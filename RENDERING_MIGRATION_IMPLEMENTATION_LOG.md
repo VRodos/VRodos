@@ -404,3 +404,73 @@ The current top-level order is:
   - `js_libs/vrodos_compile_dialogue.js`
 - PHP syntax check passed on:
   - `includes/class-vrodos-compiler-manager.php`
+
+## Phase 16
+
+### Status
+
+- Complete
+
+### Intent
+
+- Close the PMNDRS AA investigation loop on the pinned r181 stack.
+- Fix PMNDRS AA persistence/hydration gaps in the compile-dialog roundtrip.
+- Verify whether movement-time FPS drops come from PMNDRS AA itself or from shared navmesh collision work.
+
+### Applied Changes
+
+- Added a PMNDRS AA debug overlay in `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js` behind:
+  - `?vrodos_debug_pmndrs_aa=1`
+- The overlay reports:
+  - selected PMNDRS AA mode/preset
+  - requested/applied composer multisample count
+  - `WebGL2` / `maxSamples` capability
+  - whether `SMAAEffect` is present
+  - whether the PMNDRS composer/effect pass is live
+  - whether any MSAA fallback occurred
+- Fixed PMNDRS AA scene-json persistence in `js_libs/vrodos_ScenePersistence.js` by:
+  - exporting `aframePmndrsAAMode`
+  - exporting `aframePmndrsAAPreset`
+  - importing both fields back into `SceneSettings`
+- Fixed PMNDRS AA loader hydration in `js_libs/vrodos_LoaderMulti.js` by restoring:
+  - `aframePmndrsAAMode`
+  - `aframePmndrsAAPreset`
+- Fixed compile-dialog refresh rendering in `js_libs/vrodos_compile_dialogue.js` so the PMNDRS AA selects no longer receive the non-option internal fallback value `'inherit'`, which previously caused blank dropdowns after refresh/load.
+- Added a navigation-performance overlay in `runtime/assets/js/master/components/vrodos_navigation.component.js` behind:
+  - `?vrodos_debug_nav_perf=1`
+- The navigation overlay reports:
+  - per-frame / averaged nav tick time
+  - constrained-movement time
+  - ground-sample time
+  - raycast time
+  - raycast count
+  - intersection count
+- Applied the first low-risk collision optimization in `runtime/assets/js/master/components/vrodos_navigation.component.js`:
+  - build a flattened `navMeshCollisionTargets` mesh list during navmesh refresh
+  - raycast against that flat list with `recursive=false` instead of recursively traversing each navmesh root on every probe
+
+### Validation
+
+- `eslint` passed on:
+  - `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
+  - `runtime/assets/js/master/components/vrodos_navigation.component.js`
+  - `js_libs/vrodos_ScenePersistence.js`
+  - `js_libs/vrodos_LoaderMulti.js`
+  - `js_libs/vrodos_compile_dialogue.js`
+- Manual runtime diagnosis established:
+  - `MSAA high` was genuinely active in the compiled scene (`requested 8`, `applied 8`, `fallback none`)
+  - `SMAA/MSAA` were functioning, but scene quality/performance remained a tradeoff rather than a wiring failure
+  - the compile dialog now saves, reloads, and re-renders PMNDRS AA values correctly
+  - nav/collision perf counters stayed near zero while standing still and jumped only while moving, confirming that movement-time FPS drops were being amplified by navmesh collision work
+  - flattening navmesh collision targets improved movement performance enough to be accepted as a meaningful first optimization
+
+### Findings
+
+- PMNDRS `SMAA` and composer `MSAA` are officially supported features; the problem here is not PMNDRS feature maturity.
+- On the current marina stress scene:
+  - `MSAA high` still leaves visible aliasing on thin linework, micro-geometry, and specular edges
+  - `SMAA high` still leaves visible jaggies on boats, pavement, and fence detail
+  - `SMAA ultra` produces materially better cleanup but drops performance too far for this scene
+- Legacy FXAA still gives the best perceived cleanup on this particular scene, even though PMNDRS AA is functioning correctly.
+- The movement-related FPS dips are not explained by PMNDRS AA alone; shared collision/raycast cost is a confirmed contributing factor.
+- Recommended follow-up direction: leave PMNDRS AA available, keep `none` as the PMNDRS default, and resume the next Takram/PMNDRS integration phase in a fresh thread.

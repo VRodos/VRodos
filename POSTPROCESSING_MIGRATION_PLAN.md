@@ -632,12 +632,43 @@ Current live decision on the pinned A-Frame master + Three r181 stack:
   - `ultra`
 - Runtime mapping:
   - `smaa` -> `SMAAEffect` only, using the selected PMNDRS preset
-  - `msaa` -> composer multisampling only, using sample-count tiers derived from the selected PMNDRS preset and clamped to the renderer's supported max
+- `msaa` -> composer multisampling only, using sample-count tiers derived from the selected PMNDRS preset and clamped to the renderer's supported max
 - Current default direction: default new PMNDRS scenes to `none`, and let authors opt into `smaa` or `msaa` explicitly.
 - Backward compatibility rule: scenes that were already authored against PMNDRS before explicit PMNDRS AA metadata existed may still derive their initial PMNDRS AA choice from the historical shared `aaQuality` field until they are re-saved.
+- PMNDRS `SMAA` and composer `MSAA` are official supported features of `postprocessing`; the risk here is project-specific quality/performance tradeoff on the current VRodos scene/runtime, not lack of PMNDRS support.
+- Compile-dialog roundtrip for PMNDRS AA now depends on all of these links being in place:
+  - dialog -> `envir.scene`
+  - `envir.scene` -> scene JSON metadata
+  - scene JSON metadata -> loader hydration back into `envir.scene`
+  - dialog sync resolving only real option values (`none|smaa|msaa` and `low|medium|high|ultra`) instead of transient internal fallback values
+- Runtime debug helpers added during diagnosis:
+  - `?vrodos_debug_pmndrs_aa=1` shows the live PMNDRS AA mode, preset, requested/applied MSAA samples, SMAA presence, and fallback state
+  - `?vrodos_debug_nav_perf=1` shows movement/collision timing, raycast count, and navmesh intersection volume
+- Current real-scene findings on the marina stress scene:
+  - `MSAA high` is genuinely active (`requested 8`, `applied 8`, `fallback none`) but still leaves visible aliasing on thin linework, small distant silhouettes, and strong specular highlights
+  - `SMAA high` improves image quality but still leaves visible jaggies on boats, pavement, and fence detail
+  - `SMAA ultra` looks materially better, but the frame-rate drop is too severe for this scene
+  - Legacy FXAA still produces the best perceived cleanup for this particular scene, even though PMNDRS AA is functioning correctly
+- Current practical direction:
+  - keep PMNDRS AA controls available
+  - keep PMNDRS default AA at `none`
+  - do not spend additional migration time chasing PMNDRS-vs-legacy AA parity before resuming the next Takram phase
+- Performance diagnosis update:
+  - idle PMNDRS AA cost is not the whole slowdown story
+  - the movement-triggered FPS dips were confirmed to spike only when ground/navmesh collision sampling runs
+  - the first low-risk optimization is now in place: collision raycasts use a flattened list of navmesh mesh targets instead of recursively traversing root hierarchies on every probe
 - Historical Phase 0 notes about FXAA as a fallback remain useful only as migration history from the older r173 stack; they are no longer the active AA decision for live PMNDRS scenes.
 
-## 15. Reference Links
+## 15. Resume Point
+
+When work resumes in a new thread, treat the AA investigation as sufficiently understood for now:
+
+- Horizon artifact root cause: PMNDRS `FXAAEffect`
+- PMNDRS AA status: working, but scene-dependent in quality/performance
+- Collision-performance status: confirmed movement hot spot; first navmesh-target flattening optimization already applied
+- Recommended next roadmap slice: continue the next Takram/PMNDRS integration phase rather than spending more time on AA tuning
+
+## 16. Reference Links
 
 - pmndrs/postprocessing: <https://github.com/pmndrs/postprocessing>
 - pmndrs/postprocessing WebXR research issue #677: <https://github.com/pmndrs/postprocessing/issues/677>

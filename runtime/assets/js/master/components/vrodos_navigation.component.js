@@ -9,6 +9,23 @@ var VRODOSNavmeshDefaults = VRODOSMaster.NAVMESH_DEFAULTS || window.VRODOS_NAVME
     maxSlope: 45
 };
 
+function vrodosNavPerfDebugEnabled() {
+    if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.navPerfOverlay === true) {
+        return true;
+    }
+
+    if (typeof window.location === 'undefined' || !window.location.search) {
+        return false;
+    }
+
+    try {
+        var params = new URLSearchParams(window.location.search);
+        return params.get('vrodos_debug_nav_perf') === '1';
+    } catch (err) {
+        return false;
+    }
+}
+
 AFRAME.registerComponent('vrodos-navmesh-helper', {
     init: function () {
         this.applyHiddenNavmeshState = this.applyHiddenNavmeshState.bind(this);
@@ -64,6 +81,7 @@ AFRAME.registerComponent('custom-movement', {
         this.thumbInput = { x: 0, y: 0 };
         this.keyboardInput = { x: 0, y: 0 };
         this.navMeshRoots = [];
+        this.navMeshCollisionTargets = [];
         this.navMeshDirty = true;
         this.navMeshBounds = new THREE.Box3();
         this.navMeshRootBounds = new THREE.Box3();
@@ -121,6 +139,7 @@ AFRAME.registerComponent('custom-movement', {
         };
         this.searchRadii = [0.5, 1, 2, 4, 6];
         this.searchAngles = [0, 45, 90, 135, 180, 225, 270, 315];
+        this.navPerfDebug = this.createNavPerfDebugState();
 
         this.handleThumbstickMove = this.handleThumbstickMove.bind(this);
         this.handleThumbstickEnd = this.handleThumbstickEnd.bind(this);
@@ -291,6 +310,115 @@ AFRAME.registerComponent('custom-movement', {
         this.sceneEl.removeEventListener('child-detached', this.handleSceneChildDetached);
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
+        if (this.navPerfDebug && this.navPerfDebug.overlay && this.navPerfDebug.overlay.parentNode) {
+            this.navPerfDebug.overlay.parentNode.removeChild(this.navPerfDebug.overlay);
+            this.navPerfDebug.overlay = null;
+        }
+    },
+    createNavPerfDebugState: function () {
+        if (!vrodosNavPerfDebugEnabled()) {
+            return null;
+        }
+
+        return {
+            overlay: null,
+            lastOverlayAt: 0,
+            avgTickMs: 0,
+            avgConstrainedMs: 0,
+            avgSampleMs: 0,
+            avgRaycastMs: 0,
+            avgRaycasts: 0,
+            avgIntersections: 0,
+            frame: null
+        };
+    },
+    ensureNavPerfDebugOverlay: function () {
+        if (!this.navPerfDebug || typeof document === 'undefined' || !document.body) {
+            return null;
+        }
+
+        if (!this.navPerfDebug.overlay) {
+            var overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.left = '12px';
+            overlay.style.top = '12px';
+            overlay.style.zIndex = '99998';
+            overlay.style.padding = '8px 10px';
+            overlay.style.borderRadius = '8px';
+            overlay.style.background = 'rgba(10, 16, 28, 0.88)';
+            overlay.style.color = '#9ef7b3';
+            overlay.style.font = '12px/1.35 Consolas, Monaco, monospace';
+            overlay.style.whiteSpace = 'pre';
+            overlay.style.pointerEvents = 'none';
+            overlay.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.28)';
+            overlay.textContent = 'NAV PERF DEBUG\nwaiting for movement...';
+            document.body.appendChild(overlay);
+            this.navPerfDebug.overlay = overlay;
+        }
+
+        return this.navPerfDebug.overlay;
+    },
+    beginNavPerfDebugFrame: function () {
+        if (!this.navPerfDebug) {
+            return;
+        }
+
+        this.navPerfDebug.frame = {
+            tickStart: performance.now(),
+            tickMs: 0,
+            constrainedMs: 0,
+            sampleMs: 0,
+            raycastMs: 0,
+            raycasts: 0,
+            intersections: 0,
+            collisionsEnabled: false,
+            moving: false
+        };
+    },
+    finishNavPerfDebugFrame: function () {
+        if (!this.navPerfDebug || !this.navPerfDebug.frame) {
+            return;
+        }
+
+        var now = performance.now();
+        var frame = this.navPerfDebug.frame;
+        var alpha = 0.2;
+        frame.tickMs = now - frame.tickStart;
+
+        this.navPerfDebug.avgTickMs = this.navPerfDebug.avgTickMs === 0 ? frame.tickMs : (this.navPerfDebug.avgTickMs * (1 - alpha)) + (frame.tickMs * alpha);
+        this.navPerfDebug.avgConstrainedMs = this.navPerfDebug.avgConstrainedMs === 0 ? frame.constrainedMs : (this.navPerfDebug.avgConstrainedMs * (1 - alpha)) + (frame.constrainedMs * alpha);
+        this.navPerfDebug.avgSampleMs = this.navPerfDebug.avgSampleMs === 0 ? frame.sampleMs : (this.navPerfDebug.avgSampleMs * (1 - alpha)) + (frame.sampleMs * alpha);
+        this.navPerfDebug.avgRaycastMs = this.navPerfDebug.avgRaycastMs === 0 ? frame.raycastMs : (this.navPerfDebug.avgRaycastMs * (1 - alpha)) + (frame.raycastMs * alpha);
+        this.navPerfDebug.avgRaycasts = this.navPerfDebug.avgRaycasts === 0 ? frame.raycasts : (this.navPerfDebug.avgRaycasts * (1 - alpha)) + (frame.raycasts * alpha);
+        this.navPerfDebug.avgIntersections = this.navPerfDebug.avgIntersections === 0 ? frame.intersections : (this.navPerfDebug.avgIntersections * (1 - alpha)) + (frame.intersections * alpha);
+
+        if ((now - this.navPerfDebug.lastOverlayAt) >= 150) {
+            this.updateNavPerfDebugOverlay();
+            this.navPerfDebug.lastOverlayAt = now;
+        }
+    },
+    updateNavPerfDebugOverlay: function () {
+        if (!this.navPerfDebug || !this.navPerfDebug.frame) {
+            return;
+        }
+
+        var overlay = this.ensureNavPerfDebugOverlay();
+        if (!overlay) {
+            return;
+        }
+
+        var frame = this.navPerfDebug.frame;
+        overlay.textContent = [
+            'NAV PERF DEBUG',
+            'moving: ' + (frame.moving ? 'yes' : 'no'),
+            'collisions: ' + (frame.collisionsEnabled ? 'on' : 'off'),
+            'tick ms: ' + frame.tickMs.toFixed(2) + ' avg ' + this.navPerfDebug.avgTickMs.toFixed(2),
+            'constrained ms: ' + frame.constrainedMs.toFixed(2) + ' avg ' + this.navPerfDebug.avgConstrainedMs.toFixed(2),
+            'sample ms: ' + frame.sampleMs.toFixed(2) + ' avg ' + this.navPerfDebug.avgSampleMs.toFixed(2),
+            'raycast ms: ' + frame.raycastMs.toFixed(2) + ' avg ' + this.navPerfDebug.avgRaycastMs.toFixed(2),
+            'raycasts: ' + frame.raycasts + ' avg ' + this.navPerfDebug.avgRaycasts.toFixed(1),
+            'intersections: ' + frame.intersections + ' avg ' + this.navPerfDebug.avgIntersections.toFixed(1)
+        ].join('\n');
     },
     getSceneSettings: function () {
         return this.sceneEl ? this.sceneEl.getAttribute('scene-settings') : null;
@@ -351,6 +479,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         this.navMeshRoots = [];
+        this.navMeshCollisionTargets = [];
         this.navMeshBounds.makeEmpty();
 
         var navMeshEntities = this.sceneEl.querySelectorAll(this.navMeshEntitySelector);
@@ -359,6 +488,11 @@ AFRAME.registerComponent('custom-movement', {
             if (meshRoot) {
                 this.applyWalkBehaviorToNavMeshRoot(meshRoot, this.normalizeWalkBehavior(navMeshEntities[i].getAttribute('data-vrodos-walk-behavior')));
                 this.navMeshRoots.push(meshRoot);
+                meshRoot.traverse(function (node) {
+                    if (node && node.isMesh) {
+                        this.navMeshCollisionTargets.push(node);
+                    }
+                }.bind(this));
                 this.navMeshRootBounds.setFromObject(meshRoot);
                 if (!this.navMeshRootBounds.isEmpty()) {
                     this.navMeshBounds.union(this.navMeshRootBounds);
@@ -467,7 +601,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         this.refreshNavMeshRoots();
-        return this.navMeshRoots.length > 0;
+        return this.navMeshCollisionTargets.length > 0;
     },
     getMovementDeltaFromInput: function (inputX, inputY, distance) {
         var referenceEl = this.cameraEl || this.cameraRig;
@@ -502,9 +636,18 @@ AFRAME.registerComponent('custom-movement', {
         this.wasdControlsSuppressed = collisionsEnabled;
     },
     sampleGroundAtSingle: function (position, referenceGroundY, outputGround) {
+        var navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
+        var sampleStart = navPerfFrame ? performance.now() : 0;
+        var finalizeSample = function (result) {
+            if (navPerfFrame) {
+                navPerfFrame.sampleMs += performance.now() - sampleStart;
+            }
+            return result;
+        };
+
         this.refreshNavMeshRoots();
-        if (this.navMeshRoots.length === 0) {
-            return null;
+        if (this.navMeshCollisionTargets.length === 0) {
+            return finalizeSample(null);
         }
 
         var originY = typeof referenceGroundY === 'number'
@@ -515,7 +658,13 @@ AFRAME.registerComponent('custom-movement', {
         this.raycaster.set(this.raycastOrigin, this.raycastDirection);
         this.raycaster.far = this.data.maxStepHeight + this.data.maxDropHeight + 20;
 
-        var intersections = this.raycaster.intersectObjects(this.navMeshRoots, true);
+        var raycastStart = navPerfFrame ? performance.now() : 0;
+        var intersections = this.raycaster.intersectObjects(this.navMeshCollisionTargets, false);
+        if (navPerfFrame) {
+            navPerfFrame.raycastMs += performance.now() - raycastStart;
+            navPerfFrame.raycasts += 1;
+            navPerfFrame.intersections += intersections.length;
+        }
         var hasReferenceGround = typeof referenceGroundY === 'number' && isFinite(referenceGroundY);
         var minAllowedY = hasReferenceGround ? referenceGroundY - (this.data.maxDropHeight + this.groundProbeStepTolerance) : -Infinity;
         var maxAllowedY = hasReferenceGround ? referenceGroundY + this.data.maxStepHeight + this.groundProbeStepTolerance : Infinity;
@@ -548,7 +697,7 @@ AFRAME.registerComponent('custom-movement', {
                 outputGround.normal.copy(this.tempWorldNormal);
                 outputGround.slope = slope;
                 outputGround.behavior = behavior;
-                return outputGround;
+                return finalizeSample(outputGround);
             }
 
             if (!hasReferenceGround) {
@@ -558,7 +707,7 @@ AFRAME.registerComponent('custom-movement', {
                 outputGround.normal.copy(this.tempWorldNormal);
                 outputGround.slope = slope;
                 outputGround.behavior = behavior;
-                return outputGround;
+                return finalizeSample(outputGround);
             }
 
             if (hit.point.y < minAllowedY || hit.point.y > maxAllowedY) {
@@ -589,7 +738,7 @@ AFRAME.registerComponent('custom-movement', {
             }
         }
 
-        return bestAutoHit ? outputGround : null;
+        return finalizeSample(bestAutoHit ? outputGround : null);
     },
     sampleGroundAt: function (position, referenceGroundY, outputGround) {
         if (this.shouldReuseAutoGroundSample(position, referenceGroundY)) {
@@ -846,8 +995,17 @@ AFRAME.registerComponent('custom-movement', {
         }
     },
     applyConstrainedMovement: function (deltaX, deltaZ) {
+        var navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
+        var constrainedStart = navPerfFrame ? performance.now() : 0;
+        var finalizeConstrained = function (result) {
+            if (navPerfFrame) {
+                navPerfFrame.constrainedMs += performance.now() - constrainedStart;
+            }
+            return result;
+        };
+
         if (Math.abs(deltaX) < 0.00001 && Math.abs(deltaZ) < 0.00001) {
-            return true;
+            return finalizeConstrained(true);
         }
 
         if (this.heightOffset === null) {
@@ -874,7 +1032,7 @@ AFRAME.registerComponent('custom-movement', {
 
             currentGround = this.findNearestGroundAt(navigationPosition, this.getRecoverySearchRadius(navigationPosition), this.recoveryGroundHit);
             if (!currentGround) {
-                return false;
+                return finalizeConstrained(false);
             }
 
             if (this.heightOffset === null) {
@@ -882,7 +1040,7 @@ AFRAME.registerComponent('custom-movement', {
             }
 
             if (!this.snapNavigationToRecoveredGround(currentGround)) {
-                return false;
+                return finalizeConstrained(false);
             }
 
             currentPosition.copy(this.lastResolvedPosition);
@@ -890,19 +1048,19 @@ AFRAME.registerComponent('custom-movement', {
 
         var resolvedStep = this.resolveMovementAgainstGround(currentPosition, deltaX, deltaZ, currentGround, this.resolvedMovementStep);
         if (!resolvedStep) {
-            return false;
+            return finalizeConstrained(false);
         }
 
         var nextY = resolvedStep.ground.point.y + (this.heightOffset !== null ? this.heightOffset : 0);
         this.targetWorldPosition.set(resolvedStep.position.x, nextY, resolvedStep.position.z);
         if (!this.setNavigationWorldPosition(this.targetWorldPosition)) {
-            return false;
+            return finalizeConstrained(false);
         }
 
         this.lastResolvedPosition.copy(this.targetWorldPosition);
         this.setResolvedGroundHit(resolvedStep.ground, this.targetWorldPosition, this.lastGroundHit);
         this.hasLastGroundHit = true;
-        return true;
+        return finalizeConstrained(true);
     },
     tick: function (time, timeDelta) {
         var settings = this.getSceneSettings();
@@ -910,55 +1068,67 @@ AFRAME.registerComponent('custom-movement', {
             return;
         }
 
-        var movementDisabled = settings.movement_disabled === true || settings.movement_disabled === 'true' || settings.movement_disabled === '1';
-        if (movementDisabled) {
-            this.setNavigationWorldPosition(this.lastResolvedPosition);
-            return;
-        }
+        this.beginNavPerfDebugFrame();
 
-        this.ensureNavigationStatePrimed();
+        try {
+            var movementDisabled = settings.movement_disabled === true || settings.movement_disabled === 'true' || settings.movement_disabled === '1';
+            if (movementDisabled) {
+                this.setNavigationWorldPosition(this.lastResolvedPosition);
+                return;
+            }
 
-        var currentPosition = this.tickWorldPosition.copy(this.getNavigationWorldPosition());
-        var externalDeltaX = currentPosition.x - this.lastResolvedPosition.x;
-        var externalDeltaZ = currentPosition.z - this.lastResolvedPosition.z;
-        var hasExternalMovement = Math.abs(externalDeltaX) > 0.0001 || Math.abs(externalDeltaZ) > 0.0001;
-        var collisionsEnabled = this.areCollisionsEnabled();
-        this.updateWASDControlsState(collisionsEnabled);
+            this.ensureNavigationStatePrimed();
 
-        if (hasExternalMovement) {
-            this.setNavigationWorldPosition(this.lastResolvedPosition);
+            var currentPosition = this.tickWorldPosition.copy(this.getNavigationWorldPosition());
+            var externalDeltaX = currentPosition.x - this.lastResolvedPosition.x;
+            var externalDeltaZ = currentPosition.z - this.lastResolvedPosition.z;
+            var hasExternalMovement = Math.abs(externalDeltaX) > 0.0001 || Math.abs(externalDeltaZ) > 0.0001;
+            var collisionsEnabled = this.areCollisionsEnabled();
+            this.updateWASDControlsState(collisionsEnabled);
+            if (this.navPerfDebug && this.navPerfDebug.frame) {
+                this.navPerfDebug.frame.collisionsEnabled = collisionsEnabled;
+            }
+
+            if (hasExternalMovement) {
+                this.setNavigationWorldPosition(this.lastResolvedPosition);
+
+                if (collisionsEnabled) {
+                    this.applyConstrainedMovement(externalDeltaX, externalDeltaZ);
+                } else {
+                    this.applyDirectMovement(externalDeltaX, externalDeltaZ);
+                }
+            }
+
+            var thumbstickX = Math.abs(this.thumbInput.x) > 0.08 ? this.thumbInput.x : 0;
+            var thumbstickY = Math.abs(this.thumbInput.y) > 0.08 ? this.thumbInput.y : 0;
+            var keyboardX = collisionsEnabled ? this.keyboardInput.x : 0;
+            var keyboardY = collisionsEnabled ? this.keyboardInput.y : 0;
+            var inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
+            var inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
+            if (this.navPerfDebug && this.navPerfDebug.frame) {
+                this.navPerfDebug.frame.moving = hasExternalMovement || inputX !== 0 || inputY !== 0;
+            }
+
+            if (inputX === 0 && inputY === 0) {
+                if (!hasExternalMovement) {
+                    this.lastResolvedPosition.copy(currentPosition);
+                }
+                return;
+            }
+
+            var movementDistance = this.data.movementSpeed * (Math.min(timeDelta, 50) / 1000);
+            var movementDelta = this.getMovementDeltaFromInput(inputX, inputY, movementDistance);
+            if (!movementDelta) {
+                return;
+            }
 
             if (collisionsEnabled) {
-                this.applyConstrainedMovement(externalDeltaX, externalDeltaZ);
+                this.applyConstrainedMovement(movementDelta.x, movementDelta.z);
             } else {
-                this.applyDirectMovement(externalDeltaX, externalDeltaZ);
+                this.applyDirectMovement(movementDelta.x, movementDelta.z);
             }
-        }
-
-        var thumbstickX = Math.abs(this.thumbInput.x) > 0.08 ? this.thumbInput.x : 0;
-        var thumbstickY = Math.abs(this.thumbInput.y) > 0.08 ? this.thumbInput.y : 0;
-        var keyboardX = collisionsEnabled ? this.keyboardInput.x : 0;
-        var keyboardY = collisionsEnabled ? this.keyboardInput.y : 0;
-        var inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
-        var inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
-
-        if (inputX === 0 && inputY === 0) {
-            if (!hasExternalMovement) {
-                this.lastResolvedPosition.copy(currentPosition);
-            }
-            return;
-        }
-
-        var movementDistance = this.data.movementSpeed * (Math.min(timeDelta, 50) / 1000);
-        var movementDelta = this.getMovementDeltaFromInput(inputX, inputY, movementDistance);
-        if (!movementDelta) {
-            return;
-        }
-
-        if (collisionsEnabled) {
-            this.applyConstrainedMovement(movementDelta.x, movementDelta.z);
-        } else {
-            this.applyDirectMovement(movementDelta.x, movementDelta.z);
+        } finally {
+            this.finishNavPerfDebugFrame();
         }
     }
 });
