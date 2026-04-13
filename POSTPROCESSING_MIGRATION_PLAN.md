@@ -14,10 +14,11 @@ This plan compares the four realistic options (A-Frame defaults, stock Three pos
 
 ---
 
-## Status Snapshot (2026-04-10)
+## Status Snapshot (2026-04-13)
 
 | Phase | Status | Notes |
 |---|---|---|
+| Foundation 0 | In progress | Repo-wide A-Frame master + Three r181 migration audit/planning has been promoted ahead of further PMNDRS/Takram feature work. |
 | Phase 0 | Complete | Compatibility smoke test completed with caveats (see §9). |
 | Phase 1 | Complete | Bundle/runtime extension completed (see §10). |
 | Phase 2 | Complete | PMNDRS runtime module implemented (`vrodos_postprocessing_pmndrs.js`). |
@@ -29,6 +30,61 @@ This plan compares the four realistic options (A-Frame defaults, stock Three pos
 **What is no longer relevant now**
 - `realism-effects` as an SSR/TRAA dependency for this migration (rejected in §10 due Three r173 incompatibility).
 - pre-Phase-0 decision questions that were already answered by implementation and subsequent results sections.
+- Treating Three r173 as the long-term base. The active foundation question is now whether VRodos should move to a pinned A-Frame master snapshot with Three r181 before continuing Horizon/Takram/cloud work.
+
+---
+
+## 0. Course Correction: Why r181 Comes First Now
+
+After the Horizon/Takram work on top of Three r173, the new conclusion is:
+
+- **A-Frame stable 1.7.1 is still on Three r173.**
+- **A-Frame master has moved to Three r181**, and VRodos already carries a commented prototype reference to that direction in `js_libs/aframe_libs/Master_Client_prototype.html`.
+- `postprocessing@6.39.0` supports `three >=0.168.0 <0.184.0`, so r181 remains in-range.
+- `@takram/three-atmosphere@0.18.0` and `@takram/three-clouds@0.7.4` both support `three >=0.170.0`, so r181 also fits their range cleanly.
+
+This does **not** mean r181 will automatically fix every Horizon artifact. Some of those issues were integration and ownership bugs in VRodos itself. But it does mean r181 is now the better foundation for the next stage because it should reduce compatibility pressure between A-Frame, PMNDRS, and Takram.
+
+### Repo audit findings that justify the foundation phase
+
+The repo still contains a meaningful amount of r173-specific plumbing:
+
+- `package.json` pins `three: 0.173.0`.
+- `scripts/build-three-r173.mjs` emits `js_libs/threejs173/vrodos-three-r173.bundle.js`.
+- `includes/class-vrodos-asset-manager.php` still pins the active vendor directory to `threejs173`, although the editor/runtime fallback consumers are now being centralized behind shared globals.
+- The bundle/build naming is still explicitly r173-based (`build-three-r173.mjs`, `threejs173`, `vrodos-three-r173.bundle.js`) and needs a controlled rename or compatibility alias during the r181 migration.
+- The legacy and PMNDRS runtime modules contain comments and workarounds explicitly framed around the r173/A-Frame-1.7.1 stack, including the load-bearing `isXRRenderTarget` tone-mapping workaround in `vrodos_postprocessing.js`.
+
+### Leftover 147 -> 173 migration findings
+
+The audit did **not** uncover a large pile of obviously-unmigrated pre-r173 APIs still active in the hot rendering paths. The main useful findings were:
+
+- Already modernized:
+  - `renderer.outputColorSpace = THREE.SRGBColorSpace`
+  - `renderer.toneMapping = THREE.ACESFilmicToneMapping`
+  - Pointer-lock access already prefers `controls.object`
+- Needs review during r181 migration:
+  - `THREE.PCFSoftShadowMap` is still used in the editor/runtime. It remains valid on r181 but is deprecated at 181 -> 182, so it should be revisited while renderer defaults are touched.
+  - `THREE.RGBELoader` is still used for HDR environments. The rename to `HDRLoader` happens at 179 -> 180, making this a concrete compatibility checkpoint for r181.
+  - The legacy post-FX path still depends on the r173-specific `isXRRenderTarget` tone-mapping hack and must be re-validated carefully on r181.
+
+### New foundation phase before additional Takram work
+
+1. **Foundation 0A — version-neutral plumbing**
+   - Remove hardcoded `threejs173` fallback paths from editor/runtime helpers.
+   - Centralize vendor bundle base paths so the version switch is not a string-search exercise.
+2. **Foundation 0B — pinned r181 spike**
+   - Move the local Three dependency and vendor build to r181 on a dedicated migration slice.
+   - Switch compiled clients to a pinned A-Frame master commit that matches that Three version.
+3. **Foundation 0C — subsystem validation**
+   - Editor renderer
+   - Asset viewer
+   - Legacy post-FX
+   - PMNDRS post-FX
+   - Takram atmosphere init
+   - networked-aframe / aframe-extras / environment-component compatibility
+4. **Foundation 0D — resume PMNDRS/Takram roadmap**
+   - Continue the Takram-first Horizon/light-source work only after the r181 baseline is proven.
 
 ---
 
