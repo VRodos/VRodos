@@ -413,8 +413,10 @@ function vrodos_createLightSun(nameModel, addedAt) {
     lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
 
     envir.scene.add(lightSun);
+    envir.selectableMeshes.add(lightSun);
     envir.scene.add(lightSunHelper);
     envir.scene.add(lightTargetSpot);
+    envir.selectableMeshes.add(lightTargetSpot);
     envir.scene.add(lightSunShadowhelper);
 
     lightSun.target.updateMatrixWorld();
@@ -488,6 +490,7 @@ function vrodos_createLightLamp(nameModel, addedAt) {
     lightLampHelper.parentLightName = lightLamp.name;
 
     envir.scene.add(lightLamp);
+    envir.selectableMeshes.add(lightLamp);
     envir.scene.add(lightLampHelper);
     lightLampHelper.update();
 
@@ -552,7 +555,9 @@ function vrodos_createLightSpot(nameModel, addedAt) {
     lightSpot.target.position = lightTargetSpot.position;
 
     envir.scene.add(lightSpot);
+    envir.selectableMeshes.add(lightSpot);
     envir.scene.add(lightTargetSpot);
+    envir.selectableMeshes.add(lightTargetSpot);
 
     lightSpot.target.updateMatrixWorld();
 
@@ -599,6 +604,7 @@ function vrodos_createLightAmbient(nameModel, addedAt) {
     lightAmbient.add(lampSphere);
 
     envir.scene.add(lightAmbient);
+    envir.selectableMeshes.add(lightAmbient);
 
     let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
     trs_tmp['translation'][1] += 3;
@@ -652,6 +658,7 @@ function vrodos_createPawn(nameModel, addedAt, pluginPath) {
             Pawn.add(pawnLabel);
 
             envir.scene.add(Pawn);
+            envir.selectableMeshes.add(Pawn);
 
             let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
             trs_tmp['translation'][1] += 3;
@@ -745,6 +752,7 @@ function vrodos_createAssessmentAsset(nameModel, addedAt) {
     assessmentObject.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
     envir.scene.add(assessmentObject);
+    envir.selectableMeshes.add(assessmentObject);
     transform_controls.attach(assessmentObject);
     removeAllCelOutlines();
     addCelOutline(assessmentObject);
@@ -962,6 +970,7 @@ function deleteAssetFromScene(uuid) {
 
     // Remove object from scene
     envir.scene.remove(objectSelected);
+    envir.selectableMeshes.delete(objectSelected);
 
     // Remove from hierarchy viewer
     removeHierarchyEntriesForObject(uuid, objectSelected.name);

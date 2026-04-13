@@ -60,6 +60,11 @@ class vrodos_3d_editor_environmentals {
         this.clock = new THREE.Clock();
         this.flagPlayAnimation = true;
 
+        // scene object caches — maintained by add/remove operations to avoid per-interaction scene.traverse()
+        this.selectableMeshes = new Set();   // top-level objects with isSelectableMesh = true
+        this.celOutlineMeshes = new Set();   // active __cel_outline__ back-face hull meshes
+        this.positionalAudioNodes = [];      // THREE.PositionalAudio nodes (future audio support)
+
         // Composer is for the green outline effect when selecting objects
         this.isComposerOn = true;
         this.is2d = false;
@@ -86,7 +91,8 @@ class vrodos_3d_editor_environmentals {
         this.FAR = 200000; // keep the camera empty until everything is loaded
 
         // -- Set Renderer ----
-        this.renderer = new THREE.WebGLRenderer({antialias: true, alpha: false, logarithmicDepthBuffer: false});
+        // antialias: false — MSAA backbuffer is never used once EffectComposer is active (FXAA handles AA via composer)
+        this.renderer = new THREE.WebGLRenderer({antialias: false, alpha: false, logarithmicDepthBuffer: false});
         this.renderer.shadowMap.enabled = true;
 
         // BasicShadowMap gives unfiltered shadow maps - fastest, but lowest quality.
@@ -223,7 +229,7 @@ class vrodos_3d_editor_environmentals {
         this.ASPECT = this.SCREEN_WIDTH / this.SCREEN_HEIGHT;
 
         this.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
         this.labelRenderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
         //----------------------------------------------
@@ -238,7 +244,7 @@ class vrodos_3d_editor_environmentals {
         this.cameraThirdPerson.updateProjectionMatrix();
 
         //---------------------------------------------------------------
-        let pixelRatio = window.devicePixelRatio || 1;
+        let pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
         this.composer.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
         this.composer.renderer.setPixelRatio(pixelRatio);
         this.effectFXAA.uniforms['resolution'].value.set(1 / (this.SCREEN_WIDTH * pixelRatio), 1 / (this.SCREEN_HEIGHT * pixelRatio));

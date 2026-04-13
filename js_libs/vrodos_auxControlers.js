@@ -34,6 +34,9 @@ function addCelOutline(object) {
             outline.raycast = function () {}; // invisible to raycasting
             outline.frustumCulled = false;
             child.add(outline);
+            if (typeof envir !== 'undefined' && envir.celOutlineMeshes) {
+                envir.celOutlineMeshes.add(outline);
+            }
         }
     });
 }
@@ -49,6 +52,9 @@ function removeCelOutline(object) {
     });
     toRemove.forEach((mesh) => {
         if (mesh.parent) mesh.parent.remove(mesh);
+        if (typeof envir !== 'undefined' && envir.celOutlineMeshes) {
+            envir.celOutlineMeshes.delete(mesh);
+        }
     });
 }
 
@@ -57,6 +63,15 @@ function removeCelOutline(object) {
  */
 function removeAllCelOutlines() {
     if (typeof envir === 'undefined' || !envir.scene) return;
+    if (envir.celOutlineMeshes && envir.celOutlineMeshes.size > 0) {
+        // Fast path: use the cache — no scene traverse needed
+        for (const mesh of envir.celOutlineMeshes) {
+            if (mesh.parent) mesh.parent.remove(mesh);
+        }
+        envir.celOutlineMeshes.clear();
+        return;
+    }
+    // Fallback: cache not yet initialised (first call before envir is ready)
     const toRemove = [];
     envir.scene.traverse((child) => {
         if (child.name === CEL_OUTLINE_TAG) toRemove.push(child);

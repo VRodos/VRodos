@@ -674,11 +674,30 @@ class VRodos_LoaderMulti {
                                             let finalObject = setObjectProperties(object.scene, name, resources3D);
                                             finalObject.isSelectableMesh = true;
 
+                                            // Apply max anisotropy to all loaded textures for sharper oblique surfaces
+                                            const maxAniso = envir.renderer.capabilities.getMaxAnisotropy();
+                                            if (maxAniso > 1) {
+                                                finalObject.traverse((node) => {
+                                                    if (!node.isMesh) return;
+                                                    const mats = Array.isArray(node.material) ? node.material : [node.material];
+                                                    for (const mat of mats) {
+                                                        if (!mat) continue;
+                                                        for (const slot of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap']) {
+                                                            if (mat[slot] && mat[slot].isTexture) {
+                                                                mat[slot].anisotropy = maxAniso;
+                                                                mat[slot].needsUpdate = true;
+                                                            }
+                                                        }
+                                                    }
+                                                });
+                                            }
+
                                             if (finalObject.children === '') {
                                                 finalObject.children = [];
                                             }
 
                                             envir.scene.add(finalObject);
+                                            envir.selectableMeshes.add(finalObject);
                                             finalObject.glb_path = glbURL;
                                             if (manager) manager.itemEnd(name);
                                             resolve();

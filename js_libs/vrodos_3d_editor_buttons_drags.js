@@ -905,14 +905,10 @@ function pauseClickFun() {
         document.getElementById('pauseRendering').style.background = 'red';
     }
 
-    envir.scene.traverse(function (node) {
-        if (node instanceof THREE.PositionalAudio) {
-            if (isPaused)
-                node.pause();
-            else
-                node.play();
-        }
-    });
+    for (const node of (envir.positionalAudioNodes || [])) {
+        if (isPaused) node.pause();
+        else node.play();
+    }
 }
 
 

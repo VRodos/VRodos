@@ -253,14 +253,10 @@ function selectorMajor(event, objectSel, whocalls) {
             if (!transform_controls.object.parentLight)
                 return;
 
-            // transform_controls.object.parentLight.target.position.setFromMatrixPosition(transform_controls.object.matrix);
-            // transform_controls.object.parentLight.target.updateMatrixWorld();
-            envir.scene.traverse(function (child) {
-                if (child.light != undefined)
-                    if (child.light.name === transform_controls.object.name)
-                        child.update();
-            }
-            );
+            // Name-based lookup instead of full scene traverse — helper naming convention: 'lightHelper_' + lightName
+            const helperName = 'lightHelper_' + transform_controls.object.name;
+            const helper = envir.scene.getObjectByName(helperName);
+            if (helper && typeof helper.update === 'function') helper.update();
         };
 
 
@@ -762,17 +758,14 @@ initPersistentPropertyListeners();
  * @returns {Array}
  */
 function getActiveMeshes() {
-
-    let activeMeshes = [];
-
-    // ToDo: Is it possible to avoid traversing scene object in each drag event?
-    envir.scene.traverse(function (child) {
-        if (child.isSelectableMesh) {
-            activeMeshes.push(child);
-        }
-    });
-
-    return activeMeshes;
+    // Fast path: use the pre-built cache maintained by add/remove operations
+    if (envir.selectableMeshes && envir.selectableMeshes.size > 0) {
+        return Array.from(envir.selectableMeshes);
+    }
+    // Fallback: cache not yet populated (scene still loading)
+    const fallback = [];
+    envir.scene.traverse(c => { if (c.isSelectableMesh) fallback.push(c); });
+    return fallback;
 }
 
 
