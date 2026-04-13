@@ -689,6 +689,11 @@ html [type="button"],
 	cursor: grab;
 }
 
+/* Add-new card is not draggable — restore default cursor */
+#add-new-scene-card {
+	cursor: default;
+}
+
 .SceneCardContainer.dragging {
 	opacity: 0.4;
 }
