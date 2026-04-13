@@ -92,6 +92,61 @@
         return v === true || v === 'true' || v === '1' || v === 1;
     }
 
+    function getPmndrsAtmosphereModeSignature(self, atmosphereConfig) {
+        if (!(atmosphereConfig && atmosphereConfig.enabled)) {
+            return 'atmosphere:off';
+        }
+
+        return isHorizonBackground(self) ? 'atmosphere:horizon' : 'atmosphere:world';
+    }
+
+    function disposePmndrsComposerResources(self) {
+        if (!self) {
+            return;
+        }
+
+        if (self.pmndrsComposer) {
+            try {
+                self.pmndrsComposer.dispose();
+            } catch (err) {
+                console.warn('[VRodos] pmndrs composer.dispose failed:', err);
+            }
+        }
+
+        self.pmndrsComposer = null;
+        self.pmndrsRenderPass = null;
+        self.pmndrsEffectPass = null;
+        self.pmndrsSsaoEffect = null;
+        self.pmndrsBloomEffect = null;
+        self.pmndrsAerialPerspectiveEffect = null;
+        self._pmndrsAtmosphereSignature = null;
+        self._pmndrsLastW = 0;
+        self._pmndrsLastH = 0;
+    }
+
+    function syncPmndrsAerialPerspectiveEffect(self, camera, atmosphereConfig) {
+        if (!self || !self.pmndrsAerialPerspectiveEffect || !(atmosphereConfig && atmosphereConfig.enabled)) {
+            return;
+        }
+
+        var atmosphereState = (typeof self.ensurePmndrsAtmosphereResources === 'function') ? self.ensurePmndrsAtmosphereResources() : null;
+        if (atmosphereState && !atmosphereState.failed && atmosphereState.textures) {
+            self.pmndrsAerialPerspectiveEffect.irradianceTexture = atmosphereState.textures.irradianceTexture || null;
+            self.pmndrsAerialPerspectiveEffect.scatteringTexture = atmosphereState.textures.scatteringTexture || null;
+            self.pmndrsAerialPerspectiveEffect.transmittanceTexture = atmosphereState.textures.transmittanceTexture || null;
+            self.pmndrsAerialPerspectiveEffect.singleMieScatteringTexture = atmosphereState.textures.singleMieScatteringTexture || null;
+            self.pmndrsAerialPerspectiveEffect.higherOrderScatteringTexture = atmosphereState.textures.higherOrderScatteringTexture || null;
+        }
+
+        if (camera && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== 'undefined') {
+            self.pmndrsAerialPerspectiveEffect.mainCamera = camera;
+        }
+
+        if (typeof self.applyPmndrsAtmosphereConfigToTarget === 'function') {
+            self.applyPmndrsAtmosphereConfigToTarget(self.pmndrsAerialPerspectiveEffect, atmosphereConfig);
+        }
+    }
+
     /**
      * Lazily build the EffectComposer on the first intercepted render call.
      * Deferring construction until the first real frame guarantees that
@@ -127,6 +182,7 @@
 
         var effects = [];
         var atmosphereConfig = (typeof this.getPmndrsAtmosphereConfig === 'function') ? this.getPmndrsAtmosphereConfig() : null;
+        this._pmndrsAtmosphereSignature = getPmndrsAtmosphereModeSignature(this, atmosphereConfig);
 
         if (atmosphereConfig && atmosphereConfig.enabled && !isHorizonBackground(this)) {
             var VTA = window.VRODOS_TAKRAM_ATMOSPHERE;
@@ -144,7 +200,7 @@
                         inscatter: atmosphereConfig.inscatterEnabled,
                         albedoScale: atmosphereConfig.albedoScale,
                         sky: false,
-                        sun: true,
+                        sun: atmosphereConfig.takramSunEnabled !== false,
                         moon: atmosphereConfig.moonEnabled,
                         ground: atmosphereConfig.groundEnabled
                     });
@@ -161,10 +217,10 @@
                 this._pmndrsAtmosphereWarned = true;
             }
         } else if (atmosphereConfig && atmosphereConfig.enabled && isHorizonBackground(this)) {
-            // Horizon now uses Takram SkyMaterial directly and skips the depth-based
-            // AerialPerspectiveEffect. This avoids the EffectComposer depth blit path
-            // that currently produces repeated glBlitFramebuffer warnings on the
-            // A-Frame r173 runtime while still giving us the Takram sky + sun.
+            // Horizon keeps using Takram SkyMaterial directly. The post-process
+            // AerialPerspectiveEffect triggers repeated depth blit errors on the
+            // current A-Frame r173 runtime, which also manifests visually as an
+            // opaque white ground cap over the horizon.
             this.pmndrsAerialPerspectiveEffect = null;
         }
 
@@ -339,6 +395,11 @@
 
             // Lazy composer build on first valid frame — guarantees camera and canvas
             // are ready (Phase 0 zero-canvas race fix).
+            var atmosphereConfig = (typeof self.getPmndrsAtmosphereConfig === 'function') ? self.getPmndrsAtmosphereConfig() : null;
+            var atmosphereSignature = getPmndrsAtmosphereModeSignature(self, atmosphereConfig);
+            if (self.pmndrsComposer && self._pmndrsAtmosphereSignature !== atmosphereSignature) {
+                disposePmndrsComposerResources(self);
+            }
             if (!self.pmndrsComposer) {
                 var built = self._buildPmndrsComposer(scene, camera);
                 if (!built || !self.pmndrsComposer) {
@@ -357,6 +418,7 @@
                 }
             }
 
+            syncPmndrsAerialPerspectiveEffect(self, camera, atmosphereConfig);
             self.updatePmndrsPostProcessingSize();
             self._updatePmndrsAdaptiveAO();
 
@@ -461,24 +523,10 @@
             this.el.renderer.toneMapping = this._pmndrsPrevToneMapping;
             this._pmndrsPrevToneMapping = undefined;
         }
-        if (this.pmndrsComposer) {
-            try {
-                this.pmndrsComposer.dispose();
-            } catch (err) {
-                console.warn('[VRodos] pmndrs composer.dispose failed:', err);
-            }
-        }
-        this.pmndrsComposer = null;
-        this.pmndrsRenderPass = null;
-        this.pmndrsEffectPass = null;
-        this.pmndrsSsaoEffect = null;
-        this.pmndrsBloomEffect = null;
-        this.pmndrsAerialPerspectiveEffect = null;
+        disposePmndrsComposerResources(this);
         this.pmndrsOriginalRender = null;
         this.pmndrsActive = false;
         this.pmndrsRendering = false;
-        this._pmndrsLastW = 0;
-        this._pmndrsLastH = 0;
         this._pmndrsAdaptive = null;
         this._pmndrsSsrTraaWarned = false;
         this._pmndrsAtmosphereWarned = false;

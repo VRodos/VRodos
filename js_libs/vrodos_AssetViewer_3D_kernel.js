@@ -323,15 +323,21 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     getDracoDecoderPath() {
+        const vendorDir = window.vrodos_three_vendor_dir || 'threejs173';
+
         if (window.vrodos_three_decoder_path) {
             return window.vrodos_three_decoder_path;
         }
 
-        if (typeof vrodos_data !== 'undefined' && vrodos_data.pluginPath) {
-            return vrodos_data.pluginPath + 'js_libs/threejs173/draco/';
+        if (window.vrodos_three_vendor_base) {
+            return window.vrodos_three_vendor_base + 'draco/';
         }
 
-        return '../wp-content/plugins/VRodos/js_libs/threejs173/draco/';
+        if (typeof vrodos_data !== 'undefined' && vrodos_data.pluginPath) {
+            return vrodos_data.pluginPath + 'js_libs/' + vendorDir + '/draco/';
+        }
+
+        return '../wp-content/plugins/VRodos/js_libs/' + vendorDir + '/draco/';
     }
 
     createGlbLoader() {

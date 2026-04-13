@@ -536,7 +536,9 @@ class vrodos_3d_editor_environmentals {
         // let pathn = window.location.pathname.replace(/[^/]*$/, '');
         // pathn = pathn.split('/').slice(0,-2).join('/');
 
-        let fontPath = window.vrodos_three_font_path || (pluginPath + '/js_libs/threejs173/fonts/helvetiker_bold.typeface.json');
+        let vendorDir = window.vrodos_three_vendor_dir || 'threejs173';
+        let vendorBase = window.vrodos_three_vendor_base || (pluginPath + '/js_libs/' + vendorDir + '/');
+        let fontPath = window.vrodos_three_font_path || (vendorBase + 'fonts/helvetiker_bold.typeface.json');
         loader.load(fontPath, this.loadtexts);
     }
 

@@ -83,13 +83,11 @@
         natural: {
             sunElevationDeg: 10,
             sunAzimuthDeg: 38,
-            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
             aerialStrength: 0.85
         },
         clear: {
             sunElevationDeg: 14,
             sunAzimuthDeg: 34,
-            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
             rayleighScale: 0.88,
             mieScatteringScale: 0.72,
             mieExtinctionScale: 0.86,
@@ -98,7 +96,6 @@
         crisp: {
             sunElevationDeg: 17,
             sunAzimuthDeg: 42,
-            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
             rayleighScale: 1.12,
             mieScatteringScale: 0.64,
             mieExtinctionScale: 0.8,
@@ -187,7 +184,7 @@
         return raw.charAt(0) === '#' ? raw : ('#' + raw);
     }
 
-    function buildPmndrsSunDirection(elevationDeg, azimuthDeg) {
+    function buildPmndrsLocalSunDirection(elevationDeg, azimuthDeg) {
         var elevation = THREE.MathUtils.degToRad(elevationDeg);
         var azimuth = THREE.MathUtils.degToRad(azimuthDeg);
         var cosElevation = Math.cos(elevation);
@@ -195,6 +192,21 @@
             Math.sin(azimuth) * cosElevation,
             Math.sin(elevation),
             -Math.cos(azimuth) * cosElevation
+        ).normalize();
+    }
+
+    function buildPmndrsEcefSunDirection(localSunDirection) {
+        if (!localSunDirection) {
+            return new THREE.Vector3(0, 1, 0);
+        }
+
+        // VRodos authored worlds use X=east, Y=up, Z=south so that -Z is the
+        // natural forward/north-ish direction. Takram expects sunDirection in
+        // ECEF space, so we mirror X/Z into the ECEF frame anchored below.
+        return new THREE.Vector3(
+            -localSunDirection.x,
+            localSunDirection.y,
+            -localSunDirection.z
         ).normalize();
     }
 
@@ -212,23 +224,37 @@
             return null;
         }
 
-        var bottomRadius = null;
-        if (target.atmosphere && typeof target.atmosphere.bottomRadius === 'number') {
-            bottomRadius = target.atmosphere.bottomRadius;
-        } else if (target.uniforms && target.uniforms.ATMOSPHERE && target.uniforms.ATMOSPHERE.value && typeof target.uniforms.ATMOSPHERE.value.bottom_radius === 'number') {
-            bottomRadius = target.uniforms.ATMOSPHERE.value.bottom_radius;
+        var equatorialRadius = null;
+        if (target.ellipsoid && target.ellipsoid.radii) {
+            equatorialRadius = Math.max(
+                target.ellipsoid.radii.x || 0,
+                target.ellipsoid.radii.y || 0
+            );
         }
 
-        if (!bottomRadius || !isFinite(bottomRadius)) {
-            bottomRadius = 6360000;
+        if (!equatorialRadius && window.VRODOS_TAKRAM_ATMOSPHERE && window.VRODOS_TAKRAM_ATMOSPHERE.Ellipsoid && window.VRODOS_TAKRAM_ATMOSPHERE.Ellipsoid.WGS84) {
+            equatorialRadius = Math.max(
+                window.VRODOS_TAKRAM_ATMOSPHERE.Ellipsoid.WGS84.radii.x || 0,
+                window.VRODOS_TAKRAM_ATMOSPHERE.Ellipsoid.WGS84.radii.y || 0
+            );
         }
 
-        // Takram expects scene coordinates in an Earth-centered frame. Our scenes
-        // are authored in a local Y-up space near the origin, so we pin that local
-        // origin onto an arbitrary point on the ellipsoid surface with the same
-        // axis orientation. This gives the shaders a sane altitude and tangent
-        // frame without forcing the rest of VRodos to become geospatial.
-        matrix.makeTranslation(0, bottomRadius, 0);
+        if (!equatorialRadius || !isFinite(equatorialRadius)) {
+            equatorialRadius = 6378137;
+        }
+
+        // Takram expects an orthogonal world -> ECEF transform. VRodos authored
+        // scenes use X=east, Y=up, Z=south (so -Z behaves like "forward"), so
+        // we anchor the local origin onto an actual WGS84 surface point near the
+        // equator and provide the matching rotation instead of translation alone.
+        // Using atmosphere.bottomRadius here is wrong because Takram's altitude
+        // correction then pushes the camera below the ground sphere, which shows
+        // up as a giant fake horizon dome.
+        matrix.makeBasis(
+            new THREE.Vector3(-1, 0, 0), // local +X (east) -> ECEF west at +Y anchor
+            new THREE.Vector3(0, 1, 0),  // local +Y (up)   -> ECEF up
+            new THREE.Vector3(0, 0, -1)  // local +Z (south)-> ECEF south
+        ).setPosition(0, equatorialRadius, 0);
         return matrix;
     }
 
@@ -245,6 +271,10 @@
             target.atmosphere.miePhaseFunctionG = params.miePhaseFunctionG;
             target.atmosphere.absorptionExtinction.copy(params.absorptionExtinction);
             target.atmosphere.groundAlbedo.copy(params.groundAlbedo);
+        }
+
+        if (target.groundAlbedo && typeof target.groundAlbedo.copy === 'function') {
+            target.groundAlbedo.copy(params.groundAlbedo);
         }
 
         if (target.uniforms && target.uniforms.ATMOSPHERE && target.uniforms.ATMOSPHERE.value) {
@@ -270,6 +300,10 @@
             if (uniforms.ground_albedo && typeof uniforms.ground_albedo.copy === 'function') {
                 uniforms.ground_albedo.copy(params.groundAlbedo);
             }
+        }
+
+        if (target.uniforms && target.uniforms.groundAlbedo && target.uniforms.groundAlbedo.value && typeof target.uniforms.groundAlbedo.value.copy === 'function') {
+            target.uniforms.groundAlbedo.value.copy(params.groundAlbedo);
         }
 
         if (typeof target.sunAngularRadius === 'number' || typeof target.sunAngularRadius === 'undefined') {
@@ -312,32 +346,187 @@
         state.skyGeometry = null;
     }
 
+    function setPmndrsAtmosphereSkyVisibility(self, visible) {
+        if (!self || !self._pmndrsAtmosphereState || !self._pmndrsAtmosphereState.skyMesh) {
+            return false;
+        }
+
+        self._pmndrsAtmosphereState.skyMesh.visible = !!visible;
+        return true;
+    }
+
+    function isPmndrsAtmosphereSkyVisible(self) {
+        return !!(self &&
+            self._pmndrsAtmosphereState &&
+            self._pmndrsAtmosphereState.skyMesh &&
+            self._pmndrsAtmosphereState.skyMesh.visible);
+    }
+
+    function hasPmndrsLegacyEnvironmentToken(value) {
+        if (typeof value !== 'string' || !value) {
+            return false;
+        }
+
+        var normalized = value.toLowerCase();
+        return normalized.indexOf('environment') > -1 ||
+            normalized.indexOf('atmosphere') > -1 ||
+            normalized === 'sky' ||
+            normalized === 'sun' ||
+            normalized === 'sunsphere' ||
+            normalized === 'skybox' ||
+            normalized === 'skydome';
+    }
+
+    function getPmndrsLegacyEnvironmentClassName(el) {
+        if (!el) {
+            return '';
+        }
+
+        if (typeof el.className === 'string') {
+            return el.className.toLowerCase();
+        }
+
+        if (el.getAttribute) {
+            return String(el.getAttribute('class') || '').toLowerCase();
+        }
+
+        return '';
+    }
+
+    function isPmndrsLegacyEnvironmentElement(el) {
+        if (!el) {
+            return false;
+        }
+
+        var id = (typeof el.id === 'string' ? el.id : '').toLowerCase();
+        var tagName = (typeof el.tagName === 'string' ? el.tagName : '').toLowerCase();
+        var className = getPmndrsLegacyEnvironmentClassName(el);
+
+        if (tagName === 'a-sun-sky' || tagName === 'a-sky') {
+            return true;
+        }
+
+        if (id === 'default-sky' ||
+            id === 'default-sun' ||
+            id === 'vrodos-pmndrs-sun' ||
+            id === 'vrodos-pmndrs-sun-haze') {
+            return true;
+        }
+
+        if (el.hasAttribute &&
+            (el.hasAttribute('data-vrodos-preset-sky') ||
+             el.hasAttribute('data-vrodos-pmndrs-sun'))) {
+            return true;
+        }
+
+        return className.indexOf('environmentsun') > -1 ||
+            className.indexOf('environment-sun') > -1 ||
+            className.indexOf('environmentsky') > -1 ||
+            className.indexOf('environment-sky') > -1;
+    }
+
+    function isPmndrsLegacyEnvironmentVisualNode(node) {
+        if (!node || (node.userData && node.userData.vrodosPmndrsAtmosphereSky)) {
+            return false;
+        }
+
+        if (isPmndrsLegacyEnvironmentElement(node.el)) {
+            return true;
+        }
+
+        var material = Array.isArray(node.material) ? node.material[0] : node.material;
+        var uniforms = material && material.uniforms ? material.uniforms : null;
+        if (uniforms && (uniforms.sunPosition || uniforms.sunposition || uniforms.sun_direction)) {
+            return true;
+        }
+
+        var nodeName = (typeof node.name === 'string') ? node.name : '';
+        var materialName = (material && typeof material.name === 'string') ? material.name : '';
+        return hasPmndrsLegacyEnvironmentToken(nodeName) || hasPmndrsLegacyEnvironmentToken(materialName);
+    }
+
+    function schedulePmndrsHorizonEnvironmentCleanup(self) {
+        if (!self) {
+            return;
+        }
+
+        var hideEnvVisuals = function () {
+            hidePmndrsHorizonEnvironmentVisuals(self);
+        };
+
+        hideEnvVisuals();
+        if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(hideEnvVisuals);
+        }
+        setTimeout(hideEnvVisuals, 50);
+        setTimeout(hideEnvVisuals, 200);
+    }
+
+    function formatPmndrsSunDirectionForLog(direction) {
+        if (!direction) {
+            return 'n/a';
+        }
+
+        return [
+            direction.x.toFixed(3),
+            direction.y.toFixed(3),
+            direction.z.toFixed(3)
+        ].join(',');
+    }
+
+    function logPmndrsHorizonDiagnostic(self, context, atmosphereConfig) {
+        if (!self || !self.data || !context) {
+            return;
+        }
+
+        var reflectionSource = (typeof self.getEffectiveReflectionSource === 'function')
+            ? self.getEffectiveReflectionSource()
+            : (self.data.reflectionSource || 'hdr');
+        var owner = atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self)
+            ? 'takram-sky'
+            : (atmosphereConfig && atmosphereConfig.enabled ? 'takram-fallback' : 'legacy-fallback');
+        var signature = [
+            context,
+            owner,
+            reflectionSource,
+            atmosphereConfig && atmosphereConfig.groundEnabled ? 'ground-on' : 'ground-off',
+            atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'sun-off' : 'sun-on',
+            formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null)
+        ].join('|');
+
+        self._pmndrsHorizonDiagSignatures = self._pmndrsHorizonDiagSignatures || {};
+        if (self._pmndrsHorizonDiagSignatures[context] === signature) {
+            return;
+        }
+
+        self._pmndrsHorizonDiagSignatures[context] = signature;
+        console.info('[VRodos] PMNDRS horizon diagnostic (' + context + '): owner=' + owner +
+            ', reflection=' + reflectionSource +
+            ', ground=' + (atmosphereConfig && atmosphereConfig.groundEnabled ? 'on' : 'off') +
+            ', sun=' + (atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'off' : 'on') +
+            ', sunDir=' + formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null));
+    }
+
     function hidePmndrsHorizonEnvironmentVisuals(self) {
         if (!self || !self.el || !self.el.object3D) {
             return;
         }
         self.el.object3D.traverse(function (node) {
-            if (!node || !node.isMesh || (node.userData && node.userData.vrodosPmndrsAtmosphereSky)) {
+            if (!node || (node.userData && node.userData.vrodosPmndrsAtmosphereSky)) {
                 return;
             }
-            var nodeName = (typeof node.name === 'string') ? node.name.toLowerCase() : '';
-            var materialName = (node.material && typeof node.material.name === 'string') ? node.material.name.toLowerCase() : '';
-            var shouldHide = nodeName.indexOf('environment') > -1 ||
-                nodeName.indexOf('sun') > -1 ||
-                nodeName.indexOf('sky') > -1 ||
-                nodeName.indexOf('atmosphere') > -1 ||
-                materialName.indexOf('environment') > -1 ||
-                materialName.indexOf('sun') > -1 ||
-                materialName.indexOf('sky') > -1 ||
-                nodeName === 'sunsphere';
 
-            if (shouldHide) {
+            if (isPmndrsLegacyEnvironmentVisualNode(node)) {
                 node.visible = false;
+                node.userData = node.userData || {};
+                node.userData.vrodosPmndrsLegacySuppressed = true;
             }
         });
 
-        Array.prototype.forEach.call(document.querySelectorAll('.environmentSun, .environment-sun, .environmentSky, .environment-sky, [class*="environmentSun"], [class*="environmentSky"]'), function (node) {
-            node.setAttribute('visible', 'false');
+        Array.prototype.forEach.call(document.querySelectorAll('#default-sky, #default-sun, #vrodos-pmndrs-sun, #vrodos-pmndrs-sun-haze, a-sun-sky, a-sky[data-vrodos-preset-sky=\"true\"], .environmentSun, .environment-sun, .environmentSky, .environment-sky, [class*=\"environmentSun\"], [class*=\"environmentSky\"]'), function (node) {
+            if (node && typeof node.setAttribute === 'function') {
+                node.setAttribute('visible', 'false');
+            }
         });
     }
 
@@ -346,7 +535,7 @@
             return;
         }
 
-        Array.prototype.forEach.call(self.el.querySelectorAll('a-sun-sky, [material*="sunPosition"], [material*="sunposition"]'), function (sunSkyEl) {
+        Array.prototype.forEach.call(self.el.querySelectorAll('a-sun-sky, a-sky[data-vrodos-preset-sky="true"], #default-sky, #default-sun, #vrodos-pmndrs-sun, #vrodos-pmndrs-sun-haze, [material*="sunPosition"], [material*="sunposition"]'), function (sunSkyEl) {
             if (sunSkyEl && typeof sunSkyEl.removeObject3D === 'function') {
                 try {
                     sunSkyEl.removeObject3D('mesh');
@@ -362,13 +551,14 @@
 
         if (self.el.object3D) {
             self.el.object3D.traverse(function (node) {
-                if (!node || !node.isMesh || !node.material) {
+                if (!node) {
                     return;
                 }
 
-                var uniforms = node.material.uniforms;
-                if (uniforms && (uniforms.sunPosition || uniforms.sunposition || uniforms.sun_direction)) {
+                if (isPmndrsLegacyEnvironmentVisualNode(node)) {
                     node.visible = false;
+                    node.userData = node.userData || {};
+                    node.userData.vrodosPmndrsLegacySuppressed = true;
                 }
             });
         }
@@ -425,7 +615,7 @@
         self.ensurePhotorealHelperLight(
             'vrodos-pmndrs-horizon-key-light',
             'type: directional; color: ' + keyColor + '; intensity: ' + keyIntensity.toFixed(2) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + shadowMap + '; shadowMapHeight: ' + shadowMap + '; shadowCameraTop: 28; shadowCameraRight: 28; shadowCameraLeft: -28; shadowCameraBottom: -28; shadowBias: -0.00012;',
-            formatVectorPosition(config.sunDirection, 28, 8)
+            formatVectorPosition(config.localSunDirection || config.sunDirection, 28, 8)
         );
 
         self.ensurePhotorealHelperLight(
@@ -434,6 +624,115 @@
             '0 6 0'
         );
     }
+
+    function isPmndrsTakramLocalHorizonMode(self) {
+        return !!(self && self.data && self.data.selChoice === "0");
+    }
+
+    function applyPmndrsTakramLocalHorizonConstraints(config) {
+        if (!config) {
+            return config;
+        }
+
+        // Current local-world constraints. Later phases will replace the helper
+        // lights and visible-sun workaround with Takram's own light-source path,
+        // but this keeps the behavior centralized so the migration is contained.
+        config.groundEnabled = false;
+        config.groundAlbedo = '#000000';
+        config.takramSunEnabled = false;
+        config.sunAngularRadius = TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS;
+        config.rayleighScale = 1.0;
+        config.mieScatteringScale = 1.0;
+        config.mieExtinctionScale = 1.0;
+        config.miePhaseG = 0.8;
+        config.absorptionScale = 1.0;
+        return config;
+    }
+
+    function resetPmndrsTakramHorizonState(state) {
+        if (!state) {
+            return state;
+        }
+
+        state.mode = 'inactive';
+        state.owner = 'none';
+        state.usesTakramGround = false;
+        state.usesTakramSunDisk = false;
+        state.usesTakramLightSources = false;
+        state.groundEnabled = false;
+        state.takramSunEnabled = false;
+        state.localSunDirection.set(0, 0, 0);
+        state.sunDirectionECEF.set(0, 0, 0);
+        state.moonDirectionECEF.set(0, 0, 0);
+        state.anchorPositionECEF.set(0, 0, 0);
+        state.worldToECEFMatrix.identity();
+        return state;
+    }
+
+    function ensurePmndrsTakramHorizonState(self) {
+        if (!self) {
+            return null;
+        }
+
+        if (!self._pmndrsTakramHorizonState) {
+            self._pmndrsTakramHorizonState = {
+                mode: 'inactive',
+                owner: 'none',
+                anchorPositionECEF: new THREE.Vector3(),
+                worldToECEFMatrix: new THREE.Matrix4(),
+                localSunDirection: new THREE.Vector3(),
+                sunDirectionECEF: new THREE.Vector3(),
+                moonDirectionECEF: new THREE.Vector3(),
+                usesTakramGround: false,
+                usesTakramSunDisk: false,
+                usesTakramLightSources: false,
+                groundEnabled: false,
+                takramSunEnabled: false
+            };
+        }
+
+        return self._pmndrsTakramHorizonState;
+    }
+
+    function syncPmndrsTakramHorizonState(self, config) {
+        var state = ensurePmndrsTakramHorizonState(self);
+        if (!state) {
+            return null;
+        }
+
+        if (!(config && config.enabled && isPmndrsTakramLocalHorizonMode(self))) {
+            return resetPmndrsTakramHorizonState(state);
+        }
+
+        // This phase intentionally keeps the current Horizon path in a prep
+        // state: Takram owns the atmosphere config and frame data, while the
+        // full Takram light-source swap lands in a later phase.
+        state.mode = 'local-light-source-prep';
+        state.owner = 'takram-config-prep';
+        state.groundEnabled = !!config.groundEnabled;
+        state.takramSunEnabled = config.takramSunEnabled !== false;
+        state.usesTakramGround = !!config.groundEnabled;
+        state.usesTakramSunDisk = config.takramSunEnabled !== false;
+        state.usesTakramLightSources = false;
+
+        if (config.localSunDirection) {
+            state.localSunDirection.copy(config.localSunDirection);
+        }
+        if (config.sunDirection) {
+            state.sunDirectionECEF.copy(config.sunDirection);
+        }
+        if (config.moonDirection) {
+            state.moonDirectionECEF.copy(config.moonDirection);
+        }
+
+        ensurePmndrsWorldToEcefMatrix(state);
+        state.anchorPositionECEF.setFromMatrixPosition(state.worldToECEFMatrix);
+        return state;
+    }
+
+    H.getPmndrsTakramHorizonState = function () {
+        return ensurePmndrsTakramHorizonState(this);
+    };
 
     H.getPmndrsAtmosphereConfig = function () {
         if (!this || !this.data) {
@@ -472,8 +771,14 @@
             });
         }
 
-        config.sunDirection = buildPmndrsSunDirection(config.sunElevationDeg, config.sunAzimuthDeg);
+        if (isPmndrsTakramLocalHorizonMode(this)) {
+            applyPmndrsTakramLocalHorizonConstraints(config);
+        }
+
+        config.localSunDirection = buildPmndrsLocalSunDirection(config.sunElevationDeg, config.sunAzimuthDeg);
+        config.sunDirection = buildPmndrsEcefSunDirection(config.localSunDirection);
         config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
+        syncPmndrsTakramHorizonState(this, config);
         return config;
     };
 
@@ -669,6 +974,7 @@
                 singleMieScatteringTexture: state.textures.singleMieScatteringTexture || null,
                 higherOrderScatteringTexture: state.textures.higherOrderScatteringTexture || null,
                 ground: config.groundEnabled,
+                groundAlbedo: new THREE.Color(config.groundAlbedo),
                 moon: config.moonEnabled
             });
             state.skyMesh = new THREE.Mesh(state.skyGeometry, state.skyMaterial);
@@ -695,6 +1001,20 @@
         }
 
         return true;
+    }
+
+    function showPmndrsAtmosphereSkyForSceneProbe(self, config) {
+        var wasVisible = isPmndrsAtmosphereSkyVisible(self);
+        if (!ensurePmndrsAtmosphereSky(self, config)) {
+            return false;
+        }
+
+        setPmndrsAtmosphereSkyVisibility(self, true);
+        return !wasVisible;
+    }
+
+    function hidePmndrsAtmosphereSky(self) {
+        setPmndrsAtmosphereSkyVisibility(self, false);
     }
 
     function getPmndrsExposureValue(self) {
@@ -911,8 +1231,72 @@
         if (oldSunHaze && oldSunHaze.parentNode) {
             oldSunHaze.parentNode.removeChild(oldSunHaze);
         }
+        var visibleTakramSun = document.getElementById('vrodos-takram-visible-sun');
+        if (visibleTakramSun && visibleTakramSun.parentNode) {
+            visibleTakramSun.parentNode.removeChild(visibleTakramSun);
+        }
         self._pmndrsSunDirection = null;
         self._pmndrsSunDistance = null;
+    }
+
+    function ensurePmndrsTakramVisibleSun(self, config, preset) {
+        if (!self || !self.el || !config || typeof document === 'undefined') {
+            return;
+        }
+
+        var sunEl = document.getElementById('vrodos-takram-visible-sun');
+        if (!sunEl) {
+            sunEl = document.createElement('a-entity');
+            sunEl.setAttribute('id', 'vrodos-takram-visible-sun');
+            self.el.appendChild(sunEl);
+        }
+
+        var texture = createPmndrsSunTexture(self);
+        if (!texture) {
+            return;
+        }
+
+        var sprite = sunEl.getObject3D('mesh');
+        if (!sprite) {
+            var material = new THREE.SpriteMaterial({
+                map: texture,
+                color: '#ffedb2',
+                transparent: true,
+                alphaTest: 0.001,
+                blending: THREE.NormalBlending,
+                depthWrite: false,
+                depthTest: true,
+                fog: false
+            });
+            material.toneMapped = false;
+            material.name = 'vrodosTakramDiscMaterial';
+            sprite = new THREE.Sprite(material);
+            sprite.frustumCulled = false;
+            sprite.renderOrder = 10;
+            sprite.name = 'vrodosTakramDiscSprite';
+            sunEl.setObject3D('mesh', sprite);
+        }
+
+        var cfg = getPmndrsHorizonSunConfig(preset, 'fallback');
+        var takramSunScale = Math.max(18, Math.min(52, 30 * (config.sunAngularRadius / TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS)));
+        sprite.scale.set(takramSunScale, takramSunScale, 1);
+        sprite.material.color.set(cfg.color).multiplyScalar(Math.max(cfg.intensity || 4.0, 4.8));
+
+        self._pmndrsSunDirection = (config.localSunDirection || config.sunDirection || new THREE.Vector3(0, 1, 0)).clone().normalize();
+        self._pmndrsSunDistance = config.sunDistance || cfg.distance || 5200;
+
+        if (!self._pmndrsSunCameraPosition) {
+            self._pmndrsSunCameraPosition = new THREE.Vector3();
+        }
+
+        var camera = self.el.camera;
+        if (!camera || typeof camera.getWorldPosition !== 'function') {
+            return;
+        }
+
+        sunEl.object3D.visible = true;
+        camera.getWorldPosition(self._pmndrsSunCameraPosition);
+        sunEl.object3D.position.copy(self._pmndrsSunCameraPosition).addScaledVector(self._pmndrsSunDirection, self._pmndrsSunDistance);
     }
 
     function ensurePmndrsHorizonSun(self, lightPosition, preset, options) {
@@ -1035,7 +1419,7 @@
         var atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
         if (atmosphereConfig && atmosphereConfig.enabled && window.VRODOS_TAKRAM_ATMOSPHERE) {
             ensurePmndrsAtmosphereSky(this, atmosphereConfig);
-            clearPmndrsHorizonSun(this);
+            ensurePmndrsTakramVisibleSun(this, atmosphereConfig, this.getHorizonSkyPreset ? this.getHorizonSkyPreset() : 'natural');
             return;
         }
 
@@ -1300,27 +1684,22 @@
         var atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
         if (usesTakramHorizon && atmosphereConfig && atmosphereConfig.enabled) {
             removeLegacySunSkyEntitiesForPmndrs(this);
+            schedulePmndrsHorizonEnvironmentCleanup(this);
             ensurePmndrsTakramHorizonLights(this, atmosphereConfig, preset);
             ensurePmndrsAtmosphereSky(this, atmosphereConfig);
-            clearPmndrsHorizonSun(this);
+            ensurePmndrsTakramVisibleSun(this, atmosphereConfig, preset);
+            logPmndrsHorizonDiagnostic(this, 'apply-horizon', atmosphereConfig);
             return;
         }
 
         this.removePhotorealHelperLights();
 
         if (atmosphereConfig && atmosphereConfig.enabled && window.VRODOS_TAKRAM_ATMOSPHERE) {
-            var self = this;
-            var hideEnvVisuals = function () {
-                hidePmndrsHorizonEnvironmentVisuals(self);
-            };
-            if (typeof requestAnimationFrame === 'function') {
-                requestAnimationFrame(hideEnvVisuals);
-            }
-            setTimeout(hideEnvVisuals, 50);
-            setTimeout(hideEnvVisuals, 200);
+            schedulePmndrsHorizonEnvironmentCleanup(this);
 
             clearPmndrsHorizonSun(this);
             if (ensurePmndrsAtmosphereSky(this, atmosphereConfig)) {
+                logPmndrsHorizonDiagnostic(this, 'apply-horizon', atmosphereConfig);
                 return;
             }
         }
@@ -1416,5 +1795,17 @@
         this.applyPostFXProfile();
         this.syncFPSMeterState();
         this.sceneCollectionsDirty = false;
+    };
+    H.hidePmndrsHorizonEnvironmentVisuals = function () {
+        hidePmndrsHorizonEnvironmentVisuals(this);
+    };
+    H.showPmndrsAtmosphereSkyForSceneProbe = function (config) {
+        return showPmndrsAtmosphereSkyForSceneProbe(this, config);
+    };
+    H.hidePmndrsAtmosphereSky = function () {
+        hidePmndrsAtmosphereSky(this);
+    };
+    H.logPmndrsHorizonDiagnostic = function (context, atmosphereConfig) {
+        logPmndrsHorizonDiagnostic(this, context, atmosphereConfig);
     };
 })();

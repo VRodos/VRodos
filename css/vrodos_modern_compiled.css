@@ -4783,6 +4783,10 @@ input.tw-tab:checked + .tw-tab-content,
   background-color: rgb(15 23 42 / 0.6);
 }
 
+.vrodos-manager-wrapper .tw-bg-slate-900\/70 {
+  background-color: rgb(15 23 42 / 0.7);
+}
+
 .vrodos-manager-wrapper .tw-bg-slate-950 {
   --tw-bg-opacity: 1;
   background-color: rgb(2 6 23 / var(--tw-bg-opacity, 1));
@@ -4827,10 +4831,6 @@ input.tw-tab:checked + .tw-tab-content,
 
 .vrodos-manager-wrapper .tw-bg-white\/95 {
   background-color: rgb(255 255 255 / 0.95);
-}
-
-.vrodos-manager-wrapper .tw-bg-slate-900\/70 {
-  background-color: rgb(15 23 42 / 0.7);
 }
 
 .vrodos-manager-wrapper .tw-bg-\[radial-gradient\(circle_at_top\,_rgba\(16\,185\,129\,0\.08\)\,_rgba\(248\,250\,252\,0\.96\)_48\%\,_rgba\(241\,245\,249\,1\)_100\%\)\] {
@@ -5473,6 +5473,11 @@ input.tw-tab:checked + .tw-tab-content,
   color: rgb(2 132 199 / var(--tw-text-opacity, 1));
 }
 
+.vrodos-manager-wrapper .tw-text-slate-100 {
+  --tw-text-opacity: 1;
+  color: rgb(241 245 249 / var(--tw-text-opacity, 1));
+}
+
 .vrodos-manager-wrapper .tw-text-slate-200 {
   --tw-text-opacity: 1;
   color: rgb(226 232 240 / var(--tw-text-opacity, 1));
@@ -5549,11 +5554,6 @@ input.tw-tab:checked + .tw-tab-content,
 
 .vrodos-manager-wrapper .tw-text-white\/90 {
   color: rgb(255 255 255 / 0.9);
-}
-
-.vrodos-manager-wrapper .tw-text-slate-100 {
-  --tw-text-opacity: 1;
-  color: rgb(241 245 249 / var(--tw-text-opacity, 1));
 }
 
 .vrodos-manager-wrapper .tw-no-underline {

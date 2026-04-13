@@ -198,9 +198,38 @@
         var renderer = this.el.renderer;
         var sceneObj = this.el.object3D;
         var anchorObject = this.getSceneProbeAnchorObject();
+        var atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
+        var showedTakramProbeSky = false;
+        var shouldSyncTakramHorizon = !!(
+            this &&
+            this.data &&
+            this.data.selChoice === "0" &&
+            this.data.postFXEngine === 'pmndrs' &&
+            atmosphereConfig &&
+            atmosphereConfig.enabled &&
+            window.VRODOS_TAKRAM_ATMOSPHERE
+        );
 
         if (!renderer || !sceneObj || !anchorObject || !this.ensureSceneProbeResources()) {
             return false;
+        }
+
+        if (shouldSyncTakramHorizon) {
+            if (typeof this.applyHorizonSkyPreset === 'function') {
+                this.applyHorizonSkyPreset();
+            }
+            if (typeof this.hidePmndrsHorizonEnvironmentVisuals === 'function') {
+                this.hidePmndrsHorizonEnvironmentVisuals();
+            }
+            if (typeof this.updatePmndrsHorizonSun === 'function') {
+                this.updatePmndrsHorizonSun();
+            }
+            if (typeof this.showPmndrsAtmosphereSkyForSceneProbe === 'function') {
+                showedTakramProbeSky = !!this.showPmndrsAtmosphereSkyForSceneProbe(atmosphereConfig);
+            }
+            if (typeof this.logPmndrsHorizonDiagnostic === 'function') {
+                this.logPmndrsHorizonDiagnostic('scene-probe-capture', atmosphereConfig);
+            }
         }
 
         anchorObject.updateMatrixWorld(true);
@@ -221,6 +250,9 @@
             console.warn('[VRodos] Scene reflection probe capture failed.', error);
             sceneObj.environment = previousEnvironment;
             this.restoreSceneProbeExcludedObjects(hiddenObjects);
+            if (showedTakramProbeSky && typeof this.hidePmndrsAtmosphereSky === 'function') {
+                this.hidePmndrsAtmosphereSky();
+            }
             this.sceneProbeCapturing = false;
             return false;
         }
@@ -228,6 +260,9 @@
         this.restoreSceneProbeExcludedObjects(hiddenObjects);
         this.sceneProbeCapturing = false;
         sceneObj.environment = previousEnvironment;
+        if (showedTakramProbeSky && typeof this.hidePmndrsAtmosphereSky === 'function') {
+            this.hidePmndrsAtmosphereSky();
+        }
 
         var probeTarget = this._sceneProbePmremGenerator.fromCubemap(this._sceneProbeCubeRenderTarget.texture);
         if (!probeTarget || !probeTarget.texture) {
@@ -246,6 +281,9 @@
         this._sceneProbeNeedsUpdate = false;
         this._currentReflectionSource = 'scene-probe';
         this.applyMaterialProfiles();
+        if (shouldSyncTakramHorizon) {
+            console.info('[VRodos] Scene reflection probe captured from synced PMNDRS Horizon Takram sky.');
+        }
         return true;
     };
     H.applyEnvMapProfile = function () {
