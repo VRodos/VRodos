@@ -18,7 +18,7 @@ This plan compares the four realistic options (A-Frame defaults, stock Three pos
 
 | Phase | Status | Notes |
 |---|---|---|
-| Foundation 0 | In progress | Repo-wide A-Frame master + Three r181 migration audit/planning has been promoted ahead of further PMNDRS/Takram feature work. |
+| Foundation 0 | In progress | The pinned A-Frame master + Three r181 foundation is now active in live runtime code. Remaining work is subsystem validation, legacy/PMNDRS re-baselining, and Takram/cloud follow-through on top of that base. |
 | Phase 0 | Complete | Compatibility smoke test completed with caveats (see §9). |
 | Phase 1 | Complete | Bundle/runtime extension completed (see §10). |
 | Phase 2 | Complete | PMNDRS runtime module implemented (`vrodos_postprocessing_pmndrs.js`). |
@@ -30,7 +30,8 @@ This plan compares the four realistic options (A-Frame defaults, stock Three pos
 **What is no longer relevant now**
 - `realism-effects` as an SSR/TRAA dependency for this migration (rejected in §10 due Three r173 incompatibility).
 - pre-Phase-0 decision questions that were already answered by implementation and subsequent results sections.
-- Treating Three r173 as the long-term base. The active foundation question is now whether VRodos should move to a pinned A-Frame master snapshot with Three r181 before continuing Horizon/Takram/cloud work.
+- Treating Three r173 as the long-term base.
+- Runtime profile / fallback switching for A-Frame and Three. The live source of truth is now `includes/class-vrodos-render-runtime-manager.php`.
 
 ---
 
@@ -47,12 +48,12 @@ This does **not** mean r181 will automatically fix every Horizon artifact. Some 
 
 ### Repo audit findings that justify the foundation phase
 
-The repo still contains a meaningful amount of r173-specific plumbing:
+The repo historically contained a meaningful amount of r173-specific plumbing:
 
-- `package.json` pins `three: 0.173.0`.
-- `scripts/build-three-r173.mjs` emits `js_libs/threejs173/vrodos-three-r173.bundle.js`.
-- `includes/class-vrodos-asset-manager.php` still pins the active vendor directory to `threejs173`, although the editor/runtime fallback consumers are now being centralized behind shared globals.
-- The bundle/build naming is still explicitly r173-based (`build-three-r173.mjs`, `threejs173`, `vrodos-three-r173.bundle.js`) and needs a controlled rename or compatibility alias during the r181 migration.
+- `package.json` was pinned to `three: 0.173.0`.
+- `scripts/build-three-r173.mjs` emitted `js_libs/threejs173/vrodos-three-r173.bundle.js`.
+- `includes/class-vrodos-asset-manager.php` and editor/runtime helpers were hard-wired to `threejs173`.
+- The bundle/build naming was explicitly r173-based and needed a controlled rename or compatibility alias during the r181 migration.
 - The legacy and PMNDRS runtime modules contain comments and workarounds explicitly framed around the r173/A-Frame-1.7.1 stack, including the load-bearing `isXRRenderTarget` tone-mapping workaround in `vrodos_postprocessing.js`.
 
 ### Leftover 147 -> 173 migration findings
@@ -74,8 +75,11 @@ The audit did **not** uncover a large pile of obviously-unmigrated pre-r173 APIs
    - Remove hardcoded `threejs173` fallback paths from editor/runtime helpers.
    - Centralize vendor bundle base paths so the version switch is not a string-search exercise.
 2. **Foundation 0B — pinned r181 spike**
-   - Move the local Three dependency and vendor build to r181 on a dedicated migration slice.
+   - This is now the active runtime foundation, not a temporary opt-in spike.
+   - Move the local Three dependency and vendor build to r181.
    - Switch compiled clients to a pinned A-Frame master commit that matches that Three version.
+   - Keep the smoke harness aligned with the same pinned destination stack so validation tracks the runtime that live code now uses.
+   - Remove version-selection sprawl and keep one live source of truth for the active runtime in `includes/class-vrodos-render-runtime-manager.php`.
 3. **Foundation 0C — subsystem validation**
    - Editor renderer
    - Asset viewer
@@ -84,7 +88,7 @@ The audit did **not** uncover a large pile of obviously-unmigrated pre-r173 APIs
    - Takram atmosphere init
    - networked-aframe / aframe-extras / environment-component compatibility
 4. **Foundation 0D — resume PMNDRS/Takram roadmap**
-   - Continue the Takram-first Horizon/light-source work only after the r181 baseline is proven.
+   - Continue the Takram-first Horizon/light-source work only after the r181 baseline is proven across editor, asset viewer, legacy post-FX, PMNDRS, and Takram init.
 
 ---
 
@@ -597,7 +601,21 @@ These phases replace the now-redundant standalone Horizon/Takram planning doc.
 
 ---
 
-## 13. Reference Links
+## 13. Runtime Source Of Truth
+
+The active runtime pair is now pinned in one place:
+
+- `includes/class-vrodos-render-runtime-manager.php`
+
+That file defines:
+
+- the A-Frame runtime URL
+- the matching Three vendor directory
+- the matching Three vendor bundle
+
+VRodos is no longer treating stable and master as interchangeable runtime profiles for this migration. The current goal is to make the latest supported A-Frame/Three pair work as the single active stack.
+
+## 14. Reference Links
 
 - pmndrs/postprocessing: <https://github.com/pmndrs/postprocessing>
 - pmndrs/postprocessing WebXR research issue #677: <https://github.com/pmndrs/postprocessing/issues/677>

@@ -1,6 +1,6 @@
 # VRodos Rendering Pipeline — Technical Reference
 
-> Canonical reference for the compiled A-Frame scene's post-processing pipeline, shader architecture, and runtime quality system. For end-user feature summaries, see `README.md`. For historical debugging notes and WebGLRenderer quirks, see `POSTFX_DEBUG_NOTES.md`.
+> Canonical reference for the compiled A-Frame scene's post-processing pipeline, shader architecture, and runtime quality system on the current pinned A-Frame master + Three r181 stack. For end-user feature summaries, see `README.md`. For historical debugging notes and WebGLRenderer quirks, see `POSTFX_DEBUG_NOTES.md`.
 
 ---
 
@@ -79,7 +79,9 @@ components/vrodos_scene_settings.component.js   (consumes all of the above)
 
 ---
 
-## 3. The `isXRRenderTarget` Color-Encoding Trick
+## 3. The `isXRRenderTarget` Color-Encoding Workaround
+
+This section starts from the original r173 investigation because that is where the workaround was discovered. The workaround is still active in VRodos' legacy post-FX path on the current pinned r181 stack, so treat it as current compatibility behavior rather than dead historical trivia.
 
 **The single most important architectural detail.** In Three.js r173, rendering to a `WebGLRenderTarget` *skips* tone mapping and output color-space encoding — both are only applied on direct-to-screen or XR-target renders. This means a naive composite pipeline reads raw linear un-tone-mapped values from its render target, producing a washed-out, low-contrast image that's hard to correct in shader space.
 
@@ -274,7 +276,7 @@ if (useTAA) {
 
 ## 11. HDR Environment Maps
 
-RGBELoader (embedded in `vrodos_master_rendering.js`) loads `.hdr` files, which are then processed through `PMREMGenerator` to produce a mip-mapped prefiltered radiance map usable as `scene.environment` and on PBR materials' `envMap`.
+HDRLoader (with a temporary `RGBELoader` compatibility alias in `vrodos_master_rendering.js`) loads `.hdr` files, which are then processed through `PMREMGenerator` to produce a mip-mapped prefiltered radiance map usable as `scene.environment` and on PBR materials' `envMap`.
 
 - 3 presets: studio (`spot1Lux.hdr`), quarry (`quarry_01_1k.hdr`), venice (`venice_sunset_1k.hdr`)
 - `envMapIntensity` widened to 0.5×–2.0× range
@@ -298,7 +300,15 @@ RGBELoader (embedded in `vrodos_master_rendering.js`) loads `.hdr` files, which 
 
 ## 13. Key Version Info
 
-- A-Frame **1.7.1** bundles **Three.js r173**
+Current runtime:
+
+- VRodos now pins an A-Frame master runtime at commit `96cc74fa7a4640f394a78985a637a788daf56186`
+- The matching live vendor bundle is **Three.js r181**
+- `physicallyCorrectLights` is always on in modern Three runtimes â€” no flag needed
+
+Historical note: the legacy compatibility bullets below were originally written against the earlier r173 baseline and are still relevant mainly as renderer-behavior context.
+
+- VRodos now pins an A-Frame master runtime at commit `96cc74fa7a4640f394a78985a637a788daf56186`
 - `physicallyCorrectLights` is always on in r173 — no flag needed
 - `outputEncoding` was removed in r152 — use `outputColorSpace`
 - `ShaderMaterial` does **not** auto-invoke `linearToOutputTexel` — the colorspace_fragment chunk must be explicitly included or the RT must carry its own encoding (which we do via the `isXRRenderTarget` trick)

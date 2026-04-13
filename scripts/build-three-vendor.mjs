@@ -2,18 +2,23 @@ import { mkdir, rm, writeFile, cp, access } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
+import {
+  THREE_VENDOR_DIR,
+  THREE_VENDOR_BUNDLE_FILE,
+  THREE_VENDOR_BUILD_ENTRY_FILE
+} from './three-vendor.config.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
-const outputDir = path.join(rootDir, 'js_libs', 'threejs173');
-const bundlePath = path.join(outputDir, 'vrodos-three-r173.bundle.js');
+const outputDir = path.join(rootDir, 'js_libs', THREE_VENDOR_DIR);
+const bundlePath = path.join(outputDir, THREE_VENDOR_BUNDLE_FILE);
 const dracoSourceDir = path.join(rootDir, 'node_modules', 'three', 'examples', 'jsm', 'libs', 'draco');
 const dracoOutputDir = path.join(outputDir, 'draco');
 const fontSourcePath = path.join(rootDir, 'node_modules', 'three', 'examples', 'fonts', 'helvetiker_bold.typeface.json');
 const fontOutputDir = path.join(outputDir, 'fonts');
 const fontOutputPath = path.join(fontOutputDir, 'helvetiker_bold.typeface.json');
-const tempEntryPath = path.join(rootDir, 'scripts', '.tmp-build-three-r173-entry.mjs');
+const tempEntryPath = path.join(rootDir, 'scripts', THREE_VENDOR_BUILD_ENTRY_FILE);
 const runtimeVendorDir = path.join(rootDir, 'runtime', 'assets', 'js', 'master', 'lib');
 const takramBundlePath = path.join(runtimeVendorDir, 'vrodos-takram-atmosphere.bundle.js');
 const takramEntryPath = path.join(rootDir, 'scripts', '.tmp-build-takram-atmosphere-entry.mjs');
@@ -28,7 +33,7 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -45,7 +50,7 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 // NOTE: realism-effects is intentionally NOT bundled. Its latest release
 // (1.1.2, last published 2022) imports the removed-in-r162 symbol
 // WebGLMultipleRenderTargets from three, which makes it hard-incompatible with
-// our pinned Three r173. pmndrs/postprocessing 6.x has also dropped SSR and
+// our current baseline. pmndrs/postprocessing 6.x has also dropped SSR and
 // TAA from its core, so the new pipeline simply does not provide SSR/TRAA;
 // scenes that need those stay on the legacy vrodos_postprocessing.js path.
 // See POSTPROCESSING_MIGRATION_PLAN.md sections 9 and 11 for details.
@@ -60,7 +65,9 @@ Object.assign(THREE, { ...THREEBase }, {
   PointerLockControls,
   GLTFLoader,
   DRACOLoader,
-  RGBELoader,
+  HDRLoader,
+  // Temporary compatibility alias during the r181 migration window.
+  RGBELoader: HDRLoader,
   CSS2DRenderer,
   CSS2DObject,
   EffectComposer,
@@ -101,7 +108,7 @@ function createAliasPlugin(aliases) {
     name: 'vrodos-alias-plugin',
     setup(buildContext) {
       Object.entries(aliases).forEach(([filterValue, replacementPath]) => {
-        buildContext.onResolve({ filter: new RegExp(`^${filterValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }, () => ({
+        buildContext.onResolve({ filter: new RegExp(`^${filterValue.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}$`) }, () => ({
           path: replacementPath
         }));
       });
@@ -137,7 +144,7 @@ async function buildBundle() {
       platform: 'browser',
       target: ['es2019'],
       outfile: bundlePath,
-      legalComments: 'none',
+      legalComments: 'none'
     });
   } finally {
     await rm(tempEntryPath, { force: true });

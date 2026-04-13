@@ -129,10 +129,10 @@ class vrodos_3d_editor_environmentals {
 
 
         // Add a background to the scene
-        let rgbeloader = new THREE.RGBELoader();
+        let hdrLoader = new THREE.HDRLoader();
         let scope = this;
 
-        rgbeloader.setPath( pluginPath + '/images/hdr/' )
+        hdrLoader.setPath( pluginPath + '/images/hdr/' )
             .load( 'Stonewall_Ref.hdr', (texture) => {
                 texture.mapping = THREE.EquirectangularReflectionMapping;
                 scope.maintexture = texture;
@@ -536,7 +536,7 @@ class vrodos_3d_editor_environmentals {
         // let pathn = window.location.pathname.replace(/[^/]*$/, '');
         // pathn = pathn.split('/').slice(0,-2).join('/');
 
-        let vendorDir = window.vrodos_three_vendor_dir || 'threejs173';
+        let vendorDir = window.vrodos_three_vendor_dir || 'threejs181';
         let vendorBase = window.vrodos_three_vendor_base || (pluginPath + '/js_libs/' + vendorDir + '/');
         let fontPath = window.vrodos_three_font_path || (vendorBase + 'fonts/helvetiker_bold.typeface.json');
         loader.load(fontPath, this.loadtexts);

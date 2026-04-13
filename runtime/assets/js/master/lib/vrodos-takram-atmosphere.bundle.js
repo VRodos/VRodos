@@ -302,6 +302,7 @@
   var EquirectangularRefractionMapping = moduleValue2["EquirectangularRefractionMapping"];
   var Euler = moduleValue2["Euler"];
   var EventDispatcher = moduleValue2["EventDispatcher"];
+  var ExternalTexture = moduleValue2["ExternalTexture"];
   var ExtrudeGeometry = moduleValue2["ExtrudeGeometry"];
   var FileLoader = moduleValue2["FileLoader"];
   var Float16BufferAttribute = moduleValue2["Float16BufferAttribute"];
@@ -312,6 +313,7 @@
   var FramebufferTexture = moduleValue2["FramebufferTexture"];
   var FrontSide = moduleValue2["FrontSide"];
   var Frustum = moduleValue2["Frustum"];
+  var FrustumArray = moduleValue2["FrustumArray"];
   var GLBufferAttribute = moduleValue2["GLBufferAttribute"];
   var GLSL1 = moduleValue2["GLSL1"];
   var GLSL3 = moduleValue2["GLSL3"];
@@ -346,6 +348,8 @@
   var InterpolateDiscrete = moduleValue2["InterpolateDiscrete"];
   var InterpolateLinear = moduleValue2["InterpolateLinear"];
   var InterpolateSmooth = moduleValue2["InterpolateSmooth"];
+  var InterpolationSamplingMode = moduleValue2["InterpolationSamplingMode"];
+  var InterpolationSamplingType = moduleValue2["InterpolationSamplingType"];
   var InvertStencilOp = moduleValue2["InvertStencilOp"];
   var KeepStencilOp = moduleValue2["KeepStencilOp"];
   var KeyframeTrack = moduleValue2["KeyframeTrack"];
@@ -383,8 +387,6 @@
   var LoopOnce = moduleValue2["LoopOnce"];
   var LoopPingPong = moduleValue2["LoopPingPong"];
   var LoopRepeat = moduleValue2["LoopRepeat"];
-  var LuminanceAlphaFormat = moduleValue2["LuminanceAlphaFormat"];
-  var LuminanceFormat = moduleValue2["LuminanceFormat"];
   var MOUSE = moduleValue2["MOUSE"];
   var Material = moduleValue2["Material"];
   var MaterialLoader = moduleValue2["MaterialLoader"];
@@ -510,7 +512,6 @@
   var ReinhardToneMapping = moduleValue2["ReinhardToneMapping"];
   var RenderTarget = moduleValue2["RenderTarget"];
   var RenderTarget3D = moduleValue2["RenderTarget3D"];
-  var RenderTargetArray = moduleValue2["RenderTargetArray"];
   var RepeatWrapping = moduleValue2["RepeatWrapping"];
   var ReplaceStencilOp = moduleValue2["ReplaceStencilOp"];
   var ReverseSubtractEquation = moduleValue2["ReverseSubtractEquation"];
@@ -561,6 +562,7 @@
   var Texture = moduleValue2["Texture"];
   var TextureLoader = moduleValue2["TextureLoader"];
   var TextureUtils = moduleValue2["TextureUtils"];
+  var Timer2 = moduleValue2["Timer"];
   var TimestampQuery = moduleValue2["TimestampQuery"];
   var TorusGeometry = moduleValue2["TorusGeometry"];
   var TorusKnotGeometry = moduleValue2["TorusKnotGeometry"];
@@ -579,6 +581,7 @@
   var UniformsLib = moduleValue2["UniformsLib"];
   var UniformsUtils = moduleValue2["UniformsUtils"];
   var UnsignedByteType = moduleValue2["UnsignedByteType"];
+  var UnsignedInt101111Type = moduleValue2["UnsignedInt101111Type"];
   var UnsignedInt248Type = moduleValue2["UnsignedInt248Type"];
   var UnsignedInt5999Type = moduleValue2["UnsignedInt5999Type"];
   var UnsignedIntType = moduleValue2["UnsignedIntType"];
@@ -608,6 +611,12 @@
   var ZeroSlopeEnding = moduleValue2["ZeroSlopeEnding"];
   var ZeroStencilOp = moduleValue2["ZeroStencilOp"];
   var createCanvasElement = moduleValue2["createCanvasElement"];
+  var error = moduleValue2["error"];
+  var getConsoleFunction = moduleValue2["getConsoleFunction"];
+  var log = moduleValue2["log"];
+  var setConsoleFunction = moduleValue2["setConsoleFunction"];
+  var warn = moduleValue2["warn"];
+  var warnOnce = moduleValue2["warnOnce"];
 
   // node_modules/@takram/three-geospatial/build/shared.js
   var a = true;
@@ -1186,10 +1195,22 @@
 
   // node_modules/three/examples/jsm/loaders/EXRLoader.js
   var EXRLoader = class extends DataTextureLoader {
+    /**
+     * Constructs a new EXR loader.
+     *
+     * @param {LoadingManager} [manager] - The loading manager.
+     */
     constructor(manager) {
       super(manager);
       this.type = HalfFloatType;
+      this.outputFormat = RGBAFormat;
     }
+    /**
+     * Parses the given EXR texture data.
+     *
+     * @param {ArrayBuffer} buffer - The raw texture data.
+     * @return {DataTextureLoader~TexData} An object representing the parsed texture data.
+     */
     parse(buffer) {
       const USHORT_RANGE = 1 << 16;
       const BITMAP_SIZE = USHORT_RANGE >> 3;
@@ -1702,6 +1723,51 @@
           }
         }
       }
+      function lossyDctChannelDecode(channelIndex, rowPtrs, channelData, acBuffer, dcBuffer, outBuffer) {
+        const dataView = new DataView(outBuffer.buffer);
+        const cd = channelData[channelIndex];
+        const width = cd.width;
+        const height = cd.height;
+        const numBlocksX = Math.ceil(width / 8);
+        const numBlocksY = Math.ceil(height / 8);
+        const numFullBlocksX = Math.floor(width / 8);
+        const leftoverX = width - (numBlocksX - 1) * 8;
+        const leftoverY = height - (numBlocksY - 1) * 8;
+        const currAcComp = { value: 0 };
+        let currDcComp = 0;
+        const dctData = new Float32Array(64);
+        const halfZigBlock = new Uint16Array(64);
+        const rowBlock = new Uint16Array(numBlocksX * 64);
+        for (let blocky = 0; blocky < numBlocksY; ++blocky) {
+          let maxY = 8;
+          if (blocky == numBlocksY - 1) maxY = leftoverY;
+          for (let blockx = 0; blockx < numBlocksX; ++blockx) {
+            halfZigBlock.fill(0);
+            halfZigBlock[0] = dcBuffer[currDcComp++];
+            unRleAC(currAcComp, acBuffer, halfZigBlock);
+            unZigZag(halfZigBlock, dctData);
+            dctInverse(dctData);
+            convertToHalf(dctData, rowBlock, blockx * 64);
+          }
+          for (let y2 = 8 * blocky; y2 < 8 * blocky + maxY; ++y2) {
+            let offset2 = rowPtrs[channelIndex][y2];
+            for (let blockx = 0; blockx < numFullBlocksX; ++blockx) {
+              const src = blockx * 64 + (y2 & 7) * 8;
+              for (let x3 = 0; x3 < 8; ++x3) {
+                dataView.setUint16(offset2 + x3 * INT16_SIZE * cd.type, rowBlock[src + x3], true);
+              }
+              offset2 += 8 * INT16_SIZE * cd.type;
+            }
+            if (numBlocksX != numFullBlocksX) {
+              const src = numFullBlocksX * 64 + (y2 & 7) * 8;
+              for (let x3 = 0; x3 < leftoverX; ++x3) {
+                dataView.setUint16(offset2 + x3 * INT16_SIZE * cd.type, rowBlock[src + x3], true);
+              }
+            }
+          }
+        }
+        cd.decoded = true;
+      }
       function unRleAC(currAcComp, acBuffer, halfZigBlock) {
         let acValue;
         let dctComp = 1;
@@ -2098,7 +2164,9 @@
             outBufferEnd += channelData[chan].width * info.type * INT16_SIZE;
           }
         }
-        lossyDctDecode(cscSet, rowOffsets, channelData, acBuffer, dcBuffer, outBuffer);
+        if (cscSet.idx[0] !== void 0 && channelData[cscSet.idx[0]]) {
+          lossyDctDecode(cscSet, rowOffsets, channelData, acBuffer, dcBuffer, outBuffer);
+        }
         for (let i3 = 0; i3 < channelData.length; ++i3) {
           const cd = channelData[i3];
           if (cd.decoded) continue;
@@ -2118,7 +2186,8 @@
               }
               break;
             case LOSSY_DCT:
-            // skip
+              lossyDctChannelDecode(i3, rowOffsets, channelData, acBuffer, dcBuffer, outBuffer);
+              break;
             default:
               throw new Error("EXRLoader.parse: unsupported channel compression");
           }
@@ -2456,7 +2525,7 @@
         let keepReading = true;
         while (keepReading) {
           const attributeName = parseNullTerminatedString(buffer2, offset2);
-          if (attributeName == 0) {
+          if (attributeName === "") {
             keepReading = false;
           } else {
             const attributeType = parseNullTerminatedString(buffer2, offset2);
@@ -2475,7 +2544,7 @@
         }
         return EXRHeader2;
       }
-      function setupDecoder(EXRHeader2, dataView, uInt8Array2, offset2, outputType) {
+      function setupDecoder(EXRHeader2, dataView, uInt8Array2, offset2, outputType, outputFormat) {
         const EXRDecoder2 = {
           size: 0,
           viewer: dataView,
@@ -2485,6 +2554,7 @@
           height: EXRHeader2.dataWindow.yMax - EXRHeader2.dataWindow.yMin + 1,
           inputChannels: EXRHeader2.channels,
           channelByteOffsets: {},
+          shouldExpand: false,
           scanOrder: null,
           totalBytes: null,
           columns: null,
@@ -2544,16 +2614,63 @@
           }
         }
         let fillAlpha = false;
+        let invalidOutput = false;
         if (channels.R && channels.G && channels.B) {
-          fillAlpha = !channels.A;
           EXRDecoder2.outputChannels = 4;
-          EXRDecoder2.decodeChannels = { R: 0, G: 1, B: 2, A: 3 };
         } else if (channels.Y) {
           EXRDecoder2.outputChannels = 1;
-          EXRDecoder2.decodeChannels = { Y: 0 };
         } else {
           throw new Error("EXRLoader.parse: file contains unsupported data channels.");
         }
+        switch (EXRDecoder2.outputChannels) {
+          case 4:
+            if (outputFormat == RGBAFormat) {
+              fillAlpha = !channels.A;
+              EXRDecoder2.format = RGBAFormat;
+              EXRDecoder2.colorSpace = LinearSRGBColorSpace;
+              EXRDecoder2.outputChannels = 4;
+              EXRDecoder2.decodeChannels = { R: 0, G: 1, B: 2, A: 3 };
+            } else if (outputFormat == RGFormat) {
+              EXRDecoder2.format = RGFormat;
+              EXRDecoder2.colorSpace = LinearSRGBColorSpace;
+              EXRDecoder2.outputChannels = 2;
+              EXRDecoder2.decodeChannels = { R: 0, G: 1 };
+            } else if (outputFormat == RedFormat) {
+              EXRDecoder2.format = RedFormat;
+              EXRDecoder2.colorSpace = LinearSRGBColorSpace;
+              EXRDecoder2.outputChannels = 1;
+              EXRDecoder2.decodeChannels = { R: 0 };
+            } else {
+              invalidOutput = true;
+            }
+            break;
+          case 1:
+            if (outputFormat == RGBAFormat) {
+              fillAlpha = true;
+              EXRDecoder2.format = RGBAFormat;
+              EXRDecoder2.colorSpace = LinearSRGBColorSpace;
+              EXRDecoder2.outputChannels = 4;
+              EXRDecoder2.shouldExpand = true;
+              EXRDecoder2.decodeChannels = { Y: 0 };
+            } else if (outputFormat == RGFormat) {
+              EXRDecoder2.format = RGFormat;
+              EXRDecoder2.colorSpace = LinearSRGBColorSpace;
+              EXRDecoder2.outputChannels = 2;
+              EXRDecoder2.shouldExpand = true;
+              EXRDecoder2.decodeChannels = { Y: 0 };
+            } else if (outputFormat == RedFormat) {
+              EXRDecoder2.format = RedFormat;
+              EXRDecoder2.colorSpace = LinearSRGBColorSpace;
+              EXRDecoder2.outputChannels = 1;
+              EXRDecoder2.decodeChannels = { Y: 0 };
+            } else {
+              invalidOutput = true;
+            }
+            break;
+          default:
+            invalidOutput = true;
+        }
+        if (invalidOutput) throw new Error("EXRLoader.parse: invalid output format for specified file.");
         if (EXRDecoder2.type == 1) {
           switch (outputType) {
             case FloatType:
@@ -2605,13 +2722,6 @@
         } else {
           EXRDecoder2.scanOrder = (y2) => EXRDecoder2.height - 1 - y2;
         }
-        if (EXRDecoder2.outputChannels == 4) {
-          EXRDecoder2.format = RGBAFormat;
-          EXRDecoder2.colorSpace = LinearSRGBColorSpace;
-        } else {
-          EXRDecoder2.format = RedFormat;
-          EXRDecoder2.colorSpace = NoColorSpace;
-        }
         if (EXRHeader2.spec.singleTile) {
           EXRDecoder2.blockHeight = EXRHeader2.tiles.ySize;
           EXRDecoder2.blockWidth = EXRHeader2.tiles.xSize;
@@ -2637,8 +2747,18 @@
       const bufferDataView = new DataView(buffer);
       const uInt8Array = new Uint8Array(buffer);
       const EXRHeader = parseHeader(bufferDataView, buffer, offset);
-      const EXRDecoder = setupDecoder(EXRHeader, bufferDataView, uInt8Array, offset, this.type);
+      const EXRDecoder = setupDecoder(EXRHeader, bufferDataView, uInt8Array, offset, this.type, this.outputFormat);
       EXRDecoder.decode();
+      if (EXRDecoder.shouldExpand) {
+        const byteArray = EXRDecoder.byteArray;
+        if (this.outputFormat == RGBAFormat) {
+          for (let i3 = 0; i3 < byteArray.length; i3 += 4)
+            byteArray[i3 + 2] = byteArray[i3 + 1] = byteArray[i3];
+        } else if (this.outputFormat == RGFormat) {
+          for (let i3 = 0; i3 < byteArray.length; i3 += 2)
+            byteArray[i3 + 1] = byteArray[i3];
+        }
+      }
       return {
         header: EXRHeader,
         width: EXRDecoder.width,
@@ -2649,8 +2769,24 @@
         type: this.type
       };
     }
+    /**
+     * Sets the texture type.
+     *
+     * @param {(HalfFloatType|FloatType)} value - The texture type to set.
+     * @return {EXRLoader} A reference to this loader.
+     */
     setDataType(value) {
       this.type = value;
+      return this;
+    }
+    /**
+     * Sets texture output format. Defaults to `RGBAFormat`.
+     *
+     * @param {(RGBAFormat|RGFormat|RedFormat)} value - Texture output format.
+     * @return {EXRLoader} A reference to this loader.
+     */
+    setOutputFormat(value) {
+      this.outputFormat = value;
       return this;
     }
     load(url, onLoad, onProgress, onError) {
@@ -6037,7 +6173,6 @@ IrradianceSpectrum ComputeIndirectIrradianceTexture(
   ie2.DEFAULT = /* @__PURE__ */ new ie2();
   var n0 = ie2;
   var Vn2 = `precision highp sampler2DArray;
-#define PERSPECTIVE_CAMERA 1
 
 #include "core/depth"
 #include "core/math"
@@ -6327,7 +6462,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
   #endif // HAS_OVERLAY
 
   float depth = readDepthValue(depthBuffer, uv);
-  if (depth >= 0.9999) {
+  if (depth >= 1.0 - 1e-8) {
     #ifdef SKY
     vec3 rayDirection = normalize(vRayDirection);
     outputColor.rgb = getSkyRadiance(

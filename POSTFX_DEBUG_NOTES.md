@@ -2,6 +2,11 @@
 
 ## Context
 
+Historical note:
+- This document records the investigation that originally happened on the older r173-based runtime.
+- The current live stack is pinned to A-Frame master + Three r181.
+- The notes remain useful because the legacy post-FX path still carries the same `isXRRenderTarget` workaround, but they should be treated as debugging history until fully re-validated on r181.
+
 - Runtime page tested: `http://wp.local:5832/Master_Client_766.html`
 - Main runtime files: `runtime/assets/js/master/vrodos_master_rendering.js` (shaders) + `runtime/assets/js/master/components/vrodos_scene_settings.component.js` (render loop)
 - Scene confirmed by user:
@@ -18,7 +23,7 @@
 
 ## Root Cause (Confirmed 2026-04-05)
 
-**Three.js r173 skips tone mapping AND output encoding when rendering to a `WebGLRenderTarget`.**
+**Observed on Three.js r173: rendering to a `WebGLRenderTarget` skipped tone mapping and output encoding.**
 
 Source: `node_modules/three/src/renderers/webgl/WebGLPrograms.js` line 202:
 ```javascript

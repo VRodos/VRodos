@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>VRodos — Phase 0: pmndrs/postprocessing × Three r173 smoke test</title>
+<title>VRodos — Phase 0: pmndrs/postprocessing × Three r181 smoke test</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   html, body { margin: 0; padding: 0; background: #0f172a; color: #e2e8f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -22,14 +22,14 @@
 <body>
 
 <div id="report">
-  <h1>VRodos — Phase 0 smoke test · pmndrs/postprocessing 6.x × Three r173</h1>
+  <h1>VRodos — Phase 0 smoke test · pmndrs/postprocessing 6.x × Three r181</h1>
   <div id="rows"></div>
 </div>
 
-<!-- 1) A-Frame 1.7.1 (same version VRodos compiled scenes use) -->
-<script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
-<!-- 2) Phase 0 bundle: window.THREE (r173 subset) + window.POSTPROCESSING + window.N8AOPostPass -->
-<script src="js_libs/threejs173/vrodos-phase0-smoke.bundle.js"></script>
+<!-- 1) Active pinned A-Frame runtime used by VRodos compiled scenes -->
+<script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@96cc74fa7a4640f394a78985a637a788daf56186/dist/aframe-master.min.js"></script>
+<!-- 2) Phase 0 bundle: window.THREE (active subset) + window.POSTPROCESSING + window.N8AOPostPass -->
+<script src="js_libs/threejs181/vrodos-phase0-smoke.bundle.js"></script>
 
 <a-scene embedded background="color: #111827" vr-mode-ui="enabled: false">
   <a-entity position="0 1.6 3"
@@ -54,7 +54,7 @@
  * -------------------------------------------------------------------------
  * For each verification below, we try to construct and (where applicable)
  * render the relevant pmndrs/postprocessing primitive against the actual
- * A-Frame WebGLRenderer and Three.js r173 build exposed by
+ * A-Frame WebGLRenderer and Three.js r181 build exposed by
  * vrodos-phase0-smoke.bundle.js. Every step is reported to the on-screen
  * panel AND console. Any exception → FAIL and we continue with the next
  * step so the full picture is visible in one run.
@@ -117,9 +117,9 @@
     info('postprocessing version', (POSTPROCESSING && POSTPROCESSING.REVISION) ? POSTPROCESSING.REVISION : 'exported names: ' + Object.keys(POSTPROCESSING || {}).slice(0, 8).join(', ') + '…');
     info('Renderer', 'isWebGL2: ' + (renderer.capabilities && renderer.capabilities.isWebGL2) + ', maxSamples: ' + (renderer.capabilities && renderer.capabilities.maxSamples));
 
-    // --- 1. EffectComposer construction against r173 renderer ---
+    // --- 1. EffectComposer construction against the active renderer ---
     var composer;
-    report('EffectComposer(renderer) constructs on Three r173', function () {
+    report('EffectComposer(renderer) constructs on Three r181', function () {
       if (!window.POSTPROCESSING || !POSTPROCESSING.EffectComposer) throw new Error('POSTPROCESSING.EffectComposer missing');
       composer = new POSTPROCESSING.EffectComposer(renderer);
       return 'constructed';

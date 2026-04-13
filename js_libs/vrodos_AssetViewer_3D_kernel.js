@@ -323,7 +323,7 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     getDracoDecoderPath() {
-        const vendorDir = window.vrodos_three_vendor_dir || 'threejs173';
+        const vendorDir = window.vrodos_three_vendor_dir || 'threejs181';
 
         if (window.vrodos_three_decoder_path) {
             return window.vrodos_three_decoder_path;

@@ -5,7 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class VRodos_Compiler_Manager {
-
 	private string $server_protocol;
 	private string $portNodeJs;
 	private string $plugin_path_url;
@@ -464,6 +463,7 @@ class VRodos_Compiler_Manager {
 
 		// Modify strings
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
+		$content = str_replace( 'AFRAME_RUNTIME_URL_PLACEHOLDER', esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ), $content );
 		$content = str_replace(
 			'js/components/immerse-assessment_component.js',
 			$this->normalize_url( $this->plugin_path_url . 'js_libs/aframe_libs/js/components/immerse-assessment_component.js' ),
@@ -1479,6 +1479,7 @@ class VRodos_Compiler_Manager {
 
 		$content = str_replace( 'appname', $app_name, $content );
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
+		$content = str_replace( 'AFRAME_RUNTIME_URL_PLACEHOLDER', esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ), $content );
 		$content = str_replace(
 			'VRODOS_PLUGIN_URL_PLACEHOLDER',
 			esc_url( $this->plugin_path_url ),

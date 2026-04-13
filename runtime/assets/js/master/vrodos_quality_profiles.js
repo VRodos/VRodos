@@ -1466,7 +1466,7 @@
                 : (isHighQuality ? 1.06 : 1.0);
         }
 
-        // physicallyCorrectLights was removed in Three.js r150-r165 and is always on in r173 (A-Frame 1.7.1).
+        // physicallyCorrectLights was removed in Three.js r150-r165 and is always on in modern A-Frame/Three runtimes.
         // outputColorSpace & toneMapping are already set by A-Frame's renderer system.
         // (colorManagement: true -> SRGBColorSpace; renderer="toneMapping: ACESFilmic" in HTML)
         // These defensive guards ensure correctness if A-Frame defaults ever change.

@@ -228,6 +228,8 @@ class VRodos_Asset_Manager {
 
 	public function register_scripts() {
 		$plugin_url_js = plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'js_libs/';
+		$three_vendor_dir = VRodos_Render_Runtime_Manager::get_three_vendor_dir();
+		$three_vendor_bundle = VRodos_Render_Runtime_Manager::get_three_vendor_bundle();
 
 		$scripts = [
       // General Scripts
@@ -264,8 +266,8 @@ class VRodos_Asset_Manager {
       ['vrodos_HierarchyViewer', $plugin_url_js . 'vrodos_HierarchyViewer.js'],
       ['vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js'],
       ['vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js', ['ajax-script_create_game']],
-      // Three.js r173 bundle
-      ['vrodos_three_r173_bundle', $plugin_url_js . 'threejs173/vrodos-three-r173.bundle.js'],
+      // Active Three vendor bundle paired with the pinned A-Frame runtime.
+      ['vrodos_three_vendor_bundle', $plugin_url_js . $three_vendor_dir . '/' . $three_vendor_bundle],
       // Other Libraries
       ['vrodos_load_lilgui', 'https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.umd.js'],
       ['lucide-icons', 'https://unpkg.com/lucide@0.469.0'],
@@ -292,15 +294,17 @@ class VRodos_Asset_Manager {
 	}
 
 	private function enqueue_three_vendor_bundle(): void {
-		wp_enqueue_script( 'vrodos_three_r173_bundle' );
+		wp_enqueue_script( 'vrodos_three_vendor_bundle' );
 
 		$plugin_url = plugin_dir_url( VRODOS_PLUGIN_FILE );
-		$three_vendor_dir = 'threejs173';
+		$runtime_config = VRodos_Render_Runtime_Manager::get_config();
+		$three_vendor_dir = (string) ( $runtime_config['three_vendor_dir'] ?? VRodos_Render_Runtime_Manager::get_three_vendor_dir() );
 		$three_vendor_base = $plugin_url . 'js_libs/' . $three_vendor_dir . '/';
 		$inline_script = 'window.vrodos_three_vendor_dir = ' . wp_json_encode( $three_vendor_dir ) . ';'
 			. 'window.vrodos_three_vendor_base = ' . wp_json_encode( $three_vendor_base ) . ';'
 			. 'window.vrodos_three_decoder_path = ' . wp_json_encode( $three_vendor_base . 'draco/' ) . ';'
-			. 'window.vrodos_three_font_path = ' . wp_json_encode( $three_vendor_base . 'fonts/helvetiker_bold.typeface.json' ) . ';';
-		wp_add_inline_script( 'vrodos_three_r173_bundle', $inline_script, 'before' );
+			. 'window.vrodos_three_font_path = ' . wp_json_encode( $three_vendor_base . 'fonts/helvetiker_bold.typeface.json' ) . ';'
+			. 'window.vrodos_render_runtime = ' . wp_json_encode( $runtime_config ) . ';';
+		wp_add_inline_script( 'vrodos_three_vendor_bundle', $inline_script, 'before' );
 	}
 }

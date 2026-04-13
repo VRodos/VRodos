@@ -2,7 +2,7 @@
  * VRodos pmndrs Post-Processing Pipeline (clean-room sibling to vrodos_postprocessing.js)
  *
  * Uses pmndrs/postprocessing 6.39 (window.POSTPROCESSING, bundled by
- * scripts/build-three-r173.mjs) to drive an EffectComposer that fuses every
+ * scripts/build-three-vendor.mjs) to drive an EffectComposer that fuses every
  * supported effect into a single EffectPass for the lowest possible per-frame
  * cost. This module is selected per-scene via the postFXEngine scene-settings
  * field. See POSTPROCESSING_MIGRATION_PLAN.md §11 for the architectural decision.
@@ -17,7 +17,7 @@
  *   - FXAAEffect           (postFXEdgeAAEnabled)
  *
  * NOT supported in this engine — scenes that need these stay on postFXEngine='legacy':
- *   - SSR  (no actively-maintained pmndrs-compatible SSR effect on Three r173)
+ *   - SSR  (no actively-maintained pmndrs-compatible SSR effect in this VRodos pipeline)
  *   - TRAA (pmndrs/postprocessing 6.x removed TAA from core)
  *
  * Hard rule: this file must never import, call, or share render targets with
@@ -219,7 +219,7 @@
         } else if (atmosphereConfig && atmosphereConfig.enabled && isHorizonBackground(this)) {
             // Horizon keeps using Takram SkyMaterial directly. The post-process
             // AerialPerspectiveEffect triggers repeated depth blit errors on the
-            // current A-Frame r173 runtime, which also manifests visually as an
+            // current pinned A-Frame runtime, which also manifests visually as an
             // opaque white ground cap over the horizon.
             this.pmndrsAerialPerspectiveEffect = null;
         }
@@ -303,7 +303,7 @@
             }
         }
 
-        // FXAA — only AA path supported by this engine. SMAA is broken inside EffectPass on r173.
+        // FXAA — only AA path supported by this engine while the SMAA path remains disabled.
         if (this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXEdgeAAEnabled')) {
             try {
                 effects.push(new PP.FXAAEffect());

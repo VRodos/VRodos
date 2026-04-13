@@ -327,9 +327,9 @@
 
         this.clearHdrEnvironmentMap(false);
 
-        // Guard: RGBELoader must be available
-        if (typeof THREE.RGBELoader === 'undefined') {
-            console.warn('[VRodos] RGBELoader not available; HDR env map skipped.');
+        var HDRLoaderClass = THREE.HDRLoader || THREE.RGBELoader;
+        if (typeof HDRLoaderClass === 'undefined') {
+            console.warn('[VRodos] HDRLoader not available; HDR env map skipped.');
             return;
         }
 
@@ -341,7 +341,7 @@
         var renderer = this.el.renderer;
         var self = this;
 
-        var loader = new THREE.RGBELoader();
+        var loader = new HDRLoaderClass();
         loader.load(hdrUrl, function (texture) {
             texture.mapping = THREE.EquirectangularReflectionMapping;
 

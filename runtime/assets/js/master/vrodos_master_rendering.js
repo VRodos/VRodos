@@ -453,6 +453,7 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 
 	}
 
+	THREE.HDRLoader = RGBELoader;
 	THREE.RGBELoader = RGBELoader;
 
 } )();

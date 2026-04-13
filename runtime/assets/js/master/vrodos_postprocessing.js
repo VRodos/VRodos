@@ -101,8 +101,8 @@
             targetOptions.depthTexture = depthTexture;
         }
         this.postProcessingTarget = new THREE.WebGLRenderTarget(width, height, targetOptions);
-        // Force Three.js r173 to apply ACESFilmic tone mapping + sRGB encoding when rendering
-        // to this target. Normally Three.js skips both for WebGLRenderTarget (only does them
+        // Force the current Three runtime to apply ACESFilmic tone mapping + sRGB encoding when
+        // rendering to this target. Normally Three skips both for WebGLRenderTarget (only does
         // for null/screen target). Setting isXRRenderTarget=true + colorSpace=SRGBColorSpace
         // makes it follow the XR path which applies both — matching the direct-to-screen output.
         // The composite shader then needs NO linearToSRGB since the RT is already fully encoded.

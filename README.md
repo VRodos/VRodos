@@ -53,10 +53,10 @@ It combines a Three.js scene editor, custom WordPress content types, asset manag
 
 ### Runtime quality and visual features
 
-- A-Frame 1.7.1 + Three.js r173 runtime with full PBR material support
+- Pinned A-Frame master runtime + Three.js r181 with full PBR material support
 - Desktop-oriented `High` quality rendering path with quality-aware renderer tuning
 - Shadow quality presets (off / medium PCFShadowMap / high PCFSoftShadowMap)
-- HDR environment maps (RGBELoader + PMREMGenerator) with 3 presets for realistic PBR reflections
+- HDR environment maps (HDRLoader + PMREMGenerator) with 3 presets for realistic PBR reflections
 - PBR material enhancement: envMapIntensity range (0.5x–2.0x), physically correct lights
 
 #### Post-processing pipeline
@@ -98,8 +98,8 @@ All effects are individually toggleable from the compile dialog. For the full te
 - WordPress 6.x
 - PHP 8.3+
 - Vanilla JavaScript
-- Three.js r173 in the editor stack (migrated from r147)
-- A-Frame 1.7.1 (bundles Three.js r173) in the compiled runtime
+- Three.js r181 in the editor/runtime vendor stack
+- Pinned A-Frame master runtime (commit `96cc74fa7a4640f394a78985a637a788daf56186`) in the compiled runtime
 - Node.js server for networked/collaborative features
 
 ## Core WordPress Model
