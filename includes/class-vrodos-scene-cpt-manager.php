@@ -279,6 +279,10 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframeHorizonSkyPreset'] = $json_metadata->aframeHorizonSkyPreset ?? 'natural';
 		$scene_data['aframeEnvMapPreset'] = $json_metadata->aframeEnvMapPreset ?? 'none';
 		$scene_data['aframePostFXEngine'] = ( $json_metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ? 'pmndrs' : 'legacy';
+		$pmndrs_aa_mode_raw = $json_metadata->aframePmndrsAAMode ?? 'inherit';
+		$scene_data['aframePmndrsAAMode'] = in_array( $pmndrs_aa_mode_raw, [ 'none', 'smaa', 'msaa' ], true ) ? $pmndrs_aa_mode_raw : 'inherit';
+		$pmndrs_aa_preset_raw = $json_metadata->aframePmndrsAAPreset ?? 'inherit';
+		$scene_data['aframePmndrsAAPreset'] = in_array( $pmndrs_aa_preset_raw, [ 'low', 'medium', 'high', 'ultra' ], true ) ? $pmndrs_aa_preset_raw : 'inherit';
 		$scene_data['aframePmndrsBloomIntensity'] = isset( $json_metadata->aframePmndrsBloomIntensity ) ? (float) $json_metadata->aframePmndrsBloomIntensity : 1.0;
 		$scene_data['aframePmndrsBloomThreshold'] = isset( $json_metadata->aframePmndrsBloomThreshold ) ? (float) $json_metadata->aframePmndrsBloomThreshold : 0.62;
 		$scene_data['aframePmndrsVignetteEnabled'] = $json_metadata->aframePmndrsVignetteEnabled ?? false;

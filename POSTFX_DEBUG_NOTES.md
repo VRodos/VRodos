@@ -211,3 +211,84 @@ This exploits Three.js r173 source behavior:
 - Deleted `runtime/assets/js/vrodos_master_components.js` — legacy monolith, not loaded by any compiled scene
 - Deleted `runtime/assets/js/vrodos_master_logic.js` — unreferenced, superseded by master/ structure
 - Updated all file references in MD docs to point to correct master/ files
+
+---
+
+## Horizon PMNDRS Aerial Foliage Regression (2026-04-13)
+
+While re-validating the experimental Horizon PMNDRS Takram aerial path on the newer runtime stack, the sun and general sky composition were restored successfully, but billboard-style foliage remained visibly semi-transparent against the sky.
+
+### Scope / Trigger
+
+- Experimental path only: `?vrodos_debug_enable_pmndrs_horizon_aerial=1`
+- Stable/base Horizon path still looks better for production scenes right now
+- Main files involved:
+  - `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
+  - `runtime/assets/js/master/vrodos_quality_profiles.js`
+  - `runtime/assets/js/master/lib/vrodos-takram-atmosphere.bundle.js`
+
+### What Works
+
+- `AerialPerspectiveEffect` can now be enabled again for Horizon without the earlier composer crash
+- Visible sun helper was restored for the experimental Horizon aerial path
+- The temporary Horizon aerial-strength brightness test/clamp was reverted
+- Foliage mesh discovery is finding the intended scene objects instead of returning zero matches
+
+### Persistent Symptom
+
+- Palm fronds / foliage still appear ghosted or semi-transparent against the bright sky
+- This remains true even after overlay bypass, Takram-side threshold changes, and runtime material normalization attempts
+- The base Horizon path still looks better because it avoids this regression
+
+### Diagnostic Evidence
+
+The foliage overlay selection refresh reached 6 meshes, and the material dump showed billboard-style `MeshBasicMaterial` foliage, including explicitly blended materials:
+
+```text
+MeshBasicMaterial,transparent=1,opacity=1.00,alphaTest=0.000,map=1,alphaMap=0
+MeshBasicMaterial,transparent=1,opacity=1.00,alphaTest=0.000,map=1,alphaMap=0
+MeshBasicMaterial,transparent=0,opacity=1.00,alphaTest=0.010,map=1,alphaMap=0
+MeshBasicMaterial,transparent=0,opacity=1.00,alphaTest=0.010,map=1,alphaMap=0
+MeshBasicMaterial,transparent=1,opacity=0.50,alphaTest=0.000,map=1,alphaMap=0
+MeshBasicMaterial,transparent=1,opacity=0.50,alphaTest=0.000,map=1,alphaMap=0
+```
+
+Important takeaway: at least part of the visible foliage is authored as alpha-blended textured planes, and two of the selected materials are literally `opacity=0.50`.
+
+### Experiments Already Tried
+
+1. Re-enabled the experimental Horizon aerial path behind `?vrodos_debug_enable_pmndrs_horizon_aerial=1`
+2. Restored visible sun handling while Takram aerial owns the sky
+3. Added a Horizon foliage overlay selection pass and wired it into Takram overlay compositing
+4. Expanded foliage matching so palms/leaves/fronds/bushes/foliage materials are actually found
+5. Added expected depth-texture plumbing for the custom pass so the composer could build again
+6. Forced overlay output toward opaque cutout behavior
+7. Changed the overlay RT sampling to nearest filtering
+8. Relaxed Takram overlay early-return from exact `overlay.a == 1.0` to thresholded bypass and forced opaque output on that branch
+9. Tried runtime foliage material normalization:
+   - `transparent = false`
+   - `opacity = 1`
+   - raised `alphaTest`
+   - enabled `depthWrite`
+   - disabled alpha-hash / alpha-to-coverage / premultiplied alpha
+10. Replaced selected foliage materials with dedicated cutout clones for the main scene render instead of mutating shared originals in place
+
+### Result
+
+None of the above changed the visible regression in a meaningful way. The foliage still reads as semi-transparent in the experimental Horizon aerial mode.
+
+### Current Conclusion
+
+This no longer looks like a simple mesh-selection or material-flag problem. The remaining evidence suggests the artifact is fundamentally tied to how the Takram Horizon `AerialPerspectiveEffect` path composes these billboard/alpha foliage assets in this scene.
+
+### Recommended Next Step
+
+If this is revisited, the next materially different approach should be architectural rather than another small threshold tweak:
+
+- render tagged Horizon foliage in a dedicated foreground/final pass after the aerial composition, fully bypassing Takram's atmospheric blend for those meshes
+
+Tradeoffs to keep in mind:
+
+- depth/occlusion ordering will need careful handling
+- this should remain Horizon-only and experimental at first
+- until that exists, the base Horizon path should remain the safer default

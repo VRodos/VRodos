@@ -197,6 +197,525 @@
         return hasPmndrsDebugFlag('pmndrsAADebugOverlay', 'vrodos_debug_pmndrs_aa');
     }
 
+    function shouldEnablePmndrsHorizonAerial(self) {
+        return isHorizonBackground(self) &&
+            hasPmndrsDebugFlag('enablePmndrsHorizonAerial', 'vrodos_debug_enable_pmndrs_horizon_aerial');
+    }
+
+    function getPmndrsHorizonFoliageAlphaTestTarget() {
+        return 0.35;
+    }
+
+    function isPmndrsHorizonFoliageOverlayCandidateMaterial(material) {
+        var materialName;
+
+        if (!material || material.visible === false || material.colorWrite === false) {
+            return false;
+        }
+
+        if (typeof material.opacity === 'number' && material.opacity <= 0) {
+            return false;
+        }
+
+        if ((typeof material.alphaTest === 'number' && material.alphaTest > 0) && (material.map || material.alphaMap)) {
+            return true;
+        }
+
+        if (material.transparent === true && (material.map || material.alphaMap)) {
+            return true;
+        }
+
+        materialName = (typeof material.name === 'string') ? material.name.toLowerCase() : '';
+        if ((material.map || material.alphaMap) && /leaf|leaves|palm|frond|tree|bush|plant|foliage|vegetation/.test(materialName)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function createPmndrsHorizonCutoutMaterial(material, cacheTag) {
+        var clone;
+        var prevOnBeforeCompile;
+
+        if (!material || typeof material.clone !== 'function') {
+            return material;
+        }
+
+        clone = material.clone();
+        clone.transparent = false;
+        clone.opacity = 1;
+        clone.alphaTest = Math.max(material.alphaTest || 0, getPmndrsHorizonFoliageAlphaTestTarget());
+        if (typeof clone.depthWrite !== 'undefined') {
+            clone.depthWrite = true;
+        }
+        if (typeof clone.depthTest !== 'undefined') {
+            clone.depthTest = true;
+        }
+        if (typeof clone.colorWrite !== 'undefined') {
+            clone.colorWrite = true;
+        }
+        if (typeof clone.blending !== 'undefined') {
+            clone.blending = THREE.NormalBlending;
+        }
+        if (typeof clone.alphaHash !== 'undefined') {
+            clone.alphaHash = false;
+        }
+        if (typeof clone.alphaToCoverage !== 'undefined') {
+            clone.alphaToCoverage = false;
+        }
+        if (typeof clone.premultipliedAlpha !== 'undefined') {
+            clone.premultipliedAlpha = false;
+        }
+        prevOnBeforeCompile = clone.onBeforeCompile;
+        clone.onBeforeCompile = function (shader, renderer) {
+            if (typeof prevOnBeforeCompile === 'function') {
+                prevOnBeforeCompile.call(this, shader, renderer);
+            }
+            if (typeof shader.fragmentShader === 'string' && shader.fragmentShader.indexOf('diffuseColor.a = 1.0;') === -1) {
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    '#include <opaque_fragment>',
+                    'diffuseColor.a = 1.0;\n#include <opaque_fragment>'
+                );
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    '#include <output_fragment>',
+                    'diffuseColor.a = 1.0;\n#include <output_fragment>'
+                );
+            }
+        };
+        clone.customProgramCacheKey = function () {
+            return 'vrodos-horizon-' + cacheTag + '-opaque-cutout';
+        };
+        clone.needsUpdate = true;
+        return clone;
+    }
+
+    function restoreAllPmndrsHorizonFoliageMaterials(self) {
+        var overrides;
+        var uuid;
+        var entry;
+
+        if (!self || !self._pmndrsHorizonFoliageObjectOverrides) {
+            return;
+        }
+
+        overrides = self._pmndrsHorizonFoliageObjectOverrides;
+        for (uuid in overrides) {
+            if (!overrides.hasOwnProperty(uuid)) {
+                continue;
+            }
+
+            entry = overrides[uuid];
+            if (!entry || !entry.object) {
+                continue;
+            }
+
+            entry.object.material = entry.originalMaterial;
+            if (entry.normalizedMaterials && entry.normalizedMaterials.length) {
+                entry.normalizedMaterials.forEach(function (material) {
+                    if (material && typeof material.dispose === 'function') {
+                        material.dispose();
+                    }
+                });
+            }
+        }
+
+        self._pmndrsHorizonFoliageObjectOverrides = {};
+    }
+
+    function applyPmndrsHorizonFoliageMaterialNormalization(self) {
+        var overlayPass;
+        var overrides;
+        var seen;
+        var alphaTestTarget;
+        var uuid;
+        var entry;
+
+        if (!self) {
+            return;
+        }
+
+        overlayPass = self.pmndrsHorizonFoliageOverlayPass;
+        if (!overlayPass || !overlayPass.selection) {
+            restoreAllPmndrsHorizonFoliageMaterials(self);
+            return;
+        }
+
+        overrides = self._pmndrsHorizonFoliageObjectOverrides = self._pmndrsHorizonFoliageObjectOverrides || {};
+        seen = {};
+
+        overlayPass.selection.forEach(function (object) {
+            var materials;
+            var i;
+            var material;
+            var normalizedMaterials;
+            var objectKey;
+
+            if (!object || !object.material) {
+                return;
+            }
+
+            objectKey = object.uuid || String(Math.random());
+            seen[objectKey] = true;
+            materials = Array.isArray(object.material) ? object.material : [object.material];
+            normalizedMaterials = [];
+            for (i = 0; i < materials.length; i++) {
+                material = materials[i];
+                if (!isPmndrsHorizonFoliageOverlayCandidateMaterial(material)) {
+                    normalizedMaterials.push(material);
+                    continue;
+                }
+
+                normalizedMaterials.push(createPmndrsHorizonCutoutMaterial(material, 'scene-foliage'));
+            }
+
+            if (!overrides[objectKey]) {
+                overrides[objectKey] = {
+                    object: object,
+                    originalMaterial: object.material,
+                    normalizedMaterials: []
+                };
+            } else if (overrides[objectKey].normalizedMaterials && overrides[objectKey].normalizedMaterials.length) {
+                overrides[objectKey].normalizedMaterials.forEach(function (oldMaterial) {
+                    if (oldMaterial && oldMaterial !== object.material && typeof oldMaterial.dispose === 'function') {
+                        oldMaterial.dispose();
+                    }
+                });
+            }
+
+            overrides[objectKey].normalizedMaterials = normalizedMaterials.filter(function (candidate, idx) {
+                return candidate !== materials[idx];
+            });
+            object.material = Array.isArray(object.material) ? normalizedMaterials : normalizedMaterials[0];
+        });
+
+        for (uuid in overrides) {
+            if (!overrides.hasOwnProperty(uuid) || seen[uuid]) {
+                continue;
+            }
+
+            entry = overrides[uuid];
+            if (!entry || !entry.object) {
+                delete overrides[uuid];
+                continue;
+            }
+
+            entry.object.material = entry.originalMaterial;
+            if (entry.normalizedMaterials && entry.normalizedMaterials.length) {
+                entry.normalizedMaterials.forEach(function (material) {
+                    if (material && typeof material.dispose === 'function') {
+                        material.dispose();
+                    }
+                });
+            }
+            delete overrides[uuid];
+        }
+    }
+
+    function isPmndrsHorizonFoliageOverlayCandidateMesh(node) {
+        var materials;
+        var nodeName;
+        var i;
+
+        if (!node || !node.isMesh || node.visible === false || !node.material) {
+            return false;
+        }
+
+        if (node.userData && (node.userData.vrodosPmndrsAtmosphereSky || node.userData.vrodosPmndrsLegacySuppressed)) {
+            return false;
+        }
+
+        if (node.el && node.el.classList && node.el.classList.contains('vrodos-navmesh')) {
+            return false;
+        }
+
+        nodeName = (typeof node.name === 'string') ? node.name.toLowerCase() : '';
+        if (/leaf|leaves|palm|frond|tree|bush|plant|foliage|vegetation/.test(nodeName)) {
+            return true;
+        }
+
+        materials = Array.isArray(node.material) ? node.material : [node.material];
+        for (i = 0; i < materials.length; i++) {
+            if (isPmndrsHorizonFoliageOverlayCandidateMaterial(materials[i])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function refreshPmndrsHorizonFoliageOverlaySelection(self, scene) {
+        var overlayPass;
+        var selectedCount = 0;
+        var selectedSummaries = [];
+
+        if (!self || !scene) {
+            return 0;
+        }
+
+        overlayPass = self.pmndrsHorizonFoliageOverlayPass;
+        if (!overlayPass || !overlayPass.selection) {
+            return 0;
+        }
+
+        overlayPass.selection.clear();
+        scene.traverse(function (node) {
+            if (!isPmndrsHorizonFoliageOverlayCandidateMesh(node)) {
+                return;
+            }
+
+            overlayPass.selection.add(node);
+            selectedCount++;
+            if (selectedSummaries.length < 12) {
+                var materials = Array.isArray(node.material) ? node.material : [node.material];
+                var materialSummary = materials.map(function (material) {
+                    if (!material) {
+                        return 'null-material';
+                    }
+                    return [
+                        (material.name || material.type || 'material'),
+                        'transparent=' + (material.transparent === true ? '1' : '0'),
+                        'opacity=' + (typeof material.opacity === 'number' ? material.opacity.toFixed(2) : 'n/a'),
+                        'alphaTest=' + (typeof material.alphaTest === 'number' ? material.alphaTest.toFixed(3) : 'n/a'),
+                        'map=' + (material.map ? '1' : '0'),
+                        'alphaMap=' + (material.alphaMap ? '1' : '0')
+                    ].join(',');
+                }).join(' | ');
+                selectedSummaries.push((node.name || node.uuid || 'unnamed-mesh') + ' -> ' + materialSummary);
+            }
+        });
+
+        if (self._pmndrsHorizonFoliageOverlaySelectedCount !== selectedCount) {
+            console.info('[VRodos] PMNDRS Horizon foliage overlay selection refreshed: ' + selectedCount + ' alpha-cutout mesh(es) will bypass aerial compositing.');
+            self._pmndrsHorizonFoliageOverlaySelectedCount = selectedCount;
+            if (selectedSummaries.length > 0) {
+                console.info('[VRodos] PMNDRS Horizon foliage overlay meshes:\n' + selectedSummaries.join('\n'));
+            }
+        }
+
+        return selectedCount;
+    }
+
+    function PmndrsHorizonFoliageOverlayPass(scene, camera, PP, THREE) {
+        this.THREE = THREE;
+        this.name = 'VRodosPmndrsHorizonFoliageOverlayPass';
+        this.enabled = true;
+        this.needsSwap = false;
+        this.needsDepthTexture = false;
+        this.renderToScreen = false;
+        this.selection = new PP.Selection(undefined, 30);
+        this.renderPass = new PP.RenderPass(scene, camera);
+        this.renderPass.ignoreBackground = true;
+        this.renderPass.skipShadowMapUpdate = true;
+        this.renderPass.selection = this.selection;
+        this._overlayMaterialCache = {};
+        if (this.renderPass.clearPass) {
+            this.renderPass.clearPass.overrideClearColor = new THREE.Color(0x000000);
+            this.renderPass.clearPass.overrideClearAlpha = 0;
+        }
+        this.renderTarget = new THREE.WebGLRenderTarget(1, 1, {
+            depthBuffer: false,
+            stencilBuffer: false,
+            type: THREE.HalfFloatType
+        });
+        this.renderTarget.texture.name = 'VRodos.Pmndrs.HorizonFoliageOverlay';
+        this.renderTarget.texture.generateMipmaps = false;
+        this.renderTarget.texture.minFilter = THREE.NearestFilter;
+        this.renderTarget.texture.magFilter = THREE.NearestFilter;
+    }
+
+    Object.defineProperty(PmndrsHorizonFoliageOverlayPass.prototype, 'map', {
+        get: function () {
+            return this.renderTarget ? this.renderTarget.texture : null;
+        }
+    });
+
+    Object.defineProperty(PmndrsHorizonFoliageOverlayPass.prototype, 'mainCamera', {
+        get: function () {
+            return this.renderPass ? this.renderPass.mainCamera : null;
+        },
+        set: function (camera) {
+            if (this.renderPass) {
+                this.renderPass.mainCamera = camera;
+            }
+        }
+    });
+
+    PmndrsHorizonFoliageOverlayPass.prototype.initialize = function (renderer, alpha, frameBufferType) {
+        if (this.renderPass && typeof this.renderPass.initialize === 'function') {
+            this.renderPass.initialize(renderer, alpha, frameBufferType);
+        }
+    };
+
+    PmndrsHorizonFoliageOverlayPass.prototype.getOverlayMaterial = function (material) {
+        var cacheKey;
+        var overlayMaterial;
+        var prevOnBeforeCompile;
+
+        if (!material || typeof material.clone !== 'function') {
+            return material;
+        }
+
+        cacheKey = material.uuid || material.id || String(Math.random());
+        overlayMaterial = this._overlayMaterialCache[cacheKey];
+        if (overlayMaterial && overlayMaterial.userData && overlayMaterial.userData.vrodosOverlaySourceVersion === material.version) {
+            return overlayMaterial;
+        }
+
+        if (overlayMaterial && typeof overlayMaterial.dispose === 'function') {
+            overlayMaterial.dispose();
+        }
+
+        overlayMaterial = material.clone();
+        overlayMaterial.transparent = false;
+        overlayMaterial.opacity = 1;
+        if (typeof overlayMaterial.alphaTest === 'number') {
+            overlayMaterial.alphaTest = Math.max(material.alphaTest || 0, 0.003);
+        }
+        if (typeof overlayMaterial.depthWrite !== 'undefined') {
+            overlayMaterial.depthWrite = true;
+        }
+        if (typeof overlayMaterial.depthTest !== 'undefined') {
+            overlayMaterial.depthTest = true;
+        }
+        if (typeof overlayMaterial.colorWrite !== 'undefined') {
+            overlayMaterial.colorWrite = true;
+        }
+        if (typeof overlayMaterial.blending !== 'undefined') {
+            overlayMaterial.blending = this.THREE.NormalBlending;
+        }
+        if (typeof overlayMaterial.premultipliedAlpha !== 'undefined') {
+            overlayMaterial.premultipliedAlpha = false;
+        }
+        if (typeof overlayMaterial.alphaHash !== 'undefined') {
+            overlayMaterial.alphaHash = false;
+        }
+        if (typeof overlayMaterial.alphaToCoverage !== 'undefined') {
+            overlayMaterial.alphaToCoverage = false;
+        }
+        prevOnBeforeCompile = overlayMaterial.onBeforeCompile;
+        overlayMaterial.onBeforeCompile = function (shader, renderer) {
+            if (typeof prevOnBeforeCompile === 'function') {
+                prevOnBeforeCompile.call(this, shader, renderer);
+            }
+            if (typeof shader.fragmentShader === 'string' && shader.fragmentShader.indexOf('diffuseColor.a = 1.0;') === -1) {
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    '#include <opaque_fragment>',
+                    'diffuseColor.a = 1.0;\n#include <opaque_fragment>'
+                );
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    '#include <output_fragment>',
+                    'diffuseColor.a = 1.0;\n#include <output_fragment>'
+                );
+            }
+        };
+        overlayMaterial.customProgramCacheKey = function () {
+            return 'vrodos-horizon-foliage-overlay-opaque-cutout';
+        };
+        overlayMaterial.needsUpdate = true;
+        overlayMaterial.userData = overlayMaterial.userData || {};
+        overlayMaterial.userData.vrodosOverlaySourceVersion = material.version;
+        this._overlayMaterialCache[cacheKey] = overlayMaterial;
+        return overlayMaterial;
+    };
+
+    PmndrsHorizonFoliageOverlayPass.prototype.prepareSelectionMaterials = function () {
+        var swaps = [];
+        var self = this;
+
+        if (!this.selection || this.selection.size === 0) {
+            return swaps;
+        }
+
+        this.selection.forEach(function (object) {
+            var originalMaterial;
+            var overlayMaterial;
+
+            if (!object || !object.material) {
+                return;
+            }
+
+            originalMaterial = object.material;
+            if (Array.isArray(originalMaterial)) {
+                overlayMaterial = originalMaterial.map(function (material) {
+                    return self.getOverlayMaterial(material);
+                });
+            } else {
+                overlayMaterial = self.getOverlayMaterial(originalMaterial);
+            }
+
+            swaps.push({
+                object: object,
+                material: originalMaterial
+            });
+            object.material = overlayMaterial;
+        });
+
+        return swaps;
+    };
+
+    PmndrsHorizonFoliageOverlayPass.prototype.restoreSelectionMaterials = function (swaps) {
+        var i;
+        var swap;
+
+        for (i = 0; i < swaps.length; i++) {
+            swap = swaps[i];
+            if (!swap || !swap.object) {
+                continue;
+            }
+            swap.object.material = swap.material;
+        }
+    };
+
+    PmndrsHorizonFoliageOverlayPass.prototype.render = function (renderer, inputBuffer, outputBuffer, deltaTime, stencilTest) {
+        var swaps;
+
+        if (this.renderPass) {
+            swaps = this.prepareSelectionMaterials();
+            try {
+                this.renderPass.render(renderer, this.renderTarget, null, deltaTime, stencilTest);
+            } finally {
+                this.restoreSelectionMaterials(swaps);
+            }
+        }
+    };
+
+    PmndrsHorizonFoliageOverlayPass.prototype.setSize = function (width, height) {
+        if (this.renderTarget) {
+            this.renderTarget.setSize(width, height);
+        }
+    };
+
+    PmndrsHorizonFoliageOverlayPass.prototype.setDepthTexture = function (depthTexture, depthPacking) {
+        this.depthTexture = depthTexture || null;
+        this.depthPacking = depthPacking;
+    };
+
+    PmndrsHorizonFoliageOverlayPass.prototype.getDepthTexture = function () {
+        return this.depthTexture || null;
+    };
+
+    PmndrsHorizonFoliageOverlayPass.prototype.dispose = function () {
+        var cacheKey;
+
+        if (this.selection && typeof this.selection.clear === 'function') {
+            this.selection.clear();
+        }
+        for (cacheKey in this._overlayMaterialCache) {
+            if (this._overlayMaterialCache.hasOwnProperty(cacheKey) &&
+                this._overlayMaterialCache[cacheKey] &&
+                typeof this._overlayMaterialCache[cacheKey].dispose === 'function') {
+                this._overlayMaterialCache[cacheKey].dispose();
+            }
+        }
+        this._overlayMaterialCache = {};
+        if (this.renderTarget && typeof this.renderTarget.dispose === 'function') {
+            this.renderTarget.dispose();
+        }
+        if (this.renderPass && typeof this.renderPass.dispose === 'function') {
+            this.renderPass.dispose();
+        }
+    };
+
     function ensurePmndrsAADebugOverlay(self) {
         if (!self || !isPmndrsAADebugOverlayEnabled() || typeof document === 'undefined' || !document.body) {
             return null;
@@ -254,6 +773,7 @@
             'effect pass: ' + (self && self.pmndrsEffectPass ? 'yes' : 'no'),
             'bloom: ' + (self && self.pmndrsBloomEffect ? 'yes' : 'no'),
             'atmosphere: ' + (self && self.pmndrsAerialPerspectiveEffect ? 'effect' : ((self && typeof self.isPmndrsAtmosphereEnabled === 'function' && self.isPmndrsAtmosphereEnabled()) ? 'takram-only' : 'off')),
+            'horizon aerial: ' + (shouldEnablePmndrsHorizonAerial(self) ? 'experimental-on' : 'off'),
             'msaa fallback: ' + ((self && self._pmndrsMsaaFallbackReason) ? self._pmndrsMsaaFallbackReason : 'none')
         ];
 
@@ -265,7 +785,11 @@
             return 'atmosphere:off';
         }
 
-        return isHorizonBackground(self) ? 'atmosphere:horizon' : 'atmosphere:world';
+        if (isHorizonBackground(self)) {
+            return shouldEnablePmndrsHorizonAerial(self) ? 'atmosphere:horizon-aerial' : 'atmosphere:horizon-sky';
+        }
+
+        return 'atmosphere:world';
     }
 
     function disposePmndrsComposerResources(self) {
@@ -288,12 +812,15 @@
         self.pmndrsBloomEffect = null;
         self.pmndrsSmaaEffect = null;
         self.pmndrsAerialPerspectiveEffect = null;
+        self.pmndrsHorizonFoliageOverlayPass = null;
+        restoreAllPmndrsHorizonFoliageMaterials(self);
         self._pmndrsAtmosphereSignature = null;
         self._pmndrsComposerSignature = null;
         self._pmndrsRequestedMultisampling = 0;
         self._pmndrsAppliedMultisampling = 0;
         self._pmndrsAppliedSmaaPreset = null;
         self._pmndrsMsaaFallbackReason = '';
+        self._pmndrsHorizonFoliageOverlaySelectedCount = 0;
         self._pmndrsLastW = 0;
         self._pmndrsLastH = 0;
         updatePmndrsAADebugOverlay(self);
@@ -386,13 +913,15 @@
             this._pmndrsMsaaFallbackReason = '';
         }
 
-        if (atmosphereConfig && atmosphereConfig.enabled && !isHorizonBackground(this)) {
+        if (atmosphereConfig && atmosphereConfig.enabled && (!isHorizonBackground(this) || shouldEnablePmndrsHorizonAerial(this))) {
             var VTA = window.VRODOS_TAKRAM_ATMOSPHERE;
             var atmosphereState = (typeof this.ensurePmndrsAtmosphereResources === 'function') ? this.ensurePmndrsAtmosphereResources() : null;
+            var useHorizonAerial = shouldEnablePmndrsHorizonAerial(this);
 
             if (VTA && atmosphereState && !atmosphereState.failed && atmosphereState.textures) {
                 try {
                     this.pmndrsAerialPerspectiveEffect = new VTA.AerialPerspectiveEffect(camera, {
+                        reconstructNormal: useHorizonAerial,
                         irradianceTexture: atmosphereState.textures.irradianceTexture || null,
                         scatteringTexture: atmosphereState.textures.scatteringTexture || null,
                         transmittanceTexture: atmosphereState.textures.transmittanceTexture || null,
@@ -401,18 +930,34 @@
                         transmittance: atmosphereConfig.transmittanceEnabled,
                         inscatter: atmosphereConfig.inscatterEnabled,
                         albedoScale: atmosphereConfig.albedoScale,
-                        sky: false,
+                        sky: useHorizonAerial,
                         sun: atmosphereConfig.takramSunEnabled !== false,
                         moon: atmosphereConfig.moonEnabled,
                         ground: atmosphereConfig.groundEnabled
                     });
+                    if (useHorizonAerial && !this._pmndrsHorizonAerialWarned) {
+                        console.info('[VRodos] PMNDRS Horizon AerialPerspectiveEffect experimental path enabled via ?vrodos_debug_enable_pmndrs_horizon_aerial=1. Takram SkyMaterial ownership is bypassed for this scene so the post-process aerial path can be re-validated on r181.');
+                        this._pmndrsHorizonAerialWarned = true;
+                    }
                     if (typeof this.applyPmndrsAtmosphereConfigToTarget === 'function') {
                         this.applyPmndrsAtmosphereConfigToTarget(this.pmndrsAerialPerspectiveEffect, atmosphereConfig);
+                    }
+                    if (useHorizonAerial && PP && PP.Selection && PP.RenderPass) {
+                        this.pmndrsHorizonFoliageOverlayPass = new PmndrsHorizonFoliageOverlayPass(scene, camera, PP, THREE);
+                        refreshPmndrsHorizonFoliageOverlaySelection(this, scene);
+                        applyPmndrsHorizonFoliageMaterialNormalization(this);
+                        composer.addPass(this.pmndrsHorizonFoliageOverlayPass);
+                        this.pmndrsAerialPerspectiveEffect.overlay = this.pmndrsHorizonFoliageOverlayPass;
+                    } else {
+                        this.pmndrsHorizonFoliageOverlayPass = null;
+                        restoreAllPmndrsHorizonFoliageMaterials(this);
                     }
                     effects.push(this.pmndrsAerialPerspectiveEffect);
                 } catch (err) {
                     console.warn('[VRodos] pmndrs Takram AerialPerspectiveEffect construction failed, skipping:', err);
                     this.pmndrsAerialPerspectiveEffect = null;
+                    this.pmndrsHorizonFoliageOverlayPass = null;
+                    restoreAllPmndrsHorizonFoliageMaterials(this);
                 }
             } else if (!this._pmndrsAtmosphereWarned) {
                 console.info('[VRodos] PMNDRS atmosphere requested but Takram atmosphere resources are not ready - using fallback horizon visuals.');
@@ -422,8 +967,11 @@
             // Horizon keeps using Takram SkyMaterial directly. The post-process
             // AerialPerspectiveEffect triggers repeated depth blit errors on the
             // current pinned A-Frame runtime, which also manifests visually as an
-            // opaque white ground cap over the horizon.
+            // opaque white ground cap over the horizon. Use the explicit debug
+            // opt-in above to re-test the full post-process aerial path on r181
+            // without flipping the shipped default.
             this.pmndrsAerialPerspectiveEffect = null;
+            restoreAllPmndrsHorizonFoliageMaterials(this);
         }
 
         // SSAO — temporarily disabled in the pmndrs pipeline (Phase 3).
@@ -635,9 +1183,16 @@
                 if (self.pmndrsAerialPerspectiveEffect && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== 'undefined') {
                     self.pmndrsAerialPerspectiveEffect.mainCamera = camera;
                 }
+                if (self.pmndrsHorizonFoliageOverlayPass && typeof self.pmndrsHorizonFoliageOverlayPass.mainCamera !== 'undefined') {
+                    self.pmndrsHorizonFoliageOverlayPass.mainCamera = camera;
+                }
             }
 
             syncPmndrsAerialPerspectiveEffect(self, camera, atmosphereConfig);
+            if (self.pmndrsHorizonFoliageOverlayPass && self.sceneCollectionsDirty) {
+                refreshPmndrsHorizonFoliageOverlaySelection(self, scene);
+                applyPmndrsHorizonFoliageMaterialNormalization(self);
+            }
             self.updatePmndrsPostProcessingSize();
             self._updatePmndrsAdaptiveAO();
 

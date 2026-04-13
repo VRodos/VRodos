@@ -184,6 +184,23 @@
         return raw.charAt(0) === '#' ? raw : ('#' + raw);
     }
 
+    function hasPmndrsDebugFlag(debugKey, queryKey) {
+        if (window.VRODOS_DEBUG && window.VRODOS_DEBUG[debugKey] === true) {
+            return true;
+        }
+
+        if (typeof window.location === 'undefined' || !window.location.search) {
+            return false;
+        }
+
+        try {
+            var params = new URLSearchParams(window.location.search);
+            return params.get(queryKey) === '1';
+        } catch (err) {
+            return false;
+        }
+    }
+
     function buildPmndrsLocalSunDirection(elevationDeg, azimuthDeg) {
         var elevation = THREE.MathUtils.degToRad(elevationDeg);
         var azimuth = THREE.MathUtils.degToRad(azimuthDeg);
@@ -482,9 +499,11 @@
         var reflectionSource = (typeof self.getEffectiveReflectionSource === 'function')
             ? self.getEffectiveReflectionSource()
             : (self.data.reflectionSource || 'hdr');
-        var owner = atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self)
-            ? 'takram-sky'
-            : (atmosphereConfig && atmosphereConfig.enabled ? 'takram-fallback' : 'legacy-fallback');
+        var owner = atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsHorizonAerialPerspectivePath(self)
+            ? 'takram-aerial-effect'
+            : (atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self)
+                ? 'takram-sky'
+                : (atmosphereConfig && atmosphereConfig.enabled ? 'takram-fallback' : 'legacy-fallback'));
         var signature = [
             context,
             owner,
@@ -575,6 +594,11 @@
         );
     }
 
+    function shouldUsePmndrsHorizonAerialPerspectivePath(self) {
+        return shouldUsePmndrsTakramHorizonPath(self) &&
+            hasPmndrsDebugFlag('enablePmndrsHorizonAerial', 'vrodos_debug_enable_pmndrs_horizon_aerial');
+    }
+
     function formatVectorPosition(vector, distance, minY) {
         var y = vector.y * distance;
         if (typeof minY === 'number') {
@@ -629,17 +653,19 @@
         return !!(self && self.data && self.data.selChoice === "0");
     }
 
-    function applyPmndrsTakramLocalHorizonConstraints(config) {
+    function applyPmndrsTakramLocalHorizonConstraints(self, config) {
         if (!config) {
             return config;
         }
+
+        var experimentalHorizonAerial = shouldUsePmndrsHorizonAerialPerspectivePath(self);
 
         // Current local-world constraints. Later phases will replace the helper
         // lights and visible-sun workaround with Takram's own light-source path,
         // but this keeps the behavior centralized so the migration is contained.
         config.groundEnabled = false;
         config.groundAlbedo = '#000000';
-        config.takramSunEnabled = false;
+        config.takramSunEnabled = experimentalHorizonAerial;
         config.sunAngularRadius = TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS;
         config.rayleighScale = 1.0;
         config.mieScatteringScale = 1.0;
@@ -772,7 +798,7 @@
         }
 
         if (isPmndrsTakramLocalHorizonMode(this)) {
-            applyPmndrsTakramLocalHorizonConstraints(config);
+            applyPmndrsTakramLocalHorizonConstraints(this, config);
         }
 
         config.localSunDirection = buildPmndrsLocalSunDirection(config.sunElevationDeg, config.sunAzimuthDeg);
@@ -1444,6 +1470,12 @@
 
         var atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
         if (atmosphereConfig && atmosphereConfig.enabled && window.VRODOS_TAKRAM_ATMOSPHERE) {
+            if (shouldUsePmndrsHorizonAerialPerspectivePath(this)) {
+                removePmndrsAtmosphereSky(this);
+                ensurePmndrsTakramVisibleSun(this, atmosphereConfig, this.getHorizonSkyPreset ? this.getHorizonSkyPreset() : 'natural');
+                return;
+            }
+
             ensurePmndrsAtmosphereSky(this, atmosphereConfig);
             ensurePmndrsTakramVisibleSun(this, atmosphereConfig, this.getHorizonSkyPreset ? this.getHorizonSkyPreset() : 'natural');
             return;
@@ -1653,6 +1685,7 @@
         var preset = this.getHorizonSkyPreset();
         var isPmndrs = this.data.postFXEngine === 'pmndrs';
         var usesTakramHorizon = shouldUsePmndrsTakramHorizonPath(this);
+        var usesHorizonAerial = shouldUsePmndrsHorizonAerialPerspectivePath(this);
         var shadowEnabled = this.data.shadowQuality !== 'off';
 
         if (isPmndrs) {
@@ -1712,8 +1745,13 @@
             removeLegacySunSkyEntitiesForPmndrs(this);
             schedulePmndrsHorizonEnvironmentCleanup(this);
             ensurePmndrsTakramHorizonLights(this, atmosphereConfig, preset);
-            ensurePmndrsAtmosphereSky(this, atmosphereConfig);
-            ensurePmndrsTakramVisibleSun(this, atmosphereConfig, preset);
+            if (usesHorizonAerial) {
+                removePmndrsAtmosphereSky(this);
+                ensurePmndrsTakramVisibleSun(this, atmosphereConfig, preset);
+            } else {
+                ensurePmndrsAtmosphereSky(this, atmosphereConfig);
+                ensurePmndrsTakramVisibleSun(this, atmosphereConfig, preset);
+            }
             logPmndrsHorizonDiagnostic(this, 'apply-horizon', atmosphereConfig);
             return;
         }

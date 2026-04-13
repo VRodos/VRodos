@@ -755,6 +755,8 @@ extract( $data );
 			envir.scene.aframeHorizonSkyPreset = vrodos_scene_data["aframeHorizonSkyPreset"] || 'natural';
 			envir.scene.aframeEnvMapPreset = vrodos_scene_data["aframeEnvMapPreset"] || 'none';
 			envir.scene.aframePostFXEngine = (vrodos_scene_data["aframePostFXEngine"] === 'pmndrs') ? 'pmndrs' : 'legacy';
+			envir.scene.aframePmndrsAAMode = (['none','smaa','msaa'].includes(vrodos_scene_data["aframePmndrsAAMode"])) ? vrodos_scene_data["aframePmndrsAAMode"] : 'inherit';
+			envir.scene.aframePmndrsAAPreset = (['low','medium','high','ultra'].includes(vrodos_scene_data["aframePmndrsAAPreset"])) ? vrodos_scene_data["aframePmndrsAAPreset"] : 'inherit';
 			envir.scene.aframePmndrsBloomIntensity = (typeof vrodos_scene_data["aframePmndrsBloomIntensity"] === 'number') ? vrodos_scene_data["aframePmndrsBloomIntensity"] : 1.0;
 			envir.scene.aframePmndrsBloomThreshold = (typeof vrodos_scene_data["aframePmndrsBloomThreshold"] === 'number') ? vrodos_scene_data["aframePmndrsBloomThreshold"] : 0.62;
 			envir.scene.aframePmndrsVignetteEnabled = vrodos_scene_data["aframePmndrsVignetteEnabled"] === true || vrodos_scene_data["aframePmndrsVignetteEnabled"] === 'true';

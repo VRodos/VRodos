@@ -6455,8 +6455,8 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
 
   #ifdef HAS_OVERLAY
   vec4 overlay = texture(overlayBuffer, uv);
-  if (overlay.a == 1.0) {
-    outputColor = overlay;
+  if (overlay.a >= 0.5) {
+    outputColor = vec4(overlay.rgb, 1.0);
     return;
   }
   #endif // HAS_OVERLAY
