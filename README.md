@@ -1,106 +1,173 @@
-# VRodos: 3D Scene Authoring and A-Frame Publishing for WordPress
+# VRodos: WordPress 3D Authoring with Compiled A-Frame Scenes
 
-VRodos turns WordPress into a browser-based 3D scene authoring system with a compiled A-Frame output for interactive desktop, VR, and immersive web experiences.
+VRodos turns WordPress into a browser-based 3D scene authoring system with a compiled A-Frame runtime for interactive desktop, VR, and immersive web experiences.
 
-It combines a Three.js scene editor, custom WordPress content types, asset management, and an A-Frame runtime so creators can build, save, organize, and publish scenes from inside WordPress.
+It combines:
+
+- a Three.js-based editor and asset workflow inside WordPress
+- a compiled A-Frame runtime for published scenes
+- dual compiled-scene rendering paths for different visual goals
+- built-in controls for environment, reflections, movement, and post-processing
 
 ## What VRodos Supports Today
 
 ### Scene authoring
 
-- In-browser 3D scene editor built on Three.js
-- Per-scene organization through custom post types for projects, scenes, and assets
-- Hierarchy viewer, transform editing, lighting placement, camera controls, and scene options
-- Scene save/load, undo/redo reload paths, and JSON-based scene persistence
-- Background authoring for:
-  - Horizon
-  - Horizon sky preset tuning
-  - Solid color
-  - Presets
-  - Image sky
-- Fog controls and scene-level environment settings
+- In-browser 3D scene editor built on the VRodos Three.js vendor stack
+- Scene save/load through JSON-based persistence
+- Transform editing, hierarchy management, lighting placement, and scene-level options
+- Background authoring for Horizon, solid color, preset environments, and image skies
+- Fog and environment settings authored in the editor and carried into compiled output
 
 ### Asset workflows
 
-- 3D asset upload and editing for GLB, OBJ, and FBX workflows
+- 3D asset workflows for GLB content
 - Image, video, audio, light, and helper asset usage inside scenes
-- Asset categories and taxonomy-driven organization
-- Dedicated `Walkable Surfaces` category for compiled navigation meshes
-- Scene-side asset browser and drag/drop placement
-- Asset editor integration from both standalone pages and inside scene workflows
+- Taxonomy-driven asset organization inside WordPress
+- Dedicated `Walkable Surfaces` helper category for compiled navigation meshes
+- Drag/drop placement from the scene-side asset browser
 
 ### Compiled A-Frame output
 
 - One-click scene compilation to A-Frame HTML output
-- Scene startup loader to reduce visible object pop-in during initial load
-- Compile dialog controls for compiled-output quality settings (see "Post-processing pipeline" below for details)
-- Scene editor remains the source of truth for:
-  - Background style
-  - Horizon sky preset
-  - Preset selection
-  - Preset ground toggle
-- Fog-off scenes compile without inherited fallback fog
-- Improved double-sided image output using a two-plane compile strategy to avoid back-face overlap artifacts
+- Scene startup loader to reduce visible object pop-in
+- Desktop-oriented high-quality rendering path for compiled scenes
+- Runtime support for interactive desktop, VR, and immersive-web experiences
+- Local/networked collaboration support through the bundled `networked-aframe` server
 
-### Navigation and interaction
+## Current Compiled Runtime
 
-- Compiled movement with desktop and VR-friendly controls
-- Category-driven walkable surface collisions for compiled A-Frame scenes
-- Automatic walkable-surface detection when `Walkable Surfaces` assets exist in a scene
-- Scene-level collision override through `aframeCollisionMode`
-- Auto step-up traversal across walkable ramps and stairs
-- POI, image, video, and raycast-driven interactions in compiled scenes
+VRodos currently targets one active compiled-scene runtime pair:
 
-### Runtime quality and visual features
+- A-Frame master commit `96cc74fa7a4640f394a78985a637a788daf56186`
+- Three.js vendor stack `r181`
 
-- Pinned A-Frame master runtime + Three.js r181 with full PBR material support
-- Desktop-oriented `High` quality rendering path with quality-aware renderer tuning
-- Shadow quality presets (off / medium PCFShadowMap / high PCFSoftShadowMap)
-- HDR environment maps (HDRLoader + PMREMGenerator) with 3 presets for realistic PBR reflections
-- PBR material enhancement: envMapIntensity range (0.5x–2.0x), physically correct lights
+That runtime powers:
 
-#### Post-processing pipeline
+- PBR materials and modern Three.js lighting behavior
+- shadow quality presets
+- fog and horizon/sky presentation
+- HDR environment-map reflections
+- scene-probe reflections for authored environments
+- compiled walkable-surface collision workflows
 
-When post-FX is enabled, a lazily-instantiated multi-pass cinematic pipeline runs. Only passes for effects actually enabled in the compile dialog are allocated — disabled effects consume zero VRAM and zero ALU.
+The runtime source of truth is [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php).
 
-1. **Scene render** — ACESFilmic tone mapping + sRGB encoding applied to render target via Three.js `isXRRenderTarget` trick
-2. **SAO (Scalable Ambient Obscurance)** — depth-only screen-space AO with bilateral blur, 3 quality presets (soft/balanced/strong), half resolution. Adaptive temporal subsampling: when average FPS drops below 30, SAO computes every other frame and reuses the previous result, restoring full rate when FPS recovers above 45 (3-second hysteresis)
-3. **SSR (Screen-Space Reflections)** — ray marching with binary refinement, Fresnel-based strength, edge/distance fade, 3 strength presets, half resolution
-4. **Bloom** — bright-pass + separable 9-tap Gaussian blur at half resolution
-5. **Composite** — `#define`-specialized shader that combines only the enabled features (AO × scene + SSR + bloom + color grading + vignette + exposure); disabled paths are compiled out entirely
-6. **TAA (Temporal Anti-Aliasing)** — Halton(2,3) sub-pixel jitter with 5-tap Catmull-Rom history sampling and YCoCg variance-clipped temporal accumulation. Catmull-Rom resampling preserves high-frequency texture detail across repeated accumulations, preventing the "JPG mush" that bilinear history sampling compounds
-7. **FXAA** — NVIDIA FXAA 3.11 as final cleanup pass. Automatically skipped when TAA is on (TAA already resolves aliasing and FXAA would blur its output)
+## Compiled Scene Visual Features
 
-All effects are individually toggleable from the compile dialog. For the full technical breakdown of every pass, shader, and design trade-off, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md).
+Compiled scenes can currently offer:
 
-#### Compile dialog controls
+- PBR materials with HDR reflections and tuned environment intensity
+- fog, horizon, solid-color, image-sky, and preset background modes
+- desktop high-quality rendering mode
+- shadow presets for performance vs visual quality
+- reflection source selection between HDR presets and scene probes
+- walkable-surface collisions using helper meshes authored in the editor
 
-- Render quality: Standard / High
-- Shadow quality: Off / Medium / High
-- Anti-aliasing: Off / Balanced / High / Ultra
-- Post-processing master toggle
-- SAO ambient occlusion: Off / Soft / Balanced / Strong
-- SSR reflection strength: Off / Subtle / Balanced / Strong
-- TAA temporal anti-aliasing toggle
-- Bloom strength: Off / Subtle / Moderate / Strong
-- Color grading, exposure, contrast, vignette presets
-- FXAA edge smoothing strength
-- FPS meter toggle for performance monitoring
+## Rendering Paths for Compiled Scenes
 
-### Collaboration and publishing
+VRodos now ships two compiled-scene post-processing engines. The engine is selected per scene through the compile dialog.
 
-- Networked multi-user runtime through the bundled `networked-aframe` server
-- WebRTC/easyRTC-based collaboration support
-- Build outputs served through the local/runtime web server
+### Legacy engine
 
-## Technology Stack
+The `Legacy` engine is the original custom VRodos post-FX path and still covers the broadest effect set.
 
-- WordPress 6.x
-- PHP 8.3+
-- Vanilla JavaScript
-- Three.js r181 in the editor/runtime vendor stack
-- Pinned A-Frame master runtime (commit `96cc74fa7a4640f394a78985a637a788daf56186`) in the compiled runtime
-- Node.js server for networked/collaborative features
+It currently supports:
+
+- custom SAO
+- custom SSR
+- bloom
+- color grading
+- vignette
+- FXAA
+- optional TAA
+
+Choose the legacy engine when a scene depends on:
+
+- SSR
+- TAA
+- the existing custom AO/reflection look
+
+For the deep technical breakdown of the legacy custom renderer, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). That document is a legacy-pipeline reference, not a full description of the PMNDRS/Takram path.
+
+### PMNDRS engine
+
+The `Pmndrs` engine is the newer composer-based path for compiled desktop scenes.
+
+It currently supports:
+
+- `EffectComposer` / `EffectPass`-based rendering
+- anti-aliasing modes: `none`, `smaa`, `msaa`
+- bloom controls
+- tone-map exposure control
+- vignette controls
+- Takram atmosphere controls
+- Takram sky ownership for the PMNDRS Horizon path
+
+Important current limitations:
+
+- SSR is not available on the PMNDRS path
+- TAA is not available on the PMNDRS path
+- SSAO is currently disabled on the live PMNDRS build
+- bloom is skipped for Horizon backgrounds to avoid sky haloing
+
+For current-state PMNDRS/Takram decisions and follow-up work, see [`POSTPROCESSING_MIGRATION_PLAN.md`](POSTPROCESSING_MIGRATION_PLAN.md).
+
+## Takram Support
+
+Takram support in VRodos currently means atmosphere and sky integration, not clouds.
+
+### Shipped now
+
+- Takram atmosphere resources bundled with the runtime
+- PMNDRS compile-dialog controls for atmosphere quality and advanced tuning
+- Takram-driven sky ownership on the PMNDRS Horizon path
+- atmospheric tuning for sun position, scattering, ground, and aerial-strength behavior
+
+### Not shipped yet
+
+- Takram volumetric clouds
+
+## Compile Dialog Controls
+
+The compile dialog exposes both shared controls and engine-specific controls.
+
+### Shared controls
+
+- render quality
+- shadow quality
+- reflection profile and reflection source
+- post-FX master toggle
+- ambient occlusion preset authoring surface
+- bloom toggle / preset
+- color grading toggle with exposure and contrast presets
+- vignette toggle
+- fog and background configuration authored from the scene
+- FPS meter toggle
+
+### Legacy-only controls
+
+- SSR strength
+- TAA toggle
+- legacy edge smoothing / FXAA tuning
+- the currently active AO implementation behind the shared AO presets
+
+### PMNDRS-only controls
+
+- AA mode: `none`, `smaa`, `msaa`
+- AA preset: `low`, `medium`, `high`, `ultra`
+- bloom multiplier
+- bloom threshold
+- tone-map exposure
+- vignette darkness
+- Takram atmosphere toggle
+- atmosphere preset: `performance`, `balanced`, `quality`, `cinematic`, `custom`
+- advanced atmosphere controls for:
+  - sun elevation and azimuth
+  - sun radius and distance
+  - aerial strength and albedo scale
+  - transmittance, inscatter, and ground toggles
+  - Rayleigh, Mie, absorption, and moon settings
 
 ## Core WordPress Model
 
@@ -110,17 +177,28 @@ VRodos uses custom post types and taxonomies for its content model:
 - `vrodos_scene`: scenes
 - `vrodos_asset3d`: assets
 
-The plugin follows a manager-class architecture, with responsibilities split across dedicated managers for assets, scenes, AJAX, upload handling, compilation, defaults, roles, menus, settings, and pages.
+The plugin follows a manager-class architecture, with dedicated managers for assets, scenes, AJAX, uploads, compilation, defaults, roles, menus, settings, and pages.
 
 ## Typical Workflow
 
 1. Create a project.
 2. Create one or more scenes.
 3. Upload or edit assets.
-4. Add assets to the scene editor and configure transforms, lights, and background.
-5. Optionally add helper assets in the `Walkable Surfaces` category for compiled navigation.
-6. Open the compile dialog and choose compiled-output quality settings.
+4. Add assets to the scene editor and configure transforms, lights, background, and movement helpers.
+5. Add helper meshes to the `Walkable Surfaces` category if the compiled scene needs guided collisions.
+6. Open the compile dialog and choose the rendering engine and quality settings.
 7. Build the project to generate compiled A-Frame output.
+
+## Technology Stack
+
+- WordPress 6.x
+- PHP 8.3+
+- Vanilla JavaScript
+- Three.js vendor stack `r181`
+- Pinned A-Frame master runtime for compiled scenes
+- `pmndrs/postprocessing` for the PMNDRS compiled-scene engine
+- Takram atmosphere runtime bundle for atmosphere / sky integration
+- Node.js server for networked and collaborative features
 
 ## Local Development
 
@@ -146,7 +224,7 @@ cd server/
 node easyrtc-server.js
 ```
 
-By default, the local runtime server is commonly used on port `5832`.
+The local runtime server is commonly used on port `5832`.
 
 ## Upload Limits
 
@@ -159,29 +237,28 @@ If large assets fail to upload, check:
 - Apache or Local WP request/body size limits
 - WordPress/media-related server limits
 
-For Local WP environments, Apache limits can still block uploads even when PHP limits look large enough.
-
 ## Troubleshooting
 
 ### Scene editor does not load correctly
 
 - Verify plugin scripts are enqueued.
 - Check the browser console for JavaScript errors.
-- Confirm Three.js and editor assets are present in the plugin directory.
+- Confirm the Three.js/editor assets are present in the plugin directory.
 
 ### Compiled scene looks flat or low quality
 
-- Rebuild after changing compile dialog quality settings.
+- Rebuild after changing compile-dialog quality settings.
 - Use `High` render quality for desktop-oriented scenes.
-- Enable post-processing and set SAO to Balanced or Strong for depth.
-- Enable SSR (Balanced) for reflective surfaces — requires PBR materials with metalness/roughness.
-- Review authored GLB material quality, textures, and lighting setup.
+- Choose the engine that matches the scene's needs:
+  - `Legacy` for SSR/TAA/custom AO needs
+  - `Pmndrs` for composer-based AA and Takram atmosphere controls
+- Review authored materials, textures, lighting, and reflection settings.
 
 ### Walkable surfaces do not behave as expected
 
 - Ensure the helper asset belongs to the `Walkable Surfaces` category.
 - Rebuild the scene after changing walkable geometry.
-- Use simpler helper meshes for navigation when the visible GLB is noisy or anomalous.
+- Prefer simpler helper meshes when the visible GLB is noisy or irregular.
 
 ### Large uploads fail
 
