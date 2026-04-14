@@ -16,6 +16,9 @@ class VRodos_Asset_Manager {
 		add_action( 'wp_enqueue_scripts', $this->enqueue_scene_editor_scripts(...), 999 );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_project_manager_scripts(...), 999 );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_assets_list_scripts(...) );
+
+        // Modern stats-gl module loader
+		add_filter( 'script_loader_tag', $this->filter_stats_gl_tag(...), 10, 3 );
 	}
 	
 	public function enqueue_dashboard_scripts( $hook ) {
@@ -106,6 +109,7 @@ class VRodos_Asset_Manager {
 
 		// Scripts from original enqueue_scene_editor_scripts
 		wp_enqueue_script( 'vrodos_scripts' );
+		wp_enqueue_script( 'stats-gl' );
 		$this->enqueue_three_vendor_bundle();
 		wp_enqueue_script( 'vrodos_inflate' );
 		wp_enqueue_script( 'vrodos_icons' );
@@ -236,6 +240,7 @@ class VRodos_Asset_Manager {
 
 		// Load single asset: Load existing asset
 		wp_enqueue_script( 'vrodos_AssetViewer_3D_kernel' );
+		wp_enqueue_script( 'stats-gl' );
 
 		// Load scripts for asset editor
 		wp_enqueue_script( 'vrodos_asset_editor_scripts' );
@@ -262,6 +267,7 @@ class VRodos_Asset_Manager {
       ['vrodos_inflate', $plugin_url_js . 'external_js_libraries/inflate.min.js'],
       ['vrodos_scene_settings_schema', $plugin_url_js . 'vrodos_scene_settings_schema.js'],
       ['vrodos_ScenePersistence', $plugin_url_js . 'vrodos_ScenePersistence.js', ['vrodos_scene_settings_schema']],
+      ['stats-gl', 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js'],
       ['vrodos_vr_editor_analytics', $plugin_url_js . 'vrodos_3d_editor_analytics.js'],
       // AJAX Scripts
       ['ajax-script_compile', $plugin_url_js . 'ajaxes/vrodos_request_compile.js'],
@@ -334,5 +340,24 @@ class VRodos_Asset_Manager {
 			. 'window.vrodos_three_font_path = ' . wp_json_encode( $three_vendor_base . 'fonts/helvetiker_bold.typeface.json' ) . ';'
 			. 'window.vrodos_render_runtime = ' . wp_json_encode( $runtime_config ) . ';';
 		wp_add_inline_script( 'vrodos_three_vendor_bundle', $inline_script, 'before' );
+	}
+
+	/**
+	 * Filters the script tag for stats-gl to load it as a module and assign to window.Stats.
+	 */
+	public function filter_stats_gl_tag( $tag, $handle, $src ) {
+		if ( 'stats-gl' !== $handle ) {
+			return $tag;
+		}
+
+		// Use a module loader to safely import and assign to window.Stats with fallback
+		return sprintf(
+			'<script type="module">
+                import("%1$s")
+                    .then(m => { window.Stats = m.default; })
+                    .catch(e => { console.warn("VRodos Error: stats-gl failed to load from CDN. Scene will continue without performance overlay.", e); });
+            </script>',
+			esc_url( $src )
+		);
 	}
 }

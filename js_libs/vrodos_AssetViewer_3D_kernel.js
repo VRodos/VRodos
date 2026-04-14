@@ -52,12 +52,27 @@ class VRodos_AssetViewer_3D_kernel {
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-        if (this.statsSwitch) {
-            this.stats = new Stats();
-            const wrapper = document.getElementById('wrapper_3d_inner');
-            if (wrapper) {
-                wrapper.appendChild(this.stats.dom);
-                this.stats.dom.style.removeProperty('left');
+        if (this.statsSwitch && typeof Stats !== 'undefined') {
+            try {
+                this.stats = new Stats({ minimal: true });
+
+                // Initialize with renderer for GPU tracking if stats-gl
+                if (typeof this.stats.init === 'function') {
+                    this.stats.init(this.renderer);
+                }
+
+                const wrapper = document.getElementById('wrapper_3d_inner');
+                if (wrapper) {
+                    wrapper.appendChild(this.stats.dom);
+                    this.stats.dom.style.position = 'absolute';
+                    this.stats.dom.style.top = '12px';
+                    this.stats.dom.style.left = '12px';
+                    this.stats.dom.style.right = 'auto';
+                    this.stats.dom.style.zIndex = '9999';
+                }
+            } catch (e) {
+                console.warn("VRodos: AssetViewer stats failed to initialize.", e);
+                this.stats = null;
             }
         }
 

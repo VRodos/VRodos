@@ -1,4 +1,4 @@
-﻿/**
+/**
  * VRodos Master Scene Settings Component
  */
 
@@ -319,21 +319,38 @@ AFRAME.registerComponent('scene-settings', {
             return;
         }
 
-        this.fpsStats = new Stats();
-        this.fpsStats.showPanel(0);
-        this.fpsStatsRoot = this.fpsStats.dom || this.fpsStats.domElement || null;
-        if (!this.fpsStatsRoot) {
-            this.fpsStats = null;
-            return;
-        }
+        try {
+            // Modern stats-gl initialization (minimal: true enables panel cycling on click)
+            this.fpsStats = new Stats({ minimal: true });
 
-        this.fpsStatsRoot.style.position = 'fixed';
-        this.fpsStatsRoot.style.top = '12px';
-        this.fpsStatsRoot.style.right = '12px';
-        this.fpsStatsRoot.style.left = 'auto';
-        this.fpsStatsRoot.style.zIndex = '9999';
-        this.fpsStatsRoot.style.opacity = '0.92';
-        document.body.appendChild(this.fpsStatsRoot);
+            // Initialize with renderer for GPU tracking if available
+            if (typeof this.fpsStats.init === 'function' && this.el.renderer) {
+                this.fpsStats.init(this.el.renderer);
+            }
+
+            // stats-gl panels (0: FPS, 1: MS, 2: MB)
+            if (typeof this.fpsStats.showPanel === 'function') {
+                this.fpsStats.showPanel(0);
+            }
+
+            this.fpsStatsRoot = this.fpsStats.dom || this.fpsStats.domElement || null;
+            if (!this.fpsStatsRoot) {
+                this.fpsStats = null;
+                return;
+            }
+
+            this.fpsStatsRoot.id = 'vrodos-stats-meter';
+            this.fpsStatsRoot.style.position = 'fixed';
+            this.fpsStatsRoot.style.top = '16px';
+            this.fpsStatsRoot.style.left = '16px';
+            this.fpsStatsRoot.style.right = 'auto';
+            this.fpsStatsRoot.style.zIndex = '9999';
+            this.fpsStatsRoot.style.opacity = '0.92';
+            document.body.appendChild(this.fpsStatsRoot);
+        } catch (e) {
+            console.warn("VRodos Error: Stats.js/stats-gl failed to initialize. Scene will continue.", e);
+            this.fpsStats = null;
+        }
     },
     disableFPSMeter: function () {
         if (!this.fpsStats) {

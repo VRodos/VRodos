@@ -15,7 +15,11 @@
     <script src="AFRAME_RUNTIME_URL_PLACEHOLDER"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+    <!-- Modern performance monitor with fallback -->
+    <script type="module">
+        import Stats from 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js';
+        window.Stats = Stats;
+    </script>
     <link rel="stylesheet" href="https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.css" />
     <script src="https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.umd.js"></script>
 
