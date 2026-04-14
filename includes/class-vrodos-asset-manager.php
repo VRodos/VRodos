@@ -105,7 +105,6 @@ class VRodos_Asset_Manager {
 		wp_enqueue_style( 'vrodos_3D_editor_browser' );
 
 		// Scripts from original enqueue_scene_editor_scripts
-		wp_enqueue_script( 'jquery-ui-draggable' );
 		wp_enqueue_script( 'vrodos_scripts' );
 		$this->enqueue_three_vendor_bundle();
 		wp_enqueue_script( 'vrodos_inflate' );

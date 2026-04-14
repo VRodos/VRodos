@@ -1,4 +1,4 @@
-jQuery(document).ready(function($) {
+window.addEventListener('DOMContentLoaded', () => {
     const Shared = VRodosCompileUI.Shared;
 
 
