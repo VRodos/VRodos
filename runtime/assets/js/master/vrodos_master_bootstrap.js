@@ -143,7 +143,7 @@
     }
 
     function buildVideoControlGui(buttonEl) {
-        if (typeof window.NAF === 'undefined' || typeof dat === 'undefined') {
+        if (typeof window.NAF === 'undefined' || typeof lil === 'undefined') {
             return;
         }
 
@@ -161,7 +161,7 @@
             // Ignore old GUI teardown failures.
         }
 
-        buttonEl.gui = new dat.GUI({ width: 200 });
+        buttonEl.gui = new lil.GUI({ width: 200 });
 
         if (!entities) {
             return;
@@ -210,7 +210,7 @@
                     controller.panelaki = panels[entityId];
                     controller.domElement.pName = entityId;
                     controller.onChange(function () {
-                        var panel = this.panelaki !== undefined ? this.panelaki : buttonEl.gui.__folders[this.domElement.parentElement.pName].__controllers[5].panelaki;
+                        var panel = this.panelaki !== undefined ? this.panelaki : this.parent.controllers[5].panelaki;
                         var value = apiPatternSingle[this.property];
 
                         if (this.property === 'w') {
