@@ -4861,6 +4861,10 @@ input.tw-tab:checked + .tw-tab-content,
   background-color: rgb(255 255 255 / 0.95);
 }
 
+.vrodos-manager-wrapper .tw-bg-slate-700\/30 {
+  background-color: rgb(51 65 85 / 0.3);
+}
+
 .vrodos-manager-wrapper .tw-bg-\[radial-gradient\(circle_at_top\,_rgba\(16\,185\,129\,0\.08\)\,_rgba\(248\,250\,252\,0\.96\)_48\%\,_rgba\(241\,245\,249\,1\)_100\%\)\] {
   background-image: radial-gradient(circle at top, rgba(16,185,129,0.08), rgba(248,250,252,0.96) 48%, rgba(241,245,249,1) 100%);
 }
@@ -6949,6 +6953,10 @@ body.vrodos-manager-wrapper {
 
 .vrodos-manager-wrapper .hover\:tw-bg-white\/80:hover {
   background-color: rgb(255 255 255 / 0.8);
+}
+
+.vrodos-manager-wrapper .hover\:tw-bg-slate-700\/50:hover {
+  background-color: rgb(51 65 85 / 0.5);
 }
 
 .vrodos-manager-wrapper .hover\:tw-text-blue-400:hover {

@@ -313,12 +313,15 @@ extract( $data );
 					<div id="numerical_gui-container" class="VrGuiContainerStyle"></div>
 
 					<!-- Constrain scale -->
-					<div class="tw-flex tw-items-center tw-gap-2 tw-px-3 tw-py-1.5 tw-border-t tw-border-white/5">
+					<div class="tw-flex tw-items-center tw-justify-between tw-px-3 tw-py-2 tw-bg-slate-700/30 tw-border-t tw-border-white/5 hover:tw-bg-slate-700/50 tw-transition-colors">
+						<div class="tw-flex tw-items-center tw-gap-2">
+							<i data-lucide="link-2" class="tw-w-3 tw-h-3 tw-text-slate-400"></i>
+							<label for="scaleLockCheckbox" class="tw-text-[11px] tw-font-semibold tw-text-slate-200 tw-cursor-pointer">Uniform Scaling</label>
+						</div>
 						<input type="checkbox" title="Constrain Scale dims to one value"
 							   id="scaleLockCheckbox" name="scaleLockCheckbox" form="3dAssetForm"
-							   class="tw-checkbox tw-checkbox-sm tw-checkbox-primary"
-							   onchange="keepScaleAspectRatio(this.checked)">
-						<label for="scaleLockCheckbox" class="tw-text-xs tw-text-slate-300 tw-cursor-pointer">Constrain Scale</label>
+							   class="tw-checkbox tw-checkbox-xs tw-checkbox-primary tw-border-white/20"
+							   onchange="keepScaleAspectRatio(this.checked)" checked>
 					</div>
 
 					<!-- Object Properties (auto-shown on selection based on category) -->

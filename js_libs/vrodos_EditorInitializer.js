@@ -46,6 +46,11 @@ function initVrodosEditor() {
     window.envir = new vrodos_3d_editor_environmentals(mainDiv);
     envir.is2d = false;
 
+    // Initialize scale constraint to true (Uniform Scaling) by default
+    if (envir.scene) {
+        envir.scene.keepScaleAspectRatio = true;
+    }
+
     // Transform Controls
     window.transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement);
     window.transform_controls_helper = (typeof transform_controls.getHelper === 'function') ?

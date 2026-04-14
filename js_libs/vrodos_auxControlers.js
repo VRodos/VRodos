@@ -1054,34 +1054,72 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
         envir.scene.dispatchEvent({type:"modificationPendingSave"});
     }
 
+    const scaleSyncEpsilon = 0.00001;
+    const activeAxis = transform_controls.axis;
+    const isScaling = transform_controls.mode === 'scale' && transform_controls.dragging;
+    const sStart = transform_controls._scaleStart;
+
     //---------scale_x -------------------------------
-    if (transform_controls.object.scale.x !== gui_controls_funs.dg_s1){
-        gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
-        if (envir.scene.keepScaleAspectRatio) {
-            gui_controls_funs.dg_s2 = transform_controls.object.scale.x;
-            gui_controls_funs.dg_s3 = transform_controls.object.scale.x;
+    if (Math.abs(transform_controls.object.scale.x - gui_controls_funs.dg_s1) > scaleSyncEpsilon){
+        const isMaster = !isScaling || (activeAxis && activeAxis.indexOf('X') !== -1);
+        if (isMaster) {
+            gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
+            if (envir.scene.keepScaleAspectRatio) {
+                if (isScaling && sStart && Math.abs(sStart.x) > 0.0001) {
+                    const ratio = transform_controls.object.scale.x / sStart.x;
+                    transform_controls.object.scale.y = sStart.y * ratio;
+                    transform_controls.object.scale.z = sStart.z * ratio;
+                } else {
+                    transform_controls.object.scale.y = transform_controls.object.scale.x;
+                    transform_controls.object.scale.z = transform_controls.object.scale.x;
+                }
+                gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
+                gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
+            }
+            envir.scene.dispatchEvent({ type: "modificationPendingSave" });
         }
-        envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 
     //---------scale_y -------------------------------
-    if (transform_controls.object.scale.y !== gui_controls_funs.dg_s2){
-        gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
-        if (envir.scene.keepScaleAspectRatio) {
-            gui_controls_funs.dg_s1 = transform_controls.object.scale.y;
-            gui_controls_funs.dg_s3 = transform_controls.object.scale.y;
+    if (Math.abs(transform_controls.object.scale.y - gui_controls_funs.dg_s2) > scaleSyncEpsilon){
+        const isMaster = !isScaling || (activeAxis && activeAxis.indexOf('Y') !== -1);
+        if (isMaster) {
+            gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
+            if (envir.scene.keepScaleAspectRatio) {
+                if (isScaling && sStart && Math.abs(sStart.y) > 0.0001) {
+                    const ratio = transform_controls.object.scale.y / sStart.y;
+                    transform_controls.object.scale.x = sStart.x * ratio;
+                    transform_controls.object.scale.z = sStart.z * ratio;
+                } else {
+                    transform_controls.object.scale.x = transform_controls.object.scale.y;
+                    transform_controls.object.scale.z = transform_controls.object.scale.y;
+                }
+                gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
+                gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
+            }
+            envir.scene.dispatchEvent({ type: "modificationPendingSave" });
         }
-        envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 
     //---------scale_z -------------------------------
-    if (transform_controls.object.scale.z !== gui_controls_funs.dg_s3){
-        gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
-        if (envir.scene.keepScaleAspectRatio) {
-            gui_controls_funs.dg_s1 = transform_controls.object.scale.z;
-            gui_controls_funs.dg_s2 = transform_controls.object.scale.z;
+    if (Math.abs(transform_controls.object.scale.z - gui_controls_funs.dg_s3) > scaleSyncEpsilon){
+        const isMaster = !isScaling || (activeAxis && activeAxis.indexOf('Z') !== -1);
+        if (isMaster) {
+            gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
+            if (envir.scene.keepScaleAspectRatio) {
+                if (isScaling && sStart && Math.abs(sStart.z) > 0.0001) {
+                    const ratio = transform_controls.object.scale.z / sStart.z;
+                    transform_controls.object.scale.x = sStart.x * ratio;
+                    transform_controls.object.scale.y = sStart.y * ratio;
+                } else {
+                    transform_controls.object.scale.x = transform_controls.object.scale.z;
+                    transform_controls.object.scale.y = transform_controls.object.scale.z;
+                }
+                gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
+                gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
+            }
+            envir.scene.dispatchEvent({ type: "modificationPendingSave" });
         }
-        envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     }
 
 }
