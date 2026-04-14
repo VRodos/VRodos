@@ -288,7 +288,11 @@ class VRodos_Asset_Manager {
       ['vrodos_addRemoveOne', $plugin_url_js . 'vrodos_addRemoveOne.js'],
       ['vrodos_icons', $plugin_url_js . 'vrodos_icons.js'],
       ['vrodos_HierarchyViewer', $plugin_url_js . 'vrodos_HierarchyViewer.js'],
-      ['vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js'],
+      ['vrodos_CompileUI_Shared', $plugin_url_js . 'vrodos_CompileUI_Shared.js'],
+      ['vrodos_CompileUI_General', $plugin_url_js . 'vrodos_CompileUI_General.js', ['vrodos_CompileUI_Shared']],
+      ['vrodos_CompileUI_PostFX', $plugin_url_js . 'vrodos_CompileUI_PostFX.js', ['vrodos_CompileUI_Shared']],
+      ['vrodos_CompileUI_Atmosphere', $plugin_url_js . 'vrodos_CompileUI_Atmosphere.js', ['vrodos_CompileUI_Shared']],
+      ['vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js', ['vrodos_CompileUI_Shared', 'vrodos_CompileUI_General', 'vrodos_CompileUI_PostFX', 'vrodos_CompileUI_Atmosphere']],
       ['vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js', ['ajax-script_create_game']],
       ['vrodos_EditorInitializer', $plugin_url_js . 'vrodos_EditorInitializer.js', ['vrodos_scripts', 'vrodos_scene_settings_schema', 'vrodos_ScenePersistence', 'vrodos_LoaderMulti', 'vrodos_3d_editor_environmentals', 'vrodos_addRemoveOne', 'vrodos_3d_editor_buttons_drags']],
       // Active Three vendor bundle paired with the pinned A-Frame runtime.

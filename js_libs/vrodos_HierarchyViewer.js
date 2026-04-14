@@ -1,14 +1,35 @@
 /**
  *   Reset object in scene
  */
-function resetInScene(name){
+function resetInScene(name) {
+    let obj = null;
 
     if (name === "avatarCamera") {
-        envir.resetDirectorTransform();
+        if (typeof envir.resetDirectorTransform === 'function') {
+            envir.resetDirectorTransform();
+        }
+        obj = envir.getDirectorObject();
     } else {
-        envir.scene.getObjectByName(name).position.set(0, 1.3, 0);
-        envir.scene.getObjectByName(name).rotation.set(0, 0, 0);
-        envir.scene.getObjectByName(name).scale.set(1, 1, 1);
+        obj = envir.scene.getObjectByName(name);
+        if (obj) {
+            obj.position.set(0, 1.3, 0);
+            obj.rotation.set(0, 0, 0);
+            obj.scale.set(1, 1, 1);
+        }
+    }
+
+    if (obj) {
+        // Update transform controls if this object is selected
+        if (typeof transform_controls !== 'undefined' && transform_controls.object === obj) {
+            if (typeof updatePositionsAndControls === 'function') {
+                updatePositionsAndControls();
+            }
+        }
+
+        // Trigger save
+        if (typeof triggerAutoSave === 'function') {
+            triggerAutoSave();
+        }
     }
 }
 
@@ -410,10 +431,11 @@ function CreateLockButton(obj) {
 }
 
 function CreateResetButton(obj){
-
+    // Properly escape names for onclick
+    const escapedName = (obj.name || "").replace(/'/g, "\\'");
     return '<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-blue-400 tw-transition-colors" aria-label="Reset asset"' +
         ' title="Reset asset object" onclick="event.stopPropagation(); ' +
-        'resetInScene(\'' + obj.name + '\');'
+        'resetInScene(\'' + escapedName + '\');'
         + '">' +
         '<i data-lucide="refresh-cw" class="tw-w-4 tw-h-4"></i>' +
         '</a>';

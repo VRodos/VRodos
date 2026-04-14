@@ -52,6 +52,14 @@ class VRodos_LightsPawn_Loader {
                 continue;
             }
 
+            // Restore Director/Camera position
+            if (name === 'cameraCoords' && typeof resource === 'object') {
+                if (typeof envir !== 'undefined' && typeof envir.applyDirectorTransform === 'function') {
+                    envir.applyDirectorTransform(resource.position, resource.rotation);
+                }
+                continue;
+            }
+
             // Fallback for flat metadata (backward compatibility)
             if (name === 'fogCategory' || name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity') {
                this.processSceneSettings(resources3D);
