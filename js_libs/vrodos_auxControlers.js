@@ -1,11 +1,3 @@
-/**
- * lil-gui controls variables initialize (migrated from dat.gui)
- *
- * @type {gui_controls_funs}
- */
-let dg_s1_prev;
-let dg_s2_prev;
-let dg_s3_prev;
 
 // ─── Cel-shaded selection outline (back-face hull) ───
 
@@ -31,7 +23,7 @@ function addCelOutline(object) {
             const outline = new THREE.Mesh(child.geometry, CEL_OUTLINE_MATERIAL);
             outline.name = CEL_OUTLINE_TAG;
             outline.scale.setScalar(1.04);
-            outline.raycast = function () {}; // invisible to raycasting
+            outline.raycast = function () { }; // invisible to raycasting
             outline.frustumCulled = false;
             child.add(outline);
             if (typeof envir !== 'undefined' && envir.celOutlineMeshes) {
@@ -104,24 +96,24 @@ function showObjectControlsPanel(objectName) {
     }
 
     // Position 100px to the right of last click, clamped to viewport
-    let panelW = panel.offsetWidth  || 280;
+    let panelW = panel.offsetWidth || 280;
     let panelH = panel.offsetHeight || 300;
     let mx = _lastClickX || (window.innerWidth / 2);
     let my = _lastClickY || (window.innerHeight / 2);
 
     let left = mx + 100;
-    let top  = my - panelH / 2;
+    let top = my - panelH / 2;
 
     // If it would go off the right edge, place it to the left of the cursor instead
     if (left + panelW > window.innerWidth - 8) {
         left = mx - 100 - panelW;
     }
     // Final clamp
-    left = Math.max(8, Math.min(left, window.innerWidth  - panelW - 8));
-    top  = Math.max(40, Math.min(top,  window.innerHeight - panelH - 8));
+    left = Math.max(8, Math.min(left, window.innerWidth - panelW - 8));
+    top = Math.max(40, Math.min(top, window.innerHeight - panelH - 8));
 
-    panel.style.left  = Math.round(left) + 'px';
-    panel.style.top   = Math.round(top)  + 'px';
+    panel.style.left = Math.round(left) + 'px';
+    panel.style.top = Math.round(top) + 'px';
     panel.style.right = 'auto';
 }
 
@@ -215,12 +207,12 @@ function ensureAssessmentPropertiesSection() {
     section.innerHTML =
         '<div class="prop-section-title" style="padding-bottom:2px; margin-bottom:2px;">Assessment Details</div>' +
         '<div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
-            '<div>' +
-                '<div id="assessmentTypeValue" class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-2 tw-py-0.5 tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-[0.1em] tw-text-sky-200"></div>' +
-            '</div>' +
-            '<div>' +
-                '<div id="assessmentLevelsValue" class="tw-flex tw-flex-wrap tw-gap-1"></div>' +
-            '</div>' +
+        '<div>' +
+        '<div id="assessmentTypeValue" class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-2 tw-py-0.5 tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-[0.1em] tw-text-sky-200"></div>' +
+        '</div>' +
+        '<div>' +
+        '<div id="assessmentLevelsValue" class="tw-flex tw-flex-wrap tw-gap-1"></div>' +
+        '</div>' +
         '</div>';
 
     container.appendChild(section);
@@ -295,12 +287,12 @@ function ensureWalkableSurfacePropertiesSection() {
     section.innerHTML =
         '<div class="prop-section-title" style="padding-bottom:2px; margin-bottom:2px;">Walkable Surface</div>' +
         '<div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
-            '<label for="walkableBehaviorSelect" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Walking Behavior</label>' +
-            '<select id="walkableBehaviorSelect" class="tw-select tw-select-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
-                '<option value="precise">Precise</option>' +
-                '<option value="auto">Auto</option>' +
-            '</select>' +
-            '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Use <strong class="tw-text-slate-300">Auto</strong> for uploaded GLBs with messy or uneven topology. Use <strong class="tw-text-slate-300">Precise</strong> for cleaner helper meshes.</div>' +
+        '<label for="walkableBehaviorSelect" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Walking Behavior</label>' +
+        '<select id="walkableBehaviorSelect" class="tw-select tw-select-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
+        '<option value="precise">Precise</option>' +
+        '<option value="auto">Auto</option>' +
+        '</select>' +
+        '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Use <strong class="tw-text-slate-300">Auto</strong> for uploaded GLBs with messy or uneven topology. Use <strong class="tw-text-slate-300">Precise</strong> for cleaner helper meshes.</div>' +
         '</div>';
 
     container.appendChild(section);
@@ -478,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
     header.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
         panel.style.left = (startLeft + e.clientX - startX) + 'px';
-        panel.style.top  = (startTop  + e.clientY - startY) + 'px';
+        panel.style.top = (startTop + e.clientY - startY) + 'px';
     });
 
     header.addEventListener('pointerup', (e) => {
@@ -531,9 +523,9 @@ for (let key in gui_controls_funs) {
 
     // Patch getValue to ALWAYS return a number — lil-gui's updateDisplay calls .toFixed()
     // which crashes on strings/NaN. This is the definitive guard.
-    (function(ctrl) {
+    (function (ctrl) {
         let _origGetValue = ctrl.getValue.bind(ctrl);
-        ctrl.getValue = function() {
+        ctrl.getValue = function () {
             let v = _origGetValue();
             return (typeof v === 'number' && !isNaN(v)) ? v : 0;
         };
@@ -658,262 +650,226 @@ function controllerDatGuiOnChange() {
 
     // --- Translation ---
     dg_controller[0].onChange((value) => {
-            if (!_isDragScrubbing) return;
-            value = parseFloat(value) || 0;
-            if (transform_controls.object) transform_controls.object.position.x = value;
-        }
+        if (!_isDragScrubbing) return;
+        value = parseFloat(value) || 0;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) target.position.x = value;
+    }
     );
     dg_controller[0].onFinishChange((value) => {
-            value = parseFloat(value) || 0;
-            gui_controls_funs.dg_t1 = value;
-            if (transform_controls.object) transform_controls.object.position.x = value;
-            animate();
-            triggerAutoSave();
+        value = parseFloat(value) || 0;
+        gui_controls_funs.dg_t1 = value;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) {
+            target.position.x = value;
+            target.updateMatrix();
+            target.updateMatrixWorld();
         }
+        animate();
+        triggerAutoSave();
+    }
     );
 
     dg_controller[1].onChange((value) => {
-            if (!_isDragScrubbing) return;
-            value = parseFloat(value) || 0;
-            if (transform_controls.object) transform_controls.object.position.y = value;
-        }
+        if (!_isDragScrubbing) return;
+        value = parseFloat(value) || 0;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) target.position.y = value;
+    }
     );
     dg_controller[1].onFinishChange((value) => {
-            value = parseFloat(value) || 0;
-            gui_controls_funs.dg_t2 = value;
-            if (transform_controls.object) transform_controls.object.position.y = value;
-            animate();
-            triggerAutoSave();
+        value = parseFloat(value) || 0;
+        gui_controls_funs.dg_t2 = value;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) {
+            target.position.y = value;
+            target.updateMatrix();
+            target.updateMatrixWorld();
         }
+        animate();
+        triggerAutoSave();
+    }
     );
 
     dg_controller[2].onChange((value) => {
-            if (!_isDragScrubbing) return;
-            value = parseFloat(value) || 0;
-            if (transform_controls.object) transform_controls.object.position.z = value;
-        }
+        if (!_isDragScrubbing) return;
+        value = parseFloat(value) || 0;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) target.position.z = value;
+    }
     );
     dg_controller[2].onFinishChange((value) => {
-            value = parseFloat(value) || 0;
-            gui_controls_funs.dg_t3 = value;
-            if (transform_controls.object) transform_controls.object.position.z = value;
-            animate();
-            triggerAutoSave();
+        value = parseFloat(value) || 0;
+        gui_controls_funs.dg_t3 = value;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) {
+            target.position.z = value;
+            target.updateMatrix();
+            target.updateMatrixWorld();
         }
+        animate();
+        triggerAutoSave();
+    }
     );
 
     // --- Rotation ---
     dg_controller[3].onChange((value) => {
-            if (!_isDragScrubbing) return;
-            value = parseFloat(value) || 0;
-            if (transform_controls.object) {
-                if (transform_controls.object.category_name == "camera") {
-                    transform_controls.object.rotation.x = 0;
-                } else {
-                    transform_controls.object.rotation.x = value / 180 * Math.PI;
-                }
-            }
-        }
+        if (!_isDragScrubbing) return;
+        value = parseFloat(value) || 0;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) target.rotation.x = value / 180 * Math.PI;
+    }
     );
     dg_controller[3].onFinishChange((value) => {
-            value = parseFloat(value) || 0;
-            gui_controls_funs.dg_r1 = value;
-            if (transform_controls.object) {
-                if (transform_controls.object.category_name == "camera") {
-                    transform_controls.object.rotation.x = 0;
-                    gui_controls_funs.dg_r1 = 0;
-                } else {
-                    transform_controls.object.rotation.x = value / 180 * Math.PI;
-                }
-            }
-            animate();
-            triggerAutoSave();
+        value = parseFloat(value) || 0;
+        gui_controls_funs.dg_r1 = value;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) {
+            target.rotation.x = value / 180 * Math.PI;
+            target.updateMatrix();
+            target.updateMatrixWorld();
         }
+        animate();
+        triggerAutoSave();
+    }
     );
 
     dg_controller[4].onChange((value) => {
-            if (!_isDragScrubbing) return;
-            value = parseFloat(value) || 0;
-            if (transform_controls.object) {
-                if (transform_controls.object.category_name == "camera") {
-                    transform_controls.object.rotation.y = 0;
-                } else {
-                    transform_controls.object.rotation.y = value / 180 * Math.PI;
-                }
-            }
-        }
+        if (!_isDragScrubbing) return;
+        value = parseFloat(value) || 0;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) target.rotation.y = value / 180 * Math.PI;
+    }
     );
     dg_controller[4].onFinishChange((value) => {
-            value = parseFloat(value) || 0;
-            gui_controls_funs.dg_r2 = value;
-            if (transform_controls.object) {
-                if (transform_controls.object.category_name == "camera") {
-                    transform_controls.object.rotation.y = 0;
-                    gui_controls_funs.dg_r2 = 0;
-                } else {
-                    transform_controls.object.rotation.y = value / 180 * Math.PI;
-                }
-            }
-            animate();
-            triggerAutoSave();
+        value = parseFloat(value) || 0;
+        gui_controls_funs.dg_r2 = value;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) {
+            target.rotation.y = value / 180 * Math.PI;
+            target.updateMatrix();
+            target.updateMatrixWorld();
         }
+        animate();
+        triggerAutoSave();
+    }
     );
 
     dg_controller[5].onChange((value) => {
-            if (!_isDragScrubbing) return;
-            value = parseFloat(value) || 0;
-            if (transform_controls.object) {
-                if (transform_controls.object.category_name == "camera") {
-                    transform_controls.object.rotation.z = 0;
-                } else {
-                    transform_controls.object.rotation.z = value / 180 * Math.PI;
-                }
-            }
-        }
+        if (!_isDragScrubbing) return;
+        value = parseFloat(value) || 0;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) target.rotation.z = value / 180 * Math.PI;
+    }
     );
     dg_controller[5].onFinishChange((value) => {
-            value = parseFloat(value) || 0;
-            gui_controls_funs.dg_r3 = value;
-            if (transform_controls.object) {
-                if (transform_controls.object.category_name == "camera") {
-                    transform_controls.object.rotation.z = 0;
-                    gui_controls_funs.dg_r3 = 0;
-                } else {
-                    transform_controls.object.rotation.z = value / 180 * Math.PI;
-                }
-            }
-            animate();
-            triggerAutoSave();
+        value = parseFloat(value) || 0;
+        gui_controls_funs.dg_r3 = value;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) {
+            target.rotation.z = value / 180 * Math.PI;
+            target.updateMatrix();
+            target.updateMatrixWorld();
         }
+        animate();
+        triggerAutoSave();
+    }
     );
 
     // --- Scale ---
     dg_controller[6].onChange((value) => {
-            if (!_isDragScrubbing) return;
-            value = parseFloat(value) || 0;
-            if (!transform_controls.object) return;
-            if (transform_controls.object.category_name == "camera") return;
-            if (envir.scene.keepScaleAspectRatio) {
-                transform_controls.object.scale.set(value, value, value);
-                gui_controls_funs.dg_s2 = value;
-                gui_controls_funs.dg_s3 = value;
-                dg_controller[7].updateDisplay();
-                dg_controller[8].updateDisplay();
-            } else {
-                transform_controls.object.scale.set(value, gui_controls_funs.dg_s2, gui_controls_funs.dg_s3);
-            }
+        if (!_isDragScrubbing) return;
+        value = parseFloat(value) || 0;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (!target) return;
+        target.scale.x = value;
+        if (envir.scene.keepScaleAspectRatio) {
+            target.scale.y = value;
+            target.scale.z = value;
         }
+    }
     );
     dg_controller[6].onFinishChange((value) => {
-            value = parseFloat(value) || 0;
-            gui_controls_funs.dg_s1 = value;
-            if (!transform_controls.object) return;
-            if (transform_controls.object.category_name == "camera") {
-                transform_controls.object.scale.x = 1;
-                gui_controls_funs.dg_s1 = 1;
-            } else {
-                if (envir.scene.keepScaleAspectRatio) {
-                    transform_controls.object.scale.set(value, value, value);
-                    gui_controls_funs.dg_s2 = value;
-                    gui_controls_funs.dg_s3 = value;
-                    dg_controller[7].updateDisplay();
-                    dg_controller[8].updateDisplay();
-                } else {
-                    transform_controls.object.scale.set(value, gui_controls_funs.dg_s2, gui_controls_funs.dg_s3);
-                }
-                envir.scene.dispatchEvent({ type: "modificationPendingSave" });
-                dg_s1_prev = value;
+        value = parseFloat(value) || 0;
+        gui_controls_funs.dg_s1 = value;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) {
+            target.scale.x = value;
+            if (envir.scene.keepScaleAspectRatio) {
+                target.scale.y = value;
+                target.scale.z = value;
             }
-            animate();
-            triggerAutoSave();
+            target.updateMatrix();
+            target.updateMatrixWorld();
         }
+        animate();
+        triggerAutoSave();
+    }
     );
 
     dg_controller[7].onChange((value) => {
-            if (!_isDragScrubbing) return;
-            value = parseFloat(value) || 0;
-            if (!transform_controls.object) return;
-            if (transform_controls.object.category_name == "camera") return;
-            if (envir.scene.keepScaleAspectRatio) {
-                transform_controls.object.scale.set(value, value, value);
-                gui_controls_funs.dg_s1 = value;
-                gui_controls_funs.dg_s3 = value;
-                dg_controller[6].updateDisplay();
-                dg_controller[8].updateDisplay();
-            } else {
-                transform_controls.object.scale.set(gui_controls_funs.dg_s1, value, gui_controls_funs.dg_s3);
-            }
+        if (!_isDragScrubbing) return;
+        value = parseFloat(value) || 0;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (!target) return;
+        target.scale.y = value;
+        if (envir.scene.keepScaleAspectRatio) {
+            target.scale.x = value;
+            target.scale.z = value;
         }
+    }
     );
     dg_controller[7].onFinishChange((value) => {
-            value = parseFloat(value) || 0;
-            gui_controls_funs.dg_s2 = value;
-            if (!transform_controls.object) return;
-            if (transform_controls.object.category_name == "camera") {
-                transform_controls.object.scale.y = 1;
-                gui_controls_funs.dg_s2 = 1;
-            } else {
-                if (envir.scene.keepScaleAspectRatio) {
-                    transform_controls.object.scale.set(value, value, value);
-                    gui_controls_funs.dg_s1 = value;
-                    gui_controls_funs.dg_s3 = value;
-                    dg_controller[6].updateDisplay();
-                    dg_controller[8].updateDisplay();
-                } else {
-                    transform_controls.object.scale.set(gui_controls_funs.dg_s1, value, gui_controls_funs.dg_s3);
-                }
-                envir.scene.dispatchEvent({type:"modificationPendingSave"});
-                dg_s2_prev = value;
+        value = parseFloat(value) || 0;
+        gui_controls_funs.dg_s2 = value;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) {
+            target.scale.y = value;
+            if (envir.scene.keepScaleAspectRatio) {
+                target.scale.x = value;
+                target.scale.z = value;
             }
-            animate();
-            triggerAutoSave();
+            target.updateMatrix();
+            target.updateMatrixWorld();
         }
+        animate();
+        triggerAutoSave();
+    }
     );
 
     dg_controller[8].onChange((value) => {
-            if (!_isDragScrubbing) return;
-            value = parseFloat(value) || 0;
-            if (!transform_controls.object) return;
-            if (transform_controls.object.category_name == "camera") return;
-            if (envir.scene.keepScaleAspectRatio) {
-                transform_controls.object.scale.set(value, value, value);
-                gui_controls_funs.dg_s1 = value;
-                gui_controls_funs.dg_s2 = value;
-                dg_controller[6].updateDisplay();
-                dg_controller[7].updateDisplay();
-            } else {
-                transform_controls.object.scale.set(gui_controls_funs.dg_s1, gui_controls_funs.dg_s2, value);
-            }
+        if (!_isDragScrubbing) return;
+        value = parseFloat(value) || 0;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (!target) return;
+        target.scale.z = value;
+        if (envir.scene.keepScaleAspectRatio) {
+            target.scale.x = value;
+            target.scale.y = value;
         }
+    }
     );
     dg_controller[8].onFinishChange((value) => {
-            value = parseFloat(value) || 0;
-            gui_controls_funs.dg_s3 = value;
-            if (!transform_controls.object) return;
-            if (transform_controls.object.category_name == "camera") {
-                transform_controls.object.scale.z = 1;
-                gui_controls_funs.dg_s3 = 1;
-            } else {
-                if (envir.scene.keepScaleAspectRatio) {
-                    transform_controls.object.scale.set(value, value, value);
-                    gui_controls_funs.dg_s1 = value;
-                    gui_controls_funs.dg_s2 = value;
-                    dg_controller[6].updateDisplay();
-                    dg_controller[7].updateDisplay();
-                } else {
-                    transform_controls.object.scale.set(gui_controls_funs.dg_s1, gui_controls_funs.dg_s2, value);
-                }
-                envir.scene.dispatchEvent({type:"modificationPendingSave"});
-                dg_s3_prev = value;
+        value = parseFloat(value) || 0;
+        gui_controls_funs.dg_s3 = value;
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) {
+            target.scale.z = value;
+            if (envir.scene.keepScaleAspectRatio) {
+                target.scale.x = value;
+                target.scale.y = value;
             }
-            animate();
-            triggerAutoSave();
+            target.updateMatrix();
+            target.updateMatrixWorld();
         }
+        animate();
+        triggerAutoSave();
+    }
     );
 
     // Make slider-text controllers more interactive
     // lil-gui exposes .$input for the input element
-    let opCodes = ['Tx','Ty','Tz','Rx','Ry','Rz','Sx','Sy','Sz'];
+    let opCodes = ['Tx', 'Ty', 'Tz', 'Rx', 'Ry', 'Rz', 'Sx', 'Sy', 'Sz'];
     for (let idx = 0; idx < 9; idx++) {
         dg_controller[idx]._opCode = opCodes[idx];
         setEventListenerKeyPressControllerConstrained(dg_controller[idx].$input, dg_controller[idx]);
@@ -941,62 +897,69 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
 
     // While on Input Field on Focus and pressing enter for value
     element.addEventListener('keydown', (e) => {
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (!target) return;
 
         switch (controller._opCode) {
             case 'Tx':
                 gui_controls_funs.dg_t1 = element.value;
-                transform_controls.object.position.x = element.value;
+                target.position.x = element.value;
                 break;
             case 'Ty':
                 gui_controls_funs.dg_t2 = element.value;
-                transform_controls.object.position.y = element.value;
+                target.position.y = element.value;
                 break;
             case 'Tz':
                 gui_controls_funs.dg_t3 = element.value;
-                transform_controls.object.position.z = element.value;
+                target.position.z = element.value;
                 break;
             case 'Rx':
                 gui_controls_funs.dg_r1 = element.value;
-
-                transform_controls.object.rotation.x = element.value;
+                target.rotation.x = element.value / 180 * Math.PI;
+                target.updateMatrixWorld();
                 break;
             case 'Ry':
                 gui_controls_funs.dg_r2 = element.value;
-                transform_controls.object.rotation.y = element.value;
+                target.rotation.y = element.value / 180 * Math.PI;
+                target.updateMatrixWorld();
                 break;
             case 'Rz':
                 gui_controls_funs.dg_r3 = element.value;
-                transform_controls.object.rotation.z = element.value;
+                target.rotation.z = element.value / 180 * Math.PI;
+                target.updateMatrixWorld();
                 break;
             case 'Sx':
                 gui_controls_funs.dg_s1 = element.value;
-                transform_controls.object.scale.x = element.value;
+                target.scale.x = element.value;
                 if (envir.scene.keepScaleAspectRatio) {
                     gui_controls_funs.dg_s2 = element.value;
-                    transform_controls.object.scale.y = element.value;
+                    target.scale.y = element.value;
                     gui_controls_funs.dg_s3 = element.value;
-                    transform_controls.object.scale.z = element.value;
+                    target.scale.z = element.value;
                 }
+                target.updateMatrixWorld();
                 break;
             case 'Sy':
                 gui_controls_funs.dg_s2 = element.value;
-                transform_controls.object.scale.y = element.value;
+                target.scale.y = element.value;
                 if (envir.scene.keepScaleAspectRatio) {
                     gui_controls_funs.dg_s1 = element.value;
-                    transform_controls.object.scale.x = element.value;
+                    target.scale.x = element.value;
                     gui_controls_funs.dg_s3 = element.value;
-                    transform_controls.object.scale.z = element.value;
+                    target.scale.z = element.value;
                 }
+                target.updateMatrixWorld();
                 break;
             case 'Sz':
                 gui_controls_funs.dg_s3 = element.value;
-                transform_controls.object.scale.z = element.value;
+                target.scale.z = element.value;
                 if (envir.scene.keepScaleAspectRatio) {
                     gui_controls_funs.dg_s2 = element.value;
-                    transform_controls.object.scale.y = element.value;
+                    target.scale.y = element.value;
                     gui_controls_funs.dg_s1 = element.value;
-                    transform_controls.object.scale.x = element.value;
+                    target.scale.x = element.value;
                 }
+                target.updateMatrixWorld();
                 break;
         }
 
@@ -1007,6 +970,26 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
 
 
 
+// =================================================================================
+// 3D TRANSFORMATION PROXY SYSTEM
+// =================================================================================
+// Purpose: Enables high-sensitivity rotation in Three.js r181.
+// Why: Modern Three.js clamps slerp(t) to [0,1]. To achieve >1x scaling, we use an 
+// interactive Proxy handles object and manually extrapolate the Delta Axis-Angle.
+// =================================================================================
+
+// Global Gizmo Proxy to decouple interaction from visual result
+window.vrodosGizmoProxy = new THREE.Object3D();
+window.vrodosGizmoProxy.name = "vrodosGizmoProxy";
+
+// State tracking for proxy-based transformation
+window.vrodosRotationSensitivity = 20.0; // Default multiplier for rotation
+let _qProxyStart = new THREE.Quaternion();
+let _pProxyStart = new THREE.Vector3();
+let _qRealStart = new THREE.Quaternion();
+let _pRealStart = new THREE.Vector3();
+let _currentSelectedRealObject = null;
+
 /**
  *  When you change trs from axes controls then automatically the GUI and the php form are updated
  *
@@ -1014,109 +997,178 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
  */
 function updatePositionsPhpAndJavsFromControlsAxes() {
 
+    if (!transform_controls.object) return;
+
+    // Determine the real object we are actually trying to move
+    const realObject = _currentSelectedRealObject;
+    if (!realObject) return;
+
+    const isDragging = transform_controls.dragging;
+    const activeAxis = transform_controls.axis;
+
+    // --- Proxy Sync Logic ---
+    // Safety check: is the object currently attached to TransformControls actually our Proxy?
+    const isWorkingOnProxy = transform_controls.object && transform_controls.object.name === "vrodosGizmoProxy";
+
+    if (isDragging) {
+        if (transform_controls.mode === 'rotate' && isWorkingOnProxy) {
+            // High-Sensitivity Booster Logic (Unclamped for r181)
+            // Extract the Axis and Angle of the proxy's change
+            const qProxyCurrent = transform_controls.object.quaternion.clone();
+            const qDelta = qProxyCurrent.clone().multiply(_qProxyStart.clone().invert());
+            
+            const angle = 2 * Math.acos(Math.min(1, Math.max(-1, qDelta.w)));
+            const s = Math.sqrt(1 - qDelta.w * qDelta.w);
+            const axis = new THREE.Vector3();
+            if (s < 0.0001) {
+                axis.set(1, 0, 0); 
+            } else {
+                axis.set(qDelta.x / s, qDelta.y / s, qDelta.z / s);
+            }
+            
+            // Rebuild the rotation with the multiplier applied directly to the angle
+            const boostedDelta = new THREE.Quaternion().setFromAxisAngle(axis, angle * window.vrodosRotationSensitivity);
+            
+            realObject.quaternion.copy(_qRealStart).multiply(boostedDelta);
+            realObject.updateMatrix();
+            realObject.updateMatrixWorld();
+        } else {
+            // 1:1 Sync for Translation, Scale, or non-proxy fallback
+            realObject.position.copy(transform_controls.object.position);
+            realObject.scale.copy(transform_controls.object.scale);
+            if (!isWorkingOnProxy) {
+                realObject.quaternion.copy(transform_controls.object.quaternion);
+            }
+            realObject.updateMatrix();
+            realObject.updateMatrixWorld();
+        }
+    } else {
+        // IDLE STATE: Handles follow asset
+        if (isWorkingOnProxy) {
+            transform_controls.object.position.copy(realObject.position);
+            transform_controls.object.quaternion.copy(realObject.quaternion);
+            transform_controls.object.scale.copy(realObject.scale);
+            transform_controls.object.updateMatrix();
+            transform_controls.object.updateMatrixWorld();
+        }
+    }
+
+    // Trigger matrix updates during transformations to ensure visual consistency
+    if (isDragging && transform_controls.object) {
+        transform_controls.object.updateMatrix();
+        transform_controls.object.updateMatrixWorld();
+    }
+
     //--------- translate_x ---------------
-    if ( transform_controls.object.position.x!== gui_controls_funs.dg_t1) {
-        gui_controls_funs.dg_t1 = transform_controls.object.position.x;
-        envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+    if (Math.abs(transform_controls.object.position.x - gui_controls_funs.dg_t1) > 0.0001) {
+        const isMaster = !isDragging || (activeAxis && activeAxis.indexOf('X') !== -1);
+        if (isMaster) {
+            gui_controls_funs.dg_t1 = transform_controls.object.position.x;
+            envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+        }
     }
 
     //--------- translate_y ---------------
-    if (transform_controls.object.position.y!== gui_controls_funs.dg_t2) {
-        gui_controls_funs.dg_t2 = transform_controls.object.position.y;
-
-        envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+    if (Math.abs(transform_controls.object.position.y - gui_controls_funs.dg_t2) > 0.0001) {
+        const isMaster = !isDragging || (activeAxis && activeAxis.indexOf('Y') !== -1);
+        if (isMaster) {
+            gui_controls_funs.dg_t2 = transform_controls.object.position.y;
+            envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+        }
     }
 
     //--------- translate_z ---------------
-    if (transform_controls.object.position.z!== gui_controls_funs.dg_t3) {
-        gui_controls_funs.dg_t3 = transform_controls.object.position.z;
-
-        envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+    if (Math.abs(transform_controls.object.position.z - gui_controls_funs.dg_t3) > 0.0001) {
+        const isMaster = !isDragging || (activeAxis && activeAxis.indexOf('Z') !== -1);
+        if (isMaster) {
+            gui_controls_funs.dg_t3 = transform_controls.object.position.z;
+            envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+        }
     }
 
-    //--------- rotate_x ----------------------
-    if (transform_controls.object.rotation.x*180/Math.PI !== gui_controls_funs.dg_r1){
-        gui_controls_funs.dg_r1 = transform_controls.object.rotation.x * 180/Math.PI;
+    // Rotation epsilon - use a slightly larger one for stability during gizmo interaction
+    const rotEpsilon = 0.001;
 
-        envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+    //--------- rotate_x ----------------------
+    const rotXDeg = realObject.rotation.x * 180 / Math.PI;
+    if (Math.abs(rotXDeg - gui_controls_funs.dg_r1) > rotEpsilon) {
+        const isMaster = !isDragging || (activeAxis && activeAxis.indexOf('X') !== -1);
+        if (isMaster) {
+            gui_controls_funs.dg_r1 = rotXDeg;
+            envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+        }
     }
 
     //---------rotate_y -------------------------------
-    if (transform_controls.object.rotation.y * 180 / Math.PI !== gui_controls_funs.dg_r2) {
-        gui_controls_funs.dg_r2 = transform_controls.object.rotation.y * 180 / Math.PI;
-        envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+    const rotYDeg = realObject.rotation.y * 180 / Math.PI;
+    if (Math.abs(rotYDeg - gui_controls_funs.dg_r2) > rotEpsilon) {
+        const isMaster = !isDragging || (activeAxis && activeAxis.indexOf('Y') !== -1);
+        if (isMaster) {
+            gui_controls_funs.dg_r2 = rotYDeg;
+            envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+        }
     }
 
     //---------rotate_z -------------------------------
-    if (transform_controls.object.rotation.z*180/Math.PI !== gui_controls_funs.dg_r3){
-        gui_controls_funs.dg_r3 = transform_controls.object.rotation.z * 180/Math.PI;
-
-        envir.scene.dispatchEvent({type:"modificationPendingSave"});
+    const rotZDeg = realObject.rotation.z * 180 / Math.PI;
+    if (Math.abs(rotZDeg - gui_controls_funs.dg_r3) > rotEpsilon) {
+        const isMaster = !isDragging || (activeAxis && activeAxis.indexOf('Z') !== -1);
+        if (isMaster) {
+            gui_controls_funs.dg_r3 = rotZDeg;
+            envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+        }
     }
 
     const scaleSyncEpsilon = 0.00001;
-    const activeAxis = transform_controls.axis;
-    const isScaling = transform_controls.mode === 'scale' && transform_controls.dragging;
+    const isScaling = transform_controls.mode === 'scale' && isDragging;
     const sStart = transform_controls._scaleStart;
 
     //---------scale_x -------------------------------
-    if (Math.abs(transform_controls.object.scale.x - gui_controls_funs.dg_s1) > scaleSyncEpsilon){
+    if (Math.abs(realObject.scale.x - gui_controls_funs.dg_s1) > scaleSyncEpsilon){
         const isMaster = !isScaling || (activeAxis && activeAxis.indexOf('X') !== -1);
         if (isMaster) {
-            gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
+            gui_controls_funs.dg_s1 = realObject.scale.x;
             if (envir.scene.keepScaleAspectRatio) {
                 if (isScaling && sStart && Math.abs(sStart.x) > 0.0001) {
-                    const ratio = transform_controls.object.scale.x / sStart.x;
-                    transform_controls.object.scale.y = sStart.y * ratio;
-                    transform_controls.object.scale.z = sStart.z * ratio;
+                    const ratio = realObject.scale.x / sStart.x;
+                    realObject.scale.y = sStart.y * ratio;
+                    realObject.scale.z = sStart.z * ratio;
                 } else {
-                    transform_controls.object.scale.y = transform_controls.object.scale.x;
-                    transform_controls.object.scale.z = transform_controls.object.scale.x;
+                    realObject.scale.x = realObject.scale.z;
+                    realObject.scale.y = realObject.scale.z;
                 }
-                gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
-                gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
+                gui_controls_funs.dg_s1 = realObject.scale.x;
+                gui_controls_funs.dg_s2 = realObject.scale.y;
             }
             envir.scene.dispatchEvent({ type: "modificationPendingSave" });
         }
     }
 
     //---------scale_y -------------------------------
-    if (Math.abs(transform_controls.object.scale.y - gui_controls_funs.dg_s2) > scaleSyncEpsilon){
+    if (Math.abs(realObject.scale.y - gui_controls_funs.dg_s2) > scaleSyncEpsilon){
         const isMaster = !isScaling || (activeAxis && activeAxis.indexOf('Y') !== -1);
         if (isMaster) {
-            gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
-            if (envir.scene.keepScaleAspectRatio) {
-                if (isScaling && sStart && Math.abs(sStart.y) > 0.0001) {
-                    const ratio = transform_controls.object.scale.y / sStart.y;
-                    transform_controls.object.scale.x = sStart.x * ratio;
-                    transform_controls.object.scale.z = sStart.z * ratio;
-                } else {
-                    transform_controls.object.scale.x = transform_controls.object.scale.y;
-                    transform_controls.object.scale.z = transform_controls.object.scale.y;
-                }
-                gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
-                gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
-            }
+            gui_controls_funs.dg_s2 = realObject.scale.y;
             envir.scene.dispatchEvent({ type: "modificationPendingSave" });
         }
     }
 
     //---------scale_z -------------------------------
-    if (Math.abs(transform_controls.object.scale.z - gui_controls_funs.dg_s3) > scaleSyncEpsilon){
+    if (Math.abs(realObject.scale.z - gui_controls_funs.dg_s3) > scaleSyncEpsilon){
         const isMaster = !isScaling || (activeAxis && activeAxis.indexOf('Z') !== -1);
         if (isMaster) {
-            gui_controls_funs.dg_s3 = transform_controls.object.scale.z;
+            gui_controls_funs.dg_s3 = realObject.scale.z;
             if (envir.scene.keepScaleAspectRatio) {
                 if (isScaling && sStart && Math.abs(sStart.z) > 0.0001) {
-                    const ratio = transform_controls.object.scale.z / sStart.z;
-                    transform_controls.object.scale.x = sStart.x * ratio;
-                    transform_controls.object.scale.y = sStart.y * ratio;
+                    const ratio = realObject.scale.z / sStart.z;
+                    realObject.scale.x = sStart.x * ratio;
+                    realObject.scale.y = sStart.y * ratio;
                 } else {
-                    transform_controls.object.scale.x = transform_controls.object.scale.z;
-                    transform_controls.object.scale.y = transform_controls.object.scale.z;
+                    realObject.scale.x = realObject.scale.z;
+                    realObject.scale.y = realObject.scale.z;
                 }
-                gui_controls_funs.dg_s1 = transform_controls.object.scale.x;
-                gui_controls_funs.dg_s2 = transform_controls.object.scale.y;
+                gui_controls_funs.dg_s1 = realObject.scale.x;
+                gui_controls_funs.dg_s2 = realObject.scale.y;
             }
             envir.scene.dispatchEvent({ type: "modificationPendingSave" });
         }
@@ -1125,21 +1177,61 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
 }
 
 
+
+/**
+ * Centralized Gizmo Attachment: Handles Proxy setup and identity delegation.
+ * Use this instead of transform_controls.attach(obj)
+ */
+function vrodosAttachGizmo(object) {
+    if (!object) return;
+
+    _currentSelectedRealObject = object;
+
+    if (window.vrodosGizmoProxy) {
+        // 1. Ensure proxy is in scene
+        if (!envir.scene.getObjectByName("vrodosGizmoProxy")) {
+            envir.scene.add(window.vrodosGizmoProxy);
+        }
+
+        // 2. Sync Proxy to Object initial state
+        window.vrodosGizmoProxy.position.copy(object.position);
+        window.vrodosGizmoProxy.quaternion.copy(object.quaternion);
+        window.vrodosGizmoProxy.scale.copy(object.scale);
+
+        // 3. Delegate properties for safety checks in other scripts
+        window.vrodosGizmoProxy.realObject = object;
+        window.vrodosGizmoProxy.category_name = object.category_name;
+        window.vrodosGizmoProxy.asset_name = object.asset_name;
+        window.vrodosGizmoProxy.isLight = object.isLight;
+        window.vrodosGizmoProxy.parentLight = object.parentLight;
+        window.vrodosGizmoProxy.locked = object.locked;
+        window.vrodosGizmoProxy.name = "vrodosGizmoProxy";
+
+        // 4. Attach handles to proxy
+        transform_controls.attach(window.vrodosGizmoProxy);
+    } else {
+        // Fallback: attach directly to object if proxy failed to init
+        transform_controls.attach(object);
+    }
+}
+
 function setDatGuiInitialVales(object){
+
+    vrodosAttachGizmo(object);
 
     if (!transform_controls.object) return;
 
-    gui_controls_funs.dg_t1 = Number(transform_controls.object.position.x) || 0;
-    gui_controls_funs.dg_t2 = Number(transform_controls.object.position.y) || 0;
-    gui_controls_funs.dg_t3 = Number(transform_controls.object.position.z) || 0;
+    gui_controls_funs.dg_t1 = Number(object.position.x) || 0;
+    gui_controls_funs.dg_t2 = Number(object.position.y) || 0;
+    gui_controls_funs.dg_t3 = Number(object.position.z) || 0;
 
-    gui_controls_funs.dg_r1 = Number(transform_controls.object.rotation.x) || 0;
-    gui_controls_funs.dg_r2 = Number(transform_controls.object.rotation.y) || 0;
-    gui_controls_funs.dg_r3 = Number(transform_controls.object.rotation.z) || 0;
+    gui_controls_funs.dg_r1 = (Number(object.rotation.x) * 180 / Math.PI) || 0;
+    gui_controls_funs.dg_r2 = (Number(object.rotation.y) * 180 / Math.PI) || 0;
+    gui_controls_funs.dg_r3 = (Number(object.rotation.z) * 180 / Math.PI) || 0;
 
-    gui_controls_funs.dg_s1 = Number(transform_controls.object.scale.x) || 0;
-    gui_controls_funs.dg_s2 = Number(transform_controls.object.scale.y) || 0;
-    gui_controls_funs.dg_s3 = Number(transform_controls.object.scale.z) || 0;
+    gui_controls_funs.dg_s1 = Number(object.scale.x) || 0;
+    gui_controls_funs.dg_s2 = Number(object.scale.y) || 0;
+    gui_controls_funs.dg_s3 = Number(object.scale.z) || 0;
 
     // lil-gui: updateDisplay() reads from the bound object and formats with .decimals(2)
     for (let c = 0; c < 9; c++) {

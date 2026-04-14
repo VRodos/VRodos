@@ -198,7 +198,11 @@ function selectObjectPreview(objectSel) {
     if (!objectSel) return;
 
     setBackgroundColorHierarchyViewer(objectSel.uuid);
-    transform_controls.attach(objectSel);
+    if (typeof vrodosAttachGizmo === 'function') {
+        vrodosAttachGizmo(objectSel);
+    } else {
+        transform_controls.attach(objectSel);
+    }
 
     if (objectSel.name !== "avatarCamera") {
         setTransformControlsSize();
@@ -230,7 +234,11 @@ function selectorMajor(event, objectSel, whocalls) {
         // set the selected color of the hierarchy viewer
         setBackgroundColorHierarchyViewer(objectSel.uuid);
 
-        transform_controls.attach(objectSel);
+        if (typeof vrodosAttachGizmo === 'function') {
+            vrodosAttachGizmo(objectSel);
+        } else {
+            transform_controls.attach(objectSel);
+        }
 
         // Move light direction
         let lightDirectionalLightSpotMover = () => {

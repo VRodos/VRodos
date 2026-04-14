@@ -652,10 +652,14 @@ function loadButtonActions() {
 
         // Sun and Target spot can not change control manipulation mode
         if (transform_controls.object) {
-            if (transform_controls.object['category_name'].includes("lightTargetSpot") ||
-                transform_controls.object['category_name'].includes("lightSun") ||
-                transform_controls.object['category_name'].includes("lightLamp") ||
-                transform_controls.object['category_name'].includes("lightSpot")) {
+            // Check if we are attached to a proxy or directly to an object
+            const targetObject = transform_controls.object.realObject || transform_controls.object;
+            const category = targetObject.category_name || "";
+
+            if (category.includes("lightTargetSpot") ||
+                category.includes("lightSun") ||
+                category.includes("lightLamp") ||
+                category.includes("lightSpot")) {
 
                 if (mode === 'rotate')
                     return;
@@ -668,6 +672,17 @@ function loadButtonActions() {
 // Event listener to disable orbit controls while dragging
 transform_controls.addEventListener('dragging-changed', function (event) {
     envir.orbitControls.enabled = !event.value;
+
+    // Capture start orientations for proxy-based transformation
+    if (event.value && transform_controls.object && _currentSelectedRealObject) {
+        if (typeof _qProxyStart !== 'undefined') {
+            _qProxyStart.copy(transform_controls.object.quaternion);
+            _pProxyStart.copy(transform_controls.object.position);
+            
+            _qRealStart.copy(_currentSelectedRealObject.quaternion);
+            _pRealStart.copy(_currentSelectedRealObject.position);
+        }
+    }
 });
 
     // Axis Increase size btn
