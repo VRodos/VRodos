@@ -201,7 +201,7 @@ class VrodosSceneExporter {
             entryObject.quaternion = [quatR.x, quatR.y, quatR.z, quatR.w];
         }
 
-        if (o.category_name && o.category_name.includes('light')) {
+        if (o.isLight && o.category_name && o.category_name.includes('light')) {
             this.processLight(o, entryObject);
         } else if (o.name === 'avatarCamera') {
             this.processAvatar(o, entryObject);
@@ -211,7 +211,11 @@ class VrodosSceneExporter {
     }
 
     processLight(o, entryObject) {
-        entryObject.lightcolor = [o.color.r, o.color.g, o.color.b];
+        if (o.color) {
+            entryObject.lightcolor = [o.color.r, o.color.g, o.color.b];
+        } else {
+            entryObject.lightcolor = [1, 1, 1];
+        }
         entryObject.lightintensity = o.intensity;
 
         if (o.category_name === 'lightSun' || o.category_name === 'lightSpot') {

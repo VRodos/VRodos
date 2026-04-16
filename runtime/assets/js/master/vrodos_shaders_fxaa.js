@@ -24,7 +24,6 @@
                 'varying vec2 vUv;',
                 '#define FxaaTexTop(t, p) texture2D(t, p, -100.0)',
                 '#define FxaaTexOff(t, p, o, r) texture2D(t, p + (o * r), -100.0)',
-                '#define NUM_SAMPLES 5',
                 'float contrast(vec4 a, vec4 b) {',
                 '  vec4 diff = abs(a - b);',
                 '  return max(max(max(diff.r, diff.g), diff.b), diff.a);',
@@ -72,7 +71,9 @@
                 '  float pDist = 0.;',
                 '  vec2 posN = posM;',
                 '  vec2 posP = posM;',
-                '  for (int i = 0; i < NUM_SAMPLES; i++) {',
+                '',
+                '  // Unrolled sampling loop (5 iterations) to avoid X3595 gradient instructions in varying loop iteration',
+                '  for (int i = 0; i < 5; i++) { // Const loop count is fine for compiler',
                 '    float increment = float(i + 1);',
                 '    if (!doneN) {',
                 '      nDist += increment;',
@@ -86,10 +87,11 @@
                 '      vec4 rgbaEndP = FxaaTexTop(tex, posP.xy);',
                 '      doneP = contrast(rgbaEndP, rgbaM) > contrast(rgbaEndP, rgbaN);',
                 '    }',
-                '    if (doneN || doneP) { break; }',
+                '    if (doneN || doneP) break;',
                 '  }',
+                '',
                 '  if (!doneP && !doneN) { return rgbaM; }',
-                '  float dist = min(doneN ? nDist / float(NUM_SAMPLES) : 1., doneP ? pDist / float(NUM_SAMPLES) : 1.);',
+                '  float dist = min(doneN ? nDist / 5.0 : 1.0, doneP ? pDist / 5.0 : 1.0);',
                 '  dist = 1. - pow(dist, .5);',
                 '  return mix(rgbaM, rgbaN, dist * .5);',
                 '}',
@@ -107,4 +109,22 @@
     }
 
     VRODOSMaster.createFXAAMaterial = vrodosCreateFXAAMaterial;
+    
+    // Inject into THREE namespace to replace the bundled one if it's causing warnings in the editor
+    if (window.THREE) {
+        window.THREE.FXAAShader = {
+            uniforms: {
+                tDiffuse: { value: null },
+                resolution: { value: new THREE.Vector2(1 / 1024, 1 / 512) }
+            },
+            vertexShader: [
+                'varying vec2 vUv;',
+                'void main() {',
+                '  vUv = uv;',
+                '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+                '}'
+            ].join('\n'),
+            fragmentShader: vrodosCreateFXAAMaterial().fragmentShader
+        };
+    }
 })();

@@ -118,7 +118,6 @@ class VRodos_Asset_Manager {
 		wp_enqueue_script( 'vrodos_scene_settings_schema' );
 		wp_enqueue_script( 'vrodos_ScenePersistence' );
 		wp_enqueue_script( 'vrodos_jscolorpick' );
-		wp_enqueue_script( 'vrodos_html2canvas' );
 		wp_enqueue_script( 'vrodos_3d_editor_environmentals' );
 		wp_enqueue_script( 'vrodos_keyButtons' );
 		wp_enqueue_script( 'vrodos_rayCasters' );
@@ -247,10 +246,6 @@ class VRodos_Asset_Manager {
 
 		// Select colors
 		wp_enqueue_script( 'vrodos_jscolorpick' );
-
-		// to capture screenshot of the 3D molecule and its tags
-		wp_enqueue_script( 'vrodos_html2canvas' );
-
 	}
 
 	public function register_scripts() {
@@ -263,7 +258,6 @@ class VRodos_Asset_Manager {
       ['vrodos_asset_editor_scripts', $plugin_url_js . 'vrodos_asset_editor_scripts.js'],
       ['vrodos_scripts', $plugin_url_js . 'vrodos_scripts.js'],
       ['vrodos_jscolorpick', $plugin_url_js . 'external_js_libraries/jscolor.js'],
-      ['vrodos_html2canvas', $plugin_url_js . 'external_js_libraries/html2canvas.min.js'],
       ['vrodos_inflate', $plugin_url_js . 'external_js_libraries/inflate.min.js'],
       ['vrodos_scene_settings_schema', $plugin_url_js . 'vrodos_scene_settings_schema.js'],
       ['vrodos_ScenePersistence', $plugin_url_js . 'vrodos_ScenePersistence.js', ['vrodos_scene_settings_schema']],

@@ -358,7 +358,7 @@ class VRodos_LoaderMulti {
                                 const object = objectMain.scene.children[0];
                                 object.name = "Camera3Dmodel";
                                 object.vrodos_internal_helper = true;
-                                object.isSelectableMesh = false;
+                                object.isSelectableMesh = true;
                                 object.renderOrder = 1;
                                 object.traverse((child) => {
                                     child.vrodos_internal_helper = true;
@@ -382,6 +382,7 @@ class VRodos_LoaderMulti {
                                     }
                                 }
                                 envir.applyDirectorTransform(translation, rotation);
+                                if (envir.selectableMeshes) envir.selectableMeshes.add(object);
                                 if (manager) manager.itemEnd(name);
                                 resolve();
                             },
@@ -403,6 +404,7 @@ class VRodos_LoaderMulti {
                         const object = vrodosLoaderCreateAssessmentObject(name, resource);
                         setObjectProperties(object, name, resources3D);
                         envir.scene.add(object);
+                        if (envir.selectableMeshes) envir.selectableMeshes.add(object);
                         envir.loadedObjectsCount++;
                         if (typeof addInHierarchyViewer === 'function') {
                             addInHierarchyViewer(object);
@@ -449,6 +451,7 @@ class VRodos_LoaderMulti {
                             object.rotation.set(rot[0], rot[1], rot[2]);
                             object.scale.set(scl[0], scl[1], scl[2]);
                             envir.scene.add(object);
+                            if (envir.selectableMeshes) envir.selectableMeshes.add(object);
                             envir.loadedObjectsCount++;
 
                             // When dragged onto canvas (manager.onLoad won't fire — no GLTF items),

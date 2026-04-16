@@ -215,6 +215,10 @@ class VRodos_LightsPawn_Loader {
 
         light.target.position.copy(targetSpot.position);
         envir.scene.add(targetSpot);
+        if (envir.selectableMeshes) {
+            envir.selectableMeshes.add(light);
+            envir.selectableMeshes.add(targetSpot);
+        }
 
         const shadowHelper = new THREE.CameraHelper(light.shadow.camera);
         shadowHelper.name = "lightShadowHelper_" + light.name;
@@ -245,6 +249,7 @@ class VRodos_LightsPawn_Loader {
         light.lampshadowBias = resource['lampshadowBias'];
 
         envir.scene.add(light);
+        if (envir.selectableMeshes) envir.selectableMeshes.add(light);
 
         const sphere = new THREE.Mesh(
             new THREE.SphereGeometry(0.5, 16, 8),
@@ -298,6 +303,10 @@ class VRodos_LightsPawn_Loader {
         targetSpot.parentLight = light;
 
         envir.scene.add(targetSpot);
+        if (envir.selectableMeshes) {
+            envir.selectableMeshes.add(light);
+            envir.selectableMeshes.add(targetSpot);
+        }
         light.target.updateMatrixWorld();
         light.target.position.copy(targetSpot.position);
 
@@ -329,6 +338,7 @@ class VRodos_LightsPawn_Loader {
         light.add(sphere);
 
         envir.scene.add(light);
+        if (envir.selectableMeshes) envir.selectableMeshes.add(light);
     }
 
     initPawn(name, resource, finalPath, manager) {

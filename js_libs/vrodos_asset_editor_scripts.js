@@ -151,30 +151,36 @@ function rgbToHex(r, g, b) {
 }
 
 function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
-    asset_viewer_3d_kernel_local.render();
+    // Determine dimensions from the existing canvas
+    const canvas = asset_viewer_3d_kernel_local.renderer.domElement;
+    const w = canvas.width;
+    const h = canvas.height;
 
-    html2canvas(document.querySelector('#wrapper_3d_inner')).then((canvas) => {
-        asset_viewer_3d_kernel_local.render();
-        const sourceRatio = canvas.width / canvas.height;
-        const targetWidth = 1068;
-        const targetHeight = Math.max(1, Math.round(targetWidth / sourceRatio));
+    // Use an offscreen renderer to capture the screenshot reliably
+    const offscreenRenderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true, alpha: true });
+    offscreenRenderer.setSize(w, h);
+    offscreenRenderer.setClearColor(asset_viewer_3d_kernel_local.scene.background || 0x000000, 1);
+    offscreenRenderer.render(asset_viewer_3d_kernel_local.scene, asset_viewer_3d_kernel_local.camera);
 
-        const resizedCanvas = document.createElement('canvas');
-        resizedCanvas.width = targetWidth;
-        resizedCanvas.height = targetHeight;
+    const sourceCanvas = offscreenRenderer.domElement;
+    const sourceRatio = w / h;
+    const targetWidth = 1068;
+    const targetHeight = Math.max(1, Math.round(targetWidth / sourceRatio));
 
-        resizedCanvas.getContext('2d').drawImage(
-            canvas,
-            0,
-            0,
-            targetWidth,
-            targetHeight
-        );
+    // Create a resized canvas for the final thumbnail
+    const resizedCanvas = document.createElement('canvas');
+    resizedCanvas.width = targetWidth;
+    resizedCanvas.height = targetHeight;
 
-        const screenshotDataUrl = resizedCanvas.toDataURL('image/png');
-        vrodos_set_asset_screenshot_preview(screenshotDataUrl);
-        document.getElementById('sshotFileInput').value = screenshotDataUrl;
-    });
+    const ctx = resizedCanvas.getContext('2d');
+    ctx.drawImage(sourceCanvas, 0, 0, targetWidth, targetHeight);
+
+    const screenshotDataUrl = resizedCanvas.toDataURL('image/png');
+    vrodos_set_asset_screenshot_preview(screenshotDataUrl);
+    document.getElementById('sshotFileInput').value = screenshotDataUrl;
+
+    // Clean up
+    offscreenRenderer.dispose();
 }
 
 function loadFileInputLabel() {
@@ -206,7 +212,6 @@ function setScreenshotHandler() {
     const sshotBtn = document.getElementById('createModelScreenshotBtn');
     if (sshotBtn && document.getElementById('sshotPreviewImg')) {
         sshotBtn.addEventListener('click', () => {
-            asset_viewer_3d_kernel.renderer.preserveDrawingBuffer = true;
             vrodos_create_model_sshot(asset_viewer_3d_kernel);
         });
     }

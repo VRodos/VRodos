@@ -319,9 +319,14 @@ class vrodos_3d_editor_environmentals {
         this.orbitControls.object.zoom = 1;
         this.orbitControls.minZoom = 1;
         this.orbitControls.maxZoom = 10000;
-        this.orbitControls.object.updateProjectionMatrix();
-        this.orbitControls.name = "orbitControls";
         this.orbitControls.enableRotate = true;
+
+        // Real-time gizmo scaling during zoom
+        this.orbitControls.addEventListener('change', () => {
+            if (typeof setTransformControlsSize === 'function') {
+                setTransformControlsSize();
+            }
+        });
 
         // Add a helper for debug purpose
         // this.cameraOrbitHelper = new THREE.CameraHelper( this.cameraOrbit );
@@ -337,7 +342,7 @@ class vrodos_3d_editor_environmentals {
         this.cameraAvatar = new THREE.PerspectiveCamera(this.VIEW_ANGLE, this.ASPECT, 0.01, 4000);
         this.cameraAvatar.name = "avatarCamera";
         this.cameraAvatar.category_name = "avatarYawObject";
-        this.cameraAvatar.isSelectableMesh = false;
+        this.cameraAvatar.isSelectableMesh = true;
         this.cameraAvatar.rotation.order = 'YXZ';
         this.cameraAvatar.rotation.y = Math.PI*2;
 

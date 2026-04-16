@@ -513,16 +513,24 @@ function displaySpotProperties(event, name) {
         spotTargetObject.appendChild(new Option(scene_object.name));
     }
 
-    var spotColor = document.getElementById("spotColor");
-    spotColor.value = transform_controls.object.children[0].material.color.getHexString();
-    document.getElementById("spotPower").value = transform_controls.object.power;
-    document.getElementById("spotDecay").value = transform_controls.object.decay;
-    document.getElementById("spotDistance").value = transform_controls.object.distance;
-    document.getElementById("spotAngle").value = transform_controls.object.angle;
-    document.getElementById("spotPenumbra").value = transform_controls.object.penumbra;
-    document.getElementById("spotTargetObject").value = transform_controls.object.target.name;
+    let spotColor = document.getElementById("spotColor");
+    let sceneObj = envir.scene.getObjectByName(name) || transform_controls.object;
 
-    spotColor.style.background = "#" + spotColor.value;
+    if (spotColor && sceneObj && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
+        spotColor.value = sceneObj.children[0].material.color.getHexString();
+        spotColor.style.background = "#" + spotColor.value;
+    }
+
+    if (sceneObj) {
+        if (document.getElementById("spotPower")) document.getElementById("spotPower").value = sceneObj.power || 1;
+        if (document.getElementById("spotDecay")) document.getElementById("spotDecay").value = sceneObj.decay || 2;
+        if (document.getElementById("spotDistance")) document.getElementById("spotDistance").value = sceneObj.distance || 0;
+        if (document.getElementById("spotAngle")) document.getElementById("spotAngle").value = sceneObj.angle || Math.PI / 3;
+        if (document.getElementById("spotPenumbra")) document.getElementById("spotPenumbra").value = sceneObj.penumbra || 0;
+        if (document.getElementById("spotTargetObject") && sceneObj.target) {
+            document.getElementById("spotTargetObject").value = sceneObj.target.name;
+        }
+    }
 
     // Show Selection (inside floating panel)
     if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
@@ -541,11 +549,17 @@ function displayAmbientProperties(event, name) {
         var scene_object = envir.scene.getObjectByName(id_Hierarchy);
     }
 
-    var ambientColor = document.getElementById("ambientColor");
-    ambientColor.value = transform_controls.object.children[0].material.color.getHexString();
-    document.getElementById("ambientIntensity").value = transform_controls.object.intensity;
+    let ambientColor = document.getElementById("ambientColor");
+    let sceneObj = envir.scene.getObjectByName(name) || transform_controls.object;
 
-    ambientColor.style.background = "#" + ambientColor.value;
+    if (ambientColor && sceneObj && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
+        ambientColor.value = sceneObj.children[0].material.color.getHexString();
+        ambientColor.style.background = "#" + ambientColor.value;
+    }
+
+    if (sceneObj && document.getElementById("ambientIntensity")) {
+        document.getElementById("ambientIntensity").value = sceneObj.intensity || 1;
+    }
 
     // Show Selection (inside floating panel)
     if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';

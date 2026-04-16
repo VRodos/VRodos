@@ -1,12 +1,23 @@
 'use strict';
 
 function setTransformControlsSize() {
-    if (!transform_controls.object) return;
-    let dims = findDimensions(transform_controls.object);
-    let sizeT = 0.25 * Math.log((Math.max(...dims) + 1) + 1);
-    // Use isFinite to catch NaN and Infinity
-    if (!Number.isFinite(sizeT) || sizeT <= 0) sizeT = 0.5;
-    transform_controls.setSize(sizeT);
+    if (typeof transform_controls === 'undefined' || !transform_controls || !transform_controls.object || !envir) return;
+
+    const dims = findDimensions(transform_controls.object);
+    const maxDim = Math.max(...dims);
+    
+    // Baseline world size based on object dimension
+    let worldSize = 0.25 * Math.log(maxDim + 2);
+
+    // Zoom compensation for Orthographic Camera
+    if (envir.cameraOrbit && envir.cameraOrbit.isOrthographicCamera) {
+        const referenceZoom = 800;
+        const currentZoom = envir.cameraOrbit.zoom || referenceZoom;
+        worldSize = worldSize * (referenceZoom / currentZoom) * 1.5;
+    }
+
+    if (!Number.isFinite(worldSize) || worldSize < 0.1) worldSize = 0.5;
+    transform_controls.setSize(worldSize);
 }
 
 function vrodos_fillin_widget_assettrs(selectedObject) {

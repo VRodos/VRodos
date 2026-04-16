@@ -308,7 +308,1452 @@
         return runtime;
     }
 
+    function normalizeComparableText(value) {
+        return decodeDisplayText(value)
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function normalizeWordSearchText(value) {
+        return decodeDisplayText(value)
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, "");
+    }
+
+    function normalizeFreeText(value) {
+        return decodeDisplayText(value)
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function toArray(value) {
+        return Array.isArray(value) ? value : [];
+    }
+
+    function uniqueId(prefix, index) {
+        return `${prefix}-${index + 1}`;
+    }
+
+    function shuffleArray(values) {
+        const copy = values.slice();
+        for (let index = copy.length - 1; index > 0; index -= 1) {
+            const swapIndex = Math.floor(Math.random() * (index + 1));
+            const temp = copy[index];
+            copy[index] = copy[swapIndex];
+            copy[swapIndex] = temp;
+        }
+        return copy;
+    }
+
+    function arrayEquals(left, right) {
+        if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+            return false;
+        }
+
+        for (let index = 0; index < left.length; index += 1) {
+            if (left[index] !== right[index]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function getAnswerTexts(question) {
+        if (!question || typeof question !== "object") {
+            return [];
+        }
+
+        if (Array.isArray(question.answers)) {
+            return question.answers.map((item) => decodeDisplayText(item && typeof item === "object" ? item.text : item));
+        }
+
+        if (Array.isArray(question.options)) {
+            return question.options.map((item) => decodeDisplayText(item && typeof item === "object" ? item.text : item));
+        }
+
+        return [];
+    }
+
+    function getCorrectIndex(question) {
+        const correctIndex = Number(question && question.correctIndex);
+        return Number.isInteger(correctIndex) && correctIndex >= 0 ? correctIndex : null;
+    }
+
+    function normalizeQuestionItems(payload) {
+        return toArray(payload && payload.content && payload.content.questions)
+            .map((question, index) => ({
+                id: question && question.id ? String(question.id) : uniqueId("question", index),
+                prompt: decodeDisplayText(question && question.question ? question.question : ""),
+                answers: getAnswerTexts(question),
+                correctIndex: getCorrectIndex(question),
+                imageUrl: question && question.imageUrl ? String(question.imageUrl) : ""
+            }))
+            .filter((question) => question.prompt || question.answers.length || question.imageUrl);
+    }
+
+    function normalizePairEntries(payload) {
+        return toArray(payload && payload.content && payload.content.pairs)
+            .map((pair, index) => ({
+                id: pair && pair.id ? String(pair.id) : uniqueId("pair", index),
+                source: decodeDisplayText(pair && pair.source ? pair.source : ""),
+                target: decodeDisplayText(pair && pair.target ? pair.target : "")
+            }))
+            .filter((pair) => pair.source || pair.target);
+    }
+
+    function normalizeGridEntries(payload) {
+        return toArray(payload && payload.content && payload.content.words)
+            .map((word, index) => {
+                const text = decodeDisplayText(word && word.text ? word.text : "");
+                const hint = decodeDisplayText(word && word.hint ? word.hint : "");
+                return {
+                    id: word && word.id ? String(word.id) : uniqueId("word", index),
+                    text,
+                    hint,
+                    normalized: normalizeWordSearchText(text)
+                };
+            })
+            .filter((word) => word.text && word.normalized);
+    }
+
+    function normalizeTextAnnotations(text, annotations, type) {
+        const textLength = String(text || "").length;
+        const ordered = toArray(annotations)
+            .map((annotation, index) => ({
+                id: annotation && annotation.id ? String(annotation.id) : uniqueId(type || "annotation", index),
+                start: Number(annotation && annotation.start),
+                end: Number(annotation && annotation.end),
+                type: annotation && annotation.type ? String(annotation.type) : "",
+                correctValue: decodeDisplayText(annotation && annotation.correctValue ? annotation.correctValue : "")
+            }))
+            .filter((annotation) =>
+                annotation.type === type
+                && Number.isFinite(annotation.start)
+                && Number.isFinite(annotation.end)
+                && annotation.start >= 0
+                && annotation.end > annotation.start
+                && annotation.end <= textLength
+            )
+            .sort((left, right) => left.start - right.start || left.end - right.end);
+
+        const normalized = [];
+        let cursor = -1;
+        ordered.forEach((annotation) => {
+            if (annotation.start < cursor) {
+                return;
+            }
+            normalized.push(annotation);
+            cursor = annotation.end;
+        });
+
+        return normalized;
+    }
+
+    function buildAssessmentResult(payload, response, extra) {
+        return Object.assign({
+            completedAt: new Date().toISOString(),
+            title: payload && payload.title ? payload.title : "",
+            type: payload && payload.type ? payload.type : "",
+            group: payload && payload.group ? payload.group : "",
+            levels: Array.isArray(payload && payload.levels) ? payload.levels.slice() : [],
+            completionState: "completed",
+            response: response || {}
+        }, extra || {});
+    }
+
+    function renderEmptyState(runtime, title, description) {
+        runtime.body.innerHTML = [
+            '<div style="padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);box-shadow:0 12px 30px rgba(15,23,42,0.06);">',
+            `<div style="font-size:18px;font-weight:800;margin-bottom:10px;color:#0f172a;">${escapeHtml(title)}</div>`,
+            `<div style="font-size:14px;line-height:1.6;color:#64748b;">${escapeHtml(description)}</div>`,
+            "</div>"
+        ].join("");
+        runtime.setStatus(runtime.payload && (runtime.payload.type || runtime.payload.group) || "Assessment");
+        runtime.configurePrimaryAction({ visible: false });
+    }
+
+    function createQuestionRenderer() {
+        return {
+            createState(payload) {
+                return {
+                    items: normalizeQuestionItems(payload),
+                    activeIndex: 0,
+                    selectedByIndex: []
+                };
+            },
+            render(runtime) {
+                const state = runtime.state;
+                const items = state.items;
+                const question = items[state.activeIndex];
+                if (!question) {
+                    renderEmptyState(runtime, "This assessment is empty.", "Add at least one question in Immerse to make it playable in VRodos.");
+                    return;
+                }
+
+                if (!question.answers.length) {
+                    renderEmptyState(runtime, "This question has no answers.", "Add answer options in Immerse to make this assessment playable in VRodos.");
+                    return;
+                }
+
+                const selectedIndex = Number.isInteger(state.selectedByIndex[state.activeIndex])
+                    ? state.selectedByIndex[state.activeIndex]
+                    : null;
+
+                runtime.body.innerHTML = [
+                    question.imageUrl
+                        ? `<div style="margin-bottom:16px;"><img src="${escapeHtml(question.imageUrl)}" alt="" style="width:100%;max-height:280px;object-fit:contain;border-radius:18px;background:#f8fafc;border:1px solid rgba(226,232,240,0.95);" /></div>`
+                        : "",
+                    `<div style="font-size:20px;font-weight:800;line-height:1.35;margin-bottom:18px;color:#0f172a;">${escapeHtml(question.prompt || `Question ${state.activeIndex + 1}`)}</div>`,
+                    '<div style="display:grid;gap:12px;">',
+                    question.answers.map((answer, index) => {
+                        const isSelected = selectedIndex === index;
+                        const background = isSelected ? "rgba(92, 200, 135, 0.14)" : "#ffffff";
+                        const border = isSelected ? "rgba(92, 200, 135, 0.9)" : "rgba(203, 213, 225, 0.95)";
+                        const color = isSelected ? "#166534" : "#1e293b";
+
+                        return [
+                            `<button type="button" data-answer-index="${index}"`,
+                            ' style="text-align:left;border-radius:16px;padding:14px 16px;border:1px solid ' + border + ';',
+                            ' background:' + background + ';color:' + color + ';cursor:pointer;font-size:15px;font-weight:700;box-shadow:0 8px 18px rgba(15,23,42,0.04);">',
+                            `${escapeHtml(answer || `Option ${index + 1}`)}`,
+                            "</button>"
+                        ].join("");
+                    }).join(""),
+                    "</div>"
+                ].join("");
+
+                runtime.body.querySelectorAll("[data-answer-index]").forEach((button) => {
+                    button.addEventListener("click", () => {
+                        state.selectedByIndex[state.activeIndex] = Number(button.getAttribute("data-answer-index"));
+                        runtime.rerender();
+                    });
+                });
+
+                runtime.setStatus(`Question ${state.activeIndex + 1} of ${items.length}`);
+                runtime.configurePrimaryAction({
+                    visible: true,
+                    label: state.activeIndex >= items.length - 1 ? "Finish" : "Next",
+                    disabled: selectedIndex === null
+                });
+            },
+            onPrimaryAction(runtime) {
+                const state = runtime.state;
+                const items = state.items;
+                const currentQuestion = items[state.activeIndex];
+                if (!currentQuestion) {
+                    return;
+                }
+
+                const selectedIndex = Number.isInteger(state.selectedByIndex[state.activeIndex])
+                    ? state.selectedByIndex[state.activeIndex]
+                    : null;
+                if (selectedIndex === null) {
+                    return;
+                }
+
+                if (state.activeIndex >= items.length - 1) {
+                    const answers = items.map((question, index) => {
+                        const responseIndex = Number.isInteger(state.selectedByIndex[index]) ? state.selectedByIndex[index] : null;
+                        const correctIndex = question.correctIndex;
+                        const isCorrect = correctIndex === null || responseIndex === null ? null : responseIndex === correctIndex;
+                        return {
+                            questionId: question.id,
+                            questionIndex: index,
+                            prompt: question.prompt,
+                            options: question.answers.slice(),
+                            selectedIndex: responseIndex,
+                            selectedAnswer: responseIndex !== null ? question.answers[responseIndex] || "" : "",
+                            correctIndex,
+                            correctAnswer: correctIndex !== null ? question.answers[correctIndex] || "" : "",
+                            isCorrect
+                        };
+                    });
+
+                    const gradedAnswers = answers.filter((answer) => answer.isCorrect !== null);
+                    runtime.finish(
+                        { answers },
+                        { isCorrect: gradedAnswers.length ? gradedAnswers.every((answer) => answer.isCorrect === true) : null }
+                    );
+                    return;
+                }
+
+                state.activeIndex += 1;
+                runtime.rerender();
+            }
+        };
+    }
+
+    function findSourceByAssignedTarget(matchesBySource, targetId) {
+        return Object.keys(matchesBySource).find((sourceId) => matchesBySource[sourceId] === targetId) || "";
+    }
+
+    function assignMatchingPair(state, sourceId, targetId) {
+        Object.keys(state.matchesBySource).forEach((existingSourceId) => {
+            if (existingSourceId === sourceId || state.matchesBySource[existingSourceId] === targetId) {
+                delete state.matchesBySource[existingSourceId];
+            }
+        });
+
+        state.matchesBySource[sourceId] = targetId;
+        state.selectedSourceId = "";
+        state.selectedTargetId = "";
+    }
+
+    function assignDragDropPair(state, sourceId, targetId) {
+        Object.keys(state.assignmentsByTarget).forEach((existingTargetId) => {
+            if (existingTargetId === targetId || state.assignmentsByTarget[existingTargetId] === sourceId) {
+                delete state.assignmentsByTarget[existingTargetId];
+            }
+        });
+
+        state.assignmentsByTarget[targetId] = sourceId;
+        state.selectedSourceId = "";
+        state.dragSourceId = "";
+    }
+
+    function createPairRenderer() {
+        return {
+            createState(payload) {
+                const entries = normalizePairEntries(payload);
+                const ids = entries.map((entry) => entry.id);
+                return {
+                    mode: normalizeComparableText(payload && payload.type) === "drag and drop" ? "dragdrop" : "matching",
+                    entries,
+                    entriesById: Object.fromEntries(entries.map((entry) => [entry.id, entry])),
+                    sourceOrder: shuffleArray(ids),
+                    targetOrder: shuffleArray(ids),
+                    matchesBySource: {},
+                    assignmentsByTarget: {},
+                    selectedSourceId: "",
+                    selectedTargetId: "",
+                    dragSourceId: ""
+                };
+            },
+            render(runtime) {
+                const state = runtime.state;
+                if (!state.entries.length) {
+                    renderEmptyState(runtime, "This assessment is empty.", "Add at least one pair in Immerse to make it playable in VRodos.");
+                    return;
+                }
+
+                if (state.mode === "dragdrop") {
+                    renderDragDropPair(runtime);
+                    return;
+                }
+
+                renderMatchingPair(runtime);
+            },
+            onPrimaryAction(runtime) {
+                const state = runtime.state;
+                const entries = state.entries;
+                if (state.mode === "dragdrop") {
+                    if (Object.keys(state.assignmentsByTarget).length !== entries.length) {
+                        return;
+                    }
+
+                    const placements = entries.map((entry) => {
+                        const sourceId = state.assignmentsByTarget[entry.id] || "";
+                        const sourceEntry = state.entriesById[sourceId];
+                        return {
+                            targetId: entry.id,
+                            target: entry.target,
+                            selectedSourceId: sourceId,
+                            selectedSource: sourceEntry ? sourceEntry.source : "",
+                            expectedSourceId: entry.id,
+                            expectedSource: entry.source,
+                            isCorrect: sourceId === entry.id
+                        };
+                    });
+
+                    runtime.finish(
+                        { placements, variant: "drag-and-drop" },
+                        { isCorrect: placements.every((placement) => placement.isCorrect === true) }
+                    );
+                    return;
+                }
+
+                if (Object.keys(state.matchesBySource).length !== entries.length) {
+                    return;
+                }
+
+                const matches = entries.map((entry) => {
+                    const selectedTargetId = state.matchesBySource[entry.id] || "";
+                    const selectedTarget = state.entriesById[selectedTargetId];
+                    return {
+                        sourceId: entry.id,
+                        source: entry.source,
+                        expectedTargetId: entry.id,
+                        expectedTarget: entry.target,
+                        selectedTargetId,
+                        selectedTarget: selectedTarget ? selectedTarget.target : "",
+                        isCorrect: selectedTargetId === entry.id
+                    };
+                });
+
+                runtime.finish(
+                    { matches, variant: "matching" },
+                    { isCorrect: matches.every((match) => match.isCorrect === true) }
+                );
+            }
+        };
+    }
+
+    function renderMatchingPair(runtime) {
+        const state = runtime.state;
+        const matchedCount = Object.keys(state.matchesBySource).length;
+
+        runtime.body.innerHTML = [
+            '<div style="display:grid;gap:20px;">',
+            '<div style="padding:16px 18px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:14px;line-height:1.6;">Select one source and one target to lock a pair. You can clear any existing pair before finishing.</div>',
+            '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">',
+            '<div style="padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);">',
+            '<div style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Sources</div>',
+            '<div style="display:grid;gap:10px;">',
+            state.sourceOrder.map((sourceId) => {
+                const entry = state.entriesById[sourceId];
+                const matchedTargetId = state.matchesBySource[sourceId] || "";
+                const matchedTarget = matchedTargetId ? state.entriesById[matchedTargetId] : null;
+                const isSelected = state.selectedSourceId === sourceId;
+                return [
+                    `<div style="border-radius:16px;border:1px solid ${isSelected ? "rgba(92,200,135,0.9)" : "rgba(203,213,225,0.95)"};padding:12px;background:${isSelected ? "rgba(92,200,135,0.12)" : "#ffffff"};">`,
+                    `<button type="button" data-match-source-id="${escapeHtml(sourceId)}" style="width:100%;text-align:left;border:0;background:transparent;padding:0;cursor:pointer;font-size:15px;font-weight:700;color:#0f172a;">${escapeHtml(entry.source || "Untitled source")}</button>`,
+                    matchedTarget
+                        ? `<div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;"><span style="font-size:12px;color:#166534;font-weight:700;">Matched with ${escapeHtml(matchedTarget.target || "target")}</span><button type="button" data-unmatch-source-id="${escapeHtml(sourceId)}" style="border:0;background:transparent;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;">Clear</button></div>`
+                        : '<div style="margin-top:8px;font-size:12px;color:#94a3b8;">Not matched yet</div>',
+                    "</div>"
+                ].join("");
+            }).join(""),
+            "</div>",
+            "</div>",
+            '<div style="padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);">',
+            '<div style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Targets</div>',
+            '<div style="display:grid;gap:10px;">',
+            state.targetOrder.map((targetId) => {
+                const entry = state.entriesById[targetId];
+                const assignedSourceId = findSourceByAssignedTarget(state.matchesBySource, targetId);
+                const assignedSource = assignedSourceId ? state.entriesById[assignedSourceId] : null;
+                const isSelected = state.selectedTargetId === targetId;
+                return [
+                    `<div style="border-radius:16px;border:1px solid ${isSelected ? "rgba(59,130,246,0.9)" : "rgba(203,213,225,0.95)"};padding:12px;background:${isSelected ? "rgba(59,130,246,0.10)" : "#ffffff"};">`,
+                    `<button type="button" data-match-target-id="${escapeHtml(targetId)}" style="width:100%;text-align:left;border:0;background:transparent;padding:0;cursor:pointer;font-size:15px;font-weight:700;color:#0f172a;">${escapeHtml(entry.target || "Untitled target")}</button>`,
+                    assignedSource
+                        ? `<div style="margin-top:8px;font-size:12px;color:#166534;font-weight:700;">Linked to ${escapeHtml(assignedSource.source || "source")}</div>`
+                        : '<div style="margin-top:8px;font-size:12px;color:#94a3b8;">Waiting for a source</div>',
+                    "</div>"
+                ].join("");
+            }).join(""),
+            "</div>",
+            "</div>",
+            "</div>",
+            "</div>"
+        ].join("");
+
+        runtime.body.querySelectorAll("[data-match-source-id]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const sourceId = button.getAttribute("data-match-source-id") || "";
+                state.selectedSourceId = state.selectedSourceId === sourceId ? "" : sourceId;
+                if (state.selectedSourceId && state.selectedTargetId) {
+                    assignMatchingPair(state, state.selectedSourceId, state.selectedTargetId);
+                }
+                runtime.rerender();
+            });
+        });
+
+        runtime.body.querySelectorAll("[data-match-target-id]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const targetId = button.getAttribute("data-match-target-id") || "";
+                state.selectedTargetId = state.selectedTargetId === targetId ? "" : targetId;
+                if (state.selectedSourceId && state.selectedTargetId) {
+                    assignMatchingPair(state, state.selectedSourceId, state.selectedTargetId);
+                }
+                runtime.rerender();
+            });
+        });
+
+        runtime.body.querySelectorAll("[data-unmatch-source-id]").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const sourceId = button.getAttribute("data-unmatch-source-id") || "";
+                delete state.matchesBySource[sourceId];
+                if (state.selectedSourceId === sourceId) {
+                    state.selectedSourceId = "";
+                }
+                runtime.rerender();
+            });
+        });
+
+        runtime.setStatus(`Matched ${matchedCount} of ${state.entries.length} pairs`);
+        runtime.configurePrimaryAction({
+            visible: true,
+            label: "Finish",
+            disabled: matchedCount !== state.entries.length
+        });
+    }
+
+    function renderDragDropPair(runtime) {
+        const state = runtime.state;
+        const assignedSourceIds = new Set(Object.values(state.assignmentsByTarget));
+        const availableSourceIds = state.sourceOrder.filter((sourceId) => !assignedSourceIds.has(sourceId));
+        const placedCount = Object.keys(state.assignmentsByTarget).length;
+
+        runtime.body.innerHTML = [
+            '<div style="display:grid;gap:20px;">',
+            '<div style="padding:16px 18px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:14px;line-height:1.6;">Drag each source chip onto the correct target. You can also tap a source and then tap a target if drag and drop is unavailable.</div>',
+            '<div style="padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);">',
+            '<div style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Source Bank</div>',
+            '<div style="display:flex;flex-wrap:wrap;gap:10px;">',
+            availableSourceIds.length
+                ? availableSourceIds.map((sourceId) => {
+                    const entry = state.entriesById[sourceId];
+                    const isSelected = state.selectedSourceId === sourceId;
+                    return `<button type="button" draggable="true" data-drag-source-id="${escapeHtml(sourceId)}" style="border-radius:999px;padding:10px 14px;border:1px solid ${isSelected ? "rgba(92,200,135,0.9)" : "rgba(203,213,225,0.95)"};background:${isSelected ? "rgba(92,200,135,0.14)" : "#ffffff"};cursor:grab;font-size:14px;font-weight:700;color:#0f172a;">${escapeHtml(entry.source || "Source")}</button>`;
+                }).join("")
+                : '<div style="font-size:14px;color:#166534;font-weight:700;">All sources are placed.</div>',
+            "</div>",
+            "</div>",
+            '<div style="display:grid;gap:12px;">',
+            state.targetOrder.map((targetId) => {
+                const entry = state.entriesById[targetId];
+                const assignedSourceId = state.assignmentsByTarget[targetId] || "";
+                const assignedSource = assignedSourceId ? state.entriesById[assignedSourceId] : null;
+                return [
+                    `<div data-drop-target-id="${escapeHtml(targetId)}" style="border-radius:18px;border:1px dashed ${assignedSource ? "rgba(92,200,135,0.9)" : "rgba(148,163,184,0.6)"};padding:14px 16px;background:${assignedSource ? "rgba(92,200,135,0.10)" : "rgba(248,250,252,0.95)"};">`,
+                    `<div style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:8px;">Target</div>`,
+                    `<div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:10px;">${escapeHtml(entry.target || "Target")}</div>`,
+                    assignedSource
+                        ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;"><span style="display:inline-flex;align-items:center;border-radius:999px;padding:9px 12px;background:#ffffff;border:1px solid rgba(92,200,135,0.9);font-size:13px;font-weight:700;color:#166534;">${escapeHtml(assignedSource.source || "Source")}</span><button type="button" data-clear-target-id="${escapeHtml(targetId)}" style="border:0;background:transparent;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;">Clear</button></div>`
+                        : '<div style="font-size:13px;color:#94a3b8;">Drop a source here</div>',
+                    "</div>"
+                ].join("");
+            }).join(""),
+            "</div>",
+            "</div>"
+        ].join("");
+
+        runtime.body.querySelectorAll("[data-drag-source-id]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const sourceId = button.getAttribute("data-drag-source-id") || "";
+                state.selectedSourceId = state.selectedSourceId === sourceId ? "" : sourceId;
+                runtime.rerender();
+            });
+
+            button.addEventListener("dragstart", (event) => {
+                const sourceId = button.getAttribute("data-drag-source-id") || "";
+                state.dragSourceId = sourceId;
+                if (event.dataTransfer) {
+                    event.dataTransfer.effectAllowed = "move";
+                    event.dataTransfer.setData("text/plain", sourceId);
+                }
+            });
+
+            button.addEventListener("dragend", () => {
+                state.dragSourceId = "";
+            });
+        });
+
+        runtime.body.querySelectorAll("[data-drop-target-id]").forEach((panel) => {
+            panel.addEventListener("dragover", (event) => {
+                event.preventDefault();
+            });
+
+            panel.addEventListener("drop", (event) => {
+                event.preventDefault();
+                const targetId = panel.getAttribute("data-drop-target-id") || "";
+                const sourceId = state.dragSourceId
+                    || (event.dataTransfer ? event.dataTransfer.getData("text/plain") : "")
+                    || state.selectedSourceId;
+                if (!sourceId || !targetId) {
+                    return;
+                }
+                assignDragDropPair(state, sourceId, targetId);
+                runtime.rerender();
+            });
+
+            panel.addEventListener("click", () => {
+                const targetId = panel.getAttribute("data-drop-target-id") || "";
+                if (!state.selectedSourceId || !targetId) {
+                    return;
+                }
+                assignDragDropPair(state, state.selectedSourceId, targetId);
+                runtime.rerender();
+            });
+        });
+
+        runtime.body.querySelectorAll("[data-clear-target-id]").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const targetId = button.getAttribute("data-clear-target-id") || "";
+                delete state.assignmentsByTarget[targetId];
+                runtime.rerender();
+            });
+        });
+
+        runtime.setStatus(`Placed ${placedCount} of ${state.entries.length} items`);
+        runtime.configurePrimaryAction({
+            visible: true,
+            label: "Finish",
+            disabled: placedCount !== state.entries.length
+        });
+    }
+
+    const WORD_SEARCH_DIRECTIONS = [
+        { row: 0, col: 1 },
+        { row: 1, col: 0 },
+        { row: 1, col: 1 },
+        { row: 1, col: -1 },
+        { row: 0, col: -1 },
+        { row: -1, col: 0 },
+        { row: -1, col: -1 },
+        { row: -1, col: 1 }
+    ];
+
+    function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function getAxisRange(size, delta, length) {
+        if (delta > 0) {
+            return [0, size - length];
+        }
+        if (delta < 0) {
+            return [length - 1, size - 1];
+        }
+        return [0, size - 1];
+    }
+
+    function createEmptyGrid(size) {
+        return Array.from({ length: size }, () => Array.from({ length: size }, () => ""));
+    }
+
+    function buildWordSearchPuzzle(entries) {
+        if (!entries.length) {
+            return null;
+        }
+
+        const longestWord = entries.reduce((maxLength, entry) => Math.max(maxLength, entry.normalized.length), 0);
+        const totalLetters = entries.reduce((count, entry) => count + entry.normalized.length, 0);
+        const minSize = Math.max(8, longestWord, Math.ceil(Math.sqrt(totalLetters * 1.4)));
+        const maxSize = Math.max(14, longestWord);
+        const placementOrder = entries.slice().sort((left, right) => right.normalized.length - left.normalized.length);
+
+        for (let size = minSize; size <= maxSize; size += 1) {
+            for (let attempt = 0; attempt < 18; attempt += 1) {
+                const cells = createEmptyGrid(size);
+                const placements = {};
+                let failed = false;
+
+                for (const entry of placementOrder) {
+                    const directions = shuffleArray(WORD_SEARCH_DIRECTIONS);
+                    let placed = false;
+
+                    for (const direction of directions) {
+                        const [rowMin, rowMax] = getAxisRange(size, direction.row, entry.normalized.length);
+                        const [colMin, colMax] = getAxisRange(size, direction.col, entry.normalized.length);
+
+                        for (let tries = 0; tries < 80; tries += 1) {
+                            const row = randomInt(rowMin, rowMax);
+                            const col = randomInt(colMin, colMax);
+                            let canPlace = true;
+
+                            for (let letterIndex = 0; letterIndex < entry.normalized.length; letterIndex += 1) {
+                                const cellRow = row + direction.row * letterIndex;
+                                const cellCol = col + direction.col * letterIndex;
+                                const existingLetter = cells[cellRow][cellCol];
+                                const nextLetter = entry.normalized[letterIndex];
+                                if (existingLetter && existingLetter !== nextLetter) {
+                                    canPlace = false;
+                                    break;
+                                }
+                            }
+
+                            if (!canPlace) {
+                                continue;
+                            }
+
+                            const path = [];
+                            for (let letterIndex = 0; letterIndex < entry.normalized.length; letterIndex += 1) {
+                                const cellRow = row + direction.row * letterIndex;
+                                const cellCol = col + direction.col * letterIndex;
+                                const nextLetter = entry.normalized[letterIndex];
+                                cells[cellRow][cellCol] = nextLetter;
+                                path.push(`${cellRow}:${cellCol}`);
+                            }
+
+                            placements[entry.id] = path;
+                            placed = true;
+                            break;
+                        }
+
+                        if (placed) {
+                            break;
+                        }
+                    }
+
+                    if (!placed) {
+                        failed = true;
+                        break;
+                    }
+                }
+
+                if (failed) {
+                    continue;
+                }
+
+                for (let row = 0; row < size; row += 1) {
+                    for (let col = 0; col < size; col += 1) {
+                        if (!cells[row][col]) {
+                            cells[row][col] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+                        }
+                    }
+                }
+
+                return {
+                    size,
+                    cells,
+                    entries: entries.map((entry) => ({
+                        id: entry.id,
+                        text: entry.text,
+                        hint: entry.hint,
+                        normalized: entry.normalized,
+                        path: placements[entry.id] || []
+                    }))
+                };
+            }
+        }
+
+        return null;
+    }
+
+    function getWordSearchPath(start, end, size) {
+        const deltaRow = end.row - start.row;
+        const deltaCol = end.col - start.col;
+        const stepRow = deltaRow === 0 ? 0 : deltaRow / Math.abs(deltaRow);
+        const stepCol = deltaCol === 0 ? 0 : deltaCol / Math.abs(deltaCol);
+        const straightLine = deltaRow === 0 || deltaCol === 0 || Math.abs(deltaRow) === Math.abs(deltaCol);
+
+        if (!straightLine) {
+            return [`${start.row}:${start.col}`];
+        }
+
+        const length = Math.max(Math.abs(deltaRow), Math.abs(deltaCol)) + 1;
+        const keys = [];
+        for (let index = 0; index < length; index += 1) {
+            const row = start.row + stepRow * index;
+            const col = start.col + stepCol * index;
+            if (row < 0 || row >= size || col < 0 || col >= size) {
+                return [`${start.row}:${start.col}`];
+            }
+            keys.push(`${row}:${col}`);
+        }
+
+        return keys;
+    }
+
+    function collectFoundWordSearchCells(entries, foundIds) {
+        const cells = new Set();
+        entries.forEach((entry) => {
+            if (!foundIds.has(entry.id)) {
+                return;
+            }
+            entry.path.forEach((key) => cells.add(key));
+        });
+        return cells;
+    }
+
+    function paintWordSearchBoard(runtime) {
+        const state = runtime.state;
+        const foundCellKeys = collectFoundWordSearchCells(state.puzzle.entries, state.foundIds);
+        const selectedKeys = new Set(state.selectionKeys);
+        runtime.body.querySelectorAll("[data-wordsearch-cell]").forEach((button) => {
+            const key = button.getAttribute("data-wordsearch-cell") || "";
+            let background = "#ffffff";
+            let borderColor = "rgba(203,213,225,0.95)";
+            let color = "#0f172a";
+
+            if (foundCellKeys.has(key)) {
+                background = "rgba(92,200,135,0.18)";
+                borderColor = "rgba(92,200,135,0.95)";
+                color = "#166534";
+            } else if (selectedKeys.has(key)) {
+                background = "rgba(59,130,246,0.16)";
+                borderColor = "rgba(59,130,246,0.85)";
+                color = "#1d4ed8";
+            }
+
+            button.style.background = background;
+            button.style.borderColor = borderColor;
+            button.style.color = color;
+        });
+    }
+
+    function finalizeWordSearchSelection(runtime) {
+        const state = runtime.state;
+        if (!state || state.mode !== "wordsearch" || !state.isSelecting) {
+            return;
+        }
+
+        state.isSelecting = false;
+        const selection = state.selectionKeys.slice();
+        const matchedEntry = state.puzzle.entries.find((entry) =>
+            !state.foundIds.has(entry.id)
+            && (arrayEquals(selection, entry.path) || arrayEquals(selection, entry.path.slice().reverse()))
+        );
+
+        if (matchedEntry) {
+            state.foundIds.add(matchedEntry.id);
+        }
+
+        state.selectionStart = null;
+        state.selectionKeys = [];
+        runtime.rerender();
+    }
+
+    function createGridRenderer() {
+        return {
+            createState(payload, runtime) {
+                const entries = normalizeGridEntries(payload);
+                const mode = normalizeComparableText(payload && payload.type) === "vocabulary bingo" ? "bingo" : "wordsearch";
+
+                if (mode === "bingo") {
+                    const promptOrder = shuffleArray(entries.map((entry) => entry.id));
+                    return {
+                        mode,
+                        entries,
+                        entriesById: Object.fromEntries(entries.map((entry) => [entry.id, entry])),
+                        boardOrder: shuffleArray(entries.map((entry) => entry.id)),
+                        promptOrder,
+                        currentPromptIndex: 0,
+                        markedIds: new Set(),
+                        feedback: ""
+                    };
+                }
+
+                const puzzle = buildWordSearchPuzzle(entries);
+                const state = {
+                    mode,
+                    entries,
+                    puzzle,
+                    foundIds: new Set(),
+                    selectionStart: null,
+                    selectionKeys: [],
+                    isSelecting: false,
+                    cleanup: null
+                };
+
+                const pointerUpHandler = () => finalizeWordSearchSelection(runtime);
+                document.addEventListener("pointerup", pointerUpHandler);
+                document.addEventListener("pointercancel", pointerUpHandler);
+                state.cleanup = () => {
+                    document.removeEventListener("pointerup", pointerUpHandler);
+                    document.removeEventListener("pointercancel", pointerUpHandler);
+                };
+
+                return state;
+            },
+            render(runtime) {
+                const state = runtime.state;
+                if (!state.entries.length) {
+                    renderEmptyState(runtime, "This assessment is empty.", "Add at least one word in Immerse to make it playable in VRodos.");
+                    return;
+                }
+
+                if (state.mode === "bingo") {
+                    renderVocabularyBingo(runtime);
+                    return;
+                }
+
+                renderWordSearch(runtime);
+            },
+            onPrimaryAction(runtime) {
+                const state = runtime.state;
+                if (state.mode === "bingo") {
+                    if (state.markedIds.size !== state.entries.length) {
+                        return;
+                    }
+
+                    const prompts = state.promptOrder.map((entryId, index) => {
+                        const entry = state.entriesById[entryId];
+                        return {
+                            promptIndex: index,
+                            wordId: entry.id,
+                            word: entry.text,
+                            hint: entry.hint,
+                            wasMarked: state.markedIds.has(entry.id)
+                        };
+                    });
+
+                    runtime.finish(
+                        { prompts, variant: "vocabulary-bingo" },
+                        { isCorrect: prompts.every((prompt) => prompt.wasMarked === true) }
+                    );
+                    return;
+                }
+
+                if (!state.puzzle || state.foundIds.size !== state.puzzle.entries.length) {
+                    return;
+                }
+
+                const words = state.puzzle.entries.map((entry) => ({
+                    wordId: entry.id,
+                    word: entry.text,
+                    hint: entry.hint,
+                    found: state.foundIds.has(entry.id)
+                }));
+
+                runtime.finish(
+                    { words, variant: "word-search" },
+                    { isCorrect: words.every((word) => word.found === true) }
+                );
+            }
+        };
+    }
+
+    function renderWordSearch(runtime) {
+        const state = runtime.state;
+        const puzzle = state.puzzle;
+        if (!puzzle) {
+            renderEmptyState(runtime, "This word search could not be built.", "Try shorter words or remove punctuation-heavy items in Immerse, then compile again.");
+            return;
+        }
+
+        runtime.body.innerHTML = [
+            '<div style="display:grid;gap:18px;">',
+            '<div style="padding:16px 18px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:14px;line-height:1.6;">Drag across letters in a straight line to find each hidden word. Words can appear forwards, backwards, vertically, horizontally, or diagonally.</div>',
+            '<div style="display:flex;flex-wrap:wrap;gap:8px;">',
+            puzzle.entries.map((entry) => {
+                const found = state.foundIds.has(entry.id);
+                return `<span style="display:inline-flex;align-items:center;border-radius:999px;padding:8px 12px;border:1px solid ${found ? "rgba(92,200,135,0.9)" : "rgba(203,213,225,0.95)"};background:${found ? "rgba(92,200,135,0.14)" : "#ffffff"};color:${found ? "#166534" : "#334155"};font-size:13px;font-weight:700;">${escapeHtml(entry.text)}</span>`;
+            }).join(""),
+            "</div>",
+            `<div style="display:grid;grid-template-columns:repeat(${puzzle.size}, minmax(0, 1fr));gap:6px;max-width:min(100%, 640px);">`,
+            puzzle.cells.map((row, rowIndex) =>
+                row.map((letter, colIndex) =>
+                    `<button type="button" data-wordsearch-cell="${rowIndex}:${colIndex}" style="aspect-ratio:1 / 1;border-radius:12px;border:1px solid rgba(203,213,225,0.95);background:#ffffff;font-size:15px;font-weight:800;color:#0f172a;cursor:pointer;user-select:none;">${escapeHtml(letter)}</button>`
+                ).join("")
+            ).join(""),
+            "</div>",
+            "</div>"
+        ].join("");
+
+        runtime.body.querySelectorAll("[data-wordsearch-cell]").forEach((button) => {
+            button.addEventListener("pointerdown", (event) => {
+                event.preventDefault();
+                const key = button.getAttribute("data-wordsearch-cell") || "";
+                const [row, col] = key.split(":").map((value) => Number(value));
+                state.isSelecting = true;
+                state.selectionStart = { row, col };
+                state.selectionKeys = [key];
+                paintWordSearchBoard(runtime);
+            });
+
+            button.addEventListener("pointerenter", () => {
+                if (!state.isSelecting || !state.selectionStart) {
+                    return;
+                }
+                const key = button.getAttribute("data-wordsearch-cell") || "";
+                const [row, col] = key.split(":").map((value) => Number(value));
+                state.selectionKeys = getWordSearchPath(state.selectionStart, { row, col }, puzzle.size);
+                paintWordSearchBoard(runtime);
+            });
+        });
+
+        paintWordSearchBoard(runtime);
+        runtime.setStatus(`Found ${state.foundIds.size} of ${puzzle.entries.length} words`);
+        runtime.configurePrimaryAction({
+            visible: true,
+            label: "Finish",
+            disabled: state.foundIds.size !== puzzle.entries.length
+        });
+    }
+
+    function renderVocabularyBingo(runtime) {
+        const state = runtime.state;
+        const total = state.entries.length;
+        const boardSize = Math.ceil(Math.sqrt(total));
+        const boardSlots = state.boardOrder.concat(Array.from({ length: boardSize * boardSize - total }, () => ""));
+        const currentPromptId = state.promptOrder[state.currentPromptIndex] || "";
+        const currentPrompt = currentPromptId ? state.entriesById[currentPromptId] : null;
+
+        runtime.body.innerHTML = [
+            '<div style="display:grid;gap:18px;">',
+            currentPrompt
+                ? `<div style="padding:18px;border-radius:18px;background:rgba(59,130,246,0.08);border:1px solid rgba(147,197,253,0.5);"><div style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#1d4ed8;margin-bottom:8px;">Current prompt</div><div style="font-size:20px;font-weight:800;color:#0f172a;margin-bottom:6px;">${escapeHtml(currentPrompt.hint || currentPrompt.text)}</div><div style="font-size:13px;color:#64748b;">Mark the matching word on the board.</div></div>`
+                : '<div style="padding:18px;border-radius:18px;background:rgba(92,200,135,0.12);border:1px solid rgba(92,200,135,0.45);font-size:15px;font-weight:700;color:#166534;">All prompts completed. Review the board and finish.</div>',
+            state.feedback
+                ? `<div style="font-size:13px;font-weight:700;color:#dc2626;">${escapeHtml(state.feedback)}</div>`
+                : "",
+            `<div style="display:grid;grid-template-columns:repeat(${boardSize}, minmax(0, 1fr));gap:10px;">`,
+            boardSlots.map((entryId) => {
+                if (!entryId) {
+                    return '<div style="aspect-ratio:1 / 1;border-radius:16px;background:rgba(226,232,240,0.55);border:1px dashed rgba(203,213,225,0.95);"></div>';
+                }
+
+                const entry = state.entriesById[entryId];
+                const marked = state.markedIds.has(entryId);
+                return `<button type="button" data-bingo-word-id="${escapeHtml(entryId)}" style="aspect-ratio:1 / 1;border-radius:16px;border:1px solid ${marked ? "rgba(92,200,135,0.95)" : "rgba(203,213,225,0.95)"};background:${marked ? "rgba(92,200,135,0.16)" : "#ffffff"};padding:12px;font-size:14px;font-weight:700;color:${marked ? "#166534" : "#0f172a"};cursor:${marked ? "default" : "pointer"};">${escapeHtml(entry.text)}</button>`;
+            }).join(""),
+            "</div>",
+            "</div>"
+        ].join("");
+
+        runtime.body.querySelectorAll("[data-bingo-word-id]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const wordId = button.getAttribute("data-bingo-word-id") || "";
+                if (!wordId || state.markedIds.has(wordId) || !currentPrompt) {
+                    return;
+                }
+
+                if (wordId === currentPrompt.id) {
+                    state.markedIds.add(wordId);
+                    state.feedback = "";
+                    if (state.currentPromptIndex < state.promptOrder.length) {
+                        state.currentPromptIndex += 1;
+                    }
+                } else {
+                    state.feedback = "That does not match the current prompt. Try again.";
+                }
+
+                runtime.rerender();
+            });
+        });
+
+        runtime.setStatus(`Completed ${state.markedIds.size} of ${state.entries.length} prompts`);
+        runtime.configurePrimaryAction({
+            visible: true,
+            label: "Finish",
+            disabled: state.markedIds.size !== state.entries.length
+        });
+    }
+
+    function buildTextSegments(text, annotations) {
+        const sourceText = String(text || "");
+        const segments = [];
+        let cursor = 0;
+
+        annotations.forEach((annotation) => {
+            if (cursor < annotation.start) {
+                segments.push({ type: "text", text: sourceText.slice(cursor, annotation.start) });
+            }
+
+            segments.push({
+                type: annotation.type,
+                id: annotation.id,
+                text: sourceText.slice(annotation.start, annotation.end),
+                correctValue: annotation.correctValue
+            });
+            cursor = annotation.end;
+        });
+
+        if (cursor < sourceText.length) {
+            segments.push({ type: "text", text: sourceText.slice(cursor) });
+        }
+
+        return segments;
+    }
+
+    function createTextRenderer() {
+        return {
+            createState(payload) {
+                const sourceText = decodeDisplayText(payload && payload.content && payload.content.text ? payload.content.text : "");
+                const typeKey = normalizeComparableText(payload && payload.type);
+                const mode = typeKey === "highlight" ? "highlight" : "fill-gaps";
+                if (mode === "highlight") {
+                    const highlights = normalizeTextAnnotations(sourceText, payload && payload.content && payload.content.annotations, "highlight");
+                    return {
+                        mode,
+                        sourceText,
+                        annotations: highlights,
+                        selectedIds: new Set()
+                    };
+                }
+
+                const blanks = normalizeTextAnnotations(sourceText, payload && payload.content && payload.content.annotations, "blank");
+                return {
+                    mode,
+                    sourceText,
+                    annotations: blanks,
+                    values: Object.fromEntries(blanks.map((annotation) => [annotation.id, ""]))
+                };
+            },
+            render(runtime) {
+                if (runtime.state.mode === "highlight") {
+                    renderHighlightText(runtime);
+                    return;
+                }
+                renderFillGapsText(runtime);
+            },
+            onPrimaryAction(runtime) {
+                const state = runtime.state;
+                if (state.mode === "highlight") {
+                    if (state.selectedIds.size !== state.annotations.length) {
+                        return;
+                    }
+
+                    const selections = state.annotations.map((annotation) => ({
+                        annotationId: annotation.id,
+                        text: state.sourceText.slice(annotation.start, annotation.end),
+                        selected: state.selectedIds.has(annotation.id),
+                        isCorrect: state.selectedIds.has(annotation.id)
+                    }));
+
+                    runtime.finish(
+                        { selections, variant: "highlight" },
+                        { isCorrect: selections.every((selection) => selection.isCorrect === true) }
+                    );
+                    return;
+                }
+
+                const blanks = state.annotations.map((annotation) => {
+                    const enteredValue = state.values[annotation.id] || "";
+                    const isCorrect = normalizeFreeText(enteredValue) === normalizeFreeText(annotation.correctValue || annotation.text);
+                    return {
+                        annotationId: annotation.id,
+                        expectedValue: annotation.correctValue || annotation.text,
+                        enteredValue,
+                        isCorrect
+                    };
+                });
+
+                runtime.finish(
+                    { blanks, variant: "fill-in-the-gaps" },
+                    { isCorrect: blanks.every((blank) => blank.isCorrect === true) }
+                );
+            }
+        };
+    }
+
+    function updateFillGapControls(runtime) {
+        const state = runtime.state;
+        const filledCount = state.annotations.filter((annotation) => normalizeFreeText(state.values[annotation.id] || "")).length;
+        runtime.setStatus(`Filled ${filledCount} of ${state.annotations.length} blanks`);
+        runtime.configurePrimaryAction({
+            visible: true,
+            label: "Check answers",
+            disabled: filledCount !== state.annotations.length
+        });
+    }
+
+    function renderFillGapsText(runtime) {
+        const state = runtime.state;
+        if (!state.annotations.length || !state.sourceText) {
+            renderEmptyState(runtime, "This assessment is empty.", "Add text and at least one blank annotation in Immerse to make it playable in VRodos.");
+            return;
+        }
+
+        const segments = buildTextSegments(state.sourceText, state.annotations);
+        runtime.body.innerHTML = [
+            '<div style="display:grid;gap:18px;">',
+            '<div style="padding:16px 18px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:14px;line-height:1.6;">Fill every blank to unlock the final check.</div>',
+            '<div style="padding:20px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);font-family:Georgia,\'Times New Roman\',serif;font-size:18px;line-height:1.9;color:#0f172a;white-space:pre-wrap;">',
+            segments.map((segment) => {
+                if (segment.type !== "blank") {
+                    return escapeHtml(segment.text).replace(/\n/g, "<br />");
+                }
+
+                const value = state.values[segment.id] || "";
+                return `<input type="text" data-blank-id="${escapeHtml(segment.id)}" value="${escapeHtml(value)}" style="display:inline-block;min-width:120px;margin:0 4px;padding:6px 10px;border-radius:10px;border:1px solid rgba(59,130,246,0.45);background:rgba(248,250,252,0.98);font:inherit;color:#0f172a;" />`;
+            }).join(""),
+            "</div>",
+            "</div>"
+        ].join("");
+
+        runtime.body.querySelectorAll("[data-blank-id]").forEach((input) => {
+            input.addEventListener("input", () => {
+                const annotationId = input.getAttribute("data-blank-id") || "";
+                state.values[annotationId] = input.value;
+                updateFillGapControls(runtime);
+            });
+        });
+
+        updateFillGapControls(runtime);
+    }
+
+    function renderHighlightText(runtime) {
+        const state = runtime.state;
+        if (!state.annotations.length || !state.sourceText) {
+            renderEmptyState(runtime, "This assessment is empty.", "Add text and at least one highlight annotation in Immerse to make it playable in VRodos.");
+            return;
+        }
+
+        const segments = buildTextSegments(state.sourceText, state.annotations);
+        runtime.body.innerHTML = [
+            '<div style="display:grid;gap:18px;">',
+            '<div style="padding:16px 18px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:14px;line-height:1.6;">Select every highlighted target in the passage to finish.</div>',
+            '<div style="padding:20px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);font-family:Georgia,\'Times New Roman\',serif;font-size:18px;line-height:1.9;color:#0f172a;white-space:pre-wrap;">',
+            segments.map((segment) => {
+                if (segment.type !== "highlight") {
+                    return escapeHtml(segment.text).replace(/\n/g, "<br />");
+                }
+
+                const selected = state.selectedIds.has(segment.id);
+                return `<span role="button" tabindex="0" data-highlight-id="${escapeHtml(segment.id)}" style="display:inline;border-radius:8px;padding:0 3px;background:${selected ? "rgba(92,200,135,0.18)" : "rgba(250,204,21,0.24)"};border-bottom:2px solid ${selected ? "rgba(92,200,135,0.95)" : "rgba(234,179,8,0.95)"};cursor:pointer;">${escapeHtml(segment.text)}</span>`;
+            }).join(""),
+            "</div>",
+            "</div>"
+        ].join("");
+
+        runtime.body.querySelectorAll("[data-highlight-id]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const annotationId = button.getAttribute("data-highlight-id") || "";
+                if (state.selectedIds.has(annotationId)) {
+                    state.selectedIds.delete(annotationId);
+                } else {
+                    state.selectedIds.add(annotationId);
+                }
+                runtime.rerender();
+            });
+        });
+
+        runtime.setStatus(`Selected ${state.selectedIds.size} of ${state.annotations.length} highlights`);
+        runtime.configurePrimaryAction({
+            visible: true,
+            label: "Finish",
+            disabled: state.selectedIds.size !== state.annotations.length
+        });
+    }
+
+    const ASSESSMENT_RENDERERS = {
+        Question: createQuestionRenderer(),
+        ImageQuiz: createQuestionRenderer(),
+        Pair: createPairRenderer(),
+        Grid: createGridRenderer(),
+        Text: createTextRenderer()
+    };
+
+    function resolveRenderer(payload) {
+        if (!payload || !payload.supported) {
+            return null;
+        }
+
+        return ASSESSMENT_RENDERERS[payload.group] || null;
+    }
+
+    function getOverlayRuntimeV2() {
+        if (window.__vrodosImmerseAssessmentRuntime) {
+            return window.__vrodosImmerseAssessmentRuntime;
+        }
+
+        const runtime = {
+            lastResult: null,
+            payload: null,
+            renderer: null,
+            state: null,
+            root: null,
+            body: null,
+            nextButton: null,
+            dismissButton: null,
+            status: null,
+            title: null,
+            kicker: null
+        };
+
+        const root = document.createElement("div");
+        root.id = "vrodos-immerse-assessment-overlay";
+        root.style.position = "fixed";
+        root.style.inset = "0";
+        root.style.zIndex = "2147482000";
+        root.style.display = "none";
+        root.style.alignItems = "center";
+        root.style.justifyContent = "center";
+        root.style.padding = "24px";
+        root.style.background = "rgba(148, 163, 184, 0.34)";
+        root.style.backdropFilter = "blur(12px)";
+        root.style.fontFamily = "'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+
+        const panel = document.createElement("div");
+        panel.style.width = "min(720px, 100%)";
+        panel.style.maxHeight = "min(84vh, 860px)";
+        panel.style.overflow = "auto";
+        panel.style.borderRadius = "22px";
+        panel.style.background = "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)";
+        panel.style.color = "#1e293b";
+        panel.style.border = "1px solid rgba(203, 213, 225, 0.9)";
+        panel.style.boxShadow = "0 28px 80px rgba(15, 23, 42, 0.18)";
+
+        const header = document.createElement("div");
+        header.style.display = "flex";
+        header.style.justifyContent = "space-between";
+        header.style.alignItems = "flex-start";
+        header.style.gap = "16px";
+        header.style.padding = "20px 22px 14px";
+        header.style.borderBottom = "1px solid rgba(226, 232, 240, 0.9)";
+
+        const titleWrap = document.createElement("div");
+        titleWrap.innerHTML = [
+            '<div id="vrodos-immerse-assessment-kicker" style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#3b82f6;margin-bottom:6px;"></div>',
+            '<div id="vrodos-immerse-assessment-title" style="font-size:24px;font-weight:800;line-height:1.2;color:#0f172a;"></div>'
+        ].join("");
+
+        const dismissButton = document.createElement("button");
+        dismissButton.type = "button";
+        dismissButton.setAttribute("aria-label", "Close assessment");
+        dismissButton.style.border = "1px solid rgba(203, 213, 225, 0.95)";
+        dismissButton.style.borderRadius = "999px";
+        dismissButton.style.width = "42px";
+        dismissButton.style.height = "42px";
+        dismissButton.style.cursor = "pointer";
+        dismissButton.style.background = "#ffffff";
+        dismissButton.style.color = "#475569";
+        dismissButton.style.fontSize = "24px";
+        dismissButton.style.lineHeight = "1";
+        dismissButton.style.fontWeight = "500";
+        dismissButton.innerHTML = "&times;";
+
+        const body = document.createElement("div");
+        body.id = "vrodos-immerse-assessment-body";
+        body.style.padding = "22px";
+
+        const footer = document.createElement("div");
+        footer.style.display = "flex";
+        footer.style.justifyContent = "space-between";
+        footer.style.alignItems = "center";
+        footer.style.gap = "12px";
+        footer.style.padding = "0 22px 22px";
+
+        const status = document.createElement("div");
+        status.id = "vrodos-immerse-assessment-status";
+        status.style.fontSize = "13px";
+        status.style.color = "#64748b";
+
+        const nextButton = document.createElement("button");
+        nextButton.type = "button";
+        nextButton.textContent = "Finish";
+        nextButton.style.border = "0";
+        nextButton.style.borderRadius = "999px";
+        nextButton.style.padding = "12px 18px";
+        nextButton.style.cursor = "pointer";
+        nextButton.style.background = "#5cc887";
+        nextButton.style.color = "#ffffff";
+        nextButton.style.fontWeight = "800";
+        nextButton.style.display = "none";
+
+        header.appendChild(titleWrap);
+        header.appendChild(dismissButton);
+        footer.appendChild(status);
+        footer.appendChild(nextButton);
+        panel.appendChild(header);
+        panel.appendChild(body);
+        panel.appendChild(footer);
+        root.appendChild(panel);
+        document.body.appendChild(root);
+
+        runtime.root = root;
+        runtime.body = body;
+        runtime.nextButton = nextButton;
+        runtime.dismissButton = dismissButton;
+        runtime.status = status;
+        runtime.title = titleWrap.querySelector("#vrodos-immerse-assessment-title");
+        runtime.kicker = titleWrap.querySelector("#vrodos-immerse-assessment-kicker");
+
+        runtime.configurePrimaryAction = function (config) {
+            const options = config || {};
+            const visible = Boolean(options.visible);
+            runtime.nextButton.style.display = visible ? "inline-flex" : "none";
+            runtime.nextButton.textContent = options.label || "Finish";
+            runtime.nextButton.disabled = Boolean(options.disabled);
+            runtime.nextButton.style.opacity = runtime.nextButton.disabled ? "0.55" : "1";
+            runtime.nextButton.style.pointerEvents = runtime.nextButton.disabled ? "none" : "auto";
+        };
+
+        runtime.setStatus = function (message) {
+            runtime.status.textContent = message || "";
+        };
+
+        runtime.resetState = function () {
+            if (runtime.state && typeof runtime.state.cleanup === "function") {
+                runtime.state.cleanup();
+            }
+
+            runtime.payload = null;
+            runtime.renderer = null;
+            runtime.state = null;
+            runtime.body.innerHTML = "";
+            runtime.setStatus("");
+            runtime.configurePrimaryAction({ visible: false });
+        };
+
+        runtime.hide = function () {
+            runtime.root.style.display = "none";
+            setAssessmentSceneInteractionLocked(false);
+            runtime.resetState();
+        };
+
+        runtime.finish = function (response, extra) {
+            if (!runtime.payload) {
+                return;
+            }
+
+            runtime.lastResult = buildAssessmentResult(runtime.payload, response, extra);
+            runtime.payload.result = runtime.lastResult;
+            window.__vrodosLastAssessmentResult = runtime.lastResult;
+            runtime.hide();
+        };
+
+        runtime.renderUnsupported = function () {
+            const isPromptFamily = runtime.payload && runtime.payload.group === "Prompt";
+            renderEmptyState(
+                runtime,
+                "This assessment type is not interactive in VRodos yet.",
+                isPromptFamily
+                    ? "Prompt-family assessments are intentionally left read-only in this release. The scene still compiles safely."
+                    : "The scene still compiles safely, but this assessment currently opens as a read-only card. Supported interactive groups are Question, Image quiz, Pair, Grid, and Text."
+            );
+        };
+
+        runtime.rerender = function () {
+            if (!runtime.renderer || typeof runtime.renderer.render !== "function") {
+                runtime.renderUnsupported();
+                return;
+            }
+
+            runtime.renderer.render(runtime);
+        };
+
+        runtime.open = function (payload) {
+            runtime.resetState();
+            runtime.payload = payload;
+            runtime.kicker.textContent = payload.type || payload.group || "Assessment";
+            if (typeof vrodosDecodeDisplayText === "function") {
+                runtime.title.textContent = vrodosDecodeDisplayText(payload.title || "Assessment");
+            } else {
+                runtime.title.textContent = decodeDisplayText(payload.title || "Assessment");
+            }
+            runtime.root.style.display = "flex";
+            setAssessmentSceneInteractionLocked(true);
+
+            runtime.renderer = resolveRenderer(payload);
+            if (!runtime.renderer) {
+                runtime.renderUnsupported();
+                return;
+            }
+
+            runtime.state = typeof runtime.renderer.createState === "function"
+                ? runtime.renderer.createState(payload, runtime)
+                : {};
+            runtime.rerender();
+        };
+
+        dismissButton.addEventListener("click", runtime.hide);
+        nextButton.addEventListener("click", () => {
+            if (!runtime.renderer || typeof runtime.renderer.onPrimaryAction !== "function") {
+                return;
+            }
+
+            runtime.renderer.onPrimaryAction(runtime);
+        });
+
+        window.__vrodosImmerseAssessmentRuntime = runtime;
+        return runtime;
+    }
+
     function getOverlayRuntime() {
+        return getOverlayRuntimeV2();
+    }
+
+    function getOverlayRuntimeLegacy() {
         if (window.__vrodosImmerseAssessmentRuntime) {
             return window.__vrodosImmerseAssessmentRuntime;
         }
