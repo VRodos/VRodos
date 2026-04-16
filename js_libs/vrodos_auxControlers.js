@@ -582,6 +582,17 @@ function _addDragScrub(controller) {
         dragging = false;
         startX = e.clientX;
         startValue = controller.getValue();
+        
+        // [NEW] Capture start TRS for Undo
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (target) {
+            input._oldTRS = {
+                pos: target.position.clone(),
+                rot: target.rotation.clone(),
+                scale: target.scale.clone()
+            };
+        }
+        
         input.setPointerCapture(e.pointerId);
         e.preventDefault(); // Prevent focus on pointerdown — we decide on pointerup
     });
@@ -611,6 +622,10 @@ function _addDragScrub(controller) {
         if (wasDragging) {
             // Finished a drag — resume animation and save
             _isDragScrubbing = false;
+            
+            // Commit Undo Transform
+            commitUndoTransformFromInput(input);
+            
             animate();
             triggerAutoSave();
         } else {
@@ -626,6 +641,9 @@ function _addDragScrub(controller) {
     input.addEventListener('blur', () => {
         isKeyboardEditing = false;
         input.style.cursor = 'ew-resize';
+        
+        // Commit Undo Transform for keyboard edits
+        commitUndoTransformFromInput(input);
     });
 
     // On Enter or Escape, blur the input — onFinishChange handles the actual update
@@ -641,6 +659,31 @@ function _addDragScrub(controller) {
  *  Add listeners: Update php, javascript and transform_controls when GUI changes
  *  Triggered once initially
  */
+function commitUndoTransformFromInput(input) {
+    if (typeof vrodosUndoManager === 'undefined' || vrodosUndoManager.isExecuting) return;
+    if (!input._oldTRS) return;
+
+    const target = _currentSelectedRealObject || transform_controls.object;
+    if (!target) return;
+
+    const newTRS = {
+        pos: target.position.clone(),
+        rot: target.rotation.clone(),
+        scale: target.scale.clone()
+    };
+
+    const moved = target.position.distanceToSquared(input._oldTRS.pos) > 0.000001 ||
+                  target.scale.distanceToSquared(input._oldTRS.scale) > 0.000001 ||
+                  Math.abs(target.rotation.x - input._oldTRS.rot.x) > 0.0001 ||
+                  Math.abs(target.rotation.y - input._oldTRS.rot.y) > 0.0001 ||
+                  Math.abs(target.rotation.z - input._oldTRS.rot.z) > 0.0001;
+
+    if (moved) {
+        vrodosUndoManager.add(new TransformCommand(target, input._oldTRS, newTRS));
+    }
+    delete input._oldTRS;
+}
+
 function controllerDatGuiOnChange() {
 
 
@@ -1183,7 +1226,7 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
  * Use this instead of transform_controls.attach(obj)
  */
 function vrodosAttachGizmo(object) {
-    if (!object) return;
+    if (!object || object.name === "vrodosGizmoProxy") return;
 
     _currentSelectedRealObject = object;
 

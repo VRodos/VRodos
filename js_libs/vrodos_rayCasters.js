@@ -615,10 +615,23 @@ function initPersistentPropertyListeners() {
     const setProp = (prop, isCheckbox, sanitize = false) => {
         return function () {
             if (transform_controls && transform_controls.object) {
+                let target = _currentSelectedRealObject || transform_controls.object;
+                if (target.name === "vrodosGizmoProxy" && target.realObject) {
+                    target = target.realObject;
+                }
+
+                const obj = target;
+                const oldValue = obj[prop];
                 let val = isCheckbox ? (this.checked ? 1 : 0) : this.value;
                 if (sanitize) val = sanitizeInputValue(val);
-                transform_controls.object[prop] = val;
-                saveChanges();
+                
+                if (oldValue !== val) {
+                    obj[prop] = val;
+                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+                        vrodosUndoManager.add(new PropertyCommand(obj, prop, oldValue, val));
+                    }
+                    saveChanges();
+                }
             }
         };
     };
@@ -626,10 +639,19 @@ function initPersistentPropertyListeners() {
     // --- Sun Properties ---
     const sunColor = document.getElementById('sunColor');
     if (sunColor) {
+        sunColor.addEventListener('focus', function() { this._oldVal = this.value; });
         sunColor.addEventListener('change', function () {
             if (transform_controls.object && transform_controls.object.children[0]) {
-                sunColor.value = "#" + transform_controls.object.children[0].material.color.getHexString();
-                saveChanges();
+                const obj = transform_controls.object;
+                const oldVal = this._oldVal || "#" + obj.children[0].material.color.getHexString();
+                const newVal = this.value;
+                
+                if (oldVal !== newVal) {
+                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+                        vrodosUndoManager.add(new PropertyCommand(obj, 'color', oldVal, newVal));
+                    }
+                    saveChanges();
+                }
             }
         });
     }
@@ -659,10 +681,19 @@ function initPersistentPropertyListeners() {
     // --- Lamp Properties ---
     const lampColor = document.getElementById('lampColor');
     if (lampColor) {
+        lampColor.addEventListener('focus', function() { this._oldVal = this.value; });
         lampColor.addEventListener('change', function () {
             if (transform_controls.object && transform_controls.object.children[0]) {
-                lampColor.value = "#" + transform_controls.object.children[0].material.color.getHexString();
-                saveChanges();
+                const obj = transform_controls.object;
+                const oldVal = this._oldVal || "#" + obj.children[0].material.color.getHexString();
+                const newVal = this.value;
+
+                if (oldVal !== newVal) {
+                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+                        vrodosUndoManager.add(new PropertyCommand(obj, 'color', oldVal, newVal));
+                    }
+                    saveChanges();
+                }
             }
         });
     }
@@ -691,20 +722,40 @@ function initPersistentPropertyListeners() {
     // --- Door & Link Properties ---
     const popupDoorSelect = document.getElementById("popupDoorSelect");
     if (popupDoorSelect) {
+        popupDoorSelect.addEventListener("focus", function() { this._oldVal = this.value; });
         popupDoorSelect.addEventListener("change", function () {
             if (transform_controls && transform_controls.object && this.value !== "Default" && this.value) {
-                transform_controls.object.sceneID_target = this.value;
-                saveChanges();
+                const obj = transform_controls.object;
+                const oldVal = this._oldVal || obj.sceneID_target;
+                const newVal = this.value;
+
+                if (oldVal !== newVal) {
+                    obj.sceneID_target = newVal;
+                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+                        vrodosUndoManager.add(new PropertyCommand(obj, 'sceneID_target', oldVal, newVal));
+                    }
+                    saveChanges();
+                }
             }
         });
     }
 
     const popupLinkSelect = document.getElementById("poi_link_text");
     if (popupLinkSelect) {
+        popupLinkSelect.addEventListener("focus", function() { this._oldVal = this.value; });
         popupLinkSelect.addEventListener("change", function () {
             if (transform_controls && transform_controls.object && this.value) {
-                transform_controls.object.poi_link_url = this.value;
-                saveChanges();
+                const obj = transform_controls.object;
+                const oldVal = this._oldVal || obj.poi_link_url;
+                const newVal = this.value;
+
+                if (oldVal !== newVal) {
+                    obj.poi_link_url = newVal;
+                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+                        vrodosUndoManager.add(new PropertyCommand(obj, 'poi_link_url', oldVal, newVal));
+                    }
+                    saveChanges();
+                }
             }
         });
     }
@@ -717,15 +768,24 @@ function initPersistentPropertyListeners() {
     if (chboxImg) {
         chboxImg.addEventListener("change", function () {
             if (transform_controls && transform_controls.object) {
-                if (this.checked) {
-                    transform_controls.object.poi_img_content = setDesc && setDesc.value ? setDesc.value : '';
-                    if (setDesc) setDesc.style.display = "block";
-                } else {
-                    if (setDesc) setDesc.style.display = "none";
-                    transform_controls.object.poi_img_content = null;
+                const obj = transform_controls.object;
+                const oldContent = obj.poi_img_content;
+                const oldTitle = obj.poi_img_title;
+                const newContent = this.checked ? (setDesc && setDesc.value ? setDesc.value : '') : null;
+                const newTitle = setTitle ? setTitle.value : obj.poi_img_title;
+
+                if (oldContent !== newContent) {
+                    obj.poi_img_content = newContent;
+                    obj.poi_img_title = newTitle;
+                    
+                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+                        // For complex multi-prop changes, we could use a custom command, but PropertyCommand is enough for the main content
+                        vrodosUndoManager.add(new PropertyCommand(obj, 'poi_img_content', oldContent, newContent));
+                    }
+
+                    if (setDesc) setDesc.style.display = this.checked ? "block" : "none";
+                    saveChanges();
                 }
-                if (setTitle) transform_controls.object.poi_img_title = setTitle.value;
-                saveChanges();
             }
         });
     }
@@ -746,17 +806,26 @@ function initPersistentPropertyListeners() {
     if (chboxVid) {
         chboxVid.addEventListener("change", function () {
             if (transform_controls && transform_controls.object) {
-                transform_controls.object.follow_camera = this.checked ? 1 : 0;
-                
-                if (this.checked) {
-                    if (setFocusX) transform_controls.object.follow_camera_x = setFocusX.value;
-                    if (setFocusZ) transform_controls.object.follow_camera_z = setFocusZ.value;
+                const obj = transform_controls.object;
+                const oldVal = obj.follow_camera;
+                const newVal = this.checked ? 1 : 0;
+
+                if (oldVal !== newVal) {
+                    obj.follow_camera = newVal;
+                    if (this.checked) {
+                        if (setFocusX) obj.follow_camera_x = setFocusX.value;
+                        if (setFocusZ) obj.follow_camera_z = setFocusZ.value;
+                    }
+                    
+                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+                        vrodosUndoManager.add(new PropertyCommand(obj, 'follow_camera', oldVal, newVal));
+                    }
+
+                    if (setFocusX) setFocusX.disabled = !this.checked;
+                    if (setFocusZ) setFocusZ.disabled = !this.checked;
+                    
+                    saveChanges();
                 }
-                
-                if (setFocusX) setFocusX.disabled = !this.checked;
-                if (setFocusZ) setFocusZ.disabled = !this.checked;
-                
-                saveChanges();
             }
         });
     }

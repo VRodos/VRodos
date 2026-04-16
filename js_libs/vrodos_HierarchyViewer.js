@@ -12,9 +12,22 @@ function resetInScene(name) {
     } else {
         obj = envir.scene.getObjectByName(name);
         if (obj) {
+            // [NEW] Capture start state for Undo
+            const oldTRS = {
+                pos: obj.position.clone(),
+                rot: obj.rotation.clone(),
+                scale: obj.scale.clone()
+            };
+
             obj.position.set(0, 1.3, 0);
             obj.rotation.set(0, 0, 0);
             obj.scale.set(1, 1, 1);
+
+            // [NEW] Commit command
+            if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+                const newTRS = { pos: obj.position.clone(), rot: obj.rotation.clone(), scale: obj.scale.clone() };
+                vrodosUndoManager.add(new TransformCommand(obj, oldTRS, newTRS));
+            }
         }
     }
 

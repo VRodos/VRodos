@@ -583,30 +583,15 @@ function loadButtonActions() {
 
     // UNDO button
     document.getElementById('undo-scene-button').addEventListener('click', function () {
-
-        post_revision_no += 1;
-
-        document.getElementById('redo-scene-button').style.visibility = 'visible';
-
-        this.innerHTML = "...";
-        this.classList.add("LinkDisabled");
-
-        vrodos_undoSceneAjax(uploadDir, post_revision_no);
+        if (typeof vrodosUndoManager !== 'undefined') {
+            vrodosUndoManager.undo();
+        }
     });
 
     // REDO button
     document.getElementById('redo-scene-button').addEventListener('click', function () {
-
-        if (post_revision_no >= 1) {
-            post_revision_no -= 1;
-
-            this.innerHTML = "...";
-            this.classList.add("LinkDisabled");
-            vrodos_redoSceneAjax(uploadDir, post_revision_no);
-
-            if (post_revision_no < 1) {
-                document.getElementById('redo-scene-button').style.visibility = 'hidden';
-            }
+        if (typeof vrodosUndoManager !== 'undefined') {
+            vrodosUndoManager.redo();
         }
     });
 
@@ -673,15 +658,51 @@ function loadButtonActions() {
 transform_controls.addEventListener('dragging-changed', function (event) {
     envir.orbitControls.enabled = !event.value;
 
-    // Capture start orientations for proxy-based transformation
-    if (event.value && transform_controls.object && _currentSelectedRealObject) {
-        if (typeof _qProxyStart !== 'undefined') {
+    if (event.value && transform_controls.object) {
+        // Capture start state for Undo/Redo - Use the real object's TRS
+        let target = _currentSelectedRealObject || transform_controls.object;
+        if (target.name === "vrodosGizmoProxy" && target.realObject) {
+            target = target.realObject;
+        }
+
+        transform_controls._oldTRS = {
+            pos: target.position.clone(),
+            rot: target.rotation.clone(),
+            scale: target.scale.clone()
+        };
+
+        // Capture start orientations for proxy-based transformation
+        if (_currentSelectedRealObject && typeof _qProxyStart !== 'undefined') {
             _qProxyStart.copy(transform_controls.object.quaternion);
             _pProxyStart.copy(transform_controls.object.position);
             
             _qRealStart.copy(_currentSelectedRealObject.quaternion);
             _pRealStart.copy(_currentSelectedRealObject.position);
         }
+    } else if (!event.value && transform_controls.object && transform_controls._oldTRS) {
+        // Drag finished, commit command
+        let target = _currentSelectedRealObject || transform_controls.object;
+        if (target.name === "vrodosGizmoProxy" && target.realObject) {
+            target = target.realObject;
+        }
+
+        const newTRS = {
+            pos: target.position.clone(),
+            rot: target.rotation.clone(),
+            scale: target.scale.clone()
+        };
+
+        // Simple threshold check to see if it actually moved
+        const moved = target.position.distanceToSquared(transform_controls._oldTRS.pos) > 0.000001 ||
+                      target.scale.distanceToSquared(transform_controls._oldTRS.scale) > 0.000001 ||
+                      Math.abs(target.rotation.x - transform_controls._oldTRS.rot.x) > 0.0001 ||
+                      Math.abs(target.rotation.y - transform_controls._oldTRS.rot.y) > 0.0001 ||
+                      Math.abs(target.rotation.z - transform_controls._oldTRS.rot.z) > 0.0001;
+
+        if (moved) {
+            vrodosUndoManager.add(new TransformCommand(target, transform_controls._oldTRS, newTRS));
+        }
+        delete transform_controls._oldTRS;
     }
 });
 

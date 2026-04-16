@@ -811,6 +811,11 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
     } else {
         vrodos_createGlbAsset(nameModel, addedAt, pluginPath);
     }
+
+    // [NEW] Capture for Undo Manager
+    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+        vrodosUndoManager.add(new AddObjectCommand(nameModel, vrodos_scene_data.objects[nameModel]));
+    }
 }
 
 
@@ -835,7 +840,7 @@ function deleteFomScene(uuid, name) {
     delete_btn_element.addEventListener('click', function() {
         delete_dialog_element.close();
         transform_controls.detach();
-        deleteAssetFromScene(uuid);
+        deleteAssetFromScene(uuid, true);
         if(selUuid != "unassigned"){
              if (delUuid != selUuid){
             transform_controls.attach(envir.scene.getObjectByProperty( 'uuid' , selUuid));
@@ -900,8 +905,9 @@ function lockOnScene(uuid, name) {
  * Delete from scene
  *
  * @param uuid
+ * @param preventDispose
  */
-function deleteAssetFromScene(uuid) {
+function deleteAssetFromScene(uuid, preventDispose = false) {
 
     // 1. Delete object from js array (if it exists. Usually it is saved after reload)
     for (const obj of Object.values(vrodos_scene_data.objects)) {
@@ -911,16 +917,32 @@ function deleteAssetFromScene(uuid) {
         }
     }
 
-    // 2. Find actual object inside scene
+    // 2. Find actual object inside scene (search direct children and handles proxies)
     let objectSelected = null;
     for (const child of envir.scene.children) {
-        if (typeof child === 'object' && child !== null && child.uuid == uuid) {
-            objectSelected = child; // We found the direct child map
-            break;
+        if (typeof child === 'object' && child !== null) {
+            if (child.uuid === uuid) {
+                objectSelected = child.realObject || child;
+                break;
+            }
+            // Check if it's a proxy for this uuid
+            if (child.realObject && child.realObject.uuid === uuid) {
+                objectSelected = child.realObject;
+                break;
+            }
         }
     }
 
     if (!objectSelected) return;
+
+    // [NEW] Capture for Undo Manager before deletion
+    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+        const target = objectSelected.realObject || objectSelected;
+        const objData = vrodos_scene_data.objects[target.name];
+        if (objData) {
+            vrodosUndoManager.add(new DeleteObjectCommand(target.name, objData, target));
+        }
+    }
 
 
     // remove animations
@@ -956,7 +978,29 @@ function deleteAssetFromScene(uuid) {
     document.dispatchEvent(new CustomEvent("mouseup", { "detail": "Example of an event" }));
 
     // Dispose GPU resources (geometry, materials, textures) to prevent VRAM leaks
-    objectSelected.traverse(function (node) {
+    if (!preventDispose) {
+        vrodosDisposeObject(objectSelected);
+    }
+
+    // Remove object from scene
+    envir.scene.remove(objectSelected);
+    envir.selectableMeshes.delete(objectSelected);
+
+    // Remove from hierarchy viewer
+    removeHierarchyEntriesForObject(uuid, objectSelected.name);
+
+    //transform_controls.detach();
+
+    // Save scene
+    triggerAutoSave();
+}
+
+/**
+ * Dispose GPU resources (geometry, materials, textures) to prevent VRAM leaks
+ */
+function vrodosDisposeObject(object) {
+    if (!object) return;
+    object.traverse(function (node) {
         if (node.geometry) node.geometry.dispose();
         if (node.material) {
             let materials = Array.isArray(node.material) ? node.material : [node.material];
@@ -970,17 +1014,4 @@ function deleteAssetFromScene(uuid) {
             });
         }
     });
-
-    // Remove object from scene
-    envir.scene.remove(objectSelected);
-    envir.selectableMeshes.delete(objectSelected);
-
-    // Remove from hierarchy viewer
-    removeHierarchyEntriesForObject(uuid, objectSelected.name);
-
-    //transform_controls.detach();
-
-    // Save scene
-    triggerAutoSave();
-
 }
