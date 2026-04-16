@@ -198,7 +198,6 @@ class VRodos_Asset_Manager {
 			'siteurl'             => site_url(),
 			// Phase 2 localization
 			'upload_image_nonce'  => wp_create_nonce( 'vrodos_scene_upload_image_nonce' ),
-			'post_revision_no'    => 1,
 			'isPaused'            => false,
 			'isAnyLight'          => true,
 			'mapActions'          => new stdClass(),

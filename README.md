@@ -15,6 +15,7 @@ It combines:
 
 - In-browser 3D scene editor built on the VRodos Three.js vendor stack
 - Scene save/load through JSON-based persistence
+- Client-side Undo/Redo engine (50-action history) for transformations, additions, deletions, and light properties
 - Transform editing, hierarchy management, lighting placement, and scene-level options
 - Background authoring for Horizon, solid color, preset environments, and image skies
 - Fog and environment settings authored in the editor and carried into compiled output

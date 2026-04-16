@@ -11,8 +11,6 @@ class VRodos_AJAX_Handler {
 
 	public function __construct() {
 		add_action( 'wp_ajax_vrodos_save_scene_async_action', $this->save_scene_async_action_callback(...) );
-		add_action( 'wp_ajax_vrodos_undo_scene_async_action', $this->undo_scene_async_action_callback(...) );
-		add_action( 'wp_ajax_vrodos_redo_scene_async_action', $this->redo_scene_async_action_callback(...) );
 		add_action( 'wp_ajax_vrodos_delete_scene_action', $this->delete_scene_frontend_callback(...) );
 		add_action( 'wp_ajax_vrodos_delete_asset_action', $this->delete_asset3d_frontend_callback(...) );
 		add_action( 'wp_ajax_vrodos_fetch_assetmeta_action', $this->fetch_asset3d_meta_backend_callback(...) );
@@ -253,59 +251,7 @@ class VRodos_AJAX_Handler {
 		wp_die();
 	}
 
-	// Undo button for scenes
-	public function undo_scene_async_action_callback() {
-		if ( ! isset( $_POST['post_revision_no'] ) ) {
-			wp_send_json_error( 'Missing revision number.' );
-		}
 
-		$revision_number  = $_POST['post_revision_no'];
-		$current_scene_id = $_POST['scene_id'];
-
-		$rev         = wp_get_post_revisions(
-			$current_scene_id,
-			[
-       'offset'         => $revision_number,
-       // Start from the previous change
-       'posts_per_page' => 1,
-       // Only a single revision
-       'post_name__in'  => ["{$current_scene_id}-revision-v1"],
-       'check_enabled'  => false,
-   ]
-		);
-		$sceneToLoad = reset( $rev )->post_content;
-
-		echo $sceneToLoad;
-		wp_die();
-	}
-
-
-
-	// Redo button for scenes
-	public function redo_scene_async_action_callback() {
-		if ( ! isset( $_POST['post_revision_no'] ) ) {
-			wp_send_json_error( 'Missing revision number.' );
-		}
-
-		$revision_number  = $_POST['post_revision_no'];
-		$current_scene_id = $_POST['scene_id'];
-
-		$rev         = wp_get_post_revisions(
-			$current_scene_id,
-			[
-       'offset'         => $revision_number,
-       // Start from the previous change
-       'posts_per_page' => 1,
-       // Only a single revision
-       'post_name__in'  => ["{$current_scene_id}-revision-v1"],
-       'check_enabled'  => false,
-   ]
-		);
-		$sceneToLoad = reset( $rev )->post_content;
-
-		echo $sceneToLoad;
-		wp_die();
-	}
 
 	// REORDER SCENES
 	public function reorder_scenes_callback() {

@@ -17,7 +17,6 @@ window.vrodos_scene_data = vrodos_data.scene_data;
 window.scene_id = vrodos_data.scene_id;
 window.vrodos_scene_upload_image_nonce = vrodos_data.upload_image_nonce;
 
-window.post_revision_no = vrodos_data.post_revision_no;
 window.isPaused = vrodos_data.isPaused;
 window.isAnyLight = vrodos_data.isAnyLight;
 window.mapActions = vrodos_data.mapActions;
