@@ -120,10 +120,10 @@ else { ?>
             <span id="assetEditorNoticeText" class="tw-text-xs tw-font-bold"><?php echo esc_html($asset_notice_message); ?></span>
         </div>
         <form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data" class="tw-flex-1 tw-flex tw-flex-col tw-min-h-0 tw-m-0 tw-bg-slate-50">
-            <main class="tw-flex-1 tw-flex tw-flex-col lg:tw-flex-row tw-overflow-hidden tw-min-h-0 tw-bg-slate-50">
+            <main class="tw-flex-1 tw-flex tw-flex-col lg:tw-flex-row tw-overflow-y-auto lg:tw-overflow-hidden tw-min-h-0 tw-bg-slate-50">
             
             <!-- Left Column: 3D Preview & Files -->
-            <div class="tw-w-full lg:tw-w-[420px] tw-flex-none tw-bg-slate-50 tw-border-b lg:tw-border-b-0 lg:tw-border-r tw-border-slate-200 tw-overflow-y-auto lg:tw-h-full">
+            <div class="tw-w-full lg:tw-w-[420px] tw-flex-none tw-bg-slate-50 tw-border-b lg:tw-border-b-0 lg:tw-border-r tw-border-slate-200 tw-overflow-visible lg:tw-overflow-y-auto lg:tw-h-full">
                 <div class="tw-p-5 lg:tw-p-6 tw-space-y-4">
                     <!-- 3D Preview Card -->
                     <div id="vrodos_3d_preview_card" class="tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3]">
@@ -265,7 +265,7 @@ else { ?>
             </div>
 
             <!-- Right Center: Main Form Area -->
-            <div class="tw-flex-1 tw-bg-white lg:tw-border-l tw-border-slate-200 tw-overflow-y-auto">
+            <div class="tw-flex-1 tw-bg-white lg:tw-border-l tw-border-slate-200 tw-overflow-visible lg:tw-overflow-y-auto">
                 
                     
                     <!-- Primary Action Sticky Header -->

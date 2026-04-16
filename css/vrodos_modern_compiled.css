@@ -4392,6 +4392,10 @@ input.tw-tab:checked + .tw-tab-content,
   overflow: hidden;
 }
 
+.vrodos-manager-wrapper .tw-overflow-visible {
+  overflow: visible;
+}
+
 .vrodos-manager-wrapper .tw-overflow-x-auto {
   overflow-x: auto;
 }
@@ -7253,6 +7257,14 @@ body.vrodos-manager-wrapper {
 
   .vrodos-manager-wrapper .lg\:tw-flex-row-reverse {
     flex-direction: row-reverse;
+  }
+
+  .vrodos-manager-wrapper .lg\:tw-overflow-hidden {
+    overflow: hidden;
+  }
+
+  .vrodos-manager-wrapper .lg\:tw-overflow-y-auto {
+    overflow-y: auto;
   }
 
   .vrodos-manager-wrapper .lg\:tw-border-b-0 {
