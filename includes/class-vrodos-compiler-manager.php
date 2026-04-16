@@ -699,39 +699,85 @@ class VRodos_Compiler_Manager {
 	 */
 	private function apply_scene_environment( &$content, $dom, $ascene, $scene_json, $project_id ) {
 		$metadata = $scene_json->metadata;
-		$bcg_choice            = $metadata->backgroundStyleOption ?? '0';
-		$preset_choice         = $metadata->backgroundPresetOption ?? 'None';
-		$clear_color           = $metadata->ClearColor ?? '#ffffff';
-		$pr_type               = $this->get_project_type_slug( (int) $project_id );
-		$sel_choice            = $bcg_choice;
-		$pres_choice           = $preset_choice;
-		$fog_cat               = $metadata->fogCategory ?? 0;
-		$fog_color             = $metadata->fogcolor ?? '#FFFFFF';
-		$fog_far               = $metadata->fogfar ?? 1000;
-		$fog_near              = $metadata->fognear ?? 0;
-		$fog_density           = $metadata->fogdensity ?? 0.00000001;
-		$cam_pos               = isset($scene_json->objects->avatarCamera) ? implode(' ', $scene_json->objects->avatarCamera->position) : '0 1.6 0';
-		$cam_rot_y             = isset($scene_json->objects->avatarCamera) ? (180 / pi() * $scene_json->objects->avatarCamera->rotation[1]) : '0';
-		
-		$avatar_enabled    = isset( $metadata->enableAvatar ) && filter_var( $metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$public_chat       = isset( $metadata->enableGeneralChat ) && filter_var( $metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$movement_disabled = isset( $metadata->disableMovement ) && filter_var( $metadata->disableMovement, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+
+		// 1. Core Metadata Extraction
+		$project_type_slug = $this->get_project_type_slug( (int) $project_id );
+		$bcg_choice        = $metadata->backgroundStyleOption ?? '0';
+		$preset_choice     = $metadata->backgroundPresetOption ?? 'None';
+		$clear_color       = $metadata->ClearColor ?? '#ffffff';
+		$image_path        = $metadata->backgroundImagePath ?? '';
+
+		// 2. Map all metadata for scene-settings component (Boolean normalization)
+		$movement_disabled = isset( $metadata->disableMovement ) && filter_var( $metadata->disableMovement, FILTER_VALIDATE_BOOLEAN );
+		$avatar_enabled    = isset( $metadata->enableAvatar ) && filter_var( $metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN );
+		$public_chat       = isset( $metadata->enableGeneralChat ) && filter_var( $metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN );
 		$ground_enabled    = isset( $metadata->backgroundPresetGroundEnabled ) && filter_var( $metadata->backgroundPresetGroundEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$fp_meter_enabled  = isset( $metadata->enableFPSMeter ) && filter_var( $metadata->enableFPSMeter, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-
-		$ascene->setAttribute( 'scene-settings',
-			"color: $clear_color; pr_type: $pr_type; selChoice: $sel_choice; presChoice: $pres_choice; presetGroundEnabled: $ground_enabled; " .
-			"fogCategory: $fog_cat; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density; " .
-			"avatar_enabled: $avatar_enabled; movement_disabled: $movement_disabled; fpsMeterEnabled: $fp_meter_enabled; " .
-			"cam_position: $cam_pos; cam_rotation_y: $cam_rot_y; public_chat: $public_chat" .
-			( isset( $metadata->composite_params ) ? "; " . $metadata->composite_params : "" )
-		);
-
-		$image_path            = $metadata->backgroundImagePath ?? '';
 		
-		$projectType = $this->get_project_type_slug( (int) $project_id );
+		// FPS Meter (Check both legacy and modern keys)
+		$fps_meter_enabled = ( ( isset( $metadata->enableFPSMeter ) && filter_var( $metadata->enableFPSMeter, FILTER_VALIDATE_BOOLEAN ) ) || 
+							  ( isset( $metadata->aframeFPSMeterEnabled ) && filter_var( $metadata->aframeFPSMeterEnabled, FILTER_VALIDATE_BOOLEAN ) ) ) ? '1' : '0';
 
-		// 1. Handle Background (Skybox)
+		// Camera defaults
+		$cam_pos   = isset( $scene_json->objects->avatarCamera ) ? implode( ' ', (array) $scene_json->objects->avatarCamera->position ) : '0 1.6 0';
+		$cam_rot_y = isset( $scene_json->objects->avatarCamera ) ? ( 180 / pi() * $scene_json->objects->avatarCamera->rotation[1] ) : '0';
+
+		// Fog Settings
+		$fog_cat     = $metadata->fogCategory ?? 0;
+		$fog_color   = $metadata->fogcolor ?? '#FFFFFF';
+		$fog_far     = $metadata->fogfar ?? 1000;
+		$fog_near    = $metadata->fognear ?? 0;
+		$fog_density = $metadata->fogdensity ?? 0.00000001;
+
+		// 3. New Advanced Rendering Parameters (Phase 3 Refactoring)
+		$collision_mode     = $metadata->aframeCollisionMode ?? 'auto';
+		$render_quality     = $metadata->aframeRenderQuality ?? 'standard';
+		$shadow_quality     = $metadata->aframeShadowQuality ?? 'medium';
+		$aa_quality         = $metadata->aframeAAQuality ?? 'balanced';
+		$legacy_horizon_size = max( 500, min( 8000, (int) ( $metadata->aframeLegacyHorizonStageSize ?? 5000 ) ) );
+		$ao_preset          = $metadata->aframeAmbientOcclusionPreset ?? 'balanced';
+		$cs_preset          = $metadata->aframeContactShadowPreset ?? 'soft';
+		$post_fx_enabled    = isset( $metadata->aframePostFXEnabled ) && filter_var( $metadata->aframePostFXEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$post_fx_engine     = ( ( $metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ) ? 'pmndrs' : 'legacy';
+		$reflection_profile = $metadata->aframeReflectionProfile ?? 'balanced';
+		$reflection_source  = $metadata->aframeReflectionSource ?? 'hdr';
+		$horizon_preset     = $metadata->aframeHorizonSkyPreset ?? 'natural';
+		$env_map_preset     = $metadata->aframeEnvMapPreset ?? 'none';
+
+		// 4. Assemble scene-settings attribute
+		$scene_settings_attr = "color: $clear_color; pr_type: $project_type_slug; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $ground_enabled" .
+			"; movement_disabled: " . ( $movement_disabled ? 'true' : 'false' ) . 
+			"; avatar_enabled: " . ( $avatar_enabled ? 'true' : 'false' ) .
+			"; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality" .
+			"; fpsMeterEnabled: $fps_meter_enabled; legacyHorizonStageSize: $legacy_horizon_size; ambientOcclusionPreset: $ao_preset" .
+			"; contactShadowPreset: $cs_preset; postFXEnabled: $post_fx_enabled; postFXEngine: $post_fx_engine" .
+			"; reflectionProfile: $reflection_profile; reflectionSource: $reflection_source; horizonSkyPreset: $horizon_preset" .
+			"; envMapPreset: $env_map_preset; cam_position: $cam_pos; cam_rotation_y: $cam_rot_y; public_chat: " . ( $public_chat ? 'true' : 'false' ) .
+			"; fogCategory: $fog_cat; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density";
+
+		// Append composite_params if they exist (allows passing arbitrary component params from metadata)
+		if ( ! empty( $metadata->composite_params ) ) {
+			$scene_settings_attr .= "; " . $metadata->composite_params;
+		}
+
+		$ascene->setAttribute( 'scene-settings', $scene_settings_attr );
+
+		// 5. PMNDRS specific tweaks
+		if ( $post_fx_engine === 'pmndrs' ) {
+			$aa_mode    = $metadata->aframePmndrsAAMode    ?? ( $aa_quality === 'off' ? 'none' : 'msaa' );
+			$aa_preset  = $metadata->aframePmndrsAAPreset  ?? ( $aa_quality === 'ultra' ? 'ultra' : 'high' );
+			$bloom_int  = max( 0.0, min( 3.0, (float) ( $metadata->aframePmndrsBloomIntensity ?? 1.0 ) ) );
+			$bloom_thr  = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsBloomThreshold ?? 0.62 ) ) );
+			$vign_en    = isset( $metadata->aframePmndrsVignetteEnabled ) && filter_var( $metadata->aframePmndrsVignetteEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+			$vign_dark  = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsVignetteDarkness ?? 0.5 ) ) );
+			$tm_exp     = max( 0.3, min( 2.5, (float) ( $metadata->aframePmndrsToneMappingExposure ?? 1.0 ) ) );
+
+			$pmndrs_attr = "aaMode: $aa_mode; aaPreset: $aa_preset; bloomIntensity: $bloom_int; bloomThreshold: $bloom_thr" .
+				"; vignetteEnabled: $vign_en; vignetteDarkness: $vign_dark; toneMappingExposure: $tm_exp";
+			
+			$ascene->setAttribute( 'vrodos-postprocessing-pmndrs', $pmndrs_attr );
+		}
+
+		// 6. Handle Background (Skybox)
 		if ( $bcg_choice == '3' && $image_path ) {
 			$a_asset = $this->get_or_create_assets_container( $dom, $ascene );
 			
@@ -742,71 +788,13 @@ class VRodos_Compiler_Manager {
 			$a_asset->appendChild( $a_asset_sky );
 		}
 
-		// 2. Map all metadata for scene-settings component
-		$movement_disabled = isset( $metadata->disableMovement ) && filter_var( $metadata->disableMovement, FILTER_VALIDATE_BOOLEAN );
-		$avatar_enabled    = isset( $metadata->enableAvatar ) && filter_var( $metadata->enableAvatar, FILTER_VALIDATE_BOOLEAN );
-		$collision_mode    = $metadata->aframeCollisionMode ?? 'auto';
-		$render_quality    = $metadata->aframeRenderQuality ?? 'standard';
-		$shadow_quality    = $metadata->aframeShadowQuality ?? 'medium';
-		$aa_quality        = $metadata->aframeAAQuality ?? 'balanced';
-		$fps_meter_enabled = isset( $metadata->aframeFPSMeterEnabled ) && filter_var( $metadata->aframeFPSMeterEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$legacy_horizon_size = max( 500, min( 8000, (int)($metadata->aframeLegacyHorizonStageSize ?? 5000) ) );
-		$ao_preset         = $metadata->aframeAmbientOcclusionPreset ?? 'balanced';
-		$cs_preset         = $metadata->aframeContactShadowPreset ?? 'soft';
-		$post_fx_enabled   = isset( $metadata->aframePostFXEnabled ) && filter_var( $metadata->aframePostFXEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$post_fx_engine    = ( ($metadata->aframePostFXEngine ?? 'legacy') === 'pmndrs' ) ? 'pmndrs' : 'legacy';
-		$reflection_profile = $metadata->aframeReflectionProfile ?? 'balanced';
-		$reflection_source = $metadata->aframeReflectionSource ?? 'hdr';
-		$horizon_preset    = $metadata->aframeHorizonSkyPreset ?? 'natural';
-		$env_map_preset    = $metadata->aframeEnvMapPreset ?? 'none';
-		$cam_pos           = isset($scene_json->objects->avatarCamera) ? implode(' ', $scene_json->objects->avatarCamera->position) : '0 1.6 0';
-		$cam_rot_y         = isset($scene_json->objects->avatarCamera) ? (180 / pi() * $scene_json->objects->avatarCamera->rotation[1]) : '0';
-		$public_chat       = isset( $metadata->enableGeneralChat ) && filter_var( $metadata->enableGeneralChat, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
-
-		// Fog Metadata
-		$fog_cat     = $metadata->fogCategory ?? 0;
-		$fog_color   = $metadata->fogcolor ?? '#FFFFFF';
-		$fog_far     = $metadata->fogfar ?? 1000;
-		$fog_near    = $metadata->fognear ?? 0;
-		$fog_density = $metadata->fogdensity ?? 0.00000001;
-
-		$scene_settings_attr = "color: " . ($metadata->ClearColor ?? '#ffffff') . 
-			"; pr_type: $projectType; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $preset_ground_enabled" .
-			"; movement_disabled: " . ($movement_disabled ? 'true' : 'false') . 
-			"; avatar_enabled: " . ($avatar_enabled ? 'true' : 'false') .
-			"; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality" .
-			"; fpsMeterEnabled: $fps_meter_enabled; legacyHorizonStageSize: $legacy_horizon_size; ambientOcclusionPreset: $ao_preset" .
-			"; contactShadowPreset: $cs_preset; postFXEnabled: $post_fx_enabled; postFXEngine: $post_fx_engine" .
-			"; reflectionProfile: $reflection_profile; reflectionSource: $reflection_source; horizonSkyPreset: $horizon_preset" .
-			"; envMapPreset: $env_map_preset; cam_position: $cam_pos; cam_rotation_y: $cam_rot_y; public_chat: $public_chat" .
-			"; fogCategory: $fog_cat; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density";
-
-		$ascene->setAttribute( 'scene-settings', $scene_settings_attr );
-
-		// 3. PMNDRS specific tweaks
-		if ( $post_fx_engine === 'pmndrs' ) {
-			$aa_mode    = $metadata->aframePmndrsAAMode    ?? ( $aa_quality === 'off' ? 'none' : 'msaa' );
-			$aa_preset  = $metadata->aframePmndrsAAPreset  ?? ( $aa_quality === 'ultra' ? 'ultra' : 'high' );
-			$bloom_int  = max( 0.0, min( 3.0, (float)($metadata->aframePmndrsBloomIntensity ?? 1.0) ) );
-			$bloom_thr  = max( 0.0, min( 1.0, (float)($metadata->aframePmndrsBloomThreshold ?? 0.62) ) );
-			$vign_en    = isset($metadata->aframePmndrsVignetteEnabled) && filter_var($metadata->aframePmndrsVignetteEnabled, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
-			$vign_dark  = max( 0.0, min( 1.0, (float)($metadata->aframePmndrsVignetteDarkness ?? 0.5) ) );
-			$tm_exp     = max( 0.3, min( 2.5, (float)($metadata->aframePmndrsToneMappingExposure ?? 1.0) ) );
-
-			$pmndrs_attr = "aaMode: $aa_mode; aaPreset: $aa_preset; bloomIntensity: $bloom_int; bloomThreshold: $bloom_thr" .
-				"; vignetteEnabled: $vign_en; vignetteDarkness: $vign_dark; toneMappingExposure: $tm_exp";
-			
-			$ascene->setAttribute( 'vrodos-postprocessing-pmndrs', $pmndrs_attr );
-		}
-
-		// 4. Update Fog and Background directly in DOM (fixes A-Frame 1.7.0+ parsing issues)
-		$clear_color = $metadata->ClearColor ?? '#ffffff';
+		// 7. Update Fog and Background directly in DOM (fixes A-Frame 1.7.0+ parsing issues)
 		$ascene->setAttribute( 'background', "color: $clear_color" );
 
 		if ( $fog_cat != 0 ) {
-			$fogtype = ($fog_cat == 1) ? 'linear' : 'exponential';
+			$fogtype = ( $fog_cat == 1 ) ? 'linear' : 'exponential';
 			$fogcolor_hex = '#' . ltrim( $fog_color, '#' );
-			$fog_replace = "type: $fogtype; color: $fogcolor_hex; far: $fog_far; density: " . (1.5 * $fog_density) . "; near: $fog_near";
+			$fog_replace = "type: $fogtype; color: $fogcolor_hex; far: $fog_far; density: " . ( 1.5 * $fog_density ) . "; near: $fog_near";
 			$ascene->setAttribute( 'fog', $fog_replace );
 		} else {
 			$ascene->removeAttribute( 'fog' );
