@@ -778,7 +778,11 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
             "rotation": [0, 0, 0],
             "scale": [1, 1, 1]
         },
-        "fnPath": path ? path.substring(path.lastIndexOf('/') + 1) : '',
+        "fnPath": (function() {
+            if (!path) return '';
+            const idx = path.indexOf('uploads/');
+            return idx !== -1 ? path.substring(idx + 8) : path.substring(path.lastIndexOf('/') + 1);
+        })(),
         "asset_name": nameModel,
         "category_name": categoryName,
         "isLight": categoryName.includes("light"),

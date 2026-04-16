@@ -620,8 +620,26 @@ function setObjectProperties(object, name, resources3D) {
     object.fnPath = resource['path'] || object.fnPath || '';
 
     // avoid revealing the full path. Use the relative in the saving format.
-    if (typeof object.fnPath === 'string' && object.fnPath.indexOf('uploads/') !== -1) {
-        object.fnPath = object.fnPath.substring(object.fnPath.indexOf('uploads/') + 7);
+    if (typeof object.fnPath === 'string') {
+        // Recursive cleaning: while it looks like a URL followed by another URL
+        while (/https?:\/\//i.test(object.fnPath) && object.fnPath.lastIndexOf('http') > 0) {
+            object.fnPath = object.fnPath.substring(object.fnPath.lastIndexOf('http'));
+        }
+
+        // Strip the upload directory prefix to get the relative path
+        const uploadsTags = ['wp-content/uploads', 'uploads/'];
+        for (const tag of uploadsTags) {
+            const idx = object.fnPath.indexOf(tag);
+            if (idx !== -1) {
+                object.fnPath = object.fnPath.substring(idx + tag.length);
+                break;
+            }
+        }
+
+        // Final cleanup of leading slashes
+        while (object.fnPath.startsWith('/')) {
+            object.fnPath = object.fnPath.substring(1);
+        }
     }
     object['glb_id'] = resource['glb_id'];
 

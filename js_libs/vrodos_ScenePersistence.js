@@ -23,21 +23,57 @@ function vrodosSceneSafeScale(values) {
 }
 
 function vrodosSceneResolveObjectPath(value, UPLOAD_DIR) {
-    const explicitPath = value && typeof value.path === 'string' ? value.path.trim() : '';
+    let explicitPath = value && typeof value.path === 'string' ? value.path.trim() : '';
+    
+    // Recursive cleaning of junk from explicitPath
     if (explicitPath !== '') {
+        while (/https?:\/\//i.test(explicitPath) && explicitPath.lastIndexOf('http') > 0) {
+            explicitPath = explicitPath.substring(explicitPath.lastIndexOf('http'));
+        }
+    }
+
+    if (explicitPath !== '' && (/^https?:\/\//i.test(explicitPath) || explicitPath.startsWith('//'))) {
         return explicitPath;
     }
 
-    const fnPath = value && typeof value.fnPath === 'string' ? value.fnPath.trim() : '';
+    let fnPath = value && typeof value.fnPath === 'string' ? value.fnPath.trim() : '';
     if (fnPath === '') {
         return '';
     }
 
-    if (/^https?:\/\//i.test(fnPath) || fnPath.startsWith('uploads/')) {
+    // Defensive check: if fnPath already contains multiple URLs, strip to the last one
+    while (/https?:\/\//i.test(fnPath) && fnPath.lastIndexOf('http') > 0) {
+        fnPath = fnPath.substring(fnPath.lastIndexOf('http'));
+    }
+
+    // If it's now a clean full URL or starts with uploads/, return it
+    if (/^https?:\/\//i.test(fnPath) || fnPath.startsWith('//') || fnPath.startsWith('uploads/')) {
         return fnPath;
     }
 
-    return UPLOAD_DIR + fnPath;
+    // One more cleaning: if fnPath starts with UPLOAD_DIR or /wp-content/uploads
+    if (UPLOAD_DIR && fnPath.includes(UPLOAD_DIR)) {
+        fnPath = fnPath.substring(fnPath.indexOf(UPLOAD_DIR) + UPLOAD_DIR.length);
+    } else if (fnPath.includes('wp-content/uploads')) {
+        const idx = fnPath.indexOf('wp-content/uploads') + 18;
+        fnPath = fnPath.substring(idx);
+    }
+    
+    // Final check for accidental doubling of 'uploads' string without slash
+    if (fnPath.startsWith('uploads')) {
+        fnPath = fnPath.substring(7);
+    }
+
+    // Ensure no leading slashes before we join
+    while (fnPath.startsWith('/')) {
+        fnPath = fnPath.substring(1);
+    }
+
+    if (fnPath === '') return '';
+
+    // Join with UPLOAD_DIR
+    const separator = UPLOAD_DIR.endsWith('/') ? '' : '/';
+    return UPLOAD_DIR + separator + fnPath;
 }
 
 function vrodosSceneSafeObjectName(node, fallbackIndex) {
@@ -168,7 +204,8 @@ class VrodosSceneExporter {
             'id',
             'title',
             'name',
-            'isGroup'
+            'isGroup',
+            'path'
         ];
 
         const entryObject = {};
