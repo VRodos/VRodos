@@ -116,7 +116,6 @@ class VRodos_Asset_Manager {
 		wp_enqueue_script( 'vrodos_load_lilgui' );
 		wp_enqueue_script( 'vrodos_scene_settings_schema' );
 		wp_enqueue_script( 'vrodos_ScenePersistence' );
-		wp_enqueue_script( 'vrodos_jscolorpick' );
 		wp_enqueue_script( 'vrodos_3d_editor_environmentals' );
 		wp_enqueue_script( 'vrodos_keyButtons' );
 		wp_enqueue_script( 'vrodos_rayCasters' );
@@ -242,9 +241,6 @@ class VRodos_Asset_Manager {
 
 		// Load scripts for asset editor
 		wp_enqueue_script( 'vrodos_asset_editor_scripts' );
-
-		// Select colors
-		wp_enqueue_script( 'vrodos_jscolorpick' );
 	}
 
 	public function register_scripts() {
@@ -256,7 +252,6 @@ class VRodos_Asset_Manager {
       // General Scripts
       ['vrodos_asset_editor_scripts', $plugin_url_js . 'vrodos_asset_editor_scripts.js'],
       ['vrodos_scripts', $plugin_url_js . 'vrodos_scripts.js'],
-      ['vrodos_jscolorpick', $plugin_url_js . 'external_js_libraries/jscolor.js'],
       ['vrodos_scene_settings_schema', $plugin_url_js . 'vrodos_scene_settings_schema.js'],
       ['vrodos_ScenePersistence', $plugin_url_js . 'vrodos_ScenePersistence.js', ['vrodos_scene_settings_schema']],
       ['stats-gl', 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js'],

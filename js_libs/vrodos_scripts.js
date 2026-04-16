@@ -3,21 +3,9 @@
 function setTransformControlsSize() {
     if (typeof transform_controls === 'undefined' || !transform_controls || !transform_controls.object || !envir) return;
 
-    const dims = findDimensions(transform_controls.object);
-    const maxDim = Math.max(...dims);
-    
-    // Baseline world size based on object dimension
-    let worldSize = 0.25 * Math.log(maxDim + 2);
-
-    // Zoom compensation for Orthographic Camera
-    if (envir.cameraOrbit && envir.cameraOrbit.isOrthographicCamera) {
-        const referenceZoom = 800;
-        const currentZoom = envir.cameraOrbit.zoom || referenceZoom;
-        worldSize = worldSize * (referenceZoom / currentZoom) * 1.5;
-    }
-
-    if (!Number.isFinite(worldSize) || worldSize < 0.1) worldSize = 0.5;
-    transform_controls.setSize(worldSize);
+    // Use a fixed size for the transform controls, regardless of the object dimensions or zoom level.
+    // Three.js natively keeps the gizmo size consistent relative to the screen.
+    transform_controls.setSize(1.2);
 }
 
 function vrodos_fillin_widget_assettrs(selectedObject) {
@@ -43,11 +31,12 @@ function rgbToHex(red, green, blue) {
 }
 
 
-function updateClearColorPicker(picker) {
-    document.getElementById('sceneClearColor').value = picker.toRGBString();
-    let hex = rgbToHex(picker.rgb[0], picker.rgb[1], picker.rgb[2]);
-    //envir.renderer.setClearColor(hex);
-    envir.scene.background = new THREE.Color(hex);
+function updateClearColorPicker(input) {
+    const hex = input.value;
+    document.getElementById('sceneClearColor').value = hex;
+    if (envir && envir.scene) {
+        envir.scene.background = new THREE.Color(hex);
+    }
     saveChanges();
 }
 
@@ -221,7 +210,7 @@ function bcgRadioSelect(option) {
                 setHorizonSkyPresetSelection(els.horizonSkyPreset ? els.horizonSkyPreset.value : 'natural');
             },
             1: () => {
-                if (els.color?.value) envir.scene.background = new THREE.Color("#" + els.color.value);
+                if (els.color?.value) envir.scene.background = new THREE.Color(els.color.value);
             },
             2: () => {
                 setBackgroundPresetSelection(els.presets.value);
@@ -253,8 +242,8 @@ function hexToRgb(hex) {
     } : null;
 }
 
-function updateFogColorPicker(picker) {
-    document.getElementById('FogColor').value = picker.toRGBString();
+function updateFogColorPicker(input) {
+    document.getElementById('FogColor').value = input.value;
     updateFog("editing");
 }
 
@@ -324,20 +313,15 @@ function mapDensityToSlider(density) {
 function updateFog(whencalled) {
     if (!envir?.scene) return;
 
-    const picker = document.getElementById('jscolorpickFog')?.jscolor;
-    if (!picker) return;
+    const colorInput = document.getElementById('jscolorpickFog');
+    if (!colorInput) return;
 
     const fogType = document.getElementById('FogType').value;
     const fogNear = parseFloat(document.getElementById('FogNear').value || 0);
     const fogFar = parseFloat(document.getElementById('FogFar').value || 1000);
     const fogDensity = parseFloat(document.getElementById('FogDensity').value || 0.00000001);
 
-    const colorHex = picker.rgb.map(x => {
-        const s = Math.round(x).toString(16);
-        return s.length === 1 ? "0" + s : s;
-    }).join("");
-
-    const standardizedColor = "#" + colorHex;
+    const standardizedColor = colorInput.value;
 
     // 1. Update metadata for persistence
     envir.scene.fogcolor = standardizedColor;

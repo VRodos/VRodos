@@ -6,7 +6,7 @@
  * Description: Make your WordPress website a VR site
  * Author: Anastasios Papazoglou Chalikias, Elias Kouslis, Dimitrios Ververidis
  * Author URI: https://vrodos.iti.gr
- * Version: 2.5
+ * Version: 3.0
  * Requires at least: 6.8
  * Requires PHP: 8.3
  */

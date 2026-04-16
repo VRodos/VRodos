@@ -363,7 +363,7 @@ function vrodos_createLightSun(nameModel, addedAt) {
     lightSun.shadowCameraLeft = "-200";
     lightSun.shadowCameraRight = "200";
     lightSun.shadowBias = "-0.001";
-    lightSun.defaultColor = "0xffff00";
+    lightSun.defaultColor = "0xffffff";
     lightSun.name = nameModel;
     lightSun['asset_name'] = "mylightSun";
     lightSun.isSelectableMesh = true;
@@ -371,19 +371,18 @@ function vrodos_createLightSun(nameModel, addedAt) {
     lightSun['category_slug'] = "lightSun";
     lightSun.isLight = true;
     lightSun.addedAt = addedAt;
-
-    const hexcol = "0xffff00";
+    const hexcol = 0xffffff;
 
     // Add Sun Helper (visual representation in editor)
     let sunSphere = new THREE.Mesh(
         new THREE.SphereGeometry(1, 16, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffff00 })
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
     );
     sunSphere.isSelectableMesh = true;
     sunSphere.name = "SunSphere";
     lightSun.add(sunSphere);
 
-    let lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, 0x555500);
+    let lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, 0xcccccc);
     lightSunHelper.isLightHelper = true;
     lightSunHelper.name = 'lightHelper_' + lightSun.name;
     lightSunHelper['category_name'] = 'lightHelper';
@@ -393,7 +392,7 @@ function vrodos_createLightSun(nameModel, addedAt) {
     let lightTargetSpot = new THREE.Object3D();
     lightTargetSpot.add(new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 16, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffaa00 })
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
     ));
 
     lightTargetSpot.isSelectableMesh = true;

@@ -74,9 +74,6 @@ class VRodos_LightsPawn_Loader {
                     const el = document.getElementById(id);
                     if (el) el.value = resource;
                 });
-                if (document.getElementById('jscolorpick')?.jscolor) {
-                    document.getElementById('jscolorpick').jscolor.fromString(resource);
-                }
                 continue;
             }
 
@@ -120,9 +117,7 @@ class VRodos_LightsPawn_Loader {
             const fcolor = settings.fogcolor;
             const colorValue = fcolor.startsWith('#') ? fcolor : '#' + fcolor;
             const picker = document.getElementById('jscolorpickFog');
-            if (picker?.jscolor) {
-                picker.jscolor.fromString(colorValue);
-            } else if (picker) {
+            if (picker) {
                 picker.value = colorValue;
             }
         }

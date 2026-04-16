@@ -111,15 +111,7 @@ function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputEl
     }
 }
 
-function updateColorPicker(picker, asset_viewer_3d_kernel_local) {
-    document.getElementById('assetback3dcolor').value = picker.toRGBString();
 
-    asset_viewer_3d_kernel_local.scene.background.r = picker.rgb[0] / 255;
-    asset_viewer_3d_kernel_local.scene.background.g = picker.rgb[1] / 255;
-    asset_viewer_3d_kernel_local.scene.background.b = picker.rgb[2] / 255;
-
-    asset_viewer_3d_kernel_local.render();
-}
 
 function updateNativeColorPicker(input, asset_viewer_3d_kernel_local) {
     const hex = input.value;

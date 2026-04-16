@@ -443,8 +443,7 @@ function displaySunProperties(event, name) {
     if (textBias) textBias.value = sceneObj.shadowBias;
 
     if (sunColor && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
-        sunColor.value = sceneObj.children[0].material.color.getHexString();
-        sunColor.style.background = "#" + sunColor.value;
+        sunColor.value = "#" + sceneObj.children[0].material.color.getHexString();
     }
 
     if (sunIntensity) sunIntensity.value = sceneObj.lightintensity || 1;
@@ -484,8 +483,7 @@ function displayLampProperties(event, name) {
     if (textBias) textBias.value = sceneObj.lampshadowBias;
 
     if (lampColor && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
-        lampColor.value = sceneObj.children[0].material.color.getHexString();
-        lampColor.style.background = "#" + lampColor.value;
+        lampColor.value = "#" + sceneObj.children[0].material.color.getHexString();
     }
 
     if (lampPower) lampPower.value = sceneObj.power;
@@ -517,8 +515,7 @@ function displaySpotProperties(event, name) {
     let sceneObj = envir.scene.getObjectByName(name) || transform_controls.object;
 
     if (spotColor && sceneObj && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
-        spotColor.value = sceneObj.children[0].material.color.getHexString();
-        spotColor.style.background = "#" + spotColor.value;
+        spotColor.value = "#" + sceneObj.children[0].material.color.getHexString();
     }
 
     if (sceneObj) {
@@ -553,8 +550,7 @@ function displayAmbientProperties(event, name) {
     let sceneObj = envir.scene.getObjectByName(name) || transform_controls.object;
 
     if (ambientColor && sceneObj && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
-        ambientColor.value = sceneObj.children[0].material.color.getHexString();
-        ambientColor.style.background = "#" + ambientColor.value;
+        ambientColor.value = "#" + sceneObj.children[0].material.color.getHexString();
     }
 
     if (sceneObj && document.getElementById("ambientIntensity")) {
@@ -631,9 +627,8 @@ function initPersistentPropertyListeners() {
     const sunColor = document.getElementById('sunColor');
     if (sunColor) {
         sunColor.addEventListener('change', function () {
-            if (transform_controls && transform_controls.object && transform_controls.object.children[0]) {
-                sunColor.value = transform_controls.object.children[0].material.color.getHexString();
-                sunColor.style.background = "#" + sunColor.value;
+            if (transform_controls.object && transform_controls.object.children[0]) {
+                sunColor.value = "#" + transform_controls.object.children[0].material.color.getHexString();
                 saveChanges();
             }
         });
@@ -665,9 +660,8 @@ function initPersistentPropertyListeners() {
     const lampColor = document.getElementById('lampColor');
     if (lampColor) {
         lampColor.addEventListener('change', function () {
-            if (transform_controls && transform_controls.object && transform_controls.object.children[0]) {
-                lampColor.value = transform_controls.object.children[0].material.color.getHexString();
-                lampColor.style.background = "#" + lampColor.value;
+            if (transform_controls.object && transform_controls.object.children[0]) {
+                lampColor.value = "#" + transform_controls.object.children[0].material.color.getHexString();
                 saveChanges();
             }
         });

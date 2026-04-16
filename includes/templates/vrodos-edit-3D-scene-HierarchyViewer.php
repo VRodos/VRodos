@@ -117,8 +117,8 @@
                 </div>
                 <div id="bcgColorRow" class="tw-flex tw-items-center tw-gap-2" style="display:none">
                     <label class="tw-text-xs tw-text-white/80 tw-w-12 tw-flex-shrink-0">Color</label>
-                    <input id="jscolorpick" class="jscolor {onFineChange:'updateClearColorPicker(this)'}" autocomplete="off" disabled
-                           value="000000" style="height:26px; width:60px; padding:2px; border:1px solid rgba(255,255,255,0.1); border-radius:4px; cursor:pointer; background: #1e293b; color: white;">
+                    <input id="jscolorpick" type="color" oninput="updateClearColorPicker(this)"
+                           value="#000000" style="height:26px; width:60px; padding:0; border:1px solid rgba(255,255,255,0.1); border-radius:4px; cursor:pointer; background: transparent;">
                     <input type="text" id="sceneClearColor" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility:hidden; position:absolute;">
                 </div>
                 <div id="bcgPresetsRow" class="tw-flex tw-items-center tw-gap-2" style="display:none">
@@ -194,8 +194,8 @@
 
                     <div class="colorElement tw-flex tw-items-center tw-gap-2" style="display:none">
                         <label class="tw-text-xs tw-text-white/80 tw-w-12 tw-flex-shrink-0">Color</label>
-                        <input id="jscolorpickFog" class="jscolor {onFineChange:'updateFogColorPicker(this)'}" autocomplete="off"
-                               style="height:26px; width:60px; padding:2px; border:1px solid rgba(255,255,255,0.1); border-radius:4px; cursor:pointer; background: #1e293b; color: white;">
+                        <input id="jscolorpickFog" type="color" oninput="updateFogColorPicker(this)"
+                               style="height:26px; width:60px; padding:0; border:1px solid rgba(255,255,255,0.1); border-radius:4px; cursor:pointer; background: transparent;">
                         <input type="text" id="FogColor" name="FogColor" form="3dAssetForm" value="" style="visibility:hidden; position:absolute;">
                     </div>
 

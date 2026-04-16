@@ -44,12 +44,12 @@
 		saveChanges();
 	}
 
-	function updateObjectColorPicker(picker) {
-		transform_controls.object.children[0].material.color.setHex("0x" + document.getElementById("ObjectColor").value);
+	function updateObjectColorPicker(input) {
+		transform_controls.object.children[0].material.color.set(input.value);
 	}
 
-	function updateObjectEmissiveColorPicker(picker) {
-		transform_controls.object.children[0].material.emissive.setHex("0x" + document.getElementById("ObjectEmissiveColor").value);
+	function updateObjectEmissiveColorPicker(input) {
+		transform_controls.object.children[0].material.emissive.set(input.value);
 	}
 
 	function changeEmissiveIntensity() {
@@ -85,52 +85,70 @@
 
 
 	/// Sun Color Selector
-	function updateSunColorPickerLight(picker) {
-
-		var hexcol = "0x" + document.getElementById("sunColor").value;
+	function updateSunColorPickerLight(input) {
+		if (!transform_controls.object) return;
+		var hexcol = input.value;
 
 		// Sun as object
-		transform_controls.object.color.setHex(hexcol);
+		if (transform_controls.object.color) {
+			transform_controls.object.color.set(hexcol);
+		}
 
 		// Sun as Sphere
-		transform_controls.object.children[0].material.color.setHex(hexcol);
+		if (transform_controls.object.children && transform_controls.object.children[0] && transform_controls.object.children[0].material && transform_controls.object.children[0].material.color) {
+			transform_controls.object.children[0].material.color.set(hexcol);
+		}
 
 		// Sun Helper
 		var lightHelper = envir.scene.getObjectByName("lightHelper_" + transform_controls.object.name);
-		lightHelper.children[0].material.color.setHex(hexcol);
-		lightHelper.children[1].material.color.setHex(hexcol);
+		if (lightHelper && lightHelper.children && lightHelper.children.length > 1) {
+			if (lightHelper.children[0].material && lightHelper.children[0].material.color) lightHelper.children[0].material.color.set(hexcol);
+			if (lightHelper.children[1].material && lightHelper.children[1].material.color) lightHelper.children[1].material.color.set(hexcol);
+		}
 
 		// TargetSpot
 		var lightTargetSpot = envir.scene.getObjectByName("lightTargetSpot_" + transform_controls.object.name);
-		lightTargetSpot.children[0].material.color.setHex(hexcol);
+		if (lightTargetSpot && lightTargetSpot.children && lightTargetSpot.children[0] && lightTargetSpot.children[0].material && lightTargetSpot.children[0].material.color) {
+			lightTargetSpot.children[0].material.color.set(hexcol);
+		}
 	}
 
 
 	/// Lamp Color Selector
-	function updateLampColorPickerLight(picker) {
-		var hexcol = "0x" + document.getElementById("lampColor").value;
+	function updateLampColorPickerLight(input) {
+		if (!transform_controls.object) return;
+		var hexcol = input.value;
 		// Lamp as object
-		transform_controls.object.color.setHex(hexcol);
+		if (transform_controls.object.color) {
+			transform_controls.object.color.set(hexcol);
+		}
 		// Lamp as Sphere
-		transform_controls.object.children[0].material.color.setHex(hexcol);
+		if (transform_controls.object.children && transform_controls.object.children[0] && transform_controls.object.children[0].material) {
+			transform_controls.object.children[0].material.color.set(hexcol);
+		}
 	}
 
 
 	/// Spot Color Selector
-	function updateSpotColorPickerLight(picker) {
-		var hexcol = "0x" + document.getElementById("spotColor").value;
+	function updateSpotColorPickerLight(input) {
+		if (!transform_controls.object) return;
+		var hexcol = input.value;
 
 		// Spot as object
-		transform_controls.object.color.setHex(hexcol);
+		if (transform_controls.object.color) {
+			transform_controls.object.color.set(hexcol);
+		}
 
 		// Spot as Sphere
-		transform_controls.object.children[0].material.color.setHex(hexcol);
+		if (transform_controls.object.children && transform_controls.object.children[0] && transform_controls.object.children[0].material) {
+			transform_controls.object.children[0].material.color.set(hexcol);
+		}
 
 		// Spot as Helper rays
 		envir.scene.traverse(function (child) {
 				if (child.light != undefined)
 					if (child.light.name === transform_controls.object.name)
-						child.color.setHex(hexcol);
+						if (child.color) child.color.set(hexcol);
 			}
 		);
 
@@ -138,12 +156,17 @@
 	}
 
 	/// Ambient Color Selector
-	function updateAmbientColorPickerLight(picker) {
-		var hexcol = "0x" + document.getElementById("ambientColor").value;
+	function updateAmbientColorPickerLight(input) {
+		if (!transform_controls.object) return;
+		var hexcol = input.value;
 		// AmbientLight as object
-		transform_controls.object.color.setHex(hexcol);
+		if (transform_controls.object.color) {
+			transform_controls.object.color.set(hexcol);
+		}
 		// AmbientLight as Sphere
-		transform_controls.object.children[0].material.color.setHex(hexcol);
+		if (transform_controls.object.children && transform_controls.object.children[0] && transform_controls.object.children[0].material) {
+			transform_controls.object.children[0].material.color.set(hexcol);
+		}
 	}
 
 
@@ -195,9 +218,10 @@
 	</div>
 
 	<div class="prop-row">
-		<label for="sunColor" class="prop-label">Color (hex)</label>
-		<input type="text" id="sunColor" name="sunColor" title="Hex color, ffffff = white"
-				value="ffff00" maxlength="6" class="jscolor {onFineChange:'updateSunColorPickerLight(this)'} prop-input" />
+		<label for="sunColor" class="prop-label">Color</label>
+		<input type="color" id="sunColor" name="sunColor" title="Select sun color"
+				value="#ffffff" oninput="updateSunColorPickerLight(this)"
+				style="width: 100%; height: 24px; border: none; padding: 0; background: transparent; cursor: pointer;" />
 	</div>
 
 	<div class="prop-row">
@@ -267,9 +291,10 @@
 	</div>
 
 	<div class="prop-row">
-		<label for="lampColor" class="prop-label">Color (hex)</label>
-		<input type="text" id="lampColor" name="lampColor" title="Hex color, ffffff = white"
-				value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateLampColorPickerLight(this)'} prop-input" />
+		<label for="lampColor" class="prop-label">Color</label>
+		<input type="color" id="lampColor" name="lampColor" title="Select lamp color"
+				value="#ffffff" oninput="updateLampColorPickerLight(this)"
+				style="width: 100%; height: 24px; border: none; padding: 0; background: transparent; cursor: pointer;" />
 	</div>
 
 	<div class="prop-row">
@@ -361,9 +386,10 @@
 	</div>
 
 	<div class="prop-row">
-		<label for="spotColor" class="prop-label">Color (hex)</label>
-		<input type="text" id="spotColor" name="spotColor" title="Hex color, ffffff = white"
-				value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateSpotColorPickerLight(this)'} prop-input" />
+		<label for="spotColor" class="prop-label">Color</label>
+		<input type="color" id="spotColor" name="spotColor" title="Select spot color"
+				value="#ffffff" oninput="updateSpotColorPickerLight(this)"
+				style="width: 100%; height: 24px; border: none; padding: 0; background: transparent; cursor: pointer;" />
 	</div>
 
 	<div class="prop-row">
@@ -407,9 +433,10 @@
 	</div>
 
 	<div class="prop-row">
-		<label for="ambientColor" class="prop-label">Color (hex)</label>
-		<input type="text" id="ambientColor" name="ambientColor" title="Hex color, ffffff = white"
-				value="ffffff" maxlength="6" class="jscolor {onFineChange:'updateAmbientColorPickerLight(this)'} prop-input" />
+		<label for="ambientColor" class="prop-label">Color</label>
+		<input type="color" id="ambientColor" name="ambientColor" title="Select ambient color"
+				value="#ffffff" oninput="updateAmbientColorPickerLight(this)"
+				style="width: 100%; height: 24px; border: none; padding: 0; background: transparent; cursor: pointer;" />
 	</div>
 </div>
 

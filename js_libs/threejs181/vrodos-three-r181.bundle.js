@@ -45644,15 +45644,15 @@ void main() {
     updateMatrixWorld(force) {
       const controls = this.controls;
       if (controls.object !== void 0) {
-        controls.object.updateMatrixWorld();
         if (controls.object.parent === null) {
-          console.error("TransformControls: The attached 3D object must be a part of the scene graph.");
+          controls.detach();
         } else {
+          controls.object.updateMatrixWorld();
           controls.object.parent.matrixWorld.decompose(controls._parentPosition, controls._parentQuaternion, controls._parentScale);
+          controls.object.matrixWorld.decompose(controls.worldPosition, controls.worldQuaternion, controls._worldScale);
+          controls._parentQuaternionInv.copy(controls._parentQuaternion).invert();
+          controls._worldQuaternionInv.copy(controls.worldQuaternion).invert();
         }
-        controls.object.matrixWorld.decompose(controls.worldPosition, controls.worldQuaternion, controls._worldScale);
-        controls._parentQuaternionInv.copy(controls._parentQuaternion).invert();
-        controls._worldQuaternionInv.copy(controls.worldQuaternion).invert();
       }
       controls.camera.updateMatrixWorld();
       controls.camera.matrixWorld.decompose(controls.cameraPosition, controls.cameraQuaternion, controls._cameraScale);

@@ -219,7 +219,11 @@ class VrodosSceneExporter {
         entryObject.lightintensity = o.intensity;
 
         if (o.category_name === 'lightSun' || o.category_name === 'lightSpot') {
-            entryObject.targetposition = [o.target.position.x, o.target.position.y, o.target.position.z];
+            if (o.target && o.target.position) {
+                entryObject.targetposition = [o.target.position.x, o.target.position.y, o.target.position.z];
+            } else {
+                entryObject.targetposition = [0, 0, 0];
+            }
         }
 
         if (o.category_name === 'lightLamp' || o.category_name === 'lightSpot') {
