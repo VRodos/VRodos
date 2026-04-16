@@ -13,14 +13,14 @@
     "watch:css": "tailwindcss -i ./css/vrodos_modern.css -o ./css/vrodos_modern_compiled.css --watch"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.27",
+    "autoprefixer": "^10.5.0",
     "daisyui": "^4.12.24",
     "esbuild": "^0.28.0",
     "eslint": "^9.39.4",
     "n8ao": "^1.10.1",
-    "postcss": "^8.5.8",
+    "postcss": "^8.5.10",
     "postprocessing": "^6.39.0",
-    "prettier": "^3.8.1",
+    "prettier": "^3.8.3",
     "tailwindcss": "^3.4.19",
     "three": "^0.181.0"
   },
