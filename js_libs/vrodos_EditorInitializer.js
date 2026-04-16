@@ -171,6 +171,7 @@ function updatePositionsAndControls() {
     }
 }
 window.updatePositionsAndControls = updatePositionsAndControls;
+window.animate = animate;
 
 /**
  * Handle background UI initialization that requires specific logic

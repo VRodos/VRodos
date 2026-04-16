@@ -2,9 +2,6 @@
 
 <script>
 
-	function changeOverrideMaterial() {
-		transform_controls.object.children[0].overrideMaterial = 'true';
-	}
 
 
 	function updateSpot() {
@@ -21,9 +18,6 @@
 		updateSpot();
 	}
 
-	function enableSceneEnvironmentTexture(value) {
-		envir.scene.environment = value ? envir.maintexture : null;
-	}
 
 	function keepScaleAspectRatio(value) {
 		envir.scene.keepScaleAspectRatio = value;
@@ -44,44 +38,6 @@
 		saveChanges();
 	}
 
-	function updateObjectColorPicker(input) {
-		transform_controls.object.children[0].material.color.set(input.value);
-	}
-
-	function updateObjectEmissiveColorPicker(input) {
-		transform_controls.object.children[0].material.emissive.set(input.value);
-	}
-
-	function changeEmissiveIntensity() {
-		transform_controls.object.children[0].material.emissiveIntensity = parseFloat(document.getElementById("ObjectEmissiveIntensity").value);
-	}
-
-	function changeRoughness() {
-		transform_controls.object.children[0].material.roughness = parseFloat(document.getElementById("ObjectRoughness").value);
-	}
-
-	function changeMetalness() {
-		transform_controls.object.children[0].material.metalness = parseFloat(document.getElementById("ObjectMetalness").value);
-	}
-
-	function validate(evt) {
-		var theEvent = evt || window.event;
-
-		// Handle paste
-		if (theEvent.type === 'paste') {
-			key = event.clipboardData.getData('text/plain');
-		} else {
-		// Handle key press
-			var key = theEvent.keyCode || theEvent.which;
-			key = String.fromCharCode(key);
-		}
-		var regex = /^$|^-?(\\d+)?(\\.?\\d*)?$/;
-		var re = new RegExp('^$|^-?(\\d+)?(\\.?\\d*)?$');
-		if( !regex.test(key) ) {
-			theEvent.returnValue = false;
-			if(theEvent.preventDefault) theEvent.preventDefault();
-		}
-	}
 
 
 	/// Sun Color Selector
@@ -170,40 +126,6 @@
 	}
 
 
-	// Set video texture when popup change
-	function textureChangeFunction() {
-		var url = document.getElementById("ObjectVideoTexture").value;
-		var videoDom = document.createElement('video');
-		videoDom.src = url;
-		videoDom.load();
-		var videoTexture = new THREE.VideoTexture(videoDom);
-
-
-		videoTexture.wrapS = videoTexture.wrapT = THREE.RepeatWrapping;
-
-		var rX = document.getElementById("ObjectVideoTextureRepeatX").value;
-		var rY = document.getElementById("ObjectVideoTextureRepeatY").value;
-
-
-
-		videoTexture.repeat.set(rX, rY);
-
-		var rotationTexture = document.getElementById("ObjectVideoTextureRotation").value;
-		videoTexture.rotation = rotationTexture;
-
-		var cX = document.getElementById("ObjectVideoTextureCenterX").value;
-		var cY = document.getElementById("ObjectVideoTextureCenterY").value;
-		videoTexture.center = new THREE.Vector2(cX, cY);
-
-
-		var movieMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, side: THREE.DoubleSide });
-		setTimeout(function () {
-			transform_controls.object.children[0].material = movieMaterial;
-			videoDom.play();
-		}, 1000);
-
-
-	}
 </script>
 
 <!-- Sun Properties -->

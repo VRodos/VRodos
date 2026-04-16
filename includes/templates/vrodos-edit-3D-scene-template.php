@@ -349,7 +349,7 @@ extract( $data );
 
 
 				<!--  Asset browse Left panel  -->
-				
+
 				<!-- The panel -->
 				<div class="filemanager" id="assetBrowserToolbar">
 
@@ -476,7 +476,7 @@ extract( $data );
 
 			transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
 
-			
+
 			loaderMulti = new VRodos_LoaderMulti("2");
 			let assetsLoadPromise = loaderMulti.load(manager, resources3D, pluginPath);
 			Promise.allSettled([lightsLoadPromise, assetsLoadPromise]).then(function () {
@@ -485,123 +485,6 @@ extract( $data );
 
 		}
 		<!--  Part 3: Start 3D with Javascript   -->
-
-		function updatePositionsAndControls()
-		{
-			// envir.orbitControls.update();
-			// updatePointerLockControls();
-
-			// Now update the translation and rotation input texts from transform controls
-			if (transform_controls.object) {
-				const affines = ['position', 'rotation', 'scale'];
-				for (let j=0; j<3; j++ ) {
-					for (let i = 0; i < 3; i++) {
-						if (controlInterface.controllers[j*3+i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
-							controlInterface.controllers[j*3+i].updateDisplay();
-						}
-					}
-				}
-				updatePositionsPhpAndJavsFromControlsAxes();
-			}
-		}
-
-
-
-		function attachToControls(name, objItem){
-
-			let trs_tmp = vrodos_scene_data.objects[name]['trs'];
-			transform_controls.attach(objItem);
-			console.log("attached");
-			console.log(objItem);
-
-			if (objItem.category_name == "avatarYawObject"){
-				document.getElementById('rotate-switch').disabled = true;
-				document.getElementById('rotate-switch-label').style.color = "grey";
-
-				document.getElementById('scale-switch').disabled = true;
-				document.getElementById('scale-switch-label').style.color = "grey";
-			}
-				
-			else{
-				document.getElementById('rotate-switch').disabled = false;
-				document.getElementById('rotate-switch-label').style = "inherit";
-
-				document.getElementById('scale-switch').disabled = false;
-				document.getElementById('scale-switch-label').style = "inherit";
-			}
-
-			// highlight — cel outline (no panel on load)
-			removeAllCelOutlines();
-			addCelOutline(objItem);
-
-			transform_controls.object.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1],
-				trs_tmp['translation'][2]);
-			transform_controls.object.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1],
-				trs_tmp['rotation'][2]);
-			transform_controls.object.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
-
-
-			console.log(objItem);
-
-			// Don't show the floating panel on initial scene load — only on user interaction
-			// showObjectControlsPanel();
-			var dblSidedSwitch = document.getElementById('double-sided-switch');
-			if (dblSidedSwitch) dblSidedSwitch.style.display = '';
-
-			showObjectPropertiesPanel(transform_controls.getMode());
-
-			selected_object_name = name;
-			transform_controls.setMode("translate");
-
-			// Resize controls based on object size
-			setTransformControlsSize();
-		}
-
-		function animate()
-		{
-
-			if(isPaused) {
-				return;
-			}
-
-			id_animation_frame = requestAnimationFrame( animate );
-
-			// Select the proper camera (orbit, or avatar, or thirdPersonView)
-			let curr_camera = avatarControlsEnabled ?
-				(envir.thirdPersonView ? envir.cameraThirdPerson : envir.cameraAvatar) : envir.cameraOrbit;
-
-			// Render it
-			// envir.renderer.render( envir.scene, curr_camera);
-			// Label is for setting labels to objects
-
-			envir.labelRenderer.render(envir.scene, curr_camera);
-
-
-			// Animation
-			if (envir.flagPlayAnimation) {
-				if (envir.animationMixers.length > 0) {
-					let new_time = envir.clock.getDelta();
-					for (let i = 0; i < envir.animationMixers.length; i++) {
-						envir.animationMixers[i].update(new_time);
-					}
-				}
-			}
-
-			if (envir.isComposerOn)
-				envir.composer.render();
-
-
-			// Update it
-			envir.orbitControls.update();
-			updatePointerLockControls();
-			if (typeof envir.updateCompassUI === 'function') {
-				envir.updateCompassUI();
-			}
-
-			//updatePositionsAndControls();
-
-			//envir.cubeCamera.update( envir.renderer, envir.scene );
-		}
 
 		let toggleEnvTexture = (el) => {
 			document.getElementById("env_texture-change-btn").classList.toggle('toggle-active');
