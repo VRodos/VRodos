@@ -23,10 +23,9 @@ if ( ! defined( 'VRODOS_PLUGIN_FILE' ) ) {
 // @ini_set( 'memory_limit', '512M');
 @ini_set( 'max_execution_time', '2400' );
 
-// Set scope for the 3D editor
-// Archaeology                     : 1 - probably should delete this case.
-// Virtual Exhibition (VRExpo)     : 2
-// VirtualProduction (MediaVerse)  : 3
+// Project Scopes:
+// 2: 3D Exposition (VRExpo)
+// 3: Virtual Production (MediaVerse)
 $project_scope = 2;
 
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-render-runtime-manager.php');

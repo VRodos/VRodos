@@ -70,9 +70,9 @@ extract($data);
                     <h1 class="tw-text-xs tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-widest">Asset Editor</h1>
                 </div>
                 <div class="tw-flex tw-items-center tw-gap-2 tw-bg-slate-50 tw-px-3 tw-py-1.5 tw-rounded-lg tw-border tw-border-slate-100">
-                    <i data-lucide="<?php echo ($isJoker === 'true') ? 'globe' : 'folder'; ?>" class="tw-w-3 tw-h-3 tw-text-slate-400"></i>
-                    <span class="tw-text-[10px] tw-font-black tw-uppercase tw-tracking-wider <?php echo ($isJoker === 'true') ? 'tw-text-slate-500' : 'tw-text-primary'; ?>">
-                        <?php if ($isJoker === 'true'): ?>
+                    <i data-lucide="<?php echo ($isShared === 'true') ? 'globe' : 'folder'; ?>" class="tw-w-3 tw-h-3 tw-text-slate-400"></i>
+                    <span class="tw-text-[10px] tw-font-black tw-uppercase tw-tracking-wider <?php echo ($isShared === 'true') ? 'tw-text-slate-500' : 'tw-text-primary'; ?>">
+                        <?php if ($isShared === 'true'): ?>
                             Shared Asset
                         <?php elseif ($game_post): ?>
                             <?php echo esc_html($game_post->post_title); ?>

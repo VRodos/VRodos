@@ -131,12 +131,12 @@ class VRodos_Pages_Manager {
 	}
 
 	public static function prepare_assets_list_page_data() {
-		$perma_structure  = (bool) get_option( 'permalink_structure' );
-		$parameter_pass   = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
-		$joker_project_id = get_page_by_path( 'archaeology-joker', OBJECT, 'vrodos_game' )->ID;
+		$perma_structure   = (bool) get_option( 'permalink_structure' );
+		$parameter_pass    = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
+		$shared_project_id = get_page_by_path( 'archaeology-joker', OBJECT, 'vrodos_game' )->ID;
 
-		$joker_project_post = get_post( $joker_project_id );
-		$joker_project_slug = $joker_project_post->post_name;
+		$shared_project_post = get_post( $shared_project_id );
+		$shared_project_slug = $shared_project_post->post_name;
 
 		$isUserloggedIn = is_user_logged_in();
 		$isUserAdmin    = $isUserloggedIn && current_user_can( 'administrator' );
@@ -164,9 +164,9 @@ class VRodos_Pages_Manager {
 		} elseif ( $isUserloggedIn && $single_project_asset_list ) {
 			$link_to_add = esc_url( get_permalink( $newAssetPage[0]->ID ) . $parameter_pass . $current_game_project_id . '&singleproject=true&preview=0' );
 		} elseif ( $isUserAdmin && ! $single_project_asset_list ) {
-			$link_to_add = esc_url( get_permalink( $newAssetPage[0]->ID ) . $parameter_pass . $joker_project_id . '&preview=0' );
+			$link_to_add = esc_url( get_permalink( $newAssetPage[0]->ID ) . $parameter_pass . $shared_project_id . '&preview=0' );
 		} elseif ( $isUserloggedIn ) {
-			$link_to_add = esc_url( get_permalink( $newAssetPage[0]->ID ) . $parameter_pass . $joker_project_id . '&preview=0' );
+			$link_to_add = esc_url( get_permalink( $newAssetPage[0]->ID ) . $parameter_pass . $shared_project_id . '&preview=0' );
 		}
 
 		$link_to_edit = home_url() . '/vrodos-asset-editor-page/?';
@@ -181,12 +181,12 @@ class VRodos_Pages_Manager {
 			if ( $single_project_asset_list ) {
 				$helpMessage = 'A list of your private Assets belonging to the project <b>' . $current_game_project_post->post_title . '</b>.';
 			} else {
-				$helpMessage = 'Add a Shared Asset here. It will be accessible by all projects. If you want it to be private, make a project and add the asset there.';
+				$helpMessage = 'Add a Shared Asset here. These are accessible across all your projects. To keep an asset private, create a new project and add it there.';
 			}
 		} else {
-			$helpMessage = 'Login to a) add a Shared Asset or b) to create a Project and add your private Assets there';
+			$helpMessage = 'Login to manage Shared Assets or to create a new Project for your private assets.';
 		}
 
-		return ['assets'                       => $assets, 'is_user_logged_in'            => $isUserloggedIn, 'is_user_admin'                => $isUserAdmin, 'user_id'                      => $user_id, 'link_to_add'                  => $link_to_add, 'link_to_edit'                 => $link_to_edit, 'go_back_to_all_projects_link' => $goBackTo_AllProjects_link, 'help_message'                 => $helpMessage, 'joker_project_slug'           => $joker_project_slug, 'single_project_asset_list'    => $single_project_asset_list, 'current_game_project_post'    => $current_game_project_post];
+		return ['assets'                       => $assets, 'is_user_logged_in'            => $isUserloggedIn, 'is_user_admin'                => $isUserAdmin, 'user_id'                      => $user_id, 'link_to_add'                  => $link_to_add, 'link_to_edit'                 => $link_to_edit, 'go_back_to_all_projects_link' => $goBackTo_AllProjects_link, 'help_message'                 => $helpMessage, 'joker_project_slug'           => $shared_project_slug, 'single_project_asset_list'    => $single_project_asset_list, 'current_game_project_post'    => $current_game_project_post];
 	}
 }

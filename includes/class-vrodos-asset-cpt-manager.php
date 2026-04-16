@@ -42,7 +42,7 @@ class VRodos_Asset_CPT_Manager {
       ['Video', 'Video', 'vrodos_asset3d_video', 'string', '', true, true],
       ['isreward', 'isreward', 'vrodos_asset3d_isreward', 'string', '0', true, true],
       ['isCloned', 'isCloned', 'vrodos_asset3d_isCloned', 'string', 'false', true, true],
-      ['isJoker', 'isJoker', 'vrodos_asset3d_isJoker', 'string', 'false', true, true],
+      ['isShared', 'isShared Asset', 'vrodos_asset3d_isJoker', 'string', 'false', true, true],
       ['fonts', 'fonts', 'vrodos_asset3d_fonts', 'string', '', true, true],
       ['back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'string', '#FFFFFF', true, true],
       ['Asset TRS', 'Initial asset translation, rotation, scale for the asset editor', 'vrodos_asset3d_assettrs', 'string', '0,0,0,0,0,0,0,0,0', true, true],
@@ -137,7 +137,7 @@ class VRodos_Asset_CPT_Manager {
 		$assetPGame     = self::ensure_asset_project_term( $game_post );
 		$assetPGameID   = $assetPGame ? $assetPGame->term_id : null;
 		$assetPGameSlug = $assetPGame ? $assetPGame->slug : '';
-		$isJoker        = ( str_contains( $assetPGameSlug, 'joker' ) ) ? 'true' : 'false';
+		$isShared       = ( str_contains( $assetPGameSlug, 'joker' ) ) ? 'true' : 'false';
 
 		$assetTitle   = isset( $_POST['assetTitle'] ) ? esc_attr( strip_tags( (string) $_POST['assetTitle'] ) ) : '';
 		$assetCatID   = isset( $_POST['term_id'] ) ? intval( $_POST['term_id'] ) : 0; // Legacy hidden input.
@@ -210,7 +210,7 @@ class VRodos_Asset_CPT_Manager {
 			}
 
 			update_post_meta( $asset_id, 'vrodos_asset3d_isCloned', 'false' );
-			update_post_meta( $asset_id, 'vrodos_asset3d_isJoker', $isJoker );
+			update_post_meta( $asset_id, 'vrodos_asset3d_isJoker', $isShared );
 
 			// Invalidate all Assets List transients
 			global $wpdb;
@@ -638,7 +638,7 @@ class VRodos_Asset_CPT_Manager {
 								<?php
 								break;
 							case 'isCloned':
-							case 'isJoker':
+							case 'isJoker': // Displayed as 'isShared' in labels but keep ID for logic
 							case 'assettrs':
 								?>
 								<input type="text" name="<?php echo esc_attr( $field['id'] ); ?>" readonly
@@ -835,9 +835,9 @@ class VRodos_Asset_CPT_Manager {
 		$assetPGame           = self::ensure_asset_project_term( $game_post );
 		$data['assetPGameID'] = $assetPGame ? $assetPGame->term_id : null;
 
-		// Fix for PHP 8 deprecation warning
-		$assetPGameSlug  = $assetPGame ? $assetPGame->slug : '';
-		$data['isJoker'] = ( str_contains( $assetPGameSlug, 'joker' ) ) ? 'true' : 'false';
+		// Terminology update: isJoker -> isShared
+		$assetPGameSlug   = $assetPGame ? $assetPGame->slug : '';
+		$data['isShared'] = ( str_contains( $assetPGameSlug, 'joker' ) ) ? 'true' : 'false';
 
 		$all_game_category     = get_the_terms( $data['project_id'], 'vrodos_game_type' );
 		$data['game_category'] = $all_game_category ? $all_game_category[0]->slug : null;

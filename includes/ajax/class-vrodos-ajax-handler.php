@@ -517,18 +517,18 @@ class VRodos_AJAX_Handler {
 		$perma_structure     = (bool) get_option( 'permalink_structure' );
 		$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 
-		// Exclude Joker projects (internal shared-asset repositories) from the listing
-		$joker_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
-		$joker_ids = [];
-		foreach ($joker_slugs as $slug) {
+		// Exclude internal shared-asset repositories from the listing
+		$shared_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
+		$shared_ids = [];
+		foreach ($shared_slugs as $slug) {
 			$post = get_page_by_path($slug, OBJECT, 'vrodos_game');
-			if ($post) $joker_ids[] = $post->ID;
+			if ($post) $shared_ids[] = $post->ID;
 		}
 
 		// Define custom query parameters
 		$custom_query_args = ['post_type' => 'vrodos_game', 'posts_per_page' => -1];
-		if (!empty($joker_ids)) {
-			$custom_query_args['post__not_in'] = $joker_ids;
+		if (!empty($shared_ids)) {
+			$custom_query_args['post__not_in'] = $shared_ids;
 		}
 
 		// if (current_user_can('administrator')){

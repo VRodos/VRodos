@@ -74,21 +74,45 @@ class VRodos_Post_Type_Manager {
 	}
 
 	public function vrodos_projects_taxtypes_define(): void {
-		wp_insert_term(
-			'archaeology',
-			'vrodos_game_type',
-			['description' => 'Default Projects', 'slug'        => 'archaeology_games']
+		$taxonomy = 'vrodos_game_type';
+
+		// 1. Fix technical archaeology repository
+		$arch_slug = 'archaeology_games';
+		$existing_arch = get_term_by( 'slug', $arch_slug, $taxonomy );
+		
+		if ( $existing_arch ) {
+			if ( $existing_arch->name !== 'Shared Resources' ) {
+				wp_update_term( $existing_arch->term_id, $taxonomy, array( 'name' => 'Shared Resources', 'description' => 'Internal repository for shared assets' ) );
+			}
+		} else {
+			wp_insert_term( 'Shared Resources', $taxonomy, array( 'slug' => $arch_slug, 'description' => 'Internal repository for shared assets' ) );
+		}
+
+		// 2. Cleanup duplicate created by term name conflict (archaeology_games-2)
+		$dup_arch = get_term_by( 'slug', $arch_slug . '-2', $taxonomy );
+		if ( $dup_arch ) {
+			$actual_arch = get_term_by( 'slug', $arch_slug, $taxonomy );
+			if ( $actual_arch ) {
+				// Relocate any projects using the duplicate term
+				$posts = get_posts( array( 'post_type' => 'vrodos_game', 'numberposts' => -1, 'tax_query' => array( array( 'taxonomy' => $taxonomy, 'field' => 'term_id', 'terms' => $dup_arch->term_id ) ) ) );
+				foreach ( $posts as $p ) {
+					wp_set_object_terms( $p->ID, array( (int) $actual_arch->term_id ), $taxonomy, false );
+				}
+				wp_delete_term( $dup_arch->term_id, $taxonomy );
+			}
+		}
+
+		// 3. Ensure other project types are defined
+		$types = array(
+			array( 'name' => 'vrexpo', 'slug' => 'vrexpo_games', 'desc' => 'Exhibition Projects' ),
+			array( 'name' => 'virtualproduction', 'slug' => 'virtualproduction_games', 'desc' => 'Virtual Production Projects' )
 		);
-		wp_insert_term(
-			'vrexpo',
-			'vrodos_game_type',
-			['description' => 'Exhibition Projects', 'slug'        => 'vrexpo_games']
-		);
-		wp_insert_term(
-			'virtualproduction',
-			'vrodos_game_type',
-			['description' => 'Virtual Production Projects', 'slug'        => 'virtualproduction_games']
-		);
+
+		foreach ( $types as $type ) {
+			if ( ! get_term_by( 'slug', $type['slug'], $taxonomy ) ) {
+				wp_insert_term( $type['name'], $taxonomy, array( 'slug' => $type['slug'], 'description' => $type['desc'] ) );
+			}
+		}
 	}
 
 	// Create Scene - Scene as custom type 'vrodos_scene'

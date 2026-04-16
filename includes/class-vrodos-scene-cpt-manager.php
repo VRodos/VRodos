@@ -452,11 +452,8 @@ class VRodos_Scene_CPT_Manager {
 			$data['single_lowercase']  = 'project';
 		}
 
-		// Legacy Archaeology data
+		// Legacy data cleanup: Archaeology specific doors are no longer used in current scopes.
 		$data['doorsAllInfo'] = null;
-		if ( isset( $data['project_type'] ) && $data['project_type'] === 'Archaeology' && function_exists( 'vrodos_get_all_doors_of_project_fastversion' ) ) {
-			$data['doorsAllInfo'] = vrodos_get_all_doors_of_project_fastversion( $data['project_id'] );
-		}
 
 		// Fallback: if no scene ID in URL, use the first scene of the project
 		if ( empty( $data['current_scene_id'] ) && ! empty( $data['project_id'] ) ) {
@@ -572,12 +569,8 @@ class VRodos_Scene_CPT_Manager {
 		// Back link for breadcrumb
 		$data['goBackTo_AllProjects_link'] = ( $data['allProjectsPage'] && isset( $data['allProjectsPage'][0]->ID ) ) ? esc_url( get_permalink( $data['allProjectsPage'][0]->ID ) ) : '';
 
-		// Text for buttons based on project type
-		if ( isset( $data['project_type'] ) && $data['project_type'] === 'Archaeology' ) {
-			$data['single_first'] = 'Tour';
-		} else {
-			$data['single_first'] = 'Project';
-		}
+		// Terminology update: default to Project
+		$data['single_first'] = 'Project';
 
 		// Paths and URLs
 		$data['pluginpath'] = plugin_dir_url( VRODOS_PLUGIN_FILE );

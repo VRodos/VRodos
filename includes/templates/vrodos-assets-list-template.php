@@ -156,7 +156,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
 
                 <div id="<?php echo $asset['asset_id']; ?>" class="tw-group asset-card tw-bg-white tw-border tw-border-slate-200 tw-rounded-2xl tw-overflow-hidden hover:tw-shadow-2xl hover:tw-shadow-primary/10 hover:tw-border-primary/30 tw-transition-all tw-duration-300 tw-flex tw-flex-col"
                      data-category="<?php echo esc_attr($asset['category_slug']); ?>"
-                     data-visibility="<?php echo ($asset['is_joker'] == 'true') ? 'shared' : 'private'; ?>">
+                     data-visibility="<?php echo ($asset['is_shared'] == 'true') ? 'shared' : 'private'; ?>">
 
                     <!-- Clickable Area for Edit -->
                     <?php if ( $can_edit_asset ) : ?>
@@ -194,9 +194,9 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                             </span>
 
                             <!-- Visibility Badge -->
-                            <?php if ( $asset['is_joker'] == 'true' ) : ?>
+                            <?php if ( $asset['is_shared'] == 'true' ) : ?>
                                 <span class="tw-w-fit tw-px-2.5 tw-py-1 tw-bg-emerald-500 tw-text-white tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-widest tw-rounded-lg tw-shadow-md">
-                                    Public
+                                    Shared
                                 </span>
                             <?php else : ?>
                                 <span class="tw-w-fit tw-flex tw-items-center tw-gap-1.5 tw-px-2.5 tw-py-1 tw-bg-slate-800 tw-text-white tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-widest tw-rounded-lg tw-shadow-md">
@@ -214,12 +214,12 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                             <a href="<?php echo $edit_link; ?>"
                                class="tw-block hover:tw-text-primary tw-transition-colors tw-min-w-0">
                                 <h3 class="tw-font-bold tw-text-slate-800 tw-leading-tight tw-mb-1 tw-truncate"><?php echo $asset['asset_name']; ?></h3>
-                                <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ($asset['is_joker'] === 'true') ? 'public' : $asset['asset_parent_game_slug']; ?></p>
+                                <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ($asset['is_shared'] === 'true') ? 'shared' : $asset['asset_parent_game_slug']; ?></p>
                             </a>
                             <?php else : ?>
                             <div class="tw-min-w-0">
                                 <h3 class="tw-font-bold tw-text-slate-800 tw-leading-tight tw-mb-1 tw-truncate"><?php echo $asset['asset_name']; ?></h3>
-                                <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ($asset['is_joker'] === 'true') ? 'public' : $asset['asset_parent_game_slug']; ?></p>
+                                <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold uppercase tw-tracking-wider">@<?php echo ($asset['is_shared'] === 'true') ? 'shared' : $asset['asset_parent_game_slug']; ?></p>
                             </div>
                             <?php endif; ?>
 

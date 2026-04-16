@@ -15,6 +15,7 @@ class VRodos_Game_CPT_Manager {
 
 		// Hide joker projects from the admin list
 		add_action( 'pre_get_posts', $this->hide_joker_projects_from_admin_list(...) );
+		add_filter( 'views_edit-vrodos_game', $this->adjust_vrodos_game_counts(...) );
 	}
 
 	public function hide_joker_projects_from_admin_list( $query ): void {
@@ -24,19 +25,45 @@ class VRodos_Game_CPT_Manager {
 
 		$screen = get_current_screen();
 		if ( $screen && $screen->id === 'edit-vrodos_game' ) {
-			$joker_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
-			$joker_ids   = [];
-			foreach ( $joker_slugs as $slug ) {
-				$joker_post = get_page_by_path( $slug, OBJECT, 'vrodos_game' );
-				if ( $joker_post ) {
-					$joker_ids[] = $joker_post->ID;
+			$shared_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
+			$shared_ids   = [];
+			foreach ( $shared_slugs as $slug ) {
+				$shared_post = get_page_by_path( $slug, OBJECT, 'vrodos_game' );
+				if ( $shared_post ) {
+					$shared_ids[] = $shared_post->ID;
 				}
 			}
 
-			if ( ! empty( $joker_ids ) ) {
-				$query->set( 'post__not_in', $joker_ids );
+			if ( ! empty( $shared_ids ) ) {
+				$query->set( 'post__not_in', $shared_ids );
 			}
 		}
+	}
+
+	public function adjust_vrodos_game_counts( $views ): array {
+		$shared_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
+		$hidden_count = 0;
+		foreach ( $shared_slugs as $slug ) {
+			if ( get_page_by_path( $slug, OBJECT, 'vrodos_game' ) ) {
+				$hidden_count++;
+			}
+		}
+
+		if ( $hidden_count > 0 ) {
+			foreach ( $views as $id => $view ) {
+				$views[ $id ] = preg_replace_callback(
+					'/\((\d+)\)/',
+					function ( $matches ) use ( $hidden_count ) {
+						$count     = (int) $matches[1];
+						$new_count = max( 0, $count - $hidden_count );
+						return '(' . $new_count . ')';
+					},
+					$view
+				);
+			}
+		}
+
+		return $views;
 	}
 
 	public function vrodos_create_joker_projects(): void {
@@ -46,7 +73,7 @@ class VRodos_Game_CPT_Manager {
 		if ( ! VRodos_Core_Manager::vrodos_the_slug_exists( 'archaeology-joker' ) ) {
 
 			$tax_slug   = 'archaeology_games';
-			$post_title = 'Archaeology Joker';
+			$post_title = 'Shared Assets Repository';
 			$post_name  = 'archaeology-joker';
 
 			$this->create_post_project_joker( $tax_slug, $post_title, $post_name, $userID );
@@ -320,17 +347,13 @@ class VRodos_Game_CPT_Manager {
 			$project_type_slug = $project_type_terms[0]->slug;
 		}
 
-		// Get project type string name (e.g., "Archaeology")
+		// Get project type string name
 		$project_type_obj    = VRodos_Core_Manager::vrodos_return_project_type( $project_id );
 		$project_type_string = $project_type_obj ? $project_type_obj->string : null;
 		$project_type_icon   = $project_type_obj ? $project_type_obj->icon : null;
 
-		// Determine the 'singular' name for the project type for UI text (e.g., "tour" or "project")
-		if ( $project_type_string === 'Archaeology' ) {
-			$single_lowercase = 'tour';
-		} else {
-			$single_lowercase = 'project';
-		}
+		// Default singular name for the project type
+		$single_lowercase = 'project';
 
 		return ['project_id'        => $project_id, 'project_post'      => $project_post, 'projectSlug'       => $projectSlug, 'project_type'      => $project_type_string, 'project_type_slug' => $project_type_slug, 'project_type_icon' => $project_type_icon, 'single_lowercase'  => $single_lowercase];
 	}

@@ -81,6 +81,21 @@ class VRodos_Core_Manager {
 	public static function vrodos_plugin_main_page(): void {
 		$allProjectsPage = self::vrodos_getEditpage( 'allgames' );
 
+		$projects_total = (int) wp_count_posts( 'vrodos_game' )->publish;
+		
+		// Subtract hidden technical repositories (joker projects) from the count
+		$shared_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
+		$hidden_projects_count = 0;
+		foreach ( $shared_slugs as $slug ) {
+			if ( get_page_by_path( $slug, OBJECT, 'vrodos_game' ) ) {
+				$hidden_projects_count++;
+			}
+		}
+		
+		$projects_count = max( 0, $projects_total - $hidden_projects_count );
+		$scenes_count   = wp_count_posts( 'vrodos_scene' )->publish;
+		$assets_count   = wp_count_posts( 'vrodos_asset3d' )->publish;
+
 		if ( is_admin() ) {
 			if ( ! function_exists( 'get_plugin_data' ) ) {
 				require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -139,25 +154,6 @@ class VRodos_Core_Manager {
 
 				<!-- Stats Overview -->
 				<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-6 tw-mb-10">
-					<?php
-					// Get all projects and filter out jokers for the count
-					$all_projects = new WP_Query(['post_type' => 'vrodos_game', 'posts_per_page' => -1]);
-					$projects_count = 0;
-					if ($all_projects->have_posts()) {
-						foreach ($all_projects->posts as $p) {
-							if (!str_contains($p->post_name, 'joker')) {
-								$projects_count++;
-							}
-						}
-					}
-					
-					$scenes_query = new WP_Query(['post_type' => 'vrodos_scene', 'posts_per_page' => -1]);
-					$scenes_count = $scenes_query->found_posts;
-					
-					$assets_query = new WP_Query(['post_type' => 'vrodos_asset3d', 'posts_per_page' => -1]);
-					$assets_count = $assets_query->found_posts;
-					?>
-					
 					<div class="tw-stat tw-bg-white tw-rounded-2xl tw-shadow-sm tw-border tw-border-slate-100 tw-p-6" data-theme="emerald">
 						<div class="tw-stat-figure tw-text-primary">
 							<i data-lucide="folder-kanban" class="tw-w-8 tw-h-8"></i>
@@ -514,15 +510,15 @@ class VRodos_Core_Manager {
 			] );
 		}
 
-		// 2. Shared (joker) asset IDs via meta flag — more reliable than taxonomy lookup
-		$joker_ids = get_posts( [
+		// 2. Shared asset IDs via meta flag — more reliable than taxonomy lookup
+		$shared_ids = get_posts( [
 			'post_type'      => 'vrodos_asset3d',
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
 			'meta_query'     => [ [ 'key' => 'vrodos_asset3d_isJoker', 'value' => 'true', 'compare' => '=' ] ],
 		] );
 
-		$all_ids = array_unique( array_merge( $project_ids, $joker_ids ) );
+		$all_ids = array_unique( array_merge( $project_ids, $shared_ids ) );
 
 		if ( empty( $all_ids ) ) {
 			return $allAssets;
@@ -562,7 +558,7 @@ class VRodos_Core_Manager {
 					}
 				}
 
-				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_cloned'       => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ), 'is_joker'        => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true )];
+				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_cloned'       => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ), 'is_shared'        => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true )];
 
 				switch ( $asset_cat_arr[0]->slug ) {
 					case 'video':
@@ -628,12 +624,11 @@ class VRodos_Core_Manager {
 		};
 	}
 
-	/* Get all game projects of the user */
 	public static function vrodos_get_user_game_projects( $user_id, $isUserAdmin ): array {
 
-		$games_slugs = ['archaeology-joker'];
+		$games_slugs = ['shared-assets-repository'];
 
-		// user is not logged in return only joker game
+		// user is not logged in return only shared game repository project slug
 		if ( $user_id == 0 ) {
 			return $games_slugs;
 		}
@@ -759,7 +754,7 @@ class VRodos_Core_Manager {
 					'screenshot_id'          => $sshotID,
 					'screenshot_path'        => $sshotPath,
 					'is_cloned'              => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ),
-					'is_joker'               => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ),
+					'is_shared'              => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ),
 					'assettrs'               => $assettrs,
 					'asset_parent_game'      => ( get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ) === 'true' ) ? 'Public Assets' : ( ! empty( $asset_pgame ) ? $asset_pgame[0]->name : '' ),
 					'asset_parent_game_slug' => ! empty( $asset_pgame ) ? $asset_pgame[0]->slug : '',
@@ -804,21 +799,21 @@ class VRodos_Core_Manager {
 	}
 
 	/**
-	 * Get the Assets of a game plus its respective joker game assets
+	 * Get the Assets of a game plus its respective shared game assets
 	 *
 	 * @param $gameType
 	 */
-	public static function vrodos_get_assetids_joker( $gameType ): array {
+	public static function vrodos_get_assetids_shared( $gameType ): array {
 
 		$assetIds = [];
 
-		// find the joker game slug e.g. "Archaeology-joker"
-		$joker_game_slug = $gameType . '-joker';
+		// find the shared game slug e.g. "archaeology-joker" (preserved for compatibility)
+		$shared_game_slug = $gameType . '-joker';
 
-		// Slugs are low case "Archaeology-joker" -> "archaeology-joker"
-		$joker_game_slug = strtolower( $joker_game_slug );
+		// Slugs are low case 
+		$shared_game_slug = strtolower( $shared_game_slug );
 
-		$queryargs = ['post_type'      => 'vrodos_asset3d', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_asset3d_pgame', 'field'    => 'slug', 'terms'    => $joker_game_slug]]];
+		$queryargs = ['post_type'      => 'vrodos_asset3d', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_asset3d_pgame', 'field'    => 'slug', 'terms'    => $shared_game_slug]]];
 
 		$custom_query = new WP_Query( $queryargs );
 
