@@ -483,17 +483,18 @@ class VRodos_AssetViewer_3D_kernel {
 
         const sphere = this.computeSceneBoundingSphereAll(towhatObj);
         this.scene.add(sphere[2]);
+        const sphereCenter = sphere[0].clone();
+        const totalRadius = Math.max(sphere[1], 0.1);
 
         if (this.controls.enableZoom) {
-            const totalRadius = Math.max(sphere[1], 0.1);
-            this.controls.target.copy(sphere[0]);
+            this.controls.target.copy(sphereCenter);
             this.controls.minDistance = 0.01 * totalRadius;
             this.controls.maxDistance = 100 * totalRadius;
             this.controls.update();
         }
 
-        this.cameraTarget.copy(sphere[0]);
-        this.resetCamera();
+        this.cameraTarget.copy(sphereCenter);
+        this.frameCameraToSphere(sphereCenter, totalRadius);
     }
 
     resizeDisplayGL() {
@@ -511,6 +512,19 @@ class VRodos_AssetViewer_3D_kernel {
     resetCamera() {
         this.camera.position.copy(this.cameraDefaults.posCamera);
         this.cameraTarget.copy(this.controls.target || this.cameraDefaults.posCameraTarget);
+        this.updateCamera();
+    }
+
+    frameCameraToSphere(center, radius) {
+        const safeRadius = Math.max(radius, 0.1);
+        const fovRadians = THREE.MathUtils.degToRad(this.camera.fov);
+        const fitDistance = safeRadius / Math.sin(fovRadians / 2);
+        const cameraDirection = new THREE.Vector3(0.85, 0.55, 1).normalize();
+        const cameraPosition = center.clone().add(cameraDirection.multiplyScalar(fitDistance * 1.1));
+
+        this.camera.position.copy(cameraPosition);
+        this.camera.near = Math.max(safeRadius / 200, 0.01);
+        this.camera.far = Math.max(safeRadius * 200, 1000);
         this.updateCamera();
     }
 
