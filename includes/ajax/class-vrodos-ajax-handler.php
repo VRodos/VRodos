@@ -565,8 +565,8 @@ class VRodos_AJAX_Handler {
 				if ( $scene_thumb_url ) {
 					echo '<img src="' . esc_url( $scene_thumb_url ) . '" alt="" class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-500" />';
 				} else {
-					echo '<div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-base-content/20">';
-					echo '<i data-lucide="' . ( $is_expo ? 'globe' : 'clapperboard' ) . '" class="tw-w-8 tw-h-8"></i>';
+					echo '<div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-bg-gradient-to-br tw-from-slate-50 tw-to-slate-100 tw-text-slate-300">';
+					echo '<i data-lucide="' . ( $is_expo ? 'globe' : 'clapperboard' ) . '" class="tw-w-14 tw-h-14" stroke-width="1.5"></i>';
 					echo '</div>';
 				}
 				echo '</a>';

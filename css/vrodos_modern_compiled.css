@@ -4868,9 +4868,19 @@ input.tw-tab:checked + .tw-tab-content,
   background-image: linear-gradient(to top, var(--tw-gradient-stops));
 }
 
+.vrodos-manager-wrapper .tw-bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
 .vrodos-manager-wrapper .tw-from-slate-900\/80 {
   --tw-gradient-from: rgb(15 23 42 / 0.8) var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.vrodos-manager-wrapper .tw-from-slate-50 {
+  --tw-gradient-from: #f8fafc var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(248 250 252 / 0) var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
@@ -4881,6 +4891,10 @@ input.tw-tab:checked + .tw-tab-content,
 
 .vrodos-manager-wrapper .tw-to-transparent {
   --tw-gradient-to: transparent var(--tw-gradient-to-position);
+}
+
+.vrodos-manager-wrapper .tw-to-slate-100 {
+  --tw-gradient-to: #f1f5f9 var(--tw-gradient-to-position);
 }
 
 .vrodos-manager-wrapper .tw-object-contain {
