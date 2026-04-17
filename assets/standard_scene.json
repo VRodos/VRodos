@@ -6,6 +6,7 @@
     "ClearColor" : "#eeeeee",
     "toneMappingExposure" : "1",
     "enableEnvironmentTexture" : "false",
+    "backgroundStyleOption": 0,
     "objects": 9
   },
   "urlBaseType": "relativeToScene",
