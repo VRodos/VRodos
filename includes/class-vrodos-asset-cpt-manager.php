@@ -36,6 +36,12 @@ class VRodos_Asset_CPT_Manager {
       // Short , full, id, type, default, single, show_in_rest
       ['GLB File', 'GLB File', 'vrodos_asset3d_glb', 'string', '', true, true],
       ['Audio File', 'Audio File for the 3D model', 'vrodos_asset3d_audio', 'string', '', true, true],
+      ['Audio Playback Mode', 'Audio playback mode', 'vrodos_asset3d_audio_playback_mode', 'string', 'interact', true, true],
+      ['Audio Loop', 'Audio loop enabled', 'vrodos_asset3d_audio_loop', 'string', '0', true, true],
+      ['Audio Volume', 'Audio volume', 'vrodos_asset3d_audio_volume', 'string', '1', true, true],
+      ['Audio Ref Distance', 'Audio reference distance', 'vrodos_asset3d_audio_ref_distance', 'string', '2', true, true],
+      ['Audio Max Distance', 'Audio max distance', 'vrodos_asset3d_audio_max_distance', 'string', '20', true, true],
+      ['Audio Rolloff Factor', 'Audio rolloff factor', 'vrodos_asset3d_audio_rolloff_factor', 'string', '1', true, true],
       ['Diffusion Image', 'Diffusion Image', 'vrodos_asset3d_diffimage', 'string', '', false, true],
       ['Screenshot Image', 'Screenshot Image', 'vrodos_asset3d_screenimage', 'string', '', true, true],
       ['Next Scene (Only for Doors)', 'Next Scene', 'vrodos_asset3d_scene', 'string', '', true, true],
@@ -107,6 +113,43 @@ class VRodos_Asset_CPT_Manager {
 	private static function get_immerse_original_image_url( int $asset_id ): string {
 		$original_url = (string) get_post_meta( $asset_id, '_immerse_original_url', true );
 		return wp_http_validate_url( $original_url ) ? esc_url_raw( $original_url ) : '';
+	}
+
+	private static function get_audio_settings_defaults(): array {
+		return [
+			'playback_mode'  => 'interact',
+			'loop'           => false,
+			'volume'         => '1',
+			'ref_distance'   => '2',
+			'max_distance'   => '20',
+			'rolloff_factor' => '1',
+		];
+	}
+
+	private static function ensure_audio_asset_defaults( int $asset_id ): void {
+		if ( $asset_id <= 0 ) {
+			return;
+		}
+
+		update_post_meta( $asset_id, 'vrodos_asset3d_glb', VRodos_Core_Manager::get_builtin_audio_marker_url() );
+		update_post_meta( $asset_id, 'vrodos_asset3d_screenimage', VRodos_Core_Manager::get_builtin_audio_thumbnail_url() );
+
+		$defaults = self::get_audio_settings_defaults();
+		if ( get_post_meta( $asset_id, 'vrodos_asset3d_audio_playback_mode', true ) === '' ) {
+			update_post_meta( $asset_id, 'vrodos_asset3d_audio_playback_mode', $defaults['playback_mode'] );
+		}
+		if ( get_post_meta( $asset_id, 'vrodos_asset3d_audio_volume', true ) === '' ) {
+			update_post_meta( $asset_id, 'vrodos_asset3d_audio_volume', $defaults['volume'] );
+		}
+		if ( get_post_meta( $asset_id, 'vrodos_asset3d_audio_ref_distance', true ) === '' ) {
+			update_post_meta( $asset_id, 'vrodos_asset3d_audio_ref_distance', $defaults['ref_distance'] );
+		}
+		if ( get_post_meta( $asset_id, 'vrodos_asset3d_audio_max_distance', true ) === '' ) {
+			update_post_meta( $asset_id, 'vrodos_asset3d_audio_max_distance', $defaults['max_distance'] );
+		}
+		if ( get_post_meta( $asset_id, 'vrodos_asset3d_audio_rolloff_factor', true ) === '' ) {
+			update_post_meta( $asset_id, 'vrodos_asset3d_audio_rolloff_factor', $defaults['rolloff_factor'] );
+		}
 	}
 
 	public function handle_asset_frontend_submission(): void {
@@ -227,6 +270,21 @@ class VRodos_Asset_CPT_Manager {
 		// Save custom parameters according to asset type.
 		if ( $assetCatTerm ) {
 			switch ( $assetCatTerm->slug ) {
+			case 'audio':
+				VRodos_Upload_Manager::create_asset_add_audio_frontend( $asset_id );
+				self::ensure_audio_asset_defaults( (int) $asset_id );
+				$audio_defaults = self::get_audio_settings_defaults();
+				$audio_playback_mode = isset( $_POST['audio_playback_mode'] ) ? sanitize_key( (string) $_POST['audio_playback_mode'] ) : $audio_defaults['playback_mode'];
+				if ( ! in_array( $audio_playback_mode, [ 'autoplay', 'interact' ], true ) ) {
+					$audio_playback_mode = $audio_defaults['playback_mode'];
+				}
+				update_post_meta( $asset_id, 'vrodos_asset3d_audio_playback_mode', $audio_playback_mode );
+				update_post_meta( $asset_id, 'vrodos_asset3d_audio_loop', isset( $_POST['audio_loop_checkbox'] ) );
+				update_post_meta( $asset_id, 'vrodos_asset3d_audio_volume', self::sanitize_audio_float_setting( $_POST['audio_volume'] ?? $audio_defaults['volume'], 0.0, 1.0, (float) $audio_defaults['volume'] ) );
+				update_post_meta( $asset_id, 'vrodos_asset3d_audio_ref_distance', self::sanitize_audio_float_setting( $_POST['audio_ref_distance'] ?? $audio_defaults['ref_distance'], 0.1, 1000.0, (float) $audio_defaults['ref_distance'] ) );
+				update_post_meta( $asset_id, 'vrodos_asset3d_audio_max_distance', self::sanitize_audio_float_setting( $_POST['audio_max_distance'] ?? $audio_defaults['max_distance'], 0.1, 10000.0, (float) $audio_defaults['max_distance'] ) );
+				update_post_meta( $asset_id, 'vrodos_asset3d_audio_rolloff_factor', self::sanitize_audio_float_setting( $_POST['audio_rolloff_factor'] ?? $audio_defaults['rolloff_factor'], 0.0, 10.0, (float) $audio_defaults['rolloff_factor'] ) );
+				break;
 
 			case 'video':
 				if ( isset( $_FILES['videoFileInput'] ) ) {
@@ -284,8 +342,6 @@ class VRodos_Asset_CPT_Manager {
 		}
 
 		// Audio: To add
-		// VRodos_Upload_Manager::create_asset_add_audio_frontend($asset_id);
-
 		if ( ! isset( $_GET['vrodos_asset'] ) ) {
 			$redirect_url = add_query_arg( 'vrodos_asset', $asset_id, $redirect_url );
 		}
@@ -795,6 +851,13 @@ class VRodos_Asset_CPT_Manager {
 		update_post_meta( $asset_id, 'vrodos_asset3d_assettrs', $asset_trs );
 	}
 
+	private static function sanitize_audio_float_setting( $value, float $min, float $max, float $default ): string {
+		$float_value = is_numeric( $value ) ? (float) $value : $default;
+		$float_value = max( $min, min( $max, $float_value ) );
+
+		return rtrim( rtrim( number_format( $float_value, 3, '.', '' ), '0' ), '.' );
+	}
+
 	public static function prepare_asset_editor_template_data(): array {
 		$data = [];
 
@@ -874,6 +937,11 @@ class VRodos_Asset_CPT_Manager {
 		$data['audio_icon_url']  = plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'images/audio.png';
 
 		if ( $data['asset_id'] != null ) {
+			$saved_category_terms = wp_get_post_terms( $data['asset_id'], 'vrodos_asset3d_cat' );
+			if ( ! is_wp_error( $saved_category_terms ) && ! empty( $saved_category_terms ) && ( $saved_category_terms[0]->slug ?? '' ) === 'audio' ) {
+				self::ensure_audio_asset_defaults( (int) $data['asset_id'] );
+			}
+
 			$assetpostMeta                     = get_post_meta( $data['asset_id'] );
 			$data['back_3d_color']             = isset( $assetpostMeta['vrodos_asset3d_back3dcolor'] ) ? $assetpostMeta['vrodos_asset3d_back3dcolor'][0] : '#ffffff';
 			$asset_3d_files                    = VRodos_Core_Manager::get_3D_model_files( $assetpostMeta, $data['asset_id'] );
@@ -958,6 +1026,18 @@ class VRodos_Asset_CPT_Manager {
 		$data['video_title']           = get_post_meta( $asset_id, 'vrodos_asset3d_video_title', true );
 		$data['video_autoloop']        = get_post_meta( $asset_id, 'vrodos_asset3d_video_autoloop', true ) ? 'checked' : '';
 
+		// Audio
+		$audio_defaults                = self::get_audio_settings_defaults();
+		$audioID                       = get_post_meta( $asset_id, 'vrodos_asset3d_audio', true );
+		$data['audio_attachment_file'] = self::resolve_media_meta_url( $audioID );
+		$data['audio_playback_mode']   = get_post_meta( $asset_id, 'vrodos_asset3d_audio_playback_mode', true ) ?: $audio_defaults['playback_mode'];
+		$data['audio_loop']            = get_post_meta( $asset_id, 'vrodos_asset3d_audio_loop', true ) ? 'checked' : '';
+		$data['audio_volume']          = get_post_meta( $asset_id, 'vrodos_asset3d_audio_volume', true ) ?: $audio_defaults['volume'];
+		$data['audio_ref_distance']    = get_post_meta( $asset_id, 'vrodos_asset3d_audio_ref_distance', true ) ?: $audio_defaults['ref_distance'];
+		$data['audio_max_distance']    = get_post_meta( $asset_id, 'vrodos_asset3d_audio_max_distance', true ) ?: $audio_defaults['max_distance'];
+		$data['audio_rolloff_factor']  = get_post_meta( $asset_id, 'vrodos_asset3d_audio_rolloff_factor', true ) ?: $audio_defaults['rolloff_factor'];
+		$data['audio_distance_model']  = 'inverse';
+
 		// Screenshot
 		$data['scrnImageURL'] = '';
 		$data['hasScreenshot'] = false;
@@ -1016,16 +1096,6 @@ class VRodos_Asset_CPT_Manager {
 		// POI Link
 		$data['asset_link'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
 
-		// Audio
-		$audioID                       = get_post_meta( $asset_id, 'vrodos_asset3d_audio', true );
-		$attachment_post               = get_post( $audioID );
-		$data['audio_attachment_file'] = $audioID ? wp_get_attachment_url( $audioID ) : null;
-
-		if ( $data['audio_attachment_file'] ) {
-			$data['audio_file_type'] = ( str_contains( (string) $data['audio_attachment_file'], 'mp3' ) ) ? 'mp3' : 'wav';
-		} else {
-			$data['audio_file_type'] = null;
-		}
 	}
 
 	private static function build_frontend_redirect_url(): string {

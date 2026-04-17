@@ -120,7 +120,7 @@ class VRodos_AJAX_Handler {
 		wp_reset_postdata();
 		$asset_id       = $_POST['asset_id'];
 		$glbID          = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
-		$glbURL         = wp_get_attachment_url( $glbID );
+		$glbURL         = VRodos_Core_Manager::resolve_media_meta_url( $glbID );
 
 		$compiler = new VRodos_Compiler_Manager();
 		$glbURL = $compiler->normalize_url( $glbURL );
@@ -449,9 +449,18 @@ class VRodos_AJAX_Handler {
 
 		$sceneIdList = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( $parent_id );
 
-		$compiler   = new VRodos_Compiler_Manager();
-		$scene_json = $compiler->compile_aframe( $projectId, $sceneIdList, $showPawnPositions );
-		echo $scene_json;
+		$compiler      = new VRodos_Compiler_Manager();
+		$scene_json    = $compiler->compile_aframe( $projectId, $sceneIdList, $showPawnPositions );
+		$scene_payload = json_decode( (string) $scene_json, true );
+
+		if ( is_array( $scene_payload ) ) {
+			$scene_payload['CurrentSceneMasterClient'] = $compiler->nodeJSpath() . 'Master_Client_' . (int) $sceneId . '.html';
+			$scene_payload['CurrentSceneSimpleClient'] = $compiler->nodeJSpath() . 'Simple_Client_' . (int) $sceneId . '.html';
+			echo wp_json_encode( $scene_payload );
+		} else {
+			echo $scene_json;
+		}
+
 		wp_die();
 	}
 

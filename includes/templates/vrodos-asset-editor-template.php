@@ -43,6 +43,11 @@ extract($data);
         #video_section,
         #video_options_section,
         #video_screenshot_section { display: block !important; }
+        <?php elseif ( $initial_cat_slug === 'audio' ) : ?>
+        #glb_file_section,
+        #screenshot_section { display: none !important; }
+        #audio_section,
+        #audio_options_section { display: block !important; }
         <?php elseif ( $initial_cat_slug === 'poi-imagetext' ) : ?>
         #poi_image_text_section,
         #poi_image_file_section { display: block !important; }
@@ -319,6 +324,7 @@ else { ?>
                             'decoration'    => 'leaf',
                             'walkable-surface' => 'footprints',
                             'door'          => 'door-open',
+                            'audio'         => 'volume-2',
                             'video'         => 'clapperboard',
                             'poi-imagetext' => 'image',
                             'image'         => 'image-play',
@@ -512,6 +518,42 @@ else { ?>
                                 </label>
                             </div>
                         </div>
+
+                        <!-- Audio Source Section -->
+                        <div id="audio_section" class="tw-space-y-6" style="display: none;">
+                            <label class="vrodos-label">
+                                Audio Source
+                            </label>
+
+                            <div class="tw-rounded-2xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-5 tw-space-y-4">
+                                <div class="tw-flex tw-items-center tw-gap-3">
+                                    <div class="tw-flex tw-h-12 tw-w-12 tw-items-center tw-justify-center tw-rounded-2xl tw-bg-white tw-shadow-sm">
+                                        <i data-lucide="volume-2" class="tw-h-5 tw-w-5 tw-text-primary"></i>
+                                    </div>
+                                    <div class="tw-min-w-0">
+                                        <div class="tw-text-sm tw-font-black tw-text-slate-800">Bundled positional audio marker</div>
+                                        <div class="tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-widest tw-text-slate-400">Marker GLB is fixed in v1</div>
+                                    </div>
+                                </div>
+
+                                <audio id="audioFile" class="tw-w-full" controls preload="metadata">
+                                    <source src="<?php echo esc_url($audio_attachment_file ?? ''); ?>">
+                                </audio>
+
+                                <div class="tw-w-full tw-bg-white tw-border tw-border-dashed tw-border-slate-200 tw-rounded-2xl tw-p-3 tw-text-center hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-group">
+                                    <input class="tw-hidden" type="file" name="audioFileInput" id="audioFileInput" accept=".mp3,.m4a,.wav,.ogg,audio/mpeg,audio/mp4,audio/wav,audio/ogg"/>
+                                    <label for="audioFileInput" class="tw-cursor-pointer tw-flex tw-flex-col tw-items-center tw-gap-2">
+                                        <div class="tw-w-7 tw-h-7 tw-bg-white tw-shadow-sm tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-group-hover:tw-scale-110 tw-transition-transform">
+                                            <i data-lucide="upload-cloud" class="tw-w-3.5 tw-h-3.5 tw-text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <p id="audioUploadInputLabel" class="tw-text-xs tw-font-bold tw-text-slate-800"><?php echo !empty($audio_attachment_file) ? 'Replace Audio' : 'Choose Audio'; ?></p>
+                                            <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold tw-uppercase">MP3, M4A, WAV, OGG</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Right Column: Dynamic Category Settings -->
@@ -621,6 +663,58 @@ else { ?>
                                         <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Autoplay & Loop</span>
                                         <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Start instantly and repeat</span>
                                     </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Audio Playback Options -->
+                        <div id="audio_options_section" class="tw-space-y-6" style="display: none;">
+                            <label class="vrodos-label">
+                                Audio Playback
+                            </label>
+                            <div class="tw-space-y-4">
+                                <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+                                    <div>
+                                        <label for="audio_playback_mode" class="vrodos-label">Playback Mode</label>
+                                        <select id="audio_playback_mode" name="audio_playback_mode" class="tw-select tw-select-bordered tw-w-full">
+                                            <option value="interact" <?php selected(($audio_playback_mode ?? 'interact'), 'interact'); ?>>Interact</option>
+                                            <option value="autoplay" <?php selected(($audio_playback_mode ?? 'interact'), 'autoplay'); ?>>Autoplay</option>
+                                        </select>
+                                    </div>
+                                    <div class="tw-flex tw-items-end">
+                                        <div class="tw-flex tw-items-center tw-gap-4 tw-p-5 tw-bg-slate-50 tw-rounded-2xl tw-border tw-border-slate-100 tw-w-full">
+                                            <input type="checkbox" id="audio_loop_checkbox" name="audio_loop_checkbox"
+                                                   class="tw-checkbox tw-checkbox-primary tw-rounded-lg" <?php echo $audio_loop ?? ''; ?>/>
+                                            <label for="audio_loop_checkbox" class="tw-cursor-pointer">
+                                                <span class="tw-block tw-text-sm tw-font-black tw-text-slate-800">Loop</span>
+                                                <span class="tw-block tw-text-[10px] tw-text-slate-400 tw-font-bold tw-uppercase tw-mt-0.5">Repeat playback</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+                                    <div>
+                                        <label for="audio_volume" class="vrodos-label">Volume</label>
+                                        <input id="audio_volume" type="number" min="0" max="1" step="0.1" class="vrodos-input" name="audio_volume" value="<?php echo esc_attr($audio_volume ?? '1'); ?>">
+                                    </div>
+                                    <div>
+                                        <label for="audio_ref_distance" class="vrodos-label">Reference Distance</label>
+                                        <input id="audio_ref_distance" type="number" min="0.1" step="0.1" class="vrodos-input" name="audio_ref_distance" value="<?php echo esc_attr($audio_ref_distance ?? '2'); ?>">
+                                    </div>
+                                    <div>
+                                        <label for="audio_max_distance" class="vrodos-label">Max Distance</label>
+                                        <input id="audio_max_distance" type="number" min="0.1" step="0.1" class="vrodos-input" name="audio_max_distance" value="<?php echo esc_attr($audio_max_distance ?? '20'); ?>">
+                                    </div>
+                                    <div>
+                                        <label for="audio_rolloff_factor" class="vrodos-label">Rolloff Factor</label>
+                                        <input id="audio_rolloff_factor" type="number" min="0" step="0.1" class="vrodos-input" name="audio_rolloff_factor" value="<?php echo esc_attr($audio_rolloff_factor ?? '1'); ?>">
+                                    </div>
+                                </div>
+
+                                <div class="tw-rounded-2xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+                                    <div class="tw-text-[10px] tw-font-black tw-uppercase tw-tracking-widest tw-text-slate-500">Runtime defaults</div>
+                                    <div class="tw-mt-2 tw-text-xs tw-font-medium tw-text-slate-700">Audio is positional in v1 and uses the <code>inverse</code> distance model.</div>
                                 </div>
                             </div>
                         </div>
@@ -735,15 +829,6 @@ else { ?>
                     </div>
                 </div>
             </div>
-
-    <!-- Audio Hidden Panel -->
-    <div id="audioDetailsPanel" class="tw-hidden">
-        <input class="FullWidth" type="file" name="audioFileInput" value="" id="audioFileInput" accept="audio/mp3,audio/wav"/>
-        <audio id='audioFile' controls loop preload="auto">
-            <source src="<?php echo esc_url($audio_attachment_file ?? ''); ?>" type="audio/<?php echo esc_attr($audio_file_type); ?>">
-        </audio>
-    </div>
-
 
 	<script type="text/javascript">
 		'use strict';
@@ -917,12 +1002,15 @@ else { ?>
 					document.getElementById('ipr_section').style.display = "none";
 					document.getElementById('poi_help_section').style.display = "none";
 					document.getElementById('poi_link_section').style.display = "none";
+					document.getElementById('audio_section').style.display = "none";
+					document.getElementById('audio_options_section').style.display = "none";
 					document.getElementById('video_section').style.display = "none";
 					document.getElementById('video_options_section').style.display = "none";
 					document.getElementById('video_screenshot_section').style.display = "none";
 					document.getElementById('poi_image_text_section').style.display = "none";
 					document.getElementById('poi_image_file_section').style.display = "none";
-				document.getElementById('image_flat_file_section').style.display = "none";
+					document.getElementById('image_flat_file_section').style.display = "none";
+					document.getElementById('image_preview_card').style.display = "none";
 				};
 
 				let loadLayout = (slug) => {
@@ -935,13 +1023,19 @@ else { ?>
 							document.getElementById('poi_image_text_section').style.display = "block";
 							document.getElementById('poi_image_file_section').style.display = "block";
 							break;
-					case "image":
+						case "image":
 							document.getElementById('glb_file_section').style.display = "none";
 							document.getElementById('vrodos_3d_preview_card').style.display = "none";
 							document.getElementById('image_preview_card').style.display = "flex";
 							document.getElementById('vrodos_editor_tip_card').style.display = "none";
 							document.getElementById('screenshot_section').style.display = "none";
 							document.getElementById('image_flat_file_section').style.display = "block";
+							break;
+						case "audio":
+							document.getElementById('glb_file_section').style.display = "none";
+							document.getElementById('screenshot_section').style.display = "none";
+							document.getElementById('audio_section').style.display = "block";
+							document.getElementById('audio_options_section').style.display = "block";
 							break;
 						case "poi-link":
 							document.getElementById('poi_link_section').style.display = "block";
@@ -979,6 +1073,24 @@ else { ?>
 					}
 
 					videoInputTag.addEventListener('change', readVideo);
+
+					const audioInputTag = document.getElementById('audioFileInput');
+					if (audioInputTag) {
+						audioInputTag.addEventListener('change', function (evt) {
+							const files = evt.target.files;
+							const label = document.getElementById('audioUploadInputLabel');
+							if (files && files.length && label) {
+								label.textContent = files[0].name;
+							}
+							if (files && files.length) {
+								const audioEl = document.getElementById('audioFile');
+								if (audioEl) {
+									audioEl.src = URL.createObjectURL(files[0]);
+									audioEl.load();
+								}
+							}
+						});
+					}
 				});
 
 				function updateSelectComponent() {

@@ -55,9 +55,10 @@ function vrodos_compileAjax(showPawnPositions) {
 	.then( function (urlExperienceSequenceJSON) {
 
 		let urlExperienceSequence = JSON.parse( urlExperienceSequenceJSON );
-		let primaryExperienceUrl = projectType === 'vrexpo_games'
-			? (urlExperienceSequence["MasterClient"] || urlExperienceSequence["index"] || urlExperienceSequence["SimpleClient"] || '')
-			: (urlExperienceSequence["index"] || urlExperienceSequence["MasterClient"] || urlExperienceSequence["SimpleClient"] || '');
+		let primaryExperienceUrl = urlExperienceSequence["CurrentSceneMasterClient"]
+			|| (projectType === 'vrexpo_games'
+				? (urlExperienceSequence["MasterClient"] || urlExperienceSequence["index"] || urlExperienceSequence["SimpleClient"] || '')
+				: (urlExperienceSequence["MasterClient"] || urlExperienceSequence["index"] || urlExperienceSequence["SimpleClient"] || ''));
 
 		document.getElementById( "compileProgressTitle" ).style.display = 'none';
 		document.getElementById( "progressSliderSubLineDeterminateValue" ).style.width = '1px';
@@ -92,11 +93,14 @@ function vrodos_compileAjax(showPawnPositions) {
 		}
 
 		if (projectType === 'vrexpo_games') {
-			createLinks( urlExperienceSequence["MasterClient"], "Exposition link" );
+			createLinks( urlExperienceSequence["CurrentSceneMasterClient"] || urlExperienceSequence["MasterClient"], "Scene link" );
+			if (urlExperienceSequence["MasterClient"] && urlExperienceSequence["MasterClient"] !== urlExperienceSequence["CurrentSceneMasterClient"]) {
+				createLinks( urlExperienceSequence["MasterClient"], "Base scene link" );
+			}
 		} else {
 			createLinks( urlExperienceSequence["index"], "Index" );
-			createLinks( urlExperienceSequence["MasterClient"], "Director" );
-			createLinks( urlExperienceSequence["SimpleClient"],"Actor" );
+			createLinks( urlExperienceSequence["CurrentSceneMasterClient"] || urlExperienceSequence["MasterClient"], "Director (current scene)" );
+			createLinks( urlExperienceSequence["CurrentSceneSimpleClient"] || urlExperienceSequence["SimpleClient"],"Actor (current scene)" );
 		}
 
 		if (primaryExperienceUrl) {

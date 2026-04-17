@@ -16,6 +16,7 @@ var VRODOS_CATEGORY_ICONS = {
     'decoration':      'leaf',
     'walkable-surface':'footprints',
     'door':            'door-open',
+    'audio':           'volume-2',
     'video':           'clapperboard',
     'poi-imagetext':   'image',
     'image':           'image-play',

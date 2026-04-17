@@ -24,22 +24,15 @@ AFRAME.registerComponent('video-controls', {
     },
     init: function () {
 
-        this.video_id = "#video_" + this.data.id;
-        this.video = document.querySelector(this.video_id);
-
-        if (this.video) {
-            // Ensure the video loads data immediately so it isn't "empty" for WebGL
-            this.video.preload = "auto";
-
-            // Fix Cross-origin warnings
-            if (!this.video.getAttribute('crossorigin')) {
-                this.video.setAttribute('crossorigin', 'anonymous');
-            }
-        }
+        this.videoElementId = "video_" + this.data.id;
+        this.video_id = "#" + this.videoElementId;
+        this.videoPrimed = false;
+        this.videoSourceUrl = "";
 
         this.video_display_id = "#video-display_" + this.data.id;
         this.vid_panel_id = "#vid-panel_" + this.data.id;
         this.videoDisplay = document.querySelector(this.video_display_id);
+        this.playHintEl = document.querySelector("#video-playhint_" + this.data.id);
         this.videoPanel = document.querySelector(this.vid_panel_id);
         this.fsEl = document.querySelector("#ent_fs_" + this.data.id);
         this.plEl = document.querySelector("#ent_pl_" + this.data.id);
@@ -61,14 +54,20 @@ AFRAME.registerComponent('video-controls', {
         this.restoreVid = this.restoreVid.bind(this);
         this.removeVRTraces = this.removeVRTraces.bind(this);
         this.visCollection = [];
+        this.videoSourceUrl = this.videoDisplay ? (this.videoDisplay.getAttribute("data-vrodos-video-src") || "") : "";
+        this.videoLoop = this.videoDisplay ? this.videoDisplay.getAttribute("data-vrodos-video-loop") === "true" : false;
+        this.videoPosterSelector = this.videoDisplay ? (this.videoDisplay.getAttribute("data-vrodos-video-poster") || "") : "";
+        this.videoPosterUrl = this.resolvePosterUrl();
+        this.video = this.ensureVideoElement();
+        this.dialogVideo = document.getElementById("video-panel-video");
 
         this.panelElems = [this.videoPanel, this.fsEl, this.plEl, this.exEl, this.exFrameEl];
         document.querySelector('a-scene').addEventListener('exit-vr', this.removeVRTraces);
 
-        let video = document.getElementById("video-panel-video");
-        video.addEventListener('play', playing_no_vr);
-
-        video.addEventListener('pause', pausing_no_vr);
+        if (this.dialogVideo) {
+            this.dialogVideo.addEventListener('play', playing_no_vr);
+            this.dialogVideo.addEventListener('pause', pausing_no_vr);
+        }
 
         function playing_no_vr(e) {
             if (typeof window.gtag === 'function') {
@@ -83,6 +82,7 @@ AFRAME.registerComponent('video-controls', {
         }
 
         if(this.video.getAttribute("autoplay-manual") == "true"){
+            this.primeVideoForPlayback();
             // Try to play, but catch error if browser blocks it (no user interaction yet)
             var playPromise = this.video.play();
             if (playPromise !== undefined) {
@@ -126,14 +126,217 @@ AFRAME.registerComponent('video-controls', {
         this.video.addEventListener("ended", (e) => {
             this.playUpd(this.plEl);
         });
+        this.video.addEventListener("play", () => {
+            this.updateInlinePlayHint();
+        });
+        this.video.addEventListener("pause", () => {
+            this.updateInlinePlayHint();
+        });
         
-        if (this.video.getAttribute("src")){
+        if (this.videoSourceUrl){
             this.onVideoClick = this.onVideoClick.bind(this);
             this.exitPanel = this.exitPanel.bind(this);
             this.playVideo = this.playVideo.bind(this);
             this.onFullScreenClick = this.onFullScreenClick.bind(this);
             this.videoDisplay.addEventListener('click', this.onVideoClick);
         }
+
+        this.updateInlinePlayHint();
+    },
+
+    ensureVideoElement: function () {
+        var existingVideo = document.getElementById(this.videoElementId);
+        if (existingVideo) {
+            this.prepareVideoElement(existingVideo);
+            return existingVideo;
+        }
+
+        var videoEl = document.createElement("video");
+        videoEl.id = this.videoElementId;
+        videoEl.setAttribute("crossorigin", "anonymous");
+        videoEl.setAttribute("playsinline", "");
+        videoEl.setAttribute("webkit-playsinline", "");
+        videoEl.style.display = "none";
+        document.body.appendChild(videoEl);
+        this.prepareVideoElement(videoEl);
+        return videoEl;
+    },
+
+    resolvePosterUrl: function () {
+        if (!this.videoPosterSelector || this.videoPosterSelector.charAt(0) !== "#") {
+            return "";
+        }
+
+        var posterAsset = document.querySelector(this.videoPosterSelector);
+        if (!posterAsset) {
+            return "";
+        }
+
+        return posterAsset.getAttribute("src") || "";
+    },
+
+    prepareVideoElement: function (videoEl) {
+        if (!videoEl) {
+            return;
+        }
+
+        videoEl.loop = this.videoLoop;
+        videoEl.preload = videoEl.getAttribute("autoplay-manual") == "true" ? "auto" : "none";
+    },
+
+    configureDialogVideoElement: function (videoEl) {
+        if (!videoEl) {
+            return;
+        }
+
+        videoEl.preload = this.videoPrimed ? "auto" : "metadata";
+        videoEl.loop = this.videoLoop;
+
+        if (this.videoPosterUrl) {
+            videoEl.setAttribute("poster", this.videoPosterUrl);
+        } else {
+            videoEl.removeAttribute("poster");
+        }
+    },
+
+    updateInlinePlayHint: function () {
+        if (!this.playHintEl) {
+            return;
+        }
+
+        var shouldShow = !this.videoPrimed || !this.video || this.video.paused;
+        this.playHintEl.setAttribute("visible", shouldShow ? "true" : "false");
+    },
+
+    tuneVideoTexture: function () {
+        if (!this.videoDisplay || !this.videoDisplay.getObject3D || typeof THREE === "undefined") {
+            return;
+        }
+
+        var mesh = this.videoDisplay.getObject3D("mesh");
+        if (!mesh || !mesh.material) {
+            return;
+        }
+
+        var material = mesh.material;
+        var map = material.map;
+        if (!map) {
+            return;
+        }
+
+        if (typeof THREE.LinearFilter !== "undefined") {
+            map.minFilter = THREE.LinearFilter;
+            map.magFilter = THREE.LinearFilter;
+        }
+
+        map.generateMipmaps = false;
+        map.needsUpdate = true;
+        material.needsUpdate = true;
+    },
+
+    bindInlineVideoTexture: function () {
+        if (!this.videoDisplay || !this.video) {
+            return;
+        }
+
+        this.videoDisplay.setAttribute("src", this.video_id);
+        this.videoDisplay.setAttribute("material", "shader: flat; side: double; npot: true");
+
+        requestAnimationFrame(() => {
+            this.tuneVideoTexture();
+        });
+    },
+
+    activateInlineVideoTexture: function () {
+        if (!this.videoDisplay || !this.video) {
+            return;
+        }
+
+        if (this.video.readyState >= 3 && this.video.videoWidth > 0 && this.video.videoHeight > 0) {
+            if (typeof this.video.requestVideoFrameCallback === "function") {
+                this.video.requestVideoFrameCallback(() => {
+                    this.bindInlineVideoTexture();
+                });
+            } else {
+                this.bindInlineVideoTexture();
+            }
+            return;
+        }
+
+        if (this.boundActivateInlineVideoTexture) {
+            this.video.removeEventListener("loadeddata", this.boundActivateInlineVideoTexture);
+            this.video.removeEventListener("canplay", this.boundActivateInlineVideoTexture);
+        }
+
+        this.boundActivateInlineVideoTexture = () => {
+            if (!this.videoDisplay || !this.video) {
+                return;
+            }
+
+            if (this.video.readyState < 3 || this.video.videoWidth <= 0 || this.video.videoHeight <= 0) {
+                return;
+            }
+
+            if (typeof this.video.requestVideoFrameCallback === "function") {
+                this.video.requestVideoFrameCallback(() => {
+                    this.bindInlineVideoTexture();
+                });
+            } else {
+                this.bindInlineVideoTexture();
+            }
+        };
+
+        this.video.addEventListener("loadeddata", this.boundActivateInlineVideoTexture, { once: true });
+        this.video.addEventListener("canplay", this.boundActivateInlineVideoTexture, { once: true });
+    },
+
+    primeVideoForPlayback: function () {
+        if (!this.video || this.videoPrimed) {
+            this.activateInlineVideoTexture();
+            return;
+        }
+
+        this.videoPrimed = true;
+        this.video.preload = "auto";
+        this.configureDialogVideoElement(this.dialogVideo);
+
+        if (!this.video.getAttribute("src") && this.videoSourceUrl) {
+            this.video.setAttribute("src", this.videoSourceUrl);
+        }
+
+        this.activateInlineVideoTexture();
+
+        if (typeof this.video.load === "function") {
+            this.video.load();
+        }
+
+        this.updateInlinePlayHint();
+    },
+
+    prepareDialogPlayback: function () {
+        var videoElement = this.dialogVideo || document.getElementById("video-panel-video");
+        if (!videoElement) {
+            return null;
+        }
+
+        this.dialogVideo = videoElement;
+        this.configureDialogVideoElement(videoElement);
+
+        var desiredUrl = this.video.currentSrc || this.video.getAttribute("src") || this.videoSourceUrl;
+        if (!desiredUrl) {
+            return videoElement;
+        }
+
+        var currentUrl = videoElement.currentSrc || videoElement.getAttribute("src") || "";
+        if (currentUrl !== desiredUrl) {
+            videoElement.pause();
+            videoElement.setAttribute("src", desiredUrl);
+            if (typeof videoElement.load === "function") {
+                videoElement.load();
+            }
+        }
+
+        return videoElement;
     },
 
     removeVRTraces: function(evt){
@@ -187,9 +390,11 @@ AFRAME.registerComponent('video-controls', {
         obj.setAttribute("material", "depthTest: false");
         obj.setAttribute("material", "transparent: true");
         obj.setAttribute("material", "opacity: 1");
+        this.updateInlinePlayHint();
     },
 
     playVideo: function(event) {
+        this.primeVideoForPlayback();
         if (this.video.paused) {
             this.video.play();
             if (typeof window.gtag === 'function') {
@@ -333,7 +538,6 @@ AFRAME.registerComponent('video-controls', {
     },
    
     onVideoClick:  function (evt) {
-        
         this.panel_pos_dynamic =  (this.visibleWidthAtZDepth(this.panel_z)/2-1) + " " + "-0.3" + " " + this.panel_z; //From rightmost position  subtract panel width (0.2) and padding
         // this.el.object3D.position.z = -2.5;
         this.restorePanel = this.restorePanel.bind(this);
@@ -343,16 +547,10 @@ AFRAME.registerComponent('video-controls', {
         }
         
         if (!browsingModeVR) {
-            let video_element = document.getElementById("video-panel-video");
-            video_element.innerHTML = '';
-            let video_source = document.createElement('source');
-            let video_file_url = this.video.getAttribute("src");
-
-            video_source.setAttribute('src', video_file_url );
-
-            let extension_pos = video_file_url.lastIndexOf('.');
-            video_source.setAttribute('type', 'video/'+ video_file_url.substring(extension_pos + 1));
-            video_element.appendChild(video_source);
+            let video_element = this.prepareDialogPlayback();
+            if (!video_element) {
+                return;
+            }
 
             let videoDialog = document.querySelector('#video-controls-dialog');
             let videoTitleEl = document.querySelector('#video-controls-dialog-title');
@@ -388,6 +586,7 @@ AFRAME.registerComponent('video-controls', {
                 }
             }
         } else {
+            this.primeVideoForPlayback();
             this.restorePanel();
             if(this.is_fs){
                 this.restoreVid();
@@ -409,6 +608,7 @@ AFRAME.registerComponent('video-controls', {
     },
     
     onFullScreenClick:  function (evt) {
+        this.primeVideoForPlayback();
 
         if (typeof window.gtag === 'function') {
             window.gtag('event', 'poivideo_video_fullscreen_vr');

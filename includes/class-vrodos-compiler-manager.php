@@ -822,12 +822,52 @@ class VRodos_Compiler_Manager {
 	 * Modularized Object Renderer
 	 */
 	private function render_scene_objects( $dom, $ascene, $assets, $objects, $project_id, $scene_id, $config = [] ) {
-		foreach ( $objects as $obj ) {
+		foreach ( $objects as $object_key => $obj ) {
+			if ( is_object( $obj ) ) {
+				if ( empty( $obj->uuid ) ) {
+					$obj->uuid = $this->build_runtime_object_id( $obj, (string) $object_key );
+				}
+				if ( empty( $obj->name ) ) {
+					$obj->name = (string) $object_key;
+				}
+			}
+
 			$this->render_scene_object( $dom, $ascene, $assets, $obj, array_merge( $config, [
 				'project_id' => $project_id,
 				'scene_id'   => $scene_id
 			] ) );
 		}
+	}
+
+	private function build_runtime_object_id( $obj, string $object_key = '' ): string {
+		$parts = [];
+
+		if ( $object_key !== '' ) {
+			$parts[] = sanitize_title( $object_key );
+		}
+
+		if ( ! empty( $obj->asset_slug ) ) {
+			$parts[] = sanitize_title( (string) $obj->asset_slug );
+		}
+
+		if ( ! empty( $obj->asset_id ) ) {
+			$parts[] = 'asset_' . absint( $obj->asset_id );
+		}
+
+		if ( ! empty( $obj->immerse_attachment_id ) ) {
+			$parts[] = 'immerse_' . sanitize_title( (string) $obj->immerse_attachment_id );
+		}
+
+		if ( ! empty( $obj->category_slug ) ) {
+			$parts[] = sanitize_title( (string) $obj->category_slug );
+		}
+
+		$parts = array_values( array_filter( array_unique( $parts ) ) );
+		if ( empty( $parts ) ) {
+			return 'object_' . wp_generate_password( 8, false, false );
+		}
+
+		return implode( '_', $parts );
 	}
 
 	private function render_scene_object( $dom, $ascene, $assets, $obj, $config = [] ) {
@@ -846,6 +886,9 @@ class VRodos_Compiler_Manager {
 			case 'poi-link':
 			case 'chat':
 				$this->render_gltf_entity( $dom, $ascene, $assets, $obj );
+				break;
+			case 'audio':
+				$this->render_audio_entity( $dom, $ascene, $assets, $obj );
 				break;
 			case 'image':
 			case 'video':
@@ -992,6 +1035,86 @@ class VRodos_Compiler_Manager {
 		$ascene->appendChild( $entity );
 	}
 
+	private function render_audio_entity( $dom, $ascene, $assets, $obj ) {
+		$uuid       = $obj->uuid ?? '';
+		$audio_path = $this->normalize_url( (string) ( $obj->audio_path ?? '' ) );
+		$glb_path   = $this->normalize_url( (string) ( $obj->glb_path ?? '' ) );
+
+		if ( $uuid === '' || $audio_path === '' || $glb_path === '' ) {
+			return;
+		}
+
+		$asset_item = $dom->createElement( 'a-asset-item' );
+		$asset_item->setAttribute( 'id', $uuid );
+		$asset_item->setAttribute( 'src', $glb_path );
+		$asset_item->setAttribute( 'response-type', 'arraybuffer' );
+		$asset_item->setAttribute( 'crossorigin', 'anonymous' );
+		$assets->appendChild( $asset_item );
+
+		$audio_asset_id = 'audio_src_' . $uuid;
+		$audio_asset = $dom->createElement( 'audio' );
+		$audio_asset->setAttribute( 'id', $audio_asset_id );
+		$audio_asset->setAttribute( 'src', $audio_path );
+		$audio_asset->setAttribute( 'preload', 'auto' );
+		$audio_asset->setAttribute( 'crossorigin', 'anonymous' );
+		$assets->appendChild( $audio_asset );
+
+		$entity = $dom->createElement( 'a-entity' );
+		$entity->setAttribute( 'id', 'audio_entity_' . $uuid );
+		$entity->setAttribute( 'gltf-model', '#' . $uuid );
+		$entity->setAttribute( 'clear-frustum-culling', '' );
+		$entity->setAttribute( 'shadow', 'cast: true; receive: true' );
+		$entity->setAttribute( 'class', 'override-materials hideable' . ( ( $obj->audio_playback_mode ?? 'interact' ) === 'interact' ? ' raycastable' : '' ) );
+		$entity->setAttribute( 'material', '' );
+		$entity->setAttribute( 'original-scale', implode( ' ', [
+			(float) ( $obj->scale[0] ?? 1 ),
+			(float) ( $obj->scale[1] ?? 1 ),
+			(float) ( $obj->scale[2] ?? 1 ),
+		] ) );
+		$this->setAffineTransformations( $entity, $obj );
+
+		$audio_loop           = filter_var( $obj->audio_loop ?? false, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$audio_volume         = (float) ( $obj->audio_volume ?? 1 );
+		$audio_ref_distance   = (float) ( $obj->audio_ref_distance ?? 2 );
+		$audio_max_distance   = (float) ( $obj->audio_max_distance ?? 20 );
+		$audio_rolloff_factor = (float) ( $obj->audio_rolloff_factor ?? 1 );
+		$audio_mode           = in_array( (string) ( $obj->audio_playback_mode ?? 'interact' ), [ 'autoplay', 'interact' ], true )
+			? (string) $obj->audio_playback_mode
+			: 'interact';
+		$distance_model       = (string) ( $obj->audio_distance_model ?? 'inverse' );
+
+		$entity->setAttribute(
+			'sound',
+			sprintf(
+				'src: #%1$s; positional: true; autoplay: false; loop: %2$s; volume: %3$s; refDistance: %4$s; maxDistance: %5$s; rolloffFactor: %6$s; distanceModel: %7$s; poolSize: 1',
+				$audio_asset_id,
+				$audio_loop,
+				$audio_volume,
+				$audio_ref_distance,
+				$audio_max_distance,
+				$audio_rolloff_factor,
+				$distance_model
+			)
+		);
+		$entity->setAttribute(
+			'audio-source-controls',
+			sprintf(
+				'mode: %1$s; loop: %2$s; volume: %3$s; refDistance: %4$s; maxDistance: %5$s; rolloffFactor: %6$s; distanceModel: %7$s',
+				$audio_mode,
+				$audio_loop,
+				$audio_volume,
+				$audio_ref_distance,
+				$audio_max_distance,
+				$audio_rolloff_factor,
+				$distance_model
+			)
+		);
+		$entity->setAttribute( 'data-audio-title', $this->sanitize_text_attr( (string) ( $obj->asset_name ?? $obj->name ?? 'Audio' ) ) );
+		$entity->setAttribute( 'data-audio-state', 'idle' );
+
+		$ascene->appendChild( $entity );
+	}
+
 	private function render_media_entity( $dom, $ascene, $assets, $obj ) {
 		$uuid = $obj->uuid ?? '';
 		$cat  = $obj->category_slug ?? '';
@@ -1031,6 +1154,18 @@ class VRodos_Compiler_Manager {
 			$ascene->appendChild( $parent );
 
 		} elseif ( $cat === 'video' ) {
+			$poster_id  = '';
+			$poster_url = $this->normalize_url( $obj->screenshot_path ?? '' );
+
+			if ( $poster_url ) {
+				$poster_id = 'video_poster_' . $uuid;
+				$poster = $dom->createElement( 'img' );
+				$poster->setAttribute( 'id', $poster_id );
+				$poster->setAttribute( 'src', $poster_url );
+				$poster->setAttribute( 'crossorigin', 'anonymous' );
+				$assets->appendChild( $poster );
+			}
+
 			// Video Assets (Controls)
 			$v_pl = $dom->createElement( 'img' );
 			$v_pl->setAttribute( 'id', 'video_pl_' . $uuid );
@@ -1052,27 +1187,32 @@ class VRodos_Compiler_Manager {
 			$v_ex->setAttribute( 'src', $this->plugin_path_url . 'assets/images/exit_2f3542.png' );
 			$assets->appendChild( $v_ex );
 
-			// Video Asset (Source)
-			$video = $dom->createElement( 'video' );
-			$video->setAttribute( 'id', 'video_' . $uuid );
-			$video->setAttribute( 'crossorigin', 'anonymous' );
-			$video->setAttribute( 'src', $this->normalize_url( $obj->video_path ?? '' ) );
-			$video->setAttribute( 'loop', ($obj->video_loop ?? 0) == 1 ? 'true' : 'false' );
-			$video->setAttribute( 'playsinline', '' );
-			$video->setAttribute( 'webkit-playsinline', '' );
-			$assets->appendChild( $video );
-
 			// Video Display
 			$display = $dom->createElement( 'a-plane' );
 			$display->setAttribute( 'id', 'video-display_' . $uuid );
 			$display->setAttribute( 'width', '4' );
 			$display->setAttribute( 'height', '3' );
-			$display->setAttribute( 'src', '#video_' . $uuid );
+			if ( $poster_id ) {
+				$display->setAttribute( 'src', '#' . $poster_id );
+				$display->setAttribute( 'data-vrodos-video-poster', '#' . $poster_id );
+			}
 			$display->setAttribute( 'material', 'shader: flat; side: double' );
 			$display->setAttribute( 'class', 'clickable raycastable hideable' );
 			$display->setAttribute( 'original-scale', '1 1 1' );
+			$display->setAttribute( 'data-vrodos-video-src', $this->normalize_url( $obj->video_path ?? '' ) );
+			$display->setAttribute( 'data-vrodos-video-loop', ($obj->video_loop ?? 0) == 1 ? 'true' : 'false' );
 			$display->setAttribute( 'video-controls', "id: $uuid" );
 			$this->setAffineTransformations( $display, $obj );
+
+			$play_hint = $dom->createElement( 'a-plane' );
+			$play_hint->setAttribute( 'id', 'video-playhint_' . $uuid );
+			$play_hint->setAttribute( 'src', '#video_pl_' . $uuid );
+			$play_hint->setAttribute( 'position', '0 0 0.01' );
+			$play_hint->setAttribute( 'width', '0.72' );
+			$play_hint->setAttribute( 'height', '0.72' );
+			$play_hint->setAttribute( 'material', 'shader: flat; side: double; transparent: true; opacity: 0.96; depthTest: false' );
+			$display->appendChild( $play_hint );
+
 			$ascene->appendChild( $display );
 
 			// Video Panel (Hidden by default, attached to camera by JS)

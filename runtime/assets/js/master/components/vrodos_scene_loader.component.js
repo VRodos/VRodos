@@ -38,15 +38,18 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.revealTargets = [];
         this.pendingModelIds = {};
         this.pendingModelCount = 0;
+        this.pendingAssetIds = {};
+        this.pendingAssetCount = 0;
         this.loadedAssets = false;
         this.isReady = false;
         this.startedAt = performance.now();
         this.loadingOverlay = null;
         this.progressLabel = null;
+        this.assetsEl = null;
         this.boundHandleSceneLoaded = this.handleSceneLoaded.bind(this);
-        this.boundHandleAssetsLoaded = this.handleAssetsLoaded.bind(this);
         this.boundHandleModelLoaded = this.handleModelLoaded.bind(this);
         this.boundHandleModelError = this.handleModelError.bind(this);
+        this.boundHandleAssetReady = this.handleAssetReady.bind(this);
 
         this.createOverlay();
 
@@ -114,15 +117,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             this.sceneEl.querySelectorAll('[data-vrodos-delayed-reveal="true"]')
         );
 
-        var assetsEl = this.sceneEl.querySelector('#scene-assets');
-        if (assetsEl) {
-            assetsEl.addEventListener('loaded', this.boundHandleAssetsLoaded, { once: true });
-            if (assetsEl.hasLoaded) {
-                this.loadedAssets = true;
-            }
-        } else {
-            this.loadedAssets = true;
-        }
+        this.trackBlockingAssets(this.sceneEl.querySelector('#scene-assets'));
 
         this.pendingModelIds = {};
         this.pendingModelCount = 0;
@@ -148,8 +143,112 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.updateProgress();
         this.maybeRevealScene();
     },
-    handleAssetsLoaded: function () {
-        this.loadedAssets = true;
+    trackBlockingAssets: function (assetsEl) {
+        this.clearPendingAssets();
+        this.assetsEl = assetsEl || null;
+
+        if (!assetsEl) {
+            this.loadedAssets = true;
+            return;
+        }
+
+        var blockingAssets = Array.prototype.slice.call(assetsEl.children).filter(function (assetEl) {
+            return this.isBlockingAsset(assetEl);
+        }, this);
+
+        if (!blockingAssets.length) {
+            this.loadedAssets = true;
+            return;
+        }
+
+        this.loadedAssets = false;
+        this.pendingAssetIds = {};
+        this.pendingAssetCount = 0;
+
+        blockingAssets.forEach(function (assetEl, index) {
+            if (this.assetHasLoaded(assetEl)) {
+                return;
+            }
+
+            var assetId = assetEl.id || ('vrodos-asset-wait-' + index);
+            if (!assetEl.id) {
+                assetEl.id = assetId;
+            }
+
+            this.pendingAssetIds[assetId] = true;
+            this.pendingAssetCount += 1;
+            assetEl.addEventListener('load', this.boundHandleAssetReady);
+            assetEl.addEventListener('loaded', this.boundHandleAssetReady);
+            assetEl.addEventListener('error', this.boundHandleAssetReady);
+        }, this);
+
+        if (this.pendingAssetCount === 0) {
+            this.loadedAssets = true;
+        }
+    },
+    clearPendingAssets: function () {
+        if (!this.assetsEl) {
+            this.pendingAssetIds = {};
+            this.pendingAssetCount = 0;
+            return;
+        }
+
+        Array.prototype.slice.call(this.assetsEl.children).forEach(function (assetEl) {
+            assetEl.removeEventListener('load', this.boundHandleAssetReady);
+            assetEl.removeEventListener('loaded', this.boundHandleAssetReady);
+            assetEl.removeEventListener('error', this.boundHandleAssetReady);
+        }, this);
+
+        this.pendingAssetIds = {};
+        this.pendingAssetCount = 0;
+    },
+    isBlockingAsset: function (assetEl) {
+        if (!assetEl || !assetEl.tagName) {
+            return false;
+        }
+
+        var tagName = assetEl.tagName.toUpperCase();
+
+        if (tagName === 'VIDEO' || tagName === 'AUDIO' || tagName === 'SOURCE') {
+            return false;
+        }
+
+        return true;
+    },
+    assetHasLoaded: function (assetEl) {
+        if (!assetEl) {
+            return true;
+        }
+
+        if (assetEl.hasLoaded === true) {
+            return true;
+        }
+
+        if (assetEl.tagName && assetEl.tagName.toUpperCase() === 'IMG') {
+            return assetEl.complete;
+        }
+
+        return false;
+    },
+    handleAssetReady: function (event) {
+        if (!event || !event.target) {
+            return;
+        }
+
+        this.resolvePendingAsset(event.target);
+    },
+    resolvePendingAsset: function (target) {
+        if (!target || !target.id || !this.pendingAssetIds[target.id]) {
+            return;
+        }
+
+        target.removeEventListener('load', this.boundHandleAssetReady);
+        target.removeEventListener('loaded', this.boundHandleAssetReady);
+        target.removeEventListener('error', this.boundHandleAssetReady);
+
+        delete this.pendingAssetIds[target.id];
+        this.pendingAssetCount = Math.max(0, this.pendingAssetCount - 1);
+        this.loadedAssets = this.pendingAssetCount === 0;
         this.updateProgress();
         this.maybeRevealScene();
     },
@@ -195,7 +294,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         });
 
         if (!this.loadedAssets) {
-            this.progressLabel.textContent = 'Preparing assets...';
+            this.progressLabel.textContent = 'Preparing scene assets...';
             return;
         }
 
@@ -247,6 +346,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.sceneEl.removeEventListener('loaded', this.boundHandleSceneLoaded);
         this.sceneEl.removeEventListener('model-loaded', this.boundHandleModelLoaded);
         this.sceneEl.removeEventListener('model-error', this.boundHandleModelError);
+        this.clearPendingAssets();
  
         if (this.fallbackTimeout) {
             clearTimeout(this.fallbackTimeout);

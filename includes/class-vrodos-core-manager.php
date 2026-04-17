@@ -50,7 +50,11 @@ class VRodos_Core_Manager {
 		$mime_types['json'] = 'text/json';
 		$mime_types['mp4']  = 'video/mp4';
 		$mime_types['ogv']  = 'application/ogg';
-		$mime_types['ogg']  = 'application/ogg';
+		$mime_types['ogg']  = 'audio/ogg';
+		$mime_types['mp3']  = 'audio/mpeg';
+		$mime_types['m4a']  = 'audio/mp4';
+		$mime_types['wav']  = 'audio/wav';
+		$mime_types['oga']  = 'audio/ogg';
 		$mime_types['glb']  = 'model/gltf-binary';
 		return $mime_types;
 	}
@@ -66,7 +70,7 @@ class VRodos_Core_Manager {
 		return $data;
 	}
 
-	private static function resolve_media_meta_url( $meta_value ): string {
+	public static function resolve_media_meta_url( $meta_value ): string {
 		if ( empty( $meta_value ) ) {
 			return '';
 		}
@@ -76,6 +80,14 @@ class VRodos_Core_Manager {
 		}
 
 		return esc_url_raw( (string) $meta_value );
+	}
+
+	public static function get_builtin_audio_marker_url(): string {
+		return plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'assets/cube.glb';
+	}
+
+	public static function get_builtin_audio_thumbnail_url(): string {
+		return plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'images/audio.png';
 	}
 
 	public static function vrodos_plugin_main_page(): void {
@@ -541,8 +553,8 @@ class VRodos_Core_Manager {
 					continue;
 				}
 
-				$glbID   = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ); // GLB ID
-				$glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';                   // GLB PATH
+				$glbID   = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ); // GLB ID or URL
+				$glbPath = self::resolve_media_meta_url( $glbID );                  // GLB PATH
 
 				$sshotID   = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true ); // Screenshot Image ID or remote URL
 				$sshotPath = '';
@@ -561,6 +573,18 @@ class VRodos_Core_Manager {
 				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_cloned'       => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ), 'is_shared'        => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true )];
 
 				switch ( $asset_cat_arr[0]->slug ) {
+					case 'audio':
+						$data_arr['audio_id']                = get_post_meta( $asset_id, 'vrodos_asset3d_audio', true );
+						$data_arr['audio_path']              = self::resolve_media_meta_url( $data_arr['audio_id'] );
+						$data_arr['audio_playback_mode']     = get_post_meta( $asset_id, 'vrodos_asset3d_audio_playback_mode', true ) ?: 'interact';
+						$data_arr['audio_loop']              = get_post_meta( $asset_id, 'vrodos_asset3d_audio_loop', true );
+						$data_arr['audio_volume']            = get_post_meta( $asset_id, 'vrodos_asset3d_audio_volume', true ) ?: '1';
+						$data_arr['audio_ref_distance']      = get_post_meta( $asset_id, 'vrodos_asset3d_audio_ref_distance', true ) ?: '2';
+						$data_arr['audio_max_distance']      = get_post_meta( $asset_id, 'vrodos_asset3d_audio_max_distance', true ) ?: '20';
+						$data_arr['audio_rolloff_factor']    = get_post_meta( $asset_id, 'vrodos_asset3d_audio_rolloff_factor', true ) ?: '1';
+						$data_arr['audio_distance_model']    = 'inverse';
+						$data_arr['screenshot_path']         = $data_arr['screenshot_path'] ?: self::get_builtin_audio_thumbnail_url();
+						break;
 					case 'video':
 						$data_arr['video_id']    = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
 						$data_arr['video_path']  = self::resolve_media_meta_url( $data_arr['video_id'] );
@@ -719,7 +743,7 @@ class VRodos_Core_Manager {
 				}
 
 				$glbID   = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
-				$glbPath = $glbID ? wp_get_attachment_url( $glbID ) : '';
+				$glbPath = self::resolve_media_meta_url( $glbID );
 
 				$sshotID   = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
 				$sshotPath = '';
@@ -764,6 +788,18 @@ class VRodos_Core_Manager {
 				];
 
 				switch ( $asset_cat_arr[0]->slug ) {
+					case 'audio':
+						$data_arr['audio_id']             = get_post_meta( $asset_id, 'vrodos_asset3d_audio', true );
+						$data_arr['audio_path']           = self::resolve_media_meta_url( $data_arr['audio_id'] );
+						$data_arr['audio_playback_mode']  = get_post_meta( $asset_id, 'vrodos_asset3d_audio_playback_mode', true ) ?: 'interact';
+						$data_arr['audio_loop']           = get_post_meta( $asset_id, 'vrodos_asset3d_audio_loop', true );
+						$data_arr['audio_volume']         = get_post_meta( $asset_id, 'vrodos_asset3d_audio_volume', true ) ?: '1';
+						$data_arr['audio_ref_distance']   = get_post_meta( $asset_id, 'vrodos_asset3d_audio_ref_distance', true ) ?: '2';
+						$data_arr['audio_max_distance']   = get_post_meta( $asset_id, 'vrodos_asset3d_audio_max_distance', true ) ?: '20';
+						$data_arr['audio_rolloff_factor'] = get_post_meta( $asset_id, 'vrodos_asset3d_audio_rolloff_factor', true ) ?: '1';
+						$data_arr['audio_distance_model'] = 'inverse';
+						$data_arr['screenshot_path']      = $data_arr['screenshot_path'] ?: self::get_builtin_audio_thumbnail_url();
+						break;
 					case 'video':
 						$data_arr['video_id']    = get_post_meta( $asset_id, 'vrodos_asset3d_video', true );
 						$data_arr['video_path']  = self::resolve_media_meta_url( $data_arr['video_id'] );
@@ -842,7 +878,7 @@ class VRodos_Core_Manager {
 
 		$glb_file_name = null;
 		if ( array_key_exists( 'vrodos_asset3d_glb', $assetpostMeta ) && ! empty( $assetpostMeta['vrodos_asset3d_glb'][0] ) ) {
-			$glb_file_name = wp_get_attachment_url( $assetpostMeta['vrodos_asset3d_glb'][0] );
+			$glb_file_name = self::resolve_media_meta_url( $assetpostMeta['vrodos_asset3d_glb'][0] );
 		}
 
 		// Keep the historical keys for compatibility, but only GLB remains an active model source.

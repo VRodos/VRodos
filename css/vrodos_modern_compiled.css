@@ -4284,6 +4284,10 @@ input.tw-tab:checked + .tw-tab-content,
   align-items: flex-start;
 }
 
+.vrodos-manager-wrapper .tw-items-end {
+  align-items: flex-end;
+}
+
 .vrodos-manager-wrapper .tw-items-center {
   align-items: center;
 }
@@ -4864,18 +4868,12 @@ input.tw-tab:checked + .tw-tab-content,
   background-image: radial-gradient(circle at top, rgba(16,185,129,0.08), rgba(248,250,252,0.96) 48%, rgba(241,245,249,1) 100%);
 }
 
-.vrodos-manager-wrapper .tw-bg-gradient-to-t {
-  background-image: linear-gradient(to top, var(--tw-gradient-stops));
-}
-
 .vrodos-manager-wrapper .tw-bg-gradient-to-br {
   background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
 }
 
-.vrodos-manager-wrapper .tw-from-slate-900\/80 {
-  --tw-gradient-from: rgb(15 23 42 / 0.8) var(--tw-gradient-from-position);
-  --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position);
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+.vrodos-manager-wrapper .tw-bg-gradient-to-t {
+  background-image: linear-gradient(to top, var(--tw-gradient-stops));
 }
 
 .vrodos-manager-wrapper .tw-from-slate-50 {
@@ -4884,17 +4882,23 @@ input.tw-tab:checked + .tw-tab-content,
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
+.vrodos-manager-wrapper .tw-from-slate-900\/80 {
+  --tw-gradient-from: rgb(15 23 42 / 0.8) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
 .vrodos-manager-wrapper .tw-via-transparent {
   --tw-gradient-to: rgb(0 0 0 / 0)  var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), transparent var(--tw-gradient-via-position), var(--tw-gradient-to);
 }
 
-.vrodos-manager-wrapper .tw-to-transparent {
-  --tw-gradient-to: transparent var(--tw-gradient-to-position);
-}
-
 .vrodos-manager-wrapper .tw-to-slate-100 {
   --tw-gradient-to: #f1f5f9 var(--tw-gradient-to-position);
+}
+
+.vrodos-manager-wrapper .tw-to-transparent {
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
 }
 
 .vrodos-manager-wrapper .tw-object-contain {
