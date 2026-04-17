@@ -549,8 +549,8 @@ function displayAmbientProperties(event, name) {
     let ambientColor = document.getElementById("ambientColor");
     let sceneObj = envir.scene.getObjectByName(name) || transform_controls.object;
 
-    if (ambientColor && sceneObj && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
-        ambientColor.value = "#" + sceneObj.children[0].material.color.getHexString();
+    if (ambientColor && sceneObj && sceneObj.color) {
+        ambientColor.value = "#" + sceneObj.color.getHexString();
     }
 
     if (sceneObj && document.getElementById("ambientIntensity")) {
@@ -611,27 +611,40 @@ function displayLinkProperties(event, name) {
  * so that we don't need to bind/unbind them on every click.
  */
 function initPersistentPropertyListeners() {
+
+    const getSelectedPropertyTarget = () => {
+        if (typeof _currentSelectedRealObject !== 'undefined' && _currentSelectedRealObject) {
+            return _currentSelectedRealObject;
+        }
+
+        if (!transform_controls || !transform_controls.object) {
+            return null;
+        }
+
+        if (transform_controls.object.name === "vrodosGizmoProxy" && transform_controls.object.realObject) {
+            return transform_controls.object.realObject;
+        }
+
+        return transform_controls.object;
+    };
     
     const setProp = (prop, isCheckbox, sanitize = false) => {
         return function () {
-            if (transform_controls && transform_controls.object) {
-                let target = _currentSelectedRealObject || transform_controls.object;
-                if (target.name === "vrodosGizmoProxy" && target.realObject) {
-                    target = target.realObject;
-                }
+            const obj = getSelectedPropertyTarget();
+            if (!obj) {
+                return;
+            }
 
-                const obj = target;
-                const oldValue = obj[prop];
-                let val = isCheckbox ? (this.checked ? 1 : 0) : this.value;
-                if (sanitize) val = sanitizeInputValue(val);
-                
-                if (oldValue !== val) {
-                    obj[prop] = val;
-                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new PropertyCommand(obj, prop, oldValue, val));
-                    }
-                    saveChanges();
+            const oldValue = obj[prop];
+            let val = isCheckbox ? (this.checked ? 1 : 0) : this.value;
+            if (sanitize) val = sanitizeInputValue(val);
+            
+            if (oldValue !== val) {
+                obj[prop] = val;
+                if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+                    vrodosUndoManager.add(new PropertyCommand(obj, prop, oldValue, val));
                 }
+                saveChanges();
             }
         };
     };
@@ -641,8 +654,8 @@ function initPersistentPropertyListeners() {
     if (sunColor) {
         sunColor.addEventListener('focus', function() { this._oldVal = this.value; });
         sunColor.addEventListener('change', function () {
-            if (transform_controls.object && transform_controls.object.children[0]) {
-                const obj = transform_controls.object;
+            const obj = getSelectedPropertyTarget();
+            if (obj && obj.children && obj.children[0] && obj.children[0].material && obj.children[0].material.color) {
                 const oldVal = this._oldVal || "#" + obj.children[0].material.color.getHexString();
                 const newVal = this.value;
                 
@@ -657,7 +670,7 @@ function initPersistentPropertyListeners() {
     }
 
     const sunIntensity = document.getElementById('sunIntensity');
-    if (sunIntensity) sunIntensity.addEventListener('change', setProp('lightintensity', false, true));
+    if (sunIntensity) sunIntensity.addEventListener('change', setProp('intensity', false, true));
 
     ['Bottom', 'Top', 'Left', 'Right'].forEach(side => {
         let el = document.getElementById('sunShadowCamera' + side);
@@ -683,8 +696,8 @@ function initPersistentPropertyListeners() {
     if (lampColor) {
         lampColor.addEventListener('focus', function() { this._oldVal = this.value; });
         lampColor.addEventListener('change', function () {
-            if (transform_controls.object && transform_controls.object.children[0]) {
-                const obj = transform_controls.object;
+            const obj = getSelectedPropertyTarget();
+            if (obj && obj.children && obj.children[0] && obj.children[0].material && obj.children[0].material.color) {
                 const oldVal = this._oldVal || "#" + obj.children[0].material.color.getHexString();
                 const newVal = this.value;
 
@@ -718,6 +731,29 @@ function initPersistentPropertyListeners() {
 
     let elLampCast = document.getElementById('lampcastShadow');
     if (elLampCast) elLampCast.addEventListener('change', setProp('lampcastingShadow', true));
+
+    // --- Ambient Properties ---
+    const ambientColor = document.getElementById('ambientColor');
+    if (ambientColor) {
+        ambientColor.addEventListener('focus', function() { this._oldVal = this.value; });
+        ambientColor.addEventListener('change', function () {
+            const obj = getSelectedPropertyTarget();
+            if (obj && obj.color) {
+                const oldVal = this._oldVal || "#" + obj.color.getHexString();
+                const newVal = this.value;
+
+                if (oldVal !== newVal) {
+                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+                        vrodosUndoManager.add(new PropertyCommand(obj, 'color', oldVal, newVal));
+                    }
+                    saveChanges();
+                }
+            }
+        });
+    }
+
+    const ambientIntensity = document.getElementById('ambientIntensity');
+    if (ambientIntensity) ambientIntensity.addEventListener('change', setProp('intensity', false, true));
 
     // --- Door & Link Properties ---
     const popupDoorSelect = document.getElementById("popupDoorSelect");
@@ -998,4 +1034,3 @@ function displayPoiVideoProperties(event, name) {
 
     ppPropertiesDiv.style.display = '';
 }
-

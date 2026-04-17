@@ -483,7 +483,8 @@ function setHierarchyViewer() {
     let regular = [];
 
     envir.scene.traverse((obj) => {
-        if (obj.name === "SunSphere" || obj.name === "SpotSphere" || obj.name === "ambientSphere") return;
+        if (obj.name !== 'avatarCamera' && obj.parent && obj.parent.name !== 'vrodosScene') return;
+        if (obj.name === "SunSphere" || obj.name === "SpotSphere" || obj.name === "LampSphere" || obj.name === "ambientSphere") return;
         if (obj.vrodos_internal_helper === true) return;
         if (!obj.isSelectableMesh && obj.name !== "avatarCamera") return;
 

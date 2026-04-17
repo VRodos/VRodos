@@ -543,6 +543,7 @@ for (let key in gui_controls_funs) {
 // Global flag: true while a drag-scrub is active on any lil-gui input.
 // Used by onChange handlers to distinguish drag (apply live) vs keyboard (skip until commit).
 let _isDragScrubbing = false;
+window.vrodosGuiKeyboardEditing = window.vrodosGuiKeyboardEditing || 0;
 
 /**
  * Adds mouse-drag scrubbing to a lil-gui number controller input.
@@ -562,6 +563,20 @@ function _addDragScrub(controller) {
     // Determine sensitivity from the controller property name
     const isScale = controller.property.startsWith('dg_s');
     const sensitivity = isScale ? 0.005 : 0.01;
+
+    function setKeyboardEditing(nextState) {
+        if (isKeyboardEditing === nextState) return;
+
+        isKeyboardEditing = nextState;
+
+        if (nextState) {
+            window.vrodosGuiKeyboardEditing = (window.vrodosGuiKeyboardEditing || 0) + 1;
+            input.dataset.vrodosKeyboardEditing = '1';
+        } else {
+            window.vrodosGuiKeyboardEditing = Math.max(0, (window.vrodosGuiKeyboardEditing || 0) - 1);
+            delete input.dataset.vrodosKeyboardEditing;
+        }
+    }
 
     input.style.cursor = 'ew-resize';
 
@@ -630,16 +645,21 @@ function _addDragScrub(controller) {
             triggerAutoSave();
         } else {
             // Was a click (no drag) — enter keyboard editing mode
-            isKeyboardEditing = true;
+            setKeyboardEditing(true);
             input.focus();
             input.select();
             input.style.cursor = 'text';
         }
     });
 
+    input.addEventListener('focus', () => {
+        setKeyboardEditing(true);
+        input.style.cursor = 'text';
+    });
+
     // Exit keyboard editing mode on blur
     input.addEventListener('blur', () => {
-        isKeyboardEditing = false;
+        setKeyboardEditing(false);
         input.style.cursor = 'ew-resize';
         
         // Commit Undo Transform for keyboard edits
@@ -926,8 +946,105 @@ function controllerDatGuiOnChange() {
  * @param controller - the lil-gui controller (has _opCode custom property)
  */
 function setEventListenerKeyPressControllerConstrained(element, controller) {
+    let skipNextFocusoutCommit = false;
+
+    function syncAttachedProxy(target) {
+        if (!transform_controls || !transform_controls.object || !target) return;
+        if (transform_controls.object === target) return;
+        if (transform_controls.object.realObject !== target) return;
+
+        transform_controls.object.position.copy(target.position);
+        transform_controls.object.quaternion.copy(target.quaternion);
+        transform_controls.object.scale.copy(target.scale);
+        transform_controls.object.updateMatrix();
+        transform_controls.object.updateMatrixWorld(true);
+    }
+
+    function commitInputValue() {
+        const target = _currentSelectedRealObject || transform_controls.object;
+        if (!target) return;
+
+        const parsed = parseFloat(element.value);
+        const safeValue = Number.isFinite(parsed) ? parsed : 0;
+
+        switch (controller._opCode) {
+            case 'Tx':
+                gui_controls_funs.dg_t1 = safeValue;
+                target.position.x = safeValue;
+                break;
+            case 'Ty':
+                gui_controls_funs.dg_t2 = safeValue;
+                target.position.y = safeValue;
+                break;
+            case 'Tz':
+                gui_controls_funs.dg_t3 = safeValue;
+                target.position.z = safeValue;
+                break;
+            case 'Rx':
+                gui_controls_funs.dg_r1 = safeValue;
+                target.rotation.x = safeValue / 180 * Math.PI;
+                break;
+            case 'Ry':
+                gui_controls_funs.dg_r2 = safeValue;
+                target.rotation.y = safeValue / 180 * Math.PI;
+                break;
+            case 'Rz':
+                gui_controls_funs.dg_r3 = safeValue;
+                target.rotation.z = safeValue / 180 * Math.PI;
+                break;
+            case 'Sx':
+                gui_controls_funs.dg_s1 = safeValue;
+                target.scale.x = safeValue;
+                if (envir.scene.keepScaleAspectRatio) {
+                    gui_controls_funs.dg_s2 = safeValue;
+                    target.scale.y = safeValue;
+                    gui_controls_funs.dg_s3 = safeValue;
+                    target.scale.z = safeValue;
+                }
+                break;
+            case 'Sy':
+                gui_controls_funs.dg_s2 = safeValue;
+                target.scale.y = safeValue;
+                if (envir.scene.keepScaleAspectRatio) {
+                    gui_controls_funs.dg_s1 = safeValue;
+                    target.scale.x = safeValue;
+                    gui_controls_funs.dg_s3 = safeValue;
+                    target.scale.z = safeValue;
+                }
+                break;
+            case 'Sz':
+                gui_controls_funs.dg_s3 = safeValue;
+                target.scale.z = safeValue;
+                if (envir.scene.keepScaleAspectRatio) {
+                    gui_controls_funs.dg_s1 = safeValue;
+                    target.scale.x = safeValue;
+                    gui_controls_funs.dg_s2 = safeValue;
+                    target.scale.y = safeValue;
+                }
+                break;
+            default:
+                return;
+        }
+
+        target.updateMatrix();
+        target.updateMatrixWorld(true);
+        syncAttachedProxy(target);
+
+        if (transform_controls) {
+            transform_controls.visible = true;
+        }
+
+        controller.updateDisplay();
+        animate();
+        triggerAutoSave();
+    }
 
     element.addEventListener("focusout", function (event) {
+        if (!skipNextFocusoutCommit) {
+            commitInputValue();
+        } else {
+            skipNextFocusoutCommit = false;
+        }
         animate();
         triggerAutoSave();
     });
@@ -938,76 +1055,26 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
     });
 
 
-    // While on Input Field on Focus and pressing enter for value
+    // Keyboard edits are committed only on Enter / blur.
+    // This keeps temporary text edits away from Three.js while still allowing
+    // a safe, explicit commit when the user finishes typing.
     element.addEventListener('keydown', (e) => {
-        const target = _currentSelectedRealObject || transform_controls.object;
-        if (!target) return;
-
-        switch (controller._opCode) {
-            case 'Tx':
-                gui_controls_funs.dg_t1 = element.value;
-                target.position.x = element.value;
-                break;
-            case 'Ty':
-                gui_controls_funs.dg_t2 = element.value;
-                target.position.y = element.value;
-                break;
-            case 'Tz':
-                gui_controls_funs.dg_t3 = element.value;
-                target.position.z = element.value;
-                break;
-            case 'Rx':
-                gui_controls_funs.dg_r1 = element.value;
-                target.rotation.x = element.value / 180 * Math.PI;
-                target.updateMatrixWorld();
-                break;
-            case 'Ry':
-                gui_controls_funs.dg_r2 = element.value;
-                target.rotation.y = element.value / 180 * Math.PI;
-                target.updateMatrixWorld();
-                break;
-            case 'Rz':
-                gui_controls_funs.dg_r3 = element.value;
-                target.rotation.z = element.value / 180 * Math.PI;
-                target.updateMatrixWorld();
-                break;
-            case 'Sx':
-                gui_controls_funs.dg_s1 = element.value;
-                target.scale.x = element.value;
-                if (envir.scene.keepScaleAspectRatio) {
-                    gui_controls_funs.dg_s2 = element.value;
-                    target.scale.y = element.value;
-                    gui_controls_funs.dg_s3 = element.value;
-                    target.scale.z = element.value;
-                }
-                target.updateMatrixWorld();
-                break;
-            case 'Sy':
-                gui_controls_funs.dg_s2 = element.value;
-                target.scale.y = element.value;
-                if (envir.scene.keepScaleAspectRatio) {
-                    gui_controls_funs.dg_s1 = element.value;
-                    target.scale.x = element.value;
-                    gui_controls_funs.dg_s3 = element.value;
-                    target.scale.z = element.value;
-                }
-                target.updateMatrixWorld();
-                break;
-            case 'Sz':
-                gui_controls_funs.dg_s3 = element.value;
-                target.scale.z = element.value;
-                if (envir.scene.keepScaleAspectRatio) {
-                    gui_controls_funs.dg_s2 = element.value;
-                    target.scale.y = element.value;
-                    gui_controls_funs.dg_s1 = element.value;
-                    target.scale.x = element.value;
-                }
-                target.updateMatrixWorld();
-                break;
+        if (e.key === 'Enter' || e.key === 'NumpadEnter') {
+            skipNextFocusoutCommit = true;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            commitInputValue();
+            element.blur();
+            return;
         }
 
-        animate();
-        triggerAutoSave();
+        if (e.key === 'Escape') {
+            skipNextFocusoutCommit = true;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            controller.updateDisplay();
+            element.blur();
+        }
     }, true);
 }
 
@@ -1256,6 +1323,8 @@ function vrodosAttachGizmo(object) {
         // Fallback: attach directly to object if proxy failed to init
         transform_controls.attach(object);
     }
+
+    transform_controls.visible = true;
 }
 
 function setDatGuiInitialVales(object){

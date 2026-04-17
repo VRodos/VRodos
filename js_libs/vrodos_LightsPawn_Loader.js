@@ -164,6 +164,7 @@ class VRodos_LightsPawn_Loader {
         light.category_name = "lightSun";
         light.isSelectableMesh = true;
         light.isLight = true;
+        light.addedAt = resource['addedAt'];
         light.castShadow = true;
         light.sunSky = resource['sunSky'];
         light.locked = resource['locked'];
@@ -180,7 +181,7 @@ class VRodos_LightsPawn_Loader {
             new THREE.SphereGeometry(1, 16, 8),
             new THREE.MeshBasicMaterial({ color })
         );
-        sphere.isSelectableMesh = true;
+        sphere.isSelectableMesh = false;
         sphere.name = "SunSphere";
         light.add(sphere);
 
@@ -189,6 +190,7 @@ class VRodos_LightsPawn_Loader {
         helper.name = 'lightHelper_' + light.name;
         helper.category_name = 'lightHelper';
         helper.parentLightName = name;
+        helper.vrodos_internal_helper = true;
         envir.scene.add(helper);
         envir.scene.add(light);
 
@@ -200,10 +202,12 @@ class VRodos_LightsPawn_Loader {
             new THREE.SphereGeometry(0.5, 16, 8),
             new THREE.MeshBasicMaterial({ color })
         ));
+        targetSpot.children[0].isSelectableMesh = false;
         targetSpot.isSelectableMesh = true;
         targetSpot.name = "lightTargetSpot_" + light.name;
         targetSpot.category_name = "lightTargetSpot";
         targetSpot.isLightTargetSpot = true;
+        targetSpot.addedAt = resource['addedAt'];
         targetSpot.position.set(tp[0], tp[1], tp[2]);
         targetSpot.parentLight = light;
         targetSpot.parentLightHelper = helper;
@@ -217,6 +221,7 @@ class VRodos_LightsPawn_Loader {
 
         const shadowHelper = new THREE.CameraHelper(light.shadow.camera);
         shadowHelper.name = "lightShadowHelper_" + light.name;
+        shadowHelper.vrodos_internal_helper = true;
         envir.scene.add(shadowHelper);
     }
 
@@ -231,6 +236,7 @@ class VRodos_LightsPawn_Loader {
         light.category_name = "lightLamp";
         light.isSelectableMesh = true;
         light.isLight = true;
+        light.addedAt = resource['addedAt'];
         light.castShadow = true;
         light.shadow.radius = parseFloat(resource['shadowRadius']);
         light.locked = resource['locked'];
@@ -259,6 +265,7 @@ class VRodos_LightsPawn_Loader {
         helper.name = 'lightHelper_' + light.name;
         helper.category_name = 'lightHelper';
         helper.parentLightName = light.name;
+        helper.vrodos_internal_helper = true;
         envir.scene.add(helper);
     }
 
@@ -273,6 +280,7 @@ class VRodos_LightsPawn_Loader {
         light.category_name = "lightSpot";
         light.isSelectableMesh = true;
         light.isLight = true;
+        light.addedAt = resource['addedAt'];
         light.locked = resource['locked'];
         light.castShadow = true;
 
@@ -280,7 +288,7 @@ class VRodos_LightsPawn_Loader {
             new THREE.SphereGeometry(1, 16, 8),
             new THREE.MeshBasicMaterial({ color })
         );
-        sphere.isSelectableMesh = true;
+        sphere.isSelectableMesh = false;
         sphere.name = "SpotSphere";
         light.add(sphere);
 
@@ -290,10 +298,12 @@ class VRodos_LightsPawn_Loader {
             new THREE.SphereGeometry(0.5, 16, 8),
             new THREE.MeshBasicMaterial({ color })
         ));
+        targetSpot.children[0].isSelectableMesh = false;
         targetSpot.isSelectableMesh = true;
         targetSpot.name = "lightTargetSpot_" + light.name;
         targetSpot.category_name = "lightTargetSpot";
         targetSpot.isLightTargetSpot = true;
+        targetSpot.addedAt = resource['addedAt'];
         targetSpot.position.set(tp[0], tp[1], tp[2]);
         targetSpot.parentLight = light;
 
@@ -314,6 +324,7 @@ class VRodos_LightsPawn_Loader {
     initAmbient(name, resource) {
         const lc = resource['lightcolor'];
         const color = new THREE.Color(lc[0], lc[1], lc[2]);
+        const helperColor = 0xffff00;
         const light = new THREE.AmbientLight(color, resource['lightintensity']);
 
         this.applyTRS(light, resource['trs']);
@@ -322,13 +333,14 @@ class VRodos_LightsPawn_Loader {
         light.category_name = "lightAmbient";
         light.isSelectableMesh = true;
         light.isLight = true;
+        light.addedAt = resource['addedAt'];
         light.locked = resource['locked'];
 
         const sphere = new THREE.Mesh(
             new THREE.SphereGeometry(1, 16, 8),
-            new THREE.MeshBasicMaterial({ color })
+            new THREE.MeshBasicMaterial({ color: helperColor })
         );
-        sphere.isSelectableMesh = true;
+        sphere.isSelectableMesh = false;
         sphere.name = "ambientSphere";
         light.add(sphere);
 

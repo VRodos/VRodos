@@ -378,7 +378,7 @@ function vrodos_createLightSun(nameModel, addedAt) {
         new THREE.SphereGeometry(1, 16, 8),
         new THREE.MeshBasicMaterial({ color: 0xffffff })
     );
-    sunSphere.isSelectableMesh = true;
+    sunSphere.isSelectableMesh = false;
     sunSphere.name = "SunSphere";
     lightSun.add(sunSphere);
 
@@ -387,6 +387,7 @@ function vrodos_createLightSun(nameModel, addedAt) {
     lightSunHelper.name = 'lightHelper_' + lightSun.name;
     lightSunHelper['category_name'] = 'lightHelper';
     lightSunHelper.parentLightName = lightSun.name;
+    lightSunHelper.vrodos_internal_helper = true;
 
     // Target spot: Where Sun points
     let lightTargetSpot = new THREE.Object3D();
@@ -394,6 +395,7 @@ function vrodos_createLightSun(nameModel, addedAt) {
         new THREE.SphereGeometry(0.5, 16, 8),
         new THREE.MeshBasicMaterial({ color: 0xffffff })
     ));
+    lightTargetSpot.children[0].isSelectableMesh = false;
 
     lightTargetSpot.isSelectableMesh = true;
     lightTargetSpot.name = "lightTargetSpot_" + lightSun.name;
@@ -410,6 +412,7 @@ function vrodos_createLightSun(nameModel, addedAt) {
     // Add shadow camera helper
     let lightSunShadowhelper = new THREE.CameraHelper(lightSun.shadow.camera);
     lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
+    lightSunShadowhelper.vrodos_internal_helper = true;
 
     envir.scene.add(lightSun);
     envir.selectableMeshes.add(lightSun);
@@ -478,7 +481,7 @@ function vrodos_createLightLamp(nameModel, addedAt) {
         new THREE.SphereGeometry(0.5, 16, 8),
         new THREE.MeshBasicMaterial({ color: 0xffff00 })
     );
-    lampSphere.isSelectableMesh = true;
+    lampSphere.isSelectableMesh = false;
     lampSphere.name = "LampSphere";
     lightLamp.add(lampSphere);
 
@@ -487,6 +490,7 @@ function vrodos_createLightLamp(nameModel, addedAt) {
     lightLampHelper.name = 'lightHelper_' + lightLamp.name;
     lightLampHelper['category_name'] = 'lightHelper';
     lightLampHelper.parentLightName = lightLamp.name;
+    lightLampHelper.vrodos_internal_helper = true;
 
     envir.scene.add(lightLamp);
     envir.selectableMeshes.add(lightLamp);
@@ -532,14 +536,15 @@ function vrodos_createLightSpot(nameModel, addedAt) {
         new THREE.SphereGeometry(0.5, 16, 8),
         new THREE.MeshBasicMaterial({ color: 0xffaa00 })
     ));
+    lightTargetSpot.children[0].isSelectableMesh = false;
 
     let lampSphere = new THREE.Mesh(
         new THREE.SphereGeometry(1, 16, 8),
         new THREE.MeshBasicMaterial({ color: 0xffff00 })
     );
     lampSphere.rotation.set(Math.PI / 2, 0, 0);
-    lampSphere.isSelectableMesh = true;
-    lampSphere.name = "LampSphere";
+    lampSphere.isSelectableMesh = false;
+    lampSphere.name = "SpotSphere";
     lightSpot.add(lampSphere);
 
     lightTargetSpot.isSelectableMesh = true;
@@ -595,11 +600,11 @@ function vrodos_createLightAmbient(nameModel, addedAt) {
 
     let lampSphere = new THREE.Mesh(
         new THREE.SphereGeometry(1, 16, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
+        new THREE.MeshBasicMaterial({ color: 0xffff00 })
     );
     lampSphere.rotation.set(Math.PI / 2, 0, 0);
-    lampSphere.isSelectableMesh = true;
-    lampSphere.name = "LampSphere";
+    lampSphere.isSelectableMesh = false;
+    lampSphere.name = "ambientSphere";
     lightAmbient.add(lampSphere);
 
     envir.scene.add(lightAmbient);

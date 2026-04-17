@@ -155,6 +155,7 @@ function initVrodosEditor() {
  */
 function updatePositionsAndControls() {
     if (!transform_controls.object || !controlInterface) return;
+    if ((window.vrodosGuiKeyboardEditing || 0) > 0) return;
 
     const affines = ['position', 'rotation', 'scale'];
     for (let j = 0; j < 3; j++) {
