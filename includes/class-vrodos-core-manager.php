@@ -83,7 +83,7 @@ class VRodos_Core_Manager {
 	}
 
 	public static function get_builtin_audio_marker_url(): string {
-		return plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'assets/cube.glb';
+		return plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'runtime/assets/media/speaker.glb';
 	}
 
 	public static function get_builtin_audio_thumbnail_url(): string {
