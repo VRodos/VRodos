@@ -193,6 +193,10 @@ AFRAME.registerComponent('info-panel', {
     },
 
     onNextButtonClick: function (evt) {
+        if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== undefined) {
+            if (evt.detail.originalEvent.button !== 0) return;
+        }
+
 
         this.readingPos += 1;
 
@@ -216,6 +220,10 @@ AFRAME.registerComponent('info-panel', {
 
     },
     onPrevButtonClick: function (evt) {
+        if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== undefined) {
+            if (evt.detail.originalEvent.button !== 0) return;
+        }
+
 
         this.readingPos -= 1;
         this.indPos = this.readingPos + 1;
@@ -240,6 +248,10 @@ AFRAME.registerComponent('info-panel', {
 
 
     onMenuButtonClick: function (evt) {
+        if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== undefined) {
+            if (evt.detail.originalEvent.button !== 0) return;
+        }
+
 
         if (typeof window.gtag === 'function') {
             window.gtag('event', 'poiimgtext_open');
@@ -353,6 +365,10 @@ AFRAME.registerComponent('info-panel', {
     },
 
     onBackgroundClick: function (evt) {
+        if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== undefined) {
+            if (evt.detail.originalEvent.button !== 0) return;
+        }
+
         this.backgroundEl.object3D.scale.set(0.0001, 0.0001, 0.0001);
         this.backgroundEl.object3D.visible = false;
         this.el.object3D.scale.set(0.0001, 0.0001, 0.0001);

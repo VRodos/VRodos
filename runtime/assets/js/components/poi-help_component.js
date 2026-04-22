@@ -266,6 +266,9 @@ AFRAME.registerComponent('help-chat', {
             }
         });
         elem.addEventListener("click", evt => {
+            if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== undefined) {
+                if (evt.detail.originalEvent.button !== 0) return;
+            }
             document.getElementById("chat-wrapper-el").style.visibility = 'visible';
             setChatTabState('private');
             document.getElementById("public-chat-button").disabled = false;
