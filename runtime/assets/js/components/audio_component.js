@@ -161,6 +161,15 @@ AFRAME.registerComponent('audio-source-controls', {
 
     onInteract: function (evt) {
         const currentState = this.el.getAttribute('data-audio-state');
+        
+        // Only restrict non-primary buttons if the interaction comes from a mouse-like device
+        // This ensures VR controllers (triggers/grips) continue to work in headset mode.
+        if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== undefined) {
+             if (evt.detail.originalEvent.button !== 0) {
+                 return;
+             }
+        }
+
         console.log('[Audio] Interaction triggered on:', this.el.id, 'Attribute State:', currentState);
         
         if (this.data.mode !== 'interact') {
@@ -264,12 +273,16 @@ AFRAME.registerComponent('audio-source-controls', {
             this.pendingAutoplay = false;
             this.syncVisualState(true);
 
-            if (fromUserGesture) {
+            // Only attempt fallback if the primary sound component failed to start
+            if (fromUserGesture && !this.isPlaying()) {
+                console.log('[Audio] Primary 3D sound did not start, trying fallback.');
                 this.playAudioElementFallback();
+            } else if (fromUserGesture) {
+                console.log('[Audio] Primary 3D sound is playing. Skipping 2D fallback to preserve spatial effect.');
             }
 
             if (this.isPlaying()) {
-                console.log('[Audio] isPlaying() is true after playSound.');
+                console.log('[Audio] isPlaying() is true after play sequence.');
                 this.pendingPlayRequest = false;
             }
 
