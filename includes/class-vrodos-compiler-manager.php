@@ -278,6 +278,18 @@ class VRodos_Compiler_Manager {
 		$ascene->appendChild( $anchor );
 	}
 
+	private function apply_immerse_cefr_gating_attributes( DOMElement $element, $contentObject ): void {
+		$is_attachment = strtolower( trim( (string) ( $contentObject->immerse_object_type ?? '' ) ) ) === 'attachment';
+		$cefr_levels   = trim( (string) ( $contentObject->immerse_cefr_levels ?? '' ) );
+
+		if ( ! $is_attachment || $cefr_levels === '' ) {
+			return;
+		}
+
+		$element->setAttribute( 'data-immerse-cefr-levels', $cefr_levels );
+		$element->setAttribute( 'immerse-cefr-asset', '' );
+	}
+
 	private function markDelayedRevealEntities( DOMDocument $dom ) {
 		$xpath          = new DOMXPath( $dom );
 		$hideable_nodes = $xpath->query( "//*[contains(concat(' ', normalize-space(@class), ' '), ' hideable ')]" );
@@ -1031,6 +1043,7 @@ class VRodos_Compiler_Manager {
 		$entity->setAttribute( 'class', $class );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
 		$entity->setAttribute( 'shadow', 'cast: true; receive: true' );
+		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 		
 		$ascene->appendChild( $entity );
 	}
@@ -1111,6 +1124,7 @@ class VRodos_Compiler_Manager {
 		);
 		$entity->setAttribute( 'data-audio-title', $this->sanitize_text_attr( (string) ( $obj->asset_name ?? $obj->name ?? 'Audio' ) ) );
 		$entity->setAttribute( 'data-audio-state', 'idle' );
+		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 
 		$ascene->appendChild( $entity );
 	}
@@ -1132,6 +1146,7 @@ class VRodos_Compiler_Manager {
 			$parent->setAttribute( 'id', 'image-display_' . $uuid );
 			$this->setAffineTransformations( $parent, $obj );
 			$parent->setAttribute( 'class', 'hideable' );
+			$this->apply_immerse_cefr_gating_attributes( $parent, $obj );
 
 			// Determine if transparent (usually yes for PNG POIs)
 			$is_transparent = isset($obj->transparent) ? ($obj->transparent ? 'true' : 'false') : 'true';
@@ -1203,6 +1218,7 @@ class VRodos_Compiler_Manager {
 			$display->setAttribute( 'data-vrodos-video-loop', ($obj->video_loop ?? 0) == 1 ? 'true' : 'false' );
 			$display->setAttribute( 'video-controls', "id: $uuid" );
 			$this->setAffineTransformations( $display, $obj );
+			$this->apply_immerse_cefr_gating_attributes( $display, $obj );
 
 			$play_hint = $dom->createElement( 'a-plane' );
 			$play_hint->setAttribute( 'id', 'video-playhint_' . $uuid );

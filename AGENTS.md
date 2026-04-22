@@ -27,7 +27,7 @@ This document provides a comprehensive overview of the VRodos WordPress plugin's
 VRodos/
 ├── VRodos.php                 # Main plugin file - clean manager instantiation
 ├── includes/                  # Manager classes (business logic)
-│   ├── class-vrodos-*.php    # 18 manager classes
+│   ├── class-vrodos-*.php    # 15 manager classes
 │   ├── ajax/                  # AJAX handler
 │   └── templates/             # PHP templates for editor UI
 ├── js_libs/                   # JavaScript libraries and custom modules
@@ -61,8 +61,6 @@ VRodos follows a clean **Manager Class Pattern** where each manager class encaps
 | **VRodos_Pages_Manager** | Creation of required WordPress pages (editor, asset list, etc.) |
 | **VRodos_Core_Manager** | Core utilities and helper functions |
 | **VRodos_Settings_Manager** | Plugin settings and configuration |
-| **VRodos_Shortcode_Manager** | WordPress shortcode handlers |
-| **VRodos_Widget_Manager** | WordPress widgets |
 | **VRodos_Default_Scene_Manager** | Default scene templates |
 | **VRodos_Default_Data_Manager** | Default data initialization |
 | **VRodos_Compiler_Manager** | Scene compilation and A-Frame export |

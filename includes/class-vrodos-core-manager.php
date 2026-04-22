@@ -76,10 +76,53 @@ class VRodos_Core_Manager {
 		}
 
 		if ( is_numeric( $meta_value ) ) {
-			return wp_get_attachment_url( (int) $meta_value ) ?: '';
+			return self::normalize_media_url( wp_get_attachment_url( (int) $meta_value ) ?: '' );
 		}
 
-		return esc_url_raw( (string) $meta_value );
+		return self::normalize_media_url( esc_url_raw( (string) $meta_value ) );
+	}
+
+	private static function normalize_media_url( string $url ): string {
+		if ( $url === '' ) {
+			return '';
+		}
+
+		return (string) preg_replace( '#(?<!:)/{2,}#', '/', $url );
+	}
+
+	private static function normalize_cefr_levels_meta( $meta_value ): array {
+		$levels = maybe_unserialize( $meta_value );
+		if ( ! is_array( $levels ) ) {
+			return [];
+		}
+
+		$allowed    = [ 'A1', 'A2', 'B1', 'B2', 'ALL', 'ALL LEVELS' ];
+		$normalized = [];
+
+		foreach ( $levels as $level ) {
+			if ( is_array( $level ) || is_object( $level ) ) {
+				continue;
+			}
+
+			$level = strtoupper( trim( (string) $level ) );
+			if ( $level === '' || ! in_array( $level, $allowed, true ) || in_array( $level, $normalized, true ) ) {
+				continue;
+			}
+
+			$normalized[] = $level;
+		}
+
+		return $normalized;
+	}
+
+	private static function encode_cefr_levels_meta( $meta_value ): string {
+		$levels = self::normalize_cefr_levels_meta( $meta_value );
+		if ( empty( $levels ) ) {
+			return '';
+		}
+
+		$json = wp_json_encode( $levels );
+		return is_string( $json ) && $json !== '' ? base64_encode( $json ) : '';
 	}
 
 	public static function get_builtin_audio_marker_url(): string {
@@ -571,6 +614,13 @@ class VRodos_Core_Manager {
 				}
 
 				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_cloned'       => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ), 'is_shared'        => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true )];
+
+				$immerse_cefr_levels = self::encode_cefr_levels_meta(
+					get_post_meta( $asset_id, 'vrodos_asset3d_immerse_cefr_levels', true )
+				);
+				if ( ! empty( $immerse_cefr_levels ) ) {
+					$data_arr['immerse_cefr_levels'] = $immerse_cefr_levels;
+				}
 
 				switch ( $asset_cat_arr[0]->slug ) {
 					case 'audio':

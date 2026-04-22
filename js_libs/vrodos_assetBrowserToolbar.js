@@ -23,6 +23,7 @@ let vrodos_fetchListAvailableAssetsAjax = (isAdmin, gameProjectSlug, urlforAsset
  * @param responseData
  */
 function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
+    window.vrodosAssetBrowserItemsById = {};
 
     function vrodos_getAssetPreviewFallbackIcon(asset) {
         const categoryKey = asset && (asset.category_slug || asset.category_icon);
@@ -54,10 +55,16 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
     function vrodos_normalizeAssessmentLevels(levels) {
         let source = levels;
+        const allowedLevels = ['A1', 'A2', 'B1', 'B2', 'ALL', 'ALL LEVELS'];
 
         if (Array.isArray(source)) {
             return source
-                .map(function (level) { return vrodos_decodeAssessmentText(level).trim().toUpperCase(); })
+                .map(function (level) {
+                    if (level && typeof level === 'object') {
+                        return '';
+                    }
+                    return vrodos_decodeAssessmentText(level).trim().toUpperCase();
+                })
                 .filter(Boolean);
         }
 
@@ -71,7 +78,8 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     const decoded = new TextDecoder('utf-8').decode(bytes);
                     source = JSON.parse(decoded);
                 } catch (base64Err) {
-                    source = source.split(/[,\s/]+/);
+                    const matches = source.toUpperCase().match(/\b(?:A1|A2|B1|B2|ALL LEVELS|ALL)\b/g);
+                    source = matches || [];
                 }
             }
         }
@@ -82,15 +90,16 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
         return Array.from(new Set(source
             .map(function (level) { return vrodos_decodeAssessmentText(level).trim().toUpperCase(); })
+            .filter(function (level) { return allowedLevels.indexOf(level) !== -1; })
             .filter(Boolean)));
     }
 
-    function vrodos_resolvedAssessmentLevels(levels) {
+    function vrodos_resolvedCefrLevels(levels, emptyMeansAll) {
         let normalizedLevels = vrodos_normalizeAssessmentLevels(levels);
         let allLevels = ['A1', 'A2', 'B1', 'B2'];
 
         if (!normalizedLevels.length) {
-            return allLevels;
+            return emptyMeansAll === false ? [] : allLevels;
         }
 
         if (normalizedLevels.indexOf('ALL') !== -1 || normalizedLevels.indexOf('ALL LEVELS') !== -1) {
@@ -102,21 +111,25 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
         });
     }
 
+    function vrodos_resolvedAssessmentLevels(levels) {
+        return vrodos_resolvedCefrLevels(levels, true);
+    }
+
     function vrodos_buildAssessmentMetaHTML(asset) {
         if (!asset) {
             return '';
         }
 
-        if (String(asset.category_slug || '').toLowerCase() !== 'assessment') {
-            return '';
-        }
-
+        let isAssessment = String(asset.category_slug || '').toLowerCase() === 'assessment';
+        let genericLevelsSource = asset.immerse_cefr_levels || '';
         let assessmentType = vrodos_decodeAssessmentText(asset.assessment_type || asset.assessment_group || '').trim();
-        let assessmentLevels = vrodos_resolvedAssessmentLevels(asset.assessment_levels || '');
+        let assessmentLevels = isAssessment
+            ? vrodos_resolvedAssessmentLevels(asset.assessment_levels || '')
+            : vrodos_resolvedCefrLevels(genericLevelsSource, false);
         let typeBadgeHTML = '';
         let levelBadgesHTML = '';
 
-        if (assessmentType) {
+        if (isAssessment && assessmentType) {
             typeBadgeHTML =
                 '<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-sky-100">' +
                 escapeHTML(assessmentType) +
@@ -186,7 +199,18 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     dragGhost.appendChild(dragGhostLabel);
     document.body.appendChild(dragGhost);
 
+    responseData.forEach(function (asset) {
+        if (!asset || !asset.asset_id) {
+            return;
+        }
+
+        window.vrodosAssetBrowserItemsById[String(asset.asset_id)] = asset;
+    });
+
     render(responseData, gameProjectSlug, urlforAssetEdit);
+    if (typeof setHierarchyViewer === 'function') {
+        setHierarchyViewer();
+    }
 
     // Hiding and showing the search box
     let searchBox = filemanager.querySelector('.search');

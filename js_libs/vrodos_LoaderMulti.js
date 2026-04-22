@@ -1,5 +1,9 @@
 "use strict";
 
+function vrodosLoaderJoinUrl(base, path) {
+    return String(base || '').replace(/\/+$/, '') + '/' + String(path || '').replace(/^\/+/, '');
+}
+
 function vrodosLoaderSafeNumber(value, fallback) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
@@ -490,7 +494,7 @@ class VRodos_LoaderMulti {
 
                                     let glbURL = resourcesGLB['glbURL'];
                                     if (resource['category_slug'] === "video") {
-                                        glbURL = `${pluginPath}/assets/objects/tv_flat_scaled_rotated.glb`;
+                                        glbURL = vrodosLoaderJoinUrl(pluginPath, 'assets/objects/tv_flat_scaled_rotated.glb');
                                     }
 
                                     if (!glbURL) {

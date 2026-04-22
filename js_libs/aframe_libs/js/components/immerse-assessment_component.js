@@ -33,6 +33,10 @@
     }
 
     function normalizeLevel(value) {
+        if (value && typeof value === "object") {
+            return "";
+        }
+
         const normalized = String(value || "").trim().toUpperCase();
         return CEFR_LEVELS.includes(normalized) ? normalized : "";
     }
@@ -77,13 +81,18 @@
             .replace(/'/g, "&#39;");
     }
 
-    function getAssessmentLevels(element) {
-        return normalizeLevels(
-            decodeBase64Json(element.getAttribute("data-assessment-levels"), [])
-        );
+    function getElementLevels(element) {
+        const assessmentLevels = element.getAttribute("data-assessment-levels");
+        const genericLevels = element.getAttribute("data-immerse-cefr-levels");
+
+        if (assessmentLevels) {
+            return normalizeLevels(decodeBase64Json(assessmentLevels, []));
+        }
+
+        return normalizeLevels(decodeBase64Json(genericLevels, []));
     }
 
-    function setAssessmentVisible(element, isVisible) {
+    function setCefrControlledVisible(element, isVisible) {
         element.setAttribute("visible", isVisible ? "true" : "false");
 
         if (!element.dataset.immerseRaycastableOriginal) {
@@ -121,12 +130,12 @@
 
             runtime.elements.push(element);
             element.removeAttribute("data-vrodos-delayed-reveal");
-            setAssessmentVisible(element, false);
+            setCefrControlledVisible(element, false);
             runtime.schedulePrompt();
         };
 
         runtime.matchesLevel = function (element, level) {
-            const levels = getAssessmentLevels(element);
+            const levels = getElementLevels(element);
             if (!level) {
                 return false;
             }
@@ -146,7 +155,7 @@
             }
 
             runtime.elements.forEach((element) => {
-                setAssessmentVisible(element, runtime.matchesLevel(element, normalizedLevel));
+                setCefrControlledVisible(element, runtime.matchesLevel(element, normalizedLevel));
             });
         };
 
@@ -2112,6 +2121,12 @@
                 if (this.onClick) {
                     this.el.removeEventListener("click", this.onClick);
                 }
+            }
+        });
+
+        AFRAME.registerComponent("immerse-cefr-asset", {
+            init: function () {
+                getCefrRuntime().register(this.el);
             }
         });
     }

@@ -85,11 +85,6 @@ new VRodos_Default_Data_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-settings-manager.php');
 new VRodos_Settings_Manager();
 
-// Shortcode Manager Class
-require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-shortcode-manager.php');
-new VRodos_Shortcode_Manager();
-
-
 // AJAX Handler Class
 require_once(plugin_dir_path(__FILE__) . 'includes/ajax/class-vrodos-ajax-handler.php');
 new VRodos_AJAX_Handler();

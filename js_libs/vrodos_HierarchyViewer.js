@@ -179,12 +179,18 @@ function _hierarchyDecodeText(value) {
     return text;
 }
 
-function _hierarchyNormalizeAssessmentLevels(levels) {
+function _hierarchyNormalizeCefrLevels(levels) {
     let source = levels;
+    let allowedLevels = ['A1', 'A2', 'B1', 'B2', 'ALL', 'ALL LEVELS'];
 
     if (Array.isArray(source)) {
         return source
-            .map(function (level) { return _hierarchyDecodeText(level).trim().toUpperCase(); })
+            .map(function (level) {
+                if (level && typeof level === 'object') {
+                    return '';
+                }
+                return _hierarchyDecodeText(level).trim().toUpperCase();
+            })
             .filter(Boolean);
     }
 
@@ -198,7 +204,8 @@ function _hierarchyNormalizeAssessmentLevels(levels) {
                 const decoded = new TextDecoder('utf-8').decode(bytes);
                 source = JSON.parse(decoded);
             } catch (base64Err) {
-                source = source.split(/[,\s/]+/);
+                const matches = source.toUpperCase().match(/\b(?:A1|A2|B1|B2|ALL LEVELS|ALL)\b/g);
+                source = matches || [];
             }
         }
     }
@@ -209,15 +216,16 @@ function _hierarchyNormalizeAssessmentLevels(levels) {
 
     return Array.from(new Set(source
         .map(function (level) { return _hierarchyDecodeText(level).trim().toUpperCase(); })
+        .filter(function (level) { return allowedLevels.indexOf(level) !== -1; })
         .filter(Boolean)));
 }
 
-function _hierarchyResolvedAssessmentLevels(levels) {
-    let normalizedLevels = _hierarchyNormalizeAssessmentLevels(levels);
+function _hierarchyResolvedCefrLevels(levels, emptyMeansAll) {
+    let normalizedLevels = _hierarchyNormalizeCefrLevels(levels);
     let allLevels = ['A1', 'A2', 'B1', 'B2'];
 
     if (!normalizedLevels.length) {
-        return allLevels;
+        return emptyMeansAll === false ? [] : allLevels;
     }
 
     if (normalizedLevels.indexOf('ALL') !== -1 || normalizedLevels.indexOf('ALL LEVELS') !== -1) {
@@ -229,6 +237,23 @@ function _hierarchyResolvedAssessmentLevels(levels) {
     });
 }
 
+function _hierarchyResolvedAssessmentLevels(levels) {
+    return _hierarchyResolvedCefrLevels(levels, true);
+}
+
+function _hierarchyAssetBrowserItemForObject(obj) {
+    if (!obj || !window.vrodosAssetBrowserItemsById) {
+        return null;
+    }
+
+    let assetId = obj.asset_id || '';
+    if (assetId === '') {
+        return null;
+    }
+
+    return window.vrodosAssetBrowserItemsById[String(assetId)] || null;
+}
+
 function _hierarchyAssessmentBadgesHTML(obj) {
     if (!obj) {
         return '';
@@ -236,16 +261,23 @@ function _hierarchyAssessmentBadgesHTML(obj) {
 
     let categorySlug = String(obj.category_slug || '').toLowerCase();
     let categoryName = String(obj.category_name || '').toLowerCase();
-    if (categorySlug !== 'assessment' && categoryName !== 'assessment') {
+    let assetBrowserItem = _hierarchyAssetBrowserItemForObject(obj);
+    let genericLevelsSource = obj.immerse_cefr_levels
+        || (assetBrowserItem ? assetBrowserItem.immerse_cefr_levels || '' : '');
+    let isAssessment = categorySlug === 'assessment' || categoryName === 'assessment';
+    let genericLevels = _hierarchyResolvedCefrLevels(genericLevelsSource, false);
+    if (!isAssessment && !genericLevels.length) {
         return '';
     }
 
     let assessmentType = _hierarchyDecodeText(obj.assessment_type || obj.assessment_group || '').trim();
-    let assessmentLevels = _hierarchyResolvedAssessmentLevels(obj.assessment_levels || '');
+    let assessmentLevels = isAssessment
+        ? _hierarchyResolvedAssessmentLevels(obj.assessment_levels || '')
+        : genericLevels;
     let typeBadgeHTML = '';
     let levelBadgesHTML = '';
 
-    if (assessmentType) {
+    if (isAssessment && assessmentType) {
         typeBadgeHTML =
             '<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-sky-200">' +
             _hierarchyEscapeHTML(assessmentType) +
