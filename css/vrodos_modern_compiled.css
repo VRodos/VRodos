@@ -1510,6 +1510,12 @@ body {
   margin-inline-end: -0px;
 }
 
+.tw-input-sm[type="number"]::-webkit-inner-spin-button {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-inline-end: -0px;
+}
+
 .tw-join {
   display: inline-flex;
   align-items: stretch;
@@ -3230,6 +3236,14 @@ input.tw-tab:checked + .tw-tab-content,
   font-size: 0.75rem;
   line-height: 1rem;
   line-height: 1.625;
+}
+
+.tw-input-sm {
+  height: 2rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 2rem;
 }
 
 .tw-join.tw-join-vertical {

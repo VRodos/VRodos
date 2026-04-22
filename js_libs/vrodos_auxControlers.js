@@ -346,6 +346,222 @@ function displayWalkableSurfaceProperties(object) {
     section.style.display = 'block';
 }
 
+function getObjectControlsTargetObject() {
+    if (typeof vrodosGetPopupTargetObject === 'function') {
+        return vrodosGetPopupTargetObject();
+    }
+
+    if (typeof _currentSelectedRealObject !== 'undefined' && _currentSelectedRealObject) {
+        return _currentSelectedRealObject;
+    }
+
+    if (typeof transform_controls === 'undefined' || !transform_controls.object) {
+        return null;
+    }
+
+    if (transform_controls.object.name === 'vrodosGizmoProxy' && transform_controls.object.realObject) {
+        return transform_controls.object.realObject;
+    }
+
+    return transform_controls.object;
+}
+
+function vrodosNormalizeAudioPlaybackMode(value) {
+    return String(value || '').toLowerCase() === 'autoplay' ? 'autoplay' : 'interact';
+}
+
+function vrodosNormalizeAudioLoopValue(value) {
+    let normalized = String(value ?? '').toLowerCase();
+    return (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') ? '1' : '0';
+}
+
+function vrodosNormalizeAudioNumericValue(value, fallback, minimum, maximum) {
+    let numericValue = parseFloat(value);
+
+    if (!isFinite(numericValue)) {
+        numericValue = fallback;
+    }
+
+    if (typeof minimum === 'number') {
+        numericValue = Math.max(minimum, numericValue);
+    }
+
+    if (typeof maximum === 'number') {
+        numericValue = Math.min(maximum, numericValue);
+    }
+
+    return String(numericValue);
+}
+
+function vrodosCommitObjectControlsProperty(prop, nextValue) {
+    let targetObject = getObjectControlsTargetObject();
+    if (!targetObject) return;
+
+    let previousValue = targetObject[prop];
+    let previousComparable = previousValue == null ? '' : String(previousValue);
+    let nextComparable = nextValue == null ? '' : String(nextValue);
+
+    if (previousComparable === nextComparable) {
+        return;
+    }
+
+    targetObject[prop] = nextValue;
+    if (!targetObject.userData) {
+        targetObject.userData = {};
+    }
+    targetObject.userData[prop] = nextValue;
+
+    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
+        vrodosUndoManager.add(new PropertyCommand(targetObject, prop, previousValue, nextValue));
+    }
+
+    if (typeof saveChanges === 'function') {
+        saveChanges();
+    } else if (typeof envir !== 'undefined' && envir.scene) {
+        envir.scene.dispatchEvent({ type: 'modificationPendingSave' });
+    }
+}
+
+function ensureAudioPropertiesSection() {
+    let container = document.getElementById('object-properties-container');
+    if (!container) return null;
+
+    let section = document.getElementById('audioPropertiesDiv');
+    if (section) {
+        return section;
+    }
+
+    section = document.createElement('div');
+    section.id = 'audioPropertiesDiv';
+    section.className = 'object-property-section';
+    section.style.display = 'none';
+    section.innerHTML =
+        '<div class="prop-section-title" style="padding-bottom:2px; margin-bottom:2px;">Audio Settings</div>' +
+        '<div class="tw-flex tw-flex-col tw-gap-3 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
+        '<div class="tw-flex tw-flex-col tw-gap-1">' +
+        '<label for="audioPlaybackModeSelect" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Playback Mode</label>' +
+        '<select id="audioPlaybackModeSelect" class="tw-select tw-select-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
+        '<option value="interact">Interact</option>' +
+        '<option value="autoplay">Autoplay</option>' +
+        '</select>' +
+        '</div>' +
+        '<label class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-semibold tw-text-slate-200">' +
+        '<input type="checkbox" id="audioLoopCheckbox" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary">' +
+        '<span>Loop</span>' +
+        '</label>' +
+        '<div class="tw-grid tw-grid-cols-1 tw-gap-2">' +
+        '<div class="tw-flex tw-flex-col tw-gap-1">' +
+        '<label for="audioVolumeInput" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Volume</label>' +
+        '<input id="audioVolumeInput" type="number" min="0" max="1" step="0.1" class="tw-input tw-input-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
+        '</div>' +
+        '<div class="tw-flex tw-flex-col tw-gap-1">' +
+        '<label for="audioRefDistanceInput" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Reference Distance</label>' +
+        '<input id="audioRefDistanceInput" type="number" min="0.1" step="0.1" class="tw-input tw-input-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
+        '</div>' +
+        '<div class="tw-flex tw-flex-col tw-gap-1">' +
+        '<label for="audioMaxDistanceInput" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Max Distance</label>' +
+        '<input id="audioMaxDistanceInput" type="number" min="0.1" step="0.1" class="tw-input tw-input-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
+        '</div>' +
+        '<div class="tw-flex tw-flex-col tw-gap-1">' +
+        '<label for="audioRolloffFactorInput" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Rolloff Factor</label>' +
+        '<input id="audioRolloffFactorInput" type="number" min="0" step="0.1" class="tw-input tw-input-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
+        '</div>' +
+        '</div>' +
+        '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">These values are saved on the scene object and used by the compiled scene runtime.</div>' +
+        '</div>';
+
+    container.appendChild(section);
+
+    let playbackModeSelect = document.getElementById('audioPlaybackModeSelect');
+    let loopCheckbox = document.getElementById('audioLoopCheckbox');
+    let volumeInput = document.getElementById('audioVolumeInput');
+    let refDistanceInput = document.getElementById('audioRefDistanceInput');
+    let maxDistanceInput = document.getElementById('audioMaxDistanceInput');
+    let rolloffFactorInput = document.getElementById('audioRolloffFactorInput');
+
+    if (playbackModeSelect) {
+        playbackModeSelect.addEventListener('change', function () {
+            vrodosCommitObjectControlsProperty('audio_playback_mode', vrodosNormalizeAudioPlaybackMode(this.value));
+        });
+    }
+
+    if (loopCheckbox) {
+        loopCheckbox.addEventListener('change', function () {
+            vrodosCommitObjectControlsProperty('audio_loop', this.checked ? '1' : '0');
+        });
+    }
+
+    if (volumeInput) {
+        volumeInput.addEventListener('change', function () {
+            let normalized = vrodosNormalizeAudioNumericValue(this.value, 1, 0, 1);
+            this.value = normalized;
+            vrodosCommitObjectControlsProperty('audio_volume', normalized);
+        });
+    }
+
+    if (refDistanceInput) {
+        refDistanceInput.addEventListener('change', function () {
+            let normalized = vrodosNormalizeAudioNumericValue(this.value, 2, 0.1);
+            this.value = normalized;
+            vrodosCommitObjectControlsProperty('audio_ref_distance', normalized);
+        });
+    }
+
+    if (maxDistanceInput) {
+        maxDistanceInput.addEventListener('change', function () {
+            let normalized = vrodosNormalizeAudioNumericValue(this.value, 20, 0.1);
+            this.value = normalized;
+            vrodosCommitObjectControlsProperty('audio_max_distance', normalized);
+        });
+    }
+
+    if (rolloffFactorInput) {
+        rolloffFactorInput.addEventListener('change', function () {
+            let normalized = vrodosNormalizeAudioNumericValue(this.value, 1, 0);
+            this.value = normalized;
+            vrodosCommitObjectControlsProperty('audio_rolloff_factor', normalized);
+        });
+    }
+
+    return section;
+}
+
+function displayAudioProperties(object) {
+    let section = ensureAudioPropertiesSection();
+    if (!section || !object) return;
+
+    let playbackModeSelect = document.getElementById('audioPlaybackModeSelect');
+    let loopCheckbox = document.getElementById('audioLoopCheckbox');
+    let volumeInput = document.getElementById('audioVolumeInput');
+    let refDistanceInput = document.getElementById('audioRefDistanceInput');
+    let maxDistanceInput = document.getElementById('audioMaxDistanceInput');
+    let rolloffFactorInput = document.getElementById('audioRolloffFactorInput');
+
+    let playbackMode = vrodosNormalizeAudioPlaybackMode(object.audio_playback_mode);
+    let loopValue = vrodosNormalizeAudioLoopValue(object.audio_loop);
+    let volumeValue = vrodosNormalizeAudioNumericValue(object.audio_volume, 1, 0, 1);
+    let refDistanceValue = vrodosNormalizeAudioNumericValue(object.audio_ref_distance, 2, 0.1);
+    let maxDistanceValue = vrodosNormalizeAudioNumericValue(object.audio_max_distance, 20, 0.1);
+    let rolloffFactorValue = vrodosNormalizeAudioNumericValue(object.audio_rolloff_factor, 1, 0);
+
+    object.audio_playback_mode = playbackMode;
+    object.audio_loop = loopValue;
+    object.audio_volume = volumeValue;
+    object.audio_ref_distance = refDistanceValue;
+    object.audio_max_distance = maxDistanceValue;
+    object.audio_rolloff_factor = rolloffFactorValue;
+    object.audio_distance_model = object.audio_distance_model || 'inverse';
+
+    if (playbackModeSelect) playbackModeSelect.value = playbackMode;
+    if (loopCheckbox) loopCheckbox.checked = loopValue === '1';
+    if (volumeInput) volumeInput.value = volumeValue;
+    if (refDistanceInput) refDistanceInput.value = refDistanceValue;
+    if (maxDistanceInput) maxDistanceInput.value = maxDistanceValue;
+    if (rolloffFactorInput) rolloffFactorInput.value = rolloffFactorValue;
+
+    section.style.display = 'block';
+}
+
 /**
  * Hide all object property sections inside the floating panel.
  */
@@ -387,6 +603,10 @@ function showPropertiesInPanel(object) {
             break;
         case 'video':
             displayPoiVideoProperties(null, name);
+            hasProperties = true;
+            break;
+        case 'audio':
+            displayAudioProperties(object);
             hasProperties = true;
             break;
         case 'door':

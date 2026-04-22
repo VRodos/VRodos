@@ -1077,7 +1077,6 @@ class VRodos_Compiler_Manager {
 		$entity->setAttribute( 'gltf-model', '#' . $uuid );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
 		$entity->setAttribute( 'shadow', 'cast: true; receive: true' );
-		$entity->setAttribute( 'class', 'override-materials hideable' . ( ( $obj->audio_playback_mode ?? 'interact' ) === 'interact' ? ' raycastable' : '' ) );
 		$entity->setAttribute( 'material', '' );
 		$entity->setAttribute( 'original-scale', implode( ' ', [
 			(float) ( $obj->scale[0] ?? 1 ),
@@ -1095,6 +1094,14 @@ class VRodos_Compiler_Manager {
 			? (string) $obj->audio_playback_mode
 			: 'interact';
 		$distance_model       = (string) ( $obj->audio_distance_model ?? 'inverse' );
+		$entity_class         = 'override-materials';
+
+		if ( $audio_mode === 'interact' ) {
+			$entity_class .= ' raycastable clickable';
+			$entity->setAttribute( 'highlight', 'audio_entity_' . $uuid );
+		}
+
+		$entity->setAttribute( 'class', $entity_class );
 
 		$entity->setAttribute(
 			'sound',
@@ -1122,8 +1129,10 @@ class VRodos_Compiler_Manager {
 				$distance_model
 			)
 		);
+		$entity->setAttribute( 'data-audio-asset-id', $audio_asset_id );
 		$entity->setAttribute( 'data-audio-title', $this->sanitize_text_attr( (string) ( $obj->asset_name ?? $obj->name ?? 'Audio' ) ) );
 		$entity->setAttribute( 'data-audio-state', 'idle' );
+
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 
 		$ascene->appendChild( $entity );
