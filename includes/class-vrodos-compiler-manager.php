@@ -49,7 +49,6 @@ class VRodos_Compiler_Manager {
 			if ( ! $this->processExists( 'networked-afr' ) ) {
 				shell_exec( $strCmd . ' > /dev/null 2>/dev/null &' );
 			}
-			sleep( 2 );
 		}
 
 		// Ensure output directory exists before writing compiled files
@@ -827,6 +826,7 @@ class VRodos_Compiler_Manager {
 				$ascene->appendChild( $a_asset );
 			}
 		}
+		$a_asset->setAttribute( 'timeout', '5000' );
 		return $a_asset;
 	}
 

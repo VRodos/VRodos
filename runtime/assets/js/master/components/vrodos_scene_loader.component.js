@@ -1,4 +1,4 @@
-﻿/**
+/**
  * VRodos Master Scene Loader Components
  */
 
@@ -30,7 +30,6 @@ AFRAME.registerComponent('clear-frustum-culling', {
 
 AFRAME.registerComponent('vrodos-scene-loader', {
     schema: {
-        fallbackMs: { type: 'number', default: 12000 },
         minimumVisibleMs: { type: 'number', default: 350 }
     },
     init: function () {
@@ -53,11 +52,15 @@ AFRAME.registerComponent('vrodos-scene-loader', {
 
         this.createOverlay();
 
-        this.sceneEl.addEventListener('loaded', this.boundHandleSceneLoaded);
+        if (this.sceneEl.hasLoaded) {
+            this.handleSceneLoaded();
+        } else {
+            this.sceneEl.addEventListener('loaded', this.boundHandleSceneLoaded);
+        }
         this.sceneEl.addEventListener('model-loaded', this.boundHandleModelLoaded);
         this.sceneEl.addEventListener('model-error', this.boundHandleModelError);
 
-        this.fallbackTimeout = setTimeout(this.revealScene.bind(this), this.data.fallbackMs);
+
     },
     createOverlay: function () {
         var overlay = document.createElement('div');
@@ -107,6 +110,29 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         overlay.appendChild(spinner);
         overlay.appendChild(title);
         overlay.appendChild(progress);
+        var skipBtn = document.createElement('button');
+        skipBtn.textContent = 'Reveal Scene Anyway';
+        skipBtn.style.marginTop = '20px';
+        skipBtn.style.padding = '8px 16px';
+        skipBtn.style.background = 'rgba(255,255,255,0.1)';
+        skipBtn.style.border = '1px solid rgba(255,255,255,0.2)';
+        skipBtn.style.borderRadius = '20px';
+        skipBtn.style.color = '#fff';
+        skipBtn.style.cursor = 'pointer';
+        skipBtn.style.fontSize = '12px';
+        skipBtn.style.opacity = '0';
+        skipBtn.style.transition = 'opacity 0.5s ease';
+        skipBtn.style.pointerEvents = 'none';
+        skipBtn.onclick = this.revealScene.bind(this);
+        overlay.appendChild(skipBtn);
+
+        setTimeout(function() {
+            if (!this.isReady) {
+                skipBtn.style.opacity = '1';
+                skipBtn.style.pointerEvents = 'auto';
+            }
+        }.bind(this), 3000);
+
         document.body.appendChild(overlay);
 
         this.loadingOverlay = overlay;
@@ -147,7 +173,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.clearPendingAssets();
         this.assetsEl = assetsEl || null;
 
-        if (!assetsEl) {
+        if (!assetsEl || assetsEl.hasLoaded) {
             this.loadedAssets = true;
             return;
         }
@@ -164,6 +190,10 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.loadedAssets = false;
         this.pendingAssetIds = {};
         this.pendingAssetCount = 0;
+
+        // Listen for the container itself (handles A-Frame's internal timeout)
+        assetsEl.addEventListener('loaded', this.boundHandleAssetReady);
+        assetsEl.addEventListener('timeout', this.boundHandleAssetReady);
 
         blockingAssets.forEach(function (assetEl, index) {
             if (this.assetHasLoaded(assetEl)) {
@@ -220,12 +250,21 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return true;
         }
 
+        // A-Frame built-in state
         if (assetEl.hasLoaded === true) {
             return true;
         }
 
-        if (assetEl.tagName && assetEl.tagName.toUpperCase() === 'IMG') {
-            return assetEl.complete;
+        var tagName = assetEl.tagName ? assetEl.tagName.toUpperCase() : '';
+
+        // Image check
+        if (tagName === 'IMG') {
+            return assetEl.complete && assetEl.naturalHeight !== 0;
+        }
+
+        // Video/Audio check (even if we don't block, good for health)
+        if (tagName === 'VIDEO' || tagName === 'AUDIO') {
+            return assetEl.readyState >= 3; // HAVE_FUTURE_DATA
         }
 
         return false;
@@ -238,7 +277,18 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.resolvePendingAsset(event.target);
     },
     resolvePendingAsset: function (target) {
-        if (!target || !target.id || !this.pendingAssetIds[target.id]) {
+        if (!target) {
+            return;
+        }
+
+        // Special case: assets container timed out or loaded everything
+        if (target === this.assetsEl) {
+            this.loadedAssets = true;
+            this.maybeRevealScene();
+            return;
+        }
+
+        if (!target.id || !this.pendingAssetIds[target.id]) {
             return;
         }
 
@@ -329,6 +379,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
 
         if (this.loadingOverlay) {
             this.loadingOverlay.style.opacity = '0';
+            this.loadingOverlay.style.pointerEvents = 'none';
             window.setTimeout(function () {
                 if (this.loadingOverlay && this.loadingOverlay.parentNode) {
                     this.loadingOverlay.parentNode.removeChild(this.loadingOverlay);
@@ -337,20 +388,16 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             }.bind(this), 260);
         }
 
-        if (this.fallbackTimeout) {
-            clearTimeout(this.fallbackTimeout);
-            this.fallbackTimeout = null;
-        }
+
+
+
+
     },
     remove: function () {
         this.sceneEl.removeEventListener('loaded', this.boundHandleSceneLoaded);
         this.sceneEl.removeEventListener('model-loaded', this.boundHandleModelLoaded);
         this.sceneEl.removeEventListener('model-error', this.boundHandleModelError);
         this.clearPendingAssets();
- 
-        if (this.fallbackTimeout) {
-            clearTimeout(this.fallbackTimeout);
-        }
 
         if (this.loadingOverlay && this.loadingOverlay.parentNode) {
             this.loadingOverlay.parentNode.removeChild(this.loadingOverlay);
