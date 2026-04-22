@@ -28,6 +28,7 @@ window.addEventListener('DOMContentLoaded', () => {
             ambientOcclusionPreset: document.getElementById('compileAmbientOcclusionPresetSelect'),
             contactShadowPreset: document.getElementById('compileContactShadowPresetSelect'),
             fpsMeter: document.getElementById('compileFPSMeterToggle'),
+            hoveringInteractables: document.getElementById('compileHoveringInteractablesToggle'),
             postFx: document.getElementById('compilePostFxToggle'),
             postFxColor: document.getElementById('compilePostFxColorToggle'),
             edgeAAStrength: document.getElementById('compileEdgeAAStrengthSlider'),
@@ -121,6 +122,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (typeof envir.scene.aframeFPSMeterEnabled === 'undefined') {
             envir.scene.aframeFPSMeterEnabled = false;
+        }
+        if (typeof envir.scene.aframeHoveringInteractables === 'undefined') {
+            envir.scene.aframeHoveringInteractables = true;
         }
         if (typeof envir.scene.aframeLegacyHorizonStageSize !== 'number') {
             envir.scene.aframeLegacyHorizonStageSize = VRodosCompileUI.General.clampLegacyHorizonStageSize(envir.scene.aframeLegacyHorizonStageSize);
@@ -408,6 +412,9 @@ window.addEventListener('DOMContentLoaded', () => {
         ensureCompileSceneSettingsDefaults();
 
         VRodosCompileUI.General.syncToScene(controls);
+        if (controls.hoveringInteractables) {
+            envir.scene.aframeHoveringInteractables = !!controls.hoveringInteractables.checked;
+        }
         VRodosCompileUI.PostFX.syncToScene(controls);
         
         var selectedPostFxEngine = VRodosCompileUI.PostFX.normalizeEngine(controls.postFxEngine.value);
@@ -451,6 +458,9 @@ window.addEventListener('DOMContentLoaded', () => {
             ? VRodosCompileUI.General.normalizeContactShadowPreset(envir.scene.aframeContactShadowPreset)
             : 'soft';
         controls.fpsMeter.checked = !!(envir && envir.scene && envir.scene.aframeFPSMeterEnabled);
+        if (controls.hoveringInteractables) {
+            controls.hoveringInteractables.checked = !(envir && envir.scene) || envir.scene.aframeHoveringInteractables !== false;
+        }
         controls.postFx.checked = !!(envir && envir.scene && envir.scene.aframePostFXEnabled);
         if (controls.legacyHorizonStageSize) {
             controls.legacyHorizonStageSize.value = VRodosCompileUI.General.clampLegacyHorizonStageSize(envir && envir.scene ? envir.scene.aframeLegacyHorizonStageSize : 5000);
@@ -613,6 +623,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (controls.fpsMeter) {
         controls.fpsMeter.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.hoveringInteractables) {
+        controls.hoveringInteractables.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.legacyHorizonStageSize) {
         controls.legacyHorizonStageSize.addEventListener('input', updatePmndrsValueLabels);

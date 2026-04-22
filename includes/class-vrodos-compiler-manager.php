@@ -10,6 +10,7 @@ class VRodos_Compiler_Manager {
 	private string $plugin_path_url;
 	private string $plugin_path_dir;
 	private string $website_root_url;
+	private bool $isHoverEnabled = true;
 
 	public function __construct() {
 		$this->server_protocol  = is_ssl() ? 'https' : 'http';
@@ -99,6 +100,9 @@ class VRodos_Compiler_Manager {
 		$is_vrexpo         = ( $project_type_slug === 'vrexpo_games' );
 		$first_scene_id    = (int) reset( $valid_scene_ids );
 		$last_scene_id     = (int) end( $valid_scene_ids );
+		$first_scene_json  = reset( $scene_json );
+
+		$this->isHoverEnabled = $first_scene_json->metadata->aframeHoveringInteractables ?? true;
 
 		foreach ( $valid_scene_ids as $key => $value ) {
 			if ( ! $is_vrexpo ) {
@@ -264,6 +268,9 @@ class VRodos_Compiler_Manager {
 		);
 		$model->setAttribute( 'rotation', '-90 0 0' );
 		$model->setAttribute( 'class', 'raycastable hideable non-vr' );
+		if ( $this->isHoverEnabled ) {
+			$model->setAttribute( 'vrodos-hypnotic-hover', '' );
+		}
 		$model->setAttribute( 'immerse-assessment-launcher', '' );
 		$model->setAttribute( 'shadow', 'cast: true; receive: true' );
 		$model->setAttribute( 'data-assessment-title', $assessment_title );
@@ -1021,6 +1028,9 @@ class VRodos_Compiler_Manager {
 			$class .= ' raycastable';
 			$entity->setAttribute( 'id', "entity_$uuid" );
 			$entity->setAttribute( 'highlight', "entity_$uuid" );
+			if ( $this->isHoverEnabled ) {
+				$entity->setAttribute( 'vrodos-hypnotic-hover', '' );
+			}
 			if ( ! empty( $obj->sceneID_target ) ) {
 				$this->includeDoorFunctionality( $entity, $obj->sceneID_target );
 			}
@@ -1028,6 +1038,9 @@ class VRodos_Compiler_Manager {
 			$class .= ' raycastable';
 			$entity->setAttribute( 'link-listener', (string) ($obj->poi_link_url ?? '') );
 			$entity->setAttribute( 'highlight', $uuid );
+			if ( $this->isHoverEnabled ) {
+				$entity->setAttribute( 'vrodos-hypnotic-hover', '' );
+			}
 		} elseif ( $cat === 'chat' ) {
 			// Help Chat POI
 			$class .= ' raycastable';
@@ -1035,6 +1048,9 @@ class VRodos_Compiler_Manager {
 			$entity->setAttribute( 'highlight', "entity_$uuid" );
 			$entity->setAttribute( 'title', $this->sanitize_text_attr( $obj->poi_help_title ?? 'Help' ) );
 			$entity->setAttribute( 'help-chat', "scene_id: " . ($obj->sceneID_target ?? $scene_id) . "; num_participants: " . ($obj->poi_help_max_participants ?? '-1') );
+			if ( $this->isHoverEnabled ) {
+				$entity->setAttribute( 'vrodos-hypnotic-hover', '' );
+			}
 		}
 
 		$material = '';
@@ -1099,6 +1115,9 @@ class VRodos_Compiler_Manager {
 		if ( $audio_mode === 'interact' ) {
 			$entity_class .= ' raycastable clickable';
 			$entity->setAttribute( 'highlight', 'audio_entity_' . $uuid );
+			if ( $this->isHoverEnabled ) {
+				$entity->setAttribute( 'vrodos-hypnotic-hover', '' );
+			}
 		}
 
 		$entity->setAttribute( 'class', $entity_class );
@@ -1330,6 +1349,9 @@ class VRodos_Compiler_Manager {
 		$button->setAttribute( 'gltf-model', 'url(' . $this->normalize_url( $obj->glb_path ?? '' ) . ')' );
 		$button->setAttribute( 'highlight', 'button_poi_' . $uuid );
 		$button->setAttribute( 'class', 'raycastable menu-button hideable' );
+		if ( $this->isHoverEnabled ) {
+			$button->setAttribute( 'vrodos-hypnotic-hover', '' );
+		}
 		$button->setAttribute( 'shadow', 'cast: true; receive: true' );
 		$this->setAffineTransformations( $button, $obj ); // Trigger stays in 3D world
 		$ascene->appendChild( $button );

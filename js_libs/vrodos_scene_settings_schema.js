@@ -26,6 +26,7 @@ const VRODOS_SCENE_SETTINGS_SCHEMA = {
     'enableGeneralChat': { type: 'boolean', default: false, envirKey: 'enableGeneralChat' },
     'aframeCollisionMode': { type: 'string', default: 'auto', envirKey: 'aframeCollisionMode' },
     'aframeFPSMeterEnabled': { type: 'boolean', default: false, envirKey: 'aframeFPSMeterEnabled' },
+    'aframeHoveringInteractables': { type: 'boolean', default: true, envirKey: 'aframeHoveringInteractables' },
     'aframeLegacyHorizonStageSize': { type: 'number', default: 5000, envirKey: 'aframeLegacyHorizonStageSize' },
 
     // Rendering Quality

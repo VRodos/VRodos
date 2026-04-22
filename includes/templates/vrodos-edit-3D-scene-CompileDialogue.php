@@ -184,6 +184,13 @@
 								</div>
 								<input id="compileFPSMeterToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
 							</label>
+							<label class="tw-flex tw-items-center tw-justify-between tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
+								<div>
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Hovering Interactables</span>
+									<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Enables a subtle floating animation on interactive markers.</p>
+								</div>
+								<input id="compileHoveringInteractablesToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
+							</label>
 						</div>
 					</div>
 
