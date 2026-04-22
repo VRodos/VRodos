@@ -118,17 +118,43 @@ class VRodos_AJAX_Handler {
 
 	public function vrodos_fetch_glb_asset3d_frontend_callback(): void {
 		wp_reset_postdata();
-		$asset_id       = $_POST['asset_id'];
-		$glbID          = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
-		$glbURL         = VRodos_Core_Manager::resolve_media_meta_url( $glbID );
+		$asset_id = $_POST['asset_id'];
+		
+		$glbID = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
+		$glbURL = VRodos_Core_Manager::resolve_media_meta_url( $glbID );
 
 		$compiler = new VRodos_Compiler_Manager();
-		$glbURL = $compiler->normalize_url( $glbURL );
-
-		$output         = new StdClass();
+		$output = new stdClass();
 		$output->glbIDs = $glbID;
-		$output->glbURL = $glbURL;
-		print_r( json_encode( $output, JSON_UNESCAPED_SLASHES ) );
+		$output->glbURL = $compiler->normalize_url( $glbURL );
+
+		// Fetch category slug
+		$terms = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
+		if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+			$output->category_slug = $terms[0]->slug;
+		} else {
+			$output->category_slug = '';
+		}
+
+		// Resolve screenshot_path
+		$sshotID = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
+		if ( ! $sshotID ) {
+			$sshotID = get_post_thumbnail_id( $asset_id );
+		}
+		
+		// Fallback to Immerse original URL ONLY for images (not for videos)
+		if ( ! $sshotID && $output->category_slug === 'image' ) {
+			$sshotID = get_post_meta( $asset_id, '_immerse_original_url', true );
+		}
+		
+		if ( $sshotID ) {
+			$sshotUrl = VRodos_Core_Manager::resolve_media_meta_url( $sshotID );
+			if ( $sshotUrl ) {
+				$output->screenshot_path = $compiler->normalize_url( $sshotUrl );
+			}
+		}
+
+		echo json_encode( $output, JSON_UNESCAPED_SLASHES );
 		wp_die();
 	}
 

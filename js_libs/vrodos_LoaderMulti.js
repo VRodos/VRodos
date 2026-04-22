@@ -489,10 +489,22 @@ class VRodos_LoaderMulti {
                                         })
                                     });
 
-                                    const resText = await response.text();
-                                    const resourcesGLB = JSON.parse(resText);
+                                    let resourcesGLB = {};
+                                    try {
+                                        const resText = await response.text();
+                                        resourcesGLB = JSON.parse(resText);
+                                    } catch (e) {
+                                        console.warn("Could not parse metadata for asset " + name, e);
+                                    }
 
-                                    let glbURL = resourcesGLB['glbURL'];
+                                    // Surgical merge: Only take what we need for thumbnails and visuals.
+                                    // This prevents overwriting essential properties like category_name.
+                                    if (resourcesGLB && resourcesGLB.screenshot_path) resource.screenshot_path = resourcesGLB.screenshot_path;
+                                    if (resourcesGLB && resourcesGLB.category_slug) resource.category_slug = resourcesGLB.category_slug;
+
+                                    // Fallback: If the AJAX failed to return a GLB URL, use the one we already have in the resource.
+                                    // This prevents assets from being skipped (which would cause them to be deleted on save).
+                                    let glbURL = resourcesGLB && resourcesGLB.glbURL ? resourcesGLB.glbURL : (resource.glb_path || resource.path);
                                     if (resource['category_slug'] === "video") {
                                         glbURL = vrodosLoaderJoinUrl(pluginPath, 'assets/objects/tv_flat_scaled_rotated.glb');
                                     }
@@ -665,7 +677,55 @@ function setObjectProperties(object, name, resources3D) {
             object.children[0].castShadow = true;
         }
     }*/
-    //============== Video texture ==========
+    //============== Video thumbnail texture ==========
+    if (resource['category_slug'] === 'video') {
+        const screenshotPath = resource['screenshot_path'] || resource['poi_img_path'] || resource['poi_image_path'];
+        if (screenshotPath) {
+            const texLoader = new THREE.TextureLoader();
+            texLoader.setCrossOrigin('anonymous');
+            texLoader.load(screenshotPath, 
+                (texture) => {
+                    let screenFound = false;
+                    const nodeList = [];
+                    object.traverse((node) => { nodeList.push(node); });
+
+                    // 1st pass: Look for specific screen-like names
+                    nodeList.forEach((node) => {
+                        if (node.isMesh) {
+                            const nodeName = (node.name || "").toLowerCase();
+                            if (nodeName.includes('screen') || nodeName.includes('display') || nodeName.includes('plane')) {
+                                 node.material = new THREE.MeshBasicMaterial({ 
+                                     map: texture, 
+                                     transparent: true,
+                                     side: THREE.DoubleSide
+                                 });
+                                 node.material.needsUpdate = true;
+                                 screenFound = true;
+                            }
+                        }
+                    });
+
+                    // 2nd pass: Fallback if no specific screen found
+                    if (!screenFound) {
+                        nodeList.forEach((node) => {
+                            if (node.isMesh) {
+                                node.material = new THREE.MeshBasicMaterial({ 
+                                    map: texture, 
+                                    transparent: true,
+                                    side: THREE.DoubleSide
+                                });
+                                node.material.needsUpdate = true;
+                            }
+                        });
+                    }
+                },
+                undefined,
+                (err) => {
+                    console.error("Error loading video thumbnail texture:", screenshotPath, err);
+                }
+            );
+        }
+    }
 
 
     const trs = resource['trs'] || {};

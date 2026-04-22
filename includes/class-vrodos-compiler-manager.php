@@ -1200,12 +1200,32 @@ class VRodos_Compiler_Manager {
 			$poster_id  = '';
 			$poster_url = $this->normalize_url( $obj->screenshot_path ?? '' );
 
+			// Fallback: 1. Featured Image, 2. Immerse Original URL
+			if ( ! $poster_url && ! empty( $obj->asset_id ) ) {
+				$wp_thumb = get_the_post_thumbnail_url( (int) $obj->asset_id, 'full' );
+				if ( $wp_thumb ) {
+					$poster_url = $this->normalize_url( $wp_thumb );
+				}
+				if ( ! $poster_url ) {
+					$immerse_url = get_post_meta( (int) $obj->asset_id, '_immerse_original_url', true );
+					if ( $immerse_url ) {
+						$poster_url = $this->normalize_url( $immerse_url );
+					}
+				}
+			}
+
 			if ( $poster_url ) {
 				$poster_id = 'video_poster_' . $uuid;
 				$poster = $dom->createElement( 'img' );
 				$poster->setAttribute( 'id', $poster_id );
 				$poster->setAttribute( 'src', $poster_url );
-				$poster->setAttribute( 'crossorigin', 'anonymous' );
+				
+				// Only apply crossorigin if the URL is external
+				if ( strpos( $poster_url, $this->plugin_path_url ) === false && 
+				     strpos( $poster_url, 'wp-content/uploads' ) === false ) {
+					$poster->setAttribute( 'crossorigin', 'anonymous' );
+				}
+				
 				$assets->appendChild( $poster );
 			}
 
@@ -1236,10 +1256,13 @@ class VRodos_Compiler_Manager {
 			$display->setAttribute( 'width', '4' );
 			$display->setAttribute( 'height', '3' );
 			if ( $poster_id ) {
-				$display->setAttribute( 'src', '#' . $poster_id );
 				$display->setAttribute( 'data-vrodos-video-poster', '#' . $poster_id );
 			}
-			$display->setAttribute( 'material', 'shader: flat; side: double' );
+			$material_attr = 'shader: flat; side: double; transparent: true; alphaTest: 0.5; depthWrite: false; npot: true';
+			if ( $poster_id ) {
+				$material_attr .= "; src: #$poster_id";
+			}
+			$display->setAttribute( 'material', $material_attr );
 			$display->setAttribute( 'class', 'clickable raycastable hideable' );
 			$display->setAttribute( 'original-scale', '1 1 1' );
 			$display->setAttribute( 'data-vrodos-video-src', $this->normalize_url( $obj->video_path ?? '' ) );
