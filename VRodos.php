@@ -28,6 +28,7 @@ if ( ! defined( 'VRODOS_PLUGIN_FILE' ) ) {
 // 3: Virtual Production (MediaVerse)
 $project_scope = 2;
 
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-path-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-render-runtime-manager.php');
 
 // Asset Manager Class

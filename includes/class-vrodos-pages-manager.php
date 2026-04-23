@@ -7,9 +7,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class VRodos_Pages_Manager {
 
 	protected $templates;
+	protected $legacy_template_aliases;
 
 	public function __construct() {
 		$this->templates = [];
+		$this->legacy_template_aliases = [];
 
 		// Add a filter to the attributes metabox to inject template into the cache.
 		if ( version_compare( floatval( get_bloginfo( 'version' ) ), '4.7', '<' ) ) {
@@ -27,14 +29,30 @@ class VRodos_Pages_Manager {
 		// template assigned and return it's path
 		add_filter( 'template_include', $this->view_project_template(...) );
 
-		// Add your templates to this array.
-		$this->templates = ['/templates/vrodos-project-manager-template.php' => 'Project Manager Template', '/templates/vrodos-assets-list-template.php'   => 'Assets List Template', '/templates/vrodos-edit-3D-scene-template.php' => 'Scene 3D Editor Template', '/templates/vrodos-asset-editor-template.php'  => 'Asset Editor Template'];
+		$this->templates = [
+			VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-project-manager-template.php' ) => 'Project Manager Template',
+			VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-assets-list-template.php' ) => 'Assets List Template',
+			VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-edit-3D-scene-template.php' ) => 'Scene 3D Editor Template',
+			VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-asset-editor-template.php' ) => 'Asset Editor Template',
+		];
+
+		// Keep legacy template keys resolving for existing page meta during migration.
+		$this->legacy_template_aliases = [
+			VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-project-manager-template.php' ) => 'Project Manager Template',
+			VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-assets-list-template.php' ) => 'Assets List Template',
+			VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-edit-3D-scene-template.php' ) => 'Scene 3D Editor Template',
+			VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-asset-editor-template.php' ) => 'Asset Editor Template',
+		];
 
 		add_action( 'admin_notices', $this->vrodos_fx_admin_notice_notice(...) );
 	}
 
 	public function add_new_template( $posts_templates ) {
 		return array_merge( $posts_templates, $this->templates );
+	}
+
+	private function get_supported_templates(): array {
+		return array_merge( $this->templates, $this->legacy_template_aliases );
 	}
 
 	public function register_project_templates( $atts ) {
@@ -54,10 +72,11 @@ class VRodos_Pages_Manager {
 		if ( ! $post ) {
 			return $template;
 		}
-		if ( ! isset( $this->templates[ get_post_meta( $post->ID, '_wp_page_template', true ) ] ) ) {
+		$page_template = get_post_meta( $post->ID, '_wp_page_template', true );
+		if ( ! isset( $this->get_supported_templates()[ $page_template ] ) ) {
 			return $template;
 		}
-		$file = plugin_dir_path( __FILE__ ) . ltrim( get_post_meta( $post->ID, '_wp_page_template', true ), '/' );
+		$file = VRodos_Path_Manager::page_template_path( $page_template );
 		if ( file_exists( $file ) ) {
 			return $file;
 		} else {
@@ -69,7 +88,24 @@ class VRodos_Pages_Manager {
 	public static function vrodos_create_pages() {
 		ob_start();
 
-		$pages = ['vrodos-project-manager-page' => ['title'    => 'VROdos - Project Manager', 'template' => '/templates/vrodos-project-manager-template.php'], 'vrodos-assets-list-page'     => ['title'    => 'VROdos - Assets List', 'template' => '/templates/vrodos-assets-list-template.php'], 'vrodos-edit-3d-scene-page'   => ['title'    => 'VROdos - Scene 3D Editor', 'template' => '/templates/vrodos-edit-3D-scene-template.php'], 'vrodos-asset-editor-page'    => ['title'    => 'VROdos - Asset Editor', 'template' => '/templates/vrodos-asset-editor-template.php']];
+		$pages = [
+			'vrodos-project-manager-page' => [
+				'title' => 'VROdos - Project Manager',
+				'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-project-manager-template.php' ),
+			],
+			'vrodos-assets-list-page' => [
+				'title' => 'VROdos - Assets List',
+				'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-assets-list-template.php' ),
+			],
+			'vrodos-edit-3d-scene-page' => [
+				'title' => 'VROdos - Scene 3D Editor',
+				'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-edit-3D-scene-template.php' ),
+			],
+			'vrodos-asset-editor-page' => [
+				'title' => 'VROdos - Asset Editor',
+				'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-asset-editor-template.php' ),
+			],
+		];
 
 		foreach ( $pages as $slug => $page ) {
 			if ( ! self::vrodos_get_page_by_slug( $slug ) ) {

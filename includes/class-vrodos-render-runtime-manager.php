@@ -14,7 +14,7 @@ class VRodos_Render_Runtime_Manager {
 	private const AFRAME_RUNTIME_COMMIT = '96cc74fa7a4640f394a78985a637a788daf56186';
 
 	private const THREE_VENDOR_VERSION = '0.181.0';
-	private const THREE_VENDOR_DIR = 'threejs181';
+	private const THREE_VENDOR_DIR = 'three-r181';
 	private const THREE_VENDOR_BUNDLE = 'vrodos-three-r181.bundle.js';
 
 	public static function get_config(): array {

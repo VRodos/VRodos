@@ -46,12 +46,12 @@ The current top-level order is:
 
 ### Applied Changes
 
-- Added a richer PMNDRS Horizon/Takram runtime state container in `runtime/assets/js/master/vrodos_quality_profiles.js`.
+- Added a richer PMNDRS Horizon/Takram runtime state container in `assets/js/runtime/master/vrodos_quality_profiles.js`.
 - Recorded explicit ownership-intent flags so later Takram light-source swaps can land behind one state object.
 
 ### Validation
 
-- `eslint` on `runtime/assets/js/master/vrodos_quality_profiles.js`
+- `eslint` on `assets/js/runtime/master/vrodos_quality_profiles.js`
 - Result: pass
 
 ## Phase 3
@@ -95,7 +95,7 @@ The current top-level order is:
 ### Applied Changes
 
 - Installed `three@0.181.0`.
-- Switched the active vendor config, asset-manager bundle path, and editor/runtime fallback defaults from `threejs173` to `threejs181`.
+- Switched the active vendor config, asset-manager bundle path, and editor/runtime fallback defaults from `threejs173` to the refactored `assets/vendor/three-r181` target.
 
 ### Validation
 
@@ -103,7 +103,7 @@ The current top-level order is:
 - Fix the first round of build-time compatibility issues that surface.
 - Result:
   - `three@0.181.0` installed successfully
-  - `node scripts/build-three-vendor.mjs` passed and emitted `js_libs/threejs181/vrodos-three-r181.bundle.js`
+  - `node scripts/build-three-vendor.mjs` passed and emitted `assets/vendor/three-r181/vrodos-three-r181.bundle.js`
   - no first-pass build-time compatibility break blocked the vendor rebuild
 
 ## Phase 6
@@ -222,9 +222,9 @@ The current top-level order is:
   - `README.md`
   - `scripts/build-phase0-smoke.mjs`
   - `phase0-pmndrs-smoke-test.html`
-  - `runtime/assets/js/master/vrodos_postprocessing.js`
-  - `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
-  - `runtime/assets/js/master/vrodos_quality_profiles.js`
+  - `assets/js/runtime/master/vrodos_postprocessing.js`
+  - `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js`
+  - `assets/js/runtime/master/vrodos_quality_profiles.js`
 
 ### Validation
 
@@ -249,13 +249,13 @@ The current top-level order is:
 - Exposed the custom runtime HDR loader as both:
   - `THREE.HDRLoader`
   - `THREE.RGBELoader`
-- Updated `runtime/assets/js/master/vrodos_scene_probe.js` to prefer `THREE.HDRLoader` and fall back to `THREE.RGBELoader`.
+- Updated `assets/js/runtime/master/vrodos_scene_probe.js` to prefer `THREE.HDRLoader` and fall back to `THREE.RGBELoader`.
 
 ### Validation
 
 - `eslint` passed on:
-  - `runtime/assets/js/master/vrodos_master_rendering.js`
-  - `runtime/assets/js/master/vrodos_scene_probe.js`
+  - `assets/js/runtime/master/vrodos_master_rendering.js`
+  - `assets/js/runtime/master/vrodos_scene_probe.js`
 
 ## Phase 4
 
@@ -328,14 +328,14 @@ The current top-level order is:
 ### Applied Changes
 
 - Confirmed through narrow runtime toggles that the Horizon halo artifact survives without the visible PMNDRS sun sprite, but disappears when PMNDRS `FXAAEffect` is disabled.
-- Updated `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js` so the PMNDRS runtime no longer adds `FXAAEffect`.
+- Updated `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` so the PMNDRS runtime no longer adds `FXAAEffect`.
 - Updated PMNDRS runtime comments/logging to record the current direction: keep FXAA disabled and investigate `SMAAEffect` plus PMNDRS/MSAA behavior instead.
 - Added a current-runtime AA decision note to `POSTPROCESSING_MIGRATION_PLAN.md`.
 
 ### Validation
 
 - `eslint` passed on:
-  - `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
+  - `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js`
 - Manual runtime diagnosis result:
   - `?vrodos_debug_disable_pmndrs_sun=1` did **not** remove the artifact
   - `?vrodos_debug_disable_pmndrs_fxaa=1` **did** remove the artifact
@@ -353,19 +353,19 @@ The current top-level order is:
 
 ### Applied Changes
 
-- Updated `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js` so PMNDRS anti-aliasing now uses:
+- Updated `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` so PMNDRS anti-aliasing now uses:
   - composer multisampling from `aaQuality`
   - `SMAAEffect` from the same `aaQuality` tier
 - Added safe fallbacks so composer construction retries without MSAA if multisampled init fails.
-- Updated `runtime/assets/js/master/components/vrodos_scene_settings.component.js` so PMNDRS AA alone is enough to keep post-processing active when no other PMNDRS effects are enabled.
+- Updated `assets/js/runtime/master/components/vrodos_scene_settings.component.js` so PMNDRS AA alone is enough to keep post-processing active when no other PMNDRS effects are enabled.
 - Updated `js_libs/vrodos_compile_dialogue.js` so the PMNDRS engine hint now explains that the shared Anti-Aliasing selector drives SMAA/MSAA.
 - Recorded the live AA mapping in `POSTPROCESSING_MIGRATION_PLAN.md`.
 
 ### Validation
 
 - `eslint` passed on:
-  - `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
-  - `runtime/assets/js/master/components/vrodos_scene_settings.component.js`
+  - `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js`
+  - `assets/js/runtime/master/components/vrodos_scene_settings.component.js`
   - `js_libs/vrodos_compile_dialogue.js`
 
 ## Phase 15
@@ -381,7 +381,7 @@ The current top-level order is:
 
 ### Applied Changes
 
-- Reworked `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js` to use exclusive PMNDRS AA modes:
+- Reworked `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` to use exclusive PMNDRS AA modes:
   - `none`
   - `smaa`
   - `msaa`
@@ -399,8 +399,8 @@ The current top-level order is:
 ### Validation
 
 - `eslint` passed on:
-  - `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
-  - `runtime/assets/js/master/components/vrodos_scene_settings.component.js`
+  - `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js`
+  - `assets/js/runtime/master/components/vrodos_scene_settings.component.js`
   - `js_libs/vrodos_compile_dialogue.js`
 - PHP syntax check passed on:
   - `includes/class-vrodos-compiler-manager.php`
@@ -419,7 +419,7 @@ The current top-level order is:
 
 ### Applied Changes
 
-- Added a PMNDRS AA debug overlay in `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js` behind:
+- Added a PMNDRS AA debug overlay in `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` behind:
   - `?vrodos_debug_pmndrs_aa=1`
 - The overlay reports:
   - selected PMNDRS AA mode/preset
@@ -436,7 +436,7 @@ The current top-level order is:
   - `aframePmndrsAAMode`
   - `aframePmndrsAAPreset`
 - Fixed compile-dialog refresh rendering in `js_libs/vrodos_compile_dialogue.js` so the PMNDRS AA selects no longer receive the non-option internal fallback value `'inherit'`, which previously caused blank dropdowns after refresh/load.
-- Added a navigation-performance overlay in `runtime/assets/js/master/components/vrodos_navigation.component.js` behind:
+- Added a navigation-performance overlay in `assets/js/runtime/master/components/vrodos_navigation.component.js` behind:
   - `?vrodos_debug_nav_perf=1`
 - The navigation overlay reports:
   - per-frame / averaged nav tick time
@@ -445,15 +445,15 @@ The current top-level order is:
   - raycast time
   - raycast count
   - intersection count
-- Applied the first low-risk collision optimization in `runtime/assets/js/master/components/vrodos_navigation.component.js`:
+- Applied the first low-risk collision optimization in `assets/js/runtime/master/components/vrodos_navigation.component.js`:
   - build a flattened `navMeshCollisionTargets` mesh list during navmesh refresh
   - raycast against that flat list with `recursive=false` instead of recursively traversing each navmesh root on every probe
 
 ### Validation
 
 - `eslint` passed on:
-  - `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
-  - `runtime/assets/js/master/components/vrodos_navigation.component.js`
+  - `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js`
+  - `assets/js/runtime/master/components/vrodos_navigation.component.js`
   - `js_libs/vrodos_ScenePersistence.js`
   - `js_libs/vrodos_LoaderMulti.js`
   - `js_libs/vrodos_compile_dialogue.js`

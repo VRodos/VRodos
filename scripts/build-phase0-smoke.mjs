@@ -16,7 +16,7 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 import { THREE_VENDOR_DIR, THREE_SMOKE_BUNDLE_FILE } from './three-vendor.config.mjs';
 
-const outputDir = path.join(rootDir, 'js_libs', THREE_VENDOR_DIR);
+const outputDir = path.join(rootDir, 'assets', 'vendor', THREE_VENDOR_DIR);
 const bundlePath = path.join(outputDir, THREE_SMOKE_BUNDLE_FILE);
 const tempEntryPath = path.join(rootDir, 'scripts', '.tmp-phase0-smoke-entry.mjs');
 

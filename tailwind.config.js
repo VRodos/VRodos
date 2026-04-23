@@ -4,9 +4,9 @@ module.exports = {
   important: '.vrodos-manager-wrapper',
   content: [
     "./includes/**/*.php",
-    "./js_libs/**/*.js",
-    "./js_libs/aframe_libs/**/*.html",
-    "./runtime/assets/js/**/*.js",
+    "./templates/**/*.php",
+    "./templates/**/*.html",
+    "./assets/js/**/*.js",
     "./VRodos.php"
   ],
   theme: {

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="emerald">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>VROdos Collaborative Environment</title>
+    <meta name="description" content="VR Collaborative environment"/>
+
+    <link rel="stylesheet" type="text/css" href="VRODOS_CSS_URL_PLACEHOLDERvrodos_modern_compiled.css" />
+    <script src="https://unpkg.com/lucide@0.469.0"></script>
+
+    <style>
+        .vr-mesh-bg {
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.05) 0px, transparent 50%);
+        }
+        
+        .vr-glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .role-card:hover .role-icon-wrapper {
+            transform: scale(1.1) rotate(5deg);
+        }
+    </style>
+</head>
+
+<body class="vrodos-manager-wrapper tw-min-h-screen tw-bg-slate-50 tw-text-slate-900 tw-antialiased vr-mesh-bg">
+
+    <div class="tw-flex tw-flex-col tw-min-h-screen tw-items-center tw-justify-center tw-p-6">
+        
+        <!-- Header Section -->
+        <div class="tw-text-center tw-mb-12 tw-max-w-2xl tw-animate-fade-in">
+            <div class="tw-inline-flex tw-items-center tw-gap-2 tw-px-3 tw-py-1 tw-rounded-full tw-bg-emerald-50 tw-border tw-border-emerald-100 tw-mb-4">
+                <span class="tw-relative tw-flex tw-h-2 tw-w-2">
+                    <span class="tw-animate-ping tw-absolute tw-inline-flex tw-h-full tw-w-full tw-rounded-full tw-bg-emerald-400 tw-opacity-75"></span>
+                    <span class="tw-relative tw-inline-flex tw-rounded-full tw-h-2 tw-w-2 tw-bg-emerald-500"></span>
+                </span>
+                <span class="tw-text-[10px] tw-font-black tw-uppercase tw-tracking-widest tw-text-emerald-700">Live Collaboration</span>
+            </div>
+            
+            <h1 id="_sceneName" class="tw-text-4xl md:tw-text-5xl tw-font-black tw-text-slate-900 tw-mb-4 tw-tracking-tight">project_sceneId</h1>
+            <p class="tw-text-slate-500 tw-text-lg tw-font-medium">Welcome to the collaborative virtual environment. Please select your role to enter the scene.</p>
+        </div>
+
+        <!-- Role Selection Grid -->
+        <div id="wrapper" class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-8 tw-w-full tw-max-w-5xl">
+            
+            <!-- Actor Card -->
+            <div class="tw-group tw-relative">
+                <a href="Simple_Client.html" class="role-card tw-block tw-h-full tw-p-8 tw-rounded-[2.5rem] tw-border tw-border-slate-200 tw-bg-white tw-shadow-xl tw-transition-all hover:tw-shadow-2xl hover:tw-border-sky-200 tw-overflow-hidden vr-glass-panel">
+                    <div class="tw-absolute tw-top-0 tw-right-0 tw-p-6 tw-opacity-5 group-hover:tw-opacity-10 tw-transition-opacity">
+                        <i data-lucide="smartphone" class="tw-w-32 tw-h-32"></i>
+                    </div>
+
+                    <div class="tw-relative tw-z-10">
+                        <div class="role-icon-wrapper tw-w-16 tw-h-16 tw-bg-sky-50 tw-rounded-2xl tw-flex tw-items-center tw-justify-center tw-mb-6 tw-transition-transform tw-duration-500">
+                            <i data-lucide="smartphone" class="tw-w-8 tw-h-8 tw-text-sky-600"></i>
+                        </div>
+                        
+                        <div class="tw-mb-6">
+                            <h2 class="tw-text-2xl tw-font-black tw-text-slate-900 tw-mb-2">Participate as Actor</h2>
+                            <p class="tw-text-slate-500 tw-text-sm tw-leading-relaxed">Stream your live performance directly into the scene using your smartphone and a green screen.</p>
+                        </div>
+
+                        <div class="tw-space-y-3 tw-mb-8">
+                            <div class="tw-flex tw-items-center tw-gap-3 tw-text-[11px] tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-wider">
+                                <i data-lucide="check-circle-2" class="tw-w-3.5 tw-h-3.5 tw-text-emerald-500"></i>
+                                Requires Smartphone
+                            </div>
+                            <div class="tw-flex tw-items-center tw-gap-3 tw-text-[11px] tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-wider">
+                                <i data-lucide="check-circle-2" class="tw-w-3.5 tw-h-3.5 tw-text-emerald-500"></i>
+                                Green Screen Recommended
+                            </div>
+                        </div>
+
+                        <div class="tw-flex tw-items-center tw-gap-2 tw-text-sky-600 tw-font-bold tw-text-sm">
+                            Join Scene 
+                            <i data-lucide="arrow-right" class="tw-w-4 tw-h-4 tw-transition-transform group-hover:tw-translate-x-1"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Director Card -->
+            <div class="tw-group tw-relative">
+                <a href="Master_Client.html" target="_blank" class="role-card tw-block tw-h-full tw-p-8 tw-rounded-[2.5rem] tw-border tw-border-slate-200 tw-bg-white tw-shadow-xl tw-transition-all hover:tw-shadow-2xl hover:tw-border-emerald-200 tw-overflow-hidden vr-glass-panel">
+                    <div class="tw-absolute tw-top-0 tw-right-0 tw-p-6 tw-opacity-5 group-hover:tw-opacity-10 tw-transition-opacity">
+                        <i data-lucide="monitor" class="tw-w-32 tw-h-32"></i>
+                    </div>
+
+                    <div class="tw-relative tw-z-10">
+                        <div class="role-icon-wrapper tw-w-16 tw-h-16 tw-bg-emerald-50 tw-rounded-2xl tw-flex tw-items-center tw-justify-center tw-mb-6 tw-transition-transform tw-duration-500">
+                            <i data-lucide="monitor" class="tw-w-8 tw-h-8 tw-text-emerald-600"></i>
+                        </div>
+                        
+                        <div class="tw-mb-6">
+                            <h2 class="tw-text-2xl tw-font-black tw-text-slate-900 tw-mb-2">Manage as Director</h2>
+                            <p class="tw-text-slate-500 tw-text-sm tw-leading-relaxed">Full control over the environment and composition. Best experienced on a high-end workstation.</p>
+                        </div>
+
+                        <div class="tw-space-y-3 tw-mb-8">
+                            <div class="tw-flex tw-items-center tw-gap-3 tw-text-[11px] tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-wider">
+                                <i data-lucide="check-circle-2" class="tw-w-3.5 tw-h-3.5 tw-text-emerald-500"></i>
+                                Full Scene Control
+                            </div>
+                            <div class="tw-flex tw-items-center tw-gap-3 tw-text-[11px] tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-wider">
+                                <i data-lucide="check-circle-2" class="tw-w-3.5 tw-h-3.5 tw-text-emerald-500"></i>
+                                Desktop PC Required
+                            </div>
+                        </div>
+
+                        <div class="tw-flex tw-items-center tw-gap-2 tw-text-emerald-600 tw-font-bold tw-text-sm">
+                            Open Dashboard
+                            <i data-lucide="external-link" class="tw-w-4 tw-h-4 tw-transition-transform group-hover:tw-translate-x-1"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Scaling logic for preview
+        (function() {
+            const body = document.querySelector('body');
+            if (window.innerWidth < 1000) {
+                 // Removed hardcoded scaling as Tailwind handles responsiveness better
+            }
+        })();
+
+        // Initialize Lucide icons
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -8,7 +8,7 @@ Historical note:
 - The notes remain useful because the legacy post-FX path still carries the same `isXRRenderTarget` workaround, but they should be treated as debugging history until fully re-validated on r181.
 
 - Runtime page tested: `http://wp.local:5832/Master_Client_766.html`
-- Main runtime files: `runtime/assets/js/master/vrodos_master_rendering.js` (shaders) + `runtime/assets/js/master/components/vrodos_scene_settings.component.js` (render loop)
+- Main runtime files: `assets/js/runtime/master/vrodos_master_rendering.js` (shaders) + `assets/js/runtime/master/components/vrodos_scene_settings.component.js` (render loop)
 - Scene confirmed by user:
   - `postFXEnabled: 1`
   - `postFXBloomEnabled: 0`
@@ -169,12 +169,12 @@ The TAA shader is a simple variance-clipped temporal accumulation — **no depth
 
 | File | Role |
 |------|------|
-| `runtime/assets/js/master/vrodos_master_rendering.js` | Shader factory functions (composite, SAO, FXAA, bloom) |
-| `runtime/assets/js/master/components/vrodos_scene_settings.component.js` | A-Frame component — render loop, per-frame uniform updates |
+| `assets/js/runtime/master/vrodos_master_rendering.js` | Shader factory functions (composite, SAO, FXAA, bloom) |
+| `assets/js/runtime/master/components/vrodos_scene_settings.component.js` | A-Frame component — render loop, per-frame uniform updates |
 
 `vrodos_master_components.js` appears to be a legacy monolith no longer used in production. All shader and render-loop changes must target the `master/` directory files.
 
-The HTML template at `js_libs/aframe_libs/Master_Client_prototype.html` confirms the load order.
+The HTML template at `templates/runtime/aframe/Master_Client_prototype.html` confirms the load order.
 
 ## ACES Attempt (2026-04-05) — Also Wrong
 
@@ -208,8 +208,8 @@ This exploits Three.js r173 source behavior:
 
 ## Cleanup Done (2026-04-05)
 
-- Deleted `runtime/assets/js/vrodos_master_components.js` — legacy monolith, not loaded by any compiled scene
-- Deleted `runtime/assets/js/vrodos_master_logic.js` — unreferenced, superseded by master/ structure
+- Deleted `assets/js/runtime/vrodos_master_components.js` — legacy monolith, not loaded by any compiled scene
+- Deleted `assets/js/runtime/vrodos_master_logic.js` — unreferenced, superseded by master/ structure
 - Updated all file references in MD docs to point to correct master/ files
 
 ---
@@ -223,9 +223,9 @@ While re-validating the experimental Horizon PMNDRS Takram aerial path on the ne
 - Experimental path only: `?vrodos_debug_enable_pmndrs_horizon_aerial=1`
 - Stable/base Horizon path still looks better for production scenes right now
 - Main files involved:
-  - `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
-  - `runtime/assets/js/master/vrodos_quality_profiles.js`
-  - `runtime/assets/js/master/lib/vrodos-takram-atmosphere.bundle.js`
+  - `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js`
+  - `assets/js/runtime/master/vrodos_quality_profiles.js`
+  - `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js`
 
 ### What Works
 

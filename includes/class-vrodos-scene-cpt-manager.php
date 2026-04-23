@@ -573,7 +573,7 @@ class VRodos_Scene_CPT_Manager {
 		$data['single_first'] = 'Project';
 
 		// Paths and URLs
-		$data['pluginpath'] = plugin_dir_url( VRODOS_PLUGIN_FILE );
+		$data['pluginpath'] = VRodos_Path_Manager::plugin_url();
 		$data['upload_dir'] = str_replace( '\\', '/', wp_upload_dir()['basedir'] );
 		$data['upload_url'] = wp_upload_dir()['baseurl'];
 

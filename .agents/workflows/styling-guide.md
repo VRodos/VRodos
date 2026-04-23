@@ -10,8 +10,8 @@ All modern VRodos manager pages (Project Manager, Assets List, Asset Editor, etc
 
 | Layer | File | Purpose |
 |---|---|---|
-| **Source** | `css/vrodos_modern.css` | Custom overrides, animations, DaisyUI surgical fixes |
-| **Compiled** | `css/vrodos_modern_compiled.css` | Auto-generated — **never edit directly** |
+| **Source** | `assets/css/vrodos_modern.css` | Custom overrides, animations, DaisyUI surgical fixes |
+| **Compiled** | `assets/css/vrodos_modern_compiled.css` | Auto-generated — **never edit directly** |
 | **Config** | `tailwind.config.js` | Tailwind + DaisyUI config |
 
 ## Prefixes

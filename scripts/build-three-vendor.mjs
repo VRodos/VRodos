@@ -11,7 +11,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
-const outputDir = path.join(rootDir, 'js_libs', THREE_VENDOR_DIR);
+const outputDir = path.join(rootDir, 'assets', 'vendor', THREE_VENDOR_DIR);
 const bundlePath = path.join(outputDir, THREE_VENDOR_BUNDLE_FILE);
 const dracoSourceDir = path.join(rootDir, 'node_modules', 'three', 'examples', 'jsm', 'libs', 'draco');
 const dracoOutputDir = path.join(outputDir, 'draco');
@@ -19,7 +19,7 @@ const fontSourcePath = path.join(rootDir, 'node_modules', 'three', 'examples', '
 const fontOutputDir = path.join(outputDir, 'fonts');
 const fontOutputPath = path.join(fontOutputDir, 'helvetiker_bold.typeface.json');
 const tempEntryPath = path.join(rootDir, 'scripts', THREE_VENDOR_BUILD_ENTRY_FILE);
-const runtimeVendorDir = path.join(rootDir, 'runtime', 'assets', 'js', 'master', 'lib');
+const runtimeVendorDir = path.join(rootDir, 'assets', 'js', 'runtime', 'master', 'lib');
 const takramBundlePath = path.join(runtimeVendorDir, 'vrodos-takram-atmosphere.bundle.js');
 const takramEntryPath = path.join(rootDir, 'scripts', '.tmp-build-takram-atmosphere-entry.mjs');
 const threeShimPath = path.join(rootDir, 'scripts', '.tmp-three-global-shim.mjs');

@@ -1,0 +1,52 @@
+{
+  "metadata": {
+    "formatVersion": 4.0,
+    "type": "scene",
+    "generatedBy": "SceneExporter.js",
+    "ClearColor" : "#eeeeee",
+    "toneMappingExposure" : "1",
+    "enableEnvironmentTexture" : "false",
+    "backgroundStyleOption": 0,
+    "objects": 9
+  },
+  "urlBaseType": "relativeToScene",
+  "objects": {
+    "avatarCamera": {
+      "position": [
+        0,
+        0.2,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "quaternion": [
+        0.0000,
+        0.8980,
+        0.0000,
+        -0.4399
+      ],
+      "quaternion_player": [
+        0.0000,
+        0.8980,
+        0.0000,
+        -0.4399
+      ],
+      "quaternion_camera": [
+        0.0000,
+        0.0000,
+        0.0000,
+        1.0000
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "visible": true,
+      "children": {}
+    }
+  }
+}

@@ -124,21 +124,21 @@ fabric.properties
 assets/Director/Old/
 includes/FTPTransfer2.php
 
-js_libs/threejs79.zip
-js_libs/wu_3d_view.js
 test_compiler/
 /StandardAssets/
 /semantics/
 /peer-calls/
 /includes/translate/
 /build/
-/networked-aframe/server/keys.json
+/services/networked-aframe/server/keys.json
 
 /runtime/build/
 
 
 # Modernization Tooling
 vendor/
+!/assets/vendor/
+!/assets/vendor/**
 node_modules/
 build/
 build_dist/

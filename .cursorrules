@@ -15,7 +15,7 @@ Working (hand-styled only): d-btn, d-checkbox, d-radio, d-modal, d-input, d-sele
 - Tailwind prefix: tw-
 - DaisyUI prefix: d- (only with manual CSS backing)
 - Icons: Lucide (<i data-lucide="name">) — call lucide.createIcons() after dynamic DOM changes
-- Category icons: single source of truth in js_libs/vrodos_icons.js
+- Category icons: single source of truth in assets/js/editor/vrodos_icons.js
 - Camera: envir.orbitControls.object (NOT envir.camera)
 - Selection: mouseup with 5px drag threshold
 - Always null-guard transform_controls.object

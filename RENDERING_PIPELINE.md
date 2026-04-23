@@ -6,7 +6,7 @@
 
 ## 1. Pipeline Overview
 
-The compiled runtime uses a custom `renderer.render` hijack to insert a multi-pass post-processing pipeline between A-Frame's scene render and the final screen output. The component responsible is `scene-settings` at `runtime/assets/js/master/components/vrodos_scene_settings.component.js`, and the helpers live alongside it.
+The compiled runtime uses a custom `renderer.render` hijack to insert a multi-pass post-processing pipeline between A-Frame's scene render and the final screen output. The component responsible is `scene-settings` at `assets/js/runtime/master/components/vrodos_scene_settings.component.js`, and the helpers live alongside it.
 
 ### Full pipeline (all effects active)
 
@@ -31,12 +31,12 @@ Every stage except the scene render and composite is **conditional** — disable
 
 | File | Exports on `VRODOSMaster` |
 |------|---------------------------|
-| `runtime/assets/js/master/vrodos_shaders_bloom.js` | `createBrightPassMaterial`, `createGaussianBlurMaterial` |
-| `runtime/assets/js/master/vrodos_shaders_sao.js` | `createSAOMaterial`, `createSAOBlurMaterial` |
-| `runtime/assets/js/master/vrodos_shaders_fxaa.js` | `createFXAAMaterial` |
-| `runtime/assets/js/master/vrodos_shaders_taa.js` | `createTAAMaterial` |
-| `runtime/assets/js/master/vrodos_shaders_ssr.js` | `createSSRMaterial` |
-| `runtime/assets/js/master/vrodos_shaders_composite.js` | `createPhotorealPostMaterial(features)` |
+| `assets/js/runtime/master/vrodos_shaders_bloom.js` | `createBrightPassMaterial`, `createGaussianBlurMaterial` |
+| `assets/js/runtime/master/vrodos_shaders_sao.js` | `createSAOMaterial`, `createSAOBlurMaterial` |
+| `assets/js/runtime/master/vrodos_shaders_fxaa.js` | `createFXAAMaterial` |
+| `assets/js/runtime/master/vrodos_shaders_taa.js` | `createTAAMaterial` |
+| `assets/js/runtime/master/vrodos_shaders_ssr.js` | `createSSRMaterial` |
+| `assets/js/runtime/master/vrodos_shaders_composite.js` | `createPhotorealPostMaterial(features)` |
 
 Each shader file is an IIFE that registers its factory on `window.VRODOSMaster`. They have zero inter-dependencies.
 
@@ -44,9 +44,9 @@ Each shader file is an IIFE that registers its factory on `window.VRODOSMaster`.
 
 | File | Contents |
 |------|----------|
-| `runtime/assets/js/master/vrodos_postprocessing.js` | `enablePostProcessing`, `disablePostProcessing`, `updatePostProcessingSize`, `syncPostProcessingState` — owns the render loop patch, RT creation/disposal, and all post-FX state |
-| `runtime/assets/js/master/vrodos_scene_probe.js` | 15 scene-probe / HDR env-map functions |
-| `runtime/assets/js/master/vrodos_quality_profiles.js` | 9 quality-profile functions (render, shadow, material, background, post-FX, horizon sky, helper lights) |
+| `assets/js/runtime/master/vrodos_postprocessing.js` | `enablePostProcessing`, `disablePostProcessing`, `updatePostProcessingSize`, `syncPostProcessingState` — owns the render loop patch, RT creation/disposal, and all post-FX state |
+| `assets/js/runtime/master/vrodos_scene_probe.js` | 15 scene-probe / HDR env-map functions |
+| `assets/js/runtime/master/vrodos_quality_profiles.js` | 9 quality-profile functions (render, shadow, material, background, post-FX, horizon sky, helper lights) |
 
 Helper functions are defined on `VRODOSMaster.SceneSettingsHelpers` and the component's methods are simple property-reference delegates:
 
@@ -61,10 +61,10 @@ enablePostProcessing: VRODOSMaster.SceneSettingsHelpers.enablePostProcessing,
 
 | File | Role |
 |------|------|
-| `runtime/assets/js/master/vrodos_master_rendering.js` | `RGBELoader` (embedded, single copy), material enhancement, navmesh utilities, basic utility exports |
-| `runtime/assets/js/master/components/vrodos_scene_settings.component.js` | Schema, init/remove/tick lifecycle, FPS meter, value getters, delegate assignments |
+| `assets/js/runtime/master/vrodos_master_rendering.js` | `RGBELoader` (embedded, single copy), material enhancement, navmesh utilities, basic utility exports |
+| `assets/js/runtime/master/components/vrodos_scene_settings.component.js` | Schema, init/remove/tick lifecycle, FPS meter, value getters, delegate assignments |
 
-### Load order (`js_libs/aframe_libs/Master_Client_prototype.html`)
+### Load order (`templates/runtime/aframe/Master_Client_prototype.html`)
 
 ```
 vrodos_master_shared.js                 (VRODOSMaster namespace)
@@ -182,8 +182,8 @@ The Catmull-Rom history sample is the single most impactful TAA quality fix. Wit
 
 ### Files
 
-- `runtime/assets/js/master/vrodos_shaders_taa.js` — shader factory, Catmull-Rom sampler, variance clipping
-- `runtime/assets/js/master/vrodos_postprocessing.js` — jitter application, ping-pong, `taaBlitMaterial` passthrough
+- `assets/js/runtime/master/vrodos_shaders_taa.js` — shader factory, Catmull-Rom sampler, variance clipping
+- `assets/js/runtime/master/vrodos_postprocessing.js` — jitter application, ping-pong, `taaBlitMaterial` passthrough
 
 ---
 
@@ -286,8 +286,8 @@ HDRLoader (with a temporary `RGBELoader` compatibility alias in `vrodos_master_r
 
 ## 12. Adding a New Post-FX Effect (Checklist)
 
-1. Create `runtime/assets/js/master/vrodos_shaders_<effect>.js`, IIFE-wrapping a `createXMaterial()` factory and registering on `VRODOSMaster`.
-2. Add a `<script>` tag to `js_libs/aframe_libs/Master_Client_prototype.html` in the shader block.
+1. Create `assets/js/runtime/master/vrodos_shaders_<effect>.js`, IIFE-wrapping a `createXMaterial()` factory and registering on `VRODOSMaster`.
+2. Add a `<script>` tag to `templates/runtime/aframe/Master_Client_prototype.html` in the shader block.
 3. Add conditional resource creation in `vrodos_postprocessing.js` → `enablePostProcessing`, gated on the appropriate component setting.
 4. Add resize handling in `updatePostProcessingSize` with null guards.
 5. Add disposal in `disablePostProcessing` with null guards.

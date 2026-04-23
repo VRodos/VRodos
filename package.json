@@ -6,11 +6,11 @@
     "build": "npm run build:three && npm run build:css",
     "build:three": "node ./scripts/build-three-vendor.mjs",
     "build:vendor": "npm run build:three",
-    "lint": "eslint \"runtime/assets/js/master/**/*.js\"",
-    "lint:fix": "eslint \"runtime/assets/js/master/**/*.js\" --fix",
+    "lint": "eslint \"assets/js/runtime/master/**/*.js\"",
+    "lint:fix": "eslint \"assets/js/runtime/master/**/*.js\" --fix",
     "format": "prettier --write \"**/*.{js,css,md,json}\"",
-    "build:css": "tailwindcss -i ./css/vrodos_modern.css -o ./css/vrodos_modern_compiled.css",
-    "watch:css": "tailwindcss -i ./css/vrodos_modern.css -o ./css/vrodos_modern_compiled.css --watch"
+    "build:css": "tailwindcss -i ./assets/css/vrodos_modern.css -o ./assets/css/vrodos_modern_compiled.css",
+    "watch:css": "tailwindcss -i ./assets/css/vrodos_modern.css -o ./assets/css/vrodos_modern_compiled.css --watch"
   },
   "devDependencies": {
     "autoprefixer": "^10.5.0",

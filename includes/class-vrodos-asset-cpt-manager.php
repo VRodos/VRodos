@@ -977,10 +977,10 @@ class VRodos_Asset_CPT_Manager {
 		$data['dropdownHeading']           = 'Select a category';
 
 		// Prepare image URLs for the template
-		$data['no_img_path_url'] = plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'images/ic_sshot.png';
-		$data['login_promo_url'] = plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'images/screenshots/authtoolimage.jpg';
-		$data['glb_icon_url']    = plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'images/cube.png';
-		$data['audio_icon_url']  = plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'images/audio.png';
+		$data['no_img_path_url'] = VRodos_Path_Manager::image_url( 'ui/ic_sshot.png' );
+		$data['login_promo_url'] = VRodos_Path_Manager::image_url( 'screenshots/authtoolimage.jpg' );
+		$data['glb_icon_url']    = VRodos_Path_Manager::image_url( 'ui/cube.png' );
+		$data['audio_icon_url']  = VRodos_Path_Manager::image_url( 'ui/audio.png' );
 
 		if ( $data['asset_id'] != null ) {
 			$saved_category_terms = wp_get_post_terms( $data['asset_id'], 'vrodos_asset3d_cat' );
@@ -1107,7 +1107,7 @@ class VRodos_Asset_CPT_Manager {
 		$data['poi_img_content'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_content', true );
 
 		// POI Image File
-		$data['imagePoiImageURL'] = plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'images/ic_sshot.png';
+		$data['imagePoiImageURL'] = VRodos_Path_Manager::image_url( 'ui/ic_sshot.png' );
 		if ( $asset_id ) {
 			$imagePoiImageURL = self::resolve_media_meta_url( get_post_meta( $asset_id, 'vrodos_asset3d_poi_imgtxt_image', true ) );
 			if ( $imagePoiImageURL ) {

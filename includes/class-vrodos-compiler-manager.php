@@ -14,8 +14,8 @@ class VRodos_Compiler_Manager {
 
 	public function __construct() {
 		$this->server_protocol  = is_ssl() ? 'https' : 'http';
-		$this->plugin_path_url  = plugin_dir_url( dirname( __FILE__, 2 ) . '/VRodos.php' );
-		$this->plugin_path_dir  = plugin_dir_path( dirname( __FILE__, 2 ) . '/VRodos.php' );
+		$this->plugin_path_url  = VRodos_Path_Manager::plugin_url();
+		$this->plugin_path_dir  = VRodos_Path_Manager::plugin_path();
 
 		// Use the current request host if available (e.g. when accessing via IP)
 		// otherwise fallback to the site's configured URL.
@@ -41,11 +41,13 @@ class VRodos_Compiler_Manager {
 	public function compile_aframe( $project_id, $scene_id_list, $showPawnPositions ) {
 
 		// Start node js server at port 5832
-		$strCmd = 'node ' . $this->plugin_path_dir . '/networked-aframe/server/easyrtc-server.js';
+		$server_script = VRodos_Path_Manager::networked_aframe_server_path();
 
 		if ( PHP_OS == 'WINNT' ) {
-			popen( 'start ' . $strCmd, 'r' );
+			$strCmd = 'node "' . str_replace( '"', '\"', $server_script ) . '"';
+			popen( 'start "" ' . $strCmd, 'r' );
 		} else {
+			$strCmd = 'node ' . escapeshellarg( $server_script );
 			// if not already running (linux)
 			if ( ! $this->processExists( 'networked-afr' ) ) {
 				shell_exec( $strCmd . ' > /dev/null 2>/dev/null &' );
@@ -53,7 +55,7 @@ class VRodos_Compiler_Manager {
 		}
 
 		// Ensure output directory exists before writing compiled files
-		$build_dir = $this->plugin_path_dir . '/runtime/build/';
+		$build_dir = VRodos_Path_Manager::runtime_build_path();
 		if ( ! is_dir( $build_dir ) ) {
 			wp_mkdir_p( $build_dir );
 		}
@@ -189,6 +191,29 @@ class VRodos_Compiler_Manager {
 		return $url;
 	}
 
+	private function replace_runtime_asset_placeholders( string $content ): string {
+		// Keep the legacy placeholder forms so older copied prototypes still compile
+		// while source templates move to clearer asset-specific placeholders.
+		$replacements = [
+			'VRODOS_PLUGIN_URL_PLACEHOLDERruntime/assets/js/master/lib/' => VRodos_Path_Manager::runtime_master_url( 'lib/' ),
+			'VRODOS_PLUGIN_URL_PLACEHOLDERruntime/assets/js/' => VRodos_Path_Manager::runtime_js_url(),
+			'VRODOS_PLUGIN_URL_PLACEHOLDERruntime/assets/media/' => VRodos_Path_Manager::media_url(),
+			'VRODOS_PLUGIN_URL_PLACEHOLDERcss/' => VRodos_Path_Manager::css_url(),
+			'VRODOS_CSS_URL_PLACEHOLDER' => VRodos_Path_Manager::css_url(),
+			'VRODOS_ASSET_IMAGE_URL_PLACEHOLDER' => VRodos_Path_Manager::image_url(),
+		];
+
+		return str_replace( array_keys( $replacements ), array_values( $replacements ), $content );
+	}
+
+	private function runtime_asset_url( string $relative ): string {
+		return '../../assets/' . ltrim( str_replace( '\\', '/', $relative ), '/' );
+	}
+
+	private function runtime_image_url( string $relative ): string {
+		return $this->runtime_asset_url( 'images/' . ltrim( $relative, '/\\' ) );
+	}
+
 	private function is_immerse_project( int $project_id ): bool {
 		return $project_id > 0 && get_post_meta( $project_id, '_immerse_source', true ) === 'immerse';
 	}
@@ -264,7 +289,7 @@ class VRodos_Compiler_Manager {
 		$model = $dom->createElement( 'a-entity' );
 		$model->setAttribute(
 			'gltf-model',
-			'url(' . $this->normalize_url( $this->plugin_path_url . 'runtime/assets/media/assessment.glb' ) . ')'
+			'url(' . $this->normalize_url( VRodos_Path_Manager::model_url( 'runtime/assessment.glb' ) ) . ')'
 		);
 		$model->setAttribute( 'rotation', '-90 0 0' );
 		$model->setAttribute( 'class', 'raycastable hideable non-vr' );
@@ -458,24 +483,24 @@ class VRodos_Compiler_Manager {
 	}
 
 	private function createIndexFile( $project_title, $scene_id, $scene_title ) {
-		$filenameSource = $this->plugin_path_dir . '/js_libs/aframe_libs/index_prototype.html';
+		$filenameSource = VRodos_Path_Manager::runtime_template_path( 'index_prototype.html' );
 		$content        = $this->reader( $filenameSource );
 		$content        = str_replace( 'Client.html', 'Client_' . $scene_id . '.html', $content );
 		$content        = str_replace( 'project_sceneId', $project_title . ' - ' . $scene_title[0], $content );
+		$content        = $this->replace_runtime_asset_placeholders( $content );
 		$content        = str_replace(
 			'VRODOS_PLUGIN_URL_PLACEHOLDER',
 			esc_url( $this->plugin_path_url ),
 			$content
 		);
-		return $this->writer( $this->plugin_path_dir . '/runtime/build/' . 'index_' . $scene_id . '.html', $content );
+		return $this->writer( VRodos_Path_Manager::runtime_build_path( 'index_' . $scene_id . '.html' ), $content );
 	}
 
 	private function createMasterClient( $scene_id, $scene_title, $scene_json, $showPawnPositions, $index, $project_id, $scene_id_list ) {
 
 		// Read prototype
 		$content = $this->reader(
-			$this->plugin_path_dir
-			. '/js_libs/aframe_libs/Master_Client_prototype.html'
+			VRodos_Path_Manager::runtime_template_path( 'Master_Client_prototype.html' )
 		);
 
 
@@ -483,15 +508,16 @@ class VRodos_Compiler_Manager {
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
 		$content = str_replace( 'AFRAME_RUNTIME_URL_PLACEHOLDER', esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ), $content );
 		
-		// specific path for Immerse Assessment (different location)
-		$content = str_replace( 'src="js/components/immerse-assessment_component.js"', 'src="' . $this->plugin_path_url . 'js_libs/aframe_libs/js/components/immerse-assessment_component.js"', $content );
+		// Specific path for Immerse Assessment, now part of the runtime component set.
+		$content = str_replace( 'src="js/components/immerse-assessment_component.js"', 'src="' . VRodos_Path_Manager::runtime_component_url( 'immerse-assessment_component.js' ), $content );
 
 		// Bulk path redirection for all local assets to plugin absolute URLs
 		// We use context-aware patterns (src="js/ and href="css/) to avoid double-prefixing paths that already have placeholders
-		$content = str_replace( 'src="js/components/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/components/', $content );
-		$content = str_replace( 'src="js/master/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/master/', $content );
-		$content = str_replace( 'src="js/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/', $content );
-		$content = str_replace( 'href="css/', 'href="' . $this->plugin_path_url . 'runtime/assets/css/', $content );
+		$content = str_replace( 'src="js/components/', 'src="' . VRodos_Path_Manager::runtime_component_url(), $content );
+		$content = str_replace( 'src="js/master/', 'src="' . VRodos_Path_Manager::runtime_master_url(), $content );
+		$content = str_replace( 'src="js/', 'src="' . VRodos_Path_Manager::runtime_js_url(), $content );
+		$content = str_replace( 'href="css/', 'href="' . VRodos_Path_Manager::css_url( 'runtime/' ), $content );
+		$content = $this->replace_runtime_asset_placeholders( $content );
 
 		// Inject plugin base URL so runtime can load assets properly.
 		$content = str_replace(
@@ -607,8 +633,8 @@ class VRodos_Compiler_Manager {
 		$contentNew = $dom->saveHTML();
 		$contentNew = "<!-- Detected Hostname: {$this->website_root_url} -->\n" . $contentNew;
 
-		// Write back to root
-		return $this->writer( $this->plugin_path_dir . '/runtime/build/Master_Client_' . $scene_id . '.html', $contentNew );
+		// Write compiled HTML into the generated runtime build directory.
+		return $this->writer( VRodos_Path_Manager::runtime_build_path( 'Master_Client_' . $scene_id . '.html' ), $contentNew );
 	}
 
 	private function includeDoorFunctionality( $a_entity, $door_link ) {
@@ -620,8 +646,7 @@ class VRodos_Compiler_Manager {
 
 		// Read prototype
 		$content = $this->reader(
-			$this->plugin_path_dir
-			. '/js_libs/aframe_libs/Simple_Client_prototype.html'
+			VRodos_Path_Manager::runtime_template_path( 'Simple_Client_prototype.html' )
 		);
 
 		// Modify strings
@@ -633,13 +658,14 @@ class VRodos_Compiler_Manager {
 		$content = str_replace( 'AFRAME_RUNTIME_URL_PLACEHOLDER', esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ), $content );
 		
 		// specific path for Immerse Assessment (different location)
-		$content = str_replace( 'src="js/components/immerse-assessment_component.js"', 'src="' . $this->plugin_path_url . 'js_libs/aframe_libs/js/components/immerse-assessment_component.js"', $content );
+		$content = str_replace( 'src="js/components/immerse-assessment_component.js"', 'src="' . VRodos_Path_Manager::runtime_component_url( 'immerse-assessment_component.js' ), $content );
 
 		// Bulk path redirection for all local assets to plugin absolute URLs
-		$content = str_replace( 'src="js/components/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/components/', $content );
-		$content = str_replace( 'src="js/master/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/master/', $content );
-		$content = str_replace( 'src="js/', 'src="' . $this->plugin_path_url . 'runtime/assets/js/', $content );
-		$content = str_replace( 'href="css/', 'href="' . $this->plugin_path_url . 'runtime/assets/css/', $content );
+		$content = str_replace( 'src="js/components/', 'src="' . VRodos_Path_Manager::runtime_component_url(), $content );
+		$content = str_replace( 'src="js/master/', 'src="' . VRodos_Path_Manager::runtime_master_url(), $content );
+		$content = str_replace( 'src="js/', 'src="' . VRodos_Path_Manager::runtime_js_url(), $content );
+		$content = str_replace( 'href="css/', 'href="' . VRodos_Path_Manager::css_url( 'runtime/' ), $content );
+		$content = $this->replace_runtime_asset_placeholders( $content );
 
 		$content = str_replace(
 			'VRODOS_PLUGIN_URL_PLACEHOLDER',
@@ -708,8 +734,8 @@ class VRodos_Compiler_Manager {
 
 		$contentNew = $dom->saveHTML( $dom->documentElement );
 
-		// Write back to root
-		return $this->writer( $this->plugin_path_dir . '/runtime/build/Simple_Client_' . $scene_id . '.html', $contentNew );
+		// Write compiled HTML into the generated runtime build directory.
+		return $this->writer( VRodos_Path_Manager::runtime_build_path( 'Simple_Client_' . $scene_id . '.html' ), $contentNew );
 	}
 
 	/**
@@ -930,7 +956,7 @@ class VRodos_Compiler_Manager {
 	private function render_pawn_entity( $dom, $ascene, $obj, $config ) {
 		if ( isset( $config['showPawnPositions'] ) && $config['showPawnPositions'] === 'true' ) {
 			$pawn = $dom->createElement( 'a-entity' );
-			$pawn->setAttribute( 'gltf-model', 'url(' . $this->normalize_url( $this->plugin_path_url . 'assets/pawn.glb' ) . ')' );
+			$pawn->setAttribute( 'gltf-model', 'url(' . $this->normalize_url( VRodos_Path_Manager::model_url( 'editor/pawn.glb' ) ) . ')' );
 			$this->setAffineTransformations( $pawn, $obj );
 			$ascene->appendChild( $pawn );
 		}
@@ -1245,22 +1271,26 @@ class VRodos_Compiler_Manager {
 			// Video Assets (Controls)
 			$v_pl = $dom->createElement( 'img' );
 			$v_pl->setAttribute( 'id', 'video_pl_' . $uuid );
-			$v_pl->setAttribute( 'src', $this->plugin_path_url . 'assets/images/play_2f3542.png' );
+			$v_pl->setAttribute( 'src', $this->runtime_image_url( 'ui/play_2f3542.png' ) );
+			$v_pl->setAttribute( 'crossorigin', 'anonymous' );
 			$assets->appendChild( $v_pl );
 
 			$v_pas = $dom->createElement( 'img' );
 			$v_pas->setAttribute( 'id', 'video_pas_' . $uuid );
-			$v_pas->setAttribute( 'src', $this->plugin_path_url . 'assets/images/pause_2f3542.png' );
+			$v_pas->setAttribute( 'src', $this->runtime_image_url( 'ui/pause_2f3542.png' ) );
+			$v_pas->setAttribute( 'crossorigin', 'anonymous' );
 			$assets->appendChild( $v_pas );
 
 			$v_fs = $dom->createElement( 'img' );
 			$v_fs->setAttribute( 'id', 'video_fs_' . $uuid );
-			$v_fs->setAttribute( 'src', $this->plugin_path_url . 'assets/images/fullscreen_2f3542.png' );
+			$v_fs->setAttribute( 'src', $this->runtime_image_url( 'ui/fullscreen_2f3542.png' ) );
+			$v_fs->setAttribute( 'crossorigin', 'anonymous' );
 			$assets->appendChild( $v_fs );
 
 			$v_ex = $dom->createElement( 'img' );
 			$v_ex->setAttribute( 'id', 'video_ex_' . $uuid );
-			$v_ex->setAttribute( 'src', $this->plugin_path_url . 'assets/images/exit_2f3542.png' );
+			$v_ex->setAttribute( 'src', $this->runtime_image_url( 'ui/exit_2f3542.png' ) );
+			$v_ex->setAttribute( 'crossorigin', 'anonymous' );
 			$assets->appendChild( $v_ex );
 
 			// Video Display
@@ -1375,7 +1405,8 @@ class VRodos_Compiler_Manager {
 
 		$esc_img = $dom->createElement( 'img' );
 		$esc_img->setAttribute( 'id', 'esc_img_' . $uuid );
-		$esc_img->setAttribute( 'src', $this->plugin_path_url . 'assets/images/x_2f3542.png' );
+		$esc_img->setAttribute( 'src', $this->runtime_image_url( 'ui/x_2f3542.png' ) );
+		$esc_img->setAttribute( 'crossorigin', 'anonymous' );
 		$assets->appendChild( $esc_img );
 
 		// 2. UI Container (attached to scene, moved by JS)

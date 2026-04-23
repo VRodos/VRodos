@@ -214,12 +214,12 @@ The plugin follows a manager-class architecture, with dedicated managers for ass
 
 The bundled server lives in:
 
-`runtime/networked-aframe/`
+`services/networked-aframe/`
 
 Install and run it with:
 
 ```bash
-cd wp-content/plugins/VRodos/runtime/networked-aframe/
+cd wp-content/plugins/VRodos/services/networked-aframe/
 npm install
 cd server/
 node easyrtc-server.js

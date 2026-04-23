@@ -3,12 +3,12 @@
 > **Canonical Source of Truth:** This file provides foundational mandates for AI agents. It incorporates rules from `CLAUDE.md` and project documentation.
 
 ## Project Overview
-VRodos is a WordPress plugin that transforms a standard website into a **3D/VR content management and creation platform**. It features a WebGL-based editor (Three.js r147), asset management (GLB, OBJ, FBX), and A-Frame export for VR.
+VRodos is a WordPress plugin that transforms a standard website into a **3D/VR content management and creation platform**. It features a WebGL-based editor (Three.js r181 vendor stack), asset management (GLB, OBJ, FBX), and A-Frame export for VR.
 
 - **Backend:** PHP 8.3+ (modernized), WordPress 6.8+
-- **Frontend:** Vanilla JS, Three.js (r147), A-Frame (1.4.2)
+- **Frontend:** Vanilla JS, Three.js (r181), A-Frame (1.7.1 runtime)
 - **Styling:** Tailwind CSS + DaisyUI (namespaced with `tw-` prefix)
-- **Collaborative Server:** Node.js + easyRTC (located in `runtime/networked-aframe/`)
+- **Collaborative Server:** Node.js + easyRTC (located in `services/networked-aframe/`)
 
 ## Technical Architecture
 
@@ -21,7 +21,7 @@ The plugin is organized into ~18 specialized **Manager Classes** in `includes/`.
 
 ### Data Model
 - Scenes are stored as structured JSON in `post_content` or post meta.
-- Custom persistence logic resides in `js_libs/vrodos_ScenePersistence.js`.
+- Custom persistence logic resides in `assets/js/editor/vrodos_ScenePersistence.js`.
 
 ## Critical Development Rules
 
@@ -40,10 +40,11 @@ The plugin is organized into ~18 specialized **Manager Classes** in `includes/`.
 
 ### 3. UI Components & Icons
 - **Icons:** Use Lucide icons (`<i data-lucide="name">`). Call `lucide.createIcons()` after dynamic DOM updates.
-- **Category Icons:** The single source of truth is `js_libs/vrodos_icons.js` (JS) and `vrodos_get_asset_category_icon()` in `vrodos-assets-list-template.php` (PHP).
+- **Category Icons:** The single source of truth is `assets/js/editor/vrodos_icons.js` (JS) and `vrodos_get_asset_category_icon()` in `vrodos-assets-list-template.php` (PHP).
 
 ### 4. Template Structure
-Every template file in `includes/templates/` must output a full HTML document (`<!DOCTYPE html>`, `<html>`, `<body>`).
+Canonical page templates live in `templates/pages/`, while page-template meta aliases preserve compatibility for older assignments during migration.
+Every page template must output a full HTML document (`<!DOCTYPE html>`, `<html>`, `<body>`).
 - Use `wp_head()` in `<head>` and `wp_footer()` before `</body>`.
 - Ensure `<body>` has `vrodos-manager-wrapper` and `tw-overflow-hidden`.
 
@@ -56,8 +57,8 @@ Every template file in `includes/templates/` must output a full HTML document (`
 
 ## Collaborative Server Setup (networked-aframe)
 The server enables real-time collaborative editing.
-1. **Dependencies:** `cd runtime/networked-aframe/ && npm install`
-2. **TURN Server:** Create `runtime/networked-aframe/server/keys.json` for WebRTC connections.
+1. **Dependencies:** `cd services/networked-aframe/ && npm install`
+2. **TURN Server:** Create `services/networked-aframe/server/keys.json` for WebRTC connections.
     ```json
     {
       "iceServers": [
@@ -70,7 +71,7 @@ The server enables real-time collaborative editing.
       ]
     }
     ```
-3. **Start:** `node runtime/networked-aframe/server/easyrtc-server.js` (Default port: `5832`)
+3. **Start:** `node services/networked-aframe/server/easyrtc-server.js` (Default port: `5832`)
 
 ## Building and Running
 

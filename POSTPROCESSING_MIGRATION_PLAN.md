@@ -102,7 +102,7 @@ These decisions are still active and should be treated as the source of truth.
 
 - no shared composer state with the legacy engine
 - no shared render targets with the legacy engine
-- PMNDRS-specific behavior lives in `runtime/assets/js/master/vrodos_postprocessing_pmndrs.js`
+- PMNDRS-specific behavior lives in `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js`
 
 ### 4. WebXR still bypasses desktop post-FX
 

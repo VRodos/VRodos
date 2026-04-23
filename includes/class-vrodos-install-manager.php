@@ -39,9 +39,8 @@ class VRodos_Install_Manager {
 	 * Safe to call on every activation — wp_mkdir_p() is idempotent.
 	 */
 	private function create_required_directories(): void {
-		$plugin_dir = plugin_dir_path( VRODOS_PLUGIN_FILE );
 		$dirs = [
-			$plugin_dir . 'runtime/build',
+			VRodos_Path_Manager::runtime_build_path(),
 		];
 		foreach ( $dirs as $dir ) {
 			wp_mkdir_p( $dir );

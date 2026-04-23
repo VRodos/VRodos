@@ -8,7 +8,7 @@ Whenever you modify the modern design system in VRodos, follow these steps to en
 
 ## 1. Modify Source CSS
 All modern transformations and design system extensions should be made in:
-[vrodos_modern.css](file:///d:/localhost/wp_vrodos/wp-content/plugins/VRodos/css/vrodos_modern.css)
+[vrodos_modern.css](file:///d:/localhost/wp_vrodos/wp-content/plugins/VRodos/assets/css/vrodos_modern.css)
 
 ## 2. Content Path Verification
 If you add new PHP templates or move logic to different files, ensure they are covered in the `content` array of:
@@ -23,7 +23,7 @@ npm run build:css
 ```
 
 This command updates:
-[vrodos_modern_compiled.css](file:///d:/localhost/wp_vrodos/wp-content/plugins/VRodos/css/vrodos_modern_compiled.css)
+[vrodos_modern_compiled.css](file:///d:/localhost/wp_vrodos/wp-content/plugins/VRodos/assets/css/vrodos_modern_compiled.css)
 
 ## 4. Verification
 Always verify that:

@@ -20,8 +20,8 @@ return static function (RectorConfig $rectorConfig): void {
         // SetList::TYPE_DECLARATION, 
     ]);
     
-    // Skip some files if needed (e.g. templates which might break with strict types)
+    // Skip page templates from both the canonical and legacy mirror locations.
     $rectorConfig->skip([
-        __DIR__ . '/includes/templates/*', 
+        __DIR__ . '/templates/pages/*',
     ]);
 };

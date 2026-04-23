@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="emerald">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Collaborative content creation</title>
+    <meta name="description" content="Collaborative content creation" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <!-- A-Frame runtime source is selected by the compiler to allow a pinned master spike without changing the prototype again. -->
+    <script src="AFRAME_RUNTIME_URL_PLACEHOLDER"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
+    <!-- Modern performance monitor with fallback -->
+    <script type="module">
+        import Stats from 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js';
+        window.Stats = Stats;
+    </script>
+    <link rel="stylesheet" href="https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.css" />
+    <script src="https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.umd.js"></script>
+
+    <script src="../easyrtc/easyrtc.js"></script>
+    <script src="../dist/networked-aframe.js"></script>
+
+    <script src="js/highlight_img.js"></script>
+
+    <script src="js/components/poi-image_component.js"></script>
+    <script src="js/components/chat_poi_component.js"></script>
+    <script src="js/components/indicator_component.js"></script>
+    <script src="js/components/poi-link_component.js"></script>
+    <script src="js/components/door_component.js"></script>
+    <script src="js/components/audio_component.js"></script>
+    <script src="js/components/video_component.js"></script>
+    <script src="js/components/vrodos_hypnotic_hover.component.js"></script>
+    <script src="js/components/immerse-assessment_component.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.7.0/dist/aframe-extras.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.5.0/dist/aframe-environment-component.min.js">
+    </script>
+
+
+
+    <link rel="stylesheet" type="text/css" href="VRODOS_CSS_URL_PLACEHOLDERruntime/vrodos_runtime.css" />
+    <link rel="stylesheet" type="text/css" href="VRODOS_CSS_URL_PLACEHOLDERvrodos_modern_compiled.css" />
+    <script src="https://unpkg.com/lucide@0.469.0"></script>
+
+    <!-- Hard Global Scrollbar Suppression for VR Runtime -->
+    <style>
+        html,
+        body {
+            overflow: hidden !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+            overscroll-behavior: none !important;
+        }
+
+        .a-canvas {
+            width: 100% !important;
+            height: 100% !important;
+            outline: none !important;
+        }
+
+        ::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        .tw-modal {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+
+        .tw-modal::-webkit-scrollbar {
+            display: none !important;
+        }
+    </style>
+
+    <!---- Blink Controls ---->
+    <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls/dist/aframe-blink-controls.min.js"></script>
+
+    <!-- Master Client Modular Runtime -->
+    <script>
+        window.VRODOS_PLUGIN_URL = "VRODOS_PLUGIN_URL_PLACEHOLDER";
+        window.VRODOS_ASSET_IMAGE_URL = "VRODOS_ASSET_IMAGE_URL_PLACEHOLDER";
+    </script>
+    <script src="js/master/vrodos_master_shared.js"></script>
+    <script src="js/master/vrodos_ui_helpers.js"></script>
+    <script src="js/master/vrodos_master_bootstrap.js"></script>
+    <script src="js/master/vrodos_master_rendering.js"></script>
+    <script src="js/master/vrodos_shaders_bloom.js"></script>
+    <script src="js/master/vrodos_shaders_sao.js"></script>
+    <script src="js/master/vrodos_shaders_fxaa.js"></script>
+    <script src="js/master/vrodos_shaders_taa.js"></script>
+    <script src="js/master/vrodos_shaders_ssr.js"></script>
+    <script src="js/master/vrodos_shaders_composite.js"></script>
+    <script src="js/master/vrodos_postprocessing.js"></script>
+    <!-- pmndrs/postprocessing 6.39 UMD build. Top-level `var POSTPROCESSING = (...)`
+         in a non-module script tag becomes `window.POSTPROCESSING` automatically.
+         Required by vrodos_postprocessing_pmndrs.js when postFXEngine === 'pmndrs'. -->
+    <script src="js/master/lib/postprocessing.min.js"></script>
+    <script src="js/master/lib/vrodos-takram-atmosphere.bundle.js"></script>
+    <script src="js/master/vrodos_postprocessing_pmndrs.js"></script>
+    <script src="js/master/vrodos_scene_probe.js"></script>
+    <script src="js/master/vrodos_quality_profiles.js"></script>
+    <script src="js/master/components/vrodos_scene_loader.component.js"></script>
+    <script src="js/master/components/vrodos_avatar.component.js"></script>
+    <script src="js/master/components/vrodos_scene_settings.component.js"></script>
+    <script src="js/master/components/vrodos_navigation.component.js"></script>
+    <script src="js/master/components/vrodos_misc.component.js"></script>
+
+</head>
+
+<body id="master-client-body" class="vrodos-manager-wrapper tw-overflow-hidden tw-antialiased">
+
+    <div class="ChatDrawerStyle tw-z-[101] tw-flex tw-flex-col tw-overflow-hidden tw-shadow-2xl tw-transition-all tw-duration-500"
+        id="chat-wrapper-el" style="visibility: hidden">
+
+        <!-- Minimalist Header (Dark Theme - Ultra Thin) -->
+        <div
+            class="tw-flex tw-items-center tw-justify-between tw-gap-2 tw-border-b tw-border-white/10 tw-bg-slate-900/40 tw-px-3 tw-py-1 tw-backdrop-blur-sm">
+            <div class="tw-join tw-rounded-lg tw-bg-white/10 tw-p-0.5" role="tablist">
+                <button id="public-chat-button"
+                    class="tw-btn tw-btn-xs tw-join-item tw-btn-primary tw-h-6 tw-min-h-0 tw-rounded-md tw-border-0 tw-px-3 tw-text-[9px] tw-font-bold tw-text-white">Public</button>
+                <button id="private-chat-button"
+                    class="tw-btn tw-btn-xs tw-join-item tw-btn-ghost tw-h-6 tw-min-h-0 tw-rounded-md tw-border-0 tw-px-3 tw-text-[9px] tw-font-bold tw-text-white/50 tw-hidden">
+                    <span id="private-chat-button-label">Private</span>
+                </button>
+            </div>
+
+            <div class="tw-flex tw-items-center tw-gap-1">
+                <button id="expand-chat-btn"
+                    class="tw-btn tw-btn-square tw-btn-xs tw-btn-ghost tw-h-6 tw-w-6 tw-min-h-0 tw-text-white/60 hover:tw-bg-white/10"
+                    title="Expand">
+                    <i data-lucide="expand" class="tw-h-3 tw-w-3"></i>
+                </button>
+                <button id="minimize-chat-btn"
+                    class="tw-btn tw-btn-square tw-btn-xs tw-btn-ghost tw-h-6 tw-w-6 tw-min-h-0 tw-text-white/60 hover:tw-bg-white/10"
+                    title="Minimize">
+                    <i data-lucide="minus" class="tw-h-3 tw-w-3"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat History -->
+        <div class="ChatMessagesStyleNormal tw-flex-1 tw-overflow-y-auto tw-bg-transparent tw-px-3 tw-py-2"
+            id="chat-messages-wrapper">
+            <div id="chat-messages" class="tw-text-[12px] tw-leading-relaxed tw-text-white/80"></div>
+        </div>
+
+        <!-- Consolidated Control Bar (Dark Theme) -->
+        <div id="chatControlsOverlay"
+            class="tw-border-t tw-border-white/10 tw-bg-slate-900/40 tw-p-2 tw-backdrop-blur-sm">
+            <div class="tw-flex tw-items-center tw-gap-2">
+                <!-- Color -->
+                <button id="color-changer"
+                    class="tw-w-7 tw-h-7 tw-rounded-full tw-border-2 tw-border-white/20 tw-shadow-sm tw-transition-transform hover:tw-scale-110 active:tw-scale-95"
+                    title="Avatar color"
+                    onclick="let nC = window.ntExample.randomColor(); document.getElementById('cameraA').setAttribute('player-info', 'color', nC); this.style.backgroundColor = nC; this.style.color = nC;">
+                </button>
+
+                <!-- Nick -->
+                <input id="username-overlay"
+                    class="tw-w-16 tw-h-8 tw-rounded-lg tw-bg-white/10 tw-px-2 tw-text-[10px] tw-font-bold tw-text-white tw-placeholder-white/30 tw-transition-all focus:tw-bg-white/20 focus:tw-ring-1 focus:tw-ring-primary/40"
+                    maxlength="16" placeholder="Nick"
+                    oninput="document.getElementById('cameraA').setAttribute('player-info', 'name', this.value)" />
+
+                <!-- Message -->
+                <div class="tw-relative tw-flex-1">
+                    <input type="text" id="chatInput"
+                        class="tw-w-full tw-h-8 tw-rounded-lg tw-bg-white/10 tw-border tw-border-white/10 tw-pl-3 tw-pr-10 tw-text-[12px] tw-text-white placeholder:tw-text-white/30 focus:tw-border-emerald-500/50 focus:tw-ring-4 focus:tw-ring-emerald-500/10"
+                        placeholder="Message...">
+                    <button id="send-msg-chat-btn"
+                        class="tw-absolute tw-right-1 tw-top-1 tw-w-6 tw-h-6 tw-bg-transparent tw-text-white/60 tw-flex tw-items-center tw-justify-center tw-transition-all hover:tw-text-emerald-400 active:tw-scale-90">
+                        <i data-lucide="send" class="tw-h-3 tw-w-3"></i>
+                    </button>
+                </div>
+
+                <button id="exit-private-chat-btn" class="tw-btn tw-btn-square tw-btn-xs tw-btn-ghost tw-text-rose-400"
+                    title="Exit Private" style="display: none">
+                    <i data-lucide="x" class="tw-h-3 tw-w-3"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mediaPanel">
+        <div class="wrapperVideoElement" style="visibility: hidden">
+            <video id="video-preview" width="300" height="200" autoplay muted></video>
+            <video id="recording" hidden></video>
+        </div>
+
+        <div class="actionsDirector tw-absolute tw-bottom-6 tw-right-6 tw-w-[280px] tw-bg-white/95 tw-backdrop-blur-xl tw-rounded-3xl tw-border tw-border-slate-100 tw-shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] tw-p-5 tw-z-[1000] tw-flex tw-flex-col tw-gap-4"
+            name="actionsDiv" id="actionsDiv">
+
+            <!-- Header -->
+            <div class="tw-flex tw-items-center tw-justify-between tw-pb-3 tw-border-b tw-border-slate-100">
+                <span class="tw-text-xs tw-font-black tw-uppercase tw-tracking-widest tw-text-slate-800">Director
+                    Panel</span>
+                <button id="toggle_controls"
+                    class="tw-btn tw-btn-circle tw-btn-xs tw-btn-ghost tw-text-slate-400 hover:tw-text-rose-500 tw-min-h-0 tw-h-6 tw-w-6"
+                    title="Hide panel (Press 'X' to show again)">
+                    <i data-lucide="x" class="tw-h-3.5 tw-w-3.5"></i>
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="tw-grid tw-grid-cols-2 tw-gap-3">
+                <div class="tw-rounded-2xl tw-bg-slate-50 tw-p-3 tw-flex tw-flex-col tw-items-center tw-justify-center">
+                    <i data-lucide="theater" class="tw-h-5 tw-w-5 tw-text-emerald-500 tw-mb-1"></i>
+                    <span id="roomNameShow"
+                        class="tw-text-[10px] tw-font-bold tw-text-slate-600 tw-truncate tw-w-full tw-text-center">roomname</span>
+                </div>
+                <div class="tw-rounded-2xl tw-bg-slate-50 tw-p-3 tw-flex tw-flex-col tw-items-center tw-justify-center">
+                    <i data-lucide="users" class="tw-h-5 tw-w-5 tw-text-emerald-500 tw-mb-1"></i>
+                    <span id="occupantsNumberShow" class="tw-text-xs tw-font-black tw-text-slate-800">0</span>
+                </div>
+            </div>
+
+            <!-- Main Actions -->
+            <div class="tw-flex tw-flex-col tw-gap-2">
+                <button id="obtainStatusAndSetSizeControls"
+                    class="tw-btn tw-btn-sm tw-w-full tw-rounded-xl tw-bg-slate-50 tw-border tw-border-slate-200 tw-text-slate-700 hover:tw-bg-white hover:tw-border-emerald-300 hover:tw-text-emerald-600 tw-shadow-sm tw-flex tw-items-center tw-justify-center tw-gap-2 tw-font-bold tw-transition-colors"
+                    title="Obtain status and control green screens">
+                    <i data-lucide="refresh-cw" class="tw-h-4 tw-w-4"></i>
+                    Sync Green Screens
+                </button>
+                <button id="screen-btn-sendscreen"
+                    class="tw-btn tw-btn-sm tw-w-full tw-rounded-xl tw-bg-slate-50 tw-border tw-border-slate-200 tw-text-slate-700 hover:tw-bg-white hover:tw-border-emerald-300 hover:tw-text-emerald-600 tw-shadow-sm tw-flex tw-items-center tw-justify-center tw-gap-2 tw-font-bold tw-transition-colors"
+                    title="Send scene stream back to actors">
+                    <i data-lucide="monitor-play" class="tw-h-4 tw-w-4"></i>
+                    Stream to Actors
+                </button>
+            </div>
+
+            <!-- Recording Controls -->
+            <div
+                class="tw-bg-slate-50 tw-rounded-2xl tw-p-3 tw-border tw-border-slate-100 tw-flex tw-flex-col tw-gap-2">
+                <div class="tw-flex tw-items-center tw-justify-center tw-gap-3">
+                    <button id="start-recording-btn"
+                        class="tw-btn tw-btn-circle tw-btn-sm tw-bg-white tw-border tw-border-slate-200 hover:tw-bg-rose-50 hover:tw-border-rose-200 tw-shadow-sm tw-transition-colors"
+                        title="Start capturing video">
+                        <span
+                            class="tw-h-3 tw-w-3 tw-rounded-full tw-bg-rose-500 tw-shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>
+                    </button>
+
+                    <a id="download-recording-btn"
+                        class="tw-btn tw-btn-circle tw-btn-sm tw-bg-slate-200 tw-border-none tw-text-slate-600 hover:tw-bg-slate-300 hover:tw-text-slate-800"
+                        title="Download video" style="visibility: hidden">
+                        <i data-lucide="download" class="tw-h-4 tw-w-4"></i>
+                    </a>
+
+                    <button id="upload-recording-btn"
+                        class="tw-btn tw-btn-circle tw-btn-sm tw-bg-emerald-100 tw-border-none tw-text-emerald-700 hover:tw-bg-emerald-200 active:tw-scale-95"
+                        title="Upload Recording to MediaVerse" style="visibility: hidden;" disabled>
+                        <i data-lucide="upload-cloud" class="tw-h-4 tw-w-4"></i>
+                    </button>
+                </div>
+                <div class="tw-text-center tw-empty:tw-hidden">
+                    <span id="captured-video-label" class="tw-text-[10px] tw-font-bold tw-text-slate-500"></span>
+                </div>
+            </div>
+
+            <!-- Footer / Camera Position -->
+            <div class="tw-flex tw-items-center tw-justify-between tw-pt-3 tw-border-t tw-border-slate-100">
+                <div class="tw-flex tw-items-center tw-gap-2 tw-text-slate-400">
+                    <i data-lucide="camera" class="tw-h-3.5 tw-w-3.5"></i>
+                    <span class="tw-text-[10px] tw-font-black tw-uppercase tw-tracking-wider">Camera Pos</span>
+                </div>
+                <span id="positionShow" class="tw-text-[10px] tw-font-mono tw-font-bold tw-text-emerald-600"></span>
+            </div>
+
+            <div id="panelsSizeControlsDiv" class="tw-hidden"></div>
+        </div>
+        <input id="node-url-input" hidden disabled />
+        <input id="node-token-input" hidden disabled />
+        <input id="is-base-scene-input" hidden disabled />
+    </div>
+    </div>
+
+    <!-- Avatar Selection Redesign (Pure White & Clean) -->
+    <dialog id="avatar-selection-dialog" class="tw-modal vrodos-runtime-dialog tw-overflow-hidden"
+        aria-labelledby="Avatar selection popup">
+        <div
+            class="tw-modal-box tw-p-0 tw-overflow-hidden tw-border-none tw-bg-white/95 tw-shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] tw-backdrop-blur-2xl tw-max-h-[90vh]">
+            <!-- Header (No Border) -->
+            <div class="tw-flex tw-items-center tw-justify-between tw-gap-4 tw-bg-white tw-px-6 tw-py-5">
+                <h3 class="tw-text-xl tw-font-black tw-uppercase tw-tracking-widest tw-text-slate-900">Select Avatar
+                </h3>
+                <button class="tw-btn tw-btn-circle tw-btn-sm tw-btn-ghost tw-text-slate-400 hover:tw-bg-slate-100"
+                    type="button" data-dialog-close="cancel">
+                    <i data-lucide="x" class="tw-h-4 tw-w-4"></i>
+                </button>
+            </div>
+
+            <div class="tw-px-8 tw-pb-10 tw-pt-2 tw-overflow-y-auto tw-scrollbar-none">
+                <form name="avatarRadiosForm" class="tw-grid tw-gap-5 md:tw-grid-cols-2">
+                    <!-- Option: No Avatar -->
+                    <div class="tw-relative">
+                        <input type="radio" id="no-avatar-radio" name="avatar-radios" value="no-avatar" checked
+                            class="tw-peer tw-hidden">
+                        <label for="no-avatar-radio"
+                            class="tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-items-center tw-gap-5 tw-rounded-[2rem] tw-border-2 tw-border-slate-50 tw-bg-slate-50/50 tw-p-8 tw-text-center tw-transition-all hover:tw-bg-white peer-checked:tw-border-emerald-500 peer-checked:tw-bg-white peer-checked:tw-shadow-xl peer-checked:tw-shadow-emerald-500/10">
+                            <div
+                                class="tw-flex tw-h-24 tw-w-24 tw-items-center tw-justify-center tw-rounded-[2.5rem] tw-bg-slate-100/80 tw-text-slate-500 tw-ring-1 tw-ring-inset tw-ring-slate-200/50">
+                                <i data-lucide="user-round-x" class="tw-h-12 tw-w-12"></i>
+                            </div>
+                            <div class="tw-space-y-2">
+                                <div class="tw-text-lg tw-font-black tw-text-slate-900">No Avatar</div>
+                                <p class="tw-text-xs tw-leading-relaxed tw-text-slate-400">Interact as a simple pointer
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Option: A Blob -->
+                    <div class="tw-relative">
+                        <input type="radio" id="blob-radio" value="blob" name="avatar-radios" class="tw-peer tw-hidden">
+                        <label for="blob-radio"
+                            class="tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-items-center tw-gap-5 tw-rounded-[2rem] tw-border-2 tw-border-slate-50 tw-bg-slate-50/50 tw-p-8 tw-text-center tw-transition-all hover:tw-bg-white peer-checked:tw-border-emerald-500 peer-checked:tw-bg-white peer-checked:tw-shadow-xl peer-checked:tw-shadow-emerald-500/10">
+                            <div class="tw-overflow-hidden tw-rounded-[2.5rem] tw-ring-1 tw-ring-slate-200/50">
+                                <img src="img/blob-avatar.png" width="96" height="96" class="tw-object-cover" />
+                            </div>
+                            <div class="tw-space-y-2">
+                                <div class="tw-text-lg tw-font-black tw-text-slate-900">Visual Avatar</div>
+                                <div
+                                    class="tw-inline-flex tw-items-center tw-rounded-full tw-bg-emerald-100 tw-px-3 tw-py-0.5 tw-text-[10px] tw-font-black tw-uppercase tw-tracking-widest tw-text-emerald-700">
+                                    Recommended</div>
+                            </div>
+                        </label>
+                    </div>
+                </form>
+
+                <div class="tw-mt-8 tw-flex tw-items-center tw-justify-center tw-gap-4">
+                    <button id="selectAvatarBtn"
+                        class="tw-btn tw-btn-primary tw-h-12 tw-min-h-0 tw-w-full tw-rounded-2xl tw-border-none tw-bg-emerald-500 tw-text-sm tw-font-black tw-uppercase tw-tracking-widest tw-text-white tw-shadow-lg tw-shadow-emerald-500/25 hover:tw-bg-emerald-600 active:tw-scale-[0.98]"
+                        type="button" data-dialog-close="accept" onclick="selectAvatarType()">
+                        Continue to Scene
+                    </button>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+
+    <!-- IMG POI Dialog component (Modernized: Hero Layout) -->
+    <dialog id="poi-img-dialog" class="tw-modal vrodos-runtime-dialog tw-overflow-hidden"
+        aria-labelledby="Image POI popup">
+        <div
+            class="tw-modal-box tw-p-0 tw-max-w-[min(92vw,52rem)] tw-max-h-[85vh] tw-w-full tw-bg-transparent tw-shadow-none tw-overflow-hidden">
+            <div
+                class="tw-relative tw-w-full tw-bg-white/95 tw-backdrop-blur-2xl tw-rounded-[2rem] tw-overflow-hidden tw-shadow-[0_32px_64px_-16px_rgba(0,0,0,0.25)] tw-border tw-border-white/60">
+                <!-- X Overlay Button -->
+                <button
+                    class="tw-absolute tw-top-5 tw-right-5 tw-z-50 tw-btn tw-btn-circle tw-btn-sm tw-bg-white/40 tw-text-slate-800 tw-backdrop-blur-xl tw-border-white/50 tw-shadow-sm hover:tw-bg-white/80 active:tw-scale-95"
+                    type="button" data-dialog-close="cancel" aria-label="Close image details">
+                    <i data-lucide="x" class="tw-h-4 tw-w-4"></i>
+                </button>
+
+                <!-- Image Display Area -->
+                <div class="tw-flex tw-justify-center tw-bg-slate-100/30 tw-border-b tw-border-slate-100">
+                    <img src="" alt="Image POI Content" id="poi-img-dialog-image"
+                        class="tw-max-h-[50vh] tw-w-auto tw-max-w-full tw-object-contain tw-transition-transform tw-duration-500" />
+                </div>
+
+                <!-- Content Area -->
+                <div class="tw-p-10 tw-bg-white">
+                    <div id="poi-img-dialog-title"
+                        class="tw-text-2xl tw-font-black tw-uppercase tw-tracking-widest tw-text-slate-900 tw-mb-4">
+                    </div>
+                    <div id="poi-img-dialog-description"
+                        class="tw-text-slate-600 tw-leading-relaxed tw-text-lg tw-max-h-[20vh] tw-overflow-y-auto tw-scrollbar-none">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Video selection (Video Only with X Overlay) -->
+    <dialog id="video-controls-dialog" class="tw-modal vrodos-runtime-dialog tw-overflow-hidden"
+        aria-labelledby="Video viewer">
+        <div
+            class="tw-modal-box tw-p-0 tw-max-w-[min(90vw,80rem)] tw-max-h-[85vh] tw-w-full tw-bg-transparent tw-shadow-none tw-overflow-hidden">
+            <div
+                class="tw-relative tw-w-full tw-aspect-video tw-bg-black tw-rounded-2xl tw-overflow-hidden tw-shadow-2xl tw-border tw-border-white/10">
+                <!-- X Overlay Button -->
+                <button
+                    class="tw-absolute tw-top-4 tw-right-4 tw-z-50 tw-btn tw-btn-circle tw-btn-sm tw-bg-black/40 tw-text-white tw-backdrop-blur-md tw-border-white/10 hover:tw-bg-black/60 active:tw-scale-95"
+                    type="button" data-dialog-close="cancel" aria-label="Close video viewer">
+                    <i data-lucide="x" class="tw-h-4 tw-w-4"></i>
+                </button>
+
+                <video controls controlsList="nodownload" id="video-panel-video"
+                    class="tw-h-full tw-w-full tw-block tw-bg-black">
+                    Your browser does not support video.
+                </video>
+            </div>
+        </div>
+    </dialog>
+
+    <a-scene oculus-go-controls-enabled start-animation id="aframe-scene-container"
+        fog="AFRAME_FOG_PLACEHOLDER" background="color: AFRAME_CLEARCOLOR_PLACEHOLDER" renderer="antialias: true;
+            sortTransparentObjects: true;
+            toneMapping: ACESFilmic;
+            precision: high;
+            logarithmicDepthBuffer: true;
+            alpha: true;" shadow="type: pcfsoft;" vr-mode-ui="enabled: true"
+        device-orientation-permission-ui="enabled: false" loading-screen="dotsColor: gray; backgroundColor: black;"
+        networked-scene="app: appname; room: roomname; debug: false; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;">
+
+        <a-assets id="scene-assets">
+
+            <!-- Avatar Template -->
+            <template id="avatar-template-expo">
+                <a-entity class="avatar hideable" player-info avatar-movement-info>
+
+
+                    <!-- Sphere Avatar-->
+                    <a-sphere class="head" scale="0.2 0.18 0.2" visible="false"
+                        shadow="cast:true; receive:true;"></a-sphere>
+                    <a-entity class="face" position="0 0.05 0" visible="false">
+                        <a-sphere class="eye" color="white" position="0.06 0.05 -0.16" scale="0.04 0.04 0.04">
+                            <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+                        </a-sphere>
+                        <a-sphere class="eye" color="white" position="-0.06 0.05 -0.16" scale="0.04 0.04 0.04">
+                            <a-sphere class="pupil" color="black" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+                        </a-sphere>
+                    </a-entity>
+
+
+                    <!-- Text component for a nametag; the value will be updated by the player-info component -->
+                    <a-text class="nametag" value="?" rotation="0 180 0" position="0.25 -0.35 0" side="double"
+                        scale=".5 .5 .5" visible="false"></a-text>
+                </a-entity>
+            </template>
+
+            <!-- Avatar template for MediaVerse projects-->
+            <template id="avatar-template">
+                <a-entity class="avatar hideable" networked-audio-source>
+
+                    <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="2" height="1.5"
+                        position="0 0.6 -0.15" material="side: double"
+                        networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
+                        render-order-change="2000">
+                    </a-plane>
+
+                    <a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15"
+                        material="side: double" networked-video-source="streamName:screen">
+                    </a-plane>
+                </a-entity>
+            </template>
+
+            <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
+                material="color: black; shader: flat"></a-mixin>
+            <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
+                material="color: white; shader: flat"
+                animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
+                animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
+            <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
+                material="color: white; shader: flat" position="0 0 0.005"></a-mixin>
+            <a-mixin id="poiImage" geometry="primitive: plane; width: 1.4; height: 0.8"
+                material="shader: flat;  transparent: true" position="0 0.455 0.002"></a-mixin>
+            <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.4; height: 1.4"
+                material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
+            <a-mixin id="poiEsc" geometry="primitive: plane; width: 1; height: 1" position="1 0.73 0.002"
+                material="shader: flat; transparent: true"></a-mixin>
+            <a-mixin id="poiImgNext" geometry="primitive: plane; width: 1; height: 1"
+                material="shader: flat; transparent: true" position="1 -0.5 0.002"></a-mixin>
+            <a-mixin id="poiImgPrev" geometry="primitive: plane; width: 1; height: 1"
+                material="shader: flat; transparent: true" position="-1 -0.5 0.002"></a-mixin>
+            <a-mixin id="poiEscFrame" geometry="primitive: circle; radius: 0.15"
+                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
+                position="1 0.73 0.002"></a-mixin>
+            <a-mixin id="poiImgPrevFrame" geometry="primitive: circle; radius: 0.15"
+                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
+                position="-1 -0.5 0.002"></a-mixin>
+            <a-mixin id="poiImgNextFrame" geometry="primitive: circle; radius: 0.15"
+                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
+                position=" 1 -0.5 0.002"></a-mixin>
+            <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.4; height: 0.14"
+                material="shader: flat; color: #dfe4ea;" position=" 0 0 0.000001"></a-mixin>
+            <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
+                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true;"
+                position="0.15 0.15 0.000001"></a-mixin>
+            <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 2; height: 0.3"
+                material="color: black; opacity: 0.7; shader: flat"></a-mixin>
+
+            <a-asset-item id="check_indicator_id" src="../../assets/models/editor/checkmark.glb"></a-asset-item>
+            <a-asset-item id="x_indicator_id" src="../../assets/models/editor/xmark.glb"></a-asset-item>
+        </a-assets>
+
+        <a-entity id="player"></a-entity>
+        <a-entity id="actor"></a-entity>
+
+        <!-- oculus hands -->
+        <a-entity id="leftHand" oculus-touch-controls="hand: left" visible="false"></a-entity>
+        <a-entity id="rightHand" oculus-touch-controls="hand: right" visible="false" blink-controls></a-entity>
+
+
+    </a-scene>
+
+    <script src="js/components/chat_component.js"></script>
+</body>
+
+</html>

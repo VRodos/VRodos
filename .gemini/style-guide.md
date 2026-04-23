@@ -63,7 +63,7 @@ input:checked + label { background: #10b981; color: #fff; }
 
 ## Category Icons
 
-Single source of truth: `js_libs/vrodos_icons.js`
+Single source of truth: `assets/js/editor/vrodos_icons.js`
 - `VRODOS_CATEGORY_ICONS` map + `vrodos_getCategoryIcon(key)` function
 - PHP mirror in `vrodos-assets-list-template.php`
 - **DO NOT** create new icon mappings elsewhere
@@ -88,10 +88,10 @@ ALL 4 templates follow this normalized structure:
 |------|---------|
 | `CLAUDE.md` | Full AI agent rules (canonical) |
 | `includes/class-vrodos-asset-manager.php` | ALL script/style registration & enqueuing |
-| `js_libs/vrodos_icons.js` | Category icon map |
-| `css/vrodos_modern.css` | Source CSS (hand-written overrides) |
-| `css/vrodos_modern_compiled.css` | Auto-generated — DO NOT edit |
-| `css/vrodos_3D_editor.css` | Scene editor styles |
+| `assets/js/editor/vrodos_icons.js` | Category icon map |
+| `assets/css/vrodos_modern.css` | Source CSS (hand-written overrides) |
+| `assets/css/vrodos_modern_compiled.css` | Auto-generated — DO NOT edit |
+| `assets/css/editor/vrodos_3D_editor.css` | Scene editor styles |
 
 ---
 

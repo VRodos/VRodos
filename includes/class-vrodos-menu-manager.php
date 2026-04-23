@@ -107,7 +107,7 @@ class VRodos_Menu_Manager {
 			'manage_options',
 			'vrodos-plugin',
 			['VRodos_Core_Manager', 'vrodos_plugin_main_page'],
-			plugin_dir_url( __FILE__ ) . '../images/vrodos_icon_20_w.png',
+			VRodos_Path_Manager::image_url( 'ui/vrodos_icon_20_w.png' ),
 			25
 		);
 

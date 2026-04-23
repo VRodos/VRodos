@@ -126,11 +126,11 @@ class VRodos_Core_Manager {
 	}
 
 	public static function get_builtin_audio_marker_url(): string {
-		return plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'runtime/assets/media/speaker.glb';
+		return VRodos_Path_Manager::model_url( 'runtime/speaker.glb' );
 	}
 
 	public static function get_builtin_audio_thumbnail_url(): string {
-		return plugin_dir_url( VRODOS_PLUGIN_FILE ) . 'images/audio.png';
+		return VRodos_Path_Manager::image_url( 'ui/audio.png' );
 	}
 
 	public static function vrodos_plugin_main_page(): void {
@@ -184,7 +184,7 @@ class VRodos_Core_Manager {
 					<div class="tw-hero-content tw-flex-col lg:tw-flex-row-reverse tw-p-8 lg:tw-p-12 tw-gap-8">
 						<div class="tw-relative">
 							<div class="tw-absolute -tw-inset-4 tw-bg-white/20 tw-rounded-full tw-blur-3xl"></div>
-							<img src="<?php echo plugin_dir_url( VRODOS_PLUGIN_FILE ); ?>images/VRodos_icon_512.png" 
+							<img src="<?php echo esc_url( VRodos_Path_Manager::image_url( 'ui/VRodos_icon_512.png' ) ); ?>"
 								 alt="VRodos Icon" 
 								 class="tw-relative tw-w-40 tw-h-40 lg:tw-w-56 lg:tw-h-56 tw-drop-shadow-2xl">
 						</div>
@@ -492,17 +492,26 @@ class VRodos_Core_Manager {
 	public static function vrodos_getEditpage( $type ) {
 
 		$templateURL = match ( $type ) {
-			'allgames', 'game' => '/templates/vrodos-project-manager-template.php',
-			'assetslist' => '/templates/vrodos-assets-list-template.php',
-			'scene' => '/templates/vrodos-edit-3D-scene-template.php',
-			'asset' => '/templates/vrodos-asset-editor-template.php',
+			'allgames', 'game' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-project-manager-template.php' ),
+			'assetslist' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-assets-list-template.php' ),
+			'scene' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-edit-3D-scene-template.php' ),
+			'asset' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-asset-editor-template.php' ),
 			default => null,
 		};
 
 		if ( $templateURL ) {
-			return get_pages(
+			$pages = get_pages(
 				['hierarchical' => 0, 'parent'       => -1, 'meta_key'     => '_wp_page_template', 'meta_value'   => $templateURL]
 			);
+
+			if ( empty( $pages ) ) {
+				$legacy_template_url = VRodos_Path_Manager::legacy_page_template_meta( $templateURL );
+				$pages               = get_pages(
+					['hierarchical' => 0, 'parent'       => -1, 'meta_key'     => '_wp_page_template', 'meta_value'   => $legacy_template_url]
+				);
+			}
+
+			return $pages;
 		} else {
 			return false;
 		}
@@ -692,9 +701,8 @@ class VRodos_Core_Manager {
 
 	public static function vrodos_getDefaultJSONscene( $mygameType ): string {
 
-		$p = plugin_dir_path( __DIR__ );
 		return match ( $mygameType ) {
-			default => file_get_contents( $p . '/assets/standard_scene.json' ),
+			default => file_get_contents( VRodos_Path_Manager::standard_scene_path() ),
 		};
 	}
 

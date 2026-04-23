@@ -113,7 +113,7 @@ DaisyUI components now work directly. Just use `tw-` prefix:
 
 ## 3. Category Icons — Single Source of Truth
 
-ALL category-to-icon mappings live in `js_libs/vrodos_icons.js`:
+ALL category-to-icon mappings live in `assets/js/editor/vrodos_icons.js`:
 - `VRODOS_CATEGORY_ICONS` — the canonical map
 - `vrodos_getCategoryIcon(key)` — the lookup function
 - PHP mirror: `vrodos_get_asset_category_icon()` in `vrodos-assets-list-template.php`
@@ -202,22 +202,22 @@ Asset editor additionally loads: `vrodos_asseteditor.css`
 | File | Purpose |
 |------|---------|
 | `includes/class-vrodos-asset-manager.php` | ALL script/style registration & enqueuing |
-| `includes/templates/vrodos-edit-3D-scene-template.php` | Main scene editor template |
-| `includes/templates/vrodos-edit-3D-scene-HierarchyViewer.php` | Right panel (hierarchy + options) |
-| `includes/templates/vrodos-edit-3D-scene-Popups.php` | Property popups (lights, door, POI) |
-| `js_libs/vrodos_auxControlers.js` | lil-gui, cel outline, floating panel helpers |
-| `js_libs/vrodos_rayCasters.js` | Mouse interaction, selection, click/drag detection |
-| `js_libs/vrodos_HierarchyViewer.js` | Hierarchy list rendering |
-| `js_libs/vrodos_icons.js` | Category icon map (single source of truth) |
-| `js_libs/vrodos_addRemoveOne.js` | Add/remove/lock objects in scene |
-| `js_libs/vrodos_3d_editor_buttons_drags.js` | UI controls, drag-to-canvas, event binding |
-| `css/vrodos_modern.css` | Source CSS (hand-written DaisyUI overrides) |
-| `css/vrodos_modern_compiled.css` | Compiled output (auto-generated, DO NOT edit) |
-| `css/vrodos_3D_editor.css` | Scene editor specific styles |
+| `templates/pages/vrodos-edit-3D-scene-template.php` | Main scene editor template |
+| `templates/pages/vrodos-edit-3D-scene-HierarchyViewer.php` | Right panel (hierarchy + options) |
+| `templates/pages/vrodos-edit-3D-scene-Popups.php` | Property popups (lights, door, POI) |
+| `assets/js/editor/vrodos_auxControlers.js` | lil-gui, cel outline, floating panel helpers |
+| `assets/js/editor/vrodos_rayCasters.js` | Mouse interaction, selection, click/drag detection |
+| `assets/js/editor/vrodos_HierarchyViewer.js` | Hierarchy list rendering |
+| `assets/js/editor/vrodos_icons.js` | Category icon map (single source of truth) |
+| `assets/js/editor/vrodos_addRemoveOne.js` | Add/remove/lock objects in scene |
+| `assets/js/editor/vrodos_3d_editor_buttons_drags.js` | UI controls, drag-to-canvas, event binding |
+| `assets/css/vrodos_modern.css` | Source CSS (hand-written DaisyUI overrides) |
+| `assets/css/vrodos_modern_compiled.css` | Compiled output (auto-generated, DO NOT edit) |
+| `assets/css/editor/vrodos_3D_editor.css` | Scene editor specific styles |
 
 ### Naming
 - Tailwind prefix: `tw-`
-- DaisyUI prefix: `d-` (but remember: only hand-styled components work)
+- DaisyUI prefix: `tw-`
 - Lucide icons: `<i data-lucide="icon-name">` + call `lucide.createIcons()` after dynamic DOM insertion
 - Custom toggle classes: `toggle-btn`, `toggle-active`, `affineSwitch`, `fogSwitch`
 

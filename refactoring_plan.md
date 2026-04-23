@@ -6,13 +6,13 @@ This plan aims to modularize the VRodos architecture, reducing the size of monol
 
 Currently, scene settings (like Takram Atmosphere) are hardcoded in multiple JS files. This phase centralizes them into a single schema.
 
-### [DONE] [vrodos_scene_settings_schema.js](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/js_libs/vrodos_scene_settings_schema.js)
+### [DONE] [vrodos_scene_settings_schema.js](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/assets/js/editor/vrodos_scene_settings_schema.js)
 - Define a master configuration object containing all scene metadata keys, their types, and default values.
 
-### [DONE] [vrodos_ScenePersistence.js](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/js_libs/vrodos_ScenePersistence.js)
+### [DONE] [vrodos_ScenePersistence.js](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/assets/js/editor/vrodos_ScenePersistence.js)
 - Refactor `VrodosSceneExporter` and `VrodosSceneImporter` to loop through the schema instead of using hardcoded whitelists.
 
-### [DONE] [vrodos_LoaderMulti.js](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/js_libs/vrodos_LoaderMulti.js)
+### [DONE] [vrodos_LoaderMulti.js](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/assets/js/editor/vrodos_LoaderMulti.js)
 - Refactor the metadata application logic (lines 95-300+) to use the schema for setting `envir.scene` values.
 
 ---
@@ -21,10 +21,10 @@ Currently, scene settings (like Takram Atmosphere) are hardcoded in multiple JS 
 
 Streamline how the editor starts up and maps PHP data to JS state.
 
-### [DONE] [vrodos_EditorInitializer.js](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/js_libs/vrodos_EditorInitializer.js)
+### [DONE] [vrodos_EditorInitializer.js](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/assets/js/editor/vrodos_EditorInitializer.js)
 - Extract the initialization logic from the PHP template into a clean JS module.
 
-### [DONE] [vrodos-edit-3D-scene-template.php](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/includes/templates/vrodos-edit-3D-scene-template.php)
+### [DONE] [vrodos-edit-3D-scene-template.php](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/templates/pages/vrodos-edit-3D-scene-template.php)
 - Replace massive inline JS blocks with a single call to the new initializer.
 
 ---
@@ -46,7 +46,7 @@ Modularize the A-Frame generation logic in the PHP compiler.
 
 Break down the massive UI dialogue scripts.
 
-### [MODIFY] [vrodos_compile_dialogue.js](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/js_libs/vrodos_compile_dialogue.js)
+### [MODIFY] [vrodos_compile_dialogue.js](file:///d:/Development/WordPress/app/public/wp-content/plugins/VRodos/assets/js/editor/vrodos_compile_dialogue.js)
 - Extract panels (Atmosphere, Post-FX, General Rendering) into separate logical components.
 - Use a common event-driven system for UI-to-Scene updates.
 

@@ -16,10 +16,9 @@ Write-Host "Copying files..." -ForegroundColor Cyan
 # List of items to copy
 $items = @(
     "assets",
-    "css",
-    "images",
+    "templates",
+    "services",
     "includes",
-    "js_libs",
     "runtime",
     "VRodos.php",
     "readme.txt",
@@ -29,6 +28,18 @@ $items = @(
 foreach ($item in $items) {
     if (Test-Path $item) {
         Copy-Item $item -Destination $targetDir -Recurse
+    }
+}
+
+# 2b. Remove generated or local-only directories from the distributable
+$pathsToRemove = @(
+    "$targetDir\services\networked-aframe\node_modules",
+    "$targetDir\runtime\build"
+)
+
+foreach ($pathToRemove in $pathsToRemove) {
+    if (Test-Path $pathToRemove) {
+        Remove-Item $pathToRemove -Recurse -Force
     }
 }
 

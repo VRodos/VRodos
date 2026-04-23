@@ -38,14 +38,14 @@ this.renderer.toneMappingExposure = 1.0;
 
 ### [ ] Implement SpotLightHelper
 Current spot lights in the editor lack a visual helper. Adding a `THREE.SpotLightHelper` would provide better visual feedback for cone angle and orientation.
-- **File**: `js_libs/vrodos_addRemoveOne.js` and `js_libs/vrodos_LightsPawn_Loader.js`
+- **File**: `assets/js/editor/vrodos_addRemoveOne.js` and `assets/js/editor/vrodos_LightsPawn_Loader.js`
 
 ### [ ] Dynamic Shadow Camera Adjustment
 Improve Sun shadow quality by dynamically adjusting the shadow camera bounds based on the scene's bounding box.
 - **Goal**: Minimize "shadow acne" and improve resolution for large/small scenes.
 
 ### [ ] Light Property Sync Refactor
-Refactor `updateSpot()` in `includes/templates/vrodos-edit-3D-scene-Popups.php` to avoid `scene.traverse()` calls on every input change, favoring direct object references or event-based updates.
+Refactor `updateSpot()` in `templates/pages/vrodos-edit-3D-scene-Popups.php` to avoid `scene.traverse()` calls on every input change, favoring direct object references or event-based updates.
 
 ### [ ] Real-time Exposure Control
 Add a GUI slider to control `renderer.toneMappingExposure` to allow users to balance lighting levels across different environments (Indoor vs. Outdoor).

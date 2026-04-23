@@ -1,9 +1,9 @@
 module.exports = [
     {
-        ignores: ['**/node_modules/**']
+        ignores: ['**/node_modules/**', 'assets/js/runtime/master/lib/**/*.js']
     },
     {
-        files: ['runtime/assets/js/master/**/*.js'],
+        files: ['assets/js/runtime/master/**/*.js'],
         languageOptions: {
             ecmaVersion: 'latest',
             sourceType: 'script',
