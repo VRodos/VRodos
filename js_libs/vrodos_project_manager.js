@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     lucide.createIcons();
     fetchAllProjectsAndAddToDOM(vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass, -1, true);
+    setupProjectCountSync();
 
     // Modals (DaisyUI)
     let dialog = document.getElementById('delete-dialog');
@@ -110,5 +111,54 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('delete-dialog-progress-bar').style.display = 'none';
         dialog.close();
     });
+
+    function setupProjectCountSync() {
+        const projectRoot = document.getElementById('ExistingProjectsDivDOM');
+        const observerRoot = projectRoot ? projectRoot.parentElement : null;
+
+        function readContainerCount(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return null;
+
+            const dataCount = container.getAttribute('data-project-count');
+            if (dataCount !== null && /^\d+$/.test(dataCount)) {
+                return dataCount;
+            }
+
+            return Array.from(container.children).filter(child => child.nodeType === 1).length.toString();
+        }
+
+        function updateCountIndicator() {
+            const indicator = document.getElementById('projects-count-indicator');
+            if (!indicator) return;
+
+            const immerseContainer = document.getElementById('ic-immerse-projects');
+            const isImmerseVisible = immerseContainer && !immerseContainer.classList.contains('tw-hidden');
+            const count = (isImmerseVisible
+                ? readContainerCount('ic-pm-project-container')
+                : readContainerCount('vrodos-list-projects-container')) || '0';
+
+            indicator.textContent = count;
+        }
+
+        document.addEventListener('click', (event) => {
+            if (event.target.closest('.ic-pm-tab')) {
+                setTimeout(updateCountIndicator, 0);
+            }
+        });
+
+        document.addEventListener('change', (event) => {
+            if (event.target.matches('#ic-pm-usecase-filter')) {
+                setTimeout(updateCountIndicator, 0);
+            }
+        });
+
+        if (observerRoot) {
+            new MutationObserver(() => setTimeout(updateCountIndicator, 0)).observe(observerRoot, {
+                childList: true,
+                subtree: true
+            });
+        }
+    }
 
 });
