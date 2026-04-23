@@ -192,13 +192,7 @@ class VRodos_Compiler_Manager {
 	}
 
 	private function replace_runtime_asset_placeholders( string $content ): string {
-		// Keep the legacy placeholder forms so older copied prototypes still compile
-		// while source templates move to clearer asset-specific placeholders.
 		$replacements = [
-			'VRODOS_PLUGIN_URL_PLACEHOLDERruntime/assets/js/master/lib/' => VRodos_Path_Manager::runtime_master_url( 'lib/' ),
-			'VRODOS_PLUGIN_URL_PLACEHOLDERruntime/assets/js/' => VRodos_Path_Manager::runtime_js_url(),
-			'VRODOS_PLUGIN_URL_PLACEHOLDERruntime/assets/media/' => VRodos_Path_Manager::media_url(),
-			'VRODOS_PLUGIN_URL_PLACEHOLDERcss/' => VRodos_Path_Manager::css_url(),
 			'VRODOS_CSS_URL_PLACEHOLDER' => VRodos_Path_Manager::css_url(),
 			'VRODOS_ASSET_IMAGE_URL_PLACEHOLDER' => VRodos_Path_Manager::image_url(),
 		];

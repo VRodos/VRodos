@@ -181,14 +181,12 @@ The local runtime server is typically used on port `5832`.
 ### Cleanup rules
 
 - Do not treat `runtime/build/` HTML as source.
-- Do not remove legacy folders until generated scenes have been recompiled and searches confirm no active references remain.
-- The compiler may intentionally keep compatibility replacements for one migration window.
 
 ### Cleanup status
 
 - `js_libs/` and the mirrored `includes/templates/` tree should not be reintroduced.
-- The remaining deliberate legacy source references are the compiler placeholder replacements for `runtime/assets/...`.
 - Top-level `css/` and `images/` should not be reintroduced now that `assets/css/` and `assets/images/` are canonical.
+- The compiler now expects only the canonical placeholder scheme used by `templates/runtime/aframe/`.
 
 ---
 

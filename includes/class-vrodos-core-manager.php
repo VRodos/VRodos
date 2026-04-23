@@ -87,7 +87,39 @@ class VRodos_Core_Manager {
 			return '';
 		}
 
-		return (string) preg_replace( '#(?<!:)/{2,}#', '/', $url );
+		$url = (string) preg_replace( '#(?<!:)/{2,}#', '/', $url );
+		$parsed_url = parse_url( $url );
+		$path = isset( $parsed_url['path'] ) ? (string) $parsed_url['path'] : '';
+
+		if ( preg_match( '#/wp-content/plugins/[^/]+/images/(.+)$#', $path, $matches ) ) {
+			$legacy_relative = ltrim( str_replace( '\\', '/', $matches[1] ), '/' );
+			$mapped_relative = self::map_legacy_image_relative_path( $legacy_relative );
+
+			if ( $mapped_relative !== '' ) {
+				return VRodos_Path_Manager::image_url( $mapped_relative );
+			}
+		}
+
+		return $url;
+	}
+
+	private static function map_legacy_image_relative_path( string $legacy_relative ): string {
+		if ( $legacy_relative === '' ) {
+			return '';
+		}
+
+		if (
+			str_starts_with( $legacy_relative, 'hdr/' ) ||
+			str_starts_with( $legacy_relative, 'lights/' ) ||
+			str_starts_with( $legacy_relative, 'screenshots/' ) ||
+			str_starts_with( $legacy_relative, 'textures/' ) ||
+			str_starts_with( $legacy_relative, 'ui/' ) ||
+			str_starts_with( $legacy_relative, 'runtime/' )
+		) {
+			return $legacy_relative;
+		}
+
+		return 'ui/' . basename( $legacy_relative );
 	}
 
 	private static function normalize_cefr_levels_meta( $meta_value ): array {

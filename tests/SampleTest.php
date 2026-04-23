@@ -16,6 +16,23 @@ final class SampleTest extends TestCase
         $this->assertTrue(class_exists('VRodos_Core_Manager'));
     }
 
+    public function testResolveMediaMetaUrlRewritesLegacyPluginImageRoot(): void
+    {
+        $this->assertSame(
+            'https://example.com/wp-content/plugins/vrodos/assets/images/ui/audio.png',
+            VRodos_Core_Manager::resolve_media_meta_url(
+                'https://example.com/wp-content/plugins/VRodos/images/audio.png'
+            )
+        );
+
+        $this->assertSame(
+            'https://example.com/wp-content/plugins/vrodos/assets/images/hdr/quarry_01_1k.hdr',
+            VRodos_Core_Manager::resolve_media_meta_url(
+                'https://example.com/wp-content/plugins/VRodos/images/hdr/quarry_01_1k.hdr'
+            )
+        );
+    }
+
     public function testPathManagerUsesNewAssetRoots(): void
     {
         $this->assertSame(
