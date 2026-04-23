@@ -105,6 +105,15 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                 <button class="visibility-filter-btn tw-btn tw-btn-xs tw-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-visibility="private">Private</button>
             </div>
 
+            <?php if ( ! empty( $has_immerse_assets ) ) : ?>
+                <!-- Source Filters -->
+                <div class="tw-flex tw-items-center tw-gap-1.5 tw-p-1 tw-bg-slate-50 tw-rounded-xl">
+                    <button class="source-filter-btn tw-btn tw-btn-xs tw-btn-primary tw-rounded-lg tw-px-5" data-source="all">All Assets</button>
+                    <button class="source-filter-btn tw-btn tw-btn-xs tw-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-source="immerse">Immerse</button>
+                    <button class="source-filter-btn tw-btn tw-btn-xs tw-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-source="native">VRodos</button>
+                </div>
+            <?php endif; ?>
+
             <!-- Category Filters -->
             <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-1">
                 <button class="category-filter-btn tw-btn tw-btn-sm tw-btn-primary tw-rounded-xl tw-px-6 tw-gap-2" data-category="all">
@@ -157,7 +166,8 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
 
                 <div id="<?php echo $asset['asset_id']; ?>" class="tw-group asset-card tw-bg-white tw-border tw-border-slate-200 tw-rounded-2xl tw-overflow-hidden hover:tw-shadow-2xl hover:tw-shadow-primary/10 hover:tw-border-primary/30 tw-transition-all tw-duration-300 tw-flex tw-flex-col"
                      data-category="<?php echo esc_attr($asset['category_slug']); ?>"
-                     data-visibility="<?php echo ($asset['is_shared'] == 'true') ? 'shared' : 'private'; ?>">
+                     data-visibility="<?php echo ($asset['is_shared'] == 'true') ? 'shared' : 'private'; ?>"
+                     data-source="<?php echo (! empty($asset['is_immerse']) && $asset['is_immerse'] === 'true') ? 'immerse' : 'native'; ?>">
 
                     <!-- Clickable Area for Edit -->
                     <?php if ( $can_edit_asset ) : ?>
@@ -301,14 +311,17 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
         // Filtering Logic
         let activeCategory = 'all';
         let activeVisibility = 'all';
+        let activeSource = 'all';
 
         function applyFilters() {
             document.querySelectorAll('.asset-card').forEach(function(card) {
                 var cardCat = card.dataset.category;
                 var cardVis = card.dataset.visibility;
+                var cardSource = card.dataset.source || 'native';
                 var catMatch = (activeCategory === 'all' || cardCat === activeCategory);
                 var visMatch = (activeVisibility === 'all' || cardVis === activeVisibility);
-                card.style.display = (catMatch && visMatch) ? '' : 'none';
+                var sourceMatch = (activeSource === 'all' || cardSource === activeSource);
+                card.style.display = (catMatch && visMatch && sourceMatch) ? '' : 'none';
             });
             initIcons();
         }
@@ -330,6 +343,19 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
             btn.addEventListener('click', function() {
                 activeVisibility = this.dataset.visibility;
                 document.querySelectorAll('.visibility-filter-btn').forEach(function(b) {
+                    b.classList.remove('tw-btn-primary');
+                    b.classList.add('tw-btn-ghost', 'tw-text-slate-400');
+                });
+                this.classList.remove('tw-btn-ghost', 'tw-text-slate-400');
+                this.classList.add('tw-btn-primary');
+                applyFilters();
+            });
+        });
+
+        document.querySelectorAll('.source-filter-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                activeSource = this.dataset.source;
+                document.querySelectorAll('.source-filter-btn').forEach(function(b) {
                     b.classList.remove('tw-btn-primary');
                     b.classList.add('tw-btn-ghost', 'tw-text-slate-400');
                 });

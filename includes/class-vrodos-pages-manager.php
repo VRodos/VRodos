@@ -158,6 +158,12 @@ class VRodos_Pages_Manager {
 
 		$assets       = VRodos_Core_Manager::get_assets( $user_games_slugs );
 		$newAssetPage = VRodos_Core_Manager::vrodos_getEditpage( 'asset' );
+		$has_immerse_assets = ! empty(
+			array_filter(
+				$assets,
+				static fn( $asset ) => ! empty( $asset['is_immerse'] ) && $asset['is_immerse'] === 'true'
+			)
+		);
 
 		if ( ! $isUserloggedIn ) {
 			$link_to_add = wp_login_url();
@@ -187,6 +193,6 @@ class VRodos_Pages_Manager {
 			$helpMessage = 'Login to manage Shared Assets or to create a new Project for your private assets.';
 		}
 
-		return ['assets'                       => $assets, 'is_user_logged_in'            => $isUserloggedIn, 'is_user_admin'                => $isUserAdmin, 'user_id'                      => $user_id, 'link_to_add'                  => $link_to_add, 'link_to_edit'                 => $link_to_edit, 'go_back_to_all_projects_link' => $goBackTo_AllProjects_link, 'help_message'                 => $helpMessage, 'joker_project_slug'           => $shared_project_slug, 'single_project_asset_list'    => $single_project_asset_list, 'current_game_project_post'    => $current_game_project_post];
+		return ['assets'                       => $assets, 'is_user_logged_in'            => $isUserloggedIn, 'is_user_admin'                => $isUserAdmin, 'user_id'                      => $user_id, 'link_to_add'                  => $link_to_add, 'link_to_edit'                 => $link_to_edit, 'go_back_to_all_projects_link' => $goBackTo_AllProjects_link, 'help_message'                 => $helpMessage, 'joker_project_slug'           => $shared_project_slug, 'single_project_asset_list'    => $single_project_asset_list, 'current_game_project_post'    => $current_game_project_post, 'has_immerse_assets'          => $has_immerse_assets];
 	}
 }

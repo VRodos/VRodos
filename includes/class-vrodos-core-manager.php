@@ -759,7 +759,7 @@ class VRodos_Core_Manager {
 
 	public static function get_assets( $games_slugs ): array {
 		// Create a cache key based on the games slugs to ensure per-context caching
-		$cache_key = 'vrodos_assets_' . md5( json_encode( $games_slugs ) . get_current_user_id() );
+		$cache_key = 'vrodos_assets_' . md5( json_encode( $games_slugs ) . get_current_user_id() . '|source-filter-v1' );
 		$cached_assets = get_transient( $cache_key );
 
 		if ( false !== $cached_assets ) {
@@ -829,6 +829,7 @@ class VRodos_Core_Manager {
 					'screenshot_path'        => $sshotPath,
 					'is_cloned'              => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ),
 					'is_shared'              => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ),
+					'is_immerse'             => get_post_meta( $asset_id, '_immerse_source', true ) === 'immerse' ? 'true' : 'false',
 					'assettrs'               => $assettrs,
 					'asset_parent_game'      => ( get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ) === 'true' ) ? 'Public Assets' : ( ! empty( $asset_pgame ) ? $asset_pgame[0]->name : '' ),
 					'asset_parent_game_slug' => ! empty( $asset_pgame ) ? $asset_pgame[0]->slug : '',
