@@ -422,6 +422,18 @@
 	</div>
 </div>
 
+<!-- Link Properties -->
+<div id="popUpLinkPropertiesDiv" class="object-property-section" style="display:none;">
+	<div class="prop-section-title">External Link</div>
+
+	<div class="prop-row">
+		<label for="poi_link_text" class="prop-label">URL</label>
+		<input type="text" id="poi_link_text" name="poi_link_text" placeholder="https://example.com"
+				class="prop-input tw-flex-1" value="" 
+				onkeyup="vrodosSetPopupProp('poi_link_url', this.value); saveChanges();" />
+	</div>
+</div>
+
 <!-- Marker Properties (WindEnergy) -->
 <div id="popUpMarkerPropertiesDiv" class="object-property-section" style="display:none;">
 	<div class="prop-section-title">Marker Properties</div>
