@@ -173,7 +173,6 @@ AFRAME.registerComponent('chat-poi', {
         document.addEventListener('entityCreated',evt => {
             roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id) || [];
             if(evt.detail.el.id == "cameraA"){
-                console.log("Local User loaded");
                 if (connectedEntities.indexOf(NAF.clientId) < 0) {
                     connectedEntities.push(NAF.clientId);
                 }
@@ -187,7 +186,6 @@ AFRAME.registerComponent('chat-poi', {
             }
 
             if (isEqual(roomOccupants, connectedEntities)){
-                console.log("Sync complete via entityCreated");
                 syncComplete = true;
                 let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
                 document.dispatchEvent(eventSyncComplete);
@@ -211,7 +209,6 @@ AFRAME.registerComponent('chat-poi', {
             }
 
             if (isEqual(roomOccupants, connectedEntities)) {
-                console.log("Sync complete via checkExistingEntities");
                 syncComplete = true;
                 let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
                 document.dispatchEvent(eventSyncComplete);
@@ -242,12 +239,9 @@ AFRAME.registerComponent('chat-poi', {
             if (!syncComplete){
                 if (connectedEntities.indexOf(evt.detail.clientId) > -1){
                     connectedEntities.splice(connectedEntities.indexOf(evt.detail.clientId), 1);
-                    console.log(connectedEntities.indexOf(evt.detail.clientId));
-
                 }
                 if (roomOccupants.indexOf(evt.detail.clientId) > -1){
                     roomOccupants.splice(roomOccupants.indexOf(evt.detail.clientId), 1);
-                    console.log(connectedEntities.indexOf(evt.detail.clientId));
                 }
                 if (isEqual(roomOccupants,connectedEntities)){
                     let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
@@ -371,11 +365,9 @@ AFRAME.registerComponent('chat-poi', {
             }
         });
         elem.addEventListener("click", evt => {
-            console.log("Chat POI Clicked", elem.id);
             if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== undefined) {
                 if (evt.detail.originalEvent.button !== 0) return;
             }
-            console.log("Opening chat wrapper");
             const wrapper = document.getElementById("chat-wrapper-el");
             if (!wrapper) {
                 return;
@@ -384,7 +376,6 @@ AFRAME.registerComponent('chat-poi', {
             wrapper.style.visibility = 'visible';
             wrapper.style.display = 'flex'; // Ensure it's not display:none
             wrapper.classList.remove('tw-hidden');
-            console.log("Wrapper style after changes:", wrapper.style.visibility, wrapper.style.display, wrapper.classList.contains('tw-hidden'));
             setChatTabState('private');
             const publicChatButton = document.getElementById("public-chat-button");
             if (publicChatButton) {

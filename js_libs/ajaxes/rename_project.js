@@ -13,7 +13,6 @@ function vrodos_renameProjectAjax(projectId, newTitle, onComplete) {
     })
     .then(response => response.text())
     .then(result => {
-        console.log("Project renamed successfully:", result);
         if (onComplete) onComplete(true, result);
     })
     .catch(err => {
