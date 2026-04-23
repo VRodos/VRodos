@@ -244,7 +244,7 @@ function finalizeSceneLoad() {
 
     if (typeof findSceneDimensions === 'function') {
         findSceneDimensions();
-        envir.updateCameraGivenSceneLimits();
+        envir.fitCameraToSceneLimits();
     }
 
     // Focus on Actor/Player

@@ -755,7 +755,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
         }
 
         findSceneDimensions();
-        envir.updateCameraGivenSceneLimits();
+        envir.fitCameraToSceneLimits();
 
         envir.orbitControls.object.updateProjectionMatrix();
         document.getElementById("dim-change-btn").classList.toggle('toggle-active');

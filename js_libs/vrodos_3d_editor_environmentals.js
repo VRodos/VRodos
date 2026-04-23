@@ -221,7 +221,7 @@ class vrodos_3d_editor_environmentals {
         this.turboResize();
     }
 
-    // Resize renderers
+    // Resize renderers without changing the user's current orbit target, position, or zoom.
     turboResize() {
 
         this.SCREEN_WIDTH = this.vr_editor_main_div.clientWidth; // 500; //window.innerWidth;
@@ -234,7 +234,7 @@ class vrodos_3d_editor_environmentals {
         this.labelRenderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
         //----------------------------------------------
 
-        this.updateCameraGivenSceneLimits();
+        this.updateCameraProjectionForResize();
 
         //----------------------------------------------------------------
         this.cameraAvatar.aspect = this.ASPECT;
@@ -248,6 +248,27 @@ class vrodos_3d_editor_environmentals {
         this.composer.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
         this.composer.renderer.setPixelRatio(pixelRatio);
         this.effectFXAA.uniforms['resolution'].value.set(1 / (this.SCREEN_WIDTH * pixelRatio), 1 / (this.SCREEN_HEIGHT * pixelRatio));
+    }
+
+    updateCameraProjectionForResize() {
+        if (!this.cameraOrbit) {
+            return;
+        }
+
+        if (this.cameraOrbit.type === 'PerspectiveCamera') {
+            this.cameraOrbit.aspect = this.ASPECT;
+        } else if (this.cameraOrbit.type === 'OrthographicCamera') {
+            this.cameraOrbit.left = this.FRUSTUM_SIZE * this.ASPECT / -2;
+            this.cameraOrbit.right = this.FRUSTUM_SIZE * this.ASPECT / 2;
+            this.cameraOrbit.top = this.FRUSTUM_SIZE / 2;
+            this.cameraOrbit.bottom = this.FRUSTUM_SIZE / -2;
+            this.cameraOrbit.zoom = vrodosClampNumber(this.cameraOrbit.zoom, 10, 5000, 600);
+        }
+
+        this.cameraOrbit.updateProjectionMatrix();
+        if (this.orbitControls) {
+            this.orbitControls.update();
+        }
     }
 
     getActiveEditorCamera() {
@@ -590,7 +611,7 @@ class vrodos_3d_editor_environmentals {
         }
     }
 
-    updateCameraGivenSceneLimits() {
+    fitCameraToSceneLimits() {
 
         if (this.cameraOrbit.type === 'PerspectiveCamera') {
 

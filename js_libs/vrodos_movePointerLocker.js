@@ -89,7 +89,7 @@ function firstPersonViewWithoutLock(){
         envir.orbitControls.reset();
 
         findSceneDimensions();
-        envir.updateCameraGivenSceneLimits();
+        envir.fitCameraToSceneLimits();
 
     }
 }
