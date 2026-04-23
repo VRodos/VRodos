@@ -8,10 +8,14 @@ AFRAME.registerComponent('highlight', {
         this.onMouseLeave = this.onMouseLeave.bind(this);
         this.reset = this.reset.bind(this);
         this.onBackgroundClick = this.onBackgroundClick.bind(this); // Added binding
+        this.applyHighlight = this.applyHighlight.bind(this);
+        this.clearHighlight = this.clearHighlight.bind(this);
 
         this.el.addEventListener('click', this.onBackgroundClick);
         this.el.addEventListener('mouseenter', this.onMouseEnter);
         this.el.addEventListener('mouseleave', this.onMouseLeave);
+        this.el.addEventListener('raycaster-intersected-cleared', this.onMouseLeave);
+        this.el.addEventListener('raycaster-intersection-cleared', this.onMouseLeave);
         this.el.addEventListener('click', this.onClick);
 
         this.el.addEventListener("animationcomplete", e => {
@@ -34,9 +38,13 @@ AFRAME.registerComponent('highlight', {
     },
 
     onMouseEnter: function (evt) {
-        evt.target.object3D.receiveShadow = false;
+        this.applyHighlight();
+    },
 
-        evt.target.object3D.traverse((child) => {
+    applyHighlight: function () {
+        this.el.object3D.receiveShadow = false;
+
+        this.el.object3D.traverse((child) => {
             if (child.type === 'Mesh') {
                 const materials = Array.isArray(child.material) ? child.material : [child.material];
 
@@ -44,11 +52,17 @@ AFRAME.registerComponent('highlight', {
                     // SAFETY CHECK: Skip ShaderMaterials
                     if (!material || material.type === 'ShaderMaterial' || material.type === 'RawShaderMaterial') return;
 
+                    if (!material.userData.vrodosHighlightOriginal) {
+                        material.userData.vrodosHighlightOriginal = {
+                            color: material.color ? material.color.getHex() : null,
+                            emissive: material.emissive ? material.emissive.getHex() : null,
+                            emissiveIntensity: material.emissiveIntensity || 0
+                        };
+                    }
+
                     var c = new THREE.Color();
                     c.set(material.color);
 
-                    material.userData.originalColor = c.getHexString();
-                    material.userData.originalEmissiveIntensity = material.emissiveIntensity || 0;
                     var hex_val = "0x" + c.getHexString();
 
                     // Only set emissive if the material supports it (Standard/Basic/Phong)
@@ -64,9 +78,11 @@ AFRAME.registerComponent('highlight', {
     },
 
     onMouseLeave: function (evt) {
-        if (this.el.is('clicked')) { return; }
+        this.clearHighlight();
+    },
 
-        evt.target.object3D.traverse((child) => {
+    clearHighlight: function () {
+        this.el.object3D.traverse((child) => {
             if (child.type === 'Mesh') {
                 const materials = Array.isArray(child.material) ? child.material : [child.material];
 
@@ -74,15 +90,24 @@ AFRAME.registerComponent('highlight', {
                     // SAFETY CHECK: Skip ShaderMaterials
                     if (!material || material.type === 'ShaderMaterial' || material.type === 'RawShaderMaterial') return;
 
-                    if (material.userData.originalColor) {
-                        material.color.setHex("0x" + material.userData.originalColor);
+                    const original = material.userData.vrodosHighlightOriginal;
+                    if (!original) {
+                        return;
                     }
 
-                    if (material.userData.originalEmissiveIntensity !== undefined) {
-                        material.emissiveIntensity = material.userData.originalEmissiveIntensity;
-                    } else if (material.emissiveIntensity !== undefined) {
-                        material.emissiveIntensity = 0;
+                    if (material.color && original.color !== null) {
+                        material.color.setHex(original.color);
                     }
+
+                    if (material.emissive && original.emissive !== null) {
+                        material.emissive.setHex(original.emissive);
+                    }
+
+                    if (material.emissiveIntensity !== undefined) {
+                        material.emissiveIntensity = original.emissiveIntensity;
+                    }
+
+                    delete material.userData.vrodosHighlightOriginal;
                 });
 
                 child.receiveShadow = false;
@@ -91,23 +116,20 @@ AFRAME.registerComponent('highlight', {
     },
 
     onBackgroundClick: function (evt) {
-        evt.target.object3D.traverse((child) => {
-            if (child.type === 'Mesh') {
-                const materials = Array.isArray(child.material) ? child.material : [child.material];
-
-                materials.forEach(material => {
-                    // SAFETY CHECK: Skip ShaderMaterials
-                    if (!material || material.type === 'ShaderMaterial' || material.type === 'RawShaderMaterial') return;
-
-                    if (material.userData.originalColor) {
-                        material.color.setHex("0x" + material.userData.originalColor);
-                    }
-                });
-            }
-        })
+        this.clearHighlight();
     },
 
     reset: function () {
-        // Reset logic
+        this.clearHighlight();
+    },
+
+    remove: function () {
+        this.clearHighlight();
+        this.el.removeEventListener('click', this.onBackgroundClick);
+        this.el.removeEventListener('mouseenter', this.onMouseEnter);
+        this.el.removeEventListener('mouseleave', this.onMouseLeave);
+        this.el.removeEventListener('raycaster-intersected-cleared', this.onMouseLeave);
+        this.el.removeEventListener('raycaster-intersection-cleared', this.onMouseLeave);
+        this.el.removeEventListener('click', this.onClick);
     }
 });
