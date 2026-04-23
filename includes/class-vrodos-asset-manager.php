@@ -313,6 +313,7 @@ class VRodos_Asset_Manager {
 		wp_register_style( 'vrodos_asseteditor_stylesheet', $plugin_url . 'css/vrodos_asseteditor.css' );
 		wp_register_style( 'vrodos_widgets_stylesheet', $plugin_url . 'css/vrodos_widgets.css' );
 		wp_register_style( 'vrodos_modern_compiled', $plugin_url . 'css/vrodos_modern_compiled.css' );
+		wp_register_style( 'vrodos_runtime', $plugin_url . 'css/vrodos_runtime.css' );
 	}
 
 	private function enqueue_three_vendor_bundle(): void {

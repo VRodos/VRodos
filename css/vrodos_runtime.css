@@ -1,3 +1,10 @@
+/* ═══════════════════════════════════════════
+   VRodos Runtime Stylesheet
+   Consolidated from legacy adv-screen.css and vrodos_master_styles.css
+   Used by A-Frame Compiled Scenes (Master & Simple Clients)
+   ═══════════════════════════════════════════ */
+
+/* ─── Feedback & Loading Overlays ─── */
 .renderFeedback {
     width: 100%;
     height: 100%;
@@ -12,8 +19,7 @@
     transform: translate(-50%, -50%);
 }
 
-/* legacy styles moved to Tailwind */
-
+/* ─── Director Panel & Controls ─── */
 .actionsDirector {
     position: absolute;
     background: rgba(255, 255, 255, 0.9);
@@ -57,6 +63,7 @@
     margin-top: 0.5rem;
 }
 
+/* ─── Video & Recording ─── */
 .wrapperVideoElement {
     position: absolute;
     display: block;
@@ -188,7 +195,90 @@
     z-index: 999;
 }
 
-/* dat gui customization for Emerald theme */
+/* ─── Chat Drawer & Collaborative UI ─── */
+.ChatDrawerStyle {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 22rem;
+    height: 50%;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-top-right-radius: 1rem;
+    z-index: 1000;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ChatDrawerStyleExpanded {
+    width: 28rem;
+    height: 85%;
+    border-top-right-radius: 1.5rem;
+}
+
+.ChatDrawerStyleMinimized {
+    width: 14rem;
+    height: 2.25rem;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0.75rem;
+}
+
+.ChatDrawerStyleMinimized #chat-messages-wrapper,
+.ChatDrawerStyleMinimized #chatControlsOverlay {
+    display: none !important;
+}
+
+.ChatMessagesStyleNormal {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+
+.ChatMessagesStyleNormal::-webkit-scrollbar {
+    width: 4px;
+}
+
+.ChatMessagesStyleNormal::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+}
+
+.button-tab {
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.5rem;
+    box-sizing: border-box;
+    color: #0d172a;
+    cursor: pointer;
+    display: inline-block;
+    font-family: inherit;
+    font-size: 0.8em;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    text-align: center;
+    text-decoration: none;
+    transition: all .2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    user-select: none;
+}
+
+.IconButtonStyle {
+    background-color: transparent;
+    cursor: pointer;
+    border: none;
+    height: 24px;
+    width: 24px;
+    margin: 0 auto;
+    padding: 0 2px;
+}
+
+.IconButtonStyle i {
+    color: #64748b;
+}
+
+/* ─── External Library Overrides ─── */
 .dg.ac {
     z-index: 10000 !important;
 }
