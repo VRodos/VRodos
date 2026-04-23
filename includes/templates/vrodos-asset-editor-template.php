@@ -500,7 +500,7 @@ else { ?>
                             </label>
                             
                             <div class="tw-bg-slate-900 tw-rounded-2xl tw-overflow-hidden tw-shadow-xl tw-max-h-[320px] tw-flex tw-items-center tw-justify-center">
-                                <video id="assetVideoTag" class="tw-w-full tw-h-full tw-max-h-[320px]" preload="auto" controls>
+                                <video id="assetVideoTag" class="tw-w-full tw-h-full tw-max-h-[320px]" preload="auto" controls crossorigin="anonymous">
                                     <source id="assetVideoSource" src="<?php echo esc_url($video_attachment_file ?? ''); ?>" type="video/mp4">
                                 </video>
                             </div>
@@ -919,7 +919,11 @@ else { ?>
 			canvas.width = video.videoWidth || 640;
 			canvas.height = video.videoHeight || 360;
 			ctx.drawImage( video, 0, 0, canvas.width, canvas.height);
-			videoSshotFileInput.value = canvas.toDataURL('image/png');
+			try {
+				videoSshotFileInput.value = canvas.toDataURL('image/png');
+			} catch (e) {
+				console.warn("VRodos: Could not generate video screenshot due to cross-origin restrictions (Tainted Canvas).", e);
+			}
 		};
 
 		// Debounce helper to prevent excessive processing
