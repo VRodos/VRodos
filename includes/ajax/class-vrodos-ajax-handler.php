@@ -28,9 +28,40 @@ class VRodos_AJAX_Handler {
 		add_action( 'wp_ajax_vrodos_fetch_game_assets_action', $this->vrodos_fetch_game_assets_action_callback(...) );
 
 		add_action( 'wp_ajax_vrodos_delete_game_action', $this->vrodos_delete_gameproject_frontend_callback(...) );
+		add_action( 'wp_ajax_vrodos_rename_project_action', $this->vrodos_rename_project_frontend_callback(...) );
 		add_action( 'wp_ajax_vrodos_create_project_action', $this->vrodos_create_project_frontend_callback(...) );
 		add_action( 'wp_ajax_vrodos_fetch_glb_asset_action', $this->vrodos_fetch_glb_asset3d_frontend_callback(...) );
 		add_action( 'wp_ajax_nopriv_vrodos_fetch_glb_asset_action', $this->vrodos_fetch_glb_asset3d_frontend_callback(...) );
+	}
+
+	public function vrodos_rename_project_frontend_callback(): void {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
+
+		$project_id    = absint( $_POST['project_id'] );
+		$project_title = sanitize_text_field( (string) $_POST['project_title'] );
+
+		if ( ! $project_id || ! $project_title ) {
+			wp_send_json_error( 'Invalid data.' );
+		}
+
+		$project_post = get_post( $project_id );
+		if ( ! $project_post || $project_post->post_type !== 'vrodos_game' ) {
+			wp_send_json_error( 'Invalid project.' );
+		}
+
+		$res = wp_update_post( [
+			'ID'         => $project_id,
+			'post_title' => $project_title
+		] );
+
+		if ( is_wp_error( $res ) ) {
+			wp_send_json_error( $res->get_error_message() );
+		}
+
+		echo $project_title;
+		wp_die();
 	}
 
 	public function vrodos_create_project_frontend_callback(): void {
@@ -611,7 +642,21 @@ class VRodos_AJAX_Handler {
 
 				// 2a. Info
 				echo '<div class="tw-min-w-0 tw-flex tw-flex-col tw-gap-1">';
+				echo '<div class="tw-flex tw-items-center tw-gap-2 tw-group/title tw-min-w-0">';
 				echo '<div id="' . $game_id . '-title" class="tw-text-sm tw-font-bold tw-text-base-content tw-truncate">' . esc_html( $game_title ) . '</div>';
+				echo '<input id="' . $game_id . '-title-input" type="text" class="tw-input tw-input-xs tw-input-bordered tw-w-full tw-hidden" value="' . esc_attr( $game_title ) . '" />';
+				echo '<button type="button" class="tw-p-1 tw-text-base-content/20 hover:tw-text-primary tw-opacity-0 group-hover/title:tw-opacity-100 tw-transition-all vrodos-rename-project-btn" data-game-id="' . $game_id . '" title="Rename project">';
+				echo '<i data-lucide="pencil" class="tw-w-3 tw-h-3"></i>';
+				echo '</button>';
+				echo '<div id="' . $game_id . '-rename-actions" class="tw-flex tw-items-center tw-gap-1 tw-hidden">';
+				echo '<button type="button" class="tw-p-1 tw-text-success hover:tw-bg-success/10 tw-rounded vrodos-save-rename-btn" data-game-id="' . $game_id . '" title="Save">';
+				echo '<i data-lucide="check" class="tw-w-3 tw-h-3"></i>';
+				echo '</button>';
+				echo '<button type="button" class="tw-p-1 tw-text-error hover:tw-bg-error/10 tw-rounded vrodos-cancel-rename-btn" data-game-id="' . $game_id . '" title="Cancel">';
+				echo '<i data-lucide="x" class="tw-w-3 tw-h-3"></i>';
+				echo '</button>';
+				echo '</div>';
+				echo '</div>';
 				echo '<div class="tw-flex tw-items-center tw-gap-2 tw-flex-wrap">';
 				echo '<span class="tw-text-[9px] tw-font-bold tw-text-primary tw-bg-primary/10 tw-px-1.5 tw-py-0.5 tw-rounded tw-uppercase">' . esc_html( $game_type_obj->string ) . '</span>';
 				echo '<span class="tw-text-[10px] tw-text-base-content/40">' . esc_html( $game_date ) . '</span>';

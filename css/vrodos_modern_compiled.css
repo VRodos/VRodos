@@ -5615,6 +5615,11 @@ input.tw-tab:checked + .tw-tab-content,
   color: rgb(255 255 255 / 0.9);
 }
 
+.vrodos-manager-wrapper .tw-text-success {
+  --tw-text-opacity: 1;
+  color: var(--fallback-su,oklch(var(--su)/var(--tw-text-opacity, 1)));
+}
+
 .vrodos-manager-wrapper .tw-no-underline {
   text-decoration-line: none;
 }
@@ -6986,6 +6991,10 @@ body.vrodos-manager-wrapper {
   background-color: rgb(255 255 255 / 0.8);
 }
 
+.vrodos-manager-wrapper .hover\:tw-bg-success\/10:hover {
+  background-color: var(--fallback-su,oklch(var(--su)/0.1));
+}
+
 .vrodos-manager-wrapper .hover\:tw-text-blue-400:hover {
   --tw-text-opacity: 1;
   color: rgb(96 165 250 / var(--tw-text-opacity, 1));
@@ -7205,6 +7214,10 @@ body.vrodos-manager-wrapper {
 
 .vrodos-manager-wrapper :is(.tw-group:hover .group-hover\:tw-opacity-90) {
   opacity: 0.9;
+}
+
+.vrodos-manager-wrapper :is(.tw-group\/title:hover .group-hover\/title\:tw-opacity-100) {
+  opacity: 1;
 }
 
 .vrodos-manager-wrapper :is(.tw-peer:checked ~ .peer-checked\:tw-border-emerald-500) {

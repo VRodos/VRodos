@@ -76,6 +76,8 @@ class VRodos_Asset_Manager {
 			['ajax_url' => admin_url( 'admin-ajax.php' )]
 		);
 
+		wp_enqueue_script( 'ajax-script_rename_game' );
+
 		wp_enqueue_script( 'vrodos_project_manager' );
 
 		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
@@ -267,6 +269,7 @@ class VRodos_Asset_Manager {
       ['ajax-script_delete_game', $plugin_url_js . 'ajaxes/delete_game_scene_asset.js'],
       ['ajax-script_deleteasset', $plugin_url_js . 'ajaxes/delete_asset.js'],
       ['ajax-script_create_game', $plugin_url_js . 'ajaxes/create_project.js'],
+      ['ajax-script_rename_game', $plugin_url_js . 'ajaxes/rename_project.js'],
       // 3D Editor & Viewer Scripts
       ['vrodos_AssetViewer_3D_kernel', $plugin_url_js . 'vrodos_AssetViewer_3D_kernel.js'],
       ['vrodos_3d_editor_buttons_drags', $plugin_url_js . 'vrodos_3d_editor_buttons_drags.js', ['vrodos_addRemoveOne']],
@@ -286,7 +289,7 @@ class VRodos_Asset_Manager {
       ['vrodos_CompileUI_PostFX', $plugin_url_js . 'vrodos_CompileUI_PostFX.js', ['vrodos_CompileUI_Shared']],
       ['vrodos_CompileUI_Atmosphere', $plugin_url_js . 'vrodos_CompileUI_Atmosphere.js', ['vrodos_CompileUI_Shared']],
       ['vrodos_compile_dialogue', $plugin_url_js . 'vrodos_compile_dialogue.js', ['vrodos_CompileUI_Shared', 'vrodos_CompileUI_General', 'vrodos_CompileUI_PostFX', 'vrodos_CompileUI_Atmosphere']],
-      ['vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js', ['ajax-script_create_game']],
+      ['vrodos_project_manager', $plugin_url_js . 'vrodos_project_manager.js', ['ajax-script_create_game', 'ajax-script_rename_game']],
       ['vrodos_EditorInitializer', $plugin_url_js . 'vrodos_EditorInitializer.js', ['vrodos_scripts', 'vrodos_scene_settings_schema', 'vrodos_ScenePersistence', 'vrodos_LoaderMulti', 'vrodos_3d_editor_environmentals', 'vrodos_addRemoveOne', 'vrodos_3d_editor_buttons_drags']],
       // Active Three vendor bundle paired with the pinned A-Frame runtime.
       ['vrodos_three_vendor_bundle', $plugin_url_js . $three_vendor_dir . '/' . $three_vendor_bundle],

@@ -53,14 +53,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Delegated event listener for project deletion
+    // Delegated event listener for project actions (deletion, rename)
     document.getElementById('ExistingProjectsDivDOM').addEventListener('click', (e) => {
-        let btn = e.target.closest('.vrodos-delete-project-btn');
-        if (!btn) return;
-        let gameId = btn.dataset.gameId;
-        let gameTitle = btn.dataset.gameTitle || "this project";
-        if (gameId) {
-            deleteProject(gameId, gameTitle);
+        // Delete button
+        let deleteBtn = e.target.closest('.vrodos-delete-project-btn');
+        if (deleteBtn) {
+            let gameId = deleteBtn.dataset.gameId;
+            let gameTitle = deleteBtn.dataset.gameTitle || "this project";
+            if (gameId) {
+                deleteProject(gameId, gameTitle);
+            }
+            return;
+        }
+
+        // Rename button (Pencil)
+        let renameBtn = e.target.closest('.vrodos-rename-project-btn');
+        if (renameBtn) {
+            let gameId = renameBtn.dataset.gameId;
+            if (gameId) enterEditMode(gameId);
+            return;
+        }
+
+        // Save Rename button (Check)
+        let saveBtn = e.target.closest('.vrodos-save-rename-btn');
+        if (saveBtn) {
+            let gameId = saveBtn.dataset.gameId;
+            if (gameId) saveRename(gameId);
+            return;
+        }
+
+        // Cancel Rename button (X)
+        let cancelBtn = e.target.closest('.vrodos-cancel-rename-btn');
+        if (cancelBtn) {
+            let gameId = cancelBtn.dataset.gameId;
+            if (gameId) exitEditMode(gameId);
+            return;
         }
     });
 
