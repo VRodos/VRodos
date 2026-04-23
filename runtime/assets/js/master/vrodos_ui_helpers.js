@@ -104,6 +104,56 @@
         });
     };
 
+    api.getChatCapabilities = function () {
+        var sceneEl = document.getElementById('aframe-scene-container') || document.querySelector('a-scene');
+        var settings = sceneEl ? sceneEl.getAttribute('scene-settings') : null;
+        var hasPublic = !!(settings && String(settings.public_chat) === '1');
+        var hasPrivate = !!document.querySelector('[chat-poi]');
+
+        return {
+            public: hasPublic,
+            private: hasPrivate,
+            any: hasPublic || hasPrivate
+        };
+    };
+
+    api.applyChatTabs = function (activeTab) {
+        var capabilities = api.getChatCapabilities();
+        var publicBtn = document.getElementById('public-chat-button');
+        var privateBtn = document.getElementById('private-chat-button');
+        var resolvedActiveTab = activeTab;
+
+        if (resolvedActiveTab === 'public' && !capabilities.public) {
+            resolvedActiveTab = capabilities.private ? 'private' : '';
+        }
+
+        if (resolvedActiveTab === 'private' && !capabilities.private) {
+            resolvedActiveTab = capabilities.public ? 'public' : '';
+        }
+
+        if (!resolvedActiveTab) {
+            resolvedActiveTab = capabilities.public ? 'public' : (capabilities.private ? 'private' : '');
+        }
+
+        api.setButtonVisible(publicBtn, capabilities.public);
+        api.setButtonVisible(privateBtn, capabilities.private);
+
+        if (publicBtn) {
+            publicBtn.disabled = !capabilities.public || !capabilities.private;
+        }
+
+        if (privateBtn) {
+            privateBtn.disabled = !capabilities.private;
+        }
+
+        api.setChatTabState(resolvedActiveTab);
+
+        return {
+            activeTab: resolvedActiveTab,
+            capabilities: capabilities
+        };
+    };
+
     document.addEventListener('click', function (event) {
         var closeTrigger = event.target.closest('[data-dialog-close]');
         if (!closeTrigger) {

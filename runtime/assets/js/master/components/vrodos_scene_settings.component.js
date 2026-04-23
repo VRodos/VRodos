@@ -644,20 +644,18 @@ AFRAME.registerComponent('scene-settings', {
             }
 
             const sceneContainer = document.getElementById("aframe-scene-container");
-            if (sceneContainer) {
+            if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.applyChatTabs === 'function') {
+                window.VRODOSMasterUI.applyChatTabs(this.data.public_chat === "1" ? 'public' : 'private');
+            } else if (sceneContainer) {
                 const settings = sceneContainer.getAttribute("scene-settings");
-                if (settings.public_chat == "0") {
-                    if (privateChatBtn) privateChatBtn.disabled = true;
-                } else {
-                    if (publicChatBtn) {
-                        if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.setButtonVisible === 'function') {
-                            window.VRODOSMasterUI.setButtonVisible(publicChatBtn, true);
-                            window.VRODOSMasterUI.setChatTabState('public');
-                        } else {
-                            publicChatBtn.style.visibility = 'visible';
-                        }
-                        publicChatBtn.disabled = true;
-                    }
+                if (publicChatBtn) {
+                    publicChatBtn.style.visibility = settings && settings.public_chat == "1" ? 'visible' : 'hidden';
+                    publicChatBtn.disabled = settings && settings.public_chat != "1";
+                }
+                if (privateChatBtn) {
+                    const hasPrivateChat = !!document.querySelector('[chat-poi]');
+                    privateChatBtn.style.visibility = hasPrivateChat ? 'visible' : 'hidden';
+                    privateChatBtn.disabled = !hasPrivateChat;
                 }
             }
 

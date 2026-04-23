@@ -8,10 +8,16 @@ let getChatCurrentTimeString = () => {
         String(date.getSeconds()).padStart(2, '0') + ']';
 }
 
+function isPublicChatEnabled() {
+    let sceneEl = document.getElementById("aframe-scene-container") || document.querySelector('a-scene');
+    let settings = sceneEl ? sceneEl.getAttribute("scene-settings") : null;
+    return !!(settings && String(settings.public_chat) === "1");
+}
+
 function sendPublicMessage() {
     let chatInput = document.getElementById('chatInput');
     let chatLog = document.getElementById('chat-messages');
-    if (!chatInput || !chatLog || !chatInput.value.trim()) return;
+    if (!isPublicChatEnabled() || !publicChatIsActive || !chatInput || !chatLog || !chatInput.value.trim()) return;
 
     let player_info = document.getElementById('cameraA') ? document.getElementById('cameraA').getAttribute('player-info') : null;
 
@@ -32,6 +38,11 @@ function sendPublicMessage() {
 document.addEventListener('DOMContentLoaded', () => {
     let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
     let chatInput = document.getElementById('chatInput');
+    publicChatIsActive = isPublicChatEnabled();
+
+    if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.applyChatTabs === 'function') {
+        window.VRODOSMasterUI.applyChatTabs(publicChatIsActive ? 'public' : 'private');
+    }
 
     if (sendMsgChatBtn) {
         sendMsgChatBtn.addEventListener("click", sendPublicMessage);
@@ -111,5 +122,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
 
