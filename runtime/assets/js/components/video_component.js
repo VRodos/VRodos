@@ -381,15 +381,16 @@ AFRAME.registerComponent('video-controls', {
     },
 
     playUpd: function(obj) {
+        const icon3d = obj.querySelector('[vrodos-3d-play-icon]');
         if (this.video.paused) {
-            obj.setAttribute("src", "#video_pl_" + this.data.id);   
+            if (icon3d) icon3d.setAttribute("visible", "true");
+            obj.setAttribute("material", "visible: false");
         }
         else {
+            if (icon3d) icon3d.setAttribute("visible", "false");
             obj.setAttribute("src", "#video_pas_" + this.data.id);
+            obj.setAttribute("material", "visible: true; transparent: true; opacity: 1; depthTest: false");
         }
-        obj.setAttribute("material", "depthTest: false");
-        obj.setAttribute("material", "transparent: true");
-        obj.setAttribute("material", "opacity: 1");
         this.updateInlinePlayHint();
     },
 
@@ -509,15 +510,16 @@ AFRAME.registerComponent('video-controls', {
     },
     
     updatePlayEntity: function (obj) {
+        const icon3d = obj.querySelector('[vrodos-3d-play-icon]');
         if (this.video.paused) {
-            obj.setAttribute("src", "#video_pl_" + this.data.id);          
+            if (icon3d) icon3d.setAttribute("visible", "true");
+            obj.setAttribute("material", "visible: false");
         }
         else {
-            obj.setAttribute("src", "#video_pas_" + this.data.id);     
+            if (icon3d) icon3d.setAttribute("visible", "false");
+            obj.setAttribute("src", "#video_pas_" + this.data.id);
+            obj.setAttribute("material", "visible: true; transparent: true; opacity: 1; depthTest: false");
         }
-        obj.setAttribute("material", "depthTest: false");
-        obj.setAttribute("material", "transparent: true");
-        obj.setAttribute("material", "opacity: 1");
     },
 
     handleCamEntity: function (obj, non_visible, trans, opac) {
@@ -699,5 +701,59 @@ AFRAME.registerComponent('video-controls', {
         // else
         //     this.cam.setAttribute("wasd-controls-enabled", "false");
             this.updatePlayEntity(this.plEl);
+    }
+});
+
+AFRAME.registerComponent('vrodos-3d-play-icon', {
+    init: function () {
+        const shape = new THREE.Shape();
+        shape.moveTo(0, 1);
+        shape.lineTo(1.732, 0); 
+        shape.lineTo(0, -1);
+        shape.lineTo(0, 1);
+
+        const extrudeSettings = {
+            depth: 0.1,
+            bevelEnabled: true,
+            bevelThickness: 0.05,
+            bevelSize: 0.05,
+            bevelSegments: 5
+        };
+
+        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        
+        // Material 0: Front and back faces (Vibrant red)
+        const frontMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xff0000,
+            emissive: 0xff0000,
+            emissiveIntensity: 0.4,
+            roughness: 0.8,
+            metalness: 0.0 // Removed metalness to avoid black look in shadow
+        });
+
+        // Material 1: Sides and bevel (Realistic falloff red)
+        const sideMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xcc0000,
+            emissive: 0x880000,
+            emissiveIntensity: 0.3,
+            roughness: 0.8,
+            metalness: 0.0
+        });
+
+        const mesh = new THREE.Mesh(geometry, [frontMaterial, sideMaterial]);
+
+        geometry.computeBoundingBox();
+        const center = new THREE.Vector3();
+        geometry.boundingBox.getCenter(center);
+        geometry.translate(-center.x, -center.y, -center.z);
+
+        // Add a dedicated small light so the 3D bevels are always visible
+        const light = new THREE.PointLight(0xffffff, 1, 2);
+        light.position.set(0.5, 0.5, 1); 
+        this.el.setObject3D('light', light);
+
+        // Standard play button points right. 
+        mesh.rotation.z = 0;
+        this.el.setObject3D('mesh', mesh);
     }
 });

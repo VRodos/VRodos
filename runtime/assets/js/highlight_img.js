@@ -38,22 +38,25 @@ AFRAME.registerComponent('highlight', {
 
         evt.target.object3D.traverse((child) => {
             if (child.type === 'Mesh') {
-                const material = child.material;
+                const materials = Array.isArray(child.material) ? child.material : [child.material];
 
-                // SAFETY CHECK: Skip ShaderMaterials to prevent crashing on A-Frame 1.7.0
-                if (!material || material.type === 'ShaderMaterial' || material.type === 'RawShaderMaterial') return;
+                materials.forEach(material => {
+                    // SAFETY CHECK: Skip ShaderMaterials
+                    if (!material || material.type === 'ShaderMaterial' || material.type === 'RawShaderMaterial') return;
 
-                var c = new THREE.Color();
-                c.set(material.color);
+                    var c = new THREE.Color();
+                    c.set(material.color);
 
-                material.userData.originalColor = c.getHexString();
-                var hex_val = "0x" + c.getHexString();
+                    material.userData.originalColor = c.getHexString();
+                    material.userData.originalEmissiveIntensity = material.emissiveIntensity || 0;
+                    var hex_val = "0x" + c.getHexString();
 
-                // Only set emissive if the material supports it (Standard/Basic/Phong)
-                if (material.emissive) {
-                    material.emissive = new THREE.Color(parseInt(hex_val));
-                    material.emissiveIntensity = 0.3;
-                }
+                    // Only set emissive if the material supports it (Standard/Basic/Phong)
+                    if (material.emissive) {
+                        material.emissive = new THREE.Color(parseInt(hex_val));
+                        material.emissiveIntensity = 0.8; // Increased for better visibility
+                    }
+                });
 
                 child.receiveShadow = false;
             }
@@ -65,18 +68,22 @@ AFRAME.registerComponent('highlight', {
 
         evt.target.object3D.traverse((child) => {
             if (child.type === 'Mesh') {
-                const material = child.material;
+                const materials = Array.isArray(child.material) ? child.material : [child.material];
 
-                // SAFETY CHECK: Skip ShaderMaterials
-                if (!material || material.type === 'ShaderMaterial' || material.type === 'RawShaderMaterial') return;
+                materials.forEach(material => {
+                    // SAFETY CHECK: Skip ShaderMaterials
+                    if (!material || material.type === 'ShaderMaterial' || material.type === 'RawShaderMaterial') return;
 
-                if (material.userData.originalColor) {
-                    material.color.setHex("0x" + material.userData.originalColor);
-                }
+                    if (material.userData.originalColor) {
+                        material.color.setHex("0x" + material.userData.originalColor);
+                    }
 
-                if (material.emissiveIntensity !== undefined) {
-                    material.emissiveIntensity = 0;
-                }
+                    if (material.userData.originalEmissiveIntensity !== undefined) {
+                        material.emissiveIntensity = material.userData.originalEmissiveIntensity;
+                    } else if (material.emissiveIntensity !== undefined) {
+                        material.emissiveIntensity = 0;
+                    }
+                });
 
                 child.receiveShadow = false;
             }
@@ -86,14 +93,16 @@ AFRAME.registerComponent('highlight', {
     onBackgroundClick: function (evt) {
         evt.target.object3D.traverse((child) => {
             if (child.type === 'Mesh') {
-                const material = child.material;
+                const materials = Array.isArray(child.material) ? child.material : [child.material];
 
-                // SAFETY CHECK: Skip ShaderMaterials
-                if (!material || material.type === 'ShaderMaterial' || material.type === 'RawShaderMaterial') return;
+                materials.forEach(material => {
+                    // SAFETY CHECK: Skip ShaderMaterials
+                    if (!material || material.type === 'ShaderMaterial' || material.type === 'RawShaderMaterial') return;
 
-                if (material.userData.originalColor) {
-                    material.color.setHex("0x" + material.userData.originalColor);
-                }
+                    if (material.userData.originalColor) {
+                        material.color.setHex("0x" + material.userData.originalColor);
+                    }
+                });
             }
         })
     },

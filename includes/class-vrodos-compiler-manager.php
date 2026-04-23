@@ -1271,13 +1271,16 @@ class VRodos_Compiler_Manager {
 			$this->setAffineTransformations( $display, $obj );
 			$this->apply_immerse_cefr_gating_attributes( $display, $obj );
 
-			$play_hint = $dom->createElement( 'a-plane' );
+			$play_hint = $dom->createElement( 'a-entity' );
 			$play_hint->setAttribute( 'id', 'video-playhint_' . $uuid );
-			$play_hint->setAttribute( 'src', '#video_pl_' . $uuid );
-			$play_hint->setAttribute( 'position', '0 0 0.01' );
-			$play_hint->setAttribute( 'width', '0.72' );
-			$play_hint->setAttribute( 'height', '0.72' );
-			$play_hint->setAttribute( 'material', 'shader: flat; side: double; transparent: true; opacity: 0.96; depthTest: false' );
+			$play_hint->setAttribute( 'vrodos-3d-play-icon', '' );
+			$play_hint->setAttribute( 'class', 'raycastable' );
+			$play_hint->setAttribute( 'highlight', 'video-playhint_' . $uuid );
+			if ( $this->isHoverEnabled ) {
+				$play_hint->setAttribute( 'vrodos-hypnotic-hover', '' );
+			}
+			$play_hint->setAttribute( 'position', '0 0 0.1' );
+			$play_hint->setAttribute( 'scale', '0.28 0.28 0.28' );
 			$display->appendChild( $play_hint );
 
 			$ascene->appendChild( $display );
@@ -1304,15 +1307,23 @@ class VRodos_Compiler_Manager {
 			$exit_btn->setAttribute( 'class', 'raycastable' );
 			$panel->appendChild( $exit_btn );
 
-			// Play Button
-			$play_btn = $dom->createElement( 'a-plane' );
+			// Play Button (Switches between 3D Play and 2D Pause)
+			$play_btn = $dom->createElement( 'a-entity' );
 			$play_btn->setAttribute( 'id', 'ent_pl_' . $uuid );
-			$play_btn->setAttribute( 'src', '#video_pl_' . $uuid );
 			$play_btn->setAttribute( 'position', '0 -0.2 0.001' );
-			$play_btn->setAttribute( 'width', '0.1' );
-			$play_btn->setAttribute( 'height', '0.1' );
-			$play_btn->setAttribute( 'material', 'transparent: true' );
+			$play_btn->setAttribute( 'geometry', 'primitive: plane; width: 0.1; height: 0.1' );
+			$play_btn->setAttribute( 'material', 'transparent: true; visible: false' );
 			$play_btn->setAttribute( 'class', 'raycastable' );
+			$play_btn->setAttribute( 'highlight', 'ent_pl_' . $uuid );
+			if ( $this->isHoverEnabled ) {
+				$play_btn->setAttribute( 'vrodos-hypnotic-hover', '' );
+			}
+
+			$play_btn_3d = $dom->createElement( 'a-entity' );
+			$play_btn_3d->setAttribute( 'vrodos-3d-play-icon', '' );
+			$play_btn_3d->setAttribute( 'scale', '0.04 0.04 0.04' );
+			$play_btn->appendChild( $play_btn_3d );
+
 			$panel->appendChild( $play_btn );
 
 			// Fullscreen Button
