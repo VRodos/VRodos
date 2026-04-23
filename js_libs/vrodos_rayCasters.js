@@ -373,6 +373,10 @@ function showProperties(event, object) {
         case 'poi-link':
             displayLinkProperties(event, name);
             break;
+        case 'chat':
+        case 'poi-chat':
+            displayPoiChatProperties(event, name);
+            break;
         // case 'lightSun':
         //     displaySunProperties(event, name);
         //     break;
@@ -606,6 +610,24 @@ function displayLinkProperties(event, name) {
     popUpLinkPropertiesDiv.style.display = '';
 }
 
+function displayPoiChatProperties(event, name) {
+    let ppPropertiesDiv = document.getElementById("popUpPoiChatPropertiesDiv");
+    if (!ppPropertiesDiv) return;
+
+    let sceneObj = envir.scene.getObjectByName(name);
+    if (!sceneObj) return;
+
+    let setTitle = document.getElementById('poi_chat_title');
+    let setParticipants = document.getElementById('poi_chat_participants');
+    let setIndicators = document.getElementById('poi_chat_indicators');
+
+    if (setTitle) setTitle.value = sceneObj.poi_chat_title || 'Help Chat';
+    if (setParticipants) setParticipants.value = sceneObj.poi_chat_participants || 2;
+    if (setIndicators) setIndicators.checked = !!sceneObj.poi_chat_indicators;
+
+    ppPropertiesDiv.style.display = '';
+}
+
 /**
  * Initializes persistent event listeners for light and properties panels
  * so that we don't need to bind/unbind them on every click.
@@ -725,6 +747,16 @@ function initPersistentPropertyListeners() {
         let el = document.getElementById('lampshadowMap' + dim);
         if (el) el.addEventListener('change', setProp('lampshadowMap' + dim, false, true));
     });
+
+    // --- Chat Properties ---
+    const chatTitle = document.getElementById('poi_chat_title');
+    if (chatTitle) chatTitle.addEventListener('change', setProp('poi_chat_title', false));
+
+    const chatParticipants = document.getElementById('poi_chat_participants');
+    if (chatParticipants) chatParticipants.addEventListener('change', setProp('poi_chat_participants', false, true));
+
+    const chatIndicators = document.getElementById('poi_chat_indicators');
+    if (chatIndicators) chatIndicators.addEventListener('change', setProp('poi_chat_indicators', true));
 
     let elLampBias = document.getElementById('lampshadowBias');
     if (elLampBias) elLampBias.addEventListener('change', setProp('lampshadowBias', false, true));
@@ -868,6 +900,15 @@ function initPersistentPropertyListeners() {
 
     if (setFocusX) setFocusX.addEventListener("change", setProp('follow_camera_x', false));
     if (setFocusZ) setFocusZ.addEventListener("change", setProp('follow_camera_z', false));
+
+    // --- POI Chat Properties ---
+    const setChatTitle = document.getElementById('poi_chat_title');
+    const setChatParticipants = document.getElementById('poi_chat_participants');
+    const setChatIndicators = document.getElementById('poi_chat_indicators');
+
+    if (setChatTitle) setChatTitle.addEventListener("change", setProp('poi_chat_title', false));
+    if (setChatParticipants) setChatParticipants.addEventListener("change", setProp('poi_chat_participants', false, true));
+    if (setChatIndicators) setChatIndicators.addEventListener("change", setProp('poi_chat_indicators', true));
 }
 
 // Call once when script loads

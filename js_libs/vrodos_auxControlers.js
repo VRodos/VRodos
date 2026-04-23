@@ -586,6 +586,7 @@ function showPropertiesInPanel(object) {
 
     let name = object.name;
     let hasProperties = false;
+    console.log("showPropertiesInPanel", name, object.category_slug);
 
     // Dispatch by category_slug first
     switch (object.category_slug) {
@@ -615,6 +616,11 @@ function showPropertiesInPanel(object) {
             break;
         case 'poi-link':
             displayLinkProperties(null, name);
+            hasProperties = true;
+            break;
+        case 'chat':
+        case 'poi-chat':
+            displayPoiChatProperties(null, name);
             hasProperties = true;
             break;
     }

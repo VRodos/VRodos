@@ -149,14 +149,14 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
     const h = canvas.height;
 
     // Use an offscreen renderer to capture the screenshot reliably
-    const offscreenRenderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true, alpha: true });
+    const offscreenRenderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true, alpha: false });
     offscreenRenderer.setSize(w, h);
     offscreenRenderer.setClearColor(asset_viewer_3d_kernel_local.scene.background || 0x000000, 1);
     offscreenRenderer.render(asset_viewer_3d_kernel_local.scene, asset_viewer_3d_kernel_local.camera);
 
     const sourceCanvas = offscreenRenderer.domElement;
     const sourceRatio = w / h;
-    const targetWidth = 1068;
+    const targetWidth = Math.min(960, Math.max(1, w));
     const targetHeight = Math.max(1, Math.round(targetWidth / sourceRatio));
 
     // Create a resized canvas for the final thumbnail
@@ -167,7 +167,7 @@ function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
     const ctx = resizedCanvas.getContext('2d');
     ctx.drawImage(sourceCanvas, 0, 0, targetWidth, targetHeight);
 
-    const screenshotDataUrl = resizedCanvas.toDataURL('image/png');
+    const screenshotDataUrl = resizedCanvas.toDataURL('image/jpeg', 0.82);
     vrodos_set_asset_screenshot_preview(screenshotDataUrl);
     document.getElementById('sshotFileInput').value = screenshotDataUrl;
 

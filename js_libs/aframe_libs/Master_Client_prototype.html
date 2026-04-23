@@ -29,7 +29,7 @@
     <script src="js/highlight_img.js"></script>
 
     <script src="js/components/poi-image_component.js"></script>
-    <script src="js/components/poi-help_component.js"></script>
+    <script src="js/components/chat_poi_component.js"></script>
     <script src="js/components/indicator_component.js"></script>
     <script src="js/components/poi-link_component.js"></script>
     <script src="js/components/door_component.js"></script>
@@ -43,7 +43,7 @@
         src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.5.0/dist/aframe-environment-component.min.js">
     </script>
 
-    <script src="js/indicators_aframe.js"></script>
+
 
     <link rel="stylesheet" type="text/css" href="VRODOS_PLUGIN_URL_PLACEHOLDERcss/vrodos_runtime.css" />
     <link rel="stylesheet" type="text/css" href="VRODOS_PLUGIN_URL_PLACEHOLDERcss/vrodos_modern_compiled.css" />
@@ -131,7 +131,9 @@
                 <button id="public-chat-button"
                     class="tw-btn tw-btn-xs tw-join-item tw-btn-primary tw-h-6 tw-min-h-0 tw-rounded-md tw-border-0 tw-px-3 tw-text-[9px] tw-font-bold tw-text-white">Public</button>
                 <button id="private-chat-button"
-                    class="tw-btn tw-btn-xs tw-join-item tw-btn-ghost tw-h-6 tw-min-h-0 tw-rounded-md tw-border-0 tw-px-3 tw-text-[9px] tw-font-bold tw-text-white/50 tw-hidden">Private</button>
+                    class="tw-btn tw-btn-xs tw-join-item tw-btn-ghost tw-h-6 tw-min-h-0 tw-rounded-md tw-border-0 tw-px-3 tw-text-[9px] tw-font-bold tw-text-white/50 tw-hidden">
+                    <span id="private-chat-button-label">Private</span>
+                </button>
             </div>
 
             <div class="tw-flex tw-items-center tw-gap-1">
@@ -182,7 +184,7 @@
                     </button>
                 </div>
 
-                <button id="exit-help-btn" class="tw-btn tw-btn-square tw-btn-xs tw-btn-ghost tw-text-rose-400"
+                <button id="exit-private-chat-btn" class="tw-btn tw-btn-square tw-btn-xs tw-btn-ghost tw-text-rose-400"
                     title="Exit Private" style="display: none">
                     <i data-lucide="x" class="tw-h-3 tw-w-3"></i>
                 </button>
@@ -491,6 +493,8 @@
             <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 2; height: 0.3"
                 material="color: black; opacity: 0.7; shader: flat"></a-mixin>
 
+            <a-asset-item id="check_indicator_id" src="VRODOS_PLUGIN_URL_PLACEHOLDERassets/checkmark.glb"></a-asset-item>
+            <a-asset-item id="x_indicator_id" src="VRODOS_PLUGIN_URL_PLACEHOLDERassets/xmark.glb"></a-asset-item>
         </a-assets>
 
         <a-entity id="player"></a-entity>

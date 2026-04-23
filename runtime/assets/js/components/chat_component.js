@@ -1,30 +1,37 @@
+let publicChatIsActive = true;
+let chatLogPublicHistory = [];
+
+let getChatCurrentTimeString = () => {
+    let date = new Date;
+    return '[' + String(date.getHours()).padStart(2, '0') + ':' +
+        String(date.getMinutes()).padStart(2, '0') + ':' +
+        String(date.getSeconds()).padStart(2, '0') + ']';
+}
+
+function sendPublicMessage() {
+    let chatInput = document.getElementById('chatInput');
+    let chatLog = document.getElementById('chat-messages');
+    if (!chatInput || !chatLog || !chatInput.value.trim()) return;
+
+    let player_info = document.getElementById('cameraA') ? document.getElementById('cameraA').getAttribute('player-info') : null;
+
+    let dateString = getChatCurrentTimeString();
+    chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
+    chatLogPublicHistory.push(dateString + ' Me: ' + chatInput.value);
+    if (typeof NAF !== 'undefined' && NAF.connection) {
+        NAF.connection.broadcastData("chat", { txt: chatInput.value, player: player_info });
+    }
+    if (typeof window.gtag === 'function') {
+        window.gtag('event', 'chat_public_msg_dispatched');
+    }
+
+    // Clear input after sending
+    chatInput.value = '';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
     let chatInput = document.getElementById('chatInput');
-    let chatLog = document.getElementById('chat-messages');
-
-    let publicChatIsActive = true;
-    let chatLogPublicHistory = [];
-
-    function sendPublicMessage() {
-        if (!chatInput.value.trim()) return;
-
-        let player_info = document.getElementById('cameraA') ? document.getElementById('cameraA').getAttribute('player-info') : null;
-        let player_name = player_info ? player_info.name : 'Unknown';
-
-        let dateString = getChatCurrentTimeString();
-        chatLog.innerHTML += '<span>' + dateString + ' Me: ' + chatInput.value + '</span><br>';
-        chatLogPublicHistory.push(dateString + ' Me: ' + chatInput.value);
-        if (typeof NAF !== 'undefined' && NAF.connection) {
-            NAF.connection.broadcastData("chat", { txt: chatInput.value, player: player_info });
-        }
-        if (typeof window.gtag === 'function') {
-            window.gtag('event', 'chat_public_msg_dispatched');
-        }
-
-        // Clear input after sending
-        chatInput.value = '';
-    }
 
     if (sendMsgChatBtn) {
         sendMsgChatBtn.addEventListener("click", sendPublicMessage);
@@ -41,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Wait for NAF connection before subscribing
     const subscribeWhenReady = () => {
+        let chatLog = document.getElementById('chat-messages');
         if (NAF.connection) {
             NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
                 let dateString = getChatCurrentTimeString();
@@ -104,9 +112,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-let getChatCurrentTimeString = () => {
-    let date = new Date;
-    return '[' + String(date.getHours()).padStart(2, '0') + ':' +
-        String(date.getMinutes()).padStart(2, '0') + ':' +
-        String(date.getSeconds()).padStart(2, '0') + ']';
-}
+

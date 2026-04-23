@@ -21,6 +21,7 @@ var VRODOS_CATEGORY_ICONS = {
     'poi-imagetext':   'image',
     'image':           'image-play',
     'chat':            'message-square',
+    'poi-chat':        'message-square',
     'poi-link':        'external-link',
     'assessment':      'clipboard-check',
 

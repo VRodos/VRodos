@@ -13,7 +13,7 @@ class VRodos_Upload_Manager {
 	 */
 	public static function create_asset_3dfiles_extra_frontend( $asset_new_id, $project_id, $asset_cat_id ): void {
 		// Upload and update DB
-		if ( ( isset( $_POST['glbFileInput'] ) && $_POST['glbFileInput'] ) || ( isset( $_FILES['multipleFilesInput'] ) && $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE ) ) {
+		if ( ( isset( $_POST['glbFileInput'] ) && $_POST['glbFileInput'] ) || ( isset( $_FILES['multipleFilesInput'] ) && isset( $_FILES['multipleFilesInput']['error'][0] ) && $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE ) ) {
 			wp_raise_memory_limit( 'admin' );
 			@set_time_limit( 300 );
 
@@ -98,9 +98,16 @@ class VRodos_Upload_Manager {
 		$args['path'] = str_replace( $args['subdir'], '', $args['path'] );
 		$args['url']  = str_replace( $args['subdir'], '', $args['url'] );
 
-		$newdir = get_post_type( $post_id ) === 'vrodos_scene' ?
-			'/' . get_the_terms( $post_id, 'vrodos_scene_pgame' )[0]->slug . '/scenes'  // 'vrodos_scene'
-			: '/' . get_post_meta( $post_id, 'vrodos_asset3d_pathData', true ) . '/models'; // 'vrodos_asset3d'
+		$newdir = '/models';
+		if ( get_post_type( $post_id ) === 'vrodos_scene' ) {
+			$terms = get_the_terms( $post_id, 'vrodos_scene_pgame' );
+			$slug   = ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0]->slug : 'unknown';
+			$newdir = '/' . $slug . '/scenes';
+		} else {
+			$pathData = get_post_meta( $post_id, 'vrodos_asset3d_pathData', true );
+			$slug     = ! empty( $pathData ) ? $pathData : 'unknown';
+			$newdir   = '/' . $slug . '/models';
+		}
 
 		$args['subdir'] = $newdir;
 		$args['path']  .= $newdir;
@@ -331,6 +338,32 @@ class VRodos_Upload_Manager {
 	public static function upload_asset_screenshot( $image, $parentPostId, $projectId, $existing_screenshot_id = null ) {
 		self::load_wp_admin_files();
 
+		$image_data = (string) $image;
+		$mime_type  = 'image/png';
+		if ( preg_match( '/^data:(image\/(?:png|jpe?g|webp));base64,/', $image_data, $matches ) ) {
+			$mime_type = strtolower( $matches[1] );
+		}
+
+		$extensions = [
+			'image/jpeg' => 'jpg',
+			'image/jpg'  => 'jpg',
+			'image/png'  => 'png',
+			'image/webp' => 'webp',
+		];
+		$extension  = $extensions[ $mime_type ] ?? 'png';
+		$comma_pos  = strpos( $image_data, ',' );
+		if ( $comma_pos === false ) {
+			return false;
+		}
+
+		// Define a unique filename using a timestamp to prevent orphaned files
+		// with identical names and naturally bust browser caching.
+		$filename      = $parentPostId . '_sshot_' . time() . '.' . $extension;
+		$decoded_image = base64_decode( substr( $image_data, $comma_pos + 1 ), true );
+		if ( $decoded_image === false ) {
+			return false;
+		}
+
 		// Set post_id for the upload directory filter.
 		$_REQUEST['post_id'] = $parentPostId;
 		add_filter( 'upload_dir', self::upload_dir_for_scenes_or_assets(...) );
@@ -339,11 +372,6 @@ class VRodos_Upload_Manager {
 		if ( $existing_screenshot_id ) {
 			wp_delete_attachment( $existing_screenshot_id, true );
 		}
-
-		// Define a unique filename using a timestamp to prevent orphaned files 
-		// with identical names and naturally bust browser caching.
-		$filename      = $parentPostId . '_sshot_' . time() . '.png';
-		$decoded_image = base64_decode( substr( (string) $image, strpos( (string) $image, ',' ) + 1 ) );
 
 		// Prevent thumbnails from being generated for the new screenshot.
 		add_filter( 'intermediate_image_sizes_advanced', self::remove_allthumbs_sizes(...), 10, 2 );

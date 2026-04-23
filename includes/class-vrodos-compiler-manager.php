@@ -904,7 +904,7 @@ class VRodos_Compiler_Manager {
 			case 'door':
 			case 'poi-link':
 			case 'chat':
-				$this->render_gltf_entity( $dom, $ascene, $assets, $obj );
+				$this->render_gltf_entity( $dom, $ascene, $assets, $obj, (int) ($config['scene_id'] ?? 0) );
 				break;
 			case 'audio':
 				$this->render_audio_entity( $dom, $ascene, $assets, $obj );
@@ -994,7 +994,7 @@ class VRodos_Compiler_Manager {
 		$ascene->appendChild( $a_light );
 	}
 
-	private function render_gltf_entity( $dom, $ascene, $assets, $obj ) {
+	private function render_gltf_entity( $dom, $ascene, $assets, $obj, $scene_id = 0 ) {
 		$uuid = $obj->uuid ?? '';
 		$cat  = $obj->category_slug ?? '';
 		
@@ -1046,8 +1046,21 @@ class VRodos_Compiler_Manager {
 			$class .= ' raycastable';
 			$entity->setAttribute( 'id', "entity_$uuid" );
 			$entity->setAttribute( 'highlight', "entity_$uuid" );
-			$entity->setAttribute( 'title', $this->sanitize_text_attr( $obj->poi_help_title ?? 'Help' ) );
-			$entity->setAttribute( 'help-chat', "scene_id: " . ($obj->sceneID_target ?? $scene_id) . "; num_participants: " . ($obj->poi_help_max_participants ?? '-1') );
+
+			// Unify properties using fallback chain
+			$chat_title = $this->sanitize_text_attr( $obj->poi_chat_title ?? $obj->poi_help_title ?? 'Help' );
+			$chat_participants = $obj->poi_chat_participants ?? $obj->poi_help_max_participants ?? '2';
+			$chat_indicators = $obj->poi_chat_indicators ?? 'false';
+
+			$entity->setAttribute( 'title', $chat_title );
+			$entity->setAttribute( 'chat-poi', "scene_id: " . ($obj->sceneID_target ?? $scene_id) . "; num_participants: " . $chat_participants );
+
+			// Add availability indicator logic if enabled
+			if ( filter_var( $chat_indicators, FILTER_VALIDATE_BOOLEAN ) ) {
+				$entity->setAttribute( 'indicator-availability', "num_participants: " . $chat_participants );
+				$entity->setAttribute( 'poi_chat_indicators', 'true' );
+			}
+
 			if ( $this->isHoverEnabled ) {
 				$entity->setAttribute( 'vrodos-hypnotic-hover', '' );
 			}

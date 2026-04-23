@@ -22,6 +22,9 @@ extract($data);
         var vrodos_isEditable = <?php echo $isEditable ? 'true' : 'false'; ?>;
         var vrodosMaxUploadBytes = <?php echo (int) $max_upload_bytes; ?>;
         var vrodosMaxUploadLabel = <?php echo json_encode($max_upload_label); ?>;
+        var vrodosMaxRequestBytes = <?php echo (int) $request_max_bytes; ?>;
+        var vrodosMaxRequestLabel = <?php echo json_encode($request_max_label); ?>;
+        var vrodosRequestLimitLabel = <?php echo json_encode($request_limit_label); ?>;
     </script>
     <?php
     // Pre-apply the correct section visibility to prevent layout flicker on load.
@@ -54,7 +57,7 @@ extract($data);
         <?php elseif ( $initial_cat_slug === 'poi-link' ) : ?>
         #poi_link_section { display: block !important; }
         <?php elseif ( $initial_cat_slug === 'chat' ) : ?>
-        #poi_help_section { display: block !important; }
+        #poi_chat_section { display: block !important; }
         <?php endif; ?>
     </style>
     <?php endif; ?>
@@ -560,7 +563,7 @@ else { ?>
                     <div class="tw-space-y-10">
 
                         <!-- Chat Settings -->
-                        <div id="poi_help_section" class="tw-space-y-6" style="display: none;">
+                        <div id="poi_chat_section" class="tw-space-y-6" style="display: none;">
                             <div class="tw-flex tw-items-center tw-justify-between">
                                 <label class="vrodos-label !tw-mb-0">
                                     Chat Settings
@@ -855,6 +858,9 @@ else { ?>
 		const assetEditorNoticeText = document.getElementById("assetEditorNoticeText");
 		const maxGlbUploadBytes = Number(window.vrodosMaxUploadBytes || 0);
 		const maxGlbUploadLabel = window.vrodosMaxUploadLabel || '';
+		const maxRequestBytes = Number(window.vrodosMaxRequestBytes || 0);
+		const maxRequestLabel = window.vrodosMaxRequestLabel || '';
+		const requestLimitLabel = window.vrodosRequestLimitLabel || maxRequestLabel;
 
 		// Define this globally so it's accessible to vrodos_asset_editor_scripts.js
 		var sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg") ? document.getElementById("sshotPreviewImg").src : "";
@@ -881,21 +887,56 @@ else { ?>
 			assetEditorNotice.classList.add('tw-hidden');
 		};
 
+		const vrodosGetStringBytes = (value) => {
+			const text = String(value || '');
+			if (window.Blob) {
+				return new Blob([text]).size;
+			}
+			return unescape(encodeURIComponent(text)).length;
+		};
+
+		const vrodosEstimateMultipartRequestBytes = (form) => {
+			if (!form || typeof FormData === 'undefined') {
+				return 0;
+			}
+
+			let total = 1024; // Closing boundary and request framing.
+			const fieldOverheadBytes = 512;
+			const formData = new FormData(form);
+			for (const [name, value] of formData.entries()) {
+				total += fieldOverheadBytes + vrodosGetStringBytes(name);
+				if (value instanceof File) {
+					if (!value.name && value.size === 0) {
+						continue;
+					}
+					total += value.size + vrodosGetStringBytes(value.name) + vrodosGetStringBytes(value.type);
+				} else {
+					total += vrodosGetStringBytes(value);
+				}
+			}
+
+			return total;
+		};
+
 		window.vrodos_validate_selected_glb = function () {
-			if (!multipleFilesInputElem || !multipleFilesInputElem.files || !multipleFilesInputElem.files.length) {
-				clearAssetEditorNotice();
-				return true;
+			const file = (multipleFilesInputElem && multipleFilesInputElem.files && multipleFilesInputElem.files.length)
+				? multipleFilesInputElem.files[0]
+				: null;
+
+			if (file && maxGlbUploadBytes && file.size > maxGlbUploadBytes) {
+				setAssetEditorNotice('This GLB is too large for the current safe upload limit (' + maxGlbUploadLabel + '). Please reduce the file size or increase PHP upload_max_filesize/post_max_size and the server request limit.');
+				return false;
 			}
 
-			const file = multipleFilesInputElem.files[0];
-			if (!file || !maxGlbUploadBytes || file.size <= maxGlbUploadBytes) {
-				clearAssetEditorNotice();
-				return true;
+			const form = document.getElementById('3dAssetForm');
+			const estimatedRequestBytes = vrodosEstimateMultipartRequestBytes(form);
+			if (maxRequestBytes && estimatedRequestBytes > maxRequestBytes) {
+				setAssetEditorNotice('This upload is too large for the current server request limit (' + requestLimitLabel + '). Choose a smaller GLB or reduce/remove the generated screenshot before saving.');
+				return false;
 			}
 
-			setAssetEditorNotice('This GLB is too large for the current upload limit (' + maxGlbUploadLabel + '). Please reduce the file size or increase PHP upload_max_filesize/post_max_size.');
-			multipleFilesInputElem.value = '';
-			return false;
+			clearAssetEditorNotice();
+			return true;
 		};
 
 		document.addEventListener('DOMContentLoaded', function() {
@@ -915,12 +956,15 @@ else { ?>
 
 		let generateVideoSshot = (canvas, video) => {
 			let ctx = canvas.getContext('2d');
-			// High-resolution capture: set canvas size to match video's natural dimensions
-			canvas.width = video.videoWidth || 640;
-			canvas.height = video.videoHeight || 360;
+			const sourceWidth = video.videoWidth || 640;
+			const sourceHeight = video.videoHeight || 360;
+			const targetWidth = Math.min(960, sourceWidth);
+			const targetHeight = Math.max(1, Math.round(targetWidth * (sourceHeight / sourceWidth)));
+			canvas.width = targetWidth;
+			canvas.height = targetHeight;
 			ctx.drawImage( video, 0, 0, canvas.width, canvas.height);
 			try {
-				videoSshotFileInput.value = canvas.toDataURL('image/png');
+				videoSshotFileInput.value = canvas.toDataURL('image/jpeg', 0.82);
 			} catch (e) {
 				console.warn("VRodos: Could not generate video screenshot due to cross-origin restrictions (Tainted Canvas).", e);
 			}
@@ -1004,7 +1048,7 @@ else { ?>
 					document.getElementById('screenshot_section').style.display = "block";
 					
 					document.getElementById('ipr_section').style.display = "none";
-					document.getElementById('poi_help_section').style.display = "none";
+					document.getElementById('poi_chat_section').style.display = "none";
 					document.getElementById('poi_link_section').style.display = "none";
 					document.getElementById('audio_section').style.display = "none";
 					document.getElementById('audio_options_section').style.display = "none";
@@ -1020,8 +1064,8 @@ else { ?>
 				let loadLayout = (slug) => {
 					switch (slug) {
 						case "chat":
-							document.getElementById('ipr_section').style.display = "none";
-							document.getElementById('poi_help_section').style.display = "block";
+							document.getElementById('ipr_section').style.display = "block";
+							document.getElementById('poi_chat_section').style.display = "block";
 							break;
 						case "poi-imagetext":
 							document.getElementById('poi_image_text_section').style.display = "block";

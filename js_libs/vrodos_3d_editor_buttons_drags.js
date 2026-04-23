@@ -791,7 +791,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
     // Prevent showing the context menu on property panels
     ['popUpArtifactPropertiesDiv', 'popUpDoorPropertiesDiv', 'popUpPoiImageTextPropertiesDiv',
      'popUpPoiVideoPropertiesDiv', 'popUpSunPropertiesDiv', 'popUpLampPropertiesDiv',
-     'popUpSpotPropertiesDiv', 'popUpAmbientPropertiesDiv'].forEach(function (id) {
+     'popUpSpotPropertiesDiv', 'popUpAmbientPropertiesDiv', 'popUpPoiChatPropertiesDiv'].forEach(function (id) {
         let el = document.getElementById(id);
         if (el) el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     });

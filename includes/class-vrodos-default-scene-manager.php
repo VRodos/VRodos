@@ -95,11 +95,31 @@ class VRodos_Default_Scene_Manager {
 		$sceneEnvironment
 	): array {
 		$tax_parent_project = get_term_by( 'slug', $projectSlug, 'vrodos_scene_pgame' );
-		$taxParentProjectId = $tax_parent_project->term_id;
+		$taxParentProjectId = $tax_parent_project ? $tax_parent_project->term_id : 0;
 
 		$sceneYAML   = get_term_by( 'slug', $sceneYAMLslug, 'vrodos_scene_yaml' );
-		$sceneYAMLID = $sceneYAML->term_id;
+		$sceneYAMLID = $sceneYAML ? $sceneYAML->term_id : 0;
 
-		return ['post_title'   => $title, 'post_content' => $content, 'post_name'    => $sceneSlug, 'post_type'    => 'vrodos_scene', 'post_status'  => 'publish', 'tax_input'    => ['vrodos_scene_pgame' => [$taxParentProjectId], 'vrodos_scene_yaml'  => [$sceneYAMLID]], 'meta_input'   => ['vrodos_scene_default'     => $isUndeletable, 'vrodos_scene_metatype'    => $metaType, 'vrodos_menu_has_help'     => $hasHelp, 'vrodos_menu_has_login'    => $hasLogin, 'vrodos_menu_has_options'  => $hasOptions, 'vrodos_scene_caption'     => $caption, 'vrodos_scene_isRegional'  => $isRegional, 'vrodos_scene_environment' => $sceneEnvironment]];
+		return [
+			'post_title'   => $title,
+			'post_content' => $content,
+			'post_name'    => $sceneSlug,
+			'post_type'    => 'vrodos_scene',
+			'post_status'  => 'publish',
+			'tax_input'    => [
+				'vrodos_scene_pgame' => [$taxParentProjectId],
+				'vrodos_scene_yaml'  => [$sceneYAMLID]
+			],
+			'meta_input'   => [
+				'vrodos_scene_default'     => $isUndeletable,
+				'vrodos_scene_metatype'    => $metaType,
+				'vrodos_menu_has_help'     => $hasHelp,
+				'vrodos_menu_has_login'    => $hasLogin,
+				'vrodos_menu_has_options'  => $hasOptions,
+				'vrodos_scene_caption'     => $caption,
+				'vrodos_scene_isRegional'  => $isRegional,
+				'vrodos_scene_environment' => $sceneEnvironment
+			]
+		];
 	}
 }
