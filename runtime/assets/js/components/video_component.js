@@ -275,7 +275,7 @@ AFRAME.registerComponent('video-controls', {
     bindInlineVideoTexture: function () {
         if (!this.videoDisplay || !this.video) return;
         this.videoDisplay.setAttribute("src", this.video_id);
-        this.videoDisplay.setAttribute("material", "shader: flat; side: double; npot: true");
+        this.videoDisplay.setAttribute("material", "shader: flat; side: double");
         requestAnimationFrame(() => this.tuneVideoTexture());
     },
 

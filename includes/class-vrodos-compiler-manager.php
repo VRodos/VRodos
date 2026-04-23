@@ -1271,7 +1271,7 @@ class VRodos_Compiler_Manager {
 			if ( $poster_id ) {
 				$display->setAttribute( 'data-vrodos-video-poster', '#' . $poster_id );
 			}
-			$material_attr = 'shader: flat; side: double; transparent: true; alphaTest: 0.5; depthWrite: false; npot: true';
+			$material_attr = 'shader: flat; side: double; transparent: true; alphaTest: 0.5; depthWrite: false';
 			if ( $poster_id ) {
 				$material_attr .= "; src: #$poster_id";
 			}
