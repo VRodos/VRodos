@@ -32,6 +32,19 @@
         return text;
     }
 
+    function normalizeAssessmentLineBreaks(value) {
+        return String(value || "")
+            .replace(/\r\n?/g, "\n")
+            .replace(/([.!?;:])nn(?=\S)/g, "$1\n\n")
+            .replace(/(:)n(?=\S)/g, "$1\n")
+            .replace(/([.!?;:])n(?=\s*[Α-ΩΆΈΉΊΌΎΏ])/g, "$1\n")
+            .replace(/([.!?;:])n(?=\s*(?:\d+\.|[A-ZΑ-ΩΆΈΉΊΌΎΏ]))/g, "$1\n")
+            .replace(/([^A-Za-z])nn(?=\S)/g, "$1\n\n")
+            .replace(/ntn(?=[Α-ΩΆΈΉΊΌΎΏ])/g, "\n\n")
+            .replace(/([^\s])nn(?=[Α-ΩΆΈΉΊΌΎΏ])/g, "$1\n\n")
+            .replace(/([^\s])n(?=\d+\.)/g, "$1\n");
+    }
+
     function normalizeLevel(value) {
         if (value && typeof value === "object") {
             return "";
@@ -337,6 +350,10 @@
             .toLowerCase();
     }
 
+    function isPlaceholderText(value) {
+        return !normalizeFreeText(String(value || "").replace(/_+/g, ""));
+    }
+
     function toArray(value) {
         return Array.isArray(value) ? value : [];
     }
@@ -431,13 +448,25 @@
     function normalizeTextAnnotations(text, annotations, type) {
         const textLength = String(text || "").length;
         const ordered = toArray(annotations)
-            .map((annotation, index) => ({
-                id: annotation && annotation.id ? String(annotation.id) : uniqueId(type || "annotation", index),
-                start: Number(annotation && annotation.start),
-                end: Number(annotation && annotation.end),
-                type: annotation && annotation.type ? String(annotation.type) : "",
-                correctValue: decodeDisplayText(annotation && annotation.correctValue ? annotation.correctValue : "")
-            }))
+            .map((annotation, index) => {
+                const start = Number(annotation && annotation.start);
+                const end = Number(annotation && annotation.end);
+                const annotationText = decodeDisplayText(annotation && annotation.text ? annotation.text : "");
+                const correctValue = decodeDisplayText(
+                    annotation && annotation.correctValue
+                        ? annotation.correctValue
+                        : (annotation && annotation.value ? annotation.value : annotationText)
+                );
+
+                return {
+                    id: annotation && annotation.id ? String(annotation.id) : uniqueId(type || "annotation", index),
+                    start,
+                    end,
+                    type: annotation && annotation.type ? String(annotation.type) : "",
+                    correctValue,
+                    annotationText
+                };
+            })
             .filter((annotation) =>
                 annotation.type === type
                 && Number.isFinite(annotation.start)
@@ -454,7 +483,9 @@
             if (annotation.start < cursor) {
                 return;
             }
-            normalized.push(annotation);
+            normalized.push(Object.assign({}, annotation, {
+                correctValue: annotation.correctValue || String(text || "").slice(annotation.start, annotation.end)
+            }));
             cursor = annotation.end;
         });
 
@@ -1363,10 +1394,85 @@
         return segments;
     }
 
+    function formatFillGapTextSegment(value) {
+        return escapeHtml(
+            String(value || "")
+                .replace(/(^|[\s.,;:!?])n(?=_)/g, "$1")
+                .replace(/(^|[\s.,;:!?])n(?=[α-ωάέήίόύώϊϋΐΰΑ-ΩΆΈΉΊΌΎΏ])/g, "$1")
+                .replace(/_+/g, "")
+        ).replace(/\n/g, "<br />");
+    }
+
+    function extractFillGapWordBank(sourceText) {
+        const text = String(sourceText || "");
+        const firstBlock = text.split(/\n\s*\n/)[0] || "";
+        const markerMatch = firstBlock.match(/correct\s+word\s*:/i);
+        const wordListText = markerMatch ? firstBlock.slice(markerMatch.index + markerMatch[0].length) : firstBlock;
+
+        return wordListText
+            .split(",")
+            .map((word) => decodeDisplayText(word).replace(/_+/g, "").trim())
+            .filter(Boolean)
+            .map((word, index) => ({
+                id: `fill-gap-word-${index}`,
+                text: word
+            }));
+    }
+
+    function createFillGapWordBank(sourceText, annotations) {
+        const annotationWords = toArray(annotations)
+            .map((annotation, index) => {
+                const text = decodeDisplayText(
+                    annotation && annotation.correctValue
+                        ? annotation.correctValue
+                        : (annotation && annotation.annotationText ? annotation.annotationText : "")
+                ).trim();
+
+                return text
+                    ? {
+                        id: `fill-gap-word-${index}`,
+                        text,
+                        annotationId: annotation.id || ""
+                    }
+                    : null;
+            })
+            .filter(Boolean);
+
+        return annotationWords.length ? annotationWords : extractFillGapWordBank(sourceText);
+    }
+
+    function stripFillGapWordBankIntro(value) {
+        const text = String(value || "");
+        const firstBlock = text.split(/\n\s*\n/)[0] || "";
+        if (!/correct\s+word\s*:/i.test(firstBlock)) {
+            return text;
+        }
+
+        return text.replace(/^[\s\S]*?\n\s*\n/, "");
+    }
+
+    function assignFillGapWord(state, wordId, blankId) {
+        const word = state.wordsById[wordId];
+        if (!word || !blankId) {
+            return;
+        }
+
+        Object.keys(state.assignmentsByBlank).forEach((existingBlankId) => {
+            if (existingBlankId === blankId || state.assignmentsByBlank[existingBlankId] === wordId) {
+                delete state.assignmentsByBlank[existingBlankId];
+            }
+        });
+
+        state.assignmentsByBlank[blankId] = wordId;
+        state.values[blankId] = word.text;
+        state.selectedWordId = "";
+        state.dragWordId = "";
+    }
+
     function createTextRenderer() {
         return {
             createState(payload) {
-                const sourceText = decodeDisplayText(payload && payload.content && payload.content.text ? payload.content.text : "");
+                const sourceText = normalizeAssessmentLineBreaks(decodeDisplayText(payload && payload.content && payload.content.text ? payload.content.text : ""));
                 const typeKey = normalizeComparableText(payload && payload.type);
                 const mode = typeKey === "highlight" ? "highlight" : "fill-gaps";
                 if (mode === "highlight") {
@@ -1384,7 +1490,11 @@
                     mode,
                     sourceText,
                     annotations: blanks,
-                    values: Object.fromEntries(blanks.map((annotation) => [annotation.id, ""]))
+                    values: Object.fromEntries(blanks.map((annotation) => [annotation.id, ""])),
+                    wordBank: createFillGapWordBank(sourceText, blanks),
+                    assignmentsByBlank: {},
+                    selectedWordId: "",
+                    dragWordId: ""
                 };
             },
             render(runtime) {
@@ -1415,12 +1525,16 @@
                     return;
                 }
 
-                const blanks = state.annotations.map((annotation) => {
+                const blanks = state.annotations.map((annotation, index) => {
                     const enteredValue = state.values[annotation.id] || "";
-                    const isCorrect = normalizeFreeText(enteredValue) === normalizeFreeText(annotation.correctValue || annotation.text);
+                    const wordBankAnswer = state.wordBank && state.wordBank[index] ? state.wordBank[index].text : "";
+                    const expectedValue = isPlaceholderText(annotation.correctValue)
+                        ? (wordBankAnswer || annotation.text)
+                        : annotation.correctValue;
+                    const isCorrect = normalizeFreeText(enteredValue) === normalizeFreeText(expectedValue);
                     return {
                         annotationId: annotation.id,
-                        expectedValue: annotation.correctValue || annotation.text,
+                        expectedValue,
                         enteredValue,
                         isCorrect
                     };
@@ -1440,7 +1554,7 @@
         runtime.setStatus(`Filled ${filledCount} of ${state.annotations.length} blanks`);
         runtime.configurePrimaryAction({
             visible: true,
-            label: "Check answers",
+            label: "Submit",
             disabled: filledCount !== state.annotations.length
         });
     }
@@ -1453,27 +1567,103 @@
         }
 
         const segments = buildTextSegments(state.sourceText, state.annotations);
+        const wordsById = Object.fromEntries((state.wordBank || []).map((word) => [word.id, word]));
+        state.wordsById = wordsById;
+        const assignedWordIds = new Set(Object.values(state.assignmentsByBlank || {}));
+        const availableWords = (state.wordBank || []).filter((word) => !assignedWordIds.has(word.id));
+        let textSegmentIndex = 0;
+
         runtime.body.innerHTML = [
             '<div style="display:grid;gap:18px;">',
-            '<div style="padding:16px 18px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:14px;line-height:1.6;">Fill every blank to unlock the final check.</div>',
+            '<div style="padding:16px 18px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:14px;line-height:1.6;">Drag each word into a blank. You can also tap a word and then tap a blank.</div>',
+            '<div style="padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);">',
+            '<div style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Word Bank</div>',
+            '<div style="display:flex;flex-wrap:wrap;gap:10px;">',
+            availableWords.length
+                ? availableWords.map((word) => {
+                    const isSelected = state.selectedWordId === word.id;
+                    return `<button type="button" draggable="true" data-fill-gap-word-id="${escapeHtml(word.id)}" style="border-radius:999px;padding:10px 14px;border:1px solid ${isSelected ? "rgba(92,200,135,0.9)" : "rgba(203,213,225,0.95)"};background:${isSelected ? "rgba(92,200,135,0.14)" : "#ffffff"};cursor:grab;font-size:14px;font-weight:700;color:#0f172a;">${escapeHtml(word.text)}</button>`;
+                }).join("")
+                : '<div style="font-size:14px;color:#166534;font-weight:700;">All words are placed.</div>',
+            "</div>",
+            "</div>",
             '<div style="padding:20px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);font-family:Georgia,\'Times New Roman\',serif;font-size:18px;line-height:1.9;color:#0f172a;white-space:pre-wrap;">',
             segments.map((segment) => {
                 if (segment.type !== "blank") {
-                    return escapeHtml(segment.text).replace(/\n/g, "<br />");
+                    const displayText = textSegmentIndex === 0 ? stripFillGapWordBankIntro(segment.text) : segment.text;
+                    textSegmentIndex += 1;
+                    return formatFillGapTextSegment(displayText);
                 }
 
-                const value = state.values[segment.id] || "";
-                return `<input type="text" data-blank-id="${escapeHtml(segment.id)}" value="${escapeHtml(value)}" style="display:inline-block;min-width:120px;margin:0 4px;padding:6px 10px;border-radius:10px;border:1px solid rgba(59,130,246,0.45);background:rgba(248,250,252,0.98);font:inherit;color:#0f172a;" />`;
+                const assignedWordId = state.assignmentsByBlank[segment.id] || "";
+                const assignedWord = assignedWordId ? wordsById[assignedWordId] : null;
+                return [
+                    `<span role="button" tabindex="0" data-fill-gap-blank-id="${escapeHtml(segment.id)}" style="display:inline-flex;align-items:center;justify-content:center;${assignedWord ? "min-width:13ch;" : "width:13ch;"}max-width:calc(100% - 8px);min-height:2.15em;margin:0 3px;padding:4px 10px;border-radius:10px;border:1px dashed ${assignedWord ? "rgba(92,200,135,0.9)" : "rgba(59,130,246,0.45)"};background:${assignedWord ? "rgba(92,200,135,0.10)" : "rgba(248,250,252,0.98)"};font:inherit;color:${assignedWord ? "#166534" : "#64748b"};vertical-align:baseline;cursor:pointer;box-sizing:border-box;">`,
+                    assignedWord ? `<span style="display:block;min-width:0;white-space:normal;text-align:center;line-height:1.25;">${escapeHtml(assignedWord.text)}</span><button type="button" data-clear-blank-id="${escapeHtml(segment.id)}" aria-label="Clear answer" title="Clear answer" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:6px;flex:0 0 auto;border:0;border-radius:999px;background:transparent;color:#dc2626;cursor:pointer;"><svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>` : "",
+                    "</span>"
+                ].join("");
             }).join(""),
             "</div>",
             "</div>"
         ].join("");
 
-        runtime.body.querySelectorAll("[data-blank-id]").forEach((input) => {
-            input.addEventListener("input", () => {
-                const annotationId = input.getAttribute("data-blank-id") || "";
-                state.values[annotationId] = input.value;
-                updateFillGapControls(runtime);
+        runtime.body.querySelectorAll("[data-fill-gap-word-id]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const wordId = button.getAttribute("data-fill-gap-word-id") || "";
+                state.selectedWordId = state.selectedWordId === wordId ? "" : wordId;
+                runtime.rerender();
+            });
+
+            button.addEventListener("dragstart", (event) => {
+                const wordId = button.getAttribute("data-fill-gap-word-id") || "";
+                state.dragWordId = wordId;
+                if (event.dataTransfer) {
+                    event.dataTransfer.effectAllowed = "move";
+                    event.dataTransfer.setData("text/plain", wordId);
+                }
+            });
+
+            button.addEventListener("dragend", () => {
+                state.dragWordId = "";
+            });
+        });
+
+        runtime.body.querySelectorAll("[data-fill-gap-blank-id]").forEach((slot) => {
+            slot.addEventListener("dragover", (event) => {
+                event.preventDefault();
+            });
+
+            slot.addEventListener("drop", (event) => {
+                event.preventDefault();
+                const blankId = slot.getAttribute("data-fill-gap-blank-id") || "";
+                const wordId = state.dragWordId
+                    || (event.dataTransfer ? event.dataTransfer.getData("text/plain") : "")
+                    || state.selectedWordId;
+                assignFillGapWord(state, wordId, blankId);
+                runtime.rerender();
+            });
+
+            slot.addEventListener("click", () => {
+                const blankId = slot.getAttribute("data-fill-gap-blank-id") || "";
+                if (!state.selectedWordId) {
+                    return;
+                }
+                assignFillGapWord(state, state.selectedWordId, blankId);
+                runtime.rerender();
+            });
+        });
+
+        runtime.body.querySelectorAll("[data-clear-blank-id]").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const blankId = button.getAttribute("data-clear-blank-id") || "";
+                const wordId = state.assignmentsByBlank[blankId] || "";
+                delete state.assignmentsByBlank[blankId];
+                state.values[blankId] = "";
+                if (state.selectedWordId === wordId) {
+                    state.selectedWordId = "";
+                }
+                runtime.rerender();
             });
         });
 
