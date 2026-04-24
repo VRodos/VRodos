@@ -747,7 +747,10 @@
 
         runtime.body.innerHTML = [
             '<div style="display:grid;gap:20px;">',
-            '<div style="padding:16px 18px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:14px;line-height:1.6;">Select one source and one target to lock a pair. You can clear any existing pair before finishing.</div>',
+            '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:16px;background:#f0f7ff;border:1px solid rgba(59,130,246,0.15);color:#1e40af;font-size:14px;line-height:1.5;">' +
+            '<div style="flex-shrink:0;margin-top:1px;color:#3b82f6;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></div>' +
+            '<div>Select one source and one target to lock a pair. You can clear any existing pair before finishing.</div>' +
+            '</div>',
             '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">',
             '<div style="padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);">',
             '<div style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Sources</div>',
@@ -841,7 +844,10 @@
 
         runtime.body.innerHTML = [
             '<div style="display:grid;gap:20px;">',
-            '<div style="padding:16px 18px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:14px;line-height:1.6;">Drag each source chip onto the correct target. You can also tap a source and then tap a target if drag and drop is unavailable.</div>',
+            '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:16px;background:#f0f7ff;border:1px solid rgba(59,130,246,0.15);color:#1e40af;font-size:14px;line-height:1.5;">' +
+            '<div style="flex-shrink:0;margin-top:1px;color:#3b82f6;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></div>' +
+            '<div>Drag each source chip onto the correct target. You can also tap a source and then tap a target if drag and drop is unavailable.</div>' +
+            '</div>',
             '<div style="padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);">',
             '<div style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Source Bank</div>',
             '<div style="display:flex;flex-wrap:wrap;gap:10px;">',
@@ -1261,7 +1267,10 @@
 
         runtime.body.innerHTML = [
             '<div style="display:grid;gap:18px;">',
-            '<div style="padding:16px 18px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:14px;line-height:1.6;">Drag across letters in a straight line to find each hidden word. Words can appear forwards, backwards, vertically, horizontally, or diagonally.</div>',
+            '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:16px;background:#f0f7ff;border:1px solid rgba(59,130,246,0.15);color:#1e40af;font-size:14px;line-height:1.5;">' +
+            '<div style="flex-shrink:0;margin-top:1px;color:#3b82f6;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></div>' +
+            '<div>Drag across letters in a straight line to find each hidden word. Words can appear forwards, backwards, vertically, horizontally, or diagonally.</div>' +
+            '</div>',
             '<div style="display:flex;flex-wrap:wrap;gap:8px;">',
             puzzle.entries.map((entry) => {
                 const found = state.foundIds.has(entry.id);
@@ -1575,19 +1584,22 @@
 
         runtime.body.innerHTML = [
             '<div style="display:grid;gap:18px;">',
-            '<div style="padding:16px 18px;border-radius:18px;background:rgba(59,130,246,0.08);color:#1d4ed8;font-size:14px;line-height:1.6;">Drag each word into a blank. You can also tap a word and then tap a blank.</div>',
-            '<div style="padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);">',
-            '<div style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Word Bank</div>',
+            '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:16px;background:#f0f7ff;border:1px solid rgba(59,130,246,0.15);color:#1e40af;font-size:14px;line-height:1.5;">' +
+            '<div style="flex-shrink:0;margin-top:1px;color:#3b82f6;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></div>' +
+            '<div>Drag each word into a blank. You can also tap a word and then tap a blank.</div>' +
+            '</div>',
+            '<div style="padding:18px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);box-shadow:0 1px 3px rgba(0,0,0,0.02);">',
+            '<div style="font-size:12px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#94a3b8;margin-bottom:12px;">Word Bank</div>',
             '<div style="display:flex;flex-wrap:wrap;gap:10px;">',
             availableWords.length
                 ? availableWords.map((word) => {
                     const isSelected = state.selectedWordId === word.id;
-                    return `<button type="button" draggable="true" data-fill-gap-word-id="${escapeHtml(word.id)}" style="border-radius:999px;padding:10px 14px;border:1px solid ${isSelected ? "rgba(92,200,135,0.9)" : "rgba(203,213,225,0.95)"};background:${isSelected ? "rgba(92,200,135,0.14)" : "#ffffff"};cursor:grab;font-size:14px;font-weight:700;color:#0f172a;">${escapeHtml(word.text)}</button>`;
+                    return `<button type="button" draggable="true" data-fill-gap-word-id="${escapeHtml(word.id)}" style="border-radius:999px;padding:10px 16px;border:1px solid ${isSelected ? "rgba(59,130,246,0.8)" : "rgba(226,232,240,0.9)"};background:${isSelected ? "rgba(59,130,246,0.08)" : "#ffffff"};box-shadow:0 2px 5px rgba(15,23,42,0.04);cursor:grab;font-size:14px;font-weight:700;color:${isSelected ? "#1d4ed8" : "#334155"};transition:all 0.15s ease;">${escapeHtml(word.text)}</button>`;
                 }).join("")
-                : '<div style="font-size:14px;color:#166534;font-weight:700;">All words are placed.</div>',
+                : '<div style="font-size:14px;color:#10b981;font-weight:700;display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg> All words are placed.</div>',
             "</div>",
             "</div>",
-            '<div style="padding:20px;border-radius:18px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);font-family:Georgia,\'Times New Roman\',serif;font-size:18px;line-height:1.9;color:#0f172a;white-space:pre-wrap;">',
+            '<div style="padding:26px;border-radius:20px;background:#ffffff;border:1px solid rgba(226,232,240,0.95);font-family:\'Outfit\', -apple-system, sans-serif;font-size:20px;line-height:2.4;color:#1e293b;white-space:pre-wrap;box-shadow:0 4px 20px rgba(15,23,42,0.02);">',
             segments.map((segment) => {
                 if (segment.type !== "blank") {
                     const displayText = textSegmentIndex === 0 ? stripFillGapWordBankIntro(segment.text) : segment.text;
@@ -1598,8 +1610,8 @@
                 const assignedWordId = state.assignmentsByBlank[segment.id] || "";
                 const assignedWord = assignedWordId ? wordsById[assignedWordId] : null;
                 return [
-                    `<span role="button" tabindex="0" data-fill-gap-blank-id="${escapeHtml(segment.id)}" style="display:inline-flex;align-items:center;justify-content:center;${assignedWord ? "min-width:13ch;" : "width:13ch;"}max-width:calc(100% - 8px);min-height:2.15em;margin:0 3px;padding:4px 10px;border-radius:10px;border:1px dashed ${assignedWord ? "rgba(92,200,135,0.9)" : "rgba(59,130,246,0.45)"};background:${assignedWord ? "rgba(92,200,135,0.10)" : "rgba(248,250,252,0.98)"};font:inherit;color:${assignedWord ? "#166534" : "#64748b"};vertical-align:baseline;cursor:pointer;box-sizing:border-box;">`,
-                    assignedWord ? `<span style="display:block;min-width:0;white-space:normal;text-align:center;line-height:1.25;">${escapeHtml(assignedWord.text)}</span><button type="button" data-clear-blank-id="${escapeHtml(segment.id)}" aria-label="Clear answer" title="Clear answer" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:6px;flex:0 0 auto;border:0;border-radius:999px;background:transparent;color:#dc2626;cursor:pointer;"><svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>` : "",
+                    `<span role="button" tabindex="0" data-fill-gap-blank-id="${escapeHtml(segment.id)}" style="display:inline-flex;align-items:center;justify-content:center;${assignedWord ? "min-width:14ch;" : "width:14ch;"}max-width:calc(100% - 8px);min-height:2.25em;margin:0 4px;padding:2px 10px;border-radius:12px;border:2px ${assignedWord ? "solid" : "dashed"} ${assignedWord ? "rgba(16,185,129,0.8)" : "rgba(203,213,225,1)"};background:${assignedWord ? "rgba(16,185,129,0.06)" : "#f1f5f9"};font:inherit;color:${assignedWord ? "#065f46" : "#64748b"};vertical-align:middle;cursor:pointer;box-sizing:border-box;transition:all 0.2s ease;box-shadow:${assignedWord ? "inset 0 2px 4px rgba(0,0,0,0.02)" : "none"};">`,
+                    assignedWord ? `<span style="display:block;min-width:0;white-space:normal;text-align:center;line-height:1.2;font-weight:700;">${escapeHtml(assignedWord.text)}</span><button type="button" data-clear-blank-id="${escapeHtml(segment.id)}" aria-label="Clear answer" title="Clear answer" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-left:8px;flex:0 0 auto;border:0;border-radius:999px;background:rgba(244,63,94,0.1);color:#e11d48;cursor:pointer;transition:background 0.2s ease;"><svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>` : "",
                     "</span>"
                 ].join("");
             }).join(""),
