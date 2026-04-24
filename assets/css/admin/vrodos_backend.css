@@ -44,10 +44,6 @@
 	top: 3px;
 }
 
-
-
-
-
 #vrodos-custom-fields-table, #vrodos-custom-fields-table td, #vrodos-custom-fields-table th{
 	border: 1px solid #dddddd;
 	padding: 15px;
@@ -70,11 +66,6 @@
 .image_fetch_img{
 	width:200px;
 	width:100%;
-}
-
-.img_res_title_f{
-	/*width:200px;*/
-	/*word-break: break-all;*/
 }
 
 .video_res_title_f{

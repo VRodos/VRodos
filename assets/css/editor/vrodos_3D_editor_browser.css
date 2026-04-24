@@ -29,9 +29,6 @@
     display: flex !important; /* Drawer handle must stay visible */
 }
 
-
-
-
 /*-------------------------
 	Search box
 -------------------------*/
@@ -91,14 +88,9 @@
 	display: none !important; /* Managed by new internal card buttons */
 }
 
-
-
-
 .editor-asset-tile-style:hover {
 	background-color: rgba(63,81,181,0.1);
 }
-
-
 
 /*Tabs for filebrowser*/
 /* Style the tab */
@@ -151,4 +143,4 @@
 	justify-content: center;
 	height: auto !important;
 	min-height: 200px;
-}
+}
