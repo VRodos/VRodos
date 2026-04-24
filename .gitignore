@@ -107,27 +107,13 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-### PhpStorm Patch ###
-# Comment Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-215987721
-
-# *.iml
-# modules.xml
-# .idea/misc.xml
-# *.ipr
-
 # Sonarlint plugin
 .idea/sonarlint
 
 # End of https://www.gitignore.io/api/node,phpstorm
 /.idea/
 
-assets/Director/Old/
-includes/FTPTransfer2.php
-
-test_compiler/
 /StandardAssets/
-/semantics/
-/peer-calls/
 /includes/translate/
 /build/
 /services/networked-aframe/server/keys.json
@@ -138,7 +124,6 @@ test_compiler/
 assets/Director/
 assets/objects/
 
-
 # Modernization Tooling
 vendor/
 !/assets/vendor/
@@ -146,10 +131,6 @@ vendor/
 node_modules/
 build/
 build_dist/
-composer.phar
-rector_preview.txt
 .idea/
 .vscode/
-.phpunit.result.cache
-rector.php.bak
 
