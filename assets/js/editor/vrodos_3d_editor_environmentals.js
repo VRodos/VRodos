@@ -1,6 +1,29 @@
-// noinspection DuplicatedCode
-
 "use strict";
+
+const VRODOS_EDITOR_CAMERA = Object.freeze({
+    viewAngle: 60,
+    frustumSize: 100000,
+    near: 0.01,
+    far: 200000,
+    avatarFar: 4000,
+    thirdPersonFar: 3000
+});
+
+const VRODOS_EDITOR_SCENE_DEFAULTS = Object.freeze({
+    surfaceDimension: 100,
+    centerX: 0,
+    centerY: 0,
+    centerZ: 0,
+    gridSize: 2000,
+    gridDivisions: 40,
+    axesSize: 100
+});
+
+const VRODOS_EDITOR_ZOOM = Object.freeze({
+    min: 10,
+    max: 5000,
+    fallback: 600
+});
 
 function vrodosClampNumber(value, min, max, fallback) {
     let parsed = Number(value);
@@ -17,7 +40,12 @@ function vrodosOrthoFitZoom(frustumSize, aspect, sceneSurfaceDimension) {
     let visibleWidth = safeDimension * 2.2;
     let computedZoom = (frustumSize * safeAspect) / visibleWidth;
 
-    return vrodosClampNumber(computedZoom, 10, 5000, 600);
+    return vrodosClampNumber(
+        computedZoom,
+        VRODOS_EDITOR_ZOOM.min,
+        VRODOS_EDITOR_ZOOM.max,
+        VRODOS_EDITOR_ZOOM.fallback
+    );
 }
 
 function vrodosDirectorSafeVector(values, fallback) {
@@ -94,98 +122,51 @@ class vrodos_3d_editor_environmentals {
 
         this.vr_editor_main_div = vr_editor_main_div;
 
-        this.SCREEN_WIDTH = this.vr_editor_main_div.clientWidth; // 500; //window.innerWidth;
-        this.SCREEN_HEIGHT = this.vr_editor_main_div.clientHeight; // 500; //window.innerHeight;
-        this.VIEW_ANGLE = 60;
+        this.updateScreenMetrics();
+        this.VIEW_ANGLE = VRODOS_EDITOR_CAMERA.viewAngle;
 
-        this.ASPECT = this.SCREEN_WIDTH / this.SCREEN_HEIGHT;
-        this.FRUSTUM_SIZE = 100000; // For orthographic camera only
+        this.FRUSTUM_SIZE = VRODOS_EDITOR_CAMERA.frustumSize; // For orthographic camera only
 
-        this.SCENE_DIMENSION_SURFACE = 100; // It is the max of x z dimensions of the scene (found when all objects are loaded)
-        this.SCENE_CENTER_X = 0;
-        this.SCENE_CENTER_Y = 0;
-        this.SCENE_CENTER_Z = 0;
+        this.SCENE_DIMENSION_SURFACE = VRODOS_EDITOR_SCENE_DEFAULTS.surfaceDimension; // It is the max of x z dimensions of the scene (found when all objects are loaded)
+        this.SCENE_CENTER_X = VRODOS_EDITOR_SCENE_DEFAULTS.centerX;
+        this.SCENE_CENTER_Y = VRODOS_EDITOR_SCENE_DEFAULTS.centerY;
+        this.SCENE_CENTER_Z = VRODOS_EDITOR_SCENE_DEFAULTS.centerZ;
 
-        this.NEAR = 0.01;
-        this.FAR = 200000; // keep the camera empty until everything is loaded
+        this.NEAR = VRODOS_EDITOR_CAMERA.near;
+        this.FAR = VRODOS_EDITOR_CAMERA.far; // keep the camera empty until everything is loaded
 
         // -- Set Renderer ----
         // antialias: false — MSAA backbuffer is never used once EffectComposer is active (FXAA handles AA via composer)
         this.renderer = new THREE.WebGLRenderer({antialias: false, alpha: false, logarithmicDepthBuffer: false});
-        this.renderer.shadowMap.enabled = true;
-
-        // BasicShadowMap gives unfiltered shadow maps - fastest, but lowest quality.
-        // PCFShadowMap filters shadow maps using the Percentage-Closer Filtering (PCF) algorithm (default).
-        // PCFSoftShadowMap filters shadow maps using the Percentage-Closer Filtering (PCF) algorithm with better soft shadows especially when using low-resolution shadow maps.
-        // VSMShadowMap filters shadow maps using the Variance Shadow Map (VSM) algorithm. When using VSMShadowMap all shadow receivers will also cast shadows.
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.renderer.autoClear = false;
-        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.0;
-
-
-
+        this.configureRenderer();
         // Label renderer for CSS2D renderer
         this.labelRenderer = new THREE.CSS2DRenderer();
-        this.labelRenderer.domElement.style.position = 'absolute';
-        this.labelRenderer.domElement.style.top = '0';
-        this.labelRenderer.domElement.style.fontSize = "25pt";
-        this.labelRenderer.domElement.style.textShadow = "-1px -1px #000, 1px -1px #000, -1px 1px  #000, 1px 1px #000";
-        this.labelRenderer.domElement.style.pointerEvents = 'none';
+        this.configureLabelRenderer();
         this.labelRenderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
 
-        this.renderer.sortObjects = true;
         this.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
 
-        // This works well for outlining objects in white background
-        //this.renderer.setClearColor(0xeeeeee, 1);
-
-
-        // ------ Create Scene -------
+         // ------ Create Scene -------
         this.scene = new THREE.Scene();
         this.scene.name = "vrodosScene";
 
-        // This doesn't work well for outlining objects in white background
-        //this.scene.background = new THREE.Color( 0xeeeeee );
-
-        //this.scene.background = new THREE.Color(this.back_3d_color);
-
-
-
-        // Add a background to the scene
-        let hdrLoader = new THREE.HDRLoader();
-        let scope = this;
-
-        const imageBaseUrl = vrodosEnvironmentResolveBaseUrl(pluginPath, 'imageBaseUrl', 'assets/images/');
-        hdrLoader.setPath( imageBaseUrl + 'hdr/' )
-            .load( 'Stonewall_Ref.hdr', (texture) => {
-                texture.mapping = THREE.EquirectangularReflectionMapping;
-                scope.maintexture = texture;
-                scope.scene.environment = scope.maintexture;
-            } );
-        //
-        // this.cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256 );
-        // this.cubeRenderTarget.texture.type = THREE.HalfFloatType;
-        //
-        // // REM HERE
-        // // Check envmap for every material
-        // this.cubeCamera = new THREE.CubeCamera( 1, 1000, this.cubeRenderTarget );
+        this.loadSceneEnvironmentTexture();
 
         // --- Add Grid to scene
-        this.gridHelper = new THREE.GridHelper(2000, 40);
+        this.gridHelper = new THREE.GridHelper(
+            VRODOS_EDITOR_SCENE_DEFAULTS.gridSize,
+            VRODOS_EDITOR_SCENE_DEFAULTS.gridDivisions
+        );
         this.gridHelper.name = "myGridHelper";
         this.scene.add(this.gridHelper);
         this.gridHelper.visible = true;
 
         // -- Add Axes helper
-        this.axesHelper = new THREE.AxesHelper(100);
+        this.axesHelper = new THREE.AxesHelper(VRODOS_EDITOR_SCENE_DEFAULTS.axesSize);
         this.axesHelper.name = "myAxisHelper";
         this.scene.add(this.axesHelper);
         this.setAxisText();
         this.axesHelper.visible = true;
-
-
 
 
         // add the renderers to the canvas
@@ -199,26 +180,75 @@ class vrodos_3d_editor_environmentals {
         // This is to make selected items glow
         this.setComposerAndPasses();
 
-        // Resize handle
-        window.addEventListener('resize', (event) => {this.turboResize();}, true);
+        this.bindResizeHandler();
+    }
+
+    bindResizeHandler() {
+        window.addEventListener('resize', () => {
+            this.turboResize();
+        }, true);
+    }
+
+    configureRenderer() {
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.autoClear = false;
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.0;
+        this.renderer.sortObjects = true;
+    }
+
+    configureLabelRenderer() {
+        Object.assign(this.labelRenderer.domElement.style, {
+            position: 'absolute',
+            top: '0',
+            fontSize: '25pt',
+            textShadow: '-1px -1px #000, 1px -1px #000, -1px 1px  #000, 1px 1px #000',
+            pointerEvents: 'none'
+        });
+    }
+
+    updateScreenMetrics() {
+        const width = this.vr_editor_main_div ? this.vr_editor_main_div.clientWidth : 0;
+        const height = this.vr_editor_main_div ? this.vr_editor_main_div.clientHeight : 0;
+
+        this.SCREEN_WIDTH = Math.max(width || 1, 1);
+        this.SCREEN_HEIGHT = Math.max(height || 1, 1);
+        this.ASPECT = this.SCREEN_WIDTH / this.SCREEN_HEIGHT;
+    }
+
+    loadSceneEnvironmentTexture() {
+        const imageBaseUrl = vrodosEnvironmentResolveBaseUrl(pluginPath, 'imageBaseUrl', 'assets/images/');
+        const hdrLoader = new THREE.HDRLoader();
+
+        hdrLoader.setPath(imageBaseUrl + 'hdr/')
+            .load('Stonewall_Ref.hdr', (texture) => {
+                texture.mapping = THREE.EquirectangularReflectionMapping;
+                this.maintexture = texture;
+                this.scene.environment = this.maintexture;
+            });
+    }
+
+    isAvatarControlsEnabled() {
+        return typeof avatarControlsEnabled !== 'undefined' && avatarControlsEnabled;
     }
 
 
-    // EffectComposer for 1) rendering; 2) Outline effect; 3) FXAA antializing
+    // EffectComposer for rendering, outline pass compatibility, and FXAA antialiasing.
     setComposerAndPasses(transform_controls) {
 
         // Get current camera
-        let camera = avatarControlsEnabled ? this.cameraAvatar : this.cameraOrbit;
+        let camera = this.isAvatarControlsEnabled() ? this.cameraAvatar : this.cameraOrbit;
 
-        if (transform_controls)
+        if (transform_controls) {
             transform_controls.camera = camera;
+        }
 
         this.composer = new THREE.EffectComposer(this.renderer);
-
         this.renderPass = new THREE.RenderPass(this.scene, camera);
 
         // Outline Pass
-        this.outlinePass = [];
         this.outlinePass = new THREE.OutlinePass(
             new THREE.Vector2(this.SCREEN_WIDTH, this.SCREEN_HEIGHT), this.scene, camera);
         // OutlinePass disabled — replaced by cel-shaded back-face hull outline
@@ -226,7 +256,6 @@ class vrodos_3d_editor_environmentals {
         this.outlinePass.enabled = false;
 
         // FX Pass
-        this.effectFXAA = [];
         this.effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
         this.effectFXAA.uniforms['resolution'].value.set(1 / this.SCREEN_WIDTH, 1 / this.SCREEN_HEIGHT);
         this.effectFXAA.renderToScreen = true;
@@ -244,9 +273,7 @@ class vrodos_3d_editor_environmentals {
     // Resize renderers without changing the user's current orbit target, position, or zoom.
     turboResize() {
 
-        this.SCREEN_WIDTH = this.vr_editor_main_div.clientWidth; // 500; //window.innerWidth;
-        this.SCREEN_HEIGHT = this.vr_editor_main_div.clientHeight; // 500; //window.innerHeight;
-        this.ASPECT = this.SCREEN_WIDTH / this.SCREEN_HEIGHT;
+        this.updateScreenMetrics();
 
         this.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -257,17 +284,25 @@ class vrodos_3d_editor_environmentals {
         this.updateCameraProjectionForResize();
 
         //----------------------------------------------------------------
-        this.cameraAvatar.aspect = this.ASPECT;
-        this.cameraAvatar.updateProjectionMatrix();
+        if (this.cameraAvatar) {
+            this.cameraAvatar.aspect = this.ASPECT;
+            this.cameraAvatar.updateProjectionMatrix();
+        }
 
-        this.cameraThirdPerson.aspect = this.ASPECT;
-        this.cameraThirdPerson.updateProjectionMatrix();
+        if (this.cameraThirdPerson) {
+            this.cameraThirdPerson.aspect = this.ASPECT;
+            this.cameraThirdPerson.updateProjectionMatrix();
+        }
 
         //---------------------------------------------------------------
         let pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-        this.composer.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
-        this.composer.renderer.setPixelRatio(pixelRatio);
-        this.effectFXAA.uniforms['resolution'].value.set(1 / (this.SCREEN_WIDTH * pixelRatio), 1 / (this.SCREEN_HEIGHT * pixelRatio));
+        if (this.composer && this.composer.renderer) {
+            this.composer.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
+            this.composer.renderer.setPixelRatio(pixelRatio);
+        }
+        if (this.effectFXAA && this.effectFXAA.uniforms && this.effectFXAA.uniforms['resolution']) {
+            this.effectFXAA.uniforms['resolution'].value.set(1 / (this.SCREEN_WIDTH * pixelRatio), 1 / (this.SCREEN_HEIGHT * pixelRatio));
+        }
     }
 
     updateCameraProjectionForResize() {
@@ -282,7 +317,12 @@ class vrodos_3d_editor_environmentals {
             this.cameraOrbit.right = this.FRUSTUM_SIZE * this.ASPECT / 2;
             this.cameraOrbit.top = this.FRUSTUM_SIZE / 2;
             this.cameraOrbit.bottom = this.FRUSTUM_SIZE / -2;
-            this.cameraOrbit.zoom = vrodosClampNumber(this.cameraOrbit.zoom, 10, 5000, 600);
+            this.cameraOrbit.zoom = vrodosClampNumber(
+                this.cameraOrbit.zoom,
+                VRODOS_EDITOR_ZOOM.min,
+                VRODOS_EDITOR_ZOOM.max,
+                VRODOS_EDITOR_ZOOM.fallback
+            );
         }
 
         this.cameraOrbit.updateProjectionMatrix();
@@ -292,7 +332,7 @@ class vrodos_3d_editor_environmentals {
     }
 
     getActiveEditorCamera() {
-        if (avatarControlsEnabled) {
+        if (this.isAvatarControlsEnabled()) {
             return this.thirdPersonView ? this.cameraThirdPerson : this.cameraAvatar;
         }
 
@@ -368,10 +408,6 @@ class vrodos_3d_editor_environmentals {
                 setTransformControlsSize();
             }
         });
-
-        // Add a helper for debug purpose
-        // this.cameraOrbitHelper = new THREE.CameraHelper( this.cameraOrbit );
-        // this.scene.add( this.cameraOrbitHelper );
     }
 
     /**
@@ -380,7 +416,12 @@ class vrodos_3d_editor_environmentals {
     setAvatarCamera() {
 
         // Avatar camera is a Perspective camera
-        this.cameraAvatar = new THREE.PerspectiveCamera(this.VIEW_ANGLE, this.ASPECT, 0.01, 4000);
+        this.cameraAvatar = new THREE.PerspectiveCamera(
+            this.VIEW_ANGLE,
+            this.ASPECT,
+            VRODOS_EDITOR_CAMERA.near,
+            VRODOS_EDITOR_CAMERA.avatarFar
+        );
         this.cameraAvatar.name = "avatarCamera";
         this.cameraAvatar.category_name = "avatarYawObject";
         this.cameraAvatar.isSelectableMesh = true;
@@ -395,8 +436,6 @@ class vrodos_3d_editor_environmentals {
         // Avatar camera Controls is a PointerLockControls
 
         this.avatarControls = new THREE.PointerLockControls(this.cameraAvatar, this.renderer.domElement);
-
-
         this.avatarControls.name = "avatarControls";
 
         // Avatar Yaw controls
@@ -409,17 +448,18 @@ class vrodos_3d_editor_environmentals {
         this.scene.add(avatarControlsYawObject);
 
         // Third person camera is a Perspective camera
-        this.cameraThirdPerson = new THREE.PerspectiveCamera(this.VIEW_ANGLE, this.ASPECT, 0.01, 3000);
+        this.cameraThirdPerson = new THREE.PerspectiveCamera(
+            this.VIEW_ANGLE,
+            this.ASPECT,
+            VRODOS_EDITOR_CAMERA.near,
+            VRODOS_EDITOR_CAMERA.thirdPersonFar
+        );
         this.cameraThirdPerson.position.set(0, 4, 5);
         this.cameraThirdPerson.rotation.x = -0.2;
         this.cameraThirdPerson.name = "cameraThirdPerson";
 
         avatarControlsYawObject.add(this.cameraThirdPerson);
 
-        // Add a helper for this camera
-        //  this.cameraAvatarHelper = new THREE.CameraHelper( this.cameraAvatar );
-        //  this.cameraAvatarHelper.name = "cameraAvatarHelper";
-        //  this.scene.add( this.cameraAvatarHelper );
     }
 
 
@@ -491,7 +531,7 @@ class vrodos_3d_editor_environmentals {
     }
 
     getDirectorRig() {
-        return vrodosGetPointerLockObject(envir.avatarControls);
+        return vrodosGetPointerLockObject(this.avatarControls);
     }
 
     setDirectorWorldPosition(x, y, z, rx, ry) {
@@ -585,8 +625,6 @@ class vrodos_3d_editor_environmentals {
     setAxisText() {
         let loader = new THREE.FontLoader();
         loader.scene = this.scene;
-        // let pathn = window.location.pathname.replace(/[^/]*$/, '');
-        // pathn = pathn.split('/').slice(0,-2).join('/');
 
         let vendorDir = window.vrodos_three_vendor_dir || 'three-r181';
         let vendorRoot = vrodosEnvironmentResolveBaseUrl(pluginPath, 'vendorBaseUrl', 'assets/vendor/');
@@ -601,12 +639,7 @@ class vrodos_3d_editor_environmentals {
             for (let dist = 10; dist < 200; dist = dist + 10) {
                 let textGeo = new THREE.TextGeometry(dist + " m", {
                     font: font,
-                    size: 0.2,
-                    // height: 50,
-                    // curveSegments: 12,
-                    // bevelThickness: 2,
-                    // bevelSize: 5,
-                    // bevelEnabled: true
+                    size: 0.2
                 });
                 let color = new THREE.Color();
                 color.setRGB(letterAx == 'X' ? 255 : 0, letterAx == 'Y' ? 255 : 0, letterAx == 'Z' ? 255 : 0);
@@ -626,8 +659,6 @@ class vrodos_3d_editor_environmentals {
                 text.position.z = letterAx == 'Z' ? dist : 0;
                 text.scale.z = 0.001;
                 text.name = "myAxisText" + letterAx;
-
-                //window.envir.axesHelper.add(text);
             }
         }
     }
@@ -641,18 +672,11 @@ class vrodos_3d_editor_environmentals {
             this.ASPECT = this.vr_editor_main_div.clientWidth / this.vr_editor_main_div.clientHeight;
             this.cameraOrbit.left = this.FRUSTUM_SIZE * this.ASPECT / -2;
             this.cameraOrbit.right = this.FRUSTUM_SIZE * this.ASPECT / 2;
-
             this.cameraOrbit.zoom = vrodosOrthoFitZoom(this.FRUSTUM_SIZE, this.ASPECT, this.SCENE_DIMENSION_SURFACE);
         }
 
         if (this.is2d) {
             this.cameraOrbit.position.set(this.SCENE_CENTER_X, this.FRUSTUM_SIZE, this.SCENE_CENTER_Z);
-
-            // this.cameraOrbit.rotation._x = - Math.PI/2;
-            // this.cameraOrbit.rotation._y = 0;
-            // this.cameraOrbit.rotation._z = 0;
-
-            //this.cameraOrbit. orbitControls.object.quaternion = new THREE.Quaternion(0.707, 0 , 0, 0.707);
 
         } else {
             this.cameraOrbit.position.set(
@@ -667,8 +691,12 @@ class vrodos_3d_editor_environmentals {
             this.orbitControls.update();
         }
 
-        this.cameraOrbit.zoom = vrodosClampNumber(this.cameraOrbit.zoom, 10, 5000, 600);
+        this.cameraOrbit.zoom = vrodosClampNumber(
+            this.cameraOrbit.zoom,
+            VRODOS_EDITOR_ZOOM.min,
+            VRODOS_EDITOR_ZOOM.max,
+            VRODOS_EDITOR_ZOOM.fallback
+        );
         this.cameraOrbit.updateProjectionMatrix();
-        //this.orbitControls.object.updateProjectionMatrix();
     }
 }

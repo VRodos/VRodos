@@ -137,7 +137,6 @@ class VRodos_Asset_Manager {
 		wp_enqueue_script( 'vrodos_movePointerLocker' );
 		wp_enqueue_script( 'vrodos_addRemoveOne' );
 		wp_enqueue_script( 'vrodos_3d_editor_buttons_drags' );
-		wp_enqueue_script( 'vrodos_vr_editor_analytics' );
 		wp_enqueue_script( 'vrodos_fetch_asset_scenes_request' );
 		wp_enqueue_script( 'vrodos_compile_dialogue' );
 
@@ -266,7 +265,6 @@ class VRodos_Asset_Manager {
       ['vrodos_scene_settings_schema', VRodos_Path_Manager::editor_js_url( 'vrodos_scene_settings_schema.js' )],
       ['vrodos_ScenePersistence', VRodos_Path_Manager::editor_js_url( 'vrodos_ScenePersistence.js' ), ['vrodos_scene_settings_schema']],
       ['stats-gl', 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js'],
-      ['vrodos_vr_editor_analytics', VRodos_Path_Manager::editor_js_url( 'vrodos_3d_editor_analytics.js' )],
       // AJAX Scripts
       ['ajax-script_compile', VRodos_Path_Manager::editor_ajax_js_url( 'vrodos_request_compile.js' )],
       ['ajax-script_deletescene', VRodos_Path_Manager::editor_ajax_js_url( 'delete_scene.js' )],
