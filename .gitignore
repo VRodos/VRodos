@@ -133,6 +133,10 @@ test_compiler/
 /services/networked-aframe/server/keys.json
 
 /runtime/build/
+/runtime/assets/
+/runtime/networked-aframe/
+assets/Director/
+assets/objects/
 
 
 # Modernization Tooling
