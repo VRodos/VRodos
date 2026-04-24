@@ -320,7 +320,6 @@ class VRodos_Asset_Manager {
 		wp_register_style( 'vrodos_3D_editor_browser', VRodos_Path_Manager::css_url( 'editor/vrodos_3D_editor_browser.css' ) );
 		wp_register_style( 'vrodos_frontend_stylesheet', VRodos_Path_Manager::css_url( 'frontend/vrodos_frontend.css' ) );
 		wp_register_style( 'vrodos_asseteditor_stylesheet', VRodos_Path_Manager::css_url( 'editor/vrodos_asseteditor.css' ) );
-		wp_register_style( 'vrodos_widgets_stylesheet', VRodos_Path_Manager::css_url( 'frontend/vrodos_widgets.css' ) );
 		wp_register_style( 'vrodos_modern_compiled', VRodos_Path_Manager::css_url( 'vrodos_modern_compiled.css' ) );
 		wp_register_style( 'vrodos_runtime', VRodos_Path_Manager::css_url( 'runtime/vrodos_runtime.css' ) );
 	}
