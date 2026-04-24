@@ -55,7 +55,6 @@ VRodos/
   services/
     networked-aframe/              Node/WebRTC collaborative runtime server
   scripts/                         Build and maintenance scripts
-  tests/                           Lightweight PHPUnit smoke coverage
 ```
 
 ### Architectural rules

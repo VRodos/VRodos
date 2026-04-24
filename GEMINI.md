@@ -76,9 +76,7 @@ The server enables real-time collaborative editing.
 ## Building and Running
 
 ### PHP (Backend)
-- **Linting:** `composer run cs` (PHPCS with WordPress standards)
-- **Refactoring:** `composer run rector` (PHP 8.3 compatibility)
-- **Testing:** `composer run test` (PHPUnit)
+- Composer/PHPUnit tooling has been removed from this plugin. Use targeted PHP syntax checks with the local PHP runtime when editing PHP files.
 
 ### JavaScript/CSS (Frontend)
 - **CSS Build:** `npm run build:css` (Tailwind)
