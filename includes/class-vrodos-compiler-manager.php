@@ -502,9 +502,6 @@ class VRodos_Compiler_Manager {
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
 		$content = str_replace( 'AFRAME_RUNTIME_URL_PLACEHOLDER', esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ), $content );
 		
-		// Specific path for Immerse Assessment, now part of the runtime component set.
-		$content = str_replace( 'src="js/components/immerse-assessment_component.js"', 'src="' . VRodos_Path_Manager::runtime_component_url( 'immerse-assessment_component.js' ) . '"', $content );
-
 		// Bulk path redirection for all local assets to plugin absolute URLs
 		// We use context-aware patterns (src="js/ and href="css/) to avoid double-prefixing paths that already have placeholders
 		$content = str_replace( 'src="js/components/', 'src="' . VRodos_Path_Manager::runtime_component_url(), $content );
@@ -651,9 +648,6 @@ class VRodos_Compiler_Manager {
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
 		$content = str_replace( 'AFRAME_RUNTIME_URL_PLACEHOLDER', esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ), $content );
 		
-		// specific path for Immerse Assessment (different location)
-		$content = str_replace( 'src="js/components/immerse-assessment_component.js"', 'src="' . VRodos_Path_Manager::runtime_component_url( 'immerse-assessment_component.js' ) . '"', $content );
-
 		// Bulk path redirection for all local assets to plugin absolute URLs
 		$content = str_replace( 'src="js/components/', 'src="' . VRodos_Path_Manager::runtime_component_url(), $content );
 		$content = str_replace( 'src="js/master/', 'src="' . VRodos_Path_Manager::runtime_master_url(), $content );
