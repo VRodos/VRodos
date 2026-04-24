@@ -40,14 +40,15 @@ function updateClearColorPicker(input) {
     saveChanges();
 }
 
-function saveChanges() {
+function saveChanges(options) {
+    let saveOptions = options || {};
 
     if (envir && envir.isSceneLoading) {
         return Promise.resolve();
     }
 
     let save_scene_btn = document.getElementById("save-scene-button");
-    if (save_scene_btn.classList.contains("LinkDisabled")) {
+    if (save_scene_btn.classList.contains("LinkDisabled") && !saveOptions.force) {
         return (typeof vrodos_whenSceneSaveSettles === 'function') ? vrodos_whenSceneSaveSettles() : Promise.resolve();
     }
 

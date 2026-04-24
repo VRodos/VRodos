@@ -122,6 +122,16 @@ function waitForLatestSceneSave() {
     return Promise.resolve();
 }
 
+function persistSceneScreenshot() {
+    return waitForLatestSceneSave()
+        .then(function () {
+            return (typeof saveChanges === 'function') ? saveChanges({force: true}) : Promise.resolve();
+        })
+        .catch(function (error) {
+            console.warn('VRodos: scene screenshot could not be saved.', error);
+        });
+}
+
 function setSceneScreenshotPreview(src) {
     let sceneShot = document.getElementById('vrodos_scene_sshot');
     let placeholder = document.getElementById('vrodos_scene_sshot_placeholder');
@@ -410,8 +420,10 @@ function loadButtonActions() {
             let reader = new FileReader();
 
             reader.onload = function (e) {
-                setSceneScreenshotPreview(e.target.result);
+                new_screenshot_data = e.target.result;
+                setSceneScreenshotPreview(new_screenshot_data);
                 is_scene_icon_manually_selected = true;
+                persistSceneScreenshot();
             };
 
             reader.readAsDataURL(input.files[0]);
@@ -1003,8 +1015,7 @@ function takeScreenshot() {
     if (envir.scene.getObjectByName("myTransformControls"))
         envir.scene.getObjectByName("myTransformControls").visible = true;
 
-    // Auto-save the scene so the screenshot is persisted immediately
-    document.getElementById('save-scene-button').click();
+    persistSceneScreenshot();
 }
 
 

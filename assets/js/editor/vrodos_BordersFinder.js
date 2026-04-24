@@ -1,168 +1,180 @@
 
-// Find dimensions of the selected object
-function findDimensions(groupObj){
+"use strict";
 
-    if (groupObj.getObjectByName('bbox')){
-        groupObj.remove( groupObj.getObjectByName('bbox') );
+const VRODOS_BORDER_HELPER_NAMES = Object.freeze([
+    'bbox',
+    'x_dim_line'
+]);
+
+const VRODOS_SCENE_BOUNDS_EXCLUDED_NAMES = Object.freeze([
+    'myTransformControls',
+    'myGridHelper',
+    'myAxisHelper',
+    'orbitCamera',
+    'avatarCamera'
+]);
+
+const VRODOS_LIGHT_BOUND_TYPES = Object.freeze([
+    'PointLight',
+    'PointLightHelper',
+    'SpotLight'
+]);
+
+function removeBoundsHelpers(groupObj) {
+    if (!groupObj) {
+        return;
     }
-    if (groupObj.getObjectByName('x_dim_line')){
-        groupObj.remove( groupObj.getObjectByName('x_dim_line') );
+
+    VRODOS_BORDER_HELPER_NAMES.forEach((helperName) => {
+        const helper = groupObj.getObjectByName(helperName);
+        if (helper) {
+            groupObj.remove(helper);
+        }
+    });
+}
+
+function createBoundsTarget(groupObj) {
+    if (!groupObj || VRODOS_LIGHT_BOUND_TYPES.includes(groupObj.type)) {
+        const geometryBox = new THREE.BoxGeometry(1, 1, 1);
+        const materialBox = new THREE.MeshBasicMaterial({color: 0x00ff00});
+        return new THREE.Mesh(geometryBox, materialBox);
     }
+
+    return groupObj;
+}
+
+function createBoxHelper(groupObj) {
+    const boundsTarget = createBoundsTarget(groupObj);
+    const box = new THREE.BoxHelper(boundsTarget, 0xff00ff);
+    box.geometry.computeBoundingBox();
+    box.name = 'bbox';
+
+    return box;
+}
+
+function getObjectBoundingBox(groupObj) {
+    removeBoundsHelpers(groupObj);
+
+    const box = createBoxHelper(groupObj);
+    if (!box.geometry.boundingBox) {
+        return null;
+    }
+
+    return box.geometry.boundingBox;
+}
+
+function isSceneBoundsCandidate(sceneChild) {
+    if (!sceneChild || VRODOS_SCENE_BOUNDS_EXCLUDED_NAMES.includes(sceneChild.name)) {
+        return false;
+    }
+
+    if (sceneChild.category_name === 'lightHelper' || sceneChild.category_name === 'lightTargetSpot') {
+        return false;
+    }
+
+    if (typeof sceneChild.name === 'string' && sceneChild.name.startsWith('lightShadowHelper_')) {
+        return false;
+    }
+
+    return sceneChild.vrodos_internal_helper !== true;
+}
+
+// Find dimensions of the selected object
+function findDimensions(groupObj) {
+    const fallbackDimensions = [1, 1, 1];
 
     try {
-        // ======= bbox ========================
-        var box;
-        if (groupObj.type !== "PointLight" &&  groupObj.type !== "PointLightHelper" && groupObj.type !== "SpotLight") {
-            box = new THREE.BoxHelper(groupObj, 0xff00ff);
-        } else {
-            const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
-            const materialBox = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
-            var simpleBox = new THREE.Mesh( geometryBox, materialBox );
-            box = new THREE.BoxHelper(simpleBox, 0xff00ff);
+        const boundingBox = getObjectBoundingBox(groupObj);
+        if (!boundingBox) {
+            return fallbackDimensions;
         }
 
-        box.geometry.computeBoundingBox();
-        box.name = "bbox";
+        const finalVec = new THREE.Vector3().subVectors(boundingBox.min, boundingBox.max);
+        const dimensions = [
+            Math.abs(finalVec.x),
+            Math.abs(finalVec.y),
+            Math.abs(finalVec.z)
+        ];
 
-        // Safety check for boundingBox
-        if (!box.geometry.boundingBox) {
-            return [1, 1, 1];
+        if (dimensions.some((dimension) => !Number.isFinite(dimension))) {
+            return fallbackDimensions;
         }
 
-        var finalVec = new THREE.Vector3().subVectors(box.geometry.boundingBox.min, box.geometry.boundingBox.max);
-
-        var x = Math.abs(finalVec.x);
-        var y = Math.abs(finalVec.y);
-        var z = Math.abs(finalVec.z);
-
-        // Guard against NaN from corrupted geometry
-        if (isNaN(x) || isNaN(y) || isNaN(z)) {
-            return [1, 1, 1];
-        }
-
-        return [x, y, z];
+        return dimensions;
     } catch (e) {
-        console.warn("findDimensions: could not compute bounds for", groupObj.name, e.message);
-        return [1, 1, 1];
+        console.warn('findDimensions: could not compute bounds for', groupObj ? groupObj.name : groupObj, e.message);
+        return fallbackDimensions;
     }
 }
 
 // Find dimensions of the selected object
-function findBorders(groupObj){
+function findBorders(groupObj) {
+    const boundingBox = getObjectBoundingBox(groupObj);
 
-    groupObj.remove( groupObj.getObjectByName('bbox') );
-    groupObj.remove( groupObj.getObjectByName('x_dim_line') );
-
-    // ======= bbox ========================
-    var box;
-    if (groupObj.type !== "PointLight" &&  groupObj.type !== "PointLightHelper") {
-        box = new THREE.BoxHelper(groupObj, 0xff00ff);
-    } else {
-        const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
-        const materialBox = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
-        const simpleBox = new THREE.Mesh( geometryBox, materialBox );
-        box = new THREE.BoxHelper(simpleBox, 0xff00ff);
+    if (!boundingBox) {
+        return [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)];
     }
 
-    box.geometry.computeBoundingBox();
-    box.name = "bbox";
+    return [boundingBox.min, boundingBox.max];
+}
 
-    var finalVec = new THREE.Vector3().subVectors(box.geometry.boundingBox.min, box.geometry.boundingBox.max);
 
-    var x = Math.abs(finalVec.x);
-    var y = Math.abs(finalVec.y);
-    var z = Math.abs(finalVec.z);
-
-    return [box.geometry.boundingBox.min, box.geometry.boundingBox.max];
+function getEmptyBounds() {
+    return [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)];
 }
 
 
 // Find Limits (world coordinates) of the selected object
-function findObjectLimits(groupObj){
-
-    if (groupObj.getObjectByName('bbox')) {
-        groupObj.remove( groupObj.getObjectByName('bbox') );
-    }
-    if (groupObj.getObjectByName('x_dim_line')) {
-        groupObj.remove( groupObj.getObjectByName('x_dim_line') );
-    }
-
-
-    // ======= bbox ========================
+function findObjectLimits(groupObj) {
     try {
-
-        var box;
-        if (groupObj.type !== "PointLight" &&  groupObj.type !== "PointLightHelper") {
-            box = new THREE.BoxHelper(groupObj, 0xff00ff);
-        } else {
-            const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
-            const materialBox = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
-            const simpleBox = new THREE.Mesh( geometryBox, materialBox );
-            box = new THREE.BoxHelper(simpleBox, 0xff00ff);
+        const boundingBox = getObjectBoundingBox(groupObj);
+        if (!boundingBox) {
+            return getEmptyBounds();
         }
 
-        box.geometry.computeBoundingBox();
-        box.name = "bbox";
-
-        // var finalVec = new THREE.Vector3().subVectors(box.geometry.boundingBox.min, box.geometry.boundingBox.max);
-        // var x = Math.abs(finalVec.x);
-        // var y = Math.abs(finalVec.y);
-        // var z = Math.abs(finalVec.z);
-
-        return [box.geometry.boundingBox.min, box.geometry.boundingBox.max];
-    } catch (e){
-        console.error("ERROR 512" + groupObj.name + "is problematic");
-        return [new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0)];
+        return [boundingBox.min, boundingBox.max];
+    } catch (e) {
+        console.error('findObjectLimits: could not compute bounds for', groupObj ? groupObj.name : groupObj, e.message);
+        return getEmptyBounds();
     }
 }
 
 
 // Reset
-function findSceneDimensions(){
+function findSceneDimensions() {
 
-    var xMax = 0;
-    var xMin = 0;
-    var zMax = 0;
-    var zMin = 0;
-    var yMax = 0;
-    var yMin = 0;
-    var hasSceneContent = false;
-
-    for (var i = 0; i < envir.scene.children.length; i++) {
-        var sceneChild = envir.scene.children[i];
-
-        if (sceneChild.name !== "myTransformControls" &&
-            sceneChild.name !== "myGridHelper" &&
-            sceneChild.name !== "myAxisHelper" &&
-            sceneChild.name !== "orbitCamera" &&
-            sceneChild.name !== "avatarCamera") {
-
-            if (sceneChild.category_name === 'lightHelper' ||
-                sceneChild.category_name === 'lightTargetSpot' ||
-                sceneChild.name.startsWith('lightShadowHelper_') ||
-                sceneChild.vrodos_internal_helper === true)
-                continue;
-
-            var sizeXYZ_Arr = findObjectLimits(sceneChild);
-            hasSceneContent = true;
-
-            xMin = Math.min(sizeXYZ_Arr[0].x, xMin);
-            xMax = Math.max(sizeXYZ_Arr[1].x, xMax);
-
-            yMin = Math.min(sizeXYZ_Arr[0].y, yMin);
-            yMax = Math.max(sizeXYZ_Arr[1].y, yMax);
-
-            zMin = Math.min(sizeXYZ_Arr[0].z, zMin);
-            zMax = Math.max(sizeXYZ_Arr[1].z, zMax);
-
-        }
+    if (typeof envir === 'undefined' || !envir || !envir.scene) {
+        return;
     }
 
-    envir.SCENE_DIMENSION_SURFACE = Math.max(xMax - xMin, zMax - zMin);
-    envir.SCENE_CENTER_X = hasSceneContent ? (xMin + xMax) / 2 : 0;
-    envir.SCENE_CENTER_Y = hasSceneContent ? (yMin + yMax) / 2 : 0;
-    envir.SCENE_CENTER_Z = hasSceneContent ? (zMin + zMax) / 2 : 0;
+    const bounds = {
+        xMax: 0,
+        xMin: 0,
+        yMax: 0,
+        yMin: 0,
+        zMax: 0,
+        zMin: 0,
+        hasSceneContent: false
+    };
 
-    // In empty scene lets fix it to 10
-    //envir.SCENE_DIMENSION_SURFACE = envir.SCENE_DIMENSION_SURFACE > 0 ? envir.SCENE_DIMENSION_SURFACE * 1.5 : 10;
+    envir.scene.children
+        .filter(isSceneBoundsCandidate)
+        .forEach((sceneChild) => {
+            const objectBounds = findObjectLimits(sceneChild);
+            bounds.hasSceneContent = true;
+
+            bounds.xMin = Math.min(objectBounds[0].x, bounds.xMin);
+            bounds.xMax = Math.max(objectBounds[1].x, bounds.xMax);
+
+            bounds.yMin = Math.min(objectBounds[0].y, bounds.yMin);
+            bounds.yMax = Math.max(objectBounds[1].y, bounds.yMax);
+
+            bounds.zMin = Math.min(objectBounds[0].z, bounds.zMin);
+            bounds.zMax = Math.max(objectBounds[1].z, bounds.zMax);
+        });
+
+    envir.SCENE_DIMENSION_SURFACE = Math.max(bounds.xMax - bounds.xMin, bounds.zMax - bounds.zMin);
+    envir.SCENE_CENTER_X = bounds.hasSceneContent ? (bounds.xMin + bounds.xMax) / 2 : 0;
+    envir.SCENE_CENTER_Y = bounds.hasSceneContent ? (bounds.yMin + bounds.yMax) / 2 : 0;
+    envir.SCENE_CENTER_Z = bounds.hasSceneContent ? (bounds.zMin + bounds.zMax) / 2 : 0;
 }

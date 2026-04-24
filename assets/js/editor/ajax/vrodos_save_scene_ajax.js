@@ -15,9 +15,10 @@ function vrodos_saveSceneAjax() {
 		'scene_caption': document.getElementById( "sceneCaptionInput" ).value
 	});
 
+	let pendingScreenshotData = null;
 	if (new_screenshot_data) {
-		postdata.append( 'scene_screenshot', new_screenshot_data );
-		new_screenshot_data = null;
+		pendingScreenshotData = new_screenshot_data;
+		postdata.append( 'scene_screenshot', pendingScreenshotData );
 	}
 
 	vrodosIsSceneSavePending = true;
@@ -39,6 +40,9 @@ function vrodos_saveSceneAjax() {
 		};
 		document.getElementById( "compileGameBtn" ).disabled = true;
 		setTimeout( enableSaveFunctionality, 2000 );
+		if (pendingScreenshotData && new_screenshot_data === pendingScreenshotData) {
+			new_screenshot_data = null;
+		}
 		return data;
 	})
 	.catch( function (err) {

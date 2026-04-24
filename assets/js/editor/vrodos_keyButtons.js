@@ -13,28 +13,6 @@ let prevTime = performance.now();
 let velocity = new THREE.Vector3();
 let torgue = new THREE.Vector3();
 
-// MOUSE DOWN
-// document.addEventListener( 'mousedown', function ( event ) {
-//     if (avatarControlsEnabled) {
-//         switch (event.button) {
-//             case 0: moveForward = true; break;
-//             case 2: moveBackward = true; break;
-//         }
-//     }
-// }, true);
-//
-// // MOUSE UP
-// document.addEventListener( 'mouseup', function ( event ) {
-//     if (avatarControlsEnabled) {
-//         switch (event.button) {
-//             case 0: moveForward = false; break;
-//             case 2: moveBackward = false; break;
-//         }
-//     }
-// }, true);
-//
-// WHEEL
-
 document.addEventListener('wheel', (event) => {
     if (avatarControlsEnabled)
         if (event.deltaY)
@@ -49,9 +27,6 @@ document.addEventListener('wheel', (event) => {
 }, true);
 
 firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
-
-if (firstPersonBlockerBtn) {
-};
 
 document.addEventListener('remove_movement',
     (event) => {
@@ -134,9 +109,6 @@ const updatePointerLockControls = function(){
     torgue.y = torgue.y * 0.7; // * delta;
     torgue.x = torgue.x * 0.7; // * delta;
 
-
-
-
     if (moveForward) velocity.z -= avatar_movement_speed_factor * delta;
     if (moveBackward) velocity.z += avatar_movement_speed_factor * delta;
     if (moveLeft) torgue.y += avatar_movement_speed_factor * delta;
@@ -171,66 +143,3 @@ const updatePointerLockControls = function(){
 }
 
 // TODO: RAYCASTING SIGNIFICANTLY DETERIORATES RENDERING SPEED
-
-//for (let vertexIndex = 0; vertexIndex < 1; vertexIndex++) //cubeRayShield.geometry.vertices.length
-//{
-//    let localVertex = cubeRayShield.geometry.vertices[vertexIndex].clone();
-//    let globalVertex = localVertex.applyProjection(cubeRayShield.matrixWorld);
-//
-//
-//    let directorWorldPosition = director.position.clone().applyProjection(director.matrixWorld);
-//
-//    let directionVector = globalVertex.sub(directorWorldPosition);
-//
-//    let dirVecNorm = directionVector.clone().normalize();
-//
-//    // Visualize Raycaster with a line
-//    //    let geometryL = new THREE.Geometry();
-//    //    let geometryL = new THREE.Geometry();
-//    //    geometryL.vertices.push(directorWorldPosition,
-//    //        directorWorldPosition.clone().add(dirVecNorm)
-//    //    );
-//    //    console.log(director.position.clone(), director.position.clone().add(dirVecNorm));
-//    //    envir.scene.add(new THREE.Line(geometryL, new THREE.LineBasicMaterial({color: 0x0000ff})));
-//
-//    let raycaster = new THREE.Raycaster(directorWorldPosition, dirVecNorm, 1, 10);
-//    let actMesh = getActiveMeshes();
-//    let collisionResults = raycaster.intersectObjects( actMesh, true );
-//}
-
-
-// Collider test: Make everything touched red
-//for ( let i = 0; i < collisionResults.length; i++ )
-//    collisionResults[ i ].object.material.color.set( 0xff0000 );
-
-
-//        let isOnObject = collisionResults.length > 0; // && collisionResults[0].distance < directionVector.length();
-
-
-
-
-// When the avatar moves then move the camera to follow him
-
-//if (!avatarControlsEnabled) {
-//    //envir.orbitControls.object.translateX(velocity.x * delta);
-//    //envir.orbitControls.object.translateY(velocity.y * delta);
-//    //envir.orbitControls.object.translateZ(velocity.z * delta);
-//
-//
-//}
-//
-//
-
-
-// Update the camera Y not to be so low
-//if ( moveForward )
-//    envir.orbitControls.object.translateY( - velocity.y * delta );
-
-//if ( envir.avatarControls.object.position.y < 1.80 ) {
-//    velocity.y = 0;
-//    envir.avatarControls.object.position.y = 0;
-//    envir.avatarControls.object.children[1].position.y=0;
-//    envir.avatarControls.object.children[0].position.y=0;
-//
-//    canJump = true;
-//}
