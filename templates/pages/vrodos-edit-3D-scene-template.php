@@ -332,8 +332,7 @@ extract( $data );
 						<div id="row_cogwheel" class="row-right-panel">
 							<a type="button" id="optionsPopupBtn"
 								class="EditorToolbarBtnStyle tw-btn tw-btn-sm tw-btn-primary"
-								title="Edit scene options"
-								onclick="if(window.syncCompileDialogFromSceneSettings) window.syncCompileDialogFromSceneSettings(); document.getElementById('compile-dialog').showModal()">
+								title="Edit scene options">
 								<i data-lucide="settings" ></i>
 							</a>
 						</div>
