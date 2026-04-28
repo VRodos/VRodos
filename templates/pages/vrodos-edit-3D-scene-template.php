@@ -70,6 +70,16 @@ extract( $data );
 					</div>
 
 
+					<div class="tw-flex-1 tw-flex tw-items-center tw-justify-center">
+						<?php if ( ! empty( $immerse_scene_info['content'] ) ) : ?>
+                        <a id="toggleImmerseSceneInfoBtn" type="button"
+                           class="tw-flex tw-items-center tw-gap-1 tw-px-2 tw-py-1 tw-text-xs tw-font-bold tw-opacity-70 hover:tw-opacity-100 tw-transition-all tw-cursor-pointer"
+                           title="View imported Immerse scene information">
+                            <i data-lucide="file-text" class="tw-w-3.5 tw-h-3.5"></i> Scene Info
+                        </a>
+						<?php endif; ?>
+					</div>
+
 					<div class="tw-ml-auto tw-flex tw-items-center tw-gap-2">
 
                         <a id="toggleUIBtn" data-toggle='on' type="button"
@@ -159,6 +169,85 @@ extract( $data );
 					</div>
 					<form method="dialog" class="tw-modal-backdrop"><button>close</button></form>
 				</dialog>
+
+				<?php if ( ! empty( $immerse_scene_info['content'] ) ) : ?>
+				<!-- Imported Immerse scene information (floating panel) -->
+				<div id="immerseSceneInfoDialog"
+					 class="tw-fixed tw-hidden tw-flex tw-flex-col tw-bg-slate-900 tw-shadow-2xl tw-border tw-border-white/10 tw-p-0 tw-overflow-hidden tw-text-white vrodos-immerse-scene-info-panel"
+					 role="dialog"
+					 aria-label="Imported Scene Information"
+					 style="top: 110px; left: 420px; width: min(42vw, 720px); height: min(72vh, 680px); min-width: 360px; min-height: 260px; max-width: calc(100vw - 24px); max-height: calc(100vh - 70px); border-radius: 0.75rem; z-index: 2147483647;">
+					<div id="immerseSceneInfoHeader" class="tw-flex tw-items-center tw-justify-between tw-px-4 tw-py-1.5 tw-bg-slate-800 tw-border-b tw-border-white/10 tw-flex-shrink-0 tw-cursor-move tw-select-none">
+						<div class="tw-flex tw-items-center tw-gap-2 tw-min-w-0">
+							<i data-lucide="file-text" class="tw-w-3.5 tw-h-3.5 tw-text-emerald-400"></i>
+							<span class="tw-text-xs tw-font-bold tw-text-white tw-tracking-wide">Imported Scene Information</span>
+							<?php if ( ! empty( $immerse_scene_info['source_id'] ) ) : ?>
+								<span class="tw-text-[10px] tw-text-slate-500 tw-font-mono tw-truncate">#<?php echo esc_html( $immerse_scene_info['source_id'] ); ?></span>
+							<?php endif; ?>
+						</div>
+						<div class="tw-flex tw-items-center tw-gap-2">
+							<button id="copyImmerseSceneInfoBtn" type="button" class="tw-px-2.5 tw-py-0.5 tw-text-[10px] tw-font-semibold tw-text-slate-400 hover:tw-text-white tw-bg-slate-700 hover:tw-bg-slate-600 tw-rounded tw-transition-colors tw-flex tw-items-center tw-gap-1" title="Copy to clipboard">
+								<i data-lucide="clipboard-copy" class="tw-w-3 tw-h-3"></i> Copy
+							</button>
+							<button id="closeImmerseSceneInfoBtn" type="button" class="tw-p-0.5 tw-text-slate-500 hover:tw-text-white tw-transition-colors tw-rounded" title="Close">
+								<i data-lucide="x" class="tw-w-3.5 tw-h-3.5"></i>
+							</button>
+						</div>
+					</div>
+					<div id="immerse_scene_info_rendered"
+						 class="tw-flex-1 tw-w-full tw-bg-slate-950 tw-text-slate-100 tw-text-sm tw-leading-relaxed tw-p-5 tw-overflow-y-auto focus:tw-outline-none vrodos-immerse-scene-info-rendered">
+						<?php echo wp_kses_post( $immerse_scene_info['content'] ); ?>
+					</div>
+					<script type="application/json" id="immerse_scene_info_source"><?php echo wp_json_encode( (string) $immerse_scene_info['content'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?></script>
+					<div id="immerseSceneInfoResizeHandle" class="vrodos-immerse-scene-info-resize-handle" title="Resize"></div>
+					<style>
+						.vrodos-immerse-scene-info-panel {
+							touch-action: none;
+						}
+						.vrodos-immerse-scene-info-panel.is-resizing,
+						.vrodos-immerse-scene-info-panel.is-resizing * {
+							user-select: none;
+							cursor: nwse-resize !important;
+						}
+						.vrodos-immerse-scene-info-resize-handle {
+							position: absolute;
+							right: 0;
+							bottom: 0;
+							width: 18px;
+							height: 18px;
+							cursor: nwse-resize;
+							z-index: 2;
+						}
+						.vrodos-immerse-scene-info-resize-handle::after {
+							content: "";
+							position: absolute;
+							right: 4px;
+							bottom: 4px;
+							width: 8px;
+							height: 8px;
+							border-right: 2px solid rgba(148, 163, 184, 0.85);
+							border-bottom: 2px solid rgba(148, 163, 184, 0.85);
+						}
+						.vrodos-immerse-scene-info-rendered {
+							scrollbar-width: thin;
+							scrollbar-color: #475569 transparent;
+						}
+						.vrodos-immerse-scene-info-rendered::-webkit-scrollbar { width: 8px; }
+						.vrodos-immerse-scene-info-rendered::-webkit-scrollbar-track { background: transparent; }
+						.vrodos-immerse-scene-info-rendered::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+						.vrodos-immerse-scene-info-rendered::-webkit-scrollbar-thumb:hover { background: #64748b; }
+						.vrodos-immerse-scene-info-rendered p { margin: 0 0 0.85rem; }
+						.vrodos-immerse-scene-info-rendered p:last-child { margin-bottom: 0; }
+						.vrodos-immerse-scene-info-rendered strong { color: #ffffff; font-weight: 800; }
+						.vrodos-immerse-scene-info-rendered em { color: #cbd5e1; }
+						.vrodos-immerse-scene-info-rendered ul,
+						.vrodos-immerse-scene-info-rendered ol { margin: 0.65rem 0 0.85rem 1.25rem; padding-left: 1rem; }
+						.vrodos-immerse-scene-info-rendered li { margin: 0.35rem 0; }
+						.vrodos-immerse-scene-info-rendered a { color: #34d399; text-decoration: underline; text-underline-offset: 2px; }
+						.vrodos-immerse-scene-info-rendered span[class*="underline"] { text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
+					</style>
+				</div>
+				<?php endif; ?>
 
 
 

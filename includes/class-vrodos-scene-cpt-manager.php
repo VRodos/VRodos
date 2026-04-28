@@ -474,6 +474,17 @@ class VRodos_Scene_CPT_Manager {
 		// Scene Post
 		$data['scene_post'] = $data['current_scene_id'] ? get_post( $data['current_scene_id'] ) : null;
 		$data['sceneTitle'] = $data['scene_post'] ? $data['scene_post']->post_name : '';
+		$data['immerse_scene_info'] = [
+			'source_id' => '',
+			'content'   => '',
+		];
+
+		if ( ! empty( $data['current_scene_id'] ) ) {
+			$data['immerse_scene_info'] = [
+				'source_id' => (string) get_post_meta( (int) $data['current_scene_id'], '_immerse_scene_id', true ),
+				'content'   => (string) get_post_meta( (int) $data['current_scene_id'], '_immerse_scene_content', true ),
+			];
+		}
 
 		// The scene's own parent-project relationship is the authoritative source of
 		// project context for the editor.

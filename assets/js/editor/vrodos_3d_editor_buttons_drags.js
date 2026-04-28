@@ -72,6 +72,206 @@ function fallbackCopyTextareaText(textarea) {
     });
 }
 
+function copyPlainText(text) {
+    text = text || '';
+
+    if (window.isSecureContext && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        return navigator.clipboard.writeText(text).catch(function () {
+            return fallbackCopyPlainText(text);
+        });
+    }
+
+    return fallbackCopyPlainText(text);
+}
+
+function fallbackCopyPlainText(text) {
+    return new Promise(function (resolve, reject) {
+        let textarea = document.createElement('textarea');
+        let activeElement = document.activeElement;
+
+        textarea.value = text || '';
+        textarea.setAttribute('readonly', 'readonly');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '0';
+        textarea.style.opacity = '0';
+
+        document.body.appendChild(textarea);
+
+        try {
+            focusWithoutScroll(textarea);
+            textarea.select();
+            textarea.setSelectionRange(0, textarea.value.length);
+
+            let copied = document.execCommand('copy');
+            textarea.remove();
+
+            if (activeElement && typeof activeElement.focus === 'function') {
+                focusWithoutScroll(activeElement);
+            }
+
+            if (copied) {
+                resolve();
+            } else {
+                reject(new Error('Clipboard copy command was rejected.'));
+            }
+        } catch (error) {
+            textarea.remove();
+            reject(error);
+        }
+    });
+}
+
+function clampFloatingPanelToViewport(panel) {
+    if (!panel) return;
+
+    let rect = panel.getBoundingClientRect();
+    let margin = 8;
+    let maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+    let maxTop = Math.max(44, window.innerHeight - rect.height - margin);
+    let nextLeft = Math.min(Math.max(rect.left, margin), maxLeft);
+    let nextTop = Math.min(Math.max(rect.top, 44), maxTop);
+
+    panel.style.left = nextLeft + 'px';
+    panel.style.top = nextTop + 'px';
+}
+
+function showFloatingPanel(panel) {
+    if (!panel) return;
+
+    panel.classList.remove('tw-hidden');
+    panel.style.display = 'flex';
+    clampFloatingPanelToViewport(panel);
+}
+
+function hideFloatingPanel(panel) {
+    if (!panel) return;
+
+    panel.classList.add('tw-hidden');
+    panel.style.display = 'none';
+}
+
+function initializeFloatingPanel(panelId, headerId, closeButtonId) {
+    let panel = document.getElementById(panelId);
+    let header = document.getElementById(headerId);
+    let closeButton = document.getElementById(closeButtonId);
+    let resizeHandle = document.getElementById(panelId.replace('Dialog', 'ResizeHandle'));
+
+    if (!panel || !header) return;
+
+    if (closeButton) {
+        closeButton.addEventListener('click', function () {
+            hideFloatingPanel(panel);
+        });
+    }
+
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+
+    header.addEventListener('pointerdown', function (event) {
+        if (event.target.closest('button, a')) return;
+
+        let rect = panel.getBoundingClientRect();
+        isDragging = true;
+        startX = event.clientX;
+        startY = event.clientY;
+        startLeft = rect.left;
+        startTop = rect.top;
+
+        panel.style.left = startLeft + 'px';
+        panel.style.top = startTop + 'px';
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+        header.setPointerCapture(event.pointerId);
+        event.preventDefault();
+    });
+
+    header.addEventListener('pointermove', function (event) {
+        if (!isDragging) return;
+
+        panel.style.left = (startLeft + event.clientX - startX) + 'px';
+        panel.style.top = (startTop + event.clientY - startY) + 'px';
+        clampFloatingPanelToViewport(panel);
+    });
+
+    header.addEventListener('pointerup', function (event) {
+        isDragging = false;
+        try {
+            header.releasePointerCapture(event.pointerId);
+        } catch (error) {
+            // Pointer capture can already be released if the pointer leaves the window.
+        }
+    });
+
+    window.addEventListener('resize', function () {
+        if (!panel.classList.contains('tw-hidden')) {
+            clampFloatingPanelToViewport(panel);
+        }
+    });
+
+    if (resizeHandle) {
+        let isResizing = false;
+        let resizeStartX = 0;
+        let resizeStartY = 0;
+        let resizeStartWidth = 0;
+        let resizeStartHeight = 0;
+        let resizeStartLeft = 0;
+        let resizeStartTop = 0;
+
+        resizeHandle.addEventListener('pointerdown', function (event) {
+            let rect = panel.getBoundingClientRect();
+            isResizing = true;
+            resizeStartX = event.clientX;
+            resizeStartY = event.clientY;
+            resizeStartWidth = rect.width;
+            resizeStartHeight = rect.height;
+            resizeStartLeft = rect.left;
+            resizeStartTop = rect.top;
+
+            panel.classList.add('is-resizing');
+            panel.style.left = resizeStartLeft + 'px';
+            panel.style.top = resizeStartTop + 'px';
+            panel.style.right = 'auto';
+            panel.style.bottom = 'auto';
+            resizeHandle.setPointerCapture(event.pointerId);
+            event.preventDefault();
+            event.stopPropagation();
+        });
+
+        resizeHandle.addEventListener('pointermove', function (event) {
+            if (!isResizing) return;
+
+            let minWidth = parseFloat(window.getComputedStyle(panel).minWidth) || 360;
+            let minHeight = parseFloat(window.getComputedStyle(panel).minHeight) || 260;
+            let margin = 8;
+            let maxWidth = Math.max(minWidth, window.innerWidth - resizeStartLeft - margin);
+            let maxHeight = Math.max(minHeight, window.innerHeight - resizeStartTop - margin);
+            let nextWidth = Math.min(Math.max(resizeStartWidth + event.clientX - resizeStartX, minWidth), maxWidth);
+            let nextHeight = Math.min(Math.max(resizeStartHeight + event.clientY - resizeStartY, minHeight), maxHeight);
+
+            panel.style.width = nextWidth + 'px';
+            panel.style.height = nextHeight + 'px';
+            event.preventDefault();
+            event.stopPropagation();
+        });
+
+        resizeHandle.addEventListener('pointerup', function (event) {
+            isResizing = false;
+            panel.classList.remove('is-resizing');
+            try {
+                resizeHandle.releasePointerCapture(event.pointerId);
+            } catch (error) {
+                // Pointer capture can already be released if the pointer leaves the window.
+            }
+            event.preventDefault();
+            event.stopPropagation();
+        });
+    }
+}
+
 function showTemporaryButtonSuccess(buttonId, message) {
     let btn = document.getElementById(buttonId);
     if (!btn) return;
@@ -502,6 +702,46 @@ function loadButtonActions() {
                 console.warn('VRodos: failed to copy scene JSON to clipboard.', error);
             });
     });
+
+    let immerseSceneInfoBtn = document.getElementById('toggleImmerseSceneInfoBtn');
+    let immerseSceneInfoDialog = document.getElementById('immerseSceneInfoDialog');
+    if (immerseSceneInfoBtn && immerseSceneInfoDialog) {
+        immerseSceneInfoBtn.addEventListener('click', function () {
+            if (immerseSceneInfoDialog.classList.contains('tw-hidden')) {
+                showFloatingPanel(immerseSceneInfoDialog);
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } else {
+                hideFloatingPanel(immerseSceneInfoDialog);
+            }
+        });
+    }
+
+    initializeFloatingPanel('immerseSceneInfoDialog', 'immerseSceneInfoHeader', 'closeImmerseSceneInfoBtn');
+
+    let copyImmerseSceneInfoBtn = document.getElementById('copyImmerseSceneInfoBtn');
+    if (copyImmerseSceneInfoBtn) {
+        copyImmerseSceneInfoBtn.addEventListener('click', function () {
+            let sourceNode = document.getElementById('immerse_scene_info_source');
+            let sourceText = '';
+
+            if (sourceNode) {
+                try {
+                    sourceText = JSON.parse(sourceNode.textContent || '""');
+                } catch (error) {
+                    sourceText = sourceNode.textContent || '';
+                }
+            }
+
+            copyPlainText(sourceText)
+                .then(function () {
+                    showTemporaryButtonSuccess('copyImmerseSceneInfoBtn', 'Copied!');
+                })
+                .catch(function (error) {
+                    showTemporaryButtonWarning('copyImmerseSceneInfoBtn', 'Press Ctrl+C');
+                    console.warn('VRodos: failed to copy imported scene information to clipboard.', error);
+                });
+        });
+    }
 
     // Drag elements inside VR Editor
     document.getElementById('vr_editor_main_div').ondrop =
