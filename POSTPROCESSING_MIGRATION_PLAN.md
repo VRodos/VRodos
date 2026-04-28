@@ -6,8 +6,8 @@ For the end-user plugin overview, see [README.md](README.md). For the legacy cus
 
 ## Status Snapshot
 
-- Active compiled runtime: A-Frame master commit `96cc74fa7a4640f394a78985a637a788daf56186`
-- Active Three vendor stack: `r181`
+- Active compiled runtime: A-Frame metadata declared in root `package.json`
+- Active Three vendor stack: `r181`, derived from the locked root `three` package
 - Active post-FX model: dual-engine, per-scene selection
 - Engine selector: `postFXEngine` with `legacy` and `pmndrs`
 - Takram status: atmosphere integration is live
@@ -19,21 +19,24 @@ VRodos now ships one active A-Frame + Three runtime pair and two desktop post-pr
 
 ### Runtime source of truth
 
-The runtime pair is pinned in:
+The runtime package intent is pinned in:
 
-- `includes/class-vrodos-render-runtime-manager.php`
+- root `package.json`
+- root `package-lock.json`
 
-That file defines:
+The build writes:
 
-- the A-Frame runtime URL
-- the active A-Frame commit
-- the Three vendor directory
-- the Three vendor bundle
+- `assets/runtime-version-manifest.json`
+- `assets/vendor/<three-dir>/<three-bundle>`
+- `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js`
+
+`VRodos_Render_Runtime_Manager` reads the generated manifest and exposes the same runtime config keys to PHP and editor globals.
 
 ### Engine model
 
 - `legacy` is the original custom VRodos pipeline
 - `pmndrs` is the composer-based pipeline built on `pmndrs/postprocessing`
+- PMNDRS and N8AO globals are exported by `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`; there is no separate `postprocessing.min.js` runtime file
 - scenes select one engine through `postFXEngine`
 - the two engines are intentionally isolated and do not share render targets or passes
 

@@ -214,6 +214,7 @@ Asset editor additionally loads: `vrodos_asseteditor.css`
 | `assets/css/vrodos_modern.css` | Source CSS (hand-written DaisyUI overrides) |
 | `assets/css/vrodos_modern_compiled.css` | Compiled output (auto-generated, DO NOT edit) |
 | `assets/css/editor/vrodos_3D_editor.css` | Scene editor specific styles |
+| `assets/runtime-version-manifest.json` | Generated runtime package/version manifest from `npm run build:three` |
 
 ### Naming
 - Tailwind prefix: `tw-`

@@ -40,8 +40,8 @@ It combines:
 
 VRodos currently targets one active compiled-scene runtime pair:
 
-- A-Frame master commit `96cc74fa7a4640f394a78985a637a788daf56186`
-- Three.js vendor stack `r181`
+- A-Frame master commit `96cc74fa7a4640f394a78985a637a788daf56186`, declared in root `package.json`
+- Three.js vendor stack `r181`, derived from the locked root `three` package
 
 That runtime powers:
 
@@ -52,7 +52,7 @@ That runtime powers:
 - scene-probe reflections for authored environments
 - compiled walkable-surface collision workflows
 
-The runtime source of truth is [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php).
+The runtime version source of truth is root [`package.json`](package.json) plus [`package-lock.json`](package-lock.json). `npm run build:three` generates [`assets/runtime-version-manifest.json`](assets/runtime-version-manifest.json), and [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php) reads that manifest at runtime with conservative fallbacks.
 
 ## Compiled Scene Visual Features
 
@@ -195,10 +195,10 @@ The plugin follows a manager-class architecture, with dedicated managers for ass
 - WordPress 6.x
 - PHP 8.3+
 - Vanilla JavaScript
-- Three.js vendor stack `r181`
-- Pinned A-Frame master runtime for compiled scenes
-- `pmndrs/postprocessing` for the PMNDRS compiled-scene engine
-- Takram atmosphere runtime bundle for atmosphere / sky integration
+- Three.js vendor stack from root `three`
+- Pinned A-Frame runtime metadata from root `package.json`
+- `pmndrs/postprocessing` and `n8ao` bundled into the compiled-scene postprocessing runtime bundle
+- Takram atmosphere runtime bundle built from root `@takram/*` package versions
 - Node.js server for networked and collaborative features
 
 ## Local Development
@@ -226,6 +226,34 @@ node easyrtc-server.js
 ```
 
 The local runtime server is commonly used on port `5832`.
+
+### Updating Runtime Packages
+
+Runtime package versions are intentionally synchronized through the root npm manifest and lockfile.
+
+1. Update root `package.json`:
+   - `devDependencies.three`
+   - `devDependencies.postprocessing`
+   - `devDependencies.n8ao`
+   - `dependencies.@takram/three-atmosphere`
+   - `dependencies.@takram/three-clouds`
+   - `vrodos.runtime.aframe` metadata when the compiled A-Frame runtime URL, version, or commit changes
+2. Run:
+
+```bash
+npm install
+npm run build
+```
+
+3. Commit the updated lockfile and generated runtime outputs:
+   - `package-lock.json`
+   - `assets/runtime-version-manifest.json`
+   - `assets/vendor/<three-dir>/<three-bundle>`
+   - `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`
+   - `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js`
+   - `assets/css/vrodos_modern_compiled.css` when the full build changes CSS
+
+Do not manually copy `postprocessing.min.js` into the runtime. PMNDRS globals are exported by `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` as `window.POSTPROCESSING` and `window.N8AOPostPass`, using A-Frame's existing `window.THREE`.
 
 ## Upload Limits
 

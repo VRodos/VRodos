@@ -1,6 +1,6 @@
 # VRodos Rendering Pipeline — Technical Reference
 
-> Canonical reference for the compiled A-Frame scene's post-processing pipeline, shader architecture, and runtime quality system on the current pinned A-Frame master + Three r181 stack. For end-user feature summaries, see `README.md`. For historical debugging notes and WebGLRenderer quirks, see `POSTFX_DEBUG_NOTES.md`.
+> Canonical reference for the compiled A-Frame scene's post-processing pipeline, shader architecture, and runtime quality system on the current package-synchronized A-Frame + Three r181 stack. For end-user feature summaries, see `README.md`. For historical debugging notes and WebGLRenderer quirks, see `POSTFX_DEBUG_NOTES.md`.
 
 ---
 
@@ -72,6 +72,8 @@ vrodos_master_bootstrap.js              (bootstrap)
 vrodos_master_rendering.js              (RGBELoader + material utils)
 vrodos_shaders_*.js                     (6 shader files — register factories)
 vrodos_postprocessing.js                (register SceneSettingsHelpers)
+lib/vrodos-postprocessing.bundle.js     (PMNDRS + N8AO globals, bound to A-Frame's window.THREE)
+lib/vrodos-takram-atmosphere.bundle.js  (Takram globals; reads PMNDRS deps from window.POSTPROCESSING)
 vrodos_scene_probe.js                   (register SceneSettingsHelpers)
 vrodos_quality_profiles.js              (register SceneSettingsHelpers)
 components/vrodos_scene_settings.component.js   (consumes all of the above)
@@ -302,13 +304,15 @@ HDRLoader (with a temporary `RGBELoader` compatibility alias in `vrodos_master_r
 
 Current runtime:
 
-- VRodos now pins an A-Frame master runtime at commit `96cc74fa7a4640f394a78985a637a788daf56186`
-- The matching live vendor bundle is **Three.js r181**
+- Root `package.json` and `package-lock.json` define runtime package intent.
+- `npm run build:three` generates `assets/runtime-version-manifest.json`.
+- `VRodos_Render_Runtime_Manager` reads the generated manifest for the A-Frame URL, Three vendor bundle, PMNDRS, N8AO, and Takram versions.
+- The matching live vendor bundle is currently **Three.js r181**.
+- PMNDRS `postprocessing` and `n8ao` are exported from `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` as `window.POSTPROCESSING` and `window.N8AOPostPass`; do not load a separate `postprocessing.min.js` or the editor Three vendor bundle in compiled scenes.
 - `physicallyCorrectLights` is always on in modern Three runtimes â€” no flag needed
 
 Historical note: the legacy compatibility bullets below were originally written against the earlier r173 baseline and are still relevant mainly as renderer-behavior context.
 
-- VRodos now pins an A-Frame master runtime at commit `96cc74fa7a4640f394a78985a637a788daf56186`
 - `physicallyCorrectLights` is always on in r173 — no flag needed
 - `outputEncoding` was removed in r152 — use `outputColorSpace`
 - `ShaderMaterial` does **not** auto-invoke `linearToOutputTexel` — the colorspace_fragment chunk must be explicitly included or the RT must carry its own encoding (which we do via the `isXRRenderTarget` trick)

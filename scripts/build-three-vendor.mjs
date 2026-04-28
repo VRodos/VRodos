@@ -1,18 +1,23 @@
-import { mkdir, rm, writeFile, cp, access } from 'node:fs/promises';
+import { mkdir, rm, writeFile, cp, access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import {
-  THREE_VENDOR_DIR,
-  THREE_VENDOR_BUNDLE_FILE,
-  THREE_VENDOR_BUILD_ENTRY_FILE
+  RUNTIME_MANIFEST_FILE,
+  THREE_VENDOR_BUILD_ENTRY_FILE,
+  getLockedPackageVersion,
+  getPackageRuntimeConfig,
+  getThreeRuntimeConfig
 } from './three-vendor.config.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
-const outputDir = path.join(rootDir, 'assets', 'vendor', THREE_VENDOR_DIR);
-const bundlePath = path.join(outputDir, THREE_VENDOR_BUNDLE_FILE);
+const packageJsonPath = path.join(rootDir, 'package.json');
+const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'));
+const threeRuntimeConfig = getThreeRuntimeConfig();
+const outputDir = path.join(rootDir, 'assets', 'vendor', threeRuntimeConfig.vendorDir);
+const bundlePath = path.join(outputDir, threeRuntimeConfig.bundleFile);
 const dracoSourceDir = path.join(rootDir, 'node_modules', 'three', 'examples', 'jsm', 'libs', 'draco');
 const dracoOutputDir = path.join(outputDir, 'draco');
 const fontSourcePath = path.join(rootDir, 'node_modules', 'three', 'examples', 'fonts', 'helvetiker_bold.typeface.json');
@@ -20,10 +25,23 @@ const fontOutputDir = path.join(outputDir, 'fonts');
 const fontOutputPath = path.join(fontOutputDir, 'helvetiker_bold.typeface.json');
 const tempEntryPath = path.join(rootDir, 'scripts', THREE_VENDOR_BUILD_ENTRY_FILE);
 const runtimeVendorDir = path.join(rootDir, 'assets', 'js', 'runtime', 'master', 'lib');
+const postprocessingRuntimeBundlePath = path.join(runtimeVendorDir, 'vrodos-postprocessing.bundle.js');
+const postprocessingRuntimeEntryPath = path.join(rootDir, 'scripts', '.tmp-build-postprocessing-runtime-entry.mjs');
 const takramBundlePath = path.join(runtimeVendorDir, 'vrodos-takram-atmosphere.bundle.js');
 const takramEntryPath = path.join(rootDir, 'scripts', '.tmp-build-takram-atmosphere-entry.mjs');
 const threeShimPath = path.join(rootDir, 'scripts', '.tmp-three-global-shim.mjs');
 const postprocessingShimPath = path.join(rootDir, 'scripts', '.tmp-postprocessing-global-shim.mjs');
+const manifestPath = path.join(rootDir, 'assets', RUNTIME_MANIFEST_FILE);
+const runtimeConfig = getPackageRuntimeConfig();
+const aframeConfig = runtimeConfig.aframe ?? {};
+
+const requiredPackages = [
+  'three',
+  'postprocessing',
+  'n8ao',
+  '@takram/three-atmosphere',
+  '@takram/three-clouds',
+];
 
 const bundleEntrySource = `
 import * as THREEBase from 'three';
@@ -93,6 +111,65 @@ async function ensurePathExists(targetPath, label) {
   }
 }
 
+function getDeclaredDependency(packageName) {
+  return packageJson.dependencies?.[packageName] ?? packageJson.devDependencies?.[packageName] ?? null;
+}
+
+function parseSemver(version) {
+  const match = /^(\d+)\.(\d+)\.(\d+)/.exec(version);
+  if (!match) {
+    throw new Error(`Unsupported semver value: ${version}`);
+  }
+
+  return match.slice(1).map((part) => Number(part));
+}
+
+function versionSatisfiesDeclaration(version, declaration) {
+  if (!declaration) {
+    return false;
+  }
+
+  if (declaration.startsWith('^')) {
+    const [declaredMajor, declaredMinor, declaredPatch] = parseSemver(declaration.slice(1));
+    const [actualMajor, actualMinor, actualPatch] = parseSemver(version);
+
+    if (declaredMajor === 0) {
+      return actualMajor === 0 && actualMinor === declaredMinor && actualPatch >= declaredPatch;
+    }
+
+    return actualMajor === declaredMajor;
+  }
+
+  if (declaration.startsWith('~')) {
+    const [declaredMajor, declaredMinor, declaredPatch] = parseSemver(declaration.slice(1));
+    const [actualMajor, actualMinor, actualPatch] = parseSemver(version);
+    return actualMajor === declaredMajor && actualMinor === declaredMinor && actualPatch >= declaredPatch;
+  }
+
+  return declaration === version;
+}
+
+function validateRuntimeVersions() {
+  for (const packageName of requiredPackages) {
+    const declaration = getDeclaredDependency(packageName);
+    const lockedVersion = getLockedPackageVersion(packageName);
+
+    if (!declaration) {
+      throw new Error(`Missing ${packageName} in root package.json dependencies.`);
+    }
+
+    if (!versionSatisfiesDeclaration(lockedVersion, declaration)) {
+      throw new Error(
+        `${packageName}@${lockedVersion} from package-lock.json does not satisfy package.json declaration ${declaration}.`
+      );
+    }
+  }
+
+  if (!aframeConfig.url || !aframeConfig.label || !aframeConfig.source) {
+    throw new Error('Missing vrodos.runtime.aframe metadata in package.json.');
+  }
+}
+
 async function copySupportAssets() {
   await ensurePathExists(dracoSourceDir, 'Draco decoder assets');
   await ensurePathExists(fontSourcePath, 'Helvetiker font asset');
@@ -151,6 +228,41 @@ async function buildBundle() {
   }
 }
 
+async function buildPostprocessingRuntimeBundle() {
+  await mkdir(runtimeVendorDir, { recursive: true });
+  await writeGlobalShim('three', 'window.THREE || {}', threeShimPath);
+
+  const entrySource = `
+import * as POSTPROCESSING from 'postprocessing';
+import { N8AOPostPass } from 'n8ao';
+
+window.POSTPROCESSING = POSTPROCESSING;
+window.N8AOPostPass = N8AOPostPass;
+`;
+
+  await writeFile(postprocessingRuntimeEntryPath, entrySource, 'utf8');
+
+  try {
+    await build({
+      entryPoints: [postprocessingRuntimeEntryPath],
+      bundle: true,
+      format: 'iife',
+      platform: 'browser',
+      target: ['es2019'],
+      outfile: postprocessingRuntimeBundlePath,
+      legalComments: 'none',
+      plugins: [
+        createAliasPlugin({
+          three: threeShimPath
+        })
+      ]
+    });
+  } finally {
+    await rm(postprocessingRuntimeEntryPath, { force: true });
+    await rm(threeShimPath, { force: true });
+  }
+}
+
 async function buildTakramAtmosphereBundle() {
   await mkdir(runtimeVendorDir, { recursive: true });
   await writeGlobalShim('three', 'window.THREE || {}', threeShimPath);
@@ -186,12 +298,65 @@ window.VRODOS_TAKRAM_ATMOSPHERE = VRODOSTakramAtmosphere;
   }
 }
 
+async function writeRuntimeManifest() {
+  const postprocessingVersion = getLockedPackageVersion('postprocessing');
+  const n8aoVersion = getLockedPackageVersion('n8ao');
+  const takramAtmosphereVersion = getLockedPackageVersion('@takram/three-atmosphere');
+  const takramCloudsVersion = getLockedPackageVersion('@takram/three-clouds');
+
+  const manifest = {
+    schemaVersion: 1,
+    generatedBy: 'scripts/build-three-vendor.mjs',
+    aframe: {
+      label: aframeConfig.label,
+      source: aframeConfig.source,
+      version: aframeConfig.version ?? '',
+      commit: aframeConfig.commit ?? '',
+      url: aframeConfig.url,
+    },
+    three: {
+      version: threeRuntimeConfig.version,
+      revision: threeRuntimeConfig.revision,
+      vendorDir: threeRuntimeConfig.vendorDir,
+      bundleFile: threeRuntimeConfig.bundleFile,
+      bundlePath: `assets/vendor/${threeRuntimeConfig.vendorDir}/${threeRuntimeConfig.bundleFile}`,
+    },
+    postprocessing: {
+      version: postprocessingVersion,
+      global: 'POSTPROCESSING',
+      bundleFile: path.basename(postprocessingRuntimeBundlePath),
+      bundlePath: 'assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js',
+    },
+    n8ao: {
+      version: n8aoVersion,
+      global: 'N8AOPostPass',
+      bundleFile: path.basename(postprocessingRuntimeBundlePath),
+      bundlePath: 'assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js',
+    },
+    takram: {
+      atmosphereVersion: takramAtmosphereVersion,
+      cloudsVersion: takramCloudsVersion,
+      global: 'VRODOS_TAKRAM_ATMOSPHERE',
+      bundleFile: path.basename(takramBundlePath),
+      bundlePath: 'assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js',
+    },
+  };
+
+  await mkdir(path.dirname(manifestPath), { recursive: true });
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+}
+
 async function main() {
+  validateRuntimeVersions();
   await buildBundle();
+  await buildPostprocessingRuntimeBundle();
   await buildTakramAtmosphereBundle();
   await copySupportAssets();
+  await writeRuntimeManifest();
   console.log(`Built ${path.relative(rootDir, bundlePath)}`);
+  console.log(`Built ${path.relative(rootDir, postprocessingRuntimeBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, takramBundlePath)}`);
+  console.log(`Wrote ${path.relative(rootDir, manifestPath)}`);
 }
 
 main().catch((error) => {

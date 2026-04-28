@@ -2,6 +2,17 @@
   "name": "vrodos-plugin",
   "version": "2.5.0",
   "description": "VRodos WordPress Plugin",
+  "vrodos": {
+    "runtime": {
+      "aframe": {
+        "label": "A-Frame master",
+        "source": "cdn-master",
+        "version": "1.7.1",
+        "commit": "96cc74fa7a4640f394a78985a637a788daf56186",
+        "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@96cc74fa7a4640f394a78985a637a788daf56186/dist/aframe-master.min.js"
+      }
+    }
+  },
   "scripts": {
     "build": "npm run build:three && npm run build:css",
     "build:three": "node ./scripts/build-three-vendor.mjs",

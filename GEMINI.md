@@ -6,7 +6,7 @@
 VRodos is a WordPress plugin that transforms a standard website into a **3D/VR content management and creation platform**. It features a WebGL-based editor (Three.js r181 vendor stack), asset management (GLB, OBJ, FBX), and A-Frame export for VR.
 
 - **Backend:** PHP 8.3+ (modernized), WordPress 6.8+
-- **Frontend:** Vanilla JS, Three.js (r181), A-Frame (1.7.1 runtime)
+- **Frontend:** Vanilla JS, generated Three.js vendor bundle (currently r181), A-Frame runtime metadata from root `package.json`
 - **Styling:** Tailwind CSS + DaisyUI (namespaced with `tw-` prefix)
 - **Collaborative Server:** Node.js + easyRTC (located in `services/networked-aframe/`)
 
@@ -79,10 +79,14 @@ The server enables real-time collaborative editing.
 - Composer/PHPUnit tooling has been removed from this plugin. Use targeted PHP syntax checks with the local PHP runtime when editing PHP files.
 
 ### JavaScript/CSS (Frontend)
+- **Full Build:** `npm run build` (runtime vendor bundles, runtime manifest, and Tailwind CSS)
+- **Runtime Vendor Build:** `npm run build:three` (Three, PMNDRS, N8AO, Takram, and `assets/runtime-version-manifest.json`)
 - **CSS Build:** `npm run build:css` (Tailwind)
 - **CSS Watch:** `npm run watch:css`
 - **Linting:** `npm run lint` (ESLint)
 - **Formatting:** `npm run format` (Prettier)
+
+Runtime versions are controlled by root `package.json` and `package-lock.json`. Update package declarations or `vrodos.runtime.aframe`, run `npm install`, then run `npm run build`; do not manually copy standalone PMNDRS bundles.
 
 ## Troubleshooting
 - **REST API/AJAX Issues:** Ensure WordPress Permalinks are NOT set to "Plain".

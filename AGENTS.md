@@ -50,6 +50,7 @@ VRodos/
     models/                        Built-in editor/runtime/director GLB models
     vendor/                        Vendored browser bundles such as Three r181
     scenes/                        Built-in scene JSON
+    runtime-version-manifest.json  Generated runtime package/version manifest
   runtime/
     build/                         Generated compiled HTML output only
   services/
@@ -118,10 +119,10 @@ Runtime JS lives under:
 
 The active compiled runtime currently targets:
 
-- A-Frame `1.7.1`
-- Three.js vendor stack `r181`
+- A-Frame master runtime metadata declared in root `package.json`
+- Three.js vendor stack `r181`, derived from the locked root `three` package
 
-`VRodos_Render_Runtime_Manager` is the source of truth for the active runtime pairing and vendor bundle selection.
+Root `package.json` plus `package-lock.json` are the version source of truth. `npm run build:three` generates `assets/runtime-version-manifest.json`, and `VRodos_Render_Runtime_Manager` reads that manifest for the active runtime pairing and vendor bundle selection.
 
 ---
 
@@ -130,10 +131,10 @@ The active compiled runtime currently targets:
 - Backend: PHP 8.3+, WordPress 6.8+
 - Database: MySQL 8.0+ or MariaDB 10.6+
 - Frontend: Vanilla JavaScript
-- Editor rendering: Three.js `r181`
-- Compiled runtime: A-Frame `1.7.1`
-- Runtime post-processing: legacy custom path plus PMNDRS path
-- Atmosphere runtime: Takram bundle
+- Editor rendering: generated Three vendor bundle, currently `r181`
+- Compiled runtime: A-Frame metadata from root `package.json`
+- Runtime post-processing: legacy custom path plus PMNDRS path bundled through `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`
+- Atmosphere runtime: generated Takram bundle
 - Collaborative server: Node.js + EasyRTC/WebRTC
 
 ---
@@ -159,9 +160,12 @@ The local runtime server is typically used on port `5832`.
 
 ### Build outputs
 
-- Three vendor build targets `assets/vendor/three-r181/`
+- Three vendor build targets `assets/vendor/<three-dir>/`, currently `assets/vendor/three-r181/`
 - Runtime master library outputs target `assets/js/runtime/master/lib/`
+- Runtime version manifest targets `assets/runtime-version-manifest.json`
 - CSS outputs target `assets/css/`
+
+Run `npm run build` after changing runtime package versions. Do not manually copy standalone PMNDRS bundles; `postprocessing` and `n8ao` are exported from `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`.
 
 ---
 
@@ -195,6 +199,7 @@ The local runtime server is typically used on port `5832`.
 
 - Verify `VRodos_Asset_Manager` enqueues the expected scripts.
 - Confirm the active Three vendor bundle exists under `assets/vendor/three-r181/`.
+- Confirm `assets/runtime-version-manifest.json` matches the current package lock after package updates.
 - Check the browser console for JS errors.
 
 ### Compiled scene missing assets

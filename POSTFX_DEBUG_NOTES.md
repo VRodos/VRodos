@@ -4,7 +4,7 @@
 
 Historical note:
 - This document records the investigation that originally happened on the older r173-based runtime.
-- The current live stack is pinned to A-Frame master + Three r181.
+- The current live stack is package-synchronized through root `package.json`, `package-lock.json`, and `assets/runtime-version-manifest.json`; it currently resolves to A-Frame master + Three r181.
 - The notes remain useful because the legacy post-FX path still carries the same `isXRRenderTarget` workaround, but they should be treated as debugging history until fully re-validated on r181.
 
 - Runtime page tested: `http://wp.local:5832/Master_Client_766.html`

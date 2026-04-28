@@ -8,10 +8,11 @@ This log is append-oriented. Older phase entries remain for historical context e
 
 The current top-level order is:
 
-1. Foundation migration toward pinned A-Frame master + Three r181
-2. Re-baseline legacy and PMNDRS on that stack
-3. Resume Takram-first Horizon/light-source work
-4. Add clouds only after the new baseline is stable
+1. Keep runtime package versions synchronized through root `package.json`, `package-lock.json`, and `assets/runtime-version-manifest.json`
+2. Maintain the current A-Frame master + Three r181 baseline
+3. Re-baseline legacy and PMNDRS behavior on that stack as needed
+4. Resume Takram-first Horizon/light-source work
+5. Add clouds only after the new baseline is stable
 
 ## Phase 1
 
@@ -474,3 +475,50 @@ The current top-level order is:
 - Legacy FXAA still gives the best perceived cleanup on this particular scene, even though PMNDRS AA is functioning correctly.
 - The movement-related FPS dips are not explained by PMNDRS AA alone; shared collision/raycast cost is a confirmed contributing factor.
 - Recommended follow-up direction: leave PMNDRS AA available, keep `none` as the PMNDRS default, and resume the next Takram/PMNDRS integration phase in a fresh thread.
+
+## Phase 17
+
+### Status
+
+- Complete
+
+### Intent
+
+- Make root `package.json` and `package-lock.json` the source of truth for compiled-runtime package versions.
+- Remove the stale standalone PMNDRS UMD file from the compiled scene load path.
+- Generate a manifest that PHP can use for A-Frame, Three, PMNDRS, N8AO, and Takram runtime metadata.
+
+### Applied Changes
+
+- Added `vrodos.runtime.aframe` metadata to root `package.json`.
+- Updated `scripts/three-vendor.config.mjs` so Three vendor directory and bundle names are derived from the locked root `three` package.
+- Updated `scripts/build-three-vendor.mjs` to validate locked runtime package versions, rebuild the Three vendor bundle, rebuild the compiled-scene postprocessing bundle, rebuild the Takram atmosphere bundle, and write `assets/runtime-version-manifest.json`.
+- Updated `includes/class-vrodos-render-runtime-manager.php` to read the generated manifest while preserving conservative fallback values.
+- Removed the compiled-scene `postprocessing.min.js` script tag from `templates/runtime/aframe/Master_Client_prototype.html`.
+- Removed `assets/js/runtime/master/lib/postprocessing.min.js`; PMNDRS globals now come from `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`.
+- Updated current Markdown docs to describe the package-synchronized runtime build mechanism and package update workflow.
+
+### Validation
+
+- `npm.cmd run build` passed.
+- `npm.cmd run build:three` passed after final script cleanup.
+- PHP syntax checks passed on:
+  - `includes/class-vrodos-render-runtime-manager.php`
+  - `includes/class-vrodos-asset-manager.php`
+  - `includes/class-vrodos-compiler-manager.php`
+- Confirmed `assets/runtime-version-manifest.json` reports:
+  - Three `0.181.0`
+  - PMNDRS postprocessing `6.39.1`
+  - N8AO `1.10.1`
+  - Takram atmosphere `0.18.0`
+  - Takram clouds `0.7.4`
+- Confirmed the generated compiled-scene postprocessing bundle exports:
+  - `window.POSTPROCESSING`
+  - `window.N8AOPostPass`
+- Confirmed no source prototype references `postprocessing.min.js`.
+
+### Follow-up Correction
+
+- The first Phase 17 implementation briefly loaded the full editor Three vendor bundle in compiled scenes, which caused a second Three instance beside A-Frame's own Three and broke `Entity.setObject3D`.
+- Corrected the compiled-scene path by generating `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`, which aliases `three` to A-Frame's existing `window.THREE`.
+- Compiled scenes now load A-Frame first, then `vrodos-postprocessing.bundle.js`, then `vrodos-takram-atmosphere.bundle.js`.

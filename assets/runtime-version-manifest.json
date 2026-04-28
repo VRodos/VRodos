@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "scripts/build-three-vendor.mjs",
+  "aframe": {
+    "label": "A-Frame master",
+    "source": "cdn-master",
+    "version": "1.7.1",
+    "commit": "96cc74fa7a4640f394a78985a637a788daf56186",
+    "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@96cc74fa7a4640f394a78985a637a788daf56186/dist/aframe-master.min.js"
+  },
+  "three": {
+    "version": "0.181.0",
+    "revision": "181",
+    "vendorDir": "three-r181",
+    "bundleFile": "vrodos-three-r181.bundle.js",
+    "bundlePath": "assets/vendor/three-r181/vrodos-three-r181.bundle.js"
+  },
+  "postprocessing": {
+    "version": "6.39.1",
+    "global": "POSTPROCESSING",
+    "bundleFile": "vrodos-postprocessing.bundle.js",
+    "bundlePath": "assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js"
+  },
+  "n8ao": {
+    "version": "1.10.1",
+    "global": "N8AOPostPass",
+    "bundleFile": "vrodos-postprocessing.bundle.js",
+    "bundlePath": "assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js"
+  },
+  "takram": {
+    "atmosphereVersion": "0.18.0",
+    "cloudsVersion": "0.7.4",
+    "global": "VRODOS_TAKRAM_ATMOSPHERE",
+    "bundleFile": "vrodos-takram-atmosphere.bundle.js",
+    "bundlePath": "assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js"
+  }
+}
