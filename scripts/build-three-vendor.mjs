@@ -165,9 +165,27 @@ function validateRuntimeVersions() {
     }
   }
 
-  if (!aframeConfig.url || !aframeConfig.label || !aframeConfig.source) {
+  if (!aframeConfig.label || !aframeConfig.source) {
     throw new Error('Missing vrodos.runtime.aframe metadata in package.json.');
   }
+
+  resolveAframeRuntimeUrl();
+}
+
+function resolveAframeRuntimeUrl() {
+  if (aframeConfig.url) {
+    return aframeConfig.url;
+  }
+
+  if (aframeConfig.source === 'cdn-master' && aframeConfig.commit) {
+    return `https://cdn.jsdelivr.net/gh/aframevr/aframe@${aframeConfig.commit}/dist/aframe-master.min.js`;
+  }
+
+  if (aframeConfig.source === 'cdn-release' && aframeConfig.version) {
+    return `https://aframe.io/releases/${aframeConfig.version}/aframe.min.js`;
+  }
+
+  throw new Error('Unable to resolve A-Frame runtime URL from vrodos.runtime.aframe metadata.');
 }
 
 async function copySupportAssets() {
@@ -312,7 +330,7 @@ async function writeRuntimeManifest() {
       source: aframeConfig.source,
       version: aframeConfig.version ?? '',
       commit: aframeConfig.commit ?? '',
-      url: aframeConfig.url,
+      url: resolveAframeRuntimeUrl(),
     },
     three: {
       version: threeRuntimeConfig.version,

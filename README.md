@@ -237,7 +237,7 @@ Runtime package versions are intentionally synchronized through the root npm man
    - `devDependencies.n8ao`
    - `dependencies.@takram/three-atmosphere`
    - `dependencies.@takram/three-clouds`
-   - `vrodos.runtime.aframe` metadata when the compiled A-Frame runtime URL, version, or commit changes
+   - `vrodos.runtime.aframe.commit` for A-Frame master builds, or `vrodos.runtime.aframe.version` when using a release build
 2. Run:
 
 ```bash

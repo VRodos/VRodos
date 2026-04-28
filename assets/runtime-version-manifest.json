@@ -5,8 +5,8 @@
     "label": "A-Frame master",
     "source": "cdn-master",
     "version": "1.7.1",
-    "commit": "96cc74fa7a4640f394a78985a637a788daf56186",
-    "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@96cc74fa7a4640f394a78985a637a788daf56186/dist/aframe-master.min.js"
+    "commit": "63600d331e8eca9bec786bf030bc66040625750b",
+    "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@63600d331e8eca9bec786bf030bc66040625750b/dist/aframe-master.min.js"
   },
   "three": {
     "version": "0.181.0",
