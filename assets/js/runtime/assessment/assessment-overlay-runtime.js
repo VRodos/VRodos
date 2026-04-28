@@ -235,7 +235,13 @@
             return;
         }
 
-        if (el.components && el.components[attrName]) {
+        const hasComponent = Boolean(el.components && el.components[attrName]);
+        const hasAttribute = el.hasAttribute && el.hasAttribute(attrName);
+        if (!hasComponent && !hasAttribute) {
+            return;
+        }
+
+        if (hasComponent) {
             if (enabled && typeof el.components[attrName].play === "function") {
                 el.components[attrName].play();
             } else if (!enabled && typeof el.components[attrName].pause === "function") {
