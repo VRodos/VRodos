@@ -770,6 +770,16 @@ class VRodos_Compiler_Manager {
 		$cs_preset          = $metadata->aframeContactShadowPreset ?? 'soft';
 		$post_fx_enabled    = isset( $metadata->aframePostFXEnabled ) && filter_var( $metadata->aframePostFXEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
 		$post_fx_engine     = ( ( $metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ) ? 'pmndrs' : 'legacy';
+		$post_fx_color      = ! isset( $metadata->aframePostFXColorEnabled ) || filter_var( $metadata->aframePostFXColorEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$post_fx_bloom      = isset( $metadata->aframePostFXBloomEnabled ) && filter_var( $metadata->aframePostFXBloomEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$post_fx_edge_aa    = ! isset( $metadata->aframePostFXEdgeAAEnabled ) || filter_var( $metadata->aframePostFXEdgeAAEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$post_fx_edge_strength = max( 0, min( 5, (int) ( $metadata->aframePostFXEdgeAAStrength ?? 3 ) ) );
+		$post_fx_taa        = isset( $metadata->aframePostFXTAAEnabled ) && filter_var( $metadata->aframePostFXTAAEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$post_fx_ssr        = isset( $metadata->aframePostFXSSREnabled ) && filter_var( $metadata->aframePostFXSSREnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
+		$ssr_strength       = in_array( $metadata->aframePostFXSSRStrength ?? 'off', [ 'off', 'subtle', 'balanced', 'strong' ], true ) ? $metadata->aframePostFXSSRStrength : 'off';
+		$bloom_strength     = in_array( $metadata->aframeBloomStrength ?? 'off', [ 'off', 'soft', 'medium' ], true ) ? $metadata->aframeBloomStrength : 'off';
+		$exposure_preset    = in_array( $metadata->aframeExposurePreset ?? 'neutral', [ 'neutral', 'bright', 'cinematic' ], true ) ? $metadata->aframeExposurePreset : 'neutral';
+		$contrast_preset    = in_array( $metadata->aframeContrastPreset ?? 'balanced', [ 'soft', 'balanced', 'punchy' ], true ) ? $metadata->aframeContrastPreset : 'balanced';
 		$reflection_profile = $metadata->aframeReflectionProfile ?? 'balanced';
 		$reflection_source  = $metadata->aframeReflectionSource ?? 'hdr';
 		$horizon_preset     = $metadata->aframeHorizonSkyPreset ?? 'natural';
@@ -782,6 +792,9 @@ class VRodos_Compiler_Manager {
 			"; collisionMode: $collision_mode; renderQuality: $render_quality; shadowQuality: $shadow_quality; aaQuality: $aa_quality" .
 			"; fpsMeterEnabled: $fps_meter_enabled; legacyHorizonStageSize: $legacy_horizon_size; ambientOcclusionPreset: $ao_preset" .
 			"; contactShadowPreset: $cs_preset; postFXEnabled: $post_fx_enabled; postFXEngine: $post_fx_engine" .
+			"; postFXColorEnabled: $post_fx_color; postFXBloomEnabled: $post_fx_bloom; postFXEdgeAAEnabled: $post_fx_edge_aa" .
+			"; postFXEdgeAAStrength: $post_fx_edge_strength; postFXTAAEnabled: $post_fx_taa; postFXSSREnabled: $post_fx_ssr" .
+			"; postFXSSRStrength: $ssr_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset" .
 			"; reflectionProfile: $reflection_profile; reflectionSource: $reflection_source; horizonSkyPreset: $horizon_preset" .
 			"; envMapPreset: $env_map_preset; cam_position: $cam_pos; cam_rotation_y: $cam_rot_y; public_chat: " . ( $public_chat ? 'true' : 'false' ) .
 			"; fogCategory: $fog_cat; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density";

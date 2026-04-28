@@ -37,14 +37,14 @@ VRodosCompileUI.PostFX = (function () {
     }
 
     function normalizeReflectionProfile(value) {
-        if (value === 'performance' || value === 'balanced' || value === 'quality') {
+        if (value === 'soft' || value === 'balanced' || value === 'enhanced') {
             return value;
         }
         return 'balanced';
     }
 
     function normalizeReflectionSource(value) {
-        if (value === 'hdr' || value === 'none') {
+        if (value === 'hdr' || value === 'scene-probe') {
             return value;
         }
         return 'hdr';
@@ -58,7 +58,7 @@ VRodosCompileUI.PostFX = (function () {
     }
 
     function normalizeSSRStrength(value) {
-        if (value === 'off' || value === 'low' || value === 'medium' || value === 'high') {
+        if (value === 'off' || value === 'subtle' || value === 'balanced' || value === 'strong') {
             return value;
         }
         return 'off';
