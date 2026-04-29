@@ -248,9 +248,33 @@ AFRAME.registerComponent('scene-settings', {
     getReflectionSource: function () {
         return this.data.reflectionSource === 'scene-probe' ? 'scene-probe' : 'hdr';
     },
+    isImmersiveXrActive: function () {
+        return !!(this.el.renderer && this.el.renderer.xr && this.el.renderer.xr.isPresenting);
+    },
+    isAFrameVrModeActive: function () {
+        return !!(this.el.is && this.el.is('vr-mode'));
+    },
+    isDocumentFullscreenActive: function () {
+        return !!(
+            document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement
+        );
+    },
+    getPresentationMode: function () {
+        if (this.isImmersiveXrActive()) {
+            return 'immersive-xr';
+        }
+
+        if (this.isAFrameVrModeActive() || this.isDocumentFullscreenActive()) {
+            return 'desktop-fullscreen';
+        }
+
+        return 'inline';
+    },
     isVrPresentationActive: function () {
-        var inVrMode = this.el.is && this.el.is('vr-mode');
-        return !!(inVrMode || (this.el.renderer && this.el.renderer.xr && this.el.renderer.xr.isPresenting));
+        return this.isImmersiveXrActive();
     },
     isMobileDevice: function () {
         return !!(AFRAME.utils &&
@@ -435,6 +459,24 @@ AFRAME.registerComponent('scene-settings', {
             this.getAmbientOcclusionPreset() !== 'off' ||
             this.isPmndrsAtmosphereEnabled();
     },
+    hasPostProcessingPipelineRequest: function () {
+        return this.data.renderQuality === 'high' &&
+            this.data.postFXEnabled !== '0' &&
+            this.hasCinematicShaderOptions();
+    },
+    warnImmersiveXrPostProcessingFallback: function () {
+        if (!this.isImmersiveXrActive()) {
+            this._immersiveXrPostFXFallbackWarned = false;
+            return;
+        }
+
+        if (!this.hasPostProcessingPipelineRequest() || this._immersiveXrPostFXFallbackWarned) {
+            return;
+        }
+
+        this._immersiveXrPostFXFallbackWarned = true;
+        console.warn('[VRodos] Immersive XR is using the direct stereo renderer fallback for screen-space post-FX. Scene-owned horizon, atmosphere, lights, fog, exposure, and materials remain active; unsupported composer passes are skipped for XR compatibility.');
+    },
     shouldUseEdgeAAOversample: function () {
         return this.data.renderQuality === 'high' &&
             this.data.postFXEnabled !== '0' &&
@@ -476,12 +518,7 @@ AFRAME.registerComponent('scene-settings', {
         }
     },
     shouldUsePostProcessing: function () {
-        var inVrMode = this.el.is && this.el.is('vr-mode');
-        return this.data.renderQuality === 'high' &&
-            this.data.postFXEnabled !== '0' &&
-            this.hasCinematicShaderOptions() &&
-            !inVrMode &&
-            !(this.el.renderer && this.el.renderer.xr && this.el.renderer.xr.isPresenting);
+        return this.hasPostProcessingPipelineRequest() && !this.isImmersiveXrActive();
     },
     // --- Post-processing methods — LEGACY engine (extracted to vrodos_postprocessing.js) ---
     updatePostProcessingSize: VRODOSMaster.SceneSettingsHelpers.updatePostProcessingSize,
@@ -503,6 +540,8 @@ AFRAME.registerComponent('scene-settings', {
     // down before bringing the new one up. Defensive disable of the OTHER engine on every
     // call protects against drift if data.postFXEngine ever changes mid-session.
     syncPostProcessingState: function () {
+        this.warnImmersiveXrPostProcessingFallback();
+
         if (this.data.postFXEngine === 'pmndrs') {
             if (this.postProcessingActive) {
                 this.disablePostProcessing();
@@ -524,6 +563,37 @@ AFRAME.registerComponent('scene-settings', {
                 this.disablePostProcessing();
             }
         }
+    },
+    syncPresentationVisualState: function (waitForSettle) {
+        var self = this;
+
+        this.markSceneCollectionsDirty();
+        this.applyRenderQualityProfile();
+        this.applyBackgroundQualityProfile();
+        this.applyEnvMapProfile();
+        this.applyPostFXProfile();
+        this.updatePmndrsHorizonSun();
+
+        if (!waitForSettle) {
+            return;
+        }
+
+        var resync = function () {
+            self.markSceneCollectionsDirty();
+            self.applyRenderQualityProfile();
+            self.applyBackgroundQualityProfile();
+            self.applyEnvMapProfile();
+            self.applyPostFXProfile();
+            self.updatePostProcessingSize();
+            self.updatePmndrsPostProcessingSize();
+            self.updatePmndrsHorizonSun();
+        };
+
+        if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(resync);
+        }
+        setTimeout(resync, 80);
+        setTimeout(resync, 240);
     },
     // --- Quality profile methods (extracted to vrodos_quality_profiles.js) ---
     applyRenderQualityProfile: VRODOSMaster.SceneSettingsHelpers.applyRenderQualityProfile,
@@ -556,6 +626,9 @@ AFRAME.registerComponent('scene-settings', {
             this.updatePostProcessingSize();
             this.updatePmndrsPostProcessingSize();
             this.updatePmndrsHorizonSun();
+        }.bind(this);
+        this.handlePresentationModeChange = function () {
+            this.syncPresentationVisualState(true);
         }.bind(this);
         this.postProcessingSize = new THREE.Vector2();
         this.sceneQueryCache = {};
@@ -620,6 +693,10 @@ AFRAME.registerComponent('scene-settings', {
         this._whiteSAOTexture = null;
         this._blackSSRTexture = null;
         window.addEventListener('resize', this.handleResize);
+        document.addEventListener('fullscreenchange', this.handlePresentationModeChange);
+        document.addEventListener('webkitfullscreenchange', this.handlePresentationModeChange);
+        document.addEventListener('mozfullscreenchange', this.handlePresentationModeChange);
+        document.addEventListener('MSFullscreenChange', this.handlePresentationModeChange);
         this.el.addEventListener('child-attached', this.handleSceneMutation);
         this.el.addEventListener('child-detached', this.handleSceneMutation);
         // Event - When scene is loaded
@@ -692,14 +769,12 @@ AFRAME.registerComponent('scene-settings', {
 
         this.el.addEventListener("enter-vr", () => {
             VRODOSMaster.setBrowsingModeVR(true);
-            this.applyEnvMapProfile();
-            this.syncPostProcessingState();
+            this.syncPresentationVisualState(true);
             if (typeof window.gtag === 'function') window.gtag('event', 'vr_enabled');
         });
         this.el.addEventListener("exit-vr", () => {
             VRODOSMaster.setBrowsingModeVR(false);
-            this.applyEnvMapProfile();
-            this.syncPostProcessingState();
+            this.syncPresentationVisualState(true);
             if (typeof window.gtag === 'function') window.gtag('event', 'vr_disabled');
         });
 
@@ -811,6 +886,10 @@ AFRAME.registerComponent('scene-settings', {
         this.el.removeEventListener('child-attached', this.handleSceneMutation);
         this.el.removeEventListener('child-detached', this.handleSceneMutation);
         window.removeEventListener('resize', this.handleResize);
+        document.removeEventListener('fullscreenchange', this.handlePresentationModeChange);
+        document.removeEventListener('webkitfullscreenchange', this.handlePresentationModeChange);
+        document.removeEventListener('mozfullscreenchange', this.handlePresentationModeChange);
+        document.removeEventListener('MSFullscreenChange', this.handlePresentationModeChange);
         if (this.queuedQualityRefreshId) {
             clearTimeout(this.queuedQualityRefreshId);
             this.queuedQualityRefreshId = null;
