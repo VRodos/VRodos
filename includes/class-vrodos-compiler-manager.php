@@ -787,6 +787,21 @@ class VRodos_Compiler_Manager {
 		$reflection_profile = $metadata->aframeReflectionProfile ?? 'balanced';
 		$reflection_source  = $metadata->aframeReflectionSource ?? 'hdr';
 		$horizon_preset     = $metadata->aframeHorizonSkyPreset ?? 'natural';
+		$pmndrs_horizon_helper_defaults = [
+			'key'  => 1.15,
+			'fill' => 0.45,
+		];
+		if ( 'clear' === $horizon_preset ) {
+			$pmndrs_horizon_helper_defaults = [
+				'key'  => 1.24,
+				'fill' => 0.55,
+			];
+		} elseif ( 'crisp' === $horizon_preset ) {
+			$pmndrs_horizon_helper_defaults = [
+				'key'  => 1.19,
+				'fill' => 0.49,
+			];
+		}
 		$env_map_preset     = $metadata->aframeEnvMapPreset ?? 'none';
 		$pmndrs_atmosphere_enabled = isset( $metadata->aframePmndrsAtmosphereEnabled ) && filter_var( $metadata->aframePmndrsAtmosphereEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
 		$pmndrs_atmosphere_preset_raw = $metadata->aframePmndrsAtmospherePreset ?? 'midday';
@@ -810,6 +825,8 @@ class VRodos_Compiler_Manager {
 		$pmndrs_mie_phase_g = max( 0.0, min( 0.99, (float) ( $metadata->aframePmndrsMiePhaseG ?? 0.74 ) ) );
 		$pmndrs_absorption_scale = max( 0.1, min( 3.0, (float) ( $metadata->aframePmndrsAbsorptionScale ?? 0.94 ) ) );
 		$pmndrs_moon_enabled = isset( $metadata->aframePmndrsMoonEnabled ) && filter_var( $metadata->aframePmndrsMoonEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$pmndrs_horizon_key_light_intensity = max( 0.0, min( 3.0, (float) ( $metadata->aframePmndrsHorizonKeyLightIntensity ?? $pmndrs_horizon_helper_defaults['key'] ) ) );
+		$pmndrs_horizon_fill_light_intensity = max( 0.0, min( 3.0, (float) ( $metadata->aframePmndrsHorizonFillLightIntensity ?? $pmndrs_horizon_helper_defaults['fill'] ) ) );
 
 		// 4. Assemble scene-settings attribute
 		$scene_settings_attr = "color: $clear_color; pr_type: $project_type_slug; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $ground_enabled" .
@@ -833,7 +850,8 @@ class VRodos_Compiler_Manager {
 			"; pmndrsGroundEnabled: $pmndrs_ground_enabled; pmndrsGroundAlbedo: $pmndrs_ground_albedo" .
 			"; pmndrsRayleighScale: $pmndrs_rayleigh_scale; pmndrsMieScatteringScale: $pmndrs_mie_scattering_scale" .
 			"; pmndrsMieExtinctionScale: $pmndrs_mie_extinction_scale; pmndrsMiePhaseG: $pmndrs_mie_phase_g" .
-			"; pmndrsAbsorptionScale: $pmndrs_absorption_scale; pmndrsMoonEnabled: $pmndrs_moon_enabled";
+			"; pmndrsAbsorptionScale: $pmndrs_absorption_scale; pmndrsMoonEnabled: $pmndrs_moon_enabled" .
+			"; pmndrsHorizonKeyLightIntensity: $pmndrs_horizon_key_light_intensity; pmndrsHorizonFillLightIntensity: $pmndrs_horizon_fill_light_intensity";
 
 		// Append composite_params if they exist (allows passing arbitrary component params from metadata)
 		if ( ! empty( $metadata->composite_params ) ) {

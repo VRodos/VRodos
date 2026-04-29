@@ -25,6 +25,15 @@ Key technical achievements:
 2. **Takram Atmosphere Regression Coverage:** Keep one Horizon and one non-Horizon PMNDRS scene in manual smoke coverage for atmosphere look presets.
 3. **Takram Clouds:** Add volumetric clouds only after the atmosphere baseline remains stable across the target scenes.
 
+## Recent Landed Work
+
+### PMNDRS Horizon helper lighting exposure
+
+- Exposed PMNDRS Horizon helper-light intensity controls in the compile dialog.
+- Added persisted scene metadata and compiled `scene-settings` fields for Horizon key/fill light intensities.
+- Replaced hardcoded PMNDRS Horizon helper-light intensities with scene-configured values while keeping preset-driven colors.
+- Enlarged the visible Horizon sun overlay on the stable Takram sky path and expanded Horizon diagnostics to include helper-light intensity and sun-scale data.
+
 ## Historical Phases Summary (Phases 1-17)
 
 For historical context, the migration was completed in 17 distinct phases:

@@ -5,6 +5,20 @@
 (function () {
     var H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     var TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 0.0047;
+    var PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS = {
+        natural: {
+            keyIntensity: 1.15,
+            fillIntensity: 0.45
+        },
+        clear: {
+            keyIntensity: 1.24,
+            fillIntensity: 0.55
+        },
+        crisp: {
+            keyIntensity: 1.19,
+            fillIntensity: 0.49
+        }
+    };
     var PMNDRS_ATMOSPHERE_LOOK_DEFAULTS = {
         sunrise: {
             sunElevationDeg: 6,
@@ -170,6 +184,38 @@
             miePhaseG: lerpNumber(midday.miePhaseG, target.miePhaseG, blend),
             absorptionScale: lerpNumber(midday.absorptionScale, target.absorptionScale, blend),
             moonEnabled: blend >= 0.5 && target.moonEnabled === true
+        };
+    }
+
+    function getPmndrsHorizonHelperLightDefaults(preset) {
+        switch (preset) {
+            case 'clear':
+                return PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS.clear;
+            case 'crisp':
+                return PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS.crisp;
+            default:
+                return PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS.natural;
+        }
+    }
+
+    function getPmndrsHorizonHelperLightConfig(self, preset) {
+        var defaults = getPmndrsHorizonHelperLightDefaults(preset);
+        var keyColor = '#fff0cf';
+        var fillColor = '#cfe3ff';
+
+        if (preset === 'clear') {
+            keyColor = '#fff4d8';
+            fillColor = '#d7e8ff';
+        } else if (preset === 'crisp') {
+            keyColor = '#fff2d2';
+            fillColor = '#d4e4ff';
+        }
+
+        return {
+            keyColor: keyColor,
+            fillColor: fillColor,
+            keyIntensity: readPmndrsAtmosphereNumber(self, 'pmndrsHorizonKeyLightIntensity', 0, 3, defaults.keyIntensity),
+            fillIntensity: readPmndrsAtmosphereNumber(self, 'pmndrsHorizonFillLightIntensity', 0, 3, defaults.fillIntensity)
         };
     }
 
@@ -540,6 +586,13 @@
             return;
         }
 
+        var horizonPreset = typeof self.getHorizonSkyPreset === 'function' ? self.getHorizonSkyPreset() : 'natural';
+        var helperConfig = shouldUsePmndrsTakramHorizonPath(self)
+            ? getPmndrsHorizonHelperLightConfig(self, horizonPreset)
+            : null;
+        var visibleSunScale = atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self)
+            ? getPmndrsTakramVisibleSunScale(atmosphereConfig)
+            : null;
         var reflectionSource = (typeof self.getEffectiveReflectionSource === 'function')
             ? self.getEffectiveReflectionSource()
             : (self.data.reflectionSource || 'hdr');
@@ -554,7 +607,10 @@
             reflectionSource,
             atmosphereConfig && atmosphereConfig.groundEnabled ? 'ground-on' : 'ground-off',
             atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'sun-off' : 'sun-on',
-            formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null)
+            formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null),
+            helperConfig ? helperConfig.keyIntensity.toFixed(2) : 'n/a',
+            helperConfig ? helperConfig.fillIntensity.toFixed(2) : 'n/a',
+            visibleSunScale !== null ? visibleSunScale.toFixed(2) : 'n/a'
         ].join('|');
 
         self._pmndrsHorizonDiagSignatures = self._pmndrsHorizonDiagSignatures || {};
@@ -567,7 +623,10 @@
             ', reflection=' + reflectionSource +
             ', ground=' + (atmosphereConfig && atmosphereConfig.groundEnabled ? 'on' : 'off') +
             ', sun=' + (atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'off' : 'on') +
-            ', sunDir=' + formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null));
+            ', sunDir=' + formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null) +
+            ', helperKey=' + (helperConfig ? helperConfig.keyIntensity.toFixed(2) : 'n/a') +
+            ', helperFill=' + (helperConfig ? helperConfig.fillIntensity.toFixed(2) : 'n/a') +
+            ', sunScale=' + (visibleSunScale !== null ? visibleSunScale.toFixed(2) : 'n/a'));
     }
 
     function hidePmndrsHorizonEnvironmentVisuals(self) {
@@ -663,32 +722,17 @@
         var shadowEnabled = self.data.shadowQuality !== 'off';
         var shadowMap = self.data.shadowQuality === 'high' ? 2048 : 1024;
         var castShadow = shadowEnabled ? 'true' : 'false';
-        var keyColor = '#fff0cf';
-        var fillColor = '#cfe3ff';
-        var keyIntensity = 0.96;
-        var fillIntensity = 0.32;
-
-        if (preset === 'clear') {
-            keyColor = '#fff4d8';
-            fillColor = '#d7e8ff';
-            keyIntensity = 1.05;
-            fillIntensity = 0.42;
-        } else if (preset === 'crisp') {
-            keyColor = '#fff2d2';
-            fillColor = '#d4e4ff';
-            keyIntensity = 1.0;
-            fillIntensity = 0.36;
-        }
+        var helperConfig = getPmndrsHorizonHelperLightConfig(self, preset);
 
         self.ensurePhotorealHelperLight(
             'vrodos-pmndrs-horizon-key-light',
-            'type: directional; color: ' + keyColor + '; intensity: ' + keyIntensity.toFixed(2) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + shadowMap + '; shadowMapHeight: ' + shadowMap + '; shadowCameraTop: 28; shadowCameraRight: 28; shadowCameraLeft: -28; shadowCameraBottom: -28; shadowBias: -0.00012;',
+            'type: directional; color: ' + helperConfig.keyColor + '; intensity: ' + helperConfig.keyIntensity.toFixed(2) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + shadowMap + '; shadowMapHeight: ' + shadowMap + '; shadowCameraTop: 28; shadowCameraRight: 28; shadowCameraLeft: -28; shadowCameraBottom: -28; shadowBias: -0.00012;',
             formatVectorPosition(config.localSunDirection || config.sunDirection, 28, 8)
         );
 
         self.ensurePhotorealHelperLight(
             'vrodos-pmndrs-horizon-fill-light',
-            'type: ambient; color: ' + fillColor + '; intensity: ' + fillIntensity.toFixed(2) + ';',
+            'type: ambient; color: ' + helperConfig.fillColor + '; intensity: ' + helperConfig.fillIntensity.toFixed(2) + ';',
             '0 6 0'
         );
     }
@@ -829,6 +873,20 @@
             miePhaseG: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsMiePhaseG', 0, 0.99, presetDefaults.miePhaseG) : presetDefaults.miePhaseG,
             absorptionScale: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsAbsorptionScale', 0.1, 3, presetDefaults.absorptionScale) : presetDefaults.absorptionScale,
             moonEnabled: usesCustomValues ? readPmndrsAtmosphereBool(this, 'pmndrsMoonEnabled', presetDefaults.moonEnabled) : presetDefaults.moonEnabled,
+            horizonKeyLightIntensity: readPmndrsAtmosphereNumber(
+                this,
+                'pmndrsHorizonKeyLightIntensity',
+                0,
+                3,
+                getPmndrsHorizonHelperLightDefaults(typeof this.getHorizonSkyPreset === 'function' ? this.getHorizonSkyPreset() : 'natural').keyIntensity
+            ),
+            horizonFillLightIntensity: readPmndrsAtmosphereNumber(
+                this,
+                'pmndrsHorizonFillLightIntensity',
+                0,
+                3,
+                getPmndrsHorizonHelperLightDefaults(typeof this.getHorizonSkyPreset === 'function' ? this.getHorizonSkyPreset() : 'natural').fillIntensity
+            ),
             takramSunEnabled: true
         };
 
@@ -1317,6 +1375,13 @@
         }
     }
 
+    function getPmndrsTakramVisibleSunScale(config) {
+        if (!config) {
+            return 72;
+        }
+        return Math.max(48, Math.min(120, 72 * (config.sunAngularRadius / TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS)));
+    }
+
     function ensurePmndrsTakramVisibleSun(self, config, preset) {
         if (!self || !self.el || !config || typeof document === 'undefined') {
             return;
@@ -1361,7 +1426,7 @@
         }
 
         var cfg = getPmndrsHorizonSunConfig(preset, 'fallback');
-        var takramSunScale = Math.max(18, Math.min(52, 30 * (config.sunAngularRadius / TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS)));
+        var takramSunScale = getPmndrsTakramVisibleSunScale(config);
         sprite.scale.set(takramSunScale, takramSunScale, 1);
         sprite.material.color.set(cfg.color).multiplyScalar(Math.max(cfg.intensity || 4.0, 4.8));
 

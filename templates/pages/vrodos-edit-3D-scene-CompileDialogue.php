@@ -485,6 +485,38 @@
 										</div>
 
 										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+											<label class="tw-form-control tw-w-full">
+												<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Horizon Lighting Preset</span>
+												<select id="compilePmndrsHorizonLightingPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+													<option value="natural">Natural</option>
+													<option value="clear">Clear</option>
+													<option value="crisp">Crisp</option>
+													<option value="custom">Custom</option>
+												</select>
+											</label>
+											<div class="tw-flex tw-items-end tw-text-[10px] tw-leading-relaxed tw-text-slate-400">
+												Visible helper-light presets for the Takram Horizon path. Manual slider edits switch this to Custom.
+											</div>
+										</div>
+
+										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Horizon Key Light</span>
+													<span id="compilePmndrsHorizonKeyLightIntensityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.15</span>
+												</div>
+												<input id="compilePmndrsHorizonKeyLightIntensitySlider" type="range" min="0" max="3" step="0.01" value="1.15" class="tw-range tw-range-primary tw-range-xs">
+											</div>
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Horizon Fill Light</span>
+													<span id="compilePmndrsHorizonFillLightIntensityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.45</span>
+												</div>
+												<input id="compilePmndrsHorizonFillLightIntensitySlider" type="range" min="0" max="3" step="0.01" value="0.45" class="tw-range tw-range-primary tw-range-xs">
+											</div>
+										</div>
+
+										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
 											<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 												<input id="compilePmndrsTransmittanceToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
 												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Transmittance</span>

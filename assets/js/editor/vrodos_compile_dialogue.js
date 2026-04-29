@@ -101,6 +101,11 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsAbsorptionScale: document.getElementById('compilePmndrsAbsorptionScaleSlider'),
             pmndrsAbsorptionScaleValue: document.getElementById('compilePmndrsAbsorptionScaleValue'),
             pmndrsMoon: document.getElementById('compilePmndrsMoonToggle'),
+            pmndrsHorizonLightingPreset: document.getElementById('compilePmndrsHorizonLightingPresetSelect'),
+            pmndrsHorizonKeyLightIntensity: document.getElementById('compilePmndrsHorizonKeyLightIntensitySlider'),
+            pmndrsHorizonKeyLightIntensityValue: document.getElementById('compilePmndrsHorizonKeyLightIntensityValue'),
+            pmndrsHorizonFillLightIntensity: document.getElementById('compilePmndrsHorizonFillLightIntensitySlider'),
+            pmndrsHorizonFillLightIntensityValue: document.getElementById('compilePmndrsHorizonFillLightIntensityValue'),
             pmndrsResetBtn: document.getElementById('compilePmndrsResetBtn'),
             universalPostFxGroup: document.getElementById('compileUniversalPostFxGroup'),
             engineControlsColumn: document.getElementById('compileEngineControlsColumn'),
@@ -265,6 +270,29 @@ window.addEventListener('DOMContentLoaded', () => {
         if (typeof envir.scene.aframePmndrsMoonEnabled === 'undefined') {
             envir.scene.aframePmndrsMoonEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.moonEnabled;
         }
+        var lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
+            envir.scene.aframeHorizonSkyPreset,
+            Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset
+        );
+        if (!envir.scene.aframePmndrsHorizonLightingPreset) {
+            envir.scene.aframePmndrsHorizonLightingPreset = lightingPresetFallback;
+        } else {
+            envir.scene.aframePmndrsHorizonLightingPreset = Shared.normalizePmndrsHorizonLightingPreset(
+                envir.scene.aframePmndrsHorizonLightingPreset,
+                lightingPresetFallback
+            );
+        }
+        var helperDefaults = Shared.getPmndrsHorizonHelperDefaults(
+            envir.scene.aframePmndrsHorizonLightingPreset === 'custom'
+                ? lightingPresetFallback
+                : envir.scene.aframePmndrsHorizonLightingPreset
+        );
+        if (typeof envir.scene.aframePmndrsHorizonKeyLightIntensity !== 'number') {
+            envir.scene.aframePmndrsHorizonKeyLightIntensity = Shared.clampNumber(envir.scene.aframePmndrsHorizonKeyLightIntensity, 0, 3, helperDefaults.keyLightIntensity);
+        }
+        if (typeof envir.scene.aframePmndrsHorizonFillLightIntensity !== 'number') {
+            envir.scene.aframePmndrsHorizonFillLightIntensity = Shared.clampNumber(envir.scene.aframePmndrsHorizonFillLightIntensity, 0, 3, helperDefaults.fillLightIntensity);
+        }
 
         envir.scene.aframeAAQuality = VRodosCompileUI.General.normalizeAAQuality(envir.scene.aframeAAQuality);
         envir.scene.aframeAmbientOcclusionPreset = VRodosCompileUI.General.normalizeAmbientOcclusionPreset(envir.scene.aframeAmbientOcclusionPreset);
@@ -409,6 +437,12 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (c.pmndrsAbsorptionScale && c.pmndrsAbsorptionScaleValue) {
             c.pmndrsAbsorptionScaleValue.textContent = Shared.formatNumber(parseFloat(c.pmndrsAbsorptionScale.value));
+        }
+        if (c.pmndrsHorizonKeyLightIntensity && c.pmndrsHorizonKeyLightIntensityValue) {
+            c.pmndrsHorizonKeyLightIntensityValue.textContent = Shared.formatNumber(parseFloat(c.pmndrsHorizonKeyLightIntensity.value));
+        }
+        if (c.pmndrsHorizonFillLightIntensity && c.pmndrsHorizonFillLightIntensityValue) {
+            c.pmndrsHorizonFillLightIntensityValue.textContent = Shared.formatNumber(parseFloat(c.pmndrsHorizonFillLightIntensity.value));
         }
     }
 
@@ -573,6 +607,20 @@ window.addEventListener('DOMContentLoaded', () => {
                 ? VRodosCompileUI.Atmosphere.normalizeQuality(envir.scene.aframePmndrsAtmosphereQuality)
                 : Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
         }
+        var lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
+            envir && envir.scene ? envir.scene.aframeHorizonSkyPreset : 'natural',
+            Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset
+        );
+        var resolvedHorizonLightingPreset = Shared.normalizePmndrsHorizonLightingPreset(
+            envir && envir.scene ? envir.scene.aframePmndrsHorizonLightingPreset : lightingPresetFallback,
+            lightingPresetFallback
+        );
+        var helperDefaults = Shared.getPmndrsHorizonHelperDefaults(
+            resolvedHorizonLightingPreset === 'custom' ? lightingPresetFallback : resolvedHorizonLightingPreset
+        );
+        if (controls.pmndrsHorizonLightingPreset) {
+            controls.pmndrsHorizonLightingPreset.value = resolvedHorizonLightingPreset;
+        }
         var resolvedAtmospherePreset = VRodosCompileUI.Atmosphere.normalizePreset(
             controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset
         );
@@ -630,6 +678,22 @@ window.addEventListener('DOMContentLoaded', () => {
             if (controls.pmndrsMoon) {
                 controls.pmndrsMoon.checked = !!(envir && envir.scene && envir.scene.aframePmndrsMoonEnabled);
             }
+        }
+        if (controls.pmndrsHorizonKeyLightIntensity) {
+            controls.pmndrsHorizonKeyLightIntensity.value = Shared.clampNumber(
+                envir && envir.scene ? envir.scene.aframePmndrsHorizonKeyLightIntensity : helperDefaults.keyLightIntensity,
+                0,
+                3,
+                helperDefaults.keyLightIntensity
+            );
+        }
+        if (controls.pmndrsHorizonFillLightIntensity) {
+            controls.pmndrsHorizonFillLightIntensity.value = Shared.clampNumber(
+                envir && envir.scene ? envir.scene.aframePmndrsHorizonFillLightIntensity : helperDefaults.fillLightIntensity,
+                0,
+                3,
+                helperDefaults.fillLightIntensity
+            );
         }
         updatePmndrsValueLabels();
 
@@ -732,7 +796,7 @@ window.addEventListener('DOMContentLoaded', () => {
             el.addEventListener('input', updatePmndrsValueLabels);
         }
     });
-    [
+        [
         controls.pmndrsSunElevation,
         controls.pmndrsSunAzimuth,
         controls.pmndrsSunAngularRadius,
@@ -752,6 +816,33 @@ window.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+    [
+        controls.pmndrsHorizonKeyLightIntensity,
+        controls.pmndrsHorizonFillLightIntensity
+    ].forEach(function (el) {
+        if (el) {
+            el.addEventListener('input', function () {
+                updatePmndrsValueLabels();
+                VRodosCompileUI.Atmosphere.markHorizonLightingCustom(controls);
+            });
+            el.addEventListener('change', syncCompilePostFxState);
+        }
+    });
+    if (controls.pmndrsHorizonLightingPreset) {
+        controls.pmndrsHorizonLightingPreset.addEventListener('change', function () {
+            var fallbackPreset = Shared.normalizePmndrsHorizonLightingPreset(
+                envir && envir.scene ? envir.scene.aframeHorizonSkyPreset : 'natural',
+                Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset
+            );
+            var preset = Shared.normalizePmndrsHorizonLightingPreset(controls.pmndrsHorizonLightingPreset.value, fallbackPreset);
+            if (preset !== 'custom') {
+                VRodosCompileUI.Atmosphere.applyHorizonLightingPreset(controls, preset);
+            }
+            updatePmndrsValueLabels();
+            syncCompilePostFxState();
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
+        });
+    }
     [
         controls.pmndrsTransmittance,
         controls.pmndrsInscatter,
@@ -813,6 +904,14 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsAtmospherePreset) c.pmndrsAtmospherePreset.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset;
             if (c.pmndrsAtmospherePresetIntensity) c.pmndrsAtmospherePresetIntensity.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePresetIntensity;
             if (c.pmndrsAtmosphereQuality) c.pmndrsAtmosphereQuality.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
+            var lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
+                envir && envir.scene ? envir.scene.aframeHorizonSkyPreset : 'natural',
+                Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset
+            );
+            if (c.pmndrsHorizonLightingPreset) c.pmndrsHorizonLightingPreset.value = lightingPresetFallback;
+            var helperDefaults = Shared.getPmndrsHorizonHelperDefaults(lightingPresetFallback);
+            if (c.pmndrsHorizonKeyLightIntensity) c.pmndrsHorizonKeyLightIntensity.value = helperDefaults.keyLightIntensity;
+            if (c.pmndrsHorizonFillLightIntensity) c.pmndrsHorizonFillLightIntensity.value = helperDefaults.fillLightIntensity;
             VRodosCompileUI.Atmosphere.applyLookPreset(c, Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset);
             updatePmndrsValueLabels();
             syncCompilePostFxState();

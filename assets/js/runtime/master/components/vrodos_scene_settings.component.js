@@ -81,6 +81,8 @@ AFRAME.registerComponent('scene-settings', {
         pmndrsMiePhaseG: { type: "string", default: "0.74" },
         pmndrsAbsorptionScale: { type: "string", default: "0.94" },
         pmndrsMoonEnabled: { type: "string", default: "0" },
+        pmndrsHorizonKeyLightIntensity: { type: "string", default: "1.15" },
+        pmndrsHorizonFillLightIntensity: { type: "string", default: "0.45" },
     },
     getSSRStrengthValue: function () {
         switch (this.data.postFXSSRStrength) {

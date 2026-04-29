@@ -277,6 +277,21 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframeReflectionProfile'] = $json_metadata->aframeReflectionProfile ?? 'balanced';
 		$scene_data['aframeReflectionSource'] = $json_metadata->aframeReflectionSource ?? 'hdr';
 		$scene_data['aframeHorizonSkyPreset'] = $json_metadata->aframeHorizonSkyPreset ?? 'natural';
+		$pmndrs_horizon_helper_defaults = [
+			'key'  => 1.0,
+			'fill' => 0.4,
+		];
+		if ( 'clear' === $scene_data['aframeHorizonSkyPreset'] ) {
+			$pmndrs_horizon_helper_defaults = [
+				'key'  => 1.0,
+				'fill' => 0.48,
+			];
+		} elseif ( 'crisp' === $scene_data['aframeHorizonSkyPreset'] ) {
+			$pmndrs_horizon_helper_defaults = [
+				'key'  => 0.98,
+				'fill' => 0.44,
+			];
+		}
 		$scene_data['aframeEnvMapPreset'] = $json_metadata->aframeEnvMapPreset ?? 'none';
 		$scene_data['aframePostFXEngine'] = ( $json_metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ? 'pmndrs' : 'legacy';
 		$legacy_atmosphere_keys = [
@@ -335,6 +350,11 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsMiePhaseG'] = isset( $json_metadata->aframePmndrsMiePhaseG ) ? (float) $json_metadata->aframePmndrsMiePhaseG : 0.74;
 		$scene_data['aframePmndrsAbsorptionScale'] = isset( $json_metadata->aframePmndrsAbsorptionScale ) ? (float) $json_metadata->aframePmndrsAbsorptionScale : 0.94;
 		$scene_data['aframePmndrsMoonEnabled'] = $json_metadata->aframePmndrsMoonEnabled ?? false;
+		$scene_data['aframePmndrsHorizonLightingPreset'] = isset( $json_metadata->aframePmndrsHorizonLightingPreset )
+			? $json_metadata->aframePmndrsHorizonLightingPreset
+			: $scene_data['aframeHorizonSkyPreset'];
+		$scene_data['aframePmndrsHorizonKeyLightIntensity'] = isset( $json_metadata->aframePmndrsHorizonKeyLightIntensity ) ? (float) $json_metadata->aframePmndrsHorizonKeyLightIntensity : $pmndrs_horizon_helper_defaults['key'];
+		$scene_data['aframePmndrsHorizonFillLightIntensity'] = isset( $json_metadata->aframePmndrsHorizonFillLightIntensity ) ? (float) $json_metadata->aframePmndrsHorizonFillLightIntensity : $pmndrs_horizon_helper_defaults['fill'];
 		$scene_data['backgroundPresetOption'] = $json_metadata->backgroundPresetOption ?? '1';
 		$scene_data['backgroundPresetGroundEnabled'] = $json_metadata->backgroundPresetGroundEnabled ?? true;
 		$scene_data['backgroundImagePath']    = $json_metadata->backgroundImagePath ?? '';

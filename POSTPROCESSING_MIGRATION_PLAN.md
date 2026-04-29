@@ -120,6 +120,7 @@ Takram support in VRodos means atmosphere and sky integration today, not clouds.
 
 - Takram atmosphere resources are bundled locally
 - PMNDRS scenes expose separate Takram atmosphere look and quality controls in the compile dialog
+- PMNDRS Horizon helper-light intensities are scene-configurable through the compile dialog
 - atmosphere looks: `sunrise`, `midday`, `sunset`, `night`, `custom`
 - Takram resource quality: `performance`, `balanced`, `quality`, `cinematic`
 - preset intensity and advanced sun/scattering controls are persisted into compiled `scene-settings`

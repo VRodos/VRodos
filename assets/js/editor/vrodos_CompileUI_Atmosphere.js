@@ -203,6 +203,25 @@ VRodosCompileUI.Atmosphere = (function () {
         }
     }
 
+    function applyHorizonLightingPreset(controls, presetKey) {
+        var fallbackPreset = envir && envir.scene ? envir.scene.aframeHorizonSkyPreset : Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset;
+        var normalized = Shared.normalizePmndrsHorizonLightingPreset(presetKey, fallbackPreset);
+        if (normalized === 'custom') {
+            return;
+        }
+
+        var preset = Shared.getPmndrsHorizonHelperDefaults(normalized);
+        if (controls.pmndrsHorizonLightingPreset) controls.pmndrsHorizonLightingPreset.value = normalized;
+        if (controls.pmndrsHorizonKeyLightIntensity) controls.pmndrsHorizonKeyLightIntensity.value = preset.keyLightIntensity;
+        if (controls.pmndrsHorizonFillLightIntensity) controls.pmndrsHorizonFillLightIntensity.value = preset.fillLightIntensity;
+    }
+
+    function markHorizonLightingCustom(controls) {
+        if (controls.pmndrsHorizonLightingPreset) {
+            controls.pmndrsHorizonLightingPreset.value = 'custom';
+        }
+    }
+
     function setAdvancedState(controls, enabled) {
         var isEnabled = enabled === true;
         if (controls.pmndrsAtmosphereAdvanced) {
@@ -229,7 +248,10 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsMieExtinctionScale,
             controls.pmndrsMiePhaseG,
             controls.pmndrsAbsorptionScale,
-            controls.pmndrsMoon
+            controls.pmndrsMoon,
+            controls.pmndrsHorizonLightingPreset,
+            controls.pmndrsHorizonKeyLightIntensity,
+            controls.pmndrsHorizonFillLightIntensity
         ].forEach(function (el) {
             if (el) {
                 el.disabled = !isEnabled;
@@ -273,6 +295,28 @@ VRodosCompileUI.Atmosphere = (function () {
         envir.scene.aframePmndrsMiePhaseG = Shared.clampNumber(controls.pmndrsMiePhaseG ? controls.pmndrsMiePhaseG.value : d.miePhaseG, 0, 0.99, d.miePhaseG);
         envir.scene.aframePmndrsAbsorptionScale = Shared.clampNumber(controls.pmndrsAbsorptionScale ? controls.pmndrsAbsorptionScale.value : d.absorptionScale, 0.1, 3, d.absorptionScale);
         envir.scene.aframePmndrsMoonEnabled = controls.pmndrsMoon ? controls.pmndrsMoon.checked === true : false;
+        var lightingPresetFallback = envir.scene.aframeHorizonSkyPreset || d.horizonLightingPreset;
+        envir.scene.aframePmndrsHorizonLightingPreset = Shared.normalizePmndrsHorizonLightingPreset(
+            controls.pmndrsHorizonLightingPreset ? controls.pmndrsHorizonLightingPreset.value : lightingPresetFallback,
+            lightingPresetFallback
+        );
+        var helperDefaults = Shared.getPmndrsHorizonHelperDefaults(
+            envir.scene.aframePmndrsHorizonLightingPreset === 'custom'
+                ? lightingPresetFallback
+                : envir.scene.aframePmndrsHorizonLightingPreset
+        );
+        envir.scene.aframePmndrsHorizonKeyLightIntensity = Shared.clampNumber(
+            controls.pmndrsHorizonKeyLightIntensity ? controls.pmndrsHorizonKeyLightIntensity.value : helperDefaults.keyLightIntensity,
+            0,
+            3,
+            helperDefaults.keyLightIntensity
+        );
+        envir.scene.aframePmndrsHorizonFillLightIntensity = Shared.clampNumber(
+            controls.pmndrsHorizonFillLightIntensity ? controls.pmndrsHorizonFillLightIntensity.value : helperDefaults.fillLightIntensity,
+            0,
+            3,
+            helperDefaults.fillLightIntensity
+        );
 
         if (typeof envir.updateAtmosphere === 'function') {
             envir.updateAtmosphere();
@@ -281,7 +325,9 @@ VRodosCompileUI.Atmosphere = (function () {
 
     return {
         applyLookPreset: applyLookPreset,
+        applyHorizonLightingPreset: applyHorizonLightingPreset,
         markCustom: markCustom,
+        markHorizonLightingCustom: markHorizonLightingCustom,
         setAdvancedState: setAdvancedState,
         syncToScene: syncToScene,
         normalizeQuality: normalizeQuality,

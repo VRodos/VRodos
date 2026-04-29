@@ -85,6 +85,9 @@ const VRODOS_SCENE_SETTINGS_SCHEMA = {
     'aframePmndrsMiePhaseG': { type: 'number', default: 0.74, envirKey: 'aframePmndrsMiePhaseG' },
     'aframePmndrsAbsorptionScale': { type: 'number', default: 0.94, envirKey: 'aframePmndrsAbsorptionScale' },
     'aframePmndrsMoonEnabled': { type: 'boolean', default: false, envirKey: 'aframePmndrsMoonEnabled' },
+    'aframePmndrsHorizonLightingPreset': { type: 'string', default: 'natural', envirKey: 'aframePmndrsHorizonLightingPreset' },
+    'aframePmndrsHorizonKeyLightIntensity': { type: 'number', default: 1.15, envirKey: 'aframePmndrsHorizonKeyLightIntensity' },
+    'aframePmndrsHorizonFillLightIntensity': { type: 'number', default: 0.45, envirKey: 'aframePmndrsHorizonFillLightIntensity' },
 };
 
 if (typeof module !== 'undefined' && module.exports) {

@@ -34,8 +34,43 @@ VRodosCompileUI.Shared = (function () {
         mieExtinctionScale: 0.56,
         miePhaseG: 0.74,
         absorptionScale: 0.94,
-        moonEnabled: false
+        moonEnabled: false,
+        horizonLightingPreset: 'natural',
+        horizonKeyLightIntensity: 1.15,
+        horizonFillLightIntensity: 0.45
     };
+
+    function getPmndrsHorizonHelperDefaults(preset) {
+        switch (preset) {
+            case 'clear':
+                return {
+                    keyLightIntensity: 1.24,
+                    fillLightIntensity: 0.55
+                };
+            case 'crisp':
+                return {
+                    keyLightIntensity: 1.19,
+                    fillLightIntensity: 0.49
+                };
+            default:
+                return {
+                    keyLightIntensity: PMNDRS_TWEAK_DEFAULTS.horizonKeyLightIntensity,
+                    fillLightIntensity: PMNDRS_TWEAK_DEFAULTS.horizonFillLightIntensity
+                };
+        }
+    }
+
+    function normalizePmndrsHorizonLightingPreset(value, fallback) {
+        switch (value) {
+            case 'natural':
+            case 'clear':
+            case 'crisp':
+            case 'custom':
+                return value;
+            default:
+                return fallback || PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset;
+        }
+    }
 
     function clampNumber(value, min, max, fallback) {
         var n = parseFloat(value);
@@ -69,6 +104,8 @@ VRodosCompileUI.Shared = (function () {
 
     return {
         PMNDRS_TWEAK_DEFAULTS: PMNDRS_TWEAK_DEFAULTS,
+        getPmndrsHorizonHelperDefaults: getPmndrsHorizonHelperDefaults,
+        normalizePmndrsHorizonLightingPreset: normalizePmndrsHorizonLightingPreset,
         clampNumber: clampNumber,
         normalizeColorHex: normalizeColorHex,
         formatNumber: formatNumber,
