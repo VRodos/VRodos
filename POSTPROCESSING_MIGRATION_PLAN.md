@@ -74,6 +74,7 @@ It currently provides:
 
 - `EffectComposer` / `EffectPass`-based rendering
 - PMNDRS AA modes: `none`, `smaa`, `msaa`
+- ambient occlusion through the shared AO presets, implemented with bundled `N8AOPostPass`
 - bloom controls
 - tone-mapping exposure control
 - vignette controls
@@ -84,7 +85,6 @@ The PMNDRS engine does **not** provide these features in VRodos today:
 
 - SSR
 - TAA
-- active SSAO in the live build
 
 ## Current Architectural Decisions
 
@@ -148,8 +148,8 @@ These are intentional or known current-state limitations, not future tense place
 
 - PMNDRS does not provide SSR in VRodos today
 - PMNDRS does not provide TAA in VRodos today
-- PMNDRS SSAO is currently disabled in the live build because of the current depth-attachment blit conflict
-- PMNDRS bloom is skipped for Horizon backgrounds to avoid haloing and upper-sky artifacts
+- PMNDRS ambient occlusion uses `N8AOPostPass` instead of `POSTPROCESSING.SSAOEffect` to avoid the previous depth-attachment blit conflict
+- PMNDRS composer MSAA is disabled when ambient occlusion is active; use SMAA for PMNDRS AO scenes
 - PMNDRS `AerialPerspectiveEffect` is skipped for Horizon backgrounds on the current runtime because that path still triggers depth-blit errors and visual artifacts
 
 ### Takram limitations
@@ -162,17 +162,17 @@ These are intentional or known current-state limitations, not future tense place
 
 Only live follow-up work belongs here.
 
-### 1. Re-enable PMNDRS SSAO
+### 1. Tune PMNDRS ambient occlusion
 
 Goal:
 
-- restore AO support in the PMNDRS engine without reviving the current depth blit conflict
+- refine the N8AO preset mapping after visual testing across representative scenes
 
 Current direction:
 
-- revisit the PMNDRS depth/normal path
-- wire the proper downsampling / normal-buffer solution
-- only re-enable after confirming stable behavior on the pinned A-Frame + Three runtime
+- keep the existing shared AO preset UI as the toggle surface
+- adjust N8AO radius, falloff, intensity, and quality settings only after smoke testing
+- avoid returning to `POSTPROCESSING.SSAOEffect` unless its depth path is proven stable on the pinned runtime
 
 ### 2. Revisit Horizon `AerialPerspectiveEffect`
 

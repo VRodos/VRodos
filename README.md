@@ -103,6 +103,7 @@ It currently supports:
 
 - `EffectComposer` / `EffectPass`-based rendering
 - anti-aliasing modes: `none`, `smaa`, `msaa`
+- ambient occlusion through the shared AO presets
 - bloom controls
 - tone-map exposure control
 - vignette controls
@@ -113,8 +114,7 @@ Important current limitations:
 
 - SSR is not available on the PMNDRS path
 - TAA is not available on the PMNDRS path
-- SSAO is currently disabled on the live PMNDRS build
-- bloom is skipped for Horizon backgrounds to avoid sky haloing
+- composer MSAA is disabled when PMNDRS ambient occlusion is active; use SMAA for AO scenes
 
 For current-state PMNDRS/Takram decisions and follow-up work, see [`POSTPROCESSING_MIGRATION_PLAN.md`](POSTPROCESSING_MIGRATION_PLAN.md).
 

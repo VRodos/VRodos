@@ -827,6 +827,15 @@ class VRodos_Compiler_Manager {
 		$pmndrs_moon_enabled = isset( $metadata->aframePmndrsMoonEnabled ) && filter_var( $metadata->aframePmndrsMoonEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
 		$pmndrs_horizon_key_light_intensity = max( 0.0, min( 3.0, (float) ( $metadata->aframePmndrsHorizonKeyLightIntensity ?? $pmndrs_horizon_helper_defaults['key'] ) ) );
 		$pmndrs_horizon_fill_light_intensity = max( 0.0, min( 3.0, (float) ( $metadata->aframePmndrsHorizonFillLightIntensity ?? $pmndrs_horizon_helper_defaults['fill'] ) ) );
+		$pmndrs_aa_mode_raw = $metadata->aframePmndrsAAMode ?? 'inherit';
+		$pmndrs_aa_mode = in_array( $pmndrs_aa_mode_raw, [ 'inherit', 'none', 'smaa', 'msaa' ], true ) ? $pmndrs_aa_mode_raw : 'inherit';
+		$pmndrs_aa_preset_raw = $metadata->aframePmndrsAAPreset ?? 'inherit';
+		$pmndrs_aa_preset = in_array( $pmndrs_aa_preset_raw, [ 'inherit', 'low', 'medium', 'high', 'ultra' ], true ) ? $pmndrs_aa_preset_raw : 'inherit';
+		$pmndrs_bloom_intensity = max( 0.0, min( 3.0, (float) ( $metadata->aframePmndrsBloomIntensity ?? 1.0 ) ) );
+		$pmndrs_bloom_threshold = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsBloomThreshold ?? 0.62 ) ) );
+		$pmndrs_vignette_enabled = isset( $metadata->aframePmndrsVignetteEnabled ) && filter_var( $metadata->aframePmndrsVignetteEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$pmndrs_vignette_darkness = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsVignetteDarkness ?? 0.5 ) ) );
+		$pmndrs_tone_mapping_exposure = max( 0.3, min( 2.5, (float) ( $metadata->aframePmndrsToneMappingExposure ?? 1.0 ) ) );
 
 		// 4. Assemble scene-settings attribute
 		$scene_settings_attr = "color: $clear_color; pr_type: $project_type_slug; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $ground_enabled" .
@@ -841,6 +850,10 @@ class VRodos_Compiler_Manager {
 			"; reflectionProfile: $reflection_profile; reflectionSource: $reflection_source; horizonSkyPreset: $horizon_preset" .
 			"; envMapPreset: $env_map_preset; cam_position: $cam_pos; cam_rotation_y: $cam_rot_y; public_chat: " . ( $public_chat ? 'true' : 'false' ) .
 			"; fogCategory: $fog_cat; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density" .
+			"; pmndrsAAMode: $pmndrs_aa_mode; pmndrsAAPreset: $pmndrs_aa_preset" .
+			"; pmndrsBloomIntensity: $pmndrs_bloom_intensity; pmndrsBloomThreshold: $pmndrs_bloom_threshold" .
+			"; pmndrsVignetteEnabled: $pmndrs_vignette_enabled; pmndrsVignetteDarkness: $pmndrs_vignette_darkness" .
+			"; pmndrsToneMappingExposure: $pmndrs_tone_mapping_exposure" .
 			"; pmndrsAtmosphereEnabled: $pmndrs_atmosphere_enabled; pmndrsAtmospherePreset: $pmndrs_atmosphere_preset" .
 			"; pmndrsAtmospherePresetIntensity: $pmndrs_atmosphere_preset_intensity; pmndrsAtmosphereQuality: $pmndrs_atmosphere_quality" .
 			"; pmndrsSunElevationDeg: $pmndrs_sun_elevation; pmndrsSunAzimuthDeg: $pmndrs_sun_azimuth" .
@@ -860,23 +873,7 @@ class VRodos_Compiler_Manager {
 
 		$ascene->setAttribute( 'scene-settings', $scene_settings_attr );
 
-		// 5. PMNDRS specific tweaks
-		if ( $post_fx_engine === 'pmndrs' ) {
-			$aa_mode    = $metadata->aframePmndrsAAMode    ?? ( $aa_quality === 'off' ? 'none' : 'msaa' );
-			$aa_preset  = $metadata->aframePmndrsAAPreset  ?? ( $aa_quality === 'ultra' ? 'ultra' : 'high' );
-			$bloom_int  = max( 0.0, min( 3.0, (float) ( $metadata->aframePmndrsBloomIntensity ?? 1.0 ) ) );
-			$bloom_thr  = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsBloomThreshold ?? 0.62 ) ) );
-			$vign_en    = isset( $metadata->aframePmndrsVignetteEnabled ) && filter_var( $metadata->aframePmndrsVignetteEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
-			$vign_dark  = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsVignetteDarkness ?? 0.5 ) ) );
-			$tm_exp     = max( 0.3, min( 2.5, (float) ( $metadata->aframePmndrsToneMappingExposure ?? 1.0 ) ) );
-
-			$pmndrs_attr = "aaMode: $aa_mode; aaPreset: $aa_preset; bloomIntensity: $bloom_int; bloomThreshold: $bloom_thr" .
-				"; vignetteEnabled: $vign_en; vignetteDarkness: $vign_dark; toneMappingExposure: $tm_exp";
-			
-			$ascene->setAttribute( 'vrodos-postprocessing-pmndrs', $pmndrs_attr );
-		}
-
-		// 6. Handle Background (Skybox)
+		// 5. Handle Background (Skybox)
 		if ( $bcg_choice == '3' && $image_path ) {
 			$a_asset = $this->get_or_create_assets_container( $dom, $ascene );
 			

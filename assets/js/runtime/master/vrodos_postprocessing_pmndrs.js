@@ -8,7 +8,6 @@
  * field. See POSTPROCESSING_MIGRATION_PLAN.md §11 for the architectural decision.
  *
  * Effects merged into one EffectPass when their flags are set:
- *   - SSAOEffect           (ambientOcclusionPreset !== 'off')
  *   - BloomEffect          (bloomStrength > 0)
  *   - BrightnessContrast   (postFXColorEnabled)
  *   - HueSaturation        (postFXColorEnabled)
@@ -16,8 +15,12 @@
  *   - ToneMappingEffect    (always, ACES Filmic)
  *   - SMAAEffect           (pmndrsAAMode === 'smaa')
  *
+ * Effects inserted as standalone pmndrs-compatible passes:
+ *   - N8AOPostPass         (ambientOcclusionPreset !== 'off')
+ *
  * Multisample AA is applied at the composer level when
- * pmndrsAAMode === 'msaa' and WebGL2 multisampling is available.
+ * pmndrsAAMode === 'msaa', WebGL2 multisampling is available, and
+ * N8AO is not active.
  *
  * NOT supported in this engine — scenes that need these stay on postFXEngine='legacy':
  *   - SSR  (no actively-maintained pmndrs-compatible SSR effect in this VRodos pipeline)
@@ -33,18 +36,43 @@
     var H = VRODOSMaster.PmndrsHelpers = VRODOSMaster.PmndrsHelpers || {};
 
     /**
-     * Convert the legacy ambientOcclusionPreset string to pmndrs SSAOEffect options.
+     * Convert the shared ambientOcclusionPreset string to N8AO settings.
      */
-    function ssaoOptionsForPreset(preset) {
+    function n8aoOptionsForPreset(preset) {
         switch (preset) {
             case 'soft':
-                return { samples: 9, rings: 4, distanceThreshold: 0.6, distanceFalloff: 0.1, rangeThreshold: 0.0015, rangeFalloff: 0.01, luminanceInfluence: 0.7, radius: 18.25, intensity: 1.0, bias: 0.025 };
+                return { quality: 'Performance', aoRadius: 18, distanceFalloff: 0.22, intensity: 1.15, halfRes: true, denoiseIterations: 1 };
             case 'strong':
-                return { samples: 21, rings: 7, distanceThreshold: 0.95, distanceFalloff: 0.03, rangeThreshold: 0.001, rangeFalloff: 0.012, luminanceInfluence: 0.7, radius: 28.0, intensity: 2.4, bias: 0.04 };
+                return { quality: 'Medium', aoRadius: 32, distanceFalloff: 0.26, intensity: 2.25, halfRes: true, denoiseIterations: 2 };
             case 'balanced':
             default:
-                return { samples: 14, rings: 5, distanceThreshold: 0.85, distanceFalloff: 0.05, rangeThreshold: 0.0012, rangeFalloff: 0.012, luminanceInfluence: 0.7, radius: 22.0, intensity: 1.6, bias: 0.035 };
+                return { quality: 'Low', aoRadius: 24, distanceFalloff: 0.24, intensity: 1.65, halfRes: true, denoiseIterations: 1 };
         }
+    }
+
+    function configureN8AOPostPass(pass, preset, THREE) {
+        var options = n8aoOptionsForPreset(preset);
+
+        if (!pass || !pass.configuration) {
+            return;
+        }
+
+        if (typeof pass.setQualityMode === 'function') {
+            pass.setQualityMode(options.quality);
+        }
+
+        pass.configuration.screenSpaceRadius = true;
+        pass.configuration.aoRadius = options.aoRadius;
+        pass.configuration.distanceFalloff = options.distanceFalloff;
+        pass.configuration.intensity = options.intensity;
+        pass.configuration.halfRes = options.halfRes;
+        pass.configuration.depthAwareUpsampling = true;
+        pass.configuration.denoiseIterations = options.denoiseIterations;
+        pass.configuration.gammaCorrection = false;
+        pass.configuration.accumulate = false;
+        pass.autoDetectTransparency = false;
+        pass.configuration.transparencyAware = false;
+        pass.configuration.color = new THREE.Color(0, 0, 0);
     }
 
     /**
@@ -130,11 +158,15 @@
         return !!(self && self.data && self.data.postFXEngine === 'pmndrs' && getPmndrsAAMode(self) !== 'none');
     }
 
+    function isPmndrsAmbientOcclusionEnabled(self) {
+        return !!(self && typeof self.getAmbientOcclusionPreset === 'function' && self.getAmbientOcclusionPreset() !== 'off');
+    }
+
     function getPmndrsRequestedMultisampling(self, renderer) {
         var requestedSamples = 0;
         var maxSamples = 0;
 
-        if (!isPmndrsAAEnabled(self) || getPmndrsAAMode(self) !== 'msaa' || hasPmndrsDebugFlag('disablePmndrsMsaa', 'vrodos_debug_disable_pmndrs_msaa')) {
+        if (!isPmndrsAAEnabled(self) || getPmndrsAAMode(self) !== 'msaa' || isPmndrsAmbientOcclusionEnabled(self) || hasPmndrsDebugFlag('disablePmndrsMsaa', 'vrodos_debug_disable_pmndrs_msaa')) {
             return 0;
         }
         if (!renderer || !renderer.capabilities || renderer.capabilities.isWebGL2 !== true) {
@@ -187,6 +219,7 @@
     function getPmndrsComposerSignature(self, renderer, atmosphereConfig, PP) {
         var smaaPreset = getPmndrsSmaaPreset(self, PP);
         return getPmndrsAtmosphereModeSignature(self, atmosphereConfig) +
+            '|ao:' + ((self && typeof self.getAmbientOcclusionPreset === 'function') ? self.getAmbientOcclusionPreset() : 'off') +
             '|aaMode:' + getPmndrsAAMode(self) +
             '|aaPreset:' + getPmndrsAAPreset(self) +
             '|msaa:' + getPmndrsRequestedMultisampling(self, renderer) +
@@ -771,6 +804,7 @@
             'smaa preset: ' + ((self && self._pmndrsAppliedSmaaPreset !== null && self._pmndrsAppliedSmaaPreset !== undefined) ? self._pmndrsAppliedSmaaPreset : 'off'),
             'composer: ' + (self && self.pmndrsComposer ? 'yes' : 'no'),
             'effect pass: ' + (self && self.pmndrsEffectPass ? 'yes' : 'no'),
+            'ao: ' + (self && self.pmndrsSsaoEffect ? 'n8ao' : 'off'),
             'bloom: ' + (self && self.pmndrsBloomEffect ? 'yes' : 'no'),
             'atmosphere: ' + (self && self.pmndrsAerialPerspectiveEffect ? 'effect' : ((self && typeof self.isPmndrsAtmosphereEnabled === 'function' && self.isPmndrsAtmosphereEnabled()) ? 'takram-only' : 'off')),
             'horizon aerial: ' + (shouldEnablePmndrsHorizonAerial(self) ? 'experimental-on' : 'off'),
@@ -792,10 +826,52 @@
         return 'atmosphere:world';
     }
 
+    function disposeN8AOPostPass(pass) {
+        if (!pass) {
+            return;
+        }
+
+        [
+            pass.writeTargetInternal,
+            pass.readTargetInternal,
+            pass.outputTargetInternal,
+            pass.accumulationRenderTarget,
+            pass.depthDownsampleTarget,
+            pass.transparencyRenderTargetDWFalse,
+            pass.transparencyRenderTargetDWTrue
+        ].forEach(function (target) {
+            if (target && typeof target.dispose === 'function') {
+                target.dispose();
+            }
+        });
+
+        [
+            pass.copyQuad,
+            pass.accumulationQuad,
+            pass.depthDownsampleQuad,
+            pass.depthCopyPass,
+            pass.effectShaderQuad,
+            pass.poissonBlurQuad,
+            pass.effectCompositerQuad
+        ].forEach(function (quad) {
+            if (quad && typeof quad.dispose === 'function') {
+                quad.dispose();
+            } else if (quad && quad.material && typeof quad.material.dispose === 'function') {
+                quad.material.dispose();
+            }
+        });
+
+        if (pass.bluenoise && typeof pass.bluenoise.dispose === 'function') {
+            pass.bluenoise.dispose();
+        }
+    }
+
     function disposePmndrsComposerResources(self) {
         if (!self) {
             return;
         }
+
+        disposeN8AOPostPass(self.pmndrsSsaoEffect);
 
         if (self.pmndrsComposer) {
             try {
@@ -912,6 +988,9 @@
         if (!this._pmndrsMsaaFallbackReason) {
             this._pmndrsMsaaFallbackReason = '';
         }
+        if (getPmndrsAAMode(this) === 'msaa' && isPmndrsAmbientOcclusionEnabled(this)) {
+            this._pmndrsMsaaFallbackReason = 'ao-disables-msaa';
+        }
 
         if (atmosphereConfig && atmosphereConfig.enabled && (!isHorizonBackground(this) || shouldEnablePmndrsHorizonAerial(this))) {
             var VTA = window.VRODOS_TAKRAM_ATMOSPHERE;
@@ -974,33 +1053,34 @@
             restoreAllPmndrsHorizonFoliageMaterials(this);
         }
 
-        // SSAO — temporarily disabled in the pmndrs pipeline (Phase 3).
-        //
-        // pmndrs SSAOEffect with normalBuffer=null shares the composer's depth
-        // attachment, which causes
-        //   GL_INVALID_OPERATION: glBlitFramebuffer: Read and write depth stencil
-        //   attachments cannot be the same image
-        // when combined with HalfFloatType frame buffers. Wiring up
-        // DepthDownsamplingPass + a separate normal buffer is the proper fix
-        // (Phase 3 follow-up). For now we no-op so the rest of the pipeline
-        // can render. Scenes that require SSAO should compile against the
-        // legacy engine.
+        // SSAO through the shared ambientOcclusionPreset control.
+        // N8AOPostPass is used instead of POSTPROCESSING.SSAOEffect because it
+        // is compatible with pmndrs/postprocessing and does not trigger the
+        // depth attachment blit conflict seen on the previous SSAOEffect path.
         var aoPreset = (typeof this.getAmbientOcclusionPreset === 'function') ? this.getAmbientOcclusionPreset() : 'off';
-        if (aoPreset && aoPreset !== 'off' && !this._pmndrsSsaoSkipWarned) {
-            console.info('[VRodos] pmndrs pipeline: SSAO preset "' + aoPreset + '" requested but SSAOEffect is disabled in this Phase 3 build (depth-attachment blit conflict). Switch postFXEngine to "legacy" if SSAO is required.');
-            this._pmndrsSsaoSkipWarned = true;
-        }
         this.pmndrsSsaoEffect = null;
+        if (aoPreset && aoPreset !== 'off') {
+            if (typeof window.N8AOPostPass === 'function') {
+                try {
+                    this.pmndrsSsaoEffect = new window.N8AOPostPass(scene, camera, Math.max(1, w), Math.max(1, h));
+                    configureN8AOPostPass(this.pmndrsSsaoEffect, aoPreset, THREE);
+                    composer.addPass(this.pmndrsSsaoEffect);
+                } catch (err) {
+                    console.warn('[VRodos] pmndrs N8AO construction failed, skipping AO:', err);
+                    disposeN8AOPostPass(this.pmndrsSsaoEffect);
+                    this.pmndrsSsaoEffect = null;
+                }
+            } else if (!this._pmndrsSsaoSkipWarned) {
+                console.info('[VRodos] pmndrs pipeline: AO preset "' + aoPreset + '" requested but window.N8AOPostPass is not loaded.');
+                this._pmndrsSsaoSkipWarned = true;
+            }
+        }
 
         // Bloom (intensity & threshold come from per-scene Pmndrs tweaks)
         var bloomVal = (typeof this.getBloomStrengthValue === 'function') ? this.getBloomStrengthValue() : 0;
         var pmndrsBloomMult = readPmndrsNumber(this, 'pmndrsBloomIntensity', 0, 3, 1.0);
         var pmndrsBloomThr  = readPmndrsNumber(this, 'pmndrsBloomThreshold', 0, 1, 0.62);
-        if (isHorizonBackground(this) && bloomVal > 0 && !this._pmndrsHorizonBloomSkipWarned) {
-            console.info('[VRodos] pmndrs bloom disabled for HORIZON background to avoid sky haloing. Switch to "legacy" if bloom on the HORIZON sky is required.');
-            this._pmndrsHorizonBloomSkipWarned = true;
-        }
-        if (!isHorizonBackground(this) && bloomVal > 0 && pmndrsBloomMult > 0) {
+        if (bloomVal > 0 && pmndrsBloomMult > 0) {
             try {
                 this.pmndrsBloomEffect = new PP.BloomEffect(bloomOptionsForLegacyValue(this, bloomVal, pmndrsBloomMult, pmndrsBloomThr));
                 effects.push(this.pmndrsBloomEffect);
@@ -1105,10 +1185,9 @@
         this._pmndrsLastW = 0;
         this._pmndrsLastH = 0;
 
-        // Adaptive AO half-rate state — mirrors legacy file lines 282-315.
-        // When 30-frame rolling avg FPS drops below 30, SSAO blends out on
-        // alternate frames (effective half-rate) until FPS recovers above 45.
-        // 3-second cooldown between state changes prevents oscillation.
+        // Reserved for future adaptive AO tuning.
+        // N8AOPostPass remains stable frame-to-frame for now rather than being
+        // toggled half-rate.
         this._pmndrsAdaptive = {
             halfRate: false,
             frameCounter: 0,
@@ -1180,6 +1259,9 @@
                 if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== 'undefined') {
                     self.pmndrsEffectPass.mainCamera = camera;
                 }
+                if (self.pmndrsSsaoEffect && typeof self.pmndrsSsaoEffect.camera !== 'undefined') {
+                    self.pmndrsSsaoEffect.camera = camera;
+                }
                 if (self.pmndrsAerialPerspectiveEffect && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== 'undefined') {
                     self.pmndrsAerialPerspectiveEffect.mainCamera = camera;
                 }
@@ -1233,55 +1315,11 @@
     };
 
     /**
-     * Adaptive SSAO half-rate. Departs from the legacy SAO ping-pong behaviour:
-     * because the SSAOEffect is merged inside the fused EffectPass we cannot
-     * cheaply skip its render call, so instead we modulate its blendMode opacity
-     * between 1 and 0 on alternate frames when half-rate is engaged. The visual
-     * delta is small because SSAO is already low-frequency. Same FPS state machine
-     * as the legacy file (30-frame rolling avg, 30/45 hysteresis, 3 s cooldown).
+     * Reserved for future adaptive PMNDRS AO tuning. N8AOPostPass owns its own
+     * render pass and accumulation behavior, so the old SSAOEffect opacity
+     * modulation path is intentionally disabled.
      */
-    H._updatePmndrsAdaptiveAO = function () {
-        if (!this.pmndrsSsaoEffect || !this._pmndrsAdaptive) {
-            return;
-        }
-        var a = this._pmndrsAdaptive;
-        var nowMs = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-        var frameDt = nowMs - a.lastFrameTime;
-        a.lastFrameTime = nowMs;
-        if (frameDt > 0 && frameDt < 1000) {
-            a.fpsHistory[a.fpsHistoryIdx] = 1000 / frameDt;
-            a.fpsHistoryIdx = (a.fpsHistoryIdx + 1) % 30;
-            if (a.fpsHistoryIdx === 0) {
-                a.fpsHistoryFilled = true;
-            }
-        }
-        if (a.fpsHistoryFilled) {
-            var sum = 0;
-            for (var i = 0; i < 30; i++) {
-                sum += a.fpsHistory[i];
-            }
-            var avgFps = sum / 30;
-            var sinceChange = nowMs - a.lastStateChange;
-            if (sinceChange > 3000) {
-                if (!a.halfRate && avgFps < 30) {
-                    a.halfRate = true;
-                    a.lastStateChange = nowMs;
-                } else if (a.halfRate && avgFps > 45) {
-                    a.halfRate = false;
-                    a.lastStateChange = nowMs;
-                }
-            }
-        }
-        if (this.pmndrsSsaoEffect.blendMode && this.pmndrsSsaoEffect.blendMode.opacity) {
-            if (a.halfRate) {
-                var skip = (a.frameCounter & 1) === 1;
-                a.frameCounter++;
-                this.pmndrsSsaoEffect.blendMode.opacity.value = skip ? 0 : 1;
-            } else {
-                this.pmndrsSsaoEffect.blendMode.opacity.value = 1;
-            }
-        }
-    };
+    H._updatePmndrsAdaptiveAO = function () {};
 
     H.disablePmndrsPostProcessing = function () {
         if (!this.pmndrsActive || !this.el.renderer) {
