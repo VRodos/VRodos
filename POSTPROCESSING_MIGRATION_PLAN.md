@@ -78,6 +78,7 @@ It currently provides:
 - bloom controls
 - tone-mapping exposure control
 - vignette controls
+- noise and chromatic aberration controls
 - Takram atmosphere look presets and advanced controls
 - Takram sky ownership for the PMNDRS Horizon path
 

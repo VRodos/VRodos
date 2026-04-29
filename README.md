@@ -107,6 +107,7 @@ It currently supports:
 - bloom controls
 - tone-map exposure control
 - vignette controls
+- PMNDRS noise and chromatic aberration controls
 - Takram atmosphere look presets and advanced controls
 - Takram sky ownership for the PMNDRS Horizon path
 

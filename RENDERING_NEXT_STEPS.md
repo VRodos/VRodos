@@ -10,7 +10,7 @@ This tracker is the live source for the compiled-scene PMNDRS/Takram rendering p
 - The PMNDRS engine uses `window.POSTPROCESSING` from `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`.
 - The PMNDRS engine uses A-Frame's existing `window.THREE`; it must not load a second Three instance.
 - Takram atmosphere uses `window.VRODOS_TAKRAM_ATMOSPHERE` from `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js`.
-- PMNDRS currently supports composer rendering, N8AO ambient occlusion, SMAA/MSAA, bloom, tone mapping, vignette, Takram atmosphere controls, and Takram sky ownership for Horizon scenes.
+- PMNDRS currently supports composer rendering, N8AO ambient occlusion, SMAA/MSAA, bloom, tone mapping, color/contrast grading, vignette, noise, chromatic aberration, Takram atmosphere controls, and Takram sky ownership for Horizon scenes.
 
 ## Uncovered Issues
 
@@ -23,7 +23,7 @@ This tracker is the live source for the compiled-scene PMNDRS/Takram rendering p
 
 ## Future Backlog
 
-- PMNDRS effects to evaluate after SSAO: depth of field, LUT/color grading extension, noise, chromatic aberration, outline/selective bloom, god rays, tilt shift, pixelation, glitch, and shock wave.
+- PMNDRS effects to evaluate after the first Phase 3 pass: depth of field, LUT/color grading extension, outline/selective bloom, god rays, tilt shift, pixelation, glitch, and shock wave.
 - Takram non-cloud features to evaluate: stars, date/time sun and moon direction, `SkyLightProbe`, `SunDirectionalLight`, `LightingMaskPass`, and geodetic/ECEF/ENU helpers.
 - Volumetric clouds remain explicitly out of scope for this plan.
 
@@ -73,3 +73,28 @@ Follow-up changes:
 - Rebalanced N8AO presets for runtime cost: `soft` uses Performance quality, `balanced` uses Low quality, and `strong` uses Medium quality.
 - Disabled N8AO transparency auto-detection by default to avoid the extra transparent-scene render path in compiled scenes.
 - Restored PMNDRS bloom on Horizon backgrounds and removed the old warning branch.
+- Follow-up correction: PMNDRS Horizon bloom is restored to the generic bloom profile; the reported hard horizon boundary also appears with bloom off, so bloom is not treated as the cause.
+
+### 2026-04-29 - Phase 3: First PMNDRS effect expansion
+
+Status: in progress; first low-risk effects implemented.
+
+Decision:
+- Ship low-risk PMNDRS effects first as compile-dialog settings: noise and chromatic aberration.
+- Keep LUT/color grading extension and depth of field queued because they need asset/control design beyond a simple toggle and slider.
+
+Changes:
+- Add PMNDRS-only compile controls for noise opacity and chromatic aberration offset.
+- Persist new scene metadata keys: `aframePmndrsNoiseEnabled`, `aframePmndrsNoiseOpacity`, `aframePmndrsChromaticAberrationEnabled`, and `aframePmndrsChromaticAberrationOffset`.
+- Serialize new compiled `scene-settings` keys: `pmndrsNoiseEnabled`, `pmndrsNoiseOpacity`, `pmndrsChromaticAberrationEnabled`, and `pmndrsChromaticAberrationOffset`.
+- Add runtime construction for bundled `POSTPROCESSING.NoiseEffect` and `POSTPROCESSING.ChromaticAberrationEffect` inside the PMNDRS composer path only.
+- Fix compile-dialog contrast preset normalization so the existing `soft`, `balanced`, and `punchy` values survive scene sync.
+- Known issue: chromatic aberration can darken/warp the Takram/Horizon sky boundary. It remains user-controlled instead of runtime-disabled so authors can choose whether to use it.
+
+Verification:
+- `npm.cmd run lint` passed for runtime master JS.
+- `node --check` passed for edited editor-side JS files.
+- PHP syntax checks passed for `includes/class-vrodos-compiler-manager.php` and `includes/class-vrodos-scene-cpt-manager.php`.
+- `git diff --check` passed.
+- Static search confirmed the new PMNDRS effect keys are present in UI, editor sync, metadata schema, compiler serialization, runtime schema, and PMNDRS runtime construction.
+- Generated HTML inspection remains pending until a compiled scene is available.

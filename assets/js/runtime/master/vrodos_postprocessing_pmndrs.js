@@ -12,6 +12,8 @@
  *   - BrightnessContrast   (postFXColorEnabled)
  *   - HueSaturation        (postFXColorEnabled)
  *   - VignetteEffect       (postFXVignetteEnabled)
+ *   - NoiseEffect          (pmndrsNoiseEnabled)
+ *   - ChromaticAberration  (pmndrsChromaticAberrationEnabled)
  *   - ToneMappingEffect    (always, ACES Filmic)
  *   - SMAAEffect           (pmndrsAAMode === 'smaa')
  *
@@ -96,10 +98,6 @@
             mipmapBlur: true
         };
 
-        // HORIZON skies have a small authored sun disk against a flat gradient background.
-        // pmndrs mipmap bloom spreads that high-luminance spot into a massive gray cap in
-        // the upper hemisphere, so clamp bloom harder for selChoice === "0" while still
-        // allowing authored scene objects to pick up a subtle glow.
         return options;
     }
 
@@ -223,7 +221,9 @@
             '|aaMode:' + getPmndrsAAMode(self) +
             '|aaPreset:' + getPmndrsAAPreset(self) +
             '|msaa:' + getPmndrsRequestedMultisampling(self, renderer) +
-            '|smaa:' + (smaaPreset === null ? 'off' : smaaPreset);
+            '|smaa:' + (smaaPreset === null ? 'off' : smaaPreset) +
+            '|noise:' + readPmndrsBool(self, 'pmndrsNoiseEnabled') + ':' + readPmndrsNumber(self, 'pmndrsNoiseOpacity', 0, 0.2, 0.04) +
+            '|chroma:' + readPmndrsBool(self, 'pmndrsChromaticAberrationEnabled') + ':' + readPmndrsNumber(self, 'pmndrsChromaticAberrationOffset', 0, 0.006, 0.0015);
     }
 
     function isPmndrsAADebugOverlayEnabled() {
@@ -806,6 +806,8 @@
             'effect pass: ' + (self && self.pmndrsEffectPass ? 'yes' : 'no'),
             'ao: ' + (self && self.pmndrsSsaoEffect ? 'n8ao' : 'off'),
             'bloom: ' + (self && self.pmndrsBloomEffect ? 'yes' : 'no'),
+            'noise: ' + (self && self.pmndrsNoiseEffect ? 'yes' : 'off'),
+            'chromatic: ' + (self && self.pmndrsChromaticAberrationEffect ? 'yes' : 'off'),
             'atmosphere: ' + (self && self.pmndrsAerialPerspectiveEffect ? 'effect' : ((self && typeof self.isPmndrsAtmosphereEnabled === 'function' && self.isPmndrsAtmosphereEnabled()) ? 'takram-only' : 'off')),
             'horizon aerial: ' + (shouldEnablePmndrsHorizonAerial(self) ? 'experimental-on' : 'off'),
             'msaa fallback: ' + ((self && self._pmndrsMsaaFallbackReason) ? self._pmndrsMsaaFallbackReason : 'none')
@@ -887,6 +889,8 @@
         self.pmndrsSsaoEffect = null;
         self.pmndrsBloomEffect = null;
         self.pmndrsSmaaEffect = null;
+        self.pmndrsNoiseEffect = null;
+        self.pmndrsChromaticAberrationEffect = null;
         self.pmndrsAerialPerspectiveEffect = null;
         self.pmndrsHorizonFoliageOverlayPass = null;
         restoreAllPmndrsHorizonFoliageMaterials(self);
@@ -1130,6 +1134,39 @@
                 effects.push(new PP.VignetteEffect({ offset: 0.35, darkness: vDarkness }));
             } catch (err) {
                 console.warn('[VRodos] pmndrs VignetteEffect failed, skipping:', err);
+            }
+        }
+
+        this.pmndrsNoiseEffect = null;
+        if (readPmndrsBool(this, 'pmndrsNoiseEnabled')) {
+            try {
+                this.pmndrsNoiseEffect = new PP.NoiseEffect({
+                    blendFunction: PP.BlendFunction ? PP.BlendFunction.SCREEN : undefined,
+                    premultiply: false
+                });
+                if (this.pmndrsNoiseEffect.blendMode && this.pmndrsNoiseEffect.blendMode.opacity) {
+                    this.pmndrsNoiseEffect.blendMode.opacity.value = readPmndrsNumber(this, 'pmndrsNoiseOpacity', 0, 0.2, 0.04);
+                }
+                effects.push(this.pmndrsNoiseEffect);
+            } catch (err) {
+                console.warn('[VRodos] pmndrs NoiseEffect failed, skipping:', err);
+                this.pmndrsNoiseEffect = null;
+            }
+        }
+
+        this.pmndrsChromaticAberrationEffect = null;
+        if (readPmndrsBool(this, 'pmndrsChromaticAberrationEnabled')) {
+            try {
+                var chromaOffset = readPmndrsNumber(this, 'pmndrsChromaticAberrationOffset', 0, 0.006, 0.0015);
+                this.pmndrsChromaticAberrationEffect = new PP.ChromaticAberrationEffect({
+                    offset: new THREE.Vector2(chromaOffset, chromaOffset * 0.5),
+                    radialModulation: true,
+                    modulationOffset: 0.25
+                });
+                effects.push(this.pmndrsChromaticAberrationEffect);
+            } catch (err) {
+                console.warn('[VRodos] pmndrs ChromaticAberrationEffect failed, skipping:', err);
+                this.pmndrsChromaticAberrationEffect = null;
             }
         }
 

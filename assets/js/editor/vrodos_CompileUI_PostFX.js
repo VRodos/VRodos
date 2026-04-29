@@ -30,7 +30,7 @@ VRodosCompileUI.PostFX = (function () {
     }
 
     function normalizeContrastPreset(value) {
-        if (value === 'balanced' || value === 'high' || value === 'low') {
+        if (value === 'soft' || value === 'balanced' || value === 'punchy') {
             return value;
         }
         return 'balanced';
@@ -146,6 +146,28 @@ VRodosCompileUI.PostFX = (function () {
         if (controls.pmndrsVignetteDarkness) {
             controls.pmndrsVignetteDarkness.disabled = !pmndrsTweakEnabled || !isPmndrsVignetteEnabled;
         }
+
+        var isPmndrsNoiseEnabled = controls.pmndrsNoise && controls.pmndrsNoise.checked;
+        if (controls.pmndrsNoiseWrapper) {
+            controls.pmndrsNoiseWrapper.style.display = isPmndrsNoiseEnabled ? '' : 'none';
+        }
+        if (controls.pmndrsNoise) {
+            controls.pmndrsNoise.disabled = !pmndrsTweakEnabled;
+        }
+        if (controls.pmndrsNoiseOpacity) {
+            controls.pmndrsNoiseOpacity.disabled = !pmndrsTweakEnabled || !isPmndrsNoiseEnabled;
+        }
+
+        var isPmndrsChromaticAberrationEnabled = controls.pmndrsChromaticAberration && controls.pmndrsChromaticAberration.checked;
+        if (controls.pmndrsChromaticAberrationWrapper) {
+            controls.pmndrsChromaticAberrationWrapper.style.display = isPmndrsChromaticAberrationEnabled ? '' : 'none';
+        }
+        if (controls.pmndrsChromaticAberration) {
+            controls.pmndrsChromaticAberration.disabled = !pmndrsTweakEnabled;
+        }
+        if (controls.pmndrsChromaticAberrationOffset) {
+            controls.pmndrsChromaticAberrationOffset.disabled = !pmndrsTweakEnabled || !isPmndrsChromaticAberrationEnabled;
+        }
     }
 
     function updateValueLabels(controls) {
@@ -160,6 +182,12 @@ VRodosCompileUI.PostFX = (function () {
         }
         if (controls.pmndrsVignetteDarkness && controls.pmndrsVignetteDarknessValue) {
             controls.pmndrsVignetteDarknessValue.textContent = Shared.formatNumber(parseFloat(controls.pmndrsVignetteDarkness.value));
+        }
+        if (controls.pmndrsNoiseOpacity && controls.pmndrsNoiseOpacityValue) {
+            controls.pmndrsNoiseOpacityValue.textContent = Shared.formatNumber(parseFloat(controls.pmndrsNoiseOpacity.value));
+        }
+        if (controls.pmndrsChromaticAberrationOffset && controls.pmndrsChromaticAberrationOffsetValue) {
+            controls.pmndrsChromaticAberrationOffsetValue.textContent = Shared.formatRadius(parseFloat(controls.pmndrsChromaticAberrationOffset.value));
         }
     }
 
@@ -201,6 +229,18 @@ VRodosCompileUI.PostFX = (function () {
         }
         if (controls.pmndrsVignetteDarkness) {
             envir.scene.aframePmndrsVignetteDarkness = Shared.clampNumber(controls.pmndrsVignetteDarkness.value, 0, 1, d.vignetteDarkness);
+        }
+        if (controls.pmndrsNoise) {
+            envir.scene.aframePmndrsNoiseEnabled = controls.pmndrsNoise.checked === true;
+        }
+        if (controls.pmndrsNoiseOpacity) {
+            envir.scene.aframePmndrsNoiseOpacity = Shared.clampNumber(controls.pmndrsNoiseOpacity.value, 0, 0.2, d.noiseOpacity);
+        }
+        if (controls.pmndrsChromaticAberration) {
+            envir.scene.aframePmndrsChromaticAberrationEnabled = controls.pmndrsChromaticAberration.checked === true;
+        }
+        if (controls.pmndrsChromaticAberrationOffset) {
+            envir.scene.aframePmndrsChromaticAberrationOffset = Shared.clampNumber(controls.pmndrsChromaticAberrationOffset.value, 0, 0.006, d.chromaticAberrationOffset);
         }
     }
 

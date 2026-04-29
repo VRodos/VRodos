@@ -389,6 +389,36 @@
 										<input id="compilePmndrsVignetteDarknessSlider" type="range" min="0" max="1" step="0.02" value="0.5" class="tw-range tw-range-primary tw-range-xs">
 									</div>
 								</div>
+
+								<div class="tw-pt-2 tw-border-t tw-border-slate-200 tw-space-y-4">
+									<div>
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-mb-2">
+											<input id="compilePmndrsNoiseToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Subtle PMNDRS film-grain style noise.">Noise</span>
+										</label>
+										<div id="compilePmndrsNoiseWrapper">
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Noise Opacity</span>
+												<span id="compilePmndrsNoiseOpacityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.04</span>
+											</div>
+											<input id="compilePmndrsNoiseOpacitySlider" type="range" min="0" max="0.2" step="0.005" value="0.04" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+									</div>
+
+									<div>
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-mb-2">
+											<input id="compilePmndrsChromaticAberrationToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Subtle radial color separation near the frame edges.">Chromatic Aberration</span>
+										</label>
+										<div id="compilePmndrsChromaticAberrationWrapper">
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Aberration Offset</span>
+												<span id="compilePmndrsChromaticAberrationOffsetValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.0015</span>
+											</div>
+											<input id="compilePmndrsChromaticAberrationOffsetSlider" type="range" min="0" max="0.006" step="0.0001" value="0.0015" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+									</div>
+								</div>
 							</div>
 						</div>
 

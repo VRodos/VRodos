@@ -328,6 +328,10 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsVignetteEnabled'] = $json_metadata->aframePmndrsVignetteEnabled ?? false;
 		$scene_data['aframePmndrsVignetteDarkness'] = isset( $json_metadata->aframePmndrsVignetteDarkness ) ? (float) $json_metadata->aframePmndrsVignetteDarkness : 0.5;
 		$scene_data['aframePmndrsToneMappingExposure'] = isset( $json_metadata->aframePmndrsToneMappingExposure ) ? (float) $json_metadata->aframePmndrsToneMappingExposure : 1.0;
+		$scene_data['aframePmndrsNoiseEnabled'] = $json_metadata->aframePmndrsNoiseEnabled ?? false;
+		$scene_data['aframePmndrsNoiseOpacity'] = isset( $json_metadata->aframePmndrsNoiseOpacity ) ? (float) $json_metadata->aframePmndrsNoiseOpacity : 0.04;
+		$scene_data['aframePmndrsChromaticAberrationEnabled'] = $json_metadata->aframePmndrsChromaticAberrationEnabled ?? false;
+		$scene_data['aframePmndrsChromaticAberrationOffset'] = isset( $json_metadata->aframePmndrsChromaticAberrationOffset ) ? (float) $json_metadata->aframePmndrsChromaticAberrationOffset : 0.0015;
 		$scene_data['aframePmndrsAtmosphereEnabled'] = $json_metadata->aframePmndrsAtmosphereEnabled ?? true;
 		$scene_data['aframePmndrsAtmospherePreset'] = property_exists( $json_metadata, 'aframePmndrsAtmospherePreset' )
 			? $json_metadata->aframePmndrsAtmospherePreset

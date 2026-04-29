@@ -836,6 +836,10 @@ class VRodos_Compiler_Manager {
 		$pmndrs_vignette_enabled = isset( $metadata->aframePmndrsVignetteEnabled ) && filter_var( $metadata->aframePmndrsVignetteEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
 		$pmndrs_vignette_darkness = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsVignetteDarkness ?? 0.5 ) ) );
 		$pmndrs_tone_mapping_exposure = max( 0.3, min( 2.5, (float) ( $metadata->aframePmndrsToneMappingExposure ?? 1.0 ) ) );
+		$pmndrs_noise_enabled = isset( $metadata->aframePmndrsNoiseEnabled ) && filter_var( $metadata->aframePmndrsNoiseEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$pmndrs_noise_opacity = max( 0.0, min( 0.2, (float) ( $metadata->aframePmndrsNoiseOpacity ?? 0.04 ) ) );
+		$pmndrs_chromatic_aberration_enabled = isset( $metadata->aframePmndrsChromaticAberrationEnabled ) && filter_var( $metadata->aframePmndrsChromaticAberrationEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$pmndrs_chromatic_aberration_offset = max( 0.0, min( 0.006, (float) ( $metadata->aframePmndrsChromaticAberrationOffset ?? 0.0015 ) ) );
 
 		// 4. Assemble scene-settings attribute
 		$scene_settings_attr = "color: $clear_color; pr_type: $project_type_slug; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $ground_enabled" .
@@ -854,6 +858,8 @@ class VRodos_Compiler_Manager {
 			"; pmndrsBloomIntensity: $pmndrs_bloom_intensity; pmndrsBloomThreshold: $pmndrs_bloom_threshold" .
 			"; pmndrsVignetteEnabled: $pmndrs_vignette_enabled; pmndrsVignetteDarkness: $pmndrs_vignette_darkness" .
 			"; pmndrsToneMappingExposure: $pmndrs_tone_mapping_exposure" .
+			"; pmndrsNoiseEnabled: $pmndrs_noise_enabled; pmndrsNoiseOpacity: $pmndrs_noise_opacity" .
+			"; pmndrsChromaticAberrationEnabled: $pmndrs_chromatic_aberration_enabled; pmndrsChromaticAberrationOffset: $pmndrs_chromatic_aberration_offset" .
 			"; pmndrsAtmosphereEnabled: $pmndrs_atmosphere_enabled; pmndrsAtmospherePreset: $pmndrs_atmosphere_preset" .
 			"; pmndrsAtmospherePresetIntensity: $pmndrs_atmosphere_preset_intensity; pmndrsAtmosphereQuality: $pmndrs_atmosphere_quality" .
 			"; pmndrsSunElevationDeg: $pmndrs_sun_elevation; pmndrsSunAzimuthDeg: $pmndrs_sun_azimuth" .

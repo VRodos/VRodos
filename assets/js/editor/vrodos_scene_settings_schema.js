@@ -63,6 +63,10 @@ const VRODOS_SCENE_SETTINGS_SCHEMA = {
     'aframePmndrsVignetteEnabled': { type: 'boolean', default: false, envirKey: 'aframePmndrsVignetteEnabled' },
     'aframePmndrsVignetteDarkness': { type: 'number', default: 0.5, envirKey: 'aframePmndrsVignetteDarkness' },
     'aframePmndrsToneMappingExposure': { type: 'number', default: 1.0, envirKey: 'aframePmndrsToneMappingExposure' },
+    'aframePmndrsNoiseEnabled': { type: 'boolean', default: false, envirKey: 'aframePmndrsNoiseEnabled' },
+    'aframePmndrsNoiseOpacity': { type: 'number', default: 0.04, envirKey: 'aframePmndrsNoiseOpacity' },
+    'aframePmndrsChromaticAberrationEnabled': { type: 'boolean', default: false, envirKey: 'aframePmndrsChromaticAberrationEnabled' },
+    'aframePmndrsChromaticAberrationOffset': { type: 'number', default: 0.0015, envirKey: 'aframePmndrsChromaticAberrationOffset' },
 
     // Takram Atmosphere (PMNDRS)
     'aframePmndrsAtmosphereEnabled': { type: 'boolean', default: true, envirKey: 'aframePmndrsAtmosphereEnabled' },

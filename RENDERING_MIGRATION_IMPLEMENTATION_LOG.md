@@ -18,13 +18,14 @@ Key technical achievements:
 - **Anti-Aliasing (AA):** Legacy FXAA was replaced with PMNDRS native SMAA/MSAA. The Scene Settings dialog and backend persistence (JSON) were updated to support PMNDRS-specific AA modes and presets.
 - **Takram Atmosphere:** The PMNDRS compile dialog now separates artist-facing atmosphere looks (`sunrise`, `midday`, `sunset`, `night`, `custom`) from Takram resource quality (`performance`, `balanced`, `quality`, `cinematic`). Preset intensity and advanced sun/scattering controls are persisted and serialized into compiled `scene-settings`.
 - **PMNDRS Ambient Occlusion:** PMNDRS scenes use the shared ambient occlusion presets through bundled `N8AOPostPass`, avoiding the previous `SSAOEffect` depth-attachment conflict.
+- **PMNDRS Low-Risk Effects:** Noise and chromatic aberration are exposed as PMNDRS-only compile-dialog controls and serialized into compiled `scene-settings`.
 - **Legacy Cleanup:** All `threejs173` directories, scripts, and hardcoded references have been removed. `RGBELoader` was updated to `HDRLoader`.
 
 ## Current Focus & Next Steps
 
 1. **Maintain the r181 baseline:** Ensure stability on the current A-Frame master + Three r181 stack before adding new major features.
 2. **Takram Atmosphere Regression Coverage:** Keep one Horizon and one non-Horizon PMNDRS scene in manual smoke coverage for atmosphere look presets.
-3. **PMNDRS Effects:** Add the next low-risk PMNDRS effects as toggleable compile-dialog settings after N8AO smoke testing.
+3. **PMNDRS Effects:** Tune the newly added noise/chromatic aberration controls, then evaluate LUT/color grading extension and depth of field.
 4. **Takram Clouds:** Add volumetric clouds only after the atmosphere baseline remains stable across the target scenes.
 
 ## Recent Landed Work
