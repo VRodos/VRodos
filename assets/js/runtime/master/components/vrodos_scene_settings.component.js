@@ -62,22 +62,24 @@ AFRAME.registerComponent('scene-settings', {
         pmndrsVignetteDarkness: { type: "string", default: "0.5" },
         pmndrsToneMappingExposure: { type: "string", default: "1.0" },
         pmndrsAtmosphereEnabled: { type: "string", default: "1" },
+        pmndrsAtmospherePreset: { type: "string", default: "midday" },
+        pmndrsAtmospherePresetIntensity: { type: "string", default: "1.0" },
         pmndrsAtmosphereQuality: { type: "string", default: "balanced" },
-        pmndrsSunElevationDeg: { type: "string", default: "10" },
-        pmndrsSunAzimuthDeg: { type: "string", default: "38" },
+        pmndrsSunElevationDeg: { type: "string", default: "62" },
+        pmndrsSunAzimuthDeg: { type: "string", default: "20" },
         pmndrsSunDistance: { type: "string", default: "5200" },
-        pmndrsSunAngularRadius: { type: "string", default: "0.0068" },
-        pmndrsAerialStrength: { type: "string", default: "0.85" },
-        pmndrsAlbedoScale: { type: "string", default: "0.96" },
+        pmndrsSunAngularRadius: { type: "string", default: "0.0047" },
+        pmndrsAerialStrength: { type: "string", default: "0.55" },
+        pmndrsAlbedoScale: { type: "string", default: "1.0" },
         pmndrsTransmittanceEnabled: { type: "string", default: "1" },
         pmndrsInscatterEnabled: { type: "string", default: "1" },
         pmndrsGroundEnabled: { type: "string", default: "1" },
-        pmndrsGroundAlbedo: { type: "string", default: "#f0e6d6" },
-        pmndrsRayleighScale: { type: "string", default: "1.0" },
-        pmndrsMieScatteringScale: { type: "string", default: "0.9" },
-        pmndrsMieExtinctionScale: { type: "string", default: "1.0" },
-        pmndrsMiePhaseG: { type: "string", default: "0.8" },
-        pmndrsAbsorptionScale: { type: "string", default: "1.0" },
+        pmndrsGroundAlbedo: { type: "string", default: "#d8d8d0" },
+        pmndrsRayleighScale: { type: "string", default: "1.18" },
+        pmndrsMieScatteringScale: { type: "string", default: "0.42" },
+        pmndrsMieExtinctionScale: { type: "string", default: "0.56" },
+        pmndrsMiePhaseG: { type: "string", default: "0.74" },
+        pmndrsAbsorptionScale: { type: "string", default: "0.94" },
         pmndrsMoonEnabled: { type: "string", default: "0" },
     },
     getSSRStrengthValue: function () {
@@ -200,9 +202,9 @@ AFRAME.registerComponent('scene-settings', {
     getPmndrsAtmosphereQuality: function () {
         switch (this.data.pmndrsAtmosphereQuality) {
             case 'performance':
+            case 'balanced':
             case 'quality':
             case 'cinematic':
-            case 'custom':
                 return this.data.pmndrsAtmosphereQuality;
             default:
                 return 'balanced';

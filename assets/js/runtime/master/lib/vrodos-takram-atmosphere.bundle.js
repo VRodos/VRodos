@@ -11,10 +11,10 @@
     AerialPerspectiveEffect: () => H3,
     AtmosphereMaterialBase: () => se2,
     AtmosphereParameters: () => n0,
-    DEFAULT_PRECOMPUTED_TEXTURES_URL: () => m3,
-    DEFAULT_STARS_DATA_URL: () => S2,
+    DEFAULT_PRECOMPUTED_TEXTURES_URL: () => S3,
+    DEFAULT_STARS_DATA_URL: () => d2,
     DensityProfileLayer: () => v0,
-    IRRADIANCE_TEXTURE_HEIGHT: () => A3,
+    IRRADIANCE_TEXTURE_HEIGHT: () => A4,
     IRRADIANCE_TEXTURE_WIDTH: () => f2,
     LightingMaskPass: () => ki,
     METER_TO_LENGTH_UNIT: () => w2,
@@ -22,8 +22,8 @@
     PrecomputedTexturesLoader: () => Bi,
     SCATTERING_TEXTURE_DEPTH: () => N2,
     SCATTERING_TEXTURE_HEIGHT: () => g3,
-    SCATTERING_TEXTURE_MU_SIZE: () => _2,
-    SCATTERING_TEXTURE_MU_S_SIZE: () => R3,
+    SCATTERING_TEXTURE_MU_SIZE: () => _3,
+    SCATTERING_TEXTURE_MU_S_SIZE: () => R4,
     SCATTERING_TEXTURE_NU_SIZE: () => u3,
     SCATTERING_TEXTURE_R_SIZE: () => i2,
     SCATTERING_TEXTURE_WIDTH: () => U2,
@@ -33,13 +33,11 @@
     StarsGeometry: () => ji,
     StarsMaterial: () => $t2,
     SunDirectionalLight: () => Xi,
-    TRANSMITTANCE_TEXTURE_HEIGHT: () => p2,
+    TRANSMITTANCE_TEXTURE_HEIGHT: () => p3,
     TRANSMITTANCE_TEXTURE_WIDTH: () => C3,
     XYZ_TO_SRGB: () => D3,
     aerialPerspectiveEffectOptionsDefaults: () => Kn2,
     atmosphereMaterialParametersBaseDefaults: () => Be2,
-    convertBVIndexToLinearSRGBChromaticity: () => U3,
-    convertTemperatureToLinearSRGBChromaticity: () => D4,
     fromAstroRotationMatrix: () => Wr,
     fromAstroVector: () => jt2,
     getAltitudeCorrectionOffset: () => X,
@@ -625,32 +623,36 @@
     if (!i3) {
       if (a)
         throw new Error(n);
-      var o3 = typeof r4 == "function" ? r4() : r4, t2 = o3 ? "".concat(n, ": ").concat(o3) : n;
+      var o2 = typeof r4 == "function" ? r4() : r4, t2 = o2 ? "".concat(n, ": ").concat(o2) : n;
       throw new Error(t2);
     }
   }
 
   // node_modules/@takram/three-geospatial/build/shared2.js
+  var R = "9627216cc50057994c98a2118f3c4a23765d43b9";
+  var _ = `https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/${R}/packages/core/assets/stbn.bin`;
+
+  // node_modules/@takram/three-geospatial/build/shared3.js
   var $ = /* @__PURE__ */ new Vector3();
   function D(q2, t2, i3 = new Vector3(), s) {
     var _a2;
-    const { x: r4, y: e3, z: n4 } = q2, o3 = t2.x, h2 = t2.y, u5 = t2.z, d3 = r4 * r4 * o3, m4 = e3 * e3 * h2, c3 = n4 * n4 * u5, l3 = d3 + m4 + c3, p3 = Math.sqrt(1 / l3);
-    if (!Number.isFinite(p3))
+    const { x: r4, y: e3, z: n4 } = q2, o2 = t2.x, h2 = t2.y, u4 = t2.z, d3 = r4 * r4 * o2, m3 = e3 * e3 * h2, c3 = n4 * n4 * u4, l3 = d3 + m3 + c3, p4 = Math.sqrt(1 / l3);
+    if (!Number.isFinite(p4))
       return;
-    const w3 = $.copy(q2).multiplyScalar(p3);
+    const w3 = $.copy(q2).multiplyScalar(p4);
     if (l3 < ((_a2 = s == null ? void 0 : s.centerTolerance) != null ? _a2 : 0.1))
       return i3.copy(w3);
-    const f4 = w3.multiply(t2).multiplyScalar(2);
-    let y2 = (1 - p3) * q2.length() / (f4.length() / 2), I3 = 0, x3, M2, g5, v3;
+    const f3 = w3.multiply(t2).multiplyScalar(2);
+    let y3 = (1 - p4) * q2.length() / (f3.length() / 2), I3 = 0, x3, M2, g5, v3;
     do {
-      y2 -= I3, x3 = 1 / (1 + y2 * o3), M2 = 1 / (1 + y2 * h2), g5 = 1 / (1 + y2 * u5);
-      const V2 = x3 * x3, F2 = M2 * M2, L3 = g5 * g5, G4 = V2 * x3, j2 = F2 * M2, B = L3 * g5;
-      v3 = d3 * V2 + m4 * F2 + c3 * L3 - 1, I3 = v3 / ((d3 * G4 * o3 + m4 * j2 * h2 + c3 * B * u5) * -2);
+      y3 -= I3, x3 = 1 / (1 + y3 * o2), M2 = 1 / (1 + y3 * h2), g5 = 1 / (1 + y3 * u4);
+      const V2 = x3 * x3, F2 = M2 * M2, L3 = g5 * g5, G4 = V2 * x3, j2 = F2 * M2, B2 = L3 * g5;
+      v3 = d3 * V2 + m3 * F2 + c3 * L3 - 1, I3 = v3 / ((d3 * G4 * o2 + m3 * j2 * h2 + c3 * B2 * u4) * -2);
     } while (Math.abs(v3) > 1e-12);
     return i3.set(r4 * x3, e3 * M2, n4 * g5);
   }
   var E = /* @__PURE__ */ new Vector3();
-  var R = /* @__PURE__ */ new Vector3();
+  var R2 = /* @__PURE__ */ new Vector3();
   var U = /* @__PURE__ */ new Vector3();
   var b = class b2 {
     constructor(t2, i3, s) {
@@ -697,29 +699,29 @@
       this.getSurfaceNormal(t2, r4), i3.set(-t2.y, t2.x, 0).normalize(), s.crossVectors(r4, i3).normalize();
     }
     getEastNorthUpFrame(t2, i3 = new Matrix4()) {
-      const s = E, r4 = R, e3 = U;
+      const s = E, r4 = R2, e3 = U;
       return this.getEastNorthUpVectors(t2, s, r4, e3), i3.makeBasis(s, r4, e3).setPosition(t2);
     }
     getNorthUpEastFrame(t2, i3 = new Matrix4()) {
-      const s = E, r4 = R, e3 = U;
+      const s = E, r4 = R2, e3 = U;
       return this.getEastNorthUpVectors(t2, s, r4, e3), i3.makeBasis(r4, e3, s).setPosition(t2);
     }
     getIntersection(t2, i3 = new Vector3()) {
-      const s = this.reciprocalRadii(E), r4 = R.copy(s).multiply(t2.origin), e3 = U.copy(s).multiply(t2.direction), n4 = r4.lengthSq(), o3 = e3.lengthSq(), h2 = r4.dot(e3), u5 = h2 ** 2 - o3 * (n4 - 1);
+      const s = this.reciprocalRadii(E), r4 = R2.copy(s).multiply(t2.origin), e3 = U.copy(s).multiply(t2.direction), n4 = r4.lengthSq(), o2 = e3.lengthSq(), h2 = r4.dot(e3), u4 = h2 ** 2 - o2 * (n4 - 1);
       if (n4 === 1)
         return i3.copy(t2.origin);
       if (n4 > 1) {
-        if (h2 >= 0 || u5 < 0)
+        if (h2 >= 0 || u4 < 0)
           return;
-        const d3 = Math.sqrt(u5), m4 = (-h2 - d3) / o3, c3 = (-h2 + d3) / o3;
-        return t2.at(Math.min(m4, c3), i3);
+        const d3 = Math.sqrt(u4), m3 = (-h2 - d3) / o2, c3 = (-h2 + d3) / o2;
+        return t2.at(Math.min(m3, c3), i3);
       }
       if (n4 < 1) {
-        const d3 = h2 ** 2 - o3 * (n4 - 1), m4 = Math.sqrt(d3), c3 = (-h2 + m4) / o3;
+        const d3 = h2 ** 2 - o2 * (n4 - 1), m3 = Math.sqrt(d3), c3 = (-h2 + m3) / o2;
         return t2.at(c3, i3);
       }
       if (h2 < 0)
-        return t2.at(-h2 / o3, i3);
+        return t2.at(-h2 / o2, i3);
     }
     getOsculatingSphereCenter(t2, i3, s = new Vector3()) {
       c(this.radii.x === this.radii.y);
@@ -732,11 +734,11 @@
     }
     getNormalAtHorizon(t2, i3, s = new Vector3()) {
       c(this.radii.x === this.radii.y);
-      const r4 = this.radii.x ** 2, e3 = this.radii.z ** 2, n4 = t2, o3 = i3;
-      let h2 = (n4.x * o3.x + n4.y * o3.y) / r4 + n4.z * o3.z / e3;
+      const r4 = this.radii.x ** 2, e3 = this.radii.z ** 2, n4 = t2, o2 = i3;
+      let h2 = (n4.x * o2.x + n4.y * o2.y) / r4 + n4.z * o2.z / e3;
       h2 /= (n4.x ** 2 + n4.y ** 2) / r4 + n4.z ** 2 / e3;
-      const u5 = E.copy(o3).multiplyScalar(-h2).add(t2);
-      return s.set(u5.x / r4, u5.y / r4, u5.z / e3).normalize();
+      const u4 = E.copy(o2).multiplyScalar(-h2).add(t2);
+      return s.set(u4.x / r4, u4.y / r4, u4.z / e3).normalize();
     }
   };
   b.WGS84 = /* @__PURE__ */ new b(
@@ -791,8 +793,8 @@
         );
       const n4 = A.multiplyVectors(e3, r4).normalize();
       this.longitude = Math.atan2(n4.y, n4.x), this.latitude = Math.asin(n4.z);
-      const o3 = A.subVectors(t2, e3);
-      return this.height = Math.sign(o3.dot(t2)) * o3.length(), this;
+      const o2 = A.subVectors(t2, e3);
+      return this.height = Math.sign(o2.dot(t2)) * o2.length(), this;
     }
     // See: https://en.wikipedia.org/wiki/Geographic_coordinate_conversion
     // Reference: https://github.com/CesiumGS/cesium/blob/1.122/packages/engine/Source/Core/Cartesian3.js#L916
@@ -934,9 +936,9 @@
       if (cd[i3])
         ++l3[cd[i3] - 1];
     }
-    var le2 = new u16(mb);
+    var le = new u16(mb);
     for (i3 = 1; i3 < mb; ++i3) {
-      le2[i3] = le2[i3 - 1] + l3[i3 - 1] << 1;
+      le[i3] = le[i3 - 1] + l3[i3 - 1] << 1;
     }
     var co;
     if (r4) {
@@ -946,8 +948,8 @@
         if (cd[i3]) {
           var sv = i3 << 4 | cd[i3];
           var r_1 = mb - cd[i3];
-          var v3 = le2[cd[i3] - 1]++ << r_1;
-          for (var m4 = v3 | (1 << r_1) - 1; v3 <= m4; ++v3) {
+          var v3 = le[cd[i3] - 1]++ << r_1;
+          for (var m3 = v3 | (1 << r_1) - 1; v3 <= m3; ++v3) {
             co[rev[v3] >> rvb] = sv;
           }
         }
@@ -956,7 +958,7 @@
       co = new u16(s);
       for (i3 = 0; i3 < s; ++i3) {
         if (cd[i3]) {
-          co[i3] = rev[le2[cd[i3] - 1]++] >> 15 - cd[i3];
+          co[i3] = rev[le[cd[i3] - 1]++] >> 15 - cd[i3];
         }
       }
     }
@@ -982,23 +984,23 @@
   var flrm = /* @__PURE__ */ hMap(flt, 9, 1);
   var fdrm = /* @__PURE__ */ hMap(fdt, 5, 1);
   var max = function(a3) {
-    var m4 = a3[0];
+    var m3 = a3[0];
     for (var i3 = 1; i3 < a3.length; ++i3) {
-      if (a3[i3] > m4)
-        m4 = a3[i3];
+      if (a3[i3] > m3)
+        m3 = a3[i3];
     }
-    return m4;
+    return m3;
   };
-  var bits = function(d3, p3, m4) {
-    var o3 = p3 / 8 | 0;
-    return (d3[o3] | d3[o3 + 1] << 8) >> (p3 & 7) & m4;
+  var bits = function(d3, p4, m3) {
+    var o2 = p4 / 8 | 0;
+    return (d3[o2] | d3[o2 + 1] << 8) >> (p4 & 7) & m3;
   };
-  var bits16 = function(d3, p3) {
-    var o3 = p3 / 8 | 0;
-    return (d3[o3] | d3[o3 + 1] << 8 | d3[o3 + 2] << 16) >> (p3 & 7);
+  var bits16 = function(d3, p4) {
+    var o2 = p4 / 8 | 0;
+    return (d3[o2] | d3[o2 + 1] << 8 | d3[o2 + 2] << 16) >> (p4 & 7);
   };
-  var shft = function(p3) {
-    return (p3 + 7) / 8 | 0;
+  var shft = function(p4) {
+    return (p4 + 7) / 8 | 0;
   };
   var slc = function(v3, s, e3) {
     if (s == null || s < 0)
@@ -1282,21 +1284,21 @@
         }
       }
       function hufUnpackEncTable(uInt8Array2, inOffset, ni2, im, iM, hcode) {
-        const p3 = inOffset;
+        const p4 = inOffset;
         let c3 = 0;
         let lc = 0;
         for (; im <= iM; im++) {
-          if (p3.value - inOffset.value > ni2) return false;
-          getBits(6, c3, lc, uInt8Array2, p3);
+          if (p4.value - inOffset.value > ni2) return false;
+          getBits(6, c3, lc, uInt8Array2, p4);
           const l3 = getBitsReturn.l;
           c3 = getBitsReturn.c;
           lc = getBitsReturn.lc;
           hcode[im] = l3;
           if (l3 == LONG_ZEROCODE_RUN) {
-            if (p3.value - inOffset.value > ni2) {
+            if (p4.value - inOffset.value > ni2) {
               throw new Error("Something wrong with hufUnpackEncTable");
             }
-            getBits(8, c3, lc, uInt8Array2, p3);
+            getBits(8, c3, lc, uInt8Array2, p4);
             let zerun = getBitsReturn.l + SHORTEST_LONG_RUN;
             c3 = getBitsReturn.c;
             lc = getBitsReturn.lc;
@@ -1336,10 +1338,10 @@
             }
             pl.lit++;
             if (pl.p) {
-              const p3 = pl.p;
+              const p4 = pl.p;
               pl.p = new Array(pl.lit);
               for (let i3 = 0; i3 < pl.lit - 1; ++i3) {
-                pl.p[i3] = p3[i3];
+                pl.p[i3] = p4[i3];
               }
             } else {
               pl.p = new Array(1);
@@ -1376,13 +1378,13 @@
             lc = getCharReturn.lc;
           }
           lc -= 8;
-          let cs2 = c3 >> lc;
-          cs2 = new Uint8Array([cs2])[0];
-          if (outBufferOffset.value + cs2 > outBufferEndOffset) {
+          let cs = c3 >> lc;
+          cs = new Uint8Array([cs])[0];
+          if (outBufferOffset.value + cs > outBufferEndOffset) {
             return false;
           }
           const s = outBuffer[outBufferOffset.value - 1];
-          while (cs2-- > 0) {
+          while (cs-- > 0) {
             outBuffer[outBufferOffset.value++] = s;
           }
         } else if (outBufferOffset.value < outBufferEndOffset) {
@@ -1406,15 +1408,15 @@
         const hs = Int16(h2);
         const hi2 = hs;
         const ai2 = ls + (hi2 & 1) + (hi2 >> 1);
-        const as2 = ai2;
+        const as = ai2;
         const bs = ai2 - hi2;
-        wdec14Return.a = as2;
+        wdec14Return.a = as;
         wdec14Return.b = bs;
       }
       function wdec16(l3, h2) {
-        const m4 = UInt16(l3);
+        const m3 = UInt16(l3);
         const d3 = UInt16(h2);
-        const bb = m4 - (d3 >> 1) & MOD_MASK;
+        const bb = m3 - (d3 >> 1) & MOD_MASK;
         const aa = d3 + bb - A_OFFSET & MOD_MASK;
         wdec14Return.a = aa;
         wdec14Return.b = bb;
@@ -1422,19 +1424,19 @@
       function wav2Decode(buffer2, j2, nx, ox, ny, oy, mx) {
         const w14 = mx < 1 << 14;
         const n4 = nx > ny ? ny : nx;
-        let p3 = 1;
+        let p4 = 1;
         let p22;
         let py;
-        while (p3 <= n4) p3 <<= 1;
-        p3 >>= 1;
-        p22 = p3;
-        p3 >>= 1;
-        while (p3 >= 1) {
+        while (p4 <= n4) p4 <<= 1;
+        p4 >>= 1;
+        p22 = p4;
+        p4 >>= 1;
+        while (p4 >= 1) {
           py = 0;
           const ey = py + oy * (ny - p22);
-          const oy1 = oy * p3;
+          const oy1 = oy * p4;
           const oy2 = oy * p22;
-          const ox1 = ox * p3;
+          const ox1 = ox * p4;
           const ox2 = ox * p22;
           let i00, i01, i10, i11;
           for (; py <= ey; py += oy2) {
@@ -1472,7 +1474,7 @@
                 buffer2[p11 + j2] = wdec14Return.b;
               }
             }
-            if (nx & p3) {
+            if (nx & p4) {
               const p10 = px + oy1;
               if (w14)
                 wdec14(buffer2[px + j2], buffer2[p10 + j2]);
@@ -1483,7 +1485,7 @@
               buffer2[px + j2] = i00;
             }
           }
-          if (ny & p3) {
+          if (ny & p4) {
             let px = py;
             const ex = py + ox * (nx - p22);
             for (; px <= ex; px += ox2) {
@@ -1497,8 +1499,8 @@
               buffer2[px + j2] = i00;
             }
           }
-          p22 = p3;
-          p3 >>= 1;
+          p22 = p4;
+          p4 >>= 1;
         }
         return py;
       }
@@ -1611,20 +1613,20 @@
       function decodeRunLength(source) {
         let size = source.byteLength;
         const out = new Array();
-        let p3 = 0;
+        let p4 = 0;
         const reader = new DataView(source);
         while (size > 0) {
-          const l3 = reader.getInt8(p3++);
+          const l3 = reader.getInt8(p4++);
           if (l3 < 0) {
             const count = -l3;
             size -= count + 1;
             for (let i3 = 0; i3 < count; i3++) {
-              out.push(reader.getUint8(p3++));
+              out.push(reader.getUint8(p4++));
             }
           } else {
             const count = l3;
             size -= 2;
-            const value = reader.getUint8(p3++);
+            const value = reader.getUint8(p4++);
             for (let i3 = 0; i3 < count + 1; i3++) {
               out.push(value);
             }
@@ -1680,10 +1682,10 @@
           let offset2 = 0;
           for (let comp = 0; comp < numComp; ++comp) {
             const type = channelData[cscSet.idx[comp]].type;
-            for (let y2 = 8 * blocky; y2 < 8 * blocky + maxY; ++y2) {
-              offset2 = rowOffsets[comp][y2];
+            for (let y3 = 8 * blocky; y3 < 8 * blocky + maxY; ++y3) {
+              offset2 = rowOffsets[comp][y3];
               for (let blockx = 0; blockx < numFullBlocksX; ++blockx) {
-                const src = blockx * 64 + (y2 & 7) * 8;
+                const src = blockx * 64 + (y3 & 7) * 8;
                 dataView.setUint16(offset2 + 0 * INT16_SIZE * type, rowBlock[comp][src + 0], true);
                 dataView.setUint16(offset2 + 1 * INT16_SIZE * type, rowBlock[comp][src + 1], true);
                 dataView.setUint16(offset2 + 2 * INT16_SIZE * type, rowBlock[comp][src + 2], true);
@@ -1696,9 +1698,9 @@
               }
             }
             if (numFullBlocksX != numBlocksX) {
-              for (let y2 = 8 * blocky; y2 < 8 * blocky + maxY; ++y2) {
-                const offset3 = rowOffsets[comp][y2] + 8 * numFullBlocksX * INT16_SIZE * type;
-                const src = numFullBlocksX * 64 + (y2 & 7) * 8;
+              for (let y3 = 8 * blocky; y3 < 8 * blocky + maxY; ++y3) {
+                const offset3 = rowOffsets[comp][y3] + 8 * numFullBlocksX * INT16_SIZE * type;
+                const src = numFullBlocksX * 64 + (y3 & 7) * 8;
                 for (let x3 = 0; x3 < maxX; ++x3) {
                   dataView.setUint16(offset3 + x3 * INT16_SIZE * type, rowBlock[comp][src + x3], true);
                 }
@@ -1712,8 +1714,8 @@
           channelData[cscSet.idx[comp]].decoded = true;
           const type = channelData[cscSet.idx[comp]].type;
           if (channelData[comp].type != 2) continue;
-          for (let y2 = 0; y2 < height; ++y2) {
-            const offset2 = rowOffsets[comp][y2];
+          for (let y3 = 0; y3 < height; ++y3) {
+            const offset2 = rowOffsets[comp][y3];
             for (let x3 = 0; x3 < width; ++x3) {
               halfRow[x3] = dataView.getUint16(offset2 + x3 * INT16_SIZE * type, true);
             }
@@ -1749,17 +1751,17 @@
             dctInverse(dctData);
             convertToHalf(dctData, rowBlock, blockx * 64);
           }
-          for (let y2 = 8 * blocky; y2 < 8 * blocky + maxY; ++y2) {
-            let offset2 = rowPtrs[channelIndex][y2];
+          for (let y3 = 8 * blocky; y3 < 8 * blocky + maxY; ++y3) {
+            let offset2 = rowPtrs[channelIndex][y3];
             for (let blockx = 0; blockx < numFullBlocksX; ++blockx) {
-              const src = blockx * 64 + (y2 & 7) * 8;
+              const src = blockx * 64 + (y3 & 7) * 8;
               for (let x3 = 0; x3 < 8; ++x3) {
                 dataView.setUint16(offset2 + x3 * INT16_SIZE * cd.type, rowBlock[src + x3], true);
               }
               offset2 += 8 * INT16_SIZE * cd.type;
             }
             if (numBlocksX != numFullBlocksX) {
-              const src = numFullBlocksX * 64 + (y2 & 7) * 8;
+              const src = numFullBlocksX * 64 + (y3 & 7) * 8;
               for (let x3 = 0; x3 < leftoverX; ++x3) {
                 dataView.setUint16(offset2 + x3 * INT16_SIZE * cd.type, rowBlock[src + x3], true);
               }
@@ -1856,7 +1858,7 @@
         const c3 = 0.5 * Math.cos(3.14159 / 8);
         const d3 = 0.5 * Math.cos(3 * 3.14159 / 16);
         const e3 = 0.5 * Math.cos(5 * 3.14159 / 16);
-        const f4 = 0.5 * Math.cos(3 * 3.14159 / 8);
+        const f3 = 0.5 * Math.cos(3 * 3.14159 / 8);
         const g5 = 0.5 * Math.cos(7 * 3.14159 / 16);
         const alpha = new Array(4);
         const beta = new Array(4);
@@ -1865,9 +1867,9 @@
         for (let row = 0; row < 8; ++row) {
           const rowPtr = row * 8;
           alpha[0] = c3 * data[rowPtr + 2];
-          alpha[1] = f4 * data[rowPtr + 2];
+          alpha[1] = f3 * data[rowPtr + 2];
           alpha[2] = c3 * data[rowPtr + 6];
-          alpha[3] = f4 * data[rowPtr + 6];
+          alpha[3] = f3 * data[rowPtr + 6];
           beta[0] = b4 * data[rowPtr + 1] + d3 * data[rowPtr + 3] + e3 * data[rowPtr + 5] + g5 * data[rowPtr + 7];
           beta[1] = d3 * data[rowPtr + 1] - g5 * data[rowPtr + 3] - b4 * data[rowPtr + 5] - e3 * data[rowPtr + 7];
           beta[2] = e3 * data[rowPtr + 1] - b4 * data[rowPtr + 3] + g5 * data[rowPtr + 5] + d3 * data[rowPtr + 7];
@@ -1891,9 +1893,9 @@
         }
         for (let column = 0; column < 8; ++column) {
           alpha[0] = c3 * data[16 + column];
-          alpha[1] = f4 * data[16 + column];
+          alpha[1] = f3 * data[16 + column];
           alpha[2] = c3 * data[48 + column];
-          alpha[3] = f4 * data[48 + column];
+          alpha[3] = f3 * data[48 + column];
           beta[0] = b4 * data[8 + column] + d3 * data[24 + column] + e3 * data[40 + column] + g5 * data[56 + column];
           beta[1] = d3 * data[8 + column] - g5 * data[24 + column] - b4 * data[40 + column] - e3 * data[56 + column];
           beta[2] = e3 * data[8 + column] - b4 * data[24 + column] + g5 * data[40 + column] + d3 * data[56 + column];
@@ -1918,12 +1920,12 @@
       }
       function csc709Inverse(data) {
         for (let i3 = 0; i3 < 64; ++i3) {
-          const y2 = data[0][i3];
+          const y3 = data[0][i3];
           const cb = data[1][i3];
           const cr3 = data[2][i3];
-          data[0][i3] = y2 + 1.5747 * cr3;
-          data[1][i3] = y2 - 0.1873 * cb - 0.4682 * cr3;
-          data[2][i3] = y2 + 1.8556 * cb;
+          data[0][i3] = y3 + 1.5747 * cr3;
+          data[1][i3] = y3 - 0.1873 * cb - 0.4682 * cr3;
+          data[2][i3] = y3 + 1.8556 * cb;
         }
       }
       function convertToHalf(src, dst, idx) {
@@ -2004,7 +2006,7 @@
         applyLut(lut, outBuffer, outBufferEnd);
         let tmpOffset = 0;
         const tmpBuffer = new Uint8Array(outBuffer.buffer.byteLength);
-        for (let y2 = 0; y2 < info.lines; y2++) {
+        for (let y3 = 0; y3 < info.lines; y3++) {
           for (let c3 = 0; c3 < info.inputChannels.length; c3++) {
             const cd = pizChannelData[c3];
             const n4 = cd.nx * cd.size;
@@ -2025,7 +2027,7 @@
         let tmpBufferEnd = 0;
         let writePtr = 0;
         const ptr = new Array(4);
-        for (let y2 = 0; y2 < info.lines; y2++) {
+        for (let y3 = 0; y3 < info.lines; y3++) {
           for (let c3 = 0; c3 < info.inputChannels.length; c3++) {
             let pixel = 0;
             const type = info.inputChannels[c3].pixelType;
@@ -2158,7 +2160,7 @@
         for (let i3 = 0; i3 < rowOffsets.length; ++i3) {
           rowOffsets[i3] = new Array();
         }
-        for (let y2 = 0; y2 < info.lines; ++y2) {
+        for (let y3 = 0; y3 < info.lines; ++y3) {
           for (let chan = 0; chan < channelData.length; ++chan) {
             rowOffsets[chan].push(outBufferEnd);
             outBufferEnd += channelData[chan].width * info.type * INT16_SIZE;
@@ -2174,7 +2176,7 @@
             case RLE:
               let row = 0;
               let rleOffset = 0;
-              for (let y2 = 0; y2 < info.lines; ++y2) {
+              for (let y3 = 0; y3 < info.lines; ++y3) {
                 let rowOffsetBytes = rowOffsets[i3][row];
                 for (let x3 = 0; x3 < cd.width; ++x3) {
                   for (let byte = 0; byte < INT16_SIZE * cd.type; ++byte) {
@@ -2215,13 +2217,13 @@
       }
       function parseRational(dataView, offset2) {
         const x3 = parseInt32(dataView, offset2);
-        const y2 = parseUint32(dataView, offset2);
-        return [x3, y2];
+        const y3 = parseUint32(dataView, offset2);
+        return [x3, y3];
       }
       function parseTimecode(dataView, offset2) {
         const x3 = parseUint32(dataView, offset2);
-        const y2 = parseUint32(dataView, offset2);
-        return [x3, y2];
+        const y3 = parseUint32(dataView, offset2);
+        return [x3, y3];
       }
       function parseInt32(dataView, offset2) {
         const Int32 = dataView.getInt32(offset2.value, true);
@@ -2367,14 +2369,14 @@
       }
       function parseV2f(dataView, offset2) {
         const x3 = parseFloat32(dataView, offset2);
-        const y2 = parseFloat32(dataView, offset2);
-        return [x3, y2];
+        const y3 = parseFloat32(dataView, offset2);
+        return [x3, y3];
       }
       function parseV3f(dataView, offset2) {
         const x3 = parseFloat32(dataView, offset2);
-        const y2 = parseFloat32(dataView, offset2);
+        const y3 = parseFloat32(dataView, offset2);
         const z4 = parseFloat32(dataView, offset2);
-        return [x3, y2, z4];
+        return [x3, y3, z4];
       }
       function parseValue(dataView, buffer2, offset2, type, size) {
         if (type === "string" || type === "stringvector" || type === "iccProfile") {
@@ -2718,9 +2720,9 @@
         EXRDecoder2.totalBytes = byteOffset;
         EXRDecoder2.outLineWidth = EXRDecoder2.width * EXRDecoder2.outputChannels;
         if (EXRHeader2.lineOrder === "INCREASING_Y") {
-          EXRDecoder2.scanOrder = (y2) => y2;
+          EXRDecoder2.scanOrder = (y3) => y3;
         } else {
-          EXRDecoder2.scanOrder = (y2) => EXRDecoder2.height - 1 - y2;
+          EXRDecoder2.scanOrder = (y3) => EXRDecoder2.height - 1 - y3;
         }
         if (EXRHeader2.spec.singleTile) {
           EXRDecoder2.blockHeight = EXRHeader2.tiles.ySize;
@@ -2730,7 +2732,7 @@
           const numYTiles = calculateTiles(numXLevels, EXRDecoder2.height, EXRHeader2.tiles.ySize, EXRHeader2.tiles.roundingMode);
           EXRDecoder2.tileCount = numXTiles[0] * numYTiles[0];
           for (let l3 = 0; l3 < numXLevels; l3++)
-            for (let y2 = 0; y2 < numYTiles[l3]; y2++)
+            for (let y3 = 0; y3 < numYTiles[l3]; y3++)
               for (let x3 = 0; x3 < numXTiles[l3]; x3++)
                 parseInt64(dataView, offset2);
           EXRDecoder2.decode = parseTiles.bind(EXRDecoder2);
@@ -2803,45 +2805,43 @@
   };
 
   // node_modules/@takram/three-geospatial/build/index.js
-  var an = class extends Loader {
-    load(t2, n4, r4, s) {
-      const o3 = new FileLoader(this.manager);
-      o3.setResponseType("arraybuffer"), o3.setRequestHeader(this.requestHeader), o3.setPath(this.path), o3.setWithCredentials(this.withCredentials), o3.load(
+  var sn = class extends Loader {
+    load(t2, n4, r4, o2) {
+      const s = new FileLoader(this.manager);
+      s.setResponseType("arraybuffer"), s.setRequestHeader(this.requestHeader), s.setPath(this.path), s.setWithCredentials(this.withCredentials), s.load(
         t2,
         (i3) => {
           c(i3 instanceof ArrayBuffer);
           try {
             n4(i3);
           } catch (c3) {
-            s != null ? s(c3) : console.error(c3), this.manager.itemError(t2);
+            o2 != null ? o2(c3) : console.error(c3), this.manager.itemError(t2);
           }
         },
         r4,
-        s
+        o2
       );
     }
   };
-  function Pr(e3) {
+  function wr(e3) {
     var _a2, _b2, _c;
     return e3 instanceof WebGLRenderer ? e3.getContext().getExtension("OES_texture_float_linear") != null : (_c = (_b2 = (_a2 = e3.backend).hasFeature) == null ? void 0 : _b2.call(_a2, "float32-filterable")) != null ? _c : false;
   }
-  var un = "9627216cc50057994c98a2118f3c4a23765d43b9";
-  var xr = `https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/${un}/packages/core/assets/stbn.bin`;
-  var yn = "This is not an object";
-  var dn = "This is not a Float16Array object";
-  var Jt = "This constructor is not a subclass of Float16Array";
-  var we = "The constructor property value is not an object";
-  var pn = "Species constructor didn't return TypedArray object";
-  var An = "Derived constructor created TypedArray object which was too small length";
+  var on = "This is not an object";
+  var cn = "This is not a Float16Array object";
+  var qt = "This constructor is not a subclass of Float16Array";
+  var pe = "The constructor property value is not an object";
+  var an = "Species constructor didn't return TypedArray object";
+  var hn = "Derived constructor created TypedArray object which was too small length";
   var J = "Attempting to access detached ArrayBuffer";
-  var xt = "Cannot convert undefined or null to object";
-  var Nt = "Cannot mix BigInt and other types, use explicit conversions";
-  var $t = "@@iterator property is not callable";
-  var Qt = "Reduce of empty array with no initial value";
-  var gn = "The comparison function must be either a function or undefined";
+  var Pt = "Cannot convert undefined or null to object";
+  var xt = "Cannot mix BigInt and other types, use explicit conversions";
+  var kt = "@@iterator property is not callable";
+  var Jt = "Reduce of empty array with no initial value";
+  var fn = "The comparison function must be either a function or undefined";
   var St = "Offset is out of bounds";
   function g(e3) {
-    return (t2, ...n4) => m(e3, t2, n4);
+    return (t2, ...n4) => S2(e3, t2, n4);
   }
   function H(e3, t2) {
     return g(
@@ -2852,39 +2852,39 @@
     );
   }
   var {
-    apply: m,
-    construct: k,
-    defineProperty: Zt,
-    get: _t,
+    apply: S2,
+    construct: q,
+    defineProperty: $t,
+    get: mt,
     getOwnPropertyDescriptor: v,
     getPrototypeOf: tt,
-    has: Rt,
-    ownKeys: Te,
-    set: Kt,
-    setPrototypeOf: be
+    has: Nt,
+    ownKeys: Ae,
+    set: Qt,
+    setPrototypeOf: ge
   } = Reflect;
-  var wn = Proxy;
+  var ln = Proxy;
   var {
-    EPSILON: Tn,
-    MAX_SAFE_INTEGER: te,
-    isFinite: me,
+    EPSILON: un,
+    MAX_SAFE_INTEGER: Zt,
+    isFinite: we,
     isNaN: G
   } = Number;
   var {
     iterator: x,
-    species: bn,
+    species: yn,
     toStringTag: Mt,
-    for: mn
+    for: dn
   } = Symbol;
   var j = Object;
   var {
     create: At,
     defineProperty: et2,
-    freeze: Sn,
-    is: ee
+    freeze: pn,
+    is: Kt
   } = j;
   var Lt = j.prototype;
-  var _n = (
+  var An = (
     /** @type {any} */
     Lt.__lookupGetter__ ? g(
       /** @type {any} */
@@ -2892,63 +2892,63 @@
     ) : (e3, t2) => {
       if (e3 == null)
         throw w(
-          xt
+          Pt
         );
       let n4 = j(e3);
       do {
         const r4 = v(n4, t2);
         if (r4 !== void 0)
-          return L(r4, "get") ? r4.get : void 0;
+          return R3(r4, "get") ? r4.get : void 0;
       } while ((n4 = tt(n4)) !== null);
     }
   );
-  var L = (
+  var R3 = (
     /** @type {any} */
     j.hasOwn || g(Lt.hasOwnProperty)
   );
-  var Se = Array;
-  var _e = Se.isArray;
-  var gt = Se.prototype;
-  var En = g(gt.join);
-  var In = g(gt.push);
-  var On = g(
+  var Te = Array;
+  var be = Te.isArray;
+  var gt = Te.prototype;
+  var gn = g(gt.join);
+  var wn = g(gt.push);
+  var Tn = g(
     gt.toLocaleString
   );
   var Bt = gt[x];
-  var Pn = g(Bt);
+  var bn = g(Bt);
   var {
-    abs: xn,
-    trunc: Ee
+    abs: Sn,
+    trunc: Se
   } = Math;
   var wt = ArrayBuffer;
-  var Nn = wt.isView;
-  var Ie = wt.prototype;
-  var Rn = g(Ie.slice);
-  var Ln = H(Ie, "byteLength");
-  var Ut = typeof SharedArrayBuffer < "u" ? SharedArrayBuffer : null;
-  var Un = Ut && H(Ut.prototype, "byteLength");
-  var Dt = tt(Uint8Array);
-  var Cn = Dt.from;
-  var b3 = Dt.prototype;
-  var Fn = b3[x];
-  var Mn = g(b3.keys);
-  var Bn = g(
+  var mn = wt.isView;
+  var me = wt.prototype;
+  var _n = g(me.slice);
+  var En = H(me, "byteLength");
+  var Rt = typeof SharedArrayBuffer < "u" ? SharedArrayBuffer : null;
+  var In = Rt && H(Rt.prototype, "byteLength");
+  var Ft = tt(Uint8Array);
+  var On = Ft.from;
+  var b3 = Ft.prototype;
+  var Pn = b3[x];
+  var xn = g(b3.keys);
+  var Nn = g(
     b3.values
   );
-  var Dn = g(
+  var Ln = g(
     b3.entries
   );
-  var vn = g(b3.set);
-  var ne = g(
+  var Rn = g(b3.set);
+  var te = g(
     b3.reverse
   );
-  var Gn = g(b3.fill);
-  var jn = g(
+  var Un = g(b3.fill);
+  var Cn = g(
     b3.copyWithin
   );
-  var re = g(b3.sort);
+  var ee = g(b3.sort);
   var Y = g(b3.slice);
-  var zn = g(
+  var Mn = g(
     b3.subarray
   );
   var T = H(
@@ -2959,44 +2959,44 @@
     b3,
     "byteOffset"
   );
-  var y = H(
+  var y2 = H(
     b3,
     "length"
   );
-  var Oe = H(
+  var _e = H(
     b3,
     Mt
   );
-  var Hn = Uint8Array;
-  var S = Uint16Array;
-  var se = (...e3) => m(Cn, S, e3);
-  var vt = Uint32Array;
-  var Wn = Float32Array;
-  var F = tt([][x]());
-  var Tt = g(F.next);
-  var Vn = g((function* () {
+  var Bn = Uint8Array;
+  var m = Uint16Array;
+  var ne = (...e3) => S2(On, m, e3);
+  var Dt = Uint32Array;
+  var Fn = Float32Array;
+  var M = tt([][x]());
+  var Tt = g(M.next);
+  var Dn = g((function* () {
   })().next);
-  var Yn = tt(F);
-  var Xn = DataView.prototype;
-  var kn = g(
-    Xn.getUint16
+  var vn = tt(M);
+  var Gn = DataView.prototype;
+  var jn = g(
+    Gn.getUint16
   );
   var w = TypeError;
-  var Et = RangeError;
-  var Pe = WeakSet;
-  var xe = Pe.prototype;
-  var qn = g(xe.add);
-  var Jn = g(xe.has);
+  var _t = RangeError;
+  var Ee = WeakSet;
+  var Ie = Ee.prototype;
+  var zn = g(Ie.add);
+  var Hn = g(Ie.has);
   var bt = WeakMap;
-  var Gt = bt.prototype;
-  var at = g(Gt.get);
-  var $n = g(Gt.has);
-  var jt = g(Gt.set);
-  var Ne = new bt();
-  var Qn = At(null, {
+  var vt = bt.prototype;
+  var at = g(vt.get);
+  var Wn = g(vt.has);
+  var Gt = g(vt.set);
+  var Oe = new bt();
+  var Vn = At(null, {
     next: {
       value: function() {
-        const t2 = at(Ne, this);
+        const t2 = at(Oe, this);
         return Tt(t2);
       }
     },
@@ -3006,45 +3006,45 @@
       }
     }
   });
-  function q(e3) {
-    if (e3[x] === Bt && F.next === Tt)
+  function k(e3) {
+    if (e3[x] === Bt && M.next === Tt)
       return e3;
-    const t2 = At(Qn);
-    return jt(Ne, t2, Pn(e3)), t2;
+    const t2 = At(Vn);
+    return Gt(Oe, t2, bn(e3)), t2;
   }
-  var Re = new bt();
-  var Le = At(Yn, {
+  var Pe = new bt();
+  var xe = At(vn, {
     next: {
       value: function() {
-        const t2 = at(Re, this);
-        return Vn(t2);
+        const t2 = at(Pe, this);
+        return Dn(t2);
       },
       writable: true,
       configurable: true
     }
   });
-  for (const e3 of Te(F))
-    e3 !== "next" && et2(Le, e3, v(F, e3));
-  function oe(e3) {
-    const t2 = At(Le);
-    return jt(Re, t2, e3), t2;
+  for (const e3 of Ae(M))
+    e3 !== "next" && et2(xe, e3, v(M, e3));
+  function re(e3) {
+    const t2 = At(xe);
+    return Gt(Pe, t2, e3), t2;
   }
   function ht(e3) {
     return e3 !== null && typeof e3 == "object" || typeof e3 == "function";
   }
-  function ie(e3) {
+  function se(e3) {
     return e3 !== null && typeof e3 == "object";
   }
   function ft(e3) {
-    return Oe(e3) !== void 0;
+    return _e(e3) !== void 0;
   }
-  function Ct(e3) {
-    const t2 = Oe(e3);
+  function Ut(e3) {
+    const t2 = _e(e3);
     return t2 === "BigInt64Array" || t2 === "BigUint64Array";
   }
-  function Zn(e3) {
+  function Yn(e3) {
     try {
-      return _e(e3) ? false : (Ln(
+      return be(e3) ? false : (En(
         /** @type {any} */
         e3
       ), true);
@@ -3052,11 +3052,11 @@
       return false;
     }
   }
-  function Ue(e3) {
-    if (Ut === null)
+  function Ne(e3) {
+    if (Rt === null)
       return false;
     try {
-      return Un(
+      return In(
         /** @type {any} */
         e3
       ), true;
@@ -3064,78 +3064,78 @@
       return false;
     }
   }
-  function Kn(e3) {
-    return Zn(e3) || Ue(e3);
+  function Xn(e3) {
+    return Yn(e3) || Ne(e3);
   }
-  function ce(e3) {
-    return _e(e3) ? e3[x] === Bt && F.next === Tt : false;
+  function oe(e3) {
+    return be(e3) ? e3[x] === Bt && M.next === Tt : false;
   }
-  function tr(e3) {
-    return ft(e3) ? e3[x] === Fn && F.next === Tt : false;
+  function qn(e3) {
+    return ft(e3) ? e3[x] === Pn && M.next === Tt : false;
   }
   function nt(e3) {
     if (typeof e3 != "string")
       return false;
     const t2 = +e3;
-    return e3 !== t2 + "" || !me(t2) ? false : t2 === Ee(t2);
+    return e3 !== t2 + "" || !we(t2) ? false : t2 === Se(t2);
   }
-  var lt = mn("__Float16Array__");
-  function er(e3) {
-    if (!ie(e3))
+  var lt = dn("__Float16Array__");
+  function kn(e3) {
+    if (!se(e3))
       return false;
     const t2 = tt(e3);
-    if (!ie(t2))
+    if (!se(t2))
       return false;
     const n4 = t2.constructor;
     if (n4 === void 0)
       return false;
     if (!ht(n4))
-      throw w(we);
-    return Rt(n4, lt);
+      throw w(pe);
+    return Nt(n4, lt);
   }
-  var Ft = 1 / Tn;
-  function nr(e3) {
-    return e3 + Ft - Ft;
+  var Ct = 1 / un;
+  function Jn(e3) {
+    return e3 + Ct - Ct;
   }
-  var Ce = 6103515625e-14;
-  var rr = 65504;
-  var Fe = 9765625e-10;
-  var ae = Fe * Ce;
-  var sr = Fe * Ft;
-  function or(e3) {
+  var Le = 6103515625e-14;
+  var $n = 65504;
+  var Re = 9765625e-10;
+  var ie = Re * Le;
+  var Qn = Re * Ct;
+  function Zn(e3) {
     const t2 = +e3;
-    if (!me(t2) || t2 === 0)
+    if (!we(t2) || t2 === 0)
       return t2;
-    const n4 = t2 > 0 ? 1 : -1, r4 = xn(t2);
-    if (r4 < Ce)
-      return n4 * nr(r4 / ae) * ae;
-    const s = (1 + sr) * r4, o3 = s - (s - r4);
-    return o3 > rr || G(o3) ? n4 * (1 / 0) : n4 * o3;
+    const n4 = t2 > 0 ? 1 : -1, r4 = Sn(t2);
+    if (r4 < Le)
+      return n4 * Jn(r4 / ie) * ie;
+    const o2 = (1 + Qn) * r4, s = o2 - (o2 - r4);
+    return s > $n || G(s) ? n4 * (1 / 0) : n4 * s;
   }
-  var Me = new wt(4);
-  var Be = new Wn(Me);
-  var De = new vt(Me);
-  var E2 = new S(512);
-  var I = new Hn(512);
+  var Ue = new wt(4);
+  var Ce = new Fn(Ue);
+  var Me = new Dt(Ue);
+  var E3 = new m(512);
+  var I = new Bn(512);
   for (let e3 = 0; e3 < 256; ++e3) {
     const t2 = e3 - 127;
-    t2 < -24 ? (E2[e3] = 0, E2[e3 | 256] = 32768, I[e3] = 24, I[e3 | 256] = 24) : t2 < -14 ? (E2[e3] = 1024 >> -t2 - 14, E2[e3 | 256] = 1024 >> -t2 - 14 | 32768, I[e3] = -t2 - 1, I[e3 | 256] = -t2 - 1) : t2 <= 15 ? (E2[e3] = t2 + 15 << 10, E2[e3 | 256] = t2 + 15 << 10 | 32768, I[e3] = 13, I[e3 | 256] = 13) : t2 < 128 ? (E2[e3] = 31744, E2[e3 | 256] = 64512, I[e3] = 24, I[e3 | 256] = 24) : (E2[e3] = 31744, E2[e3 | 256] = 64512, I[e3] = 13, I[e3 | 256] = 13);
+    t2 < -24 ? (E3[e3] = 0, E3[e3 | 256] = 32768, I[e3] = 24, I[e3 | 256] = 24) : t2 < -14 ? (E3[e3] = 1024 >> -t2 - 14, E3[e3 | 256] = 1024 >> -t2 - 14 | 32768, I[e3] = -t2 - 1, I[e3 | 256] = -t2 - 1) : t2 <= 15 ? (E3[e3] = t2 + 15 << 10, E3[e3 | 256] = t2 + 15 << 10 | 32768, I[e3] = 13, I[e3 | 256] = 13) : t2 < 128 ? (E3[e3] = 31744, E3[e3 | 256] = 64512, I[e3] = 24, I[e3 | 256] = 24) : (E3[e3] = 31744, E3[e3 | 256] = 64512, I[e3] = 13, I[e3 | 256] = 13);
   }
   function P2(e3) {
-    Be[0] = or(e3);
-    const t2 = De[0], n4 = t2 >> 23 & 511;
-    return E2[n4] + ((t2 & 8388607) >> I[n4]);
+    Ce[0] = Zn(e3);
+    const t2 = Me[0], n4 = t2 >> 23 & 511;
+    return E3[n4] + ((t2 & 8388607) >> I[n4]);
   }
-  var zt = new vt(2048);
+  var jt = new Dt(2048);
   for (let e3 = 1; e3 < 1024; ++e3) {
     let t2 = e3 << 13, n4 = 0;
     for (; (t2 & 8388608) === 0; )
       t2 <<= 1, n4 -= 8388608;
-    t2 &= -8388609, n4 += 947912704, zt[e3] = t2 | n4;
+    t2 &= -8388609, n4 += 947912704, jt[e3] = t2 | n4;
   }
   for (let e3 = 1024; e3 < 2048; ++e3)
-    zt[e3] = 939524096 + (e3 - 1024 << 13);
-  var W = new vt(64);
+    jt[e3] = 939524096 + (e3 - 1024 << 13);
+  var W = new Dt(64);
   for (let e3 = 1; e3 < 31; ++e3)
     W[e3] = e3 << 23;
   W[31] = 1199570944;
@@ -3143,42 +3143,42 @@
   for (let e3 = 33; e3 < 63; ++e3)
     W[e3] = 2147483648 + (e3 - 32 << 23);
   W[63] = 3347054592;
-  var ve = new S(64);
+  var Be = new m(64);
   for (let e3 = 1; e3 < 64; ++e3)
-    e3 !== 32 && (ve[e3] = 1024);
-  function d(e3) {
+    e3 !== 32 && (Be[e3] = 1024);
+  function p(e3) {
     const t2 = e3 >> 10;
-    return De[0] = zt[ve[t2] + (e3 & 1023)] + W[t2], Be[0];
+    return Me[0] = jt[Be[t2] + (e3 & 1023)] + W[t2], Ce[0];
   }
-  function R2(e3) {
+  function L(e3) {
     const t2 = +e3;
-    return G(t2) || t2 === 0 ? 0 : Ee(t2);
+    return G(t2) || t2 === 0 ? 0 : Se(t2);
   }
-  function It(e3) {
-    const t2 = R2(e3);
-    return t2 < 0 ? 0 : t2 < te ? t2 : te;
+  function Et(e3) {
+    const t2 = L(e3);
+    return t2 < 0 ? 0 : t2 < Zt ? t2 : Zt;
   }
   function rt(e3, t2) {
     if (!ht(e3))
-      throw w(yn);
+      throw w(on);
     const n4 = e3.constructor;
     if (n4 === void 0)
       return t2;
     if (!ht(n4))
-      throw w(we);
-    const r4 = n4[bn];
+      throw w(pe);
+    const r4 = n4[yn];
     return r4 != null ? r4 : t2;
   }
   function $2(e3) {
-    if (Ue(e3))
+    if (Ne(e3))
       return false;
     try {
-      return Rn(e3, 0, 0), false;
+      return _n(e3, 0, 0), false;
     } catch {
     }
     return true;
   }
-  function he(e3, t2) {
+  function ce(e3, t2) {
     const n4 = G(e3), r4 = G(t2);
     if (n4 && r4)
       return 0;
@@ -3189,47 +3189,47 @@
     if (e3 > t2)
       return 1;
     if (e3 === 0 && t2 === 0) {
-      const s = ee(e3, 0), o3 = ee(t2, 0);
-      if (!s && o3)
+      const o2 = Kt(e3, 0), s = Kt(t2, 0);
+      if (!o2 && s)
         return -1;
-      if (s && !o3)
+      if (o2 && !s)
         return 1;
     }
     return 0;
   }
-  var Ht = 2;
+  var zt = 2;
   var ut = new bt();
   function D2(e3) {
-    return $n(ut, e3) || !Nn(e3) && er(e3);
+    return Wn(ut, e3) || !mn(e3) && kn(e3);
   }
   function u(e3) {
     if (!D2(e3))
-      throw w(dn);
+      throw w(cn);
   }
   function st(e3, t2) {
     const n4 = D2(e3), r4 = ft(e3);
     if (!n4 && !r4)
-      throw w(pn);
+      throw w(an);
     if (typeof t2 == "number") {
-      let s;
+      let o2;
       if (n4) {
-        const o3 = l(e3);
-        s = y(o3);
+        const s = l(e3);
+        o2 = y2(s);
       } else
-        s = y(e3);
-      if (s < t2)
+        o2 = y2(e3);
+      if (o2 < t2)
         throw w(
-          An
+          hn
         );
     }
-    if (Ct(e3))
-      throw w(Nt);
+    if (Ut(e3))
+      throw w(xt);
   }
   function l(e3) {
     const t2 = at(ut, e3);
     if (t2 !== void 0) {
-      const s = T(t2);
-      if ($2(s))
+      const o2 = T(t2);
+      if ($2(o2))
         throw w(J);
       return t2;
     }
@@ -3239,7 +3239,7 @@
     );
     if ($2(n4))
       throw w(J);
-    const r4 = k(A2, [
+    const r4 = q(A3, [
       n4,
       /** @type {any} */
       e3.byteOffset,
@@ -3248,76 +3248,76 @@
     ], e3.constructor);
     return at(ut, r4);
   }
-  function fe(e3) {
-    const t2 = y(e3), n4 = [];
+  function ae(e3) {
+    const t2 = y2(e3), n4 = [];
     for (let r4 = 0; r4 < t2; ++r4)
-      n4[r4] = d(e3[r4]);
+      n4[r4] = p(e3[r4]);
     return n4;
   }
-  var Ge = new Pe();
-  for (const e3 of Te(b3)) {
+  var Fe = new Ee();
+  for (const e3 of Ae(b3)) {
     if (e3 === Mt)
       continue;
     const t2 = v(b3, e3);
-    L(t2, "get") && typeof t2.get == "function" && qn(Ge, t2.get);
+    R3(t2, "get") && typeof t2.get == "function" && zn(Fe, t2.get);
   }
-  var ir = Sn(
+  var Kn = pn(
     /** @type {ProxyHandler<Float16BitsArray>} */
     {
       get(e3, t2, n4) {
-        return nt(t2) && L(e3, t2) ? d(_t(e3, t2)) : Jn(Ge, _n(e3, t2)) ? _t(e3, t2) : _t(e3, t2, n4);
+        return nt(t2) && R3(e3, t2) ? p(mt(e3, t2)) : Hn(Fe, An(e3, t2)) ? mt(e3, t2) : mt(e3, t2, n4);
       },
       set(e3, t2, n4, r4) {
-        return nt(t2) && L(e3, t2) ? Kt(e3, t2, P2(n4)) : Kt(e3, t2, n4, r4);
+        return nt(t2) && R3(e3, t2) ? Qt(e3, t2, P2(n4)) : Qt(e3, t2, n4, r4);
       },
       getOwnPropertyDescriptor(e3, t2) {
-        if (nt(t2) && L(e3, t2)) {
+        if (nt(t2) && R3(e3, t2)) {
           const n4 = v(e3, t2);
-          return n4.value = d(n4.value), n4;
+          return n4.value = p(n4.value), n4;
         }
         return v(e3, t2);
       },
       defineProperty(e3, t2, n4) {
-        return nt(t2) && L(e3, t2) && L(n4, "value") && (n4.value = P2(n4.value)), Zt(e3, t2, n4);
+        return nt(t2) && R3(e3, t2) && R3(n4, "value") && (n4.value = P2(n4.value)), $t(e3, t2, n4);
       }
     }
   );
-  var A2 = class _A {
+  var A3 = class _A {
     /** @see https://tc39.es/ecma262/#sec-typedarray */
     constructor(t2, n4, r4) {
-      let s;
+      let o2;
       if (D2(t2))
-        s = k(S, [l(t2)], new.target);
-      else if (ht(t2) && !Kn(t2)) {
+        o2 = q(m, [l(t2)], new.target);
+      else if (ht(t2) && !Xn(t2)) {
         let i3, c3;
         if (ft(t2)) {
-          i3 = t2, c3 = y(t2);
+          i3 = t2, c3 = y2(t2);
           const a3 = T(t2);
           if ($2(a3))
             throw w(J);
-          if (Ct(t2))
-            throw w(Nt);
+          if (Ut(t2))
+            throw w(xt);
           const h2 = new wt(
-            c3 * Ht
+            c3 * zt
           );
-          s = k(S, [h2], new.target);
+          o2 = q(m, [h2], new.target);
         } else {
           const a3 = t2[x];
           if (a3 != null && typeof a3 != "function")
-            throw w($t);
-          a3 != null ? ce(t2) ? (i3 = t2, c3 = t2.length) : (i3 = [.../** @type {Iterable<unknown>} */
+            throw w(kt);
+          a3 != null ? oe(t2) ? (i3 = t2, c3 = t2.length) : (i3 = [.../** @type {Iterable<unknown>} */
           t2], c3 = i3.length) : (i3 = /** @type {ArrayLike<unknown>} */
-          t2, c3 = It(i3.length)), s = k(S, [c3], new.target);
+          t2, c3 = Et(i3.length)), o2 = q(m, [c3], new.target);
         }
         for (let a3 = 0; a3 < c3; ++a3)
-          s[a3] = P2(i3[a3]);
+          o2[a3] = P2(i3[a3]);
       } else
-        s = k(S, arguments, new.target);
-      const o3 = (
+        o2 = q(m, arguments, new.target);
+      const s = (
         /** @type {any} */
-        new wn(s, ir)
+        new ln(o2, Kn)
       );
-      return jt(ut, o3, s), o3;
+      return Gt(ut, s, o2), s;
     }
     /**
      * limitation: `Object.getOwnPropertyNames(Float16Array)` or `Reflect.ownKeys(Float16Array)` include this key
@@ -3325,60 +3325,60 @@
      */
     static from(t2, ...n4) {
       const r4 = this;
-      if (!Rt(r4, lt))
+      if (!Nt(r4, lt))
         throw w(
-          Jt
+          qt
         );
       if (r4 === _A) {
         if (D2(t2) && n4.length === 0) {
-          const f4 = l(t2), p3 = new S(
-            T(f4),
-            C2(f4),
-            y(f4)
+          const f3 = l(t2), d3 = new m(
+            T(f3),
+            C2(f3),
+            y2(f3)
           );
           return new _A(
-            T(Y(p3))
+            T(Y(d3))
           );
         }
         if (n4.length === 0)
           return new _A(
             T(
-              se(t2, P2)
+              ne(t2, P2)
             )
           );
         const a3 = n4[0], h2 = n4[1];
         return new _A(
           T(
-            se(t2, function(f4, ...p3) {
+            ne(t2, function(f3, ...d3) {
               return P2(
-                m(a3, this, [f4, ...q(p3)])
+                S2(a3, this, [f3, ...k(d3)])
               );
             }, h2)
           )
         );
       }
-      let s, o3;
+      let o2, s;
       const i3 = t2[x];
       if (i3 != null && typeof i3 != "function")
-        throw w($t);
+        throw w(kt);
       if (i3 != null)
-        ce(t2) ? (s = t2, o3 = t2.length) : tr(t2) ? (s = t2, o3 = y(t2)) : (s = [...t2], o3 = s.length);
+        oe(t2) ? (o2 = t2, s = t2.length) : qn(t2) ? (o2 = t2, s = y2(t2)) : (o2 = [...t2], s = o2.length);
       else {
         if (t2 == null)
           throw w(
-            xt
+            Pt
           );
-        s = j(t2), o3 = It(s.length);
+        o2 = j(t2), s = Et(o2.length);
       }
-      const c3 = new r4(o3);
+      const c3 = new r4(s);
       if (n4.length === 0)
-        for (let a3 = 0; a3 < o3; ++a3)
+        for (let a3 = 0; a3 < s; ++a3)
           c3[a3] = /** @type {number} */
-          s[a3];
+          o2[a3];
       else {
         const a3 = n4[0], h2 = n4[1];
-        for (let f4 = 0; f4 < o3; ++f4)
-          c3[f4] = m(a3, h2, [s[f4], f4]);
+        for (let f3 = 0; f3 < s; ++f3)
+          c3[f3] = S2(a3, h2, [o2[f3], f3]);
       }
       return c3;
     }
@@ -3388,27 +3388,27 @@
      */
     static of(...t2) {
       const n4 = this;
-      if (!Rt(n4, lt))
+      if (!Nt(n4, lt))
         throw w(
-          Jt
+          qt
         );
       const r4 = t2.length;
       if (n4 === _A) {
-        const o3 = new _A(r4), i3 = l(o3);
+        const s = new _A(r4), i3 = l(s);
         for (let c3 = 0; c3 < r4; ++c3)
           i3[c3] = P2(t2[c3]);
-        return o3;
+        return s;
       }
-      const s = new n4(r4);
-      for (let o3 = 0; o3 < r4; ++o3)
-        s[o3] = t2[o3];
-      return s;
+      const o2 = new n4(r4);
+      for (let s = 0; s < r4; ++s)
+        o2[s] = t2[s];
+      return o2;
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.keys */
     keys() {
       u(this);
       const t2 = l(this);
-      return Mn(t2);
+      return xn(t2);
     }
     /**
      * limitation: returns a object whose prototype is not `%ArrayIteratorPrototype%`
@@ -3417,9 +3417,9 @@
     values() {
       u(this);
       const t2 = l(this);
-      return oe((function* () {
-        for (const n4 of Bn(t2))
-          yield d(n4);
+      return re((function* () {
+        for (const n4 of Nn(t2))
+          yield p(n4);
       })());
     }
     /**
@@ -3429,57 +3429,57 @@
     entries() {
       u(this);
       const t2 = l(this);
-      return oe((function* () {
-        for (const [n4, r4] of Dn(t2))
+      return re((function* () {
+        for (const [n4, r4] of Ln(t2))
           yield (
             /** @type {[number, number]} */
-            [n4, d(r4)]
+            [n4, p(r4)]
           );
       })());
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.at */
     at(t2) {
       u(this);
-      const n4 = l(this), r4 = y(n4), s = R2(t2), o3 = s >= 0 ? s : r4 + s;
-      if (!(o3 < 0 || o3 >= r4))
-        return d(n4[o3]);
+      const n4 = l(this), r4 = y2(n4), o2 = L(t2), s = o2 >= 0 ? o2 : r4 + o2;
+      if (!(s < 0 || s >= r4))
+        return p(n4[s]);
     }
     /** @see https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.with */
     with(t2, n4) {
       u(this);
-      const r4 = l(this), s = y(r4), o3 = R2(t2), i3 = o3 >= 0 ? o3 : s + o3, c3 = +n4;
-      if (i3 < 0 || i3 >= s)
-        throw Et(St);
-      const a3 = new S(
+      const r4 = l(this), o2 = y2(r4), s = L(t2), i3 = s >= 0 ? s : o2 + s, c3 = +n4;
+      if (i3 < 0 || i3 >= o2)
+        throw _t(St);
+      const a3 = new m(
         T(r4),
         C2(r4),
-        y(r4)
+        y2(r4)
       ), h2 = new _A(
         T(
           Y(a3)
         )
-      ), f4 = l(h2);
-      return f4[i3] = P2(c3), h2;
+      ), f3 = l(h2);
+      return f3[i3] = P2(c3), h2;
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.map */
     map(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4), o3 = n4[0], i3 = rt(r4, _A);
+      const r4 = l(this), o2 = y2(r4), s = n4[0], i3 = rt(r4, _A);
       if (i3 === _A) {
-        const a3 = new _A(s), h2 = l(a3);
-        for (let f4 = 0; f4 < s; ++f4) {
-          const p3 = d(r4[f4]);
-          h2[f4] = P2(
-            m(t2, o3, [p3, f4, this])
+        const a3 = new _A(o2), h2 = l(a3);
+        for (let f3 = 0; f3 < o2; ++f3) {
+          const d3 = p(r4[f3]);
+          h2[f3] = P2(
+            S2(t2, s, [d3, f3, this])
           );
         }
         return a3;
       }
-      const c3 = new i3(s);
-      st(c3, s);
-      for (let a3 = 0; a3 < s; ++a3) {
-        const h2 = d(r4[a3]);
-        c3[a3] = m(t2, o3, [h2, a3, this]);
+      const c3 = new i3(o2);
+      st(c3, o2);
+      for (let a3 = 0; a3 < o2; ++a3) {
+        const h2 = p(r4[a3]);
+        c3[a3] = S2(t2, s, [h2, a3, this]);
       }
       return (
         /** @type {any} */
@@ -3489,10 +3489,10 @@
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.filter */
     filter(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4), o3 = n4[0], i3 = [];
-      for (let h2 = 0; h2 < s; ++h2) {
-        const f4 = d(r4[h2]);
-        m(t2, o3, [f4, h2, this]) && In(i3, f4);
+      const r4 = l(this), o2 = y2(r4), s = n4[0], i3 = [];
+      for (let h2 = 0; h2 < o2; ++h2) {
+        const f3 = p(r4[h2]);
+        S2(t2, s, [f3, h2, this]) && wn(i3, f3);
       }
       const c3 = rt(r4, _A), a3 = new c3(i3);
       return st(a3), /** @type {any} */
@@ -3501,44 +3501,44 @@
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.reduce */
     reduce(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4);
-      if (s === 0 && n4.length === 0)
-        throw w(Qt);
-      let o3, i3;
-      n4.length === 0 ? (o3 = d(r4[0]), i3 = 1) : (o3 = n4[0], i3 = 0);
-      for (let c3 = i3; c3 < s; ++c3)
-        o3 = t2(
-          o3,
-          d(r4[c3]),
+      const r4 = l(this), o2 = y2(r4);
+      if (o2 === 0 && n4.length === 0)
+        throw w(Jt);
+      let s, i3;
+      n4.length === 0 ? (s = p(r4[0]), i3 = 1) : (s = n4[0], i3 = 0);
+      for (let c3 = i3; c3 < o2; ++c3)
+        s = t2(
+          s,
+          p(r4[c3]),
           c3,
           this
         );
-      return o3;
+      return s;
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.reduceright */
     reduceRight(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4);
-      if (s === 0 && n4.length === 0)
-        throw w(Qt);
-      let o3, i3;
-      n4.length === 0 ? (o3 = d(r4[s - 1]), i3 = s - 2) : (o3 = n4[0], i3 = s - 1);
+      const r4 = l(this), o2 = y2(r4);
+      if (o2 === 0 && n4.length === 0)
+        throw w(Jt);
+      let s, i3;
+      n4.length === 0 ? (s = p(r4[o2 - 1]), i3 = o2 - 2) : (s = n4[0], i3 = o2 - 1);
       for (let c3 = i3; c3 >= 0; --c3)
-        o3 = t2(
-          o3,
-          d(r4[c3]),
+        s = t2(
+          s,
+          p(r4[c3]),
           c3,
           this
         );
-      return o3;
+      return s;
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.foreach */
     forEach(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4), o3 = n4[0];
-      for (let i3 = 0; i3 < s; ++i3)
-        m(t2, o3, [
-          d(r4[i3]),
+      const r4 = l(this), o2 = y2(r4), s = n4[0];
+      for (let i3 = 0; i3 < o2; ++i3)
+        S2(t2, s, [
+          p(r4[i3]),
           i3,
           this
         ]);
@@ -3546,20 +3546,20 @@
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.find */
     find(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4), o3 = n4[0];
-      for (let i3 = 0; i3 < s; ++i3) {
-        const c3 = d(r4[i3]);
-        if (m(t2, o3, [c3, i3, this]))
+      const r4 = l(this), o2 = y2(r4), s = n4[0];
+      for (let i3 = 0; i3 < o2; ++i3) {
+        const c3 = p(r4[i3]);
+        if (S2(t2, s, [c3, i3, this]))
           return c3;
       }
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.findindex */
     findIndex(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4), o3 = n4[0];
-      for (let i3 = 0; i3 < s; ++i3) {
-        const c3 = d(r4[i3]);
-        if (m(t2, o3, [c3, i3, this]))
+      const r4 = l(this), o2 = y2(r4), s = n4[0];
+      for (let i3 = 0; i3 < o2; ++i3) {
+        const c3 = p(r4[i3]);
+        if (S2(t2, s, [c3, i3, this]))
           return i3;
       }
       return -1;
@@ -3567,20 +3567,20 @@
     /** @see https://tc39.es/proposal-array-find-from-last/index.html#sec-%typedarray%.prototype.findlast */
     findLast(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4), o3 = n4[0];
-      for (let i3 = s - 1; i3 >= 0; --i3) {
-        const c3 = d(r4[i3]);
-        if (m(t2, o3, [c3, i3, this]))
+      const r4 = l(this), o2 = y2(r4), s = n4[0];
+      for (let i3 = o2 - 1; i3 >= 0; --i3) {
+        const c3 = p(r4[i3]);
+        if (S2(t2, s, [c3, i3, this]))
           return c3;
       }
     }
     /** @see https://tc39.es/proposal-array-find-from-last/index.html#sec-%typedarray%.prototype.findlastindex */
     findLastIndex(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4), o3 = n4[0];
-      for (let i3 = s - 1; i3 >= 0; --i3) {
-        const c3 = d(r4[i3]);
-        if (m(t2, o3, [c3, i3, this]))
+      const r4 = l(this), o2 = y2(r4), s = n4[0];
+      for (let i3 = o2 - 1; i3 >= 0; --i3) {
+        const c3 = p(r4[i3]);
+        if (S2(t2, s, [c3, i3, this]))
           return i3;
       }
       return -1;
@@ -3588,10 +3588,10 @@
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.every */
     every(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4), o3 = n4[0];
-      for (let i3 = 0; i3 < s; ++i3)
-        if (!m(t2, o3, [
-          d(r4[i3]),
+      const r4 = l(this), o2 = y2(r4), s = n4[0];
+      for (let i3 = 0; i3 < o2; ++i3)
+        if (!S2(t2, s, [
+          p(r4[i3]),
           i3,
           this
         ]))
@@ -3601,10 +3601,10 @@
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.some */
     some(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4), o3 = n4[0];
-      for (let i3 = 0; i3 < s; ++i3)
-        if (m(t2, o3, [
-          d(r4[i3]),
+      const r4 = l(this), o2 = y2(r4), s = n4[0];
+      for (let i3 = 0; i3 < o2; ++i3)
+        if (S2(t2, s, [
+          p(r4[i3]),
           i3,
           this
         ]))
@@ -3614,139 +3614,139 @@
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.set */
     set(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = R2(n4[0]);
-      if (s < 0)
-        throw Et(St);
+      const r4 = l(this), o2 = L(n4[0]);
+      if (o2 < 0)
+        throw _t(St);
       if (t2 == null)
+        throw w(
+          Pt
+        );
+      if (Ut(t2))
         throw w(
           xt
         );
-      if (Ct(t2))
-        throw w(
-          Nt
-        );
       if (D2(t2))
-        return vn(
+        return Rn(
           l(this),
           l(t2),
-          s
+          o2
         );
       if (ft(t2)) {
         const a3 = T(t2);
         if ($2(a3))
           throw w(J);
       }
-      const o3 = y(r4), i3 = j(t2), c3 = It(i3.length);
-      if (s === 1 / 0 || c3 + s > o3)
-        throw Et(St);
+      const s = y2(r4), i3 = j(t2), c3 = Et(i3.length);
+      if (o2 === 1 / 0 || c3 + o2 > s)
+        throw _t(St);
       for (let a3 = 0; a3 < c3; ++a3)
-        r4[a3 + s] = P2(i3[a3]);
+        r4[a3 + o2] = P2(i3[a3]);
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.reverse */
     reverse() {
       u(this);
       const t2 = l(this);
-      return ne(t2), this;
+      return te(t2), this;
     }
     /** @see https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.toReversed */
     toReversed() {
       u(this);
-      const t2 = l(this), n4 = new S(
+      const t2 = l(this), n4 = new m(
         T(t2),
         C2(t2),
-        y(t2)
+        y2(t2)
       ), r4 = new _A(
         T(
           Y(n4)
         )
-      ), s = l(r4);
-      return ne(s), r4;
+      ), o2 = l(r4);
+      return te(o2), r4;
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.fill */
     fill(t2, ...n4) {
       u(this);
       const r4 = l(this);
-      return Gn(
+      return Un(
         r4,
         P2(t2),
-        ...q(n4)
+        ...k(n4)
       ), this;
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.copywithin */
     copyWithin(t2, n4, ...r4) {
       u(this);
-      const s = l(this);
-      return jn(s, t2, n4, ...q(r4)), this;
+      const o2 = l(this);
+      return Cn(o2, t2, n4, ...k(r4)), this;
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.sort */
     sort(t2) {
       u(this);
-      const n4 = l(this), r4 = t2 !== void 0 ? t2 : he;
-      return re(n4, (s, o3) => r4(d(s), d(o3))), this;
+      const n4 = l(this), r4 = t2 !== void 0 ? t2 : ce;
+      return ee(n4, (o2, s) => r4(p(o2), p(s))), this;
     }
     /** @see https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.toSorted */
     toSorted(t2) {
       u(this);
       const n4 = l(this);
       if (t2 !== void 0 && typeof t2 != "function")
-        throw new w(gn);
-      const r4 = t2 !== void 0 ? t2 : he, s = new S(
+        throw new w(fn);
+      const r4 = t2 !== void 0 ? t2 : ce, o2 = new m(
         T(n4),
         C2(n4),
-        y(n4)
-      ), o3 = new _A(
+        y2(n4)
+      ), s = new _A(
         T(
-          Y(s)
+          Y(o2)
         )
-      ), i3 = l(o3);
-      return re(i3, (c3, a3) => r4(d(c3), d(a3))), o3;
+      ), i3 = l(s);
+      return ee(i3, (c3, a3) => r4(p(c3), p(a3))), s;
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.slice */
     slice(t2, n4) {
       u(this);
-      const r4 = l(this), s = rt(r4, _A);
-      if (s === _A) {
-        const We2 = new S(
+      const r4 = l(this), o2 = rt(r4, _A);
+      if (o2 === _A) {
+        const je2 = new m(
           T(r4),
           C2(r4),
-          y(r4)
+          y2(r4)
         );
         return new _A(
           T(
-            Y(We2, t2, n4)
+            Y(je2, t2, n4)
           )
         );
       }
-      const o3 = y(r4), i3 = R2(t2), c3 = n4 === void 0 ? o3 : R2(n4);
+      const s = y2(r4), i3 = L(t2), c3 = n4 === void 0 ? s : L(n4);
       let a3;
-      i3 === -1 / 0 ? a3 = 0 : i3 < 0 ? a3 = o3 + i3 > 0 ? o3 + i3 : 0 : a3 = o3 < i3 ? o3 : i3;
+      i3 === -1 / 0 ? a3 = 0 : i3 < 0 ? a3 = s + i3 > 0 ? s + i3 : 0 : a3 = s < i3 ? s : i3;
       let h2;
-      c3 === -1 / 0 ? h2 = 0 : c3 < 0 ? h2 = o3 + c3 > 0 ? o3 + c3 : 0 : h2 = o3 < c3 ? o3 : c3;
-      const f4 = h2 - a3 > 0 ? h2 - a3 : 0, p3 = new s(f4);
-      if (st(p3, f4), f4 === 0)
-        return p3;
+      c3 === -1 / 0 ? h2 = 0 : c3 < 0 ? h2 = s + c3 > 0 ? s + c3 : 0 : h2 = s < c3 ? s : c3;
+      const f3 = h2 - a3 > 0 ? h2 - a3 : 0, d3 = new o2(f3);
+      if (st(d3, f3), f3 === 0)
+        return d3;
       const O2 = T(r4);
       if ($2(O2))
         throw w(J);
-      let B = 0;
+      let F2 = 0;
       for (; a3 < h2; )
-        p3[B] = d(r4[a3]), ++a3, ++B;
+        d3[F2] = p(r4[a3]), ++a3, ++F2;
       return (
         /** @type {any} */
-        p3
+        d3
       );
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.subarray */
     subarray(t2, n4) {
       u(this);
-      const r4 = l(this), s = rt(r4, _A), o3 = new S(
+      const r4 = l(this), o2 = rt(r4, _A), s = new m(
         T(r4),
         C2(r4),
-        y(r4)
-      ), i3 = zn(o3, t2, n4), c3 = new s(
+        y2(r4)
+      ), i3 = Mn(s, t2, n4), c3 = new o2(
         T(i3),
         C2(i3),
-        y(i3)
+        y2(i3)
       );
       return st(c3), /** @type {any} */
       c3;
@@ -3754,40 +3754,40 @@
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.indexof */
     indexOf(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4);
-      let o3 = R2(n4[0]);
-      if (o3 === 1 / 0)
+      const r4 = l(this), o2 = y2(r4);
+      let s = L(n4[0]);
+      if (s === 1 / 0)
         return -1;
-      o3 < 0 && (o3 += s, o3 < 0 && (o3 = 0));
-      for (let i3 = o3; i3 < s; ++i3)
-        if (L(r4, i3) && d(r4[i3]) === t2)
+      s < 0 && (s += o2, s < 0 && (s = 0));
+      for (let i3 = s; i3 < o2; ++i3)
+        if (R3(r4, i3) && p(r4[i3]) === t2)
           return i3;
       return -1;
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.lastindexof */
     lastIndexOf(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4);
-      let o3 = n4.length >= 1 ? R2(n4[0]) : s - 1;
-      if (o3 === -1 / 0)
+      const r4 = l(this), o2 = y2(r4);
+      let s = n4.length >= 1 ? L(n4[0]) : o2 - 1;
+      if (s === -1 / 0)
         return -1;
-      o3 >= 0 ? o3 = o3 < s - 1 ? o3 : s - 1 : o3 += s;
-      for (let i3 = o3; i3 >= 0; --i3)
-        if (L(r4, i3) && d(r4[i3]) === t2)
+      s >= 0 ? s = s < o2 - 1 ? s : o2 - 1 : s += o2;
+      for (let i3 = s; i3 >= 0; --i3)
+        if (R3(r4, i3) && p(r4[i3]) === t2)
           return i3;
       return -1;
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.includes */
     includes(t2, ...n4) {
       u(this);
-      const r4 = l(this), s = y(r4);
-      let o3 = R2(n4[0]);
-      if (o3 === 1 / 0)
+      const r4 = l(this), o2 = y2(r4);
+      let s = L(n4[0]);
+      if (s === 1 / 0)
         return false;
-      o3 < 0 && (o3 += s, o3 < 0 && (o3 = 0));
+      s < 0 && (s += o2, s < 0 && (s = 0));
       const i3 = G(t2);
-      for (let c3 = o3; c3 < s; ++c3) {
-        const a3 = d(r4[c3]);
+      for (let c3 = s; c3 < o2; ++c3) {
+        const a3 = p(r4[c3]);
         if (i3 && G(a3) || a3 === t2)
           return true;
       }
@@ -3796,14 +3796,14 @@
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.join */
     join(t2) {
       u(this);
-      const n4 = l(this), r4 = fe(n4);
-      return En(r4, t2);
+      const n4 = l(this), r4 = ae(n4);
+      return gn(r4, t2);
     }
     /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.tolocalestring */
     toLocaleString(...t2) {
       u(this);
-      const n4 = l(this), r4 = fe(n4);
-      return On(r4, ...q(t2));
+      const n4 = l(this), r4 = ae(n4);
+      return Tn(r4, ...k(t2));
     }
     /** @see https://tc39.es/ecma262/#sec-get-%typedarray%.prototype-@@tostringtag */
     get [Mt]() {
@@ -3814,93 +3814,93 @@
         );
     }
   };
-  et2(A2, "BYTES_PER_ELEMENT", {
-    value: Ht
+  et2(A3, "BYTES_PER_ELEMENT", {
+    value: zt
   });
-  et2(A2, lt, {});
-  be(A2, Dt);
-  var yt = A2.prototype;
+  et2(A3, lt, {});
+  ge(A3, Ft);
+  var yt = A3.prototype;
   et2(yt, "BYTES_PER_ELEMENT", {
-    value: Ht
+    value: zt
   });
   et2(yt, x, {
     value: yt.values,
     writable: true,
     configurable: true
   });
-  be(yt, b3);
-  function cr(e3, t2, ...n4) {
-    return d(
-      kn(e3, t2, ...q(n4))
+  ge(yt, b3);
+  function tr(e3, t2, ...n4) {
+    return p(
+      jn(e3, t2, ...k(n4))
     );
   }
-  function Nr(e3) {
-    return e3 instanceof Int8Array || e3 instanceof Uint8Array || e3 instanceof Uint8ClampedArray || e3 instanceof Int16Array || e3 instanceof Uint16Array || e3 instanceof Int32Array || e3 instanceof Uint32Array || e3 instanceof A2 || e3 instanceof Float32Array || e3 instanceof Float64Array;
+  function Tr(e3) {
+    return e3 instanceof Int8Array || e3 instanceof Uint8Array || e3 instanceof Uint8ClampedArray || e3 instanceof Int16Array || e3 instanceof Uint16Array || e3 instanceof Int32Array || e3 instanceof Uint32Array || e3 instanceof A3 || e3 instanceof Float32Array || e3 instanceof Float64Array;
   }
-  var ar = class extends Loader {
+  var er = class extends Loader {
     constructor(t2, n4) {
       super(n4), this.parser = t2;
     }
-    load(t2, n4, r4, s) {
-      const o3 = new an(this.manager);
-      o3.setRequestHeader(this.requestHeader), o3.setPath(this.path), o3.setWithCredentials(this.withCredentials), o3.load(
+    load(t2, n4, r4, o2) {
+      const s = new sn(this.manager);
+      s.setRequestHeader(this.requestHeader), s.setPath(this.path), s.setWithCredentials(this.withCredentials), s.load(
         t2,
         (i3) => {
           try {
             n4(this.parser(i3));
           } catch (c3) {
-            s != null ? s(c3) : console.error(c3), this.manager.itemError(t2);
+            o2 != null ? o2(c3) : console.error(c3), this.manager.itemError(t2);
           }
         },
         r4,
-        s
+        o2
       );
     }
   };
-  function hr(e3) {
-    const t2 = e3 instanceof Int8Array ? ByteType : e3 instanceof Uint8Array ? UnsignedByteType : e3 instanceof Uint8ClampedArray ? UnsignedByteType : e3 instanceof Int16Array ? ShortType : e3 instanceof Uint16Array ? UnsignedShortType : e3 instanceof Int32Array ? IntType : e3 instanceof Uint32Array ? UnsignedIntType : e3 instanceof A2 ? HalfFloatType : e3 instanceof Float32Array ? FloatType : e3 instanceof Float64Array ? FloatType : null;
+  function nr(e3) {
+    const t2 = e3 instanceof Int8Array ? ByteType : e3 instanceof Uint8Array ? UnsignedByteType : e3 instanceof Uint8ClampedArray ? UnsignedByteType : e3 instanceof Int16Array ? ShortType : e3 instanceof Uint16Array ? UnsignedShortType : e3 instanceof Int32Array ? IntType : e3 instanceof Uint32Array ? UnsignedIntType : e3 instanceof A3 ? HalfFloatType : e3 instanceof Float32Array ? FloatType : e3 instanceof Float64Array ? FloatType : null;
     return c(t2 != null), t2;
   }
-  var fr = class extends Loader {
-    constructor(t2, n4, r4 = {}, s) {
-      super(s), this.textureClass = t2, this.parser = n4, this.options = {
+  var br = class extends Loader {
+    constructor(t2, n4, r4 = {}, o2) {
+      super(o2), this.textureClass = t2, this.parser = n4, this.options = {
         format: RGBAFormat,
         minFilter: LinearFilter,
         magFilter: LinearFilter,
         ...r4
       };
     }
-    load(t2, n4, r4, s) {
-      const o3 = new this.textureClass(), i3 = new ar(this.parser, this.manager);
+    load(t2, n4, r4, o2) {
+      const s = new this.textureClass(), i3 = new er(this.parser, this.manager);
       return i3.setRequestHeader(this.requestHeader), i3.setPath(this.path), i3.setWithCredentials(this.withCredentials), i3.load(
         t2,
         (c3) => {
-          o3.image.data = c3 instanceof A2 ? new Uint16Array(c3.buffer) : c3;
-          const { width: a3, height: h2, depth: f4, ...p3 } = this.options;
-          a3 != null && (o3.image.width = a3), h2 != null && (o3.image.height = h2), "depth" in o3.image && f4 != null && (o3.image.depth = f4), o3.type = hr(c3), Object.assign(o3, p3), o3.needsUpdate = true, n4 == null ? void 0 : n4(o3);
+          s.image.data = c3 instanceof A3 ? new Uint16Array(c3.buffer) : c3;
+          const { width: a3, height: h2, depth: f3, ...d3 } = this.options;
+          a3 != null && (s.image.width = a3), h2 != null && (s.image.height = h2), "depth" in s.image && f3 != null && (s.image.depth = f3), s.type = nr(c3), Object.assign(s, d3), s.needsUpdate = true, n4 == null ? void 0 : n4(s);
         },
         r4,
-        s
-      ), o3;
+        o2
+      ), s;
     }
   };
   var z3 = MathUtils.clamp;
-  var Rr = MathUtils.euclideanModulo;
-  var Lr = MathUtils.inverseLerp;
-  var Ur = MathUtils.lerp;
-  var Cr = MathUtils.degToRad;
-  var Fr = MathUtils.radToDeg;
-  var Mr = MathUtils.isPowerOfTwo;
-  var Br = MathUtils.ceilPowerOfTwo;
-  var Dr = MathUtils.floorPowerOfTwo;
-  var vr = MathUtils.normalize;
-  function Gr(e3, t2, n4, r4 = 0, s = 1) {
-    return MathUtils.mapLinear(e3, t2, n4, r4, s);
+  var Sr = MathUtils.euclideanModulo;
+  var mr = MathUtils.inverseLerp;
+  var _r = MathUtils.lerp;
+  var Er = MathUtils.degToRad;
+  var Ir = MathUtils.radToDeg;
+  var Or = MathUtils.isPowerOfTwo;
+  var Pr = MathUtils.ceilPowerOfTwo;
+  var xr = MathUtils.floorPowerOfTwo;
+  var Nr = MathUtils.normalize;
+  function Lr(e3, t2, n4, r4 = 0, o2 = 1) {
+    return MathUtils.mapLinear(e3, t2, n4, r4, o2);
   }
-  function Hr(e3) {
+  function Cr(e3) {
     return Math.min(Math.max(e3, 0), 1);
   }
-  function Vr(e3) {
+  function Br(e3) {
     return (t2, n4) => {
       t2 instanceof Material ? Object.defineProperty(t2, n4, {
         enumerable: true,
@@ -3923,95 +3923,95 @@
       });
     };
   }
-  function le(e3) {
+  function he(e3) {
     return typeof e3 == "number" ? Math.floor(e3) : typeof e3 == "string" ? parseInt(e3, 10) : typeof e3 == "boolean" ? +e3 : 0;
   }
-  function Yr(e3, {
+  function Fr(e3, {
     min: t2 = Number.MIN_SAFE_INTEGER,
     max: n4 = Number.MAX_SAFE_INTEGER
   } = {}) {
-    return (r4, s) => {
-      r4 instanceof Material ? Object.defineProperty(r4, s, {
+    return (r4, o2) => {
+      r4 instanceof Material ? Object.defineProperty(r4, o2, {
         enumerable: true,
         get() {
           var _a2;
-          const o3 = (_a2 = this.defines) == null ? void 0 : _a2[e3];
-          return o3 != null ? le(o3) : 0;
+          const s = (_a2 = this.defines) == null ? void 0 : _a2[e3];
+          return s != null ? he(s) : 0;
         },
-        set(o3) {
+        set(s) {
           var _a2;
-          const i3 = this[s];
-          o3 !== i3 && ((_a2 = this.defines) != null ? _a2 : this.defines = {}, this.defines[e3] = z3(o3, t2, n4).toFixed(0), this.needsUpdate = true);
+          const i3 = this[o2];
+          s !== i3 && ((_a2 = this.defines) != null ? _a2 : this.defines = {}, this.defines[e3] = z3(s, t2, n4).toFixed(0), this.needsUpdate = true);
         }
-      }) : Object.defineProperty(r4, s, {
+      }) : Object.defineProperty(r4, o2, {
         enumerable: true,
         get() {
-          const o3 = this.defines.get(e3);
-          return o3 != null ? le(o3) : 0;
+          const s = this.defines.get(e3);
+          return s != null ? he(s) : 0;
         },
-        set(o3) {
-          const i3 = this[s];
-          o3 !== i3 && (this.defines.set(e3, z3(o3, t2, n4).toFixed(0)), this.setChanged());
+        set(s) {
+          const i3 = this[o2];
+          s !== i3 && (this.defines.set(e3, z3(s, t2, n4).toFixed(0)), this.setChanged());
         }
       });
     };
   }
-  var $r = class extends Loader {
+  var zr = class extends Loader {
     constructor(t2 = {}, n4) {
       super(n4), this.options = t2;
     }
-    load(t2, n4, r4, s) {
-      const { width: o3, height: i3, depth: c3 } = this.options, a3 = new Data3DTexture(null, o3, i3, c3), h2 = new EXRLoader(this.manager);
+    load(t2, n4, r4, o2) {
+      const { width: s, height: i3, depth: c3 } = this.options, a3 = new Data3DTexture(null, s, i3, c3), h2 = new EXRLoader(this.manager);
       return h2.setRequestHeader(this.requestHeader), h2.setPath(this.path), h2.setWithCredentials(this.withCredentials), h2.load(
         t2,
-        (f4) => {
-          const { image: p3 } = f4;
+        (f3) => {
+          const { image: d3 } = f3;
           a3.image = {
-            data: p3.data,
-            width: o3 != null ? o3 : p3.width,
-            height: i3 != null ? i3 : p3.height,
-            depth: c3 != null ? c3 : Math.sqrt(p3.height)
-          }, a3.type = f4.type, a3.format = f4.format, a3.colorSpace = f4.colorSpace, a3.needsUpdate = true;
+            data: d3.data,
+            width: s != null ? s : d3.width,
+            height: i3 != null ? i3 : d3.height,
+            depth: c3 != null ? c3 : Math.sqrt(d3.height)
+          }, a3.type = f3.type, a3.format = f3.format, a3.colorSpace = f3.colorSpace, a3.needsUpdate = true;
           try {
             n4 == null ? void 0 : n4(a3);
           } catch (O2) {
-            s != null ? s(O2) : console.error(O2), this.manager.itemError(t2);
+            o2 != null ? o2(O2) : console.error(O2), this.manager.itemError(t2);
           }
         },
         r4,
-        s
+        o2
       ), a3;
     }
   };
-  var Qr = class extends Loader {
+  var Hr = class extends Loader {
     constructor(t2 = {}, n4) {
       super(n4), this.options = t2;
     }
-    load(t2, n4, r4, s) {
-      const { width: o3, height: i3 } = this.options, c3 = new DataTexture(null, o3, i3), a3 = new EXRLoader(this.manager);
+    load(t2, n4, r4, o2) {
+      const { width: s, height: i3 } = this.options, c3 = new DataTexture(null, s, i3), a3 = new EXRLoader(this.manager);
       return a3.setRequestHeader(this.requestHeader), a3.setPath(this.path), a3.setWithCredentials(this.withCredentials), a3.load(
         t2,
         (h2) => {
-          const { image: f4 } = h2;
+          const { image: f3 } = h2;
           c3.image = {
-            data: f4.data,
-            width: o3 != null ? o3 : f4.width,
-            height: i3 != null ? i3 : f4.height
+            data: f3.data,
+            width: s != null ? s : f3.width,
+            height: i3 != null ? i3 : f3.height
           }, c3.type = h2.type, c3.format = h2.format, c3.colorSpace = h2.colorSpace, c3.needsUpdate = true;
           try {
             n4 == null ? void 0 : n4(c3);
-          } catch (p3) {
-            s != null ? s(p3) : console.error(p3), this.manager.itemError(t2);
+          } catch (d3) {
+            o2 != null ? o2(d3) : console.error(d3), this.manager.itemError(t2);
           }
         },
         r4,
-        s
+        o2
       ), c3;
     }
   };
   var Q2 = class Q3 {
-    constructor(t2 = 0, n4 = 0, r4 = 0, s = 0) {
-      this.west = t2, this.south = n4, this.east = r4, this.north = s;
+    constructor(t2 = 0, n4 = 0, r4 = 0, o2 = 0) {
+      this.west = t2, this.south = n4, this.east = r4, this.north = o2;
     }
     get width() {
       let t2 = this.east;
@@ -4020,8 +4020,8 @@
     get height() {
       return this.north - this.south;
     }
-    set(t2, n4, r4, s) {
-      return this.west = t2, this.south = n4, this.east = r4, this.north = s, this;
+    set(t2, n4, r4, o2) {
+      return this.west = t2, this.south = n4, this.east = r4, this.north = o2, this;
     }
     clone() {
       return new Q3(this.west, this.south, this.east, this.north);
@@ -4054,49 +4054,49 @@
     C.MAX_LONGITUDE,
     C.MAX_LATITUDE
   );
-  var pr = /^[ \t]*#include +"([\w\d./]+)"/gm;
-  function Ar(e3, t2) {
-    return e3.replace(pr, (n4, r4) => {
-      const o3 = r4.split("/").reduce(
+  var cr = /^[ \t]*#include +"([\w\d./]+)"/gm;
+  function ar(e3, t2) {
+    return e3.replace(cr, (n4, r4) => {
+      const s = r4.split("/").reduce(
         (i3, c3) => typeof i3 != "string" && i3 != null ? i3[c3] : void 0,
         t2
       );
-      if (typeof o3 != "string")
+      if (typeof s != "string")
         throw new Error(`Could not find include for ${r4}.`);
-      return Ar(o3, t2);
+      return ar(s, t2);
     });
   }
   var ct;
-  function gr() {
+  function hr() {
     if (ct != null)
       return ct;
     const e3 = new Uint32Array([268435456]);
     return ct = new Uint8Array(e3.buffer, e3.byteOffset, e3.byteLength)[0] === 0, ct;
   }
-  function M(e3, t2, n4, r4 = true) {
-    if (r4 === gr())
+  function B(e3, t2, n4, r4 = true) {
+    if (r4 === hr())
       return new t2(e3);
-    const s = Object.assign(new DataView(e3), {
+    const o2 = Object.assign(new DataView(e3), {
       getFloat16(i3, c3) {
-        return cr(this, i3, c3);
+        return tr(this, i3, c3);
       }
-    }), o3 = new t2(s.byteLength / t2.BYTES_PER_ELEMENT);
-    for (let i3 = 0, c3 = 0; i3 < o3.length; ++i3, c3 += t2.BYTES_PER_ELEMENT)
-      o3[i3] = s[n4](c3, r4);
-    return o3;
-  }
-  var rs = (e3, t2) => M(e3, A2, "getFloat16", t2);
-  function cs(e3) {
-  }
-  var Tr = /#pragma unroll_loop_start\s+for\s*\(\s*int\s+i\s*=\s*(\d+)\s*;\s*i\s*<\s*(\d+)\s*;\s*(?:i\s*\+\+|\+\+\s*i)\s*\)\s*{([\s\S]+?)}\s+#pragma unroll_loop_end/g;
-  function br(e3, t2, n4, r4) {
-    let s = "";
-    for (let o3 = parseInt(t2, 10); o3 < parseInt(n4, 10); ++o3)
-      s += r4.replace(/\[\s*i\s*\]/g, `[${o3}]`).replace(/UNROLLED_LOOP_INDEX/g, `${o3}`);
+    }), s = new t2(o2.byteLength / t2.BYTES_PER_ELEMENT);
+    for (let i3 = 0, c3 = 0; i3 < s.length; ++i3, c3 += t2.BYTES_PER_ELEMENT)
+      s[i3] = o2[n4](c3, r4);
     return s;
   }
-  function as(e3) {
-    return e3.replace(Tr, br);
+  var Jr = (e3, t2) => B(e3, A3, "getFloat16", t2);
+  function Zr(e3) {
+  }
+  var fr = /#pragma unroll_loop_start\s+for\s*\(\s*int\s+i\s*=\s*(\d+)\s*;\s*i\s*<\s*(\d+)\s*;\s*(?:i\s*\+\+|\+\+\s*i)\s*\)\s*{([\s\S]+?)}\s+#pragma unroll_loop_end/g;
+  function lr(e3, t2, n4, r4) {
+    let o2 = "";
+    for (let s = parseInt(t2, 10); s < parseInt(n4, 10); ++s)
+      o2 += r4.replace(/\[\s*i\s*\]/g, `[${s}]`).replace(/UNROLLED_LOOP_INDEX/g, `${s}`);
+    return o2;
+  }
+  function Kr(e3) {
+    return e3.replace(fr, lr);
   }
 
   // node_modules/@takram/three-geospatial/build/shaders.js
@@ -4329,7 +4329,7 @@ vec3 unpackVec2ToNormal(vec2 e) {
   return normalize(v);
 }
 `;
-  var o2 = `float raySphereFirstIntersection(
+  var o = `float raySphereFirstIntersection(
   const vec3 origin,
   const vec3 direction,
   const vec3 center,
@@ -4487,29 +4487,29 @@ vec2 vogelDisk(const int index, const int sampleCount, const float phi) {
 }
 `;
   var m2 = n2;
-  var d2 = e;
+  var d = e;
   var f = c2;
   var x2 = i;
-  var p = r;
-  var u2 = o2;
-  var _ = a2;
+  var p2 = r;
+  var u2 = o;
+  var _2 = a2;
   var g2 = v2;
 
   // node_modules/@takram/three-atmosphere/build/shared2.js
-  var T2 = "9c6dfd0054f077f3ad4695b802e74d4c6a814440";
-  var m3 = `https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/${T2}/packages/atmosphere/assets`;
-  var S2 = `https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/${T2}/packages/atmosphere/assets/stars.bin`;
+  var T2 = "eac103980f20c0956f2d3215833e73514be08462";
+  var S3 = `https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/${T2}/packages/atmosphere/assets`;
+  var d2 = `https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/${T2}/packages/atmosphere/assets/stars.bin`;
   var f2 = 64;
-  var A3 = 16;
+  var A4 = 16;
   var i2 = 32;
-  var _2 = 128;
-  var R3 = 32;
+  var _3 = 128;
+  var R4 = 32;
   var u3 = 8;
-  var U2 = u3 * R3;
-  var g3 = _2;
+  var U2 = u3 * R4;
+  var g3 = _3;
   var N2 = i2;
   var C3 = 256;
-  var p2 = 64;
+  var p3 = 64;
   var w2 = 1 / 1e3;
   var h = 100;
   var D3 = /* @__PURE__ */ new Matrix3(
@@ -4543,14 +4543,14 @@ vec2 vogelDisk(const int index, const int sampleCount, const float phi) {
   }
   var H2 = typeof window < "u" && window.requestIdleCallback != null ? window.requestIdleCallback : function(a3, e3 = {}) {
     var _a2;
-    const n4 = (_a2 = e3.timeout) != null ? _a2 : 1, o3 = performance.now();
+    const n4 = (_a2 = e3.timeout) != null ? _a2 : 1, o2 = performance.now();
     return setTimeout(() => {
       a3({
         get didTimeout() {
-          return e3.timeout != null ? false : performance.now() - o3 - 1 > n4;
+          return e3.timeout != null ? false : performance.now() - o2 - 1 > n4;
         },
         timeRemaining() {
-          return Math.max(0, 1 + (performance.now() - o3));
+          return Math.max(0, 1 + (performance.now() - o2));
         }
       });
     }, 1);
@@ -6140,7 +6140,7 @@ IrradianceSpectrum ComputeIndirectIrradianceTexture(
       ], this.mieScattering = new Vector3(3996e-6, 3996e-6, 3996e-6), this.mieExtinction = new Vector3(444e-5, 444e-5, 444e-5), this.miePhaseFunctionG = 0.8, this.absorptionDensity = [
         new v0(25, 0, 0, 1 / 15, -2 / 3),
         new v0(0, 0, 0, -1 / 15, 8 / 3)
-      ], this.absorptionExtinction = new Vector3(65e-5, 1881e-6, 85e-6), this.groundAlbedo = new Color().setScalar(0.1), this.muSMin = Math.cos(Cr(120)), this.sunRadianceToLuminance = new Vector3(98242.786222, 69954.398112, 66475.012354), this.skyRadianceToLuminance = new Vector3(114974.916437, 71305.954816, 65310.548555), this.sunRadianceToRelativeLuminance = new Vector3(), this.skyRadianceToRelativeLuminance = new Vector3(), kn2(this, e3);
+      ], this.absorptionExtinction = new Vector3(65e-5, 1881e-6, 85e-6), this.groundAlbedo = new Color().setScalar(0.1), this.muSMin = Math.cos(Er(120)), this.sunRadianceToLuminance = new Vector3(98242.786222, 69954.398112, 66475.012354), this.skyRadianceToLuminance = new Vector3(114974.916437, 71305.954816, 65310.548555), this.sunRadianceToRelativeLuminance = new Vector3(), this.skyRadianceToRelativeLuminance = new Vector3(), kn2(this, e3);
       const t2 = Fn2.dot(this.sunRadianceToLuminance);
       this.sunRadianceToRelativeLuminance.copy(this.sunRadianceToLuminance).divideScalar(t2), this.skyRadianceToRelativeLuminance.copy(this.skyRadianceToLuminance).divideScalar(t2);
     }
@@ -6706,8 +6706,8 @@ vec3 getSkyRadiance(
 `;
   var Wn2 = Object.defineProperty;
   var L2 = (n4, e3, t2, r4) => {
-    for (var i3 = void 0, a3 = n4.length - 1, o3; a3 >= 0; a3--)
-      (o3 = n4[a3]) && (i3 = o3(e3, t2, i3) || i3);
+    for (var i3 = void 0, a3 = n4.length - 1, o2; a3 >= 0; a3--)
+      (o2 = n4[a3]) && (i3 = o2(e3, t2, i3) || i3);
     return i3 && Wn2(e3, t2, i3), i3;
   };
   var jn2 = /* @__PURE__ */ new Vector3();
@@ -6739,22 +6739,22 @@ vec3 getSkyRadiance(
       const {
         blendFunction: i3,
         normalBuffer: a3 = null,
-        octEncodedNormal: o3,
+        octEncodedNormal: o2,
         reconstructNormal: c3,
         irradianceTexture: s = null,
         scatteringTexture: l3 = null,
         transmittanceTexture: d3 = null,
-        singleMieScatteringTexture: m4 = null,
-        higherOrderScatteringTexture: f4 = null,
+        singleMieScatteringTexture: m3 = null,
+        higherOrderScatteringTexture: f3 = null,
         ellipsoid: v3,
         correctAltitude: T3,
-        correctGeometricError: E3,
+        correctGeometricError: E4,
         sunDirection: x3,
-        sunLight: y2,
+        sunLight: y3,
         skyLight: I3,
         transmittance: N3,
         inscatter: b4,
-        albedoScale: U4,
+        albedoScale: U3,
         sky: z4,
         sun: F2,
         moon: q2,
@@ -6765,13 +6765,13 @@ vec3 getSkyRadiance(
       } = { ...Kn2, ...t2 };
       super(
         "AerialPerspectiveEffect",
-        as(
-          Ar(Vn2, {
+        Kr(
+          ar(Vn2, {
             core: {
-              depth: d2,
-              packing: p,
+              depth: d,
+              packing: p2,
               math: x2,
-              transform: _,
+              transform: _2,
               raySphereIntersection: u2,
               cascadedShadowMaps: m2,
               interleavedGradientNoise: f,
@@ -6804,7 +6804,7 @@ vec3 getSkyRadiance(
               altitudeCorrection: new Uniform(new Vector3()),
               geometricErrorCorrectionAmount: new Uniform(0),
               sunDirection: new Uniform((_a2 = x3 == null ? void 0 : x3.clone()) != null ? _a2 : new Vector3()),
-              albedoScale: new Uniform(U4),
+              albedoScale: new Uniform(U3),
               moonDirection: new Uniform((_b2 = Z == null ? void 0 : Z.clone()) != null ? _b2 : new Vector3()),
               moonAngularRadius: new Uniform(i0),
               lunarRadianceScale: new Uniform(a0),
@@ -6837,17 +6837,17 @@ vec3 getSkyRadiance(
           // prettier-ignore
           defines: /* @__PURE__ */ new Map([
             ["TRANSMITTANCE_TEXTURE_WIDTH", C3.toFixed(0)],
-            ["TRANSMITTANCE_TEXTURE_HEIGHT", p2.toFixed(0)],
+            ["TRANSMITTANCE_TEXTURE_HEIGHT", p3.toFixed(0)],
             ["SCATTERING_TEXTURE_R_SIZE", i2.toFixed(0)],
-            ["SCATTERING_TEXTURE_MU_SIZE", _2.toFixed(0)],
-            ["SCATTERING_TEXTURE_MU_S_SIZE", R3.toFixed(0)],
+            ["SCATTERING_TEXTURE_MU_SIZE", _3.toFixed(0)],
+            ["SCATTERING_TEXTURE_MU_S_SIZE", R4.toFixed(0)],
             ["SCATTERING_TEXTURE_NU_SIZE", u3.toFixed(0)],
             ["IRRADIANCE_TEXTURE_WIDTH", f2.toFixed(0)],
-            ["IRRADIANCE_TEXTURE_HEIGHT", A3.toFixed(0)],
+            ["IRRADIANCE_TEXTURE_HEIGHT", A4.toFixed(0)],
             ["METER_TO_LENGTH_UNIT", w2.toFixed(7)]
           ])
         }
-      ), this.camera = e3, this.atmosphere = r4, this.overlay = null, this.shadow = null, this.shadowLength = null, this.lightingMask = null, this.hasNormals = false, this.combinedScatteringTextures = false, this.hasHigherOrderScatteringTexture = false, this.shadowSampleCount = 8, this.octEncodedNormal = o3, this.reconstructNormal = c3, this.singleMieScatteringTexture = m4, this.higherOrderScatteringTexture = f4, this.ellipsoid = v3, this.correctAltitude = T3, this.correctGeometricError = E3, this.sunLight = y2, this.skyLight = I3, this.transmittance = N3, this.inscatter = b4, this.sky = z4, this.sun = F2, this.moon = q2, this.ground = J2;
+      ), this.camera = e3, this.atmosphere = r4, this.overlay = null, this.shadow = null, this.shadowLength = null, this.lightingMask = null, this.hasNormals = false, this.combinedScatteringTextures = false, this.hasHigherOrderScatteringTexture = false, this.shadowSampleCount = 8, this.octEncodedNormal = o2, this.reconstructNormal = c3, this.singleMieScatteringTexture = m3, this.higherOrderScatteringTexture = f3, this.ellipsoid = v3, this.correctAltitude = T3, this.correctGeometricError = E4, this.sunLight = y3, this.skyLight = I3, this.transmittance = N3, this.inscatter = b4, this.sky = z4, this.sun = F2, this.moon = q2, this.ground = J2;
     }
     get mainCamera() {
       return this.camera;
@@ -6861,20 +6861,20 @@ vec3 getSkyRadiance(
         matrixWorldInverse: r4,
         projectionMatrixInverse: i3,
         matrixWorld: a3
-      } = e3, o3 = this.uniforms;
-      o3.get("projectionMatrix").value.copy(t2), o3.get("viewMatrix").value.copy(r4), o3.get("inverseProjectionMatrix").value.copy(i3), o3.get("inverseViewMatrix").value.copy(a3);
+      } = e3, o2 = this.uniforms;
+      o2.get("projectionMatrix").value.copy(t2), o2.get("viewMatrix").value.copy(r4), o2.get("inverseProjectionMatrix").value.copy(i3), o2.get("inverseViewMatrix").value.copy(a3);
       const c3 = e3.getWorldPosition(
-        o3.get("cameraPosition").value
-      ), s = o3.get("worldToECEFMatrix").value, l3 = jn2.copy(c3).applyMatrix4(s);
+        o2.get("cameraPosition").value
+      ), s = o2.get("worldToECEFMatrix").value, l3 = jn2.copy(c3).applyMatrix4(s);
       try {
-        const m4 = Yn2.setFromECEF(l3).height, f4 = Xn2.set(0, this.ellipsoid.maximumRadius, -Math.max(0, m4)).applyMatrix4(t2);
-        o3.get("geometricErrorCorrectionAmount").value = Hr(
-          Gr(f4.y, 41.5, 13.8, 0, 1)
+        const m3 = Yn2.setFromECEF(l3).height, f3 = Xn2.set(0, this.ellipsoid.maximumRadius, -Math.max(0, m3)).applyMatrix4(t2);
+        o2.get("geometricErrorCorrectionAmount").value = Cr(
+          Lr(f3.y, 41.5, 13.8, 0, 1)
         );
       } catch {
         return;
       }
-      const d3 = o3.get("altitudeCorrection");
+      const d3 = o2.get("altitudeCorrection");
       this.correctAltitude ? X(
         l3,
         this.atmosphere.bottomRadius,
@@ -6884,13 +6884,13 @@ vec3 getSkyRadiance(
     }
     updateOverlay() {
       let e3 = false;
-      const { uniforms: t2, defines: r4, overlay: i3 } = this, a3 = r4.has("HAS_OVERLAY"), o3 = i3 != null;
-      return o3 !== a3 && (o3 ? r4.set("HAS_OVERLAY", "1") : (r4.delete("HAS_OVERLAY"), t2.get("overlayBuffer").value = null), e3 = true), o3 && (t2.get("overlayBuffer").value = i3.map), e3;
+      const { uniforms: t2, defines: r4, overlay: i3 } = this, a3 = r4.has("HAS_OVERLAY"), o2 = i3 != null;
+      return o2 !== a3 && (o2 ? r4.set("HAS_OVERLAY", "1") : (r4.delete("HAS_OVERLAY"), t2.get("overlayBuffer").value = null), e3 = true), o2 && (t2.get("overlayBuffer").value = i3.map), e3;
     }
     updateShadow() {
       let e3 = false;
-      const { uniforms: t2, defines: r4, shadow: i3 } = this, a3 = r4.has("HAS_SHADOW"), o3 = i3 != null;
-      if (o3 !== a3 && (o3 ? r4.set("HAS_SHADOW", "1") : (r4.delete("HAS_SHADOW"), t2.get("shadowBuffer").value = null), e3 = true), o3) {
+      const { uniforms: t2, defines: r4, shadow: i3 } = this, a3 = r4.has("HAS_SHADOW"), o2 = i3 != null;
+      if (o2 !== a3 && (o2 ? r4.set("HAS_SHADOW", "1") : (r4.delete("HAS_SHADOW"), t2.get("shadowBuffer").value = null), e3 = true), o2) {
         const c3 = r4.get("SHADOW_CASCADE_COUNT"), s = `${i3.cascadeCount}`;
         c3 !== s && (r4.set("SHADOW_CASCADE_COUNT", i3.cascadeCount.toFixed(0)), e3 = true), t2.get("shadowBuffer").value = i3.map, t2.get("shadowMapSize").value = i3.mapSize, t2.get("shadowIntervals").value = i3.intervals, t2.get("shadowMatrices").value = i3.matrices, t2.get("inverseShadowMatrices").value = i3.inverseMatrices, t2.get("shadowFar").value = i3.far, t2.get("shadowTopHeight").value = i3.topHeight;
       }
@@ -6898,13 +6898,13 @@ vec3 getSkyRadiance(
     }
     updateShadowLength() {
       let e3 = false;
-      const { uniforms: t2, defines: r4, shadowLength: i3 } = this, a3 = r4.has("HAS_SHADOW_LENGTH"), o3 = i3 != null;
-      return o3 !== a3 && (o3 ? r4.set("HAS_SHADOW_LENGTH", "1") : (r4.delete("HAS_SHADOW_LENGTH"), t2.get("shadowLengthBuffer").value = null), e3 = true), o3 && (t2.get("shadowLengthBuffer").value = i3.map), e3;
+      const { uniforms: t2, defines: r4, shadowLength: i3 } = this, a3 = r4.has("HAS_SHADOW_LENGTH"), o2 = i3 != null;
+      return o2 !== a3 && (o2 ? r4.set("HAS_SHADOW_LENGTH", "1") : (r4.delete("HAS_SHADOW_LENGTH"), t2.get("shadowLengthBuffer").value = null), e3 = true), o2 && (t2.get("shadowLengthBuffer").value = i3.map), e3;
     }
     updateLightingMask() {
       let e3 = false;
-      const { uniforms: t2, defines: r4, lightingMask: i3 } = this, a3 = r4.has("HAS_LIGHTING_MASK"), o3 = i3 != null;
-      if (o3 !== a3 && (o3 ? r4.set("HAS_LIGHTING_MASK", "1") : (r4.delete("HAS_LIGHTING_MASK"), t2.get("lightingMaskBuffer").value = null), e3 = true), o3) {
+      const { uniforms: t2, defines: r4, lightingMask: i3 } = this, a3 = r4.has("HAS_LIGHTING_MASK"), o2 = i3 != null;
+      if (o2 !== a3 && (o2 ? r4.set("HAS_LIGHTING_MASK", "1") : (r4.delete("HAS_LIGHTING_MASK"), t2.get("lightingMaskBuffer").value = null), e3 = true), o2) {
         t2.get("lightingMaskBuffer").value = i3.map;
         const c3 = r4.get("LIGHTING_MASK_CHANNEL"), s = i3.channel;
         s !== c3 && (/^[rgba]$/.test(s) ? (r4.set("LIGHTING_MASK_CHANNEL", s), e3 = true) : console.error(`Expression validation failed: ${s}`));
@@ -6999,54 +6999,54 @@ vec3 getSkyRadiance(
     }
   };
   L2([
-    Vr("OCT_ENCODED_NORMAL")
+    Br("OCT_ENCODED_NORMAL")
   ], H3.prototype, "octEncodedNormal");
   L2([
-    Vr("RECONSTRUCT_NORMAL")
+    Br("RECONSTRUCT_NORMAL")
   ], H3.prototype, "reconstructNormal");
   L2([
-    Vr("HAS_NORMALS")
+    Br("HAS_NORMALS")
   ], H3.prototype, "hasNormals");
   L2([
-    Vr("COMBINED_SCATTERING_TEXTURES")
+    Br("COMBINED_SCATTERING_TEXTURES")
   ], H3.prototype, "combinedScatteringTextures");
   L2([
-    Vr("HAS_HIGHER_ORDER_SCATTERING_TEXTURE")
+    Br("HAS_HIGHER_ORDER_SCATTERING_TEXTURE")
   ], H3.prototype, "hasHigherOrderScatteringTexture");
   L2([
-    Vr("CORRECT_GEOMETRIC_ERROR")
+    Br("CORRECT_GEOMETRIC_ERROR")
   ], H3.prototype, "correctGeometricError");
   L2([
-    Vr("SUN_LIGHT")
+    Br("SUN_LIGHT")
   ], H3.prototype, "sunLight");
   L2([
-    Vr("SKY_LIGHT")
+    Br("SKY_LIGHT")
   ], H3.prototype, "skyLight");
   L2([
-    Vr("TRANSMITTANCE")
+    Br("TRANSMITTANCE")
   ], H3.prototype, "transmittance");
   L2([
-    Vr("INSCATTER")
+    Br("INSCATTER")
   ], H3.prototype, "inscatter");
   L2([
-    Vr("SKY")
+    Br("SKY")
   ], H3.prototype, "sky");
   L2([
-    Vr("SUN")
+    Br("SUN")
   ], H3.prototype, "sun");
   L2([
-    Vr("MOON")
+    Br("MOON")
   ], H3.prototype, "moon");
   L2([
-    Vr("GROUND")
+    Br("GROUND")
   ], H3.prototype, "ground");
   L2([
-    Yr("SHADOW_SAMPLE_COUNT", { min: 1, max: 16 })
+    Fr("SHADOW_SAMPLE_COUNT", { min: 1, max: 16 })
   ], H3.prototype, "shadowSampleCount");
   var $n2 = Object.defineProperty;
   var Dt2 = (n4, e3, t2, r4) => {
-    for (var i3 = void 0, a3 = n4.length - 1, o3; a3 >= 0; a3--)
-      (o3 = n4[a3]) && (i3 = o3(e3, t2, i3) || i3);
+    for (var i3 = void 0, a3 = n4.length - 1, o2; a3 >= 0; a3--)
+      (o2 = n4[a3]) && (i3 = o2(e3, t2, i3) || i3);
     return i3 && $n2(e3, t2, i3), i3;
   };
   var qn2 = /* @__PURE__ */ new Vector3();
@@ -7070,13 +7070,13 @@ vec3 getSkyRadiance(
         irradianceTexture: r4 = null,
         scatteringTexture: i3 = null,
         transmittanceTexture: a3 = null,
-        singleMieScatteringTexture: o3 = null,
+        singleMieScatteringTexture: o2 = null,
         higherOrderScatteringTexture: c3 = null,
         ellipsoid: s,
         correctAltitude: l3,
         sunDirection: d3,
-        sunAngularRadius: m4,
-        renderTargetCount: f4,
+        sunAngularRadius: m3,
+        renderTargetCount: f3,
         ...v3
       } = { ...Be2, ...e3 };
       super({
@@ -7104,17 +7104,17 @@ vec3 getSkyRadiance(
         defines: {
           PI: `${Math.PI}`,
           TRANSMITTANCE_TEXTURE_WIDTH: C3.toFixed(0),
-          TRANSMITTANCE_TEXTURE_HEIGHT: p2.toFixed(0),
+          TRANSMITTANCE_TEXTURE_HEIGHT: p3.toFixed(0),
           SCATTERING_TEXTURE_R_SIZE: i2.toFixed(0),
-          SCATTERING_TEXTURE_MU_SIZE: _2.toFixed(0),
-          SCATTERING_TEXTURE_MU_S_SIZE: R3.toFixed(0),
+          SCATTERING_TEXTURE_MU_SIZE: _3.toFixed(0),
+          SCATTERING_TEXTURE_MU_S_SIZE: R4.toFixed(0),
           SCATTERING_TEXTURE_NU_SIZE: u3.toFixed(0),
           IRRADIANCE_TEXTURE_WIDTH: f2.toFixed(0),
-          IRRADIANCE_TEXTURE_HEIGHT: A3.toFixed(0),
+          IRRADIANCE_TEXTURE_HEIGHT: A4.toFixed(0),
           METER_TO_LENGTH_UNIT: w2.toFixed(7),
           ...v3.defines
         }
-      }), this.atmosphere = t2, this.combinedScatteringTextures = false, this.hasHigherOrderScatteringTexture = false, this.singleMieScatteringTexture = o3, this.higherOrderScatteringTexture = c3, this.ellipsoid = s, this.correctAltitude = l3, m4 != null && (this.sunAngularRadius = m4), this.renderTargetCount = f4;
+      }), this.atmosphere = t2, this.combinedScatteringTextures = false, this.hasHigherOrderScatteringTexture = false, this.singleMieScatteringTexture = o2, this.higherOrderScatteringTexture = c3, this.ellipsoid = s, this.correctAltitude = l3, m3 != null && (this.sunAngularRadius = m3), this.renderTargetCount = f3;
     }
     copyCameraSettings(e3) {
       const t2 = this.uniforms, r4 = e3.getWorldPosition(
@@ -7133,7 +7133,7 @@ vec3 getSkyRadiance(
         this.renderTargetCount
       );
     }
-    onBeforeRender(e3, t2, r4, i3, a3, o3) {
+    onBeforeRender(e3, t2, r4, i3, a3, o2) {
       this.copyCameraSettings(r4);
     }
     get irradianceTexture() {
@@ -7188,13 +7188,13 @@ vec3 getSkyRadiance(
     }
   };
   Dt2([
-    Vr("COMBINED_SCATTERING_TEXTURES")
+    Br("COMBINED_SCATTERING_TEXTURES")
   ], se2.prototype, "combinedScatteringTextures");
   Dt2([
-    Vr("HAS_HIGHER_ORDER_SCATTERING_TEXTURE")
+    Br("HAS_HIGHER_ORDER_SCATTERING_TEXTURE")
   ], se2.prototype, "hasHigherOrderScatteringTexture");
   var Jn2 = 173.1446326846693;
-  var It2 = 14959787069098932e-8;
+  var It = 14959787069098932e-8;
   var g4 = 0.017453292519943295;
   var at2 = 57.29577951308232;
   var Qn2 = 365.24217;
@@ -7205,12 +7205,12 @@ vec3 getSkyRadiance(
   var er2 = 10800 * 60;
   var tr2 = 2 * er2;
   var nr2 = 6378.1366;
-  var rr2 = nr2 / It2;
-  var ir2 = 81.30056;
+  var rr = nr2 / It;
+  var ir = 81.30056;
   var We = 2959122082855911e-19;
   var xe2 = 2825345909524226e-22;
   var Me2 = 8459715185680659e-23;
-  var Ae = 1292024916781969e-23;
+  var Ae2 = 1292024916781969e-23;
   var we2 = 1524358900784276e-23;
   function l0(n4) {
     if (!Number.isFinite(n4))
@@ -7220,21 +7220,21 @@ vec3 getSkyRadiance(
   function E0(n4) {
     return n4 - Math.floor(n4);
   }
-  var S3;
+  var S4;
   (function(n4) {
     n4.Sun = "Sun", n4.Moon = "Moon", n4.Mercury = "Mercury", n4.Venus = "Venus", n4.Earth = "Earth", n4.Mars = "Mars", n4.Jupiter = "Jupiter", n4.Saturn = "Saturn", n4.Uranus = "Uranus", n4.Neptune = "Neptune", n4.Pluto = "Pluto", n4.SSB = "SSB", n4.EMB = "EMB", n4.Star1 = "Star1", n4.Star2 = "Star2", n4.Star3 = "Star3", n4.Star4 = "Star4", n4.Star5 = "Star5", n4.Star6 = "Star6", n4.Star7 = "Star7", n4.Star8 = "Star8";
-  })(S3 || (S3 = {}));
+  })(S4 || (S4 = {}));
   var ar2 = [
-    S3.Star1,
-    S3.Star2,
-    S3.Star3,
-    S3.Star4,
-    S3.Star5,
-    S3.Star6,
-    S3.Star7,
-    S3.Star8
+    S4.Star1,
+    S4.Star2,
+    S4.Star3,
+    S4.Star4,
+    S4.Star5,
+    S4.Star6,
+    S4.Star7,
+    S4.Star8
   ];
-  var or2 = [
+  var or = [
     { ra: 0, dec: 0, dist: 0 },
     { ra: 0, dec: 0, dist: 0 },
     { ra: 0, dec: 0, dist: 0 },
@@ -7244,12 +7244,12 @@ vec3 getSkyRadiance(
     { ra: 0, dec: 0, dist: 0 },
     { ra: 0, dec: 0, dist: 0 }
   ];
-  function sr2(n4) {
+  function sr(n4) {
     const e3 = ar2.indexOf(n4);
-    return e3 >= 0 ? or2[e3] : null;
+    return e3 >= 0 ? or[e3] : null;
   }
-  function Pt(n4) {
-    const e3 = sr2(n4);
+  function Pt2(n4) {
+    const e3 = sr(n4);
     return e3 && e3.dist > 0 ? e3 : null;
   }
   var V;
@@ -7894,9 +7894,9 @@ vec3 getSkyRadiance(
     ]
   };
   function cr2(n4) {
-    var e3, t2, r4, i3, a3, o3, c3;
+    var e3, t2, r4, i3, a3, o2, c3;
     const s = 2e3 + (n4 - 14) / Qn2;
-    return s < -500 ? (e3 = (s - 1820) / 100, -20 + 32 * e3 * e3) : s < 500 ? (e3 = s / 100, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, a3 = t2 * r4, o3 = r4 * r4, 10583.6 - 1014.41 * e3 + 33.78311 * t2 - 5.952053 * r4 - 0.1798452 * i3 + 0.022174192 * a3 + 0.0090316521 * o3) : s < 1600 ? (e3 = (s - 1e3) / 100, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, a3 = t2 * r4, o3 = r4 * r4, 1574.2 - 556.01 * e3 + 71.23472 * t2 + 0.319781 * r4 - 0.8503463 * i3 - 5050998e-9 * a3 + 0.0083572073 * o3) : s < 1700 ? (e3 = s - 1600, t2 = e3 * e3, r4 = e3 * t2, 120 - 0.9808 * e3 - 0.01532 * t2 + r4 / 7129) : s < 1800 ? (e3 = s - 1700, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, 8.83 + 0.1603 * e3 - 59285e-7 * t2 + 13336e-8 * r4 - i3 / 1174e3) : s < 1860 ? (e3 = s - 1800, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, a3 = t2 * r4, o3 = r4 * r4, c3 = r4 * i3, 13.72 - 0.332447 * e3 + 68612e-7 * t2 + 41116e-7 * r4 - 37436e-8 * i3 + 121272e-10 * a3 - 1699e-10 * o3 + 875e-12 * c3) : s < 1900 ? (e3 = s - 1860, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, a3 = t2 * r4, 7.62 + 0.5737 * e3 - 0.251754 * t2 + 0.01680668 * r4 - 4473624e-10 * i3 + a3 / 233174) : s < 1920 ? (e3 = s - 1900, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, -2.79 + 1.494119 * e3 - 0.0598939 * t2 + 61966e-7 * r4 - 197e-6 * i3) : s < 1941 ? (e3 = s - 1920, t2 = e3 * e3, r4 = e3 * t2, 21.2 + 0.84493 * e3 - 0.0761 * t2 + 20936e-7 * r4) : s < 1961 ? (e3 = s - 1950, t2 = e3 * e3, r4 = e3 * t2, 29.07 + 0.407 * e3 - t2 / 233 + r4 / 2547) : s < 1986 ? (e3 = s - 1975, t2 = e3 * e3, r4 = e3 * t2, 45.45 + 1.067 * e3 - t2 / 260 - r4 / 718) : s < 2005 ? (e3 = s - 2e3, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, a3 = t2 * r4, 63.86 + 0.3345 * e3 - 0.060374 * t2 + 17275e-7 * r4 + 651814e-9 * i3 + 2373599e-11 * a3) : s < 2050 ? (e3 = s - 2e3, 62.92 + 0.32217 * e3 + 5589e-6 * e3 * e3) : s < 2150 ? (e3 = (s - 1820) / 100, -20 + 32 * e3 * e3 - 0.5628 * (2150 - s)) : (e3 = (s - 1820) / 100, -20 + 32 * e3 * e3);
+    return s < -500 ? (e3 = (s - 1820) / 100, -20 + 32 * e3 * e3) : s < 500 ? (e3 = s / 100, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, a3 = t2 * r4, o2 = r4 * r4, 10583.6 - 1014.41 * e3 + 33.78311 * t2 - 5.952053 * r4 - 0.1798452 * i3 + 0.022174192 * a3 + 0.0090316521 * o2) : s < 1600 ? (e3 = (s - 1e3) / 100, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, a3 = t2 * r4, o2 = r4 * r4, 1574.2 - 556.01 * e3 + 71.23472 * t2 + 0.319781 * r4 - 0.8503463 * i3 - 5050998e-9 * a3 + 0.0083572073 * o2) : s < 1700 ? (e3 = s - 1600, t2 = e3 * e3, r4 = e3 * t2, 120 - 0.9808 * e3 - 0.01532 * t2 + r4 / 7129) : s < 1800 ? (e3 = s - 1700, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, 8.83 + 0.1603 * e3 - 59285e-7 * t2 + 13336e-8 * r4 - i3 / 1174e3) : s < 1860 ? (e3 = s - 1800, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, a3 = t2 * r4, o2 = r4 * r4, c3 = r4 * i3, 13.72 - 0.332447 * e3 + 68612e-7 * t2 + 41116e-7 * r4 - 37436e-8 * i3 + 121272e-10 * a3 - 1699e-10 * o2 + 875e-12 * c3) : s < 1900 ? (e3 = s - 1860, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, a3 = t2 * r4, 7.62 + 0.5737 * e3 - 0.251754 * t2 + 0.01680668 * r4 - 4473624e-10 * i3 + a3 / 233174) : s < 1920 ? (e3 = s - 1900, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, -2.79 + 1.494119 * e3 - 0.0598939 * t2 + 61966e-7 * r4 - 197e-6 * i3) : s < 1941 ? (e3 = s - 1920, t2 = e3 * e3, r4 = e3 * t2, 21.2 + 0.84493 * e3 - 0.0761 * t2 + 20936e-7 * r4) : s < 1961 ? (e3 = s - 1950, t2 = e3 * e3, r4 = e3 * t2, 29.07 + 0.407 * e3 - t2 / 233 + r4 / 2547) : s < 1986 ? (e3 = s - 1975, t2 = e3 * e3, r4 = e3 * t2, 45.45 + 1.067 * e3 - t2 / 260 - r4 / 718) : s < 2005 ? (e3 = s - 2e3, t2 = e3 * e3, r4 = e3 * t2, i3 = t2 * t2, a3 = t2 * r4, 63.86 + 0.3345 * e3 - 0.060374 * t2 + 17275e-7 * r4 + 651814e-9 * i3 + 2373599e-11 * a3) : s < 2050 ? (e3 = s - 2e3, 62.92 + 0.32217 * e3 + 5589e-6 * e3 * e3) : s < 2150 ? (e3 = (s - 1820) / 100, -20 + 32 * e3 * e3 - 0.5628 * (2150 - s)) : (e3 = (s - 1820) / 100, -20 + 32 * e3 * e3);
   }
   var ur = cr2;
   function st2(n4) {
@@ -7977,13 +7977,13 @@ vec3 getSkyRadiance(
   function r0(n4) {
     return n4 instanceof t0 ? n4 : new t0(n4);
   }
-  function lr(n4) {
-    function e3(f4) {
-      return f4 % tr2 * x0;
+  function lr2(n4) {
+    function e3(f3) {
+      return f3 % tr2 * x0;
     }
-    const t2 = n4.tt / 36525, r4 = e3(128710479305e-5 + t2 * 1295965810481e-4), i3 = e3(335779.526232 + t2 * 17395272628478e-4), a3 = e3(107226070369e-5 + t2 * 1602961601209e-3), o3 = e3(450160.398036 - t2 * 69628905431e-4);
-    let c3 = Math.sin(o3), s = Math.cos(o3), l3 = (-172064161 - 174666 * t2) * c3 + 33386 * s, d3 = (92052331 + 9086 * t2) * s + 15377 * c3, m4 = 2 * (i3 - a3 + o3);
-    return c3 = Math.sin(m4), s = Math.cos(m4), l3 += (-13170906 - 1675 * t2) * c3 - 13696 * s, d3 += (5730336 - 3015 * t2) * s - 4587 * c3, m4 = 2 * (i3 + o3), c3 = Math.sin(m4), s = Math.cos(m4), l3 += (-2276413 - 234 * t2) * c3 + 2796 * s, d3 += (978459 - 485 * t2) * s + 1374 * c3, m4 = 2 * o3, c3 = Math.sin(m4), s = Math.cos(m4), l3 += (2074554 + 207 * t2) * c3 - 698 * s, d3 += (-897492 + 470 * t2) * s - 291 * c3, c3 = Math.sin(r4), s = Math.cos(r4), l3 += (1475877 - 3633 * t2) * c3 + 11817 * s, d3 += (73871 - 184 * t2) * s - 1924 * c3, {
+    const t2 = n4.tt / 36525, r4 = e3(128710479305e-5 + t2 * 1295965810481e-4), i3 = e3(335779.526232 + t2 * 17395272628478e-4), a3 = e3(107226070369e-5 + t2 * 1602961601209e-3), o2 = e3(450160.398036 - t2 * 69628905431e-4);
+    let c3 = Math.sin(o2), s = Math.cos(o2), l3 = (-172064161 - 174666 * t2) * c3 + 33386 * s, d3 = (92052331 + 9086 * t2) * s + 15377 * c3, m3 = 2 * (i3 - a3 + o2);
+    return c3 = Math.sin(m3), s = Math.cos(m3), l3 += (-13170906 - 1675 * t2) * c3 - 13696 * s, d3 += (5730336 - 3015 * t2) * s - 4587 * c3, m3 = 2 * (i3 + o2), c3 = Math.sin(m3), s = Math.cos(m3), l3 += (-2276413 - 234 * t2) * c3 + 2796 * s, d3 += (978459 - 485 * t2) * s + 1374 * c3, m3 = 2 * o2, c3 = Math.sin(m3), s = Math.cos(m3), l3 += (2074554 + 207 * t2) * c3 - 698 * s, d3 += (-897492 + 470 * t2) * s - 291 * c3, c3 = Math.sin(r4), s = Math.cos(r4), l3 += (1475877 - 3633 * t2) * c3 + 11817 * s, d3 += (73871 - 184 * t2) * s - 1924 * c3, {
       dpsi: -135e-6 + l3 * 1e-7,
       deps: 388e-6 + d3 * 1e-7
     };
@@ -7995,7 +7995,7 @@ vec3 getSkyRadiance(
   var K0;
   function Ot(n4) {
     if (!K0 || Math.abs(K0.tt - n4.tt) > 1e-6) {
-      const e3 = lr(n4), t2 = Nt2(n4), r4 = t2 + e3.deps / 3600;
+      const e3 = lr2(n4), t2 = Nt2(n4), r4 = t2 + e3.deps / 3600;
       K0 = {
         tt: n4.tt,
         dpsi: e3.dpsi,
@@ -8018,51 +8018,51 @@ vec3 getSkyRadiance(
   function hr2(n4, e3) {
     return dr(Nt2(n4), e3);
   }
-  function mr(n4) {
+  function mr2(n4) {
     const e3 = n4.tt / 36525;
-    function t2(_3, R4) {
-      const A4 = [];
+    function t2(_4, R5) {
+      const A5 = [];
       let C4;
-      for (C4 = 0; C4 <= R4 - _3; ++C4)
-        A4.push(0);
-      return { min: _3, array: A4 };
+      for (C4 = 0; C4 <= R5 - _4; ++C4)
+        A5.push(0);
+      return { min: _4, array: A5 };
     }
-    function r4(_3, R4, A4, C4) {
+    function r4(_4, R5, A5, C4) {
       const P3 = [];
-      for (let Q4 = 0; Q4 <= R4 - _3; ++Q4)
-        P3.push(t2(A4, C4));
-      return { min: _3, array: P3 };
+      for (let Q4 = 0; Q4 <= R5 - _4; ++Q4)
+        P3.push(t2(A5, C4));
+      return { min: _4, array: P3 };
     }
-    function i3(_3, R4, A4) {
-      const C4 = _3.array[R4 - _3.min];
-      return C4.array[A4 - C4.min];
+    function i3(_4, R5, A5) {
+      const C4 = _4.array[R5 - _4.min];
+      return C4.array[A5 - C4.min];
     }
-    function a3(_3, R4, A4, C4) {
-      const P3 = _3.array[R4 - _3.min];
-      P3.array[A4 - P3.min] = C4;
+    function a3(_4, R5, A5, C4) {
+      const P3 = _4.array[R5 - _4.min];
+      P3.array[A5 - P3.min] = C4;
     }
-    let o3, c3, s, l3, d3, m4, f4, v3, T3, E3, x3, y2, I3, N3, b4, U4, z4, F2, q2, Z, i0, a0, J2, N0 = r4(-6, 6, 1, 4), p0 = r4(-6, 6, 1, 4);
-    function z0(_3, R4) {
-      return i3(N0, _3, R4);
+    let o2, c3, s, l3, d3, m3, f3, v3, T3, E4, x3, y3, I3, N3, b4, U3, z4, F2, q2, Z, i0, a0, J2, N0 = r4(-6, 6, 1, 4), p0 = r4(-6, 6, 1, 4);
+    function z0(_4, R5) {
+      return i3(N0, _4, R5);
     }
-    function k0(_3, R4) {
-      return i3(p0, _3, R4);
+    function k0(_4, R5) {
+      return i3(p0, _4, R5);
     }
-    function V0(_3, R4, A4) {
-      return a3(N0, _3, R4, A4);
+    function V0(_4, R5, A5) {
+      return a3(N0, _4, R5, A5);
     }
-    function B0(_3, R4, A4) {
-      return a3(p0, _3, R4, A4);
+    function B0(_4, R5, A5) {
+      return a3(p0, _4, R5, A5);
     }
-    function $e(_3, R4, A4, C4, P3) {
-      P3(_3 * A4 - R4 * C4, R4 * A4 + _3 * C4);
+    function $e(_4, R5, A5, C4, P3) {
+      P3(_4 * A5 - R5 * C4, R5 * A5 + _4 * C4);
     }
-    function M2(_3) {
-      return Math.sin(X2 * _3);
+    function M2(_4) {
+      return Math.sin(X2 * _4);
     }
-    f4 = e3 * e3, T3 = 0, J2 = 0, x3 = 0, y2 = 3422.7;
-    var W0 = M2(0.19833 + 0.05611 * e3), le2 = M2(0.27869 + 0.04508 * e3), de = M2(0.16827 - 0.36903 * e3), he2 = M2(0.34734 - 5.37261 * e3), me2 = M2(0.10498 - 5.37899 * e3), j0 = M2(0.42681 - 0.41855 * e3), qt = M2(0.14943 - 5.37511 * e3);
-    for (F2 = 0.84 * W0 + 0.31 * le2 + 14.27 * de + 7.26 * he2 + 0.28 * me2 + 0.24 * j0, q2 = 2.94 * W0 + 0.31 * le2 + 14.27 * de + 9.34 * he2 + 1.12 * me2 + 0.83 * j0, Z = -6.4 * W0 - 1.89 * j0, i0 = 0.21 * W0 + 0.31 * le2 + 14.27 * de - 88.7 * he2 - 15.3 * me2 + 0.24 * j0 - 1.86 * qt, a0 = F2 - Z, v3 = -3332e-9 * M2(0.59734 - 5.37261 * e3) - 539e-9 * M2(0.35498 - 5.37899 * e3) - 64e-9 * M2(0.39943 - 5.37511 * e3), I3 = X2 * E0(0.60643382 + 1336.85522467 * e3 - 313e-8 * f4) + F2 / e0, N3 = X2 * E0(0.37489701 + 1325.55240982 * e3 + 2565e-8 * f4) + q2 / e0, b4 = X2 * E0(0.99312619 + 99.99735956 * e3 - 44e-8 * f4) + Z / e0, U4 = X2 * E0(0.25909118 + 1342.2278298 * e3 - 892e-8 * f4) + i0 / e0, z4 = X2 * E0(0.82736186 + 1236.85308708 * e3 - 397e-8 * f4) + a0 / e0, d3 = 1; d3 <= 4; ++d3) {
+    f3 = e3 * e3, T3 = 0, J2 = 0, x3 = 0, y3 = 3422.7;
+    var W0 = M2(0.19833 + 0.05611 * e3), le = M2(0.27869 + 0.04508 * e3), de = M2(0.16827 - 0.36903 * e3), he2 = M2(0.34734 - 5.37261 * e3), me2 = M2(0.10498 - 5.37899 * e3), j0 = M2(0.42681 - 0.41855 * e3), qt2 = M2(0.14943 - 5.37511 * e3);
+    for (F2 = 0.84 * W0 + 0.31 * le + 14.27 * de + 7.26 * he2 + 0.28 * me2 + 0.24 * j0, q2 = 2.94 * W0 + 0.31 * le + 14.27 * de + 9.34 * he2 + 1.12 * me2 + 0.83 * j0, Z = -6.4 * W0 - 1.89 * j0, i0 = 0.21 * W0 + 0.31 * le + 14.27 * de - 88.7 * he2 - 15.3 * me2 + 0.24 * j0 - 1.86 * qt2, a0 = F2 - Z, v3 = -3332e-9 * M2(0.59734 - 5.37261 * e3) - 539e-9 * M2(0.35498 - 5.37899 * e3) - 64e-9 * M2(0.39943 - 5.37511 * e3), I3 = X2 * E0(0.60643382 + 1336.85522467 * e3 - 313e-8 * f3) + F2 / e0, N3 = X2 * E0(0.37489701 + 1325.55240982 * e3 + 2565e-8 * f3) + q2 / e0, b4 = X2 * E0(0.99312619 + 99.99735956 * e3 - 44e-8 * f3) + Z / e0, U3 = X2 * E0(0.25909118 + 1342.2278298 * e3 - 892e-8 * f3) + i0 / e0, z4 = X2 * E0(0.82736186 + 1236.85308708 * e3 - 397e-8 * f3) + a0 / e0, d3 = 1; d3 <= 4; ++d3) {
       switch (d3) {
         case 1:
           s = N3, c3 = 4, l3 = 1.000002208;
@@ -8071,7 +8071,7 @@ vec3 getSkyRadiance(
           s = b4, c3 = 3, l3 = 0.997504612 - 2495388e-9 * e3;
           break;
         case 3:
-          s = U4, c3 = 4, l3 = 1.000002708 + 139.978 * v3;
+          s = U3, c3 = 4, l3 = 1.000002708 + 139.978 * v3;
           break;
         case 4:
           s = z4, c3 = 6, l3 = 1;
@@ -8079,30 +8079,30 @@ vec3 getSkyRadiance(
         default:
           throw `Internal error: I = ${d3}`;
       }
-      for (V0(0, d3, 1), V0(1, d3, Math.cos(s) * l3), B0(0, d3, 0), B0(1, d3, Math.sin(s) * l3), m4 = 2; m4 <= c3; ++m4)
-        $e(z0(m4 - 1, d3), k0(m4 - 1, d3), z0(1, d3), k0(1, d3), (_3, R4) => (V0(m4, d3, _3), B0(m4, d3, R4)));
-      for (m4 = 1; m4 <= c3; ++m4)
-        V0(-m4, d3, z0(m4, d3)), B0(-m4, d3, -k0(m4, d3));
+      for (V0(0, d3, 1), V0(1, d3, Math.cos(s) * l3), B0(0, d3, 0), B0(1, d3, Math.sin(s) * l3), m3 = 2; m3 <= c3; ++m3)
+        $e(z0(m3 - 1, d3), k0(m3 - 1, d3), z0(1, d3), k0(1, d3), (_4, R5) => (V0(m3, d3, _4), B0(m3, d3, R5)));
+      for (m3 = 1; m3 <= c3; ++m3)
+        V0(-m3, d3, z0(m3, d3)), B0(-m3, d3, -k0(m3, d3));
     }
-    function qe(_3, R4, A4, C4) {
-      for (var P3 = { x: 1, y: 0 }, Q4 = [0, _3, R4, A4, C4], j2 = 1; j2 <= 4; ++j2)
-        Q4[j2] !== 0 && $e(P3.x, P3.y, z0(Q4[j2], j2), k0(Q4[j2], j2), (fe2, T0) => (P3.x = fe2, P3.y = T0));
+    function qe(_4, R5, A5, C4) {
+      for (var P3 = { x: 1, y: 0 }, Q4 = [0, _4, R5, A5, C4], j2 = 1; j2 <= 4; ++j2)
+        Q4[j2] !== 0 && $e(P3.x, P3.y, z0(Q4[j2], j2), k0(Q4[j2], j2), (fe, T0) => (P3.x = fe, P3.y = T0));
       return P3;
     }
-    function u5(_3, R4, A4, C4, P3, Q4, j2, fe2) {
-      var T0 = qe(P3, Q4, j2, fe2);
-      T3 += _3 * T0.y, J2 += R4 * T0.y, x3 += A4 * T0.x, y2 += C4 * T0.x;
+    function u4(_4, R5, A5, C4, P3, Q4, j2, fe) {
+      var T0 = qe(P3, Q4, j2, fe);
+      T3 += _4 * T0.y, J2 += R5 * T0.y, x3 += A5 * T0.x, y3 += C4 * T0.x;
     }
-    u5(13.902, 14.06, -1e-3, 0.2607, 0, 0, 0, 4), u5(0.403, -4.01, 0.394, 23e-4, 0, 0, 0, 3), u5(2369.912, 2373.36, 0.601, 28.2333, 0, 0, 0, 2), u5(-125.154, -112.79, -0.725, -0.9781, 0, 0, 0, 1), u5(1.979, 6.98, -0.445, 0.0433, 1, 0, 0, 4), u5(191.953, 192.72, 0.029, 3.0861, 1, 0, 0, 2), u5(-8.466, -13.51, 0.455, -0.1093, 1, 0, 0, 1), u5(22639.5, 22609.07, 0.079, 186.5398, 1, 0, 0, 0), u5(18.609, 3.59, -0.094, 0.0118, 1, 0, 0, -1), u5(-4586.465, -4578.13, -0.077, 34.3117, 1, 0, 0, -2), u5(3.215, 5.44, 0.192, -0.0386, 1, 0, 0, -3), u5(-38.428, -38.64, 1e-3, 0.6008, 1, 0, 0, -4), u5(-0.393, -1.43, -0.092, 86e-4, 1, 0, 0, -6), u5(-0.289, -1.59, 0.123, -53e-4, 0, 1, 0, 4), u5(-24.42, -25.1, 0.04, -0.3, 0, 1, 0, 2), u5(18.023, 17.93, 7e-3, 0.1494, 0, 1, 0, 1), u5(-668.146, -126.98, -1.302, -0.3997, 0, 1, 0, 0), u5(0.56, 0.32, -1e-3, -37e-4, 0, 1, 0, -1), u5(-165.145, -165.06, 0.054, 1.9178, 0, 1, 0, -2), u5(-1.877, -6.46, -0.416, 0.0339, 0, 1, 0, -4), u5(0.213, 1.02, -0.074, 54e-4, 2, 0, 0, 4), u5(14.387, 14.78, -0.017, 0.2833, 2, 0, 0, 2), u5(-0.586, -1.2, 0.054, -0.01, 2, 0, 0, 1), u5(769.016, 767.96, 0.107, 10.1657, 2, 0, 0, 0), u5(1.75, 2.01, -0.018, 0.0155, 2, 0, 0, -1), u5(-211.656, -152.53, 5.679, -0.3039, 2, 0, 0, -2), u5(1.225, 0.91, -0.03, -88e-4, 2, 0, 0, -3), u5(-30.773, -34.07, -0.308, 0.3722, 2, 0, 0, -4), u5(-0.57, -1.4, -0.074, 0.0109, 2, 0, 0, -6), u5(-2.921, -11.75, 0.787, -0.0484, 1, 1, 0, 2), u5(1.267, 1.52, -0.022, 0.0164, 1, 1, 0, 1), u5(-109.673, -115.18, 0.461, -0.949, 1, 1, 0, 0), u5(-205.962, -182.36, 2.056, 1.4437, 1, 1, 0, -2), u5(0.233, 0.36, 0.012, -25e-4, 1, 1, 0, -3), u5(-4.391, -9.66, -0.471, 0.0673, 1, 1, 0, -4), u5(0.283, 1.53, -0.111, 6e-3, 1, -1, 0, 4), u5(14.577, 31.7, -1.54, 0.2302, 1, -1, 0, 2), u5(147.687, 138.76, 0.679, 1.1528, 1, -1, 0, 0), u5(-1.089, 0.55, 0.021, 0, 1, -1, 0, -1), u5(28.475, 23.59, -0.443, -0.2257, 1, -1, 0, -2), u5(-0.276, -0.38, -6e-3, -36e-4, 1, -1, 0, -3), u5(0.636, 2.27, 0.146, -0.0102, 1, -1, 0, -4), u5(-0.189, -1.68, 0.131, -28e-4, 0, 2, 0, 2), u5(-7.486, -0.66, -0.037, -86e-4, 0, 2, 0, 0), u5(-8.096, -16.35, -0.74, 0.0918, 0, 2, 0, -2), u5(-5.741, -0.04, 0, -9e-4, 0, 0, 2, 2), u5(0.255, 0, 0, 0, 0, 0, 2, 1), u5(-411.608, -0.2, 0, -0.0124, 0, 0, 2, 0), u5(0.584, 0.84, 0, 71e-4, 0, 0, 2, -1), u5(-55.173, -52.14, 0, -0.1052, 0, 0, 2, -2), u5(0.254, 0.25, 0, -17e-4, 0, 0, 2, -3), u5(0.025, -1.67, 0, 31e-4, 0, 0, 2, -4), u5(1.06, 2.96, -0.166, 0.0243, 3, 0, 0, 2), u5(36.124, 50.64, -1.3, 0.6215, 3, 0, 0, 0), u5(-13.193, -16.4, 0.258, -0.1187, 3, 0, 0, -2), u5(-1.187, -0.74, 0.042, 74e-4, 3, 0, 0, -4), u5(-0.293, -0.31, -2e-3, 46e-4, 3, 0, 0, -6), u5(-0.29, -1.45, 0.116, -51e-4, 2, 1, 0, 2), u5(-7.649, -10.56, 0.259, -0.1038, 2, 1, 0, 0), u5(-8.627, -7.59, 0.078, -0.0192, 2, 1, 0, -2), u5(-2.74, -2.54, 0.022, 0.0324, 2, 1, 0, -4), u5(1.181, 3.32, -0.212, 0.0213, 2, -1, 0, 2), u5(9.703, 11.67, -0.151, 0.1268, 2, -1, 0, 0), u5(-0.352, -0.37, 1e-3, -28e-4, 2, -1, 0, -1), u5(-2.494, -1.17, -3e-3, -17e-4, 2, -1, 0, -2), u5(0.36, 0.2, -0.012, -43e-4, 2, -1, 0, -4), u5(-1.167, -1.25, 8e-3, -0.0106, 1, 2, 0, 0), u5(-7.412, -6.12, 0.117, 0.0484, 1, 2, 0, -2), u5(-0.311, -0.65, -0.032, 44e-4, 1, 2, 0, -4), u5(0.757, 1.82, -0.105, 0.0112, 1, -2, 0, 2), u5(2.58, 2.32, 0.027, 0.0196, 1, -2, 0, 0), u5(2.533, 2.4, -0.014, -0.0212, 1, -2, 0, -2), u5(-0.344, -0.57, -0.025, 36e-4, 0, 3, 0, -2), u5(-0.992, -0.02, 0, 0, 1, 0, 2, 2), u5(-45.099, -0.02, 0, -1e-3, 1, 0, 2, 0), u5(-0.179, -9.52, 0, -0.0833, 1, 0, 2, -2), u5(-0.301, -0.33, 0, 14e-4, 1, 0, 2, -4), u5(-6.382, -3.37, 0, -0.0481, 1, 0, -2, 2), u5(39.528, 85.13, 0, -0.7136, 1, 0, -2, 0), u5(9.366, 0.71, 0, -0.0112, 1, 0, -2, -2), u5(0.202, 0.02, 0, 0, 1, 0, -2, -4), u5(0.415, 0.1, 0, 13e-4, 0, 1, 2, 0), u5(-2.152, -2.26, 0, -66e-4, 0, 1, 2, -2), u5(-1.44, -1.3, 0, 14e-4, 0, 1, -2, 2), u5(0.384, -0.04, 0, 0, 0, 1, -2, -2), u5(1.938, 3.6, -0.145, 0.0401, 4, 0, 0, 0), u5(-0.952, -1.58, 0.052, -0.013, 4, 0, 0, -2), u5(-0.551, -0.94, 0.032, -97e-4, 3, 1, 0, 0), u5(-0.482, -0.57, 5e-3, -45e-4, 3, 1, 0, -2), u5(0.681, 0.96, -0.026, 0.0115, 3, -1, 0, 0), u5(-0.297, -0.27, 2e-3, -9e-4, 2, 2, 0, -2), u5(0.254, 0.21, -3e-3, 0, 2, -2, 0, -2), u5(-0.25, -0.22, 4e-3, 14e-4, 1, 3, 0, -2), u5(-3.996, 0, 0, 4e-4, 2, 0, 2, 0), u5(0.557, -0.75, 0, -9e-3, 2, 0, 2, -2), u5(-0.459, -0.38, 0, -53e-4, 2, 0, -2, 2), u5(-1.298, 0.74, 0, 4e-4, 2, 0, -2, 0), u5(0.538, 1.14, 0, -0.0141, 2, 0, -2, -2), u5(0.263, 0.02, 0, 0, 1, 1, 2, 0), u5(0.426, 0.07, 0, -6e-4, 1, 1, -2, -2), u5(-0.304, 0.03, 0, 3e-4, 1, -1, 2, 0), u5(-0.372, -0.19, 0, -27e-4, 1, -1, -2, 2), u5(0.418, 0, 0, 0, 0, 0, 4, 0), u5(-0.33, -0.04, 0, 0, 3, 0, 2, 0);
-    function B(_3, R4, A4, C4, P3) {
-      return _3 * qe(R4, A4, C4, P3).y;
+    u4(13.902, 14.06, -1e-3, 0.2607, 0, 0, 0, 4), u4(0.403, -4.01, 0.394, 23e-4, 0, 0, 0, 3), u4(2369.912, 2373.36, 0.601, 28.2333, 0, 0, 0, 2), u4(-125.154, -112.79, -0.725, -0.9781, 0, 0, 0, 1), u4(1.979, 6.98, -0.445, 0.0433, 1, 0, 0, 4), u4(191.953, 192.72, 0.029, 3.0861, 1, 0, 0, 2), u4(-8.466, -13.51, 0.455, -0.1093, 1, 0, 0, 1), u4(22639.5, 22609.07, 0.079, 186.5398, 1, 0, 0, 0), u4(18.609, 3.59, -0.094, 0.0118, 1, 0, 0, -1), u4(-4586.465, -4578.13, -0.077, 34.3117, 1, 0, 0, -2), u4(3.215, 5.44, 0.192, -0.0386, 1, 0, 0, -3), u4(-38.428, -38.64, 1e-3, 0.6008, 1, 0, 0, -4), u4(-0.393, -1.43, -0.092, 86e-4, 1, 0, 0, -6), u4(-0.289, -1.59, 0.123, -53e-4, 0, 1, 0, 4), u4(-24.42, -25.1, 0.04, -0.3, 0, 1, 0, 2), u4(18.023, 17.93, 7e-3, 0.1494, 0, 1, 0, 1), u4(-668.146, -126.98, -1.302, -0.3997, 0, 1, 0, 0), u4(0.56, 0.32, -1e-3, -37e-4, 0, 1, 0, -1), u4(-165.145, -165.06, 0.054, 1.9178, 0, 1, 0, -2), u4(-1.877, -6.46, -0.416, 0.0339, 0, 1, 0, -4), u4(0.213, 1.02, -0.074, 54e-4, 2, 0, 0, 4), u4(14.387, 14.78, -0.017, 0.2833, 2, 0, 0, 2), u4(-0.586, -1.2, 0.054, -0.01, 2, 0, 0, 1), u4(769.016, 767.96, 0.107, 10.1657, 2, 0, 0, 0), u4(1.75, 2.01, -0.018, 0.0155, 2, 0, 0, -1), u4(-211.656, -152.53, 5.679, -0.3039, 2, 0, 0, -2), u4(1.225, 0.91, -0.03, -88e-4, 2, 0, 0, -3), u4(-30.773, -34.07, -0.308, 0.3722, 2, 0, 0, -4), u4(-0.57, -1.4, -0.074, 0.0109, 2, 0, 0, -6), u4(-2.921, -11.75, 0.787, -0.0484, 1, 1, 0, 2), u4(1.267, 1.52, -0.022, 0.0164, 1, 1, 0, 1), u4(-109.673, -115.18, 0.461, -0.949, 1, 1, 0, 0), u4(-205.962, -182.36, 2.056, 1.4437, 1, 1, 0, -2), u4(0.233, 0.36, 0.012, -25e-4, 1, 1, 0, -3), u4(-4.391, -9.66, -0.471, 0.0673, 1, 1, 0, -4), u4(0.283, 1.53, -0.111, 6e-3, 1, -1, 0, 4), u4(14.577, 31.7, -1.54, 0.2302, 1, -1, 0, 2), u4(147.687, 138.76, 0.679, 1.1528, 1, -1, 0, 0), u4(-1.089, 0.55, 0.021, 0, 1, -1, 0, -1), u4(28.475, 23.59, -0.443, -0.2257, 1, -1, 0, -2), u4(-0.276, -0.38, -6e-3, -36e-4, 1, -1, 0, -3), u4(0.636, 2.27, 0.146, -0.0102, 1, -1, 0, -4), u4(-0.189, -1.68, 0.131, -28e-4, 0, 2, 0, 2), u4(-7.486, -0.66, -0.037, -86e-4, 0, 2, 0, 0), u4(-8.096, -16.35, -0.74, 0.0918, 0, 2, 0, -2), u4(-5.741, -0.04, 0, -9e-4, 0, 0, 2, 2), u4(0.255, 0, 0, 0, 0, 0, 2, 1), u4(-411.608, -0.2, 0, -0.0124, 0, 0, 2, 0), u4(0.584, 0.84, 0, 71e-4, 0, 0, 2, -1), u4(-55.173, -52.14, 0, -0.1052, 0, 0, 2, -2), u4(0.254, 0.25, 0, -17e-4, 0, 0, 2, -3), u4(0.025, -1.67, 0, 31e-4, 0, 0, 2, -4), u4(1.06, 2.96, -0.166, 0.0243, 3, 0, 0, 2), u4(36.124, 50.64, -1.3, 0.6215, 3, 0, 0, 0), u4(-13.193, -16.4, 0.258, -0.1187, 3, 0, 0, -2), u4(-1.187, -0.74, 0.042, 74e-4, 3, 0, 0, -4), u4(-0.293, -0.31, -2e-3, 46e-4, 3, 0, 0, -6), u4(-0.29, -1.45, 0.116, -51e-4, 2, 1, 0, 2), u4(-7.649, -10.56, 0.259, -0.1038, 2, 1, 0, 0), u4(-8.627, -7.59, 0.078, -0.0192, 2, 1, 0, -2), u4(-2.74, -2.54, 0.022, 0.0324, 2, 1, 0, -4), u4(1.181, 3.32, -0.212, 0.0213, 2, -1, 0, 2), u4(9.703, 11.67, -0.151, 0.1268, 2, -1, 0, 0), u4(-0.352, -0.37, 1e-3, -28e-4, 2, -1, 0, -1), u4(-2.494, -1.17, -3e-3, -17e-4, 2, -1, 0, -2), u4(0.36, 0.2, -0.012, -43e-4, 2, -1, 0, -4), u4(-1.167, -1.25, 8e-3, -0.0106, 1, 2, 0, 0), u4(-7.412, -6.12, 0.117, 0.0484, 1, 2, 0, -2), u4(-0.311, -0.65, -0.032, 44e-4, 1, 2, 0, -4), u4(0.757, 1.82, -0.105, 0.0112, 1, -2, 0, 2), u4(2.58, 2.32, 0.027, 0.0196, 1, -2, 0, 0), u4(2.533, 2.4, -0.014, -0.0212, 1, -2, 0, -2), u4(-0.344, -0.57, -0.025, 36e-4, 0, 3, 0, -2), u4(-0.992, -0.02, 0, 0, 1, 0, 2, 2), u4(-45.099, -0.02, 0, -1e-3, 1, 0, 2, 0), u4(-0.179, -9.52, 0, -0.0833, 1, 0, 2, -2), u4(-0.301, -0.33, 0, 14e-4, 1, 0, 2, -4), u4(-6.382, -3.37, 0, -0.0481, 1, 0, -2, 2), u4(39.528, 85.13, 0, -0.7136, 1, 0, -2, 0), u4(9.366, 0.71, 0, -0.0112, 1, 0, -2, -2), u4(0.202, 0.02, 0, 0, 1, 0, -2, -4), u4(0.415, 0.1, 0, 13e-4, 0, 1, 2, 0), u4(-2.152, -2.26, 0, -66e-4, 0, 1, 2, -2), u4(-1.44, -1.3, 0, 14e-4, 0, 1, -2, 2), u4(0.384, -0.04, 0, 0, 0, 1, -2, -2), u4(1.938, 3.6, -0.145, 0.0401, 4, 0, 0, 0), u4(-0.952, -1.58, 0.052, -0.013, 4, 0, 0, -2), u4(-0.551, -0.94, 0.032, -97e-4, 3, 1, 0, 0), u4(-0.482, -0.57, 5e-3, -45e-4, 3, 1, 0, -2), u4(0.681, 0.96, -0.026, 0.0115, 3, -1, 0, 0), u4(-0.297, -0.27, 2e-3, -9e-4, 2, 2, 0, -2), u4(0.254, 0.21, -3e-3, 0, 2, -2, 0, -2), u4(-0.25, -0.22, 4e-3, 14e-4, 1, 3, 0, -2), u4(-3.996, 0, 0, 4e-4, 2, 0, 2, 0), u4(0.557, -0.75, 0, -9e-3, 2, 0, 2, -2), u4(-0.459, -0.38, 0, -53e-4, 2, 0, -2, 2), u4(-1.298, 0.74, 0, 4e-4, 2, 0, -2, 0), u4(0.538, 1.14, 0, -0.0141, 2, 0, -2, -2), u4(0.263, 0.02, 0, 0, 1, 1, 2, 0), u4(0.426, 0.07, 0, -6e-4, 1, 1, -2, -2), u4(-0.304, 0.03, 0, 3e-4, 1, -1, 2, 0), u4(-0.372, -0.19, 0, -27e-4, 1, -1, -2, 2), u4(0.418, 0, 0, 0, 0, 0, 4, 0), u4(-0.33, -0.04, 0, 0, 3, 0, 2, 0);
+    function B2(_4, R5, A5, C4, P3) {
+      return _4 * qe(R5, A5, C4, P3).y;
     }
-    E3 = 0, E3 += B(-526.069, 0, 0, 1, -2), E3 += B(-3.352, 0, 0, 1, -4), E3 += B(44.297, 1, 0, 1, -2), E3 += B(-6, 1, 0, 1, -4), E3 += B(20.599, -1, 0, 1, 0), E3 += B(-30.598, -1, 0, 1, -2), E3 += B(-24.649, -2, 0, 1, 0), E3 += B(-2, -2, 0, 1, -2), E3 += B(-22.571, 0, 1, 1, -2), E3 += B(10.985, 0, -1, 1, -2), T3 += 0.82 * M2(0.7736 - 62.5512 * e3) + 0.31 * M2(0.0466 - 125.1025 * e3) + 0.35 * M2(0.5785 - 25.1042 * e3) + 0.66 * M2(0.4591 + 1335.8075 * e3) + 0.64 * M2(0.313 - 91.568 * e3) + 1.14 * M2(0.148 + 1331.2898 * e3) + 0.21 * M2(0.5918 + 1056.5859 * e3) + 0.44 * M2(0.5784 + 1322.8595 * e3) + 0.24 * M2(0.2275 - 5.7374 * e3) + 0.28 * M2(0.2965 + 2.6929 * e3) + 0.33 * M2(0.3132 + 6.3368 * e3), o3 = U4 + J2 / e0;
-    let Zt2 = (1.000002708 + 139.978 * v3) * (18518.511 + 1.189 + x3) * Math.sin(o3) - 6.24 * Math.sin(3 * o3) + E3;
+    E4 = 0, E4 += B2(-526.069, 0, 0, 1, -2), E4 += B2(-3.352, 0, 0, 1, -4), E4 += B2(44.297, 1, 0, 1, -2), E4 += B2(-6, 1, 0, 1, -4), E4 += B2(20.599, -1, 0, 1, 0), E4 += B2(-30.598, -1, 0, 1, -2), E4 += B2(-24.649, -2, 0, 1, 0), E4 += B2(-2, -2, 0, 1, -2), E4 += B2(-22.571, 0, 1, 1, -2), E4 += B2(10.985, 0, -1, 1, -2), T3 += 0.82 * M2(0.7736 - 62.5512 * e3) + 0.31 * M2(0.0466 - 125.1025 * e3) + 0.35 * M2(0.5785 - 25.1042 * e3) + 0.66 * M2(0.4591 + 1335.8075 * e3) + 0.64 * M2(0.313 - 91.568 * e3) + 1.14 * M2(0.148 + 1331.2898 * e3) + 0.21 * M2(0.5918 + 1056.5859 * e3) + 0.44 * M2(0.5784 + 1322.8595 * e3) + 0.24 * M2(0.2275 - 5.7374 * e3) + 0.28 * M2(0.2965 + 2.6929 * e3) + 0.33 * M2(0.3132 + 6.3368 * e3), o2 = U3 + J2 / e0;
+    let Zt2 = (1.000002708 + 139.978 * v3) * (18518.511 + 1.189 + x3) * Math.sin(o2) - 6.24 * Math.sin(3 * o2) + E4;
     return {
       geo_eclip_lon: X2 * E0((I3 + T3 / e0) / X2),
       geo_eclip_lat: Math.PI / (180 * 3600) * Zt2,
-      distance_au: e0 * rr2 / (0.999953253 * y2)
+      distance_au: e0 * rr / (0.999953253 * y3)
     };
   }
   function Lt2(n4, e3) {
@@ -8112,26 +8112,26 @@ vec3 getSkyRadiance(
       n4.rot[0][2] * e3[0] + n4.rot[1][2] * e3[1] + n4.rot[2][2] * e3[2]
     ];
   }
-  function Ht2(n4, e3, t2) {
+  function Ht(n4, e3, t2) {
     const r4 = bt2(e3, t2);
     return Lt2(r4, n4);
   }
   function bt2(n4, e3) {
     const t2 = n4.tt / 36525;
-    let r4 = 84381.406, i3 = ((((-951e-10 * t2 + 132851e-9) * t2 - 114045e-8) * t2 - 1.0790069) * t2 + 5038.481507) * t2, a3 = ((((3337e-10 * t2 - 467e-9) * t2 - 772503e-8) * t2 + 0.0512623) * t2 - 0.025754) * t2 + r4, o3 = ((((-56e-9 * t2 + 170663e-9) * t2 - 121197e-8) * t2 - 2.3814292) * t2 + 10.556403) * t2;
-    r4 *= x0, i3 *= x0, a3 *= x0, o3 *= x0;
-    const c3 = Math.sin(r4), s = Math.cos(r4), l3 = Math.sin(-i3), d3 = Math.cos(-i3), m4 = Math.sin(-a3), f4 = Math.cos(-a3), v3 = Math.sin(o3), T3 = Math.cos(o3), E3 = T3 * d3 - l3 * v3 * f4, x3 = T3 * l3 * s + v3 * f4 * d3 * s - c3 * v3 * m4, y2 = T3 * l3 * c3 + v3 * f4 * d3 * c3 + s * v3 * m4, I3 = -v3 * d3 - l3 * T3 * f4, N3 = -v3 * l3 * s + T3 * f4 * d3 * s - c3 * T3 * m4, b4 = -v3 * l3 * c3 + T3 * f4 * d3 * c3 + s * T3 * m4, U4 = l3 * m4, z4 = -m4 * d3 * s - c3 * f4, F2 = -m4 * d3 * c3 + f4 * s;
+    let r4 = 84381.406, i3 = ((((-951e-10 * t2 + 132851e-9) * t2 - 114045e-8) * t2 - 1.0790069) * t2 + 5038.481507) * t2, a3 = ((((3337e-10 * t2 - 467e-9) * t2 - 772503e-8) * t2 + 0.0512623) * t2 - 0.025754) * t2 + r4, o2 = ((((-56e-9 * t2 + 170663e-9) * t2 - 121197e-8) * t2 - 2.3814292) * t2 + 10.556403) * t2;
+    r4 *= x0, i3 *= x0, a3 *= x0, o2 *= x0;
+    const c3 = Math.sin(r4), s = Math.cos(r4), l3 = Math.sin(-i3), d3 = Math.cos(-i3), m3 = Math.sin(-a3), f3 = Math.cos(-a3), v3 = Math.sin(o2), T3 = Math.cos(o2), E4 = T3 * d3 - l3 * v3 * f3, x3 = T3 * l3 * s + v3 * f3 * d3 * s - c3 * v3 * m3, y3 = T3 * l3 * c3 + v3 * f3 * d3 * c3 + s * v3 * m3, I3 = -v3 * d3 - l3 * T3 * f3, N3 = -v3 * l3 * s + T3 * f3 * d3 * s - c3 * T3 * m3, b4 = -v3 * l3 * c3 + T3 * f3 * d3 * c3 + s * T3 * m3, U3 = l3 * m3, z4 = -m3 * d3 * s - c3 * f3, F2 = -m3 * d3 * c3 + f3 * s;
     if (e3 === V.Into2000)
       return new I0([
-        [E3, x3, y2],
+        [E4, x3, y3],
         [I3, N3, b4],
-        [U4, z4, F2]
+        [U3, z4, F2]
       ]);
     if (e3 === V.From2000)
       return new I0([
-        [E3, I3, U4],
+        [E4, I3, U3],
         [x3, N3, z4],
-        [y2, b4, F2]
+        [y3, b4, F2]
       ]);
     throw "Invalid precess direction";
   }
@@ -8141,7 +8141,7 @@ vec3 getSkyRadiance(
     return r4 < 0 && (r4 += 360), r4;
   }
   var $0;
-  function gr2(n4) {
+  function gr(n4) {
     if (!$0 || $0.tt !== n4.tt) {
       const e3 = n4.tt / 36525;
       let t2 = 15 * Ot(n4).ee;
@@ -8154,26 +8154,26 @@ vec3 getSkyRadiance(
     }
     return $0.st;
   }
-  function pr2(n4) {
+  function pr(n4) {
     const e3 = r0(n4);
-    return gr2(e3);
+    return gr(e3);
   }
   function Tr2(n4, e3, t2) {
     const r4 = Ut2(e3, t2);
     return Lt2(r4, n4);
   }
   function Ut2(n4, e3) {
-    const t2 = Ot(n4), r4 = t2.mobl * g4, i3 = t2.tobl * g4, a3 = t2.dpsi * x0, o3 = Math.cos(r4), c3 = Math.sin(r4), s = Math.cos(i3), l3 = Math.sin(i3), d3 = Math.cos(a3), m4 = Math.sin(a3), f4 = d3, v3 = -m4 * o3, T3 = -m4 * c3, E3 = m4 * s, x3 = d3 * o3 * s + c3 * l3, y2 = d3 * c3 * s - o3 * l3, I3 = m4 * l3, N3 = d3 * o3 * l3 - c3 * s, b4 = d3 * c3 * l3 + o3 * s;
+    const t2 = Ot(n4), r4 = t2.mobl * g4, i3 = t2.tobl * g4, a3 = t2.dpsi * x0, o2 = Math.cos(r4), c3 = Math.sin(r4), s = Math.cos(i3), l3 = Math.sin(i3), d3 = Math.cos(a3), m3 = Math.sin(a3), f3 = d3, v3 = -m3 * o2, T3 = -m3 * c3, E4 = m3 * s, x3 = d3 * o2 * s + c3 * l3, y3 = d3 * c3 * s - o2 * l3, I3 = m3 * l3, N3 = d3 * o2 * l3 - c3 * s, b4 = d3 * c3 * l3 + o2 * s;
     if (e3 === V.From2000)
       return new I0([
-        [f4, E3, I3],
+        [f3, E4, I3],
         [v3, x3, N3],
-        [T3, y2, b4]
+        [T3, y3, b4]
       ]);
     if (e3 === V.Into2000)
       return new I0([
-        [f4, v3, T3],
-        [E3, x3, y2],
+        [f3, v3, T3],
+        [E4, x3, y3],
         [I3, N3, b4]
       ]);
     throw "Invalid precess direction";
@@ -8190,9 +8190,9 @@ vec3 getSkyRadiance(
       return Math.hypot(this.x, this.y, this.z);
     }
   };
-  var Sr = class {
-    constructor(e3, t2, r4, i3, a3, o3, c3) {
-      this.x = e3, this.y = t2, this.z = r4, this.vx = i3, this.vy = a3, this.vz = o3, this.t = c3;
+  var Sr2 = class {
+    constructor(e3, t2, r4, i3, a3, o2, c3) {
+      this.x = e3, this.y = t2, this.z = r4, this.vx = i3, this.vy = a3, this.vz = o2, this.t = c3;
     }
   };
   var Gt2 = class {
@@ -8200,7 +8200,7 @@ vec3 getSkyRadiance(
       this.lat = l0(e3), this.lon = l0(t2), this.dist = l0(r4);
     }
   };
-  var vr2 = class {
+  var vr = class {
     constructor(e3, t2, r4, i3) {
       this.ra = l0(e3), this.dec = l0(t2), this.dist = l0(r4), this.vec = i3;
     }
@@ -8211,31 +8211,31 @@ vec3 getSkyRadiance(
     }
   };
   function ye(n4) {
-    const e3 = r0(n4), t2 = mr(e3), r4 = t2.distance_au * Math.cos(t2.geo_eclip_lat), i3 = [
+    const e3 = r0(n4), t2 = mr2(e3), r4 = t2.distance_au * Math.cos(t2.geo_eclip_lat), i3 = [
       r4 * Math.cos(t2.geo_eclip_lon),
       r4 * Math.sin(t2.geo_eclip_lon),
       t2.distance_au * Math.sin(t2.geo_eclip_lat)
-    ], a3 = hr2(e3, i3), o3 = Ht2(a3, e3, V.Into2000);
-    return new G3(o3[0], o3[1], o3[2], e3);
+    ], a3 = hr2(e3, i3), o2 = Ht(a3, e3, V.Into2000);
+    return new G3(o2[0], o2[1], o2[2], e3);
   }
   function y0(n4, e3, t2) {
     let r4 = 1, i3 = 0;
     for (let a3 of n4) {
-      let o3 = 0;
+      let o2 = 0;
       for (let [s, l3, d3] of a3)
-        o3 += s * Math.cos(l3 + e3 * d3);
-      let c3 = r4 * o3;
+        o2 += s * Math.cos(l3 + e3 * d3);
+      let c3 = r4 * o2;
       t2 && (c3 %= X2), i3 += c3, r4 *= e3;
     }
     return i3;
   }
   function Se2(n4, e3) {
     let t2 = 1, r4 = 0, i3 = 0, a3 = 0;
-    for (let o3 of n4) {
+    for (let o2 of n4) {
       let c3 = 0, s = 0;
-      for (let [l3, d3, m4] of o3) {
-        let f4 = d3 + e3 * m4;
-        c3 += l3 * m4 * Math.sin(f4), a3 > 0 && (s += l3 * Math.cos(f4));
+      for (let [l3, d3, m3] of o2) {
+        let f3 = d3 + e3 * m3;
+        c3 += l3 * m3 * Math.sin(f3), a3 > 0 && (s += l3 * Math.cos(f3));
       }
       i3 += a3 * r4 * s - t2 * c3, r4 = t2, t2 *= e3, ++a3;
     }
@@ -8243,7 +8243,7 @@ vec3 getSkyRadiance(
   }
   var b0 = 365250;
   var Ce2 = 0;
-  var De2 = 1;
+  var De = 1;
   var Ie2 = 2;
   function Pe2(n4) {
     return new O(n4[0] + 44036e-11 * n4[1] - 190919e-12 * n4[2], -479966e-12 * n4[0] + 0.917482137087 * n4[1] - 0.397776982902 * n4[2], 0.397776982902 * n4[1] + 0.917482137087 * n4[2]);
@@ -8257,27 +8257,27 @@ vec3 getSkyRadiance(
     ];
   }
   function Q0(n4, e3) {
-    const t2 = e3.tt / b0, r4 = y0(n4[Ce2], t2, true), i3 = y0(n4[De2], t2, false), a3 = y0(n4[Ie2], t2, false), o3 = Ft2(r4, i3, a3);
-    return Pe2(o3).ToAstroVector(e3);
+    const t2 = e3.tt / b0, r4 = y0(n4[Ce2], t2, true), i3 = y0(n4[De], t2, false), a3 = y0(n4[Ie2], t2, false), o2 = Ft2(r4, i3, a3);
+    return Pe2(o2).ToAstroVector(e3);
   }
-  function Er(n4, e3) {
-    const t2 = e3 / b0, r4 = y0(n4[Ce2], t2, true), i3 = y0(n4[De2], t2, false), a3 = y0(n4[Ie2], t2, false), o3 = Se2(n4[Ce2], t2), c3 = Se2(n4[De2], t2), s = Se2(n4[Ie2], t2), l3 = Math.cos(r4), d3 = Math.sin(r4), m4 = Math.cos(i3), f4 = Math.sin(i3), v3 = +(s * m4 * l3) - a3 * f4 * l3 * c3 - a3 * m4 * d3 * o3, T3 = +(s * m4 * d3) - a3 * f4 * d3 * c3 + a3 * m4 * l3 * o3, E3 = +(s * f4) + a3 * m4 * c3, x3 = Ft2(r4, i3, a3), y2 = [
+  function Er2(n4, e3) {
+    const t2 = e3 / b0, r4 = y0(n4[Ce2], t2, true), i3 = y0(n4[De], t2, false), a3 = y0(n4[Ie2], t2, false), o2 = Se2(n4[Ce2], t2), c3 = Se2(n4[De], t2), s = Se2(n4[Ie2], t2), l3 = Math.cos(r4), d3 = Math.sin(r4), m3 = Math.cos(i3), f3 = Math.sin(i3), v3 = +(s * m3 * l3) - a3 * f3 * l3 * c3 - a3 * m3 * d3 * o2, T3 = +(s * m3 * d3) - a3 * f3 * d3 * c3 + a3 * m3 * l3 * o2, E4 = +(s * f3) + a3 * m3 * c3, x3 = Ft2(r4, i3, a3), y3 = [
       v3 / b0,
       T3 / b0,
-      E3 / b0
-    ], I3 = Pe2(x3), N3 = Pe2(y2);
+      E4 / b0
+    ], I3 = Pe2(x3), N3 = Pe2(y3);
     return new d0(e3, I3, N3);
   }
   function q0(n4, e3, t2, r4) {
     const i3 = r4 / (r4 + We), a3 = Q0(M0[t2], e3);
     n4.x += i3 * a3.x, n4.y += i3 * a3.y, n4.z += i3 * a3.z;
   }
-  function _r(n4) {
+  function _r2(n4) {
     const e3 = new G3(0, 0, 0, n4);
-    return q0(e3, n4, S3.Jupiter, xe2), q0(e3, n4, S3.Saturn, Me2), q0(e3, n4, S3.Uranus, Ae), q0(e3, n4, S3.Neptune, we2), e3;
+    return q0(e3, n4, S4.Jupiter, xe2), q0(e3, n4, S4.Saturn, Me2), q0(e3, n4, S4.Uranus, Ae2), q0(e3, n4, S4.Neptune, we2), e3;
   }
   var Ne2 = 51;
-  var Rr2 = 29200;
+  var Rr = 29200;
   var A0 = 146;
   var Y2 = 201;
   var o0 = [
@@ -8386,11 +8386,11 @@ vec3 getSkyRadiance(
     }
   };
   function xr2(n4) {
-    let [e3, [t2, r4, i3], [a3, o3, c3]] = n4;
-    return new d0(e3, new O(t2, r4, i3), new O(a3, o3, c3));
+    let [e3, [t2, r4, i3], [a3, o2, c3]] = n4;
+    return new d0(e3, new O(t2, r4, i3), new O(a3, o2, c3));
   }
   function Z0(n4, e3, t2, r4) {
-    const i3 = r4 / (r4 + We), a3 = Er(M0[t2], e3);
+    const i3 = r4 / (r4 + We), a3 = Er2(M0[t2], e3);
     return n4.r.incr(a3.r.mul(i3)), n4.v.incr(a3.v.mul(i3)), a3;
   }
   function H0(n4, e3, t2) {
@@ -8400,11 +8400,11 @@ vec3 getSkyRadiance(
   var je = class {
     constructor(e3) {
       let t2 = new d0(e3, new O(0, 0, 0), new O(0, 0, 0));
-      this.Jupiter = Z0(t2, e3, S3.Jupiter, xe2), this.Saturn = Z0(t2, e3, S3.Saturn, Me2), this.Uranus = Z0(t2, e3, S3.Uranus, Ae), this.Neptune = Z0(t2, e3, S3.Neptune, we2), this.Jupiter.r.decr(t2.r), this.Jupiter.v.decr(t2.v), this.Saturn.r.decr(t2.r), this.Saturn.v.decr(t2.v), this.Uranus.r.decr(t2.r), this.Uranus.v.decr(t2.v), this.Neptune.r.decr(t2.r), this.Neptune.v.decr(t2.v), this.Sun = new d0(e3, t2.r.mul(-1), t2.v.mul(-1));
+      this.Jupiter = Z0(t2, e3, S4.Jupiter, xe2), this.Saturn = Z0(t2, e3, S4.Saturn, Me2), this.Uranus = Z0(t2, e3, S4.Uranus, Ae2), this.Neptune = Z0(t2, e3, S4.Neptune, we2), this.Jupiter.r.decr(t2.r), this.Jupiter.v.decr(t2.v), this.Saturn.r.decr(t2.r), this.Saturn.v.decr(t2.v), this.Uranus.r.decr(t2.r), this.Uranus.v.decr(t2.v), this.Neptune.r.decr(t2.r), this.Neptune.v.decr(t2.v), this.Sun = new d0(e3, t2.r.mul(-1), t2.v.mul(-1));
     }
     Acceleration(e3) {
       let t2 = H0(e3, We, this.Sun.r);
-      return t2.incr(H0(e3, xe2, this.Jupiter.r)), t2.incr(H0(e3, Me2, this.Saturn.r)), t2.incr(H0(e3, Ae, this.Uranus.r)), t2.incr(H0(e3, we2, this.Neptune.r)), t2;
+      return t2.incr(H0(e3, xe2, this.Jupiter.r)), t2.incr(H0(e3, Me2, this.Saturn.r)), t2.incr(H0(e3, Ae2, this.Uranus.r)), t2.incr(H0(e3, we2, this.Neptune.r)), t2;
     }
   };
   var ce2 = class _ce {
@@ -8427,36 +8427,36 @@ vec3 getSkyRadiance(
     return new O(e3.x + n4 * t2.x, e3.y + n4 * t2.y, e3.z + n4 * t2.z);
   }
   function Oe2(n4, e3) {
-    const t2 = n4 - e3.tt, r4 = new je(n4), i3 = te2(t2, e3.r, e3.v, e3.a), a3 = r4.Acceleration(i3).mean(e3.a), o3 = te2(t2, e3.r, e3.v, a3), c3 = e3.v.add(a3.mul(t2)), s = r4.Acceleration(o3), l3 = new ce2(n4, o3, c3, s);
+    const t2 = n4 - e3.tt, r4 = new je(n4), i3 = te2(t2, e3.r, e3.v, e3.a), a3 = r4.Acceleration(i3).mean(e3.a), o2 = te2(t2, e3.r, e3.v, a3), c3 = e3.v.add(a3.mul(t2)), s = r4.Acceleration(o2), l3 = new ce2(n4, o2, c3, s);
     return new zt2(r4, l3);
   }
-  var Mr2 = [];
-  function kt(n4, e3) {
+  var Mr = [];
+  function kt2(n4, e3) {
     const t2 = Math.floor(n4);
     return t2 < 0 ? 0 : t2 >= e3 ? e3 - 1 : t2;
   }
   function Le2(n4) {
-    const e3 = xr2(n4), t2 = new je(e3.tt), r4 = e3.r.add(t2.Sun.r), i3 = e3.v.add(t2.Sun.v), a3 = t2.Acceleration(r4), o3 = new ce2(e3.tt, r4, i3, a3);
-    return new zt2(t2, o3);
+    const e3 = xr2(n4), t2 = new je(e3.tt), r4 = e3.r.add(t2.Sun.r), i3 = e3.v.add(t2.Sun.v), a3 = t2.Acceleration(r4), o2 = new ce2(e3.tt, r4, i3, a3);
+    return new zt2(t2, o2);
   }
-  function Ar2(n4, e3) {
+  function Ar(n4, e3) {
     const t2 = o0[0][0];
     if (e3 < t2 || e3 > o0[Ne2 - 1][0])
       return null;
-    const r4 = kt((e3 - t2) / Rr2, Ne2 - 1);
+    const r4 = kt2((e3 - t2) / Rr, Ne2 - 1);
     if (!n4[r4]) {
       const a3 = n4[r4] = [];
       a3[0] = Le2(o0[r4]).grav, a3[Y2 - 1] = Le2(o0[r4 + 1]).grav;
-      let o3, c3 = a3[0].tt;
-      for (o3 = 1; o3 < Y2 - 1; ++o3)
-        a3[o3] = Oe2(c3 += A0, a3[o3 - 1]).grav;
+      let o2, c3 = a3[0].tt;
+      for (o2 = 1; o2 < Y2 - 1; ++o2)
+        a3[o2] = Oe2(c3 += A0, a3[o2 - 1]).grav;
       c3 = a3[Y2 - 1].tt;
       var i3 = [];
-      for (i3[Y2 - 1] = a3[Y2 - 1], o3 = Y2 - 2; o3 > 0; --o3)
-        i3[o3] = Oe2(c3 -= A0, i3[o3 + 1]).grav;
-      for (o3 = Y2 - 2; o3 > 0; --o3) {
-        const s = o3 / (Y2 - 1);
-        a3[o3].r = a3[o3].r.mul(1 - s).add(i3[o3].r.mul(s)), a3[o3].v = a3[o3].v.mul(1 - s).add(i3[o3].v.mul(s)), a3[o3].a = a3[o3].a.mul(1 - s).add(i3[o3].a.mul(s));
+      for (i3[Y2 - 1] = a3[Y2 - 1], o2 = Y2 - 2; o2 > 0; --o2)
+        i3[o2] = Oe2(c3 -= A0, i3[o2 + 1]).grav;
+      for (o2 = Y2 - 2; o2 > 0; --o2) {
+        const s = o2 / (Y2 - 1);
+        a3[o2].r = a3[o2].r.mul(1 - s).add(i3[o2].r.mul(s)), a3[o2].v = a3[o2].v.mul(1 - s).add(i3[o2].v.mul(s)), a3[o2].a = a3[o2].a.mul(1 - s).add(i3[o2].a.mul(s));
       }
     }
     return n4[r4];
@@ -8468,52 +8468,52 @@ vec3 getSkyRadiance(
       r4 = Oe2(a3 + 1 === i3 ? e3 : r4.grav.tt + t2, r4.grav);
     return r4;
   }
-  function wr(n4, e3) {
+  function wr2(n4, e3) {
     let t2, r4, i3;
-    const a3 = Ar2(Mr2, n4.tt);
+    const a3 = Ar(Mr, n4.tt);
     if (a3) {
-      const o3 = kt((n4.tt - a3[0].tt) / A0, Y2 - 1), c3 = a3[o3], s = a3[o3 + 1], l3 = c3.a.mean(s.a), d3 = te2(n4.tt - c3.tt, c3.r, c3.v, l3), m4 = ct2(n4.tt - c3.tt, c3.v, l3), f4 = te2(n4.tt - s.tt, s.r, s.v, l3), v3 = ct2(n4.tt - s.tt, s.v, l3), T3 = (n4.tt - c3.tt) / A0;
-      t2 = d3.mul(1 - T3).add(f4.mul(T3)), r4 = m4.mul(1 - T3).add(v3.mul(T3));
+      const o2 = kt2((n4.tt - a3[0].tt) / A0, Y2 - 1), c3 = a3[o2], s = a3[o2 + 1], l3 = c3.a.mean(s.a), d3 = te2(n4.tt - c3.tt, c3.r, c3.v, l3), m3 = ct2(n4.tt - c3.tt, c3.v, l3), f3 = te2(n4.tt - s.tt, s.r, s.v, l3), v3 = ct2(n4.tt - s.tt, s.v, l3), T3 = (n4.tt - c3.tt) / A0;
+      t2 = d3.mul(1 - T3).add(f3.mul(T3)), r4 = m3.mul(1 - T3).add(v3.mul(T3));
     } else {
-      let o3;
-      n4.tt < o0[0][0] ? o3 = ut2(o0[0], n4.tt, -A0) : o3 = ut2(o0[Ne2 - 1], n4.tt, +A0), t2 = o3.grav.r, r4 = o3.grav.v, i3 = o3.bary;
+      let o2;
+      n4.tt < o0[0][0] ? o2 = ut2(o0[0], n4.tt, -A0) : o2 = ut2(o0[Ne2 - 1], n4.tt, +A0), t2 = o2.grav.r, r4 = o2.grav.v, i3 = o2.bary;
     }
-    return i3 || (i3 = new je(n4.tt)), t2 = t2.sub(i3.Sun.r), r4 = r4.sub(i3.Sun.v), new Sr(t2.x, t2.y, t2.z, r4.x, r4.y, r4.z, n4);
+    return i3 || (i3 = new je(n4.tt)), t2 = t2.sub(i3.Sun.r), r4 = r4.sub(i3.Sun.v), new Sr2(t2.x, t2.y, t2.z, r4.x, r4.y, r4.z, n4);
   }
   function G0(n4, e3) {
     var t2 = r0(e3);
     if (n4 in M0)
       return Q0(M0[n4], t2);
-    if (n4 === S3.Pluto) {
-      const o3 = wr(t2);
-      return new G3(o3.x, o3.y, o3.z, t2);
+    if (n4 === S4.Pluto) {
+      const o2 = wr2(t2);
+      return new G3(o2.x, o2.y, o2.z, t2);
     }
-    if (n4 === S3.Sun)
+    if (n4 === S4.Sun)
       return new G3(0, 0, 0, t2);
-    if (n4 === S3.Moon) {
+    if (n4 === S4.Moon) {
       var r4 = Q0(M0.Earth, t2), i3 = ye(t2);
       return new G3(r4.x + i3.x, r4.y + i3.y, r4.z + i3.z, t2);
     }
-    if (n4 === S3.EMB) {
-      const o3 = Q0(M0.Earth, t2), c3 = ye(t2), s = 1 + ir2;
-      return new G3(o3.x + c3.x / s, o3.y + c3.y / s, o3.z + c3.z / s, t2);
+    if (n4 === S4.EMB) {
+      const o2 = Q0(M0.Earth, t2), c3 = ye(t2), s = 1 + ir;
+      return new G3(o2.x + c3.x / s, o2.y + c3.y / s, o2.z + c3.z / s, t2);
     }
-    if (n4 === S3.SSB)
-      return _r(t2);
-    const a3 = Pt(n4);
+    if (n4 === S4.SSB)
+      return _r2(t2);
+    const a3 = Pt2(n4);
     if (a3) {
-      const o3 = new Gt2(a3.dec, 15 * a3.ra, a3.dist);
-      return Or(o3, t2);
+      const o2 = new Gt2(a3.dec, 15 * a3.ra, a3.dist);
+      return Or2(o2, t2);
     }
     throw `HelioVector: Unknown body "${n4}"`;
   }
   function yr(n4, e3) {
     let t2 = e3, r4 = 0;
     for (let i3 = 0; i3 < 10; ++i3) {
-      const a3 = n4(t2), o3 = a3.Length() / Jn2;
-      if (o3 > 1)
+      const a3 = n4(t2), o2 = a3.Length() / Jn2;
+      if (o2 > 1)
         throw "Object is too distant for light-travel solver.";
-      const c3 = e3.AddDays(-o3);
+      const c3 = e3.AddDays(-o2);
       if (r4 = Math.abs(c3.tt - t2.tt), r4 < 1e-9)
         return a3;
       t2 = c3;
@@ -8530,26 +8530,26 @@ vec3 getSkyRadiance(
       return new G3(t2.x - this.observerPos.x, t2.y - this.observerPos.y, t2.z - this.observerPos.z, e3);
     }
   };
-  function Dr2(n4, e3, t2, r4) {
+  function Dr(n4, e3, t2, r4) {
     const i3 = r0(n4);
-    if (Pt(t2)) {
+    if (Pt2(t2)) {
       const c3 = G0(t2, i3), s = G0(e3, i3);
       return new G3(c3.x - s.x, c3.y - s.y, c3.z - s.z, i3);
     }
     let a3;
     a3 = G0(e3, i3);
-    const o3 = new Cr2(e3, t2, r4, a3);
-    return yr((c3) => o3.Position(c3), i3);
+    const o2 = new Cr2(e3, t2, r4, a3);
+    return yr((c3) => o2.Position(c3), i3);
   }
-  function Ir(n4, e3, t2) {
+  function Ir2(n4, e3, t2) {
     const r4 = r0(e3);
     switch (n4) {
-      case S3.Earth:
+      case S4.Earth:
         return new G3(0, 0, 0, r4);
-      case S3.Moon:
+      case S4.Moon:
         return ye(r4);
       default:
-        const i3 = Dr2(r4, S3.Earth, n4, t2);
+        const i3 = Dr(r4, S4.Earth, n4, t2);
         return i3.t = r4, i3;
     }
   }
@@ -8577,18 +8577,18 @@ vec3 getSkyRadiance(
     ]);
   }
   function Nr2(n4, e3, t2) {
-    const r4 = l0(t2) * g4, i3 = Math.cos(r4), a3 = Math.sin(r4), o3 = (e3 + 1) % 3, c3 = (e3 + 2) % 3, s = e3;
+    const r4 = l0(t2) * g4, i3 = Math.cos(r4), a3 = Math.sin(r4), o2 = (e3 + 1) % 3, c3 = (e3 + 2) % 3, s = e3;
     let l3 = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-    return l3[o3][o3] = i3 * n4.rot[o3][o3] - a3 * n4.rot[o3][c3], l3[o3][c3] = a3 * n4.rot[o3][o3] + i3 * n4.rot[o3][c3], l3[o3][s] = n4.rot[o3][s], l3[c3][o3] = i3 * n4.rot[c3][o3] - a3 * n4.rot[c3][c3], l3[c3][c3] = a3 * n4.rot[c3][o3] + i3 * n4.rot[c3][c3], l3[c3][s] = n4.rot[c3][s], l3[s][o3] = i3 * n4.rot[s][o3] - a3 * n4.rot[s][c3], l3[s][c3] = a3 * n4.rot[s][o3] + i3 * n4.rot[s][c3], l3[s][s] = n4.rot[s][s], new I0(l3);
+    return l3[o2][o2] = i3 * n4.rot[o2][o2] - a3 * n4.rot[o2][c3], l3[o2][c3] = a3 * n4.rot[o2][o2] + i3 * n4.rot[o2][c3], l3[o2][s] = n4.rot[o2][s], l3[c3][o2] = i3 * n4.rot[c3][o2] - a3 * n4.rot[c3][c3], l3[c3][c3] = a3 * n4.rot[c3][o2] + i3 * n4.rot[c3][c3], l3[c3][s] = n4.rot[c3][s], l3[s][o2] = i3 * n4.rot[s][o2] - a3 * n4.rot[s][c3], l3[s][c3] = a3 * n4.rot[s][o2] + i3 * n4.rot[s][c3], l3[s][s] = n4.rot[s][s], new I0(l3);
   }
-  function Or(n4, e3) {
+  function Or2(n4, e3) {
     e3 = r0(e3);
     const t2 = n4.lat * g4, r4 = n4.lon * g4, i3 = n4.dist * Math.cos(t2);
     return new G3(i3 * Math.cos(r4), i3 * Math.sin(r4), n4.dist * Math.sin(t2), e3);
   }
   function Lr2(n4) {
     const e3 = Hr2(n4);
-    return new vr2(e3.lon / 15, e3.lat, e3.dist, n4);
+    return new vr(e3.lon / 15, e3.lat, e3.dist, n4);
   }
   function Hr2(n4) {
     const e3 = n4.x * n4.x + n4.y * n4.y, t2 = Math.sqrt(e3 + n4.z * n4.z);
@@ -8619,61 +8619,61 @@ vec3 getSkyRadiance(
       this.ra = e3, this.dec = t2, this.spin = r4, this.north = i3;
     }
   };
-  function Ur2(n4) {
-    const e3 = Tr2([0, 0, 1], n4, V.Into2000), t2 = Ht2(e3, n4, V.Into2000), r4 = new G3(t2[0], t2[1], t2[2], n4), i3 = Lr2(r4), a3 = 190.41375788700253 + 360.9856122880876 * n4.ut;
+  function Ur(n4) {
+    const e3 = Tr2([0, 0, 1], n4, V.Into2000), t2 = Ht(e3, n4, V.Into2000), r4 = new G3(t2[0], t2[1], t2[2], n4), i3 = Lr2(r4), a3 = 190.41375788700253 + 360.9856122880876 * n4.ut;
     return new Vt(i3.ra, i3.dec, a3, r4);
   }
-  function Gr2(n4, e3) {
+  function Gr(n4, e3) {
     const t2 = r0(e3), r4 = t2.tt, i3 = r4 / 36525;
-    let a3, o3, c3;
+    let a3, o2, c3;
     switch (n4) {
-      case S3.Sun:
-        a3 = 286.13, o3 = 63.87, c3 = 84.176 + 14.1844 * r4;
+      case S4.Sun:
+        a3 = 286.13, o2 = 63.87, c3 = 84.176 + 14.1844 * r4;
         break;
-      case S3.Mercury:
-        a3 = 281.0103 - 0.0328 * i3, o3 = 61.4155 - 49e-4 * i3, c3 = 329.5988 + 6.1385108 * r4 + 0.01067257 * Math.sin(g4 * (174.7910857 + 4.092335 * r4)) - 112309e-8 * Math.sin(g4 * (349.5821714 + 8.18467 * r4)) - 1104e-7 * Math.sin(g4 * (164.3732571 + 12.277005 * r4)) - 2539e-8 * Math.sin(g4 * (339.1643429 + 16.36934 * r4)) - 571e-8 * Math.sin(g4 * (153.9554286 + 20.461675 * r4));
+      case S4.Mercury:
+        a3 = 281.0103 - 0.0328 * i3, o2 = 61.4155 - 49e-4 * i3, c3 = 329.5988 + 6.1385108 * r4 + 0.01067257 * Math.sin(g4 * (174.7910857 + 4.092335 * r4)) - 112309e-8 * Math.sin(g4 * (349.5821714 + 8.18467 * r4)) - 1104e-7 * Math.sin(g4 * (164.3732571 + 12.277005 * r4)) - 2539e-8 * Math.sin(g4 * (339.1643429 + 16.36934 * r4)) - 571e-8 * Math.sin(g4 * (153.9554286 + 20.461675 * r4));
         break;
-      case S3.Venus:
-        a3 = 272.76, o3 = 67.16, c3 = 160.2 - 1.4813688 * r4;
+      case S4.Venus:
+        a3 = 272.76, o2 = 67.16, c3 = 160.2 - 1.4813688 * r4;
         break;
-      case S3.Earth:
-        return Ur2(t2);
-      case S3.Moon:
-        const f4 = g4 * (125.045 - 0.0529921 * r4), v3 = g4 * (250.089 - 0.1059842 * r4), T3 = g4 * (260.008 + 13.0120009 * r4), E3 = g4 * (176.625 + 13.3407154 * r4), x3 = g4 * (357.529 + 0.9856003 * r4), y2 = g4 * (311.589 + 26.4057084 * r4), I3 = g4 * (134.963 + 13.064993 * r4), N3 = g4 * (276.617 + 0.3287146 * r4), b4 = g4 * (34.226 + 1.7484877 * r4), U4 = g4 * (15.134 - 0.1589763 * r4), z4 = g4 * (119.743 + 36096e-7 * r4), F2 = g4 * (239.961 + 0.1643573 * r4), q2 = g4 * (25.053 + 12.9590088 * r4);
-        a3 = 269.9949 + 31e-4 * i3 - 3.8787 * Math.sin(f4) - 0.1204 * Math.sin(v3) + 0.07 * Math.sin(T3) - 0.0172 * Math.sin(E3) + 72e-4 * Math.sin(y2) - 52e-4 * Math.sin(U4) + 43e-4 * Math.sin(q2), o3 = 66.5392 + 0.013 * i3 + 1.5419 * Math.cos(f4) + 0.0239 * Math.cos(v3) - 0.0278 * Math.cos(T3) + 68e-4 * Math.cos(E3) - 29e-4 * Math.cos(y2) + 9e-4 * Math.cos(I3) + 8e-4 * Math.cos(U4) - 9e-4 * Math.cos(q2), c3 = 38.3213 + (13.17635815 - 14e-13 * r4) * r4 + 3.561 * Math.sin(f4) + 0.1208 * Math.sin(v3) - 0.0642 * Math.sin(T3) + 0.0158 * Math.sin(E3) + 0.0252 * Math.sin(x3) - 66e-4 * Math.sin(y2) - 47e-4 * Math.sin(I3) - 46e-4 * Math.sin(N3) + 28e-4 * Math.sin(b4) + 52e-4 * Math.sin(U4) + 4e-3 * Math.sin(z4) + 19e-4 * Math.sin(F2) - 44e-4 * Math.sin(q2);
+      case S4.Earth:
+        return Ur(t2);
+      case S4.Moon:
+        const f3 = g4 * (125.045 - 0.0529921 * r4), v3 = g4 * (250.089 - 0.1059842 * r4), T3 = g4 * (260.008 + 13.0120009 * r4), E4 = g4 * (176.625 + 13.3407154 * r4), x3 = g4 * (357.529 + 0.9856003 * r4), y3 = g4 * (311.589 + 26.4057084 * r4), I3 = g4 * (134.963 + 13.064993 * r4), N3 = g4 * (276.617 + 0.3287146 * r4), b4 = g4 * (34.226 + 1.7484877 * r4), U3 = g4 * (15.134 - 0.1589763 * r4), z4 = g4 * (119.743 + 36096e-7 * r4), F2 = g4 * (239.961 + 0.1643573 * r4), q2 = g4 * (25.053 + 12.9590088 * r4);
+        a3 = 269.9949 + 31e-4 * i3 - 3.8787 * Math.sin(f3) - 0.1204 * Math.sin(v3) + 0.07 * Math.sin(T3) - 0.0172 * Math.sin(E4) + 72e-4 * Math.sin(y3) - 52e-4 * Math.sin(U3) + 43e-4 * Math.sin(q2), o2 = 66.5392 + 0.013 * i3 + 1.5419 * Math.cos(f3) + 0.0239 * Math.cos(v3) - 0.0278 * Math.cos(T3) + 68e-4 * Math.cos(E4) - 29e-4 * Math.cos(y3) + 9e-4 * Math.cos(I3) + 8e-4 * Math.cos(U3) - 9e-4 * Math.cos(q2), c3 = 38.3213 + (13.17635815 - 14e-13 * r4) * r4 + 3.561 * Math.sin(f3) + 0.1208 * Math.sin(v3) - 0.0642 * Math.sin(T3) + 0.0158 * Math.sin(E4) + 0.0252 * Math.sin(x3) - 66e-4 * Math.sin(y3) - 47e-4 * Math.sin(I3) - 46e-4 * Math.sin(N3) + 28e-4 * Math.sin(b4) + 52e-4 * Math.sin(U3) + 4e-3 * Math.sin(z4) + 19e-4 * Math.sin(F2) - 44e-4 * Math.sin(q2);
         break;
-      case S3.Mars:
-        a3 = 317.269202 - 0.10927547 * i3 + 68e-6 * Math.sin(g4 * (198.991226 + 19139.4819985 * i3)) + 238e-6 * Math.sin(g4 * (226.292679 + 38280.8511281 * i3)) + 52e-6 * Math.sin(g4 * (249.663391 + 57420.7251593 * i3)) + 9e-6 * Math.sin(g4 * (266.18351 + 76560.636795 * i3)) + 0.419057 * Math.sin(g4 * (79.398797 + 0.5042615 * i3)), o3 = 54.432516 - 0.05827105 * i3 + 51e-6 * Math.cos(g4 * (122.433576 + 19139.9407476 * i3)) + 141e-6 * Math.cos(g4 * (43.058401 + 38280.8753272 * i3)) + 31e-6 * Math.cos(g4 * (57.663379 + 57420.7517205 * i3)) + 5e-6 * Math.cos(g4 * (79.476401 + 76560.6495004 * i3)) + 1.591274 * Math.cos(g4 * (166.325722 + 0.5042615 * i3)), c3 = 176.049863 + 350.891982443297 * r4 + 145e-6 * Math.sin(g4 * (129.071773 + 19140.0328244 * i3)) + 157e-6 * Math.sin(g4 * (36.352167 + 38281.0473591 * i3)) + 4e-5 * Math.sin(g4 * (56.668646 + 57420.929536 * i3)) + 1e-6 * Math.sin(g4 * (67.364003 + 76560.2552215 * i3)) + 1e-6 * Math.sin(g4 * (104.79268 + 95700.4387578 * i3)) + 0.584542 * Math.sin(g4 * (95.391654 + 0.5042615 * i3));
+      case S4.Mars:
+        a3 = 317.269202 - 0.10927547 * i3 + 68e-6 * Math.sin(g4 * (198.991226 + 19139.4819985 * i3)) + 238e-6 * Math.sin(g4 * (226.292679 + 38280.8511281 * i3)) + 52e-6 * Math.sin(g4 * (249.663391 + 57420.7251593 * i3)) + 9e-6 * Math.sin(g4 * (266.18351 + 76560.636795 * i3)) + 0.419057 * Math.sin(g4 * (79.398797 + 0.5042615 * i3)), o2 = 54.432516 - 0.05827105 * i3 + 51e-6 * Math.cos(g4 * (122.433576 + 19139.9407476 * i3)) + 141e-6 * Math.cos(g4 * (43.058401 + 38280.8753272 * i3)) + 31e-6 * Math.cos(g4 * (57.663379 + 57420.7517205 * i3)) + 5e-6 * Math.cos(g4 * (79.476401 + 76560.6495004 * i3)) + 1.591274 * Math.cos(g4 * (166.325722 + 0.5042615 * i3)), c3 = 176.049863 + 350.891982443297 * r4 + 145e-6 * Math.sin(g4 * (129.071773 + 19140.0328244 * i3)) + 157e-6 * Math.sin(g4 * (36.352167 + 38281.0473591 * i3)) + 4e-5 * Math.sin(g4 * (56.668646 + 57420.929536 * i3)) + 1e-6 * Math.sin(g4 * (67.364003 + 76560.2552215 * i3)) + 1e-6 * Math.sin(g4 * (104.79268 + 95700.4387578 * i3)) + 0.584542 * Math.sin(g4 * (95.391654 + 0.5042615 * i3));
         break;
-      case S3.Jupiter:
+      case S4.Jupiter:
         const Z = g4 * (99.360714 + 4850.4046 * i3), i0 = g4 * (175.895369 + 1191.9605 * i3), a0 = g4 * (300.323162 + 262.5475 * i3), J2 = g4 * (114.012305 + 6070.2476 * i3), N0 = g4 * (49.511251 + 64.3 * i3);
-        a3 = 268.056595 - 6499e-6 * i3 + 117e-6 * Math.sin(Z) + 938e-6 * Math.sin(i0) + 1432e-6 * Math.sin(a0) + 3e-5 * Math.sin(J2) + 215e-5 * Math.sin(N0), o3 = 64.495303 + 2413e-6 * i3 + 5e-5 * Math.cos(Z) + 404e-6 * Math.cos(i0) + 617e-6 * Math.cos(a0) - 13e-6 * Math.cos(J2) + 926e-6 * Math.cos(N0), c3 = 284.95 + 870.536 * r4;
+        a3 = 268.056595 - 6499e-6 * i3 + 117e-6 * Math.sin(Z) + 938e-6 * Math.sin(i0) + 1432e-6 * Math.sin(a0) + 3e-5 * Math.sin(J2) + 215e-5 * Math.sin(N0), o2 = 64.495303 + 2413e-6 * i3 + 5e-5 * Math.cos(Z) + 404e-6 * Math.cos(i0) + 617e-6 * Math.cos(a0) - 13e-6 * Math.cos(J2) + 926e-6 * Math.cos(N0), c3 = 284.95 + 870.536 * r4;
         break;
-      case S3.Saturn:
-        a3 = 40.589 - 0.036 * i3, o3 = 83.537 - 4e-3 * i3, c3 = 38.9 + 810.7939024 * r4;
+      case S4.Saturn:
+        a3 = 40.589 - 0.036 * i3, o2 = 83.537 - 4e-3 * i3, c3 = 38.9 + 810.7939024 * r4;
         break;
-      case S3.Uranus:
-        a3 = 257.311, o3 = -15.175, c3 = 203.81 - 501.1600928 * r4;
+      case S4.Uranus:
+        a3 = 257.311, o2 = -15.175, c3 = 203.81 - 501.1600928 * r4;
         break;
-      case S3.Neptune:
+      case S4.Neptune:
         const p0 = g4 * (357.85 + 52.316 * i3);
-        a3 = 299.36 + 0.7 * Math.sin(p0), o3 = 43.46 - 0.51 * Math.cos(p0), c3 = 249.978 + 541.1397757 * r4 - 0.48 * Math.sin(p0);
+        a3 = 299.36 + 0.7 * Math.sin(p0), o2 = 43.46 - 0.51 * Math.cos(p0), c3 = 249.978 + 541.1397757 * r4 - 0.48 * Math.sin(p0);
         break;
-      case S3.Pluto:
-        a3 = 132.993, o3 = -6.163, c3 = 302.695 + 56.3625225 * r4;
+      case S4.Pluto:
+        a3 = 132.993, o2 = -6.163, c3 = 302.695 + 56.3625225 * r4;
         break;
       default:
         throw `Invalid body: ${n4}`;
     }
-    const s = o3 * g4, l3 = a3 * g4, d3 = Math.cos(s), m4 = new G3(d3 * Math.cos(l3), d3 * Math.sin(l3), Math.sin(s), t2);
-    return new Vt(a3 / 15, o3, c3, m4);
+    const s = o2 * g4, l3 = a3 * g4, d3 = Math.cos(s), m3 = new G3(d3 * Math.cos(l3), d3 * Math.sin(l3), Math.sin(s), t2);
+    return new Vt(a3 / 15, o2, c3, m3);
   }
-  var Fr2 = 1e-3 / It2;
+  var Fr2 = 1e-3 / It;
   var Bt2 = /* @__PURE__ */ new Vector3();
-  var zr = /* @__PURE__ */ new Vector3();
+  var zr2 = /* @__PURE__ */ new Vector3();
   var kr = /* @__PURE__ */ new Vector3();
   var Wt = /* @__PURE__ */ new Matrix4();
-  var Vr2 = /* @__PURE__ */ new Matrix4();
+  var Vr = /* @__PURE__ */ new Matrix4();
   var Br2 = /* @__PURE__ */ new Quaternion();
   function P0(n4) {
     return n4 instanceof t0 ? n4 : (
@@ -8707,38 +8707,38 @@ vec3 getSkyRadiance(
     );
   }
   function Xe(n4, e3 = new Matrix4()) {
-    const t2 = P0(n4), r4 = Nr2(br2(t2), 2, -15 * pr2(t2));
+    const t2 = P0(n4), r4 = Nr2(br2(t2), 2, -15 * pr(t2));
     return Wr(r4, e3);
   }
   function bi(n4, e3 = new Matrix4()) {
-    const t2 = P0(n4), r4 = Gr2(S3.Moon, t2), i3 = jt2(r4.north, Bt2), a3 = Cr(r4.spin), c3 = zr.set(0, 0, 1).cross(i3).normalize().applyQuaternion(Br2.setFromAxisAngle(i3, a3)).normalize(), s = kr.copy(i3).cross(c3).normalize();
+    const t2 = P0(n4), r4 = Gr(S4.Moon, t2), i3 = jt2(r4.north, Bt2), a3 = Er(r4.spin), c3 = zr2.set(0, 0, 1).cross(i3).normalize().applyQuaternion(Br2.setFromAxisAngle(i3, a3)).normalize(), s = kr.copy(i3).cross(c3).normalize();
     return e3.makeBasis(c3, s, i3);
   }
   function ue(n4, e3, t2, r4, i3) {
-    const a3 = Ir(n4, e3, false);
+    const a3 = Ir2(n4, e3, false);
     if (jt2(a3, t2), r4 != null) {
-      const o3 = Xe(e3, Vr2).transpose();
+      const o2 = Xe(e3, Vr).transpose();
       t2.sub(
-        Bt2.copy(r4).applyMatrix4(o3).multiplyScalar(Fr2)
+        Bt2.copy(r4).applyMatrix4(o2).multiplyScalar(Fr2)
       );
     }
     return t2.normalize();
   }
   function Ui(n4, e3 = new Vector3(), t2) {
-    return ue(S3.Sun, P0(n4), e3, t2);
+    return ue(S4.Sun, P0(n4), e3, t2);
   }
   function Gi(n4, e3 = new Vector3(), t2) {
-    return ue(S3.Moon, P0(n4), e3, t2);
+    return ue(S4.Moon, P0(n4), e3, t2);
   }
   function Fi(n4, e3 = new Vector3(), t2) {
     const r4 = P0(n4);
-    return ue(S3.Sun, r4, e3, t2).applyMatrix4(
+    return ue(S4.Sun, r4, e3, t2).applyMatrix4(
       Xe(r4, Wt)
     );
   }
   function zi(n4, e3 = new Vector3(), t2) {
     const r4 = P0(n4);
-    return ue(S3.Moon, r4, e3, t2).applyMatrix4(
+    return ue(S4.Moon, r4, e3, t2).applyMatrix4(
       Xe(r4, Wt)
     );
   }
@@ -8752,23 +8752,23 @@ vec3 getSkyRadiance(
     const { bottomRadius: r4 } = n4;
     return t2 < 0 && e3 ** 2 * (t2 ** 2 - 1) + r4 ** 2 >= 0;
   }
-  function Yr2(n4, e3, t2) {
+  function Yr(n4, e3, t2) {
     const { topRadius: r4 } = n4, i3 = e3 ** 2 * (t2 ** 2 - 1) + r4 ** 2;
     return jr(-e3 * t2 + Xt(i3));
   }
   function ne2(n4, e3) {
     return 0.5 / e3 + n4 * (1 - 1 / e3);
   }
-  var Kr = /* @__PURE__ */ new Vector3();
-  var mt = /* @__PURE__ */ new Vector3();
-  var $r2 = /* @__PURE__ */ new Vector3();
+  var Kr2 = /* @__PURE__ */ new Vector3();
+  var mt2 = /* @__PURE__ */ new Vector3();
+  var $r = /* @__PURE__ */ new Vector3();
   var ft2 = /* @__PURE__ */ new WeakMap();
   function qr(n4) {
-    cs(n4.image);
-    let e3 = Nr(n4.image.data) ? n4.image.data : Nr(n4.userData.imageData) ? n4.userData.imageData : void 0;
+    Zr(n4.image);
+    let e3 = Tr(n4.image.data) ? n4.image.data : Tr(n4.userData.imageData) ? n4.userData.imageData : void 0;
     if (n4.type === HalfFloatType && e3 instanceof Uint16Array) {
       const t2 = ft2.get(e3.buffer);
-      t2 == null ? (e3 = new A2(e3.buffer), ft2.set(e3.buffer, e3)) : e3 = t2;
+      t2 == null ? (e3 = new A3(e3.buffer), ft2.set(e3.buffer, e3)) : e3 = t2;
     }
     return e3;
   }
@@ -8780,53 +8780,53 @@ vec3 getSkyRadiance(
     const r4 = qr(n4);
     if (r4 == null)
       return t2.setScalar(0);
-    cs(n4.image);
-    const { width: i3, height: a3 } = n4.image, o3 = z3(e3.x, 0, 1) * (i3 - 1), c3 = z3(e3.y, 0, 1) * (a3 - 1), s = Math.floor(o3), l3 = Math.floor(c3), d3 = o3 - s, m4 = c3 - l3, f4 = d3, v3 = m4, T3 = s % i3, E3 = (T3 + 1) % i3, x3 = l3 % a3, y2 = (x3 + 1) % a3, I3 = J0(r4, x3 * i3 + T3, Kr), N3 = J0(r4, x3 * i3 + E3, mt), b4 = I3.lerp(N3, f4), U4 = J0(r4, y2 * i3 + T3, mt), z4 = J0(r4, y2 * i3 + E3, $r2), F2 = U4.lerp(z4, f4);
+    Zr(n4.image);
+    const { width: i3, height: a3 } = n4.image, o2 = z3(e3.x, 0, 1) * (i3 - 1), c3 = z3(e3.y, 0, 1) * (a3 - 1), s = Math.floor(o2), l3 = Math.floor(c3), d3 = o2 - s, m3 = c3 - l3, f3 = d3, v3 = m3, T3 = s % i3, E4 = (T3 + 1) % i3, x3 = l3 % a3, y3 = (x3 + 1) % a3, I3 = J0(r4, x3 * i3 + T3, Kr2), N3 = J0(r4, x3 * i3 + E4, mt2), b4 = I3.lerp(N3, f3), U3 = J0(r4, y3 * i3 + T3, mt2), z4 = J0(r4, y3 * i3 + E4, $r), F2 = U3.lerp(z4, f3);
     return t2.copy(b4.lerp(F2, v3));
   }
-  function Zr(n4, e3, t2, r4) {
-    const { topRadius: i3, bottomRadius: a3 } = n4, o3 = Math.sqrt(i3 ** 2 - a3 ** 2), c3 = Xt(e3 ** 2 - a3 ** 2), s = Yr2(n4, e3, t2), l3 = i3 - e3, d3 = c3 + o3, m4 = (s - l3) / (d3 - l3), f4 = c3 / o3;
+  function Zr2(n4, e3, t2, r4) {
+    const { topRadius: i3, bottomRadius: a3 } = n4, o2 = Math.sqrt(i3 ** 2 - a3 ** 2), c3 = Xt(e3 ** 2 - a3 ** 2), s = Yr(n4, e3, t2), l3 = i3 - e3, d3 = c3 + o2, m3 = (s - l3) / (d3 - l3), f3 = c3 / o2;
     return r4.set(
-      ne2(m4, C3),
-      ne2(f4, p2)
+      ne2(m3, C3),
+      ne2(f3, p3)
     );
   }
-  var Jr = /* @__PURE__ */ new Vector3();
-  var ve2 = /* @__PURE__ */ new Vector3();
-  var Qr2 = /* @__PURE__ */ new Vector2();
+  var Jr2 = /* @__PURE__ */ new Vector3();
+  var ve = /* @__PURE__ */ new Vector3();
+  var Qr = /* @__PURE__ */ new Vector2();
   function ei(n4, e3, t2, r4 = new Color(), {
     ellipsoid: i3 = N.WGS84,
     correctAltitude: a3 = true
-  } = {}, o3 = n0.DEFAULT) {
-    const c3 = Jr.copy(e3);
+  } = {}, o2 = n0.DEFAULT) {
+    const c3 = Jr2.copy(e3);
     if (a3) {
       const T3 = i3.projectOnSurface(
         e3,
-        ve2
+        ve
       );
       T3 != null && c3.sub(
         i3.getOsculatingSphereCenter(
           T3,
-          o3.bottomRadius,
-          ve2
+          o2.bottomRadius,
+          ve
         )
       );
     }
-    const s = ve2;
+    const s = ve;
     let l3 = c3.length(), d3 = c3.dot(t2);
-    const { topRadius: m4 } = o3, f4 = -d3 - Math.sqrt(d3 ** 2 - l3 ** 2 + m4 ** 2);
-    if (f4 > 0 && (l3 = m4, d3 += f4), l3 > m4)
+    const { topRadius: m3 } = o2, f3 = -d3 - Math.sqrt(d3 ** 2 - l3 ** 2 + m3 ** 2);
+    if (f3 > 0 && (l3 = m3, d3 += f3), l3 > m3)
       s.set(1, 1, 1);
     else {
       const T3 = d3 / l3;
-      if (Xr(o3, l3, T3))
+      if (Xr(o2, l3, T3))
         s.setScalar(0);
       else {
-        const x3 = Zr(o3, l3, T3, Qr2);
+        const x3 = Zr2(o2, l3, T3, Qr);
         Yt(n4, x3, s);
       }
     }
-    const v3 = s.multiply(o3.solarIrradiance).multiply(o3.sunRadianceToRelativeLuminance);
+    const v3 = s.multiply(o2.solarIrradiance).multiply(o2.sunRadianceToRelativeLuminance);
     return r4.setFromVector3(v3);
   }
   var ti = `// Based on: https://github.com/pmndrs/postprocessing/blob/v6.37.4/src/materials/glsl/depth-mask.frag
@@ -8911,8 +8911,8 @@ void main() {
         depthTexture: this.depthTexture
       }), this.depthCopyPass0 = new DepthCopyPass({ depthPacking: RGBADepthPacking }), this.depthCopyPass1 = new DepthCopyPass({ depthPacking: RGBADepthPacking }), this.clearPass = new ClearPass(true, false, false), this.clearPass.overrideClearColor = new Color(16777215), this.clearPass.overrideClearAlpha = 1;
       const r4 = new DepthMaskMaterial();
-      r4.fragmentShader = Ar(ti, {
-        core: { depth: d2 }
+      r4.fragmentShader = ar(ti, {
+        core: { depth: d }
       }), r4.uniforms.inverted = new Uniform(false), r4.copyCameraSettings(t2), r4.depthBuffer0 = this.depthCopyPass0.texture, r4.depthPacking0 = RGBADepthPacking, r4.depthBuffer1 = this.depthCopyPass1.texture, r4.depthPacking1 = RGBADepthPacking, r4.depthMode = LessEqualDepth, r4.maxDepthStrategy = DepthTestStrategy.DISCARD_MAX_DEPTH, this.depthMaskMaterial = r4, this.depthMaskPass = new ShaderPass(r4);
     }
     // eslint-disable-next-line accessor-pairs
@@ -8930,8 +8930,8 @@ void main() {
       this.depthCopyPass0.setDepthTexture(e3, t2), this.depthCopyPass1.setDepthTexture(this.depthTexture, t2);
     }
     render(e3, t2, r4, i3, a3) {
-      const o3 = e3.autoClear;
-      e3.autoClear = false, this.depthCopyPass0.render(e3, null, null), this.renderPass.render(e3, this.renderTarget, null), this.depthCopyPass1.render(e3, null, null), this.clearPass.render(e3, this.renderTarget, null), this.depthMaskPass.render(e3, null, this.renderTarget), e3.autoClear = o3;
+      const o2 = e3.autoClear;
+      e3.autoClear = false, this.depthCopyPass0.render(e3, null, null), this.renderPass.render(e3, this.renderTarget, null), this.depthCopyPass1.render(e3, null, null), this.clearPass.render(e3, this.renderTarget, null), this.depthMaskPass.render(e3, null, this.renderTarget), e3.autoClear = o2;
     }
     setSize(e3, t2) {
       this.renderTarget.setSize(e3, t2), this.depthCopyPass0.setSize(e3, t2), this.depthCopyPass1.setSize(e3, t2);
@@ -9165,8 +9165,8 @@ void main() {
     return new Promise((t2, r4) => {
       const i3 = () => {
         try {
-          const { value: a3, done: o3 } = e3.next();
-          o3 === true ? t2(a3) : H2(i3);
+          const { value: a3, done: o2 } = e3.next();
+          o2 === true ? t2(a3) : H2(i3);
         } catch (a3) {
           r4(a3 instanceof Error ? a3 : new Error());
         }
@@ -9190,11 +9190,11 @@ void main() {
       this.lambdas = new Vector3(), this.luminanceFromRadiance = new Matrix3(), e3 === HalfFloatType && (this.opticalDepth = re2(
         e3,
         C3,
-        p2
+        p3
       )), this.deltaIrradiance = re2(
         e3,
         f2,
-        A3
+        A4
       ), this.deltaRayleighScattering = C0(
         e3,
         U2,
@@ -9225,13 +9225,13 @@ void main() {
         ...e3,
         defines: {
           TRANSMITTANCE_TEXTURE_WIDTH: C3.toFixed(0),
-          TRANSMITTANCE_TEXTURE_HEIGHT: p2.toFixed(0),
+          TRANSMITTANCE_TEXTURE_HEIGHT: p3.toFixed(0),
           SCATTERING_TEXTURE_R_SIZE: i2.toFixed(0),
-          SCATTERING_TEXTURE_MU_SIZE: _2.toFixed(0),
-          SCATTERING_TEXTURE_MU_S_SIZE: R3.toFixed(0),
+          SCATTERING_TEXTURE_MU_SIZE: _3.toFixed(0),
+          SCATTERING_TEXTURE_MU_S_SIZE: R4.toFixed(0),
           SCATTERING_TEXTURE_NU_SIZE: u3.toFixed(0),
           IRRADIANCE_TEXTURE_WIDTH: f2.toFixed(0),
-          IRRADIANCE_TEXTURE_HEIGHT: A3.toFixed(0),
+          IRRADIANCE_TEXTURE_HEIGHT: A4.toFixed(0),
           ...e3.defines
         }
       });
@@ -9247,13 +9247,13 @@ void main() {
   };
   var Vi = class {
     constructor(e3, {
-      type: t2 = Pr(e3) ? FloatType : HalfFloatType,
+      type: t2 = wr(e3) ? FloatType : HalfFloatType,
       combinedScattering: r4 = true,
       higherOrderScattering: i3 = true
     } = {}) {
       var _a2, _b2;
       this.transmittanceMaterial = new _0({
-        fragmentShader: Ar(si, {
+        fragmentShader: ar(si, {
           bruneton: {
             common: e2,
             definitions: t,
@@ -9261,7 +9261,7 @@ void main() {
           }
         })
       }), this.directIrradianceMaterial = new _0({
-        fragmentShader: Ar(ni, {
+        fragmentShader: ar(ni, {
           bruneton: {
             common: e2,
             definitions: t,
@@ -9272,7 +9272,7 @@ void main() {
           transmittanceTexture: new Uniform(null)
         }
       }), this.singleScatteringMaterial = new _0({
-        fragmentShader: Ar(oi, {
+        fragmentShader: ar(oi, {
           bruneton: {
             common: e2,
             definitions: t,
@@ -9285,7 +9285,7 @@ void main() {
           layer: new Uniform(0)
         }
       }), this.scatteringDensityMaterial = new _0({
-        fragmentShader: Ar(ai, {
+        fragmentShader: ar(ai, {
           bruneton: {
             common: e2,
             definitions: t,
@@ -9302,7 +9302,7 @@ void main() {
           layer: new Uniform(0)
         }
       }), this.indirectIrradianceMaterial = new _0({
-        fragmentShader: Ar(ri, {
+        fragmentShader: ar(ri, {
           bruneton: {
             common: e2,
             definitions: t,
@@ -9317,7 +9317,7 @@ void main() {
           scatteringOrder: new Uniform(0)
         }
       }), this.multipleScatteringMaterial = new _0({
-        fragmentShader: Ar(ii, {
+        fragmentShader: ar(ii, {
           bruneton: {
             common: e2,
             definitions: t,
@@ -9333,7 +9333,7 @@ void main() {
       }), this.mesh = new Mesh(new PlaneGeometry(2, 2)), this.scene = new Scene().add(this.mesh), this.camera = new Camera(), this.updating = false, this.renderer = e3, this.type = t2, this.transmittanceRenderTarget = re2(
         t2,
         C3,
-        p2
+        p3
       ), this.scatteringRenderTarget = C0(
         t2,
         U2,
@@ -9342,7 +9342,7 @@ void main() {
       ), this.irradianceRenderTarget = re2(
         t2,
         f2,
-        A3
+        A4
       ), r4 || (this.singleMieScatteringRenderTarget = C0(
         t2,
         U2,
@@ -9526,8 +9526,8 @@ void main() {
     }
     var a3 = e3.join("/");
     a3 = a3.replace(/\/(\?|&|#[^!])/g, "$1");
-    var o3 = a3.split("?");
-    return a3 = o3.shift() + (o3.length > 0 ? "?" : "") + o3.join("&"), a3;
+    var o2 = a3.split("?");
+    return a3 = o2.shift() + (o2.length > 0 ? "?" : "") + o2.join("&"), a3;
   }
   function hi() {
     var n4;
@@ -9535,7 +9535,7 @@ void main() {
   }
   var pt = {
     width: C3,
-    height: p2
+    height: p3
   };
   var R0 = {
     width: U2,
@@ -9544,7 +9544,7 @@ void main() {
   };
   var Tt2 = {
     width: f2,
-    height: A3
+    height: A4
   };
   var Bi = class extends Loader {
     constructor({
@@ -9556,10 +9556,10 @@ void main() {
       super(a3), this.format = e3, this.type = t2, this.combinedScattering = r4, this.higherOrderScattering = i3;
     }
     setType(e3) {
-      return this.type = Pr(e3) ? FloatType : HalfFloatType, this;
+      return this.type = wr(e3) ? FloatType : HalfFloatType, this;
     }
     load(e3, t2, r4, i3) {
-      const a3 = {}, o3 = ({
+      const a3 = {}, o2 = ({
         key: c3,
         loader: s,
         path: l3
@@ -9567,85 +9567,85 @@ void main() {
         hi(e3, l3),
         (d3) => {
           var _a2;
-          d3.type = this.type, this.type === FloatType && (cs(d3.image), d3.image.data != null && (d3.image.data = new Float32Array(
-            new A2((_a2 = d3.image.data) == null ? void 0 : _a2.buffer)
+          d3.type = this.type, this.type === FloatType && (Zr(d3.image), d3.image.data != null && (d3.image.data = new Float32Array(
+            new A3((_a2 = d3.image.data) == null ? void 0 : _a2.buffer)
           ))), d3.minFilter = LinearFilter, d3.magFilter = LinearFilter, a3[`${c3}Texture`] = d3, a3.irradianceTexture != null && a3.scatteringTexture != null && a3.transmittanceTexture != null && (this.combinedScattering || a3.singleMieScatteringTexture != null) && (!this.higherOrderScattering || a3.higherOrderScatteringTexture != null) && (t2 == null ? void 0 : t2(a3));
         },
         r4,
         i3
       ));
       return this.format === "exr" ? {
-        transmittanceTexture: o3({
+        transmittanceTexture: o2({
           key: "transmittance",
-          loader: new Qr(pt, this.manager),
+          loader: new Hr(pt, this.manager),
           path: "transmittance.exr"
         }),
-        scatteringTexture: o3({
+        scatteringTexture: o2({
           key: "scattering",
-          loader: new $r(R0, this.manager),
+          loader: new zr(R0, this.manager),
           path: "scattering.exr"
         }),
-        irradianceTexture: o3({
+        irradianceTexture: o2({
           key: "irradiance",
-          loader: new Qr(Tt2, this.manager),
+          loader: new Hr(Tt2, this.manager),
           path: "irradiance.exr"
         }),
-        singleMieScatteringTexture: this.combinedScattering ? void 0 : o3({
+        singleMieScatteringTexture: this.combinedScattering ? void 0 : o2({
           key: "singleMieScattering",
-          loader: new $r(R0, this.manager),
+          loader: new zr(R0, this.manager),
           path: "single_mie_scattering.exr"
         }),
-        higherOrderScatteringTexture: this.higherOrderScattering ? o3({
+        higherOrderScatteringTexture: this.higherOrderScattering ? o2({
           key: "higherOrderScattering",
-          loader: new $r(R0, this.manager),
+          loader: new zr(R0, this.manager),
           path: "higher_order_scattering.exr"
         }) : void 0
       } : {
-        transmittanceTexture: o3({
+        transmittanceTexture: o2({
           key: "transmittance",
-          loader: new fr(
+          loader: new br(
             DataTexture,
-            rs,
+            Jr,
             pt,
             this.manager
           ),
           path: "transmittance.bin"
         }),
-        scatteringTexture: o3({
+        scatteringTexture: o2({
           key: "scattering",
-          loader: new fr(
+          loader: new br(
             Data3DTexture,
-            rs,
+            Jr,
             R0,
             this.manager
           ),
           path: "scattering.bin"
         }),
-        irradianceTexture: o3({
+        irradianceTexture: o2({
           key: "irradiance",
-          loader: new fr(
+          loader: new br(
             DataTexture,
-            rs,
+            Jr,
             Tt2,
             this.manager
           ),
           path: "irradiance.bin"
         }),
-        singleMieScatteringTexture: this.combinedScattering ? void 0 : o3({
+        singleMieScatteringTexture: this.combinedScattering ? void 0 : o2({
           key: "singleMieScattering",
-          loader: new fr(
+          loader: new br(
             Data3DTexture,
-            rs,
+            Jr,
             R0,
             this.manager
           ),
           path: "single_mie_scattering.bin"
         }),
-        higherOrderScatteringTexture: this.higherOrderScattering ? o3({
+        higherOrderScatteringTexture: this.higherOrderScattering ? o2({
           key: "higherOrderScattering",
-          loader: new fr(
+          loader: new br(
             Data3DTexture,
-            rs,
+            Jr,
             R0,
             this.manager
           ),
@@ -9655,10 +9655,10 @@ void main() {
     }
   };
   function mi({ topRadius: n4, bottomRadius: e3 }, t2, r4, i3) {
-    const a3 = (t2 - e3) / (n4 - e3), o3 = r4 * 0.5 + 0.5;
+    const a3 = (t2 - e3) / (n4 - e3), o2 = r4 * 0.5 + 0.5;
     return i3.set(
-      ne2(o3, f2),
-      ne2(a3, A3)
+      ne2(o2, f2),
+      ne2(a3, A4)
     );
   }
   var fi = 1 / Math.sqrt(Math.PI);
@@ -9679,29 +9679,29 @@ void main() {
         irradianceTexture: r4 = null,
         ellipsoid: i3,
         correctAltitude: a3,
-        sunDirection: o3
+        sunDirection: o2
       } = { ...Si, ...e3 };
-      this.irradianceTexture = r4, this.ellipsoid = i3, this.correctAltitude = a3, this.sunDirection = (_a2 = o3 == null ? void 0 : o3.clone()) != null ? _a2 : new Vector3();
+      this.irradianceTexture = r4, this.ellipsoid = i3, this.correctAltitude = a3, this.sunDirection = (_a2 = o2 == null ? void 0 : o2.clone()) != null ? _a2 : new Vector3();
     }
     update() {
       if (this.irradianceTexture == null)
         return;
       const e3 = this.worldToECEFMatrix, t2 = Ti.setFromMatrix4(e3).transpose(), i3 = this.getWorldPosition(gi).applyMatrix4(e3);
       if (this.correctAltitude) {
-        const m4 = this.ellipsoid.projectOnSurface(
+        const m3 = this.ellipsoid.projectOnSurface(
           i3,
           _e2
         );
-        m4 != null && i3.add(
+        m3 != null && i3.add(
           X(
-            m4,
+            m3,
             this.atmosphere.bottomRadius,
             this.ellipsoid,
             _e2
           )
         );
       }
-      const a3 = i3.length(), o3 = i3.dot(this.sunDirection) / a3, c3 = mi(this.atmosphere, a3, o3, pi), s = Yt(this.irradianceTexture, c3, _e2);
+      const a3 = i3.length(), o2 = i3.dot(this.sunDirection) / a3, c3 = mi(this.atmosphere, a3, o2, pi), s = Yt(this.irradianceTexture, c3, _e2);
       s.multiply(this.atmosphere.skyRadianceToRelativeLuminance);
       const l3 = this.ellipsoid.getSurfaceNormal(i3).applyMatrix3(t2), d3 = this.sh.coefficients;
       d3[0].copy(s).multiplyScalar(fi), d3[1].copy(s).multiplyScalar(Ee2 * l3.y), d3[2].copy(s).multiplyScalar(Ee2 * l3.z), d3[3].copy(s).multiplyScalar(Ee2 * l3.x);
@@ -9875,8 +9875,8 @@ void main() {
 `;
   var _i = Object.defineProperty;
   var Ye = (n4, e3, t2, r4) => {
-    for (var i3 = void 0, a3 = n4.length - 1, o3; a3 >= 0; a3--)
-      (o3 = n4[a3]) && (i3 = o3(e3, t2, i3) || i3);
+    for (var i3 = void 0, a3 = n4.length - 1, o2; a3 >= 0; a3--)
+      (o2 = n4[a3]) && (i3 = o2(e3, t2, i3) || i3);
     return i3 && _i(e3, t2, i3), i3;
   };
   var Ri = {
@@ -9897,7 +9897,7 @@ void main() {
         moon: r4,
         moonDirection: i3,
         moonAngularRadius: a3,
-        lunarRadianceScale: o3,
+        lunarRadianceScale: o2,
         ground: c3,
         groundAlbedo: s,
         ...l3
@@ -9906,7 +9906,7 @@ void main() {
         name: "SkyMaterial",
         glslVersion: GLSL3,
         vertexShader: Ei,
-        fragmentShader: Ar(vi, {
+        fragmentShader: ar(vi, {
           core: { raySphereIntersection: u2 },
           bruneton: {
             common: e2,
@@ -9921,7 +9921,7 @@ void main() {
           inverseViewMatrix: new Uniform(new Matrix4()),
           moonDirection: new Uniform((_a2 = i3 == null ? void 0 : i3.clone()) != null ? _a2 : new Vector3()),
           moonAngularRadius: new Uniform(a3),
-          lunarRadianceScale: new Uniform(o3),
+          lunarRadianceScale: new Uniform(o2),
           groundAlbedo: new Uniform(s.clone()),
           shadowLengthBuffer: new Uniform(null),
           ...l3.uniforms
@@ -9933,16 +9933,16 @@ void main() {
         depthTest: true
       }), this.shadowLength = null, this.sun = t2, this.moon = r4, this.ground = c3;
     }
-    onBeforeRender(e3, t2, r4, i3, a3, o3) {
-      super.onBeforeRender(e3, t2, r4, i3, a3, o3);
+    onBeforeRender(e3, t2, r4, i3, a3, o2) {
+      super.onBeforeRender(e3, t2, r4, i3, a3, o2);
       const { uniforms: c3, defines: s } = this;
       c3.inverseProjectionMatrix.value.copy(r4.projectionMatrixInverse), c3.inverseViewMatrix.value.copy(r4.matrixWorld);
       const l3 = s.PERSPECTIVE_CAMERA != null, d3 = r4.isPerspectiveCamera === true;
       d3 !== l3 && (d3 ? s.PERSPECTIVE_CAMERA = "1" : delete s.PERSPECTIVE_CAMERA, this.needsUpdate = true);
-      const m4 = this.groundAlbedo, f4 = s.GROUND_ALBEDO != null, v3 = m4.r !== 0 || m4.g !== 0 || m4.b !== 0;
-      v3 !== f4 && (v3 ? this.defines.GROUND_ALBEDO = "1" : delete this.defines.GROUND_ALBEDO, this.needsUpdate = true);
-      const T3 = this.shadowLength, E3 = s.HAS_SHADOW_LENGTH != null, x3 = T3 != null;
-      x3 !== E3 && (x3 ? s.HAS_SHADOW_LENGTH = "1" : (delete s.HAS_SHADOW_LENGTH, c3.shadowLengthBuffer.value = null), this.needsUpdate = true), x3 && (c3.shadowLengthBuffer.value = T3.map);
+      const m3 = this.groundAlbedo, f3 = s.GROUND_ALBEDO != null, v3 = m3.r !== 0 || m3.g !== 0 || m3.b !== 0;
+      v3 !== f3 && (v3 ? this.defines.GROUND_ALBEDO = "1" : delete this.defines.GROUND_ALBEDO, this.needsUpdate = true);
+      const T3 = this.shadowLength, E4 = s.HAS_SHADOW_LENGTH != null, x3 = T3 != null;
+      x3 !== E4 && (x3 ? s.HAS_SHADOW_LENGTH = "1" : (delete s.HAS_SHADOW_LENGTH, c3.shadowLengthBuffer.value = null), this.needsUpdate = true), x3 && (c3.shadowLengthBuffer.value = T3.map);
     }
     get moonDirection() {
       return this.uniforms.moonDirection.value;
@@ -9964,13 +9964,13 @@ void main() {
     }
   };
   Ye([
-    Vr("SUN")
+    Br("SUN")
   ], Ke.prototype, "sun");
   Ye([
-    Vr("MOON")
+    Br("MOON")
   ], Ke.prototype, "moon");
   Ye([
-    Vr("GROUND")
+    Br("GROUND")
   ], Ke.prototype, "ground");
   var ji = class extends BufferGeometry {
     constructor(e3) {
@@ -10098,8 +10098,8 @@ void main() {
 `;
   var Ai = Object.defineProperty;
   var Kt2 = (n4, e3, t2, r4) => {
-    for (var i3 = void 0, a3 = n4.length - 1, o3; a3 >= 0; a3--)
-      (o3 = n4[a3]) && (i3 = o3(e3, t2, i3) || i3);
+    for (var i3 = void 0, a3 = n4.length - 1, o2; a3 >= 0; a3--)
+      (o2 = n4[a3]) && (i3 = o2(e3, t2, i3) || i3);
     return i3 && Ai(e3, t2, i3), i3;
   };
   var wi = {
@@ -10111,7 +10111,7 @@ void main() {
   };
   var $t2 = class extends se2 {
     constructor(e3) {
-      const { pointSize: t2, intensity: r4, background: i3, ground: a3, ...o3 } = {
+      const { pointSize: t2, intensity: r4, background: i3, ground: a3, ...o2 } = {
         ...wi,
         ...e3
       };
@@ -10119,14 +10119,14 @@ void main() {
         name: "StarsMaterial",
         glslVersion: GLSL3,
         vertexShader: Mi,
-        fragmentShader: Ar(xi, {
+        fragmentShader: ar(xi, {
           bruneton: {
             common: e2,
             definitions: t,
             runtime: n3
           }
         }),
-        ...o3,
+        ...o2,
         uniforms: {
           projectionMatrix: new Uniform(new Matrix4()),
           modelViewMatrix: new Uniform(new Matrix4()),
@@ -10136,7 +10136,7 @@ void main() {
           pointSize: new Uniform(0),
           magnitudeRange: new Uniform(new Vector2(-2, 8)),
           intensity: new Uniform(r4),
-          ...o3.uniforms
+          ...o2.uniforms
         },
         defines: {
           PERSPECTIVE_CAMERA: "1"
@@ -10145,8 +10145,8 @@ void main() {
         depthTest: true
       }), this.pointSize = t2, this.background = i3, this.ground = a3;
     }
-    onBeforeRender(e3, t2, r4, i3, a3, o3) {
-      super.onBeforeRender(e3, t2, r4, i3, a3, o3);
+    onBeforeRender(e3, t2, r4, i3, a3, o2) {
+      super.onBeforeRender(e3, t2, r4, i3, a3, o2);
       const c3 = this.uniforms;
       c3.projectionMatrix.value.copy(r4.projectionMatrix), c3.modelViewMatrix.value.copy(r4.modelViewMatrix), c3.viewMatrix.value.copy(r4.matrixWorldInverse), c3.matrixWorld.value.copy(a3.matrixWorld), c3.cameraFar.value = r4.far, c3.pointSize.value = this.pointSize * e3.getPixelRatio();
       const s = r4.isPerspectiveCamera === true;
@@ -10163,10 +10163,10 @@ void main() {
     }
   };
   Kt2([
-    Vr("BACKGROUND")
+    Br("BACKGROUND")
   ], $t2.prototype, "background");
   Kt2([
-    Vr("GROUND")
+    Br("GROUND")
   ], $t2.prototype, "ground");
   var yi = /* @__PURE__ */ new Vector3();
   var Ci = /* @__PURE__ */ new Matrix3();
@@ -10183,10 +10183,10 @@ void main() {
         irradianceTexture: r4 = null,
         ellipsoid: i3,
         correctAltitude: a3,
-        sunDirection: o3,
+        sunDirection: o2,
         distance: c3
       } = { ...Di, ...e3 };
-      this.transmittanceTexture = r4, this.ellipsoid = i3, this.correctAltitude = a3, this.sunDirection = (_a2 = o3 == null ? void 0 : o3.clone()) != null ? _a2 : new Vector3(), this.distance = c3;
+      this.transmittanceTexture = r4, this.ellipsoid = i3, this.correctAltitude = a3, this.sunDirection = (_a2 = o2 == null ? void 0 : o2.clone()) != null ? _a2 : new Vector3(), this.distance = c3;
     }
     update() {
       const e3 = this.worldToECEFMatrix, t2 = Ci.setFromMatrix4(e3).transpose();
@@ -10206,22 +10206,6 @@ void main() {
       );
     }
   };
-
-  // node_modules/@takram/three-atmosphere/build/index.js
-  var u4 = /* @__PURE__ */ new Vector3();
-  function D4(t2, r4 = new Color()) {
-    const a3 = t2, o3 = a3 ** 2, T3 = (0.860117757 + 154118254e-12 * a3 + 128641212e-15 * o3) / (1 + 842420235e-12 * a3 + 708145163e-15 * o3), E3 = (0.317398726 + 422806245e-13 * a3 + 420481691e-16 * o3) / (1 - 289741816e-13 * a3 + 161456053e-15 * o3), c3 = 3 * T3 / (2 * T3 - 8 * E3 + 4), s = 2 * E3 / (2 * T3 - 8 * E3 + 4), i3 = 1, _3 = s > 0 ? c3 * i3 / s : 0, S4 = s > 0 ? (1 - c3 - s) * i3 / s : 0, e3 = u4.set(_3, i3, S4).applyMatrix3(D3);
-    return e3.x = Hr(e3.x), e3.y = Hr(e3.y), e3.z = Hr(e3.z), r4.setFromVector3(e3.normalize());
-  }
-  function f3(t2) {
-    return 4600 * (1 / (0.92 * z3(t2, -0.4, 2) + 1.7) + 1 / (0.92 * t2 + 0.62));
-  }
-  function U3(t2, r4 = new Color()) {
-    return D4(
-      f3(t2),
-      r4
-    );
-  }
 
   // scripts/.tmp-build-takram-atmosphere-entry.mjs
   window.VRODOS_TAKRAM_ATMOSPHERE = build_exports;

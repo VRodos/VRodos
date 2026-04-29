@@ -408,16 +408,35 @@
 								</div>
 
 								<div id="compilePmndrsAtmosphereWrapper" class="tw-space-y-4">
-									<label class="tw-form-control tw-w-full">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Atmosphere Preset</span>
-										<select id="compilePmndrsAtmosphereQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-											<option value="performance">Performance</option>
-											<option value="balanced">Balanced</option>
-											<option value="quality">Quality</option>
-											<option value="cinematic">Cinematic</option>
-											<option value="custom">Custom</option>
-										</select>
-									</label>
+									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<label class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Atmosphere Look</span>
+											<select id="compilePmndrsAtmospherePresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+												<option value="sunrise">Sunrise</option>
+												<option value="midday">Midday</option>
+												<option value="sunset">Sunset</option>
+												<option value="night">Night</option>
+												<option value="custom">Custom</option>
+											</select>
+										</label>
+										<label class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Takram Quality</span>
+											<select id="compilePmndrsAtmosphereQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+												<option value="performance">Performance</option>
+												<option value="balanced">Balanced</option>
+												<option value="quality">Quality</option>
+												<option value="cinematic">Cinematic</option>
+											</select>
+										</label>
+									</div>
+
+									<div>
+										<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Preset Intensity</span>
+											<span id="compilePmndrsAtmospherePresetIntensityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+										</div>
+										<input id="compilePmndrsAtmospherePresetIntensitySlider" type="range" min="0" max="1" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+									</div>
 
 									<div id="compilePmndrsAtmosphereAdvanced" class="tw-space-y-3 tw-pt-3 tw-border-t tw-border-slate-200">
 										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
@@ -426,14 +445,14 @@
 													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Elevation</span>
 													<span id="compilePmndrsSunElevationValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">10°</span>
 												</div>
-												<input id="compilePmndrsSunElevationSlider" type="range" min="-5" max="45" step="1" value="10" class="tw-range tw-range-primary tw-range-xs">
+												<input id="compilePmndrsSunElevationSlider" type="range" min="-10" max="85" step="1" value="62" class="tw-range tw-range-primary tw-range-xs">
 											</div>
 											<div>
 												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
 													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Azimuth</span>
 													<span id="compilePmndrsSunAzimuthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">38°</span>
 												</div>
-												<input id="compilePmndrsSunAzimuthSlider" type="range" min="-180" max="180" step="1" value="38" class="tw-range tw-range-primary tw-range-xs">
+												<input id="compilePmndrsSunAzimuthSlider" type="range" min="-180" max="180" step="1" value="20" class="tw-range tw-range-primary tw-range-xs">
 											</div>
 											<div>
 												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
@@ -454,14 +473,14 @@
 													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Aerial Strength</span>
 													<span id="compilePmndrsAerialStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.85</span>
 												</div>
-												<input id="compilePmndrsAerialStrengthSlider" type="range" min="0" max="1.5" step="0.01" value="0.85" class="tw-range tw-range-primary tw-range-xs">
+												<input id="compilePmndrsAerialStrengthSlider" type="range" min="0" max="2" step="0.01" value="0.55" class="tw-range tw-range-primary tw-range-xs">
 											</div>
 											<div>
 												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
 													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Albedo Scale</span>
 													<span id="compilePmndrsAlbedoScaleValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.96</span>
 												</div>
-												<input id="compilePmndrsAlbedoScaleSlider" type="range" min="0.5" max="1.5" step="0.01" value="0.96" class="tw-range tw-range-primary tw-range-xs">
+												<input id="compilePmndrsAlbedoScaleSlider" type="range" min="0" max="2" step="0.01" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 											</div>
 										</div>
 

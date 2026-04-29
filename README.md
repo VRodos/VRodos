@@ -102,7 +102,7 @@ It currently supports:
 - bloom controls
 - tone-map exposure control
 - vignette controls
-- Takram atmosphere controls
+- Takram atmosphere look presets and advanced controls
 - Takram sky ownership for the PMNDRS Horizon path
 
 Important current limitations:
@@ -121,7 +121,7 @@ Takram support in VRodos currently means atmosphere and sky integration, not clo
 ### Shipped now
 
 - Takram atmosphere resources bundled with the runtime
-- PMNDRS compile-dialog controls for atmosphere quality and advanced tuning
+- PMNDRS compile-dialog controls for visual atmosphere looks, Takram resource quality, preset intensity, and advanced tuning
 - Takram-driven sky ownership on the PMNDRS Horizon path
 - atmospheric tuning for sun position, scattering, ground, and aerial-strength behavior
 
@@ -162,7 +162,9 @@ The compile dialog exposes both shared controls and engine-specific controls.
 - tone-map exposure
 - vignette darkness
 - Takram atmosphere toggle
-- atmosphere preset: `performance`, `balanced`, `quality`, `cinematic`, `custom`
+- atmosphere look: `sunrise`, `midday`, `sunset`, `night`, `custom`
+- Takram quality: `performance`, `balanced`, `quality`, `cinematic`
+- preset intensity
 - advanced atmosphere controls for:
   - sun elevation and azimuth
   - sun radius and distance

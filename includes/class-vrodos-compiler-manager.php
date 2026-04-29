@@ -776,14 +776,40 @@ class VRodos_Compiler_Manager {
 		$post_fx_edge_strength = max( 0, min( 5, (int) ( $metadata->aframePostFXEdgeAAStrength ?? 3 ) ) );
 		$post_fx_taa        = isset( $metadata->aframePostFXTAAEnabled ) && filter_var( $metadata->aframePostFXTAAEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
 		$post_fx_ssr        = isset( $metadata->aframePostFXSSREnabled ) && filter_var( $metadata->aframePostFXSSREnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$ssr_strength       = in_array( $metadata->aframePostFXSSRStrength ?? 'off', [ 'off', 'subtle', 'balanced', 'strong' ], true ) ? $metadata->aframePostFXSSRStrength : 'off';
-		$bloom_strength     = in_array( $metadata->aframeBloomStrength ?? 'off', [ 'off', 'soft', 'medium' ], true ) ? $metadata->aframeBloomStrength : 'off';
-		$exposure_preset    = in_array( $metadata->aframeExposurePreset ?? 'neutral', [ 'neutral', 'bright', 'cinematic' ], true ) ? $metadata->aframeExposurePreset : 'neutral';
-		$contrast_preset    = in_array( $metadata->aframeContrastPreset ?? 'balanced', [ 'soft', 'balanced', 'punchy' ], true ) ? $metadata->aframeContrastPreset : 'balanced';
+		$ssr_strength_raw   = $metadata->aframePostFXSSRStrength ?? 'off';
+		$bloom_strength_raw = $metadata->aframeBloomStrength ?? 'off';
+		$exposure_raw       = $metadata->aframeExposurePreset ?? 'neutral';
+		$contrast_raw       = $metadata->aframeContrastPreset ?? 'balanced';
+		$ssr_strength       = in_array( $ssr_strength_raw, [ 'off', 'subtle', 'balanced', 'strong' ], true ) ? $ssr_strength_raw : 'off';
+		$bloom_strength     = in_array( $bloom_strength_raw, [ 'off', 'soft', 'medium' ], true ) ? $bloom_strength_raw : 'off';
+		$exposure_preset    = in_array( $exposure_raw, [ 'neutral', 'bright', 'cinematic' ], true ) ? $exposure_raw : 'neutral';
+		$contrast_preset    = in_array( $contrast_raw, [ 'soft', 'balanced', 'punchy' ], true ) ? $contrast_raw : 'balanced';
 		$reflection_profile = $metadata->aframeReflectionProfile ?? 'balanced';
 		$reflection_source  = $metadata->aframeReflectionSource ?? 'hdr';
 		$horizon_preset     = $metadata->aframeHorizonSkyPreset ?? 'natural';
 		$env_map_preset     = $metadata->aframeEnvMapPreset ?? 'none';
+		$pmndrs_atmosphere_enabled = isset( $metadata->aframePmndrsAtmosphereEnabled ) && filter_var( $metadata->aframePmndrsAtmosphereEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$pmndrs_atmosphere_preset_raw = $metadata->aframePmndrsAtmospherePreset ?? 'midday';
+		$pmndrs_atmosphere_preset = in_array( $pmndrs_atmosphere_preset_raw, [ 'sunrise', 'midday', 'sunset', 'night', 'custom' ], true ) ? $pmndrs_atmosphere_preset_raw : 'midday';
+		$pmndrs_atmosphere_preset_intensity = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsAtmospherePresetIntensity ?? 1.0 ) ) );
+		$pmndrs_atmosphere_quality_raw = $metadata->aframePmndrsAtmosphereQuality ?? 'balanced';
+		$pmndrs_atmosphere_quality = in_array( $pmndrs_atmosphere_quality_raw, [ 'performance', 'balanced', 'quality', 'cinematic' ], true ) ? $pmndrs_atmosphere_quality_raw : 'balanced';
+		$pmndrs_sun_elevation = max( -10.0, min( 85.0, (float) ( $metadata->aframePmndrsSunElevationDeg ?? 62.0 ) ) );
+		$pmndrs_sun_azimuth = max( -180.0, min( 180.0, (float) ( $metadata->aframePmndrsSunAzimuthDeg ?? 20.0 ) ) );
+		$pmndrs_sun_distance = max( 1500.0, min( 20000.0, (float) ( $metadata->aframePmndrsSunDistance ?? 5200.0 ) ) );
+		$pmndrs_sun_angular_radius = max( 0.002, min( 0.03, (float) ( $metadata->aframePmndrsSunAngularRadius ?? 0.0047 ) ) );
+		$pmndrs_aerial_strength = max( 0.0, min( 2.0, (float) ( $metadata->aframePmndrsAerialStrength ?? 0.55 ) ) );
+		$pmndrs_albedo_scale = max( 0.0, min( 2.0, (float) ( $metadata->aframePmndrsAlbedoScale ?? 1.0 ) ) );
+		$pmndrs_transmittance_enabled = ! isset( $metadata->aframePmndrsTransmittanceEnabled ) || filter_var( $metadata->aframePmndrsTransmittanceEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$pmndrs_inscatter_enabled = ! isset( $metadata->aframePmndrsInscatterEnabled ) || filter_var( $metadata->aframePmndrsInscatterEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$pmndrs_ground_enabled = ! isset( $metadata->aframePmndrsGroundEnabled ) || filter_var( $metadata->aframePmndrsGroundEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$pmndrs_ground_albedo = $metadata->aframePmndrsGroundAlbedo ?? '#d8d8d0';
+		$pmndrs_rayleigh_scale = max( 0.1, min( 3.0, (float) ( $metadata->aframePmndrsRayleighScale ?? 1.18 ) ) );
+		$pmndrs_mie_scattering_scale = max( 0.1, min( 3.0, (float) ( $metadata->aframePmndrsMieScatteringScale ?? 0.42 ) ) );
+		$pmndrs_mie_extinction_scale = max( 0.1, min( 3.0, (float) ( $metadata->aframePmndrsMieExtinctionScale ?? 0.56 ) ) );
+		$pmndrs_mie_phase_g = max( 0.0, min( 0.99, (float) ( $metadata->aframePmndrsMiePhaseG ?? 0.74 ) ) );
+		$pmndrs_absorption_scale = max( 0.1, min( 3.0, (float) ( $metadata->aframePmndrsAbsorptionScale ?? 0.94 ) ) );
+		$pmndrs_moon_enabled = isset( $metadata->aframePmndrsMoonEnabled ) && filter_var( $metadata->aframePmndrsMoonEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
 
 		// 4. Assemble scene-settings attribute
 		$scene_settings_attr = "color: $clear_color; pr_type: $project_type_slug; selChoice: $bcg_choice; presChoice: $preset_choice; presetGroundEnabled: $ground_enabled" .
@@ -797,7 +823,17 @@ class VRodos_Compiler_Manager {
 			"; postFXSSRStrength: $ssr_strength; bloomStrength: $bloom_strength; exposurePreset: $exposure_preset; contrastPreset: $contrast_preset" .
 			"; reflectionProfile: $reflection_profile; reflectionSource: $reflection_source; horizonSkyPreset: $horizon_preset" .
 			"; envMapPreset: $env_map_preset; cam_position: $cam_pos; cam_rotation_y: $cam_rot_y; public_chat: " . ( $public_chat ? 'true' : 'false' ) .
-			"; fogCategory: $fog_cat; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density";
+			"; fogCategory: $fog_cat; fogcolor: $fog_color; fogfar: $fog_far; fognear: $fog_near; fogdensity: $fog_density" .
+			"; pmndrsAtmosphereEnabled: $pmndrs_atmosphere_enabled; pmndrsAtmospherePreset: $pmndrs_atmosphere_preset" .
+			"; pmndrsAtmospherePresetIntensity: $pmndrs_atmosphere_preset_intensity; pmndrsAtmosphereQuality: $pmndrs_atmosphere_quality" .
+			"; pmndrsSunElevationDeg: $pmndrs_sun_elevation; pmndrsSunAzimuthDeg: $pmndrs_sun_azimuth" .
+			"; pmndrsSunDistance: $pmndrs_sun_distance; pmndrsSunAngularRadius: $pmndrs_sun_angular_radius" .
+			"; pmndrsAerialStrength: $pmndrs_aerial_strength; pmndrsAlbedoScale: $pmndrs_albedo_scale" .
+			"; pmndrsTransmittanceEnabled: $pmndrs_transmittance_enabled; pmndrsInscatterEnabled: $pmndrs_inscatter_enabled" .
+			"; pmndrsGroundEnabled: $pmndrs_ground_enabled; pmndrsGroundAlbedo: $pmndrs_ground_albedo" .
+			"; pmndrsRayleighScale: $pmndrs_rayleigh_scale; pmndrsMieScatteringScale: $pmndrs_mie_scattering_scale" .
+			"; pmndrsMieExtinctionScale: $pmndrs_mie_extinction_scale; pmndrsMiePhaseG: $pmndrs_mie_phase_g" .
+			"; pmndrsAbsorptionScale: $pmndrs_absorption_scale; pmndrsMoonEnabled: $pmndrs_moon_enabled";
 
 		// Append composite_params if they exist (allows passing arbitrary component params from metadata)
 		if ( ! empty( $metadata->composite_params ) ) {

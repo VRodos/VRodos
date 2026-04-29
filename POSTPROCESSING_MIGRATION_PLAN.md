@@ -10,7 +10,7 @@ For the end-user plugin overview, see [README.md](README.md). For the legacy cus
 - Active Three vendor stack: `r181`, derived from the locked root `three` package
 - Active post-FX model: dual-engine, per-scene selection
 - Engine selector: `postFXEngine` with `legacy` and `pmndrs`
-- Takram status: atmosphere integration is live
+- Takram status: atmosphere integration is live with visual look presets
 - Cloud status: volumetric clouds are not shipped yet
 
 ## Current Runtime Model
@@ -76,7 +76,7 @@ It currently provides:
 - bloom controls
 - tone-mapping exposure control
 - vignette controls
-- Takram atmosphere controls
+- Takram atmosphere look presets and advanced controls
 - Takram sky ownership for the PMNDRS Horizon path
 
 The PMNDRS engine does **not** provide these features in VRodos today:
@@ -119,7 +119,10 @@ Takram support in VRodos means atmosphere and sky integration today, not clouds.
 ### Live now
 
 - Takram atmosphere resources are bundled locally
-- PMNDRS scenes expose Takram atmosphere controls in the compile dialog
+- PMNDRS scenes expose separate Takram atmosphere look and quality controls in the compile dialog
+- atmosphere looks: `sunrise`, `midday`, `sunset`, `night`, `custom`
+- Takram resource quality: `performance`, `balanced`, `quality`, `cinematic`
+- preset intensity and advanced sun/scattering controls are persisted into compiled `scene-settings`
 - PMNDRS Horizon scenes use Takram sky ownership
 - non-Horizon PMNDRS scenes can use `AerialPerspectiveEffect` when the runtime path is valid
 
@@ -143,7 +146,7 @@ These are intentional or known current-state limitations, not future tense place
 
 - atmosphere is the shipped Takram feature
 - clouds are still deferred
-- Horizon relies on Takram sky ownership first; the full cloud path is still follow-up work
+- Horizon relies on Takram sky ownership first; atmosphere look presets are supported, while the full cloud path is still follow-up work
 
 ## Open Follow-Ups
 
@@ -186,13 +189,14 @@ Constraint:
 Current state:
 
 - the scene schema still defaults to `legacy`
+- the PMNDRS/Takram atmosphere default look is `midday`
 
 Future flip to `pmndrs` should happen only if the team intentionally decides that the current PMNDRS trade-offs are acceptable for new scenes.
 
 ## Recommended Usage Right Now
 
 - Choose `legacy` for scenes that need SSR, TAA, or the established custom AO/reflection look.
-- Choose `pmndrs` for scenes that benefit from the newer composer path, PMNDRS AA modes, and Takram atmosphere controls.
+- Choose `pmndrs` for scenes that benefit from the newer composer path, PMNDRS AA modes, and Takram atmosphere looks.
 - Treat Takram as an atmosphere/sky feature today, not a shipped cloud feature.
 
 ## Historical Notes

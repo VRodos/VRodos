@@ -5,104 +5,80 @@
 (function () {
     var H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     var TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 0.0047;
-    var PMNDRS_ATMOSPHERE_QUALITY_DEFAULTS = {
-        performance: {
-            sunElevationDeg: 8,
-            sunAzimuthDeg: 34,
-            sunDistance: 4800,
-            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
-            aerialStrength: 0.6,
-            albedoScale: 0.92,
-            transmittanceEnabled: true,
-            inscatterEnabled: true,
-            groundEnabled: true,
-            groundAlbedo: '#e8ddc9',
-            rayleighScale: 0.82,
-            mieScatteringScale: 0.62,
-            mieExtinctionScale: 0.74,
-            miePhaseG: 0.72,
-            absorptionScale: 0.82,
-            moonEnabled: false
-        },
-        balanced: {
-            sunElevationDeg: 10,
-            sunAzimuthDeg: 38,
+    var PMNDRS_ATMOSPHERE_LOOK_DEFAULTS = {
+        sunrise: {
+            sunElevationDeg: 6,
+            sunAzimuthDeg: -55,
             sunDistance: 5200,
-            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
-            aerialStrength: 0.85,
+            sunAngularRadius: 0.0049,
+            aerialStrength: 0.88,
             albedoScale: 0.96,
             transmittanceEnabled: true,
             inscatterEnabled: true,
             groundEnabled: true,
-            groundAlbedo: '#f0e6d6',
+            groundAlbedo: '#f0d8b8',
             rayleighScale: 1.0,
-            mieScatteringScale: 0.9,
-            mieExtinctionScale: 1.0,
-            miePhaseG: 0.8,
-            absorptionScale: 1.0,
+            mieScatteringScale: 0.88,
+            mieExtinctionScale: 0.98,
+            miePhaseG: 0.78,
+            absorptionScale: 0.88,
             moonEnabled: false
         },
-        quality: {
-            sunElevationDeg: 12,
-            sunAzimuthDeg: 40,
-            sunDistance: 5600,
+        midday: {
+            sunElevationDeg: 62,
+            sunAzimuthDeg: 20,
+            sunDistance: 5200,
             sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
-            aerialStrength: 1.0,
+            aerialStrength: 0.55,
             albedoScale: 1.0,
             transmittanceEnabled: true,
             inscatterEnabled: true,
             groundEnabled: true,
-            groundAlbedo: '#f6ead7',
-            rayleighScale: 1.12,
-            mieScatteringScale: 1.02,
-            mieExtinctionScale: 1.05,
-            miePhaseG: 0.82,
-            absorptionScale: 1.02,
+            groundAlbedo: '#d8d8d0',
+            rayleighScale: 1.18,
+            mieScatteringScale: 0.42,
+            mieExtinctionScale: 0.56,
+            miePhaseG: 0.74,
+            absorptionScale: 0.94,
             moonEnabled: false
         },
-        cinematic: {
-            sunElevationDeg: 7,
-            sunAzimuthDeg: 28,
-            sunDistance: 6200,
-            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
-            aerialStrength: 1.15,
-            albedoScale: 1.05,
+        sunset: {
+            sunElevationDeg: 8,
+            sunAzimuthDeg: 38,
+            sunDistance: 5600,
+            sunAngularRadius: 0.0049,
+            aerialStrength: 1.02,
+            albedoScale: 0.96,
             transmittanceEnabled: true,
             inscatterEnabled: true,
             groundEnabled: true,
-            groundAlbedo: '#f8ead2',
-            rayleighScale: 1.2,
-            mieScatteringScale: 1.16,
+            groundAlbedo: '#f2cda8',
+            rayleighScale: 0.96,
+            mieScatteringScale: 1.08,
             mieExtinctionScale: 1.18,
-            miePhaseG: 0.84,
-            absorptionScale: 0.96,
+            miePhaseG: 0.82,
+            absorptionScale: 0.86,
             moonEnabled: false
+        },
+        night: {
+            sunElevationDeg: -8,
+            sunAzimuthDeg: 25,
+            sunDistance: 5200,
+            sunAngularRadius: 0.0044,
+            aerialStrength: 0.28,
+            albedoScale: 0.82,
+            transmittanceEnabled: true,
+            inscatterEnabled: true,
+            groundEnabled: true,
+            groundAlbedo: '#4e5870',
+            rayleighScale: 0.66,
+            mieScatteringScale: 0.32,
+            mieExtinctionScale: 0.46,
+            miePhaseG: 0.7,
+            absorptionScale: 1.14,
+            moonEnabled: true
         }
     };
-    var PMNDRS_ATMOSPHERE_HORIZON_OVERRIDES = {
-        natural: {
-            sunElevationDeg: 10,
-            sunAzimuthDeg: 38,
-            aerialStrength: 0.85
-        },
-        clear: {
-            sunElevationDeg: 14,
-            sunAzimuthDeg: 34,
-            rayleighScale: 0.88,
-            mieScatteringScale: 0.72,
-            mieExtinctionScale: 0.86,
-            absorptionScale: 0.9
-        },
-        crisp: {
-            sunElevationDeg: 17,
-            sunAzimuthDeg: 42,
-            rayleighScale: 1.12,
-            mieScatteringScale: 0.64,
-            mieExtinctionScale: 0.8,
-            absorptionScale: 1.08
-        }
-    };
-
     function clampPmndrsNumber(value, min, max, fallback) {
         var n = parseFloat(value);
         if (isNaN(n)) {
@@ -120,13 +96,81 @@
     function normalizePmndrsAtmosphereQuality(value) {
         switch (value) {
             case 'performance':
+            case 'balanced':
             case 'quality':
             case 'cinematic':
-            case 'custom':
                 return value;
             default:
                 return 'balanced';
         }
+    }
+
+    function normalizePmndrsAtmospherePreset(value) {
+        switch (value) {
+            case 'sunrise':
+            case 'sunset':
+            case 'night':
+            case 'custom':
+                return value;
+            default:
+                return 'midday';
+        }
+    }
+
+    function lerpNumber(a, b, t) {
+        return a + ((b - a) * t);
+    }
+
+    function lerpPmndrsColor(fromHex, toHex, t) {
+        function hexToRgb(hex) {
+            var normalized = normalizePmndrsColor(hex, '#000000');
+            return {
+                r: parseInt(normalized.slice(1, 3), 16),
+                g: parseInt(normalized.slice(3, 5), 16),
+                b: parseInt(normalized.slice(5, 7), 16)
+            };
+        }
+        function toHex(value) {
+            var clamped = Math.max(0, Math.min(255, Math.round(value)));
+            return clamped.toString(16).padStart(2, '0');
+        }
+        var from = hexToRgb(fromHex);
+        var to = hexToRgb(toHex);
+        return '#' +
+            toHex(lerpNumber(from.r, to.r, t)) +
+            toHex(lerpNumber(from.g, to.g, t)) +
+            toHex(lerpNumber(from.b, to.b, t));
+    }
+
+    function getPmndrsAtmosphereLookDefaults(preset, intensity) {
+        var midday = PMNDRS_ATMOSPHERE_LOOK_DEFAULTS.midday;
+        var resolvedPreset = normalizePmndrsAtmospherePreset(preset);
+        var target = PMNDRS_ATMOSPHERE_LOOK_DEFAULTS[resolvedPreset] || midday;
+        var blend = clampPmndrsNumber(intensity, 0, 1, 1);
+
+        if (resolvedPreset === 'midday' || resolvedPreset === 'custom') {
+            blend = 1;
+            target = midday;
+        }
+
+        return {
+            sunElevationDeg: lerpNumber(midday.sunElevationDeg, target.sunElevationDeg, blend),
+            sunAzimuthDeg: lerpNumber(midday.sunAzimuthDeg, target.sunAzimuthDeg, blend),
+            sunDistance: lerpNumber(midday.sunDistance, target.sunDistance, blend),
+            sunAngularRadius: lerpNumber(midday.sunAngularRadius, target.sunAngularRadius, blend),
+            aerialStrength: lerpNumber(midday.aerialStrength, target.aerialStrength, blend),
+            albedoScale: lerpNumber(midday.albedoScale, target.albedoScale, blend),
+            transmittanceEnabled: blend < 0.5 ? midday.transmittanceEnabled : target.transmittanceEnabled,
+            inscatterEnabled: blend < 0.5 ? midday.inscatterEnabled : target.inscatterEnabled,
+            groundEnabled: blend < 0.5 ? midday.groundEnabled : target.groundEnabled,
+            groundAlbedo: lerpPmndrsColor(midday.groundAlbedo, target.groundAlbedo, blend),
+            rayleighScale: lerpNumber(midday.rayleighScale, target.rayleighScale, blend),
+            mieScatteringScale: lerpNumber(midday.mieScatteringScale, target.mieScatteringScale, blend),
+            mieExtinctionScale: lerpNumber(midday.mieExtinctionScale, target.mieExtinctionScale, blend),
+            miePhaseG: lerpNumber(midday.miePhaseG, target.miePhaseG, blend),
+            absorptionScale: lerpNumber(midday.absorptionScale, target.absorptionScale, blend),
+            moonEnabled: blend >= 0.5 && target.moonEnabled === true
+        };
     }
 
     function getPmndrsAtmosphereResourceProfile(self, renderer) {
@@ -664,14 +708,8 @@
         // lights and visible-sun workaround with Takram's own light-source path,
         // but this keeps the behavior centralized so the migration is contained.
         config.groundEnabled = false;
-        config.groundAlbedo = '#000000';
         config.takramSunEnabled = experimentalHorizonAerial;
         config.sunAngularRadius = TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS;
-        config.rayleighScale = 1.0;
-        config.mieScatteringScale = 1.0;
-        config.mieExtinctionScale = 1.0;
-        config.miePhaseG = 0.8;
-        config.absorptionScale = 1.0;
         return config;
     }
 
@@ -766,36 +804,33 @@
         }
 
         var quality = normalizePmndrsAtmosphereQuality(this.data.pmndrsAtmosphereQuality);
-        var presetDefaults = PMNDRS_ATMOSPHERE_QUALITY_DEFAULTS[quality] || PMNDRS_ATMOSPHERE_QUALITY_DEFAULTS.balanced;
+        var preset = normalizePmndrsAtmospherePreset(this.data.pmndrsAtmospherePreset);
+        var presetIntensity = readPmndrsAtmosphereNumber(this, 'pmndrsAtmospherePresetIntensity', 0, 1, 1);
+        var presetDefaults = getPmndrsAtmosphereLookDefaults(preset, presetIntensity);
+        var usesCustomValues = preset === 'custom';
         var config = {
             enabled: this.data.postFXEngine === 'pmndrs' && this.data.pmndrsAtmosphereEnabled !== '0',
+            preset: preset,
+            presetIntensity: presetIntensity,
             quality: quality,
-            sunElevationDeg: readPmndrsAtmosphereNumber(this, 'pmndrsSunElevationDeg', -5, 45, presetDefaults.sunElevationDeg),
-            sunAzimuthDeg: readPmndrsAtmosphereNumber(this, 'pmndrsSunAzimuthDeg', -180, 180, presetDefaults.sunAzimuthDeg),
-            sunDistance: readPmndrsAtmosphereNumber(this, 'pmndrsSunDistance', 1500, 20000, presetDefaults.sunDistance),
-            sunAngularRadius: readPmndrsAtmosphereNumber(this, 'pmndrsSunAngularRadius', 0.002, 0.03, presetDefaults.sunAngularRadius),
-            aerialStrength: readPmndrsAtmosphereNumber(this, 'pmndrsAerialStrength', 0, 1.5, presetDefaults.aerialStrength),
-            albedoScale: readPmndrsAtmosphereNumber(this, 'pmndrsAlbedoScale', 0.5, 1.5, presetDefaults.albedoScale),
-            transmittanceEnabled: readPmndrsAtmosphereBool(this, 'pmndrsTransmittanceEnabled', presetDefaults.transmittanceEnabled),
-            inscatterEnabled: readPmndrsAtmosphereBool(this, 'pmndrsInscatterEnabled', presetDefaults.inscatterEnabled),
-            groundEnabled: readPmndrsAtmosphereBool(this, 'pmndrsGroundEnabled', presetDefaults.groundEnabled),
-            groundAlbedo: normalizePmndrsColor(this.data.pmndrsGroundAlbedo, presetDefaults.groundAlbedo),
-            rayleighScale: readPmndrsAtmosphereNumber(this, 'pmndrsRayleighScale', 0.2, 2.5, presetDefaults.rayleighScale),
-            mieScatteringScale: readPmndrsAtmosphereNumber(this, 'pmndrsMieScatteringScale', 0.1, 2.5, presetDefaults.mieScatteringScale),
-            mieExtinctionScale: readPmndrsAtmosphereNumber(this, 'pmndrsMieExtinctionScale', 0.1, 2.5, presetDefaults.mieExtinctionScale),
-            miePhaseG: readPmndrsAtmosphereNumber(this, 'pmndrsMiePhaseG', 0, 0.95, presetDefaults.miePhaseG),
-            absorptionScale: readPmndrsAtmosphereNumber(this, 'pmndrsAbsorptionScale', 0, 2.5, presetDefaults.absorptionScale),
-            moonEnabled: readPmndrsAtmosphereBool(this, 'pmndrsMoonEnabled', presetDefaults.moonEnabled),
+            sunElevationDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunElevationDeg', -10, 85, presetDefaults.sunElevationDeg) : presetDefaults.sunElevationDeg,
+            sunAzimuthDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunAzimuthDeg', -180, 180, presetDefaults.sunAzimuthDeg) : presetDefaults.sunAzimuthDeg,
+            sunDistance: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunDistance', 1500, 20000, presetDefaults.sunDistance) : presetDefaults.sunDistance,
+            sunAngularRadius: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunAngularRadius', 0.002, 0.03, presetDefaults.sunAngularRadius) : presetDefaults.sunAngularRadius,
+            aerialStrength: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsAerialStrength', 0, 2, presetDefaults.aerialStrength) : presetDefaults.aerialStrength,
+            albedoScale: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsAlbedoScale', 0, 2, presetDefaults.albedoScale) : presetDefaults.albedoScale,
+            transmittanceEnabled: usesCustomValues ? readPmndrsAtmosphereBool(this, 'pmndrsTransmittanceEnabled', presetDefaults.transmittanceEnabled) : presetDefaults.transmittanceEnabled,
+            inscatterEnabled: usesCustomValues ? readPmndrsAtmosphereBool(this, 'pmndrsInscatterEnabled', presetDefaults.inscatterEnabled) : presetDefaults.inscatterEnabled,
+            groundEnabled: usesCustomValues ? readPmndrsAtmosphereBool(this, 'pmndrsGroundEnabled', presetDefaults.groundEnabled) : presetDefaults.groundEnabled,
+            groundAlbedo: usesCustomValues ? normalizePmndrsColor(this.data.pmndrsGroundAlbedo, presetDefaults.groundAlbedo) : presetDefaults.groundAlbedo,
+            rayleighScale: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsRayleighScale', 0.1, 3, presetDefaults.rayleighScale) : presetDefaults.rayleighScale,
+            mieScatteringScale: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsMieScatteringScale', 0.1, 3, presetDefaults.mieScatteringScale) : presetDefaults.mieScatteringScale,
+            mieExtinctionScale: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsMieExtinctionScale', 0.1, 3, presetDefaults.mieExtinctionScale) : presetDefaults.mieExtinctionScale,
+            miePhaseG: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsMiePhaseG', 0, 0.99, presetDefaults.miePhaseG) : presetDefaults.miePhaseG,
+            absorptionScale: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsAbsorptionScale', 0.1, 3, presetDefaults.absorptionScale) : presetDefaults.absorptionScale,
+            moonEnabled: usesCustomValues ? readPmndrsAtmosphereBool(this, 'pmndrsMoonEnabled', presetDefaults.moonEnabled) : presetDefaults.moonEnabled,
             takramSunEnabled: true
         };
-
-        if (this.data.selChoice === "0" && quality !== 'custom') {
-            var horizonPreset = this.getHorizonSkyPreset ? this.getHorizonSkyPreset() : 'natural';
-            var overrides = PMNDRS_ATMOSPHERE_HORIZON_OVERRIDES[horizonPreset] || PMNDRS_ATMOSPHERE_HORIZON_OVERRIDES.natural;
-            Object.keys(overrides).forEach(function (key) {
-                config[key] = overrides[key];
-            });
-        }
 
         if (isPmndrsTakramLocalHorizonMode(this)) {
             applyPmndrsTakramLocalHorizonConstraints(this, config);

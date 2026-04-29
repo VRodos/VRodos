@@ -28,8 +28,8 @@
     "bundlePath": "assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js"
   },
   "takram": {
-    "atmosphereVersion": "0.18.0",
-    "cloudsVersion": "0.7.4",
+    "atmosphereVersion": "0.19.0",
+    "cloudsVersion": "0.7.5",
     "global": "VRODOS_TAKRAM_ATMOSPHERE",
     "bundleFile": "vrodos-takram-atmosphere.bundle.js",
     "bundlePath": "assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js"

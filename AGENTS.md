@@ -134,7 +134,7 @@ Root `package.json` plus `package-lock.json` are the version source of truth. `n
 - Editor rendering: generated Three vendor bundle, currently `r181`
 - Compiled runtime: A-Frame metadata from root `package.json`
 - Runtime post-processing: legacy custom path plus PMNDRS path bundled through `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`
-- Atmosphere runtime: generated Takram bundle
+- Atmosphere runtime: generated Takram bundle with PMNDRS compile-dialog look presets; Takram clouds are not shipped yet
 - Collaborative server: Node.js + EasyRTC/WebRTC
 
 ---

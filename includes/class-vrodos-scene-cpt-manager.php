@@ -279,6 +279,31 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframeHorizonSkyPreset'] = $json_metadata->aframeHorizonSkyPreset ?? 'natural';
 		$scene_data['aframeEnvMapPreset'] = $json_metadata->aframeEnvMapPreset ?? 'none';
 		$scene_data['aframePostFXEngine'] = ( $json_metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ? 'pmndrs' : 'legacy';
+		$legacy_atmosphere_keys = [
+			'aframePmndrsSunElevationDeg',
+			'aframePmndrsSunAzimuthDeg',
+			'aframePmndrsSunDistance',
+			'aframePmndrsSunAngularRadius',
+			'aframePmndrsAerialStrength',
+			'aframePmndrsAlbedoScale',
+			'aframePmndrsTransmittanceEnabled',
+			'aframePmndrsInscatterEnabled',
+			'aframePmndrsGroundEnabled',
+			'aframePmndrsGroundAlbedo',
+			'aframePmndrsRayleighScale',
+			'aframePmndrsMieScatteringScale',
+			'aframePmndrsMieExtinctionScale',
+			'aframePmndrsMiePhaseG',
+			'aframePmndrsAbsorptionScale',
+			'aframePmndrsMoonEnabled',
+		];
+		$has_legacy_atmosphere_metadata = false;
+		foreach ( $legacy_atmosphere_keys as $legacy_atmosphere_key ) {
+			if ( property_exists( $json_metadata, $legacy_atmosphere_key ) ) {
+				$has_legacy_atmosphere_metadata = true;
+				break;
+			}
+		}
 		$pmndrs_aa_mode_raw = $json_metadata->aframePmndrsAAMode ?? 'inherit';
 		$scene_data['aframePmndrsAAMode'] = in_array( $pmndrs_aa_mode_raw, [ 'none', 'smaa', 'msaa' ], true ) ? $pmndrs_aa_mode_raw : 'inherit';
 		$pmndrs_aa_preset_raw = $json_metadata->aframePmndrsAAPreset ?? 'inherit';
@@ -289,22 +314,26 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsVignetteDarkness'] = isset( $json_metadata->aframePmndrsVignetteDarkness ) ? (float) $json_metadata->aframePmndrsVignetteDarkness : 0.5;
 		$scene_data['aframePmndrsToneMappingExposure'] = isset( $json_metadata->aframePmndrsToneMappingExposure ) ? (float) $json_metadata->aframePmndrsToneMappingExposure : 1.0;
 		$scene_data['aframePmndrsAtmosphereEnabled'] = $json_metadata->aframePmndrsAtmosphereEnabled ?? true;
+		$scene_data['aframePmndrsAtmospherePreset'] = property_exists( $json_metadata, 'aframePmndrsAtmospherePreset' )
+			? $json_metadata->aframePmndrsAtmospherePreset
+			: ( $has_legacy_atmosphere_metadata ? 'custom' : 'midday' );
+		$scene_data['aframePmndrsAtmospherePresetIntensity'] = isset( $json_metadata->aframePmndrsAtmospherePresetIntensity ) ? (float) $json_metadata->aframePmndrsAtmospherePresetIntensity : 1.0;
 		$scene_data['aframePmndrsAtmosphereQuality'] = $json_metadata->aframePmndrsAtmosphereQuality ?? 'balanced';
-		$scene_data['aframePmndrsSunElevationDeg'] = isset( $json_metadata->aframePmndrsSunElevationDeg ) ? (float) $json_metadata->aframePmndrsSunElevationDeg : 10;
-		$scene_data['aframePmndrsSunAzimuthDeg'] = isset( $json_metadata->aframePmndrsSunAzimuthDeg ) ? (float) $json_metadata->aframePmndrsSunAzimuthDeg : 38;
+		$scene_data['aframePmndrsSunElevationDeg'] = isset( $json_metadata->aframePmndrsSunElevationDeg ) ? (float) $json_metadata->aframePmndrsSunElevationDeg : 62;
+		$scene_data['aframePmndrsSunAzimuthDeg'] = isset( $json_metadata->aframePmndrsSunAzimuthDeg ) ? (float) $json_metadata->aframePmndrsSunAzimuthDeg : 20;
 		$scene_data['aframePmndrsSunDistance'] = isset( $json_metadata->aframePmndrsSunDistance ) ? (float) $json_metadata->aframePmndrsSunDistance : 5200;
-		$scene_data['aframePmndrsSunAngularRadius'] = isset( $json_metadata->aframePmndrsSunAngularRadius ) ? (float) $json_metadata->aframePmndrsSunAngularRadius : 0.0068;
-		$scene_data['aframePmndrsAerialStrength'] = isset( $json_metadata->aframePmndrsAerialStrength ) ? (float) $json_metadata->aframePmndrsAerialStrength : 0.85;
-		$scene_data['aframePmndrsAlbedoScale'] = isset( $json_metadata->aframePmndrsAlbedoScale ) ? (float) $json_metadata->aframePmndrsAlbedoScale : 0.96;
+		$scene_data['aframePmndrsSunAngularRadius'] = isset( $json_metadata->aframePmndrsSunAngularRadius ) ? (float) $json_metadata->aframePmndrsSunAngularRadius : 0.0047;
+		$scene_data['aframePmndrsAerialStrength'] = isset( $json_metadata->aframePmndrsAerialStrength ) ? (float) $json_metadata->aframePmndrsAerialStrength : 0.55;
+		$scene_data['aframePmndrsAlbedoScale'] = isset( $json_metadata->aframePmndrsAlbedoScale ) ? (float) $json_metadata->aframePmndrsAlbedoScale : 1.0;
 		$scene_data['aframePmndrsTransmittanceEnabled'] = $json_metadata->aframePmndrsTransmittanceEnabled ?? true;
 		$scene_data['aframePmndrsInscatterEnabled'] = $json_metadata->aframePmndrsInscatterEnabled ?? true;
 		$scene_data['aframePmndrsGroundEnabled'] = $json_metadata->aframePmndrsGroundEnabled ?? true;
-		$scene_data['aframePmndrsGroundAlbedo'] = $json_metadata->aframePmndrsGroundAlbedo ?? '#f0e6d6';
-		$scene_data['aframePmndrsRayleighScale'] = isset( $json_metadata->aframePmndrsRayleighScale ) ? (float) $json_metadata->aframePmndrsRayleighScale : 1.0;
-		$scene_data['aframePmndrsMieScatteringScale'] = isset( $json_metadata->aframePmndrsMieScatteringScale ) ? (float) $json_metadata->aframePmndrsMieScatteringScale : 0.9;
-		$scene_data['aframePmndrsMieExtinctionScale'] = isset( $json_metadata->aframePmndrsMieExtinctionScale ) ? (float) $json_metadata->aframePmndrsMieExtinctionScale : 1.0;
-		$scene_data['aframePmndrsMiePhaseG'] = isset( $json_metadata->aframePmndrsMiePhaseG ) ? (float) $json_metadata->aframePmndrsMiePhaseG : 0.8;
-		$scene_data['aframePmndrsAbsorptionScale'] = isset( $json_metadata->aframePmndrsAbsorptionScale ) ? (float) $json_metadata->aframePmndrsAbsorptionScale : 1.0;
+		$scene_data['aframePmndrsGroundAlbedo'] = $json_metadata->aframePmndrsGroundAlbedo ?? '#d8d8d0';
+		$scene_data['aframePmndrsRayleighScale'] = isset( $json_metadata->aframePmndrsRayleighScale ) ? (float) $json_metadata->aframePmndrsRayleighScale : 1.18;
+		$scene_data['aframePmndrsMieScatteringScale'] = isset( $json_metadata->aframePmndrsMieScatteringScale ) ? (float) $json_metadata->aframePmndrsMieScatteringScale : 0.42;
+		$scene_data['aframePmndrsMieExtinctionScale'] = isset( $json_metadata->aframePmndrsMieExtinctionScale ) ? (float) $json_metadata->aframePmndrsMieExtinctionScale : 0.56;
+		$scene_data['aframePmndrsMiePhaseG'] = isset( $json_metadata->aframePmndrsMiePhaseG ) ? (float) $json_metadata->aframePmndrsMiePhaseG : 0.74;
+		$scene_data['aframePmndrsAbsorptionScale'] = isset( $json_metadata->aframePmndrsAbsorptionScale ) ? (float) $json_metadata->aframePmndrsAbsorptionScale : 0.94;
 		$scene_data['aframePmndrsMoonEnabled'] = $json_metadata->aframePmndrsMoonEnabled ?? false;
 		$scene_data['backgroundPresetOption'] = $json_metadata->backgroundPresetOption ?? '1';
 		$scene_data['backgroundPresetGroundEnabled'] = $json_metadata->backgroundPresetGroundEnabled ?? true;

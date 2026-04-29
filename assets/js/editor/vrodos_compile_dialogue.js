@@ -69,6 +69,9 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsVignetteDarknessValue: document.getElementById('compilePmndrsVignetteDarknessValue'),
             pmndrsAtmosphere: document.getElementById('compilePmndrsAtmosphereToggle'),
             pmndrsAtmosphereWrapper: document.getElementById('compilePmndrsAtmosphereWrapper'),
+            pmndrsAtmospherePreset: document.getElementById('compilePmndrsAtmospherePresetSelect'),
+            pmndrsAtmospherePresetIntensity: document.getElementById('compilePmndrsAtmospherePresetIntensitySlider'),
+            pmndrsAtmospherePresetIntensityValue: document.getElementById('compilePmndrsAtmospherePresetIntensityValue'),
             pmndrsAtmosphereQuality: document.getElementById('compilePmndrsAtmosphereQualitySelect'),
             pmndrsAtmosphereAdvanced: document.getElementById('compilePmndrsAtmosphereAdvanced'),
             pmndrsSunElevation: document.getElementById('compilePmndrsSunElevationSlider'),
@@ -207,20 +210,26 @@ window.addEventListener('DOMContentLoaded', () => {
         if (typeof envir.scene.aframePmndrsAtmosphereEnabled === 'undefined') {
             envir.scene.aframePmndrsAtmosphereEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereEnabled;
         }
+        if (!envir.scene.aframePmndrsAtmospherePreset) {
+            envir.scene.aframePmndrsAtmospherePreset = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset;
+        }
+        if (typeof envir.scene.aframePmndrsAtmospherePresetIntensity !== 'number') {
+            envir.scene.aframePmndrsAtmospherePresetIntensity = Shared.clampNumber(envir.scene.aframePmndrsAtmospherePresetIntensity, 0, 1, Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePresetIntensity);
+        }
         if (!envir.scene.aframePmndrsAtmosphereQuality) {
             envir.scene.aframePmndrsAtmosphereQuality = Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
         }
         if (typeof envir.scene.aframePmndrsSunElevationDeg !== 'number') {
-            envir.scene.aframePmndrsSunElevationDeg = Shared.clampNumber(envir.scene.aframePmndrsSunElevationDeg, -15, 75, Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
+            envir.scene.aframePmndrsSunElevationDeg = Shared.clampNumber(envir.scene.aframePmndrsSunElevationDeg, -10, 85, Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
         }
         if (typeof envir.scene.aframePmndrsSunAzimuthDeg !== 'number') {
             envir.scene.aframePmndrsSunAzimuthDeg = Shared.clampNumber(envir.scene.aframePmndrsSunAzimuthDeg, -180, 180, Shared.PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg);
         }
         if (typeof envir.scene.aframePmndrsSunDistance !== 'number') {
-            envir.scene.aframePmndrsSunDistance = Shared.clampNumber(envir.scene.aframePmndrsSunDistance, 1500, 12000, Shared.PMNDRS_TWEAK_DEFAULTS.sunDistance);
+            envir.scene.aframePmndrsSunDistance = Shared.clampNumber(envir.scene.aframePmndrsSunDistance, 1500, 20000, Shared.PMNDRS_TWEAK_DEFAULTS.sunDistance);
         }
         if (typeof envir.scene.aframePmndrsSunAngularRadius !== 'number') {
-            envir.scene.aframePmndrsSunAngularRadius = Shared.clampNumber(envir.scene.aframePmndrsSunAngularRadius, 0.001, 0.03, Shared.PMNDRS_TWEAK_DEFAULTS.sunAngularRadius);
+            envir.scene.aframePmndrsSunAngularRadius = Shared.clampNumber(envir.scene.aframePmndrsSunAngularRadius, 0.002, 0.03, Shared.PMNDRS_TWEAK_DEFAULTS.sunAngularRadius);
         }
         if (typeof envir.scene.aframePmndrsAerialStrength !== 'number') {
             envir.scene.aframePmndrsAerialStrength = Shared.clampNumber(envir.scene.aframePmndrsAerialStrength, 0, 2, Shared.PMNDRS_TWEAK_DEFAULTS.aerialStrength);
@@ -272,6 +281,7 @@ window.addEventListener('DOMContentLoaded', () => {
         envir.scene.aframePostFXEngine = VRodosCompileUI.PostFX.normalizeEngine(envir.scene.aframePostFXEngine);
         envir.scene.aframePmndrsAAMode = VRodosCompileUI.PostFX.normalizePmndrsAAMode(envir.scene.aframePmndrsAAMode);
         envir.scene.aframePmndrsAAPreset = VRodosCompileUI.PostFX.normalizePmndrsAAPreset(envir.scene.aframePmndrsAAPreset);
+        envir.scene.aframePmndrsAtmospherePreset = VRodosCompileUI.Atmosphere.normalizePreset(envir.scene.aframePmndrsAtmospherePreset);
         envir.scene.aframePmndrsAtmosphereQuality = VRodosCompileUI.Atmosphere.normalizeQuality(envir.scene.aframePmndrsAtmosphereQuality);
         
         if (envir.scene.aframePostFXBloomEnabled === false) {
@@ -375,6 +385,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (c.pmndrsSunDistance && c.pmndrsSunDistanceValue) {
             c.pmndrsSunDistanceValue.textContent = String(Math.round(parseFloat(c.pmndrsSunDistance.value) || 0));
+        }
+        if (c.pmndrsAtmospherePresetIntensity && c.pmndrsAtmospherePresetIntensityValue) {
+            c.pmndrsAtmospherePresetIntensityValue.textContent = Shared.formatNumber(parseFloat(c.pmndrsAtmospherePresetIntensity.value));
         }
         if (c.pmndrsAerialStrength && c.pmndrsAerialStrengthValue) {
             c.pmndrsAerialStrengthValue.textContent = Shared.formatNumber(parseFloat(c.pmndrsAerialStrength.value));
@@ -542,61 +555,81 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls.pmndrsAtmosphere) {
             controls.pmndrsAtmosphere.checked = !(envir && envir.scene) || envir.scene.aframePmndrsAtmosphereEnabled !== false;
         }
+        if (controls.pmndrsAtmospherePreset) {
+            controls.pmndrsAtmospherePreset.value = envir && envir.scene && envir.scene.aframePmndrsAtmospherePreset
+                ? VRodosCompileUI.Atmosphere.normalizePreset(envir.scene.aframePmndrsAtmospherePreset)
+                : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset;
+        }
+        if (controls.pmndrsAtmospherePresetIntensity) {
+            controls.pmndrsAtmospherePresetIntensity.value = Shared.clampNumber(
+                envir && envir.scene ? envir.scene.aframePmndrsAtmospherePresetIntensity : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePresetIntensity,
+                0,
+                1,
+                Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePresetIntensity
+            );
+        }
         if (controls.pmndrsAtmosphereQuality) {
             controls.pmndrsAtmosphereQuality.value = envir && envir.scene && envir.scene.aframePmndrsAtmosphereQuality
                 ? VRodosCompileUI.Atmosphere.normalizeQuality(envir.scene.aframePmndrsAtmosphereQuality)
                 : Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
         }
-        if (controls.pmndrsSunElevation) {
-            controls.pmndrsSunElevation.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunElevationDeg : Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg, -15, 75, Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
-        }
-        if (controls.pmndrsSunAzimuth) {
-            controls.pmndrsSunAzimuth.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunAzimuthDeg : Shared.PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg, -180, 180, Shared.PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg);
-        }
-        if (controls.pmndrsSunDistance) {
-            controls.pmndrsSunDistance.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunDistance : Shared.PMNDRS_TWEAK_DEFAULTS.sunDistance, 1500, 12000, Shared.PMNDRS_TWEAK_DEFAULTS.sunDistance);
-        }
-        if (controls.pmndrsSunAngularRadius) {
-            controls.pmndrsSunAngularRadius.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunAngularRadius : Shared.PMNDRS_TWEAK_DEFAULTS.sunAngularRadius, 0.001, 0.03, Shared.PMNDRS_TWEAK_DEFAULTS.sunAngularRadius);
-        }
-        if (controls.pmndrsAerialStrength) {
-            controls.pmndrsAerialStrength.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsAerialStrength : Shared.PMNDRS_TWEAK_DEFAULTS.aerialStrength, 0, 2, Shared.PMNDRS_TWEAK_DEFAULTS.aerialStrength);
-        }
-        if (controls.pmndrsAlbedoScale) {
-            controls.pmndrsAlbedoScale.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsAlbedoScale : Shared.PMNDRS_TWEAK_DEFAULTS.albedoScale, 0, 2, Shared.PMNDRS_TWEAK_DEFAULTS.albedoScale);
-        }
-        if (controls.pmndrsTransmittance) {
-            controls.pmndrsTransmittance.checked = !(envir && envir.scene) || envir.scene.aframePmndrsTransmittanceEnabled !== false;
-        }
-        if (controls.pmndrsInscatter) {
-            controls.pmndrsInscatter.checked = !(envir && envir.scene) || envir.scene.aframePmndrsInscatterEnabled !== false;
-        }
-        if (controls.pmndrsGround) {
-            controls.pmndrsGround.checked = !(envir && envir.scene) || envir.scene.aframePmndrsGroundEnabled !== false;
-        }
-        if (controls.pmndrsGroundAlbedo) {
-            controls.pmndrsGroundAlbedo.value = Shared.normalizeColorHex(
-                envir && envir.scene ? envir.scene.aframePmndrsGroundAlbedo : Shared.PMNDRS_TWEAK_DEFAULTS.groundAlbedo,
-                Shared.PMNDRS_TWEAK_DEFAULTS.groundAlbedo
-            );
-        }
-        if (controls.pmndrsRayleighScale) {
-            controls.pmndrsRayleighScale.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsRayleighScale : Shared.PMNDRS_TWEAK_DEFAULTS.rayleighScale, 0.1, 3, Shared.PMNDRS_TWEAK_DEFAULTS.rayleighScale);
-        }
-        if (controls.pmndrsMieScatteringScale) {
-            controls.pmndrsMieScatteringScale.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsMieScatteringScale : Shared.PMNDRS_TWEAK_DEFAULTS.mieScatteringScale, 0.1, 3, Shared.PMNDRS_TWEAK_DEFAULTS.mieScatteringScale);
-        }
-        if (controls.pmndrsMieExtinctionScale) {
-            controls.pmndrsMieExtinctionScale.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsMieExtinctionScale : Shared.PMNDRS_TWEAK_DEFAULTS.mieExtinctionScale, 0.1, 3, Shared.PMNDRS_TWEAK_DEFAULTS.mieExtinctionScale);
-        }
-        if (controls.pmndrsMiePhaseG) {
-            controls.pmndrsMiePhaseG.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsMiePhaseG : Shared.PMNDRS_TWEAK_DEFAULTS.miePhaseG, 0, 0.99, Shared.PMNDRS_TWEAK_DEFAULTS.miePhaseG);
-        }
-        if (controls.pmndrsAbsorptionScale) {
-            controls.pmndrsAbsorptionScale.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsAbsorptionScale : Shared.PMNDRS_TWEAK_DEFAULTS.absorptionScale, 0.1, 3, Shared.PMNDRS_TWEAK_DEFAULTS.absorptionScale);
-        }
-        if (controls.pmndrsMoon) {
-            controls.pmndrsMoon.checked = !!(envir && envir.scene && envir.scene.aframePmndrsMoonEnabled);
+        var resolvedAtmospherePreset = VRodosCompileUI.Atmosphere.normalizePreset(
+            controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset
+        );
+        if (resolvedAtmospherePreset !== 'custom') {
+            VRodosCompileUI.Atmosphere.applyLookPreset(controls, resolvedAtmospherePreset);
+        } else {
+            if (controls.pmndrsSunElevation) {
+                controls.pmndrsSunElevation.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunElevationDeg : Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg, -10, 85, Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
+            }
+            if (controls.pmndrsSunAzimuth) {
+                controls.pmndrsSunAzimuth.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunAzimuthDeg : Shared.PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg, -180, 180, Shared.PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg);
+            }
+            if (controls.pmndrsSunDistance) {
+                controls.pmndrsSunDistance.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunDistance : Shared.PMNDRS_TWEAK_DEFAULTS.sunDistance, 1500, 20000, Shared.PMNDRS_TWEAK_DEFAULTS.sunDistance);
+            }
+            if (controls.pmndrsSunAngularRadius) {
+                controls.pmndrsSunAngularRadius.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsSunAngularRadius : Shared.PMNDRS_TWEAK_DEFAULTS.sunAngularRadius, 0.002, 0.03, Shared.PMNDRS_TWEAK_DEFAULTS.sunAngularRadius);
+            }
+            if (controls.pmndrsAerialStrength) {
+                controls.pmndrsAerialStrength.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsAerialStrength : Shared.PMNDRS_TWEAK_DEFAULTS.aerialStrength, 0, 2, Shared.PMNDRS_TWEAK_DEFAULTS.aerialStrength);
+            }
+            if (controls.pmndrsAlbedoScale) {
+                controls.pmndrsAlbedoScale.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsAlbedoScale : Shared.PMNDRS_TWEAK_DEFAULTS.albedoScale, 0, 2, Shared.PMNDRS_TWEAK_DEFAULTS.albedoScale);
+            }
+            if (controls.pmndrsTransmittance) {
+                controls.pmndrsTransmittance.checked = !(envir && envir.scene) || envir.scene.aframePmndrsTransmittanceEnabled !== false;
+            }
+            if (controls.pmndrsInscatter) {
+                controls.pmndrsInscatter.checked = !(envir && envir.scene) || envir.scene.aframePmndrsInscatterEnabled !== false;
+            }
+            if (controls.pmndrsGround) {
+                controls.pmndrsGround.checked = !(envir && envir.scene) || envir.scene.aframePmndrsGroundEnabled !== false;
+            }
+            if (controls.pmndrsGroundAlbedo) {
+                controls.pmndrsGroundAlbedo.value = Shared.normalizeColorHex(
+                    envir && envir.scene ? envir.scene.aframePmndrsGroundAlbedo : Shared.PMNDRS_TWEAK_DEFAULTS.groundAlbedo,
+                    Shared.PMNDRS_TWEAK_DEFAULTS.groundAlbedo
+                );
+            }
+            if (controls.pmndrsRayleighScale) {
+                controls.pmndrsRayleighScale.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsRayleighScale : Shared.PMNDRS_TWEAK_DEFAULTS.rayleighScale, 0.1, 3, Shared.PMNDRS_TWEAK_DEFAULTS.rayleighScale);
+            }
+            if (controls.pmndrsMieScatteringScale) {
+                controls.pmndrsMieScatteringScale.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsMieScatteringScale : Shared.PMNDRS_TWEAK_DEFAULTS.mieScatteringScale, 0.1, 3, Shared.PMNDRS_TWEAK_DEFAULTS.mieScatteringScale);
+            }
+            if (controls.pmndrsMieExtinctionScale) {
+                controls.pmndrsMieExtinctionScale.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsMieExtinctionScale : Shared.PMNDRS_TWEAK_DEFAULTS.mieExtinctionScale, 0.1, 3, Shared.PMNDRS_TWEAK_DEFAULTS.mieExtinctionScale);
+            }
+            if (controls.pmndrsMiePhaseG) {
+                controls.pmndrsMiePhaseG.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsMiePhaseG : Shared.PMNDRS_TWEAK_DEFAULTS.miePhaseG, 0, 0.99, Shared.PMNDRS_TWEAK_DEFAULTS.miePhaseG);
+            }
+            if (controls.pmndrsAbsorptionScale) {
+                controls.pmndrsAbsorptionScale.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsAbsorptionScale : Shared.PMNDRS_TWEAK_DEFAULTS.absorptionScale, 0.1, 3, Shared.PMNDRS_TWEAK_DEFAULTS.absorptionScale);
+            }
+            if (controls.pmndrsMoon) {
+                controls.pmndrsMoon.checked = !!(envir && envir.scene && envir.scene.aframePmndrsMoonEnabled);
+            }
         }
         updatePmndrsValueLabels();
 
@@ -694,7 +727,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     bindEngineTab(controls.postFxEngineTabLegacy);
     bindEngineTab(controls.postFxEngineTabPmndrs);
-    [controls.pmndrsBloomIntensity, controls.pmndrsBloomThreshold, controls.pmndrsExposure, controls.pmndrsVignetteDarkness].forEach(function (el) {
+    [controls.pmndrsBloomIntensity, controls.pmndrsBloomThreshold, controls.pmndrsExposure, controls.pmndrsVignetteDarkness, controls.pmndrsAtmospherePresetIntensity].forEach(function (el) {
         if (el) {
             el.addEventListener('input', updatePmndrsValueLabels);
         }
@@ -740,15 +773,30 @@ window.addEventListener('DOMContentLoaded', () => {
     if (controls.pmndrsAtmosphere) {
         controls.pmndrsAtmosphere.addEventListener('change', syncCompilePostFxState);
     }
-    if (controls.pmndrsAtmosphereQuality) {
-        controls.pmndrsAtmosphereQuality.addEventListener('change', function () {
-            var quality = VRodosCompileUI.Atmosphere.normalizeQuality(controls.pmndrsAtmosphereQuality.value);
-            if (quality !== 'custom') {
-                VRodosCompileUI.Atmosphere.applyPreset(controls, quality);
-                updatePmndrsValueLabels();
+    if (controls.pmndrsAtmospherePreset) {
+        controls.pmndrsAtmospherePreset.addEventListener('change', function () {
+            var preset = VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset.value);
+            if (preset !== 'custom') {
+                VRodosCompileUI.Atmosphere.applyLookPreset(controls, preset);
             }
+            updatePmndrsValueLabels();
             syncCompilePostFxState();
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
         });
+    }
+    if (controls.pmndrsAtmospherePresetIntensity) {
+        controls.pmndrsAtmospherePresetIntensity.addEventListener('input', function () {
+            var preset = VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset);
+            if (preset !== 'custom') {
+                VRodosCompileUI.Atmosphere.applyLookPreset(controls, preset);
+            }
+            updatePmndrsValueLabels();
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
+        });
+        controls.pmndrsAtmospherePresetIntensity.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.pmndrsAtmosphereQuality) {
+        controls.pmndrsAtmosphereQuality.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.pmndrsResetBtn) {
         controls.pmndrsResetBtn.addEventListener('click', function (e) {
@@ -762,7 +810,10 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsVignette) c.pmndrsVignette.checked = Shared.PMNDRS_TWEAK_DEFAULTS.vignetteEnabled;
             if (c.pmndrsVignetteDarkness) c.pmndrsVignetteDarkness.value = Shared.PMNDRS_TWEAK_DEFAULTS.vignetteDarkness;
             if (c.pmndrsAtmosphere) c.pmndrsAtmosphere.checked = Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereEnabled;
-            VRodosCompileUI.Atmosphere.applyPreset(c, Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality);
+            if (c.pmndrsAtmospherePreset) c.pmndrsAtmospherePreset.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset;
+            if (c.pmndrsAtmospherePresetIntensity) c.pmndrsAtmospherePresetIntensity.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePresetIntensity;
+            if (c.pmndrsAtmosphereQuality) c.pmndrsAtmosphereQuality.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
+            VRodosCompileUI.Atmosphere.applyLookPreset(c, Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset);
             updatePmndrsValueLabels();
             syncCompilePostFxState();
         });

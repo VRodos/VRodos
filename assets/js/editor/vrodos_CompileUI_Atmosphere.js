@@ -6,105 +6,179 @@
 window.VRodosCompileUI = window.VRodosCompileUI || {};
 
 VRodosCompileUI.Atmosphere = (function () {
-    
-    // Alias common items for brevity
     const Shared = VRodosCompileUI.Shared;
-    const PRESETS = {
-        performance: {
-            sunElevationDeg: 8,
-            sunAzimuthDeg: 34,
-            sunDistance: 4800,
-            sunAngularRadius: 0.0047,
-            aerialStrength: 0.6,
-            albedoScale: 0.92,
-            transmittanceEnabled: true,
-            inscatterEnabled: true,
-            groundEnabled: true,
-            groundAlbedo: '#e8ddc9',
-            rayleighScale: 0.82,
-            mieScatteringScale: 0.62,
-            mieExtinctionScale: 0.74,
-            miePhaseG: 0.72,
-            absorptionScale: 0.82,
-            moonEnabled: false
-        },
-        balanced: {
-            sunElevationDeg: 10,
-            sunAzimuthDeg: 38,
+    const MIDDAY = {
+        sunElevationDeg: 62,
+        sunAzimuthDeg: 20,
+        sunDistance: 5200,
+        sunAngularRadius: 0.0047,
+        aerialStrength: 0.55,
+        albedoScale: 1.0,
+        transmittanceEnabled: true,
+        inscatterEnabled: true,
+        groundEnabled: true,
+        groundAlbedo: '#d8d8d0',
+        rayleighScale: 1.18,
+        mieScatteringScale: 0.42,
+        mieExtinctionScale: 0.56,
+        miePhaseG: 0.74,
+        absorptionScale: 0.94,
+        moonEnabled: false
+    };
+    const LOOK_PRESETS = {
+        sunrise: {
+            sunElevationDeg: 6,
+            sunAzimuthDeg: -55,
             sunDistance: 5200,
-            sunAngularRadius: 0.0047,
-            aerialStrength: 0.85,
+            sunAngularRadius: 0.0049,
+            aerialStrength: 0.88,
             albedoScale: 0.96,
             transmittanceEnabled: true,
             inscatterEnabled: true,
             groundEnabled: true,
-            groundAlbedo: '#f0e6d6',
+            groundAlbedo: '#f0d8b8',
             rayleighScale: 1.0,
-            mieScatteringScale: 0.9,
-            mieExtinctionScale: 1.0,
-            miePhaseG: 0.8,
-            absorptionScale: 1.0,
+            mieScatteringScale: 0.88,
+            mieExtinctionScale: 0.98,
+            miePhaseG: 0.78,
+            absorptionScale: 0.88,
             moonEnabled: false
         },
-        quality: {
-            sunElevationDeg: 12,
-            sunAzimuthDeg: 40,
+        midday: MIDDAY,
+        sunset: {
+            sunElevationDeg: 8,
+            sunAzimuthDeg: 38,
             sunDistance: 5600,
-            sunAngularRadius: 0.0047,
-            aerialStrength: 1.0,
-            albedoScale: 1.0,
+            sunAngularRadius: 0.0049,
+            aerialStrength: 1.02,
+            albedoScale: 0.96,
             transmittanceEnabled: true,
             inscatterEnabled: true,
             groundEnabled: true,
-            groundAlbedo: '#f6ead7',
-            rayleighScale: 1.12,
-            mieScatteringScale: 1.02,
-            mieExtinctionScale: 1.05,
+            groundAlbedo: '#f2cda8',
+            rayleighScale: 0.96,
+            mieScatteringScale: 1.08,
+            mieExtinctionScale: 1.18,
             miePhaseG: 0.82,
-            absorptionScale: 1.02,
+            absorptionScale: 0.86,
             moonEnabled: false
         },
-        cinematic: {
-            sunElevationDeg: 7,
-            sunAzimuthDeg: 28,
-            sunDistance: 6200,
-            sunAngularRadius: 0.0047,
-            aerialStrength: 1.15,
-            albedoScale: 1.05,
+        night: {
+            sunElevationDeg: -8,
+            sunAzimuthDeg: 25,
+            sunDistance: 5200,
+            sunAngularRadius: 0.0044,
+            aerialStrength: 0.28,
+            albedoScale: 0.82,
             transmittanceEnabled: true,
             inscatterEnabled: true,
             groundEnabled: true,
-            groundAlbedo: '#f8ead2',
-            rayleighScale: 1.2,
-            mieScatteringScale: 1.16,
-            mieExtinctionScale: 1.18,
-            miePhaseG: 0.84,
-            absorptionScale: 0.96,
-            moonEnabled: false
+            groundAlbedo: '#4e5870',
+            rayleighScale: 0.66,
+            mieScatteringScale: 0.32,
+            mieExtinctionScale: 0.46,
+            miePhaseG: 0.7,
+            absorptionScale: 1.14,
+            moonEnabled: true
         }
     };
 
-    /**
-     * Helper to normalize quality string
-     */
     function normalizeQuality(value) {
-        if (['performance', 'balanced', 'quality', 'cinematic', 'custom'].indexOf(value) !== -1) {
+        if (['performance', 'balanced', 'quality', 'cinematic'].indexOf(value) !== -1) {
             return value;
         }
         return 'balanced';
     }
 
-    /**
-     * Applies a preset to the UI controls
-     */
-    function applyPreset(controls, quality) {
-        const presetKey = normalizeQuality(quality);
-        if (presetKey === 'custom') return;
+    function normalizePreset(value) {
+        if (['sunrise', 'midday', 'sunset', 'night', 'custom'].indexOf(value) !== -1) {
+            return value;
+        }
+        return Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset;
+    }
 
-        const preset = PRESETS[presetKey] || PRESETS.balanced;
-        const d = Shared.PMNDRS_TWEAK_DEFAULTS;
-        
-        if (controls.pmndrsAtmosphereQuality) controls.pmndrsAtmosphereQuality.value = presetKey;
+    function lerpNumber(a, b, t) {
+        return a + ((b - a) * t);
+    }
+
+    function hexToRgb(hex) {
+        var normalized = Shared.normalizeColorHex(hex, '#000000');
+        return {
+            r: parseInt(normalized.slice(1, 3), 16),
+            g: parseInt(normalized.slice(3, 5), 16),
+            b: parseInt(normalized.slice(5, 7), 16)
+        };
+    }
+
+    function rgbToHex(rgb) {
+        function toHex(value) {
+            var clamped = Math.max(0, Math.min(255, Math.round(value)));
+            return clamped.toString(16).padStart(2, '0');
+        }
+        return '#' + toHex(rgb.r) + toHex(rgb.g) + toHex(rgb.b);
+    }
+
+    function lerpColor(fromHex, toHex, t) {
+        var from = hexToRgb(fromHex);
+        var to = hexToRgb(toHex);
+        return rgbToHex({
+            r: lerpNumber(from.r, to.r, t),
+            g: lerpNumber(from.g, to.g, t),
+            b: lerpNumber(from.b, to.b, t)
+        });
+    }
+
+    function getPresetIntensity(controls) {
+        return Shared.clampNumber(
+            controls && controls.pmndrsAtmospherePresetIntensity ? controls.pmndrsAtmospherePresetIntensity.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePresetIntensity,
+            0,
+            1,
+            Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePresetIntensity
+        );
+    }
+
+    function getLookValues(presetKey, intensity) {
+        var resolvedPreset = normalizePreset(presetKey);
+        var blend = Math.max(0, Math.min(1, intensity));
+        if (resolvedPreset === 'custom') {
+            resolvedPreset = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset;
+        }
+
+        var target = LOOK_PRESETS[resolvedPreset] || MIDDAY;
+        if (resolvedPreset === 'midday') {
+            blend = 1;
+        }
+
+        return {
+            sunElevationDeg: lerpNumber(MIDDAY.sunElevationDeg, target.sunElevationDeg, blend),
+            sunAzimuthDeg: lerpNumber(MIDDAY.sunAzimuthDeg, target.sunAzimuthDeg, blend),
+            sunDistance: lerpNumber(MIDDAY.sunDistance, target.sunDistance, blend),
+            sunAngularRadius: lerpNumber(MIDDAY.sunAngularRadius, target.sunAngularRadius, blend),
+            aerialStrength: lerpNumber(MIDDAY.aerialStrength, target.aerialStrength, blend),
+            albedoScale: lerpNumber(MIDDAY.albedoScale, target.albedoScale, blend),
+            transmittanceEnabled: blend < 0.5 ? MIDDAY.transmittanceEnabled : target.transmittanceEnabled,
+            inscatterEnabled: blend < 0.5 ? MIDDAY.inscatterEnabled : target.inscatterEnabled,
+            groundEnabled: blend < 0.5 ? MIDDAY.groundEnabled : target.groundEnabled,
+            groundAlbedo: lerpColor(MIDDAY.groundAlbedo, target.groundAlbedo, blend),
+            rayleighScale: lerpNumber(MIDDAY.rayleighScale, target.rayleighScale, blend),
+            mieScatteringScale: lerpNumber(MIDDAY.mieScatteringScale, target.mieScatteringScale, blend),
+            mieExtinctionScale: lerpNumber(MIDDAY.mieExtinctionScale, target.mieExtinctionScale, blend),
+            miePhaseG: lerpNumber(MIDDAY.miePhaseG, target.miePhaseG, blend),
+            absorptionScale: lerpNumber(MIDDAY.absorptionScale, target.absorptionScale, blend),
+            moonEnabled: blend >= 0.5 && target.moonEnabled === true
+        };
+    }
+
+    function applyLookPreset(controls, presetKey) {
+        var normalized = normalizePreset(presetKey);
+        if (normalized === 'custom') {
+            return;
+        }
+
+        var preset = getLookValues(normalized, getPresetIntensity(controls));
+        var d = Shared.PMNDRS_TWEAK_DEFAULTS;
+
+        if (controls.pmndrsAtmospherePreset) controls.pmndrsAtmospherePreset.value = normalized;
         if (controls.pmndrsSunElevation) controls.pmndrsSunElevation.value = preset.sunElevationDeg;
         if (controls.pmndrsSunAzimuth) controls.pmndrsSunAzimuth.value = preset.sunAzimuthDeg;
         if (controls.pmndrsSunDistance) controls.pmndrsSunDistance.value = preset.sunDistance;
@@ -123,18 +197,12 @@ VRodosCompileUI.Atmosphere = (function () {
         if (controls.pmndrsMoon) controls.pmndrsMoon.checked = preset.moonEnabled === true;
     }
 
-    /**
-     * Marks the UI as using custom settings
-     */
     function markCustom(controls) {
-        if (controls.pmndrsAtmosphereQuality) {
-            controls.pmndrsAtmosphereQuality.value = 'custom';
+        if (controls.pmndrsAtmospherePreset) {
+            controls.pmndrsAtmospherePreset.value = 'custom';
         }
     }
 
-    /**
-     * Controls the advanced panel visibility/interactability
-     */
     function setAdvancedState(controls, enabled) {
         var isEnabled = enabled === true;
         if (controls.pmndrsAtmosphereAdvanced) {
@@ -142,7 +210,9 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsAtmosphereAdvanced.classList.toggle('tw-pointer-events-none', !isEnabled);
         }
 
-        const elements = [
+        [
+            controls.pmndrsAtmospherePreset,
+            controls.pmndrsAtmospherePresetIntensity,
             controls.pmndrsAtmosphereQuality,
             controls.pmndrsSunElevation,
             controls.pmndrsSunAzimuth,
@@ -160,37 +230,43 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsMiePhaseG,
             controls.pmndrsAbsorptionScale,
             controls.pmndrsMoon
-        ];
-
-        elements.forEach(function (el) {
-            if (el) el.disabled = !isEnabled;
+        ].forEach(function (el) {
+            if (el) {
+                el.disabled = !isEnabled;
+            }
         });
     }
 
-    /**
-     * Updates the 3D scene from the UI controls using standardized schema keys
-     */
     function syncToScene(controls) {
-        if (!envir || !envir.scene || !controls.pmndrsAtmosphere) return;
+        if (!envir || !envir.scene || !controls.pmndrsAtmosphere) {
+            return;
+        }
 
-        const d = Shared.PMNDRS_TWEAK_DEFAULTS;
+        var d = Shared.PMNDRS_TWEAK_DEFAULTS;
 
         envir.scene.aframePmndrsAtmosphereEnabled = controls.pmndrsAtmosphere.checked === true;
-        envir.scene.aframePmndrsAtmosphereQuality = normalizeQuality(controls.pmndrsAtmosphereQuality ? controls.pmndrsAtmosphereQuality.value : 'balanced');
-        
-        envir.scene.aframePmndrsSunElevationDeg = Shared.clampNumber(controls.pmndrsSunElevation ? controls.pmndrsSunElevation.value : d.sunElevationDeg, -15, 75, d.sunElevationDeg);
+        envir.scene.aframePmndrsAtmospherePreset = normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : d.atmospherePreset);
+        envir.scene.aframePmndrsAtmospherePresetIntensity = Shared.clampNumber(
+            controls.pmndrsAtmospherePresetIntensity ? controls.pmndrsAtmospherePresetIntensity.value : d.atmospherePresetIntensity,
+            0,
+            1,
+            d.atmospherePresetIntensity
+        );
+        envir.scene.aframePmndrsAtmosphereQuality = normalizeQuality(controls.pmndrsAtmosphereQuality ? controls.pmndrsAtmosphereQuality.value : d.atmosphereQuality);
+
+        envir.scene.aframePmndrsSunElevationDeg = Shared.clampNumber(controls.pmndrsSunElevation ? controls.pmndrsSunElevation.value : d.sunElevationDeg, -10, 85, d.sunElevationDeg);
         envir.scene.aframePmndrsSunAzimuthDeg = Shared.clampNumber(controls.pmndrsSunAzimuth ? controls.pmndrsSunAzimuth.value : d.sunAzimuthDeg, -180, 180, d.sunAzimuthDeg);
-        envir.scene.aframePmndrsSunDistance = Shared.clampNumber(controls.pmndrsSunDistance ? controls.pmndrsSunDistance.value : d.sunDistance, 1500, 12000, d.sunDistance);
-        envir.scene.aframePmndrsSunAngularRadius = Shared.clampNumber(controls.pmndrsSunAngularRadius ? controls.pmndrsSunAngularRadius.value : d.sunAngularRadius, 0.001, 0.03, d.sunAngularRadius);
-        
+        envir.scene.aframePmndrsSunDistance = Shared.clampNumber(controls.pmndrsSunDistance ? controls.pmndrsSunDistance.value : d.sunDistance, 1500, 20000, d.sunDistance);
+        envir.scene.aframePmndrsSunAngularRadius = Shared.clampNumber(controls.pmndrsSunAngularRadius ? controls.pmndrsSunAngularRadius.value : d.sunAngularRadius, 0.002, 0.03, d.sunAngularRadius);
+
         envir.scene.aframePmndrsAerialStrength = Shared.clampNumber(controls.pmndrsAerialStrength ? controls.pmndrsAerialStrength.value : d.aerialStrength, 0, 2, d.aerialStrength);
         envir.scene.aframePmndrsAlbedoScale = Shared.clampNumber(controls.pmndrsAlbedoScale ? controls.pmndrsAlbedoScale.value : d.albedoScale, 0, 2, d.albedoScale);
-        
+
         envir.scene.aframePmndrsTransmittanceEnabled = controls.pmndrsTransmittance ? controls.pmndrsTransmittance.checked === true : true;
         envir.scene.aframePmndrsInscatterEnabled = controls.pmndrsInscatter ? controls.pmndrsInscatter.checked === true : true;
         envir.scene.aframePmndrsGroundEnabled = controls.pmndrsGround ? controls.pmndrsGround.checked === true : true;
         envir.scene.aframePmndrsGroundAlbedo = Shared.normalizeColorHex(controls.pmndrsGroundAlbedo ? controls.pmndrsGroundAlbedo.value : d.groundAlbedo, d.groundAlbedo);
-        
+
         envir.scene.aframePmndrsRayleighScale = Shared.clampNumber(controls.pmndrsRayleighScale ? controls.pmndrsRayleighScale.value : d.rayleighScale, 0.1, 3, d.rayleighScale);
         envir.scene.aframePmndrsMieScatteringScale = Shared.clampNumber(controls.pmndrsMieScatteringScale ? controls.pmndrsMieScatteringScale.value : d.mieScatteringScale, 0.1, 3, d.mieScatteringScale);
         envir.scene.aframePmndrsMieExtinctionScale = Shared.clampNumber(controls.pmndrsMieExtinctionScale ? controls.pmndrsMieExtinctionScale.value : d.mieExtinctionScale, 0.1, 3, d.mieExtinctionScale);
@@ -198,18 +274,17 @@ VRodosCompileUI.Atmosphere = (function () {
         envir.scene.aframePmndrsAbsorptionScale = Shared.clampNumber(controls.pmndrsAbsorptionScale ? controls.pmndrsAbsorptionScale.value : d.absorptionScale, 0.1, 3, d.absorptionScale);
         envir.scene.aframePmndrsMoonEnabled = controls.pmndrsMoon ? controls.pmndrsMoon.checked === true : false;
 
-        // Trigger real-time atmosphere update if the component exists in the 3D editor
         if (typeof envir.updateAtmosphere === 'function') {
             envir.updateAtmosphere();
         }
     }
 
     return {
-        applyPreset: applyPreset,
+        applyLookPreset: applyLookPreset,
         markCustom: markCustom,
         setAdvancedState: setAdvancedState,
         syncToScene: syncToScene,
-        normalizeQuality: normalizeQuality
+        normalizeQuality: normalizeQuality,
+        normalizePreset: normalizePreset
     };
-
 })();
