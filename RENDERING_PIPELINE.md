@@ -325,7 +325,7 @@ These are speculative improvements — open to reconsideration but not currently
 
 - **Light unsharp-mask sharpening after TAA** (strength ~0.25) — could be added if any residual softness is reported
 - **SSR half-res depth-aware upsampling** instead of bilinear composite read
-- **Volumetric clouds / atmospheric scattering** (see `POSTPROCESSING_MIGRATION_PLAN.md`, especially Phase 5 and §12)
+- **Volumetric clouds / atmospheric scattering** (see `POSTPROCESSING_MIGRATION_PLAN.md`)
 - **Contact shadows** as a proper screen-space pass (currently only the shadow-bias preset)
 - **FXAA tier 2** (higher-quality variant) as an option for non-TAA scenes
 - **Render-target pooling** — share half-res RTs between SAO and bloom since they're sequential, saving ~4 MB when both are on

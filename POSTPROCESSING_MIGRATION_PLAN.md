@@ -201,6 +201,6 @@ The long migration narrative that used to live in this file has been intentional
 
 - VRodos evaluated the older `r173` path during the earlier migration phase, but the active runtime target is now `r181`.
 - `realism-effects` was explored historically for SSR/TRAA-style work but is not part of the live VRodos migration path.
-- The old phase-by-phase go/no-go notes and bundle experiments are archived in git history rather than kept as the main documentation surface.
+- The old phase-by-phase go/no-go notes and bundle experiments are archived in git history and summarized in `RENDERING_MIGRATION_IMPLEMENTATION_LOG.md`.
 
-If future work needs the detailed implementation diary, use git history and the related rendering notes instead of rebuilding that log here.
+If future work needs the detailed implementation diary, refer to `RENDERING_MIGRATION_IMPLEMENTATION_LOG.md` and git history instead of rebuilding that log here.
