@@ -8,6 +8,8 @@
 
 The compiled runtime uses a custom `renderer.render` hijack to insert a multi-pass post-processing pipeline between A-Frame's scene render and the final screen output. The component responsible is `scene-settings` at `assets/js/runtime/master/components/vrodos_scene_settings.component.js`, and the helpers live alongside it.
 
+Presentation mode is part of the pipeline contract. Inline desktop and desktop fullscreen use the same post-processing path. Real immersive WebXR is detected separately through `renderer.xr.isPresenting`; in that mode, XR-unsafe screen-space composer passes can fall back to the direct stereo renderer while preserving scene-owned visuals such as Horizon/Takram sky, helper lights, fog, tone mapping/exposure, env maps, and material profiles.
+
 ### Full pipeline (all effects active)
 
 ```

@@ -40,7 +40,7 @@ It combines:
 
 VRodos currently targets one active compiled-scene runtime pair:
 
-- A-Frame master commit `96cc74fa7a4640f394a78985a637a788daf56186`, declared in root `package.json`
+- A-Frame master commit `63600d331e8eca9bec786bf030bc66040625750b`, declared in root `package.json`
 - Three.js vendor stack `r181`, derived from the locked root `three` package
 
 That runtime powers:
@@ -48,6 +48,7 @@ That runtime powers:
 - PBR materials and modern Three.js lighting behavior
 - shadow quality presets
 - fog and horizon/sky presentation
+- desktop fullscreen and immersive XR visual parity for scene-owned horizon, atmosphere, lighting, fog, exposure, and material state
 - HDR environment-map reflections
 - scene-probe reflections for authored environments
 - compiled walkable-surface collision workflows
@@ -61,6 +62,7 @@ Compiled scenes can currently offer:
 - PBR materials with HDR reflections and tuned environment intensity
 - fog, horizon, solid-color, image-sky, and preset background modes
 - desktop high-quality rendering mode
+- fullscreen and immersive XR preservation of the authored desktop visual baseline, with targeted fallbacks for XR-unsafe screen-space effects
 - shadow presets for performance vs visual quality
 - reflection source selection between HDR presets and scene probes
 - walkable-surface collisions using helper meshes authored in the editor
@@ -68,6 +70,8 @@ Compiled scenes can currently offer:
 ## Rendering Paths for Compiled Scenes
 
 VRodos now ships two compiled-scene post-processing engines. The engine is selected per scene through the compile dialog.
+
+Desktop inline mode and desktop fullscreen use the same post-processing pipeline, so entering fullscreen should not change the authored look. Real immersive WebXR sessions keep the scene-owned visual baseline active and use targeted fallbacks for screen-space composer passes that are not XR-safe. In practice, Horizon/Takram sky, helper lights, fog, renderer tone mapping/exposure, env-map state, and material profiles are re-synced on fullscreen, `enter-vr`, `exit-vr`, and resize transitions.
 
 ### Legacy engine
 

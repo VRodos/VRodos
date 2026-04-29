@@ -11,6 +11,7 @@ For the end-user plugin overview, see [README.md](README.md). For the legacy cus
 - Active post-FX model: dual-engine, per-scene selection
 - Engine selector: `postFXEngine` with `legacy` and `pmndrs`
 - Takram status: atmosphere integration is live with visual look presets
+- Presentation parity status: desktop fullscreen preserves the desktop post-FX pipeline; immersive WebXR preserves scene-owned horizon/atmosphere/lighting state with targeted direct-stereo fallbacks for unsafe screen-space passes
 - Cloud status: volumetric clouds are not shipped yet
 
 ## Current Runtime Model
@@ -107,10 +108,12 @@ These decisions are still active and should be treated as the source of truth.
 - no shared render targets with the legacy engine
 - PMNDRS-specific behavior lives in `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js`
 
-### 4. WebXR still bypasses desktop post-FX
+### 4. Presentation modes are intentionally separated
 
-- desktop post-processing is the target of this roadmap
-- VR/XR runtime behavior still falls back to the plain A-Frame rendering path
+- inline desktop and desktop fullscreen use the same post-FX eligibility rules
+- immersive WebXR is detected through `renderer.xr.isPresenting`, not generic A-Frame `vr-mode`
+- immersive WebXR keeps scene-owned visuals active: Horizon/Takram sky, helper lights, fog, tone mapping/exposure, env-map state, and material profiles
+- XR-unsafe screen-space composers are skipped through a direct stereo fallback with a one-time console warning, instead of disabling the whole visual stack silently
 
 ## Takram Status
 
@@ -134,6 +137,12 @@ Takram support in VRodos means atmosphere and sky integration today, not clouds.
 ## Current Limitations
 
 These are intentional or known current-state limitations, not future tense placeholders.
+
+### Immersive XR limitations
+
+- Screen-space post-FX composer passes are not forced in real immersive WebXR sessions.
+- The fallback priority is visual continuity for scene-owned content and stereo correctness, not exact replication of every desktop-only screen-space pass.
+- Desktop fullscreen is not treated as immersive XR and should retain the same post-FX path as inline desktop rendering.
 
 ### PMNDRS limitations
 

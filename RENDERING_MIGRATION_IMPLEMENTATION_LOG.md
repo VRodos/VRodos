@@ -27,6 +27,13 @@ Key technical achievements:
 
 ## Recent Landed Work
 
+### VR/XR visual parity
+
+- Added presentation-mode detection to separate inline desktop, desktop fullscreen/A-Frame fullscreen, and real immersive WebXR.
+- Desktop fullscreen now preserves the same post-FX eligibility as inline desktop instead of being treated as a generic `vr-mode` fallback.
+- Real immersive WebXR uses a direct stereo fallback for unsupported screen-space composer passes while keeping scene-owned Horizon/Takram sky, helper lights, fog, renderer exposure/tone mapping, env maps, and material profiles active.
+- Presentation transitions now re-sync visual state on fullscreen changes, `enter-vr`, `exit-vr`, and delayed resize settling.
+
 ### PMNDRS Horizon helper lighting exposure
 
 - Exposed PMNDRS Horizon helper-light intensity controls in the compile dialog.
