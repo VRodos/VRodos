@@ -18,6 +18,7 @@ This tracker is the live source for the compiled-scene PMNDRS/Takram rendering p
 - Resolved 2026-04-29: PMNDRS SSAO was disabled because the earlier `SSAOEffect` path caused depth attachment blit conflicts on the pinned A-Frame/Three runtime. PMNDRS now uses bundled `N8AOPostPass`.
 - Resolved 2026-04-29: PMNDRS composer MSAA is disabled automatically when AO is active, because the bundled N8AO path is not stable with hardware multisampling. Use SMAA when PMNDRS AO is enabled.
 - Resolved 2026-04-29: PMNDRS bloom is no longer skipped for Horizon backgrounds; the old sky-halo warning and branch were removed.
+- Resolved 2026-04-29: Horizon PMNDRS/Takram sky still passed a non-black `groundAlbedo` after forcing `groundEnabled=false`, which could enable Takram's ground-albedo shader branch and draw a hard albedo band at the horizon. Ground-disabled Takram sky now uses black effective ground albedo.
 - Horizon `AerialPerspectiveEffect` remains experimental because of previous white-cap and alpha-foliage artifacts.
 - SSR and TAA are not available in the PMNDRS engine; scenes needing them should stay on `legacy`.
 
@@ -90,6 +91,7 @@ Changes:
 - Add runtime construction for bundled `POSTPROCESSING.NoiseEffect` and `POSTPROCESSING.ChromaticAberrationEffect` inside the PMNDRS composer path only.
 - Fix compile-dialog contrast preset normalization so the existing `soft`, `balanced`, and `punchy` values survive scene sync.
 - Known issue: chromatic aberration can darken/warp the Takram/Horizon sky boundary. It remains user-controlled instead of runtime-disabled so authors can choose whether to use it.
+- Fix Horizon PMNDRS/Takram hard boundary by passing black effective `groundAlbedo` whenever Takram ground is disabled, while preserving authored ground albedo for ground-enabled atmosphere scenes.
 
 Verification:
 - `npm.cmd run lint` passed for runtime master JS.

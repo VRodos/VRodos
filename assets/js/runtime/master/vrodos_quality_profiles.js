@@ -422,6 +422,10 @@
         }
     }
 
+    function getPmndrsEffectiveGroundAlbedo(config) {
+        return config && config.groundEnabled ? config.groundAlbedo : '#000000';
+    }
+
     function createPmndrsAtmosphereParameters(vta, config) {
         var params = new vta.AtmosphereParameters();
         params.sunAngularRadius = config.sunAngularRadius;
@@ -430,7 +434,7 @@
         params.mieExtinction.multiplyScalar(config.mieExtinctionScale);
         params.miePhaseFunctionG = config.miePhaseG;
         params.absorptionExtinction.multiplyScalar(config.absorptionScale);
-        params.groundAlbedo.set(config.groundAlbedo);
+        params.groundAlbedo.set(getPmndrsEffectiveGroundAlbedo(config));
         return params;
     }
 
@@ -1093,7 +1097,7 @@
                 singleMieScatteringTexture: state.textures.singleMieScatteringTexture || null,
                 higherOrderScatteringTexture: state.textures.higherOrderScatteringTexture || null,
                 ground: config.groundEnabled,
-                groundAlbedo: new THREE.Color(config.groundAlbedo),
+                groundAlbedo: new THREE.Color(getPmndrsEffectiveGroundAlbedo(config)),
                 moon: config.moonEnabled
             });
             state.skyMesh = new THREE.Mesh(state.skyGeometry, state.skyMaterial);
