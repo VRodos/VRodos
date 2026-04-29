@@ -42,8 +42,6 @@
      */
     function n8aoOptionsForPreset(preset) {
         var defaults = {
-            aoRadius: 5,
-            distanceFalloff: 1,
             halfRes: false,
             denoiseIterations: 2,
             screenSpaceRadius: false
@@ -51,12 +49,12 @@
 
         switch (preset) {
             case 'soft':
-                return Object.assign({}, defaults, { quality: 'Low', intensity: 2 });
+                return Object.assign({}, defaults, { quality: 'Low', aoRadius: 0.9, distanceFalloff: 0.55, intensity: 1.1 });
             case 'strong':
-                return Object.assign({}, defaults, { quality: 'High', intensity: 6.5 });
+                return Object.assign({}, defaults, { quality: 'High', aoRadius: 2.8, distanceFalloff: 0.72, intensity: 2.6 });
             case 'balanced':
             default:
-                return Object.assign({}, defaults, { quality: 'Medium', intensity: 5 });
+                return Object.assign({}, defaults, { quality: 'Medium', aoRadius: 1.6, distanceFalloff: 0.62, intensity: 1.75 });
         }
     }
 

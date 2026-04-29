@@ -172,8 +172,9 @@ Goal:
 Current baseline:
 
 - keep the existing shared AO preset UI as the toggle surface
-- use the default N8AO profile baseline for the shared presets: `soft` = Low/intensity 2, `balanced` = Medium/intensity 5, `strong` = High/intensity 6.5; all three use N8AO's default world-space radius, distance falloff, full-resolution mode, and denoise iteration count
+- use the VRodos natural N8AO profile baseline for the shared presets: `soft` = Low/radius 0.9/falloff 0.55/intensity 1.1, `balanced` = Medium/radius 1.6/falloff 0.62/intensity 1.75, `strong` = High/radius 2.8/falloff 0.72/intensity 2.6; all three remain full-resolution with two denoise iterations
 - keep the PMNDRS stability constraints in place: AO disables composer MSAA, and N8AO transparency auto-detection remains off by default
+- raw N8AO defaults are documented as too hard for current Horizon scenes because radius 5 and intensity 5+ can create long dark streaks on thin geometry
 - adjust N8AO radius, falloff, intensity, and quality settings only after visual smoke testing across representative Horizon and non-Horizon scenes
 - avoid returning to `POSTPROCESSING.SSAOEffect` unless its depth path is proven stable on the pinned runtime
 

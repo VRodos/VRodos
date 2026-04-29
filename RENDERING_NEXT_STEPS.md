@@ -73,7 +73,7 @@ Verification:
 - Static search confirmed stale "SSAO disabled" docs were updated.
 
 Follow-up changes:
-- Restored N8AO default-profile baseline after visual review: `soft` uses Low quality/intensity 2, `balanced` uses Medium quality/intensity 5, and `strong` uses High quality/intensity 6.5. All three use N8AO's default world-space radius, falloff, full-resolution mode, and denoise iteration count.
+- Tuned N8AO away from raw defaults after visual review: raw world-space radius 5 and intensity 5+ created unnatural "spider leg" dark streaks on thin Horizon geometry. Current presets use smaller world-space radii and lower intensity while staying full-resolution.
 - Disabled N8AO transparency auto-detection by default to avoid the extra transparent-scene render path in compiled scenes.
 - Restored PMNDRS bloom on Horizon backgrounds and removed the old warning branch.
 - Follow-up correction: PMNDRS Horizon bloom is restored to the generic bloom profile; the reported hard horizon boundary also appears with bloom off, so bloom is not treated as the cause.
@@ -111,7 +111,7 @@ Next phase:
 Status: complete.
 
 Changes:
-- Restored PMNDRS AO presets to the default N8AO profile baseline: `soft` = Low/intensity 2, `balanced` = Medium/intensity 5, `strong` = High/intensity 6.5, with N8AO's default world-space radius, distance falloff, full-resolution mode, and denoise iteration count.
+- Retuned PMNDRS AO presets away from raw N8AO defaults after Horizon visual review: `soft` = Low/radius 0.9/falloff 0.55/intensity 1.1, `balanced` = Medium/radius 1.6/falloff 0.62/intensity 1.75, `strong` = High/radius 2.8/falloff 0.72/intensity 2.6. All remain full-resolution with two denoise iterations.
 - Left the PMNDRS AO stability constraints unchanged: AO still disables composer MSAA, and N8AO transparency auto-detection remains off by default.
 - Updated the migration plan and implementation log so the next phase starts from the restored AO baseline.
 
