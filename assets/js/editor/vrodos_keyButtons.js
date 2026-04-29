@@ -143,3 +143,9 @@ const updatePointerLockControls = function(){
 }
 
 // TODO: RAYCASTING SIGNIFICANTLY DETERIORATES RENDERING SPEED
+
+function vrodosResetAvatarMovement() {
+    velocity.set(0, 0, 0);
+    torgue.set(0, 0, 0);
+    moveForward = moveBackward = moveLeft = moveRight = moveUp = moveDown = viewUp = viewDown = false;
+}

@@ -2,6 +2,12 @@
 // Info at http://www.html5rocks.com/en/tutorials/pointerlock/intro/
 
 var avatarControlsEnabled = false;
+var originalDirectorPos = null;
+var originalDirectorRot = null;
+var originalRigPos = null;
+var originalRigRot = null;
+
+
 
 
 // Initialize
@@ -36,8 +42,22 @@ function firstPersonViewWithoutLock(){
         // Mouse controls orbit
         envir.orbitControls.enabled = false;
 
+        // Save current director and rig transform before entering FP mode
+        const director = envir.getDirectorObject();
+        const rig = envir.getDirectorRig();
+        if (director) {
+            originalDirectorPos = director.position.clone();
+            originalDirectorRot = director.rotation.clone();
+        }
+        if (rig) {
+            originalRigPos = rig.position.clone();
+            originalRigRot = rig.rotation.clone();
+        }
+
+
         // Keep the saved Director transform as the source of truth when entering first-person preview.
         envir.moveDirectorToOrbitTarget();
+
 
         //transform_controls.visible = false;
         //
@@ -84,6 +104,44 @@ function firstPersonViewWithoutLock(){
             transform_controls.visible  = true;
 
         envir.getDirectorRig().visible = true;
+
+        // Restore Director transform to what it was before entering FP mode
+        if (originalDirectorPos && originalDirectorRot) {
+
+            // Reset movement state to stop any ongoing momentum or stuck keys
+            if (typeof vrodosResetAvatarMovement === 'function') {
+                vrodosResetAvatarMovement();
+            }
+
+            envir.applyDirectorTransform(
+                [originalDirectorPos.x, originalDirectorPos.y, originalDirectorPos.z],
+                [originalDirectorRot.x, originalDirectorRot.y, originalDirectorRot.z]
+            );
+
+            // Restore Rig transform (ensures world position is correct)
+            const rig = envir.getDirectorRig();
+            if (rig && originalRigPos && originalRigRot) {
+                rig.position.copy(originalRigPos);
+                rig.rotation.copy(originalRigRot);
+                rig.updateMatrixWorld(true);
+            }
+
+
+            // Refresh GUI and Hierarchy
+            if (typeof updatePositionsAndControls === 'function') {
+                updatePositionsAndControls();
+            }
+            if (typeof setHierarchyViewer === 'function') {
+                setHierarchyViewer();
+            }
+
+            originalDirectorPos = null;
+            originalDirectorRot = null;
+            originalRigPos = null;
+            originalRigRot = null;
+        }
+
+
 
         // ToDo: Zoom
         envir.orbitControls.reset();
