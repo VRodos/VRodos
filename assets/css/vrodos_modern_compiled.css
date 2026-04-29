@@ -6171,6 +6171,7 @@ body.vrodos-manager-wrapper {
   -webkit-backdrop-filter: blur(8px) !important;
   border: 1px solid rgba(255, 255, 255, 0.07) !important;
   transition: background-color 0.2s ease, transform 0.2s ease !important;
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .AssetsToggleStyle {
@@ -6185,10 +6186,6 @@ body.vrodos-manager-wrapper {
   right: auto !important;
   border-right: none !important;
   border-radius: 8px 0 0 8px !important;
-}
-
-.AssetsToggleStyle:hover, .HierarchyToggleStyle:hover {
-  background-color: rgba(15, 23, 42, 0.4) !important;
 }
 
 .AssetsToggleStyle i, .HierarchyToggleStyle i {

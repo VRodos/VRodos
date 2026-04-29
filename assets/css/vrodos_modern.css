@@ -291,6 +291,7 @@ body.vrodos-manager-wrapper {
   -webkit-backdrop-filter: blur(8px) !important;
   border: 1px solid rgba(255, 255, 255, 0.07) !important;
   transition: background-color 0.2s ease, transform 0.2s ease !important;
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .AssetsToggleStyle {
@@ -307,9 +308,6 @@ body.vrodos-manager-wrapper {
   border-radius: 8px 0 0 8px !important;
 }
 
-.AssetsToggleStyle:hover, .HierarchyToggleStyle:hover {
-  background-color: rgba(15, 23, 42, 0.4) !important;
-}
 
 .AssetsToggleStyle i, .HierarchyToggleStyle i {
   color: rgba(255, 255, 255, 0.4) !important;
@@ -463,13 +461,13 @@ body.vrodos-manager-wrapper {
   padding-right: 12px !important;
   padding-top: 6px !important;
   align-items: center !important;
-  
+
   /* Flex Wrapper Support & Legacy Overrides */
   position: relative !important; /* Overrides legacy absolute */
   left: auto !important;
   bottom: auto !important;
   width: auto !important;
-  display: inline-flex; 
+  display: inline-flex;
 }
 
 #scenesInsideVREditor .SceneCardContainer {
