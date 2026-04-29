@@ -149,7 +149,7 @@ These are intentional or known current-state limitations, not future tense place
 
 - PMNDRS does not provide SSR in VRodos today
 - PMNDRS does not provide TAA in VRodos today
-- PMNDRS ambient occlusion uses `N8AOPostPass` instead of `POSTPROCESSING.SSAOEffect` to avoid the previous depth-attachment blit conflict
+- PMNDRS ambient occlusion uses `N8AOPostPass` instead of `POSTPROCESSING.SSAOEffect` because the native SSAO path previously conflicted with the pinned A-Frame/Three depth/normal attachment path, most visibly during Horizon/Takram testing
 - PMNDRS composer MSAA is disabled when ambient occlusion is active; use SMAA for PMNDRS AO scenes
 - PMNDRS `AerialPerspectiveEffect` is skipped for Horizon backgrounds on the current runtime because that path still triggers depth-blit errors and visual artifacts
 
@@ -169,13 +169,26 @@ Goal:
 
 - refine the N8AO preset mapping after visual testing across representative scenes
 
-Current direction:
+Current baseline:
 
 - keep the existing shared AO preset UI as the toggle surface
-- adjust N8AO radius, falloff, intensity, and quality settings only after smoke testing
+- use the default N8AO profile baseline for the shared presets: `soft` = Low/intensity 2, `balanced` = Medium/intensity 5, `strong` = High/intensity 6.5; all three use N8AO's default world-space radius, distance falloff, full-resolution mode, and denoise iteration count
+- keep the PMNDRS stability constraints in place: AO disables composer MSAA, and N8AO transparency auto-detection remains off by default
+- adjust N8AO radius, falloff, intensity, and quality settings only after visual smoke testing across representative Horizon and non-Horizon scenes
 - avoid returning to `POSTPROCESSING.SSAOEffect` unless its depth path is proven stable on the pinned runtime
 
-### 2. Revisit Horizon `AerialPerspectiveEffect`
+### 2. Re-test native PMNDRS `SSAOEffect`
+
+Goal:
+
+- determine whether native `POSTPROCESSING.SSAOEffect` can be restored later for the PMNDRS engine
+
+Current blocker:
+
+- the previous attempt hit an A-Frame/Three depth/normal attachment blit conflict while testing Horizon/Takram scenes
+- a retry should isolate normal/depth buffers inside `vrodos_postprocessing_pmndrs.js` and include Horizon plus non-Horizon smoke scenes before replacing `N8AOPostPass`
+
+### 3. Revisit Horizon `AerialPerspectiveEffect`
 
 Goal:
 
@@ -185,7 +198,7 @@ Current blocker:
 
 - the Horizon path still shows the current depth-blit / white-cap class of failure when `AerialPerspectiveEffect` is used there
 
-### 3. Add volumetric clouds
+### 4. Add volumetric clouds
 
 Goal:
 

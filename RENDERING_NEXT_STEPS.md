@@ -15,7 +15,7 @@ This tracker is the live source for the compiled-scene PMNDRS/Takram rendering p
 ## Uncovered Issues
 
 - Resolved 2026-04-29: PMNDRS AA, bloom, vignette, and tone-map exposure settings were being serialized to an unused `vrodos-postprocessing-pmndrs` attribute. The runtime reads these values from `scene-settings`.
-- Resolved 2026-04-29: PMNDRS SSAO was disabled because the earlier `SSAOEffect` path caused depth attachment blit conflicts on the pinned A-Frame/Three runtime. PMNDRS now uses bundled `N8AOPostPass`.
+- Resolved 2026-04-29: PMNDRS SSAO was disabled because the earlier `POSTPROCESSING.SSAOEffect` path caused depth/normal attachment blit conflicts on the pinned A-Frame/Three runtime, most visibly while testing the Horizon/Takram path. PMNDRS now uses bundled `N8AOPostPass` as the stable AO implementation.
 - Resolved 2026-04-29: PMNDRS composer MSAA is disabled automatically when AO is active, because the bundled N8AO path is not stable with hardware multisampling. Use SMAA when PMNDRS AO is enabled.
 - Resolved 2026-04-29: PMNDRS bloom is no longer skipped for Horizon backgrounds; the old sky-halo warning and branch were removed.
 - Resolved 2026-04-29: Horizon PMNDRS/Takram sky still passed a non-black `groundAlbedo` after forcing `groundEnabled=false`, which could enable Takram's ground-albedo shader branch and draw a hard albedo band at the horizon. Ground-disabled Takram sky now uses black effective ground albedo.
@@ -24,7 +24,8 @@ This tracker is the live source for the compiled-scene PMNDRS/Takram rendering p
 
 ## Future Backlog
 
-- PMNDRS effects to evaluate after the first Phase 3 pass: depth of field, LUT/color grading extension, outline/selective bloom, god rays, tilt shift, pixelation, glitch, and shock wave.
+- PMNDRS effects to evaluate after the first Phase 3 pass: LUT/color grading extension, depth of field, outline/selective bloom, god rays, tilt shift, pixelation, glitch, and shock wave.
+- Future PMNDRS AO work: retry native `POSTPROCESSING.SSAOEffect` after isolating the normal/depth buffer path from Horizon/Takram rendering and confirming it no longer triggers the A-Frame depth-blit conflict.
 - Takram non-cloud features to evaluate: stars, date/time sun and moon direction, `SkyLightProbe`, `SunDirectionalLight`, `LightingMaskPass`, and geodetic/ECEF/ENU helpers.
 - Volumetric clouds remain explicitly out of scope for this plan.
 
@@ -56,6 +57,7 @@ Status: complete.
 
 Decision:
 - Use bundled `window.N8AOPostPass` as the PMNDRS-compatible SSAO pass instead of `POSTPROCESSING.SSAOEffect`.
+- Reason: native PMNDRS `SSAOEffect` was the preferred first attempt, but it conflicted with the pinned A-Frame/Three depth/normal attachment path during Horizon/Takram testing; `N8AOPostPass` avoided that failure while still running inside the PMNDRS composer.
 - Use the existing `ambientOcclusionPreset` values as the toggle surface: `off`, `soft`, `balanced`, `strong`.
 - Keep PMNDRS AO compatible by forcing composer multisampling to zero when AO is enabled; SMAA remains the recommended AA mode for PMNDRS AO scenes.
 
@@ -71,14 +73,14 @@ Verification:
 - Static search confirmed stale "SSAO disabled" docs were updated.
 
 Follow-up changes:
-- Rebalanced N8AO presets for runtime cost: `soft` uses Performance quality, `balanced` uses Low quality, and `strong` uses Medium quality.
+- Restored N8AO default-profile baseline after visual review: `soft` uses Low quality/intensity 2, `balanced` uses Medium quality/intensity 5, and `strong` uses High quality/intensity 6.5. All three use N8AO's default world-space radius, falloff, full-resolution mode, and denoise iteration count.
 - Disabled N8AO transparency auto-detection by default to avoid the extra transparent-scene render path in compiled scenes.
 - Restored PMNDRS bloom on Horizon backgrounds and removed the old warning branch.
 - Follow-up correction: PMNDRS Horizon bloom is restored to the generic bloom profile; the reported hard horizon boundary also appears with bloom off, so bloom is not treated as the cause.
 
 ### 2026-04-29 - Phase 3: First PMNDRS effect expansion
 
-Status: in progress; first low-risk effects implemented.
+Status: complete for the first low-risk effects; ready for the next PMNDRS effect phase.
 
 Decision:
 - Ship low-risk PMNDRS effects first as compile-dialog settings: noise and chromatic aberration.
@@ -97,6 +99,25 @@ Verification:
 - `npm.cmd run lint` passed for runtime master JS.
 - `node --check` passed for edited editor-side JS files.
 - PHP syntax checks passed for `includes/class-vrodos-compiler-manager.php` and `includes/class-vrodos-scene-cpt-manager.php`.
+- `git diff --check` passed.
+
+Next phase:
+- Add the PMNDRS color-grading extension first if it can reuse the existing color/contrast compile-dialog surface.
+- Add depth of field only after deciding the author-facing focus-distance workflow and confirming it behaves well in Horizon and non-Horizon scenes.
+- Keep chromatic aberration user-controlled; do not auto-disable it for Horizon scenes.
+
+### 2026-04-30 - Phase 3 baseline reset before next effect
+
+Status: complete.
+
+Changes:
+- Restored PMNDRS AO presets to the default N8AO profile baseline: `soft` = Low/intensity 2, `balanced` = Medium/intensity 5, `strong` = High/intensity 6.5, with N8AO's default world-space radius, distance falloff, full-resolution mode, and denoise iteration count.
+- Left the PMNDRS AO stability constraints unchanged: AO still disables composer MSAA, and N8AO transparency auto-detection remains off by default.
+- Updated the migration plan and implementation log so the next phase starts from the restored AO baseline.
+
+Verification:
+- `node --check assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` passed.
+- `npm.cmd run lint` passed for runtime master JS.
 - `git diff --check` passed.
 - Static search confirmed the new PMNDRS effect keys are present in UI, editor sync, metadata schema, compiler serialization, runtime schema, and PMNDRS runtime construction.
 - Generated HTML inspection remains pending until a compiled scene is available.

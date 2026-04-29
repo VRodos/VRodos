@@ -41,14 +41,22 @@
      * Convert the shared ambientOcclusionPreset string to N8AO settings.
      */
     function n8aoOptionsForPreset(preset) {
+        var defaults = {
+            aoRadius: 5,
+            distanceFalloff: 1,
+            halfRes: false,
+            denoiseIterations: 2,
+            screenSpaceRadius: false
+        };
+
         switch (preset) {
             case 'soft':
-                return { quality: 'Performance', aoRadius: 18, distanceFalloff: 0.22, intensity: 1.15, halfRes: true, denoiseIterations: 1 };
+                return Object.assign({}, defaults, { quality: 'Low', intensity: 2 });
             case 'strong':
-                return { quality: 'Medium', aoRadius: 32, distanceFalloff: 0.26, intensity: 2.25, halfRes: true, denoiseIterations: 2 };
+                return Object.assign({}, defaults, { quality: 'High', intensity: 6.5 });
             case 'balanced':
             default:
-                return { quality: 'Low', aoRadius: 24, distanceFalloff: 0.24, intensity: 1.65, halfRes: true, denoiseIterations: 1 };
+                return Object.assign({}, defaults, { quality: 'Medium', intensity: 5 });
         }
     }
 
@@ -63,7 +71,7 @@
             pass.setQualityMode(options.quality);
         }
 
-        pass.configuration.screenSpaceRadius = true;
+        pass.configuration.screenSpaceRadius = options.screenSpaceRadius;
         pass.configuration.aoRadius = options.aoRadius;
         pass.configuration.distanceFalloff = options.distanceFalloff;
         pass.configuration.intensity = options.intensity;
