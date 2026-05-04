@@ -1,7 +1,7 @@
 //  AJAX: FETCH Assets 3d
 const vrodos_fetchListAvailableAssetsAjax = (isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) => {
 
-    const url = isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_fbrowse.ajax_url;
+    const url = VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url;
     const body = new URLSearchParams({
         'action': 'vrodos_fetch_game_assets_action',
         gameProjectSlug,

@@ -591,7 +591,7 @@ function loadButtonActions() {
             container.querySelectorAll('.SceneCardContainer[draggable]').forEach((card) => {
                 formData.append('scene_ids[]', card.dataset.sceneId);
             });
-            fetch(my_ajax_object_deletescene.ajax_url, { method: 'POST', body: formData });
+            fetch(VRODOS.config.ajax_url, { method: 'POST', body: formData });
         });
     })();
 

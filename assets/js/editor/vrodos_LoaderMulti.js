@@ -496,7 +496,7 @@ class VRodos_LoaderMulti {
                         pendingLoads.push(new Promise((resolve) => {
                             const fetchAndLoadGLB = async () => {
                                 try {
-                                    const response = await fetch(my_ajax_object_fetchasset.ajax_url, {
+                                    const response = await fetch(VRODOS.config.ajax_url, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                                         body: new URLSearchParams({

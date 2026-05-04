@@ -16,7 +16,7 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug, isCloned) {
 		if (assetEl) assetEl.classList.add( "LinkDisabled" );
 	}
 
-	fetch( my_ajax_object_deleteasset.ajax_url, {
+	fetch( VRODOS.config.ajax_url, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({

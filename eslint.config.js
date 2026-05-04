@@ -38,11 +38,15 @@ module.exports = [
                 setInterval: 'readonly',
                 clearInterval: 'readonly',
                 window: 'readonly',
+                module: 'readonly',
 
                 // VRodos Editor & Runtime Globals
                 VRODOSMaster: 'readonly',
+                VRodosCompileUI: 'readonly',
                 vrodos_data: 'readonly',
                 vrodos_scene_data: 'readonly',
+                vrodos_api_config: 'readonly',
+                lucide: 'readonly',
                 VRODOS: 'readonly',
                 envir: 'readonly',
                 transform_controls: 'readonly',

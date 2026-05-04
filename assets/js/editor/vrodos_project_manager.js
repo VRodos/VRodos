@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     lucide.createIcons();
-    VRODOS.api.fetchAllProjectsAndAddToDOM(vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass, -1, true);
+    VRODOS.api.fetchAllProjectsAndAddToDOM(VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass, -1, true);
     setupProjectCountSync();
 
     // Modals (DaisyUI)
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const project_type = checkedRadio ? checkedRadio.value : 'archaeology_games';
 
             // CREATE THE PROJECT !
-            VRODOS.api.createProject(title_vrodos_project, project_type, vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
+            VRODOS.api.createProject(title_vrodos_project, project_type, VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass);
 
             // UI state updates
             document.getElementById('createNewProjectBtn').style.display = 'none';
@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('deleteProjectBtn').addEventListener('click', (e) => {
         document.getElementById('delete-dialog-progress-bar').style.display = '';
-        VRODOS.api.deleteProject(dialog.dataset.projectId, dialog, vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
+        VRODOS.api.deleteProject(dialog.dataset.projectId, dialog, VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass);
     });
 
     document.getElementById('canceldeleteProjectBtn').addEventListener('click', (e) => {

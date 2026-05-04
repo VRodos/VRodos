@@ -9,7 +9,7 @@ VRODOS.api.saveScene = function() {
 
 	const postdata = new URLSearchParams({
 		'action': 'vrodos_save_scene_async_action',
-		'scene_id': isAdmin == "back" ? phpmyvarC.scene_id : my_ajax_object_savescene.scene_id,
+		'scene_id': VRODOS.config.sceneId,
 		'scene_json': document.getElementById( "vrodos_scene_json_input" ).value,
 		'scene_title': document.getElementById( "sceneTitleInput" ).value,
 		'scene_caption': document.getElementById( "sceneCaptionInput" ).value
@@ -23,7 +23,7 @@ VRODOS.api.saveScene = function() {
 
 	VRODOS.api.isSceneSavePending = true;
 
-	VRODOS.api.sceneSavePromise = fetch( isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_savescene.ajax_url, {
+	VRODOS.api.sceneSavePromise = fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url, {
 		method: 'POST',
 		body: postdata
 	})

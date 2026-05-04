@@ -1,6 +1,6 @@
 VRODOS.api.fetchAssetAndSetWidget = function(asset_id, selectedObject) {
 
-	fetch( my_ajax_object_fetchasset_meta.ajax_url, {
+	fetch( VRODOS.config.ajax_url, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({

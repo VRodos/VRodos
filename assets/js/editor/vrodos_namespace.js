@@ -11,5 +11,10 @@ window.VRODOS = window.VRODOS || {
     },
     runtime: {},
     data: {},
-    api: {}
+    api: {},
+    config: typeof vrodos_api_config !== 'undefined' ? vrodos_api_config : {
+        ajax_url: '',
+        isAdmin: 'front',
+        plugin_url: ''
+    }
 };

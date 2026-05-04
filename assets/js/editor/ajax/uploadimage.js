@@ -16,11 +16,11 @@ VRODOS.api.uploadImage = function() {
 			formData.append( "image", e.target.result );
 			formData.append( "imagetype", extension );
 			formData.append( "filename", fn );
-			formData.append( "projectid", my_ajax_object_compile.projectId );
-			formData.append( "sceneid", my_ajax_object_compile.sceneId );
-			formData.append( "_ajax_nonce", vrodos_scene_upload_image_nonce );
+			formData.append( "projectid", VRODOS.config.projectId );
+			formData.append( "sceneid", VRODOS.config.sceneId );
+			formData.append( "_ajax_nonce", vrodos_data.upload_image_nonce );
 
-			fetch( isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_uploadimage.ajax_url, {
+			fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url, {
 				method: 'POST',
 				body: formData
 			})

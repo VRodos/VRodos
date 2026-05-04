@@ -40,14 +40,14 @@ VRODOS.api.compileScene = function(showPawnPositions) {
 	// Build query string for GET request
 	const params = new URLSearchParams({
 		'action': 'vrodos_compile_action',
-		'projectId': my_ajax_object_compile.projectId,
-		'projectSlug': my_ajax_object_compile.slug,
+		'projectId': VRODOS.config.projectId,
+		'projectSlug': VRODOS.config.slug,
 		showPawnPositions,
-		'vrodos_scene': my_ajax_object_compile.sceneId,
+		'vrodos_scene': VRODOS.config.sceneId,
 		'outputFormat': platform
 	});
 
-	const url = `${isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url  }?${  params.toString()}`;
+	const url = `${VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url  }?${  params.toString()}`;
 
 	// ajax for Aframe compiling : Transform envir.scene.children to an html aframe page
 	fetch( url )

@@ -58,9 +58,12 @@ class VRodos_Asset_Manager {
 
 		wp_enqueue_script( 'ajax-script_deleteasset' );
 		wp_localize_script(
-			'ajax-script_deleteasset',
-			'my_ajax_object_deleteasset',
-			['ajax_url' => admin_url( 'admin-ajax.php' )]
+			'vrodos_namespace',
+			'vrodos_api_config',
+			[
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+                'isAdmin'  => $isAdmin
+            ]
 		);
 
 	}
@@ -71,21 +74,8 @@ class VRodos_Asset_Manager {
 			return;
 		}
 		wp_enqueue_script( 'ajax-script_delete_game' );
-		wp_localize_script(
-			'ajax-script_delete_game',
-			'my_ajax_object_deletegame',
-			['ajax_url' => admin_url( 'admin-ajax.php' )]
-		);
-
 		wp_enqueue_script( 'ajax-script_create_game' );
-		wp_localize_script(
-			'ajax-script_create_game',
-			'my_ajax_object_creategame',
-			['ajax_url' => admin_url( 'admin-ajax.php' )]
-		);
-
 		wp_enqueue_script( 'ajax-script_rename_game' );
-
 		wp_enqueue_script( 'vrodos_project_manager' );
 
 		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
@@ -97,9 +87,14 @@ class VRodos_Asset_Manager {
 		$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 		$isAdmin             = is_admin() ? 'back' : 'front';
 		wp_localize_script(
-			'vrodos_project_manager',
-			'vrodos_project_manager_data',
-			['current_user_id'     => $user->ID, 'parameter_Scenepass' => $parameter_Scenepass, 'isAdmin'             => $isAdmin]
+			'vrodos_namespace',
+			'vrodos_api_config',
+			[
+                'ajax_url'            => admin_url( 'admin-ajax.php' ),
+                'current_user_id'     => $user->ID,
+                'parameter_Scenepass' => $parameter_Scenepass,
+                'isAdmin'             => $isAdmin
+            ]
 		);
 	}
 
@@ -147,49 +142,24 @@ class VRodos_Asset_Manager {
 
 		// Scripts & Localization from template
 		wp_enqueue_script( 'ajax-script_compile' );
-		wp_localize_script(
-			'ajax-script_compile',
-			'my_ajax_object_compile',
-			['ajax_url'  => admin_url( 'admin-ajax.php' ), 'projectId' => $template_data['project_id'], 'slug'      => $template_data['projectSlug'], 'sceneId'   => $template_data['current_scene_id']]
-		);
-
 		wp_enqueue_script( 'ajax-script_deletescene' );
-		wp_localize_script(
-			'ajax-script_deletescene',
-			'my_ajax_object_deletescene',
-			['ajax_url' => admin_url( 'admin-ajax.php' )]
-		);
-
 		wp_enqueue_script( 'ajax-script_filebrowse' );
-		wp_localize_script( 'ajax-script_filebrowse', 'my_ajax_object_fbrowse', ['ajax_url' => admin_url( 'admin-ajax.php' )] );
-
 		wp_enqueue_script( 'ajax-script_savescene' );
-		wp_localize_script(
-			'ajax-script_savescene',
-			'my_ajax_object_savescene',
-			['ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $template_data['current_scene_id']]
-		);
-
 		wp_enqueue_script( 'ajax-script_uploadimage' );
-		wp_localize_script(
-			'ajax-script_uploadimage',
-			'my_ajax_object_uploadimage',
-			['ajax_url' => admin_url( 'admin-ajax.php' ), 'scene_id' => $template_data['current_scene_id']]
-		);
-
 		wp_enqueue_script( 'ajax-script_deleteasset' );
-		wp_localize_script(
-			'ajax-script_deleteasset',
-			'my_ajax_object_deleteasset',
-			['ajax_url' => admin_url( 'admin-ajax.php' )]
-		);
-
 		wp_enqueue_script( 'ajax-script_fetchasset' );
-		wp_localize_script(
-			'ajax-script_fetchasset',
-			'my_ajax_object_fetchasset',
-			['ajax_url' => admin_url( 'admin-ajax.php' )]
-		);
+
+        wp_localize_script(
+            'vrodos_namespace',
+            'vrodos_api_config',
+            [
+                'ajax_url'  => admin_url( 'admin-ajax.php' ),
+                'projectId' => $template_data['project_id'],
+                'slug'      => $template_data['projectSlug'],
+                'sceneId'   => $template_data['current_scene_id'],
+                'isAdmin'   => $template_data['isAdmin']
+            ]
+        );
 
 		$localized_data = [
 			'scene_data'          => $scene_data,

@@ -2,7 +2,7 @@
  * Rename Project AJAX
  */
 VRODOS.api.renameProject = function(projectId, newTitle, onComplete) {
-    fetch(vrodos_project_manager_data.isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url, {
+    fetch(VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
