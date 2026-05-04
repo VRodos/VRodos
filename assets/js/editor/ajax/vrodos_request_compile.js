@@ -1,4 +1,4 @@
-function vrodos_compileAjax(showPawnPositions) {
+VRODOS.api.compileScene = function(showPawnPositions) {
 
 	// In which platform to compile, e.g. Aframe
 	const platform = document.getElementById( "platformInput" ).value;
@@ -134,13 +134,13 @@ function vrodos_compileAjax(showPawnPositions) {
 	})
 	.catch( (err) => {
 		console.log( `Ajax Aframe ERROR 189: ${  err}` );
-		hideCompileProgressSlider();
+		VRODOS.api.hideCompileProgressSlider();
 	});
 }
 
 
 // Hide compile progress slider
-function hideCompileProgressSlider() {
+VRODOS.api.hideCompileProgressSlider = function() {
 	document.getElementById( "compileProgressSlider" ).style.display = 'none';
 	document.getElementById( "compileProgressTitle" ).style.display = 'none';
 	document.getElementById( "compileProgressDeterminate" ).style.display = 'none';

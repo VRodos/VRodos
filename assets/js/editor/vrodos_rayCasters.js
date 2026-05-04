@@ -1042,7 +1042,7 @@ function saveChanges(options) {
     const exporter = new VrodosSceneExporter();
     document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
-    return vrodos_saveSceneAjax();
+    return VRODOS.api.saveScene();
 }
 
 /**

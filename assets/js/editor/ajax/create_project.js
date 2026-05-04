@@ -5,10 +5,10 @@
  *
  *  All the above are encompassed in     vrodos_create_gameproject_frontend($game_id)
  */
-let _createPending = false;
-function vrodos_createProjectAjax(project_title, project_type_slug, current_user_id, parameter_Scenepass) {
-	if (_createPending) return;
-	_createPending = true;
+VRODOS.api.isCreateProjectPending = false;
+VRODOS.api.createProject = function(project_title, project_type_slug, current_user_id, parameter_Scenepass) {
+	if (VRODOS.api.isCreateProjectPending) return;
+	VRODOS.api.isCreateProjectPending = true;
 
 	fetch( vrodos_project_manager_data.isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url, {
 		method: 'POST',
@@ -22,18 +22,18 @@ function vrodos_createProjectAjax(project_title, project_type_slug, current_user
 	.then( (response) => response.text())
 	.then( (new_project_id) => {
 
-		_createPending = false;
+		VRODOS.api.isCreateProjectPending = false;
 		console.log( "Game project has been successfully created" );
 
 		document.getElementById( 'createNewProjectBtn' ).style.display = '';
 		document.getElementById( 'create-game-progress-bar' ).style.display = 'none';
 
-		fetchAllProjectsAndAddToDOM( current_user_id, parameter_Scenepass, new_project_id );
+		VRODOS.api.fetchAllProjectsAndAddToDOM( current_user_id, parameter_Scenepass, new_project_id );
 
 	})
 	.catch( (err) => {
 
-		_createPending = false;
+		VRODOS.api.isCreateProjectPending = false;
 		document.getElementById( 'createNewProjectBtn' ).style.display = '';
 		document.getElementById( 'create-game-progress-bar' ).style.display = 'none';
 
@@ -42,7 +42,7 @@ function vrodos_createProjectAjax(project_title, project_type_slug, current_user
 }
 
 
-function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_project_id=-1, is_initial_load = false){
+VRODOS.api.fetchAllProjectsAndAddToDOM = function(current_user_id, parameter_Scenepass, new_project_id=-1, is_initial_load = false){
 
 	fetch( vrodos_project_manager_data.isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url, {
 		method: 'POST',

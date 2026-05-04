@@ -153,7 +153,7 @@
                 </div>
                 <div id="bcgImageRow" class="tw-flex tw-items-center tw-gap-2" style="display:none">
                     <label class="tw-text-xs tw-text-white/80 tw-w-12 tw-flex-shrink-0">Image</label>
-                    <input id="img_upload_bcg" type="file" name="ImgUploadBcg" value="" accept=".jpg, .png" disabled onchange="imgUpload()"
+                    <input id="img_upload_bcg" type="file" name="ImgUploadBcg" value="" accept=".jpg, .png" disabled onchange="VRODOS.api.uploadImage()"
                            style="font-size: 10px; max-width: 140px; color: rgba(255,255,255,0.6);">
                     <div class="thumbnailImg">
                         <img id="uploadImgThumb" hidden style="max-height:30px; border-radius:4px;">

@@ -307,7 +307,7 @@ class VRodos_Game_CPT_Manager {
 
 		<div id="compilationProgressText" class="mdc-typography--title"></div>
 		<hr class="WhiteSpaceSeparator" style="margin-top: 0;" tabIndex="0">
-		<a id="vrodos_compileButton" type="button" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" onclick="vrodos_compileAjax()">Compile</a>
+		<a id="vrodos_compileButton" type="button" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" onclick="VRODOS.api.compileScene()">Compile</a>
 		<hr class="separator" >
 		<div id="previewApp" class="previewApp" style="display:inline-block"></div>
 		<div id="appResultDiv" style="margin-top:20px;display:none">

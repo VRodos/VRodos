@@ -1,7 +1,7 @@
 /**
  * Rename Project AJAX
  */
-function vrodos_renameProjectAjax(projectId, newTitle, onComplete) {
+VRODOS.api.renameProject = function(projectId, newTitle, onComplete) {
     fetch(vrodos_project_manager_data.isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_creategame.ajax_url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -21,7 +21,7 @@ function vrodos_renameProjectAjax(projectId, newTitle, onComplete) {
     });
 }
 
-function enterEditMode(gameId) {
+VRODOS.api.enterEditMode = function(gameId) {
     const titleEl = document.getElementById(`${gameId}-title`);
     const inputEl = document.getElementById(`${gameId}-title-input`);
     const editBtn = document.querySelector(`.vrodos-rename-project-btn[data-game-id="${gameId}"]`);
@@ -38,10 +38,10 @@ function enterEditMode(gameId) {
         // Add temporary listeners for Enter and Escape
         const handleKeys = (e) => {
             if (e.key === 'Enter') {
-                saveRename(gameId);
+                VRODOS.api.saveRename(gameId);
                 inputEl.removeEventListener('keydown', handleKeys);
             } else if (e.key === 'Escape') {
-                exitEditMode(gameId);
+                VRODOS.api.exitEditMode(gameId);
                 inputEl.removeEventListener('keydown', handleKeys);
             }
         };
@@ -49,7 +49,7 @@ function enterEditMode(gameId) {
     }
 }
 
-function exitEditMode(gameId) {
+VRODOS.api.exitEditMode = function(gameId) {
     const titleEl = document.getElementById(`${gameId}-title`);
     const inputEl = document.getElementById(`${gameId}-title-input`);
     const editBtn = document.querySelector(`.vrodos-rename-project-btn[data-game-id="${gameId}"]`);
@@ -64,7 +64,7 @@ function exitEditMode(gameId) {
     }
 }
 
-function saveRename(gameId) {
+VRODOS.api.saveRename = function(gameId) {
     const titleEl = document.getElementById(`${gameId}-title`);
     const inputEl = document.getElementById(`${gameId}-title-input`);
     const newTitle = inputEl.value.trim();
@@ -73,20 +73,20 @@ function saveRename(gameId) {
         // Disable input while saving
         inputEl.disabled = true;
         
-        vrodos_renameProjectAjax(gameId, newTitle, (success, result) => {
+        VRODOS.api.renameProject(gameId, newTitle, (success, result) => {
             inputEl.disabled = false;
             if (success) {
                 titleEl.textContent = result;
                 // Also update data attribute on delete button if it exists
                 const deleteBtn = document.querySelector(`.vrodos-delete-project-btn[data-game-id="${gameId}"]`);
                 if (deleteBtn) deleteBtn.dataset.gameTitle = result;
-                exitEditMode(gameId);
+                VRODOS.api.exitEditMode(gameId);
             } else {
                 alert("Failed to rename project. Please try again.");
                 inputEl.focus();
             }
         });
     } else {
-        exitEditMode(gameId);
+        VRODOS.api.exitEditMode(gameId);
     }
 }

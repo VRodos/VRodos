@@ -4,10 +4,10 @@
  * Parameters from javascript
  * asset_id : the asset to delete
  */
-let _deleteAssetPending = false;
-function vrodos_deleteAssetAjax(asset_id, game_slug, isCloned) {
-	if (_deleteAssetPending) return;
-	_deleteAssetPending = true;
+VRODOS.api.isDeleteAssetPending = false;
+VRODOS.api.deleteAsset = function(asset_id, game_slug, isCloned) {
+	if (VRODOS.api.isDeleteAssetPending) return;
+	VRODOS.api.isDeleteAssetPending = true;
 
 	if (typeof envir != "undefined") {
 		const progressBar = document.getElementById( `deleteAssetProgressBar-${  asset_id}` );
@@ -29,7 +29,7 @@ function vrodos_deleteAssetAjax(asset_id, game_slug, isCloned) {
 	.then( (response) => response.text())
 	.then( (res) => {
 
-		_deleteAssetPending = false;
+		VRODOS.api.isDeleteAssetPending = false;
 		res = JSON.parse( res );
 
 		if (deleteDialog) {
@@ -77,7 +77,7 @@ function vrodos_deleteAssetAjax(asset_id, game_slug, isCloned) {
 	})
 	.catch( (err) => {
 
-		_deleteAssetPending = false;
+		VRODOS.api.isDeleteAssetPending = false;
 		const progressBar = document.getElementById( `deleteAssetProgressBar-${  asset_id}` );
 		if (progressBar) progressBar.style.display = 'none';
 

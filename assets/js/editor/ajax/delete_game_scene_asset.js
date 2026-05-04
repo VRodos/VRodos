@@ -6,10 +6,10 @@
  *
  *  All the above are encompassed in     vrodos_delete_gameproject_frontend($game_id)
  */
-let _deleteGamePending = false;
-function vrodos_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scenepass) {
-	if (_deleteGamePending) return;
-	_deleteGamePending = true;
+VRODOS.api.isDeleteProjectPending = false;
+VRODOS.api.deleteProject = function(game_id, dialog, current_user_id, parameter_Scenepass) {
+	if (VRODOS.api.isDeleteProjectPending) return;
+	VRODOS.api.isDeleteProjectPending = true;
 
 	fetch( my_ajax_object_deletegame.ajax_url, {
 		method: 'POST',
@@ -22,7 +22,7 @@ function vrodos_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scene
 	.then( (response) => response.text())
 	.then( (res) => {
 
-		_deleteGamePending = false;
+		VRODOS.api.isDeleteProjectPending = false;
 		const progressBar = document.getElementById( 'delete-dialog-progress-bar' );
 		if (progressBar) progressBar.style.display = 'none';
 		const confirmBtn = document.getElementById( 'deleteProjectBtn' );
@@ -30,14 +30,14 @@ function vrodos_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scene
 		const cancelBtn = document.getElementById( 'canceldeleteProjectBtn' );
 		if (cancelBtn) cancelBtn.classList.remove( 'LinkDisabled' );
 
-		fetchAllProjectsAndAddToDOM( current_user_id, parameter_Scenepass );
+		VRODOS.api.fetchAllProjectsAndAddToDOM( current_user_id, parameter_Scenepass );
 
 		dialog.close();
 
 	})
 	.catch( (err) => {
 
-		_deleteGamePending = false;
+		VRODOS.api.isDeleteProjectPending = false;
 		const progressBar = document.getElementById( 'delete-dialog-progress-bar' );
 		if (progressBar) progressBar.style.display = 'none';
 		const confirmBtn = document.getElementById( 'deleteProjectBtn' );

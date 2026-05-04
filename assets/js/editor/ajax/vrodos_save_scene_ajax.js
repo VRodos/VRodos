@@ -1,11 +1,11 @@
-var vrodosSceneSavePromise = Promise.resolve();
-var vrodosIsSceneSavePending = false;
+VRODOS.api.sceneSavePromise = Promise.resolve();
+VRODOS.api.isSceneSavePending = false;
 
-function vrodos_whenSceneSaveSettles() {
-	return vrodosSceneSavePromise || Promise.resolve();
+VRODOS.api.whenSceneSaveSettles = function() {
+	return VRODOS.api.sceneSavePromise || Promise.resolve();
 }
 
-function vrodos_saveSceneAjax() {
+VRODOS.api.saveScene = function() {
 
 	const postdata = new URLSearchParams({
 		'action': 'vrodos_save_scene_async_action',
@@ -21,9 +21,9 @@ function vrodos_saveSceneAjax() {
 		postdata.append( 'scene_screenshot', pendingScreenshotData );
 	}
 
-	vrodosIsSceneSavePending = true;
+	VRODOS.api.isSceneSavePending = true;
 
-	vrodosSceneSavePromise = fetch( isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_savescene.ajax_url, {
+	VRODOS.api.sceneSavePromise = fetch( isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_savescene.ajax_url, {
 		method: 'POST',
 		body: postdata
 	})
@@ -56,8 +56,8 @@ function vrodos_saveSceneAjax() {
 		throw err;
 	})
 	.finally( () => {
-		vrodosIsSceneSavePending = false;
+		VRODOS.api.isSceneSavePending = false;
 	});
 
-	return vrodosSceneSavePromise;
+	return VRODOS.api.sceneSavePromise;
 }

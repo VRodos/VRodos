@@ -852,7 +852,7 @@ else { ?>
 
 		let isLoggedIn = <?php echo $isUserloggedIn ? 1 : 0; ?>;
 		let isEditMode = (isLoggedIn === 1) ? 1 : 0 ;
-		console.log("isEditModeA:", isEditMode);
+
 
 		const assetEditorNotice = document.getElementById("assetEditorNotice");
 		const assetEditorNoticeText = document.getElementById("assetEditorNoticeText");

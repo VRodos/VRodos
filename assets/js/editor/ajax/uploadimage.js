@@ -1,4 +1,4 @@
-function imgUpload(){
+VRODOS.api.uploadImage = function() {
 
 	const formData = new FormData();
 	const input    = document.getElementById( "img_upload_bcg" );
@@ -44,7 +44,7 @@ function imgUpload(){
 				document.getElementById( 'uploadImgThumb' ).src    = data.url;
 				document.getElementById( 'uploadImgThumb' ).hidden = false;
 
-				vrodos_saveSceneAjax();
+				VRODOS.api.saveScene();
 			});
 
 		};

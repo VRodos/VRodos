@@ -312,7 +312,7 @@ function refreshSceneJsonTextarea() {
 
 function waitForLatestSceneSave() {
     if (typeof vrodos_whenSceneSaveSettles === 'function') {
-        return vrodos_whenSceneSaveSettles();
+        return VRODOS.api.whenSceneSaveSettles();
     }
 
     return Promise.resolve();
@@ -427,10 +427,10 @@ function loadButtonActions() {
         waitForLatestSceneSave()
             .then(() => (typeof saveChanges === 'function') ? saveChanges() : Promise.resolve())
             .then(() => {
-                vrodos_compileAjax(showPawnPositions);
+                VRODOS.api.compileScene(showPawnPositions);
             })
             .catch((error) => {
-                hideCompileProgressSlider();
+                VRODOS.api.hideCompileProgressSlider();
                 if (constantUpdateUser) {
                     constantUpdateUser.innerHTML =
                         '<i data-lucide="triangle-alert" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
@@ -629,7 +629,7 @@ function loadButtonActions() {
         document.getElementById("deleteSceneDialogDeleteBtn").classList.add("LinkDisabled");
         document.getElementById("deleteSceneDialogCancelBtn").classList.add("LinkDisabled");
         const dlg = document.getElementById('delete-dialog');
-        vrodos_deleteSceneAjax(dlg.dataset.sceneId, url_scene_redirect);
+        VRODOS.api.deleteScene(dlg.dataset.sceneId, url_scene_redirect);
     });
 
     document.getElementById("deleteSceneDialogCancelBtn").addEventListener("click", (e) => {
@@ -821,7 +821,7 @@ function loadButtonActions() {
         const exporter = new VrodosSceneExporter();
         document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
-        vrodos_saveSceneAjax();
+        VRODOS.api.saveScene();
     });
 
 

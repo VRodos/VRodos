@@ -289,7 +289,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
         confirmBtn.onclick = function() {
             var progressBar = document.getElementById('delete-scene-dialog-progress-bar');
             if (progressBar) { progressBar.classList.remove('tw-hidden'); progressBar.style.display = ''; }
-            vrodos_deleteAssetAjax(assetId, gameSlug, isCloned);
+            VRODOS.api.deleteAsset(assetId, gameSlug, isCloned);
         };
 
         document.getElementById('vrodos_delete_asset_modal').showModal();

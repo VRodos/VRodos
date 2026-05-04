@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     lucide.createIcons();
-    fetchAllProjectsAndAddToDOM(vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass, -1, true);
+    VRODOS.api.fetchAllProjectsAndAddToDOM(vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass, -1, true);
     setupProjectCountSync();
 
     // Modals (DaisyUI)
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const project_type = checkedRadio ? checkedRadio.value : 'archaeology_games';
 
             // CREATE THE PROJECT !
-            vrodos_createProjectAjax(title_vrodos_project, project_type, vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
+            VRODOS.api.createProject(title_vrodos_project, project_type, vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
 
             // UI state updates
             document.getElementById('createNewProjectBtn').style.display = 'none';
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const renameBtn = e.target.closest('.vrodos-rename-project-btn');
         if (renameBtn) {
             const gameId = renameBtn.dataset.gameId;
-            if (gameId) enterEditMode(gameId);
+            if (gameId) VRODOS.api.enterEditMode(gameId);
             return;
         }
 
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const saveBtn = e.target.closest('.vrodos-save-rename-btn');
         if (saveBtn) {
             const gameId = saveBtn.dataset.gameId;
-            if (gameId) saveRename(gameId);
+            if (gameId) VRODOS.api.saveRename(gameId);
             return;
         }
 
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cancelBtn = e.target.closest('.vrodos-cancel-rename-btn');
         if (cancelBtn) {
             const gameId = cancelBtn.dataset.gameId;
-            if (gameId) exitEditMode(gameId);
+            if (gameId) VRODOS.api.exitEditMode(gameId);
             return;
         }
     });
@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('deleteProjectBtn').addEventListener('click', (e) => {
         document.getElementById('delete-dialog-progress-bar').style.display = '';
-        vrodos_deleteGameAjax(dialog.dataset.projectId, dialog, vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
+        VRODOS.api.deleteProject(dialog.dataset.projectId, dialog, vrodos_project_manager_data.current_user_id, vrodos_project_manager_data.parameter_Scenepass);
     });
 
     document.getElementById('canceldeleteProjectBtn').addEventListener('click', (e) => {

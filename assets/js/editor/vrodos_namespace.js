@@ -10,5 +10,6 @@ window.VRODOS = window.VRODOS || {
         _lastClickY: 0
     },
     runtime: {},
-    data: {}
+    data: {},
+    api: {}
 };

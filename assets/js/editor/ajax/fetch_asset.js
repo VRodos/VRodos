@@ -1,4 +1,4 @@
-function vrodos_fetch_Assettrs_and_setWidget(asset_id, selectedObject) {
+VRODOS.api.fetchAssetAndSetWidget = function(asset_id, selectedObject) {
 
 	fetch( my_ajax_object_fetchasset_meta.ajax_url, {
 		method: 'POST',

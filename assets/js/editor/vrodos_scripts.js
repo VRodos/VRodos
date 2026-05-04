@@ -11,7 +11,7 @@ function setTransformControlsSize() {
 function vrodos_fillin_widget_assettrs(selectedObject) {
     if (selectedObject) {
         const asset_id = selectedObject.value;
-        vrodos_fetch_Assettrs_and_setWidget(asset_id, selectedObject);
+        VRODOS.api.fetchAssetAndSetWidget(asset_id, selectedObject);
     }
 }
 
@@ -61,7 +61,7 @@ function saveChanges(options) {
     const exporter = new VrodosSceneExporter();
     document.getElementById('vrodos_scene_json_input').value = exporter.parse(VRODOS.editor.envir.scene);
 
-    return vrodos_saveSceneAjax();
+    return VRODOS.api.saveScene();
 }
 
 function setBackgroundPresetSelection(presetValue) {

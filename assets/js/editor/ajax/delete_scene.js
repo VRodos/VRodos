@@ -5,7 +5,7 @@
  * scene_id : the scene to delete
  * vrodos_deleteSceneAjax()
  */
-function vrodos_deleteSceneAjax(scene_id, url_scene_redirect) {
+VRODOS.api.deleteScene = function(scene_id, url_scene_redirect) {
 
 	fetch( my_ajax_object_deletescene.ajax_url, {
 		method: 'POST',
