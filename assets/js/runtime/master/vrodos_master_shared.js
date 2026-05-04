@@ -28,7 +28,7 @@ VRODOSMaster.queryOne = function (selector, root) {
 };
 
 VRODOSMaster.setBrowsingModeVR = function (value) {
-    browsingModeVR = !!value;
+    browsingModeVR = Boolean(value);
     window.browsingModeVR = browsingModeVR;
     return browsingModeVR;
 };
@@ -54,7 +54,7 @@ VRODOSMaster.vectorRequiresUpdateRotation = function (epsilon) {
 };
 
 VRODOSMaster.randomColor = function () {
-    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    return `#${  Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
 };
 
 window.ntExample = window.ntExample || {
@@ -72,7 +72,7 @@ VRODOSMaster.formatBytes = function (bytes, decimals) {
     var sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
     var i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))  } ${  sizes[i]}`;
 };
 
 window.selectAvatarType = function (value) {

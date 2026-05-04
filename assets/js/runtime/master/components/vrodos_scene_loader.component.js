@@ -11,9 +11,9 @@ AFRAME.registerComponent('clear-frustum-culling', {
         disableCulling: { type: 'boolean', default: false }
     },
     init: function () {
-        let el = this.el;
+        const el = this.el;
         el.addEventListener("model-loaded", e => {
-            let mesh = el.getObject3D('mesh');
+            const mesh = el.getObject3D('mesh');
             if (!mesh) { return; }
             mesh.traverse(function (node) {
                 if (node.isMesh) {
@@ -157,7 +157,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
                 return;
             }
 
-            var targetId = target.id || ('vrodos-reveal-' + this.pendingModelCount);
+            var targetId = target.id || (`vrodos-reveal-${  this.pendingModelCount}`);
             if (!target.id) {
                 target.id = targetId;
             }
@@ -200,7 +200,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
                 return;
             }
 
-            var assetId = assetEl.id || ('vrodos-asset-wait-' + index);
+            var assetId = assetEl.id || (`vrodos-asset-wait-${  index}`);
             if (!assetEl.id) {
                 assetEl.id = assetId;
             }
@@ -354,7 +354,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         }
 
         var loadedModelCount = totalModelCount - this.pendingModelCount;
-        this.progressLabel.textContent = 'Loading 3D assets ' + loadedModelCount + '/' + totalModelCount;
+        this.progressLabel.textContent = `Loading 3D assets ${  loadedModelCount  }/${  totalModelCount}`;
     },
     maybeRevealScene: function () {
         if (this.isReady || !this.loadedAssets || this.pendingModelCount > 0) {

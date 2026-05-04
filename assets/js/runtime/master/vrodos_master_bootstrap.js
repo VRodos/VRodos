@@ -1,6 +1,7 @@
 /**
  * VRodos Master runtime bootstrap.
  */
+/* global VRODOSMaster */
 
 (function () {
     var apiPatternSingle = {
@@ -78,7 +79,7 @@
         }
 
         binder(element);
-        element.dataset.vrodosBootstrap += '|' + key;
+        element.dataset.vrodosBootstrap += `|${  key}`;
     }
 
     function registerAvatarSchema() {
@@ -197,9 +198,9 @@
                     continue;
                 }
 
-                var low = property + 'Low';
-                var high = property + 'High';
-                var step = property + 'Step';
+                var low = `${property  }Low`;
+                var high = `${property  }High`;
+                var step = `${property  }Step`;
                 var controller = videoUserGui[entityId].add(apiPatternSingle, property, apiPatternSingleMin[low], apiPatternSingleMax[high], apiPatternSingleStep[step]);
                 controller.nActor = nActor - 1;
                 controller.currentEntityId = entityId;
@@ -226,11 +227,11 @@
                         } else if (this.property.indexOf('r') === 0) {
                             var rotation = panel.getAttribute('rotation');
                             if (this.property === 'rx') {
-                                panel.setAttribute('rotation', value + ' ' + rotation.y + ' ' + rotation.z);
+                                panel.setAttribute('rotation', `${value  } ${  rotation.y  } ${  rotation.z}`);
                             } else if (this.property === 'ry') {
-                                panel.setAttribute('rotation', rotation.x + ' ' + value + ' ' + rotation.z);
+                                panel.setAttribute('rotation', `${rotation.x  } ${  value  } ${  rotation.z}`);
                             } else if (this.property === 'rz') {
-                                panel.setAttribute('rotation', rotation.x + ' ' + rotation.y + ' ' + value);
+                                panel.setAttribute('rotation', `${rotation.x  } ${  rotation.y  } ${  value}`);
                             }
                         }
                     });
@@ -368,7 +369,7 @@
                     }
 
                     if (captureLabel) {
-                        captureLabel.innerHTML = 'Recorded ' + VRODOSMaster.formatBytes(window.recordedBlob.size) + ' of ' + window.recordedBlob.type + ' media.';
+                        captureLabel.innerHTML = `Recorded ${  VRODOSMaster.formatBytes(window.recordedBlob.size)  } of ${  window.recordedBlob.type  } media.`;
                     }
                 });
             }, false);
@@ -388,13 +389,13 @@
                 var mvToken = mvTokenInput ? mvTokenInput.value : '';
                 var mvProjectId = mvProjectIdInput ? mvProjectIdInput.value : '';
 
-                var videoFile = new File([window.recordedBlob], 'vrodos-' + window.recordedBlob.size + '.webm', { type: window.recordedBlob.type });
+                var videoFile = new File([window.recordedBlob], `vrodos-${  window.recordedBlob.size  }.webm`, { type: window.recordedBlob.type });
                 var formData = new FormData();
                 formData.append('file', videoFile);
 
-                fetch(mvUrl + '/dam/assets?description=Recorded video from VRodos&externalTool=VRodos', {
+                fetch(`${mvUrl  }/dam/assets?description=Recorded video from VRodos&externalTool=VRodos`, {
                     method: 'POST',
-                    headers: { Authorization: 'Bearer ' + mvToken },
+                    headers: { Authorization: `Bearer ${  mvToken}` },
                     body: formData
                 }).then(function (response) {
                     if (response.ok) {
@@ -409,11 +410,11 @@
                         return;
                     }
 
-                    fetch(mvUrl + '/dam/project/' + mvProjectId + '/projectOutput', {
+                    fetch(`${mvUrl  }/dam/project/${  mvProjectId  }/projectOutput`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
-                            Authorization: 'Bearer ' + mvToken
+                            Authorization: `Bearer ${  mvToken}`
                         },
                         body: JSON.stringify({ projectOutput: [data.key] })
                     }).then(function (response) {
@@ -428,6 +429,54 @@
                 });
             });
         });
+    }
+
+    function handleFullscreenResult(result) {
+        if (result && typeof result.catch === 'function') {
+            result.catch(function (error) {
+                console.warn('[VRodos] Fullscreen request was ignored by the browser.', error);
+            });
+        }
+    }
+
+    function getFullscreenElement() {
+        return document.fullscreenElement ||
+            document.mozFullScreenElement ||
+            document.webkitFullscreenElement ||
+            document.msFullscreenElement ||
+            null;
+    }
+
+    function exitFullscreenIfActive() {
+        if (!getFullscreenElement()) {
+            return;
+        }
+
+        if (document.exitFullscreen) {
+            handleFullscreenResult(document.exitFullscreen());
+        } else if (document.mozCancelFullScreen) {
+            handleFullscreenResult(document.mozCancelFullScreen());
+        } else if (document.webkitCancelFullScreen) {
+            handleFullscreenResult(document.webkitCancelFullScreen());
+        } else if (document.msExitFullscreen) {
+            handleFullscreenResult(document.msExitFullscreen());
+        }
+    }
+
+    function requestFullscreen(element) {
+        if (!element || getFullscreenElement()) {
+            return;
+        }
+
+        if (element.requestFullscreen) {
+            handleFullscreenResult(element.requestFullscreen());
+        } else if (element.mozRequestFullScreen) {
+            handleFullscreenResult(element.mozRequestFullScreen());
+        } else if (element.webkitRequestFullScreen) {
+            handleFullscreenResult(element.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT));
+        } else if (element.msRequestFullscreen) {
+            handleFullscreenResult(element.msRequestFullscreen());
+        }
     }
 
     function bindDirectorControls() {
@@ -448,15 +497,7 @@
                     datGui.style.display = 'block';
                 }
 
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitCancelFullScreen) {
-                    document.webkitCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
+                exitFullscreenIfActive();
             });
         });
 
@@ -475,15 +516,7 @@
                     datGui.style.display = 'none';
                 }
 
-                if (elem.requestFullscreen) {
-                    elem.requestFullscreen();
-                } else if (elem.mozRequestFullScreen) {
-                    elem.mozRequestFullScreen();
-                } else if (elem.webkitRequestFullScreen) {
-                    elem.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
-                } else if (elem.msRequestFullscreen) {
-                    elem.msRequestFullscreen();
-                }
+                requestFullscreen(elem);
             };
         });
     }

@@ -410,14 +410,14 @@ AFRAME.registerComponent('custom-movement', {
         var frame = this.navPerfDebug.frame;
         overlay.textContent = [
             'NAV PERF DEBUG',
-            'moving: ' + (frame.moving ? 'yes' : 'no'),
-            'collisions: ' + (frame.collisionsEnabled ? 'on' : 'off'),
-            'tick ms: ' + frame.tickMs.toFixed(2) + ' avg ' + this.navPerfDebug.avgTickMs.toFixed(2),
-            'constrained ms: ' + frame.constrainedMs.toFixed(2) + ' avg ' + this.navPerfDebug.avgConstrainedMs.toFixed(2),
-            'sample ms: ' + frame.sampleMs.toFixed(2) + ' avg ' + this.navPerfDebug.avgSampleMs.toFixed(2),
-            'raycast ms: ' + frame.raycastMs.toFixed(2) + ' avg ' + this.navPerfDebug.avgRaycastMs.toFixed(2),
-            'raycasts: ' + frame.raycasts + ' avg ' + this.navPerfDebug.avgRaycasts.toFixed(1),
-            'intersections: ' + frame.intersections + ' avg ' + this.navPerfDebug.avgIntersections.toFixed(1)
+            `moving: ${  frame.moving ? 'yes' : 'no'}`,
+            `collisions: ${  frame.collisionsEnabled ? 'on' : 'off'}`,
+            `tick ms: ${  frame.tickMs.toFixed(2)  } avg ${  this.navPerfDebug.avgTickMs.toFixed(2)}`,
+            `constrained ms: ${  frame.constrainedMs.toFixed(2)  } avg ${  this.navPerfDebug.avgConstrainedMs.toFixed(2)}`,
+            `sample ms: ${  frame.sampleMs.toFixed(2)  } avg ${  this.navPerfDebug.avgSampleMs.toFixed(2)}`,
+            `raycast ms: ${  frame.raycastMs.toFixed(2)  } avg ${  this.navPerfDebug.avgRaycastMs.toFixed(2)}`,
+            `raycasts: ${  frame.raycasts  } avg ${  this.navPerfDebug.avgRaycasts.toFixed(1)}`,
+            `intersections: ${  frame.intersections  } avg ${  this.navPerfDebug.avgIntersections.toFixed(1)}`
         ].join('\n');
     },
     getSceneSettings: function () {
@@ -630,7 +630,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         if (this.el.components && this.el.components['wasd-controls']) {
-            this.el.setAttribute('wasd-controls', 'fly: false; acceleration: 20; enabled: ' + (collisionsEnabled ? 'false' : 'true'));
+            this.el.setAttribute('wasd-controls', `fly: false; acceleration: 20; enabled: ${  collisionsEnabled ? 'false' : 'true'}`);
         }
 
         this.wasdControlsSuppressed = collisionsEnabled;
@@ -807,7 +807,7 @@ AFRAME.registerComponent('custom-movement', {
     findNearestGroundAt: function (position, searchRadius, outputGround) {
         var radius = typeof searchRadius === 'number' ? searchRadius : 6;
         var bestGround = outputGround || this.bestGroundHit;
-        var foundBestGround = !!this.sampleGroundAt(position, undefined, bestGround);
+        var foundBestGround = Boolean(this.sampleGroundAt(position, undefined, bestGround));
         var bestDistanceSq = foundBestGround ? this.horizontalDistanceSquared(bestGround.rawPoint, position) : Infinity;
 
         if (foundBestGround && bestDistanceSq < 0.0001) {

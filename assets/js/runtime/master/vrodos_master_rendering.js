@@ -34,34 +34,34 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 
 			const /* return codes for rgbe routines */
 				//RGBE_RETURN_SUCCESS = 0,
-				RGBE_RETURN_FAILURE = - 1,
+				RGBE_RETURN_FAILURE = - 1;
 				/* default error routine.  change this to change error handling */
-				rgbe_read_error = 1,
-				rgbe_write_error = 2,
-				rgbe_format_error = 3,
-				rgbe_memory_error = 4,
-				rgbe_error = function ( rgbe_error_code, msg ) {
+				const rgbe_read_error = 1;
+				const rgbe_write_error = 2;
+				const rgbe_format_error = 3;
+				const rgbe_memory_error = 4;
+				const rgbe_error = function ( rgbe_error_code, msg ) {
 
 					switch ( rgbe_error_code ) {
 
 						case rgbe_read_error:
-							console.error( 'THREE.RGBELoader Read Error: ' + ( msg || '' ) );
+							console.error( `THREE.RGBELoader Read Error: ${   msg || ''}` );
 							break;
 						case rgbe_write_error:
-							console.error( 'THREE.RGBELoader Write Error: ' + ( msg || '' ) );
+							console.error( `THREE.RGBELoader Write Error: ${   msg || ''}` );
 							break;
 						case rgbe_format_error:
-							console.error( 'THREE.RGBELoader Bad File Format: ' + ( msg || '' ) );
+							console.error( `THREE.RGBELoader Bad File Format: ${   msg || ''}` );
 							break;
 						default:
 						case rgbe_memory_error:
-							console.error( 'THREE.RGBELoader: Error: ' + ( msg || '' ) );
+							console.error( `THREE.RGBELoader: Error: ${   msg || ''}` );
 
 					}
 
 					return RGBE_RETURN_FAILURE;
 
-				},
+				};
 				/* offsets to red, green, and blue components in a data (float) pixel */
 				//RGBE_DATA_RED = 0,
 				//RGBE_DATA_GREEN = 1,
@@ -71,20 +71,20 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 				//RGBE_DATA_SIZE = 4,
 
 				/* flags indicating which fields in an rgbe_header_info are valid */
-				RGBE_VALID_PROGRAMTYPE = 1,
-				RGBE_VALID_FORMAT = 2,
-				RGBE_VALID_DIMENSIONS = 4,
-				NEWLINE = '\n',
-				fgets = function ( buffer, lineLimit, consume ) {
+				const RGBE_VALID_PROGRAMTYPE = 1;
+				const RGBE_VALID_FORMAT = 2;
+				const RGBE_VALID_DIMENSIONS = 4;
+				const NEWLINE = '\n';
+				const fgets = function ( buffer, lineLimit, consume ) {
 
 					const chunkSize = 128;
 					lineLimit = ! lineLimit ? 1024 : lineLimit;
-					let p = buffer.pos,
-						i = - 1,
-						len = 0,
-						s = '',
-						chunk = String.fromCharCode.apply( null, new Uint16Array( buffer.subarray( p, p + chunkSize ) ) );
-					while ( 0 > ( i = chunk.indexOf( NEWLINE ) ) && len < lineLimit && p < buffer.byteLength ) {
+					let p = buffer.pos;
+						let i = - 1;
+						let len = 0;
+						let s = '';
+						let chunk = String.fromCharCode.apply( null, new Uint16Array( buffer.subarray( p, p + chunkSize ) ) );
+					while ( ( i = chunk.indexOf( NEWLINE ) ) < 0 && len < lineLimit && p < buffer.byteLength ) {
 
 						s += chunk;
 						len += chunk.length;
@@ -93,7 +93,7 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 
 					}
 
-					if ( - 1 < i ) {
+					if ( i > - 1 ) {
 
 						/*for (i=l-1; i>=0; i--) {
           	byteCode = m.charCodeAt(i);
@@ -101,25 +101,25 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
           	else if (byteCode > 0x7ff && byteCode <= 0xffff) byteLen += 2;
           	if (byteCode >= 0xDC00 && byteCode <= 0xDFFF) i--; //trail surrogate
           }*/
-						if ( false !== consume ) buffer.pos += len + i + 1;
+						if ( consume !== false ) buffer.pos += len + i + 1;
 						return s + chunk.slice( 0, i );
 
 					}
 
 					return false;
 
-				},
+				};
 				/* minimal header reading.  modify if you want to parse more information */
-				RGBE_ReadHeader = function ( buffer ) {
+				const RGBE_ReadHeader = function ( buffer ) {
 
 					// regexes to parse header info fields
-					const magic_token_re = /^#\?(\S+)/,
-						gamma_re = /^\s*GAMMA\s*=\s*(\d+(\.\d+)?)\s*$/,
-						exposure_re = /^\s*EXPOSURE\s*=\s*(\d+(\.\d+)?)\s*$/,
-						format_re = /^\s*FORMAT=(\S+)\s*$/,
-						dimensions_re = /^\s*\-Y\s+(\d+)\s+\+X\s+(\d+)\s*$/,
+					const magic_token_re = /^#\?(\S+)/;
+						const gamma_re = /^\s*GAMMA\s*=\s*(\d+(\.\d+)?)\s*$/;
+						const exposure_re = /^\s*EXPOSURE\s*=\s*(\d+(\.\d+)?)\s*$/;
+						const format_re = /^\s*FORMAT=(\S+)\s*$/;
+						const dimensions_re = /^\s*\-Y\s+(\d+)\s+\+X\s+(\d+)\s*$/;
 						// RGBE format header struct
-						header = {
+						const header = {
 							valid: 0,
 							/* indicate which fields are valid */
 
@@ -145,7 +145,7 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 							height: 0 /* image dimensions, width/height */
 						};
 
-					let line, match;
+					let line; let match;
 					if ( buffer.pos >= buffer.byteLength || ! ( line = fgets( buffer ) ) ) {
 
 						return rgbe_error( rgbe_read_error, 'no header found' );
@@ -161,39 +161,39 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 
 					header.valid |= RGBE_VALID_PROGRAMTYPE;
 					header.programtype = match[ 1 ];
-					header.string += line + '\n';
+					header.string += `${line  }\n`;
 					while ( true ) {
 
 						line = fgets( buffer );
-						if ( false === line ) break;
-						header.string += line + '\n';
-						if ( '#' === line.charAt( 0 ) ) {
+						if ( line === false ) break;
+						header.string += `${line  }\n`;
+						if ( line.charAt( 0 ) === '#' ) {
 
-							header.comments += line + '\n';
+							header.comments += `${line  }\n`;
 							continue; // comment line
 
 						}
 
-						if ( match = line.match( gamma_re ) ) {
+						if ( ( match = line.match( gamma_re ) ) ) {
 
 							header.gamma = parseFloat( match[ 1 ] );
 
 						}
 
-						if ( match = line.match( exposure_re ) ) {
+						if ( ( match = line.match( exposure_re ) ) ) {
 
 							header.exposure = parseFloat( match[ 1 ] );
 
 						}
 
-						if ( match = line.match( format_re ) ) {
+						if ( ( match = line.match( format_re ) ) ) {
 
 							header.valid |= RGBE_VALID_FORMAT;
 							header.format = match[ 1 ]; //'32-bit_rle_rgbe';
 
 						}
 
-						if ( match = line.match( dimensions_re ) ) {
+						if ( ( match = line.match( dimensions_re ) ) ) {
 
 							header.valid |= RGBE_VALID_DIMENSIONS;
 							header.height = parseInt( match[ 1 ], 10 );
@@ -219,15 +219,15 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 
 					return header;
 
-				},
-				RGBE_ReadPixels_RLE = function ( buffer, w, h ) {
+				};
+				const RGBE_ReadPixels_RLE = function ( buffer, w, h ) {
 
 					const scanline_width = w;
 					if (
 					// run length encoding is not allowed so read flat
 						scanline_width < 8 || scanline_width > 0x7fff ||
         // this file is not run length encoded
-        2 !== buffer[ 0 ] || 2 !== buffer[ 1 ] || buffer[ 2 ] & 0x80 ) {
+        buffer[ 0 ] !== 2 || buffer[ 1 ] !== 2 || buffer[ 2 ] & 0x80 ) {
 
 						// return the flat buffer
 						return new Uint8Array( buffer );
@@ -247,8 +247,8 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 
 					}
 
-					let offset = 0,
-						pos = 0;
+					let offset = 0;
+						let pos = 0;
 					const ptr_end = 4 * scanline_width;
 					const rgbeStart = new Uint8Array( 4 );
 					const scanline_buffer = new Uint8Array( ptr_end );
@@ -267,7 +267,7 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 						rgbeStart[ 1 ] = buffer[ pos ++ ];
 						rgbeStart[ 2 ] = buffer[ pos ++ ];
 						rgbeStart[ 3 ] = buffer[ pos ++ ];
-						if ( 2 != rgbeStart[ 0 ] || 2 != rgbeStart[ 1 ] || ( rgbeStart[ 2 ] << 8 | rgbeStart[ 3 ] ) != scanline_width ) {
+						if ( rgbeStart[ 0 ] != 2 || rgbeStart[ 1 ] != 2 || ( rgbeStart[ 2 ] << 8 | rgbeStart[ 3 ] ) != scanline_width ) {
 
 							return rgbe_error( rgbe_format_error, 'bad rgbe scanline format' );
 
@@ -275,14 +275,14 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 
 						// read each of the four channels for the scanline into the buffer
 						// first red, then green, then blue, then exponent
-						let ptr = 0,
-							count;
+						let ptr = 0;
+							let count;
 						while ( ptr < ptr_end && pos < buffer.byteLength ) {
 
 							count = buffer[ pos ++ ];
 							const isEncodedRun = count > 128;
 							if ( isEncodedRun ) count -= 128;
-							if ( 0 === count || ptr + count > ptr_end ) {
+							if ( count === 0 || ptr + count > ptr_end ) {
 
 								return rgbe_error( rgbe_format_error, 'bad scanline data' );
 
@@ -364,12 +364,12 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 			const rgbe_header_info = RGBE_ReadHeader( byteArray );
 			if ( RGBE_RETURN_FAILURE !== rgbe_header_info ) {
 
-				const w = rgbe_header_info.width,
-					h = rgbe_header_info.height,
-					image_rgba_data = RGBE_ReadPixels_RLE( byteArray.subarray( byteArray.pos ), w, h );
+				const w = rgbe_header_info.width;
+					const h = rgbe_header_info.height;
+					const image_rgba_data = RGBE_ReadPixels_RLE( byteArray.subarray( byteArray.pos ), w, h );
 				if ( RGBE_RETURN_FAILURE !== image_rgba_data ) {
 
-					let data, type;
+					let data; let type;
 					let numElements;
 					switch ( this.type ) {
 
@@ -406,11 +406,11 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 					return {
 						width: w,
 						height: h,
-						data: data,
+						data,
 						header: rgbe_header_info.string,
 						gamma: rgbe_header_info.gamma,
 						exposure: rgbe_header_info.exposure,
-						type: type
+						type
 					};
 
 				}

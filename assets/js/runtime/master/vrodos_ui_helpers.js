@@ -107,8 +107,8 @@
     api.getChatCapabilities = function () {
         var sceneEl = document.getElementById('aframe-scene-container') || document.querySelector('a-scene');
         var settings = sceneEl ? sceneEl.getAttribute('scene-settings') : null;
-        var hasPublic = !!(settings && String(settings.public_chat) === '1');
-        var hasPrivate = !!document.querySelector('[chat-poi]');
+        var hasPublic = Boolean(settings && String(settings.public_chat) === '1');
+        var hasPrivate = Boolean(document.querySelector('[chat-poi]'));
 
         return {
             public: hasPublic,
@@ -150,7 +150,7 @@
 
         return {
             activeTab: resolvedActiveTab,
-            capabilities: capabilities
+            capabilities
         };
     };
 

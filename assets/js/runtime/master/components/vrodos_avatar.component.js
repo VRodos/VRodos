@@ -5,15 +5,12 @@
 AFRAME.registerComponent('avatar-movement-info', {
     schema: {
         movementState: { type: 'string', default: 'idle' }
-    },
-    init: function () {
-
     }
 });
 
 AFRAME.registerComponent('player-info', {
     schema: {
-        name: { type: 'string', default: 'user-' + Math.round(Math.random() * 10000) },
+        name: { type: 'string', default: `user-${  Math.round(Math.random() * 10000)}` },
         color: { type: 'color', default: typeof window.ntExample !== 'undefined' ? window.ntExample.randomColor() : '#cccccc' },
         gltf: { default: '', type: 'string' },
         avatarType: { default: 'blob', type: 'string' },
@@ -94,7 +91,7 @@ AFRAME.registerComponent('player-info', {
             }
         }
     },
-    update: function (oldData) {
+    update: function () {
         this.applyAvatar();
     },
     remove: function () {

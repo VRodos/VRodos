@@ -43,8 +43,8 @@
         }
 
         var material = new THREE.ShaderMaterial({
-            defines: defines,
-            uniforms: uniforms,
+            defines,
+            uniforms,
             vertexShader: [
                 'varying vec2 vUv;',
                 'void main() {',

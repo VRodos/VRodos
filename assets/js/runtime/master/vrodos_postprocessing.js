@@ -3,6 +3,7 @@
  * Extracted from vrodos_scene_settings.component.js
  * Functions are assigned as methods on the scene-settings component via VRODOSMaster.SceneSettingsHelpers
  */
+/* global VRODOSMaster */
 (function () {
     var H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     H.updatePostProcessingSize = function () {
@@ -118,7 +119,7 @@
         // ALU. Post-FX settings are static per session so compile-time
         // specialization is safe and optimal.
         var compositeFeatures = {
-            sao: !!saoParams,
+            sao: Boolean(saoParams),
             ssr: ssrEnabled,
             bloom: this.getBloomStrengthValue() > 0,
             colorGrading: this.isPostFXOptionEnabled('postFXColorEnabled'),

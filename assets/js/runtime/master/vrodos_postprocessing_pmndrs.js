@@ -32,6 +32,7 @@
  * Hard rule: this file must never import, call, or share render targets with
  * vrodos_postprocessing.js. Mutually exclusive engines, zero blending.
  */
+/* global VRODOSMaster */
 (function () {
     if (typeof VRODOSMaster === 'undefined') {
         return;
@@ -44,7 +45,7 @@
     function nativeSsaoOptionsForPreset(PP, preset) {
         var blendFunction = (PP && PP.BlendFunction) ? PP.BlendFunction.MULTIPLY : undefined;
         var defaults = {
-            blendFunction: blendFunction,
+            blendFunction,
             distanceScaling: true,
             depthAwareUpsampling: true,
             depthAwareUpsamplingThreshold: 0.997,
@@ -94,7 +95,7 @@
      * persisted via scene-settings (pmndrsBloomIntensity / pmndrsBloomThreshold).
      */
     function isHorizonBackground(self) {
-        return !!(self && self.data && self.data.selChoice === '0');
+        return Boolean(self && self.data && self.data.selChoice === '0');
     }
 
     function bloomOptionsForLegacyValue(self, legacyValue, intensityMultiplier, threshold) {
@@ -202,7 +203,7 @@
         }
 
         look = normalizePmndrsLutLook(look);
-        lut.name = 'vrodos-' + look;
+        lut.name = `vrodos-${  look}`;
         if (look === 'neutral') {
             return lut;
         }
@@ -250,11 +251,11 @@
     }
 
     function isPmndrsAAEnabled(self) {
-        return !!(self && self.data && self.data.postFXEngine === 'pmndrs' && getPmndrsAAMode(self) !== 'none');
+        return Boolean(self && self.data && self.data.postFXEngine === 'pmndrs' && getPmndrsAAMode(self) !== 'none');
     }
 
     function isPmndrsAmbientOcclusionEnabled(self) {
-        return !!(self && typeof self.getAmbientOcclusionPreset === 'function' && self.getAmbientOcclusionPreset() !== 'off');
+        return Boolean(self && typeof self.getAmbientOcclusionPreset === 'function' && self.getAmbientOcclusionPreset() !== 'off');
     }
 
     function getPmndrsAmbientOcclusionBackend(self) {
@@ -317,16 +318,16 @@
 
     function getPmndrsComposerSignature(self, renderer, atmosphereConfig, PP) {
         var smaaPreset = getPmndrsSmaaPreset(self, PP);
-        return getPmndrsAtmosphereModeSignature(self, atmosphereConfig) +
-            '|ao:' + ((self && typeof self.getAmbientOcclusionPreset === 'function') ? self.getAmbientOcclusionPreset() : 'off') +
-            '|aoBackend:' + getPmndrsAmbientOcclusionBackend(self) +
-            '|aaMode:' + getPmndrsAAMode(self) +
-            '|aaPreset:' + getPmndrsAAPreset(self) +
-            '|msaa:' + getPmndrsRequestedMultisampling(self, renderer) +
-            '|smaa:' + (smaaPreset === null ? 'off' : smaaPreset) +
-            '|lut:' + readPmndrsBool(self, 'pmndrsLutEnabled') + ':' + normalizePmndrsLutLook(self && self.data ? self.data.pmndrsLutLook : 'neutral') + ':' + readPmndrsNumber(self, 'pmndrsLutStrength', 0, 1, 1.0) +
-            '|noise:' + readPmndrsBool(self, 'pmndrsNoiseEnabled') + ':' + readPmndrsNumber(self, 'pmndrsNoiseOpacity', 0, 0.2, 0.04) +
-            '|chroma:' + readPmndrsBool(self, 'pmndrsChromaticAberrationEnabled') + ':' + readPmndrsNumber(self, 'pmndrsChromaticAberrationOffset', 0, 0.006, 0.0015);
+        return `${getPmndrsAtmosphereModeSignature(self, atmosphereConfig) 
+            }|ao:${  (self && typeof self.getAmbientOcclusionPreset === 'function') ? self.getAmbientOcclusionPreset() : 'off' 
+            }|aoBackend:${  getPmndrsAmbientOcclusionBackend(self) 
+            }|aaMode:${  getPmndrsAAMode(self) 
+            }|aaPreset:${  getPmndrsAAPreset(self) 
+            }|msaa:${  getPmndrsRequestedMultisampling(self, renderer) 
+            }|smaa:${  smaaPreset === null ? 'off' : smaaPreset 
+            }|lut:${  readPmndrsBool(self, 'pmndrsLutEnabled')  }:${  normalizePmndrsLutLook(self && self.data ? self.data.pmndrsLutLook : 'neutral')  }:${  readPmndrsNumber(self, 'pmndrsLutStrength', 0, 1, 1.0) 
+            }|noise:${  readPmndrsBool(self, 'pmndrsNoiseEnabled')  }:${  readPmndrsNumber(self, 'pmndrsNoiseOpacity', 0, 0.2, 0.04) 
+            }|chroma:${  readPmndrsBool(self, 'pmndrsChromaticAberrationEnabled')  }:${  readPmndrsNumber(self, 'pmndrsChromaticAberrationOffset', 0, 0.006, 0.0015)}`;
     }
 
     function isPmndrsAADebugOverlayEnabled() {
@@ -419,7 +420,7 @@
             }
         };
         clone.customProgramCacheKey = function () {
-            return 'vrodos-horizon-' + cacheTag + '-opaque-cutout';
+            return `vrodos-horizon-${  cacheTag  }-opaque-cutout`;
         };
         clone.needsUpdate = true;
         return clone;
@@ -436,7 +437,7 @@
 
         overrides = self._pmndrsHorizonFoliageObjectOverrides;
         for (uuid in overrides) {
-            if (!overrides.hasOwnProperty(uuid)) {
+            if (!Object.prototype.hasOwnProperty.call(overrides, uuid)) {
                 continue;
             }
 
@@ -506,7 +507,7 @@
 
             if (!overrides[objectKey]) {
                 overrides[objectKey] = {
-                    object: object,
+                    object,
                     originalMaterial: object.material,
                     normalizedMaterials: []
                 };
@@ -525,7 +526,7 @@
         });
 
         for (uuid in overrides) {
-            if (!overrides.hasOwnProperty(uuid) || seen[uuid]) {
+            if (!Object.prototype.hasOwnProperty.call(overrides, uuid) || seen[uuid]) {
                 continue;
             }
 
@@ -609,22 +610,22 @@
                     }
                     return [
                         (material.name || material.type || 'material'),
-                        'transparent=' + (material.transparent === true ? '1' : '0'),
-                        'opacity=' + (typeof material.opacity === 'number' ? material.opacity.toFixed(2) : 'n/a'),
-                        'alphaTest=' + (typeof material.alphaTest === 'number' ? material.alphaTest.toFixed(3) : 'n/a'),
-                        'map=' + (material.map ? '1' : '0'),
-                        'alphaMap=' + (material.alphaMap ? '1' : '0')
+                        `transparent=${  material.transparent === true ? '1' : '0'}`,
+                        `opacity=${  typeof material.opacity === 'number' ? material.opacity.toFixed(2) : 'n/a'}`,
+                        `alphaTest=${  typeof material.alphaTest === 'number' ? material.alphaTest.toFixed(3) : 'n/a'}`,
+                        `map=${  material.map ? '1' : '0'}`,
+                        `alphaMap=${  material.alphaMap ? '1' : '0'}`
                     ].join(',');
                 }).join(' | ');
-                selectedSummaries.push((node.name || node.uuid || 'unnamed-mesh') + ' -> ' + materialSummary);
+                selectedSummaries.push(`${node.name || node.uuid || 'unnamed-mesh'  } -> ${  materialSummary}`);
             }
         });
 
         if (self._pmndrsHorizonFoliageOverlaySelectedCount !== selectedCount) {
-            console.info('[VRodos] PMNDRS Horizon foliage overlay selection refreshed: ' + selectedCount + ' alpha-cutout mesh(es) will bypass aerial compositing.');
+            console.info(`[VRodos] PMNDRS Horizon foliage overlay selection refreshed: ${  selectedCount  } alpha-cutout mesh(es) will bypass aerial compositing.`);
             self._pmndrsHorizonFoliageOverlaySelectedCount = selectedCount;
             if (selectedSummaries.length > 0) {
-                console.info('[VRodos] PMNDRS Horizon foliage overlay meshes:\n' + selectedSummaries.join('\n'));
+                console.info(`[VRodos] PMNDRS Horizon foliage overlay meshes:\n${  selectedSummaries.join('\n')}`);
             }
         }
 
@@ -780,7 +781,7 @@
             }
 
             swaps.push({
-                object: object,
+                object,
                 material: originalMaterial
             });
             object.material = overlayMaterial;
@@ -837,7 +838,7 @@
             this.selection.clear();
         }
         for (cacheKey in this._overlayMaterialCache) {
-            if (this._overlayMaterialCache.hasOwnProperty(cacheKey) &&
+            if (Object.prototype.hasOwnProperty.call(this._overlayMaterialCache, cacheKey) &&
                 this._overlayMaterialCache[cacheKey] &&
                 typeof this._overlayMaterialCache[cacheKey].dispose === 'function') {
                 this._overlayMaterialCache[cacheKey].dispose();
@@ -898,23 +899,23 @@
 
         lines = [
             'PMNDRS AA DEBUG',
-            'mode: ' + getPmndrsAAMode(self),
-            'preset: ' + getPmndrsAAPreset(self),
-            'requested msaa: ' + requestedMsaa,
-            'applied msaa: ' + appliedMsaa,
-            'webgl2/maxSamples: ' + ((renderer && renderer.capabilities && renderer.capabilities.isWebGL2 === true) ? 'yes' : 'no') + '/' + maxSamples,
-            'smaa effect: ' + (self && self.pmndrsSmaaEffect ? 'yes' : 'no'),
-            'smaa preset: ' + ((self && self._pmndrsAppliedSmaaPreset !== null && self._pmndrsAppliedSmaaPreset !== undefined) ? self._pmndrsAppliedSmaaPreset : 'off'),
-            'composer: ' + (self && self.pmndrsComposer ? 'yes' : 'no'),
-            'effect pass: ' + (self && self.pmndrsEffectPass ? 'yes' : 'no'),
-            'ao: ' + (self && self.pmndrsNativeSsaoEffect ? 'native-ssao' : 'off'),
-            'bloom: ' + (self && self.pmndrsBloomEffect ? 'yes' : 'no'),
-            'lut: ' + (self && self.pmndrsLutEffect ? normalizePmndrsLutLook(self.data.pmndrsLutLook) : 'off'),
-            'noise: ' + (self && self.pmndrsNoiseEffect ? 'yes' : 'off'),
-            'chromatic: ' + (self && self.pmndrsChromaticAberrationEffect ? 'yes' : 'off'),
-            'atmosphere: ' + (self && self.pmndrsAerialPerspectiveEffect ? 'effect' : ((self && typeof self.isPmndrsAtmosphereEnabled === 'function' && self.isPmndrsAtmosphereEnabled()) ? 'takram-only' : 'off')),
-            'horizon aerial: ' + (shouldEnablePmndrsHorizonAerial(self) ? 'experimental-on' : 'off'),
-            'msaa fallback: ' + ((self && self._pmndrsMsaaFallbackReason) ? self._pmndrsMsaaFallbackReason : 'none')
+            `mode: ${  getPmndrsAAMode(self)}`,
+            `preset: ${  getPmndrsAAPreset(self)}`,
+            `requested msaa: ${  requestedMsaa}`,
+            `applied msaa: ${  appliedMsaa}`,
+            `webgl2/maxSamples: ${  (renderer && renderer.capabilities && renderer.capabilities.isWebGL2 === true) ? 'yes' : 'no'  }/${  maxSamples}`,
+            `smaa effect: ${  self && self.pmndrsSmaaEffect ? 'yes' : 'no'}`,
+            `smaa preset: ${  (self && self._pmndrsAppliedSmaaPreset !== null && self._pmndrsAppliedSmaaPreset !== undefined) ? self._pmndrsAppliedSmaaPreset : 'off'}`,
+            `composer: ${  self && self.pmndrsComposer ? 'yes' : 'no'}`,
+            `effect pass: ${  self && self.pmndrsEffectPass ? 'yes' : 'no'}`,
+            `ao: ${  self && self.pmndrsNativeSsaoEffect ? 'native-ssao' : 'off'}`,
+            `bloom: ${  self && self.pmndrsBloomEffect ? 'yes' : 'no'}`,
+            `lut: ${  self && self.pmndrsLutEffect ? normalizePmndrsLutLook(self.data.pmndrsLutLook) : 'off'}`,
+            `noise: ${  self && self.pmndrsNoiseEffect ? 'yes' : 'off'}`,
+            `chromatic: ${  self && self.pmndrsChromaticAberrationEffect ? 'yes' : 'off'}`,
+            `atmosphere: ${  self && self.pmndrsAerialPerspectiveEffect ? 'effect' : ((self && typeof self.isPmndrsAtmosphereEnabled === 'function' && self.isPmndrsAtmosphereEnabled()) ? 'takram-only' : 'off')}`,
+            `horizon aerial: ${  shouldEnablePmndrsHorizonAerial(self) ? 'experimental-on' : 'off'}`,
+            `msaa fallback: ${  (self && self._pmndrsMsaaFallbackReason) ? self._pmndrsMsaaFallbackReason : 'none'}`
         ];
 
         overlay.textContent = lines.join('\n');
@@ -1163,7 +1164,7 @@
                     this.pmndrsNativeSsaoEffect = null;
                 }
             } else if (!this._pmndrsNativeSsaoSkipWarned) {
-                console.info('[VRodos] pmndrs pipeline: AO preset "' + aoPreset + '" requested but POSTPROCESSING.NormalPass/SSAOEffect is not loaded.');
+                console.info(`[VRodos] pmndrs pipeline: AO preset "${  aoPreset  }" requested but POSTPROCESSING.NormalPass/SSAOEffect is not loaded.`);
                 this._pmndrsNativeSsaoSkipWarned = true;
             }
         }

@@ -2,6 +2,7 @@
  * VRodos Quality Profile Helpers
  * Extracted from vrodos_scene_settings.component.js
  */
+/* global VRODOSMaster */
 (function () {
     var H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     var TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 0.0047;
@@ -150,10 +151,10 @@
         }
         var from = hexToRgb(fromHex);
         var to = hexToRgb(toHex);
-        return '#' +
-            toHex(lerpNumber(from.r, to.r, t)) +
-            toHex(lerpNumber(from.g, to.g, t)) +
-            toHex(lerpNumber(from.b, to.b, t));
+        return `#${ 
+            toHex(lerpNumber(from.r, to.r, t)) 
+            }${toHex(lerpNumber(from.g, to.g, t)) 
+            }${toHex(lerpNumber(from.b, to.b, t))}`;
     }
 
     function getPmndrsAtmosphereLookDefaults(preset, intensity) {
@@ -212,8 +213,8 @@
         }
 
         return {
-            keyColor: keyColor,
-            fillColor: fillColor,
+            keyColor,
+            fillColor,
             keyIntensity: readPmndrsAtmosphereNumber(self, 'pmndrsHorizonKeyLightIntensity', 0, 3, defaults.keyIntensity),
             fillIntensity: readPmndrsAtmosphereNumber(self, 'pmndrsHorizonFillLightIntensity', 0, 3, defaults.fillIntensity)
         };
@@ -221,14 +222,12 @@
 
     function getPmndrsAtmosphereResourceProfile(self, renderer) {
         var quality = normalizePmndrsAtmosphereQuality(self && self.data ? self.data.pmndrsAtmosphereQuality : 'balanced');
-        var supportsFloatLinear = !!(renderer && renderer.extensions && renderer.extensions.get('OES_texture_float_linear'));
-        var canUseFloat = !!(
-            renderer &&
+        var supportsFloatLinear = Boolean(renderer && renderer.extensions && renderer.extensions.get('OES_texture_float_linear'));
+        var canUseFloat = Boolean(renderer &&
             renderer.capabilities &&
             renderer.capabilities.isWebGL2 &&
             typeof THREE.FloatType !== 'undefined' &&
-            supportsFloatLinear
-        );
+            supportsFloatLinear);
         var wantsHighPrecision = quality === 'quality' || quality === 'cinematic' || quality === 'custom' || quality === 'balanced';
         var type = wantsHighPrecision ? THREE.FloatType : THREE.HalfFloatType;
         var higherOrderScattering = quality !== 'performance';
@@ -237,11 +236,11 @@
         var combinedScattering = true;
 
         return {
-            quality: quality,
-            type: type,
+            quality,
+            type,
             useFloat: type === THREE.FloatType,
-            higherOrderScattering: higherOrderScattering,
-            combinedScattering: combinedScattering,
+            higherOrderScattering,
+            combinedScattering,
             signature: [
                 quality,
                 type === THREE.FloatType ? 'float' : 'half',
@@ -260,7 +259,7 @@
 
     function readPmndrsAtmosphereBool(self, key, fallback) {
         if (!self || !self.data || self.data[key] === undefined) {
-            return !!fallback;
+            return Boolean(fallback);
         }
         var value = self.data[key];
         return value === true || value === 'true' || value === '1' || value === 1;
@@ -271,7 +270,7 @@
         if (!/^#?[0-9a-fA-F]{6}$/.test(raw)) {
             return fallback;
         }
-        return raw.charAt(0) === '#' ? raw : ('#' + raw);
+        return raw.charAt(0) === '#' ? raw : (`#${  raw}`);
     }
 
     function hasPmndrsDebugFlag(debugKey, queryKey) {
@@ -462,12 +461,12 @@
             return false;
         }
 
-        self._pmndrsAtmosphereState.skyMesh.visible = !!visible;
+        self._pmndrsAtmosphereState.skyMesh.visible = Boolean(visible);
         return true;
     }
 
     function isPmndrsAtmosphereSkyVisible(self) {
-        return !!(self &&
+        return Boolean(self &&
             self._pmndrsAtmosphereState &&
             self._pmndrsAtmosphereState.skyMesh &&
             self._pmndrsAtmosphereState.skyMesh.visible);
@@ -623,14 +622,14 @@
         }
 
         self._pmndrsHorizonDiagSignatures[context] = signature;
-        console.info('[VRodos] PMNDRS horizon diagnostic (' + context + '): owner=' + owner +
-            ', reflection=' + reflectionSource +
-            ', ground=' + (atmosphereConfig && atmosphereConfig.groundEnabled ? 'on' : 'off') +
-            ', sun=' + (atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'off' : 'on') +
-            ', sunDir=' + formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null) +
-            ', helperKey=' + (helperConfig ? helperConfig.keyIntensity.toFixed(2) : 'n/a') +
-            ', helperFill=' + (helperConfig ? helperConfig.fillIntensity.toFixed(2) : 'n/a') +
-            ', sunScale=' + (visibleSunScale !== null ? visibleSunScale.toFixed(2) : 'n/a'));
+        console.info(`[VRodos] PMNDRS horizon diagnostic (${  context  }): owner=${  owner 
+            }, reflection=${  reflectionSource 
+            }, ground=${  atmosphereConfig && atmosphereConfig.groundEnabled ? 'on' : 'off' 
+            }, sun=${  atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'off' : 'on' 
+            }, sunDir=${  formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null) 
+            }, helperKey=${  helperConfig ? helperConfig.keyIntensity.toFixed(2) : 'n/a' 
+            }, helperFill=${  helperConfig ? helperConfig.fillIntensity.toFixed(2) : 'n/a' 
+            }, sunScale=${  visibleSunScale !== null ? visibleSunScale.toFixed(2) : 'n/a'}`);
     }
 
     function hidePmndrsHorizonEnvironmentVisuals(self) {
@@ -691,14 +690,12 @@
     }
 
     function shouldUsePmndrsTakramHorizonPath(self) {
-        return !!(
-            self &&
+        return Boolean(self &&
             self.data &&
             self.data.selChoice === "0" &&
             self.data.postFXEngine === 'pmndrs' &&
             self.data.pmndrsAtmosphereEnabled !== '0' &&
-            window.VRODOS_TAKRAM_ATMOSPHERE
-        );
+            window.VRODOS_TAKRAM_ATMOSPHERE);
     }
 
     function shouldUsePmndrsHorizonAerialPerspectivePath(self) {
@@ -730,19 +727,19 @@
 
         self.ensurePhotorealHelperLight(
             'vrodos-pmndrs-horizon-key-light',
-            'type: directional; color: ' + helperConfig.keyColor + '; intensity: ' + helperConfig.keyIntensity.toFixed(2) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + shadowMap + '; shadowMapHeight: ' + shadowMap + '; shadowCameraTop: 28; shadowCameraRight: 28; shadowCameraLeft: -28; shadowCameraBottom: -28; shadowBias: -0.00012;',
+            `type: directional; color: ${  helperConfig.keyColor  }; intensity: ${  helperConfig.keyIntensity.toFixed(2)  }; castShadow: ${  castShadow  }; shadowMapWidth: ${  shadowMap  }; shadowMapHeight: ${  shadowMap  }; shadowCameraTop: 28; shadowCameraRight: 28; shadowCameraLeft: -28; shadowCameraBottom: -28; shadowBias: -0.00012;`,
             formatVectorPosition(config.localSunDirection || config.sunDirection, 28, 8)
         );
 
         self.ensurePhotorealHelperLight(
             'vrodos-pmndrs-horizon-fill-light',
-            'type: ambient; color: ' + helperConfig.fillColor + '; intensity: ' + helperConfig.fillIntensity.toFixed(2) + ';',
+            `type: ambient; color: ${  helperConfig.fillColor  }; intensity: ${  helperConfig.fillIntensity.toFixed(2)  };`,
             '0 6 0'
         );
     }
 
     function isPmndrsTakramLocalHorizonMode(self) {
-        return !!(self && self.data && self.data.selChoice === "0");
+        return Boolean(self && self.data && self.data.selChoice === "0");
     }
 
     function applyPmndrsTakramLocalHorizonConstraints(self, config) {
@@ -821,9 +818,9 @@
         // full Takram light-source swap lands in a later phase.
         state.mode = 'local-light-source-prep';
         state.owner = 'takram-config-prep';
-        state.groundEnabled = !!config.groundEnabled;
+        state.groundEnabled = Boolean(config.groundEnabled);
         state.takramSunEnabled = config.takramSunEnabled !== false;
-        state.usesTakramGround = !!config.groundEnabled;
+        state.usesTakramGround = Boolean(config.groundEnabled);
         state.usesTakramSunDisk = config.takramSunEnabled !== false;
         state.usesTakramLightSources = false;
 
@@ -858,9 +855,9 @@
         var usesCustomValues = preset === 'custom';
         var config = {
             enabled: this.data.postFXEngine === 'pmndrs' && this.data.pmndrsAtmosphereEnabled !== '0',
-            preset: preset,
-            presetIntensity: presetIntensity,
-            quality: quality,
+            preset,
+            presetIntensity,
+            quality,
             sunElevationDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunElevationDeg', -10, 85, presetDefaults.sunElevationDeg) : presetDefaults.sunElevationDeg,
             sunAzimuthDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunAzimuthDeg', -180, 180, presetDefaults.sunAzimuthDeg) : presetDefaults.sunAzimuthDeg,
             sunDistance: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunDistance', 1500, 20000, presetDefaults.sunDistance) : presetDefaults.sunDistance,
@@ -1043,7 +1040,7 @@
                     });
                     state.textures = state.generator.textures;
                     state.precision = 'half-fallback';
-                    state.profileSignature = profile.quality + ':half:' + (profile.higherOrderScattering ? 'higher' : 'basic') + ':' + (profile.combinedScattering ? 'combined' : 'split');
+                    state.profileSignature = `${profile.quality  }:half:${  profile.higherOrderScattering ? 'higher' : 'basic'  }:${  profile.combinedScattering ? 'combined' : 'split'}`;
                     state.promise = state.generator.update().catch(function (fallbackErr) {
                         state.failed = true;
                         console.warn('[VRodos] Takram atmosphere precompute failed, falling back to PMNDRS gradient horizon:', fallbackErr);
@@ -1662,7 +1659,7 @@
 
         this.el.object3D.traverse(function (node) {
             if (node.isMesh) {
-                var isNavmeshMesh = !!(node.el && node.el.classList && node.el.classList.contains('vrodos-navmesh'));
+                var isNavmeshMesh = Boolean(node.el && node.el.classList && node.el.classList.contains('vrodos-navmesh'));
                 if (isNavmeshMesh) {
                     node.castShadow = false;
                     node.receiveShadow = false;
@@ -1670,7 +1667,7 @@
                 }
 
                 var nodeMaterial = Array.isArray(node.material) ? node.material[0] : node.material;
-                var isTransparentMesh = !!(nodeMaterial && (nodeMaterial.transparent || nodeMaterial.opacity < 0.98));
+                var isTransparentMesh = Boolean(nodeMaterial && (nodeMaterial.transparent || nodeMaterial.opacity < 0.98));
 
                 node.castShadow = shadowsEnabled && !isTransparentMesh;
                 node.receiveShadow = shadowsEnabled;
@@ -1726,7 +1723,7 @@
             : 0;
         var options = {
             renderQuality: this.data.renderQuality || 'standard',
-            maxAnisotropy: maxAnisotropy,
+            maxAnisotropy,
             reflectionProfile: this.data.reflectionProfile || 'balanced',
             ambientOcclusionPreset: this.getAmbientOcclusionPreset(),
             environmentMap: sceneObj ? (sceneObj.environment || null) : null
@@ -1921,13 +1918,13 @@
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-key-light',
-            'type: directional; color: #fff2d8; intensity: ' + (enhancedReflections ? Math.max(contactShadowSettings.helperKeyIntensity, 1.0).toFixed(2) : (softReflections ? Math.max(contactShadowSettings.helperKeyIntensity - 0.08, 0.72).toFixed(2) : contactShadowSettings.helperKeyIntensity.toFixed(2))) + '; castShadow: ' + castShadow + '; shadowMapWidth: ' + keyShadowMap + '; shadowMapHeight: ' + keyShadowMap + '; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: ' + contactShadowSettings.bias + ';',
+            `type: directional; color: #fff2d8; intensity: ${  enhancedReflections ? Math.max(contactShadowSettings.helperKeyIntensity, 1.0).toFixed(2) : (softReflections ? Math.max(contactShadowSettings.helperKeyIntensity - 0.08, 0.72).toFixed(2) : contactShadowSettings.helperKeyIntensity.toFixed(2))  }; castShadow: ${  castShadow  }; shadowMapWidth: ${  keyShadowMap  }; shadowMapHeight: ${  keyShadowMap  }; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: ${  contactShadowSettings.bias  };`,
             contactShadowSettings.helperPosition
         );
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-fill-light',
-            'type: ambient; color: #d8e4ff; intensity: ' + (enhancedReflections ? Math.max(contactShadowSettings.helperFillIntensity, 0.4).toFixed(2) : (softReflections ? Math.max(contactShadowSettings.helperFillIntensity - 0.05, 0.22).toFixed(2) : contactShadowSettings.helperFillIntensity.toFixed(2))) + ';',
+            `type: ambient; color: #d8e4ff; intensity: ${  enhancedReflections ? Math.max(contactShadowSettings.helperFillIntensity, 0.4).toFixed(2) : (softReflections ? Math.max(contactShadowSettings.helperFillIntensity - 0.05, 0.22).toFixed(2) : contactShadowSettings.helperFillIntensity.toFixed(2))  };`,
             '0 4 0'
         );
     };

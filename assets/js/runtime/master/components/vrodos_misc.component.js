@@ -58,14 +58,14 @@ AFRAME.registerComponent('entity-movement-emitter', {
 
 AFRAME.registerComponent('static-mask-me', {
     init: function () {
-        let el = this.el;
+        const el = this.el;
         const maskMaterial = new THREE.MeshBasicMaterial({
             color: 0x00ffff,
             transparent: false,
             colorWrite: false,
         });
         maskMaterial.needsUpdate = true;
-        let mesh = el.getObject3D('mesh');
+        const mesh = el.getObject3D('mesh');
         if (!mesh) return;
         mesh.traverse(node => {
             if (node.isMesh) {
@@ -81,8 +81,8 @@ AFRAME.registerComponent('render-order-change', {
         renderingOrderArg: { type: 'string', default: '2000' }
     },
     init: function () {
-        let el = this.el;
-        let mesh = el.getObject3D('mesh');
+        const el = this.el;
+        const mesh = el.getObject3D('mesh');
         if (!mesh) return;
         mesh.traverse(node => {
             if (node.isMesh) {
@@ -110,12 +110,12 @@ AFRAME.registerComponent('show-position', {
     },
     tick: function (time, timeDelta) {
         if (this.positionShow) {
-            let p = this.el.getAttribute('position');
-            this.positionShow.innerHTML = Math.round(p.x * 100) / 100 + ", " + Math.round(p.y * 100) / 100 + ", " + Math.round(p.z * 100) / 100;
+            const p = this.el.getAttribute('position');
+            this.positionShow.innerHTML = `${Math.round(p.x * 100) / 100  }, ${  Math.round(p.y * 100) / 100  }, ${  Math.round(p.z * 100) / 100}`;
         }
 
         if (this.occupantsNumberShow && typeof window.easyrtc !== 'undefined' && typeof window.NAF !== 'undefined') {
-            let occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
+            const occupants = window.easyrtc.getRoomOccupantsAsMap(window.NAF.room);
             if (occupants) {
                 this.occupantsNumberShow.innerHTML = Object.keys(occupants).length;
             }

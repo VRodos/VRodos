@@ -2,8 +2,10 @@
  * VRodos Scene Probe & Environment Map Helpers
  * Extracted from vrodos_scene_settings.component.js
  */
+/* global VRODOSMaster */
 (function () {
-    var H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
+    VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
+    var H = VRODOSMaster.SceneSettingsHelpers;
     H.clearHdrEnvironmentMap = function (clearSceneEnvironment) {
         if (this._envMapRenderTarget) {
             this._envMapRenderTarget.dispose();
@@ -200,15 +202,13 @@
         var anchorObject = this.getSceneProbeAnchorObject();
         var atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
         var showedTakramProbeSky = false;
-        var shouldSyncTakramHorizon = !!(
-            this &&
+        var shouldSyncTakramHorizon = Boolean(this &&
             this.data &&
             this.data.selChoice === "0" &&
             this.data.postFXEngine === 'pmndrs' &&
             atmosphereConfig &&
             atmosphereConfig.enabled &&
-            window.VRODOS_TAKRAM_ATMOSPHERE
-        );
+            window.VRODOS_TAKRAM_ATMOSPHERE);
 
         if (!renderer || !sceneObj || !anchorObject || !this.ensureSceneProbeResources()) {
             return false;
@@ -225,7 +225,7 @@
                 this.updatePmndrsHorizonSun();
             }
             if (typeof this.showPmndrsAtmosphereSkyForSceneProbe === 'function') {
-                showedTakramProbeSky = !!this.showPmndrsAtmosphereSkyForSceneProbe(atmosphereConfig);
+                showedTakramProbeSky = Boolean(this.showPmndrsAtmosphereSkyForSceneProbe(atmosphereConfig));
             }
             if (typeof this.logPmndrsHorizonDiagnostic === 'function') {
                 this.logPmndrsHorizonDiagnostic('scene-probe-capture', atmosphereConfig);
@@ -337,7 +337,7 @@
         if (!hdrFile) { return; }
 
         var baseUrl = window.VRODOS_ASSET_IMAGE_URL || '../../assets/images/';
-        var hdrUrl = baseUrl + 'hdr/' + hdrFile;
+        var hdrUrl = `${baseUrl  }hdr/${  hdrFile}`;
         var renderer = this.el.renderer;
         var self = this;
 

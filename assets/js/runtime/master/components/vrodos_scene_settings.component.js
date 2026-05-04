@@ -256,18 +256,16 @@ AFRAME.registerComponent('scene-settings', {
         return this.data.reflectionSource === 'scene-probe' ? 'scene-probe' : 'hdr';
     },
     isImmersiveXrActive: function () {
-        return !!(this.el.renderer && this.el.renderer.xr && this.el.renderer.xr.isPresenting);
+        return Boolean(this.el.renderer && this.el.renderer.xr && this.el.renderer.xr.isPresenting);
     },
     isAFrameVrModeActive: function () {
-        return !!(this.el.is && this.el.is('vr-mode'));
+        return Boolean(this.el.is && this.el.is('vr-mode'));
     },
     isDocumentFullscreenActive: function () {
-        return !!(
-            document.fullscreenElement ||
+        return Boolean(document.fullscreenElement ||
             document.webkitFullscreenElement ||
             document.mozFullScreenElement ||
-            document.msFullscreenElement
-        );
+            document.msFullscreenElement);
     },
     getPresentationMode: function () {
         if (this.isImmersiveXrActive()) {
@@ -284,7 +282,7 @@ AFRAME.registerComponent('scene-settings', {
         return this.isImmersiveXrActive();
     },
     isMobileDevice: function () {
-        return !!(AFRAME.utils &&
+        return Boolean(AFRAME.utils &&
             AFRAME.utils.device &&
             typeof AFRAME.utils.device.isMobile === 'function' &&
             AFRAME.utils.device.isMobile());
@@ -294,7 +292,7 @@ AFRAME.registerComponent('scene-settings', {
             this.data.renderQuality === 'high' &&
             !this.isVrPresentationActive() &&
             !this.isMobileDevice() &&
-            !!this.el.renderer &&
+            Boolean(this.el.renderer) &&
             typeof THREE.WebGLCubeRenderTarget !== 'undefined' &&
             typeof THREE.CubeCamera !== 'undefined' &&
             typeof THREE.PMREMGenerator !== 'undefined';
@@ -724,7 +722,7 @@ AFRAME.registerComponent('scene-settings', {
             const privateChatBtn = document.getElementById("private-chat-button");
             if (privateChatBtn) {
                 privateChatBtn.addEventListener("click", () => {
-                    let event = new CustomEvent('chat-selected', { "detail": "private" });
+                    const event = new CustomEvent('chat-selected', { "detail": "private" });
                     document.dispatchEvent(event);
                     if (typeof window.gtag === 'function') window.gtag('event', 'chat_private_tab_selected');
                 });
@@ -733,7 +731,7 @@ AFRAME.registerComponent('scene-settings', {
             const publicChatBtn = document.getElementById("public-chat-button");
             if (publicChatBtn) {
                 publicChatBtn.addEventListener("click", (evt) => {
-                    let event = new CustomEvent('chat-selected', { "detail": "public" });
+                    const event = new CustomEvent('chat-selected', { "detail": "public" });
                     document.dispatchEvent(event);
                     if (typeof window.gtag === 'function') window.gtag('event', 'chat_public_tab_selected');
                 });
@@ -749,19 +747,19 @@ AFRAME.registerComponent('scene-settings', {
                     publicChatBtn.disabled = settings && settings.public_chat != "1";
                 }
                 if (privateChatBtn) {
-                    const hasPrivateChat = !!document.querySelector('[chat-poi]');
+                    const hasPrivateChat = Boolean(document.querySelector('[chat-poi]'));
                     privateChatBtn.style.visibility = hasPrivateChat ? 'visible' : 'hidden';
                     privateChatBtn.disabled = !hasPrivateChat;
                 }
             }
 
             // Avatar Selector
-            let avatarDialog = document.querySelector('#avatar-selection-dialog');
+            const avatarDialog = document.querySelector('#avatar-selection-dialog');
             if (avatarDialog) {
-                let closeAvatarDialogListener = function () {
+                const closeAvatarDialogListener = function () {
                     avatarDialog.removeEventListener('close', closeAvatarDialogListener);
-                    if (avatarDialog.returnValue !== 'accept' && typeof selectAvatarType !== 'undefined') {
-                        selectAvatarType('no-avatar');
+                    if (avatarDialog.returnValue !== 'accept' && typeof window.selectAvatarType === 'function') {
+                        window.selectAvatarType('no-avatar');
                     }
                 };
 
@@ -774,7 +772,7 @@ AFRAME.registerComponent('scene-settings', {
                         avatarDialog.showModal();
                     }
                 } else {
-                    if (typeof selectAvatarType !== 'undefined') selectAvatarType('no-avatar');
+                    if (typeof window.selectAvatarType === 'function') window.selectAvatarType('no-avatar');
                 }
             }
 
@@ -793,41 +791,41 @@ AFRAME.registerComponent('scene-settings', {
             if (typeof window.gtag === 'function') window.gtag('event', 'vr_disabled');
         });
 
-        let cam = document.querySelector("#cameraA");
+        const cam = document.querySelector("#cameraA");
         if (cam) {
             if (this.data.pr_type !== "vrexpo_games") {
                 cam.setAttribute("camera", "fov: 60");
             } else {
                 cam.setAttribute("fov", "60");
                 cam.setAttribute("camera", "fov: 60");
-                let my_face = cam.querySelector('.face');
+                const my_face = cam.querySelector('.face');
                 if (my_face) my_face.setAttribute("visible", "false");
             }
         }
 
-        let backgroundEl = this.el;
+        const backgroundEl = this.el;
         const presetGroundEnabled = this.data.presetGroundEnabled !== "0";
         if (!this.data.selChoice) this.data.selChoice = "0";
 
-        let clearGeneratedBackground = function () {
+        const clearGeneratedBackground = function () {
             backgroundEl.removeAttribute("background");
             backgroundEl.removeAttribute("environment");
             Array.prototype.forEach.call(backgroundEl.querySelectorAll('a-sun-sky'), function (oldSun) {
                 if (oldSun && oldSun.parentNode) oldSun.parentNode.removeChild(oldSun);
             });
-            let manSky = document.getElementById('default-sky');
+            const manSky = document.getElementById('default-sky');
             if (manSky) manSky.parentNode.removeChild(manSky);
-            let manSun = document.getElementById('default-sun');
+            const manSun = document.getElementById('default-sun');
             if (manSun) manSun.parentNode.removeChild(manSun);
-            let pmndrsSun = document.getElementById('vrodos-pmndrs-sun');
+            const pmndrsSun = document.getElementById('vrodos-pmndrs-sun');
             if (pmndrsSun) pmndrsSun.parentNode.removeChild(pmndrsSun);
-            let pmndrsSunHaze = document.getElementById('vrodos-pmndrs-sun-haze');
+            const pmndrsSunHaze = document.getElementById('vrodos-pmndrs-sun-haze');
             if (pmndrsSunHaze) pmndrsSunHaze.parentNode.removeChild(pmndrsSunHaze);
-            let oldOceanPlane = backgroundEl.querySelector('.ocean_asset');
+            const oldOceanPlane = backgroundEl.querySelector('.ocean_asset');
             if (oldOceanPlane) oldOceanPlane.parentNode.removeChild(oldOceanPlane);
-            let oldPresetSky = backgroundEl.querySelector('a-sky[data-vrodos-preset-sky="true"]');
+            const oldPresetSky = backgroundEl.querySelector('a-sky[data-vrodos-preset-sky="true"]');
             if (oldPresetSky) oldPresetSky.parentNode.removeChild(oldPresetSky);
-            let customSky = backgroundEl.querySelector('#sky');
+            const customSky = backgroundEl.querySelector('#sky');
             if (customSky) customSky.parentNode.removeChild(customSky);
         };
 
@@ -856,12 +854,12 @@ AFRAME.registerComponent('scene-settings', {
                 clearGeneratedBackground();
 
                 if (this.data.presChoice == "ocean") {
-                    let sky = document.createElement('a-sky');
+                    const sky = document.createElement('a-sky');
                     sky.setAttribute("color", "#a4bede");
                     sky.setAttribute("data-vrodos-preset-sky", "true");
                     backgroundEl.appendChild(sky);
                     if (presetGroundEnabled) {
-                        let plane = document.createElement('a-plane');
+                        const plane = document.createElement('a-plane');
                         plane.setAttribute("color", "#ffffff");
                         plane.setAttribute("position", "0 4.5 0");
                         plane.setAttribute("height", "11");
@@ -882,9 +880,9 @@ AFRAME.registerComponent('scene-settings', {
                 break;
             case "3":
                 clearGeneratedBackground();
-                let customImgAsset = document.querySelector('#custom_sky');
+                const customImgAsset = document.querySelector('#custom_sky');
                 if (customImgAsset && customImgAsset.getAttribute("src")) {
-                    let skyElem = document.createElement('a-sky');
+                    const skyElem = document.createElement('a-sky');
                     skyElem.setAttribute("id", "sky");
                     skyElem.setAttribute("src", "#custom_sky");
                     backgroundEl.appendChild(skyElem);
@@ -922,15 +920,15 @@ AFRAME.registerComponent('scene-settings', {
         }
         this.disableFPSMeter();
         this.removePhotorealHelperLights();
-        let manualSun = document.getElementById('default-sun');
+        const manualSun = document.getElementById('default-sun');
         if (manualSun && manualSun.parentNode) {
             manualSun.parentNode.removeChild(manualSun);
         }
-        let pmndrsSun = document.getElementById('vrodos-pmndrs-sun');
+        const pmndrsSun = document.getElementById('vrodos-pmndrs-sun');
         if (pmndrsSun && pmndrsSun.parentNode) {
             pmndrsSun.parentNode.removeChild(pmndrsSun);
         }
-        let pmndrsSunHaze = document.getElementById('vrodos-pmndrs-sun-haze');
+        const pmndrsSunHaze = document.getElementById('vrodos-pmndrs-sun-haze');
         if (pmndrsSunHaze && pmndrsSunHaze.parentNode) {
             pmndrsSunHaze.parentNode.removeChild(pmndrsSunHaze);
         }
