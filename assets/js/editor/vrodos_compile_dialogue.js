@@ -513,8 +513,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     window.vrodosApplyCompileDialogSettingsToScene = applyCompileDialogSettingsToScene;
+    VRODOS.ui.applyCompileDialogSettingsToScene = applyCompileDialogSettingsToScene;
+    VRODOS.ui.ensureCompileSceneSettingsDefaults = ensureCompileSceneSettingsDefaults;
 
-    window.syncCompileDialogFromSceneSettings = function() {
+    function syncCompileDialogFromSceneSettings() {
         const controls = getCompileDialogElements();
 
         if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.ambientOcclusionPreset || !controls.contactShadowPreset || !controls.fpsMeter || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile || !controls.reflectionSource) {
@@ -768,7 +770,10 @@ window.addEventListener('DOMContentLoaded', () => {
         updatePmndrsValueLabels();
 
         syncCompilePostFxState();
-    };
+    }
+
+    window.syncCompileDialogFromSceneSettings = syncCompileDialogFromSceneSettings;
+    VRODOS.ui.syncCompileDialogFromSceneSettings = syncCompileDialogFromSceneSettings;
 
     const controls = getCompileDialogElements();
     if (controls.renderQuality) {
