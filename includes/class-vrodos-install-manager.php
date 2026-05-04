@@ -31,7 +31,6 @@ class VRodos_Install_Manager {
 		$this->vrodos_db_create_games_versions_table();
 		$this->create_required_directories();
 		VRodos_Pages_Manager::vrodos_create_pages();
-		VRodos_Pages_Manager::vrodos_fx_admin_notice_activation_hook();
 	}
 
 	/**

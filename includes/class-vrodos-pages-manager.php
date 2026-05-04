@@ -127,36 +127,6 @@ class VRodos_Pages_Manager {
 
 	public function vrodos_fx_admin_notice_notice() {
 		if ( get_transient( 'vrodos_fx-admin-notice' ) ) {
-			if ( count( get_terms( 'nav_menu' ) ) == 0 ) {
-				wp_create_nav_menu( 'main' );
-			}
-			$menus               = get_terms( 'nav_menu' );
-			$assetsList_Page     = VRodos_Core_Manager::vrodos_getEditpage( 'assetslist' )[0];
-			$projectManager_Page = VRodos_Core_Manager::vrodos_getEditpage( 'allgames' )[0];
-			for ( $i = 0; $i < count( $menus ); $i++ ) {
-				$menu_items                      = wp_get_nav_menu_items( $menus[ $i ]->term_id, ['post_status' => 'publish'] );
-				$assetsList_itemExistsInMenu     = false;
-				$projectManager_itemExistsInMenu = false;
-				foreach ( $menu_items as $menu_item ) {
-					$assetsList_itemExistsInMenu     = $menu_item->object_id == $assetsList_Page->ID;
-					$projectManager_itemExistsInMenu = $menu_item->object_id == $projectManager_Page->ID;
-				}
-				if ( ! $assetsList_itemExistsInMenu ) {
-					wp_update_nav_menu_item(
-						$menus[ $i ]->term_id,
-						0,
-						['menu-item-title'     => 'Assets List', 'menu-item-object-id' => $assetsList_Page->ID, 'menu-item-status'    => 'publish', 'menu-item-object'    => 'page', 'menu-item-type'      => 'post_type']
-					);
-				}
-				if ( ! $projectManager_itemExistsInMenu ) {
-					wp_update_nav_menu_item(
-						$menus[ $i ]->term_id,
-						0,
-						['menu-item-title'     => 'Project Manager', 'menu-item-object-id' => $projectManager_Page->ID, 'menu-item-status'    => 'publish', 'menu-item-object'    => 'page', 'menu-item-type'      => 'post_type']
-					);
-				}
-			}
-			echo '<div class="updated notice is-dismissible"><p>Thank you for using VRodos! <strong>Two pages have been added to menu</strong>.</p></div>';
 			delete_transient( 'vrodos_fx-admin-notice' );
 		}
 	}
