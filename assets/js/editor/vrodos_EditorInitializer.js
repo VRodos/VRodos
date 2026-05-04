@@ -6,7 +6,8 @@
  */
 
 // 1. Map localized data to the unified namespace
-VRODOS.data = Object.assign({}, vrodos_data);
+window.VRODOS = window.VRODOS || { ui: { transform: {} }, utils: {}, api: {}, data: {} };
+VRODOS.data = Object.assign({}, typeof vrodos_data !== 'undefined' ? vrodos_data : {});
 VRODOS.data.paths = vrodos_data.paths || {};
 
 // Map to window for backward compatibility (legacy scripts)
