@@ -7,11 +7,29 @@
 window.VRODOS = window.VRODOS || {
     editor: {
         _lastClickX: 0,
-        _lastClickY: 0
+        _lastClickY: 0,
+        envir: null,
+        transform_controls: null,
+        transform_controls_helper: null,
+        avatarControlsEnabled: false,
+        selected_object_name: null,
+        undoManager: null,
+        currentSelectedRealObject: null,
+        isPaused: false,
+        manager: null,
+        firstPersonBlockerBtn: null,
+        id_animation_frame: null,
+        updatePositionsAndControls: () => {},
+        animate: () => {}
     },
     runtime: {},
-    data: {},
-    api: {},
+    data: {
+        editor: {},
+        scene: {}
+    },
+    api: {
+        whenSceneSaveSettles: () => Promise.resolve()
+    },
     exporter: {},
     importer: {},
     loader: {},
@@ -21,9 +39,11 @@ window.VRODOS = window.VRODOS || {
         transform: {}
     },
     utils: {},
-    config: typeof vrodos_api_config !== 'undefined' ? vrodos_api_config : {
+    config: Object.assign({
         ajax_url: '',
         isAdmin: 'front',
-        plugin_url: ''
-    }
+        plugin_url: '',
+        current_user_id: -1,
+        parameter_Scenepass: ''
+    }, typeof vrodos_api_config !== 'undefined' ? vrodos_api_config : {})
 };

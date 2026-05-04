@@ -126,8 +126,8 @@ VRODOS.api.syncSceneSetting = function(key, value, resources3D) {
         parsedValue = value || config.default;
     }
 
-    // 2. Apply to envir.scene
-    envir.scene[envirKey] = parsedValue;
+    // 2. Apply to VRODOS.editor.envir.scene
+    VRODOS.editor.envir.scene[envirKey] = parsedValue;
 
     // 3. Sync common UI elements (Checkboxes)
     const checkboxMap = {
@@ -150,7 +150,7 @@ VRODOS.api.syncSceneSetting = function(key, value, resources3D) {
 
     // 4. Handle Side Effects (Background, Fog, etc.)
     if (key === 'backgroundStyleOption') {
-        envir.scene.bcg_selection = envir.scene.backgroundStyleOption;
+        VRODOS.editor.envir.scene.bcg_selection = VRODOS.editor.envir.scene.backgroundStyleOption;
 
         const color_sel = document.getElementById('jscolorpick');
         const custom_img_sel = document.getElementById('img_upload_bcg');
@@ -193,9 +193,9 @@ VRODOS.api.syncSceneSetting = function(key, value, resources3D) {
             setBackgroundPresetGroundEnabled(presetGroundEnabled);
         }
 
-        switch (envir.scene.bcg_selection) {
+        switch (VRODOS.editor.envir.scene.bcg_selection) {
             case 4:
-                envir.scene.background = null;
+                VRODOS.editor.envir.scene.background = null;
                 const noBcg = document.getElementById("sceneNoBackground");
                 if (noBcg) noBcg.checked = true;
                 break;
@@ -243,8 +243,8 @@ VRODOS.api.syncSceneSetting = function(key, value, resources3D) {
                 }
                 break;
         }
-        envir.scene.img_bcg_path = resources3D ? (resources3D.backgroundImagePath || resources3D.SceneSettings?.backgroundImagePath) : envir.scene.img_bcg_path;
-        envir.scene.backgroundStyleOption = parsedValue;
+        VRODOS.editor.envir.scene.img_bcg_path = resources3D ? (resources3D.backgroundImagePath || resources3D.SceneSettings?.backgroundImagePath) : VRODOS.editor.envir.scene.img_bcg_path;
+        VRODOS.editor.envir.scene.backgroundStyleOption = parsedValue;
     }
 
     if (key === 'fogCategory') {
@@ -389,16 +389,16 @@ VRODOS.loader.LoaderMulti = class {
 
                                 const translation = resource?.trs?.translation ?? resource?.position ?? [0, 0.2, 0];
                                 const rotation = resource?.trs?.rotation ?? resource?.rotation ?? [0, 0, 0];
-                                if (typeof envir.installDirectorHelpers === 'function') {
-                                    envir.installDirectorHelpers(object, null);
+                                if (typeof VRODOS.editor.envir.installDirectorHelpers === 'function') {
+                                    VRODOS.editor.envir.installDirectorHelpers(object, null);
                                 } else {
-                                    const director = envir.getDirectorObject ? envir.getDirectorObject() : envir.scene.getObjectByName("avatarCamera");
+                                    const director = VRODOS.editor.envir.getDirectorObject ? VRODOS.editor.envir.getDirectorObject() : VRODOS.editor.envir.scene.getObjectByName("avatarCamera");
                                     if (director) {
                                         director.add(object);
                                     }
                                 }
-                                envir.applyDirectorTransform(translation, rotation);
-                                if (envir.selectableMeshes) envir.selectableMeshes.add(object);
+                                VRODOS.editor.envir.applyDirectorTransform(translation, rotation);
+                                if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
                                 if (manager) manager.itemEnd(name);
                                 resolve();
                             },
@@ -419,9 +419,9 @@ VRODOS.loader.LoaderMulti = class {
                     pendingLoads.push(new Promise((resolve) => {
                         const object = VRODOS.loader.createAssessmentObject(name, resource);
                         setObjectProperties(object, name, resources3D);
-                        envir.scene.add(object);
-                        if (envir.selectableMeshes) envir.selectableMeshes.add(object);
-                        envir.loadedObjectsCount++;
+                        VRODOS.editor.envir.scene.add(object);
+                        if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
+                        VRODOS.editor.envir.loadedObjectsCount++;
                         if (typeof addInHierarchyViewer === 'function') {
                             addInHierarchyViewer(object);
                         }
@@ -432,7 +432,7 @@ VRODOS.loader.LoaderMulti = class {
 
                     const imageUrl = resource.image_path;
                     if (!imageUrl) {
-                        envir.loadedObjectsCount++;
+                        VRODOS.editor.envir.loadedObjectsCount++;
                     } else {
                         // Support both scene-load format (pos/rot/scale flat arrays)
                         // and drag-and-drop format (trs.translation/rotation/scale)
@@ -466,13 +466,13 @@ VRODOS.loader.LoaderMulti = class {
                             object.position.set(pos[0], pos[1], pos[2]);
                             object.rotation.set(rot[0], rot[1], rot[2]);
                             object.scale.set(scl[0], scl[1], scl[2]);
-                            envir.scene.add(object);
-                            if (envir.selectableMeshes) envir.selectableMeshes.add(object);
-                            envir.loadedObjectsCount++;
+                            VRODOS.editor.envir.scene.add(object);
+                            if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
+                            VRODOS.editor.envir.loadedObjectsCount++;
 
                             // When dragged onto canvas (manager.onLoad won't fire — no GLTF items),
                             // manually attach controls, update hierarchy, and save.
-                            if (trs && !(envir && envir.isSceneLoading)) {
+                            if (trs && !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading)) {
                                 transform_controls.attach(object);
                                 if (typeof removeAllCelOutlines === 'function') removeAllCelOutlines();
                                 if (typeof addCelOutline === 'function') addCelOutline(object);
@@ -539,7 +539,7 @@ VRODOS.loader.LoaderMulti = class {
                                         (object) => {
                                             if (object.animations.length > 0) {
                                                 object.mixer = new THREE.AnimationMixer(object.scene);
-                                                envir.animationMixers.push(object.mixer);
+                                                VRODOS.editor.envir.animationMixers.push(object.mixer);
                                                 const action = object.mixer.clipAction(object.animations[0]);
                                                 action.play();
                                             }
@@ -548,7 +548,7 @@ VRODOS.loader.LoaderMulti = class {
                                             finalObject.isSelectableMesh = true;
 
                                             // Apply max anisotropy to all loaded textures for sharper oblique surfaces
-                                            const maxAniso = envir.renderer.capabilities.getMaxAnisotropy();
+                                            const maxAniso = VRODOS.editor.envir.renderer.capabilities.getMaxAnisotropy();
                                             if (maxAniso > 1) {
                                                 finalObject.traverse((node) => {
                                                     if (!node.isMesh) return;
@@ -569,8 +569,8 @@ VRODOS.loader.LoaderMulti = class {
                                                 finalObject.children = [];
                                             }
 
-                                            envir.scene.add(finalObject);
-                                            envir.selectableMeshes.add(finalObject);
+                                            VRODOS.editor.envir.scene.add(finalObject);
+                                            VRODOS.editor.envir.selectableMeshes.add(finalObject);
                                             finalObject.glb_path = glbURL;
                                             if (manager) manager.itemEnd(name);
                                             resolve();
@@ -613,7 +613,7 @@ VRODOS.loader.LoaderMulti = class {
                         }
                     }
                     else if (name == 'cameraCoords'){
-                        envir.applyDirectorTransform(resource.position, resource.rotation);
+                        VRODOS.editor.envir.applyDirectorTransform(resource.position, resource.rotation);
                     }
                 }
         }

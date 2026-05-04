@@ -53,7 +53,7 @@ function raycasterSetter(event) {
     _reusableMouse.y = - ((event.clientY - rect.top) / mainDiv.clientHeight) * 2 + 1;
 
     // Main Raycast object
-    _reusableRaycaster.setFromCamera(_reusableMouse, avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit);
+    _reusableRaycaster.setFromCamera(_reusableMouse, VRODOS.editor.avatarControlsEnabled ? VRODOS.editor.envir.cameraAvatar : VRODOS.editor.envir.cameraOrbit);
 
     return _reusableRaycaster;
 }
@@ -71,11 +71,11 @@ function dragDropVerticalRayCasting(event) {
 function onMouseDoubleClickFocus(event, id) {
 
     if (typeof id == 'undefined') {
-        id = envir.scene.getObjectById(selected_object_name);
+        id = VRODOS.editor.envir.scene.getObjectById(VRODOS.editor.selected_object_name);
     }
 
     if (arguments.length === 2) {
-        const obj = envir.scene.getObjectByProperty('uuid', id);
+        const obj = VRODOS.editor.envir.scene.getObjectByProperty('uuid', id);
         if (obj && !obj.locked) {
             selectorMajor(event, obj, "1");
         }
@@ -127,7 +127,7 @@ VRODOS.ui.onMouseUp = function(event) {
 };
 window._onCanvasMouseUp = VRODOS.ui.onMouseUp;
 
-VRODOS.ui.addCelOutline = function(object) {
+window.addCelOutline = function(object) {
     if (!object || !object.traverse) return;
 
     // Cel-shaded outline technique
@@ -148,12 +148,12 @@ VRODOS.ui.addCelOutline = function(object) {
         }
     });
 };
-window.addCelOutline = VRODOS.ui.addCelOutline;
+window.window.addCelOutline = window.addCelOutline;
 
-VRODOS.ui.removeAllCelOutlines = function() {
-    if (!envir || !envir.scene) return;
+window.removeAllCelOutlines = function() {
+    if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
-    envir.scene.traverse((node) => {
+    VRODOS.editor.envir.scene.traverse((node) => {
         if (node.name === "vrodos_cel_outline") {
             if (node.parent) {
                 node.parent.remove(node);
@@ -161,23 +161,23 @@ VRODOS.ui.removeAllCelOutlines = function() {
         }
     });
 };
-window.removeAllCelOutlines = VRODOS.ui.removeAllCelOutlines;
+window.window.removeAllCelOutlines = window.removeAllCelOutlines;
 
 VRODOS.ui.setSelectionIndicator = function(object) {
     if (!object) return;
-    VRODOS.ui.removeAllCelOutlines();
-    VRODOS.ui.addCelOutline(object);
+    window.removeAllCelOutlines();
+    window.addCelOutline(object);
 };
 window.setSelectionIndicator = VRODOS.ui.setSelectionIndicator;
 
-VRODOS.ui.setDatGuiInitialVales = function(object) {
+window.setDatGuiInitialVales = function(object) {
     if (!object) return;
     // Implementation for syncing dat.gui or other property editors
-    if (typeof showPropertiesInPanel === 'function') {
-        showPropertiesInPanel(object);
+    if (typeof window.showPropertiesInPanel === 'function') {
+        window.showPropertiesInPanel(object);
     }
 };
-window.setDatGuiInitialVales = VRODOS.ui.setDatGuiInitialVales;
+window.window.setDatGuiInitialVales = window.setDatGuiInitialVales;
 
 VRODOS.utils.findParentSceneObject = function(object) {
     if (!object) return null;
@@ -196,7 +196,7 @@ window.findParentSceneObject = VRODOS.utils.findParentSceneObject;
  */
 function onLeftMouseClick(event) {
     // If doing affine transformations with transform controls, then ignore select
-    if (transform_controls.dragging)
+    if (VRODOS.editor.transform_controls.dragging)
         {return;}
 
     // Middle click return
@@ -211,9 +211,9 @@ function onLeftMouseClick(event) {
     if (intersects.length === 0) {
         // Clicked empty canvas - deselect current object
         if (event.button === 0) {
-            transform_controls.detach();
-            removeAllCelOutlines();
-            hideObjectControlsPanel();
+            VRODOS.editor.transform_controls.detach();
+            window.removeAllCelOutlines();
+            window.hideObjectControlsPanel();
             const objManipToggle = document.getElementById('object-manipulation-toggle');
             const axisManipBtns = document.getElementById('axis-manipulation-buttons');
             if (objManipToggle) objManipToggle.style.display = 'none';
@@ -231,7 +231,7 @@ function onLeftMouseClick(event) {
     }
 
     // More than one objects intersected
-    const prevSelected = typeof transform_controls.object != 'undefined' ? transform_controls.object.name : null;
+    const prevSelected = typeof VRODOS.editor.transform_controls.object != 'undefined' ? VRODOS.editor.transform_controls.object.name : null;
     let selectNext = false;
     let i = 0;
 
@@ -263,32 +263,32 @@ function onLeftMouseClick(event) {
 function selectObjectPreview(objectSel) {
     if (!objectSel) return;
 
-    setBackgroundColorHierarchyViewer(objectSel.uuid);
-    if (typeof vrodosAttachGizmo === 'function') {
-        vrodosAttachGizmo(objectSel);
+    window.setBackgroundColorHierarchyViewer(objectSel.uuid);
+    if (typeof window.vrodosAttachGizmo === 'function') {
+        window.vrodosAttachGizmo(objectSel);
     } else {
-        transform_controls.attach(objectSel);
+        VRODOS.editor.transform_controls.attach(objectSel);
     }
 
     if (objectSel.name !== "avatarCamera") {
-        setTransformControlsSize();
+        window.setTransformControlsSize();
     }
 
-    transform_controls.setMode("translate");
+    VRODOS.editor.transform_controls.setMode("translate");
 
-    removeAllCelOutlines();
-    addCelOutline(objectSel);
+    window.removeAllCelOutlines();
+    window.addCelOutline(objectSel);
 }
 
 function selectorMajor(event, objectSel, whocalls) {
 
     if (event.button === 0) {
 
-        const objectTitle = typeof vrodosDecodeDisplayText === 'function'
-            ? vrodosDecodeDisplayText(objectSel.asset_name || objectSel.name || 'Object Controls')
+        const objectTitle = typeof window.vrodosDecodeDisplayText === 'function'
+            ? window.vrodosDecodeDisplayText(objectSel.asset_name || objectSel.name || 'Object Controls')
             : (objectSel.asset_name || objectSel.name || 'Object Controls');
 
-        showObjectControlsPanel(objectTitle);
+        window.showObjectControlsPanel(objectTitle);
 
         document.getElementById('translate-switch').checked = true;
         document.getElementById('rotate-switch').disabled = false;
@@ -298,38 +298,38 @@ function selectorMajor(event, objectSel, whocalls) {
         document.getElementById('scale-switch-label').style = "inherit";
       
         // set the selected color of the hierarchy viewer
-        setBackgroundColorHierarchyViewer(objectSel.uuid);
+        window.setBackgroundColorHierarchyViewer(objectSel.uuid);
 
-        if (typeof vrodosAttachGizmo === 'function') {
-            vrodosAttachGizmo(objectSel);
+        if (typeof window.vrodosAttachGizmo === 'function') {
+            window.vrodosAttachGizmo(objectSel);
         } else {
-            transform_controls.attach(objectSel);
+            VRODOS.editor.transform_controls.attach(objectSel);
         }
 
         // Move light direction
         const lightDirectionalLightSpotMover = () => {
 
-            if (!transform_controls.object)
+            if (!VRODOS.editor.transform_controls.object)
                 {return;}
 
-            if (!transform_controls.object.parentLight)
+            if (!VRODOS.editor.transform_controls.object.parentLight)
                 {return;}
 
-            transform_controls.object.parentLight.target.position.setFromMatrixPosition(transform_controls.object.matrix);
-            transform_controls.object.parentLight.target.updateMatrixWorld();
+            VRODOS.editor.transform_controls.object.parentLight.target.position.setFromMatrixPosition(VRODOS.editor.transform_controls.object.matrix);
+            VRODOS.editor.transform_controls.object.parentLight.target.updateMatrixWorld();
         };
 
         const lightSpotLightMover = () => {
 
-            if (!transform_controls.object)
+            if (!VRODOS.editor.transform_controls.object)
                 {return;}
 
-            if (!transform_controls.object.parentLight)
+            if (!VRODOS.editor.transform_controls.object.parentLight)
                 {return;}
 
             // Name-based lookup instead of full scene traverse — helper naming convention: 'lightHelper_' + lightName
-            const helperName = `lightHelper_${  transform_controls.object.name}`;
-            const helper = envir.scene.getObjectByName(helperName);
+            const helperName = `lightHelper_${  VRODOS.editor.transform_controls.object.name}`;
+            const helper = VRODOS.editor.envir.scene.getObjectByName(helperName);
             if (helper && typeof helper.update === 'function') helper.update();
         };
 
@@ -343,20 +343,20 @@ function selectorMajor(event, objectSel, whocalls) {
 
 
             if (objectSel.category_name === "lightTargetSpot") {
-                transform_controls.domElement.ownerDocument.addEventListener("pointermove", lightDirectionalLightSpotMover);
+                VRODOS.editor.transform_controls.domElement.ownerDocument.addEventListener("pointermove", lightDirectionalLightSpotMover);
             }
 
 
             if (objectSel.category_name === "lightSpot") {
-                transform_controls.domElement.ownerDocument.addEventListener("pointermove", lightSpotLightMover);
+                VRODOS.editor.transform_controls.domElement.ownerDocument.addEventListener("pointermove", lightSpotLightMover);
             }
 
-            //transform_controls.children[3].children[0].children[1].visible = false; // 2D ROTATE GIZMO
+            //VRODOS.editor.transform_controls.children[3].children[0].children[1].visible = false; // 2D ROTATE GIZMO
         } else {
 
             // Remove event listener when lightSpotHelper is not clicked
-            transform_controls.domElement.ownerDocument.removeEventListener("pointermove", lightDirectionalLightSpotMover);
-            transform_controls.domElement.ownerDocument.removeEventListener("pointermove", lightSpotLightMover);
+            VRODOS.editor.transform_controls.domElement.ownerDocument.removeEventListener("pointermove", lightDirectionalLightSpotMover);
+            VRODOS.editor.transform_controls.domElement.ownerDocument.removeEventListener("pointermove", lightSpotLightMover);
         }
 
         if (objectSel.name === "avatarCamera") {
@@ -368,35 +368,35 @@ function selectorMajor(event, objectSel, whocalls) {
 
             // case of selecting by hierarchy viewer
 
-            // transform_controls.size = 1;
-            // transform_controls.visible = false;
+            // VRODOS.editor.transform_controls.size = 1;
+            // VRODOS.editor.transform_controls.visible = false;
 
             // Can not be deleted
-            //transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;
+            //VRODOS.editor.transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;
 
 
         } else {
             // find dimensions of object in order to resize transform controls
-            setTransformControlsSize();
+            window.setTransformControlsSize();
         }
 
 
-        transform_controls.setMode("translate");
+        VRODOS.editor.transform_controls.setMode("translate");
 
 
-        if (!envir.is2d) {
-            const modeSwitch = document.getElementById(`${transform_controls.getMode()  }-switch`);
+        if (!VRODOS.editor.envir.is2d) {
+            const modeSwitch = document.getElementById(`${VRODOS.editor.transform_controls.getMode()  }-switch`);
             if (modeSwitch) modeSwitch.click();
         }
 
         // highlight — cel-shaded outline
-        removeAllCelOutlines();
-        addCelOutline(objectSel);
+        window.removeAllCelOutlines();
+        window.addCelOutline(objectSel);
 
-        setDatGuiInitialVales(objectSel);
+        window.setDatGuiInitialVales(objectSel);
 
         // Auto-show object-specific properties in the floating panel
-        showPropertiesInPanel(objectSel);
+        window.showPropertiesInPanel(objectSel);
     }
 }
 
@@ -411,7 +411,7 @@ function contextMenuClick(event) {
 
        
     // Check if right-clicked is the one selected already with left-click
-    if (transform_controls.object && intersected[0].name === transform_controls.object.name) {
+    if (VRODOS.editor.transform_controls.object && intersected[0].name === VRODOS.editor.transform_controls.object.name) {
         showProperties(event, intersected[0]);
     }
 
@@ -486,7 +486,7 @@ function displaySunProperties(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpSunPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
-    const sceneObj = envir.scene.getObjectByName(name);
+    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
     if (!sceneObj) return;
 
     const chbox = document.getElementById('castShadow');
@@ -526,7 +526,7 @@ function displayLampProperties(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpLampPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
-    const sceneObj = envir.scene.getObjectByName(name);
+    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
     if (!sceneObj) return;
 
     const chbox = document.getElementById('lampcastShadow');
@@ -576,13 +576,13 @@ function displaySpotProperties(event, name) {
     for (let i = 0; i < hierViewer.childNodes.length; i++) {
         const id_Hierarchy = hierViewer.childNodes[i].id;
         if (!id_Hierarchy) continue;
-        const scene_object = envir.scene.getObjectByName(id_Hierarchy);
+        const scene_object = VRODOS.editor.envir.scene.getObjectByName(id_Hierarchy);
         if (!scene_object) continue;
         spotTargetObject.appendChild(new Option(scene_object.name));
     }
 
     const spotColor = document.getElementById("spotColor");
-    const sceneObj = envir.scene.getObjectByName(name) || transform_controls.object;
+    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name) || VRODOS.editor.transform_controls.object;
 
     if (spotColor && sceneObj && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
         spotColor.value = `#${  sceneObj.children[0].material.color.getHexString()}`;
@@ -613,11 +613,11 @@ function displayAmbientProperties(event, name) {
     const hierViewer = document.getElementById('hierarchy-viewer');
     for (let i = 0; i < hierViewer.childNodes.length; i++) {
         const id_Hierarchy = hierViewer.childNodes[i].id;
-        const scene_object = envir.scene.getObjectByName(id_Hierarchy);
+        const scene_object = VRODOS.editor.envir.scene.getObjectByName(id_Hierarchy);
     }
 
     const ambientColor = document.getElementById("ambientColor");
-    const sceneObj = envir.scene.getObjectByName(name) || transform_controls.object;
+    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name) || VRODOS.editor.transform_controls.object;
 
     if (ambientColor && sceneObj && sceneObj.color) {
         ambientColor.value = `#${  sceneObj.color.getHexString()}`;
@@ -645,7 +645,7 @@ function displayDoorProperties(event, name) {
     const popupDoorSelect = document.getElementById("popupDoorSelect");
     if (!popupDoorSelect || !popUpDoorPropertiesDiv) return;
 
-    const sceneObj = envir.scene.getObjectByName(name);
+    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
     if (!sceneObj) return;
 
     if (sceneObj.sceneID_target) {
@@ -664,7 +664,7 @@ function displayLinkProperties(event, name) {
     const popupLinkSelect = document.getElementById("poi_link_text");
     if (!popupLinkSelect || !popUpLinkPropertiesDiv) return;
 
-    const sceneObj = envir.scene.getObjectByName(name);
+    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
     if (!sceneObj) return;
 
     if (sceneObj.poi_link_url) {
@@ -680,7 +680,7 @@ function displayPoiChatProperties(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpPoiChatPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
-    const sceneObj = envir.scene.getObjectByName(name);
+    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
     if (!sceneObj) return;
 
     const setTitle = document.getElementById('poi_chat_title');
@@ -701,19 +701,19 @@ function displayPoiChatProperties(event, name) {
 function initPersistentPropertyListeners() {
 
     const getSelectedPropertyTarget = () => {
-        if (typeof _currentSelectedRealObject !== 'undefined' && _currentSelectedRealObject) {
-            return _currentSelectedRealObject;
+        if (typeof VRODOS.editor.currentSelectedRealObject !== 'undefined' && VRODOS.editor.currentSelectedRealObject) {
+            return VRODOS.editor.currentSelectedRealObject;
         }
 
-        if (!transform_controls || !transform_controls.object) {
+        if (!VRODOS.editor.transform_controls || !VRODOS.editor.transform_controls.object) {
             return null;
         }
 
-        if (transform_controls.object.name === "vrodosGizmoProxy" && transform_controls.object.realObject) {
-            return transform_controls.object.realObject;
+        if (VRODOS.editor.transform_controls.object.name === "vrodosGizmoProxy" && VRODOS.editor.transform_controls.object.realObject) {
+            return VRODOS.editor.transform_controls.object.realObject;
         }
 
-        return transform_controls.object;
+        return VRODOS.editor.transform_controls.object;
     };
     
     const setProp = (prop, isCheckbox, sanitize = false) => function () {
@@ -729,7 +729,7 @@ function initPersistentPropertyListeners() {
             if (oldValue !== val) {
                 obj[prop] = val;
                 if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                    vrodosUndoManager.add(new PropertyCommand(obj, prop, oldValue, val));
+                    vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, prop, oldValue, val));
                 }
                 saveChanges();
             }
@@ -747,7 +747,7 @@ function initPersistentPropertyListeners() {
                 
                 if (oldVal !== newVal) {
                     if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new PropertyCommand(obj, 'color', oldVal, newVal));
+                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
                     }
                     saveChanges();
                 }
@@ -789,7 +789,7 @@ function initPersistentPropertyListeners() {
 
                 if (oldVal !== newVal) {
                     if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new PropertyCommand(obj, 'color', oldVal, newVal));
+                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
                     }
                     saveChanges();
                 }
@@ -840,7 +840,7 @@ function initPersistentPropertyListeners() {
 
                 if (oldVal !== newVal) {
                     if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new PropertyCommand(obj, 'color', oldVal, newVal));
+                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
                     }
                     saveChanges();
                 }
@@ -856,15 +856,15 @@ function initPersistentPropertyListeners() {
     if (popupDoorSelect) {
         popupDoorSelect.addEventListener("focus", function() { this._oldVal = this.value; });
         popupDoorSelect.addEventListener("change", function () {
-            if (transform_controls && transform_controls.object && this.value !== "Default" && this.value) {
-                const obj = transform_controls.object;
+            if (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.object && this.value !== "Default" && this.value) {
+                const obj = VRODOS.editor.transform_controls.object;
                 const oldVal = this._oldVal || obj.sceneID_target;
                 const newVal = this.value;
 
                 if (oldVal !== newVal) {
                     obj.sceneID_target = newVal;
                     if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new PropertyCommand(obj, 'sceneID_target', oldVal, newVal));
+                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'sceneID_target', oldVal, newVal));
                     }
                     saveChanges();
                 }
@@ -876,15 +876,15 @@ function initPersistentPropertyListeners() {
     if (popupLinkSelect) {
         popupLinkSelect.addEventListener("focus", function() { this._oldVal = this.value; });
         popupLinkSelect.addEventListener("change", function () {
-            if (transform_controls && transform_controls.object && this.value) {
-                const obj = transform_controls.object;
+            if (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.object && this.value) {
+                const obj = VRODOS.editor.transform_controls.object;
                 const oldVal = this._oldVal || obj.poi_link_url;
                 const newVal = this.value;
 
                 if (oldVal !== newVal) {
                     obj.poi_link_url = newVal;
                     if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new PropertyCommand(obj, 'poi_link_url', oldVal, newVal));
+                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_link_url', oldVal, newVal));
                     }
                     saveChanges();
                 }
@@ -899,8 +899,8 @@ function initPersistentPropertyListeners() {
 
     if (chboxImg) {
         chboxImg.addEventListener("change", function () {
-            if (transform_controls && transform_controls.object) {
-                const obj = transform_controls.object;
+            if (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.object) {
+                const obj = VRODOS.editor.transform_controls.object;
                 const oldContent = obj.poi_img_content;
                 const oldTitle = obj.poi_img_title;
                 const newContent = this.checked ? (setDesc && setDesc.value ? setDesc.value : '') : null;
@@ -912,7 +912,7 @@ function initPersistentPropertyListeners() {
                     
                     if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
                         // For complex multi-prop changes, we could use a custom command, but PropertyCommand is enough for the main content
-                        vrodosUndoManager.add(new PropertyCommand(obj, 'poi_img_content', oldContent, newContent));
+                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_img_content', oldContent, newContent));
                     }
 
                     if (setDesc) setDesc.style.display = this.checked ? "block" : "none";
@@ -937,8 +937,8 @@ function initPersistentPropertyListeners() {
 
     if (chboxVid) {
         chboxVid.addEventListener("change", function () {
-            if (transform_controls && transform_controls.object) {
-                const obj = transform_controls.object;
+            if (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.object) {
+                const obj = VRODOS.editor.transform_controls.object;
                 const oldVal = obj.follow_camera;
                 const newVal = this.checked ? 1 : 0;
 
@@ -950,7 +950,7 @@ function initPersistentPropertyListeners() {
                     }
                     
                     if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new PropertyCommand(obj, 'follow_camera', oldVal, newVal));
+                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'follow_camera', oldVal, newVal));
                     }
 
                     if (setFocusX) setFocusX.disabled = !this.checked;
@@ -985,12 +985,12 @@ initPersistentPropertyListeners();
  */
 function getActiveMeshes() {
     // Fast path: use the pre-built cache maintained by add/remove operations
-    if (envir.selectableMeshes && envir.selectableMeshes.size > 0) {
-        return Array.from(envir.selectableMeshes);
+    if (VRODOS.editor.envir.selectableMeshes && VRODOS.editor.envir.selectableMeshes.size > 0) {
+        return Array.from(VRODOS.editor.envir.selectableMeshes);
     }
     // Fallback: cache not yet populated (scene still loading)
     const fallback = [];
-    envir.scene.traverse(c => { if (c.isSelectableMesh) fallback.push(c); });
+    VRODOS.editor.envir.scene.traverse(c => { if (c.isSelectableMesh) fallback.push(c); });
     return fallback;
 }
 
@@ -1010,19 +1010,19 @@ function raylineVisualize(raycasterPick) {
     const myBulletLine = new THREE.Line(geolinecast, new THREE.LineBasicMaterial({ color: 0x0000ff }));
     myBulletLine.name = 'rayLine';
 
-    envir.scene.add(myBulletLine);
+    VRODOS.editor.envir.scene.add(myBulletLine);
 
 
     // This will force scene to update and show the line
-    envir.scene.getObjectByName('orbitCamera').position.x += 0.1;
+    VRODOS.editor.envir.scene.getObjectByName('orbitCamera').position.x += 0.1;
 
     setTimeout(() => {
-        envir.scene.getObjectByName('orbitCamera').position.x -= 0.1;
+        VRODOS.editor.envir.scene.getObjectByName('orbitCamera').position.x -= 0.1;
     }, 1500);
 
     // Remove the line
     setTimeout(() => {
-        envir.scene.remove(envir.scene.getObjectByName('rayLine'));
+        VRODOS.editor.envir.scene.remove(VRODOS.editor.envir.scene.getObjectByName('rayLine'));
     }, 1500);
 
 
@@ -1071,7 +1071,7 @@ function displayPoiImageTextProperties(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpPoiImageTextPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
-    const sceneObj = envir.scene.getObjectByName(name);
+    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
     if (!sceneObj) return;
 
     const chboxImg = document.getElementById("poi_image_desc_checkbox");
@@ -1091,22 +1091,22 @@ function displayPoiImageTextProperties(event, name) {
 function saveChanges(options) {
     const saveOptions = options || {};
 
-    if (envir && envir.isSceneLoading) {
+    if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
         return Promise.resolve();
     }
 
     const save_scene_btn = document.getElementById("save-scene-button");
     if (save_scene_btn.classList.contains("LinkDisabled") && !saveOptions.force) {
-        return (typeof vrodos_whenSceneSaveSettles === 'function') ? vrodos_whenSceneSaveSettles() : Promise.resolve();
+        return (typeof VRODOS.api.whenSceneSaveSettles === 'function') ? VRODOS.api.whenSceneSaveSettles() : Promise.resolve();
     }
 
     save_scene_btn.innerHTML = "Saving...";
     save_scene_btn.classList.add("LinkDisabled");
     document.getElementById("compileGameBtn").disabled = true;
 
-    // Export using the new VrodosSceneExporter
-    const exporter = new VrodosSceneExporter();
-    document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
+    // Export using the new VRODOS.exporter.SceneExporter
+    const exporter = new VRODOS.exporter.SceneExporter();
+    document.getElementById('vrodos_scene_json_input').value = exporter.parse(VRODOS.editor.envir.scene);
 
     return VRODOS.api.saveScene();
 }
@@ -1121,7 +1121,7 @@ function displayPoiVideoProperties(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpPoiVideoPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
-    const sceneObj = envir.scene.getObjectByName(name);
+    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
     if (!sceneObj) return;
 
     const chbox = document.getElementById("poi_video_reward_checkbox");

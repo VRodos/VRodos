@@ -22,28 +22,37 @@ window.vrodos_scene_data = VRODOS.data.scene_data;
 window.scene_id = VRODOS.data.scene_id;
 window.vrodos_scene_upload_image_nonce = VRODOS.data.upload_image_nonce;
 
-window.isPaused = VRODOS.data.isPaused;
+VRODOS.editor.isPaused = VRODOS.data.isPaused || false;
 window.isAnyLight = VRODOS.data.isAnyLight;
 window.mapActions = VRODOS.data.mapActions;
 window.showPawnPositions = VRODOS.data.showPawnPositions;
 
-// Global Three.js / Editor state
-VRODOS.editor.envir = null;
-VRODOS.editor.transform_controls = null;
-VRODOS.editor.transform_controls_helper = null;
-VRODOS.editor.manager = new THREE.LoadingManager();
-VRODOS.editor.selected_object_name = '';
-VRODOS.editor.firstPersonBlockerBtn = null;
-VRODOS.editor.id_animation_frame = null;
+// 2. Core Editor State Bridge (Ensures legacy globals stay in sync with VRODOS namespace)
+const coreState = {
+    envir: () => VRODOS.editor.envir,
+    transform_controls: () => VRODOS.editor.transform_controls,
+    transform_controls_helper: () => VRODOS.editor.transform_controls_helper,
+    manager: () => VRODOS.editor.manager,
+    selected_object_name: () => VRODOS.editor.selected_object_name,
+    firstPersonBlockerBtn: () => VRODOS.editor.firstPersonBlockerBtn,
+    id_animation_frame: () => VRODOS.editor.id_animation_frame
+};
 
-// Backward compatibility for legacy scripts
-window.envir = VRODOS.editor.envir;
-window.transform_controls = VRODOS.editor.transform_controls;
-window.transform_controls_helper = VRODOS.editor.transform_controls_helper;
-window.manager = VRODOS.editor.manager;
-window.selected_object_name = VRODOS.editor.selected_object_name;
-window.firstPersonBlockerBtn = VRODOS.editor.firstPersonBlockerBtn;
-window.id_animation_frame = VRODOS.editor.id_animation_frame;
+Object.entries(coreState).forEach(([key, getter]) => {
+    Object.defineProperty(window, key, {
+        get: getter,
+        set: (v) => { 
+            const parts = key.split('_');
+            const targetKey = parts.length > 1 ? key : key; // Keep original key for simplicity in namespace
+            VRODOS.editor[key] = v; 
+        },
+        enumerable: true,
+        configurable: true
+    });
+});
+
+// 3. Initialize core objects
+VRODOS.editor.manager = new THREE.LoadingManager();
 
 function vrodosIsSceneGraphObject(object, sceneRoot) {
     let current = object || null;
@@ -90,33 +99,30 @@ function initVrodosEditor() {
 
     // Environmentals
     VRODOS.editor.envir = new vrodos_3d_editor_environmentals(mainDiv);
-    window.envir = VRODOS.editor.envir;
-    envir.is2d = false;
+    VRODOS.editor.envir.is2d = false;
 
     // Initialize scale constraint to true (Uniform Scaling) by default
-    if (envir.scene) {
-        envir.scene.keepScaleAspectRatio = true;
+    if (VRODOS.editor.envir.scene) {
+        VRODOS.editor.envir.scene.keepScaleAspectRatio = true;
     }
 
     // Transform Controls
-    VRODOS.editor.transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement);
-    window.transform_controls = VRODOS.editor.transform_controls;
+    VRODOS.editor.transform_controls = new THREE.TransformControls(VRODOS.editor.envir.cameraOrbit, VRODOS.editor.envir.renderer.domElement);
 
-    VRODOS.editor.transform_controls_helper = (typeof transform_controls.getHelper === 'function') ?
-        transform_controls.getHelper() :
-        transform_controls;
-    window.transform_controls_helper = VRODOS.editor.transform_controls_helper;
-    transform_controls_helper.name = 'myTransformControls';
-    vrodosPatchTransformControlsAttach(transform_controls, envir.scene);
+    VRODOS.editor.transform_controls_helper = (typeof VRODOS.editor.transform_controls.getHelper === 'function') ?
+        VRODOS.editor.transform_controls.getHelper() :
+        VRODOS.editor.transform_controls;
+    VRODOS.editor.transform_controls_helper.name = 'myTransformControls';
+    vrodosPatchTransformControlsAttach(VRODOS.editor.transform_controls, VRODOS.editor.envir.scene);
 
     VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
     window.firstPersonBlockerBtn = VRODOS.editor.firstPersonBlockerBtn;
 
     // Block saves before any loader runs
-    envir.isSceneLoading = true;
-    envir.sceneLoadFinalized = false;
+    VRODOS.editor.envir.isSceneLoading = true;
+    VRODOS.editor.envir.sceneLoadFinalized = false;
 
-    // Prepare Load Manager
+    // Prepare Load VRODOS.editor.Manager
     prepareSceneLoadManager();
 
     // UI & GUI Setup
@@ -151,10 +157,10 @@ function initVrodosEditor() {
 
     // 3. Load 3D Objects
     const lightsPawnLoader = new VRodos_LightsPawn_Loader();
-    const lightsLoadPromise = lightsPawnLoader.load(vrodos_scene_data, pluginPath, manager);
+    const lightsLoadPromise = lightsPawnLoader.load(vrodos_scene_data, pluginPath, VRODOS.editor.manager);
 
     const loaderMulti = new VRodos_LoaderMulti();
-    const assetsLoadPromise = loaderMulti.load(manager, vrodos_scene_data.objects, pluginPath);
+    const assetsLoadPromise = loaderMulti.load(VRODOS.editor.manager, vrodos_scene_data.objects, pluginPath);
 
     // Initial hierarchy
     setHierarchyViewer();
@@ -168,7 +174,7 @@ function initVrodosEditor() {
     }
 
     // Add controls to scene
-    envir.scene.add(transform_controls_helper);
+    VRODOS.editor.envir.scene.add(VRODOS.editor.transform_controls_helper);
     document.getElementById("compileGameBtn").disabled = true;
 
     // Progress UI
@@ -198,7 +204,7 @@ function initVrodosEditor() {
 
     // Scene Type
     if (vrodos_data.sceneType) {
-        envir.sceneType = vrodos_data.sceneType;
+        VRODOS.editor.envir.sceneType = vrodos_data.sceneType;
     }
 }
 
@@ -207,13 +213,13 @@ function initVrodosEditor() {
  * (Restored from legacy template logic)
  */
 function updatePositionsAndControls() {
-    if (!transform_controls.object || !controlInterface) return;
+    if (!VRODOS.editor.transform_controls.object || !controlInterface) return;
     if ((window.vrodosGuiKeyboardEditing || 0) > 0) return;
 
     const affines = ['position', 'rotation', 'scale'];
     for (let j = 0; j < 3; j++) {
         for (let i = 0; i < 3; i++) {
-            if (controlInterface.controllers[j * 3 + i].getValue() !== transform_controls.object[affines[j]].toArray()[i]) {
+            if (controlInterface.controllers[j * 3 + i].getValue() !== VRODOS.editor.transform_controls.object[affines[j]].toArray()[i]) {
                 controlInterface.controllers[j * 3 + i].updateDisplay();
             }
         }
@@ -275,8 +281,8 @@ function bindBackgroundUIEvents() {
  * Preparation logic before assets start loading
  */
 function prepareSceneLoadManager() {
-    envir.sceneLoadFinalized = false;
-    manager.onProgress = function (url, loaded, total) {
+    VRODOS.editor.envir.sceneLoadFinalized = false;
+    VRODOS.editor.manager.onProgress = function (url, loaded, total) {
         document.getElementById("result_download").innerHTML = `Loading ${  loaded  } / ${  total}`;
     };
 }
@@ -285,38 +291,38 @@ function prepareSceneLoadManager() {
  * Finalize scene load: camera focus, hierarchy setup, etc.
  */
 function finalizeSceneLoad() {
-    if (!envir || envir.sceneLoadFinalized) return;
+    if (!VRODOS.editor.envir || VRODOS.editor.envir.sceneLoadFinalized) return;
 
-    envir.sceneLoadFinalized = true;
-    envir.isSceneLoading = false;
+    VRODOS.editor.envir.sceneLoadFinalized = true;
+    VRODOS.editor.envir.isSceneLoading = false;
 
     // Detach controls on load
-    transform_controls.detach();
+    VRODOS.editor.transform_controls.detach();
     if (typeof removeAllCelOutlines === 'function') removeAllCelOutlines();
     if (typeof hideObjectControlsPanel === 'function') hideObjectControlsPanel();
 
     if (typeof findSceneDimensions === 'function') {
         findSceneDimensions();
-        envir.fitCameraToSceneLimits();
+        VRODOS.editor.envir.fitCameraToSceneLimits();
     }
 
     // Focus on Actor/Player
     (function focusOnPlayer() {
         let playerObject = null;
-        envir.scene.traverse(obj => {
+        VRODOS.editor.envir.scene.traverse(obj => {
             if (!playerObject && (obj.category_name === 'pawn' || obj.name?.includes('Pawn'))) {
                 playerObject = obj;
             }
         });
         if (!playerObject) {
-            playerObject = envir.scene.getObjectByName('avatarCamera') || envir.scene.getObjectByName('Camera3Dmodel');
+            playerObject = VRODOS.editor.envir.scene.getObjectByName('avatarCamera') || VRODOS.editor.envir.scene.getObjectByName('Camera3Dmodel');
         }
 
         if (playerObject) {
-            envir.orbitControls.target.copy(playerObject.position);
-            envir.cameraOrbit.zoom = 800;
-            envir.cameraOrbit.updateProjectionMatrix();
-            envir.orbitControls.update();
+            VRODOS.editor.envir.orbitControls.target.copy(playerObject.position);
+            VRODOS.editor.envir.cameraOrbit.zoom = 800;
+            VRODOS.editor.envir.cameraOrbit.updateProjectionMatrix();
+            VRODOS.editor.envir.orbitControls.update();
         }
     })();
 
@@ -324,7 +330,7 @@ function finalizeSceneLoad() {
     setHierarchyViewer();
 
     // Avoid culling and update lights
-    envir.scene.traverse((obj) => {
+    VRODOS.editor.envir.scene.traverse((obj) => {
         obj.frustumCulled = false;
         if (obj.light != undefined && typeof obj.update === 'function') {
             obj.update();
@@ -339,34 +345,34 @@ function finalizeSceneLoad() {
  * The main animation loop
  */
 function animate() {
-    if (isPaused) return;
+    if (VRODOS.editor.isPaused) return;
 
-    id_animation_frame = requestAnimationFrame(animate);
+    VRODOS.editor.id_animation_frame = requestAnimationFrame(animate);
 
-    const curr_camera = (typeof avatarControlsEnabled !== 'undefined' && avatarControlsEnabled) ?
-        (envir.thirdPersonView ? envir.cameraThirdPerson : envir.cameraAvatar) : envir.cameraOrbit;
+    const curr_camera = (typeof VRODOS.editor.avatarControlsEnabled !== 'undefined' && VRODOS.editor.avatarControlsEnabled) ?
+        (VRODOS.editor.envir.thirdPersonView ? VRODOS.editor.envir.cameraThirdPerson : VRODOS.editor.envir.cameraAvatar) : VRODOS.editor.envir.cameraOrbit;
 
-    if (envir.labelRenderer) {
-        envir.labelRenderer.render(envir.scene, curr_camera);
+    if (VRODOS.editor.envir.labelRenderer) {
+        VRODOS.editor.envir.labelRenderer.render(VRODOS.editor.envir.scene, curr_camera);
     }
 
-    if (envir.flagPlayAnimation && envir.animationMixers.length > 0) {
-        const new_time = envir.clock.getDelta();
-        for (let i = 0; i < envir.animationMixers.length; i++) {
-            envir.animationMixers[i].update(new_time);
+    if (VRODOS.editor.envir.flagPlayAnimation && VRODOS.editor.envir.animationMixers.length > 0) {
+        const new_time = VRODOS.editor.envir.clock.getDelta();
+        for (let i = 0; i < VRODOS.editor.envir.animationMixers.length; i++) {
+            VRODOS.editor.envir.animationMixers[i].update(new_time);
         }
     }
 
-    if (envir.isComposerOn && envir.composer) {
-        envir.composer.render();
+    if (VRODOS.editor.envir.isComposerOn && VRODOS.editor.envir.composer) {
+        VRODOS.editor.envir.composer.render();
     }
 
-    envir.orbitControls.update();
-    if (typeof updatePointerLockControls === 'function') {
-        updatePointerLockControls();
+    VRODOS.editor.envir.orbitControls.update();
+    if (typeof window.updatePointerLockControls === 'function') {
+        window.updatePointerLockControls();
     }
-    if (typeof envir.updateCompassUI === 'function') {
-        envir.updateCompassUI();
+    if (typeof VRODOS.editor.envir.updateCompassUI === 'function') {
+        VRODOS.editor.envir.updateCompassUI();
     }
 }
 
@@ -377,7 +383,7 @@ window.toggleEnvTexture = (el) => {
     const btn = document.getElementById("env_texture-change-btn");
     if (btn) btn.classList.toggle('toggle-active');
     el.checked = !el.checked;
-    envir.scene.environment = !el.checked ? null : envir.maintexture;
+    VRODOS.editor.envir.scene.environment = !el.checked ? null : VRODOS.editor.envir.maintexture;
 };
 
 // INITIALIZE ON DOM CONTENT LOADED

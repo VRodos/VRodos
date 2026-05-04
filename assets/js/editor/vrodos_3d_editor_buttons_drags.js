@@ -320,10 +320,10 @@ window.showTemporaryButtonWarning = VRODOS.ui.showTemporaryButtonWarning;
 
 VRODOS.ui.refreshSceneJsonTextarea = function() {
     const textarea = document.getElementById('vrodos_scene_json_input');
-    if (!textarea || !VRODOS.exporter.SceneExporter || !envir || !envir.scene) return;
+    if (!textarea || !VRODOS.exporter.SceneExporter || !VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
     const exporter = new VRODOS.exporter.SceneExporter();
-    const exportedJson = exporter.parse(envir.scene);
+    const exportedJson = exporter.parse(VRODOS.editor.envir.scene);
 
     try {
         textarea.value = JSON.stringify(JSON.parse(exportedJson), null, 2);
@@ -405,11 +405,11 @@ VRODOS.ui.onDrop = function(ev) {
     }
 
     if (typeof showObjectPropertiesPanel === 'function') {
-        showObjectPropertiesPanel(transform_controls.getMode());
+        showObjectPropertiesPanel(VRODOS.editor.transform_controls.getMode());
     }
 
-    if (envir.is2d) {
-        transform_controls.setMode("translate");
+    if (VRODOS.editor.envir.is2d) {
+        VRODOS.editor.transform_controls.setMode("translate");
         document.getElementById("translatePanelGui").style.display = '';
     }
 
@@ -458,7 +458,7 @@ function loadButtonActions() {
         if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
         // Pause Rendering
-        isPaused = true;
+        VRODOS.editor.isPaused = true;
         swapLucideIcon(document.getElementById("pauseRendering"), "play");
     });
 
@@ -518,7 +518,7 @@ function loadButtonActions() {
     document.getElementById("compileCancelBtn").addEventListener("click", (e) => {
 
         //Start Rendering
-        isPaused = false;
+        VRODOS.editor.isPaused = false;
         swapLucideIcon(document.getElementById("pauseRendering"), "pause");
         animate();
 
@@ -538,8 +538,8 @@ function loadButtonActions() {
     const compileDlg = document.getElementById('compile-dialog');
     if (compileDlg) {
         compileDlg.addEventListener('close', () => {
-            if (isPaused) {
-                isPaused = false;
+            if (VRODOS.editor.isPaused) {
+                VRODOS.editor.isPaused = false;
                 swapLucideIcon(document.getElementById("pauseRendering"), "pause");
                 animate();
             }
@@ -844,10 +844,10 @@ function loadButtonActions() {
             // Asset add to canvas
             addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath);
 
-            showObjectPropertiesPanel(transform_controls.getMode());
+            showObjectPropertiesPanel(VRODOS.editor.transform_controls.getMode());
 
-            if (envir.is2d) {
-                transform_controls.setMode("translate");
+            if (VRODOS.editor.envir.is2d) {
+                VRODOS.editor.transform_controls.setMode("translate");
                 document.getElementById("translatePanelGui").style.display = '';
             }
 
@@ -873,7 +873,7 @@ function loadButtonActions() {
     // Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
     document.getElementById('save-scene-button').addEventListener('click', () => {
 
-        if (envir && envir.isSceneLoading) {
+        if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
             const loadingNotice = document.getElementById("result_download");
             if (loadingNotice) {
                 loadingNotice.innerHTML = "Please wait until scene loading finishes before saving.";
@@ -892,7 +892,7 @@ function loadButtonActions() {
 
         // Export using the new VrodosSceneExporter
         const exporter = new VrodosSceneExporter();
-        document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
+        document.getElementById('vrodos_scene_json_input').value = exporter.parse(VRODOS.editor.envir.scene);
 
         VRODOS.api.saveScene();
     });
@@ -918,18 +918,18 @@ function loadButtonActions() {
 
         const btn = this;
 
-        if (envir.is2d)
+        if (VRODOS.editor.envir.is2d)
             {document.getElementById("dim-change-btn").click();}
 
         if (btn.dataset.toggle === 'off') {
 
-            envir.orbitControls.autoRotate = true;
-            envir.orbitControls.autoRotateSpeed = 0.6;
+            VRODOS.editor.envir.orbitControls.autoRotate = true;
+            VRODOS.editor.envir.orbitControls.autoRotateSpeed = 0.6;
             btn.dataset.toggle = 'on';
 
         } else {
 
-            envir.orbitControls.autoRotate = false;
+            VRODOS.editor.envir.orbitControls.autoRotate = false;
             btn.dataset.toggle = 'off';
         }
 
@@ -953,9 +953,9 @@ function loadButtonActions() {
         const mode = checked ? checked.value : 'translate';
 
         // Sun and Target spot can not change control manipulation mode
-        if (transform_controls.object) {
+        if (VRODOS.editor.transform_controls.object) {
             // Check if we are attached to a proxy or directly to an object
-            const targetObject = transform_controls.object.realObject || transform_controls.object;
+            const targetObject = VRODOS.editor.transform_controls.object.realObject || VRODOS.editor.transform_controls.object;
             const category = targetObject.category_name || "";
 
             if (category.includes("lightTargetSpot") ||
@@ -966,39 +966,39 @@ function loadButtonActions() {
                 if (mode === 'rotate')
                     {return;}
             }
-            transform_controls.setMode(mode);
+            VRODOS.editor.transform_controls.setMode(mode);
             showObjectPropertiesPanel(mode);
         }
     });
 
 // Event listener to disable orbit controls while dragging
-transform_controls.addEventListener('dragging-changed', (event) => {
-    envir.orbitControls.enabled = !event.value;
+VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) => {
+    VRODOS.editor.envir.orbitControls.enabled = !event.value;
 
-    if (event.value && transform_controls.object) {
+    if (event.value && VRODOS.editor.transform_controls.object) {
         // Capture start state for Undo/Redo - Use the real object's TRS
-        let target = _currentSelectedRealObject || transform_controls.object;
+        let target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
         if (target.name === "vrodosGizmoProxy" && target.realObject) {
             target = target.realObject;
         }
 
-        transform_controls._oldTRS = {
+        VRODOS.editor.transform_controls._oldTRS = {
             pos: target.position.clone(),
             rot: target.rotation.clone(),
             scale: target.scale.clone()
         };
 
         // Capture start orientations for proxy-based transformation
-        if (_currentSelectedRealObject && typeof _qProxyStart !== 'undefined') {
-            _qProxyStart.copy(transform_controls.object.quaternion);
-            _pProxyStart.copy(transform_controls.object.position);
+        if (VRODOS.editor.currentSelectedRealObject && typeof _qProxyStart !== 'undefined') {
+            _qProxyStart.copy(VRODOS.editor.transform_controls.object.quaternion);
+            _pProxyStart.copy(VRODOS.editor.transform_controls.object.position);
             
-            _qRealStart.copy(_currentSelectedRealObject.quaternion);
-            _pRealStart.copy(_currentSelectedRealObject.position);
+            _qRealStart.copy(VRODOS.editor.currentSelectedRealObject.quaternion);
+            _pRealStart.copy(VRODOS.editor.currentSelectedRealObject.position);
         }
-    } else if (!event.value && transform_controls.object && transform_controls._oldTRS) {
+    } else if (!event.value && VRODOS.editor.transform_controls.object && VRODOS.editor.transform_controls._oldTRS) {
         // Drag finished, commit command
-        let target = _currentSelectedRealObject || transform_controls.object;
+        let target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
         if (target.name === "vrodosGizmoProxy" && target.realObject) {
             target = target.realObject;
         }
@@ -1010,27 +1010,27 @@ transform_controls.addEventListener('dragging-changed', (event) => {
         };
 
         // Simple threshold check to see if it actually moved
-        const moved = target.position.distanceToSquared(transform_controls._oldTRS.pos) > 0.000001 ||
-                      target.scale.distanceToSquared(transform_controls._oldTRS.scale) > 0.000001 ||
-                      Math.abs(target.rotation.x - transform_controls._oldTRS.rot.x) > 0.0001 ||
-                      Math.abs(target.rotation.y - transform_controls._oldTRS.rot.y) > 0.0001 ||
-                      Math.abs(target.rotation.z - transform_controls._oldTRS.rot.z) > 0.0001;
+        const moved = target.position.distanceToSquared(VRODOS.editor.transform_controls._oldTRS.pos) > 0.000001 ||
+                      target.scale.distanceToSquared(VRODOS.editor.transform_controls._oldTRS.scale) > 0.000001 ||
+                      Math.abs(target.rotation.x - VRODOS.editor.transform_controls._oldTRS.rot.x) > 0.0001 ||
+                      Math.abs(target.rotation.y - VRODOS.editor.transform_controls._oldTRS.rot.y) > 0.0001 ||
+                      Math.abs(target.rotation.z - VRODOS.editor.transform_controls._oldTRS.rot.z) > 0.0001;
 
         if (moved) {
-            vrodosUndoManager.add(new TransformCommand(target, transform_controls._oldTRS, newTRS));
+            vrodosUndoManager.add(new TransformCommand(target, VRODOS.editor.transform_controls._oldTRS, newTRS));
         }
-        delete transform_controls._oldTRS;
+        delete VRODOS.editor.transform_controls._oldTRS;
     }
 });
 
     // Axis Increase size btn
     document.getElementById("axis-size-increase-btn").addEventListener("click", () => {
-        transform_controls.setSize(transform_controls.size * 1.1);
+        VRODOS.editor.transform_controls.setSize(VRODOS.editor.transform_controls.size * 1.1);
     });
 
     // Axis Decrease size btn
     document.getElementById("axis-size-decrease-btn").addEventListener("click", () => {
-        transform_controls.setSize(Math.max(transform_controls.size * 0.9, 0.1));
+        VRODOS.editor.transform_controls.setSize(Math.max(VRODOS.editor.transform_controls.size * 0.9, 0.1));
     });
 
     // Toggle 2D vs 3D button
@@ -1038,43 +1038,43 @@ transform_controls.addEventListener('dragging-changed', (event) => {
 
         document.getElementById("translate-switch").click();
 
-        if (envir.is2d) {
+        if (VRODOS.editor.envir.is2d) {
             //3d
-            envir.orbitControls.enableRotate = true;
-            envir.gridHelper.visible = true;
-            envir.axesHelper.visible = true;
+            VRODOS.editor.envir.orbitControls.enableRotate = true;
+            VRODOS.editor.envir.gridHelper.visible = true;
+            VRODOS.editor.envir.axesHelper.visible = true;
 
             document.getElementById("object-manipulation-toggle").style.display = "";
             const dimBtn3d = document.getElementById("dim-change-btn");
             dimBtn3d.textContent = "3D";
             dimBtn3d.title = "3D mode";
 
-            envir.is2d = false;
-            transform_controls.setMode("translate");
+            VRODOS.editor.envir.is2d = false;
+            VRODOS.editor.transform_controls.setMode("translate");
 
         } else {
 
-            envir.orbitControls.reset();
+            VRODOS.editor.envir.orbitControls.reset();
 
-            envir.orbitControls.enableRotate = false;
-            envir.gridHelper.visible = false;
-            envir.axesHelper.visible = false;
+            VRODOS.editor.envir.orbitControls.enableRotate = false;
+            VRODOS.editor.envir.gridHelper.visible = false;
+            VRODOS.editor.envir.axesHelper.visible = false;
 
             document.getElementById("object-manipulation-toggle").style.display = "none";
             const dimBtn2d = document.getElementById("dim-change-btn");
             dimBtn2d.textContent = "2D";
             dimBtn2d.title = "2D mode";
 
-            envir.is2d = true;
-            transform_controls.setMode("translate");
+            VRODOS.editor.envir.is2d = true;
+            VRODOS.editor.transform_controls.setMode("translate");
 
-            if (envir.getDirectorVisualObject()) envir.getDirectorVisualObject().visible = true;
+            if (VRODOS.editor.envir.getDirectorVisualObject()) VRODOS.editor.envir.getDirectorVisualObject().visible = true;
         }
 
         findSceneDimensions();
-        envir.fitCameraToSceneLimits();
+        VRODOS.editor.envir.fitCameraToSceneLimits();
 
-        envir.orbitControls.object.updateProjectionMatrix();
+        VRODOS.editor.envir.orbitControls.object.updateProjectionMatrix();
         document.getElementById("dim-change-btn").classList.toggle('toggle-active');
     });
 
@@ -1103,7 +1103,7 @@ transform_controls.addEventListener('dragging-changed', (event) => {
     canvas3D.addEventListener('keypress', saveScene, false);
 
     // Auto save listener
-    envir.scene.addEventListener("modificationPendingSave", saveScene);
+    VRODOS.editor.envir.scene.addEventListener("modificationPendingSave", saveScene);
 
     // Prevent showing the context menu on property panels
     ['popUpArtifactPropertiesDiv', 'popUpDoorPropertiesDiv', 'popUpPoiImageTextPropertiesDiv',
@@ -1151,11 +1151,11 @@ transform_controls.addEventListener('dragging-changed', (event) => {
 
                 uiElementsToToggle.forEach(el => el.style.setProperty('display', 'none', 'important'));
 
-                transform_controls.visible = false;
-                if (envir.getDirectorRig()) envir.getDirectorRig().visible = false;
-                if (envir.gridHelper) envir.gridHelper.visible = false;
-                if (envir.axesHelper) envir.axesHelper.visible = false;
-                removeAllCelOutlines();
+                VRODOS.editor.transform_controls.visible = false;
+                if (VRODOS.editor.envir.getDirectorRig()) VRODOS.editor.envir.getDirectorRig().visible = false;
+                if (VRODOS.editor.envir.gridHelper) VRODOS.editor.envir.gridHelper.visible = false;
+                if (VRODOS.editor.envir.axesHelper) VRODOS.editor.envir.axesHelper.visible = false;
+                window.removeAllCelOutlines();
                 setVisiblityLightHelpingElements(false);
 
             } else {
@@ -1169,19 +1169,19 @@ transform_controls.addEventListener('dragging-changed', (event) => {
                     el.style.removeProperty('display');
                 });
 
-                transform_controls.visible = true;
-                if (envir.gridHelper) envir.gridHelper.visible = true;
-                if (envir.axesHelper) envir.axesHelper.visible = true;
-                if (transform_controls.object) addCelOutline(transform_controls.object);
+                VRODOS.editor.transform_controls.visible = true;
+                if (VRODOS.editor.envir.gridHelper) VRODOS.editor.envir.gridHelper.visible = true;
+                if (VRODOS.editor.envir.axesHelper) VRODOS.editor.envir.axesHelper.visible = true;
+                if (VRODOS.editor.transform_controls.object) window.addCelOutline(VRODOS.editor.transform_controls.object);
                 setVisiblityLightHelpingElements(true);
 
-                if (envir.thirdPersonView || avatarControlsEnabled) {
-                    if (envir.getDirectorRig()) envir.getDirectorRig().visible = false;
+                if (VRODOS.editor.envir.thirdPersonView || VRODOS.editor.avatarControlsEnabled) {
+                    if (VRODOS.editor.envir.getDirectorRig()) VRODOS.editor.envir.getDirectorRig().visible = false;
                 } else {
-                    if (envir.getDirectorRig()) envir.getDirectorRig().visible = true;
+                    if (VRODOS.editor.envir.getDirectorRig()) VRODOS.editor.envir.getDirectorRig().visible = true;
                 }
             }
-            if (envir.turboResize) envir.turboResize();
+            if (VRODOS.editor.envir.turboResize) VRODOS.editor.envir.turboResize();
         });
     }
 
@@ -1226,8 +1226,8 @@ transform_controls.addEventListener('dragging-changed', (event) => {
 
 function setVisiblityLightHelpingElements(statusVisibility) {
 
-    for (let i = 0; i < envir.scene.children.length; i++) {
-        const curr_obj = envir.scene.children[i];
+    for (let i = 0; i < VRODOS.editor.envir.scene.children.length; i++) {
+        const curr_obj = VRODOS.editor.envir.scene.children[i];
 
         if (curr_obj.category_name === 'lightHelper' || curr_obj.category_name === 'lightTargetSpot')
             {curr_obj.visible = statusVisibility;}
@@ -1248,18 +1248,18 @@ function setVisiblityLightHelpingElements(statusVisibility) {
 
 
 function pauseClickFun() {
-    isPaused = !isPaused;
-    swapLucideIcon(document.getElementById("pauseRendering"), isPaused ? "pause" : "play");
+    VRODOS.editor.isPaused = !VRODOS.editor.isPaused;
+    swapLucideIcon(document.getElementById("pauseRendering"), VRODOS.editor.isPaused ? "pause" : "play");
 
-    if (!isPaused) {
+    if (!VRODOS.editor.isPaused) {
         animate();
         document.getElementById('pauseRendering').style.background = '';
     } else {
         document.getElementById('pauseRendering').style.background = 'red';
     }
 
-    for (const node of (envir.positionalAudioNodes || [])) {
-        if (isPaused) node.pause();
+    for (const node of (VRODOS.editor.envir.positionalAudioNodes || [])) {
+        if (VRODOS.editor.isPaused) node.pause();
         else node.play();
     }
 }
@@ -1283,19 +1283,19 @@ function showObjectPropertiesPanel(type) {
 // Take screenshot of scene
 function takeScreenshot() {
 
-    //envir.cameraAvatarHelper.visible = false;
-    if (envir.scene.getObjectByName("myTransformControls")) {
-        envir.scene.getObjectByName("myTransformControls").visible = false;
+    //VRODOS.editor.envir.cameraAvatarHelper.visible = false;
+    if (VRODOS.editor.envir.scene.getObjectByName("myTransformControls")) {
+        VRODOS.editor.envir.scene.getObjectByName("myTransformControls").visible = false;
     }
 
     // Render to an offscreen canvas to capture the screenshot reliably
-    const camera = avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit;
-    const w = envir.renderer.domElement.width;
-    const h = envir.renderer.domElement.height;
+    const camera = VRODOS.editor.avatarControlsEnabled ? VRODOS.editor.envir.cameraAvatar : VRODOS.editor.envir.cameraOrbit;
+    const w = VRODOS.editor.envir.renderer.domElement.width;
+    const h = VRODOS.editor.envir.renderer.domElement.height;
 
     const offscreenRenderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true });
     offscreenRenderer.setSize(w, h);
-    offscreenRenderer.render(envir.scene, camera);
+    offscreenRenderer.render(VRODOS.editor.envir.scene, camera);
 
     VRODOS.api.newScreenshotData = offscreenRenderer.domElement.toDataURL("image/jpeg");
     VRODOS.ui.setSceneScreenshotPreview(VRODOS.api.newScreenshotData);
@@ -1317,8 +1317,8 @@ function takeScreenshot() {
 
     offscreenRenderer.dispose();
 
-    if (envir.scene.getObjectByName("myTransformControls"))
-        {envir.scene.getObjectByName("myTransformControls").visible = true;}
+    if (VRODOS.editor.envir.scene.getObjectByName("myTransformControls"))
+        {VRODOS.editor.envir.scene.getObjectByName("myTransformControls").visible = true;}
 
     VRODOS.api.persistSceneScreenshot();
 }
@@ -1332,7 +1332,7 @@ function saveScene(e) {
         return;
     }
 
-    if (envir && envir.isSceneLoading) {
+    if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
         return;
     }
 
@@ -1352,7 +1352,7 @@ function saveScene(e) {
 }
 
 function commitPendingSceneSave() {
-    if (envir && envir.isSceneLoading) {
+    if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
         return;
     }
     mapActions.modificationPendingSave = true;
@@ -1362,17 +1362,17 @@ function commitPendingSceneSave() {
 
 // trigger autosave for the automatic cases (insert, delete asset from scene)
 function triggerAutoSave() {
-    if (!envir || !envir.scene) {
+    if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) {
         return;
     }
 
-    if (envir.isSceneLoading) {
+    if (VRODOS.editor.envir.isSceneLoading) {
         return;
     }
 
     // For non-canvas actions like lil-gui finish-change, insert/delete, and property edits,
     // save directly instead of synthesizing a mouseup event. Synthetic mouseup bubbled back
     // into lil-gui's own onMouseUp handler and caused recursive autosave loops.
-    envir.scene.dispatchEvent({ type: "modificationPendingSave" });
+    VRODOS.editor.envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     commitPendingSceneSave();
 }

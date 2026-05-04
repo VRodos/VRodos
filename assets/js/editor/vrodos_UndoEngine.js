@@ -1,9 +1,13 @@
+'use strict';
+
+window.VRODOS = window.VRODOS || { editor: {}, data: { editor: {}, scene: {} }, config: {}, ui: { transform: {} }, utils: {}, api: {} };
+
 /**
  * Vrodos Undo Engine
  * Implements a Command Pattern for internal scene editor undo/redo.
  */
 
-class VrodosUndoManager {
+VRODOS.editor.UndoManager = class {
     constructor(maxSize = 50) {
         this.undoStack = [];
         this.redoStack = [];
@@ -82,12 +86,13 @@ class VrodosUndoManager {
             redoBtn.style.visibility = 'visible'; // Always visible as per user's last request
         }
     }
-}
+};
+window.VrodosUndoManager = VRODOS.editor.UndoManager;
 
 /**
  * Command for Object Transformations (Position, Rotation, Scale)
  */
-class TransformCommand {
+VRODOS.editor.TransformCommand = class {
     constructor(object, oldTRS, newTRS) {
         // If the object is a proxy, store the real object's UUID and Name
         let target = object;
@@ -169,12 +174,13 @@ class TransformCommand {
         if (typeof animate === 'function') animate();
         if (typeof triggerAutoSave === 'function') triggerAutoSave();
     }
-}
+};
+window.TransformCommand = VRODOS.editor.TransformCommand;
 
 /**
  * Command for Adding an Object
  */
-class AddObjectCommand {
+VRODOS.editor.AddObjectCommand = class {
     constructor(nameModel, objectData) {
         this.nameModel = nameModel;
         this.objectData = JSON.parse(JSON.stringify(objectData));
@@ -193,18 +199,19 @@ class AddObjectCommand {
             const obj = envir.scene.getObjectByName(this.nameModel);
             if (obj) {
                 // We call deleteAssetFromScene but we need to tell it NOT to push to undo again
-                vrodosUndoManager.isExecuting = true;
+                VRODOS.editor.undoManager.isExecuting = true;
                 deleteAssetFromScene(obj.uuid);
-                vrodosUndoManager.isExecuting = false;
+                VRODOS.editor.undoManager.isExecuting = false;
             }
         }
     }
-}
+};
+window.AddObjectCommand = VRODOS.editor.AddObjectCommand;
 
 /**
  * Command for Deleting an Object
  */
-class DeleteObjectCommand {
+VRODOS.editor.DeleteObjectCommand = class {
     constructor(nameModel, objectData, object3D) {
         this.nameModel = nameModel;
         this.objectData = JSON.parse(JSON.stringify(objectData));
@@ -213,10 +220,10 @@ class DeleteObjectCommand {
 
     execute() {
         if (typeof deleteAssetFromScene === 'function') {
-            vrodosUndoManager.isExecuting = true;
+            VRODOS.editor.undoManager.isExecuting = true;
             // Redo a delete: we can allow disposal since it's going into the redo stack (or out)
             deleteAssetFromScene(this.object3D.uuid, false);
-            vrodosUndoManager.isExecuting = false;
+            VRODOS.editor.undoManager.isExecuting = false;
         }
     }
 
@@ -240,7 +247,8 @@ class DeleteObjectCommand {
         
         this.object3D.updateMatrix();
         this.object3D.updateMatrixWorld(true);
-        vrodos_scene_data.objects[this.nameModel] = this.objectData;
+        VRODOS.data.scene.objects = VRODOS.data.scene.objects || {};
+        VRODOS.data.scene.objects[this.nameModel] = this.objectData;
         
         // Specialized restoration for lights
         if (this.object3D.isLight) {
@@ -272,29 +280,18 @@ class DeleteObjectCommand {
                 envir.scene.add(helper);
             }
         }
-
-        // Re-create Target Spot for Sun/Spot if needed
-        if (light.category_name === 'lightSun' || light.category_name === 'lightSpot') {
-            const targetSpot = envir.scene.getObjectByName(`lightTargetSpot_${  name}`);
-            if (!targetSpot) {
-                // We'd ideally need the original target position here. 
-                // For now, let's assume it was at (0,0,0) or rely on the Light's internal target
-                if (typeof vrodos_createLightTargetSpot === 'function') {
-                    // This is complex because we need the specific logic from addRemoveOne
-                }
-            }
-        }
     }
 
     redo() {
         this.execute();
     }
-}
+};
+window.DeleteObjectCommand = VRODOS.editor.DeleteObjectCommand;
 
 /**
  * Command for Property Changes (Color, Intensity, etc.)
  */
-class PropertyCommand {
+VRODOS.editor.PropertyCommand = class {
     constructor(object, property, oldValue, newValue) {
         const target = object.realObject || object;
         this.objectUuid = target.uuid;
@@ -340,14 +337,16 @@ class PropertyCommand {
     redo() {
         this.apply(this.newValue);
     }
-}
+};
+window.PropertyCommand = VRODOS.editor.PropertyCommand;
 
 // Global instance
-const vrodosUndoManager = new VrodosUndoManager(50);
+VRODOS.editor.undoManager = new VRODOS.editor.UndoManager(50);
+window.vrodosUndoManager = VRODOS.editor.undoManager;
 
 // Set initial UI state when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => vrodosUndoManager.updateButtons());
+    document.addEventListener('DOMContentLoaded', () => VRODOS.editor.undoManager.updateButtons());
 } else {
-    vrodosUndoManager.updateButtons();
+    VRODOS.editor.undoManager.updateButtons();
 }

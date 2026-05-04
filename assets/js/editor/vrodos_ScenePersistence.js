@@ -125,17 +125,18 @@ VRODOS.exporter.SceneExporter = class {
         };
 
         // Populate metadata using the centralized schema
-        for (const [key, config] of Object.entries(VRODOS_SCENE_SETTINGS_SCHEMA)) {
+        const schema = VRODOS.config.SCENE_SETTINGS_SCHEMA || {};
+        for (const [key, config] of Object.entries(schema)) {
             const envirKey = config.envirKey;
-            let value = envir.scene[envirKey];
+            let value = VRODOS.editor.envir.scene[envirKey];
 
             // Special handling for legacy keys or specific logic
             if (key === 'ClearColor') {
                 value = scene.background ? `#${  scene.background.getHexString()}` : '#000000';
             } else if (key === 'fogtype') {
-                value = (envir.scene.fogCategory === 1) ? 'linear' : (envir.scene.fogCategory === 2 ? 'exponential' : 'none');
+                value = (VRODOS.editor.envir.scene.fogCategory === 1) ? 'linear' : (VRODOS.editor.envir.scene.fogCategory === 2 ? 'exponential' : 'none');
             } else if (key === 'backgroundImagePath') {
-                value = envir.scene.img_bcg_path || '0';
+                value = VRODOS.editor.envir.scene.img_bcg_path || '0';
             }
 
             // Type-safe assignment with sensible fallbacks
@@ -316,8 +317,9 @@ VRODOS.importer.SceneImporter = class {
         resources3D_new.SceneSettings = {};
         resources3D_new.cameraCoords = {};
 
+        const schema = VRODOS.config.SCENE_SETTINGS_SCHEMA || {};
         for (const key in scene_json_metadata) {
-            if (Object.prototype.hasOwnProperty.call(VRODOS_SCENE_SETTINGS_SCHEMA, key)) {
+            if (Object.prototype.hasOwnProperty.call(schema, key)) {
                 resources3D_new.SceneSettings[key] = scene_json_metadata[key];
             }
         }

@@ -186,7 +186,7 @@ class VRodos_Project_AJAX {
 		// Instantiate custom query
 		$custom_query = new WP_Query( $custom_query_args );
 
-		$parameter_Scenepass = $_POST['parameter_Scenepass'] ?? $parameter_Scenepass;
+		$parameter_Scenepass = !empty($_POST['parameter_Scenepass']) ? $_POST['parameter_Scenepass'] : $parameter_Scenepass;
 		
 		// Pre-instantiate managers for performance
 		$compiler = new VRodos_Compiler_Manager();
