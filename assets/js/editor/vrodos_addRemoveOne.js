@@ -851,6 +851,10 @@ function deleteFomScene(uuid, name) {
         document.getElementById("confirm-asset-deletion-description").innerHTML = `Do you really want to delete the asset named <b>${  name  }</b>?`;
     }
 
+    if (typeof transform_controls !== 'undefined') {
+        transform_controls.detach();
+    }
+
     const delete_dialog_element = document.getElementById('confirm-deletion-dialog');
     delete_dialog_element.showModal();
 
@@ -997,7 +1001,9 @@ function deleteAssetFromScene(uuid, preventDispose = false) {
     // Remove cel outline if present
     if (typeof removeCelOutline === 'function') removeCelOutline(objectSelected);
 
-    transform_controls.detach(objectSelected);
+    if (typeof transform_controls !== 'undefined') {
+        transform_controls.detach();
+    }
 
     // prevent orbiting
     document.dispatchEvent(new CustomEvent("mouseup", { "detail": "Example of an event" }));
