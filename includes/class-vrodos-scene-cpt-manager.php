@@ -678,33 +678,61 @@ class VRodos_Scene_CPT_Manager {
 		if ( is_wp_error( $thegameType_terms ) || empty( $thegameType_terms ) ) {
 			wp_die( 'Error: Project type not found.' );
 		}
-		$project_type = VRodos_Core_Manager::vrodos_return_project_type( $project_id )->string;
-		$default_json = VRodos_Core_Manager::vrodos_getDefaultJSONscene( strtolower( $project_type ) );
+		$project_type_obj = VRodos_Core_Manager::vrodos_return_project_type( $project_id );
+		$project_type     = $project_type_obj ? $project_type_obj->string : 'scene';
+		$default_json     = VRodos_Core_Manager::vrodos_getDefaultJSONscene( strtolower( $project_type ) );
 
 		$newscene_yaml_tax = get_term_by( 'slug', 'wonderaround-yaml', 'vrodos_scene_yaml' );
 
-		$project_post        = get_post( $project_id );
+		$project_post = get_post( $project_id );
+		if ( ! $project_post ) {
+			return;
+		}
+
 		$project_slug        = $project_post->post_name;
 		$parent_project_term = get_term_by( 'slug', $project_slug, 'vrodos_scene_pgame' );
 
-		$scene_taxonomies = ['vrodos_scene_pgame' => [$parent_project_term->term_id], 'vrodos_scene_yaml'  => [$newscene_yaml_tax->term_id]];
+		$parent_term_id = $parent_project_term ? $parent_project_term->term_id : 0;
+		$yaml_term_id   = $newscene_yaml_tax ? $newscene_yaml_tax->term_id : 0;
 
-		$scene_metas = ['vrodos_scene_default'  => 0, 'vrodos_scene_caption'  => esc_attr( strip_tags( $_POST['scene-caption'] ?? '' ) ), 'vrodos_scene_metatype' => $sceneMetaType];
+		$scene_taxonomies = [
+			'vrodos_scene_pgame' => [$parent_term_id],
+			'vrodos_scene_yaml'  => [$yaml_term_id],
+		];
+
+		$scene_metas = [
+			'vrodos_scene_default'  => 0,
+			'vrodos_scene_caption'  => esc_attr( strip_tags( $_POST['scene-caption'] ?? '' ) ),
+			'vrodos_scene_metatype' => $sceneMetaType,
+		];
 
 		// Place new scene after all existing ones
-		$existing_scene_ids = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( $parent_project_term->term_id );
-		$max_order = 0;
+		$existing_scene_ids = $parent_term_id > 0 ? VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( $parent_term_id ) : [];
+		$max_order          = 0;
 		foreach ( $existing_scene_ids as $sid ) {
 			$order = (int) get_post_field( 'menu_order', $sid );
-			if ( $order > $max_order ) { $max_order = $order; }
+			if ( $order > $max_order ) {
+				$max_order = $order;
+			}
 		}
 
-		$scene_information = ['post_title'   => esc_attr( strip_tags( (string) $_POST['scene-title'] ) ), 'post_content' => $default_json, 'post_type'    => 'vrodos_scene', 'post_status'  => 'publish', 'menu_order'   => $max_order + 1, 'tax_input'    => $scene_taxonomies, 'meta_input'   => $scene_metas];
+		$scene_information = [
+			'post_title'   => esc_attr( strip_tags( (string) $_POST['scene-title'] ) ),
+			'post_content' => $default_json,
+			'post_type'    => 'vrodos_scene',
+			'post_status'  => 'publish',
+			'menu_order'   => $max_order + 1,
+			'tax_input'    => $scene_taxonomies,
+			'meta_input'   => $scene_metas,
+		];
 
 		$scene_id = wp_insert_post( $scene_information );
 
 		if ( $scene_id ) {
-			$editscenePage_res  = VRodos_Core_Manager::vrodos_getEditpage( 'scene' );
+			$editscenePage_res = VRodos_Core_Manager::vrodos_getEditpage( 'scene' );
+			if ( empty( $editscenePage_res ) ) {
+				return;
+			}
 			$edit_scene_page_id = $editscenePage_res[0]->ID;
 
 			$perma_structure     = (bool) get_option( 'permalink_structure' );
