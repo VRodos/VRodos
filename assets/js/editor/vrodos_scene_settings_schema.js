@@ -4,9 +4,9 @@
  * It is used by the Exporter, Importer, and Loader to process settings uniformly.
  */
 
-const VRODOS_SCENE_SETTINGS_SCHEMA = {
+VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     // General Environment
-    'ClearColor': { type: 'color', default: '#000000', envirKey: 'background' }, // envirKey background is handled specially in exporter
+    'ClearColor': { type: 'color', default: '#000000', envirKey: 'background' },
     'backgroundStyleOption': { type: 'number', default: 0, envirKey: 'backgroundStyleOption' },
     'backgroundImagePath': { type: 'string', default: '0', envirKey: 'img_bcg_path' },
     'backgroundPresetOption': { type: 'string', default: 'None', envirKey: 'backgroundPresetOption' },
@@ -97,6 +97,4 @@ const VRODOS_SCENE_SETTINGS_SCHEMA = {
     'aframePmndrsHorizonFillLightIntensity': { type: 'number', default: 0.45, envirKey: 'aframePmndrsHorizonFillLightIntensity' },
 };
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = VRODOS_SCENE_SETTINGS_SCHEMA;
-}
+window.VRODOS_SCENE_SETTINGS_SCHEMA = VRODOS.config.SCENE_SETTINGS_SCHEMA;

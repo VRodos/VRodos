@@ -1,28 +1,29 @@
-// Custom Scene Exporter and Importer for VRodos
-// This module keeps the legacy VRodos scene JSON contract while using the
-// current active Three.js runtime and editor object model.
+window.VRODOS = window.VRODOS || { ui: { transform: {} }, utils: {}, api: {}, data: {} };
 
-function vrodosSceneSafeNumber(value, fallback) {
+VRODOS.utils.sceneSafeNumber = function(value, fallback) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
-}
+};
+window.vrodosSceneSafeNumber = VRODOS.utils.sceneSafeNumber;
 
-function vrodosSceneSafeVector(values, fallback) {
+VRODOS.utils.sceneSafeVector = function(values, fallback) {
     const safeFallback = Array.isArray(fallback) ? fallback : [0, 0, 0];
     const source = Array.isArray(values) ? values : safeFallback;
 
     return [
-        vrodosSceneSafeNumber(source[0], safeFallback[0]),
-        vrodosSceneSafeNumber(source[1], safeFallback[1]),
-        vrodosSceneSafeNumber(source[2], safeFallback[2])
+        VRODOS.utils.sceneSafeNumber(source[0], safeFallback[0]),
+        VRODOS.utils.sceneSafeNumber(source[1], safeFallback[1]),
+        VRODOS.utils.sceneSafeNumber(source[2], safeFallback[2])
     ];
-}
+};
+window.vrodosSceneSafeVector = VRODOS.utils.sceneSafeVector;
 
-function vrodosSceneSafeScale(values) {
-    return vrodosSceneSafeVector(values, [1, 1, 1]);
-}
+VRODOS.utils.sceneSafeScale = function(values) {
+    return VRODOS.utils.sceneSafeVector(values, [1, 1, 1]);
+};
+window.vrodosSceneSafeScale = VRODOS.utils.sceneSafeScale;
 
-function vrodosSceneResolveObjectPath(value, UPLOAD_DIR) {
+VRODOS.utils.sceneResolveObjectPath = function(value, UPLOAD_DIR) {
     let explicitPath = value && typeof value.path === 'string' ? value.path.trim() : '';
     
     // Recursive cleaning of junk from explicitPath
@@ -74,9 +75,10 @@ function vrodosSceneResolveObjectPath(value, UPLOAD_DIR) {
     // Join with UPLOAD_DIR
     const separator = UPLOAD_DIR.endsWith('/') ? '' : '/';
     return UPLOAD_DIR + separator + fnPath;
-}
+};
+window.vrodosSceneResolveObjectPath = VRODOS.utils.sceneResolveObjectPath;
 
-function vrodosSceneSafeObjectName(node, fallbackIndex) {
+VRODOS.utils.sceneSafeObjectName = function(node, fallbackIndex) {
     const currentName = node && typeof node.name === 'string' ? node.name.trim() : '';
     if (currentName !== '') {
         return currentName;
@@ -92,9 +94,10 @@ function vrodosSceneSafeObjectName(node, fallbackIndex) {
     }
 
     return fallbackName;
-}
+};
+window.vrodosSceneSafeObjectName = VRODOS.utils.sceneSafeObjectName;
 
-function vrodosSceneUniqueObjectName(name, existingObjects) {
+VRODOS.utils.sceneUniqueObjectName = function(name, existingObjects) {
     let uniqueName = name;
     let suffix = 2;
 
@@ -104,9 +107,10 @@ function vrodosSceneUniqueObjectName(name, existingObjects) {
     }
 
     return uniqueName;
-}
+};
+window.vrodosSceneUniqueObjectName = VRODOS.utils.sceneUniqueObjectName;
 
-class VrodosSceneExporter {
+VRODOS.exporter.SceneExporter = class {
     parse(scene) {
         const output = {
             metadata: {
@@ -179,8 +183,8 @@ class VrodosSceneExporter {
 
             const objectData = this.processObject(node);
             if (objectData) {
-                const baseName = vrodosSceneSafeObjectName(node, output.metadata.objects);
-                const safeName = vrodosSceneUniqueObjectName(baseName, output.objects);
+                const baseName = VRODOS.utils.sceneSafeObjectName(node, output.metadata.objects);
+                const safeName = VRODOS.utils.sceneUniqueObjectName(baseName, output.objects);
                 node.name = safeName;
                 output.objects[safeName] = objectData;
                 output.metadata.objects++;
@@ -227,9 +231,9 @@ class VrodosSceneExporter {
 
         entryObject.fnPath = o.fnPath ? o.fnPath : '';
 
-        entryObject.position = vrodosSceneSafeVector([o.position.x, o.position.y, o.position.z], [0, 0, 0]);
-        entryObject.rotation = vrodosSceneSafeVector([o.rotation.x, o.rotation.y, o.rotation.z], [0, 0, 0]);
-        entryObject.scale = vrodosSceneSafeScale([o.scale.x, o.scale.y, o.scale.z]);
+        entryObject.position = VRODOS.utils.sceneSafeVector([o.position.x, o.position.y, o.position.z], [0, 0, 0]);
+        entryObject.rotation = VRODOS.utils.sceneSafeVector([o.rotation.x, o.rotation.y, o.rotation.z], [0, 0, 0]);
+        entryObject.scale = VRODOS.utils.sceneSafeScale([o.scale.x, o.scale.y, o.scale.z]);
 
         if (o.quaternion) {
             const quatR = new THREE.Quaternion();
@@ -276,8 +280,8 @@ class VrodosSceneExporter {
 
     processAvatar(o, entryObject) {
         const quatCombined = new THREE.Quaternion();
-        const pitchRotation = vrodosSceneSafeNumber(o.rotation.x, 0);
-        const yawRotation = vrodosSceneSafeNumber(o.rotation.y, 0);
+        const pitchRotation = VRODOS.utils.sceneSafeNumber(o.rotation.x, 0);
+        const yawRotation = VRODOS.utils.sceneSafeNumber(o.rotation.y, 0);
         const camEulerCombined = new THREE.Euler(-pitchRotation, (Math.PI - yawRotation) % (2 * Math.PI), 0, 'YXZ');
         quatCombined.setFromEuler(camEulerCombined);
 
@@ -295,10 +299,11 @@ class VrodosSceneExporter {
         entryObject.quaternion_camera = [quatR_camera.x, quatR_camera.y, quatR_camera.z, quatR_camera.w];
         entryObject.category_name = 'avatarYawObject';
     }
-}
+};
+window.VrodosSceneExporter = VRODOS.exporter.SceneExporter;
 
 
-class VrodosSceneImporter {
+VRODOS.importer.SceneImporter = class {
     parse(scene_json, UPLOAD_DIR) {
         if (scene_json.length === 0) {
             return {};
@@ -322,7 +327,7 @@ class VrodosSceneImporter {
 
         for (const asset_key in scene_objects) {
             const value = scene_objects[asset_key];
-            const name = vrodosSceneSafeObjectName({
+            const name = VRODOS.utils.sceneSafeObjectName({
                 name: asset_key,
                 asset_slug: value.asset_slug,
                 asset_id: value.asset_id,
@@ -330,9 +335,9 @@ class VrodosSceneImporter {
             }, objectIndex);
             objectIndex++;
 
-            value.position = vrodosSceneSafeVector(value.position, [0, 0, 0]);
-            value.rotation = vrodosSceneSafeVector(value.rotation, [0, 0, 0]);
-            value.scale = vrodosSceneSafeScale(value.scale);
+            value.position = VRODOS.utils.sceneSafeVector(value.position, [0, 0, 0]);
+            value.rotation = VRODOS.utils.sceneSafeVector(value.rotation, [0, 0, 0]);
+            value.scale = VRODOS.utils.sceneSafeScale(value.scale);
 
             if (name === 'avatarCamera') {
                 resources3D_new.cameraCoords = {
@@ -355,10 +360,11 @@ class VrodosSceneImporter {
                 resources3D_new[name].category_slug !== 'assessment' &&
                 !['lightsun', 'lightSpot', 'lightAmbient', 'Pawn', 'lightLamp'].some(el => name.includes(el))
             ) {
-                resources3D_new[name].path = vrodosSceneResolveObjectPath(value, UPLOAD_DIR);
+                resources3D_new[name].path = VRODOS.utils.sceneResolveObjectPath(value, UPLOAD_DIR);
             }
         }
 
         return resources3D_new;
     }
-}
+};
+window.VrodosSceneImporter = VRODOS.importer.SceneImporter;

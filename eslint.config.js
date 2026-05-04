@@ -52,15 +52,20 @@ module.exports = [
                 transform_controls: 'readonly',
                 avatarControlsEnabled: 'readonly',
                 selected_object_name: 'readonly',
+
+                // Legacy aliases that remain for compatibility but should be avoided in new code
                 VRodos_LoaderMulti: 'readonly',
                 vrodosGetPointerLockObject: 'readonly',
                 triggerAutoSave: 'readonly',
                 deleteFomScene: 'readonly',
                 pauseClickFun: 'readonly',
-                addCelOutline: 'readonly',
-                removeAllCelOutlines: 'readonly',
                 addInHierarchyViewer: 'readonly',
-                setTransformControlsSize: 'readonly'
+                saveScene: 'readonly',
+                pluginPath: 'readonly',
+                url_scene_redirect: 'readonly',
+                showPawnPositions: 'readonly',
+                isPaused: 'readonly',
+                animate: 'readonly'
             }
         },
         rules: {

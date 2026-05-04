@@ -94,22 +94,25 @@ var _mouseDownTime = 0;
 var _CLICK_THRESHOLD = 5; // pixels
 var _suppressNextSelection = false; // Set by drop handler to prevent selection on drop
 
-function _onCanvasMouseDown(event) {
+VRODOS.ui.onMouseDown = function(event) {
     _mouseDownPos.x = event.clientX;
     _mouseDownPos.y = event.clientY;
     _mouseDownTime = performance.now();
-    // Store for panel positioning (vrodos_auxControlers.js)
+    // Store for panel positioning
     VRODOS.editor._lastClickX = event.clientX;
     VRODOS.editor._lastClickY = event.clientY;
-}
+};
+window._onCanvasMouseDown = VRODOS.ui.onMouseDown;
 
-function _onCanvasMouseUp(event) {
+VRODOS.ui.onMouseUp = function(event) {
     const dx = event.clientX - _mouseDownPos.x;
     const dy = event.clientY - _mouseDownPos.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // Always trigger auto-save on mouseup (was previously bound to 'mouseup')
-    saveScene(event);
+    // Always trigger auto-save on mouseup
+    if (typeof saveScene === 'function') {
+        saveScene(event);
+    }
 
     // Suppress selection after a drop event
     if (_suppressNextSelection) {
@@ -121,7 +124,70 @@ function _onCanvasMouseUp(event) {
     if (dist > _CLICK_THRESHOLD) return;
 
     onLeftMouseClick(event);
-}
+};
+window._onCanvasMouseUp = VRODOS.ui.onMouseUp;
+
+VRODOS.ui.addCelOutline = function(object) {
+    if (!object || !object.traverse) return;
+
+    // Cel-shaded outline technique
+    object.traverse((node) => {
+        if (node.isMesh && !node.vrodos_internal_helper) {
+            const outlineMaterial = new THREE.MeshBasicMaterial({
+                color: 0x3b82f6, // tw-blue-500
+                side: THREE.BackSide,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const outlineMesh = new THREE.Mesh(node.geometry, outlineMaterial);
+            outlineMesh.name = "vrodos_cel_outline";
+            outlineMesh.scale.multiplyScalar(1.05);
+            outlineMesh.vrodos_internal_helper = true;
+            node.add(outlineMesh);
+        }
+    });
+};
+window.addCelOutline = VRODOS.ui.addCelOutline;
+
+VRODOS.ui.removeAllCelOutlines = function() {
+    if (!envir || !envir.scene) return;
+
+    envir.scene.traverse((node) => {
+        if (node.name === "vrodos_cel_outline") {
+            if (node.parent) {
+                node.parent.remove(node);
+            }
+        }
+    });
+};
+window.removeAllCelOutlines = VRODOS.ui.removeAllCelOutlines;
+
+VRODOS.ui.setSelectionIndicator = function(object) {
+    if (!object) return;
+    VRODOS.ui.removeAllCelOutlines();
+    VRODOS.ui.addCelOutline(object);
+};
+window.setSelectionIndicator = VRODOS.ui.setSelectionIndicator;
+
+VRODOS.ui.setDatGuiInitialVales = function(object) {
+    if (!object) return;
+    // Implementation for syncing dat.gui or other property editors
+    if (typeof showPropertiesInPanel === 'function') {
+        showPropertiesInPanel(object);
+    }
+};
+window.setDatGuiInitialVales = VRODOS.ui.setDatGuiInitialVales;
+
+VRODOS.utils.findParentSceneObject = function(object) {
+    if (!object) return null;
+    let curr = object;
+    while (curr && curr.parent && curr.parent.name !== "vrodosScene") {
+        curr = curr.parent;
+    }
+    return curr;
+};
+window.findParentSceneObject = VRODOS.utils.findParentSceneObject;
 
 /**
  * Detect mouse click (fires on mouseup if pointer didn't move)

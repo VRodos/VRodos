@@ -1,22 +1,33 @@
-// Swap a Lucide icon inside a container element
-function swapLucideIcon(container, iconName) {
+VRODOS.ui.swapLucideIcon = function(container, iconName) {
     if (!container) return;
     const icon = container.querySelector('[data-lucide], svg');
     if (icon) {
         const newIcon = document.createElement('i');
         newIcon.setAttribute('data-lucide', iconName);
-        // Preserve original sizing classes (tw-w-*, tw-h-*, etc.)
+        // Preserve original sizing classes
         const origClasses = (icon.getAttribute('class') || '').replace(/lucide[^\s]*/g, '').trim();
         if (origClasses) newIcon.setAttribute('class', origClasses);
         icon.replaceWith(newIcon);
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
-}
+};
+window.swapLucideIcon = VRODOS.ui.swapLucideIcon;
 
-// Local and Global scope functions
-let new_screenshot_data = null;
+VRODOS.api.newScreenshotData = null;
+Object.defineProperty(window, 'new_screenshot_data', {
+    get: () => VRODOS.api.newScreenshotData,
+    set: (val) => { VRODOS.api.newScreenshotData = val; },
+    configurable: true
+});
 
-function focusWithoutScroll(element) {
+VRODOS.api.isSceneIconManuallySelected = false;
+Object.defineProperty(window, 'is_scene_icon_manually_selected', {
+    get: () => VRODOS.api.isSceneIconManuallySelected,
+    set: (val) => { VRODOS.api.isSceneIconManuallySelected = val; },
+    configurable: true
+});
+
+VRODOS.ui.focusWithoutScroll = function(element) {
     if (!element || typeof element.focus !== 'function') return;
 
     try {
@@ -24,9 +35,10 @@ function focusWithoutScroll(element) {
     } catch (error) {
         element.focus();
     }
-}
+};
+window.focusWithoutScroll = VRODOS.ui.focusWithoutScroll;
 
-function copyTextareaText(textarea) {
+VRODOS.utils.copyTextareaText = function(textarea) {
     if (!textarea) {
         return Promise.reject(new Error('No textarea available for clipboard copy.'));
     }
@@ -34,20 +46,21 @@ function copyTextareaText(textarea) {
     const text = textarea.value || '';
 
     if (window.isSecureContext && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-        return navigator.clipboard.writeText(text).catch(() => fallbackCopyTextareaText(textarea));
+        return navigator.clipboard.writeText(text).catch(() => VRODOS.utils.fallbackCopyTextareaText(textarea));
     }
 
-    return fallbackCopyTextareaText(textarea);
-}
+    return VRODOS.utils.fallbackCopyTextareaText(textarea);
+};
+window.copyTextareaText = VRODOS.utils.copyTextareaText;
 
-function fallbackCopyTextareaText(textarea) {
+VRODOS.utils.fallbackCopyTextareaText = function(textarea) {
     return new Promise((resolve, reject) => {
         const activeElement = document.activeElement;
         const originalSelectionStart = textarea.selectionStart;
         const originalSelectionEnd = textarea.selectionEnd;
 
         try {
-            focusWithoutScroll(textarea);
+            VRODOS.ui.focusWithoutScroll(textarea);
             textarea.select();
             textarea.setSelectionRange(0, textarea.value.length);
 
@@ -55,7 +68,7 @@ function fallbackCopyTextareaText(textarea) {
             textarea.setSelectionRange(originalSelectionStart || 0, originalSelectionEnd || 0);
 
             if (activeElement && typeof activeElement.focus === 'function' && activeElement !== textarea) {
-                focusWithoutScroll(activeElement);
+                VRODOS.ui.focusWithoutScroll(activeElement);
             }
 
             if (copied) {
@@ -68,19 +81,21 @@ function fallbackCopyTextareaText(textarea) {
             reject(error);
         }
     });
-}
+};
+window.fallbackCopyTextareaText = VRODOS.utils.fallbackCopyTextareaText;
 
-function copyPlainText(text) {
+VRODOS.utils.copyPlainText = function(text) {
     text = text || '';
 
     if (window.isSecureContext && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-        return navigator.clipboard.writeText(text).catch(() => fallbackCopyPlainText(text));
+        return navigator.clipboard.writeText(text).catch(() => VRODOS.utils.fallbackCopyPlainText(text));
     }
 
-    return fallbackCopyPlainText(text);
-}
+    return VRODOS.utils.fallbackCopyPlainText(text);
+};
+window.copyPlainText = VRODOS.utils.copyPlainText;
 
-function fallbackCopyPlainText(text) {
+VRODOS.utils.fallbackCopyPlainText = function(text) {
     return new Promise((resolve, reject) => {
         const textarea = document.createElement('textarea');
         const activeElement = document.activeElement;
@@ -95,7 +110,7 @@ function fallbackCopyPlainText(text) {
         document.body.appendChild(textarea);
 
         try {
-            focusWithoutScroll(textarea);
+            VRODOS.ui.focusWithoutScroll(textarea);
             textarea.select();
             textarea.setSelectionRange(0, textarea.value.length);
 
@@ -103,7 +118,7 @@ function fallbackCopyPlainText(text) {
             textarea.remove();
 
             if (activeElement && typeof activeElement.focus === 'function') {
-                focusWithoutScroll(activeElement);
+                VRODOS.ui.focusWithoutScroll(activeElement);
             }
 
             if (copied) {
@@ -116,9 +131,10 @@ function fallbackCopyPlainText(text) {
             reject(error);
         }
     });
-}
+};
+window.fallbackCopyPlainText = VRODOS.utils.fallbackCopyPlainText;
 
-function clampFloatingPanelToViewport(panel) {
+VRODOS.ui.clampFloatingPanelToViewport = function(panel) {
     if (!panel) return;
 
     const rect = panel.getBoundingClientRect();
@@ -130,24 +146,27 @@ function clampFloatingPanelToViewport(panel) {
 
     panel.style.left = `${nextLeft  }px`;
     panel.style.top = `${nextTop  }px`;
-}
+};
+window.clampFloatingPanelToViewport = VRODOS.ui.clampFloatingPanelToViewport;
 
-function showFloatingPanel(panel) {
+VRODOS.ui.showFloatingPanel = function(panel) {
     if (!panel) return;
 
     panel.classList.remove('tw-hidden');
     panel.style.display = 'flex';
-    clampFloatingPanelToViewport(panel);
-}
+    VRODOS.ui.clampFloatingPanelToViewport(panel);
+};
+window.showFloatingPanel = VRODOS.ui.showFloatingPanel;
 
-function hideFloatingPanel(panel) {
+VRODOS.ui.hideFloatingPanel = function(panel) {
     if (!panel) return;
 
     panel.classList.add('tw-hidden');
     panel.style.display = 'none';
-}
+};
+window.hideFloatingPanel = VRODOS.ui.hideFloatingPanel;
 
-function initializeFloatingPanel(panelId, headerId, closeButtonId) {
+VRODOS.ui.initializeFloatingPanel = function(panelId, headerId, closeButtonId) {
     const panel = document.getElementById(panelId);
     const header = document.getElementById(headerId);
     const closeButton = document.getElementById(closeButtonId);
@@ -157,7 +176,7 @@ function initializeFloatingPanel(panelId, headerId, closeButtonId) {
 
     if (closeButton) {
         closeButton.addEventListener('click', () => {
-            hideFloatingPanel(panel);
+            VRODOS.ui.hideFloatingPanel(panel);
         });
     }
 
@@ -190,7 +209,7 @@ function initializeFloatingPanel(panelId, headerId, closeButtonId) {
 
         panel.style.left = `${startLeft + event.clientX - startX  }px`;
         panel.style.top = `${startTop + event.clientY - startY  }px`;
-        clampFloatingPanelToViewport(panel);
+        VRODOS.ui.clampFloatingPanelToViewport(panel);
     });
 
     header.addEventListener('pointerup', (event) => {
@@ -204,7 +223,7 @@ function initializeFloatingPanel(panelId, headerId, closeButtonId) {
 
     window.addEventListener('resize', () => {
         if (!panel.classList.contains('tw-hidden')) {
-            clampFloatingPanelToViewport(panel);
+            VRODOS.ui.clampFloatingPanelToViewport(panel);
         }
     });
 
@@ -266,9 +285,10 @@ function initializeFloatingPanel(panelId, headerId, closeButtonId) {
             event.stopPropagation();
         });
     }
-}
+};
+window.initializeFloatingPanel = VRODOS.ui.initializeFloatingPanel;
 
-function showTemporaryButtonSuccess(buttonId, message) {
+VRODOS.ui.showTemporaryButtonSuccess = function(buttonId, message) {
     const btn = document.getElementById(buttonId);
     if (!btn) return;
 
@@ -280,9 +300,10 @@ function showTemporaryButtonSuccess(buttonId, message) {
         btn.innerHTML = orig;
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }, 1500);
-}
+};
+window.showTemporaryButtonSuccess = VRODOS.ui.showTemporaryButtonSuccess;
 
-function showTemporaryButtonWarning(buttonId, message) {
+VRODOS.ui.showTemporaryButtonWarning = function(buttonId, message) {
     const btn = document.getElementById(buttonId);
     if (!btn) return;
 
@@ -294,13 +315,14 @@ function showTemporaryButtonWarning(buttonId, message) {
         btn.innerHTML = orig;
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }, 2500);
-}
+};
+window.showTemporaryButtonWarning = VRODOS.ui.showTemporaryButtonWarning;
 
-function refreshSceneJsonTextarea() {
+VRODOS.ui.refreshSceneJsonTextarea = function() {
     const textarea = document.getElementById('vrodos_scene_json_input');
-    if (!textarea || typeof VrodosSceneExporter === 'undefined' || !envir || !envir.scene) return;
+    if (!textarea || !VRODOS.exporter.SceneExporter || !envir || !envir.scene) return;
 
-    const exporter = new VrodosSceneExporter();
+    const exporter = new VRODOS.exporter.SceneExporter();
     const exportedJson = exporter.parse(envir.scene);
 
     try {
@@ -308,25 +330,28 @@ function refreshSceneJsonTextarea() {
     } catch (error) {
         textarea.value = exportedJson;
     }
-}
+};
+window.refreshSceneJsonTextarea = VRODOS.ui.refreshSceneJsonTextarea;
 
-function waitForLatestSceneSave() {
-    if (typeof vrodos_whenSceneSaveSettles === 'function') {
+VRODOS.api.waitForLatestSceneSave = function() {
+    if (typeof VRODOS.api.whenSceneSaveSettles === 'function') {
         return VRODOS.api.whenSceneSaveSettles();
     }
 
     return Promise.resolve();
-}
+};
+window.waitForLatestSceneSave = VRODOS.api.waitForLatestSceneSave;
 
-function persistSceneScreenshot() {
-    return waitForLatestSceneSave()
-        .then(() => (typeof saveChanges === 'function') ? saveChanges({force: true}) : Promise.resolve())
+VRODOS.api.persistSceneScreenshot = function() {
+    return VRODOS.api.waitForLatestSceneSave()
+        .then(() => (typeof VRODOS.api.saveChanges === 'function') ? VRODOS.api.saveChanges({force: true}) : Promise.resolve())
         .catch((error) => {
             console.warn('VRodos: scene screenshot could not be saved.', error);
         });
-}
+};
+window.persistSceneScreenshot = VRODOS.api.persistSceneScreenshot;
 
-function setSceneScreenshotPreview(src) {
+VRODOS.ui.setSceneScreenshotPreview = function(src) {
     const sceneShot = document.getElementById('vrodos_scene_sshot');
     const placeholder = document.getElementById('vrodos_scene_sshot_placeholder');
 
@@ -347,7 +372,55 @@ function setSceneScreenshotPreview(src) {
             placeholder.classList.remove('tw-hidden');
         }
     }
-}
+};
+window.setSceneScreenshotPreview = VRODOS.ui.setSceneScreenshotPreview;
+
+VRODOS.ui.onDrop = function(ev) {
+    // Ignore scene reorder drags
+    if (ev.dataTransfer.types.indexOf('application/vrodos-scene-reorder') !== -1) return;
+
+    const dataDrag = JSON.parse(ev.dataTransfer.getData("text"));
+
+    const categoryName = dataDrag.category_name;
+    const nameModel = dataDrag.title;
+
+    let path = '';
+
+    if (dataDrag.category_name !== "lightSun" &&
+        dataDrag.category_name !== "lightLamp" &&
+        dataDrag.category_name !== "lightSpot" &&
+        dataDrag.category_name !== "lightAmbient" &&
+        dataDrag.category_name !== "Pawn") {
+        path = dataDrag.path.substring(0, dataDrag.path.lastIndexOf("/") + 1);
+    }
+
+    const translation = dragDropVerticalRayCasting(ev);
+
+    // Suppress the click-selection that would fire from the drop's mouseup
+    _suppressNextSelection = true;
+
+    // Asset add to canvas
+    if (typeof addAssetToCanvas === 'function') {
+        addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath);
+    }
+
+    if (typeof showObjectPropertiesPanel === 'function') {
+        showObjectPropertiesPanel(transform_controls.getMode());
+    }
+
+    if (envir.is2d) {
+        transform_controls.setMode("translate");
+        document.getElementById("translatePanelGui").style.display = '';
+    }
+
+    ev.preventDefault();
+};
+window.vrodos_onDrop = VRODOS.ui.onDrop;
+
+VRODOS.ui.onDragOver = function(ev) {
+    ev.preventDefault();
+};
+window.vrodos_onDragOver = VRODOS.ui.onDragOver;
 
 // Local
 function loadButtonActions() {
@@ -598,7 +671,7 @@ function loadButtonActions() {
     // Take SCREENSHOT OF SCENE
     document.getElementById("takeScreenshotBtn").addEventListener("click", () => {
         takeScreenshot();
-        is_scene_icon_manually_selected = false;
+        VRODOS.api.isSceneIconManuallySelected = false;
     });
 
     // Select image as Scene icon
@@ -612,10 +685,10 @@ function loadButtonActions() {
             const reader = new FileReader();
 
             reader.onload = function (e) {
-                new_screenshot_data = e.target.result;
-                setSceneScreenshotPreview(new_screenshot_data);
-                is_scene_icon_manually_selected = true;
-                persistSceneScreenshot();
+                VRODOS.api.newScreenshotData = e.target.result;
+                VRODOS.ui.setSceneScreenshotPreview(VRODOS.api.newScreenshotData);
+                VRODOS.api.isSceneIconManuallySelected = true;
+                VRODOS.api.persistSceneScreenshot();
             };
 
             reader.readAsDataURL(input.files[0]);
@@ -1224,19 +1297,19 @@ function takeScreenshot() {
     offscreenRenderer.setSize(w, h);
     offscreenRenderer.render(envir.scene, camera);
 
-    new_screenshot_data = offscreenRenderer.domElement.toDataURL("image/jpeg");
-    setSceneScreenshotPreview(new_screenshot_data);
+    VRODOS.api.newScreenshotData = offscreenRenderer.domElement.toDataURL("image/jpeg");
+    VRODOS.ui.setSceneScreenshotPreview(VRODOS.api.newScreenshotData);
 
     // Also update the current scene's drawer thumbnail
     const drawerThumb = document.querySelector('.current-scene-thumb');
     if (drawerThumb) {
-        drawerThumb.src = new_screenshot_data;
+        drawerThumb.src = VRODOS.api.newScreenshotData;
     } else {
         // If placeholder (no previous screenshot), replace it with an img
         const placeholder = document.querySelector('.current-scene-thumb-placeholder');
         if (placeholder) {
             const img = document.createElement('img');
-            img.src = new_screenshot_data;
+            img.src = VRODOS.api.newScreenshotData;
             img.className = 'tw-w-full tw-h-full tw-object-cover current-scene-thumb';
             placeholder.replaceWith(img);
         }
@@ -1247,7 +1320,7 @@ function takeScreenshot() {
     if (envir.scene.getObjectByName("myTransformControls"))
         {envir.scene.getObjectByName("myTransformControls").visible = true;}
 
-    persistSceneScreenshot();
+    VRODOS.api.persistSceneScreenshot();
 }
 
 

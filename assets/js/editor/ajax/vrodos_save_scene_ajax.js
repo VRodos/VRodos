@@ -16,8 +16,8 @@ VRODOS.api.saveScene = function() {
 	});
 
 	let pendingScreenshotData = null;
-	if (new_screenshot_data) {
-		pendingScreenshotData = new_screenshot_data;
+	if (VRODOS.api.newScreenshotData) {
+		pendingScreenshotData = VRODOS.api.newScreenshotData;
 		postdata.append( 'scene_screenshot', pendingScreenshotData );
 	}
 
@@ -40,8 +40,8 @@ VRODOS.api.saveScene = function() {
 		};
 		document.getElementById( "compileGameBtn" ).disabled = true;
 		setTimeout( enableSaveFunctionality, 2000 );
-		if (pendingScreenshotData && new_screenshot_data === pendingScreenshotData) {
-			new_screenshot_data = null;
+		if (pendingScreenshotData && VRODOS.api.newScreenshotData === pendingScreenshotData) {
+			VRODOS.api.newScreenshotData = null;
 		}
 		return data;
 	})

@@ -1,10 +1,11 @@
 "use strict";
 
-function vrodosLoaderJoinUrl(base, path) {
+VRODOS.utils.loaderJoinUrl = function(base, path) {
     return `${String(base || '').replace(/\/+$/, '')  }/${  String(path || '').replace(/^\/+/, '')}`;
-}
+};
+window.vrodosLoaderJoinUrl = VRODOS.utils.loaderJoinUrl;
 
-function vrodosLoaderResolveBaseUrl(pluginPath, localizedKey, fallbackRelative) {
+VRODOS.utils.loaderResolveBaseUrl = function(pluginPath, localizedKey, fallbackRelative) {
     const paths = (typeof vrodos_data !== 'undefined' && vrodos_data.paths) ? vrodos_data.paths : {};
 
     if (paths[localizedKey]) {
@@ -13,33 +14,37 @@ function vrodosLoaderResolveBaseUrl(pluginPath, localizedKey, fallbackRelative) 
 
     const pluginBaseUrl = paths.pluginBaseUrl || (typeof pluginPath === 'string' ? pluginPath : '');
     if (pluginBaseUrl) {
-        return vrodosLoaderJoinUrl(pluginBaseUrl, fallbackRelative);
+        return VRODOS.utils.loaderJoinUrl(pluginBaseUrl, fallbackRelative);
     }
 
     return String(fallbackRelative || '').replace(/^\/+/, '');
-}
+};
+window.vrodosLoaderResolveBaseUrl = VRODOS.utils.loaderResolveBaseUrl;
 
-function vrodosLoaderSafeNumber(value, fallback) {
+VRODOS.utils.loaderSafeNumber = function(value, fallback) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
-}
+};
+window.vrodosLoaderSafeNumber = VRODOS.utils.loaderSafeNumber;
 
-function vrodosLoaderSafeVector(values, fallback) {
+VRODOS.utils.loaderSafeVector = function(values, fallback) {
     const safeFallback = Array.isArray(fallback) ? fallback : [0, 0, 0];
     const source = Array.isArray(values) ? values : safeFallback;
 
     return [
-        vrodosLoaderSafeNumber(source[0], safeFallback[0]),
-        vrodosLoaderSafeNumber(source[1], safeFallback[1]),
-        vrodosLoaderSafeNumber(source[2], safeFallback[2])
+        VRODOS.utils.loaderSafeNumber(source[0], safeFallback[0]),
+        VRODOS.utils.loaderSafeNumber(source[1], safeFallback[1]),
+        VRODOS.utils.loaderSafeNumber(source[2], safeFallback[2])
     ];
-}
+};
+window.vrodosLoaderSafeVector = VRODOS.utils.loaderSafeVector;
 
-function vrodosLoaderSafeScale(values) {
-    return vrodosLoaderSafeVector(values, [1, 1, 1]);
-}
+VRODOS.utils.loaderSafeScale = function(values) {
+    return VRODOS.utils.loaderSafeVector(values, [1, 1, 1]);
+};
+window.vrodosLoaderSafeScale = VRODOS.utils.loaderSafeScale;
 
-function vrodosLoaderSafeObjectName(name, resource, object) {
+VRODOS.utils.loaderSafeObjectName = function(name, resource, object) {
     const currentName = typeof name === 'string' ? name.trim() : '';
     if (currentName !== '') {
         return currentName;
@@ -55,9 +60,10 @@ function vrodosLoaderSafeObjectName(name, resource, object) {
     const uuidPart = resource && resource.uuid ? String(resource.uuid).split('-')[0] : String(Date.now());
 
     return `${(slugPart || 'scene_object') + (idPart ? `_${  idPart}` : '')  }_${  uuidPart}`;
-}
+};
+window.vrodosLoaderSafeObjectName = VRODOS.utils.loaderSafeObjectName;
 
-function vrodosLoaderCreateAssessmentObject(name, resource) {
+VRODOS.loader.createAssessmentObject = function(name, resource) {
     if (typeof vrodosCreateAssessmentPlaceholder === 'function') {
         return vrodosCreateAssessmentPlaceholder(name, resource);
     }
@@ -92,14 +98,16 @@ function vrodosLoaderCreateAssessmentObject(name, resource) {
     fallback.add(box);
 
     return fallback;
-}
+};
+window.vrodosLoaderCreateAssessmentObject = VRODOS.loader.createAssessmentObject;
+
 /**
  * Synchronize a scene setting using the schema
  * @param {string} key
  * @param {any} value
  * @param {object} resources3D - needed for context in side effects
  */
-function vrodosSyncSceneSetting(key, value, resources3D) {
+VRODOS.api.syncSceneSetting = function(key, value, resources3D) {
     if (!VRODOS_SCENE_SETTINGS_SCHEMA[key]) return;
 
     const config = VRODOS_SCENE_SETTINGS_SCHEMA[key];
@@ -272,9 +280,10 @@ function vrodosSyncSceneSetting(key, value, resources3D) {
             if (radioExpFog) radioExpFog.checked = true;
         }
     }
-}
+};
+window.vrodosSyncSceneSetting = VRODOS.api.syncSceneSetting;
 
-class VRodos_LoaderMulti {
+VRODOS.loader.LoaderMulti = class {
 
     constructor(who) { };
 
@@ -282,14 +291,14 @@ class VRodos_LoaderMulti {
 
         const loader = new THREE.GLTFLoader(manager);
         const pendingLoads = [];
-        const modelBaseUrl = vrodosLoaderResolveBaseUrl(pluginPath, 'modelBaseUrl', 'assets/models/');
+        const modelBaseUrl = VRODOS.utils.loaderResolveBaseUrl(pluginPath, 'modelBaseUrl', 'assets/models/');
 
         for (const name in resources3D) {
             const resource = resources3D[name];
 
             // Use schema for scene settings
             if (VRODOS_SCENE_SETTINGS_SCHEMA[name]) {
-                vrodosSyncSceneSetting(name, resource, resources3D);
+                VRODOS.api.syncSceneSetting(name, resource, resources3D);
                 continue;
             }
 
@@ -348,19 +357,6 @@ class VRodos_LoaderMulti {
                     else{
                         document.getElementById('RadioNoFog').checked = true;
                     }
-                    // if (resources3D["fogcolor"]){
-                    //     document.getElementById('jscolorpickFog').jscolor.fromString("#" + resources3D["fogcolor"]);
-                    // }
-                    // if (resources3D["fogfar"]){
-                    //     document.getElementById('FogFar').value = JSON.parse(resources3D["fogfar"]);
-                    // }
-                    // if (resources3D["fognear"]){
-                    //     document.getElementById('FogNear').value = JSON.parse(resources3D["fognear"]);
-                    // }
-                    // if (resources3D["fogdensity"]){
-                    //     document.getElementById('FogDensity').value = JSON.parse(resources3D["fogdensity"]);
-                    // }
-                    //updateFog("undo");
                 }
 
                 // Lights are in a different loop
@@ -421,7 +417,7 @@ class VRodos_LoaderMulti {
                 } else if (resource.category_slug === 'assessment') {
 
                     pendingLoads.push(new Promise((resolve) => {
-                        const object = vrodosLoaderCreateAssessmentObject(name, resource);
+                        const object = VRODOS.loader.createAssessmentObject(name, resource);
                         setObjectProperties(object, name, resources3D);
                         envir.scene.add(object);
                         if (envir.selectableMeshes) envir.selectableMeshes.add(object);
@@ -441,9 +437,9 @@ class VRodos_LoaderMulti {
                         // Support both scene-load format (pos/rot/scale flat arrays)
                         // and drag-and-drop format (trs.translation/rotation/scale)
                         const trs = resource.trs;
-                        const pos = vrodosLoaderSafeVector(resource.position || (trs && trs.translation), [0, 0, 0]);
-                        const rot = vrodosLoaderSafeVector(resource.rotation || (trs && trs.rotation), [0, 0, 0]);
-                        const scl = vrodosLoaderSafeScale(resource.scale || (trs && trs.scale));
+                        const pos = VRODOS.utils.loaderSafeVector(resource.position || (trs && trs.translation), [0, 0, 0]);
+                        const rot = VRODOS.utils.loaderSafeVector(resource.rotation || (trs && trs.rotation), [0, 0, 0]);
+                        const scl = VRODOS.utils.loaderSafeScale(resource.scale || (trs && trs.scale));
 
                         pendingLoads.push(new Promise((resolve) => {
                             const geometry = new THREE.PlaneGeometry(2, 2);
@@ -478,10 +474,10 @@ class VRodos_LoaderMulti {
                             // manually attach controls, update hierarchy, and save.
                             if (trs && !(envir && envir.isSceneLoading)) {
                                 transform_controls.attach(object);
-                                removeAllCelOutlines();
-                                addCelOutline(object);
+                                if (typeof removeAllCelOutlines === 'function') removeAllCelOutlines();
+                                if (typeof addCelOutline === 'function') addCelOutline(object);
                                 selected_object_name = object.name;
-                                setTransformControlsSize();
+                                if (typeof setTransformControlsSize === 'function') setTransformControlsSize();
                                 if (typeof addInHierarchyViewer === 'function') addInHierarchyViewer(object);
                                 if (typeof triggerAutoSave === 'function') triggerAutoSave();
                                 if (typeof setDatGuiInitialVales === 'function') setDatGuiInitialVales(object);
@@ -609,7 +605,7 @@ class VRodos_LoaderMulti {
                     else if (name === "SceneSettings") {
                         for (const key in resource) {
                             if (Object.prototype.hasOwnProperty.call(VRODOS_SCENE_SETTINGS_SCHEMA, key)) {
-                                vrodosSyncSceneSetting(key, resource[key], { "SceneSettings": resource });
+                                VRODOS.api.syncSceneSetting(key, resource[key], { "SceneSettings": resource });
                             }
                         }
                         if (typeof syncCompileDialogFromSceneSettings === 'function') {
@@ -617,21 +613,15 @@ class VRodos_LoaderMulti {
                         }
                     }
                     else if (name == 'cameraCoords'){
-                        // if (resources3D["SceneSettings"].enableGeneralChat) {
-                        //     document.getElementById("enableGeneralChatCheckbox").checked = JSON.parse(resources3D[SceneSettings].enableGeneralChat);
-                        //     envir.scene.enableGeneralChat = JSON.parse(resources3D[Settings].enableGeneralChat);
-                        // // }
-                        // console.log("Unsupported 3D model format. Error 118.");
                         envir.applyDirectorTransform(resource.position, resource.rotation);
-                        // console.log("glbID", resource['glbID']);
-                        // console.log("Unsupported 3D model format: ERROR: 118");
                     }
                 }
         }
 
         return Promise.allSettled(pendingLoads);
     }
-}
+};
+window.VRodos_LoaderMulti = VRODOS.loader.LoaderMulti;
 
 // Set loaded Object or Scene (for GLBs) properties
 function setObjectProperties(object, name, resources3D) {
@@ -645,7 +635,7 @@ function setObjectProperties(object, name, resources3D) {
         }
     }
 
-    object.name = vrodosLoaderSafeObjectName(name, resource, object);
+    object.name = VRODOS.utils.loaderSafeObjectName(name, resource, object);
     resource.name = object.name;
     object.isSelectableMesh = true;
     object.isLight = resource.isLight;
@@ -681,18 +671,6 @@ function setObjectProperties(object, name, resources3D) {
             : 'precise';
     }
 
-    // Not needed anymore, we dont override textures anymore
-    /*if (resource['overrideMaterial'] === "true") {
-        if (object.children[0].isMesh) {
-            object.children[0].material.color.setHex("0x" + resource['color']);
-            object.children[0].material.emissive.setHex("0x" + resource['emissive']);
-            object.children[0].material.roughness = parseFloat(resource['roughness']);
-            object.children[0].material.metalness = parseFloat(resource['metalness']);
-            object.children[0].material.emissiveIntensity = parseFloat(resource['emissiveIntensity']);
-            object.children[0].receiveShadow = true;
-            object.children[0].castShadow = true;
-        }
-    }*/
     //============== Video thumbnail texture ==========
     if (resource.category_slug === 'video') {
         const screenshotPath = resource.screenshot_path || resource.poi_img_path || resource.poi_image_path;
@@ -745,9 +723,9 @@ function setObjectProperties(object, name, resources3D) {
 
 
     const trs = resource.trs || {};
-    const translation = vrodosLoaderSafeVector(trs.translation || resource.position, [0, 0, 0]);
-    const rotation = vrodosLoaderSafeVector(trs.rotation || resource.rotation, [0, 0, 0]);
-    const scale = vrodosLoaderSafeScale(trs.scale || resource.scale);
+    const translation = VRODOS.utils.loaderSafeVector(trs.translation || resource.position, [0, 0, 0]);
+    const rotation = VRODOS.utils.loaderSafeVector(trs.rotation || resource.rotation, [0, 0, 0]);
+    const scale = VRODOS.utils.loaderSafeScale(trs.scale || resource.scale);
 
     object.position.set(
         translation[0],
