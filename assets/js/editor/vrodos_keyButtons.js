@@ -14,19 +14,19 @@ const velocity = new THREE.Vector3();
 const torgue = new THREE.Vector3();
 
 document.addEventListener('wheel', (event) => {
-    if (avatarControlsEnabled)
+    if (VRODOS.editor.avatarControlsEnabled)
         {if (event.deltaY)
             {if (event.deltaY > 0) {
-                envir.cameraAvatar.fov += 1;
-                envir.cameraAvatar.updateProjectionMatrix();
+                VRODOS.editor.envir.cameraAvatar.fov += 1;
+                VRODOS.editor.envir.cameraAvatar.updateProjectionMatrix();
                 //moveUp = true;
             } else {
-                envir.cameraAvatar.fov -= 1;
-                envir.cameraAvatar.updateProjectionMatrix();
+                VRODOS.editor.envir.cameraAvatar.fov -= 1;
+                VRODOS.editor.envir.cameraAvatar.updateProjectionMatrix();
             }}}
 }, true);
 
-firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
+VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
 document.addEventListener('remove_movement',
     (event) => {
@@ -47,13 +47,13 @@ document.addEventListener('add_movement',
 const keydown_handler = (ev) => {
     switch (ev.keyCode) {
         //---------------------------- TRS ---------------------------------------
-        case 80: pauseClickFun(); break; // r
+        case 80: VRODOS.ui.pauseClickFun(); break; // r
         case 82: viewUp = true; break; // r
         case 70: viewDown = true; break; // f
         case 187: break;
-        case 107: transform_controls.setSize(transform_controls.size + 0.1); break; // +,=,num+
+        case 107: VRODOS.editor.transform_controls.setSize(VRODOS.editor.transform_controls.size + 0.1); break; // +,=,num+
         case 189: break;
-        case 10: transform_controls.setSize(Math.max(transform_controls.size - 0.1, 0.1)); break;// -,_,num-
+        case 10: VRODOS.editor.transform_controls.setSize(Math.max(VRODOS.editor.transform_controls.size - 0.1, 0.1)); break;// -,_,num-
         //-------------------------------- PointerLock -----------------------
         case 38: break;// up arrow
         case 87: moveForward = true; break; // w
@@ -70,7 +70,7 @@ const keydown_handler = (ev) => {
         case 46:
             // If focus is on main screen but not at inputs
             if (ev.composedPath()[0].tagName === "BODY") {
-                deleteFomScene(transform_controls.object.uuid);
+                VRODOS.ui.deleteFomScene(VRODOS.editor.transform_controls.object.uuid);
             }
             break; //  delete
     }
@@ -95,7 +95,7 @@ const keyup_handler = (ev) => {
 
 
 /* Update the Director rig while moving with key presses */
-const updatePointerLockControls = function(){
+VRODOS.api.updatePointerLockControls = function(){
 
     const time = performance.now();
     const delta = ( time - prevTime ) / 1000;
@@ -119,9 +119,7 @@ const updatePointerLockControls = function(){
     if ( viewDown ) torgue.x += avatar_movement_speed_factor * delta;
 
     // Move avatar
-    const pointerLockObject = (typeof vrodosGetPointerLockObject === 'function') ?
-        vrodosGetPointerLockObject(envir.avatarControls) :
-        (envir.avatarControls ? envir.avatarControls.object : null);
+    const pointerLockObject = VRODOS.utils.getPointerLockObject(VRODOS.editor.envir.avatarControls);
 
     if (!pointerLockObject) {
         prevTime = time;
@@ -132,20 +130,22 @@ const updatePointerLockControls = function(){
     pointerLockObject.translateY( velocity.y );
     pointerLockObject.translateZ( velocity.z );
 
-    // if (!avatarControlsEnabled)
+    // if (!VRODOS.editor.avatarControlsEnabled)
     pointerLockObject.rotation.y += torgue.y;
-    envir.cameraAvatar.rotation.x += torgue.x;
+    VRODOS.editor.envir.cameraAvatar.rotation.x += torgue.x;
 
     // moveUp = false;
     // moveDown = false;
 
     prevTime = time;
-}
+};
 
 // TODO: RAYCASTING SIGNIFICANTLY DETERIORATES RENDERING SPEED
 
-function vrodosResetAvatarMovement() {
+VRODOS.api.resetAvatarMovement = function() {
     velocity.set(0, 0, 0);
     torgue.set(0, 0, 0);
     moveForward = moveBackward = moveLeft = moveRight = moveUp = moveDown = viewUp = viewDown = false;
-}
+};
+
+

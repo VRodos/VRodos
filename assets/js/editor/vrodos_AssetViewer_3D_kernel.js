@@ -4,7 +4,7 @@ function vrodosAssetViewerJoinUrl(base, path) {
 }
 
 function vrodosAssetViewerResolveBaseUrl(localizedKey, pluginPath, fallbackRelative) {
-    const paths = (typeof vrodos_data !== 'undefined' && vrodos_data.paths) ? vrodos_data.paths : {};
+    const paths = VRODOS.data.paths || {};
 
     if (paths[localizedKey]) {
         return paths[localizedKey];
@@ -360,7 +360,7 @@ class VRodos_AssetViewer_3D_kernel {
         const vendorDir = window.vrodos_three_vendor_dir || 'three-r181';
         const vendorBaseUrl = vrodosAssetViewerResolveBaseUrl(
             'vendorBaseUrl',
-            typeof vrodos_data !== 'undefined' ? vrodos_data.pluginPath : '',
+            typeof VRODOS.data !== 'undefined' ? VRODOS.data.pluginPath : '',
             'assets/vendor/'
         );
 
@@ -554,3 +554,6 @@ class VRodos_AssetViewer_3D_kernel {
         this.camera.updateProjectionMatrix();
     }
 }
+
+VRODOS.editor.AssetViewer3DKernel = VRodos_AssetViewer_3D_kernel;
+

@@ -96,5 +96,6 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     'aframePmndrsHorizonKeyLightIntensity': { type: 'number', default: 1.15, envirKey: 'aframePmndrsHorizonKeyLightIntensity' },
     'aframePmndrsHorizonFillLightIntensity': { type: 'number', default: 0.45, envirKey: 'aframePmndrsHorizonFillLightIntensity' },
 };
+VRODOS.sceneSettings = VRODOS.sceneSettings || {};
+VRODOS.sceneSettings.schema = VRODOS.config.SCENE_SETTINGS_SCHEMA;
 
-window.VRODOS_SCENE_SETTINGS_SCHEMA = VRODOS.config.SCENE_SETTINGS_SCHEMA;

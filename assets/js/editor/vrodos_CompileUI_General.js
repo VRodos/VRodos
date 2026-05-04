@@ -62,8 +62,8 @@ VRodosCompileUI.General = (function () {
     }
 
     function isLegacyHorizonStageApplicable() {
-        if (typeof envir === 'undefined' || !envir.scene) return false;
-        return parseInt(envir.scene.backgroundStyleOption, 10) === 0;
+        if (typeof VRODOS.editor.envir === 'undefined' || !VRODOS.editor.envir.scene) return false;
+        return parseInt(VRODOS.editor.envir.scene.backgroundStyleOption, 10) === 0;
     }
 
     // --- UI Logic ---
@@ -92,18 +92,18 @@ VRodosCompileUI.General = (function () {
     }
 
     function syncToScene(controls) {
-        if (!envir || !envir.scene) return;
+        if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
-        envir.scene.aframeRenderQuality = controls.renderQuality.value || 'standard';
-        envir.scene.aframeShadowQuality = controls.shadowQuality.value || 'medium';
-        envir.scene.aframeAAQuality = normalizeAAQuality(controls.aaQuality.value);
-        envir.scene.aframeFPSMeterEnabled = controls.fpsMeter.checked === true;
+        VRODOS.editor.envir.scene.aframeRenderQuality = controls.renderQuality.value || 'standard';
+        VRODOS.editor.envir.scene.aframeShadowQuality = controls.shadowQuality.value || 'medium';
+        VRODOS.editor.envir.scene.aframeAAQuality = normalizeAAQuality(controls.aaQuality.value);
+        VRODOS.editor.envir.scene.aframeFPSMeterEnabled = controls.fpsMeter.checked === true;
         
-        envir.scene.aframeAmbientOcclusionPreset = normalizeAmbientOcclusionPreset(controls.ambientOcclusionPreset.value);
-        envir.scene.aframeContactShadowPreset = normalizeContactShadowPreset(controls.contactShadowPreset.value);
+        VRODOS.editor.envir.scene.aframeAmbientOcclusionPreset = normalizeAmbientOcclusionPreset(controls.ambientOcclusionPreset.value);
+        VRODOS.editor.envir.scene.aframeContactShadowPreset = normalizeContactShadowPreset(controls.contactShadowPreset.value);
         
         if (controls.legacyHorizonStageSize) {
-            envir.scene.aframeLegacyHorizonStageSize = clampLegacyHorizonStageSize(controls.legacyHorizonStageSize.value);
+            VRODOS.editor.envir.scene.aframeLegacyHorizonStageSize = clampLegacyHorizonStageSize(controls.legacyHorizonStageSize.value);
         }
     }
 
@@ -127,3 +127,5 @@ VRodosCompileUI.General = (function () {
     };
 
 })();
+
+

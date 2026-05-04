@@ -1,11 +1,7 @@
-window.VRODOS = window.VRODOS || { ui: { transform: {} }, utils: {}, api: {}, data: {} };
-
 VRODOS.utils.sceneSafeNumber = function(value, fallback) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
 };
-window.vrodosSceneSafeNumber = VRODOS.utils.sceneSafeNumber;
-
 VRODOS.utils.sceneSafeVector = function(values, fallback) {
     const safeFallback = Array.isArray(fallback) ? fallback : [0, 0, 0];
     const source = Array.isArray(values) ? values : safeFallback;
@@ -16,13 +12,9 @@ VRODOS.utils.sceneSafeVector = function(values, fallback) {
         VRODOS.utils.sceneSafeNumber(source[2], safeFallback[2])
     ];
 };
-window.vrodosSceneSafeVector = VRODOS.utils.sceneSafeVector;
-
 VRODOS.utils.sceneSafeScale = function(values) {
     return VRODOS.utils.sceneSafeVector(values, [1, 1, 1]);
 };
-window.vrodosSceneSafeScale = VRODOS.utils.sceneSafeScale;
-
 VRODOS.utils.sceneResolveObjectPath = function(value, UPLOAD_DIR) {
     let explicitPath = value && typeof value.path === 'string' ? value.path.trim() : '';
     
@@ -76,8 +68,6 @@ VRODOS.utils.sceneResolveObjectPath = function(value, UPLOAD_DIR) {
     const separator = UPLOAD_DIR.endsWith('/') ? '' : '/';
     return UPLOAD_DIR + separator + fnPath;
 };
-window.vrodosSceneResolveObjectPath = VRODOS.utils.sceneResolveObjectPath;
-
 VRODOS.utils.sceneSafeObjectName = function(node, fallbackIndex) {
     const currentName = node && typeof node.name === 'string' ? node.name.trim() : '';
     if (currentName !== '') {
@@ -95,8 +85,6 @@ VRODOS.utils.sceneSafeObjectName = function(node, fallbackIndex) {
 
     return fallbackName;
 };
-window.vrodosSceneSafeObjectName = VRODOS.utils.sceneSafeObjectName;
-
 VRODOS.utils.sceneUniqueObjectName = function(name, existingObjects) {
     let uniqueName = name;
     let suffix = 2;
@@ -108,15 +96,13 @@ VRODOS.utils.sceneUniqueObjectName = function(name, existingObjects) {
 
     return uniqueName;
 };
-window.vrodosSceneUniqueObjectName = VRODOS.utils.sceneUniqueObjectName;
-
 VRODOS.exporter.SceneExporter = class {
     parse(scene) {
         const output = {
             metadata: {
                 formatVersion: 4.0,
                 type: 'scene',
-                generatedBy: 'VrodosSceneExporter.js',
+                generatedBy: 'VRODOS.exporter.SceneExporter.js',
                 timestamp: Date.now(),
                 objects: 0,
             },
@@ -301,9 +287,6 @@ VRODOS.exporter.SceneExporter = class {
         entryObject.category_name = 'avatarYawObject';
     }
 };
-window.VrodosSceneExporter = VRODOS.exporter.SceneExporter;
-
-
 VRODOS.importer.SceneImporter = class {
     parse(scene_json, UPLOAD_DIR) {
         if (scene_json.length === 0) {
@@ -369,4 +352,4 @@ VRODOS.importer.SceneImporter = class {
         return resources3D_new;
     }
 };
-window.VrodosSceneImporter = VRODOS.importer.SceneImporter;
+

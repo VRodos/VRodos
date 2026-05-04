@@ -18,9 +18,9 @@ VRODOS.api.uploadImage = function() {
 			formData.append( "filename", fn );
 			formData.append( "projectid", VRODOS.config.projectId );
 			formData.append( "sceneid", VRODOS.config.sceneId );
-			formData.append( "_ajax_nonce", vrodos_data.upload_image_nonce );
+			formData.append( "_ajax_nonce", VRODOS.data.upload_image_nonce );
 
-			fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url, {
+			fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl(), {
 				method: 'POST',
 				body: formData
 			})
@@ -30,16 +30,16 @@ VRODOS.api.uploadImage = function() {
 				const cleanResponse      = response.replace( 'File Uploaded Successfully', '' );
 				const data                 = JSON.parse( cleanResponse );
 				console.log( data.url );
-				envir.scene.img_bcg_path = data.url;
+				VRODOS.editor.envir.scene.img_bcg_path = data.url;
 
 				const saveBtn = document.getElementById( 'save-scene-button' );
 				saveBtn.innerHTML = "Saving...";
 				saveBtn.classList.add( "LinkDisabled" );
 				document.getElementById( "compileGameBtn" ).disabled = true;
 
-				// Export using the new VrodosSceneExporter
-				const exporter = new VrodosSceneExporter();
-				document.getElementById( 'vrodos_scene_json_input' ).value = exporter.parse( envir.scene );
+				// Export using the new VRODOS.exporter.SceneExporter
+				const exporter = new VRODOS.exporter.SceneExporter();
+				document.getElementById( 'vrodos_scene_json_input' ).value = exporter.parse( VRODOS.editor.envir.scene );
 
 				document.getElementById( 'uploadImgThumb' ).src    = data.url;
 				document.getElementById( 'uploadImgThumb' ).hidden = false;
@@ -51,3 +51,6 @@ VRODOS.api.uploadImage = function() {
 		reader.readAsDataURL( input.files[0] );
 	}
 }
+
+
+

@@ -14,9 +14,9 @@ const CEL_OUTLINE_MATERIAL = new THREE.MeshBasicMaterial({
  * Add a cel-shaded outline to the selected object.
  * Works by cloning each mesh with BackSide rendering, slightly scaled up.
  */
-function addCelOutline(object) {
+VRODOS.ui.addCelOutline = function(object) {
     if (!object) return;
-    removeCelOutline(object);
+    VRODOS.ui.removeCelOutline(object);
 
     object.traverse((child) => {
         if (child.isMesh && child.name !== CEL_OUTLINE_TAG) {
@@ -36,7 +36,7 @@ function addCelOutline(object) {
 /**
  * Remove cel-shaded outline from an object.
  */
-function removeCelOutline(object) {
+VRODOS.ui.removeCelOutline = function(object) {
     if (!object) return;
     const toRemove = [];
     object.traverse((child) => {
@@ -48,12 +48,12 @@ function removeCelOutline(object) {
             VRODOS.editor.envir.celOutlineMeshes.delete(mesh);
         }
     });
-}
+};
 
 /**
  * Remove all cel outlines from the entire scene.
  */
-function removeAllCelOutlines() {
+VRODOS.ui.removeAllCelOutlines = function() {
     if (typeof VRODOS.editor.envir === 'undefined' || !VRODOS.editor.envir.scene) return;
     if (VRODOS.editor.envir.celOutlineMeshes && VRODOS.editor.envir.celOutlineMeshes.size > 0) {
         // Fast path: use the cache — no scene traverse needed
@@ -223,8 +223,8 @@ function getAssessmentTypeLabel(object) {
     if (!object) return '';
 
     const rawValue = object.assessment_type || object.assessment_group || '';
-    if (typeof vrodosDecodeDisplayText === 'function') {
-        return vrodosDecodeDisplayText(rawValue).trim();
+    if (typeof VRODOS.utils.decodeDisplayText === 'function') {
+        return VRODOS.utils.decodeDisplayText(rawValue).trim();
     }
 
     return String(rawValue || '').trim();
@@ -233,8 +233,8 @@ function getAssessmentTypeLabel(object) {
 function getAssessmentLevelsList(object) {
     if (!object) return [];
 
-    if (typeof vrodosResolvedAssessmentLevels === 'function') {
-        return vrodosResolvedAssessmentLevels(object.assessment_levels || '');
+    if (typeof VRODOS.utils.resolvedAssessmentLevels === 'function') {
+        return VRODOS.utils.resolvedAssessmentLevels(object.assessment_levels || '');
     }
 
     return [];
@@ -347,8 +347,8 @@ function displayWalkableSurfaceProperties(object) {
 }
 
 function getObjectControlsTargetObject() {
-    if (typeof vrodosGetPopupTargetObject === 'function') {
-        return vrodosGetPopupTargetObject();
+    if (typeof VRODOS.ui.getPopupTargetObject === 'function') {
+        return VRODOS.ui.getPopupTargetObject();
     }
 
     if (typeof VRODOS.editor.currentSelectedRealObject !== 'undefined' && VRODOS.editor.currentSelectedRealObject) {
@@ -411,12 +411,12 @@ function vrodosCommitObjectControlsProperty(prop, nextValue) {
     }
     targetObject.userData[prop] = nextValue;
 
-    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(targetObject, prop, previousValue, nextValue));
+    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(targetObject, prop, previousValue, nextValue));
     }
 
     if (typeof saveChanges === 'function') {
-        saveChanges();
+        VRODOS.api.saveChanges();
     } else if (typeof VRODOS.editor.envir !== 'undefined' && VRODOS.editor.envir.scene) {
         VRODOS.editor.envir.scene.dispatchEvent({ type: 'modificationPendingSave' });
     }
@@ -598,11 +598,11 @@ function showPropertiesInPanel(object) {
             hasProperties = true;
             break;
         case 'poi-imagetext':
-            displayPoiImageTextProperties(null, name);
+            VRODOS.ui.displayPoiImageTextProperties(null, name);
             hasProperties = true;
             break;
         case 'video':
-            displayPoiVideoProperties(null, name);
+            VRODOS.ui.displayPoiVideoProperties(null, name);
             hasProperties = true;
             break;
         case 'audio':
@@ -610,16 +610,16 @@ function showPropertiesInPanel(object) {
             hasProperties = true;
             break;
         case 'door':
-            displayDoorProperties(null, name);
+            VRODOS.ui.displayDoorProperties(null, name);
             hasProperties = true;
             break;
         case 'poi-link':
-            displayLinkProperties(null, name);
+            VRODOS.ui.displayLinkProperties(null, name);
             hasProperties = true;
             break;
         case 'chat':
         case 'poi-chat':
-            displayPoiChatProperties(null, name);
+            VRODOS.ui.displayPoiChatProperties(null, name);
             hasProperties = true;
             break;
     }
@@ -627,19 +627,19 @@ function showPropertiesInPanel(object) {
     // Dispatch by category_name (lights)
     switch (object.category_name) {
         case 'lightSun':
-            displaySunProperties(null, name);
+            VRODOS.ui.displaySunProperties(null, name);
             hasProperties = true;
             break;
         case 'lightLamp':
-            displayLampProperties(null, name);
+            VRODOS.ui.displayLampProperties(null, name);
             hasProperties = true;
             break;
         case 'lightSpot':
-            displaySpotProperties(null, name);
+            VRODOS.ui.displaySpotProperties(null, name);
             hasProperties = true;
             break;
         case 'lightAmbient':
-            displayAmbientProperties(null, name);
+            VRODOS.ui.displayAmbientProperties(null, name);
             hasProperties = true;
             break;
     }
@@ -866,8 +866,8 @@ function _addDragScrub(controller) {
             // Commit Undo Transform
             commitUndoTransformFromInput(input);
             
-            animate();
-            triggerAutoSave();
+            VRODOS.editor.animate();
+            VRODOS.api.triggerAutoSave();
         } else {
             // Was a click (no drag) — enter keyboard editing mode
             setKeyboardEditing(true);
@@ -905,7 +905,7 @@ function _addDragScrub(controller) {
  *  Triggered once initially
  */
 function commitUndoTransformFromInput(input) {
-    if (typeof vrodosUndoManager === 'undefined' || vrodosUndoManager.isExecuting) return;
+    if (typeof VRODOS.editor.undoManager === 'undefined' || VRODOS.editor.undoManager.isExecuting) return;
     if (!input._oldTRS) return;
 
     const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
@@ -924,7 +924,7 @@ function commitUndoTransformFromInput(input) {
                   Math.abs(target.rotation.z - input._oldTRS.rot.z) > 0.0001;
 
     if (moved) {
-        vrodosUndoManager.add(new TransformCommand(target, input._oldTRS, newTRS));
+        VRODOS.editor.undoManager.add(new VRODOS.editor.TransformCommand(target, input._oldTRS, newTRS));
     }
     delete input._oldTRS;
 }
@@ -953,8 +953,8 @@ function controllerDatGuiOnChange() {
             target.updateMatrix();
             target.updateMatrixWorld();
         }
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     }
     );
 
@@ -974,8 +974,8 @@ function controllerDatGuiOnChange() {
             target.updateMatrix();
             target.updateMatrixWorld();
         }
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     }
     );
 
@@ -995,8 +995,8 @@ function controllerDatGuiOnChange() {
             target.updateMatrix();
             target.updateMatrixWorld();
         }
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     }
     );
 
@@ -1017,8 +1017,8 @@ function controllerDatGuiOnChange() {
             target.updateMatrix();
             target.updateMatrixWorld();
         }
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     }
     );
 
@@ -1038,8 +1038,8 @@ function controllerDatGuiOnChange() {
             target.updateMatrix();
             target.updateMatrixWorld();
         }
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     }
     );
 
@@ -1059,8 +1059,8 @@ function controllerDatGuiOnChange() {
             target.updateMatrix();
             target.updateMatrixWorld();
         }
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     }
     );
 
@@ -1090,8 +1090,8 @@ function controllerDatGuiOnChange() {
             target.updateMatrix();
             target.updateMatrixWorld();
         }
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     }
     );
 
@@ -1120,8 +1120,8 @@ function controllerDatGuiOnChange() {
             target.updateMatrix();
             target.updateMatrixWorld();
         }
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     }
     );
 
@@ -1150,8 +1150,8 @@ function controllerDatGuiOnChange() {
             target.updateMatrix();
             target.updateMatrixWorld();
         }
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     }
     );
 
@@ -1260,8 +1260,8 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
         }
 
         controller.updateDisplay();
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     }
 
     element.addEventListener("focusout", (event) => {
@@ -1270,8 +1270,8 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
         } else {
             skipNextFocusoutCommit = false;
         }
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     });
 
     // onclick inside stop animating
@@ -1319,10 +1319,10 @@ window.vrodosGizmoProxy.name = "vrodosGizmoProxy";
 
 // State tracking for proxy-based transformation
 window.vrodosRotationSensitivity = 20.0; // Default multiplier for rotation
-const _qProxyStart = new THREE.Quaternion();
-const _pProxyStart = new THREE.Vector3();
-const _qRealStart = new THREE.Quaternion();
-const _pRealStart = new THREE.Vector3();
+VRODOS.editor.qProxyStart = new THREE.Quaternion();
+VRODOS.editor.pProxyStart = new THREE.Vector3();
+VRODOS.editor.qRealStart = new THREE.Quaternion();
+VRODOS.editor.pRealStart = new THREE.Vector3();
 VRODOS.editor.currentSelectedRealObject = null;
 
 /**
@@ -1350,7 +1350,7 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
             // High-Sensitivity Booster Logic (Unclamped for r181)
             // Extract the Axis and Angle of the proxy's change
             const qProxyCurrent = VRODOS.editor.transform_controls.object.quaternion.clone();
-            const qDelta = qProxyCurrent.clone().multiply(_qProxyStart.clone().invert());
+            const qDelta = qProxyCurrent.clone().multiply(VRODOS.editor.qProxyStart.clone().invert());
             
             const angle = 2 * Math.acos(Math.min(1, Math.max(-1, qDelta.w)));
             const s = Math.sqrt(1 - qDelta.w * qDelta.w);
@@ -1364,7 +1364,7 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
             // Rebuild the rotation with the multiplier applied directly to the angle
             const boostedDelta = new THREE.Quaternion().setFromAxisAngle(axis, angle * window.vrodosRotationSensitivity);
             
-            realObject.quaternion.copy(_qRealStart).multiply(boostedDelta);
+            realObject.quaternion.copy(VRODOS.editor.qRealStart).multiply(boostedDelta);
             realObject.updateMatrix();
             realObject.updateMatrixWorld();
         } else {
@@ -1552,7 +1552,24 @@ function vrodosAttachGizmo(object) {
     VRODOS.editor.transform_controls.visible = true;
 }
 
-function setDatGuiInitialVales(object){
+function clearTransformSelection() {
+    VRODOS.editor.currentSelectedRealObject = null;
+
+    if (window.vrodosGizmoProxy) {
+        window.vrodosGizmoProxy.realObject = null;
+    }
+
+    if (VRODOS.editor.transform_controls) {
+        VRODOS.editor.transform_controls.detach();
+    }
+}
+
+function attachTransformTarget(object) {
+    clearTransformSelection();
+    vrodosAttachGizmo(object);
+}
+
+VRODOS.ui.setDatGuiInitialVales = function(object){
 
     vrodosAttachGizmo(object);
 
@@ -1578,11 +1595,16 @@ function setDatGuiInitialVales(object){
     updatePositionsPhpAndJavsFromControlsAxes();
 }
 
-window.vrodosAttachGizmo = vrodosAttachGizmo;
-window.setDatGuiInitialVales = setDatGuiInitialVales;
+VRODOS.ui.attachGizmo = vrodosAttachGizmo;
+VRODOS.ui.clearTransformSelection = clearTransformSelection;
+VRODOS.ui.attachTransformTarget = attachTransformTarget;
+VRODOS.ui.showObjectControlsPanel = showObjectControlsPanel;
+VRODOS.ui.hideObjectControlsPanel = hideObjectControlsPanel;
+VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;
+VRODOS.ui.controlInterface = controlInterface;
+VRODOS.ui.controllerDatGuiOnChange = controllerDatGuiOnChange;
+VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes = updatePositionsPhpAndJavsFromControlsAxes;
 
-window.showObjectControlsPanel = showObjectControlsPanel;
-window.hideObjectControlsPanel = hideObjectControlsPanel;
 
-window.controlInterface = controlInterface;
-window.updatePositionsPhpAndJavsFromControlsAxes = updatePositionsPhpAndJavsFromControlsAxes;
+
+

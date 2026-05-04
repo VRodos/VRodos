@@ -2,18 +2,18 @@
  * Delete Scene
  *
  * Parameters from javascript
- * scene_id : the scene to delete
+ * VRODOS.data.scene_id : the scene to delete
  * vrodos_deleteSceneAjax()
  */
 VRODOS.api.deleteScene = function(scene_id, url_scene_redirect) {
 
-	fetch( VRODOS.config.ajax_url, {
+	fetch( VRODOS.utils.getAjaxUrl(), {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			'action': 'vrodos_delete_scene_action',
-			scene_id,
-			url_scene_redirect
+			'scene_id': scene_id,
+			'url_scene_redirect': url_scene_redirect
 		})
 	})
 	.then( (response) => response.text())
@@ -49,3 +49,5 @@ VRODOS.api.deleteScene = function(scene_id, url_scene_redirect) {
 	});
 
 }
+
+

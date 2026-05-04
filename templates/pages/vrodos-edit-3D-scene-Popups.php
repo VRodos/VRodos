@@ -7,7 +7,7 @@
 	function updateSpot() {
 		var targetObject = vrodosGetPopupTargetObject();
 		if (!targetObject) return;
-		envir.scene.traverse(function (child) {
+		VRODOS.editor.envir.scene.traverse(function (child) {
 				if (child.light != undefined)
 					if (child.light.name === targetObject.name)
 						child.update();
@@ -18,7 +18,7 @@
 	function updateSpotConeHelper(value) {
 		var targetObject = vrodosGetPopupTargetObject();
 		if (!targetObject) return;
-		targetObject.target = envir.scene.getObjectByName(value);
+		targetObject.target = VRODOS.editor.envir.scene.getObjectByName(value);
 		updateSpot();
 	}
 
@@ -27,15 +27,15 @@
 			return _currentSelectedRealObject;
 		}
 
-		if (typeof transform_controls === 'undefined' || !transform_controls.object) {
+		if (typeof VRODOS.editor.transform_controls === 'undefined' || !VRODOS.editor.transform_controls.object) {
 			return null;
 		}
 
-		if (transform_controls.object.name === 'vrodosGizmoProxy' && transform_controls.object.realObject) {
-			return transform_controls.object.realObject;
+		if (VRODOS.editor.transform_controls.object.name === 'vrodosGizmoProxy' && VRODOS.editor.transform_controls.object.realObject) {
+			return VRODOS.editor.transform_controls.object.realObject;
 		}
 
-		return transform_controls.object;
+		return VRODOS.editor.transform_controls.object;
 	}
 
 	function vrodosSetPopupNumericProp(prop, value) {
@@ -54,22 +54,22 @@
 
 
 	function keepScaleAspectRatio(value) {
-		envir.scene.keepScaleAspectRatio = value;
+		VRODOS.editor.envir.scene.keepScaleAspectRatio = value;
 	}
 
 	function toggleBroadcastChat(value) {
-		envir.scene.enableGeneralChat = value;
-		saveChanges();
+		VRODOS.editor.envir.scene.enableGeneralChat = value;
+		VRODOS.api.saveChanges();
 	}
 
 	function toggleEnableAvatar(value) {
-		envir.scene.enableAvatar = value;
-		saveChanges();
+		VRODOS.editor.envir.scene.enableAvatar = value;
+		VRODOS.api.saveChanges();
 	}
 
 	function toggleDisableMovement(value) {
-		envir.scene.disableMovement = value;
-		saveChanges();
+		VRODOS.editor.envir.scene.disableMovement = value;
+		VRODOS.api.saveChanges();
 	}
 
 
@@ -91,14 +91,14 @@
 		}
 
 		// Sun Helper
-		var lightHelper = envir.scene.getObjectByName("lightHelper_" + targetObject.name);
+		var lightHelper = VRODOS.editor.envir.scene.getObjectByName("lightHelper_" + targetObject.name);
 		if (lightHelper && lightHelper.children && lightHelper.children.length > 1) {
 			if (lightHelper.children[0].material && lightHelper.children[0].material.color) lightHelper.children[0].material.color.set(hexcol);
 			if (lightHelper.children[1].material && lightHelper.children[1].material.color) lightHelper.children[1].material.color.set(hexcol);
 		}
 
 		// TargetSpot
-		var lightTargetSpot = envir.scene.getObjectByName("lightTargetSpot_" + targetObject.name);
+		var lightTargetSpot = VRODOS.editor.envir.scene.getObjectByName("lightTargetSpot_" + targetObject.name);
 		if (lightTargetSpot && lightTargetSpot.children && lightTargetSpot.children[0] && lightTargetSpot.children[0].material && lightTargetSpot.children[0].material.color) {
 			lightTargetSpot.children[0].material.color.set(hexcol);
 		}
@@ -138,7 +138,7 @@
 		}
 
 		// Spot as Helper rays
-		envir.scene.traverse(function (child) {
+		VRODOS.editor.envir.scene.traverse(function (child) {
 				if (child.light != undefined)
 					if (child.light.name === targetObject.name)
 						if (child.color) child.color.set(hexcol);
@@ -430,7 +430,7 @@
 		<label for="poi_link_text" class="prop-label">URL</label>
 		<input type="text" id="poi_link_text" name="poi_link_text" placeholder="https://example.com"
 				class="prop-input tw-flex-1" value="" 
-				onkeyup="vrodosSetPopupProp('poi_link_url', this.value); saveChanges();" />
+				onkeyup="vrodosSetPopupProp('poi_link_url', this.value); VRODOS.api.saveChanges();" />
 	</div>
 </div>
 
@@ -512,20 +512,21 @@
 		<label for="poi_chat_title" class="prop-label">Title</label>
 		<input type="text" id="poi_chat_title" name="poi_chat_title" placeholder="Help Chat"
 				class="prop-input tw-flex-1" maxlength="100" 
-				onkeyup="vrodosSetPopupProp('poi_chat_title', this.value); saveChanges();" />
+				onkeyup="vrodosSetPopupProp('poi_chat_title', this.value); VRODOS.api.saveChanges();" />
 	</div>
 
 	<div class="prop-row">
 		<label for="poi_chat_participants" class="prop-label">Max Participants</label>
 		<input type="number" id="poi_chat_participants" name="poi_chat_participants"
 				min="1" max="10" value="2" class="prop-input tw-w-16" 
-				onchange="vrodosSetPopupNumericProp('poi_chat_participants', this.value); saveChanges();" />
+				onchange="vrodosSetPopupNumericProp('poi_chat_participants', this.value); VRODOS.api.saveChanges();" />
 	</div>
 
 	<div class="prop-row">
 		<label for="poi_chat_indicators" class="prop-label">Show Indicators</label>
 		<input type="checkbox" id="poi_chat_indicators" name="poi_chat_indicators"
 				title="Show availability icons" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary" 
-				onchange="vrodosSetPopupProp('poi_chat_indicators', this.checked ? 1 : 0); saveChanges();" />
+				onchange="vrodosSetPopupProp('poi_chat_indicators', this.checked ? 1 : 0); VRODOS.api.saveChanges();" />
 	</div>
 </div>
+

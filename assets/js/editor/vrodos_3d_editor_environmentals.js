@@ -25,7 +25,7 @@ const VRODOS_EDITOR_ZOOM = Object.freeze({
     fallback: 600
 });
 
-function vrodosClampNumber(value, min, max, fallback) {
+VRODOS.utils.clampNumber = function(value, min, max, fallback) {
     let parsed = Number(value);
     if (!Number.isFinite(parsed)) {
         parsed = fallback;
@@ -34,13 +34,13 @@ function vrodosClampNumber(value, min, max, fallback) {
     return Math.min(max, Math.max(min, parsed));
 }
 
-function vrodosOrthoFitZoom(frustumSize, aspect, sceneSurfaceDimension) {
+VRODOS.utils.orthoFitZoom = function(frustumSize, aspect, sceneSurfaceDimension) {
     const safeDimension = Math.max(Number(sceneSurfaceDimension) || 0, 10);
     const safeAspect = Math.max(Number(aspect) || 1, 0.1);
     const visibleWidth = safeDimension * 2.2;
     const computedZoom = (frustumSize * safeAspect) / visibleWidth;
 
-    return vrodosClampNumber(
+    return VRODOS.utils.clampNumber(
         computedZoom,
         VRODOS_EDITOR_ZOOM.min,
         VRODOS_EDITOR_ZOOM.max,
@@ -53,9 +53,9 @@ function vrodosDirectorSafeVector(values, fallback) {
     const source = Array.isArray(values) ? values : safeFallback;
 
     return [
-        vrodosClampNumber(source[0], -1000000, 1000000, safeFallback[0]),
-        vrodosClampNumber(source[1], -1000000, 1000000, safeFallback[1]),
-        vrodosClampNumber(source[2], -1000000, 1000000, safeFallback[2])
+        VRODOS.utils.clampNumber(source[0], -1000000, 1000000, safeFallback[0]),
+        VRODOS.utils.clampNumber(source[1], -1000000, 1000000, safeFallback[1]),
+        VRODOS.utils.clampNumber(source[2], -1000000, 1000000, safeFallback[2])
     ];
 }
 
@@ -84,7 +84,7 @@ function vrodosEnvironmentJoinUrl(base, path) {
 }
 
 function vrodosEnvironmentResolveBaseUrl(pluginPath, localizedKey, fallbackRelative) {
-    const paths = (typeof vrodos_data !== 'undefined' && vrodos_data.paths) ? vrodos_data.paths : {};
+    const paths = VRODOS.data.paths || {};
 
     if (paths[localizedKey]) {
         return paths[localizedKey];
@@ -219,7 +219,7 @@ class vrodos_3d_editor_environmentals {
     }
 
     loadSceneEnvironmentTexture() {
-        const imageBaseUrl = vrodosEnvironmentResolveBaseUrl(pluginPath, 'imageBaseUrl', 'assets/images/');
+        const imageBaseUrl = vrodosEnvironmentResolveBaseUrl(VRODOS.data.pluginPath, 'imageBaseUrl', 'assets/images/');
         const hdrLoader = new THREE.HDRLoader();
 
         hdrLoader.setPath(`${imageBaseUrl  }hdr/`)
@@ -231,18 +231,18 @@ class vrodos_3d_editor_environmentals {
     }
 
     isAvatarControlsEnabled() {
-        return typeof avatarControlsEnabled !== 'undefined' && avatarControlsEnabled;
+        return typeof VRODOS.editor.avatarControlsEnabled !== 'undefined' && VRODOS.editor.avatarControlsEnabled;
     }
 
 
     // EffectComposer for rendering, outline pass compatibility, and FXAA antialiasing.
-    setComposerAndPasses(transform_controls) {
+    setComposerAndPasses(transformControls) {
 
         // Get current camera
         const camera = this.isAvatarControlsEnabled() ? this.cameraAvatar : this.cameraOrbit;
 
-        if (transform_controls) {
-            transform_controls.camera = camera;
+        if (transformControls) {
+            transformControls.camera = camera;
         }
 
         this.composer = new THREE.EffectComposer(this.renderer);
@@ -252,7 +252,7 @@ class vrodos_3d_editor_environmentals {
         this.outlinePass = new THREE.OutlinePass(
             new THREE.Vector2(this.SCREEN_WIDTH, this.SCREEN_HEIGHT), this.scene, camera);
         // OutlinePass disabled — replaced by cel-shaded back-face hull outline
-        // (see addCelOutline/removeCelOutline in vrodos_auxControlers.js)
+        // (see VRODOS.ui.addCelOutline/VRODOS.ui.removeCelOutline in vrodos_auxControlers.js)
         this.outlinePass.enabled = false;
 
         // FX Pass
@@ -317,7 +317,7 @@ class vrodos_3d_editor_environmentals {
             this.cameraOrbit.right = this.FRUSTUM_SIZE * this.ASPECT / 2;
             this.cameraOrbit.top = this.FRUSTUM_SIZE / 2;
             this.cameraOrbit.bottom = this.FRUSTUM_SIZE / -2;
-            this.cameraOrbit.zoom = vrodosClampNumber(
+            this.cameraOrbit.zoom = VRODOS.utils.clampNumber(
                 this.cameraOrbit.zoom,
                 VRODOS_EDITOR_ZOOM.min,
                 VRODOS_EDITOR_ZOOM.max,
@@ -404,8 +404,8 @@ class vrodos_3d_editor_environmentals {
 
         // Real-time gizmo scaling during zoom
         this.orbitControls.addEventListener('change', () => {
-            if (typeof setTransformControlsSize === 'function') {
-                setTransformControlsSize();
+            if (typeof VRODOS.ui.transform.setSize === 'function') {
+                VRODOS.ui.transform.setSize();
             }
         });
     }
@@ -625,7 +625,7 @@ class vrodos_3d_editor_environmentals {
         loader.scene = this.scene;
 
         const vendorDir = window.vrodos_three_vendor_dir || 'three-r181';
-        const vendorRoot = vrodosEnvironmentResolveBaseUrl(pluginPath, 'vendorBaseUrl', 'assets/vendor/');
+        const vendorRoot = vrodosEnvironmentResolveBaseUrl(VRODOS.data.pluginPath, 'vendorBaseUrl', 'assets/vendor/');
         const vendorBase = window.vrodos_three_vendor_base || vrodosEnvironmentJoinUrl(vendorRoot, `${vendorDir  }/`);
         const fontPath = window.vrodos_three_font_path || (`${vendorBase  }fonts/helvetiker_bold.typeface.json`);
         loader.load(fontPath, this.loadtexts);
@@ -670,7 +670,7 @@ class vrodos_3d_editor_environmentals {
             this.ASPECT = this.vr_editor_main_div.clientWidth / this.vr_editor_main_div.clientHeight;
             this.cameraOrbit.left = this.FRUSTUM_SIZE * this.ASPECT / -2;
             this.cameraOrbit.right = this.FRUSTUM_SIZE * this.ASPECT / 2;
-            this.cameraOrbit.zoom = vrodosOrthoFitZoom(this.FRUSTUM_SIZE, this.ASPECT, this.SCENE_DIMENSION_SURFACE);
+            this.cameraOrbit.zoom = VRODOS.utils.orthoFitZoom(this.FRUSTUM_SIZE, this.ASPECT, this.SCENE_DIMENSION_SURFACE);
         }
 
         if (this.is2d) {
@@ -689,7 +689,7 @@ class vrodos_3d_editor_environmentals {
             this.orbitControls.update();
         }
 
-        this.cameraOrbit.zoom = vrodosClampNumber(
+        this.cameraOrbit.zoom = VRODOS.utils.clampNumber(
             this.cameraOrbit.zoom,
             VRODOS_EDITOR_ZOOM.min,
             VRODOS_EDITOR_ZOOM.max,
@@ -698,3 +698,9 @@ class vrodos_3d_editor_environmentals {
         this.cameraOrbit.updateProjectionMatrix();
     }
 }
+VRODOS.utils.getPointerLockObject = vrodosGetPointerLockObject;
+
+VRODOS.editor.Environmentals = vrodos_3d_editor_environmentals;
+
+
+

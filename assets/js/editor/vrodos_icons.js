@@ -10,7 +10,8 @@
  *
  * To add a new category icon, add ONE entry here.
  */
-var VRODOS_CATEGORY_ICONS = {
+VRODOS.ui.icons = VRODOS.ui.icons || {};
+VRODOS.ui.icons.categoryIcons = {
 
     // ── Asset taxonomy categories (slug) ──────────────────────
     'decoration':      'leaf',
@@ -39,7 +40,7 @@ var VRODOS_CATEGORY_ICONS = {
 };
 
 /** Default icon when category is unknown */
-var VRODOS_CATEGORY_ICON_DEFAULT = 'package';
+VRODOS.ui.icons.categoryIconDefault = 'package';
 
 /**
  * Look up the Lucide icon name for a category.
@@ -50,7 +51,7 @@ var VRODOS_CATEGORY_ICON_DEFAULT = 'package';
  * @param {string} categoryKey  category_slug, category_name, or category_icon from DB
  * @returns {string} Lucide icon name
  */
-function vrodos_getCategoryIcon(categoryKey) {
-    if (!categoryKey) return VRODOS_CATEGORY_ICON_DEFAULT;
-    return VRODOS_CATEGORY_ICONS[categoryKey] || VRODOS_CATEGORY_ICON_DEFAULT;
-}
+VRODOS.ui.getCategoryIcon = function(categoryKey) {
+    if (!categoryKey) return VRODOS.ui.icons.categoryIconDefault;
+    return VRODOS.ui.icons.categoryIcons[categoryKey] || VRODOS.ui.icons.categoryIconDefault;
+};

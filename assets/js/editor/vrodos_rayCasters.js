@@ -1,4 +1,4 @@
-function normalizeIntersectedObjects(intersectedObjects) {
+VRODOS.utils.normalizeIntersectedObjects = function(intersectedObjects) {
 
     const res = [];
 
@@ -24,19 +24,19 @@ function normalizeIntersectedObjects(intersectedObjects) {
     return Array.from(new Set(res));
 }
 
-function findIntersectedRaw(event) {
+VRODOS.ui.findIntersectedRaw = function(event) {
 
-    const raycasterPick = raycasterSetter(event);
+    const raycasterPick = VRODOS.ui.raycasterSetter(event);
 
     // All 3D meshes that can be clicked
-    const activeMeshes = getActiveMeshes();
+    const activeMeshes = VRODOS.ui.getActiveMeshes();
 
     return raycasterPick.intersectObjects(activeMeshes, true);
 }
 
-function findIntersected(event) {
+VRODOS.ui.findIntersected = function(event) {
 
-    return normalizeIntersectedObjects(findIntersectedRaw(event));
+    return VRODOS.utils.normalizeIntersectedObjects(VRODOS.ui.findIntersectedRaw(event));
 }
 
 // Reusable raycaster and mouse vector (avoid allocations per event)
@@ -44,7 +44,7 @@ var _reusableRaycaster = new THREE.Raycaster();
 var _reusableMouse = new THREE.Vector2();
 
 // raycasting for picking objects
-function raycasterSetter(event) {
+VRODOS.ui.raycasterSetter = function(event) {
 
     // calculate mouse position in normalized device coordinates
     const mainDiv = document.getElementById('vr_editor_main_div');
@@ -61,14 +61,14 @@ function raycasterSetter(event) {
 
 // This raycasting is used for drag n droping objects into the scene in 2D mode in order to
 // find the correct y (height) to place the object
-function dragDropVerticalRayCasting(event) {
-    const intersects = findIntersectedRaw(event);
+VRODOS.api.dragDropVerticalRayCasting = function(event) {
+    const intersects = VRODOS.ui.findIntersectedRaw(event);
     return intersects.length === 0 ? [0, 0, 0] : [intersects[0].point.x, intersects[0].point.y, intersects[0].point.z];
 }
 
 
 // On Double click center screen and focus to that object
-function onMouseDoubleClickFocus(event, id) {
+VRODOS.ui.onMouseDoubleClickFocus = function(event, id) {
 
     if (typeof id == 'undefined') {
         id = VRODOS.editor.envir.scene.getObjectById(VRODOS.editor.selected_object_name);
@@ -77,7 +77,7 @@ function onMouseDoubleClickFocus(event, id) {
     if (arguments.length === 2) {
         const obj = VRODOS.editor.envir.scene.getObjectByProperty('uuid', id);
         if (obj && !obj.locked) {
-            selectorMajor(event, obj, "1");
+            VRODOS.ui.selectorMajor(event, obj, "1");
         }
     }
 
@@ -92,7 +92,7 @@ function onMouseDoubleClickFocus(event, id) {
 var _mouseDownPos = { x: 0, y: 0 };
 var _mouseDownTime = 0;
 var _CLICK_THRESHOLD = 5; // pixels
-var _suppressNextSelection = false; // Set by drop handler to prevent selection on drop
+VRODOS.editor.suppressNextSelection = false; // Set by drop handler to prevent selection on drop
 
 VRODOS.ui.onMouseDown = function(event) {
     _mouseDownPos.x = event.clientX;
@@ -102,32 +102,28 @@ VRODOS.ui.onMouseDown = function(event) {
     VRODOS.editor._lastClickX = event.clientX;
     VRODOS.editor._lastClickY = event.clientY;
 };
-window._onCanvasMouseDown = VRODOS.ui.onMouseDown;
-
 VRODOS.ui.onMouseUp = function(event) {
     const dx = event.clientX - _mouseDownPos.x;
     const dy = event.clientY - _mouseDownPos.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     // Always trigger auto-save on mouseup
-    if (typeof saveScene === 'function') {
-        saveScene(event);
+    if (typeof VRODOS.api.saveSceneEventHandler === 'function') {
+        VRODOS.api.saveSceneEventHandler(event);
     }
 
     // Suppress selection after a drop event
-    if (_suppressNextSelection) {
-        _suppressNextSelection = false;
+    if (VRODOS.editor.suppressNextSelection) {
+        VRODOS.editor.suppressNextSelection = false;
         return;
     }
 
     // Only trigger selection if it was a click, not a drag
     if (dist > _CLICK_THRESHOLD) return;
 
-    onLeftMouseClick(event);
+    VRODOS.ui.onLeftMouseClick(event);
 };
-window._onCanvasMouseUp = VRODOS.ui.onMouseUp;
-
-window.addCelOutline = function(object) {
+VRODOS.ui.addCelOutline = function(object) {
     if (!object || !object.traverse) return;
 
     // Cel-shaded outline technique
@@ -148,9 +144,8 @@ window.addCelOutline = function(object) {
         }
     });
 };
-window.window.addCelOutline = window.addCelOutline;
 
-window.removeAllCelOutlines = function() {
+VRODOS.ui.removeAllCelOutlines = function() {
     if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
     VRODOS.editor.envir.scene.traverse((node) => {
@@ -161,23 +156,20 @@ window.removeAllCelOutlines = function() {
         }
     });
 };
-window.window.removeAllCelOutlines = window.removeAllCelOutlines;
 
 VRODOS.ui.setSelectionIndicator = function(object) {
     if (!object) return;
-    window.removeAllCelOutlines();
-    window.addCelOutline(object);
+    VRODOS.ui.removeAllCelOutlines();
+    VRODOS.ui.addCelOutline(object);
 };
-window.setSelectionIndicator = VRODOS.ui.setSelectionIndicator;
 
-window.setDatGuiInitialVales = function(object) {
+VRODOS.ui.setDatGuiInitialVales = function(object) {
     if (!object) return;
     // Implementation for syncing dat.gui or other property editors
-    if (typeof window.showPropertiesInPanel === 'function') {
-        window.showPropertiesInPanel(object);
+    if (typeof VRODOS.ui.showPropertiesInPanel === 'function') {
+        VRODOS.ui.showPropertiesInPanel(object);
     }
 };
-window.window.setDatGuiInitialVales = window.setDatGuiInitialVales;
 
 VRODOS.utils.findParentSceneObject = function(object) {
     if (!object) return null;
@@ -187,14 +179,12 @@ VRODOS.utils.findParentSceneObject = function(object) {
     }
     return curr;
 };
-window.findParentSceneObject = VRODOS.utils.findParentSceneObject;
-
 /**
  * Detect mouse click (fires on mouseup if pointer didn't move)
  *
  * @param event
  */
-function onLeftMouseClick(event) {
+VRODOS.ui.onLeftMouseClick = function(event) {
     // If doing affine transformations with transform controls, then ignore select
     if (VRODOS.editor.transform_controls.dragging)
         {return;}
@@ -206,14 +196,14 @@ function onLeftMouseClick(event) {
     event.preventDefault();
     event.stopPropagation();
 
-    const intersects = findIntersected(event);
+    const intersects = VRODOS.ui.findIntersected(event);
 
     if (intersects.length === 0) {
         // Clicked empty canvas - deselect current object
         if (event.button === 0) {
             VRODOS.editor.transform_controls.detach();
-            window.removeAllCelOutlines();
-            window.hideObjectControlsPanel();
+            VRODOS.ui.removeAllCelOutlines();
+            VRODOS.ui.hideObjectControlsPanel();
             const objManipToggle = document.getElementById('object-manipulation-toggle');
             const axisManipBtns = document.getElementById('axis-manipulation-buttons');
             if (objManipToggle) objManipToggle.style.display = 'none';
@@ -226,7 +216,7 @@ function onLeftMouseClick(event) {
     if (intersects.length === 1) {
 
         if (!intersects[0].locked)
-            {selectorMajor(event, intersects[0], "2");}
+            {VRODOS.ui.selectorMajor(event, intersects[0], "2");}
         return;
     }
 
@@ -245,7 +235,7 @@ function onLeftMouseClick(event) {
         {i = -1;}
 
     if (!intersects[0].locked)
-        {selectorMajor(event, intersects[i + 1], "3");}
+        {VRODOS.ui.selectorMajor(event, intersects[i + 1], "3");}
 
 }// onMouseDown
 
@@ -260,35 +250,35 @@ function onLeftMouseClick(event) {
  * Lightweight selection: attach gizmo + outline, highlight in hierarchy.
  * No floating panel or properties shown. Used by hierarchy hover.
  */
-function selectObjectPreview(objectSel) {
+VRODOS.ui.selectObjectPreview = function(objectSel) {
     if (!objectSel) return;
 
-    window.setBackgroundColorHierarchyViewer(objectSel.uuid);
-    if (typeof window.vrodosAttachGizmo === 'function') {
-        window.vrodosAttachGizmo(objectSel);
+    VRODOS.ui.setBackgroundColorHierarchyViewer(objectSel.uuid);
+    if (typeof VRODOS.ui.attachGizmo === 'function') {
+        VRODOS.ui.attachGizmo(objectSel);
     } else {
         VRODOS.editor.transform_controls.attach(objectSel);
     }
 
     if (objectSel.name !== "avatarCamera") {
-        window.setTransformControlsSize();
+        VRODOS.ui.transform.setSize();
     }
 
     VRODOS.editor.transform_controls.setMode("translate");
 
-    window.removeAllCelOutlines();
-    window.addCelOutline(objectSel);
+    VRODOS.ui.removeAllCelOutlines();
+    VRODOS.ui.addCelOutline(objectSel);
 }
 
-function selectorMajor(event, objectSel, whocalls) {
+VRODOS.ui.selectorMajor = function(event, objectSel, whocalls) {
 
     if (event.button === 0) {
 
-        const objectTitle = typeof window.vrodosDecodeDisplayText === 'function'
-            ? window.vrodosDecodeDisplayText(objectSel.asset_name || objectSel.name || 'Object Controls')
+        const objectTitle = typeof VRODOS.utils.decodeDisplayText === 'function'
+            ? VRODOS.utils.decodeDisplayText(objectSel.asset_name || objectSel.name || 'Object Controls')
             : (objectSel.asset_name || objectSel.name || 'Object Controls');
 
-        window.showObjectControlsPanel(objectTitle);
+        VRODOS.ui.showObjectControlsPanel(objectTitle);
 
         document.getElementById('translate-switch').checked = true;
         document.getElementById('rotate-switch').disabled = false;
@@ -298,10 +288,10 @@ function selectorMajor(event, objectSel, whocalls) {
         document.getElementById('scale-switch-label').style = "inherit";
       
         // set the selected color of the hierarchy viewer
-        window.setBackgroundColorHierarchyViewer(objectSel.uuid);
+        VRODOS.ui.setBackgroundColorHierarchyViewer(objectSel.uuid);
 
-        if (typeof window.vrodosAttachGizmo === 'function') {
-            window.vrodosAttachGizmo(objectSel);
+        if (typeof VRODOS.ui.attachGizmo === 'function') {
+            VRODOS.ui.attachGizmo(objectSel);
         } else {
             VRODOS.editor.transform_controls.attach(objectSel);
         }
@@ -377,7 +367,7 @@ function selectorMajor(event, objectSel, whocalls) {
 
         } else {
             // find dimensions of object in order to resize transform controls
-            window.setTransformControlsSize();
+            VRODOS.ui.transform.setSize();
         }
 
 
@@ -390,21 +380,21 @@ function selectorMajor(event, objectSel, whocalls) {
         }
 
         // highlight — cel-shaded outline
-        window.removeAllCelOutlines();
-        window.addCelOutline(objectSel);
+        VRODOS.ui.removeAllCelOutlines();
+        VRODOS.ui.addCelOutline(objectSel);
 
-        window.setDatGuiInitialVales(objectSel);
+        VRODOS.ui.setDatGuiInitialVales(objectSel);
 
         // Auto-show object-specific properties in the floating panel
-        window.showPropertiesInPanel(objectSel);
+        VRODOS.ui.showPropertiesInPanel(objectSel);
     }
 }
 
 
 // Right Click: Show properties
-function contextMenuClick(event) {
+VRODOS.ui.contextMenuClick = function(event) {
     event.preventDefault();
-    const intersected = findIntersected(event);
+    const intersected = VRODOS.ui.findIntersected(event);
 
     if (intersected.length === 0)
         {return;}
@@ -428,46 +418,46 @@ function showProperties(event, object) {
             // Don't display a popup in decoration. You can only change name and glb file from asset editor!
             break;
         case 'poi-imagetext':
-            displayPoiImageTextProperties(event, name);
+            VRODOS.ui.displayPoiImageTextProperties(event, name);
             break;
         case 'video':
-            displayPoiVideoProperties(event, name);
+            VRODOS.ui.displayPoiVideoProperties(event, name);
             break;
         case 'door':
-            displayDoorProperties(event, name);
+            VRODOS.ui.displayDoorProperties(event, name);
             break;
         case 'poi-link':
-            displayLinkProperties(event, name);
+            VRODOS.ui.displayLinkProperties(event, name);
             break;
         case 'chat':
         case 'poi-chat':
-            displayPoiChatProperties(event, name);
+            VRODOS.ui.displayPoiChatProperties(event, name);
             break;
         // case 'lightSun':
-        //     displaySunProperties(event, name);
+        //     VRODOS.ui.displaySunProperties(event, name);
         //     break;
         // case 'lightLamp':
-        //     displayLampProperties(event, name);
+        //     VRODOS.ui.displayLampProperties(event, name);
         //     break;
         // case 'lightSpot':
-        //     displaySpotProperties(event, name);
+        //     VRODOS.ui.displaySpotProperties(event, name);
         //     break;
         // case 'lightAmbient':
-        //     displayAmbientProperties(event, name);
+        //     VRODOS.ui.displayAmbientProperties(event, name);
         //     break;
     }
     switch (object.category_name) {
         case 'lightSun':
-            displaySunProperties(event, name);
+            VRODOS.ui.displaySunProperties(event, name);
             break;
         case 'lightLamp':
-            displayLampProperties(event, name);
+            VRODOS.ui.displayLampProperties(event, name);
             break;
         // case 'lightSpot':
-        //     displaySpotProperties(event, name);
+        //     VRODOS.ui.displaySpotProperties(event, name);
         //     break;
         // case 'lightAmbient':
-        //     displayAmbientProperties(event, name);
+        //     VRODOS.ui.displayAmbientProperties(event, name);
         //     break;
     }
 }
@@ -482,7 +472,7 @@ function sanitizeInputValue(value) {
  * @param event
  * @param name
  */
-function displaySunProperties(event, name) {
+VRODOS.ui.displaySunProperties = function(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpSunPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
@@ -522,7 +512,7 @@ function displaySunProperties(event, name) {
 }
 
 // LAMP PROPERTIES DIV show
-function displayLampProperties(event, name) {
+VRODOS.ui.displayLampProperties = function(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpLampPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
@@ -565,7 +555,7 @@ function displayLampProperties(event, name) {
 
 
 // SPOT PROPERTIES DIV show
-function displaySpotProperties(event, name) {
+VRODOS.ui.displaySpotProperties = function(event, name) {
 
     const ppPropertiesDiv = document.getElementById("popUpSpotPropertiesDiv");
 
@@ -606,7 +596,7 @@ function displaySpotProperties(event, name) {
 
 
 // AMBIENT PROPERTIES DIV show
-function displayAmbientProperties(event, name) {
+VRODOS.ui.displayAmbientProperties = function(event, name) {
 
     const ppPropertiesDiv = document.getElementById("popUpAmbientPropertiesDiv");
 
@@ -640,7 +630,7 @@ function displayAmbientProperties(event, name) {
  * @param event
  * @param name
  */
-function displayDoorProperties(event, name) {
+VRODOS.ui.displayDoorProperties = function(event, name) {
     const popUpDoorPropertiesDiv = document.getElementById("popUpDoorPropertiesDiv");
     const popupDoorSelect = document.getElementById("popupDoorSelect");
     if (!popupDoorSelect || !popUpDoorPropertiesDiv) return;
@@ -659,7 +649,7 @@ function displayDoorProperties(event, name) {
     popUpDoorPropertiesDiv.style.display = '';
 }
 
-function displayLinkProperties(event, name) {
+VRODOS.ui.displayLinkProperties = function(event, name) {
     const popUpLinkPropertiesDiv = document.getElementById("popUpLinkPropertiesDiv");
     const popupLinkSelect = document.getElementById("poi_link_text");
     if (!popupLinkSelect || !popUpLinkPropertiesDiv) return;
@@ -676,7 +666,7 @@ function displayLinkProperties(event, name) {
     popUpLinkPropertiesDiv.style.display = '';
 }
 
-function displayPoiChatProperties(event, name) {
+VRODOS.ui.displayPoiChatProperties = function(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpPoiChatPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
@@ -728,10 +718,10 @@ function initPersistentPropertyListeners() {
             
             if (oldValue !== val) {
                 obj[prop] = val;
-                if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                    vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, prop, oldValue, val));
+                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, prop, oldValue, val));
                 }
-                saveChanges();
+                VRODOS.api.saveChanges();
             }
         };
 
@@ -746,10 +736,10 @@ function initPersistentPropertyListeners() {
                 const newVal = this.value;
                 
                 if (oldVal !== newVal) {
-                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
+                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
                     }
-                    saveChanges();
+                    VRODOS.api.saveChanges();
                 }
             }
         });
@@ -788,10 +778,10 @@ function initPersistentPropertyListeners() {
                 const newVal = this.value;
 
                 if (oldVal !== newVal) {
-                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
+                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
                     }
-                    saveChanges();
+                    VRODOS.api.saveChanges();
                 }
             }
         });
@@ -839,10 +829,10 @@ function initPersistentPropertyListeners() {
                 const newVal = this.value;
 
                 if (oldVal !== newVal) {
-                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
+                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
                     }
-                    saveChanges();
+                    VRODOS.api.saveChanges();
                 }
             }
         });
@@ -863,10 +853,10 @@ function initPersistentPropertyListeners() {
 
                 if (oldVal !== newVal) {
                     obj.sceneID_target = newVal;
-                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'sceneID_target', oldVal, newVal));
+                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'sceneID_target', oldVal, newVal));
                     }
-                    saveChanges();
+                    VRODOS.api.saveChanges();
                 }
             }
         });
@@ -883,10 +873,10 @@ function initPersistentPropertyListeners() {
 
                 if (oldVal !== newVal) {
                     obj.poi_link_url = newVal;
-                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_link_url', oldVal, newVal));
+                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_link_url', oldVal, newVal));
                     }
-                    saveChanges();
+                    VRODOS.api.saveChanges();
                 }
             }
         });
@@ -910,13 +900,13 @@ function initPersistentPropertyListeners() {
                     obj.poi_img_content = newContent;
                     obj.poi_img_title = newTitle;
                     
-                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        // For complex multi-prop changes, we could use a custom command, but PropertyCommand is enough for the main content
-                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_img_content', oldContent, newContent));
+                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                        // For complex multi-prop changes, we could use a custom command, but VRODOS.editor.PropertyCommand is enough for the main content
+                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_img_content', oldContent, newContent));
                     }
 
                     if (setDesc) setDesc.style.display = this.checked ? "block" : "none";
-                    saveChanges();
+                    VRODOS.api.saveChanges();
                 }
             }
         });
@@ -949,14 +939,14 @@ function initPersistentPropertyListeners() {
                         if (setFocusZ) obj.follow_camera_z = setFocusZ.value;
                     }
                     
-                    if (typeof vrodosUndoManager !== 'undefined' && !vrodosUndoManager.isExecuting) {
-                        vrodosUndoManager.add(new VRODOS.editor.PropertyCommand(obj, 'follow_camera', oldVal, newVal));
+                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'follow_camera', oldVal, newVal));
                     }
 
                     if (setFocusX) setFocusX.disabled = !this.checked;
                     if (setFocusZ) setFocusZ.disabled = !this.checked;
                     
-                    saveChanges();
+                    VRODOS.api.saveChanges();
                 }
             }
         });
@@ -983,7 +973,7 @@ initPersistentPropertyListeners();
  *
  * @returns {Array}
  */
-function getActiveMeshes() {
+VRODOS.ui.getActiveMeshes = function() {
     // Fast path: use the pre-built cache maintained by add/remove operations
     if (VRODOS.editor.envir.selectableMeshes && VRODOS.editor.envir.selectableMeshes.size > 0) {
         return Array.from(VRODOS.editor.envir.selectableMeshes);
@@ -1067,7 +1057,7 @@ function showWholePopupDiv(popUpDiv, event) {
  * @param event
  * @param name
  */
-function displayPoiImageTextProperties(event, name) {
+VRODOS.ui.displayPoiImageTextProperties = function(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpPoiImageTextPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
@@ -1088,7 +1078,7 @@ function displayPoiImageTextProperties(event, name) {
     ppPropertiesDiv.style.display = '';
 }
 
-function saveChanges(options) {
+VRODOS.api.saveChanges = function(options) {
     const saveOptions = options || {};
 
     if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
@@ -1117,7 +1107,7 @@ function saveChanges(options) {
  * @param event
  * @param name
  */
-function displayPoiVideoProperties(event, name) {
+VRODOS.ui.displayPoiVideoProperties = function(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpPoiVideoPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
@@ -1141,3 +1131,8 @@ function displayPoiVideoProperties(event, name) {
 
     ppPropertiesDiv.style.display = '';
 }
+
+
+
+
+

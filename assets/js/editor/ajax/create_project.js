@@ -10,7 +10,7 @@ VRODOS.api.createProject = function(project_title, project_type_slug, current_us
 	if (VRODOS.api.isCreateProjectPending) return;
 	VRODOS.api.isCreateProjectPending = true;
 
-	fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url, {
+	fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl(), {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
@@ -44,7 +44,7 @@ VRODOS.api.createProject = function(project_title, project_type_slug, current_us
 
 VRODOS.api.fetchAllProjectsAndAddToDOM = function(current_user_id, parameter_Scenepass, new_project_id=-1, is_initial_load = false){
 
-	fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url, {
+	fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl(), {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({

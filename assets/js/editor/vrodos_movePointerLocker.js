@@ -1,153 +1,156 @@
 // For detecting collisions while moving
 // Info at http://www.html5rocks.com/en/tutorials/pointerlock/intro/
 
-var avatarControlsEnabled = false;
-var originalDirectorPos = null;
-var originalDirectorRot = null;
-var originalRigPos = null;
-var originalRigRot = null;
+VRODOS.editor.avatarControlsEnabled = false;
+VRODOS.editor.originalDirectorPos = null;
+VRODOS.editor.originalDirectorRot = null;
+VRODOS.editor.originalRigPos = null;
+VRODOS.editor.originalRigRot = null;
 
 
 
 
 // Initialize
-function initPointerLock() {
+VRODOS.api.initPointerLock = function() {
 
     const firstPersonBlocker = document.getElementById('firstPersonBlocker');
-    const firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
+    VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
     const havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
 
-    avatarControlsEnabled = false;
-    envir.avatarControls.enabled = false;
+    VRODOS.editor.avatarControlsEnabled = false;
+    VRODOS.editor.envir.avatarControls.enabled = false;
 
     if (!havePointerLock) {
-        firstPersonBlockerBtn.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
+        VRODOS.editor.firstPersonBlockerBtn.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
     }
-}
+};
 
 
-function firstPersonViewWithoutLock(){
+VRODOS.api.firstPersonViewWithoutLock = function(){
 
-    if (!avatarControlsEnabled) {
+    if (!VRODOS.editor.avatarControlsEnabled) {
 
         // // ----------- First person view ----------------------
-        avatarControlsEnabled = true;
+        VRODOS.editor.avatarControlsEnabled = true;
         const event_add_mv = new CustomEvent("add_movement");
         document.dispatchEvent(event_add_mv);
 
         // Mouse controls Avatar viewing
-        envir.avatarControls.enabled = false;
+        VRODOS.editor.envir.avatarControls.enabled = false;
 
         // Mouse controls orbit
-        envir.orbitControls.enabled = false;
+        VRODOS.editor.envir.orbitControls.enabled = false;
 
         // Save current director and rig transform before entering FP mode
-        const director = envir.getDirectorObject();
-        const rig = envir.getDirectorRig();
+        const director = VRODOS.editor.envir.getDirectorObject();
+        const rig = VRODOS.editor.envir.getDirectorRig();
         if (director) {
-            originalDirectorPos = director.position.clone();
-            originalDirectorRot = director.rotation.clone();
+            VRODOS.editor.originalDirectorPos = director.position.clone();
+            VRODOS.editor.originalDirectorRot = director.rotation.clone();
         }
         if (rig) {
-            originalRigPos = rig.position.clone();
-            originalRigRot = rig.rotation.clone();
+            VRODOS.editor.originalRigPos = rig.position.clone();
+            VRODOS.editor.originalRigRot = rig.rotation.clone();
         }
 
 
         // Keep the saved Director transform as the source of truth when entering first-person preview.
-        envir.moveDirectorToOrbitTarget();
+        VRODOS.editor.envir.moveDirectorToOrbitTarget();
 
 
-        //transform_controls.visible = false;
+        //VRODOS.editor.transform_controls.visible = false;
         //
         // // Glow effect change camera
-        envir.composer = [];
-        envir.setComposerAndPasses(transform_controls);
+        VRODOS.editor.envir.composer = [];
+        VRODOS.editor.envir.setComposerAndPasses(VRODOS.editor.transform_controls);
 
-        envir.isComposerOn = true;
+        VRODOS.editor.envir.isComposerOn = true;
 
 
 
         // // if in 3rd person view then show the cameraobject
-        envir.getDirectorRig().visible = envir.thirdPersonView && avatarControlsEnabled;
+        VRODOS.editor.envir.getDirectorRig().visible = VRODOS.editor.envir.thirdPersonView && VRODOS.editor.avatarControlsEnabled;
 
 
 
     }else{
 
         // ------------- ORBIT --------------------------
-        avatarControlsEnabled = false;
+        VRODOS.editor.avatarControlsEnabled = false;
         const event_rm_mv = new CustomEvent("remove_movement");
         document.dispatchEvent(event_rm_mv);
 
-        envir.avatarControls.enabled = false;
+        VRODOS.editor.envir.avatarControls.enabled = false;
 
-        envir.orbitControls.enabled = true;
+        VRODOS.editor.envir.orbitControls.enabled = true;
 
+        const firstPersonBlocker = document.getElementById('firstPersonBlocker');
         firstPersonBlocker.style.display = '-webkit-box';
         firstPersonBlocker.style.display = '-moz-box';
         firstPersonBlocker.style.display = 'box';
 
 
-        envir.thirdPersonView = false;
+        VRODOS.editor.envir.thirdPersonView = false;
 
-        if (envir.getDirectorVisualObject()) envir.getDirectorVisualObject().visible = true;
+        if (VRODOS.editor.envir.getDirectorVisualObject()) VRODOS.editor.envir.getDirectorVisualObject().visible = true;
 
 
-        envir.composer = [];
-        envir.setComposerAndPasses(transform_controls);
+        VRODOS.editor.envir.composer = [];
+        VRODOS.editor.envir.setComposerAndPasses(VRODOS.editor.transform_controls);
 
-        envir.isComposerOn = true;
+        VRODOS.editor.envir.isComposerOn = true;
 
-        if(!envir.is2d)
-            {transform_controls.visible  = true;}
+        if(!VRODOS.editor.envir.is2d)
+            {VRODOS.editor.transform_controls.visible  = true;}
 
-        envir.getDirectorRig().visible = true;
+        VRODOS.editor.envir.getDirectorRig().visible = true;
 
         // Restore Director transform to what it was before entering FP mode
-        if (originalDirectorPos && originalDirectorRot) {
+        if (VRODOS.editor.originalDirectorPos && VRODOS.editor.originalDirectorRot) {
 
             // Reset movement state to stop any ongoing momentum or stuck keys
-            if (typeof vrodosResetAvatarMovement === 'function') {
-                vrodosResetAvatarMovement();
+            if (typeof VRODOS.api.resetAvatarMovement === 'function') {
+                VRODOS.api.resetAvatarMovement();
             }
 
-            envir.applyDirectorTransform(
-                [originalDirectorPos.x, originalDirectorPos.y, originalDirectorPos.z],
-                [originalDirectorRot.x, originalDirectorRot.y, originalDirectorRot.z]
+            VRODOS.editor.envir.applyDirectorTransform(
+                [VRODOS.editor.originalDirectorPos.x, VRODOS.editor.originalDirectorPos.y, VRODOS.editor.originalDirectorPos.z],
+                [VRODOS.editor.originalDirectorRot.x, VRODOS.editor.originalDirectorRot.y, VRODOS.editor.originalDirectorRot.z]
             );
 
             // Restore Rig transform (ensures world position is correct)
-            const rig = envir.getDirectorRig();
-            if (rig && originalRigPos && originalRigRot) {
-                rig.position.copy(originalRigPos);
-                rig.rotation.copy(originalRigRot);
+            const rig = VRODOS.editor.envir.getDirectorRig();
+            if (rig && VRODOS.editor.originalRigPos && VRODOS.editor.originalRigRot) {
+                rig.position.copy(VRODOS.editor.originalRigPos);
+                rig.rotation.copy(VRODOS.editor.originalRigRot);
                 rig.updateMatrixWorld(true);
             }
 
 
             // Refresh GUI and Hierarchy
-            if (typeof updatePositionsAndControls === 'function') {
-                updatePositionsAndControls();
+            if (typeof VRODOS.editor.updatePositionsAndControls === 'function') {
+                VRODOS.editor.updatePositionsAndControls();
             }
-            if (typeof setHierarchyViewer === 'function') {
-                setHierarchyViewer();
+            if (typeof VRODOS.ui.setHierarchyViewer === 'function') {
+                VRODOS.ui.setHierarchyViewer();
             }
 
-            originalDirectorPos = null;
-            originalDirectorRot = null;
-            originalRigPos = null;
-            originalRigRot = null;
+            VRODOS.editor.originalDirectorPos = null;
+            VRODOS.editor.originalDirectorRot = null;
+            VRODOS.editor.originalRigPos = null;
+            VRODOS.editor.originalRigRot = null;
         }
 
 
 
         // ToDo: Zoom
-        envir.orbitControls.reset();
+        VRODOS.editor.envir.orbitControls.reset();
 
-        findSceneDimensions();
-        envir.fitCameraToSceneLimits();
+        VRODOS.utils.findSceneDimensions();
+        VRODOS.editor.envir.fitCameraToSceneLimits();
 
     }
-}
+};
+
+

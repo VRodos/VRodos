@@ -204,7 +204,7 @@ VRodosCompileUI.Atmosphere = (function () {
     }
 
     function applyHorizonLightingPreset(controls, presetKey) {
-        const fallbackPreset = envir && envir.scene ? envir.scene.aframeHorizonSkyPreset : Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset;
+        const fallbackPreset = VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframeHorizonSkyPreset : Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset;
         const normalized = Shared.normalizePmndrsHorizonLightingPreset(presetKey, fallbackPreset);
         if (normalized === 'custom') {
             return;
@@ -260,66 +260,66 @@ VRodosCompileUI.Atmosphere = (function () {
     }
 
     function syncToScene(controls) {
-        if (!envir || !envir.scene || !controls.pmndrsAtmosphere) {
+        if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene || !controls.pmndrsAtmosphere) {
             return;
         }
 
         const d = Shared.PMNDRS_TWEAK_DEFAULTS;
 
-        envir.scene.aframePmndrsAtmosphereEnabled = controls.pmndrsAtmosphere.checked === true;
-        envir.scene.aframePmndrsAtmospherePreset = normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : d.atmospherePreset);
-        envir.scene.aframePmndrsAtmospherePresetIntensity = Shared.clampNumber(
+        VRODOS.editor.envir.scene.aframePmndrsAtmosphereEnabled = controls.pmndrsAtmosphere.checked === true;
+        VRODOS.editor.envir.scene.aframePmndrsAtmospherePreset = normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : d.atmospherePreset);
+        VRODOS.editor.envir.scene.aframePmndrsAtmospherePresetIntensity = Shared.clampNumber(
             controls.pmndrsAtmospherePresetIntensity ? controls.pmndrsAtmospherePresetIntensity.value : d.atmospherePresetIntensity,
             0,
             1,
             d.atmospherePresetIntensity
         );
-        envir.scene.aframePmndrsAtmosphereQuality = normalizeQuality(controls.pmndrsAtmosphereQuality ? controls.pmndrsAtmosphereQuality.value : d.atmosphereQuality);
+        VRODOS.editor.envir.scene.aframePmndrsAtmosphereQuality = normalizeQuality(controls.pmndrsAtmosphereQuality ? controls.pmndrsAtmosphereQuality.value : d.atmosphereQuality);
 
-        envir.scene.aframePmndrsSunElevationDeg = Shared.clampNumber(controls.pmndrsSunElevation ? controls.pmndrsSunElevation.value : d.sunElevationDeg, -10, 85, d.sunElevationDeg);
-        envir.scene.aframePmndrsSunAzimuthDeg = Shared.clampNumber(controls.pmndrsSunAzimuth ? controls.pmndrsSunAzimuth.value : d.sunAzimuthDeg, -180, 180, d.sunAzimuthDeg);
-        envir.scene.aframePmndrsSunDistance = Shared.clampNumber(controls.pmndrsSunDistance ? controls.pmndrsSunDistance.value : d.sunDistance, 1500, 20000, d.sunDistance);
-        envir.scene.aframePmndrsSunAngularRadius = Shared.clampNumber(controls.pmndrsSunAngularRadius ? controls.pmndrsSunAngularRadius.value : d.sunAngularRadius, 0.002, 0.03, d.sunAngularRadius);
+        VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg = Shared.clampNumber(controls.pmndrsSunElevation ? controls.pmndrsSunElevation.value : d.sunElevationDeg, -10, 85, d.sunElevationDeg);
+        VRODOS.editor.envir.scene.aframePmndrsSunAzimuthDeg = Shared.clampNumber(controls.pmndrsSunAzimuth ? controls.pmndrsSunAzimuth.value : d.sunAzimuthDeg, -180, 180, d.sunAzimuthDeg);
+        VRODOS.editor.envir.scene.aframePmndrsSunDistance = Shared.clampNumber(controls.pmndrsSunDistance ? controls.pmndrsSunDistance.value : d.sunDistance, 1500, 20000, d.sunDistance);
+        VRODOS.editor.envir.scene.aframePmndrsSunAngularRadius = Shared.clampNumber(controls.pmndrsSunAngularRadius ? controls.pmndrsSunAngularRadius.value : d.sunAngularRadius, 0.002, 0.03, d.sunAngularRadius);
 
-        envir.scene.aframePmndrsAerialStrength = Shared.clampNumber(controls.pmndrsAerialStrength ? controls.pmndrsAerialStrength.value : d.aerialStrength, 0, 2, d.aerialStrength);
-        envir.scene.aframePmndrsAlbedoScale = Shared.clampNumber(controls.pmndrsAlbedoScale ? controls.pmndrsAlbedoScale.value : d.albedoScale, 0, 2, d.albedoScale);
+        VRODOS.editor.envir.scene.aframePmndrsAerialStrength = Shared.clampNumber(controls.pmndrsAerialStrength ? controls.pmndrsAerialStrength.value : d.aerialStrength, 0, 2, d.aerialStrength);
+        VRODOS.editor.envir.scene.aframePmndrsAlbedoScale = Shared.clampNumber(controls.pmndrsAlbedoScale ? controls.pmndrsAlbedoScale.value : d.albedoScale, 0, 2, d.albedoScale);
 
-        envir.scene.aframePmndrsTransmittanceEnabled = controls.pmndrsTransmittance ? controls.pmndrsTransmittance.checked === true : true;
-        envir.scene.aframePmndrsInscatterEnabled = controls.pmndrsInscatter ? controls.pmndrsInscatter.checked === true : true;
-        envir.scene.aframePmndrsGroundEnabled = controls.pmndrsGround ? controls.pmndrsGround.checked === true : true;
-        envir.scene.aframePmndrsGroundAlbedo = Shared.normalizeColorHex(controls.pmndrsGroundAlbedo ? controls.pmndrsGroundAlbedo.value : d.groundAlbedo, d.groundAlbedo);
+        VRODOS.editor.envir.scene.aframePmndrsTransmittanceEnabled = controls.pmndrsTransmittance ? controls.pmndrsTransmittance.checked === true : true;
+        VRODOS.editor.envir.scene.aframePmndrsInscatterEnabled = controls.pmndrsInscatter ? controls.pmndrsInscatter.checked === true : true;
+        VRODOS.editor.envir.scene.aframePmndrsGroundEnabled = controls.pmndrsGround ? controls.pmndrsGround.checked === true : true;
+        VRODOS.editor.envir.scene.aframePmndrsGroundAlbedo = Shared.normalizeColorHex(controls.pmndrsGroundAlbedo ? controls.pmndrsGroundAlbedo.value : d.groundAlbedo, d.groundAlbedo);
 
-        envir.scene.aframePmndrsRayleighScale = Shared.clampNumber(controls.pmndrsRayleighScale ? controls.pmndrsRayleighScale.value : d.rayleighScale, 0.1, 3, d.rayleighScale);
-        envir.scene.aframePmndrsMieScatteringScale = Shared.clampNumber(controls.pmndrsMieScatteringScale ? controls.pmndrsMieScatteringScale.value : d.mieScatteringScale, 0.1, 3, d.mieScatteringScale);
-        envir.scene.aframePmndrsMieExtinctionScale = Shared.clampNumber(controls.pmndrsMieExtinctionScale ? controls.pmndrsMieExtinctionScale.value : d.mieExtinctionScale, 0.1, 3, d.mieExtinctionScale);
-        envir.scene.aframePmndrsMiePhaseG = Shared.clampNumber(controls.pmndrsMiePhaseG ? controls.pmndrsMiePhaseG.value : d.miePhaseG, 0, 0.99, d.miePhaseG);
-        envir.scene.aframePmndrsAbsorptionScale = Shared.clampNumber(controls.pmndrsAbsorptionScale ? controls.pmndrsAbsorptionScale.value : d.absorptionScale, 0.1, 3, d.absorptionScale);
-        envir.scene.aframePmndrsMoonEnabled = controls.pmndrsMoon ? controls.pmndrsMoon.checked === true : false;
-        const lightingPresetFallback = envir.scene.aframeHorizonSkyPreset || d.horizonLightingPreset;
-        envir.scene.aframePmndrsHorizonLightingPreset = Shared.normalizePmndrsHorizonLightingPreset(
+        VRODOS.editor.envir.scene.aframePmndrsRayleighScale = Shared.clampNumber(controls.pmndrsRayleighScale ? controls.pmndrsRayleighScale.value : d.rayleighScale, 0.1, 3, d.rayleighScale);
+        VRODOS.editor.envir.scene.aframePmndrsMieScatteringScale = Shared.clampNumber(controls.pmndrsMieScatteringScale ? controls.pmndrsMieScatteringScale.value : d.mieScatteringScale, 0.1, 3, d.mieScatteringScale);
+        VRODOS.editor.envir.scene.aframePmndrsMieExtinctionScale = Shared.clampNumber(controls.pmndrsMieExtinctionScale ? controls.pmndrsMieExtinctionScale.value : d.mieExtinctionScale, 0.1, 3, d.mieExtinctionScale);
+        VRODOS.editor.envir.scene.aframePmndrsMiePhaseG = Shared.clampNumber(controls.pmndrsMiePhaseG ? controls.pmndrsMiePhaseG.value : d.miePhaseG, 0, 0.99, d.miePhaseG);
+        VRODOS.editor.envir.scene.aframePmndrsAbsorptionScale = Shared.clampNumber(controls.pmndrsAbsorptionScale ? controls.pmndrsAbsorptionScale.value : d.absorptionScale, 0.1, 3, d.absorptionScale);
+        VRODOS.editor.envir.scene.aframePmndrsMoonEnabled = controls.pmndrsMoon ? controls.pmndrsMoon.checked === true : false;
+        const lightingPresetFallback = VRODOS.editor.envir.scene.aframeHorizonSkyPreset || d.horizonLightingPreset;
+        VRODOS.editor.envir.scene.aframePmndrsHorizonLightingPreset = Shared.normalizePmndrsHorizonLightingPreset(
             controls.pmndrsHorizonLightingPreset ? controls.pmndrsHorizonLightingPreset.value : lightingPresetFallback,
             lightingPresetFallback
         );
         const helperDefaults = Shared.getPmndrsHorizonHelperDefaults(
-            envir.scene.aframePmndrsHorizonLightingPreset === 'custom'
+            VRODOS.editor.envir.scene.aframePmndrsHorizonLightingPreset === 'custom'
                 ? lightingPresetFallback
-                : envir.scene.aframePmndrsHorizonLightingPreset
+                : VRODOS.editor.envir.scene.aframePmndrsHorizonLightingPreset
         );
-        envir.scene.aframePmndrsHorizonKeyLightIntensity = Shared.clampNumber(
+        VRODOS.editor.envir.scene.aframePmndrsHorizonKeyLightIntensity = Shared.clampNumber(
             controls.pmndrsHorizonKeyLightIntensity ? controls.pmndrsHorizonKeyLightIntensity.value : helperDefaults.keyLightIntensity,
             0,
             3,
             helperDefaults.keyLightIntensity
         );
-        envir.scene.aframePmndrsHorizonFillLightIntensity = Shared.clampNumber(
+        VRODOS.editor.envir.scene.aframePmndrsHorizonFillLightIntensity = Shared.clampNumber(
             controls.pmndrsHorizonFillLightIntensity ? controls.pmndrsHorizonFillLightIntensity.value : helperDefaults.fillLightIntensity,
             0,
             3,
             helperDefaults.fillLightIntensity
         );
 
-        if (typeof envir.updateAtmosphere === 'function') {
-            envir.updateAtmosphere();
+        if (typeof VRODOS.editor.envir.updateAtmosphere === 'function') {
+            VRODOS.editor.envir.updateAtmosphere();
         }
     }
 
@@ -334,3 +334,5 @@ VRodosCompileUI.Atmosphere = (function () {
         normalizePreset
     };
 })();
+
+

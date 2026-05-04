@@ -143,7 +143,7 @@ function findObjectLimits(groupObj) {
 // Reset
 function findSceneDimensions() {
 
-    if (typeof envir === 'undefined' || !envir || !envir.scene) {
+    if (typeof VRODOS.editor.envir === 'undefined' || !VRODOS.editor.envir || !VRODOS.editor.envir.scene) {
         return;
     }
 
@@ -157,7 +157,7 @@ function findSceneDimensions() {
         hasSceneContent: false
     };
 
-    envir.scene.children
+    VRODOS.editor.envir.scene.children
         .filter(isSceneBoundsCandidate)
         .forEach((sceneChild) => {
             const objectBounds = findObjectLimits(sceneChild);
@@ -173,8 +173,14 @@ function findSceneDimensions() {
             bounds.zMax = Math.max(objectBounds[1].z, bounds.zMax);
         });
 
-    envir.SCENE_DIMENSION_SURFACE = Math.max(bounds.xMax - bounds.xMin, bounds.zMax - bounds.zMin);
-    envir.SCENE_CENTER_X = bounds.hasSceneContent ? (bounds.xMin + bounds.xMax) / 2 : 0;
-    envir.SCENE_CENTER_Y = bounds.hasSceneContent ? (bounds.yMin + bounds.yMax) / 2 : 0;
-    envir.SCENE_CENTER_Z = bounds.hasSceneContent ? (bounds.zMin + bounds.zMax) / 2 : 0;
+    VRODOS.editor.envir.SCENE_DIMENSION_SURFACE = Math.max(bounds.xMax - bounds.xMin, bounds.zMax - bounds.zMin);
+    VRODOS.editor.envir.SCENE_CENTER_X = bounds.hasSceneContent ? (bounds.xMin + bounds.xMax) / 2 : 0;
+    VRODOS.editor.envir.SCENE_CENTER_Y = bounds.hasSceneContent ? (bounds.yMin + bounds.yMax) / 2 : 0;
+    VRODOS.editor.envir.SCENE_CENTER_Z = bounds.hasSceneContent ? (bounds.zMin + bounds.zMax) / 2 : 0;
 }
+
+VRODOS.utils.findDimensions = findDimensions;
+VRODOS.utils.findBorders = findBorders;
+VRODOS.utils.findObjectLimits = findObjectLimits;
+VRODOS.utils.findSceneDimensions = findSceneDimensions;
+

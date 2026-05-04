@@ -2,7 +2,7 @@
  * Rename Project AJAX
  */
 VRODOS.api.renameProject = function(projectId, newTitle, onComplete) {
-    fetch(VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url, {
+    fetch(VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -13,6 +13,16 @@ VRODOS.api.renameProject = function(projectId, newTitle, onComplete) {
     })
     .then(response => response.text())
     .then(result => {
+        try {
+            const payload = JSON.parse(result);
+            if (payload && payload.success === false) {
+                if (onComplete) onComplete(false, payload.data || 'Rename failed.');
+                return;
+            }
+        } catch (_err) {
+            // Successful legacy response is plain text containing the updated title.
+        }
+
         if (onComplete) onComplete(true, result);
     })
     .catch(err => {
@@ -90,3 +100,5 @@ VRODOS.api.saveRename = function(gameId) {
         VRODOS.api.exitEditMode(gameId);
     }
 }
+
+

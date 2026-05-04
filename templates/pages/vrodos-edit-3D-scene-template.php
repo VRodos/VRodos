@@ -545,30 +545,30 @@ extract( $data );
 		// Only in Undo redo as javascript not php!
 		function parseJSON_LoadScene(scene_json) {
 
-			let resources3D = new VrodosSceneImporter().parse(scene_json, uploadDir);
-			envir.isSceneLoading = true;
-			prepareSceneLoadManager();
+			let resources3D = new VRODOS.importer.SceneImporter().parse(scene_json, uploadDir);
+			VRODOS.editor.envir.isSceneLoading = true;
+			VRODOS.api.prepareSceneLoadManager();
 
 			// CLEAR SCENE
 			let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
 
-			for (let i = envir.scene.children.length - 1; i >=0 ; i--) {
-				if (!preserveElements.includes(envir.scene.children[i].name))
-					envir.scene.remove(envir.scene.children[i]);
+			for (let i = VRODOS.editor.envir.scene.children.length - 1; i >=0 ; i--) {
+				if (!preserveElements.includes(VRODOS.editor.envir.scene.children[i].name))
+					VRODOS.editor.envir.scene.remove(VRODOS.editor.envir.scene.children[i]);
 			}
-			var lightsLoader = new VRodos_LightsPawn_Loader();
-			let lightsLoadPromise = lightsLoader.load(resources3D, pluginPath, manager);
+			var lightsLoader = new VRODOS.loader.LightsPawnLoader();
+			let lightsLoadPromise = lightsLoader.load(resources3D, VRODOS.data.pluginPath, VRODOS.editor.manager);
 
-			setHierarchyViewer();
+			VRODOS.ui.setHierarchyViewer();
 			//setHierarchyViewerLight();
 
-			transform_controls.attach(envir.scene.getObjectByName("avatarCamera"));
+			VRODOS.editor.transform_controls.attach(VRODOS.editor.envir.scene.getObjectByName("avatarCamera"));
 
 
-			loaderMulti = new VRodos_LoaderMulti("2");
-			let assetsLoadPromise = loaderMulti.load(manager, resources3D, pluginPath);
+			loaderMulti = new VRODOS.loader.LoaderMulti("2");
+			let assetsLoadPromise = loaderMulti.load(VRODOS.editor.manager, resources3D, VRODOS.data.pluginPath);
 			Promise.allSettled([lightsLoadPromise, assetsLoadPromise]).then(function () {
-				finalizeSceneLoad();
+				VRODOS.api.finalizeSceneLoad();
 			});
 
 		}
@@ -577,7 +577,7 @@ extract( $data );
 		let toggleEnvTexture = (el) => {
 			document.getElementById("env_texture-change-btn").classList.toggle('toggle-active');
 			el.checked = !el.checked;
-			envir.scene.environment = !el.checked ? null : envir.maintexture;
+			VRODOS.editor.envir.scene.environment = !el.checked ? null : VRODOS.editor.envir.maintexture;
 		}
 
 	</script>

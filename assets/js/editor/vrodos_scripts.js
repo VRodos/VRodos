@@ -1,15 +1,12 @@
 'use strict';
 
-window.VRODOS = window.VRODOS || { ui: { transform: {} }, utils: {}, api: {} };
-
 VRODOS.ui.transform.setSize = function() {
-    if (typeof transform_controls === 'undefined' || !transform_controls || !transform_controls.object || !envir) return;
+    if (typeof VRODOS.editor.transform_controls === 'undefined' || !VRODOS.editor.transform_controls || !VRODOS.editor.transform_controls.object || !VRODOS.editor.envir) return;
 
     // Use a fixed size for the transform controls, regardless of the object dimensions or zoom level.
     // Three.js natively keeps the gizmo size consistent relative to the screen.
-    transform_controls.setSize(1.2);
+    VRODOS.editor.transform_controls.setSize(1.2);
 };
-window.setTransformControlsSize = VRODOS.ui.transform.setSize;
 
 VRODOS.ui.fillinWidgetAssetTRS = function(selectedObject) {
     if (selectedObject) {
@@ -17,7 +14,6 @@ VRODOS.ui.fillinWidgetAssetTRS = function(selectedObject) {
         VRODOS.api.fetchAssetAndSetWidget(asset_id, selectedObject);
     }
 };
-window.vrodos_fillin_widget_assettrs = VRODOS.ui.fillinWidgetAssetTRS;
 
 VRODOS.utils.unixTimestampToTime = function(tStr) {
     const unix_timestamp = parseInt(tStr);
@@ -28,13 +24,11 @@ VRODOS.utils.unixTimestampToTime = function(tStr) {
     const formattedTime = `${hours  }:${  minutes.substr(-2)  }:${  seconds.substr(-2)}`;
     return `${date.getDate()  }/${  date.getMonth()  }/${  date.getFullYear()  } ${  formattedTime}`;
 };
-window.unixTimestamp_to_time = VRODOS.utils.unixTimestampToTime;
 
 VRODOS.utils.rgbToHex = function(red, green, blue) {
     const rgb = (red << 16) | (green << 8) | (blue << 0);
     return `#${  (0x1000000 + rgb).toString(16).slice(1)}`;
 };
-window.rgbToHex = VRODOS.utils.rgbToHex;
 
 VRODOS.ui.updateClearColorPicker = function(input) {
     const hex = input.value;
@@ -44,7 +38,6 @@ VRODOS.ui.updateClearColorPicker = function(input) {
     }
     VRODOS.api.saveChanges();
 };
-window.updateClearColorPicker = VRODOS.ui.updateClearColorPicker;
 
 VRODOS.api.saveChanges = function(options) {
     const saveOptions = options || {};
@@ -69,31 +62,27 @@ VRODOS.api.saveChanges = function(options) {
 
     return VRODOS.api.saveScene();
 };
-window.saveChanges = VRODOS.api.saveChanges;
 
 VRODOS.ui.setBackgroundPresetSelection = function(presetValue) {
-    if (!envir || !envir.scene) return;
+    if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
-    envir.scene.preset_selection = presetValue;
-    envir.scene.backgroundPresetOption = presetValue;
-    envir.scene.bcg_selection = 2;
-    envir.scene.backgroundStyleOption = 2;
+    VRODOS.editor.envir.scene.preset_selection = presetValue;
+    VRODOS.editor.envir.scene.backgroundPresetOption = presetValue;
+    VRODOS.editor.envir.scene.bcg_selection = 2;
+    VRODOS.editor.envir.scene.backgroundStyleOption = 2;
 };
-window.setBackgroundPresetSelection = VRODOS.ui.setBackgroundPresetSelection;
 
 VRODOS.ui.setBackgroundPresetGroundEnabled = function(isEnabled) {
-    if (!envir || !envir.scene) return;
+    if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
-    envir.scene.backgroundPresetGroundEnabled = Boolean(isEnabled);
+    VRODOS.editor.envir.scene.backgroundPresetGroundEnabled = Boolean(isEnabled);
 };
-window.setBackgroundPresetGroundEnabled = VRODOS.ui.setBackgroundPresetGroundEnabled;
 
 VRODOS.ui.setHorizonSkyPresetSelection = function(presetValue) {
-    if (!envir || !envir.scene) return;
+    if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
-    envir.scene.aframeHorizonSkyPreset = (presetValue === 'clear' || presetValue === 'crisp') ? presetValue : 'natural';
+    VRODOS.editor.envir.scene.aframeHorizonSkyPreset = (presetValue === 'clear' || presetValue === 'crisp') ? presetValue : 'natural';
 };
-window.setHorizonSkyPresetSelection = VRODOS.ui.setHorizonSkyPresetSelection;
 
 VRODOS.ui.handleBackgroundPresetChange = function(selectElement) {
     if (!selectElement) return;
@@ -105,7 +94,6 @@ VRODOS.ui.handleBackgroundPresetChange = function(selectElement) {
 
     VRODOS.api.saveChanges();
 };
-window.handleBackgroundPresetChange = VRODOS.ui.handleBackgroundPresetChange;
 
 VRODOS.ui.handleBackgroundPresetGroundToggle = function(checkboxElement) {
     if (!checkboxElement) return;
@@ -113,7 +101,6 @@ VRODOS.ui.handleBackgroundPresetGroundToggle = function(checkboxElement) {
     VRODOS.ui.setBackgroundPresetGroundEnabled(checkboxElement.checked);
     VRODOS.api.saveChanges();
 };
-window.handleBackgroundPresetGroundToggle = VRODOS.ui.handleBackgroundPresetGroundToggle;
 
 VRODOS.ui.handleHorizonSkyPresetChange = function(selectElement) {
     if (!selectElement) return;
@@ -125,15 +112,13 @@ VRODOS.ui.handleHorizonSkyPresetChange = function(selectElement) {
 
     VRODOS.api.saveChanges();
 };
-window.handleHorizonSkyPresetChange = VRODOS.ui.handleHorizonSkyPresetChange;
 
 VRODOS.ui.toggleAframeCollisionMode = function(isEnabled) {
-    if (!envir || !envir.scene) return;
+    if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
-    envir.scene.aframeCollisionMode = isEnabled ? 'auto' : 'off';
+    VRODOS.editor.envir.scene.aframeCollisionMode = isEnabled ? 'auto' : 'off';
     VRODOS.api.saveChanges();
 };
-window.toggleAframeCollisionMode = VRODOS.ui.toggleAframeCollisionMode;
 
 VRODOS.ui.syncBackgroundStyleDescription = function(selectedValue) {
     const horizonDescription = document.getElementById('sceneHorizonDescription');
@@ -156,7 +141,6 @@ VRODOS.ui.syncBackgroundStyleDescription = function(selectedValue) {
     horizonDescription.style.display = isVisible ? 'block' : 'none';
     horizonDescription.classList.toggle('tw-hidden', !isVisible);
 };
-window.syncBackgroundStyleDescription = VRODOS.ui.syncBackgroundStyleDescription;
 
 VRODOS.ui.bcgRadioSelect = function(option) {
     const els = {
@@ -216,26 +200,26 @@ VRODOS.ui.bcgRadioSelect = function(option) {
     if (uiHandlers[val]) uiHandlers[val]();
 
     // 3. Update Scene
-    if (envir?.scene) {
+    if (VRODOS.editor.envir?.scene) {
         const sceneHandlers = {
             4: () => {
-                envir.scene.background = null;
+                VRODOS.editor.envir.scene.background = null;
             },
             0: () => {
-                envir.scene.background = new THREE.Color(VRODOS.utils.rgbToHex(255, 255, 255));
+                VRODOS.editor.envir.scene.background = new THREE.Color(VRODOS.utils.rgbToHex(255, 255, 255));
                 VRODOS.ui.setHorizonSkyPresetSelection(els.horizonSkyPreset ? els.horizonSkyPreset.value : 'natural');
             },
             1: () => {
-                if (els.color?.value) envir.scene.background = new THREE.Color(els.color.value);
+                if (els.color?.value) VRODOS.editor.envir.scene.background = new THREE.Color(els.color.value);
             },
             2: () => {
                 VRODOS.ui.setBackgroundPresetSelection(els.presets.value);
                 VRODOS.ui.setBackgroundPresetGroundEnabled(els.presetToggle ? els.presetToggle.checked : true);
             },
             3: () => {
-                if (envir.scene.img_bcg_path && envir.scene.img_bcg_path !== '0') {
+                if (VRODOS.editor.envir.scene.img_bcg_path && VRODOS.editor.envir.scene.img_bcg_path !== '0') {
                     if (els.thumb) {
-                        els.thumb.src = envir.scene.img_bcg_path;
+                        els.thumb.src = VRODOS.editor.envir.scene.img_bcg_path;
                         els.thumb.hidden = false;
                     }
                 }
@@ -243,12 +227,11 @@ VRODOS.ui.bcgRadioSelect = function(option) {
         };
         if (sceneHandlers[val]) sceneHandlers[val]();
 
-        envir.scene.bcg_selection = val;
-        envir.scene.backgroundStyleOption = val;
+        VRODOS.editor.envir.scene.bcg_selection = val;
+        VRODOS.editor.envir.scene.backgroundStyleOption = val;
     }
     VRODOS.api.saveChanges();
 };
-window.bcgRadioSelect = VRODOS.ui.bcgRadioSelect;
 
 VRODOS.utils.hexToRgb = function(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -258,13 +241,11 @@ VRODOS.utils.hexToRgb = function(hex) {
         b: parseInt(result[3], 16)
     } : null;
 };
-window.hexToRgb = VRODOS.utils.hexToRgb;
 
 VRODOS.ui.updateFogColorPicker = function(input) {
     document.getElementById('FogColor').value = input.value;
     VRODOS.ui.updateFog("editing");
 };
-window.updateFogColorPicker = VRODOS.ui.updateFogColorPicker;
 
 VRODOS.ui.loadFogType = function() {
     const fogMap = {
@@ -275,15 +256,15 @@ VRODOS.ui.loadFogType = function() {
 
     for (const [id, data] of Object.entries(fogMap)) {
         if (document.getElementById(id)?.checked) {
-            envir.scene.fogCategory = data.cat;
+            VRODOS.editor.envir.scene.fogCategory = data.cat;
             document.getElementById('FogType').value = data.val;
             break;
         }
     }
 
     // Initialize or Sync Fog Slider
-    if (envir.scene.fogCategory === 2) {
-        const density = envir.scene.fogdensity || 0.01;
+    if (VRODOS.editor.envir.scene.fogCategory === 2) {
+        const density = VRODOS.editor.envir.scene.fogdensity || 0.01;
         const slider = document.getElementById('FogDensitySlider');
         const hiddenInput = document.getElementById('FogDensity');
         if (slider && hiddenInput) {
@@ -296,7 +277,6 @@ VRODOS.ui.loadFogType = function() {
 
     VRODOS.ui.updateFog("editing");
 };
-window.loadFogType = VRODOS.ui.loadFogType;
 
 VRODOS.ui.handleFogDensitySlider = function(index) {
     const density = VRODOS.utils.mapSliderToDensity(index);
@@ -304,20 +284,17 @@ VRODOS.ui.handleFogDensitySlider = function(index) {
     VRODOS.ui.updateFogDensityLabel(index);
     VRODOS.ui.updateFog("editing");
 };
-window.handleFogDensitySlider = VRODOS.ui.handleFogDensitySlider;
 
 VRODOS.ui.updateFogDensityLabel = function(index) {
     const labels = ["OFF", "FAR", "MID", "NEAR"];
     const labelEl = document.getElementById("FogDensityLabel");
     if (labelEl) labelEl.innerText = labels[index] || "OFF";
 };
-window.updateFogDensityLabel = VRODOS.ui.updateFogDensityLabel;
 
 VRODOS.utils.mapSliderToDensity = function(index) {
     const mapping = [0.0, 0.001, 0.005, 0.01];
     return mapping[index] ?? 0.001;
 };
-window.mapSliderToDensity = VRODOS.utils.mapSliderToDensity;
 
 VRODOS.utils.mapDensityToSlider = function(density) {
     const mapping = [0.0, 0.001, 0.005, 0.01];
@@ -332,10 +309,9 @@ VRODOS.utils.mapDensityToSlider = function(density) {
     }
     return closestIndex;
 };
-window.mapDensityToSlider = VRODOS.utils.mapDensityToSlider;
 
 VRODOS.ui.updateFog = function(whencalled) {
-    if (!envir?.scene) return;
+    if (!VRODOS.editor.envir?.scene) return;
 
     const colorInput = document.getElementById('jscolorpickFog');
     if (!colorInput) return;
@@ -348,10 +324,10 @@ VRODOS.ui.updateFog = function(whencalled) {
     const standardizedColor = colorInput.value;
 
     // 1. Update metadata for persistence
-    envir.scene.fogcolor = standardizedColor;
-    envir.scene.fognear = fogNear;
-    envir.scene.fogfar = fogFar;
-    envir.scene.fogdensity = fogDensity;
+    VRODOS.editor.envir.scene.fogcolor = standardizedColor;
+    VRODOS.editor.envir.scene.fognear = fogNear;
+    VRODOS.editor.envir.scene.fogfar = fogFar;
+    VRODOS.editor.envir.scene.fogdensity = fogDensity;
 
     const linearElems = document.getElementsByClassName('linearElement');
     const expoElems = document.getElementsByClassName('exponentialElement');
@@ -366,21 +342,22 @@ VRODOS.ui.updateFog = function(whencalled) {
     };
 
     if (fogType === 'linear') {
-        envir.scene.fog = null; // show fog only in compiled stages
+        VRODOS.editor.envir.scene.fog = null; // show fog only in compiled stages
         setVisibility('flex', 'none', 'flex', 'flex');
-        envir.scene.fogCategory = 1;
+        VRODOS.editor.envir.scene.fogCategory = 1;
     } else if (fogType === 'exponential') {
-        envir.scene.fog = null; // show fog only in compiled stages
+        VRODOS.editor.envir.scene.fog = null; // show fog only in compiled stages
         setVisibility('none', 'flex', 'flex', 'flex');
-        envir.scene.fogCategory = 2;
+        VRODOS.editor.envir.scene.fogCategory = 2;
     } else if (fogType === 'none') {
-        envir.scene.fog = null;
+        VRODOS.editor.envir.scene.fog = null;
         setVisibility('none', 'none', 'none', 'none');
-        envir.scene.fogCategory = 0;
+        VRODOS.editor.envir.scene.fogCategory = 0;
     }
 
     if (whencalled !== "undo" && whencalled !== "loading") {
         VRODOS.api.saveChanges();
     }
 };
-window.updateFog = VRODOS.ui.updateFog;
+
+

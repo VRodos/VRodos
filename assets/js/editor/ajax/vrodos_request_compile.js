@@ -1,4 +1,13 @@
 VRODOS.api.compileScene = function(showPawnPositions) {
+	const sceneId = VRODOS.config.sceneId || VRODOS.data.sceneId || VRODOS.data.scene_id || '';
+	const projectId = VRODOS.config.projectId || VRODOS.data.projectId || '';
+	const resolvedShowPawnPositions = (showPawnPositions === true || showPawnPositions === 'true') ? 'true' : 'false';
+
+	if (!sceneId || !projectId) {
+		console.warn('VRodos: compile blocked because project or scene id is missing.', { projectId, sceneId });
+		VRODOS.api.hideCompileProgressSlider();
+		return;
+	}
 
 	// In which platform to compile, e.g. Aframe
 	const platform = document.getElementById( "platformInput" ).value;
@@ -40,21 +49,29 @@ VRODOS.api.compileScene = function(showPawnPositions) {
 	// Build query string for GET request
 	const params = new URLSearchParams({
 		'action': 'vrodos_compile_action',
-		'projectId': VRODOS.config.projectId,
-		'projectSlug': VRODOS.config.slug,
-		showPawnPositions,
-		'vrodos_scene': VRODOS.config.sceneId,
+		'projectId': projectId,
+		
+		'showPawnPositions': resolvedShowPawnPositions,
+		'vrodos_scene': sceneId,
 		'outputFormat': platform
 	});
 
-	const url = `${VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url  }?${  params.toString()}`;
+	const url = `${VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl()  }?${  params.toString()}`;
 
-	// ajax for Aframe compiling : Transform envir.scene.children to an html aframe page
+	// ajax for Aframe compiling : Transform VRODOS.editor.envir.scene.children to an html aframe page
 	fetch( url )
-	.then( (response) => response.text())
+	.then( (response) => response.text().then((text) => {
+		if (!response.ok) {
+			throw new Error(text || `Compile request failed with HTTP ${response.status}`);
+		}
+		return text;
+	}))
 	.then( (urlExperienceSequenceJSON) => {
 
 		const urlExperienceSequence = JSON.parse( urlExperienceSequenceJSON );
+		if (urlExperienceSequence && urlExperienceSequence.success === false) {
+			throw new Error(urlExperienceSequence.data || 'Compile failed.');
+		}
 		const primaryExperienceUrl = urlExperienceSequence.CurrentSceneMasterClient
 			|| (projectType === 'vrexpo_games'
 				? (urlExperienceSequence.MasterClient || urlExperienceSequence.index || urlExperienceSequence.SimpleClient || '')
@@ -147,3 +164,6 @@ VRODOS.api.hideCompileProgressSlider = function() {
 	document.getElementById( "compileProceedBtn" ).classList.remove( "LinkDisabled" );
 	document.getElementById( "compileCancelBtn" ).classList.remove( "LinkDisabled" );
 }
+
+
+

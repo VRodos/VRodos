@@ -9,14 +9,14 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug, isCloned) {
 	if (VRODOS.api.isDeleteAssetPending) return;
 	VRODOS.api.isDeleteAssetPending = true;
 
-	if (typeof envir != "undefined") {
+	if (typeof VRODOS.editor.envir != "undefined") {
 		const progressBar = document.getElementById( `deleteAssetProgressBar-${  asset_id}` );
 		if (progressBar) progressBar.style.display = '';
 		const assetEl = document.getElementById( `asset-${  asset_id}` );
 		if (assetEl) assetEl.classList.add( "LinkDisabled" );
 	}
 
-	fetch( VRODOS.config.ajax_url, {
+	fetch( VRODOS.utils.getAjaxUrl(), {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
@@ -32,6 +32,7 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug, isCloned) {
 		VRODOS.api.isDeleteAssetPending = false;
 		res = JSON.parse( res );
 
+		const deleteDialog = document.getElementById('delete-dialog');
 		if (deleteDialog) {
 			const progressBar = document.getElementById( 'delete-scene-dialog-progress-bar' );
 			if (progressBar) progressBar.style.display = 'none';
@@ -39,17 +40,17 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug, isCloned) {
 		}
 
 		// remove asset from scene (if we are at scene editor)
-		if (typeof envir != "undefined") {
+		if (typeof VRODOS.editor.envir != "undefined") {
 			// Remove objects from scene
 			const names_to_remove = [];
-			for (let i = 0; i < envir.scene.children.length; i++) {
-				if (envir.scene.children[i].assetid == `${  res  }`) {
-					names_to_remove.push( envir.scene.children[i].name );
+			for (let i = 0; i < VRODOS.editor.envir.scene.children.length; i++) {
+				if (VRODOS.editor.envir.scene.children[i].assetid == `${  res  }`) {
+					names_to_remove.push( VRODOS.editor.envir.scene.children[i].name );
 				}
 			}
 
 			for (let i = 0; i < names_to_remove.length; i++) {
-				envir.scene.remove( envir.scene.getObjectByName( names_to_remove[i] ) );
+				VRODOS.editor.envir.scene.remove( VRODOS.editor.envir.scene.getObjectByName( names_to_remove[i] ) );
 			}
 
 			const progressBar = document.getElementById( `deleteAssetProgressBar-${  asset_id}` );
@@ -88,3 +89,5 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug, isCloned) {
 		console.log( `Ajax Delete Asset: ERROR: 170 ${  err}` );
 	});
 }
+
+

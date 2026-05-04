@@ -863,7 +863,7 @@ else { ?>
 		const requestLimitLabel = window.vrodosRequestLimitLabel || maxRequestLabel;
 
 		// Define this globally so it's accessible to vrodos_asset_editor_scripts.js
-		var sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg") ? document.getElementById("sshotPreviewImg").src : "";
+		window.sshotPreviewDefaultImg = document.getElementById("sshotPreviewImg") ? document.getElementById("sshotPreviewImg").src : "";
 
 		let assettrs = document.getElementById( 'assettrs') ? document.getElementById( 'assettrs' ).value : "<?php echo $assettrs_saved; ?>";
 
@@ -985,7 +985,7 @@ else { ?>
 		setScreenshotHandler();
 
 		// ------- Class to load 3D model ---------
-		let asset_viewer_3d_kernel = new VRodos_AssetViewer_3D_kernel(document.getElementById( 'previewCanvas' ),
+		window.asset_viewer_3d_kernel = new VRODOS.editor.AssetViewer3DKernel(document.getElementById( 'previewCanvas' ),
 			document.getElementById( 'previewCanvasLabels' ),
 			document.getElementById('animButton1'),
 			document.getElementById('previewProgressSlider'), // Hide entire slider when ready
@@ -1000,7 +1000,7 @@ else { ?>
 			assettrs,
 			null); // boundSphButton removed
 
-		addHandlerFor3Dfiles(asset_viewer_3d_kernel, multipleFilesInputElem);
+		addHandlerFor3Dfiles(window.asset_viewer_3d_kernel, multipleFilesInputElem);
 
 		const assetForm = document.getElementById('3dAssetForm');
 		if (assetForm) {
@@ -1099,7 +1099,7 @@ else { ?>
 							document.getElementById('video_screenshot_section').style.display = "block";
 							break;
 					}
-					asset_viewer_3d_kernel.resizeDisplayGL();
+					window.asset_viewer_3d_kernel.resizeDisplayGL();
 				};
 
 				document.addEventListener('DOMContentLoaded', function() {

@@ -11,22 +11,8 @@ VRODOS.ui.swapLucideIcon = function(container, iconName) {
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 };
-window.swapLucideIcon = VRODOS.ui.swapLucideIcon;
-
 VRODOS.api.newScreenshotData = null;
-Object.defineProperty(window, 'new_screenshot_data', {
-    get: () => VRODOS.api.newScreenshotData,
-    set: (val) => { VRODOS.api.newScreenshotData = val; },
-    configurable: true
-});
-
 VRODOS.api.isSceneIconManuallySelected = false;
-Object.defineProperty(window, 'is_scene_icon_manually_selected', {
-    get: () => VRODOS.api.isSceneIconManuallySelected,
-    set: (val) => { VRODOS.api.isSceneIconManuallySelected = val; },
-    configurable: true
-});
-
 VRODOS.ui.focusWithoutScroll = function(element) {
     if (!element || typeof element.focus !== 'function') return;
 
@@ -36,8 +22,6 @@ VRODOS.ui.focusWithoutScroll = function(element) {
         element.focus();
     }
 };
-window.focusWithoutScroll = VRODOS.ui.focusWithoutScroll;
-
 VRODOS.utils.copyTextareaText = function(textarea) {
     if (!textarea) {
         return Promise.reject(new Error('No textarea available for clipboard copy.'));
@@ -51,8 +35,6 @@ VRODOS.utils.copyTextareaText = function(textarea) {
 
     return VRODOS.utils.fallbackCopyTextareaText(textarea);
 };
-window.copyTextareaText = VRODOS.utils.copyTextareaText;
-
 VRODOS.utils.fallbackCopyTextareaText = function(textarea) {
     return new Promise((resolve, reject) => {
         const activeElement = document.activeElement;
@@ -82,8 +64,6 @@ VRODOS.utils.fallbackCopyTextareaText = function(textarea) {
         }
     });
 };
-window.fallbackCopyTextareaText = VRODOS.utils.fallbackCopyTextareaText;
-
 VRODOS.utils.copyPlainText = function(text) {
     text = text || '';
 
@@ -93,8 +73,6 @@ VRODOS.utils.copyPlainText = function(text) {
 
     return VRODOS.utils.fallbackCopyPlainText(text);
 };
-window.copyPlainText = VRODOS.utils.copyPlainText;
-
 VRODOS.utils.fallbackCopyPlainText = function(text) {
     return new Promise((resolve, reject) => {
         const textarea = document.createElement('textarea');
@@ -132,8 +110,6 @@ VRODOS.utils.fallbackCopyPlainText = function(text) {
         }
     });
 };
-window.fallbackCopyPlainText = VRODOS.utils.fallbackCopyPlainText;
-
 VRODOS.ui.clampFloatingPanelToViewport = function(panel) {
     if (!panel) return;
 
@@ -147,8 +123,6 @@ VRODOS.ui.clampFloatingPanelToViewport = function(panel) {
     panel.style.left = `${nextLeft  }px`;
     panel.style.top = `${nextTop  }px`;
 };
-window.clampFloatingPanelToViewport = VRODOS.ui.clampFloatingPanelToViewport;
-
 VRODOS.ui.showFloatingPanel = function(panel) {
     if (!panel) return;
 
@@ -156,16 +130,12 @@ VRODOS.ui.showFloatingPanel = function(panel) {
     panel.style.display = 'flex';
     VRODOS.ui.clampFloatingPanelToViewport(panel);
 };
-window.showFloatingPanel = VRODOS.ui.showFloatingPanel;
-
 VRODOS.ui.hideFloatingPanel = function(panel) {
     if (!panel) return;
 
     panel.classList.add('tw-hidden');
     panel.style.display = 'none';
 };
-window.hideFloatingPanel = VRODOS.ui.hideFloatingPanel;
-
 VRODOS.ui.initializeFloatingPanel = function(panelId, headerId, closeButtonId) {
     const panel = document.getElementById(panelId);
     const header = document.getElementById(headerId);
@@ -286,8 +256,6 @@ VRODOS.ui.initializeFloatingPanel = function(panelId, headerId, closeButtonId) {
         });
     }
 };
-window.initializeFloatingPanel = VRODOS.ui.initializeFloatingPanel;
-
 VRODOS.ui.showTemporaryButtonSuccess = function(buttonId, message) {
     const btn = document.getElementById(buttonId);
     if (!btn) return;
@@ -301,8 +269,6 @@ VRODOS.ui.showTemporaryButtonSuccess = function(buttonId, message) {
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }, 1500);
 };
-window.showTemporaryButtonSuccess = VRODOS.ui.showTemporaryButtonSuccess;
-
 VRODOS.ui.showTemporaryButtonWarning = function(buttonId, message) {
     const btn = document.getElementById(buttonId);
     if (!btn) return;
@@ -316,8 +282,6 @@ VRODOS.ui.showTemporaryButtonWarning = function(buttonId, message) {
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }, 2500);
 };
-window.showTemporaryButtonWarning = VRODOS.ui.showTemporaryButtonWarning;
-
 VRODOS.ui.refreshSceneJsonTextarea = function() {
     const textarea = document.getElementById('vrodos_scene_json_input');
     if (!textarea || !VRODOS.exporter.SceneExporter || !VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
@@ -331,8 +295,6 @@ VRODOS.ui.refreshSceneJsonTextarea = function() {
         textarea.value = exportedJson;
     }
 };
-window.refreshSceneJsonTextarea = VRODOS.ui.refreshSceneJsonTextarea;
-
 VRODOS.api.waitForLatestSceneSave = function() {
     if (typeof VRODOS.api.whenSceneSaveSettles === 'function') {
         return VRODOS.api.whenSceneSaveSettles();
@@ -340,8 +302,6 @@ VRODOS.api.waitForLatestSceneSave = function() {
 
     return Promise.resolve();
 };
-window.waitForLatestSceneSave = VRODOS.api.waitForLatestSceneSave;
-
 VRODOS.api.persistSceneScreenshot = function() {
     return VRODOS.api.waitForLatestSceneSave()
         .then(() => (typeof VRODOS.api.saveChanges === 'function') ? VRODOS.api.saveChanges({force: true}) : Promise.resolve())
@@ -349,8 +309,6 @@ VRODOS.api.persistSceneScreenshot = function() {
             console.warn('VRodos: scene screenshot could not be saved.', error);
         });
 };
-window.persistSceneScreenshot = VRODOS.api.persistSceneScreenshot;
-
 VRODOS.ui.setSceneScreenshotPreview = function(src) {
     const sceneShot = document.getElementById('vrodos_scene_sshot');
     const placeholder = document.getElementById('vrodos_scene_sshot_placeholder');
@@ -373,8 +331,6 @@ VRODOS.ui.setSceneScreenshotPreview = function(src) {
         }
     }
 };
-window.setSceneScreenshotPreview = VRODOS.ui.setSceneScreenshotPreview;
-
 VRODOS.ui.onDrop = function(ev) {
     // Ignore scene reorder drags
     if (ev.dataTransfer.types.indexOf('application/vrodos-scene-reorder') !== -1) return;
@@ -394,18 +350,29 @@ VRODOS.ui.onDrop = function(ev) {
         path = dataDrag.path.substring(0, dataDrag.path.lastIndexOf("/") + 1);
     }
 
-    const translation = dragDropVerticalRayCasting(ev);
+    const translation = VRODOS.api.dragDropVerticalRayCasting(ev);
 
     // Suppress the click-selection that would fire from the drop's mouseup
-    _suppressNextSelection = true;
+    VRODOS.editor.suppressNextSelection = true;
+
+    if (typeof VRODOS.ui.clearTransformSelection === 'function') {
+        VRODOS.ui.clearTransformSelection();
+    } else if (VRODOS.editor.transform_controls) {
+        VRODOS.editor.transform_controls.detach();
+        VRODOS.editor.currentSelectedRealObject = null;
+    }
+    if (typeof VRODOS.ui.removeAllCelOutlines === 'function') {
+        VRODOS.ui.removeAllCelOutlines();
+    }
+    VRODOS.editor.selected_object_name = null;
 
     // Asset add to canvas
-    if (typeof addAssetToCanvas === 'function') {
-        addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath);
+    if (typeof VRODOS.api.addAssetToCanvas === 'function') {
+        VRODOS.api.addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, VRODOS.data.pluginPath);
     }
 
-    if (typeof showObjectPropertiesPanel === 'function') {
-        showObjectPropertiesPanel(VRODOS.editor.transform_controls.getMode());
+    if (typeof VRODOS.ui.showObjectPropertiesPanel === 'function') {
+        VRODOS.ui.showObjectPropertiesPanel(VRODOS.editor.transform_controls.getMode());
     }
 
     if (VRODOS.editor.envir.is2d) {
@@ -415,15 +382,11 @@ VRODOS.ui.onDrop = function(ev) {
 
     ev.preventDefault();
 };
-window.vrodos_onDrop = VRODOS.ui.onDrop;
-
 VRODOS.ui.onDragOver = function(ev) {
     ev.preventDefault();
 };
-window.vrodos_onDragOver = VRODOS.ui.onDragOver;
-
 // Local
-function loadButtonActions() {
+VRODOS.ui.loadButtonActions = function() {
     function resetCompileDialogStatusState() {
         const statusRow = document.getElementById("compileStatusRow");
         const constantUpdateUser = document.getElementById("constantUpdateUser");
@@ -450,8 +413,8 @@ function loadButtonActions() {
 
     // Compile Project button
     document.getElementById("compileGameBtn").addEventListener("click", () => {
-        if (typeof syncCompileDialogFromSceneSettings === 'function') {
-            syncCompileDialogFromSceneSettings();
+        if (typeof VRODOS.ui.syncCompileDialogFromSceneSettings === 'function') {
+            VRODOS.ui.syncCompileDialogFromSceneSettings();
         }
         resetCompileDialogStatusState();
         const dlg = document.getElementById('compile-dialog');
@@ -459,7 +422,7 @@ function loadButtonActions() {
 
         // Pause Rendering
         VRODOS.editor.isPaused = true;
-        swapLucideIcon(document.getElementById("pauseRendering"), "play");
+        VRODOS.ui.swapLucideIcon(document.getElementById("pauseRendering"), "play");
     });
 
 
@@ -486,8 +449,8 @@ function loadButtonActions() {
         if (memValue) memValue.innerHTML = "0";
 
         const constantUpdateUser = document.getElementById("constantUpdateUser");
-        if (typeof vrodosApplyCompileDialogSettingsToScene === 'function') {
-            vrodosApplyCompileDialogSettingsToScene();
+        if (typeof VRODOS.ui.applyCompileDialogSettingsToScene === 'function') {
+            VRODOS.ui.applyCompileDialogSettingsToScene();
         }
 
         if (constantUpdateUser) {
@@ -497,10 +460,10 @@ function loadButtonActions() {
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        waitForLatestSceneSave()
-            .then(() => (typeof saveChanges === 'function') ? saveChanges() : Promise.resolve())
+        VRODOS.api.waitForLatestSceneSave()
+            .then(() => (typeof VRODOS.api.saveChanges === 'function') ? VRODOS.api.saveChanges() : Promise.resolve())
             .then(() => {
-                VRODOS.api.compileScene(showPawnPositions);
+                VRODOS.api.compileScene(VRODOS.editor.showPawnPositions);
             })
             .catch((error) => {
                 VRODOS.api.hideCompileProgressSlider();
@@ -519,14 +482,14 @@ function loadButtonActions() {
 
         //Start Rendering
         VRODOS.editor.isPaused = false;
-        swapLucideIcon(document.getElementById("pauseRendering"), "pause");
-        animate();
+        VRODOS.ui.swapLucideIcon(document.getElementById("pauseRendering"), "pause");
+        VRODOS.editor.animate();
 
         // Get Pid of compile process
         const pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
 
         if (pid) {
-            vrodos_killtask_compile(pid);
+            VRODOS.api.killCompileTask(pid);
         }
 
         // Close native dialog
@@ -540,12 +503,12 @@ function loadButtonActions() {
         compileDlg.addEventListener('close', () => {
             if (VRODOS.editor.isPaused) {
                 VRODOS.editor.isPaused = false;
-                swapLucideIcon(document.getElementById("pauseRendering"), "pause");
-                animate();
+                VRODOS.ui.swapLucideIcon(document.getElementById("pauseRendering"), "pause");
+                VRODOS.editor.animate();
             }
             // Kill any running compile process
             const pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
-            if (pid) vrodos_killtask_compile(pid);
+            if (pid) VRODOS.api.killCompileTask(pid);
         });
     }
 
@@ -561,14 +524,14 @@ function loadButtonActions() {
             btn.classList.add("HierarchyToggleOff");
             btn.classList.remove("HierarchyToggleOn");
             btn.dataset.toggle = 'off';
-            swapLucideIcon(btn, 'chevron-left');
+            VRODOS.ui.swapLucideIcon(btn, 'chevron-left');
             panel.classList.add("closed");
             if (compass) compass.classList.add("panel-closed");
         } else {
             btn.classList.add("HierarchyToggleOn");
             btn.classList.remove("HierarchyToggleOff");
             btn.dataset.toggle = 'on';
-            swapLucideIcon(btn, 'chevron-right');
+            VRODOS.ui.swapLucideIcon(btn, 'chevron-right');
             panel.classList.remove("closed");
             if (compass) compass.classList.remove("panel-closed");
         }
@@ -587,13 +550,13 @@ function loadButtonActions() {
             btn.classList.add("AssetsToggleOff");
             btn.classList.remove("AssetsToggleOn");
             btn.dataset.toggle = 'off';
-            swapLucideIcon(btn, 'chevron-right');
+            VRODOS.ui.swapLucideIcon(btn, 'chevron-right');
             toolbar.classList.add("closed");
         } else {
             btn.classList.add("AssetsToggleOn");
             btn.classList.remove("AssetsToggleOff");
             btn.dataset.toggle = 'on';
-            swapLucideIcon(btn, 'chevron-left');
+            VRODOS.ui.swapLucideIcon(btn, 'chevron-left');
             toolbar.classList.remove("closed");
         }
 
@@ -608,12 +571,12 @@ function loadButtonActions() {
         if (btn.classList.contains("scenesListToggleOn")) {
             btn.classList.add("scenesListToggleOff");
             btn.classList.remove("scenesListToggleOn");
-            swapLucideIcon(this, 'chevron-up');
+            VRODOS.ui.swapLucideIcon(this, 'chevron-up');
             wrapper.classList.add("closed-drawer");
         } else {
             btn.classList.add("scenesListToggleOn");
             btn.classList.remove("scenesListToggleOff");
-            swapLucideIcon(this, 'chevron-down');
+            VRODOS.ui.swapLucideIcon(this, 'chevron-down');
             wrapper.classList.remove("closed-drawer");
         }
 
@@ -664,13 +627,13 @@ function loadButtonActions() {
             container.querySelectorAll('.SceneCardContainer[draggable]').forEach((card) => {
                 formData.append('scene_ids[]', card.dataset.sceneId);
             });
-            fetch(VRODOS.config.ajax_url, { method: 'POST', body: formData });
+            fetch(VRODOS.utils.getAjaxUrl(), { method: 'POST', body: formData });
         });
     })();
 
     // Take SCREENSHOT OF SCENE
     document.getElementById("takeScreenshotBtn").addEventListener("click", () => {
-        takeScreenshot();
+        VRODOS.api.takeScreenshot();
         VRODOS.api.isSceneIconManuallySelected = false;
     });
 
@@ -702,7 +665,7 @@ function loadButtonActions() {
         document.getElementById("deleteSceneDialogDeleteBtn").classList.add("LinkDisabled");
         document.getElementById("deleteSceneDialogCancelBtn").classList.add("LinkDisabled");
         const dlg = document.getElementById('delete-dialog');
-        VRODOS.api.deleteScene(dlg.dataset.sceneId, url_scene_redirect);
+        VRODOS.api.deleteScene(dlg.dataset.sceneId, window.url_scene_redirect);
     });
 
     document.getElementById("deleteSceneDialogCancelBtn").addEventListener("click", (e) => {
@@ -721,16 +684,15 @@ function loadButtonActions() {
 
     // Delete scene
     function deleteScene(btn) {
-
-        const scene_id = btn.dataset.sceneid;
+        const sceneId = btn.dataset.sceneid;
         const dialogTitle = document.getElementById("delete-dialog-title");
         const dialogDescription = document.getElementById("delete-dialog-description");
-        const sceneTitle = document.getElementById(`${scene_id  }-title`).textContent.trim();
+        const sceneTitle = document.getElementById(`${sceneId}-title`).textContent.trim();
 
-        dialogTitle.textContent = `Delete ${  sceneTitle  }?`;
-        dialogDescription.innerHTML = `Are you sure you want to delete your scene '${  sceneTitle  }'? There is no Undo functionality once you delete it.`;
+        dialogTitle.textContent = `Delete ${sceneTitle}?`;
+        dialogDescription.innerHTML = `Are you sure you want to delete your scene '${sceneTitle}'? There is no Undo functionality once you delete it.`;
         const dlg = document.getElementById('delete-dialog');
-        dlg.dataset.sceneId = scene_id;
+        dlg.dataset.sceneId = sceneId;
         dlg.showModal();
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
@@ -742,7 +704,7 @@ function loadButtonActions() {
             dialog.close();
         } else {
             // Refresh textarea with the exact exported scene payload
-            refreshSceneJsonTextarea();
+            VRODOS.ui.refreshSceneJsonTextarea();
             dialog.showModal();
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
@@ -756,14 +718,14 @@ function loadButtonActions() {
     // Copy JSON to clipboard
     document.getElementById('copyJsonBtn').addEventListener('click', () => {
         const textarea = document.getElementById('vrodos_scene_json_input');
-        copyTextareaText(textarea)
+        VRODOS.utils.copyTextareaText(textarea)
             .then(() => {
-                showTemporaryButtonSuccess('copyJsonBtn', 'Copied!');
+                VRODOS.ui.showTemporaryButtonSuccess('copyJsonBtn', 'Copied!');
             })
             .catch((error) => {
                 textarea.select();
                 textarea.setSelectionRange(0, textarea.value.length);
-                showTemporaryButtonWarning('copyJsonBtn', 'Press Ctrl+C');
+                VRODOS.ui.showTemporaryButtonWarning('copyJsonBtn', 'Press Ctrl+C');
                 console.warn('VRodos: failed to copy scene JSON to clipboard.', error);
             });
     });
@@ -773,15 +735,15 @@ function loadButtonActions() {
     if (immerseSceneInfoBtn && immerseSceneInfoDialog) {
         immerseSceneInfoBtn.addEventListener('click', () => {
             if (immerseSceneInfoDialog.classList.contains('tw-hidden')) {
-                showFloatingPanel(immerseSceneInfoDialog);
+                VRODOS.ui.showFloatingPanel(immerseSceneInfoDialog);
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             } else {
-                hideFloatingPanel(immerseSceneInfoDialog);
+                VRODOS.ui.hideFloatingPanel(immerseSceneInfoDialog);
             }
         });
     }
 
-    initializeFloatingPanel('immerseSceneInfoDialog', 'immerseSceneInfoHeader', 'closeImmerseSceneInfoBtn');
+    VRODOS.ui.initializeFloatingPanel('immerseSceneInfoDialog', 'immerseSceneInfoHeader', 'closeImmerseSceneInfoBtn');
 
     const copyImmerseSceneInfoBtn = document.getElementById('copyImmerseSceneInfoBtn');
     if (copyImmerseSceneInfoBtn) {
@@ -797,12 +759,12 @@ function loadButtonActions() {
                 }
             }
 
-            copyPlainText(sourceText)
+            VRODOS.utils.copyPlainText(sourceText)
                 .then(() => {
-                    showTemporaryButtonSuccess('copyImmerseSceneInfoBtn', 'Copied!');
+                    VRODOS.ui.showTemporaryButtonSuccess('copyImmerseSceneInfoBtn', 'Copied!');
                 })
                 .catch((error) => {
-                    showTemporaryButtonWarning('copyImmerseSceneInfoBtn', 'Press Ctrl+C');
+                    VRODOS.ui.showTemporaryButtonWarning('copyImmerseSceneInfoBtn', 'Press Ctrl+C');
                     console.warn('VRodos: failed to copy imported scene information to clipboard.', error);
                 });
         });
@@ -835,16 +797,27 @@ function loadButtonActions() {
                 path = dataDrag.path.substring(0, dataDrag.path.lastIndexOf("/") + 1);
             }
 
-            const translation = dragDropVerticalRayCasting(ev);
+            const translation = VRODOS.api.dragDropVerticalRayCasting(ev);
 
 
             // Suppress the click-selection that would fire from the drop's mouseup
-            _suppressNextSelection = true;
+            VRODOS.editor.suppressNextSelection = true;
+
+            if (typeof VRODOS.ui.clearTransformSelection === 'function') {
+                VRODOS.ui.clearTransformSelection();
+            } else if (VRODOS.editor.transform_controls) {
+                VRODOS.editor.transform_controls.detach();
+                VRODOS.editor.currentSelectedRealObject = null;
+            }
+            if (typeof VRODOS.ui.removeAllCelOutlines === 'function') {
+                VRODOS.ui.removeAllCelOutlines();
+            }
+            VRODOS.editor.selected_object_name = null;
 
             // Asset add to canvas
-            addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, pluginPath);
+            VRODOS.api.addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, VRODOS.data.pluginPath);
 
-            showObjectPropertiesPanel(VRODOS.editor.transform_controls.getMode());
+            VRODOS.ui.showObjectPropertiesPanel(VRODOS.editor.transform_controls.getMode());
 
             if (VRODOS.editor.envir.is2d) {
                 VRODOS.editor.transform_controls.setMode("translate");
@@ -865,7 +838,7 @@ function loadButtonActions() {
     const pauseBtn = document.getElementById("pauseRendering");
     if (pauseBtn) {
         pauseBtn.addEventListener('mousedown', (event) => {
-            pauseClickFun();
+            VRODOS.ui.pauseClickFun();
         }, false);
     }
 
@@ -890,8 +863,8 @@ function loadButtonActions() {
         save_scene_btn.classList.add("LinkDisabled");
         document.getElementById("compileGameBtn").disabled = true;
 
-        // Export using the new VrodosSceneExporter
-        const exporter = new VrodosSceneExporter();
+        // Export using the new VRODOS.exporter.SceneExporter
+        const exporter = new VRODOS.exporter.SceneExporter();
         document.getElementById('vrodos_scene_json_input').value = exporter.parse(VRODOS.editor.envir.scene);
 
         VRODOS.api.saveScene();
@@ -900,15 +873,15 @@ function loadButtonActions() {
 
     // UNDO button
     document.getElementById('undo-scene-button').addEventListener('click', () => {
-        if (typeof vrodosUndoManager !== 'undefined') {
-            vrodosUndoManager.undo();
+        if (typeof VRODOS.editor.undoManager !== 'undefined') {
+            VRODOS.editor.undoManager.undo();
         }
     });
 
     // REDO button
     document.getElementById('redo-scene-button').addEventListener('click', () => {
-        if (typeof vrodosUndoManager !== 'undefined') {
-            vrodosUndoManager.redo();
+        if (typeof VRODOS.editor.undoManager !== 'undefined') {
+            VRODOS.editor.undoManager.redo();
         }
     });
 
@@ -936,18 +909,20 @@ function loadButtonActions() {
         btn.classList.toggle('toggle-active');
     });
 
-    if (firstPersonBlockerBtn) {
-        firstPersonBlockerBtn.addEventListener('click', (event) => {
+    if (VRODOS.editor.firstPersonBlockerBtn) {
+        VRODOS.editor.firstPersonBlockerBtn.addEventListener('click', (event) => {
 
-            firstPersonViewWithoutLock();
-            document.getElementById("firstPersonBlockerBtn").classList.toggle('toggle-active');
+            VRODOS.api.firstPersonViewWithoutLock();
+            VRODOS.editor.firstPersonBlockerBtn.classList.toggle('toggle-active');
 
         }, false);
     }
 
 
     // 3D Widgets change mode (Translation-Rotation-Scale)
-    document.getElementById("object-manipulation-toggle").addEventListener("click", () => {
+    const objectManipulationToggle = document.getElementById("object-manipulation-toggle");
+    if (objectManipulationToggle) {
+    objectManipulationToggle.addEventListener("click", () => {
 
         const checked = document.querySelector("input[name='object-manipulation-switch']:checked");
         const mode = checked ? checked.value : 'translate';
@@ -967,9 +942,10 @@ function loadButtonActions() {
                     {return;}
             }
             VRODOS.editor.transform_controls.setMode(mode);
-            showObjectPropertiesPanel(mode);
+            VRODOS.ui.showObjectPropertiesPanel(mode);
         }
     });
+    }
 
 // Event listener to disable orbit controls while dragging
 VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) => {
@@ -989,12 +965,12 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
         };
 
         // Capture start orientations for proxy-based transformation
-        if (VRODOS.editor.currentSelectedRealObject && typeof _qProxyStart !== 'undefined') {
-            _qProxyStart.copy(VRODOS.editor.transform_controls.object.quaternion);
-            _pProxyStart.copy(VRODOS.editor.transform_controls.object.position);
+        if (VRODOS.editor.currentSelectedRealObject && typeof VRODOS.editor.qProxyStart !== 'undefined') {
+            VRODOS.editor.qProxyStart.copy(VRODOS.editor.transform_controls.object.quaternion);
+            VRODOS.editor.pProxyStart.copy(VRODOS.editor.transform_controls.object.position);
             
-            _qRealStart.copy(VRODOS.editor.currentSelectedRealObject.quaternion);
-            _pRealStart.copy(VRODOS.editor.currentSelectedRealObject.position);
+            VRODOS.editor.qRealStart.copy(VRODOS.editor.currentSelectedRealObject.quaternion);
+            VRODOS.editor.pRealStart.copy(VRODOS.editor.currentSelectedRealObject.position);
         }
     } else if (!event.value && VRODOS.editor.transform_controls.object && VRODOS.editor.transform_controls._oldTRS) {
         // Drag finished, commit command
@@ -1017,7 +993,7 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
                       Math.abs(target.rotation.z - VRODOS.editor.transform_controls._oldTRS.rot.z) > 0.0001;
 
         if (moved) {
-            vrodosUndoManager.add(new TransformCommand(target, VRODOS.editor.transform_controls._oldTRS, newTRS));
+            VRODOS.editor.undoManager.add(new VRODOS.editor.TransformCommand(target, VRODOS.editor.transform_controls._oldTRS, newTRS));
         }
         delete VRODOS.editor.transform_controls._oldTRS;
     }
@@ -1071,7 +1047,7 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
             if (VRODOS.editor.envir.getDirectorVisualObject()) VRODOS.editor.envir.getDirectorVisualObject().visible = true;
         }
 
-        findSceneDimensions();
+        VRODOS.utils.findSceneDimensions();
         VRODOS.editor.envir.fitCameraToSceneLimits();
 
         VRODOS.editor.envir.orbitControls.object.updateProjectionMatrix();
@@ -1085,25 +1061,25 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
 
     // Update DAT GUI only when mouse pointer is active.
     canvas3D.addEventListener("mousemove", (event) => {
-        updatePositionsAndControls();
+        VRODOS.editor.updatePositionsAndControls();
     });
 
     // Left click — track mousedown position, select on mouseup (so dragging doesn't trigger selection)
-    canvas3D.addEventListener('mousedown', _onCanvasMouseDown, false);
-    canvas3D.addEventListener('mouseup', _onCanvasMouseUp, false);
+    canvas3D.addEventListener('mousedown', VRODOS.ui.onMouseDown, false);
+    canvas3D.addEventListener('mouseup', VRODOS.ui.onMouseUp, false);
 
     // Left double click
-    canvas3D.addEventListener('dblclick', onMouseDoubleClickFocus, false);
+    canvas3D.addEventListener('dblclick', VRODOS.ui.onMouseDoubleClickFocus, false);
 
     // Right Click
-    canvas3D.addEventListener('contextmenu', contextMenuClick, false);
+    canvas3D.addEventListener('contextmenu', VRODOS.ui.contextMenuClick, false);
 
     // Auto-Saving
     // Detect enter button press for saving scene
-    canvas3D.addEventListener('keypress', saveScene, false);
+    canvas3D.addEventListener('keypress', VRODOS.api.saveSceneEventHandler, false);
 
     // Auto save listener
-    VRODOS.editor.envir.scene.addEventListener("modificationPendingSave", saveScene);
+    VRODOS.editor.envir.scene.addEventListener("modificationPendingSave", VRODOS.api.saveSceneEventHandler);
 
     // Prevent showing the context menu on property panels
     ['popUpArtifactPropertiesDiv', 'popUpDoorPropertiesDiv', 'popUpPoiImageTextPropertiesDiv',
@@ -1146,7 +1122,7 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
             if (isHiding) {
                 // --- HIDE UI ---
                 btn.classList.add('tw-opacity-40');
-                swapLucideIcon(btn, 'eye-off');
+                VRODOS.ui.swapLucideIcon(btn, 'eye-off');
                 btn.dataset.toggle = 'off';
 
                 uiElementsToToggle.forEach(el => el.style.setProperty('display', 'none', 'important'));
@@ -1155,13 +1131,13 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
                 if (VRODOS.editor.envir.getDirectorRig()) VRODOS.editor.envir.getDirectorRig().visible = false;
                 if (VRODOS.editor.envir.gridHelper) VRODOS.editor.envir.gridHelper.visible = false;
                 if (VRODOS.editor.envir.axesHelper) VRODOS.editor.envir.axesHelper.visible = false;
-                window.removeAllCelOutlines();
-                setVisiblityLightHelpingElements(false);
+                VRODOS.ui.removeAllCelOutlines();
+                VRODOS.ui.setVisiblityLightHelpingElements(false);
 
             } else {
                 // --- SHOW UI ---
                 btn.classList.remove('tw-opacity-40');
-                swapLucideIcon(btn, 'eye');
+                VRODOS.ui.swapLucideIcon(btn, 'eye');
                 btn.dataset.toggle = 'on';
 
                 uiElementsToToggle.forEach(el => {
@@ -1172,8 +1148,8 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
                 VRODOS.editor.transform_controls.visible = true;
                 if (VRODOS.editor.envir.gridHelper) VRODOS.editor.envir.gridHelper.visible = true;
                 if (VRODOS.editor.envir.axesHelper) VRODOS.editor.envir.axesHelper.visible = true;
-                if (VRODOS.editor.transform_controls.object) window.addCelOutline(VRODOS.editor.transform_controls.object);
-                setVisiblityLightHelpingElements(true);
+                if (VRODOS.editor.transform_controls.object) VRODOS.ui.addCelOutline(VRODOS.editor.transform_controls.object);
+                VRODOS.ui.setVisiblityLightHelpingElements(true);
 
                 if (VRODOS.editor.envir.thirdPersonView || VRODOS.editor.avatarControlsEnabled) {
                     if (VRODOS.editor.envir.getDirectorRig()) VRODOS.editor.envir.getDirectorRig().visible = false;
@@ -1219,12 +1195,12 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
         e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
         return false;
     }
-}
+};
 
 
 // ==================== Global scope functions ================
 
-function setVisiblityLightHelpingElements(statusVisibility) {
+VRODOS.ui.setVisiblityLightHelpingElements = function(statusVisibility) {
 
     for (let i = 0; i < VRODOS.editor.envir.scene.children.length; i++) {
         const curr_obj = VRODOS.editor.envir.scene.children[i];
@@ -1244,15 +1220,15 @@ function setVisiblityLightHelpingElements(statusVisibility) {
         if (curr_obj.type === 'CameraHelper') // This is the shadow camera of sun
             {curr_obj.visible = statusVisibility;}
     }
-}
+};
 
 
-function pauseClickFun() {
+VRODOS.ui.pauseClickFun = function() {
     VRODOS.editor.isPaused = !VRODOS.editor.isPaused;
-    swapLucideIcon(document.getElementById("pauseRendering"), VRODOS.editor.isPaused ? "pause" : "play");
+    VRODOS.ui.swapLucideIcon(document.getElementById("pauseRendering"), VRODOS.editor.isPaused ? "pause" : "play");
 
     if (!VRODOS.editor.isPaused) {
-        animate();
+        VRODOS.editor.animate();
         document.getElementById('pauseRendering').style.background = '';
     } else {
         document.getElementById('pauseRendering').style.background = 'red';
@@ -1262,26 +1238,26 @@ function pauseClickFun() {
         if (VRODOS.editor.isPaused) node.pause();
         else node.play();
     }
-}
+};
 
 
 
 // Hide right click panel for object properties
-function hideObjectPropertiesPanels() {
+VRODOS.ui.hideObjectPropertiesPanels = function() {
     let el;
     el = document.getElementById("translatePanelGui"); if (el) el.style.display = 'none';
     el = document.getElementById("rotatePanelGui");    if (el) el.style.display = 'none';
     el = document.getElementById("scalePanelGui");     if (el) el.style.display = 'none';
-}
+};
 
-function showObjectPropertiesPanel(type) {
-    hideObjectPropertiesPanels();
+VRODOS.ui.showObjectPropertiesPanel = function(type) {
+    VRODOS.ui.hideObjectPropertiesPanels();
     const el = document.getElementById(`${type  }PanelGui`);
     if (el) el.style.display = '';
-}
+};
 
 // Take screenshot of scene
-function takeScreenshot() {
+VRODOS.api.takeScreenshot = function() {
 
     //VRODOS.editor.envir.cameraAvatarHelper.visible = false;
     if (VRODOS.editor.envir.scene.getObjectByName("myTransformControls")) {
@@ -1321,16 +1297,18 @@ function takeScreenshot() {
         {VRODOS.editor.envir.scene.getObjectByName("myTransformControls").visible = true;}
 
     VRODOS.api.persistSceneScreenshot();
-}
+};
 
 
 
 
 // Save scene
-function saveScene(e) {
+VRODOS.api.saveSceneEventHandler = function(e) {
     if (!e || !e.type) {
         return;
     }
+
+    VRODOS.ui.mapActions = VRODOS.ui.mapActions || {};
 
     if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
         return;
@@ -1338,30 +1316,31 @@ function saveScene(e) {
 
     // A change has been made and mouseup then save
     if (e.type == 'modificationPendingSave')
-        {mapActions[e.type] = true;}
+        {VRODOS.ui.mapActions[e.type] = true;}
 
     if (e.type == 'mouseup') {
-        mapActions[e.type] = true;
+        VRODOS.ui.mapActions[e.type] = true;
 
-        if (mapActions.mouseup && mapActions.modificationPendingSave) {
+        if (VRODOS.ui.mapActions.mouseup && VRODOS.ui.mapActions.modificationPendingSave) {
             document.getElementById('save-scene-button').click();
-            mapActions = {};
+            VRODOS.ui.mapActions = {};
             return;
         }
     }
-}
+};
 
-function commitPendingSceneSave() {
+VRODOS.api.commitPendingSceneSave = function() {
     if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
         return;
     }
-    mapActions.modificationPendingSave = true;
+    VRODOS.ui.mapActions = VRODOS.ui.mapActions || {};
+    VRODOS.ui.mapActions.modificationPendingSave = true;
     document.getElementById('save-scene-button').click();
-    mapActions = {};
-}
+    VRODOS.ui.mapActions = {};
+};
 
 // trigger autosave for the automatic cases (insert, delete asset from scene)
-function triggerAutoSave() {
+VRODOS.api.triggerAutoSave = function() {
     if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) {
         return;
     }
@@ -1374,5 +1353,9 @@ function triggerAutoSave() {
     // save directly instead of synthesizing a mouseup event. Synthetic mouseup bubbled back
     // into lil-gui's own onMouseUp handler and caused recursive autosave loops.
     VRODOS.editor.envir.scene.dispatchEvent({ type: "modificationPendingSave" });
-    commitPendingSceneSave();
-}
+    VRODOS.api.commitPendingSceneSave();
+};
+
+
+
+

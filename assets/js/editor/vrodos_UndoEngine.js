@@ -1,7 +1,5 @@
 'use strict';
 
-window.VRODOS = window.VRODOS || { editor: {}, data: { editor: {}, scene: {} }, config: {}, ui: { transform: {} }, utils: {}, api: {} };
-
 /**
  * Vrodos Undo Engine
  * Implements a Command Pattern for internal scene editor undo/redo.
@@ -87,8 +85,6 @@ VRODOS.editor.UndoManager = class {
         }
     }
 };
-window.VrodosUndoManager = VRODOS.editor.UndoManager;
-
 /**
  * Command for Object Transformations (Position, Rotation, Scale)
  */
@@ -124,11 +120,11 @@ VRODOS.editor.TransformCommand = class {
         if (!state || !state.pos || !state.rot || !state.scale) return;
 
         // Try find by UUID first
-        let obj = envir.scene.getObjectByProperty('uuid', this.objectUuid);
+        let obj = VRODOS.editor.envir.scene.getObjectByProperty('uuid', this.objectUuid);
         
         // Fallback to find by Name (Asset names are unique in VRodos)
         if (!obj || obj.name === "vrodosGizmoProxy") {
-            obj = envir.scene.getObjectByName(this.objectName);
+            obj = VRODOS.editor.envir.scene.getObjectByName(this.objectName);
         }
 
         if (!obj || obj.name === "vrodosGizmoProxy") {
@@ -162,21 +158,19 @@ VRODOS.editor.TransformCommand = class {
         });
 
         if (obj.category_name && obj.category_name.includes("light")) {
-            const helper = envir.scene.getObjectByName(`lightHelper_${  obj.name}`);
+            const helper = VRODOS.editor.envir.scene.getObjectByName(`lightHelper_${  obj.name}`);
             if (helper && typeof helper.update === 'function') helper.update();
         }
 
         // Update UI
-        if (typeof setDatGuiInitialVales === 'function') {
-            setDatGuiInitialVales(obj);
+        if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
+            VRODOS.ui.setDatGuiInitialVales(obj);
         }
         
-        if (typeof animate === 'function') animate();
-        if (typeof triggerAutoSave === 'function') triggerAutoSave();
+        if (typeof animate === 'function') VRODOS.editor.animate();
+        if (typeof triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
     }
 };
-window.TransformCommand = VRODOS.editor.TransformCommand;
-
 /**
  * Command for Adding an Object
  */
@@ -188,26 +182,24 @@ VRODOS.editor.AddObjectCommand = class {
 
     execute() {
         // Redo functionality
-        if (typeof addAssetToCanvas === 'function') {
+        if (typeof VRODOS.api.addAssetToCanvas === 'function') {
             const data = this.objectData;
-            addAssetToCanvas(this.nameModel, data.path, data.category_name, data, data.trs.translation, pluginPath);
+            VRODOS.api.addAssetToCanvas(this.nameModel, data.path, data.category_name, data, data.trs.translation, VRODOS.data.pluginPath);
         }
     }
 
     undo() {
-        if (typeof deleteAssetFromScene === 'function') {
-            const obj = envir.scene.getObjectByName(this.nameModel);
+        if (typeof VRODOS.api.deleteAssetFromScene === 'function') {
+            const obj = VRODOS.editor.envir.scene.getObjectByName(this.nameModel);
             if (obj) {
-                // We call deleteAssetFromScene but we need to tell it NOT to push to undo again
+                // We call VRODOS.api.deleteAssetFromScene but we need to tell it NOT to push to undo again
                 VRODOS.editor.undoManager.isExecuting = true;
-                deleteAssetFromScene(obj.uuid);
+                VRODOS.api.deleteAssetFromScene(obj.uuid);
                 VRODOS.editor.undoManager.isExecuting = false;
             }
         }
     }
 };
-window.AddObjectCommand = VRODOS.editor.AddObjectCommand;
-
 /**
  * Command for Deleting an Object
  */
@@ -219,18 +211,18 @@ VRODOS.editor.DeleteObjectCommand = class {
     }
 
     execute() {
-        if (typeof deleteAssetFromScene === 'function') {
+        if (typeof VRODOS.api.deleteAssetFromScene === 'function') {
             VRODOS.editor.undoManager.isExecuting = true;
             // Redo a delete: we can allow disposal since it's going into the redo stack (or out)
-            deleteAssetFromScene(this.object3D.uuid, false);
+            VRODOS.api.deleteAssetFromScene(this.object3D.uuid, false);
             VRODOS.editor.undoManager.isExecuting = false;
         }
     }
 
     dispose() {
         // Ultimate disposal when command is purged from stack
-        if (this.object3D && typeof vrodosDisposeObject === 'function') {
-            vrodosDisposeObject(this.object3D);
+        if (this.object3D && typeof VRODOS.utils.disposeObject === 'function') {
+            VRODOS.utils.disposeObject(this.object3D);
         }
     }
 
@@ -242,8 +234,8 @@ VRODOS.editor.DeleteObjectCommand = class {
             if (node.isMesh) node.frustumCulled = false;
         });
 
-        envir.scene.add(this.object3D);
-        if (envir.selectableMeshes) envir.selectableMeshes.add(this.object3D);
+        VRODOS.editor.envir.scene.add(this.object3D);
+        if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(this.object3D);
         
         this.object3D.updateMatrix();
         this.object3D.updateMatrixWorld(true);
@@ -256,12 +248,12 @@ VRODOS.editor.DeleteObjectCommand = class {
         }
         
         // Restore to hierarchy viewer
-        if (typeof addInHierarchyViewer === 'function') {
-            addInHierarchyViewer(this.object3D);
+        if (typeof VRODOS.ui.addInHierarchyViewer === 'function') {
+            VRODOS.ui.addInHierarchyViewer(this.object3D);
         }
         
-        if (typeof animate === 'function') animate();
-        if (typeof triggerAutoSave === 'function') triggerAutoSave();
+        if (typeof animate === 'function') VRODOS.editor.animate();
+        if (typeof triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
     }
 
     restoreLightAssociates() {
@@ -269,7 +261,7 @@ VRODOS.editor.DeleteObjectCommand = class {
         const name = light.name;
         
         // Re-create Helper if it's missing (it was disposed)
-        let helper = envir.scene.getObjectByName(`lightHelper_${  name}`);
+        let helper = VRODOS.editor.envir.scene.getObjectByName(`lightHelper_${  name}`);
         if (!helper) {
             if (light.type === 'PointLight') helper = new THREE.PointLightHelper(light, 1);
             else if (light.type === 'SpotLight') helper = new THREE.SpotLightHelper(light);
@@ -277,7 +269,7 @@ VRODOS.editor.DeleteObjectCommand = class {
             
             if (helper) {
                 helper.name = `lightHelper_${  name}`;
-                envir.scene.add(helper);
+                VRODOS.editor.envir.scene.add(helper);
             }
         }
     }
@@ -286,8 +278,6 @@ VRODOS.editor.DeleteObjectCommand = class {
         this.execute();
     }
 };
-window.DeleteObjectCommand = VRODOS.editor.DeleteObjectCommand;
-
 /**
  * Command for Property Changes (Color, Intensity, etc.)
  */
@@ -301,7 +291,7 @@ VRODOS.editor.PropertyCommand = class {
     }
 
     apply(val) {
-        const obj = envir.scene.getObjectByProperty('uuid', this.objectUuid);
+        const obj = VRODOS.editor.envir.scene.getObjectByProperty('uuid', this.objectUuid);
         if (!obj) return;
         
         obj[this.property] = val;
@@ -313,21 +303,21 @@ VRODOS.editor.PropertyCommand = class {
 
         // Sync light helpers
         if (obj.category_name && obj.category_name.includes("light")) {
-            const helper = envir.scene.getObjectByName(`lightHelper_${  obj.name}`);
+            const helper = VRODOS.editor.envir.scene.getObjectByName(`lightHelper_${  obj.name}`);
             if (helper && typeof helper.update === 'function') helper.update();
         }
 
         // Update UI panels
-        if (typeof setDatGuiInitialVales === 'function') {
-            setDatGuiInitialVales(obj);
+        if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
+            VRODOS.ui.setDatGuiInitialVales(obj);
         }
         
-        if (typeof showPropertiesInPanel === 'function') {
-            showPropertiesInPanel(obj);
+        if (typeof VRODOS.ui.showPropertiesInPanel === 'function') {
+            VRODOS.ui.showPropertiesInPanel(obj);
         }
 
-        animate();
-        triggerAutoSave();
+        VRODOS.editor.animate();
+        VRODOS.api.triggerAutoSave();
     }
 
     undo() {
@@ -338,15 +328,16 @@ VRODOS.editor.PropertyCommand = class {
         this.apply(this.newValue);
     }
 };
-window.PropertyCommand = VRODOS.editor.PropertyCommand;
-
 // Global instance
 VRODOS.editor.undoManager = new VRODOS.editor.UndoManager(50);
-window.vrodosUndoManager = VRODOS.editor.undoManager;
-
 // Set initial UI state when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => VRODOS.editor.undoManager.updateButtons());
 } else {
     VRODOS.editor.undoManager.updateButtons();
 }
+
+
+
+
+

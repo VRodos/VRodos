@@ -47,7 +47,7 @@ function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
 
     const sshotImg = document.getElementById('sshotPreviewImg');
     if (sshotImg) {
-        vrodos_set_asset_screenshot_preview(sshotPreviewDefaultImg);
+        vrodos_set_asset_screenshot_preview(window.sshotPreviewDefaultImg);
     }
 
     const previewTitle = document.getElementById('objectPreviewTitle');
@@ -95,7 +95,7 @@ function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputEl
 
         const screenshotImg = document.getElementById('sshotPreviewImg');
         if (screenshotImg) {
-            vrodos_set_asset_screenshot_preview(sshotPreviewDefaultImg);
+            vrodos_set_asset_screenshot_preview(window.sshotPreviewDefaultImg);
         }
 
         const screenshotInput = document.getElementById('sshotFileInput');
@@ -196,7 +196,7 @@ function vrodos_reset_panels(asset_viewer_3d_kernel, whocalls) {
 }
 
 function clearList() {
-    vrodos_reset_panels(asset_viewer_3d_kernel, 'clearList');
+    vrodos_reset_panels(window.asset_viewer_3d_kernel, 'clearList');
     loadFileInputLabel();
 }
 
@@ -204,7 +204,7 @@ function setScreenshotHandler() {
     const sshotBtn = document.getElementById('createModelScreenshotBtn');
     if (sshotBtn && document.getElementById('sshotPreviewImg')) {
         sshotBtn.addEventListener('click', () => {
-            vrodos_create_model_sshot(asset_viewer_3d_kernel);
+            vrodos_create_model_sshot(window.asset_viewer_3d_kernel);
         });
     }
 }

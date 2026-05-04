@@ -6,50 +6,27 @@
  */
 
 // 1. Map localized data to the unified namespace
-window.VRODOS = window.VRODOS || { ui: { transform: {} }, utils: {}, api: {}, data: {} };
-VRODOS.data = Object.assign({}, typeof vrodos_data !== 'undefined' ? vrodos_data : {});
-VRODOS.data.paths = vrodos_data.paths || {};
+window.VRODOS = window.VRODOS || { editor: {}, ui: { transform: {} }, utils: {}, api: {}, data: {} };
+if (typeof VRODOS.syncLocalizedData === 'function') {
+    VRODOS.syncLocalizedData();
+}
+VRODOS.data = Object.assign({}, window.VRODOS.data || {}, VRODOS.data || {});
+VRODOS.data.paths = VRODOS.data.paths || {};
 
-// Map to window for backward compatibility (legacy scripts)
-window.pluginPath = VRODOS.data.pluginPath;
-window.vrodos_paths = VRODOS.data.paths;
-window.uploadDir = VRODOS.data.uploadDir;
-window.urlforAssetEdit = VRODOS.data.urlforAssetEdit;
-window.isAdmin = VRODOS.data.isAdmin;
-window.projectSlug = VRODOS.data.projectSlug;
-window.projectId = VRODOS.data.projectId;
-window.vrodos_scene_data = VRODOS.data.scene_data;
-window.scene_id = VRODOS.data.scene_id;
-window.vrodos_scene_upload_image_nonce = VRODOS.data.upload_image_nonce;
+// Map essential config to top level for convenience in AJAX handlers
+VRODOS.config = Object.assign(VRODOS.config || {}, {
+    ajax_url: VRODOS.data.ajax_url || '',
+    isAdmin: VRODOS.data.isAdmin || 'front',
+    plugin_url: VRODOS.data.pluginPath || '',
+    current_user_id: VRODOS.data.current_user_id || -1,
+    projectId: VRODOS.data.projectId || '',
+    sceneId: VRODOS.data.sceneId || VRODOS.data.scene_id || '',
+    slug: VRODOS.data.projectSlug || ''
+});
 
 VRODOS.editor.isPaused = VRODOS.data.isPaused || false;
-window.isAnyLight = VRODOS.data.isAnyLight;
-window.mapActions = VRODOS.data.mapActions;
-window.showPawnPositions = VRODOS.data.showPawnPositions;
+VRODOS.editor.showPawnPositions = VRODOS.data.showPawnPositions || 'false';
 
-// 2. Core Editor State Bridge (Ensures legacy globals stay in sync with VRODOS namespace)
-const coreState = {
-    envir: () => VRODOS.editor.envir,
-    transform_controls: () => VRODOS.editor.transform_controls,
-    transform_controls_helper: () => VRODOS.editor.transform_controls_helper,
-    manager: () => VRODOS.editor.manager,
-    selected_object_name: () => VRODOS.editor.selected_object_name,
-    firstPersonBlockerBtn: () => VRODOS.editor.firstPersonBlockerBtn,
-    id_animation_frame: () => VRODOS.editor.id_animation_frame
-};
-
-Object.entries(coreState).forEach(([key, getter]) => {
-    Object.defineProperty(window, key, {
-        get: getter,
-        set: (v) => { 
-            const parts = key.split('_');
-            const targetKey = parts.length > 1 ? key : key; // Keep original key for simplicity in namespace
-            VRODOS.editor[key] = v; 
-        },
-        enumerable: true,
-        configurable: true
-    });
-});
 
 // 3. Initialize core objects
 VRODOS.editor.manager = new THREE.LoadingManager();
@@ -98,7 +75,7 @@ function initVrodosEditor() {
     if (!mainDiv) return;
 
     // Environmentals
-    VRODOS.editor.envir = new vrodos_3d_editor_environmentals(mainDiv);
+    VRODOS.editor.envir = new VRODOS.editor.Environmentals(mainDiv);
     VRODOS.editor.envir.is2d = false;
 
     // Initialize scale constraint to true (Uniform Scaling) by default
@@ -123,32 +100,32 @@ function initVrodosEditor() {
     VRODOS.editor.envir.sceneLoadFinalized = false;
 
     // Prepare Load VRODOS.editor.Manager
-    prepareSceneLoadManager();
+    VRODOS.api.prepareSceneLoadManager();
 
     // UI & GUI Setup
     const guiContainer = document.getElementById('numerical_gui-container');
-    if (guiContainer && typeof controlInterface !== 'undefined') {
-        guiContainer.appendChild(controlInterface.domElement);
+    if (guiContainer && VRODOS.ui.controlInterface) {
+        guiContainer.appendChild(VRODOS.ui.controlInterface.domElement);
     }
 
-    hideObjectPropertiesPanels();
-    controllerDatGuiOnChange();
+    VRODOS.ui.hideObjectPropertiesPanels();
+    VRODOS.ui.controllerDatGuiOnChange();
 
     // 2. Initialize Scene State using the Schema (Phase 1 Refactoring Win)
     // We merge all possible sources to handle legacy transitions correctly
     const sceneSettings = Object.assign({},
-        vrodos_scene_data,
-        vrodos_scene_data.SceneSettings || {},
-        vrodos_scene_data.metadata || {}
+        VRODOS.data.scene_data,
+        VRODOS.data.scene_data.SceneSettings || {},
+        VRODOS.data.scene_data.metadata || {}
     );
 
     // First pass: General sync using the schema
-    for (const [key, schemaInfo] of Object.entries(VRODOS_SCENE_SETTINGS_SCHEMA)) {
+    for (const [key, schemaInfo] of Object.entries(VRODOS.config.SCENE_SETTINGS_SCHEMA)) {
         if (sceneSettings[key] !== undefined) {
-             vrodosSyncSceneSetting(key, sceneSettings[key]);
+             VRODOS.api.syncSceneSetting(key, sceneSettings[key]);
         } else {
              // Apply defaults if missing
-             vrodosSyncSceneSetting(key, schemaInfo.default);
+             VRODOS.api.syncSceneSetting(key, schemaInfo.default);
         }
     }
 
@@ -156,21 +133,21 @@ function initVrodosEditor() {
     syncBackgroundInitialState(sceneSettings);
 
     // 3. Load 3D Objects
-    const lightsPawnLoader = new VRodos_LightsPawn_Loader();
-    const lightsLoadPromise = lightsPawnLoader.load(vrodos_scene_data, pluginPath, VRODOS.editor.manager);
+    const lightsPawnLoader = new VRODOS.loader.LightsPawnLoader();
+    const lightsLoadPromise = lightsPawnLoader.load(VRODOS.data.scene_data, VRODOS.data.pluginPath, VRODOS.editor.manager);
 
-    const loaderMulti = new VRodos_LoaderMulti();
-    const assetsLoadPromise = loaderMulti.load(VRODOS.editor.manager, vrodos_scene_data.objects, pluginPath);
+    const loaderMulti = new VRODOS.loader.LoaderMulti();
+    const assetsLoadPromise = loaderMulti.load(VRODOS.editor.manager, VRODOS.data.scene_data.objects, VRODOS.data.pluginPath);
 
     // Initial hierarchy
-    setHierarchyViewer();
+    VRODOS.ui.setHierarchyViewer();
 
     // Fetch available assets
-    if (typeof vrodos_fetchListAvailableAssetsAjax === 'function') {
-        vrodos_fetchListAvailableAssetsAjax(isAdmin, projectSlug, urlforAssetEdit, projectId);
+    if (typeof VRODOS.api.fetchListAvailableAssets === 'function') {
+        VRODOS.api.fetchListAvailableAssets(VRODOS.config.isAdmin, VRODOS.data.projectSlug, VRODOS.data.urlforAssetEdit, VRODOS.data.projectId);
     }
-    if (typeof initHierarchyViewerEvents === 'function') {
-        initHierarchyViewerEvents();
+    if (typeof VRODOS.ui.initHierarchyViewerEvents === 'function') {
+        VRODOS.ui.initHierarchyViewerEvents();
     }
 
     // Add controls to scene
@@ -184,12 +161,12 @@ function initVrodosEditor() {
 
     // Start everything when assets load
     Promise.allSettled([lightsLoadPromise, assetsLoadPromise]).then(() => {
-        finalizeSceneLoad();
+        VRODOS.api.finalizeSceneLoad();
     });
 
-    initPointerLock();
-    animate();
-    loadButtonActions();
+    VRODOS.api.initPointerLock();
+    VRODOS.editor.animate();
+    VRODOS.ui.loadButtonActions();
 
     // Prevent body scroll
     document.getElementsByTagName("html")[0].style.overflow = "hidden";
@@ -198,13 +175,13 @@ function initVrodosEditor() {
     bindBackgroundUIEvents();
 
     // Initial compile dialog sync (Phase 2 fix)
-    if (typeof syncCompileDialogFromSceneSettings === 'function') {
-        syncCompileDialogFromSceneSettings();
+    if (typeof VRODOS.ui.syncCompileDialogFromSceneSettings === 'function') {
+        VRODOS.ui.syncCompileDialogFromSceneSettings();
     }
 
     // Scene Type
-    if (vrodos_data.sceneType) {
-        VRODOS.editor.envir.sceneType = vrodos_data.sceneType;
+    if (VRODOS.data.sceneType) {
+        VRODOS.editor.envir.sceneType = VRODOS.data.sceneType;
     }
 }
 
@@ -212,35 +189,33 @@ function initVrodosEditor() {
  * Update the translation and rotation input texts from transform controls
  * (Restored from legacy template logic)
  */
-function updatePositionsAndControls() {
-    if (!VRODOS.editor.transform_controls.object || !controlInterface) return;
+VRODOS.editor.updatePositionsAndControls = function() {
+    if (!VRODOS.editor.transform_controls.object || !VRODOS.ui.controlInterface) return;
     if ((window.vrodosGuiKeyboardEditing || 0) > 0) return;
 
     const affines = ['position', 'rotation', 'scale'];
     for (let j = 0; j < 3; j++) {
         for (let i = 0; i < 3; i++) {
-            if (controlInterface.controllers[j * 3 + i].getValue() !== VRODOS.editor.transform_controls.object[affines[j]].toArray()[i]) {
-                controlInterface.controllers[j * 3 + i].updateDisplay();
+            if (VRODOS.ui.controlInterface.controllers[j * 3 + i].getValue() !== VRODOS.editor.transform_controls.object[affines[j]].toArray()[i]) {
+                VRODOS.ui.controlInterface.controllers[j * 3 + i].updateDisplay();
             }
         }
     }
 
-    if (typeof updatePositionsPhpAndJavsFromControlsAxes === 'function') {
-        updatePositionsPhpAndJavsFromControlsAxes();
+    if (typeof VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes === 'function') {
+        VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes();
     }
-}
-window.updatePositionsAndControls = updatePositionsAndControls;
-window.animate = animate;
+};
 
 /**
  * Handle background UI initialization that requires specific logic
  */
 function syncBackgroundInitialState(settings) {
-    const selOption = parseInt(settings.backgroundStyleOption);
+    const selOption = parseInt(settings.backgroundStyleOption, 10);
     if (isNaN(selOption)) return;
 
-    if (typeof syncBackgroundStyleDescription === 'function') {
-        syncBackgroundStyleDescription(selOption);
+    if (typeof VRODOS.ui.syncBackgroundStyleDescription === 'function') {
+        VRODOS.ui.syncBackgroundStyleDescription(selOption);
     }
 
     // Call bcgRadioSelect (from vrodos_scripts.js) to fix UI rows and states
@@ -249,8 +224,8 @@ function syncBackgroundInitialState(settings) {
     if (radioEl) {
         radioEl.checked = true;
         if (typeof bcgRadioSelect === 'function') {
-            // We pass the radio element to trigger the logic but we DON'T want to saveChanges on init
-            // bcgRadioSelect calls saveChanges internally, so we might need to block it briefly or refactor
+            // We pass the radio element to trigger the logic but we DON'T want to VRODOS.api.saveChanges on init
+            // bcgRadioSelect calls VRODOS.api.saveChanges internally, so we might need to block it briefly or refactor
             // For now, let's just use the direct logic if we can
         }
     }
@@ -265,13 +240,13 @@ function bindBackgroundUIEvents() {
 
     if (preset_sel && !preset_sel.dataset.vrodosChangeBound) {
         preset_sel.addEventListener('change', function () {
-            handleBackgroundPresetChange(this);
+            VRODOS.ui.handleBackgroundPresetChange(this);
         });
         preset_sel.dataset.vrodosChangeBound = 'true';
     }
     if (preset_ground_toggle && !preset_ground_toggle.dataset.vrodosChangeBound) {
         preset_ground_toggle.addEventListener('change', function () {
-            handleBackgroundPresetGroundToggle(this);
+            VRODOS.ui.handleBackgroundPresetGroundToggle(this);
         });
         preset_ground_toggle.dataset.vrodosChangeBound = 'true';
     }
@@ -280,7 +255,7 @@ function bindBackgroundUIEvents() {
 /**
  * Preparation logic before assets start loading
  */
-function prepareSceneLoadManager() {
+VRODOS.api.prepareSceneLoadManager = function() {
     VRODOS.editor.envir.sceneLoadFinalized = false;
     VRODOS.editor.manager.onProgress = function (url, loaded, total) {
         document.getElementById("result_download").innerHTML = `Loading ${  loaded  } / ${  total}`;
@@ -290,7 +265,7 @@ function prepareSceneLoadManager() {
 /**
  * Finalize scene load: camera focus, hierarchy setup, etc.
  */
-function finalizeSceneLoad() {
+VRODOS.api.finalizeSceneLoad = function() {
     if (!VRODOS.editor.envir || VRODOS.editor.envir.sceneLoadFinalized) return;
 
     VRODOS.editor.envir.sceneLoadFinalized = true;
@@ -298,11 +273,11 @@ function finalizeSceneLoad() {
 
     // Detach controls on load
     VRODOS.editor.transform_controls.detach();
-    if (typeof removeAllCelOutlines === 'function') removeAllCelOutlines();
-    if (typeof hideObjectControlsPanel === 'function') hideObjectControlsPanel();
+    if (typeof VRODOS.ui.removeAllCelOutlines === 'function') VRODOS.ui.removeAllCelOutlines();
+    if (typeof VRODOS.ui.hideObjectControlsPanel === 'function') VRODOS.ui.hideObjectControlsPanel();
 
-    if (typeof findSceneDimensions === 'function') {
-        findSceneDimensions();
+    if (typeof VRODOS.utils.findSceneDimensions === 'function') {
+        VRODOS.utils.findSceneDimensions();
         VRODOS.editor.envir.fitCameraToSceneLimits();
     }
 
@@ -326,8 +301,8 @@ function finalizeSceneLoad() {
         }
     })();
 
-    if (typeof removeHierarchySkeleton === 'function') removeHierarchySkeleton();
-    setHierarchyViewer();
+    if (typeof VRODOS.ui.removeHierarchySkeleton === 'function') VRODOS.ui.removeHierarchySkeleton();
+    VRODOS.ui.setHierarchyViewer();
 
     // Avoid culling and update lights
     VRODOS.editor.envir.scene.traverse((obj) => {
@@ -344,10 +319,10 @@ function finalizeSceneLoad() {
 /**
  * The main animation loop
  */
-function animate() {
+VRODOS.editor.animate = function animate() {
     if (VRODOS.editor.isPaused) return;
 
-    VRODOS.editor.id_animation_frame = requestAnimationFrame(animate);
+    VRODOS.editor.id_animation_frame = requestAnimationFrame(VRODOS.editor.animate);
 
     const curr_camera = (typeof VRODOS.editor.avatarControlsEnabled !== 'undefined' && VRODOS.editor.avatarControlsEnabled) ?
         (VRODOS.editor.envir.thirdPersonView ? VRODOS.editor.envir.cameraThirdPerson : VRODOS.editor.envir.cameraAvatar) : VRODOS.editor.envir.cameraOrbit;
@@ -368,13 +343,13 @@ function animate() {
     }
 
     VRODOS.editor.envir.orbitControls.update();
-    if (typeof window.updatePointerLockControls === 'function') {
-        window.updatePointerLockControls();
+    if (typeof VRODOS.api.updatePointerLockControls === 'function') {
+        VRODOS.api.updatePointerLockControls();
     }
     if (typeof VRODOS.editor.envir.updateCompassUI === 'function') {
         VRODOS.editor.envir.updateCompassUI();
     }
-}
+};
 
 /**
  * Interface toggle for environment textures
@@ -388,3 +363,8 @@ window.toggleEnvTexture = (el) => {
 
 // INITIALIZE ON DOM CONTENT LOADED
 document.addEventListener('DOMContentLoaded', initVrodosEditor);
+
+
+
+
+

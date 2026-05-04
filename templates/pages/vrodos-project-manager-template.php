@@ -53,9 +53,9 @@ else {
 
 <!-- Core Manager Scope -->
 <div id="vrodos-project-manager-wrapper" class="vrodos-main-h tw-bg-base-100">
-    
-    <div id="vrodos-project-manager" 
-         class="tw-flex tw-flex-col tw-overflow-hidden" 
+
+    <div id="vrodos-project-manager"
+         class="tw-flex tw-flex-col tw-overflow-hidden"
          style="height: calc(100vh - var(--wp-admin-bar-height, 0px));">
         <!-- Navbar (Unified Light Header) -->
         <nav class="tw-flex-none tw-bg-white tw-border-b tw-border-slate-200 tw-px-8 tw-py-4 tw-z-[60] tw-shadow-sm">
@@ -73,7 +73,7 @@ else {
 
         <!-- Content -->
         <div class="tw-flex-1 tw-flex tw-overflow-hidden">
-            
+
             <!-- Sidebar: List -->
             <main class="tw-flex-1 tw-overflow-y-auto tw-bg-slate-50/30 tw-px-8 tw-py-10 tw-z-10">
                 <div class="tw-max-w-4xl tw-mx-auto">
@@ -81,7 +81,7 @@ else {
                         <h2 class="tw-text-sm tw-font-bold tw-text-slate-500 tw-uppercase tw-tracking-widest">Active <?php echo $multiple; ?></h2>
                         <span id="projects-count-indicator" class="tw-text-[10px] tw-font-bold tw-text-slate-400">0</span>
                     </div>
-                    
+
                     <div id="ExistingProjectsDivDOM" class="tw-space-y-3">
                         <!-- Cards via AJAX -->
                         <!-- Skeleton Loader (Visible while projects are fetching) -->
@@ -107,12 +107,12 @@ else {
                         <h2 class="tw-text-lg tw-font-bold tw-text-base-content">Create New Project</h2>
                         <p class="tw-text-xs tw-text-base-content/60 tw-mt-1">Add a new project to your collection.</p>
                     </div>
-                    
+
                     <form name="newProjectForm" id="newProjectForm" method="POST" enctype="multipart/form-data" class="tw-space-y-6">
                         <div class="tw-space-y-2">
                             <label for="title" class="tw-text-xs tw-font-medium tw-text-base-content/70">Project Name</label>
-                            <input type="text" id="title" name="title" placeholder="My Awesome Scene" 
-                                   class="tw-input tw-input-bordered tw-w-full tw-rounded-md tw-bg-base-100" 
+                            <input type="text" id="title" name="title" placeholder="My Awesome Scene"
+                                   class="tw-input tw-input-bordered tw-w-full tw-rounded-md tw-bg-base-100"
                                    required minlength="3" />
                         </div>
 
@@ -136,8 +136,8 @@ else {
 
                         <?php wp_nonce_field('post_nonce', 'post_nonce_field'); ?>
                         <input type="hidden" name="submitted" id="submitted" value="true" />
-                        
-                        <button id="createNewProjectBtn" type="button" 
+
+                        <button id="createNewProjectBtn" type="button"
                                 class="tw-btn vrodos-btn-premium tw-w-full tw-rounded-xl tw-shadow-lg">
                             CREATE PROJECT
                         </button>
@@ -159,11 +159,11 @@ else {
 
     <!-- Modals Wrapper (Direct child of body to break out of any parent clipping) -->
     <div id="vrodos-modal-wrapper">
-        
+
         <!-- Reusable Delete Project Dialog -->
-        <?php 
+        <?php
             $context = 'project';
-            include 'vrodos-delete-dialog.php'; 
+            include 'vrodos-delete-dialog.php';
         ?>
 
     </div>

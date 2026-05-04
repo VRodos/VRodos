@@ -11,7 +11,7 @@ VRODOS.api.deleteProject = function(game_id, dialog, current_user_id, parameter_
 	if (VRODOS.api.isDeleteProjectPending) return;
 	VRODOS.api.isDeleteProjectPending = true;
 
-	fetch( VRODOS.config.ajax_url, {
+	fetch( VRODOS.utils.getAjaxUrl(), {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({

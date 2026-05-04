@@ -1,4 +1,4 @@
-class VRodos_LightsPawn_Loader {
+VRODOS.loader.LightsPawnLoader = class {
     constructor(who) {}
 
     /**
@@ -34,10 +34,11 @@ class VRodos_LightsPawn_Loader {
         if (!resources3D) return;
         const pendingLoads = [];
         
-        // Use provided path or fallback to global pluginPath
-        const finalPath = providedPath || (typeof pluginPath !== 'undefined' ? pluginPath : '');
+        // Use provided path or fallback to global VRODOS.data.pluginPath
+        const finalPath = providedPath || (typeof VRODOS.data.pluginPath !== 'undefined' ? VRODOS.data.pluginPath : '');
 
         for (const name in resources3D) {
+            if (!Object.prototype.hasOwnProperty.call(resources3D, name)) continue;
             const resource = resources3D[name];
 
             // 1. Recursive handling for nested objects
@@ -54,8 +55,8 @@ class VRodos_LightsPawn_Loader {
 
             // Restore Director/Camera position
             if (name === 'cameraCoords' && typeof resource === 'object') {
-                if (typeof envir !== 'undefined' && typeof envir.applyDirectorTransform === 'function') {
-                    envir.applyDirectorTransform(resource.position, resource.rotation);
+                if (typeof VRODOS.editor.envir !== 'undefined' && typeof VRODOS.editor.envir.applyDirectorTransform === 'function') {
+                    VRODOS.editor.envir.applyDirectorTransform(resource.position, resource.rotation);
                 }
                 continue;
             }
@@ -67,8 +68,8 @@ class VRodos_LightsPawn_Loader {
             }
 
             if (name === 'ClearColor') {
-                if (envir?.scene) {
-                    envir.scene.background = new THREE.Color(resource);
+                if (VRODOS.editor.envir?.scene) {
+                    VRODOS.editor.envir.scene.background = new THREE.Color(resource);
                 }
                 ['sceneClearColor', 'jscolorpick'].forEach(id => {
                     const el = document.getElementById(id);
@@ -128,8 +129,8 @@ class VRodos_LightsPawn_Loader {
         }
         
         // Apply to THREE.js Scene
-        if (typeof updateFog === 'function') {
-            updateFog("loading");
+        if (typeof VRODOS.ui.updateFog === 'function') {
+            VRODOS.ui.updateFog("loading");
         }
     }
 
@@ -191,8 +192,8 @@ class VRodos_LightsPawn_Loader {
         helper.category_name = 'lightHelper';
         helper.parentLightName = name;
         helper.vrodos_internal_helper = true;
-        envir.scene.add(helper);
-        envir.scene.add(light);
+        VRODOS.editor.envir.scene.add(helper);
+        VRODOS.editor.envir.scene.add(light);
 
         light.target.updateMatrixWorld();
         helper.update();
@@ -213,16 +214,16 @@ class VRodos_LightsPawn_Loader {
         targetSpot.parentLightHelper = helper;
 
         light.target.position.copy(targetSpot.position);
-        envir.scene.add(targetSpot);
-        if (envir.selectableMeshes) {
-            envir.selectableMeshes.add(light);
-            envir.selectableMeshes.add(targetSpot);
+        VRODOS.editor.envir.scene.add(targetSpot);
+        if (VRODOS.editor.envir.selectableMeshes) {
+            VRODOS.editor.envir.selectableMeshes.add(light);
+            VRODOS.editor.envir.selectableMeshes.add(targetSpot);
         }
 
         const shadowHelper = new THREE.CameraHelper(light.shadow.camera);
         shadowHelper.name = `lightShadowHelper_${  light.name}`;
         shadowHelper.vrodos_internal_helper = true;
-        envir.scene.add(shadowHelper);
+        VRODOS.editor.envir.scene.add(shadowHelper);
     }
 
     initLamp(name, resource) {
@@ -249,8 +250,8 @@ class VRodos_LightsPawn_Loader {
         light.lampshadowCameraRight = resource.lampshadowCameraRight;
         light.lampshadowBias = resource.lampshadowBias;
 
-        envir.scene.add(light);
-        if (envir.selectableMeshes) envir.selectableMeshes.add(light);
+        VRODOS.editor.envir.scene.add(light);
+        if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(light);
 
         const sphere = new THREE.Mesh(
             new THREE.SphereGeometry(0.5, 16, 8),
@@ -266,7 +267,7 @@ class VRodos_LightsPawn_Loader {
         helper.category_name = 'lightHelper';
         helper.parentLightName = light.name;
         helper.vrodos_internal_helper = true;
-        envir.scene.add(helper);
+        VRODOS.editor.envir.scene.add(helper);
     }
 
     initSpot(name, resource) {
@@ -307,18 +308,18 @@ class VRodos_LightsPawn_Loader {
         targetSpot.position.set(tp[0], tp[1], tp[2]);
         targetSpot.parentLight = light;
 
-        envir.scene.add(targetSpot);
-        if (envir.selectableMeshes) {
-            envir.selectableMeshes.add(light);
-            envir.selectableMeshes.add(targetSpot);
+        VRODOS.editor.envir.scene.add(targetSpot);
+        if (VRODOS.editor.envir.selectableMeshes) {
+            VRODOS.editor.envir.selectableMeshes.add(light);
+            VRODOS.editor.envir.selectableMeshes.add(targetSpot);
         }
         light.target.updateMatrixWorld();
         light.target.position.copy(targetSpot.position);
 
-        envir.scene.add(light);
+        VRODOS.editor.envir.scene.add(light);
         // No triggerAutoSave here — this loader only restores saved state.
-        // User-initiated spot light creation (vrodos_createLightSpot in vrodos_addRemoveOne.js)
-        // handles its own triggerAutoSave().
+        // User-initiated spot light creation (VRODOS.api.createLightSpot in vrodos_addRemoveOne.js)
+        // handles its own VRODOS.api.triggerAutoSave().
     }
 
     initAmbient(name, resource) {
@@ -344,16 +345,16 @@ class VRodos_LightsPawn_Loader {
         sphere.name = "ambientSphere";
         light.add(sphere);
 
-        envir.scene.add(light);
-        if (envir.selectableMeshes) envir.selectableMeshes.add(light);
+        VRODOS.editor.envir.scene.add(light);
+        if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(light);
     }
 
     initPawn(name, resource, finalPath, manager) {
         return new Promise((resolve) => {
             if (manager) manager.itemStart(name);
             const loader = new THREE.GLTFLoader();
-            const modelBaseUrl = (typeof vrodos_data !== 'undefined' && vrodos_data.paths && vrodos_data.paths.modelBaseUrl)
-                ? vrodos_data.paths.modelBaseUrl
+            const modelBaseUrl = (typeof VRODOS.data !== 'undefined' && VRODOS.data.paths && VRODOS.data.paths.modelBaseUrl)
+                ? VRODOS.data.paths.modelBaseUrl
                 : `${finalPath  }/assets/models/`;
             loader.load(
                 `${modelBaseUrl  }editor/pawn.glb`,
@@ -370,7 +371,7 @@ class VRodos_LightsPawn_Loader {
                     pawn.material.opacity = 0.6;
 
                     let indexPawn = 1;
-                    for (const ch of envir.scene.children) {
+                    for (const ch of VRODOS.editor.envir.scene.children) {
                         if (ch.name.includes("Pawn")) indexPawn++;
                     }
 
@@ -384,8 +385,8 @@ class VRodos_LightsPawn_Loader {
                     label.position.set(0, 1.5, 0);
                     pawn.add(label);
 
-                    envir.scene.add(pawn);
-                    if (typeof setHierarchyViewer === 'function') setHierarchyViewer();
+                    VRODOS.editor.envir.scene.add(pawn);
+                    if (typeof VRODOS.ui.setHierarchyViewer === 'function') VRODOS.ui.setHierarchyViewer();
                     if (manager) manager.itemEnd(name);
                     resolve();
                 },
@@ -411,4 +412,7 @@ class VRodos_LightsPawn_Loader {
         obj.rotation.set(r[0], r[1], r[2]);
         obj.scale.set(s[0], s[1], s[2]);
     }
-}
+};
+
+
+

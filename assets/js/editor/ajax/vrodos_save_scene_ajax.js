@@ -23,7 +23,7 @@ VRODOS.api.saveScene = function() {
 
 	VRODOS.api.isSceneSavePending = true;
 
-	VRODOS.api.sceneSavePromise = fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url, {
+	VRODOS.api.sceneSavePromise = fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl(), {
 		method: 'POST',
 		body: postdata
 	})
@@ -61,3 +61,6 @@ VRODOS.api.saveScene = function() {
 
 	return VRODOS.api.sceneSavePromise;
 }
+
+
+

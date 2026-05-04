@@ -1,7 +1,7 @@
 //  AJAX: FETCH Assets 3d
-const vrodos_fetchListAvailableAssetsAjax = (isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) => {
+VRODOS.api.fetchListAvailableAssets = function(isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) {
 
-    const url = VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.config.ajax_url;
+    const url = VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl();
     const body = new URLSearchParams({
         'action': 'vrodos_fetch_game_assets_action',
         gameProjectSlug,
@@ -9,26 +9,34 @@ const vrodos_fetchListAvailableAssetsAjax = (isAdmin, gameProjectSlug, urlforAss
     });
 
     fetch(url, { method: 'POST', body })
-        .then((r) => r.json())
+        .then((r) => r.text())
+        .then((text) => {
+            const trimmed = text.trim();
+            if (!trimmed || trimmed[0] === '<') {
+                throw new Error(`Asset list endpoint returned HTML from ${url}`);
+            }
+
+            return JSON.parse(trimmed);
+        })
         .then((responseRecords) => {
-            file_Browsing_By_DB(responseRecords.items, gameProjectSlug, urlforAssetEdit);
+            VRODOS.ui.fileBrowsingByDb(responseRecords.items, gameProjectSlug, urlforAssetEdit);
         })
         .catch((err) => {
             console.log(`ERROR 51:${  err}`);
         });
-}
+};
 
 /**
  * Start the browser
  * @param responseData
  */
-function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
+VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAssetEdit) {
     window.vrodosAssetBrowserItemsById = {};
 
     function vrodos_getAssetPreviewFallbackIcon(asset) {
         const categoryKey = asset && (asset.category_slug || asset.category_icon);
         return categoryKey === "assessment"
-          ? vrodos_getCategoryIcon(categoryKey)
+          ? VRODOS.ui.getCategoryIcon(categoryKey)
           : "image-off";
     }
 
@@ -202,8 +210,8 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
     });
 
     render(responseData, gameProjectSlug, urlforAssetEdit);
-    if (typeof setHierarchyViewer === 'function') {
-        setHierarchyViewer();
+    if (typeof VRODOS.ui.setHierarchyViewer === 'function') {
+        VRODOS.ui.setHierarchyViewer();
     }
 
     // Hiding and showing the search box
@@ -313,7 +321,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
                 name = escapeHTML(f.asset_name);
 
-                const lucideIconName = vrodos_getCategoryIcon(f.category_slug || f.category_icon);
+                const lucideIconName = VRODOS.ui.getCategoryIcon(f.category_slug || f.category_icon);
 
                 // Add the category in tabs if not yet added
                 if (!document.getElementById(f.category_slug)) {
@@ -359,7 +367,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
                     `</div>${ 
 
                     (function() {
-                        const canEditThis = Boolean(vrodos_data.isUserAdmin) || (String(f.author_id) === String(vrodos_data.current_user_id));
+                        const canEditThis = Boolean(VRODOS.data.isUserAdmin) || (String(f.author_id) === String(VRODOS.data.current_user_id));
                         if (canEditThis) {
                             return `<div class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-p-2 tw-z-10 tw-transform tw-translate-y-1 group-hover:tw-translate-y-0 tw-transition-transform">` +
                                 `<button class="tw-w-full tw-bg-indigo-500/80 hover:tw-bg-indigo-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" onclick="window.location.href='${  urlforAssetEdit  }${f.asset_id  }&scene_type=scene&preview=0&editable=true'">EDIT</button>` +
@@ -483,4 +491,7 @@ function file_Browsing_By_DB(responseData, gameProjectSlug, urlforAssetEdit) {
 
         evt.currentTarget.classList.add("active");
     }
-}
+};
+
+
+

@@ -216,64 +216,64 @@ VRodosCompileUI.PostFX = (function () {
     }
 
     function syncToScene(controls) {
-        if (!envir || !envir.scene) return;
+        if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
         const d = Shared.PMNDRS_TWEAK_DEFAULTS;
 
-        envir.scene.aframePostFXEnabled = controls.postFx.checked === true;
-        envir.scene.aframePostFXColorEnabled = controls.postFxColor.checked === true;
+        VRODOS.editor.envir.scene.aframePostFXEnabled = controls.postFx.checked === true;
+        VRODOS.editor.envir.scene.aframePostFXColorEnabled = controls.postFxColor.checked === true;
         
-        envir.scene.aframeBloomStrength = normalizeBloomStrength(controls.bloomStrength.value);
-        envir.scene.aframePostFXBloomEnabled = envir.scene.aframeBloomStrength !== 'off';
+        VRODOS.editor.envir.scene.aframeBloomStrength = normalizeBloomStrength(controls.bloomStrength.value);
+        VRODOS.editor.envir.scene.aframePostFXBloomEnabled = VRODOS.editor.envir.scene.aframeBloomStrength !== 'off';
         
-        envir.scene.aframeExposurePreset = normalizeExposurePreset(controls.exposurePreset.value);
-        envir.scene.aframeContrastPreset = normalizeContrastPreset(controls.contrastPreset.value);
-        envir.scene.aframeReflectionProfile = normalizeReflectionProfile(controls.reflectionProfile.value);
-        envir.scene.aframeReflectionSource = normalizeReflectionSource(controls.reflectionSource.value);
-        envir.scene.aframeEnvMapPreset = normalizeEnvMapPreset(controls.envMapPreset.value);
+        VRODOS.editor.envir.scene.aframeExposurePreset = normalizeExposurePreset(controls.exposurePreset.value);
+        VRODOS.editor.envir.scene.aframeContrastPreset = normalizeContrastPreset(controls.contrastPreset.value);
+        VRODOS.editor.envir.scene.aframeReflectionProfile = normalizeReflectionProfile(controls.reflectionProfile.value);
+        VRODOS.editor.envir.scene.aframeReflectionSource = normalizeReflectionSource(controls.reflectionSource.value);
+        VRODOS.editor.envir.scene.aframeEnvMapPreset = normalizeEnvMapPreset(controls.envMapPreset.value);
         
-        envir.scene.aframePostFXSSRStrength = normalizeSSRStrength(controls.ssrStrength.value);
-        envir.scene.aframePostFXSSREnabled = envir.scene.aframePostFXSSRStrength !== 'off';
+        VRODOS.editor.envir.scene.aframePostFXSSRStrength = normalizeSSRStrength(controls.ssrStrength.value);
+        VRODOS.editor.envir.scene.aframePostFXSSREnabled = VRODOS.editor.envir.scene.aframePostFXSSRStrength !== 'off';
         
-        envir.scene.aframePostFXTAAEnabled = controls.taaEnabled.checked === true;
-        envir.scene.aframePostFXEngine = normalizeEngine(controls.postFxEngine.value);
+        VRODOS.editor.envir.scene.aframePostFXTAAEnabled = controls.taaEnabled.checked === true;
+        VRODOS.editor.envir.scene.aframePostFXEngine = normalizeEngine(controls.postFxEngine.value);
 
         // Pmndrs específicos
         if (controls.pmndrsBloomIntensity) {
-            envir.scene.aframePmndrsBloomIntensity = Shared.clampNumber(controls.pmndrsBloomIntensity.value, 0, 3, d.bloomIntensity);
+            VRODOS.editor.envir.scene.aframePmndrsBloomIntensity = Shared.clampNumber(controls.pmndrsBloomIntensity.value, 0, 3, d.bloomIntensity);
         }
         if (controls.pmndrsBloomThreshold) {
-            envir.scene.aframePmndrsBloomThreshold = Shared.clampNumber(controls.pmndrsBloomThreshold.value, 0, 1, d.bloomThreshold);
+            VRODOS.editor.envir.scene.aframePmndrsBloomThreshold = Shared.clampNumber(controls.pmndrsBloomThreshold.value, 0, 1, d.bloomThreshold);
         }
         if (controls.pmndrsExposure) {
-            envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(controls.pmndrsExposure.value, 0.3, 2.5, d.toneMappingExposure);
+            VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(controls.pmndrsExposure.value, 0.3, 2.5, d.toneMappingExposure);
         }
         if (controls.pmndrsLut) {
-            envir.scene.aframePmndrsLutEnabled = controls.pmndrsLut.checked === true;
+            VRODOS.editor.envir.scene.aframePmndrsLutEnabled = controls.pmndrsLut.checked === true;
         }
         if (controls.pmndrsLutLook) {
-            envir.scene.aframePmndrsLutLook = normalizePmndrsLutLook(controls.pmndrsLutLook.value);
+            VRODOS.editor.envir.scene.aframePmndrsLutLook = normalizePmndrsLutLook(controls.pmndrsLutLook.value);
         }
         if (controls.pmndrsLutStrength) {
-            envir.scene.aframePmndrsLutStrength = Shared.clampNumber(controls.pmndrsLutStrength.value, 0, 1, d.lutStrength);
+            VRODOS.editor.envir.scene.aframePmndrsLutStrength = Shared.clampNumber(controls.pmndrsLutStrength.value, 0, 1, d.lutStrength);
         }
         if (controls.pmndrsVignette) {
-            envir.scene.aframePmndrsVignetteEnabled = controls.pmndrsVignette.checked === true;
+            VRODOS.editor.envir.scene.aframePmndrsVignetteEnabled = controls.pmndrsVignette.checked === true;
         }
         if (controls.pmndrsVignetteDarkness) {
-            envir.scene.aframePmndrsVignetteDarkness = Shared.clampNumber(controls.pmndrsVignetteDarkness.value, 0, 1, d.vignetteDarkness);
+            VRODOS.editor.envir.scene.aframePmndrsVignetteDarkness = Shared.clampNumber(controls.pmndrsVignetteDarkness.value, 0, 1, d.vignetteDarkness);
         }
         if (controls.pmndrsNoise) {
-            envir.scene.aframePmndrsNoiseEnabled = controls.pmndrsNoise.checked === true;
+            VRODOS.editor.envir.scene.aframePmndrsNoiseEnabled = controls.pmndrsNoise.checked === true;
         }
         if (controls.pmndrsNoiseOpacity) {
-            envir.scene.aframePmndrsNoiseOpacity = Shared.clampNumber(controls.pmndrsNoiseOpacity.value, 0, 0.2, d.noiseOpacity);
+            VRODOS.editor.envir.scene.aframePmndrsNoiseOpacity = Shared.clampNumber(controls.pmndrsNoiseOpacity.value, 0, 0.2, d.noiseOpacity);
         }
         if (controls.pmndrsChromaticAberration) {
-            envir.scene.aframePmndrsChromaticAberrationEnabled = controls.pmndrsChromaticAberration.checked === true;
+            VRODOS.editor.envir.scene.aframePmndrsChromaticAberrationEnabled = controls.pmndrsChromaticAberration.checked === true;
         }
         if (controls.pmndrsChromaticAberrationOffset) {
-            envir.scene.aframePmndrsChromaticAberrationOffset = Shared.clampNumber(controls.pmndrsChromaticAberrationOffset.value, 0, 0.006, d.chromaticAberrationOffset);
+            VRODOS.editor.envir.scene.aframePmndrsChromaticAberrationOffset = Shared.clampNumber(controls.pmndrsChromaticAberrationOffset.value, 0, 0.006, d.chromaticAberrationOffset);
         }
     }
 
@@ -295,3 +295,5 @@ VRodosCompileUI.PostFX = (function () {
     };
 
 })();
+
+
