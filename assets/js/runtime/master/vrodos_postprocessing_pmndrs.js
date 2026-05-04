@@ -11,6 +11,7 @@
  *   - BloomEffect          (bloomStrength > 0)
  *   - BrightnessContrast   (postFXColorEnabled)
  *   - HueSaturation        (postFXColorEnabled)
+ *   - LUT3DEffect          (pmndrsLutEnabled)
  *   - VignetteEffect       (postFXVignetteEnabled)
  *   - NoiseEffect          (pmndrsNoiseEnabled)
  *   - ChromaticAberration  (pmndrsChromaticAberrationEnabled)
@@ -127,6 +128,93 @@
         return v === true || v === 'true' || v === '1' || v === 1;
     }
 
+    function normalizePmndrsLutLook(value) {
+        switch (value) {
+            case 'warm-film':
+            case 'cool-clarity':
+            case 'cinematic-contrast':
+            case 'soft-fade':
+                return value;
+            default:
+                return 'neutral';
+        }
+    }
+
+    function clamp01(value) {
+        return Math.max(0, Math.min(1, value));
+    }
+
+    function applyLutLookTransform(look, r, g, b) {
+        var luma = r * 0.2126 + g * 0.7152 + b * 0.0722;
+        var contrast;
+
+        switch (look) {
+            case 'warm-film':
+                contrast = 1.06;
+                r = (r - 0.5) * contrast + 0.5 + 0.035;
+                g = (g - 0.5) * 1.02 + 0.5 + 0.012;
+                b = (b - 0.5) * 0.96 + 0.5 - 0.025;
+                r = r * 0.98 + luma * 0.02;
+                g = g * 0.98 + luma * 0.02;
+                b = b * 0.98 + luma * 0.02;
+                break;
+            case 'cool-clarity':
+                contrast = 1.08;
+                r = (r - 0.5) * 0.99 + 0.5 - 0.018;
+                g = (g - 0.5) * 1.04 + 0.5 + 0.006;
+                b = (b - 0.5) * contrast + 0.5 + 0.03;
+                break;
+            case 'cinematic-contrast':
+                contrast = 1.16;
+                r = Math.pow(clamp01((r - 0.5) * contrast + 0.5), 0.96);
+                g = Math.pow(clamp01((g - 0.5) * 1.1 + 0.5), 1.0);
+                b = Math.pow(clamp01((b - 0.5) * 1.12 + 0.5), 1.04);
+                break;
+            case 'soft-fade':
+                contrast = 0.88;
+                r = (r - 0.5) * contrast + 0.5 + 0.035;
+                g = (g - 0.5) * contrast + 0.5 + 0.025;
+                b = (b - 0.5) * contrast + 0.5 + 0.012;
+                r = r * 0.94 + luma * 0.06;
+                g = g * 0.94 + luma * 0.06;
+                b = b * 0.94 + luma * 0.06;
+                break;
+            case 'neutral':
+            default:
+                break;
+        }
+
+        return [clamp01(r), clamp01(g), clamp01(b)];
+    }
+
+    function createBuiltInPmndrsLut(PP, look) {
+        var size = 16;
+        var lut = PP.LookupTexture.createNeutral(size);
+        var data = lut && lut.image ? lut.image.data : null;
+        var i;
+        var rgb;
+
+        if (!data) {
+            return null;
+        }
+
+        look = normalizePmndrsLutLook(look);
+        lut.name = 'vrodos-' + look;
+        if (look === 'neutral') {
+            return lut;
+        }
+
+        for (i = 0; i < data.length; i += 4) {
+            rgb = applyLutLookTransform(look, data[i], data[i + 1], data[i + 2]);
+            data[i] = rgb[0];
+            data[i + 1] = rgb[1];
+            data[i + 2] = rgb[2];
+            data[i + 3] = 1;
+        }
+        lut.needsUpdate = true;
+        return lut;
+    }
+
     function hasPmndrsDebugFlag(debugKey, queryKey) {
         if (window.VRODOS_DEBUG && window.VRODOS_DEBUG[debugKey] === true) {
             return true;
@@ -228,6 +316,7 @@
             '|aaPreset:' + getPmndrsAAPreset(self) +
             '|msaa:' + getPmndrsRequestedMultisampling(self, renderer) +
             '|smaa:' + (smaaPreset === null ? 'off' : smaaPreset) +
+            '|lut:' + readPmndrsBool(self, 'pmndrsLutEnabled') + ':' + normalizePmndrsLutLook(self && self.data ? self.data.pmndrsLutLook : 'neutral') + ':' + readPmndrsNumber(self, 'pmndrsLutStrength', 0, 1, 1.0) +
             '|noise:' + readPmndrsBool(self, 'pmndrsNoiseEnabled') + ':' + readPmndrsNumber(self, 'pmndrsNoiseOpacity', 0, 0.2, 0.04) +
             '|chroma:' + readPmndrsBool(self, 'pmndrsChromaticAberrationEnabled') + ':' + readPmndrsNumber(self, 'pmndrsChromaticAberrationOffset', 0, 0.006, 0.0015);
     }
@@ -812,6 +901,7 @@
             'effect pass: ' + (self && self.pmndrsEffectPass ? 'yes' : 'no'),
             'ao: ' + (self && self.pmndrsSsaoEffect ? 'n8ao' : 'off'),
             'bloom: ' + (self && self.pmndrsBloomEffect ? 'yes' : 'no'),
+            'lut: ' + (self && self.pmndrsLutEffect ? normalizePmndrsLutLook(self.data.pmndrsLutLook) : 'off'),
             'noise: ' + (self && self.pmndrsNoiseEffect ? 'yes' : 'off'),
             'chromatic: ' + (self && self.pmndrsChromaticAberrationEffect ? 'yes' : 'off'),
             'atmosphere: ' + (self && self.pmndrsAerialPerspectiveEffect ? 'effect' : ((self && typeof self.isPmndrsAtmosphereEnabled === 'function' && self.isPmndrsAtmosphereEnabled()) ? 'takram-only' : 'off')),
@@ -895,6 +985,11 @@
         self.pmndrsSsaoEffect = null;
         self.pmndrsBloomEffect = null;
         self.pmndrsSmaaEffect = null;
+        if (self.pmndrsLutTexture && typeof self.pmndrsLutTexture.dispose === 'function') {
+            self.pmndrsLutTexture.dispose();
+        }
+        self.pmndrsLutTexture = null;
+        self.pmndrsLutEffect = null;
         self.pmndrsNoiseEffect = null;
         self.pmndrsChromaticAberrationEffect = null;
         self.pmndrsAerialPerspectiveEffect = null;
@@ -1128,6 +1223,39 @@
                 effects.push(new PP.HueSaturationEffect({ saturation: saturationVal - 1.0, hue: 0.0 }));
             } catch (err) {
                 console.warn('[VRodos] pmndrs color grading effects failed, skipping:', err);
+            }
+        }
+
+        this.pmndrsLutEffect = null;
+        this.pmndrsLutTexture = null;
+        if (readPmndrsBool(this, 'pmndrsLutEnabled') && readPmndrsNumber(this, 'pmndrsLutStrength', 0, 1, 1.0) > 0) {
+            try {
+                var lutLook = normalizePmndrsLutLook(this.data.pmndrsLutLook);
+                var lutStrength = readPmndrsNumber(this, 'pmndrsLutStrength', 0, 1, 1.0);
+                if (PP.LUT3DEffect && PP.LookupTexture && typeof PP.LookupTexture.createNeutral === 'function') {
+                    this.pmndrsLutTexture = createBuiltInPmndrsLut(PP, lutLook);
+                    if (!this.pmndrsLutTexture) {
+                        throw new Error('Built-in LUT texture creation returned empty.');
+                    }
+                    this.pmndrsLutEffect = new PP.LUT3DEffect(this.pmndrsLutTexture, {
+                        blendFunction: PP.BlendFunction ? PP.BlendFunction.NORMAL : undefined,
+                        tetrahedralInterpolation: true
+                    });
+                    if (this.pmndrsLutEffect.blendMode && this.pmndrsLutEffect.blendMode.opacity) {
+                        this.pmndrsLutEffect.blendMode.opacity.value = lutStrength;
+                    }
+                    effects.push(this.pmndrsLutEffect);
+                } else if (!this._pmndrsLutSkipWarned) {
+                    console.info('[VRodos] pmndrs LUT requested but LUT3DEffect/LookupTexture is not loaded.');
+                    this._pmndrsLutSkipWarned = true;
+                }
+            } catch (err) {
+                console.warn('[VRodos] pmndrs built-in LUT construction failed, skipping:', err);
+                if (this.pmndrsLutTexture && typeof this.pmndrsLutTexture.dispose === 'function') {
+                    this.pmndrsLutTexture.dispose();
+                }
+                this.pmndrsLutTexture = null;
+                this.pmndrsLutEffect = null;
             }
         }
 

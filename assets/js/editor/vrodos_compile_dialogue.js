@@ -63,6 +63,11 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsBloomThresholdValue: document.getElementById('compilePmndrsBloomThresholdValue'),
             pmndrsExposure: document.getElementById('compilePmndrsExposureSlider'),
             pmndrsExposureValue: document.getElementById('compilePmndrsExposureValue'),
+            pmndrsLut: document.getElementById('compilePmndrsLutToggle'),
+            pmndrsLutWrapper: document.getElementById('compilePmndrsLutWrapper'),
+            pmndrsLutLook: document.getElementById('compilePmndrsLutLookSelect'),
+            pmndrsLutStrength: document.getElementById('compilePmndrsLutStrengthSlider'),
+            pmndrsLutStrengthValue: document.getElementById('compilePmndrsLutStrengthValue'),
             pmndrsVignette: document.getElementById('compilePmndrsVignetteToggle'),
             pmndrsVignetteWrapper: document.getElementById('compilePmndrsVignetteWrapper'),
             pmndrsVignetteDarkness: document.getElementById('compilePmndrsVignetteDarknessSlider'),
@@ -219,6 +224,13 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (typeof envir.scene.aframePmndrsToneMappingExposure !== 'number') {
             envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(envir.scene.aframePmndrsToneMappingExposure, 0.3, 2.5, 1.0);
+        }
+        if (typeof envir.scene.aframePmndrsLutEnabled === 'undefined') {
+            envir.scene.aframePmndrsLutEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.lutEnabled;
+        }
+        envir.scene.aframePmndrsLutLook = VRodosCompileUI.PostFX.normalizePmndrsLutLook(envir.scene.aframePmndrsLutLook);
+        if (typeof envir.scene.aframePmndrsLutStrength !== 'number') {
+            envir.scene.aframePmndrsLutStrength = Shared.clampNumber(envir.scene.aframePmndrsLutStrength, 0, 1, Shared.PMNDRS_TWEAK_DEFAULTS.lutStrength);
         }
         if (typeof envir.scene.aframePmndrsNoiseEnabled === 'undefined') {
             envir.scene.aframePmndrsNoiseEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.noiseEnabled;
@@ -603,6 +615,22 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls.pmndrsExposure) {
             controls.pmndrsExposure.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsToneMappingExposure : 1.0, 0.3, 2.5, 1.0);
         }
+        if (controls.pmndrsLut) {
+            controls.pmndrsLut.checked = !!(envir && envir.scene && envir.scene.aframePmndrsLutEnabled);
+        }
+        if (controls.pmndrsLutLook) {
+            controls.pmndrsLutLook.value = envir && envir.scene
+                ? VRodosCompileUI.PostFX.normalizePmndrsLutLook(envir.scene.aframePmndrsLutLook)
+                : Shared.PMNDRS_TWEAK_DEFAULTS.lutLook;
+        }
+        if (controls.pmndrsLutStrength) {
+            controls.pmndrsLutStrength.value = Shared.clampNumber(
+                envir && envir.scene ? envir.scene.aframePmndrsLutStrength : Shared.PMNDRS_TWEAK_DEFAULTS.lutStrength,
+                0,
+                1,
+                Shared.PMNDRS_TWEAK_DEFAULTS.lutStrength
+            );
+        }
         if (controls.pmndrsVignetteDarkness) {
             controls.pmndrsVignetteDarkness.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsVignetteDarkness : 0.5, 0, 1, 0.5);
         }
@@ -833,7 +861,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     bindEngineTab(controls.postFxEngineTabLegacy);
     bindEngineTab(controls.postFxEngineTabPmndrs);
-    [controls.pmndrsBloomIntensity, controls.pmndrsBloomThreshold, controls.pmndrsExposure, controls.pmndrsVignetteDarkness, controls.pmndrsNoiseOpacity, controls.pmndrsChromaticAberrationOffset, controls.pmndrsAtmospherePresetIntensity].forEach(function (el) {
+    [controls.pmndrsBloomIntensity, controls.pmndrsBloomThreshold, controls.pmndrsExposure, controls.pmndrsLutStrength, controls.pmndrsVignetteDarkness, controls.pmndrsNoiseOpacity, controls.pmndrsChromaticAberrationOffset, controls.pmndrsAtmospherePresetIntensity].forEach(function (el) {
         if (el) {
             el.addEventListener('input', updatePmndrsValueLabels);
         }
@@ -903,6 +931,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (controls.pmndrsVignette) {
         controls.pmndrsVignette.addEventListener('change', syncCompilePostFxState);
     }
+    if (controls.pmndrsLut) {
+        controls.pmndrsLut.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.pmndrsLutLook) {
+        controls.pmndrsLutLook.addEventListener('change', syncCompilePostFxState);
+    }
     if (controls.pmndrsNoise) {
         controls.pmndrsNoise.addEventListener('change', syncCompilePostFxState);
     }
@@ -946,6 +980,9 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsBloomIntensity) c.pmndrsBloomIntensity.value = Shared.PMNDRS_TWEAK_DEFAULTS.bloomIntensity;
             if (c.pmndrsBloomThreshold) c.pmndrsBloomThreshold.value = Shared.PMNDRS_TWEAK_DEFAULTS.bloomThreshold;
             if (c.pmndrsExposure) c.pmndrsExposure.value = Shared.PMNDRS_TWEAK_DEFAULTS.toneMappingExposure;
+            if (c.pmndrsLut) c.pmndrsLut.checked = Shared.PMNDRS_TWEAK_DEFAULTS.lutEnabled;
+            if (c.pmndrsLutLook) c.pmndrsLutLook.value = Shared.PMNDRS_TWEAK_DEFAULTS.lutLook;
+            if (c.pmndrsLutStrength) c.pmndrsLutStrength.value = Shared.PMNDRS_TWEAK_DEFAULTS.lutStrength;
             if (c.pmndrsVignette) c.pmndrsVignette.checked = Shared.PMNDRS_TWEAK_DEFAULTS.vignetteEnabled;
             if (c.pmndrsVignetteDarkness) c.pmndrsVignetteDarkness.value = Shared.PMNDRS_TWEAK_DEFAULTS.vignetteDarkness;
             if (c.pmndrsNoise) c.pmndrsNoise.checked = Shared.PMNDRS_TWEAK_DEFAULTS.noiseEnabled;

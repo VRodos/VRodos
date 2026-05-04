@@ -316,40 +316,91 @@
 
 					<!-- PMNDRS Engine Panes -->
 					<div id="compilePmndrsPane" class="tw-flex tw-flex-col tw-gap-4" style="display:none;">
-						<!-- Card: Camera & Optics Tuning -->
+						<!-- Card: PMNDRS Anti-Aliasing -->
 						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 							<div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
 								<div class="tw-flex tw-items-center tw-gap-2">
-									<i data-lucide="camera" class="tw-w-4 tw-h-4 tw-text-fuchsia-500"></i>
-									<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Camera &amp; Optics</h4>
+									<i data-lucide="scan" class="tw-w-4 tw-h-4 tw-text-fuchsia-500"></i>
+									<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">PMNDRS Anti-Aliasing</h4>
 								</div>
 								<button type="button" id="compilePmndrsResetBtn" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-[10px] tw-text-slate-500 hover:tw-text-emerald-600" title="Reset all Pmndrs tweaks to their default values">
 									<i data-lucide="rotate-ccw" class="tw-w-3 tw-h-3"></i> Reset
 								</button>
 							</div>
 							
+							<div id="compilePmndrsAAWrapper" class="tw-grid tw-grid-cols-2 tw-gap-3">
+								<label class="tw-form-control tw-w-full">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose the PMNDRS anti-aliasing strategy. MSAA is the preferred default when supported; SMAA is the post-process fallback.">AA Method</span>
+									<select id="compilePmndrsAAModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="none">None</option>
+										<option value="smaa">SMAA</option>
+										<option value="msaa">MSAA</option>
+									</select>
+								</label>
+								<label id="compilePmndrsAAPresetWrapper" class="tw-form-control tw-w-full">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400" title="Quality preset for the selected PMNDRS anti-aliasing method.">AA Preset</span>
+									<select id="compilePmndrsAAPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="low">Low</option>
+										<option value="medium">Medium</option>
+										<option value="high">High</option>
+										<option value="ultra">Ultra</option>
+									</select>
+								</label>
+							</div>
+						</div>
+
+						<!-- Card: PMNDRS Exposure & Color -->
+						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+							<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+								<i data-lucide="sliders-horizontal" class="tw-w-4 tw-h-4 tw-text-rose-500"></i>
+								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">PMNDRS Exposure &amp; Color</h4>
+							</div>
+
 							<div class="tw-space-y-4">
-								<div id="compilePmndrsAAWrapper" class="tw-space-y-4 tw-pb-4 tw-border-b tw-border-slate-200">
-									<label class="tw-form-control tw-w-full">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose the PMNDRS anti-aliasing strategy. MSAA is the preferred default when supported; SMAA is the post-process fallback.">Anti-Aliasing Method</span>
-										<select id="compilePmndrsAAModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-											<option value="none">None</option>
-											<option value="smaa">SMAA</option>
-											<option value="msaa">MSAA</option>
-										</select>
-									</label>
-									<label id="compilePmndrsAAPresetWrapper" class="tw-form-control tw-w-full">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400" title="Quality preset for the selected PMNDRS anti-aliasing method.">AA Preset</span>
-										<select id="compilePmndrsAAPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-											<option value="low">Low</option>
-											<option value="medium">Medium</option>
-											<option value="high">High</option>
-											<option value="ultra">Ultra</option>
-										</select>
-									</label>
+								<div>
+									<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Tone-mapping exposure multiplier applied before ACES Filmic.">Tone Map Exposure</span>
+										<span id="compilePmndrsExposureValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+									</div>
+									<input id="compilePmndrsExposureSlider" type="range" min="0.3" max="2.5" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 								</div>
 
-								<!-- Bloom Modifiers Wrapper -->
+								<div class="tw-pt-2 tw-border-t tw-border-slate-200">
+									<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-mb-2">
+										<input id="compilePmndrsLutToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Apply a built-in PMNDRS 3D lookup-table color look.">Built-In LUT Look</span>
+									</label>
+									<div id="compilePmndrsLutWrapper" class="tw-space-y-3">
+										<label class="tw-form-control">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Look</span>
+											<select id="compilePmndrsLutLookSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+												<option value="neutral">Neutral</option>
+												<option value="warm-film">Warm Film</option>
+												<option value="cool-clarity">Cool Clarity</option>
+												<option value="cinematic-contrast">Cinematic Contrast</option>
+												<option value="soft-fade">Soft Fade</option>
+											</select>
+										</label>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Look Strength</span>
+												<span id="compilePmndrsLutStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+											</div>
+											<input id="compilePmndrsLutStrengthSlider" type="range" min="0" max="1" step="0.02" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Card: PMNDRS Bloom & Lens -->
+						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+							<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+								<i data-lucide="camera" class="tw-w-4 tw-h-4 tw-text-violet-500"></i>
+								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">PMNDRS Bloom &amp; Lens</h4>
+							</div>
+
+							<div class="tw-space-y-4">
 								<div id="compilePmndrsBloomWrapper" class="tw-space-y-4">
 									<div>
 										<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
@@ -366,14 +417,6 @@
 										</div>
 										<input id="compilePmndrsBloomThresholdSlider" type="range" min="0" max="1" step="0.01" value="0.62" class="tw-range tw-range-primary tw-range-xs">
 									</div>
-								</div>
-
-								<div class="tw-border-t tw-border-slate-200 tw-pt-2">
-									<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Tone-mapping exposure multiplier applied before ACES Filmic.">Tone Map Exposure</span>
-										<span id="compilePmndrsExposureValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
-									</div>
-									<input id="compilePmndrsExposureSlider" type="range" min="0.3" max="2.5" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 								</div>
 
 								<div class="tw-pt-2 tw-border-t tw-border-slate-200">

@@ -5620,6 +5620,11 @@ input.tw-tab:checked + .tw-tab-content,
   color: rgb(255 255 255 / 0.9);
 }
 
+.vrodos-manager-wrapper .tw-text-violet-500 {
+  --tw-text-opacity: 1;
+  color: rgb(139 92 246 / var(--tw-text-opacity, 1));
+}
+
 .vrodos-manager-wrapper .tw-no-underline {
   text-decoration-line: none;
 }

@@ -78,6 +78,13 @@ VRodosCompileUI.PostFX = (function () {
         return 'inherit';
     }
 
+    function normalizePmndrsLutLook(value) {
+        if (value === 'neutral' || value === 'warm-film' || value === 'cool-clarity' || value === 'cinematic-contrast' || value === 'soft-fade') {
+            return value;
+        }
+        return 'neutral';
+    }
+
     // --- UI State Management ---
 
     function updateUI(controls, postFxEnabled, isPmndrs, isBloomEnabled) {
@@ -136,6 +143,20 @@ VRodosCompileUI.PostFX = (function () {
             controls.pmndrsExposure.disabled = !pmndrsTweakEnabled;
         }
 
+        var isPmndrsLutEnabled = controls.pmndrsLut && controls.pmndrsLut.checked;
+        if (controls.pmndrsLutWrapper) {
+            controls.pmndrsLutWrapper.style.display = isPmndrsLutEnabled ? '' : 'none';
+        }
+        if (controls.pmndrsLut) {
+            controls.pmndrsLut.disabled = !pmndrsTweakEnabled;
+        }
+        if (controls.pmndrsLutLook) {
+            controls.pmndrsLutLook.disabled = !pmndrsTweakEnabled || !isPmndrsLutEnabled;
+        }
+        if (controls.pmndrsLutStrength) {
+            controls.pmndrsLutStrength.disabled = !pmndrsTweakEnabled || !isPmndrsLutEnabled;
+        }
+
         var isPmndrsVignetteEnabled = controls.pmndrsVignette && controls.pmndrsVignette.checked;
         if (controls.pmndrsVignetteWrapper) {
             controls.pmndrsVignetteWrapper.style.display = isPmndrsVignetteEnabled ? '' : 'none';
@@ -179,6 +200,9 @@ VRodosCompileUI.PostFX = (function () {
         }
         if (controls.pmndrsExposure && controls.pmndrsExposureValue) {
             controls.pmndrsExposureValue.textContent = Shared.formatNumber(parseFloat(controls.pmndrsExposure.value));
+        }
+        if (controls.pmndrsLutStrength && controls.pmndrsLutStrengthValue) {
+            controls.pmndrsLutStrengthValue.textContent = Shared.formatNumber(parseFloat(controls.pmndrsLutStrength.value));
         }
         if (controls.pmndrsVignetteDarkness && controls.pmndrsVignetteDarknessValue) {
             controls.pmndrsVignetteDarknessValue.textContent = Shared.formatNumber(parseFloat(controls.pmndrsVignetteDarkness.value));
@@ -224,6 +248,15 @@ VRodosCompileUI.PostFX = (function () {
         if (controls.pmndrsExposure) {
             envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(controls.pmndrsExposure.value, 0.3, 2.5, d.toneMappingExposure);
         }
+        if (controls.pmndrsLut) {
+            envir.scene.aframePmndrsLutEnabled = controls.pmndrsLut.checked === true;
+        }
+        if (controls.pmndrsLutLook) {
+            envir.scene.aframePmndrsLutLook = normalizePmndrsLutLook(controls.pmndrsLutLook.value);
+        }
+        if (controls.pmndrsLutStrength) {
+            envir.scene.aframePmndrsLutStrength = Shared.clampNumber(controls.pmndrsLutStrength.value, 0, 1, d.lutStrength);
+        }
         if (controls.pmndrsVignette) {
             envir.scene.aframePmndrsVignetteEnabled = controls.pmndrsVignette.checked === true;
         }
@@ -255,6 +288,7 @@ VRodosCompileUI.PostFX = (function () {
         normalizeSSRStrength: normalizeSSRStrength,
         normalizePmndrsAAMode: normalizePmndrsAAMode,
         normalizePmndrsAAPreset: normalizePmndrsAAPreset,
+        normalizePmndrsLutLook: normalizePmndrsLutLook,
         updateUI: updateUI,
         updateValueLabels: updateValueLabels,
         syncToScene: syncToScene

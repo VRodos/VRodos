@@ -836,6 +836,10 @@ class VRodos_Compiler_Manager {
 		$pmndrs_vignette_enabled = isset( $metadata->aframePmndrsVignetteEnabled ) && filter_var( $metadata->aframePmndrsVignetteEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
 		$pmndrs_vignette_darkness = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsVignetteDarkness ?? 0.5 ) ) );
 		$pmndrs_tone_mapping_exposure = max( 0.3, min( 2.5, (float) ( $metadata->aframePmndrsToneMappingExposure ?? 1.0 ) ) );
+		$pmndrs_lut_enabled = isset( $metadata->aframePmndrsLutEnabled ) && filter_var( $metadata->aframePmndrsLutEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$pmndrs_lut_look_raw = $metadata->aframePmndrsLutLook ?? 'neutral';
+		$pmndrs_lut_look = in_array( $pmndrs_lut_look_raw, [ 'neutral', 'warm-film', 'cool-clarity', 'cinematic-contrast', 'soft-fade' ], true ) ? $pmndrs_lut_look_raw : 'neutral';
+		$pmndrs_lut_strength = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsLutStrength ?? 1.0 ) ) );
 		$pmndrs_noise_enabled = isset( $metadata->aframePmndrsNoiseEnabled ) && filter_var( $metadata->aframePmndrsNoiseEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
 		$pmndrs_noise_opacity = max( 0.0, min( 0.2, (float) ( $metadata->aframePmndrsNoiseOpacity ?? 0.04 ) ) );
 		$pmndrs_chromatic_aberration_enabled = isset( $metadata->aframePmndrsChromaticAberrationEnabled ) && filter_var( $metadata->aframePmndrsChromaticAberrationEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
@@ -858,6 +862,7 @@ class VRodos_Compiler_Manager {
 			"; pmndrsBloomIntensity: $pmndrs_bloom_intensity; pmndrsBloomThreshold: $pmndrs_bloom_threshold" .
 			"; pmndrsVignetteEnabled: $pmndrs_vignette_enabled; pmndrsVignetteDarkness: $pmndrs_vignette_darkness" .
 			"; pmndrsToneMappingExposure: $pmndrs_tone_mapping_exposure" .
+			"; pmndrsLutEnabled: $pmndrs_lut_enabled; pmndrsLutLook: $pmndrs_lut_look; pmndrsLutStrength: $pmndrs_lut_strength" .
 			"; pmndrsNoiseEnabled: $pmndrs_noise_enabled; pmndrsNoiseOpacity: $pmndrs_noise_opacity" .
 			"; pmndrsChromaticAberrationEnabled: $pmndrs_chromatic_aberration_enabled; pmndrsChromaticAberrationOffset: $pmndrs_chromatic_aberration_offset" .
 			"; pmndrsAtmosphereEnabled: $pmndrs_atmosphere_enabled; pmndrsAtmospherePreset: $pmndrs_atmosphere_preset" .

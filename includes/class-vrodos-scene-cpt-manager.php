@@ -328,6 +328,10 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsVignetteEnabled'] = $json_metadata->aframePmndrsVignetteEnabled ?? false;
 		$scene_data['aframePmndrsVignetteDarkness'] = isset( $json_metadata->aframePmndrsVignetteDarkness ) ? (float) $json_metadata->aframePmndrsVignetteDarkness : 0.5;
 		$scene_data['aframePmndrsToneMappingExposure'] = isset( $json_metadata->aframePmndrsToneMappingExposure ) ? (float) $json_metadata->aframePmndrsToneMappingExposure : 1.0;
+		$scene_data['aframePmndrsLutEnabled'] = $json_metadata->aframePmndrsLutEnabled ?? false;
+		$pmndrs_lut_look_raw = $json_metadata->aframePmndrsLutLook ?? 'neutral';
+		$scene_data['aframePmndrsLutLook'] = in_array( $pmndrs_lut_look_raw, [ 'neutral', 'warm-film', 'cool-clarity', 'cinematic-contrast', 'soft-fade' ], true ) ? $pmndrs_lut_look_raw : 'neutral';
+		$scene_data['aframePmndrsLutStrength'] = isset( $json_metadata->aframePmndrsLutStrength ) ? (float) $json_metadata->aframePmndrsLutStrength : 1.0;
 		$scene_data['aframePmndrsNoiseEnabled'] = $json_metadata->aframePmndrsNoiseEnabled ?? false;
 		$scene_data['aframePmndrsNoiseOpacity'] = isset( $json_metadata->aframePmndrsNoiseOpacity ) ? (float) $json_metadata->aframePmndrsNoiseOpacity : 0.04;
 		$scene_data['aframePmndrsChromaticAberrationEnabled'] = $json_metadata->aframePmndrsChromaticAberrationEnabled ?? false;

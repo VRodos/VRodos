@@ -61,6 +61,9 @@ AFRAME.registerComponent('scene-settings', {
         pmndrsVignetteEnabled: { type: "string", default: "0" },
         pmndrsVignetteDarkness: { type: "string", default: "0.5" },
         pmndrsToneMappingExposure: { type: "string", default: "1.0" },
+        pmndrsLutEnabled: { type: "string", default: "0" },
+        pmndrsLutLook: { type: "string", default: "neutral" },
+        pmndrsLutStrength: { type: "string", default: "1.0" },
         pmndrsNoiseEnabled: { type: "string", default: "0" },
         pmndrsNoiseOpacity: { type: "string", default: "0.04" },
         pmndrsChromaticAberrationEnabled: { type: "string", default: "0" },
@@ -451,6 +454,7 @@ AFRAME.registerComponent('scene-settings', {
             this.isPostFXOptionEnabled('postFXColorEnabled') ||
             this.isLegacyEdgeAAEnabled() ||
             this.isPmndrsAAEnabled() ||
+            (this.data.postFXEngine === 'pmndrs' && (this.data.pmndrsLutEnabled === 'true' || this.data.pmndrsLutEnabled === '1')) ||
             (this.data.postFXEngine === 'pmndrs' && (this.data.pmndrsVignetteEnabled === 'true' || this.data.pmndrsVignetteEnabled === '1')) ||
             (this.data.postFXEngine === 'pmndrs' && (this.data.pmndrsNoiseEnabled === 'true' || this.data.pmndrsNoiseEnabled === '1')) ||
             (this.data.postFXEngine === 'pmndrs' && (this.data.pmndrsChromaticAberrationEnabled === 'true' || this.data.pmndrsChromaticAberrationEnabled === '1')) ||
@@ -461,6 +465,7 @@ AFRAME.registerComponent('scene-settings', {
             this.isPostFXOptionEnabled('postFXColorEnabled') ||
             this.isLegacyEdgeAAEnabled() ||
             this.isPmndrsAAEnabled() ||
+            (this.data.postFXEngine === 'pmndrs' && (this.data.pmndrsLutEnabled === 'true' || this.data.pmndrsLutEnabled === '1')) ||
             (this.data.postFXEngine === 'pmndrs' && (this.data.pmndrsVignetteEnabled === 'true' || this.data.pmndrsVignetteEnabled === '1')) ||
             (this.data.postFXEngine === 'pmndrs' && (this.data.pmndrsNoiseEnabled === 'true' || this.data.pmndrsNoiseEnabled === '1')) ||
             (this.data.postFXEngine === 'pmndrs' && (this.data.pmndrsChromaticAberrationEnabled === 'true' || this.data.pmndrsChromaticAberrationEnabled === '1')) ||
