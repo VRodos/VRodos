@@ -37,7 +37,7 @@ The build writes:
 
 - `legacy` is the original custom VRodos pipeline
 - `pmndrs` is the composer-based pipeline built on `pmndrs/postprocessing`
-- PMNDRS and N8AO globals are exported by `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`; there is no separate `postprocessing.min.js` runtime file
+- PMNDRS globals are exported by `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`; there is no separate `postprocessing.min.js` runtime file
 - scenes select one engine through `postFXEngine`
 - the two engines are intentionally isolated and do not share render targets or passes
 
@@ -74,7 +74,7 @@ It currently provides:
 
 - `EffectComposer` / `EffectPass`-based rendering
 - PMNDRS AA modes: `none`, `smaa`, `msaa`
-- ambient occlusion through the shared AO presets, implemented with bundled `N8AOPostPass`
+- ambient occlusion through the shared AO presets, implemented with native `POSTPROCESSING.SSAOEffect`
 - bloom controls
 - tone-mapping exposure control
 - vignette controls
@@ -149,7 +149,7 @@ These are intentional or known current-state limitations, not future tense place
 
 - PMNDRS does not provide SSR in VRodos today
 - PMNDRS does not provide TAA in VRodos today
-- PMNDRS ambient occlusion uses `N8AOPostPass` instead of `POSTPROCESSING.SSAOEffect` because the native SSAO path previously conflicted with the pinned A-Frame/Three depth/normal attachment path, most visibly during Horizon/Takram testing
+- PMNDRS ambient occlusion uses native `POSTPROCESSING.SSAOEffect`; the earlier alternate AO fallback was removed after native SSAO retesting passed visual smoke
 - PMNDRS composer MSAA is disabled when ambient occlusion is active; use SMAA for PMNDRS AO scenes
 - PMNDRS `AerialPerspectiveEffect` is skipped for Horizon backgrounds on the current runtime because that path still triggers depth-blit errors and visual artifacts
 
@@ -167,27 +167,24 @@ Only live follow-up work belongs here.
 
 Goal:
 
-- refine the N8AO preset mapping after visual testing across representative scenes
+- refine the native SSAO preset mapping after visual testing across representative scenes
 
 Current baseline:
 
 - keep the existing shared AO preset UI as the toggle surface
-- use the VRodos natural N8AO profile baseline for the shared presets: `soft` = Low/radius 0.9/falloff 0.55/intensity 1.1, `balanced` = Medium/radius 1.6/falloff 0.62/intensity 1.75, `strong` = High/radius 2.8/falloff 0.72/intensity 2.6; all three remain full-resolution with two denoise iterations
-- keep the PMNDRS stability constraints in place: AO disables composer MSAA, and N8AO transparency auto-detection remains off by default
-- raw N8AO defaults are documented as too hard for current Horizon scenes because radius 5 and intensity 5+ can create long dark streaks on thin geometry
-- adjust N8AO radius, falloff, intensity, and quality settings only after visual smoke testing across representative Horizon and non-Horizon scenes
-- avoid returning to `POSTPROCESSING.SSAOEffect` unless its depth path is proven stable on the pinned runtime
+- use the native SSAO preset ladder documented in `RENDERING_PIPELINE.md`
+- keep the PMNDRS stability constraint in place: AO disables composer MSAA
+- adjust native SSAO radius, intensity, sample count, and resolution only after visual smoke testing across representative Horizon and non-Horizon scenes
 
-### 2. Re-test native PMNDRS `SSAOEffect`
+### 2. Continue validating native PMNDRS `SSAOEffect`
 
 Goal:
 
-- determine whether native `POSTPROCESSING.SSAOEffect` can be restored later for the PMNDRS engine
+- keep native `POSTPROCESSING.SSAOEffect` stable as the PMNDRS AO backend
 
 Current blocker:
 
-- the previous attempt hit an A-Frame/Three depth/normal attachment blit conflict while testing Horizon/Takram scenes
-- a retry should isolate normal/depth buffers inside `vrodos_postprocessing_pmndrs.js` and include Horizon plus non-Horizon smoke scenes before replacing `N8AOPostPass`
+- native SSAO should continue to be smoke-tested in Horizon and non-Horizon scenes whenever the PMNDRS pass order changes
 
 ### 3. Revisit Horizon `AerialPerspectiveEffect`
 

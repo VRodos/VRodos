@@ -24,7 +24,6 @@ class VRodos_Render_Runtime_Manager {
 		$aframe   = is_array( $manifest['aframe'] ?? null ) ? $manifest['aframe'] : [];
 		$three    = is_array( $manifest['three'] ?? null ) ? $manifest['three'] : [];
 		$postfx   = is_array( $manifest['postprocessing'] ?? null ) ? $manifest['postprocessing'] : [];
-		$n8ao     = is_array( $manifest['n8ao'] ?? null ) ? $manifest['n8ao'] : [];
 		$takram   = is_array( $manifest['takram'] ?? null ) ? $manifest['takram'] : [];
 
 		return [
@@ -37,7 +36,6 @@ class VRodos_Render_Runtime_Manager {
 			'three_vendor_dir' => self::string_value( $three, 'vendorDir', self::FALLBACK_THREE_VENDOR_DIR ),
 			'three_vendor_bundle' => self::string_value( $three, 'bundleFile', self::FALLBACK_THREE_VENDOR_BUNDLE ),
 			'postprocessing_version' => self::string_value( $postfx, 'version', '' ),
-			'n8ao_version' => self::string_value( $n8ao, 'version', '' ),
 			'takram_atmosphere_version' => self::string_value( $takram, 'atmosphereVersion', '' ),
 			'takram_clouds_version' => self::string_value( $takram, 'cloudsVersion', '' ),
 			'takram_bundle' => self::string_value( $takram, 'bundleFile', 'vrodos-takram-atmosphere.bundle.js' ),

@@ -19,11 +19,11 @@
  *   - SMAAEffect           (pmndrsAAMode === 'smaa')
  *
  * Effects inserted as standalone pmndrs-compatible passes:
- *   - N8AOPostPass         (ambientOcclusionPreset !== 'off')
+ *   - NormalPass           (ambientOcclusionPreset !== 'off', native SSAO support pass)
  *
  * Multisample AA is applied at the composer level when
  * pmndrsAAMode === 'msaa', WebGL2 multisampling is available, and
- * N8AO is not active.
+ * ambient occlusion is not active.
  *
  * NOT supported in this engine — scenes that need these stay on postFXEngine='legacy':
  *   - SSR  (no actively-maintained pmndrs-compatible SSR effect in this VRodos pipeline)
@@ -39,49 +39,52 @@
     var H = VRODOSMaster.PmndrsHelpers = VRODOSMaster.PmndrsHelpers || {};
 
     /**
-     * Convert the shared ambientOcclusionPreset string to N8AO settings.
+     * Convert the shared ambientOcclusionPreset string to native PMNDRS SSAOEffect settings.
      */
-    function n8aoOptionsForPreset(preset) {
+    function nativeSsaoOptionsForPreset(PP, preset) {
+        var blendFunction = (PP && PP.BlendFunction) ? PP.BlendFunction.MULTIPLY : undefined;
         var defaults = {
-            halfRes: false,
-            denoiseIterations: 2,
-            screenSpaceRadius: false
+            blendFunction: blendFunction,
+            distanceScaling: true,
+            depthAwareUpsampling: true,
+            depthAwareUpsamplingThreshold: 0.997,
+            distanceThreshold: 0.02,
+            distanceFalloff: 0.0025,
+            rangeThreshold: 0.0003,
+            rangeFalloff: 0.0001,
+            luminanceInfluence: 0.7,
+            minRadiusScale: 0.33,
+            bias: 0.025,
+            fade: 0.01
         };
 
         switch (preset) {
             case 'soft':
-                return Object.assign({}, defaults, { quality: 'Low', aoRadius: 0.9, distanceFalloff: 0.55, intensity: 1.1 });
+                return Object.assign({}, defaults, {
+                    samples: 9,
+                    rings: 7,
+                    radius: 0.06,
+                    intensity: 1.33,
+                    resolutionScale: 0.5
+                });
             case 'strong':
-                return Object.assign({}, defaults, { quality: 'High', aoRadius: 2.8, distanceFalloff: 0.72, intensity: 2.6 });
+                return Object.assign({}, defaults, {
+                    samples: 32,
+                    rings: 7,
+                    radius: 0.06,
+                    intensity: 2.01,
+                    resolutionScale: 1.0
+                });
             case 'balanced':
             default:
-                return Object.assign({}, defaults, { quality: 'Medium', aoRadius: 1.6, distanceFalloff: 0.62, intensity: 1.75 });
+                return Object.assign({}, defaults, {
+                    samples: 20,
+                    rings: 7,
+                    radius: 0.06,
+                    intensity: 1.67,
+                    resolutionScale: 0.75
+                });
         }
-    }
-
-    function configureN8AOPostPass(pass, preset, THREE) {
-        var options = n8aoOptionsForPreset(preset);
-
-        if (!pass || !pass.configuration) {
-            return;
-        }
-
-        if (typeof pass.setQualityMode === 'function') {
-            pass.setQualityMode(options.quality);
-        }
-
-        pass.configuration.screenSpaceRadius = options.screenSpaceRadius;
-        pass.configuration.aoRadius = options.aoRadius;
-        pass.configuration.distanceFalloff = options.distanceFalloff;
-        pass.configuration.intensity = options.intensity;
-        pass.configuration.halfRes = options.halfRes;
-        pass.configuration.depthAwareUpsampling = true;
-        pass.configuration.denoiseIterations = options.denoiseIterations;
-        pass.configuration.gammaCorrection = false;
-        pass.configuration.accumulate = false;
-        pass.autoDetectTransparency = false;
-        pass.configuration.transparencyAware = false;
-        pass.configuration.color = new THREE.Color(0, 0, 0);
     }
 
     /**
@@ -254,6 +257,10 @@
         return !!(self && typeof self.getAmbientOcclusionPreset === 'function' && self.getAmbientOcclusionPreset() !== 'off');
     }
 
+    function getPmndrsAmbientOcclusionBackend(self) {
+        return isPmndrsAmbientOcclusionEnabled(self) ? 'native-ssao' : 'off';
+    }
+
     function getPmndrsRequestedMultisampling(self, renderer) {
         var requestedSamples = 0;
         var maxSamples = 0;
@@ -312,6 +319,7 @@
         var smaaPreset = getPmndrsSmaaPreset(self, PP);
         return getPmndrsAtmosphereModeSignature(self, atmosphereConfig) +
             '|ao:' + ((self && typeof self.getAmbientOcclusionPreset === 'function') ? self.getAmbientOcclusionPreset() : 'off') +
+            '|aoBackend:' + getPmndrsAmbientOcclusionBackend(self) +
             '|aaMode:' + getPmndrsAAMode(self) +
             '|aaPreset:' + getPmndrsAAPreset(self) +
             '|msaa:' + getPmndrsRequestedMultisampling(self, renderer) +
@@ -899,7 +907,7 @@
             'smaa preset: ' + ((self && self._pmndrsAppliedSmaaPreset !== null && self._pmndrsAppliedSmaaPreset !== undefined) ? self._pmndrsAppliedSmaaPreset : 'off'),
             'composer: ' + (self && self.pmndrsComposer ? 'yes' : 'no'),
             'effect pass: ' + (self && self.pmndrsEffectPass ? 'yes' : 'no'),
-            'ao: ' + (self && self.pmndrsSsaoEffect ? 'n8ao' : 'off'),
+            'ao: ' + (self && self.pmndrsNativeSsaoEffect ? 'native-ssao' : 'off'),
             'bloom: ' + (self && self.pmndrsBloomEffect ? 'yes' : 'no'),
             'lut: ' + (self && self.pmndrsLutEffect ? normalizePmndrsLutLook(self.data.pmndrsLutLook) : 'off'),
             'noise: ' + (self && self.pmndrsNoiseEffect ? 'yes' : 'off'),
@@ -924,43 +932,16 @@
         return 'atmosphere:world';
     }
 
-    function disposeN8AOPostPass(pass) {
-        if (!pass) {
+    function disposePmndrsNativeSsaoResources(self) {
+        if (!self) {
             return;
         }
 
-        [
-            pass.writeTargetInternal,
-            pass.readTargetInternal,
-            pass.outputTargetInternal,
-            pass.accumulationRenderTarget,
-            pass.depthDownsampleTarget,
-            pass.transparencyRenderTargetDWFalse,
-            pass.transparencyRenderTargetDWTrue
-        ].forEach(function (target) {
-            if (target && typeof target.dispose === 'function') {
-                target.dispose();
-            }
-        });
-
-        [
-            pass.copyQuad,
-            pass.accumulationQuad,
-            pass.depthDownsampleQuad,
-            pass.depthCopyPass,
-            pass.effectShaderQuad,
-            pass.poissonBlurQuad,
-            pass.effectCompositerQuad
-        ].forEach(function (quad) {
-            if (quad && typeof quad.dispose === 'function') {
-                quad.dispose();
-            } else if (quad && quad.material && typeof quad.material.dispose === 'function') {
-                quad.material.dispose();
-            }
-        });
-
-        if (pass.bluenoise && typeof pass.bluenoise.dispose === 'function') {
-            pass.bluenoise.dispose();
+        if (self.pmndrsNativeSsaoEffect && typeof self.pmndrsNativeSsaoEffect.dispose === 'function') {
+            self.pmndrsNativeSsaoEffect.dispose();
+        }
+        if (self.pmndrsNativeNormalPass && typeof self.pmndrsNativeNormalPass.dispose === 'function') {
+            self.pmndrsNativeNormalPass.dispose();
         }
     }
 
@@ -969,7 +950,7 @@
             return;
         }
 
-        disposeN8AOPostPass(self.pmndrsSsaoEffect);
+        disposePmndrsNativeSsaoResources(self);
 
         if (self.pmndrsComposer) {
             try {
@@ -982,7 +963,8 @@
         self.pmndrsComposer = null;
         self.pmndrsRenderPass = null;
         self.pmndrsEffectPass = null;
-        self.pmndrsSsaoEffect = null;
+        self.pmndrsNativeNormalPass = null;
+        self.pmndrsNativeSsaoEffect = null;
         self.pmndrsBloomEffect = null;
         self.pmndrsSmaaEffect = null;
         if (self.pmndrsLutTexture && typeof self.pmndrsLutTexture.dispose === 'function') {
@@ -1159,25 +1141,30 @@
         }
 
         // SSAO through the shared ambientOcclusionPreset control.
-        // N8AOPostPass is used instead of POSTPROCESSING.SSAOEffect because it
-        // is compatible with pmndrs/postprocessing and does not trigger the
-        // depth attachment blit conflict seen on the previous SSAOEffect path.
+        // Native POSTPROCESSING.SSAOEffect is the default PMNDRS AO backend.
         var aoPreset = (typeof this.getAmbientOcclusionPreset === 'function') ? this.getAmbientOcclusionPreset() : 'off';
-        this.pmndrsSsaoEffect = null;
+        this.pmndrsNativeNormalPass = null;
+        this.pmndrsNativeSsaoEffect = null;
         if (aoPreset && aoPreset !== 'off') {
-            if (typeof window.N8AOPostPass === 'function') {
+            if (PP.NormalPass && PP.SSAOEffect) {
                 try {
-                    this.pmndrsSsaoEffect = new window.N8AOPostPass(scene, camera, Math.max(1, w), Math.max(1, h));
-                    configureN8AOPostPass(this.pmndrsSsaoEffect, aoPreset, THREE);
-                    composer.addPass(this.pmndrsSsaoEffect);
+                    var nativeSsaoOptions = nativeSsaoOptionsForPreset(PP, aoPreset);
+                    this.pmndrsNativeNormalPass = new PP.NormalPass(scene, camera, { resolutionScale: 1.0 });
+                    composer.addPass(this.pmndrsNativeNormalPass);
+                    this.pmndrsNativeSsaoEffect = new PP.SSAOEffect(camera, this.pmndrsNativeNormalPass.texture, nativeSsaoOptions);
+                    if (this.pmndrsNativeSsaoEffect.defines && this.pmndrsNativeSsaoEffect.defines.set) {
+                        this.pmndrsNativeSsaoEffect.defines.set('THRESHOLD', String(nativeSsaoOptions.depthAwareUpsamplingThreshold));
+                    }
+                    effects.push(this.pmndrsNativeSsaoEffect);
                 } catch (err) {
-                    console.warn('[VRodos] pmndrs N8AO construction failed, skipping AO:', err);
-                    disposeN8AOPostPass(this.pmndrsSsaoEffect);
-                    this.pmndrsSsaoEffect = null;
+                    console.warn('[VRodos] pmndrs native SSAOEffect construction failed, skipping AO:', err);
+                    disposePmndrsNativeSsaoResources(this);
+                    this.pmndrsNativeNormalPass = null;
+                    this.pmndrsNativeSsaoEffect = null;
                 }
-            } else if (!this._pmndrsSsaoSkipWarned) {
-                console.info('[VRodos] pmndrs pipeline: AO preset "' + aoPreset + '" requested but window.N8AOPostPass is not loaded.');
-                this._pmndrsSsaoSkipWarned = true;
+            } else if (!this._pmndrsNativeSsaoSkipWarned) {
+                console.info('[VRodos] pmndrs pipeline: AO preset "' + aoPreset + '" requested but POSTPROCESSING.NormalPass/SSAOEffect is not loaded.');
+                this._pmndrsNativeSsaoSkipWarned = true;
             }
         }
 
@@ -1357,8 +1344,6 @@
         this._pmndrsLastH = 0;
 
         // Reserved for future adaptive AO tuning.
-        // N8AOPostPass remains stable frame-to-frame for now rather than being
-        // toggled half-rate.
         this._pmndrsAdaptive = {
             halfRate: false,
             frameCounter: 0,
@@ -1430,8 +1415,11 @@
                 if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== 'undefined') {
                     self.pmndrsEffectPass.mainCamera = camera;
                 }
-                if (self.pmndrsSsaoEffect && typeof self.pmndrsSsaoEffect.camera !== 'undefined') {
-                    self.pmndrsSsaoEffect.camera = camera;
+                if (self.pmndrsNativeNormalPass && typeof self.pmndrsNativeNormalPass.mainCamera !== 'undefined') {
+                    self.pmndrsNativeNormalPass.mainCamera = camera;
+                }
+                if (self.pmndrsNativeSsaoEffect && typeof self.pmndrsNativeSsaoEffect.mainCamera !== 'undefined') {
+                    self.pmndrsNativeSsaoEffect.mainCamera = camera;
                 }
                 if (self.pmndrsAerialPerspectiveEffect && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== 'undefined') {
                     self.pmndrsAerialPerspectiveEffect.mainCamera = camera;
@@ -1486,9 +1474,8 @@
     };
 
     /**
-     * Reserved for future adaptive PMNDRS AO tuning. N8AOPostPass owns its own
-     * render pass and accumulation behavior, so the old SSAOEffect opacity
-     * modulation path is intentionally disabled.
+     * Reserved for future adaptive PMNDRS AO tuning. Native SSAOEffect is kept
+     * deterministic for now.
      */
     H._updatePmndrsAdaptiveAO = function () {};
 

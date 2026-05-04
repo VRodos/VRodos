@@ -27,7 +27,6 @@
     "daisyui": "^4.12.24",
     "esbuild": "^0.28.0",
     "eslint": "^10.2.1",
-    "n8ao": "^1.10.1",
     "postcss": "^8.5.12",
     "postprocessing": "^6.39.1",
     "prettier": "^3.8.3",

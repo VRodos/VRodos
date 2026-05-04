@@ -7,7 +7,7 @@ Canonical reference for the compiled A-Frame scene rendering stack on the curren
 Compiled scenes support two mutually exclusive post-processing engines selected per scene by `scene-settings.postFXEngine`:
 
 - `legacy`: VRodos custom render-target pipeline with SAO, SSR, bloom, color grading, FXAA, and TAA.
-- `pmndrs`: PMNDRS `EffectComposer` path using bundled `postprocessing`, bundled `n8ao`, and optional Takram atmosphere integration.
+- `pmndrs`: PMNDRS `EffectComposer` path using bundled `postprocessing` and optional Takram atmosphere integration.
 
 Both engines are driven by the `scene-settings` component at `assets/js/runtime/master/components/vrodos_scene_settings.component.js`.
 
@@ -44,8 +44,8 @@ Presentation mode is part of the rendering contract:
 
 | File | Role |
 | --- | --- |
-| `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` | PMNDRS composer construction, effect ordering, AA, N8AO, LUT, runtime debug overlay |
-| `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` | Bundled `window.POSTPROCESSING` and `window.N8AOPostPass` |
+| `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` | PMNDRS composer construction, effect ordering, AA, native SSAO, LUT, runtime debug overlay |
+| `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` | Bundled `window.POSTPROCESSING` |
 | `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js` | Bundled `window.VRODOS_TAKRAM_ATMOSPHERE` |
 
 ## 3. Load Order
@@ -106,8 +106,9 @@ Current PMNDRS ordering:
 ```text
 RenderPass
   -> optional Takram AerialPerspectiveEffect for non-Horizon or debug Horizon aerial path
-  -> optional N8AOPostPass standalone pass
+  -> optional NormalPass for native SSAO
   -> fused EffectPass:
+       SSAOEffect
        BloomEffect
        ToneMappingEffect
        BrightnessContrastEffect
@@ -127,7 +128,19 @@ Composer multisampling is used only when:
 - AO is off.
 - Debug flags have not disabled MSAA.
 
-When AO is active, PMNDRS disables composer MSAA and recommends SMAA because the bundled N8AO path is not stable with hardware multisampling.
+When AO is active, PMNDRS disables composer MSAA and recommends SMAA because the AO paths are not stable with hardware multisampling.
+
+PMNDRS AO backends:
+
+- Default: `POSTPROCESSING.NormalPass` plus `POSTPROCESSING.SSAOEffect`, with `SSAOEffect` merged into the fused `EffectPass`.
+- The PMNDRS debug overlay reports `ao: native-ssao` or `ao: off`.
+
+Native SSAO presets are tuned around the upstream PMNDRS SSAO demo, with `strong` matching the current tested high-quality screenshot values:
+
+- Shared defaults: `distanceThreshold: 0.02`, `distanceFalloff: 0.0025`, `rangeThreshold: 0.0003`, `rangeFalloff: 0.0001`, `luminanceInfluence: 0.7`, `minRadiusScale: 0.33`, `depthAwareUpsamplingThreshold: 0.997`, `bias: 0.025`, `fade: 0.01`.
+- `soft`: `resolutionScale: 0.5`, `samples: 9`, `rings: 7`, `radius: 0.1`, `intensity: 1.33`.
+- `balanced`: `resolutionScale: 0.75`, `samples: 20`, `rings: 7`, `radius: 0.072`, `intensity: 1.67`.
+- `strong`: `resolutionScale: 1.0`, `samples: 32`, `rings: 7`, `radius: 0.045`, `intensity: 2.01`.
 
 ## 6. PMNDRS Built-In LUT Looks
 
@@ -185,7 +198,7 @@ Scene probe capture is an alternate environment source when render quality and p
 
 - Root `package.json` and `package-lock.json` define runtime package intent.
 - `npm run build:three` generates `assets/runtime-version-manifest.json`.
-- `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, N8AO, and Takram metadata.
+- `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, and Takram metadata.
 - The current live vendor bundle is Three.js r181.
 
 ## 10. Future Ideas
@@ -193,7 +206,7 @@ Scene probe capture is an alternate environment source when render quality and p
 These are backlog items, not current implementation requirements:
 
 - Depth of field after an author-facing focus workflow is selected.
-- Native `POSTPROCESSING.SSAOEffect` retry after isolating the depth/normal attachment conflict.
+- Continue validating native `POSTPROCESSING.SSAOEffect` across broader Horizon and non-Horizon scenes.
 - Outline/selective bloom, god rays, tilt shift, pixelation, glitch, and shock wave.
 - Takram stars, date/time sun and moon direction, `SkyLightProbe`, `SunDirectionalLight`, and geospatial helpers.
 - Volumetric clouds after the PMNDRS/Takram baseline remains stable.

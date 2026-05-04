@@ -38,7 +38,6 @@ const aframeConfig = runtimeConfig.aframe ?? {};
 const requiredPackages = [
   'three',
   'postprocessing',
-  'n8ao',
   '@takram/three-atmosphere',
   '@takram/three-clouds',
 ];
@@ -73,7 +72,6 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 // scenes that need those stay on the legacy vrodos_postprocessing.js path.
 // See POSTPROCESSING_MIGRATION_PLAN.md sections 9 and 11 for details.
 import * as POSTPROCESSING from 'postprocessing';
-import { N8AOPostPass } from 'n8ao';
 
 const THREE = window.THREE && typeof window.THREE === 'object' ? window.THREE : {};
 
@@ -100,7 +98,6 @@ Object.assign(THREE, { ...THREEBase }, {
 window.THREE = THREE;
 window.Stats = Stats;
 window.POSTPROCESSING = POSTPROCESSING;
-window.N8AOPostPass = N8AOPostPass;
 `;
 
 async function ensurePathExists(targetPath, label) {
@@ -250,12 +247,10 @@ async function buildPostprocessingRuntimeBundle() {
   await mkdir(runtimeVendorDir, { recursive: true });
   await writeGlobalShim('three', 'window.THREE || {}', threeShimPath);
 
-  const entrySource = `
+const entrySource = `
 import * as POSTPROCESSING from 'postprocessing';
-import { N8AOPostPass } from 'n8ao';
 
 window.POSTPROCESSING = POSTPROCESSING;
-window.N8AOPostPass = N8AOPostPass;
 `;
 
   await writeFile(postprocessingRuntimeEntryPath, entrySource, 'utf8');
@@ -318,7 +313,6 @@ window.VRODOS_TAKRAM_ATMOSPHERE = VRODOSTakramAtmosphere;
 
 async function writeRuntimeManifest() {
   const postprocessingVersion = getLockedPackageVersion('postprocessing');
-  const n8aoVersion = getLockedPackageVersion('n8ao');
   const takramAtmosphereVersion = getLockedPackageVersion('@takram/three-atmosphere');
   const takramCloudsVersion = getLockedPackageVersion('@takram/three-clouds');
 
@@ -342,12 +336,6 @@ async function writeRuntimeManifest() {
     postprocessing: {
       version: postprocessingVersion,
       global: 'POSTPROCESSING',
-      bundleFile: path.basename(postprocessingRuntimeBundlePath),
-      bundlePath: 'assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js',
-    },
-    n8ao: {
-      version: n8aoVersion,
-      global: 'N8AOPostPass',
       bundleFile: path.basename(postprocessingRuntimeBundlePath),
       bundlePath: 'assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js',
     },

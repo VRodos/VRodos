@@ -13,11 +13,11 @@ The project has migrated from a legacy Three.js r173 setup to a pinned A-Frame m
 Completed work:
 
 - Root `package.json` and `package-lock.json` are the source of truth for runtime package versions.
-- `npm run build:three` builds the Three vendor bundle, PMNDRS/N8AO bundle, Takram atmosphere bundle, and `assets/runtime-version-manifest.json`.
+- `npm run build:three` builds the Three vendor bundle, PMNDRS bundle, Takram atmosphere bundle, and `assets/runtime-version-manifest.json`.
 - `includes/class-vrodos-render-runtime-manager.php` reads the manifest and resolves runtime assets.
 - Compiled scenes load `vrodos-postprocessing.bundle.js` and `vrodos-takram-atmosphere.bundle.js`.
 - PMNDRS and Takram bundles alias `three` to A-Frame's `window.THREE` to avoid multiple Three instances.
-- PMNDRS supports SMAA/MSAA, N8AO ambient occlusion, bloom, tone mapping, basic color/contrast grading, built-in LUT looks, vignette, noise, chromatic aberration, and Takram atmosphere.
+- PMNDRS supports SMAA/MSAA, native `SSAOEffect` ambient occlusion, bloom, tone mapping, basic color/contrast grading, built-in LUT looks, vignette, noise, chromatic aberration, and Takram atmosphere.
 - Legacy rendering remains available for SSR and TAA.
 - Obsolete `threejs173` directories, scripts, and hardcoded references have been removed.
 - `RGBELoader` usage has been updated to `HDRLoader`.
@@ -27,8 +27,8 @@ Completed work:
 1. Maintain the r181 baseline before adding larger effects.
 2. Keep one Horizon PMNDRS scene and one non-Horizon PMNDRS scene in manual smoke coverage.
 3. Verify PMNDRS built-in LUT looks in compiled scenes.
-4. Keep `N8AOPostPass` as the stable PMNDRS AO path.
-5. Defer native `SSAOEffect` retry to a separate diagnostic task.
+4. Keep native `SSAOEffect` as the default PMNDRS AO path.
+5. Continue validating native `SSAOEffect` across broader smoke coverage.
 6. Defer depth of field until the author-facing focus workflow is decided.
 7. Keep Takram volumetric clouds in backlog and out of scope for the current phase.
 
@@ -69,6 +69,13 @@ Completed work:
   - `soft-fade`
 - Regrouped PMNDRS compile-dialog controls into anti-aliasing, exposure/color, bloom/lens, and Takram atmosphere cards.
 
+### Native PMNDRS SSAO promotion
+
+- Promoted PMNDRS native AO to the default backend using `POSTPROCESSING.NormalPass` and `POSTPROCESSING.SSAOEffect`.
+- Removed the alternate AO fallback after native SSAO visual smoke passed.
+- Added composer-signature and PMNDRS debug-overlay reporting so AO backend changes are visible during smoke tests.
+- Retuned native SSAO presets around the upstream PMNDRS SSAO demo values and the current high-quality screenshot. The `soft` preset uses the demo defaults, `balanced` interpolates between demo and high, and `strong` uses full-resolution SSAO, `32` samples, radius `0.045`, and intensity `2.01`.
+
 ## Historical Phases Summary
 
 - Phases 1-4: Consolidated plans, removed hardcoded r173 paths, and prepared version-neutral vendor management.
@@ -94,3 +101,4 @@ Manual smoke:
 - PMNDRS scene with LUT strength `0.0`.
 - Horizon PMNDRS scene with Takram atmosphere plus LUT.
 - Non-Horizon PMNDRS scene with LUT, AO, bloom, SMAA/MSAA fallback, noise, and chromatic aberration.
+- Horizon and non-Horizon PMNDRS AO scenes with default native SSAO.

@@ -1,6 +1,6 @@
 // PHASE 0 SMOKE-TEST BUILD — throwaway.
 // Produces a self-contained IIFE bundle combining the current pinned Three
-// runtime subset PLUS pmndrs/postprocessing + n8ao, all
+// runtime subset PLUS pmndrs/postprocessing, all
 // exported onto window globals. Loaded by phase0-pmndrs-smoke-test.html to
 // verify that pmndrs/postprocessing 6.x constructs and renders cleanly
 // against the pinned A-Frame + Three runtime.
@@ -24,13 +24,11 @@ const bundleEntrySource = `
 import * as THREEBase from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import * as POSTPROCESSING from 'postprocessing';
-import { N8AOPostPass } from 'n8ao';
 
 const THREE = window.THREE && typeof window.THREE === 'object' ? window.THREE : {};
 Object.assign(THREE, { ...THREEBase }, { OrbitControls });
 window.THREE = THREE;
 window.POSTPROCESSING = POSTPROCESSING;
-window.N8AOPostPass = N8AOPostPass;
 `;
 
 async function main() {

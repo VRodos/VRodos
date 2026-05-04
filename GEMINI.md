@@ -80,7 +80,7 @@ The server enables real-time collaborative editing.
 
 ### JavaScript/CSS (Frontend)
 - **Full Build:** `npm run build` (runtime vendor bundles, runtime manifest, and Tailwind CSS)
-- **Runtime Vendor Build:** `npm run build:three` (Three, PMNDRS, N8AO, Takram, and `assets/runtime-version-manifest.json`)
+- **Runtime Vendor Build:** `npm run build:three` (Three, PMNDRS, Takram, and `assets/runtime-version-manifest.json`)
 - **CSS Build:** `npm run build:css` (Tailwind)
 - **CSS Watch:** `npm run watch:css`
 - **Linting:** `npm run lint` (ESLint)

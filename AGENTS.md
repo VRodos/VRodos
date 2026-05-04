@@ -165,7 +165,7 @@ The local runtime server is typically used on port `5832`.
 - Runtime version manifest targets `assets/runtime-version-manifest.json`
 - CSS outputs target `assets/css/`
 
-Run `npm run build` after changing runtime package versions. Do not manually copy standalone PMNDRS bundles; `postprocessing` and `n8ao` are exported from `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`.
+Run `npm run build` after changing runtime package versions. Do not manually copy standalone PMNDRS bundles; `postprocessing` is exported from `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`.
 
 ---
 

@@ -204,7 +204,7 @@ The plugin follows a manager-class architecture, with dedicated managers for ass
 - Vanilla JavaScript
 - Three.js vendor stack from root `three`
 - Pinned A-Frame runtime metadata from root `package.json`
-- `pmndrs/postprocessing` and `n8ao` bundled into the compiled-scene postprocessing runtime bundle
+- `pmndrs/postprocessing` bundled into the compiled-scene postprocessing runtime bundle
 - Takram atmosphere runtime bundle built from root `@takram/*` package versions
 - Node.js server for networked and collaborative features
 
@@ -241,7 +241,6 @@ Runtime package versions are intentionally synchronized through the root npm man
 1. Update root `package.json`:
    - `devDependencies.three`
    - `devDependencies.postprocessing`
-   - `devDependencies.n8ao`
    - `dependencies.@takram/three-atmosphere`
    - `dependencies.@takram/three-clouds`
    - `vrodos.runtime.aframe.commit` for A-Frame master builds, or `vrodos.runtime.aframe.version` when using a release build
@@ -260,7 +259,7 @@ npm run build
    - `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js`
    - `assets/css/vrodos_modern_compiled.css` when the full build changes CSS
 
-Do not manually copy `postprocessing.min.js` into the runtime. PMNDRS globals are exported by `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` as `window.POSTPROCESSING` and `window.N8AOPostPass`, using A-Frame's existing `window.THREE`.
+Do not manually copy `postprocessing.min.js` into the runtime. PMNDRS globals are exported by `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` as `window.POSTPROCESSING`, using A-Frame's existing `window.THREE`.
 
 ## Upload Limits
 
