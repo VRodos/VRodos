@@ -127,7 +127,7 @@ VRodosCompileUI.PostFX = (function () {
         }
 
         // Pmndrs specific toggles
-        var pmndrsTweakEnabled = postFxEnabled && isPmndrs;
+        const pmndrsTweakEnabled = postFxEnabled && isPmndrs;
         
         if (controls.pmndrsBloomIntensity) {
             controls.pmndrsBloomIntensity.disabled = !pmndrsTweakEnabled || !isBloomEnabled;
@@ -143,7 +143,7 @@ VRodosCompileUI.PostFX = (function () {
             controls.pmndrsExposure.disabled = !pmndrsTweakEnabled;
         }
 
-        var isPmndrsLutEnabled = controls.pmndrsLut && controls.pmndrsLut.checked;
+        const isPmndrsLutEnabled = controls.pmndrsLut && controls.pmndrsLut.checked;
         if (controls.pmndrsLutWrapper) {
             controls.pmndrsLutWrapper.style.display = isPmndrsLutEnabled ? '' : 'none';
         }
@@ -157,7 +157,7 @@ VRodosCompileUI.PostFX = (function () {
             controls.pmndrsLutStrength.disabled = !pmndrsTweakEnabled || !isPmndrsLutEnabled;
         }
 
-        var isPmndrsVignetteEnabled = controls.pmndrsVignette && controls.pmndrsVignette.checked;
+        const isPmndrsVignetteEnabled = controls.pmndrsVignette && controls.pmndrsVignette.checked;
         if (controls.pmndrsVignetteWrapper) {
             controls.pmndrsVignetteWrapper.style.display = isPmndrsVignetteEnabled ? '' : 'none';
         }
@@ -168,7 +168,7 @@ VRodosCompileUI.PostFX = (function () {
             controls.pmndrsVignetteDarkness.disabled = !pmndrsTweakEnabled || !isPmndrsVignetteEnabled;
         }
 
-        var isPmndrsNoiseEnabled = controls.pmndrsNoise && controls.pmndrsNoise.checked;
+        const isPmndrsNoiseEnabled = controls.pmndrsNoise && controls.pmndrsNoise.checked;
         if (controls.pmndrsNoiseWrapper) {
             controls.pmndrsNoiseWrapper.style.display = isPmndrsNoiseEnabled ? '' : 'none';
         }
@@ -179,7 +179,7 @@ VRodosCompileUI.PostFX = (function () {
             controls.pmndrsNoiseOpacity.disabled = !pmndrsTweakEnabled || !isPmndrsNoiseEnabled;
         }
 
-        var isPmndrsChromaticAberrationEnabled = controls.pmndrsChromaticAberration && controls.pmndrsChromaticAberration.checked;
+        const isPmndrsChromaticAberrationEnabled = controls.pmndrsChromaticAberration && controls.pmndrsChromaticAberration.checked;
         if (controls.pmndrsChromaticAberrationWrapper) {
             controls.pmndrsChromaticAberrationWrapper.style.display = isPmndrsChromaticAberrationEnabled ? '' : 'none';
         }
@@ -278,20 +278,20 @@ VRodosCompileUI.PostFX = (function () {
     }
 
     return {
-        normalizeEngine: normalizeEngine,
-        normalizeBloomStrength: normalizeBloomStrength,
-        normalizeExposurePreset: normalizeExposurePreset,
-        normalizeContrastPreset: normalizeContrastPreset,
-        normalizeReflectionProfile: normalizeReflectionProfile,
-        normalizeReflectionSource: normalizeReflectionSource,
-        normalizeEnvMapPreset: normalizeEnvMapPreset,
-        normalizeSSRStrength: normalizeSSRStrength,
-        normalizePmndrsAAMode: normalizePmndrsAAMode,
-        normalizePmndrsAAPreset: normalizePmndrsAAPreset,
-        normalizePmndrsLutLook: normalizePmndrsLutLook,
-        updateUI: updateUI,
-        updateValueLabels: updateValueLabels,
-        syncToScene: syncToScene
+        normalizeEngine,
+        normalizeBloomStrength,
+        normalizeExposurePreset,
+        normalizeContrastPreset,
+        normalizeReflectionProfile,
+        normalizeReflectionSource,
+        normalizeEnvMapPreset,
+        normalizeSSRStrength,
+        normalizePmndrsAAMode,
+        normalizePmndrsAAPreset,
+        normalizePmndrsLutLook,
+        updateUI,
+        updateValueLabels,
+        syncToScene
     };
 
 })();

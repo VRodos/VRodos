@@ -90,15 +90,15 @@ function _hierarchyDisplayName(obj) {
                 if (child === obj) found = true;
             }
         });
-        return _lightLabelMap[cat] + ' ' + index;
+        return `${_lightLabelMap[cat]  } ${  index}`;
     }
 
     if (cat === 'lightTargetSpot') {
         // Derive from the parent light's display name
         const parentName = obj.name.replace('lightTargetSpot_', '');
-        let parentObj = envir.scene.getObjectByName(parentName);
+        const parentObj = envir.scene.getObjectByName(parentName);
         if (parentObj) {
-            return _hierarchyDisplayName(parentObj) + ' — Target';
+            return `${_hierarchyDisplayName(parentObj)  } — Target`;
         }
         return 'Light Target';
     }
@@ -118,8 +118,8 @@ function _hierarchyCreatedLabel(obj) {
     if (!obj || obj.name === 'avatarCamera') return '';
 
     if (obj.category_name === 'lightTargetSpot') {
-        let parentName = String(obj.name || '').replace('lightTargetSpot_', '');
-        let parentObj = envir.scene.getObjectByName(parentName);
+        const parentName = String(obj.name || '').replace('lightTargetSpot_', '');
+        const parentObj = envir.scene.getObjectByName(parentName);
         if (parentObj && parentObj !== obj) {
             return _hierarchyCreatedLabel(parentObj);
         }
@@ -137,15 +137,15 @@ function _hierarchyCreatedLabel(obj) {
         if (addedAt > 9999999999) {
             addedAt = Math.floor(addedAt / 1000);
         }
-        let addedLabel = unixTimestamp_to_time(String(Math.floor(addedAt)));
+        const addedLabel = unixTimestamp_to_time(String(Math.floor(addedAt)));
         return (addedLabel && !addedLabel.includes('NaN')) ? addedLabel : '';
     }
 
-    let name = String(obj.name || '');
-    let match = name.match(/(\d{10})$/);
+    const name = String(obj.name || '');
+    const match = name.match(/(\d{10})$/);
     if (!match) return '';
 
-    let created = unixTimestamp_to_time(match[1]);
+    const created = unixTimestamp_to_time(match[1]);
     return (created && !created.includes('NaN')) ? created : '';
 }
 
@@ -171,9 +171,7 @@ function _hierarchyDecodeText(value) {
     }
 
     if (/(?:\\u|u)[0-9a-fA-F]{4}/.test(text)) {
-        text = text.replace(/(?:\\u|u)([0-9a-fA-F]{4})/g, function (_, hex) {
-            return String.fromCharCode(parseInt(hex, 16));
-        });
+        text = text.replace(/(?:\\u|u)([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
     }
 
     return text;
@@ -181,11 +179,11 @@ function _hierarchyDecodeText(value) {
 
 function _hierarchyNormalizeCefrLevels(levels) {
     let source = levels;
-    let allowedLevels = ['A1', 'A2', 'B1', 'B2', 'ALL', 'ALL LEVELS'];
+    const allowedLevels = ['A1', 'A2', 'B1', 'B2', 'ALL', 'ALL LEVELS'];
 
     if (Array.isArray(source)) {
         return source
-            .map(function (level) {
+            .map((level) => {
                 if (level && typeof level === 'object') {
                     return '';
                 }
@@ -200,7 +198,7 @@ function _hierarchyNormalizeCefrLevels(levels) {
         } catch (err) {
             try {
                 const binary = window.atob(source);
-                const bytes = Uint8Array.from(binary, function (ch) { return ch.charCodeAt(0); });
+                const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
                 const decoded = new TextDecoder('utf-8').decode(bytes);
                 source = JSON.parse(decoded);
             } catch (base64Err) {
@@ -215,14 +213,14 @@ function _hierarchyNormalizeCefrLevels(levels) {
     }
 
     return Array.from(new Set(source
-        .map(function (level) { return _hierarchyDecodeText(level).trim().toUpperCase(); })
-        .filter(function (level) { return allowedLevels.indexOf(level) !== -1; })
+        .map((level) => _hierarchyDecodeText(level).trim().toUpperCase())
+        .filter((level) => allowedLevels.indexOf(level) !== -1)
         .filter(Boolean)));
 }
 
 function _hierarchyResolvedCefrLevels(levels, emptyMeansAll) {
-    let normalizedLevels = _hierarchyNormalizeCefrLevels(levels);
-    let allLevels = ['A1', 'A2', 'B1', 'B2'];
+    const normalizedLevels = _hierarchyNormalizeCefrLevels(levels);
+    const allLevels = ['A1', 'A2', 'B1', 'B2'];
 
     if (!normalizedLevels.length) {
         return emptyMeansAll === false ? [] : allLevels;
@@ -232,9 +230,7 @@ function _hierarchyResolvedCefrLevels(levels, emptyMeansAll) {
         return allLevels;
     }
 
-    return allLevels.filter(function (level) {
-        return normalizedLevels.indexOf(level) !== -1;
-    });
+    return allLevels.filter((level) => normalizedLevels.indexOf(level) !== -1);
 }
 
 function _hierarchyResolvedAssessmentLevels(levels) {
@@ -246,7 +242,7 @@ function _hierarchyAssetBrowserItemForObject(obj) {
         return null;
     }
 
-    let assetId = obj.asset_id || '';
+    const assetId = obj.asset_id || '';
     if (assetId === '') {
         return null;
     }
@@ -259,19 +255,19 @@ function _hierarchyAssessmentBadgesHTML(obj) {
         return '';
     }
 
-    let categorySlug = String(obj.category_slug || '').toLowerCase();
-    let categoryName = String(obj.category_name || '').toLowerCase();
-    let assetBrowserItem = _hierarchyAssetBrowserItemForObject(obj);
-    let genericLevelsSource = obj.immerse_cefr_levels
+    const categorySlug = String(obj.category_slug || '').toLowerCase();
+    const categoryName = String(obj.category_name || '').toLowerCase();
+    const assetBrowserItem = _hierarchyAssetBrowserItemForObject(obj);
+    const genericLevelsSource = obj.immerse_cefr_levels
         || (assetBrowserItem ? assetBrowserItem.immerse_cefr_levels || '' : '');
-    let isAssessment = categorySlug === 'assessment' || categoryName === 'assessment';
-    let genericLevels = _hierarchyResolvedCefrLevels(genericLevelsSource, false);
+    const isAssessment = categorySlug === 'assessment' || categoryName === 'assessment';
+    const genericLevels = _hierarchyResolvedCefrLevels(genericLevelsSource, false);
     if (!isAssessment && !genericLevels.length) {
         return '';
     }
 
-    let assessmentType = _hierarchyDecodeText(obj.assessment_type || obj.assessment_group || '').trim();
-    let assessmentLevels = isAssessment
+    const assessmentType = _hierarchyDecodeText(obj.assessment_type || obj.assessment_group || '').trim();
+    const assessmentLevels = isAssessment
         ? _hierarchyResolvedAssessmentLevels(obj.assessment_levels || '')
         : genericLevels;
     let typeBadgeHTML = '';
@@ -279,29 +275,27 @@ function _hierarchyAssessmentBadgesHTML(obj) {
 
     if (isAssessment && assessmentType) {
         typeBadgeHTML =
-            '<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-sky-200">' +
-            _hierarchyEscapeHTML(assessmentType) +
-            '</span>';
+            `<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-sky-200">${ 
+            _hierarchyEscapeHTML(assessmentType) 
+            }</span>`;
     }
 
     if (assessmentLevels.length) {
-        levelBadgesHTML = assessmentLevels.map(function (level) {
-            return (
-                '<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-emerald-400/35 tw-bg-emerald-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-emerald-200">' +
-                _hierarchyEscapeHTML(level) +
-                '</span>'
-            );
-        }).join('');
+        levelBadgesHTML = assessmentLevels.map((level) => (
+                `<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-emerald-400/35 tw-bg-emerald-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-emerald-200">${ 
+                _hierarchyEscapeHTML(level) 
+                }</span>`
+            )).join('');
     }
 
     if (!typeBadgeHTML && !levelBadgesHTML) {
         return '';
     }
 
-    return '<span class="tw-mt-1 tw-flex tw-flex-col tw-gap-1 tw-leading-none">' +
-        (typeBadgeHTML ? '<span class="tw-flex tw-flex-wrap tw-gap-1">' + typeBadgeHTML + '</span>' : '') +
-        (levelBadgesHTML ? '<span class="tw-flex tw-flex-wrap tw-gap-1">' + levelBadgesHTML + '</span>' : '') +
-        '</span>';
+    return `<span class="tw-mt-1 tw-flex tw-flex-col tw-gap-1 tw-leading-none">${ 
+        typeBadgeHTML ? `<span class="tw-flex tw-flex-wrap tw-gap-1">${  typeBadgeHTML  }</span>` : '' 
+        }${levelBadgesHTML ? `<span class="tw-flex tw-flex-wrap tw-gap-1">${  levelBadgesHTML  }</span>` : '' 
+        }</span>`;
 }
 
 /**
@@ -309,10 +303,10 @@ function _hierarchyAssessmentBadgesHTML(obj) {
  */
 function hierarchyHoverSelect(uuid) {
     // Don't change selection on hover if a properties panel is open
-    let panel = document.getElementById('object-controls-panel');
+    const panel = document.getElementById('object-controls-panel');
     if (panel && !panel.classList.contains('tw-hidden')) return;
 
-    let obj = envir.scene.getObjectByProperty('uuid', uuid);
+    const obj = envir.scene.getObjectByProperty('uuid', uuid);
     if (!obj || obj.locked) return;
     selectObjectPreview(obj);
 }
@@ -321,10 +315,10 @@ function hierarchyHoverSelect(uuid) {
  * Click on hierarchy item: full select with floating panel and properties.
  */
 function hierarchyClickSelect(event, uuid) {
-    let obj = envir.scene.getObjectByProperty('uuid', uuid);
+    const obj = envir.scene.getObjectByProperty('uuid', uuid);
     if (!obj || obj.locked) return;
     // Simulate left-click event for selectorMajor
-    let fakeEvent = { button: 0 };
+    const fakeEvent = { button: 0 };
     selectorMajor(fakeEvent, obj, "1");
 }
 
@@ -332,25 +326,25 @@ function hierarchyClickSelect(event, uuid) {
  * Determine the correct insertion point for a hierarchy item.
  * Order: Director → Lights grouped by type (Sun, Lamp, Spot, Ambient) each with target → Regular objects
  */
-let _lightTypeOrder = ['lightSun', 'lightLamp', 'lightSpot', 'lightAmbient'];
+const _lightTypeOrder = ['lightSun', 'lightLamp', 'lightSpot', 'lightAmbient'];
 
 function _getItemCategory(item) {
-    let name = item.getAttribute('data-name');
+    const name = item.getAttribute('data-name');
     if (!name) return null;
     if (name === 'avatarCamera') return 'director';
-    let sceneObj = envir.scene.getObjectByName(name);
+    const sceneObj = envir.scene.getObjectByName(name);
     return sceneObj ? (sceneObj.category_name || '') : '';
 }
 
 function _findInsertionPoint(obj) {
-    let viewer = document.getElementById('hierarchy-viewer');
+    const viewer = document.getElementById('hierarchy-viewer');
     if (!viewer) return null;
 
-    let items = viewer.querySelectorAll('.hierarchyItem');
-    let categoryName = obj.category_name || '';
-    let isDirector = obj.name === 'avatarCamera';
-    let isTarget = categoryName === 'lightTargetSpot';
-    let isLight = categoryName.startsWith('light') && !isTarget;
+    const items = viewer.querySelectorAll('.hierarchyItem');
+    const categoryName = obj.category_name || '';
+    const isDirector = obj.name === 'avatarCamera';
+    const isTarget = categoryName === 'lightTargetSpot';
+    const isLight = categoryName.startsWith('light') && !isTarget;
 
     // Director always goes first
     if (isDirector) {
@@ -359,7 +353,7 @@ function _findInsertionPoint(obj) {
 
     // Light target: insert right after its source light
     if (isTarget) {
-        let parentName = obj.name.replace('lightTargetSpot_', '');
+        const parentName = obj.name.replace('lightTargetSpot_', '');
         for (let i = 0; i < items.length; i++) {
             if (items[i].getAttribute('data-name') === parentName) {
                 return items[i].nextElementSibling;
@@ -369,17 +363,17 @@ function _findInsertionPoint(obj) {
 
     // Light source: insert after the last item of the same type, or after the preceding type group
     if (isLight) {
-        let typeIndex = _lightTypeOrder.indexOf(categoryName);
+        const typeIndex = _lightTypeOrder.indexOf(categoryName);
 
         // Find the last item of the same light type (including its targets)
         let lastSameType = null;
         for (let i = 0; i < items.length; i++) {
-            let cat = _getItemCategory(items[i]);
+            const cat = _getItemCategory(items[i]);
             if (cat === categoryName) lastSameType = items[i];
             // Also count targets that belong to this type
             if (cat === 'lightTargetSpot') {
-                let pName = items[i].getAttribute('data-name').replace('lightTargetSpot_', '');
-                let pObj = envir.scene.getObjectByName(pName);
+                const pName = items[i].getAttribute('data-name').replace('lightTargetSpot_', '');
+                const pObj = envir.scene.getObjectByName(pName);
                 if (pObj && pObj.category_name === categoryName) lastSameType = items[i];
             }
         }
@@ -387,14 +381,14 @@ function _findInsertionPoint(obj) {
 
         // No same-type exists yet — find insertion point after preceding type groups
         for (let t = typeIndex - 1; t >= 0; t--) {
-            let precedingType = _lightTypeOrder[t];
+            const precedingType = _lightTypeOrder[t];
             let lastOfPreceding = null;
             for (let i = 0; i < items.length; i++) {
-                let cat = _getItemCategory(items[i]);
+                const cat = _getItemCategory(items[i]);
                 if (cat === precedingType) lastOfPreceding = items[i];
                 if (cat === 'lightTargetSpot') {
-                    let pName = items[i].getAttribute('data-name').replace('lightTargetSpot_', '');
-                    let pObj = envir.scene.getObjectByName(pName);
+                    const pName = items[i].getAttribute('data-name').replace('lightTargetSpot_', '');
+                    const pObj = envir.scene.getObjectByName(pName);
                     if (pObj && pObj.category_name === precedingType) lastOfPreceding = items[i];
                 }
             }
@@ -411,43 +405,43 @@ function _findInsertionPoint(obj) {
     }
 
     // Regular object: append at end (before skeleton if present)
-    let skeleton = document.getElementById('hierarchy-skeleton');
+    const skeleton = document.getElementById('hierarchy-skeleton');
     return skeleton || null;
 }
 
 function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML){
 
-    let iconName = _hierarchyIconForObject(obj);
-    let categoryName = obj.category_name || '';
-    let isLight = categoryName.startsWith('light');
+    const iconName = _hierarchyIconForObject(obj);
+    const categoryName = obj.category_name || '';
+    const isLight = categoryName.startsWith('light');
     let iconColor = isLight ? 'tw-text-amber-400' : 'tw-text-white/40';
     if (obj.name === 'avatarCamera') iconColor = 'tw-text-blue-400';
-    let assessmentBadgesHTML = _hierarchyAssessmentBadgesHTML(obj);
+    const assessmentBadgesHTML = _hierarchyAssessmentBadgesHTML(obj);
 
-    let itemHTML = '<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-white/5 hover:tw-bg-white/10 tw-cursor-pointer tw-transition-colors"' +
-        ' id="' + obj.uuid + '" data-name="' + obj.name + '" data-uuid="' + obj.uuid + '">' +
-        '<i data-lucide="' + iconName + '" class="tw-w-4 tw-h-4 tw-flex-shrink-0 ' + iconColor + '"></i>' +
-        '<span class="tw-flex-1 tw-min-w-0 tw-text-[9pt] tw-leading-tight tw-text-white"' +
-        ' title="' + (obj.title || object_name) + '">' +
-        '<span class="tw-block tw-font-medium tw-truncate">' + object_name + '</span>' +
-        assessmentBadgesHTML +
-        (created ? '<span class="tw-mt-1 tw-block tw-text-[7pt] tw-text-white/50 tw-font-normal">' + created + '</span>' : '') +
-        '</span>' +
-        '<span class="tw-flex tw-items-center tw-gap-0.5 tw-flex-shrink-0">' +
-        deleteButtonHTML +
-        resetButtonHTML +
-        lockButtonHTML +
-        '</span>' +
-        '</li>';
+    const itemHTML = `<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-white/5 hover:tw-bg-white/10 tw-cursor-pointer tw-transition-colors"` +
+        ` id="${  obj.uuid  }" data-name="${  obj.name  }" data-uuid="${  obj.uuid  }">` +
+        `<i data-lucide="${  iconName  }" class="tw-w-4 tw-h-4 tw-flex-shrink-0 ${  iconColor  }"></i>` +
+        `<span class="tw-flex-1 tw-min-w-0 tw-text-[9pt] tw-leading-tight tw-text-white"` +
+        ` title="${  obj.title || object_name  }">` +
+        `<span class="tw-block tw-font-medium tw-truncate">${  object_name  }</span>${ 
+        assessmentBadgesHTML 
+        }${created ? `<span class="tw-mt-1 tw-block tw-text-[7pt] tw-text-white/50 tw-font-normal">${  created  }</span>` : '' 
+        }</span>` +
+        `<span class="tw-flex tw-items-center tw-gap-0.5 tw-flex-shrink-0">${ 
+        deleteButtonHTML 
+        }${resetButtonHTML 
+        }${lockButtonHTML 
+        }</span>` +
+        `</li>`;
 
-    let viewer = document.getElementById('hierarchy-viewer');
+    const viewer = document.getElementById('hierarchy-viewer');
     if (!viewer) return;
 
-    let temp = document.createElement('template');
+    const temp = document.createElement('template');
     temp.innerHTML = itemHTML;
     let insertBefore = _findInsertionPoint(obj);
     if (!insertBefore) {
-        let skeleton = document.getElementById('hierarchy-skeleton');
+        const skeleton = document.getElementById('hierarchy-skeleton');
         if (skeleton && skeleton.parentElement === viewer) {
             insertBefore = skeleton;
         }
@@ -462,28 +456,28 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
 
 
 function CreateDeleteButton(obj) {
-    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-red-400 tw-transition-colors" aria-label="Delete asset"' +
-        ' title="Delete asset object" onclick="event.stopPropagation(); deleteFomScene(\'' + obj.uuid + '\', \'' + obj.asset_name + '\');">' +
-        '<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>' + '</a>';
+    return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-red-400 tw-transition-colors" aria-label="Delete asset"` +
+        ` title="Delete asset object" onclick="event.stopPropagation(); deleteFomScene('${  obj.uuid  }', '${  obj.asset_name  }');">` +
+        `<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>` + `</a>`;
 }
 
 
 function CreateLockButton(obj) {
-    let lock_ic = (obj.locked) ? 'lock' : 'lock-open';
-    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-white tw-transition-colors" aria-label="Lock asset"' +
-        ' title="Lock asset object" onclick="event.stopPropagation(); lockOnScene(\'' + obj.uuid + '\', \'' + obj.asset_name + '\');">' +
-        '<i data-lucide="' + lock_ic + '" class="tw-w-4 tw-h-4"></i>' + '</a>';
+    const lock_ic = (obj.locked) ? 'lock' : 'lock-open';
+    return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-white tw-transition-colors" aria-label="Lock asset"` +
+        ` title="Lock asset object" onclick="event.stopPropagation(); lockOnScene('${  obj.uuid  }', '${  obj.asset_name  }');">` +
+        `<i data-lucide="${  lock_ic  }" class="tw-w-4 tw-h-4"></i>` + `</a>`;
 }
 
 function CreateResetButton(obj){
     // Properly escape names for onclick
     const escapedName = (obj.name || "").replace(/'/g, "\\'");
-    return '<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-blue-400 tw-transition-colors" aria-label="Reset asset"' +
-        ' title="Reset asset object" onclick="event.stopPropagation(); ' +
-        'resetInScene(\'' + escapedName + '\');'
-        + '">' +
-        '<i data-lucide="refresh-cw" class="tw-w-4 tw-h-4"></i>' +
-        '</a>';
+    return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-blue-400 tw-transition-colors" aria-label="Reset asset"` +
+        ` title="Reset asset object" onclick="event.stopPropagation(); ` +
+        `resetInScene('${  escapedName  }');`
+        + `">` +
+        `<i data-lucide="refresh-cw" class="tw-w-4 tw-h-4"></i>` +
+        `</a>`;
 
 }
 
@@ -492,11 +486,11 @@ let _previousHighlightedId = null;
 
 function setBackgroundColorHierarchyViewer(id) {
     if (_previousHighlightedId) {
-        let prev = document.getElementById(_previousHighlightedId);
+        const prev = document.getElementById(_previousHighlightedId);
         if (prev) prev.style.background = '';
     }
 
-    let el = document.getElementById(id);
+    const el = document.getElementById(id);
     if (el) el.style.background = 'rgba(59, 130, 246, 0.3)';
 
     _previousHighlightedId = id;
@@ -509,10 +503,10 @@ function setHierarchyViewer() {
     document.querySelectorAll('#hierarchy-viewer .hierarchyItem').forEach((el) => { el.remove(); });
 
     // Collect all hierarchy-worthy objects
-    let director = [];
-    let lights = [];      // light sources (sun, lamp, spot, ambient)
-    let targets = [];     // light targets
-    let regular = [];
+    const director = [];
+    const lights = [];      // light sources (sun, lamp, spot, ambient)
+    const targets = [];     // light targets
+    const regular = [];
 
     envir.scene.traverse((obj) => {
         if (obj.name !== 'avatarCamera' && obj.parent && obj.parent.name !== 'vrodosScene') return;
@@ -527,12 +521,12 @@ function setHierarchyViewer() {
     });
 
     // Group lights by type, then each source followed by its target
-    let lightTypeOrder = ['lightSun', 'lightLamp', 'lightSpot', 'lightAmbient'];
-    let sortedLights = [];
+    const lightTypeOrder = ['lightSun', 'lightLamp', 'lightSpot', 'lightAmbient'];
+    const sortedLights = [];
     lightTypeOrder.forEach((type) => {
-        lights.filter((l) => { return l.category_name === type; }).forEach((light) => {
+        lights.filter((l) => l.category_name === type).forEach((light) => {
             sortedLights.push(light);
-            let target = targets.find((t) => { return t.name === 'lightTargetSpot_' + light.name; });
+            const target = targets.find((t) => t.name === `lightTargetSpot_${  light.name}`);
             if (target) sortedLights.push(target);
         });
     });
@@ -541,14 +535,14 @@ function setHierarchyViewer() {
         if (sortedLights.indexOf(t) === -1) sortedLights.push(t);
     });
 
-    let sorted = [].concat(director, sortedLights, regular);
+    const sorted = [].concat(director, sortedLights, regular);
 
     sorted.forEach((obj) => {
-        let asset_name = _hierarchyDisplayName(obj);
-        let created = _hierarchyCreatedLabel(obj);
-        let deleteButton = obj.category_name === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
+        const asset_name = _hierarchyDisplayName(obj);
+        const created = _hierarchyCreatedLabel(obj);
+        const deleteButton = obj.category_name === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
             CreateDeleteButton(obj);
-        let lockButton = obj.category_name === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
+        const lockButton = obj.category_name === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
             CreateLockButton(obj);
         AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj), lockButton);
     });
@@ -562,7 +556,7 @@ function setHierarchyViewer() {
  * Call this once ALL assets (lights + GLBs) have finished loading.
  */
 function removeHierarchySkeleton() {
-    let skeleton = document.getElementById('hierarchy-skeleton');
+    const skeleton = document.getElementById('hierarchy-skeleton');
     if (skeleton) skeleton.remove();
 }
 
@@ -574,21 +568,19 @@ function addInHierarchyViewer(obj) {
         return;
     }
 
-    let existingItem = Array.from(document.querySelectorAll('#hierarchy-viewer .hierarchyItem')).find((item) => {
-        return item.getAttribute('data-uuid') === obj.uuid || item.getAttribute('data-name') === obj.name;
-    });
+    const existingItem = Array.from(document.querySelectorAll('#hierarchy-viewer .hierarchyItem')).find((item) => item.getAttribute('data-uuid') === obj.uuid || item.getAttribute('data-name') === obj.name);
     if (existingItem) {
         setBackgroundColorHierarchyViewer(existingItem.id || obj.uuid);
         return;
     }
 
-    let asset_name = _hierarchyDisplayName(obj);
+    const asset_name = _hierarchyDisplayName(obj);
 
-    let created = _hierarchyCreatedLabel(obj);
+    const created = _hierarchyCreatedLabel(obj);
 
-    let deleteButton = obj['category_name'] === "lightTargetSpot" ? "" : CreateDeleteButton(obj);
+    const deleteButton = obj.category_name === "lightTargetSpot" ? "" : CreateDeleteButton(obj);
 
-    let lockButton = obj['category_name'] === "lightTargetSpot" ? "" : CreateLockButton(obj);
+    const lockButton = obj.category_name === "lightTargetSpot" ? "" : CreateLockButton(obj);
 
     // Add as a list item
     AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj), lockButton);
@@ -604,22 +596,22 @@ function addInHierarchyViewer(obj) {
  * Call once after DOM is ready. Replaces per-item inline onmouseenter/onclick.
  */
 function initHierarchyViewerEvents() {
-    let viewer = document.getElementById('hierarchy-viewer');
+    const viewer = document.getElementById('hierarchy-viewer');
     if (!viewer) return;
 
     viewer.addEventListener('mouseenter', (e) => {
-        let item = e.target.closest('.hierarchyItem');
+        const item = e.target.closest('.hierarchyItem');
         if (!item) return;
-        let uuid = item.dataset.uuid;
+        const uuid = item.dataset.uuid;
         if (uuid) hierarchyHoverSelect(uuid);
     }, true); // use capture so mouseenter fires for child elements
 
     viewer.addEventListener('click', (e) => {
         // Ignore clicks on action buttons (delete, lock, reset)
         if (e.target.closest('a[aria-label]')) return;
-        let item = e.target.closest('.hierarchyItem');
+        const item = e.target.closest('.hierarchyItem');
         if (!item) return;
-        let uuid = item.dataset.uuid;
+        const uuid = item.dataset.uuid;
         if (uuid) hierarchyClickSelect(e, uuid);
     });
 }

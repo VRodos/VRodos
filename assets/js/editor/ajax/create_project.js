@@ -15,12 +15,12 @@ function vrodos_createProjectAjax(project_title, project_type_slug, current_user
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			'action': 'vrodos_create_project_action',
-			'project_title': project_title,
-			'project_type_slug': project_type_slug
+			project_title,
+			project_type_slug
 		})
 	})
-	.then( function (response) { return response.text(); })
-	.then( function (new_project_id) {
+	.then( (response) => response.text())
+	.then( (new_project_id) => {
 
 		_createPending = false;
 		console.log( "Game project has been successfully created" );
@@ -31,13 +31,13 @@ function vrodos_createProjectAjax(project_title, project_type_slug, current_user
 		fetchAllProjectsAndAddToDOM( current_user_id, parameter_Scenepass, new_project_id );
 
 	})
-	.catch( function (err) {
+	.catch( (err) => {
 
 		_createPending = false;
 		document.getElementById( 'createNewProjectBtn' ).style.display = '';
 		document.getElementById( 'create-game-progress-bar' ).style.display = 'none';
 
-		console.log( "Ajax Create Game: ERROR: 169 " + err );
+		console.log( `Ajax Create Game: ERROR: 169 ${  err}` );
 	});
 }
 
@@ -49,22 +49,22 @@ function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_p
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			'action': 'vrodos_fetch_list_projects_action',
-			'current_user_id': current_user_id,
-			'parameter_Scenepass': parameter_Scenepass,
-			'is_initial_load': is_initial_load
+			current_user_id,
+			parameter_Scenepass,
+			is_initial_load
 		})
 	})
-	.then( function (response) { return response.text(); })
-	.then( function (domhtml) {
+	.then( (response) => response.text())
+	.then( (domhtml) => {
 
 		// Add list to div
 		document.getElementById( 'ExistingProjectsDivDOM' ).innerHTML = domhtml;
 
 		// Update projects count
-		let listContainer = document.getElementById('vrodos-list-projects-container');
+		const listContainer = document.getElementById('vrodos-list-projects-container');
 		if (listContainer) {
-			let count = listContainer.getAttribute('data-project-count');
-			let indicator = document.getElementById('projects-count-indicator');
+			const count = listContainer.getAttribute('data-project-count');
+			const indicator = document.getElementById('projects-count-indicator');
 			if (indicator) indicator.textContent = count;
 		}
 
@@ -73,13 +73,13 @@ function fetchAllProjectsAndAddToDOM(current_user_id, parameter_Scenepass, new_p
 
 		// Open the project automatically
 		if (new_project_id > -1) {
-			let btn = document.getElementById( "3d-editor-bt-" + new_project_id );
+			const btn = document.getElementById( `3d-editor-bt-${  new_project_id}` );
 			if (btn) btn.click();
 		}
 
 	})
-	.catch( function (err) {
-		console.log( "Ajax Fetch List Projects Error: ERROR: 170 " + err );
+	.catch( (err) => {
+		console.log( `Ajax Fetch List Projects Error: ERROR: 170 ${  err}` );
 	});
 
 }

@@ -1,7 +1,7 @@
 (function () {
     window.VRODOSMasterUI = window.VRODOSMasterUI || {};
 
-    var api = window.VRODOSMasterUI;
+    const api = window.VRODOSMasterUI;
 
     api.renderIcons = function (options) {
         if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
@@ -16,8 +16,8 @@
 
         dialog.dataset.vrodosDialogBound = 'true';
 
-        dialog.addEventListener('click', function (event) {
-            var modalBox = dialog.querySelector('.tw-modal-box');
+        dialog.addEventListener('click', (event) => {
+            const modalBox = dialog.querySelector('.tw-modal-box');
             if (!modalBox) {
                 return;
             }
@@ -31,7 +31,7 @@
     };
 
     api.showDialog = function (dialogOrSelector) {
-        var dialog = typeof dialogOrSelector === 'string'
+        const dialog = typeof dialogOrSelector === 'string'
             ? document.querySelector(dialogOrSelector)
             : dialogOrSelector;
 
@@ -56,7 +56,7 @@
     };
 
     api.closeDialog = function (dialogOrSelector, returnValue) {
-        var dialog = typeof dialogOrSelector === 'string'
+        const dialog = typeof dialogOrSelector === 'string'
             ? document.querySelector(dialogOrSelector)
             : dialogOrSelector;
 
@@ -72,7 +72,7 @@
     };
 
     api.setButtonVisible = function (buttonOrId, visible) {
-        var button = typeof buttonOrId === 'string'
+        const button = typeof buttonOrId === 'string'
             ? document.getElementById(buttonOrId)
             : buttonOrId;
 
@@ -86,13 +86,13 @@
     };
 
     api.setChatTabState = function (activeTab) {
-        var publicBtn = document.getElementById('public-chat-button');
-        var privateBtn = document.getElementById('private-chat-button');
+        const publicBtn = document.getElementById('public-chat-button');
+        const privateBtn = document.getElementById('private-chat-button');
 
         [
             { button: publicBtn, active: activeTab === 'public' },
             { button: privateBtn, active: activeTab === 'private' }
-        ].forEach(function (entry) {
+        ].forEach((entry) => {
             if (!entry.button) {
                 return;
             }
@@ -105,10 +105,10 @@
     };
 
     api.getChatCapabilities = function () {
-        var sceneEl = document.getElementById('aframe-scene-container') || document.querySelector('a-scene');
-        var settings = sceneEl ? sceneEl.getAttribute('scene-settings') : null;
-        var hasPublic = Boolean(settings && String(settings.public_chat) === '1');
-        var hasPrivate = Boolean(document.querySelector('[chat-poi]'));
+        const sceneEl = document.getElementById('aframe-scene-container') || document.querySelector('a-scene');
+        const settings = sceneEl ? sceneEl.getAttribute('scene-settings') : null;
+        const hasPublic = Boolean(settings && String(settings.public_chat) === '1');
+        const hasPrivate = Boolean(document.querySelector('[chat-poi]'));
 
         return {
             public: hasPublic,
@@ -118,10 +118,10 @@
     };
 
     api.applyChatTabs = function (activeTab) {
-        var capabilities = api.getChatCapabilities();
-        var publicBtn = document.getElementById('public-chat-button');
-        var privateBtn = document.getElementById('private-chat-button');
-        var resolvedActiveTab = activeTab;
+        const capabilities = api.getChatCapabilities();
+        const publicBtn = document.getElementById('public-chat-button');
+        const privateBtn = document.getElementById('private-chat-button');
+        let resolvedActiveTab = activeTab;
 
         if (resolvedActiveTab === 'public' && !capabilities.public) {
             resolvedActiveTab = capabilities.private ? 'private' : '';
@@ -154,13 +154,13 @@
         };
     };
 
-    document.addEventListener('click', function (event) {
-        var closeTrigger = event.target.closest('[data-dialog-close]');
+    document.addEventListener('click', (event) => {
+        const closeTrigger = event.target.closest('[data-dialog-close]');
         if (!closeTrigger) {
             return;
         }
 
-        var dialog = closeTrigger.closest('dialog');
+        const dialog = closeTrigger.closest('dialog');
         if (!dialog) {
             return;
         }
@@ -168,7 +168,7 @@
         api.closeDialog(dialog, closeTrigger.getAttribute('data-dialog-close'));
     });
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('dialog.vrodos-runtime-dialog').forEach(api.ensureDialog);
         api.renderIcons();
     });

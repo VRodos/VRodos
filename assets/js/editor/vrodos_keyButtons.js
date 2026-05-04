@@ -7,23 +7,23 @@ let moveDown = false;
 let viewUp = false;
 let viewDown = false;
 
-let avatar_movement_speed_factor = 0.1;
+const avatar_movement_speed_factor = 0.1;
 
 let prevTime = performance.now();
-let velocity = new THREE.Vector3();
-let torgue = new THREE.Vector3();
+const velocity = new THREE.Vector3();
+const torgue = new THREE.Vector3();
 
 document.addEventListener('wheel', (event) => {
     if (avatarControlsEnabled)
-        if (event.deltaY)
-            if (event.deltaY > 0) {
+        {if (event.deltaY)
+            {if (event.deltaY > 0) {
                 envir.cameraAvatar.fov += 1;
                 envir.cameraAvatar.updateProjectionMatrix();
                 //moveUp = true;
             } else {
                 envir.cameraAvatar.fov -= 1;
                 envir.cameraAvatar.updateProjectionMatrix();
-            }
+            }}}
 }, true);
 
 firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
@@ -44,7 +44,7 @@ document.addEventListener('add_movement',
         document.addEventListener('keyup', keyup_handler);
     }
 );
-let keydown_handler = (ev) => {
+const keydown_handler = (ev) => {
     switch (ev.keyCode) {
         //---------------------------- TRS ---------------------------------------
         case 80: pauseClickFun(); break; // r
@@ -75,7 +75,7 @@ let keydown_handler = (ev) => {
             break; //  delete
     }
 };
-let keyup_handler = (ev) => {
+const keyup_handler = (ev) => {
     switch (ev.keyCode) {
         case 38: // up
         case 87: moveForward = false; break; // w
@@ -97,8 +97,8 @@ let keyup_handler = (ev) => {
 /* Update the Director rig while moving with key presses */
 const updatePointerLockControls = function(){
 
-    let time = performance.now();
-    let delta = ( time - prevTime ) / 1000;
+    const time = performance.now();
+    const delta = ( time - prevTime ) / 1000;
 
     // Reductors of velocity
     velocity.x -= velocity.x * 2.0 * delta;
@@ -119,7 +119,7 @@ const updatePointerLockControls = function(){
     if ( viewDown ) torgue.x += avatar_movement_speed_factor * delta;
 
     // Move avatar
-    let pointerLockObject = (typeof vrodosGetPointerLockObject === 'function') ?
+    const pointerLockObject = (typeof vrodosGetPointerLockObject === 'function') ?
         vrodosGetPointerLockObject(envir.avatarControls) :
         (envir.avatarControls ? envir.avatarControls.object : null);
 

@@ -2,10 +2,10 @@
  * VRodos FXAA Shader — NVIDIA FXAA 3.11
  */
 (function () {
-    var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
+    const VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
 
     function vrodosCreateFXAAMaterial() {
-        var material = new THREE.ShaderMaterial({
+        const material = new THREE.ShaderMaterial({
             uniforms: {
                 tDiffuse: { value: null },
                 resolution: { value: new THREE.Vector2(1 / 1024, 1 / 512) }

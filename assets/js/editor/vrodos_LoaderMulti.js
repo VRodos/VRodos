@@ -1,7 +1,7 @@
 "use strict";
 
 function vrodosLoaderJoinUrl(base, path) {
-    return String(base || '').replace(/\/+$/, '') + '/' + String(path || '').replace(/^\/+/, '');
+    return `${String(base || '').replace(/\/+$/, '')  }/${  String(path || '').replace(/^\/+/, '')}`;
 }
 
 function vrodosLoaderResolveBaseUrl(pluginPath, localizedKey, fallbackRelative) {
@@ -54,7 +54,7 @@ function vrodosLoaderSafeObjectName(name, resource, object) {
     const idPart = resource && resource.asset_id ? String(resource.asset_id).trim() : '';
     const uuidPart = resource && resource.uuid ? String(resource.uuid).split('-')[0] : String(Date.now());
 
-    return (slugPart || 'scene_object') + (idPart ? '_' + idPart : '') + '_' + uuidPart;
+    return `${(slugPart || 'scene_object') + (idPart ? `_${  idPart}` : '')  }_${  uuidPart}`;
 }
 
 function vrodosLoaderCreateAssessmentObject(name, resource) {
@@ -64,23 +64,23 @@ function vrodosLoaderCreateAssessmentObject(name, resource) {
 
     const fallback = new THREE.Group();
     fallback.name = name;
-    fallback['asset_name'] = typeof vrodosDecodeDisplayText === 'function'
+    fallback.asset_name = typeof vrodosDecodeDisplayText === 'function'
         ? vrodosDecodeDisplayText(resource.asset_name || resource.assessment_title || 'Assessment')
         : (resource.asset_name || resource.assessment_title || 'Assessment');
-    fallback['category_name'] = resource.category_name || 'Assessment';
-    fallback['category_slug'] = 'assessment';
-    fallback['assessment_title'] = typeof vrodosDecodeDisplayText === 'function'
+    fallback.category_name = resource.category_name || 'Assessment';
+    fallback.category_slug = 'assessment';
+    fallback.assessment_title = typeof vrodosDecodeDisplayText === 'function'
         ? vrodosDecodeDisplayText(resource.assessment_title || resource.asset_name || 'Assessment')
         : (resource.assessment_title || resource.asset_name || 'Assessment');
-    fallback['assessment_type'] = typeof vrodosDecodeDisplayText === 'function'
+    fallback.assessment_type = typeof vrodosDecodeDisplayText === 'function'
         ? vrodosDecodeDisplayText(resource.assessment_type || '')
         : (resource.assessment_type || '');
-    fallback['assessment_group'] = typeof vrodosDecodeDisplayText === 'function'
+    fallback.assessment_group = typeof vrodosDecodeDisplayText === 'function'
         ? vrodosDecodeDisplayText(resource.assessment_group || '')
         : (resource.assessment_group || '');
-    fallback['assessment_content'] = resource.assessment_content || '';
-    fallback['assessment_levels'] = resource.assessment_levels || '';
-    fallback['assessment_supported'] = resource.assessment_supported || 'false';
+    fallback.assessment_content = resource.assessment_content || '';
+    fallback.assessment_levels = resource.assessment_levels || '';
+    fallback.assessment_supported = resource.assessment_supported || 'false';
     fallback.isSelectableMesh = true;
     fallback.isLight = false;
 
@@ -144,21 +144,21 @@ function vrodosSyncSceneSetting(key, value, resources3D) {
     if (key === 'backgroundStyleOption') {
         envir.scene.bcg_selection = envir.scene.backgroundStyleOption;
 
-        let color_sel = document.getElementById('jscolorpick');
-        let custom_img_sel = document.getElementById('img_upload_bcg');
-        let preset_sel = document.getElementById('presetsBcg');
-        let preset_ground_toggle = document.getElementById('presetGroundToggle');
+        const color_sel = document.getElementById('jscolorpick');
+        const custom_img_sel = document.getElementById('img_upload_bcg');
+        const preset_sel = document.getElementById('presetsBcg');
+        const preset_ground_toggle = document.getElementById('presetGroundToggle');
 
-        let img_thumb = document.getElementById('uploadImgThumb');
-        let horizon_sky_preset = document.getElementById('horizonSkyPreset');
+        const img_thumb = document.getElementById('uploadImgThumb');
+        const horizon_sky_preset = document.getElementById('horizonSkyPreset');
 
-        let horizonSkyRow = document.getElementById('bcgHorizonSkyRow');
-        let colorRow = document.getElementById('bcgColorRow');
-        let presetsRow = document.getElementById('bcgPresetsRow');
-        let presetGroundRow = document.getElementById('bcgPresetGroundRow');
-        let imageRow = document.getElementById('bcgImageRow');
-        let horizonDescription = document.getElementById('sceneHorizonDescription');
-        let presetGroundEnabled = (resources3D && resources3D["backgroundPresetGroundEnabled"] !== false);
+        const horizonSkyRow = document.getElementById('bcgHorizonSkyRow');
+        const colorRow = document.getElementById('bcgColorRow');
+        const presetsRow = document.getElementById('bcgPresetsRow');
+        const presetGroundRow = document.getElementById('bcgPresetGroundRow');
+        const imageRow = document.getElementById('bcgImageRow');
+        const horizonDescription = document.getElementById('sceneHorizonDescription');
+        const presetGroundEnabled = (resources3D && resources3D.backgroundPresetGroundEnabled !== false);
 
         // Hide all rows first
         if (horizonSkyRow) horizonSkyRow.style.display = 'none';
@@ -178,7 +178,7 @@ function vrodosSyncSceneSetting(key, value, resources3D) {
         }
         if (horizon_sky_preset) {
             horizon_sky_preset.disabled = true;
-            horizon_sky_preset.value = (resources3D && resources3D["aframeHorizonSkyPreset"]) || 'natural';
+            horizon_sky_preset.value = (resources3D && resources3D.aframeHorizonSkyPreset) || 'natural';
         }
         if (custom_img_sel) custom_img_sel.disabled = true;
         if (typeof setBackgroundPresetGroundEnabled === 'function') {
@@ -212,7 +212,7 @@ function vrodosSyncSceneSetting(key, value, resources3D) {
                 if (skyRadio) skyRadio.checked = true;
                 if (preset_sel) {
                     preset_sel.disabled = false;
-                    const opt = resources3D ? (resources3D["backgroundPresetOption"] || resources3D["SceneSettings"]?.backgroundPresetOption) : null;
+                    const opt = resources3D ? (resources3D.backgroundPresetOption || resources3D.SceneSettings?.backgroundPresetOption) : null;
                     for (let i = 0; i < preset_sel.options.length; i++) {
                         if (preset_sel.options[i].value == opt) {
                             preset_sel.options[i].selected = true;
@@ -228,14 +228,14 @@ function vrodosSyncSceneSetting(key, value, resources3D) {
                 if (customRadio) customRadio.checked = true;
                 if (custom_img_sel) custom_img_sel.disabled = false;
                 if (imageRow) imageRow.style.display = 'flex';
-                const path = resources3D ? (resources3D["backgroundImagePath"] || resources3D["SceneSettings"]?.backgroundImagePath) : null;
+                const path = resources3D ? (resources3D.backgroundImagePath || resources3D.SceneSettings?.backgroundImagePath) : null;
                 if (path && path != 0 && img_thumb) {
                     img_thumb.src = path;
                     img_thumb.hidden = false;
                 }
                 break;
         }
-        envir.scene.img_bcg_path = resources3D ? (resources3D["backgroundImagePath"] || resources3D["SceneSettings"]?.backgroundImagePath) : envir.scene.img_bcg_path;
+        envir.scene.img_bcg_path = resources3D ? (resources3D.backgroundImagePath || resources3D.SceneSettings?.backgroundImagePath) : envir.scene.img_bcg_path;
         envir.scene.backgroundStyleOption = parsedValue;
     }
 
@@ -294,15 +294,15 @@ class VRodos_LoaderMulti {
             }
 
             if (name === 'ClearColor' || name === 'enableEnvironmentTexture' || name === 'fogCategory' || name === 'fogtype')
-                continue;
+                {continue;}
 
                 // Fog is not parsed here but in LightsPawn_Loader
                 if (name === 'fogCategory') {
                     if (resource){
                         //document.getElementById('FogType').value = resource.fogtype;
-                        let linear_elems = document.getElementsByClassName('linearElement');
-                        let expo_elems = document.getElementsByClassName('exponentialElement');
-                        let color_elems = document.getElementsByClassName('colorElement');
+                        const linear_elems = document.getElementsByClassName('linearElement');
+                        const expo_elems = document.getElementsByClassName('exponentialElement');
+                        const color_elems = document.getElementsByClassName('colorElement');
 
                         if (resource === "0") {
                             document.getElementById('RadioNoFog').checked = true;
@@ -364,9 +364,9 @@ class VRodos_LoaderMulti {
                 }
 
                 // Lights are in a different loop
-                if (resource['category_name']) {
-                    if (resource['category_name'].startsWith("light") || resource['category_name'].startsWith("pawn"))
-                        continue;
+                if (resource.category_name) {
+                    if (resource.category_name.startsWith("light") || resource.category_name.startsWith("pawn"))
+                        {continue;}
                 }
                 // Load Camera object
                 if (name === 'avatarCamera') {
@@ -383,7 +383,7 @@ class VRodos_LoaderMulti {
                                 object.traverse((child) => {
                                     child.vrodos_internal_helper = true;
                                     if (child !== object) {
-                                        child.isSelectableMesh = !!child.isMesh;
+                                        child.isSelectableMesh = Boolean(child.isMesh);
                                     }
                                 });
 
@@ -418,7 +418,7 @@ class VRodos_LoaderMulti {
                         );
                     }));
 
-                } else if (resource['category_slug'] === 'assessment') {
+                } else if (resource.category_slug === 'assessment') {
 
                     pendingLoads.push(new Promise((resolve) => {
                         const object = vrodosLoaderCreateAssessmentObject(name, resource);
@@ -432,9 +432,9 @@ class VRodos_LoaderMulti {
                         resolve();
                     }));
 
-                } else if (resource['category_slug'] === 'image') { // Flat image plane
+                } else if (resource.category_slug === 'image') { // Flat image plane
 
-                    const imageUrl = resource['image_path'];
+                    const imageUrl = resource.image_path;
                     if (!imageUrl) {
                         envir.loadedObjectsCount++;
                     } else {
@@ -491,7 +491,7 @@ class VRodos_LoaderMulti {
                     }
 
                 } else { // GLB 3D models
-                    if ((resource['glb_id'] !== "" && resource['glb_id'] !== undefined) || resource['category_slug'] === "video") {
+                    if ((resource.glb_id !== "" && resource.glb_id !== undefined) || resource.category_slug === "video") {
                         if (manager) manager.itemStart(name);
                         pendingLoads.push(new Promise((resolve) => {
                             const fetchAndLoadGLB = async () => {
@@ -501,7 +501,7 @@ class VRodos_LoaderMulti {
                                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                                         body: new URLSearchParams({
                                             'action': 'vrodos_fetch_glb_asset_action',
-                                            'asset_id': resource['asset_id']
+                                            'asset_id': resource.asset_id
                                         })
                                     });
 
@@ -510,7 +510,7 @@ class VRodos_LoaderMulti {
                                         const resText = await response.text();
                                         resourcesGLB = JSON.parse(resText);
                                     } catch (e) {
-                                        console.warn("Could not parse metadata for asset " + name, e);
+                                        console.warn(`Could not parse metadata for asset ${  name}`, e);
                                     }
 
                                     // Surgical merge: Only take what we need for thumbnails and visuals.
@@ -521,8 +521,8 @@ class VRodos_LoaderMulti {
                                     // Fallback: If the AJAX failed to return a GLB URL, use the one we already have in the resource.
                                     // This prevents assets from being skipped (which would cause them to be deleted on save).
                                     let glbURL = resourcesGLB && resourcesGLB.glbURL ? resourcesGLB.glbURL : (resource.glb_path || resource.path);
-                                    if (resource['category_slug'] === "video") {
-                                        glbURL = modelBaseUrl + 'editor/tv_flat_scaled_rotated.glb';
+                                    if (resource.category_slug === "video") {
+                                        glbURL = `${modelBaseUrl  }editor/tv_flat_scaled_rotated.glb`;
                                     }
 
                                     if (!glbURL) {
@@ -548,7 +548,7 @@ class VRodos_LoaderMulti {
                                                 action.play();
                                             }
 
-                                            let finalObject = setObjectProperties(object.scene, name, resources3D);
+                                            const finalObject = setObjectProperties(object.scene, name, resources3D);
                                             finalObject.isSelectableMesh = true;
 
                                             // Apply max anisotropy to all loaded textures for sharper oblique surfaces
@@ -581,7 +581,7 @@ class VRodos_LoaderMulti {
                                         },
                                         (xhr) => {
                                             const mbLoaded = Math.floor(xhr.loaded / 104857.6) / 10;
-                                            document.getElementById("result_download").innerHTML = `'${resource['asset_name']}' downloaded ${mbLoaded} Mb`;
+                                            document.getElementById("result_download").innerHTML = `'${resource.asset_name}' downloaded ${mbLoaded} Mb`;
                                         },
                                         (error) => {
                                             console.error('A GLB loading error happened. Error 1590', error);
@@ -648,8 +648,8 @@ function setObjectProperties(object, name, resources3D) {
     object.name = vrodosLoaderSafeObjectName(name, resource, object);
     resource.name = object.name;
     object.isSelectableMesh = true;
-    object.isLight = resource['isLight'];
-    object.fnPath = resource['path'] || object.fnPath || '';
+    object.isLight = resource.isLight;
+    object.fnPath = resource.path || object.fnPath || '';
 
     // avoid revealing the full path. Use the relative in the saving format.
     if (typeof object.fnPath === 'string') {
@@ -673,7 +673,7 @@ function setObjectProperties(object, name, resources3D) {
             object.fnPath = object.fnPath.substring(1);
         }
     }
-    object['glb_id'] = resource['glb_id'];
+    object.glb_id = resource.glb_id;
 
     if (String(object.category_slug || '').toLowerCase() === 'walkable-surface') {
         object.walkableBehavior = (String(resource.walkableBehavior || object.walkableBehavior || '').toLowerCase() === 'auto')
@@ -694,8 +694,8 @@ function setObjectProperties(object, name, resources3D) {
         }
     }*/
     //============== Video thumbnail texture ==========
-    if (resource['category_slug'] === 'video') {
-        const screenshotPath = resource['screenshot_path'] || resource['poi_img_path'] || resource['poi_image_path'];
+    if (resource.category_slug === 'video') {
+        const screenshotPath = resource.screenshot_path || resource.poi_img_path || resource.poi_image_path;
         if (screenshotPath) {
             const texLoader = new THREE.TextureLoader();
             texLoader.setCrossOrigin('anonymous');
@@ -744,10 +744,10 @@ function setObjectProperties(object, name, resources3D) {
     }
 
 
-    const trs = resource['trs'] || {};
-    const translation = vrodosLoaderSafeVector(trs['translation'] || resource['position'], [0, 0, 0]);
-    const rotation = vrodosLoaderSafeVector(trs['rotation'] || resource['rotation'], [0, 0, 0]);
-    const scale = vrodosLoaderSafeScale(trs['scale'] || resource['scale']);
+    const trs = resource.trs || {};
+    const translation = vrodosLoaderSafeVector(trs.translation || resource.position, [0, 0, 0]);
+    const rotation = vrodosLoaderSafeVector(trs.rotation || resource.rotation, [0, 0, 0]);
+    const scale = vrodosLoaderSafeScale(trs.scale || resource.scale);
 
     object.position.set(
         translation[0],

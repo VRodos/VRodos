@@ -4,7 +4,7 @@
 /* global VRODOSMaster */
 
 (function () {
-    var apiPatternSingle = {
+    const apiPatternSingle = {
         ThresholdMin: 0.106,
         ThresholdMax: 0.13,
         red: 48,
@@ -20,7 +20,7 @@
         rz: 0
     };
 
-    var apiPatternSingleMin = {
+    const apiPatternSingleMin = {
         ThresholdMinLow: 0,
         ThresholdMaxLow: 0,
         redLow: 0,
@@ -36,7 +36,7 @@
         rzLow: -100
     };
 
-    var apiPatternSingleMax = {
+    const apiPatternSingleMax = {
         ThresholdMinHigh: 0.4,
         ThresholdMaxHigh: 0.4,
         redHigh: 255,
@@ -52,7 +52,7 @@
         rzHigh: 100
     };
 
-    var apiPatternSingleStep = {
+    const apiPatternSingleStep = {
         ThresholdMinStep: 0.001,
         ThresholdMaxStep: 0.001,
         redStep: 1,
@@ -116,9 +116,9 @@
     }
 
     function bindLateJoinSync() {
-        bindOnce(document.body, 'late-join-sync', function () {
-            document.body.addEventListener('clientConnected', function (evt) {
-                var myCam = VRODOSMaster.getElement('cameraA', true);
+        bindOnce(document.body, 'late-join-sync', () => {
+            document.body.addEventListener('clientConnected', (evt) => {
+                const myCam = VRODOSMaster.getElement('cameraA', true);
                 if (myCam && myCam.components['player-info'] && myCam.components.networked) {
                     myCam.components.networked.syncAll(evt.detail.clientId, true);
                 }
@@ -127,14 +127,14 @@
     }
 
     function bindScreenShareButton() {
-        var screenBtnEle = VRODOSMaster.getElement('screen-btn-sendscreen', true);
-        bindOnce(screenBtnEle, 'screen-share', function (buttonEl) {
-            buttonEl.addEventListener('click', function () {
+        const screenBtnEle = VRODOSMaster.getElement('screen-btn-sendscreen', true);
+        bindOnce(screenBtnEle, 'screen-share', (buttonEl) => {
+            buttonEl.addEventListener('click', () => {
                 navigator.mediaDevices.getDisplayMedia({
                     preferCurrentTab: true,
                     selfBrowserSurface: 'include',
                     audio: true
-                }).then(function (stream) {
+                }).then((stream) => {
                     if (NAF.connection.adapter.addLocalMediaStream) {
                         NAF.connection.adapter.addLocalMediaStream(stream, 'screen');
                     }
@@ -148,8 +148,8 @@
             return;
         }
 
-        var entities = window.NAF.connection.entities.entities;
-        var panelsSizeControlsDiv = VRODOSMaster.getElement('panelsSizeControlsDiv', true);
+        const entities = window.NAF.connection.entities.entities;
+        const panelsSizeControlsDiv = VRODOSMaster.getElement('panelsSizeControlsDiv', true);
         if (panelsSizeControlsDiv) {
             panelsSizeControlsDiv.replaceChildren([]);
         }
@@ -168,22 +168,22 @@
             return;
         }
 
-        var nActor = 0;
-        var panels = {};
-        var elementsDatGui = [];
-        var videoUserGui = [];
+        let nActor = 0;
+        const panels = {};
+        const elementsDatGui = [];
+        const videoUserGui = [];
 
-        for (var entityId in entities) {
+        for (const entityId in entities) {
             if (!Object.prototype.hasOwnProperty.call(entities, entityId)) {
                 continue;
             }
 
-            var entityNode = entities[entityId];
+            const entityNode = entities[entityId];
             if (!entityNode.childNodes || entityNode.childNodes.length < 2) {
                 continue;
             }
 
-            var height = entityNode.childNodes[1].getAttribute('height');
+            const height = entityNode.childNodes[1].getAttribute('height');
             if (!height) {
                 continue;
             }
@@ -198,21 +198,21 @@
                     continue;
                 }
 
-                var low = `${property  }Low`;
-                var high = `${property  }High`;
-                var step = `${property  }Step`;
-                var controller = videoUserGui[entityId].add(apiPatternSingle, property, apiPatternSingleMin[low], apiPatternSingleMax[high], apiPatternSingleStep[step]);
+                const low = `${property  }Low`;
+                const high = `${property  }High`;
+                const step = `${property  }Step`;
+                const controller = videoUserGui[entityId].add(apiPatternSingle, property, apiPatternSingleMin[low], apiPatternSingleMax[high], apiPatternSingleStep[step]);
                 controller.nActor = nActor - 1;
                 controller.currentEntityId = entityId;
                 controller.currentProperty = property;
                 elementsDatGui[entityId][property] = controller;
 
-                if (['w', 'h', 'x', 'y', 'z', 'rx', 'ry', 'rz'].some(function (prefix) { return property.indexOf(prefix) === 0; })) {
+                if (['w', 'h', 'x', 'y', 'z', 'rx', 'ry', 'rz'].some((prefix) => property.indexOf(prefix) === 0)) {
                     controller.panelaki = panels[entityId];
                     controller.domElement.pName = entityId;
                     controller.onChange(function () {
-                        var panel = this.panelaki !== undefined ? this.panelaki : this.parent.controllers[5].panelaki;
-                        var value = apiPatternSingle[this.property];
+                        const panel = this.panelaki !== undefined ? this.panelaki : this.parent.controllers[5].panelaki;
+                        const value = apiPatternSingle[this.property];
 
                         if (this.property === 'w') {
                             panel.setAttribute('width', value);
@@ -225,7 +225,7 @@
                         } else if (this.property === 'z') {
                             panel.getAttribute('position').z = value / 10000;
                         } else if (this.property.indexOf('r') === 0) {
-                            var rotation = panel.getAttribute('rotation');
+                            const rotation = panel.getAttribute('rotation');
                             if (this.property === 'rx') {
                                 panel.setAttribute('rotation', `${value  } ${  rotation.y  } ${  rotation.z}`);
                             } else if (this.property === 'ry') {
@@ -239,7 +239,7 @@
                 }
 
                 controller.onChange(function () {
-                    var domAffected = document.getElementsByClassName('videoPlaneGreenClass')[this.nActor];
+                    const domAffected = document.getElementsByClassName('videoPlaneGreenClass')[this.nActor];
                     if (domAffected) {
                         domAffected.setAttribute('networked-video-source', this.currentProperty, apiPatternSingle[this.currentProperty]);
                     }
@@ -249,17 +249,17 @@
     }
 
     function bindStatusControls() {
-        var btStatusControls = VRODOSMaster.getElement('obtainStatusAndSetSizeControls', true);
-        bindOnce(btStatusControls, 'status-controls', function (buttonEl) {
-            buttonEl.addEventListener('click', function () {
+        const btStatusControls = VRODOSMaster.getElement('obtainStatusAndSetSizeControls', true);
+        bindOnce(btStatusControls, 'status-controls', (buttonEl) => {
+            buttonEl.addEventListener('click', () => {
                 buildVideoControlGui(buttonEl);
             });
         });
     }
 
     function startRecording(stream) {
-        var recorder = new MediaRecorder(stream);
-        var data = [];
+        const recorder = new MediaRecorder(stream);
+        const data = [];
 
         recorder.ondataavailable = function (event) {
             data.push(event.data);
@@ -267,25 +267,23 @@
         recorder.start();
 
         return Promise.all([
-            new Promise(function (resolve, reject) {
+            new Promise((resolve, reject) => {
                 recorder.onstop = resolve;
                 recorder.onerror = function (event) {
                     reject(event.name);
                 };
             })
-        ]).then(function () {
-            return data;
-        });
+        ]).then(() => data);
     }
 
     function stopRecording(stream) {
-        stream.getTracks().forEach(function (track) {
+        stream.getTracks().forEach((track) => {
             track.stop();
         });
 
-        var recordBtn = VRODOSMaster.getElement('start-recording-btn', true);
-        var downloadBtn = VRODOSMaster.getElement('download-recording-btn', true);
-        var uploadBtn = VRODOSMaster.getElement('upload-recording-btn', true);
+        const recordBtn = VRODOSMaster.getElement('start-recording-btn', true);
+        const downloadBtn = VRODOSMaster.getElement('download-recording-btn', true);
+        const uploadBtn = VRODOSMaster.getElement('upload-recording-btn', true);
 
         if (recordBtn) {
             recordBtn.disabled = false;
@@ -301,15 +299,15 @@
     }
 
     function bindRecordingControls() {
-        var recordButton = VRODOSMaster.getElement('start-recording-btn', true);
-        var videoPreview = VRODOSMaster.getElement('video-preview', true);
-        var downloadButton = VRODOSMaster.getElement('download-recording-btn', true);
-        var uploadButton = VRODOSMaster.getElement('upload-recording-btn', true);
-        var captureLabel = VRODOSMaster.getElement('captured-video-label', true);
-        var recording = VRODOSMaster.getElement('recording', true);
+        const recordButton = VRODOSMaster.getElement('start-recording-btn', true);
+        const videoPreview = VRODOSMaster.getElement('video-preview', true);
+        const downloadButton = VRODOSMaster.getElement('download-recording-btn', true);
+        const uploadButton = VRODOSMaster.getElement('upload-recording-btn', true);
+        const captureLabel = VRODOSMaster.getElement('captured-video-label', true);
+        const recording = VRODOSMaster.getElement('recording', true);
 
-        bindOnce(recordButton, 'recording', function (buttonEl) {
-            buttonEl.addEventListener('click', function () {
+        bindOnce(recordButton, 'recording', (buttonEl) => {
+            buttonEl.addEventListener('click', () => {
                 if (captureLabel) {
                     captureLabel.innerHTML = '';
                 }
@@ -320,7 +318,7 @@
                     systemAudio: 'include',
                     video: { cursor: 'never' },
                     audio: true
-                }).then(function (stream) {
+                }).then((stream) => {
                     buttonEl.disabled = true;
                     if (downloadButton) {
                         downloadButton.style.visibility = 'hidden';
@@ -338,16 +336,16 @@
                         stopRecording(videoPreview.srcObject);
                     };
 
-                    return new Promise(function (resolve) {
+                    return new Promise((resolve) => {
                         videoPreview.onplaying = resolve;
                     });
-                }).then(function () {
+                }).then(() => {
                     if (!videoPreview || typeof videoPreview.captureStream !== 'function') {
                         return null;
                     }
 
                     return startRecording(videoPreview.captureStream());
-                }).then(function (recordedChunks) {
+                }).then((recordedChunks) => {
                     if (!recordedChunks) {
                         return;
                     }
@@ -375,29 +373,29 @@
             }, false);
         });
 
-        bindOnce(uploadButton, 'upload-recording', function (buttonEl) {
-            buttonEl.addEventListener('click', function () {
+        bindOnce(uploadButton, 'upload-recording', (buttonEl) => {
+            buttonEl.addEventListener('click', () => {
                 if (!window.recordedBlob) {
                     return;
                 }
 
                 buttonEl.disabled = true;
-                var mvUrlInput = VRODOSMaster.getElement('node-url-input', true);
-                var mvTokenInput = VRODOSMaster.getElement('node-token-input', true);
-                var mvProjectIdInput = VRODOSMaster.getElement('mv-project-id-input', true);
-                var mvUrl = mvUrlInput ? mvUrlInput.value : '';
-                var mvToken = mvTokenInput ? mvTokenInput.value : '';
-                var mvProjectId = mvProjectIdInput ? mvProjectIdInput.value : '';
+                const mvUrlInput = VRODOSMaster.getElement('node-url-input', true);
+                const mvTokenInput = VRODOSMaster.getElement('node-token-input', true);
+                const mvProjectIdInput = VRODOSMaster.getElement('mv-project-id-input', true);
+                const mvUrl = mvUrlInput ? mvUrlInput.value : '';
+                const mvToken = mvTokenInput ? mvTokenInput.value : '';
+                const mvProjectId = mvProjectIdInput ? mvProjectIdInput.value : '';
 
-                var videoFile = new File([window.recordedBlob], `vrodos-${  window.recordedBlob.size  }.webm`, { type: window.recordedBlob.type });
-                var formData = new FormData();
+                const videoFile = new File([window.recordedBlob], `vrodos-${  window.recordedBlob.size  }.webm`, { type: window.recordedBlob.type });
+                const formData = new FormData();
                 formData.append('file', videoFile);
 
                 fetch(`${mvUrl  }/dam/assets?description=Recorded video from VRodos&externalTool=VRodos`, {
                     method: 'POST',
                     headers: { Authorization: `Bearer ${  mvToken}` },
                     body: formData
-                }).then(function (response) {
+                }).then((response) => {
                     if (response.ok) {
                         return response.json();
                     }
@@ -405,7 +403,7 @@
                     buttonEl.disabled = false;
                     alert('There has been a problem uploading your video to MediaVerse platform');
                     return null;
-                }).then(function (data) {
+                }).then((data) => {
                     if (!data) {
                         return;
                     }
@@ -417,7 +415,7 @@
                             Authorization: `Bearer ${  mvToken}`
                         },
                         body: JSON.stringify({ projectOutput: [data.key] })
-                    }).then(function (response) {
+                    }).then((response) => {
                         buttonEl.disabled = false;
                         if (response.ok) {
                             alert('The video has been successfully uploaded to MediaVerse!');
@@ -433,7 +431,7 @@
 
     function handleFullscreenResult(result) {
         if (result && typeof result.catch === 'function') {
-            result.catch(function (error) {
+            result.catch((error) => {
                 console.warn('[VRodos] Fullscreen request was ignored by the browser.', error);
             });
         }
@@ -480,14 +478,14 @@
     }
 
     function bindDirectorControls() {
-        bindOnce(document.body, 'director-keydown', function () {
-            document.addEventListener('keydown', function (event) {
+        bindOnce(document.body, 'director-keydown', () => {
+            document.addEventListener('keydown', (event) => {
                 if (event.keyCode !== 88) {
                     return;
                 }
 
-                var actionsDiv = VRODOSMaster.getElement('actionsDiv', true);
-                var datGui = document.getElementsByClassName('dg ac')[0];
+                const actionsDiv = VRODOSMaster.getElement('actionsDiv', true);
+                const datGui = document.getElementsByClassName('dg ac')[0];
 
                 if (actionsDiv) {
                     actionsDiv.style.display = 'block';
@@ -501,12 +499,12 @@
             });
         });
 
-        var directorControls = VRODOSMaster.getElement('toggle_controls', true);
-        bindOnce(directorControls, 'director-controls', function (buttonEl) {
+        const directorControls = VRODOSMaster.getElement('toggle_controls', true);
+        bindOnce(directorControls, 'director-controls', (buttonEl) => {
             buttonEl.onclick = function () {
-                var actionsDiv = VRODOSMaster.getElement('actionsDiv', true);
-                var datGui = document.getElementsByClassName('dg ac')[0];
-                var elem = document.body;
+                const actionsDiv = VRODOSMaster.getElement('actionsDiv', true);
+                const datGui = document.getElementsByClassName('dg ac')[0];
+                const elem = document.body;
 
                 if (actionsDiv) {
                     actionsDiv.style.display = 'none';
@@ -522,10 +520,10 @@
     }
 
     function bindSceneAssetVisibility() {
-        var sceneAssets = VRODOSMaster.queryOne('#scene-assets');
-        bindOnce(sceneAssets, 'scene-assets-visible', function (assetsEl) {
-            assetsEl.addEventListener('loaded', function () {
-                var chatWrapper = VRODOSMaster.getElement('chat-wrapper-el', true);
+        const sceneAssets = VRODOSMaster.queryOne('#scene-assets');
+        bindOnce(sceneAssets, 'scene-assets-visible', (assetsEl) => {
+            assetsEl.addEventListener('loaded', () => {
+                const chatWrapper = VRODOSMaster.getElement('chat-wrapper-el', true);
                 if (chatWrapper && chatWrapper.getAttribute('data-visible') === 'true') {
                     chatWrapper.style.visibility = 'visible';
                 }

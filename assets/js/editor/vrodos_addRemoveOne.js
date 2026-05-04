@@ -6,7 +6,7 @@ function getSceneObjectAddedAt(dataDrag) {
 }
 
 function vrodosEditorJoinUrl(base, path) {
-    return String(base || '').replace(/\/+$/, '') + '/' + String(path || '').replace(/^\/+/, '');
+    return `${String(base || '').replace(/\/+$/, '')  }/${  String(path || '').replace(/^\/+/, '')}`;
 }
 
 function vrodosEditorResolveBaseUrl(pluginPath, localizedKey, fallbackRelative) {
@@ -293,19 +293,19 @@ function vrodosCreateAssessmentLabel(title, type, levels) {
 function vrodosCreateAssessmentPlaceholder(nameModel, resource) {
     const assessmentGroup = new THREE.Group();
     assessmentGroup.name = nameModel;
-    assessmentGroup['asset_name'] = vrodosDecodeDisplayText(resource.asset_name || resource.assessment_title || 'Assessment');
-    assessmentGroup['asset_slug'] = resource.asset_slug || '';
-    assessmentGroup['asset_id'] = resource.asset_id || 0;
-    assessmentGroup['category_name'] = resource.category_name || 'Assessment';
-    assessmentGroup['category_slug'] = 'assessment';
-    assessmentGroup['assessment_title'] = vrodosDecodeDisplayText(resource.assessment_title || resource.asset_name || 'Assessment');
-    assessmentGroup['assessment_type'] = vrodosDecodeDisplayText(resource.assessment_type || '');
-    assessmentGroup['assessment_group'] = vrodosDecodeDisplayText(resource.assessment_group || '');
-    assessmentGroup['assessment_source_id'] = resource.assessment_source_id || '';
-    assessmentGroup['assessment_content'] = resource.assessment_content || '';
-    assessmentGroup['assessment_levels'] = vrodosNormalizeAssessmentLevels(resource.assessment_levels || '');
-    assessmentGroup['assessment_supported'] = resource.assessment_supported || 'false';
-    assessmentGroup['addedAt'] = resource.addedAt || Math.floor(Date.now() / 1000);
+    assessmentGroup.asset_name = vrodosDecodeDisplayText(resource.asset_name || resource.assessment_title || 'Assessment');
+    assessmentGroup.asset_slug = resource.asset_slug || '';
+    assessmentGroup.asset_id = resource.asset_id || 0;
+    assessmentGroup.category_name = resource.category_name || 'Assessment';
+    assessmentGroup.category_slug = 'assessment';
+    assessmentGroup.assessment_title = vrodosDecodeDisplayText(resource.assessment_title || resource.asset_name || 'Assessment');
+    assessmentGroup.assessment_type = vrodosDecodeDisplayText(resource.assessment_type || '');
+    assessmentGroup.assessment_group = vrodosDecodeDisplayText(resource.assessment_group || '');
+    assessmentGroup.assessment_source_id = resource.assessment_source_id || '';
+    assessmentGroup.assessment_content = resource.assessment_content || '';
+    assessmentGroup.assessment_levels = vrodosNormalizeAssessmentLevels(resource.assessment_levels || '');
+    assessmentGroup.assessment_supported = resource.assessment_supported || 'false';
+    assessmentGroup.addedAt = resource.addedAt || Math.floor(Date.now() / 1000);
     assessmentGroup.isSelectableMesh = true;
     assessmentGroup.isLight = false;
     assessmentGroup.fnPath = '';
@@ -357,8 +357,8 @@ function vrodosCreateAssessmentPlaceholder(nameModel, resource) {
     assessmentGroup.add(dot);
 
     const infoPlate = vrodosCreateAssessmentInfoPlate(
-        assessmentGroup['assessment_type'] || assessmentGroup['assessment_group'],
-        assessmentGroup['assessment_levels']
+        assessmentGroup.assessment_type || assessmentGroup.assessment_group,
+        assessmentGroup.assessment_levels
     );
     if (infoPlate) {
         assessmentGroup.add(infoPlate);
@@ -371,7 +371,7 @@ function vrodosCreateAssessmentPlaceholder(nameModel, resource) {
  * Create a Sun light in the scene.
  */
 function vrodos_createLightSun(nameModel, addedAt) {
-    let lightSun = new THREE.DirectionalLight(0xffffff, 1);
+    const lightSun = new THREE.DirectionalLight(0xffffff, 1);
     lightSun.castShadow = true;
     lightSun.sunSky = true;
     lightSun.castingShadow = true;
@@ -384,16 +384,16 @@ function vrodos_createLightSun(nameModel, addedAt) {
     lightSun.shadowBias = "-0.001";
     lightSun.defaultColor = "0xffffff";
     lightSun.name = nameModel;
-    lightSun['asset_name'] = "mylightSun";
+    lightSun.asset_name = "mylightSun";
     lightSun.isSelectableMesh = true;
-    lightSun['category_name'] = "lightSun";
-    lightSun['category_slug'] = "lightSun";
+    lightSun.category_name = "lightSun";
+    lightSun.category_slug = "lightSun";
     lightSun.isLight = true;
     lightSun.addedAt = addedAt;
     const hexcol = 0xffffff;
 
     // Add Sun Helper (visual representation in editor)
-    let sunSphere = new THREE.Mesh(
+    const sunSphere = new THREE.Mesh(
         new THREE.SphereGeometry(1, 16, 8),
         new THREE.MeshBasicMaterial({ color: 0xffffff })
     );
@@ -401,15 +401,15 @@ function vrodos_createLightSun(nameModel, addedAt) {
     sunSphere.name = "SunSphere";
     lightSun.add(sunSphere);
 
-    let lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, 0xcccccc);
+    const lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, 0xcccccc);
     lightSunHelper.isLightHelper = true;
-    lightSunHelper.name = 'lightHelper_' + lightSun.name;
-    lightSunHelper['category_name'] = 'lightHelper';
+    lightSunHelper.name = `lightHelper_${  lightSun.name}`;
+    lightSunHelper.category_name = 'lightHelper';
     lightSunHelper.parentLightName = lightSun.name;
     lightSunHelper.vrodos_internal_helper = true;
 
     // Target spot: Where Sun points
-    let lightTargetSpot = new THREE.Object3D();
+    const lightTargetSpot = new THREE.Object3D();
     lightTargetSpot.add(new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 16, 8),
         new THREE.MeshBasicMaterial({ color: 0xffffff })
@@ -417,8 +417,8 @@ function vrodos_createLightSun(nameModel, addedAt) {
     lightTargetSpot.children[0].isSelectableMesh = false;
 
     lightTargetSpot.isSelectableMesh = true;
-    lightTargetSpot.name = "lightTargetSpot_" + lightSun.name;
-    lightTargetSpot['category_name'] = "lightTargetSpot";
+    lightTargetSpot.name = `lightTargetSpot_${  lightSun.name}`;
+    lightTargetSpot.category_name = "lightTargetSpot";
     lightTargetSpot.isLightTargetSpot = true;
     lightTargetSpot.isLight = false;
     lightTargetSpot.addedAt = addedAt;
@@ -429,8 +429,8 @@ function vrodos_createLightSun(nameModel, addedAt) {
     lightSun.target.position = lightTargetSpot.position;
 
     // Add shadow camera helper
-    let lightSunShadowhelper = new THREE.CameraHelper(lightSun.shadow.camera);
-    lightSunShadowhelper.name = "lightShadowHelper_" + lightSun.name;
+    const lightSunShadowhelper = new THREE.CameraHelper(lightSun.shadow.camera);
+    lightSunShadowhelper.name = `lightShadowHelper_${  lightSun.name}`;
     lightSunShadowhelper.vrodos_internal_helper = true;
 
     envir.scene.add(lightSun);
@@ -444,12 +444,12 @@ function vrodos_createLightSun(nameModel, addedAt) {
     lightSunHelper.update();
 
     // Set initial transformations
-    let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
-    trs_tmp['translation'][1] += 3; // Sun should be higher than objects
+    const trs_tmp = vrodos_scene_data.objects[nameModel].trs;
+    trs_tmp.translation[1] += 3; // Sun should be higher than objects
 
-    lightSun.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
-    lightSun.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-    lightSun.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+    lightSun.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
+    lightSun.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
+    lightSun.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
     // Attach Editor Controls
     transform_controls.attach(lightSun);
@@ -476,11 +476,11 @@ function vrodos_createLightSun(nameModel, addedAt) {
  * Create a Lamp light in the scene.
  */
 function vrodos_createLightLamp(nameModel, addedAt) {
-    let lightLamp = new THREE.PointLight(0xffffff, 1, 100, 2);
+    const lightLamp = new THREE.PointLight(0xffffff, 1, 100, 2);
     lightLamp.name = nameModel;
-    lightLamp['asset_name'] = "mylightLamp";
+    lightLamp.asset_name = "mylightLamp";
     lightLamp.isSelectableMesh = true;
-    lightLamp['category_name'] = "lightLamp";
+    lightLamp.category_name = "lightLamp";
     lightLamp.isLight = true;
     lightLamp.castShadow = true;
     lightLamp.addedAt = addedAt;
@@ -496,7 +496,7 @@ function vrodos_createLightLamp(nameModel, addedAt) {
     const hexcol = "0xffff00";
 
     // Add Lamp Helper visual representation
-    let lampSphere = new THREE.Mesh(
+    const lampSphere = new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 16, 8),
         new THREE.MeshBasicMaterial({ color: 0xffff00 })
     );
@@ -504,10 +504,10 @@ function vrodos_createLightLamp(nameModel, addedAt) {
     lampSphere.name = "LampSphere";
     lightLamp.add(lampSphere);
 
-    let lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, 0x555500);
+    const lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, 0x555500);
     lightLampHelper.isLightHelper = true;
-    lightLampHelper.name = 'lightHelper_' + lightLamp.name;
-    lightLampHelper['category_name'] = 'lightHelper';
+    lightLampHelper.name = `lightHelper_${  lightLamp.name}`;
+    lightLampHelper.category_name = 'lightHelper';
     lightLampHelper.parentLightName = lightLamp.name;
     lightLampHelper.vrodos_internal_helper = true;
 
@@ -516,12 +516,12 @@ function vrodos_createLightLamp(nameModel, addedAt) {
     envir.scene.add(lightLampHelper);
     lightLampHelper.update();
 
-    let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
-    trs_tmp['translation'][1] += 3;
+    const trs_tmp = vrodos_scene_data.objects[nameModel].trs;
+    trs_tmp.translation[1] += 3;
 
-    lightLamp.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
-    lightLamp.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-    lightLamp.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+    lightLamp.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
+    lightLamp.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
+    lightLamp.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
     transform_controls.attach(lightLamp);
     removeAllCelOutlines();
@@ -542,22 +542,22 @@ function vrodos_createLightLamp(nameModel, addedAt) {
  * Create a Spot light in the scene.
  */
 function vrodos_createLightSpot(nameModel, addedAt) {
-    let lightSpot = new THREE.SpotLight(0xffffff, 1, 5, 0.39, 0, 2);
+    const lightSpot = new THREE.SpotLight(0xffffff, 1, 5, 0.39, 0, 2);
     lightSpot.name = nameModel;
-    lightSpot['asset_name'] = "mylightSpot";
+    lightSpot.asset_name = "mylightSpot";
     lightSpot.isSelectableMesh = true;
-    lightSpot['category_name'] = "lightSpot";
+    lightSpot.category_name = "lightSpot";
     lightSpot.isLight = true;
     lightSpot.addedAt = addedAt;
 
-    let lightTargetSpot = new THREE.Object3D();
+    const lightTargetSpot = new THREE.Object3D();
     lightTargetSpot.add(new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 16, 8),
         new THREE.MeshBasicMaterial({ color: 0xffaa00 })
     ));
     lightTargetSpot.children[0].isSelectableMesh = false;
 
-    let lampSphere = new THREE.Mesh(
+    const lampSphere = new THREE.Mesh(
         new THREE.SphereGeometry(1, 16, 8),
         new THREE.MeshBasicMaterial({ color: 0xffff00 })
     );
@@ -567,8 +567,8 @@ function vrodos_createLightSpot(nameModel, addedAt) {
     lightSpot.add(lampSphere);
 
     lightTargetSpot.isSelectableMesh = true;
-    lightTargetSpot.name = "lightTargetSpot_" + lightSpot.name;
-    lightTargetSpot['category_name'] = "lightTargetSpot";
+    lightTargetSpot.name = `lightTargetSpot_${  lightSpot.name}`;
+    lightTargetSpot.category_name = "lightTargetSpot";
     lightTargetSpot.isLightTargetSpot = true;
     lightTargetSpot.isLight = false;
     lightTargetSpot.addedAt = addedAt;
@@ -584,12 +584,12 @@ function vrodos_createLightSpot(nameModel, addedAt) {
 
     lightSpot.target.updateMatrixWorld();
 
-    let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
-    trs_tmp['translation'][1] += 3;
+    const trs_tmp = vrodos_scene_data.objects[nameModel].trs;
+    trs_tmp.translation[1] += 3;
 
-    lightSpot.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
-    lightSpot.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-    lightSpot.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+    lightSpot.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
+    lightSpot.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
+    lightSpot.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
     transform_controls.attach(lightSpot);
     removeAllCelOutlines();
@@ -609,15 +609,15 @@ function vrodos_createLightSpot(nameModel, addedAt) {
  * Create an Ambient light in the scene.
  */
 function vrodos_createLightAmbient(nameModel, addedAt) {
-    let lightAmbient = new THREE.AmbientLight(0xffffff, 1);
+    const lightAmbient = new THREE.AmbientLight(0xffffff, 1);
     lightAmbient.name = nameModel;
-    lightAmbient['asset_name'] = "mylightAmbient";
+    lightAmbient.asset_name = "mylightAmbient";
     lightAmbient.isSelectableMesh = true;
-    lightAmbient['category_name'] = "lightAmbient";
+    lightAmbient.category_name = "lightAmbient";
     lightAmbient.isLight = true;
     lightAmbient.addedAt = addedAt;
 
-    let lampSphere = new THREE.Mesh(
+    const lampSphere = new THREE.Mesh(
         new THREE.SphereGeometry(1, 16, 8),
         new THREE.MeshBasicMaterial({ color: 0xffff00 })
     );
@@ -629,12 +629,12 @@ function vrodos_createLightAmbient(nameModel, addedAt) {
     envir.scene.add(lightAmbient);
     envir.selectableMeshes.add(lightAmbient);
 
-    let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
-    trs_tmp['translation'][1] += 3;
+    const trs_tmp = vrodos_scene_data.objects[nameModel].trs;
+    trs_tmp.translation[1] += 3;
 
-    lightAmbient.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
-    lightAmbient.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-    lightAmbient.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+    lightAmbient.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
+    lightAmbient.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
+    lightAmbient.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
     transform_controls.attach(lightAmbient);
     removeAllCelOutlines();
@@ -656,40 +656,40 @@ function vrodos_createPawn(nameModel, addedAt, pluginPath) {
     const modelBaseUrl = vrodosEditorResolveBaseUrl(pluginPath, 'modelBaseUrl', 'assets/models/');
 
     loader.load(
-        modelBaseUrl + 'editor/pawn.glb',
+        `${modelBaseUrl  }editor/pawn.glb`,
         (gltf) => {
-            let Pawn = gltf.scene.children[0];
+            const Pawn = gltf.scene.children[0];
             Pawn.name = nameModel;
-            Pawn['asset_name'] = "myActor";
+            Pawn.asset_name = "myActor";
             Pawn.isSelectableMesh = true;
-            Pawn['category_name'] = "pawn";
+            Pawn.category_name = "pawn";
             Pawn.isLight = false;
             Pawn.addedAt = addedAt;
 
             let indexPawn = 1;
-            for (let ch of envir.scene.children) {
+            for (const ch of envir.scene.children) {
                 if (ch.name.includes("Pawn")) indexPawn++;
             }
 
-            let pawnLabelDiv = document.createElement('div');
-            pawnLabelDiv.textContent = 'Actor ' + indexPawn;
+            const pawnLabelDiv = document.createElement('div');
+            pawnLabelDiv.textContent = `Actor ${  indexPawn}`;
             pawnLabelDiv.style.marginTop = '-1em';
             pawnLabelDiv.style.fontSize = '26px';
             pawnLabelDiv.style.color = "yellow";
 
-            let pawnLabel = new THREE.CSS2DObject(pawnLabelDiv);
+            const pawnLabel = new THREE.CSS2DObject(pawnLabelDiv);
             pawnLabel.position.set(0, 1.5, 0);
             Pawn.add(pawnLabel);
 
             envir.scene.add(Pawn);
             envir.selectableMeshes.add(Pawn);
 
-            let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
-            trs_tmp['translation'][1] += 3;
+            const trs_tmp = vrodos_scene_data.objects[nameModel].trs;
+            trs_tmp.translation[1] += 3;
 
-            Pawn.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
-            Pawn.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-            Pawn.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+            Pawn.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
+            Pawn.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
+            Pawn.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
             transform_controls.attach(Pawn);
             removeAllCelOutlines();
@@ -715,21 +715,21 @@ function vrodos_createGlbAsset(nameModel, addedAt, pluginPath) {
     document.getElementById("progressWrapper").style.visibility = "visible";
     document.getElementById("result_download").innerHTML = "Loading";
 
-    let manager = new THREE.LoadingManager();
+    const manager = new THREE.LoadingManager();
     manager.onProgress = (item, loaded, total) => {
-        document.getElementById("result_download").innerHTML = vrodos_scene_data.objects[nameModel]['asset_name'] + " loading part " + loaded + " / " + total;
+        document.getElementById("result_download").innerHTML = `${vrodos_scene_data.objects[nameModel].asset_name  } loading part ${  loaded  } / ${  total}`;
     };
 
     manager.onLoad = () => {
-        let insertedObject = envir.scene.getObjectByName(nameModel);
-        let trs_tmp = vrodos_scene_data.objects[nameModel]['trs'];
+        const insertedObject = envir.scene.getObjectByName(nameModel);
+        const trs_tmp = vrodos_scene_data.objects[nameModel].trs;
 
-        insertedObject.position.set(trs_tmp['translation'][0], trs_tmp['translation'][1], trs_tmp['translation'][2]);
-        insertedObject.rotation.set(trs_tmp['rotation'][0], trs_tmp['rotation'][1], trs_tmp['rotation'][2]);
-        insertedObject.scale.set(trs_tmp['scale'][0], trs_tmp['scale'][1], trs_tmp['scale'][2]);
+        insertedObject.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
+        insertedObject.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
+        insertedObject.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
         if (insertedObject.children[0].isMesh) {
-            let mat = insertedObject.children[0].material;
+            const mat = insertedObject.children[0].material;
             if (isNaN(mat.metalness)) {
                 mat.metalness = 0;
                 mat.roughness = 0.5;
@@ -754,7 +754,7 @@ function vrodos_createGlbAsset(nameModel, addedAt, pluginPath) {
         document.getElementById("progressWrapper").style.visibility = "hidden";
     };
 
-    let loaderMulti = new VRodos_LoaderMulti();
+    const loaderMulti = new VRodos_LoaderMulti();
     loaderMulti.load(manager, { [nameModel]: vrodos_scene_data.objects[nameModel] }, pluginPath);
 }
 
@@ -797,7 +797,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 
     // Initial persistence structure
     vrodos_scene_data.objects[nameModel] = {
-        "path": path,
+        path,
         "trs": {
             "translation": [translation[0], translation[1], translation[2]],
             "rotation": [0, 0, 0],
@@ -811,7 +811,7 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
         "asset_name": nameModel,
         "category_name": categoryName,
         "isLight": categoryName.includes("light"),
-        "addedAt": addedAt,
+        addedAt,
     };
 
     // Copy drag data properties
@@ -847,22 +847,22 @@ function addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, 
 function deleteFomScene(uuid, name) {
 
     if (name) {
-        document.getElementById("confirm-asset-deletion-title").innerHTML = 'Delete ' + name + '?';
-        document.getElementById("confirm-asset-deletion-description").innerHTML = 'Do you really want to delete the asset named <b>' + name + '</b>?';
+        document.getElementById("confirm-asset-deletion-title").innerHTML = `Delete ${  name  }?`;
+        document.getElementById("confirm-asset-deletion-description").innerHTML = `Do you really want to delete the asset named <b>${  name  }</b>?`;
     }
 
-    let delete_dialog_element = document.getElementById('confirm-deletion-dialog');
+    const delete_dialog_element = document.getElementById('confirm-deletion-dialog');
     delete_dialog_element.showModal();
 
-    let delUuid = uuid;
+    const delUuid = uuid;
     let selUuid;
     if( typeof(transform_controls.object) != "undefined" )
-        selUuid = transform_controls.object.uuid;
+        {selUuid = transform_controls.object.uuid;}
     else
-        selUuid = "unassigned";
+        {selUuid = "unassigned";}
     // var selUuid = (typeof checkUuid != "undefined") ? checkUuid : "unassigned";
-    let delete_btn_element = document.getElementById("delete-asset-btn-confirmation");
-    delete_btn_element.addEventListener('click', function() {
+    const delete_btn_element = document.getElementById("delete-asset-btn-confirmation");
+    delete_btn_element.addEventListener('click', () => {
         delete_dialog_element.close();
         transform_controls.detach();
         deleteAssetFromScene(uuid, true);
@@ -895,8 +895,8 @@ function removeHierarchyEntriesForObject(uuid, objectName) {
 
 function lockOnScene(uuid, name) {
 
-    let selectedObject = envir.scene.getObjectByProperty( 'uuid' , uuid);
-    let hierarchyItem = document.getElementById(uuid);
+    const selectedObject = envir.scene.getObjectByProperty( 'uuid' , uuid);
+    const hierarchyItem = document.getElementById(uuid);
 
     if (selectedObject.locked){
         selectedObject.locked = false;
@@ -911,10 +911,10 @@ function lockOnScene(uuid, name) {
 
     // Update the lock icon in the hierarchy viewer (Lucide)
     if (hierarchyItem) {
-        let lockAnchor = hierarchyItem.querySelector('a[aria-label="Lock asset"]');
+        const lockAnchor = hierarchyItem.querySelector('a[aria-label="Lock asset"]');
         if (lockAnchor) {
-            let newIcon = selectedObject.locked ? 'lock' : 'lock-open';
-            lockAnchor.innerHTML = '<i data-lucide="' + newIcon + '" class="tw-w-4 tw-h-4"></i>';
+            const newIcon = selectedObject.locked ? 'lock' : 'lock-open';
+            lockAnchor.innerHTML = `<i data-lucide="${  newIcon  }" class="tw-w-4 tw-h-4"></i>`;
             if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [lockAnchor] });
         }
     }
@@ -978,18 +978,18 @@ function deleteAssetFromScene(uuid, preventDispose = false) {
     // If deleting light then remove also its LightHelper and lightTargetSpot and Shadow Helper
     if (objectSelected.isLight) {
         // Sun Shadow Helper
-        let shadowHelper = envir.scene.getObjectByName("lightShadowHelper_" + objectSelected.name);
+        const shadowHelper = envir.scene.getObjectByName(`lightShadowHelper_${  objectSelected.name}`);
         if (shadowHelper) { shadowHelper.dispose(); envir.scene.remove(shadowHelper); }
 
         // Sun target spot
-        let targetSpot = envir.scene.getObjectByName("lightTargetSpot_" + objectSelected.name);
+        const targetSpot = envir.scene.getObjectByName(`lightTargetSpot_${  objectSelected.name}`);
         if (targetSpot) envir.scene.remove(targetSpot);
 
         // Sun target spot remove from hierarchy viewer
         removeHierarchyEntriesForObject('', `lightTargetSpot_${objectSelected.name}`);
 
         // Light Helper (for all lights)
-        let lightHelper = envir.scene.getObjectByName("lightHelper_" + objectSelected.name);
+        const lightHelper = envir.scene.getObjectByName(`lightHelper_${  objectSelected.name}`);
         if (lightHelper) { lightHelper.dispose(); envir.scene.remove(lightHelper); }
     }
     
@@ -1025,11 +1025,11 @@ function deleteAssetFromScene(uuid, preventDispose = false) {
  */
 function vrodosDisposeObject(object) {
     if (!object) return;
-    object.traverse(function (node) {
+    object.traverse((node) => {
         if (node.geometry) node.geometry.dispose();
         if (node.material) {
-            let materials = Array.isArray(node.material) ? node.material : [node.material];
-            materials.forEach(function (mat) {
+            const materials = Array.isArray(node.material) ? node.material : [node.material];
+            materials.forEach((mat) => {
                 for (const key in mat) {
                     if (mat[key] && typeof mat[key].dispose === 'function') {
                         mat[key].dispose(); // textures, env maps, etc.

@@ -7,7 +7,7 @@ function vrodos_whenSceneSaveSettles() {
 
 function vrodos_saveSceneAjax() {
 
-	let postdata = new URLSearchParams({
+	const postdata = new URLSearchParams({
 		'action': 'vrodos_save_scene_async_action',
 		'scene_id': isAdmin == "back" ? phpmyvarC.scene_id : my_ajax_object_savescene.scene_id,
 		'scene_json': document.getElementById( "vrodos_scene_json_input" ).value,
@@ -27,13 +27,13 @@ function vrodos_saveSceneAjax() {
 		method: 'POST',
 		body: postdata
 	})
-	.then( function (response) { return response.text(); })
-	.then( function (data) {
+	.then( (response) => response.text())
+	.then( (data) => {
 
-		let save_scene_btn       = document.getElementById( "save-scene-button" );
+		const save_scene_btn       = document.getElementById( "save-scene-button" );
 		save_scene_btn.innerHTML = "All changes saved";
 
-		let enableSaveFunctionality = function () {
+		const enableSaveFunctionality = function () {
 			save_scene_btn.innerHTML = "Save Scene";
 			save_scene_btn.classList.remove( "LinkDisabled" );
 			document.getElementById( "compileGameBtn" ).disabled = false;
@@ -45,17 +45,17 @@ function vrodos_saveSceneAjax() {
 		}
 		return data;
 	})
-	.catch( function (err) {
+	.catch( (err) => {
 
-		console.log( "Ajax Save Scene: ERROR: 156 - " + err );
-		alert( "Save Scene Error - " + err );
+		console.log( `Ajax Save Scene: ERROR: 156 - ${  err}` );
+		alert( `Save Scene Error - ${  err}` );
 
-		let saveBtn = document.getElementById( 'save-scene-button' );
+		const saveBtn = document.getElementById( 'save-scene-button' );
 		saveBtn.innerHTML = "Save scene";
 		saveBtn.classList.remove( "LinkDisabled" );
 		throw err;
 	})
-	.finally( function () {
+	.finally( () => {
 		vrodosIsSceneSavePending = false;
 	});
 

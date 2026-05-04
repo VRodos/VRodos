@@ -302,7 +302,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (typeof envir.scene.aframePmndrsMoonEnabled === 'undefined') {
             envir.scene.aframePmndrsMoonEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.moonEnabled;
         }
-        var lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
+        const lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
             envir.scene.aframeHorizonSkyPreset,
             Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset
         );
@@ -314,7 +314,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 lightingPresetFallback
             );
         }
-        var helperDefaults = Shared.getPmndrsHorizonHelperDefaults(
+        const helperDefaults = Shared.getPmndrsHorizonHelperDefaults(
             envir.scene.aframePmndrsHorizonLightingPreset === 'custom'
                 ? lightingPresetFallback
                 : envir.scene.aframePmndrsHorizonLightingPreset
@@ -352,20 +352,20 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function syncCompilePostFxState() {
-        var controls = getCompileDialogElements();
+        const controls = getCompileDialogElements();
         if (!controls.postFx || !controls.bloomStrength || !controls.postFxColor || !controls.edgeAAStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile || !controls.reflectionSource) {
             return;
         }
 
-        var postFxEnabled = controls.postFx.checked;
-        var colorGradingEnabled = postFxEnabled && controls.postFxColor.checked;
-        var envLightingEnabled = postFxEnabled && VRodosCompileUI.PostFX.normalizeReflectionSource(controls.reflectionSource.value) === 'hdr';
-        var bloomEnabled = postFxEnabled && VRodosCompileUI.PostFX.normalizeBloomStrength(controls.bloomStrength.value) !== 'off';
-        var engine = controls.postFxEngine ? VRodosCompileUI.PostFX.normalizeEngine(controls.postFxEngine.value) : 'legacy';
-        var isPmndrs = engine === 'pmndrs';
+        const postFxEnabled = controls.postFx.checked;
+        const colorGradingEnabled = postFxEnabled && controls.postFxColor.checked;
+        const envLightingEnabled = postFxEnabled && VRodosCompileUI.PostFX.normalizeReflectionSource(controls.reflectionSource.value) === 'hdr';
+        const bloomEnabled = postFxEnabled && VRodosCompileUI.PostFX.normalizeBloomStrength(controls.bloomStrength.value) !== 'off';
+        const engine = controls.postFxEngine ? VRodosCompileUI.PostFX.normalizeEngine(controls.postFxEngine.value) : 'legacy';
+        const isPmndrs = engine === 'pmndrs';
         VRodosCompileUI.General.updateUI(controls, isPmndrs);
 
-        var edgeAAAvailable = postFxEnabled && !isPmndrs;
+        const edgeAAAvailable = postFxEnabled && !isPmndrs;
         
         VRodosCompileUI.PostFX.updateUI(controls, postFxEnabled, isPmndrs, bloomEnabled);
 
@@ -400,9 +400,9 @@ window.addEventListener('DOMContentLoaded', () => {
             controls.taaEnabled.parentElement && controls.taaEnabled.parentElement.classList.toggle('tw-opacity-60', isPmndrs);
         }
 
-        var pmndrsTweakEnabled = postFxEnabled && isPmndrs;
-        var pmndrsAAMode = controls.pmndrsAAMode ? VRodosCompileUI.PostFX.normalizePmndrsAAMode(controls.pmndrsAAMode.value) : Shared.PMNDRS_TWEAK_DEFAULTS.aaMode;
-        var pmndrsAAPresetVisible = pmndrsTweakEnabled && pmndrsAAMode !== 'none';
+        const pmndrsTweakEnabled = postFxEnabled && isPmndrs;
+        const pmndrsAAMode = controls.pmndrsAAMode ? VRodosCompileUI.PostFX.normalizePmndrsAAMode(controls.pmndrsAAMode.value) : Shared.PMNDRS_TWEAK_DEFAULTS.aaMode;
+        const pmndrsAAPresetVisible = pmndrsTweakEnabled && pmndrsAAMode !== 'none';
 
         if (controls.pmndrsAAWrapper) {
             controls.pmndrsAAWrapper.style.display = pmndrsTweakEnabled ? '' : 'none';
@@ -421,7 +421,7 @@ window.addEventListener('DOMContentLoaded', () => {
             controls.pmndrsBloomWrapper.style.display = bloomEnabled ? '' : 'none';
         }
         
-        var pmndrsAtmoChecked = pmndrsTweakEnabled && controls.pmndrsAtmosphere && controls.pmndrsAtmosphere.checked === true;
+        const pmndrsAtmoChecked = pmndrsTweakEnabled && controls.pmndrsAtmosphere && controls.pmndrsAtmosphere.checked === true;
         if (controls.pmndrsAtmosphereWrapper) {
             controls.pmndrsAtmosphereWrapper.style.display = pmndrsAtmoChecked ? '' : 'none';
         }
@@ -431,7 +431,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function updatePmndrsValueLabels() {
-        var c = getCompileDialogElements();
+        const c = getCompileDialogElements();
         VRodosCompileUI.General.updateValueLabels(c);
         VRodosCompileUI.PostFX.updateValueLabels(c);
         if (c.pmndrsSunElevation && c.pmndrsSunElevationValue) {
@@ -483,7 +483,7 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        var controls = getCompileDialogElements();
+        const controls = getCompileDialogElements();
         if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.ambientOcclusionPreset || !controls.contactShadowPreset || !controls.fpsMeter || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile || !controls.reflectionSource) {
             return;
         }
@@ -492,12 +492,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
         VRodosCompileUI.General.syncToScene(controls);
         if (controls.hoveringInteractables) {
-            envir.scene.aframeHoveringInteractables = !!controls.hoveringInteractables.checked;
+            envir.scene.aframeHoveringInteractables = Boolean(controls.hoveringInteractables.checked);
         }
         VRodosCompileUI.PostFX.syncToScene(controls);
         
-        var selectedPostFxEngine = VRodosCompileUI.PostFX.normalizeEngine(controls.postFxEngine.value);
-        var edgeAAValue = VRodosCompileUI.General.normalizeEdgeAAStrengthLevel(controls.edgeAAStrength.value);
+        const selectedPostFxEngine = VRodosCompileUI.PostFX.normalizeEngine(controls.postFxEngine.value);
+        const edgeAAValue = VRodosCompileUI.General.normalizeEdgeAAStrengthLevel(controls.edgeAAStrength.value);
         envir.scene.aframePostFXEdgeAAEnabled = selectedPostFxEngine !== 'pmndrs' && edgeAAValue > 0;
         envir.scene.aframePostFXEdgeAAStrength = edgeAAValue > 0 ? edgeAAValue : (envir.scene.aframePostFXEdgeAAStrength || 3);
 
@@ -515,7 +515,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window.vrodosApplyCompileDialogSettingsToScene = applyCompileDialogSettingsToScene;
 
     window.syncCompileDialogFromSceneSettings = function() {
-        var controls = getCompileDialogElements();
+        const controls = getCompileDialogElements();
 
         if (!controls.renderQuality || !controls.shadowQuality || !controls.aaQuality || !controls.ambientOcclusionPreset || !controls.contactShadowPreset || !controls.fpsMeter || !controls.postFx || !controls.postFxColor || !controls.edgeAAStrength || !controls.bloomStrength || !controls.exposurePreset || !controls.contrastPreset || !controls.reflectionProfile || !controls.reflectionSource) {
             return;
@@ -536,18 +536,18 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.contactShadowPreset.value = envir && envir.scene
             ? VRodosCompileUI.General.normalizeContactShadowPreset(envir.scene.aframeContactShadowPreset)
             : 'soft';
-        controls.fpsMeter.checked = !!(envir && envir.scene && envir.scene.aframeFPSMeterEnabled);
+        controls.fpsMeter.checked = Boolean(envir && envir.scene && envir.scene.aframeFPSMeterEnabled);
         if (controls.hoveringInteractables) {
             controls.hoveringInteractables.checked = !(envir && envir.scene) || envir.scene.aframeHoveringInteractables !== false;
         }
-        controls.postFx.checked = !!(envir && envir.scene && envir.scene.aframePostFXEnabled);
+        controls.postFx.checked = Boolean(envir && envir.scene && envir.scene.aframePostFXEnabled);
         if (controls.legacyHorizonStageSize) {
             controls.legacyHorizonStageSize.value = VRodosCompileUI.General.clampLegacyHorizonStageSize(envir && envir.scene ? envir.scene.aframeLegacyHorizonStageSize : 5000);
         }
         controls.postFxColor.checked = !(envir && envir.scene) || envir.scene.aframePostFXColorEnabled !== false;
 
-        var edgeAAEnabled = !(envir && envir.scene) || envir.scene.aframePostFXEdgeAAEnabled !== false;
-        var edgeAAStrength = envir && envir.scene ? envir.scene.aframePostFXEdgeAAStrength : 3;
+        const edgeAAEnabled = !(envir && envir.scene) || envir.scene.aframePostFXEdgeAAEnabled !== false;
+        const edgeAAStrength = envir && envir.scene ? envir.scene.aframePostFXEdgeAAStrength : 3;
         controls.edgeAAStrength.value = edgeAAEnabled ? VRodosCompileUI.General.normalizeEdgeAAStrengthLevel(edgeAAStrength) : 0;
 
         controls.bloomStrength.value = envir && envir.scene
@@ -576,7 +576,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 : 'off';
         }
         if (controls.taaEnabled) {
-            controls.taaEnabled.checked = !!(envir && envir.scene && envir.scene.aframePostFXTAAEnabled);
+            controls.taaEnabled.checked = Boolean(envir && envir.scene && envir.scene.aframePostFXTAAEnabled);
         }
         if (controls.postFxEngine) {
             controls.postFxEngine.value = envir && envir.scene && envir.scene.aframePostFXEngine
@@ -584,7 +584,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 : 'legacy';
         }
         if (controls.pmndrsAAMode) {
-            var pmndrsAAModeValue = envir && envir.scene
+            let pmndrsAAModeValue = envir && envir.scene
                 ? VRodosCompileUI.PostFX.normalizePmndrsAAMode(envir.scene.aframePmndrsAAMode)
                 : 'inherit';
             if (pmndrsAAModeValue === 'inherit') {
@@ -595,7 +595,7 @@ window.addEventListener('DOMContentLoaded', () => {
             controls.pmndrsAAMode.value = pmndrsAAModeValue;
         }
         if (controls.pmndrsAAPreset) {
-            var pmndrsAAPresetValue = envir && envir.scene
+            let pmndrsAAPresetValue = envir && envir.scene
                 ? VRodosCompileUI.PostFX.normalizePmndrsAAPreset(envir.scene.aframePmndrsAAPreset)
                 : 'inherit';
             if (pmndrsAAPresetValue === 'inherit') {
@@ -616,7 +616,7 @@ window.addEventListener('DOMContentLoaded', () => {
             controls.pmndrsExposure.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsToneMappingExposure : 1.0, 0.3, 2.5, 1.0);
         }
         if (controls.pmndrsLut) {
-            controls.pmndrsLut.checked = !!(envir && envir.scene && envir.scene.aframePmndrsLutEnabled);
+            controls.pmndrsLut.checked = Boolean(envir && envir.scene && envir.scene.aframePmndrsLutEnabled);
         }
         if (controls.pmndrsLutLook) {
             controls.pmndrsLutLook.value = envir && envir.scene
@@ -635,7 +635,7 @@ window.addEventListener('DOMContentLoaded', () => {
             controls.pmndrsVignetteDarkness.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsVignetteDarkness : 0.5, 0, 1, 0.5);
         }
         if (controls.pmndrsNoise) {
-            controls.pmndrsNoise.checked = !!(envir && envir.scene && envir.scene.aframePmndrsNoiseEnabled);
+            controls.pmndrsNoise.checked = Boolean(envir && envir.scene && envir.scene.aframePmndrsNoiseEnabled);
         }
         if (controls.pmndrsNoiseOpacity) {
             controls.pmndrsNoiseOpacity.value = Shared.clampNumber(
@@ -646,7 +646,7 @@ window.addEventListener('DOMContentLoaded', () => {
             );
         }
         if (controls.pmndrsChromaticAberration) {
-            controls.pmndrsChromaticAberration.checked = !!(envir && envir.scene && envir.scene.aframePmndrsChromaticAberrationEnabled);
+            controls.pmndrsChromaticAberration.checked = Boolean(envir && envir.scene && envir.scene.aframePmndrsChromaticAberrationEnabled);
         }
         if (controls.pmndrsChromaticAberrationOffset) {
             controls.pmndrsChromaticAberrationOffset.value = Shared.clampNumber(
@@ -677,21 +677,21 @@ window.addEventListener('DOMContentLoaded', () => {
                 ? VRodosCompileUI.Atmosphere.normalizeQuality(envir.scene.aframePmndrsAtmosphereQuality)
                 : Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
         }
-        var lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
+        const lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
             envir && envir.scene ? envir.scene.aframeHorizonSkyPreset : 'natural',
             Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset
         );
-        var resolvedHorizonLightingPreset = Shared.normalizePmndrsHorizonLightingPreset(
+        const resolvedHorizonLightingPreset = Shared.normalizePmndrsHorizonLightingPreset(
             envir && envir.scene ? envir.scene.aframePmndrsHorizonLightingPreset : lightingPresetFallback,
             lightingPresetFallback
         );
-        var helperDefaults = Shared.getPmndrsHorizonHelperDefaults(
+        const helperDefaults = Shared.getPmndrsHorizonHelperDefaults(
             resolvedHorizonLightingPreset === 'custom' ? lightingPresetFallback : resolvedHorizonLightingPreset
         );
         if (controls.pmndrsHorizonLightingPreset) {
             controls.pmndrsHorizonLightingPreset.value = resolvedHorizonLightingPreset;
         }
-        var resolvedAtmospherePreset = VRodosCompileUI.Atmosphere.normalizePreset(
+        const resolvedAtmospherePreset = VRodosCompileUI.Atmosphere.normalizePreset(
             controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset
         );
         if (resolvedAtmospherePreset !== 'custom') {
@@ -746,7 +746,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 controls.pmndrsAbsorptionScale.value = Shared.clampNumber(envir && envir.scene ? envir.scene.aframePmndrsAbsorptionScale : Shared.PMNDRS_TWEAK_DEFAULTS.absorptionScale, 0.1, 3, Shared.PMNDRS_TWEAK_DEFAULTS.absorptionScale);
             }
             if (controls.pmndrsMoon) {
-                controls.pmndrsMoon.checked = !!(envir && envir.scene && envir.scene.aframePmndrsMoonEnabled);
+                controls.pmndrsMoon.checked = Boolean(envir && envir.scene && envir.scene.aframePmndrsMoonEnabled);
             }
         }
         if (controls.pmndrsHorizonKeyLightIntensity) {
@@ -770,9 +770,9 @@ window.addEventListener('DOMContentLoaded', () => {
         syncCompilePostFxState();
     };
 
-    var controls = getCompileDialogElements();
+    const controls = getCompileDialogElements();
     if (controls.renderQuality) {
-        controls.renderQuality.addEventListener('change', function() {
+        controls.renderQuality.addEventListener('change', () => {
             syncCompilePostFxState();
         });
     }
@@ -799,7 +799,7 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.legacyHorizonStageSize.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.postFx) {
-        controls.postFx.addEventListener('change', function() {
+        controls.postFx.addEventListener('change', () => {
             syncCompilePostFxState();
         });
     }
@@ -807,7 +807,7 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.postFxColor.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.edgeAAStrength) {
-        controls.edgeAAStrength.addEventListener('input', function() {
+        controls.edgeAAStrength.addEventListener('input', () => {
             VRodosCompileUI.General.updateValueLabels(controls);
         });
         controls.edgeAAStrength.addEventListener('change', syncCompilePostFxState);
@@ -849,10 +849,10 @@ window.addEventListener('DOMContentLoaded', () => {
     // and re-runs the show/hide gating. Disabled tabs (when postFx is off) are no-ops.
     function bindEngineTab(tabEl) {
         if (!tabEl) return;
-        tabEl.addEventListener('click', function (e) {
+        tabEl.addEventListener('click', (e) => {
             e.preventDefault();
             if (tabEl.disabled) return;
-            var engine = tabEl.getAttribute('data-engine') === 'pmndrs' ? 'pmndrs' : 'legacy';
+            const engine = tabEl.getAttribute('data-engine') === 'pmndrs' ? 'pmndrs' : 'legacy';
             if (controls.postFxEngine) {
                 controls.postFxEngine.value = engine;
             }
@@ -861,7 +861,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     bindEngineTab(controls.postFxEngineTabLegacy);
     bindEngineTab(controls.postFxEngineTabPmndrs);
-    [controls.pmndrsBloomIntensity, controls.pmndrsBloomThreshold, controls.pmndrsExposure, controls.pmndrsLutStrength, controls.pmndrsVignetteDarkness, controls.pmndrsNoiseOpacity, controls.pmndrsChromaticAberrationOffset, controls.pmndrsAtmospherePresetIntensity].forEach(function (el) {
+    [controls.pmndrsBloomIntensity, controls.pmndrsBloomThreshold, controls.pmndrsExposure, controls.pmndrsLutStrength, controls.pmndrsVignetteDarkness, controls.pmndrsNoiseOpacity, controls.pmndrsChromaticAberrationOffset, controls.pmndrsAtmospherePresetIntensity].forEach((el) => {
         if (el) {
             el.addEventListener('input', updatePmndrsValueLabels);
         }
@@ -878,9 +878,9 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.pmndrsMieExtinctionScale,
         controls.pmndrsMiePhaseG,
         controls.pmndrsAbsorptionScale
-    ].forEach(function (el) {
+    ].forEach((el) => {
         if (el) {
-            el.addEventListener('input', function () {
+            el.addEventListener('input', () => {
                 updatePmndrsValueLabels();
                 VRodosCompileUI.Atmosphere.markCustom(controls);
             });
@@ -889,9 +889,9 @@ window.addEventListener('DOMContentLoaded', () => {
     [
         controls.pmndrsHorizonKeyLightIntensity,
         controls.pmndrsHorizonFillLightIntensity
-    ].forEach(function (el) {
+    ].forEach((el) => {
         if (el) {
-            el.addEventListener('input', function () {
+            el.addEventListener('input', () => {
                 updatePmndrsValueLabels();
                 VRodosCompileUI.Atmosphere.markHorizonLightingCustom(controls);
             });
@@ -899,12 +899,12 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
     if (controls.pmndrsHorizonLightingPreset) {
-        controls.pmndrsHorizonLightingPreset.addEventListener('change', function () {
-            var fallbackPreset = Shared.normalizePmndrsHorizonLightingPreset(
+        controls.pmndrsHorizonLightingPreset.addEventListener('change', () => {
+            const fallbackPreset = Shared.normalizePmndrsHorizonLightingPreset(
                 envir && envir.scene ? envir.scene.aframeHorizonSkyPreset : 'natural',
                 Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset
             );
-            var preset = Shared.normalizePmndrsHorizonLightingPreset(controls.pmndrsHorizonLightingPreset.value, fallbackPreset);
+            const preset = Shared.normalizePmndrsHorizonLightingPreset(controls.pmndrsHorizonLightingPreset.value, fallbackPreset);
             if (preset !== 'custom') {
                 VRodosCompileUI.Atmosphere.applyHorizonLightingPreset(controls, preset);
             }
@@ -919,9 +919,9 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.pmndrsGround,
         controls.pmndrsGroundAlbedo,
         controls.pmndrsMoon
-    ].forEach(function (el) {
+    ].forEach((el) => {
         if (el) {
-            el.addEventListener('change', function () {
+            el.addEventListener('change', () => {
                 VRodosCompileUI.Atmosphere.markCustom(controls);
                 updatePmndrsValueLabels();
                 syncCompilePostFxState();
@@ -947,8 +947,8 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.pmndrsAtmosphere.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.pmndrsAtmospherePreset) {
-        controls.pmndrsAtmospherePreset.addEventListener('change', function () {
-            var preset = VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset.value);
+        controls.pmndrsAtmospherePreset.addEventListener('change', () => {
+            const preset = VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset.value);
             if (preset !== 'custom') {
                 VRodosCompileUI.Atmosphere.applyLookPreset(controls, preset);
             }
@@ -958,8 +958,8 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
     if (controls.pmndrsAtmospherePresetIntensity) {
-        controls.pmndrsAtmospherePresetIntensity.addEventListener('input', function () {
-            var preset = VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset);
+        controls.pmndrsAtmospherePresetIntensity.addEventListener('input', () => {
+            const preset = VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset);
             if (preset !== 'custom') {
                 VRodosCompileUI.Atmosphere.applyLookPreset(controls, preset);
             }
@@ -972,9 +972,9 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.pmndrsAtmosphereQuality.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.pmndrsResetBtn) {
-        controls.pmndrsResetBtn.addEventListener('click', function (e) {
+        controls.pmndrsResetBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            var c = getCompileDialogElements();
+            const c = getCompileDialogElements();
             if (c.pmndrsAAMode) c.pmndrsAAMode.value = Shared.PMNDRS_TWEAK_DEFAULTS.aaMode;
             if (c.pmndrsAAPreset) c.pmndrsAAPreset.value = Shared.PMNDRS_TWEAK_DEFAULTS.aaPreset;
             if (c.pmndrsBloomIntensity) c.pmndrsBloomIntensity.value = Shared.PMNDRS_TWEAK_DEFAULTS.bloomIntensity;
@@ -993,12 +993,12 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsAtmospherePreset) c.pmndrsAtmospherePreset.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset;
             if (c.pmndrsAtmospherePresetIntensity) c.pmndrsAtmospherePresetIntensity.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePresetIntensity;
             if (c.pmndrsAtmosphereQuality) c.pmndrsAtmosphereQuality.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
-            var lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
+            const lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
                 envir && envir.scene ? envir.scene.aframeHorizonSkyPreset : 'natural',
                 Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset
             );
             if (c.pmndrsHorizonLightingPreset) c.pmndrsHorizonLightingPreset.value = lightingPresetFallback;
-            var helperDefaults = Shared.getPmndrsHorizonHelperDefaults(lightingPresetFallback);
+            const helperDefaults = Shared.getPmndrsHorizonHelperDefaults(lightingPresetFallback);
             if (c.pmndrsHorizonKeyLightIntensity) c.pmndrsHorizonKeyLightIntensity.value = helperDefaults.keyLightIntensity;
             if (c.pmndrsHorizonFillLightIntensity) c.pmndrsHorizonFillLightIntensity.value = helperDefaults.fillLightIntensity;
             VRodosCompileUI.Atmosphere.applyLookPreset(c, Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset);
@@ -1010,11 +1010,11 @@ window.addEventListener('DOMContentLoaded', () => {
     // Initial synchronization moved to vrodos_EditorInitializer.js to ensure environment is ready
 
     function copyURLToClipboard() {
-        let linkElement = document.getElementById("openWebLinkhref");
+        const linkElement = document.getElementById("openWebLinkhref");
         if(linkElement && linkElement.href) {
             navigator.clipboard.writeText(linkElement.href)
                 .then(() => {
-                    alert("Copied url: " + linkElement.href);
+                    alert(`Copied url: ${  linkElement.href}`);
                 })
                 .catch(err => {
                     console.error('Failed to copy URL: ', err);
@@ -1022,7 +1022,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    var copyButton = document.getElementById("buttonCopyWebLink");
+    const copyButton = document.getElementById("buttonCopyWebLink");
     if(copyButton) {
         copyButton.addEventListener("click", copyURLToClipboard);
     }

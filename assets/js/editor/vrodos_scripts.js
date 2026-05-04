@@ -10,24 +10,24 @@ function setTransformControlsSize() {
 
 function vrodos_fillin_widget_assettrs(selectedObject) {
     if (selectedObject) {
-        let asset_id = selectedObject.value;
+        const asset_id = selectedObject.value;
         vrodos_fetch_Assettrs_and_setWidget(asset_id, selectedObject);
     }
 }
 
 function unixTimestamp_to_time(tStr) {
-    let unix_timestamp = parseInt(tStr);
-    let date = new Date(unix_timestamp * 1000);
-    let hours = date.getHours();
-    let minutes = "0" + date.getMinutes();
-    let seconds = "0" + date.getSeconds();
-    let formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-    return date.getDate() + '/' + date.getMonth() + '/' + date.getFullYear() + ' ' + formattedTime;
+    const unix_timestamp = parseInt(tStr);
+    const date = new Date(unix_timestamp * 1000);
+    const hours = date.getHours();
+    const minutes = `0${  date.getMinutes()}`;
+    const seconds = `0${  date.getSeconds()}`;
+    const formattedTime = `${hours  }:${  minutes.substr(-2)  }:${  seconds.substr(-2)}`;
+    return `${date.getDate()  }/${  date.getMonth()  }/${  date.getFullYear()  } ${  formattedTime}`;
 }
 
 function rgbToHex(red, green, blue) {
     const rgb = (red << 16) | (green << 8) | (blue << 0);
-    return '#' + (0x1000000 + rgb).toString(16).slice(1);
+    return `#${  (0x1000000 + rgb).toString(16).slice(1)}`;
 }
 
 
@@ -41,24 +41,24 @@ function updateClearColorPicker(input) {
 }
 
 function saveChanges(options) {
-    let saveOptions = options || {};
+    const saveOptions = options || {};
 
     if (envir && envir.isSceneLoading) {
         return Promise.resolve();
     }
 
-    let save_scene_btn = document.getElementById("save-scene-button");
+    const save_scene_btn = document.getElementById("save-scene-button");
     if (save_scene_btn.classList.contains("LinkDisabled") && !saveOptions.force) {
         return (typeof vrodos_whenSceneSaveSettles === 'function') ? vrodos_whenSceneSaveSettles() : Promise.resolve();
     }
 
-    let savBtn = document.getElementById('save-scene-button');
+    const savBtn = document.getElementById('save-scene-button');
     savBtn.innerHTML = "Saving...";
     savBtn.classList.add("LinkDisabled");
     document.getElementById("compileGameBtn").disabled = true;
 
     // Export using the new VrodosSceneExporter
-    let exporter = new VrodosSceneExporter();
+    const exporter = new VrodosSceneExporter();
     document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
     return vrodos_saveSceneAjax();
@@ -76,7 +76,7 @@ function setBackgroundPresetSelection(presetValue) {
 function setBackgroundPresetGroundEnabled(isEnabled) {
     if (!envir || !envir.scene) return;
 
-    envir.scene.backgroundPresetGroundEnabled = !!isEnabled;
+    envir.scene.backgroundPresetGroundEnabled = Boolean(isEnabled);
 }
 
 function setHorizonSkyPresetSelection(presetValue) {
@@ -90,7 +90,7 @@ function handleBackgroundPresetChange(selectElement) {
 
     setBackgroundPresetSelection(selectElement.value);
 
-    let sceneSkyRadio = document.getElementById('sceneSky');
+    const sceneSkyRadio = document.getElementById('sceneSky');
     if (sceneSkyRadio) sceneSkyRadio.checked = true;
 
     saveChanges();
@@ -108,7 +108,7 @@ function handleHorizonSkyPresetChange(selectElement) {
 
     setHorizonSkyPresetSelection(selectElement.value);
 
-    let sceneHorizonRadio = document.getElementById('sceneHorizon');
+    const sceneHorizonRadio = document.getElementById('sceneHorizon');
     if (sceneHorizonRadio) sceneHorizonRadio.checked = true;
 
     saveChanges();
@@ -265,11 +265,11 @@ function loadFogType() {
 
     // Initialize or Sync Fog Slider
     if (envir.scene.fogCategory === 2) {
-        let density = envir.scene.fogdensity || 0.01;
-        let slider = document.getElementById('FogDensitySlider');
-        let hiddenInput = document.getElementById('FogDensity');
+        const density = envir.scene.fogdensity || 0.01;
+        const slider = document.getElementById('FogDensitySlider');
+        const hiddenInput = document.getElementById('FogDensity');
         if (slider && hiddenInput) {
-            let index = mapDensityToSlider(density);
+            const index = mapDensityToSlider(density);
             slider.value = index;
             hiddenInput.value = density;
             updateFogDensityLabel(index);
@@ -280,7 +280,7 @@ function loadFogType() {
 }
 
 function handleFogDensitySlider(index) {
-    let density = mapSliderToDensity(index);
+    const density = mapSliderToDensity(index);
     document.getElementById('FogDensity').value = density;
     updateFogDensityLabel(index);
     updateFog("editing");
@@ -288,7 +288,7 @@ function handleFogDensitySlider(index) {
 
 function updateFogDensityLabel(index) {
     const labels = ["OFF", "FAR", "MID", "NEAR"];
-    let labelEl = document.getElementById("FogDensityLabel");
+    const labelEl = document.getElementById("FogDensityLabel");
     if (labelEl) labelEl.innerText = labels[index] || "OFF";
 }
 
@@ -302,7 +302,7 @@ function mapDensityToSlider(density) {
     let closestIndex = 0;
     let minDiff = Infinity;
     for (let i = 0; i < mapping.length; i++) {
-        let diff = Math.abs(mapping[i] - density);
+        const diff = Math.abs(mapping[i] - density);
         if (diff < minDiff) {
             minDiff = diff;
             closestIndex = i;
@@ -337,9 +337,9 @@ function updateFog(whencalled) {
 
     const setVisibility = (linear, expo, color, main) => {
         if (fogValues) fogValues.style.display = main;
-        for (let el of linearElems) el.style.display = linear;
-        for (let el of expoElems) el.style.display = expo;
-        for (let el of colorElems) el.style.display = color;
+        for (const el of linearElems) el.style.display = linear;
+        for (const el of expoElems) el.style.display = expo;
+        for (const el of colorElems) el.style.display = color;
     };
 
     if (fogType === 'linear') {

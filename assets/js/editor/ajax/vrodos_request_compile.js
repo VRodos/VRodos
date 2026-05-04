@@ -1,20 +1,20 @@
 function vrodos_compileAjax(showPawnPositions) {
 
 	// In which platform to compile, e.g. Aframe
-	var platform = document.getElementById( "platformInput" ).value;
+	const platform = document.getElementById( "platformInput" ).value;
 
 	// Change UI text label
-	var compilationProgressText = document.getElementById( "compilationProgressText" );
+	const compilationProgressText = document.getElementById( "compilationProgressText" );
 
-	let projectType = document.getElementById( "project-type" ).value;
+	const projectType = document.getElementById( "project-type" ).value;
 
 	// Enable cancel button
 	document.getElementById( "compileCancelBtn" ).classList.remove( "LinkDisabled" );
 
-	var statusRow = document.getElementById( "compileStatusRow" );
-	var appResultDiv = document.getElementById( "appResultDiv" );
-	var resultMeta = document.getElementById( "compileResultMeta" );
-	var topResultLink = document.getElementById( "compileTopResultLink" );
+	const statusRow = document.getElementById( "compileStatusRow" );
+	const appResultDiv = document.getElementById( "appResultDiv" );
+	const resultMeta = document.getElementById( "compileResultMeta" );
+	const topResultLink = document.getElementById( "compileTopResultLink" );
 	if (statusRow) {
 		statusRow.style.display = 'flex';
 	}
@@ -38,27 +38,27 @@ function vrodos_compileAjax(showPawnPositions) {
 	if (typeof lucide !== 'undefined') lucide.createIcons();
 
 	// Build query string for GET request
-	let params = new URLSearchParams({
+	const params = new URLSearchParams({
 		'action': 'vrodos_compile_action',
 		'projectId': my_ajax_object_compile.projectId,
 		'projectSlug': my_ajax_object_compile.slug,
-		'showPawnPositions': showPawnPositions,
+		showPawnPositions,
 		'vrodos_scene': my_ajax_object_compile.sceneId,
 		'outputFormat': platform
 	});
 
-	let url = (isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url) + '?' + params.toString();
+	const url = `${isAdmin == "back" ? 'admin-ajax.php' : my_ajax_object_compile.ajax_url  }?${  params.toString()}`;
 
 	// ajax for Aframe compiling : Transform envir.scene.children to an html aframe page
 	fetch( url )
-	.then( function (response) { return response.text(); })
-	.then( function (urlExperienceSequenceJSON) {
+	.then( (response) => response.text())
+	.then( (urlExperienceSequenceJSON) => {
 
-		let urlExperienceSequence = JSON.parse( urlExperienceSequenceJSON );
-		let primaryExperienceUrl = urlExperienceSequence["CurrentSceneMasterClient"]
+		const urlExperienceSequence = JSON.parse( urlExperienceSequenceJSON );
+		const primaryExperienceUrl = urlExperienceSequence.CurrentSceneMasterClient
 			|| (projectType === 'vrexpo_games'
-				? (urlExperienceSequence["MasterClient"] || urlExperienceSequence["index"] || urlExperienceSequence["SimpleClient"] || '')
-				: (urlExperienceSequence["MasterClient"] || urlExperienceSequence["index"] || urlExperienceSequence["SimpleClient"] || ''));
+				? (urlExperienceSequence.MasterClient || urlExperienceSequence.index || urlExperienceSequence.SimpleClient || '')
+				: (urlExperienceSequence.MasterClient || urlExperienceSequence.index || urlExperienceSequence.SimpleClient || ''));
 
 		document.getElementById( "compileProgressTitle" ).style.display = 'none';
 		document.getElementById( "progressSliderSubLineDeterminateValue" ).style.width = '1px';
@@ -66,7 +66,7 @@ function vrodos_compileAjax(showPawnPositions) {
 		document.getElementById( "compileProgressSlider" ).style.display = 'none';
 		document.getElementById( "compilationProgressText" ).style.display = 'none';
 
-		let compile_dialogue_div       = document.getElementById( "previewApp" );
+		const compile_dialogue_div       = document.getElementById( "previewApp" );
 		compile_dialogue_div.innerHTML = "";
 
 		function createLinks(url, captionText){
@@ -74,16 +74,16 @@ function vrodos_compileAjax(showPawnPositions) {
 				return;
 			}
 
-			let section           = document.createElement( 'div' );
+			const section           = document.createElement( 'div' );
 			section.style.cssText = 'padding-top: 8px;';
 
-			let title           = document.createElement( 'span' );
+			const title           = document.createElement( 'span' );
 			title.style.cssText = 'color: black; font-weight:500;';
-			title.innerText     = captionText + ': ';
+			title.innerText     = `${captionText  }: `;
 
 			section.append( title );
 
-			let link       = document.createElement( 'a' );
+			const link       = document.createElement( 'a' );
 			link.innerText = url;
 			link.setAttribute( "href", url );
 			link.setAttribute( "target", '_blank' );
@@ -93,20 +93,20 @@ function vrodos_compileAjax(showPawnPositions) {
 		}
 
 		if (projectType === 'vrexpo_games') {
-			createLinks( urlExperienceSequence["CurrentSceneMasterClient"] || urlExperienceSequence["MasterClient"], "Scene link" );
-			if (urlExperienceSequence["MasterClient"] && urlExperienceSequence["MasterClient"] !== urlExperienceSequence["CurrentSceneMasterClient"]) {
-				createLinks( urlExperienceSequence["MasterClient"], "Base scene link" );
+			createLinks( urlExperienceSequence.CurrentSceneMasterClient || urlExperienceSequence.MasterClient, "Scene link" );
+			if (urlExperienceSequence.MasterClient && urlExperienceSequence.MasterClient !== urlExperienceSequence.CurrentSceneMasterClient) {
+				createLinks( urlExperienceSequence.MasterClient, "Base scene link" );
 			}
 		} else {
-			createLinks( urlExperienceSequence["index"], "Index" );
-			createLinks( urlExperienceSequence["CurrentSceneMasterClient"] || urlExperienceSequence["MasterClient"], "Director (current scene)" );
-			createLinks( urlExperienceSequence["CurrentSceneSimpleClient"] || urlExperienceSequence["SimpleClient"],"Actor (current scene)" );
+			createLinks( urlExperienceSequence.index, "Index" );
+			createLinks( urlExperienceSequence.CurrentSceneMasterClient || urlExperienceSequence.MasterClient, "Director (current scene)" );
+			createLinks( urlExperienceSequence.CurrentSceneSimpleClient || urlExperienceSequence.SimpleClient,"Actor (current scene)" );
 		}
 
 		if (primaryExperienceUrl) {
-			var webLink = document.getElementById( "vrodos-weblink" );
-			var openWebLink = document.getElementById( "openWebLinkhref" );
-			var copyButton = document.getElementById( "buttonCopyWebLink" );
+			const webLink = document.getElementById( "vrodos-weblink" );
+			const openWebLink = document.getElementById( "openWebLinkhref" );
+			const copyButton = document.getElementById( "buttonCopyWebLink" );
 
 			if (statusRow) {
 				statusRow.style.display = 'none';
@@ -115,7 +115,7 @@ function vrodos_compileAjax(showPawnPositions) {
 				appResultDiv.style.display = 'flex';
 			}
 			if (resultMeta) {
-				resultMeta.textContent = 'Ready to be shared - ' + new Date().toLocaleString();
+				resultMeta.textContent = `Ready to be shared - ${  new Date().toLocaleString()}`;
 			}
 			if (webLink) {
 				webLink.href = primaryExperienceUrl;
@@ -132,8 +132,8 @@ function vrodos_compileAjax(showPawnPositions) {
 		}
 
 	})
-	.catch( function (err) {
-		console.log( "Ajax Aframe ERROR 189: " + err );
+	.catch( (err) => {
+		console.log( `Ajax Aframe ERROR 189: ${  err}` );
 		hideCompileProgressSlider();
 	});
 }

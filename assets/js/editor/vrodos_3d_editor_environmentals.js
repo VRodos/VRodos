@@ -35,10 +35,10 @@ function vrodosClampNumber(value, min, max, fallback) {
 }
 
 function vrodosOrthoFitZoom(frustumSize, aspect, sceneSurfaceDimension) {
-    let safeDimension = Math.max(Number(sceneSurfaceDimension) || 0, 10);
-    let safeAspect = Math.max(Number(aspect) || 1, 0.1);
-    let visibleWidth = safeDimension * 2.2;
-    let computedZoom = (frustumSize * safeAspect) / visibleWidth;
+    const safeDimension = Math.max(Number(sceneSurfaceDimension) || 0, 10);
+    const safeAspect = Math.max(Number(aspect) || 1, 0.1);
+    const visibleWidth = safeDimension * 2.2;
+    const computedZoom = (frustumSize * safeAspect) / visibleWidth;
 
     return vrodosClampNumber(
         computedZoom,
@@ -80,7 +80,7 @@ function vrodosGetPointerLockObject(pointerLockControls) {
 }
 
 function vrodosEnvironmentJoinUrl(base, path) {
-    return String(base || '').replace(/\/+$/, '') + '/' + String(path || '').replace(/^\/+/, '');
+    return `${String(base || '').replace(/\/+$/, '')  }/${  String(path || '').replace(/^\/+/, '')}`;
 }
 
 function vrodosEnvironmentResolveBaseUrl(pluginPath, localizedKey, fallbackRelative) {
@@ -222,7 +222,7 @@ class vrodos_3d_editor_environmentals {
         const imageBaseUrl = vrodosEnvironmentResolveBaseUrl(pluginPath, 'imageBaseUrl', 'assets/images/');
         const hdrLoader = new THREE.HDRLoader();
 
-        hdrLoader.setPath(imageBaseUrl + 'hdr/')
+        hdrLoader.setPath(`${imageBaseUrl  }hdr/`)
             .load('Stonewall_Ref.hdr', (texture) => {
                 texture.mapping = THREE.EquirectangularReflectionMapping;
                 this.maintexture = texture;
@@ -239,7 +239,7 @@ class vrodos_3d_editor_environmentals {
     setComposerAndPasses(transform_controls) {
 
         // Get current camera
-        let camera = this.isAvatarControlsEnabled() ? this.cameraAvatar : this.cameraOrbit;
+        const camera = this.isAvatarControlsEnabled() ? this.cameraAvatar : this.cameraOrbit;
 
         if (transform_controls) {
             transform_controls.camera = camera;
@@ -257,7 +257,7 @@ class vrodos_3d_editor_environmentals {
 
         // FX Pass
         this.effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
-        this.effectFXAA.uniforms['resolution'].value.set(1 / this.SCREEN_WIDTH, 1 / this.SCREEN_HEIGHT);
+        this.effectFXAA.uniforms.resolution.value.set(1 / this.SCREEN_WIDTH, 1 / this.SCREEN_HEIGHT);
         this.effectFXAA.renderToScreen = true;
 
         this.turboResize();
@@ -295,13 +295,13 @@ class vrodos_3d_editor_environmentals {
         }
 
         //---------------------------------------------------------------
-        let pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
         if (this.composer && this.composer.renderer) {
             this.composer.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
             this.composer.renderer.setPixelRatio(pixelRatio);
         }
-        if (this.effectFXAA && this.effectFXAA.uniforms && this.effectFXAA.uniforms['resolution']) {
-            this.effectFXAA.uniforms['resolution'].value.set(1 / (this.SCREEN_WIDTH * pixelRatio), 1 / (this.SCREEN_HEIGHT * pixelRatio));
+        if (this.effectFXAA && this.effectFXAA.uniforms && this.effectFXAA.uniforms.resolution) {
+            this.effectFXAA.uniforms.resolution.value.set(1 / (this.SCREEN_WIDTH * pixelRatio), 1 / (this.SCREEN_HEIGHT * pixelRatio));
         }
     }
 
@@ -366,7 +366,7 @@ class vrodos_3d_editor_environmentals {
         const headingRadians = Math.atan2(direction.x, -direction.z);
         const headingDegrees = (THREE.MathUtils.radToDeg(headingRadians) + 360) % 360;
 
-        needleElement.style.transform = 'rotate(' + headingDegrees.toFixed(2) + 'deg)';
+        needleElement.style.transform = `rotate(${  headingDegrees.toFixed(2)  }deg)`;
     }
 
     /**
@@ -439,7 +439,7 @@ class vrodos_3d_editor_environmentals {
         this.avatarControls.name = "avatarControls";
 
         // Avatar Yaw controls
-        let avatarControlsYawObject = vrodosGetPointerLockObject(this.avatarControls);
+        const avatarControlsYawObject = vrodosGetPointerLockObject(this.avatarControls);
         if (!avatarControlsYawObject) {
             return;
         }
@@ -467,9 +467,7 @@ class vrodos_3d_editor_environmentals {
         const director = this.getDirectorObject();
 
         if (director) {
-            const childrenToRemove = director.children.filter((child) => {
-                return vrodosDirectorIsInternalHelper(child);
-            });
+            const childrenToRemove = director.children.filter((child) => vrodosDirectorIsInternalHelper(child));
 
             childrenToRemove.forEach((child) => {
                 director.remove(child);
@@ -623,42 +621,42 @@ class vrodos_3d_editor_environmentals {
 
     /* X, Y ,Z letters  for axes */
     setAxisText() {
-        let loader = new THREE.FontLoader();
+        const loader = new THREE.FontLoader();
         loader.scene = this.scene;
 
-        let vendorDir = window.vrodos_three_vendor_dir || 'three-r181';
-        let vendorRoot = vrodosEnvironmentResolveBaseUrl(pluginPath, 'vendorBaseUrl', 'assets/vendor/');
-        let vendorBase = window.vrodos_three_vendor_base || vrodosEnvironmentJoinUrl(vendorRoot, vendorDir + '/');
-        let fontPath = window.vrodos_three_font_path || (vendorBase + 'fonts/helvetiker_bold.typeface.json');
+        const vendorDir = window.vrodos_three_vendor_dir || 'three-r181';
+        const vendorRoot = vrodosEnvironmentResolveBaseUrl(pluginPath, 'vendorBaseUrl', 'assets/vendor/');
+        const vendorBase = window.vrodos_three_vendor_base || vrodosEnvironmentJoinUrl(vendorRoot, `${vendorDir  }/`);
+        const fontPath = window.vrodos_three_font_path || (`${vendorBase  }fonts/helvetiker_bold.typeface.json`);
         loader.load(fontPath, this.loadtexts);
     }
 
     loadtexts(font) {
 
-        for (let letterAx of ['X', 'Y', 'Z']) {
+        for (const letterAx of ['X', 'Y', 'Z']) {
             for (let dist = 10; dist < 200; dist = dist + 10) {
-                let textGeo = new THREE.TextGeometry(dist + " m", {
-                    font: font,
+                const textGeo = new THREE.TextGeometry(`${dist  } m`, {
+                    font,
                     size: 0.2
                 });
-                let color = new THREE.Color();
+                const color = new THREE.Color();
                 color.setRGB(letterAx == 'X' ? 255 : 0, letterAx == 'Y' ? 255 : 0, letterAx == 'Z' ? 255 : 0);
-                let textMaterial = new THREE.MeshBasicMaterial({color: color});
-                let text = new THREE.Mesh(textGeo, textMaterial);
+                const textMaterial = new THREE.MeshBasicMaterial({color});
+                const text = new THREE.Mesh(textGeo, textMaterial);
 
                 if (letterAx == 'X')
-                    text.rotation.y = -Math.PI / 2;
+                    {text.rotation.y = -Math.PI / 2;}
                 else if (letterAx == 'Y') {
                     text.rotation.x = Math.PI / 2;
                     text.rotation.z = Math.PI;
                 } else if (letterAx == 'Z')
-                    text.rotation.y = Math.PI;
+                    {text.rotation.y = Math.PI;}
 
                 text.position.x = letterAx == 'X' ? dist : 0;
                 text.position.y = letterAx == 'Y' ? dist : 0;
                 text.position.z = letterAx == 'Z' ? dist : 0;
                 text.scale.z = 0.001;
-                text.name = "myAxisText" + letterAx;
+                text.name = `myAxisText${  letterAx}`;
             }
         }
     }

@@ -1,14 +1,14 @@
 function imgUpload(){
 
-	let formData = new FormData();
-	let input    = document.getElementById( "img_upload_bcg" );
+	const formData = new FormData();
+	const input    = document.getElementById( "img_upload_bcg" );
 
 	if (input.files && input.files[0]) {
 
-		let fn        = input.files[0].name;
-		let extension = fn.split( '.' ).pop();
+		const fn        = input.files[0].name;
+		const extension = fn.split( '.' ).pop();
 
-		let reader = new FileReader();
+		const reader = new FileReader();
 
 		reader.onload = function (e) {
 
@@ -24,21 +24,21 @@ function imgUpload(){
 				method: 'POST',
 				body: formData
 			})
-			.then( function (response) { return response.text(); })
-			.then( function (response) {
+			.then( (response) => response.text())
+			.then( (response) => {
 
 				const cleanResponse      = response.replace( 'File Uploaded Successfully', '' );
-				let data                 = JSON.parse( cleanResponse );
+				const data                 = JSON.parse( cleanResponse );
 				console.log( data.url );
 				envir.scene.img_bcg_path = data.url;
 
-				let saveBtn = document.getElementById( 'save-scene-button' );
+				const saveBtn = document.getElementById( 'save-scene-button' );
 				saveBtn.innerHTML = "Saving...";
 				saveBtn.classList.add( "LinkDisabled" );
 				document.getElementById( "compileGameBtn" ).disabled = true;
 
 				// Export using the new VrodosSceneExporter
-				let exporter = new VrodosSceneExporter();
+				const exporter = new VrodosSceneExporter();
 				document.getElementById( 'vrodos_scene_json_input' ).value = exporter.parse( envir.scene );
 
 				document.getElementById( 'uploadImgThumb' ).src    = data.url;

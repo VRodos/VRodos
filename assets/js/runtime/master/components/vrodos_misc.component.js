@@ -15,10 +15,10 @@ AFRAME.registerComponent('entity-movement-emitter', {
         clip: { type: "string", default: "idle" },
     },
     init: function () {
-        var shouldCaptureKeyEvent = AFRAME.utils.shouldCaptureKeyEvent;
-        var elem = this.el;
+        const shouldCaptureKeyEvent = AFRAME.utils.shouldCaptureKeyEvent;
+        const elem = this.el;
 
-        document.addEventListener('keydown', function (event) {
+        document.addEventListener('keydown', (event) => {
             const cameraA = document.getElementById('cameraA');
             if (!cameraA) return;
 
@@ -46,7 +46,7 @@ AFRAME.registerComponent('entity-movement-emitter', {
             }
         });
 
-        document.addEventListener('keyup', function (event) {
+        document.addEventListener('keyup', (event) => {
             const cameraA = document.getElementById('cameraA');
             if (cameraA) {
                 elem.emit('avatar-changed-animation', "stopped", false);

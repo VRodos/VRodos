@@ -10,18 +10,18 @@
  * Accepted features: { sao, ssr, bloom, colorGrading, vignette }
  */
 (function () {
-    var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
+    const VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
 
     function vrodosCreatePhotorealPostMaterial(features) {
         features = features || {};
-        var defines = {};
+        const defines = {};
         if (features.sao) { defines.VRODOS_USE_SAO = ''; }
         if (features.ssr) { defines.VRODOS_USE_SSR = ''; }
         if (features.bloom) { defines.VRODOS_USE_BLOOM = ''; }
         if (features.colorGrading) { defines.VRODOS_USE_COLOR_GRADING = ''; }
         if (features.vignette) { defines.VRODOS_USE_VIGNETTE = ''; }
 
-        var uniforms = {
+        const uniforms = {
             tDiffuse: { value: null },
             exposure: { value: 1.0 }
         };
@@ -42,7 +42,7 @@
             uniforms.vignetteStrength = { value: 0.16 };
         }
 
-        var material = new THREE.ShaderMaterial({
+        const material = new THREE.ShaderMaterial({
             defines,
             uniforms,
             vertexShader: [

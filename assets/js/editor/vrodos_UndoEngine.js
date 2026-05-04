@@ -151,13 +151,13 @@ class TransformCommand {
         obj.updateMatrix();
         obj.updateMatrixWorld(true);
         obj.visible = true;
-        obj.traverse(function(node) {
+        obj.traverse((node) => {
             node.visible = true;
             if (node.isMesh) node.frustumCulled = false;
         });
 
         if (obj.category_name && obj.category_name.includes("light")) {
-            const helper = envir.scene.getObjectByName('lightHelper_' + obj.name);
+            const helper = envir.scene.getObjectByName(`lightHelper_${  obj.name}`);
             if (helper && typeof helper.update === 'function') helper.update();
         }
 
@@ -230,7 +230,7 @@ class DeleteObjectCommand {
     undo() {
         // Restore 3D object to scene
         this.object3D.visible = true;
-        this.object3D.traverse(function(node) {
+        this.object3D.traverse((node) => {
             node.visible = true;
             if (node.isMesh) node.frustumCulled = false;
         });
@@ -261,21 +261,21 @@ class DeleteObjectCommand {
         const name = light.name;
         
         // Re-create Helper if it's missing (it was disposed)
-        let helper = envir.scene.getObjectByName("lightHelper_" + name);
+        let helper = envir.scene.getObjectByName(`lightHelper_${  name}`);
         if (!helper) {
             if (light.type === 'PointLight') helper = new THREE.PointLightHelper(light, 1);
             else if (light.type === 'SpotLight') helper = new THREE.SpotLightHelper(light);
             else if (light.type === 'DirectionalLight') helper = new THREE.DirectionalLightHelper(light, 1);
             
             if (helper) {
-                helper.name = "lightHelper_" + name;
+                helper.name = `lightHelper_${  name}`;
                 envir.scene.add(helper);
             }
         }
 
         // Re-create Target Spot for Sun/Spot if needed
         if (light.category_name === 'lightSun' || light.category_name === 'lightSpot') {
-            let targetSpot = envir.scene.getObjectByName("lightTargetSpot_" + name);
+            const targetSpot = envir.scene.getObjectByName(`lightTargetSpot_${  name}`);
             if (!targetSpot) {
                 // We'd ideally need the original target position here. 
                 // For now, let's assume it was at (0,0,0) or rely on the Light's internal target
@@ -316,7 +316,7 @@ class PropertyCommand {
 
         // Sync light helpers
         if (obj.category_name && obj.category_name.includes("light")) {
-            const helper = envir.scene.getObjectByName('lightHelper_' + obj.name);
+            const helper = envir.scene.getObjectByName(`lightHelper_${  obj.name}`);
             if (helper && typeof helper.update === 'function') helper.update();
         }
 

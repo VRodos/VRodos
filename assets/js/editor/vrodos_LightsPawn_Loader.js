@@ -16,9 +16,9 @@ class VRodos_LightsPawn_Loader {
 
         if (fogValues) fogValues.style.display = isNone ? "none" : "flex";
 
-        for (let el of linearElems) el.style.display = isLinear ? "flex" : "none";
-        for (let el of expoElems) el.style.display = isExponential ? "flex" : "none";
-        for (let el of colorElems) el.style.display = isNone ? "none" : "flex";
+        for (const el of linearElems) el.style.display = isLinear ? "flex" : "none";
+        for (const el of expoElems) el.style.display = isExponential ? "flex" : "none";
+        for (const el of colorElems) el.style.display = isNone ? "none" : "flex";
 
         const radioMap = { '0': 'RadioNoFog', '1': 'RadioLinearFog', '2': 'RadioExponentialFog' };
         if (radioMap[fogCategory]) {
@@ -78,7 +78,7 @@ class VRodos_LightsPawn_Loader {
             }
 
             // 3. Filter for Lights and Pawns
-            const category = resource['category_name'];
+            const category = resource.category_name;
             if (!category || (!category.startsWith("light") && !category.startsWith("pawn"))) {
                 continue;
             }
@@ -115,7 +115,7 @@ class VRodos_LightsPawn_Loader {
         // Sync Color Picker
         if (settings.fogcolor) {
             const fcolor = settings.fogcolor;
-            const colorValue = fcolor.startsWith('#') ? fcolor : '#' + fcolor;
+            const colorValue = fcolor.startsWith('#') ? fcolor : `#${  fcolor}`;
             const picker = document.getElementById('jscolorpickFog');
             if (picker) {
                 picker.value = colorValue;
@@ -148,15 +148,15 @@ class VRodos_LightsPawn_Loader {
     }
 
     initSun(name, resource) {
-        const lc = resource['lightcolor'];
+        const lc = resource.lightcolor;
         const color = new THREE.Color(lc[0], lc[1], lc[2]);
-        const light = new THREE.DirectionalLight(color, resource['lightintensity']);
+        const light = new THREE.DirectionalLight(color, resource.lightintensity);
 
         light.shadow.camera.near = 0.5;
         light.shadow.camera.far = 500;
-        this.applyTRS(light, resource['trs']);
+        this.applyTRS(light, resource.trs);
 
-        const tp = resource['targetposition'];
+        const tp = resource.targetposition;
         light.target.position.set(tp[0], tp[1], tp[2]);
         
         light.name = name;
@@ -164,18 +164,18 @@ class VRodos_LightsPawn_Loader {
         light.category_name = "lightSun";
         light.isSelectableMesh = true;
         light.isLight = true;
-        light.addedAt = resource['addedAt'];
+        light.addedAt = resource.addedAt;
         light.castShadow = true;
-        light.sunSky = resource['sunSky'];
-        light.locked = resource['locked'];
-        light.castingShadow = resource['castingShadow'];
-        light.shadowMapHeight = resource['shadowMapHeight'];
-        light.shadowMapWidth = resource['shadowMapWidth'];
-        light.shadowCameraTop = resource['shadowCameraTop'];
-        light.shadowCameraBottom = resource['shadowCameraBottom'];
-        light.shadowCameraLeft = resource['shadowCameraLeft'];
-        light.shadowCameraRight = resource['shadowCameraRight'];
-        light.shadowBias = resource['shadowBias'];
+        light.sunSky = resource.sunSky;
+        light.locked = resource.locked;
+        light.castingShadow = resource.castingShadow;
+        light.shadowMapHeight = resource.shadowMapHeight;
+        light.shadowMapWidth = resource.shadowMapWidth;
+        light.shadowCameraTop = resource.shadowCameraTop;
+        light.shadowCameraBottom = resource.shadowCameraBottom;
+        light.shadowCameraLeft = resource.shadowCameraLeft;
+        light.shadowCameraRight = resource.shadowCameraRight;
+        light.shadowBias = resource.shadowBias;
 
         const sphere = new THREE.Mesh(
             new THREE.SphereGeometry(1, 16, 8),
@@ -187,7 +187,7 @@ class VRodos_LightsPawn_Loader {
 
         const helper = new THREE.DirectionalLightHelper(light, 3, color);
         helper.isLightHelper = true;
-        helper.name = 'lightHelper_' + light.name;
+        helper.name = `lightHelper_${  light.name}`;
         helper.category_name = 'lightHelper';
         helper.parentLightName = name;
         helper.vrodos_internal_helper = true;
@@ -204,10 +204,10 @@ class VRodos_LightsPawn_Loader {
         ));
         targetSpot.children[0].isSelectableMesh = false;
         targetSpot.isSelectableMesh = true;
-        targetSpot.name = "lightTargetSpot_" + light.name;
+        targetSpot.name = `lightTargetSpot_${  light.name}`;
         targetSpot.category_name = "lightTargetSpot";
         targetSpot.isLightTargetSpot = true;
-        targetSpot.addedAt = resource['addedAt'];
+        targetSpot.addedAt = resource.addedAt;
         targetSpot.position.set(tp[0], tp[1], tp[2]);
         targetSpot.parentLight = light;
         targetSpot.parentLightHelper = helper;
@@ -220,34 +220,34 @@ class VRodos_LightsPawn_Loader {
         }
 
         const shadowHelper = new THREE.CameraHelper(light.shadow.camera);
-        shadowHelper.name = "lightShadowHelper_" + light.name;
+        shadowHelper.name = `lightShadowHelper_${  light.name}`;
         shadowHelper.vrodos_internal_helper = true;
         envir.scene.add(shadowHelper);
     }
 
     initLamp(name, resource) {
-        const lc = resource['lightcolor'];
+        const lc = resource.lightcolor;
         const color = new THREE.Color(lc[0], lc[1], lc[2]);
-        const light = new THREE.PointLight(color, resource['lightintensity'], resource['lightdistance'], resource['lightdecay']);
+        const light = new THREE.PointLight(color, resource.lightintensity, resource.lightdistance, resource.lightdecay);
         
-        this.applyTRS(light, resource['trs']);
+        this.applyTRS(light, resource.trs);
         light.name = name;
         light.asset_name = "mylightLamp";
         light.category_name = "lightLamp";
         light.isSelectableMesh = true;
         light.isLight = true;
-        light.addedAt = resource['addedAt'];
+        light.addedAt = resource.addedAt;
         light.castShadow = true;
-        light.shadow.radius = parseFloat(resource['shadowRadius']);
-        light.locked = resource['locked'];
-        light.lampcastingShadow = resource['lampcastingShadow'];
-        light.lampshadowMapHeight = resource['lampshadowMapHeight'];
-        light.lampshadowMapWidth = resource['lampshadowMapWidth'];
-        light.lampshadowCameraTop = resource['lampshadowCameraTop'];
-        light.lampshadowCameraBottom = resource['lampshadowCameraBottom'];
-        light.lampshadowCameraLeft = resource['lampshadowCameraLeft'];
-        light.lampshadowCameraRight = resource['lampshadowCameraRight'];
-        light.lampshadowBias = resource['lampshadowBias'];
+        light.shadow.radius = parseFloat(resource.shadowRadius);
+        light.locked = resource.locked;
+        light.lampcastingShadow = resource.lampcastingShadow;
+        light.lampshadowMapHeight = resource.lampshadowMapHeight;
+        light.lampshadowMapWidth = resource.lampshadowMapWidth;
+        light.lampshadowCameraTop = resource.lampshadowCameraTop;
+        light.lampshadowCameraBottom = resource.lampshadowCameraBottom;
+        light.lampshadowCameraLeft = resource.lampshadowCameraLeft;
+        light.lampshadowCameraRight = resource.lampshadowCameraRight;
+        light.lampshadowBias = resource.lampshadowBias;
 
         envir.scene.add(light);
         if (envir.selectableMeshes) envir.selectableMeshes.add(light);
@@ -262,7 +262,7 @@ class VRodos_LightsPawn_Loader {
 
         const helper = new THREE.PointLightHelper(light, 1, color);
         helper.isLightHelper = true;
-        helper.name = 'lightHelper_' + light.name;
+        helper.name = `lightHelper_${  light.name}`;
         helper.category_name = 'lightHelper';
         helper.parentLightName = light.name;
         helper.vrodos_internal_helper = true;
@@ -271,17 +271,17 @@ class VRodos_LightsPawn_Loader {
 
     initSpot(name, resource) {
         const color = new THREE.Color(0.996, 1, 0);
-        const light = new THREE.SpotLight(color, resource['lightintensity'], resource['lightdistance'], resource['lightangle'], resource['lightpenumbra'], resource['lightdecay']);
+        const light = new THREE.SpotLight(color, resource.lightintensity, resource.lightdistance, resource.lightangle, resource.lightpenumbra, resource.lightdecay);
 
-        this.applyTRS(light, resource['trs']);
+        this.applyTRS(light, resource.trs);
         light.scale.set(1, 1, 1);
         light.name = name;
         light.asset_name = "mylightSpot";
         light.category_name = "lightSpot";
         light.isSelectableMesh = true;
         light.isLight = true;
-        light.addedAt = resource['addedAt'];
-        light.locked = resource['locked'];
+        light.addedAt = resource.addedAt;
+        light.locked = resource.locked;
         light.castShadow = true;
 
         const sphere = new THREE.Mesh(
@@ -292,7 +292,7 @@ class VRodos_LightsPawn_Loader {
         sphere.name = "SpotSphere";
         light.add(sphere);
 
-        const tp = resource['targetposition'];
+        const tp = resource.targetposition;
         const targetSpot = new THREE.Object3D();
         targetSpot.add(new THREE.Mesh(
             new THREE.SphereGeometry(0.5, 16, 8),
@@ -300,10 +300,10 @@ class VRodos_LightsPawn_Loader {
         ));
         targetSpot.children[0].isSelectableMesh = false;
         targetSpot.isSelectableMesh = true;
-        targetSpot.name = "lightTargetSpot_" + light.name;
+        targetSpot.name = `lightTargetSpot_${  light.name}`;
         targetSpot.category_name = "lightTargetSpot";
         targetSpot.isLightTargetSpot = true;
-        targetSpot.addedAt = resource['addedAt'];
+        targetSpot.addedAt = resource.addedAt;
         targetSpot.position.set(tp[0], tp[1], tp[2]);
         targetSpot.parentLight = light;
 
@@ -322,19 +322,19 @@ class VRodos_LightsPawn_Loader {
     }
 
     initAmbient(name, resource) {
-        const lc = resource['lightcolor'];
+        const lc = resource.lightcolor;
         const color = new THREE.Color(lc[0], lc[1], lc[2]);
         const helperColor = 0xffff00;
-        const light = new THREE.AmbientLight(color, resource['lightintensity']);
+        const light = new THREE.AmbientLight(color, resource.lightintensity);
 
-        this.applyTRS(light, resource['trs']);
+        this.applyTRS(light, resource.trs);
         light.name = name;
         light.asset_name = "mylightAmbient";
         light.category_name = "lightAmbient";
         light.isSelectableMesh = true;
         light.isLight = true;
-        light.addedAt = resource['addedAt'];
-        light.locked = resource['locked'];
+        light.addedAt = resource.addedAt;
+        light.locked = resource.locked;
 
         const sphere = new THREE.Mesh(
             new THREE.SphereGeometry(1, 16, 8),
@@ -354,12 +354,12 @@ class VRodos_LightsPawn_Loader {
             const loader = new THREE.GLTFLoader();
             const modelBaseUrl = (typeof vrodos_data !== 'undefined' && vrodos_data.paths && vrodos_data.paths.modelBaseUrl)
                 ? vrodos_data.paths.modelBaseUrl
-                : finalPath + '/assets/models/';
+                : `${finalPath  }/assets/models/`;
             loader.load(
-                modelBaseUrl + 'editor/pawn.glb',
+                `${modelBaseUrl  }editor/pawn.glb`,
                 (gltf) => {
                     const pawn = gltf.scene.children[0];
-                    this.applyTRS(pawn, resource['trs']);
+                    this.applyTRS(pawn, resource.trs);
 
                     pawn.name = name;
                     pawn.asset_name = "myActor";
@@ -370,12 +370,12 @@ class VRodos_LightsPawn_Loader {
                     pawn.material.opacity = 0.6;
 
                     let indexPawn = 1;
-                    for (let ch of envir.scene.children) {
+                    for (const ch of envir.scene.children) {
                         if (ch.name.includes("Pawn")) indexPawn++;
                     }
 
                     const labelDiv = document.createElement('div');
-                    labelDiv.textContent = 'Actor ' + indexPawn;
+                    labelDiv.textContent = `Actor ${  indexPawn}`;
                     labelDiv.style.marginTop = '-1em';
                     labelDiv.style.fontSize = '26px';
                     labelDiv.style.color = "yellow";
@@ -404,9 +404,9 @@ class VRodos_LightsPawn_Loader {
 
     applyTRS(obj, trs) {
         if (!trs) return;
-        const t = trs['translation'];
-        const r = trs['rotation'];
-        const s = trs['scale'];
+        const t = trs.translation;
+        const r = trs.rotation;
+        const s = trs.scale;
         obj.position.set(t[0], t[1], t[2]);
         obj.rotation.set(r[0], r[1], r[2]);
         obj.scale.set(s[0], s[1], s[2]);

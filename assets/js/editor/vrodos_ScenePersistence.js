@@ -85,7 +85,7 @@ function vrodosSceneSafeObjectName(node, fallbackIndex) {
     const slugPart = node && node.asset_slug ? String(node.asset_slug).trim() : '';
     const idPart = node && node.asset_id ? String(node.asset_id).trim() : '';
     const uuidPart = node && node.uuid ? String(node.uuid).split('-')[0] : String(fallbackIndex || Date.now());
-    const fallbackName = (slugPart || 'scene_object') + (idPart ? '_' + idPart : '') + '_' + uuidPart;
+    const fallbackName = `${(slugPart || 'scene_object') + (idPart ? `_${  idPart}` : '')  }_${  uuidPart}`;
 
     if (node) {
         node.name = fallbackName;
@@ -99,7 +99,7 @@ function vrodosSceneUniqueObjectName(name, existingObjects) {
     let suffix = 2;
 
     while (Object.prototype.hasOwnProperty.call(existingObjects, uniqueName)) {
-        uniqueName = name + '_' + suffix;
+        uniqueName = `${name  }_${  suffix}`;
         suffix++;
     }
 
@@ -127,7 +127,7 @@ class VrodosSceneExporter {
 
             // Special handling for legacy keys or specific logic
             if (key === 'ClearColor') {
-                value = scene.background ? '#' + scene.background.getHexString() : '#000000';
+                value = scene.background ? `#${  scene.background.getHexString()}` : '#000000';
             } else if (key === 'fogtype') {
                 value = (envir.scene.fogCategory === 1) ? 'linear' : (envir.scene.fogCategory === 2 ? 'exponential' : 'none');
             } else if (key === 'backgroundImagePath') {
@@ -232,8 +232,8 @@ class VrodosSceneExporter {
         entryObject.scale = vrodosSceneSafeScale([o.scale.x, o.scale.y, o.scale.z]);
 
         if (o.quaternion) {
-            let quatR = new THREE.Quaternion();
-            let eulerR = new THREE.Euler(entryObject.rotation[0], -entryObject.rotation[1], -entryObject.rotation[2], 'XYZ');
+            const quatR = new THREE.Quaternion();
+            const eulerR = new THREE.Euler(entryObject.rotation[0], -entryObject.rotation[1], -entryObject.rotation[2], 'XYZ');
             quatR.setFromEuler(eulerR);
             entryObject.quaternion = [quatR.x, quatR.y, quatR.z, quatR.w];
         }
@@ -275,18 +275,18 @@ class VrodosSceneExporter {
     }
 
     processAvatar(o, entryObject) {
-        let quatCombined = new THREE.Quaternion();
+        const quatCombined = new THREE.Quaternion();
         const pitchRotation = vrodosSceneSafeNumber(o.rotation.x, 0);
         const yawRotation = vrodosSceneSafeNumber(o.rotation.y, 0);
-        let camEulerCombined = new THREE.Euler(-pitchRotation, (Math.PI - yawRotation) % (2 * Math.PI), 0, 'YXZ');
+        const camEulerCombined = new THREE.Euler(-pitchRotation, (Math.PI - yawRotation) % (2 * Math.PI), 0, 'YXZ');
         quatCombined.setFromEuler(camEulerCombined);
 
-        let quatR_player = new THREE.Quaternion();
-        let eulerR_player = new THREE.Euler(0, (Math.PI - yawRotation) % (2 * Math.PI), 0, 'YXZ');
+        const quatR_player = new THREE.Quaternion();
+        const eulerR_player = new THREE.Euler(0, (Math.PI - yawRotation) % (2 * Math.PI), 0, 'YXZ');
         quatR_player.setFromEuler(eulerR_player);
 
-        let quatR_camera = new THREE.Quaternion();
-        let eulerR_camera = new THREE.Euler(-pitchRotation, 0, 0, 'YXZ');
+        const quatR_camera = new THREE.Quaternion();
+        const eulerR_camera = new THREE.Euler(-pitchRotation, 0, 0, 'YXZ');
         quatR_camera.setFromEuler(eulerR_camera);
 
         entryObject.rotation = [pitchRotation, yawRotation, 0];
@@ -306,18 +306,18 @@ class VrodosSceneImporter {
 
         const resources3D_new = {};
         const scene_json_obj = JSON.parse(scene_json);
-        const scene_json_metadata = scene_json_obj['metadata'];
+        const scene_json_metadata = scene_json_obj.metadata;
 
-        resources3D_new["SceneSettings"] = {};
-        resources3D_new["cameraCoords"] = {};
+        resources3D_new.SceneSettings = {};
+        resources3D_new.cameraCoords = {};
 
         for (const key in scene_json_metadata) {
             if (Object.prototype.hasOwnProperty.call(VRODOS_SCENE_SETTINGS_SCHEMA, key)) {
-                resources3D_new["SceneSettings"][key] = scene_json_metadata[key];
+                resources3D_new.SceneSettings[key] = scene_json_metadata[key];
             }
         }
 
-        const scene_objects = scene_json_obj['objects'];
+        const scene_objects = scene_json_obj.objects;
         let objectIndex = 0;
 
         for (const asset_key in scene_objects) {
@@ -335,7 +335,7 @@ class VrodosSceneImporter {
             value.scale = vrodosSceneSafeScale(value.scale);
 
             if (name === 'avatarCamera') {
-                resources3D_new["cameraCoords"] = {
+                resources3D_new.cameraCoords = {
                     position: value.position,
                     rotation: value.rotation
                 };

@@ -2,7 +2,7 @@
  * VRodos Bloom Shaders — Bright-pass + Gaussian blur
  */
 (function () {
-    var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
+    const VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
 
     function vrodosCreateBrightPassMaterial() {
         return new THREE.ShaderMaterial({

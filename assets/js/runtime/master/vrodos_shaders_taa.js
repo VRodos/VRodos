@@ -7,10 +7,10 @@
  * preventing the "JPG mush" that bilinear history sampling accumulates.
  */
 (function () {
-    var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
+    const VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
 
     function vrodosCreateTAAMaterial() {
-        var material = new THREE.ShaderMaterial({
+        const material = new THREE.ShaderMaterial({
             uniforms: {
                 tCurrent: { value: null },
                 tHistory: { value: null },

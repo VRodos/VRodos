@@ -37,14 +37,14 @@
     if (typeof VRODOSMaster === 'undefined') {
         return;
     }
-    var H = VRODOSMaster.PmndrsHelpers = VRODOSMaster.PmndrsHelpers || {};
+    const H = VRODOSMaster.PmndrsHelpers = VRODOSMaster.PmndrsHelpers || {};
 
     /**
      * Convert the shared ambientOcclusionPreset string to native PMNDRS SSAOEffect settings.
      */
     function nativeSsaoOptionsForPreset(PP, preset) {
-        var blendFunction = (PP && PP.BlendFunction) ? PP.BlendFunction.MULTIPLY : undefined;
-        var defaults = {
+        const blendFunction = (PP && PP.BlendFunction) ? PP.BlendFunction.MULTIPLY : undefined;
+        const defaults = {
             blendFunction,
             distanceScaling: true,
             depthAwareUpsampling: true,
@@ -100,9 +100,9 @@
 
     function bloomOptionsForLegacyValue(self, legacyValue, intensityMultiplier, threshold) {
         // legacy values are roughly 0..2; pmndrs intensity is roughly 0..3
-        var mult = (typeof intensityMultiplier === 'number' && !isNaN(intensityMultiplier)) ? intensityMultiplier : 1.0;
-        var thr = (typeof threshold === 'number' && !isNaN(threshold)) ? threshold : 0.62;
-        var options = {
+        const mult = (typeof intensityMultiplier === 'number' && !isNaN(intensityMultiplier)) ? intensityMultiplier : 1.0;
+        const thr = (typeof threshold === 'number' && !isNaN(threshold)) ? threshold : 0.62;
+        const options = {
             intensity: Math.max(0, legacyValue) * 1.4 * mult,
             luminanceThreshold: thr,
             luminanceSmoothing: 0.18,
@@ -118,8 +118,8 @@
      * so we always parseFloat. Returns `fallback` on parse failure or out-of-range.
      */
     function readPmndrsNumber(self, key, min, max, fallback) {
-        var raw = (self && self.data && self.data[key] !== undefined) ? self.data[key] : fallback;
-        var n = parseFloat(raw);
+        const raw = (self && self.data && self.data[key] !== undefined) ? self.data[key] : fallback;
+        const n = parseFloat(raw);
         if (isNaN(n)) return fallback;
         if (n < min) return min;
         if (n > max) return max;
@@ -128,7 +128,7 @@
 
     function readPmndrsBool(self, key) {
         if (!self || !self.data) return false;
-        var v = self.data[key];
+        const v = self.data[key];
         return v === true || v === 'true' || v === '1' || v === 1;
     }
 
@@ -149,8 +149,8 @@
     }
 
     function applyLutLookTransform(look, r, g, b) {
-        var luma = r * 0.2126 + g * 0.7152 + b * 0.0722;
-        var contrast;
+        const luma = r * 0.2126 + g * 0.7152 + b * 0.0722;
+        let contrast;
 
         switch (look) {
             case 'warm-film':
@@ -192,11 +192,11 @@
     }
 
     function createBuiltInPmndrsLut(PP, look) {
-        var size = 16;
-        var lut = PP.LookupTexture.createNeutral(size);
-        var data = lut && lut.image ? lut.image.data : null;
-        var i;
-        var rgb;
+        const size = 16;
+        const lut = PP.LookupTexture.createNeutral(size);
+        const data = lut && lut.image ? lut.image.data : null;
+        let i;
+        let rgb;
 
         if (!data) {
             return null;
@@ -229,7 +229,7 @@
         }
 
         try {
-            var params = new URLSearchParams(window.location.search);
+            const params = new URLSearchParams(window.location.search);
             return params.get(queryKey) === '1';
         } catch (err) {
             return false;
@@ -263,8 +263,8 @@
     }
 
     function getPmndrsRequestedMultisampling(self, renderer) {
-        var requestedSamples = 0;
-        var maxSamples = 0;
+        let requestedSamples = 0;
+        let maxSamples = 0;
 
         if (!isPmndrsAAEnabled(self) || getPmndrsAAMode(self) !== 'msaa' || isPmndrsAmbientOcclusionEnabled(self) || hasPmndrsDebugFlag('disablePmndrsMsaa', 'vrodos_debug_disable_pmndrs_msaa')) {
             return 0;
@@ -317,7 +317,7 @@
     }
 
     function getPmndrsComposerSignature(self, renderer, atmosphereConfig, PP) {
-        var smaaPreset = getPmndrsSmaaPreset(self, PP);
+        const smaaPreset = getPmndrsSmaaPreset(self, PP);
         return `${getPmndrsAtmosphereModeSignature(self, atmosphereConfig) 
             }|ao:${  (self && typeof self.getAmbientOcclusionPreset === 'function') ? self.getAmbientOcclusionPreset() : 'off' 
             }|aoBackend:${  getPmndrsAmbientOcclusionBackend(self) 
@@ -344,7 +344,7 @@
     }
 
     function isPmndrsHorizonFoliageOverlayCandidateMaterial(material) {
-        var materialName;
+        let materialName;
 
         if (!material || material.visible === false || material.colorWrite === false) {
             return false;
@@ -371,8 +371,8 @@
     }
 
     function createPmndrsHorizonCutoutMaterial(material, cacheTag) {
-        var clone;
-        var prevOnBeforeCompile;
+        let clone;
+        let prevOnBeforeCompile;
 
         if (!material || typeof material.clone !== 'function') {
             return material;
@@ -427,9 +427,9 @@
     }
 
     function restoreAllPmndrsHorizonFoliageMaterials(self) {
-        var overrides;
-        var uuid;
-        var entry;
+        let overrides;
+        let uuid;
+        let entry;
 
         if (!self || !self._pmndrsHorizonFoliageObjectOverrides) {
             return;
@@ -448,7 +448,7 @@
 
             entry.object.material = entry.originalMaterial;
             if (entry.normalizedMaterials && entry.normalizedMaterials.length) {
-                entry.normalizedMaterials.forEach(function (material) {
+                entry.normalizedMaterials.forEach((material) => {
                     if (material && typeof material.dispose === 'function') {
                         material.dispose();
                     }
@@ -460,12 +460,12 @@
     }
 
     function applyPmndrsHorizonFoliageMaterialNormalization(self) {
-        var overlayPass;
-        var overrides;
-        var seen;
-        var alphaTestTarget;
-        var uuid;
-        var entry;
+        let overlayPass;
+        let overrides;
+        let seen;
+        let alphaTestTarget;
+        let uuid;
+        let entry;
 
         if (!self) {
             return;
@@ -480,12 +480,12 @@
         overrides = self._pmndrsHorizonFoliageObjectOverrides = self._pmndrsHorizonFoliageObjectOverrides || {};
         seen = {};
 
-        overlayPass.selection.forEach(function (object) {
-            var materials;
-            var i;
-            var material;
-            var normalizedMaterials;
-            var objectKey;
+        overlayPass.selection.forEach((object) => {
+            let materials;
+            let i;
+            let material;
+            let normalizedMaterials;
+            let objectKey;
 
             if (!object || !object.material) {
                 return;
@@ -512,16 +512,14 @@
                     normalizedMaterials: []
                 };
             } else if (overrides[objectKey].normalizedMaterials && overrides[objectKey].normalizedMaterials.length) {
-                overrides[objectKey].normalizedMaterials.forEach(function (oldMaterial) {
+                overrides[objectKey].normalizedMaterials.forEach((oldMaterial) => {
                     if (oldMaterial && oldMaterial !== object.material && typeof oldMaterial.dispose === 'function') {
                         oldMaterial.dispose();
                     }
                 });
             }
 
-            overrides[objectKey].normalizedMaterials = normalizedMaterials.filter(function (candidate, idx) {
-                return candidate !== materials[idx];
-            });
+            overrides[objectKey].normalizedMaterials = normalizedMaterials.filter((candidate, idx) => candidate !== materials[idx]);
             object.material = Array.isArray(object.material) ? normalizedMaterials : normalizedMaterials[0];
         });
 
@@ -538,7 +536,7 @@
 
             entry.object.material = entry.originalMaterial;
             if (entry.normalizedMaterials && entry.normalizedMaterials.length) {
-                entry.normalizedMaterials.forEach(function (material) {
+                entry.normalizedMaterials.forEach((material) => {
                     if (material && typeof material.dispose === 'function') {
                         material.dispose();
                     }
@@ -549,9 +547,9 @@
     }
 
     function isPmndrsHorizonFoliageOverlayCandidateMesh(node) {
-        var materials;
-        var nodeName;
-        var i;
+        let materials;
+        let nodeName;
+        let i;
 
         if (!node || !node.isMesh || node.visible === false || !node.material) {
             return false;
@@ -581,9 +579,9 @@
     }
 
     function refreshPmndrsHorizonFoliageOverlaySelection(self, scene) {
-        var overlayPass;
-        var selectedCount = 0;
-        var selectedSummaries = [];
+        let overlayPass;
+        let selectedCount = 0;
+        const selectedSummaries = [];
 
         if (!self || !scene) {
             return 0;
@@ -595,7 +593,7 @@
         }
 
         overlayPass.selection.clear();
-        scene.traverse(function (node) {
+        scene.traverse((node) => {
             if (!isPmndrsHorizonFoliageOverlayCandidateMesh(node)) {
                 return;
             }
@@ -603,8 +601,8 @@
             overlayPass.selection.add(node);
             selectedCount++;
             if (selectedSummaries.length < 12) {
-                var materials = Array.isArray(node.material) ? node.material : [node.material];
-                var materialSummary = materials.map(function (material) {
+                const materials = Array.isArray(node.material) ? node.material : [node.material];
+                const materialSummary = materials.map((material) => {
                     if (!material) {
                         return 'null-material';
                     }
@@ -684,9 +682,9 @@
     };
 
     PmndrsHorizonFoliageOverlayPass.prototype.getOverlayMaterial = function (material) {
-        var cacheKey;
-        var overlayMaterial;
-        var prevOnBeforeCompile;
+        let cacheKey;
+        let overlayMaterial;
+        let prevOnBeforeCompile;
 
         if (!material || typeof material.clone !== 'function') {
             return material;
@@ -756,16 +754,16 @@
     };
 
     PmndrsHorizonFoliageOverlayPass.prototype.prepareSelectionMaterials = function () {
-        var swaps = [];
-        var self = this;
+        const swaps = [];
+        const self = this;
 
         if (!this.selection || this.selection.size === 0) {
             return swaps;
         }
 
-        this.selection.forEach(function (object) {
-            var originalMaterial;
-            var overlayMaterial;
+        this.selection.forEach((object) => {
+            let originalMaterial;
+            let overlayMaterial;
 
             if (!object || !object.material) {
                 return;
@@ -773,9 +771,7 @@
 
             originalMaterial = object.material;
             if (Array.isArray(originalMaterial)) {
-                overlayMaterial = originalMaterial.map(function (material) {
-                    return self.getOverlayMaterial(material);
-                });
+                overlayMaterial = originalMaterial.map((material) => self.getOverlayMaterial(material));
             } else {
                 overlayMaterial = self.getOverlayMaterial(originalMaterial);
             }
@@ -791,8 +787,8 @@
     };
 
     PmndrsHorizonFoliageOverlayPass.prototype.restoreSelectionMaterials = function (swaps) {
-        var i;
-        var swap;
+        let i;
+        let swap;
 
         for (i = 0; i < swaps.length; i++) {
             swap = swaps[i];
@@ -804,7 +800,7 @@
     };
 
     PmndrsHorizonFoliageOverlayPass.prototype.render = function (renderer, inputBuffer, outputBuffer, deltaTime, stencilTest) {
-        var swaps;
+        let swaps;
 
         if (this.renderPass) {
             swaps = this.prepareSelectionMaterials();
@@ -832,7 +828,7 @@
     };
 
     PmndrsHorizonFoliageOverlayPass.prototype.dispose = function () {
-        var cacheKey;
+        let cacheKey;
 
         if (this.selection && typeof this.selection.clear === 'function') {
             this.selection.clear();
@@ -859,7 +855,7 @@
         }
 
         if (!self._pmndrsAADebugOverlay) {
-            var overlay = document.createElement('div');
+            const overlay = document.createElement('div');
             overlay.style.position = 'fixed';
             overlay.style.left = '12px';
             overlay.style.bottom = '12px';
@@ -881,12 +877,12 @@
     }
 
     function updatePmndrsAADebugOverlay(self) {
-        var overlay = ensurePmndrsAADebugOverlay(self);
-        var renderer;
-        var requestedMsaa;
-        var appliedMsaa;
-        var maxSamples;
-        var lines;
+        const overlay = ensurePmndrsAADebugOverlay(self);
+        let renderer;
+        let requestedMsaa;
+        let appliedMsaa;
+        let maxSamples;
+        let lines;
 
         if (!overlay) {
             return;
@@ -995,7 +991,7 @@
             return;
         }
 
-        var atmosphereState = (typeof self.ensurePmndrsAtmosphereResources === 'function') ? self.ensurePmndrsAtmosphereResources() : null;
+        const atmosphereState = (typeof self.ensurePmndrsAtmosphereResources === 'function') ? self.ensurePmndrsAtmosphereResources() : null;
         if (atmosphereState && !atmosphereState.failed && atmosphereState.textures) {
             self.pmndrsAerialPerspectiveEffect.irradianceTexture = atmosphereState.textures.irradianceTexture || null;
             self.pmndrsAerialPerspectiveEffect.scatteringTexture = atmosphereState.textures.scatteringTexture || null;
@@ -1021,18 +1017,18 @@
      *   - any A-Frame deferred init has settled.
      */
     H._buildPmndrsComposer = function (scene, camera) {
-        var renderer = this.el.renderer;
-        var PP = window.POSTPROCESSING;
-        var THREE = window.THREE;
-        var atmosphereConfig = (typeof this.getPmndrsAtmosphereConfig === 'function') ? this.getPmndrsAtmosphereConfig() : null;
+        const renderer = this.el.renderer;
+        const PP = window.POSTPROCESSING;
+        const THREE = window.THREE;
+        const atmosphereConfig = (typeof this.getPmndrsAtmosphereConfig === 'function') ? this.getPmndrsAtmosphereConfig() : null;
         if (!renderer || !PP || !THREE || !camera) {
             return false;
         }
 
-        var composer;
-        var requestedMultisampling = getPmndrsRequestedMultisampling(this, renderer);
-        var requestedMultisamplingInitial = requestedMultisampling;
-        var composerOptions = {
+        let composer;
+        let requestedMultisampling = getPmndrsRequestedMultisampling(this, renderer);
+        const requestedMultisamplingInitial = requestedMultisampling;
+        const composerOptions = {
             frameBufferType: THREE.HalfFloatType
         };
         if (requestedMultisampling > 0) {
@@ -1060,14 +1056,14 @@
         }
 
         // Defensive setSize — guard against the A-Frame zero-canvas race observed in Phase 0.
-        var w = (renderer.domElement && (renderer.domElement.clientWidth || renderer.domElement.width)) || window.innerWidth || 1;
-        var h = (renderer.domElement && (renderer.domElement.clientHeight || renderer.domElement.height)) || window.innerHeight || 1;
+        const w = (renderer.domElement && (renderer.domElement.clientWidth || renderer.domElement.width)) || window.innerWidth || 1;
+        const h = (renderer.domElement && (renderer.domElement.clientHeight || renderer.domElement.height)) || window.innerHeight || 1;
         composer.setSize(Math.max(1, w), Math.max(1, h));
 
-        var renderPass = new PP.RenderPass(scene, camera);
+        const renderPass = new PP.RenderPass(scene, camera);
         composer.addPass(renderPass);
 
-        var effects = [];
+        const effects = [];
         this._pmndrsAtmosphereSignature = getPmndrsAtmosphereModeSignature(this, atmosphereConfig);
         this._pmndrsComposerSignature = getPmndrsComposerSignature(this, renderer, atmosphereConfig, PP);
         this._pmndrsRequestedMultisampling = requestedMultisamplingInitial;
@@ -1081,9 +1077,9 @@
         }
 
         if (atmosphereConfig && atmosphereConfig.enabled && (!isHorizonBackground(this) || shouldEnablePmndrsHorizonAerial(this))) {
-            var VTA = window.VRODOS_TAKRAM_ATMOSPHERE;
-            var atmosphereState = (typeof this.ensurePmndrsAtmosphereResources === 'function') ? this.ensurePmndrsAtmosphereResources() : null;
-            var useHorizonAerial = shouldEnablePmndrsHorizonAerial(this);
+            const VTA = window.VRODOS_TAKRAM_ATMOSPHERE;
+            const atmosphereState = (typeof this.ensurePmndrsAtmosphereResources === 'function') ? this.ensurePmndrsAtmosphereResources() : null;
+            const useHorizonAerial = shouldEnablePmndrsHorizonAerial(this);
 
             if (VTA && atmosphereState && !atmosphereState.failed && atmosphereState.textures) {
                 try {
@@ -1143,13 +1139,13 @@
 
         // SSAO through the shared ambientOcclusionPreset control.
         // Native POSTPROCESSING.SSAOEffect is the default PMNDRS AO backend.
-        var aoPreset = (typeof this.getAmbientOcclusionPreset === 'function') ? this.getAmbientOcclusionPreset() : 'off';
+        const aoPreset = (typeof this.getAmbientOcclusionPreset === 'function') ? this.getAmbientOcclusionPreset() : 'off';
         this.pmndrsNativeNormalPass = null;
         this.pmndrsNativeSsaoEffect = null;
         if (aoPreset && aoPreset !== 'off') {
             if (PP.NormalPass && PP.SSAOEffect) {
                 try {
-                    var nativeSsaoOptions = nativeSsaoOptionsForPreset(PP, aoPreset);
+                    const nativeSsaoOptions = nativeSsaoOptionsForPreset(PP, aoPreset);
                     this.pmndrsNativeNormalPass = new PP.NormalPass(scene, camera, { resolutionScale: 1.0 });
                     composer.addPass(this.pmndrsNativeNormalPass);
                     this.pmndrsNativeSsaoEffect = new PP.SSAOEffect(camera, this.pmndrsNativeNormalPass.texture, nativeSsaoOptions);
@@ -1170,9 +1166,9 @@
         }
 
         // Bloom (intensity & threshold come from per-scene Pmndrs tweaks)
-        var bloomVal = (typeof this.getBloomStrengthValue === 'function') ? this.getBloomStrengthValue() : 0;
-        var pmndrsBloomMult = readPmndrsNumber(this, 'pmndrsBloomIntensity', 0, 3, 1.0);
-        var pmndrsBloomThr  = readPmndrsNumber(this, 'pmndrsBloomThreshold', 0, 1, 0.62);
+        const bloomVal = (typeof this.getBloomStrengthValue === 'function') ? this.getBloomStrengthValue() : 0;
+        const pmndrsBloomMult = readPmndrsNumber(this, 'pmndrsBloomIntensity', 0, 3, 1.0);
+        const pmndrsBloomThr  = readPmndrsNumber(this, 'pmndrsBloomThreshold', 0, 1, 0.62);
         if (bloomVal > 0 && pmndrsBloomMult > 0) {
             try {
                 this.pmndrsBloomEffect = new PP.BloomEffect(bloomOptionsForLegacyValue(this, bloomVal, pmndrsBloomMult, pmndrsBloomThr));
@@ -1189,7 +1185,7 @@
         // Per-scene exposure multiplier is applied via the renderer's toneMappingExposure.
         try {
             effects.push(new PP.ToneMappingEffect({ mode: PP.ToneMappingMode.ACES_FILMIC }));
-            var pmndrsExposure = readPmndrsNumber(this, 'pmndrsToneMappingExposure', 0.3, 2.5, 1.0);
+            const pmndrsExposure = readPmndrsNumber(this, 'pmndrsToneMappingExposure', 0.3, 2.5, 1.0);
             if (renderer && typeof renderer.toneMappingExposure !== 'undefined') {
                 this._pmndrsPrevToneMappingExposure = renderer.toneMappingExposure;
                 renderer.toneMappingExposure = pmndrsExposure;
@@ -1205,8 +1201,8 @@
         // Color grading — Brightness/Contrast + Hue/Saturation
         if (this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXColorEnabled')) {
             try {
-                var contrastVal = (typeof this.getContrastValue === 'function') ? this.getContrastValue() : 1.0;
-                var saturationVal = (typeof this.getSaturationValue === 'function') ? this.getSaturationValue() : 1.0;
+                const contrastVal = (typeof this.getContrastValue === 'function') ? this.getContrastValue() : 1.0;
+                const saturationVal = (typeof this.getSaturationValue === 'function') ? this.getSaturationValue() : 1.0;
                 effects.push(new PP.BrightnessContrastEffect({ contrast: contrastVal - 1.0, brightness: 0.0 }));
                 effects.push(new PP.HueSaturationEffect({ saturation: saturationVal - 1.0, hue: 0.0 }));
             } catch (err) {
@@ -1218,8 +1214,8 @@
         this.pmndrsLutTexture = null;
         if (readPmndrsBool(this, 'pmndrsLutEnabled') && readPmndrsNumber(this, 'pmndrsLutStrength', 0, 1, 1.0) > 0) {
             try {
-                var lutLook = normalizePmndrsLutLook(this.data.pmndrsLutLook);
-                var lutStrength = readPmndrsNumber(this, 'pmndrsLutStrength', 0, 1, 1.0);
+                const lutLook = normalizePmndrsLutLook(this.data.pmndrsLutLook);
+                const lutStrength = readPmndrsNumber(this, 'pmndrsLutStrength', 0, 1, 1.0);
                 if (PP.LUT3DEffect && PP.LookupTexture && typeof PP.LookupTexture.createNeutral === 'function') {
                     this.pmndrsLutTexture = createBuiltInPmndrsLut(PP, lutLook);
                     if (!this.pmndrsLutTexture) {
@@ -1249,10 +1245,10 @@
 
         // Vignette — pmndrs engine has its own per-scene flag (legacy postFXVignetteEnabled
         // is hard-coded false, so we honour pmndrsVignetteEnabled instead)
-        var pmndrsVignetteOn = readPmndrsBool(this, 'pmndrsVignetteEnabled');
+        const pmndrsVignetteOn = readPmndrsBool(this, 'pmndrsVignetteEnabled');
         if (pmndrsVignetteOn) {
             try {
-                var vDarkness = readPmndrsNumber(this, 'pmndrsVignetteDarkness', 0, 1, 0.5);
+                const vDarkness = readPmndrsNumber(this, 'pmndrsVignetteDarkness', 0, 1, 0.5);
                 effects.push(new PP.VignetteEffect({ offset: 0.35, darkness: vDarkness }));
             } catch (err) {
                 console.warn('[VRodos] pmndrs VignetteEffect failed, skipping:', err);
@@ -1279,7 +1275,7 @@
         this.pmndrsChromaticAberrationEffect = null;
         if (readPmndrsBool(this, 'pmndrsChromaticAberrationEnabled')) {
             try {
-                var chromaOffset = readPmndrsNumber(this, 'pmndrsChromaticAberrationOffset', 0, 0.006, 0.0015);
+                const chromaOffset = readPmndrsNumber(this, 'pmndrsChromaticAberrationOffset', 0, 0.006, 0.0015);
                 this.pmndrsChromaticAberrationEffect = new PP.ChromaticAberrationEffect({
                     offset: new THREE.Vector2(chromaOffset, chromaOffset * 0.5),
                     radialModulation: true,
@@ -1298,7 +1294,7 @@
         //   - msaa: composer multisampling only
         // FXAA stays disabled due the Horizon sun halo artifact it introduced on
         // the pinned r181 stack.
-        var smaaPreset = getPmndrsSmaaPreset(this, PP);
+        const smaaPreset = getPmndrsSmaaPreset(this, PP);
         if (smaaPreset !== null) {
             try {
                 this.pmndrsSmaaEffect = new PP.SMAAEffect({ preset: smaaPreset });
@@ -1315,8 +1311,8 @@
         }
 
         // SSR / TRAA are not supported in this engine — log once per scene load.
-        var wantsSSR = this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXSSREnabled');
-        var wantsTAA = this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXTAAEnabled');
+        const wantsSSR = this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXSSREnabled');
+        const wantsTAA = this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXTAAEnabled');
         if ((wantsSSR || wantsTAA) && !this._pmndrsSsrTraaWarned) {
             console.info('[VRodos] SSR/TRAA requested but not available in pmndrs pipeline — switch postFXEngine to "legacy" if those effects are required.');
             this._pmndrsSsrTraaWarned = true;
@@ -1361,7 +1357,7 @@
     };
 
     H.enablePmndrsPostProcessing = function () {
-        var renderer = this.el.renderer;
+        const renderer = this.el.renderer;
         if (!renderer || this.pmndrsActive) {
             return;
         }
@@ -1383,9 +1379,9 @@
         ensurePmndrsAADebugOverlay(this);
         updatePmndrsAADebugOverlay(this);
 
-        var self = this;
+        const self = this;
         renderer.render = function (scene, camera) {
-            var shouldIntercept = self.pmndrsActive &&
+            const shouldIntercept = self.pmndrsActive &&
                 self.shouldUsePostProcessing() &&
                 !self.pmndrsRendering &&
                 !self.sceneProbeCapturing &&
@@ -1398,13 +1394,13 @@
 
             // Lazy composer build on first valid frame — guarantees camera and canvas
             // are ready (Phase 0 zero-canvas race fix).
-            var atmosphereConfig = (typeof self.getPmndrsAtmosphereConfig === 'function') ? self.getPmndrsAtmosphereConfig() : null;
-            var composerSignature = getPmndrsComposerSignature(self, self.el && self.el.renderer, atmosphereConfig, window.POSTPROCESSING);
+            const atmosphereConfig = (typeof self.getPmndrsAtmosphereConfig === 'function') ? self.getPmndrsAtmosphereConfig() : null;
+            const composerSignature = getPmndrsComposerSignature(self, self.el && self.el.renderer, atmosphereConfig, window.POSTPROCESSING);
             if (self.pmndrsComposer && self._pmndrsComposerSignature !== composerSignature) {
                 disposePmndrsComposerResources(self);
             }
             if (!self.pmndrsComposer) {
-                var built = self._buildPmndrsComposer(scene, camera);
+                const built = self._buildPmndrsComposer(scene, camera);
                 if (!built || !self.pmndrsComposer) {
                     return self.pmndrsOriginalRender(scene, camera);
                 }
@@ -1456,8 +1452,8 @@
         if (!this.pmndrsComposer || !this.el.renderer) {
             return;
         }
-        var renderer = this.el.renderer;
-        var size = this.postProcessingSize;
+        const renderer = this.el.renderer;
+        const size = this.postProcessingSize;
         renderer.getSize(size);
         // pmndrs/postprocessing's EffectComposer.setSize expects CSS pixels (NOT
         // device pixels) — it re-applies the renderer pixel ratio internally.
@@ -1465,8 +1461,8 @@
         // around physical pixel buffers. Multiplying here causes max-texture-size
         // overflow on HiDPI screens and the framebuffer comes back with zero-size
         // attachments (black screen).
-        var w = Math.max(1, Math.floor(size.x));
-        var h = Math.max(1, Math.floor(size.y));
+        const w = Math.max(1, Math.floor(size.x));
+        const h = Math.max(1, Math.floor(size.y));
         if (this._pmndrsLastW !== w || this._pmndrsLastH !== h) {
             this.pmndrsComposer.setSize(w, h);
             this._pmndrsLastW = w;

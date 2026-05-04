@@ -33,7 +33,7 @@ VRodosCompileUI.General = (function () {
     }
 
     function normalizeEdgeAAStrengthLevel(value) {
-        var numeric = parseInt(value, 10);
+        const numeric = parseInt(value, 10);
         if (isNaN(numeric)) return 3;
 
         if (numeric > 5) {
@@ -74,7 +74,7 @@ VRodosCompileUI.General = (function () {
     }
 
     function updateUI(controls, isPmndrs) {
-        var legacyHorizonStageEnabled = !isPmndrs && isLegacyHorizonStageApplicable();
+        const legacyHorizonStageEnabled = !isPmndrs && isLegacyHorizonStageApplicable();
 
         if (controls.legacyHorizonStageSizeRow) {
             controls.legacyHorizonStageSizeRow.style.display = legacyHorizonStageEnabled ? '' : 'none';
@@ -115,15 +115,15 @@ VRodosCompileUI.General = (function () {
     }
 
     return {
-        normalizeAAQuality: normalizeAAQuality,
-        normalizeAmbientOcclusionPreset: normalizeAmbientOcclusionPreset,
-        normalizeContactShadowPreset: normalizeContactShadowPreset,
-        normalizeEdgeAAStrengthLevel: normalizeEdgeAAStrengthLevel,
-        getEdgeAAStrengthLabel: getEdgeAAStrengthLabel,
-        clampLegacyHorizonStageSize: clampLegacyHorizonStageSize,
-        updateUI: updateUI,
-        syncToScene: syncToScene,
-        updateValueLabels: updateValueLabels
+        normalizeAAQuality,
+        normalizeAmbientOcclusionPreset,
+        normalizeContactShadowPreset,
+        normalizeEdgeAAStrengthLevel,
+        getEdgeAAStrengthLabel,
+        clampLegacyHorizonStageSize,
+        updateUI,
+        syncToScene,
+        updateValueLabels
     };
 
 })();

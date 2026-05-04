@@ -4,10 +4,10 @@
  * Runs at half resolution for performance. Outputs reflection color in rgb, hit mask in alpha.
  */
 (function () {
-    var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
+    const VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
 
     function vrodosCreateSSRMaterial() {
-        var material = new THREE.ShaderMaterial({
+        const material = new THREE.ShaderMaterial({
             defines: {
                 MAX_STEPS: 48,
                 BINARY_STEPS: 5

@@ -80,7 +80,7 @@ VRodosCompileUI.Shared = (function () {
     }
 
     function clampNumber(value, min, max, fallback) {
-        var n = parseFloat(value);
+        const n = parseFloat(value);
         if (isNaN(n)) return fallback;
         if (n < min) return min;
         if (n > max) return max;
@@ -88,11 +88,11 @@ VRodosCompileUI.Shared = (function () {
     }
 
     function normalizeColorHex(value, fallback) {
-        var raw = (typeof value === 'string') ? value.trim() : '';
+        const raw = (typeof value === 'string') ? value.trim() : '';
         if (!/^#?[0-9a-fA-F]{6}$/.test(raw)) {
             return fallback;
         }
-        return raw.charAt(0) === '#' ? raw.toLowerCase() : ('#' + raw.toLowerCase());
+        return raw.charAt(0) === '#' ? raw.toLowerCase() : (`#${  raw.toLowerCase()}`);
     }
 
     function formatNumber(value) {
@@ -100,24 +100,24 @@ VRodosCompileUI.Shared = (function () {
     }
 
     function formatRadius(value) {
-        var n = parseFloat(value);
+        let n = parseFloat(value);
         if (isNaN(n)) n = 0;
         return n.toFixed(4);
     }
 
     function formatDegrees(value) {
-        return String(Math.round(parseFloat(value) || 0)) + '\u00b0';
+        return `${String(Math.round(parseFloat(value) || 0))  }\u00b0`;
     }
 
     return {
-        PMNDRS_TWEAK_DEFAULTS: PMNDRS_TWEAK_DEFAULTS,
-        getPmndrsHorizonHelperDefaults: getPmndrsHorizonHelperDefaults,
-        normalizePmndrsHorizonLightingPreset: normalizePmndrsHorizonLightingPreset,
-        clampNumber: clampNumber,
-        normalizeColorHex: normalizeColorHex,
-        formatNumber: formatNumber,
-        formatRadius: formatRadius,
-        formatDegrees: formatDegrees
+        PMNDRS_TWEAK_DEFAULTS,
+        getPmndrsHorizonHelperDefaults,
+        normalizePmndrsHorizonLightingPreset,
+        clampNumber,
+        normalizeColorHex,
+        formatNumber,
+        formatRadius,
+        formatDegrees
     };
 
 })();

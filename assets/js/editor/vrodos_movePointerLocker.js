@@ -13,10 +13,10 @@ var originalRigRot = null;
 // Initialize
 function initPointerLock() {
 
-    var firstPersonBlocker = document.getElementById('firstPersonBlocker');
-    var firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
+    const firstPersonBlocker = document.getElementById('firstPersonBlocker');
+    const firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
-    var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
+    const havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
 
     avatarControlsEnabled = false;
     envir.avatarControls.enabled = false;
@@ -33,7 +33,7 @@ function firstPersonViewWithoutLock(){
 
         // // ----------- First person view ----------------------
         avatarControlsEnabled = true;
-        let event_add_mv = new CustomEvent("add_movement");
+        const event_add_mv = new CustomEvent("add_movement");
         document.dispatchEvent(event_add_mv);
 
         // Mouse controls Avatar viewing
@@ -78,7 +78,7 @@ function firstPersonViewWithoutLock(){
 
         // ------------- ORBIT --------------------------
         avatarControlsEnabled = false;
-        var event_rm_mv = new CustomEvent("remove_movement");
+        const event_rm_mv = new CustomEvent("remove_movement");
         document.dispatchEvent(event_rm_mv);
 
         envir.avatarControls.enabled = false;
@@ -101,7 +101,7 @@ function firstPersonViewWithoutLock(){
         envir.isComposerOn = true;
 
         if(!envir.is2d)
-            transform_controls.visible  = true;
+            {transform_controls.visible  = true;}
 
         envir.getDirectorRig().visible = true;
 

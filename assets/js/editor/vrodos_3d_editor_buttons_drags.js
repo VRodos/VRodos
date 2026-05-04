@@ -1,12 +1,12 @@
 // Swap a Lucide icon inside a container element
 function swapLucideIcon(container, iconName) {
     if (!container) return;
-    let icon = container.querySelector('[data-lucide], svg');
+    const icon = container.querySelector('[data-lucide], svg');
     if (icon) {
-        let newIcon = document.createElement('i');
+        const newIcon = document.createElement('i');
         newIcon.setAttribute('data-lucide', iconName);
         // Preserve original sizing classes (tw-w-*, tw-h-*, etc.)
-        let origClasses = (icon.getAttribute('class') || '').replace(/lucide[^\s]*/g, '').trim();
+        const origClasses = (icon.getAttribute('class') || '').replace(/lucide[^\s]*/g, '').trim();
         if (origClasses) newIcon.setAttribute('class', origClasses);
         icon.replaceWith(newIcon);
         if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -31,29 +31,27 @@ function copyTextareaText(textarea) {
         return Promise.reject(new Error('No textarea available for clipboard copy.'));
     }
 
-    let text = textarea.value || '';
+    const text = textarea.value || '';
 
     if (window.isSecureContext && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-        return navigator.clipboard.writeText(text).catch(function () {
-            return fallbackCopyTextareaText(textarea);
-        });
+        return navigator.clipboard.writeText(text).catch(() => fallbackCopyTextareaText(textarea));
     }
 
     return fallbackCopyTextareaText(textarea);
 }
 
 function fallbackCopyTextareaText(textarea) {
-    return new Promise(function (resolve, reject) {
-        let activeElement = document.activeElement;
-        let originalSelectionStart = textarea.selectionStart;
-        let originalSelectionEnd = textarea.selectionEnd;
+    return new Promise((resolve, reject) => {
+        const activeElement = document.activeElement;
+        const originalSelectionStart = textarea.selectionStart;
+        const originalSelectionEnd = textarea.selectionEnd;
 
         try {
             focusWithoutScroll(textarea);
             textarea.select();
             textarea.setSelectionRange(0, textarea.value.length);
 
-            let copied = document.execCommand('copy');
+            const copied = document.execCommand('copy');
             textarea.setSelectionRange(originalSelectionStart || 0, originalSelectionEnd || 0);
 
             if (activeElement && typeof activeElement.focus === 'function' && activeElement !== textarea) {
@@ -76,18 +74,16 @@ function copyPlainText(text) {
     text = text || '';
 
     if (window.isSecureContext && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-        return navigator.clipboard.writeText(text).catch(function () {
-            return fallbackCopyPlainText(text);
-        });
+        return navigator.clipboard.writeText(text).catch(() => fallbackCopyPlainText(text));
     }
 
     return fallbackCopyPlainText(text);
 }
 
 function fallbackCopyPlainText(text) {
-    return new Promise(function (resolve, reject) {
-        let textarea = document.createElement('textarea');
-        let activeElement = document.activeElement;
+    return new Promise((resolve, reject) => {
+        const textarea = document.createElement('textarea');
+        const activeElement = document.activeElement;
 
         textarea.value = text || '';
         textarea.setAttribute('readonly', 'readonly');
@@ -103,7 +99,7 @@ function fallbackCopyPlainText(text) {
             textarea.select();
             textarea.setSelectionRange(0, textarea.value.length);
 
-            let copied = document.execCommand('copy');
+            const copied = document.execCommand('copy');
             textarea.remove();
 
             if (activeElement && typeof activeElement.focus === 'function') {
@@ -125,15 +121,15 @@ function fallbackCopyPlainText(text) {
 function clampFloatingPanelToViewport(panel) {
     if (!panel) return;
 
-    let rect = panel.getBoundingClientRect();
-    let margin = 8;
-    let maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
-    let maxTop = Math.max(44, window.innerHeight - rect.height - margin);
-    let nextLeft = Math.min(Math.max(rect.left, margin), maxLeft);
-    let nextTop = Math.min(Math.max(rect.top, 44), maxTop);
+    const rect = panel.getBoundingClientRect();
+    const margin = 8;
+    const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+    const maxTop = Math.max(44, window.innerHeight - rect.height - margin);
+    const nextLeft = Math.min(Math.max(rect.left, margin), maxLeft);
+    const nextTop = Math.min(Math.max(rect.top, 44), maxTop);
 
-    panel.style.left = nextLeft + 'px';
-    panel.style.top = nextTop + 'px';
+    panel.style.left = `${nextLeft  }px`;
+    panel.style.top = `${nextTop  }px`;
 }
 
 function showFloatingPanel(panel) {
@@ -152,15 +148,15 @@ function hideFloatingPanel(panel) {
 }
 
 function initializeFloatingPanel(panelId, headerId, closeButtonId) {
-    let panel = document.getElementById(panelId);
-    let header = document.getElementById(headerId);
-    let closeButton = document.getElementById(closeButtonId);
-    let resizeHandle = document.getElementById(panelId.replace('Dialog', 'ResizeHandle'));
+    const panel = document.getElementById(panelId);
+    const header = document.getElementById(headerId);
+    const closeButton = document.getElementById(closeButtonId);
+    const resizeHandle = document.getElementById(panelId.replace('Dialog', 'ResizeHandle'));
 
     if (!panel || !header) return;
 
     if (closeButton) {
-        closeButton.addEventListener('click', function () {
+        closeButton.addEventListener('click', () => {
             hideFloatingPanel(panel);
         });
     }
@@ -171,33 +167,33 @@ function initializeFloatingPanel(panelId, headerId, closeButtonId) {
     let startLeft = 0;
     let startTop = 0;
 
-    header.addEventListener('pointerdown', function (event) {
+    header.addEventListener('pointerdown', (event) => {
         if (event.target.closest('button, a')) return;
 
-        let rect = panel.getBoundingClientRect();
+        const rect = panel.getBoundingClientRect();
         isDragging = true;
         startX = event.clientX;
         startY = event.clientY;
         startLeft = rect.left;
         startTop = rect.top;
 
-        panel.style.left = startLeft + 'px';
-        panel.style.top = startTop + 'px';
+        panel.style.left = `${startLeft  }px`;
+        panel.style.top = `${startTop  }px`;
         panel.style.right = 'auto';
         panel.style.bottom = 'auto';
         header.setPointerCapture(event.pointerId);
         event.preventDefault();
     });
 
-    header.addEventListener('pointermove', function (event) {
+    header.addEventListener('pointermove', (event) => {
         if (!isDragging) return;
 
-        panel.style.left = (startLeft + event.clientX - startX) + 'px';
-        panel.style.top = (startTop + event.clientY - startY) + 'px';
+        panel.style.left = `${startLeft + event.clientX - startX  }px`;
+        panel.style.top = `${startTop + event.clientY - startY  }px`;
         clampFloatingPanelToViewport(panel);
     });
 
-    header.addEventListener('pointerup', function (event) {
+    header.addEventListener('pointerup', (event) => {
         isDragging = false;
         try {
             header.releasePointerCapture(event.pointerId);
@@ -206,7 +202,7 @@ function initializeFloatingPanel(panelId, headerId, closeButtonId) {
         }
     });
 
-    window.addEventListener('resize', function () {
+    window.addEventListener('resize', () => {
         if (!panel.classList.contains('tw-hidden')) {
             clampFloatingPanelToViewport(panel);
         }
@@ -221,8 +217,8 @@ function initializeFloatingPanel(panelId, headerId, closeButtonId) {
         let resizeStartLeft = 0;
         let resizeStartTop = 0;
 
-        resizeHandle.addEventListener('pointerdown', function (event) {
-            let rect = panel.getBoundingClientRect();
+        resizeHandle.addEventListener('pointerdown', (event) => {
+            const rect = panel.getBoundingClientRect();
             isResizing = true;
             resizeStartX = event.clientX;
             resizeStartY = event.clientY;
@@ -232,8 +228,8 @@ function initializeFloatingPanel(panelId, headerId, closeButtonId) {
             resizeStartTop = rect.top;
 
             panel.classList.add('is-resizing');
-            panel.style.left = resizeStartLeft + 'px';
-            panel.style.top = resizeStartTop + 'px';
+            panel.style.left = `${resizeStartLeft  }px`;
+            panel.style.top = `${resizeStartTop  }px`;
             panel.style.right = 'auto';
             panel.style.bottom = 'auto';
             resizeHandle.setPointerCapture(event.pointerId);
@@ -241,24 +237,24 @@ function initializeFloatingPanel(panelId, headerId, closeButtonId) {
             event.stopPropagation();
         });
 
-        resizeHandle.addEventListener('pointermove', function (event) {
+        resizeHandle.addEventListener('pointermove', (event) => {
             if (!isResizing) return;
 
-            let minWidth = parseFloat(window.getComputedStyle(panel).minWidth) || 360;
-            let minHeight = parseFloat(window.getComputedStyle(panel).minHeight) || 260;
-            let margin = 8;
-            let maxWidth = Math.max(minWidth, window.innerWidth - resizeStartLeft - margin);
-            let maxHeight = Math.max(minHeight, window.innerHeight - resizeStartTop - margin);
-            let nextWidth = Math.min(Math.max(resizeStartWidth + event.clientX - resizeStartX, minWidth), maxWidth);
-            let nextHeight = Math.min(Math.max(resizeStartHeight + event.clientY - resizeStartY, minHeight), maxHeight);
+            const minWidth = parseFloat(window.getComputedStyle(panel).minWidth) || 360;
+            const minHeight = parseFloat(window.getComputedStyle(panel).minHeight) || 260;
+            const margin = 8;
+            const maxWidth = Math.max(minWidth, window.innerWidth - resizeStartLeft - margin);
+            const maxHeight = Math.max(minHeight, window.innerHeight - resizeStartTop - margin);
+            const nextWidth = Math.min(Math.max(resizeStartWidth + event.clientX - resizeStartX, minWidth), maxWidth);
+            const nextHeight = Math.min(Math.max(resizeStartHeight + event.clientY - resizeStartY, minHeight), maxHeight);
 
-            panel.style.width = nextWidth + 'px';
-            panel.style.height = nextHeight + 'px';
+            panel.style.width = `${nextWidth  }px`;
+            panel.style.height = `${nextHeight  }px`;
             event.preventDefault();
             event.stopPropagation();
         });
 
-        resizeHandle.addEventListener('pointerup', function (event) {
+        resizeHandle.addEventListener('pointerup', (event) => {
             isResizing = false;
             panel.classList.remove('is-resizing');
             try {
@@ -273,39 +269,39 @@ function initializeFloatingPanel(panelId, headerId, closeButtonId) {
 }
 
 function showTemporaryButtonSuccess(buttonId, message) {
-    let btn = document.getElementById(buttonId);
+    const btn = document.getElementById(buttonId);
     if (!btn) return;
 
-    let orig = btn.innerHTML;
-    btn.innerHTML = '<i data-lucide="check" class="tw-w-3.5 tw-h-3.5"></i> ' + message;
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i data-lucide="check" class="tw-w-3.5 tw-h-3.5"></i> ${  message}`;
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    setTimeout(function () {
+    setTimeout(() => {
         btn.innerHTML = orig;
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }, 1500);
 }
 
 function showTemporaryButtonWarning(buttonId, message) {
-    let btn = document.getElementById(buttonId);
+    const btn = document.getElementById(buttonId);
     if (!btn) return;
 
-    let orig = btn.innerHTML;
-    btn.innerHTML = '<i data-lucide="triangle-alert" class="tw-w-3.5 tw-h-3.5"></i> ' + message;
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i data-lucide="triangle-alert" class="tw-w-3.5 tw-h-3.5"></i> ${  message}`;
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    setTimeout(function () {
+    setTimeout(() => {
         btn.innerHTML = orig;
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }, 2500);
 }
 
 function refreshSceneJsonTextarea() {
-    let textarea = document.getElementById('vrodos_scene_json_input');
+    const textarea = document.getElementById('vrodos_scene_json_input');
     if (!textarea || typeof VrodosSceneExporter === 'undefined' || !envir || !envir.scene) return;
 
-    let exporter = new VrodosSceneExporter();
-    let exportedJson = exporter.parse(envir.scene);
+    const exporter = new VrodosSceneExporter();
+    const exportedJson = exporter.parse(envir.scene);
 
     try {
         textarea.value = JSON.stringify(JSON.parse(exportedJson), null, 2);
@@ -324,17 +320,15 @@ function waitForLatestSceneSave() {
 
 function persistSceneScreenshot() {
     return waitForLatestSceneSave()
-        .then(function () {
-            return (typeof saveChanges === 'function') ? saveChanges({force: true}) : Promise.resolve();
-        })
-        .catch(function (error) {
+        .then(() => (typeof saveChanges === 'function') ? saveChanges({force: true}) : Promise.resolve())
+        .catch((error) => {
             console.warn('VRodos: scene screenshot could not be saved.', error);
         });
 }
 
 function setSceneScreenshotPreview(src) {
-    let sceneShot = document.getElementById('vrodos_scene_sshot');
-    let placeholder = document.getElementById('vrodos_scene_sshot_placeholder');
+    const sceneShot = document.getElementById('vrodos_scene_sshot');
+    const placeholder = document.getElementById('vrodos_scene_sshot_placeholder');
 
     if (!sceneShot) {
         return;
@@ -358,11 +352,11 @@ function setSceneScreenshotPreview(src) {
 // Local
 function loadButtonActions() {
     function resetCompileDialogStatusState() {
-        let statusRow = document.getElementById("compileStatusRow");
-        let constantUpdateUser = document.getElementById("constantUpdateUser");
-        let appResultDiv = document.getElementById("appResultDiv");
-        let topResultLink = document.getElementById("compileTopResultLink");
-        let resultMeta = document.getElementById("compileResultMeta");
+        const statusRow = document.getElementById("compileStatusRow");
+        const constantUpdateUser = document.getElementById("constantUpdateUser");
+        const appResultDiv = document.getElementById("appResultDiv");
+        const topResultLink = document.getElementById("compileTopResultLink");
+        const resultMeta = document.getElementById("compileResultMeta");
 
         if (statusRow) statusRow.style.display = 'flex';
         if (appResultDiv) appResultDiv.style.display = 'none';
@@ -382,12 +376,12 @@ function loadButtonActions() {
     }
 
     // Compile Project button
-    document.getElementById("compileGameBtn").addEventListener("click", function () {
+    document.getElementById("compileGameBtn").addEventListener("click", () => {
         if (typeof syncCompileDialogFromSceneSettings === 'function') {
             syncCompileDialogFromSceneSettings();
         }
         resetCompileDialogStatusState();
-        let dlg = document.getElementById('compile-dialog');
+        const dlg = document.getElementById('compile-dialog');
         if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
         // Pause Rendering
@@ -397,28 +391,28 @@ function loadButtonActions() {
 
 
     // Cogwheel options button
-    document.getElementById("optionsPopupBtn").addEventListener("click", function () {
-        let dlg = document.getElementById('options-dialog');
+    document.getElementById("optionsPopupBtn").addEventListener("click", () => {
+        const dlg = document.getElementById('options-dialog');
         if (dlg) { dlg.showModal(); if (typeof lucide !== 'undefined') lucide.createIcons(); }
     });
 
     // Compile Proceed
-    document.getElementById("compileProceedBtn").addEventListener("click", function () {
+    document.getElementById("compileProceedBtn").addEventListener("click", () => {
         resetCompileDialogStatusState();
         document.getElementById("compileProgressSlider").style.display = '';
         document.getElementById("compileProgressTitle").style.display = '';
 
-        let zipLink = document.getElementById("vrodos-ziplink");
-        let webLink = document.getElementById("vrodos-weblink");
+        const zipLink = document.getElementById("vrodos-ziplink");
+        const webLink = document.getElementById("vrodos-weblink");
         if (zipLink) zipLink.style.display = 'none';
         if (webLink) webLink.style.display = 'none';
 
-        let progText = document.getElementById("compilationProgressText");
-        let memValue = document.getElementById("unityTaskMemValue");
+        const progText = document.getElementById("compilationProgressText");
+        const memValue = document.getElementById("unityTaskMemValue");
         if (progText) progText.innerHTML = "";
         if (memValue) memValue.innerHTML = "0";
 
-        let constantUpdateUser = document.getElementById("constantUpdateUser");
+        const constantUpdateUser = document.getElementById("constantUpdateUser");
         if (typeof vrodosApplyCompileDialogSettingsToScene === 'function') {
             vrodosApplyCompileDialogSettingsToScene();
         }
@@ -431,13 +425,11 @@ function loadButtonActions() {
         }
 
         waitForLatestSceneSave()
-            .then(function () {
-                return (typeof saveChanges === 'function') ? saveChanges() : Promise.resolve();
-            })
-            .then(function () {
+            .then(() => (typeof saveChanges === 'function') ? saveChanges() : Promise.resolve())
+            .then(() => {
                 vrodos_compileAjax(showPawnPositions);
             })
-            .catch(function (error) {
+            .catch((error) => {
                 hideCompileProgressSlider();
                 if (constantUpdateUser) {
                     constantUpdateUser.innerHTML =
@@ -450,7 +442,7 @@ function loadButtonActions() {
     });
 
     // Compile Cancel
-    document.getElementById("compileCancelBtn").addEventListener("click", function (e) {
+    document.getElementById("compileCancelBtn").addEventListener("click", (e) => {
 
         //Start Rendering
         isPaused = false;
@@ -458,39 +450,39 @@ function loadButtonActions() {
         animate();
 
         // Get Pid of compile process
-        let pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
+        const pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
 
         if (pid) {
             vrodos_killtask_compile(pid);
         }
 
         // Close native dialog
-        let dlg = document.getElementById('compile-dialog');
+        const dlg = document.getElementById('compile-dialog');
         if (dlg && dlg.open) dlg.close();
     });
 
     // Resume rendering when compile dialog is closed (by any means: cancel, backdrop, escape)
-    let compileDlg = document.getElementById('compile-dialog');
+    const compileDlg = document.getElementById('compile-dialog');
     if (compileDlg) {
-        compileDlg.addEventListener('close', function () {
+        compileDlg.addEventListener('close', () => {
             if (isPaused) {
                 isPaused = false;
                 swapLucideIcon(document.getElementById("pauseRendering"), "pause");
                 animate();
             }
             // Kill any running compile process
-            let pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
+            const pid = document.getElementById("compileCancelBtn").getAttribute("data-unity-pid");
             if (pid) vrodos_killtask_compile(pid);
         });
     }
 
     // Hierarchy Toolbar close button (Event delegation for maximum robustness)
-    document.addEventListener('click', function (e) {
-        let btn = e.target.closest('#bt_close_hierarchy_toolbar');
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('#bt_close_hierarchy_toolbar');
         if (!btn) return;
         e.preventDefault();
-        let panel = document.getElementById("right-elements-panel");
-        let compass = document.getElementById("scene-editor-compass");
+        const panel = document.getElementById("right-elements-panel");
+        const compass = document.getElementById("scene-editor-compass");
 
         if (btn.classList.contains("HierarchyToggleOn")) {
             btn.classList.add("HierarchyToggleOff");
@@ -512,11 +504,11 @@ function loadButtonActions() {
     });
 
     // File Browser Toolbar close button (Event delegation for maximum robustness)
-    document.addEventListener('click', function (e) {
-        let btn = e.target.closest('#bt_close_file_toolbar');
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('#bt_close_file_toolbar');
         if (!btn) return;
         e.preventDefault();
-        let toolbar = document.getElementById("assetBrowserToolbar");
+        const toolbar = document.getElementById("assetBrowserToolbar");
 
         if (btn.classList.contains("AssetsToggleOn")) {
             btn.classList.add("AssetsToggleOff");
@@ -537,8 +529,8 @@ function loadButtonActions() {
 
     // Scenes List Toolbar close button
     document.getElementById("scenesList-toggle-btn").addEventListener("click", function () {
-        let wrapper = document.getElementById("scenesDrawerWrapper");
-        let btn = document.getElementById("scenesList-toggle-btn");
+        const wrapper = document.getElementById("scenesDrawerWrapper");
+        const btn = document.getElementById("scenesList-toggle-btn");
 
         if (btn.classList.contains("scenesListToggleOn")) {
             btn.classList.add("scenesListToggleOff");
@@ -557,12 +549,12 @@ function loadButtonActions() {
 
     // ── Scene Reorder Drag-and-Drop ──
     (function() {
-        let container = document.getElementById('scenesInsideVREditor');
+        const container = document.getElementById('scenesInsideVREditor');
         if (!container) return;
         let dragItem = null;
 
-        container.addEventListener('dragstart', function(e) {
-            let card = e.target.closest('.SceneCardContainer[draggable]');
+        container.addEventListener('dragstart', (e) => {
+            const card = e.target.closest('.SceneCardContainer[draggable]');
             if (!card) return;
             dragItem = card;
             card.classList.add('dragging');
@@ -570,13 +562,13 @@ function loadButtonActions() {
             e.dataTransfer.setData('application/vrodos-scene-reorder', 'true');
         });
 
-        container.addEventListener('dragover', function(e) {
+        container.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
-            let card = e.target.closest('.SceneCardContainer[draggable]');
+            const card = e.target.closest('.SceneCardContainer[draggable]');
             if (!card || card === dragItem) return;
-            let rect = card.getBoundingClientRect();
-            let midX = rect.left + rect.width / 2;
+            const rect = card.getBoundingClientRect();
+            const midX = rect.left + rect.width / 2;
             if (e.clientX < midX) {
                 container.insertBefore(dragItem, card);
             } else {
@@ -584,19 +576,19 @@ function loadButtonActions() {
             }
         });
 
-        container.addEventListener('dragend', function() {
+        container.addEventListener('dragend', () => {
             if (dragItem) dragItem.classList.remove('dragging');
             dragItem = null;
             // Update number badges
-            container.querySelectorAll('.SceneCardContainer[draggable] .scene-order-badge').forEach(function(badge, i) {
+            container.querySelectorAll('.SceneCardContainer[draggable] .scene-order-badge').forEach((badge, i) => {
                 badge.textContent = i + 1;
             });
             // Save new order via AJAX
-            let formData = new FormData();
+            const formData = new FormData();
             formData.append('action', 'vrodos_reorder_scenes_action');
-            let nonceField = document.querySelector('[name="post_nonce_field"]');
+            const nonceField = document.querySelector('[name="post_nonce_field"]');
             if (nonceField) formData.append('nonce', nonceField.value);
-            container.querySelectorAll('.SceneCardContainer[draggable]').forEach(function(card) {
+            container.querySelectorAll('.SceneCardContainer[draggable]').forEach((card) => {
                 formData.append('scene_ids[]', card.dataset.sceneId);
             });
             fetch(my_ajax_object_deletescene.ajax_url, { method: 'POST', body: formData });
@@ -604,7 +596,7 @@ function loadButtonActions() {
     })();
 
     // Take SCREENSHOT OF SCENE
-    document.getElementById("takeScreenshotBtn").addEventListener("click", function () {
+    document.getElementById("takeScreenshotBtn").addEventListener("click", () => {
         takeScreenshot();
         is_scene_icon_manually_selected = false;
     });
@@ -617,7 +609,7 @@ function loadButtonActions() {
     function readLocalImageAsSceneIcon(input) {
 
         if (input.files && input.files[0]) {
-            let reader = new FileReader();
+            const reader = new FileReader();
 
             reader.onload = function (e) {
                 new_screenshot_data = e.target.result;
@@ -632,23 +624,23 @@ function loadButtonActions() {
 
 
     // DELETE SCENE DIALOGUE
-    document.getElementById("deleteSceneDialogDeleteBtn").addEventListener("click", function (e) {
+    document.getElementById("deleteSceneDialogDeleteBtn").addEventListener("click", (e) => {
         document.getElementById('delete-scene-dialog-progress-bar').style.display = '';
         document.getElementById("deleteSceneDialogDeleteBtn").classList.add("LinkDisabled");
         document.getElementById("deleteSceneDialogCancelBtn").classList.add("LinkDisabled");
-        let dlg = document.getElementById('delete-dialog');
+        const dlg = document.getElementById('delete-dialog');
         vrodos_deleteSceneAjax(dlg.dataset.sceneId, url_scene_redirect);
     });
 
-    document.getElementById("deleteSceneDialogCancelBtn").addEventListener("click", function (e) {
+    document.getElementById("deleteSceneDialogCancelBtn").addEventListener("click", (e) => {
         document.getElementById('delete-scene-dialog-progress-bar').style.display = 'none';
-        let dlg = document.getElementById('delete-dialog');
+        const dlg = document.getElementById('delete-dialog');
         if (dlg && dlg.open) dlg.close();
     });
 
 
     // Scene card delete icons (delegated)
-    document.querySelectorAll(".cardDeleteIcon").forEach(function (el) {
+    document.querySelectorAll(".cardDeleteIcon").forEach((el) => {
         el.addEventListener("click", function () {
             deleteScene(this);
         });
@@ -657,22 +649,22 @@ function loadButtonActions() {
     // Delete scene
     function deleteScene(btn) {
 
-        let scene_id = btn.dataset.sceneid;
-        let dialogTitle = document.getElementById("delete-dialog-title");
-        let dialogDescription = document.getElementById("delete-dialog-description");
-        let sceneTitle = document.getElementById(scene_id + "-title").textContent.trim();
+        const scene_id = btn.dataset.sceneid;
+        const dialogTitle = document.getElementById("delete-dialog-title");
+        const dialogDescription = document.getElementById("delete-dialog-description");
+        const sceneTitle = document.getElementById(`${scene_id  }-title`).textContent.trim();
 
-        dialogTitle.textContent = "Delete " + sceneTitle + "?";
-        dialogDescription.innerHTML = "Are you sure you want to delete your scene '" + sceneTitle + "'? There is no Undo functionality once you delete it.";
-        let dlg = document.getElementById('delete-dialog');
+        dialogTitle.textContent = `Delete ${  sceneTitle  }?`;
+        dialogDescription.innerHTML = `Are you sure you want to delete your scene '${  sceneTitle  }'? There is no Undo functionality once you delete it.`;
+        const dlg = document.getElementById('delete-dialog');
         dlg.dataset.sceneId = scene_id;
         dlg.showModal();
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     // Toggle JSON viewer dialog
-    document.getElementById('toggleViewSceneContentBtn').addEventListener('click', function () {
-        let dialog = document.getElementById('sceneJsonContent');
+    document.getElementById('toggleViewSceneContentBtn').addEventListener('click', () => {
+        const dialog = document.getElementById('sceneJsonContent');
         if (dialog.open) {
             dialog.close();
         } else {
@@ -684,18 +676,18 @@ function loadButtonActions() {
     });
 
     // Close JSON dialog via close button
-    document.getElementById('closeJsonBtn').addEventListener('click', function () {
+    document.getElementById('closeJsonBtn').addEventListener('click', () => {
         document.getElementById('sceneJsonContent').close();
     });
 
     // Copy JSON to clipboard
-    document.getElementById('copyJsonBtn').addEventListener('click', function () {
-        let textarea = document.getElementById('vrodos_scene_json_input');
+    document.getElementById('copyJsonBtn').addEventListener('click', () => {
+        const textarea = document.getElementById('vrodos_scene_json_input');
         copyTextareaText(textarea)
-            .then(function () {
+            .then(() => {
                 showTemporaryButtonSuccess('copyJsonBtn', 'Copied!');
             })
-            .catch(function (error) {
+            .catch((error) => {
                 textarea.select();
                 textarea.setSelectionRange(0, textarea.value.length);
                 showTemporaryButtonWarning('copyJsonBtn', 'Press Ctrl+C');
@@ -703,10 +695,10 @@ function loadButtonActions() {
             });
     });
 
-    let immerseSceneInfoBtn = document.getElementById('toggleImmerseSceneInfoBtn');
-    let immerseSceneInfoDialog = document.getElementById('immerseSceneInfoDialog');
+    const immerseSceneInfoBtn = document.getElementById('toggleImmerseSceneInfoBtn');
+    const immerseSceneInfoDialog = document.getElementById('immerseSceneInfoDialog');
     if (immerseSceneInfoBtn && immerseSceneInfoDialog) {
-        immerseSceneInfoBtn.addEventListener('click', function () {
+        immerseSceneInfoBtn.addEventListener('click', () => {
             if (immerseSceneInfoDialog.classList.contains('tw-hidden')) {
                 showFloatingPanel(immerseSceneInfoDialog);
                 if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -718,10 +710,10 @@ function loadButtonActions() {
 
     initializeFloatingPanel('immerseSceneInfoDialog', 'immerseSceneInfoHeader', 'closeImmerseSceneInfoBtn');
 
-    let copyImmerseSceneInfoBtn = document.getElementById('copyImmerseSceneInfoBtn');
+    const copyImmerseSceneInfoBtn = document.getElementById('copyImmerseSceneInfoBtn');
     if (copyImmerseSceneInfoBtn) {
-        copyImmerseSceneInfoBtn.addEventListener('click', function () {
-            let sourceNode = document.getElementById('immerse_scene_info_source');
+        copyImmerseSceneInfoBtn.addEventListener('click', () => {
+            const sourceNode = document.getElementById('immerse_scene_info_source');
             let sourceText = '';
 
             if (sourceNode) {
@@ -733,10 +725,10 @@ function loadButtonActions() {
             }
 
             copyPlainText(sourceText)
-                .then(function () {
+                .then(() => {
                     showTemporaryButtonSuccess('copyImmerseSceneInfoBtn', 'Copied!');
                 })
-                .catch(function (error) {
+                .catch((error) => {
                     showTemporaryButtonWarning('copyImmerseSceneInfoBtn', 'Press Ctrl+C');
                     console.warn('VRodos: failed to copy imported scene information to clipboard.', error);
                 });
@@ -750,19 +742,19 @@ function loadButtonActions() {
             // Ignore scene reorder drags
             if (ev.dataTransfer.types.indexOf('application/vrodos-scene-reorder') !== -1) return;
 
-            let dataDrag = JSON.parse(ev.dataTransfer.getData("text"));
+            const dataDrag = JSON.parse(ev.dataTransfer.getData("text"));
 
-            let categoryName = dataDrag['category_name'];
-            let nameModel = dataDrag.title;
+            const categoryName = dataDrag.category_name;
+            const nameModel = dataDrag.title;
 
             let path = '';
 
             // SUN or LAMP or Spot or Ambient
-            if (dataDrag['category_name'] === "lightSun" ||
-                dataDrag['category_name'] === "lightLamp" ||
-                dataDrag['category_name'] === "lightSpot" ||
-                dataDrag['category_name'] === "lightAmbient" ||
-                dataDrag['category_name'] === "Pawn") {
+            if (dataDrag.category_name === "lightSun" ||
+                dataDrag.category_name === "lightLamp" ||
+                dataDrag.category_name === "lightSpot" ||
+                dataDrag.category_name === "lightAmbient" ||
+                dataDrag.category_name === "Pawn") {
 
 
             }
@@ -770,7 +762,7 @@ function loadButtonActions() {
                 path = dataDrag.path.substring(0, dataDrag.path.lastIndexOf("/") + 1);
             }
 
-            let translation = dragDropVerticalRayCasting(ev);
+            const translation = dragDropVerticalRayCasting(ev);
 
 
             // Suppress the click-selection that would fire from the drop's mouseup
@@ -797,26 +789,26 @@ function loadButtonActions() {
         };
 
 
-    let pauseBtn = document.getElementById("pauseRendering");
+    const pauseBtn = document.getElementById("pauseRendering");
     if (pauseBtn) {
-        pauseBtn.addEventListener('mousedown', function (event) {
+        pauseBtn.addEventListener('mousedown', (event) => {
             pauseClickFun();
         }, false);
     }
 
 
     // Convert scene to json and put the json in the wordpress field vrodos_scene_json_input
-    document.getElementById('save-scene-button').addEventListener('click', function () {
+    document.getElementById('save-scene-button').addEventListener('click', () => {
 
         if (envir && envir.isSceneLoading) {
-            let loadingNotice = document.getElementById("result_download");
+            const loadingNotice = document.getElementById("result_download");
             if (loadingNotice) {
                 loadingNotice.innerHTML = "Please wait until scene loading finishes before saving.";
             }
             return;
         }
 
-        let save_scene_btn = document.getElementById("save-scene-button");
+        const save_scene_btn = document.getElementById("save-scene-button");
         if (save_scene_btn.classList.contains("LinkDisabled")){
             return;
         }
@@ -826,7 +818,7 @@ function loadButtonActions() {
         document.getElementById("compileGameBtn").disabled = true;
 
         // Export using the new VrodosSceneExporter
-        let exporter = new VrodosSceneExporter();
+        const exporter = new VrodosSceneExporter();
         document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
 
         vrodos_saveSceneAjax();
@@ -834,14 +826,14 @@ function loadButtonActions() {
 
 
     // UNDO button
-    document.getElementById('undo-scene-button').addEventListener('click', function () {
+    document.getElementById('undo-scene-button').addEventListener('click', () => {
         if (typeof vrodosUndoManager !== 'undefined') {
             vrodosUndoManager.undo();
         }
     });
 
     // REDO button
-    document.getElementById('redo-scene-button').addEventListener('click', function () {
+    document.getElementById('redo-scene-button').addEventListener('click', () => {
         if (typeof vrodosUndoManager !== 'undefined') {
             vrodosUndoManager.redo();
         }
@@ -851,10 +843,10 @@ function loadButtonActions() {
     // Autorotate in 3D
     document.getElementById('toggle-tour-around-btn').addEventListener('click', function () {
 
-        let btn = this;
+        const btn = this;
 
         if (envir.is2d)
-            document.getElementById("dim-change-btn").click();
+            {document.getElementById("dim-change-btn").click();}
 
         if (btn.dataset.toggle === 'off') {
 
@@ -872,7 +864,7 @@ function loadButtonActions() {
     });
 
     if (firstPersonBlockerBtn) {
-        firstPersonBlockerBtn.addEventListener('click', function (event) {
+        firstPersonBlockerBtn.addEventListener('click', (event) => {
 
             firstPersonViewWithoutLock();
             document.getElementById("firstPersonBlockerBtn").classList.toggle('toggle-active');
@@ -882,10 +874,10 @@ function loadButtonActions() {
 
 
     // 3D Widgets change mode (Translation-Rotation-Scale)
-    document.getElementById("object-manipulation-toggle").addEventListener("click", function () {
+    document.getElementById("object-manipulation-toggle").addEventListener("click", () => {
 
-        let checked = document.querySelector("input[name='object-manipulation-switch']:checked");
-        let mode = checked ? checked.value : 'translate';
+        const checked = document.querySelector("input[name='object-manipulation-switch']:checked");
+        const mode = checked ? checked.value : 'translate';
 
         // Sun and Target spot can not change control manipulation mode
         if (transform_controls.object) {
@@ -899,7 +891,7 @@ function loadButtonActions() {
                 category.includes("lightSpot")) {
 
                 if (mode === 'rotate')
-                    return;
+                    {return;}
             }
             transform_controls.setMode(mode);
             showObjectPropertiesPanel(mode);
@@ -907,7 +899,7 @@ function loadButtonActions() {
     });
 
 // Event listener to disable orbit controls while dragging
-transform_controls.addEventListener('dragging-changed', function (event) {
+transform_controls.addEventListener('dragging-changed', (event) => {
     envir.orbitControls.enabled = !event.value;
 
     if (event.value && transform_controls.object) {
@@ -959,17 +951,17 @@ transform_controls.addEventListener('dragging-changed', function (event) {
 });
 
     // Axis Increase size btn
-    document.getElementById("axis-size-increase-btn").addEventListener("click", function () {
+    document.getElementById("axis-size-increase-btn").addEventListener("click", () => {
         transform_controls.setSize(transform_controls.size * 1.1);
     });
 
     // Axis Decrease size btn
-    document.getElementById("axis-size-decrease-btn").addEventListener("click", function () {
+    document.getElementById("axis-size-decrease-btn").addEventListener("click", () => {
         transform_controls.setSize(Math.max(transform_controls.size * 0.9, 0.1));
     });
 
     // Toggle 2D vs 3D button
-    document.getElementById("dim-change-btn").addEventListener("click", function () {
+    document.getElementById("dim-change-btn").addEventListener("click", () => {
 
         document.getElementById("translate-switch").click();
 
@@ -980,7 +972,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
             envir.axesHelper.visible = true;
 
             document.getElementById("object-manipulation-toggle").style.display = "";
-            let dimBtn3d = document.getElementById("dim-change-btn");
+            const dimBtn3d = document.getElementById("dim-change-btn");
             dimBtn3d.textContent = "3D";
             dimBtn3d.title = "3D mode";
 
@@ -996,7 +988,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
             envir.axesHelper.visible = false;
 
             document.getElementById("object-manipulation-toggle").style.display = "none";
-            let dimBtn2d = document.getElementById("dim-change-btn");
+            const dimBtn2d = document.getElementById("dim-change-btn");
             dimBtn2d.textContent = "2D";
             dimBtn2d.title = "2D mode";
 
@@ -1016,7 +1008,7 @@ transform_controls.addEventListener('dragging-changed', function (event) {
 
     // Main canvas handlers
 
-    let canvas3D = document.querySelector("#vr_editor_main_div canvas");
+    const canvas3D = document.querySelector("#vr_editor_main_div canvas");
 
     // Update DAT GUI only when mouse pointer is active.
     canvas3D.addEventListener("mousemove", (event) => {
@@ -1043,9 +1035,9 @@ transform_controls.addEventListener('dragging-changed', function (event) {
     // Prevent showing the context menu on property panels
     ['popUpArtifactPropertiesDiv', 'popUpDoorPropertiesDiv', 'popUpPoiImageTextPropertiesDiv',
      'popUpPoiVideoPropertiesDiv', 'popUpSunPropertiesDiv', 'popUpLampPropertiesDiv',
-     'popUpSpotPropertiesDiv', 'popUpAmbientPropertiesDiv', 'popUpPoiChatPropertiesDiv'].forEach(function (id) {
-        let el = document.getElementById(id);
-        if (el) el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+     'popUpSpotPropertiesDiv', 'popUpAmbientPropertiesDiv', 'popUpPoiChatPropertiesDiv'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('contextmenu', (e) => { e.preventDefault(); });
     });
 
 
@@ -1122,9 +1114,9 @@ transform_controls.addEventListener('dragging-changed', function (event) {
 
 
     // Drag light or Pawn: Add event listeners
-    let allUpperToolbarButtons = document.querySelectorAll('.environmentBar .lightpawnbutton');
+    const allUpperToolbarButtons = document.querySelectorAll('.environmentBar .lightpawnbutton');
 
-    [].forEach.call(allUpperToolbarButtons, function (col) {
+    [].forEach.call(allUpperToolbarButtons, (col) => {
         col.addEventListener('dragstart', handleLightPawnDragStart, false);
     });
 
@@ -1139,15 +1131,15 @@ transform_controls.addEventListener('dragging-changed', function (event) {
             e.target.dataset.lightpawn === "Ambient"
         ) {
             dragData = {
-                "category_name": "light" + e.target.dataset.lightpawn,
-                "title": "mylight" + e.target.dataset.lightpawn + "_" + Math.floor(Date.now() / 1000)
+                "category_name": `light${  e.target.dataset.lightpawn}`,
+                "title": `mylight${  e.target.dataset.lightpawn  }_${  Math.floor(Date.now() / 1000)}`
             };
 
         }
         else if (e.target.dataset.lightpawn === "Pawn") {
             dragData = {
                 "category_name": "Pawn",
-                "title": "aPawn" + "_" + Math.floor(Date.now() / 1000)
+                "title": `aPawn` + `_${  Math.floor(Date.now() / 1000)}`
             };
         }
 
@@ -1162,22 +1154,22 @@ transform_controls.addEventListener('dragging-changed', function (event) {
 function setVisiblityLightHelpingElements(statusVisibility) {
 
     for (let i = 0; i < envir.scene.children.length; i++) {
-        let curr_obj = envir.scene.children[i];
+        const curr_obj = envir.scene.children[i];
 
-        if (curr_obj['category_name'] === 'lightHelper' || curr_obj['category_name'] === 'lightTargetSpot')
-            curr_obj.visible = statusVisibility;
+        if (curr_obj.category_name === 'lightHelper' || curr_obj.category_name === 'lightTargetSpot')
+            {curr_obj.visible = statusVisibility;}
 
-        if (curr_obj['category_name'] === 'lightSun')
-            curr_obj.children[0].visible = statusVisibility;
+        if (curr_obj.category_name === 'lightSun')
+            {curr_obj.children[0].visible = statusVisibility;}
 
-        if (curr_obj['category_name'] === 'lightLamp')
-            curr_obj.children[0].visible = statusVisibility;
+        if (curr_obj.category_name === 'lightLamp')
+            {curr_obj.children[0].visible = statusVisibility;}
 
-        if (curr_obj['category_name'] === 'lightSpot')
-            curr_obj.children[0].visible = statusVisibility;
+        if (curr_obj.category_name === 'lightSpot')
+            {curr_obj.children[0].visible = statusVisibility;}
 
         if (curr_obj.type === 'CameraHelper') // This is the shadow camera of sun
-            curr_obj.visible = statusVisibility;
+            {curr_obj.visible = statusVisibility;}
     }
 }
 
@@ -1211,7 +1203,7 @@ function hideObjectPropertiesPanels() {
 
 function showObjectPropertiesPanel(type) {
     hideObjectPropertiesPanels();
-    let el = document.getElementById(type + "PanelGui");
+    const el = document.getElementById(`${type  }PanelGui`);
     if (el) el.style.display = '';
 }
 
@@ -1224,11 +1216,11 @@ function takeScreenshot() {
     }
 
     // Render to an offscreen canvas to capture the screenshot reliably
-    let camera = avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit;
-    let w = envir.renderer.domElement.width;
-    let h = envir.renderer.domElement.height;
+    const camera = avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit;
+    const w = envir.renderer.domElement.width;
+    const h = envir.renderer.domElement.height;
 
-    let offscreenRenderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true });
+    const offscreenRenderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true });
     offscreenRenderer.setSize(w, h);
     offscreenRenderer.render(envir.scene, camera);
 
@@ -1236,14 +1228,14 @@ function takeScreenshot() {
     setSceneScreenshotPreview(new_screenshot_data);
 
     // Also update the current scene's drawer thumbnail
-    let drawerThumb = document.querySelector('.current-scene-thumb');
+    const drawerThumb = document.querySelector('.current-scene-thumb');
     if (drawerThumb) {
         drawerThumb.src = new_screenshot_data;
     } else {
         // If placeholder (no previous screenshot), replace it with an img
-        let placeholder = document.querySelector('.current-scene-thumb-placeholder');
+        const placeholder = document.querySelector('.current-scene-thumb-placeholder');
         if (placeholder) {
-            let img = document.createElement('img');
+            const img = document.createElement('img');
             img.src = new_screenshot_data;
             img.className = 'tw-w-full tw-h-full tw-object-cover current-scene-thumb';
             placeholder.replaceWith(img);
@@ -1253,7 +1245,7 @@ function takeScreenshot() {
     offscreenRenderer.dispose();
 
     if (envir.scene.getObjectByName("myTransformControls"))
-        envir.scene.getObjectByName("myTransformControls").visible = true;
+        {envir.scene.getObjectByName("myTransformControls").visible = true;}
 
     persistSceneScreenshot();
 }
@@ -1273,12 +1265,12 @@ function saveScene(e) {
 
     // A change has been made and mouseup then save
     if (e.type == 'modificationPendingSave')
-        mapActions[e.type] = true;
+        {mapActions[e.type] = true;}
 
     if (e.type == 'mouseup') {
         mapActions[e.type] = true;
 
-        if (mapActions['mouseup'] && mapActions['modificationPendingSave']) {
+        if (mapActions.mouseup && mapActions.modificationPendingSave) {
             document.getElementById('save-scene-button').click();
             mapActions = {};
             return;
@@ -1290,7 +1282,7 @@ function commitPendingSceneSave() {
     if (envir && envir.isSceneLoading) {
         return;
     }
-    mapActions['modificationPendingSave'] = true;
+    mapActions.modificationPendingSave = true;
     document.getElementById('save-scene-button').click();
     mapActions = {};
 }

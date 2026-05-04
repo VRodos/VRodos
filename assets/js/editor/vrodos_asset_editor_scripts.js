@@ -3,12 +3,12 @@
  */
 'use strict';
 
-let slideIndex = 0;
+const slideIndex = 0;
 
 function vrodos_set_asset_screenshot_preview(src) {
     const sshotImg = document.getElementById('sshotPreviewImg');
     const placeholder = document.getElementById('sshotPreviewPlaceholder');
-    const hasSource = !!src;
+    const hasSource = Boolean(src);
 
     if (sshotImg) {
         if (hasSource) {
@@ -139,7 +139,7 @@ function rgbToHex(r, g, b) {
     r = Math.max(r, 0);
     g = Math.max(g, 0);
     b = Math.max(b, 0);
-    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    return `#${  ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
 function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {

@@ -159,9 +159,9 @@ AFRAME.registerComponent('scene-settings', {
     },
     // Halton low-discrepancy sequence for TAA jitter
     _halton: function (index, base) {
-        var result = 0;
-        var f = 1.0 / base;
-        var i = index;
+        let result = 0;
+        let f = 1.0 / base;
+        let i = index;
         while (i > 0) {
             result += f * (i % base);
             i = Math.floor(i / base);
@@ -170,7 +170,7 @@ AFRAME.registerComponent('scene-settings', {
         return result;
     },
     getSAOParams: function () {
-        var preset = this.getAmbientOcclusionPreset();
+        const preset = this.getAmbientOcclusionPreset();
         switch (preset) {
             case 'soft':
                 return { numSamples: 8, numRings: 3, intensity: 0.25, kernelRadius: 10, bias: 0.02, depthCutoff: 0.005, maxDistance: 60 };
@@ -201,7 +201,7 @@ AFRAME.registerComponent('scene-settings', {
         }
     },
     getEnvMapPath: function () {
-        var map = {
+        const map = {
             studio: 'spot1Lux.hdr',
             quarry: 'quarry_01_1k.hdr',
             venice: 'venice_sunset_1k.hdr'
@@ -325,8 +325,8 @@ AFRAME.registerComponent('scene-settings', {
     captureSceneProbe: VRODOSMaster.SceneSettingsHelpers.captureSceneProbe,
     applyEnvMapProfile: VRODOSMaster.SceneSettingsHelpers.applyEnvMapProfile,
     getContactShadowSettings: function () {
-        var shadowQuality = this.data.shadowQuality || 'medium';
-        var preset = this.getContactShadowPreset();
+        const shadowQuality = this.data.shadowQuality || 'medium';
+        const preset = this.getContactShadowPreset();
 
         if (preset === 'off') {
             return shadowQuality === 'high'
@@ -496,7 +496,7 @@ AFRAME.registerComponent('scene-settings', {
             this.isLegacyEdgeAAEnabled();
     },
     getEdgeAAStrengthFactor: function () {
-        var parsed = parseInt(this.data.postFXEdgeAAStrength, 10);
+        let parsed = parseInt(this.data.postFXEdgeAAStrength, 10);
         if (isNaN(parsed)) {
             parsed = 3;
         }
@@ -578,7 +578,7 @@ AFRAME.registerComponent('scene-settings', {
         }
     },
     syncPresentationVisualState: function (waitForSettle) {
-        var self = this;
+        const self = this;
 
         this.markSceneCollectionsDirty();
         this.applyRenderQualityProfile();
@@ -591,7 +591,7 @@ AFRAME.registerComponent('scene-settings', {
             return;
         }
 
-        var resync = function () {
+        const resync = function () {
             self.markSceneCollectionsDirty();
             self.applyRenderQualityProfile();
             self.applyBackgroundQualityProfile();
@@ -810,7 +810,7 @@ AFRAME.registerComponent('scene-settings', {
         const clearGeneratedBackground = function () {
             backgroundEl.removeAttribute("background");
             backgroundEl.removeAttribute("environment");
-            Array.prototype.forEach.call(backgroundEl.querySelectorAll('a-sun-sky'), function (oldSun) {
+            Array.prototype.forEach.call(backgroundEl.querySelectorAll('a-sun-sky'), (oldSun) => {
                 if (oldSun && oldSun.parentNode) oldSun.parentNode.removeChild(oldSun);
             });
             const manSky = document.getElementById('default-sky');
@@ -945,7 +945,7 @@ AFRAME.registerComponent('scene-settings', {
         }
 
         if (!this._sceneProbeNeedsUpdate && this._sceneProbeLastYaw !== null) {
-            var anchorObject = this.getSceneProbeAnchorObject();
+            const anchorObject = this.getSceneProbeAnchorObject();
             if (anchorObject) {
                 anchorObject.updateMatrixWorld(true);
                 anchorObject.getWorldPosition(this._sceneProbeCurrentPosition);

@@ -1,6 +1,6 @@
 /* GLB-only 3D viewer used by the asset editor. */
 function vrodosAssetViewerJoinUrl(base, path) {
-    return String(base || '').replace(/\/+$/, '') + '/' + String(path || '').replace(/^\/+/, '');
+    return `${String(base || '').replace(/\/+$/, '')  }/${  String(path || '').replace(/^\/+/, '')}`;
 }
 
 function vrodosAssetViewerResolveBaseUrl(localizedKey, pluginPath, fallbackRelative) {
@@ -369,10 +369,10 @@ class VRodos_AssetViewer_3D_kernel {
         }
 
         if (window.vrodos_three_vendor_base) {
-            return window.vrodos_three_vendor_base + 'draco/';
+            return `${window.vrodos_three_vendor_base  }draco/`;
         }
 
-        return vrodosAssetViewerJoinUrl(vendorBaseUrl, vendorDir + '/draco/');
+        return vrodosAssetViewerJoinUrl(vendorBaseUrl, `${vendorDir  }/draco/`);
     }
 
     createGlbLoader() {
@@ -486,7 +486,7 @@ class VRodos_AssetViewer_3D_kernel {
                 }
 
                 const progress = Math.max(0, Math.min(100, Math.round((xhr.loaded / xhr.total) * 100)));
-                this.previewProgressLine.style.width = progress + '%';
+                this.previewProgressLine.style.width = `${progress  }%`;
             },
             (error) => {
                 console.log('An error happened', error);

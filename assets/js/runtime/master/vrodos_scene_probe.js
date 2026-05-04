@@ -5,7 +5,7 @@
 /* global VRODOSMaster */
 (function () {
     VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
-    var H = VRODOSMaster.SceneSettingsHelpers;
+    const H = VRODOSMaster.SceneSettingsHelpers;
     H.clearHdrEnvironmentMap = function (clearSceneEnvironment) {
         if (this._envMapRenderTarget) {
             this._envMapRenderTarget.dispose();
@@ -50,8 +50,8 @@
         }
     };
     H.ensureSceneProbeResources = function () {
-        var renderer = this.el.renderer;
-        var sceneObj = this.el.object3D;
+        const renderer = this.el.renderer;
+        const sceneObj = this.el.object3D;
         if (!renderer || !sceneObj) {
             return false;
         }
@@ -108,16 +108,16 @@
             return;
         }
 
-        this.queuedQualityRefreshId = window.setTimeout(function () {
-            var shouldWaitForModelSettle = this.pendingQualityRefreshWaitForSettle;
+        this.queuedQualityRefreshId = window.setTimeout(() => {
+            const shouldWaitForModelSettle = this.pendingQualityRefreshWaitForSettle;
             this.queuedQualityRefreshId = null;
             this.pendingQualityRefreshWaitForSettle = false;
             this.applyQualityProfiles();
             this.requestSceneProbeRefresh(shouldWaitForModelSettle);
-        }.bind(this), 50);
+        }, 50);
     };
     H.getSceneProbeAnchorObject = function () {
-        var cameraRig = document.getElementById('cameraA');
+        const cameraRig = document.getElementById('cameraA');
         if (cameraRig && cameraRig.object3D) {
             return cameraRig.object3D;
         }
@@ -149,7 +149,7 @@
             return 180;
         }
 
-        var delta = Math.atan2(Math.sin(a - b), Math.cos(a - b));
+        const delta = Math.atan2(Math.sin(a - b), Math.cos(a - b));
         return Math.abs(delta * 180 / Math.PI);
     };
     H.hideSceneProbeObject = function (object3D, hiddenObjects, hiddenLookup) {
@@ -162,23 +162,23 @@
         object3D.visible = false;
     };
     H.collectSceneProbeExcludedObjects = function () {
-        var self = this;
-        var hiddenObjects = [];
-        var hiddenLookup = {};
+        const self = this;
+        const hiddenObjects = [];
+        const hiddenLookup = {};
 
-        Array.prototype.forEach.call(this.getCachedSceneQuery('photorealLights', '[data-vrodos-photoreal-light="true"]'), function (entityEl) {
+        Array.prototype.forEach.call(this.getCachedSceneQuery('photorealLights', '[data-vrodos-photoreal-light="true"]'), (entityEl) => {
             if (entityEl && entityEl.object3D) {
                 self.hideSceneProbeObject(entityEl.object3D, hiddenObjects, hiddenLookup);
             }
         });
 
-        Array.prototype.forEach.call(this.getCachedSceneQuery('navMeshes', '.vrodos-navmesh'), function (entityEl) {
+        Array.prototype.forEach.call(this.getCachedSceneQuery('navMeshes', '.vrodos-navmesh'), (entityEl) => {
             if (entityEl && entityEl.object3D) {
                 self.hideSceneProbeObject(entityEl.object3D, hiddenObjects, hiddenLookup);
             }
         });
 
-        var cameraRig = document.getElementById('cameraA');
+        const cameraRig = document.getElementById('cameraA');
         if (cameraRig && cameraRig.object3D) {
             this.hideSceneProbeObject(cameraRig.object3D, hiddenObjects, hiddenLookup);
         }
@@ -190,19 +190,19 @@
             return;
         }
 
-        hiddenObjects.forEach(function (entry) {
+        hiddenObjects.forEach((entry) => {
             if (entry && entry.object) {
                 entry.object.visible = entry.visible;
             }
         });
     };
     H.captureSceneProbe = function (now) {
-        var renderer = this.el.renderer;
-        var sceneObj = this.el.object3D;
-        var anchorObject = this.getSceneProbeAnchorObject();
-        var atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
-        var showedTakramProbeSky = false;
-        var shouldSyncTakramHorizon = Boolean(this &&
+        const renderer = this.el.renderer;
+        const sceneObj = this.el.object3D;
+        const anchorObject = this.getSceneProbeAnchorObject();
+        const atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
+        let showedTakramProbeSky = false;
+        const shouldSyncTakramHorizon = Boolean(this &&
             this.data &&
             this.data.selChoice === "0" &&
             this.data.postFXEngine === 'pmndrs' &&
@@ -238,8 +238,8 @@
         this._sceneProbeCubeCamera.position.copy(this._sceneProbeCurrentPosition);
         this._sceneProbeCubeCamera.updateMatrixWorld(true);
 
-        var previousEnvironment = sceneObj.environment;
-        var hiddenObjects = this.collectSceneProbeExcludedObjects();
+        const previousEnvironment = sceneObj.environment;
+        const hiddenObjects = this.collectSceneProbeExcludedObjects();
 
         sceneObj.environment = null;
         this.sceneProbeCapturing = true;
@@ -264,7 +264,7 @@
             this.hidePmndrsAtmosphereSky();
         }
 
-        var probeTarget = this._sceneProbePmremGenerator.fromCubemap(this._sceneProbeCubeRenderTarget.texture);
+        const probeTarget = this._sceneProbePmremGenerator.fromCubemap(this._sceneProbeCubeRenderTarget.texture);
         if (!probeTarget || !probeTarget.texture) {
             return false;
         }
@@ -287,9 +287,9 @@
         return true;
     };
     H.applyEnvMapProfile = function () {
-        var preset = this.data.envMapPreset || 'none';
-        var sceneObj = this.el.object3D;
-        var effectiveSource = this.getEffectiveReflectionSource();
+        const preset = this.data.envMapPreset || 'none';
+        const sceneObj = this.el.object3D;
+        const effectiveSource = this.getEffectiveReflectionSource();
 
         if (effectiveSource === 'scene-probe') {
             this.clearHdrEnvironmentMap(this._currentReflectionSource !== 'scene-probe');
@@ -327,28 +327,28 @@
 
         this.clearHdrEnvironmentMap(false);
 
-        var HDRLoaderClass = THREE.HDRLoader || THREE.RGBELoader;
+        const HDRLoaderClass = THREE.HDRLoader || THREE.RGBELoader;
         if (typeof HDRLoaderClass === 'undefined') {
             console.warn('[VRodos] HDRLoader not available; HDR env map skipped.');
             return;
         }
 
-        var hdrFile = this.getEnvMapPath();
+        const hdrFile = this.getEnvMapPath();
         if (!hdrFile) { return; }
 
-        var baseUrl = window.VRODOS_ASSET_IMAGE_URL || '../../assets/images/';
-        var hdrUrl = `${baseUrl  }hdr/${  hdrFile}`;
-        var renderer = this.el.renderer;
-        var self = this;
+        const baseUrl = window.VRODOS_ASSET_IMAGE_URL || '../../assets/images/';
+        const hdrUrl = `${baseUrl  }hdr/${  hdrFile}`;
+        const renderer = this.el.renderer;
+        const self = this;
 
-        var loader = new HDRLoaderClass();
-        loader.load(hdrUrl, function (texture) {
+        const loader = new HDRLoaderClass();
+        loader.load(hdrUrl, (texture) => {
             texture.mapping = THREE.EquirectangularReflectionMapping;
 
-            var pmremGenerator = new THREE.PMREMGenerator(renderer);
+            const pmremGenerator = new THREE.PMREMGenerator(renderer);
             pmremGenerator.compileEquirectangularShader();
-            var envMapRenderTarget = pmremGenerator.fromEquirectangular(texture);
-            var envMap = envMapRenderTarget.texture;
+            const envMapRenderTarget = pmremGenerator.fromEquirectangular(texture);
+            const envMap = envMapRenderTarget.texture;
 
             sceneObj.environment = envMap;
             if (self._envMapRenderTarget) {
@@ -364,7 +364,7 @@
             self.applyMaterialProfiles();
 
             console.log('[VRodos] HDR environment map loaded:', hdrFile);
-        }, undefined, function (err) {
+        }, undefined, (err) => {
             console.warn('[VRodos] Failed to load HDR env map:', hdrUrl, err);
         });
     };

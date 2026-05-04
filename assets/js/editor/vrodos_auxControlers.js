@@ -96,10 +96,10 @@ function showObjectControlsPanel(objectName) {
     }
 
     // Position 100px to the right of last click, clamped to viewport
-    let panelW = panel.offsetWidth || 280;
-    let panelH = panel.offsetHeight || 300;
-    let mx = _lastClickX || (window.innerWidth / 2);
-    let my = _lastClickY || (window.innerHeight / 2);
+    const panelW = panel.offsetWidth || 280;
+    const panelH = panel.offsetHeight || 300;
+    const mx = _lastClickX || (window.innerWidth / 2);
+    const my = _lastClickY || (window.innerHeight / 2);
 
     let left = mx + 100;
     let top = my - panelH / 2;
@@ -112,14 +112,14 @@ function showObjectControlsPanel(objectName) {
     left = Math.max(8, Math.min(left, window.innerWidth - panelW - 8));
     top = Math.max(40, Math.min(top, window.innerHeight - panelH - 8));
 
-    panel.style.left = Math.round(left) + 'px';
-    panel.style.top = Math.round(top) + 'px';
+    panel.style.left = `${Math.round(left)  }px`;
+    panel.style.top = `${Math.round(top)  }px`;
     panel.style.right = 'auto';
 }
 
 // Track last click position (updated by the canvas mousedown handler)
-let _lastClickX = 0;
-let _lastClickY = 0;
+var _lastClickX = 0;
+var _lastClickY = 0;
 
 function hideObjectControlsPanel() {
     const panel = document.getElementById('object-controls-panel');
@@ -131,7 +131,7 @@ function hideObjectControlsPanel() {
 function humanizeObjectTypeLabel(typeValue) {
     if (!typeValue) return '';
 
-    let aliases = {
+    const aliases = {
         'walkable-surface': 'Walkable Surface',
         'poi-imagetext': 'Image Text POI',
         'poi-link': 'Link POI',
@@ -153,7 +153,7 @@ function humanizeObjectTypeLabel(typeValue) {
         .replace(/[_-]+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim()
-        .replace(/\b\w/g, function (char) { return char.toUpperCase(); });
+        .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function getObjectTypeLabel(object) {
@@ -168,7 +168,7 @@ function getObjectTypeLabel(object) {
 }
 
 function updateObjectControlsMeta(object) {
-    let badge = document.getElementById('object-controls-badge');
+    const badge = document.getElementById('object-controls-badge');
     if (!badge) return;
 
     if (!object) {
@@ -179,7 +179,7 @@ function updateObjectControlsMeta(object) {
         return;
     }
 
-    let typeLabel = getObjectTypeLabel(object);
+    const typeLabel = getObjectTypeLabel(object);
     if (!typeLabel) {
         badge.classList.add('tw-hidden');
         return;
@@ -192,7 +192,7 @@ function updateObjectControlsMeta(object) {
 }
 
 function ensureAssessmentPropertiesSection() {
-    let container = document.getElementById('object-properties-container');
+    const container = document.getElementById('object-properties-container');
     if (!container) return null;
 
     let section = document.getElementById('popUpAssessmentPropertiesDiv');
@@ -222,7 +222,7 @@ function ensureAssessmentPropertiesSection() {
 function getAssessmentTypeLabel(object) {
     if (!object) return '';
 
-    let rawValue = object.assessment_type || object.assessment_group || '';
+    const rawValue = object.assessment_type || object.assessment_group || '';
     if (typeof vrodosDecodeDisplayText === 'function') {
         return vrodosDecodeDisplayText(rawValue).trim();
     }
@@ -241,13 +241,13 @@ function getAssessmentLevelsList(object) {
 }
 
 function displayAssessmentProperties(object) {
-    let section = ensureAssessmentPropertiesSection();
+    const section = ensureAssessmentPropertiesSection();
     if (!section || !object) return;
 
-    let typeValue = document.getElementById('assessmentTypeValue');
-    let levelsValue = document.getElementById('assessmentLevelsValue');
-    let assessmentType = getAssessmentTypeLabel(object) || 'Assessment';
-    let assessmentLevels = getAssessmentLevelsList(object);
+    const typeValue = document.getElementById('assessmentTypeValue');
+    const levelsValue = document.getElementById('assessmentLevelsValue');
+    const assessmentType = getAssessmentTypeLabel(object) || 'Assessment';
+    const assessmentLevels = getAssessmentLevelsList(object);
 
     if (typeValue) {
         typeValue.textContent = assessmentType;
@@ -256,8 +256,8 @@ function displayAssessmentProperties(object) {
     if (levelsValue) {
         levelsValue.innerHTML = '';
 
-        assessmentLevels.forEach(function (level) {
-            let pill = document.createElement('span');
+        assessmentLevels.forEach((level) => {
+            const pill = document.createElement('span');
             pill.className = 'tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-emerald-400/35 tw-bg-emerald-500/10 tw-px-1.5 tw-py-0.5 tw-text-[9px] tw-font-bold tw-uppercase tw-tracking-[0.1em] tw-text-emerald-200';
             pill.textContent = level;
             levelsValue.appendChild(pill);
@@ -272,7 +272,7 @@ function vrodosNormalizeWalkableBehavior(value) {
 }
 
 function ensureWalkableSurfacePropertiesSection() {
-    let container = document.getElementById('object-properties-container');
+    const container = document.getElementById('object-properties-container');
     if (!container) return null;
 
     let section = document.getElementById('walkableSurfacePropertiesDiv');
@@ -297,17 +297,17 @@ function ensureWalkableSurfacePropertiesSection() {
 
     container.appendChild(section);
 
-    let select = document.getElementById('walkableBehaviorSelect');
+    const select = document.getElementById('walkableBehaviorSelect');
     if (select) {
-        select.addEventListener('change', function () {
+        select.addEventListener('change', () => {
             if (!transform_controls || !transform_controls.object) return;
 
-            let selectedObject = transform_controls.object;
+            const selectedObject = transform_controls.object;
             if (String(selectedObject.category_slug || '').toLowerCase() !== 'walkable-surface') {
                 return;
             }
 
-            let nextBehavior = vrodosNormalizeWalkableBehavior(select.value);
+            const nextBehavior = vrodosNormalizeWalkableBehavior(select.value);
             if (selectedObject.walkableBehavior === nextBehavior) {
                 return;
             }
@@ -328,11 +328,11 @@ function ensureWalkableSurfacePropertiesSection() {
 }
 
 function displayWalkableSurfaceProperties(object) {
-    let section = ensureWalkableSurfacePropertiesSection();
+    const section = ensureWalkableSurfacePropertiesSection();
     if (!section || !object) return;
 
-    let select = document.getElementById('walkableBehaviorSelect');
-    let currentBehavior = vrodosNormalizeWalkableBehavior(object.walkableBehavior);
+    const select = document.getElementById('walkableBehaviorSelect');
+    const currentBehavior = vrodosNormalizeWalkableBehavior(object.walkableBehavior);
     object.walkableBehavior = currentBehavior;
 
     if (object.userData) {
@@ -371,7 +371,7 @@ function vrodosNormalizeAudioPlaybackMode(value) {
 }
 
 function vrodosNormalizeAudioLoopValue(value) {
-    let normalized = String(value ?? '').toLowerCase();
+    const normalized = String(value ?? '').toLowerCase();
     return (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') ? '1' : '0';
 }
 
@@ -394,12 +394,12 @@ function vrodosNormalizeAudioNumericValue(value, fallback, minimum, maximum) {
 }
 
 function vrodosCommitObjectControlsProperty(prop, nextValue) {
-    let targetObject = getObjectControlsTargetObject();
+    const targetObject = getObjectControlsTargetObject();
     if (!targetObject) return;
 
-    let previousValue = targetObject[prop];
-    let previousComparable = previousValue == null ? '' : String(previousValue);
-    let nextComparable = nextValue == null ? '' : String(nextValue);
+    const previousValue = targetObject[prop];
+    const previousComparable = previousValue == null ? '' : String(previousValue);
+    const nextComparable = nextValue == null ? '' : String(nextValue);
 
     if (previousComparable === nextComparable) {
         return;
@@ -423,7 +423,7 @@ function vrodosCommitObjectControlsProperty(prop, nextValue) {
 }
 
 function ensureAudioPropertiesSection() {
-    let container = document.getElementById('object-properties-container');
+    const container = document.getElementById('object-properties-container');
     if (!container) return null;
 
     let section = document.getElementById('audioPropertiesDiv');
@@ -472,12 +472,12 @@ function ensureAudioPropertiesSection() {
 
     container.appendChild(section);
 
-    let playbackModeSelect = document.getElementById('audioPlaybackModeSelect');
-    let loopCheckbox = document.getElementById('audioLoopCheckbox');
-    let volumeInput = document.getElementById('audioVolumeInput');
-    let refDistanceInput = document.getElementById('audioRefDistanceInput');
-    let maxDistanceInput = document.getElementById('audioMaxDistanceInput');
-    let rolloffFactorInput = document.getElementById('audioRolloffFactorInput');
+    const playbackModeSelect = document.getElementById('audioPlaybackModeSelect');
+    const loopCheckbox = document.getElementById('audioLoopCheckbox');
+    const volumeInput = document.getElementById('audioVolumeInput');
+    const refDistanceInput = document.getElementById('audioRefDistanceInput');
+    const maxDistanceInput = document.getElementById('audioMaxDistanceInput');
+    const rolloffFactorInput = document.getElementById('audioRolloffFactorInput');
 
     if (playbackModeSelect) {
         playbackModeSelect.addEventListener('change', function () {
@@ -493,7 +493,7 @@ function ensureAudioPropertiesSection() {
 
     if (volumeInput) {
         volumeInput.addEventListener('change', function () {
-            let normalized = vrodosNormalizeAudioNumericValue(this.value, 1, 0, 1);
+            const normalized = vrodosNormalizeAudioNumericValue(this.value, 1, 0, 1);
             this.value = normalized;
             vrodosCommitObjectControlsProperty('audio_volume', normalized);
         });
@@ -501,7 +501,7 @@ function ensureAudioPropertiesSection() {
 
     if (refDistanceInput) {
         refDistanceInput.addEventListener('change', function () {
-            let normalized = vrodosNormalizeAudioNumericValue(this.value, 2, 0.1);
+            const normalized = vrodosNormalizeAudioNumericValue(this.value, 2, 0.1);
             this.value = normalized;
             vrodosCommitObjectControlsProperty('audio_ref_distance', normalized);
         });
@@ -509,7 +509,7 @@ function ensureAudioPropertiesSection() {
 
     if (maxDistanceInput) {
         maxDistanceInput.addEventListener('change', function () {
-            let normalized = vrodosNormalizeAudioNumericValue(this.value, 20, 0.1);
+            const normalized = vrodosNormalizeAudioNumericValue(this.value, 20, 0.1);
             this.value = normalized;
             vrodosCommitObjectControlsProperty('audio_max_distance', normalized);
         });
@@ -517,7 +517,7 @@ function ensureAudioPropertiesSection() {
 
     if (rolloffFactorInput) {
         rolloffFactorInput.addEventListener('change', function () {
-            let normalized = vrodosNormalizeAudioNumericValue(this.value, 1, 0);
+            const normalized = vrodosNormalizeAudioNumericValue(this.value, 1, 0);
             this.value = normalized;
             vrodosCommitObjectControlsProperty('audio_rolloff_factor', normalized);
         });
@@ -527,22 +527,22 @@ function ensureAudioPropertiesSection() {
 }
 
 function displayAudioProperties(object) {
-    let section = ensureAudioPropertiesSection();
+    const section = ensureAudioPropertiesSection();
     if (!section || !object) return;
 
-    let playbackModeSelect = document.getElementById('audioPlaybackModeSelect');
-    let loopCheckbox = document.getElementById('audioLoopCheckbox');
-    let volumeInput = document.getElementById('audioVolumeInput');
-    let refDistanceInput = document.getElementById('audioRefDistanceInput');
-    let maxDistanceInput = document.getElementById('audioMaxDistanceInput');
-    let rolloffFactorInput = document.getElementById('audioRolloffFactorInput');
+    const playbackModeSelect = document.getElementById('audioPlaybackModeSelect');
+    const loopCheckbox = document.getElementById('audioLoopCheckbox');
+    const volumeInput = document.getElementById('audioVolumeInput');
+    const refDistanceInput = document.getElementById('audioRefDistanceInput');
+    const maxDistanceInput = document.getElementById('audioMaxDistanceInput');
+    const rolloffFactorInput = document.getElementById('audioRolloffFactorInput');
 
-    let playbackMode = vrodosNormalizeAudioPlaybackMode(object.audio_playback_mode);
-    let loopValue = vrodosNormalizeAudioLoopValue(object.audio_loop);
-    let volumeValue = vrodosNormalizeAudioNumericValue(object.audio_volume, 1, 0, 1);
-    let refDistanceValue = vrodosNormalizeAudioNumericValue(object.audio_ref_distance, 2, 0.1);
-    let maxDistanceValue = vrodosNormalizeAudioNumericValue(object.audio_max_distance, 20, 0.1);
-    let rolloffFactorValue = vrodosNormalizeAudioNumericValue(object.audio_rolloff_factor, 1, 0);
+    const playbackMode = vrodosNormalizeAudioPlaybackMode(object.audio_playback_mode);
+    const loopValue = vrodosNormalizeAudioLoopValue(object.audio_loop);
+    const volumeValue = vrodosNormalizeAudioNumericValue(object.audio_volume, 1, 0, 1);
+    const refDistanceValue = vrodosNormalizeAudioNumericValue(object.audio_ref_distance, 2, 0.1);
+    const maxDistanceValue = vrodosNormalizeAudioNumericValue(object.audio_max_distance, 20, 0.1);
+    const rolloffFactorValue = vrodosNormalizeAudioNumericValue(object.audio_rolloff_factor, 1, 0);
 
     object.audio_playback_mode = playbackMode;
     object.audio_loop = loopValue;
@@ -566,10 +566,10 @@ function displayAudioProperties(object) {
  * Hide all object property sections inside the floating panel.
  */
 function hideAllPropertyPanels() {
-    let container = document.getElementById('object-properties-container');
+    const container = document.getElementById('object-properties-container');
     if (!container) return;
     container.style.display = 'none';
-    let sections = container.querySelectorAll('.object-property-section');
+    const sections = container.querySelectorAll('.object-property-section');
     for (let i = 0; i < sections.length; i++) {
         sections[i].style.display = 'none';
     }
@@ -584,7 +584,7 @@ function showPropertiesInPanel(object) {
     hideAllPropertyPanels();
     updateObjectControlsMeta(object);
 
-    let name = object.name;
+    const name = object.name;
     let hasProperties = false;
 
     // Dispatch by category_slug first
@@ -646,7 +646,7 @@ function showPropertiesInPanel(object) {
 
     // Show the container only if a property section is active
     if (hasProperties) {
-        let container = document.getElementById('object-properties-container');
+        const container = document.getElementById('object-properties-container');
         if (container) container.style.display = 'block';
     }
 }
@@ -668,20 +668,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Draggable via header — use delta from initial pointer position
     // Panel is position:fixed, so coordinates are viewport-relative
-    let isDragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+    let isDragging = false; let startX = 0; let startY = 0; let startLeft = 0; let startTop = 0;
 
     header.addEventListener('pointerdown', (e) => {
         if (e.target.closest('button')) return; // don't drag on close button
         isDragging = true;
 
         // For fixed positioning, getBoundingClientRect gives viewport coords directly
-        let rect = panel.getBoundingClientRect();
+        const rect = panel.getBoundingClientRect();
         startLeft = rect.left;
         startTop = rect.top;
 
         // Convert to left/top positioning (from right)
-        panel.style.left = startLeft + 'px';
-        panel.style.top = startTop + 'px';
+        panel.style.left = `${startLeft  }px`;
+        panel.style.top = `${startTop  }px`;
         panel.style.right = 'auto';
 
         // Remember the starting pointer position
@@ -694,8 +694,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     header.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
-        panel.style.left = (startLeft + e.clientX - startX) + 'px';
-        panel.style.top = (startTop + e.clientY - startY) + 'px';
+        panel.style.left = `${startLeft + e.clientX - startX  }px`;
+        panel.style.top = `${startTop + e.clientY - startY  }px`;
     });
 
     header.addEventListener('pointerup', (e) => {
@@ -705,7 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // GUI controls — lil-gui (successor to dat.gui)
-let controlInterface = new lil.GUI({ autoPlace: false });
+const controlInterface = new lil.GUI({ autoPlace: false });
 controlInterface.domElement.style.width = '100%';
 
 // Remove the lil-gui title bar (our floating panel has its own header)
@@ -713,16 +713,16 @@ controlInterface.domElement.style.width = '100%';
 controlInterface.$title.style.display = 'none';
 controlInterface.domElement.classList.add('autoHeight');
 
-let coordLabel = ['<span style="color:red">X</span>', '<span style="color:green">Y</span>', '<span style="color:blue">Z</span>'];
-let actionLabel = ['translate', 'translate', 'translate', 'rotate', 'rotate', 'rotate', 'scale', 'scale', 'scale'];
+const coordLabel = ['<span style="color:red">X</span>', '<span style="color:green">Y</span>', '<span style="color:blue">Z</span>'];
+const actionLabel = ['translate', 'translate', 'translate', 'rotate', 'rotate', 'rotate', 'scale', 'scale', 'scale'];
 
 
-let dg_controller = Array();
+const dg_controller = Array();
 
-let gui_controls_funs = (function () {
+const gui_controls_funs = (function () {
     // Internal storage — always numeric
-    let _vals = { dg_t1: 0, dg_t2: 0, dg_t3: 0, dg_r1: 0, dg_r2: 0, dg_r3: 0, dg_s1: 0, dg_s2: 0, dg_s3: 0 };
-    let obj = {};
+    const _vals = { dg_t1: 0, dg_t2: 0, dg_t3: 0, dg_r1: 0, dg_r2: 0, dg_r3: 0, dg_s1: 0, dg_s2: 0, dg_s3: 0 };
+    const obj = {};
     // Define getter/setter for each property so lil-gui never stores a string
     Object.keys(_vals).forEach((key) => {
         Object.defineProperty(obj, key, {
@@ -738,9 +738,9 @@ let gui_controls_funs = (function () {
 
 // Add variables to GUI
 let i = 0;
-for (let key in gui_controls_funs) {
+for (const key in gui_controls_funs) {
 
-    let label = actionLabel[i] + " " + coordLabel[i % 3];
+    const label = `${actionLabel[i]  } ${  coordLabel[i % 3]}`;
 
     // lil-gui: .add() returns a Controller, .step() and .name() chain the same way
     // .decimals(2) handles display formatting (replaces manual toFixed hacks)
@@ -749,9 +749,9 @@ for (let key in gui_controls_funs) {
     // Patch getValue to ALWAYS return a number — lil-gui's updateDisplay calls .toFixed()
     // which crashes on strings/NaN. This is the definitive guard.
     (function (ctrl) {
-        let _origGetValue = ctrl.getValue.bind(ctrl);
+        const _origGetValue = ctrl.getValue.bind(ctrl);
         ctrl.getValue = function () {
-            let v = _origGetValue();
+            const v = _origGetValue();
             return (typeof v === 'number' && !isNaN(v)) ? v : 0;
         };
     })(dg_controller[i]);
@@ -1157,7 +1157,7 @@ function controllerDatGuiOnChange() {
 
     // Make slider-text controllers more interactive
     // lil-gui exposes .$input for the input element
-    let opCodes = ['Tx', 'Ty', 'Tz', 'Rx', 'Ry', 'Rz', 'Sx', 'Sy', 'Sz'];
+    const opCodes = ['Tx', 'Ty', 'Tz', 'Rx', 'Ry', 'Rz', 'Sx', 'Sy', 'Sz'];
     for (let idx = 0; idx < 9; idx++) {
         dg_controller[idx]._opCode = opCodes[idx];
         setEventListenerKeyPressControllerConstrained(dg_controller[idx].$input, dg_controller[idx]);
@@ -1264,7 +1264,7 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
         triggerAutoSave();
     }
 
-    element.addEventListener("focusout", function (event) {
+    element.addEventListener("focusout", (event) => {
         if (!skipNextFocusoutCommit) {
             commitInputValue();
         } else {
@@ -1275,7 +1275,7 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
     });
 
     // onclick inside stop animating
-    element.addEventListener("click", function (event) {
+    element.addEventListener("click", (event) => {
         cancelAnimationFrame(id_animation_frame);
     });
 
@@ -1319,10 +1319,10 @@ window.vrodosGizmoProxy.name = "vrodosGizmoProxy";
 
 // State tracking for proxy-based transformation
 window.vrodosRotationSensitivity = 20.0; // Default multiplier for rotation
-let _qProxyStart = new THREE.Quaternion();
-let _pProxyStart = new THREE.Vector3();
-let _qRealStart = new THREE.Quaternion();
-let _pRealStart = new THREE.Vector3();
+const _qProxyStart = new THREE.Quaternion();
+const _pProxyStart = new THREE.Vector3();
+const _qRealStart = new THREE.Quaternion();
+const _pRealStart = new THREE.Vector3();
 let _currentSelectedRealObject = null;
 
 /**

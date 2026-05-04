@@ -15,7 +15,7 @@ AFRAME.registerComponent('clear-frustum-culling', {
         el.addEventListener("model-loaded", e => {
             const mesh = el.getObject3D('mesh');
             if (!mesh) { return; }
-            mesh.traverse(function (node) {
+            mesh.traverse((node) => {
                 if (node.isMesh) {
                     if (this.data.disableCulling) {
                         node.frustumCulled = false;
@@ -23,7 +23,7 @@ AFRAME.registerComponent('clear-frustum-culling', {
                     node.castShadow = true;
                     node.receiveShadow = true;
                 }
-            }.bind(this));
+            });
         });
     }
 });
@@ -63,7 +63,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
 
     },
     createOverlay: function () {
-        var overlay = document.createElement('div');
+        const overlay = document.createElement('div');
         overlay.id = 'vrodos-scene-loader-overlay';
         overlay.setAttribute('aria-live', 'polite');
         overlay.style.position = 'fixed';
@@ -82,7 +82,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         overlay.style.opacity = '1';
         overlay.style.pointerEvents = 'auto';
 
-        var spinner = document.createElement('div');
+        const spinner = document.createElement('div');
         spinner.style.width = '42px';
         spinner.style.height = '42px';
         spinner.style.border = '3px solid rgba(255,255,255,0.16)';
@@ -90,18 +90,18 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         spinner.style.borderRadius = '50%';
         spinner.style.animation = 'vrodos-loader-spin 0.9s linear infinite';
 
-        var title = document.createElement('div');
+        const title = document.createElement('div');
         title.textContent = 'Loading scene';
         title.style.fontSize = '18px';
         title.style.fontWeight = '600';
 
-        var progress = document.createElement('div');
+        const progress = document.createElement('div');
         progress.textContent = 'Preparing 3D assets...';
         progress.style.fontSize = '13px';
         progress.style.opacity = '0.78';
 
         if (!document.getElementById('vrodos-scene-loader-style')) {
-            var style = document.createElement('style');
+            const style = document.createElement('style');
             style.id = 'vrodos-scene-loader-style';
             style.textContent = '@keyframes vrodos-loader-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
             document.head.appendChild(style);
@@ -110,7 +110,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         overlay.appendChild(spinner);
         overlay.appendChild(title);
         overlay.appendChild(progress);
-        var skipBtn = document.createElement('button');
+        const skipBtn = document.createElement('button');
         skipBtn.textContent = 'Reveal Scene Anyway';
         skipBtn.style.marginTop = '20px';
         skipBtn.style.padding = '8px 16px';
@@ -126,12 +126,12 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         skipBtn.onclick = this.revealScene.bind(this);
         overlay.appendChild(skipBtn);
 
-        setTimeout(function() {
+        setTimeout(() => {
             if (!this.isReady) {
                 skipBtn.style.opacity = '1';
                 skipBtn.style.pointerEvents = 'auto';
             }
-        }.bind(this), 3000);
+        }, 3000);
 
         document.body.appendChild(overlay);
 
@@ -157,7 +157,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
                 return;
             }
 
-            var targetId = target.id || (`vrodos-reveal-${  this.pendingModelCount}`);
+            const targetId = target.id || (`vrodos-reveal-${  this.pendingModelCount}`);
             if (!target.id) {
                 target.id = targetId;
             }
@@ -178,7 +178,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return;
         }
 
-        var blockingAssets = Array.prototype.slice.call(assetsEl.children).filter(function (assetEl) {
+        const blockingAssets = Array.prototype.slice.call(assetsEl.children).filter(function (assetEl) {
             return this.isBlockingAsset(assetEl);
         }, this);
 
@@ -200,7 +200,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
                 return;
             }
 
-            var assetId = assetEl.id || (`vrodos-asset-wait-${  index}`);
+            const assetId = assetEl.id || (`vrodos-asset-wait-${  index}`);
             if (!assetEl.id) {
                 assetEl.id = assetId;
             }
@@ -237,7 +237,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return false;
         }
 
-        var tagName = assetEl.tagName.toUpperCase();
+        const tagName = assetEl.tagName.toUpperCase();
 
         if (tagName === 'VIDEO' || tagName === 'AUDIO' || tagName === 'SOURCE') {
             return false;
@@ -255,7 +255,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return true;
         }
 
-        var tagName = assetEl.tagName ? assetEl.tagName.toUpperCase() : '';
+        const tagName = assetEl.tagName ? assetEl.tagName.toUpperCase() : '';
 
         // Image check
         if (tagName === 'IMG') {
@@ -336,8 +336,8 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return;
         }
 
-        var totalModelCount = 0;
-        this.revealTargets.forEach(function (target) {
+        let totalModelCount = 0;
+        this.revealTargets.forEach((target) => {
             if (target.hasAttribute('gltf-model')) {
                 totalModelCount += 1;
             }
@@ -353,7 +353,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return;
         }
 
-        var loadedModelCount = totalModelCount - this.pendingModelCount;
+        const loadedModelCount = totalModelCount - this.pendingModelCount;
         this.progressLabel.textContent = `Loading 3D assets ${  loadedModelCount  }/${  totalModelCount}`;
     },
     maybeRevealScene: function () {
@@ -361,8 +361,8 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return;
         }
 
-        var elapsed = performance.now() - this.startedAt;
-        var remainingDelay = Math.max(0, this.data.minimumVisibleMs - elapsed);
+        const elapsed = performance.now() - this.startedAt;
+        const remainingDelay = Math.max(0, this.data.minimumVisibleMs - elapsed);
         window.setTimeout(this.revealScene.bind(this), remainingDelay);
     },
     revealScene: function () {
@@ -372,7 +372,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
 
         this.isReady = true;
 
-        this.revealTargets.forEach(function (target) {
+        this.revealTargets.forEach((target) => {
             target.setAttribute('visible', 'true');
             target.removeAttribute('data-vrodos-delayed-reveal');
         });
@@ -380,12 +380,12 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         if (this.loadingOverlay) {
             this.loadingOverlay.style.opacity = '0';
             this.loadingOverlay.style.pointerEvents = 'none';
-            window.setTimeout(function () {
+            window.setTimeout(() => {
                 if (this.loadingOverlay && this.loadingOverlay.parentNode) {
                     this.loadingOverlay.parentNode.removeChild(this.loadingOverlay);
                 }
                 this.loadingOverlay = null;
-            }.bind(this), 260);
+            }, 260);
         }
 
 

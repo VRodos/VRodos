@@ -16,18 +16,18 @@ function vrodos_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scene
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			'action': 'vrodos_delete_game_action',
-			'game_id': game_id
+			game_id
 		})
 	})
-	.then( function (response) { return response.text(); })
-	.then( function (res) {
+	.then( (response) => response.text())
+	.then( (res) => {
 
 		_deleteGamePending = false;
-		let progressBar = document.getElementById( 'delete-dialog-progress-bar' );
+		const progressBar = document.getElementById( 'delete-dialog-progress-bar' );
 		if (progressBar) progressBar.style.display = 'none';
-		let confirmBtn = document.getElementById( 'deleteProjectBtn' );
+		const confirmBtn = document.getElementById( 'deleteProjectBtn' );
 		if (confirmBtn) confirmBtn.classList.remove( 'LinkDisabled' );
-		let cancelBtn = document.getElementById( 'canceldeleteProjectBtn' );
+		const cancelBtn = document.getElementById( 'canceldeleteProjectBtn' );
 		if (cancelBtn) cancelBtn.classList.remove( 'LinkDisabled' );
 
 		fetchAllProjectsAndAddToDOM( current_user_id, parameter_Scenepass );
@@ -35,18 +35,18 @@ function vrodos_deleteGameAjax(game_id, dialog, current_user_id, parameter_Scene
 		dialog.close();
 
 	})
-	.catch( function (err) {
+	.catch( (err) => {
 
 		_deleteGamePending = false;
-		let progressBar = document.getElementById( 'delete-dialog-progress-bar' );
+		const progressBar = document.getElementById( 'delete-dialog-progress-bar' );
 		if (progressBar) progressBar.style.display = 'none';
-		let confirmBtn = document.getElementById( 'deleteProjectBtn' );
+		const confirmBtn = document.getElementById( 'deleteProjectBtn' );
 		if (confirmBtn) confirmBtn.classList.remove( 'LinkDisabled' );
-		let cancelBtn = document.getElementById( 'canceldeleteProjectBtn' );
+		const cancelBtn = document.getElementById( 'canceldeleteProjectBtn' );
 		if (cancelBtn) cancelBtn.classList.remove( 'LinkDisabled' );
 
 		alert( "Could not delete game. Try deleting it from the administration panel" );
-		console.log( "Ajax Delete Game: ERROR: 166 " + err );
+		console.log( `Ajax Delete Game: ERROR: 166 ${  err}` );
 	});
 
 }

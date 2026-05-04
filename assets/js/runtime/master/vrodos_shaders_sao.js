@@ -2,10 +2,10 @@
  * VRodos SAO Shaders — Scalable Ambient Occlusion + bilateral blur
  */
 (function () {
-    var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
+    const VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
 
     function vrodosCreateSAOMaterial() {
-        var material = new THREE.ShaderMaterial({
+        const material = new THREE.ShaderMaterial({
             defines: {
                 'NUM_SAMPLES': 16,
                 'NUM_RINGS': 4
@@ -101,7 +101,7 @@
     }
 
     function vrodosCreateSAOBlurMaterial() {
-        var material = new THREE.ShaderMaterial({
+        const material = new THREE.ShaderMaterial({
             uniforms: {
                 tDiffuse: { value: null },
                 tDepth: { value: null },

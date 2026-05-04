@@ -5,17 +5,17 @@
  */
 /* global VRODOSMaster */
 (function () {
-    var H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
+    const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     H.updatePostProcessingSize = function () {
         if (!this.postProcessingTarget || !this.el.renderer) {
             return;
         }
 
-        var size = this.postProcessingSize;
+        const size = this.postProcessingSize;
         this.el.renderer.getSize(size);
-        var pixelRatio = typeof this.el.renderer.getPixelRatio === 'function' ? this.el.renderer.getPixelRatio() : 1;
-        var width = Math.max(1, Math.floor(size.x * pixelRatio));
-        var height = Math.max(1, Math.floor(size.y * pixelRatio));
+        const pixelRatio = typeof this.el.renderer.getPixelRatio === 'function' ? this.el.renderer.getPixelRatio() : 1;
+        const width = Math.max(1, Math.floor(size.x * pixelRatio));
+        const height = Math.max(1, Math.floor(size.y * pixelRatio));
 
         if (this.postProcessingTarget.width !== width || this.postProcessingTarget.height !== height) {
             this.postProcessingTarget.setSize(width, height);
@@ -30,8 +30,8 @@
         }
 
         // Resize bloom targets at half resolution
-        var halfW = Math.max(1, Math.floor(width / 2));
-        var halfH = Math.max(1, Math.floor(height / 2));
+        const halfW = Math.max(1, Math.floor(width / 2));
+        const halfH = Math.max(1, Math.floor(height / 2));
         if (this.bloomTargetA && (this.bloomTargetA.width !== halfW || this.bloomTargetA.height !== halfH)) {
             this.bloomTargetA.setSize(halfW, halfH);
         }
@@ -76,28 +76,28 @@
         }
     };
     H.enablePostProcessing = function () {
-        var renderer = this.el.renderer;
+        const renderer = this.el.renderer;
         if (!renderer || this.postProcessingActive) {
             return;
         }
 
-        var width = 1;
-        var height = 1;
+        let width = 1;
+        let height = 1;
         if (typeof renderer.getSize === 'function') {
             renderer.getSize(this.postProcessingSize);
-            var pixelRatio = typeof renderer.getPixelRatio === 'function' ? renderer.getPixelRatio() : 1;
+            const pixelRatio = typeof renderer.getPixelRatio === 'function' ? renderer.getPixelRatio() : 1;
             width = Math.max(1, Math.floor(this.postProcessingSize.x * pixelRatio));
             height = Math.max(1, Math.floor(this.postProcessingSize.y * pixelRatio));
         }
 
         // Create main render target — attach DepthTexture when SAO, TAA, or SSR is active (disables MSAA)
-        var saoParams = this.getSAOParams();
-        var taaEnabled = this.isPostFXOptionEnabled('postFXTAAEnabled');
-        var ssrEnabled = this.isPostFXOptionEnabled('postFXSSREnabled');
-        var needsDepthTexture = saoParams || taaEnabled || ssrEnabled;
-        var targetOptions = { depthBuffer: true };
+        const saoParams = this.getSAOParams();
+        const taaEnabled = this.isPostFXOptionEnabled('postFXTAAEnabled');
+        const ssrEnabled = this.isPostFXOptionEnabled('postFXSSREnabled');
+        const needsDepthTexture = saoParams || taaEnabled || ssrEnabled;
+        const targetOptions = { depthBuffer: true };
         if (needsDepthTexture) {
-            var depthTexture = new THREE.DepthTexture(width, height);
+            const depthTexture = new THREE.DepthTexture(width, height);
             depthTexture.type = THREE.UnsignedIntType;
             targetOptions.depthTexture = depthTexture;
         }
@@ -111,14 +111,14 @@
         this.postProcessingTarget.texture.colorSpace = THREE.SRGBColorSpace;
         // MSAA only when DepthTexture is off (DepthTexture + MSAA conflict in WebGL2)
         if (!needsDepthTexture && typeof this.postProcessingTarget.samples !== 'undefined') {
-            var maxSamples = (renderer.capabilities && renderer.capabilities.maxSamples) ? renderer.capabilities.maxSamples : 4;
+            const maxSamples = (renderer.capabilities && renderer.capabilities.maxSamples) ? renderer.capabilities.maxSamples : 4;
             this.postProcessingTarget.samples = Math.min(maxSamples, this.getAAQualitySampleCount());
         }
         // Compile the composite shader with ONLY the features enabled for this
         // session — disabled effects contribute zero texture fetches and zero
         // ALU. Post-FX settings are static per session so compile-time
         // specialization is safe and optimal.
-        var compositeFeatures = {
+        const compositeFeatures = {
             sao: Boolean(saoParams),
             ssr: ssrEnabled,
             bloom: this.getBloomStrengthValue() > 0,
@@ -133,11 +133,11 @@
         this.postProcessingScene.add(this.postProcessingQuad);
 
         // Half-res dimensions (reused by bloom, SAO, SSR)
-        var halfW = Math.max(1, Math.floor(width / 2));
-        var halfH = Math.max(1, Math.floor(height / 2));
+        const halfW = Math.max(1, Math.floor(width / 2));
+        const halfH = Math.max(1, Math.floor(height / 2));
 
         // Multi-pass bloom targets (half resolution) — lazy: only when strength > 0
-        var bloomEnabled = this.getBloomStrengthValue() > 0;
+        const bloomEnabled = this.getBloomStrengthValue() > 0;
         if (bloomEnabled) {
             this.bloomTargetA = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
             this.bloomTargetB = new THREE.WebGLRenderTarget(halfW, halfH, { depthBuffer: false });
@@ -190,7 +190,7 @@
         // are allocated whenever EITHER FXAA or TAA is enabled.
         // fxaaMaterial itself is only needed when FXAA is actually the final pass
         // (skipped when TAA is on — FXAA would blur TAA's texture detail).
-        var fxaaEnabled = this.isPostFXOptionEnabled('postFXEdgeAAEnabled');
+        const fxaaEnabled = this.isPostFXOptionEnabled('postFXEdgeAAEnabled');
         if (fxaaEnabled || taaEnabled) {
             this.fxaaTarget = new THREE.WebGLRenderTarget(width, height, { depthBuffer: false });
             this.fxaaQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), null);
@@ -217,7 +217,7 @@
             this._taaFrameIndex = 0;
             // Pre-compute Halton(2,3) jitter sequence (16 samples)
             this._taaJitterSequence = [];
-            for (var ji = 0; ji < 16; ji++) {
+            for (let ji = 0; ji < 16; ji++) {
                 this._taaJitterSequence.push({
                     x: this._halton(ji + 1, 2) - 0.5,
                     y: this._halton(ji + 1, 3) - 0.5
@@ -263,7 +263,7 @@
         this.postProcessingActive = true;
 
         renderer.render = function (scene, camera) {
-            var shouldIntercept = this.postProcessingActive &&
+            const shouldIntercept = this.postProcessingActive &&
                 this.shouldUsePostProcessing() &&
                 !this.postProcessingRendering &&
                 !this.sceneProbeCapturing &&
@@ -278,14 +278,14 @@
             this.postProcessingRendering = true;
 
             try {
-                var previousTarget = renderer.getRenderTarget();
+                const previousTarget = renderer.getRenderTarget();
 
                 // --- Adaptive SAO quality: update FPS history and state machine ---
                 // Only active when SAO resources exist. Temporal subsampling cuts
                 // SAO cost in half when the 30-frame rolling avg FPS drops below 30.
                 if (this.saoMaterial && this._adaptiveFPSHistory) {
-                    var nowMs = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-                    var frameDt = nowMs - this._adaptiveLastFrameTime;
+                    const nowMs = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+                    const frameDt = nowMs - this._adaptiveLastFrameTime;
                     this._adaptiveLastFrameTime = nowMs;
                     // Ignore tab-pause / first-frame outliers
                     if (frameDt > 0 && frameDt < 1000) {
@@ -296,12 +296,12 @@
                         }
                     }
                     if (this._adaptiveFPSHistoryFilled) {
-                        var fpsSum = 0;
-                        for (var ai = 0; ai < 30; ai++) {
+                        let fpsSum = 0;
+                        for (let ai = 0; ai < 30; ai++) {
                             fpsSum += this._adaptiveFPSHistory[ai];
                         }
-                        var avgFps = fpsSum / 30;
-                        var sinceChange = nowMs - this._adaptiveLastStateChange;
+                        const avgFps = fpsSum / 30;
+                        const sinceChange = nowMs - this._adaptiveLastStateChange;
                         // 3-second cooldown between state changes to prevent oscillation
                         if (sinceChange > 3000) {
                             if (!this._adaptiveSAOHalfRate && avgFps < 30) {
@@ -316,13 +316,13 @@
                 }
 
                 // TAA jitter: apply sub-pixel offset to camera projection
-                var useTAA = this.isPostFXOptionEnabled('postFXTAAEnabled') && this.taaMaterial && this.taaCurrentTarget;
+                const useTAA = this.isPostFXOptionEnabled('postFXTAAEnabled') && this.taaMaterial && this.taaCurrentTarget;
                 if (useTAA) {
                     // Apply Halton jitter to projection matrix
                     this._taaSavedProjectionMatrix = this._taaSavedProjectionMatrix || new THREE.Matrix4();
                     this._taaSavedProjectionMatrix.copy(camera.projectionMatrix);
-                    var jitter = this._taaJitterSequence[this._taaFrameIndex % 16];
-                    var size = renderer.getSize(this.postProcessingSize);
+                    const jitter = this._taaJitterSequence[this._taaFrameIndex % 16];
+                    const size = renderer.getSize(this.postProcessingSize);
                     // Jitter magnitude ±0.375 px (reduced from ±0.5) — less sub-pixel
                     // drift per frame means less accumulated softening in the history buffer.
                     camera.projectionMatrix.elements[8] += (jitter.x * 1.5) / size.x;
@@ -346,7 +346,7 @@
                 // composite shader still samples saoTargetA which holds the
                 // last computed result — SAO is low-frequency so this is
                 // nearly imperceptible but halves SAO GPU cost.
-                var skipSAOThisFrame = false;
+                let skipSAOThisFrame = false;
                 if (this.saoMaterial && this._adaptiveSAOHalfRate) {
                     skipSAOThisFrame = (this._adaptiveSAOFrameCounter & 1) === 1;
                     this._adaptiveSAOFrameCounter++;
@@ -390,7 +390,7 @@
                 // the SAO sampling path when VRODOS_USE_SAO is undefined.
 
                 // SSR pass (half resolution, after SAO, before bloom)
-                var useSSR = this.isPostFXOptionEnabled('postFXSSREnabled') && this.ssrMaterial && this.ssrTargetA && this.postProcessingTarget.depthTexture;
+                const useSSR = this.isPostFXOptionEnabled('postFXSSREnabled') && this.ssrMaterial && this.ssrTargetA && this.postProcessingTarget.depthTexture;
                 if (useSSR) {
                     this.ssrMaterial.uniforms.tDiffuse.value = this.postProcessingTarget.texture;
                     this.ssrMaterial.uniforms.tDepth.value = this.postProcessingTarget.depthTexture;
@@ -413,7 +413,7 @@
                 // the SSR sampling path when VRODOS_USE_SSR is undefined.
 
                 // Multi-pass bloom (only if bloom is enabled)
-                var bloomValue = this.getBloomStrengthValue();
+                const bloomValue = this.getBloomStrengthValue();
                 if (bloomValue > 0 && this.bloomTargetA && this.bloomTargetB) {
                     // Bloom pass A: Bright-pass extraction â†’ bloomTargetA (half-res)
                     this.bloomQuad.material = this.bloomBrightPassMaterial;
@@ -447,8 +447,8 @@
 
                 // Pass 5: Final composite — only touch uniforms that exist on
                 // the specialized material (features compile out disabled paths).
-                var compUniforms = this.postProcessingMaterial.uniforms;
-                var compFeatures = this._compositeFeatures;
+                const compUniforms = this.postProcessingMaterial.uniforms;
+                const compFeatures = this._compositeFeatures;
                 compUniforms.tDiffuse.value = this.postProcessingTarget.texture;
                 if (compFeatures.bloom) {
                     compUniforms.bloomStrength.value = bloomValue;
@@ -464,7 +464,7 @@
                     compUniforms.exposure.value = 1.0;
                 }
 
-                var useFXAA = this.isPostFXOptionEnabled('postFXEdgeAAEnabled') && this.fxaaTarget && this.fxaaMaterial;
+                const useFXAA = this.isPostFXOptionEnabled('postFXEdgeAAEnabled') && this.fxaaTarget && this.fxaaMaterial;
 
                 // Determine where composite outputs to (depends on TAA and FXAA)
                 if (useTAA) {
@@ -494,7 +494,7 @@
                     this.postProcessingOriginalRender(this.fxaaScene, this.postProcessingCamera);
 
                     // Swap ping-pong: taaCurrentTarget becomes next frame’s history
-                    var tmpTarget = this.taaCurrentTarget;
+                    const tmpTarget = this.taaCurrentTarget;
                     this.taaCurrentTarget = this.taaHistoryTarget;
                     this.taaHistoryTarget = tmpTarget;
                 } else if (useFXAA) {

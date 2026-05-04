@@ -102,7 +102,7 @@ function initVrodosEditor() {
     prepareSceneLoadManager();
 
     // UI & GUI Setup
-    let guiContainer = document.getElementById('numerical_gui-container');
+    const guiContainer = document.getElementById('numerical_gui-container');
     if (guiContainer && typeof controlInterface !== 'undefined') {
         guiContainer.appendChild(controlInterface.domElement);
     }
@@ -159,7 +159,7 @@ function initVrodosEditor() {
     document.getElementById("result_download").innerHTML = "Loading";
 
     // Start everything when assets load
-    Promise.allSettled([lightsLoadPromise, assetsLoadPromise]).then(function () {
+    Promise.allSettled([lightsLoadPromise, assetsLoadPromise]).then(() => {
         finalizeSceneLoad();
     });
 
@@ -259,7 +259,7 @@ function bindBackgroundUIEvents() {
 function prepareSceneLoadManager() {
     envir.sceneLoadFinalized = false;
     manager.onProgress = function (url, loaded, total) {
-        document.getElementById("result_download").innerHTML = "Loading " + loaded + " / " + total;
+        document.getElementById("result_download").innerHTML = `Loading ${  loaded  } / ${  total}`;
     };
 }
 
@@ -306,7 +306,7 @@ function finalizeSceneLoad() {
     setHierarchyViewer();
 
     // Avoid culling and update lights
-    envir.scene.traverse(function (obj) {
+    envir.scene.traverse((obj) => {
         obj.frustumCulled = false;
         if (obj.light != undefined && typeof obj.update === 'function') {
             obj.update();
@@ -325,7 +325,7 @@ function animate() {
 
     id_animation_frame = requestAnimationFrame(animate);
 
-    let curr_camera = (typeof avatarControlsEnabled !== 'undefined' && avatarControlsEnabled) ?
+    const curr_camera = (typeof avatarControlsEnabled !== 'undefined' && avatarControlsEnabled) ?
         (envir.thirdPersonView ? envir.cameraThirdPerson : envir.cameraAvatar) : envir.cameraOrbit;
 
     if (envir.labelRenderer) {
@@ -333,7 +333,7 @@ function animate() {
     }
 
     if (envir.flagPlayAnimation && envir.animationMixers.length > 0) {
-        let new_time = envir.clock.getDelta();
+        const new_time = envir.clock.getDelta();
         for (let i = 0; i < envir.animationMixers.length; i++) {
             envir.animationMixers[i].update(new_time);
         }
