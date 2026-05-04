@@ -98,8 +98,8 @@ function showObjectControlsPanel(objectName) {
     // Position 100px to the right of last click, clamped to viewport
     const panelW = panel.offsetWidth || 280;
     const panelH = panel.offsetHeight || 300;
-    const mx = _lastClickX || (window.innerWidth / 2);
-    const my = _lastClickY || (window.innerHeight / 2);
+    const mx = VRODOS.editor._lastClickX || (window.innerWidth / 2);
+    const my = VRODOS.editor._lastClickY || (window.innerHeight / 2);
 
     let left = mx + 100;
     let top = my - panelH / 2;
@@ -118,8 +118,8 @@ function showObjectControlsPanel(objectName) {
 }
 
 // Track last click position (updated by the canvas mousedown handler)
-var _lastClickX = 0;
-var _lastClickY = 0;
+VRODOS.editor._lastClickX = 0;
+VRODOS.editor._lastClickY = 0;
 
 function hideObjectControlsPanel() {
     const panel = document.getElementById('object-controls-panel');

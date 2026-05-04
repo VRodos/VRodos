@@ -43,6 +43,7 @@ module.exports = [
                 VRODOSMaster: 'readonly',
                 vrodos_data: 'readonly',
                 vrodos_scene_data: 'readonly',
+                VRODOS: 'readonly',
                 envir: 'readonly',
                 transform_controls: 'readonly',
                 avatarControlsEnabled: 'readonly',

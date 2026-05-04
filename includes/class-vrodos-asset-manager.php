@@ -118,6 +118,7 @@ class VRodos_Asset_Manager {
 		wp_enqueue_style( 'vrodos_3D_editor_browser' );
 
 		// Scripts from original enqueue_scene_editor_scripts
+		wp_enqueue_script( 'vrodos_namespace' );
 		wp_enqueue_script( 'vrodos_scripts' );
 		wp_enqueue_script( 'vrodos_UndoEngine' );
 		wp_enqueue_script( 'stats-gl' );
@@ -258,6 +259,8 @@ class VRodos_Asset_Manager {
 		$three_vendor_bundle = VRodos_Render_Runtime_Manager::get_three_vendor_bundle();
 
 		$scripts = [
+      // Foundation
+      ['vrodos_namespace', VRodos_Path_Manager::editor_js_url( 'vrodos_namespace.js' )],
       // General Scripts
       ['vrodos_asset_editor_scripts', VRodos_Path_Manager::editor_js_url( 'vrodos_asset_editor_scripts.js' )],
       ['vrodos_scripts', VRodos_Path_Manager::editor_js_url( 'vrodos_scripts.js' )],

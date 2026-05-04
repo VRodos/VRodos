@@ -99,8 +99,8 @@ function _onCanvasMouseDown(event) {
     _mouseDownPos.y = event.clientY;
     _mouseDownTime = performance.now();
     // Store for panel positioning (vrodos_auxControlers.js)
-    _lastClickX = event.clientX;
-    _lastClickY = event.clientY;
+    VRODOS.editor._lastClickX = event.clientX;
+    VRODOS.editor._lastClickY = event.clientY;
 }
 
 function _onCanvasMouseUp(event) {

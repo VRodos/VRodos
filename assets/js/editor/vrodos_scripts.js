@@ -34,8 +34,8 @@ function rgbToHex(red, green, blue) {
 function updateClearColorPicker(input) {
     const hex = input.value;
     document.getElementById('sceneClearColor').value = hex;
-    if (envir && envir.scene) {
-        envir.scene.background = new THREE.Color(hex);
+    if (VRODOS.editor.envir && VRODOS.editor.envir.scene) {
+        VRODOS.editor.envir.scene.background = new THREE.Color(hex);
     }
     saveChanges();
 }
@@ -43,7 +43,7 @@ function updateClearColorPicker(input) {
 function saveChanges(options) {
     const saveOptions = options || {};
 
-    if (envir && envir.isSceneLoading) {
+    if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
         return Promise.resolve();
     }
 
@@ -59,7 +59,7 @@ function saveChanges(options) {
 
     // Export using the new VrodosSceneExporter
     const exporter = new VrodosSceneExporter();
-    document.getElementById('vrodos_scene_json_input').value = exporter.parse(envir.scene);
+    document.getElementById('vrodos_scene_json_input').value = exporter.parse(VRODOS.editor.envir.scene);
 
     return vrodos_saveSceneAjax();
 }

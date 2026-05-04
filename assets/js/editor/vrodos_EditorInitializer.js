@@ -5,32 +5,44 @@
  * mapping localized PHP data to JavaScript state.
  */
 
-// 1. Map localized data to global variables for backward compatibility
-// These are used by legacy scripts (keyButtons, rayCasters, etc.)
-window.pluginPath = vrodos_data.pluginPath;
-window.vrodos_paths = vrodos_data.paths || {};
-window.uploadDir = vrodos_data.uploadDir;
-window.urlforAssetEdit = vrodos_data.urlforAssetEdit;
-window.isAdmin = vrodos_data.isAdmin;
-window.projectSlug = vrodos_data.projectSlug;
-window.projectId = vrodos_data.projectId;
-window.vrodos_scene_data = vrodos_data.scene_data;
-window.scene_id = vrodos_data.scene_id;
-window.vrodos_scene_upload_image_nonce = vrodos_data.upload_image_nonce;
+// 1. Map localized data to the unified namespace
+VRODOS.data = Object.assign({}, vrodos_data);
+VRODOS.data.paths = vrodos_data.paths || {};
 
-window.isPaused = vrodos_data.isPaused;
-window.isAnyLight = vrodos_data.isAnyLight;
-window.mapActions = vrodos_data.mapActions;
-window.showPawnPositions = vrodos_data.showPawnPositions;
+// Map to window for backward compatibility (legacy scripts)
+window.pluginPath = VRODOS.data.pluginPath;
+window.vrodos_paths = VRODOS.data.paths;
+window.uploadDir = VRODOS.data.uploadDir;
+window.urlforAssetEdit = VRODOS.data.urlforAssetEdit;
+window.isAdmin = VRODOS.data.isAdmin;
+window.projectSlug = VRODOS.data.projectSlug;
+window.projectId = VRODOS.data.projectId;
+window.vrodos_scene_data = VRODOS.data.scene_data;
+window.scene_id = VRODOS.data.scene_id;
+window.vrodos_scene_upload_image_nonce = VRODOS.data.upload_image_nonce;
+
+window.isPaused = VRODOS.data.isPaused;
+window.isAnyLight = VRODOS.data.isAnyLight;
+window.mapActions = VRODOS.data.mapActions;
+window.showPawnPositions = VRODOS.data.showPawnPositions;
 
 // Global Three.js / Editor state
-window.envir = null;
-window.transform_controls = null;
-window.transform_controls_helper = null;
-window.manager = new THREE.LoadingManager();
-window.selected_object_name = '';
-window.firstPersonBlockerBtn = null;
-window.id_animation_frame = null;
+VRODOS.editor.envir = null;
+VRODOS.editor.transform_controls = null;
+VRODOS.editor.transform_controls_helper = null;
+VRODOS.editor.manager = new THREE.LoadingManager();
+VRODOS.editor.selected_object_name = '';
+VRODOS.editor.firstPersonBlockerBtn = null;
+VRODOS.editor.id_animation_frame = null;
+
+// Backward compatibility for legacy scripts
+window.envir = VRODOS.editor.envir;
+window.transform_controls = VRODOS.editor.transform_controls;
+window.transform_controls_helper = VRODOS.editor.transform_controls_helper;
+window.manager = VRODOS.editor.manager;
+window.selected_object_name = VRODOS.editor.selected_object_name;
+window.firstPersonBlockerBtn = VRODOS.editor.firstPersonBlockerBtn;
+window.id_animation_frame = VRODOS.editor.id_animation_frame;
 
 function vrodosIsSceneGraphObject(object, sceneRoot) {
     let current = object || null;
@@ -76,7 +88,8 @@ function initVrodosEditor() {
     if (!mainDiv) return;
 
     // Environmentals
-    window.envir = new vrodos_3d_editor_environmentals(mainDiv);
+    VRODOS.editor.envir = new vrodos_3d_editor_environmentals(mainDiv);
+    window.envir = VRODOS.editor.envir;
     envir.is2d = false;
 
     // Initialize scale constraint to true (Uniform Scaling) by default
@@ -85,14 +98,18 @@ function initVrodosEditor() {
     }
 
     // Transform Controls
-    window.transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement);
-    window.transform_controls_helper = (typeof transform_controls.getHelper === 'function') ?
+    VRODOS.editor.transform_controls = new THREE.TransformControls(envir.cameraOrbit, envir.renderer.domElement);
+    window.transform_controls = VRODOS.editor.transform_controls;
+
+    VRODOS.editor.transform_controls_helper = (typeof transform_controls.getHelper === 'function') ?
         transform_controls.getHelper() :
         transform_controls;
+    window.transform_controls_helper = VRODOS.editor.transform_controls_helper;
     transform_controls_helper.name = 'myTransformControls';
     vrodosPatchTransformControlsAttach(transform_controls, envir.scene);
 
-    window.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
+    VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
+    window.firstPersonBlockerBtn = VRODOS.editor.firstPersonBlockerBtn;
 
     // Block saves before any loader runs
     envir.isSceneLoading = true;
