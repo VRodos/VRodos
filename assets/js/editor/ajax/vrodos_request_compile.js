@@ -49,7 +49,7 @@ VRODOS.api.compileScene = function(showPawnPositions) {
 	// Build query string for GET request
 	const params = new URLSearchParams({
 		'action': 'vrodos_compile_action',
-		'projectId': projectId,
+		projectId,
 		
 		'showPawnPositions': resolvedShowPawnPositions,
 		'vrodos_scene': sceneId,

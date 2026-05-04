@@ -12,8 +12,8 @@ VRODOS.api.deleteScene = function(scene_id, url_scene_redirect) {
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			'action': 'vrodos_delete_scene_action',
-			'scene_id': scene_id,
-			'url_scene_redirect': url_scene_redirect
+			scene_id,
+			url_scene_redirect
 		})
 	})
 	.then( (response) => response.text())
