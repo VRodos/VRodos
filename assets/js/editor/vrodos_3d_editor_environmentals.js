@@ -165,7 +165,6 @@ class vrodos_3d_editor_environmentals {
         this.axesHelper = new THREE.AxesHelper(VRODOS_EDITOR_SCENE_DEFAULTS.axesSize);
         this.axesHelper.name = "myAxisHelper";
         this.scene.add(this.axesHelper);
-        this.setAxisText();
         this.axesHelper.visible = true;
 
 
@@ -617,50 +616,6 @@ class vrodos_3d_editor_environmentals {
         this.applyDirectorTransform([0, 0.2, 0], [0, 0, 0]);
     }
 
-    //================= Static Environmentals ==============================
-
-    /* X, Y ,Z letters  for axes */
-    setAxisText() {
-        const loader = new THREE.FontLoader();
-        loader.scene = this.scene;
-
-        const vendorDir = window.vrodos_three_vendor_dir || 'three-r181';
-        const vendorRoot = vrodosEnvironmentResolveBaseUrl(VRODOS.data.pluginPath, 'vendorBaseUrl', 'assets/vendor/');
-        const vendorBase = window.vrodos_three_vendor_base || vrodosEnvironmentJoinUrl(vendorRoot, `${vendorDir  }/`);
-        const fontPath = window.vrodos_three_font_path || (`${vendorBase  }fonts/helvetiker_bold.typeface.json`);
-        loader.load(fontPath, this.loadtexts);
-    }
-
-    loadtexts(font) {
-
-        for (const letterAx of ['X', 'Y', 'Z']) {
-            for (let dist = 10; dist < 200; dist = dist + 10) {
-                const textGeo = new THREE.TextGeometry(`${dist  } m`, {
-                    font,
-                    size: 0.2
-                });
-                const color = new THREE.Color();
-                color.setRGB(letterAx == 'X' ? 255 : 0, letterAx == 'Y' ? 255 : 0, letterAx == 'Z' ? 255 : 0);
-                const textMaterial = new THREE.MeshBasicMaterial({color});
-                const text = new THREE.Mesh(textGeo, textMaterial);
-
-                if (letterAx == 'X')
-                    {text.rotation.y = -Math.PI / 2;}
-                else if (letterAx == 'Y') {
-                    text.rotation.x = Math.PI / 2;
-                    text.rotation.z = Math.PI;
-                } else if (letterAx == 'Z')
-                    {text.rotation.y = Math.PI;}
-
-                text.position.x = letterAx == 'X' ? dist : 0;
-                text.position.y = letterAx == 'Y' ? dist : 0;
-                text.position.z = letterAx == 'Z' ? dist : 0;
-                text.scale.z = 0.001;
-                text.name = `myAxisText${  letterAx}`;
-            }
-        }
-    }
-
     fitCameraToSceneLimits() {
 
         if (this.cameraOrbit.type === 'PerspectiveCamera') {
@@ -701,6 +656,3 @@ class vrodos_3d_editor_environmentals {
 VRODOS.utils.getPointerLockObject = vrodosGetPointerLockObject;
 
 VRODOS.editor.Environmentals = vrodos_3d_editor_environmentals;
-
-
-
