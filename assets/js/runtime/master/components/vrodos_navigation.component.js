@@ -2,6 +2,7 @@
  * VRodos Master Navigation Components
  */
 
+/* global vrodosCreateHiddenNavmeshMaterial */
 var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
 var VRODOSNavmeshDefaults = VRODOSMaster.NAVMESH_DEFAULTS || window.VRODOS_NAVMESH_DEFAULTS || {
     maxStepHeight: 0.6,
@@ -19,7 +20,7 @@ function vrodosNavPerfDebugEnabled() {
     }
 
     try {
-        var params = new URLSearchParams(window.location.search);
+        const params = new URLSearchParams(window.location.search);
         return params.get('vrodos_debug_nav_perf') === '1';
     } catch (err) {
         return false;
@@ -36,13 +37,13 @@ AFRAME.registerComponent('vrodos-navmesh-helper', {
         }
     },
     applyHiddenNavmeshState: function () {
-        var meshRoot = this.el.getObject3D('mesh');
+        const meshRoot = this.el.getObject3D('mesh');
         if (!meshRoot) {
             return;
         }
 
         meshRoot.visible = true;
-        meshRoot.traverse(function (node) {
+        meshRoot.traverse((node) => {
             if (!node.isMesh) {
                 return;
             }
@@ -52,9 +53,7 @@ AFRAME.registerComponent('vrodos-navmesh-helper', {
             node.receiveShadow = false;
 
             if (Array.isArray(node.material)) {
-                node.material = node.material.map(function (material) {
-                    return vrodosCreateHiddenNavmeshMaterial(material);
-                });
+                node.material = node.material.map((material) => vrodosCreateHiddenNavmeshMaterial(material));
             } else if (node.material) {
                 node.material = vrodosCreateHiddenNavmeshMaterial(node.material);
             }
@@ -249,12 +248,12 @@ AFRAME.registerComponent('custom-movement', {
         this.syncHeightOffset();
     },
     shouldIgnoreKeyboardEvent: function (event) {
-        var target = event ? event.target : null;
+        const target = event ? event.target : null;
         if (!target) {
             return false;
         }
 
-        var tagName = target.tagName ? target.tagName.toLowerCase() : '';
+        const tagName = target.tagName ? target.tagName.toLowerCase() : '';
         return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target.isContentEditable;
     },
     updateKeyboardAxis: function (code, isPressed) {
@@ -338,7 +337,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         if (!this.navPerfDebug.overlay) {
-            var overlay = document.createElement('div');
+            const overlay = document.createElement('div');
             overlay.style.position = 'fixed';
             overlay.style.left = '12px';
             overlay.style.top = '12px';
@@ -380,9 +379,9 @@ AFRAME.registerComponent('custom-movement', {
             return;
         }
 
-        var now = performance.now();
-        var frame = this.navPerfDebug.frame;
-        var alpha = 0.2;
+        const now = performance.now();
+        const frame = this.navPerfDebug.frame;
+        const alpha = 0.2;
         frame.tickMs = now - frame.tickStart;
 
         this.navPerfDebug.avgTickMs = this.navPerfDebug.avgTickMs === 0 ? frame.tickMs : (this.navPerfDebug.avgTickMs * (1 - alpha)) + (frame.tickMs * alpha);
@@ -402,12 +401,12 @@ AFRAME.registerComponent('custom-movement', {
             return;
         }
 
-        var overlay = this.ensureNavPerfDebugOverlay();
+        const overlay = this.ensureNavPerfDebugOverlay();
         if (!overlay) {
             return;
         }
 
-        var frame = this.navPerfDebug.frame;
+        const frame = this.navPerfDebug.frame;
         overlay.textContent = [
             'NAV PERF DEBUG',
             `moving: ${  frame.moving ? 'yes' : 'no'}`,
@@ -431,7 +430,7 @@ AFRAME.registerComponent('custom-movement', {
         return this.cameraRig ? this.cameraRig.object3D : null;
     },
     getNavigationWorldPosition: function () {
-        var anchorObject = this.getNavigationAnchorObject();
+        const anchorObject = this.getNavigationAnchorObject();
         if (!anchorObject) {
             return this.currentWorldPosition.set(0, 0, 0);
         }
@@ -439,12 +438,12 @@ AFRAME.registerComponent('custom-movement', {
         return anchorObject.getWorldPosition(this.currentWorldPosition);
     },
     setNavigationWorldPosition: function (targetWorldPosition) {
-        var anchorObject = this.getNavigationAnchorObject();
+        const anchorObject = this.getNavigationAnchorObject();
         if (!anchorObject || !this.cameraRig || !this.cameraRig.object3D) {
             return false;
         }
 
-        var currentWorldPosition = this.getNavigationWorldPosition();
+        const currentWorldPosition = this.getNavigationWorldPosition();
         this.movementOffset.copy(targetWorldPosition).sub(currentWorldPosition);
         this.cameraRig.object3D.position.add(this.movementOffset);
         return true;
@@ -454,8 +453,8 @@ AFRAME.registerComponent('custom-movement', {
             return Infinity;
         }
 
-        var deltaX = pointA.x - pointB.x;
-        var deltaZ = pointA.z - pointB.z;
+        const deltaX = pointA.x - pointB.x;
+        const deltaZ = pointA.z - pointB.z;
         return deltaX * deltaX + deltaZ * deltaZ;
     },
     ensureNavigationStatePrimed: function () {
@@ -482,17 +481,17 @@ AFRAME.registerComponent('custom-movement', {
         this.navMeshCollisionTargets = [];
         this.navMeshBounds.makeEmpty();
 
-        var navMeshEntities = this.sceneEl.querySelectorAll(this.navMeshEntitySelector);
-        for (var i = 0; i < navMeshEntities.length; i++) {
-            var meshRoot = navMeshEntities[i].getObject3D('mesh');
+        const navMeshEntities = this.sceneEl.querySelectorAll(this.navMeshEntitySelector);
+        for (let i = 0; i < navMeshEntities.length; i++) {
+            const meshRoot = navMeshEntities[i].getObject3D('mesh');
             if (meshRoot) {
                 this.applyWalkBehaviorToNavMeshRoot(meshRoot, this.normalizeWalkBehavior(navMeshEntities[i].getAttribute('data-vrodos-walk-behavior')));
                 this.navMeshRoots.push(meshRoot);
-                meshRoot.traverse(function (node) {
+                meshRoot.traverse((node) => {
                     if (node && node.isMesh) {
                         this.navMeshCollisionTargets.push(node);
                     }
-                }.bind(this));
+                });
                 this.navMeshRootBounds.setFromObject(meshRoot);
                 if (!this.navMeshRootBounds.isEmpty()) {
                     this.navMeshBounds.union(this.navMeshRootBounds);
@@ -506,8 +505,8 @@ AFRAME.registerComponent('custom-movement', {
         return String(value || '').toLowerCase() === 'auto' ? 'auto' : 'precise';
     },
     applyWalkBehaviorToNavMeshRoot: function (meshRoot, behavior) {
-        var normalizedBehavior = this.normalizeWalkBehavior(behavior);
-        meshRoot.traverse(function (node) {
+        const normalizedBehavior = this.normalizeWalkBehavior(behavior);
+        meshRoot.traverse((node) => {
             if (!node.isMesh) {
                 return;
             }
@@ -517,7 +516,7 @@ AFRAME.registerComponent('custom-movement', {
         });
     },
     getWalkBehaviorFromIntersection: function (hit) {
-        var object3D = hit && hit.object ? hit.object : null;
+        let object3D = hit && hit.object ? hit.object : null;
         while (object3D) {
             if (object3D.userData && object3D.userData.vrodosWalkBehavior) {
                 return this.normalizeWalkBehavior(object3D.userData.vrodosWalkBehavior);
@@ -586,16 +585,16 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         this.navMeshBounds.getSize(this.boundsSize);
-        var boundsRadius = VRODOSMaster.clamp(this.boundsSize.length() * 0.35, 12, 120);
+        const boundsRadius = VRODOSMaster.clamp(this.boundsSize.length() * 0.35, 12, 120);
 
         this.boundsClosestPoint.copy(position);
         this.navMeshBounds.clampPoint(position, this.boundsClosestPoint);
-        var horizontalDistanceToBounds = Math.sqrt(this.horizontalDistanceSquared(position, this.boundsClosestPoint));
+        const horizontalDistanceToBounds = Math.sqrt(this.horizontalDistanceSquared(position, this.boundsClosestPoint));
 
         return Math.max(boundsRadius, horizontalDistanceToBounds + 6);
     },
     areCollisionsEnabled: function () {
-        var settings = this.getSceneSettings();
+        const settings = this.getSceneSettings();
         if (!settings || settings.collisionMode === 'off') {
             return false;
         }
@@ -604,7 +603,7 @@ AFRAME.registerComponent('custom-movement', {
         return this.navMeshCollisionTargets.length > 0;
     },
     getMovementDeltaFromInput: function (inputX, inputY, distance) {
-        var referenceEl = this.cameraEl || this.cameraRig;
+        const referenceEl = this.cameraEl || this.cameraRig;
         if (!referenceEl || !referenceEl.object3D) {
             return null;
         }
@@ -636,9 +635,9 @@ AFRAME.registerComponent('custom-movement', {
         this.wasdControlsSuppressed = collisionsEnabled;
     },
     sampleGroundAtSingle: function (position, referenceGroundY, outputGround) {
-        var navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
-        var sampleStart = navPerfFrame ? performance.now() : 0;
-        var finalizeSample = function (result) {
+        const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
+        const sampleStart = navPerfFrame ? performance.now() : 0;
+        const finalizeSample = function (result) {
             if (navPerfFrame) {
                 navPerfFrame.sampleMs += performance.now() - sampleStart;
             }
@@ -650,7 +649,7 @@ AFRAME.registerComponent('custom-movement', {
             return finalizeSample(null);
         }
 
-        var originY = typeof referenceGroundY === 'number'
+        const originY = typeof referenceGroundY === 'number'
             ? referenceGroundY + this.data.maxStepHeight + 2
             : position.y + this.data.maxStepHeight + 2;
 
@@ -658,29 +657,29 @@ AFRAME.registerComponent('custom-movement', {
         this.raycaster.set(this.raycastOrigin, this.raycastDirection);
         this.raycaster.far = this.data.maxStepHeight + this.data.maxDropHeight + 20;
 
-        var raycastStart = navPerfFrame ? performance.now() : 0;
-        var intersections = this.raycaster.intersectObjects(this.navMeshCollisionTargets, false);
+        const raycastStart = navPerfFrame ? performance.now() : 0;
+        const intersections = this.raycaster.intersectObjects(this.navMeshCollisionTargets, false);
         if (navPerfFrame) {
             navPerfFrame.raycastMs += performance.now() - raycastStart;
             navPerfFrame.raycasts += 1;
             navPerfFrame.intersections += intersections.length;
         }
-        var hasReferenceGround = typeof referenceGroundY === 'number' && isFinite(referenceGroundY);
-        var minAllowedY = hasReferenceGround ? referenceGroundY - (this.data.maxDropHeight + this.groundProbeStepTolerance) : -Infinity;
-        var maxAllowedY = hasReferenceGround ? referenceGroundY + this.data.maxStepHeight + this.groundProbeStepTolerance : Infinity;
-        var bestAutoHit = null;
-        var bestAutoHeightDelta = Infinity;
-        var bestScore = Infinity;
+        const hasReferenceGround = typeof referenceGroundY === 'number' && isFinite(referenceGroundY);
+        const minAllowedY = hasReferenceGround ? referenceGroundY - (this.data.maxDropHeight + this.groundProbeStepTolerance) : -Infinity;
+        const maxAllowedY = hasReferenceGround ? referenceGroundY + this.data.maxStepHeight + this.groundProbeStepTolerance : Infinity;
+        let bestAutoHit = null;
+        let bestAutoHeightDelta = Infinity;
+        let bestScore = Infinity;
 
-        for (var i = 0; i < intersections.length; i++) {
-            var hit = intersections[i];
+        for (let i = 0; i < intersections.length; i++) {
+            const hit = intersections[i];
             if (!hit.face) {
                 continue;
             }
 
             this.tempWorldNormal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld).normalize();
-            var slope = THREE.MathUtils.radToDeg(Math.acos(VRODOSMaster.clamp(this.tempWorldNormal.dot(this.upVector), -1, 1)));
-            var behavior = this.getWalkBehaviorFromIntersection(hit);
+            const slope = THREE.MathUtils.radToDeg(Math.acos(VRODOSMaster.clamp(this.tempWorldNormal.dot(this.upVector), -1, 1)));
+            const behavior = this.getWalkBehaviorFromIntersection(hit);
 
             if (slope > this.data.maxSlope + 0.5) {
                 continue;
@@ -714,9 +713,9 @@ AFRAME.registerComponent('custom-movement', {
                 continue;
             }
 
-            var autoHeightDelta = Math.abs(hit.point.y - referenceGroundY);
-            var autoScore = autoHeightDelta + (i * 0.0001);
-            var shouldReplaceAutoHit = autoScore < bestScore;
+            const autoHeightDelta = Math.abs(hit.point.y - referenceGroundY);
+            const autoScore = autoHeightDelta + (i * 0.0001);
+            let shouldReplaceAutoHit = autoScore < bestScore;
 
             if (!shouldReplaceAutoHit && bestAutoHit &&
                 Math.abs(autoHeightDelta - bestAutoHeightDelta) <= this.autoGroundOverlayTolerance &&
@@ -745,25 +744,25 @@ AFRAME.registerComponent('custom-movement', {
             return this.reuseAutoGroundSample(position, outputGround);
         }
 
-        var directGround = this.sampleGroundAtSingle(position, referenceGroundY, outputGround);
+        const directGround = this.sampleGroundAtSingle(position, referenceGroundY, outputGround);
         if (directGround) {
             this.storeAutoGroundSample(position, directGround);
             return directGround;
         }
 
-        var hasReferenceGround = typeof referenceGroundY === 'number' && isFinite(referenceGroundY);
-        var bestCandidate = null;
-        var bestScore = Infinity;
+        const hasReferenceGround = typeof referenceGroundY === 'number' && isFinite(referenceGroundY);
+        let bestCandidate = null;
+        let bestScore = Infinity;
 
-        for (var i = 1; i < this.groundProbeOffsets.length; i++) {
-            var probeOffset = this.groundProbeOffsets[i];
+        for (let i = 1; i < this.groundProbeOffsets.length; i++) {
+            const probeOffset = this.groundProbeOffsets[i];
             this.groundProbePosition.set(
                 position.x + probeOffset.x,
                 position.y,
                 position.z + probeOffset.y
             );
 
-            var candidateGround = this.sampleGroundAtSingle(
+            const candidateGround = this.sampleGroundAtSingle(
                 this.groundProbePosition,
                 referenceGroundY,
                 this.offsetGroundHit
@@ -773,7 +772,7 @@ AFRAME.registerComponent('custom-movement', {
                 continue;
             }
 
-            var score = this.horizontalDistanceSquared(candidateGround.rawPoint, position);
+            let score = this.horizontalDistanceSquared(candidateGround.rawPoint, position);
             if (hasReferenceGround) {
                 score += Math.abs(candidateGround.point.y - referenceGroundY) * 1.5;
             }
@@ -796,7 +795,7 @@ AFRAME.registerComponent('custom-movement', {
         return outputGround;
     },
     canAttemptRecovery: function () {
-        var now = performance.now();
+        const now = performance.now();
         if (now - this.lastRecoveryAttemptAt < 250) {
             return false;
         }
@@ -805,10 +804,10 @@ AFRAME.registerComponent('custom-movement', {
         return true;
     },
     findNearestGroundAt: function (position, searchRadius, outputGround) {
-        var radius = typeof searchRadius === 'number' ? searchRadius : 6;
-        var bestGround = outputGround || this.bestGroundHit;
-        var foundBestGround = Boolean(this.sampleGroundAt(position, undefined, bestGround));
-        var bestDistanceSq = foundBestGround ? this.horizontalDistanceSquared(bestGround.rawPoint, position) : Infinity;
+        const radius = typeof searchRadius === 'number' ? searchRadius : 6;
+        const bestGround = outputGround || this.bestGroundHit;
+        let foundBestGround = Boolean(this.sampleGroundAt(position, undefined, bestGround));
+        let bestDistanceSq = foundBestGround ? this.horizontalDistanceSquared(bestGround.rawPoint, position) : Infinity;
 
         if (foundBestGround && bestDistanceSq < 0.0001) {
             return bestGround;
@@ -816,26 +815,26 @@ AFRAME.registerComponent('custom-movement', {
 
         this.searchRadii[this.searchRadii.length - 1] = radius;
 
-        for (var r = 0; r < this.searchRadii.length; r++) {
-            var offsetRadius = this.searchRadii[r];
+        for (let r = 0; r < this.searchRadii.length; r++) {
+            const offsetRadius = this.searchRadii[r];
             if (offsetRadius > radius) {
                 continue;
             }
 
-            for (var a = 0; a < this.searchAngles.length; a++) {
-                var radians = THREE.MathUtils.degToRad(this.searchAngles[a]);
+            for (let a = 0; a < this.searchAngles.length; a++) {
+                const radians = THREE.MathUtils.degToRad(this.searchAngles[a]);
                 this.targetWorldPosition.set(
                     position.x + Math.cos(radians) * offsetRadius,
                     position.y,
                     position.z + Math.sin(radians) * offsetRadius
                 );
 
-                var candidateGround = this.sampleGroundAt(this.targetWorldPosition, undefined, this.candidateGroundHit);
+                const candidateGround = this.sampleGroundAt(this.targetWorldPosition, undefined, this.candidateGroundHit);
                 if (!candidateGround) {
                     continue;
                 }
 
-                var distanceSq = this.horizontalDistanceSquared(candidateGround.rawPoint, position);
+                const distanceSq = this.horizontalDistanceSquared(candidateGround.rawPoint, position);
                 if (distanceSq < bestDistanceSq) {
                     this.copyGroundHit(candidateGround, bestGround);
                     foundBestGround = true;
@@ -849,26 +848,26 @@ AFRAME.registerComponent('custom-movement', {
     resolveMovementAgainstGround: function (currentPosition, deltaX, deltaZ, currentGround, outputStep) {
         outputStep = outputStep || this.resolvedMovementStep;
         this.stepDelta.set(deltaX, 0, deltaZ);
-        var totalDistance = this.stepDelta.length();
+        const totalDistance = this.stepDelta.length();
         if (totalDistance < 0.00001) {
             outputStep.position.copy(currentPosition);
             this.copyGroundHit(currentGround, outputStep.ground);
             return outputStep;
         }
 
-        var steps = Math.max(1, Math.ceil(totalDistance / 0.2));
-        var bestPosition = outputStep.position;
-        var bestGround = this.bestGroundHit;
-        var autoGroundMisses = 0;
+        const steps = Math.max(1, Math.ceil(totalDistance / 0.2));
+        const bestPosition = outputStep.position;
+        const bestGround = this.bestGroundHit;
+        let autoGroundMisses = 0;
         bestPosition.copy(currentPosition);
         this.copyGroundHit(currentGround, bestGround);
 
-        for (var step = 1; step <= steps; step++) {
+        for (let step = 1; step <= steps; step++) {
             this.stepPosition.copy(currentPosition);
             this.stepPosition.x += deltaX * (step / steps);
             this.stepPosition.z += deltaZ * (step / steps);
 
-            var stepGround = this.sampleGroundAt(this.stepPosition, bestGround.point.y, this.sampledGroundHit);
+            let stepGround = this.sampleGroundAt(this.stepPosition, bestGround.point.y, this.sampledGroundHit);
             if (!stepGround) {
                 if (this.canUseAutoGroundMissGrace(bestGround, bestPosition, this.stepPosition, autoGroundMisses)) {
                     autoGroundMisses++;
@@ -884,7 +883,7 @@ AFRAME.registerComponent('custom-movement', {
 
             autoGroundMisses = 0;
 
-            var deltaY = stepGround.point.y - bestGround.point.y;
+            let deltaY = stepGround.point.y - bestGround.point.y;
             if (stepGround.behavior === 'auto' && Math.abs(deltaY) <= this.autoGroundHeightDeadband) {
                 stepGround.point.y = bestGround.point.y;
                 deltaY = 0;
@@ -912,7 +911,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         if (this.heightOffset === null) {
-            var currentPosition = this.getNavigationWorldPosition();
+            const currentPosition = this.getNavigationWorldPosition();
             this.heightOffset = currentPosition.y - groundHit.point.y;
         }
 
@@ -939,7 +938,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         if (this.heightOffset === null) {
-            var currentPosition = this.getNavigationWorldPosition();
+            const currentPosition = this.getNavigationWorldPosition();
             this.heightOffset = currentPosition.y - groundHit.point.y;
         }
 
@@ -964,8 +963,8 @@ AFRAME.registerComponent('custom-movement', {
             return;
         }
 
-        var navigationPosition = this.getNavigationWorldPosition();
-        var currentGround = this.sampleGroundAt(navigationPosition, this.hasLastGroundHit ? this.lastGroundHit.point.y : undefined, this.sampledGroundHit);
+        const navigationPosition = this.getNavigationWorldPosition();
+        let currentGround = this.sampleGroundAt(navigationPosition, this.hasLastGroundHit ? this.lastGroundHit.point.y : undefined, this.sampledGroundHit);
         if (!currentGround) {
             currentGround = this.findNearestGroundAt(navigationPosition, this.getRecoverySearchRadius(navigationPosition), this.recoveryGroundHit);
             if (!currentGround) {
@@ -995,9 +994,9 @@ AFRAME.registerComponent('custom-movement', {
         }
     },
     applyConstrainedMovement: function (deltaX, deltaZ) {
-        var navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
-        var constrainedStart = navPerfFrame ? performance.now() : 0;
-        var finalizeConstrained = function (result) {
+        const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
+        const constrainedStart = navPerfFrame ? performance.now() : 0;
+        const finalizeConstrained = function (result) {
             if (navPerfFrame) {
                 navPerfFrame.constrainedMs += performance.now() - constrainedStart;
             }
@@ -1012,8 +1011,8 @@ AFRAME.registerComponent('custom-movement', {
             this.syncHeightOffset();
         }
 
-        var currentPosition = this.constrainedCurrentPosition.copy(this.lastResolvedPosition);
-        var currentGround = this.hasLastGroundHit ? this.lastGroundHit : null;
+        const currentPosition = this.constrainedCurrentPosition.copy(this.lastResolvedPosition);
+        let currentGround = this.hasLastGroundHit ? this.lastGroundHit : null;
         if (currentGround && this.horizontalDistanceSquared(currentGround.point, currentPosition) > (1.5 * 1.5)) {
             currentGround = null;
         }
@@ -1025,7 +1024,7 @@ AFRAME.registerComponent('custom-movement', {
             );
         }
         if (!currentGround) {
-            var navigationPosition = this.getNavigationWorldPosition();
+            const navigationPosition = this.getNavigationWorldPosition();
             if (!this.canAttemptRecovery()) {
                 return false;
             }
@@ -1046,12 +1045,12 @@ AFRAME.registerComponent('custom-movement', {
             currentPosition.copy(this.lastResolvedPosition);
         }
 
-        var resolvedStep = this.resolveMovementAgainstGround(currentPosition, deltaX, deltaZ, currentGround, this.resolvedMovementStep);
+        const resolvedStep = this.resolveMovementAgainstGround(currentPosition, deltaX, deltaZ, currentGround, this.resolvedMovementStep);
         if (!resolvedStep) {
             return finalizeConstrained(false);
         }
 
-        var nextY = resolvedStep.ground.point.y + (this.heightOffset !== null ? this.heightOffset : 0);
+        const nextY = resolvedStep.ground.point.y + (this.heightOffset !== null ? this.heightOffset : 0);
         this.targetWorldPosition.set(resolvedStep.position.x, nextY, resolvedStep.position.z);
         if (!this.setNavigationWorldPosition(this.targetWorldPosition)) {
             return finalizeConstrained(false);
@@ -1063,7 +1062,7 @@ AFRAME.registerComponent('custom-movement', {
         return finalizeConstrained(true);
     },
     tick: function (time, timeDelta) {
-        var settings = this.getSceneSettings();
+        const settings = this.getSceneSettings();
         if (!settings) {
             return;
         }
@@ -1071,7 +1070,7 @@ AFRAME.registerComponent('custom-movement', {
         this.beginNavPerfDebugFrame();
 
         try {
-            var movementDisabled = settings.movement_disabled === true || settings.movement_disabled === 'true' || settings.movement_disabled === '1';
+            const movementDisabled = settings.movement_disabled === true || settings.movement_disabled === 'true' || settings.movement_disabled === '1';
             if (movementDisabled) {
                 this.setNavigationWorldPosition(this.lastResolvedPosition);
                 return;
@@ -1079,11 +1078,11 @@ AFRAME.registerComponent('custom-movement', {
 
             this.ensureNavigationStatePrimed();
 
-            var currentPosition = this.tickWorldPosition.copy(this.getNavigationWorldPosition());
-            var externalDeltaX = currentPosition.x - this.lastResolvedPosition.x;
-            var externalDeltaZ = currentPosition.z - this.lastResolvedPosition.z;
-            var hasExternalMovement = Math.abs(externalDeltaX) > 0.0001 || Math.abs(externalDeltaZ) > 0.0001;
-            var collisionsEnabled = this.areCollisionsEnabled();
+            const currentPosition = this.tickWorldPosition.copy(this.getNavigationWorldPosition());
+            const externalDeltaX = currentPosition.x - this.lastResolvedPosition.x;
+            const externalDeltaZ = currentPosition.z - this.lastResolvedPosition.z;
+            const hasExternalMovement = Math.abs(externalDeltaX) > 0.0001 || Math.abs(externalDeltaZ) > 0.0001;
+            const collisionsEnabled = this.areCollisionsEnabled();
             this.updateWASDControlsState(collisionsEnabled);
             if (this.navPerfDebug && this.navPerfDebug.frame) {
                 this.navPerfDebug.frame.collisionsEnabled = collisionsEnabled;
@@ -1099,12 +1098,12 @@ AFRAME.registerComponent('custom-movement', {
                 }
             }
 
-            var thumbstickX = Math.abs(this.thumbInput.x) > 0.08 ? this.thumbInput.x : 0;
-            var thumbstickY = Math.abs(this.thumbInput.y) > 0.08 ? this.thumbInput.y : 0;
-            var keyboardX = collisionsEnabled ? this.keyboardInput.x : 0;
-            var keyboardY = collisionsEnabled ? this.keyboardInput.y : 0;
-            var inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
-            var inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
+            const thumbstickX = Math.abs(this.thumbInput.x) > 0.08 ? this.thumbInput.x : 0;
+            const thumbstickY = Math.abs(this.thumbInput.y) > 0.08 ? this.thumbInput.y : 0;
+            const keyboardX = collisionsEnabled ? this.keyboardInput.x : 0;
+            const keyboardY = collisionsEnabled ? this.keyboardInput.y : 0;
+            const inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
+            const inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
             if (this.navPerfDebug && this.navPerfDebug.frame) {
                 this.navPerfDebug.frame.moving = hasExternalMovement || inputX !== 0 || inputY !== 0;
             }
@@ -1116,8 +1115,8 @@ AFRAME.registerComponent('custom-movement', {
                 return;
             }
 
-            var movementDistance = this.data.movementSpeed * (Math.min(timeDelta, 50) / 1000);
-            var movementDelta = this.getMovementDeltaFromInput(inputX, inputY, movementDistance);
+            const movementDistance = this.data.movementSpeed * (Math.min(timeDelta, 50) / 1000);
+            const movementDelta = this.getMovementDeltaFromInput(inputX, inputY, movementDistance);
             if (!movementDelta) {
                 return;
             }

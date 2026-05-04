@@ -16,8 +16,8 @@
     "build": "npm run build:three && npm run build:css",
     "build:three": "node ./scripts/build-three-vendor.mjs",
     "build:vendor": "npm run build:three",
-    "lint": "eslint \"assets/js/runtime/master/**/*.js\"",
-    "lint:fix": "eslint \"assets/js/runtime/master/**/*.js\" --fix",
+    "lint": "eslint \"assets/js/{runtime/master,editor}/**/*.js\"",
+    "lint:fix": "eslint \"assets/js/{runtime/master,editor}/**/*.js\" --fix",
     "format": "prettier --write \"**/*.{js,css,md,json}\"",
     "build:css": "tailwindcss -i ./assets/css/vrodos_modern.css -o ./assets/css/vrodos_modern_compiled.css",
     "watch:css": "tailwindcss -i ./assets/css/vrodos_modern.css -o ./assets/css/vrodos_modern_compiled.css --watch"

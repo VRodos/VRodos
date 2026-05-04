@@ -3,7 +3,7 @@ module.exports = [
         ignores: ['**/node_modules/**', 'assets/js/runtime/master/lib/**/*.js']
     },
     {
-        files: ['assets/js/runtime/master/**/*.js'],
+        files: ['assets/js/runtime/master/**/*.js', 'assets/js/editor/**/*.js'],
         languageOptions: {
             ecmaVersion: 'latest',
             sourceType: 'script',
@@ -37,10 +37,25 @@ module.exports = [
                 clearTimeout: 'readonly',
                 setInterval: 'readonly',
                 clearInterval: 'readonly',
-                vrodosCreateHiddenNavmeshMaterial: 'readonly',
-                vrodosEnhanceMeshMaterial: 'readonly',
-                vrodosGetExplicitMaterialOverrides: 'readonly',
-                window: 'readonly'
+                window: 'readonly',
+
+                // VRodos Editor & Runtime Globals
+                VRODOSMaster: 'readonly',
+                vrodos_data: 'readonly',
+                vrodos_scene_data: 'readonly',
+                envir: 'readonly',
+                transform_controls: 'readonly',
+                avatarControlsEnabled: 'readonly',
+                selected_object_name: 'readonly',
+                VRodos_LoaderMulti: 'readonly',
+                vrodosGetPointerLockObject: 'readonly',
+                triggerAutoSave: 'readonly',
+                deleteFomScene: 'readonly',
+                pauseClickFun: 'readonly',
+                addCelOutline: 'readonly',
+                removeAllCelOutlines: 'readonly',
+                addInHierarchyViewer: 'readonly',
+                setTransformControlsSize: 'readonly'
             }
         },
         rules: {
@@ -152,11 +167,13 @@ module.exports = [
             'no-use-before-define': ['warn', { functions: false, classes: true, variables: false }],
             'no-useless-call': 'warn',
             'no-useless-concat': 'warn',
-            'no-var': 'off',
+            'no-var': 'error',
             'object-shorthand': ['warn', 'properties'],
             'one-var': ['warn', 'never'],
-            'prefer-const': 'warn',
-            'prefer-template': 'warn',
+            'prefer-const': 'error',
+            'prefer-template': 'error',
+            'arrow-body-style': ['warn', 'as-needed'],
+            'prefer-arrow-callback': 'warn',
             'radix': 'error',
             'yoda': 'warn'
         }

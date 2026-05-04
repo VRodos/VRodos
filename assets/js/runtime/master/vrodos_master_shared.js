@@ -9,8 +9,8 @@ window.browsingModeVR = browsingModeVR;
 VRODOSMaster.domCache = VRODOSMaster.domCache || {};
 
 VRODOSMaster.getElement = function (id, refresh) {
-    var cache = VRODOSMaster.domCache;
-    var cached = cache[id];
+    const cache = VRODOSMaster.domCache;
+    let cached = cache[id];
     if (!refresh && cached && cached.isConnected) {
         return cached;
     }
@@ -35,7 +35,7 @@ VRODOSMaster.setBrowsingModeVR = function (value) {
 
 VRODOSMaster.vectorRequiresUpdateRotation = function (epsilon) {
     return function () {
-        var prev = null;
+        let prev = null;
         return function (curr) {
             if (prev === null) {
                 prev = new THREE.Vector3(curr.x, curr.y, curr.z);
@@ -62,27 +62,27 @@ window.ntExample = window.ntExample || {
 };
 
 VRODOSMaster.formatBytes = function (bytes, decimals) {
-    var safeDecimals = typeof decimals === 'number' ? decimals : 2;
-    if (!+bytes) {
+    const safeDecimals = typeof decimals === 'number' ? decimals : 2;
+    if (!Number(bytes)) {
         return '0 Bytes';
     }
 
-    var k = 1024;
-    var dm = safeDecimals < 0 ? 0 : safeDecimals;
-    var sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
-    var i = Math.floor(Math.log(bytes) / Math.log(k));
+    const k = 1024;
+    const dm = safeDecimals < 0 ? 0 : safeDecimals;
+    const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))  } ${  sizes[i]}`;
 };
 
 window.selectAvatarType = function (value) {
-    var selectedValue = value;
+    let selectedValue = value;
     if (!selectedValue) {
-        var checkedRadio = VRODOSMaster.queryOne('input[name="avatar-radios"]:checked');
+        const checkedRadio = VRODOSMaster.queryOne('input[name="avatar-radios"]:checked');
         selectedValue = checkedRadio ? checkedRadio.value : 'no-avatar';
     }
 
-    var cameraA = VRODOSMaster.getElement('cameraA', true);
+    const cameraA = VRODOSMaster.getElement('cameraA', true);
     if (cameraA) {
         cameraA.setAttribute('player-info', 'avatarType', selectedValue);
     }

@@ -117,7 +117,7 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 						const gamma_re = /^\s*GAMMA\s*=\s*(\d+(\.\d+)?)\s*$/;
 						const exposure_re = /^\s*EXPOSURE\s*=\s*(\d+(\.\d+)?)\s*$/;
 						const format_re = /^\s*FORMAT=(\S+)\s*$/;
-						const dimensions_re = /^\s*\-Y\s+(\d+)\s+\+X\s+(\d+)\s*$/;
+						const dimensions_re = /^\s*-Y\s+(\d+)\s+\+X\s+(\d+)\s*$/;
 						// RGBE format header struct
 						const header = {
 							valid: 0,
@@ -267,7 +267,7 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 						rgbeStart[ 1 ] = buffer[ pos ++ ];
 						rgbeStart[ 2 ] = buffer[ pos ++ ];
 						rgbeStart[ 3 ] = buffer[ pos ++ ];
-						if ( rgbeStart[ 0 ] != 2 || rgbeStart[ 1 ] != 2 || ( rgbeStart[ 2 ] << 8 | rgbeStart[ 3 ] ) != scanline_width ) {
+						if ( rgbeStart[ 0 ] !== 2 || rgbeStart[ 1 ] !== 2 || ( rgbeStart[ 2 ] << 8 | rgbeStart[ 3 ] ) !== scanline_width ) {
 
 							return rgbe_error( rgbe_format_error, 'bad rgbe scanline format' );
 
@@ -373,7 +373,7 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 					let numElements;
 					switch ( this.type ) {
 
-						case THREE.FloatType:
+						case THREE.FloatType: {
 							numElements = image_rgba_data.length / 4;
 							const floatArray = new Float32Array( numElements * 4 );
 							for ( let j = 0; j < numElements; j ++ ) {
@@ -385,7 +385,8 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 							data = floatArray;
 							type = THREE.FloatType;
 							break;
-						case THREE.HalfFloatType:
+						}
+						case THREE.HalfFloatType: {
 							numElements = image_rgba_data.length / 4;
 							const halfArray = new Uint16Array( numElements * 4 );
 							for ( let j = 0; j < numElements; j ++ ) {
@@ -397,6 +398,7 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 							data = halfArray;
 							type = THREE.HalfFloatType;
 							break;
+						}
 						default:
 							console.error( 'THREE.RGBELoader: unsupported type: ', this.type );
 							break;
@@ -440,6 +442,8 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 						texture.generateMipmaps = false;
 						texture.flipY = true;
 						break;
+					default:
+						break;
 
 				}
 
@@ -468,7 +472,7 @@ function vrodosClamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
 
-function vrodosCreateHiddenNavmeshMaterial(sourceMaterial) {
+function vrodosCreateHiddenNavmeshMaterial(_sourceMaterial) {
     return new THREE.MeshBasicMaterial({
         side: THREE.DoubleSide,
         transparent: true,
@@ -488,7 +492,7 @@ function vrodosApplyTextureQuality(texture, options, isColorTexture) {
     }
 
     if (!texture.isVideoTexture && typeof options.maxAnisotropy === 'number' && options.maxAnisotropy > 0) {
-        var targetAnisotropy = options.renderQuality === 'high'
+        const targetAnisotropy = options.renderQuality === 'high'
             ? Math.min(options.maxAnisotropy, 16)
             : Math.min(options.maxAnisotropy, 8);
         texture.anisotropy = Math.max(texture.anisotropy || 0, targetAnisotropy);
@@ -552,7 +556,7 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
             material.userData.vrodosBaseEnvMapIntensity = material.envMapIntensity || 1;
         }
 
-        var targetEnvMapIntensity = material.userData.vrodosBaseEnvMapIntensity;
+        let targetEnvMapIntensity = material.userData.vrodosBaseEnvMapIntensity;
         if (options.reflectionProfile === 'soft') {
             targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity * 0.5, 0.3);
         } else if (options.renderQuality === 'high') {
@@ -606,7 +610,7 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
             if (typeof material.userData.vrodosBaseAoMapIntensity === 'undefined') {
                 material.userData.vrodosBaseAoMapIntensity = material.aoMapIntensity || 1;
             }
-            var targetAoIntensity = material.userData.vrodosBaseAoMapIntensity;
+            let targetAoIntensity = material.userData.vrodosBaseAoMapIntensity;
             switch (options.ambientOcclusionPreset) {
                 case 'off':
                     targetAoIntensity = material.userData.vrodosBaseAoMapIntensity;
@@ -630,7 +634,7 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
             }
 
             if (material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === 'function') {
-                var normalBoost = 1.0;
+                let normalBoost = 1.0;
                 switch (options.ambientOcclusionPreset) {
                     case 'soft':
                         normalBoost = 1.02;
