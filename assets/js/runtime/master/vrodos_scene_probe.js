@@ -2,7 +2,7 @@
  * VRodos Scene Probe & Environment Map Helpers
  * Extracted from vrodos_scene_settings.component.js
  */
-/* global VRODOSMaster */
+
 (function () {
     VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     const H = VRODOSMaster.SceneSettingsHelpers;
