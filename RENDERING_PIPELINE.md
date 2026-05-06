@@ -189,6 +189,8 @@ Runtime behavior:
 - `manual` preserves the existing sun elevation/azimuth slider behavior.
 - `preset-time` resolves the selected time preset through the existing Takram atmosphere look defaults before building local and ECEF sun/moon directions.
 - The night preset turns the moon path on through `pmndrsMoonEnabled` unless the author explicitly overrides it in the compile dialog.
+- Horizon PMNDRS night uses dim cool helper moonlight instead of daytime Horizon helper-light intensities; if the moon path is disabled, helper lights fall back to near black.
+- HDR/scene-probe env-map intensity is scaled down at night without changing authored material roughness or metalness.
 - Horizon `AerialPerspectiveEffect` remains gated behind `?vrodos_debug_enable_pmndrs_horizon_aerial=1`.
 
 This phase does not add stars, `SkyLightProbe`, `SunDirectionalLight`, `LightingMaskPass`, geospatial latitude/longitude UI, or volumetric clouds.

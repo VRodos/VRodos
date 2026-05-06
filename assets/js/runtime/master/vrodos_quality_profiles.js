@@ -6,6 +6,7 @@
 (function () {
     const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 0.0047;
+    const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.18;
     const PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS = {
         natural: {
             keyIntensity: 1.15,
@@ -235,10 +236,29 @@
         }
     }
 
-    function getPmndrsHorizonHelperLightConfig(self, preset) {
+    function isPmndrsPresetTimeNight(config) {
+        return Boolean(config &&
+            config.celestialMode === 'preset-time' &&
+            config.celestialTimePreset === 'night');
+    }
+
+    function getPmndrsNightReflectionIntensityScale(self, config, reflectionSource) {
+        const source = reflectionSource || (self && typeof self.getEffectiveReflectionSource === 'function'
+            ? self.getEffectiveReflectionSource()
+            : 'none');
+        return isPmndrsPresetTimeNight(config) && (source === 'hdr' || source === 'scene-probe')
+            ? PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE
+            : 1;
+    }
+
+    function getPmndrsHorizonHelperLightConfig(self, preset, atmosphereConfig) {
         const defaults = getPmndrsHorizonHelperLightDefaults(preset);
         let keyColor = '#fff0cf';
         let fillColor = '#cfe3ff';
+        let keyIntensity = readPmndrsAtmosphereNumber(self, 'pmndrsHorizonKeyLightIntensity', 0, 3, defaults.keyIntensity);
+        let fillIntensity = readPmndrsAtmosphereNumber(self, 'pmndrsHorizonFillLightIntensity', 0, 3, defaults.fillIntensity);
+        let useMoonDirection = false;
+        let directionOwner = 'sun';
 
         if (preset === 'clear') {
             keyColor = '#fff4d8';
@@ -248,11 +268,23 @@
             fillColor = '#d4e4ff';
         }
 
+        if (isPmndrsPresetTimeNight(atmosphereConfig)) {
+            const moonEnabled = atmosphereConfig.moonEnabled !== false;
+            keyColor = moonEnabled ? '#b8c8ff' : '#39425c';
+            fillColor = moonEnabled ? '#3f4f78' : '#111827';
+            keyIntensity = Math.min(keyIntensity, moonEnabled ? 0.16 : 0.03);
+            fillIntensity = Math.min(fillIntensity, moonEnabled ? 0.035 : 0.015);
+            useMoonDirection = moonEnabled;
+            directionOwner = moonEnabled ? 'moon' : 'none';
+        }
+
         return {
             keyColor,
             fillColor,
-            keyIntensity: readPmndrsAtmosphereNumber(self, 'pmndrsHorizonKeyLightIntensity', 0, 3, defaults.keyIntensity),
-            fillIntensity: readPmndrsAtmosphereNumber(self, 'pmndrsHorizonFillLightIntensity', 0, 3, defaults.fillIntensity)
+            keyIntensity,
+            fillIntensity,
+            useMoonDirection,
+            directionOwner
         };
     }
 
@@ -627,7 +659,7 @@
 
         const horizonPreset = typeof self.getHorizonSkyPreset === 'function' ? self.getHorizonSkyPreset() : 'natural';
         const helperConfig = shouldUsePmndrsTakramHorizonPath(self)
-            ? getPmndrsHorizonHelperLightConfig(self, horizonPreset)
+            ? getPmndrsHorizonHelperLightConfig(self, horizonPreset, atmosphereConfig)
             : null;
         const visibleSunScale = atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self)
             ? getPmndrsTakramVisibleSunScale(atmosphereConfig)
@@ -635,6 +667,7 @@
         const reflectionSource = (typeof self.getEffectiveReflectionSource === 'function')
             ? self.getEffectiveReflectionSource()
             : (self.data.reflectionSource || 'hdr');
+        const reflectionScale = getPmndrsNightReflectionIntensityScale(self, atmosphereConfig, reflectionSource);
         const owner = atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsHorizonAerialPerspectivePath(self)
             ? 'takram-aerial-effect'
             : (atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self)
@@ -651,6 +684,8 @@
             formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null),
             helperConfig ? helperConfig.keyIntensity.toFixed(2) : 'n/a',
             helperConfig ? helperConfig.fillIntensity.toFixed(2) : 'n/a',
+            helperConfig ? helperConfig.directionOwner : 'n/a',
+            reflectionScale.toFixed(2),
             visibleSunScale !== null ? visibleSunScale.toFixed(2) : 'n/a'
         ].join('|');
 
@@ -669,6 +704,8 @@
             }, sunDir=${  formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null) 
             }, helperKey=${  helperConfig ? helperConfig.keyIntensity.toFixed(2) : 'n/a' 
             }, helperFill=${  helperConfig ? helperConfig.fillIntensity.toFixed(2) : 'n/a' 
+            }, helperDir=${  helperConfig ? helperConfig.directionOwner : 'n/a'
+            }, reflectionScale=${  reflectionScale.toFixed(2)
             }, sunScale=${  visibleSunScale !== null ? visibleSunScale.toFixed(2) : 'n/a'}`);
     }
 
@@ -763,12 +800,15 @@
         const shadowEnabled = self.data.shadowQuality !== 'off';
         const shadowMap = self.data.shadowQuality === 'high' ? 2048 : 1024;
         const castShadow = shadowEnabled ? 'true' : 'false';
-        const helperConfig = getPmndrsHorizonHelperLightConfig(self, preset);
+        const helperConfig = getPmndrsHorizonHelperLightConfig(self, preset, config);
+        const keyDirection = helperConfig.useMoonDirection
+            ? (config.localMoonDirection || config.moonDirection || config.localSunDirection || config.sunDirection)
+            : (config.localSunDirection || config.sunDirection);
 
         self.ensurePhotorealHelperLight(
             'vrodos-pmndrs-horizon-key-light',
             `type: directional; color: ${  helperConfig.keyColor  }; intensity: ${  helperConfig.keyIntensity.toFixed(2)  }; castShadow: ${  castShadow  }; shadowMapWidth: ${  shadowMap  }; shadowMapHeight: ${  shadowMap  }; shadowCameraTop: 28; shadowCameraRight: 28; shadowCameraLeft: -28; shadowCameraBottom: -28; shadowBias: -0.00012;`,
-            formatVectorPosition(config.localSunDirection || config.sunDirection, 28, 8)
+            formatVectorPosition(keyDirection, 28, helperConfig.useMoonDirection ? 4 : 8)
         );
 
         self.ensurePhotorealHelperLight(
@@ -943,6 +983,7 @@
         }
 
         config.localSunDirection = buildPmndrsLocalSunDirection(config.sunElevationDeg, config.sunAzimuthDeg);
+        config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection);
         config.sunDirection = buildPmndrsEcefSunDirection(config.localSunDirection);
         config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
         syncPmndrsTakramHorizonState(this, config);
@@ -1768,10 +1809,12 @@
         const maxAnisotropy = renderer && typeof renderer.capabilities !== 'undefined' && typeof renderer.capabilities.getMaxAnisotropy === 'function'
             ? renderer.capabilities.getMaxAnisotropy()
             : 0;
+        const atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
         const options = {
             renderQuality: this.data.renderQuality || 'standard',
             maxAnisotropy,
             reflectionProfile: this.data.reflectionProfile || 'balanced',
+            reflectionIntensityScale: getPmndrsNightReflectionIntensityScale(this, atmosphereConfig),
             ambientOcclusionPreset: this.getAmbientOcclusionPreset(),
             environmentMap: sceneObj ? (sceneObj.environment || null) : null
         };

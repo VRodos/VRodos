@@ -567,6 +567,10 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
             targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.5);
         }
 
+        if (options.environmentMap && typeof options.reflectionIntensityScale === 'number') {
+            targetEnvMapIntensity *= options.reflectionIntensityScale;
+        }
+
         material.envMapIntensity = targetEnvMapIntensity;
     }
 

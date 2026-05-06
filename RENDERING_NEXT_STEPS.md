@@ -31,6 +31,7 @@ This tracker is the live source for the compiled-scene PMNDRS/Takram rendering p
 - Resolved 2026-04-29: Horizon PMNDRS/Takram sky now uses black effective `groundAlbedo` whenever Takram ground is disabled, avoiding the hard albedo band at the horizon.
 - Resolved 2026-05-06: Built-in PMNDRS LUT compile options were manually smoke-tested in compiled scenes, including the v1 look controls and strength handling.
 - Resolved 2026-05-06: Takram celestial mode v1 added manual/preset-time compile settings, time-of-day presets, compiled `scene-settings` serialization, and runtime preset resolution.
+- Resolved 2026-05-06: Horizon PMNDRS `preset-time/night` helper lighting now uses dim moonlight or near-black fallback instead of daytime helper-light intensities.
 
 ## Execution Plan
 
@@ -137,6 +138,23 @@ Verification:
 - PHP syntax checks passed for edited compiler and scene CPT files.
 - `npm.cmd run lint` passed with existing warnings.
 - Manual compiled-scene smoke remains the next verification step.
+
+### 2026-05-06 - Fix: Horizon PMNDRS night helper lighting
+
+Status: implemented; visual smoke pending.
+
+Changes:
+- `preset-time/night` now caps Horizon PMNDRS helper lights to dim cool moonlight when the moon path is enabled.
+- If the moon path is disabled, Horizon PMNDRS helper lights fall back to near black.
+- Night helper key direction follows the local moon vector instead of the sun vector.
+- HDR/scene-probe env-map intensity is scaled down at night without changing authored material roughness or metalness.
+- Horizon diagnostics now report helper direction and night reflection scale.
+
+Verification:
+- `node --check` passed for edited runtime JS.
+- `npm.cmd run lint` passed with existing warnings.
+- `git diff --check` passed.
+- Manual smoke should confirm the black sky remains, scene readability is dim, and the road no longer gets a bright daytime specular streak.
 
 ## Future Backlog
 

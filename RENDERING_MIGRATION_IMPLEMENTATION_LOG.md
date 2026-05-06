@@ -88,6 +88,14 @@ Completed work:
 - Runtime `preset-time` resolves through the existing Takram sun-direction helper path; `manual` preserves existing sun slider behavior.
 - Night preset moon behavior is controlled through `pmndrsMoonEnabled`, so authors can override it without adding stars, probes, geospatial UI, or clouds in this phase.
 
+### PMNDRS Horizon night lighting fix
+
+- `preset-time/night` no longer reuses daytime Horizon helper-light intensity.
+- Night helper lighting uses dim cool moonlight when `pmndrsMoonEnabled` is true, and a near-black fallback when it is false.
+- The Horizon helper key direction follows the local moon vector for night moonlight.
+- Runtime env-map reflection intensity is reduced for night HDR/scene-probe reflections without changing authored road/material roughness.
+- PMNDRS Horizon diagnostics now include helper direction and night reflection scale.
+
 ### Native PMNDRS SSAO promotion
 
 - Promoted PMNDRS native AO to the default backend using `POSTPROCESSING.NormalPass` and `POSTPROCESSING.SSAOEffect`.
@@ -123,3 +131,5 @@ Manual smoke:
 - Horizon and non-Horizon PMNDRS AO scenes with default native SSAO.
 - Horizon and non-Horizon PMNDRS scenes with each Takram celestial preset.
 - Existing manually tuned PMNDRS/Takram scene remains visually unchanged in `manual` mode.
+- Horizon PMNDRS `preset-time/night` with no HDR/scene-probe reflection should have no bright road light streak.
+- Horizon PMNDRS `preset-time/night` with HDR or scene-probe reflection should keep reflections subdued.
