@@ -476,7 +476,7 @@
 								<div class="tw-flex tw-items-center tw-justify-between tw-gap-3">
 									<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 										<input id="compilePmndrsAtmosphereToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Enable Takram atmosphere and aerial perspective in the PMNDRS pipeline.">Atmosphere</span>
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Enable Takram atmosphere in the PMNDRS pipeline.">Atmosphere</span>
 									</label>
 								</div>
 
@@ -510,6 +510,7 @@
 											<select id="compilePmndrsCelestialModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 												<option value="manual">Manual</option>
 												<option value="preset-time">Preset Time</option>
+												<option value="datetime">Date/Time</option>
 											</select>
 										</label>
 										<label id="compilePmndrsCelestialTimePresetWrapper" class="tw-form-control tw-w-full">
@@ -521,6 +522,43 @@
 												<option value="sunset">Sunset</option>
 												<option value="night">Night</option>
 											</select>
+										</label>
+									</div>
+
+									<div id="compilePmndrsCelestialDateTimeWrapper" class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<label class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">UTC Date</span>
+											<input id="compilePmndrsCelestialDateInput" type="date" value="2026-06-21" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1">
+										</label>
+										<label class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">UTC Time</span>
+											<input id="compilePmndrsCelestialUtcTimeInput" type="time" value="12:00" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1">
+										</label>
+									</div>
+
+									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+											<input id="compilePmndrsGeospatialToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Use latitude, longitude, and altitude to anchor the Takram world-to-ECEF frame.">Geospatial Frame</span>
+										</label>
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+											<input id="compilePmndrsAerialPerspectiveToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Experimental Takram AerialPerspectiveEffect for Horizon revalidation.">Horizon Aerial</span>
+										</label>
+									</div>
+
+									<div class="tw-grid tw-grid-cols-3 tw-gap-3">
+										<label class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Latitude</span>
+											<input id="compilePmndrsGeospatialLatitudeInput" type="number" min="-90" max="90" step="0.0001" value="0" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1">
+										</label>
+										<label class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Longitude</span>
+											<input id="compilePmndrsGeospatialLongitudeInput" type="number" min="-180" max="180" step="0.0001" value="0" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1">
+										</label>
+										<label class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Altitude M</span>
+											<input id="compilePmndrsGeospatialAltitudeInput" type="number" min="-500" max="20000" step="1" value="0" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1">
 										</label>
 									</div>
 

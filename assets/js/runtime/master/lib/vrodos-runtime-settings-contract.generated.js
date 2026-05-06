@@ -145,13 +145,45 @@
                 "cinematic"
             ]
         },
+        "pmndrsAerialPerspectiveEnabled": {
+            "metadataKey": "aframePmndrsAerialPerspectiveEnabled",
+            "type": "boolean",
+            "default": false
+        },
+        "pmndrsGeospatialEnabled": {
+            "metadataKey": "aframePmndrsGeospatialEnabled",
+            "type": "boolean",
+            "default": false
+        },
+        "pmndrsGeospatialLatitudeDeg": {
+            "metadataKey": "aframePmndrsGeospatialLatitudeDeg",
+            "type": "number",
+            "default": 0,
+            "min": -90,
+            "max": 90
+        },
+        "pmndrsGeospatialLongitudeDeg": {
+            "metadataKey": "aframePmndrsGeospatialLongitudeDeg",
+            "type": "number",
+            "default": 0,
+            "min": -180,
+            "max": 180
+        },
+        "pmndrsGeospatialAltitudeMeters": {
+            "metadataKey": "aframePmndrsGeospatialAltitudeMeters",
+            "type": "number",
+            "default": 0,
+            "min": -500,
+            "max": 20000
+        },
         "pmndrsCelestialMode": {
             "metadataKey": "aframePmndrsCelestialMode",
             "type": "enum",
             "default": "manual",
             "allowed": [
                 "manual",
-                "preset-time"
+                "preset-time",
+                "datetime"
             ]
         },
         "pmndrsCelestialTimePreset": {
@@ -165,6 +197,18 @@
                 "sunset",
                 "night"
             ]
+        },
+        "pmndrsCelestialDate": {
+            "metadataKey": "aframePmndrsCelestialDate",
+            "type": "string",
+            "default": "2026-06-21",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "pmndrsCelestialUtcTime": {
+            "metadataKey": "aframePmndrsCelestialUtcTime",
+            "type": "string",
+            "default": "12:00",
+            "pattern": "^\\d{2}:\\d{2}$"
         },
         "pmndrsSunElevationDeg": {
             "metadataKey": "aframePmndrsSunElevationDeg",

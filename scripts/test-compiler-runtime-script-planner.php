@@ -110,6 +110,12 @@ vrodos_assert_same(
 );
 
 vrodos_assert_same(
+	[ 'scene-components', 'core-runtime', 'pmndrs-postprocessing-vendor', 'pmndrs-postfx', 'aframe-components' ],
+	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => false, 'aframePmndrsGeospatialEnabled' => true ] ) ),
+	'PMNDRS geospatial disabled by Takram atmosphere gate'
+);
+
+vrodos_assert_same(
 	[ 'scene-components', 'core-runtime', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'pmndrs-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true ] ) ),
 	'PMNDRS with Takram'

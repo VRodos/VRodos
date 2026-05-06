@@ -334,9 +334,14 @@
         return hasPmndrsDebugFlag('pmndrsAADebugOverlay', 'vrodos_debug_pmndrs_aa');
     }
 
+    function shouldEnablePmndrsAerialPerspective(self) {
+        return readPmndrsBool(self, 'pmndrsAerialPerspectiveEnabled') ||
+            (isHorizonBackground(self) &&
+                hasPmndrsDebugFlag('enablePmndrsHorizonAerial', 'vrodos_debug_enable_pmndrs_horizon_aerial'));
+    }
+
     function shouldEnablePmndrsHorizonAerial(self) {
-        return isHorizonBackground(self) &&
-            hasPmndrsDebugFlag('enablePmndrsHorizonAerial', 'vrodos_debug_enable_pmndrs_horizon_aerial');
+        return isHorizonBackground(self) && shouldEnablePmndrsAerialPerspective(self);
     }
 
     function getPmndrsHorizonFoliageAlphaTestTarget() {
@@ -926,7 +931,7 @@
             return shouldEnablePmndrsHorizonAerial(self) ? 'atmosphere:horizon-aerial' : 'atmosphere:horizon-sky';
         }
 
-        return 'atmosphere:world';
+        return shouldEnablePmndrsAerialPerspective(self) ? 'atmosphere:world-aerial' : 'atmosphere:world-sky';
     }
 
     function disposePmndrsNativeSsaoResources(self) {
@@ -1076,7 +1081,7 @@
             this._pmndrsMsaaFallbackReason = 'ao-disables-msaa';
         }
 
-        if (atmosphereConfig && atmosphereConfig.enabled && (!isHorizonBackground(this) || shouldEnablePmndrsHorizonAerial(this))) {
+        if (atmosphereConfig && atmosphereConfig.enabled && shouldEnablePmndrsAerialPerspective(this)) {
             const VTA = window.VRODOS_TAKRAM_ATMOSPHERE;
             const atmosphereState = (typeof this.ensurePmndrsAtmosphereResources === 'function') ? this.ensurePmndrsAtmosphereResources() : null;
             const useHorizonAerial = shouldEnablePmndrsHorizonAerial(this);
@@ -1099,7 +1104,7 @@
                         ground: atmosphereConfig.groundEnabled
                     });
                     if (useHorizonAerial && !this._pmndrsHorizonAerialWarned) {
-                        console.info('[VRodos] PMNDRS Horizon AerialPerspectiveEffect experimental path enabled via ?vrodos_debug_enable_pmndrs_horizon_aerial=1. Takram SkyMaterial ownership is bypassed for this scene so the post-process aerial path can be re-validated on r181.');
+                        console.info('[VRodos] PMNDRS Horizon AerialPerspectiveEffect experimental path enabled. Takram SkyMaterial ownership is bypassed for this scene so the post-process aerial path can be re-validated on r181.');
                         this._pmndrsHorizonAerialWarned = true;
                     }
                     if (typeof this.applyPmndrsAtmosphereConfigToTarget === 'function') {
@@ -1126,13 +1131,12 @@
                 console.info('[VRodos] PMNDRS atmosphere requested but Takram atmosphere resources are not ready - using fallback horizon visuals.');
                 this._pmndrsAtmosphereWarned = true;
             }
-        } else if (atmosphereConfig && atmosphereConfig.enabled && isHorizonBackground(this)) {
-            // Horizon keeps using Takram SkyMaterial directly. The post-process
+        } else if (atmosphereConfig && atmosphereConfig.enabled) {
+            // Takram atmosphere keeps using SkyMaterial directly unless the
+            // explicit post-process aerial path is enabled. On Horizon, the
             // AerialPerspectiveEffect triggers repeated depth blit errors on the
             // current pinned A-Frame runtime, which also manifests visually as an
-            // opaque white ground cap over the horizon. Use the explicit debug
-            // opt-in above to re-test the full post-process aerial path on r181
-            // without flipping the shipped default.
+            // opaque white ground cap over the horizon.
             this.pmndrsAerialPerspectiveEffect = null;
             restoreAllPmndrsHorizonFoliageMaterials(this);
         }

@@ -89,6 +89,14 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsCelestialMode: document.getElementById('compilePmndrsCelestialModeSelect'),
             pmndrsCelestialTimePresetWrapper: document.getElementById('compilePmndrsCelestialTimePresetWrapper'),
             pmndrsCelestialTimePreset: document.getElementById('compilePmndrsCelestialTimePresetSelect'),
+            pmndrsCelestialDateTimeWrapper: document.getElementById('compilePmndrsCelestialDateTimeWrapper'),
+            pmndrsCelestialDate: document.getElementById('compilePmndrsCelestialDateInput'),
+            pmndrsCelestialUtcTime: document.getElementById('compilePmndrsCelestialUtcTimeInput'),
+            pmndrsGeospatial: document.getElementById('compilePmndrsGeospatialToggle'),
+            pmndrsGeospatialLatitude: document.getElementById('compilePmndrsGeospatialLatitudeInput'),
+            pmndrsGeospatialLongitude: document.getElementById('compilePmndrsGeospatialLongitudeInput'),
+            pmndrsGeospatialAltitude: document.getElementById('compilePmndrsGeospatialAltitudeInput'),
+            pmndrsAerialPerspective: document.getElementById('compilePmndrsAerialPerspectiveToggle'),
             pmndrsAtmosphereAdvanced: document.getElementById('compilePmndrsAtmosphereAdvanced'),
             pmndrsSunElevation: document.getElementById('compilePmndrsSunElevationSlider'),
             pmndrsSunElevationValue: document.getElementById('compilePmndrsSunElevationValue'),
@@ -259,6 +267,23 @@ window.addEventListener('DOMContentLoaded', () => {
         if (!VRODOS.editor.envir.scene.aframePmndrsAtmosphereQuality) {
             VRODOS.editor.envir.scene.aframePmndrsAtmosphereQuality = Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
         }
+        if (typeof VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled === 'undefined') {
+            VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.aerialPerspectiveEnabled;
+        }
+        if (typeof VRODOS.editor.envir.scene.aframePmndrsGeospatialEnabled === 'undefined') {
+            VRODOS.editor.envir.scene.aframePmndrsGeospatialEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialEnabled;
+        }
+        if (typeof VRODOS.editor.envir.scene.aframePmndrsGeospatialLatitudeDeg !== 'number') {
+            VRODOS.editor.envir.scene.aframePmndrsGeospatialLatitudeDeg = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsGeospatialLatitudeDeg, -90, 90, Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLatitudeDeg);
+        }
+        if (typeof VRODOS.editor.envir.scene.aframePmndrsGeospatialLongitudeDeg !== 'number') {
+            VRODOS.editor.envir.scene.aframePmndrsGeospatialLongitudeDeg = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsGeospatialLongitudeDeg, -180, 180, Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLongitudeDeg);
+        }
+        if (typeof VRODOS.editor.envir.scene.aframePmndrsGeospatialAltitudeMeters !== 'number') {
+            VRODOS.editor.envir.scene.aframePmndrsGeospatialAltitudeMeters = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsGeospatialAltitudeMeters, -500, 20000, Shared.PMNDRS_TWEAK_DEFAULTS.geospatialAltitudeMeters);
+        }
+        VRODOS.editor.envir.scene.aframePmndrsCelestialDate = VRodosCompileUI.Atmosphere.normalizeDate(VRODOS.editor.envir.scene.aframePmndrsCelestialDate, Shared.PMNDRS_TWEAK_DEFAULTS.celestialDate);
+        VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime = VRodosCompileUI.Atmosphere.normalizeUtcTime(VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime, Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime);
         if (typeof VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg !== 'number') {
             VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg, -10, 85, Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
         }
@@ -697,6 +722,31 @@ window.addEventListener('DOMContentLoaded', () => {
                 ? VRodosCompileUI.Atmosphere.normalizeCelestialTimePreset(VRODOS.editor.envir.scene.aframePmndrsCelestialTimePreset)
                 : Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset;
         }
+        if (controls.pmndrsCelestialDate) {
+            controls.pmndrsCelestialDate.value = VRODOS.editor.envir && VRODOS.editor.envir.scene
+                ? VRodosCompileUI.Atmosphere.normalizeDate(VRODOS.editor.envir.scene.aframePmndrsCelestialDate, Shared.PMNDRS_TWEAK_DEFAULTS.celestialDate)
+                : Shared.PMNDRS_TWEAK_DEFAULTS.celestialDate;
+        }
+        if (controls.pmndrsCelestialUtcTime) {
+            controls.pmndrsCelestialUtcTime.value = VRODOS.editor.envir && VRODOS.editor.envir.scene
+                ? VRodosCompileUI.Atmosphere.normalizeUtcTime(VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime, Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime)
+                : Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime;
+        }
+        if (controls.pmndrsGeospatial) {
+            controls.pmndrsGeospatial.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsGeospatialEnabled);
+        }
+        if (controls.pmndrsAerialPerspective) {
+            controls.pmndrsAerialPerspective.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled);
+        }
+        if (controls.pmndrsGeospatialLatitude) {
+            controls.pmndrsGeospatialLatitude.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsGeospatialLatitudeDeg : Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLatitudeDeg, -90, 90, Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLatitudeDeg);
+        }
+        if (controls.pmndrsGeospatialLongitude) {
+            controls.pmndrsGeospatialLongitude.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsGeospatialLongitudeDeg : Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLongitudeDeg, -180, 180, Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLongitudeDeg);
+        }
+        if (controls.pmndrsGeospatialAltitude) {
+            controls.pmndrsGeospatialAltitude.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsGeospatialAltitudeMeters : Shared.PMNDRS_TWEAK_DEFAULTS.geospatialAltitudeMeters, -500, 20000, Shared.PMNDRS_TWEAK_DEFAULTS.geospatialAltitudeMeters);
+        }
         const lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
             VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframeHorizonSkyPreset : 'natural',
             Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset
@@ -776,6 +826,9 @@ window.addEventListener('DOMContentLoaded', () => {
             if (controls.pmndrsMoon) {
                 controls.pmndrsMoon.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsMoonEnabled);
             }
+        }
+        if (resolvedCelestialMode === 'datetime' && controls.pmndrsMoon) {
+            controls.pmndrsMoon.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsMoonEnabled);
         }
         if (controls.pmndrsHorizonKeyLightIntensity) {
             controls.pmndrsHorizonKeyLightIntensity.value = Shared.clampNumber(
@@ -954,7 +1007,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (el) {
             el.addEventListener('change', () => {
                 const presetTimeMoonOverride = el === controls.pmndrsMoon &&
-                    VRodosCompileUI.Atmosphere.normalizeCelestialMode(controls.pmndrsCelestialMode ? controls.pmndrsCelestialMode.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialMode) === 'preset-time';
+                    ['preset-time', 'datetime'].indexOf(VRodosCompileUI.Atmosphere.normalizeCelestialMode(controls.pmndrsCelestialMode ? controls.pmndrsCelestialMode.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialMode)) !== -1;
                 if (!presetTimeMoonOverride) {
                     VRodosCompileUI.Atmosphere.markCustom(controls);
                 }
@@ -1007,6 +1060,31 @@ window.addEventListener('DOMContentLoaded', () => {
             VRodosCompileUI.Atmosphere.syncToScene(controls);
         });
     }
+    [controls.pmndrsCelestialDate, controls.pmndrsCelestialUtcTime].forEach((el) => {
+        if (el) {
+            el.addEventListener('change', () => {
+                if (controls.pmndrsCelestialMode) {
+                    controls.pmndrsCelestialMode.value = 'datetime';
+                }
+                syncCompilePostFxState();
+                VRodosCompileUI.Atmosphere.syncToScene(controls);
+            });
+        }
+    });
+    [
+        controls.pmndrsGeospatial,
+        controls.pmndrsAerialPerspective,
+        controls.pmndrsGeospatialLatitude,
+        controls.pmndrsGeospatialLongitude,
+        controls.pmndrsGeospatialAltitude
+    ].forEach((el) => {
+        if (el) {
+            el.addEventListener('change', () => {
+                syncCompilePostFxState();
+                VRodosCompileUI.Atmosphere.syncToScene(controls);
+            });
+        }
+    });
     if (controls.pmndrsAtmospherePreset) {
         controls.pmndrsAtmospherePreset.addEventListener('change', () => {
             const preset = VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset.value);
@@ -1064,6 +1142,13 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsAtmosphereQuality) c.pmndrsAtmosphereQuality.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
             if (c.pmndrsCelestialMode) c.pmndrsCelestialMode.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialMode;
             if (c.pmndrsCelestialTimePreset) c.pmndrsCelestialTimePreset.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset;
+            if (c.pmndrsCelestialDate) c.pmndrsCelestialDate.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialDate;
+            if (c.pmndrsCelestialUtcTime) c.pmndrsCelestialUtcTime.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime;
+            if (c.pmndrsGeospatial) c.pmndrsGeospatial.checked = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialEnabled;
+            if (c.pmndrsAerialPerspective) c.pmndrsAerialPerspective.checked = Shared.PMNDRS_TWEAK_DEFAULTS.aerialPerspectiveEnabled;
+            if (c.pmndrsGeospatialLatitude) c.pmndrsGeospatialLatitude.value = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLatitudeDeg;
+            if (c.pmndrsGeospatialLongitude) c.pmndrsGeospatialLongitude.value = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLongitudeDeg;
+            if (c.pmndrsGeospatialAltitude) c.pmndrsGeospatialAltitude.value = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialAltitudeMeters;
             const lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
                 VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframeHorizonSkyPreset : 'natural',
                 Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset

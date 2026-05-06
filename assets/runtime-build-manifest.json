@@ -158,7 +158,9 @@
       "dependencies": [],
       "features": [
         "takram-atmosphere",
-        "pmndrs-atmosphere"
+        "pmndrs-atmosphere",
+        "takram-celestial",
+        "takram-geospatial"
       ],
       "generatedBy": "build:three"
     },

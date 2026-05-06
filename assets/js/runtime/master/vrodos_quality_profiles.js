@@ -7,6 +7,8 @@
     const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 0.0047;
     const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.18;
+    const WGS84_EQUATORIAL_RADIUS = 6378137;
+    const WGS84_POLAR_RADIUS = 6356752.3142451793;
     const runtimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
     const PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS = runtimeSettingsContract.horizonHelperLightPresets || {
         natural: {
@@ -154,7 +156,10 @@
     }
 
     function normalizePmndrsCelestialMode(value) {
-        return value === 'preset-time' ? 'preset-time' : 'manual';
+        if (value === 'preset-time' || value === 'datetime') {
+            return value;
+        }
+        return 'manual';
     }
 
     function normalizePmndrsCelestialTimePreset(value) {
@@ -168,6 +173,27 @@
             default:
                 return 'midday';
         }
+    }
+
+    function normalizePmndrsDate(value, fallback) {
+        const candidate = typeof value === 'string' ? value.trim() : '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(candidate)) {
+            return candidate;
+        }
+        return fallback || '2026-06-21';
+    }
+
+    function normalizePmndrsUtcTime(value, fallback) {
+        const candidate = typeof value === 'string' ? value.trim() : '';
+        if (/^\d{2}:\d{2}$/.test(candidate)) {
+            const parts = candidate.split(':');
+            const hour = parseInt(parts[0], 10);
+            const minute = parseInt(parts[1], 10);
+            if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+                return candidate;
+            }
+        }
+        return fallback || '12:00';
     }
 
     function lerpNumber(a, b, t) {
@@ -246,8 +272,8 @@
 
     function isPmndrsPresetTimeNight(config) {
         return Boolean(config &&
-            config.celestialMode === 'preset-time' &&
-            config.celestialTimePreset === 'night');
+            ((config.celestialMode === 'preset-time' && config.celestialTimePreset === 'night') ||
+                (config.celestialMode === 'datetime' && typeof config.sunElevationDeg === 'number' && config.sunElevationDeg < -2)));
     }
 
     function getPmndrsNightReflectionIntensityScale(self, config, reflectionSource) {
@@ -377,14 +403,114 @@
         ).normalize();
     }
 
-    function buildPmndrsEcefSunDirection(localSunDirection) {
+    function getPmndrsDateObject(dateText, utcTimeText) {
+        const date = normalizePmndrsDate(dateText);
+        const time = normalizePmndrsUtcTime(utcTimeText);
+        const parsed = new Date(`${date  }T${  time  }:00Z`);
+        if (isNaN(parsed.getTime())) {
+            return new Date('2026-06-21T12:00:00Z');
+        }
+        return parsed;
+    }
+
+    function buildPmndrsGeospatialFrame(latitudeDeg, longitudeDeg, altitudeMeters) {
+        const lat = THREE.MathUtils.degToRad(clampPmndrsNumber(latitudeDeg, -90, 90, 0));
+        const lon = THREE.MathUtils.degToRad(clampPmndrsNumber(longitudeDeg, -180, 180, 0));
+        const height = clampPmndrsNumber(altitudeMeters, -500, 20000, 0);
+        const sinLat = Math.sin(lat);
+        const cosLat = Math.cos(lat);
+        const sinLon = Math.sin(lon);
+        const cosLon = Math.cos(lon);
+        const a = WGS84_EQUATORIAL_RADIUS;
+        const b = WGS84_POLAR_RADIUS;
+        const e2 = 1 - ((b * b) / (a * a));
+        const n = a / Math.sqrt(1 - (e2 * sinLat * sinLat));
+        const position = new THREE.Vector3(
+            (n + height) * cosLat * cosLon,
+            (n + height) * cosLat * sinLon,
+            ((n * (1 - e2)) + height) * sinLat
+        );
+        const up = new THREE.Vector3(cosLat * cosLon, cosLat * sinLon, sinLat).normalize();
+        const east = new THREE.Vector3(-sinLon, cosLon, 0);
+        if (east.lengthSq() < 0.000001) {
+            east.set(0, 1, 0);
+        }
+        east.normalize();
+        const north = new THREE.Vector3().crossVectors(up, east).normalize();
+        const south = north.clone().multiplyScalar(-1);
+        const matrix = new THREE.Matrix4().makeBasis(east, up, south).setPosition(position);
+
+        return {
+            latitudeDeg: THREE.MathUtils.radToDeg(lat),
+            longitudeDeg: THREE.MathUtils.radToDeg(lon),
+            altitudeMeters: height,
+            position,
+            east,
+            up,
+            north,
+            south,
+            matrix
+        };
+    }
+
+    function getPmndrsGeospatialFrame(config) {
+        if (!config || !config.geospatialEnabled) {
+            return null;
+        }
+        if (!config._geospatialFrame) {
+            config._geospatialFrame = buildPmndrsGeospatialFrame(
+                config.geospatialLatitudeDeg,
+                config.geospatialLongitudeDeg,
+                config.geospatialAltitudeMeters
+            );
+        }
+        return config._geospatialFrame;
+    }
+
+    function ecefDirectionToPmndrsLocal(direction, frame) {
+        if (!direction || !frame) {
+            return direction ? direction.clone().normalize() : new THREE.Vector3(0, 1, 0);
+        }
+        return new THREE.Vector3(
+            direction.dot(frame.east),
+            direction.dot(frame.up),
+            direction.dot(frame.south)
+        ).normalize();
+    }
+
+    function localDirectionToPmndrsEcef(localDirection, frame) {
+        if (!localDirection || !frame) {
+            return new THREE.Vector3(0, 1, 0);
+        }
+        return new THREE.Vector3()
+            .addScaledVector(frame.east, localDirection.x)
+            .addScaledVector(frame.up, localDirection.y)
+            .addScaledVector(frame.south, localDirection.z)
+            .normalize();
+    }
+
+    function applyLocalDirectionAngles(config) {
+        const local = config && config.localSunDirection ? config.localSunDirection : null;
+        if (!local) {
+            return;
+        }
+        config.sunElevationDeg = THREE.MathUtils.radToDeg(Math.asin(Math.max(-1, Math.min(1, local.y))));
+        config.sunAzimuthDeg = THREE.MathUtils.radToDeg(Math.atan2(local.x, -local.z));
+    }
+
+    function buildPmndrsEcefSunDirection(localSunDirection, config) {
         if (!localSunDirection) {
             return new THREE.Vector3(0, 1, 0);
         }
 
+        const frame = getPmndrsGeospatialFrame(config);
+        if (frame) {
+            return localDirectionToPmndrsEcef(localSunDirection, frame);
+        }
+
         // VRodos authored worlds use X=east, Y=up, Z=south so that -Z is the
         // natural forward/north-ish direction. Takram expects sunDirection in
-        // ECEF space, so we mirror X/Z into the ECEF frame anchored below.
+        // ECEF space, so we mirror X/Z into the default fixed frame anchored below.
         return new THREE.Vector3(
             -localSunDirection.x,
             localSunDirection.y,
@@ -396,7 +522,7 @@
         return sunDirection.clone().multiplyScalar(-1).normalize();
     }
 
-    function ensurePmndrsWorldToEcefMatrix(target) {
+    function ensurePmndrsWorldToEcefMatrix(target, config) {
         if (!target) {
             return null;
         }
@@ -406,23 +532,10 @@
             return null;
         }
 
-        let equatorialRadius = null;
-        if (target.ellipsoid && target.ellipsoid.radii) {
-            equatorialRadius = Math.max(
-                target.ellipsoid.radii.x || 0,
-                target.ellipsoid.radii.y || 0
-            );
-        }
-
-        if (!equatorialRadius && window.VRODOS_TAKRAM_ATMOSPHERE && window.VRODOS_TAKRAM_ATMOSPHERE.Ellipsoid && window.VRODOS_TAKRAM_ATMOSPHERE.Ellipsoid.WGS84) {
-            equatorialRadius = Math.max(
-                window.VRODOS_TAKRAM_ATMOSPHERE.Ellipsoid.WGS84.radii.x || 0,
-                window.VRODOS_TAKRAM_ATMOSPHERE.Ellipsoid.WGS84.radii.y || 0
-            );
-        }
-
-        if (!equatorialRadius || !isFinite(equatorialRadius)) {
-            equatorialRadius = 6378137;
+        const frame = getPmndrsGeospatialFrame(config);
+        if (frame) {
+            matrix.copy(frame.matrix);
+            return matrix;
         }
 
         // Takram expects an orthogonal world -> ECEF transform. VRodos authored
@@ -436,7 +549,7 @@
             new THREE.Vector3(-1, 0, 0), // local +X (east) -> ECEF west at +Y anchor
             new THREE.Vector3(0, 1, 0),  // local +Y (up)   -> ECEF up
             new THREE.Vector3(0, 0, -1)  // local +Z (south)-> ECEF south
-        ).setPosition(0, equatorialRadius, 0);
+        ).setPosition(0, WGS84_EQUATORIAL_RADIUS, 0);
         return matrix;
     }
 
@@ -785,7 +898,8 @@
 
     function shouldUsePmndrsHorizonAerialPerspectivePath(self) {
         return shouldUsePmndrsTakramHorizonPath(self) &&
-            hasPmndrsDebugFlag('enablePmndrsHorizonAerial', 'vrodos_debug_enable_pmndrs_horizon_aerial');
+            (readPmndrsAtmosphereBool(self, 'pmndrsAerialPerspectiveEnabled', false) ||
+                hasPmndrsDebugFlag('enablePmndrsHorizonAerial', 'vrodos_debug_enable_pmndrs_horizon_aerial'));
     }
 
     function formatVectorPosition(vector, distance, minY) {
@@ -922,7 +1036,7 @@
             state.moonDirectionECEF.copy(config.moonDirection);
         }
 
-        ensurePmndrsWorldToEcefMatrix(state);
+        ensurePmndrsWorldToEcefMatrix(state, config);
         state.anchorPositionECEF.setFromMatrixPosition(state.worldToECEFMatrix);
         return state;
     }
@@ -940,19 +1054,29 @@
         const preset = normalizePmndrsAtmospherePreset(this.data.pmndrsAtmospherePreset);
         const celestialMode = normalizePmndrsCelestialMode(this.data.pmndrsCelestialMode);
         const celestialTimePreset = normalizePmndrsCelestialTimePreset(this.data.pmndrsCelestialTimePreset);
+        const celestialDate = normalizePmndrsDate(this.data.pmndrsCelestialDate);
+        const celestialUtcTime = normalizePmndrsUtcTime(this.data.pmndrsCelestialUtcTime);
         const presetIntensity = readPmndrsAtmosphereNumber(this, 'pmndrsAtmospherePresetIntensity', 0, 1, 1);
         const resolvedLookPreset = celestialMode === 'preset-time' ? celestialTimePreset : preset;
         const presetDefaults = getPmndrsAtmosphereLookDefaults(resolvedLookPreset, presetIntensity);
-        const usesCustomValues = celestialMode === 'manual' && preset === 'custom';
+        const usesCustomValues = celestialMode !== 'preset-time' && preset === 'custom';
         const manualMoonEnabled = readPmndrsAtmosphereBool(this, 'pmndrsMoonEnabled', presetDefaults.moonEnabled);
+        const geospatialEnabled = readPmndrsAtmosphereBool(this, 'pmndrsGeospatialEnabled', false);
         const config = {
             enabled: this.data.postFXEngine === 'pmndrs' && this.data.pmndrsAtmosphereEnabled !== '0',
             preset,
             celestialMode,
             celestialTimePreset,
+            celestialDate,
+            celestialUtcTime,
             resolvedLookPreset,
             presetIntensity,
             quality,
+            geospatialEnabled,
+            geospatialLatitudeDeg: readPmndrsAtmosphereNumber(this, 'pmndrsGeospatialLatitudeDeg', -90, 90, 0),
+            geospatialLongitudeDeg: readPmndrsAtmosphereNumber(this, 'pmndrsGeospatialLongitudeDeg', -180, 180, 0),
+            geospatialAltitudeMeters: readPmndrsAtmosphereNumber(this, 'pmndrsGeospatialAltitudeMeters', -500, 20000, 0),
+            aerialPerspectiveEnabled: readPmndrsAtmosphereBool(this, 'pmndrsAerialPerspectiveEnabled', false),
             sunElevationDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunElevationDeg', -10, 85, presetDefaults.sunElevationDeg) : presetDefaults.sunElevationDeg,
             sunAzimuthDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunAzimuthDeg', -180, 180, presetDefaults.sunAzimuthDeg) : presetDefaults.sunAzimuthDeg,
             sunDistance: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunDistance', 1500, 20000, presetDefaults.sunDistance) : presetDefaults.sunDistance,
@@ -968,7 +1092,7 @@
             mieExtinctionScale: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsMieExtinctionScale', 0.1, 3, presetDefaults.mieExtinctionScale) : presetDefaults.mieExtinctionScale,
             miePhaseG: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsMiePhaseG', 0, 0.99, presetDefaults.miePhaseG) : presetDefaults.miePhaseG,
             absorptionScale: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsAbsorptionScale', 0.1, 3, presetDefaults.absorptionScale) : presetDefaults.absorptionScale,
-            moonEnabled: celestialMode === 'preset-time' ? manualMoonEnabled : (usesCustomValues ? manualMoonEnabled : presetDefaults.moonEnabled),
+            moonEnabled: (celestialMode === 'preset-time' || celestialMode === 'datetime') ? manualMoonEnabled : (usesCustomValues ? manualMoonEnabled : presetDefaults.moonEnabled),
             horizonKeyLightIntensity: readPmndrsAtmosphereNumber(
                 this,
                 'pmndrsHorizonKeyLightIntensity',
@@ -992,8 +1116,31 @@
 
         config.localSunDirection = buildPmndrsLocalSunDirection(config.sunElevationDeg, config.sunAzimuthDeg);
         config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection);
-        config.sunDirection = buildPmndrsEcefSunDirection(config.localSunDirection);
+        config.sunDirection = buildPmndrsEcefSunDirection(config.localSunDirection, config);
         config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
+
+        if (celestialMode === 'datetime' && window.VRODOS_TAKRAM_ATMOSPHERE) {
+            const frame = getPmndrsGeospatialFrame(config) || buildPmndrsGeospatialFrame(0, 90, 0);
+            const observerECEF = frame.position;
+            const date = getPmndrsDateObject(celestialDate, celestialUtcTime);
+            const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
+
+            if (typeof vta.getSunDirectionECEF === 'function') {
+                config.sunDirection = vta.getSunDirectionECEF(date, new THREE.Vector3(), observerECEF).normalize();
+                config.localSunDirection = frame ? ecefDirectionToPmndrsLocal(config.sunDirection, frame) : buildPmndrsLocalSunDirection(config.sunElevationDeg, config.sunAzimuthDeg);
+                applyLocalDirectionAngles(config);
+            }
+            if (typeof vta.getMoonDirectionECEF === 'function') {
+                config.moonDirection = vta.getMoonDirectionECEF(date, new THREE.Vector3(), observerECEF).normalize();
+                config.localMoonDirection = frame ? ecefDirectionToPmndrsLocal(config.moonDirection, frame) : buildPmndrsMoonDirection(config.localSunDirection);
+            } else {
+                config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
+                config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection);
+            }
+            if (typeof vta.getECIToECEFRotationMatrix === 'function') {
+                config.inertialToECEFMatrix = vta.getECIToECEFRotationMatrix(date, new THREE.Matrix4());
+            }
+        }
         syncPmndrsTakramHorizonState(this, config);
         return config;
     };
@@ -1082,7 +1229,7 @@
         if (target.blendMode && target.blendMode.opacity) {
             target.blendMode.opacity.value = config.aerialStrength;
         }
-        ensurePmndrsWorldToEcefMatrix(target);
+        ensurePmndrsWorldToEcefMatrix(target, config);
     };
 
     H.ensurePmndrsAtmosphereResources = function () {

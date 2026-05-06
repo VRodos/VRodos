@@ -118,8 +118,15 @@ class VRodos_Compiler_Scene_Settings {
 			'pmndrsAtmospherePreset'             => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmospherePreset' ),
 			'pmndrsAtmospherePresetIntensity'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmospherePresetIntensity' ),
 			'pmndrsAtmosphereQuality'            => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmosphereQuality' ),
+			'pmndrsAerialPerspectiveEnabled'     => $this->pmndrs_bool_attr( $metadata, 'pmndrsAerialPerspectiveEnabled' ),
+			'pmndrsGeospatialEnabled'            => $this->pmndrs_bool_attr( $metadata, 'pmndrsGeospatialEnabled' ),
+			'pmndrsGeospatialLatitudeDeg'        => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsGeospatialLatitudeDeg' ),
+			'pmndrsGeospatialLongitudeDeg'       => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsGeospatialLongitudeDeg' ),
+			'pmndrsGeospatialAltitudeMeters'     => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsGeospatialAltitudeMeters' ),
 			'pmndrsCelestialMode'                => $celestial_mode,
 			'pmndrsCelestialTimePreset'          => $celestial_time,
+			'pmndrsCelestialDate'                => $this->date_attr( $metadata, 'pmndrsCelestialDate' ),
+			'pmndrsCelestialUtcTime'             => $this->time_attr( $metadata, 'pmndrsCelestialUtcTime' ),
 			'pmndrsSunElevationDeg'              => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsSunElevationDeg' ),
 			'pmndrsSunAzimuthDeg'                => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsSunAzimuthDeg' ),
 			'pmndrsSunDistance'                  => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsSunDistance' ),
@@ -168,6 +175,20 @@ class VRodos_Compiler_Scene_Settings {
 	private function pmndrs_bool_attr( $metadata, string $scene_setting_key, bool $fallback = false ): string {
 		$value = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, $scene_setting_key, $fallback );
 		return $value ? 'true' : 'false';
+	}
+
+	private function date_attr( $metadata, string $scene_setting_key ): string {
+		$value = (string) VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, $scene_setting_key );
+		return preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ? $value : (string) VRodos_Runtime_Settings_Contract::default( $scene_setting_key );
+	}
+
+	private function time_attr( $metadata, string $scene_setting_key ): string {
+		$value = (string) VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, $scene_setting_key );
+		if ( preg_match( '/^([01]\d|2[0-3]):([0-5]\d)$/', $value ) ) {
+			return $value;
+		}
+
+		return (string) VRodos_Runtime_Settings_Contract::default( $scene_setting_key );
 	}
 
 	private function get_or_create_assets_container( DOMDocument $dom, DOMElement $ascene ): DOMElement {

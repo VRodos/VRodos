@@ -118,7 +118,10 @@ VRodosCompileUI.Atmosphere = (function () {
     }
 
     function normalizeCelestialMode(value) {
-        return value === 'preset-time' ? 'preset-time' : 'manual';
+        if (value === 'preset-time' || value === 'datetime') {
+            return value;
+        }
+        return 'manual';
     }
 
     function normalizeCelestialTimePreset(value) {
@@ -126,6 +129,27 @@ VRodosCompileUI.Atmosphere = (function () {
             return value;
         }
         return Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset;
+    }
+
+    function normalizeDate(value, fallback) {
+        const candidate = typeof value === 'string' ? value.trim() : '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(candidate)) {
+            return candidate;
+        }
+        return fallback || Shared.PMNDRS_TWEAK_DEFAULTS.celestialDate;
+    }
+
+    function normalizeUtcTime(value, fallback) {
+        const candidate = typeof value === 'string' ? value.trim() : '';
+        if (/^\d{2}:\d{2}$/.test(candidate)) {
+            const parts = candidate.split(':');
+            const hour = parseInt(parts[0], 10);
+            const minute = parseInt(parts[1], 10);
+            if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+                return candidate;
+            }
+        }
+        return fallback || Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime;
     }
 
     function lerpNumber(a, b, t) {
@@ -275,6 +299,11 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsAtmospherePreset,
             controls.pmndrsAtmospherePresetIntensity,
             controls.pmndrsAtmosphereQuality,
+            controls.pmndrsAerialPerspective,
+            controls.pmndrsGeospatial,
+            controls.pmndrsGeospatialLatitude,
+            controls.pmndrsGeospatialLongitude,
+            controls.pmndrsGeospatialAltitude,
             controls.pmndrsSunElevation,
             controls.pmndrsSunAzimuth,
             controls.pmndrsSunAngularRadius,
@@ -308,6 +337,28 @@ VRodosCompileUI.Atmosphere = (function () {
         if (controls.pmndrsCelestialTimePreset) {
             controls.pmndrsCelestialTimePreset.disabled = !presetTimeEnabled;
         }
+
+        const dateTimeEnabled = isEnabled && celestialMode === 'datetime';
+        if (controls.pmndrsCelestialDateTimeWrapper) {
+            controls.pmndrsCelestialDateTimeWrapper.style.display = dateTimeEnabled ? '' : 'none';
+        }
+        if (controls.pmndrsCelestialDate) {
+            controls.pmndrsCelestialDate.disabled = !dateTimeEnabled;
+        }
+        if (controls.pmndrsCelestialUtcTime) {
+            controls.pmndrsCelestialUtcTime.disabled = !dateTimeEnabled;
+        }
+
+        const geospatialEnabled = isEnabled && controls.pmndrsGeospatial && controls.pmndrsGeospatial.checked === true;
+        [
+            controls.pmndrsGeospatialLatitude,
+            controls.pmndrsGeospatialLongitude,
+            controls.pmndrsGeospatialAltitude
+        ].forEach((el) => {
+            if (el) {
+                el.disabled = !geospatialEnabled;
+            }
+        });
     }
 
     function syncToScene(controls) {
@@ -331,6 +382,13 @@ VRodosCompileUI.Atmosphere = (function () {
         VRODOS.editor.envir.scene.aframePmndrsAtmosphereQuality = normalizeQuality(controls.pmndrsAtmosphereQuality ? controls.pmndrsAtmosphereQuality.value : d.atmosphereQuality);
         VRODOS.editor.envir.scene.aframePmndrsCelestialMode = normalizeCelestialMode(controls.pmndrsCelestialMode ? controls.pmndrsCelestialMode.value : d.celestialMode);
         VRODOS.editor.envir.scene.aframePmndrsCelestialTimePreset = normalizeCelestialTimePreset(controls.pmndrsCelestialTimePreset ? controls.pmndrsCelestialTimePreset.value : d.celestialTimePreset);
+        VRODOS.editor.envir.scene.aframePmndrsCelestialDate = normalizeDate(controls.pmndrsCelestialDate ? controls.pmndrsCelestialDate.value : d.celestialDate, d.celestialDate);
+        VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime = normalizeUtcTime(controls.pmndrsCelestialUtcTime ? controls.pmndrsCelestialUtcTime.value : d.celestialUtcTime, d.celestialUtcTime);
+        VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled = (pmndrsRuntimeEnabled && controls.pmndrsAerialPerspective) ? controls.pmndrsAerialPerspective.checked === true : false;
+        VRODOS.editor.envir.scene.aframePmndrsGeospatialEnabled = (pmndrsRuntimeEnabled && controls.pmndrsGeospatial) ? controls.pmndrsGeospatial.checked === true : false;
+        VRODOS.editor.envir.scene.aframePmndrsGeospatialLatitudeDeg = Shared.clampNumber(controls.pmndrsGeospatialLatitude ? controls.pmndrsGeospatialLatitude.value : d.geospatialLatitudeDeg, -90, 90, d.geospatialLatitudeDeg);
+        VRODOS.editor.envir.scene.aframePmndrsGeospatialLongitudeDeg = Shared.clampNumber(controls.pmndrsGeospatialLongitude ? controls.pmndrsGeospatialLongitude.value : d.geospatialLongitudeDeg, -180, 180, d.geospatialLongitudeDeg);
+        VRODOS.editor.envir.scene.aframePmndrsGeospatialAltitudeMeters = Shared.clampNumber(controls.pmndrsGeospatialAltitude ? controls.pmndrsGeospatialAltitude.value : d.geospatialAltitudeMeters, -500, 20000, d.geospatialAltitudeMeters);
 
         VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg = Shared.clampNumber(controls.pmndrsSunElevation ? controls.pmndrsSunElevation.value : d.sunElevationDeg, -10, 85, d.sunElevationDeg);
         VRODOS.editor.envir.scene.aframePmndrsSunAzimuthDeg = Shared.clampNumber(controls.pmndrsSunAzimuth ? controls.pmndrsSunAzimuth.value : d.sunAzimuthDeg, -180, 180, d.sunAzimuthDeg);
@@ -390,7 +448,9 @@ VRodosCompileUI.Atmosphere = (function () {
         normalizeQuality,
         normalizePreset,
         normalizeCelestialMode,
-        normalizeCelestialTimePreset
+        normalizeCelestialTimePreset,
+        normalizeDate,
+        normalizeUtcTime
     };
 })();
 

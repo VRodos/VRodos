@@ -114,17 +114,60 @@
       "default": "balanced",
       "allowed": ["performance", "balanced", "quality", "cinematic"]
     },
+    "pmndrsAerialPerspectiveEnabled": {
+      "metadataKey": "aframePmndrsAerialPerspectiveEnabled",
+      "type": "boolean",
+      "default": false
+    },
+    "pmndrsGeospatialEnabled": {
+      "metadataKey": "aframePmndrsGeospatialEnabled",
+      "type": "boolean",
+      "default": false
+    },
+    "pmndrsGeospatialLatitudeDeg": {
+      "metadataKey": "aframePmndrsGeospatialLatitudeDeg",
+      "type": "number",
+      "default": 0.0,
+      "min": -90.0,
+      "max": 90.0
+    },
+    "pmndrsGeospatialLongitudeDeg": {
+      "metadataKey": "aframePmndrsGeospatialLongitudeDeg",
+      "type": "number",
+      "default": 0.0,
+      "min": -180.0,
+      "max": 180.0
+    },
+    "pmndrsGeospatialAltitudeMeters": {
+      "metadataKey": "aframePmndrsGeospatialAltitudeMeters",
+      "type": "number",
+      "default": 0.0,
+      "min": -500.0,
+      "max": 20000.0
+    },
     "pmndrsCelestialMode": {
       "metadataKey": "aframePmndrsCelestialMode",
       "type": "enum",
       "default": "manual",
-      "allowed": ["manual", "preset-time"]
+      "allowed": ["manual", "preset-time", "datetime"]
     },
     "pmndrsCelestialTimePreset": {
       "metadataKey": "aframePmndrsCelestialTimePreset",
       "type": "enum",
       "default": "midday",
       "allowed": ["sunrise", "midday", "golden-hour", "sunset", "night"]
+    },
+    "pmndrsCelestialDate": {
+      "metadataKey": "aframePmndrsCelestialDate",
+      "type": "string",
+      "default": "2026-06-21",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "pmndrsCelestialUtcTime": {
+      "metadataKey": "aframePmndrsCelestialUtcTime",
+      "type": "string",
+      "default": "12:00",
+      "pattern": "^\\d{2}:\\d{2}$"
     },
     "pmndrsSunElevationDeg": {
       "metadataKey": "aframePmndrsSunElevationDeg",
