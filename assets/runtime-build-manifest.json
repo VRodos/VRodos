@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "scripts/build-runtime-master-bundles.mjs",
+  "runtimeRoot": "assets/js/runtime/master/lib",
+  "chunks": {
+    "scene-components": {
+      "id": "scene-components",
+      "label": "Scene components",
+      "type": "script",
+      "file": "vrodos-runtime-scene-components.bundle.js",
+      "src": "js/master/lib/vrodos-runtime-scene-components.bundle.js",
+      "order": 10,
+      "dependencies": [],
+      "features": [
+        "scene-components",
+        "poi",
+        "media",
+        "audio",
+        "assessment"
+      ],
+      "sourceFiles": [
+        "assets/js/runtime/highlight_img.js",
+        "assets/js/runtime/components/poi-image_component.js",
+        "assets/js/runtime/components/chat_poi_component.js",
+        "assets/js/runtime/components/indicator_component.js",
+        "assets/js/runtime/components/poi-link_component.js",
+        "assets/js/runtime/components/door_component.js",
+        "assets/js/runtime/components/audio_component.js",
+        "assets/js/runtime/components/video_component.js",
+        "assets/js/runtime/components/vrodos_hypnotic_hover.component.js",
+        "assets/js/runtime/assessment/assessment-utils.js",
+        "assets/js/runtime/assessment/assessment-cefr-runtime.js",
+        "assets/js/runtime/assessment/assessment-renderers.js",
+        "assets/js/runtime/assessment/assessment-overlay-runtime.js",
+        "assets/js/runtime/components/immerse-assessment_component.js"
+      ],
+      "generatedBy": "build:runtime"
+    },
+    "core-runtime": {
+      "id": "core-runtime",
+      "label": "Core runtime",
+      "type": "script",
+      "file": "vrodos-runtime-core.bundle.js",
+      "src": "js/master/lib/vrodos-runtime-core.bundle.js",
+      "order": 20,
+      "dependencies": [],
+      "features": [
+        "runtime-core",
+        "ui",
+        "rendering",
+        "quality-profiles",
+        "scene-probe"
+      ],
+      "sourceFiles": [
+        "assets/js/runtime/master/lib/vrodos-runtime-settings-contract.generated.js",
+        "assets/js/runtime/master/vrodos_master_shared.js",
+        "assets/js/runtime/master/vrodos_ui_helpers.js",
+        "assets/js/runtime/master/vrodos_master_bootstrap.js",
+        "assets/js/runtime/master/vrodos_master_rendering.js",
+        "assets/js/runtime/master/vrodos_scene_probe.js",
+        "assets/js/runtime/master/vrodos_quality_profiles.js"
+      ],
+      "generatedBy": "build:runtime"
+    },
+    "legacy-postfx": {
+      "id": "legacy-postfx",
+      "label": "Legacy post-FX engine",
+      "type": "script",
+      "file": "vrodos-runtime-legacy-postfx.bundle.js",
+      "src": "js/master/lib/vrodos-runtime-legacy-postfx.bundle.js",
+      "order": 40,
+      "dependencies": [],
+      "features": [
+        "postfx",
+        "legacy-postfx",
+        "sao",
+        "ssr",
+        "taa",
+        "fxaa",
+        "bloom"
+      ],
+      "sourceFiles": [
+        "assets/js/runtime/master/vrodos_shaders_bloom.js",
+        "assets/js/runtime/master/vrodos_shaders_sao.js",
+        "assets/js/runtime/master/vrodos_shaders_fxaa.js",
+        "assets/js/runtime/master/vrodos_shaders_taa.js",
+        "assets/js/runtime/master/vrodos_shaders_ssr.js",
+        "assets/js/runtime/master/vrodos_shaders_composite.js",
+        "assets/js/runtime/master/vrodos_postprocessing.js"
+      ],
+      "generatedBy": "build:runtime"
+    },
+    "pmndrs-postfx": {
+      "id": "pmndrs-postfx",
+      "label": "PMNDRS post-FX adapter",
+      "type": "script",
+      "file": "vrodos-runtime-pmndrs-postfx.bundle.js",
+      "src": "js/master/lib/vrodos-runtime-pmndrs-postfx.bundle.js",
+      "order": 50,
+      "dependencies": [
+        "pmndrs-postprocessing-vendor"
+      ],
+      "features": [
+        "postfx",
+        "pmndrs-postfx"
+      ],
+      "sourceFiles": [
+        "assets/js/runtime/master/vrodos_postprocessing_pmndrs.js"
+      ],
+      "generatedBy": "build:runtime"
+    },
+    "aframe-components": {
+      "id": "aframe-components",
+      "label": "Master A-Frame components",
+      "type": "script",
+      "file": "vrodos-runtime-aframe-components.bundle.js",
+      "src": "js/master/lib/vrodos-runtime-aframe-components.bundle.js",
+      "order": 90,
+      "dependencies": [
+        "core-runtime"
+      ],
+      "features": [
+        "aframe-components",
+        "scene-settings",
+        "navigation",
+        "avatars"
+      ],
+      "sourceFiles": [
+        "assets/js/runtime/master/components/vrodos_scene_loader.component.js",
+        "assets/js/runtime/master/components/vrodos_avatar.component.js",
+        "assets/js/runtime/master/components/vrodos_scene_settings.component.js",
+        "assets/js/runtime/master/components/vrodos_navigation.component.js",
+        "assets/js/runtime/master/components/vrodos_misc.component.js"
+      ],
+      "generatedBy": "build:runtime"
+    },
+    "pmndrs-postprocessing-vendor": {
+      "id": "pmndrs-postprocessing-vendor",
+      "label": "PMNDRS postprocessing vendor",
+      "type": "script",
+      "file": "vrodos-postprocessing.bundle.js",
+      "src": "js/master/lib/vrodos-postprocessing.bundle.js",
+      "order": 35,
+      "dependencies": [],
+      "features": [
+        "pmndrs-vendor",
+        "postprocessing"
+      ],
+      "generatedBy": "build:three"
+    },
+    "takram-atmosphere": {
+      "id": "takram-atmosphere",
+      "label": "Takram atmosphere vendor",
+      "type": "script",
+      "file": "vrodos-takram-atmosphere.bundle.js",
+      "src": "js/master/lib/vrodos-takram-atmosphere.bundle.js",
+      "order": 45,
+      "dependencies": [],
+      "features": [
+        "takram-atmosphere",
+        "pmndrs-atmosphere"
+      ],
+      "generatedBy": "build:three"
+    },
+    "fps-meter": {
+      "id": "fps-meter",
+      "label": "FPS meter tooling",
+      "type": "inline-module",
+      "order": 30,
+      "dependencies": [],
+      "features": [
+        "fps-meter",
+        "debug-tooling"
+      ],
+      "moduleImport": "https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js",
+      "readyGlobal": "VRODOS_STATS_READY",
+      "global": "Stats",
+      "export": "default"
+    }
+  }
+}

@@ -49,7 +49,7 @@
     getSunDirectionECI: () => Ui,
     getSunLightColor: () => ei,
     skyLightProbeParametersDefaults: () => Si,
-    skyMaterialParametersDefaults: () => Ri,
+    skyMaterialParametersDefaults: () => _i,
     starsMaterialParametersDefaults: () => wi,
     sunDirectionalLightParametersDefaults: () => Di,
     toAstroTime: () => P0
@@ -6200,8 +6200,6 @@ uniform sampler3D higher_order_scattering_texture;
 #include "bruneton/common"
 #include "bruneton/runtime"
 
-#include "sky"
-
 uniform sampler2D normalBuffer;
 
 uniform mat4 projectionMatrix;
@@ -6212,10 +6210,13 @@ uniform float bottomRadius;
 uniform mat4 worldToECEFMatrix;
 uniform float geometricErrorCorrectionAmount;
 uniform vec3 sunDirection;
+uniform float cosSunAngularRadius;
 uniform vec3 moonDirection;
 uniform float moonAngularRadius;
 uniform float lunarRadianceScale;
 uniform float albedoScale;
+
+#include "sky"
 
 #ifdef HAS_LIGHTING_MASK
 uniform sampler2D lightingMaskBuffer;
@@ -6461,10 +6462,14 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
   }
   #endif // HAS_OVERLAY
 
+  vec3 rayDirection = normalize(vRayDirection);
+  vec3 dRDdx = dFdx(rayDirection);
+  vec3 dRDdy = dFdy(rayDirection);
+  float fragmentAngle = length(dRDdx + dRDdy) / length(rayDirection);
+
   float depth = readDepthValue(depthBuffer, uv);
   if (depth >= 1.0 - 1e-8) {
     #ifdef SKY
-    vec3 rayDirection = normalize(vRayDirection);
     outputColor.rgb = getSkyRadiance(
       vCameraPosition,
       rayDirection,
@@ -6472,7 +6477,8 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
       sunDirection,
       moonDirection,
       moonAngularRadius,
-      lunarRadianceScale
+      lunarRadianceScale,
+      fragmentAngle
     );
     outputColor.a = 1.0;
     #else // SKY
@@ -6501,9 +6507,9 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
   vec3 viewNormal;
   bool degenerateNormal = false;
   #ifdef RECONSTRUCT_NORMAL
-  vec3 dx = dFdx(viewPosition);
-  vec3 dy = dFdy(viewPosition);
-  viewNormal = normalize(cross(dx, dy));
+  vec3 dVPdx = dFdx(viewPosition);
+  vec3 dVPdy = dFdy(viewPosition);
+  viewNormal = normalize(cross(dVPdx, dVPdy));
   #elif defined(HAS_NORMALS)
   viewNormal = readNormal(uv, degenerateNormal);
   #endif // defined(HAS_NORMALS)
@@ -6649,7 +6655,8 @@ vec3 getSkyRadiance(
   const vec3 sunDirection,
   const vec3 moonDirection,
   const float moonAngularRadius,
-  const float lunarRadianceScale
+  const float lunarRadianceScale,
+  const float fragmentAngle
 ) {
   vec3 transmittance;
   vec3 radiance = GetSkyRadiance(
@@ -6663,15 +6670,9 @@ vec3 getSkyRadiance(
   // Rendering celestial objects without perspective doesn't make sense.
   #ifdef PERSPECTIVE_CAMERA
 
-  #if defined(SUN) || defined(MOON)
-  vec3 ddx = dFdx(rayDirection);
-  vec3 ddy = dFdy(rayDirection);
-  float fragmentAngle = length(ddx + ddy) / length(rayDirection);
-  #endif // defined(SUN) || defined(MOON)
-
   #ifdef SUN
   float viewDotSun = dot(rayDirection, sunDirection);
-  if (viewDotSun > cos(ATMOSPHERE.sun_angular_radius)) {
+  if (viewDotSun > cosSunAngularRadius) {
     float angle = acos(clamp(viewDotSun, -1.0, 1.0));
     float antialias = smoothstep(
       ATMOSPHERE.sun_angular_radius,
@@ -6743,7 +6744,7 @@ vec3 getSkyRadiance(
         reconstructNormal: c3,
         irradianceTexture: s = null,
         scatteringTexture: l3 = null,
-        transmittanceTexture: d3 = null,
+        transmittanceTexture: h2 = null,
         singleMieScatteringTexture: m3 = null,
         higherOrderScatteringTexture: f3 = null,
         ellipsoid: v3,
@@ -6804,6 +6805,7 @@ vec3 getSkyRadiance(
               altitudeCorrection: new Uniform(new Vector3()),
               geometricErrorCorrectionAmount: new Uniform(0),
               sunDirection: new Uniform((_a2 = x3 == null ? void 0 : x3.clone()) != null ? _a2 : new Vector3()),
+              cosSunAngularRadius: new Uniform(r4.sunAngularRadius),
               albedoScale: new Uniform(U3),
               moonDirection: new Uniform((_b2 = Z == null ? void 0 : Z.clone()) != null ? _b2 : new Vector3()),
               moonAngularRadius: new Uniform(i0),
@@ -6829,7 +6831,7 @@ vec3 getSkyRadiance(
               SKY_SPECTRAL_RADIANCE_TO_LUMINANCE: new Uniform(r4.skyRadianceToRelativeLuminance),
               irradiance_texture: new Uniform(s),
               scattering_texture: new Uniform(l3),
-              transmittance_texture: new Uniform(d3),
+              transmittance_texture: new Uniform(h2),
               single_mie_scattering_texture: new Uniform(null),
               higher_order_scattering_texture: new Uniform(null)
             })
@@ -6874,13 +6876,13 @@ vec3 getSkyRadiance(
       } catch {
         return;
       }
-      const d3 = o2.get("altitudeCorrection");
+      const h2 = o2.get("altitudeCorrection");
       this.correctAltitude ? X(
         l3,
         this.atmosphere.bottomRadius,
         this.ellipsoid,
-        d3.value
-      ) : d3.value.setScalar(0);
+        h2.value
+      ) : h2.value.setScalar(0);
     }
     updateOverlay() {
       let e3 = false;
@@ -6963,6 +6965,12 @@ vec3 getSkyRadiance(
     }
     get sunDirection() {
       return this.uniforms.get("sunDirection").value;
+    }
+    get sunAngularRadius() {
+      return this.uniforms.get("ATMOSPHERE").value.sun_angular_radius;
+    }
+    set sunAngularRadius(e3) {
+      this.uniforms.get("ATMOSPHERE").value.sun_angular_radius = e3, this.uniforms.get("cosSunAngularRadius").value = Math.cos(e3);
     }
     get albedoScale() {
       return this.uniforms.get("albedoScale").value;
@@ -7074,7 +7082,7 @@ vec3 getSkyRadiance(
         higherOrderScatteringTexture: c3 = null,
         ellipsoid: s,
         correctAltitude: l3,
-        sunDirection: d3,
+        sunDirection: h2,
         sunAngularRadius: m3,
         renderTargetCount: f3,
         ...v3
@@ -7089,7 +7097,8 @@ vec3 getSkyRadiance(
           cameraPosition: new Uniform(new Vector3()),
           worldToECEFMatrix: new Uniform(new Matrix4()),
           altitudeCorrection: new Uniform(new Vector3()),
-          sunDirection: new Uniform((_a2 = d3 == null ? void 0 : d3.clone()) != null ? _a2 : new Vector3()),
+          sunDirection: new Uniform((_a2 = h2 == null ? void 0 : h2.clone()) != null ? _a2 : new Vector3()),
+          cosSunAngularRadius: new Uniform(t2.sunAngularRadius),
           // Uniforms for atmosphere functions
           ATMOSPHERE: t2.toUniform(),
           SUN_SPECTRAL_RADIANCE_TO_LUMINANCE: new Uniform(t2.sunRadianceToRelativeLuminance),
@@ -7176,7 +7185,7 @@ vec3 getSkyRadiance(
       return this.uniforms.ATMOSPHERE.value.sun_angular_radius;
     }
     set sunAngularRadius(e3) {
-      this.uniforms.ATMOSPHERE.value.sun_angular_radius = e3;
+      this.uniforms.ATMOSPHERE.value.sun_angular_radius = e3, this.uniforms.cosSunAngularRadius.value = Math.cos(e3);
     }
     /** @package */
     get renderTargetCount() {
@@ -7982,10 +7991,10 @@ vec3 getSkyRadiance(
       return f3 % tr2 * x0;
     }
     const t2 = n4.tt / 36525, r4 = e3(128710479305e-5 + t2 * 1295965810481e-4), i3 = e3(335779.526232 + t2 * 17395272628478e-4), a3 = e3(107226070369e-5 + t2 * 1602961601209e-3), o2 = e3(450160.398036 - t2 * 69628905431e-4);
-    let c3 = Math.sin(o2), s = Math.cos(o2), l3 = (-172064161 - 174666 * t2) * c3 + 33386 * s, d3 = (92052331 + 9086 * t2) * s + 15377 * c3, m3 = 2 * (i3 - a3 + o2);
-    return c3 = Math.sin(m3), s = Math.cos(m3), l3 += (-13170906 - 1675 * t2) * c3 - 13696 * s, d3 += (5730336 - 3015 * t2) * s - 4587 * c3, m3 = 2 * (i3 + o2), c3 = Math.sin(m3), s = Math.cos(m3), l3 += (-2276413 - 234 * t2) * c3 + 2796 * s, d3 += (978459 - 485 * t2) * s + 1374 * c3, m3 = 2 * o2, c3 = Math.sin(m3), s = Math.cos(m3), l3 += (2074554 + 207 * t2) * c3 - 698 * s, d3 += (-897492 + 470 * t2) * s - 291 * c3, c3 = Math.sin(r4), s = Math.cos(r4), l3 += (1475877 - 3633 * t2) * c3 + 11817 * s, d3 += (73871 - 184 * t2) * s - 1924 * c3, {
+    let c3 = Math.sin(o2), s = Math.cos(o2), l3 = (-172064161 - 174666 * t2) * c3 + 33386 * s, h2 = (92052331 + 9086 * t2) * s + 15377 * c3, m3 = 2 * (i3 - a3 + o2);
+    return c3 = Math.sin(m3), s = Math.cos(m3), l3 += (-13170906 - 1675 * t2) * c3 - 13696 * s, h2 += (5730336 - 3015 * t2) * s - 4587 * c3, m3 = 2 * (i3 + o2), c3 = Math.sin(m3), s = Math.cos(m3), l3 += (-2276413 - 234 * t2) * c3 + 2796 * s, h2 += (978459 - 485 * t2) * s + 1374 * c3, m3 = 2 * o2, c3 = Math.sin(m3), s = Math.cos(m3), l3 += (2074554 + 207 * t2) * c3 - 698 * s, h2 += (-897492 + 470 * t2) * s - 291 * c3, c3 = Math.sin(r4), s = Math.cos(r4), l3 += (1475877 - 3633 * t2) * c3 + 11817 * s, h2 += (73871 - 184 * t2) * s - 1924 * c3, {
       dpsi: -135e-6 + l3 * 1e-7,
-      deps: 388e-6 + d3 * 1e-7
+      deps: 388e-6 + h2 * 1e-7
     };
   }
   function Nt2(n4) {
@@ -8020,50 +8029,50 @@ vec3 getSkyRadiance(
   }
   function mr2(n4) {
     const e3 = n4.tt / 36525;
-    function t2(_4, R5) {
+    function t2(R5, _4) {
       const A5 = [];
       let C4;
-      for (C4 = 0; C4 <= R5 - _4; ++C4)
+      for (C4 = 0; C4 <= _4 - R5; ++C4)
         A5.push(0);
-      return { min: _4, array: A5 };
+      return { min: R5, array: A5 };
     }
-    function r4(_4, R5, A5, C4) {
+    function r4(R5, _4, A5, C4) {
       const P3 = [];
-      for (let Q4 = 0; Q4 <= R5 - _4; ++Q4)
+      for (let Q4 = 0; Q4 <= _4 - R5; ++Q4)
         P3.push(t2(A5, C4));
-      return { min: _4, array: P3 };
+      return { min: R5, array: P3 };
     }
-    function i3(_4, R5, A5) {
-      const C4 = _4.array[R5 - _4.min];
+    function i3(R5, _4, A5) {
+      const C4 = R5.array[_4 - R5.min];
       return C4.array[A5 - C4.min];
     }
-    function a3(_4, R5, A5, C4) {
-      const P3 = _4.array[R5 - _4.min];
+    function a3(R5, _4, A5, C4) {
+      const P3 = R5.array[_4 - R5.min];
       P3.array[A5 - P3.min] = C4;
     }
-    let o2, c3, s, l3, d3, m3, f3, v3, T3, E4, x3, y3, I3, N3, b4, U3, z4, F2, q2, Z, i0, a0, J2, N0 = r4(-6, 6, 1, 4), p0 = r4(-6, 6, 1, 4);
-    function z0(_4, R5) {
-      return i3(N0, _4, R5);
+    let o2, c3, s, l3, h2, m3, f3, v3, T3, E4, x3, y3, I3, N3, b4, U3, z4, F2, q2, Z, i0, a0, J2, N0 = r4(-6, 6, 1, 4), p0 = r4(-6, 6, 1, 4);
+    function z0(R5, _4) {
+      return i3(N0, R5, _4);
     }
-    function k0(_4, R5) {
-      return i3(p0, _4, R5);
+    function k0(R5, _4) {
+      return i3(p0, R5, _4);
     }
-    function V0(_4, R5, A5) {
-      return a3(N0, _4, R5, A5);
+    function V0(R5, _4, A5) {
+      return a3(N0, R5, _4, A5);
     }
-    function B0(_4, R5, A5) {
-      return a3(p0, _4, R5, A5);
+    function B0(R5, _4, A5) {
+      return a3(p0, R5, _4, A5);
     }
-    function $e(_4, R5, A5, C4, P3) {
-      P3(_4 * A5 - R5 * C4, R5 * A5 + _4 * C4);
+    function $e(R5, _4, A5, C4, P3) {
+      P3(R5 * A5 - _4 * C4, _4 * A5 + R5 * C4);
     }
-    function M2(_4) {
-      return Math.sin(X2 * _4);
+    function M2(R5) {
+      return Math.sin(X2 * R5);
     }
     f3 = e3 * e3, T3 = 0, J2 = 0, x3 = 0, y3 = 3422.7;
     var W0 = M2(0.19833 + 0.05611 * e3), le = M2(0.27869 + 0.04508 * e3), de = M2(0.16827 - 0.36903 * e3), he2 = M2(0.34734 - 5.37261 * e3), me2 = M2(0.10498 - 5.37899 * e3), j0 = M2(0.42681 - 0.41855 * e3), qt2 = M2(0.14943 - 5.37511 * e3);
-    for (F2 = 0.84 * W0 + 0.31 * le + 14.27 * de + 7.26 * he2 + 0.28 * me2 + 0.24 * j0, q2 = 2.94 * W0 + 0.31 * le + 14.27 * de + 9.34 * he2 + 1.12 * me2 + 0.83 * j0, Z = -6.4 * W0 - 1.89 * j0, i0 = 0.21 * W0 + 0.31 * le + 14.27 * de - 88.7 * he2 - 15.3 * me2 + 0.24 * j0 - 1.86 * qt2, a0 = F2 - Z, v3 = -3332e-9 * M2(0.59734 - 5.37261 * e3) - 539e-9 * M2(0.35498 - 5.37899 * e3) - 64e-9 * M2(0.39943 - 5.37511 * e3), I3 = X2 * E0(0.60643382 + 1336.85522467 * e3 - 313e-8 * f3) + F2 / e0, N3 = X2 * E0(0.37489701 + 1325.55240982 * e3 + 2565e-8 * f3) + q2 / e0, b4 = X2 * E0(0.99312619 + 99.99735956 * e3 - 44e-8 * f3) + Z / e0, U3 = X2 * E0(0.25909118 + 1342.2278298 * e3 - 892e-8 * f3) + i0 / e0, z4 = X2 * E0(0.82736186 + 1236.85308708 * e3 - 397e-8 * f3) + a0 / e0, d3 = 1; d3 <= 4; ++d3) {
-      switch (d3) {
+    for (F2 = 0.84 * W0 + 0.31 * le + 14.27 * de + 7.26 * he2 + 0.28 * me2 + 0.24 * j0, q2 = 2.94 * W0 + 0.31 * le + 14.27 * de + 9.34 * he2 + 1.12 * me2 + 0.83 * j0, Z = -6.4 * W0 - 1.89 * j0, i0 = 0.21 * W0 + 0.31 * le + 14.27 * de - 88.7 * he2 - 15.3 * me2 + 0.24 * j0 - 1.86 * qt2, a0 = F2 - Z, v3 = -3332e-9 * M2(0.59734 - 5.37261 * e3) - 539e-9 * M2(0.35498 - 5.37899 * e3) - 64e-9 * M2(0.39943 - 5.37511 * e3), I3 = X2 * E0(0.60643382 + 1336.85522467 * e3 - 313e-8 * f3) + F2 / e0, N3 = X2 * E0(0.37489701 + 1325.55240982 * e3 + 2565e-8 * f3) + q2 / e0, b4 = X2 * E0(0.99312619 + 99.99735956 * e3 - 44e-8 * f3) + Z / e0, U3 = X2 * E0(0.25909118 + 1342.2278298 * e3 - 892e-8 * f3) + i0 / e0, z4 = X2 * E0(0.82736186 + 1236.85308708 * e3 - 397e-8 * f3) + a0 / e0, h2 = 1; h2 <= 4; ++h2) {
+      switch (h2) {
         case 1:
           s = N3, c3 = 4, l3 = 1.000002208;
           break;
@@ -8077,25 +8086,25 @@ vec3 getSkyRadiance(
           s = z4, c3 = 6, l3 = 1;
           break;
         default:
-          throw `Internal error: I = ${d3}`;
+          throw `Internal error: I = ${h2}`;
       }
-      for (V0(0, d3, 1), V0(1, d3, Math.cos(s) * l3), B0(0, d3, 0), B0(1, d3, Math.sin(s) * l3), m3 = 2; m3 <= c3; ++m3)
-        $e(z0(m3 - 1, d3), k0(m3 - 1, d3), z0(1, d3), k0(1, d3), (_4, R5) => (V0(m3, d3, _4), B0(m3, d3, R5)));
+      for (V0(0, h2, 1), V0(1, h2, Math.cos(s) * l3), B0(0, h2, 0), B0(1, h2, Math.sin(s) * l3), m3 = 2; m3 <= c3; ++m3)
+        $e(z0(m3 - 1, h2), k0(m3 - 1, h2), z0(1, h2), k0(1, h2), (R5, _4) => (V0(m3, h2, R5), B0(m3, h2, _4)));
       for (m3 = 1; m3 <= c3; ++m3)
-        V0(-m3, d3, z0(m3, d3)), B0(-m3, d3, -k0(m3, d3));
+        V0(-m3, h2, z0(m3, h2)), B0(-m3, h2, -k0(m3, h2));
     }
-    function qe(_4, R5, A5, C4) {
-      for (var P3 = { x: 1, y: 0 }, Q4 = [0, _4, R5, A5, C4], j2 = 1; j2 <= 4; ++j2)
+    function qe(R5, _4, A5, C4) {
+      for (var P3 = { x: 1, y: 0 }, Q4 = [0, R5, _4, A5, C4], j2 = 1; j2 <= 4; ++j2)
         Q4[j2] !== 0 && $e(P3.x, P3.y, z0(Q4[j2], j2), k0(Q4[j2], j2), (fe, T0) => (P3.x = fe, P3.y = T0));
       return P3;
     }
-    function u4(_4, R5, A5, C4, P3, Q4, j2, fe) {
+    function u4(R5, _4, A5, C4, P3, Q4, j2, fe) {
       var T0 = qe(P3, Q4, j2, fe);
-      T3 += _4 * T0.y, J2 += R5 * T0.y, x3 += A5 * T0.x, y3 += C4 * T0.x;
+      T3 += R5 * T0.y, J2 += _4 * T0.y, x3 += A5 * T0.x, y3 += C4 * T0.x;
     }
     u4(13.902, 14.06, -1e-3, 0.2607, 0, 0, 0, 4), u4(0.403, -4.01, 0.394, 23e-4, 0, 0, 0, 3), u4(2369.912, 2373.36, 0.601, 28.2333, 0, 0, 0, 2), u4(-125.154, -112.79, -0.725, -0.9781, 0, 0, 0, 1), u4(1.979, 6.98, -0.445, 0.0433, 1, 0, 0, 4), u4(191.953, 192.72, 0.029, 3.0861, 1, 0, 0, 2), u4(-8.466, -13.51, 0.455, -0.1093, 1, 0, 0, 1), u4(22639.5, 22609.07, 0.079, 186.5398, 1, 0, 0, 0), u4(18.609, 3.59, -0.094, 0.0118, 1, 0, 0, -1), u4(-4586.465, -4578.13, -0.077, 34.3117, 1, 0, 0, -2), u4(3.215, 5.44, 0.192, -0.0386, 1, 0, 0, -3), u4(-38.428, -38.64, 1e-3, 0.6008, 1, 0, 0, -4), u4(-0.393, -1.43, -0.092, 86e-4, 1, 0, 0, -6), u4(-0.289, -1.59, 0.123, -53e-4, 0, 1, 0, 4), u4(-24.42, -25.1, 0.04, -0.3, 0, 1, 0, 2), u4(18.023, 17.93, 7e-3, 0.1494, 0, 1, 0, 1), u4(-668.146, -126.98, -1.302, -0.3997, 0, 1, 0, 0), u4(0.56, 0.32, -1e-3, -37e-4, 0, 1, 0, -1), u4(-165.145, -165.06, 0.054, 1.9178, 0, 1, 0, -2), u4(-1.877, -6.46, -0.416, 0.0339, 0, 1, 0, -4), u4(0.213, 1.02, -0.074, 54e-4, 2, 0, 0, 4), u4(14.387, 14.78, -0.017, 0.2833, 2, 0, 0, 2), u4(-0.586, -1.2, 0.054, -0.01, 2, 0, 0, 1), u4(769.016, 767.96, 0.107, 10.1657, 2, 0, 0, 0), u4(1.75, 2.01, -0.018, 0.0155, 2, 0, 0, -1), u4(-211.656, -152.53, 5.679, -0.3039, 2, 0, 0, -2), u4(1.225, 0.91, -0.03, -88e-4, 2, 0, 0, -3), u4(-30.773, -34.07, -0.308, 0.3722, 2, 0, 0, -4), u4(-0.57, -1.4, -0.074, 0.0109, 2, 0, 0, -6), u4(-2.921, -11.75, 0.787, -0.0484, 1, 1, 0, 2), u4(1.267, 1.52, -0.022, 0.0164, 1, 1, 0, 1), u4(-109.673, -115.18, 0.461, -0.949, 1, 1, 0, 0), u4(-205.962, -182.36, 2.056, 1.4437, 1, 1, 0, -2), u4(0.233, 0.36, 0.012, -25e-4, 1, 1, 0, -3), u4(-4.391, -9.66, -0.471, 0.0673, 1, 1, 0, -4), u4(0.283, 1.53, -0.111, 6e-3, 1, -1, 0, 4), u4(14.577, 31.7, -1.54, 0.2302, 1, -1, 0, 2), u4(147.687, 138.76, 0.679, 1.1528, 1, -1, 0, 0), u4(-1.089, 0.55, 0.021, 0, 1, -1, 0, -1), u4(28.475, 23.59, -0.443, -0.2257, 1, -1, 0, -2), u4(-0.276, -0.38, -6e-3, -36e-4, 1, -1, 0, -3), u4(0.636, 2.27, 0.146, -0.0102, 1, -1, 0, -4), u4(-0.189, -1.68, 0.131, -28e-4, 0, 2, 0, 2), u4(-7.486, -0.66, -0.037, -86e-4, 0, 2, 0, 0), u4(-8.096, -16.35, -0.74, 0.0918, 0, 2, 0, -2), u4(-5.741, -0.04, 0, -9e-4, 0, 0, 2, 2), u4(0.255, 0, 0, 0, 0, 0, 2, 1), u4(-411.608, -0.2, 0, -0.0124, 0, 0, 2, 0), u4(0.584, 0.84, 0, 71e-4, 0, 0, 2, -1), u4(-55.173, -52.14, 0, -0.1052, 0, 0, 2, -2), u4(0.254, 0.25, 0, -17e-4, 0, 0, 2, -3), u4(0.025, -1.67, 0, 31e-4, 0, 0, 2, -4), u4(1.06, 2.96, -0.166, 0.0243, 3, 0, 0, 2), u4(36.124, 50.64, -1.3, 0.6215, 3, 0, 0, 0), u4(-13.193, -16.4, 0.258, -0.1187, 3, 0, 0, -2), u4(-1.187, -0.74, 0.042, 74e-4, 3, 0, 0, -4), u4(-0.293, -0.31, -2e-3, 46e-4, 3, 0, 0, -6), u4(-0.29, -1.45, 0.116, -51e-4, 2, 1, 0, 2), u4(-7.649, -10.56, 0.259, -0.1038, 2, 1, 0, 0), u4(-8.627, -7.59, 0.078, -0.0192, 2, 1, 0, -2), u4(-2.74, -2.54, 0.022, 0.0324, 2, 1, 0, -4), u4(1.181, 3.32, -0.212, 0.0213, 2, -1, 0, 2), u4(9.703, 11.67, -0.151, 0.1268, 2, -1, 0, 0), u4(-0.352, -0.37, 1e-3, -28e-4, 2, -1, 0, -1), u4(-2.494, -1.17, -3e-3, -17e-4, 2, -1, 0, -2), u4(0.36, 0.2, -0.012, -43e-4, 2, -1, 0, -4), u4(-1.167, -1.25, 8e-3, -0.0106, 1, 2, 0, 0), u4(-7.412, -6.12, 0.117, 0.0484, 1, 2, 0, -2), u4(-0.311, -0.65, -0.032, 44e-4, 1, 2, 0, -4), u4(0.757, 1.82, -0.105, 0.0112, 1, -2, 0, 2), u4(2.58, 2.32, 0.027, 0.0196, 1, -2, 0, 0), u4(2.533, 2.4, -0.014, -0.0212, 1, -2, 0, -2), u4(-0.344, -0.57, -0.025, 36e-4, 0, 3, 0, -2), u4(-0.992, -0.02, 0, 0, 1, 0, 2, 2), u4(-45.099, -0.02, 0, -1e-3, 1, 0, 2, 0), u4(-0.179, -9.52, 0, -0.0833, 1, 0, 2, -2), u4(-0.301, -0.33, 0, 14e-4, 1, 0, 2, -4), u4(-6.382, -3.37, 0, -0.0481, 1, 0, -2, 2), u4(39.528, 85.13, 0, -0.7136, 1, 0, -2, 0), u4(9.366, 0.71, 0, -0.0112, 1, 0, -2, -2), u4(0.202, 0.02, 0, 0, 1, 0, -2, -4), u4(0.415, 0.1, 0, 13e-4, 0, 1, 2, 0), u4(-2.152, -2.26, 0, -66e-4, 0, 1, 2, -2), u4(-1.44, -1.3, 0, 14e-4, 0, 1, -2, 2), u4(0.384, -0.04, 0, 0, 0, 1, -2, -2), u4(1.938, 3.6, -0.145, 0.0401, 4, 0, 0, 0), u4(-0.952, -1.58, 0.052, -0.013, 4, 0, 0, -2), u4(-0.551, -0.94, 0.032, -97e-4, 3, 1, 0, 0), u4(-0.482, -0.57, 5e-3, -45e-4, 3, 1, 0, -2), u4(0.681, 0.96, -0.026, 0.0115, 3, -1, 0, 0), u4(-0.297, -0.27, 2e-3, -9e-4, 2, 2, 0, -2), u4(0.254, 0.21, -3e-3, 0, 2, -2, 0, -2), u4(-0.25, -0.22, 4e-3, 14e-4, 1, 3, 0, -2), u4(-3.996, 0, 0, 4e-4, 2, 0, 2, 0), u4(0.557, -0.75, 0, -9e-3, 2, 0, 2, -2), u4(-0.459, -0.38, 0, -53e-4, 2, 0, -2, 2), u4(-1.298, 0.74, 0, 4e-4, 2, 0, -2, 0), u4(0.538, 1.14, 0, -0.0141, 2, 0, -2, -2), u4(0.263, 0.02, 0, 0, 1, 1, 2, 0), u4(0.426, 0.07, 0, -6e-4, 1, 1, -2, -2), u4(-0.304, 0.03, 0, 3e-4, 1, -1, 2, 0), u4(-0.372, -0.19, 0, -27e-4, 1, -1, -2, 2), u4(0.418, 0, 0, 0, 0, 0, 4, 0), u4(-0.33, -0.04, 0, 0, 3, 0, 2, 0);
-    function B2(_4, R5, A5, C4, P3) {
-      return _4 * qe(R5, A5, C4, P3).y;
+    function B2(R5, _4, A5, C4, P3) {
+      return R5 * qe(_4, A5, C4, P3).y;
     }
     E4 = 0, E4 += B2(-526.069, 0, 0, 1, -2), E4 += B2(-3.352, 0, 0, 1, -4), E4 += B2(44.297, 1, 0, 1, -2), E4 += B2(-6, 1, 0, 1, -4), E4 += B2(20.599, -1, 0, 1, 0), E4 += B2(-30.598, -1, 0, 1, -2), E4 += B2(-24.649, -2, 0, 1, 0), E4 += B2(-2, -2, 0, 1, -2), E4 += B2(-22.571, 0, 1, 1, -2), E4 += B2(10.985, 0, -1, 1, -2), T3 += 0.82 * M2(0.7736 - 62.5512 * e3) + 0.31 * M2(0.0466 - 125.1025 * e3) + 0.35 * M2(0.5785 - 25.1042 * e3) + 0.66 * M2(0.4591 + 1335.8075 * e3) + 0.64 * M2(0.313 - 91.568 * e3) + 1.14 * M2(0.148 + 1331.2898 * e3) + 0.21 * M2(0.5918 + 1056.5859 * e3) + 0.44 * M2(0.5784 + 1322.8595 * e3) + 0.24 * M2(0.2275 - 5.7374 * e3) + 0.28 * M2(0.2965 + 2.6929 * e3) + 0.33 * M2(0.3132 + 6.3368 * e3), o2 = U3 + J2 / e0;
     let Zt2 = (1.000002708 + 139.978 * v3) * (18518.511 + 1.189 + x3) * Math.sin(o2) - 6.24 * Math.sin(3 * o2) + E4;
@@ -8120,7 +8129,7 @@ vec3 getSkyRadiance(
     const t2 = n4.tt / 36525;
     let r4 = 84381.406, i3 = ((((-951e-10 * t2 + 132851e-9) * t2 - 114045e-8) * t2 - 1.0790069) * t2 + 5038.481507) * t2, a3 = ((((3337e-10 * t2 - 467e-9) * t2 - 772503e-8) * t2 + 0.0512623) * t2 - 0.025754) * t2 + r4, o2 = ((((-56e-9 * t2 + 170663e-9) * t2 - 121197e-8) * t2 - 2.3814292) * t2 + 10.556403) * t2;
     r4 *= x0, i3 *= x0, a3 *= x0, o2 *= x0;
-    const c3 = Math.sin(r4), s = Math.cos(r4), l3 = Math.sin(-i3), d3 = Math.cos(-i3), m3 = Math.sin(-a3), f3 = Math.cos(-a3), v3 = Math.sin(o2), T3 = Math.cos(o2), E4 = T3 * d3 - l3 * v3 * f3, x3 = T3 * l3 * s + v3 * f3 * d3 * s - c3 * v3 * m3, y3 = T3 * l3 * c3 + v3 * f3 * d3 * c3 + s * v3 * m3, I3 = -v3 * d3 - l3 * T3 * f3, N3 = -v3 * l3 * s + T3 * f3 * d3 * s - c3 * T3 * m3, b4 = -v3 * l3 * c3 + T3 * f3 * d3 * c3 + s * T3 * m3, U3 = l3 * m3, z4 = -m3 * d3 * s - c3 * f3, F2 = -m3 * d3 * c3 + f3 * s;
+    const c3 = Math.sin(r4), s = Math.cos(r4), l3 = Math.sin(-i3), h2 = Math.cos(-i3), m3 = Math.sin(-a3), f3 = Math.cos(-a3), v3 = Math.sin(o2), T3 = Math.cos(o2), E4 = T3 * h2 - l3 * v3 * f3, x3 = T3 * l3 * s + v3 * f3 * h2 * s - c3 * v3 * m3, y3 = T3 * l3 * c3 + v3 * f3 * h2 * c3 + s * v3 * m3, I3 = -v3 * h2 - l3 * T3 * f3, N3 = -v3 * l3 * s + T3 * f3 * h2 * s - c3 * T3 * m3, b4 = -v3 * l3 * c3 + T3 * f3 * h2 * c3 + s * T3 * m3, U3 = l3 * m3, z4 = -m3 * h2 * s - c3 * f3, F2 = -m3 * h2 * c3 + f3 * s;
     if (e3 === V.Into2000)
       return new I0([
         [E4, x3, y3],
@@ -8163,7 +8172,7 @@ vec3 getSkyRadiance(
     return Lt2(r4, n4);
   }
   function Ut2(n4, e3) {
-    const t2 = Ot(n4), r4 = t2.mobl * g4, i3 = t2.tobl * g4, a3 = t2.dpsi * x0, o2 = Math.cos(r4), c3 = Math.sin(r4), s = Math.cos(i3), l3 = Math.sin(i3), d3 = Math.cos(a3), m3 = Math.sin(a3), f3 = d3, v3 = -m3 * o2, T3 = -m3 * c3, E4 = m3 * s, x3 = d3 * o2 * s + c3 * l3, y3 = d3 * c3 * s - o2 * l3, I3 = m3 * l3, N3 = d3 * o2 * l3 - c3 * s, b4 = d3 * c3 * l3 + o2 * s;
+    const t2 = Ot(n4), r4 = t2.mobl * g4, i3 = t2.tobl * g4, a3 = t2.dpsi * x0, o2 = Math.cos(r4), c3 = Math.sin(r4), s = Math.cos(i3), l3 = Math.sin(i3), h2 = Math.cos(a3), m3 = Math.sin(a3), f3 = h2, v3 = -m3 * o2, T3 = -m3 * c3, E4 = m3 * s, x3 = h2 * o2 * s + c3 * l3, y3 = h2 * c3 * s - o2 * l3, I3 = m3 * l3, N3 = h2 * o2 * l3 - c3 * s, b4 = h2 * c3 * l3 + o2 * s;
     if (e3 === V.From2000)
       return new I0([
         [f3, E4, I3],
@@ -8222,8 +8231,8 @@ vec3 getSkyRadiance(
     let r4 = 1, i3 = 0;
     for (let a3 of n4) {
       let o2 = 0;
-      for (let [s, l3, d3] of a3)
-        o2 += s * Math.cos(l3 + e3 * d3);
+      for (let [s, l3, h2] of a3)
+        o2 += s * Math.cos(l3 + e3 * h2);
       let c3 = r4 * o2;
       t2 && (c3 %= X2), i3 += c3, r4 *= e3;
     }
@@ -8233,8 +8242,8 @@ vec3 getSkyRadiance(
     let t2 = 1, r4 = 0, i3 = 0, a3 = 0;
     for (let o2 of n4) {
       let c3 = 0, s = 0;
-      for (let [l3, d3, m3] of o2) {
-        let f3 = d3 + e3 * m3;
+      for (let [l3, h2, m3] of o2) {
+        let f3 = h2 + e3 * m3;
         c3 += l3 * m3 * Math.sin(f3), a3 > 0 && (s += l3 * Math.cos(f3));
       }
       i3 += a3 * r4 * s - t2 * c3, r4 = t2, t2 *= e3, ++a3;
@@ -8261,7 +8270,7 @@ vec3 getSkyRadiance(
     return Pe2(o2).ToAstroVector(e3);
   }
   function Er2(n4, e3) {
-    const t2 = e3 / b0, r4 = y0(n4[Ce2], t2, true), i3 = y0(n4[De], t2, false), a3 = y0(n4[Ie2], t2, false), o2 = Se2(n4[Ce2], t2), c3 = Se2(n4[De], t2), s = Se2(n4[Ie2], t2), l3 = Math.cos(r4), d3 = Math.sin(r4), m3 = Math.cos(i3), f3 = Math.sin(i3), v3 = +(s * m3 * l3) - a3 * f3 * l3 * c3 - a3 * m3 * d3 * o2, T3 = +(s * m3 * d3) - a3 * f3 * d3 * c3 + a3 * m3 * l3 * o2, E4 = +(s * f3) + a3 * m3 * c3, x3 = Ft2(r4, i3, a3), y3 = [
+    const t2 = e3 / b0, r4 = y0(n4[Ce2], t2, true), i3 = y0(n4[De], t2, false), a3 = y0(n4[Ie2], t2, false), o2 = Se2(n4[Ce2], t2), c3 = Se2(n4[De], t2), s = Se2(n4[Ie2], t2), l3 = Math.cos(r4), h2 = Math.sin(r4), m3 = Math.cos(i3), f3 = Math.sin(i3), v3 = +(s * m3 * l3) - a3 * f3 * l3 * c3 - a3 * m3 * h2 * o2, T3 = +(s * m3 * h2) - a3 * f3 * h2 * c3 + a3 * m3 * l3 * o2, E4 = +(s * f3) + a3 * m3 * c3, x3 = Ft2(r4, i3, a3), y3 = [
       v3 / b0,
       T3 / b0,
       E4 / b0
@@ -8272,12 +8281,12 @@ vec3 getSkyRadiance(
     const i3 = r4 / (r4 + We), a3 = Q0(M0[t2], e3);
     n4.x += i3 * a3.x, n4.y += i3 * a3.y, n4.z += i3 * a3.z;
   }
-  function _r2(n4) {
+  function Rr(n4) {
     const e3 = new G3(0, 0, 0, n4);
     return q0(e3, n4, S4.Jupiter, xe2), q0(e3, n4, S4.Saturn, Me2), q0(e3, n4, S4.Uranus, Ae2), q0(e3, n4, S4.Neptune, we2), e3;
   }
   var Ne2 = 51;
-  var Rr = 29200;
+  var _r2 = 29200;
   var A0 = 146;
   var Y2 = 201;
   var o0 = [
@@ -8443,7 +8452,7 @@ vec3 getSkyRadiance(
     const t2 = o0[0][0];
     if (e3 < t2 || e3 > o0[Ne2 - 1][0])
       return null;
-    const r4 = kt2((e3 - t2) / Rr, Ne2 - 1);
+    const r4 = kt2((e3 - t2) / _r2, Ne2 - 1);
     if (!n4[r4]) {
       const a3 = n4[r4] = [];
       a3[0] = Le2(o0[r4]).grav, a3[Y2 - 1] = Le2(o0[r4 + 1]).grav;
@@ -8472,8 +8481,8 @@ vec3 getSkyRadiance(
     let t2, r4, i3;
     const a3 = Ar(Mr, n4.tt);
     if (a3) {
-      const o2 = kt2((n4.tt - a3[0].tt) / A0, Y2 - 1), c3 = a3[o2], s = a3[o2 + 1], l3 = c3.a.mean(s.a), d3 = te2(n4.tt - c3.tt, c3.r, c3.v, l3), m3 = ct2(n4.tt - c3.tt, c3.v, l3), f3 = te2(n4.tt - s.tt, s.r, s.v, l3), v3 = ct2(n4.tt - s.tt, s.v, l3), T3 = (n4.tt - c3.tt) / A0;
-      t2 = d3.mul(1 - T3).add(f3.mul(T3)), r4 = m3.mul(1 - T3).add(v3.mul(T3));
+      const o2 = kt2((n4.tt - a3[0].tt) / A0, Y2 - 1), c3 = a3[o2], s = a3[o2 + 1], l3 = c3.a.mean(s.a), h2 = te2(n4.tt - c3.tt, c3.r, c3.v, l3), m3 = ct2(n4.tt - c3.tt, c3.v, l3), f3 = te2(n4.tt - s.tt, s.r, s.v, l3), v3 = ct2(n4.tt - s.tt, s.v, l3), T3 = (n4.tt - c3.tt) / A0;
+      t2 = h2.mul(1 - T3).add(f3.mul(T3)), r4 = m3.mul(1 - T3).add(v3.mul(T3));
     } else {
       let o2;
       n4.tt < o0[0][0] ? o2 = ut2(o0[0], n4.tt, -A0) : o2 = ut2(o0[Ne2 - 1], n4.tt, +A0), t2 = o2.grav.r, r4 = o2.grav.v, i3 = o2.bary;
@@ -8499,7 +8508,7 @@ vec3 getSkyRadiance(
       return new G3(o2.x + c3.x / s, o2.y + c3.y / s, o2.z + c3.z / s, t2);
     }
     if (n4 === S4.SSB)
-      return _r2(t2);
+      return Rr(t2);
     const a3 = Pt2(n4);
     if (a3) {
       const o2 = new Gt2(a3.dec, 15 * a3.ra, a3.dist);
@@ -8665,7 +8674,7 @@ vec3 getSkyRadiance(
       default:
         throw `Invalid body: ${n4}`;
     }
-    const s = o2 * g4, l3 = a3 * g4, d3 = Math.cos(s), m3 = new G3(d3 * Math.cos(l3), d3 * Math.sin(l3), Math.sin(s), t2);
+    const s = o2 * g4, l3 = a3 * g4, h2 = Math.cos(s), m3 = new G3(h2 * Math.cos(l3), h2 * Math.sin(l3), Math.sin(s), t2);
     return new Vt(a3 / 15, o2, c3, m3);
   }
   var Fr2 = 1e-3 / It;
@@ -8781,11 +8790,11 @@ vec3 getSkyRadiance(
     if (r4 == null)
       return t2.setScalar(0);
     Zr(n4.image);
-    const { width: i3, height: a3 } = n4.image, o2 = z3(e3.x, 0, 1) * (i3 - 1), c3 = z3(e3.y, 0, 1) * (a3 - 1), s = Math.floor(o2), l3 = Math.floor(c3), d3 = o2 - s, m3 = c3 - l3, f3 = d3, v3 = m3, T3 = s % i3, E4 = (T3 + 1) % i3, x3 = l3 % a3, y3 = (x3 + 1) % a3, I3 = J0(r4, x3 * i3 + T3, Kr2), N3 = J0(r4, x3 * i3 + E4, mt2), b4 = I3.lerp(N3, f3), U3 = J0(r4, y3 * i3 + T3, mt2), z4 = J0(r4, y3 * i3 + E4, $r), F2 = U3.lerp(z4, f3);
+    const { width: i3, height: a3 } = n4.image, o2 = z3(e3.x, 0, 1) * (i3 - 1), c3 = z3(e3.y, 0, 1) * (a3 - 1), s = Math.floor(o2), l3 = Math.floor(c3), h2 = o2 - s, m3 = c3 - l3, f3 = h2, v3 = m3, T3 = s % i3, E4 = (T3 + 1) % i3, x3 = l3 % a3, y3 = (x3 + 1) % a3, I3 = J0(r4, x3 * i3 + T3, Kr2), N3 = J0(r4, x3 * i3 + E4, mt2), b4 = I3.lerp(N3, f3), U3 = J0(r4, y3 * i3 + T3, mt2), z4 = J0(r4, y3 * i3 + E4, $r), F2 = U3.lerp(z4, f3);
     return t2.copy(b4.lerp(F2, v3));
   }
   function Zr2(n4, e3, t2, r4) {
-    const { topRadius: i3, bottomRadius: a3 } = n4, o2 = Math.sqrt(i3 ** 2 - a3 ** 2), c3 = Xt(e3 ** 2 - a3 ** 2), s = Yr(n4, e3, t2), l3 = i3 - e3, d3 = c3 + o2, m3 = (s - l3) / (d3 - l3), f3 = c3 / o2;
+    const { topRadius: i3, bottomRadius: a3 } = n4, o2 = Math.sqrt(i3 ** 2 - a3 ** 2), c3 = Xt(e3 ** 2 - a3 ** 2), s = Yr(n4, e3, t2), l3 = i3 - e3, h2 = c3 + o2, m3 = (s - l3) / (h2 - l3), f3 = c3 / o2;
     return r4.set(
       ne2(m3, C3),
       ne2(f3, p3)
@@ -8813,12 +8822,12 @@ vec3 getSkyRadiance(
       );
     }
     const s = ve;
-    let l3 = c3.length(), d3 = c3.dot(t2);
-    const { topRadius: m3 } = o2, f3 = -d3 - Math.sqrt(d3 ** 2 - l3 ** 2 + m3 ** 2);
-    if (f3 > 0 && (l3 = m3, d3 += f3), l3 > m3)
+    let l3 = c3.length(), h2 = c3.dot(t2);
+    const { topRadius: m3 } = o2, f3 = -h2 - Math.sqrt(h2 ** 2 - l3 ** 2 + m3 ** 2);
+    if (f3 > 0 && (l3 = m3, h2 += f3), l3 > m3)
       s.set(1, 1, 1);
     else {
-      const T3 = d3 / l3;
+      const T3 = h2 / l3;
       if (Xr(o2, l3, T3))
         s.setScalar(0);
       else {
@@ -9217,7 +9226,7 @@ void main() {
       (_a2 = this.opticalDepth) == null ? void 0 : _a2.dispose(), this.deltaIrradiance.dispose(), this.deltaRayleighScattering.dispose(), this.deltaMieScattering.dispose(), this.deltaScatteringDensity.dispose();
     }
   };
-  var _0 = class extends RawShaderMaterial {
+  var R0 = class extends RawShaderMaterial {
     constructor(e3) {
       super({
         glslVersion: GLSL3,
@@ -9252,7 +9261,7 @@ void main() {
       higherOrderScattering: i3 = true
     } = {}) {
       var _a2, _b2;
-      this.transmittanceMaterial = new _0({
+      this.transmittanceMaterial = new R0({
         fragmentShader: ar(si, {
           bruneton: {
             common: e2,
@@ -9260,7 +9269,7 @@ void main() {
             precompute: r3
           }
         })
-      }), this.directIrradianceMaterial = new _0({
+      }), this.directIrradianceMaterial = new R0({
         fragmentShader: ar(ni, {
           bruneton: {
             common: e2,
@@ -9271,7 +9280,7 @@ void main() {
         uniforms: {
           transmittanceTexture: new Uniform(null)
         }
-      }), this.singleScatteringMaterial = new _0({
+      }), this.singleScatteringMaterial = new R0({
         fragmentShader: ar(oi, {
           bruneton: {
             common: e2,
@@ -9284,7 +9293,7 @@ void main() {
           transmittanceTexture: new Uniform(null),
           layer: new Uniform(0)
         }
-      }), this.scatteringDensityMaterial = new _0({
+      }), this.scatteringDensityMaterial = new R0({
         fragmentShader: ar(ai, {
           bruneton: {
             common: e2,
@@ -9301,7 +9310,7 @@ void main() {
           scatteringOrder: new Uniform(0),
           layer: new Uniform(0)
         }
-      }), this.indirectIrradianceMaterial = new _0({
+      }), this.indirectIrradianceMaterial = new R0({
         fragmentShader: ar(ri, {
           bruneton: {
             common: e2,
@@ -9316,7 +9325,7 @@ void main() {
           multipleScatteringTexture: new Uniform(null),
           scatteringOrder: new Uniform(0)
         }
-      }), this.multipleScatteringMaterial = new _0({
+      }), this.multipleScatteringMaterial = new R0({
         fragmentShader: ar(ii, {
           bruneton: {
             common: e2,
@@ -9537,7 +9546,7 @@ void main() {
     width: C3,
     height: p3
   };
-  var R0 = {
+  var _0 = {
     width: U2,
     height: g3,
     depth: N2
@@ -9565,11 +9574,11 @@ void main() {
         path: l3
       }) => (s.setRequestHeader(this.requestHeader), s.setPath(this.path), s.setWithCredentials(this.withCredentials), s.load(
         hi(e3, l3),
-        (d3) => {
+        (h2) => {
           var _a2;
-          d3.type = this.type, this.type === FloatType && (Zr(d3.image), d3.image.data != null && (d3.image.data = new Float32Array(
-            new A3((_a2 = d3.image.data) == null ? void 0 : _a2.buffer)
-          ))), d3.minFilter = LinearFilter, d3.magFilter = LinearFilter, a3[`${c3}Texture`] = d3, a3.irradianceTexture != null && a3.scatteringTexture != null && a3.transmittanceTexture != null && (this.combinedScattering || a3.singleMieScatteringTexture != null) && (!this.higherOrderScattering || a3.higherOrderScatteringTexture != null) && (t2 == null ? void 0 : t2(a3));
+          h2.type = this.type, this.type === FloatType && (Zr(h2.image), h2.image.data != null && (h2.image.data = new Float32Array(
+            new A3((_a2 = h2.image.data) == null ? void 0 : _a2.buffer)
+          ))), h2.minFilter = LinearFilter, h2.magFilter = LinearFilter, a3[`${c3}Texture`] = h2, a3.irradianceTexture != null && a3.scatteringTexture != null && a3.transmittanceTexture != null && (this.combinedScattering || a3.singleMieScatteringTexture != null) && (!this.higherOrderScattering || a3.higherOrderScatteringTexture != null) && (t2 == null ? void 0 : t2(a3));
         },
         r4,
         i3
@@ -9582,7 +9591,7 @@ void main() {
         }),
         scatteringTexture: o2({
           key: "scattering",
-          loader: new zr(R0, this.manager),
+          loader: new zr(_0, this.manager),
           path: "scattering.exr"
         }),
         irradianceTexture: o2({
@@ -9592,12 +9601,12 @@ void main() {
         }),
         singleMieScatteringTexture: this.combinedScattering ? void 0 : o2({
           key: "singleMieScattering",
-          loader: new zr(R0, this.manager),
+          loader: new zr(_0, this.manager),
           path: "single_mie_scattering.exr"
         }),
         higherOrderScatteringTexture: this.higherOrderScattering ? o2({
           key: "higherOrderScattering",
-          loader: new zr(R0, this.manager),
+          loader: new zr(_0, this.manager),
           path: "higher_order_scattering.exr"
         }) : void 0
       } : {
@@ -9616,7 +9625,7 @@ void main() {
           loader: new br(
             Data3DTexture,
             Jr,
-            R0,
+            _0,
             this.manager
           ),
           path: "scattering.bin"
@@ -9636,7 +9645,7 @@ void main() {
           loader: new br(
             Data3DTexture,
             Jr,
-            R0,
+            _0,
             this.manager
           ),
           path: "single_mie_scattering.bin"
@@ -9646,7 +9655,7 @@ void main() {
           loader: new br(
             Data3DTexture,
             Jr,
-            R0,
+            _0,
             this.manager
           ),
           path: "higher_order_scattering.bin"
@@ -9664,7 +9673,7 @@ void main() {
   var fi = 1 / Math.sqrt(Math.PI);
   var Ee2 = Math.sqrt(3) / (2 * Math.sqrt(Math.PI));
   var gi = /* @__PURE__ */ new Vector3();
-  var _e2 = /* @__PURE__ */ new Vector3();
+  var Re2 = /* @__PURE__ */ new Vector3();
   var pi = /* @__PURE__ */ new Vector2();
   var Ti = /* @__PURE__ */ new Matrix3();
   var Si = {
@@ -9690,21 +9699,21 @@ void main() {
       if (this.correctAltitude) {
         const m3 = this.ellipsoid.projectOnSurface(
           i3,
-          _e2
+          Re2
         );
         m3 != null && i3.add(
           X(
             m3,
             this.atmosphere.bottomRadius,
             this.ellipsoid,
-            _e2
+            Re2
           )
         );
       }
-      const a3 = i3.length(), o2 = i3.dot(this.sunDirection) / a3, c3 = mi(this.atmosphere, a3, o2, pi), s = Yt(this.irradianceTexture, c3, _e2);
+      const a3 = i3.length(), o2 = i3.dot(this.sunDirection) / a3, c3 = mi(this.atmosphere, a3, o2, pi), s = Yt(this.irradianceTexture, c3, Re2);
       s.multiply(this.atmosphere.skyRadianceToRelativeLuminance);
-      const l3 = this.ellipsoid.getSurfaceNormal(i3).applyMatrix3(t2), d3 = this.sh.coefficients;
-      d3[0].copy(s).multiplyScalar(fi), d3[1].copy(s).multiplyScalar(Ee2 * l3.y), d3[2].copy(s).multiplyScalar(Ee2 * l3.z), d3[3].copy(s).multiplyScalar(Ee2 * l3.x);
+      const l3 = this.ellipsoid.getSurfaceNormal(i3).applyMatrix3(t2), h2 = this.sh.coefficients;
+      h2[0].copy(s).multiplyScalar(fi), h2[1].copy(s).multiplyScalar(Ee2 * l3.y), h2[2].copy(s).multiplyScalar(Ee2 * l3.z), h2[3].copy(s).multiplyScalar(Ee2 * l3.x);
     }
   };
   var vi = `precision highp float;
@@ -9729,13 +9738,14 @@ uniform sampler3D higher_order_scattering_texture;
 #include "bruneton/common"
 #include "bruneton/runtime"
 
-#include "sky"
-
 uniform vec3 sunDirection;
+uniform float cosSunAngularRadius;
 uniform vec3 moonDirection;
 uniform float moonAngularRadius;
 uniform float lunarRadianceScale;
 uniform vec3 groundAlbedo;
+
+#include "sky"
 
 #ifdef HAS_SHADOW_LENGTH
 uniform sampler2D shadowLengthBuffer;
@@ -9757,6 +9767,9 @@ void main() {
 
   vec3 cameraPosition = vCameraPosition;
   vec3 rayDirection = normalize(vRayDirection);
+  vec3 dRDdx = dFdx(rayDirection);
+  vec3 dRDdy = dFdy(rayDirection);
+  float fragmentAngle = length(dRDdx + dRDdy) / length(rayDirection);
 
   #ifdef GROUND_ALBEDO
 
@@ -9796,7 +9809,8 @@ void main() {
       sunDirection,
       moonDirection,
       moonAngularRadius,
-      lunarRadianceScale
+      lunarRadianceScale,
+      fragmentAngle
     );
   }
 
@@ -9809,7 +9823,8 @@ void main() {
     sunDirection,
     moonDirection,
     moonAngularRadius,
-    lunarRadianceScale
+    lunarRadianceScale,
+    fragmentAngle
   );
 
   #endif // GROUND_ALBEDO
@@ -9873,13 +9888,13 @@ void main() {
   gl_Position = vec4(position.xy, 1.0, 1.0);
 }
 `;
-  var _i = Object.defineProperty;
+  var Ri = Object.defineProperty;
   var Ye = (n4, e3, t2, r4) => {
     for (var i3 = void 0, a3 = n4.length - 1, o2; a3 >= 0; a3--)
       (o2 = n4[a3]) && (i3 = o2(e3, t2, i3) || i3);
-    return i3 && _i(e3, t2, i3), i3;
+    return i3 && Ri(e3, t2, i3), i3;
   };
-  var Ri = {
+  var _i = {
     ...Be2,
     sun: true,
     moon: true,
@@ -9901,7 +9916,7 @@ void main() {
         ground: c3,
         groundAlbedo: s,
         ...l3
-      } = { ...Ri, ...e3 };
+      } = { ..._i, ...e3 };
       super({
         name: "SkyMaterial",
         glslVersion: GLSL3,
@@ -9937,8 +9952,8 @@ void main() {
       super.onBeforeRender(e3, t2, r4, i3, a3, o2);
       const { uniforms: c3, defines: s } = this;
       c3.inverseProjectionMatrix.value.copy(r4.projectionMatrixInverse), c3.inverseViewMatrix.value.copy(r4.matrixWorld);
-      const l3 = s.PERSPECTIVE_CAMERA != null, d3 = r4.isPerspectiveCamera === true;
-      d3 !== l3 && (d3 ? s.PERSPECTIVE_CAMERA = "1" : delete s.PERSPECTIVE_CAMERA, this.needsUpdate = true);
+      const l3 = s.PERSPECTIVE_CAMERA != null, h2 = r4.isPerspectiveCamera === true;
+      h2 !== l3 && (h2 ? s.PERSPECTIVE_CAMERA = "1" : delete s.PERSPECTIVE_CAMERA, this.needsUpdate = true);
       const m3 = this.groundAlbedo, f3 = s.GROUND_ALBEDO != null, v3 = m3.r !== 0 || m3.g !== 0 || m3.b !== 0;
       v3 !== f3 && (v3 ? this.defines.GROUND_ALBEDO = "1" : delete this.defines.GROUND_ALBEDO, this.needsUpdate = true);
       const T3 = this.shadowLength, E4 = s.HAS_SHADOW_LENGTH != null, x3 = T3 != null;

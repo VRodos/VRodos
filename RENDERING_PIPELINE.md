@@ -30,6 +30,7 @@ Presentation mode is part of the rendering contract:
 | `assets/js/runtime/master/lib/vrodos-runtime-core.bundle.js` | Generated compiled-scene core runtime bundle |
 | `assets/js/runtime/master/lib/vrodos-runtime-scene-components.bundle.js` | Generated compiled-scene POI/media/assessment component bundle |
 | `assets/js/runtime/master/lib/vrodos-runtime-aframe-components.bundle.js` | Generated compiled-scene master A-Frame component bundle |
+| `assets/runtime-build-manifest.json` | Generated runtime chunk manifest consumed by the compiler script planner |
 
 ### Legacy custom pipeline files
 
@@ -55,12 +56,13 @@ Presentation mode is part of the rendering contract:
 
 ## 3. Load Order
 
-`templates/runtime/aframe/Master_Client_prototype.html` loads rendering-relevant runtime scripts in this order, omitting external networking/UI libraries:
+`templates/runtime/aframe/Master_Client_prototype.html` contains one `VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER`. The compiler fills it from `assets/runtime-build-manifest.json` according to scene metadata. Rendering-relevant runtime chunks resolve in this order, omitting external networking/UI libraries:
 
 ```text
 AFRAME_RUNTIME_URL_PLACEHOLDER
 lib/vrodos-runtime-scene-components.bundle.js
 lib/vrodos-runtime-core.bundle.js
+optional FPS meter inline module
 optional lib/vrodos-runtime-legacy-postfx.bundle.js
 optional lib/vrodos-postprocessing.bundle.js
 optional lib/vrodos-takram-atmosphere.bundle.js
@@ -68,7 +70,7 @@ optional lib/vrodos-runtime-pmndrs-postfx.bundle.js
 lib/vrodos-runtime-aframe-components.bundle.js
 ```
 
-The optional post-FX bundle set is injected by the compiler from scene metadata. The PMNDRS and Takram bundles are generated from root `package.json` and `package-lock.json`. They must use A-Frame's `window.THREE`; compiled scenes must not load a second Three instance.
+The optional runtime bundle set is selected by `VRodos_Compiler_Runtime_Script_Planner`, not by hardcoded template script tags. PMNDRS and Takram bundles are generated from root `package.json` and `package-lock.json`. They must use A-Frame's `window.THREE`; compiled scenes must not load a second Three instance.
 
 ## 4. Legacy Pipeline
 

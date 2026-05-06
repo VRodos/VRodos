@@ -10,6 +10,8 @@ require_once __DIR__ . '/class-vrodos-compiler-template-renderer.php';
 require_once __DIR__ . '/class-vrodos-compiler-scene-repository.php';
 require_once __DIR__ . '/class-vrodos-compiler-scene-settings.php';
 require_once __DIR__ . '/class-vrodos-compiler-aframe-entity-renderer.php';
+require_once __DIR__ . '/class-vrodos-compiler-runtime-manifest.php';
+require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
 
 class VRodos_Compiler_Manager {
 	private string $server_protocol;
@@ -23,6 +25,7 @@ class VRodos_Compiler_Manager {
 	private VRodos_Compiler_Scene_Repository $scene_repository;
 	private VRodos_Compiler_Scene_Settings $scene_settings;
 	private VRodos_Compiler_AFrame_Entity_Renderer $entity_renderer;
+	private ?VRodos_Compiler_Runtime_Script_Planner $runtime_script_planner = null;
 
 	public function __construct() {
 		$this->server_protocol  = is_ssl() ? 'https' : 'http';
@@ -308,9 +311,7 @@ class VRodos_Compiler_Manager {
 		// Modify strings
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
 		$content = str_replace( 'AFRAME_RUNTIME_URL_PLACEHOLDER', esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ), $content );
-		$content = str_replace( 'VRODOS_FPS_METER_RUNTIME_SCRIPTS_PLACEHOLDER', $this->build_fps_meter_runtime_scripts( $scene_json ), $content );
-		$content = str_replace( 'VRODOS_LEGACY_RUNTIME_SCRIPTS_PLACEHOLDER', $this->build_legacy_runtime_scripts( $scene_json ), $content );
-		$content = str_replace( 'VRODOS_PMNDRS_RUNTIME_SCRIPTS_PLACEHOLDER', $this->build_pmndrs_runtime_scripts( $scene_json ), $content );
+		$content = str_replace( 'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER', $this->runtime_script_planner()->render_scripts_for_scene( $scene_json ), $content );
 		
 		$content = $this->runtime_assets->redirect_runtime_template_urls( $content );
 
@@ -432,66 +433,6 @@ class VRodos_Compiler_Manager {
 		return $this->writer( VRodos_Path_Manager::runtime_build_path( 'Master_Client_' . $scene_id . '.html' ), $contentNew );
 	}
 
-	private function build_legacy_runtime_scripts( $scene_json ): string {
-		$metadata = is_object( $scene_json->metadata ?? null ) ? $scene_json->metadata : null;
-		if ( ! $metadata || ! VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePostFXEnabled ?? false ) ) {
-			return '';
-		}
-
-		if ( ( $metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ) {
-			return '';
-		}
-
-		return $this->runtime_script_tag( 'js/master/lib/vrodos-runtime-legacy-postfx.bundle.js' );
-	}
-
-	private function build_fps_meter_runtime_scripts( $scene_json ): string {
-		$metadata = is_object( $scene_json->metadata ?? null ) ? $scene_json->metadata : null;
-		if ( ! $metadata ) {
-			return '';
-		}
-
-		$enabled = VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->enableFPSMeter ?? false )
-			|| VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeFPSMeterEnabled ?? false );
-
-		if ( ! $enabled ) {
-			return '';
-		}
-
-		return '<script type="module">
-        window.VRODOS_STATS_READY = import("https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js")
-            .then((m) => { window.Stats = m.default; return window.Stats; })
-            .catch((e) => { console.warn("VRodos Error: stats-gl failed to load from CDN. Scene will continue without performance overlay.", e); return null; });
-    </script>';
-	}
-
-	private function build_pmndrs_runtime_scripts( $scene_json ): string {
-		$metadata = is_object( $scene_json->metadata ?? null ) ? $scene_json->metadata : null;
-		if ( ! $metadata || ! VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePostFXEnabled ?? false ) ) {
-			return '';
-		}
-
-		if ( ( $metadata->aframePostFXEngine ?? 'legacy' ) !== 'pmndrs' ) {
-			return '';
-		}
-
-		$scripts = [
-			$this->runtime_script_tag( 'js/master/lib/vrodos-postprocessing.bundle.js' ),
-		];
-
-		if ( VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePmndrsAtmosphereEnabled ?? true, true ) ) {
-			$scripts[] = $this->runtime_script_tag( 'js/master/lib/vrodos-takram-atmosphere.bundle.js' );
-		}
-
-		$scripts[] = $this->runtime_script_tag( 'js/master/lib/vrodos-runtime-pmndrs-postfx.bundle.js' );
-
-		return implode( "\n    ", $scripts );
-	}
-
-	private function runtime_script_tag( string $src ): string {
-		return '<script src="' . esc_attr( $src ) . '"></script>';
-	}
-
 	private function createSimpleClient( $scene_id, $scene_json, $project_id ) {
 
 		// Read prototype
@@ -506,6 +447,7 @@ class VRodos_Compiler_Manager {
 		$content = str_replace( 'appname', $app_name, $content );
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
 		$content = str_replace( 'AFRAME_RUNTIME_URL_PLACEHOLDER', esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ), $content );
+		$content = str_replace( 'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER', $this->runtime_script_planner()->render_scripts_for_chunk_ids( [ 'scene-components' ] ), $content );
 		
 		$content = $this->runtime_assets->redirect_runtime_template_urls( $content );
 
@@ -585,5 +527,13 @@ class VRodos_Compiler_Manager {
 	 */
 	private function apply_scene_environment( &$content, $dom, $ascene, $scene_json, $project_id ) {
 		$this->scene_settings->apply( $dom, $ascene, $scene_json, (int) $project_id, [ $this, 'normalize_url' ] );
+	}
+
+	private function runtime_script_planner(): VRodos_Compiler_Runtime_Script_Planner {
+		if ( null === $this->runtime_script_planner ) {
+			$this->runtime_script_planner = new VRodos_Compiler_Runtime_Script_Planner( new VRodos_Compiler_Runtime_Manifest() );
+		}
+
+		return $this->runtime_script_planner;
 	}
 }

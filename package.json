@@ -28,7 +28,7 @@
     "daisyui": "^4.12.24",
     "esbuild": "^0.28.0",
     "eslint": "^10.3.0",
-    "postcss": "^8.5.13",
+    "postcss": "^8.5.14",
     "postprocessing": "^6.39.1",
     "prettier": "^3.8.3",
     "tailwindcss": "^3.4.19",
@@ -38,7 +38,7 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "@takram/three-atmosphere": "^0.19.0",
-    "@takram/three-clouds": "^0.7.5"
+    "@takram/three-atmosphere": "^0.19.1",
+    "@takram/three-clouds": "^0.7.6"
   }
 }
