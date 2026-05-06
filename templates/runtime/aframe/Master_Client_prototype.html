@@ -13,35 +13,14 @@
 
     <!-- A-Frame runtime source is selected by the compiler to allow a pinned master spike without changing the prototype again. -->
     <script src="AFRAME_RUNTIME_URL_PLACEHOLDER"></script>
-    <script src="js/master/lib/vrodos-postprocessing.bundle.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
-    <!-- Modern performance monitor with fallback -->
-    <script type="module">
-        import Stats from 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js';
-        window.Stats = Stats;
-    </script>
-    <link rel="stylesheet" href="https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.css" />
-    <script src="https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.umd.js"></script>
+    VRODOS_FPS_METER_RUNTIME_SCRIPTS_PLACEHOLDER
 
     <script src="../easyrtc/easyrtc.js"></script>
     <script src="../dist/networked-aframe.js"></script>
 
-    <script src="js/highlight_img.js"></script>
-
-    <script src="js/components/poi-image_component.js"></script>
-    <script src="js/components/chat_poi_component.js"></script>
-    <script src="js/components/indicator_component.js"></script>
-    <script src="js/components/poi-link_component.js"></script>
-    <script src="js/components/door_component.js"></script>
-    <script src="js/components/audio_component.js"></script>
-    <script src="js/components/video_component.js"></script>
-    <script src="js/components/vrodos_hypnotic_hover.component.js"></script>
-    <script src="js/assessment/assessment-utils.js"></script>
-    <script src="js/assessment/assessment-cefr-runtime.js"></script>
-    <script src="js/assessment/assessment-renderers.js"></script>
-    <script src="js/assessment/assessment-overlay-runtime.js"></script>
-    <script src="js/components/immerse-assessment_component.js"></script>
+    <script src="js/master/lib/vrodos-runtime-scene-components.bundle.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.7.0/dist/aframe-extras.min.js"></script>
     <script
@@ -100,26 +79,10 @@
         window.VRODOS_PLUGIN_URL = "VRODOS_PLUGIN_URL_PLACEHOLDER";
         window.VRODOS_ASSET_IMAGE_URL = "VRODOS_ASSET_IMAGE_URL_PLACEHOLDER";
     </script>
-    <script src="js/master/vrodos_master_shared.js"></script>
-    <script src="js/master/vrodos_ui_helpers.js"></script>
-    <script src="js/master/vrodos_master_bootstrap.js"></script>
-    <script src="js/master/vrodos_master_rendering.js"></script>
-    <script src="js/master/vrodos_shaders_bloom.js"></script>
-    <script src="js/master/vrodos_shaders_sao.js"></script>
-    <script src="js/master/vrodos_shaders_fxaa.js"></script>
-    <script src="js/master/vrodos_shaders_taa.js"></script>
-    <script src="js/master/vrodos_shaders_ssr.js"></script>
-    <script src="js/master/vrodos_shaders_composite.js"></script>
-    <script src="js/master/vrodos_postprocessing.js"></script>
-    <script src="js/master/lib/vrodos-takram-atmosphere.bundle.js"></script>
-    <script src="js/master/vrodos_postprocessing_pmndrs.js"></script>
-    <script src="js/master/vrodos_scene_probe.js"></script>
-    <script src="js/master/vrodos_quality_profiles.js"></script>
-    <script src="js/master/components/vrodos_scene_loader.component.js"></script>
-    <script src="js/master/components/vrodos_avatar.component.js"></script>
-    <script src="js/master/components/vrodos_scene_settings.component.js"></script>
-    <script src="js/master/components/vrodos_navigation.component.js"></script>
-    <script src="js/master/components/vrodos_misc.component.js"></script>
+    <script src="js/master/lib/vrodos-runtime-core.bundle.js"></script>
+    VRODOS_LEGACY_RUNTIME_SCRIPTS_PLACEHOLDER
+    VRODOS_PMNDRS_RUNTIME_SCRIPTS_PLACEHOLDER
+    <script src="js/master/lib/vrodos-runtime-aframe-components.bundle.js"></script>
 
 </head>
 

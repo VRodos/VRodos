@@ -1,8 +1,19 @@
-/**
+﻿/**
  * VRodos Scene Settings Schema
  * This file acts as the single source of truth for all scene metadata keys.
  * It is used by the Exporter, Importer, and Loader to process settings uniformly.
  */
+
+const VRODOSSceneSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
+
+function vrodosEditorSceneSettingDefault(sceneSettingKey, fallback, defaultKey) {
+    const setting = VRODOSSceneSettingsContract.sceneSettings && VRODOSSceneSettingsContract.sceneSettings[sceneSettingKey];
+    const keyName = defaultKey || 'default';
+    if (!setting) return fallback;
+    if (setting[keyName] !== undefined) return setting[keyName];
+    if (setting.default !== undefined) return setting.default;
+    return fallback;
+}
 
 VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     // General Environment
@@ -56,47 +67,47 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     'aframeContrastPreset': { type: 'string', default: 'balanced', envirKey: 'aframeContrastPreset' },
 
     // PMNDRS-specific
-    'aframePmndrsAAMode': { type: 'string', default: 'inherit', envirKey: 'aframePmndrsAAMode' },
-    'aframePmndrsAAPreset': { type: 'string', default: 'low', envirKey: 'aframePmndrsAAPreset' },
-    'aframePmndrsBloomIntensity': { type: 'number', default: 1.0, envirKey: 'aframePmndrsBloomIntensity' },
-    'aframePmndrsBloomThreshold': { type: 'number', default: 0.62, envirKey: 'aframePmndrsBloomThreshold' },
-    'aframePmndrsVignetteEnabled': { type: 'boolean', default: false, envirKey: 'aframePmndrsVignetteEnabled' },
-    'aframePmndrsVignetteDarkness': { type: 'number', default: 0.5, envirKey: 'aframePmndrsVignetteDarkness' },
-    'aframePmndrsToneMappingExposure': { type: 'number', default: 1.0, envirKey: 'aframePmndrsToneMappingExposure' },
-    'aframePmndrsLutEnabled': { type: 'boolean', default: false, envirKey: 'aframePmndrsLutEnabled' },
-    'aframePmndrsLutLook': { type: 'string', default: 'neutral', envirKey: 'aframePmndrsLutLook' },
-    'aframePmndrsLutStrength': { type: 'number', default: 1.0, envirKey: 'aframePmndrsLutStrength' },
-    'aframePmndrsNoiseEnabled': { type: 'boolean', default: false, envirKey: 'aframePmndrsNoiseEnabled' },
-    'aframePmndrsNoiseOpacity': { type: 'number', default: 0.04, envirKey: 'aframePmndrsNoiseOpacity' },
-    'aframePmndrsChromaticAberrationEnabled': { type: 'boolean', default: false, envirKey: 'aframePmndrsChromaticAberrationEnabled' },
-    'aframePmndrsChromaticAberrationOffset': { type: 'number', default: 0.0015, envirKey: 'aframePmndrsChromaticAberrationOffset' },
+    'aframePmndrsAAMode': { type: 'string', default: vrodosEditorSceneSettingDefault('pmndrsAAMode', 'inherit'), envirKey: 'aframePmndrsAAMode' },
+    'aframePmndrsAAPreset': { type: 'string', default: vrodosEditorSceneSettingDefault('pmndrsAAPreset', 'low'), envirKey: 'aframePmndrsAAPreset' },
+    'aframePmndrsBloomIntensity': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsBloomIntensity', 1.0), envirKey: 'aframePmndrsBloomIntensity' },
+    'aframePmndrsBloomThreshold': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsBloomThreshold', 0.62), envirKey: 'aframePmndrsBloomThreshold' },
+    'aframePmndrsVignetteEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('pmndrsVignetteEnabled', false), envirKey: 'aframePmndrsVignetteEnabled' },
+    'aframePmndrsVignetteDarkness': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsVignetteDarkness', 0.5), envirKey: 'aframePmndrsVignetteDarkness' },
+    'aframePmndrsToneMappingExposure': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsToneMappingExposure', 1.0), envirKey: 'aframePmndrsToneMappingExposure' },
+    'aframePmndrsLutEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('pmndrsLutEnabled', false), envirKey: 'aframePmndrsLutEnabled' },
+    'aframePmndrsLutLook': { type: 'string', default: vrodosEditorSceneSettingDefault('pmndrsLutLook', 'neutral'), envirKey: 'aframePmndrsLutLook' },
+    'aframePmndrsLutStrength': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsLutStrength', 1.0), envirKey: 'aframePmndrsLutStrength' },
+    'aframePmndrsNoiseEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('pmndrsNoiseEnabled', false), envirKey: 'aframePmndrsNoiseEnabled' },
+    'aframePmndrsNoiseOpacity': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsNoiseOpacity', 0.04), envirKey: 'aframePmndrsNoiseOpacity' },
+    'aframePmndrsChromaticAberrationEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('pmndrsChromaticAberrationEnabled', false), envirKey: 'aframePmndrsChromaticAberrationEnabled' },
+    'aframePmndrsChromaticAberrationOffset': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsChromaticAberrationOffset', 0.0015), envirKey: 'aframePmndrsChromaticAberrationOffset' },
 
     // Takram Atmosphere (PMNDRS)
-    'aframePmndrsAtmosphereEnabled': { type: 'boolean', default: true, envirKey: 'aframePmndrsAtmosphereEnabled' },
-    'aframePmndrsAtmospherePreset': { type: 'string', default: 'midday', envirKey: 'aframePmndrsAtmospherePreset' },
-    'aframePmndrsAtmospherePresetIntensity': { type: 'number', default: 1.0, envirKey: 'aframePmndrsAtmospherePresetIntensity' },
-    'aframePmndrsAtmosphereQuality': { type: 'string', default: 'balanced', envirKey: 'aframePmndrsAtmosphereQuality' },
-    'aframePmndrsCelestialMode': { type: 'string', default: 'manual', envirKey: 'aframePmndrsCelestialMode' },
-    'aframePmndrsCelestialTimePreset': { type: 'string', default: 'midday', envirKey: 'aframePmndrsCelestialTimePreset' },
-    'aframePmndrsSunElevationDeg': { type: 'number', default: 62, envirKey: 'aframePmndrsSunElevationDeg' },
-    'aframePmndrsSunAzimuthDeg': { type: 'number', default: 20, envirKey: 'aframePmndrsSunAzimuthDeg' },
-    'aframePmndrsSunDistance': { type: 'number', default: 5200, envirKey: 'aframePmndrsSunDistance' },
-    'aframePmndrsSunAngularRadius': { type: 'number', default: 0.0047, envirKey: 'aframePmndrsSunAngularRadius' },
-    'aframePmndrsAerialStrength': { type: 'number', default: 0.55, envirKey: 'aframePmndrsAerialStrength' },
-    'aframePmndrsAlbedoScale': { type: 'number', default: 1.0, envirKey: 'aframePmndrsAlbedoScale' },
-    'aframePmndrsTransmittanceEnabled': { type: 'boolean', default: true, envirKey: 'aframePmndrsTransmittanceEnabled' },
-    'aframePmndrsInscatterEnabled': { type: 'boolean', default: true, envirKey: 'aframePmndrsInscatterEnabled' },
-    'aframePmndrsGroundEnabled': { type: 'boolean', default: true, envirKey: 'aframePmndrsGroundEnabled' },
-    'aframePmndrsGroundAlbedo': { type: 'color', default: '#d8d8d0', envirKey: 'aframePmndrsGroundAlbedo' },
-    'aframePmndrsRayleighScale': { type: 'number', default: 1.18, envirKey: 'aframePmndrsRayleighScale' },
-    'aframePmndrsMieScatteringScale': { type: 'number', default: 0.42, envirKey: 'aframePmndrsMieScatteringScale' },
-    'aframePmndrsMieExtinctionScale': { type: 'number', default: 0.56, envirKey: 'aframePmndrsMieExtinctionScale' },
-    'aframePmndrsMiePhaseG': { type: 'number', default: 0.74, envirKey: 'aframePmndrsMiePhaseG' },
-    'aframePmndrsAbsorptionScale': { type: 'number', default: 0.94, envirKey: 'aframePmndrsAbsorptionScale' },
-    'aframePmndrsMoonEnabled': { type: 'boolean', default: false, envirKey: 'aframePmndrsMoonEnabled' },
-    'aframePmndrsHorizonLightingPreset': { type: 'string', default: 'natural', envirKey: 'aframePmndrsHorizonLightingPreset' },
-    'aframePmndrsHorizonKeyLightIntensity': { type: 'number', default: 1.15, envirKey: 'aframePmndrsHorizonKeyLightIntensity' },
-    'aframePmndrsHorizonFillLightIntensity': { type: 'number', default: 0.45, envirKey: 'aframePmndrsHorizonFillLightIntensity' },
+    'aframePmndrsAtmosphereEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('pmndrsAtmosphereEnabled', true), envirKey: 'aframePmndrsAtmosphereEnabled' },
+    'aframePmndrsAtmospherePreset': { type: 'string', default: vrodosEditorSceneSettingDefault('pmndrsAtmospherePreset', 'midday'), envirKey: 'aframePmndrsAtmospherePreset' },
+    'aframePmndrsAtmospherePresetIntensity': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsAtmospherePresetIntensity', 1.0), envirKey: 'aframePmndrsAtmospherePresetIntensity' },
+    'aframePmndrsAtmosphereQuality': { type: 'string', default: vrodosEditorSceneSettingDefault('pmndrsAtmosphereQuality', 'balanced'), envirKey: 'aframePmndrsAtmosphereQuality' },
+    'aframePmndrsCelestialMode': { type: 'string', default: vrodosEditorSceneSettingDefault('pmndrsCelestialMode', 'manual'), envirKey: 'aframePmndrsCelestialMode' },
+    'aframePmndrsCelestialTimePreset': { type: 'string', default: vrodosEditorSceneSettingDefault('pmndrsCelestialTimePreset', 'midday'), envirKey: 'aframePmndrsCelestialTimePreset' },
+    'aframePmndrsSunElevationDeg': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsSunElevationDeg', 62), envirKey: 'aframePmndrsSunElevationDeg' },
+    'aframePmndrsSunAzimuthDeg': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsSunAzimuthDeg', 20), envirKey: 'aframePmndrsSunAzimuthDeg' },
+    'aframePmndrsSunDistance': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsSunDistance', 5200), envirKey: 'aframePmndrsSunDistance' },
+    'aframePmndrsSunAngularRadius': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsSunAngularRadius', 0.0047), envirKey: 'aframePmndrsSunAngularRadius' },
+    'aframePmndrsAerialStrength': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsAerialStrength', 0.55), envirKey: 'aframePmndrsAerialStrength' },
+    'aframePmndrsAlbedoScale': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsAlbedoScale', 1.0), envirKey: 'aframePmndrsAlbedoScale' },
+    'aframePmndrsTransmittanceEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('pmndrsTransmittanceEnabled', true), envirKey: 'aframePmndrsTransmittanceEnabled' },
+    'aframePmndrsInscatterEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('pmndrsInscatterEnabled', true), envirKey: 'aframePmndrsInscatterEnabled' },
+    'aframePmndrsGroundEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('pmndrsGroundEnabled', true), envirKey: 'aframePmndrsGroundEnabled' },
+    'aframePmndrsGroundAlbedo': { type: 'color', default: vrodosEditorSceneSettingDefault('pmndrsGroundAlbedo', '#d8d8d0'), envirKey: 'aframePmndrsGroundAlbedo' },
+    'aframePmndrsRayleighScale': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsRayleighScale', 1.18), envirKey: 'aframePmndrsRayleighScale' },
+    'aframePmndrsMieScatteringScale': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsMieScatteringScale', 0.42), envirKey: 'aframePmndrsMieScatteringScale' },
+    'aframePmndrsMieExtinctionScale': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsMieExtinctionScale', 0.56), envirKey: 'aframePmndrsMieExtinctionScale' },
+    'aframePmndrsMiePhaseG': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsMiePhaseG', 0.74), envirKey: 'aframePmndrsMiePhaseG' },
+    'aframePmndrsAbsorptionScale': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsAbsorptionScale', 0.94), envirKey: 'aframePmndrsAbsorptionScale' },
+    'aframePmndrsMoonEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('pmndrsMoonEnabled', false), envirKey: 'aframePmndrsMoonEnabled' },
+    'aframePmndrsHorizonLightingPreset': { type: 'string', default: vrodosEditorSceneSettingDefault('pmndrsHorizonLightingPreset', 'natural'), envirKey: 'aframePmndrsHorizonLightingPreset' },
+    'aframePmndrsHorizonKeyLightIntensity': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsHorizonKeyLightIntensity', 1.15), envirKey: 'aframePmndrsHorizonKeyLightIntensity' },
+    'aframePmndrsHorizonFillLightIntensity': { type: 'number', default: vrodosEditorSceneSettingDefault('pmndrsHorizonFillLightIntensity', 0.45), envirKey: 'aframePmndrsHorizonFillLightIntensity' },
 };
 VRODOS.sceneSettings = VRODOS.sceneSettings || {};
 VRODOS.sceneSettings.schema = VRODOS.config.SCENE_SETTINGS_SCHEMA;

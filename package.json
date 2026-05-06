@@ -13,8 +13,9 @@
     }
   },
   "scripts": {
-    "build": "npm run build:three && npm run build:css",
+    "build": "npm run build:three && npm run build:runtime && npm run build:css",
     "build:three": "node ./scripts/build-three-vendor.mjs",
+    "build:runtime": "node ./scripts/build-runtime-master-bundles.mjs",
     "build:vendor": "npm run build:three",
     "lint": "eslint \"assets/js/{runtime/master,editor}/**/*.js\"",
     "lint:fix": "eslint \"assets/js/{runtime/master,editor}/**/*.js\" --fix",

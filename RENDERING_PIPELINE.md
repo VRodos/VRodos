@@ -26,13 +26,17 @@ Presentation mode is part of the rendering contract:
 | `assets/js/runtime/master/components/vrodos_scene_settings.component.js` | A-Frame schema, lifecycle, settings getters, engine dispatcher |
 | `assets/js/runtime/master/vrodos_master_rendering.js` | HDR loader and shared material/runtime helpers |
 | `assets/js/runtime/master/vrodos_scene_probe.js` | HDR and scene-probe environment map support |
-| `assets/js/runtime/master/vrodos_quality_profiles.js` | Render, shadow, material, background, post-FX, Horizon, and Takram quality profiles |
+| `assets/js/runtime/master/vrodos_quality_profiles.js` | Source for render, shadow, material, background, post-FX, Horizon, and Takram quality profiles |
+| `assets/js/runtime/master/lib/vrodos-runtime-core.bundle.js` | Generated compiled-scene core runtime bundle |
+| `assets/js/runtime/master/lib/vrodos-runtime-scene-components.bundle.js` | Generated compiled-scene POI/media/assessment component bundle |
+| `assets/js/runtime/master/lib/vrodos-runtime-aframe-components.bundle.js` | Generated compiled-scene master A-Frame component bundle |
 
 ### Legacy custom pipeline files
 
 | File | Role |
 | --- | --- |
 | `assets/js/runtime/master/vrodos_postprocessing.js` | Legacy render-loop hijack, render targets, resource lifecycle, pass execution |
+| `assets/js/runtime/master/lib/vrodos-runtime-legacy-postfx.bundle.js` | Generated compiled-scene legacy post-FX bundle |
 | `assets/js/runtime/master/vrodos_shaders_bloom.js` | Bright-pass and Gaussian blur shader factories |
 | `assets/js/runtime/master/vrodos_shaders_sao.js` | SAO and bilateral blur shader factories |
 | `assets/js/runtime/master/vrodos_shaders_fxaa.js` | FXAA shader factory |
@@ -47,6 +51,7 @@ Presentation mode is part of the rendering contract:
 | `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` | PMNDRS composer construction, effect ordering, AA, native SSAO, LUT, runtime debug overlay |
 | `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` | Bundled `window.POSTPROCESSING` |
 | `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js` | Bundled `window.VRODOS_TAKRAM_ATMOSPHERE` |
+| `assets/js/runtime/master/lib/vrodos-runtime-pmndrs-postfx.bundle.js` | Generated compiled-scene PMNDRS post-FX adapter bundle |
 
 ## 3. Load Order
 
@@ -54,25 +59,16 @@ Presentation mode is part of the rendering contract:
 
 ```text
 AFRAME_RUNTIME_URL_PLACEHOLDER
-lib/vrodos-postprocessing.bundle.js
-vrodos_master_shared.js
-vrodos_ui_helpers.js
-vrodos_master_bootstrap.js
-vrodos_master_rendering.js
-vrodos_shaders_*.js
-vrodos_postprocessing.js
-lib/vrodos-takram-atmosphere.bundle.js
-vrodos_postprocessing_pmndrs.js
-vrodos_scene_probe.js
-vrodos_quality_profiles.js
-components/vrodos_scene_loader.component.js
-components/vrodos_avatar.component.js
-components/vrodos_scene_settings.component.js
-components/vrodos_navigation.component.js
-components/vrodos_misc.component.js
+lib/vrodos-runtime-scene-components.bundle.js
+lib/vrodos-runtime-core.bundle.js
+optional lib/vrodos-runtime-legacy-postfx.bundle.js
+optional lib/vrodos-postprocessing.bundle.js
+optional lib/vrodos-takram-atmosphere.bundle.js
+optional lib/vrodos-runtime-pmndrs-postfx.bundle.js
+lib/vrodos-runtime-aframe-components.bundle.js
 ```
 
-The PMNDRS and Takram bundles are generated from root `package.json` and `package-lock.json`. They must use A-Frame's `window.THREE`; compiled scenes must not load a second Three instance.
+The optional post-FX bundle set is injected by the compiler from scene metadata. The PMNDRS and Takram bundles are generated from root `package.json` and `package-lock.json`. They must use A-Frame's `window.THREE`; compiled scenes must not load a second Three instance.
 
 ## 4. Legacy Pipeline
 
@@ -225,6 +221,7 @@ Scene probe capture is an alternate environment source when render quality and p
 
 - Root `package.json` and `package-lock.json` define runtime package intent.
 - `npm run build:three` generates `assets/runtime-version-manifest.json`.
+- `npm run build:runtime` generates the compiled-scene runtime bundles and the browser settings-contract script from `assets/runtime-settings-contract.json`.
 - `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, and Takram metadata.
 - The current live vendor bundle is Three.js r181.
 

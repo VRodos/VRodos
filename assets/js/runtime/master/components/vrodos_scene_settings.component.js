@@ -3,6 +3,26 @@
  */
 
 var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
+var VRODOSRuntimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
+
+function vrodosSceneSettingDefault(key, fallback) {
+    const setting = VRODOSRuntimeSettingsContract.sceneSettings && VRODOSRuntimeSettingsContract.sceneSettings[key];
+    if (!setting || setting.default === undefined) {
+        return fallback;
+    }
+    if (typeof setting.default === 'boolean') {
+        return setting.default ? '1' : '0';
+    }
+    return String(setting.default);
+}
+
+function vrodosRuntimeNoop() {
+    return undefined;
+}
+
+function vrodosRuntimeFalse() {
+    return false;
+}
 
 AFRAME.registerComponent('scene-settings', {
     schema: {
@@ -54,44 +74,44 @@ AFRAME.registerComponent('scene-settings', {
         postFXEngine: { type: "string", default: "legacy" },
         // Pmndrs-only tweakable knobs. Numbers serialized as strings since
         // A-Frame string-typed schema is what the rest of this component uses.
-        pmndrsAAMode: { type: "string", default: "inherit" },
-        pmndrsAAPreset: { type: "string", default: "inherit" },
-        pmndrsBloomIntensity: { type: "string", default: "1.0" },
-        pmndrsBloomThreshold: { type: "string", default: "0.62" },
-        pmndrsVignetteEnabled: { type: "string", default: "0" },
-        pmndrsVignetteDarkness: { type: "string", default: "0.5" },
-        pmndrsToneMappingExposure: { type: "string", default: "1.0" },
-        pmndrsLutEnabled: { type: "string", default: "0" },
-        pmndrsLutLook: { type: "string", default: "neutral" },
-        pmndrsLutStrength: { type: "string", default: "1.0" },
-        pmndrsNoiseEnabled: { type: "string", default: "0" },
-        pmndrsNoiseOpacity: { type: "string", default: "0.04" },
-        pmndrsChromaticAberrationEnabled: { type: "string", default: "0" },
-        pmndrsChromaticAberrationOffset: { type: "string", default: "0.0015" },
-        pmndrsAtmosphereEnabled: { type: "string", default: "1" },
-        pmndrsAtmospherePreset: { type: "string", default: "midday" },
-        pmndrsAtmospherePresetIntensity: { type: "string", default: "1.0" },
-        pmndrsAtmosphereQuality: { type: "string", default: "balanced" },
-        pmndrsCelestialMode: { type: "string", default: "manual" },
-        pmndrsCelestialTimePreset: { type: "string", default: "midday" },
-        pmndrsSunElevationDeg: { type: "string", default: "62" },
-        pmndrsSunAzimuthDeg: { type: "string", default: "20" },
-        pmndrsSunDistance: { type: "string", default: "5200" },
-        pmndrsSunAngularRadius: { type: "string", default: "0.0047" },
-        pmndrsAerialStrength: { type: "string", default: "0.55" },
-        pmndrsAlbedoScale: { type: "string", default: "1.0" },
-        pmndrsTransmittanceEnabled: { type: "string", default: "1" },
-        pmndrsInscatterEnabled: { type: "string", default: "1" },
-        pmndrsGroundEnabled: { type: "string", default: "1" },
-        pmndrsGroundAlbedo: { type: "string", default: "#d8d8d0" },
-        pmndrsRayleighScale: { type: "string", default: "1.18" },
-        pmndrsMieScatteringScale: { type: "string", default: "0.42" },
-        pmndrsMieExtinctionScale: { type: "string", default: "0.56" },
-        pmndrsMiePhaseG: { type: "string", default: "0.74" },
-        pmndrsAbsorptionScale: { type: "string", default: "0.94" },
-        pmndrsMoonEnabled: { type: "string", default: "0" },
-        pmndrsHorizonKeyLightIntensity: { type: "string", default: "1.15" },
-        pmndrsHorizonFillLightIntensity: { type: "string", default: "0.45" },
+        pmndrsAAMode: { type: "string", default: vrodosSceneSettingDefault("pmndrsAAMode", "inherit") },
+        pmndrsAAPreset: { type: "string", default: vrodosSceneSettingDefault("pmndrsAAPreset", "inherit") },
+        pmndrsBloomIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsBloomIntensity", "1.0") },
+        pmndrsBloomThreshold: { type: "string", default: vrodosSceneSettingDefault("pmndrsBloomThreshold", "0.62") },
+        pmndrsVignetteEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsVignetteEnabled", "0") },
+        pmndrsVignetteDarkness: { type: "string", default: vrodosSceneSettingDefault("pmndrsVignetteDarkness", "0.5") },
+        pmndrsToneMappingExposure: { type: "string", default: vrodosSceneSettingDefault("pmndrsToneMappingExposure", "1.0") },
+        pmndrsLutEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsLutEnabled", "0") },
+        pmndrsLutLook: { type: "string", default: vrodosSceneSettingDefault("pmndrsLutLook", "neutral") },
+        pmndrsLutStrength: { type: "string", default: vrodosSceneSettingDefault("pmndrsLutStrength", "1.0") },
+        pmndrsNoiseEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsNoiseEnabled", "0") },
+        pmndrsNoiseOpacity: { type: "string", default: vrodosSceneSettingDefault("pmndrsNoiseOpacity", "0.04") },
+        pmndrsChromaticAberrationEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsChromaticAberrationEnabled", "0") },
+        pmndrsChromaticAberrationOffset: { type: "string", default: vrodosSceneSettingDefault("pmndrsChromaticAberrationOffset", "0.0015") },
+        pmndrsAtmosphereEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsAtmosphereEnabled", "1") },
+        pmndrsAtmospherePreset: { type: "string", default: vrodosSceneSettingDefault("pmndrsAtmospherePreset", "midday") },
+        pmndrsAtmospherePresetIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsAtmospherePresetIntensity", "1.0") },
+        pmndrsAtmosphereQuality: { type: "string", default: vrodosSceneSettingDefault("pmndrsAtmosphereQuality", "balanced") },
+        pmndrsCelestialMode: { type: "string", default: vrodosSceneSettingDefault("pmndrsCelestialMode", "manual") },
+        pmndrsCelestialTimePreset: { type: "string", default: vrodosSceneSettingDefault("pmndrsCelestialTimePreset", "midday") },
+        pmndrsSunElevationDeg: { type: "string", default: vrodosSceneSettingDefault("pmndrsSunElevationDeg", "62") },
+        pmndrsSunAzimuthDeg: { type: "string", default: vrodosSceneSettingDefault("pmndrsSunAzimuthDeg", "20") },
+        pmndrsSunDistance: { type: "string", default: vrodosSceneSettingDefault("pmndrsSunDistance", "5200") },
+        pmndrsSunAngularRadius: { type: "string", default: vrodosSceneSettingDefault("pmndrsSunAngularRadius", "0.0047") },
+        pmndrsAerialStrength: { type: "string", default: vrodosSceneSettingDefault("pmndrsAerialStrength", "0.55") },
+        pmndrsAlbedoScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsAlbedoScale", "1.0") },
+        pmndrsTransmittanceEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsTransmittanceEnabled", "1") },
+        pmndrsInscatterEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsInscatterEnabled", "1") },
+        pmndrsGroundEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsGroundEnabled", "1") },
+        pmndrsGroundAlbedo: { type: "string", default: vrodosSceneSettingDefault("pmndrsGroundAlbedo", "#d8d8d0") },
+        pmndrsRayleighScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsRayleighScale", "1.18") },
+        pmndrsMieScatteringScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsMieScatteringScale", "0.42") },
+        pmndrsMieExtinctionScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsMieExtinctionScale", "0.56") },
+        pmndrsMiePhaseG: { type: "string", default: vrodosSceneSettingDefault("pmndrsMiePhaseG", "0.74") },
+        pmndrsAbsorptionScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsAbsorptionScale", "0.94") },
+        pmndrsMoonEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsMoonEnabled", "0") },
+        pmndrsHorizonKeyLightIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsHorizonKeyLightIntensity", "1.15") },
+        pmndrsHorizonFillLightIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsHorizonFillLightIntensity", "0.45") },
     },
     getSSRStrengthValue: function () {
         switch (this.data.postFXSSRStrength) {
@@ -346,11 +366,37 @@ AFRAME.registerComponent('scene-settings', {
             ? { bias: -0.00016, normalBias: 0.018, helperKeyIntensity: 0.94, helperFillIntensity: 0.34, helperPosition: '6 10 4' }
             : { bias: -0.0001, normalBias: 0.012, helperKeyIntensity: 0.9, helperFillIntensity: 0.32, helperPosition: '6.2 10 4.2' };
     },
+    isFPSMeterRequested: function () {
+        return this.data.fpsMeterEnabled !== '0';
+    },
     shouldShowFPSMeter: function () {
-        return this.data.fpsMeterEnabled !== '0' && typeof Stats !== 'undefined';
+        return this.isFPSMeterRequested() && typeof Stats !== 'undefined';
+    },
+    queueFPSMeterEnable: function () {
+        if (this.fpsStatsPending || !this.isFPSMeterRequested()) {
+            return;
+        }
+
+        const statsReady = window.VRODOS_STATS_READY;
+        if (!statsReady || typeof statsReady.then !== 'function') {
+            return;
+        }
+
+        this.fpsStatsPending = true;
+        statsReady.then(() => {
+            this.fpsStatsPending = false;
+            if (this.isFPSMeterRequested()) {
+                this.enableFPSMeter();
+            }
+        });
     },
     enableFPSMeter: function () {
-        if (this.fpsStats || !this.shouldShowFPSMeter()) {
+        if (this.fpsStats) {
+            return;
+        }
+
+        if (!this.shouldShowFPSMeter()) {
+            this.queueFPSMeterEnable();
             return;
         }
 
@@ -398,10 +444,16 @@ AFRAME.registerComponent('scene-settings', {
 
         this.fpsStats = null;
         this.fpsStatsRoot = null;
+        this.fpsStatsPending = false;
     },
     syncFPSMeterState: function () {
         if (this.shouldShowFPSMeter()) {
             this.enableFPSMeter();
+            return;
+        }
+
+        if (this.isFPSMeterRequested()) {
+            this.queueFPSMeterEnable();
             return;
         }
 
@@ -535,22 +587,21 @@ AFRAME.registerComponent('scene-settings', {
     shouldUsePostProcessing: function () {
         return this.hasPostProcessingPipelineRequest() && !this.isImmersiveXrActive();
     },
-    // --- Post-processing methods — LEGACY engine (extracted to vrodos_postprocessing.js) ---
-    updatePostProcessingSize: VRODOSMaster.SceneSettingsHelpers.updatePostProcessingSize,
-    enablePostProcessing: VRODOSMaster.SceneSettingsHelpers.enablePostProcessing,
-    disablePostProcessing: VRODOSMaster.SceneSettingsHelpers.disablePostProcessing,
-    _syncLegacyPostProcessingState: VRODOSMaster.SceneSettingsHelpers.syncPostProcessingState,
-    // --- Post-processing methods — PMNDRS engine (extracted to vrodos_postprocessing_pmndrs.js) ---
-    // The PmndrsHelpers bag is created by vrodos_postprocessing_pmndrs.js. If that file
-    // failed to load for any reason, the no-op fallbacks below ensure the component still
-    // initialises and the scene degrades gracefully to a non-post-FX render.
-    enablePmndrsPostProcessing: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.enablePmndrsPostProcessing) || function () {},
-    disablePmndrsPostProcessing: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.disablePmndrsPostProcessing) || function () {},
-    updatePmndrsPostProcessingSize: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.updatePmndrsPostProcessingSize) || function () {},
-    _buildPmndrsComposer: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers._buildPmndrsComposer) || function () { return false; },
-    _updatePmndrsAdaptiveAO: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers._updatePmndrsAdaptiveAO) || function () {},
+    // --- Post-processing methods: LEGACY engine (extracted to vrodos_postprocessing.js) ---
+    updatePostProcessingSize: VRODOSMaster.SceneSettingsHelpers.updatePostProcessingSize || vrodosRuntimeNoop,
+    enablePostProcessing: VRODOSMaster.SceneSettingsHelpers.enablePostProcessing || vrodosRuntimeNoop,
+    disablePostProcessing: VRODOSMaster.SceneSettingsHelpers.disablePostProcessing || vrodosRuntimeNoop,
+    _syncLegacyPostProcessingState: VRODOSMaster.SceneSettingsHelpers.syncPostProcessingState || vrodosRuntimeNoop,
+    // --- Post-processing methods: PMNDRS engine (extracted to vrodos_postprocessing_pmndrs.js) ---
+    // The compiler only includes the selected engine chunk. Missing helper bags here mean
+    // the other engine was intentionally omitted from this freshly compiled scene.
+    enablePmndrsPostProcessing: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.enablePmndrsPostProcessing) || vrodosRuntimeNoop,
+    disablePmndrsPostProcessing: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.disablePmndrsPostProcessing) || vrodosRuntimeNoop,
+    updatePmndrsPostProcessingSize: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.updatePmndrsPostProcessingSize) || vrodosRuntimeNoop,
+    _buildPmndrsComposer: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers._buildPmndrsComposer) || vrodosRuntimeFalse,
+    _updatePmndrsAdaptiveAO: (VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers._updatePmndrsAdaptiveAO) || vrodosRuntimeNoop,
     // --- Engine dispatcher: routes to legacy or pmndrs path based on data.postFXEngine ---
-    // See POSTPROCESSING_MIGRATION_PLAN.md §11. Engines are mutually exclusive: switching
+    // Engines are mutually exclusive: switching
     // from one to the other (e.g. via a future runtime toggle) tears the previous engine
     // down before bringing the new one up. Defensive disable of the OTHER engine on every
     // call protects against drift if data.postFXEngine ever changes mid-session.

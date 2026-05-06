@@ -1,4 +1,4 @@
-/**
+﻿/**
  * VRodos Compile Dialogue - Shared Utilities & Constants
  * Part of Phase 4 Refactoring: UI Componentization
  */
@@ -6,67 +6,66 @@
 window.VRodosCompileUI = window.VRodosCompileUI || {};
 
 VRodosCompileUI.Shared = (function () {
+    const contract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {}, horizonHelperLightPresets: {} };
+
+    function contractDefault(key, fallback, defaultKey) {
+        const setting = contract.sceneSettings && contract.sceneSettings[key];
+        const keyName = defaultKey || 'editorDefault';
+        if (!setting) return fallback;
+        if (setting[keyName] !== undefined) return setting[keyName];
+        if (setting.default !== undefined) return setting.default;
+        return fallback;
+    }
 
     const PMNDRS_TWEAK_DEFAULTS = {
-        aaMode: 'none',
-        aaPreset: 'medium',
-        bloomIntensity: 1.0,
-        bloomThreshold: 0.62,
-        toneMappingExposure: 1.0,
-        lutEnabled: false,
-        lutLook: 'neutral',
-        lutStrength: 1.0,
-        vignetteEnabled: false,
-        vignetteDarkness: 0.5,
-        noiseEnabled: false,
-        noiseOpacity: 0.04,
-        chromaticAberrationEnabled: false,
-        chromaticAberrationOffset: 0.0015,
-        atmosphereEnabled: true,
-        atmospherePreset: 'midday',
-        atmospherePresetIntensity: 1.0,
-        atmosphereQuality: 'balanced',
-        celestialMode: 'manual',
-        celestialTimePreset: 'midday',
-        sunElevationDeg: 62,
-        sunAzimuthDeg: 20,
-        sunDistance: 5200,
-        sunAngularRadius: 0.0047,
-        aerialStrength: 0.55,
-        albedoScale: 1.0,
-        transmittanceEnabled: true,
-        inscatterEnabled: true,
-        groundEnabled: true,
-        groundAlbedo: '#d8d8d0',
-        rayleighScale: 1.18,
-        mieScatteringScale: 0.42,
-        mieExtinctionScale: 0.56,
-        miePhaseG: 0.74,
-        absorptionScale: 0.94,
-        moonEnabled: false,
-        horizonLightingPreset: 'natural',
-        horizonKeyLightIntensity: 1.15,
-        horizonFillLightIntensity: 0.45
+        aaMode: contractDefault('pmndrsAAMode', 'none'),
+        aaPreset: contractDefault('pmndrsAAPreset', 'medium'),
+        bloomIntensity: contractDefault('pmndrsBloomIntensity', 1.0),
+        bloomThreshold: contractDefault('pmndrsBloomThreshold', 0.62),
+        toneMappingExposure: contractDefault('pmndrsToneMappingExposure', 1.0),
+        lutEnabled: contractDefault('pmndrsLutEnabled', false),
+        lutLook: contractDefault('pmndrsLutLook', 'neutral'),
+        lutStrength: contractDefault('pmndrsLutStrength', 1.0),
+        vignetteEnabled: contractDefault('pmndrsVignetteEnabled', false),
+        vignetteDarkness: contractDefault('pmndrsVignetteDarkness', 0.5),
+        noiseEnabled: contractDefault('pmndrsNoiseEnabled', false),
+        noiseOpacity: contractDefault('pmndrsNoiseOpacity', 0.04),
+        chromaticAberrationEnabled: contractDefault('pmndrsChromaticAberrationEnabled', false),
+        chromaticAberrationOffset: contractDefault('pmndrsChromaticAberrationOffset', 0.0015),
+        atmosphereEnabled: contractDefault('pmndrsAtmosphereEnabled', true),
+        atmospherePreset: contractDefault('pmndrsAtmospherePreset', 'midday'),
+        atmospherePresetIntensity: contractDefault('pmndrsAtmospherePresetIntensity', 1.0),
+        atmosphereQuality: contractDefault('pmndrsAtmosphereQuality', 'balanced'),
+        celestialMode: contractDefault('pmndrsCelestialMode', 'manual'),
+        celestialTimePreset: contractDefault('pmndrsCelestialTimePreset', 'midday'),
+        sunElevationDeg: contractDefault('pmndrsSunElevationDeg', 62),
+        sunAzimuthDeg: contractDefault('pmndrsSunAzimuthDeg', 20),
+        sunDistance: contractDefault('pmndrsSunDistance', 5200),
+        sunAngularRadius: contractDefault('pmndrsSunAngularRadius', 0.0047),
+        aerialStrength: contractDefault('pmndrsAerialStrength', 0.55),
+        albedoScale: contractDefault('pmndrsAlbedoScale', 1.0),
+        transmittanceEnabled: contractDefault('pmndrsTransmittanceEnabled', true),
+        inscatterEnabled: contractDefault('pmndrsInscatterEnabled', true),
+        groundEnabled: contractDefault('pmndrsGroundEnabled', true),
+        groundAlbedo: contractDefault('pmndrsGroundAlbedo', '#d8d8d0'),
+        rayleighScale: contractDefault('pmndrsRayleighScale', 1.18),
+        mieScatteringScale: contractDefault('pmndrsMieScatteringScale', 0.42),
+        mieExtinctionScale: contractDefault('pmndrsMieExtinctionScale', 0.56),
+        miePhaseG: contractDefault('pmndrsMiePhaseG', 0.74),
+        absorptionScale: contractDefault('pmndrsAbsorptionScale', 0.94),
+        moonEnabled: contractDefault('pmndrsMoonEnabled', false),
+        horizonLightingPreset: contractDefault('pmndrsHorizonLightingPreset', 'natural'),
+        horizonKeyLightIntensity: contractDefault('pmndrsHorizonKeyLightIntensity', 1.15),
+        horizonFillLightIntensity: contractDefault('pmndrsHorizonFillLightIntensity', 0.45)
     };
 
     function getPmndrsHorizonHelperDefaults(preset) {
-        switch (preset) {
-            case 'clear':
-                return {
-                    keyLightIntensity: 1.24,
-                    fillLightIntensity: 0.55
-                };
-            case 'crisp':
-                return {
-                    keyLightIntensity: 1.19,
-                    fillLightIntensity: 0.49
-                };
-            default:
-                return {
-                    keyLightIntensity: PMNDRS_TWEAK_DEFAULTS.horizonKeyLightIntensity,
-                    fillLightIntensity: PMNDRS_TWEAK_DEFAULTS.horizonFillLightIntensity
-                };
-        }
+        const normalized = ['clear', 'crisp'].indexOf(preset) !== -1 ? preset : 'natural';
+        const defaults = contract.horizonHelperLightPresets && contract.horizonHelperLightPresets[normalized];
+        return {
+            keyLightIntensity: defaults && defaults.keyLightIntensity !== undefined ? defaults.keyLightIntensity : PMNDRS_TWEAK_DEFAULTS.horizonKeyLightIntensity,
+            fillLightIntensity: defaults && defaults.fillLightIntensity !== undefined ? defaults.fillLightIntensity : PMNDRS_TWEAK_DEFAULTS.horizonFillLightIntensity
+        };
     }
 
     function normalizePmndrsHorizonLightingPreset(value, fallback) {

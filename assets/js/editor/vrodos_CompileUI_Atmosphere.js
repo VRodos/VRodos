@@ -1,4 +1,4 @@
-/**
+﻿/**
  * VRodos Compile Dialogue - Atmosphere Module
  * Part of Phase 4 Refactoring: UI Componentization
  */
@@ -7,7 +7,9 @@ window.VRodosCompileUI = window.VRodosCompileUI || {};
 
 VRodosCompileUI.Atmosphere = (function () {
     const Shared = VRodosCompileUI.Shared;
-    const MIDDAY = {
+    const contract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
+    const contractLookDefaults = contract.atmosphereLookDefaults || null;
+    const MIDDAY = (contractLookDefaults && contractLookDefaults.midday) || {
         sunElevationDeg: 62,
         sunAzimuthDeg: 20,
         sunDistance: 5200,
@@ -25,7 +27,7 @@ VRodosCompileUI.Atmosphere = (function () {
         absorptionScale: 0.94,
         moonEnabled: false
     };
-    const LOOK_PRESETS = {
+    const LOOK_PRESETS = contractLookDefaults || {
         sunrise: {
             sunElevationDeg: 6,
             sunAzimuthDeg: -55,
