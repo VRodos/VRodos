@@ -1,8 +1,6 @@
 /**
  * VRodos Master runtime bootstrap.
  */
-/* global VRODOSMaster */
-
 (function () {
     const apiPatternSingle = {
         ThresholdMin: 0.106,
@@ -193,21 +191,22 @@
             panels[entityId] = entityNode.childNodes[0].id === 'videoPlaneGreen' ? entityNode.childNodes[0] : entityNode.childNodes[1];
             elementsDatGui[entityId] = [];
 
-            for (var property in apiPatternSingle) {
+            for (const property in apiPatternSingle) {
                 if (!Object.prototype.hasOwnProperty.call(apiPatternSingle, property)) {
                     continue;
                 }
 
-                const low = `${property  }Low`;
-                const high = `${property  }High`;
-                const step = `${property  }Step`;
-                const controller = videoUserGui[entityId].add(apiPatternSingle, property, apiPatternSingleMin[low], apiPatternSingleMax[high], apiPatternSingleStep[step]);
+                const currentProperty = property;
+                const low = `${currentProperty  }Low`;
+                const high = `${currentProperty  }High`;
+                const step = `${currentProperty  }Step`;
+                const controller = videoUserGui[entityId].add(apiPatternSingle, currentProperty, apiPatternSingleMin[low], apiPatternSingleMax[high], apiPatternSingleStep[step]);
                 controller.nActor = nActor - 1;
                 controller.currentEntityId = entityId;
-                controller.currentProperty = property;
-                elementsDatGui[entityId][property] = controller;
+                controller.currentProperty = currentProperty;
+                elementsDatGui[entityId][currentProperty] = controller;
 
-                if (['w', 'h', 'x', 'y', 'z', 'rx', 'ry', 'rz'].some((prefix) => property.indexOf(prefix) === 0)) {
+                if (['w', 'h', 'x', 'y', 'z', 'rx', 'ry', 'rz'].some((prefix) => currentProperty.indexOf(prefix) === 0)) {
                     controller.panelaki = panels[entityId];
                     controller.domElement.pName = entityId;
                     controller.onChange(function () {
