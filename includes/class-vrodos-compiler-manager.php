@@ -806,10 +806,14 @@ class VRodos_Compiler_Manager {
 		$env_map_preset     = $metadata->aframeEnvMapPreset ?? 'none';
 		$pmndrs_atmosphere_enabled = ( $post_fx_enabled_bool && 'pmndrs' === $post_fx_engine && isset( $metadata->aframePmndrsAtmosphereEnabled ) && filter_var( $metadata->aframePmndrsAtmosphereEnabled, FILTER_VALIDATE_BOOLEAN ) ) ? 'true' : 'false';
 		$pmndrs_atmosphere_preset_raw = $metadata->aframePmndrsAtmospherePreset ?? 'midday';
-		$pmndrs_atmosphere_preset = in_array( $pmndrs_atmosphere_preset_raw, [ 'sunrise', 'midday', 'sunset', 'night', 'custom' ], true ) ? $pmndrs_atmosphere_preset_raw : 'midday';
+		$pmndrs_atmosphere_preset = in_array( $pmndrs_atmosphere_preset_raw, [ 'sunrise', 'midday', 'golden-hour', 'sunset', 'night', 'custom' ], true ) ? $pmndrs_atmosphere_preset_raw : 'midday';
 		$pmndrs_atmosphere_preset_intensity = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsAtmospherePresetIntensity ?? 1.0 ) ) );
 		$pmndrs_atmosphere_quality_raw = $metadata->aframePmndrsAtmosphereQuality ?? 'balanced';
 		$pmndrs_atmosphere_quality = in_array( $pmndrs_atmosphere_quality_raw, [ 'performance', 'balanced', 'quality', 'cinematic' ], true ) ? $pmndrs_atmosphere_quality_raw : 'balanced';
+		$pmndrs_celestial_mode_raw = $metadata->aframePmndrsCelestialMode ?? 'manual';
+		$pmndrs_celestial_mode = in_array( $pmndrs_celestial_mode_raw, [ 'manual', 'preset-time' ], true ) ? $pmndrs_celestial_mode_raw : 'manual';
+		$pmndrs_celestial_time_preset_raw = $metadata->aframePmndrsCelestialTimePreset ?? 'midday';
+		$pmndrs_celestial_time_preset = in_array( $pmndrs_celestial_time_preset_raw, [ 'sunrise', 'midday', 'golden-hour', 'sunset', 'night' ], true ) ? $pmndrs_celestial_time_preset_raw : 'midday';
 		$pmndrs_sun_elevation = max( -10.0, min( 85.0, (float) ( $metadata->aframePmndrsSunElevationDeg ?? 62.0 ) ) );
 		$pmndrs_sun_azimuth = max( -180.0, min( 180.0, (float) ( $metadata->aframePmndrsSunAzimuthDeg ?? 20.0 ) ) );
 		$pmndrs_sun_distance = max( 1500.0, min( 20000.0, (float) ( $metadata->aframePmndrsSunDistance ?? 5200.0 ) ) );
@@ -825,7 +829,11 @@ class VRodos_Compiler_Manager {
 		$pmndrs_mie_extinction_scale = max( 0.1, min( 3.0, (float) ( $metadata->aframePmndrsMieExtinctionScale ?? 0.56 ) ) );
 		$pmndrs_mie_phase_g = max( 0.0, min( 0.99, (float) ( $metadata->aframePmndrsMiePhaseG ?? 0.74 ) ) );
 		$pmndrs_absorption_scale = max( 0.1, min( 3.0, (float) ( $metadata->aframePmndrsAbsorptionScale ?? 0.94 ) ) );
-		$pmndrs_moon_enabled = isset( $metadata->aframePmndrsMoonEnabled ) && filter_var( $metadata->aframePmndrsMoonEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$pmndrs_moon_explicit = property_exists( $metadata, 'aframePmndrsMoonEnabled' );
+		$pmndrs_moon_enabled_bool = $pmndrs_moon_explicit
+			? filter_var( $metadata->aframePmndrsMoonEnabled, FILTER_VALIDATE_BOOLEAN )
+			: ( 'preset-time' === $pmndrs_celestial_mode && 'night' === $pmndrs_celestial_time_preset );
+		$pmndrs_moon_enabled = $pmndrs_moon_enabled_bool ? 'true' : 'false';
 		$pmndrs_horizon_key_light_intensity = max( 0.0, min( 3.0, (float) ( $metadata->aframePmndrsHorizonKeyLightIntensity ?? $pmndrs_horizon_helper_defaults['key'] ) ) );
 		$pmndrs_horizon_fill_light_intensity = max( 0.0, min( 3.0, (float) ( $metadata->aframePmndrsHorizonFillLightIntensity ?? $pmndrs_horizon_helper_defaults['fill'] ) ) );
 		$pmndrs_aa_mode_raw = $metadata->aframePmndrsAAMode ?? 'inherit';
@@ -868,6 +876,7 @@ class VRodos_Compiler_Manager {
 			"; pmndrsChromaticAberrationEnabled: $pmndrs_chromatic_aberration_enabled; pmndrsChromaticAberrationOffset: $pmndrs_chromatic_aberration_offset" .
 			"; pmndrsAtmosphereEnabled: $pmndrs_atmosphere_enabled; pmndrsAtmospherePreset: $pmndrs_atmosphere_preset" .
 			"; pmndrsAtmospherePresetIntensity: $pmndrs_atmosphere_preset_intensity; pmndrsAtmosphereQuality: $pmndrs_atmosphere_quality" .
+			"; pmndrsCelestialMode: $pmndrs_celestial_mode; pmndrsCelestialTimePreset: $pmndrs_celestial_time_preset" .
 			"; pmndrsSunElevationDeg: $pmndrs_sun_elevation; pmndrsSunAzimuthDeg: $pmndrs_sun_azimuth" .
 			"; pmndrsSunDistance: $pmndrs_sun_distance; pmndrsSunAngularRadius: $pmndrs_sun_angular_radius" .
 			"; pmndrsAerialStrength: $pmndrs_aerial_strength; pmndrsAlbedoScale: $pmndrs_albedo_scale" .

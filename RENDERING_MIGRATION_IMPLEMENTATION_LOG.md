@@ -17,7 +17,7 @@ Completed work:
 - `includes/class-vrodos-render-runtime-manager.php` reads the manifest and resolves runtime assets.
 - Compiled scenes load `vrodos-postprocessing.bundle.js` and `vrodos-takram-atmosphere.bundle.js`.
 - PMNDRS and Takram bundles alias `three` to A-Frame's `window.THREE` to avoid multiple Three instances.
-- PMNDRS supports SMAA/MSAA, native `SSAOEffect` ambient occlusion, bloom, tone mapping, basic color/contrast grading, built-in LUT looks, vignette, noise, chromatic aberration, and Takram atmosphere.
+- PMNDRS supports SMAA/MSAA, native `SSAOEffect` ambient occlusion, bloom, tone mapping, basic color/contrast grading, built-in LUT looks, vignette, noise, chromatic aberration, Takram atmosphere, and Takram celestial preset controls.
 - Legacy rendering remains available for SSR and TAA.
 - Obsolete `threejs173` directories, scripts, and hardcoded references have been removed.
 - `RGBELoader` usage has been updated to `HDRLoader`.
@@ -26,11 +26,12 @@ Completed work:
 
 1. Maintain the r181 baseline before adding larger effects.
 2. Keep one Horizon PMNDRS scene and one non-Horizon PMNDRS scene in manual smoke coverage.
-3. Verify PMNDRS built-in LUT looks in compiled scenes.
-4. Keep native `SSAOEffect` as the default PMNDRS AO path.
-5. Continue validating native `SSAOEffect` across broader smoke coverage.
-6. Defer depth of field until the author-facing focus workflow is decided.
-7. Keep Takram volumetric clouds in backlog and out of scope for the current phase.
+3. Keep native `SSAOEffect` as the default PMNDRS AO path.
+4. Continue validating native `SSAOEffect` across broader smoke coverage.
+5. Smoke Takram celestial presets across one Horizon and one non-Horizon compiled PMNDRS scene.
+6. Begin the next phase with Takram non-cloud geospatial features.
+7. Defer depth of field until the author-facing focus workflow is decided.
+8. Keep Takram volumetric clouds in backlog and out of scope for the current phase.
 
 ## Recent Landed Work
 
@@ -68,6 +69,24 @@ Completed work:
   - `cinematic-contrast`
   - `soft-fade`
 - Regrouped PMNDRS compile-dialog controls into anti-aliasing, exposure/color, bloom/lens, and Takram atmosphere cards.
+- Manual compiled-scene smoke on 2026-05-06 confirmed the LUT compile options and `scene-settings` serialization are working, so no automated browser smoke was added for this pass.
+
+### Takram celestial controls v1
+
+- Added author-facing celestial mode controls for PMNDRS/Takram compiled scenes:
+  - `manual`
+  - `preset-time`
+- Added time presets:
+  - `sunrise`
+  - `midday`
+  - `golden-hour`
+  - `sunset`
+  - `night`
+- Added metadata and compiled `scene-settings` keys:
+  - `aframePmndrsCelestialMode` / `pmndrsCelestialMode`
+  - `aframePmndrsCelestialTimePreset` / `pmndrsCelestialTimePreset`
+- Runtime `preset-time` resolves through the existing Takram sun-direction helper path; `manual` preserves existing sun slider behavior.
+- Night preset moon behavior is controlled through `pmndrsMoonEnabled`, so authors can override it without adding stars, probes, geospatial UI, or clouds in this phase.
 
 ### Native PMNDRS SSAO promotion
 
@@ -102,3 +121,5 @@ Manual smoke:
 - Horizon PMNDRS scene with Takram atmosphere plus LUT.
 - Non-Horizon PMNDRS scene with LUT, AO, bloom, SMAA/MSAA fallback, noise, and chromatic aberration.
 - Horizon and non-Horizon PMNDRS AO scenes with default native SSAO.
+- Horizon and non-Horizon PMNDRS scenes with each Takram celestial preset.
+- Existing manually tuned PMNDRS/Takram scene remains visually unchanged in `manual` mode.

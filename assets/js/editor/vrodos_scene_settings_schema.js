@@ -76,6 +76,8 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     'aframePmndrsAtmospherePreset': { type: 'string', default: 'midday', envirKey: 'aframePmndrsAtmospherePreset' },
     'aframePmndrsAtmospherePresetIntensity': { type: 'number', default: 1.0, envirKey: 'aframePmndrsAtmospherePresetIntensity' },
     'aframePmndrsAtmosphereQuality': { type: 'string', default: 'balanced', envirKey: 'aframePmndrsAtmosphereQuality' },
+    'aframePmndrsCelestialMode': { type: 'string', default: 'manual', envirKey: 'aframePmndrsCelestialMode' },
+    'aframePmndrsCelestialTimePreset': { type: 'string', default: 'midday', envirKey: 'aframePmndrsCelestialTimePreset' },
     'aframePmndrsSunElevationDeg': { type: 'number', default: 62, envirKey: 'aframePmndrsSunElevationDeg' },
     'aframePmndrsSunAzimuthDeg': { type: 'number', default: 20, envirKey: 'aframePmndrsSunAzimuthDeg' },
     'aframePmndrsSunDistance': { type: 'number', default: 5200, envirKey: 'aframePmndrsSunDistance' },

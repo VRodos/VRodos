@@ -487,6 +487,7 @@
 											<select id="compilePmndrsAtmospherePresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 												<option value="sunrise">Sunrise</option>
 												<option value="midday">Midday</option>
+												<option value="golden-hour">Golden Hour</option>
 												<option value="sunset">Sunset</option>
 												<option value="night">Night</option>
 												<option value="custom">Custom</option>
@@ -499,6 +500,26 @@
 												<option value="balanced">Balanced</option>
 												<option value="quality">Quality</option>
 												<option value="cinematic">Cinematic</option>
+											</select>
+										</label>
+									</div>
+
+									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<label class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Celestial Mode</span>
+											<select id="compilePmndrsCelestialModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+												<option value="manual">Manual</option>
+												<option value="preset-time">Preset Time</option>
+											</select>
+										</label>
+										<label id="compilePmndrsCelestialTimePresetWrapper" class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Time Preset</span>
+											<select id="compilePmndrsCelestialTimePresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+												<option value="sunrise">Sunrise</option>
+												<option value="midday">Midday</option>
+												<option value="golden-hour">Golden Hour</option>
+												<option value="sunset">Sunset</option>
+												<option value="night">Night</option>
 											</select>
 										</label>
 									</div>

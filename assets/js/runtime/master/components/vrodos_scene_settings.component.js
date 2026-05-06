@@ -72,6 +72,8 @@ AFRAME.registerComponent('scene-settings', {
         pmndrsAtmospherePreset: { type: "string", default: "midday" },
         pmndrsAtmospherePresetIntensity: { type: "string", default: "1.0" },
         pmndrsAtmosphereQuality: { type: "string", default: "balanced" },
+        pmndrsCelestialMode: { type: "string", default: "manual" },
+        pmndrsCelestialTimePreset: { type: "string", default: "midday" },
         pmndrsSunElevationDeg: { type: "string", default: "62" },
         pmndrsSunAzimuthDeg: { type: "string", default: "20" },
         pmndrsSunDistance: { type: "string", default: "5200" },

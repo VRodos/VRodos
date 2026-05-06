@@ -342,6 +342,10 @@ class VRodos_Scene_CPT_Manager {
 			: ( $has_legacy_atmosphere_metadata ? 'custom' : 'midday' );
 		$scene_data['aframePmndrsAtmospherePresetIntensity'] = isset( $json_metadata->aframePmndrsAtmospherePresetIntensity ) ? (float) $json_metadata->aframePmndrsAtmospherePresetIntensity : 1.0;
 		$scene_data['aframePmndrsAtmosphereQuality'] = $json_metadata->aframePmndrsAtmosphereQuality ?? 'balanced';
+		$pmndrs_celestial_mode_raw = $json_metadata->aframePmndrsCelestialMode ?? 'manual';
+		$scene_data['aframePmndrsCelestialMode'] = in_array( $pmndrs_celestial_mode_raw, [ 'manual', 'preset-time' ], true ) ? $pmndrs_celestial_mode_raw : 'manual';
+		$pmndrs_celestial_time_preset_raw = $json_metadata->aframePmndrsCelestialTimePreset ?? 'midday';
+		$scene_data['aframePmndrsCelestialTimePreset'] = in_array( $pmndrs_celestial_time_preset_raw, [ 'sunrise', 'midday', 'golden-hour', 'sunset', 'night' ], true ) ? $pmndrs_celestial_time_preset_raw : 'midday';
 		$scene_data['aframePmndrsSunElevationDeg'] = isset( $json_metadata->aframePmndrsSunElevationDeg ) ? (float) $json_metadata->aframePmndrsSunElevationDeg : 62;
 		$scene_data['aframePmndrsSunAzimuthDeg'] = isset( $json_metadata->aframePmndrsSunAzimuthDeg ) ? (float) $json_metadata->aframePmndrsSunAzimuthDeg : 20;
 		$scene_data['aframePmndrsSunDistance'] = isset( $json_metadata->aframePmndrsSunDistance ) ? (float) $json_metadata->aframePmndrsSunDistance : 5200;

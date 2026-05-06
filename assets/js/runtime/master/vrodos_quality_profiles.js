@@ -57,6 +57,24 @@
             absorptionScale: 0.94,
             moonEnabled: false
         },
+        'golden-hour': {
+            sunElevationDeg: 14,
+            sunAzimuthDeg: 32,
+            sunDistance: 5400,
+            sunAngularRadius: 0.0049,
+            aerialStrength: 0.78,
+            albedoScale: 0.98,
+            transmittanceEnabled: true,
+            inscatterEnabled: true,
+            groundEnabled: true,
+            groundAlbedo: '#efd1a6',
+            rayleighScale: 1.02,
+            mieScatteringScale: 0.82,
+            mieExtinctionScale: 0.92,
+            miePhaseG: 0.78,
+            absorptionScale: 0.9,
+            moonEnabled: false
+        },
         sunset: {
             sunElevationDeg: 8,
             sunAzimuthDeg: 38,
@@ -123,9 +141,27 @@
     function normalizePmndrsAtmospherePreset(value) {
         switch (value) {
             case 'sunrise':
+            case 'golden-hour':
             case 'sunset':
             case 'night':
             case 'custom':
+                return value;
+            default:
+                return 'midday';
+        }
+    }
+
+    function normalizePmndrsCelestialMode(value) {
+        return value === 'preset-time' ? 'preset-time' : 'manual';
+    }
+
+    function normalizePmndrsCelestialTimePreset(value) {
+        switch (value) {
+            case 'sunrise':
+            case 'midday':
+            case 'golden-hour':
+            case 'sunset':
+            case 'night':
                 return value;
             default:
                 return 'midday';
@@ -608,6 +644,8 @@
             context,
             owner,
             reflectionSource,
+            atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : 'manual',
+            atmosphereConfig && atmosphereConfig.celestialTimePreset ? atmosphereConfig.celestialTimePreset : 'midday',
             atmosphereConfig && atmosphereConfig.groundEnabled ? 'ground-on' : 'ground-off',
             atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'sun-off' : 'sun-on',
             formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null),
@@ -624,6 +662,8 @@
         self._pmndrsHorizonDiagSignatures[context] = signature;
         console.info(`[VRodos] PMNDRS horizon diagnostic (${  context  }): owner=${  owner 
             }, reflection=${  reflectionSource 
+            }, celestial=${  atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : 'manual'
+            }/${  atmosphereConfig && atmosphereConfig.celestialTimePreset ? atmosphereConfig.celestialTimePreset : 'midday'
             }, ground=${  atmosphereConfig && atmosphereConfig.groundEnabled ? 'on' : 'off' 
             }, sun=${  atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'off' : 'on' 
             }, sunDir=${  formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null) 
@@ -850,12 +890,19 @@
 
         const quality = normalizePmndrsAtmosphereQuality(this.data.pmndrsAtmosphereQuality);
         const preset = normalizePmndrsAtmospherePreset(this.data.pmndrsAtmospherePreset);
+        const celestialMode = normalizePmndrsCelestialMode(this.data.pmndrsCelestialMode);
+        const celestialTimePreset = normalizePmndrsCelestialTimePreset(this.data.pmndrsCelestialTimePreset);
         const presetIntensity = readPmndrsAtmosphereNumber(this, 'pmndrsAtmospherePresetIntensity', 0, 1, 1);
-        const presetDefaults = getPmndrsAtmosphereLookDefaults(preset, presetIntensity);
-        const usesCustomValues = preset === 'custom';
+        const resolvedLookPreset = celestialMode === 'preset-time' ? celestialTimePreset : preset;
+        const presetDefaults = getPmndrsAtmosphereLookDefaults(resolvedLookPreset, presetIntensity);
+        const usesCustomValues = celestialMode === 'manual' && preset === 'custom';
+        const manualMoonEnabled = readPmndrsAtmosphereBool(this, 'pmndrsMoonEnabled', presetDefaults.moonEnabled);
         const config = {
             enabled: this.data.postFXEngine === 'pmndrs' && this.data.pmndrsAtmosphereEnabled !== '0',
             preset,
+            celestialMode,
+            celestialTimePreset,
+            resolvedLookPreset,
             presetIntensity,
             quality,
             sunElevationDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunElevationDeg', -10, 85, presetDefaults.sunElevationDeg) : presetDefaults.sunElevationDeg,
@@ -873,7 +920,7 @@
             mieExtinctionScale: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsMieExtinctionScale', 0.1, 3, presetDefaults.mieExtinctionScale) : presetDefaults.mieExtinctionScale,
             miePhaseG: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsMiePhaseG', 0, 0.99, presetDefaults.miePhaseG) : presetDefaults.miePhaseG,
             absorptionScale: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsAbsorptionScale', 0.1, 3, presetDefaults.absorptionScale) : presetDefaults.absorptionScale,
-            moonEnabled: usesCustomValues ? readPmndrsAtmosphereBool(this, 'pmndrsMoonEnabled', presetDefaults.moonEnabled) : presetDefaults.moonEnabled,
+            moonEnabled: celestialMode === 'preset-time' ? manualMoonEnabled : (usesCustomValues ? manualMoonEnabled : presetDefaults.moonEnabled),
             horizonKeyLightIntensity: readPmndrsAtmosphereNumber(
                 this,
                 'pmndrsHorizonKeyLightIntensity',

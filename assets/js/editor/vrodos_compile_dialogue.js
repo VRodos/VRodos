@@ -86,6 +86,9 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsAtmospherePresetIntensity: document.getElementById('compilePmndrsAtmospherePresetIntensitySlider'),
             pmndrsAtmospherePresetIntensityValue: document.getElementById('compilePmndrsAtmospherePresetIntensityValue'),
             pmndrsAtmosphereQuality: document.getElementById('compilePmndrsAtmosphereQualitySelect'),
+            pmndrsCelestialMode: document.getElementById('compilePmndrsCelestialModeSelect'),
+            pmndrsCelestialTimePresetWrapper: document.getElementById('compilePmndrsCelestialTimePresetWrapper'),
+            pmndrsCelestialTimePreset: document.getElementById('compilePmndrsCelestialTimePresetSelect'),
             pmndrsAtmosphereAdvanced: document.getElementById('compilePmndrsAtmosphereAdvanced'),
             pmndrsSunElevation: document.getElementById('compilePmndrsSunElevationSlider'),
             pmndrsSunElevationValue: document.getElementById('compilePmndrsSunElevationValue'),
@@ -343,6 +346,8 @@ window.addEventListener('DOMContentLoaded', () => {
         VRODOS.editor.envir.scene.aframePmndrsAAPreset = VRodosCompileUI.PostFX.normalizePmndrsAAPreset(VRODOS.editor.envir.scene.aframePmndrsAAPreset);
         VRODOS.editor.envir.scene.aframePmndrsAtmospherePreset = VRodosCompileUI.Atmosphere.normalizePreset(VRODOS.editor.envir.scene.aframePmndrsAtmospherePreset);
         VRODOS.editor.envir.scene.aframePmndrsAtmosphereQuality = VRodosCompileUI.Atmosphere.normalizeQuality(VRODOS.editor.envir.scene.aframePmndrsAtmosphereQuality);
+        VRODOS.editor.envir.scene.aframePmndrsCelestialMode = VRodosCompileUI.Atmosphere.normalizeCelestialMode(VRODOS.editor.envir.scene.aframePmndrsCelestialMode);
+        VRODOS.editor.envir.scene.aframePmndrsCelestialTimePreset = VRodosCompileUI.Atmosphere.normalizeCelestialTimePreset(VRODOS.editor.envir.scene.aframePmndrsCelestialTimePreset);
         
         if (VRODOS.editor.envir.scene.aframePostFXBloomEnabled === false) {
             VRODOS.editor.envir.scene.aframeBloomStrength = 'off';
@@ -682,6 +687,16 @@ window.addEventListener('DOMContentLoaded', () => {
                 ? VRodosCompileUI.Atmosphere.normalizeQuality(VRODOS.editor.envir.scene.aframePmndrsAtmosphereQuality)
                 : Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
         }
+        if (controls.pmndrsCelestialMode) {
+            controls.pmndrsCelestialMode.value = VRODOS.editor.envir && VRODOS.editor.envir.scene
+                ? VRodosCompileUI.Atmosphere.normalizeCelestialMode(VRODOS.editor.envir.scene.aframePmndrsCelestialMode)
+                : Shared.PMNDRS_TWEAK_DEFAULTS.celestialMode;
+        }
+        if (controls.pmndrsCelestialTimePreset) {
+            controls.pmndrsCelestialTimePreset.value = VRODOS.editor.envir && VRODOS.editor.envir.scene
+                ? VRodosCompileUI.Atmosphere.normalizeCelestialTimePreset(VRODOS.editor.envir.scene.aframePmndrsCelestialTimePreset)
+                : Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset;
+        }
         const lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
             VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframeHorizonSkyPreset : 'natural',
             Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset
@@ -699,7 +714,15 @@ window.addEventListener('DOMContentLoaded', () => {
         const resolvedAtmospherePreset = VRodosCompileUI.Atmosphere.normalizePreset(
             controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset
         );
-        if (resolvedAtmospherePreset !== 'custom') {
+        const resolvedCelestialMode = VRodosCompileUI.Atmosphere.normalizeCelestialMode(
+            controls.pmndrsCelestialMode ? controls.pmndrsCelestialMode.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialMode
+        );
+        if (resolvedCelestialMode === 'preset-time') {
+            VRodosCompileUI.Atmosphere.applyCelestialTimePreset(
+                controls,
+                controls.pmndrsCelestialTimePreset ? controls.pmndrsCelestialTimePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset
+            );
+        } else if (resolvedAtmospherePreset !== 'custom') {
             VRodosCompileUI.Atmosphere.applyLookPreset(controls, resolvedAtmospherePreset);
         } else {
             if (controls.pmndrsSunElevation) {
@@ -930,7 +953,11 @@ window.addEventListener('DOMContentLoaded', () => {
     ].forEach((el) => {
         if (el) {
             el.addEventListener('change', () => {
-                VRodosCompileUI.Atmosphere.markCustom(controls);
+                const presetTimeMoonOverride = el === controls.pmndrsMoon &&
+                    VRodosCompileUI.Atmosphere.normalizeCelestialMode(controls.pmndrsCelestialMode ? controls.pmndrsCelestialMode.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialMode) === 'preset-time';
+                if (!presetTimeMoonOverride) {
+                    VRodosCompileUI.Atmosphere.markCustom(controls);
+                }
                 updatePmndrsValueLabels();
                 syncCompilePostFxState();
             });
@@ -954,9 +981,38 @@ window.addEventListener('DOMContentLoaded', () => {
     if (controls.pmndrsAtmosphere) {
         controls.pmndrsAtmosphere.addEventListener('change', syncCompilePostFxState);
     }
+    if (controls.pmndrsCelestialMode) {
+        controls.pmndrsCelestialMode.addEventListener('change', () => {
+            const mode = VRodosCompileUI.Atmosphere.normalizeCelestialMode(controls.pmndrsCelestialMode.value);
+            controls.pmndrsCelestialMode.value = mode;
+            if (mode === 'preset-time') {
+                VRodosCompileUI.Atmosphere.applyCelestialTimePreset(
+                    controls,
+                    controls.pmndrsCelestialTimePreset ? controls.pmndrsCelestialTimePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset
+                );
+            }
+            updatePmndrsValueLabels();
+            syncCompilePostFxState();
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
+        });
+    }
+    if (controls.pmndrsCelestialTimePreset) {
+        controls.pmndrsCelestialTimePreset.addEventListener('change', () => {
+            if (controls.pmndrsCelestialMode) {
+                controls.pmndrsCelestialMode.value = 'preset-time';
+            }
+            VRodosCompileUI.Atmosphere.applyCelestialTimePreset(controls, controls.pmndrsCelestialTimePreset.value);
+            updatePmndrsValueLabels();
+            syncCompilePostFxState();
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
+        });
+    }
     if (controls.pmndrsAtmospherePreset) {
         controls.pmndrsAtmospherePreset.addEventListener('change', () => {
             const preset = VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset.value);
+            if (controls.pmndrsCelestialMode) {
+                controls.pmndrsCelestialMode.value = 'manual';
+            }
             if (preset !== 'custom') {
                 VRodosCompileUI.Atmosphere.applyLookPreset(controls, preset);
             }
@@ -967,8 +1023,13 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (controls.pmndrsAtmospherePresetIntensity) {
         controls.pmndrsAtmospherePresetIntensity.addEventListener('input', () => {
-            const preset = VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset);
-            if (preset !== 'custom') {
+            const celestialMode = VRodosCompileUI.Atmosphere.normalizeCelestialMode(controls.pmndrsCelestialMode ? controls.pmndrsCelestialMode.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialMode);
+            const preset = celestialMode === 'preset-time'
+                ? VRodosCompileUI.Atmosphere.normalizeCelestialTimePreset(controls.pmndrsCelestialTimePreset ? controls.pmndrsCelestialTimePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset)
+                : VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset);
+            if (celestialMode === 'preset-time') {
+                VRodosCompileUI.Atmosphere.applyCelestialTimePreset(controls, preset);
+            } else if (preset !== 'custom') {
                 VRodosCompileUI.Atmosphere.applyLookPreset(controls, preset);
             }
             updatePmndrsValueLabels();
@@ -1001,6 +1062,8 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsAtmospherePreset) c.pmndrsAtmospherePreset.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset;
             if (c.pmndrsAtmospherePresetIntensity) c.pmndrsAtmospherePresetIntensity.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePresetIntensity;
             if (c.pmndrsAtmosphereQuality) c.pmndrsAtmosphereQuality.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
+            if (c.pmndrsCelestialMode) c.pmndrsCelestialMode.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialMode;
+            if (c.pmndrsCelestialTimePreset) c.pmndrsCelestialTimePreset.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset;
             const lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
                 VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframeHorizonSkyPreset : 'natural',
                 Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset

@@ -50,20 +50,26 @@ Presentation mode is part of the rendering contract:
 
 ## 3. Load Order
 
-`templates/runtime/aframe/Master_Client_prototype.html` loads runtime scripts in this order:
+`templates/runtime/aframe/Master_Client_prototype.html` loads rendering-relevant runtime scripts in this order, omitting external networking/UI libraries:
 
 ```text
+AFRAME_RUNTIME_URL_PLACEHOLDER
+lib/vrodos-postprocessing.bundle.js
 vrodos_master_shared.js
+vrodos_ui_helpers.js
 vrodos_master_bootstrap.js
 vrodos_master_rendering.js
 vrodos_shaders_*.js
 vrodos_postprocessing.js
-vrodos_postprocessing_pmndrs.js
-lib/vrodos-postprocessing.bundle.js
 lib/vrodos-takram-atmosphere.bundle.js
+vrodos_postprocessing_pmndrs.js
 vrodos_scene_probe.js
 vrodos_quality_profiles.js
+components/vrodos_scene_loader.component.js
+components/vrodos_avatar.component.js
 components/vrodos_scene_settings.component.js
+components/vrodos_navigation.component.js
+components/vrodos_misc.component.js
 ```
 
 The PMNDRS and Takram bundles are generated from root `package.json` and `package-lock.json`. They must use A-Frame's `window.THREE`; compiled scenes must not load a second Three instance.
@@ -168,7 +174,26 @@ Runtime behavior:
 - Strength is applied through the effect blend opacity.
 - LUT failure logs once and falls back to the rest of the PMNDRS pipeline.
 
-## 7. Legacy Effect Notes
+## 7. PMNDRS/Takram Celestial Controls
+
+Takram celestial controls are author-facing artistic presets, not geospatial solar simulation.
+
+Scene settings:
+
+- `pmndrsCelestialMode`: `manual` or `preset-time`
+- `pmndrsCelestialTimePreset`: `sunrise`, `midday`, `golden-hour`, `sunset`, or `night`
+- Existing manual controls remain valid: `pmndrsSunElevationDeg`, `pmndrsSunAzimuthDeg`, and `pmndrsMoonEnabled`
+
+Runtime behavior:
+
+- `manual` preserves the existing sun elevation/azimuth slider behavior.
+- `preset-time` resolves the selected time preset through the existing Takram atmosphere look defaults before building local and ECEF sun/moon directions.
+- The night preset turns the moon path on through `pmndrsMoonEnabled` unless the author explicitly overrides it in the compile dialog.
+- Horizon `AerialPerspectiveEffect` remains gated behind `?vrodos_debug_enable_pmndrs_horizon_aerial=1`.
+
+This phase does not add stars, `SkyLightProbe`, `SunDirectionalLight`, `LightingMaskPass`, geospatial latitude/longitude UI, or volumetric clouds.
+
+## 8. Legacy Effect Notes
 
 ### TAA
 
@@ -182,7 +207,7 @@ Legacy SSR is half-resolution screen-space ray marching using the shared depth t
 
 Legacy SAO is half-resolution, depth-only ambient occlusion with bilateral blur and optional adaptive half-rate updates under low FPS.
 
-## 8. HDR Environment Maps and Scene Probe
+## 9. HDR Environment Maps and Scene Probe
 
 HDR environment presets are loaded through the runtime HDR loader and processed through `PMREMGenerator` for `scene.environment` and PBR material `envMap`.
 
@@ -194,21 +219,21 @@ Current presets:
 
 Scene probe capture is an alternate environment source when render quality and presentation mode allow it.
 
-## 9. Version Source of Truth
+## 10. Version Source of Truth
 
 - Root `package.json` and `package-lock.json` define runtime package intent.
 - `npm run build:three` generates `assets/runtime-version-manifest.json`.
 - `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, and Takram metadata.
 - The current live vendor bundle is Three.js r181.
 
-## 10. Future Ideas
+## 11. Future Ideas
 
 These are backlog items, not current implementation requirements:
 
 - Depth of field after an author-facing focus workflow is selected.
 - Continue validating native `POSTPROCESSING.SSAOEffect` across broader Horizon and non-Horizon scenes.
 - Outline/selective bloom, god rays, tilt shift, pixelation, glitch, and shock wave.
-- Takram stars, date/time sun and moon direction, `SkyLightProbe`, `SunDirectionalLight`, and geospatial helpers.
+- Takram stars, geospatial date/time solar simulation, `SkyLightProbe`, `SunDirectionalLight`, and geospatial helpers.
 - Volumetric clouds after the PMNDRS/Takram baseline remains stable.
 
 ## References

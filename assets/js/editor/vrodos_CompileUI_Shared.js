@@ -26,6 +26,8 @@ VRodosCompileUI.Shared = (function () {
         atmospherePreset: 'midday',
         atmospherePresetIntensity: 1.0,
         atmosphereQuality: 'balanced',
+        celestialMode: 'manual',
+        celestialTimePreset: 'midday',
         sunElevationDeg: 62,
         sunAzimuthDeg: 20,
         sunDistance: 5200,
