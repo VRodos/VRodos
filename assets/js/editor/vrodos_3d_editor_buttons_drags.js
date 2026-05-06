@@ -463,7 +463,7 @@ VRODOS.ui.loadButtonActions = function() {
         VRODOS.api.waitForLatestSceneSave()
             .then(() => (typeof VRODOS.api.saveChanges === 'function') ? VRODOS.api.saveChanges({force: true}) : Promise.resolve())
             .then(() => {
-                VRODOS.api.compileScene(VRODOS.editor.showPawnPositions);
+                VRODOS.api.compileScene(VRODOS.editor.showPawnPositions, { skipSave: true });
             })
             .catch((error) => {
                 VRODOS.api.hideCompileProgressSlider();

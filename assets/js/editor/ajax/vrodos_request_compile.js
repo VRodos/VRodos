@@ -1,7 +1,8 @@
-VRODOS.api.compileScene = function(showPawnPositions) {
+VRODOS.api.compileScene = function(showPawnPositions, options) {
 	const sceneId = VRODOS.config.sceneId || VRODOS.data.sceneId || VRODOS.data.scene_id || '';
 	const projectId = VRODOS.config.projectId || VRODOS.data.projectId || '';
 	const resolvedShowPawnPositions = (showPawnPositions === true || showPawnPositions === 'true') ? 'true' : 'false';
+	const compileOptions = options || {};
 
 	if (!sceneId || !projectId) {
 		console.warn('VRodos: compile blocked because project or scene id is missing.', { projectId, sceneId });
@@ -9,6 +10,7 @@ VRODOS.api.compileScene = function(showPawnPositions) {
 		return;
 	}
 
+	const runCompileRequest = function() {
 	// In which platform to compile, e.g. Aframe
 	const platform = document.getElementById( "platformInput" ).value;
 
@@ -153,6 +155,32 @@ VRODOS.api.compileScene = function(showPawnPositions) {
 		console.log( `Ajax Aframe ERROR 189: ${  err}` );
 		VRODOS.api.hideCompileProgressSlider();
 	});
+	};
+
+	if (!compileOptions.skipSave && typeof VRODOS.ui.applyCompileDialogSettingsToScene === 'function') {
+		VRODOS.ui.applyCompileDialogSettingsToScene();
+	}
+
+	if (
+		!compileOptions.skipSave &&
+		typeof VRODOS.api.waitForLatestSceneSave === 'function' &&
+		typeof VRODOS.api.saveChanges === 'function' &&
+		document.getElementById('save-scene-button') &&
+		VRODOS.editor &&
+		VRODOS.editor.envir &&
+		VRODOS.editor.envir.scene
+	) {
+		VRODOS.api.waitForLatestSceneSave()
+			.then(() => VRODOS.api.saveChanges({force: true}))
+			.then(runCompileRequest)
+			.catch((error) => {
+				console.warn('VRodos: compile blocked because scene save failed.', error);
+				VRODOS.api.hideCompileProgressSlider();
+			});
+		return;
+	}
+
+	runCompileRequest();
 }
 
 

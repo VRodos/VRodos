@@ -338,14 +338,14 @@ class VRodos_Compiler_Manager {
 		}
 	}
 
-	private function setAffineTransformations( $entity, $contentObject ) {
+	private function setAffineTransformations( $entity, $contentObject, bool $preserve_editor_rotation = false ) {
 		$entity->setAttribute( 'position', implode( ' ', $contentObject->position ) );
+		$rotation = $preserve_editor_rotation
+			? [ 180 / pi() * $contentObject->rotation[0], 180 / pi() * $contentObject->rotation[1], 180 / pi() * $contentObject->rotation[2] ]
+			: [ - 180 / pi() * $contentObject->rotation[0], 180 / pi() * $contentObject->rotation[1], 180 / pi() * $contentObject->rotation[2] ];
 		$entity->setAttribute(
 			'rotation',
-			implode(
-				' ',
-				[- 180 / pi() * $contentObject->rotation[0], 180 / pi() * $contentObject->rotation[1], 180 / pi() * $contentObject->rotation[2]]
-			)
+			implode( ' ', $rotation )
 		);
 		$entity->setAttribute( 'scale', implode( ' ', $contentObject->scale ) );
 	}
@@ -768,8 +768,9 @@ class VRodos_Compiler_Manager {
 		$legacy_horizon_size = max( 500, min( 8000, (int) ( $metadata->aframeLegacyHorizonStageSize ?? 5000 ) ) );
 		$ao_preset          = $metadata->aframeAmbientOcclusionPreset ?? 'balanced';
 		$cs_preset          = $metadata->aframeContactShadowPreset ?? 'soft';
-		$post_fx_enabled    = isset( $metadata->aframePostFXEnabled ) && filter_var( $metadata->aframePostFXEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
-		$post_fx_engine     = ( ( $metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ) ? 'pmndrs' : 'legacy';
+		$post_fx_enabled_bool = isset( $metadata->aframePostFXEnabled ) && filter_var( $metadata->aframePostFXEnabled, FILTER_VALIDATE_BOOLEAN );
+		$post_fx_enabled    = $post_fx_enabled_bool ? '1' : '0';
+		$post_fx_engine     = ( $post_fx_enabled_bool && ( $metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ) ? 'pmndrs' : 'legacy';
 		$post_fx_color      = ! isset( $metadata->aframePostFXColorEnabled ) || filter_var( $metadata->aframePostFXColorEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
 		$post_fx_bloom      = isset( $metadata->aframePostFXBloomEnabled ) && filter_var( $metadata->aframePostFXBloomEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
 		$post_fx_edge_aa    = ! isset( $metadata->aframePostFXEdgeAAEnabled ) || filter_var( $metadata->aframePostFXEdgeAAEnabled, FILTER_VALIDATE_BOOLEAN ) ? '1' : '0';
@@ -803,7 +804,7 @@ class VRodos_Compiler_Manager {
 			];
 		}
 		$env_map_preset     = $metadata->aframeEnvMapPreset ?? 'none';
-		$pmndrs_atmosphere_enabled = isset( $metadata->aframePmndrsAtmosphereEnabled ) && filter_var( $metadata->aframePmndrsAtmosphereEnabled, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+		$pmndrs_atmosphere_enabled = ( $post_fx_enabled_bool && 'pmndrs' === $post_fx_engine && isset( $metadata->aframePmndrsAtmosphereEnabled ) && filter_var( $metadata->aframePmndrsAtmosphereEnabled, FILTER_VALIDATE_BOOLEAN ) ) ? 'true' : 'false';
 		$pmndrs_atmosphere_preset_raw = $metadata->aframePmndrsAtmospherePreset ?? 'midday';
 		$pmndrs_atmosphere_preset = in_array( $pmndrs_atmosphere_preset_raw, [ 'sunrise', 'midday', 'sunset', 'night', 'custom' ], true ) ? $pmndrs_atmosphere_preset_raw : 'midday';
 		$pmndrs_atmosphere_preset_intensity = max( 0.0, min( 1.0, (float) ( $metadata->aframePmndrsAtmospherePresetIntensity ?? 1.0 ) ) );
@@ -1104,7 +1105,7 @@ class VRodos_Compiler_Manager {
 		$sc_z = $obj->scale[2] ?? 1;
 		$entity->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
 		
-		$this->setAffineTransformations( $entity, $obj );
+		$this->setAffineTransformations( $entity, $obj, true );
 		
 		$class = 'override-materials hideable';
 		
@@ -1201,7 +1202,7 @@ class VRodos_Compiler_Manager {
 			(float) ( $obj->scale[1] ?? 1 ),
 			(float) ( $obj->scale[2] ?? 1 ),
 		] ) );
-		$this->setAffineTransformations( $entity, $obj );
+		$this->setAffineTransformations( $entity, $obj, true );
 
 		$audio_loop           = filter_var( $obj->audio_loop ?? false, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
 		$audio_volume         = (float) ( $obj->audio_volume ?? 1 );

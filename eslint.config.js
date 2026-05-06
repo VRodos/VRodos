@@ -105,7 +105,7 @@ const baseRules = {
     'dot-notation': 'warn',
     'eqeqeq': ['warn', 'smart'],
     'guard-for-in': 'warn',
-    'no-alert': 'warn',
+    /*'no-alert': 'warn',*/
     'no-caller': 'error',
     'no-else-return': 'warn',
     'no-empty-function': 'warn',

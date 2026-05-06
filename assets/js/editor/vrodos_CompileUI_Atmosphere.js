@@ -266,7 +266,10 @@ VRodosCompileUI.Atmosphere = (function () {
 
         const d = Shared.PMNDRS_TWEAK_DEFAULTS;
 
-        VRODOS.editor.envir.scene.aframePmndrsAtmosphereEnabled = controls.pmndrsAtmosphere.checked === true;
+        const pmndrsEngineSelected = controls.postFxEngine && controls.postFxEngine.value === 'pmndrs';
+        const pmndrsRuntimeEnabled = controls.postFx && controls.postFx.checked === true && pmndrsEngineSelected;
+
+        VRODOS.editor.envir.scene.aframePmndrsAtmosphereEnabled = pmndrsRuntimeEnabled && controls.pmndrsAtmosphere.checked === true;
         VRODOS.editor.envir.scene.aframePmndrsAtmospherePreset = normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : d.atmospherePreset);
         VRODOS.editor.envir.scene.aframePmndrsAtmospherePresetIntensity = Shared.clampNumber(
             controls.pmndrsAtmospherePresetIntensity ? controls.pmndrsAtmospherePresetIntensity.value : d.atmospherePresetIntensity,

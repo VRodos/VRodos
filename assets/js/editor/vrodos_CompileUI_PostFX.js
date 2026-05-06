@@ -220,7 +220,9 @@ VRodosCompileUI.PostFX = (function () {
 
         const d = Shared.PMNDRS_TWEAK_DEFAULTS;
 
-        VRODOS.editor.envir.scene.aframePostFXEnabled = controls.postFx.checked === true;
+        const postFxEnabled = controls.postFx.checked === true;
+
+        VRODOS.editor.envir.scene.aframePostFXEnabled = postFxEnabled;
         VRODOS.editor.envir.scene.aframePostFXColorEnabled = controls.postFxColor.checked === true;
         
         VRODOS.editor.envir.scene.aframeBloomStrength = normalizeBloomStrength(controls.bloomStrength.value);
@@ -236,7 +238,7 @@ VRodosCompileUI.PostFX = (function () {
         VRODOS.editor.envir.scene.aframePostFXSSREnabled = VRODOS.editor.envir.scene.aframePostFXSSRStrength !== 'off';
         
         VRODOS.editor.envir.scene.aframePostFXTAAEnabled = controls.taaEnabled.checked === true;
-        VRODOS.editor.envir.scene.aframePostFXEngine = normalizeEngine(controls.postFxEngine.value);
+        VRODOS.editor.envir.scene.aframePostFXEngine = postFxEnabled ? normalizeEngine(controls.postFxEngine.value) : 'legacy';
 
         // Pmndrs específicos
         if (controls.pmndrsBloomIntensity) {

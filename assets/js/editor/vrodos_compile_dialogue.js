@@ -496,7 +496,10 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         VRodosCompileUI.PostFX.syncToScene(controls);
         
-        const selectedPostFxEngine = VRodosCompileUI.PostFX.normalizeEngine(controls.postFxEngine.value);
+        const selectedPostFxEngine = controls.postFx.checked === true
+            ? VRodosCompileUI.PostFX.normalizeEngine(controls.postFxEngine.value)
+            : 'legacy';
+        VRODOS.editor.envir.scene.aframePostFXEngine = selectedPostFxEngine;
         const edgeAAValue = VRodosCompileUI.General.normalizeEdgeAAStrengthLevel(controls.edgeAAStrength.value);
         VRODOS.editor.envir.scene.aframePostFXEdgeAAEnabled = selectedPostFxEngine !== 'pmndrs' && edgeAAValue > 0;
         VRODOS.editor.envir.scene.aframePostFXEdgeAAStrength = edgeAAValue > 0 ? edgeAAValue : (VRODOS.editor.envir.scene.aframePostFXEdgeAAStrength || 3);
