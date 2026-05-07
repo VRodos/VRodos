@@ -31,6 +31,7 @@ The first profiling pass on `http://wp.local:5832/Master_Client_766.html` showed
 - Complete: Settings > Assets changed to a GLB diagnostics/reporting surface while per-asset actions live on the dashboard.
 - Complete: dashboard Compile Use toggles for ready safe Draco derivatives, with validation before enabling compile substitution.
 - Complete: AJAX dashboard refresh/toggle actions for cheap row updates without a full dashboard reload.
+- Complete: first admin refactor phase split the asset optimization manager into a thin hook coordinator plus focused files under `includes/asset-optimization/`.
 - Next: add texture compression/KTX2 derivative generation for texture-heavy assets, then plan explicit LOD derivative families for distance-based scene cost reduction.
 
 ## Spector.js Debug Phase
@@ -218,6 +219,29 @@ Dashboard workflow:
 - Dashboard refresh/generate actions redirect back to the `Actionable Assets` tab and do not enable compile substitution. Only the explicit Compile Use toggle changes compile substitution.
 - Derivative files are cached artifacts owned by the asset post. Permanent asset deletion removes `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/` plus derivative/analysis metadata.
 - Project-delete flows that delete associated asset posts inherit the same derivative cleanup; this covers Immerse project assets when they are removed through VRodos project deletion.
+
+## Admin Refactor Phase
+
+The first cleanup pass extracted asset optimization code without changing public behavior:
+
+- `includes/class-vrodos-asset-optimization-manager.php` is now a thin hook coordinator and compatibility facade.
+- The implementation moved to `includes/asset-optimization/`:
+  - admin actions/metabox handlers
+  - Settings > Assets rendering and batch/report helpers
+  - dashboard Actionable Assets row rendering and AJAX row refresh support
+  - GLB-only asset scanning
+  - GLB source analysis and recommendation scoring
+  - safe Draco derivative generation, compile-use validation, and derivative cache cleanup
+- Compatibility wrappers remain on `VRodos_Asset_Optimization_Manager` for compiler/dashboard callers:
+  - `resolve_compiled_glb_asset()`
+  - `dashboard_actionable_assets()`
+  - `render_dashboard_actionable_assets_table()`
+- Hook names, AJAX/admin-post action names, metadata keys, derivative cache paths, and opt-in compile substitution semantics are unchanged.
+
+Remaining admin cleanup:
+
+- Move dashboard page rendering out of `VRodos_Core_Manager` into `includes/admin/`.
+- Split `VRodos_Asset_CPT_Manager` into hook registration, metabox/editor, frontend submission, and taxonomy helper classes.
 
 The existing glTF Transform prototype script now supports single-source mode for admin/backend use:
 

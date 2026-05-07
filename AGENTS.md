@@ -20,6 +20,7 @@ It provides:
 VRodos/
   VRodos.php
   includes/                        PHP managers, models, AJAX classes
+  includes/asset-optimization/     GLB analysis, derivative, dashboard, and admin optimization helpers
   templates/pages/                 WordPress page templates
   templates/runtime/aframe/        A-Frame compile prototypes
   assets/js/editor/                Scene editor scripts
@@ -47,7 +48,7 @@ Important managers:
 - `VRodos_Scene_CPT_Manager`: scene editor data preparation
 - `VRodos_Compiler_Manager`: compiled A-Frame scene generation
 - `VRodos_Render_Runtime_Manager`: active runtime/version configuration
-- `VRodos_Asset_Optimization_Manager`: read-only GLB benefit analysis, dashboard actionable assets, admin-side GLB derivative generation, derivative metadata, cache cleanup, and opt-in compile selection
+- `VRodos_Asset_Optimization_Manager`: thin hook coordinator for read-only GLB benefit analysis, dashboard actionable assets, admin-side GLB derivative generation, derivative metadata, cache cleanup, and opt-in compile selection; implementation lives in `includes/asset-optimization/`
 - `VRodos_Path_Manager`: path/url indirection
 
 ## Runtime And Rendering
