@@ -63,6 +63,7 @@ Root `package.json` plus `package-lock.json` are the version source of truth. `n
 Rendering docs:
 
 - `RENDERING_PIPELINE.md`: current technical render-stack reference
+- `PERFORMANCE_OPTIMIZATION_PLAN.md`: profiler, Spector, asset-audit, and derivative-optimization findings
 - `TAKRAM_REALISTIC_LIGHTING_PLAN.md`: phased Takram realism, Three-version, and SSGI roadmap
 - `RENDERING_MIGRATION_IMPLEMENTATION_LOG.md`: consolidated migration history
 - `POSTFX_DEBUG_NOTES.md`: historical color/Horizon debug findings
@@ -124,6 +125,15 @@ Common checks:
 - `node --check` for edited JS files
 - PHP syntax checks for edited PHP files
 - `git diff --check`
+
+Performance tooling:
+
+- Use `scripts/profile-master-client.mjs` for compiled-client CDP captures.
+- Use `--disable-fps-meter` for timing comparisons unless testing the FPS meter itself.
+- Use `--spector` only after rAF/trace sampling for one-frame WebGL anatomy.
+- Use `scripts/audit-master-client-assets.mjs` to correlate compile diagnostics with local GLB metadata.
+- Use `scripts/prototype-optimize-master-client-assets.mjs` for offline derivative prototypes only. It writes reports/GLBs under the requested output directory and must not modify WordPress uploads.
+- Do not substitute Draco, Meshopt, or KTX2 derivatives into compiled pages until the relevant A-Frame/Three decoder path is verified and visual parity is checked.
 
 Do not manually copy standalone PMNDRS bundles. `postprocessing` is exported from `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`.
 

@@ -17,6 +17,8 @@
     "build:three": "node ./scripts/build-three-vendor.mjs",
     "build:runtime": "node ./scripts/build-runtime-master-bundles.mjs",
     "build:vendor": "npm run build:three",
+    "assets:audit:master": "node ./scripts/audit-master-client-assets.mjs",
+    "assets:optimize:prototype": "node ./scripts/prototype-optimize-master-client-assets.mjs",
     "lint": "eslint \"assets/js/{runtime/master,editor}/**/*.js\"",
     "lint:fix": "eslint \"assets/js/{runtime/master,editor}/**/*.js\" --fix",
     "format": "prettier --write \"**/*.{js,css,md,json}\"",
@@ -26,6 +28,7 @@
     "size:css": "node ./scripts/report-css-size.mjs"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "4.3.0",
     "autoprefixer": "^10.5.0",
     "daisyui": "^4.12.24",
     "esbuild": "^0.28.0",

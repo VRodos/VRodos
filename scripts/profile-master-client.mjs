@@ -26,7 +26,8 @@ function parseArgs(argv) {
         keepProfile: false,
         json: false,
         spector: false,
-        spectorOutput: ''
+        spectorOutput: '',
+        disableFpsMeter: false
     };
 
     for (let i = 0; i < argv.length; i += 1) {
@@ -99,6 +100,9 @@ function parseArgs(argv) {
             case '--spector-output':
                 options.spectorOutput = nextValue() || '';
                 break;
+            case '--disable-fps-meter':
+                options.disableFpsMeter = true;
+                break;
             case '--help':
             case '-h':
                 printHelp();
@@ -135,6 +139,7 @@ Options:
   --json                  Print full JSON to stdout even when --output is used.
   --spector               Capture one Spector.js WebGL frame after timing samples.
   --spector-output PATH   Write the Spector capture JSON to PATH. Defaults next to --output.
+  --disable-fps-meter     Disable the runtime FPS meter before warmup; this does not persist scene data.
 `);
 }
 
@@ -642,6 +647,34 @@ async function sampleFrames(cdp, frames) {
     })()`, true, Math.max(30000, frames * 200));
 }
 
+async function disableRuntimeFpsMeter(cdp) {
+    return evaluate(cdp, `(() => {
+        const scene = document.querySelector('a-scene');
+        const settingsComponent = scene && scene.components && scene.components['scene-settings'];
+        if (!settingsComponent || !settingsComponent.data) {
+            return {
+                disabled: false,
+                reason: 'scene-settings component was not available'
+            };
+        }
+
+        const before = settingsComponent.data.fpsMeterEnabled;
+        settingsComponent.data.fpsMeterEnabled = '0';
+        if (typeof settingsComponent.syncFPSMeterState === 'function') {
+            settingsComponent.syncFPSMeterState();
+        } else if (typeof settingsComponent.disableFPSMeter === 'function') {
+            settingsComponent.disableFPSMeter();
+        }
+
+        return {
+            disabled: true,
+            before,
+            after: settingsComponent.data.fpsMeterEnabled,
+            statsElementPresent: Boolean(document.getElementById('vrodos-stats-meter'))
+        };
+    })()`);
+}
+
 async function captureSceneSnapshot(cdp) {
     return evaluate(cdp, `(() => {
         const scene = document.querySelector('a-scene');
@@ -801,6 +834,9 @@ function summarizeSpectorCapture(capture) {
     }
 
     const commands = Array.isArray(capture.commands) ? capture.commands : [];
+    const primitiveAnalysis = Array.isArray(capture.analyses)
+        ? capture.analyses.find((analysis) => analysis && analysis.analyserName === 'Primitives')
+        : null;
     const commandCounts = {};
     for (const command of commands) {
         const name = command && (command.name || command.commandName || command.functionName || command.method);
@@ -842,6 +878,14 @@ function summarizeSpectorCapture(capture) {
         programSwitches,
         framebufferBinds,
         textureUploads,
+        primitives: primitiveAnalysis ? {
+            total: primitiveAnalysis.total || 0,
+            triangles: primitiveAnalysis.triangles || 0,
+            triangleStrip: primitiveAnalysis.triangleStrip || 0,
+            triangleFan: primitiveAnalysis.triangleFan || 0,
+            lines: primitiveAnalysis.lines || 0,
+            points: primitiveAnalysis.points || 0
+        } : null,
         topCommands: Object.entries(commandCounts)
             .map(([name, count]) => ({ name, count }))
             .sort((a, b) => b.count - a.count)
@@ -900,6 +944,9 @@ async function captureSpectorFrame(cdp, timeoutMs) {
 
         function summarizeCapture(capture) {
             const commands = Array.isArray(capture && capture.commands) ? capture.commands : [];
+            const primitiveAnalysis = Array.isArray(capture && capture.analyses)
+                ? capture.analyses.find((analysis) => analysis && analysis.analyserName === 'Primitives')
+                : null;
             const counts = {};
             commands.forEach((command) => {
                 const name = command && (command.name || command.commandName || command.functionName || command.method);
@@ -914,6 +961,14 @@ async function captureSpectorFrame(cdp, timeoutMs) {
                 programSwitches: counts.useProgram || 0,
                 framebufferBinds: counts.bindFramebuffer || 0,
                 textureUploads: countWhere(['texImage2D', 'texImage3D', 'texSubImage2D', 'texSubImage3D', 'compressedTexImage2D', 'compressedTexImage3D', 'compressedTexSubImage2D', 'compressedTexSubImage3D']),
+                primitives: primitiveAnalysis ? {
+                    total: primitiveAnalysis.total || 0,
+                    triangles: primitiveAnalysis.triangles || 0,
+                    triangleStrip: primitiveAnalysis.triangleStrip || 0,
+                    triangleFan: primitiveAnalysis.triangleFan || 0,
+                    lines: primitiveAnalysis.lines || 0,
+                    points: primitiveAnalysis.points || 0
+                } : null,
                 topCommands: Object.entries(counts)
                     .map(([name, count]) => ({ name, count }))
                     .sort((a, b) => b.count - a.count)
@@ -1074,6 +1129,9 @@ function printSummary(result) {
     if (result.spector && result.spector.enabled) {
         const summary = result.spector.summary || {};
         console.log(`Spector: ${summary.commandCount || 0} commands, ${summary.drawCalls || 0} draw calls, ${summary.programSwitches || 0} program switches, ${summary.framebufferBinds || 0} framebuffer binds`);
+        if (summary.primitives && Number.isFinite(summary.primitives.triangles)) {
+            console.log(`Spector primitives: ${summary.primitives.triangles.toLocaleString('en-US')} submitted triangles`);
+        }
         if (result.spector.output) {
             console.log(`Spector capture written to ${result.spector.output}`);
         }
@@ -1185,6 +1243,21 @@ async function run() {
             return Boolean(scene && scene.renderer && scene.object3D);
         })()`, options.timeoutMs);
 
+        if (options.disableFpsMeter) {
+            try {
+                await waitForRuntime(cdp, `(() => {
+                    const scene = document.querySelector('a-scene');
+                    return Boolean(scene && scene.components && scene.components['scene-settings']);
+                })()`, Math.min(options.timeoutMs, 15000));
+            } catch (error) {
+                // The override result below will report the missing component.
+            }
+        }
+
+        const runtimeOverrides = {
+            fpsMeter: options.disableFpsMeter ? await disableRuntimeFpsMeter(cdp) : { disabled: false }
+        };
+
         if (options.warmupMs > 0) {
             await delay(options.warmupMs);
         }
@@ -1228,6 +1301,7 @@ async function run() {
             warmupMs: options.warmupMs,
             requestedFrames: options.frames,
             traceMs: options.traceMs,
+            runtimeOverrides,
             sceneBefore,
             scene,
             frameSample: {
