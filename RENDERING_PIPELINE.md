@@ -133,6 +133,7 @@ Future admin-panel optimization should be derivative-based: keep the original up
 - `Generate safe Draco derivative` runs the same glTF Transform `prune -> dedup -> draco` flow used by the prototype script.
 - New or updated `vrodos_asset3d_glb` metadata triggers read-only GLB benefit analysis and stores `_vrodos_asset3d_glb_analysis`.
 - The top-level VRodos dashboard has an `Actionable Assets` tab for the highest-priority GLB optimization items, single-asset refresh/generate derivative actions, and a Compile Use toggle for ready derivatives.
+- Dashboard analysis refresh and Compile Use toggles use `admin-ajax.php` and update the affected row in place. Safe Draco generation still uses the signed admin action path because it writes derivative files.
 - Derivatives are stored in uploads under `vrodos-optimized-assets/asset-{asset_id}/`.
 - Metadata lives in `_vrodos_asset3d_glb_derivatives`.
 - Permanent deletion of a `vrodos_asset3d` post removes its derivative cache directory and optimization metadata. Project deletion paths that delete associated assets inherit this cleanup.

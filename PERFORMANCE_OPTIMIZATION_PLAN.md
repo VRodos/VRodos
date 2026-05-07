@@ -30,6 +30,7 @@ The first profiling pass on `http://wp.local:5832/Master_Client_766.html` showed
 - Complete: derivative cache cleanup when GLB asset posts are permanently deleted, including project-delete flows that delete their assets.
 - Complete: Settings > Assets changed to a GLB diagnostics/reporting surface while per-asset actions live on the dashboard.
 - Complete: dashboard Compile Use toggles for ready safe Draco derivatives, with validation before enabling compile substitution.
+- Complete: AJAX dashboard refresh/toggle actions for cheap row updates without a full dashboard reload.
 - Next: add texture compression/KTX2 derivative generation for texture-heavy assets, then plan explicit LOD derivative families for distance-based scene cost reduction.
 
 ## Spector.js Debug Phase
@@ -211,6 +212,8 @@ Dashboard workflow:
 - Row-level dashboard actions can refresh one asset's analysis or generate one safe Draco derivative from the overview screen.
 - Safe Draco generation appears on rows where the current derivative optimization type is actionable; future KTX2/LOD rows remain visible as recommendations until those generators exist.
 - The `Compile Use` column is a toggle for ready safe Draco derivatives. Enabling validates the derivative before setting `compileEnabled`; disabling returns compilation to the original GLB.
+- Analysis refresh and Compile Use toggles update the dashboard row asynchronously through `admin-ajax.php`.
+- Safe Draco generation remains a signed admin action because it writes files and can take longer; it should move to a queued/progress AJAX flow before becoming fully async.
 - Dashboard and Settings asset optimization tables filter to GLB-referenced assets only, so non-GLB media does not appear as unsupported optimization work.
 - Dashboard refresh/generate actions redirect back to the `Actionable Assets` tab and do not enable compile substitution. Only the explicit Compile Use toggle changes compile substitution.
 - Derivative files are cached artifacts owned by the asset post. Permanent asset deletion removes `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/` plus derivative/analysis metadata.

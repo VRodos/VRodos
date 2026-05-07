@@ -38,6 +38,15 @@ class VRodos_Asset_Manager {
 
 		wp_enqueue_style( 'vrodos_modern_compiled' );
 		wp_enqueue_script( 'lucide-icons' );
+		wp_enqueue_script( 'vrodos_dashboard_assets' );
+		wp_localize_script(
+			'vrodos_dashboard_assets',
+			'vrodosDashboardAssets',
+			[
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'vrodos_dashboard_asset_actions' ),
+			]
+		);
 		
 		// Initialize Lucide icons
 		wp_add_inline_script( 'lucide-icons', 'window.addEventListener("DOMContentLoaded", function() { lucide.createIcons(); });' );
@@ -273,6 +282,7 @@ class VRodos_Asset_Manager {
       ['vrodos_CompileUI_Atmosphere', VRodos_Path_Manager::editor_js_url( 'vrodos_CompileUI_Atmosphere.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared']],
       ['vrodos_compile_dialogue', VRodos_Path_Manager::editor_js_url( 'vrodos_compile_dialogue.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared', 'vrodos_CompileUI_General', 'vrodos_CompileUI_PostFX', 'vrodos_CompileUI_Atmosphere']],
       ['vrodos_project_manager', VRodos_Path_Manager::editor_js_url( 'vrodos_project_manager.js' ), ['vrodos_namespace', 'ajax-script_create_game', 'ajax-script_rename_game']],
+      ['vrodos_dashboard_assets', VRodos_Path_Manager::editor_js_url( 'vrodos_dashboard_assets.js' ), ['lucide-icons']],
       ['vrodos_EditorInitializer', VRodos_Path_Manager::editor_js_url( 'vrodos_EditorInitializer.js' ), ['vrodos_namespace', 'vrodos_scripts', 'vrodos_scene_settings_schema', 'vrodos_ScenePersistence', 'vrodos_LoaderMulti', 'vrodos_3d_editor_environmentals', 'vrodos_addRemoveOne', 'vrodos_3d_editor_buttons_drags']],
       // Active Three vendor bundle paired with the pinned A-Frame runtime.
       ['vrodos_three_vendor_bundle', VRodos_Path_Manager::vendor_url( $three_vendor_dir . '/' . $three_vendor_bundle )],

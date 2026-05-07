@@ -26,6 +26,8 @@ class VRodos_Asset_Optimization_Manager {
 		add_action( 'admin_post_vrodos_dashboard_refresh_asset_glb_analysis', $this->handle_dashboard_refresh_asset_glb_analysis(...) );
 		add_action( 'admin_post_vrodos_dashboard_optimize_asset_glb', $this->handle_dashboard_optimize_asset_glb(...) );
 		add_action( 'admin_post_vrodos_dashboard_toggle_asset_compile_use', $this->handle_dashboard_toggle_asset_compile_use(...) );
+		add_action( 'wp_ajax_vrodos_dashboard_refresh_asset_glb_analysis', $this->ajax_dashboard_refresh_asset_glb_analysis(...) );
+		add_action( 'wp_ajax_vrodos_dashboard_toggle_asset_compile_use', $this->ajax_dashboard_toggle_asset_compile_use(...) );
 		add_action( 'added_post_meta', $this->handle_asset_glb_meta_change(...), 10, 4 );
 		add_action( 'updated_post_meta', $this->handle_asset_glb_meta_change(...), 10, 4 );
 		add_action( 'deleted_post_meta', $this->handle_asset_glb_meta_delete(...), 10, 4 );
@@ -389,26 +391,84 @@ class VRodos_Asset_Optimization_Manager {
 			exit;
 		}
 
-		$meta = self::get_derivative_meta( $asset_id );
-		if ( $enabled ) {
-			$source = self::get_source_glb( $asset_id );
-			$derivative = $meta['derivatives'][ $profile ] ?? null;
-			if ( is_wp_error( $source ) || ! is_array( $derivative ) || ! self::is_derivative_usable( $derivative, (string) $source['url'] ) ) {
-				wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'compile-enable-failed' ] ) );
-				exit;
-			}
+		$result = self::set_asset_compile_use( $asset_id, $profile, $enabled );
+		if ( is_wp_error( $result ) ) {
+			wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'compile-enable-failed' ] ) );
+			exit;
+		}
 
-			$meta['activeProfile'] = $profile;
-			$meta['compileEnabled'] = true;
-			update_post_meta( $asset_id, self::META_KEY, $meta );
+		if ( $enabled ) {
 			wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'compile-enabled' ] ) );
 			exit;
 		}
 
-		$meta['compileEnabled'] = false;
-		update_post_meta( $asset_id, self::META_KEY, $meta );
 		wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'compile-disabled' ] ) );
 		exit;
+	}
+
+	public function ajax_dashboard_refresh_asset_glb_analysis(): void {
+		check_ajax_referer( 'vrodos_dashboard_asset_actions', 'nonce' );
+
+		$asset_id = isset( $_POST['asset_id'] ) ? absint( $_POST['asset_id'] ) : 0;
+		if ( $asset_id <= 0 || ! current_user_can( 'edit_post', $asset_id ) ) {
+			wp_send_json_error( [ 'message' => __( 'You are not allowed to analyze this asset.', 'vrodos' ) ], 403 );
+		}
+
+		$result = self::refresh_asset_analysis( $asset_id );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error(
+				array_merge(
+					[
+						'message' => $result->get_error_message(),
+					],
+					self::dashboard_asset_row_state( $asset_id )
+				)
+			);
+		}
+
+		wp_send_json_success(
+			array_merge(
+				[
+					'message' => __( 'Asset analysis refreshed.', 'vrodos' ),
+				],
+				self::dashboard_asset_row_state( $asset_id )
+			)
+		);
+	}
+
+	public function ajax_dashboard_toggle_asset_compile_use(): void {
+		check_ajax_referer( 'vrodos_dashboard_asset_actions', 'nonce' );
+
+		$asset_id = isset( $_POST['asset_id'] ) ? absint( $_POST['asset_id'] ) : 0;
+		$enabled  = isset( $_POST['enabled'] ) && '1' === sanitize_key( (string) wp_unslash( $_POST['enabled'] ) );
+		$profile  = isset( $_POST['profile'] ) ? sanitize_key( (string) wp_unslash( $_POST['profile'] ) ) : 'safe-draco';
+
+		if ( $asset_id <= 0 || ! current_user_can( 'edit_post', $asset_id ) ) {
+			wp_send_json_error( [ 'message' => __( 'You are not allowed to change compile use for this asset.', 'vrodos' ) ], 403 );
+		}
+
+		$result = self::set_asset_compile_use( $asset_id, $profile, $enabled );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error(
+				array_merge(
+					[
+						'message' => $result->get_error_message(),
+					],
+					self::dashboard_asset_row_state( $asset_id )
+				)
+			);
+		}
+
+		wp_send_json_success(
+			array_merge(
+				[
+					'message' => $enabled
+						? __( 'Compiled scenes will use this derivative.', 'vrodos' )
+						: __( 'Compiled scenes will use the original GLB.', 'vrodos' ),
+				],
+				self::dashboard_asset_row_state( $asset_id )
+			)
+		);
 	}
 
 	public static function resolve_compiled_glb_asset( int $asset_id, string $source_url ): array {
@@ -544,36 +604,22 @@ class VRodos_Asset_Optimization_Manager {
 						$derivative_status = is_array( $derivative ) ? self::derivative_unusable_reason( $derivative, $source_url ) : 'No safe Draco derivative generated.';
 						$derivative_ready = is_array( $derivative ) && '' === $derivative_status;
 						$flags = is_array( $item['dashboardFlags'] ?? null ) ? $item['dashboardFlags'] : [];
-						$can_generate_safe_draco = self::dashboard_can_generate_safe_draco( $flags, $derivative_ready );
-						$generate_label = ! empty( $flags['stale-derivative'] ) ? 'Regenerate derivative' : 'Generate derivative';
 						?>
-						<tr class="tw-hover hover:tw-bg-slate-50/80 tw-transition-colors">
+						<tr class="tw-hover hover:tw-bg-slate-50/80 tw-transition-colors" data-vrodos-dashboard-asset-row="<?php echo esc_attr( (string) $asset_id ); ?>">
 							<td>
 								<div class="tw-font-black tw-text-slate-700"><?php echo esc_html( $title ); ?></div>
 								<div class="tw-text-[10px] tw-text-slate-400 tw-font-mono">#<?php echo esc_html( (string) $asset_id ); ?></div>
 							</td>
 							<td class="tw-text-xs tw-font-bold tw-text-slate-500"><?php echo esc_html( size_format( (int) ( $item['sourceSizeBytes'] ?? 0 ), 1 ) ); ?></td>
-							<td class="tw-text-center"><?php self::render_dashboard_analysis_icon( $flags ); ?></td>
-							<td class="tw-text-center"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'geometryDerivative', 'Geometry derivative recommended', 'Geometry derivative not recommended' ); ?></td>
-							<td class="tw-text-center"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'textureDerivative', 'Texture derivative recommended', 'Texture derivative not recommended' ); ?></td>
-							<td class="tw-text-center"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'lodDerivative', 'LOD derivative recommended', 'LOD derivative not recommended' ); ?></td>
-							<td class="tw-text-center"><?php self::render_dashboard_draco_icon( $derivative_ready, $derivative_status, $flags ); ?></td>
-							<td class="tw-text-center"><?php self::render_dashboard_compile_toggle( $asset_id, $meta, $derivative_ready ); ?></td>
+							<td class="tw-text-center" data-vrodos-dashboard-cell="analysis"><?php self::render_dashboard_analysis_icon( $flags ); ?></td>
+							<td class="tw-text-center" data-vrodos-dashboard-cell="geometry"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'geometryDerivative', 'Geometry derivative recommended', 'Geometry derivative not recommended' ); ?></td>
+							<td class="tw-text-center" data-vrodos-dashboard-cell="texture"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'textureDerivative', 'Texture derivative recommended', 'Texture derivative not recommended' ); ?></td>
+							<td class="tw-text-center" data-vrodos-dashboard-cell="lod"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'lodDerivative', 'LOD derivative recommended', 'LOD derivative not recommended' ); ?></td>
+							<td class="tw-text-center" data-vrodos-dashboard-cell="draco"><?php self::render_dashboard_draco_icon( $derivative_ready, $derivative_status, $flags ); ?></td>
+							<td class="tw-text-center" data-vrodos-dashboard-cell="compile"><?php self::render_dashboard_compile_toggle( $asset_id, $meta, $derivative_ready ); ?></td>
 							<td class="tw-text-right">
-								<div class="tw-flex tw-flex-wrap tw-justify-end tw-gap-2">
-									<a href="<?php echo esc_url( self::dashboard_refresh_analysis_url( $asset_id ) ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-slate-600 tw-font-black tw-uppercase tw-tracking-wider" title="Refresh GLB analysis">
-										<i data-lucide="refresh-cw" class="tw-w-3 tw-h-3"></i>
-										Refresh
-									</a>
-									<?php if ( $can_generate_safe_draco ) : ?>
-										<a href="<?php echo esc_url( self::dashboard_optimize_url( $asset_id ) ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-primary tw-font-black tw-uppercase tw-tracking-wider">
-											<i data-lucide="package-check" class="tw-w-3 tw-h-3"></i>
-											<?php echo esc_html( $generate_label ); ?>
-										</a>
-									<?php endif; ?>
-									<a href="<?php echo esc_url( get_edit_post_link( $asset_id, 'raw' ) ?: '#' ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-slate-500 tw-font-black tw-uppercase tw-tracking-wider">
-										Edit
-									</a>
+								<div class="tw-flex tw-flex-wrap tw-justify-end tw-gap-2" data-vrodos-dashboard-cell="actions">
+									<?php echo self::dashboard_row_actions_html( $asset_id, $flags, $derivative_ready ); ?>
 								</div>
 							</td>
 						</tr>
@@ -589,6 +635,112 @@ class VRodos_Asset_Optimization_Manager {
 			return false;
 		}
 		return ! empty( $flags['geometry'] ) || ! empty( $flags['stale-derivative'] );
+	}
+
+	private static function dashboard_asset_row_state( int $asset_id ): array {
+		$scan = self::scan_glb_derivatives( 'safe-draco' );
+		$item = null;
+		foreach ( [ 'analysisMissing', 'analysisStale', 'recommendedGeometry', 'recommendedTexture', 'recommendedLod', 'stale', 'ready', 'unsupported', 'lowBenefit', 'missing' ] as $bucket ) {
+			foreach ( $scan[ $bucket ] ?? [] as $candidate ) {
+				if ( (int) ( $candidate['assetId'] ?? 0 ) === $asset_id ) {
+					$item = array_merge( $item ?? [], $candidate );
+				}
+			}
+		}
+
+		$meta       = self::get_derivative_meta( $asset_id );
+		$source    = self::get_source_glb( $asset_id );
+		$source_url = is_wp_error( $source ) ? '' : (string) $source['url'];
+		$analysis  = self::get_analysis_meta( $asset_id );
+		$flags     = [];
+
+		if ( is_wp_error( $source ) ) {
+			$flags['unsupported'] = true;
+		} elseif ( empty( $analysis ) ) {
+			$flags['analysis-missing'] = true;
+		} elseif ( self::analysis_needs_refresh( $analysis, $source ) ) {
+			$flags['analysis-stale'] = true;
+		} else {
+			if ( ! empty( $analysis['recommendations']['geometryDerivative'] ) ) {
+				$flags['geometry'] = true;
+			}
+			if ( ! empty( $analysis['recommendations']['textureDerivative'] ) ) {
+				$flags['texture'] = true;
+			}
+			if ( ! empty( $analysis['recommendations']['lodDerivative'] ) ) {
+				$flags['lod'] = true;
+			}
+		}
+
+		$derivative = $meta['derivatives']['safe-draco'] ?? null;
+		$derivative_status = is_array( $derivative ) ? self::derivative_unusable_reason( $derivative, $source_url ) : 'No safe Draco derivative generated.';
+		$derivative_ready = is_array( $derivative ) && '' === $derivative_status;
+		if ( is_array( $derivative ) && ! $derivative_ready ) {
+			$flags['stale-derivative'] = true;
+		}
+		if ( $derivative_ready && empty( $meta['compileEnabled'] ) ) {
+			$flags['compile-disabled'] = true;
+		}
+
+		return [
+			'assetId'      => $asset_id,
+			'rowVisible'   => self::dashboard_row_is_actionable( $flags ),
+			'cells'        => self::dashboard_row_cells_html( $asset_id, $meta, $analysis, $flags, $derivative_ready, $derivative_status ),
+			'actionsHtml'  => self::dashboard_row_actions_html( $asset_id, $flags, $derivative_ready ),
+			'compileEnabled' => ! empty( $meta['compileEnabled'] ),
+			'title'        => (string) ( $item['title'] ?? get_the_title( $asset_id ) ?: 'Asset #' . $asset_id ),
+		];
+	}
+
+	private static function dashboard_row_is_actionable( array $flags ): bool {
+		foreach ( [ 'analysis-missing', 'analysis-stale', 'geometry', 'texture', 'lod', 'stale-derivative', 'unsupported', 'compile-disabled' ] as $key ) {
+			if ( ! empty( $flags[ $key ] ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static function dashboard_row_cells_html( int $asset_id, array $meta, array $analysis, array $flags, bool $derivative_ready, string $derivative_status ): array {
+		return [
+			'analysis' => self::capture_dashboard_html( static fn() => self::render_dashboard_analysis_icon( $flags ) ),
+			'geometry' => self::capture_dashboard_html( static fn() => self::render_dashboard_recommendation_icon( $flags, $analysis, 'geometryDerivative', 'Geometry derivative recommended', 'Geometry derivative not recommended' ) ),
+			'texture'  => self::capture_dashboard_html( static fn() => self::render_dashboard_recommendation_icon( $flags, $analysis, 'textureDerivative', 'Texture derivative recommended', 'Texture derivative not recommended' ) ),
+			'lod'      => self::capture_dashboard_html( static fn() => self::render_dashboard_recommendation_icon( $flags, $analysis, 'lodDerivative', 'LOD derivative recommended', 'LOD derivative not recommended' ) ),
+			'draco'    => self::capture_dashboard_html( static fn() => self::render_dashboard_draco_icon( $derivative_ready, $derivative_status, $flags ) ),
+			'compile'  => self::capture_dashboard_html( static fn() => self::render_dashboard_compile_toggle( $asset_id, $meta, $derivative_ready ) ),
+		];
+	}
+
+	private static function dashboard_row_actions_html( int $asset_id, array $flags, bool $derivative_ready ): string {
+		$can_generate_safe_draco = self::dashboard_can_generate_safe_draco( $flags, $derivative_ready );
+		$generate_label = ! empty( $flags['stale-derivative'] ) ? 'Regenerate derivative' : 'Generate derivative';
+
+		return self::capture_dashboard_html(
+			static function () use ( $asset_id, $can_generate_safe_draco, $generate_label ): void {
+				?>
+				<a href="<?php echo esc_url( self::dashboard_refresh_analysis_url( $asset_id ) ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-slate-600 tw-font-black tw-uppercase tw-tracking-wider" title="Refresh GLB analysis" data-vrodos-dashboard-action="refresh-analysis" data-asset-id="<?php echo esc_attr( (string) $asset_id ); ?>">
+					<i data-lucide="refresh-cw" class="tw-w-3 tw-h-3"></i>
+					Refresh
+				</a>
+				<?php if ( $can_generate_safe_draco ) : ?>
+					<a href="<?php echo esc_url( self::dashboard_optimize_url( $asset_id ) ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-primary tw-font-black tw-uppercase tw-tracking-wider">
+						<i data-lucide="package-check" class="tw-w-3 tw-h-3"></i>
+						<?php echo esc_html( $generate_label ); ?>
+					</a>
+				<?php endif; ?>
+				<a href="<?php echo esc_url( get_edit_post_link( $asset_id, 'raw' ) ?: '#' ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-slate-500 tw-font-black tw-uppercase tw-tracking-wider">
+					Edit
+				</a>
+				<?php
+			}
+		);
+	}
+
+	private static function capture_dashboard_html( callable $render ): string {
+		ob_start();
+		$render();
+		return (string) ob_get_clean();
 	}
 
 	private static function render_dashboard_analysis_icon( array $flags ): void {
@@ -654,21 +806,21 @@ class VRodos_Asset_Optimization_Manager {
 	private static function render_dashboard_compile_toggle( int $asset_id, array $meta, bool $derivative_ready ): void {
 		$compile_enabled = ! empty( $meta['compileEnabled'] );
 		if ( $compile_enabled && $derivative_ready ) {
-			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, false ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-emerald-500 hover:tw-text-emerald-700" title="' . esc_attr__( 'Disable derivative use in compiled scenes', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Disable derivative use in compiled scenes', 'vrodos' ) . '">';
+			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, false ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-emerald-500 hover:tw-text-emerald-700" title="' . esc_attr__( 'Disable derivative use in compiled scenes', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Disable derivative use in compiled scenes', 'vrodos' ) . '" data-vrodos-dashboard-action="toggle-compile" data-asset-id="' . esc_attr( (string) $asset_id ) . '" data-enabled="0">';
 			echo '<i data-lucide="toggle-right" class="tw-w-5 tw-h-5"></i>';
 			echo '</a>';
 			return;
 		}
 
 		if ( $compile_enabled && ! $derivative_ready ) {
-			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, false ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-rose-500 hover:tw-text-rose-700" title="' . esc_attr__( 'Disable invalid compile use', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Disable invalid compile use', 'vrodos' ) . '">';
+			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, false ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-rose-500 hover:tw-text-rose-700" title="' . esc_attr__( 'Disable invalid compile use', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Disable invalid compile use', 'vrodos' ) . '" data-vrodos-dashboard-action="toggle-compile" data-asset-id="' . esc_attr( (string) $asset_id ) . '" data-enabled="0">';
 			echo '<i data-lucide="x-circle" class="tw-w-5 tw-h-5"></i>';
 			echo '</a>';
 			return;
 		}
 
 		if ( $derivative_ready ) {
-			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, true ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-slate-300 hover:tw-text-emerald-600" title="' . esc_attr__( 'Enable derivative use in compiled scenes', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Enable derivative use in compiled scenes', 'vrodos' ) . '">';
+			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, true ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-slate-300 hover:tw-text-emerald-600" title="' . esc_attr__( 'Enable derivative use in compiled scenes', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Enable derivative use in compiled scenes', 'vrodos' ) . '" data-vrodos-dashboard-action="toggle-compile" data-asset-id="' . esc_attr( (string) $asset_id ) . '" data-enabled="1">';
 			echo '<i data-lucide="toggle-left" class="tw-w-5 tw-h-5"></i>';
 			echo '</a>';
 			return;
@@ -1230,6 +1382,30 @@ class VRodos_Asset_Optimization_Manager {
 			),
 			admin_url( 'admin.php' )
 		);
+	}
+
+	private static function set_asset_compile_use( int $asset_id, string $profile, bool $enabled ) {
+		if ( ! isset( self::supported_profiles()[ $profile ] ) ) {
+			return new WP_Error( 'vrodos_invalid_derivative_profile', __( 'Unsupported derivative profile.', 'vrodos' ) );
+		}
+
+		$meta = self::get_derivative_meta( $asset_id );
+		if ( $enabled ) {
+			$source = self::get_source_glb( $asset_id );
+			$derivative = $meta['derivatives'][ $profile ] ?? null;
+			if ( is_wp_error( $source ) || ! is_array( $derivative ) || ! self::is_derivative_usable( $derivative, (string) $source['url'] ) ) {
+				return new WP_Error( 'vrodos_derivative_not_ready', __( 'The derivative is not ready for compiled-scene use.', 'vrodos' ) );
+			}
+
+			$meta['activeProfile'] = $profile;
+			$meta['compileEnabled'] = true;
+			update_post_meta( $asset_id, self::META_KEY, $meta );
+			return true;
+		}
+
+		$meta['compileEnabled'] = false;
+		update_post_meta( $asset_id, self::META_KEY, $meta );
+		return true;
 	}
 
 	private static function supported_profiles(): array {
