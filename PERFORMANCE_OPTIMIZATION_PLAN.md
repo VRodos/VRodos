@@ -22,7 +22,8 @@ The first profiling pass on `http://wp.local:5832/Master_Client_766.html` showed
 - Complete: decoder asset publishing and compiled-scene decoder config for Draco, Meshopt, and Basis/KTX2.
 - Complete: compiled-scene Meshopt decoder smoke fix after discovering A-Frame requires a classic/browser-global decoder script.
 - Complete: compiled-scene safe Draco derivative trial for the largest asphalt GLB through profiler resource interception.
-- Next: design admin-panel derivative storage and compile-time selection, with a texture-compression path for texture-heavy assets.
+- Complete: admin-side safe Draco derivative generation/storage and opt-in compiler selection.
+- Next: add texture compression/KTX2 profile for texture-heavy assets and run visual QA on opted-in compiled scenes.
 
 ## Spector.js Debug Phase
 
@@ -173,6 +174,39 @@ Verdict:
 - The largest remaining runtime cost is still frame anatomy: many draw calls/material switches and repeated rendering through shadows/post-processing, not just GLB transfer size.
 - Texture-heavy assets like `rockPatch_dC.glb` need a texture-compression/resizing phase; geometry compression barely changes their size.
 
+## Admin Derivative Storage Phase
+
+Implemented the first production-facing derivative contract:
+
+- `VRodos_Asset_Optimization_Manager` adds a `GLB Optimization` side metabox on `vrodos_asset3d` admin edit screens.
+- The metabox can generate a `safe-draco` derivative for local uploaded GLBs.
+- Derivatives are written under WordPress uploads:
+  `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/`
+- Source uploads are kept unchanged.
+- Derivative metadata is stored on the asset in `_vrodos_asset3d_glb_derivatives`.
+- Compiled scenes only use derivatives when the asset has `Use active derivative in compiled scenes` enabled.
+- `VRodos_Compiler_AFrame_Entity_Renderer` resolves GLB URLs through the derivative manager during compilation and records a compile diagnostic note when a derivative is used.
+
+The existing glTF Transform prototype script now supports single-source mode for admin/backend use:
+
+```bash
+node scripts/prototype-optimize-master-client-assets.mjs --source D:\Development\WordPress\app\public\wp-content\uploads\archaeology-joker\models\aeschylus.glb --source-url /wp-content/uploads/archaeology-joker/models/aeschylus.glb --output-dir C:\tmp\vrodos-single-asset-optimize-test --output-file C:\tmp\vrodos-single-asset-optimize-test\aeschylus.safe-draco.glb --manifest C:\tmp\vrodos-single-asset-optimize-test\manifest.json --markdown C:\tmp\vrodos-single-asset-optimize-test\manifest.md --profile safe-draco --json
+```
+
+Validation result:
+
+- Single-source optimizer mode generated `aeschylus.safe-draco.glb`.
+- Size changed from `2.9MB` to `2.2MB`, saving `795,408` bytes (`25.9%`).
+- The derivative reported `KHR_draco_mesh_compression`.
+- PHP syntax checks passed for the new optimization manager, compiler entity renderer, and plugin bootstrap.
+
+Operational policy:
+
+- Generate does not automatically enable compile substitution.
+- Compile substitution is per-asset opt-in after visual parity is checked.
+- The resolver validates that the derivative file still exists and that its recorded source URL matches the current source URL before substituting it.
+- If validation fails, compilation silently falls back to the original GLB.
+
 ## Policy
 
 - `high` must remain visually equivalent to the current look.
@@ -196,7 +230,8 @@ Verdict:
 12. Publish Draco, Basis/KTX2, and Meshopt decoder assets through the Three vendor build.
 13. Stamp compiled A-Frame scenes with root `gltf-model` decoder paths.
 14. Add profiler resource interception to test compiled-scene derivative substitutions without editing uploads or generated HTML.
-15. Next optimization pass should prototype admin-side derivative storage plus compile-time selection, then add texture compression for texture-heavy GLBs.
+15. Add admin-side derivative storage plus opt-in compile-time selection.
+16. Next optimization pass should add texture compression for texture-heavy GLBs and visual QA tooling for opted-in derivatives.
 
 ## Acceptance Criteria
 
@@ -211,5 +246,7 @@ Verdict:
 - The derivative prototype can generate JSON/Markdown reports and cached GLB derivatives without modifying uploaded assets.
 - Compiled scenes include decoder paths for Draco, Basis/KTX2, and Meshopt compressed assets after regeneration.
 - The profiler can trial a local derivative through `--resource-override URL_OR_PATH=FILE` and record fulfilled override details.
+- Asset admins can generate a safe Draco derivative for a local uploaded GLB without replacing the original upload.
+- The compiler can use an optimized derivative only when the asset metadata explicitly enables it.
 - `?vrodos_spector=1` exposes `window.VRODOS_SPECTOR` and opens Spector's UI without affecting normal URLs.
 - `node --check`, PHP lint for edited PHP files, and `git diff --check` pass for the edited files.

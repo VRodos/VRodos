@@ -71,6 +71,10 @@ new VRodos_Pages_Manager();
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-core-manager.php');
 new VRodos_Core_Manager();
 
+// Asset Optimization Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-asset-optimization-manager.php');
+new VRodos_Asset_Optimization_Manager();
+
 // Default Scene Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-default-scene-manager.php');
 

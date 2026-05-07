@@ -573,12 +573,14 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		// Add to assets
 		$asset_item = $dom->createElement( 'a-asset-item' );
 		$asset_item->setAttribute( 'id', $uuid );
-		$glb_url = $this->normalize_url( $obj->glb_path ?? '' );
+		$glb_resolution = $this->resolve_compiled_gltf_asset_url( $obj, (string) ( $obj->glb_path ?? '' ) );
+		$glb_url        = $this->normalize_url( $glb_resolution['url'] );
 		$asset_item->setAttribute( 'src', $glb_url );
 		$asset_item->setAttribute( 'response-type', 'arraybuffer' );
 		$asset_item->setAttribute( 'crossorigin', 'anonymous' );
 		$assets->appendChild( $asset_item );
 		$this->track_runtime_asset( 'gltf', $glb_url, $cat . ':' . $uuid );
+		$this->track_gltf_derivative_usage( $glb_resolution, $obj, $cat . ':' . $uuid );
 
 		// Create entity
 		$entity = $dom->createElement( 'a-entity' );
@@ -649,6 +651,43 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 		
 		$ascene->appendChild( $entity );
+	}
+
+	private function resolve_compiled_gltf_asset_url( $obj, string $source_url ): array {
+		$result = [
+			'url'        => $source_url,
+			'derivative' => null,
+		];
+
+		if ( empty( $obj->asset_id ) || ! class_exists( 'VRodos_Asset_Optimization_Manager' ) ) {
+			return $result;
+		}
+
+		$resolved = VRodos_Asset_Optimization_Manager::resolve_compiled_glb_asset( absint( $obj->asset_id ), $source_url );
+		if ( is_array( $resolved ) && ! empty( $resolved['url'] ) ) {
+			return $resolved;
+		}
+
+		return $result;
+	}
+
+	private function track_gltf_derivative_usage( array $resolution, $obj, string $context ): void {
+		if ( empty( $resolution['derivative'] ) || ! is_array( $resolution['derivative'] ) ) {
+			return;
+		}
+
+		$derivative = $resolution['derivative'];
+		$asset_id   = ! empty( $obj->asset_id ) ? absint( $obj->asset_id ) : 0;
+		$profile    = (string) ( $derivative['profile'] ?? 'optimized' );
+		$saved      = ! empty( $derivative['reductionBytes'] ) ? $this->format_bytes( (int) $derivative['reductionBytes'] ) : 'unknown size';
+
+		$this->diagnostic_notes[] = sprintf(
+			'Using %s GLB derivative for asset %d in %s (%s saved).',
+			$profile,
+			$asset_id,
+			$context,
+			$saved
+		);
 	}
 
 	private function render_audio_entity( $dom, $ascene, $assets, $obj ) {

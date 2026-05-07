@@ -124,6 +124,19 @@ Current loader caveat: compressed derivatives must not be substituted into compi
 
 Future admin-panel optimization should be derivative-based: keep the original uploaded asset, generate one or more cached optimized variants, store metadata about size/profile/validation, and let scene compilation choose a validated derivative by render profile.
 
+### Admin Derivative Storage
+
+`VRodos_Asset_Optimization_Manager` provides the first admin-side derivative workflow for `vrodos_asset3d`:
+
+- The asset edit screen has a `GLB Optimization` metabox.
+- `Generate safe Draco derivative` runs the same glTF Transform `prune -> dedup -> draco` flow used by the prototype script.
+- Derivatives are stored in uploads under `vrodos-optimized-assets/asset-{asset_id}/`.
+- Metadata lives in `_vrodos_asset3d_glb_derivatives`.
+- Compilation uses a derivative only when the asset's `Use active derivative in compiled scenes` checkbox is enabled.
+- If the derivative file is missing or the stored source URL no longer matches the current GLB URL, compilation falls back to the original GLB.
+
+`VRodos_Compiler_AFrame_Entity_Renderer` is the URL selection point. It keeps scene JSON untouched, resolves the active derivative during compilation by `asset_id`, and adds a compile diagnostic note when a derivative is used.
+
 ### Compressed Asset Decoder Paths
 
 The compiler now writes A-Frame decoder paths onto the root scene:

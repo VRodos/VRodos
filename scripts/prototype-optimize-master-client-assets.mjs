@@ -28,6 +28,9 @@ function parseArgs(argv) {
         outputDir: defaultOutputDir,
         manifest: '',
         markdown: '',
+        source: '',
+        sourceUrl: '',
+        outputFile: '',
         profile: 'safe-draco',
         limit: 3,
         include: '',
@@ -63,6 +66,15 @@ function parseArgs(argv) {
                 break;
             case '--markdown':
                 options.markdown = nextValue() || '';
+                break;
+            case '--source':
+                options.source = nextValue() || '';
+                break;
+            case '--source-url':
+                options.sourceUrl = nextValue() || '';
+                break;
+            case '--output-file':
+                options.outputFile = nextValue() || '';
                 break;
             case '--profile':
                 options.profile = nextValue() || options.profile;
@@ -100,6 +112,8 @@ function parseArgs(argv) {
     options.outputDir = path.resolve(options.outputDir);
     options.manifest = path.resolve(options.manifest || path.join(options.outputDir, path.basename(defaultManifestPath)));
     options.markdown = path.resolve(options.markdown || path.join(options.outputDir, path.basename(defaultMarkdownPath)));
+    options.source = options.source ? path.resolve(options.source) : '';
+    options.outputFile = options.outputFile ? path.resolve(options.outputFile) : '';
 
     return options;
 }
@@ -113,6 +127,9 @@ Options:
   --output-dir PATH       Directory for derivative GLBs and reports. Default: ${defaultOutputDir}
   --manifest PATH         JSON manifest path. Defaults under --output-dir.
   --markdown PATH         Markdown report path. Defaults under --output-dir.
+  --source PATH           Optimize one local GLB instead of selecting assets from an audit.
+  --source-url URL        Source URL metadata to record with --source.
+  --output-file PATH      Exact derivative GLB path for --source mode.
   --profile NAME          One of safe-draco, safe-meshopt. Default: safe-draco.
   --limit N               Number of top GLBs to process. Default: 3.
   --include REGEX         Only process assets whose URL or filename matches.
@@ -331,6 +348,20 @@ function scoreAsset(asset) {
 }
 
 function selectAssets(audit, options) {
+    if (options.source) {
+        if (!existsSync(options.source)) {
+            throw new Error(`Source GLB does not exist: ${options.source}`);
+        }
+
+        return [{
+            url: options.sourceUrl || options.source,
+            localPath: options.source,
+            context: 'single-source',
+            flags: [],
+            exists: true
+        }];
+    }
+
     const includeRegex = options.include ? new RegExp(options.include, 'i') : null;
     return (audit.glbAssets || [])
         .filter((asset) => asset.exists && asset.localPath && !asset.error)
@@ -440,7 +471,7 @@ async function optimizeAsset(asset, index, options, runner) {
     const sourcePath = path.resolve(asset.localPath);
     const fileName = path.basename(normalizeUrlPath(asset.url || sourcePath));
     const slug = `${String(index + 1).padStart(2, '0')}-${slugify(fileName)}`;
-    const derivativePath = path.join(options.outputDir, `${slug}.${options.profile}.glb`);
+    const derivativePath = options.outputFile || path.join(options.outputDir, `${slug}.${options.profile}.glb`);
     const workDir = path.join(options.outputDir, '.work', `${slug}-${Date.now()}`);
     const sourceSizeBytes = asset.localSizeBytes || asset.sizeBytes || await getFileSize(sourcePath);
     const record = {
@@ -476,6 +507,7 @@ async function optimizeAsset(asset, index, options, runner) {
         return record;
     }
 
+    await mkdir(path.dirname(derivativePath), { recursive: true });
     await mkdir(workDir, { recursive: true });
     const steps = profileSteps(options.profile, sourcePath, derivativePath, workDir);
     for (const args of steps) {
@@ -583,7 +615,7 @@ function printSummary(manifest) {
 
 async function run() {
     const options = parseArgs(process.argv.slice(2));
-    const audit = JSON.parse(await readFile(options.audit, 'utf8'));
+    const audit = options.source ? { glbAssets: [] } : JSON.parse(await readFile(options.audit, 'utf8'));
     const selectedAssets = selectAssets(audit, options);
     const runner = resolveGltfTransformRunner(options.gltfTransform);
     const toolVersion = options.dryRun ? '' : await getToolVersion(runner);
