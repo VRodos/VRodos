@@ -501,13 +501,15 @@
 								<div id="compilePmndrsAtmosphereWrapper" class="tw-space-y-4">
 									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
 										<label class="tw-form-control tw-w-full">
-											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Atmosphere Look</span>
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Sky Time</span>
 											<select id="compilePmndrsAtmospherePresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+												<option value="night">Night</option>
+												<option value="dawn">Dawn</option>
 												<option value="sunrise">Sunrise</option>
+												<option value="early-morning">Early Morning</option>
 												<option value="midday">Midday</option>
 												<option value="golden-hour">Golden Hour</option>
 												<option value="sunset">Sunset</option>
-												<option value="night">Night</option>
 												<option value="custom">Custom</option>
 											</select>
 										</label>
@@ -524,21 +526,23 @@
 
 									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
 										<label class="tw-form-control tw-w-full">
-											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Celestial Mode</span>
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Advanced Time Source</span>
 											<select id="compilePmndrsCelestialModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-												<option value="manual">Manual</option>
-												<option value="preset-time">Preset Time</option>
+												<option value="preset-time">Sky Time Preset</option>
 												<option value="datetime">Date/Time</option>
+												<option value="manual">Manual Custom</option>
 											</select>
 										</label>
-										<label id="compilePmndrsCelestialTimePresetWrapper" class="tw-form-control tw-w-full">
+										<label id="compilePmndrsCelestialTimePresetWrapper" class="tw-form-control tw-w-full" style="display: none;">
 											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Time Preset</span>
 											<select id="compilePmndrsCelestialTimePresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+												<option value="night">Night</option>
+												<option value="dawn">Dawn</option>
 												<option value="sunrise">Sunrise</option>
+												<option value="early-morning">Early Morning</option>
 												<option value="midday">Midday</option>
 												<option value="golden-hour">Golden Hour</option>
 												<option value="sunset">Sunset</option>
-												<option value="night">Night</option>
 											</select>
 										</label>
 									</div>
@@ -599,7 +603,7 @@
 													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Elevation</span>
 													<span id="compilePmndrsSunElevationValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">10°</span>
 												</div>
-												<input id="compilePmndrsSunElevationSlider" type="range" min="-10" max="85" step="1" value="62" class="tw-range tw-range-primary tw-range-xs">
+												<input id="compilePmndrsSunElevationSlider" type="range" min="-18" max="85" step="1" value="62" class="tw-range tw-range-primary tw-range-xs">
 											</div>
 											<div>
 												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">

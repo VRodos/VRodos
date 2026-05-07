@@ -5,7 +5,7 @@
 /* global VRODOSMaster, vrodosEnhanceMeshMaterial, vrodosGetExplicitMaterialOverrides */
 (function () {
     const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
-    const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 0.0047;
+    const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 0.004675;
     const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.18;
     const WGS84_EQUATORIAL_RADIUS = 6378137;
     const WGS84_POLAR_RADIUS = 6356752.3142451793;
@@ -25,22 +25,76 @@
         }
     };
     const PMNDRS_ATMOSPHERE_LOOK_DEFAULTS = runtimeSettingsContract.atmosphereLookDefaults || {
+        night: {
+            sunElevationDeg: -18,
+            sunAzimuthDeg: 25,
+            sunDistance: 5200,
+            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
+            aerialStrength: 0.16,
+            albedoScale: 0.85,
+            transmittanceEnabled: true,
+            inscatterEnabled: true,
+            groundEnabled: true,
+            groundAlbedo: '#1a1a1a',
+            rayleighScale: 0.9,
+            mieScatteringScale: 0.45,
+            mieExtinctionScale: 0.55,
+            miePhaseG: 0.8,
+            absorptionScale: 1.05,
+            moonEnabled: true
+        },
+        dawn: {
+            sunElevationDeg: -5,
+            sunAzimuthDeg: -65,
+            sunDistance: 5200,
+            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
+            aerialStrength: 0.45,
+            albedoScale: 0.9,
+            transmittanceEnabled: true,
+            inscatterEnabled: true,
+            groundEnabled: true,
+            groundAlbedo: '#1a1a1a',
+            rayleighScale: 1.0,
+            mieScatteringScale: 0.75,
+            mieExtinctionScale: 0.85,
+            miePhaseG: 0.8,
+            absorptionScale: 1.0,
+            moonEnabled: false
+        },
         sunrise: {
-            sunElevationDeg: 6,
+            sunElevationDeg: 2,
             sunAzimuthDeg: -55,
             sunDistance: 5200,
-            sunAngularRadius: 0.0049,
-            aerialStrength: 0.88,
+            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
+            aerialStrength: 0.65,
             albedoScale: 0.96,
             transmittanceEnabled: true,
             inscatterEnabled: true,
             groundEnabled: true,
-            groundAlbedo: '#f0d8b8',
+            groundAlbedo: '#1a1a1a',
             rayleighScale: 1.0,
-            mieScatteringScale: 0.88,
+            mieScatteringScale: 0.9,
+            mieExtinctionScale: 0.95,
+            miePhaseG: 0.8,
+            absorptionScale: 1.0,
+            moonEnabled: false
+        },
+        'early-morning': {
+            sunElevationDeg: 22,
+            sunAzimuthDeg: -28,
+            sunDistance: 5200,
+            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
+            aerialStrength: 0.5,
+            albedoScale: 1.0,
+            transmittanceEnabled: true,
+            inscatterEnabled: true,
+            groundEnabled: true,
+            groundAlbedo: '#1a1a1a',
+            rayleighScale: 1.0,
+            mieScatteringScale: 0.95,
             mieExtinctionScale: 0.98,
-            miePhaseG: 0.78,
-            absorptionScale: 0.88,
+            miePhaseG: 0.8,
+            absorptionScale: 1.0,
             moonEnabled: false
         },
         midday: {
@@ -62,58 +116,40 @@
             moonEnabled: false
         },
         'golden-hour': {
-            sunElevationDeg: 14,
+            sunElevationDeg: 5,
             sunAzimuthDeg: 32,
-            sunDistance: 5400,
-            sunAngularRadius: 0.0049,
-            aerialStrength: 0.78,
+            sunDistance: 5200,
+            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
+            aerialStrength: 0.65,
             albedoScale: 0.98,
             transmittanceEnabled: true,
             inscatterEnabled: true,
             groundEnabled: true,
-            groundAlbedo: '#efd1a6',
-            rayleighScale: 1.02,
-            mieScatteringScale: 0.82,
-            mieExtinctionScale: 0.92,
-            miePhaseG: 0.78,
-            absorptionScale: 0.9,
+            groundAlbedo: '#1a1a1a',
+            rayleighScale: 1.0,
+            mieScatteringScale: 0.9,
+            mieExtinctionScale: 0.95,
+            miePhaseG: 0.8,
+            absorptionScale: 1.0,
             moonEnabled: false
         },
         sunset: {
-            sunElevationDeg: 8,
+            sunElevationDeg: 1,
             sunAzimuthDeg: 38,
-            sunDistance: 5600,
-            sunAngularRadius: 0.0049,
-            aerialStrength: 1.02,
+            sunDistance: 5200,
+            sunAngularRadius: TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS,
+            aerialStrength: 0.75,
             albedoScale: 0.96,
             transmittanceEnabled: true,
             inscatterEnabled: true,
             groundEnabled: true,
-            groundAlbedo: '#f2cda8',
-            rayleighScale: 0.96,
-            mieScatteringScale: 1.08,
-            mieExtinctionScale: 1.18,
-            miePhaseG: 0.82,
-            absorptionScale: 0.86,
+            groundAlbedo: '#1a1a1a',
+            rayleighScale: 1.0,
+            mieScatteringScale: 0.95,
+            mieExtinctionScale: 1.05,
+            miePhaseG: 0.8,
+            absorptionScale: 1.0,
             moonEnabled: false
-        },
-        night: {
-            sunElevationDeg: -8,
-            sunAzimuthDeg: 25,
-            sunDistance: 5200,
-            sunAngularRadius: 0.0044,
-            aerialStrength: 0.28,
-            albedoScale: 0.82,
-            transmittanceEnabled: true,
-            inscatterEnabled: true,
-            groundEnabled: true,
-            groundAlbedo: '#4e5870',
-            rayleighScale: 0.66,
-            mieScatteringScale: 0.32,
-            mieExtinctionScale: 0.46,
-            miePhaseG: 0.7,
-            absorptionScale: 1.14,
-            moonEnabled: true
         }
     };
     function clampPmndrsNumber(value, min, max, fallback) {
@@ -176,10 +212,12 @@
 
     function normalizePmndrsAtmospherePreset(value) {
         switch (value) {
+            case 'night':
+            case 'dawn':
             case 'sunrise':
+            case 'early-morning':
             case 'golden-hour':
             case 'sunset':
-            case 'night':
             case 'custom':
                 return value;
             default:
@@ -196,11 +234,13 @@
 
     function normalizePmndrsCelestialTimePreset(value) {
         switch (value) {
+            case 'night':
+            case 'dawn':
             case 'sunrise':
+            case 'early-morning':
             case 'midday':
             case 'golden-hour':
             case 'sunset':
-            case 'night':
                 return value;
             default:
                 return 'midday';
@@ -302,10 +342,20 @@
         }
     }
 
+    function getResolvedPmndrsSkyTimePreset(config) {
+        if (!config) {
+            return 'midday';
+        }
+        if (config.resolvedLookPreset && config.resolvedLookPreset !== 'custom') {
+            return config.resolvedLookPreset;
+        }
+        return config.celestialTimePreset || 'midday';
+    }
+
     function isPmndrsPresetTimeNight(config) {
         return Boolean(config &&
-            ((config.celestialMode === 'preset-time' && config.celestialTimePreset === 'night') ||
-                (config.celestialMode === 'datetime' && typeof config.sunElevationDeg === 'number' && config.sunElevationDeg < -2)));
+            (getResolvedPmndrsSkyTimePreset(config) === 'night' ||
+                (config.celestialMode === 'datetime' && typeof config.sunElevationDeg === 'number' && config.sunElevationDeg <= -12)));
     }
 
     function getPmndrsNightReflectionIntensityScale(self, config, reflectionSource) {
@@ -331,6 +381,7 @@
         const sunElevation = atmosphereConfig && typeof atmosphereConfig.sunElevationDeg === 'number'
             ? atmosphereConfig.sunElevationDeg
             : null;
+        const skyTimePreset = getResolvedPmndrsSkyTimePreset(atmosphereConfig);
 
         if (preset === 'clear') {
             keyColor = '#fff4d8';
@@ -348,17 +399,27 @@
             fillIntensity = Math.min(fillIntensity, moonEnabled ? 0.035 : 0.015);
             useMoonDirection = moonEnabled;
             directionOwner = moonEnabled ? 'moon' : 'none';
+        } else if (atmosphereConfig && (skyTimePreset === 'dawn' || (sunElevation !== null && sunElevation < 0))) {
+            keyColor = '#9fb7ff';
+            fillColor = '#223354';
+            keyIntensity = Math.min(keyIntensity, 0.22);
+            fillIntensity = Math.min(fillIntensity, 0.12);
         } else if (atmosphereConfig &&
-            (atmosphereConfig.celestialTimePreset === 'sunrise' ||
-                atmosphereConfig.celestialTimePreset === 'golden-hour' ||
-                atmosphereConfig.celestialTimePreset === 'sunset' ||
+            (skyTimePreset === 'sunrise' ||
+                skyTimePreset === 'golden-hour' ||
+                skyTimePreset === 'sunset' ||
                 (sunElevation !== null && sunElevation < 18))) {
-            keyColor = atmosphereConfig.celestialTimePreset === 'sunrise' ? '#ffd6a8' : '#ffba7a';
+            keyColor = skyTimePreset === 'sunset' ? '#ff9f64' : (skyTimePreset === 'sunrise' ? '#ffd1a3' : '#ffba7a');
             fillColor = '#5f78ab';
-            keyIntensity = Math.max(keyIntensity, 1.18);
-            fillIntensity = Math.min(fillIntensity, 0.08);
+            keyIntensity = Math.max(keyIntensity, skyTimePreset === 'sunset' ? 1.05 : 1.1);
+            fillIntensity = Math.min(fillIntensity, 0.12);
+        } else if (atmosphereConfig && (skyTimePreset === 'early-morning' || (sunElevation !== null && sunElevation >= 18 && sunElevation < 35))) {
+            keyColor = '#fff0cf';
+            fillColor = '#c9dcff';
+            keyIntensity = Math.max(keyIntensity, 1.55);
+            fillIntensity = Math.max(fillIntensity, 0.65);
         } else if (atmosphereConfig &&
-            (atmosphereConfig.celestialTimePreset === 'midday' ||
+            (skyTimePreset === 'midday' ||
                 (sunElevation !== null && sunElevation >= 35))) {
             keyColor = preset === 'clear' ? '#fff6e4' : '#fff2d4';
             fillColor = '#d7e8ff';
@@ -866,6 +927,7 @@
             : 'off';
         const correctAltitude = atmosphereConfig && atmosphereConfig.correctAltitudeEnabled !== false ? 'on' : 'off';
         const lightSourceMode = atmosphereConfig && atmosphereConfig.useTakramLightSources === true ? 'takram' : 'helper';
+        const resolvedSkyTimePreset = getResolvedPmndrsSkyTimePreset(atmosphereConfig);
         const owner = atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsHorizonAerialPerspectivePath(self)
             ? 'takram-sky+aerial'
             : (atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self)
@@ -876,7 +938,7 @@
             owner,
             reflectionSource,
             atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : 'manual',
-            atmosphereConfig && atmosphereConfig.celestialTimePreset ? atmosphereConfig.celestialTimePreset : 'midday',
+            resolvedSkyTimePreset,
             atmosphereConfig && atmosphereConfig.groundEnabled ? 'ground-on' : 'ground-off',
             atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'sun-off' : 'sun-on',
             formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null),
@@ -907,7 +969,7 @@
         log.call(console, `[VRodos] PMNDRS horizon diagnostic (${  context  }): owner=${  owner
             }, reflection=${  reflectionSource 
             }, celestial=${  atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : 'manual'
-            }/${  atmosphereConfig && atmosphereConfig.celestialTimePreset ? atmosphereConfig.celestialTimePreset : 'midday'
+            }/${  resolvedSkyTimePreset
             }, ground=${  atmosphereConfig && atmosphereConfig.groundEnabled ? 'on' : 'off' 
             }, sun=${  atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'off' : 'on' 
             }, sunDir=${  formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null) 
@@ -1409,13 +1471,15 @@
         const resolvedLookPreset = celestialMode === 'preset-time' ? celestialTimePreset : preset;
         const presetDefaults = getPmndrsAtmosphereLookDefaults(resolvedLookPreset, presetIntensity);
         const usesCustomValues = celestialMode !== 'preset-time' && preset === 'custom';
+        const effectiveCelestialTimePreset = resolvedLookPreset === 'custom' ? celestialTimePreset : resolvedLookPreset;
         const manualMoonEnabled = readPmndrsAtmosphereBool(this, 'pmndrsMoonEnabled', presetDefaults.moonEnabled);
         const geospatialEnabled = readPmndrsAtmosphereBool(this, 'pmndrsGeospatialEnabled', false);
         const config = {
             enabled: this.data.postFXEngine === 'pmndrs' && this.data.pmndrsAtmosphereEnabled !== '0',
             preset,
             celestialMode,
-            celestialTimePreset,
+            celestialTimePreset: effectiveCelestialTimePreset,
+            authoredCelestialTimePreset: celestialTimePreset,
             celestialDate,
             celestialUtcTime,
             resolvedLookPreset,
@@ -1427,7 +1491,7 @@
             geospatialAltitudeMeters: readPmndrsAtmosphereNumber(this, 'pmndrsGeospatialAltitudeMeters', -500, 20000, 0),
             aerialPerspectiveEnabled: readPmndrsAtmosphereBool(this, 'pmndrsAerialPerspectiveEnabled', false),
             correctAltitudeEnabled: readPmndrsAtmosphereBool(this, 'pmndrsCorrectAltitudeEnabled', true),
-            sunElevationDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunElevationDeg', -10, 85, presetDefaults.sunElevationDeg) : presetDefaults.sunElevationDeg,
+            sunElevationDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunElevationDeg', -18, 85, presetDefaults.sunElevationDeg) : presetDefaults.sunElevationDeg,
             sunAzimuthDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunAzimuthDeg', -180, 180, presetDefaults.sunAzimuthDeg) : presetDefaults.sunAzimuthDeg,
             sunDistance: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunDistance', 1500, 20000, presetDefaults.sunDistance) : presetDefaults.sunDistance,
             sunAngularRadius: usesCustomValues ? readPmndrsAtmosphereNumber(this, 'pmndrsSunAngularRadius', 0.002, 0.03, presetDefaults.sunAngularRadius) : presetDefaults.sunAngularRadius,

@@ -46,8 +46,13 @@ class VRodos_Compiler_Scene_Settings {
 		$post_fx_engine       = ( $post_fx_enabled_bool && ( $metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ) ? 'pmndrs' : 'legacy';
 		$horizon_preset       = $this->enum_value( $metadata->aframeHorizonSkyPreset ?? 'natural', [ 'natural', 'clear', 'crisp' ], 'natural' );
 		$horizon_defaults     = VRodos_Runtime_Settings_Contract::horizon_helper_defaults( $horizon_preset );
+		$atmosphere_preset    = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmospherePreset' );
 		$celestial_mode       = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCelestialMode' );
 		$celestial_time       = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCelestialTimePreset' );
+		if ( 'datetime' !== $celestial_mode && 'custom' !== $atmosphere_preset ) {
+			$celestial_mode = 'preset-time';
+			$celestial_time = $atmosphere_preset;
+		}
 		$moon_explicit        = property_exists( $metadata, VRodos_Runtime_Settings_Contract::metadata_key( 'pmndrsMoonEnabled' ) );
 		$moon_enabled         = $moon_explicit
 			? VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsMoonEnabled' )
@@ -117,7 +122,7 @@ class VRodos_Compiler_Scene_Settings {
 			'pmndrsChromaticAberrationEnabled'   => $this->pmndrs_bool_attr( $metadata, 'pmndrsChromaticAberrationEnabled' ),
 			'pmndrsChromaticAberrationOffset'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsChromaticAberrationOffset' ),
 			'pmndrsAtmosphereEnabled'            => ( $post_fx_enabled_bool && 'pmndrs' === $post_fx_engine && VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmosphereEnabled' ) ) ? 'true' : 'false',
-			'pmndrsAtmospherePreset'             => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmospherePreset' ),
+			'pmndrsAtmospherePreset'             => $atmosphere_preset,
 			'pmndrsAtmospherePresetIntensity'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmospherePresetIntensity' ),
 			'pmndrsAtmosphereQuality'            => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmosphereQuality' ),
 			'pmndrsAerialPerspectiveEnabled'     => $this->pmndrs_bool_attr( $metadata, 'pmndrsAerialPerspectiveEnabled' ),

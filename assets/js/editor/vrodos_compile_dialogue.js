@@ -295,7 +295,7 @@ window.addEventListener('DOMContentLoaded', () => {
         VRODOS.editor.envir.scene.aframePmndrsCelestialDate = VRodosCompileUI.Atmosphere.normalizeDate(VRODOS.editor.envir.scene.aframePmndrsCelestialDate, Shared.PMNDRS_TWEAK_DEFAULTS.celestialDate);
         VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime = VRodosCompileUI.Atmosphere.normalizeUtcTime(VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime, Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime);
         if (typeof VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg !== 'number') {
-            VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg, -10, 85, Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
+            VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg, -18, 85, Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
         }
         if (typeof VRODOS.editor.envir.scene.aframePmndrsSunAzimuthDeg !== 'number') {
             VRODOS.editor.envir.scene.aframePmndrsSunAzimuthDeg = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsSunAzimuthDeg, -180, 180, Shared.PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg);
@@ -793,11 +793,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 controls,
                 controls.pmndrsCelestialTimePreset ? controls.pmndrsCelestialTimePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset
             );
-        } else if (resolvedAtmospherePreset !== 'custom') {
+        } else if (resolvedCelestialMode !== 'datetime' && resolvedAtmospherePreset !== 'custom') {
             VRodosCompileUI.Atmosphere.applyLookPreset(controls, resolvedAtmospherePreset);
         } else {
             if (controls.pmndrsSunElevation) {
-                controls.pmndrsSunElevation.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg : Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg, -10, 85, Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
+                controls.pmndrsSunElevation.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg : Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg, -18, 85, Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
             }
             if (controls.pmndrsSunAzimuth) {
                 controls.pmndrsSunAzimuth.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsSunAzimuthDeg : Shared.PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg, -180, 180, Shared.PMNDRS_TWEAK_DEFAULTS.sunAzimuthDeg);
@@ -1066,10 +1066,17 @@ window.addEventListener('DOMContentLoaded', () => {
             const mode = VRodosCompileUI.Atmosphere.normalizeCelestialMode(controls.pmndrsCelestialMode.value);
             controls.pmndrsCelestialMode.value = mode;
             if (mode === 'preset-time') {
-                VRodosCompileUI.Atmosphere.applyCelestialTimePreset(
-                    controls,
-                    controls.pmndrsCelestialTimePreset ? controls.pmndrsCelestialTimePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset
-                );
+                const skyTimePreset = VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset);
+                if (skyTimePreset !== 'custom') {
+                    VRodosCompileUI.Atmosphere.applyLookPreset(controls, skyTimePreset);
+                } else {
+                    VRodosCompileUI.Atmosphere.applyCelestialTimePreset(
+                        controls,
+                        controls.pmndrsCelestialTimePreset ? controls.pmndrsCelestialTimePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset
+                    );
+                }
+            } else if (mode === 'manual') {
+                VRodosCompileUI.Atmosphere.markCustom(controls);
             }
             updatePmndrsValueLabels();
             syncCompilePostFxState();
@@ -1116,11 +1123,10 @@ window.addEventListener('DOMContentLoaded', () => {
     if (controls.pmndrsAtmospherePreset) {
         controls.pmndrsAtmospherePreset.addEventListener('change', () => {
             const preset = VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset.value);
-            if (controls.pmndrsCelestialMode) {
-                controls.pmndrsCelestialMode.value = 'manual';
-            }
             if (preset !== 'custom') {
                 VRodosCompileUI.Atmosphere.applyLookPreset(controls, preset);
+            } else if (controls.pmndrsCelestialMode) {
+                controls.pmndrsCelestialMode.value = 'manual';
             }
             updatePmndrsValueLabels();
             syncCompilePostFxState();
@@ -1135,7 +1141,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 : VRodosCompileUI.Atmosphere.normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset);
             if (celestialMode === 'preset-time') {
                 VRodosCompileUI.Atmosphere.applyCelestialTimePreset(controls, preset);
-            } else if (preset !== 'custom') {
+            } else if (celestialMode !== 'datetime' && preset !== 'custom') {
                 VRodosCompileUI.Atmosphere.applyLookPreset(controls, preset);
             }
             updatePmndrsValueLabels();

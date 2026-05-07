@@ -137,11 +137,13 @@
             "type": "enum",
             "default": "midday",
             "allowed": [
+                "night",
+                "dawn",
                 "sunrise",
+                "early-morning",
                 "midday",
                 "golden-hour",
                 "sunset",
-                "night",
                 "custom"
             ]
         },
@@ -214,11 +216,13 @@
             "type": "enum",
             "default": "midday",
             "allowed": [
+                "night",
+                "dawn",
                 "sunrise",
+                "early-morning",
                 "midday",
                 "golden-hour",
-                "sunset",
-                "night"
+                "sunset"
             ]
         },
         "pmndrsCelestialDate": {
@@ -237,7 +241,7 @@
             "metadataKey": "aframePmndrsSunElevationDeg",
             "type": "number",
             "default": 62,
-            "min": -10,
+            "min": -18,
             "max": 85
         },
         "pmndrsSunAzimuthDeg": {
@@ -257,7 +261,7 @@
         "pmndrsSunAngularRadius": {
             "metadataKey": "aframePmndrsSunAngularRadius",
             "type": "number",
-            "default": 0.0047,
+            "default": 0.004675,
             "min": 0.002,
             "max": 0.03
         },
@@ -293,40 +297,40 @@
         "pmndrsGroundAlbedo": {
             "metadataKey": "aframePmndrsGroundAlbedo",
             "type": "color",
-            "default": "#d8d8d0"
+            "default": "#1a1a1a"
         },
         "pmndrsRayleighScale": {
             "metadataKey": "aframePmndrsRayleighScale",
             "type": "number",
-            "default": 1.18,
+            "default": 1,
             "min": 0.1,
             "max": 3
         },
         "pmndrsMieScatteringScale": {
             "metadataKey": "aframePmndrsMieScatteringScale",
             "type": "number",
-            "default": 0.42,
+            "default": 1,
             "min": 0.1,
             "max": 3
         },
         "pmndrsMieExtinctionScale": {
             "metadataKey": "aframePmndrsMieExtinctionScale",
             "type": "number",
-            "default": 0.56,
+            "default": 1,
             "min": 0.1,
             "max": 3
         },
         "pmndrsMiePhaseG": {
             "metadataKey": "aframePmndrsMiePhaseG",
             "type": "number",
-            "default": 0.74,
+            "default": 0.8,
             "min": 0,
             "max": 0.99
         },
         "pmndrsAbsorptionScale": {
             "metadataKey": "aframePmndrsAbsorptionScale",
             "type": "number",
-            "default": 0.94,
+            "default": 1,
             "min": 0.1,
             "max": 3
         },
@@ -376,29 +380,83 @@
         }
     },
     "atmosphereLookDefaults": {
+        "night": {
+            "sunElevationDeg": -18,
+            "sunAzimuthDeg": 25,
+            "sunDistance": 5200,
+            "sunAngularRadius": 0.004675,
+            "aerialStrength": 0.16,
+            "albedoScale": 0.85,
+            "transmittanceEnabled": true,
+            "inscatterEnabled": true,
+            "groundEnabled": true,
+            "groundAlbedo": "#1a1a1a",
+            "rayleighScale": 0.9,
+            "mieScatteringScale": 0.45,
+            "mieExtinctionScale": 0.55,
+            "miePhaseG": 0.8,
+            "absorptionScale": 1.05,
+            "moonEnabled": true
+        },
+        "dawn": {
+            "sunElevationDeg": -5,
+            "sunAzimuthDeg": -65,
+            "sunDistance": 5200,
+            "sunAngularRadius": 0.004675,
+            "aerialStrength": 0.45,
+            "albedoScale": 0.9,
+            "transmittanceEnabled": true,
+            "inscatterEnabled": true,
+            "groundEnabled": true,
+            "groundAlbedo": "#1a1a1a",
+            "rayleighScale": 1,
+            "mieScatteringScale": 0.75,
+            "mieExtinctionScale": 0.85,
+            "miePhaseG": 0.8,
+            "absorptionScale": 1,
+            "moonEnabled": false
+        },
         "sunrise": {
-            "sunElevationDeg": 6,
+            "sunElevationDeg": 2,
             "sunAzimuthDeg": -55,
             "sunDistance": 5200,
-            "sunAngularRadius": 0.0049,
-            "aerialStrength": 0.88,
+            "sunAngularRadius": 0.004675,
+            "aerialStrength": 0.65,
             "albedoScale": 0.96,
             "transmittanceEnabled": true,
             "inscatterEnabled": true,
             "groundEnabled": true,
-            "groundAlbedo": "#f0d8b8",
+            "groundAlbedo": "#1a1a1a",
             "rayleighScale": 1,
-            "mieScatteringScale": 0.88,
+            "mieScatteringScale": 0.9,
+            "mieExtinctionScale": 0.95,
+            "miePhaseG": 0.8,
+            "absorptionScale": 1,
+            "moonEnabled": false
+        },
+        "early-morning": {
+            "sunElevationDeg": 22,
+            "sunAzimuthDeg": -28,
+            "sunDistance": 5200,
+            "sunAngularRadius": 0.004675,
+            "aerialStrength": 0.5,
+            "albedoScale": 1,
+            "transmittanceEnabled": true,
+            "inscatterEnabled": true,
+            "groundEnabled": true,
+            "groundAlbedo": "#1a1a1a",
+            "rayleighScale": 1,
+            "mieScatteringScale": 0.95,
             "mieExtinctionScale": 0.98,
-            "miePhaseG": 0.78,
-            "absorptionScale": 0.88,
+            "miePhaseG": 0.8,
+            "absorptionScale": 1,
             "moonEnabled": false
         },
         "midday": {
             "sunElevationDeg": 62,
             "sunAzimuthDeg": 20,
             "sunDistance": 5200,
-            "sunAngularRadius": 0.0047,
+            "sunAngularRadius": 0.004675,
             "aerialStrength": 0.55,
             "albedoScale": 1,
             "transmittanceEnabled": true,
@@ -413,58 +471,40 @@
             "moonEnabled": false
         },
         "golden-hour": {
-            "sunElevationDeg": 14,
+            "sunElevationDeg": 5,
             "sunAzimuthDeg": 32,
-            "sunDistance": 5400,
-            "sunAngularRadius": 0.0049,
-            "aerialStrength": 0.78,
+            "sunDistance": 5200,
+            "sunAngularRadius": 0.004675,
+            "aerialStrength": 0.65,
             "albedoScale": 0.98,
             "transmittanceEnabled": true,
             "inscatterEnabled": true,
             "groundEnabled": true,
-            "groundAlbedo": "#efd1a6",
-            "rayleighScale": 1.02,
-            "mieScatteringScale": 0.82,
-            "mieExtinctionScale": 0.92,
-            "miePhaseG": 0.78,
-            "absorptionScale": 0.9,
+            "groundAlbedo": "#1a1a1a",
+            "rayleighScale": 1,
+            "mieScatteringScale": 0.9,
+            "mieExtinctionScale": 0.95,
+            "miePhaseG": 0.8,
+            "absorptionScale": 1,
             "moonEnabled": false
         },
         "sunset": {
-            "sunElevationDeg": 8,
+            "sunElevationDeg": 1,
             "sunAzimuthDeg": 38,
-            "sunDistance": 5600,
-            "sunAngularRadius": 0.0049,
-            "aerialStrength": 1.02,
+            "sunDistance": 5200,
+            "sunAngularRadius": 0.004675,
+            "aerialStrength": 0.75,
             "albedoScale": 0.96,
             "transmittanceEnabled": true,
             "inscatterEnabled": true,
             "groundEnabled": true,
-            "groundAlbedo": "#f2cda8",
-            "rayleighScale": 0.96,
-            "mieScatteringScale": 1.08,
-            "mieExtinctionScale": 1.18,
-            "miePhaseG": 0.82,
-            "absorptionScale": 0.86,
+            "groundAlbedo": "#1a1a1a",
+            "rayleighScale": 1,
+            "mieScatteringScale": 0.95,
+            "mieExtinctionScale": 1.05,
+            "miePhaseG": 0.8,
+            "absorptionScale": 1,
             "moonEnabled": false
-        },
-        "night": {
-            "sunElevationDeg": -8,
-            "sunAzimuthDeg": 25,
-            "sunDistance": 5200,
-            "sunAngularRadius": 0.0044,
-            "aerialStrength": 0.28,
-            "albedoScale": 0.82,
-            "transmittanceEnabled": true,
-            "inscatterEnabled": true,
-            "groundEnabled": true,
-            "groundAlbedo": "#4e5870",
-            "rayleighScale": 0.66,
-            "mieScatteringScale": 0.32,
-            "mieExtinctionScale": 0.46,
-            "miePhaseG": 0.7,
-            "absorptionScale": 1.14,
-            "moonEnabled": true
         }
     }
 };
