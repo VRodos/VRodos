@@ -6,7 +6,9 @@ module.exports = {
     "./includes/**/*.php",
     "./templates/**/*.php",
     "./templates/**/*.html",
-    "./assets/js/**/*.js",
+    "./assets/js/editor/**/*.js",
+    "./assets/js/runtime/**/*.js",
+    "!./assets/js/runtime/master/lib/**/*.js",
     "./VRodos.php"
   ],
   theme: {
@@ -16,7 +18,7 @@ module.exports = {
     require("daisyui")
   ],
   daisyui: {
-    themes: ["light", "dark", "cupcake", "emerald"],
-    prefix: "", // No DaisyUI prefix — Tailwind's 'tw-' prefix handles namespacing
+    themes: ["emerald"],
+    prefix: "", // No DaisyUI prefix; Tailwind's 'tw-' prefix handles namespacing
   },
 }
