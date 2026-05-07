@@ -1,0 +1,192 @@
+# Takram-Realistic A-Frame Lighting Plan
+
+## Purpose
+
+This is the handoff plan for making compiled VRodos scenes look closer to the Takram vanilla atmosphere demo while preserving the A-Frame XR runtime.
+
+The important finding is architectural: Takram's vanilla `post-process` atmosphere story is not just a tone-mapping preset. It renders scene geometry as albedo/unlit material and lets `AerialPerspectiveEffect` apply sun and sky lighting in post-process. VRodos currently renders authored A-Frame/GLB PBR content with helper lights by default, so it cannot fully match the vanilla demo through exposure and fill-light tuning alone.
+
+## Current State
+
+- Compiled scenes target the A-Frame runtime declared in root `package.json` and the generated Three r181 manifest.
+- PMNDRS and Takram bundles use A-Frame's existing `window.THREE`; compiled scenes must not load a second Three instance.
+- PMNDRS supports SMAA/MSAA, native SSAO, bloom, selectable tone mapping, exposure, generated LUT looks, color grading, vignette, noise, chromatic aberration, Takram atmosphere, Takram lens flare, and Takram correct-altitude controls.
+- Takram atmosphere resources and `@takram/three-geospatial-effects` are bundled through `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js`.
+- Horizon/Takram scenes disable A-Frame default lights and use Takram `SkyMaterial` for sky and sun disk ownership.
+- Local Horizon currently uses the stable VRodos helper-light path by default for A-Frame/PBR material-authored content.
+- Takram physical `SunDirectionalLight` and `SkyLightProbe` are available only through the debug flag `?vrodos_debug_takram_physical_lights=1`.
+- PMNDRS composer interception is bypassed during immersive XR so A-Frame stereo rendering remains intact.
+- Reflections are removed when reflection source is `none`; material env-map intensity is scaled down for night HDR/scene-probe scenes.
+
+## Findings To Preserve
+
+- Takram's vanilla demo `lighting: post-process` mode uses unlit materials for scene geometry. In the Basic story, terrain and foreground geometry switch to `MeshBasicMaterial` in post-process mode.
+- Takram's vanilla post-process mode does not use scene `SunLight` / `SkyLight` objects. It uses `AerialPerspectiveEffect` with `sunLight` and `skyLight` enabled.
+- Takram's light-source mode is different: it uses `SunDirectionalLight` and `SkyLightProbe` with normal materials, but it approximates atmospheric radiance at one point.
+- Mixing PBR helper or physical lights with post-process `sunLight` / `skyLight` can double-light the scene or wash out colors.
+- Takram lens flare is tied to the Takram Horizon sun. Its `LensFlareEffect` is a convolution effect and must stay in its own `EffectPass`.
+- Takram `DitheringEffect` can add visible grain to texture-heavy compiled A-Frame scenes. Keep it out of the default path unless it is reintroduced as a measured opt-in.
+- A-Frame classic script builds already own their Three instance. Loading latest Three beside classic A-Frame risks duplicate `THREE` instances, broken materials, mismatched render targets, and PMNDRS/Takram incompatibilities.
+- A newer Three version should be tested only through a separate A-Frame module/import-map runtime spike where A-Frame, loaders, PMNDRS, Takram, and VRodos resolve to the same Three instance.
+- SSGI is not the first realism fix. It may help with near-field bounce/contact realism later, but it does not replace the Takram atmosphere lighting model.
+
+## Phased Roadmap
+
+### Phase 0 - Baseline Lock
+
+Goal: keep the current stabilized runtime reproducible before adding a new lighting mode.
+
+Deliverables:
+
+- Keep current default Horizon light source as `helper`.
+- Keep `?vrodos_debug_takram_physical_lights=1` as the validation route for Takram physical lights.
+- Keep diagnostics reporting owner, reflection source, time preset, sun direction, helper intensities, reflection scale, sun radius, A-Frame default-light state, LUT readiness, exposure, tone mapping, lens flare, correct altitude, and light source.
+- Keep PMNDRS composer disabled during immersive XR.
+
+Acceptance:
+
+- Midday and sunset scenes load without the previous delayed Takram light-source flash.
+- `reflection=none` produces no material env-map reflections.
+- Lens flare on/off no longer breaks the composer.
+
+### Phase 1 - Explicit Horizon Lighting Mode
+
+Goal: replace debug-only lighting ownership with an author-visible runtime setting.
+
+Add scene setting:
+
+```text
+pmndrsHorizonLightingMode: "helper" | "light-source" | "post-process-albedo"
+```
+
+Behavior:
+
+- `helper`: current default and XR fallback.
+- `light-source`: Takram `SunDirectionalLight` plus `SkyLightProbe`, promoted from the current debug flag.
+- `post-process-albedo`: desktop-only Takram vanilla target, implemented in later phases.
+
+Acceptance:
+
+- Existing scenes default to `helper`.
+- Diagnostics show `lightingMode`.
+- The current debug flag can still force `light-source` during validation.
+
+### Phase 2 - Post-Process Albedo Prototype
+
+Goal: build the first Takram-vanilla-style desktop mode without affecting XR.
+
+Behavior:
+
+- Enable `AerialPerspectiveEffect` with `sunLight`, `skyLight`, `transmittance`, and `inscatter`.
+- Keep tone mapping after atmospheric lighting.
+- Keep Takram lens flare as a separate pass.
+- Temporarily render eligible opaque world meshes as cached albedo/unlit materials during PMNDRS composer rendering.
+- Exclude UI, video, image panels, media planes, markers, avatars, and known transparent problem meshes.
+- Keep transparent foliage bypassed or excluded until a dedicated mask/overlay strategy is validated.
+
+Acceptance:
+
+- Desktop midday and sunset look closer to Takram vanilla than helper mode.
+- No double-lighting from helper, A-Frame default, or Takram physical lights.
+- XR still bypasses the composer and uses a stable fallback.
+
+### Phase 3 - Visual Calibration
+
+Goal: tune realism against representative VRodos scenes after the correct lighting model exists.
+
+Tasks:
+
+- Compare `helper`, `light-source`, and `post-process-albedo` at exposure `1`, `5`, and `10`.
+- Validate AgX, Reinhard, Cineon, ACES Filmic, and Linear tone mapping.
+- Test midday, sunset, night, and dark/interior scenes.
+- Re-evaluate SSAO strength, material env-map intensity, and horizon helper values only after post-process albedo is working.
+- Keep DitheringEffect off unless it is opt-in and verified not to add objectionable grain.
+
+Acceptance:
+
+- Midday is not washed out.
+- Sunset retains correct contrast without losing all readable shadow detail.
+- Dark scenes remain plausible without global flat fill.
+- Texture grain is not introduced by the default PMNDRS path.
+
+### Phase 4 - Three/A-Frame Module Runtime Spike
+
+Goal: determine whether compiled scenes can move beyond Three r181 without breaking A-Frame XR.
+
+Approach:
+
+- Keep production on `classic-aframe-r181`.
+- Add an experimental `module-aframe-importmap` runtime track.
+- First validate module A-Frame with Three r181 through import maps.
+- Only then test a latest Three candidate.
+- Require exactly one shared Three instance for A-Frame, VRodos, loaders, PMNDRS, Takram, and addons.
+
+Acceptance:
+
+- A-Frame core, `aframe-extras`, networked-aframe, VRodos components, loaders, PMNDRS composer, and Takram atmosphere all bind to the same `THREE`.
+- No duplicate Three globals or class-instance mismatches.
+- Classic r181 remains available as the production fallback.
+
+### Phase 5 - SSGI Research Spike
+
+Goal: evaluate screen-space global illumination only after the Takram lighting model is correct.
+
+Candidate paths:
+
+- Revalidate `realism-effects` against the active Three baseline.
+- Evaluate newer Three SSGI/TSL options only inside the module-runtime spike.
+
+Constraints:
+
+- Desktop-only at first.
+- Off in immersive XR.
+- Must account for depth, normal, roughness, transparency, sky/fog, and custom material limitations.
+- Must not be used to hide incorrect atmosphere/light ownership.
+
+Acceptance:
+
+- SSGI improves near-field bounce/contact realism in a controlled scene.
+- It does not wash out midday, brighten night globally, or conflict with Takram atmosphere.
+
+### Phase 6 - Clouds And Geospatial Expansion
+
+Goal: add heavier Takram features only after the baseline lighting model is stable.
+
+Candidates:
+
+- Stars.
+- Full geospatial date/time solar simulation.
+- `LightingMaskPass` for mixed lighting.
+- Volumetric clouds.
+
+Acceptance:
+
+- Each feature has its own visual smoke scene and does not regress the Horizon lighting modes.
+
+## Verification Matrix
+
+Run static checks after implementation phases:
+
+- `npm run build:three`
+- `npm run build:runtime`
+- `npm run lint -- --quiet`
+- JS syntax checks for edited sources and generated bundles
+- PHP syntax checks for edited compiler/manager files
+- `git diff --check`
+
+Run visual checks at `http://wp.local:5832/Master_Client_766.html`:
+
+- Midday exposure `1`, `5`, `10`.
+- Sunset exposure `1`, `5`, `10`.
+- Night with HDR/scene-probe reflection on and off.
+- Lens flare on/off.
+- Reflection source `none`.
+- Enter and exit immersive XR with PMNDRS enabled.
+
+## References
+
+- Takram atmosphere docs: https://github.com/takram-design-engineering/three-geospatial/blob/main/packages/atmosphere/README.md
+- Takram Basic story source: https://github.com/takram-design-engineering/three-geospatial/blob/main/storybook/src/atmosphere/Atmosphere-Basic.tsx
+- A-Frame module/import-map FAQ: https://aframe.io/docs/1.7.0/introduction/faq.html
+- Three.js SSGI discussion: https://discourse.threejs.org/t/ssgi-screen-space-global-illumination/85190
+- `realism-effects`: https://github.com/0beqz/realism-effects

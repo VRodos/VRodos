@@ -1,6 +1,6 @@
 # VRodos Rendering Pipeline - Technical Reference
 
-Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame master + Three r181 runtime. For end-user feature summaries, see `README.md`. For historical WebGLRenderer debugging notes, see `POSTFX_DEBUG_NOTES.md`.
+Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame master + Three r181 runtime. For end-user feature summaries, see `README.md`. For the phased Takram realism roadmap, see `TAKRAM_REALISTIC_LIGHTING_PLAN.md`. For historical WebGLRenderer debugging notes, see `POSTFX_DEBUG_NOTES.md`.
 
 ## 1. Runtime Overview
 
@@ -49,9 +49,9 @@ Presentation mode is part of the rendering contract:
 
 | File | Role |
 | --- | --- |
-| `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` | PMNDRS composer construction, effect ordering, AA, native SSAO, LUT, runtime debug overlay |
+| `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` | PMNDRS composer construction, effect ordering, AA, native SSAO, LUT, Takram lens flare, runtime debug overlay |
 | `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` | Bundled `window.POSTPROCESSING` |
-| `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js` | Bundled `window.VRODOS_TAKRAM_ATMOSPHERE` |
+| `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js` | Bundled `window.VRODOS_TAKRAM_ATMOSPHERE`, including Takram atmosphere and geospatial effects |
 | `assets/js/runtime/master/lib/vrodos-runtime-pmndrs-postfx.bundle.js` | Generated compiled-scene PMNDRS post-FX adapter bundle |
 
 ## 3. Load Order
@@ -109,12 +109,13 @@ Current PMNDRS ordering:
 
 ```text
 RenderPass
-  -> optional Takram AerialPerspectiveEffect for non-Horizon or debug Horizon aerial path
   -> optional NormalPass for native SSAO
+  -> optional standalone LensFlareEffect pass
   -> fused EffectPass:
+       optional Takram AerialPerspectiveEffect for non-Horizon or Horizon aerial-haze path
        SSAOEffect
        BloomEffect
-       ToneMappingEffect
+       selectable ToneMappingEffect
        BrightnessContrastEffect
        HueSaturationEffect
        LUT3DEffect
@@ -146,6 +147,8 @@ Native SSAO presets are tuned around the upstream PMNDRS SSAO demo, with `strong
 - `balanced`: `resolutionScale: 0.75`, `samples: 20`, `rings: 7`, `radius: 0.072`, `intensity: 1.67`.
 - `strong`: `resolutionScale: 1.0`, `samples: 32`, `rings: 7`, `radius: 0.045`, `intensity: 2.01`.
 
+Takram LensFlareEffect is intentionally not merged into the fused `EffectPass`. It is a convolution effect, so it runs as its own pass when `pmndrsLensFlareEnabled` is true and the Horizon Takram sun is active.
+
 ## 6. PMNDRS Built-In LUT Looks
 
 PMNDRS LUT v1 uses generated built-in 3D lookup textures. It does not load uploaded `.cube` or `.3dl` assets.
@@ -172,12 +175,16 @@ Runtime behavior:
 - Strength is applied through the effect blend opacity.
 - LUT failure logs once and falls back to the rest of the PMNDRS pipeline.
 
-## 7. PMNDRS/Takram Celestial Controls
+## 7. PMNDRS/Takram Atmosphere and Horizon Lighting
 
-Takram celestial controls are author-facing artistic presets, not geospatial solar simulation.
+Takram controls are author-facing artistic presets today, not full geospatial solar simulation. Horizon scenes use Takram `SkyMaterial` for the sky and sun disk. A-Frame default lights are disabled for Takram Horizon scenes.
 
 Scene settings:
 
+- `pmndrsToneMappingMode`: `agx`, `reinhard`, `cineon`, `aces-filmic`, or `linear`
+- `pmndrsToneMappingExposure`: `1.0` to `20.0`
+- `pmndrsLensFlareEnabled`
+- `pmndrsCorrectAltitudeEnabled`
 - `pmndrsCelestialMode`: `manual` or `preset-time`
 - `pmndrsCelestialTimePreset`: `sunrise`, `midday`, `golden-hour`, `sunset`, or `night`
 - Existing manual controls remain valid: `pmndrsSunElevationDeg`, `pmndrsSunAzimuthDeg`, and `pmndrsMoonEnabled`
@@ -189,9 +196,12 @@ Runtime behavior:
 - The night preset turns the moon path on through `pmndrsMoonEnabled` unless the author explicitly overrides it in the compile dialog.
 - Horizon PMNDRS night uses dim cool helper moonlight instead of daytime Horizon helper-light intensities; if the moon path is disabled, helper lights fall back to near black.
 - HDR/scene-probe env-map intensity is scaled down at night without changing authored material roughness or metalness.
-- Horizon `AerialPerspectiveEffect` remains gated behind `?vrodos_debug_enable_pmndrs_horizon_aerial=1`.
+- Horizon uses stable helper lights by default for A-Frame/PBR material-authored scenes.
+- Takram physical `SunDirectionalLight` and `SkyLightProbe` remain available for validation behind `?vrodos_debug_takram_physical_lights=1`.
+- Horizon `AerialPerspectiveEffect` is constrained to haze/transmittance in the current PBR path so it does not re-light the scene as albedo.
+- The future Takram-vanilla target is an explicit `post-process-albedo` lighting mode, documented in `TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
 
-This phase does not add stars, `SkyLightProbe`, `SunDirectionalLight`, `LightingMaskPass`, geospatial latitude/longitude UI, or volumetric clouds.
+This phase does not add stars, author-facing geospatial latitude/longitude UI, `LightingMaskPass`, SSGI, or volumetric clouds.
 
 ## 8. Legacy Effect Notes
 
@@ -226,19 +236,22 @@ Scene probe capture is an alternate environment source when render quality and p
 - `npm run build:runtime` generates the compiled-scene runtime bundles and the browser settings-contract script from `assets/runtime-settings-contract.json`.
 - `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, and Takram metadata.
 - The current live vendor bundle is Three.js r181.
+- The classic compiled A-Frame runtime must not load a second Three instance. Any attempt to test a newer Three version belongs in a separate A-Frame module/import-map runtime spike.
 
 ## 11. Future Ideas
 
 These are backlog items, not current implementation requirements:
 
-- Depth of field after an author-facing focus workflow is selected.
+- Explicit `pmndrsHorizonLightingMode` with `helper`, `light-source`, and `post-process-albedo`.
+- Desktop-only Takram-vanilla `post-process-albedo` mode.
 - Continue validating native `POSTPROCESSING.SSAOEffect` across broader Horizon and non-Horizon scenes.
-- Outline/selective bloom, god rays, tilt shift, pixelation, glitch, and shock wave.
-- Takram stars, geospatial date/time solar simulation, `SkyLightProbe`, `SunDirectionalLight`, and geospatial helpers.
-- Volumetric clouds after the PMNDRS/Takram baseline remains stable.
+- A-Frame module/import-map runtime spike for future Three upgrades.
+- SSGI desktop research after Takram lighting ownership is correct.
+- Takram stars, geospatial date/time solar simulation, `LightingMaskPass`, and geospatial helpers.
+- Volumetric clouds after the PMNDRS/Takram lighting baseline remains stable.
 
 ## References
 
-- `RENDERING_NEXT_STEPS.md` - live rendering phase tracker.
+- `TAKRAM_REALISTIC_LIGHTING_PLAN.md` - phased Takram realism and Three/SSGI roadmap.
 - `RENDERING_MIGRATION_IMPLEMENTATION_LOG.md` - staged migration history.
 - `POSTFX_DEBUG_NOTES.md` - color-encoding and WebGLRenderer debugging history.

@@ -17,21 +17,23 @@ Completed work:
 - `includes/class-vrodos-render-runtime-manager.php` reads the manifest and resolves runtime assets.
 - Compiled scenes load `vrodos-postprocessing.bundle.js` and `vrodos-takram-atmosphere.bundle.js`.
 - PMNDRS and Takram bundles alias `three` to A-Frame's `window.THREE` to avoid multiple Three instances.
-- PMNDRS supports SMAA/MSAA, native `SSAOEffect` ambient occlusion, bloom, tone mapping, basic color/contrast grading, built-in LUT looks, vignette, noise, chromatic aberration, Takram atmosphere, and Takram celestial preset controls.
+- PMNDRS supports SMAA/MSAA, native `SSAOEffect` ambient occlusion, bloom, selectable tone mapping, exposure, basic color/contrast grading, built-in LUT looks, vignette, noise, chromatic aberration, Takram atmosphere, Takram celestial preset controls, Takram correct-altitude, and Takram Horizon lens flare.
+- PMNDRS Horizon scenes use Takram SkyMaterial for the sky and real sun disk, with A-Frame default lights disabled.
+- Local Horizon scenes use stable helper lighting by default; Takram physical `SunDirectionalLight` and `SkyLightProbe` remain available behind `?vrodos_debug_takram_physical_lights=1`.
 - Legacy rendering remains available for SSR and TAA.
 - Obsolete `threejs173` directories, scripts, and hardcoded references have been removed.
 - `RGBELoader` usage has been updated to `HDRLoader`.
 
 ## Current Focus and Next Steps
 
-1. Maintain the r181 baseline before adding larger effects.
+1. Maintain the r181 baseline before adding a new lighting mode.
 2. Keep one Horizon PMNDRS scene and one non-Horizon PMNDRS scene in manual smoke coverage.
-3. Keep native `SSAOEffect` as the default PMNDRS AO path.
-4. Continue validating native `SSAOEffect` across broader smoke coverage.
-5. Smoke Takram celestial presets across one Horizon and one non-Horizon compiled PMNDRS scene.
-6. Begin the next phase with Takram non-cloud geospatial features.
-7. Defer depth of field until the author-facing focus workflow is decided.
-8. Keep Takram volumetric clouds in backlog and out of scope for the current phase.
+3. Add explicit Horizon lighting modes: `helper`, `light-source`, and `post-process-albedo`.
+4. Prototype desktop-only Takram-vanilla `post-process-albedo` lighting.
+5. Preserve the immersive XR composer bypass and direct stereo fallback.
+6. Defer Three latest testing to a separate A-Frame module/import-map runtime spike.
+7. Defer SSGI until Takram lighting ownership is correct.
+8. Keep Takram volumetric clouds in backlog and out of scope for the current lighting phase.
 
 ## Recent Landed Work
 
@@ -103,6 +105,19 @@ Completed work:
 - Added composer-signature and PMNDRS debug-overlay reporting so AO backend changes are visible during smoke tests.
 - Retuned native SSAO presets around the upstream PMNDRS SSAO demo values and the current high-quality screenshot. The `soft` preset uses the demo defaults, `balanced` interpolates between demo and high, and `strong` uses full-resolution SSAO, `32` samples, radius `0.045`, and intensity `2.01`.
 
+### Takram Horizon stabilization and realism findings
+
+- Added PMNDRS compile/runtime controls for tone mapping mode, exposure range `1..20`, Takram lens flare, and Takram correct altitude.
+- Bundled `@takram/three-geospatial-effects` and merged it into `window.VRODOS_TAKRAM_ATMOSPHERE`.
+- Kept Takram LensFlareEffect in a standalone pass because convolution effects cannot be merged into the main PMNDRS EffectPass.
+- Removed the synthetic Horizon sun sprite and let Takram SkyMaterial own the real sun disk.
+- Disabled A-Frame default lights for Takram Horizon scenes.
+- Fixed reflection source `none` so material env maps are removed and env-map intensity becomes zero.
+- Kept local Horizon on helper lights by default to avoid the delayed LUT-ready physical-light handoff.
+- Added diagnostic logging for LUT readiness, tone mapping, exposure, lens flare, correct altitude, A-Frame default lights, sun radius, reflection scale, and active light source.
+- Confirmed the remaining Takram realism gap is architectural: the vanilla demo uses post-process albedo lighting, while VRodos currently renders A-Frame/GLB PBR content.
+- Captured the phased follow-up plan in `TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
+
 ## Historical Phases Summary
 
 - Phases 1-4: Consolidated plans, removed hardcoded r173 paths, and prepared version-neutral vendor management.
@@ -111,6 +126,7 @@ Completed work:
 - Phases 13-16: Diagnosed PMNDRS Horizon artifacts, moved from FXAA to PMNDRS-native AA, optimized navigation raycasting, and updated scene-settings persistence.
 - Phase 17: Synchronized runtime packages with `package.json`, generated `runtime-version-manifest.json`, and rebuilt PMNDRS/Takram bundles to alias A-Frame's `THREE`.
 - Takram atmosphere rollout: upgraded Takram packages, rebuilt the runtime bundle, added atmosphere look presets, fixed compiler serialization, and confirmed preset propagation in compiled PMNDRS scenes.
+- Takram realism audit: identified the need for explicit Horizon lighting modes and a desktop-only post-process albedo path before SSGI or clouds.
 
 ## Verification Targets
 
@@ -133,3 +149,8 @@ Manual smoke:
 - Existing manually tuned PMNDRS/Takram scene remains visually unchanged in `manual` mode.
 - Horizon PMNDRS `preset-time/night` with no HDR/scene-probe reflection should have no bright road light streak.
 - Horizon PMNDRS `preset-time/night` with HDR or scene-probe reflection should keep reflections subdued.
+- Horizon PMNDRS midday and sunset with tone mapping modes and exposure `1`, `5`, and `10`.
+- Horizon PMNDRS with lens flare on/off.
+- Horizon PMNDRS with reflection source `none`.
+- Horizon PMNDRS with `?vrodos_debug_takram_physical_lights=1`.
+- Immersive XR entry/exit with PMNDRS enabled should bypass the composer and keep stable direct lighting.

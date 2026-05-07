@@ -292,3 +292,22 @@ Tradeoffs to keep in mind:
 - depth/occlusion ordering will need careful handling
 - this should remain Horizon-only and experimental at first
 - until that exists, the base Horizon path should remain the safer default
+
+---
+
+## Current Takram Horizon Status (2026-05-07)
+
+The old Horizon aerial foliage investigation remains useful as failure history, but the active plan has changed.
+
+Current behavior:
+
+- Takram SkyMaterial owns the Horizon sky and real sun disk.
+- A-Frame default lights are disabled for Takram Horizon scenes.
+- Local Horizon uses stable helper lighting by default for A-Frame/PBR assets.
+- Takram physical `SunDirectionalLight` and `SkyLightProbe` are available only through `?vrodos_debug_takram_physical_lights=1`.
+- Horizon `AerialPerspectiveEffect` is constrained to haze/transmittance in the current PBR path so it does not post-process relight material-authored GLB content.
+- Takram LensFlareEffect is live as a standalone PMNDRS pass.
+
+The important Takram vanilla finding is that the demo's `post-process` lighting uses unlit/albedo geometry and lets `AerialPerspectiveEffect` apply sun and sky lighting. VRodos needs an explicit desktop-only `post-process-albedo` mode to pursue that look safely. Do not try to recreate it by only raising helper fill, exposure, SSGI, or bloom.
+
+See `TAKRAM_REALISTIC_LIGHTING_PLAN.md` for the current phased plan.

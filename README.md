@@ -51,6 +51,7 @@ That runtime powers:
 - desktop fullscreen and immersive XR visual parity for scene-owned horizon, atmosphere, lighting, fog, exposure, and material state
 - HDR environment-map reflections
 - scene-probe reflections for authored environments
+- PMNDRS/Takram tone mapping, lens flare, and atmosphere controls for desktop compiled scenes
 - compiled walkable-surface collision workflows
 
 The runtime version source of truth is root [`package.json`](package.json) plus [`package-lock.json`](package-lock.json). `npm run build:three` generates [`assets/runtime-version-manifest.json`](assets/runtime-version-manifest.json), and [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php) reads that manifest at runtime with conservative fallbacks.
@@ -65,6 +66,7 @@ Compiled scenes can currently offer:
 - fullscreen and immersive XR preservation of the authored desktop visual baseline, with targeted fallbacks for XR-unsafe screen-space effects
 - shadow presets for performance vs visual quality
 - reflection source selection between HDR presets and scene probes
+- PMNDRS selectable tone mapping, exposure, generated LUT looks, Takram correct-altitude, and Takram Horizon lens flare
 - walkable-surface collisions using helper meshes authored in the editor
 
 ## Rendering Paths for Compiled Scenes
@@ -93,7 +95,7 @@ Choose the legacy engine when a scene depends on:
 - TAA
 - the existing custom AO/reflection look
 
-For the deep technical breakdown of the legacy custom renderer, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). That document is a legacy-pipeline reference, not a full description of the PMNDRS/Takram path.
+For the deep technical breakdown of the compiled rendering stack, including the legacy custom renderer and PMNDRS/Takram path, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md).
 
 ### PMNDRS engine
 
@@ -105,19 +107,23 @@ It currently supports:
 - anti-aliasing modes: `none`, `smaa`, `msaa`
 - ambient occlusion through the shared AO presets
 - bloom controls
-- tone-map exposure control
+- selectable tone mapping: AgX, Reinhard, Cineon, ACES Filmic, Linear
+- tone-map exposure range `1..20`
+- generated built-in LUT looks
 - vignette controls
 - PMNDRS noise and chromatic aberration controls
-- Takram atmosphere look presets and advanced controls
-- Takram sky ownership for the PMNDRS Horizon path
+- Takram atmosphere/celestial presets and advanced controls
+- Takram correct-altitude control
+- Takram Horizon sky, sun disk, and lens flare ownership
 
 Important current limitations:
 
 - SSR is not available on the PMNDRS path
 - TAA is not available on the PMNDRS path
 - composer MSAA is disabled when PMNDRS ambient occlusion is active; use SMAA for AO scenes
+- the current Horizon PMNDRS path is stable helper-lit A-Frame/PBR, not yet Takram vanilla post-process albedo lighting
 
-For current-state PMNDRS/Takram decisions and follow-up work, see [`POSTPROCESSING_MIGRATION_PLAN.md`](POSTPROCESSING_MIGRATION_PLAN.md).
+For current-state PMNDRS/Takram decisions and phased follow-up work, see [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md). For the technical render-stack reference, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md).
 
 ## Takram Support
 
@@ -126,13 +132,18 @@ Takram support in VRodos currently means atmosphere and sky integration, not clo
 ### Shipped now
 
 - Takram atmosphere resources bundled with the runtime
-- PMNDRS compile-dialog controls for visual atmosphere looks, Takram resource quality, preset intensity, and advanced tuning
-- Takram-driven sky ownership on the PMNDRS Horizon path
+- PMNDRS compile-dialog controls for visual atmosphere looks, celestial presets, Takram resource quality, preset intensity, and advanced tuning
+- Takram-driven sky and real sun-disk ownership on the PMNDRS Horizon path
+- Takram LensFlareEffect for the Horizon sun
+- Takram correct-altitude toggle
 - atmospheric tuning for sun position, scattering, ground, and aerial-strength behavior
+- stable helper-light ownership for existing A-Frame/PBR Horizon scenes, with Takram physical lights kept as a validation path
 
 ### Not shipped yet
 
+- desktop Takram-vanilla `post-process-albedo` lighting mode
 - Takram volumetric clouds
+- SSGI
 
 ## Compile Dialog Controls
 
@@ -164,11 +175,16 @@ The compile dialog exposes both shared controls and engine-specific controls.
 - AA preset: `low`, `medium`, `high`, `ultra`
 - bloom multiplier
 - bloom threshold
+- tone mapping mode
 - tone-map exposure
+- lens flare toggle
 - vignette darkness
 - Takram atmosphere toggle
 - atmosphere look: `sunrise`, `midday`, `sunset`, `night`, `custom`
+- celestial mode: `manual` or `preset-time`
+- celestial time preset: `sunrise`, `midday`, `golden-hour`, `sunset`, `night`
 - Takram quality: `performance`, `balanced`, `quality`, `cinematic`
+- correct-altitude toggle
 - preset intensity
 - advanced atmosphere controls for:
   - sun elevation and azimuth
@@ -243,6 +259,7 @@ Runtime package versions are intentionally synchronized through the root npm man
    - `devDependencies.postprocessing`
    - `dependencies.@takram/three-atmosphere`
    - `dependencies.@takram/three-clouds`
+   - `dependencies.@takram/three-geospatial-effects`
    - `vrodos.runtime.aframe.commit` for A-Frame master builds, or `vrodos.runtime.aframe.version` when using a release build
 2. Run:
 
@@ -260,6 +277,8 @@ npm run build
    - `assets/css/vrodos_modern_compiled.css` when the full build changes CSS
 
 Do not manually copy `postprocessing.min.js` into the runtime. PMNDRS globals are exported by `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` as `window.POSTPROCESSING`, using A-Frame's existing `window.THREE`.
+
+Do not load a newer Three.js beside the current classic A-Frame runtime. Future Three upgrades should be tested through a separate A-Frame module/import-map runtime track so A-Frame, VRodos, PMNDRS, Takram, loaders, and addons all share one Three instance.
 
 ## Upload Limits
 
@@ -288,6 +307,7 @@ If large assets fail to upload, check:
   - `Legacy` for SSR/TAA/custom AO needs
   - `Pmndrs` for composer-based AA and Takram atmosphere controls
 - Review authored materials, textures, lighting, and reflection settings.
+- For Takram realism work, follow [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md) instead of tuning helper lights as if they were the Takram vanilla post-process lighting model.
 
 ### Walkable surfaces do not behave as expected
 
