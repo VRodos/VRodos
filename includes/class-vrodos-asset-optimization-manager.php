@@ -25,9 +25,11 @@ class VRodos_Asset_Optimization_Manager {
 		add_action( 'admin_post_vrodos_refresh_asset_glb_analysis', $this->handle_refresh_asset_glb_analysis(...) );
 		add_action( 'admin_post_vrodos_dashboard_refresh_asset_glb_analysis', $this->handle_dashboard_refresh_asset_glb_analysis(...) );
 		add_action( 'admin_post_vrodos_dashboard_optimize_asset_glb', $this->handle_dashboard_optimize_asset_glb(...) );
+		add_action( 'admin_post_vrodos_dashboard_toggle_asset_compile_use', $this->handle_dashboard_toggle_asset_compile_use(...) );
 		add_action( 'added_post_meta', $this->handle_asset_glb_meta_change(...), 10, 4 );
 		add_action( 'updated_post_meta', $this->handle_asset_glb_meta_change(...), 10, 4 );
 		add_action( 'deleted_post_meta', $this->handle_asset_glb_meta_delete(...), 10, 4 );
+		add_action( 'before_delete_post', $this->handle_asset_delete(...), 10, 2 );
 		add_filter( 'vrodos_settings_tabs', $this->register_settings_tab(...) );
 		add_action( 'vrodos_render_settings_tab_' . self::SETTINGS_TAB_KEY, $this->render_asset_optimization_settings(...) );
 	}
@@ -55,6 +57,14 @@ class VRodos_Asset_Optimization_Manager {
 		}
 
 		delete_post_meta( $asset_id, self::ANALYSIS_META_KEY );
+	}
+
+	public function handle_asset_delete( int $post_id, WP_Post $post ): void {
+		if ( 'vrodos_asset3d' !== $post->post_type ) {
+			return;
+		}
+
+		self::delete_asset_derivative_cache( $post_id );
 	}
 
 	public function add_meta_boxes(): void {
@@ -160,18 +170,6 @@ class VRodos_Asset_Optimization_Manager {
 		$scan             = self::scan_glb_derivatives( $profile );
 		$report           = $this->read_batch_report_from_request();
 		$analysis_report  = $this->read_analysis_report_from_request();
-		$recommended_count = count( $scan['recommendedGeometry'] );
-		$missing_count    = count( $scan['missing'] );
-		$stale_count      = count( $scan['stale'] );
-		$auto_requested   = isset( $_GET['vrodos_asset_optimization_autorun'] ) && '1' === sanitize_key( (string) wp_unslash( $_GET['vrodos_asset_optimization_autorun'] ) );
-		$analysis_auto_requested = isset( $_GET['vrodos_asset_analysis_autorun'] ) && '1' === sanitize_key( (string) wp_unslash( $_GET['vrodos_asset_analysis_autorun'] ) );
-		$stop_for_failure = ! empty( $report['failed'] );
-		$target           = (string) ( $report['target'] ?? 'recommended' );
-		$remaining        = (int) ( $report['remaining'] ?? $recommended_count );
-		$should_continue  = $auto_requested && ! $stop_for_failure && $remaining > 0 && in_array( $target, [ 'recommended', 'missing', 'stale' ], true );
-		$analysis_target  = (string) ( $analysis_report['target'] ?? 'stale' );
-		$analysis_remaining = (int) ( $analysis_report['remaining'] ?? ( count( $scan['analysisMissing'] ) + count( $scan['analysisStale'] ) ) );
-		$should_continue_analysis = $analysis_auto_requested && $analysis_remaining > 0 && in_array( $analysis_target, [ 'stale', 'all' ], true );
 
 		echo '<h2>' . esc_html__( 'Asset Optimization' ) . '</h2>';
 		echo '<p>' . esc_html__( 'Analyze uploaded GLBs before generating cached optimized derivatives. This does not replace source uploads and does not enable compiled-scene substitution.' ) . '</p>';
@@ -180,65 +178,8 @@ class VRodos_Asset_Optimization_Manager {
 		$this->render_batch_report( $report );
 		$this->render_asset_optimization_summary( $scan );
 
-		echo '<h3>' . esc_html__( 'Analysis Refresh' ) . '</h3>';
-		echo '<p>' . esc_html__( 'New uploads and Immerse imports are analyzed automatically. Use this for existing assets or stale analysis records.' ) . '</p>';
-		$this->render_analysis_form(
-			'stale',
-			true,
-			'vrodos-refresh-stale-glb-analysis',
-			sprintf(
-				/* translators: %d: number of assets needing analysis. */
-				_n( 'Refresh missing/stale analysis (%d asset)', 'Refresh missing/stale analysis (%d assets)', count( $scan['analysisMissing'] ) + count( $scan['analysisStale'] ) ),
-				count( $scan['analysisMissing'] ) + count( $scan['analysisStale'] )
-			),
-			( count( $scan['analysisMissing'] ) + count( $scan['analysisStale'] ) ) <= 0
-		);
-
-		echo '<h3>' . esc_html__( 'Batch Generation' ) . '</h3>';
-		echo '<p>' . esc_html__( 'The default batch only generates safe Draco derivatives for assets that analysis says should benefit from geometry compression. If any asset fails, automatic continuation stops so the error can be reviewed.' ) . '</p>';
-
-		$this->render_batch_form(
-			$profile,
-			'recommended',
-			true,
-			'vrodos-optimize-recommended-glbs',
-			sprintf(
-				/* translators: %d: number of recommended assets. */
-				_n( 'Generate recommended safe Draco derivative (%d asset)', 'Generate recommended safe Draco derivatives (%d assets)', $recommended_count ),
-				$recommended_count
-			),
-			$recommended_count <= 0
-		);
-
-		if ( $missing_count > $recommended_count ) {
-			$this->render_batch_form(
-				$profile,
-				'missing',
-				false,
-				'vrodos-optimize-all-missing-glbs',
-				sprintf(
-					/* translators: %d: number of missing assets. */
-					_n( 'Generate all missing safe Draco derivative (%d asset)', 'Generate all missing safe Draco derivatives (%d assets)', $missing_count ),
-					$missing_count
-				),
-				false
-			);
-		}
-
-		if ( $stale_count > 0 ) {
-			$this->render_batch_form(
-				$profile,
-				'stale',
-				false,
-				'vrodos-optimize-stale-glbs',
-				sprintf(
-					/* translators: %d: number of stale assets. */
-					_n( 'Regenerate stale safe Draco derivative (%d asset)', 'Regenerate stale safe Draco derivatives (%d assets)', $stale_count ),
-					$stale_count
-				),
-				false
-			);
-		}
+		echo '<h3>' . esc_html__( 'Action Surface' ) . '</h3>';
+		echo '<p>' . esc_html__( 'Use Dashboard > Actionable Assets for per-asset analysis refresh and derivative generation. This Settings tab is now the GLB diagnostics and reporting view.' ) . '</p>';
 
 		$this->render_asset_candidate_list( __( 'Recommended for safe Draco/Meshopt geometry derivatives' ), $scan['recommendedGeometry'], 'recommendation' );
 		$this->render_asset_candidate_list( __( 'Recommended for future KTX2 texture derivatives' ), $scan['recommendedTexture'], 'recommendation' );
@@ -249,32 +190,6 @@ class VRodos_Asset_Optimization_Manager {
 		$this->render_asset_candidate_list( __( 'Needs analysis refresh' ), array_merge( $scan['analysisMissing'], $scan['analysisStale'] ) );
 		$this->render_asset_candidate_list( __( 'Unsupported or non-local GLB assets' ), $scan['unsupported'] );
 
-		if ( $should_continue_analysis ) {
-			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Continuing the asset analysis refresh...' ) . '</p></div>';
-			$this->render_analysis_form(
-				$analysis_target,
-				true,
-				'vrodos-asset-analysis-autocontinue',
-				__( 'Continue asset analysis refresh' ),
-				false,
-				true
-			);
-			echo '<script>window.setTimeout(function(){var form=document.getElementById("vrodos-asset-analysis-autocontinue");if(form){HTMLFormElement.prototype.submit.call(form);}},700);</script>';
-		}
-
-		if ( $should_continue ) {
-			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Continuing the optimization batch...' ) . '</p></div>';
-			$this->render_batch_form(
-				$profile,
-				$target,
-				true,
-				'vrodos-asset-optimization-autocontinue',
-				__( 'Continue optimization batch' ),
-				false,
-				true
-			);
-			echo '<script>window.setTimeout(function(){var form=document.getElementById("vrodos-asset-optimization-autocontinue");if(form){HTMLFormElement.prototype.submit.call(form);}},700);</script>';
-		}
 	}
 
 	public function save_derivative_compile_settings( int $post_id, WP_Post $post ): void {
@@ -410,6 +325,92 @@ class VRodos_Asset_Optimization_Manager {
 		exit;
 	}
 
+	public function handle_dashboard_refresh_asset_glb_analysis(): void {
+		$asset_id = isset( $_GET['asset_id'] ) ? absint( $_GET['asset_id'] ) : 0;
+		if ( $asset_id <= 0 || ! current_user_can( 'edit_post', $asset_id ) ) {
+			wp_die( esc_html__( 'You are not allowed to analyze this asset.', 'vrodos' ), '', [ 'response' => 403 ] );
+		}
+
+		check_admin_referer( 'vrodos_dashboard_refresh_asset_glb_analysis_' . $asset_id );
+
+		$result = self::refresh_asset_analysis( $asset_id );
+		$notice = is_wp_error( $result ) ? 'analysis-failed' : 'analysis-refreshed';
+		wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => $notice ] ) );
+		exit;
+	}
+
+	public function handle_dashboard_optimize_asset_glb(): void {
+		$asset_id = isset( $_GET['asset_id'] ) ? absint( $_GET['asset_id'] ) : 0;
+		$profile  = isset( $_GET['profile'] ) ? sanitize_key( (string) wp_unslash( $_GET['profile'] ) ) : 'safe-draco';
+
+		if ( $asset_id <= 0 || ! current_user_can( 'edit_post', $asset_id ) ) {
+			wp_die( esc_html__( 'You are not allowed to optimize this asset.', 'vrodos' ), '', [ 'response' => 403 ] );
+		}
+
+		check_admin_referer( 'vrodos_dashboard_optimize_asset_glb_' . $asset_id );
+
+		if ( ! isset( self::supported_profiles()[ $profile ] ) ) {
+			wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'invalid-profile' ] ) );
+			exit;
+		}
+
+		$source = self::get_source_glb( $asset_id );
+		if ( is_wp_error( $source ) ) {
+			$this->record_error( $asset_id, $source->get_error_message() );
+			wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'optimize-failed' ] ) );
+			exit;
+		}
+
+		$result = $this->generate_derivative( $asset_id, $source, $profile );
+		if ( is_wp_error( $result ) ) {
+			$this->record_error( $asset_id, $result->get_error_message() );
+			wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'optimize-failed' ] ) );
+			exit;
+		}
+
+		$this->store_derivative_record( $asset_id, $result );
+		wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'optimized' ] ) );
+		exit;
+	}
+
+	public function handle_dashboard_toggle_asset_compile_use(): void {
+		$asset_id = isset( $_GET['asset_id'] ) ? absint( $_GET['asset_id'] ) : 0;
+		$enabled  = isset( $_GET['enabled'] ) && '1' === sanitize_key( (string) wp_unslash( $_GET['enabled'] ) );
+		$profile  = isset( $_GET['profile'] ) ? sanitize_key( (string) wp_unslash( $_GET['profile'] ) ) : 'safe-draco';
+
+		if ( $asset_id <= 0 || ! current_user_can( 'edit_post', $asset_id ) ) {
+			wp_die( esc_html__( 'You are not allowed to change compile use for this asset.', 'vrodos' ), '', [ 'response' => 403 ] );
+		}
+
+		check_admin_referer( 'vrodos_dashboard_toggle_asset_compile_use_' . $asset_id );
+
+		if ( ! isset( self::supported_profiles()[ $profile ] ) ) {
+			wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'invalid-profile' ] ) );
+			exit;
+		}
+
+		$meta = self::get_derivative_meta( $asset_id );
+		if ( $enabled ) {
+			$source = self::get_source_glb( $asset_id );
+			$derivative = $meta['derivatives'][ $profile ] ?? null;
+			if ( is_wp_error( $source ) || ! is_array( $derivative ) || ! self::is_derivative_usable( $derivative, (string) $source['url'] ) ) {
+				wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'compile-enable-failed' ] ) );
+				exit;
+			}
+
+			$meta['activeProfile'] = $profile;
+			$meta['compileEnabled'] = true;
+			update_post_meta( $asset_id, self::META_KEY, $meta );
+			wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'compile-enabled' ] ) );
+			exit;
+		}
+
+		$meta['compileEnabled'] = false;
+		update_post_meta( $asset_id, self::META_KEY, $meta );
+		wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'compile-disabled' ] ) );
+		exit;
+	}
+
 	public static function resolve_compiled_glb_asset( int $asset_id, string $source_url ): array {
 		$result = [
 			'url'        => $source_url,
@@ -440,6 +441,290 @@ class VRodos_Asset_Optimization_Manager {
 		return $result;
 	}
 
+	public static function dashboard_actionable_assets( int $limit = 10 ): array {
+		$scan  = self::scan_glb_derivatives( 'safe-draco' );
+		$items = [];
+
+		$mark = static function ( array $source_items, string $key ) use ( &$items ): void {
+			foreach ( $source_items as $item ) {
+				$asset_id = (int) ( $item['assetId'] ?? 0 );
+				if ( $asset_id <= 0 ) {
+					continue;
+				}
+				if ( ! isset( $items[ $asset_id ] ) ) {
+					$items[ $asset_id ] = $item;
+					$items[ $asset_id ]['dashboardFlags'] = [];
+				}
+				$items[ $asset_id ]['dashboardFlags'][ $key ] = true;
+				$items[ $asset_id ]['recommendationScore'] = max(
+					(int) ( $items[ $asset_id ]['recommendationScore'] ?? 0 ),
+					(int) ( $item['recommendationScore'] ?? $item['sourceSizeBytes'] ?? 0 )
+				);
+				foreach ( [ 'analysis', 'recommendationReasons', 'suggestedAction', 'sourceUrl', 'sourceSizeBytes', 'status', 'statusLabel', 'reason' ] as $field ) {
+					if ( isset( $item[ $field ] ) && ! isset( $items[ $asset_id ][ $field ] ) ) {
+						$items[ $asset_id ][ $field ] = $item[ $field ];
+					}
+				}
+			}
+		};
+
+		$mark( $scan['analysisMissing'], 'analysis-missing' );
+		$mark( $scan['analysisStale'], 'analysis-stale' );
+		$mark( $scan['recommendedGeometry'], 'geometry' );
+		$mark( $scan['recommendedTexture'], 'texture' );
+		$mark( $scan['recommendedLod'], 'lod' );
+		$mark( $scan['stale'], 'stale-derivative' );
+
+		$ready_compile_candidates = array_filter(
+			$scan['ready'],
+			static function ( array $item ): bool {
+				$asset_id = (int) ( $item['assetId'] ?? 0 );
+				if ( $asset_id <= 0 ) {
+					return false;
+				}
+				$meta = self::get_derivative_meta( $asset_id );
+				return empty( $meta['compileEnabled'] );
+			}
+		);
+		$mark( $ready_compile_candidates, 'compile-disabled' );
+
+		$unsupported = array_filter(
+			$scan['unsupported'],
+			static fn( array $item ): bool => ( $item['reason'] ?? '' ) !== 'Asset has no GLB source URL.'
+		);
+		$mark( $unsupported, 'unsupported' );
+
+		$items = array_values( $items );
+		usort(
+			$items,
+			static fn( array $a, array $b ): int => (int) ( $b['recommendationScore'] ?? 0 ) <=> (int) ( $a['recommendationScore'] ?? 0 )
+		);
+
+		return array_slice( $items, 0, max( 1, $limit ) );
+	}
+
+	public static function render_dashboard_actionable_assets_table( int $limit = 10 ): void {
+		$items = self::dashboard_actionable_assets( $limit );
+
+		if ( empty( $items ) ) {
+			?>
+			<div class="tw-text-center tw-py-12 tw-text-slate-400 tw-font-bold">
+				<i data-lucide="check-circle" class="tw-w-8 tw-h-8 tw-mx-auto tw-mb-3 tw-text-emerald-500"></i>
+				No actionable GLB optimization items right now.
+			</div>
+			<?php
+			return;
+		}
+
+		?>
+		<div class="tw-overflow-x-auto">
+			<table class="tw-table tw-w-full">
+				<thead>
+					<tr class="tw-bg-slate-50/30">
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest">Asset</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest">Size</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">Analysis</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">Geometry</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">Texture</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">LOD</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">Safe Draco</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">Compile Use</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-right">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $items as $item ) : ?>
+						<?php
+						$asset_id = (int) ( $item['assetId'] ?? 0 );
+						$title    = (string) ( $item['title'] ?? 'Asset #' . $asset_id );
+						$analysis = is_array( $item['analysis'] ?? null ) ? $item['analysis'] : [];
+						$meta     = self::get_derivative_meta( $asset_id );
+						$source_url = (string) ( $item['sourceUrl'] ?? '' );
+						$derivative = $meta['derivatives']['safe-draco'] ?? null;
+						$derivative_status = is_array( $derivative ) ? self::derivative_unusable_reason( $derivative, $source_url ) : 'No safe Draco derivative generated.';
+						$derivative_ready = is_array( $derivative ) && '' === $derivative_status;
+						$flags = is_array( $item['dashboardFlags'] ?? null ) ? $item['dashboardFlags'] : [];
+						$can_generate_safe_draco = self::dashboard_can_generate_safe_draco( $flags, $derivative_ready );
+						$generate_label = ! empty( $flags['stale-derivative'] ) ? 'Regenerate derivative' : 'Generate derivative';
+						?>
+						<tr class="tw-hover hover:tw-bg-slate-50/80 tw-transition-colors">
+							<td>
+								<div class="tw-font-black tw-text-slate-700"><?php echo esc_html( $title ); ?></div>
+								<div class="tw-text-[10px] tw-text-slate-400 tw-font-mono">#<?php echo esc_html( (string) $asset_id ); ?></div>
+							</td>
+							<td class="tw-text-xs tw-font-bold tw-text-slate-500"><?php echo esc_html( size_format( (int) ( $item['sourceSizeBytes'] ?? 0 ), 1 ) ); ?></td>
+							<td class="tw-text-center"><?php self::render_dashboard_analysis_icon( $flags ); ?></td>
+							<td class="tw-text-center"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'geometryDerivative', 'Geometry derivative recommended', 'Geometry derivative not recommended' ); ?></td>
+							<td class="tw-text-center"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'textureDerivative', 'Texture derivative recommended', 'Texture derivative not recommended' ); ?></td>
+							<td class="tw-text-center"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'lodDerivative', 'LOD derivative recommended', 'LOD derivative not recommended' ); ?></td>
+							<td class="tw-text-center"><?php self::render_dashboard_draco_icon( $derivative_ready, $derivative_status, $flags ); ?></td>
+							<td class="tw-text-center"><?php self::render_dashboard_compile_toggle( $asset_id, $meta, $derivative_ready ); ?></td>
+							<td class="tw-text-right">
+								<div class="tw-flex tw-flex-wrap tw-justify-end tw-gap-2">
+									<a href="<?php echo esc_url( self::dashboard_refresh_analysis_url( $asset_id ) ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-slate-600 tw-font-black tw-uppercase tw-tracking-wider" title="Refresh GLB analysis">
+										<i data-lucide="refresh-cw" class="tw-w-3 tw-h-3"></i>
+										Refresh
+									</a>
+									<?php if ( $can_generate_safe_draco ) : ?>
+										<a href="<?php echo esc_url( self::dashboard_optimize_url( $asset_id ) ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-primary tw-font-black tw-uppercase tw-tracking-wider">
+											<i data-lucide="package-check" class="tw-w-3 tw-h-3"></i>
+											<?php echo esc_html( $generate_label ); ?>
+										</a>
+									<?php endif; ?>
+									<a href="<?php echo esc_url( get_edit_post_link( $asset_id, 'raw' ) ?: '#' ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-slate-500 tw-font-black tw-uppercase tw-tracking-wider">
+										Edit
+									</a>
+								</div>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php
+	}
+
+	private static function dashboard_can_generate_safe_draco( array $flags, bool $derivative_ready ): bool {
+		if ( $derivative_ready || ! empty( $flags['unsupported'] ) ) {
+			return false;
+		}
+		return ! empty( $flags['geometry'] ) || ! empty( $flags['stale-derivative'] );
+	}
+
+	private static function render_dashboard_analysis_icon( array $flags ): void {
+		if ( ! empty( $flags['unsupported'] ) ) {
+			self::render_dashboard_status_icon( 'x-circle', 'Unsupported for automatic GLB analysis', 'tw-text-rose-500' );
+			return;
+		}
+		if ( ! empty( $flags['analysis-stale'] ) ) {
+			self::render_dashboard_status_icon( 'refresh-cw', 'Analysis is stale', 'tw-text-amber-500' );
+			return;
+		}
+		if ( ! empty( $flags['analysis-missing'] ) ) {
+			self::render_dashboard_status_icon( 'triangle-alert', 'Analysis is missing', 'tw-text-amber-500' );
+			return;
+		}
+		self::render_dashboard_status_icon( 'check-circle', 'Analysis is current', 'tw-text-emerald-500' );
+	}
+
+	private static function render_dashboard_recommendation_icon( array $flags, array $analysis, string $key, string $recommended_title, string $not_applicable_title ): void {
+		if ( ! empty( $flags['unsupported'] ) ) {
+			self::render_dashboard_status_icon( 'x-circle', 'Unsupported', 'tw-text-rose-500' );
+			return;
+		}
+		if ( ! empty( $flags['analysis-missing'] ) || ! empty( $flags['analysis-stale'] ) ) {
+			self::render_dashboard_status_icon( 'refresh-cw', 'Refresh analysis first', 'tw-text-amber-500' );
+			return;
+		}
+		if ( ! empty( $analysis['recommendations'][ $key ] ) ) {
+			self::render_dashboard_status_icon( 'triangle-alert', $recommended_title, 'tw-text-amber-500' );
+			return;
+		}
+		self::render_dashboard_status_icon( 'circle-minus', $not_applicable_title, 'tw-text-slate-300' );
+	}
+
+	private static function render_dashboard_draco_icon( bool $derivative_ready, string $derivative_status, array $flags ): void {
+		if ( $derivative_ready ) {
+			self::render_dashboard_status_icon( 'check-circle', 'Safe Draco derivative is ready', 'tw-text-emerald-500' );
+			return;
+		}
+		if ( ! empty( $flags['stale-derivative'] ) ) {
+			self::render_dashboard_status_icon( 'refresh-cw', 'Safe Draco derivative is stale', 'tw-text-amber-500' );
+			return;
+		}
+		if ( ! empty( $flags['geometry'] ) ) {
+			self::render_dashboard_status_icon( 'triangle-alert', 'Safe Draco derivative is recommended', 'tw-text-amber-500' );
+			return;
+		}
+		self::render_dashboard_status_icon( 'circle-minus', $derivative_status ?: 'Safe Draco derivative is not applicable', 'tw-text-slate-300' );
+	}
+
+	private static function render_dashboard_compile_icon( array $meta, bool $derivative_ready ): void {
+		if ( ! empty( $meta['compileEnabled'] ) && $derivative_ready ) {
+			self::render_dashboard_status_icon( 'check-circle', 'Compiled scenes may use this derivative', 'tw-text-emerald-500' );
+			return;
+		}
+		if ( ! empty( $meta['compileEnabled'] ) && ! $derivative_ready ) {
+			self::render_dashboard_status_icon( 'x-circle', 'Compile use is enabled but derivative is not ready', 'tw-text-rose-500' );
+			return;
+		}
+		self::render_dashboard_status_icon( 'circle-minus', 'Compile use is off', 'tw-text-slate-300' );
+	}
+
+	private static function render_dashboard_compile_toggle( int $asset_id, array $meta, bool $derivative_ready ): void {
+		$compile_enabled = ! empty( $meta['compileEnabled'] );
+		if ( $compile_enabled && $derivative_ready ) {
+			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, false ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-emerald-500 hover:tw-text-emerald-700" title="' . esc_attr__( 'Disable derivative use in compiled scenes', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Disable derivative use in compiled scenes', 'vrodos' ) . '">';
+			echo '<i data-lucide="toggle-right" class="tw-w-5 tw-h-5"></i>';
+			echo '</a>';
+			return;
+		}
+
+		if ( $compile_enabled && ! $derivative_ready ) {
+			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, false ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-rose-500 hover:tw-text-rose-700" title="' . esc_attr__( 'Disable invalid compile use', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Disable invalid compile use', 'vrodos' ) . '">';
+			echo '<i data-lucide="x-circle" class="tw-w-5 tw-h-5"></i>';
+			echo '</a>';
+			return;
+		}
+
+		if ( $derivative_ready ) {
+			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, true ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-slate-300 hover:tw-text-emerald-600" title="' . esc_attr__( 'Enable derivative use in compiled scenes', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Enable derivative use in compiled scenes', 'vrodos' ) . '">';
+			echo '<i data-lucide="toggle-left" class="tw-w-5 tw-h-5"></i>';
+			echo '</a>';
+			return;
+		}
+
+		self::render_dashboard_status_icon( 'circle-minus', 'Generate a ready derivative before enabling compile use', 'tw-text-slate-300' );
+	}
+
+	private static function render_dashboard_status_icon( string $icon, string $title, string $class ): void {
+		echo '<span class="tw-inline-flex tw-items-center tw-justify-center" title="' . esc_attr( $title ) . '" aria-label="' . esc_attr( $title ) . '">';
+		echo '<i data-lucide="' . esc_attr( $icon ) . '" class="tw-w-4 tw-h-4 ' . esc_attr( $class ) . '"></i>';
+		echo '</span>';
+	}
+
+	private static function dashboard_refresh_analysis_url( int $asset_id ): string {
+		return wp_nonce_url(
+			add_query_arg(
+				[
+					'action'   => 'vrodos_dashboard_refresh_asset_glb_analysis',
+					'asset_id' => $asset_id,
+				],
+				admin_url( 'admin-post.php' )
+			),
+			'vrodos_dashboard_refresh_asset_glb_analysis_' . $asset_id
+		);
+	}
+
+	private static function dashboard_optimize_url( int $asset_id ): string {
+		return wp_nonce_url(
+			add_query_arg(
+				[
+					'action'   => 'vrodos_dashboard_optimize_asset_glb',
+					'asset_id' => $asset_id,
+					'profile'  => 'safe-draco',
+				],
+				admin_url( 'admin-post.php' )
+			),
+			'vrodos_dashboard_optimize_asset_glb_' . $asset_id
+		);
+	}
+
+	private static function dashboard_toggle_compile_url( int $asset_id, bool $enabled ): string {
+		return wp_nonce_url(
+			add_query_arg(
+				[
+					'action'   => 'vrodos_dashboard_toggle_asset_compile_use',
+					'asset_id' => $asset_id,
+					'profile'  => 'safe-draco',
+					'enabled'  => $enabled ? '1' : '0',
+				],
+				admin_url( 'admin-post.php' )
+			),
+			'vrodos_dashboard_toggle_asset_compile_use_' . $asset_id
+		);
+	}
+
 	private function render_asset_optimization_summary( array $scan ): void {
 		$ready_count            = count( $scan['ready'] );
 		$missing_count          = count( $scan['missing'] );
@@ -451,7 +736,7 @@ class VRodos_Asset_Optimization_Manager {
 
 		echo '<table class="widefat striped" style="max-width:760px;margin:16px 0;">';
 		echo '<tbody>';
-		echo '<tr><th scope="row">' . esc_html__( 'Asset posts scanned' ) . '</th><td>' . esc_html( number_format_i18n( (int) $scan['totalAssets'] ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'GLB asset posts scanned' ) . '</th><td>' . esc_html( number_format_i18n( (int) $scan['totalAssets'] ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Local GLB assets' ) . '</th><td>' . esc_html( number_format_i18n( (int) $scan['localGlbs'] ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Analyzed GLB assets' ) . '</th><td>' . esc_html( number_format_i18n( (int) $scan['analysisReady'] ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Needs analysis refresh' ) . '</th><td>' . esc_html( number_format_i18n( count( $scan['analysisMissing'] ) + count( $scan['analysisStale'] ) ) ) . '</td></tr>';
@@ -706,17 +991,7 @@ class VRodos_Asset_Optimization_Manager {
 	}
 
 	private static function collect_analysis_candidates( string $target ): array {
-		$asset_ids = get_posts(
-			[
-				'post_type'      => 'vrodos_asset3d',
-				'post_status'    => 'any',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'orderby'        => 'ID',
-				'order'          => 'ASC',
-				'no_found_rows'  => true,
-			]
-		);
+		$asset_ids = self::collect_glb_asset_ids();
 
 		$candidates = [];
 		foreach ( $asset_ids as $asset_id ) {
@@ -742,17 +1017,7 @@ class VRodos_Asset_Optimization_Manager {
 	}
 
 	private static function scan_glb_derivatives( string $profile ): array {
-		$asset_ids = get_posts(
-			[
-				'post_type'      => 'vrodos_asset3d',
-				'post_status'    => 'any',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'orderby'        => 'ID',
-				'order'          => 'ASC',
-				'no_found_rows'  => true,
-			]
-		);
+		$asset_ids = self::collect_glb_asset_ids();
 
 		$scan = [
 			'profile'               => $profile,
@@ -878,6 +1143,43 @@ class VRodos_Asset_Optimization_Manager {
 		return $scan;
 	}
 
+	private static function collect_glb_asset_ids(): array {
+		$asset_ids = get_posts(
+			[
+				'post_type'      => 'vrodos_asset3d',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+				'no_found_rows'  => true,
+			]
+		);
+
+		return array_values(
+			array_filter(
+				array_map( 'intval', $asset_ids ),
+				static fn( int $asset_id ): bool => self::asset_has_glb_source_reference( $asset_id )
+			)
+		);
+	}
+
+	private static function asset_has_glb_source_reference( int $asset_id ): bool {
+		$source_meta = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
+		$source_url  = VRodos_Core_Manager::resolve_media_meta_url( $source_meta );
+
+		if ( '' !== $source_url && 'glb' === strtolower( pathinfo( (string) wp_parse_url( self::strip_url_query_fragment( $source_url ), PHP_URL_PATH ), PATHINFO_EXTENSION ) ) ) {
+			return true;
+		}
+
+		if ( is_numeric( $source_meta ) ) {
+			$source_path = get_attached_file( (int) $source_meta );
+			return is_string( $source_path ) && 'glb' === strtolower( pathinfo( $source_path, PATHINFO_EXTENSION ) );
+		}
+
+		return false;
+	}
+
 	private function store_batch_report( array $report ): string {
 		$key = wp_generate_password( 12, false, false );
 		set_transient( self::BATCH_TRANSIENT_PREFIX . $key, $report, 15 * MINUTE_IN_SECONDS );
@@ -910,6 +1212,19 @@ class VRodos_Asset_Optimization_Manager {
 				[
 					'page' => self::SETTINGS_PAGE_KEY,
 					'tab'  => self::SETTINGS_TAB_KEY,
+				],
+				$args
+			),
+			admin_url( 'admin.php' )
+		);
+	}
+
+	private static function dashboard_url( array $args = [] ): string {
+		return add_query_arg(
+			array_merge(
+				[
+					'page'                 => 'vrodos-plugin',
+					'vrodos_dashboard_tab' => 'assets',
 				],
 				$args
 			),
@@ -1486,7 +1801,7 @@ class VRodos_Asset_Optimization_Manager {
 
 	private function build_derivative_paths( int $asset_id, array $source, string $profile ): array {
 		$uploads = wp_upload_dir();
-		$dir     = wp_normalize_path( trailingslashit( $uploads['basedir'] ) . 'vrodos-optimized-assets/asset-' . $asset_id );
+		$dir     = self::derivative_cache_dir( $asset_id );
 		$url     = trailingslashit( $uploads['baseurl'] ) . 'vrodos-optimized-assets/asset-' . $asset_id;
 		$base    = sanitize_file_name( pathinfo( (string) $source['path'], PATHINFO_FILENAME ) . '.' . $profile );
 
@@ -1498,6 +1813,75 @@ class VRodos_Asset_Optimization_Manager {
 			'manifest' => $dir . '/' . $base . '.manifest.json',
 			'markdown' => $dir . '/' . $base . '.manifest.md',
 		];
+	}
+
+	private static function derivative_cache_dir( int $asset_id ): string {
+		$uploads = wp_upload_dir();
+		return wp_normalize_path( trailingslashit( $uploads['basedir'] ) . 'vrodos-optimized-assets/asset-' . $asset_id );
+	}
+
+	private static function optimized_assets_base_dir(): string {
+		$uploads = wp_upload_dir();
+		return wp_normalize_path( trailingslashit( $uploads['basedir'] ) . 'vrodos-optimized-assets' );
+	}
+
+	private static function delete_asset_derivative_cache( int $asset_id ): void {
+		if ( $asset_id <= 0 ) {
+			return;
+		}
+
+		$dir = self::derivative_cache_dir( $asset_id );
+		if ( self::is_safe_derivative_cache_dir( $dir, $asset_id ) && is_dir( $dir ) ) {
+			self::delete_directory_tree( $dir );
+		}
+
+		delete_post_meta( $asset_id, self::META_KEY );
+		delete_post_meta( $asset_id, self::ANALYSIS_META_KEY );
+	}
+
+	private static function is_safe_derivative_cache_dir( string $dir, int $asset_id ): bool {
+		$base = self::optimized_assets_base_dir();
+		$expected = wp_normalize_path( trailingslashit( $base ) . 'asset-' . $asset_id );
+
+		if ( $dir !== $expected ) {
+			return false;
+		}
+
+		$real_base = realpath( $base );
+		$real_dir  = realpath( $dir );
+		if ( ! is_string( $real_base ) || ! is_string( $real_dir ) ) {
+			return false;
+		}
+
+		$real_base = wp_normalize_path( $real_base );
+		$real_dir  = wp_normalize_path( $real_dir );
+
+		return str_starts_with( $real_dir, trailingslashit( $real_base ) );
+	}
+
+	private static function delete_directory_tree( string $dir ): void {
+		$entries = scandir( $dir );
+		if ( false === $entries ) {
+			return;
+		}
+
+		foreach ( $entries as $entry ) {
+			if ( '.' === $entry || '..' === $entry ) {
+				continue;
+			}
+
+			$path = $dir . DIRECTORY_SEPARATOR . $entry;
+			if ( is_link( $path ) || is_file( $path ) ) {
+				wp_delete_file( $path );
+				continue;
+			}
+
+			if ( is_dir( $path ) ) {
+				self::delete_directory_tree( $path );
+			}
+		}
+
+		@rmdir( $dir );
 	}
 
 	private function store_derivative_record( int $asset_id, array $result ): void {

@@ -23,8 +23,13 @@ The first profiling pass on `http://wp.local:5832/Master_Client_766.html` showed
 - Complete: compiled-scene Meshopt decoder smoke fix after discovering A-Frame requires a classic/browser-global decoder script.
 - Complete: compiled-scene safe Draco derivative trial for the largest asphalt GLB through profiler resource interception.
 - Complete: admin-side safe Draco derivative generation/storage and opt-in compiler selection.
-- Complete: settings-level batch generation for missing safe Draco derivatives.
-- Complete: automatic read-only GLB benefit analysis and recommendation-first Settings > Assets table.
+- Complete: initial settings-level batch generation for missing safe Draco derivatives.
+- Complete: automatic read-only GLB benefit analysis and recommendation-first Settings > Assets diagnostics table.
+- Complete: VRodos dashboard Actionable Assets tab for top GLB optimization work.
+- Complete: dashboard-side GLB optimization row actions and GLB-only filtering for dashboard/Settings asset tables.
+- Complete: derivative cache cleanup when GLB asset posts are permanently deleted, including project-delete flows that delete their assets.
+- Complete: Settings > Assets changed to a GLB diagnostics/reporting surface while per-asset actions live on the dashboard.
+- Complete: dashboard Compile Use toggles for ready safe Draco derivatives, with validation before enabling compile substitution.
 - Next: add texture compression/KTX2 derivative generation for texture-heavy assets, then plan explicit LOD derivative families for distance-based scene cost reduction.
 
 ## Spector.js Debug Phase
@@ -183,7 +188,7 @@ Implemented the first production-facing derivative contract:
 - `VRodos_Asset_Optimization_Manager` adds a `GLB Optimization` side metabox on `vrodos_asset3d` admin edit screens.
 - VRodos Settings now has an `Assets` tab for library-level optimization status.
 - The metabox can generate a `safe-draco` derivative for local uploaded GLBs.
-- The `Assets` tab analyzes GLBs first, ranks likely-benefit assets, and batch-generates recommended `safe-draco` derivatives for local uploaded GLBs.
+- The `Assets` tab analyzes GLBs first and ranks likely-benefit assets for diagnostics/reporting.
 - Batch generation processes a bounded number of assets per request and resumes automatically until the queue is empty, unless an asset fails.
 - Derivatives are written under WordPress uploads:
   `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/`
@@ -196,9 +201,20 @@ Automatic benefit analysis:
 
 - When `vrodos_asset3d_glb` is added or updated, VRodos reads the GLB JSON chunk and stores `_vrodos_asset3d_glb_analysis`.
 - The analysis records source fingerprint, size, counts, estimated triangles, primitive/material/image counts, compression extensions, estimated geometry/image payload, recommendation booleans, reasons, and suggested action.
-- Settings > Assets includes a refresh/backfill action for existing or stale analysis records.
-- Default batch generation targets only assets recommended for a safe Draco/Meshopt geometry derivative.
+- Settings > Assets is now a GLB diagnostics/reporting view; per-asset refresh and derivative generation happen from the dashboard Actionable Assets rows.
 - Low-benefit, already compressed, unsupported, texture-heavy, and LOD-candidate assets are shown separately.
+
+Dashboard workflow:
+
+- The top-level VRodos dashboard keeps the existing Active Projects table as a tab.
+- A second `Actionable Assets` tab shows the top recommended GLB optimization items.
+- Row-level dashboard actions can refresh one asset's analysis or generate one safe Draco derivative from the overview screen.
+- Safe Draco generation appears on rows where the current derivative optimization type is actionable; future KTX2/LOD rows remain visible as recommendations until those generators exist.
+- The `Compile Use` column is a toggle for ready safe Draco derivatives. Enabling validates the derivative before setting `compileEnabled`; disabling returns compilation to the original GLB.
+- Dashboard and Settings asset optimization tables filter to GLB-referenced assets only, so non-GLB media does not appear as unsupported optimization work.
+- Dashboard refresh/generate actions redirect back to the `Actionable Assets` tab and do not enable compile substitution. Only the explicit Compile Use toggle changes compile substitution.
+- Derivative files are cached artifacts owned by the asset post. Permanent asset deletion removes `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/` plus derivative/analysis metadata.
+- Project-delete flows that delete associated asset posts inherit the same derivative cleanup; this covers Immerse project assets when they are removed through VRodos project deletion.
 
 The existing glTF Transform prototype script now supports single-source mode for admin/backend use:
 
@@ -218,6 +234,7 @@ Operational policy:
 - Generate does not automatically enable compile substitution.
 - Batch generate does not automatically enable compile substitution.
 - Analysis does not generate files and does not enable compile substitution.
+- Deleting an asset deletes its cached derivative directory and optimization metadata.
 - Compile substitution is per-asset opt-in after visual parity is checked.
 - The resolver validates that the derivative file still exists and that its recorded source URL matches the current source URL before substituting it.
 - If validation fails, compilation silently falls back to the original GLB.
@@ -258,9 +275,10 @@ Do not add automatic LOD substitution until visual thresholds, distance bands, s
 14. Add profiler resource interception to test compiled-scene derivative substitutions without editing uploads or generated HTML.
 15. Add admin-side derivative storage plus opt-in compile-time selection.
 16. Add a settings-level batch button for generating missing safe Draco derivatives.
-17. Add automatic GLB benefit analysis and recommendation-first batch generation.
-18. Next optimization pass should add texture compression for texture-heavy GLBs and visual QA tooling for opted-in derivatives.
-19. Plan LOD derivative families for distance-based render-cost reduction after compression and QA paths are stable.
+17. Add automatic GLB benefit analysis and recommendation-first derivative targeting.
+18. Add a dashboard Actionable Assets tab for top optimization items.
+19. Next optimization pass should add texture compression for texture-heavy GLBs and visual QA tooling for opted-in derivatives.
+20. Plan LOD derivative families for distance-based render-cost reduction after compression and QA paths are stable.
 
 ## Acceptance Criteria
 
@@ -276,7 +294,9 @@ Do not add automatic LOD substitution until visual thresholds, distance bands, s
 - Compiled scenes include decoder paths for Draco, Basis/KTX2, and Meshopt compressed assets after regeneration.
 - The profiler can trial a local derivative through `--resource-override URL_OR_PATH=FILE` and record fulfilled override details.
 - Asset admins can generate a safe Draco derivative for a local uploaded GLB without replacing the original upload.
-- Site admins can refresh saved GLB analysis and batch-generate recommended safe Draco derivatives from the Settings > Assets tab without replacing originals or enabling compile substitution.
+- Site admins can refresh saved GLB analysis and generate recommended safe Draco derivatives from dashboard Actionable Assets rows without replacing originals or enabling compile substitution.
+- Site admins can see top actionable GLB assets from the dashboard and run single-asset refresh/generate derivative actions without enabling compile substitution.
+- Dashboard and Settings optimization tables show only GLB-referenced assets.
 - The compiler can use an optimized derivative only when the asset metadata explicitly enables it.
 - `?vrodos_spector=1` exposes `window.VRODOS_SPECTOR` and opens Spector's UI without affecting normal URLs.
 - `node --check`, PHP lint for edited PHP files, and `git diff --check` pass for the edited files.

@@ -129,13 +129,14 @@ Future admin-panel optimization should be derivative-based: keep the original up
 `VRodos_Asset_Optimization_Manager` provides the first admin-side derivative workflow for `vrodos_asset3d`:
 
 - The asset edit screen has a `GLB Optimization` metabox.
-- Settings > Assets shows library-level GLB analysis and safe Draco derivative status.
+- Settings > Assets shows library-level GLB analysis and safe Draco derivative status for GLB-referenced assets only as a diagnostics/reporting view.
 - `Generate safe Draco derivative` runs the same glTF Transform `prune -> dedup -> draco` flow used by the prototype script.
 - New or updated `vrodos_asset3d_glb` metadata triggers read-only GLB benefit analysis and stores `_vrodos_asset3d_glb_analysis`.
-- `Generate recommended safe Draco derivatives` batch-generates only analysis-recommended local GLB derivatives in bounded admin requests and stops automatic continuation on failures.
+- The top-level VRodos dashboard has an `Actionable Assets` tab for the highest-priority GLB optimization items, single-asset refresh/generate derivative actions, and a Compile Use toggle for ready derivatives.
 - Derivatives are stored in uploads under `vrodos-optimized-assets/asset-{asset_id}/`.
 - Metadata lives in `_vrodos_asset3d_glb_derivatives`.
-- Compilation uses a derivative only when the asset's `Use active derivative in compiled scenes` checkbox is enabled.
+- Permanent deletion of a `vrodos_asset3d` post removes its derivative cache directory and optimization metadata. Project deletion paths that delete associated assets inherit this cleanup.
+- Compilation uses a derivative only when the asset's `Use active derivative in compiled scenes` checkbox or dashboard Compile Use toggle is enabled.
 - If the derivative file is missing or the stored source URL no longer matches the current GLB URL, compilation falls back to the original GLB.
 
 `VRodos_Compiler_AFrame_Entity_Renderer` is the URL selection point. It keeps scene JSON untouched, resolves the active derivative during compilation by `asset_id`, and adds a compile diagnostic note when a derivative is used.
