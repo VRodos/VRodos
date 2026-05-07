@@ -351,19 +351,8 @@ VRODOS.editor.animate = function animate() {
     }
 };
 
-/**
- * Interface toggle for environment textures
- */
-window.toggleEnvTexture = (el) => {
-    const btn = document.getElementById("env_texture-change-btn");
-    if (btn) btn.classList.toggle('toggle-active');
-    el.checked = !el.checked;
-    VRODOS.editor.envir.scene.environment = !el.checked ? null : VRODOS.editor.envir.maintexture;
-};
-
 // INITIALIZE ON DOM CONTENT LOADED
 document.addEventListener('DOMContentLoaded', initVrodosEditor);
-
 
 
 

@@ -317,16 +317,6 @@ extract( $data );
 						</a>
 					</div>
 
-
-					<div class="environmentButton">
-						<input style="display: none" type="checkbox" id="sceneEnvironmentTexture" name="sceneEnvTexture" checked />
-						<a id="env_texture-change-btn"
-							title="Toggle textures" onclick="toggleEnvTexture(document.getElementById('sceneEnvironmentTexture'))"
-							class="EditorToolbarBtnStyle tw-btn tw-btn-sm toggle-btn toggle-active">
-							<i data-lucide="layers" class="tw-w-4 tw-h-4"></i>
-						</a>
-					</div>
-
 					<!-- Cogwheel options -->
 					<div class="environmentButton">
 						<div id="row_cogwheel" class="row-right-panel">
@@ -573,12 +563,6 @@ extract( $data );
 
 		}
 		<!--  Part 3: Start 3D with Javascript   -->
-
-		let toggleEnvTexture = (el) => {
-			document.getElementById("env_texture-change-btn").classList.toggle('toggle-active');
-			el.checked = !el.checked;
-			VRODOS.editor.envir.scene.environment = !el.checked ? null : VRODOS.editor.envir.maintexture;
-		}
 
 	</script>
 	<?php
