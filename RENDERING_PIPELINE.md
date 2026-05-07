@@ -212,6 +212,8 @@ Scene settings:
 - `reflectionsEnabled`: global reflections switch. When off, runtime environment reflections and direct material specular/glint contribution are suppressed.
 - `reflectionProfile`: intensity shaping for enabled reflections: `soft`, `balanced`, or `enhanced`.
 - `reflectionSource`: `hdr` or `scene-probe`; the effective source becomes `none` when no HDR preset/probe is active or global reflections are disabled.
+- `sceneProbeUpdateMode`: scene-probe capture cadence. `static` captures after load/settle and does not refresh from player movement; `slow-dynamic` allows rare refreshes after substantial movement or yaw changes.
+- `sceneProbeResolution`: scene-probe cubemap size: `64`, `128`, or `256`. Default is `128`.
 - `reflectionOcclusionMode`: `auto`, `off`, or `strong`; controls shadow-based direct-sun glint/specular attenuation.
 
 Lighting participation:
@@ -260,7 +262,13 @@ Current presets:
 - `quarry`
 - `venice`
 
-Scene probe capture is an alternate environment source when render quality and presentation mode allow it.
+Scene probe capture is an alternate environment source when render quality and presentation mode allow it. It is disabled on mobile and immersive VR, and it still requires high render quality.
+
+Scene-probe capture is intentionally smooth-first by default:
+
+- `sceneProbeUpdateMode=static` captures once after scene/model settle and then keeps that PMREM environment stable during camera/player movement.
+- `sceneProbeUpdateMode=slow-dynamic` refreshes only after a larger anchor movement threshold, a larger yaw threshold, and a multi-second cooldown.
+- `sceneProbeResolution=128` is the default cubemap size. `64` is available for heavier scenes, and `256` is available for sharper reflections on stronger machines.
 
 If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`, scene environment maps are cleared, material `envMapIntensity` becomes zero, and direct specular/glint output is suppressed by the material shader hook.
 

@@ -37,6 +37,16 @@ Completed work:
 
 ## Recent Landed Work
 
+### Smooth scene-probe defaults
+
+- Added persisted scene metadata and compiled `scene-settings` keys:
+  - `aframeSceneProbeUpdateMode` / `sceneProbeUpdateMode`
+  - `aframeSceneProbeResolution` / `sceneProbeResolution`
+- Added compile-dialog controls that appear only when reflection source is `scene-probe`.
+- Changed scene-probe defaults from frequent dynamic captures to `static` capture after scene/model settle.
+- Lowered the default scene-probe cubemap size to `128`, with `64` and `256` as author-selectable quality choices.
+- Kept `slow-dynamic` available for rare refreshes after larger movement/yaw changes and a longer cooldown.
+
 ### Shadow-aware lighting and reflection controls
 
 - Added compiled-scene lighting participation for visible world meshes, decoration objects, image/video display planes, POI link objects, and POI image/text world surfaces.
