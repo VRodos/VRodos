@@ -38,6 +38,7 @@ window.addEventListener('DOMContentLoaded', () => {
             exposurePreset: document.getElementById('compileExposurePresetSelect'),
             contrastPreset: document.getElementById('compileContrastPresetSelect'),
             colorGradingWrapper: document.getElementById('compileColorGradingWrapper'),
+            reflectionsEnabled: document.getElementById('compileReflectionsEnabledToggle'),
             reflectionProfile: document.getElementById('compileReflectionProfileSelect'),
             reflectionSource: document.getElementById('compileReflectionSourceSelect'),
             envMapPreset: document.getElementById('compileEnvMapPresetSelect'),
@@ -190,6 +191,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (!VRODOS.editor.envir.scene.aframeContrastPreset) {
             VRODOS.editor.envir.scene.aframeContrastPreset = 'balanced';
+        }
+        if (typeof VRODOS.editor.envir.scene.aframeReflectionsEnabled === 'undefined') {
+            VRODOS.editor.envir.scene.aframeReflectionsEnabled = true;
         }
         if (typeof VRODOS.editor.envir.scene.aframePostFXBloomEnabled === 'undefined') {
             VRODOS.editor.envir.scene.aframePostFXBloomEnabled = false;
@@ -399,7 +403,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
         const postFxEnabled = controls.postFx.checked;
         const colorGradingEnabled = postFxEnabled && controls.postFxColor.checked;
-        const envLightingEnabled = postFxEnabled && VRodosCompileUI.PostFX.normalizeReflectionSource(controls.reflectionSource.value) === 'hdr';
+        const reflectionsEnabled = !controls.reflectionsEnabled || controls.reflectionsEnabled.checked === true;
+        const reflectionControlsEnabled = postFxEnabled && reflectionsEnabled;
+        const envLightingEnabled = reflectionControlsEnabled && VRodosCompileUI.PostFX.normalizeReflectionSource(controls.reflectionSource.value) === 'hdr';
         const bloomEnabled = postFxEnabled && VRodosCompileUI.PostFX.normalizeBloomStrength(controls.bloomStrength.value) !== 'off';
         const engine = controls.postFxEngine ? VRodosCompileUI.PostFX.normalizeEngine(controls.postFxEngine.value) : 'legacy';
         const isPmndrs = engine === 'pmndrs';
@@ -411,8 +417,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
         controls.postFxColor.disabled = !postFxEnabled;
         controls.bloomStrength.disabled = !postFxEnabled;
-        controls.reflectionProfile.disabled = !postFxEnabled;
-        controls.reflectionSource.disabled = !postFxEnabled;
+        controls.reflectionProfile.disabled = !reflectionControlsEnabled;
+        controls.reflectionSource.disabled = !reflectionControlsEnabled;
         
         if (controls.envMapPresetWrapper) {
             controls.envMapPresetWrapper.style.display = envLightingEnabled ? '' : 'none';
@@ -604,6 +610,10 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.contrastPreset.value = VRODOS.editor.envir && VRODOS.editor.envir.scene
             ? VRodosCompileUI.PostFX.normalizeContrastPreset(VRODOS.editor.envir.scene.aframeContrastPreset)
             : 'balanced';
+        if (controls.reflectionsEnabled) {
+            controls.reflectionsEnabled.checked = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) ||
+                VRODOS.editor.envir.scene.aframeReflectionsEnabled !== false;
+        }
         controls.reflectionProfile.value = VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeReflectionProfile
             ? VRodosCompileUI.PostFX.normalizeReflectionProfile(VRODOS.editor.envir.scene.aframeReflectionProfile)
             : 'balanced';
@@ -928,6 +938,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (controls.reflectionProfile) {
         controls.reflectionProfile.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.reflectionsEnabled) {
+        controls.reflectionsEnabled.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.reflectionSource) {
         controls.reflectionSource.addEventListener('change', syncCompilePostFxState);

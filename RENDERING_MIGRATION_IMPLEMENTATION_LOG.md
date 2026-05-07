@@ -37,6 +37,17 @@ Completed work:
 
 ## Recent Landed Work
 
+### Shadow-aware lighting and reflection controls
+
+- Added compiled-scene lighting participation for visible world meshes, decoration objects, image/video display planes, POI link objects, and POI image/text world surfaces.
+- Excluded hidden navmesh helpers, camera UI, skies, avatars, helper lights, and debug objects from shadow casting.
+- Made walkable/navmesh world surfaces receiver-only to reduce low-angle road/floor shadow banding.
+- Added adaptive directional sun/helper shadow fitting around nearby world bounds and the active camera region.
+- Added `reflectionOcclusionMode` / `aframeReflectionOcclusionMode` for `auto`, `off`, and `strong` direct-sun glint attenuation.
+- Added `reflectionsEnabled` / `aframeReflectionsEnabled` as a global compiled-scene reflections switch.
+- Patched compiled-scene PBR/Phong material shaders so shadowed pixels suppress direct sun specular, indirect specular, clearcoat, sheen, and bright glint output.
+- Reduced PMNDRS Horizon console noise to one default startup state line, with expanded diagnostics behind `?vrodos_debug_pmndrs_horizon=1` and `?vrodos_debug_pmndrs_horizon_verbose=1`.
+
 ### VR/XR visual parity
 
 - Added presentation-mode detection to separate inline desktop, desktop fullscreen/A-Frame fullscreen, and real immersive WebXR.

@@ -363,6 +363,23 @@
             "default": 0.45,
             "min": 0,
             "max": 3
+        },
+        "reflectionsEnabled": {
+            "metadataKey": "aframeReflectionsEnabled",
+            "type": "boolean",
+            "default": true,
+            "editorDefault": true
+        },
+        "reflectionOcclusionMode": {
+            "metadataKey": "aframeReflectionOcclusionMode",
+            "type": "enum",
+            "default": "auto",
+            "editorDefault": "auto",
+            "allowed": [
+                "auto",
+                "off",
+                "strong"
+            ]
         }
     },
     "horizonHelperLightPresets": {

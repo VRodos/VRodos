@@ -51,6 +51,8 @@ That runtime powers:
 - desktop fullscreen and immersive XR visual parity for scene-owned horizon, atmosphere, lighting, fog, exposure, and material state
 - HDR environment-map reflections
 - scene-probe reflections for authored environments
+- a global reflections switch for compiled scenes
+- shadow-aware direct-sun glint suppression for compiled-scene PBR materials
 - PMNDRS/Takram tone mapping, lens flare, and atmosphere controls for desktop compiled scenes
 - compiled walkable-surface collision workflows
 
@@ -65,7 +67,9 @@ Compiled scenes can currently offer:
 - desktop high-quality rendering mode
 - fullscreen and immersive XR preservation of the authored desktop visual baseline, with targeted fallbacks for XR-unsafe screen-space effects
 - shadow presets for performance vs visual quality
+- shadow participation for visible world meshes, decoration objects, image/video surfaces, POI links, and POI image/text world surfaces
 - reflection source selection between HDR presets and scene probes
+- global reflection enable/disable control plus shadow-aware direct-sun reflection occlusion
 - PMNDRS selectable tone mapping, exposure, generated LUT looks, Takram correct-altitude, and Takram Horizon lens flare
 - walkable-surface collisions using helper meshes authored in the editor
 
@@ -153,6 +157,7 @@ The compile dialog exposes both shared controls and engine-specific controls.
 
 - render quality
 - shadow quality
+- global reflections toggle
 - reflection profile and reflection source
 - post-FX master toggle
 - ambient occlusion preset authoring surface

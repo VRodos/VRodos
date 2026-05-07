@@ -46,8 +46,10 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     'aframeAAQuality': { type: 'string', default: 'balanced', envirKey: 'aframeAAQuality' },
     'aframeAmbientOcclusionPreset': { type: 'string', default: 'balanced', envirKey: 'aframeAmbientOcclusionPreset' },
     'aframeContactShadowPreset': { type: 'string', default: 'soft', envirKey: 'aframeContactShadowPreset' },
+    'aframeReflectionsEnabled': { type: 'boolean', default: true, envirKey: 'aframeReflectionsEnabled' },
     'aframeReflectionProfile': { type: 'string', default: 'balanced', envirKey: 'aframeReflectionProfile' },
     'aframeReflectionSource': { type: 'string', default: 'hdr', envirKey: 'aframeReflectionSource' },
+    'aframeReflectionOcclusionMode': { type: 'string', default: 'auto', envirKey: 'aframeReflectionOcclusionMode' },
     'aframeEnvMapPreset': { type: 'string', default: 'none', envirKey: 'aframeEnvMapPreset' },
     'aframeHorizonSkyPreset': { type: 'string', default: 'natural', envirKey: 'aframeHorizonSkyPreset' },
 

@@ -203,7 +203,40 @@ Runtime behavior:
 
 This phase does not add stars, author-facing geospatial latitude/longitude UI, `LightingMaskPass`, SSGI, or volumetric clouds.
 
-## 8. Legacy Effect Notes
+## 8. Shadow-Aware Lighting And Reflections
+
+Compiled scenes run a lighting-participation pass from `vrodos_quality_profiles.js` and material shader hooks from `vrodos_master_rendering.js`.
+
+Scene settings:
+
+- `reflectionsEnabled`: global reflections switch. When off, runtime environment reflections and direct material specular/glint contribution are suppressed.
+- `reflectionProfile`: intensity shaping for enabled reflections: `soft`, `balanced`, or `enhanced`.
+- `reflectionSource`: `hdr` or `scene-probe`; the effective source becomes `none` when no HDR preset/probe is active or global reflections are disabled.
+- `reflectionOcclusionMode`: `auto`, `off`, or `strong`; controls shadow-based direct-sun glint/specular attenuation.
+
+Lighting participation:
+
+- Visible compiled world meshes cast and receive shadows by default when `shadowQuality` is not `off`.
+- Image assets, video display planes, POI link objects, POI image/text trigger objects, and visible POI image/text panel surfaces participate like decoration meshes.
+- Hidden navmesh helper materials, camera-attached UI, skies, avatars, helper lights, and debug objects are excluded.
+- Walkable/navmesh world surfaces are receiver-only to avoid low-angle ground self-shadow banding.
+- Directional sun/helper lights receive an adaptive orthographic shadow-camera fit around nearby world bounds and the current camera region.
+
+Reflection/glint handling:
+
+- Standard, Physical, and Phong materials get a runtime shader hook when shadow-aware reflections or global reflection suppression is active.
+- Direct specular, indirect specular, clearcoat, sheen, and bright glint output are multiplied by a shadow-aware specular factor.
+- This is separate from SSR. In PMNDRS scenes, a bright road glint with `reflection=none` is direct sun/specular energy, so the shader hook is what suppresses it under a blocker.
+- In immersive XR the custom shadow-aware reflection attenuation is disabled and the runtime keeps the safer scene-owned fallback behavior.
+
+Diagnostics:
+
+- Compiled PMNDRS Horizon scenes emit one default startup state line with the active engine, owner, reflection source, reflection occlusion mode, shadow quality, celestial preset, sun direction, exposure, tone mapping, lens flare, and light source.
+- Use `?vrodos_debug_pmndrs_horizon=1` for repeated debug-level diagnostic lines when the diagnostic signature changes.
+- Use `?vrodos_debug_pmndrs_horizon_verbose=1` for info-level diagnostic lines.
+- Expanded diagnostic fields include `shadowCasters`, `shadowReceivers`, `shadowReceiverOnly`, `dirShadowLights`, `fittedDirLights`, and `shadowFit`.
+
+## 9. Legacy Effect Notes
 
 ### TAA
 
@@ -217,7 +250,7 @@ Legacy SSR is half-resolution screen-space ray marching using the shared depth t
 
 Legacy SAO is half-resolution, depth-only ambient occlusion with bilateral blur and optional adaptive half-rate updates under low FPS.
 
-## 9. HDR Environment Maps and Scene Probe
+## 10. HDR Environment Maps and Scene Probe
 
 HDR environment presets are loaded through the runtime HDR loader and processed through `PMREMGenerator` for `scene.environment` and PBR material `envMap`.
 
@@ -229,7 +262,9 @@ Current presets:
 
 Scene probe capture is an alternate environment source when render quality and presentation mode allow it.
 
-## 10. Version Source of Truth
+If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`, scene environment maps are cleared, material `envMapIntensity` becomes zero, and direct specular/glint output is suppressed by the material shader hook.
+
+## 11. Version Source of Truth
 
 - Root `package.json` and `package-lock.json` define runtime package intent.
 - `npm run build:three` generates `assets/runtime-version-manifest.json`.
@@ -238,7 +273,7 @@ Scene probe capture is an alternate environment source when render quality and p
 - The current live vendor bundle is Three.js r181.
 - The classic compiled A-Frame runtime must not load a second Three instance. Any attempt to test a newer Three version belongs in a separate A-Frame module/import-map runtime spike.
 
-## 11. Future Ideas
+## 12. Future Ideas
 
 These are backlog items, not current implementation requirements:
 

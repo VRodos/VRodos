@@ -473,13 +473,16 @@ function vrodosClamp(value, min, max) {
 }
 
 function vrodosCreateHiddenNavmeshMaterial(_sourceMaterial) {
-    return new THREE.MeshBasicMaterial({
+    const material = new THREE.MeshBasicMaterial({
         side: THREE.DoubleSide,
         transparent: true,
         opacity: 0,
         colorWrite: false,
         depthWrite: false
     });
+    material.userData = material.userData || {};
+    material.userData.vrodosHiddenNavmeshMaterial = true;
+    return material;
 }
 
 function vrodosApplyTextureQuality(texture, options, isColorTexture) {
@@ -523,13 +526,137 @@ function vrodosGetExplicitMaterialOverrides(entityEl) {
     return entityEl.getAttribute('material') || {};
 }
 
+function vrodosGetReflectionShadowStrength(options) {
+    if (!options || !options.shadowAwareReflections) {
+        return 0;
+    }
+
+    switch (options.reflectionOcclusionMode) {
+        case 'strong':
+            return 0.96;
+        case 'off':
+            return 0;
+        case 'auto':
+        default:
+            return 0.82;
+    }
+}
+
+function vrodosGetGlobalReflectionStrength(options) {
+    return options && options.reflectionsEnabled === false ? 0 : 1;
+}
+
+function vrodosInstallReflectionShadowPatch(material) {
+    if (!material || material.userData.vrodosReflectionShadowPatched) {
+        return;
+    }
+
+    const previousOnBeforeCompile = material.onBeforeCompile;
+    const previousCustomProgramCacheKey = material.customProgramCacheKey;
+    const reflectionShadowUniform = material.userData.vrodosReflectionShadowUniform || { value: 0 };
+    const reflectionGlobalUniform = material.userData.vrodosReflectionGlobalUniform || { value: 1 };
+
+    material.userData.vrodosReflectionShadowUniform = reflectionShadowUniform;
+    material.userData.vrodosReflectionGlobalUniform = reflectionGlobalUniform;
+    material.userData.vrodosReflectionShadowPatched = true;
+
+    material.onBeforeCompile = function (shader, renderer) {
+        if (typeof previousOnBeforeCompile === 'function') {
+            previousOnBeforeCompile.call(this, shader, renderer);
+        }
+
+        shader.uniforms.vrodosReflectionShadowStrength = reflectionShadowUniform;
+        shader.uniforms.vrodosReflectionGlobalStrength = reflectionGlobalUniform;
+
+        const functionSource = [
+            'uniform float vrodosReflectionShadowStrength;',
+            'uniform float vrodosReflectionGlobalStrength;',
+            'float vrodosGetDirectionalReflectionShadow() {',
+            '  float shadowVisibility = 1.0;',
+            '  #if defined( USE_SHADOWMAP ) && NUM_DIR_LIGHT_SHADOWS > 0',
+            '    DirectionalLightShadow directionalLightShadow;',
+            '    #pragma unroll_loop_start',
+            '    for ( int i = 0; i < NUM_DIR_LIGHT_SHADOWS; i ++ ) {',
+            '      directionalLightShadow = directionalLightShadows[ i ];',
+            '      shadowVisibility = min( shadowVisibility, receiveShadow ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowIntensity, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0 );',
+            '    }',
+            '    #pragma unroll_loop_end',
+            '  #endif',
+            '  return mix( 1.0, shadowVisibility, vrodosReflectionShadowStrength );',
+            '}',
+            ''
+        ].join('\n');
+
+        if (shader.fragmentShader.indexOf('vrodosGetDirectionalReflectionShadow') === -1) {
+            shader.fragmentShader = shader.fragmentShader.replace('void main() {', `${functionSource}void main() {`);
+        }
+
+        const lightingEndPatch = [
+            '#include <lights_fragment_end>',
+            'float vrodosReflectionShadow = vrodosGetDirectionalReflectionShadow();',
+            'float vrodosReflectionSpecular = vrodosReflectionGlobalStrength * vrodosReflectionShadow;',
+            '#if defined( RE_Direct )',
+            '  reflectedLight.directSpecular *= vrodosReflectionSpecular;',
+            '#endif',
+            '#if defined( RE_IndirectSpecular )',
+            '  reflectedLight.indirectSpecular *= vrodosReflectionSpecular;',
+            '#endif',
+            '#ifdef USE_CLEARCOAT',
+            '  clearcoatSpecularDirect *= vrodosReflectionSpecular;',
+            '  clearcoatSpecularIndirect *= vrodosReflectionSpecular;',
+            '#endif',
+            '#ifdef USE_SHEEN',
+            '  sheenSpecularDirect *= vrodosReflectionSpecular;',
+            '  sheenSpecularIndirect *= vrodosReflectionSpecular;',
+            '#endif'
+        ].join('\n');
+
+        const hasLightingEndChunk = shader.fragmentShader.indexOf('#include <lights_fragment_end>') !== -1;
+        if (hasLightingEndChunk) {
+            shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_end>', lightingEndPatch);
+        }
+
+        const outgoingLightLine = 'vec3 outgoingLight = totalDiffuse + totalSpecular + totalEmissiveRadiance;';
+        if (hasLightingEndChunk && shader.fragmentShader.indexOf(outgoingLightLine) !== -1) {
+            const glintPatch = [
+                outgoingLightLine,
+                'float vrodosSunGlintLuma = dot( outgoingLight, vec3( 0.2126, 0.7152, 0.0722 ) );',
+                'float vrodosSunGlintMask = smoothstep( 0.55, 1.35, vrodosSunGlintLuma );',
+                'outgoingLight *= mix( 1.0, vrodosReflectionSpecular, vrodosSunGlintMask );'
+            ].join('\n');
+            shader.fragmentShader = shader.fragmentShader.replace(outgoingLightLine, glintPatch);
+        }
+
+        const phongOutgoingLightLine = 'vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;';
+        if (hasLightingEndChunk && shader.fragmentShader.indexOf(phongOutgoingLightLine) !== -1) {
+            const phongGlintPatch = [
+                phongOutgoingLightLine,
+                'float vrodosSunGlintLuma = dot( outgoingLight, vec3( 0.2126, 0.7152, 0.0722 ) );',
+                'float vrodosSunGlintMask = smoothstep( 0.55, 1.35, vrodosSunGlintLuma );',
+                'outgoingLight *= mix( 1.0, vrodosReflectionSpecular, vrodosSunGlintMask );'
+            ].join('\n');
+            shader.fragmentShader = shader.fragmentShader.replace(phongOutgoingLightLine, phongGlintPatch);
+        }
+    };
+
+    material.customProgramCacheKey = function () {
+        const previousKey = typeof previousCustomProgramCacheKey === 'function'
+            ? previousCustomProgramCacheKey.call(this)
+            : '';
+        return `${previousKey}|vrodos-reflection-shadow-v3`;
+    };
+
+    material.needsUpdate = true;
+}
+
 function vrodosEnhanceMeshMaterial(material, overrides, options) {
     if (!material) {
         return;
     }
 
     const reflectionSource = options.reflectionSource || (options.environmentMap ? 'hdr' : 'none');
-    const reflectionsDisabled = reflectionSource === 'none';
+    const globalReflectionStrength = vrodosGetGlobalReflectionStrength(options);
+    const reflectionsDisabled = globalReflectionStrength <= 0 || reflectionSource === 'none';
     material.userData = material.userData || {};
 
     vrodosApplyTextureQuality(material.map, options, true);
@@ -579,6 +706,15 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
         }
 
         material.envMapIntensity = targetEnvMapIntensity;
+    }
+
+    if (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial || material.isMeshPhongMaterial) {
+        const reflectionShadowStrength = vrodosGetReflectionShadowStrength(options);
+        if (reflectionShadowStrength > 0 || globalReflectionStrength < 1 || material.userData.vrodosReflectionShadowPatched) {
+            vrodosInstallReflectionShadowPatch(material);
+            material.userData.vrodosReflectionShadowUniform.value = reflectionShadowStrength;
+            material.userData.vrodosReflectionGlobalUniform.value = globalReflectionStrength;
+        }
     }
 
     if (typeof material.shadowSide !== 'undefined' && typeof THREE.FrontSide !== 'undefined') {

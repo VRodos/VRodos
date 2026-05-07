@@ -166,6 +166,14 @@
 								</label>
 							</div>
 
+							<label class="tw-flex tw-items-center tw-justify-between tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
+								<div>
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Global Reflections</span>
+									<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Controls material, environment, and direct specular reflections in compiled scenes.</p>
+								</div>
+								<input id="compileReflectionsEnabledToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
+							</label>
+
 							<div id="compileLegacyHorizonStageSizeRow" class="tw-pt-2 tw-border-t tw-border-slate-200">
 								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
 									<div>

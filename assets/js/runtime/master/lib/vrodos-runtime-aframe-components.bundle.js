@@ -462,8 +462,10 @@
       bloomStrength: { type: "string", default: "off" },
       exposurePreset: { type: "string", default: "neutral" },
       contrastPreset: { type: "string", default: "balanced" },
+      reflectionsEnabled: { type: "string", default: vrodosSceneSettingDefault("reflectionsEnabled", "1") },
       reflectionProfile: { type: "string", default: "balanced" },
       reflectionSource: { type: "string", default: "hdr" },
+      reflectionOcclusionMode: { type: "string", default: vrodosSceneSettingDefault("reflectionOcclusionMode", "auto") },
       horizonSkyPreset: { type: "string", default: "natural" },
       envMapPreset: { type: "string", default: "none" },
       cam_position: { type: "string", default: "0 1.6 0" },
@@ -702,6 +704,9 @@
     getReflectionSource: function() {
       return this.data.reflectionSource === "scene-probe" ? "scene-probe" : "hdr";
     },
+    areReflectionsEnabled: function() {
+      return !(this.data.reflectionsEnabled === false || this.data.reflectionsEnabled === "false" || this.data.reflectionsEnabled === "0" || this.data.reflectionsEnabled === 0);
+    },
     isImmersiveXrActive: function() {
       return Boolean(this.el.renderer && this.el.renderer.xr && this.el.renderer.xr.isPresenting);
     },
@@ -730,6 +735,9 @@
       return this.getReflectionSource() === "scene-probe" && this.data.renderQuality === "high" && !this.isVrPresentationActive() && !this.isMobileDevice() && Boolean(this.el.renderer) && typeof THREE.WebGLCubeRenderTarget !== "undefined" && typeof THREE.CubeCamera !== "undefined" && typeof THREE.PMREMGenerator !== "undefined";
     },
     getEffectiveReflectionSource: function() {
+      if (!this.areReflectionsEnabled()) {
+        return "none";
+      }
       if (this.canUseSceneProbe()) {
         return "scene-probe";
       }
@@ -1018,6 +1026,7 @@
     applyMaterialProfiles: VRODOSMaster.SceneSettingsHelpers.applyMaterialProfiles,
     ensurePhotorealHelperLight: VRODOSMaster.SceneSettingsHelpers.ensurePhotorealHelperLight,
     removePhotorealHelperLights: VRODOSMaster.SceneSettingsHelpers.removePhotorealHelperLights,
+    updateAdaptiveShadowFit: VRODOSMaster.SceneSettingsHelpers.updateAdaptiveShadowFit || vrodosRuntimeNoop,
     applyHorizonSkyPreset: VRODOSMaster.SceneSettingsHelpers.applyHorizonSkyPreset,
     ensurePmndrsAtmosphereResources: VRODOSMaster.SceneSettingsHelpers.ensurePmndrsAtmosphereResources || function() {
       return null;
@@ -1345,6 +1354,7 @@
         this.fpsStats.update();
       }
       this.updatePmndrsHorizonSun();
+      this.updateAdaptiveShadowFit(false);
       if (this.getEffectiveReflectionSource() !== "scene-probe") {
         return;
       }
@@ -1393,6 +1403,9 @@
   AFRAME.registerComponent("vrodos-navmesh-helper", {
     init: function() {
       this.applyHiddenNavmeshState = this.applyHiddenNavmeshState.bind(this);
+      this.createHiddenNavmeshMaterial = VRODOSMaster.createHiddenNavmeshMaterial || window.vrodosCreateHiddenNavmeshMaterial || function(material) {
+        return material;
+      };
       this.el.addEventListener("model-loaded", this.applyHiddenNavmeshState);
       if (this.el.getObject3D("mesh")) {
         this.applyHiddenNavmeshState();
@@ -1412,9 +1425,9 @@
         node.castShadow = false;
         node.receiveShadow = false;
         if (Array.isArray(node.material)) {
-          node.material = node.material.map((material) => vrodosCreateHiddenNavmeshMaterial(material));
+          node.material = node.material.map((material) => this.createHiddenNavmeshMaterial(material));
         } else if (node.material) {
-          node.material = vrodosCreateHiddenNavmeshMaterial(node.material);
+          node.material = this.createHiddenNavmeshMaterial(node.material);
         }
       });
     },

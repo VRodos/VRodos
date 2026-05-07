@@ -2,7 +2,6 @@
  * VRodos Master Navigation Components
  */
 
-/* global vrodosCreateHiddenNavmeshMaterial */
 var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
 var VRODOSNavmeshDefaults = VRODOSMaster.NAVMESH_DEFAULTS || window.VRODOS_NAVMESH_DEFAULTS || {
     maxStepHeight: 0.6,
@@ -30,6 +29,7 @@ function vrodosNavPerfDebugEnabled() {
 AFRAME.registerComponent('vrodos-navmesh-helper', {
     init: function () {
         this.applyHiddenNavmeshState = this.applyHiddenNavmeshState.bind(this);
+        this.createHiddenNavmeshMaterial = VRODOSMaster.createHiddenNavmeshMaterial || window.vrodosCreateHiddenNavmeshMaterial || function (material) { return material; };
         this.el.addEventListener('model-loaded', this.applyHiddenNavmeshState);
 
         if (this.el.getObject3D('mesh')) {
@@ -53,9 +53,9 @@ AFRAME.registerComponent('vrodos-navmesh-helper', {
             node.receiveShadow = false;
 
             if (Array.isArray(node.material)) {
-                node.material = node.material.map((material) => vrodosCreateHiddenNavmeshMaterial(material));
+                node.material = node.material.map((material) => this.createHiddenNavmeshMaterial(material));
             } else if (node.material) {
-                node.material = vrodosCreateHiddenNavmeshMaterial(node.material);
+                node.material = this.createHiddenNavmeshMaterial(node.material);
             }
         });
     },

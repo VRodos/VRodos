@@ -50,8 +50,10 @@ AFRAME.registerComponent('scene-settings', {
         bloomStrength: { type: "string", default: "off" },
         exposurePreset: { type: "string", default: "neutral" },
         contrastPreset: { type: "string", default: "balanced" },
+        reflectionsEnabled: { type: "string", default: vrodosSceneSettingDefault("reflectionsEnabled", "1") },
         reflectionProfile: { type: "string", default: "balanced" },
         reflectionSource: { type: "string", default: "hdr" },
+        reflectionOcclusionMode: { type: "string", default: vrodosSceneSettingDefault("reflectionOcclusionMode", "auto") },
         horizonSkyPreset: { type: "string", default: "natural" },
         envMapPreset: { type: "string", default: "none" },
         cam_position: { type: "string", default: "0 1.6 0" },
@@ -287,6 +289,12 @@ AFRAME.registerComponent('scene-settings', {
     getReflectionSource: function () {
         return this.data.reflectionSource === 'scene-probe' ? 'scene-probe' : 'hdr';
     },
+    areReflectionsEnabled: function () {
+        return !(this.data.reflectionsEnabled === false ||
+            this.data.reflectionsEnabled === 'false' ||
+            this.data.reflectionsEnabled === '0' ||
+            this.data.reflectionsEnabled === 0);
+    },
     isImmersiveXrActive: function () {
         return Boolean(this.el.renderer && this.el.renderer.xr && this.el.renderer.xr.isPresenting);
     },
@@ -330,6 +338,10 @@ AFRAME.registerComponent('scene-settings', {
             typeof THREE.PMREMGenerator !== 'undefined';
     },
     getEffectiveReflectionSource: function () {
+        if (!this.areReflectionsEnabled()) {
+            return 'none';
+        }
+
         if (this.canUseSceneProbe()) {
             return 'scene-probe';
         }
@@ -677,6 +689,7 @@ AFRAME.registerComponent('scene-settings', {
     applyMaterialProfiles: VRODOSMaster.SceneSettingsHelpers.applyMaterialProfiles,
     ensurePhotorealHelperLight: VRODOSMaster.SceneSettingsHelpers.ensurePhotorealHelperLight,
     removePhotorealHelperLights: VRODOSMaster.SceneSettingsHelpers.removePhotorealHelperLights,
+    updateAdaptiveShadowFit: VRODOSMaster.SceneSettingsHelpers.updateAdaptiveShadowFit || vrodosRuntimeNoop,
     applyHorizonSkyPreset: VRODOSMaster.SceneSettingsHelpers.applyHorizonSkyPreset,
     ensurePmndrsAtmosphereResources: VRODOSMaster.SceneSettingsHelpers.ensurePmndrsAtmosphereResources || function () { return null; },
     disposePmndrsAtmosphere: VRODOSMaster.SceneSettingsHelpers.disposePmndrsAtmosphere || function () {},
@@ -1004,6 +1017,7 @@ AFRAME.registerComponent('scene-settings', {
         }
 
         this.updatePmndrsHorizonSun();
+        this.updateAdaptiveShadowFit(false);
 
         if (this.getEffectiveReflectionSource() !== 'scene-probe') {
             return;

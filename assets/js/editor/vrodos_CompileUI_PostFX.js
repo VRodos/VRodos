@@ -243,6 +243,9 @@ VRodosCompileUI.PostFX = (function () {
         
         VRODOS.editor.envir.scene.aframeExposurePreset = normalizeExposurePreset(controls.exposurePreset.value);
         VRODOS.editor.envir.scene.aframeContrastPreset = normalizeContrastPreset(controls.contrastPreset.value);
+        if (controls.reflectionsEnabled) {
+            VRODOS.editor.envir.scene.aframeReflectionsEnabled = controls.reflectionsEnabled.checked === true;
+        }
         VRODOS.editor.envir.scene.aframeReflectionProfile = normalizeReflectionProfile(controls.reflectionProfile.value);
         VRODOS.editor.envir.scene.aframeReflectionSource = normalizeReflectionSource(controls.reflectionSource.value);
         VRODOS.editor.envir.scene.aframeEnvMapPreset = normalizeEnvMapPreset(controls.envMapPreset.value);
