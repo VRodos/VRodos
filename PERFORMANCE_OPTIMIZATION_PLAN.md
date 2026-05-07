@@ -21,7 +21,8 @@ The first profiling pass on `http://wp.local:5832/Master_Client_766.html` showed
 - Complete: prototype cached optimized GLB derivatives for the top offenders with glTF Transform.
 - Complete: decoder asset publishing and compiled-scene decoder config for Draco, Meshopt, and Basis/KTX2.
 - Complete: compiled-scene Meshopt decoder smoke fix after discovering A-Frame requires a classic/browser-global decoder script.
-- Next: visually compare compressed derivatives in the compiled scene, then design admin-panel optimization controls.
+- Complete: compiled-scene safe Draco derivative trial for the largest asphalt GLB through profiler resource interception.
+- Next: design admin-panel derivative storage and compile-time selection, with a texture-compression path for texture-heavy assets.
 
 ## Spector.js Debug Phase
 
@@ -146,6 +147,32 @@ Remaining gate:
 - Swap one safe derivative at a time, starting with the Draco asphalt derivative.
 - Verify load success, console/network health, and visual parity before any automatic substitution or admin action is enabled.
 
+## Compiled Derivative Trial Phase
+
+The profiler can now substitute local derivative files into a compiled client without modifying uploads or generated HTML:
+
+```bash
+node scripts/profile-master-client.mjs http://wp.local:5832/Master_Client_766.html --disable-fps-meter --resource-override "/wp-content/uploads/archaeology-joker/models/asphalt_injection8_-_monacoazure_coast.glb=C:\tmp\vrodos-master-client-optimized-assets\01-asphalt-injection8-monacoazure-coast.safe-draco.glb" --output C:\tmp\vrodos-master-client-draco-asphalt-override.json
+```
+
+This uses Chrome DevTools request interception to fulfill the original compiled-scene request from a local derivative. It is a test/profiling tool only; production compiled pages should reference validated cached derivatives directly.
+
+Measured result for the first compiled-scene trial:
+
+- Baseline no-FPS-meter smoke profile: `116,853,487` transfer bytes, `119,032,466` encoded bytes, `120,199,180` decoded bytes.
+- Safe Draco asphalt override: `105,100,299` transfer bytes, `107,279,278` encoded bytes, `108,445,992` decoded bytes.
+- Net reduction: `11,753,188` bytes, about `11.2MB`, matching the asphalt derivative size change.
+- The override fulfilled one request for `asphalt_injection8_-_monacoazure_coast.glb` from `01-asphalt-injection8-monacoazure-coast.safe-draco.glb`.
+- Runtime health stayed clean: `exceptions: []`, no Meshopt/Draco loader errors, and only the expected compile diagnostics warning.
+- Scene composition stayed identical in the smoke capture: `203` meshes, `195` geometries, `81` materials, `58` textures, `18` shadow casters, and `178` shadow receivers.
+
+Verdict:
+
+- Safe Draco is compatible in the compiled scene and is useful for network/download reduction.
+- It is not a steady-frame performance fix for this asphalt asset because it preserves the same primitives, materials, textures, and scene object counts.
+- The largest remaining runtime cost is still frame anatomy: many draw calls/material switches and repeated rendering through shadows/post-processing, not just GLB transfer size.
+- Texture-heavy assets like `rockPatch_dC.glb` need a texture-compression/resizing phase; geometry compression barely changes their size.
+
 ## Policy
 
 - `high` must remain visually equivalent to the current look.
@@ -168,7 +195,8 @@ Remaining gate:
 11. Add a glTF Transform derivative prototype script with `safe-draco` and `safe-meshopt` profiles.
 12. Publish Draco, Basis/KTX2, and Meshopt decoder assets through the Three vendor build.
 13. Stamp compiled A-Frame scenes with root `gltf-model` decoder paths.
-14. Next optimization pass should regenerate the target scene, load prototype derivatives, and then prototype admin-side derivative storage plus compile-time selection.
+14. Add profiler resource interception to test compiled-scene derivative substitutions without editing uploads or generated HTML.
+15. Next optimization pass should prototype admin-side derivative storage plus compile-time selection, then add texture compression for texture-heavy GLBs.
 
 ## Acceptance Criteria
 
@@ -182,5 +210,6 @@ Remaining gate:
 - The asset audit can write JSON/Markdown reports from a profiler capture without modifying uploaded assets.
 - The derivative prototype can generate JSON/Markdown reports and cached GLB derivatives without modifying uploaded assets.
 - Compiled scenes include decoder paths for Draco, Basis/KTX2, and Meshopt compressed assets after regeneration.
+- The profiler can trial a local derivative through `--resource-override URL_OR_PATH=FILE` and record fulfilled override details.
 - `?vrodos_spector=1` exposes `window.VRODOS_SPECTOR` and opens Spector's UI without affecting normal URLs.
 - `node --check`, PHP lint for edited PHP files, and `git diff --check` pass for the edited files.

@@ -2,7 +2,7 @@
 
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
@@ -27,7 +27,8 @@ function parseArgs(argv) {
         json: false,
         spector: false,
         spectorOutput: '',
-        disableFpsMeter: false
+        disableFpsMeter: false,
+        resourceOverrides: []
     };
 
     for (let i = 0; i < argv.length; i += 1) {
@@ -103,6 +104,10 @@ function parseArgs(argv) {
             case '--disable-fps-meter':
                 options.disableFpsMeter = true;
                 break;
+            case '--resource-override':
+            case '--asset-override':
+                options.resourceOverrides.push(parseResourceOverrideSpec(nextValue() || ''));
+                break;
             case '--help':
             case '-h':
                 printHelp();
@@ -140,7 +145,189 @@ Options:
   --spector               Capture one Spector.js WebGL frame after timing samples.
   --spector-output PATH   Write the Spector capture JSON to PATH. Defaults next to --output.
   --disable-fps-meter     Disable the runtime FPS meter before warmup; this does not persist scene data.
+  --resource-override URL_OR_PATH=FILE
+                           Fulfill a matching compiled-client resource request from a local file.
+                           Repeatable; useful for GLB derivative trials without editing uploads.
 `);
+}
+
+function parseResourceOverrideSpec(spec) {
+    const separator = spec.indexOf('=');
+    if (separator <= 0 || separator === spec.length - 1) {
+        throw new Error(`Invalid --resource-override value "${spec}". Use URL_OR_PATH=FILE.`);
+    }
+
+    return {
+        match: spec.slice(0, separator).trim(),
+        filePath: path.resolve(spec.slice(separator + 1).trim())
+    };
+}
+
+function normalizeRequestPath(value) {
+    if (!value) {
+        return '';
+    }
+
+    const withoutHash = String(value).split('#')[0];
+    const withoutQuery = withoutHash.split('?')[0];
+
+    try {
+        if (/^https?:\/\//i.test(withoutQuery)) {
+            return decodeURIComponent(new URL(withoutQuery).pathname).replaceAll('\\', '/');
+        }
+    } catch (error) {
+        return withoutQuery.replaceAll('\\', '/');
+    }
+
+    try {
+        return decodeURIComponent(withoutQuery).replaceAll('\\', '/');
+    } catch (error) {
+        return withoutQuery.replaceAll('\\', '/');
+    }
+}
+
+function requestMatchesOverride(requestUrl, match) {
+    if (!requestUrl || !match) {
+        return false;
+    }
+
+    if (requestUrl === match) {
+        return true;
+    }
+
+    const requestPath = normalizeRequestPath(requestUrl);
+    const matchPath = normalizeRequestPath(match);
+    return Boolean(requestPath && matchPath && requestPath === matchPath);
+}
+
+function mimeTypeForPath(filePath) {
+    const ext = path.extname(filePath).toLowerCase();
+    if (ext === '.glb') {
+        return 'model/gltf-binary';
+    }
+    if (ext === '.gltf') {
+        return 'model/gltf+json';
+    }
+    if (ext === '.ktx2') {
+        return 'image/ktx2';
+    }
+    if (ext === '.bin') {
+        return 'application/octet-stream';
+    }
+    return 'application/octet-stream';
+}
+
+async function prepareResourceOverrides(overrides) {
+    const prepared = [];
+    for (let index = 0; index < overrides.length; index += 1) {
+        const override = overrides[index];
+        const fileStat = await stat(override.filePath);
+        if (!fileStat.isFile()) {
+            throw new Error(`Resource override target is not a file: ${override.filePath}`);
+        }
+
+        prepared.push({
+            index,
+            match: override.match,
+            filePath: override.filePath,
+            mimeType: mimeTypeForPath(override.filePath),
+            sizeBytes: fileStat.size,
+            fulfilledCount: 0,
+            bodyPromise: null
+        });
+    }
+    return prepared;
+}
+
+async function readOverrideBody(override) {
+    if (!override.bodyPromise) {
+        override.bodyPromise = readFile(override.filePath).then((buffer) => ({
+            byteLength: buffer.byteLength,
+            body: buffer.toString('base64')
+        }));
+    }
+    return override.bodyPromise;
+}
+
+async function handleResourceOverrideRequest(cdp, overrides, events, params) {
+    const requestUrl = params.request?.url || '';
+    const override = overrides.find((candidate) => requestMatchesOverride(requestUrl, candidate.match));
+
+    if (!override) {
+        await cdp.send('Fetch.continueRequest', { requestId: params.requestId });
+        return;
+    }
+
+    const body = await readOverrideBody(override);
+    await cdp.send('Fetch.fulfillRequest', {
+        requestId: params.requestId,
+        responseCode: 200,
+        responseHeaders: [
+            { name: 'Content-Type', value: override.mimeType },
+            { name: 'Content-Length', value: String(body.byteLength) },
+            { name: 'Access-Control-Allow-Origin', value: '*' },
+            { name: 'Cache-Control', value: 'no-store' },
+            { name: 'X-VRodos-Profile-Resource-Override', value: '1' }
+        ],
+        body: body.body
+    });
+
+    override.fulfilledCount += 1;
+    events.push({
+        match: override.match,
+        requestUrl,
+        filePath: override.filePath,
+        mimeType: override.mimeType,
+        sizeBytes: body.byteLength,
+        sizeLabel: formatBytes(body.byteLength)
+    });
+}
+
+async function enableResourceOverrides(cdp, overrides, events) {
+    if (!overrides.length) {
+        return;
+    }
+
+    cdp.on('Fetch.requestPaused', (params) => {
+        handleResourceOverrideRequest(cdp, overrides, events, params).catch(async (error) => {
+            events.push({
+                requestUrl: params.request?.url || '',
+                error: error.message || String(error)
+            });
+            try {
+                await cdp.send('Fetch.continueRequest', { requestId: params.requestId });
+            } catch (continueError) {
+                // The request may already be closed; the captured event above is enough.
+            }
+        });
+    });
+
+    await cdp.send('Fetch.enable', {
+        patterns: [
+            {
+                urlPattern: '*'
+            }
+        ]
+    });
+}
+
+function summarizeResourceOverrides(overrides, events) {
+    const fulfilledBytes = events.reduce((total, event) => total + (Number(event.sizeBytes) || 0), 0);
+    return {
+        enabled: overrides.length > 0,
+        configured: overrides.map((override) => ({
+            match: override.match,
+            filePath: override.filePath,
+            mimeType: override.mimeType,
+            sizeBytes: override.sizeBytes,
+            sizeLabel: formatBytes(override.sizeBytes),
+            fulfilledCount: override.fulfilledCount
+        })),
+        fulfilledCount: events.filter((event) => !event.error).length,
+        fulfilledBytes,
+        fulfilledSizeLabel: formatBytes(fulfilledBytes),
+        events
+    };
 }
 
 function deriveSpectorOutputPath(outputPath) {
@@ -1134,6 +1321,10 @@ function printSummary(result) {
         console.log(`Shadows: ${scene.objectCounts.shadowCasters} casters, ${scene.objectCounts.shadowReceivers} receivers, renderer shadow map ${scene.renderer ? scene.renderer.shadowMapEnabled : 'n/a'}`);
     }
     console.log(`Resources: ${resources.count} entries, transfer ${formatBytes(resources.transferSize)}, encoded ${formatBytes(resources.encodedBodySize)}, decoded ${formatBytes(resources.decodedBodySize)}`);
+    if (result.runtimeOverrides?.resourceOverrides?.enabled) {
+        const overrides = result.runtimeOverrides.resourceOverrides;
+        console.log(`Resource overrides: ${overrides.fulfilledCount} fulfilled, ${overrides.fulfilledSizeLabel} served from local derivatives`);
+    }
     if (result.trace && result.trace.totals) {
         console.log(`Trace: total ${formatMs(result.trace.totals.totalDurationMs)}, GPU ${formatMs(result.trace.totals.gpuDurationMs)}, scripting ${formatMs(result.trace.totals.scriptingDurationMs)}`);
     }
@@ -1152,6 +1343,7 @@ function printSummary(result) {
 
 async function run() {
     const options = parseArgs(process.argv.slice(2));
+    const resourceOverrides = await prepareResourceOverrides(options.resourceOverrides);
     const WebSocketClass = await loadWebSocketClass();
     const port = await getFreePort();
     const userDataDir = options.userDataDir || path.join(os.tmpdir(), `vrodos-profile-${Date.now()}-${process.pid}`);
@@ -1202,6 +1394,7 @@ async function run() {
         const consoleMessages = [];
         const networkFailures = [];
         const exceptions = [];
+        const resourceOverrideEvents = [];
 
         cdp.on('Runtime.consoleAPICalled', (params) => {
             if (!['warning', 'error', 'assert'].includes(params.type)) {
@@ -1234,6 +1427,7 @@ async function run() {
         await cdp.send('Page.enable');
         await cdp.send('Runtime.enable');
         await cdp.send('Network.enable');
+        await enableResourceOverrides(cdp, resourceOverrides, resourceOverrideEvents);
         await cdp.send('Performance.enable');
         await cdp.send('Log.enable');
         await cdp.send('Page.bringToFront');
@@ -1281,6 +1475,7 @@ async function run() {
         const afterMetrics = metricsToObject((await cdp.send('Performance.getMetrics')).metrics);
         const scene = await captureSceneSnapshot(cdp);
         const resources = await captureResources(cdp);
+        runtimeOverrides.resourceOverrides = summarizeResourceOverrides(resourceOverrides, resourceOverrideEvents);
         let spector = {
             enabled: false
         };

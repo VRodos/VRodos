@@ -101,6 +101,14 @@ node scripts/audit-master-client-assets.mjs --profile C:\tmp\vrodos-master-clien
 
 The audit parses GLB headers/JSON without rewriting uploads. It estimates unique source triangles, primitive count, material count, compression extensions, and first-action recommendations. Compression automation should generate cached derivatives at upload or compile time; compiled A-Frame pages should load validated Meshopt/Draco/KTX2 derivatives rather than compressing raw GLBs in the browser during page load.
 
+Use profiler resource overrides for compiled-scene derivative trials before changing compiler substitution rules:
+
+```bash
+node scripts/profile-master-client.mjs http://wp.local:5832/Master_Client_766.html --disable-fps-meter --resource-override "/wp-content/uploads/archaeology-joker/models/asphalt_injection8_-_monacoazure_coast.glb=C:\tmp\vrodos-master-client-optimized-assets\01-asphalt-injection8-monacoazure-coast.safe-draco.glb" --output C:\tmp\vrodos-master-client-draco-asphalt-override.json
+```
+
+`--resource-override` is repeatable. It uses CDP request interception and is intended for one-off derivative validation; production clients should reference validated cached derivative URLs directly.
+
 Prototype optimized derivatives with glTF Transform:
 
 ```bash
@@ -128,6 +136,8 @@ Decoder files are copied by `npm run build:three` and recorded in `assets/runtim
 Use the browser-global Meshopt decoder file, `meshopt_decoder.js`, in generated clients. A-Frame loads `meshoptDecoderPath` as a classic script, so the ESM `meshopt_decoder.module.js` form is not valid there. The vendor build also refreshes `meshopt_decoder.module.js` with the same browser-global payload as a compatibility copy for already-generated clients.
 
 A short smoke profile on `Master_Client_766.html` confirmed the generated root scene attribute points at `meshopt_decoder.js` and no longer throws the previous Meshopt `Unexpected token 'export'` / `MeshoptDecoder.ready` errors. For future captures, inspect `scene.gltfModel` in `scripts/profile-master-client.mjs` output to confirm the root scene attribute and decoder globals.
+
+The first compiled-scene safe Draco trial substituted only `asphalt_injection8_-_monacoazure_coast.glb` through `--resource-override`. It reduced transfer/encoded/decoded resource bytes by about `11.2MB`, kept object/material/texture counts unchanged, and produced no loader exceptions. This validates the compressed-geometry loader path, but it does not reduce draw calls or material switches by itself.
 
 ## 4. Legacy Pipeline
 

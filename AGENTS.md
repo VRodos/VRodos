@@ -131,6 +131,7 @@ Performance tooling:
 - Use `scripts/profile-master-client.mjs` for compiled-client CDP captures.
 - Use `--disable-fps-meter` for timing comparisons unless testing the FPS meter itself.
 - Use `--spector` only after rAF/trace sampling for one-frame WebGL anatomy.
+- Use profiler `--resource-override URL_OR_PATH=FILE` for compiled-scene derivative trials without editing uploads or generated HTML. Treat it as a validation tool, not production substitution.
 - Use `scripts/audit-master-client-assets.mjs` to correlate compile diagnostics with local GLB metadata.
 - Use `scripts/prototype-optimize-master-client-assets.mjs` for offline derivative prototypes only. It writes reports/GLBs under the requested output directory and must not modify WordPress uploads.
 - `npm run build:three` copies Draco, Basis/KTX2, and Meshopt decoder assets into `assets/vendor/three-r181/` and records them in `assets/runtime-version-manifest.json`.
