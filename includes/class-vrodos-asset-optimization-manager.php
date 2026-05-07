@@ -6,15 +6,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class VRodos_Asset_Optimization_Manager {
 	private const META_KEY = '_vrodos_asset3d_glb_derivatives';
+	private const ANALYSIS_META_KEY = '_vrodos_asset3d_glb_analysis';
 	private const SETTINGS_PAGE_KEY = 'vrodos_options';
 	private const SETTINGS_TAB_KEY = 'vrodos_asset_optimization_settings';
 	private const BATCH_TRANSIENT_PREFIX = 'vrodos_asset_glb_opt_batch_';
+	private const GLB_MAGIC = 'glTF';
+	private const GLB_VERSION = 2;
+	private const GLB_JSON_CHUNK = 0x4E4F534A;
+	private const GLTF_TRIANGLES_MODE = 4;
+	private const GLTF_TRIANGLE_STRIP_MODE = 5;
+	private const GLTF_TRIANGLE_FAN_MODE = 6;
 
 	public function __construct() {
 		add_action( 'add_meta_boxes', $this->add_meta_boxes(...) );
 		add_action( 'save_post_vrodos_asset3d', $this->save_derivative_compile_settings(...), 20, 2 );
 		add_action( 'admin_post_vrodos_optimize_asset_glb', $this->handle_optimize_asset_glb(...) );
 		add_action( 'admin_post_vrodos_optimize_missing_glbs', $this->handle_optimize_missing_glbs(...) );
+		add_action( 'admin_post_vrodos_refresh_asset_glb_analysis', $this->handle_refresh_asset_glb_analysis(...) );
+		add_action( 'admin_post_vrodos_dashboard_refresh_asset_glb_analysis', $this->handle_dashboard_refresh_asset_glb_analysis(...) );
+		add_action( 'admin_post_vrodos_dashboard_optimize_asset_glb', $this->handle_dashboard_optimize_asset_glb(...) );
+		add_action( 'added_post_meta', $this->handle_asset_glb_meta_change(...), 10, 4 );
+		add_action( 'updated_post_meta', $this->handle_asset_glb_meta_change(...), 10, 4 );
+		add_action( 'deleted_post_meta', $this->handle_asset_glb_meta_delete(...), 10, 4 );
 		add_filter( 'vrodos_settings_tabs', $this->register_settings_tab(...) );
 		add_action( 'vrodos_render_settings_tab_' . self::SETTINGS_TAB_KEY, $this->render_asset_optimization_settings(...) );
 	}
@@ -22,6 +35,26 @@ class VRodos_Asset_Optimization_Manager {
 	public function register_settings_tab( array $tabs ): array {
 		$tabs[ self::SETTINGS_TAB_KEY ] = __( 'Assets' );
 		return $tabs;
+	}
+
+	public function handle_asset_glb_meta_change( $meta_id, int $asset_id, string $meta_key, $meta_value ): void {
+		unset( $meta_id, $meta_value );
+
+		if ( 'vrodos_asset3d_glb' !== $meta_key || get_post_type( $asset_id ) !== 'vrodos_asset3d' ) {
+			return;
+		}
+
+		self::refresh_asset_analysis( $asset_id );
+	}
+
+	public function handle_asset_glb_meta_delete( $meta_ids, int $asset_id, string $meta_key, $meta_value ): void {
+		unset( $meta_ids, $meta_value );
+
+		if ( 'vrodos_asset3d_glb' !== $meta_key || get_post_type( $asset_id ) !== 'vrodos_asset3d' ) {
+			return;
+		}
+
+		delete_post_meta( $asset_id, self::ANALYSIS_META_KEY );
 	}
 
 	public function add_meta_boxes(): void {
@@ -126,35 +159,71 @@ class VRodos_Asset_Optimization_Manager {
 		$profile          = 'safe-draco';
 		$scan             = self::scan_glb_derivatives( $profile );
 		$report           = $this->read_batch_report_from_request();
+		$analysis_report  = $this->read_analysis_report_from_request();
+		$recommended_count = count( $scan['recommendedGeometry'] );
 		$missing_count    = count( $scan['missing'] );
 		$stale_count      = count( $scan['stale'] );
 		$auto_requested   = isset( $_GET['vrodos_asset_optimization_autorun'] ) && '1' === sanitize_key( (string) wp_unslash( $_GET['vrodos_asset_optimization_autorun'] ) );
+		$analysis_auto_requested = isset( $_GET['vrodos_asset_analysis_autorun'] ) && '1' === sanitize_key( (string) wp_unslash( $_GET['vrodos_asset_analysis_autorun'] ) );
 		$stop_for_failure = ! empty( $report['failed'] );
-		$target           = (string) ( $report['target'] ?? 'missing' );
-		$remaining        = (int) ( $report['remaining'] ?? $missing_count );
-		$should_continue  = $auto_requested && ! $stop_for_failure && $remaining > 0 && in_array( $target, [ 'missing', 'stale' ], true );
+		$target           = (string) ( $report['target'] ?? 'recommended' );
+		$remaining        = (int) ( $report['remaining'] ?? $recommended_count );
+		$should_continue  = $auto_requested && ! $stop_for_failure && $remaining > 0 && in_array( $target, [ 'recommended', 'missing', 'stale' ], true );
+		$analysis_target  = (string) ( $analysis_report['target'] ?? 'stale' );
+		$analysis_remaining = (int) ( $analysis_report['remaining'] ?? ( count( $scan['analysisMissing'] ) + count( $scan['analysisStale'] ) ) );
+		$should_continue_analysis = $analysis_auto_requested && $analysis_remaining > 0 && in_array( $analysis_target, [ 'stale', 'all' ], true );
 
 		echo '<h2>' . esc_html__( 'Asset Optimization' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Generate cached optimized GLB derivatives for uploaded assets. This does not replace source uploads and does not enable compiled-scene substitution.' ) . '</p>';
+		echo '<p>' . esc_html__( 'Analyze uploaded GLBs before generating cached optimized derivatives. This does not replace source uploads and does not enable compiled-scene substitution.' ) . '</p>';
 
+		$this->render_analysis_report( $analysis_report );
 		$this->render_batch_report( $report );
 		$this->render_asset_optimization_summary( $scan );
 
+		echo '<h3>' . esc_html__( 'Analysis Refresh' ) . '</h3>';
+		echo '<p>' . esc_html__( 'New uploads and Immerse imports are analyzed automatically. Use this for existing assets or stale analysis records.' ) . '</p>';
+		$this->render_analysis_form(
+			'stale',
+			true,
+			'vrodos-refresh-stale-glb-analysis',
+			sprintf(
+				/* translators: %d: number of assets needing analysis. */
+				_n( 'Refresh missing/stale analysis (%d asset)', 'Refresh missing/stale analysis (%d assets)', count( $scan['analysisMissing'] ) + count( $scan['analysisStale'] ) ),
+				count( $scan['analysisMissing'] ) + count( $scan['analysisStale'] )
+			),
+			( count( $scan['analysisMissing'] ) + count( $scan['analysisStale'] ) ) <= 0
+		);
+
 		echo '<h3>' . esc_html__( 'Batch Generation' ) . '</h3>';
-		echo '<p>' . esc_html__( 'The batch runner processes a small number of assets per request and then resumes until the selected queue is empty. If any asset fails, automatic continuation stops so the error can be reviewed.' ) . '</p>';
+		echo '<p>' . esc_html__( 'The default batch only generates safe Draco derivatives for assets that analysis says should benefit from geometry compression. If any asset fails, automatic continuation stops so the error can be reviewed.' ) . '</p>';
 
 		$this->render_batch_form(
 			$profile,
-			'missing',
+			'recommended',
 			true,
-			'vrodos-optimize-missing-glbs',
+			'vrodos-optimize-recommended-glbs',
 			sprintf(
-				/* translators: %d: number of missing assets. */
-				_n( 'Generate missing safe Draco derivative (%d asset)', 'Generate missing safe Draco derivatives (%d assets)', $missing_count ),
-				$missing_count
+				/* translators: %d: number of recommended assets. */
+				_n( 'Generate recommended safe Draco derivative (%d asset)', 'Generate recommended safe Draco derivatives (%d assets)', $recommended_count ),
+				$recommended_count
 			),
-			$missing_count <= 0
+			$recommended_count <= 0
 		);
+
+		if ( $missing_count > $recommended_count ) {
+			$this->render_batch_form(
+				$profile,
+				'missing',
+				false,
+				'vrodos-optimize-all-missing-glbs',
+				sprintf(
+					/* translators: %d: number of missing assets. */
+					_n( 'Generate all missing safe Draco derivative (%d asset)', 'Generate all missing safe Draco derivatives (%d assets)', $missing_count ),
+					$missing_count
+				),
+				false
+			);
+		}
 
 		if ( $stale_count > 0 ) {
 			$this->render_batch_form(
@@ -171,9 +240,27 @@ class VRodos_Asset_Optimization_Manager {
 			);
 		}
 
+		$this->render_asset_candidate_list( __( 'Recommended for safe Draco/Meshopt geometry derivatives' ), $scan['recommendedGeometry'], 'recommendation' );
+		$this->render_asset_candidate_list( __( 'Recommended for future KTX2 texture derivatives' ), $scan['recommendedTexture'], 'recommendation' );
+		$this->render_asset_candidate_list( __( 'Recommended for future LOD derivatives' ), $scan['recommendedLod'], 'recommendation' );
+		$this->render_asset_candidate_list( __( 'Low-benefit or already compressed GLB assets' ), $scan['lowBenefit'], 'recommendation' );
 		$this->render_asset_candidate_list( __( 'Missing safe Draco derivatives' ), $scan['missing'] );
 		$this->render_asset_candidate_list( __( 'Stale safe Draco derivatives' ), $scan['stale'] );
+		$this->render_asset_candidate_list( __( 'Needs analysis refresh' ), array_merge( $scan['analysisMissing'], $scan['analysisStale'] ) );
 		$this->render_asset_candidate_list( __( 'Unsupported or non-local GLB assets' ), $scan['unsupported'] );
+
+		if ( $should_continue_analysis ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Continuing the asset analysis refresh...' ) . '</p></div>';
+			$this->render_analysis_form(
+				$analysis_target,
+				true,
+				'vrodos-asset-analysis-autocontinue',
+				__( 'Continue asset analysis refresh' ),
+				false,
+				true
+			);
+			echo '<script>window.setTimeout(function(){var form=document.getElementById("vrodos-asset-analysis-autocontinue");if(form){HTMLFormElement.prototype.submit.call(form);}},700);</script>';
+		}
 
 		if ( $should_continue ) {
 			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Continuing the optimization batch...' ) . '</p></div>';
@@ -271,8 +358,8 @@ class VRodos_Asset_Optimization_Manager {
 		if ( ! isset( self::supported_profiles()[ $profile ] ) ) {
 			$profile = 'safe-draco';
 		}
-		if ( ! in_array( $target, [ 'missing', 'stale' ], true ) ) {
-			$target = 'missing';
+		if ( ! in_array( $target, [ 'recommended', 'missing', 'stale' ], true ) ) {
+			$target = 'recommended';
 		}
 
 		$batch_limit = (int) apply_filters( 'vrodos_asset_optimizer_batch_size', 3 );
@@ -285,6 +372,38 @@ class VRodos_Asset_Optimization_Manager {
 		];
 		if ( $autorun && empty( $report['failed'] ) && ! empty( $report['generated'] ) && (int) ( $report['remaining'] ?? 0 ) > 0 ) {
 			$args['vrodos_asset_optimization_autorun'] = '1';
+		}
+
+		wp_safe_redirect( self::settings_tab_url( $args ) );
+		exit;
+	}
+
+	public function handle_refresh_asset_glb_analysis(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You are not allowed to analyze assets.', 'vrodos' ), '', [ 'response' => 403 ] );
+		}
+
+		check_admin_referer( 'vrodos_refresh_asset_glb_analysis' );
+
+		$target = isset( $_POST['vrodos_asset_analysis_target'] )
+			? sanitize_key( (string) wp_unslash( $_POST['vrodos_asset_analysis_target'] ) )
+			: 'stale';
+		$autorun = ! empty( $_POST['vrodos_asset_analysis_autorun'] );
+
+		if ( ! in_array( $target, [ 'stale', 'all' ], true ) ) {
+			$target = 'stale';
+		}
+
+		$batch_limit = (int) apply_filters( 'vrodos_asset_analysis_batch_size', 25 );
+		$batch_limit = max( 1, min( 100, $batch_limit ) );
+		$report      = $this->run_analysis_batch( $target, $batch_limit );
+		$report_key  = $this->store_batch_report( $report );
+
+		$args = [
+			'vrodos_asset_analysis_report' => $report_key,
+		];
+		if ( $autorun && (int) ( $report['remaining'] ?? 0 ) > 0 ) {
+			$args['vrodos_asset_analysis_autorun'] = '1';
 		}
 
 		wp_safe_redirect( self::settings_tab_url( $args ) );
@@ -334,6 +453,11 @@ class VRodos_Asset_Optimization_Manager {
 		echo '<tbody>';
 		echo '<tr><th scope="row">' . esc_html__( 'Asset posts scanned' ) . '</th><td>' . esc_html( number_format_i18n( (int) $scan['totalAssets'] ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Local GLB assets' ) . '</th><td>' . esc_html( number_format_i18n( (int) $scan['localGlbs'] ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Analyzed GLB assets' ) . '</th><td>' . esc_html( number_format_i18n( (int) $scan['analysisReady'] ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Needs analysis refresh' ) . '</th><td>' . esc_html( number_format_i18n( count( $scan['analysisMissing'] ) + count( $scan['analysisStale'] ) ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Recommended safe Draco candidates' ) . '</th><td>' . esc_html( number_format_i18n( count( $scan['recommendedGeometry'] ) ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Future KTX2 candidates' ) . '</th><td>' . esc_html( number_format_i18n( count( $scan['recommendedTexture'] ) ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Future LOD candidates' ) . '</th><td>' . esc_html( number_format_i18n( count( $scan['recommendedLod'] ) ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Ready safe Draco derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $ready_count ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Missing safe Draco derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $missing_count ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Stale safe Draco derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $stale_count ) ) . '</td></tr>';
@@ -362,14 +486,28 @@ class VRodos_Asset_Optimization_Manager {
 		echo '</form>';
 	}
 
-	private function render_asset_candidate_list( string $title, array $items, int $limit = 10 ): void {
+	private function render_analysis_form( string $target, bool $autorun, string $form_id, string $button_label, bool $disabled = false, bool $hidden = false ): void {
+		$submit_name = sanitize_key( str_replace( '-', '_', $form_id ) . '_submit' );
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" id="' . esc_attr( $form_id ) . '" style="' . ( $hidden ? 'display:none;' : 'margin:12px 0;' ) . '">';
+		wp_nonce_field( 'vrodos_refresh_asset_glb_analysis' );
+		echo '<input type="hidden" name="action" value="vrodos_refresh_asset_glb_analysis">';
+		echo '<input type="hidden" name="vrodos_asset_analysis_target" value="' . esc_attr( $target ) . '">';
+		if ( $autorun ) {
+			echo '<input type="hidden" name="vrodos_asset_analysis_autorun" value="1">';
+		}
+		submit_button( $button_label, 'secondary', $submit_name, false, $disabled ? [ 'disabled' => 'disabled' ] : [] );
+		echo '</form>';
+	}
+
+	private function render_asset_candidate_list( string $title, array $items, string $mode = 'status', int $limit = 10 ): void {
 		if ( empty( $items ) ) {
 			return;
 		}
 
 		echo '<h3>' . esc_html( $title ) . '</h3>';
 		echo '<table class="widefat striped" style="max-width:960px;margin-bottom:16px;">';
-		echo '<thead><tr><th>' . esc_html__( 'Asset' ) . '</th><th>' . esc_html__( 'Source size' ) . '</th><th>' . esc_html__( 'Status' ) . '</th></tr></thead>';
+		echo '<thead><tr><th>' . esc_html__( 'Asset' ) . '</th><th>' . esc_html__( 'Source size' ) . '</th><th>' . esc_html__( 'Status' ) . '</th><th>' . esc_html__( 'Reason' ) . '</th></tr></thead>';
 		echo '<tbody>';
 
 		foreach ( array_slice( $items, 0, $limit ) as $item ) {
@@ -388,7 +526,8 @@ class VRodos_Asset_Optimization_Manager {
 			}
 			echo '</td>';
 			echo '<td>' . esc_html( size_format( (int) ( $item['sourceSizeBytes'] ?? 0 ), 1 ) ) . '</td>';
-			echo '<td>' . esc_html( (string) ( $item['reason'] ?? $item['status'] ?? '' ) ) . '</td>';
+			echo '<td>' . esc_html( (string) ( $item['statusLabel'] ?? $item['status'] ?? '' ) ) . '</td>';
+			echo '<td>' . esc_html( $this->candidate_reason_text( $item, $mode ) ) . '</td>';
 			echo '</tr>';
 		}
 
@@ -407,6 +546,17 @@ class VRodos_Asset_Optimization_Manager {
 				)
 			);
 		}
+	}
+
+	private function candidate_reason_text( array $item, string $mode ): string {
+		if ( 'recommendation' === $mode ) {
+			$reasons = $item['recommendationReasons'] ?? [];
+			if ( is_array( $reasons ) && ! empty( $reasons ) ) {
+				return implode( '; ', array_map( 'strval', $reasons ) );
+			}
+		}
+
+		return (string) ( $item['reason'] ?? $item['suggestedAction'] ?? $item['status'] ?? '' );
 	}
 
 	private function render_batch_report( array $report ): void {
@@ -438,6 +588,29 @@ class VRodos_Asset_Optimization_Manager {
 		if ( ! empty( $report['failed'] ) ) {
 			echo '<ul>';
 			foreach ( $report['failed'] as $item ) {
+				echo '<li><strong>' . esc_html( (string) $item['title'] ) . ':</strong> ' . esc_html( (string) $item['error'] ) . '</li>';
+			}
+			echo '</ul>';
+		}
+	}
+
+	private function render_analysis_report( array $report ): void {
+		if ( empty( $report ) ) {
+			return;
+		}
+
+		echo '<div class="notice notice-success inline"><p>';
+		printf(
+			esc_html__( 'Analysis refresh finished: %1$d analyzed, %2$d unsupported, %3$d remaining.' ),
+			count( $report['analyzed'] ?? [] ),
+			count( $report['unsupported'] ?? [] ),
+			(int) ( $report['remaining'] ?? 0 )
+		);
+		echo '</p></div>';
+
+		if ( ! empty( $report['unsupported'] ) ) {
+			echo '<ul>';
+			foreach ( $report['unsupported'] as $item ) {
 				echo '<li><strong>' . esc_html( (string) $item['title'] ) . ':</strong> ' . esc_html( (string) $item['error'] ) . '</li>';
 			}
 			echo '</ul>';
@@ -499,6 +672,75 @@ class VRodos_Asset_Optimization_Manager {
 		return $report;
 	}
 
+	private function run_analysis_batch( string $target, int $limit ): array {
+		$candidates = array_slice( self::collect_analysis_candidates( $target ), 0, $limit );
+		$report     = [
+			'target'      => $target,
+			'attempted'   => count( $candidates ),
+			'analyzed'    => [],
+			'unsupported' => [],
+			'remaining'   => count( self::collect_analysis_candidates( $target ) ),
+		];
+
+		foreach ( $candidates as $candidate ) {
+			$asset_id = (int) $candidate['assetId'];
+			$result   = self::refresh_asset_analysis( $asset_id );
+			if ( is_wp_error( $result ) ) {
+				$report['unsupported'][] = [
+					'assetId' => $asset_id,
+					'title'   => (string) $candidate['title'],
+					'error'   => $result->get_error_message(),
+				];
+				continue;
+			}
+
+			$report['analyzed'][] = [
+				'assetId'         => $asset_id,
+				'title'           => (string) $candidate['title'],
+				'suggestedAction' => (string) ( $result['suggestedAction'] ?? '' ),
+			];
+		}
+
+		$report['remaining'] = count( self::collect_analysis_candidates( $target ) );
+		return $report;
+	}
+
+	private static function collect_analysis_candidates( string $target ): array {
+		$asset_ids = get_posts(
+			[
+				'post_type'      => 'vrodos_asset3d',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+				'no_found_rows'  => true,
+			]
+		);
+
+		$candidates = [];
+		foreach ( $asset_ids as $asset_id ) {
+			$asset_id = (int) $asset_id;
+			$source   = self::get_source_glb( $asset_id );
+			if ( is_wp_error( $source ) ) {
+				continue;
+			}
+
+			$analysis = self::get_analysis_meta( $asset_id );
+			if ( 'all' !== $target && ! self::analysis_needs_refresh( $analysis, $source ) ) {
+				continue;
+			}
+
+			$title = get_the_title( $asset_id );
+			$candidates[] = [
+				'assetId' => $asset_id,
+				'title'   => $title ? $title : 'Asset #' . $asset_id,
+			];
+		}
+
+		return $candidates;
+	}
+
 	private static function scan_glb_derivatives( string $profile ): array {
 		$asset_ids = get_posts(
 			[
@@ -516,6 +758,14 @@ class VRodos_Asset_Optimization_Manager {
 			'profile'               => $profile,
 			'totalAssets'           => count( $asset_ids ),
 			'localGlbs'             => 0,
+			'analysisReady'         => 0,
+			'analysisMissing'       => [],
+			'analysisStale'         => [],
+			'recommended'           => [],
+			'recommendedGeometry'   => [],
+			'recommendedTexture'    => [],
+			'recommendedLod'        => [],
+			'lowBenefit'            => [],
 			'ready'                 => [],
 			'missing'               => [],
 			'stale'                 => [],
@@ -548,29 +798,81 @@ class VRodos_Asset_Optimization_Manager {
 
 			$meta       = self::get_derivative_meta( $asset_id );
 			$derivative = $meta['derivatives'][ $profile ] ?? null;
+			$derivative_status = 'missing';
 			if ( ! is_array( $derivative ) ) {
 				$item['status'] = 'missing';
+				$item['statusLabel'] = 'Missing derivative';
 				$item['reason'] = 'No derivative generated yet.';
 				$scan['missing'][] = $item;
+			} else {
+				$reason = self::derivative_unusable_reason( $derivative, (string) $source['url'] );
+				if ( '' !== $reason ) {
+					$derivative_status = 'stale';
+					$item['status'] = 'stale';
+					$item['statusLabel'] = 'Stale derivative';
+					$item['reason'] = $reason;
+					$scan['stale'][] = $item;
+				} else {
+					$derivative_status = 'ready';
+					$item['status']              = 'ready';
+					$item['statusLabel']         = 'Ready derivative';
+					$item['derivativeSizeBytes'] = (int) ( $derivative['derivativeSizeBytes'] ?? 0 );
+					$item['reductionBytes']      = (int) ( $derivative['reductionBytes'] ?? 0 );
+					$item['reductionPercent']    = is_numeric( $derivative['reductionPercent'] ?? null ) ? (float) $derivative['reductionPercent'] : 0.0;
+					$scan['readySavedBytes']    += (int) $item['reductionBytes'];
+					$scan['readySourceBytes']   += (int) ( $derivative['sourceSizeBytes'] ?? $item['sourceSizeBytes'] );
+					$scan['readyDerivativeBytes'] += (int) $item['derivativeSizeBytes'];
+					$scan['ready'][]             = $item;
+				}
+			}
+
+			$analysis = self::get_analysis_meta( $asset_id );
+			if ( empty( $analysis ) ) {
+				$analysis_item = $item;
+				$analysis_item['statusLabel'] = 'Needs analysis';
+				$analysis_item['reason'] = 'No saved GLB analysis yet.';
+				$scan['analysisMissing'][] = $analysis_item;
 				continue;
 			}
 
-			$reason = self::derivative_unusable_reason( $derivative, (string) $source['url'] );
-			if ( '' !== $reason ) {
-				$item['status'] = 'stale';
-				$item['reason'] = $reason;
-				$scan['stale'][] = $item;
+			if ( self::analysis_needs_refresh( $analysis, $source ) ) {
+				$analysis_item = $item;
+				$analysis_item['statusLabel'] = 'Stale analysis';
+				$analysis_item['reason'] = 'Source GLB changed since the saved analysis.';
+				$scan['analysisStale'][] = $analysis_item;
 				continue;
 			}
 
-			$item['status']              = 'ready';
-			$item['derivativeSizeBytes'] = (int) ( $derivative['derivativeSizeBytes'] ?? 0 );
-			$item['reductionBytes']      = (int) ( $derivative['reductionBytes'] ?? 0 );
-			$item['reductionPercent']    = is_numeric( $derivative['reductionPercent'] ?? null ) ? (float) $derivative['reductionPercent'] : 0.0;
-			$scan['readySavedBytes']    += (int) $item['reductionBytes'];
-			$scan['readySourceBytes']   += (int) ( $derivative['sourceSizeBytes'] ?? $item['sourceSizeBytes'] );
-			$scan['readyDerivativeBytes'] += (int) $item['derivativeSizeBytes'];
-			$scan['ready'][]             = $item;
+			++$scan['analysisReady'];
+			$item['analysis'] = $analysis;
+			$item['recommendationReasons'] = self::analysis_reason_labels( $analysis );
+			$item['suggestedAction'] = (string) ( $analysis['suggestedAction'] ?? '' );
+			$item['recommendationScore'] = self::analysis_priority_score( $analysis );
+
+			if ( ! empty( $analysis['recommendations']['geometryDerivative'] ) && 'ready' !== $derivative_status ) {
+				$scan['recommendedGeometry'][] = $item;
+				$scan['recommended'][] = $item;
+			}
+			if ( ! empty( $analysis['recommendations']['textureDerivative'] ) ) {
+				$scan['recommendedTexture'][] = $item;
+			}
+			if ( ! empty( $analysis['recommendations']['lodDerivative'] ) ) {
+				$scan['recommendedLod'][] = $item;
+			}
+			if (
+				empty( $analysis['recommendations']['geometryDerivative'] )
+				&& empty( $analysis['recommendations']['textureDerivative'] )
+				&& empty( $analysis['recommendations']['lodDerivative'] )
+			) {
+				$scan['lowBenefit'][] = $item;
+			}
+		}
+
+		foreach ( [ 'recommended', 'recommendedGeometry', 'recommendedTexture', 'recommendedLod', 'lowBenefit' ] as $key ) {
+			usort(
+				$scan[ $key ],
+				static fn( array $a, array $b ): int => (int) ( $b['recommendationScore'] ?? 0 ) <=> (int) ( $a['recommendationScore'] ?? 0 )
+			);
 		}
 
 		return $scan;
@@ -584,6 +886,16 @@ class VRodos_Asset_Optimization_Manager {
 
 	private function read_batch_report_from_request(): array {
 		$key = isset( $_GET['vrodos_asset_batch_report'] ) ? sanitize_key( (string) wp_unslash( $_GET['vrodos_asset_batch_report'] ) ) : '';
+		if ( '' === $key ) {
+			return [];
+		}
+
+		$report = get_transient( self::BATCH_TRANSIENT_PREFIX . $key );
+		return is_array( $report ) ? $report : [];
+	}
+
+	private function read_analysis_report_from_request(): array {
+		$key = isset( $_GET['vrodos_asset_analysis_report'] ) ? sanitize_key( (string) wp_unslash( $_GET['vrodos_asset_analysis_report'] ) ) : '';
 		if ( '' === $key ) {
 			return [];
 		}
@@ -610,6 +922,430 @@ class VRodos_Asset_Optimization_Manager {
 			'safe-draco'   => 'Safe Draco',
 			'safe-meshopt' => 'Safe Meshopt',
 		];
+	}
+
+	private static function get_analysis_meta( int $asset_id ): array {
+		$raw = get_post_meta( $asset_id, self::ANALYSIS_META_KEY, true );
+		return is_array( $raw ) ? $raw : [];
+	}
+
+	private static function refresh_asset_analysis( int $asset_id ) {
+		$source = self::get_source_glb( $asset_id );
+		if ( is_wp_error( $source ) ) {
+			$record = self::build_analysis_error_record( $source->get_error_message() );
+			update_post_meta( $asset_id, self::ANALYSIS_META_KEY, $record );
+			return $source;
+		}
+
+		$analysis = self::build_glb_analysis( $source );
+		if ( is_wp_error( $analysis ) ) {
+			$record = self::build_analysis_error_record( $analysis->get_error_message(), $source );
+			update_post_meta( $asset_id, self::ANALYSIS_META_KEY, $record );
+			return $analysis;
+		}
+
+		update_post_meta( $asset_id, self::ANALYSIS_META_KEY, $analysis );
+		return $analysis;
+	}
+
+	private static function build_analysis_error_record( string $message, ?array $source = null ): array {
+		return [
+			'schemaVersion'     => 1,
+			'status'            => 'unsupported',
+			'error'             => wp_strip_all_tags( $message ),
+			'sourceUrl'         => isset( $source['url'] ) ? esc_url_raw( (string) $source['url'] ) : '',
+			'sourcePath'        => isset( $source['path'] ) ? wp_normalize_path( (string) $source['path'] ) : '',
+			'sourceSizeBytes'   => isset( $source['sizeBytes'] ) ? (int) $source['sizeBytes'] : 0,
+			'sourceMtime'       => isset( $source['path'] ) && is_file( (string) $source['path'] ) ? (int) filemtime( (string) $source['path'] ) : 0,
+			'sourceFingerprint' => isset( $source['path'] ) ? self::source_fingerprint( $source ) : '',
+			'flags'             => [],
+			'recommendations'   => self::empty_recommendations(),
+			'reasons'           => [],
+			'suggestedAction'   => 'Unsupported for automatic analysis.',
+			'analyzedAt'        => current_time( 'mysql', true ),
+		];
+	}
+
+	private static function build_glb_analysis( array $source ) {
+		$gltf = self::read_glb_json( (string) $source['path'] );
+		if ( is_wp_error( $gltf ) ) {
+			return $gltf;
+		}
+
+		$analysis = self::analyze_gltf_json( $gltf );
+		$analysis['schemaVersion']     = 1;
+		$analysis['status']            = 'analyzed';
+		$analysis['sourceUrl']         = esc_url_raw( (string) $source['url'] );
+		$analysis['sourcePath']        = wp_normalize_path( (string) $source['path'] );
+		$analysis['sourceSizeBytes']   = (int) $source['sizeBytes'];
+		$analysis['sourceMtime']       = is_file( (string) $source['path'] ) ? (int) filemtime( (string) $source['path'] ) : 0;
+		$analysis['sourceFingerprint'] = self::source_fingerprint( $source );
+		$analysis['analyzedAt']        = current_time( 'mysql', true );
+
+		$recommendation = self::recommendations_for_analysis( $analysis );
+		return array_merge( $analysis, $recommendation );
+	}
+
+	private static function source_fingerprint( array $source ): string {
+		$path  = (string) ( $source['path'] ?? '' );
+		$mtime = is_file( $path ) ? (int) filemtime( $path ) : 0;
+		return sha1(
+			implode(
+				'|',
+				[
+					self::normalize_url_path( (string) ( $source['url'] ?? '' ) ),
+					wp_normalize_path( $path ),
+					(string) ( (int) ( $source['sizeBytes'] ?? 0 ) ),
+					(string) $mtime,
+				]
+			)
+		);
+	}
+
+	private static function read_glb_json( string $path ) {
+		$handle = fopen( $path, 'rb' );
+		if ( false === $handle ) {
+			return new WP_Error( 'vrodos_glb_analysis_open_failed', 'Could not open GLB for analysis.' );
+		}
+
+		$header = fread( $handle, 12 );
+		if ( ! is_string( $header ) || strlen( $header ) < 12 ) {
+			fclose( $handle );
+			return new WP_Error( 'vrodos_glb_analysis_short_header', 'GLB header is incomplete.' );
+		}
+
+		if ( substr( $header, 0, 4 ) !== self::GLB_MAGIC ) {
+			fclose( $handle );
+			return new WP_Error( 'vrodos_glb_analysis_bad_magic', 'File is not a binary GLB.' );
+		}
+
+		$version = self::read_uint32_le( substr( $header, 4, 4 ) );
+		$length  = self::read_uint32_le( substr( $header, 8, 4 ) );
+		if ( self::GLB_VERSION !== $version ) {
+			fclose( $handle );
+			return new WP_Error( 'vrodos_glb_analysis_bad_version', 'Only GLB version 2 can be analyzed.' );
+		}
+
+		$offset = 12;
+		while ( $offset + 8 <= $length && ! feof( $handle ) ) {
+			$chunk_header = fread( $handle, 8 );
+			if ( ! is_string( $chunk_header ) || strlen( $chunk_header ) < 8 ) {
+				break;
+			}
+
+			$chunk_length = self::read_uint32_le( substr( $chunk_header, 0, 4 ) );
+			$chunk_type   = self::read_uint32_le( substr( $chunk_header, 4, 4 ) );
+			$offset      += 8;
+
+			if ( self::GLB_JSON_CHUNK === $chunk_type ) {
+				$json_text = fread( $handle, $chunk_length );
+				fclose( $handle );
+				if ( ! is_string( $json_text ) ) {
+					return new WP_Error( 'vrodos_glb_analysis_json_read_failed', 'Could not read GLB JSON chunk.' );
+				}
+
+				$decoded = json_decode( trim( $json_text ), true );
+				if ( ! is_array( $decoded ) ) {
+					return new WP_Error( 'vrodos_glb_analysis_json_invalid', 'GLB JSON chunk is invalid.' );
+				}
+
+				return $decoded;
+			}
+
+			if ( 0 !== fseek( $handle, $chunk_length, SEEK_CUR ) ) {
+				fclose( $handle );
+				return new WP_Error( 'vrodos_glb_analysis_seek_failed', 'GLB chunk table is invalid.' );
+			}
+			$offset += $chunk_length;
+		}
+
+		fclose( $handle );
+		return new WP_Error( 'vrodos_glb_analysis_json_missing', 'GLB does not contain a JSON chunk.' );
+	}
+
+	private static function read_uint32_le( string $bytes ): int {
+		$value = unpack( 'Vvalue', $bytes );
+		return is_array( $value ) ? (int) $value['value'] : 0;
+	}
+
+	private static function analyze_gltf_json( array $gltf ): array {
+		$meshes       = is_array( $gltf['meshes'] ?? null ) ? $gltf['meshes'] : [];
+		$nodes        = is_array( $gltf['nodes'] ?? null ) ? $gltf['nodes'] : [];
+		$materials    = is_array( $gltf['materials'] ?? null ) ? $gltf['materials'] : [];
+		$textures     = is_array( $gltf['textures'] ?? null ) ? $gltf['textures'] : [];
+		$images       = is_array( $gltf['images'] ?? null ) ? $gltf['images'] : [];
+		$animations   = is_array( $gltf['animations'] ?? null ) ? $gltf['animations'] : [];
+		$buffers      = is_array( $gltf['buffers'] ?? null ) ? $gltf['buffers'] : [];
+		$buffer_views = is_array( $gltf['bufferViews'] ?? null ) ? $gltf['bufferViews'] : [];
+		$accessors    = is_array( $gltf['accessors'] ?? null ) ? $gltf['accessors'] : [];
+		$extensions   = self::extension_set( $gltf );
+		$used_materials = [];
+		$geometry_buffer_views = [];
+		$image_buffer_views = [];
+		$primitive_count = 0;
+		$indexed_primitive_count = 0;
+		$vertex_count = 0;
+		$submitted_vertex_count = 0;
+		$estimated_triangles = 0;
+		$max_primitive_submitted_count = 0;
+		$max_primitive_triangles = 0;
+
+		foreach ( $meshes as $mesh ) {
+			foreach ( is_array( $mesh['primitives'] ?? null ) ? $mesh['primitives'] : [] as $primitive ) {
+				if ( ! is_array( $primitive ) ) {
+					continue;
+				}
+				++$primitive_count;
+				$mode = isset( $primitive['mode'] ) ? (int) $primitive['mode'] : self::GLTF_TRIANGLES_MODE;
+				if ( isset( $primitive['indices'] ) ) {
+					++$indexed_primitive_count;
+					$buffer_view = self::accessor_buffer_view( $accessors, (int) $primitive['indices'] );
+					if ( null !== $buffer_view ) {
+						$geometry_buffer_views[ $buffer_view ] = true;
+					}
+				}
+				if ( isset( $primitive['material'] ) ) {
+					$used_materials[ (int) $primitive['material'] ] = true;
+				}
+				foreach ( is_array( $primitive['attributes'] ?? null ) ? $primitive['attributes'] : [] as $accessor_index ) {
+					$buffer_view = self::accessor_buffer_view( $accessors, (int) $accessor_index );
+					if ( null !== $buffer_view ) {
+						$geometry_buffer_views[ $buffer_view ] = true;
+					}
+				}
+				foreach ( array_keys( is_array( $primitive['extensions'] ?? null ) ? $primitive['extensions'] : [] ) as $extension_name ) {
+					$extensions[ (string) $extension_name ] = true;
+				}
+
+				$submitted = self::primitive_submitted_count( $accessors, $primitive );
+				$vertices  = self::primitive_vertex_count( $accessors, $primitive );
+				$triangles = self::estimate_primitive_triangles( $mode, $submitted );
+				$submitted_vertex_count += $submitted;
+				$vertex_count += $vertices;
+				$estimated_triangles += $triangles;
+				$max_primitive_submitted_count = max( $max_primitive_submitted_count, $submitted );
+				$max_primitive_triangles = max( $max_primitive_triangles, $triangles );
+			}
+		}
+
+		foreach ( $images as $image ) {
+			if ( is_array( $image ) && isset( $image['bufferView'] ) ) {
+				$image_buffer_views[ (int) $image['bufferView'] ] = true;
+			}
+		}
+
+		$buffer_bytes = 0;
+		foreach ( $buffers as $buffer ) {
+			$buffer_bytes += is_array( $buffer ) ? (int) ( $buffer['byteLength'] ?? 0 ) : 0;
+		}
+
+		$geometry_bytes = self::sum_buffer_view_bytes( $buffer_views, array_keys( $geometry_buffer_views ) );
+		$image_bytes    = self::sum_buffer_view_bytes( $buffer_views, array_keys( $image_buffer_views ) );
+		$extension_names = array_keys( $extensions );
+		sort( $extension_names );
+
+		return [
+			'assetVersion' => (string) ( $gltf['asset']['version'] ?? '' ),
+			'generator'    => (string) ( $gltf['asset']['generator'] ?? '' ),
+			'counts'       => [
+				'nodes'             => count( $nodes ),
+				'meshes'            => count( $meshes ),
+				'primitives'        => $primitive_count,
+				'indexedPrimitives' => $indexed_primitive_count,
+				'materials'         => count( $materials ),
+				'usedMaterials'     => count( $used_materials ),
+				'textures'          => count( $textures ),
+				'images'            => count( $images ),
+				'animations'        => count( $animations ),
+			],
+			'geometry'     => [
+				'estimatedTriangles'          => $estimated_triangles,
+				'vertexCount'                 => $vertex_count,
+				'submittedVertexCount'        => $submitted_vertex_count,
+				'maxPrimitiveSubmittedCount'  => $max_primitive_submitted_count,
+				'maxPrimitiveTriangles'       => $max_primitive_triangles,
+				'estimatedGeometryBytes'      => $geometry_bytes,
+			],
+			'payload'      => [
+				'declaredBufferBytes' => $buffer_bytes,
+				'estimatedImageBytes' => $image_bytes,
+			],
+			'extensions'   => [
+				'used'                   => $extension_names,
+				'hasMeshopt'             => ! empty( $extensions['EXT_meshopt_compression'] ),
+				'hasDraco'               => ! empty( $extensions['KHR_draco_mesh_compression'] ),
+				'hasKtx2'                => ! empty( $extensions['KHR_texture_basisu'] ),
+				'hasGeometryCompression' => ! empty( $extensions['EXT_meshopt_compression'] ) || ! empty( $extensions['KHR_draco_mesh_compression'] ),
+				'hasTextureCompression'  => ! empty( $extensions['KHR_texture_basisu'] ),
+			],
+		];
+	}
+
+	private static function extension_set( array $gltf ): array {
+		$extensions = [];
+		foreach ( [ 'extensionsUsed', 'extensionsRequired' ] as $key ) {
+			foreach ( is_array( $gltf[ $key ] ?? null ) ? $gltf[ $key ] : [] as $extension_name ) {
+				$extensions[ (string) $extension_name ] = true;
+			}
+		}
+		return $extensions;
+	}
+
+	private static function accessor_buffer_view( array $accessors, int $accessor_index ): ?int {
+		if ( ! isset( $accessors[ $accessor_index ] ) || ! is_array( $accessors[ $accessor_index ] ) ) {
+			return null;
+		}
+		return isset( $accessors[ $accessor_index ]['bufferView'] ) ? (int) $accessors[ $accessor_index ]['bufferView'] : null;
+	}
+
+	private static function sum_buffer_view_bytes( array $buffer_views, array $indices ): int {
+		$total = 0;
+		foreach ( $indices as $index ) {
+			if ( isset( $buffer_views[ $index ] ) && is_array( $buffer_views[ $index ] ) ) {
+				$total += (int) ( $buffer_views[ $index ]['byteLength'] ?? 0 );
+			}
+		}
+		return $total;
+	}
+
+	private static function primitive_submitted_count( array $accessors, array $primitive ): int {
+		if ( isset( $primitive['indices'] ) && isset( $accessors[ (int) $primitive['indices'] ] ) && is_array( $accessors[ (int) $primitive['indices'] ] ) ) {
+			return (int) ( $accessors[ (int) $primitive['indices'] ]['count'] ?? 0 );
+		}
+
+		$position = $primitive['attributes']['POSITION'] ?? null;
+		if ( null !== $position && isset( $accessors[ (int) $position ] ) && is_array( $accessors[ (int) $position ] ) ) {
+			return (int) ( $accessors[ (int) $position ]['count'] ?? 0 );
+		}
+
+		return 0;
+	}
+
+	private static function primitive_vertex_count( array $accessors, array $primitive ): int {
+		$position = $primitive['attributes']['POSITION'] ?? null;
+		if ( null !== $position && isset( $accessors[ (int) $position ] ) && is_array( $accessors[ (int) $position ] ) ) {
+			return (int) ( $accessors[ (int) $position ]['count'] ?? 0 );
+		}
+		return 0;
+	}
+
+	private static function estimate_primitive_triangles( int $mode, int $submitted_count ): int {
+		if ( $submitted_count <= 0 ) {
+			return 0;
+		}
+		if ( self::GLTF_TRIANGLES_MODE === $mode ) {
+			return (int) floor( $submitted_count / 3 );
+		}
+		if ( self::GLTF_TRIANGLE_STRIP_MODE === $mode || self::GLTF_TRIANGLE_FAN_MODE === $mode ) {
+			return max( 0, $submitted_count - 2 );
+		}
+		return 0;
+	}
+
+	private static function recommendations_for_analysis( array $analysis ): array {
+		$size_bytes     = (int) ( $analysis['sourceSizeBytes'] ?? 0 );
+		$triangles      = (int) ( $analysis['geometry']['estimatedTriangles'] ?? 0 );
+		$primitives     = (int) ( $analysis['counts']['primitives'] ?? 0 );
+		$materials      = (int) ( $analysis['counts']['usedMaterials'] ?? $analysis['counts']['materials'] ?? 0 );
+		$images         = (int) ( $analysis['counts']['images'] ?? 0 );
+		$geometry_bytes = (int) ( $analysis['geometry']['estimatedGeometryBytes'] ?? 0 );
+		$image_bytes    = (int) ( $analysis['payload']['estimatedImageBytes'] ?? 0 );
+		$extensions     = is_array( $analysis['extensions'] ?? null ) ? $analysis['extensions'] : [];
+		$flags          = [];
+		$reasons        = [];
+		$recommendations = self::empty_recommendations();
+
+		if ( $size_bytes >= 50 * 1024 * 1024 ) {
+			$flags[] = 'very_large_file';
+		} elseif ( $size_bytes >= 20 * 1024 * 1024 ) {
+			$flags[] = 'large_file';
+		}
+		if ( $triangles >= 500000 ) {
+			$flags[] = 'high_triangles';
+		} elseif ( $triangles >= 100000 ) {
+			$flags[] = 'moderate_high_triangles';
+		}
+		if ( $primitives >= 100 ) {
+			$flags[] = 'many_primitives';
+		}
+		if ( $materials >= 20 ) {
+			$flags[] = 'many_materials';
+		}
+
+		$geometry_meaningful = $geometry_bytes >= 1024 * 1024 || $triangles >= 50000 || $primitives >= 50 || ( $size_bytes >= 5 * 1024 * 1024 && $triangles >= 10000 );
+		if ( empty( $extensions['hasGeometryCompression'] ) && $geometry_meaningful ) {
+			$flags[] = 'missing_geometry_compression';
+			$recommendations['geometryDerivative'] = true;
+			$reasons[] = 'Source has meaningful geometry and no Draco/Meshopt compression.';
+		}
+
+		$texture_payload_likely = $image_bytes >= 8 * 1024 * 1024
+			|| ( $size_bytes >= 20 * 1024 * 1024 && $images > 0 && ( 0 === $geometry_bytes || $geometry_bytes < (int) ( $size_bytes * 0.45 ) ) );
+		if ( $images > 0 && empty( $extensions['hasTextureCompression'] ) && $texture_payload_likely ) {
+			$flags[] = 'missing_texture_compression';
+			$recommendations['textureDerivative'] = true;
+			$reasons[] = 'Texture payload appears significant and no KTX2/Basis texture compression is present.';
+		}
+
+		if ( $triangles >= 100000 || $primitives >= 100 || (int) ( $analysis['geometry']['maxPrimitiveTriangles'] ?? 0 ) >= 50000 ) {
+			$flags[] = 'lod_candidate';
+			$recommendations['lodDerivative'] = true;
+			$reasons[] = 'Geometry is large enough to benefit from explicit distance-based LOD candidates.';
+		}
+
+		if ( ! $recommendations['geometryDerivative'] && ! $recommendations['textureDerivative'] && ! $recommendations['lodDerivative'] ) {
+			$reasons[] = empty( $extensions['hasGeometryCompression'] ) ? 'No high-benefit derivative target was detected.' : 'Geometry compression is already present or the asset is small.';
+		}
+
+		return [
+			'flags'           => array_values( array_unique( $flags ) ),
+			'recommendations' => $recommendations,
+			'reasons'         => $reasons,
+			'suggestedAction' => self::suggested_action_for_recommendations( $recommendations ),
+		];
+	}
+
+	private static function empty_recommendations(): array {
+		return [
+			'geometryDerivative' => false,
+			'textureDerivative'  => false,
+			'lodDerivative'      => false,
+		];
+	}
+
+	private static function suggested_action_for_recommendations( array $recommendations ): string {
+		if ( ! empty( $recommendations['geometryDerivative'] ) ) {
+			return 'Generate a safe Draco derivative first.';
+		}
+		if ( ! empty( $recommendations['textureDerivative'] ) ) {
+			return 'Plan a KTX2/Basis texture derivative.';
+		}
+		if ( ! empty( $recommendations['lodDerivative'] ) ) {
+			return 'Plan explicit LOD derivatives and distance bands.';
+		}
+		return 'No derivative is recommended by the cheap analysis.';
+	}
+
+	private static function analysis_needs_refresh( array $analysis, array $source ): bool {
+		if ( empty( $analysis ) || ( $analysis['sourceFingerprint'] ?? '' ) !== self::source_fingerprint( $source ) ) {
+			return true;
+		}
+		return false;
+	}
+
+	private static function analysis_reason_labels( array $analysis ): array {
+		$reasons = $analysis['reasons'] ?? [];
+		return is_array( $reasons ) ? array_map( 'strval', $reasons ) : [];
+	}
+
+	private static function analysis_priority_score( array $analysis ): int {
+		$size_bytes = (int) ( $analysis['sourceSizeBytes'] ?? 0 );
+		$triangles  = (int) ( $analysis['geometry']['estimatedTriangles'] ?? 0 );
+		$primitives = (int) ( $analysis['counts']['primitives'] ?? 0 );
+		$materials  = (int) ( $analysis['counts']['usedMaterials'] ?? $analysis['counts']['materials'] ?? 0 );
+		$image_bytes = (int) ( $analysis['payload']['estimatedImageBytes'] ?? 0 );
+
+		return $size_bytes + ( $triangles * 100 ) + ( $primitives * 100000 ) + ( $materials * 500000 ) + $image_bytes;
 	}
 
 	private static function get_derivative_meta( int $asset_id ): array {
