@@ -136,27 +136,8 @@ class VRodos_Admin_Dashboard_Page {
 
 				<?php
 				$asset_opt_notice = isset( $_GET['vrodos_asset_opt_notice'] ) ? sanitize_key( (string) wp_unslash( $_GET['vrodos_asset_opt_notice'] ) ) : '';
-				if ( '' !== $asset_opt_notice ) :
-					$notice_message = match ( $asset_opt_notice ) {
-						'analysis-refreshed' => 'Asset analysis refreshed.',
-						'optimized'          => 'Safe Draco derivative generated.',
-						'compile-enabled'    => 'Compiled scenes will use the active derivative for this asset.',
-						'compile-disabled'   => 'Compiled scenes will use the original GLB for this asset.',
-						'analysis-failed'    => 'Asset analysis failed. Open the asset or Settings > Assets for details.',
-						'optimize-failed'    => 'Derivative generation failed. Open the asset or Settings > Assets for details.',
-						'compile-enable-failed' => 'Compile use was not enabled because the derivative is not ready.',
-						'invalid-profile'    => 'Unsupported derivative profile.',
-						default              => '',
-					};
-					if ( '' !== $notice_message ) :
-						?>
-						<div class="tw-alert <?php echo str_contains( $asset_opt_notice, 'failed' ) || 'invalid-profile' === $asset_opt_notice ? 'tw-alert-warning' : 'tw-alert-success'; ?> tw-mb-6 tw-rounded-xl tw-shadow-sm">
-							<i data-lucide="<?php echo str_contains( $asset_opt_notice, 'failed' ) || 'invalid-profile' === $asset_opt_notice ? 'triangle-alert' : 'check-circle'; ?>" class="tw-w-5 tw-h-5"></i>
-							<span class="tw-font-bold"><?php echo esc_html( $notice_message ); ?></span>
-						</div>
-						<?php
-					endif;
-				endif;
+				$asset_opt_notice_message = self::asset_opt_notice_message( $asset_opt_notice );
+				$asset_opt_notice_is_error = self::is_asset_opt_notice_error( $asset_opt_notice );
 				?>
 
 				<!-- Dashboard Tables -->
@@ -254,6 +235,15 @@ class VRodos_Admin_Dashboard_Page {
 								</div>
 							</div>
 							<div id="vrodos-dashboard-panel-assets" class="vrodos-dashboard-tab-panel">
+								<?php if ( '' !== $asset_opt_notice_message ) : ?>
+									<div class="tw-m-6 tw-mb-0 tw-flex tw-items-center tw-gap-3 tw-rounded-xl tw-border tw-px-4 tw-py-3 tw-text-sm tw-font-bold <?php echo $asset_opt_notice_is_error ? 'tw-border-amber-200 tw-bg-amber-50 tw-text-amber-900' : 'tw-border-emerald-200 tw-bg-emerald-50 tw-text-emerald-900'; ?>" data-vrodos-dashboard-notice>
+										<i data-lucide="<?php echo $asset_opt_notice_is_error ? 'triangle-alert' : 'check-circle'; ?>" class="tw-w-5 tw-h-5 tw-shrink-0"></i>
+										<span class="tw-flex-1"><?php echo esc_html( $asset_opt_notice_message ); ?></span>
+										<button type="button" class="tw-btn tw-btn-ghost tw-btn-xs tw-min-h-0 tw-h-7 tw-w-7 tw-p-0" data-vrodos-dashboard-notice-close aria-label="Dismiss notice">
+											<i data-lucide="x" class="tw-w-4 tw-h-4"></i>
+										</button>
+									</div>
+								<?php endif; ?>
 								<?php
 								if ( class_exists( 'VRodos_Asset_Optimization_Manager' ) ) {
 									VRodos_Asset_Optimization_Manager::render_dashboard_actionable_assets_table( 10 );
@@ -281,4 +271,22 @@ class VRodos_Admin_Dashboard_Page {
 		<hr class="wp-block-separator"/>
 		<?php
 		}
+
+	private static function asset_opt_notice_message( string $notice ): string {
+		return match ( $notice ) {
+			'analysis-refreshed'    => 'Asset analysis refreshed.',
+			'optimized'             => 'Safe Draco derivative generated.',
+			'compile-enabled'       => 'Compiled scenes will use the active derivative for this asset.',
+			'compile-disabled'      => 'Compiled scenes will use the original GLB for this asset.',
+			'analysis-failed'       => 'Asset analysis failed. Open the asset or Settings > Assets for details.',
+			'optimize-failed'       => 'Derivative generation failed. Open the asset or Settings > Assets for details.',
+			'compile-enable-failed' => 'Compile use was not enabled because the derivative is not ready.',
+			'invalid-profile'       => 'Unsupported derivative profile.',
+			default                 => '',
+		};
+	}
+
+	private static function is_asset_opt_notice_error( string $notice ): bool {
+		return str_contains( $notice, 'failed' ) || 'invalid-profile' === $notice;
+	}
 }

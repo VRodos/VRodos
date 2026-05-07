@@ -400,8 +400,8 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 			array_merge(
 				[
 					'message' => $enabled
-						? __( 'Compiled scenes will use this derivative.', 'vrodos' )
-						: __( 'Compiled scenes will use the original GLB.', 'vrodos' ),
+						? __( 'Compiled scenes will use the active derivative for this asset.', 'vrodos' )
+						: __( 'Compiled scenes will use the original GLB for this asset.', 'vrodos' ),
 				],
 				self::dashboard_asset_row_state( $asset_id )
 			)
