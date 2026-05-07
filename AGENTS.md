@@ -21,6 +21,7 @@ VRodos/
   VRodos.php
   includes/                        PHP managers, models, AJAX classes
   includes/admin/                  Admin page renderers such as the VRodos dashboard
+  includes/asset-cpt/              Asset CPT metabox, taxonomy, submission, and shared admin helpers
   includes/asset-optimization/     GLB analysis, derivative, dashboard, and admin optimization helpers
   templates/pages/                 WordPress page templates
   templates/runtime/aframe/        A-Frame compile prototypes
@@ -49,6 +50,7 @@ Important managers:
 - `VRodos_Scene_CPT_Manager`: scene editor data preparation
 - `VRodos_Compiler_Manager`: compiled A-Frame scene generation
 - `VRodos_Render_Runtime_Manager`: active runtime/version configuration
+- `VRodos_Asset_CPT_Manager`: thin hook registrar and compatibility facade for asset admin/editor behavior; implementation lives in `includes/asset-cpt/`
 - `VRodos_Asset_Optimization_Manager`: thin hook coordinator for read-only GLB benefit analysis, dashboard actionable assets, admin-side GLB derivative generation, derivative metadata, cache cleanup, and opt-in compile selection; implementation lives in `includes/asset-optimization/`
 - `VRodos_Admin_Dashboard_Page`: top-level dashboard rendering, including notices, stats, Active Projects, and Actionable Assets tabs
 - `VRodos_Path_Manager`: path/url indirection

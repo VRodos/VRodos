@@ -33,6 +33,7 @@ The first profiling pass on `http://wp.local:5832/Master_Client_766.html` showed
 - Complete: AJAX dashboard refresh/toggle actions for cheap row updates without a full dashboard reload.
 - Complete: first admin refactor phase split the asset optimization manager into a thin hook coordinator plus focused files under `includes/asset-optimization/`.
 - Complete: second admin refactor phase moved top-level dashboard rendering from `VRodos_Core_Manager` into `includes/admin/class-vrodos-admin-dashboard-page.php` while preserving the existing menu callback wrapper.
+- Complete: third admin refactor phase split `VRodos_Asset_CPT_Manager` into a thin hook registrar plus focused files under `includes/asset-cpt/`.
 - Next: add texture compression/KTX2 derivative generation for texture-heavy assets, then plan explicit LOD derivative families for distance-based scene cost reduction.
 
 ## Spector.js Debug Phase
@@ -245,9 +246,26 @@ Dashboard extraction:
 - `VRodos_Admin_Dashboard_Page` owns dashboard CSS, notices, stats, Active Projects markup, and Actionable Assets tab composition.
 - Dashboard asset rows still delegate to `VRodos_Asset_Optimization_Manager::render_dashboard_actionable_assets_table( 10 )`.
 
+Asset CPT extraction:
+
+- `VRodos_Asset_CPT_Manager` remains the class instantiated by `VRodos.php`.
+- Hook names and callback method names remain available on `VRodos_Asset_CPT_Manager`; each wrapper delegates to `VRodos_Asset_CPT_Admin_Controller`.
+- The frontend template contract `VRodos_Asset_CPT_Manager::prepare_asset_editor_template_data()` remains available and delegates to the extracted controller.
+- Frontend create/update compatibility wrappers remain available:
+  - `create_asset_frontend()`
+  - `update_asset_frontend()`
+  - `update_asset_meta()`
+- Extracted implementation files:
+  - `includes/asset-cpt/trait-vrodos-asset-cpt-metabox-admin.php`
+  - `includes/asset-cpt/trait-vrodos-asset-cpt-taxonomy-admin.php`
+  - `includes/asset-cpt/trait-vrodos-asset-cpt-submission.php`
+  - `includes/asset-cpt/trait-vrodos-asset-cpt-shared.php`
+- Asset metabox/taxonomy nonce actions are pinned to the old manager basename to avoid changing save semantics.
+
 Remaining admin cleanup:
 
-- Split `VRodos_Asset_CPT_Manager` into hook registration, metabox/editor, frontend submission, and taxonomy helper classes.
+- Consider moving the extracted Asset CPT traits into concrete service classes once behavior has been verified in the WordPress UI.
+- Consider a later enqueue cleanup pass if admin/dashboard script ownership keeps growing.
 
 The existing glTF Transform prototype script now supports single-source mode for admin/backend use:
 
