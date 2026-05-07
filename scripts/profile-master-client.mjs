@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const DEFAULT_URL = 'http://wp.local:5832/Master_Client_766.html';
+const SPECTOR_CDN_URL = 'https://cdn.jsdelivr.net/npm/spectorjs@0.9.30/dist/spector.bundle.js';
 
 function parseArgs(argv) {
     const options = {
@@ -23,7 +24,9 @@ function parseArgs(argv) {
         chrome: '',
         userDataDir: '',
         keepProfile: false,
-        json: false
+        json: false,
+        spector: false,
+        spectorOutput: ''
     };
 
     for (let i = 0; i < argv.length; i += 1) {
@@ -90,6 +93,12 @@ function parseArgs(argv) {
             case '--json':
                 options.json = true;
                 break;
+            case '--spector':
+                options.spector = true;
+                break;
+            case '--spector-output':
+                options.spectorOutput = nextValue() || '';
+                break;
             case '--help':
             case '-h':
                 printHelp();
@@ -124,7 +133,36 @@ Options:
   --user-data-dir PATH    Reuse a Chrome profile directory.
   --keep-profile          Keep the temporary profile directory.
   --json                  Print full JSON to stdout even when --output is used.
+  --spector               Capture one Spector.js WebGL frame after timing samples.
+  --spector-output PATH   Write the Spector capture JSON to PATH. Defaults next to --output.
 `);
+}
+
+function deriveSpectorOutputPath(outputPath) {
+    if (!outputPath) {
+        return '';
+    }
+
+    const parsed = path.parse(path.resolve(outputPath));
+    const base = parsed.ext ? parsed.name : parsed.base;
+    const ext = parsed.ext || '.json';
+    return path.join(parsed.dir, `${base}.spector${ext}`);
+}
+
+function resolveSpectorOutputPath(options) {
+    if (!options.spector) {
+        return '';
+    }
+
+    if (options.spectorOutput) {
+        return path.resolve(options.spectorOutput);
+    }
+
+    if (options.output) {
+        return deriveSpectorOutputPath(options.output);
+    }
+
+    return path.join(os.tmpdir(), `vrodos-master-client-spector-${Date.now()}.json`);
 }
 
 async function loadWebSocketClass() {
@@ -711,6 +749,12 @@ async function captureSceneSnapshot(cdp) {
                 clearFrustumElements: document.querySelectorAll('[clear-frustum-culling]').length,
                 raycastableElements: document.querySelectorAll('.raycastable').length
             },
+            debug: {
+                spectorGlobalAvailable: Boolean(window.SPECTOR && window.SPECTOR.Spector),
+                vrodosSpectorAvailable: Boolean(window.VRODOS_SPECTOR),
+                spectorDebugScriptLoaded: Boolean(document.querySelector('script[data-vrodos-spector-debug="true"]')),
+                spectorProfilerScriptLoaded: Boolean(document.querySelector('script[data-vrodos-spector-profiler="true"]'))
+            },
             compileDiagnostics: window.VRODOS_COMPILE_DIAGNOSTICS || null
         };
     })()`);
@@ -751,6 +795,249 @@ async function captureResources(cdp) {
     })()`);
 }
 
+function summarizeSpectorCapture(capture) {
+    if (!capture || typeof capture !== 'object') {
+        return null;
+    }
+
+    const commands = Array.isArray(capture.commands) ? capture.commands : [];
+    const commandCounts = {};
+    for (const command of commands) {
+        const name = command && (command.name || command.commandName || command.functionName || command.method);
+        if (!name) {
+            continue;
+        }
+        commandCounts[name] = (commandCounts[name] || 0) + 1;
+    }
+
+    const drawCallNames = new Set([
+        'drawArrays',
+        'drawArraysInstanced',
+        'drawElements',
+        'drawElementsInstanced'
+    ]);
+    const textureUploadNames = new Set([
+        'texImage2D',
+        'texImage3D',
+        'texSubImage2D',
+        'texSubImage3D',
+        'compressedTexImage2D',
+        'compressedTexImage3D',
+        'compressedTexSubImage2D',
+        'compressedTexSubImage3D'
+    ]);
+
+    const drawCalls = Object.entries(commandCounts)
+        .filter(([name]) => drawCallNames.has(name))
+        .reduce((total, [, count]) => total + count, 0);
+    const textureUploads = Object.entries(commandCounts)
+        .filter(([name]) => textureUploadNames.has(name))
+        .reduce((total, [, count]) => total + count, 0);
+    const programSwitches = commandCounts.useProgram || 0;
+    const framebufferBinds = commandCounts.bindFramebuffer || 0;
+
+    return {
+        commandCount: commands.length,
+        drawCalls,
+        programSwitches,
+        framebufferBinds,
+        textureUploads,
+        topCommands: Object.entries(commandCounts)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 20),
+        captureCanvas: capture.canvas || capture.captureCanvas || null,
+        startTime: capture.startTime || null,
+        endTime: capture.endTime || null
+    };
+}
+
+async function captureSpectorFrame(cdp, timeoutMs) {
+    const captureTimeoutMs = Math.max(10000, timeoutMs);
+    const startExpression = `(() => {
+        const spectorUrl = ${JSON.stringify(SPECTOR_CDN_URL)};
+        const timeoutMs = ${JSON.stringify(captureTimeoutMs)};
+        window.__VRODOS_PROFILE_SPECTOR_CAPTURE = {
+            status: 'loading',
+            loadedFrom: spectorUrl,
+            canvas: null,
+            summary: null,
+            captureStringLength: 0,
+            error: null
+        };
+
+        function loadSpector() {
+            if (window.SPECTOR && window.SPECTOR.Spector) {
+                return Promise.resolve();
+            }
+
+            return new Promise((resolve, reject) => {
+                const existing = document.querySelector('script[data-vrodos-spector-profiler="true"]');
+                if (existing) {
+                    existing.addEventListener('load', () => resolve(), { once: true });
+                    existing.addEventListener('error', () => reject(new Error('Spector.js script failed to load.')), { once: true });
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = spectorUrl;
+                script.async = true;
+                script.crossOrigin = 'anonymous';
+                script.dataset.vrodosSpectorProfiler = 'true';
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error('Spector.js script failed to load.'));
+                (document.head || document.documentElement).appendChild(script);
+            });
+        }
+
+        function nextFrame() {
+            return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        }
+
+        function getCanvas() {
+            return document.querySelector('a-scene canvas') || document.querySelector('canvas');
+        }
+
+        function summarizeCapture(capture) {
+            const commands = Array.isArray(capture && capture.commands) ? capture.commands : [];
+            const counts = {};
+            commands.forEach((command) => {
+                const name = command && (command.name || command.commandName || command.functionName || command.method);
+                if (name) {
+                    counts[name] = (counts[name] || 0) + 1;
+                }
+            });
+            const countWhere = (names) => names.reduce((total, name) => total + (counts[name] || 0), 0);
+            return {
+                commandCount: commands.length,
+                drawCalls: countWhere(['drawArrays', 'drawArraysInstanced', 'drawElements', 'drawElementsInstanced']),
+                programSwitches: counts.useProgram || 0,
+                framebufferBinds: counts.bindFramebuffer || 0,
+                textureUploads: countWhere(['texImage2D', 'texImage3D', 'texSubImage2D', 'texSubImage3D', 'compressedTexImage2D', 'compressedTexImage3D', 'compressedTexSubImage2D', 'compressedTexSubImage3D']),
+                topCommands: Object.entries(counts)
+                    .map(([name, count]) => ({ name, count }))
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 20)
+            };
+        }
+
+        loadSpector().then(() => {
+            const canvas = getCanvas();
+            if (!canvas) {
+                window.__VRODOS_PROFILE_SPECTOR_CAPTURE.status = 'error';
+                window.__VRODOS_PROFILE_SPECTOR_CAPTURE.error = 'No A-Frame/WebGL canvas found for Spector capture.';
+                return;
+            }
+
+            const spector = new window.SPECTOR.Spector();
+            window.VRODOS_PROFILE_SPECTOR = spector;
+            window.__VRODOS_PROFILE_SPECTOR_CAPTURE.status = 'capturing';
+            window.__VRODOS_PROFILE_SPECTOR_CAPTURE.canvas = {
+                width: canvas.width,
+                height: canvas.height,
+                clientWidth: canvas.clientWidth,
+                clientHeight: canvas.clientHeight
+            };
+            let done = false;
+            const timer = setTimeout(() => {
+                if (done) {
+                    return;
+                }
+                done = true;
+                window.__VRODOS_PROFILE_SPECTOR_CAPTURE.status = 'error';
+                window.__VRODOS_PROFILE_SPECTOR_CAPTURE.error = 'Timed out waiting for Spector capture.';
+            }, timeoutMs);
+
+            spector.onCapture.add((capture) => {
+                if (done) {
+                    return;
+                }
+                done = true;
+                clearTimeout(timer);
+                try {
+                    const captureString = JSON.stringify(capture);
+                    window.__VRODOS_PROFILE_SPECTOR_CAPTURE.summary = summarizeCapture(capture);
+                    window.__VRODOS_PROFILE_SPECTOR_CAPTURE.captureString = captureString;
+                    window.__VRODOS_PROFILE_SPECTOR_CAPTURE.captureStringLength = captureString.length;
+                    window.__VRODOS_PROFILE_SPECTOR_CAPTURE.status = 'done';
+                } catch (error) {
+                    window.__VRODOS_PROFILE_SPECTOR_CAPTURE.status = 'error';
+                    window.__VRODOS_PROFILE_SPECTOR_CAPTURE.error = error && error.message ? error.message : String(error);
+                }
+            });
+
+            try {
+                spector.captureCanvas(canvas);
+                nextFrame();
+            } catch (error) {
+                clearTimeout(timer);
+                done = true;
+                window.__VRODOS_PROFILE_SPECTOR_CAPTURE.status = 'error';
+                window.__VRODOS_PROFILE_SPECTOR_CAPTURE.error = error && error.message ? error.message : String(error);
+            }
+        }).catch((error) => {
+            window.__VRODOS_PROFILE_SPECTOR_CAPTURE.status = 'error';
+            window.__VRODOS_PROFILE_SPECTOR_CAPTURE.error = error && error.message ? error.message : String(error);
+        });
+
+        return {
+            started: true,
+            loadedFrom: spectorUrl
+        };
+    })()`;
+
+    await evaluate(cdp, startExpression, true, 5000);
+
+    const startedAt = Date.now();
+    let state = null;
+    while (Date.now() - startedAt < captureTimeoutMs) {
+        state = await evaluate(cdp, `(() => {
+            const state = window.__VRODOS_PROFILE_SPECTOR_CAPTURE || null;
+            if (!state) {
+                return null;
+            }
+            return {
+                status: state.status,
+                loadedFrom: state.loadedFrom,
+                canvas: state.canvas,
+                summary: state.summary,
+                captureStringLength: state.captureStringLength || 0,
+                error: state.error
+            };
+        })()`, true, 10000);
+
+        if (state && (state.status === 'done' || state.status === 'error')) {
+            break;
+        }
+        await delay(500);
+    }
+
+    if (!state || state.status !== 'done') {
+        throw new Error(state && state.error ? state.error : 'Timed out waiting for Spector capture.');
+    }
+
+    const chunkSize = 512 * 1024;
+    let captureString = '';
+    for (let offset = 0; offset < state.captureStringLength; offset += chunkSize) {
+        const chunk = await evaluate(cdp, `(() => {
+            const state = window.__VRODOS_PROFILE_SPECTOR_CAPTURE || {};
+            const value = state.captureString || '';
+            return value.slice(${JSON.stringify(offset)}, ${JSON.stringify(offset + chunkSize)});
+        })()`, true, 10000);
+        captureString += chunk || '';
+    }
+
+    const parsedCapture = captureString ? JSON.parse(captureString) : null;
+
+    return {
+        loadedFrom: state.loadedFrom || SPECTOR_CDN_URL,
+        canvas: state.canvas || null,
+        summary: state.summary || summarizeSpectorCapture(parsedCapture),
+        capture: parsedCapture,
+        captureString
+    };
+}
+
 function formatMs(value) {
     return value === null || value === undefined ? 'n/a' : `${value.toFixed(2)}ms`;
 }
@@ -783,6 +1070,13 @@ function printSummary(result) {
     console.log(`Resources: ${resources.count} entries, transfer ${formatBytes(resources.transferSize)}, encoded ${formatBytes(resources.encodedBodySize)}, decoded ${formatBytes(resources.decodedBodySize)}`);
     if (result.trace && result.trace.totals) {
         console.log(`Trace: total ${formatMs(result.trace.totals.totalDurationMs)}, GPU ${formatMs(result.trace.totals.gpuDurationMs)}, scripting ${formatMs(result.trace.totals.scriptingDurationMs)}`);
+    }
+    if (result.spector && result.spector.enabled) {
+        const summary = result.spector.summary || {};
+        console.log(`Spector: ${summary.commandCount || 0} commands, ${summary.drawCalls || 0} draw calls, ${summary.programSwitches || 0} program switches, ${summary.framebufferBinds || 0} framebuffer binds`);
+        if (result.spector.output) {
+            console.log(`Spector capture written to ${result.spector.output}`);
+        }
     }
     console.log(`Console warnings/errors: ${result.console.length}; network failures: ${result.networkFailures.length}; exceptions: ${result.exceptions.length}`);
 }
@@ -903,6 +1197,23 @@ async function run() {
         const afterMetrics = metricsToObject((await cdp.send('Performance.getMetrics')).metrics);
         const scene = await captureSceneSnapshot(cdp);
         const resources = await captureResources(cdp);
+        let spector = {
+            enabled: false
+        };
+
+        if (options.spector) {
+            const spectorOutputPath = resolveSpectorOutputPath(options);
+            const spectorCapture = await captureSpectorFrame(cdp, options.timeoutMs);
+            await mkdir(path.dirname(path.resolve(spectorOutputPath)), { recursive: true });
+            await writeFile(spectorOutputPath, `${spectorCapture.captureString || JSON.stringify(spectorCapture.capture, null, 2)}\n`, 'utf8');
+            spector = {
+                enabled: true,
+                loadedFrom: spectorCapture.loadedFrom,
+                output: path.resolve(spectorOutputPath),
+                canvas: spectorCapture.canvas,
+                summary: spectorCapture.summary
+            };
+        }
 
         const result = {
             capturedAt: new Date().toISOString(),
@@ -926,6 +1237,7 @@ async function run() {
             },
             trace,
             resources,
+            spector,
             performanceMetrics: {
                 before: beforeMetrics,
                 after: afterMetrics,

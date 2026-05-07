@@ -56,6 +56,7 @@
         "assets/js/runtime/master/vrodos_master_shared.js",
         "assets/js/runtime/master/vrodos_ui_helpers.js",
         "assets/js/runtime/master/vrodos_master_bootstrap.js",
+        "assets/js/runtime/master/vrodos_spector_debug.js",
         "assets/js/runtime/master/vrodos_master_rendering.js",
         "assets/js/runtime/master/vrodos_scene_probe.js",
         "assets/js/runtime/master/vrodos_quality_profiles.js"

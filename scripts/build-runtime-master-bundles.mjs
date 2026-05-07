@@ -51,6 +51,7 @@ const chunks = [
       path.join(runtimeMasterDir, 'vrodos_master_shared.js'),
       path.join(runtimeMasterDir, 'vrodos_ui_helpers.js'),
       path.join(runtimeMasterDir, 'vrodos_master_bootstrap.js'),
+      path.join(runtimeMasterDir, 'vrodos_spector_debug.js'),
       path.join(runtimeMasterDir, 'vrodos_master_rendering.js'),
       path.join(runtimeMasterDir, 'vrodos_scene_probe.js'),
       path.join(runtimeMasterDir, 'vrodos_quality_profiles.js')
