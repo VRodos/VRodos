@@ -43,6 +43,7 @@
         this._sceneProbeLastCaptureMs = 0;
         this._sceneProbeLastModelEventMs = 0;
         this._sceneProbeLastYaw = null;
+        this._sceneProbeResolution = null;
         this.sceneProbeCapturing = false;
 
         if (clearSceneEnvironment && this.el && this.el.object3D) {
@@ -56,11 +57,29 @@
             return false;
         }
 
+        const resolution = typeof this.getSceneProbeResolution === 'function'
+            ? this.getSceneProbeResolution()
+            : 128;
+
+        if (this._sceneProbeCubeRenderTarget && this._sceneProbeResolution !== resolution) {
+            this._sceneProbeCubeRenderTarget.dispose();
+            this._sceneProbeCubeRenderTarget = null;
+            if (this._sceneProbeCubeCamera && this._sceneProbeCubeCamera.parent) {
+                this._sceneProbeCubeCamera.parent.remove(this._sceneProbeCubeCamera);
+            }
+            this._sceneProbeCubeCamera = null;
+            if (this._sceneProbePmremTarget) {
+                this._sceneProbePmremTarget.dispose();
+                this._sceneProbePmremTarget = null;
+            }
+        }
+
         if (!this._sceneProbeCubeRenderTarget) {
-            this._sceneProbeCubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, {
+            this._sceneProbeCubeRenderTarget = new THREE.WebGLCubeRenderTarget(resolution, {
                 generateMipmaps: true,
                 minFilter: THREE.LinearMipmapLinearFilter
             });
+            this._sceneProbeResolution = resolution;
         }
 
         if (!this._sceneProbeCubeCamera) {

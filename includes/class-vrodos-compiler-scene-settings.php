@@ -96,6 +96,8 @@ class VRodos_Compiler_Scene_Settings {
 			'reflectionsEnabled'                 => VRodos_Runtime_Settings_Contract::bool_string( $metadata->aframeReflectionsEnabled ?? true, true, '1', '0' ),
 			'reflectionProfile'                  => $metadata->aframeReflectionProfile ?? 'balanced',
 			'reflectionSource'                   => $metadata->aframeReflectionSource ?? 'hdr',
+			'sceneProbeUpdateMode'               => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'sceneProbeUpdateMode', 'static' ),
+			'sceneProbeResolution'               => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'sceneProbeResolution', '128' ),
 			'reflectionOcclusionMode'            => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'reflectionOcclusionMode' ),
 			'horizonSkyPreset'                   => $horizon_preset,
 			'envMapPreset'                       => $metadata->aframeEnvMapPreset ?? 'none',

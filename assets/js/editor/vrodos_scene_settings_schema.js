@@ -49,6 +49,8 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     'aframeReflectionsEnabled': { type: 'boolean', default: true, envirKey: 'aframeReflectionsEnabled' },
     'aframeReflectionProfile': { type: 'string', default: 'balanced', envirKey: 'aframeReflectionProfile' },
     'aframeReflectionSource': { type: 'string', default: 'hdr', envirKey: 'aframeReflectionSource' },
+    'aframeSceneProbeUpdateMode': { type: 'string', default: vrodosEditorSceneSettingDefault('sceneProbeUpdateMode', 'static'), envirKey: 'aframeSceneProbeUpdateMode' },
+    'aframeSceneProbeResolution': { type: 'string', default: vrodosEditorSceneSettingDefault('sceneProbeResolution', '128'), envirKey: 'aframeSceneProbeResolution' },
     'aframeReflectionOcclusionMode': { type: 'string', default: 'auto', envirKey: 'aframeReflectionOcclusionMode' },
     'aframeEnvMapPreset': { type: 'string', default: 'none', envirKey: 'aframeEnvMapPreset' },
     'aframeHorizonSkyPreset': { type: 'string', default: 'natural', envirKey: 'aframeHorizonSkyPreset' },
@@ -123,4 +125,3 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
 };
 VRODOS.sceneSettings = VRODOS.sceneSettings || {};
 VRODOS.sceneSettings.schema = VRODOS.config.SCENE_SETTINGS_SCHEMA;
-

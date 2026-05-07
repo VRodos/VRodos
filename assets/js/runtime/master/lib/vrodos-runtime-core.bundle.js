@@ -371,6 +371,27 @@
           "default": true,
           "editorDefault": true
         },
+        "sceneProbeUpdateMode": {
+          "metadataKey": "aframeSceneProbeUpdateMode",
+          "type": "enum",
+          "default": "static",
+          "editorDefault": "static",
+          "allowed": [
+            "static",
+            "slow-dynamic"
+          ]
+        },
+        "sceneProbeResolution": {
+          "metadataKey": "aframeSceneProbeResolution",
+          "type": "enum",
+          "default": "128",
+          "editorDefault": "128",
+          "allowed": [
+            "64",
+            "128",
+            "256"
+          ]
+        },
         "reflectionOcclusionMode": {
           "metadataKey": "aframeReflectionOcclusionMode",
           "type": "enum",
@@ -1822,6 +1843,7 @@
       this._sceneProbeLastCaptureMs = 0;
       this._sceneProbeLastModelEventMs = 0;
       this._sceneProbeLastYaw = null;
+      this._sceneProbeResolution = null;
       this.sceneProbeCapturing = false;
       if (clearSceneEnvironment && this.el && this.el.object3D) {
         this.el.object3D.environment = null;
@@ -1833,11 +1855,25 @@
       if (!renderer || !sceneObj) {
         return false;
       }
+      const resolution = typeof this.getSceneProbeResolution === "function" ? this.getSceneProbeResolution() : 128;
+      if (this._sceneProbeCubeRenderTarget && this._sceneProbeResolution !== resolution) {
+        this._sceneProbeCubeRenderTarget.dispose();
+        this._sceneProbeCubeRenderTarget = null;
+        if (this._sceneProbeCubeCamera && this._sceneProbeCubeCamera.parent) {
+          this._sceneProbeCubeCamera.parent.remove(this._sceneProbeCubeCamera);
+        }
+        this._sceneProbeCubeCamera = null;
+        if (this._sceneProbePmremTarget) {
+          this._sceneProbePmremTarget.dispose();
+          this._sceneProbePmremTarget = null;
+        }
+      }
       if (!this._sceneProbeCubeRenderTarget) {
-        this._sceneProbeCubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, {
+        this._sceneProbeCubeRenderTarget = new THREE.WebGLCubeRenderTarget(resolution, {
           generateMipmaps: true,
           minFilter: THREE.LinearMipmapLinearFilter
         });
+        this._sceneProbeResolution = resolution;
       }
       if (!this._sceneProbeCubeCamera) {
         this._sceneProbeCubeCamera = new THREE.CubeCamera(0.1, 1e3, this._sceneProbeCubeRenderTarget);

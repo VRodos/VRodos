@@ -314,6 +314,20 @@
       "default": true,
       "editorDefault": true
     },
+    "sceneProbeUpdateMode": {
+      "metadataKey": "aframeSceneProbeUpdateMode",
+      "type": "enum",
+      "default": "static",
+      "editorDefault": "static",
+      "allowed": ["static", "slow-dynamic"]
+    },
+    "sceneProbeResolution": {
+      "metadataKey": "aframeSceneProbeResolution",
+      "type": "enum",
+      "default": "128",
+      "editorDefault": "128",
+      "allowed": ["64", "128", "256"]
+    },
     "reflectionOcclusionMode": {
       "metadataKey": "aframeReflectionOcclusionMode",
       "type": "enum",

@@ -465,6 +465,8 @@
       reflectionsEnabled: { type: "string", default: vrodosSceneSettingDefault("reflectionsEnabled", "1") },
       reflectionProfile: { type: "string", default: "balanced" },
       reflectionSource: { type: "string", default: "hdr" },
+      sceneProbeUpdateMode: { type: "string", default: vrodosSceneSettingDefault("sceneProbeUpdateMode", "static") },
+      sceneProbeResolution: { type: "string", default: vrodosSceneSettingDefault("sceneProbeResolution", "128") },
       reflectionOcclusionMode: { type: "string", default: vrodosSceneSettingDefault("reflectionOcclusionMode", "auto") },
       horizonSkyPreset: { type: "string", default: "natural" },
       envMapPreset: { type: "string", default: "none" },
@@ -703,6 +705,19 @@
     },
     getReflectionSource: function() {
       return this.data.reflectionSource === "scene-probe" ? "scene-probe" : "hdr";
+    },
+    getSceneProbeUpdateMode: function() {
+      return this.data.sceneProbeUpdateMode === "slow-dynamic" ? "slow-dynamic" : "static";
+    },
+    getSceneProbeResolution: function() {
+      switch (String(this.data.sceneProbeResolution || "128")) {
+        case "64":
+          return 64;
+        case "256":
+          return 256;
+        default:
+          return 128;
+      }
     },
     areReflectionsEnabled: function() {
       return !(this.data.reflectionsEnabled === false || this.data.reflectionsEnabled === "false" || this.data.reflectionsEnabled === "0" || this.data.reflectionsEnabled === 0);
@@ -1096,6 +1111,7 @@
       this._sceneProbeCubeCamera = null;
       this._sceneProbePmremGenerator = null;
       this._sceneProbePmremTarget = null;
+      this._sceneProbeResolution = null;
       this._sceneProbeNeedsUpdate = false;
       this._sceneProbeLastCaptureMs = 0;
       this._sceneProbeLastModelEventMs = 0;
@@ -1358,12 +1374,16 @@
       if (this.getEffectiveReflectionSource() !== "scene-probe") {
         return;
       }
-      if (!this._sceneProbeNeedsUpdate && this._sceneProbeLastYaw !== null) {
+      const sceneProbeUpdateMode = this.getSceneProbeUpdateMode();
+      if (sceneProbeUpdateMode === "static" && !this._sceneProbeNeedsUpdate && this._sceneProbeLastYaw !== null) {
+        return;
+      }
+      if (sceneProbeUpdateMode === "slow-dynamic" && !this._sceneProbeNeedsUpdate && this._sceneProbeLastYaw !== null) {
         const anchorObject = this.getSceneProbeAnchorObject();
         if (anchorObject) {
           anchorObject.updateMatrixWorld(true);
           anchorObject.getWorldPosition(this._sceneProbeCurrentPosition);
-          if (this._sceneProbeCurrentPosition.distanceToSquared(this._sceneProbeLastPosition) > 0.75 * 0.75 || this.getSceneProbeYawDeltaDegrees(this.getSceneProbeAnchorYaw(anchorObject), this._sceneProbeLastYaw) > 12) {
+          if (this._sceneProbeCurrentPosition.distanceToSquared(this._sceneProbeLastPosition) > 6 * 6 || this.getSceneProbeYawDeltaDegrees(this.getSceneProbeAnchorYaw(anchorObject), this._sceneProbeLastYaw) > 45) {
             this._sceneProbeNeedsUpdate = true;
           }
         }
@@ -1371,10 +1391,12 @@
       if (!this._sceneProbeNeedsUpdate) {
         return;
       }
-      if (time - this._sceneProbeLastCaptureMs < 250) {
+      const captureCooldownMs = sceneProbeUpdateMode === "slow-dynamic" ? 5e3 : 500;
+      if (time - this._sceneProbeLastCaptureMs < captureCooldownMs) {
         return;
       }
-      if (this._sceneProbeLastModelEventMs && time - this._sceneProbeLastModelEventMs < 350) {
+      const modelSettleMs = sceneProbeUpdateMode === "slow-dynamic" ? 750 : 350;
+      if (this._sceneProbeLastModelEventMs && time - this._sceneProbeLastModelEventMs < modelSettleMs) {
         return;
       }
       this.captureSceneProbe(time);

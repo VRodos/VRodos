@@ -1,9 +1,9 @@
 
 <dialog id="compile-dialog"
-	class="tw-modal"
-	style="z-index: 1000;"
-	data-game-slug="<?php echo esc_attr( $projectSlug ); ?>"
-	data-project-id="<?php echo esc_attr( $project_id ); ?>">
+        class="tw-modal"
+        style="z-index: 1000;"
+        data-game-slug="<?php echo esc_attr( $projectSlug ); ?>"
+        data-project-id="<?php echo esc_attr( $project_id ); ?>">
 
 	<div class="tw-modal-box tw-p-0 tw-overflow-hidden tw-max-w-3xl tw-w-full tw-max-h-[90vh] tw-flex tw-flex-col">
 
@@ -23,9 +23,9 @@
 					Build Project
 				</a>
 				<button type="button"
-						class="tw-p-1.5 tw-text-slate-400 hover:tw-text-slate-700 tw-rounded-lg hover:tw-bg-slate-100 tw-transition-colors"
-						title="Close"
-						onclick="document.getElementById('compile-dialog').close()">
+				        class="tw-p-1.5 tw-text-slate-400 hover:tw-text-slate-700 tw-rounded-lg hover:tw-bg-slate-100 tw-transition-colors"
+				        title="Close"
+				        onclick="document.getElementById('compile-dialog').close()">
 					<i data-lucide="x" class="tw-w-4 tw-h-4"></i>
 				</button>
 			</div>
@@ -80,7 +80,7 @@
 			<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-mb-5 tw-items-start">
 				<!-- Left Column: Global Settings -->
 				<div class="tw-flex tw-flex-col tw-gap-4">
-					
+
 					<!-- Card: Base Render Quality -->
 					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 						<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
@@ -106,16 +106,6 @@
 									</select>
 								</label>
 							</div>
-
-							<label id="compileAAQualityWrapper" class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Anti-Aliasing</span>
-								<select id="compileAAQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-									<option value="off">Off</option>
-									<option value="balanced">Balanced</option>
-									<option value="high">High</option>
-									<option value="ultra">Ultra</option>
-								</select>
-							</label>
 
 							<div class="tw-grid tw-grid-cols-2 tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
 								<label class="tw-form-control">
@@ -147,58 +137,83 @@
 						</div>
 
 						<div class="tw-space-y-4">
-							<div class="tw-grid tw-grid-cols-2 tw-gap-3">
-								<label class="tw-form-control">
-									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose between HDR reflections or a live scene-based reflection probe">Reflection Source</span>
-									<select id="compileReflectionSourceSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-										<option value="hdr">HDR</option>
-										<option value="scene-probe">Scene Probe</option>
-									</select>
-								</label>
-								<label id="compileEnvMapPresetWrapper" class="tw-form-control">
-									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="HDR environment map for PBR reflections and lighting">Env Lighting</span>
-									<select id="compileEnvMapPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-										<option value="none">None</option>
-										<option value="studio">Studio</option>
-										<option value="quarry">Quarry</option>
-										<option value="venice">Venice Sunset</option>
-									</select>
-								</label>
-							</div>
-
-							<label class="tw-flex tw-items-center tw-justify-between tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
-								<div>
-									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Global Reflections</span>
-									<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Controls material, environment, and direct specular reflections in compiled scenes.</p>
+							<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer">
+								<input id="compileReflectionsEnabledToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
+								<div class="tw-min-w-0">
+									<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Global Reflections</span>
+									<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Enables reflections.</p>
 								</div>
-								<input id="compileReflectionsEnabledToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
 							</label>
 
-							<div id="compileLegacyHorizonStageSizeRow" class="tw-pt-2 tw-border-t tw-border-slate-200">
-								<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-									<div>
-										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Legacy Horizon Size</span>
-										<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Expands the A-Frame environment dome for Legacy + HORIZON scenes.</p>
+							<div class="tw-space-y-3">
+								<div id="compileReflectionControlsWrapper" class="tw-grid tw-grid-cols-2 tw-gap-3">
+									<label class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose between HDR reflections or a live scene-based reflection probe">Reflection Source</span>
+										<select id="compileReflectionSourceSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+											<option value="hdr">HDR</option>
+											<option value="scene-probe">Scene Probe</option>
+										</select>
+									</label>
+									<label id="compileEnvMapPresetWrapper" class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="HDR environment map for PBR reflections and lighting">Env Lighting</span>
+										<select id="compileEnvMapPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+											<option value="none">None</option>
+											<option value="studio">Studio</option>
+											<option value="quarry">Quarry</option>
+											<option value="venice">Venice Sunset</option>
+										</select>
+									</label>
+								</div>
+								<div id="compileSceneProbeControlsWrapper" class="tw-grid tw-grid-cols-2 tw-gap-3">
+									<label class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Controls when scene-probe reflections are recaptured. Static captures once after load for smooth playback.">Scene Probe Update</span>
+										<select id="compileSceneProbeUpdateModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+											<option value="static">Static on load</option>
+											<option value="slow-dynamic">Slow dynamic</option>
+										</select>
+									</label>
+									<label class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Resolution of the cubemap used for scene-probe reflections. Lower values are smoother.">Probe Quality</span>
+										<select id="compileSceneProbeResolutionSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+											<option value="64">Performance 64</option>
+											<option value="128">Balanced 128</option>
+											<option value="256">Sharp 256</option>
+										</select>
+									</label>
+								</div>
+							</div>
+
+							<div class="tw-space-y-3 tw-pt-3 tw-border-t tw-border-slate-200">
+								<p class="tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-wide tw-text-slate-400">Runtime Helpers</p>
+								<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+									<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer">
+										<input id="compileHoveringInteractablesToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
+										<div class="tw-min-w-0">
+											<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Hovering Interactables</span>
+											<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Enables a subtle floating animation on interactive markers.</p>
+										</div>
+									</label>
+
+									<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer">
+										<input id="compileFPSMeterToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
+										<div class="tw-min-w-0">
+											<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">FPS Meter</span>
+											<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Shows a live FPS counter in compiled scenes for quality testing.</p>
+										</div>
+									</label>
+								</div>
+
+								<div id="compileLegacyHorizonStageSizeRow">
+									<div class="tw-flex tw-items-center tw-justify-between tw-gap-3 tw-mb-1">
+										<div class="tw-min-w-0">
+											<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Legacy Horizon Size</span>
+											<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Expands the A-Frame environment dome for Legacy + HORIZON scenes.</p>
+										</div>
+										<span id="compileLegacyHorizonStageSizeValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px] tw-flex-shrink-0">5000</span>
 									</div>
-									<span id="compileLegacyHorizonStageSizeValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">5000</span>
+									<input id="compileLegacyHorizonStageSizeSlider" type="range" min="500" max="8000" step="100" value="5000" class="tw-range tw-range-primary tw-range-xs">
 								</div>
-								<input id="compileLegacyHorizonStageSizeSlider" type="range" min="500" max="8000" step="100" value="5000" class="tw-range tw-range-primary tw-range-xs">
 							</div>
-
-							<label class="tw-flex tw-items-center tw-justify-between tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
-								<div>
-									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">FPS Meter</span>
-									<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Shows a live FPS counter in compiled scenes for quality testing.</p>
-								</div>
-								<input id="compileFPSMeterToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
-							</label>
-							<label class="tw-flex tw-items-center tw-justify-between tw-gap-3 tw-pt-2 tw-border-t tw-border-slate-200">
-								<div>
-									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Hovering Interactables</span>
-									<p class="tw-text-[10px] tw-text-slate-400 tw-mt-0.5">Enables a subtle floating animation on interactive markers.</p>
-								</div>
-								<input id="compileHoveringInteractablesToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
-							</label>
 						</div>
 					</div>
 
@@ -270,7 +285,7 @@
 
 				<!-- Right Column: Contextual Engine Controls -->
 				<div id="compileEngineControlsColumn" class="tw-flex tw-flex-col tw-gap-4">
-					
+
 					<!-- Engine selection tabs -->
 					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 						<div class="tw-mb-3">
@@ -295,6 +310,23 @@
 
 					<!-- LEGACY Engine Panes -->
 					<div id="compileLegacyPane" class="tw-flex tw-flex-col tw-gap-4">
+						<!-- Card: Legacy Anti-Aliasing -->
+						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+							<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+								<i data-lucide="scan" class="tw-w-4 tw-h-4 tw-text-indigo-500"></i>
+								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Legacy Anti-Aliasing</h4>
+							</div>
+							<label id="compileAAQualityWrapper" class="tw-form-control">
+								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">AA Quality</span>
+								<select id="compileAAQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+									<option value="off">Off</option>
+									<option value="balanced">Balanced</option>
+									<option value="high">High</option>
+									<option value="ultra">Ultra</option>
+								</select>
+							</label>
+						</div>
+
 						<!-- Card: Legacy Enhancements -->
 						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 							<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
@@ -335,7 +367,7 @@
 									<i data-lucide="rotate-ccw" class="tw-w-3 tw-h-3"></i> Reset
 								</button>
 							</div>
-							
+
 							<div id="compilePmndrsAAWrapper" class="tw-grid tw-grid-cols-2 tw-gap-3">
 								<label class="tw-form-control tw-w-full">
 									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose the PMNDRS anti-aliasing strategy. MSAA is the preferred default when supported; SMAA is the post-process fallback.">AA Method</span>
@@ -365,23 +397,26 @@
 							</div>
 
 							<div class="tw-space-y-4">
-								<label class="tw-form-control tw-w-full">
-									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Final PMNDRS tone mapping operator. AgX matches the Takram vanilla atmosphere story.">Tone Mapping</span>
-									<select id="compilePmndrsToneMappingSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-										<option value="agx">AgX</option>
-										<option value="reinhard">Reinhard</option>
-										<option value="cineon">Cineon</option>
-										<option value="aces-filmic">ACES Filmic</option>
-										<option value="linear">Linear</option>
-									</select>
-								</label>
 
-								<div>
-									<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Tone-mapping exposure multiplier applied before the selected PMNDRS tone mapping operator.">Tone Map Exposure</span>
-										<span id="compilePmndrsExposureValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+								<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+									<label class="tw-form-control tw-w-full">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Final PMNDRS tone mapping operator. AgX matches the Takram vanilla atmosphere story.">Tone Mapping</span>
+										<select id="compilePmndrsToneMappingSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+											<option value="agx">AgX</option>
+											<option value="reinhard">Reinhard</option>
+											<option value="cineon">Cineon</option>
+											<option value="aces-filmic">ACES Filmic</option>
+											<option value="linear">Linear</option>
+										</select>
+									</label>
+
+									<div>
+										<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Tone-mapping exposure multiplier applied before the selected PMNDRS tone mapping operator.">Tone Map Exposure</span>
+											<span id="compilePmndrsExposureValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+										</div>
+										<input id="compilePmndrsExposureSlider" type="range" min="1" max="20" step="0.1" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 									</div>
-									<input id="compilePmndrsExposureSlider" type="range" min="1" max="20" step="0.1" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 								</div>
 
 								<div class="tw-pt-2 tw-border-t tw-border-slate-200">
@@ -390,22 +425,26 @@
 										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Apply a built-in PMNDRS 3D lookup-table color look.">Built-In LUT Look</span>
 									</label>
 									<div id="compilePmndrsLutWrapper" class="tw-space-y-3">
-										<label class="tw-form-control">
-											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Look</span>
-											<select id="compilePmndrsLutLookSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-												<option value="neutral">Neutral</option>
-												<option value="warm-film">Warm Film</option>
-												<option value="cool-clarity">Cool Clarity</option>
-												<option value="cinematic-contrast">Cinematic Contrast</option>
-												<option value="soft-fade">Soft Fade</option>
-											</select>
-										</label>
-										<div>
-											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Look Strength</span>
-												<span id="compilePmndrsLutStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+
+										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+
+											<label class="tw-form-control">
+												<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Look</span>
+												<select id="compilePmndrsLutLookSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+													<option value="neutral">Neutral</option>
+													<option value="warm-film">Warm Film</option>
+													<option value="cool-clarity">Cool Clarity</option>
+													<option value="cinematic-contrast">Cinematic Contrast</option>
+													<option value="soft-fade">Soft Fade</option>
+												</select>
+											</label>
+											<div>
+												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Look Strength</span>
+													<span id="compilePmndrsLutStrengthValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+												</div>
+												<input id="compilePmndrsLutStrengthSlider" type="range" min="0" max="1" step="0.02" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 											</div>
-											<input id="compilePmndrsLutStrengthSlider" type="range" min="0" max="1" step="0.02" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 										</div>
 									</div>
 								</div>

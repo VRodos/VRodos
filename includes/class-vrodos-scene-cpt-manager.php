@@ -279,6 +279,8 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframeReflectionsEnabled'] = $json_metadata->aframeReflectionsEnabled ?? true;
 		$scene_data['aframeReflectionProfile'] = $json_metadata->aframeReflectionProfile ?? 'balanced';
 		$scene_data['aframeReflectionSource'] = $json_metadata->aframeReflectionSource ?? 'hdr';
+		$scene_data['aframeSceneProbeUpdateMode'] = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $json_metadata, 'sceneProbeUpdateMode', 'static' );
+		$scene_data['aframeSceneProbeResolution'] = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $json_metadata, 'sceneProbeResolution', '128' );
 		$scene_data['aframeHorizonSkyPreset'] = $json_metadata->aframeHorizonSkyPreset ?? 'natural';
 		$pmndrs_horizon_helper_defaults = VRodos_Runtime_Settings_Contract::horizon_helper_defaults( (string) $scene_data['aframeHorizonSkyPreset'] );
 		$scene_data['aframeEnvMapPreset'] = $json_metadata->aframeEnvMapPreset ?? 'none';

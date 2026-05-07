@@ -50,6 +50,18 @@ VRodosCompileUI.PostFX = (function () {
         return 'hdr';
     }
 
+    function normalizeSceneProbeUpdateMode(value) {
+        return value === 'slow-dynamic' ? 'slow-dynamic' : 'static';
+    }
+
+    function normalizeSceneProbeResolution(value) {
+        const normalized = String(value);
+        if (normalized === '64' || normalized === '128' || normalized === '256') {
+            return normalized;
+        }
+        return '128';
+    }
+
     function normalizeEnvMapPreset(value) {
         if (value === 'studio' || value === 'quarry' || value === 'venice') {
             return value;
@@ -248,6 +260,12 @@ VRodosCompileUI.PostFX = (function () {
         }
         VRODOS.editor.envir.scene.aframeReflectionProfile = normalizeReflectionProfile(controls.reflectionProfile.value);
         VRODOS.editor.envir.scene.aframeReflectionSource = normalizeReflectionSource(controls.reflectionSource.value);
+        if (controls.sceneProbeUpdateMode) {
+            VRODOS.editor.envir.scene.aframeSceneProbeUpdateMode = normalizeSceneProbeUpdateMode(controls.sceneProbeUpdateMode.value);
+        }
+        if (controls.sceneProbeResolution) {
+            VRODOS.editor.envir.scene.aframeSceneProbeResolution = normalizeSceneProbeResolution(controls.sceneProbeResolution.value);
+        }
         VRODOS.editor.envir.scene.aframeEnvMapPreset = normalizeEnvMapPreset(controls.envMapPreset.value);
         
         VRODOS.editor.envir.scene.aframePostFXSSRStrength = normalizeSSRStrength(controls.ssrStrength.value);
@@ -308,6 +326,8 @@ VRodosCompileUI.PostFX = (function () {
         normalizeContrastPreset,
         normalizeReflectionProfile,
         normalizeReflectionSource,
+        normalizeSceneProbeUpdateMode,
+        normalizeSceneProbeResolution,
         normalizeEnvMapPreset,
         normalizeSSRStrength,
         normalizePmndrsAAMode,
@@ -320,5 +340,4 @@ VRodosCompileUI.PostFX = (function () {
     };
 
 })();
-
 

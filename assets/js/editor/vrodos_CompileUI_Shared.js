@@ -69,6 +69,11 @@ VRodosCompileUI.Shared = (function () {
         horizonFillLightIntensity: contractDefault('pmndrsHorizonFillLightIntensity', 0.45)
     };
 
+    const SCENE_PROBE_DEFAULTS = {
+        updateMode: contractDefault('sceneProbeUpdateMode', 'static'),
+        resolution: String(contractDefault('sceneProbeResolution', '128'))
+    };
+
     function getPmndrsHorizonHelperDefaults(preset) {
         const normalized = ['clear', 'crisp'].indexOf(preset) !== -1 ? preset : 'natural';
         const defaults = contract.horizonHelperLightPresets && contract.horizonHelperLightPresets[normalized];
@@ -122,6 +127,7 @@ VRodosCompileUI.Shared = (function () {
 
     return {
         PMNDRS_TWEAK_DEFAULTS,
+        SCENE_PROBE_DEFAULTS,
         getPmndrsHorizonHelperDefaults,
         normalizePmndrsHorizonLightingPreset,
         clampNumber,
@@ -132,4 +138,3 @@ VRodosCompileUI.Shared = (function () {
     };
 
 })();
-

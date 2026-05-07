@@ -39,8 +39,12 @@ window.addEventListener('DOMContentLoaded', () => {
             contrastPreset: document.getElementById('compileContrastPresetSelect'),
             colorGradingWrapper: document.getElementById('compileColorGradingWrapper'),
             reflectionsEnabled: document.getElementById('compileReflectionsEnabledToggle'),
+            reflectionControlsWrapper: document.getElementById('compileReflectionControlsWrapper'),
             reflectionProfile: document.getElementById('compileReflectionProfileSelect'),
             reflectionSource: document.getElementById('compileReflectionSourceSelect'),
+            sceneProbeControlsWrapper: document.getElementById('compileSceneProbeControlsWrapper'),
+            sceneProbeUpdateMode: document.getElementById('compileSceneProbeUpdateModeSelect'),
+            sceneProbeResolution: document.getElementById('compileSceneProbeResolutionSelect'),
             envMapPreset: document.getElementById('compileEnvMapPresetSelect'),
             envMapPresetWrapper: document.getElementById('compileEnvMapPresetWrapper'),
             ssrStrength: document.getElementById('compileSSRStrengthSelect'),
@@ -182,6 +186,12 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (!VRODOS.editor.envir.scene.aframeReflectionSource) {
             VRODOS.editor.envir.scene.aframeReflectionSource = 'hdr';
+        }
+        if (!VRODOS.editor.envir.scene.aframeSceneProbeUpdateMode) {
+            VRODOS.editor.envir.scene.aframeSceneProbeUpdateMode = Shared.SCENE_PROBE_DEFAULTS.updateMode;
+        }
+        if (!VRODOS.editor.envir.scene.aframeSceneProbeResolution) {
+            VRODOS.editor.envir.scene.aframeSceneProbeResolution = Shared.SCENE_PROBE_DEFAULTS.resolution;
         }
         if (!VRODOS.editor.envir.scene.aframeEnvMapPreset) {
             VRODOS.editor.envir.scene.aframeEnvMapPreset = 'none';
@@ -377,6 +387,8 @@ window.addEventListener('DOMContentLoaded', () => {
         VRODOS.editor.envir.scene.aframeContrastPreset = VRodosCompileUI.PostFX.normalizeContrastPreset(VRODOS.editor.envir.scene.aframeContrastPreset);
         VRODOS.editor.envir.scene.aframeReflectionProfile = VRodosCompileUI.PostFX.normalizeReflectionProfile(VRODOS.editor.envir.scene.aframeReflectionProfile);
         VRODOS.editor.envir.scene.aframeReflectionSource = VRodosCompileUI.PostFX.normalizeReflectionSource(VRODOS.editor.envir.scene.aframeReflectionSource);
+        VRODOS.editor.envir.scene.aframeSceneProbeUpdateMode = VRodosCompileUI.PostFX.normalizeSceneProbeUpdateMode(VRODOS.editor.envir.scene.aframeSceneProbeUpdateMode);
+        VRODOS.editor.envir.scene.aframeSceneProbeResolution = VRodosCompileUI.PostFX.normalizeSceneProbeResolution(VRODOS.editor.envir.scene.aframeSceneProbeResolution);
         VRODOS.editor.envir.scene.aframeEnvMapPreset = VRodosCompileUI.PostFX.normalizeEnvMapPreset(VRODOS.editor.envir.scene.aframeEnvMapPreset);
         VRODOS.editor.envir.scene.aframePostFXSSRStrength = VRodosCompileUI.PostFX.normalizeSSRStrength(VRODOS.editor.envir.scene.aframePostFXSSRStrength);
         VRODOS.editor.envir.scene.aframePostFXSSREnabled = VRODOS.editor.envir.scene.aframePostFXSSRStrength !== 'off';
@@ -404,8 +416,11 @@ window.addEventListener('DOMContentLoaded', () => {
         const postFxEnabled = controls.postFx.checked;
         const colorGradingEnabled = postFxEnabled && controls.postFxColor.checked;
         const reflectionsEnabled = !controls.reflectionsEnabled || controls.reflectionsEnabled.checked === true;
+        const reflectionControlsVisible = reflectionsEnabled;
         const reflectionControlsEnabled = postFxEnabled && reflectionsEnabled;
-        const envLightingEnabled = reflectionControlsEnabled && VRodosCompileUI.PostFX.normalizeReflectionSource(controls.reflectionSource.value) === 'hdr';
+        const reflectionSource = VRodosCompileUI.PostFX.normalizeReflectionSource(controls.reflectionSource.value);
+        const envLightingEnabled = reflectionControlsEnabled && reflectionSource === 'hdr';
+        const sceneProbeControlsVisible = reflectionControlsVisible && reflectionSource === 'scene-probe';
         const bloomEnabled = postFxEnabled && VRodosCompileUI.PostFX.normalizeBloomStrength(controls.bloomStrength.value) !== 'off';
         const engine = controls.postFxEngine ? VRodosCompileUI.PostFX.normalizeEngine(controls.postFxEngine.value) : 'legacy';
         const isPmndrs = engine === 'pmndrs';
@@ -419,6 +434,19 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.bloomStrength.disabled = !postFxEnabled;
         controls.reflectionProfile.disabled = !reflectionControlsEnabled;
         controls.reflectionSource.disabled = !reflectionControlsEnabled;
+
+        if (controls.reflectionControlsWrapper) {
+            controls.reflectionControlsWrapper.style.display = reflectionControlsVisible ? '' : 'none';
+        }
+        if (controls.sceneProbeControlsWrapper) {
+            controls.sceneProbeControlsWrapper.style.display = sceneProbeControlsVisible ? '' : 'none';
+        }
+        if (controls.sceneProbeUpdateMode) {
+            controls.sceneProbeUpdateMode.disabled = !reflectionControlsEnabled || reflectionSource !== 'scene-probe';
+        }
+        if (controls.sceneProbeResolution) {
+            controls.sceneProbeResolution.disabled = !reflectionControlsEnabled || reflectionSource !== 'scene-probe';
+        }
         
         if (controls.envMapPresetWrapper) {
             controls.envMapPresetWrapper.style.display = envLightingEnabled ? '' : 'none';
@@ -620,6 +648,16 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.reflectionSource.value = VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeReflectionSource
             ? VRodosCompileUI.PostFX.normalizeReflectionSource(VRODOS.editor.envir.scene.aframeReflectionSource)
             : 'hdr';
+        if (controls.sceneProbeUpdateMode) {
+            controls.sceneProbeUpdateMode.value = VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeSceneProbeUpdateMode
+                ? VRodosCompileUI.PostFX.normalizeSceneProbeUpdateMode(VRODOS.editor.envir.scene.aframeSceneProbeUpdateMode)
+                : Shared.SCENE_PROBE_DEFAULTS.updateMode;
+        }
+        if (controls.sceneProbeResolution) {
+            controls.sceneProbeResolution.value = VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeSceneProbeResolution
+                ? VRodosCompileUI.PostFX.normalizeSceneProbeResolution(VRODOS.editor.envir.scene.aframeSceneProbeResolution)
+                : Shared.SCENE_PROBE_DEFAULTS.resolution;
+        }
         if (controls.envMapPreset) {
             controls.envMapPreset.value = VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeEnvMapPreset
                 ? VRodosCompileUI.PostFX.normalizeEnvMapPreset(VRODOS.editor.envir.scene.aframeEnvMapPreset)
@@ -945,6 +983,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (controls.reflectionSource) {
         controls.reflectionSource.addEventListener('change', syncCompilePostFxState);
     }
+    if (controls.sceneProbeUpdateMode) {
+        controls.sceneProbeUpdateMode.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.sceneProbeResolution) {
+        controls.sceneProbeResolution.addEventListener('change', syncCompilePostFxState);
+    }
     if (controls.envMapPreset) {
         controls.envMapPreset.addEventListener('change', syncCompilePostFxState);
     }
@@ -1233,5 +1277,3 @@ window.addEventListener('DOMContentLoaded', () => {
         copyButton.addEventListener("click", copyURLToClipboard);
     }
 });
-
-

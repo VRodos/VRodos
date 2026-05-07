@@ -4406,6 +4406,12 @@ input.tw-tab:checked + .tw-tab-content,
   margin-bottom: calc(2rem * var(--tw-space-y-reverse));
 }
 
+.vrodos-manager-wrapper :is(.tw-space-y-5 > :not([hidden]) ~ :not([hidden])) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.25rem * var(--tw-space-y-reverse));
+}
+
 .vrodos-manager-wrapper .tw-overflow-hidden {
   overflow: hidden;
 }
@@ -5317,6 +5323,10 @@ input.tw-tab:checked + .tw-tab-content,
 
 .vrodos-manager-wrapper .tw-leading-tight {
   line-height: 1.25;
+}
+
+.vrodos-manager-wrapper .tw-leading-snug {
+  line-height: 1.375;
 }
 
 .vrodos-manager-wrapper .tw-tracking-\[0\.12em\] {
