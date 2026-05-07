@@ -19,7 +19,9 @@ The first profiling pass on `http://wp.local:5832/Master_Client_766.html` showed
 - Complete: clean profiler/Spector mode with temporary FPS-meter override.
 - Complete: read-only GLB asset audit that correlates compile diagnostics with local GLB metadata.
 - Complete: prototype cached optimized GLB derivatives for the top offenders with glTF Transform.
-- Next: verify loader support and visual parity before enabling compile-time substitution or admin-panel optimization controls.
+- Complete: decoder asset publishing and compiled-scene decoder config for Draco, Meshopt, and Basis/KTX2.
+- Complete: compiled-scene Meshopt decoder smoke fix after discovering A-Frame requires a classic/browser-global decoder script.
+- Next: visually compare compressed derivatives in the compiled scene, then design admin-panel optimization controls.
 
 ## Spector.js Debug Phase
 
@@ -108,6 +110,42 @@ Runtime/admin-panel decision:
 - The action should keep the original upload, write derivatives plus metadata, show size/quality status, and let compilation choose a validated derivative by render profile.
 - Automatic substitution is still blocked until the compiled A-Frame loader path is verified for Draco and/or Meshopt decoder wiring.
 
+## Compressed Loader Support Phase
+
+A-Frame's `gltf-model` component supports Draco, Meshopt, and Basis/KTX2 decoder paths on the root `<a-scene>` via `dracoDecoderPath`, `meshoptDecoderPath`, and `basisTranscoderPath`.
+
+Implemented support:
+
+- `npm run build:three` now copies decoder assets into the Three vendor directory:
+  - `assets/vendor/three-r181/draco/gltf/`
+  - `assets/vendor/three-r181/basis/`
+  - `assets/vendor/three-r181/meshopt/meshopt_decoder.js`
+- `assets/runtime-version-manifest.json` records those decoder paths under `three.decoders`.
+- `VRodos_Asset_Manager` exposes decoder URL globals for editor/runtime consumers:
+  - `window.vrodos_three_draco_decoder_path`
+  - `window.vrodos_three_basis_transcoder_path`
+  - `window.vrodos_three_meshopt_decoder_path`
+- `VRodos_Compiler_Manager` stamps both master and simple compiled clients with root scene decoder config:
+
+```html
+<a-scene gltf-model="dracoDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/draco/gltf/; basisTranscoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/basis/; meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/meshopt/meshopt_decoder.js;">
+```
+
+Verification:
+
+- Local server returned `200` for Draco WASM, Basis WASM, and Meshopt decoder JS.
+- A compiled-scene smoke test exposed that A-Frame loads `meshoptDecoderPath` as a classic script. The first implementation published Three's ESM `meshopt_decoder.module.js`, which threw `Unexpected token 'export'` and then broke A-Frame's `MeshoptDecoder.ready` access. The vendor build now publishes the browser-global Meshopt decoder at `meshopt_decoder.js` and refreshes `meshopt_decoder.module.js` as a compatibility copy for already-compiled clients.
+- Smoke profile after the fix:
+  `node scripts/profile-master-client.mjs http://wp.local:5832/Master_Client_766.html --frames 60 --warmup-ms 1000 --trace-ms 0 --timeout-ms 30000 --output C:\tmp\vrodos-master-client-smoke.json`
+- The smoke profile recorded root scene `meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/meshopt/meshopt_decoder.js`, `exceptions: []`, and no `Unexpected token 'export'` / `MeshoptDecoder.ready` console errors.
+- The remaining console warning in that smoke profile is the expected `[VRodos] Compile performance diagnostics` warning. Captured `net::ERR_ABORTED` fetch failures did not include thrown page exceptions and should be reviewed only if they appear during a longer manual session.
+- The profiler now records root scene `gltf-model` attributes and decoder globals in `scene.gltfModel` for future captures.
+
+Remaining gate:
+
+- Swap one safe derivative at a time, starting with the Draco asphalt derivative.
+- Verify load success, console/network health, and visual parity before any automatic substitution or admin action is enabled.
+
 ## Policy
 
 - `high` must remain visually equivalent to the current look.
@@ -128,7 +166,9 @@ Runtime/admin-panel decision:
 9. Add a profiler `--disable-fps-meter` switch so StatsGL does not pollute comparison captures.
 10. Add a read-only GLB asset audit script that estimates local GLB triangles, primitives, materials, compression extensions, and first-action recommendations.
 11. Add a glTF Transform derivative prototype script with `safe-draco` and `safe-meshopt` profiles.
-12. Next optimization pass should verify compressed-asset loader support, then prototype admin-side derivative storage and compile-time selection.
+12. Publish Draco, Basis/KTX2, and Meshopt decoder assets through the Three vendor build.
+13. Stamp compiled A-Frame scenes with root `gltf-model` decoder paths.
+14. Next optimization pass should regenerate the target scene, load prototype derivatives, and then prototype admin-side derivative storage plus compile-time selection.
 
 ## Acceptance Criteria
 
@@ -141,5 +181,6 @@ Runtime/admin-panel decision:
 - The profiler can optionally write a Spector.js capture JSON after timing samples.
 - The asset audit can write JSON/Markdown reports from a profiler capture without modifying uploaded assets.
 - The derivative prototype can generate JSON/Markdown reports and cached GLB derivatives without modifying uploaded assets.
+- Compiled scenes include decoder paths for Draco, Basis/KTX2, and Meshopt compressed assets after regeneration.
 - `?vrodos_spector=1` exposes `window.VRODOS_SPECTOR` and opens Spector's UI without affecting normal URLs.
 - `node --check`, PHP lint for edited PHP files, and `git diff --check` pass for the edited files.

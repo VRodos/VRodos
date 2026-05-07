@@ -20,6 +20,12 @@ const outputDir = path.join(rootDir, 'assets', 'vendor', threeRuntimeConfig.vend
 const bundlePath = path.join(outputDir, threeRuntimeConfig.bundleFile);
 const dracoSourceDir = path.join(rootDir, 'node_modules', 'three', 'examples', 'jsm', 'libs', 'draco');
 const dracoOutputDir = path.join(outputDir, 'draco');
+const basisSourceDir = path.join(rootDir, 'node_modules', 'three', 'examples', 'jsm', 'libs', 'basis');
+const basisOutputDir = path.join(outputDir, 'basis');
+const meshoptSourcePath = path.join(rootDir, 'node_modules', 'meshoptimizer', 'meshopt_decoder.cjs');
+const meshoptOutputDir = path.join(outputDir, 'meshopt');
+const meshoptOutputPath = path.join(meshoptOutputDir, 'meshopt_decoder.js');
+const meshoptCompatOutputPath = path.join(meshoptOutputDir, 'meshopt_decoder.module.js');
 const fontSourcePath = path.join(rootDir, 'node_modules', 'three', 'examples', 'fonts', 'helvetiker_bold.typeface.json');
 const fontOutputDir = path.join(outputDir, 'fonts');
 const fontOutputPath = path.join(fontOutputDir, 'helvetiker_bold.typeface.json');
@@ -188,11 +194,18 @@ function resolveAframeRuntimeUrl() {
 
 async function copySupportAssets() {
   await ensurePathExists(dracoSourceDir, 'Draco decoder assets');
+  await ensurePathExists(basisSourceDir, 'Basis/KTX2 transcoder assets');
+  await ensurePathExists(meshoptSourcePath, 'Meshopt decoder asset');
   await ensurePathExists(fontSourcePath, 'Helvetiker font asset');
 
   await mkdir(dracoOutputDir, { recursive: true });
+  await mkdir(basisOutputDir, { recursive: true });
+  await mkdir(meshoptOutputDir, { recursive: true });
   await mkdir(fontOutputDir, { recursive: true });
   await cp(dracoSourceDir, dracoOutputDir, { recursive: true, force: true });
+  await cp(basisSourceDir, basisOutputDir, { recursive: true, force: true });
+  await cp(meshoptSourcePath, meshoptOutputPath, { force: true });
+  await cp(meshoptSourcePath, meshoptCompatOutputPath, { force: true });
   await cp(fontSourcePath, fontOutputPath, { force: true });
 }
 
@@ -336,6 +349,11 @@ async function writeRuntimeManifest() {
       vendorDir: threeRuntimeConfig.vendorDir,
       bundleFile: threeRuntimeConfig.bundleFile,
       bundlePath: `assets/vendor/${threeRuntimeConfig.vendorDir}/${threeRuntimeConfig.bundleFile}`,
+      decoders: {
+        dracoDecoderPath: `assets/vendor/${threeRuntimeConfig.vendorDir}/draco/gltf/`,
+        basisTranscoderPath: `assets/vendor/${threeRuntimeConfig.vendorDir}/basis/`,
+        meshoptDecoderPath: `assets/vendor/${threeRuntimeConfig.vendorDir}/meshopt/meshopt_decoder.js`,
+      },
     },
     postprocessing: {
       version: postprocessingVersion,

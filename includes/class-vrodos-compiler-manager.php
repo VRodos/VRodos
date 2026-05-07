@@ -452,6 +452,7 @@ class VRodos_Compiler_Manager {
 		$dom->getElementsByTagName( 'title' )->item( 0 )->nodeValue = $scene_title[ $index ];
 
 		$this->apply_scene_environment( $content, $dom, $ascene, $scene_json, $project_id );
+		$this->apply_gltf_decoder_config( $ascene );
 		$ascene->setAttribute( 'vrodos-scene-loader', '' );
 
 		// Set networked properties
@@ -581,6 +582,7 @@ class VRodos_Compiler_Manager {
 		$ascene     = $basicDomElements['ascene'];
 
 		$this->apply_scene_environment( $content, $dom, $ascene, $scene_json, $project_id );
+		$this->apply_gltf_decoder_config( $ascene );
 
 		// Use helper to ensure a-assets exists and is attached
 		$a_asset = $this->entity_renderer->get_or_create_assets_container( $dom, $ascene );
@@ -642,6 +644,25 @@ class VRodos_Compiler_Manager {
 	 */
 	private function apply_scene_environment( &$content, $dom, $ascene, $scene_json, $project_id ) {
 		$this->scene_settings->apply( $dom, $ascene, $scene_json, (int) $project_id, [ $this, 'normalize_url' ] );
+	}
+
+	private function apply_gltf_decoder_config( DOMElement $ascene ): void {
+		$ascene->setAttribute( 'gltf-model', $this->build_gltf_decoder_config() );
+	}
+
+	private function build_gltf_decoder_config(): string {
+		$runtime_config    = VRodos_Render_Runtime_Manager::get_config();
+		$three_vendor_dir  = (string) ( $runtime_config['three_vendor_dir'] ?? VRodos_Render_Runtime_Manager::get_three_vendor_dir() );
+		$three_vendor_base = VRodos_Path_Manager::vendor_url( $three_vendor_dir . '/' );
+
+		return implode(
+			' ',
+			[
+				'dracoDecoderPath: ' . $this->normalize_url( $three_vendor_base . 'draco/gltf/' ) . ';',
+				'basisTranscoderPath: ' . $this->normalize_url( $three_vendor_base . 'basis/' ) . ';',
+				'meshoptDecoderPath: ' . $this->normalize_url( $three_vendor_base . 'meshopt/meshopt_decoder.js' ) . ';',
+			]
+		);
 	}
 
 	private function append_compile_diagnostics_script( DOMDocument $dom, array $diagnostics ): void {

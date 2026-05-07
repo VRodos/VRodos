@@ -13,7 +13,12 @@
     "revision": "181",
     "vendorDir": "three-r181",
     "bundleFile": "vrodos-three-r181.bundle.js",
-    "bundlePath": "assets/vendor/three-r181/vrodos-three-r181.bundle.js"
+    "bundlePath": "assets/vendor/three-r181/vrodos-three-r181.bundle.js",
+    "decoders": {
+      "dracoDecoderPath": "assets/vendor/three-r181/draco/gltf/",
+      "basisTranscoderPath": "assets/vendor/three-r181/basis/",
+      "meshoptDecoderPath": "assets/vendor/three-r181/meshopt/meshopt_decoder.js"
+    }
   },
   "postprocessing": {
     "version": "6.39.1",

@@ -110,11 +110,24 @@ npm run assets:optimize:prototype -- --audit C:\tmp\vrodos-master-client-asset-a
 Derivative prototype profiles:
 
 - `safe-draco`: prune, dedupe, and Draco geometry compression. It preserves source uploads and does not resize textures or simplify geometry.
-- `safe-meshopt`: prune, dedupe, and Meshopt geometry compression. It is for comparison until the compiled runtime has explicit Meshopt decoder wiring.
+- `safe-meshopt`: prune, dedupe, and Meshopt geometry compression. It is for comparison until a regenerated compiled client is visually checked with Meshopt decoder wiring.
 
-Current loader caveat: compressed derivatives must not be substituted into compiled pages until A-Frame's `gltf-model` path is verified with the relevant decoder. The Three r181 vendor build includes `DRACOLoader` and copied Draco decoder assets; Meshopt and KTX2 decoder wiring are not currently proven in the compiled runtime.
+Current loader caveat: compressed derivatives must not be substituted into compiled pages until the generated client's root `gltf-model` config is present and visual parity is checked with the relevant decoder.
 
 Future admin-panel optimization should be derivative-based: keep the original uploaded asset, generate one or more cached optimized variants, store metadata about size/profile/validation, and let scene compilation choose a validated derivative by render profile.
+
+### Compressed Asset Decoder Paths
+
+The compiler now writes A-Frame decoder paths onto the root scene:
+
+```html
+<a-scene gltf-model="dracoDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/draco/gltf/; basisTranscoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/basis/; meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/meshopt/meshopt_decoder.js;">
+```
+
+Decoder files are copied by `npm run build:three` and recorded in `assets/runtime-version-manifest.json` under `three.decoders`.
+Use the browser-global Meshopt decoder file, `meshopt_decoder.js`, in generated clients. A-Frame loads `meshoptDecoderPath` as a classic script, so the ESM `meshopt_decoder.module.js` form is not valid there. The vendor build also refreshes `meshopt_decoder.module.js` with the same browser-global payload as a compatibility copy for already-generated clients.
+
+A short smoke profile on `Master_Client_766.html` confirmed the generated root scene attribute points at `meshopt_decoder.js` and no longer throws the previous Meshopt `Unexpected token 'export'` / `MeshoptDecoder.ready` errors. For future captures, inspect `scene.gltfModel` in `scripts/profile-master-client.mjs` output to confirm the root scene attribute and decoder globals.
 
 ## 4. Legacy Pipeline
 

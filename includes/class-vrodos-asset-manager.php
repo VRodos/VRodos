@@ -308,6 +308,9 @@ class VRodos_Asset_Manager {
 		$inline_script = 'window.vrodos_three_vendor_dir = ' . wp_json_encode( $three_vendor_dir ) . ';'
 			. 'window.vrodos_three_vendor_base = ' . wp_json_encode( $three_vendor_base ) . ';'
 			. 'window.vrodos_three_decoder_path = ' . wp_json_encode( $three_vendor_base . 'draco/' ) . ';'
+			. 'window.vrodos_three_draco_decoder_path = ' . wp_json_encode( $three_vendor_base . 'draco/gltf/' ) . ';'
+			. 'window.vrodos_three_basis_transcoder_path = ' . wp_json_encode( $three_vendor_base . 'basis/' ) . ';'
+			. 'window.vrodos_three_meshopt_decoder_path = ' . wp_json_encode( $three_vendor_base . 'meshopt/meshopt_decoder.js' ) . ';'
 			. 'window.vrodos_three_font_path = ' . wp_json_encode( $three_vendor_base . 'fonts/helvetiker_bold.typeface.json' ) . ';'
 			. 'window.vrodos_render_runtime = ' . wp_json_encode( $runtime_config ) . ';';
 		wp_add_inline_script( 'vrodos_three_vendor_bundle', $inline_script, 'before' );

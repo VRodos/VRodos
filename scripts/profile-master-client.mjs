@@ -782,6 +782,17 @@ async function captureSceneSnapshot(cdp) {
                 clearFrustumElements: document.querySelectorAll('[clear-frustum-culling]').length,
                 raycastableElements: document.querySelectorAll('.raycastable').length
             },
+            gltfModel: scene ? {
+                sceneAttribute: scene.getAttribute('gltf-model'),
+                systemData: scene.systems && scene.systems['gltf-model'] && scene.systems['gltf-model'].data
+                    ? Object.assign({}, scene.systems['gltf-model'].data)
+                    : null,
+                decoderGlobals: {
+                    draco: window.vrodos_three_draco_decoder_path || window.vrodos_three_decoder_path || null,
+                    basis: window.vrodos_three_basis_transcoder_path || null,
+                    meshopt: window.vrodos_three_meshopt_decoder_path || null
+                }
+            } : null,
             debug: {
                 spectorGlobalAvailable: Boolean(window.SPECTOR && window.SPECTOR.Spector),
                 vrodosSpectorAvailable: Boolean(window.VRODOS_SPECTOR),

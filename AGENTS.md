@@ -133,7 +133,10 @@ Performance tooling:
 - Use `--spector` only after rAF/trace sampling for one-frame WebGL anatomy.
 - Use `scripts/audit-master-client-assets.mjs` to correlate compile diagnostics with local GLB metadata.
 - Use `scripts/prototype-optimize-master-client-assets.mjs` for offline derivative prototypes only. It writes reports/GLBs under the requested output directory and must not modify WordPress uploads.
-- Do not substitute Draco, Meshopt, or KTX2 derivatives into compiled pages until the relevant A-Frame/Three decoder path is verified and visual parity is checked.
+- `npm run build:three` copies Draco, Basis/KTX2, and Meshopt decoder assets into `assets/vendor/three-r181/` and records them in `assets/runtime-version-manifest.json`.
+- Compiled scenes receive root `gltf-model` decoder paths from `VRodos_Compiler_Manager`; regenerate compiled HTML before testing compressed derivatives.
+- Use `meshopt_decoder.js` for A-Frame `meshoptDecoderPath`. A-Frame loads this path as a classic script, so do not point compiled scenes at the ESM `meshopt_decoder.module.js`; the `.module.js` filename is only kept as a compatibility copy for older generated clients.
+- Do not substitute Draco, Meshopt, or KTX2 derivatives into compiled pages until the relevant A-Frame/Three decoder path is present in the generated client and visual parity is checked.
 
 Do not manually copy standalone PMNDRS bundles. `postprocessing` is exported from `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`.
 
