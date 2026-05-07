@@ -191,6 +191,23 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 	}
 
+	private function set_world_lighting_attributes( DOMElement $entity ): void {
+		$entity->setAttribute( 'data-vrodos-world-lighting', 'true' );
+		$entity->setAttribute( 'shadow', 'cast: true; receive: true' );
+	}
+
+	private function set_overlay_ui_attributes( DOMElement $entity ): void {
+		$entity->setAttribute( 'data-vrodos-overlay-ui', 'true' );
+	}
+
+	private function world_media_material( string $src, string $side = 'double', bool $transparent = true ): string {
+		$material = "src: $src; side: $side; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
+		if ( $transparent ) {
+			$material .= '; transparent: true; alphaTest: 0.5';
+		}
+		return $material;
+	}
+
 
 	private function includeDoorFunctionality( $a_entity, $door_link ) {
 		// Use a relative path for the baked HTML door link so it works across IPs/localhost without CORS.
@@ -450,7 +467,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$entity->setAttribute( 'material', $material );
 		$entity->setAttribute( 'class', $class );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
-		$entity->setAttribute( 'shadow', 'cast: true; receive: true' );
+		$this->set_world_lighting_attributes( $entity );
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 		
 		$ascene->appendChild( $entity );
@@ -565,24 +582,29 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$parent = $dom->createElement( 'a-entity' );
 			$parent->setAttribute( 'id', 'image-display_' . $uuid );
 			$this->setAffineTransformations( $parent, $obj );
-			$parent->setAttribute( 'class', 'hideable' );
+			$parent->setAttribute( 'class', 'override-materials hideable' );
+			$parent->setAttribute( 'clear-frustum-culling', '' );
+			$this->set_world_lighting_attributes( $parent );
 			$this->apply_immerse_cefr_gating_attributes( $parent, $obj );
 
 			// Determine if transparent (usually yes for PNG POIs)
 			$is_transparent = isset($obj->transparent) ? ($obj->transparent ? 'true' : 'false') : 'true';
+			$is_transparent_bool = $is_transparent === 'true';
 
 			$front = $dom->createElement( 'a-plane' );
 			$front->setAttribute( 'height', '2' );
 			$front->setAttribute( 'width', '2' );
 			$front->setAttribute( 'position', '0 0 0.001' );
-			$front->setAttribute( 'material', "src: #image_$uuid; shader: flat; side: front; transparent: $is_transparent; alphaTest: 0.5; depthWrite: false" );
+			$front->setAttribute( 'material', $this->world_media_material( "#image_$uuid", 'front', $is_transparent_bool ) );
+			$this->set_world_lighting_attributes( $front );
 			
 			$back = $dom->createElement( 'a-plane' );
 			$back->setAttribute( 'height', '2' );
 			$back->setAttribute( 'width', '2' );
 			$back->setAttribute( 'position', '0 0 -0.001' );
 			$back->setAttribute( 'rotation', '0 180 0' );
-			$back->setAttribute( 'material', "src: #image_$uuid; shader: flat; side: front; transparent: $is_transparent; alphaTest: 0.5; depthWrite: false" );
+			$back->setAttribute( 'material', $this->world_media_material( "#image_$uuid", 'front', $is_transparent_bool ) );
+			$this->set_world_lighting_attributes( $back );
 
 			$parent->appendChild( $front );
 			$parent->appendChild( $back );
@@ -654,15 +676,17 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			if ( $poster_id ) {
 				$display->setAttribute( 'data-vrodos-video-poster', '#' . $poster_id );
 			}
-			$material_attr = 'shader: flat; side: double; transparent: true; alphaTest: 0.5; depthWrite: false';
+			$material_attr = 'side: double; transparent: true; alphaTest: 0.5; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true';
 			if ( $poster_id ) {
 				$material_attr .= "; src: #$poster_id";
 			}
 			$display->setAttribute( 'material', $material_attr );
-			$display->setAttribute( 'class', 'clickable raycastable hideable' );
+			$display->setAttribute( 'class', 'override-materials clickable raycastable hideable' );
 			$display->setAttribute( 'original-scale', '1 1 1' );
 			$display->setAttribute( 'data-vrodos-video-src', $this->normalize_url( $obj->video_path ?? '' ) );
 			$display->setAttribute( 'data-vrodos-video-loop', ($obj->video_loop ?? 0) == 1 ? 'true' : 'false' );
+			$display->setAttribute( 'clear-frustum-culling', '' );
+			$this->set_world_lighting_attributes( $display );
 			$display->setAttribute( 'video-controls', "id: $uuid" );
 			$this->setAffineTransformations( $display, $obj );
 			$this->apply_immerse_cefr_gating_attributes( $display, $obj );
@@ -687,12 +711,14 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$panel->setAttribute( 'mixin', 'vid_panel' );
 			$panel->setAttribute( 'visible', 'false' );
 			$panel->setAttribute( 'scale', '0.0001 0.0001 0.0001' );
+			$this->set_overlay_ui_attributes( $panel );
 
 			// Exit Frame & Button
 			$exit_frame = $dom->createElement( 'a-entity' );
 			$exit_frame->setAttribute( 'id', 'exit_vid_panel_' . $uuid );
 			$exit_frame->setAttribute( 'mixin', 'poiVidEscFrame' );
 			$exit_frame->setAttribute( 'class', 'raycastable' );
+			$this->set_overlay_ui_attributes( $exit_frame );
 			$panel->appendChild( $exit_frame );
 
 			$exit_btn = $dom->createElement( 'a-plane' );
@@ -701,6 +727,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$exit_btn->setAttribute( 'mixin', 'poiVidEscFrame' );
 			$exit_btn->setAttribute( 'material', 'transparent: true' );
 			$exit_btn->setAttribute( 'class', 'raycastable' );
+			$this->set_overlay_ui_attributes( $exit_btn );
 			$panel->appendChild( $exit_btn );
 
 			// Play Button (Switches between 3D Play and 2D Pause)
@@ -711,6 +738,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$play_btn->setAttribute( 'material', 'transparent: true; visible: false' );
 			$play_btn->setAttribute( 'class', 'raycastable' );
 			$play_btn->setAttribute( 'highlight', 'ent_pl_' . $uuid );
+			$this->set_overlay_ui_attributes( $play_btn );
 			if ( $this->isHoverEnabled ) {
 				$play_btn->setAttribute( 'vrodos-hypnotic-hover', '' );
 			}
@@ -718,6 +746,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$play_btn_3d = $dom->createElement( 'a-entity' );
 			$play_btn_3d->setAttribute( 'vrodos-3d-play-icon', '' );
 			$play_btn_3d->setAttribute( 'scale', '0.04 0.04 0.04' );
+			$this->set_overlay_ui_attributes( $play_btn_3d );
 			$play_btn->appendChild( $play_btn_3d );
 
 			$panel->appendChild( $play_btn );
@@ -731,6 +760,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$fs_btn->setAttribute( 'height', '0.1' );
 			$fs_btn->setAttribute( 'material', 'transparent: true' );
 			$fs_btn->setAttribute( 'class', 'raycastable' );
+			$this->set_overlay_ui_attributes( $fs_btn );
 			$panel->appendChild( $fs_btn );
 
 			// Title
@@ -740,6 +770,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$title->setAttribute( 'position', '0 0.3 0.001' );
 			$title->setAttribute( 'align', 'center' );
 			$title->setAttribute( 'width', '0.5' );
+			$this->set_overlay_ui_attributes( $title );
 			$panel->appendChild( $title );
 
 			$ascene->appendChild( $panel );
@@ -768,6 +799,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$ui->setAttribute( 'class', 'hideable raycastable' );
 		$ui->setAttribute( 'visible', 'false' );
 		$ui->setAttribute( 'scale', '0.001 0.001 0.001' );
+		$this->set_overlay_ui_attributes( $ui );
 		// Add invisible geometry to satisfy this.el.components.material access in legacy JS
 		$ui->setAttribute( 'geometry', 'primitive: plane; width: 0.001; height: 0.001' );
 		$ui->setAttribute( 'material', 'visible: false; depthTest: true' );
@@ -779,11 +811,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$button->setAttribute( 'id', 'button_poi_' . $uuid );
 		$button->setAttribute( 'gltf-model', 'url(' . $this->normalize_url( $obj->glb_path ?? '' ) . ')' );
 		$button->setAttribute( 'highlight', 'button_poi_' . $uuid );
-		$button->setAttribute( 'class', 'raycastable menu-button hideable' );
+		$button->setAttribute( 'class', 'override-materials raycastable menu-button hideable' );
 		if ( $this->isHoverEnabled ) {
 			$button->setAttribute( 'vrodos-hypnotic-hover', '' );
 		}
-		$button->setAttribute( 'shadow', 'cast: true; receive: true' );
+		$button->setAttribute( 'clear-frustum-culling', '' );
+		$this->set_world_lighting_attributes( $button );
 		$this->setAffineTransformations( $button, $obj ); // Trigger stays in 3D world
 		$ascene->appendChild( $button );
 
@@ -794,6 +827,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$infoPanel->setAttribute( 'geometry', 'primitive: plane; width: 1.5; height: 1.8' );
 		$infoPanel->setAttribute( 'material', 'color: #333333; shader: flat; transparent: true; opacity: 0.9' );
 		$infoPanel->setAttribute( 'position', '0 0 0.005' );
+		$this->set_overlay_ui_attributes( $infoPanel );
 		$ui->appendChild( $infoPanel );
 
 		// Image Display Plane
@@ -802,6 +836,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$top_img->setAttribute( 'geometry', 'primitive: plane; width: 1.4; height: 0.8' );
 		$top_img->setAttribute( 'material', 'shader: flat; transparent: true' );
 		$top_img->setAttribute( 'position', '0 0.35 0.01' );
+		$this->set_overlay_ui_attributes( $top_img );
 		$ui->appendChild( $top_img );
 
 		// Title Text (Using fallbacks for common mismatched keys)
@@ -816,6 +851,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$title->setAttribute( 'font', 'https://cdn.aframe.io/fonts/DejaVu-sdf.fnt' );
 		$title->setAttribute( 'width', '1.4' );
 		$title->setAttribute( 'title_to_add', $this->sanitize_text_attr( $title_text ) );
+		$this->set_overlay_ui_attributes( $title );
 		$ui->appendChild( $title );
 		
 		// Description Text (Using fallbacks for common mismatched keys)
@@ -830,6 +866,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$desc->setAttribute( 'font', 'https://cdn.aframe.io/fonts/DejaVu-sdf.fnt' );
 		$desc->setAttribute( 'width', '1.3' );
 		$desc->setAttribute( 'text_to_add', $this->sanitize_text_attr( $desc_text ) );
+		$this->set_overlay_ui_attributes( $desc );
 		$ui->appendChild( $desc );
 
 		// Page Indicator
@@ -837,6 +874,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$page->setAttribute( 'id', 'page_' . $uuid );
 		$page->setAttribute( 'position', '0 -0.7 0.01' );
 		$page->setAttribute( 'text', 'value: page 1; color: #aaaaaa; align: center; font: https://cdn.aframe.io/fonts/DejaVu-sdf.fnt; width: 1' );
+		$this->set_overlay_ui_attributes( $page );
 		$ui->appendChild( $page );
 
 		// Navigation Buttons
@@ -848,6 +886,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$next_panel->setAttribute( 'height', '0.1' );
 		$next_panel->setAttribute( 'color', '#444444' );
 		$next_panel->setAttribute( 'class', 'raycastable' );
+		$this->set_overlay_ui_attributes( $next_panel );
 		$ui->appendChild( $next_panel );
 
 		$next_btn = $dom->createElement( 'a-entity' );
@@ -855,6 +894,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$next_btn->setAttribute( 'position', '0.5 -0.7 0.02' );
 		$next_btn->setAttribute( 'text', 'value: NEXT; color: #ffffff; align: center; width: 1' );
 		$next_btn->setAttribute( 'class', 'raycastable' );
+		$this->set_overlay_ui_attributes( $next_btn );
 		$ui->appendChild( $next_btn );
 
 		// Prev
@@ -865,6 +905,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$prev_panel->setAttribute( 'height', '0.1' );
 		$prev_panel->setAttribute( 'color', '#444444' );
 		$prev_panel->setAttribute( 'class', 'raycastable' );
+		$this->set_overlay_ui_attributes( $prev_panel );
 		$ui->appendChild( $prev_panel );
 
 		$prev_btn = $dom->createElement( 'a-entity' );
@@ -872,6 +913,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$prev_btn->setAttribute( 'position', '-0.5 -0.7 0.02' );
 		$prev_btn->setAttribute( 'text', 'value: PREV; color: #ffffff; align: center; width: 1' );
 		$prev_btn->setAttribute( 'class', 'raycastable' );
+		$this->set_overlay_ui_attributes( $prev_btn );
 		$ui->appendChild( $prev_btn );
 
 		// Exit Button
@@ -882,6 +924,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$exit_panel->setAttribute( 'height', '0.12' );
 		$exit_panel->setAttribute( 'color', '#cc0000' );
 		$exit_panel->setAttribute( 'class', 'raycastable' );
+		$this->set_overlay_ui_attributes( $exit_panel );
 		$ui->appendChild( $exit_panel );
 
 		$exit_btn = $dom->createElement( 'a-plane' );
@@ -893,6 +936,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$exit_btn->setAttribute( 'material', 'transparent: true' );
 		$exit_btn->setAttribute( 'class', 'raycastable' );
 		$exit_btn->setAttribute( 'original-scale', '1 1 1' );
+		$this->set_overlay_ui_attributes( $exit_btn );
 		$ui->appendChild( $exit_btn );
 
 		$ascene->appendChild( $ui );

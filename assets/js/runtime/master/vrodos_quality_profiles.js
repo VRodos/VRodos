@@ -551,6 +551,7 @@
             id.indexOf('vid-panel_') === 0 ||
             entityHasClass(entityEl, 'avatar') ||
             entityHasClass(entityEl, 'non-vr') ||
+            entityEl.hasAttribute('data-vrodos-overlay-ui') ||
             entityEl.hasAttribute('data-vrodos-photoreal-light');
     }
 
@@ -560,11 +561,10 @@
         }
 
         const id = entityEl.id || '';
-        return id.indexOf('video-display_') === 0 ||
+        return entityEl.hasAttribute('data-vrodos-world-lighting') ||
+            id.indexOf('video-display_') === 0 ||
             id.indexOf('image-display_') === 0 ||
             id.indexOf('button_poi_') === 0 ||
-            id.indexOf('infoPanel_') === 0 ||
-            id.indexOf('top_img_') === 0 ||
             entityEl.hasAttribute('link-listener') ||
             entityEl.hasAttribute('data-vrodos-video-src') ||
             entityHasClass(entityEl, 'menu-button');

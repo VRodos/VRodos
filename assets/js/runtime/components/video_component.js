@@ -163,6 +163,7 @@ AFRAME.registerComponent('video-controls', {
         this.videoPosterSelector = this.videoDisplay ? (this.videoDisplay.getAttribute("data-vrodos-video-poster") || "") : "";
         this.videoPosterUrl = this.resolvePosterUrl();
         this.video = this.ensureVideoElement();
+        this.applyWorldVideoMaterial();
 
         // Bind Methods
         this.onVideoClick = this.onVideoClick.bind(this);
@@ -237,6 +238,65 @@ AFRAME.registerComponent('video-controls', {
         return posterAsset ? (posterAsset.getAttribute("src") || "") : "";
     },
 
+    getWorldVideoMaterial: function (src) {
+        var material = "side: double; transparent: true; alphaTest: 0.5; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
+        if (src) material += "; src: " + src;
+        return material;
+    },
+
+    getOverlayVideoMaterial: function (src) {
+        var material = "shader: flat; side: double; transparent: true; opacity: 1; depthTest: false; depthWrite: false";
+        if (src) material += "; src: " + src;
+        return material;
+    },
+
+    getInlineVideoMaterialSource: function () {
+        if (this.videoPrimed && this.video) return this.video_id;
+        return this.videoPosterSelector || "";
+    },
+
+    setVideoDisplayShadowState: function (enabled) {
+        if (!this.videoDisplay || !this.videoDisplay.getObject3D) return;
+        var mesh = this.videoDisplay.getObject3D("mesh");
+        if (!mesh) return;
+        mesh.traverse(function (node) {
+            if (!node || !node.isMesh) return;
+            node.castShadow = enabled;
+            node.receiveShadow = enabled;
+        });
+    },
+
+    requestSceneLightingRefresh: function () {
+        if (!this.backgroundEl || !this.backgroundEl.components) return;
+        var settings = this.backgroundEl.components["scene-settings"];
+        if (!settings) return;
+        if (typeof settings.markSceneCollectionsDirty === "function") settings.markSceneCollectionsDirty();
+        if (typeof settings.queueQualityRefresh === "function") settings.queueQualityRefresh(false);
+    },
+
+    applyWorldVideoMaterial: function () {
+        if (!this.videoDisplay) return;
+        var source = this.getInlineVideoMaterialSource();
+        if (source) this.videoDisplay.setAttribute("src", source);
+        this.videoDisplay.setAttribute("material", this.getWorldVideoMaterial(source));
+        this.videoDisplay.setAttribute("data-vrodos-world-lighting", "true");
+        this.videoDisplay.removeAttribute("data-vrodos-overlay-ui");
+        this.setVideoDisplayShadowState(true);
+        requestAnimationFrame(() => this.tuneVideoTexture());
+        this.requestSceneLightingRefresh();
+    },
+
+    applyOverlayVideoMaterial: function () {
+        if (!this.videoDisplay) return;
+        var source = this.videoPrimed ? this.video_id : this.getInlineVideoMaterialSource();
+        if (source) this.videoDisplay.setAttribute("src", source);
+        this.videoDisplay.setAttribute("material", this.getOverlayVideoMaterial(source));
+        this.videoDisplay.setAttribute("data-vrodos-overlay-ui", "true");
+        this.setVideoDisplayShadowState(false);
+        requestAnimationFrame(() => this.tuneVideoTexture());
+        this.requestSceneLightingRefresh();
+    },
+
     prepareVideoElement: function (videoEl) {
         if (!videoEl) return;
         videoEl.loop = this.videoLoop;
@@ -274,8 +334,8 @@ AFRAME.registerComponent('video-controls', {
 
     bindInlineVideoTexture: function () {
         if (!this.videoDisplay || !this.video) return;
-        this.videoDisplay.setAttribute("src", this.video_id);
-        this.videoDisplay.setAttribute("material", "shader: flat; side: double");
+        if (this.is_fs) this.applyOverlayVideoMaterial();
+        else this.applyWorldVideoMaterial();
         requestAnimationFrame(() => this.tuneVideoTexture());
     },
 
@@ -436,6 +496,7 @@ AFRAME.registerComponent('video-controls', {
         this.videoDisplay.setAttribute("position", p_x);
         this.videoDisplay.setAttribute("scale", this.videoDisplay.getAttribute("original-scale"));
         this.videoDisplay.setAttribute("rotation", r_x);
+        this.applyWorldVideoMaterial();
         this.visCollection = [];
     },
    
@@ -506,6 +567,7 @@ AFRAME.registerComponent('video-controls', {
 
         this.videoDisplay.classList.add("non-clickable");
         this.cam.add(this.videoDisplay);        
+        this.applyOverlayVideoMaterial();
         
         const viewport = window.VRODOS_VIDEO_MANAGER.getViewportAtDepth(-25);
         this.videoDisplay.setAttribute("height", viewport.height);

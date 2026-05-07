@@ -2611,14 +2611,14 @@
       }
       const id = entityEl.id || "";
       const tagName = entityEl.tagName ? entityEl.tagName.toUpperCase() : "";
-      return tagName === "A-SKY" || tagName === "A-SUN-SKY" || id === "cameraA" || id === "default-sky" || id === "default-sun" || id.indexOf("vid-panel_") === 0 || entityHasClass(entityEl, "avatar") || entityHasClass(entityEl, "non-vr") || entityEl.hasAttribute("data-vrodos-photoreal-light");
+      return tagName === "A-SKY" || tagName === "A-SUN-SKY" || id === "cameraA" || id === "default-sky" || id === "default-sun" || id.indexOf("vid-panel_") === 0 || entityHasClass(entityEl, "avatar") || entityHasClass(entityEl, "non-vr") || entityEl.hasAttribute("data-vrodos-overlay-ui") || entityEl.hasAttribute("data-vrodos-photoreal-light");
     }
     function isDecorativeLightingEntity(entityEl) {
       if (!entityEl) {
         return false;
       }
       const id = entityEl.id || "";
-      return id.indexOf("video-display_") === 0 || id.indexOf("image-display_") === 0 || id.indexOf("button_poi_") === 0 || id.indexOf("infoPanel_") === 0 || id.indexOf("top_img_") === 0 || entityEl.hasAttribute("link-listener") || entityEl.hasAttribute("data-vrodos-video-src") || entityHasClass(entityEl, "menu-button");
+      return entityEl.hasAttribute("data-vrodos-world-lighting") || id.indexOf("video-display_") === 0 || id.indexOf("image-display_") === 0 || id.indexOf("button_poi_") === 0 || entityEl.hasAttribute("link-listener") || entityEl.hasAttribute("data-vrodos-video-src") || entityHasClass(entityEl, "menu-button");
     }
     function getMaterialList(material) {
       if (!material) {
