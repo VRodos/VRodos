@@ -32,6 +32,7 @@ The first profiling pass on `http://wp.local:5832/Master_Client_766.html` showed
 - Complete: dashboard Compile Use toggles for ready safe Draco derivatives, with validation before enabling compile substitution.
 - Complete: AJAX dashboard refresh/toggle actions for cheap row updates without a full dashboard reload.
 - Complete: first admin refactor phase split the asset optimization manager into a thin hook coordinator plus focused files under `includes/asset-optimization/`.
+- Complete: second admin refactor phase moved top-level dashboard rendering from `VRodos_Core_Manager` into `includes/admin/class-vrodos-admin-dashboard-page.php` while preserving the existing menu callback wrapper.
 - Next: add texture compression/KTX2 derivative generation for texture-heavy assets, then plan explicit LOD derivative families for distance-based scene cost reduction.
 
 ## Spector.js Debug Phase
@@ -238,9 +239,14 @@ The first cleanup pass extracted asset optimization code without changing public
   - `render_dashboard_actionable_assets_table()`
 - Hook names, AJAX/admin-post action names, metadata keys, derivative cache paths, and opt-in compile substitution semantics are unchanged.
 
+Dashboard extraction:
+
+- `VRodos_Core_Manager::vrodos_plugin_main_page()` remains the stable menu callback and now delegates to `VRodos_Admin_Dashboard_Page::render()`.
+- `VRodos_Admin_Dashboard_Page` owns dashboard CSS, notices, stats, Active Projects markup, and Actionable Assets tab composition.
+- Dashboard asset rows still delegate to `VRodos_Asset_Optimization_Manager::render_dashboard_actionable_assets_table( 10 )`.
+
 Remaining admin cleanup:
 
-- Move dashboard page rendering out of `VRodos_Core_Manager` into `includes/admin/`.
 - Split `VRodos_Asset_CPT_Manager` into hook registration, metabox/editor, frontend submission, and taxonomy helper classes.
 
 The existing glTF Transform prototype script now supports single-source mode for admin/backend use:
