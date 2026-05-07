@@ -93,6 +93,7 @@
 								<label class="tw-form-control">
 									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Render</span>
 									<select id="compileRenderQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="performance">Performance</option>
 										<option value="standard">Standard</option>
 										<option value="high">High</option>
 									</select>

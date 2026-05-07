@@ -451,7 +451,9 @@
     }
 
     function getPmndrsAtmosphereResourceProfile(self, renderer) {
-        const quality = normalizePmndrsAtmosphereQuality(self && self.data ? self.data.pmndrsAtmosphereQuality : 'balanced');
+        const quality = normalizePmndrsAtmosphereQuality(self && typeof self.getPmndrsAtmosphereQuality === 'function'
+            ? self.getPmndrsAtmosphereQuality()
+            : (self && self.data ? self.data.pmndrsAtmosphereQuality : 'balanced'));
         const supportsFloatLinear = Boolean(renderer && renderer.extensions && renderer.extensions.get('OES_texture_float_linear'));
         const canUseFloat = Boolean(renderer &&
             renderer.capabilities &&
@@ -1873,7 +1875,9 @@
             return null;
         }
 
-        const quality = normalizePmndrsAtmosphereQuality(this.data.pmndrsAtmosphereQuality);
+        const quality = normalizePmndrsAtmosphereQuality(typeof this.getPmndrsAtmosphereQuality === 'function'
+            ? this.getPmndrsAtmosphereQuality()
+            : this.data.pmndrsAtmosphereQuality);
         const preset = normalizePmndrsAtmospherePreset(this.data.pmndrsAtmospherePreset);
         const celestialMode = normalizePmndrsCelestialMode(this.data.pmndrsCelestialMode);
         const celestialTimePreset = normalizePmndrsCelestialTimePreset(this.data.pmndrsCelestialTimePreset);
@@ -2618,15 +2622,17 @@
             return;
         }
 
-        const isHighQuality = this.data.renderQuality === 'high';
-        let targetPixelRatio = isHighQuality ? Math.min(window.devicePixelRatio || 1, 2) : Math.min(window.devicePixelRatio || 1, 1.25);
+        const renderQuality = typeof this.getRenderQualityLevel === 'function' ? this.getRenderQualityLevel() : (this.data.renderQuality === 'high' ? 'high' : 'standard');
+        const isHighQuality = renderQuality === 'high';
+        const isPerformanceQuality = renderQuality === 'performance';
+        let targetPixelRatio = Math.min(window.devicePixelRatio || 1, isHighQuality ? 2 : (isPerformanceQuality ? 0.9 : 1));
         if (isHighQuality) {
             targetPixelRatio = Math.max(targetPixelRatio, this.getAAQualityPixelRatioTarget());
         }
         if (this.shouldUseEdgeAAOversample()) {
             targetPixelRatio = Math.max(targetPixelRatio, 1.15 + (this.getEdgeAAStrengthFactor() * 0.7));
         }
-        targetPixelRatio = Math.min(targetPixelRatio, isHighQuality ? 1.5 : 1.25);
+        targetPixelRatio = Math.max(isPerformanceQuality ? 0.75 : 1, Math.min(targetPixelRatio, isHighQuality ? 1.5 : (isPerformanceQuality ? 0.9 : 1)));
         renderer.setPixelRatio(targetPixelRatio);
         renderer.sortObjects = true;
 
@@ -2662,7 +2668,9 @@
     };
     H.applyShadowQualityProfile = function () {
         const renderer = this.el.renderer;
-        const shadowQuality = this.data.shadowQuality || 'medium';
+        const shadowQuality = typeof this.getEffectiveShadowQuality === 'function'
+            ? this.getEffectiveShadowQuality()
+            : (this.data.shadowQuality || 'medium');
         const shadowsEnabled = shadowQuality !== 'off';
         const contactShadowSettings = this.getContactShadowSettings();
 
@@ -2752,7 +2760,7 @@
         const reflectionOcclusionMode = normalizeReflectionOcclusionMode(this.data.reflectionOcclusionMode);
         const shadowAwareReflections = reflectionsEnabled &&
             reflectionOcclusionMode !== 'off' &&
-            this.data.shadowQuality !== 'off' &&
+            (typeof this.getEffectiveShadowQuality === 'function' ? this.getEffectiveShadowQuality() : this.data.shadowQuality) !== 'off' &&
             !(typeof this.isVrPresentationActive === 'function' && this.isVrPresentationActive());
         const options = {
             renderQuality: this.data.renderQuality || 'standard',
@@ -2849,7 +2857,7 @@
         const preset = this.getHorizonSkyPreset();
         const isPmndrs = this.data.postFXEngine === 'pmndrs';
         const usesTakramHorizon = shouldUsePmndrsTakramHorizonPath(this);
-        const shadowEnabled = this.data.shadowQuality !== 'off';
+        const shadowEnabled = (typeof this.getEffectiveShadowQuality === 'function' ? this.getEffectiveShadowQuality() : this.data.shadowQuality) !== 'off';
 
         if (!usesTakramHorizon) {
             setAFrameDefaultLightsEnabled(this, true);
@@ -2936,8 +2944,10 @@
         ensurePmndrsHorizonSun(this, environmentConfig.lightPosition, preset);
     };
     H.applyBackgroundQualityProfile = function () {
-        const isHighQuality = this.data.renderQuality === 'high';
-        const shadowEnabled = this.data.shadowQuality !== 'off';
+        const renderQuality = typeof this.getRenderQualityLevel === 'function' ? this.getRenderQualityLevel() : (this.data.renderQuality === 'high' ? 'high' : 'standard');
+        const effectiveShadowQuality = typeof this.getEffectiveShadowQuality === 'function' ? this.getEffectiveShadowQuality() : this.data.shadowQuality;
+        const isHighQuality = renderQuality === 'high';
+        const shadowEnabled = effectiveShadowQuality !== 'off';
         const hasEnvironmentBackground = (this.data.selChoice === "0") || (this.data.selChoice === "2" && this.data.presChoice !== "ocean");
         const reflectionProfile = this.data.reflectionProfile || 'balanced';
         const enhancedReflections = reflectionProfile === 'enhanced';
@@ -2976,7 +2986,7 @@
             return;
         }
 
-        const keyShadowMap = this.data.shadowQuality === 'high' ? 2048 : 1024;
+        const keyShadowMap = effectiveShadowQuality === 'high' ? 2048 : 1024;
         const castShadow = shadowEnabled ? 'true' : 'false';
 
         this.ensurePhotorealHelperLight(
@@ -3025,7 +3035,10 @@
         this.sceneCollectionsDirty = false;
     };
     H.updateAdaptiveShadowFit = function (force) {
-        if (!this || !this.el || !this.el.camera || this.data.shadowQuality === 'off') {
+        if (!this ||
+            !this.el ||
+            !this.el.camera ||
+            (typeof this.getEffectiveShadowQuality === 'function' ? this.getEffectiveShadowQuality() : this.data.shadowQuality) === 'off') {
             return;
         }
 

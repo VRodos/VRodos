@@ -537,6 +537,7 @@ class VRodos_Compiler_Manager {
 		] );
 
 		$this->entity_renderer->markDelayedRevealEntities( $dom );
+		$this->append_compile_diagnostics_script( $dom, $this->entity_renderer->build_compile_diagnostics( $dom ) );
 
 		$contentNew = $dom->saveHTML();
 		$contentNew = "<!-- Detected Hostname: {$this->website_root_url} -->\n" . $contentNew;
@@ -628,6 +629,8 @@ class VRodos_Compiler_Manager {
 			}
 		}
 
+		$this->append_compile_diagnostics_script( $dom, $this->entity_renderer->build_compile_diagnostics( $dom ) );
+
 		$contentNew = $dom->saveHTML( $dom->documentElement );
 
 		// Write compiled HTML into the generated runtime build directory.
@@ -639,6 +642,38 @@ class VRodos_Compiler_Manager {
 	 */
 	private function apply_scene_environment( &$content, $dom, $ascene, $scene_json, $project_id ) {
 		$this->scene_settings->apply( $dom, $ascene, $scene_json, (int) $project_id, [ $this, 'normalize_url' ] );
+	}
+
+	private function append_compile_diagnostics_script( DOMDocument $dom, array $diagnostics ): void {
+		$body = $dom->getElementsByTagName( 'body' )->item( 0 );
+		if ( ! $body ) {
+			return;
+		}
+
+		$json = wp_json_encode(
+			$diagnostics,
+			JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES
+		);
+		if ( ! is_string( $json ) || '' === $json ) {
+			return;
+		}
+
+		$script = $dom->createElement( 'script' );
+		$script->setAttribute( 'id', 'vrodos-compile-diagnostics' );
+		$script->appendChild(
+			$dom->createTextNode(
+				"(function () {\n" .
+				"    var diagnostics = {$json};\n" .
+				"    window.VRODOS_COMPILE_DIAGNOSTICS = diagnostics;\n" .
+				"    if (diagnostics.warnings && diagnostics.warnings.length) {\n" .
+				"        console.warn('[VRodos] Compile performance diagnostics', diagnostics);\n" .
+				"    } else if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.compileDiagnostics) {\n" .
+				"        console.info('[VRodos] Compile performance diagnostics', diagnostics);\n" .
+				"    }\n" .
+				"}());"
+			)
+		);
+		$body->appendChild( $script );
 	}
 
 	private function runtime_script_planner(): VRodos_Compiler_Runtime_Script_Planner {

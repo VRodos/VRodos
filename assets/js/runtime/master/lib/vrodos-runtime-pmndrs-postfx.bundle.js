@@ -76,6 +76,18 @@
       const v = self.data[key];
       return v === true || v === "true" || v === "1" || v === 1;
     }
+    function isPmndrsLutEnabled(self) {
+      if (self && typeof self.isPmndrsLutEnabled === "function") {
+        return self.isPmndrsLutEnabled();
+      }
+      return readPmndrsBool(self, "pmndrsLutEnabled");
+    }
+    function isPmndrsLensFlareEnabled(self) {
+      if (self && typeof self.isPmndrsLensFlareEnabled === "function") {
+        return self.isPmndrsLensFlareEnabled();
+      }
+      return readPmndrsBool(self, "pmndrsLensFlareEnabled");
+    }
     function normalizePmndrsLutLook(value) {
       switch (value) {
         case "warm-film":
@@ -278,7 +290,7 @@
     }
     function getPmndrsComposerSignature(self, renderer, atmosphereConfig, PP) {
       const smaaPreset = getPmndrsSmaaPreset(self, PP);
-      return `${getPmndrsAtmosphereModeSignature(self, atmosphereConfig)}|ao:${self && typeof self.getAmbientOcclusionPreset === "function" ? self.getAmbientOcclusionPreset() : "off"}|aoBackend:${getPmndrsAmbientOcclusionBackend(self)}|aaMode:${getPmndrsAAMode(self)}|aaPreset:${getPmndrsAAPreset(self)}|msaa:${getPmndrsRequestedMultisampling(self, renderer)}|smaa:${smaaPreset === null ? "off" : smaaPreset}|tone:${getPmndrsToneMappingMode(self)}|lens:${readPmndrsBool(self, "pmndrsLensFlareEnabled")}|lut:${readPmndrsBool(self, "pmndrsLutEnabled")}:${normalizePmndrsLutLook(self && self.data ? self.data.pmndrsLutLook : "neutral")}:${readPmndrsNumber(self, "pmndrsLutStrength", 0, 1, 1)}|noise:${readPmndrsBool(self, "pmndrsNoiseEnabled")}:${readPmndrsNumber(self, "pmndrsNoiseOpacity", 0, 0.2, 0.04)}|chroma:${readPmndrsBool(self, "pmndrsChromaticAberrationEnabled")}:${readPmndrsNumber(self, "pmndrsChromaticAberrationOffset", 0, 6e-3, 15e-4)}`;
+      return `${getPmndrsAtmosphereModeSignature(self, atmosphereConfig)}|ao:${self && typeof self.getAmbientOcclusionPreset === "function" ? self.getAmbientOcclusionPreset() : "off"}|aoBackend:${getPmndrsAmbientOcclusionBackend(self)}|aaMode:${getPmndrsAAMode(self)}|aaPreset:${getPmndrsAAPreset(self)}|msaa:${getPmndrsRequestedMultisampling(self, renderer)}|smaa:${smaaPreset === null ? "off" : smaaPreset}|tone:${getPmndrsToneMappingMode(self)}|lens:${isPmndrsLensFlareEnabled(self)}|lut:${isPmndrsLutEnabled(self)}:${normalizePmndrsLutLook(self && self.data ? self.data.pmndrsLutLook : "neutral")}:${readPmndrsNumber(self, "pmndrsLutStrength", 0, 1, 1)}|noise:${readPmndrsBool(self, "pmndrsNoiseEnabled")}:${readPmndrsNumber(self, "pmndrsNoiseOpacity", 0, 0.2, 0.04)}|chroma:${readPmndrsBool(self, "pmndrsChromaticAberrationEnabled")}:${readPmndrsNumber(self, "pmndrsChromaticAberrationOffset", 0, 6e-3, 15e-4)}`;
     }
     function isPmndrsAADebugOverlayEnabled() {
       return hasPmndrsDebugFlag("pmndrsAADebugOverlay", "vrodos_debug_pmndrs_aa");
@@ -1033,7 +1045,7 @@ ${selectedSummaries.join("\n")}`);
         }
       }
       this.pmndrsLensFlareEffect = null;
-      const wantsTakramLensFlare = readPmndrsBool(this, "pmndrsLensFlareEnabled");
+      const wantsTakramLensFlare = isPmndrsLensFlareEnabled(this);
       const canUseTakramSunLensFlare = wantsTakramLensFlare && isHorizonBackground(this) && atmosphereConfig && atmosphereConfig.enabled && atmosphereConfig.takramSunEnabled !== false;
       if (wantsTakramLensFlare && !canUseTakramSunLensFlare && !this._pmndrsLensFlareContextWarned) {
         console.info("[VRodos] Takram LensFlareEffect is tied to the Takram Horizon sun; skipping because Horizon atmosphere or sun is inactive.");
@@ -1083,7 +1095,7 @@ ${selectedSummaries.join("\n")}`);
       }
       this.pmndrsLutEffect = null;
       this.pmndrsLutTexture = null;
-      if (readPmndrsBool(this, "pmndrsLutEnabled") && readPmndrsNumber(this, "pmndrsLutStrength", 0, 1, 1) > 0) {
+      if (isPmndrsLutEnabled(this) && readPmndrsNumber(this, "pmndrsLutStrength", 0, 1, 1) > 0) {
         try {
           const lutLook = normalizePmndrsLutLook(this.data.pmndrsLutLook);
           const lutStrength = readPmndrsNumber(this, "pmndrsLutStrength", 0, 1, 1);

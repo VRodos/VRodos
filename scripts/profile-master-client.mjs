@@ -1,0 +1,979 @@
+#!/usr/bin/env node
+
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import net from 'node:net';
+import os from 'node:os';
+import path from 'node:path';
+
+const DEFAULT_URL = 'http://wp.local:5832/Master_Client_766.html';
+
+function parseArgs(argv) {
+    const options = {
+        url: DEFAULT_URL,
+        warmupMs: 5000,
+        frames: 240,
+        traceMs: 3000,
+        timeoutMs: 45000,
+        viewport: { width: 1280, height: 720 },
+        dpr: 1,
+        headless: true,
+        output: '',
+        chrome: '',
+        userDataDir: '',
+        keepProfile: false,
+        json: false
+    };
+
+    for (let i = 0; i < argv.length; i += 1) {
+        const arg = argv[i];
+        const [flag, inlineValue] = arg.split('=', 2);
+        const nextValue = () => {
+            if (inlineValue !== undefined) {
+                return inlineValue;
+            }
+            i += 1;
+            return argv[i];
+        };
+        const nextNumber = (fallback) => {
+            const value = Number(nextValue());
+            return Number.isFinite(value) ? value : fallback;
+        };
+
+        switch (flag) {
+            case '--url':
+                options.url = nextValue() || options.url;
+                break;
+            case '--warmup-ms':
+                options.warmupMs = nextNumber(options.warmupMs);
+                break;
+            case '--frames':
+                options.frames = nextNumber(options.frames);
+                break;
+            case '--trace-ms':
+                options.traceMs = nextNumber(options.traceMs);
+                break;
+            case '--timeout-ms':
+                options.timeoutMs = nextNumber(options.timeoutMs);
+                break;
+            case '--viewport': {
+                const value = nextValue() || '';
+                const match = value.match(/^(\d+)x(\d+)$/i);
+                if (!match) {
+                    throw new Error(`Invalid --viewport value "${value}". Use WIDTHxHEIGHT.`);
+                }
+                options.viewport = { width: Number(match[1]), height: Number(match[2]) };
+                break;
+            }
+            case '--dpr':
+                options.dpr = nextNumber(options.dpr);
+                break;
+            case '--output':
+                options.output = nextValue() || '';
+                break;
+            case '--chrome':
+                options.chrome = nextValue() || '';
+                break;
+            case '--user-data-dir':
+                options.userDataDir = nextValue() || '';
+                break;
+            case '--headed':
+                options.headless = false;
+                break;
+            case '--headless':
+                options.headless = true;
+                break;
+            case '--keep-profile':
+                options.keepProfile = true;
+                break;
+            case '--json':
+                options.json = true;
+                break;
+            case '--help':
+            case '-h':
+                printHelp();
+                process.exit(0);
+                break;
+            default:
+                if (!arg.startsWith('-')) {
+                    options.url = arg;
+                    break;
+                }
+                throw new Error(`Unknown argument "${arg}".`);
+        }
+    }
+
+    return options;
+}
+
+function printHelp() {
+    console.log(`Usage:
+  node scripts/profile-master-client.mjs [url] [options]
+
+Options:
+  --url URL               Compiled client URL. Defaults to ${DEFAULT_URL}
+  --output PATH           Write the full JSON capture to PATH.
+  --frames N              Number of requestAnimationFrame deltas to sample. Default: 240.
+  --warmup-ms N           Warmup time after page load before sampling. Default: 5000.
+  --trace-ms N            DevTools trace duration in ms. Default: 3000.
+  --viewport WIDTHxHEIGHT Browser viewport. Default: 1280x720.
+  --dpr N                 Device scale factor for the browser. Default: 1.
+  --chrome PATH           Chrome/Edge executable path.
+  --headed                Run Chrome with a visible window.
+  --user-data-dir PATH    Reuse a Chrome profile directory.
+  --keep-profile          Keep the temporary profile directory.
+  --json                  Print full JSON to stdout even when --output is used.
+`);
+}
+
+async function loadWebSocketClass() {
+    if (typeof WebSocket !== 'undefined') {
+        return WebSocket;
+    }
+
+    try {
+        const wsModule = await import('ws');
+        return wsModule.WebSocket || wsModule.default;
+    } catch (error) {
+        throw new Error('No WebSocket implementation found. Use Node.js with global WebSocket support or install the "ws" package.');
+    }
+}
+
+class CDPClient {
+    constructor(webSocketUrl, WebSocketClass, commandTimeoutMs = 30000) {
+        this.nextId = 1;
+        this.pending = new Map();
+        this.handlers = new Map();
+        this.commandTimeoutMs = commandTimeoutMs;
+        this.socket = new WebSocketClass(webSocketUrl);
+    }
+
+    connect(timeoutMs) {
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('Timed out connecting to Chrome DevTools WebSocket.')), timeoutMs);
+            this.socket.addEventListener('open', () => {
+                clearTimeout(timeout);
+                resolve();
+            }, { once: true });
+            this.socket.addEventListener('message', (event) => this.handleMessage(event.data));
+            this.socket.addEventListener('error', (event) => {
+                clearTimeout(timeout);
+                reject(new Error(`Chrome DevTools WebSocket error: ${event.message || event.type || 'unknown error'}`));
+            }, { once: true });
+        });
+    }
+
+    handleMessage(data) {
+        const message = JSON.parse(String(data));
+        if (message.id && this.pending.has(message.id)) {
+            const { resolve, reject } = this.pending.get(message.id);
+            this.pending.delete(message.id);
+            if (message.error) {
+                reject(new Error(`${message.error.message || 'CDP command failed'} (${message.error.code || 'unknown'})`));
+            } else {
+                resolve(message.result || {});
+            }
+            return;
+        }
+
+        if (!message.method) {
+            return;
+        }
+
+        const handlers = this.handlers.get(message.method) || [];
+        handlers.forEach((handler) => handler(message.params || {}));
+    }
+
+    send(method, params = {}) {
+        const id = this.nextId;
+        this.nextId += 1;
+
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                if (!this.pending.has(id)) {
+                    return;
+                }
+                this.pending.delete(id);
+                reject(new Error(`Timed out waiting for CDP command ${method}.`));
+            }, this.commandTimeoutMs);
+            this.pending.set(id, {
+                resolve: (value) => {
+                    clearTimeout(timeout);
+                    resolve(value);
+                },
+                reject: (error) => {
+                    clearTimeout(timeout);
+                    reject(error);
+                }
+            });
+            this.socket.send(JSON.stringify({ id, method, params }));
+        });
+    }
+
+    on(method, handler) {
+        const handlers = this.handlers.get(method) || [];
+        handlers.push(handler);
+        this.handlers.set(method, handlers);
+    }
+
+    waitForEvent(method, timeoutMs) {
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error(`Timed out waiting for ${method}.`));
+            }, timeoutMs);
+
+            const handler = (params) => {
+                clearTimeout(timeout);
+                const handlers = this.handlers.get(method) || [];
+                this.handlers.set(method, handlers.filter((candidate) => candidate !== handler));
+                resolve(params);
+            };
+            this.on(method, handler);
+        });
+    }
+
+    close() {
+        try {
+            this.socket.close();
+        } catch (error) {
+            // Nothing useful to do during cleanup.
+        }
+    }
+}
+
+async function getFreePort() {
+    return new Promise((resolve, reject) => {
+        const server = net.createServer();
+        server.listen(0, '127.0.0.1', () => {
+            const address = server.address();
+            server.close(() => resolve(address.port));
+        });
+        server.on('error', reject);
+    });
+}
+
+function findChrome(explicitPath) {
+    if (explicitPath) {
+        return explicitPath;
+    }
+
+    const candidates = [
+        process.env.CHROME_PATH,
+        process.env.CHROME_BIN
+    ].filter(Boolean);
+
+    if (process.platform === 'win32') {
+        candidates.push(
+            'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+            'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+            'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+            'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+            'chrome.exe',
+            'msedge.exe'
+        );
+    } else if (process.platform === 'darwin') {
+        candidates.push(
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+            'google-chrome',
+            'chromium',
+            'msedge'
+        );
+    } else {
+        candidates.push('google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'msedge');
+    }
+
+    return candidates.find((candidate) => candidate.includes(path.sep) ? existsSync(candidate) : true);
+}
+
+function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function waitForChildExit(child, timeoutMs) {
+    if (child.exitCode !== null || child.signalCode) {
+        return Promise.resolve(true);
+    }
+
+    return new Promise((resolve) => {
+        const timeout = setTimeout(() => resolve(false), timeoutMs);
+        child.once('exit', () => {
+            clearTimeout(timeout);
+            resolve(true);
+        });
+    });
+}
+
+async function removeTemporaryProfile(userDataDir) {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+        try {
+            await rm(userDataDir, { recursive: true, force: true });
+            return;
+        } catch (error) {
+            await delay(250);
+        }
+    }
+}
+
+async function waitForChrome(port, timeoutMs) {
+    const startedAt = Date.now();
+    let lastError = null;
+    while (Date.now() - startedAt < timeoutMs) {
+        try {
+            const response = await fetchWithTimeout(`http://127.0.0.1:${port}/json/version`, {}, 2000);
+            if (response.ok) {
+                return response.json();
+            }
+        } catch (error) {
+            lastError = error;
+        }
+        await delay(150);
+    }
+    throw new Error(`Timed out waiting for Chrome DevTools endpoint.${lastError ? ` Last error: ${lastError.message}` : ''}`);
+}
+
+async function createTarget(port) {
+    const url = `http://127.0.0.1:${port}/json/new?${encodeURIComponent('about:blank')}`;
+    const response = await fetchWithTimeout(url, { method: 'PUT' }, 5000);
+    if (!response.ok) {
+        throw new Error(`Could not create Chrome target: HTTP ${response.status}`);
+    }
+    return response.json();
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        return await fetch(url, {
+            ...options,
+            signal: controller.signal
+        });
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+async function evaluate(cdp, expression, returnByValue = true, timeoutMs = 30000) {
+    const result = await cdp.send('Runtime.evaluate', {
+        expression,
+        awaitPromise: true,
+        returnByValue,
+        timeout: timeoutMs
+    });
+
+    if (result.exceptionDetails) {
+        const details = result.exceptionDetails;
+        throw new Error(details.text || details.exception?.description || 'Runtime.evaluate failed.');
+    }
+
+    return result.result?.value;
+}
+
+async function waitForRuntime(cdp, expression, timeoutMs) {
+    const startedAt = Date.now();
+    let lastValue = null;
+    while (Date.now() - startedAt < timeoutMs) {
+        try {
+            lastValue = await evaluate(cdp, expression, true, 5000);
+            if (lastValue) {
+                return lastValue;
+            }
+        } catch (error) {
+            lastValue = error.message;
+        }
+        await delay(250);
+    }
+    throw new Error(`Timed out waiting for runtime condition: ${expression}. Last value: ${lastValue}`);
+}
+
+function metricsToObject(metrics) {
+    return Object.fromEntries((metrics || []).map((metric) => [metric.name, metric.value]));
+}
+
+function percentile(values, ratio) {
+    if (!values.length) {
+        return null;
+    }
+    const sorted = [...values].sort((a, b) => a - b);
+    const index = Math.min(sorted.length - 1, Math.max(0, Math.ceil(sorted.length * ratio) - 1));
+    return sorted[index];
+}
+
+function summarizeFrameDeltas(deltas) {
+    const valid = deltas.filter((value) => Number.isFinite(value) && value > 0);
+    if (!valid.length) {
+        return {
+            count: 0,
+            minMs: null,
+            meanMs: null,
+            p50Ms: null,
+            p95Ms: null,
+            maxMs: null,
+            over16_7Ms: 0,
+            over33_3Ms: 0
+        };
+    }
+
+    const sum = valid.reduce((total, value) => total + value, 0);
+    return {
+        count: valid.length,
+        minMs: Math.min(...valid),
+        meanMs: sum / valid.length,
+        p50Ms: percentile(valid, 0.5),
+        p95Ms: percentile(valid, 0.95),
+        maxMs: Math.max(...valid),
+        over16_7Ms: valid.filter((value) => value > 16.7).length,
+        over33_3Ms: valid.filter((value) => value > 33.3).length
+    };
+}
+
+function summarizeTrace(traceEvents) {
+    const byName = new Map();
+    const totals = {
+        eventCount: traceEvents.length,
+        totalDurationMs: 0,
+        gpuDurationMs: 0,
+        scriptingDurationMs: 0,
+        renderingDurationMs: 0,
+        paintingDurationMs: 0
+    };
+
+    for (const event of traceEvents) {
+        if (event.ph !== 'X' || !Number.isFinite(event.dur)) {
+            continue;
+        }
+
+        const durationMs = event.dur / 1000;
+        const name = event.name || 'unknown';
+        const categories = event.cat || '';
+        totals.totalDurationMs += durationMs;
+
+        if (/gpu|viz/i.test(categories) || /gpu|drawframe|submitcompositorframe/i.test(name)) {
+            totals.gpuDurationMs += durationMs;
+        }
+        if (/FunctionCall|EvaluateScript|v8|TimerFire|FireAnimationFrame/i.test(name) || /v8/i.test(categories)) {
+            totals.scriptingDurationMs += durationMs;
+        }
+        if (/Layout|UpdateLayerTree|CompositeLayers|PrePaint|HitTest/i.test(name)) {
+            totals.renderingDurationMs += durationMs;
+        }
+        if (/Paint|Raster|ImageDecode|Draw LazyPixelRef/i.test(name)) {
+            totals.paintingDurationMs += durationMs;
+        }
+
+        const entry = byName.get(name) || { name, count: 0, totalMs: 0, maxMs: 0 };
+        entry.count += 1;
+        entry.totalMs += durationMs;
+        entry.maxMs = Math.max(entry.maxMs, durationMs);
+        byName.set(name, entry);
+    }
+
+    return {
+        totals,
+        topEvents: [...byName.values()]
+            .sort((a, b) => b.totalMs - a.totalMs)
+            .slice(0, 30)
+    };
+}
+
+async function readTraceStream(cdp, streamHandle, timeoutMs) {
+    let json = '';
+    let eof = false;
+    const deadline = Date.now() + timeoutMs;
+    const maxTraceBytes = 100 * 1024 * 1024;
+
+    while (!eof) {
+        if (Date.now() > deadline) {
+            throw new Error('Timed out reading Chrome trace stream.');
+        }
+        const chunk = await cdp.send('IO.read', { handle: streamHandle, size: 1024 * 1024 });
+        json += chunk.data || '';
+        if (json.length > maxTraceBytes) {
+            throw new Error(`Chrome trace stream exceeded ${maxTraceBytes} bytes.`);
+        }
+        eof = Boolean(chunk.eof);
+    }
+
+    await cdp.send('IO.close', { handle: streamHandle });
+    return JSON.parse(json);
+}
+
+async function collectTrace(cdp, durationMs, timeoutMs) {
+    if (durationMs <= 0) {
+        return summarizeTrace([]);
+    }
+
+    const completePromise = cdp.waitForEvent('Tracing.tracingComplete', timeoutMs);
+    await cdp.send('Tracing.start', {
+        categories: [
+            'devtools.timeline',
+            'disabled-by-default-devtools.timeline',
+            'disabled-by-default-devtools.timeline.frame',
+            'blink.user_timing',
+            'gpu',
+            'toplevel',
+            'v8'
+        ].join(','),
+        transferMode: 'ReturnAsStream'
+    });
+    await delay(durationMs);
+    await cdp.send('Tracing.end');
+    const complete = await completePromise;
+    const trace = await readTraceStream(cdp, complete.stream, timeoutMs);
+    return summarizeTrace(trace.traceEvents || []);
+}
+
+async function sampleFrames(cdp, frames) {
+    return evaluate(cdp, `(() => {
+        const frameCount = ${JSON.stringify(frames)};
+        return new Promise((resolve) => {
+            const deltas = [];
+            let lastTime = 0;
+            let seen = 0;
+            let resolved = false;
+            function readRendererInfo() {
+                const scene = document.querySelector('a-scene');
+                const renderer = scene && scene.renderer;
+                if (!renderer || !renderer.info) {
+                    return null;
+                }
+                const size = { width: null, height: null };
+                if (typeof renderer.getSize === 'function') {
+                    const target = {
+                        width: 0,
+                        height: 0,
+                        set(width, height) {
+                            this.width = width;
+                            this.height = height;
+                            return this;
+                        },
+                        divideScalar(scalar) {
+                            this.width /= scalar;
+                            this.height /= scalar;
+                            return this;
+                        }
+                    };
+                    renderer.getSize(target);
+                    size.width = target.width;
+                    size.height = target.height;
+                }
+                return {
+                    pixelRatio: typeof renderer.getPixelRatio === 'function' ? renderer.getPixelRatio() : null,
+                    size,
+                    memory: Object.assign({}, renderer.info.memory || {}),
+                    render: Object.assign({}, renderer.info.render || {}),
+                    programs: renderer.info.programs ? renderer.info.programs.length : null
+                };
+            }
+            function tick(now) {
+                if (resolved) {
+                    return;
+                }
+                if (lastTime) {
+                    deltas.push(now - lastTime);
+                }
+                lastTime = now;
+                seen += 1;
+                if (seen <= frameCount) {
+                    requestAnimationFrame(tick);
+                    return;
+                }
+                resolved = true;
+                clearTimeout(timeout);
+                resolve({
+                    deltas,
+                    rendererInfo: readRendererInfo(),
+                    timedOut: false
+                });
+            }
+            const timeout = setTimeout(() => {
+                if (resolved) {
+                    return;
+                }
+                resolved = true;
+                resolve({
+                    deltas,
+                    rendererInfo: readRendererInfo(),
+                    timedOut: true
+                });
+            }, Math.max(10000, frameCount * 200));
+            requestAnimationFrame(tick);
+        });
+    })()`, true, Math.max(30000, frames * 200));
+}
+
+async function captureSceneSnapshot(cdp) {
+    return evaluate(cdp, `(() => {
+        const scene = document.querySelector('a-scene');
+        const settingsComponent = scene && scene.components && scene.components['scene-settings'];
+        const settings = settingsComponent ? Object.assign({}, settingsComponent.data) : null;
+        const object3D = scene && scene.object3D;
+        const renderer = scene && scene.renderer;
+        const geometries = new Set();
+        const materials = new Set();
+        const textures = new Set();
+        const counts = {
+            objects: 0,
+            meshes: 0,
+            visibleMeshes: 0,
+            shadowCasters: 0,
+            shadowReceivers: 0,
+            frustumCulledFalse: 0,
+            lights: 0
+        };
+
+        function addMaterial(material) {
+            if (!material) {
+                return;
+            }
+            if (Array.isArray(material)) {
+                material.forEach(addMaterial);
+                return;
+            }
+            materials.add(material.uuid || material.id || materials.size);
+            Object.keys(material).forEach((key) => {
+                const value = material[key];
+                if (value && value.isTexture) {
+                    textures.add(value.uuid || value.id || textures.size);
+                }
+            });
+        }
+
+        if (object3D) {
+            object3D.traverse((node) => {
+                counts.objects += 1;
+                if (node.isLight) {
+                    counts.lights += 1;
+                }
+                if (!node.isMesh) {
+                    return;
+                }
+                counts.meshes += 1;
+                if (node.visible) {
+                    counts.visibleMeshes += 1;
+                }
+                if (node.castShadow) {
+                    counts.shadowCasters += 1;
+                }
+                if (node.receiveShadow) {
+                    counts.shadowReceivers += 1;
+                }
+                if (node.frustumCulled === false) {
+                    counts.frustumCulledFalse += 1;
+                }
+                if (node.geometry) {
+                    geometries.add(node.geometry.uuid || node.geometry.id || geometries.size);
+                }
+                addMaterial(node.material);
+            });
+        }
+
+        return {
+            location: window.location.href,
+            userAgent: navigator.userAgent,
+            devicePixelRatio: window.devicePixelRatio,
+            sceneLoaded: Boolean(scene && scene.hasLoaded),
+            settings,
+            effectiveQuality: settingsComponent ? {
+                renderQuality: typeof settingsComponent.getRenderQualityLevel === 'function' ? settingsComponent.getRenderQualityLevel() : settingsComponent.data.renderQuality,
+                shadowQuality: typeof settingsComponent.getEffectiveShadowQuality === 'function' ? settingsComponent.getEffectiveShadowQuality() : settingsComponent.data.shadowQuality,
+                atmosphereQuality: typeof settingsComponent.getPmndrsAtmosphereQuality === 'function' ? settingsComponent.getPmndrsAtmosphereQuality() : settingsComponent.data.pmndrsAtmosphereQuality,
+                pmndrsAA: typeof settingsComponent.getPmndrsAAMode === 'function' ? settingsComponent.getPmndrsAAMode() : settingsComponent.data.pmndrsAAMode,
+                pmndrsAAPreset: typeof settingsComponent.getPmndrsAAPreset === 'function' ? settingsComponent.getPmndrsAAPreset() : settingsComponent.data.pmndrsAAPreset,
+                pmndrsLutEnabled: typeof settingsComponent.isPmndrsLutEnabled === 'function' ? settingsComponent.isPmndrsLutEnabled() : settingsComponent.data.pmndrsLutEnabled,
+                pmndrsLensFlareEnabled: typeof settingsComponent.isPmndrsLensFlareEnabled === 'function' ? settingsComponent.isPmndrsLensFlareEnabled() : settingsComponent.data.pmndrsLensFlareEnabled
+            } : null,
+            renderer: renderer ? {
+                pixelRatio: typeof renderer.getPixelRatio === 'function' ? renderer.getPixelRatio() : null,
+                shadowMapEnabled: Boolean(renderer.shadowMap && renderer.shadowMap.enabled),
+                shadowMapType: renderer.shadowMap ? renderer.shadowMap.type : null,
+                outputColorSpace: renderer.outputColorSpace || null,
+                toneMapping: renderer.toneMapping || null,
+                toneMappingExposure: renderer.toneMappingExposure || null,
+                info: renderer.info ? {
+                    memory: Object.assign({}, renderer.info.memory || {}),
+                    render: Object.assign({}, renderer.info.render || {}),
+                    programs: renderer.info.programs ? renderer.info.programs.length : null
+                } : null
+            } : null,
+            objectCounts: Object.assign(counts, {
+                geometries: geometries.size,
+                materials: materials.size,
+                textures: textures.size
+            }),
+            domCounts: {
+                gltfModelElements: document.querySelectorAll('[gltf-model]').length,
+                assetItems: document.querySelectorAll('a-assets > a-asset-item').length,
+                images: document.querySelectorAll('img, a-image').length,
+                videos: document.querySelectorAll('video, a-video').length,
+                clearFrustumElements: document.querySelectorAll('[clear-frustum-culling]').length,
+                raycastableElements: document.querySelectorAll('.raycastable').length
+            },
+            compileDiagnostics: window.VRODOS_COMPILE_DIAGNOSTICS || null
+        };
+    })()`);
+}
+
+async function captureResources(cdp) {
+    return evaluate(cdp, `(() => {
+        const resources = performance.getEntriesByType('resource').map((entry) => ({
+            name: entry.name,
+            initiatorType: entry.initiatorType,
+            duration: entry.duration,
+            transferSize: entry.transferSize || 0,
+            encodedBodySize: entry.encodedBodySize || 0,
+            decodedBodySize: entry.decodedBodySize || 0
+        }));
+        const byType = {};
+        for (const resource of resources) {
+            const type = resource.initiatorType || 'unknown';
+            byType[type] = byType[type] || { count: 0, transferSize: 0, encodedBodySize: 0, decodedBodySize: 0 };
+            byType[type].count += 1;
+            byType[type].transferSize += resource.transferSize;
+            byType[type].encodedBodySize += resource.encodedBodySize;
+            byType[type].decodedBodySize += resource.decodedBodySize;
+        }
+        return {
+            totals: {
+                count: resources.length,
+                transferSize: resources.reduce((total, item) => total + item.transferSize, 0),
+                encodedBodySize: resources.reduce((total, item) => total + item.encodedBodySize, 0),
+                decodedBodySize: resources.reduce((total, item) => total + item.decodedBodySize, 0)
+            },
+            byType,
+            largest: resources
+                .slice()
+                .sort((a, b) => Math.max(b.transferSize, b.encodedBodySize, b.decodedBodySize) - Math.max(a.transferSize, a.encodedBodySize, a.decodedBodySize))
+                .slice(0, 30)
+        };
+    })()`);
+}
+
+function formatMs(value) {
+    return value === null || value === undefined ? 'n/a' : `${value.toFixed(2)}ms`;
+}
+
+function formatBytes(value) {
+    if (!Number.isFinite(value) || value <= 0) {
+        return '0 B';
+    }
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let unit = 0;
+    let size = value;
+    while (size >= 1024 && unit < units.length - 1) {
+        size /= 1024;
+        unit += 1;
+    }
+    return `${size.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+}
+
+function printSummary(result) {
+    const raf = result.frameSample.summary;
+    const scene = result.scene;
+    const resources = result.resources.totals;
+    console.log(`VRodos profile: ${result.url}`);
+    console.log(`Viewport: ${result.viewport.width}x${result.viewport.height} @ dpr ${result.dpr}`);
+    console.log(`rAF: p50 ${formatMs(raf.p50Ms)}, p95 ${formatMs(raf.p95Ms)}, mean ${formatMs(raf.meanMs)}, max ${formatMs(raf.maxMs)}, frames ${raf.count}`);
+    if (scene && scene.objectCounts) {
+        console.log(`Scene: ${scene.objectCounts.visibleMeshes}/${scene.objectCounts.meshes} visible meshes, ${scene.objectCounts.geometries} geometries, ${scene.objectCounts.materials} materials, ${scene.objectCounts.textures} textures`);
+        console.log(`Shadows: ${scene.objectCounts.shadowCasters} casters, ${scene.objectCounts.shadowReceivers} receivers, renderer shadow map ${scene.renderer ? scene.renderer.shadowMapEnabled : 'n/a'}`);
+    }
+    console.log(`Resources: ${resources.count} entries, transfer ${formatBytes(resources.transferSize)}, encoded ${formatBytes(resources.encodedBodySize)}, decoded ${formatBytes(resources.decodedBodySize)}`);
+    if (result.trace && result.trace.totals) {
+        console.log(`Trace: total ${formatMs(result.trace.totals.totalDurationMs)}, GPU ${formatMs(result.trace.totals.gpuDurationMs)}, scripting ${formatMs(result.trace.totals.scriptingDurationMs)}`);
+    }
+    console.log(`Console warnings/errors: ${result.console.length}; network failures: ${result.networkFailures.length}; exceptions: ${result.exceptions.length}`);
+}
+
+async function run() {
+    const options = parseArgs(process.argv.slice(2));
+    const WebSocketClass = await loadWebSocketClass();
+    const port = await getFreePort();
+    const userDataDir = options.userDataDir || path.join(os.tmpdir(), `vrodos-profile-${Date.now()}-${process.pid}`);
+    const autoProfileDir = !options.userDataDir;
+    await mkdir(userDataDir, { recursive: true });
+
+    const chromePath = findChrome(options.chrome);
+    const chromeArgs = [
+        `--remote-debugging-port=${port}`,
+        `--user-data-dir=${userDataDir}`,
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-background-networking',
+        '--disable-default-apps',
+        '--disable-background-timer-throttling',
+        '--disable-renderer-backgrounding',
+        '--disable-popup-blocking',
+        '--autoplay-policy=no-user-gesture-required',
+        '--ignore-certificate-errors',
+        `--window-size=${options.viewport.width},${options.viewport.height}`,
+        `--force-device-scale-factor=${options.dpr}`,
+        'about:blank'
+    ];
+
+    if (options.headless) {
+        chromeArgs.unshift('--headless=new');
+    }
+
+    const chrome = spawn(chromePath, chromeArgs, {
+        stdio: ['ignore', 'ignore', 'pipe']
+    });
+
+    const chromeErrors = [];
+    chrome.stderr.on('data', (data) => {
+        chromeErrors.push(String(data));
+        if (chromeErrors.length > 30) {
+            chromeErrors.shift();
+        }
+    });
+
+    let cdp = null;
+    try {
+        await waitForChrome(port, options.timeoutMs);
+        const target = await createTarget(port);
+        cdp = new CDPClient(target.webSocketDebuggerUrl, WebSocketClass, options.timeoutMs);
+        await cdp.connect(options.timeoutMs);
+
+        const consoleMessages = [];
+        const networkFailures = [];
+        const exceptions = [];
+
+        cdp.on('Runtime.consoleAPICalled', (params) => {
+            if (!['warning', 'error', 'assert'].includes(params.type)) {
+                return;
+            }
+            consoleMessages.push({
+                type: params.type,
+                text: (params.args || []).map((arg) => arg.value || arg.description || '').join(' '),
+                url: params.stackTrace?.callFrames?.[0]?.url || ''
+            });
+        });
+        cdp.on('Runtime.exceptionThrown', (params) => {
+            exceptions.push({
+                text: params.exceptionDetails?.text || '',
+                description: params.exceptionDetails?.exception?.description || '',
+                url: params.exceptionDetails?.url || '',
+                lineNumber: params.exceptionDetails?.lineNumber || 0,
+                columnNumber: params.exceptionDetails?.columnNumber || 0
+            });
+        });
+        cdp.on('Network.loadingFailed', (params) => {
+            networkFailures.push({
+                requestId: params.requestId,
+                errorText: params.errorText,
+                canceled: params.canceled,
+                type: params.type
+            });
+        });
+
+        await cdp.send('Page.enable');
+        await cdp.send('Runtime.enable');
+        await cdp.send('Network.enable');
+        await cdp.send('Performance.enable');
+        await cdp.send('Log.enable');
+        await cdp.send('Page.bringToFront');
+        await cdp.send('Emulation.setDeviceMetricsOverride', {
+            width: options.viewport.width,
+            height: options.viewport.height,
+            deviceScaleFactor: options.dpr,
+            mobile: false
+        });
+
+        const loadPromise = cdp.waitForEvent('Page.loadEventFired', options.timeoutMs);
+        await cdp.send('Page.navigate', { url: options.url });
+        await loadPromise;
+
+        await waitForRuntime(cdp, `Boolean(document.querySelector('a-scene'))`, options.timeoutMs);
+        await waitForRuntime(cdp, `(() => {
+            const scene = document.querySelector('a-scene');
+            return Boolean(scene && scene.renderer && scene.object3D);
+        })()`, options.timeoutMs);
+
+        if (options.warmupMs > 0) {
+            await delay(options.warmupMs);
+        }
+
+        const beforeMetrics = metricsToObject((await cdp.send('Performance.getMetrics')).metrics);
+        const sceneBefore = await captureSceneSnapshot(cdp);
+        const tracePromise = collectTrace(cdp, options.traceMs, options.timeoutMs);
+        const frameSample = await sampleFrames(cdp, options.frames);
+        const trace = await tracePromise;
+        const afterMetrics = metricsToObject((await cdp.send('Performance.getMetrics')).metrics);
+        const scene = await captureSceneSnapshot(cdp);
+        const resources = await captureResources(cdp);
+
+        const result = {
+            capturedAt: new Date().toISOString(),
+            url: options.url,
+            chrome: {
+                executable: chromePath,
+                headless: options.headless,
+                errors: chromeErrors
+            },
+            viewport: options.viewport,
+            dpr: options.dpr,
+            warmupMs: options.warmupMs,
+            requestedFrames: options.frames,
+            traceMs: options.traceMs,
+            sceneBefore,
+            scene,
+            frameSample: {
+                summary: summarizeFrameDeltas(frameSample.deltas || []),
+                deltas: frameSample.deltas || [],
+                rendererInfo: frameSample.rendererInfo || null
+            },
+            trace,
+            resources,
+            performanceMetrics: {
+                before: beforeMetrics,
+                after: afterMetrics,
+                delta: Object.fromEntries(
+                    Object.keys(afterMetrics).map((key) => [key, afterMetrics[key] - (beforeMetrics[key] || 0)])
+                )
+            },
+            console: consoleMessages,
+            networkFailures,
+            exceptions
+        };
+
+        if (options.output) {
+            await mkdir(path.dirname(path.resolve(options.output)), { recursive: true });
+            await writeFile(options.output, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+        }
+
+        if (options.json || !options.output) {
+            console.log(JSON.stringify(result, null, 2));
+        } else {
+            printSummary(result);
+            console.log(`Full capture written to ${path.resolve(options.output)}`);
+        }
+    } finally {
+        if (cdp) {
+            try {
+                await cdp.send('Browser.close');
+            } catch (error) {
+                cdp.close();
+                chrome.kill();
+            }
+        } else {
+            chrome.kill();
+        }
+
+        const exited = await waitForChildExit(chrome, 5000);
+        if (!exited) {
+            chrome.kill();
+            await waitForChildExit(chrome, 3000);
+        }
+
+        if (autoProfileDir && !options.keepProfile && userDataDir.startsWith(os.tmpdir())) {
+            await removeTemporaryProfile(userDataDir);
+        }
+    }
+}
+
+run().catch((error) => {
+    console.error(error.stack || error.message || String(error));
+    process.exit(1);
+});

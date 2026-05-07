@@ -133,6 +133,22 @@
         return v === true || v === 'true' || v === '1' || v === 1;
     }
 
+    function isPmndrsLutEnabled(self) {
+        if (self && typeof self.isPmndrsLutEnabled === 'function') {
+            return self.isPmndrsLutEnabled();
+        }
+
+        return readPmndrsBool(self, 'pmndrsLutEnabled');
+    }
+
+    function isPmndrsLensFlareEnabled(self) {
+        if (self && typeof self.isPmndrsLensFlareEnabled === 'function') {
+            return self.isPmndrsLensFlareEnabled();
+        }
+
+        return readPmndrsBool(self, 'pmndrsLensFlareEnabled');
+    }
+
     function normalizePmndrsLutLook(value) {
         switch (value) {
             case 'warm-film':
@@ -375,8 +391,8 @@
             }|msaa:${  getPmndrsRequestedMultisampling(self, renderer) 
             }|smaa:${  smaaPreset === null ? 'off' : smaaPreset 
             }|tone:${  getPmndrsToneMappingMode(self)
-            }|lens:${  readPmndrsBool(self, 'pmndrsLensFlareEnabled')
-            }|lut:${  readPmndrsBool(self, 'pmndrsLutEnabled')  }:${  normalizePmndrsLutLook(self && self.data ? self.data.pmndrsLutLook : 'neutral')  }:${  readPmndrsNumber(self, 'pmndrsLutStrength', 0, 1, 1.0) 
+            }|lens:${  isPmndrsLensFlareEnabled(self)
+            }|lut:${  isPmndrsLutEnabled(self)  }:${  normalizePmndrsLutLook(self && self.data ? self.data.pmndrsLutLook : 'neutral')  }:${  readPmndrsNumber(self, 'pmndrsLutStrength', 0, 1, 1.0)
             }|noise:${  readPmndrsBool(self, 'pmndrsNoiseEnabled')  }:${  readPmndrsNumber(self, 'pmndrsNoiseOpacity', 0, 0.2, 0.04) 
             }|chroma:${  readPmndrsBool(self, 'pmndrsChromaticAberrationEnabled')  }:${  readPmndrsNumber(self, 'pmndrsChromaticAberrationOffset', 0, 0.006, 0.0015)}`;
     }
@@ -1261,7 +1277,7 @@
         }
 
         this.pmndrsLensFlareEffect = null;
-        const wantsTakramLensFlare = readPmndrsBool(this, 'pmndrsLensFlareEnabled');
+        const wantsTakramLensFlare = isPmndrsLensFlareEnabled(this);
         const canUseTakramSunLensFlare = wantsTakramLensFlare &&
             isHorizonBackground(this) &&
             atmosphereConfig &&
@@ -1326,7 +1342,7 @@
 
         this.pmndrsLutEffect = null;
         this.pmndrsLutTexture = null;
-        if (readPmndrsBool(this, 'pmndrsLutEnabled') && readPmndrsNumber(this, 'pmndrsLutStrength', 0, 1, 1.0) > 0) {
+        if (isPmndrsLutEnabled(this) && readPmndrsNumber(this, 'pmndrsLutStrength', 0, 1, 1.0) > 0) {
             try {
                 const lutLook = normalizePmndrsLutLook(this.data.pmndrsLutLook);
                 const lutStrength = readPmndrsNumber(this, 'pmndrsLutStrength', 0, 1, 1.0);

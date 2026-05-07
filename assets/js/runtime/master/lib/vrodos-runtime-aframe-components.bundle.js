@@ -2,7 +2,9 @@
 (() => {
   AFRAME.registerComponent("clear-frustum-culling", {
     schema: {
-      disableCulling: { type: "boolean", default: false }
+      disableCulling: { type: "boolean", default: false },
+      castShadow: { type: "boolean", default: false },
+      receiveShadow: { type: "boolean", default: false }
     },
     init: function() {
       const el = this.el;
@@ -16,8 +18,12 @@
             if (this.data.disableCulling) {
               node.frustumCulled = false;
             }
-            node.castShadow = true;
-            node.receiveShadow = true;
+            if (this.data.castShadow) {
+              node.castShadow = true;
+            }
+            if (this.data.receiveShadow) {
+              node.receiveShadow = true;
+            }
           }
         });
       });
@@ -561,6 +567,27 @@
           return 0;
       }
     },
+    getRenderQualityLevel: function() {
+      switch (this.data.renderQuality) {
+        case "high":
+        case "performance":
+          return this.data.renderQuality;
+        default:
+          return "standard";
+      }
+    },
+    getEffectiveShadowQuality: function() {
+      if (this.getRenderQualityLevel() === "performance") {
+        return "off";
+      }
+      switch (this.data.shadowQuality) {
+        case "off":
+        case "high":
+          return this.data.shadowQuality;
+        default:
+          return "medium";
+      }
+    },
     getAAQualityLevel: function() {
       switch (this.data.aaQuality) {
         case "off":
@@ -572,7 +599,7 @@
       }
     },
     getAAQualityPixelRatioTarget: function() {
-      if (this.data.renderQuality !== "high") {
+      if (this.getRenderQualityLevel() !== "high") {
         return 0;
       }
       switch (this.getAAQualityLevel()) {
@@ -660,17 +687,27 @@
       return map[this.data.envMapPreset] || null;
     },
     getPmndrsAtmosphereQuality: function() {
-      switch (this.data.pmndrsAtmosphereQuality) {
+      if (this.getRenderQualityLevel() === "performance") {
+        return "performance";
+      }
+      const authoredQuality = this.data.pmndrsAtmosphereQuality;
+      if (this.getRenderQualityLevel() === "standard" && (authoredQuality === "quality" || authoredQuality === "cinematic")) {
+        return "balanced";
+      }
+      switch (authoredQuality) {
         case "performance":
         case "balanced":
         case "quality":
         case "cinematic":
-          return this.data.pmndrsAtmosphereQuality;
+          return authoredQuality;
         default:
           return "balanced";
       }
     },
     getPmndrsAAMode: function() {
+      if (this.getRenderQualityLevel() === "performance") {
+        return "none";
+      }
       switch (this.data.pmndrsAAMode) {
         case "none":
         case "smaa":
@@ -681,6 +718,9 @@
       }
     },
     getPmndrsAAPreset: function() {
+      if (this.getRenderQualityLevel() === "performance") {
+        return "low";
+      }
       switch (this.data.pmndrsAAPreset) {
         case "low":
         case "medium":
@@ -699,6 +739,12 @@
               return "medium";
           }
       }
+    },
+    isPmndrsLutEnabled: function() {
+      return this.getRenderQualityLevel() === "high" && this.data.postFXEngine === "pmndrs" && (this.data.pmndrsLutEnabled === true || this.data.pmndrsLutEnabled === "true" || this.data.pmndrsLutEnabled === "1" || this.data.pmndrsLutEnabled === 1);
+    },
+    isPmndrsLensFlareEnabled: function() {
+      return this.getRenderQualityLevel() === "high" && this.data.postFXEngine === "pmndrs" && (this.data.pmndrsLensFlareEnabled === true || this.data.pmndrsLensFlareEnabled === "true" || this.data.pmndrsLensFlareEnabled === "1" || this.data.pmndrsLensFlareEnabled === 1);
     },
     isPmndrsAtmosphereEnabled: function() {
       return this.data.postFXEngine === "pmndrs" && this.data.pmndrsAtmosphereEnabled !== "0";
@@ -909,13 +955,13 @@
       return this.data.postFXEngine !== "pmndrs" && this.isPostFXOptionEnabled("postFXEdgeAAEnabled");
     },
     hasEnabledPostFXOptions: function() {
-      return this.hasBloomEffectEnabled() || this.isPostFXOptionEnabled("postFXColorEnabled") || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsLutEnabled === "true" || this.data.pmndrsLutEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsVignetteEnabled === "true" || this.data.pmndrsVignetteEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsNoiseEnabled === "true" || this.data.pmndrsNoiseEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsChromaticAberrationEnabled === "true" || this.data.pmndrsChromaticAberrationEnabled === "1") || this.isPmndrsAtmosphereEnabled();
+      return this.hasBloomEffectEnabled() || this.isPostFXOptionEnabled("postFXColorEnabled") || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsVignetteEnabled === "true" || this.data.pmndrsVignetteEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsNoiseEnabled === "true" || this.data.pmndrsNoiseEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsChromaticAberrationEnabled === "true" || this.data.pmndrsChromaticAberrationEnabled === "1") || this.isPmndrsAtmosphereEnabled();
     },
     hasCinematicShaderOptions: function() {
-      return this.hasBloomEffectEnabled() || this.isPostFXOptionEnabled("postFXColorEnabled") || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsLutEnabled === "true" || this.data.pmndrsLutEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsVignetteEnabled === "true" || this.data.pmndrsVignetteEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsNoiseEnabled === "true" || this.data.pmndrsNoiseEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsChromaticAberrationEnabled === "true" || this.data.pmndrsChromaticAberrationEnabled === "1") || this.isPostFXOptionEnabled("postFXTAAEnabled") || this.isPostFXOptionEnabled("postFXSSREnabled") || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAtmosphereEnabled();
+      return this.hasBloomEffectEnabled() || this.isPostFXOptionEnabled("postFXColorEnabled") || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsVignetteEnabled === "true" || this.data.pmndrsVignetteEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsNoiseEnabled === "true" || this.data.pmndrsNoiseEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsChromaticAberrationEnabled === "true" || this.data.pmndrsChromaticAberrationEnabled === "1") || this.isPostFXOptionEnabled("postFXTAAEnabled") || this.isPostFXOptionEnabled("postFXSSREnabled") || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAtmosphereEnabled();
     },
     hasPostProcessingPipelineRequest: function() {
-      return this.data.renderQuality === "high" && this.data.postFXEnabled !== "0" && this.hasCinematicShaderOptions();
+      return this.getRenderQualityLevel() === "high" && this.data.postFXEnabled !== "0" && this.hasCinematicShaderOptions();
     },
     warnImmersiveXrPostProcessingFallback: function() {
       if (!this.isImmersiveXrActive()) {

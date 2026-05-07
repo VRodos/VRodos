@@ -10,6 +10,13 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private $normalize_url;
 	private string $plugin_path_url = '';
 	private bool $isHoverEnabled = true;
+	private array $diagnostic_asset_refs = [];
+	private array $diagnostic_asset_entries = [];
+	private array $diagnostic_warning_keys = [];
+	private array $diagnostic_warnings = [];
+	private array $diagnostic_notes = [];
+	private array $diagnostic_category_counts = [];
+	private int $diagnostic_object_count = 0;
 
 	public function __construct( VRodos_Compiler_Runtime_Assets $runtime_assets, VRodos_Compiler_Scene_Repository $scene_repository, callable $normalize_url ) {
 		$this->runtime_assets   = $runtime_assets;
@@ -22,12 +29,178 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->isHoverEnabled = $is_hover_enabled;
 	}
 
+	public function reset_compile_diagnostics(): void {
+		$this->diagnostic_asset_refs      = [];
+		$this->diagnostic_asset_entries   = [];
+		$this->diagnostic_warning_keys    = [];
+		$this->diagnostic_warnings        = [];
+		$this->diagnostic_notes           = [];
+		$this->diagnostic_category_counts = [];
+		$this->diagnostic_object_count    = 0;
+	}
+
 	private function normalize_url( $url ) {
 		return call_user_func( $this->normalize_url, $url );
 	}
 
 	private function runtime_image_url( string $relative ): string {
 		return $this->runtime_assets->runtime_image_url( $relative );
+	}
+
+	private function track_runtime_asset( string $type, string $url, string $context ): void {
+		$url = trim( $url );
+		if ( '' === $url ) {
+			return;
+		}
+
+		$key = $type . '|' . $url;
+		if ( ! isset( $this->diagnostic_asset_refs[ $key ] ) ) {
+			$this->diagnostic_asset_refs[ $key ] = [
+				'type'     => $type,
+				'url'      => $url,
+				'contexts' => [],
+			];
+		}
+		$this->diagnostic_asset_refs[ $key ]['contexts'][] = $context;
+
+		if ( isset( $this->diagnostic_asset_entries[ $key ] ) ) {
+			return;
+		}
+
+		$size = $this->resolve_local_asset_size( $url );
+		$this->diagnostic_asset_entries[ $key ] = [
+			'type'      => $type,
+			'url'       => $url,
+			'sizeBytes' => $size,
+			'sizeLabel' => null !== $size ? $this->format_bytes( $size ) : null,
+		];
+
+		$this->maybe_add_asset_size_warning( $type, $url, $size, $context );
+	}
+
+	private function resolve_local_asset_size( string $url ): ?int {
+		$path = wp_parse_url( $url, PHP_URL_PATH );
+		if ( ! is_string( $path ) || '' === $path ) {
+			return null;
+		}
+
+		$path       = rawurldecode( $path );
+		$candidates = [];
+		if ( defined( 'ABSPATH' ) ) {
+			$candidates[] = trailingslashit( ABSPATH ) . ltrim( $path, '/\\' );
+			$home_path    = wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+			if ( is_string( $home_path ) && '' !== $home_path && 0 === strpos( $path, $home_path ) ) {
+				$candidates[] = trailingslashit( ABSPATH ) . ltrim( substr( $path, strlen( $home_path ) ), '/\\' );
+			}
+		}
+
+		foreach ( array_unique( $candidates ) as $candidate ) {
+			if ( is_file( $candidate ) && is_readable( $candidate ) ) {
+				$size = filesize( $candidate );
+				return false === $size ? null : (int) $size;
+			}
+		}
+
+		return null;
+	}
+
+	private function maybe_add_asset_size_warning( string $type, string $url, ?int $size, string $context ): void {
+		if ( null === $size ) {
+			return;
+		}
+
+		$is_model = in_array( $type, [ 'gltf', 'gltf-inline', 'audio-model' ], true );
+		$is_image = in_array( $type, [ 'image', 'video-poster', 'poi-image' ], true );
+		$limit = $is_model ? 20 * 1024 * 1024 : ( $is_image ? 2 * 1024 * 1024 : 0 );
+		if ( $limit <= 0 || $size <= $limit ) {
+			return;
+		}
+
+		$this->add_diagnostic_warning(
+			'large-asset|' . $type . '|' . $url,
+			sprintf(
+				'Large %s asset (%s) in %s: %s. Consider mesh/texture optimization, Meshopt/Draco where appropriate, and KTX2 texture compression.',
+				$type,
+				$this->format_bytes( $size ),
+				$context,
+				$url
+			)
+		);
+	}
+
+	private function add_diagnostic_warning( string $key, string $message ): void {
+		if ( isset( $this->diagnostic_warning_keys[ $key ] ) ) {
+			return;
+		}
+
+		$this->diagnostic_warning_keys[ $key ] = true;
+		$this->diagnostic_warnings[]          = $message;
+	}
+
+	private function format_bytes( int $bytes ): string {
+		if ( $bytes >= 1024 * 1024 ) {
+			return round( $bytes / ( 1024 * 1024 ), 1 ) . ' MB';
+		}
+
+		if ( $bytes >= 1024 ) {
+			return round( $bytes / 1024, 1 ) . ' KB';
+		}
+
+		return $bytes . ' B';
+	}
+
+	public function build_compile_diagnostics( DOMDocument $dom ): array {
+		foreach ( $this->diagnostic_asset_refs as $asset ) {
+			$type = $asset['type'];
+			if ( ! in_array( $type, [ 'gltf', 'gltf-inline', 'audio-model', 'image', 'poi-image', 'video-poster' ], true ) ) {
+				continue;
+			}
+
+			$contexts = array_values( array_unique( $asset['contexts'] ) );
+			if ( count( $contexts ) > 1 ) {
+				$this->add_diagnostic_warning(
+					'duplicate-asset|' . $type . '|' . $asset['url'],
+					sprintf(
+						'Duplicate %s asset URL is referenced %d times: %s.',
+						$type,
+						count( $contexts ),
+						$asset['url']
+					)
+				);
+			}
+		}
+
+		$xpath = new DOMXPath( $dom );
+		$metrics = [
+			'objects'              => $this->diagnostic_object_count,
+			'categories'           => $this->diagnostic_category_counts,
+			'gltfModelElements'    => $xpath->query( '//*[@gltf-model]' )->length,
+			'assetItems'           => $dom->getElementsByTagName( 'a-asset-item' )->length,
+			'images'               => $dom->getElementsByTagName( 'img' )->length,
+			'videos'               => $dom->getElementsByTagName( 'video' )->length,
+			'raycastableElements'  => $xpath->query( '//*[contains(concat(" ", normalize-space(@class), " "), " raycastable ")]' )->length,
+			'shadowAttributes'     => $xpath->query( '//*[@shadow]' )->length,
+			'clearFrustumElements' => $xpath->query( '//*[@clear-frustum-culling]' )->length,
+		];
+
+		if ( $metrics['clearFrustumElements'] > 0 ) {
+			$this->diagnostic_notes[] = sprintf(
+				'%d entities use clear-frustum-culling. It no longer forces shadow participation; runtime lighting profiles decide cast/receive shadows.',
+				$metrics['clearFrustumElements']
+			);
+		}
+
+		if ( $metrics['gltfModelElements'] > 8 || $metrics['assetItems'] > 8 ) {
+			$this->diagnostic_notes[] = 'Scene has many GLTF/model entries. Compare profiler draw calls and consider asset merging or instancing for repeated static props.';
+		}
+
+		return [
+			'schemaVersion' => 1,
+			'metrics'       => $metrics,
+			'assets'        => array_values( $this->diagnostic_asset_entries ),
+			'warnings'      => $this->diagnostic_warnings,
+			'notes'         => array_values( array_unique( $this->diagnostic_notes ) ),
+		];
 	}
 
 	private function is_immerse_project( int $project_id ): bool {
@@ -237,6 +410,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	 * Modularized Object Renderer
 	 */
 	public function render_scene_objects( $dom, $ascene, $assets, $objects, $project_id, $scene_id, $config = [] ) {
+		$this->reset_compile_diagnostics();
 		foreach ( $objects as $object_key => $obj ) {
 			if ( is_object( $obj ) ) {
 				if ( empty( $obj->uuid ) ) {
@@ -287,6 +461,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private function render_scene_object( $dom, $ascene, $assets, $obj, $config = [] ) {
 		$cat  = $obj->category_slug ?? $obj->category_name ?? '';
+		$this->diagnostic_object_count++;
+		$this->diagnostic_category_counts[ $cat ] = ( $this->diagnostic_category_counts[ $cat ] ?? 0 ) + 1;
 
 		switch ( $cat ) {
 			case 'lightSun':
@@ -397,10 +573,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		// Add to assets
 		$asset_item = $dom->createElement( 'a-asset-item' );
 		$asset_item->setAttribute( 'id', $uuid );
-		$asset_item->setAttribute( 'src', $this->normalize_url( $obj->glb_path ?? '' ) );
+		$glb_url = $this->normalize_url( $obj->glb_path ?? '' );
+		$asset_item->setAttribute( 'src', $glb_url );
 		$asset_item->setAttribute( 'response-type', 'arraybuffer' );
 		$asset_item->setAttribute( 'crossorigin', 'anonymous' );
 		$assets->appendChild( $asset_item );
+		$this->track_runtime_asset( 'gltf', $glb_url, $cat . ':' . $uuid );
 
 		// Create entity
 		$entity = $dom->createElement( 'a-entity' );
@@ -488,6 +666,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$asset_item->setAttribute( 'response-type', 'arraybuffer' );
 		$asset_item->setAttribute( 'crossorigin', 'anonymous' );
 		$assets->appendChild( $asset_item );
+		$this->track_runtime_asset( 'audio-model', $glb_path, 'audio:' . $uuid );
 
 		$audio_asset_id = 'audio_src_' . $uuid;
 		$audio_asset = $dom->createElement( 'audio' );
@@ -496,6 +675,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$audio_asset->setAttribute( 'preload', 'auto' );
 		$audio_asset->setAttribute( 'crossorigin', 'anonymous' );
 		$assets->appendChild( $audio_asset );
+		$this->track_runtime_asset( 'audio', $audio_path, 'audio:' . $uuid );
 
 		$entity = $dom->createElement( 'a-entity' );
 		$entity->setAttribute( 'id', 'audio_entity_' . $uuid );
@@ -574,9 +754,11 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			// Image Asset
 			$a_img = $dom->createElement( 'img' );
 			$a_img->setAttribute( 'id', 'image_' . $uuid );
-			$a_img->setAttribute( 'src', $this->normalize_url( $obj->image_path ?? '' ) );
+			$image_url = $this->normalize_url( $obj->image_path ?? '' );
+			$a_img->setAttribute( 'src', $image_url );
 			$a_img->setAttribute( 'crossorigin', 'anonymous' );
 			$assets->appendChild( $a_img );
+			$this->track_runtime_asset( 'image', $image_url, 'image:' . $uuid );
 
 			// Parent entity for dual planes
 			$parent = $dom->createElement( 'a-entity' );
@@ -633,6 +815,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 				$poster = $dom->createElement( 'img' );
 				$poster->setAttribute( 'id', $poster_id );
 				$poster->setAttribute( 'src', $poster_url );
+				$this->track_runtime_asset( 'video-poster', $poster_url, 'video:' . $uuid );
 				
 				// Only apply crossorigin if the URL is external
 				if ( strpos( $poster_url, $this->plugin_path_url ) === false && 
@@ -646,27 +829,35 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			// Video Assets (Controls)
 			$v_pl = $dom->createElement( 'img' );
 			$v_pl->setAttribute( 'id', 'video_pl_' . $uuid );
-			$v_pl->setAttribute( 'src', $this->runtime_image_url( 'ui/play_2f3542.png' ) );
+			$play_icon_url = $this->runtime_image_url( 'ui/play_2f3542.png' );
+			$v_pl->setAttribute( 'src', $play_icon_url );
 			$v_pl->setAttribute( 'crossorigin', 'anonymous' );
 			$assets->appendChild( $v_pl );
+			$this->track_runtime_asset( 'runtime-ui-image', $play_icon_url, 'video-controls:' . $uuid );
 
 			$v_pas = $dom->createElement( 'img' );
 			$v_pas->setAttribute( 'id', 'video_pas_' . $uuid );
-			$v_pas->setAttribute( 'src', $this->runtime_image_url( 'ui/pause_2f3542.png' ) );
+			$pause_icon_url = $this->runtime_image_url( 'ui/pause_2f3542.png' );
+			$v_pas->setAttribute( 'src', $pause_icon_url );
 			$v_pas->setAttribute( 'crossorigin', 'anonymous' );
 			$assets->appendChild( $v_pas );
+			$this->track_runtime_asset( 'runtime-ui-image', $pause_icon_url, 'video-controls:' . $uuid );
 
 			$v_fs = $dom->createElement( 'img' );
 			$v_fs->setAttribute( 'id', 'video_fs_' . $uuid );
-			$v_fs->setAttribute( 'src', $this->runtime_image_url( 'ui/fullscreen_2f3542.png' ) );
+			$fullscreen_icon_url = $this->runtime_image_url( 'ui/fullscreen_2f3542.png' );
+			$v_fs->setAttribute( 'src', $fullscreen_icon_url );
 			$v_fs->setAttribute( 'crossorigin', 'anonymous' );
 			$assets->appendChild( $v_fs );
+			$this->track_runtime_asset( 'runtime-ui-image', $fullscreen_icon_url, 'video-controls:' . $uuid );
 
 			$v_ex = $dom->createElement( 'img' );
 			$v_ex->setAttribute( 'id', 'video_ex_' . $uuid );
-			$v_ex->setAttribute( 'src', $this->runtime_image_url( 'ui/exit_2f3542.png' ) );
+			$exit_icon_url = $this->runtime_image_url( 'ui/exit_2f3542.png' );
+			$v_ex->setAttribute( 'src', $exit_icon_url );
 			$v_ex->setAttribute( 'crossorigin', 'anonymous' );
 			$assets->appendChild( $v_ex );
+			$this->track_runtime_asset( 'runtime-ui-image', $exit_icon_url, 'video-controls:' . $uuid );
 
 			// Video Display
 			$display = $dom->createElement( 'a-plane' );
@@ -683,8 +874,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$display->setAttribute( 'material', $material_attr );
 			$display->setAttribute( 'class', 'override-materials clickable raycastable hideable' );
 			$display->setAttribute( 'original-scale', '1 1 1' );
-			$display->setAttribute( 'data-vrodos-video-src', $this->normalize_url( $obj->video_path ?? '' ) );
+			$video_url = $this->normalize_url( $obj->video_path ?? '' );
+			$display->setAttribute( 'data-vrodos-video-src', $video_url );
 			$display->setAttribute( 'data-vrodos-video-loop', ($obj->video_loop ?? 0) == 1 ? 'true' : 'false' );
+			$this->track_runtime_asset( 'video', $video_url, 'video:' . $uuid );
 			$display->setAttribute( 'clear-frustum-culling', '' );
 			$this->set_world_lighting_attributes( $display );
 			$display->setAttribute( 'video-controls', "id: $uuid" );
@@ -783,15 +976,19 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		// 1. Assets
 		$main_img = $dom->createElement( 'img' );
 		$main_img->setAttribute( 'id', 'main_img_' . $uuid );
-		$main_img->setAttribute( 'src', $this->normalize_url( $obj->poi_img_path ?? $obj->poi_image_path ?? '' ) );
+		$main_img_url = $this->normalize_url( $obj->poi_img_path ?? $obj->poi_image_path ?? '' );
+		$main_img->setAttribute( 'src', $main_img_url );
 		$main_img->setAttribute( 'crossorigin', 'anonymous' );
 		$assets->appendChild( $main_img );
+		$this->track_runtime_asset( 'poi-image', $main_img_url, 'poi-imagetext:' . $uuid );
 
 		$esc_img = $dom->createElement( 'img' );
 		$esc_img->setAttribute( 'id', 'esc_img_' . $uuid );
-		$esc_img->setAttribute( 'src', $this->runtime_image_url( 'ui/x_2f3542.png' ) );
+		$esc_icon_url = $this->runtime_image_url( 'ui/x_2f3542.png' );
+		$esc_img->setAttribute( 'src', $esc_icon_url );
 		$esc_img->setAttribute( 'crossorigin', 'anonymous' );
 		$assets->appendChild( $esc_img );
+		$this->track_runtime_asset( 'runtime-ui-image', $esc_icon_url, 'poi-imagetext:' . $uuid );
 
 		// 2. UI Container (attached to scene, moved by JS)
 		$ui = $dom->createElement( 'a-entity' );
@@ -809,7 +1006,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		// 3. The Button (Trigger GLTF)
 		$button = $dom->createElement( 'a-entity' );
 		$button->setAttribute( 'id', 'button_poi_' . $uuid );
-		$button->setAttribute( 'gltf-model', 'url(' . $this->normalize_url( $obj->glb_path ?? '' ) . ')' );
+		$button_glb_url = $this->normalize_url( $obj->glb_path ?? '' );
+		$button->setAttribute( 'gltf-model', 'url(' . $button_glb_url . ')' );
+		$this->track_runtime_asset( 'gltf-inline', $button_glb_url, 'poi-imagetext-button:' . $uuid );
 		$button->setAttribute( 'highlight', 'button_poi_' . $uuid );
 		$button->setAttribute( 'class', 'override-materials raycastable menu-button hideable' );
 		if ( $this->isHoverEnabled ) {

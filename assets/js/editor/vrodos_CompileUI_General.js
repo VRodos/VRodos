@@ -11,6 +11,13 @@ VRodosCompileUI.General = (function () {
 
     // --- Normalization Helpers ---
 
+    function normalizeRenderQuality(value) {
+        if (value === 'performance' || value === 'standard' || value === 'high') {
+            return value;
+        }
+        return 'standard';
+    }
+
     function normalizeAAQuality(value) {
         if (value === 'off' || value === 'high' || value === 'ultra' || value === 'balanced') {
             return value;
@@ -94,7 +101,7 @@ VRodosCompileUI.General = (function () {
     function syncToScene(controls) {
         if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
-        VRODOS.editor.envir.scene.aframeRenderQuality = controls.renderQuality.value || 'standard';
+        VRODOS.editor.envir.scene.aframeRenderQuality = normalizeRenderQuality(controls.renderQuality.value);
         VRODOS.editor.envir.scene.aframeShadowQuality = controls.shadowQuality.value || 'medium';
         VRODOS.editor.envir.scene.aframeAAQuality = normalizeAAQuality(controls.aaQuality.value);
         VRODOS.editor.envir.scene.aframeFPSMeterEnabled = controls.fpsMeter.checked === true;
@@ -115,6 +122,7 @@ VRodosCompileUI.General = (function () {
     }
 
     return {
+        normalizeRenderQuality,
         normalizeAAQuality,
         normalizeAmbientOcclusionPreset,
         normalizeContactShadowPreset,
@@ -127,5 +135,4 @@ VRodosCompileUI.General = (function () {
     };
 
 })();
-
 

@@ -8,7 +8,9 @@
 
 AFRAME.registerComponent('clear-frustum-culling', {
     schema: {
-        disableCulling: { type: 'boolean', default: false }
+        disableCulling: { type: 'boolean', default: false },
+        castShadow: { type: 'boolean', default: false },
+        receiveShadow: { type: 'boolean', default: false }
     },
     init: function () {
         const el = this.el;
@@ -20,8 +22,12 @@ AFRAME.registerComponent('clear-frustum-culling', {
                     if (this.data.disableCulling) {
                         node.frustumCulled = false;
                     }
-                    node.castShadow = true;
-                    node.receiveShadow = true;
+                    if (this.data.castShadow) {
+                        node.castShadow = true;
+                    }
+                    if (this.data.receiveShadow) {
+                        node.receiveShadow = true;
+                    }
                 }
             });
         });
