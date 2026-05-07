@@ -61,8 +61,10 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsBloomIntensityValue: document.getElementById('compilePmndrsBloomIntensityValue'),
             pmndrsBloomThreshold: document.getElementById('compilePmndrsBloomThresholdSlider'),
             pmndrsBloomThresholdValue: document.getElementById('compilePmndrsBloomThresholdValue'),
+            pmndrsToneMapping: document.getElementById('compilePmndrsToneMappingSelect'),
             pmndrsExposure: document.getElementById('compilePmndrsExposureSlider'),
             pmndrsExposureValue: document.getElementById('compilePmndrsExposureValue'),
+            pmndrsLensFlare: document.getElementById('compilePmndrsLensFlareToggle'),
             pmndrsLut: document.getElementById('compilePmndrsLutToggle'),
             pmndrsLutWrapper: document.getElementById('compilePmndrsLutWrapper'),
             pmndrsLutLook: document.getElementById('compilePmndrsLutLookSelect'),
@@ -97,6 +99,7 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsGeospatialLongitude: document.getElementById('compilePmndrsGeospatialLongitudeInput'),
             pmndrsGeospatialAltitude: document.getElementById('compilePmndrsGeospatialAltitudeInput'),
             pmndrsAerialPerspective: document.getElementById('compilePmndrsAerialPerspectiveToggle'),
+            pmndrsCorrectAltitude: document.getElementById('compilePmndrsCorrectAltitudeToggle'),
             pmndrsAtmosphereAdvanced: document.getElementById('compilePmndrsAtmosphereAdvanced'),
             pmndrsSunElevation: document.getElementById('compilePmndrsSunElevationSlider'),
             pmndrsSunElevationValue: document.getElementById('compilePmndrsSunElevationValue'),
@@ -234,7 +237,11 @@ window.addEventListener('DOMContentLoaded', () => {
             VRODOS.editor.envir.scene.aframePmndrsVignetteDarkness = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsVignetteDarkness, 0, 1, 0.5);
         }
         if (typeof VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure !== 'number') {
-            VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure, 0.3, 2.5, 1.0);
+            VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure, 1, 20, 1.0);
+        }
+        VRODOS.editor.envir.scene.aframePmndrsToneMappingMode = VRodosCompileUI.PostFX.normalizePmndrsToneMappingMode(VRODOS.editor.envir.scene.aframePmndrsToneMappingMode);
+        if (typeof VRODOS.editor.envir.scene.aframePmndrsLensFlareEnabled === 'undefined') {
+            VRODOS.editor.envir.scene.aframePmndrsLensFlareEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.lensFlareEnabled;
         }
         if (typeof VRODOS.editor.envir.scene.aframePmndrsLutEnabled === 'undefined') {
             VRODOS.editor.envir.scene.aframePmndrsLutEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.lutEnabled;
@@ -269,6 +276,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (typeof VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled === 'undefined') {
             VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.aerialPerspectiveEnabled;
+        }
+        if (typeof VRODOS.editor.envir.scene.aframePmndrsCorrectAltitudeEnabled === 'undefined') {
+            VRODOS.editor.envir.scene.aframePmndrsCorrectAltitudeEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.correctAltitudeEnabled;
         }
         if (typeof VRODOS.editor.envir.scene.aframePmndrsGeospatialEnabled === 'undefined') {
             VRODOS.editor.envir.scene.aframePmndrsGeospatialEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialEnabled;
@@ -648,7 +658,15 @@ window.addEventListener('DOMContentLoaded', () => {
             controls.pmndrsBloomThreshold.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsBloomThreshold : 0.62, 0, 1, 0.62);
         }
         if (controls.pmndrsExposure) {
-            controls.pmndrsExposure.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure : 1.0, 0.3, 2.5, 1.0);
+            controls.pmndrsExposure.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure : 1.0, 1, 20, 1.0);
+        }
+        if (controls.pmndrsToneMapping) {
+            controls.pmndrsToneMapping.value = VRODOS.editor.envir && VRODOS.editor.envir.scene
+                ? VRodosCompileUI.PostFX.normalizePmndrsToneMappingMode(VRODOS.editor.envir.scene.aframePmndrsToneMappingMode)
+                : Shared.PMNDRS_TWEAK_DEFAULTS.toneMappingMode;
+        }
+        if (controls.pmndrsLensFlare) {
+            controls.pmndrsLensFlare.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsLensFlareEnabled);
         }
         if (controls.pmndrsLut) {
             controls.pmndrsLut.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsLutEnabled);
@@ -737,6 +755,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (controls.pmndrsAerialPerspective) {
             controls.pmndrsAerialPerspective.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled);
+        }
+        if (controls.pmndrsCorrectAltitude) {
+            controls.pmndrsCorrectAltitude.checked = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) || VRODOS.editor.envir.scene.aframePmndrsCorrectAltitudeEnabled !== false;
         }
         if (controls.pmndrsGeospatialLatitude) {
             controls.pmndrsGeospatialLatitude.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsGeospatialLatitudeDeg : Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLatitudeDeg, -90, 90, Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLatitudeDeg);
@@ -929,6 +950,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (controls.pmndrsAAPreset) {
         controls.pmndrsAAPreset.addEventListener('change', syncCompilePostFxState);
     }
+    if (controls.pmndrsToneMapping) {
+        controls.pmndrsToneMapping.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.pmndrsLensFlare) {
+        controls.pmndrsLensFlare.addEventListener('change', syncCompilePostFxState);
+    }
     // Tab strip — clicking a tab writes the engine value into the hidden input
     // and re-runs the show/hide gating. Disabled tabs (when postFx is off) are no-ops.
     function bindEngineTab(tabEl) {
@@ -1073,6 +1100,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     [
         controls.pmndrsGeospatial,
+        controls.pmndrsCorrectAltitude,
         controls.pmndrsAerialPerspective,
         controls.pmndrsGeospatialLatitude,
         controls.pmndrsGeospatialLongitude,
@@ -1127,6 +1155,8 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsBloomIntensity) c.pmndrsBloomIntensity.value = Shared.PMNDRS_TWEAK_DEFAULTS.bloomIntensity;
             if (c.pmndrsBloomThreshold) c.pmndrsBloomThreshold.value = Shared.PMNDRS_TWEAK_DEFAULTS.bloomThreshold;
             if (c.pmndrsExposure) c.pmndrsExposure.value = Shared.PMNDRS_TWEAK_DEFAULTS.toneMappingExposure;
+            if (c.pmndrsToneMapping) c.pmndrsToneMapping.value = Shared.PMNDRS_TWEAK_DEFAULTS.toneMappingMode;
+            if (c.pmndrsLensFlare) c.pmndrsLensFlare.checked = Shared.PMNDRS_TWEAK_DEFAULTS.lensFlareEnabled;
             if (c.pmndrsLut) c.pmndrsLut.checked = Shared.PMNDRS_TWEAK_DEFAULTS.lutEnabled;
             if (c.pmndrsLutLook) c.pmndrsLutLook.value = Shared.PMNDRS_TWEAK_DEFAULTS.lutLook;
             if (c.pmndrsLutStrength) c.pmndrsLutStrength.value = Shared.PMNDRS_TWEAK_DEFAULTS.lutStrength;
@@ -1146,6 +1176,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsCelestialUtcTime) c.pmndrsCelestialUtcTime.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime;
             if (c.pmndrsGeospatial) c.pmndrsGeospatial.checked = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialEnabled;
             if (c.pmndrsAerialPerspective) c.pmndrsAerialPerspective.checked = Shared.PMNDRS_TWEAK_DEFAULTS.aerialPerspectiveEnabled;
+            if (c.pmndrsCorrectAltitude) c.pmndrsCorrectAltitude.checked = Shared.PMNDRS_TWEAK_DEFAULTS.correctAltitudeEnabled;
             if (c.pmndrsGeospatialLatitude) c.pmndrsGeospatialLatitude.value = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLatitudeDeg;
             if (c.pmndrsGeospatialLongitude) c.pmndrsGeospatialLongitude.value = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialLongitudeDeg;
             if (c.pmndrsGeospatialAltitude) c.pmndrsGeospatialAltitude.value = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialAltitudeMeters;

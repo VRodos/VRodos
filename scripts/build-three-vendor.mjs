@@ -39,6 +39,7 @@ const requiredPackages = [
   'three',
   'postprocessing',
   '@takram/three-atmosphere',
+  '@takram/three-geospatial-effects',
   '@takram/three-clouds',
 ];
 
@@ -283,7 +284,9 @@ async function buildTakramAtmosphereBundle() {
 
   const entrySource = `
 import * as VRODOSTakramAtmosphere from '@takram/three-atmosphere';
-window.VRODOS_TAKRAM_ATMOSPHERE = VRODOSTakramAtmosphere;
+import * as VRODOSTakramEffects from '@takram/three-geospatial-effects';
+window.VRODOS_TAKRAM_ATMOSPHERE = Object.assign({}, VRODOSTakramAtmosphere, VRODOSTakramEffects);
+window.VRODOS_TAKRAM_EFFECTS = VRODOSTakramEffects;
 `;
 
   await writeFile(takramEntryPath, entrySource, 'utf8');
@@ -315,6 +318,7 @@ async function writeRuntimeManifest() {
   const postprocessingVersion = getLockedPackageVersion('postprocessing');
   const takramAtmosphereVersion = getLockedPackageVersion('@takram/three-atmosphere');
   const takramCloudsVersion = getLockedPackageVersion('@takram/three-clouds');
+  const takramEffectsVersion = getLockedPackageVersion('@takram/three-geospatial-effects');
 
   const manifest = {
     schemaVersion: 1,
@@ -342,6 +346,7 @@ async function writeRuntimeManifest() {
     takram: {
       atmosphereVersion: takramAtmosphereVersion,
       cloudsVersion: takramCloudsVersion,
+      effectsVersion: takramEffectsVersion,
       global: 'VRODOS_TAKRAM_ATMOSPHERE',
       bundleFile: path.basename(takramBundlePath),
       bundlePath: 'assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js',

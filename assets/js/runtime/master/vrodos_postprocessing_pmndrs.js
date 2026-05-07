@@ -15,11 +15,12 @@
  *   - VignetteEffect       (postFXVignetteEnabled)
  *   - NoiseEffect          (pmndrsNoiseEnabled)
  *   - ChromaticAberration  (pmndrsChromaticAberrationEnabled)
- *   - ToneMappingEffect    (always, ACES Filmic)
+ *   - ToneMappingEffect    (always, selectable; AGX by default)
  *   - SMAAEffect           (pmndrsAAMode === 'smaa')
  *
  * Effects inserted as standalone pmndrs-compatible passes:
  *   - NormalPass           (ambientOcclusionPreset !== 'off', native SSAO support pass)
+ *   - LensFlareEffect      (pmndrsLensFlareEnabled; convolution effects cannot be merged)
  *
  * Multisample AA is applied at the composer level when
  * pmndrsAAMode === 'msaa', WebGL2 multisampling is available, and
@@ -144,6 +145,41 @@
         }
     }
 
+    function normalizePmndrsToneMappingMode(value) {
+        switch (value) {
+            case 'agx':
+            case 'reinhard':
+            case 'cineon':
+            case 'aces-filmic':
+            case 'linear':
+                return value;
+            default:
+                return 'agx';
+        }
+    }
+
+    function resolvePmndrsToneMappingMode(PP, mode) {
+        if (!PP || !PP.ToneMappingMode) {
+            return null;
+        }
+
+        switch (normalizePmndrsToneMappingMode(mode)) {
+            case 'reinhard':
+                return typeof PP.ToneMappingMode.REINHARD !== 'undefined' ? PP.ToneMappingMode.REINHARD : null;
+            case 'cineon':
+                return typeof PP.ToneMappingMode.CINEON !== 'undefined' ? PP.ToneMappingMode.CINEON : null;
+            case 'aces-filmic':
+                return typeof PP.ToneMappingMode.ACES_FILMIC !== 'undefined' ? PP.ToneMappingMode.ACES_FILMIC : null;
+            case 'linear':
+                return typeof PP.ToneMappingMode.LINEAR !== 'undefined' ? PP.ToneMappingMode.LINEAR : null;
+            case 'agx':
+            default:
+                return typeof PP.ToneMappingMode.AGX !== 'undefined'
+                    ? PP.ToneMappingMode.AGX
+                    : (typeof PP.ToneMappingMode.ACES_FILMIC !== 'undefined' ? PP.ToneMappingMode.ACES_FILMIC : null);
+        }
+    }
+
     function clamp01(value) {
         return Math.max(0, Math.min(1, value));
     }
@@ -250,12 +286,25 @@
         return self.getPmndrsAAPreset();
     }
 
+    function getPmndrsToneMappingMode(self) {
+        if (self && typeof self.getPmndrsToneMappingMode === 'function') {
+            return normalizePmndrsToneMappingMode(self.getPmndrsToneMappingMode());
+        }
+        return normalizePmndrsToneMappingMode(self && self.data ? self.data.pmndrsToneMappingMode : 'agx');
+    }
+
     function isPmndrsAAEnabled(self) {
         return Boolean(self && self.data && self.data.postFXEngine === 'pmndrs' && getPmndrsAAMode(self) !== 'none');
     }
 
     function isPmndrsAmbientOcclusionEnabled(self) {
         return Boolean(self && typeof self.getAmbientOcclusionPreset === 'function' && self.getAmbientOcclusionPreset() !== 'off');
+    }
+
+    function isPmndrsImmersiveXrActive(self) {
+        const renderer = self && self.el ? self.el.renderer : null;
+        return Boolean((renderer && renderer.xr && renderer.xr.isPresenting) ||
+            (self && self.el && typeof self.el.is === 'function' && self.el.is('vr-mode')));
     }
 
     function getPmndrsAmbientOcclusionBackend(self) {
@@ -325,6 +374,8 @@
             }|aaPreset:${  getPmndrsAAPreset(self) 
             }|msaa:${  getPmndrsRequestedMultisampling(self, renderer) 
             }|smaa:${  smaaPreset === null ? 'off' : smaaPreset 
+            }|tone:${  getPmndrsToneMappingMode(self)
+            }|lens:${  readPmndrsBool(self, 'pmndrsLensFlareEnabled')
             }|lut:${  readPmndrsBool(self, 'pmndrsLutEnabled')  }:${  normalizePmndrsLutLook(self && self.data ? self.data.pmndrsLutLook : 'neutral')  }:${  readPmndrsNumber(self, 'pmndrsLutStrength', 0, 1, 1.0) 
             }|noise:${  readPmndrsBool(self, 'pmndrsNoiseEnabled')  }:${  readPmndrsNumber(self, 'pmndrsNoiseOpacity', 0, 0.2, 0.04) 
             }|chroma:${  readPmndrsBool(self, 'pmndrsChromaticAberrationEnabled')  }:${  readPmndrsNumber(self, 'pmndrsChromaticAberrationOffset', 0, 0.006, 0.0015)}`;
@@ -342,6 +393,20 @@
 
     function shouldEnablePmndrsHorizonAerial(self) {
         return isHorizonBackground(self) && shouldEnablePmndrsAerialPerspective(self);
+    }
+
+    function constrainPmndrsHorizonAerialToVanillaLightSourceMode(effect) {
+        if (!effect) {
+            return;
+        }
+
+        // Takram documents post-process lighting and light-source lighting as
+        // separate modes. VRodos Horizon keeps PBR/A-Frame materials lit by
+        // SunDirectionalLight + SkyLightProbe, so AerialPerspectiveEffect must
+        // not also render the sky or re-light the scene as albedo.
+        if (typeof effect.sunLight !== 'undefined') effect.sunLight = false;
+        if (typeof effect.skyLight !== 'undefined') effect.skyLight = false;
+        if (typeof effect.sky !== 'undefined') effect.sky = false;
     }
 
     function getPmndrsHorizonFoliageAlphaTestTarget() {
@@ -911,6 +976,8 @@
             `effect pass: ${  self && self.pmndrsEffectPass ? 'yes' : 'no'}`,
             `ao: ${  self && self.pmndrsNativeSsaoEffect ? 'native-ssao' : 'off'}`,
             `bloom: ${  self && self.pmndrsBloomEffect ? 'yes' : 'no'}`,
+            `tone: ${  getPmndrsToneMappingMode(self)}`,
+            `lens flare: ${  self && self.pmndrsLensFlareEffect ? 'yes' : 'off'}`,
             `lut: ${  self && self.pmndrsLutEffect ? normalizePmndrsLutLook(self.data.pmndrsLutLook) : 'off'}`,
             `noise: ${  self && self.pmndrsNoiseEffect ? 'yes' : 'off'}`,
             `chromatic: ${  self && self.pmndrsChromaticAberrationEffect ? 'yes' : 'off'}`,
@@ -927,11 +994,12 @@
             return 'atmosphere:off';
         }
 
+        const altitudeMode = atmosphereConfig.correctAltitudeEnabled !== false ? ':correct-altitude' : ':raw-altitude';
         if (isHorizonBackground(self)) {
-            return shouldEnablePmndrsHorizonAerial(self) ? 'atmosphere:horizon-aerial' : 'atmosphere:horizon-sky';
+            return (shouldEnablePmndrsHorizonAerial(self) ? 'atmosphere:horizon-aerial' : 'atmosphere:horizon-sky') + altitudeMode;
         }
 
-        return shouldEnablePmndrsAerialPerspective(self) ? 'atmosphere:world-aerial' : 'atmosphere:world-sky';
+        return (shouldEnablePmndrsAerialPerspective(self) ? 'atmosphere:world-aerial' : 'atmosphere:world-sky') + altitudeMode;
     }
 
     function disposePmndrsNativeSsaoResources(self) {
@@ -965,9 +1033,11 @@
         self.pmndrsComposer = null;
         self.pmndrsRenderPass = null;
         self.pmndrsEffectPass = null;
+        self.pmndrsLensFlarePass = null;
         self.pmndrsNativeNormalPass = null;
         self.pmndrsNativeSsaoEffect = null;
         self.pmndrsBloomEffect = null;
+        self.pmndrsLensFlareEffect = null;
         self.pmndrsSmaaEffect = null;
         if (self.pmndrsLutTexture && typeof self.pmndrsLutTexture.dispose === 'function') {
             self.pmndrsLutTexture.dispose();
@@ -1011,6 +1081,9 @@
 
         if (typeof self.applyPmndrsAtmosphereConfigToTarget === 'function') {
             self.applyPmndrsAtmosphereConfigToTarget(self.pmndrsAerialPerspectiveEffect, atmosphereConfig);
+        }
+        if (shouldEnablePmndrsHorizonAerial(self)) {
+            constrainPmndrsHorizonAerialToVanillaLightSourceMode(self.pmndrsAerialPerspectiveEffect);
         }
     }
 
@@ -1098,17 +1171,21 @@
                         transmittance: atmosphereConfig.transmittanceEnabled,
                         inscatter: atmosphereConfig.inscatterEnabled,
                         albedoScale: atmosphereConfig.albedoScale,
-                        sky: useHorizonAerial,
-                        sun: atmosphereConfig.takramSunEnabled !== false,
-                        moon: atmosphereConfig.moonEnabled,
-                        ground: atmosphereConfig.groundEnabled
+                        correctAltitude: atmosphereConfig.correctAltitudeEnabled !== false,
+                        sky: false,
+                        sun: false,
+                        moon: false,
+                        ground: false
                     });
                     if (useHorizonAerial && !this._pmndrsHorizonAerialWarned) {
-                        console.info('[VRodos] PMNDRS Horizon AerialPerspectiveEffect experimental path enabled. Takram SkyMaterial ownership is bypassed for this scene so the post-process aerial path can be re-validated on r181.');
+                        console.info('[VRodos] PMNDRS Horizon AerialPerspectiveEffect enabled in Takram light-source mode. SkyMaterial, SunDirectionalLight, and SkyLightProbe remain the scene owners; aerial post-processing only applies distance haze/transmittance.');
                         this._pmndrsHorizonAerialWarned = true;
                     }
                     if (typeof this.applyPmndrsAtmosphereConfigToTarget === 'function') {
                         this.applyPmndrsAtmosphereConfigToTarget(this.pmndrsAerialPerspectiveEffect, atmosphereConfig);
+                    }
+                    if (useHorizonAerial) {
+                        constrainPmndrsHorizonAerialToVanillaLightSourceMode(this.pmndrsAerialPerspectiveEffect);
                     }
                     if (useHorizonAerial && PP && PP.Selection && PP.RenderPass) {
                         this.pmndrsHorizonFoliageOverlayPass = new PmndrsHorizonFoliageOverlayPass(scene, camera, PP, THREE);
@@ -1183,13 +1260,46 @@
             }
         }
 
-        // ACES Filmic tone mapping — applied before color grading so that
+        this.pmndrsLensFlareEffect = null;
+        const wantsTakramLensFlare = readPmndrsBool(this, 'pmndrsLensFlareEnabled');
+        const canUseTakramSunLensFlare = wantsTakramLensFlare &&
+            isHorizonBackground(this) &&
+            atmosphereConfig &&
+            atmosphereConfig.enabled &&
+            atmosphereConfig.takramSunEnabled !== false;
+        if (wantsTakramLensFlare && !canUseTakramSunLensFlare && !this._pmndrsLensFlareContextWarned) {
+            console.info('[VRodos] Takram LensFlareEffect is tied to the Takram Horizon sun; skipping because Horizon atmosphere or sun is inactive.');
+            this._pmndrsLensFlareContextWarned = true;
+        }
+        if (canUseTakramSunLensFlare) {
+            const VTA = window.VRODOS_TAKRAM_ATMOSPHERE || {};
+            if (typeof VTA.LensFlareEffect === 'function') {
+                try {
+                    this.pmndrsLensFlareEffect = new VTA.LensFlareEffect();
+                } catch (err) {
+                    console.warn('[VRodos] Takram LensFlareEffect construction failed, skipping:', err);
+                    this.pmndrsLensFlareEffect = null;
+                }
+            } else if (!this._pmndrsLensFlareSkipWarned) {
+                console.info('[VRodos] Takram LensFlareEffect requested but @takram/three-geospatial-effects is not bundled.');
+                this._pmndrsLensFlareSkipWarned = true;
+            }
+        }
+
+        // Tone mapping is applied before color grading so that
         // grading (brightness/contrast, hue/saturation, vignette) operates
         // on perceptually uniform (LDR) colours, preventing washed-out results.
         // Per-scene exposure multiplier is applied via the renderer's toneMappingExposure.
+        // The Takram vanilla atmosphere story uses AGX tone mapping with exposure 10.
         try {
-            effects.push(new PP.ToneMappingEffect({ mode: PP.ToneMappingMode.ACES_FILMIC }));
-            const pmndrsExposure = readPmndrsNumber(this, 'pmndrsToneMappingExposure', 0.3, 2.5, 1.0);
+            const toneMappingMode = resolvePmndrsToneMappingMode(PP, getPmndrsToneMappingMode(this));
+            if (toneMappingMode === null) {
+                throw new Error('ToneMappingMode is unavailable.');
+            }
+            effects.push(new PP.ToneMappingEffect({ mode: toneMappingMode }));
+            const pmndrsExposure = typeof this.getPmndrsToneMappingExposure === 'function'
+                ? this.getPmndrsToneMappingExposure()
+                : readPmndrsNumber(this, 'pmndrsToneMappingExposure', 1, 20, 1.0);
             if (renderer && typeof renderer.toneMappingExposure !== 'undefined') {
                 this._pmndrsPrevToneMappingExposure = renderer.toneMappingExposure;
                 renderer.toneMappingExposure = pmndrsExposure;
@@ -1322,6 +1432,25 @@
             this._pmndrsSsrTraaWarned = true;
         }
 
+        this.pmndrsLensFlarePass = null;
+        if (this.pmndrsLensFlareEffect) {
+            try {
+                this.pmndrsLensFlarePass = new PP.EffectPass(camera, this.pmndrsLensFlareEffect);
+                composer.addPass(this.pmndrsLensFlarePass);
+            } catch (err) {
+                console.warn('[VRodos] Takram LensFlareEffect pass failed, skipping:', err);
+                if (this.pmndrsLensFlareEffect && typeof this.pmndrsLensFlareEffect.dispose === 'function') {
+                    try {
+                        this.pmndrsLensFlareEffect.dispose();
+                    } catch (disposeErr) {
+                        console.warn('[VRodos] Takram LensFlareEffect dispose failed:', disposeErr);
+                    }
+                }
+                this.pmndrsLensFlareEffect = null;
+                this.pmndrsLensFlarePass = null;
+            }
+        }
+
         if (effects.length === 0) {
             // Nothing to merge — just feed the scene through with no post-FX.
             // Composer is still useful because it handles the final blit, but we
@@ -1388,6 +1517,7 @@
             const shouldIntercept = self.pmndrsActive &&
                 self.shouldUsePostProcessing() &&
                 !self.pmndrsRendering &&
+                !isPmndrsImmersiveXrActive(self) &&
                 !self.sceneProbeCapturing &&
                 scene === self.el.object3D &&
                 camera;
@@ -1415,6 +1545,9 @@
                 self.pmndrsRenderPass.mainCamera = camera;
                 if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== 'undefined') {
                     self.pmndrsEffectPass.mainCamera = camera;
+                }
+                if (self.pmndrsLensFlarePass && typeof self.pmndrsLensFlarePass.mainCamera !== 'undefined') {
+                    self.pmndrsLensFlarePass.mainCamera = camera;
                 }
                 if (self.pmndrsNativeNormalPass && typeof self.pmndrsNativeNormalPass.mainCamera !== 'undefined') {
                     self.pmndrsNativeNormalPass.mainCamera = camera;
@@ -1502,6 +1635,7 @@
         this._pmndrsAdaptive = null;
         this._pmndrsSsrTraaWarned = false;
         this._pmndrsAtmosphereWarned = false;
+        this._pmndrsLensFlareSkipWarned = false;
         updatePmndrsAADebugOverlay(this);
     };
 

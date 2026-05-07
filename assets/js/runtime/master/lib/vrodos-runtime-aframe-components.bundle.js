@@ -493,6 +493,8 @@
       pmndrsVignetteEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsVignetteEnabled", "0") },
       pmndrsVignetteDarkness: { type: "string", default: vrodosSceneSettingDefault("pmndrsVignetteDarkness", "0.5") },
       pmndrsToneMappingExposure: { type: "string", default: vrodosSceneSettingDefault("pmndrsToneMappingExposure", "1.0") },
+      pmndrsToneMappingMode: { type: "string", default: vrodosSceneSettingDefault("pmndrsToneMappingMode", "agx") },
+      pmndrsLensFlareEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsLensFlareEnabled", "0") },
       pmndrsLutEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsLutEnabled", "0") },
       pmndrsLutLook: { type: "string", default: vrodosSceneSettingDefault("pmndrsLutLook", "neutral") },
       pmndrsLutStrength: { type: "string", default: vrodosSceneSettingDefault("pmndrsLutStrength", "1.0") },
@@ -505,6 +507,7 @@
       pmndrsAtmospherePresetIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsAtmospherePresetIntensity", "1.0") },
       pmndrsAtmosphereQuality: { type: "string", default: vrodosSceneSettingDefault("pmndrsAtmosphereQuality", "balanced") },
       pmndrsAerialPerspectiveEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsAerialPerspectiveEnabled", "0") },
+      pmndrsCorrectAltitudeEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsCorrectAltitudeEnabled", "1") },
       pmndrsGeospatialEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsGeospatialEnabled", "0") },
       pmndrsGeospatialLatitudeDeg: { type: "string", default: vrodosSceneSettingDefault("pmndrsGeospatialLatitudeDeg", "0") },
       pmndrsGeospatialLongitudeDeg: { type: "string", default: vrodosSceneSettingDefault("pmndrsGeospatialLongitudeDeg", "0") },
@@ -1023,6 +1026,12 @@
     },
     getPmndrsAtmosphereConfig: VRODOSMaster.SceneSettingsHelpers.getPmndrsAtmosphereConfig || function() {
       return null;
+    },
+    getPmndrsToneMappingExposure: VRODOSMaster.SceneSettingsHelpers.getPmndrsToneMappingExposure || function() {
+      return 1;
+    },
+    getPmndrsToneMappingMode: VRODOSMaster.SceneSettingsHelpers.getPmndrsToneMappingMode || function() {
+      return "agx";
     },
     applyPmndrsAtmosphereConfigToTarget: VRODOSMaster.SceneSettingsHelpers.applyPmndrsAtmosphereConfigToTarget || function() {
     },

@@ -357,12 +357,23 @@
 							</div>
 
 							<div class="tw-space-y-4">
+								<label class="tw-form-control tw-w-full">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Final PMNDRS tone mapping operator. AgX matches the Takram vanilla atmosphere story.">Tone Mapping</span>
+									<select id="compilePmndrsToneMappingSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="agx">AgX</option>
+										<option value="reinhard">Reinhard</option>
+										<option value="cineon">Cineon</option>
+										<option value="aces-filmic">ACES Filmic</option>
+										<option value="linear">Linear</option>
+									</select>
+								</label>
+
 								<div>
 									<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Tone-mapping exposure multiplier applied before ACES Filmic.">Tone Map Exposure</span>
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Tone-mapping exposure multiplier applied before the selected PMNDRS tone mapping operator.">Tone Map Exposure</span>
 										<span id="compilePmndrsExposureValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
 									</div>
-									<input id="compilePmndrsExposureSlider" type="range" min="0.3" max="2.5" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+									<input id="compilePmndrsExposureSlider" type="range" min="1" max="20" step="0.1" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 								</div>
 
 								<div class="tw-pt-2 tw-border-t tw-border-slate-200">
@@ -401,6 +412,13 @@
 							</div>
 
 							<div class="tw-space-y-4">
+								<div class="tw-pt-2">
+									<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+										<input id="compilePmndrsLensFlareToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Enable Takram LensFlareEffect in the PMNDRS composer.">Lens Flare</span>
+									</label>
+								</div>
+
 								<div id="compilePmndrsBloomWrapper" class="tw-space-y-4">
 									<div>
 										<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
@@ -543,7 +561,11 @@
 										</label>
 										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 											<input id="compilePmndrsAerialPerspectiveToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Experimental Takram AerialPerspectiveEffect for Horizon revalidation.">Horizon Aerial</span>
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Takram AerialPerspectiveEffect distance haze. Sky and PBR lighting stay owned by Takram SkyMaterial, SunDirectionalLight, and SkyLightProbe.">Aerial Haze</span>
+										</label>
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+											<input id="compilePmndrsCorrectAltitudeToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Takram correctAltitude compensation for the atmospheric ellipsoid.">Correct Altitude</span>
 										</label>
 									</div>
 

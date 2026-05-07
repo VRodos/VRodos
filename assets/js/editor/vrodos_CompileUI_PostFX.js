@@ -85,6 +85,13 @@ VRodosCompileUI.PostFX = (function () {
         return 'neutral';
     }
 
+    function normalizePmndrsToneMappingMode(value) {
+        if (value === 'agx' || value === 'reinhard' || value === 'cineon' || value === 'aces-filmic' || value === 'linear') {
+            return value;
+        }
+        return 'agx';
+    }
+
     // --- UI State Management ---
 
     function updateUI(controls, postFxEnabled, isPmndrs, isBloomEnabled) {
@@ -141,6 +148,12 @@ VRodosCompileUI.PostFX = (function () {
 
         if (controls.pmndrsExposure) {
             controls.pmndrsExposure.disabled = !pmndrsTweakEnabled;
+        }
+        if (controls.pmndrsToneMapping) {
+            controls.pmndrsToneMapping.disabled = !pmndrsTweakEnabled;
+        }
+        if (controls.pmndrsLensFlare) {
+            controls.pmndrsLensFlare.disabled = !pmndrsTweakEnabled;
         }
 
         const isPmndrsLutEnabled = controls.pmndrsLut && controls.pmndrsLut.checked;
@@ -248,7 +261,13 @@ VRodosCompileUI.PostFX = (function () {
             VRODOS.editor.envir.scene.aframePmndrsBloomThreshold = Shared.clampNumber(controls.pmndrsBloomThreshold.value, 0, 1, d.bloomThreshold);
         }
         if (controls.pmndrsExposure) {
-            VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(controls.pmndrsExposure.value, 0.3, 2.5, d.toneMappingExposure);
+            VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(controls.pmndrsExposure.value, 1, 20, d.toneMappingExposure);
+        }
+        if (controls.pmndrsToneMapping) {
+            VRODOS.editor.envir.scene.aframePmndrsToneMappingMode = normalizePmndrsToneMappingMode(controls.pmndrsToneMapping.value);
+        }
+        if (controls.pmndrsLensFlare) {
+            VRODOS.editor.envir.scene.aframePmndrsLensFlareEnabled = controls.pmndrsLensFlare.checked === true;
         }
         if (controls.pmndrsLut) {
             VRODOS.editor.envir.scene.aframePmndrsLutEnabled = controls.pmndrsLut.checked === true;
@@ -291,6 +310,7 @@ VRodosCompileUI.PostFX = (function () {
         normalizePmndrsAAMode,
         normalizePmndrsAAPreset,
         normalizePmndrsLutLook,
+        normalizePmndrsToneMappingMode,
         updateUI,
         updateValueLabels,
         syncToScene

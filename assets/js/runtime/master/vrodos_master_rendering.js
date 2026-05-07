@@ -528,6 +528,8 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
         return;
     }
 
+    const reflectionSource = options.reflectionSource || (options.environmentMap ? 'hdr' : 'none');
+    const reflectionsDisabled = reflectionSource === 'none';
     material.userData = material.userData || {};
 
     vrodosApplyTextureQuality(material.map, options, true);
@@ -544,10 +546,13 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
             material.userData.vrodosBaseEnvMap = material.envMap || null;
         }
 
-        if (options.environmentMap) {
-            material.envMap = options.environmentMap;
-        } else {
-            material.envMap = material.userData.vrodosBaseEnvMap;
+        const targetEnvMap = options.environmentMap
+            ? options.environmentMap
+            : (reflectionsDisabled ? null : material.userData.vrodosBaseEnvMap);
+
+        if (material.envMap !== targetEnvMap) {
+            material.envMap = targetEnvMap;
+            material.needsUpdate = true;
         }
     }
 
@@ -557,7 +562,9 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
         }
 
         let targetEnvMapIntensity = material.userData.vrodosBaseEnvMapIntensity;
-        if (options.reflectionProfile === 'soft') {
+        if (reflectionsDisabled) {
+            targetEnvMapIntensity = 0;
+        } else if (options.reflectionProfile === 'soft') {
             targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity * 0.5, 0.3);
         } else if (options.renderQuality === 'high') {
             targetEnvMapIntensity = options.reflectionProfile === 'enhanced'

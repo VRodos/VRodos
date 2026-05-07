@@ -300,6 +300,7 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsAtmospherePresetIntensity,
             controls.pmndrsAtmosphereQuality,
             controls.pmndrsAerialPerspective,
+            controls.pmndrsCorrectAltitude,
             controls.pmndrsGeospatial,
             controls.pmndrsGeospatialLatitude,
             controls.pmndrsGeospatialLongitude,
@@ -385,6 +386,7 @@ VRodosCompileUI.Atmosphere = (function () {
         VRODOS.editor.envir.scene.aframePmndrsCelestialDate = normalizeDate(controls.pmndrsCelestialDate ? controls.pmndrsCelestialDate.value : d.celestialDate, d.celestialDate);
         VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime = normalizeUtcTime(controls.pmndrsCelestialUtcTime ? controls.pmndrsCelestialUtcTime.value : d.celestialUtcTime, d.celestialUtcTime);
         VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled = (pmndrsRuntimeEnabled && controls.pmndrsAerialPerspective) ? controls.pmndrsAerialPerspective.checked === true : false;
+        VRODOS.editor.envir.scene.aframePmndrsCorrectAltitudeEnabled = controls.pmndrsCorrectAltitude ? controls.pmndrsCorrectAltitude.checked === true : d.correctAltitudeEnabled;
         VRODOS.editor.envir.scene.aframePmndrsGeospatialEnabled = (pmndrsRuntimeEnabled && controls.pmndrsGeospatial) ? controls.pmndrsGeospatial.checked === true : false;
         VRODOS.editor.envir.scene.aframePmndrsGeospatialLatitudeDeg = Shared.clampNumber(controls.pmndrsGeospatialLatitude ? controls.pmndrsGeospatialLatitude.value : d.geospatialLatitudeDeg, -90, 90, d.geospatialLatitudeDeg);
         VRODOS.editor.envir.scene.aframePmndrsGeospatialLongitudeDeg = Shared.clampNumber(controls.pmndrsGeospatialLongitude ? controls.pmndrsGeospatialLongitude.value : d.geospatialLongitudeDeg, -180, 180, d.geospatialLongitudeDeg);

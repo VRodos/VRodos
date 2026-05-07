@@ -87,6 +87,36 @@
           return "neutral";
       }
     }
+    function normalizePmndrsToneMappingMode(value) {
+      switch (value) {
+        case "agx":
+        case "reinhard":
+        case "cineon":
+        case "aces-filmic":
+        case "linear":
+          return value;
+        default:
+          return "agx";
+      }
+    }
+    function resolvePmndrsToneMappingMode(PP, mode) {
+      if (!PP || !PP.ToneMappingMode) {
+        return null;
+      }
+      switch (normalizePmndrsToneMappingMode(mode)) {
+        case "reinhard":
+          return typeof PP.ToneMappingMode.REINHARD !== "undefined" ? PP.ToneMappingMode.REINHARD : null;
+        case "cineon":
+          return typeof PP.ToneMappingMode.CINEON !== "undefined" ? PP.ToneMappingMode.CINEON : null;
+        case "aces-filmic":
+          return typeof PP.ToneMappingMode.ACES_FILMIC !== "undefined" ? PP.ToneMappingMode.ACES_FILMIC : null;
+        case "linear":
+          return typeof PP.ToneMappingMode.LINEAR !== "undefined" ? PP.ToneMappingMode.LINEAR : null;
+        case "agx":
+        default:
+          return typeof PP.ToneMappingMode.AGX !== "undefined" ? PP.ToneMappingMode.AGX : typeof PP.ToneMappingMode.ACES_FILMIC !== "undefined" ? PP.ToneMappingMode.ACES_FILMIC : null;
+      }
+    }
     function clamp01(value) {
       return Math.max(0, Math.min(1, value));
     }
@@ -180,11 +210,21 @@
       }
       return self.getPmndrsAAPreset();
     }
+    function getPmndrsToneMappingMode(self) {
+      if (self && typeof self.getPmndrsToneMappingMode === "function") {
+        return normalizePmndrsToneMappingMode(self.getPmndrsToneMappingMode());
+      }
+      return normalizePmndrsToneMappingMode(self && self.data ? self.data.pmndrsToneMappingMode : "agx");
+    }
     function isPmndrsAAEnabled(self) {
       return Boolean(self && self.data && self.data.postFXEngine === "pmndrs" && getPmndrsAAMode(self) !== "none");
     }
     function isPmndrsAmbientOcclusionEnabled(self) {
       return Boolean(self && typeof self.getAmbientOcclusionPreset === "function" && self.getAmbientOcclusionPreset() !== "off");
+    }
+    function isPmndrsImmersiveXrActive(self) {
+      const renderer = self && self.el ? self.el.renderer : null;
+      return Boolean(renderer && renderer.xr && renderer.xr.isPresenting || self && self.el && typeof self.el.is === "function" && self.el.is("vr-mode"));
     }
     function getPmndrsAmbientOcclusionBackend(self) {
       return isPmndrsAmbientOcclusionEnabled(self) ? "native-ssao" : "off";
@@ -238,7 +278,7 @@
     }
     function getPmndrsComposerSignature(self, renderer, atmosphereConfig, PP) {
       const smaaPreset = getPmndrsSmaaPreset(self, PP);
-      return `${getPmndrsAtmosphereModeSignature(self, atmosphereConfig)}|ao:${self && typeof self.getAmbientOcclusionPreset === "function" ? self.getAmbientOcclusionPreset() : "off"}|aoBackend:${getPmndrsAmbientOcclusionBackend(self)}|aaMode:${getPmndrsAAMode(self)}|aaPreset:${getPmndrsAAPreset(self)}|msaa:${getPmndrsRequestedMultisampling(self, renderer)}|smaa:${smaaPreset === null ? "off" : smaaPreset}|lut:${readPmndrsBool(self, "pmndrsLutEnabled")}:${normalizePmndrsLutLook(self && self.data ? self.data.pmndrsLutLook : "neutral")}:${readPmndrsNumber(self, "pmndrsLutStrength", 0, 1, 1)}|noise:${readPmndrsBool(self, "pmndrsNoiseEnabled")}:${readPmndrsNumber(self, "pmndrsNoiseOpacity", 0, 0.2, 0.04)}|chroma:${readPmndrsBool(self, "pmndrsChromaticAberrationEnabled")}:${readPmndrsNumber(self, "pmndrsChromaticAberrationOffset", 0, 6e-3, 15e-4)}`;
+      return `${getPmndrsAtmosphereModeSignature(self, atmosphereConfig)}|ao:${self && typeof self.getAmbientOcclusionPreset === "function" ? self.getAmbientOcclusionPreset() : "off"}|aoBackend:${getPmndrsAmbientOcclusionBackend(self)}|aaMode:${getPmndrsAAMode(self)}|aaPreset:${getPmndrsAAPreset(self)}|msaa:${getPmndrsRequestedMultisampling(self, renderer)}|smaa:${smaaPreset === null ? "off" : smaaPreset}|tone:${getPmndrsToneMappingMode(self)}|lens:${readPmndrsBool(self, "pmndrsLensFlareEnabled")}|lut:${readPmndrsBool(self, "pmndrsLutEnabled")}:${normalizePmndrsLutLook(self && self.data ? self.data.pmndrsLutLook : "neutral")}:${readPmndrsNumber(self, "pmndrsLutStrength", 0, 1, 1)}|noise:${readPmndrsBool(self, "pmndrsNoiseEnabled")}:${readPmndrsNumber(self, "pmndrsNoiseOpacity", 0, 0.2, 0.04)}|chroma:${readPmndrsBool(self, "pmndrsChromaticAberrationEnabled")}:${readPmndrsNumber(self, "pmndrsChromaticAberrationOffset", 0, 6e-3, 15e-4)}`;
     }
     function isPmndrsAADebugOverlayEnabled() {
       return hasPmndrsDebugFlag("pmndrsAADebugOverlay", "vrodos_debug_pmndrs_aa");
@@ -248,6 +288,14 @@
     }
     function shouldEnablePmndrsHorizonAerial(self) {
       return isHorizonBackground(self) && shouldEnablePmndrsAerialPerspective(self);
+    }
+    function constrainPmndrsHorizonAerialToVanillaLightSourceMode(effect) {
+      if (!effect) {
+        return;
+      }
+      if (typeof effect.sunLight !== "undefined") effect.sunLight = false;
+      if (typeof effect.skyLight !== "undefined") effect.skyLight = false;
+      if (typeof effect.sky !== "undefined") effect.sky = false;
     }
     function getPmndrsHorizonFoliageAlphaTestTarget() {
       return 0.35;
@@ -740,6 +788,8 @@ ${selectedSummaries.join("\n")}`);
         `effect pass: ${self && self.pmndrsEffectPass ? "yes" : "no"}`,
         `ao: ${self && self.pmndrsNativeSsaoEffect ? "native-ssao" : "off"}`,
         `bloom: ${self && self.pmndrsBloomEffect ? "yes" : "no"}`,
+        `tone: ${getPmndrsToneMappingMode(self)}`,
+        `lens flare: ${self && self.pmndrsLensFlareEffect ? "yes" : "off"}`,
         `lut: ${self && self.pmndrsLutEffect ? normalizePmndrsLutLook(self.data.pmndrsLutLook) : "off"}`,
         `noise: ${self && self.pmndrsNoiseEffect ? "yes" : "off"}`,
         `chromatic: ${self && self.pmndrsChromaticAberrationEffect ? "yes" : "off"}`,
@@ -753,10 +803,11 @@ ${selectedSummaries.join("\n")}`);
       if (!(atmosphereConfig && atmosphereConfig.enabled)) {
         return "atmosphere:off";
       }
+      const altitudeMode = atmosphereConfig.correctAltitudeEnabled !== false ? ":correct-altitude" : ":raw-altitude";
       if (isHorizonBackground(self)) {
-        return shouldEnablePmndrsHorizonAerial(self) ? "atmosphere:horizon-aerial" : "atmosphere:horizon-sky";
+        return (shouldEnablePmndrsHorizonAerial(self) ? "atmosphere:horizon-aerial" : "atmosphere:horizon-sky") + altitudeMode;
       }
-      return shouldEnablePmndrsAerialPerspective(self) ? "atmosphere:world-aerial" : "atmosphere:world-sky";
+      return (shouldEnablePmndrsAerialPerspective(self) ? "atmosphere:world-aerial" : "atmosphere:world-sky") + altitudeMode;
     }
     function disposePmndrsNativeSsaoResources(self) {
       if (!self) {
@@ -784,9 +835,11 @@ ${selectedSummaries.join("\n")}`);
       self.pmndrsComposer = null;
       self.pmndrsRenderPass = null;
       self.pmndrsEffectPass = null;
+      self.pmndrsLensFlarePass = null;
       self.pmndrsNativeNormalPass = null;
       self.pmndrsNativeSsaoEffect = null;
       self.pmndrsBloomEffect = null;
+      self.pmndrsLensFlareEffect = null;
       self.pmndrsSmaaEffect = null;
       if (self.pmndrsLutTexture && typeof self.pmndrsLutTexture.dispose === "function") {
         self.pmndrsLutTexture.dispose();
@@ -826,6 +879,9 @@ ${selectedSummaries.join("\n")}`);
       }
       if (typeof self.applyPmndrsAtmosphereConfigToTarget === "function") {
         self.applyPmndrsAtmosphereConfigToTarget(self.pmndrsAerialPerspectiveEffect, atmosphereConfig);
+      }
+      if (shouldEnablePmndrsHorizonAerial(self)) {
+        constrainPmndrsHorizonAerialToVanillaLightSourceMode(self.pmndrsAerialPerspectiveEffect);
       }
     }
     H._buildPmndrsComposer = function(scene, camera) {
@@ -898,17 +954,21 @@ ${selectedSummaries.join("\n")}`);
               transmittance: atmosphereConfig.transmittanceEnabled,
               inscatter: atmosphereConfig.inscatterEnabled,
               albedoScale: atmosphereConfig.albedoScale,
-              sky: useHorizonAerial,
-              sun: atmosphereConfig.takramSunEnabled !== false,
-              moon: atmosphereConfig.moonEnabled,
-              ground: atmosphereConfig.groundEnabled
+              correctAltitude: atmosphereConfig.correctAltitudeEnabled !== false,
+              sky: false,
+              sun: false,
+              moon: false,
+              ground: false
             });
             if (useHorizonAerial && !this._pmndrsHorizonAerialWarned) {
-              console.info("[VRodos] PMNDRS Horizon AerialPerspectiveEffect experimental path enabled. Takram SkyMaterial ownership is bypassed for this scene so the post-process aerial path can be re-validated on r181.");
+              console.info("[VRodos] PMNDRS Horizon AerialPerspectiveEffect enabled in Takram light-source mode. SkyMaterial, SunDirectionalLight, and SkyLightProbe remain the scene owners; aerial post-processing only applies distance haze/transmittance.");
               this._pmndrsHorizonAerialWarned = true;
             }
             if (typeof this.applyPmndrsAtmosphereConfigToTarget === "function") {
               this.applyPmndrsAtmosphereConfigToTarget(this.pmndrsAerialPerspectiveEffect, atmosphereConfig);
+            }
+            if (useHorizonAerial) {
+              constrainPmndrsHorizonAerialToVanillaLightSourceMode(this.pmndrsAerialPerspectiveEffect);
             }
             if (useHorizonAerial && PP && PP.Selection && PP.RenderPass) {
               this.pmndrsHorizonFoliageOverlayPass = new PmndrsHorizonFoliageOverlayPass(scene, camera, PP, THREE2);
@@ -972,9 +1032,34 @@ ${selectedSummaries.join("\n")}`);
           this.pmndrsBloomEffect = null;
         }
       }
+      this.pmndrsLensFlareEffect = null;
+      const wantsTakramLensFlare = readPmndrsBool(this, "pmndrsLensFlareEnabled");
+      const canUseTakramSunLensFlare = wantsTakramLensFlare && isHorizonBackground(this) && atmosphereConfig && atmosphereConfig.enabled && atmosphereConfig.takramSunEnabled !== false;
+      if (wantsTakramLensFlare && !canUseTakramSunLensFlare && !this._pmndrsLensFlareContextWarned) {
+        console.info("[VRodos] Takram LensFlareEffect is tied to the Takram Horizon sun; skipping because Horizon atmosphere or sun is inactive.");
+        this._pmndrsLensFlareContextWarned = true;
+      }
+      if (canUseTakramSunLensFlare) {
+        const VTA = window.VRODOS_TAKRAM_ATMOSPHERE || {};
+        if (typeof VTA.LensFlareEffect === "function") {
+          try {
+            this.pmndrsLensFlareEffect = new VTA.LensFlareEffect();
+          } catch (err) {
+            console.warn("[VRodos] Takram LensFlareEffect construction failed, skipping:", err);
+            this.pmndrsLensFlareEffect = null;
+          }
+        } else if (!this._pmndrsLensFlareSkipWarned) {
+          console.info("[VRodos] Takram LensFlareEffect requested but @takram/three-geospatial-effects is not bundled.");
+          this._pmndrsLensFlareSkipWarned = true;
+        }
+      }
       try {
-        effects.push(new PP.ToneMappingEffect({ mode: PP.ToneMappingMode.ACES_FILMIC }));
-        const pmndrsExposure = readPmndrsNumber(this, "pmndrsToneMappingExposure", 0.3, 2.5, 1);
+        const toneMappingMode = resolvePmndrsToneMappingMode(PP, getPmndrsToneMappingMode(this));
+        if (toneMappingMode === null) {
+          throw new Error("ToneMappingMode is unavailable.");
+        }
+        effects.push(new PP.ToneMappingEffect({ mode: toneMappingMode }));
+        const pmndrsExposure = typeof this.getPmndrsToneMappingExposure === "function" ? this.getPmndrsToneMappingExposure() : readPmndrsNumber(this, "pmndrsToneMappingExposure", 1, 20, 1);
         if (renderer && typeof renderer.toneMappingExposure !== "undefined") {
           this._pmndrsPrevToneMappingExposure = renderer.toneMappingExposure;
           renderer.toneMappingExposure = pmndrsExposure;
@@ -1089,6 +1174,24 @@ ${selectedSummaries.join("\n")}`);
         console.info('[VRodos] SSR/TRAA requested but not available in pmndrs pipeline \u2014 switch postFXEngine to "legacy" if those effects are required.');
         this._pmndrsSsrTraaWarned = true;
       }
+      this.pmndrsLensFlarePass = null;
+      if (this.pmndrsLensFlareEffect) {
+        try {
+          this.pmndrsLensFlarePass = new PP.EffectPass(camera, this.pmndrsLensFlareEffect);
+          composer.addPass(this.pmndrsLensFlarePass);
+        } catch (err) {
+          console.warn("[VRodos] Takram LensFlareEffect pass failed, skipping:", err);
+          if (this.pmndrsLensFlareEffect && typeof this.pmndrsLensFlareEffect.dispose === "function") {
+            try {
+              this.pmndrsLensFlareEffect.dispose();
+            } catch (disposeErr) {
+              console.warn("[VRodos] Takram LensFlareEffect dispose failed:", disposeErr);
+            }
+          }
+          this.pmndrsLensFlareEffect = null;
+          this.pmndrsLensFlarePass = null;
+        }
+      }
       if (effects.length === 0) {
         this.pmndrsEffectPass = null;
       } else {
@@ -1143,7 +1246,7 @@ ${selectedSummaries.join("\n")}`);
       updatePmndrsAADebugOverlay(this);
       const self = this;
       renderer.render = function(scene, camera) {
-        const shouldIntercept = self.pmndrsActive && self.shouldUsePostProcessing() && !self.pmndrsRendering && !self.sceneProbeCapturing && scene === self.el.object3D && camera;
+        const shouldIntercept = self.pmndrsActive && self.shouldUsePostProcessing() && !self.pmndrsRendering && !isPmndrsImmersiveXrActive(self) && !self.sceneProbeCapturing && scene === self.el.object3D && camera;
         if (!shouldIntercept) {
           return self.pmndrsOriginalRender(scene, camera);
         }
@@ -1162,6 +1265,9 @@ ${selectedSummaries.join("\n")}`);
           self.pmndrsRenderPass.mainCamera = camera;
           if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== "undefined") {
             self.pmndrsEffectPass.mainCamera = camera;
+          }
+          if (self.pmndrsLensFlarePass && typeof self.pmndrsLensFlarePass.mainCamera !== "undefined") {
+            self.pmndrsLensFlarePass.mainCamera = camera;
           }
           if (self.pmndrsNativeNormalPass && typeof self.pmndrsNativeNormalPass.mainCamera !== "undefined") {
             self.pmndrsNativeNormalPass.mainCamera = camera;
@@ -1234,6 +1340,7 @@ ${selectedSummaries.join("\n")}`);
       this._pmndrsAdaptive = null;
       this._pmndrsSsrTraaWarned = false;
       this._pmndrsAtmosphereWarned = false;
+      this._pmndrsLensFlareSkipWarned = false;
       updatePmndrsAADebugOverlay(this);
     };
     H.syncPmndrsPostProcessingState = function() {

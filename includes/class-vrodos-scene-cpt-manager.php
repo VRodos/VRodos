@@ -316,6 +316,9 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsVignetteEnabled'] = $json_metadata->aframePmndrsVignetteEnabled ?? false;
 		$scene_data['aframePmndrsVignetteDarkness'] = isset( $json_metadata->aframePmndrsVignetteDarkness ) ? (float) $json_metadata->aframePmndrsVignetteDarkness : 0.5;
 		$scene_data['aframePmndrsToneMappingExposure'] = isset( $json_metadata->aframePmndrsToneMappingExposure ) ? (float) $json_metadata->aframePmndrsToneMappingExposure : 1.0;
+		$pmndrs_tone_mapping_mode_raw = $json_metadata->aframePmndrsToneMappingMode ?? 'agx';
+		$scene_data['aframePmndrsToneMappingMode'] = in_array( $pmndrs_tone_mapping_mode_raw, [ 'agx', 'reinhard', 'cineon', 'aces-filmic', 'linear' ], true ) ? $pmndrs_tone_mapping_mode_raw : 'agx';
+		$scene_data['aframePmndrsLensFlareEnabled'] = $json_metadata->aframePmndrsLensFlareEnabled ?? false;
 		$scene_data['aframePmndrsLutEnabled'] = $json_metadata->aframePmndrsLutEnabled ?? false;
 		$pmndrs_lut_look_raw = $json_metadata->aframePmndrsLutLook ?? 'neutral';
 		$scene_data['aframePmndrsLutLook'] = in_array( $pmndrs_lut_look_raw, [ 'neutral', 'warm-film', 'cool-clarity', 'cinematic-contrast', 'soft-fade' ], true ) ? $pmndrs_lut_look_raw : 'neutral';
@@ -331,6 +334,7 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsAtmospherePresetIntensity'] = isset( $json_metadata->aframePmndrsAtmospherePresetIntensity ) ? (float) $json_metadata->aframePmndrsAtmospherePresetIntensity : 1.0;
 		$scene_data['aframePmndrsAtmosphereQuality'] = $json_metadata->aframePmndrsAtmosphereQuality ?? 'balanced';
 		$scene_data['aframePmndrsAerialPerspectiveEnabled'] = $json_metadata->aframePmndrsAerialPerspectiveEnabled ?? false;
+		$scene_data['aframePmndrsCorrectAltitudeEnabled'] = $json_metadata->aframePmndrsCorrectAltitudeEnabled ?? true;
 		$scene_data['aframePmndrsGeospatialEnabled'] = $json_metadata->aframePmndrsGeospatialEnabled ?? false;
 		$scene_data['aframePmndrsGeospatialLatitudeDeg'] = isset( $json_metadata->aframePmndrsGeospatialLatitudeDeg ) ? (float) $json_metadata->aframePmndrsGeospatialLatitudeDeg : 0.0;
 		$scene_data['aframePmndrsGeospatialLongitudeDeg'] = isset( $json_metadata->aframePmndrsGeospatialLongitudeDeg ) ? (float) $json_metadata->aframePmndrsGeospatialLongitudeDeg : 0.0;

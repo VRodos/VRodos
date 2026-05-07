@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@takram/three-atmosphere": "^0.19.1",
-    "@takram/three-clouds": "^0.7.6"
+    "@takram/three-clouds": "^0.7.6",
+    "@takram/three-geospatial-effects": "^0.6.4"
   }
 }

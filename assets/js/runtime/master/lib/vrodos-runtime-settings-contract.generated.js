@@ -58,8 +58,26 @@
             "metadataKey": "aframePmndrsToneMappingExposure",
             "type": "number",
             "default": 1,
-            "min": 0.3,
-            "max": 2.5
+            "min": 1,
+            "max": 20
+        },
+        "pmndrsToneMappingMode": {
+            "metadataKey": "aframePmndrsToneMappingMode",
+            "type": "enum",
+            "default": "agx",
+            "editorDefault": "agx",
+            "allowed": [
+                "agx",
+                "reinhard",
+                "cineon",
+                "aces-filmic",
+                "linear"
+            ]
+        },
+        "pmndrsLensFlareEnabled": {
+            "metadataKey": "aframePmndrsLensFlareEnabled",
+            "type": "boolean",
+            "default": false
         },
         "pmndrsLutEnabled": {
             "metadataKey": "aframePmndrsLutEnabled",
@@ -149,6 +167,11 @@
             "metadataKey": "aframePmndrsAerialPerspectiveEnabled",
             "type": "boolean",
             "default": false
+        },
+        "pmndrsCorrectAltitudeEnabled": {
+            "metadataKey": "aframePmndrsCorrectAltitudeEnabled",
+            "type": "boolean",
+            "default": true
         },
         "pmndrsGeospatialEnabled": {
             "metadataKey": "aframePmndrsGeospatialEnabled",
@@ -381,12 +404,12 @@
             "transmittanceEnabled": true,
             "inscatterEnabled": true,
             "groundEnabled": true,
-            "groundAlbedo": "#d8d8d0",
-            "rayleighScale": 1.18,
-            "mieScatteringScale": 0.42,
-            "mieExtinctionScale": 0.56,
-            "miePhaseG": 0.74,
-            "absorptionScale": 0.94,
+            "groundAlbedo": "#1a1a1a",
+            "rayleighScale": 1,
+            "mieScatteringScale": 1,
+            "mieExtinctionScale": 1,
+            "miePhaseG": 0.8,
+            "absorptionScale": 1,
             "moonEnabled": false
         },
         "golden-hour": {

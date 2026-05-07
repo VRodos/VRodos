@@ -59,8 +59,26 @@
           "metadataKey": "aframePmndrsToneMappingExposure",
           "type": "number",
           "default": 1,
-          "min": 0.3,
-          "max": 2.5
+          "min": 1,
+          "max": 20
+        },
+        "pmndrsToneMappingMode": {
+          "metadataKey": "aframePmndrsToneMappingMode",
+          "type": "enum",
+          "default": "agx",
+          "editorDefault": "agx",
+          "allowed": [
+            "agx",
+            "reinhard",
+            "cineon",
+            "aces-filmic",
+            "linear"
+          ]
+        },
+        "pmndrsLensFlareEnabled": {
+          "metadataKey": "aframePmndrsLensFlareEnabled",
+          "type": "boolean",
+          "default": false
         },
         "pmndrsLutEnabled": {
           "metadataKey": "aframePmndrsLutEnabled",
@@ -150,6 +168,11 @@
           "metadataKey": "aframePmndrsAerialPerspectiveEnabled",
           "type": "boolean",
           "default": false
+        },
+        "pmndrsCorrectAltitudeEnabled": {
+          "metadataKey": "aframePmndrsCorrectAltitudeEnabled",
+          "type": "boolean",
+          "default": true
         },
         "pmndrsGeospatialEnabled": {
           "metadataKey": "aframePmndrsGeospatialEnabled",
@@ -382,12 +405,12 @@
           "transmittanceEnabled": true,
           "inscatterEnabled": true,
           "groundEnabled": true,
-          "groundAlbedo": "#d8d8d0",
-          "rayleighScale": 1.18,
-          "mieScatteringScale": 0.42,
-          "mieExtinctionScale": 0.56,
-          "miePhaseG": 0.74,
-          "absorptionScale": 0.94,
+          "groundAlbedo": "#1a1a1a",
+          "rayleighScale": 1,
+          "mieScatteringScale": 1,
+          "mieExtinctionScale": 1,
+          "miePhaseG": 0.8,
+          "absorptionScale": 1,
           "moonEnabled": false
         },
         "golden-hour": {
@@ -1463,6 +1486,8 @@
     if (!material) {
       return;
     }
+    const reflectionSource = options.reflectionSource || (options.environmentMap ? "hdr" : "none");
+    const reflectionsDisabled = reflectionSource === "none";
     material.userData = material.userData || {};
     vrodosApplyTextureQuality(material.map, options, true);
     vrodosApplyTextureQuality(material.emissiveMap, options, true);
@@ -1475,10 +1500,10 @@
       if (typeof material.userData.vrodosBaseEnvMap === "undefined") {
         material.userData.vrodosBaseEnvMap = material.envMap || null;
       }
-      if (options.environmentMap) {
-        material.envMap = options.environmentMap;
-      } else {
-        material.envMap = material.userData.vrodosBaseEnvMap;
+      const targetEnvMap = options.environmentMap ? options.environmentMap : reflectionsDisabled ? null : material.userData.vrodosBaseEnvMap;
+      if (material.envMap !== targetEnvMap) {
+        material.envMap = targetEnvMap;
+        material.needsUpdate = true;
       }
     }
     if (typeof material.envMapIntensity !== "undefined") {
@@ -1486,7 +1511,9 @@
         material.userData.vrodosBaseEnvMapIntensity = material.envMapIntensity || 1;
       }
       let targetEnvMapIntensity = material.userData.vrodosBaseEnvMapIntensity;
-      if (options.reflectionProfile === "soft") {
+      if (reflectionsDisabled) {
+        targetEnvMapIntensity = 0;
+      } else if (options.reflectionProfile === "soft") {
         targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity * 0.5, 0.3);
       } else if (options.renderQuality === "high") {
         targetEnvMapIntensity = options.reflectionProfile === "enhanced" ? Math.max(material.userData.vrodosBaseEnvMapIntensity, 2) : Math.max(material.userData.vrodosBaseEnvMapIntensity, 1);
@@ -1945,12 +1972,12 @@
         transmittanceEnabled: true,
         inscatterEnabled: true,
         groundEnabled: true,
-        groundAlbedo: "#d8d8d0",
-        rayleighScale: 1.18,
-        mieScatteringScale: 0.42,
-        mieExtinctionScale: 0.56,
-        miePhaseG: 0.74,
-        absorptionScale: 0.94,
+        groundAlbedo: "#1a1a1a",
+        rayleighScale: 1,
+        mieScatteringScale: 1,
+        mieExtinctionScale: 1,
+        miePhaseG: 0.8,
+        absorptionScale: 1,
         moonEnabled: false
       },
       "golden-hour": {
@@ -2030,6 +2057,34 @@
           return value;
         default:
           return "balanced";
+      }
+    }
+    function normalizePmndrsToneMappingMode(value) {
+      switch (value) {
+        case "agx":
+        case "reinhard":
+        case "cineon":
+        case "aces-filmic":
+        case "linear":
+          return value;
+        default:
+          return "agx";
+      }
+    }
+    function getThreeToneMappingForPmndrsMode(mode) {
+      const normalized = normalizePmndrsToneMappingMode(mode);
+      switch (normalized) {
+        case "reinhard":
+          return typeof THREE.ReinhardToneMapping !== "undefined" ? THREE.ReinhardToneMapping : null;
+        case "cineon":
+          return typeof THREE.CineonToneMapping !== "undefined" ? THREE.CineonToneMapping : null;
+        case "aces-filmic":
+          return typeof THREE.ACESFilmicToneMapping !== "undefined" ? THREE.ACESFilmicToneMapping : null;
+        case "linear":
+          return typeof THREE.LinearToneMapping !== "undefined" ? THREE.LinearToneMapping : null;
+        case "agx":
+        default:
+          return typeof THREE.AgXToneMapping !== "undefined" ? THREE.AgXToneMapping : typeof THREE.ACESFilmicToneMapping !== "undefined" ? THREE.ACESFilmicToneMapping : null;
       }
     }
     function normalizePmndrsAtmospherePreset(value) {
@@ -2150,6 +2205,9 @@
     }
     function getPmndrsNightReflectionIntensityScale(self, config, reflectionSource) {
       const source = reflectionSource || (self && typeof self.getEffectiveReflectionSource === "function" ? self.getEffectiveReflectionSource() : "none");
+      if (source !== "hdr" && source !== "scene-probe") {
+        return 0;
+      }
       return isPmndrsPresetTimeNight(config) && (source === "hdr" || source === "scene-probe") ? PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE : 1;
     }
     function getPmndrsHorizonHelperLightConfig(self, preset, atmosphereConfig) {
@@ -2160,6 +2218,7 @@
       let fillIntensity = readPmndrsAtmosphereNumber(self, "pmndrsHorizonFillLightIntensity", 0, 3, defaults.fillIntensity);
       let useMoonDirection = false;
       let directionOwner = "sun";
+      const sunElevation = atmosphereConfig && typeof atmosphereConfig.sunElevationDeg === "number" ? atmosphereConfig.sunElevationDeg : null;
       if (preset === "clear") {
         keyColor = "#fff4d8";
         fillColor = "#d7e8ff";
@@ -2175,6 +2234,19 @@
         fillIntensity = Math.min(fillIntensity, moonEnabled ? 0.035 : 0.015);
         useMoonDirection = moonEnabled;
         directionOwner = moonEnabled ? "moon" : "none";
+      } else if (atmosphereConfig && (atmosphereConfig.celestialTimePreset === "sunrise" || atmosphereConfig.celestialTimePreset === "golden-hour" || atmosphereConfig.celestialTimePreset === "sunset" || sunElevation !== null && sunElevation < 18)) {
+        keyColor = atmosphereConfig.celestialTimePreset === "sunrise" ? "#ffd6a8" : "#ffba7a";
+        fillColor = "#5f78ab";
+        keyIntensity = Math.max(keyIntensity, 1.18);
+        fillIntensity = Math.min(fillIntensity, 0.08);
+      } else if (atmosphereConfig && (atmosphereConfig.celestialTimePreset === "midday" || sunElevation !== null && sunElevation >= 35)) {
+        keyColor = preset === "clear" ? "#fff6e4" : "#fff2d4";
+        fillColor = "#d7e8ff";
+        keyIntensity = Math.max(keyIntensity, preset === "clear" ? 2.4 : 2.1);
+        fillIntensity = Math.max(fillIntensity, preset === "clear" ? 1.15 : 0.95);
+      } else if (sunElevation !== null && sunElevation >= 18) {
+        keyIntensity = Math.max(keyIntensity, 1.7);
+        fillIntensity = Math.max(fillIntensity, 0.7);
       }
       return {
         keyColor,
@@ -2550,10 +2622,22 @@
       }
       const horizonPreset = typeof self.getHorizonSkyPreset === "function" ? self.getHorizonSkyPreset() : "natural";
       const helperConfig = shouldUsePmndrsTakramHorizonPath(self) ? getPmndrsHorizonHelperLightConfig(self, horizonPreset, atmosphereConfig) : null;
-      const visibleSunScale = atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self) ? getPmndrsTakramVisibleSunScale(atmosphereConfig) : null;
+      const takramLightSources = self._pmndrsTakramLightSources || null;
+      const keyIntensity = takramLightSources && takramLightSources.sunLight ? takramLightSources.sunLight.intensity : helperConfig ? helperConfig.keyIntensity : null;
+      const fillIntensity = takramLightSources && takramLightSources.skyLight ? takramLightSources.skyLight.intensity : helperConfig ? helperConfig.fillIntensity : null;
+      const takramSunAngularRadius = atmosphereConfig && atmosphereConfig.enabled && atmosphereConfig.takramSunEnabled !== false && shouldUsePmndrsTakramHorizonPath(self) && typeof atmosphereConfig.sunAngularRadius === "number" ? atmosphereConfig.sunAngularRadius : null;
       const reflectionSource = typeof self.getEffectiveReflectionSource === "function" ? self.getEffectiveReflectionSource() : self.data.reflectionSource || "hdr";
       const reflectionScale = getPmndrsNightReflectionIntensityScale(self, atmosphereConfig, reflectionSource);
-      const owner = atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsHorizonAerialPerspectivePath(self) ? "takram-aerial-effect" : atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self) ? "takram-sky" : atmosphereConfig && atmosphereConfig.enabled ? "takram-fallback" : "legacy-fallback";
+      const aframeDefaultLights = areAFrameDefaultLightsEnabled(self) ? "on" : "off";
+      const atmosphereState = self._pmndrsAtmosphereState || null;
+      const takramLutState = atmosphereState && atmosphereState.ready ? "ready" : atmosphereState && atmosphereState.failed ? "failed" : "pending";
+      const pmndrsExposure = getPmndrsExposureValue(self);
+      const toneMappingMode = normalizePmndrsToneMappingMode(self.data.pmndrsToneMappingMode);
+      const lensFlareRequested = self.data.pmndrsLensFlareEnabled === true || self.data.pmndrsLensFlareEnabled === "true" || self.data.pmndrsLensFlareEnabled === "1";
+      const lensFlare = lensFlareRequested ? atmosphereConfig && atmosphereConfig.enabled && atmosphereConfig.takramSunEnabled !== false && shouldUsePmndrsTakramHorizonPath(self) ? "on" : "sun-off" : "off";
+      const correctAltitude = atmosphereConfig && atmosphereConfig.correctAltitudeEnabled !== false ? "on" : "off";
+      const lightSourceMode = atmosphereConfig && atmosphereConfig.useTakramLightSources === true ? "takram" : "helper";
+      const owner = atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsHorizonAerialPerspectivePath(self) ? "takram-sky+aerial" : atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self) ? "takram-sky" : atmosphereConfig && atmosphereConfig.enabled ? "takram-fallback" : "legacy-fallback";
       const signature = [
         context,
         owner,
@@ -2563,18 +2647,28 @@
         atmosphereConfig && atmosphereConfig.groundEnabled ? "ground-on" : "ground-off",
         atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? "sun-off" : "sun-on",
         formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null),
-        helperConfig ? helperConfig.keyIntensity.toFixed(2) : "n/a",
-        helperConfig ? helperConfig.fillIntensity.toFixed(2) : "n/a",
+        keyIntensity !== null ? keyIntensity.toFixed(2) : "n/a",
+        fillIntensity !== null ? fillIntensity.toFixed(2) : "n/a",
         helperConfig ? helperConfig.directionOwner : "n/a",
         reflectionScale.toFixed(2),
-        visibleSunScale !== null ? visibleSunScale.toFixed(2) : "n/a"
+        takramSunAngularRadius !== null ? takramSunAngularRadius.toFixed(4) : "n/a",
+        aframeDefaultLights,
+        takramLutState,
+        pmndrsExposure.toFixed(2),
+        toneMappingMode,
+        lensFlare,
+        correctAltitude,
+        lightSourceMode
       ].join("|");
       self._pmndrsHorizonDiagSignatures = self._pmndrsHorizonDiagSignatures || {};
       if (self._pmndrsHorizonDiagSignatures[context] === signature) {
         return;
       }
       self._pmndrsHorizonDiagSignatures[context] = signature;
-      console.info(`[VRodos] PMNDRS horizon diagnostic (${context}): owner=${owner}, reflection=${reflectionSource}, celestial=${atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : "manual"}/${atmosphereConfig && atmosphereConfig.celestialTimePreset ? atmosphereConfig.celestialTimePreset : "midday"}, ground=${atmosphereConfig && atmosphereConfig.groundEnabled ? "on" : "off"}, sun=${atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? "off" : "on"}, sunDir=${formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null)}, helperKey=${helperConfig ? helperConfig.keyIntensity.toFixed(2) : "n/a"}, helperFill=${helperConfig ? helperConfig.fillIntensity.toFixed(2) : "n/a"}, helperDir=${helperConfig ? helperConfig.directionOwner : "n/a"}, reflectionScale=${reflectionScale.toFixed(2)}, sunScale=${visibleSunScale !== null ? visibleSunScale.toFixed(2) : "n/a"}`);
+      const logMethod = context === "apply-horizon" && takramLutState === "pending" && lightSourceMode === "takram" ? hasPmndrsDebugFlag("pmndrsHorizonDiagnosticsVerbose", "vrodos_debug_pmndrs_horizon_verbose") ? "info" : "debug" : "info";
+      const log = console[logMethod] || console.info || function() {
+      };
+      log.call(console, `[VRodos] PMNDRS horizon diagnostic (${context}): owner=${owner}, reflection=${reflectionSource}, celestial=${atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : "manual"}/${atmosphereConfig && atmosphereConfig.celestialTimePreset ? atmosphereConfig.celestialTimePreset : "midday"}, ground=${atmosphereConfig && atmosphereConfig.groundEnabled ? "on" : "off"}, sun=${atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? "off" : "on"}, sunDir=${formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null)}, helperKey=${keyIntensity !== null ? keyIntensity.toFixed(2) : "n/a"}, helperFill=${fillIntensity !== null ? fillIntensity.toFixed(2) : "n/a"}, helperDir=${helperConfig ? helperConfig.directionOwner : "n/a"}, reflectionScale=${reflectionScale.toFixed(2)}, sunRadius=${takramSunAngularRadius !== null ? takramSunAngularRadius.toFixed(4) : "n/a"}, aframeDefaultLights=${aframeDefaultLights}, takramLut=${takramLutState}, exposure=${pmndrsExposure.toFixed(2)}, toneMapping=${toneMappingMode}, lensFlare=${lensFlare}, correctAltitude=${correctAltitude}, lightSource=${lightSourceMode}`);
     }
     function hidePmndrsHorizonEnvironmentVisuals(self) {
       if (!self || !self.el || !self.el.object3D) {
@@ -2630,6 +2724,9 @@
     function shouldUsePmndrsHorizonAerialPerspectivePath(self) {
       return shouldUsePmndrsTakramHorizonPath(self) && (readPmndrsAtmosphereBool(self, "pmndrsAerialPerspectiveEnabled", false) || hasPmndrsDebugFlag("enablePmndrsHorizonAerial", "vrodos_debug_enable_pmndrs_horizon_aerial"));
     }
+    function shouldUsePmndrsTakramPhysicalHorizonLights() {
+      return hasPmndrsDebugFlag("useTakramPhysicalHorizonLights", "vrodos_debug_takram_physical_lights");
+    }
     function formatVectorPosition(vector, distance, minY) {
       let y = vector.y * distance;
       if (typeof minY === "number") {
@@ -2641,10 +2738,75 @@
         (vector.z * distance).toFixed(2)
       ].join(" ");
     }
-    function ensurePmndrsTakramHorizonLights(self, config, preset) {
-      if (!self || !config) {
+    function areAFrameDefaultLightsEnabled(self) {
+      const sceneEl = self && self.el;
+      const defaultLightEls = sceneEl && typeof sceneEl.querySelectorAll === "function" ? Array.prototype.slice.call(sceneEl.querySelectorAll("[data-aframe-default-light]")) : [];
+      if (sceneEl && sceneEl._vrodosAFrameDefaultLightsEnabled === false) {
+        return defaultLightEls.length > 0;
+      }
+      const lightData = sceneEl && typeof sceneEl.getAttribute === "function" ? sceneEl.getAttribute("light") : null;
+      if (lightData && typeof lightData === "object" && typeof lightData.defaultLightsEnabled !== "undefined") {
+        return lightData.defaultLightsEnabled !== false;
+      }
+      if (sceneEl && sceneEl.systems && sceneEl.systems.light && sceneEl.systems.light.data && typeof sceneEl.systems.light.data.defaultLightsEnabled !== "undefined") {
+        return sceneEl.systems.light.data.defaultLightsEnabled !== false;
+      }
+      return true;
+    }
+    function setAFrameDefaultLightsEnabled(self, enabled) {
+      const sceneEl = self && self.el;
+      if (!sceneEl || typeof sceneEl.setAttribute !== "function") {
         return;
       }
+      const desired = Boolean(enabled);
+      if (sceneEl._vrodosAFrameDefaultLightsEnabled === desired && areAFrameDefaultLightsEnabled(self) === desired) {
+        return;
+      }
+      sceneEl._vrodosAFrameDefaultLightsEnabled = desired;
+      sceneEl.setAttribute("light", `defaultLightsEnabled: ${desired ? "true" : "false"}`);
+      if (!desired && typeof sceneEl.querySelectorAll === "function") {
+        Array.prototype.forEach.call(sceneEl.querySelectorAll("[data-aframe-default-light]"), (lightEl) => {
+          if (lightEl && typeof lightEl.removeObject3D === "function") {
+            try {
+              lightEl.removeObject3D("light");
+            } catch (err) {
+            }
+          }
+          if (lightEl && lightEl.parentNode) {
+            lightEl.parentNode.removeChild(lightEl);
+          }
+        });
+      }
+    }
+    function removePhotorealHelperLightElements(self) {
+      if (!self || typeof self.getCachedSceneQuery !== "function") {
+        return;
+      }
+      let removed = false;
+      Array.prototype.forEach.call(self.getCachedSceneQuery("photorealLights", '[data-vrodos-photoreal-light="true"]'), (lightEl) => {
+        if (lightEl.parentNode) {
+          lightEl.parentNode.removeChild(lightEl);
+          removed = true;
+        }
+      });
+      if (removed) {
+        self.markSceneCollectionsDirty();
+      }
+    }
+    function removePmndrsTakramLightSources(self) {
+      const state = self && self._pmndrsTakramLightSources;
+      if (!state) {
+        return;
+      }
+      ["sunLight", "skyLight", "target"].forEach((key) => {
+        const object = state[key];
+        if (object && object.parent) {
+          object.parent.remove(object);
+        }
+      });
+      self._pmndrsTakramLightSources = null;
+    }
+    function ensurePmndrsFallbackHorizonLights(self, config, preset) {
       const shadowEnabled = self.data.shadowQuality !== "off";
       const shadowMap = self.data.shadowQuality === "high" ? 2048 : 1024;
       const castShadow = shadowEnabled ? "true" : "false";
@@ -2661,6 +2823,149 @@
         "0 6 0"
       );
     }
+    function schedulePmndrsTakramLightSourceRefresh(self, atmosphereState, config, preset) {
+      if (!self || !atmosphereState || !atmosphereState.promise) {
+        return;
+      }
+      if (self._pmndrsTakramLightSourcesPendingPromise === atmosphereState.promise) {
+        return;
+      }
+      self._pmndrsTakramLightSourcesPendingPromise = atmosphereState.promise;
+      atmosphereState.promise.then(() => {
+        if (!self || self._pmndrsAtmosphereState !== atmosphereState || atmosphereState.failed) {
+          return;
+        }
+        const latestConfig = self.getPmndrsAtmosphereConfig ? self.getPmndrsAtmosphereConfig() : config;
+        if (!latestConfig || latestConfig.enabled === false || !shouldUsePmndrsTakramHorizonPath(self)) {
+          return;
+        }
+        const latestPreset = self.getHorizonSkyPreset ? self.getHorizonSkyPreset() : preset;
+        ensurePmndrsTakramHorizonLights(self, latestConfig, latestPreset);
+        ensurePmndrsAtmosphereSky(self, latestConfig);
+        logPmndrsHorizonDiagnostic(self, "apply-horizon", latestConfig);
+      }).catch((err) => {
+        self._pmndrsTakramLightSourcesPendingError = err;
+      });
+    }
+    function ensurePmndrsTakramHorizonLights(self, config, preset) {
+      if (!self || !config) {
+        return;
+      }
+      const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
+      const scene = self.el && self.el.object3D;
+      const helperConfig = getPmndrsHorizonHelperLightConfig(self, preset, config);
+      setAFrameDefaultLightsEnabled(self, false);
+      if (!vta || !scene || !vta.SunDirectionalLight || !vta.SkyLightProbe) {
+        removePmndrsTakramLightSources(self);
+        ensurePmndrsFallbackHorizonLights(self, config, preset);
+        return;
+      }
+      if (config.useTakramLightSources !== true) {
+        removePmndrsTakramLightSources(self);
+        ensurePmndrsFallbackHorizonLights(self, config, preset);
+        return;
+      }
+      const atmosphereState = self.ensurePmndrsAtmosphereResources ? self.ensurePmndrsAtmosphereResources() : null;
+      const textures = atmosphereState && !atmosphereState.failed && atmosphereState.ready ? atmosphereState.textures : null;
+      const hasTakramSunRadiance = Boolean(textures && textures.transmittanceTexture);
+      const hasTakramSkyIrradiance = Boolean(textures && textures.irradianceTexture);
+      if (!hasTakramSunRadiance || !hasTakramSkyIrradiance) {
+        removePmndrsTakramLightSources(self);
+        ensurePmndrsFallbackHorizonLights(self, config, preset);
+        if (atmosphereState && !atmosphereState.failed) {
+          schedulePmndrsTakramLightSourceRefresh(self, atmosphereState, config, preset);
+        }
+        return;
+      }
+      removePhotorealHelperLightElements(self);
+      let state = self._pmndrsTakramLightSources;
+      if (!state) {
+        const sunLight2 = new vta.SunDirectionalLight({
+          distance: 28,
+          correctAltitude: config.correctAltitudeEnabled !== false
+        });
+        sunLight2.name = "vrodosPmndrsTakramSunLight";
+        sunLight2.userData.vrodosPmndrsTakramLightSource = true;
+        const skyLight2 = new vta.SkyLightProbe({
+          correctAltitude: config.correctAltitudeEnabled !== false
+        });
+        skyLight2.name = "vrodosPmndrsTakramSkyLight";
+        skyLight2.userData.vrodosPmndrsTakramLightSource = true;
+        const target = sunLight2.target;
+        target.name = "vrodosPmndrsTakramSunTarget";
+        target.userData.vrodosPmndrsTakramLightSource = true;
+        scene.add(sunLight2);
+        scene.add(target);
+        scene.add(skyLight2);
+        state = { sunLight: sunLight2, skyLight: skyLight2, target };
+        self._pmndrsTakramLightSources = state;
+      } else {
+        if (state.sunLight && state.sunLight.parent !== scene) {
+          scene.add(state.sunLight);
+        }
+        if (state.target && state.target.parent !== scene) {
+          scene.add(state.target);
+        }
+        if (state.skyLight && state.skyLight.parent !== scene) {
+          scene.add(state.skyLight);
+        }
+      }
+      const shadowEnabled = self.data.shadowQuality !== "off";
+      const shadowMap = self.data.shadowQuality === "high" ? 2048 : 1024;
+      const sunLight = state.sunLight;
+      const skyLight = state.skyLight;
+      if (state.target) {
+        state.target.position.set(0, 0, 0);
+        state.target.updateMatrixWorld(true);
+      }
+      if (sunLight) {
+        sunLight.visible = helperConfig.keyIntensity > 0;
+        sunLight.intensity = hasTakramSunRadiance ? 1 : helperConfig.keyIntensity;
+        sunLight.color.set(helperConfig.keyColor);
+        sunLight.distance = 28;
+        if (typeof sunLight.correctAltitude !== "undefined") {
+          sunLight.correctAltitude = config.correctAltitudeEnabled !== false;
+        }
+        sunLight.castShadow = shadowEnabled;
+        sunLight.transmittanceTexture = textures ? textures.transmittanceTexture || null : null;
+        if (config.sunDirection && sunLight.sunDirection) {
+          sunLight.sunDirection.copy(config.sunDirection);
+        }
+        ensurePmndrsWorldToEcefMatrix(sunLight, config);
+        if (sunLight.shadow) {
+          sunLight.shadow.mapSize.set(shadowMap, shadowMap);
+          sunLight.shadow.bias = -12e-5;
+          if (sunLight.shadow.camera) {
+            sunLight.shadow.camera.top = 28;
+            sunLight.shadow.camera.right = 28;
+            sunLight.shadow.camera.left = -28;
+            sunLight.shadow.camera.bottom = -28;
+            if (typeof sunLight.shadow.camera.updateProjectionMatrix === "function") {
+              sunLight.shadow.camera.updateProjectionMatrix();
+            }
+          }
+          sunLight.shadow.needsUpdate = true;
+        }
+        if (typeof sunLight.update === "function") {
+          sunLight.update();
+        }
+      }
+      if (skyLight) {
+        skyLight.visible = helperConfig.fillIntensity > 0 && hasTakramSkyIrradiance;
+        skyLight.intensity = hasTakramSkyIrradiance ? 1 : helperConfig.fillIntensity;
+        if (typeof skyLight.correctAltitude !== "undefined") {
+          skyLight.correctAltitude = config.correctAltitudeEnabled !== false;
+        }
+        skyLight.irradianceTexture = textures ? textures.irradianceTexture || null : null;
+        if (config.sunDirection && skyLight.sunDirection) {
+          skyLight.sunDirection.copy(config.sunDirection);
+        }
+        ensurePmndrsWorldToEcefMatrix(skyLight, config);
+        if (typeof skyLight.update === "function") {
+          skyLight.update();
+        }
+      }
+    }
     function isPmndrsTakramLocalHorizonMode(self) {
       return Boolean(self && self.data && self.data.selChoice === "0");
     }
@@ -2668,9 +2973,9 @@
       if (!config) {
         return config;
       }
-      const experimentalHorizonAerial = shouldUsePmndrsHorizonAerialPerspectivePath(self);
       config.groundEnabled = false;
-      config.takramSunEnabled = experimentalHorizonAerial;
+      config.takramSunEnabled = true;
+      config.useTakramLightSources = shouldUsePmndrsTakramPhysicalHorizonLights();
       config.sunAngularRadius = TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS;
       return config;
     }
@@ -2722,13 +3027,13 @@
       if (!(config && config.enabled && isPmndrsTakramLocalHorizonMode(self))) {
         return resetPmndrsTakramHorizonState(state);
       }
-      state.mode = "local-light-source-prep";
-      state.owner = "takram-config-prep";
+      state.mode = "local-light-source";
+      state.owner = "takram-light-source";
       state.groundEnabled = Boolean(config.groundEnabled);
       state.takramSunEnabled = config.takramSunEnabled !== false;
       state.usesTakramGround = Boolean(config.groundEnabled);
       state.usesTakramSunDisk = config.takramSunEnabled !== false;
-      state.usesTakramLightSources = false;
+      state.usesTakramLightSources = config.useTakramLightSources === true;
       if (config.localSunDirection) {
         state.localSunDirection.copy(config.localSunDirection);
       }
@@ -2776,6 +3081,7 @@
         geospatialLongitudeDeg: readPmndrsAtmosphereNumber(this, "pmndrsGeospatialLongitudeDeg", -180, 180, 0),
         geospatialAltitudeMeters: readPmndrsAtmosphereNumber(this, "pmndrsGeospatialAltitudeMeters", -500, 2e4, 0),
         aerialPerspectiveEnabled: readPmndrsAtmosphereBool(this, "pmndrsAerialPerspectiveEnabled", false),
+        correctAltitudeEnabled: readPmndrsAtmosphereBool(this, "pmndrsCorrectAltitudeEnabled", true),
         sunElevationDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, "pmndrsSunElevationDeg", -10, 85, presetDefaults.sunElevationDeg) : presetDefaults.sunElevationDeg,
         sunAzimuthDeg: usesCustomValues ? readPmndrsAtmosphereNumber(this, "pmndrsSunAzimuthDeg", -180, 180, presetDefaults.sunAzimuthDeg) : presetDefaults.sunAzimuthDeg,
         sunDistance: usesCustomValues ? readPmndrsAtmosphereNumber(this, "pmndrsSunDistance", 1500, 2e4, presetDefaults.sunDistance) : presetDefaults.sunDistance,
@@ -2839,6 +3145,12 @@
       syncPmndrsTakramHorizonState(this, config);
       return config;
     };
+    H.getPmndrsToneMappingExposure = function() {
+      return getPmndrsExposureValue(this);
+    };
+    H.getPmndrsToneMappingMode = function() {
+      return normalizePmndrsToneMappingMode(this && this.data ? this.data.pmndrsToneMappingMode : "agx");
+    };
     H.applyPmndrsAtmosphereConfigToTarget = function(target, config) {
       const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
       if (!target || !config || !vta) {
@@ -2869,6 +3181,9 @@
       }
       if (typeof target.ground !== "undefined") {
         target.ground = config.groundEnabled;
+      }
+      if (typeof target.correctAltitude !== "undefined") {
+        target.correctAltitude = config.correctAltitudeEnabled !== false;
       }
       const setDefine = function(defs, key, val) {
         if (defs && typeof defs.set === "function") {
@@ -2952,6 +3267,7 @@
         skyMesh: null,
         skyMaterial: null,
         skyGeometry: null,
+        ready: false,
         failed: false,
         profileSignature: profile.signature,
         precision: profile.useFloat ? "float" : "half"
@@ -2963,7 +3279,10 @@
           higherOrderScattering: profile.higherOrderScattering
         });
         state.textures = state.generator.textures;
-        state.promise = state.generator.update().catch((err) => {
+        state.promise = state.generator.update().then(() => {
+          state.ready = true;
+          return state.textures;
+        }).catch((err) => {
           state.failed = true;
           console.warn("[VRodos] Takram atmosphere precompute failed, falling back to PMNDRS gradient horizon:", err);
         });
@@ -2978,7 +3297,10 @@
             state.textures = state.generator.textures;
             state.precision = "half-fallback";
             state.profileSignature = `${profile.quality}:half:${profile.higherOrderScattering ? "higher" : "basic"}:${profile.combinedScattering ? "combined" : "split"}`;
-            state.promise = state.generator.update().catch((fallbackErr) => {
+            state.promise = state.generator.update().then(() => {
+              state.ready = true;
+              return state.textures;
+            }).catch((fallbackErr) => {
               state.failed = true;
               console.warn("[VRodos] Takram atmosphere precompute failed, falling back to PMNDRS gradient horizon:", fallbackErr);
             });
@@ -3023,6 +3345,8 @@
           transmittanceTexture: state.textures.transmittanceTexture || null,
           singleMieScatteringTexture: state.textures.singleMieScatteringTexture || null,
           higherOrderScatteringTexture: state.textures.higherOrderScatteringTexture || null,
+          sun: config.takramSunEnabled !== false,
+          correctAltitude: config.correctAltitudeEnabled !== false,
           ground: config.groundEnabled,
           groundAlbedo: new THREE.Color(getPmndrsEffectiveGroundAlbedo(config)),
           moon: config.moonEnabled
@@ -3068,7 +3392,7 @@
       if (isNaN(raw)) {
         raw = 1;
       }
-      return Math.max(0.3, Math.min(2.5, raw));
+      return Math.max(1, Math.min(20, raw));
     }
     function getLegacyHorizonStageSizeValue(self) {
       if (!self || !self.data) {
@@ -3261,67 +3585,6 @@
         return false;
       }
     }
-    function getPmndrsTakramVisibleSunScale(config) {
-      if (!config) {
-        return 72;
-      }
-      return Math.max(48, Math.min(120, 72 * (config.sunAngularRadius / TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS)));
-    }
-    function ensurePmndrsTakramVisibleSun(self, config, preset) {
-      if (!self || !self.el || !config || typeof document === "undefined") {
-        return;
-      }
-      if (shouldDisablePmndrsVisibleSunDebug()) {
-        clearPmndrsHorizonSun(self);
-        return;
-      }
-      let sunEl = document.getElementById("vrodos-takram-visible-sun");
-      if (!sunEl) {
-        sunEl = document.createElement("a-entity");
-        sunEl.setAttribute("id", "vrodos-takram-visible-sun");
-        self.el.appendChild(sunEl);
-      }
-      const texture = createPmndrsSunTexture(self);
-      if (!texture) {
-        return;
-      }
-      let sprite = sunEl.getObject3D("mesh");
-      if (!sprite) {
-        const material = new THREE.SpriteMaterial({
-          map: texture,
-          color: "#ffedb2",
-          transparent: true,
-          alphaTest: 1e-3,
-          blending: THREE.NormalBlending,
-          depthWrite: false,
-          depthTest: true,
-          fog: false
-        });
-        material.toneMapped = false;
-        material.name = "vrodosTakramDiscMaterial";
-        sprite = new THREE.Sprite(material);
-        sprite.frustumCulled = false;
-        sprite.renderOrder = 10;
-        sprite.name = "vrodosTakramDiscSprite";
-        sunEl.setObject3D("mesh", sprite);
-      }
-      const cfg = getPmndrsHorizonSunConfig(preset, "fallback");
-      const takramSunScale = getPmndrsTakramVisibleSunScale(config);
-      sprite.scale.set(takramSunScale, takramSunScale, 1);
-      sprite.material.color.set(cfg.color).multiplyScalar(Math.max(cfg.intensity || 4, 4.8));
-      self._pmndrsSunDirection = (config.localSunDirection || config.sunDirection || new THREE.Vector3(0, 1, 0)).clone().normalize();
-      self._pmndrsSunDistance = config.sunDistance || cfg.distance || 5200;
-      if (!self._pmndrsSunCameraPosition) {
-        self._pmndrsSunCameraPosition = new THREE.Vector3();
-      }
-      const camera = self.el.camera;
-      if (!camera || typeof camera.getWorldPosition !== "function") {
-        return;
-      }
-      sunEl.object3D.visible = true;
-      camera.getWorldPosition(self._pmndrsSunCameraPosition);
-      sunEl.object3D.position.copy(self._pmndrsSunCameraPosition).addScaledVector(self._pmndrsSunDirection, self._pmndrsSunDistance);
-    }
     function ensurePmndrsHorizonSun(self, lightPosition, preset, options) {
       if (!self || !self.el || typeof document === "undefined") {
         return;
@@ -3427,13 +3690,8 @@
       removeLegacySunSkyEntitiesForPmndrs(this);
       const atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
       if (atmosphereConfig && atmosphereConfig.enabled && window.VRODOS_TAKRAM_ATMOSPHERE) {
-        if (shouldUsePmndrsHorizonAerialPerspectivePath(this)) {
-          removePmndrsAtmosphereSky(this);
-          ensurePmndrsTakramVisibleSun(this, atmosphereConfig, this.getHorizonSkyPreset ? this.getHorizonSkyPreset() : "natural");
-          return;
-        }
+        clearPmndrsHorizonSun(this);
         ensurePmndrsAtmosphereSky(this, atmosphereConfig);
-        ensurePmndrsTakramVisibleSun(this, atmosphereConfig, this.getHorizonSkyPreset ? this.getHorizonSkyPreset() : "natural");
         return;
       }
       const sunEl = document.getElementById("vrodos-pmndrs-sun");
@@ -3474,8 +3732,14 @@
         renderer.outputColorSpace = THREE.SRGBColorSpace;
       }
       if (typeof renderer.toneMapping !== "undefined") {
-        if (this.data.postFXEngine === "pmndrs" && typeof THREE.NoToneMapping !== "undefined") {
+        const isPmndrsDirectXr = this.data.postFXEngine === "pmndrs" && typeof this.isVrPresentationActive === "function" && this.isVrPresentationActive();
+        if (this.data.postFXEngine === "pmndrs" && !isPmndrsDirectXr && typeof THREE.NoToneMapping !== "undefined") {
           renderer.toneMapping = THREE.NoToneMapping;
+        } else if (this.data.postFXEngine === "pmndrs") {
+          const pmndrsDirectToneMapping = getThreeToneMappingForPmndrsMode(this.data.pmndrsToneMappingMode);
+          if (pmndrsDirectToneMapping !== null) {
+            renderer.toneMapping = pmndrsDirectToneMapping;
+          }
         } else if (typeof THREE.ACESFilmicToneMapping !== "undefined") {
           renderer.toneMapping = THREE.ACESFilmicToneMapping;
         }
@@ -3540,11 +3804,13 @@
       const sceneObj = this.el.object3D;
       const maxAnisotropy = renderer && typeof renderer.capabilities !== "undefined" && typeof renderer.capabilities.getMaxAnisotropy === "function" ? renderer.capabilities.getMaxAnisotropy() : 0;
       const atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
+      const reflectionSource = typeof this.getEffectiveReflectionSource === "function" ? this.getEffectiveReflectionSource() : "none";
       const options = {
         renderQuality: this.data.renderQuality || "standard",
         maxAnisotropy,
         reflectionProfile: this.data.reflectionProfile || "balanced",
-        reflectionIntensityScale: getPmndrsNightReflectionIntensityScale(this, atmosphereConfig),
+        reflectionSource,
+        reflectionIntensityScale: getPmndrsNightReflectionIntensityScale(this, atmosphereConfig, reflectionSource),
         ambientOcclusionPreset: this.getAmbientOcclusionPreset(),
         environmentMap: sceneObj ? sceneObj.environment || null : null
       };
@@ -3586,12 +3852,8 @@
       return lightEl;
     };
     H.removePhotorealHelperLights = function() {
-      Array.prototype.forEach.call(this.getCachedSceneQuery("photorealLights", '[data-vrodos-photoreal-light="true"]'), (lightEl) => {
-        if (lightEl.parentNode) {
-          lightEl.parentNode.removeChild(lightEl);
-        }
-      });
-      this.markSceneCollectionsDirty();
+      removePhotorealHelperLightElements(this);
+      removePmndrsTakramLightSources(this);
     };
     H.applyHorizonSkyPreset = function() {
       if (this.data.selChoice !== "0") {
@@ -3600,8 +3862,10 @@
       const preset = this.getHorizonSkyPreset();
       const isPmndrs = this.data.postFXEngine === "pmndrs";
       const usesTakramHorizon = shouldUsePmndrsTakramHorizonPath(this);
-      const usesHorizonAerial = shouldUsePmndrsHorizonAerialPerspectivePath(this);
       const shadowEnabled = this.data.shadowQuality !== "off";
+      if (!usesTakramHorizon) {
+        setAFrameDefaultLightsEnabled(this, true);
+      }
       if (isPmndrs) {
         removeLegacySunSkyEntitiesForPmndrs(this);
       }
@@ -3638,6 +3902,7 @@
         this.el.removeAttribute("environment");
       }
       if (!isPmndrs) {
+        setAFrameDefaultLightsEnabled(this, true);
         this.removePhotorealHelperLights();
         removePmndrsAtmosphereSky(this);
         clearPmndrsHorizonSun(this);
@@ -3648,13 +3913,8 @@
         removeLegacySunSkyEntitiesForPmndrs(this);
         schedulePmndrsHorizonEnvironmentCleanup(this);
         ensurePmndrsTakramHorizonLights(this, atmosphereConfig, preset);
-        if (usesHorizonAerial) {
-          removePmndrsAtmosphereSky(this);
-          ensurePmndrsTakramVisibleSun(this, atmosphereConfig, preset);
-        } else {
-          ensurePmndrsAtmosphereSky(this, atmosphereConfig);
-          ensurePmndrsTakramVisibleSun(this, atmosphereConfig, preset);
-        }
+        clearPmndrsHorizonSun(this);
+        ensurePmndrsAtmosphereSky(this, atmosphereConfig);
         logPmndrsHorizonDiagnostic(this, "apply-horizon", atmosphereConfig);
         return;
       }
@@ -3667,6 +3927,7 @@
           return;
         }
       }
+      setAFrameDefaultLightsEnabled(this, true);
       removePmndrsAtmosphereSky(this);
       ensurePmndrsHorizonSun(this, environmentConfig.lightPosition, preset);
     };
@@ -3684,6 +3945,7 @@
         this.applyHorizonSkyPreset();
         return;
       }
+      setAFrameDefaultLightsEnabled(this, true);
       if (hasEnvironmentBackground && this.el.hasAttribute("environment")) {
         this.el.setAttribute("environment", "shadow", shadowEnabled ? "true" : "false");
         if (this.data.selChoice === "0") {
