@@ -19,6 +19,7 @@ class VRodos_Compiler_Manager {
 	private string $plugin_path_url;
 	private string $plugin_path_dir;
 	private string $website_root_url;
+	private array $runtime_link_settings = [];
 	private bool $isHoverEnabled = true;
 	private VRodos_Compiler_Runtime_Assets $runtime_assets;
 	private VRodos_Compiler_Template_Renderer $template_renderer;
@@ -41,13 +42,7 @@ class VRodos_Compiler_Manager {
 			[ $this, 'normalize_url' ]
 		);
 
-		// Use the current request host if available (e.g. when accessing via IP)
-		// otherwise fallback to the site's configured URL.
-		if ( isset( $_SERVER['HTTP_HOST'] ) ) {
-			$this->website_root_url = $_SERVER['HTTP_HOST'];
-		} else {
-			$this->website_root_url = parse_url( get_site_url(), PHP_URL_HOST );
-		}
+		$this->website_root_url = $this->detect_request_host();
 
 		// Fallback for terminal/cron etc if everything else fails
 		if ( ! $this->website_root_url ) {
@@ -56,10 +51,8 @@ class VRodos_Compiler_Manager {
 
 		$this->plugin_path_url = $this->normalize_url( $this->plugin_path_url );
 
-		$this->portNodeJs = '5832';
-		if ( $this->website_root_url == 'vrexpo.iti.gr' ) {
-			$this->portNodeJs = '5840';
-		}
+		$this->runtime_link_settings = $this->load_runtime_link_settings();
+		$this->portNodeJs            = $this->runtime_link_settings['local_port'];
 	}
 
 	public function compile_aframe( $project_id, $scene_id_list, $showPawnPositions ) {
@@ -111,13 +104,23 @@ class VRodos_Compiler_Manager {
 			}
 		}
 
-		$result = [
-			'MasterClient' => $this->nodeJSpath() . 'Master_Client_' . ( $is_vrexpo ? $first_scene_id : $last_scene_id ) . '.html',
+		$master_scene_id  = ( $is_vrexpo ? $first_scene_id : $last_scene_id );
+		$master_filename  = 'Master_Client_' . $master_scene_id . '.html';
+		$result           = [
+			'DefaultLinkMode' => $this->runtime_link_settings['default_link_mode'],
+			'PrimaryLinkMode' => $this->primary_runtime_mode(),
+			'MasterClient'    => $this->runtime_url_for_file( $master_filename ),
 		];
+		$this->append_runtime_link_variants( $result, 'MasterClient', $master_filename );
 
 		if ( ! $is_vrexpo ) {
-			$result['index']        = $this->nodeJSpath() . 'index_' . $last_scene_id . '.html';
-			$result['SimpleClient'] = $this->nodeJSpath() . 'Simple_Client_' . $last_scene_id . '.html';
+			$index_filename         = 'index_' . $last_scene_id . '.html';
+			$simple_client_filename = 'Simple_Client_' . $last_scene_id . '.html';
+
+			$result['index']        = $this->runtime_url_for_file( $index_filename );
+			$result['SimpleClient'] = $this->runtime_url_for_file( $simple_client_filename );
+			$this->append_runtime_link_variants( $result, 'Index', $index_filename );
+			$this->append_runtime_link_variants( $result, 'SimpleClient', $simple_client_filename );
 		}
 
 		return json_encode( $result );
@@ -133,12 +136,118 @@ class VRodos_Compiler_Manager {
 	}
 
 	public function nodeJSpath() {
-		if ( PHP_OS == 'WINNT' ) {
-			return $this->server_protocol . '://' . $this->website_root_url . ':' . $this->portNodeJs . '/';
-		} elseif ( $this->website_root_url == 'vrexpo.iti.gr' ) {
-				return 'https://vrexpo-multi.iti.gr/';
-		} else {
-			return 'https://vrodos-multiplaying.iti.gr/';
+		return $this->primary_runtime_base_url();
+	}
+
+	public function runtime_url_for_file( string $filename, ?string $mode = null ): string {
+		$base_urls = $this->runtime_base_urls();
+		$mode      = $mode ?: $this->primary_runtime_mode();
+
+		if ( 'public' === $mode && ! empty( $base_urls['public'] ) ) {
+			return $base_urls['public'] . ltrim( $filename, '/' );
+		}
+
+		return $base_urls['local'] . ltrim( $filename, '/' );
+	}
+
+	private function detect_request_host(): string {
+		$host = '';
+		if ( isset( $_SERVER['HTTP_HOST'] ) ) {
+			$host = (string) wp_unslash( $_SERVER['HTTP_HOST'] );
+		}
+
+		if ( '' === $host ) {
+			$host = (string) wp_parse_url( get_site_url(), PHP_URL_HOST );
+		}
+
+		if ( str_contains( $host, '://' ) ) {
+			$host = (string) wp_parse_url( $host, PHP_URL_HOST );
+		}
+
+		$host = preg_replace( '#:\d+$#', '', $host );
+		return sanitize_text_field( (string) $host );
+	}
+
+	private function load_runtime_link_settings(): array {
+		$options = (array) get_option( 'vrodos_general_settings', [] );
+		$port    = absint( $options['vrodos_runtime_local_port'] ?? 5832 );
+		$mode    = (string) ( $options['vrodos_runtime_default_link_mode'] ?? 'both' );
+
+		if ( ! in_array( $mode, [ 'local', 'public', 'both' ], true ) ) {
+			$mode = 'both';
+		}
+
+		return [
+			'public_base_url'   => $this->normalize_runtime_base_url( (string) ( $options['vrodos_runtime_public_base_url'] ?? '' ) ),
+			'local_host'        => $this->normalize_runtime_host( (string) ( $options['vrodos_runtime_local_host'] ?? '' ) ),
+			'local_port'        => $port > 0 ? (string) $port : '5832',
+			'default_link_mode' => $mode,
+		];
+	}
+
+	private function normalize_runtime_base_url( string $url ): string {
+		$url = trim( $url );
+		if ( '' === $url ) {
+			return '';
+		}
+
+		if ( ! preg_match( '#^https?://#i', $url ) ) {
+			$url = 'https://' . $url;
+		}
+
+		$url = esc_url_raw( $url, [ 'http', 'https' ] );
+		return $url ? trailingslashit( $url ) : '';
+	}
+
+	private function normalize_runtime_host( string $host ): string {
+		$host = trim( $host );
+		if ( '' === $host ) {
+			return '';
+		}
+
+		if ( str_contains( $host, '://' ) ) {
+			$parsed_host = wp_parse_url( $host, PHP_URL_HOST );
+			$host        = $parsed_host ? (string) $parsed_host : $host;
+		}
+
+		$host = preg_replace( '#[:/\\\\].*$#', '', $host );
+		return sanitize_text_field( (string) $host );
+	}
+
+	private function runtime_base_urls(): array {
+		$local_host = $this->runtime_link_settings['local_host'] ?: $this->website_root_url;
+		$local_port = $this->runtime_link_settings['local_port'] ?: '5832';
+		$base_urls  = [
+			'local' => 'http://' . $local_host . ':' . $local_port . '/',
+		];
+
+		if ( '' !== $this->runtime_link_settings['public_base_url'] ) {
+			$base_urls['public'] = $this->runtime_link_settings['public_base_url'];
+		}
+
+		return $base_urls;
+	}
+
+	private function primary_runtime_base_url(): string {
+		$base_urls = $this->runtime_base_urls();
+		$mode      = $this->primary_runtime_mode();
+
+		return $base_urls[ $mode ] ?? $base_urls['local'];
+	}
+
+	private function primary_runtime_mode(): string {
+		if ( 'public' === $this->runtime_link_settings['default_link_mode'] && '' !== $this->runtime_link_settings['public_base_url'] ) {
+			return 'public';
+		}
+
+		return 'local';
+	}
+
+	private function append_runtime_link_variants( array &$result, string $field, string $filename ): void {
+		$result[ 'Local' . $field ] = $this->runtime_url_for_file( $filename, 'local' );
+
+		if ( '' !== $this->runtime_link_settings['public_base_url'] ) {
+			$result[ 'Public' . $field ] = $this->runtime_url_for_file( $filename, 'public' );
 		}
 	}
 
@@ -159,12 +268,15 @@ class VRodos_Compiler_Manager {
 			return $url;
 		}
 
-		$parsed = parse_url($url);
+		$parsed = wp_parse_url( (string) $url );
+		if ( ! is_array( $parsed ) ) {
+			return $url;
+		}
 		$host = isset($parsed['host']) ? $parsed['host'] : '';
+		$path = isset($parsed['path']) ? $parsed['path'] : '';
 
 		// If it's a local URL, make it relative (path absolute)
-		if ( $host === 'localhost' || $host === '127.0.0.1' || $host === $this->website_root_url || empty($host) ) {
-			$path = isset($parsed['path']) ? $parsed['path'] : '';
+		if ( $host === 'localhost' || $host === '127.0.0.1' || $host === $this->website_root_url || empty($host) || str_contains( $path, '/wp-content/' ) ) {
 			$query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
 			return $path . $query;
 		}

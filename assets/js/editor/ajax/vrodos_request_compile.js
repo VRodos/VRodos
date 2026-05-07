@@ -111,7 +111,58 @@ VRODOS.api.compileScene = function(showPawnPositions, options) {
 			compile_dialogue_div.append( section );
 		}
 
-		if (projectType === 'vrexpo_games') {
+		const hasRuntimeVariants = Boolean(
+			urlExperienceSequence.LocalMasterClient ||
+			urlExperienceSequence.PublicMasterClient ||
+			urlExperienceSequence.LocalCurrentSceneMasterClient ||
+			urlExperienceSequence.PublicCurrentSceneMasterClient
+		);
+
+		if (hasRuntimeVariants) {
+			if (projectType === 'vrexpo_games') {
+				createLinks(
+					urlExperienceSequence.LocalCurrentSceneMasterClient || urlExperienceSequence.LocalMasterClient,
+					"Local network scene link"
+				);
+				if (urlExperienceSequence.PublicCurrentSceneMasterClient || urlExperienceSequence.PublicMasterClient) {
+					createLinks(
+						urlExperienceSequence.PublicCurrentSceneMasterClient || urlExperienceSequence.PublicMasterClient,
+						"Public scene link"
+					);
+				}
+				if (
+					urlExperienceSequence.LocalMasterClient &&
+					urlExperienceSequence.LocalMasterClient !== urlExperienceSequence.LocalCurrentSceneMasterClient
+				) {
+					createLinks(urlExperienceSequence.LocalMasterClient, "Local network base scene link");
+				}
+				if (
+					urlExperienceSequence.PublicMasterClient &&
+					urlExperienceSequence.PublicMasterClient !== urlExperienceSequence.PublicCurrentSceneMasterClient
+				) {
+					createLinks(urlExperienceSequence.PublicMasterClient, "Public base scene link");
+				}
+			} else {
+				createLinks(urlExperienceSequence.LocalIndex, "Local network index");
+				createLinks(
+					urlExperienceSequence.LocalCurrentSceneMasterClient || urlExperienceSequence.LocalMasterClient,
+					"Local network director (current scene)"
+				);
+				createLinks(
+					urlExperienceSequence.LocalCurrentSceneSimpleClient || urlExperienceSequence.LocalSimpleClient,
+					"Local network actor (current scene)"
+				);
+				createLinks(urlExperienceSequence.PublicIndex, "Public index");
+				createLinks(
+					urlExperienceSequence.PublicCurrentSceneMasterClient || urlExperienceSequence.PublicMasterClient,
+					"Public director (current scene)"
+				);
+				createLinks(
+					urlExperienceSequence.PublicCurrentSceneSimpleClient || urlExperienceSequence.PublicSimpleClient,
+					"Public actor (current scene)"
+				);
+			}
+		} else if (projectType === 'vrexpo_games') {
 			createLinks( urlExperienceSequence.CurrentSceneMasterClient || urlExperienceSequence.MasterClient, "Scene link" );
 			if (urlExperienceSequence.MasterClient && urlExperienceSequence.MasterClient !== urlExperienceSequence.CurrentSceneMasterClient) {
 				createLinks( urlExperienceSequence.MasterClient, "Base scene link" );
@@ -192,6 +243,5 @@ VRODOS.api.hideCompileProgressSlider = function() {
 	document.getElementById( "compileProceedBtn" ).classList.remove( "LinkDisabled" );
 	document.getElementById( "compileCancelBtn" ).classList.remove( "LinkDisabled" );
 }
-
 
 

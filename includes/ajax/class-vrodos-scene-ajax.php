@@ -198,8 +198,23 @@ class VRodos_Scene_AJAX {
 		$scene_payload = json_decode( (string) $scene_json, true );
 
 		if ( is_array( $scene_payload ) ) {
-			$scene_payload['CurrentSceneMasterClient'] = $compiler->nodeJSpath() . 'Master_Client_' . (int) $sceneId . '.html';
-			$scene_payload['CurrentSceneSimpleClient'] = $compiler->nodeJSpath() . 'Simple_Client_' . (int) $sceneId . '.html';
+			$master_filename = 'Master_Client_' . (int) $sceneId . '.html';
+			$simple_filename = 'Simple_Client_' . (int) $sceneId . '.html';
+
+			$scene_payload['CurrentSceneMasterClient']      = $compiler->runtime_url_for_file( $master_filename );
+			$scene_payload['CurrentSceneSimpleClient']      = $compiler->runtime_url_for_file( $simple_filename );
+			$scene_payload['LocalCurrentSceneMasterClient'] = $compiler->runtime_url_for_file( $master_filename, 'local' );
+			$scene_payload['LocalCurrentSceneSimpleClient'] = $compiler->runtime_url_for_file( $simple_filename, 'local' );
+
+			$public_master_url = $compiler->runtime_url_for_file( $master_filename, 'public' );
+			$public_simple_url = $compiler->runtime_url_for_file( $simple_filename, 'public' );
+
+			if ( $public_master_url !== $scene_payload['LocalCurrentSceneMasterClient'] ) {
+				$scene_payload['PublicCurrentSceneMasterClient'] = $public_master_url;
+			}
+			if ( $public_simple_url !== $scene_payload['LocalCurrentSceneSimpleClient'] ) {
+				$scene_payload['PublicCurrentSceneSimpleClient'] = $public_simple_url;
+			}
 			echo wp_json_encode( $scene_payload );
 		} else {
 			echo $scene_json;

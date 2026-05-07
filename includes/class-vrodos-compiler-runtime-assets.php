@@ -7,8 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 class VRodos_Compiler_Runtime_Assets {
 	public function replace_placeholders( string $content ): string {
 		$replacements = [
-			'VRODOS_CSS_URL_PLACEHOLDER'         => VRodos_Path_Manager::css_url(),
-			'VRODOS_ASSET_IMAGE_URL_PLACEHOLDER' => VRodos_Path_Manager::image_url(),
+			'VRODOS_CSS_URL_PLACEHOLDER'         => $this->same_origin_path( VRodos_Path_Manager::css_url() ),
+			'VRODOS_ASSET_IMAGE_URL_PLACEHOLDER' => $this->same_origin_path( VRodos_Path_Manager::image_url() ),
 		];
 
 		return str_replace( array_keys( $replacements ), array_values( $replacements ), $content );
@@ -23,11 +23,21 @@ class VRodos_Compiler_Runtime_Assets {
 	}
 
 	public function redirect_runtime_template_urls( string $content ): string {
-		$content = str_replace( 'src="js/components/', 'src="' . VRodos_Path_Manager::runtime_component_url(), $content );
-		$content = str_replace( 'src="js/master/', 'src="' . VRodos_Path_Manager::runtime_master_url(), $content );
-		$content = str_replace( 'src="js/', 'src="' . VRodos_Path_Manager::runtime_js_url(), $content );
-		$content = str_replace( 'href="css/', 'href="' . VRodos_Path_Manager::css_url( 'runtime/' ), $content );
+		$content = str_replace( 'src="js/components/', 'src="' . $this->same_origin_path( VRodos_Path_Manager::runtime_component_url() ), $content );
+		$content = str_replace( 'src="js/master/', 'src="' . $this->same_origin_path( VRodos_Path_Manager::runtime_master_url() ), $content );
+		$content = str_replace( 'src="js/', 'src="' . $this->same_origin_path( VRodos_Path_Manager::runtime_js_url() ), $content );
+		$content = str_replace( 'href="css/', 'href="' . $this->same_origin_path( VRodos_Path_Manager::css_url( 'runtime/' ) ), $content );
 
 		return $this->replace_placeholders( $content );
+	}
+
+	private function same_origin_path( string $url ): string {
+		$path = wp_parse_url( $url, PHP_URL_PATH );
+		if ( ! $path ) {
+			return $url;
+		}
+
+		$query = wp_parse_url( $url, PHP_URL_QUERY );
+		return $path . ( $query ? '?' . $query : '' );
 	}
 }
