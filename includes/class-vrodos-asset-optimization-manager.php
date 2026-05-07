@@ -6,11 +6,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class VRodos_Asset_Optimization_Manager {
 	private const META_KEY = '_vrodos_asset3d_glb_derivatives';
+	private const SETTINGS_PAGE_KEY = 'vrodos_options';
+	private const SETTINGS_TAB_KEY = 'vrodos_asset_optimization_settings';
+	private const BATCH_TRANSIENT_PREFIX = 'vrodos_asset_glb_opt_batch_';
 
 	public function __construct() {
 		add_action( 'add_meta_boxes', $this->add_meta_boxes(...) );
 		add_action( 'save_post_vrodos_asset3d', $this->save_derivative_compile_settings(...), 20, 2 );
 		add_action( 'admin_post_vrodos_optimize_asset_glb', $this->handle_optimize_asset_glb(...) );
+		add_action( 'admin_post_vrodos_optimize_missing_glbs', $this->handle_optimize_missing_glbs(...) );
+		add_filter( 'vrodos_settings_tabs', $this->register_settings_tab(...) );
+		add_action( 'vrodos_render_settings_tab_' . self::SETTINGS_TAB_KEY, $this->render_asset_optimization_settings(...) );
+	}
+
+	public function register_settings_tab( array $tabs ): array {
+		$tabs[ self::SETTINGS_TAB_KEY ] = __( 'Assets' );
+		return $tabs;
 	}
 
 	public function add_meta_boxes(): void {
@@ -106,6 +117,79 @@ class VRodos_Asset_Optimization_Manager {
 		}
 	}
 
+	public function render_asset_optimization_settings(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			echo '<p>' . esc_html__( 'You are not allowed to manage asset optimization.' ) . '</p>';
+			return;
+		}
+
+		$profile          = 'safe-draco';
+		$scan             = self::scan_glb_derivatives( $profile );
+		$report           = $this->read_batch_report_from_request();
+		$missing_count    = count( $scan['missing'] );
+		$stale_count      = count( $scan['stale'] );
+		$auto_requested   = isset( $_GET['vrodos_asset_optimization_autorun'] ) && '1' === sanitize_key( (string) wp_unslash( $_GET['vrodos_asset_optimization_autorun'] ) );
+		$stop_for_failure = ! empty( $report['failed'] );
+		$target           = (string) ( $report['target'] ?? 'missing' );
+		$remaining        = (int) ( $report['remaining'] ?? $missing_count );
+		$should_continue  = $auto_requested && ! $stop_for_failure && $remaining > 0 && in_array( $target, [ 'missing', 'stale' ], true );
+
+		echo '<h2>' . esc_html__( 'Asset Optimization' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Generate cached optimized GLB derivatives for uploaded assets. This does not replace source uploads and does not enable compiled-scene substitution.' ) . '</p>';
+
+		$this->render_batch_report( $report );
+		$this->render_asset_optimization_summary( $scan );
+
+		echo '<h3>' . esc_html__( 'Batch Generation' ) . '</h3>';
+		echo '<p>' . esc_html__( 'The batch runner processes a small number of assets per request and then resumes until the selected queue is empty. If any asset fails, automatic continuation stops so the error can be reviewed.' ) . '</p>';
+
+		$this->render_batch_form(
+			$profile,
+			'missing',
+			true,
+			'vrodos-optimize-missing-glbs',
+			sprintf(
+				/* translators: %d: number of missing assets. */
+				_n( 'Generate missing safe Draco derivative (%d asset)', 'Generate missing safe Draco derivatives (%d assets)', $missing_count ),
+				$missing_count
+			),
+			$missing_count <= 0
+		);
+
+		if ( $stale_count > 0 ) {
+			$this->render_batch_form(
+				$profile,
+				'stale',
+				false,
+				'vrodos-optimize-stale-glbs',
+				sprintf(
+					/* translators: %d: number of stale assets. */
+					_n( 'Regenerate stale safe Draco derivative (%d asset)', 'Regenerate stale safe Draco derivatives (%d assets)', $stale_count ),
+					$stale_count
+				),
+				false
+			);
+		}
+
+		$this->render_asset_candidate_list( __( 'Missing safe Draco derivatives' ), $scan['missing'] );
+		$this->render_asset_candidate_list( __( 'Stale safe Draco derivatives' ), $scan['stale'] );
+		$this->render_asset_candidate_list( __( 'Unsupported or non-local GLB assets' ), $scan['unsupported'] );
+
+		if ( $should_continue ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Continuing the optimization batch...' ) . '</p></div>';
+			$this->render_batch_form(
+				$profile,
+				$target,
+				true,
+				'vrodos-asset-optimization-autocontinue',
+				__( 'Continue optimization batch' ),
+				false,
+				true
+			);
+			echo '<script>window.setTimeout(function(){var form=document.getElementById("vrodos-asset-optimization-autocontinue");if(form){HTMLFormElement.prototype.submit.call(form);}},700);</script>';
+		}
+	}
+
 	public function save_derivative_compile_settings( int $post_id, WP_Post $post ): void {
 		unset( $post );
 
@@ -169,6 +253,44 @@ class VRodos_Asset_Optimization_Manager {
 		$this->redirect_to_asset( $asset_id, 'optimized' );
 	}
 
+	public function handle_optimize_missing_glbs(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You are not allowed to optimize assets.', 'vrodos' ), '', [ 'response' => 403 ] );
+		}
+
+		check_admin_referer( 'vrodos_optimize_missing_glbs' );
+
+		$profile = isset( $_POST['vrodos_asset_optimization_profile'] )
+			? sanitize_key( (string) wp_unslash( $_POST['vrodos_asset_optimization_profile'] ) )
+			: 'safe-draco';
+		$target  = isset( $_POST['vrodos_asset_optimization_target'] )
+			? sanitize_key( (string) wp_unslash( $_POST['vrodos_asset_optimization_target'] ) )
+			: 'missing';
+		$autorun = ! empty( $_POST['vrodos_asset_optimization_autorun'] );
+
+		if ( ! isset( self::supported_profiles()[ $profile ] ) ) {
+			$profile = 'safe-draco';
+		}
+		if ( ! in_array( $target, [ 'missing', 'stale' ], true ) ) {
+			$target = 'missing';
+		}
+
+		$batch_limit = (int) apply_filters( 'vrodos_asset_optimizer_batch_size', 3 );
+		$batch_limit = max( 1, min( 10, $batch_limit ) );
+		$report      = $this->run_derivative_batch( $profile, $target, $batch_limit );
+		$report_key  = $this->store_batch_report( $report );
+
+		$args = [
+			'vrodos_asset_batch_report' => $report_key,
+		];
+		if ( $autorun && empty( $report['failed'] ) && ! empty( $report['generated'] ) && (int) ( $report['remaining'] ?? 0 ) > 0 ) {
+			$args['vrodos_asset_optimization_autorun'] = '1';
+		}
+
+		wp_safe_redirect( self::settings_tab_url( $args ) );
+		exit;
+	}
+
 	public static function resolve_compiled_glb_asset( int $asset_id, string $source_url ): array {
 		$result = [
 			'url'        => $source_url,
@@ -197,6 +319,290 @@ class VRodos_Asset_Optimization_Manager {
 		$result['url']        = (string) $derivative['url'];
 		$result['derivative'] = $derivative;
 		return $result;
+	}
+
+	private function render_asset_optimization_summary( array $scan ): void {
+		$ready_count            = count( $scan['ready'] );
+		$missing_count          = count( $scan['missing'] );
+		$stale_count            = count( $scan['stale'] );
+		$unsupported_count      = count( $scan['unsupported'] );
+		$ready_saved_bytes      = (int) ( $scan['readySavedBytes'] ?? 0 );
+		$ready_source_bytes     = (int) ( $scan['readySourceBytes'] ?? 0 );
+		$ready_derivative_bytes = (int) ( $scan['readyDerivativeBytes'] ?? 0 );
+
+		echo '<table class="widefat striped" style="max-width:760px;margin:16px 0;">';
+		echo '<tbody>';
+		echo '<tr><th scope="row">' . esc_html__( 'Asset posts scanned' ) . '</th><td>' . esc_html( number_format_i18n( (int) $scan['totalAssets'] ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Local GLB assets' ) . '</th><td>' . esc_html( number_format_i18n( (int) $scan['localGlbs'] ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Ready safe Draco derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $ready_count ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Missing safe Draco derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $missing_count ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Stale safe Draco derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $stale_count ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Unsupported/non-local assets' ) . '</th><td>' . esc_html( number_format_i18n( $unsupported_count ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Ready derivative savings' ) . '</th><td>' . esc_html( size_format( $ready_saved_bytes, 1 ) ) . ' saved from ' . esc_html( size_format( $ready_source_bytes, 1 ) ) . ' source GLBs';
+		if ( $ready_derivative_bytes > 0 ) {
+			echo ' (' . esc_html( size_format( $ready_derivative_bytes, 1 ) ) . ' optimized)';
+		}
+		echo '</td></tr>';
+		echo '</tbody>';
+		echo '</table>';
+	}
+
+	private function render_batch_form( string $profile, string $target, bool $autorun, string $form_id, string $button_label, bool $disabled = false, bool $hidden = false ): void {
+		$submit_name = sanitize_key( str_replace( '-', '_', $form_id ) . '_submit' );
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" id="' . esc_attr( $form_id ) . '" style="' . ( $hidden ? 'display:none;' : 'margin:12px 0;' ) . '">';
+		wp_nonce_field( 'vrodos_optimize_missing_glbs' );
+		echo '<input type="hidden" name="action" value="vrodos_optimize_missing_glbs">';
+		echo '<input type="hidden" name="vrodos_asset_optimization_profile" value="' . esc_attr( $profile ) . '">';
+		echo '<input type="hidden" name="vrodos_asset_optimization_target" value="' . esc_attr( $target ) . '">';
+		if ( $autorun ) {
+			echo '<input type="hidden" name="vrodos_asset_optimization_autorun" value="1">';
+		}
+		submit_button( $button_label, 'secondary', $submit_name, false, $disabled ? [ 'disabled' => 'disabled' ] : [] );
+		echo '</form>';
+	}
+
+	private function render_asset_candidate_list( string $title, array $items, int $limit = 10 ): void {
+		if ( empty( $items ) ) {
+			return;
+		}
+
+		echo '<h3>' . esc_html( $title ) . '</h3>';
+		echo '<table class="widefat striped" style="max-width:960px;margin-bottom:16px;">';
+		echo '<thead><tr><th>' . esc_html__( 'Asset' ) . '</th><th>' . esc_html__( 'Source size' ) . '</th><th>' . esc_html__( 'Status' ) . '</th></tr></thead>';
+		echo '<tbody>';
+
+		foreach ( array_slice( $items, 0, $limit ) as $item ) {
+			$asset_id = (int) ( $item['assetId'] ?? 0 );
+			$edit_url = $asset_id > 0 ? get_edit_post_link( $asset_id, 'raw' ) : '';
+			$title_text = (string) ( $item['title'] ?? ( $asset_id > 0 ? 'Asset #' . $asset_id : 'Asset' ) );
+			echo '<tr>';
+			echo '<td>';
+			if ( $edit_url ) {
+				echo '<a href="' . esc_url( $edit_url ) . '">' . esc_html( $title_text ) . '</a>';
+			} else {
+				echo esc_html( $title_text );
+			}
+			if ( $asset_id > 0 ) {
+				echo '<br><small>ID ' . esc_html( (string) $asset_id ) . '</small>';
+			}
+			echo '</td>';
+			echo '<td>' . esc_html( size_format( (int) ( $item['sourceSizeBytes'] ?? 0 ), 1 ) ) . '</td>';
+			echo '<td>' . esc_html( (string) ( $item['reason'] ?? $item['status'] ?? '' ) ) . '</td>';
+			echo '</tr>';
+		}
+
+		echo '</tbody>';
+		echo '</table>';
+
+		if ( count( $items ) > $limit ) {
+			printf(
+				'<p><small>%s</small></p>',
+				esc_html(
+					sprintf(
+						/* translators: %d: number of hidden assets. */
+						_n( '%d more asset not shown.', '%d more assets not shown.', count( $items ) - $limit ),
+						count( $items ) - $limit
+					)
+				)
+			);
+		}
+	}
+
+	private function render_batch_report( array $report ): void {
+		if ( empty( $report ) ) {
+			return;
+		}
+
+		$failed_count = count( $report['failed'] ?? [] );
+		$class        = $failed_count > 0 ? 'notice-warning' : 'notice-success';
+
+		echo '<div class="notice ' . esc_attr( $class ) . ' inline"><p>';
+		printf(
+			esc_html__( 'Optimization batch finished: %1$d attempted, %2$d generated, %3$d failed, %4$d remaining.' ),
+			(int) ( $report['attempted'] ?? 0 ),
+			count( $report['generated'] ?? [] ),
+			$failed_count,
+			(int) ( $report['remaining'] ?? 0 )
+		);
+		echo '</p></div>';
+
+		if ( ! empty( $report['generated'] ) ) {
+			echo '<ul>';
+			foreach ( $report['generated'] as $item ) {
+				echo '<li>' . esc_html( (string) $item['title'] ) . ': ' . esc_html( size_format( (int) $item['sourceSizeBytes'], 1 ) ) . ' -> ' . esc_html( size_format( (int) $item['derivativeSizeBytes'], 1 ) ) . ' (' . esc_html( size_format( (int) $item['reductionBytes'], 1 ) ) . ' saved)</li>';
+			}
+			echo '</ul>';
+		}
+
+		if ( ! empty( $report['failed'] ) ) {
+			echo '<ul>';
+			foreach ( $report['failed'] as $item ) {
+				echo '<li><strong>' . esc_html( (string) $item['title'] ) . ':</strong> ' . esc_html( (string) $item['error'] ) . '</li>';
+			}
+			echo '</ul>';
+		}
+	}
+
+	private function run_derivative_batch( string $profile, string $target, int $limit ): array {
+		$scan       = self::scan_glb_derivatives( $profile );
+		$candidates = array_slice( $scan[ $target ] ?? [], 0, $limit );
+		$report     = [
+			'profile'   => $profile,
+			'target'    => $target,
+			'attempted' => count( $candidates ),
+			'generated' => [],
+			'failed'    => [],
+			'remaining' => count( $scan[ $target ] ?? [] ),
+		];
+
+		foreach ( $candidates as $candidate ) {
+			$asset_id = (int) ( $candidate['assetId'] ?? 0 );
+			$title    = (string) ( $candidate['title'] ?? ( $asset_id > 0 ? 'Asset #' . $asset_id : 'Asset' ) );
+
+			$source = self::get_source_glb( $asset_id );
+			if ( is_wp_error( $source ) ) {
+				$this->record_error( $asset_id, $source->get_error_message() );
+				$report['failed'][] = [
+					'assetId' => $asset_id,
+					'title'   => $title,
+					'error'   => $source->get_error_message(),
+				];
+				continue;
+			}
+
+			$result = $this->generate_derivative( $asset_id, $source, $profile );
+			if ( is_wp_error( $result ) ) {
+				$this->record_error( $asset_id, $result->get_error_message() );
+				$report['failed'][] = [
+					'assetId' => $asset_id,
+					'title'   => $title,
+					'error'   => $result->get_error_message(),
+				];
+				continue;
+			}
+
+			$this->store_derivative_record( $asset_id, $result );
+			$record                = $result['record'];
+			$report['generated'][] = [
+				'assetId'              => $asset_id,
+				'title'                => $title,
+				'sourceSizeBytes'      => (int) ( $record['sourceSizeBytes'] ?? 0 ),
+				'derivativeSizeBytes'  => (int) ( $record['derivativeSizeBytes'] ?? 0 ),
+				'reductionBytes'       => (int) ( $record['reductionBytes'] ?? 0 ),
+				'reductionPercent'     => is_numeric( $record['reductionPercent'] ?? null ) ? (float) $record['reductionPercent'] : 0.0,
+			];
+		}
+
+		$updated_scan        = self::scan_glb_derivatives( $profile );
+		$report['remaining'] = count( $updated_scan[ $target ] ?? [] );
+		return $report;
+	}
+
+	private static function scan_glb_derivatives( string $profile ): array {
+		$asset_ids = get_posts(
+			[
+				'post_type'      => 'vrodos_asset3d',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+				'no_found_rows'  => true,
+			]
+		);
+
+		$scan = [
+			'profile'               => $profile,
+			'totalAssets'           => count( $asset_ids ),
+			'localGlbs'             => 0,
+			'ready'                 => [],
+			'missing'               => [],
+			'stale'                 => [],
+			'unsupported'           => [],
+			'readySavedBytes'       => 0,
+			'readySourceBytes'      => 0,
+			'readyDerivativeBytes'  => 0,
+		];
+
+		foreach ( $asset_ids as $asset_id ) {
+			$asset_id = (int) $asset_id;
+			$title    = get_the_title( $asset_id );
+			$title    = $title ? $title : 'Asset #' . $asset_id;
+			$source   = self::get_source_glb( $asset_id );
+			$item     = [
+				'assetId' => $asset_id,
+				'title'   => $title,
+			];
+
+			if ( is_wp_error( $source ) ) {
+				$item['status'] = 'unsupported';
+				$item['reason'] = $source->get_error_message();
+				$scan['unsupported'][] = $item;
+				continue;
+			}
+
+			++$scan['localGlbs'];
+			$item['sourceUrl']       = (string) $source['url'];
+			$item['sourceSizeBytes'] = (int) $source['sizeBytes'];
+
+			$meta       = self::get_derivative_meta( $asset_id );
+			$derivative = $meta['derivatives'][ $profile ] ?? null;
+			if ( ! is_array( $derivative ) ) {
+				$item['status'] = 'missing';
+				$item['reason'] = 'No derivative generated yet.';
+				$scan['missing'][] = $item;
+				continue;
+			}
+
+			$reason = self::derivative_unusable_reason( $derivative, (string) $source['url'] );
+			if ( '' !== $reason ) {
+				$item['status'] = 'stale';
+				$item['reason'] = $reason;
+				$scan['stale'][] = $item;
+				continue;
+			}
+
+			$item['status']              = 'ready';
+			$item['derivativeSizeBytes'] = (int) ( $derivative['derivativeSizeBytes'] ?? 0 );
+			$item['reductionBytes']      = (int) ( $derivative['reductionBytes'] ?? 0 );
+			$item['reductionPercent']    = is_numeric( $derivative['reductionPercent'] ?? null ) ? (float) $derivative['reductionPercent'] : 0.0;
+			$scan['readySavedBytes']    += (int) $item['reductionBytes'];
+			$scan['readySourceBytes']   += (int) ( $derivative['sourceSizeBytes'] ?? $item['sourceSizeBytes'] );
+			$scan['readyDerivativeBytes'] += (int) $item['derivativeSizeBytes'];
+			$scan['ready'][]             = $item;
+		}
+
+		return $scan;
+	}
+
+	private function store_batch_report( array $report ): string {
+		$key = wp_generate_password( 12, false, false );
+		set_transient( self::BATCH_TRANSIENT_PREFIX . $key, $report, 15 * MINUTE_IN_SECONDS );
+		return $key;
+	}
+
+	private function read_batch_report_from_request(): array {
+		$key = isset( $_GET['vrodos_asset_batch_report'] ) ? sanitize_key( (string) wp_unslash( $_GET['vrodos_asset_batch_report'] ) ) : '';
+		if ( '' === $key ) {
+			return [];
+		}
+
+		$report = get_transient( self::BATCH_TRANSIENT_PREFIX . $key );
+		return is_array( $report ) ? $report : [];
+	}
+
+	private static function settings_tab_url( array $args = [] ): string {
+		return add_query_arg(
+			array_merge(
+				[
+					'page' => self::SETTINGS_PAGE_KEY,
+					'tab'  => self::SETTINGS_TAB_KEY,
+				],
+				$args
+			),
+			admin_url( 'admin.php' )
+		);
 	}
 
 	private static function supported_profiles(): array {
@@ -405,20 +811,24 @@ class VRodos_Asset_Optimization_Manager {
 	}
 
 	private static function is_derivative_usable( array $derivative, string $source_url ): bool {
+		return '' === self::derivative_unusable_reason( $derivative, $source_url );
+	}
+
+	private static function derivative_unusable_reason( array $derivative, string $source_url ): string {
 		if ( ( $derivative['status'] ?? '' ) !== 'ready' || empty( $derivative['url'] ) ) {
-			return false;
+			return 'Derivative is not marked ready.';
 		}
 
 		if ( ! empty( $derivative['path'] ) && ! is_file( (string) $derivative['path'] ) ) {
-			return false;
+			return 'Derivative file is missing.';
 		}
 
 		$derivative_source = (string) ( $derivative['sourceUrl'] ?? '' );
 		if ( '' !== $derivative_source && self::normalize_url_path( $derivative_source ) !== self::normalize_url_path( $source_url ) ) {
-			return false;
+			return 'Source GLB URL has changed since the derivative was generated.';
 		}
 
-		return true;
+		return '';
 	}
 
 	private static function normalize_url_path( string $url ): string {

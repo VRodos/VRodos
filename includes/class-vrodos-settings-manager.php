@@ -30,7 +30,12 @@ class VRodos_Settings_Manager {
 	}
 
 	public function register_general_settings(): void {
-		$this->settings_tabs[ $this->general_settings_key ] = __( 'General' );
+		$this->settings_tabs = apply_filters(
+			'vrodos_settings_tabs',
+			[
+				$this->general_settings_key => __( 'General' ),
+			]
+		);
 
 		register_setting(
 			$this->general_settings_key,
@@ -168,18 +173,22 @@ class VRodos_Settings_Manager {
 	}
 
 	public function render_options() {
-		$tab = $_GET['tab'] ?? $this->general_settings_key;
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( (string) wp_unslash( $_GET['tab'] ) ) : $this->general_settings_key;
 		?>
 			<div class="wrap">
 				<h1><?php echo esc_html__( 'VRodos Settings' ); ?></h1>
 				<?php $this->render_tabs(); ?>
-				<form method="post" action="options.php">
-					<?php
-					settings_fields( $tab );
-					do_settings_sections( $tab );
-					submit_button();
-					?>
-				</form>
+				<?php if ( $tab !== $this->general_settings_key && has_action( 'vrodos_render_settings_tab_' . $tab ) ) : ?>
+					<?php do_action( 'vrodos_render_settings_tab_' . $tab ); ?>
+				<?php else : ?>
+					<form method="post" action="options.php">
+						<?php
+						settings_fields( $this->general_settings_key );
+						do_settings_sections( $this->general_settings_key );
+						submit_button();
+						?>
+					</form>
+				<?php endif; ?>
 			</div>
 		<?php
 	}
@@ -228,11 +237,18 @@ class VRodos_Settings_Manager {
 	}
 
 	public function render_tabs() {
-		$current_tab = $_GET['tab'] ?? $this->general_settings_key;
+		$current_tab = isset( $_GET['tab'] ) ? sanitize_key( (string) wp_unslash( $_GET['tab'] ) ) : $this->general_settings_key;
 		echo '<h2 class="nav-tab-wrapper">';
 		foreach ( $this->settings_tabs as $tab_key => $tab_caption ) {
-			$active = $current_tab == $tab_key ? 'nav-tab-active' : '';
-			echo '<a class="nav-tab ' . $active . '" href="?page=' . $this->options_key . '&tab=' . $tab_key . '">' . $tab_caption . '</a>';
+			$active = $current_tab === $tab_key ? 'nav-tab-active' : '';
+			$url    = add_query_arg(
+				[
+					'page' => $this->options_key,
+					'tab'  => $tab_key,
+				],
+				admin_url( 'admin.php' )
+			);
+			echo '<a class="nav-tab ' . esc_attr( $active ) . '" href="' . esc_url( $url ) . '">' . esc_html( $tab_caption ) . '</a>';
 		}
 		echo '</h2>';
 	}

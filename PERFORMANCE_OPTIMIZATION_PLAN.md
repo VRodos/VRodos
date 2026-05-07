@@ -23,7 +23,8 @@ The first profiling pass on `http://wp.local:5832/Master_Client_766.html` showed
 - Complete: compiled-scene Meshopt decoder smoke fix after discovering A-Frame requires a classic/browser-global decoder script.
 - Complete: compiled-scene safe Draco derivative trial for the largest asphalt GLB through profiler resource interception.
 - Complete: admin-side safe Draco derivative generation/storage and opt-in compiler selection.
-- Next: add texture compression/KTX2 profile for texture-heavy assets and run visual QA on opted-in compiled scenes.
+- Complete: settings-level batch generation for missing safe Draco derivatives.
+- Next: add texture compression/KTX2 profile for texture-heavy assets, then plan explicit LOD derivative families for distance-based scene cost reduction.
 
 ## Spector.js Debug Phase
 
@@ -179,7 +180,10 @@ Verdict:
 Implemented the first production-facing derivative contract:
 
 - `VRodos_Asset_Optimization_Manager` adds a `GLB Optimization` side metabox on `vrodos_asset3d` admin edit screens.
+- VRodos Settings now has an `Assets` tab for library-level optimization status.
 - The metabox can generate a `safe-draco` derivative for local uploaded GLBs.
+- The `Assets` tab can batch-generate missing `safe-draco` derivatives for local uploaded GLBs.
+- Batch generation processes a bounded number of assets per request and resumes automatically until the queue is empty, unless an asset fails.
 - Derivatives are written under WordPress uploads:
   `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/`
 - Source uploads are kept unchanged.
@@ -203,9 +207,21 @@ Validation result:
 Operational policy:
 
 - Generate does not automatically enable compile substitution.
+- Batch generate does not automatically enable compile substitution.
 - Compile substitution is per-asset opt-in after visual parity is checked.
 - The resolver validates that the derivative file still exists and that its recorded source URL matches the current source URL before substituting it.
 - If validation fails, compilation silently falls back to the original GLB.
+
+## LOD Direction
+
+LOD can reduce the render-side cost that Draco alone does not touch. It should be treated as an explicit derivative family rather than an automatic source-asset downgrade:
+
+- `lod0`: current/high source or validated optimized equivalent.
+- `lod1`/`lod2`: simplified derivatives generated and stored beside compression derivatives.
+- Compilation can emit distance-based switching only when an asset has validated LOD derivatives and the scene opts into them.
+- LOD should be measured with Spector/CDP because it targets triangles, draw calls, and shadow-pass duplication, not just transfer size.
+
+Do not add automatic LOD substitution until visual thresholds, distance bands, shadow behavior, and collision/interaction expectations are defined.
 
 ## Policy
 
@@ -231,7 +247,9 @@ Operational policy:
 13. Stamp compiled A-Frame scenes with root `gltf-model` decoder paths.
 14. Add profiler resource interception to test compiled-scene derivative substitutions without editing uploads or generated HTML.
 15. Add admin-side derivative storage plus opt-in compile-time selection.
-16. Next optimization pass should add texture compression for texture-heavy GLBs and visual QA tooling for opted-in derivatives.
+16. Add a settings-level batch button for generating missing safe Draco derivatives.
+17. Next optimization pass should add texture compression for texture-heavy GLBs and visual QA tooling for opted-in derivatives.
+18. Plan LOD derivative families for distance-based render-cost reduction after compression and QA paths are stable.
 
 ## Acceptance Criteria
 
@@ -247,6 +265,7 @@ Operational policy:
 - Compiled scenes include decoder paths for Draco, Basis/KTX2, and Meshopt compressed assets after regeneration.
 - The profiler can trial a local derivative through `--resource-override URL_OR_PATH=FILE` and record fulfilled override details.
 - Asset admins can generate a safe Draco derivative for a local uploaded GLB without replacing the original upload.
+- Site admins can batch-generate missing safe Draco derivatives from the Settings > Assets tab without replacing originals or enabling compile substitution.
 - The compiler can use an optimized derivative only when the asset metadata explicitly enables it.
 - `?vrodos_spector=1` exposes `window.VRODOS_SPECTOR` and opens Spector's UI without affecting normal URLs.
 - `node --check`, PHP lint for edited PHP files, and `git diff --check` pass for the edited files.

@@ -129,13 +129,17 @@ Future admin-panel optimization should be derivative-based: keep the original up
 `VRodos_Asset_Optimization_Manager` provides the first admin-side derivative workflow for `vrodos_asset3d`:
 
 - The asset edit screen has a `GLB Optimization` metabox.
+- Settings > Assets shows library-level safe Draco derivative status.
 - `Generate safe Draco derivative` runs the same glTF Transform `prune -> dedup -> draco` flow used by the prototype script.
+- `Generate missing safe Draco derivatives` batch-generates missing local GLB derivatives in bounded admin requests and stops automatic continuation on failures.
 - Derivatives are stored in uploads under `vrodos-optimized-assets/asset-{asset_id}/`.
 - Metadata lives in `_vrodos_asset3d_glb_derivatives`.
 - Compilation uses a derivative only when the asset's `Use active derivative in compiled scenes` checkbox is enabled.
 - If the derivative file is missing or the stored source URL no longer matches the current GLB URL, compilation falls back to the original GLB.
 
 `VRodos_Compiler_AFrame_Entity_Renderer` is the URL selection point. It keeps scene JSON untouched, resolves the active derivative during compilation by `asset_id`, and adds a compile diagnostic note when a derivative is used.
+
+LOD should follow the same derivative contract: generated alternatives are stored beside the source asset, compile-time scene output chooses them only after explicit opt-in, and runtime switching should be validated with Spector/CDP because LOD targets submitted geometry and repeated pass cost rather than transfer size alone.
 
 ### Compressed Asset Decoder Paths
 

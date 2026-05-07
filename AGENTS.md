@@ -47,7 +47,7 @@ Important managers:
 - `VRodos_Scene_CPT_Manager`: scene editor data preparation
 - `VRodos_Compiler_Manager`: compiled A-Frame scene generation
 - `VRodos_Render_Runtime_Manager`: active runtime/version configuration
-- `VRodos_Asset_Optimization_Manager`: admin-side GLB derivative generation, derivative metadata, and opt-in compile selection
+- `VRodos_Asset_Optimization_Manager`: admin-side GLB derivative generation, settings-level batch generation, derivative metadata, and opt-in compile selection
 - `VRodos_Path_Manager`: path/url indirection
 
 ## Runtime And Rendering
@@ -134,11 +134,12 @@ Performance tooling:
 - Use `--spector` only after rAF/trace sampling for one-frame WebGL anatomy.
 - Use profiler `--resource-override URL_OR_PATH=FILE` for compiled-scene derivative trials without editing uploads or generated HTML. Treat it as a validation tool, not production substitution.
 - Use `scripts/audit-master-client-assets.mjs` to correlate compile diagnostics with local GLB metadata.
-- Use `scripts/prototype-optimize-master-client-assets.mjs` for derivative prototypes and admin/backend single-source optimization. In audit mode it writes reports/GLBs under the requested output directory. In admin single-source mode, `VRodos_Asset_Optimization_Manager` writes derivatives under `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/`.
+- Use `scripts/prototype-optimize-master-client-assets.mjs` for derivative prototypes and admin/backend single-source optimization. In audit mode it writes reports/GLBs under the requested output directory. In admin single-source mode, `VRodos_Asset_Optimization_Manager` writes derivatives under `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/`. Settings > Assets can batch-generate missing safe Draco derivatives, but it must not auto-enable compile substitution.
 - `npm run build:three` copies Draco, Basis/KTX2, and Meshopt decoder assets into `assets/vendor/three-r181/` and records them in `assets/runtime-version-manifest.json`.
 - Compiled scenes receive root `gltf-model` decoder paths from `VRodos_Compiler_Manager`; regenerate compiled HTML before testing compressed derivatives.
 - Use `meshopt_decoder.js` for A-Frame `meshoptDecoderPath`. A-Frame loads this path as a classic script, so do not point compiled scenes at the ESM `meshopt_decoder.module.js`; the `.module.js` filename is only kept as a compatibility copy for older generated clients.
 - Do not enable compile substitution for Draco, Meshopt, or KTX2 derivatives until the relevant A-Frame/Three decoder path is present in the generated client and visual parity is checked. Substitution must remain per-asset opt-in.
+- Treat future LOD as an explicit derivative family (`lod0`, `lod1`, `lod2`) with opt-in compile/runtime selection, not as a silent downgrade of uploaded source assets.
 
 Do not manually copy standalone PMNDRS bundles. `postprocessing` is exported from `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`.
 
