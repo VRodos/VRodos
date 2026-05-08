@@ -77,66 +77,6 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
         return text;
     }
 
-    function vrodos_normalizeAssessmentLevels(levels) {
-        let source = levels;
-        const allowedLevels = ['A1', 'A2', 'B1', 'B2', 'ALL', 'ALL LEVELS'];
-
-        if (Array.isArray(source)) {
-            return source
-                .map((level) => {
-                    if (level && typeof level === 'object') {
-                        return '';
-                    }
-                    return vrodos_decodeAssessmentText(level).trim().toUpperCase();
-                })
-                .filter(Boolean);
-        }
-
-        if (typeof source === 'string' && source.trim() !== '') {
-            try {
-                source = JSON.parse(source);
-            } catch (err) {
-                try {
-                    const binary = window.atob(source);
-                    const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
-                    const decoded = new TextDecoder('utf-8').decode(bytes);
-                    source = JSON.parse(decoded);
-                } catch (base64Err) {
-                    const matches = source.toUpperCase().match(/\b(?:A1|A2|B1|B2|ALL LEVELS|ALL)\b/g);
-                    source = matches || [];
-                }
-            }
-        }
-
-        if (!Array.isArray(source)) {
-            return [];
-        }
-
-        return Array.from(new Set(source
-            .map((level) => vrodos_decodeAssessmentText(level).trim().toUpperCase())
-            .filter((level) => allowedLevels.indexOf(level) !== -1)
-            .filter(Boolean)));
-    }
-
-    function vrodos_resolvedCefrLevels(levels, emptyMeansAll) {
-        const normalizedLevels = vrodos_normalizeAssessmentLevels(levels);
-        const allLevels = ['A1', 'A2', 'B1', 'B2'];
-
-        if (!normalizedLevels.length) {
-            return emptyMeansAll === false ? [] : allLevels;
-        }
-
-        if (normalizedLevels.indexOf('ALL') !== -1 || normalizedLevels.indexOf('ALL LEVELS') !== -1) {
-            return allLevels;
-        }
-
-        return allLevels.filter((level) => normalizedLevels.indexOf(level) !== -1);
-    }
-
-    function vrodos_resolvedAssessmentLevels(levels) {
-        return vrodos_resolvedCefrLevels(levels, true);
-    }
-
     function vrodos_buildAssessmentMetaHTML(asset) {
         if (!asset) {
             return '';
@@ -145,25 +85,19 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
         const isAssessment = String(asset.category_slug || '').toLowerCase() === 'assessment';
         const genericLevelsSource = asset.immerse_cefr_levels || '';
         const assessmentType = vrodos_decodeAssessmentText(asset.assessment_type || asset.assessment_group || '').trim();
-        const assessmentLevels = isAssessment
-            ? vrodos_resolvedAssessmentLevels(asset.assessment_levels || '')
-            : vrodos_resolvedCefrLevels(genericLevelsSource, false);
+        const buildLevelBadges = typeof VRODOS.ui.buildCefrLevelBadgesHTML === 'function'
+            ? VRODOS.ui.buildCefrLevelBadgesHTML
+            : function() { return ''; };
+        const levelBadgesHTML = isAssessment
+            ? buildLevelBadges(asset.assessment_levels || '', { emptyMeansAll: true, textClass: 'tw-text-emerald-100' })
+            : buildLevelBadges(genericLevelsSource, { emptyMeansAll: false, textClass: 'tw-text-emerald-100' });
         let typeBadgeHTML = '';
-        let levelBadgesHTML = '';
 
         if (isAssessment && assessmentType) {
             typeBadgeHTML =
                 `<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-sky-100">${ 
                 escapeHTML(assessmentType) 
                 }</span>`;
-        }
-
-        if (assessmentLevels.length) {
-            levelBadgesHTML = assessmentLevels.map((level) => (
-                    `<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-emerald-400/35 tw-bg-emerald-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-emerald-100">${ 
-                    escapeHTML(level) 
-                    }</span>`
-                )).join('');
         }
 
         if (!typeBadgeHTML && !levelBadgesHTML) {

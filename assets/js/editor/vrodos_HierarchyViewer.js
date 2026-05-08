@@ -137,7 +137,7 @@ function _hierarchyCreatedLabel(obj) {
         if (addedAt > 9999999999) {
             addedAt = Math.floor(addedAt / 1000);
         }
-        const addedLabel = VRODOS.utils.unixTimestampToTime(String(Math.floor(addedAt)));
+        const addedLabel = _hierarchyUnixTimestampToMinuteSecond(Math.floor(addedAt));
         return (addedLabel && !addedLabel.includes('NaN')) ? addedLabel : '';
     }
 
@@ -145,8 +145,20 @@ function _hierarchyCreatedLabel(obj) {
     const match = name.match(/(\d{10})$/);
     if (!match) return '';
 
-    const created = VRODOS.utils.unixTimestampToTime(match[1]);
+    const created = _hierarchyUnixTimestampToMinuteSecond(match[1]);
     return (created && !created.includes('NaN')) ? created : '';
+}
+
+function _hierarchyUnixTimestampToMinuteSecond(unixTimestamp) {
+    const secondsValue = Number(unixTimestamp);
+    if (!Number.isFinite(secondsValue) || secondsValue <= 0) {
+        return '';
+    }
+
+    const date = new Date(secondsValue * 1000);
+    const minutes = `0${date.getMinutes()}`.slice(-2);
+    const seconds = `0${date.getSeconds()}`.slice(-2);
+    return `${minutes}:${seconds}`;
 }
 
 function _hierarchyEscapeHTML(text) {
@@ -177,66 +189,6 @@ function _hierarchyDecodeText(value) {
     return text;
 }
 
-function _hierarchyNormalizeCefrLevels(levels) {
-    let source = levels;
-    const allowedLevels = ['A1', 'A2', 'B1', 'B2', 'ALL', 'ALL LEVELS'];
-
-    if (Array.isArray(source)) {
-        return source
-            .map((level) => {
-                if (level && typeof level === 'object') {
-                    return '';
-                }
-                return _hierarchyDecodeText(level).trim().toUpperCase();
-            })
-            .filter(Boolean);
-    }
-
-    if (typeof source === 'string' && source.trim() !== '') {
-        try {
-            source = JSON.parse(source);
-        } catch (err) {
-            try {
-                const binary = window.atob(source);
-                const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
-                const decoded = new TextDecoder('utf-8').decode(bytes);
-                source = JSON.parse(decoded);
-            } catch (base64Err) {
-                const matches = source.toUpperCase().match(/\b(?:A1|A2|B1|B2|ALL LEVELS|ALL)\b/g);
-                source = matches || [];
-            }
-        }
-    }
-
-    if (!Array.isArray(source)) {
-        return [];
-    }
-
-    return Array.from(new Set(source
-        .map((level) => _hierarchyDecodeText(level).trim().toUpperCase())
-        .filter((level) => allowedLevels.indexOf(level) !== -1)
-        .filter(Boolean)));
-}
-
-function _hierarchyResolvedCefrLevels(levels, emptyMeansAll) {
-    const normalizedLevels = _hierarchyNormalizeCefrLevels(levels);
-    const allLevels = ['A1', 'A2', 'B1', 'B2'];
-
-    if (!normalizedLevels.length) {
-        return emptyMeansAll === false ? [] : allLevels;
-    }
-
-    if (normalizedLevels.indexOf('ALL') !== -1 || normalizedLevels.indexOf('ALL LEVELS') !== -1) {
-        return allLevels;
-    }
-
-    return allLevels.filter((level) => normalizedLevels.indexOf(level) !== -1);
-}
-
-function _hierarchyResolvedAssessmentLevels(levels) {
-    return _hierarchyResolvedCefrLevels(levels, true);
-}
-
 function _hierarchyAssetBrowserItemForObject(obj) {
     if (!obj || !window.vrodosAssetBrowserItemsById) {
         return null;
@@ -261,31 +213,25 @@ function _hierarchyAssessmentBadgesHTML(obj) {
     const genericLevelsSource = obj.immerse_cefr_levels
         || (assetBrowserItem ? assetBrowserItem.immerse_cefr_levels || '' : '');
     const isAssessment = categorySlug === 'assessment' || categoryName === 'assessment';
-    const genericLevels = _hierarchyResolvedCefrLevels(genericLevelsSource, false);
-    if (!isAssessment && !genericLevels.length) {
+    const buildLevelBadges = typeof VRODOS.ui.buildCefrLevelBadgesHTML === 'function'
+        ? VRODOS.ui.buildCefrLevelBadgesHTML
+        : function() { return ''; };
+    const levelBadgesHTML = isAssessment
+        ? buildLevelBadges(obj.assessment_levels || '', { emptyMeansAll: true, textClass: 'tw-text-emerald-200' })
+        : buildLevelBadges(genericLevelsSource, { emptyMeansAll: false, textClass: 'tw-text-emerald-200' });
+
+    if (!isAssessment && !levelBadgesHTML) {
         return '';
     }
 
     const assessmentType = _hierarchyDecodeText(obj.assessment_type || obj.assessment_group || '').trim();
-    const assessmentLevels = isAssessment
-        ? _hierarchyResolvedAssessmentLevels(obj.assessment_levels || '')
-        : genericLevels;
     let typeBadgeHTML = '';
-    let levelBadgesHTML = '';
 
     if (isAssessment && assessmentType) {
         typeBadgeHTML =
             `<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-sky-200">${ 
-            _hierarchyEscapeHTML(assessmentType) 
+            _hierarchyEscapeHTML(assessmentType)
             }</span>`;
-    }
-
-    if (assessmentLevels.length) {
-        levelBadgesHTML = assessmentLevels.map((level) => (
-                `<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-emerald-400/35 tw-bg-emerald-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-emerald-200">${ 
-                _hierarchyEscapeHTML(level) 
-                }</span>`
-            )).join('');
     }
 
     if (!typeBadgeHTML && !levelBadgesHTML) {
@@ -615,7 +561,5 @@ VRODOS.ui.initHierarchyViewerEvents = function() {
         if (uuid) hierarchyClickSelect(e, uuid);
     });
 }
-
-
 
 

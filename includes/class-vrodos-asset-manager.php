@@ -145,6 +145,7 @@ class VRodos_Asset_Manager {
 		wp_enqueue_script( 'stats-gl' );
 		$this->enqueue_three_vendor_bundle();
 		wp_enqueue_script( 'vrodos_icons' );
+		wp_enqueue_script( 'vrodos_cefr_badges' );
 		wp_enqueue_script( 'vrodos_HierarchyViewer' );
 		wp_enqueue_script( 'vrodos_load_lilgui' );
 		wp_enqueue_script( 'vrodos_scene_settings_schema' );
@@ -269,7 +270,7 @@ class VRodos_Asset_Manager {
       // AJAX Scripts
       ['ajax-script_compile', VRodos_Path_Manager::editor_ajax_js_url( 'vrodos_request_compile.js' ), ['vrodos_namespace']],
       ['ajax-script_deletescene', VRodos_Path_Manager::editor_ajax_js_url( 'delete_scene.js' ), ['vrodos_namespace']],
-      ['ajax-script_filebrowse', VRodos_Path_Manager::editor_js_url( 'vrodos_assetBrowserToolbar.js' ), ['vrodos_namespace']],
+      ['ajax-script_filebrowse', VRodos_Path_Manager::editor_js_url( 'vrodos_assetBrowserToolbar.js' ), ['vrodos_namespace', 'vrodos_cefr_badges']],
       ['ajax-script_savescene', VRodos_Path_Manager::editor_ajax_js_url( 'vrodos_save_scene_ajax.js' ), ['vrodos_namespace']],
       ['ajax-script_uploadimage', VRodos_Path_Manager::editor_ajax_js_url( 'uploadimage.js' ), ['vrodos_namespace']],
       ['ajax-script_fetchasset', VRodos_Path_Manager::editor_ajax_js_url( 'fetch_asset.js' ), ['vrodos_namespace']],
@@ -290,7 +291,8 @@ class VRodos_Asset_Manager {
       ['vrodos_movePointerLocker', VRodos_Path_Manager::editor_js_url( 'vrodos_movePointerLocker.js' ), ['vrodos_namespace']],
       ['vrodos_addRemoveOne', VRodos_Path_Manager::editor_js_url( 'vrodos_addRemoveOne.js' ), ['vrodos_namespace']],
       ['vrodos_icons', VRodos_Path_Manager::editor_js_url( 'vrodos_icons.js' ), ['vrodos_namespace']],
-      ['vrodos_HierarchyViewer', VRodos_Path_Manager::editor_js_url( 'vrodos_HierarchyViewer.js' ), ['vrodos_namespace']],
+      ['vrodos_cefr_badges', VRodos_Path_Manager::editor_js_url( 'vrodos_cefr_badges.js' ), ['vrodos_namespace']],
+      ['vrodos_HierarchyViewer', VRodos_Path_Manager::editor_js_url( 'vrodos_HierarchyViewer.js' ), ['vrodos_namespace', 'vrodos_cefr_badges']],
       ['vrodos_CompileUI_Shared', VRodos_Path_Manager::editor_js_url( 'vrodos_CompileUI_Shared.js' ), ['vrodos_namespace', 'vrodos_runtime_settings_contract']],
       ['vrodos_CompileUI_General', VRodos_Path_Manager::editor_js_url( 'vrodos_CompileUI_General.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared']],
       ['vrodos_CompileUI_PostFX', VRodos_Path_Manager::editor_js_url( 'vrodos_CompileUI_PostFX.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared']],
