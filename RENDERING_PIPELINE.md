@@ -93,6 +93,14 @@ Compiled clients also expose `window.VRODOS_COMPILE_DIAGNOSTICS` when generated 
 
 When comparing frame times, turn the runtime FPS meter off unless the meter itself is under test. The StatsGL path uses GPU queries that show up in Spector captures as query commands and can pollute frame anatomy.
 
+The profiler records renderer CSS size, drawing-buffer size, effective pixel ratio, estimated render pixels, and any runtime pixel-budget decision. To compare fullscreen/high-DPR cost, use an explicit viewport and device scale factor:
+
+```bash
+node scripts/profile-master-client.mjs http://wp.local:5832/Master_Client_766.html --disable-fps-meter --viewport 3840x2160 --dpr 2 --output C:\tmp\vrodos-master-client-4k-dpr2.json
+```
+
+Compiled desktop runtime applies a render-pixel budget automatically only to the `performance` render-quality profile. `high` keeps the current visual DPR behavior by default, while `?vrodos_dpr_pixel_budget=1650000` can force a desktop profiling override. Immersive WebXR is excluded from this budget path.
+
 Use the read-only GLB audit after a profiler capture to map compile diagnostics back to local asset metadata:
 
 ```bash

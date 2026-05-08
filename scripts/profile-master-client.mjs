@@ -763,12 +763,11 @@ async function sampleFrames(cdp, frames) {
             let lastTime = 0;
             let seen = 0;
             let resolved = false;
-            function readRendererInfo() {
-                const scene = document.querySelector('a-scene');
-                const renderer = scene && scene.renderer;
-                if (!renderer || !renderer.info) {
+            function readRendererPixelInfo(renderer) {
+                if (!renderer) {
                     return null;
                 }
+                const pixelRatio = typeof renderer.getPixelRatio === 'function' ? renderer.getPixelRatio() : null;
                 const size = { width: null, height: null };
                 if (typeof renderer.getSize === 'function') {
                     const target = {
@@ -789,9 +788,44 @@ async function sampleFrames(cdp, frames) {
                     size.width = target.width;
                     size.height = target.height;
                 }
+                const canvas = renderer.domElement || null;
+                const cssWidth = size.width || (canvas ? canvas.clientWidth : null) || window.innerWidth || null;
+                const cssHeight = size.height || (canvas ? canvas.clientHeight : null) || window.innerHeight || null;
+                const drawingBufferWidth = canvas && canvas.width ? canvas.width : (
+                    cssWidth && pixelRatio ? Math.round(cssWidth * pixelRatio) : null
+                );
+                const drawingBufferHeight = canvas && canvas.height ? canvas.height : (
+                    cssHeight && pixelRatio ? Math.round(cssHeight * pixelRatio) : null
+                );
                 return {
-                    pixelRatio: typeof renderer.getPixelRatio === 'function' ? renderer.getPixelRatio() : null,
-                    size,
+                    pixelRatio,
+                    cssSize: {
+                        width: cssWidth,
+                        height: cssHeight
+                    },
+                    drawingBuffer: {
+                        width: drawingBufferWidth,
+                        height: drawingBufferHeight,
+                        pixels: drawingBufferWidth && drawingBufferHeight ? drawingBufferWidth * drawingBufferHeight : null
+                    },
+                    estimatedRenderPixels: cssWidth && cssHeight && pixelRatio
+                        ? Math.round(cssWidth * cssHeight * pixelRatio * pixelRatio)
+                        : null
+                };
+            }
+            function readRendererInfo() {
+                const scene = document.querySelector('a-scene');
+                const renderer = scene && scene.renderer;
+                if (!renderer || !renderer.info) {
+                    return null;
+                }
+                const pixelInfo = readRendererPixelInfo(renderer);
+                return {
+                    pixelRatio: pixelInfo ? pixelInfo.pixelRatio : null,
+                    size: pixelInfo ? pixelInfo.cssSize : { width: null, height: null },
+                    cssSize: pixelInfo ? pixelInfo.cssSize : null,
+                    drawingBuffer: pixelInfo ? pixelInfo.drawingBuffer : null,
+                    estimatedRenderPixels: pixelInfo ? pixelInfo.estimatedRenderPixels : null,
                     memory: Object.assign({}, renderer.info.memory || {}),
                     render: Object.assign({}, renderer.info.render || {}),
                     programs: renderer.info.programs ? renderer.info.programs.length : null
@@ -882,6 +916,57 @@ async function captureSceneSnapshot(cdp) {
             lights: 0
         };
 
+        function readRendererPixelInfo() {
+            if (!renderer) {
+                return null;
+            }
+            const pixelRatio = typeof renderer.getPixelRatio === 'function' ? renderer.getPixelRatio() : null;
+            const size = { width: null, height: null };
+            if (typeof renderer.getSize === 'function') {
+                const target = {
+                    width: 0,
+                    height: 0,
+                    set(width, height) {
+                        this.width = width;
+                        this.height = height;
+                        return this;
+                    },
+                    divideScalar(scalar) {
+                        this.width /= scalar;
+                        this.height /= scalar;
+                        return this;
+                    }
+                };
+                renderer.getSize(target);
+                size.width = target.width;
+                size.height = target.height;
+            }
+            const canvas = renderer.domElement || null;
+            const cssWidth = size.width || (canvas ? canvas.clientWidth : null) || window.innerWidth || null;
+            const cssHeight = size.height || (canvas ? canvas.clientHeight : null) || window.innerHeight || null;
+            const drawingBufferWidth = canvas && canvas.width ? canvas.width : (
+                cssWidth && pixelRatio ? Math.round(cssWidth * pixelRatio) : null
+            );
+            const drawingBufferHeight = canvas && canvas.height ? canvas.height : (
+                cssHeight && pixelRatio ? Math.round(cssHeight * pixelRatio) : null
+            );
+            return {
+                pixelRatio,
+                cssSize: {
+                    width: cssWidth,
+                    height: cssHeight
+                },
+                drawingBuffer: {
+                    width: drawingBufferWidth,
+                    height: drawingBufferHeight,
+                    pixels: drawingBufferWidth && drawingBufferHeight ? drawingBufferWidth * drawingBufferHeight : null
+                },
+                estimatedRenderPixels: cssWidth && cssHeight && pixelRatio
+                    ? Math.round(cssWidth * cssHeight * pixelRatio * pixelRatio)
+                    : null
+            };
+        }
+
         function addMaterial(material) {
             if (!material) {
                 return;
@@ -928,6 +1013,8 @@ async function captureSceneSnapshot(cdp) {
             });
         }
 
+        const rendererPixelInfo = readRendererPixelInfo();
+
         return {
             location: window.location.href,
             userAgent: navigator.userAgent,
@@ -944,7 +1031,13 @@ async function captureSceneSnapshot(cdp) {
                 pmndrsLensFlareEnabled: typeof settingsComponent.isPmndrsLensFlareEnabled === 'function' ? settingsComponent.isPmndrsLensFlareEnabled() : settingsComponent.data.pmndrsLensFlareEnabled
             } : null,
             renderer: renderer ? {
-                pixelRatio: typeof renderer.getPixelRatio === 'function' ? renderer.getPixelRatio() : null,
+                pixelRatio: rendererPixelInfo ? rendererPixelInfo.pixelRatio : null,
+                cssSize: rendererPixelInfo ? rendererPixelInfo.cssSize : null,
+                drawingBuffer: rendererPixelInfo ? rendererPixelInfo.drawingBuffer : null,
+                estimatedRenderPixels: rendererPixelInfo ? rendererPixelInfo.estimatedRenderPixels : null,
+                pixelBudget: settingsComponent && settingsComponent._vrodosRenderPixelBudget
+                    ? Object.assign({}, settingsComponent._vrodosRenderPixelBudget)
+                    : null,
                 shadowMapEnabled: Boolean(renderer.shadowMap && renderer.shadowMap.enabled),
                 shadowMapType: renderer.shadowMap ? renderer.shadowMap.type : null,
                 outputColorSpace: renderer.outputColorSpace || null,
@@ -1318,6 +1411,15 @@ function printSummary(result) {
     console.log(`rAF: p50 ${formatMs(raf.p50Ms)}, p95 ${formatMs(raf.p95Ms)}, mean ${formatMs(raf.meanMs)}, max ${formatMs(raf.maxMs)}, frames ${raf.count}`);
     if (scene && scene.objectCounts) {
         console.log(`Scene: ${scene.objectCounts.visibleMeshes}/${scene.objectCounts.meshes} visible meshes, ${scene.objectCounts.geometries} geometries, ${scene.objectCounts.materials} materials, ${scene.objectCounts.textures} textures`);
+        if (scene.renderer && scene.renderer.cssSize) {
+            const css = scene.renderer.cssSize;
+            const buffer = scene.renderer.drawingBuffer || {};
+            const estimatedPixels = scene.renderer.estimatedRenderPixels;
+            const estimatedLabel = Number.isFinite(estimatedPixels) ? estimatedPixels.toLocaleString('en-US') : 'n/a';
+            const budget = scene.renderer.pixelBudget;
+            const budgetLabel = budget && budget.pixelBudget ? `${budget.pixelBudget.toLocaleString('en-US')} px (${budget.source}, applied ${budget.applied ? 'yes' : 'no'})` : 'none';
+            console.log(`Renderer: css ${css.width}x${css.height}, pixelRatio ${scene.renderer.pixelRatio}, buffer ${buffer.width || 'n/a'}x${buffer.height || 'n/a'}, estimated ${estimatedLabel} pixels, budget ${budgetLabel}`);
+        }
         console.log(`Shadows: ${scene.objectCounts.shadowCasters} casters, ${scene.objectCounts.shadowReceivers} receivers, renderer shadow map ${scene.renderer ? scene.renderer.shadowMapEnabled : 'n/a'}`);
     }
     console.log(`Resources: ${resources.count} entries, transfer ${formatBytes(resources.transferSize)}, encoded ${formatBytes(resources.encodedBodySize)}, decoded ${formatBytes(resources.decodedBodySize)}`);

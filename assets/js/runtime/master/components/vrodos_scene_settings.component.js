@@ -615,6 +615,10 @@ AFRAME.registerComponent('scene-settings', {
             this.isPmndrsAtmosphereEnabled();
     },
     hasPostProcessingPipelineRequest: function () {
+        if (this.data.postFXEngine === 'pmndrs' && this.isPmndrsAtmosphereEnabled()) {
+            return true;
+        }
+
         return this.getRenderQualityLevel() === 'high' &&
             this.data.postFXEnabled !== '0' &&
             this.hasCinematicShaderOptions();

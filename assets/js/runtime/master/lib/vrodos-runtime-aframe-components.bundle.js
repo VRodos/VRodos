@@ -961,6 +961,9 @@
       return this.hasBloomEffectEnabled() || this.isPostFXOptionEnabled("postFXColorEnabled") || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsVignetteEnabled === "true" || this.data.pmndrsVignetteEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsNoiseEnabled === "true" || this.data.pmndrsNoiseEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsChromaticAberrationEnabled === "true" || this.data.pmndrsChromaticAberrationEnabled === "1") || this.isPostFXOptionEnabled("postFXTAAEnabled") || this.isPostFXOptionEnabled("postFXSSREnabled") || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAtmosphereEnabled();
     },
     hasPostProcessingPipelineRequest: function() {
+      if (this.data.postFXEngine === "pmndrs" && this.isPmndrsAtmosphereEnabled()) {
+        return true;
+      }
       return this.getRenderQualityLevel() === "high" && this.data.postFXEnabled !== "0" && this.hasCinematicShaderOptions();
     },
     warnImmersiveXrPostProcessingFallback: function() {

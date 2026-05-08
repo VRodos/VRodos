@@ -31,6 +31,7 @@ The first profiling pass on `http://wp.local:5832/Master_Client_766.html` showed
 - Complete: Settings > Assets changed to a GLB diagnostics/reporting surface while per-asset actions live on the dashboard.
 - Complete: dashboard Compile Use toggles for ready safe Draco derivatives, with validation before enabling compile substitution.
 - Complete: AJAX dashboard refresh/toggle actions for cheap row updates without a full dashboard reload.
+- Complete: desktop performance-profile render pixel budgeting and profiler reporting for renderer CSS size, drawing-buffer size, pixel ratio, and estimated render pixels.
 - Complete: first admin refactor phase split the asset optimization manager into a thin hook coordinator plus focused files under `includes/asset-optimization/`.
 - Complete: second admin refactor phase moved top-level dashboard rendering from `VRodos_Core_Manager` into `includes/admin/class-vrodos-admin-dashboard-page.php` while preserving the existing menu callback wrapper.
 - Complete: third admin refactor phase split `VRodos_Asset_CPT_Manager` into a thin hook registrar plus focused files under `includes/asset-cpt/`.
@@ -60,6 +61,15 @@ Clean comparison command:
 ```bash
 node scripts/profile-master-client.mjs http://wp.local:5832/Master_Client_766.html --disable-fps-meter --spector --output C:\tmp\vrodos-master-client-no-fps-spector-run.json --spector-output C:\tmp\vrodos-master-client-no-fps-spector.json
 ```
+
+Desktop DPR/pixel-budget profiling:
+
+```bash
+node scripts/profile-master-client.mjs http://wp.local:5832/Master_Client_766.html --disable-fps-meter --viewport 3840x2160 --dpr 2 --output C:\tmp\vrodos-master-client-4k-dpr2.json
+node scripts/profile-master-client.mjs "http://wp.local:5832/Master_Client_766.html?vrodos_dpr_pixel_budget=1650000" --disable-fps-meter --viewport 3840x2160 --dpr 2 --output C:\tmp\vrodos-master-client-4k-dpr2-budget.json
+```
+
+The runtime keeps `high` visually stable by default. The desktop pixel budget is applied automatically only to the `performance` render-quality profile and is skipped during immersive WebXR. The `vrodos_dpr_pixel_budget` query parameter is a profiling/debug override for desktop captures, useful when comparing high-quality fullscreen cost without changing scene metadata.
 
 Clean Spector result with the FPS meter disabled:
 
@@ -306,6 +316,7 @@ Do not add automatic LOD substitution until visual thresholds, distance bands, s
 - `high` must remain visually equivalent to the current look.
 - Performance optimizations must not intentionally turn off current high-profile visual features.
 - Lower-cost behavior belongs in `standard`, `performance`, or future adaptive modes.
+- Desktop DPR pixel budgeting applies automatically to `performance`, is skipped in immersive WebXR, and can be forced for profiling with `?vrodos_dpr_pixel_budget=PIXELS`.
 - Expensive scene content should be reported with diagnostics before it is silently altered.
 
 ## Implementation Steps
