@@ -475,35 +475,6 @@
 	</div>
 </div>
 
-<!-- POI Video Properties -->
-<div id="popUpPoiVideoPropertiesDiv" class="object-property-section" style="display:none;">
-	<div class="prop-section-title">POI Video</div>
-
-	<div class="prop-row">
-		<label for="poi_video_reward_checkbox" class="prop-label">Center Video</label>
-		<input type="checkbox" id="poi_video_reward_checkbox" name="poi_video_reward_checkbox" value="center_video"
-				checked="true" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary" />
-	</div>
-
-	<div class="prop-row tw-flex-col tw-items-stretch">
-		<label class="prop-label tw-mb-1">X Coordinates</label>
-		<div class="tw-flex tw-items-center tw-gap-1">
-			<span class="tw-text-[9px] tw-text-slate-500">-30</span>
-			<input type="range" min="-30" max="30" value="0" class="tw-range tw-range-xs tw-range-primary tw-flex-1" id="focus_X">
-			<span class="tw-text-[9px] tw-text-slate-500">30</span>
-		</div>
-	</div>
-
-	<div class="prop-row tw-flex-col tw-items-stretch">
-		<label class="prop-label tw-mb-1">Z Coordinates</label>
-		<div class="tw-flex tw-items-center tw-gap-1">
-			<span class="tw-text-[9px] tw-text-slate-500">-50</span>
-			<input type="range" min="-50" max="0" value="0" class="tw-range tw-range-xs tw-range-primary tw-flex-1" id="focus_Z">
-			<span class="tw-text-[9px] tw-text-slate-500">0</span>
-		</div>
-	</div>
-</div>
-
 <!-- Chat Properties -->
 <div id="popUpPoiChatPropertiesDiv" class="object-property-section" style="display:none;">
 	<div class="prop-section-title">Chat Properties</div>

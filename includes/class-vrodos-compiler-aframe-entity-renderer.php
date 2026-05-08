@@ -413,6 +413,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->reset_compile_diagnostics();
 		foreach ( $objects as $object_key => $obj ) {
 			if ( is_object( $obj ) ) {
+				unset( $obj->follow_camera, $obj->follow_camera_x, $obj->follow_camera_z );
+
 				if ( empty( $obj->uuid ) ) {
 					$obj->uuid = $this->build_runtime_object_id( $obj, (string) $object_key );
 				}

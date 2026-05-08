@@ -400,6 +400,7 @@ class VRodos_Scene_CPT_Manager {
 			foreach ( $content_json->objects as $key => $value ) {
 				$name        = $key;
 				$object_data = (array) $value;
+				unset( $object_data['follow_camera'], $object_data['follow_camera_x'], $object_data['follow_camera_z'] );
 
 				$is_light = false;
 

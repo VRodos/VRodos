@@ -601,10 +601,6 @@ function showPropertiesInPanel(object) {
             VRODOS.ui.displayPoiImageTextProperties(null, name);
             hasProperties = true;
             break;
-        case 'video':
-            VRODOS.ui.displayPoiVideoProperties(null, name);
-            hasProperties = true;
-            break;
         case 'audio':
             displayAudioProperties(object);
             hasProperties = true;
@@ -1604,7 +1600,6 @@ VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;
 VRODOS.ui.controlInterface = controlInterface;
 VRODOS.ui.controllerDatGuiOnChange = controllerDatGuiOnChange;
 VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes = updatePositionsPhpAndJavsFromControlsAxes;
-
 
 
 

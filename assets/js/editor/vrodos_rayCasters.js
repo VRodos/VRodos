@@ -420,9 +420,6 @@ function showProperties(event, object) {
         case 'poi-imagetext':
             VRODOS.ui.displayPoiImageTextProperties(event, name);
             break;
-        case 'video':
-            VRODOS.ui.displayPoiVideoProperties(event, name);
-            break;
         case 'door':
             VRODOS.ui.displayDoorProperties(event, name);
             break;
@@ -920,41 +917,6 @@ function initPersistentPropertyListeners() {
         setDesc.addEventListener("change", setProp('poi_img_content', false));
     }
 
-    // --- POI Video Properties ---
-    const chboxVid = document.getElementById("poi_video_reward_checkbox");
-    const setFocusX = document.getElementById('focus_X');
-    const setFocusZ = document.getElementById('focus_Z');
-
-    if (chboxVid) {
-        chboxVid.addEventListener("change", function () {
-            if (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.object) {
-                const obj = VRODOS.editor.transform_controls.object;
-                const oldVal = obj.follow_camera;
-                const newVal = this.checked ? 1 : 0;
-
-                if (oldVal !== newVal) {
-                    obj.follow_camera = newVal;
-                    if (this.checked) {
-                        if (setFocusX) obj.follow_camera_x = setFocusX.value;
-                        if (setFocusZ) obj.follow_camera_z = setFocusZ.value;
-                    }
-                    
-                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'follow_camera', oldVal, newVal));
-                    }
-
-                    if (setFocusX) setFocusX.disabled = !this.checked;
-                    if (setFocusZ) setFocusZ.disabled = !this.checked;
-                    
-                    VRODOS.api.saveChanges();
-                }
-            }
-        });
-    }
-
-    if (setFocusX) setFocusX.addEventListener("change", setProp('follow_camera_x', false));
-    if (setFocusZ) setFocusZ.addEventListener("change", setProp('follow_camera_z', false));
-
     // --- POI Chat Properties ---
     const setChatTitle = document.getElementById('poi_chat_title');
     const setChatParticipants = document.getElementById('poi_chat_participants');
@@ -1100,39 +1062,4 @@ VRODOS.api.saveChanges = function(options) {
 
     return VRODOS.api.saveScene();
 }
-
-/**
- * Poi video properties
- *
- * @param event
- * @param name
- */
-VRODOS.ui.displayPoiVideoProperties = function(event, name) {
-    const ppPropertiesDiv = document.getElementById("popUpPoiVideoPropertiesDiv");
-    if (!ppPropertiesDiv) return;
-
-    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
-    if (!sceneObj) return;
-
-    const chbox = document.getElementById("poi_video_reward_checkbox");
-    const setFocusX = document.getElementById('focus_X');
-    const setFocusZ = document.getElementById('focus_Z');
-
-    if (chbox) chbox.checked = sceneObj.follow_camera == 1;
-
-    if (setFocusX) {
-        setFocusX.value = sceneObj.follow_camera_x;
-        setFocusX.disabled = sceneObj.follow_camera == 0;
-    }
-    if (setFocusZ) {
-        setFocusZ.value = sceneObj.follow_camera_z;
-        setFocusZ.disabled = sceneObj.follow_camera == 0;
-    }
-
-    ppPropertiesDiv.style.display = '';
-}
-
-
-
-
 

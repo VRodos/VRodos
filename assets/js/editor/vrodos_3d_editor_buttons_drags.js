@@ -1083,7 +1083,7 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
 
     // Prevent showing the context menu on property panels
     ['popUpArtifactPropertiesDiv', 'popUpDoorPropertiesDiv', 'popUpPoiImageTextPropertiesDiv',
-     'popUpPoiVideoPropertiesDiv', 'popUpSunPropertiesDiv', 'popUpLampPropertiesDiv',
+     'popUpSunPropertiesDiv', 'popUpLampPropertiesDiv',
      'popUpSpotPropertiesDiv', 'popUpAmbientPropertiesDiv', 'popUpPoiChatPropertiesDiv'].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('contextmenu', (e) => { e.preventDefault(); });
@@ -1355,7 +1355,6 @@ VRODOS.api.triggerAutoSave = function() {
     VRODOS.editor.envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     VRODOS.api.commitPendingSceneSave();
 };
-
 
 
 

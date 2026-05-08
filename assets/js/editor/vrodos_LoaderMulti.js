@@ -632,7 +632,19 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
     const resource = resources3D[name] || {};
 
     // Automatically load values that are available
-    const excludeKeys = new Set(['id', 'translation', 'position', 'rotation', 'scale', 'quaternion', 'children', 'trs']);
+    const excludeKeys = new Set([
+        'id',
+        'translation',
+        'position',
+        'rotation',
+        'scale',
+        'quaternion',
+        'children',
+        'trs',
+        'follow_camera',
+        'follow_camera_x',
+        'follow_camera_z'
+    ]);
     for (const [key, value] of Object.entries(resource)) {
         if (!excludeKeys.has(key)) {
             object[key] = value;
@@ -749,7 +761,6 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
 
     return object;
 }
-
 
 
 

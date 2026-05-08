@@ -196,7 +196,10 @@ VRODOS.exporter.SceneExporter = class {
             'title',
             'name',
             'isGroup',
-            'path'
+            'path',
+            'follow_camera',
+            'follow_camera_x',
+            'follow_camera_z'
         ];
 
         const entryObject = {};
@@ -312,6 +315,10 @@ VRODOS.importer.SceneImporter = class {
 
         for (const asset_key in scene_objects) {
             const value = scene_objects[asset_key];
+            delete value.follow_camera;
+            delete value.follow_camera_x;
+            delete value.follow_camera_z;
+
             const name = VRODOS.utils.sceneSafeObjectName({
                 name: asset_key,
                 asset_slug: value.asset_slug,
@@ -352,4 +359,3 @@ VRODOS.importer.SceneImporter = class {
         return resources3D_new;
     }
 };
-
