@@ -537,6 +537,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			return;
 		}
 
+		$panel_width  = '1.25';
+		$panel_height = '1.77';
+		$panel_depth  = '0.035';
+
 		$entity = $dom->createElement( 'a-entity' );
 		$entity->setAttribute( 'id', 'text-panel_' . $uuid );
 		$entity->setAttribute( 'class', 'hideable' );
@@ -544,12 +548,31 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->setAffineTransformations( $entity, $obj );
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 
-		$backing = $dom->createElement( 'a-plane' );
-		$backing->setAttribute( 'width', '2.8' );
-		$backing->setAttribute( 'height', '1.5' );
-		$backing->setAttribute( 'material', 'color: #ffffff; opacity: 0.96; transparent: true; side: double; roughness: 0.85; metalness: 0' );
+		$backing = $dom->createElement( 'a-box' );
+		$backing->setAttribute( 'width', $panel_width );
+		$backing->setAttribute( 'height', $panel_height );
+		$backing->setAttribute( 'depth', $panel_depth );
+		$backing->setAttribute( 'material', 'color: #faf7ef; roughness: 0.78; metalness: 0' );
 		$backing->setAttribute( 'position', '0 0 0' );
 		$this->set_world_lighting_attributes( $backing );
+
+		$border_material = 'color: #1f2937; opacity: 0.45; transparent: true; roughness: 0.9; metalness: 0';
+		$border_specs    = [
+			[ '1.18', '0.008', '0.006', '0 0.84 0.021' ],
+			[ '1.18', '0.008', '0.006', '0 -0.84 0.021' ],
+			[ '0.008', '1.68', '0.006', '-0.59 0 0.021' ],
+			[ '0.008', '1.68', '0.006', '0.59 0 0.021' ],
+		];
+		$border_elements  = [];
+		foreach ( $border_specs as $border_spec ) {
+			$border = $dom->createElement( 'a-box' );
+			$border->setAttribute( 'width', $border_spec[0] );
+			$border->setAttribute( 'height', $border_spec[1] );
+			$border->setAttribute( 'depth', $border_spec[2] );
+			$border->setAttribute( 'position', $border_spec[3] );
+			$border->setAttribute( 'material', $border_material );
+			$border_elements[] = $border;
+		}
 
 		$label = $dom->createElement( 'a-text' );
 		$label->setAttribute( 'value', $text );
@@ -557,12 +580,15 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$label->setAttribute( 'align', 'left' );
 		$label->setAttribute( 'anchor', 'left' );
 		$label->setAttribute( 'baseline', 'top' );
-		$label->setAttribute( 'wrap-count', '46' );
-		$label->setAttribute( 'width', '2.45' );
-		$label->setAttribute( 'position', '-1.22 0.58 0.018' );
+		$label->setAttribute( 'wrap-count', '28' );
+		$label->setAttribute( 'width', '1.08' );
+		$label->setAttribute( 'position', '-0.54 0.71 0.026' );
 		$label->setAttribute( 'material', 'side: double; transparent: true' );
 
 		$entity->appendChild( $backing );
+		foreach ( $border_elements as $border ) {
+			$entity->appendChild( $border );
+		}
 		$entity->appendChild( $label );
 		$ascene->appendChild( $entity );
 	}
@@ -571,7 +597,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$uuid = $obj->uuid ?? '';
 		$cat  = $obj->category_name ?? $obj->category_slug ?? '';
 		$type = $this->map_light_type( $cat );
-		
+
 		$a_light = $dom->createElement( 'a-light' );
 		$a_light->appendChild( $dom->createTextNode( '' ) );
 		$this->setAffineTransformations( $a_light, $obj );
@@ -591,7 +617,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$target->setAttribute( 'position', implode( ' ', (array) $obj->targetposition ) );
 			$ascene->appendChild( $target );
 			$a_light->setAttribute( 'target', '#' . $target_id );
-			
+
 			if ( $type === 'directional' ) {
 				$is_casting_shadow = isset( $obj->castingShadow ) ? ( $obj->castingShadow == '1' ? 'true' : 'false' ) : 'false';
 				$light_attr .= '; castShadow: ' . $is_casting_shadow;
@@ -628,7 +654,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private function render_gltf_entity( $dom, $ascene, $assets, $obj, $scene_id = 0 ) {
 		$uuid = $obj->uuid ?? '';
 		$cat  = $obj->category_slug ?? '';
-		
+
 		// Add to assets
 		$asset_item = $dom->createElement( 'a-asset-item' );
 		$asset_item->setAttribute( 'id', $uuid );
@@ -644,16 +670,16 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		// Create entity
 		$entity = $dom->createElement( 'a-entity' );
 		$entity->setAttribute( 'gltf-model', '#' . $uuid );
-		
+
 		$sc_x = $obj->scale[0] ?? 1;
 		$sc_y = $obj->scale[1] ?? 1;
 		$sc_z = $obj->scale[2] ?? 1;
 		$entity->setAttribute( 'original-scale', "$sc_x $sc_y $sc_z" );
-		
+
 		$this->setAffineTransformations( $entity, $obj, true );
-		
+
 		$class = 'override-materials hideable';
-		
+
 		if ( $cat === 'walkable-surface' ) {
 			$class .= ' vrodos-navmesh';
 			$walk_behavior = ( isset( $obj->walkableBehavior ) && 'auto' === strtolower( (string) $obj->walkableBehavior ) ) ? 'auto' : 'precise';
@@ -708,7 +734,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$entity->setAttribute( 'clear-frustum-culling', '' );
 		$this->set_world_lighting_attributes( $entity );
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
-		
+
 		$ascene->appendChild( $entity );
 	}
 
@@ -877,7 +903,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$front->setAttribute( 'position', '0 0 0.001' );
 			$front->setAttribute( 'material', $this->world_media_material( "#image_$uuid", 'front', $is_transparent_bool ) );
 			$this->set_world_lighting_attributes( $front );
-			
+
 			$back = $dom->createElement( 'a-plane' );
 			$back->setAttribute( 'height', '2' );
 			$back->setAttribute( 'width', '2' );
@@ -914,13 +940,13 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 				$poster->setAttribute( 'id', $poster_id );
 				$poster->setAttribute( 'src', $poster_url );
 				$this->track_runtime_asset( 'video-poster', $poster_url, 'video:' . $uuid );
-				
+
 				// Only apply crossorigin if the URL is external
-				if ( strpos( $poster_url, $this->plugin_path_url ) === false && 
+				if ( strpos( $poster_url, $this->plugin_path_url ) === false &&
 				     strpos( $poster_url, 'wp-content/uploads' ) === false ) {
 					$poster->setAttribute( 'crossorigin', 'anonymous' );
 				}
-				
+
 				$assets->appendChild( $poster );
 			}
 
@@ -1070,7 +1096,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private function render_poi_imagetext_entity( $dom, $ascene, $assets, $obj ) {
 		$uuid = $obj->uuid ?? '';
-		
+
 		// 1. Assets
 		$main_img = $dom->createElement( 'img' );
 		$main_img->setAttribute( 'id', 'main_img_' . $uuid );
@@ -1100,7 +1126,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$ui->setAttribute( 'material', 'visible: false; depthTest: true' );
 		$ui->setAttribute( 'info-panel', $uuid );
 		$this->setAffineTransformations( $ui, $obj );
-		
+
 		// 3. The Button (Trigger GLTF)
 		$button = $dom->createElement( 'a-entity' );
 		$button->setAttribute( 'id', 'button_poi_' . $uuid );
@@ -1138,7 +1164,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		// Title Text (Using fallbacks for common mismatched keys)
 		$title_text = $obj->poi_img_title ?? $obj->poi_title ?? '';
-		
+
 		$title = $dom->createElement( 'a-text' );
 		$title->setAttribute( 'id', 'title_' . $uuid );
 		$title->setAttribute( 'position', '0 0.82 0.01' );
@@ -1150,10 +1176,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$title->setAttribute( 'title_to_add', $this->sanitize_text_attr( $title_text ) );
 		$this->set_overlay_ui_attributes( $title );
 		$ui->appendChild( $title );
-		
+
 		// Description Text (Using fallbacks for common mismatched keys)
 		$desc_text = $obj->poi_img_content ?? $obj->poi_description ?? '';
-		
+
 		$desc = $dom->createElement( 'a-text' );
 		$desc->setAttribute( 'id', 'desc_' . $uuid );
 		$desc->setAttribute( 'position', '0 -0.25 0.01' );

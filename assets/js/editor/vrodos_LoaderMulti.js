@@ -153,19 +153,19 @@ VRODOS.loader.wrapTextPanelLines = function(ctx, text, maxWidth, maxLines) {
 
 VRODOS.loader.createTextPanelTexture = function(text) {
     const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 512;
+    canvas.width = 768;
+    canvas.height = 1088;
 
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#111827';
-    ctx.font = '600 38px Arial, Helvetica, sans-serif';
+    ctx.font = '600 34px Arial, Helvetica, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
-    const paddingX = 54;
-    const paddingY = 46;
-    const lineHeight = 50;
+    const paddingX = 56;
+    const paddingY = 64;
+    const lineHeight = 47;
     const maxLines = Math.floor((canvas.height - paddingY * 2) / lineHeight);
     const lines = VRODOS.loader.wrapTextPanelLines(ctx, text, canvas.width - paddingX * 2, maxLines);
 
@@ -184,6 +184,10 @@ VRODOS.loader.createTextPanelTexture = function(text) {
 
 VRODOS.loader.createTextPanelObject = function(name, resource) {
     const text = VRODOS.loader.normalizeTextPanelContent(resource || {});
+    const panelWidth = 1.25;
+    const panelHeight = 1.77;
+    const textWidth = 1.08;
+    const textHeight = 1.54;
     const group = new THREE.Group();
     group.name = name;
     group.asset_name = (resource && resource.asset_name) || name;
@@ -196,13 +200,12 @@ VRODOS.loader.createTextPanelObject = function(name, resource) {
     group.isLight = false;
 
     const panel = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.8, 1.5),
-        new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.96,
-            side: THREE.DoubleSide,
-            depthWrite: false
+        new THREE.BoxGeometry(panelWidth, panelHeight, 0.035),
+        new THREE.MeshStandardMaterial({
+            color: 0xfaf7ef,
+            roughness: 0.78,
+            metalness: 0,
+            side: THREE.FrontSide
         })
     );
     panel.name = `${name  }_panel`;
@@ -210,16 +213,16 @@ VRODOS.loader.createTextPanelObject = function(name, resource) {
     group.add(panel);
 
     const border = new THREE.LineSegments(
-        new THREE.EdgesGeometry(panel.geometry),
-        new THREE.LineBasicMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.9 })
+        new THREE.EdgesGeometry(new THREE.PlaneGeometry(panelWidth * 0.94, panelHeight * 0.95)),
+        new THREE.LineBasicMaterial({ color: 0x1f2937, transparent: true, opacity: 0.45 })
     );
     border.name = `${name  }_border`;
-    border.position.z = 0.012;
+    border.position.z = 0.024;
     border.isSelectableMesh = false;
     group.add(border);
 
     const textPlane = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.52, 1.22),
+        new THREE.PlaneGeometry(textWidth, textHeight),
         new THREE.MeshBasicMaterial({
             map: VRODOS.loader.createTextPanelTexture(text),
             transparent: true,
@@ -228,7 +231,7 @@ VRODOS.loader.createTextPanelObject = function(name, resource) {
         })
     );
     textPlane.name = `${name  }_text`;
-    textPlane.position.z = 0.018;
+    textPlane.position.z = 0.026;
     textPlane.isSelectableMesh = false;
     group.add(textPlane);
 
