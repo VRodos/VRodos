@@ -607,7 +607,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$entity->setAttribute( 'id', "entity_$uuid" );
 			$entity->setAttribute( 'highlight', "entity_$uuid" );
 			if ( $this->isHoverEnabled ) {
-				$entity->setAttribute( 'vrodos-hypnotic-hover', '' );
+				$entity->setAttribute( 'vrodos-door-indicator', '' );
 			}
 			if ( ! empty( $obj->sceneID_target ) ) {
 				$this->includeDoorFunctionality( $entity, $obj->sceneID_target );

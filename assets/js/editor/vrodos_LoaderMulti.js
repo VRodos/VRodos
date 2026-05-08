@@ -764,4 +764,3 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
 
 
 
-
