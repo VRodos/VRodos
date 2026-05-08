@@ -133,6 +133,7 @@ function humanizeObjectTypeLabel(typeValue) {
 
     const aliases = {
         'walkable-surface': 'Walkable Surface',
+        '3d-text': '3D Text',
         'poi-imagetext': 'Image Text POI',
         'poi-link': 'Link POI',
         'lightSun': 'Sun Light',
@@ -1600,6 +1601,5 @@ VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;
 VRODOS.ui.controlInterface = controlInterface;
 VRODOS.ui.controllerDatGuiOnChange = controllerDatGuiOnChange;
 VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes = updatePositionsPhpAndJavsFromControlsAxes;
-
 
 

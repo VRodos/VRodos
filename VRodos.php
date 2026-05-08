@@ -30,6 +30,7 @@ $project_scope = 2;
 
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-path-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-render-runtime-manager.php');
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-text-asset-helper.php');
 
 // Asset Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-asset-manager.php');

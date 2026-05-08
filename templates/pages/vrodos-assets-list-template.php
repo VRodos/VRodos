@@ -19,6 +19,7 @@ function vrodos_get_asset_category_icon($category_slug) {
         'walkable-surface' => 'footprints',
         'door'          => 'door-open',
         'video'         => 'clapperboard',
+        '3d-text'       => 'type',
         'poi-imagetext' => 'image',
         'image'         => 'image-play',
         'chat'          => 'message-square',
@@ -30,7 +31,7 @@ function vrodos_get_asset_category_icon($category_slug) {
 }
 
 function vrodos_get_asset_preview_fallback_icon($category_slug) {
-    return $category_slug === 'assessment'
+    return in_array($category_slug, ['assessment', '3d-text'], true)
         ? vrodos_get_asset_category_icon($category_slug)
         : 'image-off';
 }

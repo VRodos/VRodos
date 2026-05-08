@@ -78,6 +78,49 @@ class VRodos_Upload_Manager {
 			update_post_meta( $asset_new_id, 'vrodos_asset3d_video', $attachment_video_id );
 		}
 	}
+
+	public static function create_asset_add_text_frontend( int $asset_id ): array {
+		if ( ! isset( $_FILES['textAssetFileInput'] ) || (int) ( $_FILES['textAssetFileInput']['error'] ?? UPLOAD_ERR_NO_FILE ) === UPLOAD_ERR_NO_FILE ) {
+			return [
+				'success' => false,
+				'error'   => 'No text file was uploaded.',
+			];
+		}
+
+		$file = $_FILES['textAssetFileInput'];
+		$format = class_exists( 'VRodos_Text_Asset_Helper' )
+			? VRodos_Text_Asset_Helper::detect_format( (string) ( $file['name'] ?? '' ), (string) ( $file['type'] ?? '' ) )
+			: '';
+		if ( ! in_array( $format, [ 'txt', 'rtf' ], true ) ) {
+			return [
+				'success' => false,
+				'error'   => 'Only TXT and RTF files are supported for 3D Text assets.',
+			];
+		}
+
+		$attachment_id = self::upload_img_vid_aud( $file, $asset_id );
+		if ( ! $attachment_id ) {
+			return [
+				'success' => false,
+				'error'   => 'Text file upload failed.',
+			];
+		}
+
+		update_post_meta( $asset_id, 'vrodos_asset3d_text_file', (int) $attachment_id );
+		$path = get_attached_file( (int) $attachment_id );
+		$result = class_exists( 'VRodos_Text_Asset_Helper' )
+			? VRodos_Text_Asset_Helper::extract_from_file( is_string( $path ) ? $path : '', $format )
+			: [
+				'success' => false,
+				'error'   => 'Text extraction helper is unavailable.',
+			];
+
+		if ( class_exists( 'VRodos_Text_Asset_Helper' ) ) {
+			VRodos_Text_Asset_Helper::persist_extracted_text( $asset_id, $result, (int) $attachment_id );
+		}
+
+		return $result;
+	}
 	public static function register_hooks(): void {
 		// All hooks related to file uploads
 		add_filter( 'upload_dir', self::upload_dir_for_scenes_or_assets(...) );

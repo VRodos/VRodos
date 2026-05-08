@@ -35,9 +35,27 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
 
     function vrodos_getAssetPreviewFallbackIcon(asset) {
         const categoryKey = asset && (asset.category_slug || asset.category_icon);
-        return categoryKey === "assessment"
+        return ["assessment", "3d-text"].indexOf(categoryKey) !== -1
           ? VRODOS.ui.getCategoryIcon(categoryKey)
           : "image-off";
+    }
+
+    function vrodos_decodeBase64Unicode(value) {
+        if (typeof value !== 'string' || value === '') {
+            return '';
+        }
+
+        try {
+            const binary = window.atob(value);
+            const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+            return new TextDecoder('utf-8').decode(bytes);
+        } catch (err) {
+            try {
+                return window.atob(value);
+            } catch (fallbackErr) {
+                return '';
+            }
+        }
     }
 
     function vrodos_decodeAssessmentText(value) {
@@ -275,7 +293,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             dragGhostImg.removeAttribute('src');
             dragGhostImg.style.display = 'none';
             dragGhostFallback.style.display = 'flex';
-            dragGhostFallback.innerHTML = `<i data-lucide="${  fallbackIcon  }" style="width:28px; height:28px;"></i>`;
+            dragGhostFallback.innerHTML = `<i data-lucide="${  escapeAttribute(fallbackIcon)  }" style="width:28px; height:28px;"></i>`;
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
@@ -288,6 +306,10 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             const attr = target.attributes[i];
             const name = attr.name.substring(attr.name.indexOf('-') + 1);
             dragData[name] = attr.value;
+        }
+        if (dragData.text_content_b64) {
+            dragData.text_content = vrodos_decodeBase64Unicode(dragData.text_content_b64);
+            delete dragData.text_content_b64;
         }
         dragData.title = `${target.getAttribute("data-asset_slug")  }_${  Math.floor(Date.now() / 1000)}`;
         dragData.name = dragData.title;
@@ -330,7 +352,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                     //Assign different attributes to the element.
                     element.className = "tablinks tw-btn tw-btn-xs tw-btn-ghost";
                     element.id = f.category_slug;
-                    element.innerHTML = `<i data-lucide='${  lucideIconName  }' title='${  f.category_name  }' style='width:18px; height:18px;'></i>`;
+                    element.innerHTML = `<i data-lucide='${  escapeAttribute(lucideIconName)  }' title='${  escapeAttribute(f.category_name)  }' style='width:18px; height:18px;'></i>`;
                     element.addEventListener("click", function (event) { openCategoryTab(event, this); });
 
                     document.getElementById("assetCategTab").appendChild(element);
@@ -338,7 +360,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
 
                 let draggable_string = '';
                 for (const [key, value] of Object.entries(f)) {
-                    draggable_string += `data-${  key  }="${  value  }" `;
+                    draggable_string += `data-${  key  }="${  escapeAttribute(value)  }" `;
                 }
 
                 const previewFallbackIcon = vrodos_getAssetPreviewFallbackIcon(f);
@@ -346,7 +368,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                 const previewMarkup = f.screenshot_path
                     ? `<img class="assetImg tw-w-full tw-h-full tw-object-cover tw-transition-transform tw-duration-700 group-hover:tw-scale-110" draggable="false" src="${  encodeURI(f.screenshot_path)  }">`
                     : `<div class="assetImg tw-flex tw-items-center tw-justify-center tw-bg-slate-700/80">` +
-                        `<i data-lucide="${  previewFallbackIcon  }" class="tw-w-10 tw-h-10 tw-text-slate-300"></i>` +
+                        `<i data-lucide="${  escapeAttribute(previewFallbackIcon)  }" class="tw-w-10 tw-h-10 tw-text-slate-300"></i>` +
                       `</div>`;
 
                 const liHTML = `<li draggable="true" id="asset-${  f.asset_id  }" ` +
@@ -363,7 +385,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                     }</div>` +
 
                     `<div class="tw-absolute tw-top-1.5 tw-right-1.5 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-p-1 tw-rounded-md tw-border tw-border-white/10 tw-z-10">` +
-                        `<i data-lucide="${  lucideIconName  }" class="tw-w-3 tw-h-3 tw-text-slate-200"></i>` +
+                        `<i data-lucide="${  escapeAttribute(lucideIconName)  }" class="tw-w-3 tw-h-3 tw-text-slate-200"></i>` +
                     `</div>${ 
 
                     (function() {
@@ -410,7 +432,13 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
 
     // This function escapes special html characters in names
     function escapeHTML(text) {
-        return text.replace(/\&/g, '&amp;').replace(/\</g, '&lt;').replace(/\>/g, '&gt;');
+        return String(text || '').replace(/\&/g, '&amp;').replace(/\</g, '&lt;').replace(/\>/g, '&gt;');
+    }
+
+    function escapeAttribute(value) {
+        return escapeHTML(String(value ?? ''))
+            .replace(/\"/g, '&quot;')
+            .replace(/\'/g, '&#039;');
     }
 
     // Convert file sizes from bytes to human readable units
@@ -492,6 +520,3 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
         evt.currentTarget.classList.add("active");
     }
 };
-
-
-

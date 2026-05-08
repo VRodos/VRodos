@@ -175,6 +175,22 @@ trait VRodos_Asset_CPT_Submission_Controller {
 				}
 				break;
 
+			case '3d-text':
+				$has_text_upload = isset( $_FILES['textAssetFileInput'] ) && (int) ( $_FILES['textAssetFileInput']['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_NO_FILE;
+				if ( $has_text_upload ) {
+					$result = VRodos_Upload_Manager::create_asset_add_text_frontend( (int) $asset_id );
+					if ( empty( $result['success'] ) ) {
+						update_post_meta( $asset_id, 'vrodos_asset3d_text_extract_error', (string) ( $result['error'] ?? 'Text extraction failed.' ) );
+					}
+				} elseif ( isset( $_POST['textAssetContent'] ) && class_exists( 'VRodos_Text_Asset_Helper' ) ) {
+					$text_result = VRodos_Text_Asset_Helper::normalize_manual_text( (string) wp_unslash( $_POST['textAssetContent'] ) );
+					VRodos_Text_Asset_Helper::persist_extracted_text( (int) $asset_id, $text_result );
+					if ( empty( $text_result['success'] ) ) {
+						delete_post_meta( $asset_id, 'vrodos_asset3d_text_content' );
+					}
+				}
+				break;
+
 			case 'poi-link':
 				update_post_meta( $asset_id, 'vrodos_asset3d_link', $_POST['assetLinkInput'] ?? '' );
 				break;
@@ -469,6 +485,12 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 		// POI Link
 		$data['asset_link'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
+
+		// 3D Text
+		$data['text_asset_content']   = get_post_meta( $asset_id, 'vrodos_asset3d_text_content', true );
+		$data['text_asset_format']    = get_post_meta( $asset_id, 'vrodos_asset3d_text_format', true );
+		$data['text_asset_truncated'] = get_post_meta( $asset_id, 'vrodos_asset3d_text_truncated', true ) === '1' ? '1' : '';
+		$data['text_asset_file_url']  = self::resolve_media_meta_url( get_post_meta( $asset_id, 'vrodos_asset3d_text_file', true ) );
 
 	}
 }

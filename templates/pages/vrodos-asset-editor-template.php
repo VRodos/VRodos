@@ -30,7 +30,7 @@ extract($data);
     // Pre-apply the correct section visibility to prevent layout flicker on load.
     $initial_cat_slug = ! empty( $saved_term ) ? $saved_term[0]->slug : '';
     if ( $initial_cat_slug ) :
-        $hide_3d = in_array( $initial_cat_slug, [ 'image', 'video' ] );
+        $hide_3d = in_array( $initial_cat_slug, [ 'image', 'video', '3d-text' ], true );
     ?>
     <style>
         <?php if ( $hide_3d ) : ?>
@@ -54,6 +54,9 @@ extract($data);
         <?php elseif ( $initial_cat_slug === 'poi-imagetext' ) : ?>
         #poi_image_text_section,
         #poi_image_file_section { display: block !important; }
+        <?php elseif ( $initial_cat_slug === '3d-text' ) : ?>
+        #text_asset_section,
+        #text_asset_file_section { display: block !important; }
         <?php elseif ( $initial_cat_slug === 'poi-link' ) : ?>
         #poi_link_section { display: block !important; }
         <?php elseif ( $initial_cat_slug === 'chat' ) : ?>
@@ -247,6 +250,29 @@ else { ?>
                         </div>
                     </div>
 
+                    <div id="text_asset_file_section" class="tw-bg-white tw-p-5 tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-space-y-3" style="display:none;">
+                        <div class="tw-flex tw-items-center tw-justify-between">
+                            <label class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">
+                                Text Source
+                            </label>
+                            <i data-lucide="type" class="tw-w-4 tw-h-4 tw-text-primary"></i>
+                        </div>
+                        <div class="tw-w-full tw-bg-slate-50 tw-border tw-border-dashed tw-border-slate-200 tw-rounded-2xl tw-p-3 tw-text-center hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-group">
+                            <input class="tw-hidden" type="file" name="textAssetFileInput" id="textAssetFileInput" accept=".txt,.rtf,text/plain,application/rtf"/>
+                            <label for="textAssetFileInput" class="tw-cursor-pointer tw-flex tw-flex-col tw-items-center tw-gap-2">
+                                <div class="tw-w-7 tw-h-7 tw-bg-white tw-shadow-sm tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-group-hover:tw-scale-110 tw-transition-transform">
+                                    <i data-lucide="upload-cloud" class="tw-w-3.5 tw-h-3.5 tw-text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="tw-text-xs tw-font-bold tw-text-slate-800">TXT / RTF Upload</p>
+                                    <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold tw-uppercase">
+                                        <?php echo ! empty( $text_asset_file_url ) ? 'Source file saved' : 'Optional source file'; ?>
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- Context Tip Card -->
                     <div id="vrodos_editor_tip_card" class="tw-bg-emerald-50 tw-border tw-border-emerald-100 tw-p-5 tw-rounded-2xl">
                         <div class="tw-flex tw-items-center tw-gap-2 tw-mb-2">
@@ -329,6 +355,7 @@ else { ?>
                             'door'          => 'door-open',
                             'audio'         => 'volume-2',
                             'video'         => 'clapperboard',
+                            '3d-text'       => 'type',
                             'poi-imagetext' => 'image',
                             'image'         => 'image-play',
                             'chat'          => 'message-square',
@@ -628,6 +655,25 @@ else { ?>
                                 <textarea id="poiImgDescription" name="poiImgDescription" 
                                           class="vrodos-input !tw-h-auto tw-min-h-[160px] !tw-font-medium" 
                                           placeholder="Write the content here..."><?php echo esc_textarea($poi_img_content); ?></textarea>
+                            </div>
+                        </div>
+
+                        <div id="text_asset_section" class="tw-space-y-6" style="display: none;">
+                            <label for="textAssetContent" class="vrodos-label">
+                                3D Text Content
+                            </label>
+                            <div class="tw-space-y-3">
+                                <textarea id="textAssetContent" name="textAssetContent"
+                                          class="vrodos-input !tw-h-auto tw-min-h-[220px] !tw-font-medium"
+                                          maxlength="<?php echo class_exists( 'VRodos_Text_Asset_Helper' ) ? (int) VRodos_Text_Asset_Helper::MAX_TEXT_LENGTH : 2000; ?>"
+                                          placeholder="Write or upload the text to render inside the 3D scene."><?php echo esc_textarea($text_asset_content ?? ''); ?></textarea>
+                                <div class="tw-flex tw-items-center tw-gap-2 tw-text-[10px] tw-font-bold tw-text-slate-400 tw-uppercase tw-tracking-wider">
+                                    <i data-lucide="info" class="tw-w-3.5 tw-h-3.5"></i>
+                                    <span>Rendered as a readable 3D panel. Long source files are clamped to 2000 characters.</span>
+                                    <?php if ( ! empty( $text_asset_truncated ) ) : ?>
+                                        <span class="tw-text-amber-600">Source was truncated.</span>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
 
@@ -1055,6 +1101,8 @@ else { ?>
 					document.getElementById('video_section').style.display = "none";
 					document.getElementById('video_options_section').style.display = "none";
 					document.getElementById('video_screenshot_section').style.display = "none";
+					document.getElementById('text_asset_section').style.display = "none";
+					document.getElementById('text_asset_file_section').style.display = "none";
 					document.getElementById('poi_image_text_section').style.display = "none";
 					document.getElementById('poi_image_file_section').style.display = "none";
 					document.getElementById('image_flat_file_section').style.display = "none";
@@ -1084,6 +1132,14 @@ else { ?>
 							document.getElementById('screenshot_section').style.display = "none";
 							document.getElementById('audio_section').style.display = "block";
 							document.getElementById('audio_options_section').style.display = "block";
+							break;
+						case "3d-text":
+							document.getElementById('glb_file_section').style.display = "none";
+							document.getElementById('vrodos_3d_preview_card').style.display = "none";
+							document.getElementById('vrodos_editor_tip_card').style.display = "none";
+							document.getElementById('screenshot_section').style.display = "none";
+							document.getElementById('text_asset_section').style.display = "block";
+							document.getElementById('text_asset_file_section').style.display = "block";
 							break;
 						case "poi-link":
 							document.getElementById('poi_link_section').style.display = "block";

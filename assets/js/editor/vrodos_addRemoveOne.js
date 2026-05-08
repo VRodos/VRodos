@@ -826,6 +826,36 @@ VRODOS.api.createAssessmentAsset = function(nameModel, addedAt) {
     VRODOS.api.triggerAutoSave();
 }
 
+VRODOS.api.createTextAsset = function(nameModel, addedAt) {
+    const resource = VRODOS.data.scene_data.objects[nameModel] || {};
+    const textObject = VRODOS.loader.createTextPanelObject(nameModel, {
+        ...resource,
+        addedAt
+    });
+
+    VRODOS.loader.setObjectProperties(textObject, nameModel, VRODOS.data.scene_data.objects);
+    textObject.addedAt = addedAt;
+
+    VRODOS.editor.envir.scene.add(textObject);
+    VRODOS.editor.envir.selectableMeshes.add(textObject);
+    if (typeof VRODOS.ui.attachTransformTarget === 'function') {
+        VRODOS.ui.attachTransformTarget(textObject);
+    } else {
+        VRODOS.editor.currentSelectedRealObject = textObject;
+        VRODOS.editor.transform_controls.detach();
+        VRODOS.editor.transform_controls.attach(textObject);
+    }
+    VRODOS.ui.removeAllCelOutlines();
+    VRODOS.ui.addCelOutline(textObject);
+    VRODOS.ui.frameNewSceneObject(textObject);
+
+    VRODOS.editor.selected_object_name = nameModel;
+    VRODOS.ui.transform.setSize();
+    VRODOS.ui.addInHierarchyViewer(textObject);
+
+    VRODOS.api.triggerAutoSave();
+}
+
 /**
  * Main function to add objects to the canvas.
  */
@@ -863,6 +893,8 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         'lightAmbient': () => VRODOS.api.createLightAmbient(nameModel, addedAt),
         'Pawn': () => VRODOS.api.createPawn(nameModel, addedAt, VRODOS.data.pluginPath),
         'pawn': () => VRODOS.api.createPawn(nameModel, addedAt, VRODOS.data.pluginPath),
+        '3D Text': () => VRODOS.api.createTextAsset(nameModel, addedAt),
+        '3d-text': () => VRODOS.api.createTextAsset(nameModel, addedAt),
         'Assessment': () => VRODOS.api.createAssessmentAsset(nameModel, addedAt),
         'assessment': () => VRODOS.api.createAssessmentAsset(nameModel, addedAt)
     };
@@ -1083,7 +1115,6 @@ VRODOS.utils.disposeObject = function(object) {
         }
     });
 }
-
 
 
 

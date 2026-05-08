@@ -94,6 +94,147 @@ VRODOS.loader.createAssessmentObject = function(name, resource) {
     return fallback;
 };
 
+VRODOS.loader.normalizeTextPanelContent = function(resource) {
+    let text = '';
+    if (resource && typeof resource.text_content === 'string') {
+        text = resource.text_content;
+    } else if (resource && typeof resource.text === 'string') {
+        text = resource.text;
+    }
+
+    text = String(text || '')
+        .replace(/\r\n?/g, '\n')
+        .replace(/\t/g, '    ')
+        .replace(/[ \u00a0]+/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+    if (text.length > 2000) {
+        text = `${text.slice(0, 2000).trimEnd()  }...`;
+    }
+
+    return text || 'Text asset';
+};
+
+VRODOS.loader.wrapTextPanelLines = function(ctx, text, maxWidth, maxLines) {
+    const lines = [];
+    const paragraphs = String(text || '').split('\n');
+
+    paragraphs.forEach((paragraph, paragraphIndex) => {
+        const words = paragraph.trim() === '' ? [''] : paragraph.trim().split(/\s+/);
+        let line = '';
+
+        words.forEach((word) => {
+            const testLine = line ? `${line  } ${  word}` : word;
+            if (ctx.measureText(testLine).width <= maxWidth || line === '') {
+                line = testLine;
+                return;
+            }
+
+            lines.push(line);
+            line = word;
+        });
+
+        if (line || words.length === 1) {
+            lines.push(line);
+        }
+
+        if (paragraphIndex < paragraphs.length - 1) {
+            lines.push('');
+        }
+    });
+
+    if (lines.length > maxLines) {
+        return lines.slice(0, Math.max(0, maxLines - 1)).concat('...');
+    }
+
+    return lines;
+};
+
+VRODOS.loader.createTextPanelTexture = function(text) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#111827';
+    ctx.font = '600 38px Arial, Helvetica, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    const paddingX = 54;
+    const paddingY = 46;
+    const lineHeight = 50;
+    const maxLines = Math.floor((canvas.height - paddingY * 2) / lineHeight);
+    const lines = VRODOS.loader.wrapTextPanelLines(ctx, text, canvas.width - paddingX * 2, maxLines);
+
+    lines.forEach((line, index) => {
+        ctx.fillText(line, paddingX, paddingY + index * lineHeight);
+    });
+
+    const texture = new THREE.CanvasTexture(canvas);
+    if (THREE.SRGBColorSpace) {
+        texture.colorSpace = THREE.SRGBColorSpace;
+    }
+    texture.needsUpdate = true;
+
+    return texture;
+};
+
+VRODOS.loader.createTextPanelObject = function(name, resource) {
+    const text = VRODOS.loader.normalizeTextPanelContent(resource || {});
+    const group = new THREE.Group();
+    group.name = name;
+    group.asset_name = (resource && resource.asset_name) || name;
+    group.category_name = (resource && resource.category_name) || '3D Text';
+    group.category_slug = '3d-text';
+    group.text_content = text;
+    group.text_format = (resource && resource.text_format) || '';
+    group.text_truncated = (resource && resource.text_truncated) || '';
+    group.isSelectableMesh = true;
+    group.isLight = false;
+
+    const panel = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.8, 1.5),
+        new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.96,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        })
+    );
+    panel.name = `${name  }_panel`;
+    panel.isSelectableMesh = false;
+    group.add(panel);
+
+    const border = new THREE.LineSegments(
+        new THREE.EdgesGeometry(panel.geometry),
+        new THREE.LineBasicMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.9 })
+    );
+    border.name = `${name  }_border`;
+    border.position.z = 0.012;
+    border.isSelectableMesh = false;
+    group.add(border);
+
+    const textPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.52, 1.22),
+        new THREE.MeshBasicMaterial({
+            map: VRODOS.loader.createTextPanelTexture(text),
+            transparent: true,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        })
+    );
+    textPlane.name = `${name  }_text`;
+    textPlane.position.z = 0.018;
+    textPlane.isSelectableMesh = false;
+    group.add(textPlane);
+
+    return group;
+};
+
 /**
  * Synchronize a scene setting using the schema
  * @param {string} key
@@ -418,6 +559,41 @@ VRODOS.loader.LoaderMulti = class {
                         if (typeof VRODOS.ui.addInHierarchyViewer === 'function') {
                             VRODOS.ui.addInHierarchyViewer(object);
                         }
+                        resolve();
+                    }));
+
+                } else if (resource.category_slug === '3d-text') {
+
+                    pendingLoads.push(new Promise((resolve) => {
+                        const object = VRODOS.loader.createTextPanelObject(name, resource);
+                        VRODOS.loader.setObjectProperties(object, name, resources3D);
+                        VRODOS.editor.envir.scene.add(object);
+                        if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
+                        VRODOS.editor.envir.loadedObjectsCount++;
+                        if (typeof VRODOS.ui.addInHierarchyViewer === 'function') {
+                            VRODOS.ui.addInHierarchyViewer(object);
+                        }
+
+                        const trs = resource.trs;
+                        if (trs && !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading)) {
+                            if (typeof VRODOS.ui.attachTransformTarget === 'function') {
+                                VRODOS.ui.attachTransformTarget(object);
+                            } else {
+                                VRODOS.editor.currentSelectedRealObject = object;
+                                VRODOS.editor.transform_controls.detach();
+                                VRODOS.editor.transform_controls.attach(object);
+                            }
+                            if (typeof VRODOS.ui.removeAllCelOutlines === 'function') VRODOS.ui.removeAllCelOutlines();
+                            if (typeof VRODOS.ui.addCelOutline === 'function') VRODOS.ui.addCelOutline(object);
+                            if (typeof VRODOS.ui.frameNewSceneObject === 'function') VRODOS.ui.frameNewSceneObject(object);
+                            VRODOS.editor.selected_object_name = object.name;
+                            if (typeof VRODOS.ui.transform.setSize === 'function') VRODOS.ui.transform.setSize();
+                            if (typeof VRODOS.api.triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
+                            if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') VRODOS.ui.setDatGuiInitialVales(object);
+                            const progressWrapper = document.getElementById("progressWrapper");
+                            if (progressWrapper) progressWrapper.style.visibility = "hidden";
+                        }
+
                         resolve();
                     }));
 
@@ -761,6 +937,3 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
 
     return object;
 }
-
-
-

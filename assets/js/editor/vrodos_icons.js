@@ -19,6 +19,7 @@ VRODOS.ui.icons.categoryIcons = {
     'door':            'door-open',
     'audio':           'volume-2',
     'video':           'clapperboard',
+    '3d-text':         'type',
     'poi-imagetext':   'image',
     'image':           'image-play',
     'chat':            'message-square',

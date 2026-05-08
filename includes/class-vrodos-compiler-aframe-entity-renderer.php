@@ -214,6 +214,23 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		return trim( $value );
 	}
 
+	private function sanitize_multiline_text_attr( $value ): string {
+		$value = (string) ( $value ?? '' );
+		$value = $this->decode_display_text( $value );
+		$value = wp_strip_all_tags( $value );
+		$value = str_replace( [ "\r\n", "\r" ], "\n", $value );
+		$value = preg_replace( "/[ \t]+/", ' ', $value ) ?? $value;
+		$value = preg_replace( "/\n{3,}/", "\n\n", $value ) ?? $value;
+		$value = str_replace( ';', ',', $value );
+		$value = trim( $value );
+
+		if ( function_exists( 'mb_substr' ) ) {
+			return mb_substr( $value, 0, 2000 );
+		}
+
+		return substr( $value, 0, 2000 );
+	}
+
 	private function decode_display_text( string $value ): string {
 		$text = trim( $value );
 		if ( $text === '' ) {
@@ -487,6 +504,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			case 'video':
 				$this->render_media_entity( $dom, $ascene, $assets, $obj );
 				break;
+			case '3d-text':
+				$this->render_3d_text_entity( $dom, $ascene, $obj );
+				break;
 			case 'poi-imagetext':
 				$this->render_poi_imagetext_entity( $dom, $ascene, $assets, $obj );
 				break;
@@ -508,6 +528,43 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$this->setAffineTransformations( $pawn, $obj );
 			$ascene->appendChild( $pawn );
 		}
+	}
+
+	private function render_3d_text_entity( DOMDocument $dom, DOMElement $ascene, $obj ): void {
+		$uuid = $obj->uuid ?? wp_generate_uuid4();
+		$text = $this->sanitize_multiline_text_attr( $obj->text_content ?? $obj->asset_name ?? 'Text asset' );
+		if ( $text === '' ) {
+			return;
+		}
+
+		$entity = $dom->createElement( 'a-entity' );
+		$entity->setAttribute( 'id', 'text-panel_' . $uuid );
+		$entity->setAttribute( 'class', 'hideable' );
+		$entity->setAttribute( 'clear-frustum-culling', '' );
+		$this->setAffineTransformations( $entity, $obj );
+		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
+
+		$backing = $dom->createElement( 'a-plane' );
+		$backing->setAttribute( 'width', '2.8' );
+		$backing->setAttribute( 'height', '1.5' );
+		$backing->setAttribute( 'material', 'color: #ffffff; opacity: 0.96; transparent: true; side: double; roughness: 0.85; metalness: 0' );
+		$backing->setAttribute( 'position', '0 0 0' );
+		$this->set_world_lighting_attributes( $backing );
+
+		$label = $dom->createElement( 'a-text' );
+		$label->setAttribute( 'value', $text );
+		$label->setAttribute( 'color', '#111827' );
+		$label->setAttribute( 'align', 'left' );
+		$label->setAttribute( 'anchor', 'left' );
+		$label->setAttribute( 'baseline', 'top' );
+		$label->setAttribute( 'wrap-count', '46' );
+		$label->setAttribute( 'width', '2.45' );
+		$label->setAttribute( 'position', '-1.22 0.58 0.018' );
+		$label->setAttribute( 'material', 'side: double; transparent: true' );
+
+		$entity->appendChild( $backing );
+		$entity->appendChild( $label );
+		$ascene->appendChild( $entity );
 	}
 
 	private function render_light_entity( $dom, $ascene, $obj ) {

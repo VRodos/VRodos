@@ -58,6 +58,8 @@ class VRodos_Core_Manager {
 		$mime_types['wav']  = 'audio/wav';
 		$mime_types['oga']  = 'audio/ogg';
 		$mime_types['glb']  = 'model/gltf-binary';
+		$mime_types['txt']  = 'text/plain';
+		$mime_types['rtf']  = 'application/rtf';
 		return $mime_types;
 	}
 
@@ -67,6 +69,12 @@ class VRodos_Core_Manager {
 			if ( 'glb' === strtolower( $ext ) ) {
 				$data['ext']  = 'glb';
 				$data['type'] = 'model/gltf-binary';
+			} elseif ( 'txt' === strtolower( $ext ) ) {
+				$data['ext']  = 'txt';
+				$data['type'] = 'text/plain';
+			} elseif ( 'rtf' === strtolower( $ext ) ) {
+				$data['ext']  = 'rtf';
+				$data['type'] = 'application/rtf';
 			}
 		}
 		return $data;
@@ -509,6 +517,12 @@ class VRodos_Core_Manager {
 						$data_arr['image_id']   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
 						$data_arr['image_path'] = self::resolve_media_meta_url( $data_arr['image_id'] );
 						break;
+					case '3d-text':
+						$text_content = (string) get_post_meta( $asset_id, 'vrodos_asset3d_text_content', true );
+						$data_arr['text_content_b64'] = base64_encode( $text_content );
+						$data_arr['text_format']      = get_post_meta( $asset_id, 'vrodos_asset3d_text_format', true );
+						$data_arr['text_truncated']   = get_post_meta( $asset_id, 'vrodos_asset3d_text_truncated', true );
+						break;
 					case 'poi-link':
 						$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
 						break;
@@ -718,6 +732,12 @@ class VRodos_Core_Manager {
 					case 'image':
 						$data_arr['image_id']   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
 						$data_arr['image_path'] = self::resolve_media_meta_url( $data_arr['image_id'] );
+						break;
+					case '3d-text':
+						$text_content = (string) get_post_meta( $asset_id, 'vrodos_asset3d_text_content', true );
+						$data_arr['text_content_b64'] = base64_encode( $text_content );
+						$data_arr['text_format']      = get_post_meta( $asset_id, 'vrodos_asset3d_text_format', true );
+						$data_arr['text_truncated']   = get_post_meta( $asset_id, 'vrodos_asset3d_text_truncated', true );
 						break;
 					case 'poi-link':
 						$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
