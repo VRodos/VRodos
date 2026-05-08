@@ -236,7 +236,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
 
                             <!-- Trash Button -->
                             <?php if ( $is_user_admin || ( $user_id == $asset['author_id'] ) ) : ?>
-                                <button onclick="openDeleteModal(<?php echo $asset['asset_id']; ?>, '<?php echo esc_js($asset['asset_name']); ?>', '<?php echo $joker_project_slug; ?>', <?php echo $asset['is_cloned']; ?>)"
+                                <button onclick="openDeleteModal(<?php echo $asset['asset_id']; ?>, '<?php echo esc_js($asset['asset_name']); ?>', '<?php echo $joker_project_slug; ?>)"
                                         class="tw-btn tw-btn-ghost tw-btn-sm tw-btn-square tw-text-slate-300 hover:tw-text-rose-500 tw-transition-colors"
                                         title="Delete Asset">
                                     <i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>
@@ -282,14 +282,14 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
         }
     };
 
-    function openDeleteModal(assetId, assetName, gameSlug, isCloned) {
+    function openDeleteModal(assetId, assetName, gameSlug) {
         document.getElementById('delete_asset_name').textContent = assetName;
         const confirmBtn = document.getElementById('confirmDeleteButton');
 
         confirmBtn.onclick = function() {
             var progressBar = document.getElementById('delete-scene-dialog-progress-bar');
             if (progressBar) { progressBar.classList.remove('tw-hidden'); progressBar.style.display = ''; }
-            VRODOS.api.deleteAsset(assetId, gameSlug, isCloned);
+            VRODOS.api.deleteAsset(assetId, gameSlug);
         };
 
         document.getElementById('vrodos_delete_asset_modal').showModal();

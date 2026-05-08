@@ -43,8 +43,6 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		}
 		$assetCatTerm = get_term_by( 'id', $assetCatID, 'vrodos_asset3d_cat' );
 
-		$assetFonts = isset( $_POST['assetFonts'] ) ? esc_attr( strip_tags( (string) $_POST['assetFonts'] ) ) : '';
-
 		$assetback3dcolor = isset( $_POST['assetback3dcolor'] ) ? esc_attr( strip_tags( (string) $_POST['assetback3dcolor'] ) ) : '';
 		$assettrs         = isset( $_POST['assettrs'] ) ? esc_attr( strip_tags( (string) $_POST['assettrs'] ) ) : '0,0,0,0,0,0,0,0,-100';
 		$redirect_url     = self::build_frontend_redirect_url();
@@ -87,10 +85,10 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 		if ( $asset_id == null ) {
 			// It's a new Asset, let's create it (returns newly created ID, or 0 if nothing happened)
-			$asset_id = self::create_asset_frontend( $assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, '' );
+			$asset_id = self::create_asset_frontend( $assetPGameID, $assetCatID, $gameSlug, $assetCatIPRID, $assetTitle, $assetback3dcolor, $assettrs, '' );
 		} else {
 			// Edit an existing asset: Return true if updated, false if failed
-			$asset_updatedConf = self::update_asset_frontend( $assetPGameID, $assetCatID, $asset_id, $assetCatIPRID, $assetTitle, $assetFonts, $assetback3dcolor, $assettrs, '' );
+			$asset_updatedConf = self::update_asset_frontend( $assetPGameID, $assetCatID, $asset_id, $assetCatIPRID, $assetTitle, $assetback3dcolor, $assettrs, '' );
 		}
 
 		// Upload 3D files
@@ -105,7 +103,6 @@ trait VRodos_Asset_CPT_Submission_Controller {
 				}
 			}
 
-			update_post_meta( $asset_id, 'vrodos_asset3d_isCloned', 'false' );
 			update_post_meta( $asset_id, 'vrodos_asset3d_isJoker', $isShared );
 
 			// Invalidate all Assets List transients
@@ -200,31 +197,30 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		self::perform_frontend_redirect( $redirect_url, $submission_buffer_level );
 	}
 
-	public static function create_asset_frontend( $asset_pgame_id, $asset_cat_id, $game_slug, $asset_cat_ipr_id, $asset_title, $asset_fonts, $asset_back_3d_color, $asset_trs, $asset_description ) {
+	public static function create_asset_frontend( $asset_pgame_id, $asset_cat_id, $game_slug, $asset_cat_ipr_id, $asset_title, $asset_back_3d_color, $asset_trs, $asset_description ) {
 		$asset_taxonomies = ['vrodos_asset3d_pgame'   => [$asset_pgame_id], 'vrodos_asset3d_cat'     => [$asset_cat_id], 'vrodos_asset3d_ipr_cat' => [$asset_cat_ipr_id]];
 
 		$asset_information = ['post_title'   => $asset_title, 'post_content' => $asset_description, 'post_type'    => 'vrodos_asset3d', 'post_status'  => 'publish', 'tax_input'    => $asset_taxonomies];
 
 		$asset_id = wp_insert_post( $asset_information );
 		update_post_meta( $asset_id, 'vrodos_asset3d_pathData', $game_slug );
-		self::update_asset_meta( $asset_id, $asset_fonts, $asset_back_3d_color, $asset_trs );
+		self::update_asset_meta( $asset_id, $asset_back_3d_color, $asset_trs );
 
 		return $asset_id ?: 0;
 	}
 
-	public static function update_asset_frontend( $asset_pgame_id, $asset_cat_id, $asset_id, $asset_cat_ipr_id, $asset_title, $asset_fonts, $asset_back_3d_color, $asset_trs, $asset_description ) {
+	public static function update_asset_frontend( $asset_pgame_id, $asset_cat_id, $asset_id, $asset_cat_ipr_id, $asset_title, $asset_back_3d_color, $asset_trs, $asset_description ) {
 		$asset_taxonomies = ['vrodos_asset3d_pgame'   => [$asset_pgame_id], 'vrodos_asset3d_cat'     => [$asset_cat_id], 'vrodos_asset3d_ipr_cat' => [$asset_cat_ipr_id]];
 
 		$data = ['ID'           => $asset_id, 'post_title'   => $asset_title, 'post_content' => $asset_description, 'tax_input'    => $asset_taxonomies];
 
 		wp_update_post( $data );
-		self::update_asset_meta( $asset_id, $asset_fonts, $asset_back_3d_color, $asset_trs );
+		self::update_asset_meta( $asset_id, $asset_back_3d_color, $asset_trs );
 
 		return 1;
 	}
 
-	public static function update_asset_meta( $asset_id, $asset_fonts, $asset_back_3d_color, $asset_trs ): void {
-		update_post_meta( $asset_id, 'vrodos_asset3d_fonts', $asset_fonts );
+	public static function update_asset_meta( $asset_id, $asset_back_3d_color, $asset_trs ): void {
 		update_post_meta( $asset_id, 'vrodos_asset3d_back3dcolor', $asset_back_3d_color );
 		update_post_meta( $asset_id, 'vrodos_asset3d_assettrs', $asset_trs );
 	}
@@ -305,7 +301,6 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$data['back_3d_color']             = '#ffffff';
 		$data['asset_title_value']         = '';
 		$data['asset_description_value']   = '';
-		$data['asset_fonts_saved']         = '';
 		$data['asset_back_3d_color_saved'] = '#FFFFFF';
 		$data['assettrs_saved']            = '0,0,0,0,0,0,0,0,-100';
 		$data['dropdownHeading']           = 'Select a category';
@@ -329,7 +324,6 @@ trait VRodos_Asset_CPT_Submission_Controller {
 			$data['dropdownHeading']           = 'Category';
 			$data['asset_title_value']         = get_the_title( $data['asset_id'] );
 			$data['asset_description_value']   = get_post_field( 'post_content', $data['asset_id'] );
-			$data['asset_fonts_saved']         = get_post_meta( $data['asset_id'], 'vrodos_asset3d_fonts', true );
 			$data['asset_back_3d_color_saved'] = get_post_meta( $data['asset_id'], 'vrodos_asset3d_back3dcolor', true ) ?: '#FFFFFF';
 			$data['assettrs_saved']            = get_post_meta( $data['asset_id'], 'vrodos_asset3d_assettrs', true ) ?: '0,0,0,0,0,0,0,0,-100';
 

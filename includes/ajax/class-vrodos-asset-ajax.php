@@ -26,27 +26,13 @@ class VRodos_Asset_AJAX {
 
 		$asset_id = absint( $_POST['asset_id'] );
 		$gameSlug = sanitize_key( $_POST['game_slug'] );
-		$isCloned = sanitize_text_field( $_POST['isCloned'] );
 
-		// If it is not cloned then it is safe to delete the meta files.
-		if ( $isCloned === 'false' ) {
-			$args        = ['post_parent'    => $asset_id, 'post_type'      => 'attachment', 'posts_per_page' => -1];
-			$attachments = get_children( $args );
+		$args        = ['post_parent'    => $asset_id, 'post_type'      => 'attachment', 'posts_per_page' => -1];
+		$attachments = get_children( $args );
 
-			if ( $attachments ) {
-				$site_url = get_site_url();
-
-				foreach ( $attachments as $attachment ) {
-					$file_url = wp_get_attachment_url( $attachment->ID );
-					$file_path = str_replace( $site_url, ABSPATH, $file_url );
-					$file_path = wp_normalize_path( $file_path );
-
-					if ( file_exists( $file_path ) ) {
-						wp_delete_file( $file_path );
-					}
-
-					wp_delete_attachment( $attachment->ID, true );
-				}
+		if ( $attachments ) {
+			foreach ( $attachments as $attachment ) {
+				wp_delete_attachment( $attachment->ID, true );
 			}
 		}
 

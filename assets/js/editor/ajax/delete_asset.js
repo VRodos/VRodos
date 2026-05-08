@@ -5,7 +5,7 @@
  * asset_id : the asset to delete
  */
 VRODOS.api.isDeleteAssetPending = false;
-VRODOS.api.deleteAsset = function(asset_id, game_slug, isCloned) {
+VRODOS.api.deleteAsset = function(asset_id, game_slug) {
 	if (VRODOS.api.isDeleteAssetPending) return;
 	VRODOS.api.isDeleteAssetPending = true;
 
@@ -22,8 +22,7 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug, isCloned) {
 		body: new URLSearchParams({
 			'action': 'vrodos_delete_asset_action',
 			asset_id,
-			game_slug,
-			isCloned
+			game_slug
 		})
 	})
 	.then( (response) => response.text())
@@ -89,5 +88,4 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug, isCloned) {
 		console.log( `Ajax Delete Asset: ERROR: 170 ${  err}` );
 	});
 }
-
 

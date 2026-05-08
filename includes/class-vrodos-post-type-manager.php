@@ -173,9 +173,26 @@ class VRodos_Post_Type_Manager {
 		$args   = ['description'       => 'IPR taxonomy of 3D asset', 'labels'            => $labels, 'public'            => true, 'show_ui'           => true, 'hierarchical'      => false, 'show_admin_column' => true, 'capabilities'      => ['manage_terms' => 'manage_vrodos_asset3d_iprcat', 'edit_terms'   => 'manage_vrodos_asset3d_iprcat', 'delete_terms' => 'manage_vrodos_asset3d_iprcat', 'assign_terms' => 'edit_vrodos_asset3d_iprcat']];
 		register_taxonomy( 'vrodos_asset3d_ipr_cat', 'vrodos_asset3d', $args );
 
-		$terms_ipr = [['Private', 'Nobody can view or edit the asset', 'asset_private'], ['Shared_A - View', 'Others can view only', 'asset_shared_type_a'], ['Shared_B - (A) & Clone', 'Others can view, comment, and clone asset with custom descriptions', 'asset_shared_type_b'], ['Shared_C - (A,B) & Use ', 'Others can view, comment, clone and use in experiences', 'asset_shared_type_c'], ['Shared_D - (A,B,C) & Download', 'Others can view, comment, clone, use in experiences and download', 'asset_shared_type_d'], ['Shared_E - Free to reuse in any way', 'Others can reuse in any way they see fit', 'asset_shared_type_e']];
+		$terms_ipr = [
+			['Private', 'Nobody can view or edit the asset', 'asset_private'],
+			['Shared_A - View', 'Others can view only', 'asset_shared_type_a'],
+			['Shared_B - View & Comment', 'Others can view and comment on the asset.', 'asset_shared_type_b'],
+			['Shared_C - View, Comment & Use', 'Others can view, comment on, and use the asset in experiences.', 'asset_shared_type_c'],
+			['Shared_D - View, Comment, Use & Download', 'Others can view, comment on, use in experiences, and download the asset.', 'asset_shared_type_d'],
+			['Shared_E - Free to reuse in any way', 'Others can reuse in any way they see fit', 'asset_shared_type_e'],
+		];
 
 		foreach ( $terms_ipr as $ti ) {
+			$existing_term = get_term_by( 'slug', $ti[2], 'vrodos_asset3d_ipr_cat' );
+			if ( $existing_term ) {
+				wp_update_term(
+					$existing_term->term_id,
+					'vrodos_asset3d_ipr_cat',
+					['name'        => $ti[0], 'description' => $ti[1]]
+				);
+				continue;
+			}
+
 			wp_insert_term(
 				$ti[0],
 				'vrodos_asset3d_ipr_cat',

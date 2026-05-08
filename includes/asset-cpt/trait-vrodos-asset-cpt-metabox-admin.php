@@ -96,11 +96,8 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 				$is_audio_field       = in_array( $field['id'], $audio_field_ids, true );
 				switch ( $extension ) {
 					case 'audio':
-					case 'diffimage':
 					case 'scene':
 					case 'video':
-					case 'fonts':
-					case 'isreward':
 					case 'back3dcolor':
 						$showSection = 'none';
 						break;
@@ -184,7 +181,6 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 											style=" width:100%; height:200px;"><?php echo $preview_content; ?></textarea>
 								<?php
 								break;
-							case 'diffimage':
 							case 'screenimage':
 								?>
 								<input type="text" name="<?php echo esc_attr( $field['id'] ); ?>" readonly
@@ -199,7 +195,6 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 									alt="<?php echo $extension; ?> preview image"/>
 								<?php
 								break;
-							case 'isCloned':
 							case 'isJoker': // Displayed as 'isShared' in labels but keep ID for logic
 							case 'assettrs':
 								?>
@@ -211,7 +206,6 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 								break;
 							case 'scene':
 							case 'video':
-							case 'fonts':
 								// TODO: Add mechanisms for these.
 								break;
 								}

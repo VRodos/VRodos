@@ -34,14 +34,10 @@ class VRodos_Asset_CPT_Manager {
       ['Audio Ref Distance', 'Audio reference distance', 'vrodos_asset3d_audio_ref_distance', 'string', '2', true, true],
       ['Audio Max Distance', 'Audio max distance', 'vrodos_asset3d_audio_max_distance', 'string', '20', true, true],
       ['Audio Rolloff Factor', 'Audio rolloff factor', 'vrodos_asset3d_audio_rolloff_factor', 'string', '1', true, true],
-      ['Diffusion Image', 'Diffusion Image', 'vrodos_asset3d_diffimage', 'string', '', false, true],
       ['Screenshot Image', 'Screenshot Image', 'vrodos_asset3d_screenimage', 'string', '', true, true],
       ['Next Scene (Only for Doors)', 'Next Scene', 'vrodos_asset3d_scene', 'string', '', true, true],
       ['Video', 'Video', 'vrodos_asset3d_video', 'string', '', true, true],
-      ['isreward', 'isreward', 'vrodos_asset3d_isreward', 'string', '0', true, true],
-      ['isCloned', 'isCloned', 'vrodos_asset3d_isCloned', 'string', 'false', true, true],
       ['isShared', 'isShared Asset', 'vrodos_asset3d_isJoker', 'string', 'false', true, true],
-      ['fonts', 'fonts', 'vrodos_asset3d_fonts', 'string', '', true, true],
       ['back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'string', '#FFFFFF', true, true],
       ['Asset TRS', 'Initial asset translation, rotation, scale for the asset editor', 'vrodos_asset3d_assettrs', 'string', '0,0,0,0,0,0,0,0,0', true, true],
   ];
@@ -88,16 +84,16 @@ class VRodos_Asset_CPT_Manager {
 	public function vrodos_set_custom_vrodos_asset3d_columns_fill( $column, $post_id ): void { $this->controller->vrodos_set_custom_vrodos_asset3d_columns_fill( $column, $post_id ); }
 	public function handle_asset_frontend_submission(): void { $this->controller->handle_asset_frontend_submission(); }
 
-	public static function create_asset_frontend( $asset_pgame_id, $asset_cat_id, $game_slug, $asset_cat_ipr_id, $asset_title, $asset_fonts, $asset_back_3d_color, $asset_trs, $asset_description ) {
-		return VRodos_Asset_CPT_Admin_Controller::create_asset_frontend( $asset_pgame_id, $asset_cat_id, $game_slug, $asset_cat_ipr_id, $asset_title, $asset_fonts, $asset_back_3d_color, $asset_trs, $asset_description );
+	public static function create_asset_frontend( $asset_pgame_id, $asset_cat_id, $game_slug, $asset_cat_ipr_id, $asset_title, $asset_back_3d_color, $asset_trs, $asset_description ) {
+		return VRodos_Asset_CPT_Admin_Controller::create_asset_frontend( $asset_pgame_id, $asset_cat_id, $game_slug, $asset_cat_ipr_id, $asset_title, $asset_back_3d_color, $asset_trs, $asset_description );
 	}
 
-	public static function update_asset_frontend( $asset_pgame_id, $asset_cat_id, $asset_id, $asset_cat_ipr_id, $asset_title, $asset_fonts, $asset_back_3d_color, $asset_trs, $asset_description ) {
-		return VRodos_Asset_CPT_Admin_Controller::update_asset_frontend( $asset_pgame_id, $asset_cat_id, $asset_id, $asset_cat_ipr_id, $asset_title, $asset_fonts, $asset_back_3d_color, $asset_trs, $asset_description );
+	public static function update_asset_frontend( $asset_pgame_id, $asset_cat_id, $asset_id, $asset_cat_ipr_id, $asset_title, $asset_back_3d_color, $asset_trs, $asset_description ) {
+		return VRodos_Asset_CPT_Admin_Controller::update_asset_frontend( $asset_pgame_id, $asset_cat_id, $asset_id, $asset_cat_ipr_id, $asset_title, $asset_back_3d_color, $asset_trs, $asset_description );
 	}
 
-	public static function update_asset_meta( $asset_id, $asset_fonts, $asset_back_3d_color, $asset_trs ): void {
-		VRodos_Asset_CPT_Admin_Controller::update_asset_meta( $asset_id, $asset_fonts, $asset_back_3d_color, $asset_trs );
+	public static function update_asset_meta( $asset_id, $asset_back_3d_color, $asset_trs ): void {
+		VRodos_Asset_CPT_Admin_Controller::update_asset_meta( $asset_id, $asset_back_3d_color, $asset_trs );
 	}
 
 	public static function prepare_asset_editor_template_data(): array {

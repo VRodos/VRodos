@@ -11,6 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * including database table creation, page creation, and cleanup on uninstall.
  */
 class VRodos_Install_Manager {
+	private const LEGACY_ASSET_CLONE_META_CLEANUP_OPTION = 'vrodos_removed_legacy_asset_clone_meta';
+	private const LEGACY_ASSET_REMOVED_FIELDS_CLEANUP_OPTION = 'vrodos_removed_legacy_asset_removed_fields_meta';
 
 	/**
 	 * Constructor.
@@ -20,6 +22,7 @@ class VRodos_Install_Manager {
 	public function __construct() {
 		register_activation_hook( VRODOS_PLUGIN_FILE, [$this, 'activate'] );
 		register_uninstall_hook( VRODOS_PLUGIN_FILE, [self::class, 'uninstall'] );
+		add_action( 'init', [$this, 'run_legacy_cleanup_migrations'], 20 );
 	}
 
 	/**
@@ -46,6 +49,82 @@ class VRodos_Install_Manager {
 		}
 	}
 
+	public function run_legacy_cleanup_migrations(): void {
+		$this->run_legacy_asset_clone_meta_cleanup();
+		$this->run_legacy_asset_removed_fields_cleanup();
+	}
+
+	private function run_legacy_asset_clone_meta_cleanup(): void {
+		if ( get_option( self::LEGACY_ASSET_CLONE_META_CLEANUP_OPTION ) === '1' ) {
+			return;
+		}
+
+		global $wpdb;
+		$deleted = $wpdb->delete(
+			$wpdb->postmeta,
+			['meta_key' => 'vrodos_asset3d_is' . 'Cloned'],
+			['%s']
+		);
+
+		if ( $deleted !== false ) {
+			$this->clear_asset_list_transients();
+			update_option( self::LEGACY_ASSET_CLONE_META_CLEANUP_OPTION, '1', false );
+		}
+	}
+
+	private function run_legacy_asset_removed_fields_cleanup(): void {
+		if ( get_option( self::LEGACY_ASSET_REMOVED_FIELDS_CLEANUP_OPTION ) === '1' ) {
+			return;
+		}
+
+		global $wpdb;
+		$legacy_reward_key = 'vrodos_asset3d_is' . 'reward';
+		$legacy_font_key   = 'vrodos_asset3d_fo' . 'nts';
+		$legacy_image_key  = 'vrodos_asset3d_diff' . 'image';
+
+		$image_meta_rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = %s",
+				$legacy_image_key
+			)
+		);
+
+		if ( is_array( $image_meta_rows ) ) {
+			foreach ( $image_meta_rows as $image_meta_row ) {
+				$asset_id      = absint( $image_meta_row->post_id ?? 0 );
+				$attachment_id = absint( $image_meta_row->meta_value ?? 0 );
+
+				if ( $asset_id <= 0 || $attachment_id <= 0 ) {
+					continue;
+				}
+
+				$attachment = get_post( $attachment_id );
+				if ( $attachment && $attachment->post_type === 'attachment' && (int) $attachment->post_parent === $asset_id ) {
+					wp_delete_attachment( $attachment_id, true );
+				}
+			}
+		}
+
+		$deleted = $wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM $wpdb->postmeta WHERE meta_key IN (%s, %s, %s)",
+				$legacy_reward_key,
+				$legacy_font_key,
+				$legacy_image_key
+			)
+		);
+
+		if ( $deleted !== false ) {
+			$this->clear_asset_list_transients();
+			update_option( self::LEGACY_ASSET_REMOVED_FIELDS_CLEANUP_OPTION, '1', false );
+		}
+	}
+
+	private function clear_asset_list_transients(): void {
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_vrodos_assets_%', '_transient_timeout_vrodos_assets_%' ) );
+	}
+
 	/**
 	 * Plugin uninstall callback.
 	 *
@@ -60,6 +139,8 @@ class VRodos_Install_Manager {
 		delete_option( 'vrodos_game_type_children' );
 		delete_option( 'widget_vrodos_3d_widget' );
 		delete_option( 'vrodos_db_version' );
+		delete_option( self::LEGACY_ASSET_CLONE_META_CLEANUP_OPTION );
+		delete_option( self::LEGACY_ASSET_REMOVED_FIELDS_CLEANUP_OPTION );
 
 		// 2. Postmeta
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$del_prefix}postmeta WHERE meta_value LIKE %s", '%vrodos%' ) );

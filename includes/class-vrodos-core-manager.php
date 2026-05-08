@@ -467,7 +467,7 @@ class VRodos_Core_Manager {
 					}
 				}
 
-				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_cloned'       => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ), 'is_shared'        => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true )];
+				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_shared'        => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true )];
 
 				$immerse_cefr_levels = self::encode_cefr_levels_meta(
 					get_post_meta( $asset_id, 'vrodos_asset3d_immerse_cefr_levels', true )
@@ -680,7 +680,6 @@ class VRodos_Core_Manager {
 					'path'                   => $glbPath,
 					'screenshot_id'          => $sshotID,
 					'screenshot_path'        => $sshotPath,
-					'is_cloned'              => get_post_meta( $asset_id, 'vrodos_asset3d_isCloned', true ),
 					'is_shared'              => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ),
 					'is_immerse'             => get_post_meta( $asset_id, '_immerse_source', true ) === 'immerse' ? 'true' : 'false',
 					'assettrs'               => $assettrs,

@@ -154,8 +154,6 @@ class VRodos_Project_AJAX {
 	private function vrodos_delete_asset3d_noscenes_frontend( $asset_id ): void {
 		$glbID = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
 		wp_delete_attachment( $glbID, true );
-		$difID = get_post_meta( $asset_id, 'vrodos_asset3d_diffimage', true );
-		wp_delete_attachment( $difID, true );
 		$screenID = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
 		wp_delete_attachment( $screenID, true );
 		wp_delete_post( $asset_id, true );
