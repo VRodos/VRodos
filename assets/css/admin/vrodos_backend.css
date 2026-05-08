@@ -44,10 +44,58 @@
 	top: 3px;
 }
 
+#vrodos-custom-fields-table {
+	width: 100%;
+	table-layout: fixed;
+}
+
 #vrodos-custom-fields-table, #vrodos-custom-fields-table td, #vrodos-custom-fields-table th{
 	border: 1px solid #dddddd;
 	padding: 15px;
 	border-collapse: collapse;
+}
+
+#vrodos-custom-fields-table td {
+	max-width: 100%;
+	min-width: 0;
+	overflow: hidden;
+}
+
+#vrodos-custom-fields-table input[type="text"] {
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.vrodos-admin-glb-preview {
+	position: relative;
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	aspect-ratio: 16 / 9;
+	height: auto;
+	min-height: 260px;
+	max-height: 420px;
+	background: #111827;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.vrodos-admin-glb-preview canvas {
+	display: block;
+	width: 100% !important;
+	height: 100% !important;
+}
+
+.vrodos-admin-glb-preview-status {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #f8fafc;
+	background: rgba(15, 23, 42, 0.72);
+	z-index: 2;
 }
 
 .imageresbin{

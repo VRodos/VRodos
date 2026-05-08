@@ -20,6 +20,52 @@ trait VRodos_Asset_CPT_Taxonomy_Admin {
 		return $query_args;
 	}
 
+	public function vrodos_render_asset_type_admin_filter( $post_type, $which = '' ): void {
+		if ( $post_type !== 'vrodos_asset3d' ) {
+			return;
+		}
+
+		$selected = isset( $_GET['vrodos_asset_type'] ) ? absint( $_GET['vrodos_asset_type'] ) : 0;
+
+		wp_dropdown_categories(
+			[
+				'show_option_all' => __( 'All Asset Types' ),
+				'taxonomy'        => 'vrodos_asset3d_cat',
+				'name'            => 'vrodos_asset_type',
+				'id'              => 'filter-by-vrodos-asset-type',
+				'class'           => 'postform',
+				'orderby'         => 'name',
+				'hide_empty'      => false,
+				'selected'        => $selected,
+				'value_field'     => 'term_id',
+			]
+		);
+	}
+
+	public function vrodos_filter_assets_admin_query_by_type( $query ): void {
+		if ( ! is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
+
+		if ( $query->get( 'post_type' ) !== 'vrodos_asset3d' ) {
+			return;
+		}
+
+		$asset_type_id = isset( $_GET['vrodos_asset_type'] ) ? absint( $_GET['vrodos_asset_type'] ) : 0;
+		if ( $asset_type_id <= 0 ) {
+			return;
+		}
+
+		$tax_query   = (array) $query->get( 'tax_query' );
+		$tax_query[] = [
+			'taxonomy' => 'vrodos_asset3d_cat',
+			'field'    => 'term_id',
+			'terms'    => [ $asset_type_id ],
+		];
+
+		$query->set( 'tax_query', $tax_query );
+	}
+
 	public function vrodos_assets_taxcategory_box(): void {
 		remove_meta_box( 'tagsdiv-vrodos_asset3d_pgame', 'vrodos_asset3d', 'side' );
 		remove_meta_box( 'tagsdiv-vrodos_asset3d_cat', 'vrodos_asset3d', 'side' );

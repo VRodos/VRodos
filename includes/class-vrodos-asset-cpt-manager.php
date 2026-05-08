@@ -65,6 +65,8 @@ class VRodos_Asset_CPT_Manager {
 		add_filter( 'wp_dropdown_users_args', $this->change_user_dropdown(...), 10, 2 );
 		add_action( 'add_meta_boxes', $this->vrodos_assets_taxcategory_box(...) );
 		add_action( 'add_meta_boxes', $this->vrodos_assets_databox_add(...) );
+		add_action( 'restrict_manage_posts', $this->vrodos_render_asset_type_admin_filter(...), 10, 2 );
+		add_action( 'pre_get_posts', $this->vrodos_filter_assets_admin_query_by_type(...) );
 		add_filter( 'manage_vrodos_asset3d_posts_columns', $this->vrodos_set_custom_vrodos_asset3d_columns(...) );
 		add_action( 'manage_vrodos_asset3d_posts_custom_column', $this->vrodos_set_custom_vrodos_asset3d_columns_fill(...), 10, 2 );
 		add_action( 'init', $this->handle_asset_frontend_submission(...) );
@@ -80,6 +82,8 @@ class VRodos_Asset_CPT_Manager {
 	public function change_user_dropdown( $query_args, $r ) { return $this->controller->change_user_dropdown( $query_args, $r ); }
 	public function vrodos_assets_taxcategory_box(): void { $this->controller->vrodos_assets_taxcategory_box(); }
 	public function vrodos_assets_databox_add(): void { $this->controller->vrodos_assets_databox_add(); }
+	public function vrodos_render_asset_type_admin_filter( $post_type, $which = '' ): void { $this->controller->vrodos_render_asset_type_admin_filter( $post_type, $which ); }
+	public function vrodos_filter_assets_admin_query_by_type( $query ): void { $this->controller->vrodos_filter_assets_admin_query_by_type( $query ); }
 	public function vrodos_set_custom_vrodos_asset3d_columns( $columns ): array { return $this->controller->vrodos_set_custom_vrodos_asset3d_columns( $columns ); }
 	public function vrodos_set_custom_vrodos_asset3d_columns_fill( $column, $post_id ): void { $this->controller->vrodos_set_custom_vrodos_asset3d_columns_fill( $column, $post_id ); }
 	public function handle_asset_frontend_submission(): void { $this->controller->handle_asset_frontend_submission(); }
