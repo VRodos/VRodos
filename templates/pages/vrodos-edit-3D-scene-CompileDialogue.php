@@ -38,6 +38,24 @@
 			<input id="platformInput" type="hidden" value="platform-Aframe">
 			<input id="project-type" type="hidden" value="<?php echo esc_attr( strtolower( $project_type ) ); ?>">
 
+			<div class="tw-mb-3 tw-rounded-lg tw-border tw-border-emerald-200 tw-bg-emerald-50/80 tw-px-3 tw-py-2">
+				<div class="tw-flex tw-flex-col tw-gap-2 sm:tw-flex-row sm:tw-items-center sm:tw-justify-between">
+					<div class="tw-flex tw-items-center tw-gap-2 tw-min-w-0">
+						<div class="tw-w-7 tw-h-7 tw-bg-emerald-100 tw-text-emerald-700 tw-rounded-md tw-flex tw-items-center tw-justify-center tw-flex-shrink-0">
+							<i data-lucide="radio-tower" class="tw-w-3.5 tw-h-3.5"></i>
+						</div>
+						<div class="tw-min-w-0">
+							<p class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Runtime Mode</p>
+							<p class="tw-text-[10px] tw-leading-tight tw-text-emerald-700/70">Networked service or static single-player output.</p>
+						</div>
+					</div>
+					<select id="compileRuntimeModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full sm:tw-w-64 tw-bg-white">
+						<option value="networked">Networked collaboration</option>
+						<option value="single-player">Single-player static</option>
+					</select>
+				</div>
+			</div>
+
 			<div class="tw-mb-4">
 				<div id="compileStatusRow" class="tw-flex tw-items-start tw-justify-between tw-gap-3 tw-flex-wrap">
 					<div id="constantUpdateUser" class="tw-flex tw-items-start tw-gap-2 tw-text-sm tw-text-slate-600">

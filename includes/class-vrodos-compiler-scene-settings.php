@@ -73,6 +73,7 @@ class VRodos_Compiler_Scene_Settings {
 			'presetGroundEnabled'                => VRodos_Runtime_Settings_Contract::bool_string( $metadata->backgroundPresetGroundEnabled ?? false, false, '1', '0' ),
 			'movement_disabled'                  => VRodos_Runtime_Settings_Contract::bool_string( $metadata->disableMovement ?? false ),
 			'avatar_enabled'                     => VRodos_Runtime_Settings_Contract::bool_string( $metadata->enableAvatar ?? false ),
+			'runtimeMode'                        => ( $metadata->aframeRuntimeMode ?? 'networked' ) === 'single-player' ? 'single-player' : 'networked',
 			'collisionMode'                      => $metadata->aframeCollisionMode ?? 'auto',
 			'renderQuality'                      => $metadata->aframeRenderQuality ?? 'standard',
 			'shadowQuality'                      => $metadata->aframeShadowQuality ?? 'medium',

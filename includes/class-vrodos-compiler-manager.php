@@ -14,12 +14,16 @@ require_once __DIR__ . '/class-vrodos-compiler-runtime-manifest.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
 
 class VRodos_Compiler_Manager {
+	public const RUNTIME_MODE_NETWORKED     = 'networked';
+	public const RUNTIME_MODE_SINGLE_PLAYER = 'single-player';
+
 	private string $server_protocol;
 	private string $portNodeJs;
 	private string $plugin_path_url;
 	private string $plugin_path_dir;
 	private string $website_root_url;
 	private array $runtime_link_settings = [];
+	private string $runtime_mode = self::RUNTIME_MODE_NETWORKED;
 	private bool $isHoverEnabled = true;
 	private VRodos_Compiler_Runtime_Assets $runtime_assets;
 	private VRodos_Compiler_Template_Renderer $template_renderer;
@@ -55,21 +59,7 @@ class VRodos_Compiler_Manager {
 		$this->portNodeJs            = $this->runtime_link_settings['local_port'];
 	}
 
-	public function compile_aframe( $project_id, $scene_id_list, $showPawnPositions ) {
-
-		// Start node js server at port 5832
-		$server_script = VRodos_Path_Manager::networked_aframe_server_path();
-
-		if ( PHP_OS == 'WINNT' ) {
-			$strCmd = 'node "' . str_replace( '"', '\"', $server_script ) . '"';
-			popen( 'start "" ' . $strCmd, 'r' );
-		} else {
-			$strCmd = 'node ' . escapeshellarg( $server_script );
-			// if not already running (linux)
-			if ( ! $this->processExists( 'networked-afr' ) ) {
-				shell_exec( $strCmd . ' > /dev/null 2>/dev/null &' );
-			}
-		}
+	public function compile_aframe( $project_id, $scene_id_list, $showPawnPositions, $runtime_mode = null ) {
 
 		// Ensure output directory exists before writing compiled files
 		$build_dir = VRodos_Path_Manager::runtime_build_path();
@@ -91,15 +81,20 @@ class VRodos_Compiler_Manager {
 		$last_scene_id   = $context['last_scene_id'];
 		$first_scene_json = $context['first_scene_json'];
 
+		$this->runtime_mode = $this->resolve_runtime_mode( $runtime_mode, $first_scene_json );
+		if ( $this->is_networked_runtime() ) {
+			$this->start_networked_aframe_server();
+		}
+
 		$this->isHoverEnabled = $first_scene_json->metadata->aframeHoveringInteractables ?? true;
 		$this->entity_renderer->configure( $this->plugin_path_url, (bool) $this->isHoverEnabled );
 
 		foreach ( $valid_scene_ids as $key => $value ) {
-			if ( ! $is_vrexpo ) {
+			if ( $this->is_networked_runtime() && ! $is_vrexpo ) {
 				$this->createIndexFile( $project_title, $value, $scene_title );
 			}
 			$this->createMasterClient( $value, $scene_title, $scene_json[ $key ], $showPawnPositions, $key, $project_id, $valid_scene_ids );
-			if ( ! $is_vrexpo ) {
+			if ( $this->is_networked_runtime() && ! $is_vrexpo ) {
 				$this->createSimpleClient( $value, $scene_json[ $key ], $project_id );
 			}
 		}
@@ -108,12 +103,15 @@ class VRodos_Compiler_Manager {
 		$master_filename  = 'Master_Client_' . $master_scene_id . '.html';
 		$result           = [
 			'DefaultLinkMode' => $this->runtime_link_settings['default_link_mode'],
-			'PrimaryLinkMode' => $this->primary_runtime_mode(),
+			'PrimaryLinkMode' => $this->is_single_player_runtime() ? 'static' : $this->primary_runtime_mode(),
+			'RuntimeMode'     => $this->runtime_mode,
 			'MasterClient'    => $this->runtime_url_for_file( $master_filename ),
 		];
-		$this->append_runtime_link_variants( $result, 'MasterClient', $master_filename );
+		if ( $this->is_networked_runtime() ) {
+			$this->append_runtime_link_variants( $result, 'MasterClient', $master_filename );
+		}
 
-		if ( ! $is_vrexpo ) {
+		if ( $this->is_networked_runtime() && ! $is_vrexpo ) {
 			$index_filename         = 'index_' . $last_scene_id . '.html';
 			$simple_client_filename = 'Simple_Client_' . $last_scene_id . '.html';
 
@@ -124,6 +122,43 @@ class VRodos_Compiler_Manager {
 		}
 
 		return json_encode( $result );
+	}
+
+	public static function normalize_runtime_mode( $runtime_mode ): string {
+		$runtime_mode = is_string( $runtime_mode ) ? sanitize_text_field( wp_unslash( $runtime_mode ) ) : '';
+		return self::RUNTIME_MODE_SINGLE_PLAYER === $runtime_mode ? self::RUNTIME_MODE_SINGLE_PLAYER : self::RUNTIME_MODE_NETWORKED;
+	}
+
+	private function resolve_runtime_mode( $runtime_mode, $first_scene_json ): string {
+		if ( null === $runtime_mode || '' === $runtime_mode ) {
+			$metadata     = is_object( $first_scene_json->metadata ?? null ) ? $first_scene_json->metadata : new stdClass();
+			$runtime_mode = $metadata->aframeRuntimeMode ?? self::RUNTIME_MODE_NETWORKED;
+		}
+
+		return self::normalize_runtime_mode( $runtime_mode );
+	}
+
+	private function is_networked_runtime(): bool {
+		return self::RUNTIME_MODE_NETWORKED === $this->runtime_mode;
+	}
+
+	private function is_single_player_runtime(): bool {
+		return self::RUNTIME_MODE_SINGLE_PLAYER === $this->runtime_mode;
+	}
+
+	private function start_networked_aframe_server(): void {
+		$server_script = VRodos_Path_Manager::networked_aframe_server_path();
+
+		if ( PHP_OS == 'WINNT' ) {
+			$strCmd = 'node "' . str_replace( '"', '\"', $server_script ) . '"';
+			popen( 'start "" ' . $strCmd, 'r' );
+			return;
+		}
+
+		$strCmd = 'node ' . escapeshellarg( $server_script );
+		if ( ! $this->processExists( 'networked-afr' ) ) {
+			shell_exec( $strCmd . ' > /dev/null 2>/dev/null &' );
+		}
 	}
 
 	private function processExists( $processName ) {
@@ -139,7 +174,12 @@ class VRodos_Compiler_Manager {
 		return $this->primary_runtime_base_url();
 	}
 
-	public function runtime_url_for_file( string $filename, ?string $mode = null ): string {
+	public function runtime_url_for_file( string $filename, ?string $mode = null, ?string $runtime_mode = null ): string {
+		$runtime_mode = null === $runtime_mode ? $this->runtime_mode : self::normalize_runtime_mode( $runtime_mode );
+		if ( self::RUNTIME_MODE_SINGLE_PLAYER === $runtime_mode ) {
+			return VRodos_Path_Manager::runtime_build_url( ltrim( $filename, '/' ) );
+		}
+
 		$base_urls = $this->runtime_base_urls();
 		$mode      = $mode ?: $this->primary_runtime_mode();
 
@@ -423,7 +463,8 @@ class VRodos_Compiler_Manager {
 		// Modify strings
 		$content = str_replace( 'roomname', 'room' . $scene_id, $content );
 		$content = str_replace( 'AFRAME_RUNTIME_URL_PLACEHOLDER', esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ), $content );
-		$content = str_replace( 'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER', $this->runtime_script_planner()->render_scripts_for_scene( $scene_json ), $content );
+		$content = str_replace( 'VRODOS_RUNTIME_MODE_PLACEHOLDER', esc_js( $this->runtime_mode ), $content );
+		$content = str_replace( 'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER', $this->runtime_script_planner()->render_scripts_for_scene( $scene_json, $this->runtime_mode ), $content );
 		
 		$content = $this->runtime_assets->redirect_runtime_template_urls( $content );
 
@@ -455,10 +496,13 @@ class VRodos_Compiler_Manager {
 		$this->apply_gltf_decoder_config( $ascene );
 		$ascene->setAttribute( 'vrodos-scene-loader', '' );
 
-		// Set networked properties
-		$enable_director_audio = ( $projectType == 'vrexpo_games' ) ? 'false' : 'true';
-		$app_name              = ( $projectType == 'vrexpo_games' ) ? 'vrexpo' : 'vrodos';
-		$ascene->setAttribute( 'networked-scene', "app: $app_name; room: room$scene_id; debug: false; audio: $enable_director_audio; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;" );
+		if ( $this->is_networked_runtime() ) {
+			$enable_director_audio = ( $projectType == 'vrexpo_games' ) ? 'false' : 'true';
+			$app_name              = ( $projectType == 'vrexpo_games' ) ? 'vrexpo' : 'vrodos';
+			$ascene->setAttribute( 'networked-scene', "app: $app_name; room: room$scene_id; debug: false; audio: $enable_director_audio; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;" );
+		} else {
+			$ascene->removeAttribute( 'networked-scene' );
+		}
 
 		if ( $projectType == 'vrexpo_games' ) {
 
@@ -469,7 +513,9 @@ class VRodos_Compiler_Manager {
 			$a_camera = $dom->createElement( 'a-camera' );
 			$a_camera->setAttribute( 'camera', '' );
 			$a_camera->setAttribute( 'id', 'cameraA' );
-			$a_camera->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
+			if ( $this->is_networked_runtime() ) {
+				$a_camera->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
+			}
 			$a_camera->setAttribute( 'player-info', '' );
 			$a_camera->setAttribute( 'avatar-movement-info', '' );
 			$a_camera->setAttribute( 'look-controls', '' );
@@ -505,7 +551,9 @@ class VRodos_Compiler_Manager {
 
 		} else {
 			$ascenePlayer->setAttribute( 'position', '0 0.6 0' );
-			$ascenePlayer->setAttribute( 'networked', 'template:#avatar-template;attachTemplateToLocal:false;' );
+			if ( $this->is_networked_runtime() ) {
+				$ascenePlayer->setAttribute( 'networked', 'template:#avatar-template;attachTemplateToLocal:false;' );
+			}
 			$ascenePlayer->setAttribute( 'custom-movement', '' );
 			$ascenePlayer->setAttribute( 'show-position', '' );
 			$ascenePlayer->setAttribute( 'wasd-controls', 'fly:false; acceleration:20' );
@@ -521,7 +569,9 @@ class VRodos_Compiler_Manager {
 			$a_entity->setAttribute( 'active', 'true' );
 			$a_entity->setAttribute( 'camera', 'near: 0.1; far: 7000.0;' );
 			$a_entity->setAttribute( 'position', '0 0.6 0' );
-			$a_entity->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
+			if ( $this->is_networked_runtime() ) {
+				$a_entity->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
+			}
 			$a_entity->setAttribute( 'player-info', '' );
 			$a_entity->setAttribute( 'avatar-movement-info', '' );
 
@@ -537,6 +587,10 @@ class VRodos_Compiler_Manager {
 			'showPawnPositions' => $showPawnPositions
 		] );
 
+		if ( $this->is_single_player_runtime() ) {
+			$this->apply_single_player_runtime_dom( $dom, $ascene );
+		}
+
 		$this->entity_renderer->markDelayedRevealEntities( $dom );
 		$this->append_compile_diagnostics_script( $dom, $this->entity_renderer->build_compile_diagnostics( $dom ) );
 
@@ -545,6 +599,87 @@ class VRodos_Compiler_Manager {
 
 		// Write compiled HTML into the generated runtime build directory.
 		return $this->writer( VRodos_Path_Manager::runtime_build_path( 'Master_Client_' . $scene_id . '.html' ), $contentNew );
+	}
+
+	private function apply_single_player_runtime_dom( DOMDocument $dom, DOMElement $ascene ): void {
+		$ascene->removeAttribute( 'networked-scene' );
+
+		$this->remove_scripts_containing( $dom, [
+			'socket.io',
+			'easyrtc.js',
+			'networked-aframe',
+			'chat_component.js',
+		] );
+
+		foreach ( [ 'networked', 'networked-audio-source', 'networked-video-source', 'chat-poi', 'indicator-availability' ] as $attribute ) {
+			$this->remove_attribute_everywhere( $dom, $attribute );
+		}
+
+		foreach ( [ 'chat-wrapper-el', 'obtainStatusAndSetSizeControls', 'screen-btn-sendscreen' ] as $element_id ) {
+			$this->hide_dom_element( $dom->getElementById( $element_id ) );
+		}
+
+		$this->remove_dom_element( $dom->getElementById( 'avatar-selection-dialog' ) );
+
+		$occupants = $dom->getElementById( 'occupantsNumberShow' );
+		if ( $occupants instanceof DOMElement && $occupants->parentNode instanceof DOMElement ) {
+			$this->hide_dom_element( $occupants->parentNode );
+		}
+
+		$room = $dom->getElementById( 'roomNameShow' );
+		if ( $room instanceof DOMElement ) {
+			$room->nodeValue = 'single-player';
+		}
+	}
+
+	private function remove_dom_element( ?DOMElement $element ): void {
+		if ( ! $element instanceof DOMElement || ! $element->parentNode ) {
+			return;
+		}
+
+		$element->parentNode->removeChild( $element );
+	}
+
+	private function remove_scripts_containing( DOMDocument $dom, array $needles ): void {
+		$remove = [];
+		foreach ( $dom->getElementsByTagName( 'script' ) as $script ) {
+			if ( ! $script instanceof DOMElement || ! $script->hasAttribute( 'src' ) ) {
+				continue;
+			}
+
+			$src = $script->getAttribute( 'src' );
+			foreach ( $needles as $needle ) {
+				if ( str_contains( $src, (string) $needle ) ) {
+					$remove[] = $script;
+					break;
+				}
+			}
+		}
+
+		foreach ( $remove as $script ) {
+			if ( $script->parentNode ) {
+				$script->parentNode->removeChild( $script );
+			}
+		}
+	}
+
+	private function remove_attribute_everywhere( DOMDocument $dom, string $attribute ): void {
+		foreach ( $dom->getElementsByTagName( '*' ) as $element ) {
+			if ( $element instanceof DOMElement && $element->hasAttribute( $attribute ) ) {
+				$element->removeAttribute( $attribute );
+			}
+		}
+	}
+
+	private function hide_dom_element( ?DOMElement $element ): void {
+		if ( ! $element instanceof DOMElement ) {
+			return;
+		}
+
+		$style = trim( $element->getAttribute( 'style' ) );
+		$style = '' === $style ? '' : rtrim( $style, ';' ) . '; ';
+		$element->setAttribute( 'style', $style . 'display: none; visibility: hidden;' );
+		$element->setAttribute( 'data-visible', 'false' );
 	}
 
 	private function createSimpleClient( $scene_id, $scene_json, $project_id ) {

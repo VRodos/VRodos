@@ -4,6 +4,15 @@
     window.VRODOS_RUNTIME_SETTINGS_CONTRACT = {
       "schemaVersion": 1,
       "sceneSettings": {
+        "runtimeMode": {
+          "metadataKey": "aframeRuntimeMode",
+          "type": "enum",
+          "default": "networked",
+          "allowed": [
+            "networked",
+            "single-player"
+          ]
+        },
         "pmndrsAAMode": {
           "metadataKey": "aframePmndrsAAMode",
           "type": "enum",
@@ -580,7 +589,9 @@
           prev = new THREE.Vector3(curr.x, curr.y, curr.z);
           return true;
         }
-        if (!NAF.utils.almostEqualVec3(prev, curr, epsilon)) {
+        const hasNafVectorCompare = typeof window.NAF !== "undefined" && window.NAF.utils && typeof window.NAF.utils.almostEqualVec3 === "function";
+        const isAlmostEqual = hasNafVectorCompare ? window.NAF.utils.almostEqualVec3(prev, curr, epsilon) : prev.distanceTo(curr) <= epsilon;
+        if (!isAlmostEqual) {
           curr.x = 0;
           prev.copy(curr);
           return true;
@@ -810,6 +821,9 @@
       ryStep: 0.1,
       rzStep: 0.1
     };
+    function isNetworkedRuntime() {
+      return window.VRODOS_RUNTIME_MODE !== "single-player";
+    }
     function bindOnce(element, key, binder) {
       if (!element) {
         return;
@@ -869,15 +883,15 @@
             selfBrowserSurface: "include",
             audio: true
           }).then((stream) => {
-            if (NAF.connection.adapter.addLocalMediaStream) {
-              NAF.connection.adapter.addLocalMediaStream(stream, "screen");
+            if (typeof window.NAF !== "undefined" && window.NAF.connection && window.NAF.connection.adapter && typeof window.NAF.connection.adapter.addLocalMediaStream === "function") {
+              window.NAF.connection.adapter.addLocalMediaStream(stream, "screen");
             }
           });
         });
       });
     }
     function buildVideoControlGui(buttonEl) {
-      if (typeof window.NAF === "undefined" || typeof lil === "undefined") {
+      if (typeof window.NAF === "undefined" || !window.NAF.connection || !window.NAF.connection.entities || typeof lil === "undefined") {
         return;
       }
       const entities = window.NAF.connection.entities.entities;
@@ -1202,15 +1216,20 @@
       });
     }
     function init() {
-      registerAvatarSchema();
-      bindLateJoinSync();
-      bindScreenShareButton();
-      bindStatusControls();
+      if (isNetworkedRuntime()) {
+        registerAvatarSchema();
+        bindLateJoinSync();
+        bindScreenShareButton();
+        bindStatusControls();
+      }
       bindRecordingControls();
       bindDirectorControls();
       bindSceneAssetVisibility();
     }
     window.connectionResolve = function() {
+      if (!isNetworkedRuntime()) {
+        return;
+      }
       bindScreenShareButton();
     };
     if (document.readyState === "loading") {

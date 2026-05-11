@@ -35,6 +35,7 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     'disableMovement': { type: 'boolean', default: false, envirKey: 'disableMovement' },
     'enableAvatar': { type: 'boolean', default: false, envirKey: 'enableAvatar' },
     'enableGeneralChat': { type: 'boolean', default: false, envirKey: 'enableGeneralChat' },
+    'aframeRuntimeMode': { type: 'string', default: 'networked', envirKey: 'aframeRuntimeMode' },
     'aframeCollisionMode': { type: 'string', default: 'auto', envirKey: 'aframeCollisionMode' },
     'aframeFPSMeterEnabled': { type: 'boolean', default: false, envirKey: 'aframeFPSMeterEnabled' },
     'aframeHoveringInteractables': { type: 'boolean', default: true, envirKey: 'aframeHoveringInteractables' },

@@ -451,6 +451,7 @@
       presChoice: { type: "string", default: "default" },
       presetGroundEnabled: { type: "string", default: "1" },
       movement_disabled: { type: "string", default: "0" },
+      runtimeMode: { type: "string", default: "networked" },
       collisionMode: { type: "string", default: "auto" },
       renderQuality: { type: "string", default: "standard" },
       shadowQuality: { type: "string", default: "medium" },

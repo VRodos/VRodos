@@ -19,8 +19,13 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function normalizeRuntimeMode(value) {
+        return value === 'single-player' ? 'single-player' : 'networked';
+    }
+
     function getCompileDialogElements() {
         return {
+            runtimeMode: document.getElementById('compileRuntimeModeSelect'),
             renderQuality: document.getElementById('compileRenderQualitySelect'),
             shadowQuality: document.getElementById('compileShadowQualitySelect'),
             aaQuality: document.getElementById('compileAAQualitySelect'),
@@ -166,6 +171,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (typeof VRODOS.editor.envir.scene.aframeHoveringInteractables === 'undefined') {
             VRODOS.editor.envir.scene.aframeHoveringInteractables = true;
         }
+        VRODOS.editor.envir.scene.aframeRuntimeMode = normalizeRuntimeMode(VRODOS.editor.envir.scene.aframeRuntimeMode);
         if (typeof VRODOS.editor.envir.scene.aframeLegacyHorizonStageSize !== 'number') {
             VRODOS.editor.envir.scene.aframeLegacyHorizonStageSize = VRodosCompileUI.General.clampLegacyHorizonStageSize(VRODOS.editor.envir.scene.aframeLegacyHorizonStageSize);
         }
@@ -565,6 +571,9 @@ window.addEventListener('DOMContentLoaded', () => {
         ensureCompileSceneSettingsDefaults();
 
         VRodosCompileUI.General.syncToScene(controls);
+        if (controls.runtimeMode) {
+            VRODOS.editor.envir.scene.aframeRuntimeMode = normalizeRuntimeMode(controls.runtimeMode.value);
+        }
         if (controls.hoveringInteractables) {
             VRODOS.editor.envir.scene.aframeHoveringInteractables = Boolean(controls.hoveringInteractables.checked);
         }
@@ -616,6 +625,9 @@ window.addEventListener('DOMContentLoaded', () => {
             ? VRodosCompileUI.General.normalizeContactShadowPreset(VRODOS.editor.envir.scene.aframeContactShadowPreset)
             : 'soft';
         controls.fpsMeter.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeFPSMeterEnabled);
+        if (controls.runtimeMode) {
+            controls.runtimeMode.value = normalizeRuntimeMode(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframeRuntimeMode : 'networked');
+        }
         if (controls.hoveringInteractables) {
             controls.hoveringInteractables.checked = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) || VRODOS.editor.envir.scene.aframeHoveringInteractables !== false;
         }
@@ -943,6 +955,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (controls.fpsMeter) {
         controls.fpsMeter.addEventListener('change', syncCompilePostFxState);
+    }
+    if (controls.runtimeMode) {
+        controls.runtimeMode.addEventListener('change', syncCompilePostFxState);
     }
     if (controls.hoveringInteractables) {
         controls.hoveringInteractables.addEventListener('change', syncCompilePostFxState);

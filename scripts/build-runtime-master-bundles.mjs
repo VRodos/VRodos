@@ -26,8 +26,6 @@ const chunks = [
     files: [
       'highlight_img.js',
       'components/poi-image_component.js',
-      'components/chat_poi_component.js',
-      'components/indicator_component.js',
       'components/poi-link_component.js',
       'components/door_component.js',
       'components/audio_component.js',
@@ -38,6 +36,17 @@ const chunks = [
       'assessment/assessment-renderers.js',
       'assessment/assessment-overlay-runtime.js',
       'components/immerse-assessment_component.js'
+    ].map((file) => path.join(runtimeDir, file))
+  },
+  {
+    id: 'networked-components',
+    label: 'Networked scene components',
+    output: 'vrodos-runtime-networked-components.bundle.js',
+    order: 15,
+    features: ['networked-components', 'chat', 'availability'],
+    files: [
+      'components/chat_poi_component.js',
+      'components/indicator_component.js'
     ].map((file) => path.join(runtimeDir, file))
   },
   {

@@ -21,8 +21,6 @@
       "sourceFiles": [
         "assets/js/runtime/highlight_img.js",
         "assets/js/runtime/components/poi-image_component.js",
-        "assets/js/runtime/components/chat_poi_component.js",
-        "assets/js/runtime/components/indicator_component.js",
         "assets/js/runtime/components/poi-link_component.js",
         "assets/js/runtime/components/door_component.js",
         "assets/js/runtime/components/audio_component.js",
@@ -33,6 +31,25 @@
         "assets/js/runtime/assessment/assessment-renderers.js",
         "assets/js/runtime/assessment/assessment-overlay-runtime.js",
         "assets/js/runtime/components/immerse-assessment_component.js"
+      ],
+      "generatedBy": "build:runtime"
+    },
+    "networked-components": {
+      "id": "networked-components",
+      "label": "Networked scene components",
+      "type": "script",
+      "file": "vrodos-runtime-networked-components.bundle.js",
+      "src": "js/master/lib/vrodos-runtime-networked-components.bundle.js",
+      "order": 15,
+      "dependencies": [],
+      "features": [
+        "networked-components",
+        "chat",
+        "availability"
+      ],
+      "sourceFiles": [
+        "assets/js/runtime/components/chat_poi_component.js",
+        "assets/js/runtime/components/indicator_component.js"
       ],
       "generatedBy": "build:runtime"
     },

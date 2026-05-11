@@ -60,8 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Wait for NAF connection before subscribing
     const subscribeWhenReady = () => {
         let chatLog = document.getElementById('chat-messages');
-        if (NAF.connection) {
-            NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
+        if (typeof window.NAF === 'undefined') {
+            return;
+        }
+
+        if (window.NAF.connection) {
+            window.NAF.connection.subscribeToDataChannel("chat", (senderId, dataType, data, targetId) => {
                 let dateString = getChatCurrentTimeString();
                 if (publicChatIsActive && chatLog) {
                     let playerColor = data.player ? data.player.color : '#80c9d4';
@@ -122,4 +126,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-

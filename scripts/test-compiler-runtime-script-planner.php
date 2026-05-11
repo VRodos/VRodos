@@ -33,6 +33,13 @@ $manifest = new VRodos_Compiler_Runtime_Manifest(
 				'order'        => 10,
 				'dependencies' => [],
 			],
+			'networked-components'         => [
+				'id'           => 'networked-components',
+				'type'         => 'script',
+				'src'          => 'js/master/lib/vrodos-runtime-networked-components.bundle.js',
+				'order'        => 15,
+				'dependencies' => [],
+			],
 			'core-runtime'                 => [
 				'id'           => 'core-runtime',
 				'type'         => 'script',
@@ -92,39 +99,45 @@ $manifest = new VRodos_Compiler_Runtime_Manifest(
 $planner = new VRodos_Compiler_Runtime_Script_Planner( $manifest );
 
 vrodos_assert_same(
-	[ 'scene-components', 'core-runtime', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [] ) ),
 	'no post-FX'
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'core-runtime', 'legacy-postfx', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'legacy-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'legacy' ] ) ),
 	'legacy post-FX'
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'core-runtime', 'pmndrs-postprocessing-vendor', 'pmndrs-postfx', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'pmndrs-postprocessing-vendor', 'pmndrs-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => false ] ) ),
 	'PMNDRS without Takram'
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'core-runtime', 'pmndrs-postprocessing-vendor', 'pmndrs-postfx', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'pmndrs-postprocessing-vendor', 'pmndrs-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => false, 'aframePmndrsGeospatialEnabled' => true ] ) ),
 	'PMNDRS geospatial disabled by Takram atmosphere gate'
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'core-runtime', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'pmndrs-postfx', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'pmndrs-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true ] ) ),
 	'PMNDRS with Takram'
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'core-runtime', 'fps-meter', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'fps-meter', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframeFPSMeterEnabled' => true ] ) ),
 	'FPS meter'
+);
+
+vrodos_assert_same(
+	[ 'scene-components', 'core-runtime', 'aframe-components' ],
+	$planner->script_ids_for_scene( vrodos_test_scene( [] ), 'single-player' ),
+	'single-player no networked components'
 );
 
 echo "Runtime script planner fixtures passed.\n";

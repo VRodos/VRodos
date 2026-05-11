@@ -13,6 +13,14 @@ VRODOS.api.compileScene = function(showPawnPositions, options) {
 	const runCompileRequest = function() {
 	// In which platform to compile, e.g. Aframe
 	const platform = document.getElementById( "platformInput" ).value;
+	const runtimeModeControl = document.getElementById( "compileRuntimeModeSelect" );
+	const sceneRuntimeMode = VRODOS.editor && VRODOS.editor.envir && VRODOS.editor.envir.scene
+		? VRODOS.editor.envir.scene.aframeRuntimeMode
+		: '';
+	const selectedRuntimeMode = runtimeModeControl ? runtimeModeControl.value : sceneRuntimeMode;
+	const runtimeMode = selectedRuntimeMode === 'single-player'
+		? 'single-player'
+		: 'networked';
 
 	// Change UI text label
 	const compilationProgressText = document.getElementById( "compilationProgressText" );
@@ -55,7 +63,8 @@ VRODOS.api.compileScene = function(showPawnPositions, options) {
 		
 		'showPawnPositions': resolvedShowPawnPositions,
 		'vrodos_scene': sceneId,
-		'outputFormat': platform
+		'outputFormat': platform,
+		runtimeMode
 	});
 
 	const url = `${VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl()  }?${  params.toString()}`;
@@ -117,8 +126,11 @@ VRODOS.api.compileScene = function(showPawnPositions, options) {
 			urlExperienceSequence.LocalCurrentSceneMasterClient ||
 			urlExperienceSequence.PublicCurrentSceneMasterClient
 		);
+		const isSinglePlayerRuntime = urlExperienceSequence.RuntimeMode === 'single-player';
 
-		if (hasRuntimeVariants) {
+		if (isSinglePlayerRuntime) {
+			createLinks(urlExperienceSequence.CurrentSceneMasterClient || urlExperienceSequence.MasterClient, "Scene link");
+		} else if (hasRuntimeVariants) {
 			if (projectType === 'vrexpo_games') {
 				createLinks(
 					urlExperienceSequence.LocalCurrentSceneMasterClient || urlExperienceSequence.LocalMasterClient,
@@ -243,5 +255,3 @@ VRODOS.api.hideCompileProgressSlider = function() {
 	document.getElementById( "compileProceedBtn" ).classList.remove( "LinkDisabled" );
 	document.getElementById( "compileCancelBtn" ).classList.remove( "LinkDisabled" );
 }
-
-

@@ -120,6 +120,10 @@ class VRodos_Path_Manager {
 		return self::plugin_path( self::RUNTIME_BUILD_DIR . $relative );
 	}
 
+	public static function runtime_build_url( string $relative = '' ): string {
+		return self::plugin_url( self::RUNTIME_BUILD_DIR . $relative );
+	}
+
 	public static function networked_aframe_server_path(): string {
 		return self::plugin_path( self::SERVICES_DIR . 'networked-aframe/server/easyrtc-server.js' );
 	}

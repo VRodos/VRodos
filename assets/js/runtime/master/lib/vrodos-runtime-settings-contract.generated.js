@@ -3,6 +3,15 @@
     window.VRODOS_RUNTIME_SETTINGS_CONTRACT = {
     "schemaVersion": 1,
     "sceneSettings": {
+        "runtimeMode": {
+            "metadataKey": "aframeRuntimeMode",
+            "type": "enum",
+            "default": "networked",
+            "allowed": [
+                "networked",
+                "single-player"
+            ]
+        },
         "pmndrsAAMode": {
             "metadataKey": "aframePmndrsAAMode",
             "type": "enum",

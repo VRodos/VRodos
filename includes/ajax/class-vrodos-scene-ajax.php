@@ -183,6 +183,7 @@ class VRodos_Scene_AJAX {
 		$sceneId           = intval( $_REQUEST['vrodos_scene'] );
 		$projectId         = intval( $_REQUEST['projectId'] );
 		$showPawnPositions = $_REQUEST['showPawnPositions'] ?? 'false';
+		$runtimeMode       = isset( $_REQUEST['runtimeMode'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['runtimeMode'] ) ) : null;
 
 		$terms = wp_get_post_terms( $sceneId, 'vrodos_scene_pgame' );
 		if ( is_wp_error( $terms ) || empty( $terms ) ) {
@@ -194,12 +195,23 @@ class VRodos_Scene_AJAX {
 		$sceneIdList = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( $parent_id );
 
 		$compiler      = new VRodos_Compiler_Manager();
-		$scene_json    = $compiler->compile_aframe( $projectId, $sceneIdList, $showPawnPositions );
+		$scene_json    = $compiler->compile_aframe( $projectId, $sceneIdList, $showPawnPositions, $runtimeMode );
 		$scene_payload = json_decode( (string) $scene_json, true );
 
 		if ( is_array( $scene_payload ) ) {
 			$master_filename = 'Master_Client_' . (int) $sceneId . '.html';
 			$simple_filename = 'Simple_Client_' . (int) $sceneId . '.html';
+			$runtime_mode    = $scene_payload['RuntimeMode'] ?? VRodos_Compiler_Manager::RUNTIME_MODE_NETWORKED;
+
+			if ( VRodos_Compiler_Manager::RUNTIME_MODE_SINGLE_PLAYER === $runtime_mode ) {
+				$scene_payload['CurrentSceneMasterClient'] = $compiler->runtime_url_for_file(
+					$master_filename,
+					null,
+					VRodos_Compiler_Manager::RUNTIME_MODE_SINGLE_PLAYER
+				);
+				echo wp_json_encode( $scene_payload );
+				wp_die();
+			}
 
 			$scene_payload['CurrentSceneMasterClient']      = $compiler->runtime_url_for_file( $master_filename );
 			$scene_payload['CurrentSceneSimpleClient']      = $compiler->runtime_url_for_file( $simple_filename );

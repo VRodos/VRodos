@@ -42,7 +42,14 @@ VRODOSMaster.vectorRequiresUpdateRotation = function (epsilon) {
                 return true;
             }
 
-            if (!NAF.utils.almostEqualVec3(prev, curr, epsilon)) {
+            const hasNafVectorCompare = typeof window.NAF !== 'undefined' &&
+                window.NAF.utils &&
+                typeof window.NAF.utils.almostEqualVec3 === 'function';
+            const isAlmostEqual = hasNafVectorCompare
+                ? window.NAF.utils.almostEqualVec3(prev, curr, epsilon)
+                : prev.distanceTo(curr) <= epsilon;
+
+            if (!isAlmostEqual) {
                 curr.x = 0;
                 prev.copy(curr);
                 return true;

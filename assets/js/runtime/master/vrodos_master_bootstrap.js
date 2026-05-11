@@ -66,6 +66,10 @@
         rzStep: 0.1
     };
 
+    function isNetworkedRuntime() {
+        return window.VRODOS_RUNTIME_MODE !== 'single-player';
+    }
+
     function bindOnce(element, key, binder) {
         if (!element) {
             return;
@@ -133,8 +137,13 @@
                     selfBrowserSurface: 'include',
                     audio: true
                 }).then((stream) => {
-                    if (NAF.connection.adapter.addLocalMediaStream) {
-                        NAF.connection.adapter.addLocalMediaStream(stream, 'screen');
+                    if (
+                        typeof window.NAF !== 'undefined' &&
+                        window.NAF.connection &&
+                        window.NAF.connection.adapter &&
+                        typeof window.NAF.connection.adapter.addLocalMediaStream === 'function'
+                    ) {
+                        window.NAF.connection.adapter.addLocalMediaStream(stream, 'screen');
                     }
                 });
             });
@@ -142,7 +151,12 @@
     }
 
     function buildVideoControlGui(buttonEl) {
-        if (typeof window.NAF === 'undefined' || typeof lil === 'undefined') {
+        if (
+            typeof window.NAF === 'undefined' ||
+            !window.NAF.connection ||
+            !window.NAF.connection.entities ||
+            typeof lil === 'undefined'
+        ) {
             return;
         }
 
@@ -531,16 +545,21 @@
     }
 
     function init() {
-        registerAvatarSchema();
-        bindLateJoinSync();
-        bindScreenShareButton();
-        bindStatusControls();
+        if (isNetworkedRuntime()) {
+            registerAvatarSchema();
+            bindLateJoinSync();
+            bindScreenShareButton();
+            bindStatusControls();
+        }
         bindRecordingControls();
         bindDirectorControls();
         bindSceneAssetVisibility();
     }
 
     window.connectionResolve = function () {
+        if (!isNetworkedRuntime()) {
+            return;
+        }
         bindScreenShareButton();
     };
 

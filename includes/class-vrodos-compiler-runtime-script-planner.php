@@ -11,12 +11,17 @@ class VRodos_Compiler_Runtime_Script_Planner {
 		$this->manifest = $manifest;
 	}
 
-	public function script_ids_for_scene( $scene_json ): array {
+	public function script_ids_for_scene( $scene_json, string $runtime_mode = 'networked' ): array {
 		$metadata  = is_object( $scene_json->metadata ?? null ) ? $scene_json->metadata : new stdClass();
 		$requested = [
 			'scene-components',
-			'core-runtime',
 		];
+
+		if ( $this->is_networked_runtime( $runtime_mode ) ) {
+			$requested[] = 'networked-components';
+		}
+
+		$requested[] = 'core-runtime';
 
 		if ( $this->is_fps_meter_enabled( $metadata ) ) {
 			$requested[] = 'fps-meter';
@@ -38,8 +43,8 @@ class VRodos_Compiler_Runtime_Script_Planner {
 		return $this->manifest->resolve_chunk_ids( $requested );
 	}
 
-	public function render_scripts_for_scene( $scene_json ): string {
-		return $this->render_scripts_for_chunk_ids( $this->script_ids_for_scene( $scene_json ) );
+	public function render_scripts_for_scene( $scene_json, string $runtime_mode = 'networked' ): string {
+		return $this->render_scripts_for_chunk_ids( $this->script_ids_for_scene( $scene_json, $runtime_mode ) );
 	}
 
 	public function render_scripts_for_chunk_ids( array $chunk_ids ): string {
@@ -100,6 +105,10 @@ class VRodos_Compiler_Runtime_Script_Planner {
 	private function is_fps_meter_enabled( $metadata ): bool {
 		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->enableFPSMeter ?? false )
 			|| VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeFPSMeterEnabled ?? false );
+	}
+
+	private function is_networked_runtime( string $runtime_mode ): bool {
+		return 'single-player' !== $runtime_mode;
 	}
 
 	private function safe_global_name( string $name ): string {
