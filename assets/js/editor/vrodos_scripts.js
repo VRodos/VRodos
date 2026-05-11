@@ -233,6 +233,12 @@ VRODOS.ui.bcgRadioSelect = function(option) {
     VRODOS.api.saveChanges();
 };
 
+window.bcgRadioSelect = VRODOS.ui.bcgRadioSelect;
+window.updateClearColorPicker = VRODOS.ui.updateClearColorPicker;
+window.handleBackgroundPresetChange = VRODOS.ui.handleBackgroundPresetChange;
+window.handleBackgroundPresetGroundToggle = VRODOS.ui.handleBackgroundPresetGroundToggle;
+window.handleHorizonSkyPresetChange = VRODOS.ui.handleHorizonSkyPresetChange;
+
 VRODOS.utils.hexToRgb = function(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -360,4 +366,7 @@ VRODOS.ui.updateFog = function(whencalled) {
     }
 };
 
-
+window.updateFogColorPicker = VRODOS.ui.updateFogColorPicker;
+window.loadFogType = VRODOS.ui.loadFogType;
+window.handleFogDensitySlider = VRODOS.ui.handleFogDensitySlider;
+window.updateFog = VRODOS.ui.updateFog;

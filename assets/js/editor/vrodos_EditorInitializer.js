@@ -223,7 +223,7 @@ function syncBackgroundInitialState(settings) {
     const radioEl = document.getElementById(radioIdMap[selOption]);
     if (radioEl) {
         radioEl.checked = true;
-        if (typeof bcgRadioSelect === 'function') {
+        if (VRODOS.ui && typeof VRODOS.ui.bcgRadioSelect === 'function') {
             // We pass the radio element to trigger the logic but we DON'T want to VRODOS.api.saveChanges on init
             // bcgRadioSelect calls VRODOS.api.saveChanges internally, so we might need to block it briefly or refactor
             // For now, let's just use the direct logic if we can
@@ -353,6 +353,5 @@ VRODOS.editor.animate = function animate() {
 
 // INITIALIZE ON DOM CONTENT LOADED
 document.addEventListener('DOMContentLoaded', initVrodosEditor);
-
 
 

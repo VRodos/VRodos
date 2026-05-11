@@ -91,15 +91,15 @@
             <div class="tw-px-3 tw-py-1">
                 <div class="bcg-toggle" id="bcgToggleGroup">
                     <input type="radio" id="sceneNoBackground" name="sceneColorTypeRadio" value="None" />
-                    <label for="sceneNoBackground" onclick="bcgRadioSelect({value:4})">None</label>
+                    <label for="sceneNoBackground" onclick="VRODOS.ui.bcgRadioSelect({value:4})">None</label>
                     <input type="radio" id="sceneHorizon" name="sceneColorTypeRadio" value="Horizon" checked />
-                    <label for="sceneHorizon" onclick="bcgRadioSelect({value:0})">Horizon</label>
+                    <label for="sceneHorizon" onclick="VRODOS.ui.bcgRadioSelect({value:0})">Horizon</label>
                     <input type="radio" id="sceneColorRadio" name="sceneColorTypeRadio" value="color" />
-                    <label for="sceneColorRadio" onclick="bcgRadioSelect({value:1})">Color</label>
+                    <label for="sceneColorRadio" onclick="VRODOS.ui.bcgRadioSelect({value:1})">Color</label>
                     <input type="radio" id="sceneSky" name="sceneColorTypeRadio" value="sky" />
-                    <label for="sceneSky" onclick="bcgRadioSelect({value:2})">Presets</label>
+                    <label for="sceneSky" onclick="VRODOS.ui.bcgRadioSelect({value:2})">Presets</label>
                     <input type="radio" id="sceneCustomImage" name="sceneColorTypeRadio" value="Custom_img" />
-                    <label for="sceneCustomImage" onclick="bcgRadioSelect({value:3})">Image</label>
+                    <label for="sceneCustomImage" onclick="VRODOS.ui.bcgRadioSelect({value:3})">Image</label>
                 </div>
                 <p id="sceneHorizonDescription" class="tw-hidden tw-mt-2 tw-text-[11px] tw-leading-relaxed tw-text-white/60">
                     Auto-generates a natural outdoor horizon with clear sky, sunlight, and balanced scene lighting for a bright daytime look.
@@ -109,7 +109,7 @@
             <div id="bcgSubOptions" class="tw-flex tw-flex-col tw-gap-2 tw-mt-1 tw-mb-1 tw-px-3 tw-py-1">
                 <div id="bcgHorizonSkyRow" class="tw-flex tw-items-center tw-gap-2" style="display:none">
                     <label class="tw-text-xs tw-text-white/80 tw-w-20 tw-flex-shrink-0">Sky preset</label>
-                    <select name="horizonSkyPreset" id="horizonSkyPreset" class="tw-select tw-select-xs tw-bg-slate-800 tw-text-white tw-border-white/10" style="font-size: 10px;" onchange="handleHorizonSkyPresetChange(this)">
+                    <select name="horizonSkyPreset" id="horizonSkyPreset" class="tw-select tw-select-xs tw-bg-slate-800 tw-text-white tw-border-white/10" style="font-size: 10px;" onchange="VRODOS.ui.handleHorizonSkyPresetChange(this)">
                         <option value="natural">Natural</option>
                         <option value="clear">Clear</option>
                         <option value="crisp">Crisp</option>
@@ -117,7 +117,7 @@
                 </div>
                 <div id="bcgColorRow" class="tw-flex tw-items-center tw-gap-2" style="display:none">
                     <label class="tw-text-xs tw-text-white/80 tw-w-12 tw-flex-shrink-0">Color</label>
-                    <input id="jscolorpick" type="color" oninput="updateClearColorPicker(this)"
+                    <input id="jscolorpick" type="color" oninput="VRODOS.ui.updateClearColorPicker(this)"
                            value="#000000" style="height:26px; width:60px; padding:0; border:1px solid rgba(255,255,255,0.1); border-radius:4px; cursor:pointer; background: transparent;">
                     <input type="text" id="sceneClearColor" name="sceneClearColor" form="3dAssetForm" value="#000000" style="visibility:hidden; position:absolute;">
                 </div>
@@ -177,7 +177,7 @@
                 .fog-toggle input:checked + label { background: rgba(255, 255, 255, 0.1); color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
             </style>
             <div class="tw-px-3 tw-py-1">
-                <div id="FogTypeRadioButtonList" class="fog-toggle" onclick="loadFogType()">
+                <div id="FogTypeRadioButtonList" class="fog-toggle" onclick="VRODOS.ui.loadFogType()">
                     <input type="radio" id="RadioNoFog" name="projectTypeRadio" checked value="1" />
                     <label for="RadioNoFog">None</label>
                     <input type="radio" id="RadioLinearFog" name="projectTypeRadio" value="2" />
@@ -194,20 +194,20 @@
 
                     <div class="colorElement tw-flex tw-items-center tw-gap-2" style="display:none">
                         <label class="tw-text-xs tw-text-white/80 tw-w-12 tw-flex-shrink-0">Color</label>
-                        <input id="jscolorpickFog" type="color" oninput="updateFogColorPicker(this)"
+                        <input id="jscolorpickFog" type="color" oninput="VRODOS.ui.updateFogColorPicker(this)"
                                style="height:26px; width:60px; padding:0; border:1px solid rgba(255,255,255,0.1); border-radius:4px; cursor:pointer; background: transparent;">
                         <input type="text" id="FogColor" name="FogColor" form="3dAssetForm" value="" style="visibility:hidden; position:absolute;">
                     </div>
 
                     <div class="linearElement tw-flex tw-items-center tw-gap-2" style="display:none">
                         <label for="FogNear" class="tw-text-xs tw-text-white/80 tw-w-12 tw-flex-shrink-0">Near</label>
-                        <input type="text" id="FogNear" name="FogNear" form="3dAssetForm" onchange="updateFog()" value="000000"
+                        <input type="text" id="FogNear" name="FogNear" form="3dAssetForm" onchange="VRODOS.ui.updateFog()" value="000000"
                                class="tw-input tw-input-xs tw-input-bordered tw-w-16 tw-bg-slate-800 tw-text-white tw-border-white/10">
                     </div>
 
                     <div class="linearElement tw-flex tw-items-center tw-gap-2" style="display:none">
                         <label for="FogFar" class="tw-text-xs tw-text-white/80 tw-w-12 tw-flex-shrink-0">Far</label>
-                        <input type="text" id="FogFar" name="FogFar" form="3dAssetForm" value="230" onchange="updateFog()"
+                        <input type="text" id="FogFar" name="FogFar" form="3dAssetForm" value="230" onchange="VRODOS.ui.updateFog()"
                                class="tw-input tw-input-xs tw-input-bordered tw-w-16 tw-bg-slate-800 tw-text-white tw-border-white/10">
                     </div>
 
@@ -218,7 +218,7 @@
                         </div>
                         <input type="range" min="0" max="3" value="0" step="1" 
                                class="tw-range tw-range-xs tw-range-primary" id="FogDensitySlider"
-                               oninput="handleFogDensitySlider(this.value)">
+                               oninput="VRODOS.ui.handleFogDensitySlider(this.value)">
                         <div class="tw-w-full tw-flex tw-justify-between tw-text-[9px] tw-px-1 tw-opacity-50">
                             <span>OFF</span>
                             <span>FAR</span>
