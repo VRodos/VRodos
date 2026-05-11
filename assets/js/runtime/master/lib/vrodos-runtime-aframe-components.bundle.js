@@ -436,6 +436,23 @@
     }
     return String(setting.default);
   }
+  function vrodosRuntimeDebugFlag(debugKey, queryKey) {
+    if (window.VRODOS_DEBUG && window.VRODOS_DEBUG[debugKey] === true) {
+      return true;
+    }
+    if (typeof window.location === "undefined" || !window.location.search) {
+      return false;
+    }
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(queryKey) === "1";
+    } catch (err) {
+      return false;
+    }
+  }
+  function vrodosRuntimeTruthy(value) {
+    return value === true || value === "true" || value === "1" || value === 1;
+  }
   function vrodosRuntimeNoop() {
     return void 0;
   }
@@ -578,6 +595,9 @@
       }
     },
     getEffectiveShadowQuality: function() {
+      if (vrodosRuntimeDebugFlag("disableShadows", "vrodos_debug_disable_shadows")) {
+        return "off";
+      }
       if (this.getRenderQualityLevel() === "performance") {
         return "off";
       }
@@ -627,6 +647,9 @@
       }
     },
     getAmbientOcclusionPreset: function() {
+      if (this.data.postFXEngine === "pmndrs" && vrodosRuntimeDebugFlag("disablePmndrsAo", "vrodos_debug_disable_pmndrs_ao")) {
+        return "off";
+      }
       switch (this.data.ambientOcclusionPreset) {
         case "off":
         case "soft":
@@ -709,14 +732,26 @@
       if (this.getRenderQualityLevel() === "performance") {
         return "none";
       }
+      if (vrodosRuntimeDebugFlag("disablePmndrsAa", "vrodos_debug_disable_pmndrs_aa")) {
+        return "none";
+      }
+      let mode = this.getAAQualityLevel() === "off" ? "none" : "msaa";
       switch (this.data.pmndrsAAMode) {
         case "none":
         case "smaa":
         case "msaa":
-          return this.data.pmndrsAAMode;
+          mode = this.data.pmndrsAAMode;
+          break;
         default:
-          return this.getAAQualityLevel() === "off" ? "none" : "msaa";
+          break;
       }
+      if (mode === "smaa" && vrodosRuntimeDebugFlag("disablePmndrsSmaa", "vrodos_debug_disable_pmndrs_smaa")) {
+        return "none";
+      }
+      if (mode === "msaa" && vrodosRuntimeDebugFlag("disablePmndrsMsaa", "vrodos_debug_disable_pmndrs_msaa")) {
+        return "none";
+      }
+      return mode;
     },
     getPmndrsAAPreset: function() {
       if (this.getRenderQualityLevel() === "performance") {
@@ -742,13 +777,19 @@
       }
     },
     isPmndrsLutEnabled: function() {
-      return this.getRenderQualityLevel() === "high" && this.data.postFXEngine === "pmndrs" && (this.data.pmndrsLutEnabled === true || this.data.pmndrsLutEnabled === "true" || this.data.pmndrsLutEnabled === "1" || this.data.pmndrsLutEnabled === 1);
+      return this.getRenderQualityLevel() === "high" && this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsLutEnabled);
     },
     isPmndrsLensFlareEnabled: function() {
-      return this.getRenderQualityLevel() === "high" && this.data.postFXEngine === "pmndrs" && (this.data.pmndrsLensFlareEnabled === true || this.data.pmndrsLensFlareEnabled === "true" || this.data.pmndrsLensFlareEnabled === "1" || this.data.pmndrsLensFlareEnabled === 1);
+      if (vrodosRuntimeDebugFlag("disablePmndrsLensFlare", "vrodos_debug_disable_pmndrs_lens_flare")) {
+        return false;
+      }
+      return this.getRenderQualityLevel() === "high" && this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsLensFlareEnabled);
     },
     isPmndrsAtmosphereEnabled: function() {
       return this.data.postFXEngine === "pmndrs" && this.data.pmndrsAtmosphereEnabled !== "0";
+    },
+    isPmndrsAerialPerspectiveEffectEnabled: function() {
+      return this.data.postFXEngine === "pmndrs" && (vrodosRuntimeTruthy(this.data.pmndrsAerialPerspectiveEnabled) || vrodosRuntimeDebugFlag("enablePmndrsHorizonAerial", "vrodos_debug_enable_pmndrs_horizon_aerial"));
     },
     getReflectionSource: function() {
       return this.data.reflectionSource === "scene-probe" ? "scene-probe" : "hdr";
@@ -952,18 +993,27 @@
     isPostFXOptionEnabled: function(key) {
       return this.data[key] !== "0";
     },
+    hasPostFXColorGradingEffectEnabled: function() {
+      if (!this.isPostFXOptionEnabled("postFXColorEnabled")) {
+        return false;
+      }
+      return Math.abs(this.getContrastValue() - 1) > 1e-4 || Math.abs(this.getSaturationValue() - 1) > 1e-4;
+    },
     isLegacyEdgeAAEnabled: function() {
       return this.data.postFXEngine !== "pmndrs" && this.isPostFXOptionEnabled("postFXEdgeAAEnabled");
     },
     hasEnabledPostFXOptions: function() {
-      return this.hasBloomEffectEnabled() || this.isPostFXOptionEnabled("postFXColorEnabled") || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsVignetteEnabled === "true" || this.data.pmndrsVignetteEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsNoiseEnabled === "true" || this.data.pmndrsNoiseEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsChromaticAberrationEnabled === "true" || this.data.pmndrsChromaticAberrationEnabled === "1") || this.isPmndrsAtmosphereEnabled();
+      return this.hasBloomEffectEnabled() || this.hasPostFXColorGradingEffectEnabled() || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) || this.isPmndrsAerialPerspectiveEffectEnabled();
     },
     hasCinematicShaderOptions: function() {
-      return this.hasBloomEffectEnabled() || this.isPostFXOptionEnabled("postFXColorEnabled") || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsVignetteEnabled === "true" || this.data.pmndrsVignetteEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsNoiseEnabled === "true" || this.data.pmndrsNoiseEnabled === "1") || this.data.postFXEngine === "pmndrs" && (this.data.pmndrsChromaticAberrationEnabled === "true" || this.data.pmndrsChromaticAberrationEnabled === "1") || this.isPostFXOptionEnabled("postFXTAAEnabled") || this.isPostFXOptionEnabled("postFXSSREnabled") || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAtmosphereEnabled();
+      return this.hasBloomEffectEnabled() || this.hasPostFXColorGradingEffectEnabled() || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) || this.isPostFXOptionEnabled("postFXTAAEnabled") || this.isPostFXOptionEnabled("postFXSSREnabled") || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAerialPerspectiveEffectEnabled();
+    },
+    hasPmndrsComposerEffectRequest: function() {
+      return this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && this.getRenderQualityLevel() === "high" && (this.hasBloomEffectEnabled() || this.hasPostFXColorGradingEffectEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled) || vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) || vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAerialPerspectiveEffectEnabled());
     },
     hasPostProcessingPipelineRequest: function() {
-      if (this.data.postFXEngine === "pmndrs" && this.isPmndrsAtmosphereEnabled()) {
-        return true;
+      if (this.data.postFXEngine === "pmndrs") {
+        return this.hasPmndrsComposerEffectRequest();
       }
       return this.getRenderQualityLevel() === "high" && this.data.postFXEnabled !== "0" && this.hasCinematicShaderOptions();
     },
@@ -1014,6 +1064,9 @@
       }
     },
     shouldUsePostProcessing: function() {
+      if (this.data.postFXEngine === "pmndrs" && vrodosRuntimeDebugFlag("disablePmndrsComposer", "vrodos_debug_disable_pmndrs_composer")) {
+        return false;
+      }
       return this.hasPostProcessingPipelineRequest() && !this.isImmersiveXrActive();
     },
     // --- Post-processing methods: LEGACY engine (extracted to vrodos_postprocessing.js) ---
@@ -1748,6 +1801,15 @@
       return {
         overlay: null,
         lastOverlayAt: 0,
+        frames: 0,
+        movingFrames: 0,
+        collisionFrames: 0,
+        totalTickMs: 0,
+        totalConstrainedMs: 0,
+        totalSampleMs: 0,
+        totalRaycastMs: 0,
+        totalRaycasts: 0,
+        totalIntersections: 0,
         avgTickMs: 0,
         avgConstrainedMs: 0,
         avgSampleMs: 0,
@@ -1805,6 +1867,19 @@
       const frame = this.navPerfDebug.frame;
       const alpha = 0.2;
       frame.tickMs = now - frame.tickStart;
+      this.navPerfDebug.frames += 1;
+      this.navPerfDebug.totalTickMs += frame.tickMs;
+      this.navPerfDebug.totalConstrainedMs += frame.constrainedMs;
+      this.navPerfDebug.totalSampleMs += frame.sampleMs;
+      this.navPerfDebug.totalRaycastMs += frame.raycastMs;
+      this.navPerfDebug.totalRaycasts += frame.raycasts;
+      this.navPerfDebug.totalIntersections += frame.intersections;
+      if (frame.moving) {
+        this.navPerfDebug.movingFrames += 1;
+      }
+      if (frame.collisionsEnabled) {
+        this.navPerfDebug.collisionFrames += 1;
+      }
       this.navPerfDebug.avgTickMs = this.navPerfDebug.avgTickMs === 0 ? frame.tickMs : this.navPerfDebug.avgTickMs * (1 - alpha) + frame.tickMs * alpha;
       this.navPerfDebug.avgConstrainedMs = this.navPerfDebug.avgConstrainedMs === 0 ? frame.constrainedMs : this.navPerfDebug.avgConstrainedMs * (1 - alpha) + frame.constrainedMs * alpha;
       this.navPerfDebug.avgSampleMs = this.navPerfDebug.avgSampleMs === 0 ? frame.sampleMs : this.navPerfDebug.avgSampleMs * (1 - alpha) + frame.sampleMs * alpha;
@@ -1836,6 +1911,69 @@
         `raycasts: ${frame.raycasts} avg ${this.navPerfDebug.avgRaycasts.toFixed(1)}`,
         `intersections: ${frame.intersections} avg ${this.navPerfDebug.avgIntersections.toFixed(1)}`
       ].join("\n");
+    },
+    getNavPerfDebugSnapshot: function() {
+      const currentPosition = this.getNavigationWorldPosition();
+      this.refreshNavMeshRoots();
+      if (!this.navPerfDebug) {
+        return {
+          enabled: false,
+          collisionTargets: this.navMeshCollisionTargets.length,
+          navMeshRoots: this.navMeshRoots.length,
+          position: {
+            x: currentPosition.x,
+            y: currentPosition.y,
+            z: currentPosition.z
+          }
+        };
+      }
+      const frames = Math.max(1, this.navPerfDebug.frames);
+      const frame = this.navPerfDebug.frame || {};
+      return {
+        enabled: true,
+        frames: this.navPerfDebug.frames,
+        movingFrames: this.navPerfDebug.movingFrames,
+        collisionFrames: this.navPerfDebug.collisionFrames,
+        collisionTargets: this.navMeshCollisionTargets.length,
+        navMeshRoots: this.navMeshRoots.length,
+        averages: {
+          tickMs: this.navPerfDebug.totalTickMs / frames,
+          constrainedMs: this.navPerfDebug.totalConstrainedMs / frames,
+          sampleMs: this.navPerfDebug.totalSampleMs / frames,
+          raycastMs: this.navPerfDebug.totalRaycastMs / frames,
+          raycasts: this.navPerfDebug.totalRaycasts / frames,
+          intersections: this.navPerfDebug.totalIntersections / frames,
+          emaTickMs: this.navPerfDebug.avgTickMs,
+          emaConstrainedMs: this.navPerfDebug.avgConstrainedMs,
+          emaSampleMs: this.navPerfDebug.avgSampleMs,
+          emaRaycastMs: this.navPerfDebug.avgRaycastMs,
+          emaRaycasts: this.navPerfDebug.avgRaycasts,
+          emaIntersections: this.navPerfDebug.avgIntersections
+        },
+        totals: {
+          tickMs: this.navPerfDebug.totalTickMs,
+          constrainedMs: this.navPerfDebug.totalConstrainedMs,
+          sampleMs: this.navPerfDebug.totalSampleMs,
+          raycastMs: this.navPerfDebug.totalRaycastMs,
+          raycasts: this.navPerfDebug.totalRaycasts,
+          intersections: this.navPerfDebug.totalIntersections
+        },
+        lastFrame: {
+          moving: Boolean(frame.moving),
+          collisionsEnabled: Boolean(frame.collisionsEnabled),
+          tickMs: frame.tickMs || 0,
+          constrainedMs: frame.constrainedMs || 0,
+          sampleMs: frame.sampleMs || 0,
+          raycastMs: frame.raycastMs || 0,
+          raycasts: frame.raycasts || 0,
+          intersections: frame.intersections || 0
+        },
+        position: {
+          x: currentPosition.x,
+          y: currentPosition.y,
+          z: currentPosition.z
+        }
+      };
     },
     getSceneSettings: function() {
       return this.sceneEl ? this.sceneEl.getAttribute("scene-settings") : null;

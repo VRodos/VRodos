@@ -27,7 +27,8 @@ The important finding is architectural: Takram's vanilla `post-process` atmosphe
 - Takram lens flare is tied to the Takram Horizon sun. Its `LensFlareEffect` is a convolution effect and must stay in its own `EffectPass`.
 - Takram `DitheringEffect` can add visible grain to texture-heavy compiled A-Frame scenes. Keep it out of the default path unless it is reintroduced as a measured opt-in.
 - A-Frame classic script builds already own their Three instance. Loading latest Three beside classic A-Frame risks duplicate `THREE` instances, broken materials, mismatched render targets, and PMNDRS/Takram incompatibilities.
-- A newer Three version should be tested only through a separate A-Frame module/import-map runtime spike where A-Frame, loaders, PMNDRS, Takram, and VRodos resolve to the same Three instance.
+- The near-term Three upgrade route is A-Frame's planned r184 work, tracked at `aframevr/aframe#5818`, so VRodos should follow the shared A-Frame runtime upgrade instead of maintaining a separate r184 fork/import-map track.
+- WebGPU stays experimental after the r184 upgrade. PMNDRS `EffectComposer`, GLSL/onBeforeCompile material hooks, Takram integration, and XR behavior still require separate validation before WebGPU can be a production performance fix.
 - SSGI is not the first realism fix. It may help with near-field bounce/contact realism later, but it does not replace the Takram atmosphere lighting model.
 
 ## Phased Roadmap
@@ -109,23 +110,24 @@ Acceptance:
 - Dark scenes remain plausible without global flat fill.
 - Texture grain is not introduced by the default PMNDRS path.
 
-### Phase 4 - Three/A-Frame Module Runtime Spike
+### Phase 4 - A-Frame r184 / WebGPU Spike
 
-Goal: determine whether compiled scenes can move beyond Three r181 without breaking A-Frame XR.
+Goal: determine whether compiled scenes can move from the current Three r181 baseline to A-Frame's planned Three r184 runtime without breaking A-Frame XR.
 
 Approach:
 
 - Keep production on `classic-aframe-r181`.
-- Add an experimental `module-aframe-importmap` runtime track.
-- First validate module A-Frame with Three r181 through import maps.
-- Only then test a latest Three candidate.
+- Track A-Frame's r184 upgrade work, especially `aframevr/aframe#5818`.
+- Prefer the official A-Frame r184 upgrade path before any VRodos-specific runtime fork.
 - Require exactly one shared Three instance for A-Frame, VRodos, loaders, PMNDRS, Takram, and addons.
+- Test WebGPU only as an opt-in experimental renderer after r184 is stable.
 
 Acceptance:
 
 - A-Frame core, `aframe-extras`, networked-aframe, VRodos components, loaders, PMNDRS composer, and Takram atmosphere all bind to the same `THREE`.
 - No duplicate Three globals or class-instance mismatches.
 - Classic r181 remains available as the production fallback.
+- WebGPU validation records which post-processing, material hook, Takram, and XR paths are compatible or need replacements.
 
 ### Phase 5 - SSGI Research Spike
 

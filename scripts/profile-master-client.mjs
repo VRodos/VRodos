@@ -28,6 +28,9 @@ function parseArgs(argv) {
         spector: false,
         spectorOutput: '',
         disableFpsMeter: false,
+        navProfile: false,
+        navProfileMs: 3000,
+        navProfileInput: { x: 0, y: -1 },
         resourceOverrides: []
     };
 
@@ -104,6 +107,24 @@ function parseArgs(argv) {
             case '--disable-fps-meter':
                 options.disableFpsMeter = true;
                 break;
+            case '--nav-profile':
+                options.navProfile = true;
+                break;
+            case '--nav-profile-ms':
+                options.navProfileMs = nextNumber(options.navProfileMs);
+                break;
+            case '--nav-profile-input': {
+                const value = nextValue() || '';
+                const match = value.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/);
+                if (!match) {
+                    throw new Error(`Invalid --nav-profile-input value "${value}". Use X,Y.`);
+                }
+                options.navProfileInput = {
+                    x: Math.max(-1, Math.min(1, Number(match[1]))),
+                    y: Math.max(-1, Math.min(1, Number(match[2])))
+                };
+                break;
+            }
             case '--resource-override':
             case '--asset-override':
                 options.resourceOverrides.push(parseResourceOverrideSpec(nextValue() || ''));
@@ -145,10 +166,26 @@ Options:
   --spector               Capture one Spector.js WebGL frame after timing samples.
   --spector-output PATH   Write the Spector capture JSON to PATH. Defaults next to --output.
   --disable-fps-meter     Disable the runtime FPS meter before warmup; this does not persist scene data.
+  --nav-profile           Simulate movement and collect custom-movement/navmesh raycast timing.
+  --nav-profile-ms N      Movement profile duration in ms. Default: 3000.
+  --nav-profile-input X,Y Movement input vector during nav profile. Default: 0,-1.
   --resource-override URL_OR_PATH=FILE
                            Fulfill a matching compiled-client resource request from a local file.
                            Repeatable; useful for GLB derivative trials without editing uploads.
 `);
+}
+
+function addUrlQueryParam(url, key, value) {
+    try {
+        const parsed = new URL(url);
+        if (!parsed.searchParams.has(key)) {
+            parsed.searchParams.set(key, value);
+        }
+        return parsed.toString();
+    } catch (error) {
+        const separator = String(url).includes('?') ? '&' : '?';
+        return `${url}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+    }
 }
 
 function parseResourceOverrideSpec(spec) {
@@ -896,6 +933,91 @@ async function disableRuntimeFpsMeter(cdp) {
     })()`);
 }
 
+async function captureNavigationProfile(cdp, durationMs, input) {
+    const safeDuration = Math.max(250, Math.min(60000, Number(durationMs) || 3000));
+    const safeInput = {
+        x: Math.max(-1, Math.min(1, Number(input?.x) || 0)),
+        y: Math.max(-1, Math.min(1, Number(input?.y) || 0))
+    };
+
+    return evaluate(cdp, `(() => {
+        const durationMs = ${JSON.stringify(safeDuration)};
+        const input = ${JSON.stringify(safeInput)};
+        const movementEl = document.querySelector('[custom-movement]');
+        const component = movementEl && movementEl.components && movementEl.components['custom-movement'];
+        if (!component) {
+            return {
+                enabled: false,
+                reason: 'custom-movement component was not available'
+            };
+        }
+
+        if (!component.navPerfDebug && typeof component.createNavPerfDebugState === 'function') {
+            window.VRODOS_DEBUG = window.VRODOS_DEBUG || {};
+            window.VRODOS_DEBUG.navPerfOverlay = true;
+            component.navPerfDebug = component.createNavPerfDebugState();
+        }
+
+        const startSnapshot = typeof component.getNavPerfDebugSnapshot === 'function'
+            ? component.getNavPerfDebugSnapshot()
+            : null;
+        const previousKeyboard = {
+            x: component.keyboardInput ? component.keyboardInput.x : 0,
+            y: component.keyboardInput ? component.keyboardInput.y : 0
+        };
+        const previousThumb = {
+            x: component.thumbInput ? component.thumbInput.x : 0,
+            y: component.thumbInput ? component.thumbInput.y : 0
+        };
+
+        if (component.keyboardInput) {
+            component.keyboardInput.x = input.x;
+            component.keyboardInput.y = input.y;
+        }
+        if (component.thumbInput) {
+            component.thumbInput.x = 0;
+            component.thumbInput.y = 0;
+        }
+
+        function restoreInput() {
+            if (component.keyboardInput) {
+                component.keyboardInput.x = previousKeyboard.x;
+                component.keyboardInput.y = previousKeyboard.y;
+            }
+            if (component.thumbInput) {
+                component.thumbInput.x = previousThumb.x;
+                component.thumbInput.y = previousThumb.y;
+            }
+        }
+
+        function nextFrame() {
+            return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        }
+
+        return new Promise((resolve) => {
+            window.setTimeout(async () => {
+                restoreInput();
+                await nextFrame();
+                const endSnapshot = typeof component.getNavPerfDebugSnapshot === 'function'
+                    ? component.getNavPerfDebugSnapshot()
+                    : null;
+                resolve({
+                    enabled: Boolean(endSnapshot && endSnapshot.enabled),
+                    durationMs,
+                    input,
+                    start: startSnapshot,
+                    end: endSnapshot,
+                    movementDelta: startSnapshot && endSnapshot && startSnapshot.position && endSnapshot.position ? {
+                        x: endSnapshot.position.x - startSnapshot.position.x,
+                        y: endSnapshot.position.y - startSnapshot.position.y,
+                        z: endSnapshot.position.z - startSnapshot.position.z
+                    } : null
+                });
+            }, durationMs);
+        });
+    })()`, true, Math.max(10000, safeDuration + 10000));
+}
+
 async function captureSceneSnapshot(cdp) {
     return evaluate(cdp, `(() => {
         const scene = document.querySelector('a-scene');
@@ -1027,10 +1149,15 @@ async function captureSceneSnapshot(cdp) {
                 atmosphereQuality: typeof settingsComponent.getPmndrsAtmosphereQuality === 'function' ? settingsComponent.getPmndrsAtmosphereQuality() : settingsComponent.data.pmndrsAtmosphereQuality,
                 pmndrsAA: typeof settingsComponent.getPmndrsAAMode === 'function' ? settingsComponent.getPmndrsAAMode() : settingsComponent.data.pmndrsAAMode,
                 pmndrsAAPreset: typeof settingsComponent.getPmndrsAAPreset === 'function' ? settingsComponent.getPmndrsAAPreset() : settingsComponent.data.pmndrsAAPreset,
+                ambientOcclusionPreset: typeof settingsComponent.getAmbientOcclusionPreset === 'function' ? settingsComponent.getAmbientOcclusionPreset() : settingsComponent.data.ambientOcclusionPreset,
                 pmndrsLutEnabled: typeof settingsComponent.isPmndrsLutEnabled === 'function' ? settingsComponent.isPmndrsLutEnabled() : settingsComponent.data.pmndrsLutEnabled,
-                pmndrsLensFlareEnabled: typeof settingsComponent.isPmndrsLensFlareEnabled === 'function' ? settingsComponent.isPmndrsLensFlareEnabled() : settingsComponent.data.pmndrsLensFlareEnabled
+                pmndrsLensFlareEnabled: typeof settingsComponent.isPmndrsLensFlareEnabled === 'function' ? settingsComponent.isPmndrsLensFlareEnabled() : settingsComponent.data.pmndrsLensFlareEnabled,
+                postProcessingRequested: typeof settingsComponent.hasPostProcessingPipelineRequest === 'function' ? settingsComponent.hasPostProcessingPipelineRequest() : null,
+                postProcessingActive: Boolean(settingsComponent.postProcessingActive || settingsComponent.pmndrsActive),
+                shouldUsePostProcessing: typeof settingsComponent.shouldUsePostProcessing === 'function' ? settingsComponent.shouldUsePostProcessing() : null
             } : null,
             renderer: renderer ? {
+                sceneAttribute: scene ? scene.getAttribute('renderer') : null,
                 pixelRatio: rendererPixelInfo ? rendererPixelInfo.pixelRatio : null,
                 cssSize: rendererPixelInfo ? rendererPixelInfo.cssSize : null,
                 drawingBuffer: rendererPixelInfo ? rendererPixelInfo.drawingBuffer : null,
@@ -1040,6 +1167,10 @@ async function captureSceneSnapshot(cdp) {
                     : null,
                 shadowMapEnabled: Boolean(renderer.shadowMap && renderer.shadowMap.enabled),
                 shadowMapType: renderer.shadowMap ? renderer.shadowMap.type : null,
+                contextAttributes: renderer.getContext && renderer.getContext() && renderer.getContext().getContextAttributes
+                    ? renderer.getContext().getContextAttributes()
+                    : null,
+                logarithmicDepthBuffer: Boolean(renderer.capabilities && renderer.capabilities.logarithmicDepthBuffer),
                 outputColorSpace: renderer.outputColorSpace || null,
                 toneMapping: renderer.toneMapping || null,
                 toneMappingExposure: renderer.toneMappingExposure || null,
@@ -1402,6 +1533,10 @@ function formatBytes(value) {
     return `${size.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
 }
 
+function formatNumber(value) {
+    return Number.isFinite(value) ? value.toFixed(2) : 'n/a';
+}
+
 function printSummary(result) {
     const raf = result.frameSample.summary;
     const scene = result.scene;
@@ -1430,9 +1565,22 @@ function printSummary(result) {
     if (result.trace && result.trace.totals) {
         console.log(`Trace: total ${formatMs(result.trace.totals.totalDurationMs)}, GPU ${formatMs(result.trace.totals.gpuDurationMs)}, scripting ${formatMs(result.trace.totals.scriptingDurationMs)}`);
     }
+    if (result.navigationProfile && result.navigationProfile.enabled && result.navigationProfile.end) {
+        const nav = result.navigationProfile.end;
+        const avg = nav.averages || {};
+        const totals = nav.totals || {};
+        console.log(`Navigation: ${nav.collisionTargets} collision meshes, ${nav.frames} profiled frames, movement delta ${formatNumber(result.navigationProfile.movementDelta?.x)} ${formatNumber(result.navigationProfile.movementDelta?.y)} ${formatNumber(result.navigationProfile.movementDelta?.z)}`);
+        console.log(`Navigation timing: tick ${formatMs(avg.tickMs)}, constrained ${formatMs(avg.constrainedMs)}, raycast ${formatMs(avg.raycastMs)}, raycasts/frame ${formatNumber(avg.raycasts)}, intersections/frame ${formatNumber(avg.intersections)}, total raycasts ${totals.raycasts || 0}`);
+    } else if (result.navigationProfile && result.navigationProfile.reason) {
+        console.log(`Navigation: skipped (${result.navigationProfile.reason})`);
+    }
     if (result.spector && result.spector.enabled) {
         const summary = result.spector.summary || {};
-        console.log(`Spector: ${summary.commandCount || 0} commands, ${summary.drawCalls || 0} draw calls, ${summary.programSwitches || 0} program switches, ${summary.framebufferBinds || 0} framebuffer binds`);
+        if (result.spector.error) {
+            console.log(`Spector: capture failed (${result.spector.error.message || result.spector.error})`);
+        } else {
+            console.log(`Spector: ${summary.commandCount || 0} commands, ${summary.drawCalls || 0} draw calls, ${summary.programSwitches || 0} program switches, ${summary.framebufferBinds || 0} framebuffer binds`);
+        }
         if (summary.primitives && Number.isFinite(summary.primitives.triangles)) {
             console.log(`Spector primitives: ${summary.primitives.triangles.toLocaleString('en-US')} submitted triangles`);
         }
@@ -1445,6 +1593,9 @@ function printSummary(result) {
 
 async function run() {
     const options = parseArgs(process.argv.slice(2));
+    const targetUrl = options.navProfile
+        ? addUrlQueryParam(options.url, 'vrodos_debug_nav_perf', '1')
+        : options.url;
     const resourceOverrides = await prepareResourceOverrides(options.resourceOverrides);
     const WebSocketClass = await loadWebSocketClass();
     const port = await getFreePort();
@@ -1541,7 +1692,7 @@ async function run() {
         });
 
         const loadPromise = cdp.waitForEvent('Page.loadEventFired', options.timeoutMs);
-        await cdp.send('Page.navigate', { url: options.url });
+        await cdp.send('Page.navigate', { url: targetUrl });
         await loadPromise;
 
         await waitForRuntime(cdp, `Boolean(document.querySelector('a-scene'))`, options.timeoutMs);
@@ -1574,6 +1725,9 @@ async function run() {
         const tracePromise = collectTrace(cdp, options.traceMs, options.timeoutMs);
         const frameSample = await sampleFrames(cdp, options.frames);
         const trace = await tracePromise;
+        const navigationProfile = options.navProfile
+            ? await captureNavigationProfile(cdp, options.navProfileMs, options.navProfileInput)
+            : null;
         const afterMetrics = metricsToObject((await cdp.send('Performance.getMetrics')).metrics);
         const scene = await captureSceneSnapshot(cdp);
         const resources = await captureResources(cdp);
@@ -1584,21 +1738,33 @@ async function run() {
 
         if (options.spector) {
             const spectorOutputPath = resolveSpectorOutputPath(options);
-            const spectorCapture = await captureSpectorFrame(cdp, options.timeoutMs);
-            await mkdir(path.dirname(path.resolve(spectorOutputPath)), { recursive: true });
-            await writeFile(spectorOutputPath, `${spectorCapture.captureString || JSON.stringify(spectorCapture.capture, null, 2)}\n`, 'utf8');
-            spector = {
-                enabled: true,
-                loadedFrom: spectorCapture.loadedFrom,
-                output: path.resolve(spectorOutputPath),
-                canvas: spectorCapture.canvas,
-                summary: spectorCapture.summary
-            };
+            try {
+                const spectorCapture = await captureSpectorFrame(cdp, options.timeoutMs);
+                await mkdir(path.dirname(path.resolve(spectorOutputPath)), { recursive: true });
+                await writeFile(spectorOutputPath, `${spectorCapture.captureString || JSON.stringify(spectorCapture.capture, null, 2)}\n`, 'utf8');
+                spector = {
+                    enabled: true,
+                    loadedFrom: spectorCapture.loadedFrom,
+                    output: path.resolve(spectorOutputPath),
+                    canvas: spectorCapture.canvas,
+                    summary: spectorCapture.summary
+                };
+            } catch (error) {
+                spector = {
+                    enabled: true,
+                    output: '',
+                    error: {
+                        message: error && error.message ? error.message : String(error),
+                        stack: error && error.stack ? error.stack : ''
+                    }
+                };
+            }
         }
 
         const result = {
             capturedAt: new Date().toISOString(),
-            url: options.url,
+            url: targetUrl,
+            requestedUrl: options.url,
             chrome: {
                 executable: chromePath,
                 headless: options.headless,
@@ -1618,6 +1784,7 @@ async function run() {
                 rendererInfo: frameSample.rendererInfo || null
             },
             trace,
+            navigationProfile,
             resources,
             spector,
             performanceMetrics: {

@@ -370,11 +370,11 @@
     </dialog>
 
     <a-scene oculus-go-controls-enabled start-animation id="aframe-scene-container"
-        fog="AFRAME_FOG_PLACEHOLDER" background="color: AFRAME_CLEARCOLOR_PLACEHOLDER" renderer="antialias: true;
+        fog="AFRAME_FOG_PLACEHOLDER" background="color: AFRAME_CLEARCOLOR_PLACEHOLDER" renderer="antialias: false;
             sortTransparentObjects: true;
             toneMapping: ACESFilmic;
             precision: high;
-            logarithmicDepthBuffer: true;
+            logarithmicDepthBuffer: false;
             alpha: true;" shadow="type: pcfsoft;" vr-mode-ui="enabled: true"
         device-orientation-permission-ui="enabled: false" loading-screen="dotsColor: gray; backgroundColor: black;"
         networked-scene="app: appname; room: roomname; debug: false; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;">

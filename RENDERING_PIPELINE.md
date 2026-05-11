@@ -374,7 +374,8 @@ If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`,
 - `npm run build:runtime` generates the compiled-scene runtime bundles and the browser settings-contract script from `assets/runtime-settings-contract.json`.
 - `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, and Takram metadata.
 - The current live vendor bundle is Three.js r181.
-- The classic compiled A-Frame runtime must not load a second Three instance. Any attempt to test a newer Three version belongs in a separate A-Frame module/import-map runtime spike.
+- The classic compiled A-Frame runtime must not load a second Three instance. The preferred near-term upgrade path is A-Frame's planned Three r184 runtime work (`aframevr/aframe#5818`) rather than a VRodos-only Three fork.
+- WebGPU remains an experimental renderer mode after r184, with separate validation for PMNDRS post-processing, GLSL/onBeforeCompile material hooks, Takram integration, and XR behavior.
 
 ## 12. Future Ideas
 
@@ -383,7 +384,7 @@ These are backlog items, not current implementation requirements:
 - Explicit `pmndrsHorizonLightingMode` with `helper`, `light-source`, and `post-process-albedo`.
 - Desktop-only Takram-vanilla `post-process-albedo` mode.
 - Continue validating native `POSTPROCESSING.SSAOEffect` across broader Horizon and non-Horizon scenes.
-- A-Frame module/import-map runtime spike for future Three upgrades.
+- Track A-Frame r184 and run a WebGPU compatibility spike after the shared runtime upgrade is available.
 - SSGI desktop research after Takram lighting ownership is correct.
 - Takram stars, geospatial date/time solar simulation, `LightingMaskPass`, and geospatial helpers.
 - Volumetric clouds after the PMNDRS/Takram lighting baseline remains stable.

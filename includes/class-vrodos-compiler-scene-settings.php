@@ -16,6 +16,7 @@ class VRodos_Compiler_Scene_Settings {
 		$settings = $this->build_settings( $metadata, $scene_json, $project_id );
 
 		$ascene->setAttribute( 'scene-settings', $this->serialize_settings( $settings, $metadata ) );
+		$this->apply_renderer_profile( $ascene, $settings, $metadata, $scene_json );
 
 		if ( '3' === (string) $settings['selChoice'] && ! empty( $metadata->backgroundImagePath ) ) {
 			$a_asset     = $this->get_or_create_assets_container( $dom, $ascene );
@@ -172,6 +173,135 @@ class VRodos_Compiler_Scene_Settings {
 		}
 
 		return implode( '; ', $parts );
+	}
+
+	private function apply_renderer_profile( DOMElement $ascene, array $settings, $metadata, $scene_json ): void {
+		$renderer = $this->parse_component_attribute( $ascene->getAttribute( 'renderer' ) );
+
+		if ( ! isset( $renderer['sortTransparentObjects'] ) ) {
+			$renderer['sortTransparentObjects'] = 'true';
+		}
+		if ( ! isset( $renderer['toneMapping'] ) ) {
+			$renderer['toneMapping'] = 'ACESFilmic';
+		}
+		if ( ! isset( $renderer['precision'] ) ) {
+			$renderer['precision'] = 'high';
+		}
+		if ( ! isset( $renderer['alpha'] ) ) {
+			$renderer['alpha'] = 'true';
+		}
+
+		$renderer['antialias']              = $this->should_enable_renderer_antialias( $settings, $metadata ) ? 'true' : 'false';
+		$renderer['logarithmicDepthBuffer'] = $this->should_enable_logarithmic_depth_buffer( $metadata, $scene_json ) ? 'true' : 'false';
+
+		$ascene->setAttribute( 'renderer', $this->serialize_component_attribute( $renderer ) );
+	}
+
+	private function parse_component_attribute( string $attribute ): array {
+		$values = [];
+		foreach ( explode( ';', $attribute ) as $entry ) {
+			$entry = trim( $entry );
+			if ( '' === $entry ) {
+				continue;
+			}
+
+			$separator = strpos( $entry, ':' );
+			if ( false === $separator ) {
+				$values[ $entry ] = 'true';
+				continue;
+			}
+
+			$key = trim( substr( $entry, 0, $separator ) );
+			if ( '' === $key ) {
+				continue;
+			}
+			$values[ $key ] = trim( substr( $entry, $separator + 1 ) );
+		}
+
+		return $values;
+	}
+
+	private function serialize_component_attribute( array $values ): string {
+		$parts = [];
+		foreach ( $values as $key => $value ) {
+			$parts[] = $key . ': ' . $value;
+		}
+
+		return implode( '; ', $parts ) . ';';
+	}
+
+	private function should_enable_renderer_antialias( array $settings, $metadata ): bool {
+		if ( property_exists( $metadata, 'aframeRendererAntialias' ) ) {
+			return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeRendererAntialias, true );
+		}
+
+		$render_quality = (string) ( $settings['renderQuality'] ?? 'standard' );
+		$aa_quality     = (string) ( $settings['aaQuality'] ?? 'balanced' );
+		if ( 'performance' === $render_quality || 'off' === $aa_quality ) {
+			return false;
+		}
+
+		return ! $this->should_pmndrs_own_antialiasing( $settings );
+	}
+
+	private function should_pmndrs_own_antialiasing( array $settings ): bool {
+		if (
+			'high' !== (string) ( $settings['renderQuality'] ?? 'standard' ) ||
+			'0' === (string) ( $settings['postFXEnabled'] ?? '0' ) ||
+			'pmndrs' !== (string) ( $settings['postFXEngine'] ?? 'legacy' )
+		) {
+			return false;
+		}
+
+		return 'none' !== $this->effective_pmndrs_aa_mode( $settings );
+	}
+
+	private function effective_pmndrs_aa_mode( array $settings ): string {
+		if ( 'performance' === (string) ( $settings['renderQuality'] ?? 'standard' ) ) {
+			return 'none';
+		}
+
+		$mode = (string) ( $settings['pmndrsAAMode'] ?? 'inherit' );
+		if ( in_array( $mode, [ 'none', 'smaa', 'msaa' ], true ) ) {
+			return $mode;
+		}
+
+		return 'off' === (string) ( $settings['aaQuality'] ?? 'balanced' ) ? 'none' : 'msaa';
+	}
+
+	private function should_enable_logarithmic_depth_buffer( $metadata, $scene_json ): bool {
+		foreach ( [ 'aframeLogarithmicDepthBuffer', 'aframeRendererLogarithmicDepthBuffer' ] as $key ) {
+			if ( property_exists( $metadata, $key ) ) {
+				return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->{$key}, false );
+			}
+		}
+
+		return $this->scene_extent_suggests_logarithmic_depth_buffer( $scene_json );
+	}
+
+	private function scene_extent_suggests_logarithmic_depth_buffer( $scene_json ): bool {
+		$objects = is_object( $scene_json->objects ?? null ) ? (array) $scene_json->objects : [];
+		$max_abs = 0.0;
+
+		foreach ( $objects as $object ) {
+			if ( ! is_object( $object ) ) {
+				continue;
+			}
+
+			foreach ( [ 'position', 'scale' ] as $property ) {
+				if ( ! isset( $object->{$property} ) || ! is_iterable( $object->{$property} ) ) {
+					continue;
+				}
+
+				foreach ( $object->{$property} as $value ) {
+					if ( is_numeric( $value ) ) {
+						$max_abs = max( $max_abs, abs( (float) $value ) );
+					}
+				}
+			}
+		}
+
+		return $max_abs > 4000.0;
 	}
 
 	private function enum_value( $value, array $allowed, string $fallback ): string {

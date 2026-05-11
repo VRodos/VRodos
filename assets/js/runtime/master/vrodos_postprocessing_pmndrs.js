@@ -1329,7 +1329,7 @@
         }
 
         // Color grading — Brightness/Contrast + Hue/Saturation
-        if (this.isPostFXOptionEnabled && this.isPostFXOptionEnabled('postFXColorEnabled')) {
+        if (this.hasPostFXColorGradingEffectEnabled && this.hasPostFXColorGradingEffectEnabled()) {
             try {
                 const contrastVal = (typeof this.getContrastValue === 'function') ? this.getContrastValue() : 1.0;
                 const saturationVal = (typeof this.getSaturationValue === 'function') ? this.getSaturationValue() : 1.0;
