@@ -58,6 +58,7 @@ AFRAME.registerComponent('scene-settings', {
         collisionMode: { type: "string", default: "auto" },
         renderQuality: { type: "string", default: "standard" },
         shadowQuality: { type: "string", default: "medium" },
+        rootShadowType: { type: "string", default: "pcf" },
         aaQuality: { type: "string", default: "balanced" },
         fpsMeterEnabled: { type: "string", default: "0" },
         legacyHorizonStageSize: { type: "string", default: "5000" },

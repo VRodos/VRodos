@@ -1106,6 +1106,19 @@ async function captureSceneSnapshot(cdp) {
             });
         }
 
+        function threeConstantName(value, names) {
+            const three = window.THREE || (window.AFRAME && window.AFRAME.THREE);
+            if (!three || typeof value === 'undefined' || value === null) {
+                return null;
+            }
+            for (const name of names) {
+                if (three[name] === value) {
+                    return name;
+                }
+            }
+            return null;
+        }
+
         if (object3D) {
             object3D.traverse((node) => {
                 counts.objects += 1;
@@ -1158,6 +1171,7 @@ async function captureSceneSnapshot(cdp) {
             } : null,
             renderer: renderer ? {
                 sceneAttribute: scene ? scene.getAttribute('renderer') : null,
+                shadowSceneAttribute: scene ? scene.getAttribute('shadow') : null,
                 pixelRatio: rendererPixelInfo ? rendererPixelInfo.pixelRatio : null,
                 cssSize: rendererPixelInfo ? rendererPixelInfo.cssSize : null,
                 drawingBuffer: rendererPixelInfo ? rendererPixelInfo.drawingBuffer : null,
@@ -1165,15 +1179,31 @@ async function captureSceneSnapshot(cdp) {
                 pixelBudget: settingsComponent && settingsComponent._vrodosRenderPixelBudget
                     ? Object.assign({}, settingsComponent._vrodosRenderPixelBudget)
                     : null,
+                sortObjects: typeof renderer.sortObjects !== 'undefined' ? renderer.sortObjects : null,
                 shadowMapEnabled: Boolean(renderer.shadowMap && renderer.shadowMap.enabled),
                 shadowMapType: renderer.shadowMap ? renderer.shadowMap.type : null,
+                shadowMapTypeName: renderer.shadowMap ? threeConstantName(renderer.shadowMap.type, [
+                    'BasicShadowMap',
+                    'PCFShadowMap',
+                    'PCFSoftShadowMap',
+                    'VSMShadowMap'
+                ]) : null,
                 contextAttributes: renderer.getContext && renderer.getContext() && renderer.getContext().getContextAttributes
                     ? renderer.getContext().getContextAttributes()
                     : null,
                 logarithmicDepthBuffer: Boolean(renderer.capabilities && renderer.capabilities.logarithmicDepthBuffer),
                 outputColorSpace: renderer.outputColorSpace || null,
-                toneMapping: renderer.toneMapping || null,
-                toneMappingExposure: renderer.toneMappingExposure || null,
+                toneMapping: typeof renderer.toneMapping !== 'undefined' ? renderer.toneMapping : null,
+                toneMappingName: threeConstantName(renderer.toneMapping, [
+                    'NoToneMapping',
+                    'LinearToneMapping',
+                    'ReinhardToneMapping',
+                    'CineonToneMapping',
+                    'ACESFilmicToneMapping',
+                    'AgXToneMapping',
+                    'NeutralToneMapping'
+                ]),
+                toneMappingExposure: typeof renderer.toneMappingExposure !== 'undefined' ? renderer.toneMappingExposure : null,
                 info: renderer.info ? {
                     memory: Object.assign({}, renderer.info.memory || {}),
                     render: Object.assign({}, renderer.info.render || {}),
@@ -1553,9 +1583,12 @@ function printSummary(result) {
             const estimatedLabel = Number.isFinite(estimatedPixels) ? estimatedPixels.toLocaleString('en-US') : 'n/a';
             const budget = scene.renderer.pixelBudget;
             const budgetLabel = budget && budget.pixelBudget ? `${budget.pixelBudget.toLocaleString('en-US')} px (${budget.source}, applied ${budget.applied ? 'yes' : 'no'})` : 'none';
-            console.log(`Renderer: css ${css.width}x${css.height}, pixelRatio ${scene.renderer.pixelRatio}, buffer ${buffer.width || 'n/a'}x${buffer.height || 'n/a'}, estimated ${estimatedLabel} pixels, budget ${budgetLabel}`);
+            const toneMapping = scene.renderer.toneMappingName || scene.renderer.toneMapping || 'n/a';
+            const exposure = typeof scene.renderer.toneMappingExposure === 'number' ? scene.renderer.toneMappingExposure : 'n/a';
+            console.log(`Renderer: css ${css.width}x${css.height}, pixelRatio ${scene.renderer.pixelRatio}, buffer ${buffer.width || 'n/a'}x${buffer.height || 'n/a'}, estimated ${estimatedLabel} pixels, budget ${budgetLabel}, sortObjects ${scene.renderer.sortObjects}, toneMapping ${toneMapping}, exposure ${exposure}`);
         }
-        console.log(`Shadows: ${scene.objectCounts.shadowCasters} casters, ${scene.objectCounts.shadowReceivers} receivers, renderer shadow map ${scene.renderer ? scene.renderer.shadowMapEnabled : 'n/a'}`);
+        const shadowType = scene.renderer ? (scene.renderer.shadowMapTypeName || scene.renderer.shadowMapType || 'n/a') : 'n/a';
+        console.log(`Shadows: ${scene.objectCounts.shadowCasters} casters, ${scene.objectCounts.shadowReceivers} receivers, renderer shadow map ${scene.renderer ? scene.renderer.shadowMapEnabled : 'n/a'}, type ${shadowType}`);
     }
     console.log(`Resources: ${resources.count} entries, transfer ${formatBytes(resources.transferSize)}, encoded ${formatBytes(resources.encodedBodySize)}, decoded ${formatBytes(resources.decodedBodySize)}`);
     if (result.runtimeOverrides?.resourceOverrides?.enabled) {

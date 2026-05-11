@@ -14,9 +14,16 @@ class VRodos_Compiler_Scene_Settings {
 	public function apply( DOMDocument $dom, DOMElement $ascene, $scene_json, int $project_id, callable $normalize_url ): void {
 		$metadata = is_object( $scene_json->metadata ?? null ) ? $scene_json->metadata : new stdClass();
 		$settings = $this->build_settings( $metadata, $scene_json, $project_id );
+		$effective_shadow_quality = $this->get_effective_shadow_quality( $settings, $metadata );
+		$settings['rootShadowType'] = 'off' === $effective_shadow_quality ? 'pcf' : $this->get_shadow_map_type_attr( $effective_shadow_quality, $metadata );
 
 		$ascene->setAttribute( 'scene-settings', $this->serialize_settings( $settings, $metadata ) );
-		$this->apply_renderer_profile( $ascene, $settings, $metadata, $scene_json );
+		if ( $ascene->hasAttribute( 'renderer' ) ) {
+			$this->apply_renderer_profile( $ascene, $settings, $metadata, $scene_json );
+		}
+		if ( $ascene->hasAttribute( 'shadow' ) ) {
+			$this->apply_shadow_profile( $ascene, $settings, $metadata );
+		}
 
 		if ( '3' === (string) $settings['selChoice'] && ! empty( $metadata->backgroundImagePath ) ) {
 			$a_asset     = $this->get_or_create_assets_container( $dom, $ascene );
@@ -178,23 +185,29 @@ class VRodos_Compiler_Scene_Settings {
 	private function apply_renderer_profile( DOMElement $ascene, array $settings, $metadata, $scene_json ): void {
 		$renderer = $this->parse_component_attribute( $ascene->getAttribute( 'renderer' ) );
 
-		if ( ! isset( $renderer['sortTransparentObjects'] ) ) {
-			$renderer['sortTransparentObjects'] = 'true';
-		}
-		if ( ! isset( $renderer['toneMapping'] ) ) {
-			$renderer['toneMapping'] = 'ACESFilmic';
-		}
-		if ( ! isset( $renderer['precision'] ) ) {
-			$renderer['precision'] = 'high';
-		}
-		if ( ! isset( $renderer['alpha'] ) ) {
-			$renderer['alpha'] = 'true';
-		}
-
-		$renderer['antialias']              = $this->should_enable_renderer_antialias( $settings, $metadata ) ? 'true' : 'false';
-		$renderer['logarithmicDepthBuffer'] = $this->should_enable_logarithmic_depth_buffer( $metadata, $scene_json ) ? 'true' : 'false';
+		$renderer['antialias']              = $this->bool_attr( $this->should_enable_renderer_antialias( $settings, $metadata ) );
+		$renderer['colorManagement']        = $this->bool_attr( $this->should_enable_color_management( $metadata ) );
+		$renderer['sortTransparentObjects'] = $this->bool_attr( $this->should_sort_transparent_objects( $metadata, $scene_json ) );
+		$renderer['toneMapping']            = $this->get_initial_renderer_tone_mapping( $settings, $metadata );
+		$renderer['exposure']               = $this->format_renderer_number( $this->get_initial_renderer_exposure( $settings, $metadata ) );
+		$renderer['precision']              = $this->get_renderer_precision( $metadata );
+		$renderer['logarithmicDepthBuffer'] = $this->bool_attr( $this->should_enable_logarithmic_depth_buffer( $metadata, $scene_json ) );
+		$renderer['alpha']                  = $this->bool_attr( $this->should_enable_renderer_alpha( $metadata ) );
+		$renderer['stencil']                = $this->bool_attr( $this->should_enable_renderer_stencil( $metadata ) );
 
 		$ascene->setAttribute( 'renderer', $this->serialize_component_attribute( $renderer ) );
+	}
+
+	private function apply_shadow_profile( DOMElement $ascene, array $settings, $metadata ): void {
+		$shadow_quality = $this->get_effective_shadow_quality( $settings, $metadata );
+		$shadows_enabled = 'off' !== $shadow_quality;
+
+		$shadow = $this->parse_component_attribute( $ascene->getAttribute( 'shadow' ) );
+		$shadow['enabled']    = $this->bool_attr( $shadows_enabled );
+		$shadow['type']       = (string) ( $settings['rootShadowType'] ?? $this->get_shadow_map_type_attr( $shadow_quality, $metadata ) );
+		$shadow['autoUpdate'] = $this->bool_attr( $this->should_enable_shadow_auto_update( $metadata ) );
+
+		$ascene->setAttribute( 'shadow', $this->serialize_component_attribute( $shadow ) );
 	}
 
 	private function parse_component_attribute( string $attribute ): array {
@@ -230,6 +243,15 @@ class VRodos_Compiler_Scene_Settings {
 		return implode( '; ', $parts ) . ';';
 	}
 
+	private function bool_attr( bool $value ): string {
+		return $value ? 'true' : 'false';
+	}
+
+	private function format_renderer_number( float $value ): string {
+		$formatted = rtrim( rtrim( sprintf( '%.4f', $value ), '0' ), '.' );
+		return '' === $formatted ? '0' : $formatted;
+	}
+
 	private function should_enable_renderer_antialias( array $settings, $metadata ): bool {
 		if ( property_exists( $metadata, 'aframeRendererAntialias' ) ) {
 			return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeRendererAntialias, true );
@@ -244,6 +266,143 @@ class VRodos_Compiler_Scene_Settings {
 		return ! $this->should_pmndrs_own_antialiasing( $settings );
 	}
 
+	private function should_enable_color_management( $metadata ): bool {
+		if ( property_exists( $metadata, 'aframeRendererColorManagement' ) ) {
+			return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeRendererColorManagement, true );
+		}
+
+		return true;
+	}
+
+	private function should_enable_renderer_alpha( $metadata ): bool {
+		foreach ( [ 'aframeRendererAlpha', 'aframeTransparentCanvas', 'aframeEmbeddedTransparentCanvas' ] as $key ) {
+			if ( property_exists( $metadata, $key ) ) {
+				return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->{$key}, false );
+			}
+		}
+
+		return false;
+	}
+
+	private function should_enable_renderer_stencil( $metadata ): bool {
+		if ( property_exists( $metadata, 'aframeRendererStencil' ) ) {
+			return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeRendererStencil, false );
+		}
+
+		return false;
+	}
+
+	private function should_sort_transparent_objects( $metadata, $scene_json ): bool {
+		foreach ( [ 'aframeRendererSortTransparentObjects', 'aframeSortTransparentObjects' ] as $key ) {
+			if ( property_exists( $metadata, $key ) ) {
+				return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->{$key}, false );
+			}
+		}
+
+		$objects = is_object( $scene_json->objects ?? null ) ? (array) $scene_json->objects : [];
+		foreach ( $objects as $object ) {
+			if ( ! is_object( $object ) ) {
+				continue;
+			}
+
+			$category = $this->normalize_category_key( (string) ( $object->category_slug ?? $object->category_name ?? '' ) );
+			if ( in_array( $category, [ 'image', 'video', '3d-text', 'poi-imagetext', 'poi-image-text', 'poi-link', 'chat', 'assessment' ], true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private function normalize_category_key( string $category ): string {
+		$category = strtolower( trim( $category ) );
+		if ( '' === $category ) {
+			return '';
+		}
+
+		if ( function_exists( 'sanitize_title' ) ) {
+			return sanitize_title( $category );
+		}
+
+		$category = preg_replace( '/[^a-z0-9]+/', '-', $category );
+		return trim( (string) $category, '-' );
+	}
+
+	private function get_renderer_precision( $metadata ): string {
+		$value = property_exists( $metadata, 'aframeRendererPrecision' )
+			? (string) $metadata->aframeRendererPrecision
+			: 'high';
+
+		return in_array( $value, [ 'low', 'medium', 'high' ], true ) ? $value : 'high';
+	}
+
+	private function get_initial_renderer_tone_mapping( array $settings, $metadata ): string {
+		if ( property_exists( $metadata, 'aframeRendererToneMapping' ) ) {
+			return $this->normalize_aframe_tone_mapping( (string) $metadata->aframeRendererToneMapping, 'ACESFilmic' );
+		}
+
+		if ( 'pmndrs' === (string) ( $settings['postFXEngine'] ?? 'legacy' ) ) {
+			return $this->should_use_pmndrs_composer( $settings )
+				? 'no'
+				: $this->aframe_tone_mapping_for_pmndrs_mode( (string) ( $settings['pmndrsToneMappingMode'] ?? 'agx' ) );
+		}
+
+		return 'ACESFilmic';
+	}
+
+	private function normalize_aframe_tone_mapping( string $value, string $fallback ): string {
+		$normalized = strtolower( trim( $value ) );
+		switch ( $normalized ) {
+			case 'no':
+			case 'none':
+				return 'no';
+			case 'linear':
+				return 'linear';
+			case 'reinhard':
+				return 'reinhard';
+			case 'cineon':
+				return 'cineon';
+			case 'aces':
+			case 'acesfilmic':
+			case 'aces-filmic':
+				return 'ACESFilmic';
+			case 'agx':
+				return 'AgX';
+			case 'neutral':
+				return 'neutral';
+			default:
+				return $fallback;
+		}
+	}
+
+	private function aframe_tone_mapping_for_pmndrs_mode( string $mode ): string {
+		switch ( $mode ) {
+			case 'reinhard':
+				return 'reinhard';
+			case 'cineon':
+				return 'cineon';
+			case 'aces-filmic':
+				return 'ACESFilmic';
+			case 'linear':
+				return 'linear';
+			case 'agx':
+			default:
+				return 'AgX';
+		}
+	}
+
+	private function get_initial_renderer_exposure( array $settings, $metadata ): float {
+		if ( property_exists( $metadata, 'aframeRendererExposure' ) && is_numeric( $metadata->aframeRendererExposure ) ) {
+			return max( 0.0, min( 20.0, (float) $metadata->aframeRendererExposure ) );
+		}
+
+		if ( 'pmndrs' === (string) ( $settings['postFXEngine'] ?? 'legacy' ) ) {
+			return max( 1.0, min( 20.0, (float) ( $settings['pmndrsToneMappingExposure'] ?? 1.0 ) ) );
+		}
+
+		return 'high' === (string) ( $settings['renderQuality'] ?? 'standard' ) ? 1.06 : 1.0;
+	}
+
 	private function should_pmndrs_own_antialiasing( array $settings ): bool {
 		if (
 			'high' !== (string) ( $settings['renderQuality'] ?? 'standard' ) ||
@@ -254,6 +413,35 @@ class VRodos_Compiler_Scene_Settings {
 		}
 
 		return 'none' !== $this->effective_pmndrs_aa_mode( $settings );
+	}
+
+	private function should_use_pmndrs_composer( array $settings ): bool {
+		if (
+			'high' !== (string) ( $settings['renderQuality'] ?? 'standard' ) ||
+			'0' === (string) ( $settings['postFXEnabled'] ?? '0' ) ||
+			'pmndrs' !== (string) ( $settings['postFXEngine'] ?? 'legacy' )
+		) {
+			return false;
+		}
+
+		return 'off' !== (string) ( $settings['ambientOcclusionPreset'] ?? 'balanced' ) ||
+			'none' !== $this->effective_pmndrs_aa_mode( $settings ) ||
+			'off' !== (string) ( $settings['bloomStrength'] ?? 'off' ) ||
+			$this->should_apply_color_grading( $settings ) ||
+			$this->setting_bool( $settings, 'pmndrsLensFlareEnabled' ) ||
+			$this->setting_bool( $settings, 'pmndrsLutEnabled' ) ||
+			$this->setting_bool( $settings, 'pmndrsVignetteEnabled' ) ||
+			$this->setting_bool( $settings, 'pmndrsNoiseEnabled' ) ||
+			$this->setting_bool( $settings, 'pmndrsChromaticAberrationEnabled' ) ||
+			$this->setting_bool( $settings, 'pmndrsAerialPerspectiveEnabled' );
+	}
+
+	private function should_apply_color_grading( array $settings ): bool {
+		return in_array( (string) ( $settings['contrastPreset'] ?? 'balanced' ), [ 'soft', 'punchy' ], true );
+	}
+
+	private function setting_bool( array $settings, string $key ): bool {
+		return VRodos_Runtime_Settings_Contract::normalize_bool( $settings[ $key ] ?? false );
 	}
 
 	private function effective_pmndrs_aa_mode( array $settings ): string {
@@ -302,6 +490,40 @@ class VRodos_Compiler_Scene_Settings {
 		}
 
 		return $max_abs > 4000.0;
+	}
+
+	private function get_effective_shadow_quality( array $settings, $metadata ): string {
+		if ( property_exists( $metadata, 'aframeShadowEnabled' ) && ! VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeShadowEnabled, true ) ) {
+			return 'off';
+		}
+
+		if ( 'performance' === (string) ( $settings['renderQuality'] ?? 'standard' ) ) {
+			return 'off';
+		}
+
+		$shadow_quality = (string) ( $settings['shadowQuality'] ?? 'medium' );
+		return in_array( $shadow_quality, [ 'off', 'high' ], true ) ? $shadow_quality : 'medium';
+	}
+
+	private function get_shadow_map_type_attr( string $shadow_quality, $metadata ): string {
+		foreach ( [ 'aframeRootShadowType', 'aframeShadowType' ] as $key ) {
+			if ( property_exists( $metadata, $key ) ) {
+				$value = strtolower( trim( (string) $metadata->{$key} ) );
+				if ( in_array( $value, [ 'basic', 'pcf', 'pcfsoft' ], true ) ) {
+					return $value;
+				}
+			}
+		}
+
+		return 'high' === $shadow_quality ? 'pcfsoft' : 'pcf';
+	}
+
+	private function should_enable_shadow_auto_update( $metadata ): bool {
+		if ( property_exists( $metadata, 'aframeShadowAutoUpdate' ) ) {
+			return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeShadowAutoUpdate, true );
+		}
+
+		return true;
 	}
 
 	private function enum_value( $value, array $allowed, string $fallback ): string {

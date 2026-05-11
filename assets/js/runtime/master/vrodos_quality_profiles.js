@@ -308,6 +308,32 @@
         }
     }
 
+    function normalizeAFrameShadowMapType(value, fallback) {
+        switch (String(value || '').toLowerCase()) {
+            case 'basic':
+            case 'pcf':
+            case 'pcfsoft':
+            case 'vsm':
+                return String(value).toLowerCase();
+            default:
+                return fallback || 'pcf';
+        }
+    }
+
+    function getThreeShadowMapType(type) {
+        switch (normalizeAFrameShadowMapType(type, 'pcf')) {
+            case 'basic':
+                return typeof THREE.BasicShadowMap !== 'undefined' ? THREE.BasicShadowMap : THREE.PCFShadowMap;
+            case 'pcfsoft':
+                return typeof THREE.PCFSoftShadowMap !== 'undefined' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+            case 'vsm':
+                return typeof THREE.VSMShadowMap !== 'undefined' ? THREE.VSMShadowMap : THREE.PCFShadowMap;
+            case 'pcf':
+            default:
+                return THREE.PCFShadowMap;
+        }
+    }
+
     function normalizeReflectionOcclusionMode(value) {
         switch (value) {
             case 'off':
@@ -2737,7 +2763,11 @@
             maxPixelRatio: isHighQuality ? 1.5 : (isPerformanceQuality ? 0.9 : 1)
         });
         renderer.setPixelRatio(targetPixelRatio);
-        renderer.sortObjects = true;
+        if (typeof renderer.sortObjects !== 'undefined') {
+            const rendererSettings = this.el.getAttribute('renderer') || {};
+            renderer.sortObjects = rendererSettings.sortTransparentObjects === true ||
+                rendererSettings.sortTransparentObjects === 'true';
+        }
 
         if (typeof renderer.toneMappingExposure !== 'undefined') {
             renderer.toneMappingExposure = this.data.postFXEngine === 'pmndrs'
@@ -2746,9 +2776,7 @@
         }
 
         // physicallyCorrectLights was removed in Three.js r150-r165 and is always on in modern A-Frame/Three runtimes.
-        // outputColorSpace & toneMapping are already set by A-Frame's renderer system.
-        // (colorManagement: true -> SRGBColorSpace; renderer="toneMapping: ACESFilmic" in HTML)
-        // These defensive guards ensure correctness if A-Frame defaults ever change.
+        // The compiler initializes color/tone mapping on <a-scene>; these guards keep runtime profile changes aligned.
         if (typeof renderer.outputColorSpace !== 'undefined' && typeof THREE.SRGBColorSpace !== 'undefined') {
             renderer.outputColorSpace = THREE.SRGBColorSpace;
         }
@@ -2780,11 +2808,25 @@
             : (this.data.shadowQuality || 'medium');
         const shadowsEnabled = shadowQuality !== 'off';
         const contactShadowSettings = this.getContactShadowSettings();
+        const profileShadowType = shadowQuality === 'high' ? 'pcfsoft' : 'pcf';
+        const shadowTypeAttr = shadowsEnabled
+            ? normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType)
+            : 'pcf';
+        const shadowMapType = getThreeShadowMapType(shadowTypeAttr);
 
         if (renderer && renderer.shadowMap) {
             renderer.shadowMap.enabled = shadowsEnabled;
-            renderer.shadowMap.type = typeof THREE.PCFSoftShadowMap !== 'undefined' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+            renderer.shadowMap.type = shadowMapType;
             renderer.shadowMap.needsUpdate = true;
+        }
+
+        if (this.el && typeof this.el.setAttribute === 'function') {
+            const currentShadow = this.el.getAttribute('shadow') || {};
+            const currentEnabled = currentShadow.enabled === true || currentShadow.enabled === 'true';
+            const currentType = typeof currentShadow.type === 'string' ? currentShadow.type.toLowerCase() : '';
+            if (currentEnabled !== shadowsEnabled || currentType !== shadowTypeAttr) {
+                this.el.setAttribute('shadow', `enabled: ${shadowsEnabled ? 'true' : 'false'}; type: ${shadowTypeAttr}; autoUpdate: true`);
+            }
         }
 
         if (this.el.hasAttribute('environment')) {
