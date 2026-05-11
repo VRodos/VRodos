@@ -344,6 +344,20 @@ class VRodos_Compiler_Manager {
 		return $this->scene_repository->get_project_type_slug( $project_id );
 	}
 
+	private function get_avatar_camera_position_attribute( $scene_json ): string {
+		$position = $scene_json->objects->avatarCamera->position ?? [0, 1.6, 0];
+		$position = is_array( $position ) ? $position : (array) $position;
+		$position = array_values( $position );
+		$values   = [];
+
+		for ( $i = 0; $i < 3; $i++ ) {
+			$value    = $position[ $i ] ?? ( 1 === $i ? 1.6 : 0 );
+			$values[] = is_numeric( $value ) ? (string) (float) $value : (string) ( 1 === $i ? 1.6 : 0 );
+		}
+
+		return implode( ' ', $values );
+	}
+
 
 	private function createBasicDomStructureAframeActor( $content, $scene_json ) {
 		$dom                   = new DOMDocument( '1.0', 'UTF-8' );
@@ -484,6 +498,7 @@ class VRodos_Compiler_Manager {
 		$ascenePlayer = $basicDomElements['ascenePlayer'];
 		$sceneColor   = $scene_json->metadata->ClearColor;
 		$is_immerse_project = $this->is_immerse_project( (int) $project_id );
+		$camera_position_attr = $this->get_avatar_camera_position_attribute( $scene_json );
 
 		$projectType = $this->get_project_type_slug( (int) $project_id );
 		
@@ -513,6 +528,7 @@ class VRodos_Compiler_Manager {
 			$a_camera = $dom->createElement( 'a-camera' );
 			$a_camera->setAttribute( 'camera', '' );
 			$a_camera->setAttribute( 'id', 'cameraA' );
+			$a_camera->setAttribute( 'position', $camera_position_attr );
 			if ( $this->is_networked_runtime() ) {
 				$a_camera->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
 			}
@@ -550,7 +566,7 @@ class VRodos_Compiler_Manager {
 			$ascenePlayer->appendChild( $a_entity_oc_left );
 
 		} else {
-			$ascenePlayer->setAttribute( 'position', '0 0.6 0' );
+			$ascenePlayer->setAttribute( 'position', $camera_position_attr );
 			if ( $this->is_networked_runtime() ) {
 				$ascenePlayer->setAttribute( 'networked', 'template:#avatar-template;attachTemplateToLocal:false;' );
 			}
@@ -568,7 +584,7 @@ class VRodos_Compiler_Manager {
 			$a_entity->setAttribute( 'id', 'cameraA' );
 			$a_entity->setAttribute( 'active', 'true' );
 			$a_entity->setAttribute( 'camera', 'near: 0.1; far: 7000.0;' );
-			$a_entity->setAttribute( 'position', '0 0.6 0' );
+			$a_entity->setAttribute( 'position', '0 0 0' );
 			if ( $this->is_networked_runtime() ) {
 				$a_entity->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
 			}
