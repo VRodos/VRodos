@@ -145,9 +145,15 @@ class VRodos_AssetViewer_3D_kernel {
             const mouse = new THREE.Vector2();
             const raycaster = new THREE.Raycaster();
             const rect = this.canvasToBindTo.getBoundingClientRect();
+            const width = rect.width || this.canvasToBindTo.clientWidth || this.canvasToBindTo.offsetWidth || 0;
+            const height = rect.height || this.canvasToBindTo.clientHeight || this.canvasToBindTo.offsetHeight || 0;
 
-            mouse.x = ((event.clientX - rect.left) / this.canvasToBindTo.clientWidth) * 2 - 1;
-            mouse.y = -((event.clientY - rect.top) / this.canvasToBindTo.clientHeight) * 2 + 1;
+            if (width <= 0 || height <= 0) {
+                return;
+            }
+
+            mouse.x = ((event.clientX - rect.left) / width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / height) * 2 + 1;
 
             raycaster.setFromCamera(mouse, this.camera);
 
@@ -168,6 +174,46 @@ class VRodos_AssetViewer_3D_kernel {
 
     removeControlEventListeners() {
         this.controls.removeEventListener('change', this.boundRender);
+    }
+
+    getCanvasDisplaySize() {
+        if (!this.canvasToBindTo) {
+            return { width: 0, height: 0 };
+        }
+
+        const rect = typeof this.canvasToBindTo.getBoundingClientRect === 'function'
+            ? this.canvasToBindTo.getBoundingClientRect()
+            : { width: 0, height: 0 };
+
+        return {
+            width: Math.floor(rect.width || this.canvasToBindTo.clientWidth || this.canvasToBindTo.offsetWidth || 0),
+            height: Math.floor(rect.height || this.canvasToBindTo.clientHeight || this.canvasToBindTo.offsetHeight || 0)
+        };
+    }
+
+    ensureRendererSize() {
+        const size = this.getCanvasDisplaySize();
+        if (size.width <= 0 || size.height <= 0) {
+            return false;
+        }
+
+        const pixelRatio = typeof this.renderer.getPixelRatio === 'function' ? this.renderer.getPixelRatio() : 1;
+        const expectedWidth = Math.max(1, Math.floor(size.width * pixelRatio));
+        const expectedHeight = Math.max(1, Math.floor(size.height * pixelRatio));
+        const sizeChanged = this.canvasToBindTo.width !== expectedWidth || this.canvasToBindTo.height !== expectedHeight;
+
+        if (sizeChanged) {
+            this.renderer.setSize(size.width, size.height, false);
+            this.recalcAspectRatio();
+            this.camera.aspect = this.aspectRatio;
+            this.camera.updateProjectionMatrix();
+        }
+
+        if (this.labelRenderer) {
+            this.labelRenderer.setSize(size.width, size.height);
+        }
+
+        return true;
     }
 
     hasPlayableAnimations(animations) {
@@ -207,6 +253,10 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     render() {
+        if (!this.ensureRendererSize()) {
+            return false;
+        }
+
         if (!this.renderer.autoClear) {
             this.renderer.clear();
         }
@@ -233,14 +283,22 @@ class VRodos_AssetViewer_3D_kernel {
                 `${Math.round(this.camera.position.y * 1000) / 1000},` +
                 `${Math.round(this.camera.position.z * 1000) / 1000}`;
         }
+
+        return true;
     }
 
     kickRendererOnDemand() {
-        this.render();
         this.addControlEventListeners();
-        this.resizeDisplayGL();
-        this.render();
-        this.setPreviewLoading(false);
+        if (this.resizeDisplayGL()) {
+            this.setPreviewLoading(false);
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            if (this.resizeDisplayGL()) {
+                this.setPreviewLoading(false);
+            }
+        });
     }
 
     startAutoLoopRendering() {
@@ -518,15 +576,17 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     resizeDisplayGL() {
-        this.recalcAspectRatio();
-        this.renderer.setSize(this.canvasToBindTo.offsetWidth, this.canvasToBindTo.offsetHeight, false);
-        this.labelRenderer.setSize(this.canvasLabelsToBindTo.offsetWidth, this.canvasLabelsToBindTo.offsetHeight, false);
-        this.updateCamera();
+        if (!this.ensureRendererSize()) {
+            return false;
+        }
+
         this.render();
+        return true;
     }
 
     recalcAspectRatio() {
-        this.aspectRatio = this.canvasToBindTo.offsetHeight === 0 ? 1 : this.canvasToBindTo.offsetWidth / this.canvasToBindTo.offsetHeight;
+        const size = this.getCanvasDisplaySize();
+        this.aspectRatio = size.height === 0 ? 1 : size.width / size.height;
     }
 
     resetCamera() {
@@ -556,4 +616,3 @@ class VRodos_AssetViewer_3D_kernel {
 }
 
 VRODOS.editor.AssetViewer3DKernel = VRodos_AssetViewer_3D_kernel;
-

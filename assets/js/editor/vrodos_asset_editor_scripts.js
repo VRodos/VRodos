@@ -626,10 +626,25 @@ function rgbToHex(r, g, b) {
 }
 
 function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
+    if (!asset_viewer_3d_kernel_local || !asset_viewer_3d_kernel_local.renderer) {
+        vrodos_set_asset_editor_notice('The 3D preview is not ready yet. Wait for the model preview to load and try again.');
+        return;
+    }
+
+    if (typeof asset_viewer_3d_kernel_local.resizeDisplayGL === 'function' && asset_viewer_3d_kernel_local.resizeDisplayGL() === false) {
+        vrodos_set_asset_editor_notice('The 3D preview is not visible yet. Wait for the preview panel to finish loading and try again.');
+        return;
+    }
+
     // Determine dimensions from the existing canvas
     const canvas = asset_viewer_3d_kernel_local.renderer.domElement;
     const w = canvas.width;
     const h = canvas.height;
+
+    if (w <= 0 || h <= 0) {
+        vrodos_set_asset_editor_notice('The 3D preview is not ready yet. Wait for the model preview to load and try again.');
+        return;
+    }
 
     // Use an offscreen renderer to capture the screenshot reliably
     const offscreenRenderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true, alpha: false });

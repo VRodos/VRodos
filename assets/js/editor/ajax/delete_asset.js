@@ -5,11 +5,97 @@
  * asset_id : the asset to delete
  */
 VRODOS.api.isDeleteAssetPending = false;
+VRODOS.api.parseDeleteAssetResponse = function(responseText) {
+	const text = String(responseText || '').trim();
+	if (!text) {
+		return null;
+	}
+
+	try {
+		return JSON.parse(text);
+	} catch (_error) {
+		const jsonStart = text.indexOf('{');
+		const jsonEnd = text.lastIndexOf('}');
+		if (jsonStart !== -1 && jsonEnd > jsonStart) {
+			try {
+				return JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+			} catch (_jsonError) {
+				return null;
+			}
+		}
+	}
+
+	return null;
+};
+
+VRODOS.api.closeDeleteAssetDialog = function() {
+	const deleteDialog = document.getElementById('vrodos_delete_asset_modal') || document.getElementById('delete-dialog');
+	if (!deleteDialog) {
+		return;
+	}
+
+	const progressBar = document.getElementById('delete-scene-dialog-progress-bar');
+	if (progressBar) {
+		progressBar.style.display = 'none';
+		progressBar.classList.add('tw-hidden');
+	}
+
+	if (typeof deleteDialog.close === 'function' && deleteDialog.open) {
+		deleteDialog.close();
+		return;
+	}
+
+	deleteDialog.style.display = 'none';
+};
+
+VRODOS.api.removeDeletedAssetFromUi = function(deletedAssetId, asset_id) {
+	const editorScene = VRODOS.editor && VRODOS.editor.envir && VRODOS.editor.envir.scene
+		? VRODOS.editor.envir.scene
+		: null;
+
+	// remove asset from scene (if we are at scene editor)
+	if (editorScene) {
+		if (editorScene.children) {
+			const names_to_remove = [];
+			for (let i = 0; i < editorScene.children.length; i++) {
+				if (String(editorScene.children[i].assetid) === String(deletedAssetId)) {
+					names_to_remove.push(editorScene.children[i].name);
+				}
+			}
+
+			for (let i = 0; i < names_to_remove.length; i++) {
+				editorScene.remove(editorScene.getObjectByName(names_to_remove[i]));
+			}
+		}
+
+		const progressBar = document.getElementById(`deleteAssetProgressBar-${  asset_id}`);
+		if (progressBar) {
+			progressBar.style.display = 'none';
+		}
+
+		const assetEl = document.getElementById(`asset-${  asset_id}`);
+		if (assetEl) {
+			assetEl.style.transition = 'opacity 0.3s';
+			assetEl.style.opacity = '0';
+			setTimeout(() => { assetEl.remove(); }, 300);
+		}
+		return;
+	}
+
+	// remove the respective tile from the Project editor
+	const tileEl = document.getElementById(`${  deletedAssetId}`);
+	if (tileEl) {
+		tileEl.style.transition = 'opacity 0.3s';
+		tileEl.style.opacity = '0';
+		setTimeout(() => { tileEl.remove(); }, 300);
+	}
+};
+
 VRODOS.api.deleteAsset = function(asset_id, game_slug) {
 	if (VRODOS.api.isDeleteAssetPending) return;
 	VRODOS.api.isDeleteAssetPending = true;
 
-	if (typeof VRODOS.editor.envir != "undefined") {
+	if (VRODOS.editor && VRODOS.editor.envir && VRODOS.editor.envir.scene) {
 		const progressBar = document.getElementById( `deleteAssetProgressBar-${  asset_id}` );
 		if (progressBar) progressBar.style.display = '';
 		const assetEl = document.getElementById( `asset-${  asset_id}` );
@@ -29,12 +115,7 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug) {
 	.then( (result) => {
 
 		VRODOS.api.isDeleteAssetPending = false;
-		let payload = null;
-		try {
-			payload = result.text ? JSON.parse( result.text ) : null;
-		} catch (_error) {
-			payload = null;
-		}
+		const payload = VRODOS.api.parseDeleteAssetResponse(result.text);
 
 		if (!result.ok) {
 			const message = payload && payload.data ? payload.data : result.text;
@@ -49,47 +130,11 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug) {
 			throw new Error('Asset deletion response was not valid.');
 		}
 
-		const deleteDialog = document.getElementById('delete-dialog') || document.getElementById('vrodos_delete_asset_modal');
-		if (deleteDialog) {
-			const progressBar = document.getElementById( 'delete-scene-dialog-progress-bar' );
-			if (progressBar) progressBar.style.display = 'none';
-			deleteDialog.close();
-		}
-
-		// remove asset from scene (if we are at scene editor)
-		if (typeof VRODOS.editor.envir != "undefined") {
-			// Remove objects from scene
-			const names_to_remove = [];
-			for (let i = 0; i < VRODOS.editor.envir.scene.children.length; i++) {
-				if (String(VRODOS.editor.envir.scene.children[i].assetid) === String(deletedAssetId)) {
-					names_to_remove.push( VRODOS.editor.envir.scene.children[i].name );
-				}
-			}
-
-			for (let i = 0; i < names_to_remove.length; i++) {
-				VRODOS.editor.envir.scene.remove( VRODOS.editor.envir.scene.getObjectByName( names_to_remove[i] ) );
-			}
-
-			const progressBar = document.getElementById( `deleteAssetProgressBar-${  asset_id}` );
-			if (progressBar) progressBar.style.display = 'none';
-
-			const deleteDialog2 = document.getElementById( "delete-dialog" );
-			if (deleteDialog2) deleteDialog2.style.display = 'none';
-
-			const assetEl = document.getElementById( `asset-${  asset_id}` );
-			if (assetEl) {
-				assetEl.style.transition = 'opacity 0.3s';
-				assetEl.style.opacity = '0';
-				setTimeout( () => { assetEl.remove(); }, 300 );
-			}
-		} else {
-			// remove the respective tile from the Project editor
-			const tileEl = document.getElementById( `${  deletedAssetId}` );
-			if (tileEl) {
-				tileEl.style.transition = 'opacity 0.3s';
-				tileEl.style.opacity = '0';
-				setTimeout( () => { tileEl.remove(); }, 300 );
-			}
+		try {
+			VRODOS.api.closeDeleteAssetDialog();
+			VRODOS.api.removeDeletedAssetFromUi(deletedAssetId, asset_id);
+		} catch (cleanupError) {
+			console.log(`Ajax Delete Asset: cleanup warning after successful delete: ${  cleanupError}`);
 		}
 
 	})
