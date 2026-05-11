@@ -14,6 +14,120 @@ class VRodos_Asset_AJAX {
 		add_action( 'wp_ajax_vrodos_fetch_game_assets_action', [ $this, 'vrodos_fetch_game_assets_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_fetch_glb_asset_action', [ $this, 'vrodos_fetch_glb_asset3d_frontend_callback' ] );
 		add_action( 'wp_ajax_nopriv_vrodos_fetch_glb_asset_action', [ $this, 'vrodos_fetch_glb_asset3d_frontend_callback' ] );
+		add_action( 'wp_ajax_vrodos_upload_glb_chunk_action', [ $this, 'upload_glb_chunk_callback' ] );
+	}
+
+	public function upload_glb_chunk_callback(): void {
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( 'You must be logged in to upload GLB assets.', 403 );
+		}
+
+		check_ajax_referer( 'post_nonce', 'nonce' );
+
+		$upload_id   = isset( $_POST['upload_id'] ) ? sanitize_key( (string) wp_unslash( $_POST['upload_id'] ) ) : '';
+		$chunk_index = isset( $_POST['chunk_index'] ) ? absint( $_POST['chunk_index'] ) : 0;
+		$total       = isset( $_POST['total_chunks'] ) ? absint( $_POST['total_chunks'] ) : 0;
+		$file_name   = isset( $_POST['file_name'] ) ? sanitize_file_name( (string) wp_unslash( $_POST['file_name'] ) ) : '';
+		$project_id  = isset( $_POST['project_id'] ) ? absint( $_POST['project_id'] ) : 0;
+
+		if ( $upload_id === '' || $total <= 0 || $chunk_index >= $total || $file_name === '' ) {
+			wp_send_json_error( 'Invalid GLB chunk upload metadata.', 400 );
+		}
+
+		if ( strtolower( pathinfo( $file_name, PATHINFO_EXTENSION ) ) !== 'glb' ) {
+			wp_send_json_error( 'Only GLB files can be uploaded here.', 400 );
+		}
+
+		if ( empty( $_FILES['chunk'] ) || (int) ( $_FILES['chunk']['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_OK ) {
+			wp_send_json_error( 'The GLB upload chunk was not received.', 400 );
+		}
+
+		$upload_dir = wp_upload_dir();
+		if ( ! empty( $upload_dir['error'] ) ) {
+			wp_send_json_error( $upload_dir['error'], 500 );
+		}
+
+		$user_id     = get_current_user_id();
+		$session_dir = trailingslashit( $upload_dir['basedir'] ) . 'vrodos-chunked-uploads/user-' . $user_id . '/' . $upload_id;
+		if ( $chunk_index === 0 && is_dir( $session_dir ) ) {
+			$this->delete_chunk_upload_dir( $session_dir, trailingslashit( $upload_dir['basedir'] ) . 'vrodos-chunked-uploads/user-' . $user_id );
+		}
+
+		if ( ! wp_mkdir_p( $session_dir ) ) {
+			wp_send_json_error( 'Could not create the GLB chunk upload directory.', 500 );
+		}
+
+		$part_path = trailingslashit( $session_dir ) . 'chunk-' . $chunk_index . '.part';
+		if ( ! move_uploaded_file( (string) $_FILES['chunk']['tmp_name'], $part_path ) ) {
+			wp_send_json_error( 'Could not store the GLB upload chunk.', 500 );
+		}
+
+		$complete = true;
+		for ( $i = 0; $i < $total; $i++ ) {
+			if ( ! is_file( trailingslashit( $session_dir ) . 'chunk-' . $i . '.part' ) ) {
+				$complete = false;
+				break;
+			}
+		}
+
+		if ( $complete ) {
+			$final_path = trailingslashit( $session_dir ) . 'upload.glb';
+			$out        = fopen( $final_path, 'wb' );
+			if ( ! $out ) {
+				wp_send_json_error( 'Could not assemble the GLB upload.', 500 );
+			}
+
+			for ( $i = 0; $i < $total; $i++ ) {
+				$part = trailingslashit( $session_dir ) . 'chunk-' . $i . '.part';
+				$in   = fopen( $part, 'rb' );
+				if ( ! $in ) {
+					fclose( $out );
+					wp_send_json_error( 'Could not read a GLB upload chunk.', 500 );
+				}
+				stream_copy_to_stream( $in, $out );
+				fclose( $in );
+				wp_delete_file( $part );
+			}
+			fclose( $out );
+
+			file_put_contents(
+				trailingslashit( $session_dir ) . 'manifest.json',
+				wp_json_encode(
+					[
+						'file_name'  => $file_name,
+						'project_id' => $project_id,
+						'user_id'    => $user_id,
+						'created'    => time(),
+					]
+				)
+			);
+		}
+
+		wp_send_json_success(
+			[
+				'complete' => $complete,
+				'token'    => $upload_id,
+				'received' => $chunk_index + 1,
+				'total'    => $total,
+			]
+		);
+	}
+
+	private function delete_chunk_upload_dir( string $dir, string $allowed_root ): void {
+		$dir          = wp_normalize_path( $dir );
+		$allowed_root = trailingslashit( wp_normalize_path( $allowed_root ) );
+		if ( ! str_starts_with( trailingslashit( $dir ), $allowed_root ) || ! is_dir( $dir ) ) {
+			return;
+		}
+
+		$iterator = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ),
+			RecursiveIteratorIterator::CHILD_FIRST
+		);
+		foreach ( $iterator as $item ) {
+			$item->isDir() ? rmdir( $item->getPathname() ) : wp_delete_file( $item->getPathname() );
+		}
+		rmdir( $dir );
 	}
 
 	/**

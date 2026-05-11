@@ -13,7 +13,8 @@ class VRodos_Upload_Manager {
 	 */
 	public static function create_asset_3dfiles_extra_frontend( $asset_new_id, $project_id, $asset_cat_id ): void {
 		// Upload and update DB
-		if ( ( isset( $_POST['glbFileInput'] ) && $_POST['glbFileInput'] ) || ( isset( $_FILES['multipleFilesInput'] ) && isset( $_FILES['multipleFilesInput']['error'][0] ) && $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE ) ) {
+		$chunk_upload_token = isset( $_POST['glbChunkUploadToken'] ) ? sanitize_key( (string) wp_unslash( $_POST['glbChunkUploadToken'] ) ) : '';
+		if ( $chunk_upload_token || ( isset( $_POST['glbFileInput'] ) && $_POST['glbFileInput'] ) || ( isset( $_FILES['multipleFilesInput'] ) && isset( $_FILES['multipleFilesInput']['error'][0] ) && $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE ) ) {
 			wp_raise_memory_limit( 'admin' );
 			@set_time_limit( 300 );
 
@@ -27,14 +28,23 @@ class VRodos_Upload_Manager {
 				}
 			}
 
-			$glb_file_id = self::upload_asset_text(
-				$_POST['glbFileInput'] ?? null,
-				'glb_' . $asset_new_id . '_' . $asset_cat_id . '.glb',
-				$asset_new_id,
-				$_FILES,
-				0,
-				$project_id
-			);
+			if ( $chunk_upload_token ) {
+				$glb_file_id = self::import_chunked_glb_upload(
+					$chunk_upload_token,
+					'glb_' . $asset_new_id . '_' . $asset_cat_id . '.glb',
+					$asset_new_id,
+					$project_id
+				);
+			} else {
+				$glb_file_id = self::upload_asset_text(
+					$_POST['glbFileInput'] ?? null,
+					'glb_' . $asset_new_id . '_' . $asset_cat_id . '.glb',
+					$asset_new_id,
+					$_FILES,
+					0,
+					$project_id
+				);
+			}
 
 			if ( $glb_file_id ) {
 				update_post_meta( $asset_new_id, 'vrodos_asset3d_glb', $glb_file_id );
@@ -290,6 +300,82 @@ class VRodos_Upload_Manager {
 			);
 		}
 		return $result;
+	}
+
+	public static function import_chunked_glb_upload( string $token, string $target_name, int $parent_post_id, int $project_id ) {
+		self::load_wp_admin_files();
+		$token      = sanitize_key( $token );
+		$upload_dir = wp_upload_dir();
+		if ( $token === '' || ! empty( $upload_dir['error'] ) ) {
+			return false;
+		}
+
+		$user_id     = get_current_user_id();
+		$session_dir = trailingslashit( $upload_dir['basedir'] ) . 'vrodos-chunked-uploads/user-' . $user_id . '/' . $token;
+		$source      = trailingslashit( $session_dir ) . 'upload.glb';
+		$manifest    = trailingslashit( $session_dir ) . 'manifest.json';
+
+		if ( ! is_file( $source ) || ! is_file( $manifest ) ) {
+			error_log( 'VRodos Upload Error (import_chunked_glb_upload): missing completed chunk upload for token ' . $token );
+			return false;
+		}
+
+		$manifest_data = json_decode( (string) file_get_contents( $manifest ), true );
+		if ( ! is_array( $manifest_data ) || (int) ( $manifest_data['user_id'] ?? 0 ) !== $user_id ) {
+			error_log( 'VRodos Upload Error (import_chunked_glb_upload): invalid chunk upload manifest for token ' . $token );
+			return false;
+		}
+
+		$_REQUEST['post_id'] = $parent_post_id;
+		add_filter( 'upload_dir', self::upload_dir_for_scenes_or_assets(...) );
+		add_filter( 'intermediate_image_sizes_advanced', self::remove_allthumbs_sizes(...), 10, 2 );
+		$target_upload_dir = wp_upload_dir();
+		remove_filter( 'upload_dir', self::upload_dir_for_scenes_or_assets(...) );
+		remove_filter( 'intermediate_image_sizes_advanced', self::remove_allthumbs_sizes(...), 10, 2 );
+		unset( $_REQUEST['post_id'] );
+
+		if ( ! empty( $target_upload_dir['error'] ) || ! wp_mkdir_p( $target_upload_dir['path'] ) ) {
+			error_log( 'VRodos Upload Error (import_chunked_glb_upload): could not prepare final upload directory.' );
+			return false;
+		}
+
+		$filename    = wp_unique_filename( $target_upload_dir['path'], sanitize_file_name( $target_name ) );
+		$destination = trailingslashit( $target_upload_dir['path'] ) . $filename;
+		if ( ! @rename( $source, $destination ) ) {
+			if ( ! @copy( $source, $destination ) ) {
+				error_log( 'VRodos Upload Error (import_chunked_glb_upload): could not move assembled GLB.' );
+				return false;
+			}
+			wp_delete_file( $source );
+		}
+
+		$file_return = [
+			'file' => $destination,
+			'url'  => trailingslashit( $target_upload_dir['url'] ) . $filename,
+			'type' => 'model/gltf-binary',
+		];
+
+		$attachment_id = self::insert_attachment_post( $file_return, $parent_post_id );
+		self::delete_chunked_upload_session_dir( $session_dir, trailingslashit( $upload_dir['basedir'] ) . 'vrodos-chunked-uploads/user-' . $user_id );
+
+		return $attachment_id;
+	}
+
+	private static function delete_chunked_upload_session_dir( string $dir, string $allowed_root ): void {
+		$dir          = wp_normalize_path( $dir );
+		$allowed_root = trailingslashit( wp_normalize_path( $allowed_root ) );
+		if ( ! str_starts_with( trailingslashit( $dir ), $allowed_root ) || ! is_dir( $dir ) ) {
+			return;
+		}
+
+		$iterator = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ),
+			RecursiveIteratorIterator::CHILD_FIRST
+		);
+		foreach ( $iterator as $item ) {
+			$item->isDir() ? rmdir( $item->getPathname() ) : wp_delete_file( $item->getPathname() );
+		}
+		rmdir( $dir );
 	}
 
 	public static function insert_attachment_post( $file_return, $parent_post_id ) {

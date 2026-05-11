@@ -84,9 +84,12 @@ trait VRodos_Asset_CPT_Shared {
 	}
 
 	private static function get_frontend_request_size_limits(): array {
+		// By default, inherit PHP/WordPress upload limits instead of imposing a
+		// plugin-specific request ceiling. Sites that sit behind a lower web
+		// server/proxy limit can still set this filter explicitly.
 		$server_request_limit = max(
 			0,
-			(int) apply_filters( 'vrodos_asset_editor_request_limit_bytes', 100 * 1024 * 1024 )
+			(int) apply_filters( 'vrodos_asset_editor_request_limit_bytes', 0 )
 		);
 		$post_max_limit       = self::get_ini_bytes( 'post_max_size' );
 		$request_limit        = $server_request_limit;
@@ -97,9 +100,9 @@ trait VRodos_Asset_CPT_Shared {
 
 		$request_margin = max(
 			0,
-			(int) apply_filters( 'vrodos_asset_editor_request_margin_bytes', 4 * 1024 * 1024 )
+			(int) apply_filters( 'vrodos_asset_editor_request_margin_bytes', 0 )
 		);
-		$request_budget = max( 0, $request_limit - $request_margin );
+		$request_budget = $request_limit > 0 ? max( 0, $request_limit - $request_margin ) : 0;
 
 		return [
 			'limit_bytes'  => $request_limit,

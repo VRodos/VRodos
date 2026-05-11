@@ -25,6 +25,7 @@ extract($data);
         var vrodosMaxRequestBytes = <?php echo (int) $request_max_bytes; ?>;
         var vrodosMaxRequestLabel = <?php echo json_encode($request_max_label); ?>;
         var vrodosRequestLimitLabel = <?php echo json_encode($request_limit_label); ?>;
+        var vrodosAssetEditorProjectId = <?php echo (int) $project_id; ?>;
     </script>
     <?php
     // Pre-apply the correct section visibility to prevent layout flicker on load.
@@ -233,6 +234,7 @@ else { ?>
                         </div>
 
                         <input type="hidden" name="glbFileInput" value="" id="glbFileInput" />
+                        <input type="hidden" name="glbChunkUploadToken" value="" id="glbChunkUploadToken" />
                         <input type="hidden" id="assettrs" name="assettrs" value="<?php echo trim($assettrs_saved); ?>" />
                     </div>
                     <?php
@@ -1050,9 +1052,22 @@ else { ?>
 
 		const assetForm = document.getElementById('3dAssetForm');
 		if (assetForm) {
-			assetForm.addEventListener('submit', function(event) {
+			let vrodosSubmittingChunkedGlb = false;
+			assetForm.addEventListener('submit', async function(event) {
+				if (vrodosSubmittingChunkedGlb) {
+					return;
+				}
 				if (!window.vrodos_validate_selected_glb()) {
 					event.preventDefault();
+					return;
+				}
+				if (typeof window.vrodos_upload_selected_glb_in_chunks === 'function') {
+					event.preventDefault();
+					const uploaded = await window.vrodos_upload_selected_glb_in_chunks(assetForm);
+					if (uploaded) {
+						vrodosSubmittingChunkedGlb = true;
+						assetForm.submit();
+					}
 				}
 			});
 		}

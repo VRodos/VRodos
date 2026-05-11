@@ -80,7 +80,8 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 		$asset_updatedConf = 0;
 		$has_new_glb_upload = ( isset( $_FILES['multipleFilesInput'] ) && isset( $_FILES['multipleFilesInput']['error'][0] ) && (int) $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE )
-			|| ( isset( $_POST['glbFileInput'] ) && ! empty( $_POST['glbFileInput'] ) );
+			|| ( isset( $_POST['glbFileInput'] ) && ! empty( $_POST['glbFileInput'] ) )
+			|| ( isset( $_POST['glbChunkUploadToken'] ) && ! empty( $_POST['glbChunkUploadToken'] ) );
 		// NEW Asset: submit info to backend
 
 		if ( $asset_id == null ) {
@@ -278,7 +279,9 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$data['request_margin_bytes']     = $request_size_limits['margin_bytes'];
 		$data['request_margin_label']     = size_format( $data['request_margin_bytes'], 0 );
 		$data['php_max_upload_bytes']     = wp_max_upload_size();
-		$data['max_upload_bytes']         = min( $data['php_max_upload_bytes'], $data['request_max_bytes'] );
+		$data['max_upload_bytes']         = $data['request_max_bytes'] > 0
+			? min( $data['php_max_upload_bytes'], $data['request_max_bytes'] )
+			: $data['php_max_upload_bytes'];
 		$data['max_upload_label']         = size_format( $data['max_upload_bytes'], 0 );
 		$data['asset_notice_code'] = isset( $_GET['vrodos_notice'] ) ? sanitize_key( (string) $_GET['vrodos_notice'] ) : '';
 		$data['asset_notice_type'] = 'error';

@@ -103,6 +103,11 @@ function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputEl
             screenshotInput.value = '';
         }
 
+        const chunkTokenInput = document.getElementById('glbChunkUploadToken');
+        if (chunkTokenInput) {
+            chunkTokenInput.value = '';
+        }
+
         file_reader_cortex(file, asset_viewer_3d_kernel_local);
     };
 
@@ -110,6 +115,109 @@ function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputEl
         multipleFilesInputElem.addEventListener('change', handleFileSelect, false);
     }
 }
+
+function vrodos_set_asset_editor_notice(message, isError = true) {
+    const notice = document.getElementById('assetEditorNotice');
+    const text = document.getElementById('assetEditorNoticeText');
+    if (!notice || !text) {
+        return;
+    }
+
+    notice.classList.remove('tw-hidden', 'tw-bg-red-50', 'tw-border-red-200', 'tw-text-red-700', 'tw-bg-emerald-50', 'tw-border-emerald-200', 'tw-text-emerald-700');
+    notice.classList.add(isError ? 'tw-bg-red-50' : 'tw-bg-emerald-50', isError ? 'tw-border-red-200' : 'tw-border-emerald-200', isError ? 'tw-text-red-700' : 'tw-text-emerald-700');
+    text.textContent = message;
+}
+
+window.vrodos_upload_selected_glb_in_chunks = async function (form) {
+    const fileInput = document.getElementById('fileUploadInput');
+    const tokenInput = document.getElementById('glbChunkUploadToken');
+    const nonceInput = form ? form.querySelector('[name="post_nonce_field"]') : null;
+    const submitBtn = document.getElementById('formSubmitBtn');
+    const file = fileInput && fileInput.files && fileInput.files.length ? fileInput.files[0] : null;
+
+    if (!file) {
+        return true;
+    }
+
+    if (tokenInput && tokenInput.value) {
+        fileInput.value = '';
+        return true;
+    }
+
+    if (!nonceInput || !nonceInput.value) {
+        vrodos_set_asset_editor_notice('The upload security token is missing. Reload the page and try again.');
+        return false;
+    }
+
+    const chunkSize = 8 * 1024 * 1024;
+    const totalChunks = Math.max(1, Math.ceil(file.size / chunkSize));
+    const uploadId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+    const ajaxUrl = (window.VRODOS && VRODOS.utils && typeof VRODOS.utils.getAjaxUrl === 'function')
+        ? VRODOS.utils.getAjaxUrl()
+        : '/wp-admin/admin-ajax.php';
+    const formatUploadProgress = (uploadedBytes) => {
+        const clampedBytes = Math.min(file.size, Math.max(0, uploadedBytes));
+        const percent = file.size > 0 ? Math.floor((clampedBytes / file.size) * 100) : 100;
+        const uploadedMb = (clampedBytes / (1024 * 1024)).toFixed(1);
+        const totalMb = (file.size / (1024 * 1024)).toFixed(1);
+
+        return `Uploading GLB ${percent}% (${uploadedMb}/${totalMb} MB)`;
+    };
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+    }
+
+    try {
+        let finalPayload = null;
+        let uploadedBytes = 0;
+        for (let index = 0; index < totalChunks; index += 1) {
+            const start = index * chunkSize;
+            const chunk = file.slice(start, Math.min(start + chunkSize, file.size));
+            const formData = new FormData();
+            formData.append('action', 'vrodos_upload_glb_chunk_action');
+            formData.append('nonce', nonceInput.value);
+            formData.append('upload_id', uploadId);
+            formData.append('chunk_index', String(index));
+            formData.append('total_chunks', String(totalChunks));
+            formData.append('file_name', file.name);
+            formData.append('project_id', String(window.vrodosAssetEditorProjectId || '0'));
+            formData.append('chunk', chunk, file.name);
+
+            vrodos_set_asset_editor_notice(formatUploadProgress(uploadedBytes), false);
+            const response = await fetch(ajaxUrl, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            });
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || !payload || !payload.success) {
+                throw new Error((payload && payload.data) || 'The GLB chunk upload failed.');
+            }
+            finalPayload = payload;
+            uploadedBytes += chunk.size;
+            vrodos_set_asset_editor_notice(formatUploadProgress(uploadedBytes), false);
+        }
+
+        if (!finalPayload || !finalPayload.data || !finalPayload.data.complete) {
+            throw new Error('The GLB upload did not finish assembling on the server.');
+        }
+
+        if (tokenInput) {
+            tokenInput.value = uploadId;
+        }
+        fileInput.value = '';
+        vrodos_set_asset_editor_notice('GLB upload completed. Saving asset...', false);
+        return true;
+    } catch (error) {
+        vrodos_set_asset_editor_notice(error && error.message ? error.message : 'The GLB upload failed.');
+        return false;
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+        }
+    }
+};
 
 
 
