@@ -654,18 +654,31 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private function render_gltf_entity( $dom, $ascene, $assets, $obj, $scene_id = 0 ) {
 		$uuid = $obj->uuid ?? '';
 		$cat  = $obj->category_slug ?? '';
+		$context = $cat . ':' . ( $uuid !== '' ? $uuid : (string) ( $obj->name ?? 'unnamed' ) );
+
+		$glb_resolution = $this->resolve_compiled_gltf_asset_url( $obj, (string) ( $obj->glb_path ?? '' ) );
+		$glb_url        = $this->normalize_url( $glb_resolution['url'] );
+
+		if ( $uuid === '' || $glb_url === '' ) {
+			$this->add_diagnostic_warning(
+				'missing-gltf|' . $context,
+				sprintf(
+					'Skipped %s because it has no compiled GLB source. Re-select or remove the asset in the scene editor.',
+					$context
+				)
+			);
+			return;
+		}
 
 		// Add to assets
 		$asset_item = $dom->createElement( 'a-asset-item' );
 		$asset_item->setAttribute( 'id', $uuid );
-		$glb_resolution = $this->resolve_compiled_gltf_asset_url( $obj, (string) ( $obj->glb_path ?? '' ) );
-		$glb_url        = $this->normalize_url( $glb_resolution['url'] );
 		$asset_item->setAttribute( 'src', $glb_url );
 		$asset_item->setAttribute( 'response-type', 'arraybuffer' );
 		$asset_item->setAttribute( 'crossorigin', 'anonymous' );
 		$assets->appendChild( $asset_item );
-		$this->track_runtime_asset( 'gltf', $glb_url, $cat . ':' . $uuid );
-		$this->track_gltf_derivative_usage( $glb_resolution, $obj, $cat . ':' . $uuid );
+		$this->track_runtime_asset( 'gltf', $glb_url, $context );
+		$this->track_gltf_derivative_usage( $glb_resolution, $obj, $context );
 
 		// Create entity
 		$entity = $dom->createElement( 'a-entity' );

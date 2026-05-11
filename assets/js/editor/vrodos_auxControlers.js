@@ -301,9 +301,9 @@ function ensureWalkableSurfacePropertiesSection() {
     const select = document.getElementById('walkableBehaviorSelect');
     if (select) {
         select.addEventListener('change', () => {
-            if (!VRODOS.editor.transform_controls || !VRODOS.editor.transform_controls.object) return;
+            const selectedObject = getObjectControlsTargetObject();
+            if (!selectedObject) return;
 
-            const selectedObject = VRODOS.editor.transform_controls.object;
             if (String(selectedObject.category_slug || '').toLowerCase() !== 'walkable-surface') {
                 return;
             }
@@ -1533,6 +1533,7 @@ function vrodosAttachGizmo(object) {
         // 3. Delegate properties for safety checks in other scripts
         window.vrodosGizmoProxy.realObject = object;
         window.vrodosGizmoProxy.category_name = object.category_name;
+        window.vrodosGizmoProxy.category_slug = object.category_slug;
         window.vrodosGizmoProxy.asset_name = object.asset_name;
         window.vrodosGizmoProxy.isLight = object.isLight;
         window.vrodosGizmoProxy.parentLight = object.parentLight;
@@ -1601,5 +1602,4 @@ VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;
 VRODOS.ui.controlInterface = controlInterface;
 VRODOS.ui.controllerDatGuiOnChange = controllerDatGuiOnChange;
 VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes = updatePositionsPhpAndJavsFromControlsAxes;
-
 
