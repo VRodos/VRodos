@@ -817,6 +817,9 @@
     isAFrameVrModeActive: function() {
       return Boolean(this.el.is && this.el.is("vr-mode"));
     },
+    isDirectVrPresentationActive: function() {
+      return this.isImmersiveXrActive();
+    },
     isDocumentFullscreenActive: function() {
       return Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
     },
@@ -830,7 +833,7 @@
       return "inline";
     },
     isVrPresentationActive: function() {
-      return this.isImmersiveXrActive();
+      return this.isImmersiveXrActive() || this.isAFrameVrModeActive();
     },
     isMobileDevice: function() {
       return Boolean(AFRAME.utils && AFRAME.utils.device && typeof AFRAME.utils.device.isMobile === "function" && AFRAME.utils.device.isMobile());
@@ -1019,7 +1022,7 @@
       return this.getRenderQualityLevel() === "high" && this.data.postFXEnabled !== "0" && this.hasCinematicShaderOptions();
     },
     warnImmersiveXrPostProcessingFallback: function() {
-      if (!this.isImmersiveXrActive()) {
+      if (!this.isDirectVrPresentationActive()) {
         this._immersiveXrPostFXFallbackWarned = false;
         return;
       }
@@ -1068,7 +1071,7 @@
       if (this.data.postFXEngine === "pmndrs" && vrodosRuntimeDebugFlag("disablePmndrsComposer", "vrodos_debug_disable_pmndrs_composer")) {
         return false;
       }
-      return this.hasPostProcessingPipelineRequest() && !this.isImmersiveXrActive();
+      return this.hasPostProcessingPipelineRequest() && !this.isDirectVrPresentationActive();
     },
     // --- Post-processing methods: LEGACY engine (extracted to vrodos_postprocessing.js) ---
     updatePostProcessingSize: VRODOSMaster.SceneSettingsHelpers.updatePostProcessingSize || vrodosRuntimeNoop,

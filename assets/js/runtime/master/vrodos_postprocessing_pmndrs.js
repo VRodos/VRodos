@@ -317,10 +317,15 @@
         return Boolean(self && typeof self.getAmbientOcclusionPreset === 'function' && self.getAmbientOcclusionPreset() !== 'off');
     }
 
-    function isPmndrsImmersiveXrActive(self) {
+    function isPmndrsDirectVrPresentationActive(self) {
+        if (self && typeof self.isDirectVrPresentationActive === 'function') {
+            return self.isDirectVrPresentationActive();
+        }
+        if (self && typeof self.isImmersiveXrActive === 'function') {
+            return self.isImmersiveXrActive();
+        }
         const renderer = self && self.el ? self.el.renderer : null;
-        return Boolean((renderer && renderer.xr && renderer.xr.isPresenting) ||
-            (self && self.el && typeof self.el.is === 'function' && self.el.is('vr-mode')));
+        return Boolean(renderer && renderer.xr && renderer.xr.isPresenting);
     }
 
     function getPmndrsAmbientOcclusionBackend(self) {
@@ -1533,7 +1538,7 @@
             const shouldIntercept = self.pmndrsActive &&
                 self.shouldUsePostProcessing() &&
                 !self.pmndrsRendering &&
-                !isPmndrsImmersiveXrActive(self) &&
+                !isPmndrsDirectVrPresentationActive(self) &&
                 !self.sceneProbeCapturing &&
                 scene === self.el.object3D &&
                 camera;
@@ -1652,6 +1657,9 @@
         this._pmndrsSsrTraaWarned = false;
         this._pmndrsAtmosphereWarned = false;
         this._pmndrsLensFlareSkipWarned = false;
+        if (typeof this.applyRenderQualityProfile === 'function') {
+            this.applyRenderQualityProfile();
+        }
         updatePmndrsAADebugOverlay(this);
     };
 

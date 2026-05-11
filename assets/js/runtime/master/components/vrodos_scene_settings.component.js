@@ -420,6 +420,9 @@ AFRAME.registerComponent('scene-settings', {
     isAFrameVrModeActive: function () {
         return Boolean(this.el.is && this.el.is('vr-mode'));
     },
+    isDirectVrPresentationActive: function () {
+        return this.isImmersiveXrActive();
+    },
     isDocumentFullscreenActive: function () {
         return Boolean(document.fullscreenElement ||
             document.webkitFullscreenElement ||
@@ -438,7 +441,7 @@ AFRAME.registerComponent('scene-settings', {
         return 'inline';
     },
     isVrPresentationActive: function () {
-        return this.isImmersiveXrActive();
+        return this.isImmersiveXrActive() || this.isAFrameVrModeActive();
     },
     isMobileDevice: function () {
         return Boolean(AFRAME.utils &&
@@ -704,7 +707,7 @@ AFRAME.registerComponent('scene-settings', {
             this.hasCinematicShaderOptions();
     },
     warnImmersiveXrPostProcessingFallback: function () {
-        if (!this.isImmersiveXrActive()) {
+        if (!this.isDirectVrPresentationActive()) {
             this._immersiveXrPostFXFallbackWarned = false;
             return;
         }
@@ -761,7 +764,7 @@ AFRAME.registerComponent('scene-settings', {
             return false;
         }
 
-        return this.hasPostProcessingPipelineRequest() && !this.isImmersiveXrActive();
+        return this.hasPostProcessingPipelineRequest() && !this.isDirectVrPresentationActive();
     },
     // --- Post-processing methods: LEGACY engine (extracted to vrodos_postprocessing.js) ---
     updatePostProcessingSize: VRODOSMaster.SceneSettingsHelpers.updatePostProcessingSize || vrodosRuntimeNoop,
