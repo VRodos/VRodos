@@ -47,9 +47,9 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$assettrs         = isset( $_POST['assettrs'] ) ? esc_attr( strip_tags( (string) $_POST['assettrs'] ) ) : '0,0,0,0,0,0,0,0,-100';
 		$redirect_url     = self::build_frontend_redirect_url();
 
-		$glb_upload_error = self::get_frontend_glb_upload_error();
-		if ( $glb_upload_error ) {
-			self::redirect_with_frontend_notice( $redirect_url, $glb_upload_error, $submission_buffer_level );
+		$model_upload_error = self::get_frontend_model_upload_error();
+		if ( $model_upload_error ) {
+			self::redirect_with_frontend_notice( $redirect_url, $model_upload_error, $submission_buffer_level );
 		}
 
 		$assetCatIPRID = isset( $_POST['term_id_ipr'] ) ? intval( $_POST['term_id_ipr'] ) : 0; // Legacy hidden input.
@@ -79,9 +79,10 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		}
 
 		$asset_updatedConf = 0;
-		$has_new_glb_upload = ( isset( $_FILES['multipleFilesInput'] ) && isset( $_FILES['multipleFilesInput']['error'][0] ) && (int) $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE )
+		$has_new_model_upload = ( isset( $_FILES['multipleFilesInput'] ) && isset( $_FILES['multipleFilesInput']['error'][0] ) && (int) $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE )
 			|| ( isset( $_POST['glbFileInput'] ) && ! empty( $_POST['glbFileInput'] ) )
-			|| ( isset( $_POST['glbChunkUploadToken'] ) && ! empty( $_POST['glbChunkUploadToken'] ) );
+			|| ( isset( $_POST['glbChunkUploadToken'] ) && ! empty( $_POST['glbChunkUploadToken'] ) )
+			|| ( isset( $_POST['assetImportUploadToken'] ) && ! empty( $_POST['assetImportUploadToken'] ) );
 		// NEW Asset: submit info to backend
 
 		if ( $asset_id == null ) {
@@ -97,10 +98,15 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 			// NoCloning: Upload files from POST but check first
 			// if any 3D files have been selected for upload or glb blob is present
-			if ( $has_new_glb_upload ) {
-				VRodos_Upload_Manager::create_asset_3dfiles_extra_frontend( $asset_id, $project_id, $assetCatID );
-				if ( ! get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ) ) {
-					self::redirect_with_frontend_notice( $redirect_url, 'glb-upload-failed', $submission_buffer_level );
+			if ( $has_new_model_upload ) {
+				$model_upload_result = VRodos_Upload_Manager::create_asset_3dfiles_extra_frontend( $asset_id, $project_id, $assetCatID );
+				if ( empty( $model_upload_result['success'] ) ) {
+					self::redirect_with_frontend_notice( $redirect_url, 'model-upload-failed', $submission_buffer_level );
+				}
+
+				$model_import_status = (string) ( $model_upload_result['status'] ?? '' );
+				if ( ! in_array( $model_import_status, [ 'pending', 'running' ], true ) && ! get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ) ) {
+					self::redirect_with_frontend_notice( $redirect_url, 'model-upload-failed', $submission_buffer_level );
 				}
 			}
 
@@ -286,6 +292,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$data['asset_notice_code'] = isset( $_GET['vrodos_notice'] ) ? sanitize_key( (string) $_GET['vrodos_notice'] ) : '';
 		$data['asset_notice_type'] = 'error';
 		$data['asset_notice_message'] = self::map_frontend_notice_message( $data['asset_notice_code'], $data['max_upload_label'] );
+		$data['asset_import_status'] = [];
 
 		$game_post            = get_post( $data['project_id'] );
 		$data['game_post']    = $game_post;
@@ -349,6 +356,10 @@ trait VRodos_Asset_CPT_Submission_Controller {
 			if ( empty( $data['glb_file_name'] ) && self::asset_uses_legacy_non_glb_model( (int) $data['asset_id'] ) ) {
 				$data['asset_notice_type'] = 'error';
 				$data['asset_notice_message'] = 'This asset still uses a legacy non-GLB 3D format. Preview and placement now require a GLB upload.';
+			}
+
+			if ( class_exists( 'VRodos_Asset_Import_Manager' ) ) {
+				$data['asset_import_status'] = VRodos_Asset_Import_Manager::status_for_asset( (int) $data['asset_id'] );
 			}
 		}
 

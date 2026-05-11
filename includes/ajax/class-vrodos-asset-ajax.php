@@ -138,8 +138,16 @@ class VRodos_Asset_AJAX {
 			wp_send_json_error( 'Insufficient permissions.', 403 );
 		}
 
-		$asset_id = absint( $_POST['asset_id'] );
-		$gameSlug = sanitize_key( $_POST['game_slug'] );
+		$asset_id = isset( $_POST['asset_id'] ) ? absint( $_POST['asset_id'] ) : 0;
+		$gameSlug = isset( $_POST['game_slug'] ) ? sanitize_key( wp_unslash( (string) $_POST['game_slug'] ) ) : '';
+
+		if ( $asset_id <= 0 || 'vrodos_asset3d' !== get_post_type( $asset_id ) ) {
+			wp_send_json_error( 'Asset not found.', 404 );
+		}
+
+		if ( ! current_user_can( 'delete_post', $asset_id ) && (int) get_post_field( 'post_author', $asset_id ) !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'You are not allowed to delete this asset.', 403 );
+		}
 
 		$args        = ['post_parent'    => $asset_id, 'post_type'      => 'attachment', 'posts_per_page' => -1];
 		$attachments = get_children( $args );
@@ -160,8 +168,12 @@ class VRodos_Asset_AJAX {
 		global $wpdb;
 		$wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_vrodos_assets_%', '_transient_timeout_vrodos_assets_%' ) );
 
-		echo $asset_id;
-		wp_die();
+		wp_send_json_success(
+			[
+				'asset_id' => $asset_id,
+				'deleted'  => true,
+			]
+		);
 	}
 
 	/**

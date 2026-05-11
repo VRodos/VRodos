@@ -120,6 +120,10 @@ VRODOS.ui.toggleAframeCollisionMode = function(isEnabled) {
     VRODOS.api.saveChanges();
 };
 
+window.toggleAframeCollisionMode = function(isEnabled) {
+    VRODOS.ui.toggleAframeCollisionMode(isEnabled);
+};
+
 VRODOS.ui.syncBackgroundStyleDescription = function(selectedValue) {
     const horizonDescription = document.getElementById('sceneHorizonDescription');
     if (!horizonDescription) return;

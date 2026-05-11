@@ -58,6 +58,12 @@ class VRodos_Core_Manager {
 		$mime_types['wav']  = 'audio/wav';
 		$mime_types['oga']  = 'audio/ogg';
 		$mime_types['glb']  = 'model/gltf-binary';
+		$mime_types['zip']  = 'application/zip';
+		$mime_types['blend'] = 'application/octet-stream';
+		$mime_types['fbx']  = 'application/octet-stream';
+		$mime_types['obj']  = 'text/plain';
+		$mime_types['dae']  = 'model/vnd.collada+xml';
+		$mime_types['gltf'] = 'model/gltf+json';
 		$mime_types['txt']  = 'text/plain';
 		$mime_types['rtf']  = 'application/rtf';
 		return $mime_types;
@@ -66,13 +72,29 @@ class VRodos_Core_Manager {
 	public function vrodos_bypass_upload_restriction( $data, $file, $filename, $mimes, $real_mime = '' ) {
 		if ( empty( $data['ext'] ) || empty( $data['type'] ) ) {
 			$ext = pathinfo( $filename, PATHINFO_EXTENSION );
-			if ( 'glb' === strtolower( $ext ) ) {
-				$data['ext']  = 'glb';
+			$ext = strtolower( (string) $ext );
+			if ( 'glb' === $ext ) {
+				$data['ext']  = $ext;
 				$data['type'] = 'model/gltf-binary';
-			} elseif ( 'txt' === strtolower( $ext ) ) {
+			} elseif ( 'zip' === $ext ) {
+				$data['ext']  = $ext;
+				$data['type'] = 'application/zip';
+			} elseif ( in_array( $ext, [ 'blend', 'fbx' ], true ) ) {
+				$data['ext']  = $ext;
+				$data['type'] = 'application/octet-stream';
+			} elseif ( 'obj' === $ext ) {
+				$data['ext']  = $ext;
+				$data['type'] = 'text/plain';
+			} elseif ( 'dae' === $ext ) {
+				$data['ext']  = $ext;
+				$data['type'] = 'model/vnd.collada+xml';
+			} elseif ( 'gltf' === $ext ) {
+				$data['ext']  = $ext;
+				$data['type'] = 'model/gltf+json';
+			} elseif ( 'txt' === $ext ) {
 				$data['ext']  = 'txt';
 				$data['type'] = 'text/plain';
-			} elseif ( 'rtf' === strtolower( $ext ) ) {
+			} elseif ( 'rtf' === $ext ) {
 				$data['ext']  = 'rtf';
 				$data['type'] = 'application/rtf';
 			}
@@ -828,6 +850,9 @@ class VRodos_Core_Manager {
 				$scene_id      = get_the_ID();
 				$scene_content = get_post_field( 'post_content', $scene_id );
 				$scene_data    = json_decode( $scene_content, true );
+				if ( ! is_array( $scene_data ) || ! isset( $scene_data['objects'] ) || ! is_array( $scene_data['objects'] ) ) {
+					continue;
+				}
 
 				$original_count = count( $scene_data['objects'] );
 				$scene_data['objects'] = array_values( array_filter( $scene_data['objects'], function ( $obj ) use ( $asset_id ) {

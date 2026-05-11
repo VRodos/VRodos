@@ -237,7 +237,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
 
                             <!-- Trash Button -->
                             <?php if ( $is_user_admin || ( $user_id == $asset['author_id'] ) ) : ?>
-                                <button onclick="openDeleteModal(<?php echo $asset['asset_id']; ?>, '<?php echo esc_js($asset['asset_name']); ?>', '<?php echo $joker_project_slug; ?>)"
+                                <button onclick="openDeleteModal(<?php echo esc_attr( wp_json_encode( (int) $asset['asset_id'] ) ); ?>, <?php echo esc_attr( wp_json_encode( (string) $asset['asset_name'] ) ); ?>, <?php echo esc_attr( wp_json_encode( (string) $joker_project_slug ) ); ?>)"
                                         class="tw-btn tw-btn-ghost tw-btn-sm tw-btn-square tw-text-slate-300 hover:tw-text-rose-500 tw-transition-colors"
                                         title="Delete Asset">
                                     <i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>

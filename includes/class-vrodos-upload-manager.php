@@ -11,22 +11,24 @@ class VRodos_Upload_Manager {
 	/**
 	 * Create extra 3D files for the asset.
 	 */
-	public static function create_asset_3dfiles_extra_frontend( $asset_new_id, $project_id, $asset_cat_id ): void {
+	public static function create_asset_3dfiles_extra_frontend( $asset_new_id, $project_id, $asset_cat_id ): array {
 		// Upload and update DB
+		$model_upload_token = isset( $_POST['assetImportUploadToken'] ) ? sanitize_key( (string) wp_unslash( $_POST['assetImportUploadToken'] ) ) : '';
+		if ( $model_upload_token && class_exists( 'VRodos_Asset_Import_Manager' ) ) {
+			return VRodos_Asset_Import_Manager::consume_staged_upload(
+				$model_upload_token,
+				(int) $asset_new_id,
+				(int) $project_id,
+				(int) $asset_cat_id
+			);
+		}
+
 		$chunk_upload_token = isset( $_POST['glbChunkUploadToken'] ) ? sanitize_key( (string) wp_unslash( $_POST['glbChunkUploadToken'] ) ) : '';
 		if ( $chunk_upload_token || ( isset( $_POST['glbFileInput'] ) && $_POST['glbFileInput'] ) || ( isset( $_FILES['multipleFilesInput'] ) && isset( $_FILES['multipleFilesInput']['error'][0] ) && $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE ) ) {
 			wp_raise_memory_limit( 'admin' );
 			@set_time_limit( 300 );
 
-			// Clear out all previous attachments only if we have a new upload
-			$attachments = get_children(
-				['post_parent' => $asset_new_id, 'post_type'   => 'attachment']
-			);
-			foreach ( $attachments as $attachment ) {
-				if ( ! str_contains( $attachment->post_title, 'screenshot' ) ) {
-					wp_delete_attachment( $attachment->ID, true );
-				}
-			}
+			$previous_glb_id = get_post_meta( (int) $asset_new_id, 'vrodos_asset3d_glb', true );
 
 			if ( $chunk_upload_token ) {
 				$glb_file_id = self::import_chunked_glb_upload(
@@ -36,6 +38,26 @@ class VRodos_Upload_Manager {
 					$project_id
 				);
 			} else {
+				$has_uploaded_file = isset( $_FILES['multipleFilesInput']['tmp_name'][0] )
+					&& isset( $_FILES['multipleFilesInput']['error'][0] )
+					&& (int) $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE;
+				$uploaded_name = $has_uploaded_file ? (string) ( $_FILES['multipleFilesInput']['name'][0] ?? '' ) : '';
+				$extension     = strtolower( pathinfo( $uploaded_name, PATHINFO_EXTENSION ) );
+				if ( $has_uploaded_file && class_exists( 'VRodos_Asset_Import_Manager' ) && $extension !== 'glb' ) {
+					return VRodos_Asset_Import_Manager::consume_uploaded_file_array(
+						[
+							'name'     => $_FILES['multipleFilesInput']['name'][0],
+							'type'     => $_FILES['multipleFilesInput']['type'][0],
+							'tmp_name' => $_FILES['multipleFilesInput']['tmp_name'][0],
+							'error'    => $_FILES['multipleFilesInput']['error'][0],
+							'size'     => $_FILES['multipleFilesInput']['size'][0],
+						],
+						(int) $asset_new_id,
+						(int) $project_id,
+						(int) $asset_cat_id
+					);
+				}
+
 				$glb_file_id = self::upload_asset_text(
 					$_POST['glbFileInput'] ?? null,
 					'glb_' . $asset_new_id . '_' . $asset_cat_id . '.glb',
@@ -48,8 +70,27 @@ class VRodos_Upload_Manager {
 
 			if ( $glb_file_id ) {
 				update_post_meta( $asset_new_id, 'vrodos_asset3d_glb', $glb_file_id );
+				if ( is_numeric( $previous_glb_id ) && (int) $previous_glb_id > 0 && (int) $previous_glb_id !== (int) $glb_file_id ) {
+					wp_delete_attachment( (int) $previous_glb_id, true );
+				}
+				return [
+					'success'       => true,
+					'status'        => 'ready',
+					'attachment_id' => (int) $glb_file_id,
+				];
 			}
+
+			return [
+				'success' => false,
+				'status'  => 'failed',
+				'error'   => 'The model upload failed before the asset could be saved.',
+			];
 		}
+
+		return [
+			'success' => true,
+			'status'  => 'none',
+		];
 	}
 
 	/**

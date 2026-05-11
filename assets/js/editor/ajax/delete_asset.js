@@ -25,13 +25,31 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug) {
 			game_slug
 		})
 	})
-	.then( (response) => response.text())
-	.then( (res) => {
+	.then( (response) => response.text().then( (text) => ({ ok: response.ok, text }) ) )
+	.then( (result) => {
 
 		VRODOS.api.isDeleteAssetPending = false;
-		res = JSON.parse( res );
+		let payload = null;
+		try {
+			payload = result.text ? JSON.parse( result.text ) : null;
+		} catch (_error) {
+			payload = null;
+		}
 
-		const deleteDialog = document.getElementById('delete-dialog');
+		if (!result.ok) {
+			const message = payload && payload.data ? payload.data : result.text;
+			throw new Error(message || 'Asset deletion failed.');
+		}
+
+		const deletedAssetId = payload && payload.success && payload.data && payload.data.asset_id
+			? payload.data.asset_id
+			: parseInt( result.text, 10 );
+
+		if (!deletedAssetId) {
+			throw new Error('Asset deletion response was not valid.');
+		}
+
+		const deleteDialog = document.getElementById('delete-dialog') || document.getElementById('vrodos_delete_asset_modal');
 		if (deleteDialog) {
 			const progressBar = document.getElementById( 'delete-scene-dialog-progress-bar' );
 			if (progressBar) progressBar.style.display = 'none';
@@ -43,7 +61,7 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug) {
 			// Remove objects from scene
 			const names_to_remove = [];
 			for (let i = 0; i < VRODOS.editor.envir.scene.children.length; i++) {
-				if (VRODOS.editor.envir.scene.children[i].assetid == `${  res  }`) {
+				if (String(VRODOS.editor.envir.scene.children[i].assetid) === String(deletedAssetId)) {
 					names_to_remove.push( VRODOS.editor.envir.scene.children[i].name );
 				}
 			}
@@ -66,7 +84,7 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug) {
 			}
 		} else {
 			// remove the respective tile from the Project editor
-			const tileEl = document.getElementById( `${  asset_id}` );
+			const tileEl = document.getElementById( `${  deletedAssetId}` );
 			if (tileEl) {
 				tileEl.style.transition = 'opacity 0.3s';
 				tileEl.style.opacity = '0';
@@ -88,4 +106,3 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug) {
 		console.log( `Ajax Delete Asset: ERROR: 170 ${  err}` );
 	});
 }
-

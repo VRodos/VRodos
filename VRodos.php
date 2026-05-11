@@ -83,6 +83,12 @@ require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-default-scene-ma
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-upload-manager.php');
 VRodos_Upload_Manager::register_hooks();
 
+// Asset Import Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-blender-converter.php');
+require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-zip-package.php');
+require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-manager.php');
+new VRodos_Asset_Import_Manager();
+
 // Default Data Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-default-data-manager.php');
 new VRodos_Default_Data_Manager();

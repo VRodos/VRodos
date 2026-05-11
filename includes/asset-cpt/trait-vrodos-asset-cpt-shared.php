@@ -172,7 +172,7 @@ trait VRodos_Asset_CPT_Shared {
 		exit;
 	}
 
-	private static function get_frontend_glb_upload_error(): string {
+	private static function get_frontend_model_upload_error(): string {
 		if ( empty( $_FILES['multipleFilesInput'] ) || ! isset( $_FILES['multipleFilesInput']['error'][0] ) ) {
 			return '';
 		}
@@ -183,18 +183,20 @@ trait VRodos_Asset_CPT_Shared {
 		}
 
 		if ( $upload_error === UPLOAD_ERR_INI_SIZE || $upload_error === UPLOAD_ERR_FORM_SIZE ) {
-			return 'glb-too-large';
+			return 'model-too-large';
 		}
 
-		return 'glb-upload-failed';
+		return 'model-upload-failed';
 	}
 
 	private static function map_frontend_notice_message( string $notice_code, string $max_upload_label ): string {
 		switch ( $notice_code ) {
 			case 'glb-too-large':
-				return 'The selected GLB is larger than the current upload limit (' . $max_upload_label . '). Please upload a smaller file or increase PHP upload_max_filesize/post_max_size.';
+			case 'model-too-large':
+				return 'The selected model package is larger than the current upload limit (' . $max_upload_label . '). Please upload a smaller file or increase PHP upload_max_filesize/post_max_size.';
 			case 'glb-upload-failed':
-				return 'The GLB upload failed before the asset could be saved. Please try again, or reduce the file size if this model is especially large.';
+			case 'model-upload-failed':
+				return 'The model upload failed before the asset could be saved. Please try again, or reduce the file size if this package is especially large.';
 			default:
 				return '';
 		}

@@ -26,6 +26,8 @@ extract($data);
         var vrodosMaxRequestLabel = <?php echo json_encode($request_max_label); ?>;
         var vrodosRequestLimitLabel = <?php echo json_encode($request_limit_label); ?>;
         var vrodosAssetEditorProjectId = <?php echo (int) $project_id; ?>;
+        var vrodosAssetEditorAssetId = <?php echo (int) ($asset_id ?? 0); ?>;
+        var vrodosAssetImportStatus = <?php echo wp_json_encode( $asset_import_status ?? [] ); ?>;
     </script>
     <?php
     // Pre-apply the correct section visibility to prevent layout flicker on load.
@@ -210,32 +212,51 @@ else { ?>
                         </div>
                     </div>
 
-                    <!-- GLB Upload Card (Moved from sidebar) -->
+                    <!-- Model Upload Card (Moved from sidebar) -->
                     <?php if (($isOwner || $isUserAdmin)) { ?>
                     <div id="glb_file_section" class="tw-bg-white tw-p-5 tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-space-y-3">
                         <div class="tw-flex tw-items-center tw-justify-between">
                             <label class="tw-block tw-text-[10px] tw-font-black tw-text-slate-400 tw-uppercase tw-tracking-widest">
-                                3D Content (GLB)
+                                3D Content
                             </label>
                             <i data-lucide="box" class="tw-w-4 tw-h-4 tw-text-primary"></i>
                         </div>
                         
                         <div class="tw-w-full tw-bg-slate-50 tw-border tw-border-dashed tw-border-slate-200 tw-rounded-2xl tw-p-3 tw-text-center hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-group">
-                            <input id="fileUploadInput" class="tw-hidden" type="file" name="multipleFilesInput[]" accept=".glb" onclick="clearList()"/>
+                            <input id="fileUploadInput" class="tw-hidden" type="file" name="multipleFilesInput[]" accept=".glb,.zip,.blend,.fbx,.obj,.dae,.gltf" onclick="clearList()"/>
                             <label for="fileUploadInput" class="tw-cursor-pointer tw-flex tw-flex-col tw-items-center tw-gap-2">
                                 <div class="tw-w-7 tw-h-7 tw-bg-white tw-shadow-sm tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-group-hover:tw-scale-110 tw-transition-transform">
                                     <i data-lucide="upload-cloud" class="tw-w-3.5 tw-h-3.5 tw-text-primary"></i>
                                 </div>
                                 <div>
                                     <p id="fileUploadInputLabel" class="tw-text-xs tw-font-bold tw-text-slate-800">Model Upload</p>
-                                    <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold tw-uppercase">GLB MAX <?php echo esc_html( strtoupper( $max_upload_label ) ); ?></p>
+                                    <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold tw-uppercase">GLB, ZIP, BLEND, FBX, OBJ, DAE, GLTF MAX <?php echo esc_html( strtoupper( $max_upload_label ) ); ?></p>
+                                    <p class="tw-text-[9px] tw-text-slate-400">Use ZIP for OBJ/MTL textures or glTF sidecar files.</p>
                                 </div>
                             </label>
                         </div>
 
                         <input type="hidden" name="glbFileInput" value="" id="glbFileInput" />
                         <input type="hidden" name="glbChunkUploadToken" value="" id="glbChunkUploadToken" />
+                        <input type="hidden" name="assetImportUploadToken" value="" id="assetImportUploadToken" />
                         <input type="hidden" id="assettrs" name="assettrs" value="<?php echo trim($assettrs_saved); ?>" />
+                        <?php
+                        $import_status_value = (string) ( $asset_import_status['status'] ?? '' );
+                        $import_message = (string) ( $asset_import_status['message'] ?? '' );
+                        $import_notice_classes = $import_status_value === 'failed'
+                            ? 'tw-bg-red-50 tw-border-red-200 tw-text-red-700'
+                            : 'tw-bg-emerald-50 tw-border-emerald-200 tw-text-emerald-700';
+                        ?>
+                        <div id="assetImportStatusNotice"
+                             class="<?php echo esc_attr( trim( ( $import_status_value ? '' : 'tw-hidden ' ) . $import_notice_classes ) ); ?> tw-border tw-rounded-xl tw-px-3 tw-py-2 tw-text-xs tw-font-bold"
+                             data-status="<?php echo esc_attr( $import_status_value ); ?>">
+                            <span id="assetImportStatusText"><?php echo esc_html( $import_message ); ?></span>
+                            <button id="assetImportRetryBtn"
+                                    type="button"
+                                    class="<?php echo $import_status_value === 'failed' && ! empty( $asset_import_status['can_retry'] ) ? '' : 'tw-hidden'; ?> tw-btn tw-btn-xs tw-ml-2">
+                                Retry
+                            </button>
+                        </div>
                     </div>
                     <?php
     }?>
@@ -282,7 +303,7 @@ else { ?>
                              <span class="tw-text-[10px] tw-font-black tw-text-emerald-700 tw-uppercase tw-tracking-widest">Editor Tip</span>
                         </div>
                         <p class="tw-text-[11px] tw-text-emerald-800 tw-font-medium tw-leading-relaxed">
-                            Upload your GLB model here to preview it in real-time. Use the screenshot tool in the right panel to capture the preview.
+                            Upload a GLB for immediate preview. ZIP packages are inspected and prepared before saving; supported source packages convert to GLB in staging.
                         </p>
                     </div>
 
@@ -943,7 +964,7 @@ else { ?>
 			return unescape(encodeURIComponent(text)).length;
 		};
 
-		const vrodosEstimateMultipartRequestBytes = (form) => {
+		const vrodosEstimateMultipartRequestBytes = (form, ignoreModelFile = false) => {
 			if (!form || typeof FormData === 'undefined') {
 				return 0;
 			}
@@ -954,6 +975,9 @@ else { ?>
 			for (const [name, value] of formData.entries()) {
 				total += fieldOverheadBytes + vrodosGetStringBytes(name);
 				if (value instanceof File) {
+					if (ignoreModelFile && name === 'multipleFilesInput[]') {
+						continue;
+					}
 					if (!value.name && value.size === 0) {
 						continue;
 					}
@@ -966,26 +990,50 @@ else { ?>
 			return total;
 		};
 
-		window.vrodos_validate_selected_glb = function () {
+		window.vrodos_validate_selected_model = function () {
 			const file = (multipleFilesInputElem && multipleFilesInputElem.files && multipleFilesInputElem.files.length)
 				? multipleFilesInputElem.files[0]
 				: null;
+			const supportedExtensions = ['glb', 'zip', 'blend', 'fbx', 'obj', 'dae', 'gltf'];
+			const selectedExtension = file ? (file.name.split('.').pop() || '').toLowerCase() : '';
 
-			if (file && maxGlbUploadBytes && file.size > maxGlbUploadBytes) {
-				setAssetEditorNotice('This GLB is too large for the current safe upload limit (' + maxGlbUploadLabel + '). Please reduce the file size or increase PHP upload_max_filesize/post_max_size and the server request limit.');
+			if (file && !supportedExtensions.includes(selectedExtension)) {
+				setAssetEditorNotice('Supported model uploads are GLB, ZIP, BLEND, FBX, OBJ, DAE, and glTF files.');
+				return false;
+			}
+
+			const zipState = window.vrodosZipPreflightState || {};
+			const importTokenInput = document.getElementById('assetImportUploadToken');
+			if (['uploading', 'inspecting', 'preparing', 'converting'].includes(zipState.status)) {
+				setAssetEditorNotice(zipState.message || 'ZIP package preparation is still running. Wait for it to finish before saving.');
+				return false;
+			}
+			if (zipState.status === 'failed') {
+				setAssetEditorNotice(zipState.message || 'ZIP package inspection failed. Select a supported ZIP package before saving.');
+				return false;
+			}
+			if (importTokenInput && importTokenInput.value && zipState.token === importTokenInput.value && zipState.canSave === false) {
+				setAssetEditorNotice(zipState.message || 'ZIP package inspection did not find a usable model source.');
+				return false;
+			}
+
+			const chunkSize = 8 * 1024 * 1024;
+			if (file && maxGlbUploadBytes && Math.min(file.size, chunkSize) > maxGlbUploadBytes) {
+				setAssetEditorNotice('The server upload limit (' + maxGlbUploadLabel + ') is smaller than the model chunk size. Increase PHP upload_max_filesize/post_max_size before uploading this model.');
 				return false;
 			}
 
 			const form = document.getElementById('3dAssetForm');
-			const estimatedRequestBytes = vrodosEstimateMultipartRequestBytes(form);
+			const estimatedRequestBytes = vrodosEstimateMultipartRequestBytes(form, Boolean(file));
 			if (maxRequestBytes && estimatedRequestBytes > maxRequestBytes) {
-				setAssetEditorNotice('This upload is too large for the current server request limit (' + requestLimitLabel + '). Choose a smaller GLB or reduce/remove the generated screenshot before saving.');
+				setAssetEditorNotice('This asset save request is too large for the current server request limit (' + requestLimitLabel + '). Reduce/remove the generated screenshot before saving.');
 				return false;
 			}
 
 			clearAssetEditorNotice();
 			return true;
 		};
+		window.vrodos_validate_selected_glb = window.vrodos_validate_selected_model;
 
 		document.addEventListener('DOMContentLoaded', function() {
 			initIcons();
@@ -1057,13 +1105,13 @@ else { ?>
 				if (vrodosSubmittingChunkedGlb) {
 					return;
 				}
-				if (!window.vrodos_validate_selected_glb()) {
+				if (!window.vrodos_validate_selected_model()) {
 					event.preventDefault();
 					return;
 				}
-				if (typeof window.vrodos_upload_selected_glb_in_chunks === 'function') {
+				if (typeof window.vrodos_upload_selected_model_in_chunks === 'function') {
 					event.preventDefault();
-					const uploaded = await window.vrodos_upload_selected_glb_in_chunks(assetForm);
+					const uploaded = await window.vrodos_upload_selected_model_in_chunks(assetForm);
 					if (uploaded) {
 						vrodosSubmittingChunkedGlb = true;
 						assetForm.submit();
