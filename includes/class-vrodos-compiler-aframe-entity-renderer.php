@@ -128,6 +128,78 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		);
 	}
 
+	private function is_image_texture_url( string $url ): bool {
+		$url = trim( $url );
+		if ( '' === $url ) {
+			return false;
+		}
+
+		$lower_url = strtolower( $url );
+		if ( str_starts_with( $lower_url, 'data:image/' ) ) {
+			return true;
+		}
+		if ( str_starts_with( $lower_url, 'data:' ) ) {
+			return false;
+		}
+
+		$path = wp_parse_url( $url, PHP_URL_PATH );
+		if ( ! is_string( $path ) || '' === $path ) {
+			$path = $url;
+		}
+
+		$path = rawurldecode( $path );
+		$type = wp_check_filetype( $path );
+		$mime = (string) ( $type['type'] ?? '' );
+		if ( str_starts_with( strtolower( $mime ), 'image/' ) ) {
+			return true;
+		}
+
+		return in_array(
+			strtolower( pathinfo( $path, PATHINFO_EXTENSION ) ),
+			[ 'jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp', 'svg' ],
+			true
+		);
+	}
+
+	private function resolve_video_poster_url( $obj, string $uuid ): string {
+		$context    = 'video:' . ( '' !== $uuid ? $uuid : 'unnamed' );
+		$poster_url = $this->normalize_url( (string) ( $obj->screenshot_path ?? '' ) );
+
+		if ( '' !== $poster_url && ! $this->is_image_texture_url( $poster_url ) ) {
+			$this->add_diagnostic_warning(
+				'invalid-video-poster|' . $context . '|' . $poster_url,
+				sprintf(
+					'Skipped video poster for %s because the URL is not an image texture: %s.',
+					$context,
+					$poster_url
+				)
+			);
+			$poster_url = '';
+		}
+
+		if ( '' !== $poster_url || empty( $obj->asset_id ) ) {
+			return $poster_url;
+		}
+
+		$wp_thumb = get_the_post_thumbnail_url( (int) $obj->asset_id, 'full' );
+		if ( $wp_thumb ) {
+			$thumbnail_url = $this->normalize_url( $wp_thumb );
+			if ( $this->is_image_texture_url( $thumbnail_url ) ) {
+				return $thumbnail_url;
+			}
+		}
+
+		$immerse_url = (string) get_post_meta( (int) $obj->asset_id, '_immerse_original_url', true );
+		if ( '' !== trim( $immerse_url ) ) {
+			$immerse_url = $this->normalize_url( $immerse_url );
+			if ( $this->is_image_texture_url( $immerse_url ) ) {
+				return $immerse_url;
+			}
+		}
+
+		return '';
+	}
+
 	private function add_diagnostic_warning( string $key, string $message ): void {
 		if ( isset( $this->diagnostic_warning_keys[ $key ] ) ) {
 			return;
@@ -931,21 +1003,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		} elseif ( $cat === 'video' ) {
 			$poster_id  = '';
-			$poster_url = $this->normalize_url( $obj->screenshot_path ?? '' );
-
-			// Fallback: 1. Featured Image, 2. Immerse Original URL
-			if ( ! $poster_url && ! empty( $obj->asset_id ) ) {
-				$wp_thumb = get_the_post_thumbnail_url( (int) $obj->asset_id, 'full' );
-				if ( $wp_thumb ) {
-					$poster_url = $this->normalize_url( $wp_thumb );
-				}
-				if ( ! $poster_url ) {
-					$immerse_url = get_post_meta( (int) $obj->asset_id, '_immerse_original_url', true );
-					if ( $immerse_url ) {
-						$poster_url = $this->normalize_url( $immerse_url );
-					}
-				}
-			}
+			$poster_url = $this->resolve_video_poster_url( $obj, (string) $uuid );
 
 			if ( $poster_url ) {
 				$poster_id = 'video_poster_' . $uuid;

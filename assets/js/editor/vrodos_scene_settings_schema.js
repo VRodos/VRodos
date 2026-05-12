@@ -37,6 +37,7 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     'enableGeneralChat': { type: 'boolean', default: false, envirKey: 'enableGeneralChat' },
     'aframeRuntimeMode': { type: 'string', default: 'networked', envirKey: 'aframeRuntimeMode' },
     'aframeCollisionMode': { type: 'string', default: 'auto', envirKey: 'aframeCollisionMode' },
+    'aframeNavigationMode': { type: 'string', default: vrodosEditorSceneSettingDefault('navigationMode', 'walkable'), envirKey: 'aframeNavigationMode' },
     'aframeFPSMeterEnabled': { type: 'boolean', default: false, envirKey: 'aframeFPSMeterEnabled' },
     'aframeHoveringInteractables': { type: 'boolean', default: true, envirKey: 'aframeHoveringInteractables' },
     'aframeLegacyHorizonStageSize': { type: 'number', default: 5000, envirKey: 'aframeLegacyHorizonStageSize' },

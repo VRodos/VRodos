@@ -123,6 +123,15 @@ VRODOS.exporter.SceneExporter = class {
                 value = (VRODOS.editor.envir.scene.fogCategory === 1) ? 'linear' : (VRODOS.editor.envir.scene.fogCategory === 2 ? 'exponential' : 'none');
             } else if (key === 'backgroundImagePath') {
                 value = VRODOS.editor.envir.scene.img_bcg_path || '0';
+            } else if (key === 'aframeNavigationMode') {
+                value = ['walk', 'walkable', 'fly'].includes(value)
+                    ? value
+                    : (VRODOS.editor.envir.scene.aframeCollisionMode === 'off' ? 'walk' : 'walkable');
+            } else if (key === 'aframeCollisionMode') {
+                const navigationMode = ['walk', 'walkable', 'fly'].includes(VRODOS.editor.envir.scene.aframeNavigationMode)
+                    ? VRODOS.editor.envir.scene.aframeNavigationMode
+                    : (value === 'off' ? 'walk' : 'walkable');
+                value = navigationMode === 'walkable' ? 'auto' : 'off';
             }
 
             // Type-safe assignment with sensible fallbacks

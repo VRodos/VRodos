@@ -263,25 +263,42 @@ VRODOS.api.syncSceneSetting = function(key, value, resources3D) {
         parsedValue = value || config.default;
     }
 
+    if (key === 'aframeNavigationMode') {
+        parsedValue = ['walk', 'walkable', 'fly'].includes(parsedValue)
+            ? parsedValue
+            : (VRODOS.editor.envir.scene.aframeCollisionMode === 'off' ? 'walk' : 'walkable');
+    }
+
     // 2. Apply to VRODOS.editor.envir.scene
     VRODOS.editor.envir.scene[envirKey] = parsedValue;
+    if (key === 'aframeNavigationMode') {
+        VRODOS.editor.envir.scene.aframeCollisionMode = parsedValue === 'walkable' ? 'auto' : 'off';
+    } else if (key === 'aframeCollisionMode' && ['walk', 'walkable', 'fly'].includes(VRODOS.editor.envir.scene.aframeNavigationMode)) {
+        VRODOS.editor.envir.scene.aframeCollisionMode = VRODOS.editor.envir.scene.aframeNavigationMode === 'walkable' ? 'auto' : 'off';
+    }
 
     // 3. Sync common UI elements (Checkboxes)
     const checkboxMap = {
         'enableGeneralChat': 'enableGeneralChatCheckbox',
         'enableAvatar': 'enableAvatarCheckbox',
-        'disableMovement': 'moveDisableCheckbox',
-        'aframeCollisionMode': 'aframeCollisionModeCheckbox'
+        'disableMovement': 'moveDisableCheckbox'
     };
 
     if (checkboxMap[key]) {
         const el = document.getElementById(checkboxMap[key]);
         if (el) {
-            if (key === 'aframeCollisionMode') {
-                el.checked = parsedValue !== 'off';
-            } else {
-                el.checked = parsedValue;
-            }
+            el.checked = parsedValue;
+        }
+    }
+
+    const selectMap = {
+        'aframeNavigationMode': 'aframeNavigationModeSelect'
+    };
+
+    if (selectMap[key]) {
+        const el = document.getElementById(selectMap[key]);
+        if (el) {
+            el.value = parsedValue;
         }
     }
 

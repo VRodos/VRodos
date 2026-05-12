@@ -107,10 +107,24 @@ AFRAME.registerComponent('show-position', {
     init: function () {
         this.positionShow = document.getElementById("positionShow");
         this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
+        this.worldPosition = new THREE.Vector3();
+    },
+    getDisplayedPosition: function () {
+        const movementEl = document.querySelector('[custom-movement]');
+        const movement = movementEl && movementEl.components ? movementEl.components['custom-movement'] : null;
+        if (movement && typeof movement.getNavigationWorldPosition === 'function') {
+            return movement.getNavigationWorldPosition();
+        }
+
+        if (this.el.object3D && typeof this.el.object3D.getWorldPosition === 'function') {
+            return this.el.object3D.getWorldPosition(this.worldPosition);
+        }
+
+        return this.el.getAttribute('position');
     },
     tick: function (time, timeDelta) {
         if (this.positionShow) {
-            const p = this.el.getAttribute('position');
+            const p = this.getDisplayedPosition();
             this.positionShow.innerHTML = `${Math.round(p.x * 100) / 100  }, ${  Math.round(p.y * 100) / 100  }, ${  Math.round(p.z * 100) / 100}`;
         }
 

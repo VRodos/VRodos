@@ -13,6 +13,17 @@
             "single-player"
           ]
         },
+        "navigationMode": {
+          "metadataKey": "aframeNavigationMode",
+          "type": "enum",
+          "default": "walkable",
+          "editorDefault": "walkable",
+          "allowed": [
+            "walk",
+            "walkable",
+            "fly"
+          ]
+        },
         "pmndrsAAMode": {
           "metadataKey": "aframePmndrsAAMode",
           "type": "enum",

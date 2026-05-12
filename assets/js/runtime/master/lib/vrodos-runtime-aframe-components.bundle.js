@@ -470,6 +470,7 @@
       movement_disabled: { type: "string", default: "0" },
       runtimeMode: { type: "string", default: "networked" },
       collisionMode: { type: "string", default: "auto" },
+      navigationMode: { type: "string", default: vrodosSceneSettingDefault("navigationMode", "walkable") },
       renderQuality: { type: "string", default: "standard" },
       shadowQuality: { type: "string", default: "medium" },
       rootShadowType: { type: "string", default: "pcf" },
@@ -1577,7 +1578,9 @@
       this.cameraEl = document.querySelector("#cameraA") || document.querySelector("a-camera");
       this.navMeshEntitySelector = ".vrodos-navmesh";
       this.thumbInput = { x: 0, y: 0 };
-      this.keyboardInput = { x: 0, y: 0 };
+      this.leftThumbInput = { x: 0, y: 0 };
+      this.rightThumbInput = { x: 0, y: 0 };
+      this.keyboardInput = { x: 0, y: 0, vertical: 0 };
       this.navMeshRoots = [];
       this.navMeshCollisionTargets = [];
       this.navMeshDirty = true;
@@ -1590,6 +1593,7 @@
       this.upVector = new THREE.Vector3(0, 1, 0);
       this.forwardVector = new THREE.Vector3();
       this.rightVector = new THREE.Vector3();
+      this.centerRaycaster = new THREE.Raycaster();
       this.currentWorldPosition = new THREE.Vector3();
       this.targetWorldPosition = new THREE.Vector3();
       this.movementOffset = new THREE.Vector3();
@@ -1721,12 +1725,27 @@
       if (!event || !event.detail) {
         return;
       }
-      this.thumbInput.x = event.detail.x || 0;
-      this.thumbInput.y = event.detail.y || 0;
+      const source = event.currentTarget || event.target;
+      const targetInput = source === this.thumbR ? this.rightThumbInput : this.leftThumbInput;
+      targetInput.x = event.detail.x || 0;
+      targetInput.y = event.detail.y || 0;
+      this.syncThumbInput();
     },
-    handleThumbstickEnd: function() {
-      this.thumbInput.x = 0;
-      this.thumbInput.y = 0;
+    handleThumbstickEnd: function(event) {
+      const source = event ? event.currentTarget || event.target : null;
+      if (!source || source === this.thumbL) {
+        this.leftThumbInput.x = 0;
+        this.leftThumbInput.y = 0;
+      }
+      if (!source || source === this.thumbR) {
+        this.rightThumbInput.x = 0;
+        this.rightThumbInput.y = 0;
+      }
+      this.syncThumbInput();
+    },
+    syncThumbInput: function() {
+      this.thumbInput.x = Math.abs(this.leftThumbInput.x) >= Math.abs(this.rightThumbInput.x) ? this.leftThumbInput.x : this.rightThumbInput.x;
+      this.thumbInput.y = Math.abs(this.leftThumbInput.y) >= Math.abs(this.rightThumbInput.y) ? this.leftThumbInput.y : this.rightThumbInput.y;
     },
     handleNavmeshModelLoad: function(event) {
       if (!event || !event.target || !event.target.classList || !event.target.classList.contains("vrodos-navmesh")) {
@@ -1761,6 +1780,26 @@
         case "ArrowRight":
           this.keyboardInput.x = isPressed ? 1 : this.keyboardInput.x === 1 ? 0 : this.keyboardInput.x;
           return true;
+        case "KeyQ":
+          if (this.getNavigationMode() !== "fly") {
+            if (!isPressed && this.keyboardInput.vertical === -1) {
+              this.keyboardInput.vertical = 0;
+            }
+            return false;
+          }
+          this.keyboardInput.vertical = isPressed ? -1 : this.keyboardInput.vertical === -1 ? 0 : this.keyboardInput.vertical;
+          return true;
+        case "KeyE":
+          if (this.getNavigationMode() !== "fly") {
+            if (!isPressed && this.keyboardInput.vertical === 1) {
+              this.keyboardInput.vertical = 0;
+            }
+            return false;
+          }
+          this.keyboardInput.vertical = isPressed ? 1 : this.keyboardInput.vertical === 1 ? 0 : this.keyboardInput.vertical;
+          return true;
+        default:
+          break;
       }
       return false;
     },
@@ -1982,6 +2021,30 @@
     getSceneSettings: function() {
       return this.sceneEl ? this.sceneEl.getAttribute("scene-settings") : null;
     },
+    getSceneSettingsDomAttribute: function() {
+      if (!this.sceneEl) {
+        return "";
+      }
+      if (typeof this.sceneEl.getDOMAttribute === "function") {
+        const domAttribute = this.sceneEl.getDOMAttribute("scene-settings");
+        if (typeof domAttribute === "string") {
+          return domAttribute;
+        }
+      }
+      const attributeNode = this.sceneEl.attributes ? this.sceneEl.attributes.getNamedItem("scene-settings") : null;
+      return attributeNode ? attributeNode.value : "";
+    },
+    hasAuthoredNavigationMode: function() {
+      return /(?:^|;)\s*navigationMode\s*:/.test(this.getSceneSettingsDomAttribute());
+    },
+    getNavigationMode: function(settings) {
+      settings = settings || this.getSceneSettings();
+      const mode = settings ? settings.navigationMode : "";
+      if (this.hasAuthoredNavigationMode() && (mode === "walk" || mode === "walkable" || mode === "fly")) {
+        return mode;
+      }
+      return settings && settings.collisionMode === "off" ? "walk" : "walkable";
+    },
     getNavigationAnchorObject: function() {
       if (this.cameraEl && this.cameraEl.object3D) {
         return this.cameraEl.object3D;
@@ -2128,9 +2191,9 @@
       const horizontalDistanceToBounds = Math.sqrt(this.horizontalDistanceSquared(position, this.boundsClosestPoint));
       return Math.max(boundsRadius, horizontalDistanceToBounds + 6);
     },
-    areCollisionsEnabled: function() {
-      const settings = this.getSceneSettings();
-      if (!settings || settings.collisionMode === "off") {
+    areCollisionsEnabled: function(settings) {
+      settings = settings || this.getSceneSettings();
+      if (!settings || settings.collisionMode === "off" || this.getNavigationMode(settings) !== "walkable") {
         return false;
       }
       this.refreshNavMeshRoots();
@@ -2154,14 +2217,126 @@
         z: (-this.forwardVector.z * inputY + this.rightVector.z * inputX) * distance
       };
     },
-    updateWASDControlsState: function(collisionsEnabled) {
-      if (this.wasdControlsSuppressed === collisionsEnabled) {
+    getLookControlsComponent: function() {
+      if (this.cameraEl && this.cameraEl.components && this.cameraEl.components["look-controls"]) {
+        return this.cameraEl.components["look-controls"];
+      }
+      if (this.cameraRig && this.cameraRig.components && this.cameraRig.components["look-controls"]) {
+        return this.cameraRig.components["look-controls"];
+      }
+      return null;
+    },
+    setFlyForwardVectorFromScreenCenter: function() {
+      const camera = this.sceneEl && this.sceneEl.camera;
+      if (!camera || typeof this.centerRaycaster.setFromCamera !== "function") {
+        return false;
+      }
+      if (typeof camera.updateMatrixWorld === "function") {
+        camera.updateMatrixWorld(true);
+      }
+      this.centerRaycaster.setFromCamera({ x: 0, y: 0 }, camera);
+      this.forwardVector.copy(this.centerRaycaster.ray.direction);
+      if (this.forwardVector.lengthSq() < 1e-6) {
+        return false;
+      }
+      this.forwardVector.normalize();
+      return true;
+    },
+    setFlyForwardVectorFromLookControls: function() {
+      const lookControls = this.getLookControlsComponent();
+      if (!lookControls || !lookControls.el || !lookControls.el.object3D) {
+        return false;
+      }
+      const lookScene = lookControls.el.sceneEl;
+      if (lookScene && (lookScene.is("vr-mode") || lookScene.is("ar-mode")) && typeof lookScene.checkHeadsetConnected === "function" && lookScene.checkHeadsetConnected()) {
+        return false;
+      }
+      if (typeof lookControls.updateOrientation === "function") {
+        lookControls.updateOrientation();
+      }
+      const cameraObject = lookControls.el.components && lookControls.el.components.camera && lookControls.el.components.camera.camera && typeof lookControls.el.components.camera.camera.getWorldDirection === "function" ? lookControls.el.components.camera.camera : this.sceneEl && this.sceneEl.camera && typeof this.sceneEl.camera.getWorldDirection === "function" ? this.sceneEl.camera : null;
+      if (cameraObject) {
+        if (typeof cameraObject.updateMatrixWorld === "function") {
+          cameraObject.updateMatrixWorld(true);
+        }
+        cameraObject.getWorldDirection(this.forwardVector);
+        if (this.forwardVector.lengthSq() >= 1e-6) {
+          this.forwardVector.normalize();
+          return true;
+        }
+      }
+      if (!lookControls.pitchObject || !lookControls.yawObject) {
+        return false;
+      }
+      const pitch = lookControls.pitchObject.rotation ? lookControls.pitchObject.rotation.x : null;
+      const yaw = lookControls.yawObject.rotation ? lookControls.yawObject.rotation.y : null;
+      if (typeof pitch !== "number" || typeof yaw !== "number") {
+        return false;
+      }
+      const cosPitch = Math.cos(pitch);
+      this.forwardVector.set(
+        -Math.sin(yaw) * cosPitch,
+        Math.sin(pitch),
+        -Math.cos(yaw) * cosPitch
+      );
+      if (this.forwardVector.lengthSq() < 1e-6) {
+        return false;
+      }
+      this.forwardVector.normalize();
+      return true;
+    },
+    getFlyDirectionObject: function() {
+      if (this.sceneEl && this.sceneEl.camera && typeof this.sceneEl.camera.getWorldDirection === "function") {
+        return this.sceneEl.camera;
+      }
+      if (this.cameraEl && this.cameraEl.components && this.cameraEl.components.camera && this.cameraEl.components.camera.camera) {
+        return this.cameraEl.components.camera.camera;
+      }
+      if (this.cameraEl && this.cameraEl.object3DMap && this.cameraEl.object3DMap.camera) {
+        return this.cameraEl.object3DMap.camera;
+      }
+      if (this.cameraEl && this.cameraEl.object3D) {
+        return this.cameraEl.object3D;
+      }
+      return this.cameraRig ? this.cameraRig.object3D : null;
+    },
+    getFlyMovementDeltaFromInput: function(inputX, inputY, inputVertical, distance) {
+      if (!this.setFlyForwardVectorFromScreenCenter() && !this.setFlyForwardVectorFromLookControls()) {
+        const directionObject = this.getFlyDirectionObject();
+        if (!directionObject || typeof directionObject.getWorldDirection !== "function") {
+          return null;
+        }
+        if (typeof directionObject.updateMatrixWorld === "function") {
+          directionObject.updateMatrixWorld(true);
+        }
+        directionObject.getWorldDirection(this.forwardVector);
+        if (this.forwardVector.lengthSq() < 1e-6) {
+          this.forwardVector.set(0, 0, -1);
+        } else {
+          this.forwardVector.normalize();
+        }
+      }
+      this.rightVector.crossVectors(this.forwardVector, this.upVector);
+      if (this.rightVector.lengthSq() < 1e-6) {
+        this.rightVector.set(1, 0, 0);
+      } else {
+        this.rightVector.normalize();
+      }
+      return {
+        x: (-this.forwardVector.x * inputY + this.rightVector.x * inputX) * distance,
+        y: (-this.forwardVector.y * inputY + inputVertical) * distance,
+        z: (-this.forwardVector.z * inputY + this.rightVector.z * inputX) * distance
+      };
+    },
+    updateWASDControlsState: function(navigationMode, collisionsEnabled) {
+      const shouldSuppressWASD = collisionsEnabled || navigationMode === "fly";
+      if (this.wasdControlsSuppressed === shouldSuppressWASD) {
         return;
       }
       if (this.el.components && this.el.components["wasd-controls"]) {
-        this.el.setAttribute("wasd-controls", `fly: false; acceleration: 20; enabled: ${collisionsEnabled ? "false" : "true"}`);
+        this.el.setAttribute("wasd-controls", `fly: false; acceleration: 20; enabled: ${shouldSuppressWASD ? "false" : "true"}`);
       }
-      this.wasdControlsSuppressed = collisionsEnabled;
+      this.wasdControlsSuppressed = shouldSuppressWASD;
     },
     sampleGroundAtSingle: function(position, referenceGroundY, outputGround) {
       const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
@@ -2461,6 +2636,20 @@
         this.hasLastGroundHit = false;
       }
     },
+    applyFreeMovement: function(deltaX, deltaY, deltaZ) {
+      if (Math.abs(deltaX) < 1e-5 && Math.abs(deltaY) < 1e-5 && Math.abs(deltaZ) < 1e-5) {
+        return;
+      }
+      this.targetWorldPosition.copy(this.lastResolvedPosition);
+      this.targetWorldPosition.x += deltaX;
+      this.targetWorldPosition.y += deltaY;
+      this.targetWorldPosition.z += deltaZ;
+      if (this.setNavigationWorldPosition(this.targetWorldPosition)) {
+        this.lastResolvedPosition.copy(this.targetWorldPosition);
+        this.hasLastGroundHit = false;
+        this.heightOffset = null;
+      }
+    },
     applyConstrainedMovement: function(deltaX, deltaZ) {
       const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
       const constrainedStart = navPerfFrame ? performance.now() : 0;
@@ -2534,42 +2723,53 @@
         this.ensureNavigationStatePrimed();
         const currentPosition = this.tickWorldPosition.copy(this.getNavigationWorldPosition());
         const externalDeltaX = currentPosition.x - this.lastResolvedPosition.x;
+        const externalDeltaY = currentPosition.y - this.lastResolvedPosition.y;
         const externalDeltaZ = currentPosition.z - this.lastResolvedPosition.z;
-        const hasExternalMovement = Math.abs(externalDeltaX) > 1e-4 || Math.abs(externalDeltaZ) > 1e-4;
-        const collisionsEnabled = this.areCollisionsEnabled();
-        this.updateWASDControlsState(collisionsEnabled);
+        const navigationMode = this.getNavigationMode(settings);
+        const flyMode = navigationMode === "fly";
+        const hasExternalMovement = Math.abs(externalDeltaX) > 1e-4 || Math.abs(externalDeltaZ) > 1e-4 || flyMode && Math.abs(externalDeltaY) > 1e-4;
+        const collisionsEnabled = this.areCollisionsEnabled(settings);
+        this.updateWASDControlsState(navigationMode, collisionsEnabled);
         if (this.navPerfDebug && this.navPerfDebug.frame) {
           this.navPerfDebug.frame.collisionsEnabled = collisionsEnabled;
         }
         if (hasExternalMovement) {
           this.setNavigationWorldPosition(this.lastResolvedPosition);
-          if (collisionsEnabled) {
+          if (flyMode) {
+            this.applyFreeMovement(externalDeltaX, externalDeltaY, externalDeltaZ);
+          } else if (collisionsEnabled) {
             this.applyConstrainedMovement(externalDeltaX, externalDeltaZ);
           } else {
             this.applyDirectMovement(externalDeltaX, externalDeltaZ);
           }
         }
-        const thumbstickX = Math.abs(this.thumbInput.x) > 0.08 ? this.thumbInput.x : 0;
-        const thumbstickY = Math.abs(this.thumbInput.y) > 0.08 ? this.thumbInput.y : 0;
-        const keyboardX = collisionsEnabled ? this.keyboardInput.x : 0;
-        const keyboardY = collisionsEnabled ? this.keyboardInput.y : 0;
+        const horizontalThumbInput = flyMode ? this.leftThumbInput : this.thumbInput;
+        const thumbstickX = Math.abs(horizontalThumbInput.x) > 0.08 ? horizontalThumbInput.x : 0;
+        const thumbstickY = Math.abs(horizontalThumbInput.y) > 0.08 ? horizontalThumbInput.y : 0;
+        const rightThumbstickY = Math.abs(this.rightThumbInput.y) > 0.08 ? this.rightThumbInput.y : 0;
+        const keyboardX = collisionsEnabled || flyMode ? this.keyboardInput.x : 0;
+        const keyboardY = collisionsEnabled || flyMode ? this.keyboardInput.y : 0;
+        const keyboardVertical = flyMode ? this.keyboardInput.vertical : 0;
         const inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
         const inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
+        const inputVertical = flyMode ? VRODOSMaster.clamp(keyboardVertical - rightThumbstickY, -1, 1) : 0;
         if (this.navPerfDebug && this.navPerfDebug.frame) {
-          this.navPerfDebug.frame.moving = hasExternalMovement || inputX !== 0 || inputY !== 0;
+          this.navPerfDebug.frame.moving = hasExternalMovement || inputX !== 0 || inputY !== 0 || inputVertical !== 0;
         }
-        if (inputX === 0 && inputY === 0) {
+        if (inputX === 0 && inputY === 0 && inputVertical === 0) {
           if (!hasExternalMovement) {
             this.lastResolvedPosition.copy(currentPosition);
           }
           return;
         }
         const movementDistance = this.data.movementSpeed * (Math.min(timeDelta, 50) / 1e3);
-        const movementDelta = this.getMovementDeltaFromInput(inputX, inputY, movementDistance);
+        const movementDelta = flyMode ? this.getFlyMovementDeltaFromInput(inputX, inputY, inputVertical, movementDistance) : this.getMovementDeltaFromInput(inputX, inputY, movementDistance);
         if (!movementDelta) {
           return;
         }
-        if (collisionsEnabled) {
+        if (flyMode) {
+          this.applyFreeMovement(movementDelta.x, movementDelta.y, movementDelta.z);
+        } else if (collisionsEnabled) {
           this.applyConstrainedMovement(movementDelta.x, movementDelta.z);
         } else {
           this.applyDirectMovement(movementDelta.x, movementDelta.z);
@@ -2676,10 +2876,22 @@
     init: function() {
       this.positionShow = document.getElementById("positionShow");
       this.occupantsNumberShow = document.getElementById("occupantsNumberShow");
+      this.worldPosition = new THREE.Vector3();
+    },
+    getDisplayedPosition: function() {
+      const movementEl = document.querySelector("[custom-movement]");
+      const movement = movementEl && movementEl.components ? movementEl.components["custom-movement"] : null;
+      if (movement && typeof movement.getNavigationWorldPosition === "function") {
+        return movement.getNavigationWorldPosition();
+      }
+      if (this.el.object3D && typeof this.el.object3D.getWorldPosition === "function") {
+        return this.el.object3D.getWorldPosition(this.worldPosition);
+      }
+      return this.el.getAttribute("position");
     },
     tick: function(time, timeDelta) {
       if (this.positionShow) {
-        const p = this.el.getAttribute("position");
+        const p = this.getDisplayedPosition();
         this.positionShow.innerHTML = `${Math.round(p.x * 100) / 100}, ${Math.round(p.y * 100) / 100}, ${Math.round(p.z * 100) / 100}`;
       }
       if (this.occupantsNumberShow && typeof window.easyrtc !== "undefined" && typeof window.NAF !== "undefined") {

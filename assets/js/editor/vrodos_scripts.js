@@ -113,11 +113,35 @@ VRODOS.ui.handleHorizonSkyPresetChange = function(selectElement) {
     VRODOS.api.saveChanges();
 };
 
-VRODOS.ui.toggleAframeCollisionMode = function(isEnabled) {
+VRODOS.ui.normalizeAframeNavigationMode = function(mode, fallback) {
+    if (['walk', 'walkable', 'fly'].includes(mode)) {
+        return mode;
+    }
+
+    return fallback || 'walkable';
+};
+
+VRODOS.ui.setAframeNavigationMode = function(mode) {
     if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
-    VRODOS.editor.envir.scene.aframeCollisionMode = isEnabled ? 'auto' : 'off';
+    const normalizedMode = VRODOS.ui.normalizeAframeNavigationMode(mode);
+    VRODOS.editor.envir.scene.aframeNavigationMode = normalizedMode;
+    VRODOS.editor.envir.scene.aframeCollisionMode = normalizedMode === 'walkable' ? 'auto' : 'off';
+
+    const navigationModeSelect = document.getElementById('aframeNavigationModeSelect');
+    if (navigationModeSelect) {
+        navigationModeSelect.value = normalizedMode;
+    }
+
     VRODOS.api.saveChanges();
+};
+
+VRODOS.ui.toggleAframeCollisionMode = function(isEnabled) {
+    VRODOS.ui.setAframeNavigationMode(isEnabled ? 'walkable' : 'walk');
+};
+
+window.setAframeNavigationMode = function(mode) {
+    VRODOS.ui.setAframeNavigationMode(mode);
 };
 
 window.toggleAframeCollisionMode = function(isEnabled) {

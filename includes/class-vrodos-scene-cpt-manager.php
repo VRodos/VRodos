@@ -254,6 +254,8 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['disableMovement']        = $json_metadata->disableMovement ?? false;
 		$scene_data['aframeRuntimeMode']      = ( $json_metadata->aframeRuntimeMode ?? 'networked' ) === 'single-player' ? 'single-player' : 'networked';
 		$scene_data['aframeCollisionMode']    = $json_metadata->aframeCollisionMode ?? 'auto';
+		$navigation_mode                      = (string) ( $json_metadata->aframeNavigationMode ?? ( 'off' === ( $json_metadata->aframeCollisionMode ?? 'auto' ) ? 'walk' : 'walkable' ) );
+		$scene_data['aframeNavigationMode']   = in_array( $navigation_mode, [ 'walk', 'walkable', 'fly' ], true ) ? $navigation_mode : 'walkable';
 		$scene_data['aframeRenderQuality']    = $json_metadata->aframeRenderQuality ?? 'standard';
 		$scene_data['aframeShadowQuality']    = $json_metadata->aframeShadowQuality ?? 'medium';
 		$scene_data['aframeAAQuality']        = $json_metadata->aframeAAQuality ?? 'balanced';

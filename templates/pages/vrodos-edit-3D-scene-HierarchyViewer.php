@@ -65,13 +65,17 @@
         </div>
 
         <div class="tw-flex tw-items-start tw-gap-2 tw-mt-1 tw-px-3 tw-py-1">
-            <input type="checkbox" id="aframeCollisionModeCheckbox" name="aframeCollisionModeCheckbox" form="3dAssetForm"
-                   class="tw-checkbox tw-checkbox-xs tw-checkbox-primary tw-bg-slate-800 tw-border-white/20 tw-mt-0.5"
-                   onchange="toggleAframeCollisionMode(this.checked)">
-            <label for="aframeCollisionModeCheckbox" class="tw-cursor-pointer">
-                <span class="tw-block tw-text-xs tw-font-semibold tw-text-white/90">Enable walkable surface collisions</span>
-                <span class="tw-block tw-text-[10px] tw-text-white/55">Auto-applies only when Walkable Surface assets exist in the scene.</span>
+            <label for="aframeNavigationModeSelect" class="tw-flex-1 tw-cursor-pointer">
+                <span class="tw-block tw-text-xs tw-font-semibold tw-text-white/90">Navigation mode</span>
             </label>
+            <select id="aframeNavigationModeSelect" name="aframeNavigationModeSelect" form="3dAssetForm"
+                    aria-label="Navigation mode"
+                    class="tw-select tw-select-xs tw-select-bordered tw-w-36 tw-bg-slate-900 tw-text-white tw-border-white/20"
+                    onchange="setAframeNavigationMode(this.value)">
+                <option value="walk">Walk</option>
+                <option value="walkable">Walkable Surface</option>
+                <option value="fly">Fly</option>
+            </select>
         </div>
 
         <div class="tw-flex tw-flex-col tw-gap-1">

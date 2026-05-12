@@ -31,6 +31,7 @@ function parseArgs(argv) {
         navProfile: false,
         navProfileMs: 3000,
         navProfileInput: { x: 0, y: -1 },
+        navProfilePitchDeg: null,
         resourceOverrides: []
     };
 
@@ -125,6 +126,13 @@ function parseArgs(argv) {
                 };
                 break;
             }
+            case '--nav-profile-pitch-deg': {
+                const value = Number(nextValue());
+                options.navProfilePitchDeg = Number.isFinite(value)
+                    ? Math.max(-89, Math.min(89, value))
+                    : null;
+                break;
+            }
             case '--resource-override':
             case '--asset-override':
                 options.resourceOverrides.push(parseResourceOverrideSpec(nextValue() || ''));
@@ -169,6 +177,7 @@ Options:
   --nav-profile           Simulate movement and collect custom-movement/navmesh raycast timing.
   --nav-profile-ms N      Movement profile duration in ms. Default: 3000.
   --nav-profile-input X,Y Movement input vector during nav profile. Default: 0,-1.
+  --nav-profile-pitch-deg Degrees to set desktop look-controls pitch during nav profile.
   --resource-override URL_OR_PATH=FILE
                            Fulfill a matching compiled-client resource request from a local file.
                            Repeatable; useful for GLB derivative trials without editing uploads.
@@ -933,16 +942,20 @@ async function disableRuntimeFpsMeter(cdp) {
     })()`);
 }
 
-async function captureNavigationProfile(cdp, durationMs, input) {
+async function captureNavigationProfile(cdp, durationMs, input, pitchDeg = null) {
     const safeDuration = Math.max(250, Math.min(60000, Number(durationMs) || 3000));
     const safeInput = {
         x: Math.max(-1, Math.min(1, Number(input?.x) || 0)),
         y: Math.max(-1, Math.min(1, Number(input?.y) || 0))
     };
+    const safePitchDeg = Number.isFinite(Number(pitchDeg))
+        ? Math.max(-89, Math.min(89, Number(pitchDeg)))
+        : null;
 
     return evaluate(cdp, `(() => {
         const durationMs = ${JSON.stringify(safeDuration)};
         const input = ${JSON.stringify(safeInput)};
+        const pitchDeg = ${JSON.stringify(safePitchDeg)};
         const movementEl = document.querySelector('[custom-movement]');
         const component = movementEl && movementEl.components && movementEl.components['custom-movement'];
         if (!component) {
@@ -969,6 +982,12 @@ async function captureNavigationProfile(cdp, durationMs, input) {
             x: component.thumbInput ? component.thumbInput.x : 0,
             y: component.thumbInput ? component.thumbInput.y : 0
         };
+        const lookControls = typeof component.getLookControlsComponent === 'function'
+            ? component.getLookControlsComponent()
+            : (document.querySelector('[look-controls]')?.components?.['look-controls'] || null);
+        const previousPitch = lookControls && lookControls.pitchObject && lookControls.pitchObject.rotation
+            ? lookControls.pitchObject.rotation.x
+            : null;
 
         if (component.keyboardInput) {
             component.keyboardInput.x = input.x;
@@ -977,6 +996,12 @@ async function captureNavigationProfile(cdp, durationMs, input) {
         if (component.thumbInput) {
             component.thumbInput.x = 0;
             component.thumbInput.y = 0;
+        }
+        if (lookControls && lookControls.pitchObject && lookControls.pitchObject.rotation && pitchDeg !== null) {
+            lookControls.pitchObject.rotation.x = (Math.PI / 180) * pitchDeg;
+            if (typeof lookControls.updateOrientation === 'function') {
+                lookControls.updateOrientation();
+            }
         }
 
         function restoreInput() {
@@ -987,6 +1012,12 @@ async function captureNavigationProfile(cdp, durationMs, input) {
             if (component.thumbInput) {
                 component.thumbInput.x = previousThumb.x;
                 component.thumbInput.y = previousThumb.y;
+            }
+            if (lookControls && lookControls.pitchObject && lookControls.pitchObject.rotation && previousPitch !== null) {
+                lookControls.pitchObject.rotation.x = previousPitch;
+                if (typeof lookControls.updateOrientation === 'function') {
+                    lookControls.updateOrientation();
+                }
             }
         }
 
@@ -1759,7 +1790,7 @@ async function run() {
         const frameSample = await sampleFrames(cdp, options.frames);
         const trace = await tracePromise;
         const navigationProfile = options.navProfile
-            ? await captureNavigationProfile(cdp, options.navProfileMs, options.navProfileInput)
+            ? await captureNavigationProfile(cdp, options.navProfileMs, options.navProfileInput, options.navProfilePitchDeg)
             : null;
         const afterMetrics = metricsToObject((await cdp.send('Performance.getMetrics')).metrics);
         const scene = await captureSceneSnapshot(cdp);

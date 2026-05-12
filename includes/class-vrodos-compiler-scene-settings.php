@@ -72,6 +72,7 @@ class VRodos_Compiler_Scene_Settings {
 		$camera_rotation_y = isset( $scene_json->objects->avatarCamera )
 			? ( 180 / pi() * $scene_json->objects->avatarCamera->rotation[1] )
 			: '0';
+		$navigation_mode = $this->normalize_navigation_mode( $metadata->aframeNavigationMode ?? null, $metadata->aframeCollisionMode ?? 'auto' );
 
 		return [
 			'color'                              => $metadata->ClearColor ?? '#ffffff',
@@ -82,7 +83,8 @@ class VRodos_Compiler_Scene_Settings {
 			'movement_disabled'                  => VRodos_Runtime_Settings_Contract::bool_string( $metadata->disableMovement ?? false ),
 			'avatar_enabled'                     => VRodos_Runtime_Settings_Contract::bool_string( $metadata->enableAvatar ?? false ),
 			'runtimeMode'                        => ( $metadata->aframeRuntimeMode ?? 'networked' ) === 'single-player' ? 'single-player' : 'networked',
-			'collisionMode'                      => $metadata->aframeCollisionMode ?? 'auto',
+			'collisionMode'                      => 'walkable' === $navigation_mode ? 'auto' : 'off',
+			'navigationMode'                     => $navigation_mode,
 			'renderQuality'                      => $metadata->aframeRenderQuality ?? 'standard',
 			'shadowQuality'                      => $metadata->aframeShadowQuality ?? 'medium',
 			'aaQuality'                          => $metadata->aframeAAQuality ?? 'balanced',
@@ -528,6 +530,15 @@ class VRodos_Compiler_Scene_Settings {
 
 	private function enum_value( $value, array $allowed, string $fallback ): string {
 		return in_array( $value, $allowed, true ) ? (string) $value : $fallback;
+	}
+
+	private function normalize_navigation_mode( $value, $collision_mode ): string {
+		$value = is_string( $value ) ? trim( $value ) : '';
+		if ( in_array( $value, [ 'walk', 'walkable', 'fly' ], true ) ) {
+			return $value;
+		}
+
+		return 'off' === (string) $collision_mode ? 'walk' : 'walkable';
 	}
 
 	private function fps_meter_enabled( $metadata ): string {

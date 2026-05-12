@@ -119,6 +119,10 @@ function initVrodosEditor() {
         VRODOS.data.scene_data.metadata || {}
     );
 
+    if (!['walk', 'walkable', 'fly'].includes(sceneSettings.aframeNavigationMode)) {
+        sceneSettings.aframeNavigationMode = sceneSettings.aframeCollisionMode === 'off' ? 'walk' : 'walkable';
+    }
+
     // First pass: General sync using the schema
     for (const [key, schemaInfo] of Object.entries(VRODOS.config.SCENE_SETTINGS_SCHEMA)) {
         if (sceneSettings[key] !== undefined) {
@@ -353,5 +357,4 @@ VRODOS.editor.animate = function animate() {
 
 // INITIALIZE ON DOM CONTENT LOADED
 document.addEventListener('DOMContentLoaded', initVrodosEditor);
-
 

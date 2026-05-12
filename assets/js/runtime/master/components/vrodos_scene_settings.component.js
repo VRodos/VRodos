@@ -56,6 +56,7 @@ AFRAME.registerComponent('scene-settings', {
         movement_disabled: { type: "string", default: "0" },
         runtimeMode: { type: "string", default: "networked" },
         collisionMode: { type: "string", default: "auto" },
+        navigationMode: { type: "string", default: vrodosSceneSettingDefault("navigationMode", "walkable") },
         renderQuality: { type: "string", default: "standard" },
         shadowQuality: { type: "string", default: "medium" },
         rootShadowType: { type: "string", default: "pcf" },
