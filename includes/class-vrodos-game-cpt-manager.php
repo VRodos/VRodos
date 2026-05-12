@@ -229,6 +229,7 @@ class VRodos_Game_CPT_Manager {
 
 	public function set_custom_vrodos_game_columns( $columns ): array {
 		$columns['game_slug'] = 'Project Slug';
+		$columns['project_source'] = 'Source';
 		return $columns;
 	}
 
@@ -242,6 +243,12 @@ class VRodos_Game_CPT_Manager {
 				} else {
 					echo 'no slug found';
 				}
+				break;
+			case 'project_source':
+				$is_immerse_project = 'immerse' === get_post_meta( absint( $post_id ), '_immerse_source', true );
+				echo '<span title="' . esc_attr( $is_immerse_project ? 'Imported from Immerse' : 'Native VRodos project' ) . '">';
+				echo esc_html( $is_immerse_project ? 'Immerse' : 'Native' );
+				echo '</span>';
 				break;
 		}
 	}

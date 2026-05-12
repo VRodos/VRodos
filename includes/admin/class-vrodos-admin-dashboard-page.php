@@ -169,6 +169,7 @@ class VRodos_Admin_Dashboard_Page {
 												<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest">ID</th>
 												<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest">Project Title</th>
 												<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest">Type</th>
+												<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest">Source</th>
 												<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-right">Actions</th>
 											</tr>
 										</thead>
@@ -193,7 +194,9 @@ class VRodos_Admin_Dashboard_Page {
 														continue;
 													}
 													$display_count++;
-													$project_type = VRodos_Core_Manager::vrodos_return_project_type( get_the_ID() );
+													$project_id   = get_the_ID();
+													$project_type = VRodos_Core_Manager::vrodos_return_project_type( $project_id );
+													$is_immerse_project = 'immerse' === get_post_meta( $project_id, '_immerse_source', true );
 													?>
 													<tr class="tw-hover hover:tw-bg-slate-50/80 tw-transition-colors">
 														<td class="tw-opacity-40 tw-font-mono tw-text-[10px]">#<?php the_ID(); ?></td>
@@ -204,6 +207,12 @@ class VRodos_Admin_Dashboard_Page {
 															<div class="tw-badge tw-badge-ghost tw-rounded-lg tw-gap-1.5 tw-font-bold tw-text-[10px] tw-uppercase">
 																<i data-lucide="<?php echo esc_attr( $project_type->icon ); ?>" class="tw-w-3 tw-h-3"></i>
 																<?php echo esc_html( (string) $project_type->string ); ?>
+															</div>
+														</td>
+														<td>
+															<div class="tw-badge tw-badge-ghost tw-rounded-lg tw-gap-1.5 tw-font-bold tw-text-[10px] tw-uppercase <?php echo $is_immerse_project ? 'tw-text-sky-600' : 'tw-text-slate-500'; ?>" title="<?php echo esc_attr( $is_immerse_project ? 'Imported from Immerse' : 'Native VRodos project' ); ?>">
+																<i data-lucide="<?php echo esc_attr( $is_immerse_project ? 'cloud' : 'hard-drive' ); ?>" class="tw-w-3 tw-h-3"></i>
+																<?php echo esc_html( $is_immerse_project ? 'Immerse' : 'Native' ); ?>
 															</div>
 														</td>
 														<td class="tw-text-right">
@@ -218,7 +227,7 @@ class VRodos_Admin_Dashboard_Page {
 											else :
 												?>
 												<tr>
-													<td colspan="4" class="tw-text-center tw-py-12 tw-text-slate-400 tw-font-bold">
+													<td colspan="5" class="tw-text-center tw-py-12 tw-text-slate-400 tw-font-bold">
 														No projects found. Start by creating your first project!
 													</td>
 												</tr>
