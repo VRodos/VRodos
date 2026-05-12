@@ -86,13 +86,12 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 				<thead>
 					<tr class="tw-bg-slate-50/30">
 						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest">Asset</th>
-						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest">Size</th>
-						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">Analysis</th>
-						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">Geometry</th>
-						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">Texture</th>
-						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">LOD</th>
-						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">Safe Draco</th>
-						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center">Compile Use</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">Analysis</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">Geometry</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">Texture</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">LOD</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">Safe Draco</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">Compile</th>
 						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-right">Actions</th>
 					</tr>
 				</thead>
@@ -110,19 +109,21 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 						$flags = is_array( $item['dashboardFlags'] ?? null ) ? $item['dashboardFlags'] : [];
 						?>
 						<tr class="tw-hover hover:tw-bg-slate-50/80 tw-transition-colors" data-vrodos-dashboard-asset-row="<?php echo esc_attr( (string) $asset_id ); ?>">
-							<td>
-								<div class="tw-font-black tw-text-slate-700"><?php echo esc_html( $title ); ?></div>
-								<div class="tw-text-[10px] tw-text-slate-400 tw-font-mono">#<?php echo esc_html( (string) $asset_id ); ?></div>
+							<td class="tw-py-4">
+								<div class="tw-font-black tw-text-slate-700 tw-leading-tight"><?php echo esc_html( $title ); ?></div>
+								<div class="tw-flex tw-items-center tw-gap-2 tw-mt-1">
+									<span class="tw-text-[10px] tw-text-slate-400 tw-font-mono">#<?php echo esc_html( (string) $asset_id ); ?></span>
+									<span class="tw-badge tw-badge-ghost tw-badge-xs tw-text-[9px] tw-font-black tw-text-slate-500"><?php echo esc_html( size_format( (int) ( $item['sourceSizeBytes'] ?? 0 ), 1 ) ); ?></span>
+								</div>
 							</td>
-							<td class="tw-text-xs tw-font-bold tw-text-slate-500"><?php echo esc_html( size_format( (int) ( $item['sourceSizeBytes'] ?? 0 ), 1 ) ); ?></td>
 							<td class="tw-text-center" data-vrodos-dashboard-cell="analysis"><?php self::render_dashboard_analysis_icon( $flags ); ?></td>
 							<td class="tw-text-center" data-vrodos-dashboard-cell="geometry"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'geometryDerivative', 'Geometry derivative recommended', 'Geometry derivative not recommended' ); ?></td>
 							<td class="tw-text-center" data-vrodos-dashboard-cell="texture"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'textureDerivative', 'Texture derivative recommended', 'Texture derivative not recommended' ); ?></td>
 							<td class="tw-text-center" data-vrodos-dashboard-cell="lod"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'lodDerivative', 'LOD derivative recommended', 'LOD derivative not recommended' ); ?></td>
 							<td class="tw-text-center" data-vrodos-dashboard-cell="draco"><?php self::render_dashboard_draco_icon( $derivative_ready, $derivative_status, $flags ); ?></td>
 							<td class="tw-text-center" data-vrodos-dashboard-cell="compile"><?php self::render_dashboard_compile_toggle( $asset_id, $meta, $derivative_ready ); ?></td>
-							<td class="tw-text-right">
-								<div class="tw-flex tw-flex-wrap tw-justify-end tw-gap-2" data-vrodos-dashboard-cell="actions">
+							<td class="tw-text-right tw-whitespace-nowrap">
+								<div class="tw-flex tw-flex-nowrap tw-justify-end tw-gap-1" data-vrodos-dashboard-cell="actions">
 									<?php echo self::dashboard_row_actions_html( $asset_id, $flags, $derivative_ready ); ?>
 								</div>
 							</td>
@@ -218,28 +219,30 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 
 	private static function dashboard_row_actions_html( int $asset_id, array $flags, bool $derivative_ready ): string {
 		$can_generate_safe_draco = self::dashboard_can_generate_safe_draco( $flags, $derivative_ready );
-		$generate_label = ! empty( $flags['stale-derivative'] ) ? 'Regenerate derivative' : 'Generate derivative';
+		$generate_label = ! empty( $flags['stale-derivative'] ) ? 'Regenerate' : 'Generate';
 
 		return self::capture_dashboard_html(
 			static function () use ( $asset_id, $can_generate_safe_draco, $generate_label ): void {
 				?>
-				<a href="<?php echo esc_url( self::dashboard_refresh_analysis_url( $asset_id ) ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-slate-600 tw-font-black tw-uppercase tw-tracking-wider" title="Refresh GLB analysis" data-vrodos-dashboard-action="refresh-analysis" data-asset-id="<?php echo esc_attr( (string) $asset_id ); ?>">
+				<a href="<?php echo esc_url( self::dashboard_refresh_analysis_url( $asset_id ) ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-slate-600 tw-font-black tw-uppercase tw-tracking-wider tw-px-1.5" title="Refresh GLB analysis" data-vrodos-dashboard-action="refresh-analysis" data-asset-id="<?php echo esc_attr( (string) $asset_id ); ?>">
 					<i data-lucide="refresh-cw" class="tw-w-3 tw-h-3"></i>
-					Refresh
+					<span class="tw-hidden lg:tw-inline">Refresh</span>
 				</a>
 				<?php if ( $can_generate_safe_draco ) : ?>
-					<a href="<?php echo esc_url( self::dashboard_optimize_url( $asset_id ) ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-primary tw-font-black tw-uppercase tw-tracking-wider">
+					<a href="<?php echo esc_url( self::dashboard_optimize_url( $asset_id ) ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-primary tw-font-black tw-uppercase tw-tracking-wider tw-px-1.5" title="<?php echo esc_attr( $generate_label ); ?> derivative">
 						<i data-lucide="package-check" class="tw-w-3 tw-h-3"></i>
-						<?php echo esc_html( $generate_label ); ?>
+						<span class="tw-hidden lg:tw-inline"><?php echo esc_html( $generate_label ); ?></span>
 					</a>
 				<?php endif; ?>
-				<a href="<?php echo esc_url( get_edit_post_link( $asset_id, 'raw' ) ?: '#' ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-slate-500 tw-font-black tw-uppercase tw-tracking-wider">
-					Edit
+				<a href="<?php echo esc_url( get_edit_post_link( $asset_id, 'raw' ) ?: '#' ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-slate-500 tw-font-black tw-uppercase tw-tracking-wider tw-px-1.5" title="Edit asset">
+					<i data-lucide="edit-3" class="tw-w-3 tw-h-3"></i>
+					<span class="tw-hidden lg:tw-inline">Edit</span>
 				</a>
 				<?php
 			}
 		);
 	}
+
 
 	private static function capture_dashboard_html( callable $render ): string {
 		ob_start();

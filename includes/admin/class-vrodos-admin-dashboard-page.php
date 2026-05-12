@@ -69,7 +69,7 @@ class VRodos_Admin_Dashboard_Page {
 				display: block;
 			}
 		</style>
-		<div class="vrodos-manager-wrapper tw-px-8 tw-py-12 lg:tw-py-16 tw-bg-transparent">
+		<div class="vrodos-manager-wrapper tw-px-4 md:tw-px-8 tw-py-12 lg:tw-py-16 tw-bg-transparent">
 			<div class="tw-max-w-7xl tw-mx-auto">
 				<!-- Header Section -->
 				<div class="tw-flex tw-justify-between tw-items-center tw-mb-8">
@@ -146,7 +146,7 @@ class VRodos_Admin_Dashboard_Page {
 					<input type="radio" name="vrodos-dashboard-tab" id="vrodos-dashboard-tab-projects" <?php checked( $dashboard_tab, 'projects' ); ?>>
 					<input type="radio" name="vrodos-dashboard-tab" id="vrodos-dashboard-tab-assets" <?php checked( $dashboard_tab, 'assets' ); ?>>
 					<div class="tw-card-body tw-p-0">
-						<div class="vrodos-dashboard-tab-header tw-p-6 tw-border-b tw-border-slate-100 tw-flex tw-flex-wrap tw-justify-between tw-items-center tw-gap-4 tw-bg-slate-50/50">
+						<div class="vrodos-dashboard-tab-header tw-p-4 md:tw-p-6 tw-border-b tw-border-slate-100 tw-flex tw-flex-wrap tw-justify-between tw-items-center tw-gap-4 tw-bg-slate-50/50">
 							<h3 class="tw-text-lg tw-font-black tw-text-slate-800 tw-flex tw-items-center tw-gap-2 tw-uppercase tw-tracking-tight">
 								<i data-lucide="clock" class="tw-w-5 tw-h-5 tw-text-slate-400"></i>
 								Dashboard Overview
@@ -207,7 +207,7 @@ class VRodos_Admin_Dashboard_Page {
 															</div>
 														</td>
 														<td class="tw-text-right">
-															<a href="<?php echo esc_url( get_edit_post_link() ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-primary tw-font-black tw-uppercase tw-tracking-wider">
+															<a href="<?php echo esc_url( get_edit_post_link() ); ?>" class="tw-btn tw-btn-ghost tw-btn-xs tw-text-primary tw-font-black tw-uppercase tw-tracking-wider tw-px-2">
 																Edit
 															</a>
 														</td>
