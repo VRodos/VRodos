@@ -94,6 +94,8 @@ AFRAME.registerComponent('custom-movement', {
         this.forwardVector = new THREE.Vector3();
         this.rightVector = new THREE.Vector3();
         this.centerRaycaster = new THREE.Raycaster();
+        this.cameraWorldPosition = new THREE.Vector3();
+        this.screenCenterWorldPoint = new THREE.Vector3();
         this.currentWorldPosition = new THREE.Vector3();
         this.targetWorldPosition = new THREE.Vector3();
         this.movementOffset = new THREE.Vector3();
@@ -791,63 +793,89 @@ AFRAME.registerComponent('custom-movement', {
 
         return null;
     },
-    setFlyForwardVectorFromScreenCenter: function () {
-        const camera = this.sceneEl && this.sceneEl.camera;
-        if (!camera || typeof this.centerRaycaster.setFromCamera !== 'function') {
-            return false;
+    shouldSkipLookControlsOrientationRefresh: function (lookControls) {
+        const lookScene = lookControls && lookControls.el ? lookControls.el.sceneEl : null;
+        return Boolean(
+            lookScene &&
+            (lookScene.is('vr-mode') || lookScene.is('ar-mode')) &&
+            typeof lookScene.checkHeadsetConnected === 'function' &&
+            lookScene.checkHeadsetConnected()
+        );
+    },
+    refreshLookControlsOrientation: function () {
+        const lookControls = this.getLookControlsComponent();
+        if (
+            lookControls &&
+            typeof lookControls.updateOrientation === 'function' &&
+            !this.shouldSkipLookControlsOrientationRefresh(lookControls)
+        ) {
+            lookControls.updateOrientation();
         }
 
-        if (typeof camera.updateMatrixWorld === 'function') {
-            camera.updateMatrixWorld(true);
+        return lookControls;
+    },
+    getFlyCameraElement: function () {
+        if (this.cameraEl && this.cameraEl.components && this.cameraEl.components.camera) {
+            return this.cameraEl;
         }
 
-        this.centerRaycaster.setFromCamera({ x: 0, y: 0 }, camera);
-        this.forwardVector.copy(this.centerRaycaster.ray.direction);
-        if (this.forwardVector.lengthSq() < 0.000001) {
-            return false;
+        if (this.sceneEl && this.sceneEl.camera && this.sceneEl.camera.el) {
+            this.cameraEl = this.sceneEl.camera.el;
+            return this.sceneEl.camera.el;
         }
 
-        this.forwardVector.normalize();
-        return true;
+        const cameraEl = document.querySelector('#cameraA') || document.querySelector('[camera]') || document.querySelector('a-camera');
+        if (cameraEl) {
+            this.cameraEl = cameraEl;
+            return cameraEl;
+        }
+
+        return this.cameraEl || null;
+    },
+    getFlyCameraObject: function () {
+        const cameraEl = this.getFlyCameraElement();
+        if (cameraEl && cameraEl.components && cameraEl.components.camera && cameraEl.components.camera.camera) {
+            return cameraEl.components.camera.camera;
+        }
+
+        if (cameraEl && cameraEl.object3DMap && cameraEl.object3DMap.camera) {
+            return cameraEl.object3DMap.camera;
+        }
+
+        if (this.sceneEl && this.sceneEl.camera) {
+            return this.sceneEl.camera;
+        }
+
+        return null;
+    },
+    updateFlyCameraWorldMatrix: function (cameraEl, cameraObject) {
+        if (cameraObject && typeof cameraObject.updateProjectionMatrix === 'function') {
+            cameraObject.updateProjectionMatrix();
+        }
+
+        if (this.sceneEl && this.sceneEl.object3D && typeof this.sceneEl.object3D.updateMatrixWorld === 'function') {
+            this.sceneEl.object3D.matrixWorldNeedsUpdate = true;
+            this.sceneEl.object3D.updateMatrixWorld(true);
+        }
+
+        if (cameraEl && cameraEl.object3D && typeof cameraEl.object3D.updateMatrixWorld === 'function') {
+            cameraEl.object3D.matrixWorldNeedsUpdate = true;
+            cameraEl.object3D.updateMatrixWorld(true);
+        }
+
+        if (cameraObject && typeof cameraObject.updateMatrixWorld === 'function') {
+            cameraObject.matrixWorldNeedsUpdate = true;
+            cameraObject.updateMatrixWorld(true);
+        }
     },
     setFlyForwardVectorFromLookControls: function () {
-        const lookControls = this.getLookControlsComponent();
+        const lookControls = this.refreshLookControlsOrientation();
         if (!lookControls || !lookControls.el || !lookControls.el.object3D) {
             return false;
         }
 
-        const lookScene = lookControls.el.sceneEl;
-        if (lookScene &&
-            (lookScene.is('vr-mode') || lookScene.is('ar-mode')) &&
-            typeof lookScene.checkHeadsetConnected === 'function' &&
-            lookScene.checkHeadsetConnected()) {
+        if (this.shouldSkipLookControlsOrientationRefresh(lookControls)) {
             return false;
-        }
-
-        if (typeof lookControls.updateOrientation === 'function') {
-            lookControls.updateOrientation();
-        }
-
-        const cameraObject = (
-            lookControls.el.components &&
-            lookControls.el.components.camera &&
-            lookControls.el.components.camera.camera &&
-            typeof lookControls.el.components.camera.camera.getWorldDirection === 'function'
-        ) ? lookControls.el.components.camera.camera : (
-            this.sceneEl && this.sceneEl.camera && typeof this.sceneEl.camera.getWorldDirection === 'function'
-                ? this.sceneEl.camera
-                : null
-        );
-
-        if (cameraObject) {
-            if (typeof cameraObject.updateMatrixWorld === 'function') {
-                cameraObject.updateMatrixWorld(true);
-            }
-            cameraObject.getWorldDirection(this.forwardVector);
-            if (this.forwardVector.lengthSq() >= 0.000001) {
-                this.forwardVector.normalize();
-                return true;
-            }
         }
 
         if (!lookControls.pitchObject || !lookControls.yawObject) {
@@ -874,17 +902,39 @@ AFRAME.registerComponent('custom-movement', {
         this.forwardVector.normalize();
         return true;
     },
+    setFlyForwardVectorFromScreenCenter: function () {
+        this.refreshLookControlsOrientation();
+
+        const cameraEl = this.getFlyCameraElement();
+        const camera = this.getFlyCameraObject();
+        if (!camera || typeof this.centerRaycaster.setFromCamera !== 'function') {
+            return false;
+        }
+
+        this.updateFlyCameraWorldMatrix(cameraEl, camera);
+
+        if (typeof camera.getWorldPosition === 'function') {
+            camera.getWorldPosition(this.cameraWorldPosition);
+            this.screenCenterWorldPoint.set(0, 0, 0.5).unproject(camera);
+            this.forwardVector.copy(this.screenCenterWorldPoint).sub(this.cameraWorldPosition);
+        }
+
+        if (this.forwardVector.lengthSq() < 0.000001) {
+            this.centerRaycaster.setFromCamera({ x: 0, y: 0 }, camera);
+            this.forwardVector.copy(this.centerRaycaster.ray.direction);
+        }
+
+        if (this.forwardVector.lengthSq() < 0.000001) {
+            return false;
+        }
+
+        this.forwardVector.normalize();
+        return true;
+    },
     getFlyDirectionObject: function () {
-        if (this.sceneEl && this.sceneEl.camera && typeof this.sceneEl.camera.getWorldDirection === 'function') {
-            return this.sceneEl.camera;
-        }
-
-        if (this.cameraEl && this.cameraEl.components && this.cameraEl.components.camera && this.cameraEl.components.camera.camera) {
-            return this.cameraEl.components.camera.camera;
-        }
-
-        if (this.cameraEl && this.cameraEl.object3DMap && this.cameraEl.object3DMap.camera) {
-            return this.cameraEl.object3DMap.camera;
+        const cameraObject = this.getFlyCameraObject();
+        if (cameraObject && typeof cameraObject.getWorldDirection === 'function') {
+            return cameraObject;
         }
 
         if (this.cameraEl && this.cameraEl.object3D) {
@@ -894,7 +944,7 @@ AFRAME.registerComponent('custom-movement', {
         return this.cameraRig ? this.cameraRig.object3D : null;
     },
     getFlyMovementDeltaFromInput: function (inputX, inputY, inputVertical, distance) {
-        if (!this.setFlyForwardVectorFromScreenCenter() && !this.setFlyForwardVectorFromLookControls()) {
+        if (!this.setFlyForwardVectorFromLookControls() && !this.setFlyForwardVectorFromScreenCenter()) {
             const directionObject = this.getFlyDirectionObject();
             if (!directionObject || typeof directionObject.getWorldDirection !== 'function') {
                 return null;
@@ -924,17 +974,50 @@ AFRAME.registerComponent('custom-movement', {
             z: (-this.forwardVector.z * inputY + this.rightVector.z * inputX) * distance
         };
     },
+    setWASDControlsEnabled: function (targetEl, enabled, hardStop) {
+        if (!targetEl || !targetEl.components || !targetEl.components['wasd-controls']) {
+            return false;
+        }
+
+        const wasdControls = targetEl.components['wasd-controls'];
+        const wasAlreadyEnabled = wasdControls.data ? wasdControls.data.enabled === enabled : false;
+        if (!wasAlreadyEnabled) {
+            targetEl.setAttribute('wasd-controls', `fly: false; acceleration: 20; enabled: ${enabled ? 'true' : 'false'}`);
+        }
+
+        if (wasdControls.data) {
+            wasdControls.data.enabled = enabled;
+        }
+
+        if (!enabled && hardStop) {
+            if (wasdControls.keys) {
+                wasdControls.keys = {};
+            }
+            if (wasdControls.velocity && typeof wasdControls.velocity.set === 'function') {
+                wasdControls.velocity.set(0, 0, 0);
+            }
+            if (typeof wasdControls.pause === 'function') {
+                wasdControls.pause();
+            }
+        } else if (typeof wasdControls.play === 'function') {
+            wasdControls.play();
+        }
+
+        return true;
+    },
     updateWASDControlsState: function (navigationMode, collisionsEnabled) {
-        const shouldSuppressWASD = collisionsEnabled || navigationMode === 'fly';
-        if (this.wasdControlsSuppressed === shouldSuppressWASD) {
-            return;
-        }
+        const flyMode = navigationMode === 'fly';
+        const suppressRigWASD = collisionsEnabled || flyMode;
+        const rigUpdated = this.setWASDControlsEnabled(this.el, !suppressRigWASD, false);
+        const cameraUpdated = flyMode
+            ? this.setWASDControlsEnabled(this.getFlyCameraElement ? this.getFlyCameraElement() : this.cameraEl, false, true)
+            : false;
 
-        if (this.el.components && this.el.components['wasd-controls']) {
-            this.el.setAttribute('wasd-controls', `fly: false; acceleration: 20; enabled: ${  shouldSuppressWASD ? 'false' : 'true'}`);
+        if (rigUpdated || cameraUpdated) {
+            this.wasdControlsSuppressed = suppressRigWASD;
+        } else {
+            this.wasdControlsSuppressed = null;
         }
-
-        this.wasdControlsSuppressed = shouldSuppressWASD;
     },
     sampleGroundAtSingle: function (position, referenceGroundY, outputGround) {
         const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
