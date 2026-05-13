@@ -620,9 +620,7 @@ VRODOS.utils = VRODOS.utils || {};
             this.lightSpotLightMover = () => {
                 const realObject = transforms.getRealObject();
                 if (!realObject || !realObject.parentLight) return;
-                const helper = sceneRegistry.getByName(`lightHelper_${realObject.name}`) ||
-                    (getScene() ? getScene().getObjectByName(`lightHelper_${realObject.name}`) : null);
-                if (helper && typeof helper.update === 'function') helper.update();
+                VRODOS.utils.updateEditorLightHelper(realObject, getScene());
             };
 
             const category = object ? object.category_name : '';

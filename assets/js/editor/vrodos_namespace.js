@@ -181,4 +181,37 @@ VRODOS.utils.getNextPawnIndex = function(scene) {
     return count;
 };
 
+VRODOS.utils.getEditorLightObjectName = function(kind, lightName) {
+    const prefixes = {
+        helper: 'lightHelper_',
+        target: 'lightTargetSpot_',
+        shadow: 'lightShadowHelper_'
+    };
+    const prefix = prefixes[kind] || '';
+    return `${prefix}${lightName || ''}`;
+};
+
+VRODOS.utils.getEditorLightObject = function(kind, lightName, scene) {
+    const name = VRODOS.utils.getEditorLightObjectName(kind, lightName);
+    if (!name) return null;
+
+    if (kind === 'target' && VRODOS.editor && VRODOS.editor.sceneRegistry) {
+        const registered = VRODOS.editor.sceneRegistry.get(name);
+        if (registered) return registered;
+    }
+
+    return scene && typeof scene.getObjectByName === 'function'
+        ? scene.getObjectByName(name)
+        : null;
+};
+
+VRODOS.utils.updateEditorLightHelper = function(light, scene) {
+    if (!light) return null;
+    const helper = VRODOS.utils.getEditorLightObject('helper', light.name, scene);
+    if (helper && typeof helper.update === 'function') {
+        helper.update();
+    }
+    return helper;
+};
+
 VRODOS.syncLocalizedData();

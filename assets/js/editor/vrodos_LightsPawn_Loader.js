@@ -202,7 +202,7 @@ VRODOS.loader.LightsPawnLoader = class {
 
         const helper = new THREE.DirectionalLightHelper(light, 3, color);
         helper.isLightHelper = true;
-        helper.name = `lightHelper_${  light.name}`;
+        helper.name = VRODOS.utils.getEditorLightObjectName('helper', light.name);
         helper.category_name = 'lightHelper';
         helper.parentLightName = name;
         helper.vrodos_internal_helper = true;
@@ -219,7 +219,7 @@ VRODOS.loader.LightsPawnLoader = class {
         ));
         targetSpot.children[0].isSelectableMesh = false;
         targetSpot.isSelectableMesh = true;
-        targetSpot.name = `lightTargetSpot_${  light.name}`;
+        targetSpot.name = VRODOS.utils.getEditorLightObjectName('target', light.name);
         targetSpot.category_name = "lightTargetSpot";
         targetSpot.isLightTargetSpot = true;
         targetSpot.addedAt = resource.addedAt;
@@ -231,7 +231,7 @@ VRODOS.loader.LightsPawnLoader = class {
         this.registerLoadedObject(targetSpot, { renderReason: 'sun-target-loaded' });
 
         const shadowHelper = new THREE.CameraHelper(light.shadow.camera);
-        shadowHelper.name = `lightShadowHelper_${  light.name}`;
+        shadowHelper.name = VRODOS.utils.getEditorLightObjectName('shadow', light.name);
         shadowHelper.vrodos_internal_helper = true;
         VRODOS.editor.envir.scene.add(shadowHelper);
     }
@@ -272,7 +272,7 @@ VRODOS.loader.LightsPawnLoader = class {
 
         const helper = new THREE.PointLightHelper(light, 1, color);
         helper.isLightHelper = true;
-        helper.name = `lightHelper_${  light.name}`;
+        helper.name = VRODOS.utils.getEditorLightObjectName('helper', light.name);
         helper.category_name = 'lightHelper';
         helper.parentLightName = light.name;
         helper.vrodos_internal_helper = true;
@@ -310,7 +310,7 @@ VRODOS.loader.LightsPawnLoader = class {
         ));
         targetSpot.children[0].isSelectableMesh = false;
         targetSpot.isSelectableMesh = true;
-        targetSpot.name = `lightTargetSpot_${  light.name}`;
+        targetSpot.name = VRODOS.utils.getEditorLightObjectName('target', light.name);
         targetSpot.category_name = "lightTargetSpot";
         targetSpot.isLightTargetSpot = true;
         targetSpot.addedAt = resource.addedAt;

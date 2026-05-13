@@ -439,7 +439,7 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
 
     const lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, 0xcccccc);
     lightSunHelper.isLightHelper = true;
-    lightSunHelper.name = `lightHelper_${  lightSun.name}`;
+    lightSunHelper.name = VRODOS.utils.getEditorLightObjectName('helper', lightSun.name);
     lightSunHelper.category_name = 'lightHelper';
     lightSunHelper.parentLightName = lightSun.name;
     lightSunHelper.vrodos_internal_helper = true;
@@ -453,7 +453,7 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     lightTargetSpot.children[0].isSelectableMesh = false;
 
     lightTargetSpot.isSelectableMesh = true;
-    lightTargetSpot.name = `lightTargetSpot_${  lightSun.name}`;
+    lightTargetSpot.name = VRODOS.utils.getEditorLightObjectName('target', lightSun.name);
     lightTargetSpot.category_name = "lightTargetSpot";
     lightTargetSpot.isLightTargetSpot = true;
     lightTargetSpot.isLight = false;
@@ -466,7 +466,7 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
 
     // Add shadow camera helper
     const lightSunShadowhelper = new THREE.CameraHelper(lightSun.shadow.camera);
-    lightSunShadowhelper.name = `lightShadowHelper_${  lightSun.name}`;
+    lightSunShadowhelper.name = VRODOS.utils.getEditorLightObjectName('shadow', lightSun.name);
     lightSunShadowhelper.vrodos_internal_helper = true;
 
     VRODOS.ui.registerSceneObject(lightSun, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-sun-added' });
@@ -531,7 +531,7 @@ VRODOS.api.createLightLamp = function(nameModel, addedAt) {
 
     const lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, 0x555500);
     lightLampHelper.isLightHelper = true;
-    lightLampHelper.name = `lightHelper_${  lightLamp.name}`;
+    lightLampHelper.name = VRODOS.utils.getEditorLightObjectName('helper', lightLamp.name);
     lightLampHelper.category_name = 'lightHelper';
     lightLampHelper.parentLightName = lightLamp.name;
     lightLampHelper.vrodos_internal_helper = true;
@@ -584,7 +584,7 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
     lightSpot.add(lampSphere);
 
     lightTargetSpot.isSelectableMesh = true;
-    lightTargetSpot.name = `lightTargetSpot_${  lightSpot.name}`;
+    lightTargetSpot.name = VRODOS.utils.getEditorLightObjectName('target', lightSpot.name);
     lightTargetSpot.category_name = "lightTargetSpot";
     lightTargetSpot.isLightTargetSpot = true;
     lightTargetSpot.isLight = false;
@@ -972,20 +972,20 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
     // If deleting light then remove also its LightHelper and lightTargetSpot and Shadow Helper
     if (objectSelected.isLight) {
         // Sun Shadow Helper
-        const shadowHelper = VRODOS.editor.envir.scene.getObjectByName(`lightShadowHelper_${  objectSelected.name}`);
+        const shadowHelper = VRODOS.utils.getEditorLightObject('shadow', objectSelected.name, VRODOS.editor.envir.scene);
         if (shadowHelper) { shadowHelper.dispose(); VRODOS.editor.envir.scene.remove(shadowHelper); }
 
         // Sun target spot
-        const targetSpot = VRODOS.editor.envir.scene.getObjectByName(`lightTargetSpot_${  objectSelected.name}`);
+        const targetSpot = VRODOS.utils.getEditorLightObject('target', objectSelected.name, VRODOS.editor.envir.scene);
         if (targetSpot) {
             VRODOS.editor.sceneRegistry.remove(targetSpot, { reason: 'light-target-removed' });
         }
 
         // Sun target spot remove from hierarchy viewer
-        VRODOS.ui.removeHierarchyEntriesForObject('', `lightTargetSpot_${objectSelected.name}`);
+        VRODOS.ui.removeHierarchyEntriesForObject('', VRODOS.utils.getEditorLightObjectName('target', objectSelected.name));
 
         // Light Helper (for all lights)
-        const lightHelper = VRODOS.editor.envir.scene.getObjectByName(`lightHelper_${  objectSelected.name}`);
+        const lightHelper = VRODOS.utils.getEditorLightObject('helper', objectSelected.name, VRODOS.editor.envir.scene);
         if (lightHelper) { lightHelper.dispose(); VRODOS.editor.envir.scene.remove(lightHelper); }
     }
     

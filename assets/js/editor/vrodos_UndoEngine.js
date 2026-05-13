@@ -168,8 +168,7 @@ VRODOS.editor.TransformCommand = class {
         VRODOS.editor.transforms.syncProxyToObject(obj);
 
         if (obj.category_name && obj.category_name.includes("light")) {
-            const helper = VRODOS.editor.envir.scene.getObjectByName(`lightHelper_${  obj.name}`);
-            if (helper && typeof helper.update === 'function') helper.update();
+            VRODOS.utils.updateEditorLightHelper(obj, VRODOS.editor.envir.scene);
         }
 
         // Update UI
@@ -274,14 +273,14 @@ VRODOS.editor.DeleteObjectCommand = class {
         const name = light.name;
         
         // Re-create Helper if it's missing (it was disposed)
-        let helper = VRODOS.editor.envir.scene.getObjectByName(`lightHelper_${  name}`);
+        let helper = VRODOS.utils.getEditorLightObject('helper', name, VRODOS.editor.envir.scene);
         if (!helper) {
             if (light.type === 'PointLight') helper = new THREE.PointLightHelper(light, 1);
             else if (light.type === 'SpotLight') helper = new THREE.SpotLightHelper(light);
             else if (light.type === 'DirectionalLight') helper = new THREE.DirectionalLightHelper(light, 1);
             
             if (helper) {
-                helper.name = `lightHelper_${  name}`;
+                helper.name = VRODOS.utils.getEditorLightObjectName('helper', name);
                 VRODOS.editor.envir.scene.add(helper);
             }
         }
@@ -316,8 +315,7 @@ VRODOS.editor.PropertyCommand = class {
 
         // Sync light helpers
         if (obj.category_name && obj.category_name.includes("light")) {
-            const helper = VRODOS.editor.envir.scene.getObjectByName(`lightHelper_${  obj.name}`);
-            if (helper && typeof helper.update === 'function') helper.update();
+            VRODOS.utils.updateEditorLightHelper(obj, VRODOS.editor.envir.scene);
         }
 
         // Update UI panels
