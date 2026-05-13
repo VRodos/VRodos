@@ -67,6 +67,17 @@ extract($data);
         <?php endif; ?>
     </style>
     <?php endif; ?>
+    <style>
+        #vrodos-asset-editor .vrodos-model-drop-zone {
+            transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+        }
+
+        #vrodos-asset-editor .vrodos-model-drop-zone.vrodos-model-drop-zone-active {
+            border-color: #66cc8a !important;
+            background-color: rgba(102, 204, 138, 0.08) !important;
+            box-shadow: 0 0 0 3px rgba(102, 204, 138, 0.18), 0 18px 45px rgba(15, 23, 42, 0.12) !important;
+        }
+    </style>
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
 
@@ -140,7 +151,7 @@ else { ?>
             <div class="tw-w-full lg:tw-w-[420px] tw-flex-none tw-bg-slate-50 tw-border-b lg:tw-border-b-0 lg:tw-border-r tw-border-slate-200 tw-overflow-visible lg:tw-overflow-y-auto lg:tw-h-full">
                 <div class="tw-p-5 lg:tw-p-6 tw-space-y-4">
                     <!-- 3D Preview Card -->
-                    <div id="vrodos_3d_preview_card" class="tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3]">
+                    <div id="vrodos_3d_preview_card" class="vrodos-model-drop-zone tw-bg-white tw-rounded-3xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden tw-relative tw-aspect-[4/3]" data-vrodos-model-drop-zone="true">
                         <!-- Preview Overlay -->
                         <div id="previewProgressSlider" class="tw-absolute tw-inset-0 tw-z-10 tw-flex tw-flex-col tw-items-center tw-justify-center tw-bg-slate-900/50 tw-backdrop-blur-sm tw-transition-opacity" style="visibility:hidden">
                             <div class="tw-bg-white tw-p-6 tw-rounded-2xl tw-shadow-2xl tw-text-center tw-min-w-[200px]">
@@ -222,7 +233,7 @@ else { ?>
                             <i data-lucide="box" class="tw-w-4 tw-h-4 tw-text-primary"></i>
                         </div>
                         
-                        <div class="tw-w-full tw-bg-slate-50 tw-border tw-border-dashed tw-border-slate-200 tw-rounded-2xl tw-p-3 tw-text-center hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-group">
+                        <div id="vrodos_model_upload_dropzone" class="vrodos-model-drop-zone tw-w-full tw-bg-slate-50 tw-border tw-border-dashed tw-border-slate-200 tw-rounded-2xl tw-p-3 tw-text-center hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-group" data-vrodos-model-drop-zone="true">
                             <input id="fileUploadInput" class="tw-hidden" type="file" name="multipleFilesInput[]" accept=".glb,.zip,.blend,.fbx,.obj,.dae,.gltf" onclick="clearList()"/>
                             <label for="fileUploadInput" class="tw-cursor-pointer tw-flex tw-flex-col tw-items-center tw-gap-2">
                                 <div class="tw-w-7 tw-h-7 tw-bg-white tw-shadow-sm tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-group-hover:tw-scale-110 tw-transition-transform">

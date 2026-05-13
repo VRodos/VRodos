@@ -18,6 +18,73 @@ function vrodosAssetViewerResolveBaseUrl(localizedKey, pluginPath, fallbackRelat
     return String(fallbackRelative || '').replace(/^\/+/, '');
 }
 
+function vrodosCreateSpecGlossMaterialExtension(parser) {
+    const extensionName = 'KHR_materials_pbrSpecularGlossiness';
+
+    return {
+        name: extensionName,
+
+        getMaterialType(materialIndex) {
+            const materialDef = parser.json.materials[materialIndex] || {};
+            return materialDef.extensions && materialDef.extensions[extensionName]
+                ? THREE.MeshPhongMaterial
+                : null;
+        },
+
+        extendMaterialParams(materialIndex, materialParams) {
+            const materialDef = parser.json.materials[materialIndex] || {};
+            const extension = materialDef.extensions && materialDef.extensions[extensionName];
+            if (!extension) {
+                return Promise.resolve();
+            }
+
+            delete materialParams.metalness;
+            delete materialParams.roughness;
+            delete materialParams.metalnessMap;
+            delete materialParams.roughnessMap;
+
+            const pending = [];
+            materialParams.color = new THREE.Color(1, 1, 1);
+            materialParams.opacity = 1;
+            materialParams.specular = new THREE.Color(1, 1, 1);
+            materialParams.shininess = 30;
+
+            if (Array.isArray(extension.diffuseFactor) && extension.diffuseFactor.length >= 3) {
+                materialParams.color.setRGB(
+                    extension.diffuseFactor[0],
+                    extension.diffuseFactor[1],
+                    extension.diffuseFactor[2],
+                    THREE.LinearSRGBColorSpace
+                );
+                materialParams.opacity = extension.diffuseFactor[3] !== undefined ? extension.diffuseFactor[3] : 1;
+            }
+
+            if (Array.isArray(extension.specularFactor) && extension.specularFactor.length >= 3) {
+                materialParams.specular.setRGB(
+                    extension.specularFactor[0],
+                    extension.specularFactor[1],
+                    extension.specularFactor[2],
+                    THREE.LinearSRGBColorSpace
+                );
+            }
+
+            if (extension.glossinessFactor !== undefined) {
+                materialParams.shininess = Math.max(0, Math.min(1, extension.glossinessFactor)) * 100;
+            }
+
+            if (extension.diffuseTexture !== undefined) {
+                pending.push(parser.assignTexture(materialParams, 'map', extension.diffuseTexture, THREE.SRGBColorSpace));
+            }
+
+            if (extension.specularGlossinessTexture !== undefined) {
+                pending.push(parser.assignTexture(materialParams, 'specularMap', extension.specularGlossinessTexture));
+            }
+
+            return Promise.all(pending);
+        }
+    };
+}
+
 class VRodos_AssetViewer_3D_kernel {
 
     setZeroVars() {
@@ -438,6 +505,7 @@ class VRodos_AssetViewer_3D_kernel {
         const dracoLoader = new THREE.DRACOLoader();
         dracoLoader.setDecoderPath(this.getDracoDecoderPath());
         loader.setDRACOLoader(dracoLoader);
+        loader.register(vrodosCreateSpecGlossMaterialExtension);
         return loader;
     }
 

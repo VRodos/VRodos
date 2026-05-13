@@ -81,6 +81,7 @@ window.vrodosZipPreflightState = window.vrodosZipPreflightState || {
 };
 
 let vrodosModelSelectionSerial = 0;
+const VRODOS_MODEL_UPLOAD_EXTENSIONS = ['glb', 'zip', 'blend', 'fbx', 'obj', 'dae', 'gltf'];
 
 function vrodos_get_asset_editor_ajax_url() {
     return (window.VRODOS && VRODOS.utils && typeof VRODOS.utils.getAjaxUrl === 'function')
@@ -131,6 +132,149 @@ function file_reader_cortex(file, asset_viewer_3d_kernel_local) {
     reader.readAsArrayBuffer(file);
 }
 
+function vrodos_get_model_file_extension(file) {
+    return file && file.name ? (file.name.split('.').pop() || '').toLowerCase() : '';
+}
+
+function vrodos_is_supported_model_file(file) {
+    return VRODOS_MODEL_UPLOAD_EXTENSIONS.includes(vrodos_get_model_file_extension(file));
+}
+
+function vrodos_event_contains_files(event) {
+    if (!event || !event.dataTransfer) {
+        return false;
+    }
+
+    const types = Array.from(event.dataTransfer.types || []);
+    return types.includes('Files') || types.includes('application/x-moz-file');
+}
+
+function vrodos_set_model_drop_active(dropZone, isActive) {
+    if (!dropZone) {
+        return;
+    }
+
+    dropZone.classList.toggle('vrodos-model-drop-zone-active', isActive);
+}
+
+function vrodos_clear_model_drop_active() {
+    document.querySelectorAll('[data-vrodos-model-drop-zone="true"]').forEach((dropZone) => {
+        vrodos_set_model_drop_active(dropZone, false);
+    });
+}
+
+function vrodos_select_dropped_model_file(fileInput, file) {
+    if (!fileInput) {
+        vrodos_set_asset_editor_notice('The model upload field is unavailable. Reload the page and try again.');
+        return false;
+    }
+
+    if (fileInput.disabled) {
+        vrodos_set_asset_editor_notice('This asset is read-only. Model uploads are disabled.');
+        return false;
+    }
+
+    if (!vrodos_is_supported_model_file(file)) {
+        vrodos_set_asset_editor_notice('Supported model uploads are GLB, ZIP, BLEND, FBX, OBJ, DAE, and glTF files.');
+        return false;
+    }
+
+    if (typeof window.DataTransfer === 'undefined') {
+        vrodos_set_asset_editor_notice('This browser does not support drag-and-drop model upload. Use the file picker instead.');
+        return false;
+    }
+
+    const transfer = new window.DataTransfer();
+    transfer.items.add(file);
+    clearList();
+    fileInput.files = transfer.files;
+    fileInput.dispatchEvent(new window.Event('change', { bubbles: true }));
+    return true;
+}
+
+function vrodos_init_model_upload_dropzones() {
+    const fileInput = document.getElementById('fileUploadInput');
+    const dropZones = Array.from(document.querySelectorAll('[data-vrodos-model-drop-zone="true"]'));
+    if (!dropZones.length) {
+        return;
+    }
+
+    document.addEventListener('dragover', (event) => {
+        if (!vrodos_event_contains_files(event)) {
+            return;
+        }
+
+        event.preventDefault();
+    }, false);
+
+    document.addEventListener('drop', (event) => {
+        if (!vrodos_event_contains_files(event)) {
+            return;
+        }
+
+        event.preventDefault();
+        vrodos_clear_model_drop_active();
+    }, false);
+
+    dropZones.forEach((dropZone) => {
+        let dragDepth = 0;
+
+        dropZone.addEventListener('dragenter', (event) => {
+            if (!vrodos_event_contains_files(event)) {
+                return;
+            }
+
+            event.preventDefault();
+            dragDepth += 1;
+            vrodos_set_model_drop_active(dropZone, true);
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'copy';
+            }
+        });
+
+        dropZone.addEventListener('dragover', (event) => {
+            if (!vrodos_event_contains_files(event)) {
+                return;
+            }
+
+            event.preventDefault();
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'copy';
+            }
+        });
+
+        dropZone.addEventListener('dragleave', (event) => {
+            if (!vrodos_event_contains_files(event)) {
+                return;
+            }
+
+            dragDepth = Math.max(0, dragDepth - 1);
+            if (dragDepth === 0) {
+                vrodos_set_model_drop_active(dropZone, false);
+            }
+        });
+
+        dropZone.addEventListener('drop', (event) => {
+            if (!vrodos_event_contains_files(event)) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            dragDepth = 0;
+            vrodos_set_model_drop_active(dropZone, false);
+
+            const files = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files : [];
+            const file = files.length ? files[0] : null;
+            if (!file) {
+                return;
+            }
+
+            vrodos_select_dropped_model_file(fileInput, file);
+        });
+    });
+}
+
 function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputElem) {
     const handleFileSelect = (event) => {
         vrodosModelSelectionSerial += 1;
@@ -157,7 +301,7 @@ function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputEl
             return;
         }
 
-        const extension = (file.name.split('.').pop() || '').toLowerCase();
+        const extension = vrodos_get_model_file_extension(file);
         const label = document.getElementById('fileUploadInputLabel');
         if (label) {
             label.textContent = file.name;
@@ -441,7 +585,7 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
     const uploadId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
     const extension = (file.name.split('.').pop() || '').toLowerCase();
     const shouldInspectZip = extension === 'zip' && options.inspectZip !== false;
-    if (!['glb', 'zip', 'blend', 'fbx', 'obj', 'dae', 'gltf'].includes(extension)) {
+    if (!VRODOS_MODEL_UPLOAD_EXTENSIONS.includes(extension)) {
         vrodos_set_asset_editor_notice('Supported model uploads are GLB, ZIP, BLEND, FBX, OBJ, DAE, and glTF files.');
         return false;
     }
@@ -803,4 +947,5 @@ function vrodos_init_asset_import_status_polling() {
     }
 }
 
+document.addEventListener('DOMContentLoaded', vrodos_init_model_upload_dropzones);
 document.addEventListener('DOMContentLoaded', vrodos_init_asset_import_status_polling);
