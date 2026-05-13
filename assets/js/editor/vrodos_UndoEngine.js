@@ -7,24 +7,12 @@
 
 function vrodosUndoGetObjectByUuid(uuid) {
     if (!uuid) return null;
-    if (VRODOS.editor.sceneRegistry) {
-        return VRODOS.editor.sceneRegistry.getByUuid(uuid);
-    }
-
-    return VRODOS.editor.envir && VRODOS.editor.envir.scene
-        ? VRODOS.editor.envir.scene.getObjectByProperty('uuid', uuid)
-        : null;
+    return VRODOS.editor.sceneRegistry ? VRODOS.editor.sceneRegistry.get(uuid) : null;
 }
 
 function vrodosUndoGetObjectByName(name) {
     if (!name) return null;
-    if (VRODOS.editor.sceneRegistry) {
-        return VRODOS.editor.sceneRegistry.getByName(name);
-    }
-
-    return VRODOS.editor.envir && VRODOS.editor.envir.scene
-        ? VRODOS.editor.envir.scene.getObjectByName(name)
-        : null;
+    return VRODOS.editor.sceneRegistry ? VRODOS.editor.sceneRegistry.get(name) : null;
 }
 
 VRODOS.editor.UndoManager = class {

@@ -165,6 +165,10 @@ VRODOS.utils = VRODOS.utils || {};
             return object;
         },
 
+        get(objectOrId) {
+            return resolveObject(objectOrId);
+        },
+
         getSelectableRoots() {
             const envir = getEnvir();
             if (this.selectableRoots.size > 0) {

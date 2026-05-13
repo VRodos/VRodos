@@ -26,12 +26,12 @@ VRODOS.utils.resolveBaseUrl = function(pluginPath, localizedKey, fallbackRelativ
 
 function getSceneObjectByUuid(uuid) {
     if (!uuid || !VRODOS.editor.sceneRegistry) return null;
-    return VRODOS.editor.sceneRegistry.getByUuid(uuid);
+    return VRODOS.editor.sceneRegistry.get(uuid);
 }
 
 function getSceneObjectByName(name) {
     if (!name || !VRODOS.editor.sceneRegistry) return null;
-    return VRODOS.editor.sceneRegistry.getByName(name);
+    return VRODOS.editor.sceneRegistry.get(name);
 }
 
 VRODOS.ui.frameNewSceneObject = function(object3D) {

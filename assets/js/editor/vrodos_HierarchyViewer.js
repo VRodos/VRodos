@@ -7,22 +7,12 @@ function _hierarchyGetRegistry() {
 
 function _hierarchyGetObjectByUuid(uuid) {
     const registry = _hierarchyGetRegistry();
-    const registered = registry ? registry.getByUuid(uuid) : null;
-    if (registered) return registered;
-
-    return VRODOS.editor.envir && VRODOS.editor.envir.scene
-        ? VRODOS.editor.envir.scene.getObjectByProperty('uuid', uuid)
-        : null;
+    return registry ? registry.get(uuid) : null;
 }
 
 function _hierarchyGetObjectByName(name) {
     const registry = _hierarchyGetRegistry();
-    const registered = registry ? registry.getByName(name) : null;
-    if (registered) return registered;
-
-    return VRODOS.editor.envir && VRODOS.editor.envir.scene
-        ? VRODOS.editor.envir.scene.getObjectByName(name)
-        : null;
+    return registry ? registry.get(name) : null;
 }
 
 function _hierarchyGetSelectableRoots() {
