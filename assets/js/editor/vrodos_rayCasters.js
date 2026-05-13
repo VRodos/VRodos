@@ -201,18 +201,13 @@ VRODOS.ui.onLeftMouseClick = function(event) {
     if (intersects.length === 0) {
         // Clicked empty canvas - deselect current object
         if (event.button === 0) {
-            if (typeof VRODOS.ui.clearTransformSelection === 'function') {
+            if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
+                VRODOS.editor.selection.clear({ source: 'empty-canvas' });
+            } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
                 VRODOS.ui.clearTransformSelection();
-            } else {
-                VRODOS.editor.transform_controls.detach();
-                VRODOS.editor.currentSelectedRealObject = null;
+                VRODOS.ui.removeAllCelOutlines();
+                VRODOS.ui.hideObjectControlsPanel();
             }
-            VRODOS.ui.removeAllCelOutlines();
-            VRODOS.ui.hideObjectControlsPanel();
-            const objManipToggle = document.getElementById('object-manipulation-toggle');
-            const axisManipBtns = document.getElementById('axis-manipulation-buttons');
-            if (objManipToggle) objManipToggle.style.display = 'none';
-            if (axisManipBtns) axisManipBtns.style.display = 'none';
         }
         return;
     }
@@ -261,146 +256,44 @@ VRODOS.ui.onLeftMouseClick = function(event) {
 VRODOS.ui.selectObjectPreview = function(objectSel) {
     if (!objectSel) return;
 
-    VRODOS.ui.setBackgroundColorHierarchyViewer(objectSel.uuid);
-    if (typeof VRODOS.ui.attachGizmo === 'function') {
-        VRODOS.ui.attachGizmo(objectSel);
-    } else {
-        VRODOS.editor.transform_controls.attach(objectSel);
+    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.select === 'function') {
+        VRODOS.editor.selection.select(objectSel, {
+            source: 'hierarchy-preview',
+            openPanel: false,
+            showProperties: false,
+            focusHierarchy: true,
+            outline: true,
+            syncGui: true
+        });
     }
-
-    if (objectSel.name !== "avatarCamera") {
-        VRODOS.ui.transform.setSize();
-    }
-
-    VRODOS.editor.transform_controls.setMode("translate");
-
-    VRODOS.ui.removeAllCelOutlines();
-    VRODOS.ui.addCelOutline(objectSel);
 }
 
 VRODOS.ui.selectorMajor = function(event, objectSel, whocalls) {
+    if (!event || event.button !== 0 || !objectSel) return;
 
-    if (event.button === 0) {
+    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.select === 'function') {
+        VRODOS.editor.selection.select(objectSel, {
+            source: whocalls || 'selector-major',
+            openPanel: true,
+            showProperties: true,
+            focusHierarchy: true,
+            outline: true,
+            syncGui: true,
+            setMode: true
+        });
+        return;
+    }
 
-        const objectTitle = typeof VRODOS.utils.decodeDisplayText === 'function'
-            ? VRODOS.utils.decodeDisplayText(objectSel.asset_name || objectSel.name || 'Object Controls')
-            : (objectSel.asset_name || objectSel.name || 'Object Controls');
-
-        VRODOS.ui.showObjectControlsPanel(objectTitle);
-
-        document.getElementById('translate-switch').checked = true;
-        document.getElementById('rotate-switch').disabled = false;
-        document.getElementById('rotate-switch-label').style = "inherit";
-
-        document.getElementById('scale-switch').disabled = false;
-        document.getElementById('scale-switch-label').style = "inherit";
-      
-        // set the selected color of the hierarchy viewer
-        VRODOS.ui.setBackgroundColorHierarchyViewer(objectSel.uuid);
-
-        if (typeof VRODOS.ui.attachGizmo === 'function') {
-            VRODOS.ui.attachGizmo(objectSel);
-        } else {
-            VRODOS.editor.transform_controls.attach(objectSel);
-        }
-
-        // Move light direction
-        const lightDirectionalLightSpotMover = () => {
-
-            if (!VRODOS.editor.transform_controls.object)
-                {return;}
-
-            if (!VRODOS.editor.transform_controls.object.parentLight)
-                {return;}
-
-            VRODOS.editor.transform_controls.object.parentLight.target.position.setFromMatrixPosition(VRODOS.editor.transform_controls.object.matrix);
-            VRODOS.editor.transform_controls.object.parentLight.target.updateMatrixWorld();
-        };
-
-        const lightSpotLightMover = () => {
-
-            if (!VRODOS.editor.transform_controls.object)
-                {return;}
-
-            if (!VRODOS.editor.transform_controls.object.parentLight)
-                {return;}
-
-            // Name-based lookup instead of full scene traverse — helper naming convention: 'lightHelper_' + lightName
-            const realLightObject = typeof VRODOS.ui.getSelectedTransformObject === 'function'
-                ? VRODOS.ui.getSelectedTransformObject()
-                : VRODOS.editor.transform_controls.object;
-            const helperName = `lightHelper_${  realLightObject.name}`;
-            const helper = VRODOS.editor.envir.scene.getObjectByName(helperName);
-            if (helper && typeof helper.update === 'function') helper.update();
-        };
-
-
-        if (objectSel.category_name === "lightSun" ||
-            objectSel.category_name === "lightTargetSpot" ||
-            objectSel.category_name === "lightSpot" ||
-            objectSel.category_name === "lightLamp") {
-
-            // Add event listener for lightSpotHelper
-
-
-            if (objectSel.category_name === "lightTargetSpot") {
-                VRODOS.editor.transform_controls.domElement.ownerDocument.addEventListener("pointermove", lightDirectionalLightSpotMover);
-            }
-
-
-            if (objectSel.category_name === "lightSpot") {
-                VRODOS.editor.transform_controls.domElement.ownerDocument.addEventListener("pointermove", lightSpotLightMover);
-            }
-
-            //VRODOS.editor.transform_controls.children[3].children[0].children[1].visible = false; // 2D ROTATE GIZMO
-        } else {
-
-            // Remove event listener when lightSpotHelper is not clicked
-            VRODOS.editor.transform_controls.domElement.ownerDocument.removeEventListener("pointermove", lightDirectionalLightSpotMover);
-            VRODOS.editor.transform_controls.domElement.ownerDocument.removeEventListener("pointermove", lightSpotLightMover);
-        }
-
-        if (objectSel.name === "avatarCamera") {
-            document.getElementById('rotate-switch').disabled = true;
-            document.getElementById('rotate-switch-label').style.color = "grey";
-
-            document.getElementById('scale-switch').disabled = true;
-            document.getElementById('scale-switch-label').style.color = "grey";
-
-            // case of selecting by hierarchy viewer
-
-            // VRODOS.editor.transform_controls.size = 1;
-            // VRODOS.editor.transform_controls.visible = false;
-
-            // Can not be deleted
-            //VRODOS.editor.transform_controls.children[3].handleGizmos.XZY[0][0].visible = false;
-
-
-        } else {
-            // find dimensions of object in order to resize transform controls
-            VRODOS.ui.transform.setSize();
-        }
-
-
-        VRODOS.editor.transform_controls.setMode("translate");
-
-
-        if (!VRODOS.editor.envir.is2d) {
-            const modeSwitch = document.getElementById(`${VRODOS.editor.transform_controls.getMode()  }-switch`);
-            if (modeSwitch) modeSwitch.click();
-        }
-
-        // highlight — cel-shaded outline
-        VRODOS.ui.removeAllCelOutlines();
-        VRODOS.ui.addCelOutline(objectSel);
-
+    if (typeof VRODOS.ui.attachGizmo === 'function') {
+        VRODOS.ui.attachGizmo(objectSel);
+    }
+    if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
         VRODOS.ui.setDatGuiInitialVales(objectSel);
-
-        // Auto-show object-specific properties in the floating panel
+    }
+    if (typeof VRODOS.ui.showPropertiesInPanel === 'function') {
         VRODOS.ui.showPropertiesInPanel(objectSel);
     }
 }
-
 
 // Right Click: Show properties
 VRODOS.ui.contextMenuClick = function(event) {
@@ -412,9 +305,9 @@ VRODOS.ui.contextMenuClick = function(event) {
 
        
     // Check if right-clicked is the one selected already with left-click
-    const selectedTransformObject = typeof VRODOS.ui.getSelectedTransformObject === 'function'
-        ? VRODOS.ui.getSelectedTransformObject()
-        : VRODOS.editor.transform_controls.object;
+    const selectedTransformObject = VRODOS.editor.transforms && typeof VRODOS.editor.transforms.getRealObject === 'function'
+        ? VRODOS.editor.transforms.getRealObject()
+        : (typeof VRODOS.ui.getSelectedTransformObject === 'function' ? VRODOS.ui.getSelectedTransformObject() : null);
     if (selectedTransformObject && intersected[0].name === selectedTransformObject.name) {
         showProperties(event, intersected[0]);
     }
@@ -950,6 +843,13 @@ initPersistentPropertyListeners();
  * @returns {Array}
  */
 VRODOS.ui.getActiveMeshes = function() {
+    if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getSelectableRoots === 'function') {
+        const registryMeshes = VRODOS.editor.sceneRegistry.getSelectableRoots();
+        if (registryMeshes.length > 0) {
+            return registryMeshes;
+        }
+    }
+
     // Fast path: use the pre-built cache maintained by add/remove operations
     if (VRODOS.editor.envir.selectableMeshes && VRODOS.editor.envir.selectableMeshes.size > 0) {
         if (VRODOS.editor.envir.selectableMeshesDirty ||

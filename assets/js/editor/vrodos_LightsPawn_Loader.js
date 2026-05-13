@@ -148,6 +148,31 @@ VRODOS.loader.LightsPawnLoader = class {
         }
     }
 
+    registerLoadedObject(object, options) {
+        const opts = Object.assign({
+            selectable: true,
+            updateHierarchy: (VRODOS.loader && typeof VRODOS.loader.shouldBuildHierarchyDuringLoad === 'function')
+                ? VRODOS.loader.shouldBuildHierarchyDuringLoad()
+                : false,
+            incrementLoaded: false,
+            renderReason: 'lights-pawn-loaded'
+        }, options || {});
+
+        if (VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') {
+            VRODOS.editor.objectFactory.addSceneObject(object, opts);
+            return object;
+        }
+
+        VRODOS.editor.envir.scene.add(object);
+        if (opts.selectable && VRODOS.editor.envir.selectableMeshes) {
+            VRODOS.editor.envir.selectableMeshes.add(object);
+        }
+        if (opts.updateHierarchy && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
+            VRODOS.ui.addInHierarchyViewer(object);
+        }
+        return object;
+    }
+
     initSun(name, resource) {
         const lc = resource.lightcolor;
         const color = new THREE.Color(lc[0], lc[1], lc[2]);
@@ -193,7 +218,7 @@ VRODOS.loader.LightsPawnLoader = class {
         helper.parentLightName = name;
         helper.vrodos_internal_helper = true;
         VRODOS.editor.envir.scene.add(helper);
-        VRODOS.editor.envir.scene.add(light);
+        this.registerLoadedObject(light, { renderReason: 'sun-loaded' });
 
         light.target.updateMatrixWorld();
         helper.update();
@@ -214,11 +239,7 @@ VRODOS.loader.LightsPawnLoader = class {
         targetSpot.parentLightHelper = helper;
 
         light.target.position.copy(targetSpot.position);
-        VRODOS.editor.envir.scene.add(targetSpot);
-        if (VRODOS.editor.envir.selectableMeshes) {
-            VRODOS.editor.envir.selectableMeshes.add(light);
-            VRODOS.editor.envir.selectableMeshes.add(targetSpot);
-        }
+        this.registerLoadedObject(targetSpot, { renderReason: 'sun-target-loaded' });
 
         const shadowHelper = new THREE.CameraHelper(light.shadow.camera);
         shadowHelper.name = `lightShadowHelper_${  light.name}`;
@@ -250,8 +271,7 @@ VRODOS.loader.LightsPawnLoader = class {
         light.lampshadowCameraRight = resource.lampshadowCameraRight;
         light.lampshadowBias = resource.lampshadowBias;
 
-        VRODOS.editor.envir.scene.add(light);
-        if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(light);
+        this.registerLoadedObject(light, { renderReason: 'lamp-loaded' });
 
         const sphere = new THREE.Mesh(
             new THREE.SphereGeometry(0.5, 16, 8),
@@ -308,15 +328,11 @@ VRODOS.loader.LightsPawnLoader = class {
         targetSpot.position.set(tp[0], tp[1], tp[2]);
         targetSpot.parentLight = light;
 
-        VRODOS.editor.envir.scene.add(targetSpot);
-        if (VRODOS.editor.envir.selectableMeshes) {
-            VRODOS.editor.envir.selectableMeshes.add(light);
-            VRODOS.editor.envir.selectableMeshes.add(targetSpot);
-        }
+        this.registerLoadedObject(targetSpot, { renderReason: 'spot-target-loaded' });
         light.target.updateMatrixWorld();
         light.target.position.copy(targetSpot.position);
 
-        VRODOS.editor.envir.scene.add(light);
+        this.registerLoadedObject(light, { renderReason: 'spot-loaded' });
         // No triggerAutoSave here — this loader only restores saved state.
         // User-initiated spot light creation (VRODOS.api.createLightSpot in vrodos_addRemoveOne.js)
         // handles its own VRODOS.api.triggerAutoSave().
@@ -345,8 +361,7 @@ VRODOS.loader.LightsPawnLoader = class {
         sphere.name = "ambientSphere";
         light.add(sphere);
 
-        VRODOS.editor.envir.scene.add(light);
-        if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(light);
+        this.registerLoadedObject(light, { renderReason: 'ambient-loaded' });
     }
 
     initPawn(name, resource, finalPath, manager) {
@@ -385,10 +400,10 @@ VRODOS.loader.LightsPawnLoader = class {
                     label.position.set(0, 1.5, 0);
                     pawn.add(label);
 
-                    VRODOS.editor.envir.scene.add(pawn);
-                    if (!(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
-                        VRODOS.ui.addInHierarchyViewer(pawn);
-                    }
+                    this.registerLoadedObject(pawn, {
+                        renderReason: 'pawn-loaded',
+                        updateHierarchy: !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading)
+                    });
                     if (manager) manager.itemEnd(name);
                     resolve();
                 },
@@ -415,5 +430,4 @@ VRODOS.loader.LightsPawnLoader = class {
         obj.scale.set(s[0], s[1], s[2]);
     }
 };
-
 

@@ -119,12 +119,16 @@ VRODOS.editor.TransformCommand = class {
     applyState(state) {
         if (!state || !state.pos || !state.rot || !state.scale) return;
 
-        // Try find by UUID first
-        let obj = VRODOS.editor.envir.scene.getObjectByProperty('uuid', this.objectUuid);
+        // Try registry by UUID first
+        let obj = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByUuid === 'function'
+            ? VRODOS.editor.sceneRegistry.getByUuid(this.objectUuid)
+            : VRODOS.editor.envir.scene.getObjectByProperty('uuid', this.objectUuid);
         
         // Fallback to find by Name (Asset names are unique in VRodos)
         if (!obj || obj.name === "vrodosGizmoProxy") {
-            obj = VRODOS.editor.envir.scene.getObjectByName(this.objectName);
+            obj = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByName === 'function'
+                ? VRODOS.editor.sceneRegistry.getByName(this.objectName)
+                : VRODOS.editor.envir.scene.getObjectByName(this.objectName);
         }
 
         if (!obj || obj.name === "vrodosGizmoProxy") {
@@ -155,6 +159,12 @@ VRODOS.editor.TransformCommand = class {
         obj.traverse((node) => {
             node.visible = true;
         });
+        if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.invalidateBounds === 'function') {
+            VRODOS.editor.sceneRegistry.invalidateBounds(obj);
+        }
+        if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.syncProxyToObject === 'function') {
+            VRODOS.editor.transforms.syncProxyToObject(obj);
+        }
 
         if (obj.category_name && obj.category_name.includes("light")) {
             const helper = VRODOS.editor.envir.scene.getObjectByName(`lightHelper_${  obj.name}`);
@@ -166,8 +176,8 @@ VRODOS.editor.TransformCommand = class {
             VRODOS.ui.setDatGuiInitialVales(obj);
         }
         
-        if (typeof animate === 'function') VRODOS.editor.animate();
-        if (typeof triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
+        if (typeof VRODOS.editor.animate === 'function') VRODOS.editor.animate();
+        if (typeof VRODOS.api.triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
     }
 };
 /**
@@ -189,7 +199,9 @@ VRODOS.editor.AddObjectCommand = class {
 
     undo() {
         if (typeof VRODOS.api.deleteAssetFromScene === 'function') {
-            const obj = VRODOS.editor.envir.scene.getObjectByName(this.nameModel);
+            const obj = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByName === 'function'
+                ? VRODOS.editor.sceneRegistry.getByName(this.nameModel)
+                : VRODOS.editor.envir.scene.getObjectByName(this.nameModel);
             if (obj) {
                 // We call VRODOS.api.deleteAssetFromScene but we need to tell it NOT to push to undo again
                 VRODOS.editor.undoManager.isExecuting = true;
@@ -232,8 +244,17 @@ VRODOS.editor.DeleteObjectCommand = class {
             node.visible = true;
         });
 
-        VRODOS.editor.envir.scene.add(this.object3D);
-        if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(this.object3D);
+        if (VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') {
+            VRODOS.editor.objectFactory.addSceneObject(this.object3D, {
+                selectable: true,
+                updateHierarchy: false,
+                incrementLoaded: false,
+                renderReason: 'undo-restore-object'
+            });
+        } else {
+            VRODOS.editor.envir.scene.add(this.object3D);
+            if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(this.object3D);
+        }
         
         this.object3D.updateMatrix();
         this.object3D.updateMatrixWorld(true);
@@ -250,8 +271,8 @@ VRODOS.editor.DeleteObjectCommand = class {
             VRODOS.ui.addInHierarchyViewer(this.object3D);
         }
         
-        if (typeof animate === 'function') VRODOS.editor.animate();
-        if (typeof triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
+        if (typeof VRODOS.editor.animate === 'function') VRODOS.editor.animate();
+        if (typeof VRODOS.api.triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
     }
 
     restoreLightAssociates() {
@@ -289,7 +310,9 @@ VRODOS.editor.PropertyCommand = class {
     }
 
     apply(val) {
-        const obj = VRODOS.editor.envir.scene.getObjectByProperty('uuid', this.objectUuid);
+        const obj = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByUuid === 'function'
+            ? VRODOS.editor.sceneRegistry.getByUuid(this.objectUuid)
+            : VRODOS.editor.envir.scene.getObjectByProperty('uuid', this.objectUuid);
         if (!obj) return;
         
         obj[this.property] = val;
@@ -334,7 +357,6 @@ if (document.readyState === 'loading') {
 } else {
     VRODOS.editor.undoManager.updateButtons();
 }
-
 
 
 

@@ -355,11 +355,10 @@ VRODOS.ui.onDrop = function(ev) {
     // Suppress the click-selection that would fire from the drop's mouseup
     VRODOS.editor.suppressNextSelection = true;
 
-    if (typeof VRODOS.ui.clearTransformSelection === 'function') {
+    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
+        VRODOS.editor.selection.clear({ source: 'canvas-drop', hidePanel: false });
+    } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
         VRODOS.ui.clearTransformSelection();
-    } else if (VRODOS.editor.transform_controls) {
-        VRODOS.editor.transform_controls.detach();
-        VRODOS.editor.currentSelectedRealObject = null;
     }
     if (typeof VRODOS.ui.removeAllCelOutlines === 'function') {
         VRODOS.ui.removeAllCelOutlines();
@@ -803,11 +802,10 @@ VRODOS.ui.loadButtonActions = function() {
             // Suppress the click-selection that would fire from the drop's mouseup
             VRODOS.editor.suppressNextSelection = true;
 
-            if (typeof VRODOS.ui.clearTransformSelection === 'function') {
+            if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
+                VRODOS.editor.selection.clear({ source: 'canvas-drop', hidePanel: false });
+            } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
                 VRODOS.ui.clearTransformSelection();
-            } else if (VRODOS.editor.transform_controls) {
-                VRODOS.editor.transform_controls.detach();
-                VRODOS.editor.currentSelectedRealObject = null;
             }
             if (typeof VRODOS.ui.removeAllCelOutlines === 'function') {
                 VRODOS.ui.removeAllCelOutlines();
@@ -1358,5 +1356,4 @@ VRODOS.api.triggerAutoSave = function() {
     VRODOS.editor.envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     VRODOS.api.commitPendingSceneSave();
 };
-
 

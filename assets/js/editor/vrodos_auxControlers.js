@@ -1324,7 +1324,7 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
 // =================================================================================
 
 // Global Gizmo Proxy to decouple interaction from visual result
-window.vrodosGizmoProxy = new THREE.Object3D();
+window.vrodosGizmoProxy = window.vrodosGizmoProxy || new THREE.Object3D();
 window.vrodosGizmoProxy.name = "vrodosGizmoProxy";
 
 // State tracking for proxy-based transformation
@@ -1345,6 +1345,11 @@ function getTransformControlsProxy() {
 }
 
 function syncAttachedProxyToObject(target) {
+    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.syncProxyToObject === 'function') {
+        VRODOS.editor.transforms.syncProxyToObject(target);
+        return;
+    }
+
     const proxy = getTransformControlsProxy();
     if (!proxy || !target || proxy.realObject !== target) return;
 
@@ -1356,6 +1361,15 @@ function syncAttachedProxyToObject(target) {
 }
 
 function ensureTransformControlsVisible() {
+    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.attach === 'function') {
+        const helper = VRODOS.editor.transform_controls_helper || (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls._root) || null;
+        if (helper) {
+            helper.visible = Boolean(VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.object);
+            helper.updateMatrixWorld(true);
+        }
+        return;
+    }
+
     if (!VRODOS.editor.transform_controls) return;
 
     const controls = VRODOS.editor.transform_controls;
@@ -1566,83 +1580,34 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
 
 /**
  * Centralized Gizmo Attachment: Handles Proxy setup and identity delegation.
- * Use this instead of VRODOS.editor.transform_controls.attach(obj)
+ * Use this instead of touching TransformControls directly.
  */
 function vrodosAttachGizmo(object) {
-    if (!object || !VRODOS.editor.transform_controls || !VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
-
-    if (object.name === "vrodosGizmoProxy" && object.realObject) {
-        object = object.realObject;
+    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.attach === 'function') {
+        return VRODOS.editor.transforms.attach(object);
     }
-
-    if (!object || object.name === "vrodosGizmoProxy") return;
-
-    VRODOS.editor.currentSelectedRealObject = object;
-
-    if (window.vrodosGizmoProxy) {
-        const proxy = window.vrodosGizmoProxy;
-        const scene = VRODOS.editor.envir.scene;
-
-        // 1. Ensure the exact proxy instance is in the scene graph.
-        if (proxy.parent !== scene) {
-            if (proxy.parent) {
-                proxy.parent.remove(proxy);
-            }
-            scene.add(proxy);
-        }
-
-        // 2. Sync Proxy to Object initial state
-        proxy.position.copy(object.position);
-        proxy.quaternion.copy(object.quaternion);
-        proxy.scale.copy(object.scale);
-        proxy.updateMatrix();
-        proxy.updateMatrixWorld(true);
-
-        // 3. Delegate properties for safety checks in other scripts
-        proxy.realObject = object;
-        proxy.category_name = object.category_name;
-        proxy.category_slug = object.category_slug;
-        proxy.asset_name = object.asset_name;
-        proxy.isLight = object.isLight;
-        proxy.parentLight = object.parentLight;
-        proxy.locked = object.locked;
-        proxy.name = "vrodosGizmoProxy";
-
-        // 4. Attach handles to proxy
-        VRODOS.editor.transform_controls.attach(proxy);
-    } else {
-        // Fallback: attach directly to object if proxy failed to init
-        VRODOS.editor.transform_controls.attach(object);
-    }
-
-    ensureTransformControlsVisible();
-    if (typeof VRODOS.editor.requestRender === 'function') {
-        VRODOS.editor.requestRender('gizmo-attached');
-    }
+    return null;
 }
 
 function clearTransformSelection() {
+    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.detach === 'function') {
+        VRODOS.editor.transforms.detach();
+        return;
+    }
+
     VRODOS.editor.currentSelectedRealObject = null;
-
-    if (window.vrodosGizmoProxy) {
-        window.vrodosGizmoProxy.realObject = null;
-    }
-
-    if (VRODOS.editor.transform_controls) {
-        VRODOS.editor.transform_controls.detach();
-    }
-    ensureTransformControlsVisible();
-    if (typeof VRODOS.editor.requestRender === 'function') {
-        VRODOS.editor.requestRender('gizmo-cleared');
-    }
 }
 
 function attachTransformTarget(object) {
     clearTransformSelection();
-    vrodosAttachGizmo(object);
+    return vrodosAttachGizmo(object);
 }
 
 function getSelectedTransformObject() {
+    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.getRealObject === 'function') {
+        return VRODOS.editor.transforms.getRealObject();
+    }
+
     if (VRODOS.editor.currentSelectedRealObject) {
         return VRODOS.editor.currentSelectedRealObject;
     }
@@ -1701,6 +1666,8 @@ VRODOS.ui.clearTransformSelection = clearTransformSelection;
 VRODOS.ui.attachTransformTarget = attachTransformTarget;
 VRODOS.ui.getSelectedTransformObject = getSelectedTransformObject;
 VRODOS.ui.syncTransformGuiFromObject = syncTransformGuiFromObject;
+VRODOS.editor.transforms = VRODOS.editor.transforms || {};
+VRODOS.editor.transforms.syncGui = syncTransformGuiFromObject;
 VRODOS.ui.showObjectControlsPanel = showObjectControlsPanel;
 VRODOS.ui.hideObjectControlsPanel = hideObjectControlsPanel;
 VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;

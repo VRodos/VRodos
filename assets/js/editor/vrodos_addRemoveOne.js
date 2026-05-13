@@ -71,25 +71,71 @@ VRODOS.ui.frameNewSceneObject = function(object3D) {
     VRODOS.editor.envir.orbitControls.update();
 }
 
-VRODOS.utils.decodeDisplayText = function(value) {
-    let text = typeof value === 'string' ? value : (value == null ? '' : String(value));
-    if (!text) return '';
+VRODOS.ui.registerSceneObject = function(object, options) {
+    const opts = Object.assign({
+        selectable: true,
+        updateHierarchy: true,
+        select: false,
+        frame: false,
+        autosave: false,
+        renderReason: 'object-added'
+    }, options || {});
 
-    for (let i = 0; i < 2; i++) {
-        if (/%[0-9a-fA-F]{2}/.test(text)) {
-            try {
-                const decoded = decodeURIComponent(text);
-                if (decoded === text) break;
-                text = decoded;
-            } catch (err) {
-                break;
-            }
-        }
+    if (VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') {
+        return VRODOS.editor.objectFactory.addSceneObject(object, opts);
     }
 
-    return text.replace(/(?:\\+|\/+)?u([0-9a-fA-F]{4})/g, (_, hex) =>
-        String.fromCodePoint(parseInt(hex, 16))
-    );
+    if (object && VRODOS.editor.envir && VRODOS.editor.envir.scene && opts.addToScene !== false && !object.parent) {
+        VRODOS.editor.envir.scene.add(object);
+    }
+    if (object && opts.selectable && VRODOS.editor.envir && VRODOS.editor.envir.selectableMeshes) {
+        VRODOS.editor.envir.selectableMeshes.add(object);
+    }
+    if (object && opts.updateHierarchy && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
+        VRODOS.ui.addInHierarchyViewer(object);
+    }
+    return object;
+}
+
+VRODOS.ui.selectNewSceneObject = function(object, options) {
+    const opts = Object.assign({
+        source: 'add-object',
+        openPanel: false,
+        showProperties: false,
+        frame: true,
+        autosave: true
+    }, options || {});
+
+    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.select === 'function') {
+        VRODOS.editor.selection.select(object, {
+            source: opts.source,
+            openPanel: opts.openPanel,
+            showProperties: opts.showProperties,
+            focusHierarchy: true,
+            outline: true,
+            syncGui: true,
+            setMode: true
+        });
+    } else {
+        if (typeof VRODOS.ui.attachTransformTarget === 'function') VRODOS.ui.attachTransformTarget(object);
+        if (typeof VRODOS.ui.removeAllCelOutlines === 'function') VRODOS.ui.removeAllCelOutlines();
+        if (typeof VRODOS.ui.addCelOutline === 'function') VRODOS.ui.addCelOutline(object);
+        if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') VRODOS.ui.setDatGuiInitialVales(object);
+    }
+
+    if (opts.frame && typeof VRODOS.ui.frameNewSceneObject === 'function') {
+        VRODOS.ui.frameNewSceneObject(object);
+    }
+    if (object) {
+        VRODOS.editor.selected_object_name = object.name;
+    }
+    if (VRODOS.ui.transform && typeof VRODOS.ui.transform.setSize === 'function') {
+        VRODOS.ui.transform.setSize();
+    }
+    if (opts.autosave && typeof VRODOS.api.triggerAutoSave === 'function') {
+        VRODOS.api.triggerAutoSave();
+    }
+    return object;
 }
 
 VRODOS.utils.normalizeAssessmentLevels = function(levels) {
@@ -433,11 +479,9 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     lightSunShadowhelper.name = `lightShadowHelper_${  lightSun.name}`;
     lightSunShadowhelper.vrodos_internal_helper = true;
 
-    VRODOS.editor.envir.scene.add(lightSun);
-    VRODOS.editor.envir.selectableMeshes.add(lightSun);
+    VRODOS.ui.registerSceneObject(lightSun, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-sun-added' });
     VRODOS.editor.envir.scene.add(lightSunHelper);
-    VRODOS.editor.envir.scene.add(lightTargetSpot);
-    VRODOS.editor.envir.selectableMeshes.add(lightTargetSpot);
+    VRODOS.ui.registerSceneObject(lightTargetSpot, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-target-added' });
     VRODOS.editor.envir.scene.add(lightSunShadowhelper);
 
     lightSun.target.updateMatrixWorld();
@@ -451,20 +495,6 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     lightSun.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
     lightSun.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
-    // Attach Editor Controls
-    if (typeof VRODOS.ui.attachTransformTarget === 'function') {
-        VRODOS.ui.attachTransformTarget(lightSun);
-    } else {
-        VRODOS.editor.currentSelectedRealObject = lightSun;
-        VRODOS.editor.transform_controls.attach(lightSun);
-    }
-    VRODOS.ui.removeAllCelOutlines();
-    VRODOS.ui.addCelOutline(lightSun);
-    VRODOS.ui.frameNewSceneObject(lightSun);
-
-    VRODOS.editor.selected_object_name = nameModel;
-    VRODOS.ui.transform.setSize();
-
     VRODOS.ui.addInHierarchyViewer(lightSun);
     VRODOS.ui.addInHierarchyViewer(lightTargetSpot);
 
@@ -474,7 +504,7 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     lightSunHelper.children[1].material.color.setHex(hexcol);
     lightTargetSpot.children[0].material.color.setHex(hexcol);
 
-    VRODOS.api.triggerAutoSave();
+    VRODOS.ui.selectNewSceneObject(lightSun, { source: 'light-sun-added' });
 }
 
 /**
@@ -516,8 +546,7 @@ VRODOS.api.createLightLamp = function(nameModel, addedAt) {
     lightLampHelper.parentLightName = lightLamp.name;
     lightLampHelper.vrodos_internal_helper = true;
 
-    VRODOS.editor.envir.scene.add(lightLamp);
-    VRODOS.editor.envir.selectableMeshes.add(lightLamp);
+    VRODOS.ui.registerSceneObject(lightLamp, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-lamp-added' });
     VRODOS.editor.envir.scene.add(lightLampHelper);
     lightLampHelper.update();
 
@@ -528,24 +557,12 @@ VRODOS.api.createLightLamp = function(nameModel, addedAt) {
     lightLamp.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
     lightLamp.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
-    if (typeof VRODOS.ui.attachTransformTarget === 'function') {
-        VRODOS.ui.attachTransformTarget(lightLamp);
-    } else {
-        VRODOS.editor.currentSelectedRealObject = lightLamp;
-        VRODOS.editor.transform_controls.attach(lightLamp);
-    }
-    VRODOS.ui.removeAllCelOutlines();
-    VRODOS.ui.addCelOutline(lightLamp);
-    VRODOS.ui.frameNewSceneObject(lightLamp);
-
     lightLamp.color.setHex(hexcol);
     lightLamp.power = 10;
 
-    VRODOS.editor.selected_object_name = nameModel;
-    VRODOS.ui.transform.setSize();
     VRODOS.ui.addInHierarchyViewer(lightLamp);
 
-    VRODOS.api.triggerAutoSave();
+    VRODOS.ui.selectNewSceneObject(lightLamp, { source: 'light-lamp-added' });
 }
 
 /**
@@ -587,10 +604,8 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
 
     lightSpot.target.position = lightTargetSpot.position;
 
-    VRODOS.editor.envir.scene.add(lightSpot);
-    VRODOS.editor.envir.selectableMeshes.add(lightSpot);
-    VRODOS.editor.envir.scene.add(lightTargetSpot);
-    VRODOS.editor.envir.selectableMeshes.add(lightTargetSpot);
+    VRODOS.ui.registerSceneObject(lightSpot, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-spot-added' });
+    VRODOS.ui.registerSceneObject(lightTargetSpot, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-target-added' });
 
     lightSpot.target.updateMatrixWorld();
 
@@ -601,23 +616,10 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
     lightSpot.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
     lightSpot.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
-    if (typeof VRODOS.ui.attachTransformTarget === 'function') {
-        VRODOS.ui.attachTransformTarget(lightSpot);
-    } else {
-        VRODOS.editor.currentSelectedRealObject = lightSpot;
-        VRODOS.editor.transform_controls.attach(lightSpot);
-    }
-    VRODOS.ui.removeAllCelOutlines();
-    VRODOS.ui.addCelOutline(lightSpot);
-    VRODOS.ui.frameNewSceneObject(lightSpot);
-
-    VRODOS.editor.selected_object_name = nameModel;
-    VRODOS.ui.transform.setSize();
-
     VRODOS.ui.addInHierarchyViewer(lightSpot);
     VRODOS.ui.addInHierarchyViewer(lightTargetSpot);
 
-    VRODOS.api.triggerAutoSave();
+    VRODOS.ui.selectNewSceneObject(lightSpot, { source: 'light-spot-added' });
 }
 
 /**
@@ -641,8 +643,7 @@ VRODOS.api.createLightAmbient = function(nameModel, addedAt) {
     lampSphere.name = "ambientSphere";
     lightAmbient.add(lampSphere);
 
-    VRODOS.editor.envir.scene.add(lightAmbient);
-    VRODOS.editor.envir.selectableMeshes.add(lightAmbient);
+    VRODOS.ui.registerSceneObject(lightAmbient, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-ambient-added' });
 
     const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
     trs_tmp.translation[1] += 3;
@@ -651,21 +652,9 @@ VRODOS.api.createLightAmbient = function(nameModel, addedAt) {
     lightAmbient.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
     lightAmbient.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
-    if (typeof VRODOS.ui.attachTransformTarget === 'function') {
-        VRODOS.ui.attachTransformTarget(lightAmbient);
-    } else {
-        VRODOS.editor.currentSelectedRealObject = lightAmbient;
-        VRODOS.editor.transform_controls.attach(lightAmbient);
-    }
-    VRODOS.ui.removeAllCelOutlines();
-    VRODOS.ui.addCelOutline(lightAmbient);
-    VRODOS.ui.frameNewSceneObject(lightAmbient);
-
-    VRODOS.editor.selected_object_name = nameModel;
-    VRODOS.ui.transform.setSize();
     VRODOS.ui.addInHierarchyViewer(lightAmbient);
 
-    VRODOS.api.triggerAutoSave();
+    VRODOS.ui.selectNewSceneObject(lightAmbient, { source: 'light-ambient-added' });
 }
 
 /**
@@ -701,8 +690,7 @@ VRODOS.api.createPawn = function(nameModel, addedAt, pluginPath) {
             pawnLabel.position.set(0, 1.5, 0);
             Pawn.add(pawnLabel);
 
-            VRODOS.editor.envir.scene.add(Pawn);
-            VRODOS.editor.envir.selectableMeshes.add(Pawn);
+            VRODOS.ui.registerSceneObject(Pawn, { updateHierarchy: false, incrementLoaded: false, renderReason: 'pawn-added' });
 
             const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
             trs_tmp.translation[1] += 3;
@@ -711,21 +699,9 @@ VRODOS.api.createPawn = function(nameModel, addedAt, pluginPath) {
             Pawn.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
             Pawn.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
-            if (typeof VRODOS.ui.attachTransformTarget === 'function') {
-                VRODOS.ui.attachTransformTarget(Pawn);
-            } else {
-                VRODOS.editor.currentSelectedRealObject = Pawn;
-                VRODOS.editor.transform_controls.attach(Pawn);
-            }
-            VRODOS.ui.removeAllCelOutlines();
-            VRODOS.ui.addCelOutline(Pawn);
-            VRODOS.ui.frameNewSceneObject(Pawn);
-
-            VRODOS.editor.selected_object_name = nameModel;
-            VRODOS.ui.transform.setSize();
             VRODOS.ui.addInHierarchyViewer(Pawn);
 
-            VRODOS.api.triggerAutoSave();
+            VRODOS.ui.selectNewSceneObject(Pawn, { source: 'pawn-added' });
         },
         null,
         (error) => console.log('Error loading Pawn GLB:', error)
@@ -750,7 +726,10 @@ VRODOS.api.createGlbAsset = function(nameModel, addedAt, pluginPath) {
     };
 
     manager.onLoad = () => {
-        const insertedObject = VRODOS.editor.envir.scene.getObjectByName(nameModel);
+        const insertedObject = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByName === 'function'
+            ? VRODOS.editor.sceneRegistry.getByName(nameModel)
+            : VRODOS.editor.envir.scene.getObjectByName(nameModel);
+        if (!insertedObject) return;
         const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
 
         insertedObject.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
@@ -769,22 +748,9 @@ VRODOS.api.createGlbAsset = function(nameModel, addedAt, pluginPath) {
             }
         }
 
-        if (typeof VRODOS.ui.attachTransformTarget === 'function') {
-            VRODOS.ui.attachTransformTarget(insertedObject);
-        } else {
-            VRODOS.editor.currentSelectedRealObject = insertedObject;
-            VRODOS.editor.transform_controls.detach();
-            VRODOS.editor.transform_controls.attach(insertedObject);
-        }
-        VRODOS.ui.removeAllCelOutlines();
-        VRODOS.ui.addCelOutline(insertedObject);
-        VRODOS.ui.frameNewSceneObject(insertedObject);
-
-        VRODOS.editor.selected_object_name = nameModel;
-        VRODOS.ui.transform.setSize();
         VRODOS.ui.addInHierarchyViewer(insertedObject);
 
-        VRODOS.api.triggerAutoSave();
+        VRODOS.ui.selectNewSceneObject(insertedObject, { source: 'glb-added' });
         if (typeof VRODOS.editor.requestRender === 'function') {
             VRODOS.editor.requestRender('asset-added');
         }
@@ -812,24 +778,13 @@ VRODOS.api.createAssessmentAsset = function(nameModel, addedAt) {
     assessmentObject.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
     assessmentObject.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
-    VRODOS.editor.envir.scene.add(assessmentObject);
-    VRODOS.editor.envir.selectableMeshes.add(assessmentObject);
-    if (typeof VRODOS.ui.attachTransformTarget === 'function') {
-        VRODOS.ui.attachTransformTarget(assessmentObject);
-    } else {
-        VRODOS.editor.currentSelectedRealObject = assessmentObject;
-        VRODOS.editor.transform_controls.detach();
-        VRODOS.editor.transform_controls.attach(assessmentObject);
-    }
-    VRODOS.ui.removeAllCelOutlines();
-    VRODOS.ui.addCelOutline(assessmentObject);
-    VRODOS.ui.frameNewSceneObject(assessmentObject);
-
-    VRODOS.editor.selected_object_name = nameModel;
-    VRODOS.ui.transform.setSize();
-    VRODOS.ui.addInHierarchyViewer(assessmentObject);
-
-    VRODOS.api.triggerAutoSave();
+    VRODOS.ui.registerSceneObject(assessmentObject, {
+        selectable: true,
+        updateHierarchy: true,
+        incrementLoaded: false,
+        renderReason: 'assessment-added'
+    });
+    VRODOS.ui.selectNewSceneObject(assessmentObject, { source: 'assessment-added' });
 }
 
 VRODOS.api.createTextAsset = function(nameModel, addedAt) {
@@ -842,24 +797,13 @@ VRODOS.api.createTextAsset = function(nameModel, addedAt) {
     VRODOS.loader.setObjectProperties(textObject, nameModel, VRODOS.data.scene_data.objects);
     textObject.addedAt = addedAt;
 
-    VRODOS.editor.envir.scene.add(textObject);
-    VRODOS.editor.envir.selectableMeshes.add(textObject);
-    if (typeof VRODOS.ui.attachTransformTarget === 'function') {
-        VRODOS.ui.attachTransformTarget(textObject);
-    } else {
-        VRODOS.editor.currentSelectedRealObject = textObject;
-        VRODOS.editor.transform_controls.detach();
-        VRODOS.editor.transform_controls.attach(textObject);
-    }
-    VRODOS.ui.removeAllCelOutlines();
-    VRODOS.ui.addCelOutline(textObject);
-    VRODOS.ui.frameNewSceneObject(textObject);
-
-    VRODOS.editor.selected_object_name = nameModel;
-    VRODOS.ui.transform.setSize();
-    VRODOS.ui.addInHierarchyViewer(textObject);
-
-    VRODOS.api.triggerAutoSave();
+    VRODOS.ui.registerSceneObject(textObject, {
+        selectable: true,
+        updateHierarchy: true,
+        incrementLoaded: false,
+        renderReason: 'text-added'
+    });
+    VRODOS.ui.selectNewSceneObject(textObject, { source: 'text-added' });
 }
 
 /**
@@ -926,34 +870,43 @@ VRODOS.ui.deleteFomScene = function(uuid, name) {
         document.getElementById("confirm-asset-deletion-description").innerHTML = `Do you really want to delete the asset named <b>${  name  }</b>?`;
     }
 
-    if (typeof VRODOS.editor.transform_controls !== 'undefined') {
-        VRODOS.editor.transform_controls.detach();
+    const selectedObject = VRODOS.editor.transforms && typeof VRODOS.editor.transforms.getRealObject === 'function'
+        ? VRODOS.editor.transforms.getRealObject()
+        : null;
+
+    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
+        VRODOS.editor.selection.clear({ source: 'delete-dialog-open', hidePanel: false });
+    } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
+        VRODOS.ui.clearTransformSelection();
     }
 
     const delete_dialog_element = document.getElementById('confirm-deletion-dialog');
     delete_dialog_element.showModal();
 
     const delUuid = uuid;
-    let selUuid;
-    if( typeof(VRODOS.editor.transform_controls.object) != "undefined" )
-        {selUuid = VRODOS.editor.transform_controls.object.uuid;}
-    else
-        {selUuid = "unassigned";}
+    const selUuid = selectedObject ? selectedObject.uuid : "unassigned";
     // var selUuid = (typeof checkUuid != "undefined") ? checkUuid : "unassigned";
     const delete_btn_element = document.getElementById("delete-asset-btn-confirmation");
     delete_btn_element.addEventListener('click', () => {
         delete_dialog_element.close();
-        VRODOS.editor.transform_controls.detach();
+        if (typeof VRODOS.ui.clearTransformSelection === 'function') {
+            VRODOS.ui.clearTransformSelection();
+        }
         VRODOS.api.deleteAssetFromScene(uuid, true);
-        if(selUuid != "unassigned"){
-             if (delUuid != selUuid){
-            VRODOS.editor.transform_controls.attach(VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , selUuid));
-            VRODOS.ui.setDatGuiInitialVales(VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , selUuid));
-            }
-            else{
+        if (selUuid !== "unassigned") {
+            if (delUuid !== selUuid) {
+                const objectToReselect = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByUuid === 'function'
+                    ? VRODOS.editor.sceneRegistry.getByUuid(selUuid)
+                    : VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , selUuid);
+                if (objectToReselect && VRODOS.editor.selection && typeof VRODOS.editor.selection.select === 'function') {
+                    VRODOS.editor.selection.select(objectToReselect, { source: 'delete-reselect' });
+                } else if (objectToReselect && typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
+                    VRODOS.ui.setDatGuiInitialVales(objectToReselect);
+                }
+            } else {
                 VRODOS.ui.hideObjectControlsPanel();
             }
-        }else{
+        } else {
             VRODOS.ui.hideObjectControlsPanel();
         }
        
@@ -974,17 +927,27 @@ VRODOS.ui.removeHierarchyEntriesForObject = function(uuid, objectName) {
 
 VRODOS.ui.lockOnScene = function(uuid, name) {
 
-    const selectedObject = VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , uuid);
+    const selectedObject = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByUuid === 'function'
+        ? VRODOS.editor.sceneRegistry.getByUuid(uuid)
+        : VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , uuid);
     const hierarchyItem = document.getElementById(uuid);
+    if (!selectedObject) return;
 
     if (selectedObject.locked){
         selectedObject.locked = false;
-        VRODOS.editor.transform_controls.attach(VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , uuid));
-        VRODOS.ui.setDatGuiInitialVales(VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , uuid));
+        if (VRODOS.editor.selection && typeof VRODOS.editor.selection.select === 'function') {
+            VRODOS.editor.selection.select(selectedObject, { source: 'lock-toggle' });
+        } else if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
+            VRODOS.ui.setDatGuiInitialVales(selectedObject);
+        }
         VRODOS.ui.showObjectControlsPanel();
     }else{
         selectedObject.locked = true;
-        VRODOS.editor.transform_controls.detach();
+        if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
+            VRODOS.editor.selection.clear({ source: 'lock-toggle' });
+        } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
+            VRODOS.ui.clearTransformSelection();
+        }
         VRODOS.ui.hideObjectControlsPanel();
     }
 
@@ -1021,9 +984,12 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
         }
     }
 
-    // 2. Find actual object inside scene (search direct children and handles proxies)
-    let objectSelected = null;
+    // 2. Find actual object inside scene (registry first, fallback to direct children and proxies)
+    let objectSelected = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByUuid === 'function'
+        ? VRODOS.editor.sceneRegistry.getByUuid(uuid)
+        : null;
     for (const child of VRODOS.editor.envir.scene.children) {
+        if (objectSelected) break;
         if (typeof child === 'object' && child !== null) {
             if (child.uuid === uuid) {
                 objectSelected = child.realObject || child;
@@ -1062,7 +1028,16 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
 
         // Sun target spot
         const targetSpot = VRODOS.editor.envir.scene.getObjectByName(`lightTargetSpot_${  objectSelected.name}`);
-        if (targetSpot) VRODOS.editor.envir.scene.remove(targetSpot);
+        if (targetSpot) {
+            if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.remove === 'function') {
+                VRODOS.editor.sceneRegistry.remove(targetSpot, { reason: 'light-target-removed' });
+            } else {
+                VRODOS.editor.envir.scene.remove(targetSpot);
+                if (VRODOS.editor.envir.selectableMeshes) {
+                    VRODOS.editor.envir.selectableMeshes.delete(targetSpot);
+                }
+            }
+        }
 
         // Sun target spot remove from hierarchy viewer
         VRODOS.ui.removeHierarchyEntriesForObject('', `lightTargetSpot_${objectSelected.name}`);
@@ -1076,8 +1051,10 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
     // Remove cel outline if present
     if (typeof VRODOS.ui.removeCelOutline === 'function') VRODOS.ui.removeCelOutline(objectSelected);
 
-    if (typeof VRODOS.editor.transform_controls !== 'undefined') {
-        VRODOS.editor.transform_controls.detach();
+    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
+        VRODOS.editor.selection.clear({ source: 'object-deleted' });
+    } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
+        VRODOS.ui.clearTransformSelection();
     }
 
     // prevent orbiting
@@ -1089,13 +1066,19 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
     }
 
     // Remove object from scene
-    VRODOS.editor.envir.scene.remove(objectSelected);
-    VRODOS.editor.envir.selectableMeshes.delete(objectSelected);
+    if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.remove === 'function') {
+        VRODOS.editor.sceneRegistry.remove(objectSelected, { reason: 'object-deleted' });
+    } else {
+        VRODOS.editor.envir.scene.remove(objectSelected);
+        VRODOS.editor.envir.selectableMeshes.delete(objectSelected);
+    }
 
     // Remove from hierarchy viewer
     VRODOS.ui.removeHierarchyEntriesForObject(uuid, objectSelected.name);
 
-    //VRODOS.editor.transform_controls.detach();
+    if (VRODOS.editor.render && typeof VRODOS.editor.render.request === 'function') {
+        VRODOS.editor.render.request('object-deleted');
+    }
 
     // Save scene
     VRODOS.api.triggerAutoSave();
@@ -1121,5 +1104,3 @@ VRODOS.utils.disposeObject = function(object) {
         }
     });
 }
-
-

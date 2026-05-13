@@ -595,7 +595,11 @@ VRODOS.loader.LoaderMulti = class {
                                     }
                                 }
                                 VRODOS.editor.envir.applyDirectorTransform(translation, rotation);
-                                if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
+                                if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.add === 'function') {
+                                    VRODOS.editor.sceneRegistry.add(object, { addToScene: false, selectable: true, reason: 'director-camera-loaded' });
+                                } else if (VRODOS.editor.envir.selectableMeshes) {
+                                    VRODOS.editor.envir.selectableMeshes.add(object);
+                                }
                                 if (manager) manager.itemEnd(name);
                                 resolve();
                             },
@@ -616,11 +620,19 @@ VRODOS.loader.LoaderMulti = class {
                     pendingLoads.push(new Promise((resolve) => {
                         const object = VRODOS.loader.createAssessmentObject(name, resource);
                         VRODOS.loader.setObjectProperties(object, name, resources3D);
-                        VRODOS.editor.envir.scene.add(object);
-                        if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
-                        VRODOS.editor.envir.loadedObjectsCount++;
-                        if (VRODOS.loader.shouldBuildHierarchyDuringLoad() && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
-                            VRODOS.ui.addInHierarchyViewer(object);
+                        if (VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') {
+                            VRODOS.editor.objectFactory.addSceneObject(object, {
+                                selectable: true,
+                                updateHierarchy: VRODOS.loader.shouldBuildHierarchyDuringLoad(),
+                                renderReason: 'assessment-loaded'
+                            });
+                        } else {
+                            VRODOS.editor.envir.scene.add(object);
+                            if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
+                            VRODOS.editor.envir.loadedObjectsCount++;
+                            if (VRODOS.loader.shouldBuildHierarchyDuringLoad() && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
+                                VRODOS.ui.addInHierarchyViewer(object);
+                            }
                         }
                         resolve();
                     }));
@@ -630,21 +642,32 @@ VRODOS.loader.LoaderMulti = class {
                     pendingLoads.push(new Promise((resolve) => {
                         const object = VRODOS.loader.createTextPanelObject(name, resource);
                         VRODOS.loader.setObjectProperties(object, name, resources3D);
-                        VRODOS.editor.envir.scene.add(object);
-                        if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
-                        VRODOS.editor.envir.loadedObjectsCount++;
-                        if (VRODOS.loader.shouldBuildHierarchyDuringLoad() && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
-                            VRODOS.ui.addInHierarchyViewer(object);
+                        const trs = resource.trs;
+                        const shouldSelect = trs && !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading);
+                        if (VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') {
+                            VRODOS.editor.objectFactory.addSceneObject(object, {
+                                selectable: true,
+                                updateHierarchy: VRODOS.loader.shouldBuildHierarchyDuringLoad() || shouldSelect,
+                                select: shouldSelect,
+                                frame: shouldSelect,
+                                autosave: shouldSelect,
+                                openPanel: false,
+                                showProperties: false,
+                                source: 'text-loaded',
+                                renderReason: 'text-loaded'
+                            });
+                        } else {
+                            VRODOS.editor.envir.scene.add(object);
+                            if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
+                            VRODOS.editor.envir.loadedObjectsCount++;
+                            if (VRODOS.loader.shouldBuildHierarchyDuringLoad() && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
+                                VRODOS.ui.addInHierarchyViewer(object);
+                            }
                         }
 
-                        const trs = resource.trs;
-                        if (trs && !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading)) {
+                        if (shouldSelect && !(VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function')) {
                             if (typeof VRODOS.ui.attachTransformTarget === 'function') {
                                 VRODOS.ui.attachTransformTarget(object);
-                            } else {
-                                VRODOS.editor.currentSelectedRealObject = object;
-                                VRODOS.editor.transform_controls.detach();
-                                VRODOS.editor.transform_controls.attach(object);
                             }
                             if (typeof VRODOS.ui.removeAllCelOutlines === 'function') VRODOS.ui.removeAllCelOutlines();
                             if (typeof VRODOS.ui.addCelOutline === 'function') VRODOS.ui.addCelOutline(object);
@@ -653,6 +676,10 @@ VRODOS.loader.LoaderMulti = class {
                             if (typeof VRODOS.ui.transform.setSize === 'function') VRODOS.ui.transform.setSize();
                             if (typeof VRODOS.api.triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
                             if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') VRODOS.ui.setDatGuiInitialVales(object);
+                            const progressWrapper = document.getElementById("progressWrapper");
+                            if (progressWrapper) progressWrapper.style.visibility = "hidden";
+                        }
+                        if (shouldSelect && VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') {
                             const progressWrapper = document.getElementById("progressWrapper");
                             if (progressWrapper) progressWrapper.style.visibility = "hidden";
                         }
@@ -698,28 +725,43 @@ VRODOS.loader.LoaderMulti = class {
                             object.position.set(pos[0], pos[1], pos[2]);
                             object.rotation.set(rot[0], rot[1], rot[2]);
                             object.scale.set(scl[0], scl[1], scl[2]);
-                            VRODOS.editor.envir.scene.add(object);
-                            if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
-                            VRODOS.editor.envir.loadedObjectsCount++;
+                            const shouldSelect = trs && !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading);
+                            if (VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') {
+                                VRODOS.editor.objectFactory.addSceneObject(object, {
+                                    selectable: true,
+                                    updateHierarchy: VRODOS.loader.shouldBuildHierarchyDuringLoad() || shouldSelect,
+                                    select: shouldSelect,
+                                    frame: shouldSelect,
+                                    autosave: shouldSelect,
+                                    openPanel: false,
+                                    showProperties: false,
+                                    source: 'image-loaded',
+                                    renderReason: 'image-loaded'
+                                });
+                            } else {
+                                VRODOS.editor.envir.scene.add(object);
+                                if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
+                                VRODOS.editor.envir.loadedObjectsCount++;
+                            }
 
                             // When dragged onto canvas (manager.onLoad won't fire — no GLTF items),
                             // manually attach controls, update hierarchy, and save.
-                            if (trs && !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading)) {
+                            if (shouldSelect && !(VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function')) {
                                 if (typeof VRODOS.ui.attachTransformTarget === 'function') {
                                     VRODOS.ui.attachTransformTarget(object);
-                                } else {
-                                    VRODOS.editor.currentSelectedRealObject = object;
-                                    VRODOS.editor.transform_controls.detach();
-                                    VRODOS.editor.transform_controls.attach(object);
                                 }
                                 if (typeof VRODOS.ui.removeAllCelOutlines === 'function') VRODOS.ui.removeAllCelOutlines();
                                 if (typeof VRODOS.ui.addCelOutline === 'function') VRODOS.ui.addCelOutline(object);
                                 VRODOS.editor.selected_object_name = object.name;
                                 if (typeof VRODOS.ui.transform.setSize === 'function') VRODOS.ui.transform.setSize();
                                 if (typeof VRODOS.ui.addInHierarchyViewer === 'function') VRODOS.ui.addInHierarchyViewer(object);
-                                if (typeof triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
+                                if (typeof VRODOS.api.triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
                                 if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') VRODOS.ui.setDatGuiInitialVales(object);
                                 document.getElementById("progressWrapper").style.visibility = "hidden";
+                            }
+                            if (shouldSelect && VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') {
+                                const progressWrapper = document.getElementById("progressWrapper");
+                                if (progressWrapper) progressWrapper.style.visibility = "hidden";
                             }
                         }));
                     }
@@ -817,14 +859,22 @@ VRODOS.loader.LoaderMulti = class {
                                                 finalObject.children = [];
                                             }
 
-                                            VRODOS.editor.envir.scene.add(finalObject);
-                                            VRODOS.editor.envir.selectableMeshes.add(finalObject);
                                             finalObject.glb_path = glbURL;
+                                            if (VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') {
+                                                VRODOS.editor.objectFactory.addSceneObject(finalObject, {
+                                                    selectable: true,
+                                                    incrementLoaded: false,
+                                                    renderReason: 'glb-loaded'
+                                                });
+                                            } else {
+                                                VRODOS.editor.envir.scene.add(finalObject);
+                                                VRODOS.editor.envir.selectableMeshes.add(finalObject);
+                                            }
                                             if (typeof VRODOS.editor.envir.applyEditorPerformanceProfile === 'function') {
                                                 VRODOS.editor.envir.applyEditorPerformanceProfile(false);
                                             }
                                             if (manager) manager.itemEnd(name);
-                                            if (typeof VRODOS.editor.requestRender === 'function') {
+                                            if (!(VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') && typeof VRODOS.editor.requestRender === 'function') {
                                                 VRODOS.editor.requestRender('glb-loaded');
                                             }
                                             resolve();
