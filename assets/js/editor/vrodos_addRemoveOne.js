@@ -34,6 +34,53 @@ function getSceneObjectByName(name) {
     return VRODOS.editor.sceneRegistry.get(name);
 }
 
+function getPendingSceneObjectAdds() {
+    VRODOS.editor.pendingSceneObjectAdds = VRODOS.editor.pendingSceneObjectAdds || new Map();
+    return VRODOS.editor.pendingSceneObjectAdds;
+}
+
+function prunePendingSceneObjectAdds() {
+    const pendingAdds = getPendingSceneObjectAdds();
+    const now = Date.now();
+    pendingAdds.forEach((startedAt, objectName) => {
+        if (now - startedAt > 30000) {
+            pendingAdds.delete(objectName);
+        }
+    });
+}
+
+function markSceneObjectAddPending(nameModel) {
+    if (!nameModel) {
+        return;
+    }
+
+    const pendingAdds = getPendingSceneObjectAdds();
+    pendingAdds.set(nameModel, Date.now());
+    window.setTimeout(() => {
+        const startedAt = pendingAdds.get(nameModel);
+        if (startedAt && Date.now() - startedAt > 14000) {
+            pendingAdds.delete(nameModel);
+        }
+    }, 15000);
+}
+
+function isSceneObjectAddPending(nameModel) {
+    if (!nameModel) {
+        return false;
+    }
+
+    prunePendingSceneObjectAdds();
+    return getPendingSceneObjectAdds().has(nameModel);
+}
+
+function clearSceneObjectAddPending(nameModel) {
+    if (!nameModel || !VRODOS.editor.pendingSceneObjectAdds) {
+        return;
+    }
+
+    VRODOS.editor.pendingSceneObjectAdds.delete(nameModel);
+}
+
 VRODOS.ui.frameNewSceneObject = function(object3D) {
     if (!object3D || !VRODOS.editor.envir || !VRODOS.editor.envir.cameraOrbit || !VRODOS.editor.envir.orbitControls) {
         return;
@@ -795,6 +842,19 @@ VRODOS.api.createTextAsset = function(nameModel, addedAt) {
  * Main function to add objects to the canvas.
  */
 VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, translation, pluginPath) {
+    if (!nameModel) {
+        return null;
+    }
+
+    const existingObject = getSceneObjectByName(nameModel);
+    if (existingObject || isSceneObjectAddPending(nameModel)) {
+        console.warn("VRodos: skipped duplicate scene object add", nameModel);
+        return existingObject || null;
+    }
+
+    markSceneObjectAddPending(nameModel);
+    dataDrag = dataDrag || {};
+    translation = Array.isArray(translation) ? translation : [0, 0, 0];
     const addedAt = VRODOS.utils.getSceneObjectAddedAt(dataDrag);
 
     // Initial persistence structure
@@ -835,16 +895,24 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
     };
 
     // Execute the specific handler or fallback to generic GLB asset loader
-    if (categoryHandlers[categoryName]) {
-        categoryHandlers[categoryName]();
-    } else {
-        VRODOS.api.createGlbAsset(nameModel, addedAt, VRODOS.data.pluginPath);
+    try {
+        if (categoryHandlers[categoryName]) {
+            categoryHandlers[categoryName]();
+        } else {
+            VRODOS.api.createGlbAsset(nameModel, addedAt, VRODOS.data.pluginPath);
+        }
+    } catch (error) {
+        clearSceneObjectAddPending(nameModel);
+        delete VRODOS.data.scene_data.objects[nameModel];
+        throw error;
     }
 
     // [NEW] Capture for Undo Manager
     if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
         VRODOS.editor.undoManager.add(new VRODOS.editor.AddObjectCommand(nameModel, VRODOS.data.scene_data.objects[nameModel]));
     }
+
+    return getSceneObjectByName(nameModel);
 }
 
 

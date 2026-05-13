@@ -249,7 +249,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             dragData.text_content = vrodos_decodeBase64Unicode(dragData.text_content_b64);
             delete dragData.text_content_b64;
         }
-        dragData.title = `${target.getAttribute("data-asset_slug")  }_${  Math.floor(Date.now() / 1000)}`;
+        dragData.title = `${target.getAttribute("data-asset_slug")  }_${  Date.now()}`;
         dragData.name = dragData.title;
         e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
     });

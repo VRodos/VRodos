@@ -332,6 +332,12 @@ VRODOS.ui.setSceneScreenshotPreview = function(src) {
     }
 };
 VRODOS.ui.onDrop = function(ev) {
+    if (ev.vrodosSceneDropHandled) {
+        ev.preventDefault();
+        return;
+    }
+    ev.vrodosSceneDropHandled = true;
+
     // Ignore scene reorder drags
     if (ev.dataTransfer.types.indexOf('application/vrodos-scene-reorder') !== -1) return;
 
@@ -766,63 +772,11 @@ VRODOS.ui.loadButtonActions = function() {
     }
 
     // Drag elements inside VR Editor
-    document.getElementById('vr_editor_main_div').ondrop =
-        function (ev) {
-
-            // Ignore scene reorder drags
-            if (ev.dataTransfer.types.indexOf('application/vrodos-scene-reorder') !== -1) return;
-
-            const dataDrag = JSON.parse(ev.dataTransfer.getData("text"));
-
-            const categoryName = dataDrag.category_name;
-            const nameModel = dataDrag.title;
-
-            let path = '';
-
-            // SUN or LAMP or Spot or Ambient
-            if (dataDrag.category_name === "lightSun" ||
-                dataDrag.category_name === "lightLamp" ||
-                dataDrag.category_name === "lightSpot" ||
-                dataDrag.category_name === "lightAmbient" ||
-                dataDrag.category_name === "Pawn") {
-
-
-            }
-            else {
-                path = dataDrag.path.substring(0, dataDrag.path.lastIndexOf("/") + 1);
-            }
-
-            const translation = VRODOS.api.dragDropVerticalRayCasting(ev);
-
-
-            // Suppress the click-selection that would fire from the drop's mouseup
-            VRODOS.editor.suppressNextSelection = true;
-
-            VRODOS.editor.selection.clear({ source: 'canvas-drop', hidePanel: false });
-            if (typeof VRODOS.ui.removeAllCelOutlines === 'function') {
-                VRODOS.ui.removeAllCelOutlines();
-            }
-            VRODOS.editor.selected_object_name = null;
-
-            // Asset add to canvas
-            VRODOS.api.addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, VRODOS.data.pluginPath);
-
-            VRODOS.ui.showObjectPropertiesPanel(VRODOS.editor.transforms.getMode());
-
-            if (VRODOS.editor.envir.is2d) {
-                VRODOS.editor.transforms.setMode("translate");
-                document.getElementById("translatePanelGui").style.display = '';
-            }
-
-            ev.preventDefault();
-        };
+    document.getElementById('vr_editor_main_div').ondrop = VRODOS.ui.onDrop;
 
 
     // VR Editor Drag Over
-    document.getElementById('vr_editor_main_div').ondragover =
-        function (ev) {
-            ev.preventDefault();
-        };
+    document.getElementById('vr_editor_main_div').ondragover = VRODOS.ui.onDragOver;
 
 
     const pauseBtn = document.getElementById("pauseRendering");
@@ -1107,14 +1061,14 @@ VRODOS.ui.loadButtonActions = function() {
         ) {
             dragData = {
                 "category_name": `light${  e.target.dataset.lightpawn}`,
-                "title": `mylight${  e.target.dataset.lightpawn  }_${  Math.floor(Date.now() / 1000)}`
+                "title": `mylight${  e.target.dataset.lightpawn  }_${  Date.now()}`
             };
 
         }
         else if (e.target.dataset.lightpawn === "Pawn") {
             dragData = {
                 "category_name": "Pawn",
-                "title": `aPawn` + `_${  Math.floor(Date.now() / 1000)}`
+                "title": `aPawn` + `_${  Date.now()}`
             };
         }
 

@@ -734,7 +734,22 @@ VRODOS.utils = VRODOS.utils || {};
             }, options || {});
 
             if (!object) return null;
+            const existingByUuid = object.uuid ? sceneRegistry.get(object.uuid) : null;
+            const existingByName = object.name ? sceneRegistry.get(object.name) : null;
+            const existingObject = existingByUuid || existingByName;
+
+            if (existingObject && existingObject !== object) {
+                if (object.name && VRODOS.editor.pendingSceneObjectAdds instanceof Map) {
+                    VRODOS.editor.pendingSceneObjectAdds.delete(object.name);
+                }
+                console.warn('VRodos: skipped duplicate scene object registration', object.name || object.uuid);
+                return existingObject;
+            }
+
             sceneRegistry.add(object, opts);
+            if (object.name && VRODOS.editor.pendingSceneObjectAdds instanceof Map) {
+                VRODOS.editor.pendingSceneObjectAdds.delete(object.name);
+            }
 
             const envir = getEnvir();
             if (envir) {
