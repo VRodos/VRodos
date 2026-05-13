@@ -30,6 +30,15 @@ trait VRodos_Asset_CPT_Shared {
 		return wp_http_validate_url( $original_url ) ? esc_url_raw( $original_url ) : '';
 	}
 
+	private static function is_assessment_asset( int $asset_id ): bool {
+		if ( $asset_id <= 0 ) {
+			return false;
+		}
+
+		$terms = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
+		return ! is_wp_error( $terms ) && ! empty( $terms ) && ( $terms[0]->slug ?? '' ) === 'assessment';
+	}
+
 	private static function get_audio_settings_defaults(): array {
 		return [
 			'playback_mode'  => 'interact',
@@ -197,6 +206,8 @@ trait VRodos_Asset_CPT_Shared {
 			case 'glb-upload-failed':
 			case 'model-upload-failed':
 				return 'The model upload failed before the asset could be saved. Please try again, or reduce the file size if this package is especially large.';
+			case 'assessment-create-disabled':
+				return 'Assessment assets are created by the assessment import flow. Existing assessment assets can be edited, but new ones cannot be created manually.';
 			default:
 				return '';
 		}

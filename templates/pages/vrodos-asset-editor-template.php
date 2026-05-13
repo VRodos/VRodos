@@ -413,6 +413,7 @@ else { ?>
                             }
                             .vrodos-cat-trigger:hover { border-color: #cbd5e1; }
                             .vrodos-cat-trigger:focus, .vrodos-cat-trigger.open { border-color: #66cc8a; outline: none; box-shadow: 0 0 0 3px rgba(102,204,138,0.12); }
+                            .vrodos-cat-trigger.vrodos-cat-trigger-locked { cursor: not-allowed; background: #f8fafc; color: #64748b; }
                             .vrodos-cat-trigger .trigger-icon { color: #94a3b8; flex-shrink: 0; }
                             .vrodos-cat-trigger .trigger-label { flex: 1; }
                             .vrodos-cat-trigger .trigger-chevron { color: #94a3b8; flex-shrink: 0; transition: transform 0.2s; }
@@ -435,7 +436,7 @@ else { ?>
                             .vrodos-cat-option.selected i { color: #059669; }
                         </style>
                         <div class="vrodos-cat-dropdown" id="vrodos-cat-dropdown">
-                            <div class="vrodos-cat-trigger" id="vrodos-cat-trigger" tabindex="0">
+                            <div class="vrodos-cat-trigger<?php echo ! empty( $is_assessment_asset ) ? ' vrodos-cat-trigger-locked' : ''; ?>" id="vrodos-cat-trigger" tabindex="0">
                                 <i data-lucide="<?php echo esc_attr($selected_icon); ?>" class="trigger-icon tw-w-4 tw-h-4"></i>
                                 <span class="trigger-label"><?php echo $selected_name ? esc_html($selected_name) : 'Select a category'; ?></span>
                                 <i data-lucide="chevron-down" class="trigger-chevron tw-w-4 tw-h-4"></i>
@@ -467,6 +468,14 @@ else { ?>
                             const menu     = document.getElementById('vrodos-cat-menu');
                             const hidden   = document.getElementById('category-select-native');
                             const descEl   = document.getElementById('categoryDescription');
+                            const isCategoryLocked = <?php echo ! empty( $is_assessment_asset ) ? 'true' : 'false'; ?>;
+
+                            if (isCategoryLocked) {
+                                if (descEl) {
+                                    descEl.textContent = 'Assessment assets are created by the assessment import flow. You can edit the name and GLB, but not this category.';
+                                }
+                                return;
+                            }
 
                             trigger.addEventListener('click', function() {
                                 const isOpen = menu.classList.toggle('show');
@@ -1283,11 +1292,16 @@ else { ?>
 					const slug = categoryDropdownNative.value;
 					// Find the selected option in the custom dropdown
 					const selectedOpt = document.querySelector('#vrodos-cat-menu .vrodos-cat-option.selected');
-					const catId = selectedOpt ? selectedOpt.getAttribute('data-cat-id') : '';
-					const catDesc = selectedOpt ? selectedOpt.getAttribute('data-cat-desc') : '';
+					const currentlySelected = document.getElementById('currently-selected-category');
+					const catId = selectedOpt ? selectedOpt.getAttribute('data-cat-id') : (currentlySelected ? currentlySelected.getAttribute('data-cat-id') : '');
+					const catDesc = selectedOpt
+						? selectedOpt.getAttribute('data-cat-desc')
+						: (currentlySelected ? currentlySelected.getAttribute('data-cat-desc') : '');
 
 					document.getElementById('termIdInput').value = catId;
-					document.getElementById('categoryDescription').innerHTML = catDesc;
+					document.getElementById('categoryDescription').textContent = slug === 'assessment'
+						? 'Assessment assets are created by the assessment import flow. You can edit the name and GLB, but not this category.'
+						: catDesc;
 
 					return slug;
 				}

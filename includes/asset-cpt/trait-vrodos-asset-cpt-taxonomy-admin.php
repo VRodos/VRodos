@@ -104,6 +104,13 @@ trait VRodos_Asset_CPT_Taxonomy_Admin {
 		}
 		$type_ID = intval( $_POST['vrodos_asset3d_cat'], 10 );
 		$term    = ( $type_ID > 0 ) ? get_term( $type_ID, 'vrodos_asset3d_cat' ) : null;
+		if ( ! is_wp_error( $term ) && $term && ( $term->slug ?? '' ) === 'assessment' && ! self::is_assessment_asset( (int) $post_id ) ) {
+			return;
+		}
+		if ( self::is_assessment_asset( (int) $post_id ) ) {
+			wp_set_object_terms( $post_id, 'assessment', 'vrodos_asset3d_cat' );
+			return;
+		}
 		$type    = ( ! is_wp_error( $term ) && ! empty( $term ) ) ? $term->slug : null;
 		wp_set_object_terms( $post_id, $type, 'vrodos_asset3d_cat' );
 	}
@@ -118,7 +125,19 @@ trait VRodos_Asset_CPT_Taxonomy_Admin {
 			echo str_replace( ' id="_ajax_nonce"', '', $nonce_field );
 			$type_IDs   = wp_get_object_terms( $post->ID, 'vrodos_asset3d_cat', ['fields' => 'ids'] );
 			$type_ID    = ( ! is_wp_error( $type_IDs ) && ! empty( $type_IDs ) ) ? $type_IDs[0] : 0;
+			$assessment_term = get_term_by( 'slug', 'assessment', 'vrodos_asset3d_cat' );
+			$is_assessment_asset = self::is_assessment_asset( (int) $post->ID );
+			if ( $is_assessment_asset && $assessment_term ) {
+				echo '<input type="hidden" name="vrodos_asset3d_cat" value="' . esc_attr( $assessment_term->term_id ) . '"/>';
+				echo '<p><strong>' . esc_html( $assessment_term->name ) . '</strong></p>';
+				echo '<p class="description">Assessment assets can be edited, but their category is managed by the assessment import flow.</p>';
+				echo '</div>';
+				return;
+			}
 			$args       = ['show_option_none'  => 'Select Category', 'orderby'           => 'name', 'hide_empty'        => 0, 'selected'          => $type_ID, 'name'              => 'vrodos_asset3d_cat', 'taxonomy'          => 'vrodos_asset3d_cat', 'echo'              => 0, 'option_none_value' => '-1', 'id'                => 'vrodos-select-asset3d-cat-dropdown'];
+			if ( $assessment_term ) {
+				$args['exclude'] = (string) $assessment_term->term_id;
+			}
 			$select     = wp_dropdown_categories( $args );
 			$replace    = "<select$1 onchange='vrodos_hidecfields_asset3d();' required>";
 			$select     = preg_replace( '#<select([^>]*)>#', $replace, $select );

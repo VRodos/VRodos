@@ -47,6 +47,17 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$assettrs         = isset( $_POST['assettrs'] ) ? esc_attr( strip_tags( (string) $_POST['assettrs'] ) ) : '0,0,0,0,0,0,0,0,-100';
 		$redirect_url     = self::build_frontend_redirect_url();
 
+		$is_existing_assessment_asset = $editing_asset_id > 0 && self::is_assessment_asset( (int) $editing_asset_id );
+		if ( $is_existing_assessment_asset ) {
+			$assessment_term = get_term_by( 'slug', 'assessment', 'vrodos_asset3d_cat' );
+			if ( $assessment_term ) {
+				$assetCatID   = (int) $assessment_term->term_id;
+				$assetCatTerm = $assessment_term;
+			}
+		} elseif ( $assetCatTerm && ( $assetCatTerm->slug ?? '' ) === 'assessment' ) {
+			self::redirect_with_frontend_notice( $redirect_url, 'assessment-create-disabled', $submission_buffer_level );
+		}
+
 		$model_upload_error = self::get_frontend_model_upload_error();
 		if ( $model_upload_error ) {
 			self::redirect_with_frontend_notice( $redirect_url, $model_upload_error, $submission_buffer_level );
@@ -389,6 +400,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 			['hide_empty' => false, 'exclude'    => $ids_to_exclude]
 		);
 		$data['saved_term']     = wp_get_post_terms( $data['asset_id'], 'vrodos_asset3d_cat' );
+		$data['is_assessment_asset'] = ! is_wp_error( $data['saved_term'] ) && ! empty( $data['saved_term'] ) && ( $data['saved_term'][0]->slug ?? '' ) === 'assessment';
 		$data['saved_ipr_term'] = wp_get_post_terms( $data['asset_id'], 'vrodos_asset3d_ipr_cat' );
 		$data['cat_ipr_terms']  = get_terms( 'vrodos_asset3d_ipr_cat', ['get' => 'all'] );
 		if ( empty( $data['saved_ipr_term'] ) && ! empty( $data['cat_ipr_terms'] ) && ! is_wp_error( $data['cat_ipr_terms'] ) ) {
