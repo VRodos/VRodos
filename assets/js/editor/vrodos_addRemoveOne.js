@@ -772,7 +772,6 @@ VRODOS.api.createGlbAsset = function(nameModel, addedAt, pluginPath) {
             VRODOS.editor.transform_controls.detach();
             VRODOS.editor.transform_controls.attach(insertedObject);
         }
-        VRODOS.editor.envir.setComposerAndPasses();
         VRODOS.ui.removeAllCelOutlines();
         VRODOS.ui.addCelOutline(insertedObject);
         VRODOS.ui.frameNewSceneObject(insertedObject);
@@ -782,6 +781,9 @@ VRODOS.api.createGlbAsset = function(nameModel, addedAt, pluginPath) {
         VRODOS.ui.addInHierarchyViewer(insertedObject);
 
         VRODOS.api.triggerAutoSave();
+        if (typeof VRODOS.editor.requestRender === 'function') {
+            VRODOS.editor.requestRender('asset-added');
+        }
         document.getElementById("progressWrapper").style.visibility = "hidden";
     };
 
@@ -1115,7 +1117,6 @@ VRODOS.utils.disposeObject = function(object) {
         }
     });
 }
-
 
 
 

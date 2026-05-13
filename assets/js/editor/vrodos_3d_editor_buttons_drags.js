@@ -1231,6 +1231,9 @@ VRODOS.ui.pauseClickFun = function() {
         VRODOS.editor.animate();
         document.getElementById('pauseRendering').style.background = '';
     } else {
+        if (typeof VRODOS.editor.stopRenderLoop === 'function') {
+            VRODOS.editor.stopRenderLoop();
+        }
         document.getElementById('pauseRendering').style.background = 'red';
     }
 
@@ -1355,6 +1358,5 @@ VRODOS.api.triggerAutoSave = function() {
     VRODOS.editor.envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     VRODOS.api.commitPendingSceneSave();
 };
-
 
 

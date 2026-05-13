@@ -34,6 +34,20 @@ const VRODOS_DIRECTOR_GROUND_GUIDE = Object.freeze({
     surfaceOffset: 0.012
 });
 
+const VRODOS_EDITOR_PERFORMANCE_DEFAULTS = Object.freeze({
+    targetFps: 45,
+    lowEndTargetFps: 30,
+    pixelRatioCap: 1.25,
+    lowEndPixelRatioCap: 1,
+    labelFrameStride: 2,
+    lowEndLabelFrameStride: 3,
+    loaderConcurrency: 2,
+    lowEndLoaderConcurrency: 1,
+    textureAnisotropy: 4,
+    lowEndTextureAnisotropy: 2,
+    denseSceneObjectCount: 75
+});
+
 const VRODOS_DIRECTOR_GROUND_GUIDE_EXCLUDED_NAMES = new Set([
     'avatarCamera',
     'avatarControls',
@@ -154,6 +168,17 @@ function vrodosGetPointerLockObject(pointerLockControls) {
     return pointerLockControls.object || null;
 }
 
+function vrodosEditorHardwareProfile() {
+    const nav = typeof navigator !== 'undefined' ? navigator : {};
+    const cores = Number(nav.hardwareConcurrency || 4);
+    const memory = Number(nav.deviceMemory || 4);
+
+    return {
+        cores: Number.isFinite(cores) ? cores : 4,
+        memory: Number.isFinite(memory) ? memory : 4
+    };
+}
+
 function vrodosEnvironmentJoinUrl(base, path) {
     return `${String(base || '').replace(/\/+$/, '')  }/${  String(path || '').replace(/^\/+/, '')}`;
 }
@@ -184,6 +209,8 @@ class vrodos_3d_editor_environmentals {
 
         // scene object caches — maintained by add/remove operations to avoid per-interaction scene.traverse()
         this.selectableMeshes = new Set();   // top-level objects with isSelectableMesh = true
+        this.selectableMeshesArray = [];
+        this.selectableMeshesDirty = true;
         this.celOutlineMeshes = new Set();   // active __cel_outline__ back-face hull meshes
         this.positionalAudioNodes = [];      // THREE.PositionalAudio nodes (future audio support)
         this.directorGroundGuideTargets = [];
@@ -198,9 +225,15 @@ class vrodos_3d_editor_environmentals {
         this.directorGroundGuideOffsetPosition = new THREE.Vector3();
         this.directorGroundGuideRotation = new THREE.Quaternion();
         this.directorGroundGuideGroup = null;
+        this.compassDirection = new THREE.Vector3();
+        this.editorPerformanceProfile = null;
+        this.composer = null;
+        this.renderPass = null;
+        this.outlinePass = null;
+        this.effectFXAA = null;
 
-        // Composer is for the green outline effect when selecting objects
-        this.isComposerOn = true;
+        // The editor uses lightweight cel outlines, so the composer/FXAA path stays opt-in.
+        this.isComposerOn = false;
         this.is2d = false;
         this.thirdPersonView = false;
         this.isSceneLoading = false;
@@ -226,6 +259,7 @@ class vrodos_3d_editor_environmentals {
         // antialias: false — MSAA backbuffer is never used once EffectComposer is active (FXAA handles AA via composer)
         this.renderer = new THREE.WebGLRenderer({antialias: false, alpha: false, logarithmicDepthBuffer: false});
         this.configureRenderer();
+        this.bindRendererContextHandlers();
         // Label renderer for CSS2D renderer
         this.labelRenderer = new THREE.CSS2DRenderer();
         this.configureLabelRenderer();
@@ -264,8 +298,8 @@ class vrodos_3d_editor_environmentals {
         this.setOrbitCamera();
         this.setAvatarCamera();
 
-        // This is to make selected items glow
-        this.setComposerAndPasses();
+        // Composer is kept as an opt-in path; normal editing renders directly.
+        this.applyEditorPerformanceProfile(true);
 
         this.bindResizeHandler();
     }
@@ -273,17 +307,42 @@ class vrodos_3d_editor_environmentals {
     bindResizeHandler() {
         window.addEventListener('resize', () => {
             this.turboResize();
+            if (VRODOS.editor && typeof VRODOS.editor.requestRender === 'function') {
+                VRODOS.editor.requestRender('resize');
+            }
         }, true);
     }
 
     configureRenderer() {
-        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.enabled = false;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.renderer.autoClear = false;
+        this.renderer.autoClear = true;
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.0;
         this.renderer.sortObjects = true;
+    }
+
+    bindRendererContextHandlers() {
+        if (!this.renderer || !this.renderer.domElement) {
+            return;
+        }
+
+        this.renderer.domElement.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault();
+            if (VRODOS.editor && typeof VRODOS.editor.stopRenderLoop === 'function') {
+                VRODOS.editor.stopRenderLoop();
+            }
+            console.warn('VRodos editor WebGL context lost. Rendering is paused until the browser restores it.');
+        }, false);
+
+        this.renderer.domElement.addEventListener('webglcontextrestored', () => {
+            this.configureRenderer();
+            this.turboResize();
+            if (VRODOS.editor && typeof VRODOS.editor.requestRender === 'function') {
+                VRODOS.editor.requestRender('webglcontextrestored');
+            }
+        }, false);
     }
 
     configureLabelRenderer() {
@@ -303,6 +362,94 @@ class vrodos_3d_editor_environmentals {
         this.SCREEN_WIDTH = Math.max(width || 1, 1);
         this.SCREEN_HEIGHT = Math.max(height || 1, 1);
         this.ASPECT = this.SCREEN_WIDTH / this.SCREEN_HEIGHT;
+    }
+
+    getEditableObjectCount() {
+        if (this.selectableMeshes && this.selectableMeshes.size > 0) {
+            return this.selectableMeshes.size;
+        }
+
+        if (!this.scene) {
+            return 0;
+        }
+
+        let count = 0;
+        this.scene.traverse((node) => {
+            if (node.isSelectableMesh && node.vrodos_internal_helper !== true) {
+                count++;
+            }
+        });
+
+        return count;
+    }
+
+    getEditorPerformanceProfile() {
+        const hardware = vrodosEditorHardwareProfile();
+        const editableObjectCount = this.getEditableObjectCount();
+        const isLowEndHardware = hardware.cores <= 4 || hardware.memory <= 4;
+        const isDenseScene = editableObjectCount >= VRODOS_EDITOR_PERFORMANCE_DEFAULTS.denseSceneObjectCount;
+        const shouldDegrade = isLowEndHardware || isDenseScene;
+
+        return {
+            targetFps: shouldDegrade ? VRODOS_EDITOR_PERFORMANCE_DEFAULTS.lowEndTargetFps : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.targetFps,
+            pixelRatioCap: shouldDegrade ? VRODOS_EDITOR_PERFORMANCE_DEFAULTS.lowEndPixelRatioCap : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.pixelRatioCap,
+            labelFrameStride: shouldDegrade ? VRODOS_EDITOR_PERFORMANCE_DEFAULTS.lowEndLabelFrameStride : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.labelFrameStride,
+            loaderConcurrency: shouldDegrade ? VRODOS_EDITOR_PERFORMANCE_DEFAULTS.lowEndLoaderConcurrency : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.loaderConcurrency,
+            textureAnisotropy: shouldDegrade ? VRODOS_EDITOR_PERFORMANCE_DEFAULTS.lowEndTextureAnisotropy : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.textureAnisotropy,
+            isLowEndHardware,
+            isDenseScene,
+            editableObjectCount
+        };
+    }
+
+    applyEditorPerformanceProfile(force) {
+        const now = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+            ? performance.now()
+            : Date.now();
+        const loop = VRODOS.editor && VRODOS.editor.renderLoop ? VRODOS.editor.renderLoop : null;
+
+        if (!force && loop && (now - (loop.lastQualitySampleAt || 0)) < 1000) {
+            return this.editorPerformanceProfile;
+        }
+
+        const profile = this.getEditorPerformanceProfile();
+        this.editorPerformanceProfile = profile;
+
+        if (loop) {
+            loop.targetFps = profile.targetFps;
+            loop.pixelRatioCap = profile.pixelRatioCap;
+            loop.labelFrameStride = profile.labelFrameStride;
+            loop.loaderConcurrency = profile.loaderConcurrency;
+            loop.lastQualitySampleAt = now;
+        }
+
+        if (this.renderer) {
+            this.renderer.setPixelRatio(this.getEditorPixelRatio());
+        }
+        if (this.composer) {
+            if (typeof this.composer.setPixelRatio === 'function') {
+                this.composer.setPixelRatio(this.getEditorPixelRatio());
+            } else if (this.composer.renderer) {
+                this.composer.renderer.setPixelRatio(this.getEditorPixelRatio());
+            }
+        }
+
+        return profile;
+    }
+
+    getEditorPixelRatio() {
+        const devicePixelRatio = (typeof window !== 'undefined' && Number.isFinite(window.devicePixelRatio))
+            ? window.devicePixelRatio
+            : 1;
+        const loop = VRODOS.editor && VRODOS.editor.renderLoop ? VRODOS.editor.renderLoop : {};
+        const cap = Number(loop.pixelRatioCap || VRODOS_EDITOR_PERFORMANCE_DEFAULTS.pixelRatioCap);
+
+        return Math.max(1, Math.min(devicePixelRatio || 1, cap));
+    }
+
+    getEditorTextureAnisotropyCap() {
+        const profile = this.editorPerformanceProfile || this.applyEditorPerformanceProfile(true);
+        return profile ? profile.textureAnisotropy : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.textureAnisotropy;
     }
 
     loadSceneEnvironmentTexture() {
@@ -357,13 +504,44 @@ class vrodos_3d_editor_environmentals {
         this.turboResize();
     }
 
+    updateComposerCamera(camera) {
+        if (!camera) {
+            return;
+        }
+
+        if (this.renderPass) {
+            this.renderPass.camera = camera;
+        }
+
+        if (this.outlinePass) {
+            this.outlinePass.renderCamera = camera;
+            this.outlinePass.camera = camera;
+        }
+    }
+
+    renderEditorFrame(camera) {
+        if (!camera || !this.renderer || !this.scene) {
+            return;
+        }
+
+        this.applyEditorPerformanceProfile(false);
+
+        if (this.isComposerOn && this.composer && this.renderPass) {
+            this.updateComposerCamera(camera);
+            this.composer.render();
+            return;
+        }
+
+        this.renderer.render(this.scene, camera);
+    }
+
     // Resize renderers without changing the user's current orbit target, position, or zoom.
     turboResize() {
 
         this.updateScreenMetrics();
 
         this.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(this.getEditorPixelRatio());
 
         this.labelRenderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
         //----------------------------------------------
@@ -382,10 +560,18 @@ class vrodos_3d_editor_environmentals {
         }
 
         //---------------------------------------------------------------
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-        if (this.composer && this.composer.renderer) {
-            this.composer.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
-            this.composer.renderer.setPixelRatio(pixelRatio);
+        const pixelRatio = this.getEditorPixelRatio();
+        if (this.composer) {
+            if (typeof this.composer.setSize === 'function') {
+                this.composer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
+            } else if (this.composer.renderer) {
+                this.composer.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
+            }
+            if (typeof this.composer.setPixelRatio === 'function') {
+                this.composer.setPixelRatio(pixelRatio);
+            } else if (this.composer.renderer) {
+                this.composer.renderer.setPixelRatio(pixelRatio);
+            }
         }
         if (this.effectFXAA && this.effectFXAA.uniforms && this.effectFXAA.uniforms.resolution) {
             this.effectFXAA.uniforms.resolution.value.set(1 / (this.SCREEN_WIDTH * pixelRatio), 1 / (this.SCREEN_HEIGHT * pixelRatio));
@@ -439,7 +625,7 @@ class vrodos_3d_editor_environmentals {
             return;
         }
 
-        const direction = new THREE.Vector3();
+        const direction = this.compassDirection;
         activeCamera.getWorldDirection(direction);
         direction.y = 0;
 
@@ -493,6 +679,9 @@ class vrodos_3d_editor_environmentals {
         this.orbitControls.addEventListener('change', () => {
             if (typeof VRODOS.ui.transform.setSize === 'function') {
                 VRODOS.ui.transform.setSize();
+            }
+            if (VRODOS.editor && typeof VRODOS.editor.requestRender === 'function') {
+                VRODOS.editor.requestRender('orbit-change');
             }
         });
     }
@@ -751,6 +940,7 @@ class vrodos_3d_editor_environmentals {
 
     markDirectorGroundGuideTargetsDirty() {
         this.directorGroundGuideTargetsDirty = true;
+        this.selectableMeshesDirty = true;
     }
 
     ensureDirectorGroundGuide() {
@@ -880,7 +1070,7 @@ class vrodos_3d_editor_environmentals {
             return;
         }
 
-        this.scene.updateMatrixWorld(true);
+        this.scene.updateMatrixWorld(false);
         director.getWorldPosition(this.directorGroundGuideRayOrigin);
 
         if (!Number.isFinite(this.directorGroundGuideRayOrigin.y)) {

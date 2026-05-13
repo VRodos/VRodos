@@ -91,6 +91,16 @@ function initVrodosEditor() {
         VRODOS.editor.transform_controls;
     VRODOS.editor.transform_controls_helper.name = 'myTransformControls';
     vrodosPatchTransformControlsAttach(VRODOS.editor.transform_controls, VRODOS.editor.envir.scene);
+    VRODOS.editor.transform_controls.addEventListener('change', () => {
+        if (typeof VRODOS.editor.requestRender === 'function') {
+            VRODOS.editor.requestRender('transform-change');
+        }
+    });
+    VRODOS.editor.transform_controls.addEventListener('dragging-changed', () => {
+        if (typeof VRODOS.editor.requestRender === 'function') {
+            VRODOS.editor.requestRender('transform-dragging-changed');
+        }
+    });
 
     VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
     window.firstPersonBlockerBtn = VRODOS.editor.firstPersonBlockerBtn;
@@ -169,7 +179,7 @@ function initVrodosEditor() {
     });
 
     VRODOS.api.initPointerLock();
-    VRODOS.editor.animate();
+    VRODOS.editor.requestRender('initial-load');
     VRODOS.ui.loadButtonActions();
 
     // Prevent body scroll
@@ -308,9 +318,12 @@ VRODOS.api.finalizeSceneLoad = function() {
     if (typeof VRODOS.ui.removeHierarchySkeleton === 'function') VRODOS.ui.removeHierarchySkeleton();
     VRODOS.ui.setHierarchyViewer();
 
-    // Avoid culling and update lights
+    if (typeof VRODOS.editor.envir.applyEditorPerformanceProfile === 'function') {
+        VRODOS.editor.envir.applyEditorPerformanceProfile(true);
+    }
+
+    // Update light helpers without disabling Three.js frustum culling on every mesh.
     VRODOS.editor.envir.scene.traverse((obj) => {
-        obj.frustumCulled = false;
         if (obj.light != undefined && typeof obj.update === 'function') {
             obj.update();
         }
@@ -318,21 +331,48 @@ VRODOS.api.finalizeSceneLoad = function() {
 
     document.getElementById("progressWrapper").style.visibility = "hidden";
     document.getElementById("compileGameBtn").disabled = false;
+    VRODOS.editor.requestRender('scene-load-finalized');
 }
 
 /**
- * The main animation loop
+ * Guarded editor render loop. Existing callers still use animate(), but it now
+ * requests work from a single loop instead of opening duplicate RAF loops.
  */
-VRODOS.editor.animate = function animate() {
-    if (VRODOS.editor.isPaused) return;
-
-    VRODOS.editor.id_animation_frame = requestAnimationFrame(VRODOS.editor.animate);
-
+VRODOS.editor.getActiveCamera = function() {
     const curr_camera = (typeof VRODOS.editor.avatarControlsEnabled !== 'undefined' && VRODOS.editor.avatarControlsEnabled) ?
         (VRODOS.editor.envir.thirdPersonView ? VRODOS.editor.envir.cameraThirdPerson : VRODOS.editor.envir.cameraAvatar) : VRODOS.editor.envir.cameraOrbit;
 
-    if (VRODOS.editor.envir.labelRenderer) {
-        VRODOS.editor.envir.labelRenderer.render(VRODOS.editor.envir.scene, curr_camera);
+    return curr_camera;
+};
+
+VRODOS.editor.shouldRenderContinuously = function() {
+    const envir = VRODOS.editor.envir;
+    if (!envir) return false;
+
+    if (envir.isSceneLoading) return true;
+    if (VRODOS.editor.avatarControlsEnabled) return true;
+    if (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.dragging) return true;
+    if (envir.flagPlayAnimation && envir.animationMixers && envir.animationMixers.length > 0) return true;
+
+    return false;
+};
+
+VRODOS.editor.renderFrame = function(timestamp, isContinuous) {
+    const envir = VRODOS.editor.envir;
+    if (!envir) return;
+
+    const curr_camera = VRODOS.editor.getActiveCamera();
+
+    if (!VRODOS.editor.avatarControlsEnabled && envir.orbitControls && envir.orbitControls.enableDamping) {
+        envir.orbitControls.update();
+    }
+
+    if (VRODOS.editor.avatarControlsEnabled && typeof VRODOS.api.updatePointerLockControls === 'function') {
+        VRODOS.api.updatePointerLockControls();
+    }
+
+    if (VRODOS.editor.transform_controls) {
+        VRODOS.editor.transform_controls.camera = curr_camera;
     }
 
     if (VRODOS.editor.envir.flagPlayAnimation && VRODOS.editor.envir.animationMixers.length > 0) {
@@ -346,17 +386,93 @@ VRODOS.editor.animate = function animate() {
         VRODOS.editor.envir.updateDirectorGroundGuide();
     }
 
-    if (VRODOS.editor.envir.isComposerOn && VRODOS.editor.envir.composer) {
-        VRODOS.editor.envir.composer.render();
+    if (typeof envir.renderEditorFrame === 'function') {
+        envir.renderEditorFrame(curr_camera);
+    } else if (envir.renderer) {
+        envir.renderer.render(envir.scene, curr_camera);
     }
 
-    VRODOS.editor.envir.orbitControls.update();
-    if (typeof VRODOS.api.updatePointerLockControls === 'function') {
-        VRODOS.api.updatePointerLockControls();
+    const loop = VRODOS.editor.renderLoop || {};
+    const labelStride = Math.max(1, Number(loop.labelFrameStride || 1));
+    if (envir.labelRenderer && (!isContinuous || labelStride <= 1 || (loop.frameIndex % labelStride) === 0)) {
+        envir.labelRenderer.render(envir.scene, curr_camera);
     }
+
     if (typeof VRODOS.editor.envir.updateCompassUI === 'function') {
         VRODOS.editor.envir.updateCompassUI();
     }
+};
+
+VRODOS.editor.startRenderLoop = function() {
+    const loop = VRODOS.editor.renderLoop;
+    if (!loop || loop.isRunning || VRODOS.editor.isPaused || !VRODOS.editor.envir) {
+        return;
+    }
+
+    loop.isRunning = true;
+
+    const step = (timestamp) => {
+        if (VRODOS.editor.isPaused || !VRODOS.editor.envir) {
+            loop.isRunning = false;
+            VRODOS.editor.id_animation_frame = null;
+            return;
+        }
+
+        const isContinuous = VRODOS.editor.shouldRenderContinuously();
+        if (!loop.needsRender && !isContinuous) {
+            loop.isRunning = false;
+            VRODOS.editor.id_animation_frame = null;
+            return;
+        }
+
+        const targetFps = Math.max(1, Number(loop.targetFps || 45));
+        const minFrameMs = 1000 / targetFps;
+        if (isContinuous && loop.lastFrameAt && (timestamp - loop.lastFrameAt) < minFrameMs) {
+            VRODOS.editor.id_animation_frame = requestAnimationFrame(step);
+            return;
+        }
+
+        loop.lastFrameAt = timestamp;
+        loop.needsRender = false;
+        loop.frameIndex = (loop.frameIndex || 0) + 1;
+        VRODOS.editor.renderFrame(timestamp, isContinuous);
+
+        if (isContinuous || loop.needsRender) {
+            VRODOS.editor.id_animation_frame = requestAnimationFrame(step);
+            return;
+        }
+
+        loop.isRunning = false;
+        VRODOS.editor.id_animation_frame = null;
+    };
+
+    VRODOS.editor.id_animation_frame = requestAnimationFrame(step);
+};
+
+VRODOS.editor.stopRenderLoop = function() {
+    const loop = VRODOS.editor.renderLoop;
+    if (VRODOS.editor.id_animation_frame) {
+        cancelAnimationFrame(VRODOS.editor.id_animation_frame);
+    }
+    VRODOS.editor.id_animation_frame = null;
+    if (loop) {
+        loop.isRunning = false;
+        loop.needsRender = false;
+    }
+};
+
+VRODOS.editor.requestRender = function() {
+    const loop = VRODOS.editor.renderLoop;
+    if (!loop || VRODOS.editor.isPaused) {
+        return;
+    }
+
+    loop.needsRender = true;
+    VRODOS.editor.startRenderLoop();
+};
+
+VRODOS.editor.animate = function animate() {
+    VRODOS.editor.requestRender('legacy-animate');
 };
 
 // INITIALIZE ON DOM CONTENT LOADED

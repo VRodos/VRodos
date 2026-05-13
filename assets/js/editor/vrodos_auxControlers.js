@@ -1273,7 +1273,11 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
 
     // onclick inside stop animating
     element.addEventListener("click", (event) => {
-        cancelAnimationFrame(VRODOS.editor.id_animation_frame);
+        if (typeof VRODOS.editor.stopRenderLoop === 'function') {
+            VRODOS.editor.stopRenderLoop();
+        } else {
+            cancelAnimationFrame(VRODOS.editor.id_animation_frame);
+        }
     });
 
 
@@ -1602,4 +1606,3 @@ VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;
 VRODOS.ui.controlInterface = controlInterface;
 VRODOS.ui.controllerDatGuiOnChange = controllerDatGuiOnChange;
 VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes = updatePositionsPhpAndJavsFromControlsAxes;
-

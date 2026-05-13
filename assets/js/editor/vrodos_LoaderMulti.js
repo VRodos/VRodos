@@ -57,6 +57,32 @@ VRODOS.utils.loaderSafeObjectName = function(name, resource, object) {
     return `${(slugPart || 'scene_object') + (idPart ? `_${  idPart}` : '')  }_${  uuidPart}`;
 };
 
+VRODOS.utils.runLimitedTasks = async function(tasks, limit) {
+    const queue = Array.isArray(tasks) ? tasks.slice() : [];
+    const safeLimit = Math.max(1, Number(limit) || 1);
+    const workers = [];
+
+    async function runNext() {
+        while (queue.length > 0) {
+            const task = queue.shift();
+            if (typeof task !== 'function') {
+                continue;
+            }
+            await task();
+        }
+    }
+
+    for (let i = 0; i < Math.min(safeLimit, queue.length); i++) {
+        workers.push(runNext());
+    }
+
+    return Promise.allSettled(workers);
+};
+
+VRODOS.loader.shouldBuildHierarchyDuringLoad = function() {
+    return !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading);
+};
+
 VRODOS.loader.createAssessmentObject = function(name, resource) {
     if (typeof VRODOS.ui.createAssessmentPlaceholder === 'function') {
         return VRODOS.ui.createAssessmentPlaceholder(name, resource);
@@ -444,7 +470,16 @@ VRODOS.loader.LoaderMulti = class {
 
         const loader = new THREE.GLTFLoader(manager);
         const pendingLoads = [];
+        const glbLoadTasks = [];
         const modelBaseUrl = VRODOS.utils.loaderResolveBaseUrl(VRODOS.data.pluginPath, 'modelBaseUrl', 'assets/models/');
+        const resourceCount = resources3D ? Object.keys(resources3D).length : 0;
+        const loop = VRODOS.editor && VRODOS.editor.renderLoop ? VRODOS.editor.renderLoop : {};
+        const loadConcurrency = resourceCount >= 75 ? 1 : Math.max(1, Number(loop.loaderConcurrency || 2));
+        if (resourceCount >= 75 && VRODOS.editor && VRODOS.editor.renderLoop) {
+            VRODOS.editor.renderLoop.targetFps = 30;
+            VRODOS.editor.renderLoop.pixelRatioCap = 1;
+            VRODOS.editor.renderLoop.labelFrameStride = 3;
+        }
 
         for (const name in resources3D) {
             if (!Object.prototype.hasOwnProperty.call(resources3D, name)) continue;
@@ -576,7 +611,7 @@ VRODOS.loader.LoaderMulti = class {
                         VRODOS.editor.envir.scene.add(object);
                         if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
                         VRODOS.editor.envir.loadedObjectsCount++;
-                        if (typeof VRODOS.ui.addInHierarchyViewer === 'function') {
+                        if (VRODOS.loader.shouldBuildHierarchyDuringLoad() && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
                             VRODOS.ui.addInHierarchyViewer(object);
                         }
                         resolve();
@@ -590,7 +625,7 @@ VRODOS.loader.LoaderMulti = class {
                         VRODOS.editor.envir.scene.add(object);
                         if (VRODOS.editor.envir.selectableMeshes) VRODOS.editor.envir.selectableMeshes.add(object);
                         VRODOS.editor.envir.loadedObjectsCount++;
-                        if (typeof VRODOS.ui.addInHierarchyViewer === 'function') {
+                        if (VRODOS.loader.shouldBuildHierarchyDuringLoad() && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
                             VRODOS.ui.addInHierarchyViewer(object);
                         }
 
@@ -683,10 +718,10 @@ VRODOS.loader.LoaderMulti = class {
 
                 } else { // GLB 3D models
                     if ((resource.glb_id !== "" && resource.glb_id !== undefined) || resource.category_slug === "video") {
-                        if (manager) manager.itemStart(name);
-                        pendingLoads.push(new Promise((resolve) => {
+                        glbLoadTasks.push(() => new Promise((resolve) => {
                             const fetchAndLoadGLB = async () => {
                                 try {
+                                    if (manager) manager.itemStart(name);
                                     const ajaxUrl = VRODOS.utils.getAjaxUrl();
                                     const response = await fetch(ajaxUrl, {
                                         method: 'POST',
@@ -749,7 +784,11 @@ VRODOS.loader.LoaderMulti = class {
                                             finalObject.isSelectableMesh = true;
 
                                             // Apply max anisotropy to all loaded textures for sharper oblique surfaces
-                                            const maxAniso = VRODOS.editor.envir.renderer.capabilities.getMaxAnisotropy();
+                                            const rendererMaxAniso = VRODOS.editor.envir.renderer.capabilities.getMaxAnisotropy();
+                                            const editorAnisoCap = (typeof VRODOS.editor.envir.getEditorTextureAnisotropyCap === 'function')
+                                                ? VRODOS.editor.envir.getEditorTextureAnisotropyCap()
+                                                : 4;
+                                            const maxAniso = Math.min(rendererMaxAniso, editorAnisoCap);
                                             if (maxAniso > 1) {
                                                 finalObject.traverse((node) => {
                                                     if (!node.isMesh) return;
@@ -773,7 +812,13 @@ VRODOS.loader.LoaderMulti = class {
                                             VRODOS.editor.envir.scene.add(finalObject);
                                             VRODOS.editor.envir.selectableMeshes.add(finalObject);
                                             finalObject.glb_path = glbURL;
+                                            if (typeof VRODOS.editor.envir.applyEditorPerformanceProfile === 'function') {
+                                                VRODOS.editor.envir.applyEditorPerformanceProfile(false);
+                                            }
                                             if (manager) manager.itemEnd(name);
+                                            if (typeof VRODOS.editor.requestRender === 'function') {
+                                                VRODOS.editor.requestRender('glb-loaded');
+                                            }
                                             resolve();
                                         },
                                         (xhr) => {
@@ -817,6 +862,10 @@ VRODOS.loader.LoaderMulti = class {
                         VRODOS.editor.envir.applyDirectorTransform(resource.position, resource.rotation);
                     }
                 }
+        }
+
+        if (glbLoadTasks.length > 0) {
+            pendingLoads.push(VRODOS.utils.runLimitedTasks(glbLoadTasks, loadConcurrency));
         }
 
         return Promise.allSettled(pendingLoads);

@@ -154,7 +154,6 @@ VRODOS.editor.TransformCommand = class {
         obj.visible = true;
         obj.traverse((node) => {
             node.visible = true;
-            if (node.isMesh) node.frustumCulled = false;
         });
 
         if (obj.category_name && obj.category_name.includes("light")) {
@@ -231,7 +230,6 @@ VRODOS.editor.DeleteObjectCommand = class {
         this.object3D.visible = true;
         this.object3D.traverse((node) => {
             node.visible = true;
-            if (node.isMesh) node.frustumCulled = false;
         });
 
         VRODOS.editor.envir.scene.add(this.object3D);
@@ -336,7 +334,6 @@ if (document.readyState === 'loading') {
 } else {
     VRODOS.editor.undoManager.updateButtons();
 }
-
 
 
 

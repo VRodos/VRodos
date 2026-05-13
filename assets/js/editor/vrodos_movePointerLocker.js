@@ -59,18 +59,14 @@ VRODOS.api.firstPersonViewWithoutLock = function(){
         VRODOS.editor.envir.moveDirectorToOrbitTarget();
 
 
-        //VRODOS.editor.transform_controls.visible = false;
-        //
-        // // Glow effect change camera
-        VRODOS.editor.envir.composer = [];
-        VRODOS.editor.envir.setComposerAndPasses(VRODOS.editor.transform_controls);
-
-        VRODOS.editor.envir.isComposerOn = true;
-
-
-
         // // if in 3rd person view then show the cameraobject
         VRODOS.editor.envir.getDirectorRig().visible = VRODOS.editor.envir.thirdPersonView && VRODOS.editor.avatarControlsEnabled;
+        if (VRODOS.editor.transform_controls) {
+            VRODOS.editor.transform_controls.camera = VRODOS.editor.envir.thirdPersonView ? VRODOS.editor.envir.cameraThirdPerson : VRODOS.editor.envir.cameraAvatar;
+        }
+        if (typeof VRODOS.editor.requestRender === 'function') {
+            VRODOS.editor.requestRender('first-person-enabled');
+        }
 
 
 
@@ -96,10 +92,9 @@ VRODOS.api.firstPersonViewWithoutLock = function(){
         if (VRODOS.editor.envir.getDirectorVisualObject()) VRODOS.editor.envir.getDirectorVisualObject().visible = true;
 
 
-        VRODOS.editor.envir.composer = [];
-        VRODOS.editor.envir.setComposerAndPasses(VRODOS.editor.transform_controls);
-
-        VRODOS.editor.envir.isComposerOn = true;
+        if (VRODOS.editor.transform_controls) {
+            VRODOS.editor.transform_controls.camera = VRODOS.editor.envir.cameraOrbit;
+        }
 
         if(!VRODOS.editor.envir.is2d)
             {VRODOS.editor.transform_controls.visible  = true;}
@@ -149,8 +144,10 @@ VRODOS.api.firstPersonViewWithoutLock = function(){
 
         VRODOS.utils.findSceneDimensions();
         VRODOS.editor.envir.fitCameraToSceneLimits();
+        if (typeof VRODOS.editor.requestRender === 'function') {
+            VRODOS.editor.requestRender('first-person-disabled');
+        }
 
     }
 };
-
 

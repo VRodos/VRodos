@@ -21,7 +21,18 @@ Object.assign(window.VRODOS, {
         isPaused: false,
         manager: null,
         firstPersonBlockerBtn: null,
-        id_animation_frame: null
+        id_animation_frame: null,
+        renderLoop: {
+            isRunning: false,
+            needsRender: false,
+            frameIndex: 0,
+            lastFrameAt: 0,
+            lastQualitySampleAt: 0,
+            targetFps: 45,
+            pixelRatioCap: 1.25,
+            labelFrameStride: 2,
+            loaderConcurrency: 2
+        }
     },
     runtime: window.VRODOS.runtime || {},
     data: {

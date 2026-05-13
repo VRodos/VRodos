@@ -386,7 +386,9 @@ VRODOS.loader.LightsPawnLoader = class {
                     pawn.add(label);
 
                     VRODOS.editor.envir.scene.add(pawn);
-                    if (typeof VRODOS.ui.setHierarchyViewer === 'function') VRODOS.ui.setHierarchyViewer();
+                    if (!(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
+                        VRODOS.ui.addInHierarchyViewer(pawn);
+                    }
                     if (manager) manager.itemEnd(name);
                     resolve();
                 },
@@ -413,6 +415,5 @@ VRODOS.loader.LightsPawnLoader = class {
         obj.scale.set(s[0], s[1], s[2]);
     }
 };
-
 
 

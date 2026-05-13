@@ -359,8 +359,7 @@ function _findInsertionPoint(obj) {
     return skeleton || null;
 }
 
-function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML){
-
+function _hierarchyItemHTML(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML) {
     const iconName = _hierarchyIconForObject(obj);
     const categoryName = obj.category_name || '';
     const isLight = categoryName.startsWith('light');
@@ -384,11 +383,21 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
         }</span>` +
         `</li>`;
 
+    return itemHTML;
+}
+
+function _createHierarchyItemFragment(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML) {
+    const temp = document.createElement('template');
+    temp.innerHTML = _hierarchyItemHTML(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML);
+    return temp.content;
+}
+
+function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML){
+
     const viewer = document.getElementById('hierarchy-viewer');
     if (!viewer) return;
 
-    const temp = document.createElement('template');
-    temp.innerHTML = itemHTML;
+    const fragment = _createHierarchyItemFragment(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML);
     let insertBefore = _findInsertionPoint(obj);
     if (!insertBefore) {
         const skeleton = document.getElementById('hierarchy-skeleton');
@@ -398,9 +407,9 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
     }
 
     if (insertBefore) {
-        viewer.insertBefore(temp.content, insertBefore);
+        viewer.insertBefore(fragment, insertBefore);
     } else {
-        viewer.appendChild(temp.content);
+        viewer.appendChild(fragment);
     }
 }
 
@@ -448,9 +457,11 @@ VRODOS.ui.setBackgroundColorHierarchyViewer = function(id) {
 
 // Traverse the entire scene to insert scene children in Hierarchy Viewer
 VRODOS.ui.setHierarchyViewer = function() {
+    const viewer = document.getElementById('hierarchy-viewer');
+    if (!viewer) return;
 
     // Remove only real items, keep the skeleton placeholder if present
-    document.querySelectorAll('#hierarchy-viewer .hierarchyItem').forEach((el) => { el.remove(); });
+    viewer.querySelectorAll('.hierarchyItem').forEach((el) => { el.remove(); });
 
     // Collect all hierarchy-worthy objects
     const director = [];
@@ -487,6 +498,7 @@ VRODOS.ui.setHierarchyViewer = function() {
 
     const sorted = [].concat(director, sortedLights, regular);
 
+    const fragment = document.createDocumentFragment();
     sorted.forEach((obj) => {
         const asset_name = _hierarchyDisplayName(obj);
         const created = _hierarchyCreatedLabel(obj);
@@ -494,8 +506,9 @@ VRODOS.ui.setHierarchyViewer = function() {
             CreateDeleteButton(obj);
         const lockButton = obj.category_name === "lightTargetSpot" || obj.name === 'avatarCamera' ? "" :
             CreateLockButton(obj);
-        AppendObject(obj, asset_name, created, deleteButton, CreateResetButton(obj), lockButton);
+        fragment.appendChild(_createHierarchyItemFragment(obj, asset_name, created, deleteButton, CreateResetButton(obj), lockButton));
     });
+    viewer.appendChild(fragment);
 
     // Render Lucide icons in dynamically added items
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -565,4 +578,3 @@ VRODOS.ui.initHierarchyViewerEvents = function() {
         if (uuid) hierarchyClickSelect(e, uuid);
     });
 }
-

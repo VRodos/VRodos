@@ -938,7 +938,14 @@ initPersistentPropertyListeners();
 VRODOS.ui.getActiveMeshes = function() {
     // Fast path: use the pre-built cache maintained by add/remove operations
     if (VRODOS.editor.envir.selectableMeshes && VRODOS.editor.envir.selectableMeshes.size > 0) {
-        return Array.from(VRODOS.editor.envir.selectableMeshes);
+        if (VRODOS.editor.envir.selectableMeshesDirty ||
+            !Array.isArray(VRODOS.editor.envir.selectableMeshesArray) ||
+            VRODOS.editor.envir.selectableMeshesArray.length !== VRODOS.editor.envir.selectableMeshes.size) {
+            VRODOS.editor.envir.selectableMeshesArray = Array.from(VRODOS.editor.envir.selectableMeshes);
+            VRODOS.editor.envir.selectableMeshesDirty = false;
+        }
+
+        return VRODOS.editor.envir.selectableMeshesArray;
     }
     // Fallback: cache not yet populated (scene still loading)
     const fallback = [];
@@ -1062,4 +1069,3 @@ VRODOS.api.saveChanges = function(options) {
 
     return VRODOS.api.saveScene();
 }
-
