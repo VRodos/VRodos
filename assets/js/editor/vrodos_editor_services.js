@@ -281,6 +281,33 @@ VRODOS.utils = VRODOS.utils || {};
         return controls ? controls.object : null;
     };
 
+    transforms.bindControls = function() {
+        const controls = VRODOS.editor.transform_controls;
+        if (!controls || controls._vrodosServiceEventsBound) return false;
+
+        controls.addEventListener('change', () => {
+            render.request('transform-change');
+        });
+        controls.addEventListener('dragging-changed', (event) => {
+            transforms.handleDraggingChanged(event);
+        });
+        controls._vrodosServiceEventsBound = true;
+        return true;
+    };
+
+    transforms.isDragging = function() {
+        const controls = VRODOS.editor.transform_controls;
+        return Boolean(controls && controls.dragging);
+    };
+
+    transforms.setCamera = function(camera) {
+        const controls = VRODOS.editor.transform_controls;
+        if (!controls || !camera) return false;
+
+        controls.camera = camera;
+        return true;
+    };
+
     transforms.getRealObject = function(object) {
         if (object) {
             if (object.name === 'vrodosGizmoProxy' && object.realObject) {
@@ -408,6 +435,11 @@ VRODOS.utils = VRODOS.utils || {};
     transforms.getMode = function() {
         const controls = VRODOS.editor.transform_controls;
         return controls && typeof controls.getMode === 'function' ? controls.getMode() : 'translate';
+    };
+
+    transforms.getAxis = function() {
+        const controls = VRODOS.editor.transform_controls;
+        return controls ? controls.axis : null;
     };
 
     transforms.canUseMode = function(mode, object) {

@@ -1386,15 +1386,15 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     const realObject = getSelectedTransformObject();
     if (!realObject) return;
 
-    const isDragging = VRODOS.editor.transform_controls.dragging;
-    const activeAxis = VRODOS.editor.transform_controls.axis;
+    const isDragging = VRODOS.editor.transforms.isDragging();
+    const activeAxis = VRODOS.editor.transforms.getAxis();
 
     // --- Proxy Sync Logic ---
     // Safety check: is the object currently attached to TransformControls actually our Proxy?
     const isWorkingOnProxy = attachedObject.name === "vrodosGizmoProxy";
 
     if (isDragging) {
-        if (VRODOS.editor.transform_controls.mode === 'rotate' && isWorkingOnProxy) {
+        if (VRODOS.editor.transforms.getMode() === 'rotate' && isWorkingOnProxy) {
             // High-Sensitivity Booster Logic (Unclamped for r181)
             // Extract the Axis and Angle of the proxy's change
             const qProxyCurrent = attachedObject.quaternion.clone();
@@ -1504,7 +1504,7 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     }
 
     const scaleSyncEpsilon = 0.00001;
-    const isScaling = VRODOS.editor.transform_controls.mode === 'scale' && isDragging;
+    const isScaling = VRODOS.editor.transforms.getMode() === 'scale' && isDragging;
     const sStart = VRODOS.editor.transforms.dragState.scaleStart;
 
     //---------scale_x -------------------------------

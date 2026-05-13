@@ -7,6 +7,41 @@ VRODOS.editor.originalDirectorRot = null;
 VRODOS.editor.originalRigPos = null;
 VRODOS.editor.originalRigRot = null;
 
+function vrodosSyncFirstPersonRigToDirector() {
+    const envir = VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir : null;
+    if (!envir || typeof envir.getDirectorObject !== 'function') {
+        return;
+    }
+
+    const director = envir.getDirectorObject();
+    const rig = typeof envir.getDirectorRig === 'function' ? envir.getDirectorRig() : null;
+
+    if (!director) {
+        return;
+    }
+
+    director.updateMatrixWorld(true);
+
+    if (rig && rig !== director) {
+        rig.position.copy(director.position);
+        rig.quaternion.copy(director.quaternion);
+        rig.scale.set(1, 1, 1);
+        rig.updateMatrixWorld(true);
+
+        if (envir.cameraAvatar && envir.cameraAvatar.parent === rig) {
+            envir.cameraAvatar.position.set(0, 0, 0);
+            envir.cameraAvatar.rotation.set(0, 0, 0);
+            envir.cameraAvatar.scale.set(1, 1, 1);
+            envir.cameraAvatar.updateMatrixWorld(true);
+        }
+        return;
+    }
+
+    if (rig) {
+        rig.updateMatrixWorld(true);
+    }
+}
+
 
 
 
@@ -55,15 +90,16 @@ VRODOS.api.firstPersonViewWithoutLock = function(){
         }
 
 
-        // Keep the saved Director transform as the source of truth when entering first-person preview.
-        VRODOS.editor.envir.moveDirectorToOrbitTarget();
+        // First-person preview starts from the authored Director transform, not the orbit target.
+        if (typeof VRODOS.api.resetAvatarMovement === 'function') {
+            VRODOS.api.resetAvatarMovement();
+        }
+        vrodosSyncFirstPersonRigToDirector();
 
 
         // // if in 3rd person view then show the cameraobject
         VRODOS.editor.envir.getDirectorRig().visible = VRODOS.editor.envir.thirdPersonView && VRODOS.editor.avatarControlsEnabled;
-        if (VRODOS.editor.transform_controls) {
-            VRODOS.editor.transform_controls.camera = VRODOS.editor.envir.thirdPersonView ? VRODOS.editor.envir.cameraThirdPerson : VRODOS.editor.envir.cameraAvatar;
-        }
+        VRODOS.editor.transforms.setCamera(VRODOS.editor.envir.thirdPersonView ? VRODOS.editor.envir.cameraThirdPerson : VRODOS.editor.envir.cameraAvatar);
         if (typeof VRODOS.editor.requestRender === 'function') {
             VRODOS.editor.requestRender('first-person-enabled');
         }
@@ -92,9 +128,7 @@ VRODOS.api.firstPersonViewWithoutLock = function(){
         if (VRODOS.editor.envir.getDirectorVisualObject()) VRODOS.editor.envir.getDirectorVisualObject().visible = true;
 
 
-        if (VRODOS.editor.transform_controls) {
-            VRODOS.editor.transform_controls.camera = VRODOS.editor.envir.cameraOrbit;
-        }
+        VRODOS.editor.transforms.setCamera(VRODOS.editor.envir.cameraOrbit);
 
         if(!VRODOS.editor.envir.is2d && VRODOS.editor.transforms)
             {VRODOS.editor.transforms.setVisible(true);}

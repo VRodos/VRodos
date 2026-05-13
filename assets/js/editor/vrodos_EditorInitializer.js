@@ -112,11 +112,7 @@ function initVrodosEditor() {
     VRODOS.editor.transform_controls_helper.vrodos_internal_helper = true;
     vrodosPrepareTransformControlsHelper(VRODOS.editor.transform_controls_helper);
     vrodosPatchTransformControlsAttach(VRODOS.editor.transform_controls, VRODOS.editor.envir.scene);
-    VRODOS.editor.transform_controls.addEventListener('change', () => {
-        if (typeof VRODOS.editor.requestRender === 'function') {
-            VRODOS.editor.requestRender('transform-change');
-        }
-    });
+    VRODOS.editor.transforms.bindControls();
     VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
     window.firstPersonBlockerBtn = VRODOS.editor.firstPersonBlockerBtn;
 
@@ -224,7 +220,7 @@ VRODOS.editor.updatePositionsAndControls = function() {
     if (!selectedObject || !VRODOS.ui.controlInterface) return;
     if ((window.vrodosGuiKeyboardEditing || 0) > 0) return;
 
-    if (VRODOS.editor.transform_controls.dragging &&
+    if (VRODOS.editor.transforms.isDragging() &&
         typeof VRODOS.editor.transforms.syncFromControls === 'function') {
         VRODOS.editor.transforms.syncFromControls();
     }
@@ -380,7 +376,7 @@ VRODOS.editor.shouldRenderContinuously = function() {
 
     if (envir.isSceneLoading) return true;
     if (VRODOS.editor.avatarControlsEnabled) return true;
-    if (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.dragging) return true;
+    if (VRODOS.editor.transforms && VRODOS.editor.transforms.isDragging()) return true;
     if (envir.flagPlayAnimation && envir.animationMixers && envir.animationMixers.length > 0) return true;
 
     return false;
@@ -400,9 +396,7 @@ VRODOS.editor.renderFrame = function(timestamp, isContinuous) {
         VRODOS.api.updatePointerLockControls();
     }
 
-    if (VRODOS.editor.transform_controls) {
-        VRODOS.editor.transform_controls.camera = curr_camera;
-    }
+    VRODOS.editor.transforms.setCamera(curr_camera);
 
     if (VRODOS.editor.envir.flagPlayAnimation && VRODOS.editor.envir.animationMixers.length > 0) {
         const new_time = VRODOS.editor.envir.clock.getDelta();

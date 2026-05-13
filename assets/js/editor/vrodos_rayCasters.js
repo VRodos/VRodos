@@ -178,7 +178,7 @@ VRODOS.utils.findParentSceneObject = function(object) {
  */
 VRODOS.ui.onLeftMouseClick = function(event) {
     // If doing affine transformations with transform controls, then ignore select
-    if (VRODOS.editor.transform_controls.dragging)
+    if (VRODOS.editor.transforms.isDragging())
         {return;}
 
     // Middle click return

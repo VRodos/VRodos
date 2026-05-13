@@ -921,11 +921,6 @@ VRODOS.ui.loadButtonActions = function() {
     });
     }
 
-// Event listener to disable orbit controls while dragging
-VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) => {
-    VRODOS.editor.transforms.handleDraggingChanged(event);
-});
-
     // Axis Increase size btn
     document.getElementById("axis-size-increase-btn").addEventListener("click", () => {
         VRODOS.editor.transforms.scaleSize(1.1);
