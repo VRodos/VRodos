@@ -338,7 +338,8 @@ function sanitizeInputValue(value) {
   }
 
 function getEditorSceneObjectByUuid(uuid) {
-    const registered = VRODOS.editor.sceneRegistry.getByUuid(uuid);
+    const registry = VRODOS.editor.sceneRegistry;
+    const registered = registry ? registry.getByUuid(uuid) : null;
     if (registered) return registered;
 
     return VRODOS.editor.envir && VRODOS.editor.envir.scene
@@ -347,7 +348,8 @@ function getEditorSceneObjectByUuid(uuid) {
 }
 
 function getEditorSceneObjectByName(name) {
-    const registered = VRODOS.editor.sceneRegistry.getByName(name);
+    const registry = VRODOS.editor.sceneRegistry;
+    const registered = registry ? registry.getByName(name) : null;
     if (registered) return registered;
 
     return VRODOS.editor.envir && VRODOS.editor.envir.scene

@@ -24,6 +24,16 @@ VRODOS.utils.resolveBaseUrl = function(pluginPath, localizedKey, fallbackRelativ
     return String(fallbackRelative || '').replace(/^\/+/, '');
 }
 
+function getSceneObjectByUuid(uuid) {
+    if (!uuid || !VRODOS.editor.sceneRegistry) return null;
+    return VRODOS.editor.sceneRegistry.getByUuid(uuid);
+}
+
+function getSceneObjectByName(name) {
+    if (!name || !VRODOS.editor.sceneRegistry) return null;
+    return VRODOS.editor.sceneRegistry.getByName(name);
+}
+
 VRODOS.ui.frameNewSceneObject = function(object3D) {
     if (!object3D || !VRODOS.editor.envir || !VRODOS.editor.envir.cameraOrbit || !VRODOS.editor.envir.orbitControls) {
         return;
@@ -706,8 +716,7 @@ VRODOS.api.createGlbAsset = function(nameModel, addedAt, pluginPath) {
     };
 
     manager.onLoad = () => {
-        const insertedObject = VRODOS.editor.sceneRegistry.getByName(nameModel)
-            || VRODOS.editor.envir.scene.getObjectByName(nameModel);
+        const insertedObject = getSceneObjectByName(nameModel);
         if (!insertedObject) return;
         const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
 
@@ -866,8 +875,7 @@ VRODOS.ui.deleteFomScene = function(uuid, name) {
         VRODOS.api.deleteAssetFromScene(uuid, true);
         if (selUuid !== "unassigned") {
             if (delUuid !== selUuid) {
-                const objectToReselect = VRODOS.editor.sceneRegistry.getByUuid(selUuid)
-                    || VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , selUuid);
+                const objectToReselect = getSceneObjectByUuid(selUuid);
                 if (objectToReselect) {
                     VRODOS.editor.selection.select(objectToReselect, { source: 'delete-reselect' });
                 }
@@ -898,8 +906,7 @@ VRODOS.ui.removeHierarchyEntriesForObject = function(uuid, objectName) {
 
 VRODOS.ui.lockOnScene = function(uuid, name) {
 
-    const selectedObject = VRODOS.editor.sceneRegistry.getByUuid(uuid)
-        || VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , uuid);
+    const selectedObject = getSceneObjectByUuid(uuid);
     const hierarchyItem = document.getElementById(uuid);
     if (!selectedObject) return;
 
@@ -946,22 +953,7 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
         }
     }
 
-    // 2. Find actual object inside scene (registry first, fallback to direct children and proxies)
-    let objectSelected = VRODOS.editor.sceneRegistry.getByUuid(uuid);
-    for (const child of VRODOS.editor.envir.scene.children) {
-        if (objectSelected) break;
-        if (typeof child === 'object' && child !== null) {
-            if (child.uuid === uuid) {
-                objectSelected = child.realObject || child;
-                break;
-            }
-            // Check if it's a proxy for this uuid
-            if (child.realObject && child.realObject.uuid === uuid) {
-                objectSelected = child.realObject;
-                break;
-            }
-        }
-    }
+    const objectSelected = getSceneObjectByUuid(uuid);
 
     if (!objectSelected) return;
 
