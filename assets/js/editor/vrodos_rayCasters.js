@@ -201,7 +201,12 @@ VRODOS.ui.onLeftMouseClick = function(event) {
     if (intersects.length === 0) {
         // Clicked empty canvas - deselect current object
         if (event.button === 0) {
-            VRODOS.editor.transform_controls.detach();
+            if (typeof VRODOS.ui.clearTransformSelection === 'function') {
+                VRODOS.ui.clearTransformSelection();
+            } else {
+                VRODOS.editor.transform_controls.detach();
+                VRODOS.editor.currentSelectedRealObject = null;
+            }
             VRODOS.ui.removeAllCelOutlines();
             VRODOS.ui.hideObjectControlsPanel();
             const objManipToggle = document.getElementById('object-manipulation-toggle');
@@ -221,7 +226,10 @@ VRODOS.ui.onLeftMouseClick = function(event) {
     }
 
     // More than one objects intersected
-    const prevSelected = typeof VRODOS.editor.transform_controls.object != 'undefined' ? VRODOS.editor.transform_controls.object.name : null;
+    const selectedTransformObject = typeof VRODOS.ui.getSelectedTransformObject === 'function'
+        ? VRODOS.ui.getSelectedTransformObject()
+        : VRODOS.editor.transform_controls.object;
+    const prevSelected = selectedTransformObject ? selectedTransformObject.name : null;
     let selectNext = false;
     let i = 0;
 
@@ -318,7 +326,10 @@ VRODOS.ui.selectorMajor = function(event, objectSel, whocalls) {
                 {return;}
 
             // Name-based lookup instead of full scene traverse — helper naming convention: 'lightHelper_' + lightName
-            const helperName = `lightHelper_${  VRODOS.editor.transform_controls.object.name}`;
+            const realLightObject = typeof VRODOS.ui.getSelectedTransformObject === 'function'
+                ? VRODOS.ui.getSelectedTransformObject()
+                : VRODOS.editor.transform_controls.object;
+            const helperName = `lightHelper_${  realLightObject.name}`;
             const helper = VRODOS.editor.envir.scene.getObjectByName(helperName);
             if (helper && typeof helper.update === 'function') helper.update();
         };
@@ -401,7 +412,10 @@ VRODOS.ui.contextMenuClick = function(event) {
 
        
     // Check if right-clicked is the one selected already with left-click
-    if (VRODOS.editor.transform_controls.object && intersected[0].name === VRODOS.editor.transform_controls.object.name) {
+    const selectedTransformObject = typeof VRODOS.ui.getSelectedTransformObject === 'function'
+        ? VRODOS.ui.getSelectedTransformObject()
+        : VRODOS.editor.transform_controls.object;
+    if (selectedTransformObject && intersected[0].name === selectedTransformObject.name) {
         showProperties(event, intersected[0]);
     }
 

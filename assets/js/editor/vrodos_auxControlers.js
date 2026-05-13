@@ -949,6 +949,7 @@ function controllerDatGuiOnChange() {
             target.position.x = value;
             target.updateMatrix();
             target.updateMatrixWorld();
+            syncAttachedProxyToObject(target);
         }
         VRODOS.editor.animate();
         VRODOS.api.triggerAutoSave();
@@ -970,6 +971,7 @@ function controllerDatGuiOnChange() {
             target.position.y = value;
             target.updateMatrix();
             target.updateMatrixWorld();
+            syncAttachedProxyToObject(target);
         }
         VRODOS.editor.animate();
         VRODOS.api.triggerAutoSave();
@@ -991,6 +993,7 @@ function controllerDatGuiOnChange() {
             target.position.z = value;
             target.updateMatrix();
             target.updateMatrixWorld();
+            syncAttachedProxyToObject(target);
         }
         VRODOS.editor.animate();
         VRODOS.api.triggerAutoSave();
@@ -1013,6 +1016,7 @@ function controllerDatGuiOnChange() {
             target.rotation.x = value / 180 * Math.PI;
             target.updateMatrix();
             target.updateMatrixWorld();
+            syncAttachedProxyToObject(target);
         }
         VRODOS.editor.animate();
         VRODOS.api.triggerAutoSave();
@@ -1034,6 +1038,7 @@ function controllerDatGuiOnChange() {
             target.rotation.y = value / 180 * Math.PI;
             target.updateMatrix();
             target.updateMatrixWorld();
+            syncAttachedProxyToObject(target);
         }
         VRODOS.editor.animate();
         VRODOS.api.triggerAutoSave();
@@ -1055,6 +1060,7 @@ function controllerDatGuiOnChange() {
             target.rotation.z = value / 180 * Math.PI;
             target.updateMatrix();
             target.updateMatrixWorld();
+            syncAttachedProxyToObject(target);
         }
         VRODOS.editor.animate();
         VRODOS.api.triggerAutoSave();
@@ -1086,6 +1092,7 @@ function controllerDatGuiOnChange() {
             }
             target.updateMatrix();
             target.updateMatrixWorld();
+            syncAttachedProxyToObject(target);
         }
         VRODOS.editor.animate();
         VRODOS.api.triggerAutoSave();
@@ -1116,6 +1123,7 @@ function controllerDatGuiOnChange() {
             }
             target.updateMatrix();
             target.updateMatrixWorld();
+            syncAttachedProxyToObject(target);
         }
         VRODOS.editor.animate();
         VRODOS.api.triggerAutoSave();
@@ -1146,6 +1154,7 @@ function controllerDatGuiOnChange() {
             }
             target.updateMatrix();
             target.updateMatrixWorld();
+            syncAttachedProxyToObject(target);
         }
         VRODOS.editor.animate();
         VRODOS.api.triggerAutoSave();
@@ -1326,6 +1335,47 @@ VRODOS.editor.qRealStart = new THREE.Quaternion();
 VRODOS.editor.pRealStart = new THREE.Vector3();
 VRODOS.editor.currentSelectedRealObject = null;
 
+function vrodosFiniteNumber(value, fallback) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function getTransformControlsProxy() {
+    return window.vrodosGizmoProxy || null;
+}
+
+function syncAttachedProxyToObject(target) {
+    const proxy = getTransformControlsProxy();
+    if (!proxy || !target || proxy.realObject !== target) return;
+
+    proxy.position.copy(target.position);
+    proxy.quaternion.copy(target.quaternion);
+    proxy.scale.copy(target.scale);
+    proxy.updateMatrix();
+    proxy.updateMatrixWorld(true);
+}
+
+function ensureTransformControlsVisible() {
+    if (!VRODOS.editor.transform_controls) return;
+
+    const controls = VRODOS.editor.transform_controls;
+    const helper = VRODOS.editor.transform_controls_helper || controls._root || null;
+
+    controls.enabled = true;
+    if (helper) {
+        helper.visible = Boolean(controls.object);
+        helper.frustumCulled = false;
+        helper.renderOrder = Math.max(helper.renderOrder || 0, 10000);
+        if (typeof helper.traverse === 'function') {
+            helper.traverse((child) => {
+                child.frustumCulled = false;
+                child.renderOrder = Math.max(child.renderOrder || 0, 10000);
+            });
+        }
+        helper.updateMatrixWorld(true);
+    }
+}
+
 /**
  *  When you change trs from axes controls then automatically the GUI and the php form are updated
  *
@@ -1336,7 +1386,7 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     if (!VRODOS.editor.transform_controls.object) return;
 
     // Determine the real object we are actually trying to move
-    const realObject = VRODOS.editor.currentSelectedRealObject;
+    const realObject = getSelectedTransformObject();
     if (!realObject) return;
 
     const isDragging = VRODOS.editor.transform_controls.dragging;
@@ -1396,28 +1446,28 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     }
 
     //--------- translate_x ---------------
-    if (Math.abs(VRODOS.editor.transform_controls.object.position.x - gui_controls_funs.dg_t1) > 0.0001) {
+    if (Math.abs(realObject.position.x - gui_controls_funs.dg_t1) > 0.0001) {
         const isMaster = !isDragging || (activeAxis && activeAxis.indexOf('X') !== -1);
         if (isMaster) {
-            gui_controls_funs.dg_t1 = VRODOS.editor.transform_controls.object.position.x;
+            gui_controls_funs.dg_t1 = realObject.position.x;
             VRODOS.editor.envir.scene.dispatchEvent({ type: "modificationPendingSave" });
         }
     }
 
     //--------- translate_y ---------------
-    if (Math.abs(VRODOS.editor.transform_controls.object.position.y - gui_controls_funs.dg_t2) > 0.0001) {
+    if (Math.abs(realObject.position.y - gui_controls_funs.dg_t2) > 0.0001) {
         const isMaster = !isDragging || (activeAxis && activeAxis.indexOf('Y') !== -1);
         if (isMaster) {
-            gui_controls_funs.dg_t2 = VRODOS.editor.transform_controls.object.position.y;
+            gui_controls_funs.dg_t2 = realObject.position.y;
             VRODOS.editor.envir.scene.dispatchEvent({ type: "modificationPendingSave" });
         }
     }
 
     //--------- translate_z ---------------
-    if (Math.abs(VRODOS.editor.transform_controls.object.position.z - gui_controls_funs.dg_t3) > 0.0001) {
+    if (Math.abs(realObject.position.z - gui_controls_funs.dg_t3) > 0.0001) {
         const isMaster = !isDragging || (activeAxis && activeAxis.indexOf('Z') !== -1);
         if (isMaster) {
-            gui_controls_funs.dg_t3 = VRODOS.editor.transform_controls.object.position.z;
+            gui_controls_funs.dg_t3 = realObject.position.z;
             VRODOS.editor.envir.scene.dispatchEvent({ type: "modificationPendingSave" });
         }
     }
@@ -1519,39 +1569,56 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
  * Use this instead of VRODOS.editor.transform_controls.attach(obj)
  */
 function vrodosAttachGizmo(object) {
+    if (!object || !VRODOS.editor.transform_controls || !VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
+
+    if (object.name === "vrodosGizmoProxy" && object.realObject) {
+        object = object.realObject;
+    }
+
     if (!object || object.name === "vrodosGizmoProxy") return;
 
     VRODOS.editor.currentSelectedRealObject = object;
 
     if (window.vrodosGizmoProxy) {
-        // 1. Ensure proxy is in scene
-        if (!VRODOS.editor.envir.scene.getObjectByName("vrodosGizmoProxy")) {
-            VRODOS.editor.envir.scene.add(window.vrodosGizmoProxy);
+        const proxy = window.vrodosGizmoProxy;
+        const scene = VRODOS.editor.envir.scene;
+
+        // 1. Ensure the exact proxy instance is in the scene graph.
+        if (proxy.parent !== scene) {
+            if (proxy.parent) {
+                proxy.parent.remove(proxy);
+            }
+            scene.add(proxy);
         }
 
         // 2. Sync Proxy to Object initial state
-        window.vrodosGizmoProxy.position.copy(object.position);
-        window.vrodosGizmoProxy.quaternion.copy(object.quaternion);
-        window.vrodosGizmoProxy.scale.copy(object.scale);
+        proxy.position.copy(object.position);
+        proxy.quaternion.copy(object.quaternion);
+        proxy.scale.copy(object.scale);
+        proxy.updateMatrix();
+        proxy.updateMatrixWorld(true);
 
         // 3. Delegate properties for safety checks in other scripts
-        window.vrodosGizmoProxy.realObject = object;
-        window.vrodosGizmoProxy.category_name = object.category_name;
-        window.vrodosGizmoProxy.category_slug = object.category_slug;
-        window.vrodosGizmoProxy.asset_name = object.asset_name;
-        window.vrodosGizmoProxy.isLight = object.isLight;
-        window.vrodosGizmoProxy.parentLight = object.parentLight;
-        window.vrodosGizmoProxy.locked = object.locked;
-        window.vrodosGizmoProxy.name = "vrodosGizmoProxy";
+        proxy.realObject = object;
+        proxy.category_name = object.category_name;
+        proxy.category_slug = object.category_slug;
+        proxy.asset_name = object.asset_name;
+        proxy.isLight = object.isLight;
+        proxy.parentLight = object.parentLight;
+        proxy.locked = object.locked;
+        proxy.name = "vrodosGizmoProxy";
 
         // 4. Attach handles to proxy
-        VRODOS.editor.transform_controls.attach(window.vrodosGizmoProxy);
+        VRODOS.editor.transform_controls.attach(proxy);
     } else {
         // Fallback: attach directly to object if proxy failed to init
         VRODOS.editor.transform_controls.attach(object);
     }
 
-    VRODOS.editor.transform_controls.visible = true;
+    ensureTransformControlsVisible();
+    if (typeof VRODOS.editor.requestRender === 'function') {
+        VRODOS.editor.requestRender('gizmo-attached');
+    }
 }
 
 function clearTransformSelection() {
@@ -1564,6 +1631,10 @@ function clearTransformSelection() {
     if (VRODOS.editor.transform_controls) {
         VRODOS.editor.transform_controls.detach();
     }
+    ensureTransformControlsVisible();
+    if (typeof VRODOS.editor.requestRender === 'function') {
+        VRODOS.editor.requestRender('gizmo-cleared');
+    }
 }
 
 function attachTransformTarget(object) {
@@ -1571,35 +1642,65 @@ function attachTransformTarget(object) {
     vrodosAttachGizmo(object);
 }
 
+function getSelectedTransformObject() {
+    if (VRODOS.editor.currentSelectedRealObject) {
+        return VRODOS.editor.currentSelectedRealObject;
+    }
+
+    if (!VRODOS.editor.transform_controls || !VRODOS.editor.transform_controls.object) {
+        return null;
+    }
+
+    const attachedObject = VRODOS.editor.transform_controls.object;
+    if (attachedObject.name === "vrodosGizmoProxy" && attachedObject.realObject) {
+        return attachedObject.realObject;
+    }
+
+    return attachedObject;
+}
+
+function syncTransformGuiFromObject(object) {
+    const target = object || getSelectedTransformObject();
+    if (!target) return;
+
+    syncAttachedProxyToObject(target);
+    ensureTransformControlsVisible();
+
+    gui_controls_funs.dg_t1 = vrodosFiniteNumber(target.position.x, 0);
+    gui_controls_funs.dg_t2 = vrodosFiniteNumber(target.position.y, 0);
+    gui_controls_funs.dg_t3 = vrodosFiniteNumber(target.position.z, 0);
+
+    gui_controls_funs.dg_r1 = vrodosFiniteNumber(target.rotation.x, 0) * 180 / Math.PI;
+    gui_controls_funs.dg_r2 = vrodosFiniteNumber(target.rotation.y, 0) * 180 / Math.PI;
+    gui_controls_funs.dg_r3 = vrodosFiniteNumber(target.rotation.z, 0) * 180 / Math.PI;
+
+    gui_controls_funs.dg_s1 = vrodosFiniteNumber(target.scale.x, 1);
+    gui_controls_funs.dg_s2 = vrodosFiniteNumber(target.scale.y, 1);
+    gui_controls_funs.dg_s3 = vrodosFiniteNumber(target.scale.z, 1);
+
+    for (let c = 0; c < dg_controller.length; c++) {
+        if (dg_controller[c] && typeof dg_controller[c].updateDisplay === 'function') {
+            dg_controller[c].updateDisplay();
+        }
+    }
+}
+
 VRODOS.ui.setDatGuiInitialVales = function(object){
+    if (!object) return;
 
     vrodosAttachGizmo(object);
 
-    if (!VRODOS.editor.transform_controls.object) return;
-
-    gui_controls_funs.dg_t1 = Number(object.position.x) || 0;
-    gui_controls_funs.dg_t2 = Number(object.position.y) || 0;
-    gui_controls_funs.dg_t3 = Number(object.position.z) || 0;
-
-    gui_controls_funs.dg_r1 = (Number(object.rotation.x) * 180 / Math.PI) || 0;
-    gui_controls_funs.dg_r2 = (Number(object.rotation.y) * 180 / Math.PI) || 0;
-    gui_controls_funs.dg_r3 = (Number(object.rotation.z) * 180 / Math.PI) || 0;
-
-    gui_controls_funs.dg_s1 = Number(object.scale.x) || 0;
-    gui_controls_funs.dg_s2 = Number(object.scale.y) || 0;
-    gui_controls_funs.dg_s3 = Number(object.scale.z) || 0;
-
-    // lil-gui: updateDisplay() reads from the bound object and formats with .decimals(2)
-    for (let c = 0; c < 9; c++) {
-        dg_controller[c].updateDisplay();
+    syncTransformGuiFromObject(object);
+    if (typeof VRODOS.editor.requestRender === 'function') {
+        VRODOS.editor.requestRender('transform-gui-synced');
     }
-
-    updatePositionsPhpAndJavsFromControlsAxes();
 }
 
 VRODOS.ui.attachGizmo = vrodosAttachGizmo;
 VRODOS.ui.clearTransformSelection = clearTransformSelection;
 VRODOS.ui.attachTransformTarget = attachTransformTarget;
+VRODOS.ui.getSelectedTransformObject = getSelectedTransformObject;
+VRODOS.ui.syncTransformGuiFromObject = syncTransformGuiFromObject;
 VRODOS.ui.showObjectControlsPanel = showObjectControlsPanel;
 VRODOS.ui.hideObjectControlsPanel = hideObjectControlsPanel;
 VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;

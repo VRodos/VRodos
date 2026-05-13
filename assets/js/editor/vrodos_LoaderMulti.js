@@ -57,6 +57,14 @@ VRODOS.utils.loaderSafeObjectName = function(name, resource, object) {
     return `${(slugPart || 'scene_object') + (idPart ? `_${  idPart}` : '')  }_${  uuidPart}`;
 };
 
+VRODOS.utils.loaderDisplayText = function(value) {
+    if (typeof VRODOS.utils.decodeDisplayText === 'function') {
+        return VRODOS.utils.decodeDisplayText(value);
+    }
+
+    return value == null ? '' : String(value);
+};
+
 VRODOS.utils.runLimitedTasks = async function(tasks, limit) {
     const queue = Array.isArray(tasks) ? tasks.slice() : [];
     const safeLimit = Math.max(1, Number(limit) || 1);
@@ -216,7 +224,7 @@ VRODOS.loader.createTextPanelObject = function(name, resource) {
     const textHeight = 1.54;
     const group = new THREE.Group();
     group.name = name;
-    group.asset_name = (resource && resource.asset_name) || name;
+    group.asset_name = VRODOS.utils.loaderDisplayText((resource && resource.asset_name) || name);
     group.category_name = (resource && resource.category_name) || '3D Text';
     group.category_slug = '3d-text';
     group.text_content = text;
@@ -661,9 +669,9 @@ VRODOS.loader.LoaderMulti = class {
                         // Support both scene-load format (pos/rot/scale flat arrays)
                         // and drag-and-drop format (trs.translation/rotation/scale)
                         const trs = resource.trs;
-                        const pos = VRODOS.utils.loaderSafeVector(resource.position || (trs && trs.translation), [0, 0, 0]);
-                        const rot = VRODOS.utils.loaderSafeVector(resource.rotation || (trs && trs.rotation), [0, 0, 0]);
-                        const scl = VRODOS.utils.loaderSafeScale(resource.scale || (trs && trs.scale));
+                        const pos = VRODOS.utils.loaderSafeVector((trs && trs.translation) || resource.position || resource.translation, [0, 0, 0]);
+                        const rot = VRODOS.utils.loaderSafeVector((trs && trs.rotation) || resource.rotation, [0, 0, 0]);
+                        const scl = VRODOS.utils.loaderSafeScale((trs && trs.scale) || resource.scale);
 
                         pendingLoads.push(new Promise((resolve) => {
                             const geometry = new THREE.PlaneGeometry(2, 2);
@@ -823,7 +831,11 @@ VRODOS.loader.LoaderMulti = class {
                                         },
                                         (xhr) => {
                                             const mbLoaded = Math.floor(xhr.loaded / 104857.6) / 10;
-                                            document.getElementById("result_download").innerHTML = `'${resource.asset_name}' downloaded ${mbLoaded} Mb`;
+                                            const progressEl = document.getElementById("result_download");
+                                            if (progressEl) {
+                                                const displayName = VRODOS.utils.loaderDisplayText(resource.asset_name || name);
+                                                progressEl.textContent = `'${displayName}' downloaded ${mbLoaded} Mb`;
+                                            }
                                         },
                                         (error) => {
                                             console.error('A GLB loading error happened. Error 1590', error);
@@ -892,7 +904,9 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
     ]);
     for (const [key, value] of Object.entries(resource)) {
         if (!excludeKeys.has(key)) {
-            object[key] = value;
+            object[key] = ['asset_name', 'assessment_title', 'assessment_type', 'assessment_group'].includes(key)
+                ? VRODOS.utils.loaderDisplayText(value)
+                : value;
         }
     }
 
@@ -984,7 +998,7 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
 
 
     const trs = resource.trs || {};
-    const translation = VRODOS.utils.loaderSafeVector(trs.translation || resource.position, [0, 0, 0]);
+    const translation = VRODOS.utils.loaderSafeVector(trs.translation || resource.position || resource.translation, [0, 0, 0]);
     const rotation = VRODOS.utils.loaderSafeVector(trs.rotation || resource.rotation, [0, 0, 0]);
     const scale = VRODOS.utils.loaderSafeScale(trs.scale || resource.scale);
 

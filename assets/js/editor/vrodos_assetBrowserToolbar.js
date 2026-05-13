@@ -59,6 +59,10 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
     }
 
     function vrodos_decodeAssessmentText(value) {
+        if (typeof VRODOS !== 'undefined' && VRODOS.utils && typeof VRODOS.utils.decodeDisplayText === 'function') {
+            return VRODOS.utils.decodeDisplayText(value);
+        }
+
         let text = typeof value === 'string' ? value : '';
         if (!text) return '';
 
@@ -70,8 +74,8 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             }
         }
 
-        if (/(?:\\u|u)[0-9a-fA-F]{4}/.test(text)) {
-            text = text.replace(/(?:\\u|u)([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+        if (/(?:\\+|\/+)?u[0-9a-fA-F]{4}/.test(text)) {
+            text = text.replace(/(?:\\+|\/+)?u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
         }
 
         return text;
@@ -275,7 +279,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             for (let i = 0; i < enlistData.length; i++) {
                 f = enlistData[i];
 
-                name = escapeHTML(f.asset_name);
+                name = escapeHTML(vrodos_decodeAssessmentText(f.asset_name));
 
                 const lucideIconName = VRODOS.ui.getCategoryIcon(f.category_slug || f.category_icon);
 

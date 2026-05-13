@@ -53,15 +53,34 @@ function vrodosPatchTransformControlsAttach(controls, sceneRoot) {
 
     controls.attach = function (object) {
         if (!object || !sceneRoot || !vrodosIsSceneGraphObject(object, sceneRoot)) {
-            this.visible = false;
+            if (this._root) {
+                this._root.visible = false;
+            }
             return this;
         }
 
-        this.visible = true;
-        return originalAttach(object);
+        const result = originalAttach(object);
+        if (this._root) {
+            this._root.visible = true;
+            this._root.updateMatrixWorld(true);
+        }
+        return result;
     };
 
     controls._vrodosAttachPatched = true;
+}
+
+function vrodosPrepareTransformControlsHelper(helper) {
+    if (!helper || typeof helper.traverse !== 'function') {
+        return;
+    }
+
+    helper.frustumCulled = false;
+    helper.renderOrder = Math.max(helper.renderOrder || 0, 10000);
+    helper.traverse((child) => {
+        child.frustumCulled = false;
+        child.renderOrder = Math.max(child.renderOrder || 0, 10000);
+    });
 }
 
 /**
@@ -90,6 +109,7 @@ function initVrodosEditor() {
         VRODOS.editor.transform_controls.getHelper() :
         VRODOS.editor.transform_controls;
     VRODOS.editor.transform_controls_helper.name = 'myTransformControls';
+    vrodosPrepareTransformControlsHelper(VRODOS.editor.transform_controls_helper);
     vrodosPatchTransformControlsAttach(VRODOS.editor.transform_controls, VRODOS.editor.envir.scene);
     VRODOS.editor.transform_controls.addEventListener('change', () => {
         if (typeof VRODOS.editor.requestRender === 'function') {
@@ -204,20 +224,20 @@ function initVrodosEditor() {
  * (Restored from legacy template logic)
  */
 VRODOS.editor.updatePositionsAndControls = function() {
-    if (!VRODOS.editor.transform_controls.object || !VRODOS.ui.controlInterface) return;
+    const selectedObject = typeof VRODOS.ui.getSelectedTransformObject === 'function'
+        ? VRODOS.ui.getSelectedTransformObject()
+        : null;
+
+    if ((!VRODOS.editor.transform_controls.object && !selectedObject) || !VRODOS.ui.controlInterface) return;
     if ((window.vrodosGuiKeyboardEditing || 0) > 0) return;
 
-    const affines = ['position', 'rotation', 'scale'];
-    for (let j = 0; j < 3; j++) {
-        for (let i = 0; i < 3; i++) {
-            if (VRODOS.ui.controlInterface.controllers[j * 3 + i].getValue() !== VRODOS.editor.transform_controls.object[affines[j]].toArray()[i]) {
-                VRODOS.ui.controlInterface.controllers[j * 3 + i].updateDisplay();
-            }
-        }
+    if (VRODOS.editor.transform_controls.dragging &&
+        typeof VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes === 'function') {
+        VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes();
     }
 
-    if (typeof VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes === 'function') {
-        VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes();
+    if (typeof VRODOS.ui.syncTransformGuiFromObject === 'function') {
+        VRODOS.ui.syncTransformGuiFromObject(selectedObject);
     }
 };
 
@@ -286,7 +306,12 @@ VRODOS.api.finalizeSceneLoad = function() {
     VRODOS.editor.envir.isSceneLoading = false;
 
     // Detach controls on load
-    VRODOS.editor.transform_controls.detach();
+    if (typeof VRODOS.ui.clearTransformSelection === 'function') {
+        VRODOS.ui.clearTransformSelection();
+    } else {
+        VRODOS.editor.currentSelectedRealObject = null;
+        VRODOS.editor.transform_controls.detach();
+    }
     if (typeof VRODOS.ui.removeAllCelOutlines === 'function') VRODOS.ui.removeAllCelOutlines();
     if (typeof VRODOS.ui.hideObjectControlsPanel === 'function') VRODOS.ui.hideObjectControlsPanel();
 

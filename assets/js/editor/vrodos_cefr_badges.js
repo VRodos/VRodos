@@ -14,6 +14,10 @@ VRODOS.ui.badges.escapeHTML = function(value) {
 };
 
 VRODOS.ui.badges.decodeText = function(value) {
+    if (typeof VRODOS.utils.decodeDisplayText === 'function') {
+        return VRODOS.utils.decodeDisplayText(value);
+    }
+
     let text = typeof value === 'string' ? value : '';
     if (!text) return '';
 
@@ -25,8 +29,8 @@ VRODOS.ui.badges.decodeText = function(value) {
         }
     }
 
-    if (/(?:\\u|u)[0-9a-fA-F]{4}/.test(text)) {
-        text = text.replace(/(?:\\u|u)([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+    if (/(?:\\+|\/+)?u[0-9a-fA-F]{4}/.test(text)) {
+        text = text.replace(/(?:\\+|\/+)?u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
     }
 
     return text;

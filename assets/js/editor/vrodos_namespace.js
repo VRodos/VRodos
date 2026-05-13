@@ -102,4 +102,25 @@ VRODOS.utils.getAjaxUrl = function() {
     return '/wp-admin/admin-ajax.php';
 };
 
+VRODOS.utils.decodeDisplayText = function(value) {
+    let text = typeof value === 'string' ? value : (value == null ? '' : String(value));
+    if (!text) return '';
+
+    for (let i = 0; i < 2; i++) {
+        if (/%[0-9a-fA-F]{2}/.test(text)) {
+            try {
+                const decoded = decodeURIComponent(text);
+                if (decoded === text) break;
+                text = decoded;
+            } catch (err) {
+                break;
+            }
+        }
+    }
+
+    return text.replace(/(?:\\+|\/+)?u([0-9a-fA-F]{4})/g, (_, hex) =>
+        String.fromCodePoint(parseInt(hex, 16))
+    );
+};
+
 VRODOS.syncLocalizedData();

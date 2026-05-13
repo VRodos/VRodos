@@ -72,24 +72,24 @@ VRODOS.ui.frameNewSceneObject = function(object3D) {
 }
 
 VRODOS.utils.decodeDisplayText = function(value) {
-    let text = typeof value === 'string' ? value : '';
+    let text = typeof value === 'string' ? value : (value == null ? '' : String(value));
     if (!text) return '';
 
-    if (/%[0-9a-fA-F]{2}/.test(text)) {
-        try {
-            text = decodeURIComponent(text);
-        } catch (err) {
-            // Keep original text if decoding fails.
+    for (let i = 0; i < 2; i++) {
+        if (/%[0-9a-fA-F]{2}/.test(text)) {
+            try {
+                const decoded = decodeURIComponent(text);
+                if (decoded === text) break;
+                text = decoded;
+            } catch (err) {
+                break;
+            }
         }
     }
 
-    if (/(?:\\u|u)[0-9a-fA-F]{4}/.test(text)) {
-        text = text.replace(/(?:\\u|u)([0-9a-fA-F]{4})/g, (_, hex) =>
-            String.fromCharCode(parseInt(hex, 16))
-        );
-    }
-
-    return text;
+    return text.replace(/(?:\\+|\/+)?u([0-9a-fA-F]{4})/g, (_, hex) =>
+        String.fromCodePoint(parseInt(hex, 16))
+    );
 }
 
 VRODOS.utils.normalizeAssessmentLevels = function(levels) {
@@ -742,7 +742,11 @@ VRODOS.api.createGlbAsset = function(nameModel, addedAt, pluginPath) {
 
     const manager = new THREE.LoadingManager();
     manager.onProgress = (item, loaded, total) => {
-        document.getElementById("result_download").innerHTML = `${VRODOS.data.scene_data.objects[nameModel].asset_name  } loading part ${  loaded  } / ${  total}`;
+        const progressEl = document.getElementById("result_download");
+        if (progressEl) {
+            const assetName = VRODOS.utils.decodeDisplayText(VRODOS.data.scene_data.objects[nameModel].asset_name || nameModel);
+            progressEl.textContent = `${assetName} loading part ${loaded} / ${total}`;
+        }
     };
 
     manager.onLoad = () => {
@@ -1117,7 +1121,5 @@ VRODOS.utils.disposeObject = function(object) {
         }
     });
 }
-
-
 
 
