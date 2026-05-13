@@ -1128,24 +1128,18 @@ VRODOS.ui.loadButtonActions = function() {
 
 VRODOS.ui.setVisiblityLightHelpingElements = function(statusVisibility) {
 
-    for (let i = 0; i < VRODOS.editor.envir.scene.children.length; i++) {
-        const curr_obj = VRODOS.editor.envir.scene.children[i];
+    VRODOS.editor.envir.scene.traverse((curr_obj) => {
+        if (!curr_obj) return;
 
         if (curr_obj.category_name === 'lightHelper' || curr_obj.category_name === 'lightTargetSpot')
             {curr_obj.visible = statusVisibility;}
 
-        if (curr_obj.category_name === 'lightSun')
-            {curr_obj.children[0].visible = statusVisibility;}
-
-        if (curr_obj.category_name === 'lightLamp')
-            {curr_obj.children[0].visible = statusVisibility;}
-
-        if (curr_obj.category_name === 'lightSpot')
+        if ((curr_obj.category_name === 'lightSun' || curr_obj.category_name === 'lightLamp' || curr_obj.category_name === 'lightSpot') && curr_obj.children[0])
             {curr_obj.children[0].visible = statusVisibility;}
 
         if (curr_obj.type === 'CameraHelper') // This is the shadow camera of sun
             {curr_obj.visible = statusVisibility;}
-    }
+    });
 };
 
 

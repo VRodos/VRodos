@@ -665,10 +665,7 @@ VRODOS.api.createPawn = function(nameModel, addedAt, pluginPath) {
             Pawn.isLight = false;
             Pawn.addedAt = addedAt;
 
-            let indexPawn = 1;
-            for (const ch of VRODOS.editor.envir.scene.children) {
-                if (ch.name.includes("Pawn")) indexPawn++;
-            }
+            const indexPawn = VRODOS.utils.getNextPawnIndex(VRODOS.editor.envir.scene);
 
             const pawnLabelDiv = document.createElement('div');
             pawnLabelDiv.textContent = `Actor ${  indexPawn}`;

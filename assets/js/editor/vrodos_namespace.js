@@ -123,4 +123,25 @@ VRODOS.utils.decodeDisplayText = function(value) {
     );
 };
 
+VRODOS.utils.getNextPawnIndex = function(scene) {
+    const registry = VRODOS.editor && VRODOS.editor.sceneRegistry;
+    const roots = registry && typeof registry.getSelectableRoots === 'function'
+        ? registry.getSelectableRoots()
+        : null;
+    const source = roots && roots.length > 0
+        ? roots
+        : (scene && Array.isArray(scene.children) ? scene.children : []);
+
+    let count = 1;
+    source.forEach((object) => {
+        if (!object) return;
+        const name = object.name || '';
+        if (object.category_name === 'pawn' || name.includes('Pawn')) {
+            count++;
+        }
+    });
+
+    return count;
+};
+
 VRODOS.syncLocalizedData();

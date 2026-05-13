@@ -374,10 +374,7 @@ VRODOS.loader.LightsPawnLoader = class {
                     pawn.material.transparent = true;
                     pawn.material.opacity = 0.6;
 
-                    let indexPawn = 1;
-                    for (const ch of VRODOS.editor.envir.scene.children) {
-                        if (ch.name.includes("Pawn")) indexPawn++;
-                    }
+                    const indexPawn = VRODOS.utils.getNextPawnIndex(VRODOS.editor.envir.scene);
 
                     const labelDiv = document.createElement('div');
                     labelDiv.textContent = `Actor ${  indexPawn}`;

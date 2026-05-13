@@ -79,6 +79,19 @@ function isSceneBoundsCandidate(sceneChild) {
     return sceneChild.vrodos_internal_helper !== true;
 }
 
+function getSceneBoundsCandidates(scene) {
+    const registry = VRODOS.editor && VRODOS.editor.sceneRegistry;
+    const registryRoots = registry && typeof registry.getSelectableRoots === 'function'
+        ? registry.getSelectableRoots()
+        : [];
+
+    if (Array.isArray(registryRoots) && registryRoots.length > 0) {
+        return registryRoots;
+    }
+
+    return scene && Array.isArray(scene.children) ? scene.children : [];
+}
+
 // Find dimensions of the selected object
 function findDimensions(groupObj) {
     const fallbackDimensions = [1, 1, 1];
@@ -157,7 +170,7 @@ function findSceneDimensions() {
         hasSceneContent: false
     };
 
-    VRODOS.editor.envir.scene.children
+    getSceneBoundsCandidates(VRODOS.editor.envir.scene)
         .filter(isSceneBoundsCandidate)
         .forEach((sceneChild) => {
             const objectBounds = findObjectLimits(sceneChild);
@@ -183,4 +196,3 @@ VRODOS.utils.findDimensions = findDimensions;
 VRODOS.utils.findBorders = findBorders;
 VRODOS.utils.findObjectLimits = findObjectLimits;
 VRODOS.utils.findSceneDimensions = findSceneDimensions;
-
