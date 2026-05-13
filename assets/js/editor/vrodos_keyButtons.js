@@ -51,9 +51,9 @@ const keydown_handler = (ev) => {
         case 82: viewUp = true; break; // r
         case 70: viewDown = true; break; // f
         case 187: break;
-        case 107: VRODOS.editor.transform_controls.setSize(VRODOS.editor.transform_controls.size + 0.1); break; // +,=,num+
+        case 107: VRODOS.editor.transforms.scaleSize(1.1); break; // +,=,num+
         case 189: break;
-        case 10: VRODOS.editor.transform_controls.setSize(Math.max(VRODOS.editor.transform_controls.size - 0.1, 0.1)); break;// -,_,num-
+        case 10: VRODOS.editor.transforms.scaleSize(0.9); break;// -,_,num-
         //-------------------------------- PointerLock -----------------------
         case 38: break;// up arrow
         case 87: moveForward = true; break; // w
@@ -150,4 +150,3 @@ VRODOS.api.resetAvatarMovement = function() {
     torgue.set(0, 0, 0);
     moveForward = moveBackward = moveLeft = moveRight = moveUp = moveDown = viewUp = viewDown = false;
 };
-

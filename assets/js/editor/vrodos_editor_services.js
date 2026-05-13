@@ -248,6 +248,33 @@ VRODOS.utils = VRODOS.utils || {};
     }
 
     const transforms = VRODOS.editor.transforms || {};
+    const dragState = transforms.dragState || {
+        oldTRS: null,
+        scaleStart: null,
+        qProxyStart: new THREE.Quaternion(),
+        pProxyStart: new THREE.Vector3(),
+        qRealStart: new THREE.Quaternion(),
+        pRealStart: new THREE.Vector3()
+    };
+    transforms.dragState = dragState;
+
+    function cloneTRS(object) {
+        return {
+            pos: object.position.clone(),
+            rot: object.rotation.clone(),
+            scale: object.scale.clone()
+        };
+    }
+
+    function hasTRSChanged(object, oldTRS) {
+        if (!object || !oldTRS) return false;
+
+        return object.position.distanceToSquared(oldTRS.pos) > 0.000001 ||
+            object.scale.distanceToSquared(oldTRS.scale) > 0.000001 ||
+            Math.abs(object.rotation.x - oldTRS.rot.x) > 0.0001 ||
+            Math.abs(object.rotation.y - oldTRS.rot.y) > 0.0001 ||
+            Math.abs(object.rotation.z - oldTRS.rot.z) > 0.0001;
+    }
 
     transforms.getAttachedObject = function() {
         const controls = VRODOS.editor.transform_controls;
@@ -378,6 +405,125 @@ VRODOS.utils = VRODOS.utils || {};
         render.request('transform-gui-change');
     };
 
+    transforms.getMode = function() {
+        const controls = VRODOS.editor.transform_controls;
+        return controls && typeof controls.getMode === 'function' ? controls.getMode() : 'translate';
+    };
+
+    transforms.canUseMode = function(mode, object) {
+        const target = transforms.getRealObject(object);
+        if (!target) return false;
+
+        const category = target.category_name || '';
+        if (mode === 'rotate' && (
+            category.includes('lightTargetSpot') ||
+            category.includes('lightSun') ||
+            category.includes('lightLamp') ||
+            category.includes('lightSpot')
+        )) {
+            return false;
+        }
+
+        return true;
+    };
+
+    transforms.setMode = function(mode, options) {
+        const opts = options || {};
+        const controls = VRODOS.editor.transform_controls;
+        if (!controls || !transforms.canUseMode(mode, opts.object)) return false;
+
+        controls.setMode(mode);
+        if (opts.showProperties && typeof VRODOS.ui.showObjectPropertiesPanel === 'function') {
+            VRODOS.ui.showObjectPropertiesPanel(mode);
+        }
+        render.request(`transform-mode-${mode}`);
+        return true;
+    };
+
+    transforms.setSize = function(size) {
+        const controls = VRODOS.editor.transform_controls;
+        if (!controls || typeof controls.setSize !== 'function') return false;
+
+        controls.setSize(Math.max(Number(size) || 1, 0.1));
+        render.request('transform-size');
+        return true;
+    };
+
+    transforms.scaleSize = function(multiplier) {
+        const controls = VRODOS.editor.transform_controls;
+        if (!controls) return false;
+        return transforms.setSize((controls.size || 1) * multiplier);
+    };
+
+    transforms.setVisible = function(visible) {
+        const controls = VRODOS.editor.transform_controls;
+        if (!controls) return false;
+
+        const nextVisible = Boolean(visible);
+        const helper = VRODOS.editor.transform_controls_helper || controls._root || null;
+        controls.visible = nextVisible;
+        if (helper) {
+            helper.visible = nextVisible && Boolean(controls.object);
+            helper.updateMatrixWorld(true);
+        }
+        render.request(nextVisible ? 'transform-visible' : 'transform-hidden');
+        return true;
+    };
+
+    transforms.captureDragStart = function() {
+        const controls = VRODOS.editor.transform_controls;
+        const attachedObject = transforms.getAttachedObject();
+        const target = transforms.getRealObject();
+        if (!controls || !attachedObject || !target) return null;
+
+        dragState.oldTRS = cloneTRS(target);
+        dragState.scaleStart = target.scale.clone();
+
+        if (attachedObject !== target) {
+            dragState.qProxyStart.copy(attachedObject.quaternion);
+            dragState.pProxyStart.copy(attachedObject.position);
+            dragState.qRealStart.copy(target.quaternion);
+            dragState.pRealStart.copy(target.position);
+        }
+
+        return target;
+    };
+
+    transforms.commitDragEnd = function() {
+        const controls = VRODOS.editor.transform_controls;
+        const target = transforms.getRealObject();
+        const oldTRS = dragState.oldTRS;
+        if (!controls || !target || !oldTRS) return null;
+
+        const newTRS = cloneTRS(target);
+        if (hasTRSChanged(target, oldTRS) &&
+            typeof VRODOS.editor.undoManager !== 'undefined' &&
+            !VRODOS.editor.undoManager.isExecuting) {
+            VRODOS.editor.undoManager.add(new VRODOS.editor.TransformCommand(target, oldTRS, newTRS));
+        }
+
+        dragState.oldTRS = null;
+        dragState.scaleStart = null;
+        sceneRegistry.invalidateBounds(target);
+        transforms.syncProxyToObject(target);
+        render.request('transform-drag-ended');
+        return target;
+    };
+
+    transforms.handleDraggingChanged = function(event) {
+        const envir = getEnvir();
+        if (envir && envir.orbitControls) {
+            envir.orbitControls.enabled = !event.value;
+        }
+
+        if (event.value) {
+            transforms.captureDragStart();
+            render.request('transform-drag-started');
+        } else {
+            transforms.commitDragEnd();
+        }
+    };
+
     function getObjectTitle(object) {
         const rawTitle = object ? (object.asset_name || object.name || 'Object Controls') : 'Object Controls';
         return typeof VRODOS.utils.decodeDisplayText === 'function'
@@ -490,9 +636,9 @@ VRODOS.utils = VRODOS.utils || {};
             }
 
             if (opts.setMode && VRODOS.editor.transform_controls) {
-                VRODOS.editor.transform_controls.setMode('translate');
+                transforms.setMode('translate');
                 if (!getEnvir() || !getEnvir().is2d) {
-                    const modeSwitch = document.getElementById(`${VRODOS.editor.transform_controls.getMode()}-switch`);
+                    const modeSwitch = document.getElementById(`${transforms.getMode()}-switch`);
                     if (modeSwitch) modeSwitch.click();
                 }
             }

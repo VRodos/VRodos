@@ -1274,9 +1274,7 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
         target.updateMatrixWorld(true);
         syncAttachedProxy(target);
 
-        if (VRODOS.editor.transform_controls) {
-            VRODOS.editor.transform_controls.visible = true;
-        }
+        VRODOS.editor.transforms.setVisible(true);
 
         controller.updateDisplay();
         VRODOS.editor.animate();
@@ -1342,10 +1340,17 @@ window.vrodosGizmoProxy.name = "vrodosGizmoProxy";
 
 // State tracking for proxy-based transformation
 window.vrodosRotationSensitivity = 20.0; // Default multiplier for rotation
-VRODOS.editor.qProxyStart = new THREE.Quaternion();
-VRODOS.editor.pProxyStart = new THREE.Vector3();
-VRODOS.editor.qRealStart = new THREE.Quaternion();
-VRODOS.editor.pRealStart = new THREE.Vector3();
+VRODOS.editor.transforms.dragState = VRODOS.editor.transforms.dragState || {
+    scaleStart: null,
+    qProxyStart: new THREE.Quaternion(),
+    pProxyStart: new THREE.Vector3(),
+    qRealStart: new THREE.Quaternion(),
+    pRealStart: new THREE.Vector3()
+};
+VRODOS.editor.qProxyStart = VRODOS.editor.transforms.dragState.qProxyStart;
+VRODOS.editor.pProxyStart = VRODOS.editor.transforms.dragState.pProxyStart;
+VRODOS.editor.qRealStart = VRODOS.editor.transforms.dragState.qRealStart;
+VRODOS.editor.pRealStart = VRODOS.editor.transforms.dragState.pRealStart;
 VRODOS.editor.currentSelectedRealObject = null;
 
 function vrodosFiniteNumber(value, fallback) {
@@ -1393,7 +1398,8 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
             // High-Sensitivity Booster Logic (Unclamped for r181)
             // Extract the Axis and Angle of the proxy's change
             const qProxyCurrent = attachedObject.quaternion.clone();
-            const qDelta = qProxyCurrent.clone().multiply(VRODOS.editor.qProxyStart.clone().invert());
+            const dragState = VRODOS.editor.transforms.dragState;
+            const qDelta = qProxyCurrent.clone().multiply(dragState.qProxyStart.clone().invert());
             
             const angle = 2 * Math.acos(Math.min(1, Math.max(-1, qDelta.w)));
             const s = Math.sqrt(1 - qDelta.w * qDelta.w);
@@ -1407,7 +1413,7 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
             // Rebuild the rotation with the multiplier applied directly to the angle
             const boostedDelta = new THREE.Quaternion().setFromAxisAngle(axis, angle * window.vrodosRotationSensitivity);
             
-            realObject.quaternion.copy(VRODOS.editor.qRealStart).multiply(boostedDelta);
+            realObject.quaternion.copy(dragState.qRealStart).multiply(boostedDelta);
             realObject.updateMatrix();
             realObject.updateMatrixWorld();
         } else {
@@ -1499,7 +1505,7 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
 
     const scaleSyncEpsilon = 0.00001;
     const isScaling = VRODOS.editor.transform_controls.mode === 'scale' && isDragging;
-    const sStart = VRODOS.editor.transform_controls._scaleStart;
+    const sStart = VRODOS.editor.transforms.dragState.scaleStart;
 
     //---------scale_x -------------------------------
     if (Math.abs(realObject.scale.x - gui_controls_funs.dg_s1) > scaleSyncEpsilon){
@@ -1621,6 +1627,7 @@ VRODOS.ui.getSelectedTransformObject = getSelectedTransformObject;
 VRODOS.ui.syncTransformGuiFromObject = syncTransformGuiFromObject;
 VRODOS.editor.transforms = VRODOS.editor.transforms || {};
 VRODOS.editor.transforms.syncGui = syncTransformGuiFromObject;
+VRODOS.editor.transforms.syncFromControls = updatePositionsPhpAndJavsFromControlsAxes;
 VRODOS.ui.showObjectControlsPanel = showObjectControlsPanel;
 VRODOS.ui.hideObjectControlsPanel = hideObjectControlsPanel;
 VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;

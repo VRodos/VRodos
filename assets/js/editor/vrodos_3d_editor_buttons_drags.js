@@ -367,11 +367,11 @@ VRODOS.ui.onDrop = function(ev) {
     }
 
     if (typeof VRODOS.ui.showObjectPropertiesPanel === 'function') {
-        VRODOS.ui.showObjectPropertiesPanel(VRODOS.editor.transform_controls.getMode());
+        VRODOS.ui.showObjectPropertiesPanel(VRODOS.editor.transforms.getMode());
     }
 
     if (VRODOS.editor.envir.is2d) {
-        VRODOS.editor.transform_controls.setMode("translate");
+        VRODOS.editor.transforms.setMode("translate");
         document.getElementById("translatePanelGui").style.display = '';
     }
 
@@ -807,10 +807,10 @@ VRODOS.ui.loadButtonActions = function() {
             // Asset add to canvas
             VRODOS.api.addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, VRODOS.data.pluginPath);
 
-            VRODOS.ui.showObjectPropertiesPanel(VRODOS.editor.transform_controls.getMode());
+            VRODOS.ui.showObjectPropertiesPanel(VRODOS.editor.transforms.getMode());
 
             if (VRODOS.editor.envir.is2d) {
-                VRODOS.editor.transform_controls.setMode("translate");
+                VRODOS.editor.transforms.setMode("translate");
                 document.getElementById("translatePanelGui").style.display = '';
             }
 
@@ -917,78 +917,23 @@ VRODOS.ui.loadButtonActions = function() {
         const checked = document.querySelector("input[name='object-manipulation-switch']:checked");
         const mode = checked ? checked.value : 'translate';
 
-        // Sun and Target spot can not change control manipulation mode
-        const targetObject = VRODOS.editor.transforms.getRealObject();
-        if (targetObject) {
-            const category = targetObject.category_name || "";
-
-            if (category.includes("lightTargetSpot") ||
-                category.includes("lightSun") ||
-                category.includes("lightLamp") ||
-                category.includes("lightSpot")) {
-
-                if (mode === 'rotate')
-                    {return;}
-            }
-            VRODOS.editor.transform_controls.setMode(mode);
-            VRODOS.ui.showObjectPropertiesPanel(mode);
-        }
+        VRODOS.editor.transforms.setMode(mode, { showProperties: true });
     });
     }
 
 // Event listener to disable orbit controls while dragging
 VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) => {
-    VRODOS.editor.envir.orbitControls.enabled = !event.value;
-
-    const attachedObject = VRODOS.editor.transforms.getAttachedObject();
-    const target = VRODOS.editor.transforms.getRealObject();
-
-    if (event.value && attachedObject && target) {
-        // Capture start state for Undo/Redo - Use the real object's TRS
-        VRODOS.editor.transform_controls._oldTRS = {
-            pos: target.position.clone(),
-            rot: target.rotation.clone(),
-            scale: target.scale.clone()
-        };
-
-        // Capture start orientations for proxy-based transformation
-        if (attachedObject !== target && typeof VRODOS.editor.qProxyStart !== 'undefined') {
-            VRODOS.editor.qProxyStart.copy(attachedObject.quaternion);
-            VRODOS.editor.pProxyStart.copy(attachedObject.position);
-            
-            VRODOS.editor.qRealStart.copy(target.quaternion);
-            VRODOS.editor.pRealStart.copy(target.position);
-        }
-    } else if (!event.value && attachedObject && target && VRODOS.editor.transform_controls._oldTRS) {
-        // Drag finished, commit command
-        const newTRS = {
-            pos: target.position.clone(),
-            rot: target.rotation.clone(),
-            scale: target.scale.clone()
-        };
-
-        // Simple threshold check to see if it actually moved
-        const moved = target.position.distanceToSquared(VRODOS.editor.transform_controls._oldTRS.pos) > 0.000001 ||
-                      target.scale.distanceToSquared(VRODOS.editor.transform_controls._oldTRS.scale) > 0.000001 ||
-                      Math.abs(target.rotation.x - VRODOS.editor.transform_controls._oldTRS.rot.x) > 0.0001 ||
-                      Math.abs(target.rotation.y - VRODOS.editor.transform_controls._oldTRS.rot.y) > 0.0001 ||
-                      Math.abs(target.rotation.z - VRODOS.editor.transform_controls._oldTRS.rot.z) > 0.0001;
-
-        if (moved) {
-            VRODOS.editor.undoManager.add(new VRODOS.editor.TransformCommand(target, VRODOS.editor.transform_controls._oldTRS, newTRS));
-        }
-        delete VRODOS.editor.transform_controls._oldTRS;
-    }
+    VRODOS.editor.transforms.handleDraggingChanged(event);
 });
 
     // Axis Increase size btn
     document.getElementById("axis-size-increase-btn").addEventListener("click", () => {
-        VRODOS.editor.transform_controls.setSize(VRODOS.editor.transform_controls.size * 1.1);
+        VRODOS.editor.transforms.scaleSize(1.1);
     });
 
     // Axis Decrease size btn
     document.getElementById("axis-size-decrease-btn").addEventListener("click", () => {
-        VRODOS.editor.transform_controls.setSize(Math.max(VRODOS.editor.transform_controls.size * 0.9, 0.1));
+        VRODOS.editor.transforms.scaleSize(0.9);
     });
 
     // Toggle 2D vs 3D button
@@ -1008,7 +953,7 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
             dimBtn3d.title = "3D mode";
 
             VRODOS.editor.envir.is2d = false;
-            VRODOS.editor.transform_controls.setMode("translate");
+            VRODOS.editor.transforms.setMode("translate");
 
         } else {
 
@@ -1024,7 +969,7 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
             dimBtn2d.title = "2D mode";
 
             VRODOS.editor.envir.is2d = true;
-            VRODOS.editor.transform_controls.setMode("translate");
+            VRODOS.editor.transforms.setMode("translate");
 
             if (VRODOS.editor.envir.getDirectorVisualObject()) VRODOS.editor.envir.getDirectorVisualObject().visible = true;
         }
@@ -1109,7 +1054,7 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
 
                 uiElementsToToggle.forEach(el => el.style.setProperty('display', 'none', 'important'));
 
-                VRODOS.editor.transform_controls.visible = false;
+                VRODOS.editor.transforms.setVisible(false);
                 if (VRODOS.editor.envir.getDirectorRig()) VRODOS.editor.envir.getDirectorRig().visible = false;
                 if (VRODOS.editor.envir.gridHelper) VRODOS.editor.envir.gridHelper.visible = false;
                 if (VRODOS.editor.envir.axesHelper) VRODOS.editor.envir.axesHelper.visible = false;
@@ -1127,7 +1072,7 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
                     el.style.removeProperty('display');
                 });
 
-                VRODOS.editor.transform_controls.visible = true;
+                VRODOS.editor.transforms.setVisible(true);
                 if (VRODOS.editor.envir.gridHelper) VRODOS.editor.envir.gridHelper.visible = true;
                 if (VRODOS.editor.envir.axesHelper) VRODOS.editor.envir.axesHelper.visible = true;
                 const selectedObject = VRODOS.editor.transforms.getRealObject();

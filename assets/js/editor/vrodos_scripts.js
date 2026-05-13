@@ -1,11 +1,11 @@
 'use strict';
 
 VRODOS.ui.transform.setSize = function() {
-    if (typeof VRODOS.editor.transform_controls === 'undefined' || !VRODOS.editor.transform_controls || !VRODOS.editor.transform_controls.object || !VRODOS.editor.envir) return;
+    if (!VRODOS.editor.transforms || !VRODOS.editor.transforms.getRealObject()) return;
 
     // Use a fixed size for the transform controls, regardless of the object dimensions or zoom level.
     // Three.js natively keeps the gizmo size consistent relative to the screen.
-    VRODOS.editor.transform_controls.setSize(1.2);
+    VRODOS.editor.transforms.setSize(1.2);
 };
 
 VRODOS.ui.fillinWidgetAssetTRS = function(selectedObject) {

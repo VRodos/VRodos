@@ -117,12 +117,6 @@ function initVrodosEditor() {
             VRODOS.editor.requestRender('transform-change');
         }
     });
-    VRODOS.editor.transform_controls.addEventListener('dragging-changed', () => {
-        if (typeof VRODOS.editor.requestRender === 'function') {
-            VRODOS.editor.requestRender('transform-dragging-changed');
-        }
-    });
-
     VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
     window.firstPersonBlockerBtn = VRODOS.editor.firstPersonBlockerBtn;
 
@@ -231,8 +225,8 @@ VRODOS.editor.updatePositionsAndControls = function() {
     if ((window.vrodosGuiKeyboardEditing || 0) > 0) return;
 
     if (VRODOS.editor.transform_controls.dragging &&
-        typeof VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes === 'function') {
-        VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes();
+        typeof VRODOS.editor.transforms.syncFromControls === 'function') {
+        VRODOS.editor.transforms.syncFromControls();
     }
 
     VRODOS.editor.transforms.syncGui(selectedObject);

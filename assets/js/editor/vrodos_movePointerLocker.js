@@ -96,8 +96,8 @@ VRODOS.api.firstPersonViewWithoutLock = function(){
             VRODOS.editor.transform_controls.camera = VRODOS.editor.envir.cameraOrbit;
         }
 
-        if(!VRODOS.editor.envir.is2d)
-            {VRODOS.editor.transform_controls.visible  = true;}
+        if(!VRODOS.editor.envir.is2d && VRODOS.editor.transforms)
+            {VRODOS.editor.transforms.setVisible(true);}
 
         VRODOS.editor.envir.getDirectorRig().visible = true;
 
@@ -150,4 +150,3 @@ VRODOS.api.firstPersonViewWithoutLock = function(){
 
     }
 };
-
