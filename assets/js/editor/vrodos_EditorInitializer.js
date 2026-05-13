@@ -342,6 +342,10 @@ VRODOS.editor.animate = function animate() {
         }
     }
 
+    if (typeof VRODOS.editor.envir.updateDirectorGroundGuide === 'function') {
+        VRODOS.editor.envir.updateDirectorGroundGuide();
+    }
+
     if (VRODOS.editor.envir.isComposerOn && VRODOS.editor.envir.composer) {
         VRODOS.editor.envir.composer.render();
     }
@@ -357,4 +361,3 @@ VRODOS.editor.animate = function animate() {
 
 // INITIALIZE ON DOM CONTENT LOADED
 document.addEventListener('DOMContentLoaded', initVrodosEditor);
-
