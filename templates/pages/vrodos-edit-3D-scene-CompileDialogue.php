@@ -50,8 +50,8 @@
 						</div>
 					</div>
 					<select id="compileRuntimeModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full sm:tw-w-64 tw-bg-white">
-						<option value="networked">Networked collaboration</option>
 						<option value="single-player">Single-player static</option>
+						<option value="networked">Networked collaboration</option>
 					</select>
 				</div>
 			</div>

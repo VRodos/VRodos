@@ -35,7 +35,7 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     'disableMovement': { type: 'boolean', default: false, envirKey: 'disableMovement' },
     'enableAvatar': { type: 'boolean', default: false, envirKey: 'enableAvatar' },
     'enableGeneralChat': { type: 'boolean', default: false, envirKey: 'enableGeneralChat' },
-    'aframeRuntimeMode': { type: 'string', default: 'networked', envirKey: 'aframeRuntimeMode' },
+    'aframeRuntimeMode': { type: 'string', default: 'single-player', envirKey: 'aframeRuntimeMode' },
     'aframeCollisionMode': { type: 'string', default: 'auto', envirKey: 'aframeCollisionMode' },
     'aframeNavigationMode': { type: 'string', default: vrodosEditorSceneSettingDefault('navigationMode', 'walkable'), envirKey: 'aframeNavigationMode' },
     'aframeFPSMeterEnabled': { type: 'boolean', default: false, envirKey: 'aframeFPSMeterEnabled' },
@@ -60,7 +60,7 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     // Post-Processing
     'aframePostFXEnabled': { type: 'boolean', default: false, envirKey: 'aframePostFXEnabled' },
     'aframePostFXEngine': { type: 'string', default: 'legacy', envirKey: 'aframePostFXEngine' },
-    'aframePostFXColorEnabled': { type: 'boolean', default: true, envirKey: 'aframePostFXColorEnabled' },
+    'aframePostFXColorEnabled': { type: 'boolean', default: false, envirKey: 'aframePostFXColorEnabled' },
     'aframePostFXBloomEnabled': { type: 'boolean', default: false, envirKey: 'aframePostFXBloomEnabled' },
     'aframePostFXVignetteEnabled': { type: 'boolean', default: false, envirKey: 'aframePostFXVignetteEnabled' },
     'aframePostFXEdgeAAEnabled': { type: 'boolean', default: true, envirKey: 'aframePostFXEdgeAAEnabled' },

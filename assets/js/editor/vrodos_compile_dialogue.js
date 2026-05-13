@@ -20,7 +20,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function normalizeRuntimeMode(value) {
-        return value === 'single-player' ? 'single-player' : 'networked';
+        return value === 'networked' ? 'networked' : 'single-player';
     }
 
     function getCompileDialogElements() {
@@ -215,7 +215,7 @@ window.addEventListener('DOMContentLoaded', () => {
             VRODOS.editor.envir.scene.aframePostFXBloomEnabled = false;
         }
         if (typeof VRODOS.editor.envir.scene.aframePostFXColorEnabled === 'undefined') {
-            VRODOS.editor.envir.scene.aframePostFXColorEnabled = true;
+            VRODOS.editor.envir.scene.aframePostFXColorEnabled = false;
         }
         if (typeof VRODOS.editor.envir.scene.aframePostFXVignetteEnabled === 'undefined') {
             VRODOS.editor.envir.scene.aframePostFXVignetteEnabled = false;
@@ -626,7 +626,7 @@ window.addEventListener('DOMContentLoaded', () => {
             : 'soft';
         controls.fpsMeter.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeFPSMeterEnabled);
         if (controls.runtimeMode) {
-            controls.runtimeMode.value = normalizeRuntimeMode(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframeRuntimeMode : 'networked');
+            controls.runtimeMode.value = normalizeRuntimeMode(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframeRuntimeMode : 'single-player');
         }
         if (controls.hoveringInteractables) {
             controls.hoveringInteractables.checked = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) || VRODOS.editor.envir.scene.aframeHoveringInteractables !== false;
@@ -635,7 +635,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls.legacyHorizonStageSize) {
             controls.legacyHorizonStageSize.value = VRodosCompileUI.General.clampLegacyHorizonStageSize(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframeLegacyHorizonStageSize : 5000);
         }
-        controls.postFxColor.checked = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) || VRODOS.editor.envir.scene.aframePostFXColorEnabled !== false;
+        controls.postFxColor.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePostFXColorEnabled);
 
         const edgeAAEnabled = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) || VRODOS.editor.envir.scene.aframePostFXEdgeAAEnabled !== false;
         const edgeAAStrength = VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePostFXEdgeAAStrength : 3;

@@ -132,7 +132,7 @@ class VRodos_Compiler_Manager {
 	private function resolve_runtime_mode( $runtime_mode, $first_scene_json ): string {
 		if ( null === $runtime_mode || '' === $runtime_mode ) {
 			$metadata     = is_object( $first_scene_json->metadata ?? null ) ? $first_scene_json->metadata : new stdClass();
-			$runtime_mode = $metadata->aframeRuntimeMode ?? self::RUNTIME_MODE_NETWORKED;
+			$runtime_mode = $metadata->aframeRuntimeMode ?? self::RUNTIME_MODE_SINGLE_PLAYER;
 		}
 
 		return self::normalize_runtime_mode( $runtime_mode );

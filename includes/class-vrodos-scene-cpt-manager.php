@@ -252,7 +252,7 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['enableGeneralChat']      = $json_metadata->enableGeneralChat ?? false;
 		$scene_data['enableAvatar']           = $json_metadata->enableAvatar ?? false;
 		$scene_data['disableMovement']        = $json_metadata->disableMovement ?? false;
-		$scene_data['aframeRuntimeMode']      = ( $json_metadata->aframeRuntimeMode ?? 'networked' ) === 'single-player' ? 'single-player' : 'networked';
+		$scene_data['aframeRuntimeMode']      = ( $json_metadata->aframeRuntimeMode ?? 'single-player' ) === 'networked' ? 'networked' : 'single-player';
 		$scene_data['aframeCollisionMode']    = $json_metadata->aframeCollisionMode ?? 'auto';
 		$navigation_mode                      = (string) ( $json_metadata->aframeNavigationMode ?? ( 'off' === ( $json_metadata->aframeCollisionMode ?? 'auto' ) ? 'walk' : 'walkable' ) );
 		$scene_data['aframeNavigationMode']   = in_array( $navigation_mode, [ 'walk', 'walkable', 'fly' ], true ) ? $navigation_mode : 'walkable';
@@ -265,7 +265,7 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframeContactShadowPreset'] = $json_metadata->aframeContactShadowPreset ?? 'soft';
 		$scene_data['aframePostFXEnabled']    = $json_metadata->aframePostFXEnabled ?? false;
 		$scene_data['aframePostFXBloomEnabled'] = $json_metadata->aframePostFXBloomEnabled ?? false;
-		$scene_data['aframePostFXColorEnabled'] = $json_metadata->aframePostFXColorEnabled ?? true;
+		$scene_data['aframePostFXColorEnabled'] = $json_metadata->aframePostFXColorEnabled ?? false;
 		$scene_data['aframePostFXVignetteEnabled'] = false;
 		$scene_data['aframePostFXEdgeAAEnabled'] = $json_metadata->aframePostFXEdgeAAEnabled ?? true;
 		$scene_data['aframePostFXEdgeAAStrength'] = $json_metadata->aframePostFXEdgeAAStrength ?? 3;

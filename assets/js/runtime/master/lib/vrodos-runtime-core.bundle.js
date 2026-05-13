@@ -7,11 +7,16 @@
         "runtimeMode": {
           "metadataKey": "aframeRuntimeMode",
           "type": "enum",
-          "default": "networked",
+          "default": "single-player",
           "allowed": [
             "networked",
             "single-player"
           ]
+        },
+        "postFXColorEnabled": {
+          "metadataKey": "aframePostFXColorEnabled",
+          "type": "boolean",
+          "default": false
         },
         "navigationMode": {
           "metadataKey": "aframeNavigationMode",
