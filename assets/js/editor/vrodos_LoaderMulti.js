@@ -589,7 +589,9 @@ VRODOS.loader.LoaderMulti = class {
                                 if (typeof VRODOS.editor.envir.installDirectorHelpers === 'function') {
                                     VRODOS.editor.envir.installDirectorHelpers(object, null);
                                 } else {
-                                    const director = VRODOS.editor.envir.getDirectorObject ? VRODOS.editor.envir.getDirectorObject() : VRODOS.editor.envir.scene.getObjectByName("avatarCamera");
+                                    const director = typeof VRODOS.editor.envir.getDirectorObject === 'function'
+                                        ? VRODOS.editor.envir.getDirectorObject()
+                                        : null;
                                     if (director) {
                                         director.add(object);
                                     }

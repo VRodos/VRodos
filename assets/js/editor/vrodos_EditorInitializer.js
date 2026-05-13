@@ -329,7 +329,8 @@ VRODOS.api.finalizeSceneLoad = function() {
             playerObject = registry.getByName('avatarCamera') || registry.getByName('Camera3Dmodel');
         }
         if (!playerObject) {
-            playerObject = VRODOS.editor.envir.scene.getObjectByName('avatarCamera') || VRODOS.editor.envir.scene.getObjectByName('Camera3Dmodel');
+            playerObject = (typeof VRODOS.editor.envir.getDirectorObject === 'function' ? VRODOS.editor.envir.getDirectorObject() : null) ||
+                (typeof VRODOS.editor.envir.getDirectorVisualObject === 'function' ? VRODOS.editor.envir.getDirectorVisualObject() : null);
         }
 
         if (playerObject) {
