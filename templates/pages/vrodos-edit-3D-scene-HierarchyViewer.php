@@ -15,7 +15,9 @@
         <div class="tw-flex tw-flex-col tw-w-full tw-bg-transparent" id="hierarchy-viewer-container">
             <div class="tw-flex tw-items-center tw-gap-2 tw-px-3 tw-py-1.5 tw-mb-1 tw-bg-slate-950/40">
                 <i data-lucide="layers-2" class="tw-w-3 tw-h-3 tw-text-emerald-400"></i>
-                <span class="tw-font-bold tw-text-[10px] tw-text-white tw-uppercase tw-tracking-widest">Hierarchy Viewer</span>
+                <span id="hierarchy-viewer-title" class="tw-font-bold tw-text-[10px] tw-text-white tw-uppercase tw-tracking-widest">
+                    Hierarchy Viewer <span id="hierarchy-viewer-count">(0)</span>
+                </span>
             </div>
 
             <ul id="hierarchy-viewer" class="tw-list-none tw-m-0 tw-pl-3 tw-pr-1" style="max-height: 50vh; overflow-y: auto;">

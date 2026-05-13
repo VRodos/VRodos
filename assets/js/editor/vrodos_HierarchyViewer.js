@@ -436,6 +436,20 @@ function _hierarchyItemHTML(obj, object_name, created, deleteButtonHTML, resetBu
     return itemHTML;
 }
 
+VRODOS.ui.updateHierarchyViewerCount = function() {
+    const viewer = document.getElementById('hierarchy-viewer');
+    const countElement = document.getElementById('hierarchy-viewer-count');
+    const titleElement = document.getElementById('hierarchy-viewer-title');
+    const count = viewer ? viewer.querySelectorAll('.hierarchyItem').length : 0;
+
+    if (countElement) {
+        countElement.textContent = `(${  count  })`;
+    }
+    if (titleElement) {
+        titleElement.title = `${  count  } item${count === 1 ? '' : 's'} in hierarchy viewer`;
+    }
+};
+
 function _createHierarchyItemFragment(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML) {
     const temp = document.createElement('template');
     temp.innerHTML = _hierarchyItemHTML(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML);
@@ -461,6 +475,7 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
     } else {
         viewer.appendChild(fragment);
     }
+    VRODOS.ui.updateHierarchyViewerCount();
 }
 
 
@@ -581,6 +596,7 @@ VRODOS.ui.setHierarchyViewer = function() {
         fragment.appendChild(_createHierarchyItemFragment(obj, asset_name, created, deleteButton, CreateResetButton(obj), lockButton));
     });
     viewer.appendChild(fragment);
+    VRODOS.ui.updateHierarchyViewerCount();
 
     // Render Lucide icons in dynamically added items
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -593,6 +609,7 @@ VRODOS.ui.setHierarchyViewer = function() {
 VRODOS.ui.removeHierarchySkeleton = function() {
     const skeleton = document.getElementById('hierarchy-skeleton');
     if (skeleton) skeleton.remove();
+    VRODOS.ui.updateHierarchyViewerCount();
 }
 
 
@@ -606,6 +623,7 @@ VRODOS.ui.addInHierarchyViewer = function(obj) {
     const existingItem = Array.from(document.querySelectorAll('#hierarchy-viewer .hierarchyItem')).find((item) => item.getAttribute('data-uuid') === obj.uuid || item.getAttribute('data-name') === obj.name);
     if (existingItem) {
         VRODOS.ui.setBackgroundColorHierarchyViewer(existingItem.id || obj.uuid);
+        VRODOS.ui.updateHierarchyViewerCount();
         return;
     }
 
@@ -624,6 +642,7 @@ VRODOS.ui.addInHierarchyViewer = function(obj) {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     VRODOS.ui.setBackgroundColorHierarchyViewer(obj.uuid);
+    VRODOS.ui.updateHierarchyViewerCount();
 }
 
 /**
@@ -633,6 +652,7 @@ VRODOS.ui.addInHierarchyViewer = function(obj) {
 VRODOS.ui.initHierarchyViewerEvents = function() {
     const viewer = document.getElementById('hierarchy-viewer');
     if (!viewer) return;
+    VRODOS.ui.updateHierarchyViewerCount();
 
     viewer.addEventListener('mouseenter', (e) => {
         const item = e.target.closest('.hierarchyItem');

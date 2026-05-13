@@ -5,6 +5,28 @@
  * Implements a Command Pattern for internal scene editor undo/redo.
  */
 
+function vrodosUndoGetObjectByUuid(uuid) {
+    if (!uuid) return null;
+    if (VRODOS.editor.sceneRegistry) {
+        return VRODOS.editor.sceneRegistry.getByUuid(uuid);
+    }
+
+    return VRODOS.editor.envir && VRODOS.editor.envir.scene
+        ? VRODOS.editor.envir.scene.getObjectByProperty('uuid', uuid)
+        : null;
+}
+
+function vrodosUndoGetObjectByName(name) {
+    if (!name) return null;
+    if (VRODOS.editor.sceneRegistry) {
+        return VRODOS.editor.sceneRegistry.getByName(name);
+    }
+
+    return VRODOS.editor.envir && VRODOS.editor.envir.scene
+        ? VRODOS.editor.envir.scene.getObjectByName(name)
+        : null;
+}
+
 VRODOS.editor.UndoManager = class {
     constructor(maxSize = 50) {
         this.undoStack = [];
@@ -119,14 +141,11 @@ VRODOS.editor.TransformCommand = class {
     applyState(state) {
         if (!state || !state.pos || !state.rot || !state.scale) return;
 
-        // Try registry by UUID first
-        let obj = VRODOS.editor.sceneRegistry.getByUuid(this.objectUuid)
-            || VRODOS.editor.envir.scene.getObjectByProperty('uuid', this.objectUuid);
+        let obj = vrodosUndoGetObjectByUuid(this.objectUuid);
         
         // Fallback to find by Name (Asset names are unique in VRodos)
         if (!obj || obj.name === "vrodosGizmoProxy") {
-            obj = VRODOS.editor.sceneRegistry.getByName(this.objectName)
-                || VRODOS.editor.envir.scene.getObjectByName(this.objectName);
+            obj = vrodosUndoGetObjectByName(this.objectName);
         }
 
         if (!obj || obj.name === "vrodosGizmoProxy") {
@@ -193,8 +212,7 @@ VRODOS.editor.AddObjectCommand = class {
 
     undo() {
         if (typeof VRODOS.api.deleteAssetFromScene === 'function') {
-            const obj = VRODOS.editor.sceneRegistry.getByName(this.nameModel)
-                || VRODOS.editor.envir.scene.getObjectByName(this.nameModel);
+            const obj = vrodosUndoGetObjectByName(this.nameModel);
             if (obj) {
                 // We call VRODOS.api.deleteAssetFromScene but we need to tell it NOT to push to undo again
                 VRODOS.editor.undoManager.isExecuting = true;
@@ -298,8 +316,7 @@ VRODOS.editor.PropertyCommand = class {
     }
 
     apply(val) {
-        const obj = VRODOS.editor.sceneRegistry.getByUuid(this.objectUuid)
-            || VRODOS.editor.envir.scene.getObjectByProperty('uuid', this.objectUuid);
+        const obj = vrodosUndoGetObjectByUuid(this.objectUuid);
         if (!obj) return;
         
         obj[this.property] = val;

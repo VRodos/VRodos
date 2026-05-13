@@ -248,6 +248,7 @@ VRODOS.utils = VRODOS.utils || {};
     }
 
     const transforms = VRODOS.editor.transforms || {};
+    transforms.ensureVisible = forceControlsVisible;
     const dragState = transforms.dragState || {
         oldTRS: null,
         scaleStart: null,

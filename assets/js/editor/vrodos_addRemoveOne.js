@@ -891,6 +891,9 @@ VRODOS.ui.removeHierarchyEntriesForObject = function(uuid, objectName) {
             item.remove();
         }
     });
+    if (typeof VRODOS.ui.updateHierarchyViewerCount === 'function') {
+        VRODOS.ui.updateHierarchyViewerCount();
+    }
 }
 
 VRODOS.ui.lockOnScene = function(uuid, name) {

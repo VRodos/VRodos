@@ -886,7 +886,7 @@ function _addDragScrub(controller) {
 
 
 /**
- *  Add listeners: Update php, javascript and VRODOS.editor.transform_controls when GUI changes
+ *  Add listeners: Update php, javascript, and transform service state when GUI changes
  *  Triggered once initially
  */
 function commitUndoTransformFromInput(input) {
@@ -1363,12 +1363,8 @@ function syncAttachedProxyToObject(target) {
 }
 
 function ensureTransformControlsVisible() {
-    const controls = VRODOS.editor.transform_controls;
-    if (controls) controls.enabled = true;
-    const helper = VRODOS.editor.transform_controls_helper || (controls && controls._root) || null;
-    if (helper) {
-        helper.visible = Boolean(getSelectedTransformObject());
-        helper.updateMatrixWorld(true);
+    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.ensureVisible === 'function') {
+        VRODOS.editor.transforms.ensureVisible();
     }
 }
 
