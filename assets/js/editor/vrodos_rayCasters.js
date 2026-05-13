@@ -75,7 +75,7 @@ VRODOS.ui.onMouseDoubleClickFocus = function(event, id) {
     }
 
     if (arguments.length === 2) {
-        const obj = VRODOS.editor.envir.scene.getObjectByProperty('uuid', id);
+        const obj = getEditorSceneObjectByUuid(id);
         if (obj && !obj.locked) {
             VRODOS.ui.selectorMajor(event, obj, "1");
         }
@@ -163,14 +163,6 @@ VRODOS.ui.setSelectionIndicator = function(object) {
     VRODOS.ui.addCelOutline(object);
 };
 
-VRODOS.ui.setDatGuiInitialVales = function(object) {
-    if (!object) return;
-    // Implementation for syncing dat.gui or other property editors
-    if (typeof VRODOS.ui.showPropertiesInPanel === 'function') {
-        VRODOS.ui.showPropertiesInPanel(object);
-    }
-};
-
 VRODOS.utils.findParentSceneObject = function(object) {
     if (!object) return null;
     let curr = object;
@@ -201,13 +193,7 @@ VRODOS.ui.onLeftMouseClick = function(event) {
     if (intersects.length === 0) {
         // Clicked empty canvas - deselect current object
         if (event.button === 0) {
-            if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
-                VRODOS.editor.selection.clear({ source: 'empty-canvas' });
-            } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
-                VRODOS.ui.clearTransformSelection();
-                VRODOS.ui.removeAllCelOutlines();
-                VRODOS.ui.hideObjectControlsPanel();
-            }
+            VRODOS.editor.selection.clear({ source: 'empty-canvas' });
         }
         return;
     }
@@ -221,9 +207,7 @@ VRODOS.ui.onLeftMouseClick = function(event) {
     }
 
     // More than one objects intersected
-    const selectedTransformObject = typeof VRODOS.ui.getSelectedTransformObject === 'function'
-        ? VRODOS.ui.getSelectedTransformObject()
-        : VRODOS.editor.transform_controls.object;
+    const selectedTransformObject = getSelectedPropertyTarget();
     const prevSelected = selectedTransformObject ? selectedTransformObject.name : null;
     let selectNext = false;
     let i = 0;
@@ -256,43 +240,28 @@ VRODOS.ui.onLeftMouseClick = function(event) {
 VRODOS.ui.selectObjectPreview = function(objectSel) {
     if (!objectSel) return;
 
-    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.select === 'function') {
-        VRODOS.editor.selection.select(objectSel, {
-            source: 'hierarchy-preview',
-            openPanel: false,
-            showProperties: false,
-            focusHierarchy: true,
-            outline: true,
-            syncGui: true
-        });
-    }
+    VRODOS.editor.selection.select(objectSel, {
+        source: 'hierarchy-preview',
+        openPanel: false,
+        showProperties: false,
+        focusHierarchy: true,
+        outline: true,
+        syncGui: true
+    });
 }
 
 VRODOS.ui.selectorMajor = function(event, objectSel, whocalls) {
     if (!event || event.button !== 0 || !objectSel) return;
 
-    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.select === 'function') {
-        VRODOS.editor.selection.select(objectSel, {
-            source: whocalls || 'selector-major',
-            openPanel: true,
-            showProperties: true,
-            focusHierarchy: true,
-            outline: true,
-            syncGui: true,
-            setMode: true
-        });
-        return;
-    }
-
-    if (typeof VRODOS.ui.attachGizmo === 'function') {
-        VRODOS.ui.attachGizmo(objectSel);
-    }
-    if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
-        VRODOS.ui.setDatGuiInitialVales(objectSel);
-    }
-    if (typeof VRODOS.ui.showPropertiesInPanel === 'function') {
-        VRODOS.ui.showPropertiesInPanel(objectSel);
-    }
+    VRODOS.editor.selection.select(objectSel, {
+        source: whocalls || 'selector-major',
+        openPanel: true,
+        showProperties: true,
+        focusHierarchy: true,
+        outline: true,
+        syncGui: true,
+        setMode: true
+    });
 }
 
 // Right Click: Show properties
@@ -305,9 +274,7 @@ VRODOS.ui.contextMenuClick = function(event) {
 
        
     // Check if right-clicked is the one selected already with left-click
-    const selectedTransformObject = VRODOS.editor.transforms && typeof VRODOS.editor.transforms.getRealObject === 'function'
-        ? VRODOS.editor.transforms.getRealObject()
-        : (typeof VRODOS.ui.getSelectedTransformObject === 'function' ? VRODOS.ui.getSelectedTransformObject() : null);
+    const selectedTransformObject = getSelectedPropertyTarget();
     if (selectedTransformObject && intersected[0].name === selectedTransformObject.name) {
         showProperties(event, intersected[0]);
     }
@@ -370,6 +337,39 @@ function sanitizeInputValue(value) {
     return value.match(re) === null ? 0 : Number(value);
   }
 
+function getEditorSceneObjectByUuid(uuid) {
+    const registered = VRODOS.editor.sceneRegistry.getByUuid(uuid);
+    if (registered) return registered;
+
+    return VRODOS.editor.envir && VRODOS.editor.envir.scene
+        ? VRODOS.editor.envir.scene.getObjectByProperty('uuid', uuid)
+        : null;
+}
+
+function getEditorSceneObjectByName(name) {
+    const registered = VRODOS.editor.sceneRegistry.getByName(name);
+    if (registered) return registered;
+
+    return VRODOS.editor.envir && VRODOS.editor.envir.scene
+        ? VRODOS.editor.envir.scene.getObjectByName(name)
+        : null;
+}
+
+function getSelectedPropertyTarget() {
+    return VRODOS.editor.transforms.getRealObject();
+}
+
+function getSceneObjectOrSelected(name) {
+    return getEditorSceneObjectByName(name) || getSelectedPropertyTarget();
+}
+
+function getSceneObjectFromHierarchyItem(item) {
+    if (!item) return null;
+    const uuid = item.getAttribute('data-uuid') || item.id;
+    const name = item.getAttribute('data-name');
+    return (uuid ? getEditorSceneObjectByUuid(uuid) : null) || (name ? getEditorSceneObjectByName(name) : null);
+}
+
 /**
  * Sun properties
  *
@@ -380,7 +380,7 @@ VRODOS.ui.displaySunProperties = function(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpSunPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
-    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
+    const sceneObj = getEditorSceneObjectByName(name);
     if (!sceneObj) return;
 
     const chbox = document.getElementById('castShadow');
@@ -420,7 +420,7 @@ VRODOS.ui.displayLampProperties = function(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpLampPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
-    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
+    const sceneObj = getEditorSceneObjectByName(name);
     if (!sceneObj) return;
 
     const chbox = document.getElementById('lampcastShadow');
@@ -467,16 +467,14 @@ VRODOS.ui.displaySpotProperties = function(event, name) {
     spotTargetObject.innerText = '';
 
     const hierViewer = document.getElementById('hierarchy-viewer');
-    for (let i = 0; i < hierViewer.childNodes.length; i++) {
-        const id_Hierarchy = hierViewer.childNodes[i].id;
-        if (!id_Hierarchy) continue;
-        const scene_object = VRODOS.editor.envir.scene.getObjectByName(id_Hierarchy);
+    for (let i = 0; hierViewer && i < hierViewer.childNodes.length; i++) {
+        const scene_object = getSceneObjectFromHierarchyItem(hierViewer.childNodes[i]);
         if (!scene_object) continue;
         spotTargetObject.appendChild(new Option(scene_object.name));
     }
 
     const spotColor = document.getElementById("spotColor");
-    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name) || VRODOS.editor.transform_controls.object;
+    const sceneObj = getSceneObjectOrSelected(name);
 
     if (spotColor && sceneObj && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
         spotColor.value = `#${  sceneObj.children[0].material.color.getHexString()}`;
@@ -504,14 +502,8 @@ VRODOS.ui.displayAmbientProperties = function(event, name) {
 
     const ppPropertiesDiv = document.getElementById("popUpAmbientPropertiesDiv");
 
-    const hierViewer = document.getElementById('hierarchy-viewer');
-    for (let i = 0; i < hierViewer.childNodes.length; i++) {
-        const id_Hierarchy = hierViewer.childNodes[i].id;
-        const scene_object = VRODOS.editor.envir.scene.getObjectByName(id_Hierarchy);
-    }
-
     const ambientColor = document.getElementById("ambientColor");
-    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name) || VRODOS.editor.transform_controls.object;
+    const sceneObj = getSceneObjectOrSelected(name);
 
     if (ambientColor && sceneObj && sceneObj.color) {
         ambientColor.value = `#${  sceneObj.color.getHexString()}`;
@@ -539,7 +531,7 @@ VRODOS.ui.displayDoorProperties = function(event, name) {
     const popupDoorSelect = document.getElementById("popupDoorSelect");
     if (!popupDoorSelect || !popUpDoorPropertiesDiv) return;
 
-    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
+    const sceneObj = getEditorSceneObjectByName(name);
     if (!sceneObj) return;
 
     if (sceneObj.sceneID_target) {
@@ -558,7 +550,7 @@ VRODOS.ui.displayLinkProperties = function(event, name) {
     const popupLinkSelect = document.getElementById("poi_link_text");
     if (!popupLinkSelect || !popUpLinkPropertiesDiv) return;
 
-    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
+    const sceneObj = getEditorSceneObjectByName(name);
     if (!sceneObj) return;
 
     if (sceneObj.poi_link_url) {
@@ -574,7 +566,7 @@ VRODOS.ui.displayPoiChatProperties = function(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpPoiChatPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
-    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
+    const sceneObj = getEditorSceneObjectByName(name);
     if (!sceneObj) return;
 
     const setTitle = document.getElementById('poi_chat_title');
@@ -593,23 +585,6 @@ VRODOS.ui.displayPoiChatProperties = function(event, name) {
  * so that we don't need to bind/unbind them on every click.
  */
 function initPersistentPropertyListeners() {
-
-    const getSelectedPropertyTarget = () => {
-        if (typeof VRODOS.editor.currentSelectedRealObject !== 'undefined' && VRODOS.editor.currentSelectedRealObject) {
-            return VRODOS.editor.currentSelectedRealObject;
-        }
-
-        if (!VRODOS.editor.transform_controls || !VRODOS.editor.transform_controls.object) {
-            return null;
-        }
-
-        if (VRODOS.editor.transform_controls.object.name === "vrodosGizmoProxy" && VRODOS.editor.transform_controls.object.realObject) {
-            return VRODOS.editor.transform_controls.object.realObject;
-        }
-
-        return VRODOS.editor.transform_controls.object;
-    };
-    
     const setProp = (prop, isCheckbox, sanitize = false) => function () {
             const obj = getSelectedPropertyTarget();
             if (!obj) {
@@ -750,8 +725,8 @@ function initPersistentPropertyListeners() {
     if (popupDoorSelect) {
         popupDoorSelect.addEventListener("focus", function() { this._oldVal = this.value; });
         popupDoorSelect.addEventListener("change", function () {
-            if (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.object && this.value !== "Default" && this.value) {
-                const obj = VRODOS.editor.transform_controls.object;
+            const obj = getSelectedPropertyTarget();
+            if (obj && this.value !== "Default" && this.value) {
                 const oldVal = this._oldVal || obj.sceneID_target;
                 const newVal = this.value;
 
@@ -770,8 +745,8 @@ function initPersistentPropertyListeners() {
     if (popupLinkSelect) {
         popupLinkSelect.addEventListener("focus", function() { this._oldVal = this.value; });
         popupLinkSelect.addEventListener("change", function () {
-            if (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.object && this.value) {
-                const obj = VRODOS.editor.transform_controls.object;
+            const obj = getSelectedPropertyTarget();
+            if (obj && this.value) {
                 const oldVal = this._oldVal || obj.poi_link_url;
                 const newVal = this.value;
 
@@ -793,8 +768,8 @@ function initPersistentPropertyListeners() {
 
     if (chboxImg) {
         chboxImg.addEventListener("change", function () {
-            if (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.object) {
-                const obj = VRODOS.editor.transform_controls.object;
+            const obj = getSelectedPropertyTarget();
+            if (obj) {
                 const oldContent = obj.poi_img_content;
                 const oldTitle = obj.poi_img_title;
                 const newContent = this.checked ? (setDesc && setDesc.value ? setDesc.value : '') : null;
@@ -843,11 +818,9 @@ initPersistentPropertyListeners();
  * @returns {Array}
  */
 VRODOS.ui.getActiveMeshes = function() {
-    if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getSelectableRoots === 'function') {
-        const registryMeshes = VRODOS.editor.sceneRegistry.getSelectableRoots();
-        if (registryMeshes.length > 0) {
-            return registryMeshes;
-        }
+    const registryMeshes = VRODOS.editor.sceneRegistry.getSelectableRoots();
+    if (registryMeshes.length > 0) {
+        return registryMeshes;
     }
 
     // Fast path: use the pre-built cache maintained by add/remove operations
@@ -944,7 +917,7 @@ VRODOS.ui.displayPoiImageTextProperties = function(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpPoiImageTextPropertiesDiv");
     if (!ppPropertiesDiv) return;
 
-    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
+    const sceneObj = getEditorSceneObjectByName(name);
     if (!sceneObj) return;
 
     const chboxImg = document.getElementById("poi_image_desc_checkbox");

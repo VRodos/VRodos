@@ -225,11 +225,9 @@ function initVrodosEditor() {
  * (Restored from legacy template logic)
  */
 VRODOS.editor.updatePositionsAndControls = function() {
-    const selectedObject = VRODOS.editor.transforms && typeof VRODOS.editor.transforms.getRealObject === 'function'
-        ? VRODOS.editor.transforms.getRealObject()
-        : (typeof VRODOS.ui.getSelectedTransformObject === 'function' ? VRODOS.ui.getSelectedTransformObject() : null);
+    const selectedObject = VRODOS.editor.transforms.getRealObject();
 
-    if ((!VRODOS.editor.transform_controls.object && !selectedObject) || !VRODOS.ui.controlInterface) return;
+    if (!selectedObject || !VRODOS.ui.controlInterface) return;
     if ((window.vrodosGuiKeyboardEditing || 0) > 0) return;
 
     if (VRODOS.editor.transform_controls.dragging &&
@@ -237,11 +235,7 @@ VRODOS.editor.updatePositionsAndControls = function() {
         VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes();
     }
 
-    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.syncGui === 'function') {
-        VRODOS.editor.transforms.syncGui(selectedObject);
-    } else if (typeof VRODOS.ui.syncTransformGuiFromObject === 'function') {
-        VRODOS.ui.syncTransformGuiFromObject(selectedObject);
-    }
+    VRODOS.editor.transforms.syncGui(selectedObject);
 };
 
 /**
@@ -308,18 +302,10 @@ VRODOS.api.finalizeSceneLoad = function() {
     VRODOS.editor.envir.sceneLoadFinalized = true;
     VRODOS.editor.envir.isSceneLoading = false;
 
-    if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.rebuild === 'function') {
-        VRODOS.editor.sceneRegistry.rebuild(VRODOS.editor.envir.scene);
-    }
+    VRODOS.editor.sceneRegistry.rebuild(VRODOS.editor.envir.scene);
 
     // Detach controls on load
-    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
-        VRODOS.editor.selection.clear({ source: 'scene-load-finalized' });
-    } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
-        VRODOS.ui.clearTransformSelection();
-    } else {
-        VRODOS.editor.currentSelectedRealObject = null;
-    }
+    VRODOS.editor.selection.clear({ source: 'scene-load-finalized' });
     if (typeof VRODOS.ui.removeAllCelOutlines === 'function') VRODOS.ui.removeAllCelOutlines();
     if (typeof VRODOS.ui.hideObjectControlsPanel === 'function') VRODOS.ui.hideObjectControlsPanel();
 
@@ -331,11 +317,27 @@ VRODOS.api.finalizeSceneLoad = function() {
     // Focus on Actor/Player
     (function focusOnPlayer() {
         let playerObject = null;
-        VRODOS.editor.envir.scene.traverse(obj => {
-            if (!playerObject && (obj.category_name === 'pawn' || obj.name?.includes('Pawn'))) {
-                playerObject = obj;
+        const registry = VRODOS.editor.sceneRegistry;
+        const roots = registry.getSelectableRoots();
+
+        if (roots.length > 0) {
+            for (let i = 0; i < roots.length; i++) {
+                const obj = roots[i];
+                if (obj.category_name === 'pawn' || obj.name?.includes('Pawn')) {
+                    playerObject = obj;
+                    break;
+                }
             }
-        });
+        } else {
+            VRODOS.editor.envir.scene.traverse(obj => {
+                if (!playerObject && (obj.category_name === 'pawn' || obj.name?.includes('Pawn'))) {
+                    playerObject = obj;
+                }
+            });
+        }
+        if (!playerObject) {
+            playerObject = registry.getByName('avatarCamera') || registry.getByName('Camera3Dmodel');
+        }
         if (!playerObject) {
             playerObject = VRODOS.editor.envir.scene.getObjectByName('avatarCamera') || VRODOS.editor.envir.scene.getObjectByName('Camera3Dmodel');
         }

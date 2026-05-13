@@ -352,19 +352,7 @@ function getObjectControlsTargetObject() {
         return VRODOS.ui.getPopupTargetObject();
     }
 
-    if (typeof VRODOS.editor.currentSelectedRealObject !== 'undefined' && VRODOS.editor.currentSelectedRealObject) {
-        return VRODOS.editor.currentSelectedRealObject;
-    }
-
-    if (typeof VRODOS.editor.transform_controls === 'undefined' || !VRODOS.editor.transform_controls.object) {
-        return null;
-    }
-
-    if (VRODOS.editor.transform_controls.object.name === 'vrodosGizmoProxy' && VRODOS.editor.transform_controls.object.realObject) {
-        return VRODOS.editor.transform_controls.object.realObject;
-    }
-
-    return VRODOS.editor.transform_controls.object;
+    return getSelectedTransformObject();
 }
 
 function vrodosNormalizeAudioPlaybackMode(value) {
@@ -821,7 +809,7 @@ function _addDragScrub(controller) {
         startValue = controller.getValue();
         
         // [NEW] Capture start TRS for Undo
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (target) {
             input._oldTRS = {
                 pos: target.position.clone(),
@@ -905,7 +893,7 @@ function commitUndoTransformFromInput(input) {
     if (typeof VRODOS.editor.undoManager === 'undefined' || VRODOS.editor.undoManager.isExecuting) return;
     if (!input._oldTRS) return;
 
-    const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+    const target = getSelectedTransformObject();
     if (!target) return;
 
     const newTRS = {
@@ -926,6 +914,18 @@ function commitUndoTransformFromInput(input) {
     delete input._oldTRS;
 }
 
+function syncLiveGuiTransformChange(target) {
+    if (!target) return;
+
+    target.updateMatrix();
+    target.updateMatrixWorld(true);
+    syncAttachedProxyToObject(target);
+
+    if (typeof VRODOS.editor.requestRender === 'function') {
+        VRODOS.editor.requestRender('transform-gui-drag');
+    }
+}
+
 function controllerDatGuiOnChange() {
 
 
@@ -937,14 +937,17 @@ function controllerDatGuiOnChange() {
     dg_controller[0].onChange((value) => {
         if (!_isDragScrubbing) return;
         value = parseFloat(value) || 0;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
-        if (target) target.position.x = value;
+        const target = getSelectedTransformObject();
+        if (target) {
+            target.position.x = value;
+            syncLiveGuiTransformChange(target);
+        }
     }
     );
     dg_controller[0].onFinishChange((value) => {
         value = parseFloat(value) || 0;
         gui_controls_funs.dg_t1 = value;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (target) {
             target.position.x = value;
             target.updateMatrix();
@@ -959,14 +962,17 @@ function controllerDatGuiOnChange() {
     dg_controller[1].onChange((value) => {
         if (!_isDragScrubbing) return;
         value = parseFloat(value) || 0;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
-        if (target) target.position.y = value;
+        const target = getSelectedTransformObject();
+        if (target) {
+            target.position.y = value;
+            syncLiveGuiTransformChange(target);
+        }
     }
     );
     dg_controller[1].onFinishChange((value) => {
         value = parseFloat(value) || 0;
         gui_controls_funs.dg_t2 = value;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (target) {
             target.position.y = value;
             target.updateMatrix();
@@ -981,14 +987,17 @@ function controllerDatGuiOnChange() {
     dg_controller[2].onChange((value) => {
         if (!_isDragScrubbing) return;
         value = parseFloat(value) || 0;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
-        if (target) target.position.z = value;
+        const target = getSelectedTransformObject();
+        if (target) {
+            target.position.z = value;
+            syncLiveGuiTransformChange(target);
+        }
     }
     );
     dg_controller[2].onFinishChange((value) => {
         value = parseFloat(value) || 0;
         gui_controls_funs.dg_t3 = value;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (target) {
             target.position.z = value;
             target.updateMatrix();
@@ -1004,14 +1013,17 @@ function controllerDatGuiOnChange() {
     dg_controller[3].onChange((value) => {
         if (!_isDragScrubbing) return;
         value = parseFloat(value) || 0;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
-        if (target) target.rotation.x = value / 180 * Math.PI;
+        const target = getSelectedTransformObject();
+        if (target) {
+            target.rotation.x = value / 180 * Math.PI;
+            syncLiveGuiTransformChange(target);
+        }
     }
     );
     dg_controller[3].onFinishChange((value) => {
         value = parseFloat(value) || 0;
         gui_controls_funs.dg_r1 = value;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (target) {
             target.rotation.x = value / 180 * Math.PI;
             target.updateMatrix();
@@ -1026,14 +1038,17 @@ function controllerDatGuiOnChange() {
     dg_controller[4].onChange((value) => {
         if (!_isDragScrubbing) return;
         value = parseFloat(value) || 0;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
-        if (target) target.rotation.y = value / 180 * Math.PI;
+        const target = getSelectedTransformObject();
+        if (target) {
+            target.rotation.y = value / 180 * Math.PI;
+            syncLiveGuiTransformChange(target);
+        }
     }
     );
     dg_controller[4].onFinishChange((value) => {
         value = parseFloat(value) || 0;
         gui_controls_funs.dg_r2 = value;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (target) {
             target.rotation.y = value / 180 * Math.PI;
             target.updateMatrix();
@@ -1048,14 +1063,17 @@ function controllerDatGuiOnChange() {
     dg_controller[5].onChange((value) => {
         if (!_isDragScrubbing) return;
         value = parseFloat(value) || 0;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
-        if (target) target.rotation.z = value / 180 * Math.PI;
+        const target = getSelectedTransformObject();
+        if (target) {
+            target.rotation.z = value / 180 * Math.PI;
+            syncLiveGuiTransformChange(target);
+        }
     }
     );
     dg_controller[5].onFinishChange((value) => {
         value = parseFloat(value) || 0;
         gui_controls_funs.dg_r3 = value;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (target) {
             target.rotation.z = value / 180 * Math.PI;
             target.updateMatrix();
@@ -1071,19 +1089,20 @@ function controllerDatGuiOnChange() {
     dg_controller[6].onChange((value) => {
         if (!_isDragScrubbing) return;
         value = parseFloat(value) || 0;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (!target) return;
         target.scale.x = value;
         if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
             target.scale.y = value;
             target.scale.z = value;
         }
+        syncLiveGuiTransformChange(target);
     }
     );
     dg_controller[6].onFinishChange((value) => {
         value = parseFloat(value) || 0;
         gui_controls_funs.dg_s1 = value;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (target) {
             target.scale.x = value;
             if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
@@ -1102,19 +1121,20 @@ function controllerDatGuiOnChange() {
     dg_controller[7].onChange((value) => {
         if (!_isDragScrubbing) return;
         value = parseFloat(value) || 0;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (!target) return;
         target.scale.y = value;
         if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
             target.scale.x = value;
             target.scale.z = value;
         }
+        syncLiveGuiTransformChange(target);
     }
     );
     dg_controller[7].onFinishChange((value) => {
         value = parseFloat(value) || 0;
         gui_controls_funs.dg_s2 = value;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (target) {
             target.scale.y = value;
             if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
@@ -1133,19 +1153,20 @@ function controllerDatGuiOnChange() {
     dg_controller[8].onChange((value) => {
         if (!_isDragScrubbing) return;
         value = parseFloat(value) || 0;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (!target) return;
         target.scale.z = value;
         if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
             target.scale.x = value;
             target.scale.y = value;
         }
+        syncLiveGuiTransformChange(target);
     }
     );
     dg_controller[8].onFinishChange((value) => {
         value = parseFloat(value) || 0;
         gui_controls_funs.dg_s3 = value;
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (target) {
             target.scale.z = value;
             if (VRODOS.editor.envir.scene.keepScaleAspectRatio) {
@@ -1180,19 +1201,11 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
     let skipNextFocusoutCommit = false;
 
     function syncAttachedProxy(target) {
-        if (!VRODOS.editor.transform_controls || !VRODOS.editor.transform_controls.object || !target) return;
-        if (VRODOS.editor.transform_controls.object === target) return;
-        if (VRODOS.editor.transform_controls.object.realObject !== target) return;
-
-        VRODOS.editor.transform_controls.object.position.copy(target.position);
-        VRODOS.editor.transform_controls.object.quaternion.copy(target.quaternion);
-        VRODOS.editor.transform_controls.object.scale.copy(target.scale);
-        VRODOS.editor.transform_controls.object.updateMatrix();
-        VRODOS.editor.transform_controls.object.updateMatrixWorld(true);
+        VRODOS.editor.transforms.syncProxyToObject(target);
     }
 
     function commitInputValue() {
-        const target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
+        const target = getSelectedTransformObject();
         if (!target) return;
 
         const parsed = parseFloat(element.value);
@@ -1340,52 +1353,16 @@ function vrodosFiniteNumber(value, fallback) {
     return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function getTransformControlsProxy() {
-    return window.vrodosGizmoProxy || null;
-}
-
 function syncAttachedProxyToObject(target) {
-    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.syncProxyToObject === 'function') {
-        VRODOS.editor.transforms.syncProxyToObject(target);
-        return;
-    }
-
-    const proxy = getTransformControlsProxy();
-    if (!proxy || !target || proxy.realObject !== target) return;
-
-    proxy.position.copy(target.position);
-    proxy.quaternion.copy(target.quaternion);
-    proxy.scale.copy(target.scale);
-    proxy.updateMatrix();
-    proxy.updateMatrixWorld(true);
+    VRODOS.editor.transforms.syncProxyToObject(target);
 }
 
 function ensureTransformControlsVisible() {
-    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.attach === 'function') {
-        const helper = VRODOS.editor.transform_controls_helper || (VRODOS.editor.transform_controls && VRODOS.editor.transform_controls._root) || null;
-        if (helper) {
-            helper.visible = Boolean(VRODOS.editor.transform_controls && VRODOS.editor.transform_controls.object);
-            helper.updateMatrixWorld(true);
-        }
-        return;
-    }
-
-    if (!VRODOS.editor.transform_controls) return;
-
     const controls = VRODOS.editor.transform_controls;
-    const helper = VRODOS.editor.transform_controls_helper || controls._root || null;
-
-    controls.enabled = true;
+    if (controls) controls.enabled = true;
+    const helper = VRODOS.editor.transform_controls_helper || (controls && controls._root) || null;
     if (helper) {
-        helper.visible = Boolean(controls.object);
-        helper.frustumCulled = false;
-        helper.renderOrder = Math.max(helper.renderOrder || 0, 10000);
-        if (typeof helper.traverse === 'function') {
-            helper.traverse((child) => {
-                child.frustumCulled = false;
-                child.renderOrder = Math.max(child.renderOrder || 0, 10000);
-            });
-        }
+        helper.visible = Boolean(getSelectedTransformObject());
         helper.updateMatrixWorld(true);
     }
 }
@@ -1397,7 +1374,8 @@ function ensureTransformControlsVisible() {
  */
 function updatePositionsPhpAndJavsFromControlsAxes() {
 
-    if (!VRODOS.editor.transform_controls.object) return;
+    const attachedObject = VRODOS.editor.transforms.getAttachedObject();
+    if (!attachedObject) return;
 
     // Determine the real object we are actually trying to move
     const realObject = getSelectedTransformObject();
@@ -1408,13 +1386,13 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
 
     // --- Proxy Sync Logic ---
     // Safety check: is the object currently attached to TransformControls actually our Proxy?
-    const isWorkingOnProxy = VRODOS.editor.transform_controls.object && VRODOS.editor.transform_controls.object.name === "vrodosGizmoProxy";
+    const isWorkingOnProxy = attachedObject.name === "vrodosGizmoProxy";
 
     if (isDragging) {
         if (VRODOS.editor.transform_controls.mode === 'rotate' && isWorkingOnProxy) {
             // High-Sensitivity Booster Logic (Unclamped for r181)
             // Extract the Axis and Angle of the proxy's change
-            const qProxyCurrent = VRODOS.editor.transform_controls.object.quaternion.clone();
+            const qProxyCurrent = attachedObject.quaternion.clone();
             const qDelta = qProxyCurrent.clone().multiply(VRODOS.editor.qProxyStart.clone().invert());
             
             const angle = 2 * Math.acos(Math.min(1, Math.max(-1, qDelta.w)));
@@ -1434,10 +1412,10 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
             realObject.updateMatrixWorld();
         } else {
             // 1:1 Sync for Translation, Scale, or non-proxy fallback
-            realObject.position.copy(VRODOS.editor.transform_controls.object.position);
-            realObject.scale.copy(VRODOS.editor.transform_controls.object.scale);
+            realObject.position.copy(attachedObject.position);
+            realObject.scale.copy(attachedObject.scale);
             if (!isWorkingOnProxy) {
-                realObject.quaternion.copy(VRODOS.editor.transform_controls.object.quaternion);
+                realObject.quaternion.copy(attachedObject.quaternion);
             }
             realObject.updateMatrix();
             realObject.updateMatrixWorld();
@@ -1445,18 +1423,18 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     } else {
         // IDLE STATE: Handles follow asset
         if (isWorkingOnProxy) {
-            VRODOS.editor.transform_controls.object.position.copy(realObject.position);
-            VRODOS.editor.transform_controls.object.quaternion.copy(realObject.quaternion);
-            VRODOS.editor.transform_controls.object.scale.copy(realObject.scale);
-            VRODOS.editor.transform_controls.object.updateMatrix();
-            VRODOS.editor.transform_controls.object.updateMatrixWorld();
+            attachedObject.position.copy(realObject.position);
+            attachedObject.quaternion.copy(realObject.quaternion);
+            attachedObject.scale.copy(realObject.scale);
+            attachedObject.updateMatrix();
+            attachedObject.updateMatrixWorld();
         }
     }
 
     // Trigger matrix updates during transformations to ensure visual consistency
-    if (isDragging && VRODOS.editor.transform_controls.object) {
-        VRODOS.editor.transform_controls.object.updateMatrix();
-        VRODOS.editor.transform_controls.object.updateMatrixWorld();
+    if (isDragging) {
+        attachedObject.updateMatrix();
+        attachedObject.updateMatrixWorld();
     }
 
     //--------- translate_x ---------------
@@ -1583,19 +1561,11 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
  * Use this instead of touching TransformControls directly.
  */
 function vrodosAttachGizmo(object) {
-    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.attach === 'function') {
-        return VRODOS.editor.transforms.attach(object);
-    }
-    return null;
+    return VRODOS.editor.transforms.attach(object);
 }
 
 function clearTransformSelection() {
-    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.detach === 'function') {
-        VRODOS.editor.transforms.detach();
-        return;
-    }
-
-    VRODOS.editor.currentSelectedRealObject = null;
+    VRODOS.editor.transforms.detach();
 }
 
 function attachTransformTarget(object) {
@@ -1604,24 +1574,7 @@ function attachTransformTarget(object) {
 }
 
 function getSelectedTransformObject() {
-    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.getRealObject === 'function') {
-        return VRODOS.editor.transforms.getRealObject();
-    }
-
-    if (VRODOS.editor.currentSelectedRealObject) {
-        return VRODOS.editor.currentSelectedRealObject;
-    }
-
-    if (!VRODOS.editor.transform_controls || !VRODOS.editor.transform_controls.object) {
-        return null;
-    }
-
-    const attachedObject = VRODOS.editor.transform_controls.object;
-    if (attachedObject.name === "vrodosGizmoProxy" && attachedObject.realObject) {
-        return attachedObject.realObject;
-    }
-
-    return attachedObject;
+    return VRODOS.editor.transforms.getRealObject();
 }
 
 function syncTransformGuiFromObject(object) {

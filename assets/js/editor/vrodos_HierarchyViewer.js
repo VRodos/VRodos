@@ -1,6 +1,52 @@
 /**
  *   Reset object in scene
  */
+function _hierarchyGetRegistry() {
+    return VRODOS.editor.sceneRegistry;
+}
+
+function _hierarchyGetObjectByUuid(uuid) {
+    const registry = _hierarchyGetRegistry();
+    const registered = registry.getByUuid(uuid);
+    if (registered) return registered;
+
+    return VRODOS.editor.envir && VRODOS.editor.envir.scene
+        ? VRODOS.editor.envir.scene.getObjectByProperty('uuid', uuid)
+        : null;
+}
+
+function _hierarchyGetObjectByName(name) {
+    const registry = _hierarchyGetRegistry();
+    const registered = registry.getByName(name);
+    if (registered) return registered;
+
+    return VRODOS.editor.envir && VRODOS.editor.envir.scene
+        ? VRODOS.editor.envir.scene.getObjectByName(name)
+        : null;
+}
+
+function _hierarchyGetSelectableRoots() {
+    const registry = _hierarchyGetRegistry();
+    const registryRoots = registry.getSelectableRoots();
+    if (Array.isArray(registryRoots) && registryRoots.length > 0) {
+        return registryRoots;
+    }
+
+    const roots = [];
+    if (VRODOS.editor.envir && VRODOS.editor.envir.scene) {
+        VRODOS.editor.envir.scene.traverse((obj) => {
+            if (obj.isSelectableMesh || obj.name === 'avatarCamera') {
+                roots.push(obj);
+            }
+        });
+    }
+    return roots;
+}
+
+function _hierarchyGetSelectedObject() {
+    return VRODOS.editor.transforms.getRealObject();
+}
+
 VRODOS.ui.resetInScene = function(name) {
     let obj = null;
 
@@ -10,7 +56,7 @@ VRODOS.ui.resetInScene = function(name) {
         }
         obj = VRODOS.editor.envir.getDirectorObject();
     } else {
-        obj = VRODOS.editor.envir.scene.getObjectByName(name);
+        obj = _hierarchyGetObjectByName(name);
         if (obj) {
             // [NEW] Capture start state for Undo
             const oldTRS = {
@@ -33,7 +79,7 @@ VRODOS.ui.resetInScene = function(name) {
 
     if (obj) {
         // Update transform controls if this object is selected
-        if (typeof VRODOS.editor.transform_controls !== 'undefined' && VRODOS.editor.transform_controls.object === obj) {
+        if (_hierarchyGetSelectedObject() === obj) {
             if (typeof VRODOS.editor.updatePositionsAndControls === 'function') {
                 VRODOS.editor.updatePositionsAndControls();
             }
@@ -82,21 +128,21 @@ function _hierarchyDisplayName(obj) {
     // For lights, count how many of the same type appear *before* this one in traversal order
     if (_lightLabelMap[cat]) {
         let index = 0;
-        let found = false;
-        VRODOS.editor.envir.scene.traverse((child) => {
-            if (found) return;
+        const roots = _hierarchyGetSelectableRoots();
+        for (let i = 0; i < roots.length; i++) {
+            const child = roots[i];
             if (child.category_name === cat && child.isSelectableMesh) {
                 index++;
-                if (child === obj) found = true;
+                if (child === obj) break;
             }
-        });
+        }
         return `${_lightLabelMap[cat]  } ${  index}`;
     }
 
     if (cat === 'lightTargetSpot') {
         // Derive from the parent light's display name
         const parentName = obj.name.replace('lightTargetSpot_', '');
-        const parentObj = VRODOS.editor.envir.scene.getObjectByName(parentName);
+        const parentObj = _hierarchyGetObjectByName(parentName);
         if (parentObj) {
             return `${_hierarchyDisplayName(parentObj)  } — Target`;
         }
@@ -119,7 +165,7 @@ function _hierarchyCreatedLabel(obj) {
 
     if (obj.category_name === 'lightTargetSpot') {
         const parentName = String(obj.name || '').replace('lightTargetSpot_', '');
-        const parentObj = VRODOS.editor.envir.scene.getObjectByName(parentName);
+        const parentObj = _hierarchyGetObjectByName(parentName);
         if (parentObj && parentObj !== obj) {
             return _hierarchyCreatedLabel(parentObj);
         }
@@ -260,7 +306,7 @@ function hierarchyHoverSelect(uuid) {
     const panel = document.getElementById('object-controls-panel');
     if (panel && !panel.classList.contains('tw-hidden')) return;
 
-    const obj = VRODOS.editor.envir.scene.getObjectByProperty('uuid', uuid);
+    const obj = _hierarchyGetObjectByUuid(uuid);
     if (!obj || obj.locked) return;
     VRODOS.ui.selectObjectPreview(obj);
 }
@@ -269,7 +315,7 @@ function hierarchyHoverSelect(uuid) {
  * Click on hierarchy item: full select with floating panel and properties.
  */
 function hierarchyClickSelect(event, uuid) {
-    const obj = VRODOS.editor.envir.scene.getObjectByProperty('uuid', uuid);
+    const obj = _hierarchyGetObjectByUuid(uuid);
     if (!obj || obj.locked) return;
     // Simulate left-click event for VRODOS.ui.selectorMajor
     const fakeEvent = { button: 0 };
@@ -286,7 +332,7 @@ function _getItemCategory(item) {
     const name = item.getAttribute('data-name');
     if (!name) return null;
     if (name === 'avatarCamera') return 'director';
-    const sceneObj = VRODOS.editor.envir.scene.getObjectByName(name);
+    const sceneObj = _hierarchyGetObjectByName(name);
     return sceneObj ? (sceneObj.category_name || '') : '';
 }
 
@@ -327,7 +373,7 @@ function _findInsertionPoint(obj) {
             // Also count targets that belong to this type
             if (cat === 'lightTargetSpot') {
                 const pName = items[i].getAttribute('data-name').replace('lightTargetSpot_', '');
-                const pObj = VRODOS.editor.envir.scene.getObjectByName(pName);
+                const pObj = _hierarchyGetObjectByName(pName);
                 if (pObj && pObj.category_name === categoryName) lastSameType = items[i];
             }
         }
@@ -342,7 +388,7 @@ function _findInsertionPoint(obj) {
                 if (cat === precedingType) lastOfPreceding = items[i];
                 if (cat === 'lightTargetSpot') {
                     const pName = items[i].getAttribute('data-name').replace('lightTargetSpot_', '');
-                    const pObj = VRODOS.editor.envir.scene.getObjectByName(pName);
+                    const pObj = _hierarchyGetObjectByName(pName);
                     if (pObj && pObj.category_name === precedingType) lastOfPreceding = items[i];
                 }
             }
@@ -473,7 +519,7 @@ VRODOS.ui.setHierarchyViewer = function() {
     const targets = [];     // light targets
     const regular = [];
 
-    VRODOS.editor.envir.scene.traverse((obj) => {
+    _hierarchyGetSelectableRoots().forEach((obj) => {
         if (obj.name !== 'avatarCamera' && obj.parent && obj.parent.name !== 'vrodosScene') return;
         if (obj.name === "SunSphere" || obj.name === "SpotSphere" || obj.name === "LampSphere" || obj.name === "ambientSphere") return;
         if (obj.vrodos_internal_helper === true) return;

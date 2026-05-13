@@ -81,20 +81,7 @@ VRODOS.ui.registerSceneObject = function(object, options) {
         renderReason: 'object-added'
     }, options || {});
 
-    if (VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') {
-        return VRODOS.editor.objectFactory.addSceneObject(object, opts);
-    }
-
-    if (object && VRODOS.editor.envir && VRODOS.editor.envir.scene && opts.addToScene !== false && !object.parent) {
-        VRODOS.editor.envir.scene.add(object);
-    }
-    if (object && opts.selectable && VRODOS.editor.envir && VRODOS.editor.envir.selectableMeshes) {
-        VRODOS.editor.envir.selectableMeshes.add(object);
-    }
-    if (object && opts.updateHierarchy && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
-        VRODOS.ui.addInHierarchyViewer(object);
-    }
-    return object;
+    return VRODOS.editor.objectFactory.addSceneObject(object, opts);
 }
 
 VRODOS.ui.selectNewSceneObject = function(object, options) {
@@ -106,22 +93,15 @@ VRODOS.ui.selectNewSceneObject = function(object, options) {
         autosave: true
     }, options || {});
 
-    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.select === 'function') {
-        VRODOS.editor.selection.select(object, {
-            source: opts.source,
-            openPanel: opts.openPanel,
-            showProperties: opts.showProperties,
-            focusHierarchy: true,
-            outline: true,
-            syncGui: true,
-            setMode: true
-        });
-    } else {
-        if (typeof VRODOS.ui.attachTransformTarget === 'function') VRODOS.ui.attachTransformTarget(object);
-        if (typeof VRODOS.ui.removeAllCelOutlines === 'function') VRODOS.ui.removeAllCelOutlines();
-        if (typeof VRODOS.ui.addCelOutline === 'function') VRODOS.ui.addCelOutline(object);
-        if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') VRODOS.ui.setDatGuiInitialVales(object);
-    }
+    VRODOS.editor.selection.select(object, {
+        source: opts.source,
+        openPanel: opts.openPanel,
+        showProperties: opts.showProperties,
+        focusHierarchy: true,
+        outline: true,
+        syncGui: true,
+        setMode: true
+    });
 
     if (opts.frame && typeof VRODOS.ui.frameNewSceneObject === 'function') {
         VRODOS.ui.frameNewSceneObject(object);
@@ -726,9 +706,8 @@ VRODOS.api.createGlbAsset = function(nameModel, addedAt, pluginPath) {
     };
 
     manager.onLoad = () => {
-        const insertedObject = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByName === 'function'
-            ? VRODOS.editor.sceneRegistry.getByName(nameModel)
-            : VRODOS.editor.envir.scene.getObjectByName(nameModel);
+        const insertedObject = VRODOS.editor.sceneRegistry.getByName(nameModel)
+            || VRODOS.editor.envir.scene.getObjectByName(nameModel);
         if (!insertedObject) return;
         const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
 
@@ -870,15 +849,9 @@ VRODOS.ui.deleteFomScene = function(uuid, name) {
         document.getElementById("confirm-asset-deletion-description").innerHTML = `Do you really want to delete the asset named <b>${  name  }</b>?`;
     }
 
-    const selectedObject = VRODOS.editor.transforms && typeof VRODOS.editor.transforms.getRealObject === 'function'
-        ? VRODOS.editor.transforms.getRealObject()
-        : null;
+    const selectedObject = VRODOS.editor.transforms.getRealObject();
 
-    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
-        VRODOS.editor.selection.clear({ source: 'delete-dialog-open', hidePanel: false });
-    } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
-        VRODOS.ui.clearTransformSelection();
-    }
+    VRODOS.editor.selection.clear({ source: 'delete-dialog-open', hidePanel: false });
 
     const delete_dialog_element = document.getElementById('confirm-deletion-dialog');
     delete_dialog_element.showModal();
@@ -889,19 +862,14 @@ VRODOS.ui.deleteFomScene = function(uuid, name) {
     const delete_btn_element = document.getElementById("delete-asset-btn-confirmation");
     delete_btn_element.addEventListener('click', () => {
         delete_dialog_element.close();
-        if (typeof VRODOS.ui.clearTransformSelection === 'function') {
-            VRODOS.ui.clearTransformSelection();
-        }
+        VRODOS.editor.selection.clear({ source: 'delete-confirmed', hidePanel: false });
         VRODOS.api.deleteAssetFromScene(uuid, true);
         if (selUuid !== "unassigned") {
             if (delUuid !== selUuid) {
-                const objectToReselect = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByUuid === 'function'
-                    ? VRODOS.editor.sceneRegistry.getByUuid(selUuid)
-                    : VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , selUuid);
-                if (objectToReselect && VRODOS.editor.selection && typeof VRODOS.editor.selection.select === 'function') {
+                const objectToReselect = VRODOS.editor.sceneRegistry.getByUuid(selUuid)
+                    || VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , selUuid);
+                if (objectToReselect) {
                     VRODOS.editor.selection.select(objectToReselect, { source: 'delete-reselect' });
-                } else if (objectToReselect && typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
-                    VRODOS.ui.setDatGuiInitialVales(objectToReselect);
                 }
             } else {
                 VRODOS.ui.hideObjectControlsPanel();
@@ -927,27 +895,18 @@ VRODOS.ui.removeHierarchyEntriesForObject = function(uuid, objectName) {
 
 VRODOS.ui.lockOnScene = function(uuid, name) {
 
-    const selectedObject = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByUuid === 'function'
-        ? VRODOS.editor.sceneRegistry.getByUuid(uuid)
-        : VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , uuid);
+    const selectedObject = VRODOS.editor.sceneRegistry.getByUuid(uuid)
+        || VRODOS.editor.envir.scene.getObjectByProperty( 'uuid' , uuid);
     const hierarchyItem = document.getElementById(uuid);
     if (!selectedObject) return;
 
     if (selectedObject.locked){
         selectedObject.locked = false;
-        if (VRODOS.editor.selection && typeof VRODOS.editor.selection.select === 'function') {
-            VRODOS.editor.selection.select(selectedObject, { source: 'lock-toggle' });
-        } else if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
-            VRODOS.ui.setDatGuiInitialVales(selectedObject);
-        }
+        VRODOS.editor.selection.select(selectedObject, { source: 'lock-toggle' });
         VRODOS.ui.showObjectControlsPanel();
     }else{
         selectedObject.locked = true;
-        if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
-            VRODOS.editor.selection.clear({ source: 'lock-toggle' });
-        } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
-            VRODOS.ui.clearTransformSelection();
-        }
+        VRODOS.editor.selection.clear({ source: 'lock-toggle' });
         VRODOS.ui.hideObjectControlsPanel();
     }
 
@@ -985,9 +944,7 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
     }
 
     // 2. Find actual object inside scene (registry first, fallback to direct children and proxies)
-    let objectSelected = VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.getByUuid === 'function'
-        ? VRODOS.editor.sceneRegistry.getByUuid(uuid)
-        : null;
+    let objectSelected = VRODOS.editor.sceneRegistry.getByUuid(uuid);
     for (const child of VRODOS.editor.envir.scene.children) {
         if (objectSelected) break;
         if (typeof child === 'object' && child !== null) {
@@ -1029,14 +986,7 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
         // Sun target spot
         const targetSpot = VRODOS.editor.envir.scene.getObjectByName(`lightTargetSpot_${  objectSelected.name}`);
         if (targetSpot) {
-            if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.remove === 'function') {
-                VRODOS.editor.sceneRegistry.remove(targetSpot, { reason: 'light-target-removed' });
-            } else {
-                VRODOS.editor.envir.scene.remove(targetSpot);
-                if (VRODOS.editor.envir.selectableMeshes) {
-                    VRODOS.editor.envir.selectableMeshes.delete(targetSpot);
-                }
-            }
+            VRODOS.editor.sceneRegistry.remove(targetSpot, { reason: 'light-target-removed' });
         }
 
         // Sun target spot remove from hierarchy viewer
@@ -1051,11 +1001,7 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
     // Remove cel outline if present
     if (typeof VRODOS.ui.removeCelOutline === 'function') VRODOS.ui.removeCelOutline(objectSelected);
 
-    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
-        VRODOS.editor.selection.clear({ source: 'object-deleted' });
-    } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
-        VRODOS.ui.clearTransformSelection();
-    }
+    VRODOS.editor.selection.clear({ source: 'object-deleted' });
 
     // prevent orbiting
     document.dispatchEvent(new CustomEvent("mouseup", { "detail": "Example of an event" }));
@@ -1066,12 +1012,7 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
     }
 
     // Remove object from scene
-    if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.remove === 'function') {
-        VRODOS.editor.sceneRegistry.remove(objectSelected, { reason: 'object-deleted' });
-    } else {
-        VRODOS.editor.envir.scene.remove(objectSelected);
-        VRODOS.editor.envir.selectableMeshes.delete(objectSelected);
-    }
+    VRODOS.editor.sceneRegistry.remove(objectSelected, { reason: 'object-deleted' });
 
     // Remove from hierarchy viewer
     VRODOS.ui.removeHierarchyEntriesForObject(uuid, objectSelected.name);

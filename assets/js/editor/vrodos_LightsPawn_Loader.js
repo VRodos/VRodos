@@ -158,18 +158,7 @@ VRODOS.loader.LightsPawnLoader = class {
             renderReason: 'lights-pawn-loaded'
         }, options || {});
 
-        if (VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.addSceneObject === 'function') {
-            VRODOS.editor.objectFactory.addSceneObject(object, opts);
-            return object;
-        }
-
-        VRODOS.editor.envir.scene.add(object);
-        if (opts.selectable && VRODOS.editor.envir.selectableMeshes) {
-            VRODOS.editor.envir.selectableMeshes.add(object);
-        }
-        if (opts.updateHierarchy && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
-            VRODOS.ui.addInHierarchyViewer(object);
-        }
+        VRODOS.editor.objectFactory.addSceneObject(object, opts);
         return object;
     }
 
@@ -430,4 +419,3 @@ VRODOS.loader.LightsPawnLoader = class {
         obj.scale.set(s[0], s[1], s[2]);
     }
 };
-

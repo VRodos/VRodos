@@ -70,7 +70,10 @@ const keydown_handler = (ev) => {
         case 46:
             // If focus is on main screen but not at inputs
             if (ev.composedPath()[0].tagName === "BODY") {
-                VRODOS.ui.deleteFomScene(VRODOS.editor.transform_controls.object.uuid);
+                const selectedObject = VRODOS.editor.transforms.getRealObject();
+                if (selectedObject) {
+                    VRODOS.ui.deleteFomScene(selectedObject.uuid);
+                }
             }
             break; //  delete
     }
@@ -147,5 +150,4 @@ VRODOS.api.resetAvatarMovement = function() {
     torgue.set(0, 0, 0);
     moveForward = moveBackward = moveLeft = moveRight = moveUp = moveDown = viewUp = viewDown = false;
 };
-
 

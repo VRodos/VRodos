@@ -355,11 +355,7 @@ VRODOS.ui.onDrop = function(ev) {
     // Suppress the click-selection that would fire from the drop's mouseup
     VRODOS.editor.suppressNextSelection = true;
 
-    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
-        VRODOS.editor.selection.clear({ source: 'canvas-drop', hidePanel: false });
-    } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
-        VRODOS.ui.clearTransformSelection();
-    }
+    VRODOS.editor.selection.clear({ source: 'canvas-drop', hidePanel: false });
     if (typeof VRODOS.ui.removeAllCelOutlines === 'function') {
         VRODOS.ui.removeAllCelOutlines();
     }
@@ -802,11 +798,7 @@ VRODOS.ui.loadButtonActions = function() {
             // Suppress the click-selection that would fire from the drop's mouseup
             VRODOS.editor.suppressNextSelection = true;
 
-            if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
-                VRODOS.editor.selection.clear({ source: 'canvas-drop', hidePanel: false });
-            } else if (typeof VRODOS.ui.clearTransformSelection === 'function') {
-                VRODOS.ui.clearTransformSelection();
-            }
+            VRODOS.editor.selection.clear({ source: 'canvas-drop', hidePanel: false });
             if (typeof VRODOS.ui.removeAllCelOutlines === 'function') {
                 VRODOS.ui.removeAllCelOutlines();
             }
@@ -926,9 +918,8 @@ VRODOS.ui.loadButtonActions = function() {
         const mode = checked ? checked.value : 'translate';
 
         // Sun and Target spot can not change control manipulation mode
-        if (VRODOS.editor.transform_controls.object) {
-            // Check if we are attached to a proxy or directly to an object
-            const targetObject = VRODOS.editor.transform_controls.object.realObject || VRODOS.editor.transform_controls.object;
+        const targetObject = VRODOS.editor.transforms.getRealObject();
+        if (targetObject) {
             const category = targetObject.category_name || "";
 
             if (category.includes("lightTargetSpot") ||
@@ -949,13 +940,11 @@ VRODOS.ui.loadButtonActions = function() {
 VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) => {
     VRODOS.editor.envir.orbitControls.enabled = !event.value;
 
-    if (event.value && VRODOS.editor.transform_controls.object) {
-        // Capture start state for Undo/Redo - Use the real object's TRS
-        let target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
-        if (target.name === "vrodosGizmoProxy" && target.realObject) {
-            target = target.realObject;
-        }
+    const attachedObject = VRODOS.editor.transforms.getAttachedObject();
+    const target = VRODOS.editor.transforms.getRealObject();
 
+    if (event.value && attachedObject && target) {
+        // Capture start state for Undo/Redo - Use the real object's TRS
         VRODOS.editor.transform_controls._oldTRS = {
             pos: target.position.clone(),
             rot: target.rotation.clone(),
@@ -963,20 +952,15 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
         };
 
         // Capture start orientations for proxy-based transformation
-        if (VRODOS.editor.currentSelectedRealObject && typeof VRODOS.editor.qProxyStart !== 'undefined') {
-            VRODOS.editor.qProxyStart.copy(VRODOS.editor.transform_controls.object.quaternion);
-            VRODOS.editor.pProxyStart.copy(VRODOS.editor.transform_controls.object.position);
+        if (attachedObject !== target && typeof VRODOS.editor.qProxyStart !== 'undefined') {
+            VRODOS.editor.qProxyStart.copy(attachedObject.quaternion);
+            VRODOS.editor.pProxyStart.copy(attachedObject.position);
             
-            VRODOS.editor.qRealStart.copy(VRODOS.editor.currentSelectedRealObject.quaternion);
-            VRODOS.editor.pRealStart.copy(VRODOS.editor.currentSelectedRealObject.position);
+            VRODOS.editor.qRealStart.copy(target.quaternion);
+            VRODOS.editor.pRealStart.copy(target.position);
         }
-    } else if (!event.value && VRODOS.editor.transform_controls.object && VRODOS.editor.transform_controls._oldTRS) {
+    } else if (!event.value && attachedObject && target && VRODOS.editor.transform_controls._oldTRS) {
         // Drag finished, commit command
-        let target = VRODOS.editor.currentSelectedRealObject || VRODOS.editor.transform_controls.object;
-        if (target.name === "vrodosGizmoProxy" && target.realObject) {
-            target = target.realObject;
-        }
-
         const newTRS = {
             pos: target.position.clone(),
             rot: target.rotation.clone(),
@@ -1146,7 +1130,8 @@ VRODOS.editor.transform_controls.addEventListener('dragging-changed', (event) =>
                 VRODOS.editor.transform_controls.visible = true;
                 if (VRODOS.editor.envir.gridHelper) VRODOS.editor.envir.gridHelper.visible = true;
                 if (VRODOS.editor.envir.axesHelper) VRODOS.editor.envir.axesHelper.visible = true;
-                if (VRODOS.editor.transform_controls.object) VRODOS.ui.addCelOutline(VRODOS.editor.transform_controls.object);
+                const selectedObject = VRODOS.editor.transforms.getRealObject();
+                if (selectedObject) VRODOS.ui.addCelOutline(selectedObject);
                 VRODOS.ui.setVisiblityLightHelpingElements(true);
 
                 if (VRODOS.editor.envir.thirdPersonView || VRODOS.editor.avatarControlsEnabled) {
@@ -1356,4 +1341,3 @@ VRODOS.api.triggerAutoSave = function() {
     VRODOS.editor.envir.scene.dispatchEvent({ type: "modificationPendingSave" });
     VRODOS.api.commitPendingSceneSave();
 };
-
