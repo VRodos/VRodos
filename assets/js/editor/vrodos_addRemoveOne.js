@@ -175,6 +175,39 @@ VRODOS.ui.selectNewSceneObject = function(object, options) {
     return object;
 }
 
+VRODOS.ui.finalizeSceneObjectAdd = function(object, options) {
+    const opts = Object.assign({
+        alreadyRegistered: false,
+        registerOptions: {},
+        updateHierarchy: true,
+        select: true,
+        selectOptions: {}
+    }, options || {});
+
+    const registeredObject = opts.alreadyRegistered
+        ? object
+        : VRODOS.ui.registerSceneObject(object, Object.assign({}, opts.registerOptions || {}, {
+            updateHierarchy: false,
+            select: false,
+            frame: false,
+            autosave: false
+        }));
+
+    if (!registeredObject || registeredObject !== object) {
+        return registeredObject;
+    }
+
+    if (opts.updateHierarchy && typeof VRODOS.ui.addInHierarchyViewer === 'function') {
+        VRODOS.ui.addInHierarchyViewer(registeredObject);
+    }
+
+    if (opts.select) {
+        VRODOS.ui.selectNewSceneObject(registeredObject, opts.selectOptions || {});
+    }
+
+    return registeredObject;
+}
+
 VRODOS.utils.normalizeAssessmentLevels = function(levels) {
     let source = levels;
 
@@ -516,14 +549,6 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     lightSunShadowhelper.name = VRODOS.utils.getEditorLightObjectName('shadow', lightSun.name);
     lightSunShadowhelper.vrodos_internal_helper = true;
 
-    VRODOS.ui.registerSceneObject(lightSun, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-sun-added' });
-    VRODOS.editor.envir.scene.add(lightSunHelper);
-    VRODOS.ui.registerSceneObject(lightTargetSpot, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-target-added' });
-    VRODOS.editor.envir.scene.add(lightSunShadowhelper);
-
-    lightSun.target.updateMatrixWorld();
-    lightSunHelper.update();
-
     // Set initial transformations
     const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
     trs_tmp.translation[1] += 3; // Sun should be higher than objects
@@ -532,16 +557,34 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     lightSun.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
     lightSun.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
-    VRODOS.ui.addInHierarchyViewer(lightSun);
-    VRODOS.ui.addInHierarchyViewer(lightTargetSpot);
-
     lightSun.color.setHex(hexcol);
     lightSun.children[0].material.color.setHex(hexcol);
     lightSunHelper.children[0].material.color.setHex(hexcol);
     lightSunHelper.children[1].material.color.setHex(hexcol);
     lightTargetSpot.children[0].material.color.setHex(hexcol);
 
+    const registeredLightSun = VRODOS.ui.finalizeSceneObjectAdd(lightSun, {
+        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-sun-added' },
+        select: false
+    });
+    if (registeredLightSun !== lightSun) {
+        return registeredLightSun;
+    }
+
+    VRODOS.editor.envir.scene.add(lightSunHelper);
+    const registeredLightTarget = VRODOS.ui.finalizeSceneObjectAdd(lightTargetSpot, {
+        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-target-added' },
+        select: false
+    });
+    if (registeredLightTarget && registeredLightTarget !== lightTargetSpot) {
+        lightSun.target.position = registeredLightTarget.position;
+    }
+    VRODOS.editor.envir.scene.add(lightSunShadowhelper);
+
+    lightSun.target.updateMatrixWorld();
+    lightSunHelper.update();
     VRODOS.ui.selectNewSceneObject(lightSun, { source: 'light-sun-added' });
+    return lightSun;
 }
 
 /**
@@ -583,10 +626,6 @@ VRODOS.api.createLightLamp = function(nameModel, addedAt) {
     lightLampHelper.parentLightName = lightLamp.name;
     lightLampHelper.vrodos_internal_helper = true;
 
-    VRODOS.ui.registerSceneObject(lightLamp, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-lamp-added' });
-    VRODOS.editor.envir.scene.add(lightLampHelper);
-    lightLampHelper.update();
-
     const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
     trs_tmp.translation[1] += 3;
 
@@ -597,9 +636,18 @@ VRODOS.api.createLightLamp = function(nameModel, addedAt) {
     lightLamp.color.setHex(hexcol);
     lightLamp.power = 10;
 
-    VRODOS.ui.addInHierarchyViewer(lightLamp);
+    const registeredLightLamp = VRODOS.ui.finalizeSceneObjectAdd(lightLamp, {
+        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-lamp-added' },
+        select: false
+    });
+    if (registeredLightLamp !== lightLamp) {
+        return registeredLightLamp;
+    }
 
+    VRODOS.editor.envir.scene.add(lightLampHelper);
+    lightLampHelper.update();
     VRODOS.ui.selectNewSceneObject(lightLamp, { source: 'light-lamp-added' });
+    return lightLamp;
 }
 
 /**
@@ -641,11 +689,6 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
 
     lightSpot.target.position = lightTargetSpot.position;
 
-    VRODOS.ui.registerSceneObject(lightSpot, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-spot-added' });
-    VRODOS.ui.registerSceneObject(lightTargetSpot, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-target-added' });
-
-    lightSpot.target.updateMatrixWorld();
-
     const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
     trs_tmp.translation[1] += 3;
 
@@ -653,10 +696,24 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
     lightSpot.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
     lightSpot.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
-    VRODOS.ui.addInHierarchyViewer(lightSpot);
-    VRODOS.ui.addInHierarchyViewer(lightTargetSpot);
+    const registeredLightSpot = VRODOS.ui.finalizeSceneObjectAdd(lightSpot, {
+        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-spot-added' },
+        select: false
+    });
+    if (registeredLightSpot !== lightSpot) {
+        return registeredLightSpot;
+    }
 
+    const registeredLightTarget = VRODOS.ui.finalizeSceneObjectAdd(lightTargetSpot, {
+        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-target-added' },
+        select: false
+    });
+    if (registeredLightTarget && registeredLightTarget !== lightTargetSpot) {
+        lightSpot.target.position = registeredLightTarget.position;
+    }
+    lightSpot.target.updateMatrixWorld();
     VRODOS.ui.selectNewSceneObject(lightSpot, { source: 'light-spot-added' });
+    return lightSpot;
 }
 
 /**
@@ -680,8 +737,6 @@ VRODOS.api.createLightAmbient = function(nameModel, addedAt) {
     lampSphere.name = "ambientSphere";
     lightAmbient.add(lampSphere);
 
-    VRODOS.ui.registerSceneObject(lightAmbient, { updateHierarchy: false, incrementLoaded: false, renderReason: 'light-ambient-added' });
-
     const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
     trs_tmp.translation[1] += 3;
 
@@ -689,9 +744,10 @@ VRODOS.api.createLightAmbient = function(nameModel, addedAt) {
     lightAmbient.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
     lightAmbient.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
-    VRODOS.ui.addInHierarchyViewer(lightAmbient);
-
-    VRODOS.ui.selectNewSceneObject(lightAmbient, { source: 'light-ambient-added' });
+    return VRODOS.ui.finalizeSceneObjectAdd(lightAmbient, {
+        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-ambient-added' },
+        selectOptions: { source: 'light-ambient-added' }
+    });
 }
 
 /**
@@ -724,8 +780,6 @@ VRODOS.api.createPawn = function(nameModel, addedAt, pluginPath) {
             pawnLabel.position.set(0, 1.5, 0);
             Pawn.add(pawnLabel);
 
-            VRODOS.ui.registerSceneObject(Pawn, { updateHierarchy: false, incrementLoaded: false, renderReason: 'pawn-added' });
-
             const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
             trs_tmp.translation[1] += 3;
 
@@ -733,9 +787,10 @@ VRODOS.api.createPawn = function(nameModel, addedAt, pluginPath) {
             Pawn.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
             Pawn.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
-            VRODOS.ui.addInHierarchyViewer(Pawn);
-
-            VRODOS.ui.selectNewSceneObject(Pawn, { source: 'pawn-added' });
+            VRODOS.ui.finalizeSceneObjectAdd(Pawn, {
+                registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'pawn-added' },
+                selectOptions: { source: 'pawn-added' }
+            });
         },
         null,
         (error) => console.log('Error loading Pawn GLB:', error)
@@ -780,9 +835,10 @@ VRODOS.api.createGlbAsset = function(nameModel, addedAt, pluginPath) {
             }
         }
 
-        VRODOS.ui.addInHierarchyViewer(insertedObject);
-
-        VRODOS.ui.selectNewSceneObject(insertedObject, { source: 'glb-added' });
+        VRODOS.ui.finalizeSceneObjectAdd(insertedObject, {
+            alreadyRegistered: true,
+            selectOptions: { source: 'glb-added' }
+        });
         if (typeof VRODOS.editor.requestRender === 'function') {
             VRODOS.editor.requestRender('asset-added');
         }
@@ -810,13 +866,10 @@ VRODOS.api.createAssessmentAsset = function(nameModel, addedAt) {
     assessmentObject.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
     assessmentObject.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
 
-    VRODOS.ui.registerSceneObject(assessmentObject, {
-        selectable: true,
-        updateHierarchy: true,
-        incrementLoaded: false,
-        renderReason: 'assessment-added'
+    VRODOS.ui.finalizeSceneObjectAdd(assessmentObject, {
+        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'assessment-added' },
+        selectOptions: { source: 'assessment-added' }
     });
-    VRODOS.ui.selectNewSceneObject(assessmentObject, { source: 'assessment-added' });
 }
 
 VRODOS.api.createTextAsset = function(nameModel, addedAt) {
@@ -829,13 +882,10 @@ VRODOS.api.createTextAsset = function(nameModel, addedAt) {
     VRODOS.loader.setObjectProperties(textObject, nameModel, VRODOS.data.scene_data.objects);
     textObject.addedAt = addedAt;
 
-    VRODOS.ui.registerSceneObject(textObject, {
-        selectable: true,
-        updateHierarchy: true,
-        incrementLoaded: false,
-        renderReason: 'text-added'
+    VRODOS.ui.finalizeSceneObjectAdd(textObject, {
+        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'text-added' },
+        selectOptions: { source: 'text-added' }
     });
-    VRODOS.ui.selectNewSceneObject(textObject, { source: 'text-added' });
 }
 
 /**

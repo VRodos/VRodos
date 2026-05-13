@@ -260,7 +260,13 @@ VRODOS.editor.DeleteObjectCommand = class {
         }
         
         // Restore to hierarchy viewer
-        if (typeof VRODOS.ui.addInHierarchyViewer === 'function') {
+        if (typeof VRODOS.ui.finalizeSceneObjectAdd === 'function') {
+            VRODOS.ui.finalizeSceneObjectAdd(this.object3D, {
+                alreadyRegistered: true,
+                updateHierarchy: true,
+                select: false
+            });
+        } else if (typeof VRODOS.ui.addInHierarchyViewer === 'function') {
             VRODOS.ui.addInHierarchyViewer(this.object3D);
         }
         

@@ -157,6 +157,10 @@ function initVrodosEditor() {
     // Secondary pass: Background specific legacy logic
     syncBackgroundInitialState(sceneSettings);
 
+    if (typeof VRODOS.utils.dedupeSceneDataObjects === 'function') {
+        VRODOS.utils.dedupeSceneDataObjects(VRODOS.data.scene_data.objects, { reason: 'scene-load' });
+    }
+
     // 3. Load 3D Objects
     const lightsPawnLoader = new VRODOS.loader.LightsPawnLoader();
     const lightsLoadPromise = lightsPawnLoader.load(VRODOS.data.scene_data, VRODOS.data.pluginPath, VRODOS.editor.manager);

@@ -181,6 +181,75 @@ VRODOS.utils.getNextPawnIndex = function(scene) {
     return count;
 };
 
+VRODOS.utils.sceneObjectDuplicateKey = function(resource) {
+    if (!resource || typeof resource !== 'object') {
+        return '';
+    }
+
+    const addedAt = Number(resource.addedAt || 0);
+    if (!Number.isFinite(addedAt) || addedAt <= 0) {
+        return '';
+    }
+
+    const trs = resource.trs || {};
+    const vectorKey = (value, fallback) => {
+        const vector = Array.isArray(value) ? value : fallback;
+        return vector.map((entry) => {
+            const numberValue = Number(entry);
+            return Number.isFinite(numberValue) ? numberValue.toFixed(5) : '0.00000';
+        }).join(',');
+    };
+
+    const category = String(resource.category_slug || resource.category_name || '');
+    const source = String(
+        resource.asset_id ||
+        resource.glb_id ||
+        resource.fnPath ||
+        resource.path ||
+        resource.glb_path ||
+        resource.image_path ||
+        resource.asset_name ||
+        ''
+    );
+    const translation = vectorKey(trs.translation || resource.position || resource.translation, [0, 0, 0]);
+    const rotation = vectorKey(trs.rotation || resource.rotation, [0, 0, 0]);
+    const scale = vectorKey(trs.scale || resource.scale, [1, 1, 1]);
+    const target = vectorKey(resource.targetposition, [0, 0, 0]);
+
+    return [category, source, Math.floor(addedAt), translation, rotation, scale, target].join('|');
+};
+
+VRODOS.utils.dedupeSceneDataObjects = function(objects, options) {
+    if (!objects || typeof objects !== 'object') {
+        return [];
+    }
+
+    const opts = options || {};
+    const seen = new Map();
+    const removed = [];
+
+    Object.keys(objects).forEach((name) => {
+        const key = VRODOS.utils.sceneObjectDuplicateKey(objects[name]);
+        if (!key) {
+            return;
+        }
+
+        if (seen.has(key)) {
+            removed.push({ name, original: seen.get(key) });
+            delete objects[name];
+            return;
+        }
+
+        seen.set(key, name);
+    });
+
+    if (removed.length > 0 && opts.log !== false) {
+        console.warn('VRodos: removed duplicate saved scene objects before load', removed);
+    }
+
+    return removed;
+};
+
 VRODOS.utils.getEditorLightObjectName = function(kind, lightName) {
     const prefixes = {
         helper: 'lightHelper_',
