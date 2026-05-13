@@ -493,14 +493,36 @@ function CreateResetButton(obj){
 // Highlight item in Hierarchy viewer — tracks previous selection to avoid full DOM scan
 let _previousHighlightedId = null;
 
-VRODOS.ui.setBackgroundColorHierarchyViewer = function(id) {
+function _hierarchyScrollItemIntoView(item) {
+    if (!item || typeof item.scrollIntoView !== 'function') {
+        return;
+    }
+
+    window.requestAnimationFrame(() => {
+        const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        item.scrollIntoView({
+            block: 'nearest',
+            inline: 'nearest',
+            behavior: prefersReducedMotion ? 'auto' : 'smooth'
+        });
+    });
+}
+
+VRODOS.ui.setBackgroundColorHierarchyViewer = function(id, options) {
+    const opts = Object.assign({ scroll: true }, options || {});
+
     if (_previousHighlightedId) {
         const prev = document.getElementById(_previousHighlightedId);
         if (prev) prev.style.background = '';
     }
 
     const el = document.getElementById(id);
-    if (el) el.style.background = 'rgba(59, 130, 246, 0.3)';
+    if (el) {
+        el.style.background = 'rgba(59, 130, 246, 0.3)';
+        if (opts.scroll) {
+            _hierarchyScrollItemIntoView(el);
+        }
+    }
 
     _previousHighlightedId = id;
 }
