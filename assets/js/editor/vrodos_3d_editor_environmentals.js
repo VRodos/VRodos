@@ -808,6 +808,36 @@ class vrodos_3d_editor_environmentals {
         return vrodosGetPointerLockObject(this.avatarControls);
     }
 
+    syncFirstPersonRigToDirector() {
+        const director = this.getDirectorObject();
+        const rig = this.getDirectorRig();
+
+        if (!director) {
+            return;
+        }
+
+        director.updateMatrixWorld(true);
+
+        if (rig && rig !== director) {
+            rig.position.copy(director.position);
+            rig.quaternion.copy(director.quaternion);
+            rig.scale.set(1, 1, 1);
+            rig.updateMatrixWorld(true);
+
+            if (this.cameraAvatar && this.cameraAvatar.parent === rig) {
+                this.cameraAvatar.position.set(0, 0, 0);
+                this.cameraAvatar.rotation.set(0, 0, 0);
+                this.cameraAvatar.scale.set(1, 1, 1);
+                this.cameraAvatar.updateMatrixWorld(true);
+            }
+            return;
+        }
+
+        if (rig) {
+            rig.updateMatrixWorld(true);
+        }
+    }
+
     setDirectorWorldPosition(x, y, z, rx, ry) {
         const director = this.getDirectorObject();
         if (!director) {

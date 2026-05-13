@@ -7,41 +7,6 @@ VRODOS.editor.originalDirectorRot = null;
 VRODOS.editor.originalRigPos = null;
 VRODOS.editor.originalRigRot = null;
 
-function vrodosSyncFirstPersonRigToDirector() {
-    const envir = VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir : null;
-    if (!envir || typeof envir.getDirectorObject !== 'function') {
-        return;
-    }
-
-    const director = envir.getDirectorObject();
-    const rig = typeof envir.getDirectorRig === 'function' ? envir.getDirectorRig() : null;
-
-    if (!director) {
-        return;
-    }
-
-    director.updateMatrixWorld(true);
-
-    if (rig && rig !== director) {
-        rig.position.copy(director.position);
-        rig.quaternion.copy(director.quaternion);
-        rig.scale.set(1, 1, 1);
-        rig.updateMatrixWorld(true);
-
-        if (envir.cameraAvatar && envir.cameraAvatar.parent === rig) {
-            envir.cameraAvatar.position.set(0, 0, 0);
-            envir.cameraAvatar.rotation.set(0, 0, 0);
-            envir.cameraAvatar.scale.set(1, 1, 1);
-            envir.cameraAvatar.updateMatrixWorld(true);
-        }
-        return;
-    }
-
-    if (rig) {
-        rig.updateMatrixWorld(true);
-    }
-}
-
 
 
 
@@ -94,7 +59,9 @@ VRODOS.api.firstPersonViewWithoutLock = function(){
         if (typeof VRODOS.api.resetAvatarMovement === 'function') {
             VRODOS.api.resetAvatarMovement();
         }
-        vrodosSyncFirstPersonRigToDirector();
+        if (typeof VRODOS.editor.envir.syncFirstPersonRigToDirector === 'function') {
+            VRODOS.editor.envir.syncFirstPersonRigToDirector();
+        }
 
 
         // // if in 3rd person view then show the cameraobject
