@@ -80,16 +80,9 @@ function isSceneBoundsCandidate(sceneChild) {
 }
 
 function getSceneBoundsCandidates(scene) {
-    const registry = VRODOS.editor && VRODOS.editor.sceneRegistry;
-    const registryRoots = registry && typeof registry.getSelectableRoots === 'function'
-        ? registry.getSelectableRoots()
-        : [];
-
-    if (Array.isArray(registryRoots) && registryRoots.length > 0) {
-        return registryRoots;
-    }
-
-    return scene && Array.isArray(scene.children) ? scene.children : [];
+    return typeof VRODOS.utils.getEditorSceneRoots === 'function'
+        ? VRODOS.utils.getEditorSceneRoots(scene)
+        : (scene && Array.isArray(scene.children) ? scene.children : []);
 }
 
 // Find dimensions of the selected object

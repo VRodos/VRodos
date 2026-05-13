@@ -16,21 +16,13 @@ function _hierarchyGetObjectByName(name) {
 }
 
 function _hierarchyGetSelectableRoots() {
-    const registry = _hierarchyGetRegistry();
-    const registryRoots = registry ? registry.getSelectableRoots() : [];
-    if (Array.isArray(registryRoots) && registryRoots.length > 0) {
-        return registryRoots;
-    }
-
-    const roots = [];
-    if (VRODOS.editor.envir && VRODOS.editor.envir.scene) {
-        VRODOS.editor.envir.scene.traverse((obj) => {
-            if (obj.isSelectableMesh || obj.name === 'avatarCamera') {
-                roots.push(obj);
-            }
-        });
-    }
-    return roots;
+    return typeof VRODOS.utils.getEditorSceneRoots === 'function'
+        ? VRODOS.utils.getEditorSceneRoots(VRODOS.editor.envir ? VRODOS.editor.envir.scene : null, {
+            filterSelectable: true,
+            includeDirector: true,
+            traverseFallback: true
+        })
+        : [];
 }
 
 function _hierarchyGetSelectedObject() {

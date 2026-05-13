@@ -308,7 +308,13 @@ VRODOS.api.finalizeSceneLoad = function() {
     (function focusOnPlayer() {
         let playerObject = null;
         const registry = VRODOS.editor.sceneRegistry;
-        const roots = registry.getSelectableRoots();
+        const roots = typeof VRODOS.utils.getEditorSceneRoots === 'function'
+            ? VRODOS.utils.getEditorSceneRoots(VRODOS.editor.envir.scene, {
+                filterSelectable: true,
+                includeDirector: true,
+                traverseFallback: true
+            })
+            : registry.getSelectableRoots();
 
         if (roots.length > 0) {
             for (let i = 0; i < roots.length; i++) {
@@ -318,12 +324,6 @@ VRODOS.api.finalizeSceneLoad = function() {
                     break;
                 }
             }
-        } else {
-            VRODOS.editor.envir.scene.traverse(obj => {
-                if (!playerObject && (obj.category_name === 'pawn' || obj.name?.includes('Pawn'))) {
-                    playerObject = obj;
-                }
-            });
         }
         if (!playerObject) {
             playerObject = registry.getByName('avatarCamera') || registry.getByName('Camera3Dmodel');

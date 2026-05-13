@@ -123,14 +123,51 @@ VRODOS.utils.decodeDisplayText = function(value) {
     );
 };
 
-VRODOS.utils.getNextPawnIndex = function(scene) {
+VRODOS.utils.getEditorSceneRoots = function(scene, options) {
+    const opts = Object.assign({
+        filterSelectable: false,
+        includeDirector: true,
+        traverseFallback: false
+    }, options || {});
     const registry = VRODOS.editor && VRODOS.editor.sceneRegistry;
-    const roots = registry && typeof registry.getSelectableRoots === 'function'
+    const registryRoots = registry && typeof registry.getSelectableRoots === 'function'
         ? registry.getSelectableRoots()
-        : null;
-    const source = roots && roots.length > 0
-        ? roots
-        : (scene && Array.isArray(scene.children) ? scene.children : []);
+        : [];
+
+    if (Array.isArray(registryRoots) && registryRoots.length > 0) {
+        return registryRoots;
+    }
+
+    if (!scene) {
+        return [];
+    }
+
+    const roots = [];
+    const shouldInclude = (object) => {
+        if (!object) return false;
+        if (!opts.filterSelectable) return true;
+        return Boolean(object.isSelectableMesh || (opts.includeDirector && object.name === 'avatarCamera'));
+    };
+    const addIfIncluded = (object) => {
+        if (shouldInclude(object)) {
+            roots.push(object);
+        }
+    };
+
+    if (opts.traverseFallback && typeof scene.traverse === 'function') {
+        scene.traverse(addIfIncluded);
+        return roots;
+    }
+
+    if (Array.isArray(scene.children)) {
+        scene.children.forEach(addIfIncluded);
+    }
+
+    return roots;
+};
+
+VRODOS.utils.getNextPawnIndex = function(scene) {
+    const source = VRODOS.utils.getEditorSceneRoots(scene);
 
     let count = 1;
     source.forEach((object) => {
