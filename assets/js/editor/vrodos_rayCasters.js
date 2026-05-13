@@ -860,15 +860,21 @@ function raylineVisualize(raycasterPick) {
 
 
     // This will force scene to update and show the line
-    VRODOS.editor.envir.scene.getObjectByName('orbitCamera').position.x += 0.1;
+    if (VRODOS.editor.envir.cameraOrbit) {
+        VRODOS.editor.envir.cameraOrbit.position.x += 0.1;
+    }
 
     setTimeout(() => {
-        VRODOS.editor.envir.scene.getObjectByName('orbitCamera').position.x -= 0.1;
+        if (VRODOS.editor.envir.cameraOrbit) {
+            VRODOS.editor.envir.cameraOrbit.position.x -= 0.1;
+        }
     }, 1500);
 
     // Remove the line
     setTimeout(() => {
-        VRODOS.editor.envir.scene.remove(VRODOS.editor.envir.scene.getObjectByName('rayLine'));
+        if (myBulletLine.parent) {
+            myBulletLine.parent.remove(myBulletLine);
+        }
     }, 1500);
 
 

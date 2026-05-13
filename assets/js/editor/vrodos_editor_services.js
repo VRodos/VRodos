@@ -667,7 +667,7 @@ VRODOS.utils = VRODOS.utils || {};
                 VRODOS.ui.transform.setSize();
             }
 
-            if (opts.setMode && VRODOS.editor.transform_controls) {
+            if (opts.setMode) {
                 transforms.setMode('translate');
                 if (!getEnvir() || !getEnvir().is2d) {
                     const modeSwitch = document.getElementById(`${transforms.getMode()}-switch`);

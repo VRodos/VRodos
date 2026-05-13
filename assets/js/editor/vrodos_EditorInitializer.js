@@ -377,6 +377,7 @@ VRODOS.editor.shouldRenderContinuously = function() {
     if (envir.isSceneLoading) return true;
     if (VRODOS.editor.avatarControlsEnabled) return true;
     if (VRODOS.editor.transforms && VRODOS.editor.transforms.isDragging()) return true;
+    if (envir.orbitControls && envir.orbitControls.autoRotate) return true;
     if (envir.flagPlayAnimation && envir.animationMixers && envir.animationMixers.length > 0) return true;
 
     return false;
@@ -388,7 +389,9 @@ VRODOS.editor.renderFrame = function(timestamp, isContinuous) {
 
     const curr_camera = VRODOS.editor.getActiveCamera();
 
-    if (!VRODOS.editor.avatarControlsEnabled && envir.orbitControls && envir.orbitControls.enableDamping) {
+    if (!VRODOS.editor.avatarControlsEnabled &&
+        envir.orbitControls &&
+        (envir.orbitControls.enableDamping || envir.orbitControls.autoRotate)) {
         envir.orbitControls.update();
     }
 

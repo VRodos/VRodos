@@ -887,7 +887,7 @@ VRODOS.ui.loadButtonActions = function() {
         if (btn.dataset.toggle === 'off') {
 
             VRODOS.editor.envir.orbitControls.autoRotate = true;
-            VRODOS.editor.envir.orbitControls.autoRotateSpeed = 0.6;
+            VRODOS.editor.envir.orbitControls.autoRotateSpeed = 1.2;
             btn.dataset.toggle = 'on';
 
         } else {
@@ -897,6 +897,9 @@ VRODOS.ui.loadButtonActions = function() {
         }
 
         btn.classList.toggle('toggle-active');
+        if (typeof VRODOS.editor.requestRender === 'function') {
+            VRODOS.editor.requestRender('orbit-auto-rotate-toggle');
+        }
     });
 
     if (VRODOS.editor.firstPersonBlockerBtn) {
@@ -1186,8 +1189,8 @@ VRODOS.ui.showObjectPropertiesPanel = function(type) {
 VRODOS.api.takeScreenshot = function() {
 
     //VRODOS.editor.envir.cameraAvatarHelper.visible = false;
-    if (VRODOS.editor.envir.scene.getObjectByName("myTransformControls")) {
-        VRODOS.editor.envir.scene.getObjectByName("myTransformControls").visible = false;
+    if (VRODOS.editor.transforms) {
+        VRODOS.editor.transforms.setVisible(false);
     }
 
     // Render to an offscreen canvas to capture the screenshot reliably
@@ -1219,8 +1222,8 @@ VRODOS.api.takeScreenshot = function() {
 
     offscreenRenderer.dispose();
 
-    if (VRODOS.editor.envir.scene.getObjectByName("myTransformControls"))
-        {VRODOS.editor.envir.scene.getObjectByName("myTransformControls").visible = true;}
+    if (VRODOS.editor.transforms)
+        {VRODOS.editor.transforms.setVisible(true);}
 
     VRODOS.api.persistSceneScreenshot();
 };
