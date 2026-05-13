@@ -390,10 +390,11 @@ else { ?>
                             'audio'         => 'volume-2',
                             'video'         => 'clapperboard',
                             '3d-text'       => 'type',
-                            'poi-imagetext' => 'image',
-                            'image'         => 'image-play',
+                            'poi-imagetext' => 'image-play',
+                            'image'         => 'image',
                             'chat'          => 'message-square',
                             'poi-link'      => 'external-link',
+                            'assessment'    => 'clipboard-check',
                         ];
                         $selected_slug = !empty($saved_term) ? $saved_term[0]->slug : '';
                         $selected_name = !empty($saved_term) ? $saved_term[0]->name : '';
@@ -441,6 +442,9 @@ else { ?>
                             </div>
                             <div class="vrodos-cat-menu" id="vrodos-cat-menu">
                                 <?php foreach ($cat_terms as $term):
+                                    if (($term->slug ?? '') === 'assessment') {
+                                        continue;
+                                    }
                                     $icon = $cat_icon_map[$term->slug] ?? 'package';
                                     $is_sel = (!empty($saved_term) && $saved_term[0]->term_id == $term->term_id);
                                 ?>

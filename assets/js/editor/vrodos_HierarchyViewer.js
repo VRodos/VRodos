@@ -137,7 +137,7 @@ function _hierarchyCreatedLabel(obj) {
         if (addedAt > 9999999999) {
             addedAt = Math.floor(addedAt / 1000);
         }
-        const addedLabel = _hierarchyUnixTimestampToMinuteSecond(Math.floor(addedAt));
+        const addedLabel = _hierarchyUnixTimestampToDateTime(Math.floor(addedAt));
         return (addedLabel && !addedLabel.includes('NaN')) ? addedLabel : '';
     }
 
@@ -145,20 +145,24 @@ function _hierarchyCreatedLabel(obj) {
     const match = name.match(/(\d{10})$/);
     if (!match) return '';
 
-    const created = _hierarchyUnixTimestampToMinuteSecond(match[1]);
+    const created = _hierarchyUnixTimestampToDateTime(match[1]);
     return (created && !created.includes('NaN')) ? created : '';
 }
 
-function _hierarchyUnixTimestampToMinuteSecond(unixTimestamp) {
+function _hierarchyUnixTimestampToDateTime(unixTimestamp) {
     const secondsValue = Number(unixTimestamp);
     if (!Number.isFinite(secondsValue) || secondsValue <= 0) {
         return '';
     }
 
     const date = new Date(secondsValue * 1000);
+    const day = `0${date.getDate()}`.slice(-2);
+    const month = `0${date.getMonth() + 1}`.slice(-2);
+    const year = `0${date.getFullYear() % 100}`.slice(-2);
+    const hours = `0${date.getHours()}`.slice(-2);
     const minutes = `0${date.getMinutes()}`.slice(-2);
-    const seconds = `0${date.getSeconds()}`.slice(-2);
-    return `${minutes}:${seconds}`;
+
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
 function _hierarchyEscapeHTML(text) {
@@ -561,5 +565,4 @@ VRODOS.ui.initHierarchyViewerEvents = function() {
         if (uuid) hierarchyClickSelect(e, uuid);
     });
 }
-
 

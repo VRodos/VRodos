@@ -324,7 +324,8 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
 
                     (function() {
                         const canEditThis = Boolean(VRODOS.data.isUserAdmin) || (String(f.author_id) === String(VRODOS.data.current_user_id));
-                        if (canEditThis) {
+                        const isAssessment = String(f.category_slug || '').toLowerCase() === 'assessment';
+                        if (canEditThis && !isAssessment) {
                             return `<div class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-p-2 tw-z-10 tw-transform tw-translate-y-1 group-hover:tw-translate-y-0 tw-transition-transform">` +
                                 `<button class="tw-w-full tw-bg-indigo-500/80 hover:tw-bg-indigo-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" onclick="window.location.href='${  urlforAssetEdit  }${f.asset_id  }&scene_type=scene&preview=0&editable=true'">EDIT</button>` +
                             `</div>`;

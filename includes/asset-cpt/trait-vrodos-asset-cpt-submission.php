@@ -368,13 +368,20 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 	private static function prepare_taxonomy_data( &$data ): void {
 		$ids_to_exclude = [];
+		$terms_to_exclude = [ 'assessment' ];
 		if ( $data['game_category'] === 'virtualproduction_games' ) {
-			$get_terms_to_exclude = get_terms(
-				['fields'   => 'ids', 'slug'     => ['chat'], 'taxonomy' => 'vrodos_asset3d_cat']
-			);
-			if ( ! is_wp_error( $get_terms_to_exclude ) && count( $get_terms_to_exclude ) > 0 ) {
-				$ids_to_exclude = $get_terms_to_exclude;
-			}
+			$terms_to_exclude[] = 'chat';
+		}
+
+		$get_terms_to_exclude = get_terms(
+			[
+				'fields'   => 'ids',
+				'slug'     => $terms_to_exclude,
+				'taxonomy' => 'vrodos_asset3d_cat',
+			]
+		);
+		if ( ! is_wp_error( $get_terms_to_exclude ) && count( $get_terms_to_exclude ) > 0 ) {
+			$ids_to_exclude = $get_terms_to_exclude;
 		}
 
 		$data['cat_terms']      = get_terms(
