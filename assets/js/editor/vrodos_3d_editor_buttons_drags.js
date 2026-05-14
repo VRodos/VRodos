@@ -184,44 +184,8 @@ VRODOS.ui.bindLegacyEditorButtonActions = function() {
         VRODOS.ui.bindSceneSnapshotControls();
     }
 
-    const immerseSceneInfoBtn = document.getElementById('toggleImmerseSceneInfoBtn');
-    const immerseSceneInfoDialog = document.getElementById('immerseSceneInfoDialog');
-    if (immerseSceneInfoBtn && immerseSceneInfoDialog) {
-        immerseSceneInfoBtn.addEventListener('click', () => {
-            if (immerseSceneInfoDialog.classList.contains('tw-hidden')) {
-                VRODOS.ui.showFloatingPanel(immerseSceneInfoDialog);
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            } else {
-                VRODOS.ui.hideFloatingPanel(immerseSceneInfoDialog);
-            }
-        });
-    }
-
-    VRODOS.ui.initializeFloatingPanel('immerseSceneInfoDialog', 'immerseSceneInfoHeader', 'closeImmerseSceneInfoBtn');
-
-    const copyImmerseSceneInfoBtn = document.getElementById('copyImmerseSceneInfoBtn');
-    if (copyImmerseSceneInfoBtn) {
-        copyImmerseSceneInfoBtn.addEventListener('click', () => {
-            const sourceNode = document.getElementById('immerse_scene_info_source');
-            let sourceText = '';
-
-            if (sourceNode) {
-                try {
-                    sourceText = JSON.parse(sourceNode.textContent || '""');
-                } catch (error) {
-                    sourceText = sourceNode.textContent || '';
-                }
-            }
-
-            VRODOS.utils.copyPlainText(sourceText)
-                .then(() => {
-                    VRODOS.ui.showTemporaryButtonSuccess('copyImmerseSceneInfoBtn', 'Copied!');
-                })
-                .catch((error) => {
-                    VRODOS.ui.showTemporaryButtonWarning('copyImmerseSceneInfoBtn', 'Press Ctrl+C');
-                    console.warn('VRodos: failed to copy imported scene information to clipboard.', error);
-                });
-        });
+    if (typeof VRODOS.ui.bindImmerseSceneInfoControls === 'function') {
+        VRODOS.ui.bindImmerseSceneInfoControls();
     }
 
     // Drag elements inside VR Editor

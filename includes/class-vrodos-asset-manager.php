@@ -323,7 +323,7 @@ class VRodos_Asset_Manager {
       ['vrodos_scene_snapshot_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_scene_snapshot_ui.js' ), ['vrodos_namespace', 'vrodos_ui_helpers', 'vrodos_ScenePersistence', 'vrodos_three_vendor_bundle']],
       ['vrodos_scene_canvas_drop_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_scene_canvas_drop_ui.js' ), ['vrodos_namespace', 'vrodos_editor_services', 'vrodos_rayCasters', 'vrodos_addRemoveOne']],
       ['vrodos_scene_list_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_scene_list_ui.js' ), ['vrodos_namespace', 'vrodos_ui_helpers', 'ajax-script_deletescene']],
-      ['vrodos_floating_panels', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_floating_panels.js' ), ['vrodos_namespace']],
+      ['vrodos_floating_panels', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_floating_panels.js' ), ['vrodos_namespace', 'vrodos_ui_helpers']],
       ['vrodos_icons', VRodos_Path_Manager::editor_js_url( 'vrodos_icons.js' ), ['vrodos_namespace']],
       ['vrodos_cefr_badges', VRodos_Path_Manager::editor_js_url( 'vrodos_cefr_badges.js' ), ['vrodos_namespace']],
       ['vrodos_HierarchyViewer', VRodos_Path_Manager::editor_js_url( 'vrodos_HierarchyViewer.js' ), ['vrodos_namespace', 'vrodos_cefr_badges']],

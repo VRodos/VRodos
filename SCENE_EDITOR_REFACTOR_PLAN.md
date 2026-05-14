@@ -16,6 +16,7 @@
 - 2026-05-14: Phase 12 scene canvas drop UI extraction implemented.
 - 2026-05-14: Phase 13 scene list UI extraction implemented.
 - 2026-05-14: Phase 14 scene snapshot control binding extraction implemented.
+- 2026-05-14: Phase 15 Immerse scene info floating panel binding extraction implemented.
 - Verification: JS syntax checks passed; PHP syntax check for `includes/class-vrodos-asset-manager.php` passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
@@ -67,6 +68,7 @@ assets/js/editor/
 - Done: Move canvas drop handlers and upper-toolbar light/pawn drag payload creation to `ui/vrodos_scene_canvas_drop_ui.js`.
 - Done: Move scene drawer toggle, scene reorder persistence, and delete scene dialog wiring to `ui/vrodos_scene_list_ui.js`.
 - Done: Move screenshot button/manual image selection and scene JSON view/copy dialog bindings to `ui/vrodos_scene_snapshot_ui.js`.
+- Done: Move imported/Immerse scene information floating-panel toggle, resize/close setup, and copy binding to `ui/vrodos_floating_panels.js`.
 - Reduce fallback `scene.traverse()` usage in selection and hot interaction paths by relying on `sceneRegistry`.
 
 ## Test Plan

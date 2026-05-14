@@ -152,3 +152,57 @@ VRODOS.ui.initializeFloatingPanel = function(panelId, headerId, closeButtonId) {
         });
     }
 };
+
+VRODOS.ui.immerseSceneInfoControlsBound = false;
+
+VRODOS.ui.bindImmerseSceneInfoControls = function() {
+    if (VRODOS.ui.immerseSceneInfoControlsBound) {
+        return true;
+    }
+
+    const toggleButton = document.getElementById('toggleImmerseSceneInfoBtn');
+    const dialog = document.getElementById('immerseSceneInfoDialog');
+
+    if (toggleButton && dialog) {
+        toggleButton.addEventListener('click', () => {
+            if (dialog.classList.contains('tw-hidden')) {
+                VRODOS.ui.showFloatingPanel(dialog);
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } else {
+                VRODOS.ui.hideFloatingPanel(dialog);
+            }
+        });
+    }
+
+    VRODOS.ui.initializeFloatingPanel('immerseSceneInfoDialog', 'immerseSceneInfoHeader', 'closeImmerseSceneInfoBtn');
+
+    const copyButton = document.getElementById('copyImmerseSceneInfoBtn');
+    if (copyButton) {
+        copyButton.addEventListener('click', () => {
+            VRODOS.utils.copyPlainText(getImmerseSceneInfoSourceText())
+                .then(() => {
+                    VRODOS.ui.showTemporaryButtonSuccess('copyImmerseSceneInfoBtn', 'Copied!');
+                })
+                .catch((error) => {
+                    VRODOS.ui.showTemporaryButtonWarning('copyImmerseSceneInfoBtn', 'Press Ctrl+C');
+                    console.warn('VRodos: failed to copy imported scene information to clipboard.', error);
+                });
+        });
+    }
+
+    VRODOS.ui.immerseSceneInfoControlsBound = true;
+    return true;
+};
+
+function getImmerseSceneInfoSourceText() {
+    const sourceNode = document.getElementById('immerse_scene_info_source');
+    if (!sourceNode) {
+        return '';
+    }
+
+    try {
+        return JSON.parse(sourceNode.textContent || '""');
+    } catch (error) {
+        return sourceNode.textContent || '';
+    }
+}
