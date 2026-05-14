@@ -5,25 +5,6 @@ VRODOS.utils.getSceneObjectAddedAt = function(dataDrag) {
         : Math.floor(Date.now() / 1000);
 }
 
-VRODOS.utils.joinUrl = function(base, path) {
-    return `${String(base || '').replace(/\/+$/, '')  }/${  String(path || '').replace(/^\/+/, '')}`;
-}
-
-VRODOS.utils.resolveBaseUrl = function(pluginPath, localizedKey, fallbackRelative) {
-    const paths = (typeof VRODOS.data !== 'undefined' && VRODOS.data.paths) ? VRODOS.data.paths : {};
-
-    if (paths[localizedKey]) {
-        return paths[localizedKey];
-    }
-
-    const pluginBaseUrl = paths.pluginBaseUrl || (typeof VRODOS.data.pluginPath === 'string' ? VRODOS.data.pluginPath : '');
-    if (pluginBaseUrl) {
-        return VRODOS.utils.joinUrl(pluginBaseUrl, fallbackRelative);
-    }
-
-    return String(fallbackRelative || '').replace(/^\/+/, '');
-}
-
 function getSceneObjectByUuid(uuid) {
     if (!uuid || !VRODOS.editor.sceneRegistry) return null;
     return VRODOS.editor.sceneRegistry.get(uuid);
@@ -1144,25 +1125,4 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
 
     // Save scene
     VRODOS.api.triggerAutoSave();
-}
-
-/**
- * Dispose GPU resources (geometry, materials, textures) to prevent VRAM leaks
- */
-VRODOS.utils.disposeObject = function(object) {
-    if (!object) return;
-    object.traverse((node) => {
-        if (node.geometry) node.geometry.dispose();
-        if (node.material) {
-            const materials = Array.isArray(node.material) ? node.material : [node.material];
-            materials.forEach((mat) => {
-                for (const key in mat) {
-                    if (mat[key] && typeof mat[key].dispose === 'function') {
-                        mat[key].dispose(); // textures, env maps, etc.
-                    }
-                }
-                mat.dispose();
-            });
-        }
-    });
 }

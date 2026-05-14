@@ -387,7 +387,7 @@ VRODOS.ui.onDragOver = function(ev) {
     ev.preventDefault();
 };
 // Local
-VRODOS.ui.loadButtonActions = function() {
+VRODOS.ui.bindLegacyEditorButtonActions = function() {
     function resetCompileDialogStatusState() {
         const statusRow = document.getElementById("compileStatusRow");
         const constantUpdateUser = document.getElementById("constantUpdateUser");

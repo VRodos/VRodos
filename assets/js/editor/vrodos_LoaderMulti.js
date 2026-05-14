@@ -1,70 +1,5 @@
 "use strict";
 
-VRODOS.utils.loaderJoinUrl = function(base, path) {
-    return `${String(base || '').replace(/\/+$/, '')  }/${  String(path || '').replace(/^\/+/, '')}`;
-};
-
-VRODOS.utils.loaderResolveBaseUrl = function(pluginPath, localizedKey, fallbackRelative) {
-    const paths = VRODOS.data.paths || {};
-
-    if (paths[localizedKey]) {
-        return paths[localizedKey];
-    }
-
-    const pluginBaseUrl = paths.pluginBaseUrl || (typeof VRODOS.data.pluginPath === 'string' ? VRODOS.data.pluginPath : '');
-    if (pluginBaseUrl) {
-        return VRODOS.utils.loaderJoinUrl(pluginBaseUrl, fallbackRelative);
-    }
-
-    return String(fallbackRelative || '').replace(/^\/+/, '');
-};
-
-VRODOS.utils.loaderSafeNumber = function(value, fallback) {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : fallback;
-};
-
-VRODOS.utils.loaderSafeVector = function(values, fallback) {
-    const safeFallback = Array.isArray(fallback) ? fallback : [0, 0, 0];
-    const source = Array.isArray(values) ? values : safeFallback;
-
-    return [
-        VRODOS.utils.loaderSafeNumber(source[0], safeFallback[0]),
-        VRODOS.utils.loaderSafeNumber(source[1], safeFallback[1]),
-        VRODOS.utils.loaderSafeNumber(source[2], safeFallback[2])
-    ];
-};
-
-VRODOS.utils.loaderSafeScale = function(values) {
-    return VRODOS.utils.loaderSafeVector(values, [1, 1, 1]);
-};
-
-VRODOS.utils.loaderSafeObjectName = function(name, resource, object) {
-    const currentName = typeof name === 'string' ? name.trim() : '';
-    if (currentName !== '') {
-        return currentName;
-    }
-
-    const objectName = object && typeof object.name === 'string' ? object.name.trim() : '';
-    if (objectName !== '') {
-        return objectName;
-    }
-
-    const slugPart = resource && resource.asset_slug ? String(resource.asset_slug).trim() : '';
-    const idPart = resource && resource.asset_id ? String(resource.asset_id).trim() : '';
-    const uuidPart = resource && resource.uuid ? String(resource.uuid).split('-')[0] : String(Date.now());
-
-    return `${(slugPart || 'scene_object') + (idPart ? `_${  idPart}` : '')  }_${  uuidPart}`;
-};
-
-VRODOS.utils.loaderDisplayText = function(value) {
-    if (typeof VRODOS.utils.decodeDisplayText === 'function') {
-        return VRODOS.utils.decodeDisplayText(value);
-    }
-
-    return value == null ? '' : String(value);
-};
-
 VRODOS.utils.runLimitedTasks = async function(tasks, limit) {
     const queue = Array.isArray(tasks) ? tasks : [];
     const safeLimit = Math.max(1, Number(limit) || 1);
@@ -910,28 +845,9 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
     object.isLight = resource.isLight;
     object.fnPath = resource.path || object.fnPath || '';
 
-    // avoid revealing the full path. Use the relative in the saving format.
-    if (typeof object.fnPath === 'string') {
-        // Recursive cleaning: while it looks like a URL followed by another URL
-        while (/https?:\/\//i.test(object.fnPath) && object.fnPath.lastIndexOf('http') > 0) {
-            object.fnPath = object.fnPath.substring(object.fnPath.lastIndexOf('http'));
-        }
-
-        // Strip the upload directory prefix to get the relative path
-        const uploadsTags = ['wp-content/uploads', 'uploads/'];
-        for (const tag of uploadsTags) {
-            const idx = object.fnPath.indexOf(tag);
-            if (idx !== -1) {
-                object.fnPath = object.fnPath.substring(idx + tag.length);
-                break;
-            }
-        }
-
-        // Final cleanup of leading slashes
-        while (object.fnPath.startsWith('/')) {
-            object.fnPath = object.fnPath.substring(1);
-        }
-    }
+    object.fnPath = typeof VRODOS.utils.normalizeRelativeUploadPath === 'function'
+        ? VRODOS.utils.normalizeRelativeUploadPath(object.fnPath)
+        : object.fnPath;
     object.glb_id = resource.glb_id;
 
     if (String(object.category_slug || '').toLowerCase() === 'walkable-surface') {

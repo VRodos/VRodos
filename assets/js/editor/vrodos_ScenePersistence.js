@@ -1,20 +1,3 @@
-VRODOS.utils.sceneSafeNumber = function(value, fallback) {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : fallback;
-};
-VRODOS.utils.sceneSafeVector = function(values, fallback) {
-    const safeFallback = Array.isArray(fallback) ? fallback : [0, 0, 0];
-    const source = Array.isArray(values) ? values : safeFallback;
-
-    return [
-        VRODOS.utils.sceneSafeNumber(source[0], safeFallback[0]),
-        VRODOS.utils.sceneSafeNumber(source[1], safeFallback[1]),
-        VRODOS.utils.sceneSafeNumber(source[2], safeFallback[2])
-    ];
-};
-VRODOS.utils.sceneSafeScale = function(values) {
-    return VRODOS.utils.sceneSafeVector(values, [1, 1, 1]);
-};
 VRODOS.utils.sceneResolveObjectPath = function(value, UPLOAD_DIR) {
     let explicitPath = value && typeof value.path === 'string' ? value.path.trim() : '';
     
@@ -67,23 +50,6 @@ VRODOS.utils.sceneResolveObjectPath = function(value, UPLOAD_DIR) {
     // Join with UPLOAD_DIR
     const separator = UPLOAD_DIR.endsWith('/') ? '' : '/';
     return UPLOAD_DIR + separator + fnPath;
-};
-VRODOS.utils.sceneSafeObjectName = function(node, fallbackIndex) {
-    const currentName = node && typeof node.name === 'string' ? node.name.trim() : '';
-    if (currentName !== '') {
-        return currentName;
-    }
-
-    const slugPart = node && node.asset_slug ? String(node.asset_slug).trim() : '';
-    const idPart = node && node.asset_id ? String(node.asset_id).trim() : '';
-    const uuidPart = node && node.uuid ? String(node.uuid).split('-')[0] : String(fallbackIndex || Date.now());
-    const fallbackName = `${(slugPart || 'scene_object') + (idPart ? `_${  idPart}` : '')  }_${  uuidPart}`;
-
-    if (node) {
-        node.name = fallbackName;
-    }
-
-    return fallbackName;
 };
 VRODOS.utils.sceneUniqueObjectName = function(name, existingObjects) {
     let uniqueName = name;

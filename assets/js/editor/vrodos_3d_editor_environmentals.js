@@ -70,15 +70,6 @@ const VRODOS_DIRECTOR_GROUND_GUIDE_EXCLUDED_NAMES = new Set([
     'zline'
 ]);
 
-VRODOS.utils.clampNumber = function(value, min, max, fallback) {
-    let parsed = Number(value);
-    if (!Number.isFinite(parsed)) {
-        parsed = fallback;
-    }
-
-    return Math.min(max, Math.max(min, parsed));
-}
-
 VRODOS.utils.orthoFitZoom = function(frustumSize, aspect, sceneSurfaceDimension) {
     const safeDimension = Math.max(Number(sceneSurfaceDimension) || 0, 10);
     const safeAspect = Math.max(Number(aspect) || 1, 0.1);

@@ -96,6 +96,10 @@ VRodosCompileUI.Shared = (function () {
     }
 
     function clampNumber(value, min, max, fallback) {
+        if (window.VRODOS && VRODOS.utils && typeof VRODOS.utils.clampNumber === 'function') {
+            return VRODOS.utils.clampNumber(value, min, max, fallback);
+        }
+
         const n = parseFloat(value);
         if (isNaN(n)) return fallback;
         if (n < min) return min;

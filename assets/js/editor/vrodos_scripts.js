@@ -39,30 +39,6 @@ VRODOS.ui.updateClearColorPicker = function(input) {
     VRODOS.api.saveChanges();
 };
 
-VRODOS.api.saveChanges = function(options) {
-    const saveOptions = options || {};
-
-    if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
-        return Promise.resolve();
-    }
-
-    const save_scene_btn = document.getElementById("save-scene-button");
-    if (save_scene_btn.classList.contains("LinkDisabled") && !saveOptions.force) {
-        return (typeof VRODOS.api.whenSceneSaveSettles === 'function') ? VRODOS.api.whenSceneSaveSettles() : Promise.resolve();
-    }
-
-    const savBtn = document.getElementById('save-scene-button');
-    savBtn.innerHTML = "Saving...";
-    savBtn.classList.add("LinkDisabled");
-    document.getElementById("compileGameBtn").disabled = true;
-
-    // Export using the new SceneExporter
-    const exporter = new VRODOS.exporter.SceneExporter();
-    document.getElementById('vrodos_scene_json_input').value = exporter.parse(VRODOS.editor.envir.scene);
-
-    return VRODOS.api.saveScene();
-};
-
 VRODOS.ui.setBackgroundPresetSelection = function(presetValue) {
     if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
