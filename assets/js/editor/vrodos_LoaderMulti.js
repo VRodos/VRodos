@@ -112,9 +112,12 @@ VRODOS.loader.createAssessmentObject = function(name, resource) {
     fallback.assessment_group = typeof VRODOS.utils.decodeDisplayText === 'function'
         ? VRODOS.utils.decodeDisplayText(resource.assessment_group || '')
         : (resource.assessment_group || '');
+    fallback.assessment_source_id = resource.assessment_source_id || '';
     fallback.assessment_content = resource.assessment_content || '';
     fallback.assessment_levels = resource.assessment_levels || '';
     fallback.assessment_supported = resource.assessment_supported || 'false';
+    fallback.immerse_managed = resource.immerse_managed || (resource.assessment_source_id ? 'true' : '');
+    fallback.immerse_object_type = resource.immerse_object_type || (resource.assessment_source_id ? 'assessment' : '');
     fallback.isSelectableMesh = true;
     fallback.isLight = false;
 

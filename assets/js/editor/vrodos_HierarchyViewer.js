@@ -253,7 +253,7 @@ function _hierarchyAssessmentBadgesHTML(obj) {
         ? VRODOS.ui.buildCefrLevelBadgesHTML
         : function() { return ''; };
     const levelBadgesHTML = isAssessment
-        ? buildLevelBadges(obj.assessment_levels || '', { emptyMeansAll: true, textClass: 'tw-text-emerald-200' })
+        ? buildLevelBadges(obj.assessment_levels || '', { emptyMeansAll: false, textClass: 'tw-text-emerald-200' })
         : buildLevelBadges(genericLevelsSource, { emptyMeansAll: false, textClass: 'tw-text-emerald-200' });
 
     if (!isAssessment && !levelBadgesHTML) {

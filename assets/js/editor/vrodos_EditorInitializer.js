@@ -157,16 +157,11 @@ function initVrodosEditor() {
     // Secondary pass: Background specific legacy logic
     syncBackgroundInitialState(sceneSettings);
 
-    if (typeof VRODOS.utils.dedupeSceneDataObjects === 'function') {
-        VRODOS.utils.dedupeSceneDataObjects(VRODOS.data.scene_data.objects, { reason: 'scene-load' });
-    }
-
     // 3. Load 3D Objects
-    const lightsPawnLoader = new VRODOS.loader.LightsPawnLoader();
-    const lightsLoadPromise = lightsPawnLoader.load(VRODOS.data.scene_data, VRODOS.data.pluginPath, VRODOS.editor.manager);
-
-    const loaderMulti = new VRODOS.loader.LoaderMulti();
-    const assetsLoadPromise = loaderMulti.load(VRODOS.editor.manager, VRODOS.data.scene_data.objects, VRODOS.data.pluginPath);
+    VRODOS.api.loadEditorSceneResources(VRODOS.data.scene_data, {
+        assetResources: VRODOS.data.scene_data.objects,
+        reason: 'initial-scene-load'
+    });
 
     // Initial hierarchy
     VRODOS.ui.setHierarchyViewer();
@@ -187,11 +182,6 @@ function initVrodosEditor() {
     document.getElementById("progress").style.display = "block";
     document.getElementById("progressWrapper").style.visibility = "visible";
     document.getElementById("result_download").innerHTML = "Loading";
-
-    // Start everything when assets load
-    Promise.allSettled([lightsLoadPromise, assetsLoadPromise]).then(() => {
-        VRODOS.api.finalizeSceneLoad();
-    });
 
     VRODOS.api.initPointerLock();
     VRODOS.editor.requestRender('initial-load');
@@ -285,6 +275,101 @@ VRODOS.api.prepareSceneLoadManager = function() {
     VRODOS.editor.manager.onProgress = function (url, loaded, total) {
         document.getElementById("result_download").innerHTML = `Loading ${  loaded  } / ${  total}`;
     };
+}
+
+VRODOS.api.getSceneAssetResources = function(resources3D) {
+    if (resources3D && resources3D.objects && typeof resources3D.objects === 'object') {
+        return resources3D.objects;
+    }
+
+    return resources3D || {};
+}
+
+VRODOS.api.clearSceneForReload = function() {
+    const envir = VRODOS.editor.envir;
+    if (!envir || !envir.scene) return;
+
+    if (VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
+        VRODOS.editor.selection.clear({ source: 'scene-reload', hidePanel: false });
+    }
+
+    const preserveNames = new Set([
+        'myAxisHelper',
+        'myGridHelper',
+        'myTransformControls',
+        'vrodosGizmoProxy',
+        'avatarCamera',
+        'avatarControls',
+        'orbitCamera'
+    ]);
+
+    for (let i = envir.scene.children.length - 1; i >= 0; i--) {
+        const child = envir.scene.children[i];
+        if (!child) continue;
+        if (preserveNames.has(child.name) || child === VRODOS.editor.transform_controls_helper) {
+            continue;
+        }
+
+        envir.scene.remove(child);
+        if (typeof VRODOS.utils.disposeObject === 'function') {
+            VRODOS.utils.disposeObject(child);
+        }
+    }
+
+    if (typeof envir.clearDirectorInternalHelpers === 'function') {
+        envir.clearDirectorInternalHelpers();
+    }
+    if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.clear === 'function') {
+        VRODOS.editor.sceneRegistry.clear();
+    }
+    if (envir.selectableMeshes) {
+        envir.selectableMeshes.clear();
+        envir.selectableMeshesArray = [];
+        envir.selectableMeshesDirty = true;
+    }
+}
+
+VRODOS.api.loadEditorSceneResources = function(resources3D, options) {
+    const opts = options || {};
+    const envir = VRODOS.editor.envir;
+    if (!envir) return Promise.resolve([]);
+
+    envir.isSceneLoading = true;
+    envir.sceneLoadFinalized = false;
+    VRODOS.api.prepareSceneLoadManager();
+
+    const assetResources = opts.assetResources || VRODOS.api.getSceneAssetResources(resources3D);
+    if (typeof VRODOS.utils.dedupeSceneDataObjects === 'function') {
+        VRODOS.utils.dedupeSceneDataObjects(assetResources, { reason: opts.reason || 'scene-load' });
+    }
+
+    const lightsPawnLoader = new VRODOS.loader.LightsPawnLoader();
+    const lightsLoadPromise = lightsPawnLoader.load(resources3D, VRODOS.data.pluginPath, VRODOS.editor.manager);
+
+    const loaderMulti = new VRODOS.loader.LoaderMulti();
+    const assetsLoadPromise = loaderMulti.load(VRODOS.editor.manager, assetResources, VRODOS.data.pluginPath);
+
+    return Promise.allSettled([lightsLoadPromise, assetsLoadPromise]).then((result) => {
+        if (opts.finalize !== false) {
+            VRODOS.api.finalizeSceneLoad();
+        }
+        return result;
+    });
+}
+
+VRODOS.api.reloadSceneFromJson = function(sceneJson) {
+    const uploadBase = VRODOS.data.uploadDir || '';
+    const resources3D = new VRODOS.importer.SceneImporter().parse(sceneJson, uploadBase);
+
+    VRODOS.api.clearSceneForReload();
+    if (typeof VRODOS.ui.setHierarchyViewer === 'function') {
+        VRODOS.ui.setHierarchyViewer();
+    }
+
+    return VRODOS.api.loadEditorSceneResources(resources3D, {
+        assetResources: resources3D,
+        reason: 'scene-json-reload'
+    });
 }
 
 /**

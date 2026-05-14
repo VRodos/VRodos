@@ -123,6 +123,111 @@ VRODOS.utils.decodeDisplayText = function(value) {
     );
 };
 
+VRODOS.utils.encodeBase64Json = function(value) {
+    const json = JSON.stringify(value);
+    if (typeof window.TextEncoder !== 'undefined') {
+        const bytes = new window.TextEncoder().encode(json);
+        let binary = '';
+        bytes.forEach((byte) => {
+            binary += String.fromCharCode(byte);
+        });
+        return window.btoa(binary);
+    }
+
+    const encoded = encodeURIComponent(json).replace(/%([0-9A-F]{2})/g, (_, hex) =>
+        String.fromCharCode(parseInt(hex, 16))
+    );
+    return window.btoa(encoded);
+};
+
+VRODOS.utils.normalizeCefrLevels = function(levels) {
+    let source = levels;
+    const allowedLevels = ['A1', 'A2', 'B1', 'B2', 'ALL', 'ALL LEVELS'];
+
+    if (typeof source === 'string' && source.trim() !== '') {
+        try {
+            source = JSON.parse(source);
+        } catch (err) {
+            try {
+                const binary = window.atob(source);
+                const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+                const decoded = new TextDecoder('utf-8').decode(bytes);
+                source = JSON.parse(decoded);
+            } catch (base64Err) {
+                const matches = source.toUpperCase().match(/\b(?:ALL LEVELS|ALL|A1|A2|B1|B2)\b/g);
+                source = matches || [];
+            }
+        }
+    }
+
+    if (typeof source === 'string') {
+        const matches = source.toUpperCase().match(/\b(?:ALL LEVELS|ALL|A1|A2|B1|B2)\b/g);
+        source = matches || [];
+    }
+
+    if (!Array.isArray(source)) {
+        return [];
+    }
+
+    return Array.from(new Set(source
+        .map((level) => VRODOS.utils.decodeDisplayText(level).trim().toUpperCase())
+        .filter((level) => allowedLevels.indexOf(level) !== -1)
+        .filter(Boolean)));
+};
+
+VRODOS.utils.encodeAssessmentLevelsForScene = function(levels) {
+    const normalizedLevels = typeof VRODOS.utils.normalizeAssessmentLevels === 'function'
+        ? VRODOS.utils.normalizeAssessmentLevels(levels)
+        : VRODOS.utils.normalizeCefrLevels(levels);
+
+    return normalizedLevels.length > 0
+        ? VRODOS.utils.encodeBase64Json(normalizedLevels)
+        : '';
+};
+
+VRODOS.utils.isAssessmentResource = function(resource) {
+    if (!resource || typeof resource !== 'object') {
+        return false;
+    }
+
+    const categorySlug = String(resource.category_slug || '').toLowerCase();
+    const categoryName = String(resource.category_name || '').toLowerCase();
+    return categorySlug === 'assessment' || categoryName === 'assessment';
+};
+
+VRODOS.utils.assessmentMetadataScore = function(resource) {
+    if (!VRODOS.utils.isAssessmentResource(resource)) {
+        return 0;
+    }
+
+    const type = VRODOS.utils.decodeDisplayText(resource.assessment_type || '').trim();
+    const group = VRODOS.utils.decodeDisplayText(resource.assessment_group || '').trim();
+    const sourceId = String(resource.assessment_source_id || resource.asset_id || '').trim();
+    const levels = typeof VRODOS.utils.normalizeAssessmentLevels === 'function'
+        ? VRODOS.utils.normalizeAssessmentLevels(resource.assessment_levels || '')
+        : VRODOS.utils.normalizeCefrLevels(resource.assessment_levels || '');
+    const content = String(resource.assessment_content || '').trim();
+
+    return (sourceId ? 4 : 0) +
+        (type ? 3 : 0) +
+        (group ? 2 : 0) +
+        (levels.length > 0 ? 3 : 0) +
+        (content ? 1 : 0);
+};
+
+VRODOS.utils.hasCompleteAssessmentMetadata = function(resource) {
+    if (!VRODOS.utils.isAssessmentResource(resource)) {
+        return true;
+    }
+
+    const type = VRODOS.utils.decodeDisplayText(resource.assessment_type || resource.assessment_group || '').trim();
+    const levels = typeof VRODOS.utils.normalizeAssessmentLevels === 'function'
+        ? VRODOS.utils.normalizeAssessmentLevels(resource.assessment_levels || '')
+        : VRODOS.utils.normalizeCefrLevels(resource.assessment_levels || '');
+
+    return type !== '' && levels.length > 0;
+};
+
 VRODOS.utils.getEditorSceneRoots = function(scene, options) {
     const opts = Object.assign({
         filterSelectable: false,
@@ -192,6 +297,18 @@ VRODOS.utils.sceneObjectDuplicateKey = function(resource) {
         return '';
     }
 
+    if (VRODOS.utils.isAssessmentResource(resource)) {
+        const assessmentSource = String(
+            resource.assessment_source_id ||
+            resource.asset_id ||
+            resource.asset_slug ||
+            ''
+        ).trim();
+        if (assessmentSource) {
+            return `assessment|${assessmentSource}`;
+        }
+    }
+
     const addedAt = Number(resource.addedAt || 0);
     if (!Number.isFinite(addedAt) || addedAt <= 0) {
         return '';
@@ -246,6 +363,11 @@ VRODOS.utils.dedupeEditorSceneRoots = function(roots, options) {
             return;
         }
 
+        if (VRODOS.utils.isAssessmentResource(object) && !VRODOS.utils.hasCompleteAssessmentMetadata(object)) {
+            skipped.push({ name: object.name || object.uuid || 'assessment', original: 'incomplete-assessment' });
+            return;
+        }
+
         const uuid = object.uuid ? String(object.uuid) : '';
         const name = object.name ? String(object.name) : '';
         const logicalKey = VRODOS.utils.sceneObjectDuplicateKey(object);
@@ -281,25 +403,46 @@ VRODOS.utils.dedupeSceneDataObjects = function(objects, options) {
 
     const opts = options || {};
     const seen = new Map();
+    const seenScores = new Map();
     const removed = [];
 
     Object.keys(objects).forEach((name) => {
-        const key = VRODOS.utils.sceneObjectDuplicateKey(objects[name]);
+        const object = objects[name];
+        if (VRODOS.utils.isAssessmentResource(object) && !VRODOS.utils.hasCompleteAssessmentMetadata(object)) {
+            removed.push({ name, reason: 'incomplete-assessment' });
+            delete objects[name];
+            return;
+        }
+
+        const key = VRODOS.utils.sceneObjectDuplicateKey(object);
         if (!key) {
             return;
         }
 
         if (seen.has(key)) {
-            removed.push({ name, original: seen.get(key) });
+            const existingName = seen.get(key);
+            const currentScore = VRODOS.utils.assessmentMetadataScore(object);
+            const existingScore = seenScores.get(key) || 0;
+
+            if (currentScore > existingScore && objects[existingName]) {
+                removed.push({ name: existingName, original: name, reason: 'lower-quality-duplicate' });
+                delete objects[existingName];
+                seen.set(key, name);
+                seenScores.set(key, currentScore);
+                return;
+            }
+
+            removed.push({ name, original: existingName, reason: 'duplicate' });
             delete objects[name];
             return;
         }
 
         seen.set(key, name);
+        seenScores.set(key, VRODOS.utils.assessmentMetadataScore(object));
     });
 
     if (removed.length > 0 && opts.log !== false) {
-        console.warn('VRodos: removed duplicate saved scene objects before load', removed);
+        console.warn('VRodos: removed invalid or duplicate saved scene objects before load', removed);
     }
 
     return removed;

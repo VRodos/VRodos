@@ -209,32 +209,9 @@ VRODOS.ui.finalizeSceneObjectAdd = function(object, options) {
 }
 
 VRODOS.utils.normalizeAssessmentLevels = function(levels) {
-    let source = levels;
-
-    if (typeof source === 'string' && source.trim() !== '') {
-        try {
-            source = JSON.parse(source);
-        } catch (err) {
-            try {
-                const binary = window.atob(source);
-                const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
-                const decoded = new TextDecoder('utf-8').decode(bytes);
-                source = JSON.parse(decoded);
-            } catch (base64Err) {
-                source = source.split(/[,\s]+/);
-            }
-        }
-    }
-
-    if (!Array.isArray(source)) {
-        return [];
-    }
-
-    return Array.from(new Set(
-        source
-            .map((level) => VRODOS.utils.decodeDisplayText(level).trim().toUpperCase())
-            .filter(Boolean)
-    ));
+    return typeof VRODOS.utils.normalizeCefrLevels === 'function'
+        ? VRODOS.utils.normalizeCefrLevels(levels)
+        : [];
 }
 
 VRODOS.utils.resolvedAssessmentLevels = function(levels) {
@@ -408,6 +385,7 @@ VRODOS.ui.createAssessmentLabel = function(title, type, levels) {
 
 VRODOS.ui.createAssessmentPlaceholder = function(nameModel, resource) {
     const assessmentGroup = new THREE.Group();
+    const assessmentSourceId = String(resource.assessment_source_id || '').trim();
     assessmentGroup.name = nameModel;
     assessmentGroup.asset_name = VRODOS.utils.decodeDisplayText(resource.asset_name || resource.assessment_title || 'Assessment');
     assessmentGroup.asset_slug = resource.asset_slug || '';
@@ -421,6 +399,8 @@ VRODOS.ui.createAssessmentPlaceholder = function(nameModel, resource) {
     assessmentGroup.assessment_content = resource.assessment_content || '';
     assessmentGroup.assessment_levels = VRODOS.utils.normalizeAssessmentLevels(resource.assessment_levels || '');
     assessmentGroup.assessment_supported = resource.assessment_supported || 'false';
+    assessmentGroup.immerse_managed = resource.immerse_managed || (assessmentSourceId ? 'true' : '');
+    assessmentGroup.immerse_object_type = resource.immerse_object_type || (assessmentSourceId ? 'assessment' : '');
     assessmentGroup.addedAt = resource.addedAt || Math.floor(Date.now() / 1000);
     assessmentGroup.isSelectableMesh = true;
     assessmentGroup.isLight = false;
@@ -851,6 +831,15 @@ VRODOS.api.createGlbAsset = function(nameModel, addedAt, pluginPath) {
 
 VRODOS.api.createAssessmentAsset = function(nameModel, addedAt) {
     const resource = VRODOS.data.scene_data.objects[nameModel] || {};
+    if (typeof VRODOS.utils.hasCompleteAssessmentMetadata === 'function' && !VRODOS.utils.hasCompleteAssessmentMetadata(resource)) {
+        console.warn('VRodos: skipped incomplete assessment scene object', {
+            name: nameModel,
+            asset_id: resource.asset_id || '',
+            assessment_source_id: resource.assessment_source_id || ''
+        });
+        return null;
+    }
+
     const assessmentObject = VRODOS.ui.createAssessmentPlaceholder(nameModel, {
         ...resource,
         addedAt
@@ -896,6 +885,29 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         return null;
     }
 
+    dataDrag = dataDrag || {};
+    const pendingResource = Object.assign({
+        category_name: categoryName,
+        category_slug: dataDrag.category_slug || categoryName
+    }, dataDrag);
+    if (
+        typeof VRODOS.utils.isAssessmentResource === 'function' &&
+        VRODOS.utils.isAssessmentResource(pendingResource) &&
+        typeof VRODOS.utils.hasCompleteAssessmentMetadata === 'function' &&
+        !VRODOS.utils.hasCompleteAssessmentMetadata(pendingResource)
+    ) {
+        console.warn('VRodos: assessment asset is missing required metadata and was not added to the scene', {
+            name: nameModel,
+            asset_id: pendingResource.asset_id || '',
+            assessment_source_id: pendingResource.assessment_source_id || ''
+        });
+        const progressEl = document.getElementById("result_download");
+        if (progressEl) {
+            progressEl.innerHTML = "Assessment metadata is incomplete. Refresh assets and try again.";
+        }
+        return null;
+    }
+
     const existingObject = getSceneObjectByName(nameModel);
     if (existingObject || isSceneObjectAddPending(nameModel)) {
         console.warn("VRodos: skipped duplicate scene object add", nameModel);
@@ -903,7 +915,6 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
     }
 
     markSceneObjectAddPending(nameModel);
-    dataDrag = dataDrag || {};
     translation = Array.isArray(translation) ? translation : [0, 0, 0];
     const addedAt = VRODOS.utils.getSceneObjectAddedAt(dataDrag);
 

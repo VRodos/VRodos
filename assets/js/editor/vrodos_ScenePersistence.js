@@ -266,9 +266,41 @@ VRODOS.exporter.SceneExporter = class {
             this.processLight(o, entryObject);
         } else if (o.name === 'avatarCamera') {
             this.processAvatar(o, entryObject);
+        } else if (VRODOS.utils.isAssessmentResource(entryObject)) {
+            this.processAssessment(o, entryObject);
+            if (!VRODOS.utils.hasCompleteAssessmentMetadata(entryObject)) {
+                console.warn('VRodos: skipped incomplete assessment object during export', {
+                    name: o.name,
+                    asset_id: entryObject.asset_id || '',
+                    assessment_source_id: entryObject.assessment_source_id || ''
+                });
+                return null;
+            }
         }
 
         return entryObject;
+    }
+
+    processAssessment(o, entryObject) {
+        const sourceId = String(o.assessment_source_id || entryObject.assessment_source_id || '').trim();
+
+        entryObject.category_name = 'assessment';
+        entryObject.category_slug = 'assessment';
+        entryObject.asset_name = VRODOS.utils.decodeDisplayText(o.asset_name || o.assessment_title || entryObject.asset_name || 'Assessment');
+        entryObject.assessment_title = VRODOS.utils.decodeDisplayText(o.assessment_title || o.asset_name || entryObject.assessment_title || 'Assessment');
+        entryObject.assessment_type = VRODOS.utils.decodeDisplayText(o.assessment_type || entryObject.assessment_type || '');
+        entryObject.assessment_group = VRODOS.utils.decodeDisplayText(o.assessment_group || entryObject.assessment_group || '');
+        entryObject.assessment_source_id = sourceId;
+        entryObject.assessment_content = o.assessment_content || entryObject.assessment_content || '';
+        entryObject.assessment_levels = typeof VRODOS.utils.encodeAssessmentLevelsForScene === 'function'
+            ? VRODOS.utils.encodeAssessmentLevelsForScene(o.assessment_levels || entryObject.assessment_levels || '')
+            : (entryObject.assessment_levels || '');
+        entryObject.assessment_supported = String(o.assessment_supported || entryObject.assessment_supported || 'false');
+
+        if (sourceId || o.immerse_managed || entryObject.immerse_managed) {
+            entryObject.immerse_managed = String(o.immerse_managed || entryObject.immerse_managed || 'true');
+            entryObject.immerse_object_type = String(o.immerse_object_type || entryObject.immerse_object_type || 'assessment');
+        }
     }
 
     processLight(o, entryObject) {

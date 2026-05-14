@@ -534,33 +534,7 @@ extract( $data );
 
 		// Only in Undo redo as javascript not php!
 		function parseJSON_LoadScene(scene_json) {
-
-			let resources3D = new VRODOS.importer.SceneImporter().parse(scene_json, uploadDir);
-			VRODOS.editor.envir.isSceneLoading = true;
-			VRODOS.api.prepareSceneLoadManager();
-
-			// CLEAR SCENE
-			let preserveElements = ['myAxisHelper', 'myGridHelper', 'avatarCamera', 'myTransformControls'];
-
-			for (let i = VRODOS.editor.envir.scene.children.length - 1; i >=0 ; i--) {
-				if (!preserveElements.includes(VRODOS.editor.envir.scene.children[i].name))
-					VRODOS.editor.envir.scene.remove(VRODOS.editor.envir.scene.children[i]);
-			}
-			var lightsLoader = new VRODOS.loader.LightsPawnLoader();
-			let lightsLoadPromise = lightsLoader.load(resources3D, VRODOS.data.pluginPath, VRODOS.editor.manager);
-
-			VRODOS.ui.setHierarchyViewer();
-			//setHierarchyViewerLight();
-
-			VRODOS.editor.transform_controls.attach(VRODOS.editor.envir.scene.getObjectByName("avatarCamera"));
-
-
-			loaderMulti = new VRODOS.loader.LoaderMulti("2");
-			let assetsLoadPromise = loaderMulti.load(VRODOS.editor.manager, resources3D, VRODOS.data.pluginPath);
-			Promise.allSettled([lightsLoadPromise, assetsLoadPromise]).then(function () {
-				VRODOS.api.finalizeSceneLoad();
-			});
-
+			return VRODOS.api.reloadSceneFromJson(scene_json);
 		}
 		<!--  Part 3: Start 3D with Javascript   -->
 

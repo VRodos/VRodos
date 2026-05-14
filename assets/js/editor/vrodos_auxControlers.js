@@ -234,6 +234,13 @@ function getAssessmentTypeLabel(object) {
 function getAssessmentLevelsList(object) {
     if (!object) return [];
 
+    const normalizedLevels = typeof VRODOS.utils.normalizeAssessmentLevels === 'function'
+        ? VRODOS.utils.normalizeAssessmentLevels(object.assessment_levels || '')
+        : [];
+    if (!normalizedLevels.length) {
+        return [];
+    }
+
     if (typeof VRODOS.utils.resolvedAssessmentLevels === 'function') {
         return VRODOS.utils.resolvedAssessmentLevels(object.assessment_levels || '');
     }

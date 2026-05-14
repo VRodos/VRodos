@@ -189,6 +189,37 @@ class VRodos_Core_Manager {
 		return is_string( $json ) && $json !== '' ? base64_encode( $json ) : '';
 	}
 
+	private static function add_assessment_asset_browser_data( array $data_arr, int $asset_id ): array {
+		$assessment_type   = (string) get_post_meta( $asset_id, 'vrodos_asset3d_assessment_type', true );
+		$assessment_group  = (string) get_post_meta( $asset_id, 'vrodos_asset3d_assessment_group', true );
+		$assessment_levels = self::encode_cefr_levels_meta(
+			get_post_meta( $asset_id, 'vrodos_asset3d_assessment_levels', true )
+		);
+		$assessment_content_meta = (string) get_post_meta( $asset_id, 'vrodos_asset3d_assessment_content', true );
+		$assessment_content      = '';
+		if ( $assessment_content_meta !== '' ) {
+			$decoded_content = json_decode( $assessment_content_meta, true );
+			if ( is_array( $decoded_content ) ) {
+				$encoded_content = wp_json_encode( $decoded_content );
+				$assessment_content = is_string( $encoded_content ) ? base64_encode( $encoded_content ) : '';
+			}
+		}
+
+		$data_arr['path']                 = '';
+		$data_arr['glb_path']             = '';
+		$data_arr['glb_id']               = 0;
+		$data_arr['assessment_title']     = get_the_title( $asset_id );
+		$data_arr['assessment_type']      = $assessment_type;
+		$data_arr['assessment_group']     = $assessment_group;
+		$data_arr['assessment_source_id'] = (string) get_post_meta( $asset_id, '_immerse_assessment_id', true );
+		$data_arr['assessment_content']   = $assessment_content;
+		$data_arr['assessment_levels']    = $assessment_levels;
+		$data_arr['assessment_supported'] = $assessment_group !== '' ? 'true' : 'false';
+		$data_arr['category_icon']        = 'clipboard-check';
+
+		return $data_arr;
+	}
+
 	public static function get_builtin_audio_marker_url(): string {
 		return VRodos_Path_Manager::model_url( 'runtime/speaker.glb' );
 	}
@@ -545,6 +576,9 @@ class VRodos_Core_Manager {
 						$data_arr['text_format']      = get_post_meta( $asset_id, 'vrodos_asset3d_text_format', true );
 						$data_arr['text_truncated']   = get_post_meta( $asset_id, 'vrodos_asset3d_text_truncated', true );
 						break;
+					case 'assessment':
+						$data_arr = self::add_assessment_asset_browser_data( $data_arr, $asset_id );
+						break;
 					case 'poi-link':
 						$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
 						break;
@@ -760,6 +794,9 @@ class VRodos_Core_Manager {
 						$data_arr['text_content_b64'] = base64_encode( $text_content );
 						$data_arr['text_format']      = get_post_meta( $asset_id, 'vrodos_asset3d_text_format', true );
 						$data_arr['text_truncated']   = get_post_meta( $asset_id, 'vrodos_asset3d_text_truncated', true );
+						break;
+					case 'assessment':
+						$data_arr = self::add_assessment_asset_browser_data( $data_arr, $asset_id );
 						break;
 					case 'poi-link':
 						$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );

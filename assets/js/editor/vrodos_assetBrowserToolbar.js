@@ -93,7 +93,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             ? VRODOS.ui.buildCefrLevelBadgesHTML
             : function() { return ''; };
         const levelBadgesHTML = isAssessment
-            ? buildLevelBadges(asset.assessment_levels || '', { emptyMeansAll: true, textClass: 'tw-text-emerald-100' })
+            ? buildLevelBadges(asset.assessment_levels || '', { emptyMeansAll: false, textClass: 'tw-text-emerald-100' })
             : buildLevelBadges(genericLevelsSource, { emptyMeansAll: false, textClass: 'tw-text-emerald-100' });
         let typeBadgeHTML = '';
 
