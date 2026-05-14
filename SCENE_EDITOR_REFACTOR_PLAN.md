@@ -10,6 +10,7 @@
 - 2026-05-14: Phase 6 selection extraction implemented.
 - 2026-05-14: Phase 7 object factory extraction implemented.
 - 2026-05-14: Phase 8 floating panel UI extraction implemented.
+- 2026-05-14: Phase 9 shared UI helper extraction implemented.
 - Verification: JS syntax checks passed; PHP syntax check for `includes/class-vrodos-asset-manager.php` passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
@@ -55,6 +56,7 @@ assets/js/editor/
 - Done: Move object add/remove orchestration, duplicate registration guard, hierarchy/frame/autosave hooks, and loaded-object count updates to `scene/vrodos_scene_object_factory.js`; keep `vrodos_editor_services.js` as a compatibility shim.
 - In progress: Move toolbar/panel/floating-panel code out of `vrodos_3d_editor_buttons_drags.js` into focused UI modules.
 - Done: Move floating panel clamp/show/hide/drag/resize helpers to `ui/vrodos_floating_panels.js`.
+- Done: Move Lucide icon swapping, focus-without-scroll, clipboard fallback helpers, and temporary button feedback to `ui/vrodos_ui_helpers.js`.
 - Reduce fallback `scene.traverse()` usage in selection and hot interaction paths by relying on `sceneRegistry`.
 
 ## Test Plan
