@@ -1046,24 +1046,12 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
     VRODOS.editor.envir.animationMixers = VRODOS.editor.envir.animationMixers.filter(el => el._root.name !== objectSelected.name);
     VRODOS.editor.isPaused = false;
 
-    // If deleting light then remove also its LightHelper and lightTargetSpot and Shadow Helper
+    // If deleting light then remove its editor-only helper, target, and shadow helper artifacts.
     if (objectSelected.isLight) {
-        // Sun Shadow Helper
-        const shadowHelper = VRODOS.utils.getEditorLightObject('shadow', objectSelected.name, VRODOS.editor.envir.scene);
-        if (shadowHelper) { shadowHelper.dispose(); VRODOS.editor.envir.scene.remove(shadowHelper); }
-
-        // Sun target spot
-        const targetSpot = VRODOS.utils.getEditorLightObject('target', objectSelected.name, VRODOS.editor.envir.scene);
-        if (targetSpot) {
-            VRODOS.editor.sceneRegistry.remove(targetSpot, { reason: 'light-target-removed' });
-        }
-
-        // Sun target spot remove from hierarchy viewer
-        VRODOS.ui.removeHierarchyEntriesForObject('', VRODOS.utils.getEditorLightObjectName('target', objectSelected.name));
-
-        // Light Helper (for all lights)
-        const lightHelper = VRODOS.utils.getEditorLightObject('helper', objectSelected.name, VRODOS.editor.envir.scene);
-        if (lightHelper) { lightHelper.dispose(); VRODOS.editor.envir.scene.remove(lightHelper); }
+        VRODOS.utils.removeEditorLightArtifacts(objectSelected, VRODOS.editor.envir.scene, {
+            dispose: true,
+            removeHierarchy: true
+        });
     }
     
 

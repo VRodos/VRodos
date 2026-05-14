@@ -635,6 +635,84 @@ VRODOS.utils.linkDirectionalLightTarget = function(light, targetObject) {
     return VRODOS.utils.linkEditorLightTarget(light, targetObject);
 };
 
+function vrodosRemoveEditorLightArtifact(object, scene, options) {
+    if (!object) return false;
+
+    const opts = options || {};
+    const targetScene = scene || (VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
+    const shouldDispose = opts.dispose !== false;
+    const useRegistry = opts.useRegistry !== false && object.isSelectableMesh && object.vrodos_internal_helper !== true;
+
+    if (shouldDispose) {
+        if (typeof object.dispose === 'function') {
+            object.dispose();
+        } else if (typeof VRODOS.utils.disposeObject === 'function') {
+            VRODOS.utils.disposeObject(object);
+        }
+    }
+
+    if (
+        useRegistry &&
+        VRODOS.editor &&
+        VRODOS.editor.sceneRegistry &&
+        typeof VRODOS.editor.sceneRegistry.remove === 'function'
+    ) {
+        VRODOS.editor.sceneRegistry.remove(object, { reason: opts.reason || 'light-artifact-removed' });
+    } else if (object.parent) {
+        object.parent.remove(object);
+    } else if (targetScene && typeof targetScene.remove === 'function') {
+        targetScene.remove(object);
+    }
+
+    return true;
+}
+
+VRODOS.utils.removeEditorLightArtifacts = function(light, scene, options) {
+    if (!light) {
+        return { helper: false, target: false, shadow: false };
+    }
+
+    const opts = options || {};
+    const targetScene = scene || (VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
+    const lightName = light.name || '';
+    const result = {
+        helper: false,
+        target: false,
+        shadow: false
+    };
+
+    const shadowHelper = VRODOS.utils.getEditorLightObject('shadow', lightName, targetScene);
+    result.shadow = vrodosRemoveEditorLightArtifact(shadowHelper, targetScene, {
+        dispose: opts.dispose !== false,
+        reason: 'light-shadow-helper-removed',
+        useRegistry: false
+    });
+
+    const targetSpot = VRODOS.utils.getEditorLightObject('target', lightName, targetScene);
+    result.target = vrodosRemoveEditorLightArtifact(targetSpot, targetScene, {
+        dispose: opts.dispose !== false,
+        reason: 'light-target-removed',
+        useRegistry: true
+    });
+    if (targetSpot) {
+        targetSpot.parentLight = null;
+        targetSpot.parentLightHelper = null;
+    }
+
+    if (result.target && opts.removeHierarchy !== false && VRODOS.ui && typeof VRODOS.ui.removeHierarchyEntriesForObject === 'function') {
+        VRODOS.ui.removeHierarchyEntriesForObject('', VRODOS.utils.getEditorLightObjectName('target', lightName));
+    }
+
+    const lightHelper = VRODOS.utils.getEditorLightObject('helper', lightName, targetScene);
+    result.helper = vrodosRemoveEditorLightArtifact(lightHelper, targetScene, {
+        dispose: opts.dispose !== false,
+        reason: 'light-helper-removed',
+        useRegistry: false
+    });
+
+    return result;
+};
+
 function vrodosEditorLightNumber(value, fallback) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
