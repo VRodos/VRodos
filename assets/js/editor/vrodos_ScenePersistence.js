@@ -153,7 +153,10 @@ VRODOS.exporter.SceneExporter = class {
         const skippedDuplicateObjects = [];
 
         scene.traverse(node => {
-            if (node.vrodos_internal_helper === true) {
+            if (
+                node.vrodos_internal_helper === true ||
+                (typeof VRODOS.utils.isEditorInternalObject === 'function' && VRODOS.utils.isEditorInternalObject(node))
+            ) {
                 return;
             }
 

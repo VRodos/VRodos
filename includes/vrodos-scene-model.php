@@ -103,6 +103,10 @@ class Vrodos_Scene_Model {
 		$assessment_index = [];
 
 		foreach ( get_object_vars( $this->objects ) as $name => $object ) {
+			if ( $this->is_editor_internal_object( (string) $name, is_object( $object ) ? $object : null ) ) {
+				continue;
+			}
+
 			if ( ! is_object( $object ) ) {
 				$normalized[ $name ] = $object;
 				continue;
@@ -148,6 +152,27 @@ class Vrodos_Scene_Model {
 		if ( is_object( $this->metadata ) ) {
 			$this->metadata->objects = count( $normalized );
 		}
+	}
+
+	private function is_editor_internal_object( string $name, ?object $object ): bool {
+		$object_name = is_object( $object ) ? (string) ( $object->name ?? '' ) : '';
+		$names       = [
+			'vrodosGizmoProxy',
+			'myTransformControls',
+			'myAxisHelper',
+			'myGridHelper',
+			'rayLine',
+			'xline',
+			'yline',
+			'zline',
+			'bbox',
+		];
+
+		if ( in_array( $name, $names, true ) || in_array( $object_name, $names, true ) ) {
+			return true;
+		}
+
+		return is_object( $object ) && ( $object->vrodos_internal_helper ?? false ) === true;
 	}
 
 	private function is_assessment_object( object $object ): bool {

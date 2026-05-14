@@ -236,6 +236,8 @@ VRODOS.utils = VRODOS.utils || {};
             window.vrodosGizmoProxy = new THREE.Object3D();
             window.vrodosGizmoProxy.name = 'vrodosGizmoProxy';
         }
+        window.vrodosGizmoProxy.vrodos_internal_helper = true;
+        window.vrodosGizmoProxy.isSelectableMesh = false;
         return window.vrodosGizmoProxy;
     }
 
@@ -375,6 +377,8 @@ VRODOS.utils = VRODOS.utils || {};
 
             proxy.name = 'vrodosGizmoProxy';
             proxy.realObject = target;
+            proxy.vrodos_internal_helper = true;
+            proxy.isSelectableMesh = false;
             proxy.category_name = target.category_name;
             proxy.category_slug = target.category_slug;
             proxy.asset_name = target.asset_name;
@@ -743,6 +747,10 @@ VRODOS.utils = VRODOS.utils || {};
             }, options || {});
 
             if (!object) return null;
+            if (typeof VRODOS.utils.isEditorInternalObject === 'function' && VRODOS.utils.isEditorInternalObject(object)) {
+                return object;
+            }
+
             const existingByUuid = object.uuid ? sceneRegistry.get(object.uuid) : null;
             const existingByName = object.name ? sceneRegistry.get(object.name) : null;
             const existingObject = existingByUuid || existingByName;

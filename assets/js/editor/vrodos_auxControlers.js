@@ -1344,6 +1344,8 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
 // Global Gizmo Proxy to decouple interaction from visual result
 window.vrodosGizmoProxy = window.vrodosGizmoProxy || new THREE.Object3D();
 window.vrodosGizmoProxy.name = "vrodosGizmoProxy";
+window.vrodosGizmoProxy.vrodos_internal_helper = true;
+window.vrodosGizmoProxy.isSelectableMesh = false;
 
 // State tracking for proxy-based transformation
 window.vrodosRotationSensitivity = 20.0; // Default multiplier for rotation

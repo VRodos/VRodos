@@ -228,6 +228,28 @@ VRODOS.utils.hasCompleteAssessmentMetadata = function(resource) {
     return type !== '' && levels.length > 0;
 };
 
+VRODOS.utils.isEditorInternalObjectName = function(name) {
+    return [
+        'vrodosGizmoProxy',
+        'myTransformControls',
+        'myAxisHelper',
+        'myGridHelper',
+        'rayLine',
+        'xline',
+        'yline',
+        'zline',
+        'bbox'
+    ].indexOf(String(name || '')) !== -1;
+};
+
+VRODOS.utils.isEditorInternalObject = function(object, name) {
+    if (VRODOS.utils.isEditorInternalObjectName(name || (object && object.name))) {
+        return true;
+    }
+
+    return Boolean(object && object.vrodos_internal_helper === true);
+};
+
 VRODOS.utils.getEditorSceneRoots = function(scene, options) {
     const opts = Object.assign({
         filterSelectable: false,
@@ -252,6 +274,7 @@ VRODOS.utils.getEditorSceneRoots = function(scene, options) {
     const roots = [];
     const shouldInclude = (object) => {
         if (!object) return false;
+        if (VRODOS.utils.isEditorInternalObject(object)) return false;
         if (!opts.filterSelectable) return true;
         return Boolean(object.isSelectableMesh || (opts.includeDirector && object.name === 'avatarCamera'));
     };
@@ -408,6 +431,12 @@ VRODOS.utils.dedupeSceneDataObjects = function(objects, options) {
 
     Object.keys(objects).forEach((name) => {
         const object = objects[name];
+        if (VRODOS.utils.isEditorInternalObject(object, name)) {
+            removed.push({ name, reason: 'editor-internal-helper' });
+            delete objects[name];
+            return;
+        }
+
         if (VRODOS.utils.isAssessmentResource(object) && !VRODOS.utils.hasCompleteAssessmentMetadata(object)) {
             removed.push({ name, reason: 'incomplete-assessment' });
             delete objects[name];
