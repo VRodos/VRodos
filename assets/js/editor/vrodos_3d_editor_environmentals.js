@@ -40,6 +40,9 @@ class vrodos_3d_editor_environmentals {
         this.directorGroundGuideOffsetPosition = new THREE.Vector3();
         this.directorGroundGuideRotation = new THREE.Quaternion();
         this.directorGroundGuideGroup = null;
+        this.directorVisualObject = null;
+        this.directorHitProxy = null;
+        this.directorInternalHelpers = new Set();
         this.compassDirection = new THREE.Vector3();
         this.editorPerformanceProfile = null;
         this.composer = null;
@@ -549,32 +552,106 @@ class vrodos_3d_editor_environmentals {
     }
 
 
-    clearDirectorInternalHelpers() {
+    trackDirectorInternalHelper(object, role) {
+        if (!object) {
+            return null;
+        }
+
+        object.vrodos_internal_helper = true;
+        this.directorInternalHelpers.add(object);
+
+        if (role === 'visual') {
+            this.directorVisualObject = object;
+        } else if (role === 'hitProxy') {
+            this.directorHitProxy = object;
+        }
+
+        return object;
+    }
+
+    forgetDirectorInternalHelper(object) {
+        if (!object) {
+            return;
+        }
+
+        this.directorInternalHelpers.delete(object);
+        if (this.directorVisualObject === object) {
+            this.directorVisualObject = null;
+        }
+        if (this.directorHitProxy === object) {
+            this.directorHitProxy = null;
+        }
+    }
+
+    findDirectDirectorHelperByName(name) {
         const director = this.getDirectorObject();
 
-        if (director) {
-            const childrenToRemove = director.children.filter((child) => vrodosDirectorIsInternalHelper(child));
+        if (director && Array.isArray(director.children)) {
+            const directorChild = director.children.find((child) => child && child.name === name);
+            if (directorChild) {
+                return directorChild;
+            }
+        }
 
-            childrenToRemove.forEach((child) => {
-                director.remove(child);
+        if (this.scene && Array.isArray(this.scene.children)) {
+            return this.scene.children.find((child) => child && child.name === name) || null;
+        }
+
+        return null;
+    }
+
+    removeDirectorInternalHelper(object) {
+        if (!object) {
+            return;
+        }
+
+        if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.remove === 'function') {
+            VRODOS.editor.sceneRegistry.remove(object, { reason: 'director-helper-cleared' });
+        } else if (object.parent) {
+            object.parent.remove(object);
+        }
+
+        if (typeof VRODOS.utils.disposeObject === 'function') {
+            VRODOS.utils.disposeObject(object);
+        }
+
+        this.forgetDirectorInternalHelper(object);
+    }
+
+    clearDirectorInternalHelpers(options) {
+        const opts = options || {};
+        const preserve = new Set(Array.isArray(opts.preserve) ? opts.preserve.filter(Boolean) : []);
+        const director = this.getDirectorObject();
+        const helpersToRemove = new Set(this.directorInternalHelpers);
+
+        if (this.directorVisualObject) {
+            helpersToRemove.add(this.directorVisualObject);
+        }
+        if (this.directorHitProxy) {
+            helpersToRemove.add(this.directorHitProxy);
+        }
+
+        if (director) {
+            director.children.forEach((child) => {
+                if (vrodosDirectorIsInternalHelper(child)) {
+                    helpersToRemove.add(child);
+                }
             });
         }
 
-        const rootHelpers = [];
-        this.scene.traverse((child) => {
-            if (child === director) {
+        if (this.scene && Array.isArray(this.scene.children)) {
+            this.scene.children.forEach((child) => {
+                if (child !== director && vrodosDirectorIsInternalHelper(child)) {
+                    helpersToRemove.add(child);
+                }
+            });
+        }
+
+        helpersToRemove.forEach((child) => {
+            if (!child || preserve.has(child)) {
                 return;
             }
-
-            if (vrodosDirectorIsInternalHelper(child)) {
-                rootHelpers.push(child);
-            }
-        });
-
-        rootHelpers.forEach((child) => {
-            if (child.parent) {
-                child.parent.remove(child);
-            }
+            this.removeDirectorInternalHelper(child);
         });
     }
 
@@ -597,7 +674,7 @@ class vrodos_3d_editor_environmentals {
         hitProxy.position.set(0, 0, 0);
         hitProxy.updateMatrixWorld(true);
 
-        return hitProxy;
+        return this.trackDirectorInternalHelper(hitProxy, 'hitProxy');
     }
 
     setCamMeshToAvatarControls() {
@@ -665,11 +742,21 @@ class vrodos_3d_editor_environmentals {
     }
 
     getDirectorVisualObject() {
-        return this.scene.getObjectByName("Camera3Dmodel") || null;
+        if (this.directorVisualObject && this.directorVisualObject.parent) {
+            return this.directorVisualObject;
+        }
+
+        const visual = this.findDirectDirectorHelperByName("Camera3Dmodel");
+        return this.trackDirectorInternalHelper(visual, 'visual');
     }
 
     getDirectorHitProxy() {
-        return this.scene.getObjectByName("DirectorHitProxy") || null;
+        if (this.directorHitProxy && this.directorHitProxy.parent) {
+            return this.directorHitProxy;
+        }
+
+        const hitProxy = this.findDirectDirectorHelperByName("DirectorHitProxy");
+        return this.trackDirectorInternalHelper(hitProxy, 'hitProxy');
     }
 
     installDirectorHelpers(camMesh, hitProxy) {
@@ -678,14 +765,16 @@ class vrodos_3d_editor_environmentals {
             return;
         }
 
-        this.clearDirectorInternalHelpers();
+        this.clearDirectorInternalHelpers({ preserve: [camMesh, hitProxy] });
 
         if (camMesh) {
+            this.trackDirectorInternalHelper(camMesh, 'visual');
             director.add(camMesh);
             camMesh.updateMatrixWorld(true);
         }
 
         if (hitProxy) {
+            this.trackDirectorInternalHelper(hitProxy, 'hitProxy');
             director.add(hitProxy);
             hitProxy.updateMatrixWorld(true);
         }
