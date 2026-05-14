@@ -3,6 +3,7 @@
 ## Status
 
 - 2026-05-14: Phase 1 staged modular refactor implemented.
+- 2026-05-14: Phase 2 loader factory extraction implemented.
 - Verification: JS syntax checks passed; PHP syntax check for `includes/class-vrodos-asset-manager.php` passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
@@ -37,7 +38,8 @@ assets/js/editor/
 
 ## Later Phases
 
-- Split `vrodos_LoaderMulti.js` into loader modules for GLB, image, text, assessment, and resource metadata.
+- In progress: Split `vrodos_LoaderMulti.js` into loader modules for GLB, image, text, assessment, and resource metadata.
+- Done: Move assessment/text object factory helpers and loader task concurrency to `loaders/vrodos_loader_object_factories.js`.
 - Split `vrodos_3d_editor_environmentals.js` into render app, cameras, context lifecycle, resize, performance profile, and director helpers.
 - Move transform controls, selection, scene registry, and object factory out of `vrodos_editor_services.js` into `scene/` modules.
 - Move toolbar/panel/floating-panel code out of `vrodos_3d_editor_buttons_drags.js` into focused UI modules.
