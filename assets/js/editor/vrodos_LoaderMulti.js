@@ -767,8 +767,9 @@ VRODOS.loader.LoaderMulti = class {
                                         return;
                                     }
 
-                                    document.getElementById("progressWrapper").style.visibility = "visible";
-                                    document.getElementById("result_download").innerHTML = "Loading ...";
+                                    if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
+                                        VRODOS.api.setSceneLoadingProgressText("Loading ...");
+                                    }
 
                                     loader.load(
                                         glbURL,
@@ -823,10 +824,9 @@ VRODOS.loader.LoaderMulti = class {
                                         },
                                         (xhr) => {
                                             const mbLoaded = Math.floor(xhr.loaded / 104857.6) / 10;
-                                            const progressEl = document.getElementById("result_download");
-                                            if (progressEl) {
-                                                const displayName = VRODOS.utils.loaderDisplayText(resource.asset_name || name);
-                                                progressEl.textContent = `'${displayName}' downloaded ${mbLoaded} Mb`;
+                                            const displayName = VRODOS.utils.loaderDisplayText(resource.asset_name || name);
+                                            if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
+                                                VRODOS.api.setSceneLoadingProgressText(`'${displayName}' downloaded ${mbLoaded} Mb`);
                                             }
                                         },
                                         (error) => {

@@ -46,6 +46,62 @@ VRODOS.api.deferEditorStartupTask = function(callback) {
     });
 };
 
+VRODOS.api.setSceneLoadingProgressText = function(text, options) {
+    const opts = options || {};
+    const progressEl = document.getElementById("result_download");
+    if (!progressEl) {
+        return;
+    }
+
+    const progressWrapper = document.getElementById("progressWrapper");
+    if (progressWrapper && opts.visible !== false) {
+        progressWrapper.style.visibility = "visible";
+    }
+
+    const loop = VRODOS.editor.renderLoop || {};
+    const now = window.performance && typeof window.performance.now === 'function'
+        ? window.performance.now()
+        : Date.now();
+    const throttleMs = Math.max(0, Number(loop.loadingProgressThrottleMs || 0));
+    const isSceneLoading = VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading;
+
+    const applyProgressText = (value) => {
+        progressEl.textContent = String(value || '');
+        loop.lastLoadingProgressAt = window.performance && typeof window.performance.now === 'function'
+            ? window.performance.now()
+            : Date.now();
+    };
+
+    if (opts.immediate || !isSceneLoading || throttleMs <= 0) {
+        if (loop.loadingProgressTimer) {
+            window.clearTimeout(loop.loadingProgressTimer);
+            loop.loadingProgressTimer = null;
+        }
+        loop.pendingLoadingProgressText = '';
+        applyProgressText(text);
+        return;
+    }
+
+    const elapsed = now - Number(loop.lastLoadingProgressAt || 0);
+    loop.pendingLoadingProgressText = String(text || '');
+
+    if (elapsed >= throttleMs) {
+        const pendingText = loop.pendingLoadingProgressText;
+        loop.pendingLoadingProgressText = '';
+        applyProgressText(pendingText);
+        return;
+    }
+
+    if (!loop.loadingProgressTimer) {
+        loop.loadingProgressTimer = window.setTimeout(() => {
+            loop.loadingProgressTimer = null;
+            const pendingText = loop.pendingLoadingProgressText;
+            loop.pendingLoadingProgressText = '';
+            applyProgressText(pendingText);
+        }, Math.max(16, throttleMs - elapsed));
+    }
+};
+
 function vrodosIsSceneGraphObject(object, sceneRoot) {
     let current = object || null;
 
@@ -178,8 +234,7 @@ function initVrodosEditor() {
 
     // Progress UI
     document.getElementById("progress").style.display = "block";
-    document.getElementById("progressWrapper").style.visibility = "visible";
-    document.getElementById("result_download").innerHTML = "Loading";
+    VRODOS.api.setSceneLoadingProgressText("Loading", { immediate: true });
 
     VRODOS.api.initPointerLock();
     VRODOS.editor.requestRender('initial-load');
@@ -290,7 +345,7 @@ function bindBackgroundUIEvents() {
 VRODOS.api.prepareSceneLoadManager = function() {
     VRODOS.editor.envir.sceneLoadFinalized = false;
     VRODOS.editor.manager.onProgress = function (url, loaded, total) {
-        document.getElementById("result_download").innerHTML = `Loading ${  loaded  } / ${  total}`;
+        VRODOS.api.setSceneLoadingProgressText(`Loading ${  loaded  } / ${  total}`);
     };
 }
 
@@ -400,6 +455,11 @@ VRODOS.api.finalizeSceneLoad = function() {
         window.clearTimeout(loop.loadingRenderTimer);
         loop.loadingRenderTimer = null;
     }
+    if (loop.loadingProgressTimer) {
+        window.clearTimeout(loop.loadingProgressTimer);
+        loop.loadingProgressTimer = null;
+    }
+    loop.pendingLoadingProgressText = '';
 
     VRODOS.editor.envir.sceneLoadFinalized = true;
     VRODOS.editor.envir.isSceneLoading = false;
