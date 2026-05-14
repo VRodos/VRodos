@@ -44,6 +44,12 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         }
     }
 
+    function syncLightArtifacts(object) {
+        if (typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
+            VRODOS.utils.syncEditorLightArtifacts(object, getScene());
+        }
+    }
+
     function ensureProxy() {
         if (typeof THREE === 'undefined') return null;
         if (!window.vrodosGizmoProxy) {
@@ -257,6 +263,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         target.updateMatrix();
         target.updateMatrixWorld(true);
         invalidateBounds(target);
+        syncLightArtifacts(target);
         transforms.syncProxyToObject(target);
         if (commit && typeof VRODOS.api.triggerAutoSave === 'function') {
             VRODOS.api.triggerAutoSave();
@@ -369,6 +376,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         dragState.oldTRS = null;
         dragState.scaleStart = null;
         invalidateBounds(target);
+        syncLightArtifacts(target);
         transforms.syncProxyToObject(target);
         render.request('transform-drag-ended');
         return target;

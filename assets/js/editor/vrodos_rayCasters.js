@@ -559,8 +559,14 @@ function initPersistentPropertyListeners() {
             
             if (oldValue !== val) {
                 obj[prop] = val;
+                if (obj.isLight && typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
+                    VRODOS.utils.syncEditorLightArtifacts(obj, VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
+                }
                 if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
                     VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, prop, oldValue, val));
+                }
+                if (typeof VRODOS.editor.requestRender === 'function') {
+                    VRODOS.editor.requestRender('light-property-change');
                 }
                 VRODOS.api.saveChanges();
             }

@@ -508,13 +508,108 @@ VRODOS.utils.getEditorLightObject = function(kind, lightName, scene) {
         : null;
 };
 
+VRODOS.utils.linkDirectionalLightTarget = function(light, targetObject) {
+    if (!light || !targetObject || light.type !== 'DirectionalLight') {
+        return false;
+    }
+
+    light.target = targetObject;
+    targetObject.parentLight = light;
+    light.target.updateMatrixWorld(true);
+    light.updateMatrixWorld(true);
+    return true;
+};
+
+function vrodosEditorLightNumber(value, fallback) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function vrodosEditorLightBoolean(value, fallback) {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value !== 0;
+    if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+        if (['0', 'false', 'no', 'off', ''].includes(normalized)) return false;
+    }
+    return fallback;
+}
+
+VRODOS.utils.applyEditorLightShadowSettings = function(light) {
+    if (!light || !light.shadow) return false;
+
+    const shadow = light.shadow;
+    const camera = shadow.camera || null;
+
+    if (Object.prototype.hasOwnProperty.call(light, 'castingShadow')) {
+        light.castShadow = vrodosEditorLightBoolean(light.castingShadow, Boolean(light.castShadow));
+    }
+    if (Object.prototype.hasOwnProperty.call(light, 'shadowBias')) {
+        shadow.bias = vrodosEditorLightNumber(light.shadowBias, shadow.bias || 0);
+    }
+    if (shadow.mapSize && (
+        Object.prototype.hasOwnProperty.call(light, 'shadowMapWidth') ||
+        Object.prototype.hasOwnProperty.call(light, 'shadowMapHeight')
+    )) {
+        const mapWidth = Math.max(1, Math.round(vrodosEditorLightNumber(light.shadowMapWidth, shadow.mapSize.x || 512)));
+        const mapHeight = Math.max(1, Math.round(vrodosEditorLightNumber(light.shadowMapHeight, shadow.mapSize.y || 512)));
+        shadow.mapSize.set(mapWidth, mapHeight);
+    }
+
+    if (camera && camera.isOrthographicCamera) {
+        camera.top = vrodosEditorLightNumber(light.shadowCameraTop, camera.top);
+        camera.bottom = vrodosEditorLightNumber(light.shadowCameraBottom, camera.bottom);
+        camera.left = vrodosEditorLightNumber(light.shadowCameraLeft, camera.left);
+        camera.right = vrodosEditorLightNumber(light.shadowCameraRight, camera.right);
+        if (typeof camera.updateProjectionMatrix === 'function') {
+            camera.updateProjectionMatrix();
+        }
+    }
+
+    light.updateMatrixWorld(true);
+    if (light.target && typeof light.target.updateMatrixWorld === 'function') {
+        light.target.updateMatrixWorld(true);
+    }
+    if (typeof shadow.updateMatrices === 'function') {
+        shadow.updateMatrices(light);
+    } else if (camera) {
+        camera.updateMatrixWorld(true);
+    }
+
+    return true;
+};
+
 VRODOS.utils.updateEditorLightHelper = function(light, scene) {
     if (!light) return null;
+    VRODOS.utils.applyEditorLightShadowSettings(light);
+
     const helper = VRODOS.utils.getEditorLightObject('helper', light.name, scene);
     if (helper && typeof helper.update === 'function') {
         helper.update();
     }
+
+    const shadowHelper = VRODOS.utils.getEditorLightObject('shadow', light.name, scene);
+    if (shadowHelper && typeof shadowHelper.update === 'function') {
+        shadowHelper.update();
+    }
+
     return helper;
+};
+
+VRODOS.utils.syncEditorLightArtifacts = function(object, scene) {
+    const target = object ? (object.realObject || object) : null;
+    if (!target) return null;
+
+    const light = target.parentLight || (target.isLight ? target : null);
+    if (!light) return null;
+
+    if (target.category_name === 'lightTargetSpot' && light.type === 'DirectionalLight') {
+        VRODOS.utils.linkDirectionalLightTarget(light, target);
+    }
+
+    target.updateMatrixWorld(true);
+    return VRODOS.utils.updateEditorLightHelper(light, scene);
 };
 
 VRODOS.syncLocalizedData();

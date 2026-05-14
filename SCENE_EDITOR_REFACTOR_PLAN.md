@@ -29,7 +29,10 @@
 - 2026-05-14: Phase 25 duplicate raycaster cel-outline helper removal implemented.
 - 2026-05-14: Phase 26 director ground-guide target refresh scoped to registry roots.
 - 2026-05-14: Phase 27 scene-load light-helper update traversal removal implemented.
-- Verification: Phase 27 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: Sun DirectionalLight target/helper synchronization fix implemented.
+- Verification: Sun DirectionalLight JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: Sun shadow-camera helper synchronization fix implemented.
+- Verification: Sun shadow-camera helper JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -93,6 +96,8 @@ assets/js/editor/
 - Done: Remove duplicate raycaster cel-outline helpers and route selection indicators through the shared outline helper surface.
 - Done: Scope director ground-guide mesh target refresh to registered scene roots instead of traversing the whole scene.
 - Done: Replace scene-load light-helper update traversal with direct scene-level helper updates.
+- Done: Align custom sun lights with Three.js `DirectionalLight` target semantics by using the visible target object as `light.target` and synchronizing helpers during transform updates.
+- Done: Force editor Sun shadow-camera matrices and `CameraHelper` geometry to refresh after Sun/target transforms and shadow property edits.
 - Continue reducing remaining `scene.traverse()` fallbacks where focused modules can own explicit caches.
 
 ## Test Plan

@@ -108,7 +108,10 @@ VRODOS.editorScene = VRODOS.editorScene || {};
                 const attached = transforms.getAttachedObject();
                 if (!attached || !attached.parentLight) return;
                 attached.parentLight.target.position.setFromMatrixPosition(attached.matrix);
-                attached.parentLight.target.updateMatrixWorld();
+                attached.parentLight.target.updateMatrixWorld(true);
+                if (typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
+                    VRODOS.utils.syncEditorLightArtifacts(attached.parentLight.target, getScene());
+                }
             };
 
             this.lightSpotLightMover = () => {

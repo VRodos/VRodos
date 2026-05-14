@@ -1361,6 +1361,13 @@ function vrodosFiniteNumber(value, fallback) {
 
 function syncAttachedProxyToObject(target) {
     VRODOS.editor.transforms.syncProxyToObject(target);
+    syncLightArtifactsForTransform(target);
+}
+
+function syncLightArtifactsForTransform(target) {
+    if (typeof VRODOS.utils.syncEditorLightArtifacts === 'function' && VRODOS.editor.envir) {
+        VRODOS.utils.syncEditorLightArtifacts(target, VRODOS.editor.envir.scene);
+    }
 }
 
 function ensureTransformControlsVisible() {
@@ -1438,6 +1445,7 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     if (isDragging) {
         attachedObject.updateMatrix();
         attachedObject.updateMatrixWorld();
+        syncLightArtifactsForTransform(realObject);
     }
 
     //--------- translate_x ---------------

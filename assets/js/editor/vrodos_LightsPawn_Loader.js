@@ -171,8 +171,7 @@ VRODOS.loader.LightsPawnLoader = class {
         light.shadow.camera.far = 500;
         this.applyTRS(light, resource.trs);
 
-        const tp = resource.targetposition;
-        light.target.position.set(tp[0], tp[1], tp[2]);
+        const tp = Array.isArray(resource.targetposition) ? resource.targetposition : [0, 0, 0];
         
         light.name = name;
         light.asset_name = "mylightSun";
@@ -206,11 +205,7 @@ VRODOS.loader.LightsPawnLoader = class {
         helper.category_name = 'lightHelper';
         helper.parentLightName = name;
         helper.vrodos_internal_helper = true;
-        VRODOS.editor.envir.scene.add(helper);
         this.registerLoadedObject(light, { renderReason: 'sun-loaded' });
-
-        light.target.updateMatrixWorld();
-        helper.update();
 
         const targetSpot = new THREE.Object3D();
         targetSpot.add(new THREE.Mesh(
@@ -227,13 +222,15 @@ VRODOS.loader.LightsPawnLoader = class {
         targetSpot.parentLight = light;
         targetSpot.parentLightHelper = helper;
 
-        light.target.position.copy(targetSpot.position);
+        VRODOS.utils.linkDirectionalLightTarget(light, targetSpot);
         this.registerLoadedObject(targetSpot, { renderReason: 'sun-target-loaded' });
+        VRODOS.editor.envir.scene.add(helper);
 
         const shadowHelper = new THREE.CameraHelper(light.shadow.camera);
         shadowHelper.name = VRODOS.utils.getEditorLightObjectName('shadow', light.name);
         shadowHelper.vrodos_internal_helper = true;
         VRODOS.editor.envir.scene.add(shadowHelper);
+        VRODOS.utils.syncEditorLightArtifacts(light, VRODOS.editor.envir.scene);
     }
 
     initLamp(name, resource) {

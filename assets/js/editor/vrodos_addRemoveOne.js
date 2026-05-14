@@ -499,11 +499,11 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     lightTargetSpot.isLightTargetSpot = true;
     lightTargetSpot.isLight = false;
     lightTargetSpot.addedAt = addedAt;
-    lightTargetSpot.position = new THREE.Vector3(0, 0, 0);
+    lightTargetSpot.position.set(0, 0, 0);
     lightTargetSpot.parentLight = lightSun;
     lightTargetSpot.parentLightHelper = lightSunHelper;
 
-    lightSun.target.position = lightTargetSpot.position;
+    VRODOS.utils.linkDirectionalLightTarget(lightSun, lightTargetSpot);
 
     // Add shadow camera helper
     const lightSunShadowhelper = new THREE.CameraHelper(lightSun.shadow.camera);
@@ -538,12 +538,11 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
         select: false
     });
     if (registeredLightTarget && registeredLightTarget !== lightTargetSpot) {
-        lightSun.target.position = registeredLightTarget.position;
+        VRODOS.utils.linkDirectionalLightTarget(lightSun, registeredLightTarget);
     }
     VRODOS.editor.envir.scene.add(lightSunShadowhelper);
 
-    lightSun.target.updateMatrixWorld();
-    lightSunHelper.update();
+    VRODOS.utils.syncEditorLightArtifacts(lightSun, VRODOS.editor.envir.scene);
     VRODOS.ui.selectNewSceneObject(lightSun, { source: 'light-sun-added' });
     return lightSun;
 }
