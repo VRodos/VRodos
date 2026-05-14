@@ -149,6 +149,9 @@ VRODOS.exporter.SceneExporter = class {
             }
         }
 
+        const exportedDuplicateKeys = new Map();
+        const skippedDuplicateObjects = [];
+
         scene.traverse(node => {
             if (node.vrodos_internal_helper === true) {
                 return;
@@ -179,6 +182,20 @@ VRODOS.exporter.SceneExporter = class {
 
             const objectData = this.processObject(node);
             if (objectData) {
+                const duplicateKey = typeof VRODOS.utils.sceneObjectDuplicateKey === 'function'
+                    ? VRODOS.utils.sceneObjectDuplicateKey(objectData)
+                    : '';
+                if (duplicateKey) {
+                    if (exportedDuplicateKeys.has(duplicateKey)) {
+                        skippedDuplicateObjects.push({
+                            name: node.name,
+                            original: exportedDuplicateKeys.get(duplicateKey)
+                        });
+                        return;
+                    }
+                    exportedDuplicateKeys.set(duplicateKey, node.name);
+                }
+
                 const baseName = VRODOS.utils.sceneSafeObjectName(node, output.metadata.objects);
                 const safeName = VRODOS.utils.sceneUniqueObjectName(baseName, output.objects);
                 node.name = safeName;
@@ -186,6 +203,10 @@ VRODOS.exporter.SceneExporter = class {
                 output.metadata.objects++;
             }
         });
+
+        if (skippedDuplicateObjects.length > 0) {
+            console.warn('VRodos: skipped duplicate scene objects during export', skippedDuplicateObjects);
+        }
 
         return JSON.stringify(output);
     }
