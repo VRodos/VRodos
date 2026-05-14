@@ -35,6 +35,8 @@
 - Verification: Sun shadow-camera helper JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-14: Phase 28 director internal-helper cleanup traversal removal implemented.
 - Verification: Phase 28 JS syntax check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: Phase 29 hierarchy/player-focus scene-root traversal fallback removal implemented.
+- Verification: Phase 29 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -101,6 +103,7 @@ assets/js/editor/
 - Done: Align custom sun lights with Three.js `DirectionalLight` target semantics by using the visible target object as `light.target` and synchronizing helpers during transform updates.
 - Done: Force editor Sun shadow-camera matrices and `CameraHelper` geometry to refresh after Sun/target transforms and shadow property edits.
 - Done: Track director visual/proxy helpers explicitly and clear them without a full `scene.traverse()` scan.
+- Done: Add non-rebuilding scene-root reads and use them for hierarchy refresh and scene-load player focus instead of `traverseFallback`.
 - Continue reducing remaining `scene.traverse()` fallbacks where focused modules can own explicit caches.
 
 ## Test Plan

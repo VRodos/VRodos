@@ -261,11 +261,12 @@ VRODOS.utils.getEditorSceneRoots = function(scene, options) {
     const opts = Object.assign({
         filterSelectable: false,
         includeDirector: true,
+        rebuildRegistryIfEmpty: true,
         traverseFallback: false
     }, options || {});
     const registry = VRODOS.editor && VRODOS.editor.sceneRegistry;
     const registryRoots = registry && typeof registry.getSelectableRoots === 'function'
-        ? registry.getSelectableRoots()
+        ? registry.getSelectableRoots({ rebuildIfEmpty: opts.rebuildRegistryIfEmpty })
         : [];
 
     if (Array.isArray(registryRoots) && registryRoots.length > 0) {

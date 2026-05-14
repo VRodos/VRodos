@@ -20,7 +20,8 @@ function _hierarchyGetSelectableRoots() {
         ? VRODOS.utils.getEditorSceneRoots(VRODOS.editor.envir ? VRODOS.editor.envir.scene : null, {
             filterSelectable: true,
             includeDirector: true,
-            traverseFallback: true
+            rebuildRegistryIfEmpty: false,
+            traverseFallback: false
         })
         : [];
 }
@@ -524,7 +525,7 @@ VRODOS.ui.setBackgroundColorHierarchyViewer = function(id, options) {
     _previousHighlightedId = id;
 }
 
-// Traverse the entire scene to insert scene children in Hierarchy Viewer
+// Insert registered/selectable scene children in Hierarchy Viewer.
 VRODOS.ui.setHierarchyViewer = function() {
     const viewer = document.getElementById('hierarchy-viewer');
     if (!viewer) return;
