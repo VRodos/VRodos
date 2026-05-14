@@ -501,8 +501,8 @@ VRODOS.utils.getEditorLightObject = function(kind, lightName, scene) {
         : null;
 };
 
-VRODOS.utils.linkDirectionalLightTarget = function(light, targetObject) {
-    if (!light || !targetObject || light.type !== 'DirectionalLight') {
+VRODOS.utils.linkEditorLightTarget = function(light, targetObject) {
+    if (!light || !targetObject || !['DirectionalLight', 'SpotLight'].includes(light.type)) {
         return false;
     }
 
@@ -511,6 +511,14 @@ VRODOS.utils.linkDirectionalLightTarget = function(light, targetObject) {
     light.target.updateMatrixWorld(true);
     light.updateMatrixWorld(true);
     return true;
+};
+
+VRODOS.utils.linkDirectionalLightTarget = function(light, targetObject) {
+    if (!light || light.type !== 'DirectionalLight') {
+        return false;
+    }
+
+    return VRODOS.utils.linkEditorLightTarget(light, targetObject);
 };
 
 function vrodosEditorLightNumber(value, fallback) {
@@ -597,8 +605,8 @@ VRODOS.utils.syncEditorLightArtifacts = function(object, scene) {
     const light = target.parentLight || (target.isLight ? target : null);
     if (!light) return null;
 
-    if (target.category_name === 'lightTargetSpot' && light.type === 'DirectionalLight') {
-        VRODOS.utils.linkDirectionalLightTarget(light, target);
+    if (target.category_name === 'lightTargetSpot' && ['DirectionalLight', 'SpotLight'].includes(light.type)) {
+        VRODOS.utils.linkEditorLightTarget(light, target);
     }
 
     target.updateMatrixWorld(true);

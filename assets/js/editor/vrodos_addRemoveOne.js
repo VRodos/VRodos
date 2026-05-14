@@ -644,10 +644,18 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
     lightTargetSpot.isLightTargetSpot = true;
     lightTargetSpot.isLight = false;
     lightTargetSpot.addedAt = addedAt;
-    lightTargetSpot.position = new THREE.Vector3(0, 0, 0);
+    lightTargetSpot.position.set(0, 0, 0);
     lightTargetSpot.parentLight = lightSpot;
 
-    lightSpot.target.position = lightTargetSpot.position;
+    VRODOS.utils.linkEditorLightTarget(lightSpot, lightTargetSpot);
+
+    const lightSpotHelper = new THREE.SpotLightHelper(lightSpot, 0xffaa00);
+    lightSpotHelper.isLightHelper = true;
+    lightSpotHelper.name = VRODOS.utils.getEditorLightObjectName('helper', lightSpot.name);
+    lightSpotHelper.category_name = 'lightHelper';
+    lightSpotHelper.parentLightName = lightSpot.name;
+    lightSpotHelper.vrodos_internal_helper = true;
+    lightTargetSpot.parentLightHelper = lightSpotHelper;
 
     const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
     trs_tmp.translation[1] += 3;
@@ -669,9 +677,11 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
         select: false
     });
     if (registeredLightTarget && registeredLightTarget !== lightTargetSpot) {
-        lightSpot.target.position = registeredLightTarget.position;
+        VRODOS.utils.linkEditorLightTarget(lightSpot, registeredLightTarget);
+        registeredLightTarget.parentLightHelper = lightSpotHelper;
     }
-    lightSpot.target.updateMatrixWorld();
+    VRODOS.editor.envir.scene.add(lightSpotHelper);
+    VRODOS.utils.syncEditorLightArtifacts(lightSpot, VRODOS.editor.envir.scene);
     VRODOS.ui.selectNewSceneObject(lightSpot, { source: 'light-spot-added' });
     return lightSpot;
 }

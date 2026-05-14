@@ -43,6 +43,8 @@
 - Verification: Phase 31 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-14: Spot-light properties hierarchy lookup fix implemented.
 - Verification: Spot-light properties JS syntax check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: SpotLight target/helper linkage fix implemented.
+- Verification: SpotLight target/helper JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -114,6 +116,7 @@ assets/js/editor/
 - Done: Remove the unused `traverseFallback` branch from `getEditorSceneRoots`; the remaining editor `scene.traverse()` is scene serialization.
 - Done: Route legacy scene bounds helpers through the `sceneRegistry` `Box3` cache and remove throwaway `BoxHelper` bounds construction.
 - Done: Make the spot-light target dropdown use cached scene roots and guard DOM fallback lookups against non-element hierarchy nodes.
+- Done: Link SpotLight to its visible target object and add a `SpotLightHelper` cone so spot lights and targets read as one connected editor control.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

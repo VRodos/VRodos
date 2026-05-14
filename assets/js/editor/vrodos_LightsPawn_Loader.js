@@ -299,7 +299,7 @@ VRODOS.loader.LightsPawnLoader = class {
         sphere.name = "SpotSphere";
         light.add(sphere);
 
-        const tp = resource.targetposition;
+        const tp = Array.isArray(resource.targetposition) ? resource.targetposition : [0, 0, 0];
         const targetSpot = new THREE.Object3D();
         targetSpot.add(new THREE.Mesh(
             new THREE.SphereGeometry(0.5, 16, 8),
@@ -314,11 +314,20 @@ VRODOS.loader.LightsPawnLoader = class {
         targetSpot.position.set(tp[0], tp[1], tp[2]);
         targetSpot.parentLight = light;
 
-        this.registerLoadedObject(targetSpot, { renderReason: 'spot-target-loaded' });
-        light.target.updateMatrixWorld();
-        light.target.position.copy(targetSpot.position);
+        VRODOS.utils.linkEditorLightTarget(light, targetSpot);
 
+        const helper = new THREE.SpotLightHelper(light, color);
+        helper.isLightHelper = true;
+        helper.name = VRODOS.utils.getEditorLightObjectName('helper', light.name);
+        helper.category_name = 'lightHelper';
+        helper.parentLightName = light.name;
+        helper.vrodos_internal_helper = true;
+        targetSpot.parentLightHelper = helper;
+
+        this.registerLoadedObject(targetSpot, { renderReason: 'spot-target-loaded' });
         this.registerLoadedObject(light, { renderReason: 'spot-loaded' });
+        VRODOS.editor.envir.scene.add(helper);
+        VRODOS.utils.syncEditorLightArtifacts(light, VRODOS.editor.envir.scene);
         // No triggerAutoSave here — this loader only restores saved state.
         // User-initiated spot light creation (VRODOS.api.createLightSpot in vrodos_addRemoveOne.js)
         // handles its own VRODOS.api.triggerAutoSave().
