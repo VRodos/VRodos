@@ -51,26 +51,18 @@ VRODOS.ui.removeCelOutline = function(object) {
 };
 
 /**
- * Remove all cel outlines from the entire scene.
+ * Remove all tracked cel outlines.
  */
 VRODOS.ui.removeAllCelOutlines = function() {
-    if (typeof VRODOS.editor.envir === 'undefined' || !VRODOS.editor.envir.scene) return;
-    if (VRODOS.editor.envir.celOutlineMeshes && VRODOS.editor.envir.celOutlineMeshes.size > 0) {
-        // Fast path: use the cache — no scene traverse needed
-        for (const mesh of VRODOS.editor.envir.celOutlineMeshes) {
-            if (mesh.parent) mesh.parent.remove(mesh);
-        }
-        VRODOS.editor.envir.celOutlineMeshes.clear();
-        return;
-    }
-    // Fallback: cache not yet initialised (first call before VRODOS.editor.envir is ready)
-    const toRemove = [];
-    VRODOS.editor.envir.scene.traverse((child) => {
-        if (child.name === CEL_OUTLINE_TAG) toRemove.push(child);
-    });
-    toRemove.forEach((mesh) => {
+    const envir = VRODOS.editor ? VRODOS.editor.envir : null;
+    const outlineMeshes = envir ? envir.celOutlineMeshes : null;
+    if (!outlineMeshes) return;
+
+    for (const mesh of outlineMeshes) {
         if (mesh.parent) mesh.parent.remove(mesh);
-    });
+    }
+
+    outlineMeshes.clear();
 }
 
 // ─── Floating Object Controls Panel helpers ───

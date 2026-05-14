@@ -25,7 +25,8 @@
 - 2026-05-14: Phase 21 raycast selectable cache fallback hardening implemented.
 - 2026-05-14: Phase 22 light/helper visibility traversal reduction implemented.
 - 2026-05-14: Phase 23 performance-profile editable object count traversal removal implemented.
-- Verification: Phase 23 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: Phase 24 cel-outline cleanup traversal removal implemented.
+- Verification: Phase 24 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -85,6 +86,7 @@ assets/js/editor/
 - Done: Remove routine full-scene traversal fallback from raycast selection by using non-rebuilding `sceneRegistry` and selectable cache reads in hot paths.
 - Done: Replace Clear Vision light/helper visibility traversal with cache-backed target collection from `sceneRegistry` and direct scene helper children.
 - Done: Replace performance-profile editable object count traversal with selectable cache and non-rebuilding `sceneRegistry` reads.
+- Done: Replace global cel-outline cleanup traversal with the tracked `envir.celOutlineMeshes` cache.
 - Continue reducing remaining `scene.traverse()` fallbacks where focused modules can own explicit caches.
 
 ## Test Plan
