@@ -327,9 +327,32 @@ function getSceneObjectOrSelected(name) {
 
 function getSceneObjectFromHierarchyItem(item) {
     if (!item) return null;
+    if (typeof item.getAttribute !== 'function') return null;
     const uuid = item.getAttribute('data-uuid') || item.id;
     const name = item.getAttribute('data-name');
     return (uuid ? getEditorSceneObjectByUuid(uuid) : null) || (name ? getEditorSceneObjectByName(name) : null);
+}
+
+function getSpotTargetOptionObjects() {
+    const scene = VRODOS.editor.envir ? VRODOS.editor.envir.scene : null;
+    const roots = typeof VRODOS.utils.getEditorSceneRoots === 'function'
+        ? VRODOS.utils.getEditorSceneRoots(scene, {
+            filterSelectable: true,
+            includeDirector: true,
+            rebuildRegistryIfEmpty: false
+        })
+        : [];
+
+    if (roots.length > 0) {
+        return roots;
+    }
+
+    const hierViewer = document.getElementById('hierarchy-viewer');
+    if (!hierViewer) return [];
+
+    return Array.from(hierViewer.querySelectorAll('.hierarchyItem'))
+        .map(getSceneObjectFromHierarchyItem)
+        .filter(Boolean);
 }
 
 /**
@@ -426,13 +449,13 @@ VRODOS.ui.displaySpotProperties = function(event, name) {
     const ppPropertiesDiv = document.getElementById("popUpSpotPropertiesDiv");
 
     const spotTargetObject = document.getElementById("spotTargetObject");
-    spotTargetObject.innerText = '';
+    if (spotTargetObject) {
+        spotTargetObject.innerText = '';
 
-    const hierViewer = document.getElementById('hierarchy-viewer');
-    for (let i = 0; hierViewer && i < hierViewer.childNodes.length; i++) {
-        const scene_object = getSceneObjectFromHierarchyItem(hierViewer.childNodes[i]);
-        if (!scene_object) continue;
-        spotTargetObject.appendChild(new Option(scene_object.name));
+        getSpotTargetOptionObjects().forEach((sceneObject) => {
+            if (!sceneObject || !sceneObject.name) return;
+            spotTargetObject.appendChild(new Option(sceneObject.name));
+        });
     }
 
     const spotColor = document.getElementById("spotColor");

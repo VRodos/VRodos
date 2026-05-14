@@ -41,6 +41,8 @@
 - Verification: Phase 30 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-14: Phase 31 scene bounds calculation consolidation implemented.
 - Verification: Phase 31 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: Spot-light properties hierarchy lookup fix implemented.
+- Verification: Spot-light properties JS syntax check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -111,6 +113,7 @@ assets/js/editor/
 - Done: Rebuild `sceneRegistry` from direct scene roots and director helper references instead of full-scene traversal.
 - Done: Remove the unused `traverseFallback` branch from `getEditorSceneRoots`; the remaining editor `scene.traverse()` is scene serialization.
 - Done: Route legacy scene bounds helpers through the `sceneRegistry` `Box3` cache and remove throwaway `BoxHelper` bounds construction.
+- Done: Make the spot-light target dropdown use cached scene roots and guard DOM fallback lookups against non-element hierarchy nodes.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
