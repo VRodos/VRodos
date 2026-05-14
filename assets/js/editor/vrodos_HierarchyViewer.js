@@ -20,8 +20,7 @@ function _hierarchyGetSelectableRoots() {
         ? VRODOS.utils.getEditorSceneRoots(VRODOS.editor.envir ? VRODOS.editor.envir.scene : null, {
             filterSelectable: true,
             includeDirector: true,
-            rebuildRegistryIfEmpty: false,
-            traverseFallback: false
+            rebuildRegistryIfEmpty: false
         })
         : [];
 }

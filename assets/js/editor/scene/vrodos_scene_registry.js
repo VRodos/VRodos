@@ -44,6 +44,42 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         return scene.getObjectByProperty('uuid', objectOrId) || scene.getObjectByName(objectOrId);
     }
 
+    function collectRegistryRebuildCandidates(scene, envir) {
+        const candidates = [];
+        const seen = new Set();
+        const addCandidate = (object) => {
+            if (!object) return;
+            const key = object.uuid || object.name || null;
+            if (key && seen.has(key)) return;
+            candidates.push(object);
+            if (key) seen.add(key);
+        };
+
+        if (scene && Array.isArray(scene.children)) {
+            scene.children.forEach(addCandidate);
+        }
+
+        const director = envir && typeof envir.getDirectorObject === 'function'
+            ? envir.getDirectorObject()
+            : null;
+        const directorVisual = envir && typeof envir.getDirectorVisualObject === 'function'
+            ? envir.getDirectorVisualObject()
+            : null;
+
+        addCandidate(director);
+        addCandidate(directorVisual);
+
+        if (director && Array.isArray(director.children)) {
+            director.children.forEach((child) => {
+                if (child && (child.name === 'Camera3Dmodel' || child.isSelectableMesh)) {
+                    addCandidate(child);
+                }
+            });
+        }
+
+        return candidates;
+    }
+
     const sceneRegistry = VRODOS.editor.sceneRegistry || {
         byUuid: new Map(),
         byName: new Map(),
@@ -127,8 +163,8 @@ VRODOS.editorScene = VRODOS.editorScene || {};
                 envir.selectableMeshes.clear();
             }
 
-            if (scene && typeof scene.traverse === 'function') {
-                scene.traverse((object) => {
+            if (scene) {
+                collectRegistryRebuildCandidates(scene, envir).forEach((object) => {
                     if (!object || object.name === 'vrodosGizmoProxy') return;
                     if (object.vrodos_internal_helper === true && object.name !== 'Camera3Dmodel') return;
                     const isDirectorVisual = object.name === 'Camera3Dmodel' || (object.parent && object.parent.name === 'avatarCamera' && object.isSelectableMesh);

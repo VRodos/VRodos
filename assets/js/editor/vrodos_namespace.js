@@ -261,8 +261,7 @@ VRODOS.utils.getEditorSceneRoots = function(scene, options) {
     const opts = Object.assign({
         filterSelectable: false,
         includeDirector: true,
-        rebuildRegistryIfEmpty: true,
-        traverseFallback: false
+        rebuildRegistryIfEmpty: true
     }, options || {});
     const registry = VRODOS.editor && VRODOS.editor.sceneRegistry;
     const registryRoots = registry && typeof registry.getSelectableRoots === 'function'
@@ -291,13 +290,6 @@ VRODOS.utils.getEditorSceneRoots = function(scene, options) {
             roots.push(object);
         }
     };
-
-    if (opts.traverseFallback && typeof scene.traverse === 'function') {
-        scene.traverse(addIfIncluded);
-        return typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
-            ? VRODOS.utils.dedupeEditorSceneRoots(roots, { reason: 'traverse-roots', log: false })
-            : roots;
-    }
 
     if (Array.isArray(scene.children)) {
         scene.children.forEach(addIfIncluded);

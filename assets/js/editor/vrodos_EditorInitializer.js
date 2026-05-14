@@ -492,8 +492,7 @@ VRODOS.api.finalizeSceneLoad = function() {
             ? VRODOS.utils.getEditorSceneRoots(VRODOS.editor.envir.scene, {
                 filterSelectable: true,
                 includeDirector: true,
-                rebuildRegistryIfEmpty: false,
-                traverseFallback: false
+                rebuildRegistryIfEmpty: false
             })
             : registry.getSelectableRoots();
 
