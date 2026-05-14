@@ -395,6 +395,12 @@ VRODOS.api.reloadSceneFromJson = function(sceneJson) {
 VRODOS.api.finalizeSceneLoad = function() {
     if (!VRODOS.editor.envir || VRODOS.editor.envir.sceneLoadFinalized) return;
 
+    const loop = VRODOS.editor.renderLoop || {};
+    if (loop.loadingRenderTimer) {
+        window.clearTimeout(loop.loadingRenderTimer);
+        loop.loadingRenderTimer = null;
+    }
+
     VRODOS.editor.envir.sceneLoadFinalized = true;
     VRODOS.editor.envir.isSceneLoading = false;
 
@@ -593,12 +599,38 @@ VRODOS.editor.stopRenderLoop = function() {
     }
 };
 
-VRODOS.editor.requestRender = function() {
+VRODOS.editor.requestRender = function(reason) {
     const loop = VRODOS.editor.renderLoop;
     if (!loop || VRODOS.editor.isPaused) {
         return;
     }
 
+    const envir = VRODOS.editor.envir;
+    if (envir && envir.isSceneLoading) {
+        const now = window.performance && typeof window.performance.now === 'function'
+            ? window.performance.now()
+            : Date.now();
+        const throttleMs = Math.max(0, Number(loop.loadingRenderThrottleMs || 0));
+        const elapsed = now - Number(loop.lastLoadingRenderAt || 0);
+
+        if (throttleMs > 0 && elapsed < throttleMs) {
+            if (!loop.loadingRenderTimer) {
+                loop.loadingRenderTimer = window.setTimeout(() => {
+                    loop.loadingRenderTimer = null;
+                    loop.lastLoadingRenderAt = window.performance && typeof window.performance.now === 'function'
+                        ? window.performance.now()
+                        : Date.now();
+                    loop.needsRender = true;
+                    VRODOS.editor.startRenderLoop();
+                }, Math.max(16, throttleMs - elapsed));
+            }
+            return;
+        }
+
+        loop.lastLoadingRenderAt = now;
+    }
+
+    void reason;
     loop.needsRender = true;
     VRODOS.editor.startRenderLoop();
 };
