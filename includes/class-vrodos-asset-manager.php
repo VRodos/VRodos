@@ -176,6 +176,7 @@ class VRodos_Asset_Manager {
 		wp_enqueue_script( 'vrodos_scene_list_ui' );
 		wp_enqueue_script( 'vrodos_floating_panels' );
 		wp_enqueue_script( 'vrodos_editor_shell_ui' );
+		wp_enqueue_script( 'vrodos_editor_toolbar_ui' );
 		wp_enqueue_script( 'vrodos_3d_editor_buttons_drags' );
 		wp_enqueue_script( 'vrodos_scene_editor_ui_controller' );
 		wp_enqueue_script( 'vrodos_fetch_asset_scenes_request' );
@@ -300,7 +301,7 @@ class VRodos_Asset_Manager {
       ['ajax-script_rename_game', VRodos_Path_Manager::editor_ajax_js_url( 'rename_project.js' ), ['vrodos_namespace']],
       // 3D Editor & Viewer Scripts
       ['vrodos_AssetViewer_3D_kernel', VRodos_Path_Manager::editor_js_url( 'vrodos_AssetViewer_3D_kernel.js' ), ['vrodos_namespace']],
-      ['vrodos_3d_editor_buttons_drags', VRodos_Path_Manager::editor_js_url( 'vrodos_3d_editor_buttons_drags.js' ), ['vrodos_namespace', 'vrodos_editor_services', 'vrodos_addRemoveOne', 'ajax-script_savescene', 'vrodos_ui_helpers', 'vrodos_scene_snapshot_ui', 'vrodos_scene_canvas_drop_ui', 'vrodos_scene_list_ui', 'vrodos_floating_panels', 'vrodos_editor_shell_ui']],
+      ['vrodos_3d_editor_buttons_drags', VRodos_Path_Manager::editor_js_url( 'vrodos_3d_editor_buttons_drags.js' ), ['vrodos_namespace', 'vrodos_editor_services', 'vrodos_addRemoveOne', 'ajax-script_savescene', 'vrodos_ui_helpers', 'vrodos_scene_snapshot_ui', 'vrodos_scene_canvas_drop_ui', 'vrodos_scene_list_ui', 'vrodos_floating_panels', 'vrodos_editor_shell_ui', 'vrodos_editor_toolbar_ui']],
       ['vrodos_scene_editor_ui_controller', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_scene_editor_ui_controller.js' ), ['vrodos_namespace', 'vrodos_3d_editor_buttons_drags']],
       ['vrodos_editor_environment_helpers', VRodos_Path_Manager::editor_js_url( 'render/vrodos_editor_environment_helpers.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
       ['vrodos_3d_editor_environmentals', VRodos_Path_Manager::editor_js_url( 'vrodos_3d_editor_environmentals.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_editor_environment_helpers']],
@@ -326,6 +327,7 @@ class VRodos_Asset_Manager {
       ['vrodos_scene_list_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_scene_list_ui.js' ), ['vrodos_namespace', 'vrodos_ui_helpers', 'ajax-script_deletescene']],
       ['vrodos_floating_panels', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_floating_panels.js' ), ['vrodos_namespace', 'vrodos_ui_helpers']],
       ['vrodos_editor_shell_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_editor_shell_ui.js' ), ['vrodos_namespace', 'vrodos_ui_helpers', 'vrodos_editor_services', 'vrodos_auxControlers']],
+      ['vrodos_editor_toolbar_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_editor_toolbar_ui.js' ), ['vrodos_namespace', 'vrodos_ui_helpers', 'vrodos_editor_services', 'vrodos_3d_editor_environmentals', 'vrodos_BordersFinder', 'vrodos_movePointerLocker', 'ajax-script_savescene']],
       ['vrodos_icons', VRodos_Path_Manager::editor_js_url( 'vrodos_icons.js' ), ['vrodos_namespace']],
       ['vrodos_cefr_badges', VRodos_Path_Manager::editor_js_url( 'vrodos_cefr_badges.js' ), ['vrodos_namespace']],
       ['vrodos_HierarchyViewer', VRodos_Path_Manager::editor_js_url( 'vrodos_HierarchyViewer.js' ), ['vrodos_namespace', 'vrodos_cefr_badges']],
