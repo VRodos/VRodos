@@ -31,6 +31,21 @@ VRODOS.editor.showPawnPositions = VRODOS.data.showPawnPositions || 'false';
 // 3. Initialize core objects
 VRODOS.editor.manager = new THREE.LoadingManager();
 
+VRODOS.api.deferEditorStartupTask = function(callback) {
+    if (typeof callback !== 'function') {
+        return;
+    }
+
+    if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(callback, { timeout: 120 });
+        return;
+    }
+
+    window.requestAnimationFrame(() => {
+        window.setTimeout(callback, 0);
+    });
+};
+
 function vrodosIsSceneGraphObject(object, sceneRoot) {
     let current = object || null;
 
@@ -157,23 +172,6 @@ function initVrodosEditor() {
     // Secondary pass: Background specific legacy logic
     syncBackgroundInitialState(sceneSettings);
 
-    // 3. Load 3D Objects
-    VRODOS.api.loadEditorSceneResources(VRODOS.data.scene_data, {
-        assetResources: VRODOS.data.scene_data.objects,
-        reason: 'initial-scene-load'
-    });
-
-    // Initial hierarchy
-    VRODOS.ui.setHierarchyViewer();
-
-    // Fetch available assets
-    if (typeof VRODOS.api.fetchListAvailableAssets === 'function') {
-        VRODOS.api.fetchListAvailableAssets(VRODOS.config.isAdmin, VRODOS.data.projectSlug, VRODOS.data.urlforAssetEdit, VRODOS.data.projectId);
-    }
-    if (typeof VRODOS.ui.initHierarchyViewerEvents === 'function') {
-        VRODOS.ui.initHierarchyViewerEvents();
-    }
-
     // Add controls to scene
     VRODOS.editor.envir.scene.add(VRODOS.editor.transform_controls_helper);
     document.getElementById("compileGameBtn").disabled = true;
@@ -202,6 +200,25 @@ function initVrodosEditor() {
     if (VRODOS.data.sceneType) {
         VRODOS.editor.envir.sceneType = VRODOS.data.sceneType;
     }
+
+    VRODOS.api.deferEditorStartupTask(() => {
+        // Initial hierarchy
+        VRODOS.ui.setHierarchyViewer();
+
+        // Fetch available assets
+        if (typeof VRODOS.api.fetchListAvailableAssets === 'function') {
+            VRODOS.api.fetchListAvailableAssets(VRODOS.config.isAdmin, VRODOS.data.projectSlug, VRODOS.data.urlforAssetEdit, VRODOS.data.projectId);
+        }
+        if (typeof VRODOS.ui.initHierarchyViewerEvents === 'function') {
+            VRODOS.ui.initHierarchyViewerEvents();
+        }
+
+        // 3. Load 3D Objects
+        VRODOS.api.loadEditorSceneResources(VRODOS.data.scene_data, {
+            assetResources: VRODOS.data.scene_data.objects,
+            reason: 'initial-scene-load'
+        });
+    });
 }
 
 /**
@@ -464,7 +481,6 @@ VRODOS.editor.shouldRenderContinuously = function() {
     const envir = VRODOS.editor.envir;
     if (!envir) return false;
 
-    if (envir.isSceneLoading) return true;
     if (VRODOS.editor.avatarControlsEnabled) return true;
     if (VRODOS.editor.transforms && VRODOS.editor.transforms.isDragging()) return true;
     if (envir.orbitControls && envir.orbitControls.autoRotate) return true;
