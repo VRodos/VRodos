@@ -1,54 +1,3 @@
-VRODOS.api.newScreenshotData = null;
-VRODOS.api.isSceneIconManuallySelected = false;
-VRODOS.ui.refreshSceneJsonTextarea = function() {
-    const textarea = document.getElementById('vrodos_scene_json_input');
-    if (!textarea || !VRODOS.exporter.SceneExporter || !VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
-
-    const exporter = new VRODOS.exporter.SceneExporter();
-    const exportedJson = exporter.parse(VRODOS.editor.envir.scene);
-
-    try {
-        textarea.value = JSON.stringify(JSON.parse(exportedJson), null, 2);
-    } catch (error) {
-        textarea.value = exportedJson;
-    }
-};
-VRODOS.api.waitForLatestSceneSave = function() {
-    if (typeof VRODOS.api.whenSceneSaveSettles === 'function') {
-        return VRODOS.api.whenSceneSaveSettles();
-    }
-
-    return Promise.resolve();
-};
-VRODOS.api.persistSceneScreenshot = function() {
-    return VRODOS.api.waitForLatestSceneSave()
-        .then(() => (typeof VRODOS.api.saveChanges === 'function') ? VRODOS.api.saveChanges({force: true}) : Promise.resolve())
-        .catch((error) => {
-            console.warn('VRodos: scene screenshot could not be saved.', error);
-        });
-};
-VRODOS.ui.setSceneScreenshotPreview = function(src) {
-    const sceneShot = document.getElementById('vrodos_scene_sshot');
-    const placeholder = document.getElementById('vrodos_scene_sshot_placeholder');
-
-    if (!sceneShot) {
-        return;
-    }
-
-    if (src) {
-        sceneShot.src = src;
-        sceneShot.classList.remove('tw-hidden');
-        if (placeholder) {
-            placeholder.classList.add('tw-hidden');
-        }
-    } else {
-        sceneShot.removeAttribute('src');
-        sceneShot.classList.add('tw-hidden');
-        if (placeholder) {
-            placeholder.classList.remove('tw-hidden');
-        }
-    }
-};
 VRODOS.ui.onDrop = function(ev) {
     if (ev.vrodosSceneDropHandled) {
         ev.preventDefault();
@@ -842,52 +791,6 @@ VRODOS.ui.showObjectPropertiesPanel = function(type) {
     const el = document.getElementById(`${type  }PanelGui`);
     if (el) el.style.display = '';
 };
-
-// Take screenshot of scene
-VRODOS.api.takeScreenshot = function() {
-
-    //VRODOS.editor.envir.cameraAvatarHelper.visible = false;
-    if (VRODOS.editor.transforms) {
-        VRODOS.editor.transforms.setVisible(false);
-    }
-
-    // Render to an offscreen canvas to capture the screenshot reliably
-    const camera = VRODOS.editor.avatarControlsEnabled ? VRODOS.editor.envir.cameraAvatar : VRODOS.editor.envir.cameraOrbit;
-    const w = VRODOS.editor.envir.renderer.domElement.width;
-    const h = VRODOS.editor.envir.renderer.domElement.height;
-
-    const offscreenRenderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true });
-    offscreenRenderer.setSize(w, h);
-    offscreenRenderer.render(VRODOS.editor.envir.scene, camera);
-
-    VRODOS.api.newScreenshotData = offscreenRenderer.domElement.toDataURL("image/jpeg");
-    VRODOS.ui.setSceneScreenshotPreview(VRODOS.api.newScreenshotData);
-
-    // Also update the current scene's drawer thumbnail
-    const drawerThumb = document.querySelector('.current-scene-thumb');
-    if (drawerThumb) {
-        drawerThumb.src = VRODOS.api.newScreenshotData;
-    } else {
-        // If placeholder (no previous screenshot), replace it with an img
-        const placeholder = document.querySelector('.current-scene-thumb-placeholder');
-        if (placeholder) {
-            const img = document.createElement('img');
-            img.src = VRODOS.api.newScreenshotData;
-            img.className = 'tw-w-full tw-h-full tw-object-cover current-scene-thumb';
-            placeholder.replaceWith(img);
-        }
-    }
-
-    offscreenRenderer.dispose();
-
-    if (VRODOS.editor.transforms)
-        {VRODOS.editor.transforms.setVisible(true);}
-
-    VRODOS.api.persistSceneScreenshot();
-};
-
-
-
 
 // Save scene
 VRODOS.api.saveSceneEventHandler = function(e) {
