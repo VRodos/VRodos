@@ -8,6 +8,7 @@
 - 2026-05-14: Phase 4 scene registry extraction implemented.
 - 2026-05-14: Phase 5 transform controls extraction implemented.
 - 2026-05-14: Phase 6 selection extraction implemented.
+- 2026-05-14: Phase 7 object factory extraction implemented.
 - Verification: JS syntax checks passed; PHP syntax check for `includes/class-vrodos-asset-manager.php` passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
@@ -50,6 +51,7 @@ assets/js/editor/
 - Done: Move scene registry, scene/envir lookup helpers, selectable-root cache ownership, and bounds cache to `scene/vrodos_scene_registry.js`.
 - Done: Move transform controls, gizmo proxy state, drag-state snapshots, transform mode/visibility/size, GUI transforms, and undo commit hooks to `scene/vrodos_scene_transforms.js`.
 - Done: Move selection state, object-control panel opening, transform-toolbar state, light pointer handlers, hierarchy focus, cel outline hooks, and selection clearing to `scene/vrodos_scene_selection.js`.
+- Done: Move object add/remove orchestration, duplicate registration guard, hierarchy/frame/autosave hooks, and loaded-object count updates to `scene/vrodos_scene_object_factory.js`; keep `vrodos_editor_services.js` as a compatibility shim.
 - Move toolbar/panel/floating-panel code out of `vrodos_3d_editor_buttons_drags.js` into focused UI modules.
 - Reduce fallback `scene.traverse()` usage in selection and hot interaction paths by relying on `sceneRegistry`.
 
