@@ -125,56 +125,9 @@ VRODOS.ui.bindLegacyEditorButtonActions = function() {
         });
     }
 
-    // Hierarchy Toolbar close button (Event delegation for maximum robustness)
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('#bt_close_hierarchy_toolbar');
-        if (!btn) return;
-        e.preventDefault();
-        const panel = document.getElementById("right-elements-panel");
-        const compass = document.getElementById("scene-editor-compass");
-
-        if (btn.classList.contains("HierarchyToggleOn")) {
-            btn.classList.add("HierarchyToggleOff");
-            btn.classList.remove("HierarchyToggleOn");
-            btn.dataset.toggle = 'off';
-            VRODOS.ui.swapLucideIcon(btn, 'chevron-left');
-            panel.classList.add("closed");
-            if (compass) compass.classList.add("panel-closed");
-        } else {
-            btn.classList.add("HierarchyToggleOn");
-            btn.classList.remove("HierarchyToggleOff");
-            btn.dataset.toggle = 'on';
-            VRODOS.ui.swapLucideIcon(btn, 'chevron-right');
-            panel.classList.remove("closed");
-            if (compass) compass.classList.remove("panel-closed");
-        }
-
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    });
-
-    // File Browser Toolbar close button (Event delegation for maximum robustness)
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('#bt_close_file_toolbar');
-        if (!btn) return;
-        e.preventDefault();
-        const toolbar = document.getElementById("assetBrowserToolbar");
-
-        if (btn.classList.contains("AssetsToggleOn")) {
-            btn.classList.add("AssetsToggleOff");
-            btn.classList.remove("AssetsToggleOn");
-            btn.dataset.toggle = 'off';
-            VRODOS.ui.swapLucideIcon(btn, 'chevron-right');
-            toolbar.classList.add("closed");
-        } else {
-            btn.classList.add("AssetsToggleOn");
-            btn.classList.remove("AssetsToggleOff");
-            btn.dataset.toggle = 'on';
-            VRODOS.ui.swapLucideIcon(btn, 'chevron-left');
-            toolbar.classList.remove("closed");
-        }
-
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    });
+    if (typeof VRODOS.ui.bindEditorShellControls === 'function') {
+        VRODOS.ui.bindEditorShellControls();
+    }
 
     if (typeof VRODOS.ui.bindSceneListControls === 'function') {
         VRODOS.ui.bindSceneListControls();
@@ -378,103 +331,11 @@ VRODOS.ui.bindLegacyEditorButtonActions = function() {
     });
 
 
-    // Toggle UIs to clear out vision
-    const toggleUIBtn = document.getElementById('toggleUIBtn');
-    if (toggleUIBtn) {
-
-        const uiElementsToToggle = [
-            // upper toolbar kept visible (toggle button lives there)
-            document.getElementById('right-elements-panel'),
-            document.getElementById('scene-editor-compass'),
-            document.getElementById('object-controls-panel'),
-            document.querySelector('.environmentBar'),
-            document.getElementById('scenesInsideVREditor'),
-            document.getElementById('assetBrowserToolbar'),
-            document.getElementById('bt_close_file_toolbar'),
-            document.querySelector('.HierarchyToggleStyle'),
-            document.getElementById('scenesList-toggle-btn')
-        ].filter(Boolean); // Filter out nulls if an element doesn't exist
-
-        const elementDisplayStates = new Map();
-
-        // Store the initial, computed display state of each element.
-        uiElementsToToggle.forEach(el => {
-            elementDisplayStates.set(el, window.getComputedStyle(el).display);
-        });
-
-        toggleUIBtn.addEventListener('click', function () {
-            const btn = this;
-            const icon = btn.querySelector('i');
-            const isHiding = btn.dataset.toggle === 'on';
-
-            if (isHiding) {
-                // --- HIDE UI ---
-                btn.classList.add('tw-opacity-40');
-                VRODOS.ui.swapLucideIcon(btn, 'eye-off');
-                btn.dataset.toggle = 'off';
-
-                uiElementsToToggle.forEach(el => el.style.setProperty('display', 'none', 'important'));
-
-                VRODOS.editor.transforms.setVisible(false);
-                if (VRODOS.editor.envir.getDirectorRig()) VRODOS.editor.envir.getDirectorRig().visible = false;
-                if (VRODOS.editor.envir.gridHelper) VRODOS.editor.envir.gridHelper.visible = false;
-                if (VRODOS.editor.envir.axesHelper) VRODOS.editor.envir.axesHelper.visible = false;
-                VRODOS.ui.removeAllCelOutlines();
-                VRODOS.ui.setVisiblityLightHelpingElements(false);
-
-            } else {
-                // --- SHOW UI ---
-                btn.classList.remove('tw-opacity-40');
-                VRODOS.ui.swapLucideIcon(btn, 'eye');
-                btn.dataset.toggle = 'on';
-
-                uiElementsToToggle.forEach(el => {
-                    // Restore the original display style
-                    el.style.removeProperty('display');
-                });
-
-                VRODOS.editor.transforms.setVisible(true);
-                if (VRODOS.editor.envir.gridHelper) VRODOS.editor.envir.gridHelper.visible = true;
-                if (VRODOS.editor.envir.axesHelper) VRODOS.editor.envir.axesHelper.visible = true;
-                const selectedObject = VRODOS.editor.transforms.getRealObject();
-                if (selectedObject) VRODOS.ui.addCelOutline(selectedObject);
-                VRODOS.ui.setVisiblityLightHelpingElements(true);
-
-                if (VRODOS.editor.envir.thirdPersonView || VRODOS.editor.avatarControlsEnabled) {
-                    if (VRODOS.editor.envir.getDirectorRig()) VRODOS.editor.envir.getDirectorRig().visible = false;
-                } else {
-                    if (VRODOS.editor.envir.getDirectorRig()) VRODOS.editor.envir.getDirectorRig().visible = true;
-                }
-            }
-            if (VRODOS.editor.envir.turboResize) VRODOS.editor.envir.turboResize();
-        });
-    }
-
-
     // Drag light or Pawn: Add event listeners
     const allUpperToolbarButtons = document.querySelectorAll('.environmentBar .lightpawnbutton');
 
     [].forEach.call(allUpperToolbarButtons, (col) => {
         col.addEventListener('dragstart', VRODOS.ui.handleLightPawnDragStart, false);
-    });
-};
-
-
-// ==================== Global scope functions ================
-
-VRODOS.ui.setVisiblityLightHelpingElements = function(statusVisibility) {
-
-    VRODOS.editor.envir.scene.traverse((curr_obj) => {
-        if (!curr_obj) return;
-
-        if (curr_obj.category_name === 'lightHelper' || curr_obj.category_name === 'lightTargetSpot')
-            {curr_obj.visible = statusVisibility;}
-
-        if ((curr_obj.category_name === 'lightSun' || curr_obj.category_name === 'lightLamp' || curr_obj.category_name === 'lightSpot') && curr_obj.children[0])
-            {curr_obj.children[0].visible = statusVisibility;}
-
-        if (curr_obj.type === 'CameraHelper') // This is the shadow camera of sun
-            {curr_obj.visible = statusVisibility;}
     });
 };
 
