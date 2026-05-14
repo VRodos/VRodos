@@ -39,6 +39,8 @@
 - Verification: Phase 29 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-14: Phase 30 registry rebuild and scene-root traversal fallback removal implemented.
 - Verification: Phase 30 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: Phase 31 scene bounds calculation consolidation implemented.
+- Verification: Phase 31 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -108,6 +110,7 @@ assets/js/editor/
 - Done: Add non-rebuilding scene-root reads and use them for hierarchy refresh and scene-load player focus instead of `traverseFallback`.
 - Done: Rebuild `sceneRegistry` from direct scene roots and director helper references instead of full-scene traversal.
 - Done: Remove the unused `traverseFallback` branch from `getEditorSceneRoots`; the remaining editor `scene.traverse()` is scene serialization.
+- Done: Route legacy scene bounds helpers through the `sceneRegistry` `Box3` cache and remove throwaway `BoxHelper` bounds construction.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

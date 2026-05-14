@@ -14,12 +14,6 @@ const VRODOS_SCENE_BOUNDS_EXCLUDED_NAMES = Object.freeze([
     'avatarCamera'
 ]);
 
-const VRODOS_LIGHT_BOUND_TYPES = Object.freeze([
-    'PointLight',
-    'PointLightHelper',
-    'SpotLight'
-]);
-
 function removeBoundsHelpers(groupObj) {
     if (!groupObj) {
         return;
@@ -33,34 +27,29 @@ function removeBoundsHelpers(groupObj) {
     });
 }
 
-function createBoundsTarget(groupObj) {
-    if (!groupObj || VRODOS_LIGHT_BOUND_TYPES.includes(groupObj.type)) {
-        const geometryBox = new THREE.BoxGeometry(1, 1, 1);
-        const materialBox = new THREE.MeshBasicMaterial({color: 0x00ff00});
-        return new THREE.Mesh(geometryBox, materialBox);
-    }
-
-    return groupObj;
-}
-
-function createBoxHelper(groupObj) {
-    const boundsTarget = createBoundsTarget(groupObj);
-    const box = new THREE.BoxHelper(boundsTarget, 0xff00ff);
-    box.geometry.computeBoundingBox();
-    box.name = 'bbox';
-
-    return box;
+function isFiniteBounds(bounds) {
+    return Boolean(bounds) &&
+        Number.isFinite(bounds.min.x) &&
+        Number.isFinite(bounds.min.y) &&
+        Number.isFinite(bounds.min.z) &&
+        Number.isFinite(bounds.max.x) &&
+        Number.isFinite(bounds.max.y) &&
+        Number.isFinite(bounds.max.z);
 }
 
 function getObjectBoundingBox(groupObj) {
     removeBoundsHelpers(groupObj);
 
-    const box = createBoxHelper(groupObj);
-    if (!box.geometry.boundingBox) {
+    const registry = VRODOS.editor && VRODOS.editor.sceneRegistry ? VRODOS.editor.sceneRegistry : null;
+    const bounds = registry && typeof registry.getBounds === 'function'
+        ? registry.getBounds(groupObj)
+        : (groupObj && typeof THREE !== 'undefined' ? new THREE.Box3().setFromObject(groupObj) : null);
+
+    if (!isFiniteBounds(bounds)) {
         return null;
     }
 
-    return box.geometry.boundingBox;
+    return bounds.clone();
 }
 
 function isSceneBoundsCandidate(sceneChild) {
@@ -121,7 +110,7 @@ function findBorders(groupObj) {
         return [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)];
     }
 
-    return [boundingBox.min, boundingBox.max];
+    return [boundingBox.min.clone(), boundingBox.max.clone()];
 }
 
 
@@ -138,7 +127,7 @@ function findObjectLimits(groupObj) {
             return getEmptyBounds();
         }
 
-        return [boundingBox.min, boundingBox.max];
+        return [boundingBox.min.clone(), boundingBox.max.clone()];
     } catch (e) {
         console.error('findObjectLimits: could not compute bounds for', groupObj ? groupObj.name : groupObj, e.message);
         return getEmptyBounds();

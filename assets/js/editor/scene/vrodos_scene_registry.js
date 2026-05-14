@@ -80,6 +80,38 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         return candidates;
     }
 
+    function isFiniteBox(bounds) {
+        return Boolean(bounds) &&
+            Number.isFinite(bounds.min.x) &&
+            Number.isFinite(bounds.min.y) &&
+            Number.isFinite(bounds.min.z) &&
+            Number.isFinite(bounds.max.x) &&
+            Number.isFinite(bounds.max.y) &&
+            Number.isFinite(bounds.max.z);
+    }
+
+    function needsLightFallbackBounds(object, bounds) {
+        if (!object || (!object.isLight && !String(object.category_name || '').startsWith('light'))) {
+            return false;
+        }
+
+        return !isFiniteBox(bounds) || bounds.isEmpty();
+    }
+
+    function createUnitBoundsAtObject(object) {
+        if (!object || typeof THREE === 'undefined') return null;
+
+        const center = new THREE.Vector3();
+        object.updateWorldMatrix(true, false);
+        center.setFromMatrixPosition(object.matrixWorld);
+
+        const halfSize = 0.5;
+        return new THREE.Box3(
+            new THREE.Vector3(center.x - halfSize, center.y - halfSize, center.z - halfSize),
+            new THREE.Vector3(center.x + halfSize, center.y + halfSize, center.z + halfSize)
+        );
+    }
+
     const sceneRegistry = VRODOS.editor.sceneRegistry || {
         byUuid: new Map(),
         byName: new Map(),
@@ -257,7 +289,14 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             if (typeof THREE === 'undefined') return null;
 
             target.updateWorldMatrix(true, true);
-            const bounds = new THREE.Box3().setFromObject(target);
+            let bounds = new THREE.Box3().setFromObject(target);
+            if (needsLightFallbackBounds(target, bounds)) {
+                bounds = createUnitBoundsAtObject(target);
+            }
+            if (!isFiniteBox(bounds)) {
+                return null;
+            }
+
             this.boundsCache.set(target, bounds);
             return bounds;
         }
