@@ -23,6 +23,16 @@ class Vrodos_Scene_Model {
 	public ?object $objects = null;
 
 	/**
+	 * Whether the source JSON parsed into a usable scene payload.
+	 */
+	private bool $is_valid = true;
+
+	/**
+	 * Human-readable parse or validation error.
+	 */
+	private string $error_message = '';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string|null $json_string The JSON string to parse.
@@ -39,13 +49,32 @@ class Vrodos_Scene_Model {
 	 * @param string $json_string The JSON string to parse.
 	 */
 	public function from_json( string $json_string ): void {
+		$this->metadata      = null;
+		$this->objects       = null;
+		$this->is_valid      = false;
+		$this->error_message = '';
+
 		$data = json_decode( $json_string );
 
-		if ( json_last_error() === JSON_ERROR_NONE ) {
-			$this->metadata = $data->metadata ?? null;
-			$this->objects  = $data->objects ?? null;
-			$this->normalize_objects();
+		if ( json_last_error() !== JSON_ERROR_NONE ) {
+			$this->error_message = json_last_error_msg();
+			return;
 		}
+
+		if ( ! is_object( $data ) ) {
+			$this->error_message = 'Scene JSON must be an object.';
+			return;
+		}
+
+		if ( ! is_object( $data->objects ?? null ) ) {
+			$this->error_message = 'Scene JSON is missing an objects map.';
+			return;
+		}
+
+		$this->metadata = is_object( $data->metadata ?? null ) ? $data->metadata : (object) [];
+		$this->objects  = $data->objects;
+		$this->is_valid = true;
+		$this->normalize_objects();
 	}
 
 	/**
@@ -55,6 +84,14 @@ class Vrodos_Scene_Model {
 	 */
 	public function to_json(): string {
 		return json_encode( $this, JSON_PRETTY_PRINT );
+	}
+
+	public function is_valid(): bool {
+		return $this->is_valid;
+	}
+
+	public function get_error_message(): string {
+		return $this->error_message !== '' ? $this->error_message : 'Invalid scene JSON.';
 	}
 
 	private function normalize_objects(): void {

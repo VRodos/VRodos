@@ -26,6 +26,14 @@ class VRodos_Scene_AJAX {
 		}
 
 		$scene_id = intval( $_POST['scene_id'] );
+		if ( $scene_id <= 0 ) {
+			wp_send_json_error( 'Invalid scene id.', 400 );
+		}
+
+		$scene_json = isset( $_POST['scene_json'] ) ? wp_unslash( $_POST['scene_json'] ) : '';
+		if ( ! is_string( $scene_json ) || trim( $scene_json ) === '' ) {
+			wp_send_json_error( 'Missing scene JSON.', 400 );
+		}
 
 		// Save screenshot
 		if ( isset( $_POST['scene_screenshot'] ) ) {
@@ -41,17 +49,20 @@ class VRodos_Scene_AJAX {
 		}
 
 		// Create a new scene model and populate it from the posted JSON.
-		$scene_model = new Vrodos_Scene_Model( wp_unslash( $_POST['scene_json'] ) );
+		$scene_model = new Vrodos_Scene_Model( $scene_json );
+		if ( ! $scene_model->is_valid() ) {
+			wp_send_json_error( 'Invalid scene JSON: ' . $scene_model->get_error_message(), 400 );
+		}
 
 		// Save json of scene
 		$scene_new_info = [
-			'ID'           => $scene_id, 
-			'post_title'   => $_POST['scene_title'], 
+			'ID'           => $scene_id,
+			'post_title'   => sanitize_text_field( wp_unslash( $_POST['scene_title'] ?? '' ) ),
 			'post_content' => $scene_model->to_json()
 		];
 
 		$res = wp_update_post( $scene_new_info );
-		update_post_meta( $scene_id, 'vrodos_scene_caption', $_POST['scene_caption'] );
+		update_post_meta( $scene_id, 'vrodos_scene_caption', sanitize_textarea_field( wp_unslash( $_POST['scene_caption'] ?? '' ) ) );
 
 		echo $res != 0 ? 'true' : 'false';
 		wp_die();

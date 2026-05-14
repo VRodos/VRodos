@@ -27,7 +27,23 @@ VRODOS.api.saveScene = function() {
 		method: 'POST',
 		body: postdata
 	})
-	.then( (response) => response.text())
+	.then( (response) => response.text().then((text) => {
+		let payload = null;
+		try {
+			payload = JSON.parse(text);
+		} catch (err) {
+			payload = null;
+		}
+
+		if (!response.ok || (payload && payload.success === false)) {
+			const message = payload && payload.data
+				? (typeof payload.data === 'string' ? payload.data : JSON.stringify(payload.data))
+				: (text || `HTTP ${response.status}`);
+			throw new Error(message);
+		}
+
+		return payload || text;
+	}))
 	.then( (data) => {
 
 		const save_scene_btn       = document.getElementById( "save-scene-button" );
@@ -61,6 +77,5 @@ VRODOS.api.saveScene = function() {
 
 	return VRODOS.api.sceneSavePromise;
 }
-
 
 
