@@ -6,6 +6,98 @@ VRODOS.ui = VRODOS.ui || {};
 
 VRODOS.api.newScreenshotData = null;
 VRODOS.api.isSceneIconManuallySelected = false;
+VRODOS.ui.sceneSnapshotControlsBound = false;
+
+VRODOS.ui.bindSceneSnapshotControls = function() {
+    if (VRODOS.ui.sceneSnapshotControlsBound) {
+        return true;
+    }
+
+    bindScreenshotControls();
+    bindSceneJsonDialogControls();
+
+    VRODOS.ui.sceneSnapshotControlsBound = true;
+    return true;
+};
+
+function bindScreenshotControls() {
+    const takeScreenshotButton = document.getElementById('takeScreenshotBtn');
+    if (takeScreenshotButton) {
+        takeScreenshotButton.addEventListener('click', () => {
+            VRODOS.api.takeScreenshot();
+            VRODOS.api.isSceneIconManuallySelected = false;
+        });
+    }
+
+    const manualScreenshotInput = document.getElementById('vrodos_scene_sshot_manual_select');
+    if (manualScreenshotInput) {
+        manualScreenshotInput.addEventListener('change', function() {
+            readLocalImageAsSceneIcon(this);
+        });
+    }
+}
+
+function readLocalImageAsSceneIcon(input) {
+    if (!input.files || !input.files[0]) {
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        VRODOS.api.newScreenshotData = e.target.result;
+        VRODOS.ui.setSceneScreenshotPreview(VRODOS.api.newScreenshotData);
+        VRODOS.api.isSceneIconManuallySelected = true;
+        VRODOS.api.persistSceneScreenshot();
+    };
+
+    reader.readAsDataURL(input.files[0]);
+}
+
+function bindSceneJsonDialogControls() {
+    const toggleButton = document.getElementById('toggleViewSceneContentBtn');
+    if (toggleButton) {
+        toggleButton.addEventListener('click', () => {
+            const dialog = document.getElementById('sceneJsonContent');
+            if (!dialog) return;
+
+            if (dialog.open) {
+                dialog.close();
+            } else {
+                VRODOS.ui.refreshSceneJsonTextarea();
+                dialog.showModal();
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        });
+    }
+
+    const closeButton = document.getElementById('closeJsonBtn');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            const dialog = document.getElementById('sceneJsonContent');
+            if (dialog) dialog.close();
+        });
+    }
+
+    const copyButton = document.getElementById('copyJsonBtn');
+    if (copyButton) {
+        copyButton.addEventListener('click', () => {
+            const textarea = document.getElementById('vrodos_scene_json_input');
+            VRODOS.utils.copyTextareaText(textarea)
+                .then(() => {
+                    VRODOS.ui.showTemporaryButtonSuccess('copyJsonBtn', 'Copied!');
+                })
+                .catch((error) => {
+                    if (textarea) {
+                        textarea.select();
+                        textarea.setSelectionRange(0, textarea.value.length);
+                    }
+                    VRODOS.ui.showTemporaryButtonWarning('copyJsonBtn', 'Press Ctrl+C');
+                    console.warn('VRodos: failed to copy scene JSON to clipboard.', error);
+                });
+        });
+    }
+}
 
 VRODOS.ui.refreshSceneJsonTextarea = function() {
     const textarea = document.getElementById('vrodos_scene_json_input');

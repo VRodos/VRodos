@@ -180,66 +180,9 @@ VRODOS.ui.bindLegacyEditorButtonActions = function() {
         VRODOS.ui.bindSceneListControls();
     }
 
-    // Take SCREENSHOT OF SCENE
-    document.getElementById("takeScreenshotBtn").addEventListener("click", () => {
-        VRODOS.api.takeScreenshot();
-        VRODOS.api.isSceneIconManuallySelected = false;
-    });
-
-    // Select image as Scene icon
-    document.getElementById("vrodos_scene_sshot_manual_select").addEventListener("change", function () {
-        readLocalImageAsSceneIcon(this);
-    });
-
-    function readLocalImageAsSceneIcon(input) {
-
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-
-            reader.onload = function (e) {
-                VRODOS.api.newScreenshotData = e.target.result;
-                VRODOS.ui.setSceneScreenshotPreview(VRODOS.api.newScreenshotData);
-                VRODOS.api.isSceneIconManuallySelected = true;
-                VRODOS.api.persistSceneScreenshot();
-            };
-
-            reader.readAsDataURL(input.files[0]);
-        }
+    if (typeof VRODOS.ui.bindSceneSnapshotControls === 'function') {
+        VRODOS.ui.bindSceneSnapshotControls();
     }
-
-
-    // Toggle JSON viewer dialog
-    document.getElementById('toggleViewSceneContentBtn').addEventListener('click', () => {
-        const dialog = document.getElementById('sceneJsonContent');
-        if (dialog.open) {
-            dialog.close();
-        } else {
-            // Refresh textarea with the exact exported scene payload
-            VRODOS.ui.refreshSceneJsonTextarea();
-            dialog.showModal();
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-    });
-
-    // Close JSON dialog via close button
-    document.getElementById('closeJsonBtn').addEventListener('click', () => {
-        document.getElementById('sceneJsonContent').close();
-    });
-
-    // Copy JSON to clipboard
-    document.getElementById('copyJsonBtn').addEventListener('click', () => {
-        const textarea = document.getElementById('vrodos_scene_json_input');
-        VRODOS.utils.copyTextareaText(textarea)
-            .then(() => {
-                VRODOS.ui.showTemporaryButtonSuccess('copyJsonBtn', 'Copied!');
-            })
-            .catch((error) => {
-                textarea.select();
-                textarea.setSelectionRange(0, textarea.value.length);
-                VRODOS.ui.showTemporaryButtonWarning('copyJsonBtn', 'Press Ctrl+C');
-                console.warn('VRodos: failed to copy scene JSON to clipboard.', error);
-            });
-    });
 
     const immerseSceneInfoBtn = document.getElementById('toggleImmerseSceneInfoBtn');
     const immerseSceneInfoDialog = document.getElementById('immerseSceneInfoDialog');
