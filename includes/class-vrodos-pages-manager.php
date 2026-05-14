@@ -87,38 +87,45 @@ class VRodos_Pages_Manager {
 
 	public static function vrodos_create_pages() {
 		ob_start();
+		$auto_add_pages_to_menu_removed = remove_action( 'transition_post_status', '_wp_auto_add_pages_to_menu', 10 );
 
-		$pages = [
-			'vrodos-project-manager-page' => [
-				'title' => 'VROdos - Project Manager',
-				'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-project-manager-template.php' ),
-			],
-			'vrodos-assets-list-page' => [
-				'title' => 'VROdos - Assets List',
-				'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-assets-list-template.php' ),
-			],
-			'vrodos-edit-3d-scene-page' => [
-				'title' => 'VROdos - Scene 3D Editor',
-				'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-edit-3D-scene-template.php' ),
-			],
-			'vrodos-asset-editor-page' => [
-				'title' => 'VROdos - Asset Editor',
-				'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-asset-editor-template.php' ),
-			],
-		];
+		try {
+			$pages = [
+				'vrodos-project-manager-page' => [
+					'title' => 'VROdos - Project Manager',
+					'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-project-manager-template.php' ),
+				],
+				'vrodos-assets-list-page' => [
+					'title' => 'VROdos - Assets List',
+					'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-assets-list-template.php' ),
+				],
+				'vrodos-edit-3d-scene-page' => [
+					'title' => 'VROdos - Scene 3D Editor',
+					'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-edit-3D-scene-template.php' ),
+				],
+				'vrodos-asset-editor-page' => [
+					'title' => 'VROdos - Asset Editor',
+					'template' => VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-asset-editor-template.php' ),
+				],
+			];
 
-		foreach ( $pages as $slug => $page ) {
-			if ( ! self::vrodos_get_page_by_slug( $slug ) ) {
-				$new_page_id = wp_insert_post(
-					['post_title'     => $page['title'], 'post_type'      => 'page', 'post_name'      => $slug, 'comment_status' => 'closed', 'ping_status'    => 'closed', 'post_content'   => '', 'post_status'    => 'publish', 'post_author'    => 1, 'menu_order'     => 0]
-				);
+			foreach ( $pages as $slug => $page ) {
+				if ( ! self::vrodos_get_page_by_slug( $slug ) ) {
+					$new_page_id = wp_insert_post(
+						['post_title'     => $page['title'], 'post_type'      => 'page', 'post_name'      => $slug, 'comment_status' => 'closed', 'ping_status'    => 'closed', 'post_content'   => '', 'post_status'    => 'publish', 'post_author'    => 1, 'menu_order'     => 0]
+					);
 
-				if ( $new_page_id && ! is_wp_error( $new_page_id ) ) {
-					update_post_meta( $new_page_id, '_wp_page_template', $page['template'] );
+					if ( $new_page_id && ! is_wp_error( $new_page_id ) ) {
+						update_post_meta( $new_page_id, '_wp_page_template', $page['template'] );
+					}
 				}
 			}
+		} finally {
+			if ( $auto_add_pages_to_menu_removed ) {
+				add_action( 'transition_post_status', '_wp_auto_add_pages_to_menu', 10, 3 );
+			}
+			ob_end_clean();
 		}
-		ob_end_clean();
 	}
 
 	public static function vrodos_fx_admin_notice_activation_hook() {
