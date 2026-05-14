@@ -160,10 +160,11 @@ VRODOS.editor.TransformCommand = class {
         // r181 stability: Force deep matrix and visibility update
         obj.updateMatrix();
         obj.updateMatrixWorld(true);
-        obj.visible = true;
-        obj.traverse((node) => {
-            node.visible = true;
-        });
+        if (typeof VRODOS.utils.setObjectTreeVisible === 'function') {
+            VRODOS.utils.setObjectTreeVisible(obj, true);
+        } else {
+            obj.visible = true;
+        }
         VRODOS.editor.sceneRegistry.invalidateBounds(obj);
         VRODOS.editor.transforms.syncProxyToObject(obj);
 
@@ -237,10 +238,11 @@ VRODOS.editor.DeleteObjectCommand = class {
 
     undo() {
         // Restore 3D object to scene
-        this.object3D.visible = true;
-        this.object3D.traverse((node) => {
-            node.visible = true;
-        });
+        if (typeof VRODOS.utils.setObjectTreeVisible === 'function') {
+            VRODOS.utils.setObjectTreeVisible(this.object3D, true);
+        } else {
+            this.object3D.visible = true;
+        }
 
         VRODOS.editor.objectFactory.addSceneObject(this.object3D, {
             selectable: true,

@@ -55,6 +55,8 @@
 - Verification: Phase 35 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-14: Phase 36 editor light artifact module extraction implemented.
 - Verification: Phase 36 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: Phase 37 undo visibility restoration helper consolidation implemented.
+- Verification: Phase 37 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -132,6 +134,7 @@ assets/js/editor/
 - Done: Centralize Sun shadow-helper creation and restore missing light targets/shadow helpers during light delete undo.
 - Done: Centralize editor light helper/target/shadow-helper removal and disposal for delete flows.
 - Done: Move editor light artifact helpers out of `vrodos_namespace.js` into `scene/vrodos_scene_light_artifacts.js` with explicit WordPress script dependencies.
+- Done: Centralize undo object-tree visibility restoration in `scene/vrodos_scene_disposal.js` and make the undo engine depend on the lifecycle helper module.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

@@ -288,7 +288,7 @@ class VRodos_Asset_Manager {
       // General Scripts
       ['vrodos_asset_editor_scripts', VRodos_Path_Manager::editor_js_url( 'vrodos_asset_editor_scripts.js' ), ['vrodos_namespace']],
       ['vrodos_scripts', VRodos_Path_Manager::editor_js_url( 'vrodos_scripts.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
-      ['vrodos_UndoEngine', VRodos_Path_Manager::editor_js_url( 'vrodos_UndoEngine.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts']],
+      ['vrodos_UndoEngine', VRodos_Path_Manager::editor_js_url( 'vrodos_UndoEngine.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_scene_disposal']],
       ['vrodos_scene_settings_schema', VRodos_Path_Manager::editor_js_url( 'vrodos_scene_settings_schema.js' ), ['vrodos_namespace', 'vrodos_runtime_settings_contract']],
       ['vrodos_ScenePersistence', VRodos_Path_Manager::editor_js_url( 'vrodos_ScenePersistence.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_scene_settings_schema']],
       ['stats-gl', 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js'],

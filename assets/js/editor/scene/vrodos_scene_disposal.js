@@ -12,6 +12,23 @@ VRODOS.utils = VRODOS.utils || {};
         value.dispose();
     }
 
+    VRODOS.utils.setObjectTreeVisible = function(object, visible) {
+        if (!object) {
+            return null;
+        }
+
+        const nextVisible = Boolean(visible);
+        if (typeof object.traverse === 'function' && object.children && object.children.length > 0) {
+            object.traverse((node) => {
+                node.visible = nextVisible;
+            });
+            return object;
+        }
+
+        object.visible = nextVisible;
+        return object;
+    };
+
     VRODOS.utils.disposeObject = function(object) {
         if (!object || typeof object.traverse !== 'function') {
             return;
@@ -46,4 +63,3 @@ VRODOS.utils = VRODOS.utils || {};
         });
     };
 })();
-
