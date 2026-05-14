@@ -123,44 +123,14 @@ VRODOS.ui.onMouseUp = function(event) {
 
     VRODOS.ui.onLeftMouseClick(event);
 };
-VRODOS.ui.addCelOutline = function(object) {
-    if (!object || !object.traverse) return;
-
-    // Cel-shaded outline technique
-    object.traverse((node) => {
-        if (node.isMesh && !node.vrodos_internal_helper) {
-            const outlineMaterial = new THREE.MeshBasicMaterial({
-                color: 0x3b82f6, // tw-blue-500
-                side: THREE.BackSide,
-                transparent: true,
-                opacity: 0.8
-            });
-
-            const outlineMesh = new THREE.Mesh(node.geometry, outlineMaterial);
-            outlineMesh.name = "vrodos_cel_outline";
-            outlineMesh.scale.multiplyScalar(1.05);
-            outlineMesh.vrodos_internal_helper = true;
-            node.add(outlineMesh);
-        }
-    });
-};
-
-VRODOS.ui.removeAllCelOutlines = function() {
-    if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
-
-    VRODOS.editor.envir.scene.traverse((node) => {
-        if (node.name === "vrodos_cel_outline") {
-            if (node.parent) {
-                node.parent.remove(node);
-            }
-        }
-    });
-};
-
 VRODOS.ui.setSelectionIndicator = function(object) {
     if (!object) return;
-    VRODOS.ui.removeAllCelOutlines();
-    VRODOS.ui.addCelOutline(object);
+    if (typeof VRODOS.ui.removeAllCelOutlines === 'function') {
+        VRODOS.ui.removeAllCelOutlines();
+    }
+    if (typeof VRODOS.ui.addCelOutline === 'function') {
+        VRODOS.ui.addCelOutline(object);
+    }
 };
 
 VRODOS.utils.findParentSceneObject = function(object) {
