@@ -199,12 +199,10 @@ VRODOS.loader.LightsPawnLoader = class {
         sphere.name = "SunSphere";
         light.add(sphere);
 
-        const helper = new THREE.DirectionalLightHelper(light, 3, color);
-        helper.isLightHelper = true;
-        helper.name = VRODOS.utils.getEditorLightObjectName('helper', light.name);
-        helper.category_name = 'lightHelper';
-        helper.parentLightName = name;
-        helper.vrodos_internal_helper = true;
+        const helper = VRODOS.utils.createEditorLightHelper(light, {
+            size: 3,
+            color
+        });
         this.registerLoadedObject(light, { renderReason: 'sun-loaded' });
 
         const targetSpot = new THREE.Object3D();
@@ -267,12 +265,10 @@ VRODOS.loader.LightsPawnLoader = class {
         sphere.name = "LampSphere";
         light.add(sphere);
 
-        const helper = new THREE.PointLightHelper(light, 1, color);
-        helper.isLightHelper = true;
-        helper.name = VRODOS.utils.getEditorLightObjectName('helper', light.name);
-        helper.category_name = 'lightHelper';
-        helper.parentLightName = light.name;
-        helper.vrodos_internal_helper = true;
+        const helper = VRODOS.utils.createEditorLightHelper(light, {
+            size: 1,
+            color
+        });
         VRODOS.editor.envir.scene.add(helper);
     }
 
@@ -316,12 +312,9 @@ VRODOS.loader.LightsPawnLoader = class {
 
         VRODOS.utils.linkEditorLightTarget(light, targetSpot);
 
-        const helper = new THREE.SpotLightHelper(light, color);
-        helper.isLightHelper = true;
-        helper.name = VRODOS.utils.getEditorLightObjectName('helper', light.name);
-        helper.category_name = 'lightHelper';
-        helper.parentLightName = light.name;
-        helper.vrodos_internal_helper = true;
+        const helper = VRODOS.utils.createEditorLightHelper(light, {
+            color
+        });
         targetSpot.parentLightHelper = helper;
 
         this.registerLoadedObject(targetSpot, { renderReason: 'spot-target-loaded' });

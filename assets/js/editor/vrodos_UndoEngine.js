@@ -277,18 +277,29 @@ VRODOS.editor.DeleteObjectCommand = class {
     restoreLightAssociates() {
         const light = this.object3D;
         const name = light.name;
+        const scene = VRODOS.editor.envir.scene;
         
         // Re-create Helper if it's missing (it was disposed)
-        let helper = VRODOS.utils.getEditorLightObject('helper', name, VRODOS.editor.envir.scene);
+        let helper = VRODOS.utils.getEditorLightObject('helper', name, scene);
         if (!helper) {
-            if (light.type === 'PointLight') helper = new THREE.PointLightHelper(light, 1);
-            else if (light.type === 'SpotLight') helper = new THREE.SpotLightHelper(light);
-            else if (light.type === 'DirectionalLight') helper = new THREE.DirectionalLightHelper(light, 1);
-            
+            helper = VRODOS.utils.createEditorLightHelper(light, { size: 1 });
             if (helper) {
-                helper.name = VRODOS.utils.getEditorLightObjectName('helper', name);
-                VRODOS.editor.envir.scene.add(helper);
+                scene.add(helper);
             }
+        } else {
+            VRODOS.utils.configureEditorLightHelper(helper, light);
+        }
+
+        const target = VRODOS.utils.getEditorLightObject('target', name, scene);
+        if (target && ['DirectionalLight', 'SpotLight'].includes(light.type)) {
+            VRODOS.utils.linkEditorLightTarget(light, target);
+            if (helper) target.parentLightHelper = helper;
+        }
+
+        if (typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
+            VRODOS.utils.syncEditorLightArtifacts(target || light, scene);
+        } else if (helper && typeof helper.update === 'function') {
+            helper.update();
         }
     }
 

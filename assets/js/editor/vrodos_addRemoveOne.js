@@ -478,12 +478,10 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     sunSphere.name = "SunSphere";
     lightSun.add(sunSphere);
 
-    const lightSunHelper = new THREE.DirectionalLightHelper(lightSun, 3, 0xcccccc);
-    lightSunHelper.isLightHelper = true;
-    lightSunHelper.name = VRODOS.utils.getEditorLightObjectName('helper', lightSun.name);
-    lightSunHelper.category_name = 'lightHelper';
-    lightSunHelper.parentLightName = lightSun.name;
-    lightSunHelper.vrodos_internal_helper = true;
+    const lightSunHelper = VRODOS.utils.createEditorLightHelper(lightSun, {
+        size: 3,
+        color: 0xcccccc
+    });
 
     // Target spot: Where Sun points
     const lightTargetSpot = new THREE.Object3D();
@@ -579,12 +577,10 @@ VRODOS.api.createLightLamp = function(nameModel, addedAt) {
     lampSphere.name = "LampSphere";
     lightLamp.add(lampSphere);
 
-    const lightLampHelper = new THREE.PointLightHelper(lightLamp, 1, 0x555500);
-    lightLampHelper.isLightHelper = true;
-    lightLampHelper.name = VRODOS.utils.getEditorLightObjectName('helper', lightLamp.name);
-    lightLampHelper.category_name = 'lightHelper';
-    lightLampHelper.parentLightName = lightLamp.name;
-    lightLampHelper.vrodos_internal_helper = true;
+    const lightLampHelper = VRODOS.utils.createEditorLightHelper(lightLamp, {
+        size: 1,
+        color: 0x555500
+    });
 
     const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
     trs_tmp.translation[1] += 3;
@@ -649,12 +645,9 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
 
     VRODOS.utils.linkEditorLightTarget(lightSpot, lightTargetSpot);
 
-    const lightSpotHelper = new THREE.SpotLightHelper(lightSpot, 0xffaa00);
-    lightSpotHelper.isLightHelper = true;
-    lightSpotHelper.name = VRODOS.utils.getEditorLightObjectName('helper', lightSpot.name);
-    lightSpotHelper.category_name = 'lightHelper';
-    lightSpotHelper.parentLightName = lightSpot.name;
-    lightSpotHelper.vrodos_internal_helper = true;
+    const lightSpotHelper = VRODOS.utils.createEditorLightHelper(lightSpot, {
+        color: 0xffaa00
+    });
     lightTargetSpot.parentLightHelper = lightSpotHelper;
 
     const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;

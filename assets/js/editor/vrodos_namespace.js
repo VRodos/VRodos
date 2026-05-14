@@ -501,6 +501,36 @@ VRODOS.utils.getEditorLightObject = function(kind, lightName, scene) {
         : null;
 };
 
+VRODOS.utils.configureEditorLightHelper = function(helper, light) {
+    if (!helper || !light) return helper || null;
+
+    helper.isLightHelper = true;
+    helper.name = VRODOS.utils.getEditorLightObjectName('helper', light.name);
+    helper.category_name = 'lightHelper';
+    helper.parentLightName = light.name;
+    helper.vrodos_internal_helper = true;
+    return helper;
+};
+
+VRODOS.utils.createEditorLightHelper = function(light, options) {
+    if (!light || typeof THREE === 'undefined') return null;
+
+    const opts = options || {};
+    const size = Number.isFinite(Number(opts.size)) ? Number(opts.size) : 1;
+    const color = opts.color;
+    let helper = null;
+
+    if (light.type === 'PointLight') {
+        helper = new THREE.PointLightHelper(light, size, color);
+    } else if (light.type === 'SpotLight') {
+        helper = new THREE.SpotLightHelper(light, color);
+    } else if (light.type === 'DirectionalLight') {
+        helper = new THREE.DirectionalLightHelper(light, size, color);
+    }
+
+    return VRODOS.utils.configureEditorLightHelper(helper, light);
+};
+
 VRODOS.utils.linkEditorLightTarget = function(light, targetObject) {
     if (!light || !targetObject || !['DirectionalLight', 'SpotLight'].includes(light.type)) {
         return false;
@@ -587,6 +617,7 @@ VRODOS.utils.updateEditorLightHelper = function(light, scene) {
 
     const helper = VRODOS.utils.getEditorLightObject('helper', light.name, scene);
     if (helper && typeof helper.update === 'function') {
+        VRODOS.utils.configureEditorLightHelper(helper, light);
         helper.update();
     }
 
@@ -610,7 +641,11 @@ VRODOS.utils.syncEditorLightArtifacts = function(object, scene) {
     }
 
     target.updateMatrixWorld(true);
-    return VRODOS.utils.updateEditorLightHelper(light, scene);
+    const helper = VRODOS.utils.updateEditorLightHelper(light, scene);
+    if (target.category_name === 'lightTargetSpot' && helper) {
+        target.parentLightHelper = helper;
+    }
+    return helper;
 };
 
 VRODOS.syncLocalizedData();
