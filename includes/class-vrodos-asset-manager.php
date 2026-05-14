@@ -297,7 +297,7 @@ class VRodos_Asset_Manager {
       ['ajax-script_rename_game', VRodos_Path_Manager::editor_ajax_js_url( 'rename_project.js' ), ['vrodos_namespace']],
       // 3D Editor & Viewer Scripts
       ['vrodos_AssetViewer_3D_kernel', VRodos_Path_Manager::editor_js_url( 'vrodos_AssetViewer_3D_kernel.js' ), ['vrodos_namespace']],
-      ['vrodos_3d_editor_buttons_drags', VRodos_Path_Manager::editor_js_url( 'vrodos_3d_editor_buttons_drags.js' ), ['vrodos_namespace', 'vrodos_editor_services', 'vrodos_addRemoveOne', 'vrodos_ui_helpers', 'vrodos_scene_snapshot_ui', 'vrodos_floating_panels']],
+      ['vrodos_3d_editor_buttons_drags', VRodos_Path_Manager::editor_js_url( 'vrodos_3d_editor_buttons_drags.js' ), ['vrodos_namespace', 'vrodos_editor_services', 'vrodos_addRemoveOne', 'ajax-script_savescene', 'vrodos_ui_helpers', 'vrodos_scene_snapshot_ui', 'vrodos_floating_panels']],
       ['vrodos_scene_editor_ui_controller', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_scene_editor_ui_controller.js' ), ['vrodos_namespace', 'vrodos_3d_editor_buttons_drags']],
       ['vrodos_editor_environment_helpers', VRodos_Path_Manager::editor_js_url( 'render/vrodos_editor_environment_helpers.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
       ['vrodos_3d_editor_environmentals', VRodos_Path_Manager::editor_js_url( 'vrodos_3d_editor_environmentals.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_editor_environment_helpers']],

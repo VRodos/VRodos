@@ -176,3 +176,67 @@ VRODOS.api.saveScene = function() {
 
 	return VRODOS.api.sceneSavePromise;
 }
+
+VRODOS.api.clickSceneSaveButton = function() {
+	const saveButton = document.getElementById( 'save-scene-button' );
+	if (saveButton && typeof saveButton.click === 'function') {
+		saveButton.click();
+		return;
+	}
+
+	VRODOS.api.saveChanges({ force: true });
+}
+
+VRODOS.api.saveSceneEventHandler = function(e) {
+	if (!e || !e.type) {
+		return;
+	}
+
+	VRODOS.ui = VRODOS.ui || {};
+	VRODOS.ui.mapActions = VRODOS.ui.mapActions || {};
+
+	if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
+		return;
+	}
+
+	if (e.type === 'modificationPendingSave') {
+		VRODOS.ui.mapActions[e.type] = true;
+	}
+
+	if (e.type === 'mouseup') {
+		VRODOS.ui.mapActions[e.type] = true;
+
+		if (VRODOS.ui.mapActions.mouseup && VRODOS.ui.mapActions.modificationPendingSave) {
+			VRODOS.api.clickSceneSaveButton();
+			VRODOS.ui.mapActions = {};
+		}
+	}
+}
+
+VRODOS.api.commitPendingSceneSave = function() {
+	if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
+		return;
+	}
+
+	VRODOS.ui = VRODOS.ui || {};
+	VRODOS.ui.mapActions = VRODOS.ui.mapActions || {};
+	VRODOS.ui.mapActions.modificationPendingSave = true;
+	VRODOS.api.clickSceneSaveButton();
+	VRODOS.ui.mapActions = {};
+}
+
+VRODOS.api.triggerAutoSave = function() {
+	if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) {
+		return;
+	}
+
+	if (VRODOS.editor.envir.isSceneLoading) {
+		return;
+	}
+
+	// For non-canvas actions like lil-gui finish-change, insert/delete, and property edits,
+	// save directly instead of synthesizing a mouseup event. Synthetic mouseup bubbled back
+	// into lil-gui's own onMouseUp handler and caused recursive autosave loops.
+	VRODOS.editor.envir.scene.dispatchEvent({ type: 'modificationPendingSave' });
+	VRODOS.api.commitPendingSceneSave();
+}

@@ -12,6 +12,7 @@
 - 2026-05-14: Phase 8 floating panel UI extraction implemented.
 - 2026-05-14: Phase 9 shared UI helper extraction implemented.
 - 2026-05-14: Phase 10 scene snapshot UI extraction implemented.
+- 2026-05-14: Phase 11 autosave handler ownership moved to the scene save AJAX module.
 - Verification: JS syntax checks passed; PHP syntax check for `includes/class-vrodos-asset-manager.php` passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
@@ -59,6 +60,7 @@ assets/js/editor/
 - Done: Move floating panel clamp/show/hide/drag/resize helpers to `ui/vrodos_floating_panels.js`.
 - Done: Move Lucide icon swapping, focus-without-scroll, clipboard fallback helpers, and temporary button feedback to `ui/vrodos_ui_helpers.js`.
 - Done: Move scene JSON refresh, screenshot state, screenshot preview, current scene thumbnail updates, and offscreen screenshot capture to `ui/vrodos_scene_snapshot_ui.js`.
+- Done: Move `saveSceneEventHandler`, `commitPendingSceneSave`, and `triggerAutoSave` into `ajax/vrodos_save_scene_ajax.js` so scene save and autosave behavior share one owner.
 - Reduce fallback `scene.traverse()` usage in selection and hot interaction paths by relying on `sceneRegistry`.
 
 ## Test Plan
