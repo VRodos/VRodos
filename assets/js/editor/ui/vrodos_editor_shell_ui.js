@@ -163,32 +163,52 @@ VRODOS.ui = VRODOS.ui || {};
         }
     }
 
-    VRODOS.ui.setVisiblityLightHelpingElements = function(statusVisibility) {
-        if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) {
-            return;
-        }
+    function getLightHelperVisibilityTargets() {
+        const targets = new Set();
+        const envir = VRODOS.editor.envir || null;
+        const scene = envir ? envir.scene : null;
+        const registry = VRODOS.editor.sceneRegistry || null;
+        const selectableRoots = registry && typeof registry.getSelectableRoots === 'function'
+            ? registry.getSelectableRoots({ rebuildIfEmpty: false })
+            : [];
 
-        VRODOS.editor.envir.scene.traverse((currentObject) => {
+        function addLightVisibilityTarget(currentObject) {
             if (!currentObject) return;
 
-            if (currentObject.category_name === 'lightHelper' || currentObject.category_name === 'lightTargetSpot') {
-                currentObject.visible = statusVisibility;
+            const category = currentObject.category_name || '';
+            if (category === 'lightHelper' || category === 'lightTargetSpot' || currentObject.type === 'CameraHelper') {
+                targets.add(currentObject);
+                return;
             }
 
             if (
                 (
-                    currentObject.category_name === 'lightSun' ||
-                    currentObject.category_name === 'lightLamp' ||
-                    currentObject.category_name === 'lightSpot'
+                    category === 'lightSun' ||
+                    category === 'lightLamp' ||
+                    category === 'lightSpot'
                 ) &&
                 currentObject.children[0]
             ) {
-                currentObject.children[0].visible = statusVisibility;
+                targets.add(currentObject.children[0]);
             }
+        }
 
-            if (currentObject.type === 'CameraHelper') {
-                currentObject.visible = statusVisibility;
-            }
+        selectableRoots.forEach(addLightVisibilityTarget);
+
+        if (scene && Array.isArray(scene.children)) {
+            scene.children.forEach(addLightVisibilityTarget);
+        }
+
+        return Array.from(targets);
+    }
+
+    VRODOS.ui.setVisiblityLightHelpingElements = function(statusVisibility) {
+        if (!VRODOS.editor.envir) {
+            return;
+        }
+
+        getLightHelperVisibilityTargets().forEach((currentObject) => {
+            currentObject.visible = statusVisibility;
         });
     };
 

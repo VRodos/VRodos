@@ -23,7 +23,8 @@
 - 2026-05-14: Phase 19 scene canvas event binding extraction implemented.
 - 2026-05-14: Phase 20 scene editor UI controller orchestration implemented.
 - 2026-05-14: Phase 21 raycast selectable cache fallback hardening implemented.
-- Verification: Phase 21 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: Phase 22 light/helper visibility traversal reduction implemented.
+- Verification: Phase 22 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -81,7 +82,8 @@ assets/js/editor/
 - Done: Move scene canvas drop/dragover binding, mouse selection/focus/context handlers, autosave event binding, property panel context-menu suppression, and light/pawn dragstart wiring to `ui/vrodos_scene_canvas_events_ui.js`.
 - Done: Make `ui/vrodos_scene_editor_ui_controller.js` the direct UI subsystem orchestrator and reduce `vrodos_3d_editor_buttons_drags.js` to a compatibility alias.
 - Done: Remove routine full-scene traversal fallback from raycast selection by using non-rebuilding `sceneRegistry` and selectable cache reads in hot paths.
-- Continue reducing non-hot `scene.traverse()` fallbacks where focused modules can own explicit caches.
+- Done: Replace Clear Vision light/helper visibility traversal with cache-backed target collection from `sceneRegistry` and direct scene helper children.
+- Continue reducing remaining `scene.traverse()` fallbacks where focused modules can own explicit caches.
 
 ## Test Plan
 
