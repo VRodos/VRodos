@@ -531,6 +531,65 @@ VRODOS.utils.createEditorLightHelper = function(light, options) {
     return VRODOS.utils.configureEditorLightHelper(helper, light);
 };
 
+VRODOS.utils.createEditorLightVisualSphere = function(name, options) {
+    if (typeof THREE === 'undefined') return null;
+
+    const opts = options || {};
+    const radius = Math.max(0, vrodosEditorLightNumber(opts.radius, 1));
+    const widthSegments = Math.max(3, Math.round(vrodosEditorLightNumber(opts.widthSegments, 16)));
+    const heightSegments = Math.max(2, Math.round(vrodosEditorLightNumber(opts.heightSegments, 8)));
+    const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(radius, widthSegments, heightSegments),
+        new THREE.MeshBasicMaterial({ color: opts.color })
+    );
+
+    sphere.isSelectableMesh = false;
+    sphere.name = name || 'LightSphere';
+    if (opts.rotation && typeof sphere.rotation.set === 'function') {
+        sphere.rotation.set(
+            vrodosEditorLightNumber(opts.rotation[0], 0),
+            vrodosEditorLightNumber(opts.rotation[1], 0),
+            vrodosEditorLightNumber(opts.rotation[2], 0)
+        );
+    }
+    return sphere;
+};
+
+VRODOS.utils.createEditorLightTarget = function(light, options) {
+    if (!light || typeof THREE === 'undefined') return null;
+
+    const opts = options || {};
+    const target = new THREE.Object3D();
+    const targetVisual = VRODOS.utils.createEditorLightVisualSphere('LightTargetSphere', {
+        radius: vrodosEditorLightNumber(opts.radius, 0.5),
+        color: opts.color,
+        widthSegments: opts.widthSegments,
+        heightSegments: opts.heightSegments
+    });
+    const position = Array.isArray(opts.position) ? opts.position : [0, 0, 0];
+    const helper = opts.helper || null;
+
+    if (targetVisual) {
+        target.add(targetVisual);
+    }
+
+    target.isSelectableMesh = true;
+    target.name = VRODOS.utils.getEditorLightObjectName('target', light.name);
+    target.category_name = 'lightTargetSpot';
+    target.isLightTargetSpot = true;
+    target.isLight = false;
+    target.addedAt = opts.addedAt;
+    target.position.set(
+        vrodosEditorLightNumber(position[0], 0),
+        vrodosEditorLightNumber(position[1], 0),
+        vrodosEditorLightNumber(position[2], 0)
+    );
+    target.parentLight = light;
+    target.parentLightHelper = helper;
+    VRODOS.utils.linkEditorLightTarget(light, target);
+    return target;
+};
+
 VRODOS.utils.linkEditorLightTarget = function(light, targetObject) {
     if (!light || !targetObject || !['DirectionalLight', 'SpotLight'].includes(light.type)) {
         return false;

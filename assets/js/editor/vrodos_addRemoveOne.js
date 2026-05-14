@@ -470,12 +470,10 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     const hexcol = 0xffffff;
 
     // Add Sun Helper (visual representation in editor)
-    const sunSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(1, 16, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
-    );
-    sunSphere.isSelectableMesh = false;
-    sunSphere.name = "SunSphere";
+    const sunSphere = VRODOS.utils.createEditorLightVisualSphere('SunSphere', {
+        radius: 1,
+        color: 0xffffff
+    });
     lightSun.add(sunSphere);
 
     const lightSunHelper = VRODOS.utils.createEditorLightHelper(lightSun, {
@@ -484,24 +482,11 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     });
 
     // Target spot: Where Sun points
-    const lightTargetSpot = new THREE.Object3D();
-    lightTargetSpot.add(new THREE.Mesh(
-        new THREE.SphereGeometry(0.5, 16, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
-    ));
-    lightTargetSpot.children[0].isSelectableMesh = false;
-
-    lightTargetSpot.isSelectableMesh = true;
-    lightTargetSpot.name = VRODOS.utils.getEditorLightObjectName('target', lightSun.name);
-    lightTargetSpot.category_name = "lightTargetSpot";
-    lightTargetSpot.isLightTargetSpot = true;
-    lightTargetSpot.isLight = false;
-    lightTargetSpot.addedAt = addedAt;
-    lightTargetSpot.position.set(0, 0, 0);
-    lightTargetSpot.parentLight = lightSun;
-    lightTargetSpot.parentLightHelper = lightSunHelper;
-
-    VRODOS.utils.linkDirectionalLightTarget(lightSun, lightTargetSpot);
+    const lightTargetSpot = VRODOS.utils.createEditorLightTarget(lightSun, {
+        addedAt,
+        color: 0xffffff,
+        helper: lightSunHelper
+    });
 
     // Add shadow camera helper
     const lightSunShadowhelper = new THREE.CameraHelper(lightSun.shadow.camera);
@@ -569,12 +554,10 @@ VRODOS.api.createLightLamp = function(nameModel, addedAt) {
     const hexcol = "0xffff00";
 
     // Add Lamp Helper visual representation
-    const lampSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(0.5, 16, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffff00 })
-    );
-    lampSphere.isSelectableMesh = false;
-    lampSphere.name = "LampSphere";
+    const lampSphere = VRODOS.utils.createEditorLightVisualSphere('LampSphere', {
+        radius: 0.5,
+        color: 0xffff00
+    });
     lightLamp.add(lampSphere);
 
     const lightLampHelper = VRODOS.utils.createEditorLightHelper(lightLamp, {
@@ -618,37 +601,21 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
     lightSpot.isLight = true;
     lightSpot.addedAt = addedAt;
 
-    const lightTargetSpot = new THREE.Object3D();
-    lightTargetSpot.add(new THREE.Mesh(
-        new THREE.SphereGeometry(0.5, 16, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffaa00 })
-    ));
-    lightTargetSpot.children[0].isSelectableMesh = false;
-
-    const lampSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(1, 16, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffff00 })
-    );
-    lampSphere.rotation.set(Math.PI / 2, 0, 0);
-    lampSphere.isSelectableMesh = false;
-    lampSphere.name = "SpotSphere";
+    const lampSphere = VRODOS.utils.createEditorLightVisualSphere('SpotSphere', {
+        radius: 1,
+        color: 0xffff00,
+        rotation: [Math.PI / 2, 0, 0]
+    });
     lightSpot.add(lampSphere);
-
-    lightTargetSpot.isSelectableMesh = true;
-    lightTargetSpot.name = VRODOS.utils.getEditorLightObjectName('target', lightSpot.name);
-    lightTargetSpot.category_name = "lightTargetSpot";
-    lightTargetSpot.isLightTargetSpot = true;
-    lightTargetSpot.isLight = false;
-    lightTargetSpot.addedAt = addedAt;
-    lightTargetSpot.position.set(0, 0, 0);
-    lightTargetSpot.parentLight = lightSpot;
-
-    VRODOS.utils.linkEditorLightTarget(lightSpot, lightTargetSpot);
 
     const lightSpotHelper = VRODOS.utils.createEditorLightHelper(lightSpot, {
         color: 0xffaa00
     });
-    lightTargetSpot.parentLightHelper = lightSpotHelper;
+    const lightTargetSpot = VRODOS.utils.createEditorLightTarget(lightSpot, {
+        addedAt,
+        color: 0xffaa00,
+        helper: lightSpotHelper
+    });
 
     const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
     trs_tmp.translation[1] += 3;
@@ -691,13 +658,11 @@ VRODOS.api.createLightAmbient = function(nameModel, addedAt) {
     lightAmbient.isLight = true;
     lightAmbient.addedAt = addedAt;
 
-    const lampSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(1, 16, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffff00 })
-    );
-    lampSphere.rotation.set(Math.PI / 2, 0, 0);
-    lampSphere.isSelectableMesh = false;
-    lampSphere.name = "ambientSphere";
+    const lampSphere = VRODOS.utils.createEditorLightVisualSphere('ambientSphere', {
+        radius: 1,
+        color: 0xffff00,
+        rotation: [Math.PI / 2, 0, 0]
+    });
     lightAmbient.add(lampSphere);
 
     const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;

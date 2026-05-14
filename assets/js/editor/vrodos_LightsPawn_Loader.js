@@ -191,12 +191,10 @@ VRODOS.loader.LightsPawnLoader = class {
         light.shadowCameraRight = resource.shadowCameraRight;
         light.shadowBias = resource.shadowBias;
 
-        const sphere = new THREE.Mesh(
-            new THREE.SphereGeometry(1, 16, 8),
-            new THREE.MeshBasicMaterial({ color })
-        );
-        sphere.isSelectableMesh = false;
-        sphere.name = "SunSphere";
+        const sphere = VRODOS.utils.createEditorLightVisualSphere('SunSphere', {
+            radius: 1,
+            color
+        });
         light.add(sphere);
 
         const helper = VRODOS.utils.createEditorLightHelper(light, {
@@ -205,22 +203,12 @@ VRODOS.loader.LightsPawnLoader = class {
         });
         this.registerLoadedObject(light, { renderReason: 'sun-loaded' });
 
-        const targetSpot = new THREE.Object3D();
-        targetSpot.add(new THREE.Mesh(
-            new THREE.SphereGeometry(0.5, 16, 8),
-            new THREE.MeshBasicMaterial({ color })
-        ));
-        targetSpot.children[0].isSelectableMesh = false;
-        targetSpot.isSelectableMesh = true;
-        targetSpot.name = VRODOS.utils.getEditorLightObjectName('target', light.name);
-        targetSpot.category_name = "lightTargetSpot";
-        targetSpot.isLightTargetSpot = true;
-        targetSpot.addedAt = resource.addedAt;
-        targetSpot.position.set(tp[0], tp[1], tp[2]);
-        targetSpot.parentLight = light;
-        targetSpot.parentLightHelper = helper;
-
-        VRODOS.utils.linkDirectionalLightTarget(light, targetSpot);
+        const targetSpot = VRODOS.utils.createEditorLightTarget(light, {
+            addedAt: resource.addedAt,
+            color,
+            helper,
+            position: tp
+        });
         this.registerLoadedObject(targetSpot, { renderReason: 'sun-target-loaded' });
         VRODOS.editor.envir.scene.add(helper);
 
@@ -257,12 +245,10 @@ VRODOS.loader.LightsPawnLoader = class {
 
         this.registerLoadedObject(light, { renderReason: 'lamp-loaded' });
 
-        const sphere = new THREE.Mesh(
-            new THREE.SphereGeometry(0.5, 16, 8),
-            new THREE.MeshBasicMaterial({ color })
-        );
-        sphere.isSelectableMesh = false;
-        sphere.name = "LampSphere";
+        const sphere = VRODOS.utils.createEditorLightVisualSphere('LampSphere', {
+            radius: 0.5,
+            color
+        });
         light.add(sphere);
 
         const helper = VRODOS.utils.createEditorLightHelper(light, {
@@ -287,35 +273,22 @@ VRODOS.loader.LightsPawnLoader = class {
         light.locked = resource.locked;
         light.castShadow = true;
 
-        const sphere = new THREE.Mesh(
-            new THREE.SphereGeometry(1, 16, 8),
-            new THREE.MeshBasicMaterial({ color })
-        );
-        sphere.isSelectableMesh = false;
-        sphere.name = "SpotSphere";
+        const sphere = VRODOS.utils.createEditorLightVisualSphere('SpotSphere', {
+            radius: 1,
+            color
+        });
         light.add(sphere);
 
         const tp = Array.isArray(resource.targetposition) ? resource.targetposition : [0, 0, 0];
-        const targetSpot = new THREE.Object3D();
-        targetSpot.add(new THREE.Mesh(
-            new THREE.SphereGeometry(0.5, 16, 8),
-            new THREE.MeshBasicMaterial({ color })
-        ));
-        targetSpot.children[0].isSelectableMesh = false;
-        targetSpot.isSelectableMesh = true;
-        targetSpot.name = VRODOS.utils.getEditorLightObjectName('target', light.name);
-        targetSpot.category_name = "lightTargetSpot";
-        targetSpot.isLightTargetSpot = true;
-        targetSpot.addedAt = resource.addedAt;
-        targetSpot.position.set(tp[0], tp[1], tp[2]);
-        targetSpot.parentLight = light;
-
-        VRODOS.utils.linkEditorLightTarget(light, targetSpot);
-
         const helper = VRODOS.utils.createEditorLightHelper(light, {
             color
         });
-        targetSpot.parentLightHelper = helper;
+        const targetSpot = VRODOS.utils.createEditorLightTarget(light, {
+            addedAt: resource.addedAt,
+            color,
+            helper,
+            position: tp
+        });
 
         this.registerLoadedObject(targetSpot, { renderReason: 'spot-target-loaded' });
         this.registerLoadedObject(light, { renderReason: 'spot-loaded' });
@@ -341,12 +314,10 @@ VRODOS.loader.LightsPawnLoader = class {
         light.addedAt = resource.addedAt;
         light.locked = resource.locked;
 
-        const sphere = new THREE.Mesh(
-            new THREE.SphereGeometry(1, 16, 8),
-            new THREE.MeshBasicMaterial({ color: helperColor })
-        );
-        sphere.isSelectableMesh = false;
-        sphere.name = "ambientSphere";
+        const sphere = VRODOS.utils.createEditorLightVisualSphere('ambientSphere', {
+            radius: 1,
+            color: helperColor
+        });
         light.add(sphere);
 
         this.registerLoadedObject(light, { renderReason: 'ambient-loaded' });
