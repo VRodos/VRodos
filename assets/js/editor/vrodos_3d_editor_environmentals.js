@@ -848,6 +848,36 @@ class vrodos_3d_editor_environmentals {
         return group;
     }
 
+    getDirectorGroundGuideTargetRoots() {
+        const registry = VRODOS.editor && VRODOS.editor.sceneRegistry ? VRODOS.editor.sceneRegistry : null;
+        if (registry && typeof registry.getSelectableRoots === 'function') {
+            const roots = registry.getSelectableRoots({ rebuildIfEmpty: false });
+            if (roots.length > 0) {
+                return roots;
+            }
+        }
+
+        if (this.selectableMeshes && this.selectableMeshes.size > 0) {
+            return Array.from(this.selectableMeshes);
+        }
+
+        return this.scene && Array.isArray(this.scene.children)
+            ? this.scene.children
+            : [];
+    }
+
+    addDirectorGroundGuideMeshTarget(node, targets) {
+        if (!node || !node.isMesh) {
+            return;
+        }
+
+        if (vrodosDirectorGroundGuideObjectExcluded(node)) {
+            return;
+        }
+
+        targets.push(node);
+    }
+
     refreshDirectorGroundGuideTargets(now) {
         const targets = [];
 
@@ -857,16 +887,17 @@ class vrodos_3d_editor_environmentals {
             return;
         }
 
-        this.scene.traverse((node) => {
-            if (!node || !node.isMesh) {
+        this.getDirectorGroundGuideTargetRoots().forEach((root) => {
+            if (!root) {
                 return;
             }
 
-            if (vrodosDirectorGroundGuideObjectExcluded(node)) {
+            if (typeof root.traverse === 'function') {
+                root.traverse((node) => this.addDirectorGroundGuideMeshTarget(node, targets));
                 return;
             }
 
-            targets.push(node);
+            this.addDirectorGroundGuideMeshTarget(root, targets);
         });
 
         this.directorGroundGuideTargets = targets;
