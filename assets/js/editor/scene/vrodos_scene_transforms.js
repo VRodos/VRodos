@@ -61,28 +61,57 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         return window.vrodosGizmoProxy;
     }
 
+    function getTransformHelper(controls) {
+        return VRODOS.editor.transform_controls_helper || (controls ? controls._root : null) || null;
+    }
+
+    function prepareHelperNode(node) {
+        if (!node) return;
+
+        node.frustumCulled = false;
+        node.renderOrder = Math.max(node.renderOrder || 0, 10000);
+    }
+
+    const transforms = VRODOS.editor.transforms || {};
+
+    transforms.prepareHelper = function(helper) {
+        if (!helper) return null;
+
+        const helperNodes = [];
+        prepareHelperNode(helper);
+        helper.vrodos_internal_helper = true;
+
+        if (typeof helper.traverse === 'function') {
+            helper.traverse((child) => {
+                if (child === helper) {
+                    return;
+                }
+                prepareHelperNode(child);
+                helperNodes.push(child);
+            });
+        }
+
+        helper._vrodosTransformHelperNodes = helperNodes;
+        helper._vrodosTransformHelperPrepared = true;
+        return helper;
+    };
+
     function forceControlsVisible() {
         const controls = VRODOS.editor.transform_controls;
         if (!controls) return;
 
-        const helper = VRODOS.editor.transform_controls_helper || controls._root || null;
+        const helper = getTransformHelper(controls);
         controls.enabled = true;
 
         if (helper) {
-            helper.visible = Boolean(controls.object);
-            helper.frustumCulled = false;
-            helper.renderOrder = Math.max(helper.renderOrder || 0, 10000);
-            if (typeof helper.traverse === 'function') {
-                helper.traverse((child) => {
-                    child.frustumCulled = false;
-                    child.renderOrder = Math.max(child.renderOrder || 0, 10000);
-                });
+            if (!helper._vrodosTransformHelperPrepared) {
+                transforms.prepareHelper(helper);
             }
+            helper.visible = Boolean(controls.object);
             helper.updateMatrixWorld(true);
         }
     }
 
-    const transforms = VRODOS.editor.transforms || {};
     transforms.ensureVisible = forceControlsVisible;
     const dragState = transforms.dragState || {
         oldTRS: null,

@@ -142,19 +142,6 @@ function vrodosPatchTransformControlsAttach(controls, sceneRoot) {
     controls._vrodosAttachPatched = true;
 }
 
-function vrodosPrepareTransformControlsHelper(helper) {
-    if (!helper || typeof helper.traverse !== 'function') {
-        return;
-    }
-
-    helper.frustumCulled = false;
-    helper.renderOrder = Math.max(helper.renderOrder || 0, 10000);
-    helper.traverse((child) => {
-        child.frustumCulled = false;
-        child.renderOrder = Math.max(child.renderOrder || 0, 10000);
-    });
-}
-
 /**
  * Initialize the 3D environment and UI
  */
@@ -182,7 +169,9 @@ function initVrodosEditor() {
         VRODOS.editor.transform_controls;
     VRODOS.editor.transform_controls_helper.name = 'myTransformControls';
     VRODOS.editor.transform_controls_helper.vrodos_internal_helper = true;
-    vrodosPrepareTransformControlsHelper(VRODOS.editor.transform_controls_helper);
+    if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.prepareHelper === 'function') {
+        VRODOS.editor.transforms.prepareHelper(VRODOS.editor.transform_controls_helper);
+    }
     vrodosPatchTransformControlsAttach(VRODOS.editor.transform_controls, VRODOS.editor.envir.scene);
     VRODOS.editor.transforms.bindControls();
     VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
