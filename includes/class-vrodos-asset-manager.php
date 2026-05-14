@@ -140,6 +140,7 @@ class VRodos_Asset_Manager {
 
 		// Scripts from original enqueue_scene_editor_scripts
 		wp_enqueue_script( 'vrodos_namespace' );
+		wp_enqueue_script( 'vrodos_scene_light_artifacts' );
 		wp_enqueue_script( 'vrodos_editor_core_utils' );
 		wp_enqueue_script( 'vrodos_editor_diagnostics' );
 		wp_enqueue_script( 'vrodos_scripts' );
@@ -280,13 +281,14 @@ class VRodos_Asset_Manager {
 		$scripts = [
       // Foundation
       ['vrodos_namespace', VRodos_Path_Manager::editor_js_url( 'vrodos_namespace.js' )],
+      ['vrodos_scene_light_artifacts', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_light_artifacts.js' ), ['vrodos_namespace', 'vrodos_three_vendor_bundle']],
       ['vrodos_editor_core_utils', VRodos_Path_Manager::editor_js_url( 'core/vrodos_editor_core_utils.js' ), ['vrodos_namespace']],
       ['vrodos_editor_diagnostics', VRodos_Path_Manager::editor_js_url( 'core/vrodos_editor_diagnostics.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
       ['vrodos_runtime_settings_contract', VRodos_Path_Manager::runtime_master_url( 'lib/vrodos-runtime-settings-contract.generated.js' ), ['vrodos_namespace']],
       // General Scripts
       ['vrodos_asset_editor_scripts', VRodos_Path_Manager::editor_js_url( 'vrodos_asset_editor_scripts.js' ), ['vrodos_namespace']],
       ['vrodos_scripts', VRodos_Path_Manager::editor_js_url( 'vrodos_scripts.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
-      ['vrodos_UndoEngine', VRodos_Path_Manager::editor_js_url( 'vrodos_UndoEngine.js' ), ['vrodos_namespace']],
+      ['vrodos_UndoEngine', VRodos_Path_Manager::editor_js_url( 'vrodos_UndoEngine.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts']],
       ['vrodos_scene_settings_schema', VRodos_Path_Manager::editor_js_url( 'vrodos_scene_settings_schema.js' ), ['vrodos_namespace', 'vrodos_runtime_settings_contract']],
       ['vrodos_ScenePersistence', VRodos_Path_Manager::editor_js_url( 'vrodos_ScenePersistence.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_scene_settings_schema']],
       ['stats-gl', 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js'],
@@ -308,21 +310,21 @@ class VRodos_Asset_Manager {
       ['vrodos_editor_environment_helpers', VRodos_Path_Manager::editor_js_url( 'render/vrodos_editor_environment_helpers.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
       ['vrodos_3d_editor_environmentals', VRodos_Path_Manager::editor_js_url( 'vrodos_3d_editor_environmentals.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_editor_environment_helpers']],
       ['vrodos_scene_registry', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_registry.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_three_vendor_bundle']],
-      ['vrodos_scene_transforms', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_transforms.js' ), ['vrodos_namespace', 'vrodos_scene_registry', 'vrodos_three_vendor_bundle']],
-      ['vrodos_scene_selection', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_selection.js' ), ['vrodos_namespace', 'vrodos_scene_registry', 'vrodos_scene_transforms']],
+      ['vrodos_scene_transforms', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_transforms.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_scene_registry', 'vrodos_three_vendor_bundle']],
+      ['vrodos_scene_selection', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_selection.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_scene_registry', 'vrodos_scene_transforms']],
       ['vrodos_scene_object_factory', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_object_factory.js' ), ['vrodos_namespace', 'vrodos_scene_registry', 'vrodos_scene_selection']],
       ['vrodos_editor_services', VRodos_Path_Manager::editor_js_url( 'vrodos_editor_services.js' ), ['vrodos_namespace', 'vrodos_scene_registry', 'vrodos_scene_transforms', 'vrodos_scene_selection', 'vrodos_scene_object_factory', 'vrodos_three_vendor_bundle']],
       ['vrodos_editor_render_loop', VRodos_Path_Manager::editor_js_url( 'render/vrodos_editor_render_loop.js' ), ['vrodos_namespace', 'vrodos_editor_services']],
       ['vrodos_keyButtons', VRodos_Path_Manager::editor_js_url( 'vrodos_keyButtons.js' ), ['vrodos_namespace']],
-      ['vrodos_rayCasters', VRodos_Path_Manager::editor_js_url( 'vrodos_rayCasters.js' ), ['vrodos_namespace', 'vrodos_editor_services']],
-      ['vrodos_auxControlers', VRodos_Path_Manager::editor_js_url( 'vrodos_auxControlers.js' ), ['vrodos_namespace', 'vrodos_editor_services']],
+      ['vrodos_rayCasters', VRodos_Path_Manager::editor_js_url( 'vrodos_rayCasters.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_editor_services']],
+      ['vrodos_auxControlers', VRodos_Path_Manager::editor_js_url( 'vrodos_auxControlers.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_editor_services']],
       ['vrodos_BordersFinder', VRodos_Path_Manager::editor_js_url( 'vrodos_BordersFinder.js' ), ['vrodos_namespace']],
       ['vrodos_loader_object_factories', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_object_factories.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_three_vendor_bundle']],
       ['vrodos_LoaderMulti', VRodos_Path_Manager::editor_js_url( 'vrodos_LoaderMulti.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_loader_object_factories', 'vrodos_scene_settings_schema', 'vrodos_editor_services']],
-      ['vrodos_LightsPawn_Loader', VRodos_Path_Manager::editor_js_url( 'vrodos_LightsPawn_Loader.js' ), ['vrodos_namespace', 'vrodos_editor_services']],
+      ['vrodos_LightsPawn_Loader', VRodos_Path_Manager::editor_js_url( 'vrodos_LightsPawn_Loader.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_editor_services']],
       ['vrodos_movePointerLocker', VRodos_Path_Manager::editor_js_url( 'vrodos_movePointerLocker.js' ), ['vrodos_namespace']],
       ['vrodos_scene_disposal', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_disposal.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
-      ['vrodos_addRemoveOne', VRodos_Path_Manager::editor_js_url( 'vrodos_addRemoveOne.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_editor_services', 'vrodos_scene_disposal']],
+      ['vrodos_addRemoveOne', VRodos_Path_Manager::editor_js_url( 'vrodos_addRemoveOne.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_editor_core_utils', 'vrodos_editor_services', 'vrodos_scene_disposal']],
       ['vrodos_ui_helpers', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_ui_helpers.js' ), ['vrodos_namespace']],
       ['vrodos_scene_snapshot_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_scene_snapshot_ui.js' ), ['vrodos_namespace', 'vrodos_ui_helpers', 'vrodos_ScenePersistence', 'vrodos_three_vendor_bundle']],
       ['vrodos_scene_canvas_drop_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_scene_canvas_drop_ui.js' ), ['vrodos_namespace', 'vrodos_editor_services', 'vrodos_rayCasters', 'vrodos_addRemoveOne']],
