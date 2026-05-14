@@ -22,7 +22,8 @@
 - 2026-05-14: Phase 18 compile dialog UI binding extraction implemented.
 - 2026-05-14: Phase 19 scene canvas event binding extraction implemented.
 - 2026-05-14: Phase 20 scene editor UI controller orchestration implemented.
-- Verification: JS syntax checks passed; PHP syntax check for `includes/class-vrodos-asset-manager.php` passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: Phase 21 raycast selectable cache fallback hardening implemented.
+- Verification: Phase 21 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -79,7 +80,8 @@ assets/js/editor/
 - Done: Move compile/options dialog open, proceed, cancel, close, status reset, and save-before-compile bindings to `ui/vrodos_compile_dialog_ui.js`.
 - Done: Move scene canvas drop/dragover binding, mouse selection/focus/context handlers, autosave event binding, property panel context-menu suppression, and light/pawn dragstart wiring to `ui/vrodos_scene_canvas_events_ui.js`.
 - Done: Make `ui/vrodos_scene_editor_ui_controller.js` the direct UI subsystem orchestrator and reduce `vrodos_3d_editor_buttons_drags.js` to a compatibility alias.
-- Reduce fallback `scene.traverse()` usage in selection and hot interaction paths by relying on `sceneRegistry`.
+- Done: Remove routine full-scene traversal fallback from raycast selection by using non-rebuilding `sceneRegistry` and selectable cache reads in hot paths.
+- Continue reducing non-hot `scene.traverse()` fallbacks where focused modules can own explicit caches.
 
 ## Test Plan
 

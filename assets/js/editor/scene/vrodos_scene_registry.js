@@ -169,7 +169,10 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             return resolveObject(objectOrId);
         },
 
-        getSelectableRoots() {
+        getSelectableRoots(options) {
+            const opts = Object.assign({
+                rebuildIfEmpty: true
+            }, options || {});
             const envir = getEnvir();
             if (this.selectableRoots.size > 0) {
                 const roots = Array.from(this.selectableRoots);
@@ -184,6 +187,10 @@ VRODOS.editorScene = VRODOS.editorScene || {};
                     : Array.from(envir.selectableMeshes);
                 this.selectableRoots = new Set(roots);
                 return roots;
+            }
+
+            if (opts.rebuildIfEmpty === false) {
+                return [];
             }
 
             this.rebuild();

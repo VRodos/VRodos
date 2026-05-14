@@ -810,36 +810,30 @@ initPersistentPropertyListeners();
  * @returns {Array}
  */
 VRODOS.ui.getActiveMeshes = function() {
-    const registryMeshes = typeof VRODOS.utils.getEditorSceneRoots === 'function'
-        ? VRODOS.utils.getEditorSceneRoots(VRODOS.editor.envir.scene, {
-            filterSelectable: true,
-            includeDirector: true,
-            traverseFallback: false
-        })
-        : VRODOS.editor.sceneRegistry.getSelectableRoots();
+    const registry = VRODOS.editor.sceneRegistry;
+    const envir = VRODOS.editor.envir;
+    const registryMeshes = registry && typeof registry.getSelectableRoots === 'function'
+        ? registry.getSelectableRoots({ rebuildIfEmpty: false })
+        : [];
     if (registryMeshes.length > 0) {
         return registryMeshes;
     }
 
     // Fast path: use the pre-built cache maintained by add/remove operations
-    if (VRODOS.editor.envir.selectableMeshes && VRODOS.editor.envir.selectableMeshes.size > 0) {
-        if (VRODOS.editor.envir.selectableMeshesDirty ||
-            !Array.isArray(VRODOS.editor.envir.selectableMeshesArray) ||
-            VRODOS.editor.envir.selectableMeshesArray.length !== VRODOS.editor.envir.selectableMeshes.size) {
-            VRODOS.editor.envir.selectableMeshesArray = typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
-                ? VRODOS.utils.dedupeEditorSceneRoots(Array.from(VRODOS.editor.envir.selectableMeshes), { reason: 'raycast-selectable-cache', log: false })
-                : Array.from(VRODOS.editor.envir.selectableMeshes);
-            VRODOS.editor.envir.selectableMeshesDirty = false;
+    if (envir && envir.selectableMeshes && envir.selectableMeshes.size > 0) {
+        if (envir.selectableMeshesDirty ||
+            !Array.isArray(envir.selectableMeshesArray) ||
+            envir.selectableMeshesArray.length !== envir.selectableMeshes.size) {
+            envir.selectableMeshesArray = typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
+                ? VRODOS.utils.dedupeEditorSceneRoots(Array.from(envir.selectableMeshes), { reason: 'raycast-selectable-cache', log: false })
+                : Array.from(envir.selectableMeshes);
+            envir.selectableMeshesDirty = false;
         }
 
-        return VRODOS.editor.envir.selectableMeshesArray;
+        return envir.selectableMeshesArray;
     }
-    // Fallback: cache not yet populated (scene still loading)
-    const fallback = [];
-    VRODOS.editor.envir.scene.traverse(c => { if (c.isSelectableMesh) fallback.push(c); });
-    return typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
-        ? VRODOS.utils.dedupeEditorSceneRoots(fallback, { reason: 'raycast-traverse-fallback', log: false })
-        : fallback;
+
+    return [];
 }
 
 
