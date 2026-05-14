@@ -4,6 +4,34 @@ window.VRODOS = window.VRODOS || {};
 VRODOS.ui = VRODOS.ui || {};
 
 (function initVrodosSceneEditorUiController() {
+    const subsystemBinders = [
+        'bindCompileDialogControls',
+        'bindEditorShellControls',
+        'bindSceneListControls',
+        'bindSceneSnapshotControls',
+        'bindImmerseSceneInfoControls',
+        'bindEditorToolbarControls',
+        'bindSceneCanvasEventControls'
+    ];
+
+    function bindSceneEditorSubsystems() {
+        let didBindAll = true;
+
+        subsystemBinders.forEach((binderName) => {
+            if (typeof VRODOS.ui[binderName] !== 'function') {
+                console.warn(`VRodos: scene editor UI binder ${binderName} is not available.`);
+                didBindAll = false;
+                return;
+            }
+
+            if (VRODOS.ui[binderName]() === false) {
+                didBindAll = false;
+            }
+        });
+
+        return didBindAll;
+    }
+
     const controller = VRODOS.ui.sceneEditorController || {
         isBound: false,
         requiredElementIds: [
@@ -28,21 +56,16 @@ VRODOS.ui = VRODOS.ui || {};
                 return false;
             }
 
-            if (typeof VRODOS.ui.bindLegacyEditorButtonActions !== 'function') {
-                console.warn('VRodos: legacy scene editor UI binder is not available.');
-                return false;
-            }
-
-            VRODOS.ui.bindLegacyEditorButtonActions();
+            bindSceneEditorSubsystems();
             this.isBound = true;
             return true;
         }
     };
 
     VRODOS.ui.sceneEditorController = controller;
+    VRODOS.ui.bindSceneEditorSubsystems = bindSceneEditorSubsystems;
 
     VRODOS.ui.loadButtonActions = function() {
         return controller.bind();
     };
 })();
-

@@ -21,6 +21,7 @@
 - 2026-05-14: Phase 17 editor toolbar UI extraction implemented.
 - 2026-05-14: Phase 18 compile dialog UI binding extraction implemented.
 - 2026-05-14: Phase 19 scene canvas event binding extraction implemented.
+- 2026-05-14: Phase 20 scene editor UI controller orchestration implemented.
 - Verification: JS syntax checks passed; PHP syntax check for `includes/class-vrodos-asset-manager.php` passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
@@ -77,6 +78,7 @@ assets/js/editor/
 - Done: Move save/undo/redo, pause, auto-rotate, first-person preview, transform mode/axis, 2D/3D, and object-properties panel helpers to `ui/vrodos_editor_toolbar_ui.js`.
 - Done: Move compile/options dialog open, proceed, cancel, close, status reset, and save-before-compile bindings to `ui/vrodos_compile_dialog_ui.js`.
 - Done: Move scene canvas drop/dragover binding, mouse selection/focus/context handlers, autosave event binding, property panel context-menu suppression, and light/pawn dragstart wiring to `ui/vrodos_scene_canvas_events_ui.js`.
+- Done: Make `ui/vrodos_scene_editor_ui_controller.js` the direct UI subsystem orchestrator and reduce `vrodos_3d_editor_buttons_drags.js` to a compatibility alias.
 - Reduce fallback `scene.traverse()` usage in selection and hot interaction paths by relying on `sceneRegistry`.
 
 ## Test Plan
