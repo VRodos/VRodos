@@ -528,9 +528,12 @@ VRODOS.api.finalizeSceneLoad = function() {
         VRODOS.editor.envir.applyEditorPerformanceProfile(true);
     }
 
-    // Update light helpers without disabling Three.js frustum culling on every mesh.
-    VRODOS.editor.envir.scene.traverse((obj) => {
-        if (obj.light != undefined && typeof obj.update === 'function') {
+    // Light helpers are scene-level objects, so avoid walking every loaded asset subtree.
+    const sceneChildren = VRODOS.editor.envir.scene && Array.isArray(VRODOS.editor.envir.scene.children)
+        ? VRODOS.editor.envir.scene.children
+        : [];
+    sceneChildren.forEach((obj) => {
+        if (obj && obj.light !== undefined && typeof obj.update === 'function') {
             obj.update();
         }
     });
