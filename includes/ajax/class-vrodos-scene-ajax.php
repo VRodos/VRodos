@@ -61,11 +61,19 @@ class VRodos_Scene_AJAX {
 			'post_content' => $scene_model->to_json()
 		];
 
-		$res = wp_update_post( $scene_new_info );
+		$res = wp_update_post( $scene_new_info, true );
+		if ( is_wp_error( $res ) ) {
+			wp_send_json_error( 'Scene save failed: ' . $res->get_error_message(), 500 );
+		}
+		if ( ! $res ) {
+			wp_send_json_error( 'Scene save failed.', 500 );
+		}
+
 		update_post_meta( $scene_id, 'vrodos_scene_caption', sanitize_textarea_field( wp_unslash( $_POST['scene_caption'] ?? '' ) ) );
 
-		echo $res != 0 ? 'true' : 'false';
-		wp_die();
+		wp_send_json_success( [
+			'scene_id' => $scene_id,
+		] );
 	}
 
 	/**

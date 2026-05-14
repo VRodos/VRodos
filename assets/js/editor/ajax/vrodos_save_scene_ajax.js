@@ -28,21 +28,22 @@ VRODOS.api.saveScene = function() {
 		body: postdata
 	})
 	.then( (response) => response.text().then((text) => {
+		const trimmedText = String(text || '').trim();
 		let payload = null;
 		try {
-			payload = JSON.parse(text);
+			payload = JSON.parse(trimmedText);
 		} catch (err) {
 			payload = null;
 		}
 
-		if (!response.ok || (payload && payload.success === false)) {
+		if (!response.ok || trimmedText === 'false' || trimmedText === '0' || (payload && payload.success === false)) {
 			const message = payload && payload.data
 				? (typeof payload.data === 'string' ? payload.data : JSON.stringify(payload.data))
-				: (text || `HTTP ${response.status}`);
+				: (trimmedText || `HTTP ${response.status}`);
 			throw new Error(message);
 		}
 
-		return payload || text;
+		return payload || trimmedText;
 	}))
 	.then( (data) => {
 
@@ -77,5 +78,4 @@ VRODOS.api.saveScene = function() {
 
 	return VRODOS.api.sceneSavePromise;
 }
-
 
