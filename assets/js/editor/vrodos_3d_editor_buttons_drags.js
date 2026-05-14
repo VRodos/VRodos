@@ -176,73 +176,9 @@ VRODOS.ui.bindLegacyEditorButtonActions = function() {
         if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
-    // Scenes List Toolbar close button
-    document.getElementById("scenesList-toggle-btn").addEventListener("click", function () {
-        const wrapper = document.getElementById("scenesDrawerWrapper");
-        const btn = document.getElementById("scenesList-toggle-btn");
-
-        if (btn.classList.contains("scenesListToggleOn")) {
-            btn.classList.add("scenesListToggleOff");
-            btn.classList.remove("scenesListToggleOn");
-            VRODOS.ui.swapLucideIcon(this, 'chevron-up');
-            wrapper.classList.add("closed-drawer");
-        } else {
-            btn.classList.add("scenesListToggleOn");
-            btn.classList.remove("scenesListToggleOff");
-            VRODOS.ui.swapLucideIcon(this, 'chevron-down');
-            wrapper.classList.remove("closed-drawer");
-        }
-
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    });
-
-    // ── Scene Reorder Drag-and-Drop ──
-    (function() {
-        const container = document.getElementById('scenesInsideVREditor');
-        if (!container) return;
-        let dragItem = null;
-
-        container.addEventListener('dragstart', (e) => {
-            const card = e.target.closest('.SceneCardContainer[draggable]');
-            if (!card) return;
-            dragItem = card;
-            card.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('application/vrodos-scene-reorder', 'true');
-        });
-
-        container.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            const card = e.target.closest('.SceneCardContainer[draggable]');
-            if (!card || card === dragItem) return;
-            const rect = card.getBoundingClientRect();
-            const midX = rect.left + rect.width / 2;
-            if (e.clientX < midX) {
-                container.insertBefore(dragItem, card);
-            } else {
-                container.insertBefore(dragItem, card.nextSibling);
-            }
-        });
-
-        container.addEventListener('dragend', () => {
-            if (dragItem) dragItem.classList.remove('dragging');
-            dragItem = null;
-            // Update number badges
-            container.querySelectorAll('.SceneCardContainer[draggable] .scene-order-badge').forEach((badge, i) => {
-                badge.textContent = i + 1;
-            });
-            // Save new order via AJAX
-            const formData = new FormData();
-            formData.append('action', 'vrodos_reorder_scenes_action');
-            const nonceField = document.querySelector('[name="post_nonce_field"]');
-            if (nonceField) formData.append('nonce', nonceField.value);
-            container.querySelectorAll('.SceneCardContainer[draggable]').forEach((card) => {
-                formData.append('scene_ids[]', card.dataset.sceneId);
-            });
-            fetch(VRODOS.utils.getAjaxUrl(), { method: 'POST', body: formData });
-        });
-    })();
+    if (typeof VRODOS.ui.bindSceneListControls === 'function') {
+        VRODOS.ui.bindSceneListControls();
+    }
 
     // Take SCREENSHOT OF SCENE
     document.getElementById("takeScreenshotBtn").addEventListener("click", () => {
@@ -271,44 +207,6 @@ VRODOS.ui.bindLegacyEditorButtonActions = function() {
         }
     }
 
-
-    // DELETE SCENE DIALOGUE
-    document.getElementById("deleteSceneDialogDeleteBtn").addEventListener("click", (e) => {
-        document.getElementById('delete-scene-dialog-progress-bar').style.display = '';
-        document.getElementById("deleteSceneDialogDeleteBtn").classList.add("LinkDisabled");
-        document.getElementById("deleteSceneDialogCancelBtn").classList.add("LinkDisabled");
-        const dlg = document.getElementById('delete-dialog');
-        VRODOS.api.deleteScene(dlg.dataset.sceneId, window.url_scene_redirect);
-    });
-
-    document.getElementById("deleteSceneDialogCancelBtn").addEventListener("click", (e) => {
-        document.getElementById('delete-scene-dialog-progress-bar').style.display = 'none';
-        const dlg = document.getElementById('delete-dialog');
-        if (dlg && dlg.open) dlg.close();
-    });
-
-
-    // Scene card delete icons (delegated)
-    document.querySelectorAll(".cardDeleteIcon").forEach((el) => {
-        el.addEventListener("click", function () {
-            deleteScene(this);
-        });
-    });
-
-    // Delete scene
-    function deleteScene(btn) {
-        const sceneId = btn.dataset.sceneid;
-        const dialogTitle = document.getElementById("delete-dialog-title");
-        const dialogDescription = document.getElementById("delete-dialog-description");
-        const sceneTitle = document.getElementById(`${sceneId}-title`).textContent.trim();
-
-        dialogTitle.textContent = `Delete ${sceneTitle}?`;
-        dialogDescription.innerHTML = `Are you sure you want to delete your scene '${sceneTitle}'? There is no Undo functionality once you delete it.`;
-        const dlg = document.getElementById('delete-dialog');
-        dlg.dataset.sceneId = sceneId;
-        dlg.showModal();
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
 
     // Toggle JSON viewer dialog
     document.getElementById('toggleViewSceneContentBtn').addEventListener('click', () => {
