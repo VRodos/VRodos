@@ -298,8 +298,8 @@ class vrodos_3d_editor_environmentals {
         // Outline Pass
         this.outlinePass = new THREE.OutlinePass(
             new THREE.Vector2(this.SCREEN_WIDTH, this.SCREEN_HEIGHT), this.scene, camera);
-        // OutlinePass disabled — replaced by cel-shaded back-face hull outline
-        // (see VRODOS.ui.addCelOutline/VRODOS.ui.removeCelOutline in vrodos_auxControlers.js)
+        // OutlinePass disabled - replaced by cel-shaded back-face hull outline
+        // (see VRODOS.ui.addCelOutline/VRODOS.ui.removeCelOutline in scene/vrodos_scene_selection.js)
         this.outlinePass.enabled = false;
 
         // FX Pass

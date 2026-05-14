@@ -59,6 +59,8 @@
 - Verification: Phase 37 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-14: Phase 38 transform helper preparation ownership implemented.
 - Verification: Phase 38 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: Phase 39 cel-outline selection ownership implemented.
+- Verification: Phase 39 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -138,6 +140,7 @@ assets/js/editor/
 - Done: Move editor light artifact helpers out of `vrodos_namespace.js` into `scene/vrodos_scene_light_artifacts.js` with explicit WordPress script dependencies.
 - Done: Centralize undo object-tree visibility restoration in `scene/vrodos_scene_disposal.js` and make the undo engine depend on the lifecycle helper module.
 - Done: Move transform-control helper preparation into `scene/vrodos_scene_transforms.js` and cache prepared helper nodes so visibility refreshes do not re-traverse the helper subtree.
+- Done: Move cel-shaded selection outline ownership into `scene/vrodos_scene_selection.js` and track per-object outline meshes so object-level outline removal does not re-traverse after creation.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

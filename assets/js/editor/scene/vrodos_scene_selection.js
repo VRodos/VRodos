@@ -55,6 +55,108 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         }
     };
 
+    const CEL_OUTLINE_TAG = '__cel_outline__';
+    const CEL_OUTLINE_MATERIAL = new THREE.MeshBasicMaterial({
+        color: 0xff6600,
+        side: THREE.BackSide,
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false
+    });
+
+    function getCelOutlineStore(object, options) {
+        if (!object) return null;
+
+        const opts = options || {};
+        if (!object._vrodosCelOutlineMeshes && opts.create !== false) {
+            Object.defineProperty(object, '_vrodosCelOutlineMeshes', {
+                value: new Set(),
+                configurable: true
+            });
+        }
+
+        return object._vrodosCelOutlineMeshes || null;
+    }
+
+    function getCelOutlineTracker() {
+        const envir = getEnvir();
+        return envir ? envir.celOutlineMeshes : null;
+    }
+
+    function removeCelOutlineMesh(mesh, owner) {
+        if (!mesh) return;
+
+        const outlineTracker = getCelOutlineTracker();
+        if (outlineTracker) {
+            outlineTracker.delete(mesh);
+        }
+
+        const outlineOwner = owner || mesh.vrodosCelOutlineOwner || null;
+        const ownerStore = getCelOutlineStore(outlineOwner, { create: false });
+        if (ownerStore) {
+            ownerStore.delete(mesh);
+        }
+
+        if (mesh.parent) {
+            mesh.parent.remove(mesh);
+        }
+        mesh.vrodosCelOutlineOwner = null;
+    }
+
+    VRODOS.ui.addCelOutline = function(object) {
+        if (!object || typeof object.traverse !== 'function') return;
+
+        VRODOS.ui.removeCelOutline(object);
+
+        const ownerStore = getCelOutlineStore(object);
+        const outlineTracker = getCelOutlineTracker();
+
+        object.traverse((child) => {
+            if (!child.isMesh || child.name === CEL_OUTLINE_TAG) {
+                return;
+            }
+
+            const outline = new THREE.Mesh(child.geometry, CEL_OUTLINE_MATERIAL);
+            outline.name = CEL_OUTLINE_TAG;
+            outline.scale.setScalar(1.04);
+            outline.raycast = () => undefined;
+            outline.frustumCulled = false;
+            outline.vrodosCelOutlineOwner = object;
+            child.add(outline);
+            ownerStore.add(outline);
+            if (outlineTracker) {
+                outlineTracker.add(outline);
+            }
+        });
+    };
+
+    VRODOS.ui.removeCelOutline = function(object) {
+        if (!object) return;
+
+        const ownerStore = getCelOutlineStore(object, { create: false });
+        const outlines = ownerStore ? Array.from(ownerStore) : [];
+
+        if (outlines.length === 0 && typeof object.traverse === 'function') {
+            object.traverse((child) => {
+                if (child.name === CEL_OUTLINE_TAG) {
+                    outlines.push(child);
+                }
+            });
+        }
+
+        outlines.forEach((mesh) => removeCelOutlineMesh(mesh, object));
+    };
+
+    VRODOS.ui.removeAllCelOutlines = function() {
+        const outlineTracker = getCelOutlineTracker();
+        if (!outlineTracker) return;
+
+        Array.from(outlineTracker).forEach((mesh) => {
+            removeCelOutlineMesh(mesh);
+        });
+        outlineTracker.clear();
+    };
+
     function getObjectTitle(object) {
         const rawTitle = object ? (object.asset_name || object.name || 'Object Controls') : 'Object Controls';
         return typeof VRODOS.utils.decodeDisplayText === 'function'
