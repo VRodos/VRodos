@@ -5,6 +5,7 @@
 - 2026-05-14: Phase 1 staged modular refactor implemented.
 - 2026-05-14: Phase 2 loader factory extraction implemented.
 - 2026-05-14: Phase 3 render environment helper extraction implemented.
+- 2026-05-14: Phase 4 scene registry extraction implemented.
 - Verification: JS syntax checks passed; PHP syntax check for `includes/class-vrodos-asset-manager.php` passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
@@ -43,7 +44,8 @@ assets/js/editor/
 - Done: Move assessment/text object factory helpers and loader task concurrency to `loaders/vrodos_loader_object_factories.js`.
 - In progress: Split `vrodos_3d_editor_environmentals.js` into render app, cameras, context lifecycle, resize, performance profile, and director helpers.
 - Done: Move environment constants, performance defaults, pointer-lock helper, director helper predicates, and environment URL resolution to `render/vrodos_editor_environment_helpers.js`.
-- Move transform controls, selection, scene registry, and object factory out of `vrodos_editor_services.js` into `scene/` modules.
+- In progress: Move transform controls, selection, scene registry, and object factory out of `vrodos_editor_services.js` into `scene/` modules.
+- Done: Move scene registry, scene/envir lookup helpers, selectable-root cache ownership, and bounds cache to `scene/vrodos_scene_registry.js`.
 - Move toolbar/panel/floating-panel code out of `vrodos_3d_editor_buttons_drags.js` into focused UI modules.
 - Reduce fallback `scene.traverse()` usage in selection and hot interaction paths by relying on `sceneRegistry`.
 
