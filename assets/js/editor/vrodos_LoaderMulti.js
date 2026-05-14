@@ -66,13 +66,15 @@ VRODOS.utils.loaderDisplayText = function(value) {
 };
 
 VRODOS.utils.runLimitedTasks = async function(tasks, limit) {
-    const queue = Array.isArray(tasks) ? tasks.slice() : [];
+    const queue = Array.isArray(tasks) ? tasks : [];
     const safeLimit = Math.max(1, Number(limit) || 1);
     const workers = [];
+    let nextIndex = 0;
 
     async function runNext() {
-        while (queue.length > 0) {
-            const task = queue.shift();
+        while (nextIndex < queue.length) {
+            const task = queue[nextIndex];
+            nextIndex++;
             if (typeof task !== 'function') {
                 continue;
             }
