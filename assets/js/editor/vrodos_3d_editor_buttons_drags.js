@@ -803,15 +803,7 @@ VRODOS.ui.loadButtonActions = function() {
             return;
         }
 
-        save_scene_btn.innerHTML = "Saving...";
-        save_scene_btn.classList.add("LinkDisabled");
-        document.getElementById("compileGameBtn").disabled = true;
-
-        // Export using the new VRODOS.exporter.SceneExporter
-        const exporter = new VRODOS.exporter.SceneExporter();
-        document.getElementById('vrodos_scene_json_input').value = exporter.parse(VRODOS.editor.envir.scene);
-
-        VRODOS.api.saveScene();
+        VRODOS.api.saveChanges({ force: true });
     });
 
 

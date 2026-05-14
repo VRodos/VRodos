@@ -1,11 +1,109 @@
 VRODOS.api.sceneSavePromise = Promise.resolve();
 VRODOS.api.isSceneSavePending = false;
+VRODOS.api.isSceneSaveQueued = false;
+VRODOS.api.sceneSaveGeneration = 0;
 
 VRODOS.api.whenSceneSaveSettles = function() {
 	return VRODOS.api.sceneSavePromise || Promise.resolve();
 }
 
+VRODOS.api.setSceneSaveControlsSaving = function() {
+	const saveBtn = document.getElementById( "save-scene-button" );
+	if (saveBtn) {
+		saveBtn.innerHTML = "Saving...";
+		saveBtn.classList.add( "LinkDisabled" );
+	}
+	const compileBtn = document.getElementById( "compileGameBtn" );
+	if (compileBtn) {
+		compileBtn.disabled = true;
+	}
+}
+
+VRODOS.api.setSceneSaveControlsSaved = function(saveGeneration) {
+	const saveBtn = document.getElementById( "save-scene-button" );
+	const compileBtn = document.getElementById( "compileGameBtn" );
+
+	if (saveBtn) {
+		saveBtn.innerHTML = "All changes saved";
+	}
+	if (compileBtn) {
+		compileBtn.disabled = true;
+	}
+
+	setTimeout( () => {
+		if (
+			VRODOS.api.sceneSaveGeneration !== saveGeneration ||
+			VRODOS.api.isSceneSavePending ||
+			VRODOS.api.isSceneSaveQueued
+		) {
+			return;
+		}
+
+		if (saveBtn) {
+			saveBtn.innerHTML = "Save Scene";
+			saveBtn.classList.remove( "LinkDisabled" );
+		}
+		if (compileBtn) {
+			compileBtn.disabled = false;
+		}
+	}, 2000 );
+}
+
+VRODOS.api.setSceneSaveControlsFailed = function() {
+	const saveBtn = document.getElementById( "save-scene-button" );
+	if (saveBtn) {
+		saveBtn.innerHTML = "Save scene";
+		saveBtn.classList.remove( "LinkDisabled" );
+	}
+	const compileBtn = document.getElementById( "compileGameBtn" );
+	if (compileBtn) {
+		compileBtn.disabled = false;
+	}
+}
+
+VRODOS.api.exportCurrentSceneForSave = function() {
+	if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene || !VRODOS.exporter.SceneExporter) {
+		return false;
+	}
+
+	const sceneInput = document.getElementById( "vrodos_scene_json_input" );
+	if (!sceneInput) {
+		return false;
+	}
+
+	const exporter = new VRODOS.exporter.SceneExporter();
+	sceneInput.value = exporter.parse( VRODOS.editor.envir.scene );
+	return true;
+}
+
+VRODOS.api.saveChanges = function(options) {
+	const saveOptions = options || {};
+	if (saveOptions.force && !VRODOS.api.isSceneSavePending) {
+		VRODOS.api.isSceneSaveQueued = false;
+	}
+
+	if (VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading) {
+		return Promise.resolve();
+	}
+
+	if (VRODOS.api.isSceneSavePending) {
+		VRODOS.api.isSceneSaveQueued = true;
+		return VRODOS.api.whenSceneSaveSettles();
+	}
+
+	if (!VRODOS.api.exportCurrentSceneForSave()) {
+		return Promise.resolve();
+	}
+
+	VRODOS.api.setSceneSaveControlsSaving();
+	return VRODOS.api.saveScene();
+}
+
 VRODOS.api.saveScene = function() {
+	if (VRODOS.api.isSceneSavePending) {
+		VRODOS.api.isSceneSaveQueued = true;
+		return VRODOS.api.whenSceneSaveSettles();
+	}
 
 	const postdata = new URLSearchParams({
 		'action': 'vrodos_save_scene_async_action',
@@ -22,6 +120,8 @@ VRODOS.api.saveScene = function() {
 	}
 
 	VRODOS.api.isSceneSavePending = true;
+	const saveGeneration = VRODOS.api.sceneSaveGeneration + 1;
+	VRODOS.api.sceneSaveGeneration = saveGeneration;
 
 	VRODOS.api.sceneSavePromise = fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl(), {
 		method: 'POST',
@@ -47,16 +147,7 @@ VRODOS.api.saveScene = function() {
 	}))
 	.then( (data) => {
 
-		const save_scene_btn       = document.getElementById( "save-scene-button" );
-		save_scene_btn.innerHTML = "All changes saved";
-
-		const enableSaveFunctionality = function () {
-			save_scene_btn.innerHTML = "Save Scene";
-			save_scene_btn.classList.remove( "LinkDisabled" );
-			document.getElementById( "compileGameBtn" ).disabled = false;
-		};
-		document.getElementById( "compileGameBtn" ).disabled = true;
-		setTimeout( enableSaveFunctionality, 2000 );
+		VRODOS.api.setSceneSaveControlsSaved(saveGeneration);
 		if (pendingScreenshotData && VRODOS.api.newScreenshotData === pendingScreenshotData) {
 			VRODOS.api.newScreenshotData = null;
 		}
@@ -67,15 +158,21 @@ VRODOS.api.saveScene = function() {
 		console.log( `Ajax Save Scene: ERROR: 156 - ${  err}` );
 		alert( `Save Scene Error - ${  err}` );
 
-		const saveBtn = document.getElementById( 'save-scene-button' );
-		saveBtn.innerHTML = "Save scene";
-		saveBtn.classList.remove( "LinkDisabled" );
+		VRODOS.api.isSceneSaveQueued = false;
+		VRODOS.api.setSceneSaveControlsFailed();
 		throw err;
 	})
 	.finally( () => {
 		VRODOS.api.isSceneSavePending = false;
+	})
+	.then( (data) => {
+		if (!VRODOS.api.isSceneSaveQueued) {
+			return data;
+		}
+
+		VRODOS.api.isSceneSaveQueued = false;
+		return VRODOS.api.saveChanges({ force: true });
 	});
 
 	return VRODOS.api.sceneSavePromise;
 }
-
