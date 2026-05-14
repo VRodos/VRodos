@@ -810,7 +810,13 @@ initPersistentPropertyListeners();
  * @returns {Array}
  */
 VRODOS.ui.getActiveMeshes = function() {
-    const registryMeshes = VRODOS.editor.sceneRegistry.getSelectableRoots();
+    const registryMeshes = typeof VRODOS.utils.getEditorSceneRoots === 'function'
+        ? VRODOS.utils.getEditorSceneRoots(VRODOS.editor.envir.scene, {
+            filterSelectable: true,
+            includeDirector: true,
+            traverseFallback: false
+        })
+        : VRODOS.editor.sceneRegistry.getSelectableRoots();
     if (registryMeshes.length > 0) {
         return registryMeshes;
     }
@@ -820,7 +826,9 @@ VRODOS.ui.getActiveMeshes = function() {
         if (VRODOS.editor.envir.selectableMeshesDirty ||
             !Array.isArray(VRODOS.editor.envir.selectableMeshesArray) ||
             VRODOS.editor.envir.selectableMeshesArray.length !== VRODOS.editor.envir.selectableMeshes.size) {
-            VRODOS.editor.envir.selectableMeshesArray = Array.from(VRODOS.editor.envir.selectableMeshes);
+            VRODOS.editor.envir.selectableMeshesArray = typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
+                ? VRODOS.utils.dedupeEditorSceneRoots(Array.from(VRODOS.editor.envir.selectableMeshes), { reason: 'raycast-selectable-cache', log: false })
+                : Array.from(VRODOS.editor.envir.selectableMeshes);
             VRODOS.editor.envir.selectableMeshesDirty = false;
         }
 
@@ -829,7 +837,9 @@ VRODOS.ui.getActiveMeshes = function() {
     // Fallback: cache not yet populated (scene still loading)
     const fallback = [];
     VRODOS.editor.envir.scene.traverse(c => { if (c.isSelectableMesh) fallback.push(c); });
-    return fallback;
+    return typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
+        ? VRODOS.utils.dedupeEditorSceneRoots(fallback, { reason: 'raycast-traverse-fallback', log: false })
+        : fallback;
 }
 
 

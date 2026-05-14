@@ -135,7 +135,9 @@ VRODOS.utils.getEditorSceneRoots = function(scene, options) {
         : [];
 
     if (Array.isArray(registryRoots) && registryRoots.length > 0) {
-        return registryRoots;
+        return typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
+            ? VRODOS.utils.dedupeEditorSceneRoots(registryRoots, { reason: 'registry-roots', log: false })
+            : registryRoots;
     }
 
     if (!scene) {
@@ -156,14 +158,18 @@ VRODOS.utils.getEditorSceneRoots = function(scene, options) {
 
     if (opts.traverseFallback && typeof scene.traverse === 'function') {
         scene.traverse(addIfIncluded);
-        return roots;
+        return typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
+            ? VRODOS.utils.dedupeEditorSceneRoots(roots, { reason: 'traverse-roots', log: false })
+            : roots;
     }
 
     if (Array.isArray(scene.children)) {
         scene.children.forEach(addIfIncluded);
     }
 
-    return roots;
+    return typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
+        ? VRODOS.utils.dedupeEditorSceneRoots(roots, { reason: 'scene-children-roots', log: false })
+        : roots;
 };
 
 VRODOS.utils.getNextPawnIndex = function(scene) {
@@ -193,7 +199,11 @@ VRODOS.utils.sceneObjectDuplicateKey = function(resource) {
 
     const trs = resource.trs || {};
     const vectorKey = (value, fallback) => {
-        const vector = Array.isArray(value) ? value : fallback;
+        const vector = Array.isArray(value)
+            ? value
+            : (value && typeof value === 'object' && ['x', 'y', 'z'].every((axis) => axis in value)
+                ? [value.x, value.y, value.z]
+                : fallback);
         return vector.map((entry) => {
             const numberValue = Number(entry);
             return Number.isFinite(numberValue) ? numberValue.toFixed(5) : '0.00000';
@@ -217,6 +227,51 @@ VRODOS.utils.sceneObjectDuplicateKey = function(resource) {
     const target = vectorKey(resource.targetposition, [0, 0, 0]);
 
     return [category, source, Math.floor(addedAt), translation, rotation, scale, target].join('|');
+};
+
+VRODOS.utils.dedupeEditorSceneRoots = function(roots, options) {
+    if (!Array.isArray(roots) || roots.length === 0) {
+        return [];
+    }
+
+    const opts = options || {};
+    const seenUuids = new Map();
+    const seenNames = new Map();
+    const seenLogical = new Map();
+    const skipped = [];
+    const deduped = [];
+
+    roots.forEach((object) => {
+        if (!object) {
+            return;
+        }
+
+        const uuid = object.uuid ? String(object.uuid) : '';
+        const name = object.name ? String(object.name) : '';
+        const logicalKey = VRODOS.utils.sceneObjectDuplicateKey(object);
+        const existing = (uuid && seenUuids.get(uuid)) ||
+            (name && seenNames.get(name)) ||
+            (logicalKey && seenLogical.get(logicalKey));
+
+        if (existing) {
+            skipped.push({ name: name || uuid, original: existing });
+            return;
+        }
+
+        deduped.push(object);
+        if (uuid) seenUuids.set(uuid, name || uuid);
+        if (name) seenNames.set(name, name);
+        if (logicalKey) seenLogical.set(logicalKey, name || uuid);
+    });
+
+    if (skipped.length > 0 && opts.log !== false) {
+        console.warn('VRodos: skipped duplicate editor scene roots', {
+            reason: opts.reason || 'scene-roots',
+            skipped
+        });
+    }
+
+    return deduped;
 };
 
 VRODOS.utils.dedupeSceneDataObjects = function(objects, options) {

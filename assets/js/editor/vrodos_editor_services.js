@@ -172,16 +172,25 @@ VRODOS.utils = VRODOS.utils || {};
         getSelectableRoots() {
             const envir = getEnvir();
             if (this.selectableRoots.size > 0) {
-                return Array.from(this.selectableRoots);
+                const roots = Array.from(this.selectableRoots);
+                return typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
+                    ? VRODOS.utils.dedupeEditorSceneRoots(roots, { reason: 'registry-selectable-roots', log: false })
+                    : roots;
             }
 
             if (envir && envir.selectableMeshes && envir.selectableMeshes.size > 0) {
-                this.selectableRoots = new Set(envir.selectableMeshes);
-                return Array.from(this.selectableRoots);
+                const roots = typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
+                    ? VRODOS.utils.dedupeEditorSceneRoots(Array.from(envir.selectableMeshes), { reason: 'environment-selectable-roots', log: false })
+                    : Array.from(envir.selectableMeshes);
+                this.selectableRoots = new Set(roots);
+                return roots;
             }
 
             this.rebuild();
-            return Array.from(this.selectableRoots);
+            const roots = Array.from(this.selectableRoots);
+            return typeof VRODOS.utils.dedupeEditorSceneRoots === 'function'
+                ? VRODOS.utils.dedupeEditorSceneRoots(roots, { reason: 'rebuilt-selectable-roots', log: false })
+                : roots;
         },
 
         markDirty(reason) {
