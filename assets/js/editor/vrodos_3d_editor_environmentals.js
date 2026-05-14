@@ -184,18 +184,13 @@ class vrodos_3d_editor_environmentals {
             return this.selectableMeshes.size;
         }
 
-        if (!this.scene) {
-            return 0;
+        const registry = VRODOS.editor && VRODOS.editor.sceneRegistry ? VRODOS.editor.sceneRegistry : null;
+        if (registry && typeof registry.getSelectableRoots === 'function') {
+            const roots = registry.getSelectableRoots({ rebuildIfEmpty: false });
+            return roots.filter((node) => node && node.isSelectableMesh && node.vrodos_internal_helper !== true).length;
         }
 
-        let count = 0;
-        this.scene.traverse((node) => {
-            if (node.isSelectableMesh && node.vrodos_internal_helper !== true) {
-                count++;
-            }
-        });
-
-        return count;
+        return 0;
     }
 
     getEditorPerformanceProfile() {
