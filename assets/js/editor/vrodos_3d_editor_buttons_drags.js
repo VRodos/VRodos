@@ -1,58 +1,3 @@
-VRODOS.ui.onDrop = function(ev) {
-    if (ev.vrodosSceneDropHandled) {
-        ev.preventDefault();
-        return;
-    }
-    ev.vrodosSceneDropHandled = true;
-
-    // Ignore scene reorder drags
-    if (ev.dataTransfer.types.indexOf('application/vrodos-scene-reorder') !== -1) return;
-
-    const dataDrag = JSON.parse(ev.dataTransfer.getData("text"));
-
-    const categoryName = dataDrag.category_name;
-    const nameModel = dataDrag.title;
-
-    let path = '';
-
-    if (dataDrag.category_name !== "lightSun" &&
-        dataDrag.category_name !== "lightLamp" &&
-        dataDrag.category_name !== "lightSpot" &&
-        dataDrag.category_name !== "lightAmbient" &&
-        dataDrag.category_name !== "Pawn") {
-        path = dataDrag.path.substring(0, dataDrag.path.lastIndexOf("/") + 1);
-    }
-
-    const translation = VRODOS.api.dragDropVerticalRayCasting(ev);
-
-    // Suppress the click-selection that would fire from the drop's mouseup
-    VRODOS.editor.suppressNextSelection = true;
-
-    VRODOS.editor.selection.clear({ source: 'canvas-drop', hidePanel: false });
-    if (typeof VRODOS.ui.removeAllCelOutlines === 'function') {
-        VRODOS.ui.removeAllCelOutlines();
-    }
-    VRODOS.editor.selected_object_name = null;
-
-    // Asset add to canvas
-    if (typeof VRODOS.api.addAssetToCanvas === 'function') {
-        VRODOS.api.addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, VRODOS.data.pluginPath);
-    }
-
-    if (typeof VRODOS.ui.showObjectPropertiesPanel === 'function') {
-        VRODOS.ui.showObjectPropertiesPanel(VRODOS.editor.transforms.getMode());
-    }
-
-    if (VRODOS.editor.envir.is2d) {
-        VRODOS.editor.transforms.setMode("translate");
-        document.getElementById("translatePanelGui").style.display = '';
-    }
-
-    ev.preventDefault();
-};
-VRODOS.ui.onDragOver = function(ev) {
-    ev.preventDefault();
-};
 // Local
 VRODOS.ui.bindLegacyEditorButtonActions = function() {
     function resetCompileDialogStatusState() {
@@ -705,35 +650,8 @@ VRODOS.ui.bindLegacyEditorButtonActions = function() {
     const allUpperToolbarButtons = document.querySelectorAll('.environmentBar .lightpawnbutton');
 
     [].forEach.call(allUpperToolbarButtons, (col) => {
-        col.addEventListener('dragstart', handleLightPawnDragStart, false);
+        col.addEventListener('dragstart', VRODOS.ui.handleLightPawnDragStart, false);
     });
-
-
-    // Handler for dragging lights or Pawn
-    function handleLightPawnDragStart(e) {
-
-        let dragData;
-        if (e.target.dataset.lightpawn === "Sun" ||
-            e.target.dataset.lightpawn === "Spot" ||
-            e.target.dataset.lightpawn === "Lamp" ||
-            e.target.dataset.lightpawn === "Ambient"
-        ) {
-            dragData = {
-                "category_name": `light${  e.target.dataset.lightpawn}`,
-                "title": `mylight${  e.target.dataset.lightpawn  }_${  Date.now()}`
-            };
-
-        }
-        else if (e.target.dataset.lightpawn === "Pawn") {
-            dragData = {
-                "category_name": "Pawn",
-                "title": `aPawn` + `_${  Date.now()}`
-            };
-        }
-
-        e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
-        return false;
-    }
 };
 
 
