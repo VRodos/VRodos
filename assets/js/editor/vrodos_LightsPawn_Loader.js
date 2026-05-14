@@ -212,10 +212,10 @@ VRODOS.loader.LightsPawnLoader = class {
         this.registerLoadedObject(targetSpot, { renderReason: 'sun-target-loaded' });
         VRODOS.editor.envir.scene.add(helper);
 
-        const shadowHelper = new THREE.CameraHelper(light.shadow.camera);
-        shadowHelper.name = VRODOS.utils.getEditorLightObjectName('shadow', light.name);
-        shadowHelper.vrodos_internal_helper = true;
-        VRODOS.editor.envir.scene.add(shadowHelper);
+        const shadowHelper = VRODOS.utils.createEditorLightShadowHelper(light);
+        if (shadowHelper) {
+            VRODOS.editor.envir.scene.add(shadowHelper);
+        }
         VRODOS.utils.syncEditorLightArtifacts(light, VRODOS.editor.envir.scene);
     }
 

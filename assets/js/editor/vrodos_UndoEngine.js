@@ -254,9 +254,10 @@ VRODOS.editor.DeleteObjectCommand = class {
         VRODOS.data.scene.objects = VRODOS.data.scene.objects || {};
         VRODOS.data.scene.objects[this.nameModel] = this.objectData;
         
+        let restoredLightAssociates = null;
         // Specialized restoration for lights
         if (this.object3D.isLight) {
-            this.restoreLightAssociates();
+            restoredLightAssociates = this.restoreLightAssociates();
         }
         
         // Restore to hierarchy viewer
@@ -269,6 +270,10 @@ VRODOS.editor.DeleteObjectCommand = class {
         } else if (typeof VRODOS.ui.addInHierarchyViewer === 'function') {
             VRODOS.ui.addInHierarchyViewer(this.object3D);
         }
+
+        if (restoredLightAssociates && restoredLightAssociates.createdTarget && typeof VRODOS.ui.setHierarchyViewer === 'function') {
+            VRODOS.ui.setHierarchyViewer();
+        }
         
         if (typeof VRODOS.editor.animate === 'function') VRODOS.editor.animate();
         if (typeof VRODOS.api.triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
@@ -278,6 +283,13 @@ VRODOS.editor.DeleteObjectCommand = class {
         const light = this.object3D;
         const name = light.name;
         const scene = VRODOS.editor.envir.scene;
+        const objectData = this.objectData || {};
+        const lightColor = light.color || 0xffffff;
+        const result = {
+            createdTarget: false,
+            createdHelper: false,
+            createdShadowHelper: false
+        };
         
         // Re-create Helper if it's missing (it was disposed)
         let helper = VRODOS.utils.getEditorLightObject('helper', name, scene);
@@ -285,15 +297,45 @@ VRODOS.editor.DeleteObjectCommand = class {
             helper = VRODOS.utils.createEditorLightHelper(light, { size: 1 });
             if (helper) {
                 scene.add(helper);
+                result.createdHelper = true;
             }
         } else {
             VRODOS.utils.configureEditorLightHelper(helper, light);
         }
 
-        const target = VRODOS.utils.getEditorLightObject('target', name, scene);
+        let target = VRODOS.utils.getEditorLightObject('target', name, scene);
+        if (!target && ['DirectionalLight', 'SpotLight'].includes(light.type)) {
+            target = VRODOS.utils.createEditorLightTarget(light, {
+                addedAt: light.addedAt || objectData.addedAt,
+                color: lightColor,
+                helper,
+                position: objectData.targetposition
+            });
+            if (target) {
+                VRODOS.editor.objectFactory.addSceneObject(target, {
+                    selectable: true,
+                    updateHierarchy: false,
+                    incrementLoaded: false,
+                    renderReason: 'undo-restore-light-target'
+                });
+                result.createdTarget = true;
+            }
+        }
+
         if (target && ['DirectionalLight', 'SpotLight'].includes(light.type)) {
             VRODOS.utils.linkEditorLightTarget(light, target);
             if (helper) target.parentLightHelper = helper;
+        }
+
+        let shadowHelper = VRODOS.utils.getEditorLightObject('shadow', name, scene);
+        if (!shadowHelper && light.type === 'DirectionalLight') {
+            shadowHelper = VRODOS.utils.createEditorLightShadowHelper(light);
+            if (shadowHelper) {
+                scene.add(shadowHelper);
+                result.createdShadowHelper = true;
+            }
+        } else if (shadowHelper) {
+            VRODOS.utils.configureEditorLightShadowHelper(shadowHelper, light);
         }
 
         if (typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
@@ -301,6 +343,8 @@ VRODOS.editor.DeleteObjectCommand = class {
         } else if (helper && typeof helper.update === 'function') {
             helper.update();
         }
+
+        return result;
     }
 
     redo() {

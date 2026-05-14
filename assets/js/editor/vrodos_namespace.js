@@ -531,6 +531,31 @@ VRODOS.utils.createEditorLightHelper = function(light, options) {
     return VRODOS.utils.configureEditorLightHelper(helper, light);
 };
 
+VRODOS.utils.configureEditorLightShadowHelper = function(helper, light) {
+    if (!helper || !light) return helper || null;
+
+    helper.name = VRODOS.utils.getEditorLightObjectName('shadow', light.name);
+    helper.category_name = 'lightShadowHelper';
+    helper.parentLightName = light.name;
+    helper.vrodos_internal_helper = true;
+    return helper;
+};
+
+VRODOS.utils.createEditorLightShadowHelper = function(light) {
+    if (!light || typeof THREE === 'undefined' || !light.shadow || !light.shadow.camera) {
+        return null;
+    }
+
+    if (typeof VRODOS.utils.applyEditorLightShadowSettings === 'function') {
+        VRODOS.utils.applyEditorLightShadowSettings(light);
+    }
+
+    return VRODOS.utils.configureEditorLightShadowHelper(
+        new THREE.CameraHelper(light.shadow.camera),
+        light
+    );
+};
+
 VRODOS.utils.createEditorLightVisualSphere = function(name, options) {
     if (typeof THREE === 'undefined') return null;
 
@@ -682,6 +707,7 @@ VRODOS.utils.updateEditorLightHelper = function(light, scene) {
 
     const shadowHelper = VRODOS.utils.getEditorLightObject('shadow', light.name, scene);
     if (shadowHelper && typeof shadowHelper.update === 'function') {
+        VRODOS.utils.configureEditorLightShadowHelper(shadowHelper, light);
         shadowHelper.update();
     }
 

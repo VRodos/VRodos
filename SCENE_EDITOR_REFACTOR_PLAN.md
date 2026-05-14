@@ -49,6 +49,8 @@
 - Verification: Phase 32 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-14: Phase 33 editor light visual and target factory consolidation implemented.
 - Verification: Phase 33 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-14: Phase 34 editor light shadow-helper and undo-associate restoration implemented.
+- Verification: Phase 34 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -123,6 +125,7 @@ assets/js/editor/
 - Done: Link SpotLight to its visible target object and add a `SpotLightHelper` cone so spot lights and targets read as one connected editor control.
 - Done: Centralize editor light-helper creation and metadata tagging for add, load, and undo restore paths.
 - Done: Centralize editor light visual spheres and light-target object construction for add and load paths.
+- Done: Centralize Sun shadow-helper creation and restore missing light targets/shadow helpers during light delete undo.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
