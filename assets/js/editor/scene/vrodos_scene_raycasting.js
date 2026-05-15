@@ -41,6 +41,33 @@ VRODOS.ui.findIntersected = function(event) {
     return VRODOS.utils.normalizeIntersectedObjects(VRODOS.ui.findIntersectedRaw(event));
 }
 
+function _setEditorInputValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.value = value;
+    }
+    return el;
+}
+
+function _setEditorInputChecked(id, checked) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.checked = Boolean(checked);
+    }
+    return el;
+}
+
+function _getFirstChildMaterialColorHex(sceneObj) {
+    const material = sceneObj &&
+        sceneObj.children &&
+        sceneObj.children[0] &&
+        sceneObj.children[0].material;
+
+    return material && material.color && typeof material.color.getHexString === 'function'
+        ? `#${  material.color.getHexString()}`
+        : null;
+}
+
 // Reusable raycaster and mouse vector (avoid allocations per event)
 const _reusableRaycaster = new THREE.Raycaster();
 const _reusableMouse = new THREE.Vector2();
@@ -374,34 +401,22 @@ VRODOS.ui.displaySunProperties = function(event, name) {
     const sceneObj = getEditorSceneObjectByName(name);
     if (!sceneObj) return;
 
-    const chbox = document.getElementById('castShadow');
-    const chboxsunSky = document.getElementById('sunSky');
-    const textCameraBottom = document.getElementById('sunShadowCameraBottom');
-    const textCameraTop = document.getElementById('sunShadowCameraTop');
-    const textCameraLeft = document.getElementById('sunShadowCameraLeft');
-    const textCameraRight = document.getElementById('sunShadowCameraRight');
-    const textMapHeight = document.getElementById('sunshadowMapHeight');
-    const textMapWidth = document.getElementById('sunshadowMapWidth');
-    const textBias = document.getElementById('sunshadowBias');
-    const sunColor = document.getElementById('sunColor');
-    const sunIntensity = document.getElementById('sunIntensity');
+    _setEditorInputChecked('castShadow', sceneObj.castingShadow);
+    _setEditorInputChecked('sunSky', sceneObj.sunSky);
+    _setEditorInputValue('sunShadowCameraBottom', sceneObj.shadowCameraBottom);
+    _setEditorInputValue('sunShadowCameraTop', sceneObj.shadowCameraTop);
+    _setEditorInputValue('sunShadowCameraLeft', sceneObj.shadowCameraLeft);
+    _setEditorInputValue('sunShadowCameraRight', sceneObj.shadowCameraRight);
+    _setEditorInputValue('sunshadowMapHeight', sceneObj.shadowMapHeight);
+    _setEditorInputValue('sunshadowMapWidth', sceneObj.shadowMapWidth);
+    _setEditorInputValue('sunshadowBias', sceneObj.shadowBias);
 
-    if (chbox) chbox.checked = Boolean(sceneObj.castingShadow);
-    if (chboxsunSky) chboxsunSky.checked = Boolean(sceneObj.sunSky);
-
-    if (textCameraBottom) textCameraBottom.value = sceneObj.shadowCameraBottom;
-    if (textCameraTop) textCameraTop.value = sceneObj.shadowCameraTop;
-    if (textCameraLeft) textCameraLeft.value = sceneObj.shadowCameraLeft;
-    if (textCameraRight) textCameraRight.value = sceneObj.shadowCameraRight;
-    if (textMapHeight) textMapHeight.value = sceneObj.shadowMapHeight;
-    if (textMapWidth) textMapWidth.value = sceneObj.shadowMapWidth;
-    if (textBias) textBias.value = sceneObj.shadowBias;
-
-    if (sunColor && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
-        sunColor.value = `#${  sceneObj.children[0].material.color.getHexString()}`;
+    const sunColor = _getFirstChildMaterialColorHex(sceneObj);
+    if (sunColor) {
+        _setEditorInputValue('sunColor', sunColor);
     }
 
-    if (sunIntensity) sunIntensity.value = sceneObj.lightintensity || 1;
+    _setEditorInputValue('sunIntensity', sceneObj.lightintensity || 1);
 
     ppPropertiesDiv.style.display = '';
 }
@@ -414,36 +429,23 @@ VRODOS.ui.displayLampProperties = function(event, name) {
     const sceneObj = getEditorSceneObjectByName(name);
     if (!sceneObj) return;
 
-    const chbox = document.getElementById('lampcastShadow');
-    const textCameraBottom = document.getElementById('lampShadowCameraBottom');
-    const textCameraTop = document.getElementById('lampShadowCameraTop');
-    const textCameraLeft = document.getElementById('lampShadowCameraLeft');
-    const textCameraRight = document.getElementById('lampShadowCameraRight');
-    const textMapHeight = document.getElementById('lampshadowMapHeight');
-    const textMapWidth = document.getElementById('lampshadowMapWidth');
-    const textBias = document.getElementById('lampshadowBias');
-    const lampColor = document.getElementById('lampColor');
-    const lampPower = document.getElementById('lampPower');
-    const lampDecay = document.getElementById('lampDecay');
-    const lampDistance = document.getElementById('lampDistance');
+    _setEditorInputChecked('lampcastShadow', sceneObj.lampcastingShadow);
+    _setEditorInputValue('lampShadowCameraBottom', sceneObj.lampshadowCameraBottom);
+    _setEditorInputValue('lampShadowCameraTop', sceneObj.lampshadowCameraTop);
+    _setEditorInputValue('lampShadowCameraLeft', sceneObj.lampshadowCameraLeft);
+    _setEditorInputValue('lampShadowCameraRight', sceneObj.lampshadowCameraRight);
+    _setEditorInputValue('lampshadowMapHeight', sceneObj.lampshadowMapHeight);
+    _setEditorInputValue('lampshadowMapWidth', sceneObj.lampshadowMapWidth);
+    _setEditorInputValue('lampshadowBias', sceneObj.lampshadowBias);
 
-    if (chbox) chbox.checked = Boolean(sceneObj.lampcastingShadow);
-
-    if (textCameraBottom) textCameraBottom.value = sceneObj.lampshadowCameraBottom;
-    if (textCameraTop) textCameraTop.value = sceneObj.lampshadowCameraTop;
-    if (textCameraLeft) textCameraLeft.value = sceneObj.lampshadowCameraLeft;
-    if (textCameraRight) textCameraRight.value = sceneObj.lampshadowCameraRight;
-    if (textMapHeight) textMapHeight.value = sceneObj.lampshadowMapHeight;
-    if (textMapWidth) textMapWidth.value = sceneObj.lampshadowMapWidth;
-    if (textBias) textBias.value = sceneObj.lampshadowBias;
-
-    if (lampColor && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
-        lampColor.value = `#${  sceneObj.children[0].material.color.getHexString()}`;
+    const lampColor = _getFirstChildMaterialColorHex(sceneObj);
+    if (lampColor) {
+        _setEditorInputValue('lampColor', lampColor);
     }
 
-    if (lampPower) lampPower.value = sceneObj.power;
-    if (lampDecay) lampDecay.value = sceneObj.decay;
-    if (lampDistance) lampDistance.value = sceneObj.distance;
+    _setEditorInputValue('lampPower', sceneObj.power);
+    _setEditorInputValue('lampDecay', sceneObj.decay);
+    _setEditorInputValue('lampDistance', sceneObj.distance);
 
     ppPropertiesDiv.style.display = '';
 }
@@ -464,21 +466,21 @@ VRODOS.ui.displaySpotProperties = function(event, name) {
         });
     }
 
-    const spotColor = document.getElementById("spotColor");
     const sceneObj = getSceneObjectOrSelected(name);
 
-    if (spotColor && sceneObj && sceneObj.children && sceneObj.children[0] && sceneObj.children[0].material) {
-        spotColor.value = `#${  sceneObj.children[0].material.color.getHexString()}`;
+    const spotColor = _getFirstChildMaterialColorHex(sceneObj);
+    if (spotColor) {
+        _setEditorInputValue('spotColor', spotColor);
     }
 
     if (sceneObj) {
-        if (document.getElementById("spotPower")) document.getElementById("spotPower").value = sceneObj.power || 1;
-        if (document.getElementById("spotDecay")) document.getElementById("spotDecay").value = sceneObj.decay || 2;
-        if (document.getElementById("spotDistance")) document.getElementById("spotDistance").value = sceneObj.distance || 0;
-        if (document.getElementById("spotAngle")) document.getElementById("spotAngle").value = sceneObj.angle || Math.PI / 3;
-        if (document.getElementById("spotPenumbra")) document.getElementById("spotPenumbra").value = sceneObj.penumbra || 0;
-        if (document.getElementById("spotTargetObject") && sceneObj.target) {
-            document.getElementById("spotTargetObject").value = sceneObj.target.name;
+        _setEditorInputValue('spotPower', sceneObj.power || 1);
+        _setEditorInputValue('spotDecay', sceneObj.decay || 2);
+        _setEditorInputValue('spotDistance', sceneObj.distance || 0);
+        _setEditorInputValue('spotAngle', sceneObj.angle || Math.PI / 3);
+        _setEditorInputValue('spotPenumbra', sceneObj.penumbra || 0);
+        if (sceneObj.target) {
+            _setEditorInputValue('spotTargetObject', sceneObj.target.name);
         }
     }
 
@@ -493,15 +495,14 @@ VRODOS.ui.displayAmbientProperties = function(event, name) {
 
     const ppPropertiesDiv = document.getElementById("popUpAmbientPropertiesDiv");
 
-    const ambientColor = document.getElementById("ambientColor");
     const sceneObj = getSceneObjectOrSelected(name);
 
-    if (ambientColor && sceneObj && sceneObj.color) {
-        ambientColor.value = `#${  sceneObj.color.getHexString()}`;
+    if (sceneObj && sceneObj.color) {
+        _setEditorInputValue('ambientColor', `#${  sceneObj.color.getHexString()}`);
     }
 
-    if (sceneObj && document.getElementById("ambientIntensity")) {
-        document.getElementById("ambientIntensity").value = sceneObj.intensity || 1;
+    if (sceneObj) {
+        _setEditorInputValue('ambientIntensity', sceneObj.intensity || 1);
     }
 
     // Show Selection (inside floating panel)

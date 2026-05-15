@@ -161,6 +161,8 @@
 - Verification: Phase 88 JS syntax check passed; focused hierarchy row rendering sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 89 grouped hierarchy renderability cleanup implemented.
 - Verification: Phase 89 JS syntax check passed; focused hierarchy eligibility/sort sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 90 grouped light property panel setter cleanup implemented.
+- Verification: Phase 90 JS syntax check passed; focused Sun light panel setter sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -300,6 +302,7 @@ assets/js/editor/
 - Done: Group hierarchy reset cleanup by extracting reset TRS capture, default transform application, undo command creation, selected-object sync, bounds invalidation, render request, and autosave into focused helpers.
 - Done: Group hierarchy row rendering cleanup by centralizing director/target constants, action-button eligibility, row fragment assembly, light ordering, and target display labels across full rebuild and incremental add paths.
 - Done: Group hierarchy renderability cleanup by centralizing object category predicates, helper-object filtering, top-level root checks, bucket collection, light/target sorting, and incremental-add eligibility.
+- Done: Group light property panel setter cleanup by centralizing null-safe input value/checkbox writes and repeated first-child material color reads inside the raycasting/properties module.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
