@@ -352,7 +352,7 @@ class VRodos_Asset_Manager {
       ['vrodos_scene_transforms', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_transforms.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_scene_registry', 'vrodos_three_vendor_bundle']],
       ['vrodos_scene_selection', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_selection.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_scene_registry', 'vrodos_scene_transforms', 'vrodos_three_vendor_bundle']],
       ['vrodos_scene_object_factory', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_object_factory.js' ), ['vrodos_namespace', 'vrodos_scene_registry', 'vrodos_scene_selection']],
-      ['vrodos_editor_services', VRodos_Path_Manager::editor_js_url( 'vrodos_editor_services.js' ), ['vrodos_namespace', 'vrodos_scene_registry', 'vrodos_scene_transforms', 'vrodos_scene_selection', 'vrodos_scene_object_factory', 'vrodos_three_vendor_bundle']],
+      ['vrodos_editor_services', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_editor_services_compat.js' ), ['vrodos_namespace', 'vrodos_scene_registry', 'vrodos_scene_transforms', 'vrodos_scene_selection', 'vrodos_scene_object_factory', 'vrodos_three_vendor_bundle']],
       ['vrodos_editor_render_loop', VRodos_Path_Manager::editor_js_url( 'render/vrodos_editor_render_loop.js' ), ['vrodos_namespace', 'vrodos_editor_services']],
       ['vrodos_keyButtons', VRodos_Path_Manager::editor_js_url( 'vrodos_keyButtons.js' ), ['vrodos_namespace']],
       ['vrodos_rayCasters', VRodos_Path_Manager::editor_js_url( 'vrodos_rayCasters.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_editor_services']],
