@@ -40,7 +40,7 @@ VRODOS.ui = VRODOS.ui || {};
             return '';
         }
 
-        return dataDrag.path.substring(0, dataDrag.path.lastIndexOf('/') + 1);
+        return VRODOS.utils.assetBasePathFromPath(dataDrag.path);
     }
 
     VRODOS.ui.onDrop = function(ev) {

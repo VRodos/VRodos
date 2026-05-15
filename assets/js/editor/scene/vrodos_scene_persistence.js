@@ -19,6 +19,28 @@ VRODOS.utils.sceneDecodeExportTextFields = function(resource) {
     return VRODOS.utils.normalizeDisplayTextFields(resource);
 };
 
+VRODOS.utils.sceneCreateObjectRecord = function(nameModel, path, categoryName, dataDrag, translation, addedAt) {
+    const dragData = Object.assign({}, dataDrag || {});
+    VRODOS.utils.normalizeDisplayTextFields(dragData);
+
+    const safeTranslation = VRODOS.utils.safeVector(translation, [0, 0, 0]);
+    const record = Object.assign({
+        path,
+        "trs": {
+            "translation": [safeTranslation[0], safeTranslation[1], safeTranslation[2]],
+            "rotation": [0, 0, 0],
+            "scale": [1, 1, 1]
+        },
+        "fnPath": VRODOS.utils.assetFnPathFromPath(path),
+        "asset_name": VRODOS.utils.displayText(nameModel),
+        "category_name": categoryName,
+        "isLight": String(categoryName || '').includes("light"),
+        addedAt,
+    }, dragData);
+
+    return VRODOS.utils.normalizeDisplayTextFields(record);
+};
+
 VRODOS.exporter.SceneExporter = class {
     parse(scene) {
         const output = {

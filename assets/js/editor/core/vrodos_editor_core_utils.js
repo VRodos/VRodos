@@ -200,7 +200,7 @@ VRODOS.importer = VRODOS.importer || {};
     }
 
     function assetFnPathFromPath(value) {
-        const path = typeof value === 'string' ? value : '';
+        const path = cleanRepeatedUrlText(value);
         if (!path) {
             return '';
         }
@@ -210,6 +210,16 @@ VRODOS.importer = VRODOS.importer || {};
         }
 
         return path.substring(path.lastIndexOf('/') + 1);
+    }
+
+    function assetBasePathFromPath(value) {
+        const path = cleanRepeatedUrlText(value);
+        if (!path) {
+            return '';
+        }
+
+        const slashIndex = path.lastIndexOf('/');
+        return slashIndex === -1 ? '' : path.substring(0, slashIndex + 1);
     }
 
     Object.assign(VRODOS.utils, {
@@ -232,7 +242,8 @@ VRODOS.importer = VRODOS.importer || {};
         ensureSceneObjectName,
         normalizeRelativeUploadPath,
         resolveUploadAssetPath,
-        assetFnPathFromPath
+        assetFnPathFromPath,
+        assetBasePathFromPath
     });
 
     VRODOS.utils.loaderJoinUrl = joinUrl;
