@@ -61,6 +61,40 @@ function _getEditorInput(id) {
     return document.getElementById(id);
 }
 
+function _showEditorPanel(panel) {
+    if (panel) {
+        panel.style.display = '';
+    }
+}
+
+function _getPropertyPanelState(panelId, name, options) {
+    const panel = document.getElementById(panelId);
+    if (!panel) {
+        return null;
+    }
+
+    const opts = options || {};
+    const sceneObj = opts.selectedFallback
+        ? getSceneObjectOrSelected(name)
+        : getEditorSceneObjectByName(name);
+    return sceneObj ? { panel, sceneObj } : null;
+}
+
+function _populateEditorSelect(id, values) {
+    const selectEl = _getEditorInput(id);
+    if (!selectEl) {
+        return null;
+    }
+
+    selectEl.innerText = '';
+    values.forEach((value) => {
+        if (value) {
+            selectEl.appendChild(new Option(value));
+        }
+    });
+    return selectEl;
+}
+
 function _bindEditorInputChange(id, handler) {
     const el = _getEditorInput(id);
     if (el) {
@@ -97,6 +131,16 @@ function _getObjectColorHex(sceneObj) {
     return sceneObj && sceneObj.color && typeof sceneObj.color.getHexString === 'function'
         ? `#${  sceneObj.color.getHexString()}`
         : null;
+}
+
+function _getDoorTargetDisplayValue(sceneObj) {
+    if (sceneObj.sceneID_target) {
+        return sceneObj.sceneID_target;
+    }
+    if (sceneObj.doorName_target) {
+        return `${sceneObj.doorName_target  } at ${  sceneObj.sceneName_target}`;
+    }
+    return 'Default';
 }
 
 // Reusable raycaster and mouse vector (avoid allocations per event)
@@ -426,11 +470,9 @@ function getSpotTargetOptionObjects() {
  * @param name
  */
 VRODOS.ui.displaySunProperties = function(event, name) {
-    const ppPropertiesDiv = document.getElementById("popUpSunPropertiesDiv");
-    if (!ppPropertiesDiv) return;
-
-    const sceneObj = getEditorSceneObjectByName(name);
-    if (!sceneObj) return;
+    const panelState = _getPropertyPanelState("popUpSunPropertiesDiv", name);
+    if (!panelState) return;
+    const sceneObj = panelState.sceneObj;
 
     _setEditorInputChecked('castShadow', sceneObj.castingShadow);
     _setEditorInputChecked('sunSky', sceneObj.sunSky);
@@ -449,16 +491,14 @@ VRODOS.ui.displaySunProperties = function(event, name) {
 
     _setEditorInputValue('sunIntensity', sceneObj.lightintensity || 1);
 
-    ppPropertiesDiv.style.display = '';
+    _showEditorPanel(panelState.panel);
 }
 
 // LAMP PROPERTIES DIV show
 VRODOS.ui.displayLampProperties = function(event, name) {
-    const ppPropertiesDiv = document.getElementById("popUpLampPropertiesDiv");
-    if (!ppPropertiesDiv) return;
-
-    const sceneObj = getEditorSceneObjectByName(name);
-    if (!sceneObj) return;
+    const panelState = _getPropertyPanelState("popUpLampPropertiesDiv", name);
+    if (!panelState) return;
+    const sceneObj = panelState.sceneObj;
 
     _setEditorInputChecked('lampcastShadow', sceneObj.lampcastingShadow);
     _setEditorInputValue('lampShadowCameraBottom', sceneObj.lampshadowCameraBottom);
@@ -478,66 +518,53 @@ VRODOS.ui.displayLampProperties = function(event, name) {
     _setEditorInputValue('lampDecay', sceneObj.decay);
     _setEditorInputValue('lampDistance', sceneObj.distance);
 
-    ppPropertiesDiv.style.display = '';
+    _showEditorPanel(panelState.panel);
 }
 
 
 // SPOT PROPERTIES DIV show
 VRODOS.ui.displaySpotProperties = function(event, name) {
+    const panelState = _getPropertyPanelState("popUpSpotPropertiesDiv", name, { selectedFallback: true });
+    if (!panelState) return;
+    const sceneObj = panelState.sceneObj;
 
-    const ppPropertiesDiv = document.getElementById("popUpSpotPropertiesDiv");
-
-    const spotTargetObject = document.getElementById("spotTargetObject");
-    if (spotTargetObject) {
-        spotTargetObject.innerText = '';
-
-        getSpotTargetOptionObjects().forEach((sceneObject) => {
-            if (!sceneObject || !sceneObject.name) return;
-            spotTargetObject.appendChild(new Option(sceneObject.name));
-        });
-    }
-
-    const sceneObj = getSceneObjectOrSelected(name);
+    _populateEditorSelect('spotTargetObject', getSpotTargetOptionObjects().map((sceneObject) =>
+        sceneObject && sceneObject.name ? sceneObject.name : null));
 
     const spotColor = _getFirstChildMaterialColorHex(sceneObj);
     if (spotColor) {
         _setEditorInputValue('spotColor', spotColor);
     }
 
-    if (sceneObj) {
-        _setEditorInputValue('spotPower', sceneObj.power || 1);
-        _setEditorInputValue('spotDecay', sceneObj.decay || 2);
-        _setEditorInputValue('spotDistance', sceneObj.distance || 0);
-        _setEditorInputValue('spotAngle', sceneObj.angle || Math.PI / 3);
-        _setEditorInputValue('spotPenumbra', sceneObj.penumbra || 0);
-        if (sceneObj.target) {
-            _setEditorInputValue('spotTargetObject', sceneObj.target.name);
-        }
+    _setEditorInputValue('spotPower', sceneObj.power || 1);
+    _setEditorInputValue('spotDecay', sceneObj.decay || 2);
+    _setEditorInputValue('spotDistance', sceneObj.distance || 0);
+    _setEditorInputValue('spotAngle', sceneObj.angle || Math.PI / 3);
+    _setEditorInputValue('spotPenumbra', sceneObj.penumbra || 0);
+    if (sceneObj.target) {
+        _setEditorInputValue('spotTargetObject', sceneObj.target.name);
     }
 
     // Show Selection (inside floating panel)
-    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
+    _showEditorPanel(panelState.panel);
 }
 
 
 
 // AMBIENT PROPERTIES DIV show
 VRODOS.ui.displayAmbientProperties = function(event, name) {
-
-    const ppPropertiesDiv = document.getElementById("popUpAmbientPropertiesDiv");
-
-    const sceneObj = getSceneObjectOrSelected(name);
+    const panelState = _getPropertyPanelState("popUpAmbientPropertiesDiv", name, { selectedFallback: true });
+    if (!panelState) return;
+    const sceneObj = panelState.sceneObj;
 
     if (sceneObj && sceneObj.color) {
         _setEditorInputValue('ambientColor', `#${  sceneObj.color.getHexString()}`);
     }
 
-    if (sceneObj) {
-        _setEditorInputValue('ambientIntensity', sceneObj.intensity || 1);
-    }
+    _setEditorInputValue('ambientIntensity', sceneObj.intensity || 1);
 
     // Show Selection (inside floating panel)
-    if (ppPropertiesDiv) ppPropertiesDiv.style.display = '';
+    _showEditorPanel(panelState.panel);
 }
 
 
@@ -550,57 +577,31 @@ VRODOS.ui.displayAmbientProperties = function(event, name) {
  * @param name
  */
 VRODOS.ui.displayDoorProperties = function(event, name) {
-    const popUpDoorPropertiesDiv = document.getElementById("popUpDoorPropertiesDiv");
-    const popupDoorSelect = document.getElementById("popupDoorSelect");
-    if (!popupDoorSelect || !popUpDoorPropertiesDiv) return;
+    const panelState = _getPropertyPanelState("popUpDoorPropertiesDiv", name);
+    if (!panelState) return;
 
-    const sceneObj = getEditorSceneObjectByName(name);
-    if (!sceneObj) return;
-
-    if (sceneObj.sceneID_target) {
-        popupDoorSelect.value = sceneObj.sceneID_target;
-    } else if (sceneObj.doorName_target) {
-        popupDoorSelect.value = `${sceneObj.doorName_target  } at ${  sceneObj.sceneName_target}`;
-    } else {
-        popupDoorSelect.value = "Default";
-    }
-
-    popUpDoorPropertiesDiv.style.display = '';
+    _setEditorInputValue('popupDoorSelect', _getDoorTargetDisplayValue(panelState.sceneObj));
+    _showEditorPanel(panelState.panel);
 }
 
 VRODOS.ui.displayLinkProperties = function(event, name) {
-    const popUpLinkPropertiesDiv = document.getElementById("popUpLinkPropertiesDiv");
-    const popupLinkSelect = document.getElementById("poi_link_text");
-    if (!popupLinkSelect || !popUpLinkPropertiesDiv) return;
+    const panelState = _getPropertyPanelState("popUpLinkPropertiesDiv", name);
+    if (!panelState) return;
 
-    const sceneObj = getEditorSceneObjectByName(name);
-    if (!sceneObj) return;
-
-    if (sceneObj.poi_link_url) {
-        popupLinkSelect.value = sceneObj.poi_link_url;
-    } else {
-        popupLinkSelect.value = "";
-    }
-
-    popUpLinkPropertiesDiv.style.display = '';
+    _setEditorInputValue('poi_link_text', panelState.sceneObj.poi_link_url || '');
+    _showEditorPanel(panelState.panel);
 }
 
 VRODOS.ui.displayPoiChatProperties = function(event, name) {
-    const ppPropertiesDiv = document.getElementById("popUpPoiChatPropertiesDiv");
-    if (!ppPropertiesDiv) return;
+    const panelState = _getPropertyPanelState("popUpPoiChatPropertiesDiv", name);
+    if (!panelState) return;
+    const sceneObj = panelState.sceneObj;
 
-    const sceneObj = getEditorSceneObjectByName(name);
-    if (!sceneObj) return;
+    _setEditorInputValue('poi_chat_title', sceneObj.poi_chat_title || 'Help Chat');
+    _setEditorInputValue('poi_chat_participants', sceneObj.poi_chat_participants || 2);
+    _setEditorInputChecked('poi_chat_indicators', sceneObj.poi_chat_indicators);
 
-    const setTitle = document.getElementById('poi_chat_title');
-    const setParticipants = document.getElementById('poi_chat_participants');
-    const setIndicators = document.getElementById('poi_chat_indicators');
-
-    if (setTitle) setTitle.value = sceneObj.poi_chat_title || 'Help Chat';
-    if (setParticipants) setParticipants.value = sceneObj.poi_chat_participants || 2;
-    if (setIndicators) setIndicators.checked = Boolean(sceneObj.poi_chat_indicators);
-
-    ppPropertiesDiv.style.display = '';
+    _showEditorPanel(panelState.panel);
 }
 
 /**
@@ -691,6 +692,15 @@ function initPersistentPropertyListeners() {
         { id: 'lampshadowMapWidth', prop: 'lampshadowMapWidth', sanitize: true },
         { id: 'lampshadowBias', prop: 'lampshadowBias', sanitize: true },
         { id: 'lampcastShadow', prop: 'lampcastingShadow', isCheckbox: true }
+    ]);
+
+    // --- Spot Properties ---
+    bindPropEntries([
+        { id: 'spotPower', prop: 'power', sanitize: true },
+        { id: 'spotDecay', prop: 'decay', sanitize: true },
+        { id: 'spotDistance', prop: 'distance', sanitize: true },
+        { id: 'spotAngle', prop: 'angle', sanitize: true },
+        { id: 'spotPenumbra', prop: 'penumbra', sanitize: true }
     ]);
 
     // --- Ambient Properties ---
@@ -811,22 +821,17 @@ VRODOS.ui.getActiveMeshes = function() {
  * @param name
  */
 VRODOS.ui.displayPoiImageTextProperties = function(event, name) {
-    const ppPropertiesDiv = document.getElementById("popUpPoiImageTextPropertiesDiv");
-    if (!ppPropertiesDiv) return;
+    const panelState = _getPropertyPanelState("popUpPoiImageTextPropertiesDiv", name);
+    if (!panelState) return;
+    const sceneObj = panelState.sceneObj;
+    const hasContent = sceneObj.poi_img_content != null;
+    const setDesc = _setEditorInputValue('poi_image_desc_text', sceneObj.poi_img_content || '');
 
-    const sceneObj = getEditorSceneObjectByName(name);
-    if (!sceneObj) return;
-
-    const chboxImg = document.getElementById("poi_image_desc_checkbox");
-    const setTitle = document.getElementById('poi_image_title_text');
-    const setDesc = document.getElementById('poi_image_desc_text');
-
-    if (chboxImg) chboxImg.checked = sceneObj.poi_img_content != null;
+    _setEditorInputChecked('poi_image_desc_checkbox', hasContent);
     if (setDesc) {
-        setDesc.style.display = sceneObj.poi_img_content != null ? "block" : "none";
-        setDesc.value = sceneObj.poi_img_content;
+        setDesc.style.display = hasContent ? "block" : "none";
     }
-    if (setTitle) setTitle.value = sceneObj.poi_img_title;
+    _setEditorInputValue('poi_image_title_text', sceneObj.poi_img_title || '');
 
-    ppPropertiesDiv.style.display = '';
+    _showEditorPanel(panelState.panel);
 }
