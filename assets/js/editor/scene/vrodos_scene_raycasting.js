@@ -42,7 +42,7 @@ VRODOS.ui.findIntersected = function(event) {
 }
 
 function _setEditorInputValue(id, value) {
-    const el = document.getElementById(id);
+    const el = _getEditorInput(id);
     if (el) {
         el.value = value;
     }
@@ -50,10 +50,35 @@ function _setEditorInputValue(id, value) {
 }
 
 function _setEditorInputChecked(id, checked) {
-    const el = document.getElementById(id);
+    const el = _getEditorInput(id);
     if (el) {
         el.checked = Boolean(checked);
     }
+    return el;
+}
+
+function _getEditorInput(id) {
+    return document.getElementById(id);
+}
+
+function _bindEditorInputChange(id, handler) {
+    const el = _getEditorInput(id);
+    if (el) {
+        el.addEventListener('change', handler);
+    }
+    return el;
+}
+
+function _bindTrackedEditorInputChange(id, handler) {
+    const el = _getEditorInput(id);
+    if (!el) {
+        return null;
+    }
+
+    el.addEventListener('focus', function() {
+        this._oldVal = this.value;
+    });
+    el.addEventListener('change', handler);
     return el;
 }
 
@@ -65,6 +90,12 @@ function _getFirstChildMaterialColorHex(sceneObj) {
 
     return material && material.color && typeof material.color.getHexString === 'function'
         ? `#${  material.color.getHexString()}`
+        : null;
+}
+
+function _getObjectColorHex(sceneObj) {
+    return sceneObj && sceneObj.color && typeof sceneObj.color.getHexString === 'function'
+        ? `#${  sceneObj.color.getHexString()}`
         : null;
 }
 
@@ -578,232 +609,164 @@ VRODOS.ui.displayPoiChatProperties = function(event, name) {
  */
 function initPersistentPropertyListeners() {
     const setProp = (prop, isCheckbox, sanitize = false) => function () {
+        const obj = getSelectedPropertyTarget();
+        if (!obj) {
+            return;
+        }
+
+        const oldValue = obj[prop];
+        let val = isCheckbox ? (this.checked ? 1 : 0) : this.value;
+        if (sanitize) val = sanitizeInputValue(val);
+
+        if (oldValue !== val) {
+            obj[prop] = val;
+            if (obj.isLight && typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
+                VRODOS.utils.syncEditorLightArtifacts(obj, VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
+            }
+            if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, prop, oldValue, val));
+            }
+            if (typeof VRODOS.editor.requestRender === 'function') {
+                VRODOS.editor.requestRender('light-property-change');
+            }
+            VRODOS.api.saveChanges();
+        }
+    };
+
+    const bindProp = (id, prop, isCheckbox = false, sanitize = false) =>
+        _bindEditorInputChange(id, setProp(prop, isCheckbox, sanitize));
+    const bindPropEntries = (entries) => {
+        entries.forEach((entry) => {
+            bindProp(entry.id, entry.prop, entry.isCheckbox, entry.sanitize);
+        });
+    };
+    const bindColorUndo = (id, getCurrentColor) => {
+        _bindTrackedEditorInputChange(id, function () {
             const obj = getSelectedPropertyTarget();
             if (!obj) {
                 return;
             }
 
-            const oldValue = obj[prop];
-            let val = isCheckbox ? (this.checked ? 1 : 0) : this.value;
-            if (sanitize) val = sanitizeInputValue(val);
-            
-            if (oldValue !== val) {
-                obj[prop] = val;
-                if (obj.isLight && typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
-                    VRODOS.utils.syncEditorLightArtifacts(obj, VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
-                }
+            const oldVal = this._oldVal || getCurrentColor(obj);
+            const newVal = this.value;
+            if (!oldVal) {
+                return;
+            }
+
+            if (oldVal !== newVal) {
                 if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, prop, oldValue, val));
-                }
-                if (typeof VRODOS.editor.requestRender === 'function') {
-                    VRODOS.editor.requestRender('light-property-change');
+                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
                 }
                 VRODOS.api.saveChanges();
             }
-        };
+        });
+    };
 
     // --- Sun Properties ---
-    const sunColor = document.getElementById('sunColor');
-    if (sunColor) {
-        sunColor.addEventListener('focus', function() { this._oldVal = this.value; });
-        sunColor.addEventListener('change', function () {
-            const obj = getSelectedPropertyTarget();
-            if (obj && obj.children && obj.children[0] && obj.children[0].material && obj.children[0].material.color) {
-                const oldVal = this._oldVal || `#${  obj.children[0].material.color.getHexString()}`;
-                const newVal = this.value;
-                
-                if (oldVal !== newVal) {
-                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
-                    }
-                    VRODOS.api.saveChanges();
-                }
-            }
-        });
-    }
-
-    const sunIntensity = document.getElementById('sunIntensity');
-    if (sunIntensity) sunIntensity.addEventListener('change', setProp('intensity', false, true));
-
-    ['Bottom', 'Top', 'Left', 'Right'].forEach(side => {
-        const el = document.getElementById(`sunShadowCamera${  side}`);
-        if (el) el.addEventListener('change', setProp(`shadowCamera${  side}`, false, true));
-    });
-
-    ['Height', 'Width'].forEach(dim => {
-        const el = document.getElementById(`sunshadowMap${  dim}`);
-        if (el) el.addEventListener('change', setProp(`shadowMap${  dim}`, false, true));
-    });
-
-    const elSunBias = document.getElementById('sunshadowBias');
-    if (elSunBias) elSunBias.addEventListener('change', setProp('shadowBias', false, true));
-
-    const elCast = document.getElementById('castShadow');
-    if (elCast) elCast.addEventListener('change', setProp('castingShadow', true));
-
-    const elSky = document.getElementById('sunSky');
-    if (elSky) elSky.addEventListener('change', setProp('sunSky', true));
+    bindColorUndo('sunColor', _getFirstChildMaterialColorHex);
+    bindPropEntries([
+        { id: 'sunIntensity', prop: 'intensity', sanitize: true },
+        { id: 'sunShadowCameraBottom', prop: 'shadowCameraBottom', sanitize: true },
+        { id: 'sunShadowCameraTop', prop: 'shadowCameraTop', sanitize: true },
+        { id: 'sunShadowCameraLeft', prop: 'shadowCameraLeft', sanitize: true },
+        { id: 'sunShadowCameraRight', prop: 'shadowCameraRight', sanitize: true },
+        { id: 'sunshadowMapHeight', prop: 'shadowMapHeight', sanitize: true },
+        { id: 'sunshadowMapWidth', prop: 'shadowMapWidth', sanitize: true },
+        { id: 'sunshadowBias', prop: 'shadowBias', sanitize: true },
+        { id: 'castShadow', prop: 'castingShadow', isCheckbox: true },
+        { id: 'sunSky', prop: 'sunSky', isCheckbox: true }
+    ]);
 
     // --- Lamp Properties ---
-    const lampColor = document.getElementById('lampColor');
-    if (lampColor) {
-        lampColor.addEventListener('focus', function() { this._oldVal = this.value; });
-        lampColor.addEventListener('change', function () {
-            const obj = getSelectedPropertyTarget();
-            if (obj && obj.children && obj.children[0] && obj.children[0].material && obj.children[0].material.color) {
-                const oldVal = this._oldVal || `#${  obj.children[0].material.color.getHexString()}`;
-                const newVal = this.value;
-
-                if (oldVal !== newVal) {
-                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
-                    }
-                    VRODOS.api.saveChanges();
-                }
-            }
-        });
-    }
-
-    ['Power', 'Decay', 'Distance'].forEach(prop => {
-        const el = document.getElementById(`lamp${  prop}`);
-        if (el) el.addEventListener('change', setProp(prop.toLowerCase(), false, true));
-    });
-
-    ['Bottom', 'Top', 'Left', 'Right'].forEach(side => {
-        const el = document.getElementById(`lampShadowCamera${  side}`);
-        if (el) el.addEventListener('change', setProp(`lampshadowCamera${  side}`, false, true));
-    });
-
-    ['Height', 'Width'].forEach(dim => {
-        const el = document.getElementById(`lampshadowMap${  dim}`);
-        if (el) el.addEventListener('change', setProp(`lampshadowMap${  dim}`, false, true));
-    });
-
-    // --- Chat Properties ---
-    const chatTitle = document.getElementById('poi_chat_title');
-    if (chatTitle) chatTitle.addEventListener('change', setProp('poi_chat_title', false));
-
-    const chatParticipants = document.getElementById('poi_chat_participants');
-    if (chatParticipants) chatParticipants.addEventListener('change', setProp('poi_chat_participants', false, true));
-
-    const chatIndicators = document.getElementById('poi_chat_indicators');
-    if (chatIndicators) chatIndicators.addEventListener('change', setProp('poi_chat_indicators', true));
-
-    const elLampBias = document.getElementById('lampshadowBias');
-    if (elLampBias) elLampBias.addEventListener('change', setProp('lampshadowBias', false, true));
-
-    const elLampCast = document.getElementById('lampcastShadow');
-    if (elLampCast) elLampCast.addEventListener('change', setProp('lampcastingShadow', true));
+    bindColorUndo('lampColor', _getFirstChildMaterialColorHex);
+    bindPropEntries([
+        { id: 'lampPower', prop: 'power', sanitize: true },
+        { id: 'lampDecay', prop: 'decay', sanitize: true },
+        { id: 'lampDistance', prop: 'distance', sanitize: true },
+        { id: 'lampShadowCameraBottom', prop: 'lampshadowCameraBottom', sanitize: true },
+        { id: 'lampShadowCameraTop', prop: 'lampshadowCameraTop', sanitize: true },
+        { id: 'lampShadowCameraLeft', prop: 'lampshadowCameraLeft', sanitize: true },
+        { id: 'lampShadowCameraRight', prop: 'lampshadowCameraRight', sanitize: true },
+        { id: 'lampshadowMapHeight', prop: 'lampshadowMapHeight', sanitize: true },
+        { id: 'lampshadowMapWidth', prop: 'lampshadowMapWidth', sanitize: true },
+        { id: 'lampshadowBias', prop: 'lampshadowBias', sanitize: true },
+        { id: 'lampcastShadow', prop: 'lampcastingShadow', isCheckbox: true }
+    ]);
 
     // --- Ambient Properties ---
-    const ambientColor = document.getElementById('ambientColor');
-    if (ambientColor) {
-        ambientColor.addEventListener('focus', function() { this._oldVal = this.value; });
-        ambientColor.addEventListener('change', function () {
-            const obj = getSelectedPropertyTarget();
-            if (obj && obj.color) {
-                const oldVal = this._oldVal || `#${  obj.color.getHexString()}`;
-                const newVal = this.value;
-
-                if (oldVal !== newVal) {
-                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
-                    }
-                    VRODOS.api.saveChanges();
-                }
-            }
-        });
-    }
-
-    const ambientIntensity = document.getElementById('ambientIntensity');
-    if (ambientIntensity) ambientIntensity.addEventListener('change', setProp('intensity', false, true));
+    bindColorUndo('ambientColor', _getObjectColorHex);
+    bindProp('ambientIntensity', 'intensity', false, true);
 
     // --- Door & Link Properties ---
-    const popupDoorSelect = document.getElementById("popupDoorSelect");
-    if (popupDoorSelect) {
-        popupDoorSelect.addEventListener("focus", function() { this._oldVal = this.value; });
-        popupDoorSelect.addEventListener("change", function () {
-            const obj = getSelectedPropertyTarget();
-            if (obj && this.value !== "Default" && this.value) {
-                const oldVal = this._oldVal || obj.sceneID_target;
-                const newVal = this.value;
+    _bindTrackedEditorInputChange('popupDoorSelect', function () {
+        const obj = getSelectedPropertyTarget();
+        if (obj && this.value !== "Default" && this.value) {
+            const oldVal = this._oldVal || obj.sceneID_target;
+            const newVal = this.value;
 
-                if (oldVal !== newVal) {
-                    obj.sceneID_target = newVal;
-                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'sceneID_target', oldVal, newVal));
-                    }
-                    VRODOS.api.saveChanges();
+            if (oldVal !== newVal) {
+                obj.sceneID_target = newVal;
+                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'sceneID_target', oldVal, newVal));
                 }
+                VRODOS.api.saveChanges();
             }
-        });
-    }
+        }
+    });
 
-    const popupLinkSelect = document.getElementById("poi_link_text");
-    if (popupLinkSelect) {
-        popupLinkSelect.addEventListener("focus", function() { this._oldVal = this.value; });
-        popupLinkSelect.addEventListener("change", function () {
-            const obj = getSelectedPropertyTarget();
-            if (obj && this.value) {
-                const oldVal = this._oldVal || obj.poi_link_url;
-                const newVal = this.value;
+    _bindTrackedEditorInputChange('poi_link_text', function () {
+        const obj = getSelectedPropertyTarget();
+        if (obj && this.value) {
+            const oldVal = this._oldVal || obj.poi_link_url;
+            const newVal = this.value;
 
-                if (oldVal !== newVal) {
-                    obj.poi_link_url = newVal;
-                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_link_url', oldVal, newVal));
-                    }
-                    VRODOS.api.saveChanges();
+            if (oldVal !== newVal) {
+                obj.poi_link_url = newVal;
+                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_link_url', oldVal, newVal));
                 }
+                VRODOS.api.saveChanges();
             }
-        });
-    }
+        }
+    });
 
     // --- POI Image Text Properties ---
-    const chboxImg = document.getElementById("poi_image_desc_checkbox");
-    const setTitle = document.getElementById('poi_image_title_text');
-    const setDesc = document.getElementById('poi_image_desc_text');
+    const setTitle = _getEditorInput('poi_image_title_text');
+    const setDesc = _getEditorInput('poi_image_desc_text');
 
-    if (chboxImg) {
-        chboxImg.addEventListener("change", function () {
-                const obj = getSelectedPropertyTarget();
-                if (obj) {
-                    const oldContent = obj.poi_img_content;
-                    const newContent = this.checked ? (setDesc && setDesc.value ? setDesc.value : '') : null;
-                    const newTitle = setTitle ? setTitle.value : obj.poi_img_title;
+    _bindEditorInputChange('poi_image_desc_checkbox', function () {
+        const obj = getSelectedPropertyTarget();
+        if (!obj) {
+            return;
+        }
 
-                if (oldContent !== newContent) {
-                    obj.poi_img_content = newContent;
-                    obj.poi_img_title = newTitle;
-                    
-                    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                        // For complex multi-prop changes, we could use a custom command, but VRODOS.editor.PropertyCommand is enough for the main content
-                        VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_img_content', oldContent, newContent));
-                    }
+        const oldContent = obj.poi_img_content;
+        const newContent = this.checked ? (setDesc && setDesc.value ? setDesc.value : '') : null;
+        const newTitle = setTitle ? setTitle.value : obj.poi_img_title;
 
-                    if (setDesc) setDesc.style.display = this.checked ? "block" : "none";
-                    VRODOS.api.saveChanges();
-                }
+        if (oldContent !== newContent) {
+            obj.poi_img_content = newContent;
+            obj.poi_img_title = newTitle;
+
+            if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                // For complex multi-prop changes, we could use a custom command, but VRODOS.editor.PropertyCommand is enough for the main content
+                VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_img_content', oldContent, newContent));
             }
-        });
-    }
 
-    if (setTitle) {
-        setTitle.addEventListener("change", setProp('poi_img_title', false));
-    }
+            if (setDesc) setDesc.style.display = this.checked ? "block" : "none";
+            VRODOS.api.saveChanges();
+        }
+    });
 
-    if (setDesc) {
-        setDesc.addEventListener("change", setProp('poi_img_content', false));
-    }
+    bindProp('poi_img_title_text', 'poi_img_title');
+    bindProp('poi_image_desc_text', 'poi_img_content');
 
     // --- POI Chat Properties ---
-    const setChatTitle = document.getElementById('poi_chat_title');
-    const setChatParticipants = document.getElementById('poi_chat_participants');
-    const setChatIndicators = document.getElementById('poi_chat_indicators');
-
-    if (setChatTitle) setChatTitle.addEventListener("change", setProp('poi_chat_title', false));
-    if (setChatParticipants) setChatParticipants.addEventListener("change", setProp('poi_chat_participants', false, true));
-    if (setChatIndicators) setChatIndicators.addEventListener("change", setProp('poi_chat_indicators', true));
+    bindPropEntries([
+        { id: 'poi_chat_title', prop: 'poi_chat_title' },
+        { id: 'poi_chat_participants', prop: 'poi_chat_participants', sanitize: true },
+        { id: 'poi_chat_indicators', prop: 'poi_chat_indicators', isCheckbox: true }
+    ]);
 }
 
 // Call once when script loads

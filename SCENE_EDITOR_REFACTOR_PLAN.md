@@ -163,6 +163,8 @@
 - Verification: Phase 89 JS syntax check passed; focused hierarchy eligibility/sort sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 90 grouped light property panel setter cleanup implemented.
 - Verification: Phase 90 JS syntax check passed; focused Sun light panel setter sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 91 grouped persistent property listener cleanup implemented.
+- Verification: Phase 91 JS syntax check passed; focused property binding/listener sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -303,6 +305,7 @@ assets/js/editor/
 - Done: Group hierarchy row rendering cleanup by centralizing director/target constants, action-button eligibility, row fragment assembly, light ordering, and target display labels across full rebuild and incremental add paths.
 - Done: Group hierarchy renderability cleanup by centralizing object category predicates, helper-object filtering, top-level root checks, bucket collection, light/target sorting, and incremental-add eligibility.
 - Done: Group light property panel setter cleanup by centralizing null-safe input value/checkbox writes and repeated first-child material color reads inside the raycasting/properties module.
+- Done: Group persistent property listener cleanup by centralizing input change binding, tracked focus/change binding, light color undo handling, Sun/Lamp/Ambient property entries, POI image title/content bindings, and single-owner POI chat bindings.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
