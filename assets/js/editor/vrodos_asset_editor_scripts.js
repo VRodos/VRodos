@@ -3,8 +3,6 @@
  */
 'use strict';
 
-const slideIndex = 0;
-
 function vrodos_set_asset_screenshot_preview(src) {
     const sshotImg = document.getElementById('sshotPreviewImg');
     const placeholder = document.getElementById('sshotPreviewPlaceholder');
@@ -762,13 +760,6 @@ function updateNativeColorPicker(input, asset_viewer_3d_kernel_local) {
     }
 }
 
-function rgbToHex(r, g, b) {
-    r = Math.max(r, 0);
-    g = Math.max(g, 0);
-    b = Math.max(b, 0);
-    return `#${  ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-}
-
 function vrodos_create_model_sshot(asset_viewer_3d_kernel_local) {
     if (!asset_viewer_3d_kernel_local || !asset_viewer_3d_kernel_local.renderer) {
         vrodos_set_asset_editor_notice('The 3D preview is not ready yet. Wait for the model preview to load and try again.');
@@ -830,7 +821,7 @@ function loadFileInputLabel() {
     }
 }
 
-function vrodos_reset_panels(asset_viewer_3d_kernel, whocalls) {
+function vrodos_reset_panels(asset_viewer_3d_kernel, _whocalls) {
     vrodos_clear_asset_files(asset_viewer_3d_kernel);
     document.querySelectorAll('div.ProducerPlotTooltip').forEach((el) => {
         el.remove();
@@ -850,6 +841,10 @@ function setScreenshotHandler() {
         });
     }
 }
+
+window.addHandlerFor3Dfiles = addHandlerFor3Dfiles;
+window.updateNativeColorPicker = updateNativeColorPicker;
+window.setScreenshotHandler = setScreenshotHandler;
 
 function vrodos_init_asset_import_status_polling() {
     const initialStatus = window.vrodosAssetImportStatus || {};

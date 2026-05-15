@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         radio.addEventListener('change', loadProjectTypeDescription);
     });
 
-    document.getElementById('createNewProjectBtn').addEventListener('click', (e) => {
+    document.getElementById('createNewProjectBtn').addEventListener('click', () => {
         // Title of game project
         const titleEl = document.getElementById('title');
         const title_vrodos_project = titleEl ? titleEl.value : "";
@@ -102,12 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
         dialog.showModal();
     }
 
-    document.getElementById('deleteProjectBtn').addEventListener('click', (e) => {
+    document.getElementById('deleteProjectBtn').addEventListener('click', () => {
         document.getElementById('delete-dialog-progress-bar').style.display = '';
         VRODOS.api.deleteProject(dialog.dataset.projectId, dialog, VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass);
     });
 
-    document.getElementById('canceldeleteProjectBtn').addEventListener('click', (e) => {
+    document.getElementById('canceldeleteProjectBtn').addEventListener('click', () => {
         document.getElementById('delete-dialog-progress-bar').style.display = 'none';
         dialog.close();
     });
@@ -162,4 +162,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
-

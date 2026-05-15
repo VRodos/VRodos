@@ -427,7 +427,7 @@ class VRodos_AssetViewer_3D_kernel {
         this.scene.add(ambientLight);
     }
 
-    clearAllAssets(whocalls) {
+    clearAllAssets(_whocalls) {
         this.setZeroVars();
         this.stopAutoLoopRendering();
         this.mixers = [];

@@ -233,6 +233,7 @@ assets/js/editor/
 - Done: Clean up scene raycasting internals by modernizing reusable raycaster state, adding explicit switch defaults, and removing unused local debug/popup helpers without changing selection behavior.
 - Done: Clean up property controls internals by adding explicit popup-routing switch defaults, replacing a prototype-sensitive GUI controller loop, and removing unused DOM event parameters.
 - Done: Batch low-risk lint cleanup across editor AJAX, legacy helpers, undo, compile UI, hierarchy, CEFR badges, asset browser, scene object actions, and scene persistence modules without changing scene editor behavior.
+- Done: Clear the remaining editor-side lint warnings by making asset-editor template globals explicit, removing a dead local color helper/constant, and dropping unused event parameters in project/asset editor scripts.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
