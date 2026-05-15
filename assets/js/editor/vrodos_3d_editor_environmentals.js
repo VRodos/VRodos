@@ -2,7 +2,6 @@
 
 const VRODOS_EDITOR_CAMERA = VRODOS.editorRender.camera;
 const VRODOS_EDITOR_SCENE_DEFAULTS = VRODOS.editorRender.sceneDefaults;
-const vrodosEnvironmentResolveBaseUrl = VRODOS.editorRender.resolveBaseUrl;
 
 class vrodos_3d_editor_environmentals {
 
@@ -76,27 +75,8 @@ class vrodos_3d_editor_environmentals {
 
         this.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
 
-         // ------ Create Scene -------
-        this.scene = new THREE.Scene();
-        this.scene.name = "vrodosScene";
-        this.bindDirectorGroundGuideSceneMutationHooks();
-
-        this.loadSceneEnvironmentTexture();
-
-        // --- Add Grid to scene
-        this.gridHelper = new THREE.GridHelper(
-            VRODOS_EDITOR_SCENE_DEFAULTS.gridSize,
-            VRODOS_EDITOR_SCENE_DEFAULTS.gridDivisions
-        );
-        this.gridHelper.name = "myGridHelper";
-        this.scene.add(this.gridHelper);
-        this.gridHelper.visible = true;
-
-        // -- Add Axes helper
-        this.axesHelper = new THREE.AxesHelper(VRODOS_EDITOR_SCENE_DEFAULTS.axesSize);
-        this.axesHelper.name = "myAxisHelper";
-        this.scene.add(this.axesHelper);
-        this.axesHelper.visible = true;
+        this.createEditorScene();
+        this.addEditorSceneHelpers();
 
 
         // add the renderers to the canvas
@@ -113,22 +93,11 @@ class vrodos_3d_editor_environmentals {
         this.bindResizeHandler();
     }
 
-    loadSceneEnvironmentTexture() {
-        const imageBaseUrl = vrodosEnvironmentResolveBaseUrl(VRODOS.data.pluginPath, 'imageBaseUrl', 'assets/images/');
-        const hdrLoader = new THREE.HDRLoader();
-
-        hdrLoader.setPath(`${imageBaseUrl  }hdr/`)
-            .load('Stonewall_Ref.hdr', (texture) => {
-                texture.mapping = THREE.EquirectangularReflectionMapping;
-                this.maintexture = texture;
-                this.scene.environment = this.maintexture;
-            });
-    }
-
 }
 
 VRODOS.editorRender.installPerformanceProfileMethods(vrodos_3d_editor_environmentals.prototype);
 VRODOS.editorRender.installRendererLifecycleMethods(vrodos_3d_editor_environmentals.prototype);
 VRODOS.editorRender.installCameraMethods(vrodos_3d_editor_environmentals.prototype);
 VRODOS.editorRender.installDirectorHelperMethods(vrodos_3d_editor_environmentals.prototype);
+VRODOS.editorRender.installSceneEnvironmentMethods(vrodos_3d_editor_environmentals.prototype);
 VRODOS.editor.Environmentals = vrodos_3d_editor_environmentals;

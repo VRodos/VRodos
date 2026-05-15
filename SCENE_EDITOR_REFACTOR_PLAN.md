@@ -91,6 +91,8 @@
 - Verification: Phase 53 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 54 editor director helper extraction implemented.
 - Verification: Phase 54 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 55 editor scene environment extraction implemented.
+- Verification: Phase 55 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -186,6 +188,7 @@ assets/js/editor/
 - Done: Move renderer configuration, WebGL context lifecycle, label renderer setup, resize handling, composer camera sync, and direct frame rendering out of `vrodos_3d_editor_environmentals.js` into `render/vrodos_editor_renderer_lifecycle.js`.
 - Done: Move orbit/avatar/third-person camera setup, active camera selection, compass heading updates, and scene-fit camera framing out of `vrodos_3d_editor_environmentals.js` into `render/vrodos_editor_cameras.js`.
 - Done: Move Director visual/proxy helper tracking, first-person rig synchronization, authored Director transform helpers, and Director ground-guide raycast/update logic out of `vrodos_3d_editor_environmentals.js` into `render/vrodos_editor_director_helpers.js`.
+- Done: Move editor scene creation, HDR environment texture loading, and grid/axis helper setup out of `vrodos_3d_editor_environmentals.js` into `render/vrodos_editor_scene_environment.js`.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
