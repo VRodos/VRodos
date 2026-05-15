@@ -239,6 +239,7 @@ assets/js/editor/
 - Done: Normalize percent-encoded scene object names and display metadata such as Greek `asset_slug` values during drag, export, and import without decoding file paths or identifiers.
 - Done: Consolidate duplicated UI display-text decoding and HTML/attribute escaping into editor core utils and route CEFR badges, hierarchy labels, and asset browser rendering through the shared helpers.
 - Done: Route remaining editor scene, selection, persistence, and property-control display decoding through `VRODOS.utils.displayText()` with explicit core-utils script dependencies.
+- Done: Centralize known display-metadata field normalization and reuse it for scene persistence, loader property application, and asset-browser drag/search handling.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

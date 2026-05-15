@@ -349,7 +349,7 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
 
     for (const [key, value] of Object.entries(resource)) {
         if (!excludeKeys.has(key)) {
-            object[key] = ['asset_name', 'assessment_title', 'assessment_type', 'assessment_group'].includes(key)
+            object[key] = VRODOS.utils.isDisplayTextField(key)
                 ? VRODOS.utils.loaderDisplayText(value)
                 : value;
         }

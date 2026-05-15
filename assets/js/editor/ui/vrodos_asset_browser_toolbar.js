@@ -166,7 +166,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             if (value.length) {
                 filemanager.classList.add('searching');
                 fileList.innerHTML = '';
-                const filteredResponseData = selectByTitleComparizon(responseData, value.trim());
+                const filteredResponseData = selectAssetsByTitle(responseData, value.trim());
                 render(filteredResponseData, gameProjectSlug, urlforAssetEdit);
             } else {
                 filemanager.classList.remove('searching');
@@ -213,7 +213,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                 lucide.createIcons();
             }
         }
-        dragGhostLabel.textContent = assetName;
+        dragGhostLabel.textContent = VRODOS.utils.displayText(assetName);
         e.dataTransfer.setDragImage(dragGhost, 60, 45);
 
         const dragData = {};
@@ -226,12 +226,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             dragData.text_content = vrodos_decodeBase64Unicode(dragData.text_content_b64);
             delete dragData.text_content_b64;
         }
-        if (dragData.asset_slug) {
-            dragData.asset_slug = VRODOS.utils.displayText(dragData.asset_slug);
-        }
-        if (dragData.asset_name) {
-            dragData.asset_name = VRODOS.utils.displayText(dragData.asset_name);
-        }
+        VRODOS.utils.normalizeDisplayTextFields(dragData);
         const titleSlug = VRODOS.utils.displayText(target.getAttribute("data-asset_slug") || dragData.asset_slug || 'scene_object');
         dragData.title = `${titleSlug  }_${  Date.now()}`;
         dragData.name = dragData.title;
@@ -352,13 +347,22 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
 
     // Icon mapping now handled by vrodos_icons.js (single source of truth)
 
-    function selectByTitleComparizon(input_data, needle) {
-        const output_data = [];
-        input_data.forEach((d) => {
-            if (d.asset_name.toLowerCase().indexOf(needle.toLowerCase()) !== -1)
-                {output_data.push(d);}
+    function selectAssetsByTitle(inputData, needle) {
+        const query = VRODOS.utils.displayText(needle).trim().toLowerCase();
+        if (!query) {
+            return inputData;
+        }
+
+        return inputData.filter((asset) => {
+            const searchableText = [
+                asset.asset_name,
+                asset.asset_slug,
+                asset.category_name,
+                asset.category_slug
+            ].map((value) => VRODOS.utils.displayText(value).toLowerCase()).join(' ');
+
+            return searchableText.indexOf(query) !== -1;
         });
-        return output_data;
     }
 
 

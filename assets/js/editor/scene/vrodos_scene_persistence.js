@@ -66,24 +66,7 @@ VRODOS.utils.sceneUniqueObjectName = function(name, existingObjects) {
 };
 
 VRODOS.utils.sceneDecodeExportTextFields = function(resource) {
-    if (!resource || typeof resource !== 'object') {
-        return resource;
-    }
-
-    [
-        'asset_name',
-        'asset_slug',
-        'assessment_title',
-        'assessment_type',
-        'assessment_group',
-        'immerse_object_type'
-    ].forEach((key) => {
-        if (typeof resource[key] === 'string') {
-            resource[key] = VRODOS.utils.displayText(resource[key]);
-        }
-    });
-
-    return resource;
+    return VRODOS.utils.normalizeDisplayTextFields(resource);
 };
 
 VRODOS.exporter.SceneExporter = class {

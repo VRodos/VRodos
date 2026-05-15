@@ -10,6 +10,16 @@ VRODOS.exporter = VRODOS.exporter || {};
 VRODOS.importer = VRODOS.importer || {};
 
 (function initVrodosEditorCoreUtils() {
+    const displayTextFieldNames = Object.freeze([
+        'asset_name',
+        'asset_slug',
+        'assessment_title',
+        'assessment_type',
+        'assessment_group',
+        'immerse_object_type'
+    ]);
+    const displayTextFieldSet = new Set(displayTextFieldNames);
+
     function safeNumber(value, fallback) {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : fallback;
@@ -80,6 +90,25 @@ VRODOS.importer = VRODOS.importer || {};
         return displayText(value).trim();
     }
 
+    function isDisplayTextField(key) {
+        return displayTextFieldSet.has(key);
+    }
+
+    function normalizeDisplayTextFields(resource, fields) {
+        if (!resource || typeof resource !== 'object') {
+            return resource;
+        }
+
+        const fieldNames = Array.isArray(fields) ? fields : displayTextFieldNames;
+        fieldNames.forEach((key) => {
+            if (typeof resource[key] === 'string') {
+                resource[key] = displayText(resource[key]);
+            }
+        });
+
+        return resource;
+    }
+
     function safeObjectName(name, resource, object, fallbackIndex) {
         const currentName = sceneNameText(name);
         if (currentName !== '') {
@@ -141,9 +170,12 @@ VRODOS.importer = VRODOS.importer || {};
         joinUrl,
         resolveBaseUrl,
         displayText,
+        displayTextFieldNames,
         escapeHTML,
         escapeAttribute,
         sceneNameText,
+        isDisplayTextField,
+        normalizeDisplayTextFields,
         safeObjectName,
         ensureSceneObjectName,
         normalizeRelativeUploadPath
