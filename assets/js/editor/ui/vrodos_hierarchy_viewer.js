@@ -26,13 +26,72 @@ function _hierarchyGetSelectableRoots() {
 }
 
 function _hierarchyGetSelectedObject() {
-    return VRODOS.editor.transforms.getRealObject();
+    return VRODOS.editor.transforms && typeof VRODOS.editor.transforms.getRealObject === 'function'
+        ? VRODOS.editor.transforms.getRealObject()
+        : null;
 }
 
 function _hierarchyGetSceneObjectRecord(name) {
     return typeof VRODOS.utils.sceneGetObjectRecord === 'function'
         ? VRODOS.utils.sceneGetObjectRecord(name, { create: false })
         : null;
+}
+
+function _hierarchyCaptureTRS(obj) {
+    if (!obj) {
+        return null;
+    }
+
+    return {
+        pos: obj.position.clone(),
+        rot: obj.rotation.clone(),
+        scale: obj.scale.clone()
+    };
+}
+
+function _hierarchyCommitResetUndo(obj, oldTRS) {
+    if (
+        !obj ||
+        !oldTRS ||
+        typeof VRODOS.editor.undoManager === 'undefined' ||
+        VRODOS.editor.undoManager.isExecuting
+    ) {
+        return;
+    }
+
+    const newTRS = _hierarchyCaptureTRS(obj);
+    VRODOS.editor.undoManager.add(new VRODOS.editor.TransformCommand(obj, oldTRS, newTRS));
+}
+
+function _hierarchyApplyDefaultTRS(obj) {
+    if (!obj) {
+        return;
+    }
+
+    obj.position.set(0, 1.3, 0);
+    obj.rotation.set(0, 0, 0);
+    obj.scale.set(1, 1, 1);
+    obj.updateMatrix();
+    obj.updateMatrixWorld(true);
+}
+
+function _hierarchySyncResetSideEffects(obj) {
+    if (!obj) {
+        return;
+    }
+
+    if (_hierarchyGetSelectedObject() === obj && typeof VRODOS.editor.updatePositionsAndControls === 'function') {
+        VRODOS.editor.updatePositionsAndControls();
+    }
+    if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.invalidateBounds === 'function') {
+        VRODOS.editor.sceneRegistry.invalidateBounds(obj);
+    }
+    if (typeof VRODOS.editor.requestRender === 'function') {
+        VRODOS.editor.requestRender('hierarchy-reset');
+    }
+    if (typeof VRODOS.api.triggerAutoSave === 'function') {
+        VRODOS.api.triggerAutoSave();
+    }
 }
 
 VRODOS.ui.resetInScene = function(name) {
@@ -46,38 +105,13 @@ VRODOS.ui.resetInScene = function(name) {
     } else {
         obj = _hierarchyGetObjectByName(name);
         if (obj) {
-            // [NEW] Capture start state for Undo
-            const oldTRS = {
-                pos: obj.position.clone(),
-                rot: obj.rotation.clone(),
-                scale: obj.scale.clone()
-            };
-
-            obj.position.set(0, 1.3, 0);
-            obj.rotation.set(0, 0, 0);
-            obj.scale.set(1, 1, 1);
-
-            // [NEW] Commit command
-            if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                const newTRS = { pos: obj.position.clone(), rot: obj.rotation.clone(), scale: obj.scale.clone() };
-                VRODOS.editor.undoManager.add(new VRODOS.editor.TransformCommand(obj, oldTRS, newTRS));
-            }
+            const oldTRS = _hierarchyCaptureTRS(obj);
+            _hierarchyApplyDefaultTRS(obj);
+            _hierarchyCommitResetUndo(obj, oldTRS);
         }
     }
 
-    if (obj) {
-        // Update transform controls if this object is selected
-        if (_hierarchyGetSelectedObject() === obj) {
-            if (typeof VRODOS.editor.updatePositionsAndControls === 'function') {
-                VRODOS.editor.updatePositionsAndControls();
-            }
-        }
-
-        // Trigger save
-        if (typeof triggerAutoSave === 'function') {
-            VRODOS.api.triggerAutoSave();
-        }
-    }
+    _hierarchySyncResetSideEffects(obj);
 }
 
 /**

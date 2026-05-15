@@ -155,6 +155,8 @@
 - Verification: Phase 85 JS syntax check passed; focused hierarchy action delegation sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 86 grouped hierarchy markup safety cleanup implemented.
 - Verification: Phase 86 JS syntax check passed; focused hierarchy escaping sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 87 grouped hierarchy reset flow cleanup implemented.
+- Verification: Phase 87 JS syntax check passed; focused hierarchy reset sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -291,6 +293,7 @@ assets/js/editor/
 - Done: Group hierarchy ownership cleanup by moving hierarchy item lookup, removal, and lock-icon updates into the hierarchy viewer module, then routing scene-object lock/delete flows through the shared `VRODOS.ui` hierarchy helpers.
 - Done: Group hierarchy delegated-action cleanup by replacing inline delete/lock/reset hierarchy handlers with data-action buttons, centralized delegated click dispatch, escaped data attributes, and an idempotent hierarchy event binder.
 - Done: Group hierarchy markup safety cleanup by centralizing item HTML, attribute, title, timestamp, and action-label escaping for hierarchy rendering while preserving delegated action payloads.
+- Done: Group hierarchy reset cleanup by extracting reset TRS capture, default transform application, undo command creation, selected-object sync, bounds invalidation, render request, and autosave into focused helpers.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
