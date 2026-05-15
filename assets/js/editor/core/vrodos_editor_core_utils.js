@@ -60,6 +60,27 @@ VRODOS.importer = VRODOS.importer || {};
         return safeVector(values, [1, 1, 1]);
     }
 
+    function safeTRS(trs) {
+        const source = trs || {};
+        return {
+            translation: safeVector(source.translation, [0, 0, 0]),
+            rotation: safeVector(source.rotation, [0, 0, 0]),
+            scale: safeScale(source.scale)
+        };
+    }
+
+    function applyTRSToObject(object, trs) {
+        if (!object) {
+            return null;
+        }
+
+        const safe = safeTRS(trs);
+        object.position.set(safe.translation[0], safe.translation[1], safe.translation[2]);
+        object.rotation.set(safe.rotation[0], safe.rotation[1], safe.rotation[2]);
+        object.scale.set(safe.scale[0], safe.scale[1], safe.scale[2]);
+        return object;
+    }
+
     function joinUrl(base, path) {
         return `${String(base || '').replace(/\/+$/, '')  }/${  String(path || '').replace(/^\/+/, '')}`;
     }
@@ -377,6 +398,8 @@ VRODOS.importer = VRODOS.importer || {};
         clampNumber,
         safeVector,
         safeScale,
+        safeTRS,
+        applyTRSToObject,
         joinUrl,
         resolveBaseUrl,
         cleanRepeatedUrlText,

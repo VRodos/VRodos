@@ -62,6 +62,32 @@ function clearSceneObjectAddPending(nameModel) {
     VRODOS.editor.pendingSceneObjectAdds.delete(nameModel);
 }
 
+function getSceneObjectRecord(nameModel) {
+    return (VRODOS.data && VRODOS.data.scene_data && VRODOS.data.scene_data.objects)
+        ? VRODOS.data.scene_data.objects[nameModel]
+        : null;
+}
+
+function applyAddedObjectTRS(object, nameModel, options) {
+    const opts = options || {};
+    const record = getSceneObjectRecord(nameModel);
+    if (!record) {
+        return object;
+    }
+
+    record.trs = record.trs || {};
+    if (opts.yOffset) {
+        record.trs.translation = VRODOS.utils.safeVector(record.trs.translation, [0, 0, 0]);
+        record.trs.translation[1] += opts.yOffset;
+    }
+
+    return VRODOS.utils.applyTRSToObject(object, record.trs);
+}
+
+function addedObjectRegisterOptions(renderReason) {
+    return { selectable: true, incrementLoaded: false, renderReason };
+}
+
 VRODOS.ui.frameNewSceneObject = function(object3D) {
     if (!object3D || !VRODOS.editor.envir || !VRODOS.editor.envir.cameraOrbit || !VRODOS.editor.envir.orbitControls) {
         return;
@@ -493,13 +519,7 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     // Add shadow camera helper
     const lightSunShadowhelper = VRODOS.utils.createEditorLightShadowHelper(lightSun);
 
-    // Set initial transformations
-    const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
-    trs_tmp.translation[1] += 3; // Sun should be higher than objects
-
-    lightSun.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
-    lightSun.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
-    lightSun.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
+    applyAddedObjectTRS(lightSun, nameModel, { yOffset: 3 });
 
     lightSun.color.setHex(hexcol);
     lightSun.children[0].material.color.setHex(hexcol);
@@ -508,7 +528,7 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
     lightTargetSpot.children[0].material.color.setHex(hexcol);
 
     const registeredLightSun = VRODOS.ui.finalizeSceneObjectAdd(lightSun, {
-        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-sun-added' },
+        registerOptions: addedObjectRegisterOptions('light-sun-added'),
         select: false
     });
     if (registeredLightSun !== lightSun) {
@@ -517,7 +537,7 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
 
     VRODOS.editor.envir.scene.add(lightSunHelper);
     const registeredLightTarget = VRODOS.ui.finalizeSceneObjectAdd(lightTargetSpot, {
-        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-target-added' },
+        registerOptions: addedObjectRegisterOptions('light-target-added'),
         select: false
     });
     if (registeredLightTarget && registeredLightTarget !== lightTargetSpot) {
@@ -567,18 +587,13 @@ VRODOS.api.createLightLamp = function(nameModel, addedAt) {
         color: 0x555500
     });
 
-    const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
-    trs_tmp.translation[1] += 3;
-
-    lightLamp.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
-    lightLamp.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
-    lightLamp.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
+    applyAddedObjectTRS(lightLamp, nameModel, { yOffset: 3 });
 
     lightLamp.color.setHex(hexcol);
     lightLamp.power = 10;
 
     const registeredLightLamp = VRODOS.ui.finalizeSceneObjectAdd(lightLamp, {
-        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-lamp-added' },
+        registerOptions: addedObjectRegisterOptions('light-lamp-added'),
         select: false
     });
     if (registeredLightLamp !== lightLamp) {
@@ -619,15 +634,10 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
         helper: lightSpotHelper
     });
 
-    const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
-    trs_tmp.translation[1] += 3;
-
-    lightSpot.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
-    lightSpot.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
-    lightSpot.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
+    applyAddedObjectTRS(lightSpot, nameModel, { yOffset: 3 });
 
     const registeredLightSpot = VRODOS.ui.finalizeSceneObjectAdd(lightSpot, {
-        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-spot-added' },
+        registerOptions: addedObjectRegisterOptions('light-spot-added'),
         select: false
     });
     if (registeredLightSpot !== lightSpot) {
@@ -635,7 +645,7 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
     }
 
     const registeredLightTarget = VRODOS.ui.finalizeSceneObjectAdd(lightTargetSpot, {
-        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-target-added' },
+        registerOptions: addedObjectRegisterOptions('light-target-added'),
         select: false
     });
     if (registeredLightTarget && registeredLightTarget !== lightTargetSpot) {
@@ -667,15 +677,10 @@ VRODOS.api.createLightAmbient = function(nameModel, addedAt) {
     });
     lightAmbient.add(lampSphere);
 
-    const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
-    trs_tmp.translation[1] += 3;
-
-    lightAmbient.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
-    lightAmbient.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
-    lightAmbient.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
+    applyAddedObjectTRS(lightAmbient, nameModel, { yOffset: 3 });
 
     return VRODOS.ui.finalizeSceneObjectAdd(lightAmbient, {
-        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'light-ambient-added' },
+        registerOptions: addedObjectRegisterOptions('light-ambient-added'),
         selectOptions: { source: 'light-ambient-added' }
     });
 }
@@ -710,15 +715,10 @@ VRODOS.api.createPawn = function(nameModel, addedAt, _pluginPath) {
             pawnLabel.position.set(0, 1.5, 0);
             Pawn.add(pawnLabel);
 
-            const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
-            trs_tmp.translation[1] += 3;
-
-            Pawn.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
-            Pawn.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
-            Pawn.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
+            applyAddedObjectTRS(Pawn, nameModel, { yOffset: 3 });
 
             VRODOS.ui.finalizeSceneObjectAdd(Pawn, {
-                registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'pawn-added' },
+                registerOptions: addedObjectRegisterOptions('pawn-added'),
                 selectOptions: { source: 'pawn-added' }
             });
         },
@@ -747,11 +747,7 @@ VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
     manager.onLoad = () => {
         const insertedObject = getSceneObjectByName(nameModel);
         if (!insertedObject) return;
-        const trs_tmp = VRODOS.data.scene_data.objects[nameModel].trs;
-
-        insertedObject.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
-        insertedObject.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
-        insertedObject.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
+        applyAddedObjectTRS(insertedObject, nameModel);
 
         if (insertedObject.children[0].isMesh) {
             const mat = insertedObject.children[0].material;
@@ -795,18 +791,10 @@ VRODOS.api.createAssessmentAsset = function(nameModel, addedAt) {
         addedAt
     });
 
-    const trs_tmp = resource.trs || {
-        translation: [0, 0, 0],
-        rotation: [0, 0, 0],
-        scale: [1, 1, 1]
-    };
-
-    assessmentObject.position.set(trs_tmp.translation[0], trs_tmp.translation[1], trs_tmp.translation[2]);
-    assessmentObject.rotation.set(trs_tmp.rotation[0], trs_tmp.rotation[1], trs_tmp.rotation[2]);
-    assessmentObject.scale.set(trs_tmp.scale[0], trs_tmp.scale[1], trs_tmp.scale[2]);
+    VRODOS.utils.applyTRSToObject(assessmentObject, resource.trs);
 
     VRODOS.ui.finalizeSceneObjectAdd(assessmentObject, {
-        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'assessment-added' },
+        registerOptions: addedObjectRegisterOptions('assessment-added'),
         selectOptions: { source: 'assessment-added' }
     });
 
@@ -824,7 +812,7 @@ VRODOS.api.createTextAsset = function(nameModel, addedAt) {
     textObject.addedAt = addedAt;
 
     VRODOS.ui.finalizeSceneObjectAdd(textObject, {
-        registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'text-added' },
+        registerOptions: addedObjectRegisterOptions('text-added'),
         selectOptions: { source: 'text-added' }
     });
 }
