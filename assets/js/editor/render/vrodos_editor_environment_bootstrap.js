@@ -19,6 +19,7 @@ VRODOS.editorRender = VRODOS.editorRender || {};
         this.positionalAudioNodes = [];
 
         this.directorGroundGuideTargets = [];
+        this.directorGroundGuideTargetCache = new WeakMap();
         this.directorGroundGuideTargetsDirty = true;
         this.directorGroundGuideLastUpdateAt = 0;
         this.directorGroundGuideLastTargetRefreshAt = 0;

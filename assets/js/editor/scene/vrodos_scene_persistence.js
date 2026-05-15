@@ -120,36 +120,8 @@ VRODOS.exporter.SceneExporter = class {
         const exportedDuplicateKeys = new Map();
         const skippedDuplicateObjects = [];
 
-        scene.traverse(node => {
-            if (
-                node.vrodos_internal_helper === true ||
-                (typeof VRODOS.utils.isEditorInternalObject === 'function' && VRODOS.utils.isEditorInternalObject(node))
-            ) {
-                return;
-            }
-
-            if ((node.name === 'rayLine' ||
-                node.name === 'mylightAvatar' ||
-                node.name === 'mylightOrbit' ||
-                node.name === 'avatarPitchObject' ||
-                node.name === 'orbitCamera' || node.name === 'myAxisHelper' ||
-                node.name === 'myGridHelper' || node.name === 'myTransformControls' ||
-                node.category_name === 'lightHelper' ||
-                node.category_name === 'lightTargetSpot' ||
-                node.name === 'Camera3Dmodel' ||
-                node.name === 'Camera3DmodelMesh' ||
-                typeof node.category_name === 'undefined') && node.name !== 'avatarCamera') {
-                return;
-            }
-
-            if (node instanceof THREE.Mesh && node.category_name !== "pawn" && node.category_slug !== "image") {
-                return;
-            }
-
-            if (node.name === "bbox" || node.name === "xline" || node.name === "yline" ||
-                node.name === "zline") {
-                return;
-            }
+        this.getExportCandidates(scene).forEach((node) => {
+            if (!this.shouldExportNode(node)) return;
 
             const objectData = this.processObject(node);
             if (objectData) {
@@ -180,6 +152,66 @@ VRODOS.exporter.SceneExporter = class {
         }
 
         return JSON.stringify(output);
+    }
+
+    getExportCandidates(scene) {
+        if (!scene) {
+            return [];
+        }
+
+        const roots = typeof VRODOS.utils.getEditorSceneRoots === 'function'
+            ? VRODOS.utils.getEditorSceneRoots(scene, {
+                filterSelectable: true,
+                includeDirector: true,
+                rebuildRegistryIfEmpty: true
+            })
+            : [];
+
+        if (Array.isArray(roots) && roots.length > 0) {
+            return roots;
+        }
+
+        return Array.isArray(scene.children)
+            ? scene.children.filter((node) => node && (node.isSelectableMesh || node.name === 'avatarCamera'))
+            : [];
+    }
+
+    shouldExportNode(node) {
+        if (!node) {
+            return false;
+        }
+
+        if (
+            node.vrodos_internal_helper === true ||
+            (typeof VRODOS.utils.isEditorInternalObject === 'function' && VRODOS.utils.isEditorInternalObject(node))
+        ) {
+            return false;
+        }
+
+        if ((node.name === 'rayLine' ||
+            node.name === 'mylightAvatar' ||
+            node.name === 'mylightOrbit' ||
+            node.name === 'avatarPitchObject' ||
+            node.name === 'orbitCamera' || node.name === 'myAxisHelper' ||
+            node.name === 'myGridHelper' || node.name === 'myTransformControls' ||
+            node.category_name === 'lightHelper' ||
+            node.category_name === 'lightTargetSpot' ||
+            node.name === 'Camera3Dmodel' ||
+            node.name === 'Camera3DmodelMesh' ||
+            typeof node.category_name === 'undefined') && node.name !== 'avatarCamera') {
+            return false;
+        }
+
+        if (node instanceof THREE.Mesh && node.category_name !== "pawn" && node.category_slug !== "image") {
+            return false;
+        }
+
+        if (node.name === "bbox" || node.name === "xline" || node.name === "yline" ||
+            node.name === "zline") {
+            return false;
+        }
+
+        return true;
     }
 
     processObject(o) {

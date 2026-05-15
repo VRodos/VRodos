@@ -330,6 +330,7 @@ VRODOS.utils = VRODOS.utils || {};
 
     function markDirectorGroundGuideTargetsDirty() {
         this.directorGroundGuideTargetsDirty = true;
+        this.directorGroundGuideTargetCache = new WeakMap();
         this.selectableMeshesDirty = true;
     }
 
@@ -428,6 +429,41 @@ VRODOS.utils = VRODOS.utils || {};
         targets.push(node);
     }
 
+    function collectDirectorGroundGuideRootTargets(root) {
+        const targets = [];
+
+        if (!root) {
+            return targets;
+        }
+
+        if (typeof root.traverse === 'function') {
+            root.traverse((node) => this.addDirectorGroundGuideMeshTarget(node, targets));
+            return targets;
+        }
+
+        this.addDirectorGroundGuideMeshTarget(root, targets);
+        return targets;
+    }
+
+    function getDirectorGroundGuideRootTargets(root) {
+        if (!root) {
+            return [];
+        }
+
+        if (!this.directorGroundGuideTargetCache) {
+            this.directorGroundGuideTargetCache = new WeakMap();
+        }
+
+        const cachedTargets = this.directorGroundGuideTargetCache.get(root);
+        if (cachedTargets) {
+            return cachedTargets;
+        }
+
+        const targets = this.collectDirectorGroundGuideRootTargets(root);
+        this.directorGroundGuideTargetCache.set(root, targets);
+        return targets;
+    }
+
     function refreshDirectorGroundGuideTargets(now) {
         const targets = [];
 
@@ -438,16 +474,9 @@ VRODOS.utils = VRODOS.utils || {};
         }
 
         this.getDirectorGroundGuideTargetRoots().forEach((root) => {
-            if (!root) {
-                return;
-            }
-
-            if (typeof root.traverse === 'function') {
-                root.traverse((node) => this.addDirectorGroundGuideMeshTarget(node, targets));
-                return;
-            }
-
-            this.addDirectorGroundGuideMeshTarget(root, targets);
+            this.getDirectorGroundGuideRootTargets(root).forEach((target) => {
+                targets.push(target);
+            });
         });
 
         this.directorGroundGuideTargets = targets;
@@ -572,6 +601,8 @@ VRODOS.utils = VRODOS.utils || {};
         prototype.ensureDirectorGroundGuide = ensureDirectorGroundGuide;
         prototype.getDirectorGroundGuideTargetRoots = getDirectorGroundGuideTargetRoots;
         prototype.addDirectorGroundGuideMeshTarget = addDirectorGroundGuideMeshTarget;
+        prototype.collectDirectorGroundGuideRootTargets = collectDirectorGroundGuideRootTargets;
+        prototype.getDirectorGroundGuideRootTargets = getDirectorGroundGuideRootTargets;
         prototype.refreshDirectorGroundGuideTargets = refreshDirectorGroundGuideTargets;
         prototype.hideDirectorGroundGuide = hideDirectorGroundGuide;
         prototype.updateDirectorGroundGuide = updateDirectorGroundGuide;
