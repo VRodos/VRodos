@@ -15,13 +15,6 @@
 		);
 	}
 
-	function updateSpotConeHelper(value) {
-		var targetObject = vrodosGetPopupTargetObject();
-		if (!targetObject) return;
-		targetObject.target = VRODOS.editor.envir.scene.getObjectByName(value);
-		updateSpot();
-	}
-
 	function vrodosGetPopupTargetObject() {
 		if (typeof _currentSelectedRealObject !== 'undefined' && _currentSelectedRealObject) {
 			return _currentSelectedRealObject;
@@ -334,15 +327,14 @@
 	<div class="prop-row">
 		<label for="spotTargetObject" class="prop-label">Target object</label>
 		<select id="spotTargetObject" name="spotTargetObject" title="Set spot target among scene objects"
-				class="prop-select" onchange="updateSpotConeHelper(this.value)">
+				class="prop-select">
 		</select>
 	</div>
 
 	<div class="prop-row">
 		<label for="spotPower" class="prop-label">Power</label>
 		<input type="text" id="spotPower" name="spotPower" title="0 to infinite, 1 is default"
-				value="1" maxlength="4" class="prop-input"
-				onkeyup="vrodosSetPopupNumericProp('power', this.value); updateSpot();" />
+				value="1" maxlength="4" class="prop-input" />
 	</div>
 
 	<div class="prop-row">
@@ -355,29 +347,25 @@
 	<div class="prop-row">
 		<label for="spotDistance" class="prop-label">Distance</label>
 		<input type="text" id="spotDistance" name="spotDistance" title="0 to infinite, 100 is default"
-				value="100" maxlength="4" class="prop-input"
-				onkeyup="vrodosSetPopupNumericProp('distance', this.value); updateSpot();" />
+				value="100" maxlength="4" class="prop-input" />
 	</div>
 
 	<div class="prop-row">
 		<label for="spotDecay" class="prop-label">Decay</label>
 		<input type="text" id="spotDecay" name="spotDecay" title="0 to infinite, 2 is default"
-				value="2" maxlength="4" class="prop-input"
-				onkeyup="vrodosSetPopupNumericProp('decay', this.value); updateSpot();" />
+				value="2" maxlength="4" class="prop-input" />
 	</div>
 
 	<div class="prop-row">
 		<label for="spotAngle" class="prop-label">Angle</label>
 		<input type="text" id="spotAngle" name="spotAngle" title="0 to pi/2, pi/4 is default"
-				value="0.785" maxlength="5" class="prop-input"
-				onkeyup="vrodosSetPopupNumericProp('angle', this.value); updateSpot();" />
+				value="0.785" maxlength="5" class="prop-input" />
 	</div>
 
 	<div class="prop-row">
 		<label for="spotPenumbra" class="prop-label">Penumbra</label>
 		<input type="text" id="spotPenumbra" name="spotPenumbra" title="0 to 1, 0 is default"
-				value="0" maxlength="4" class="prop-input"
-				onkeyup="vrodosSetPopupNumericProp('penumbra', this.value); updateSpot();" />
+				value="0" maxlength="4" class="prop-input" />
 	</div>
 </div>
 

@@ -167,6 +167,8 @@
 - Verification: Phase 91 JS syntax check passed; focused property binding/listener sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 92 grouped property panel hydration cleanup implemented.
 - Verification: Phase 92 JS syntax check passed; focused property panel hydration and Spot numeric listener sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 93 grouped Spot panel binding migration implemented.
+- Verification: Phase 93 JS syntax check passed; `templates/pages/vrodos-edit-3D-scene-Popups.php` PHP syntax check passed; focused Spot live numeric and target relink sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -309,6 +311,7 @@ assets/js/editor/
 - Done: Group light property panel setter cleanup by centralizing null-safe input value/checkbox writes and repeated first-child material color reads inside the raycasting/properties module.
 - Done: Group persistent property listener cleanup by centralizing input change binding, tracked focus/change binding, light color undo handling, Sun/Lamp/Ambient property entries, POI image title/content bindings, and single-owner POI chat bindings.
 - Done: Group property panel hydration cleanup by centralizing panel/object resolution, panel show, select population, Door/Link/Chat/POI image value hydration, and Spot numeric property listeners while leaving Spot target object reassignment for a dedicated synchronization pass.
+- Done: Group Spot property binding migration by moving Spot target and numeric field behavior out of inline PHP handlers, adding JS-owned live numeric light-helper sync, undo/save commits, and target relinking through `linkEditorLightTarget`.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

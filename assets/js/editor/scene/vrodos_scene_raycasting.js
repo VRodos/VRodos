@@ -641,6 +641,78 @@ function initPersistentPropertyListeners() {
             bindProp(entry.id, entry.prop, entry.isCheckbox, entry.sanitize);
         });
     };
+    const syncLightPropertyEdit = (obj) => {
+        if (obj && obj.isLight && typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
+            VRODOS.utils.syncEditorLightArtifacts(obj, VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
+        }
+        if (typeof VRODOS.editor.requestRender === 'function') {
+            VRODOS.editor.requestRender('light-property-change');
+        }
+    };
+    const bindLiveNumericProp = (id, prop) => {
+        const el = _getEditorInput(id);
+        if (!el) {
+            return null;
+        }
+
+        el.addEventListener('focus', function() {
+            const obj = getSelectedPropertyTarget();
+            this._oldVal = obj ? obj[prop] : undefined;
+        });
+        el.addEventListener('input', function () {
+            const obj = getSelectedPropertyTarget();
+            if (!obj) {
+                return;
+            }
+
+            obj[prop] = sanitizeInputValue(this.value);
+            syncLightPropertyEdit(obj);
+        });
+        el.addEventListener('change', function () {
+            const obj = getSelectedPropertyTarget();
+            if (!obj) {
+                return;
+            }
+
+            const oldValue = this._oldVal;
+            const newValue = sanitizeInputValue(this.value);
+            obj[prop] = newValue;
+            if (oldValue !== newValue) {
+                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, prop, oldValue, newValue));
+                }
+                VRODOS.api.saveChanges();
+            }
+        });
+        return el;
+    };
+    const bindLiveNumericEntries = (entries) => {
+        entries.forEach((entry) => {
+            bindLiveNumericProp(entry.id, entry.prop);
+        });
+    };
+    const bindSpotTargetObject = () => {
+        _bindEditorInputChange('spotTargetObject', function () {
+            const obj = getSelectedPropertyTarget();
+            const newTarget = getEditorSceneObjectByName(this.value);
+            if (!obj || !newTarget || obj.target === newTarget) {
+                return;
+            }
+
+            const oldTarget = obj.target;
+            if (typeof VRODOS.utils.linkEditorLightTarget === 'function') {
+                VRODOS.utils.linkEditorLightTarget(obj, newTarget);
+            } else {
+                obj.target = newTarget;
+            }
+            syncLightPropertyEdit(obj);
+
+            if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'target', oldTarget, newTarget));
+            }
+            VRODOS.api.saveChanges();
+        });
+    };
     const bindColorUndo = (id, getCurrentColor) => {
         _bindTrackedEditorInputChange(id, function () {
             const obj = getSelectedPropertyTarget();
@@ -695,13 +767,14 @@ function initPersistentPropertyListeners() {
     ]);
 
     // --- Spot Properties ---
-    bindPropEntries([
+    bindLiveNumericEntries([
         { id: 'spotPower', prop: 'power', sanitize: true },
         { id: 'spotDecay', prop: 'decay', sanitize: true },
         { id: 'spotDistance', prop: 'distance', sanitize: true },
         { id: 'spotAngle', prop: 'angle', sanitize: true },
         { id: 'spotPenumbra', prop: 'penumbra', sanitize: true }
     ]);
+    bindSpotTargetObject();
 
     // --- Ambient Properties ---
     bindColorUndo('ambientColor', _getObjectColorHex);
