@@ -1,0 +1,89 @@
+"use strict";
+
+window.VRODOS = window.VRODOS || {};
+VRODOS.api = VRODOS.api || {};
+VRODOS.config = VRODOS.config || {};
+VRODOS.editor = VRODOS.editor || {};
+VRODOS.loader = VRODOS.loader || {};
+VRODOS.ui = VRODOS.ui || {};
+
+const VRODOS_LOADER_DENSE_RESOURCE_THRESHOLD = 75;
+
+function vrodosLoaderGetSceneSettingsSchema() {
+    return (VRODOS.config && VRODOS.config.SCENE_SETTINGS_SCHEMA)
+        ? VRODOS.config.SCENE_SETTINGS_SCHEMA
+        : {};
+}
+
+VRODOS.loader.getSceneResourceCount = function(resources3D) {
+    return resources3D ? Object.keys(resources3D).length : 0;
+};
+
+VRODOS.loader.applyResourceLoadProfile = function(resources3D) {
+    const resourceCount = VRODOS.loader.getSceneResourceCount(resources3D);
+    const loop = VRODOS.editor && VRODOS.editor.renderLoop ? VRODOS.editor.renderLoop : {};
+    const isDenseScene = resourceCount >= VRODOS_LOADER_DENSE_RESOURCE_THRESHOLD;
+
+    if (isDenseScene && VRODOS.editor && VRODOS.editor.renderLoop) {
+        VRODOS.editor.renderLoop.targetFps = 30;
+        VRODOS.editor.renderLoop.pixelRatioCap = 1;
+        VRODOS.editor.renderLoop.labelFrameStride = 3;
+    }
+
+    return {
+        resourceCount,
+        loadConcurrency: isDenseScene ? 1 : Math.max(1, Number(loop.loaderConcurrency || 2))
+    };
+};
+
+VRODOS.loader.syncSceneSettingsResource = function(settings) {
+    const schema = vrodosLoaderGetSceneSettingsSchema();
+    if (!settings) return;
+
+    for (const key in settings) {
+        if (!Object.prototype.hasOwnProperty.call(settings, key)) continue;
+        if (!Object.prototype.hasOwnProperty.call(schema, key)) continue;
+        VRODOS.api.syncSceneSetting(key, settings[key], { "SceneSettings": settings });
+    }
+
+    if (typeof VRODOS.ui.syncCompileDialogFromSceneSettings === 'function') {
+        VRODOS.ui.syncCompileDialogFromSceneSettings();
+    }
+};
+
+VRODOS.loader.applyCameraCoordsResource = function(resource) {
+    const envir = VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir : null;
+    if (!resource || !envir || typeof envir.applyDirectorTransform !== 'function') return;
+
+    envir.applyDirectorTransform(resource.position, resource.rotation);
+};
+
+VRODOS.loader.isLightOrPawnResource = function(resource) {
+    const categoryName = resource && resource.category_name;
+    return Boolean(categoryName && (categoryName.startsWith("light") || categoryName.startsWith("pawn")));
+};
+
+VRODOS.loader.handleResourceMetadata = function(name, resource, resources3D) {
+    const schema = vrodosLoaderGetSceneSettingsSchema();
+
+    if (Object.prototype.hasOwnProperty.call(schema, name)) {
+        VRODOS.api.syncSceneSetting(name, resource, resources3D);
+        return true;
+    }
+
+    if (name === "SceneSettings") {
+        VRODOS.loader.syncSceneSettingsResource(resource);
+        return true;
+    }
+
+    if (name === 'cameraCoords') {
+        VRODOS.loader.applyCameraCoordsResource(resource);
+        return true;
+    }
+
+    if (name === 'enableEnvironmentTexture') {
+        return true;
+    }
+
+    return false;
+};
