@@ -20,7 +20,7 @@ VRODOS.api.deleteProject = function(game_id, dialog, current_user_id, parameter_
 		})
 	})
 	.then( (response) => response.text())
-	.then( (res) => {
+	.then( () => {
 
 		VRODOS.api.isDeleteProjectPending = false;
 		const progressBar = document.getElementById( 'delete-dialog-progress-bar' );

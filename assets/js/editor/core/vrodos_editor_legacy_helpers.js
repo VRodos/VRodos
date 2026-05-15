@@ -16,7 +16,7 @@ VRODOS.ui.fillinWidgetAssetTRS = function(selectedObject) {
 };
 
 VRODOS.utils.unixTimestampToTime = function(tStr) {
-    const unix_timestamp = parseInt(tStr);
+    const unix_timestamp = parseInt(tStr, 10);
     const date = new Date(unix_timestamp * 1000);
     const hours = date.getHours();
     const minutes = `0${  date.getMinutes()}`;
@@ -181,7 +181,6 @@ VRODOS.ui.bcgRadioSelect = function(option) {
 
     // 2. Show/Enable based on selection
     const uiHandlers = {
-        4: () => {},
         0: () => {
             if (els.horizonSkyPreset) els.horizonSkyPreset.disabled = false;
             if (els.horizonSkyRow) els.horizonSkyRow.style.display = 'flex';

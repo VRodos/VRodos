@@ -477,7 +477,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (controls.taaEnabled) {
             controls.taaEnabled.disabled = !postFxEnabled || isPmndrs;
-            controls.taaEnabled.parentElement && controls.taaEnabled.parentElement.classList.toggle('tw-opacity-60', isPmndrs);
+            if (controls.taaEnabled.parentElement) {
+                controls.taaEnabled.parentElement.classList.toggle('tw-opacity-60', isPmndrs);
+            }
         }
 
         const pmndrsTweakEnabled = postFxEnabled && isPmndrs;

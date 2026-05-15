@@ -681,7 +681,7 @@ VRODOS.api.createLightAmbient = function(nameModel, addedAt) {
 /**
  * Handle Pawn actor creation.
  */
-VRODOS.api.createPawn = function(nameModel, addedAt, pluginPath) {
+VRODOS.api.createPawn = function(nameModel, addedAt, _pluginPath) {
     const loader = new THREE.GLTFLoader();
     const modelBaseUrl = VRODOS.utils.resolveBaseUrl(VRODOS.data.pluginPath, 'modelBaseUrl', 'assets/models/');
 
@@ -728,7 +728,7 @@ VRODOS.api.createPawn = function(nameModel, addedAt, pluginPath) {
 /**
  * Handle regular GLB asset loading.
  */
-VRODOS.api.createGlbAsset = function(nameModel, addedAt, pluginPath) {
+VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
     document.getElementById("progress").style.display = "block";
     document.getElementById("progressWrapper").style.visibility = "visible";
     document.getElementById("result_download").innerHTML = "Loading";
@@ -807,6 +807,8 @@ VRODOS.api.createAssessmentAsset = function(nameModel, addedAt) {
         registerOptions: { selectable: true, incrementLoaded: false, renderReason: 'assessment-added' },
         selectOptions: { source: 'assessment-added' }
     });
+
+    return assessmentObject;
 }
 
 VRODOS.api.createTextAsset = function(nameModel, addedAt) {
@@ -828,7 +830,7 @@ VRODOS.api.createTextAsset = function(nameModel, addedAt) {
 /**
  * Main function to add objects to the canvas.
  */
-VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, translation, pluginPath) {
+VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, translation, _pluginPath) {
     if (!nameModel) {
         return null;
     }
@@ -978,7 +980,7 @@ VRODOS.ui.removeHierarchyEntriesForObject = function(uuid, objectName) {
     }
 }
 
-VRODOS.ui.lockOnScene = function(uuid, name) {
+VRODOS.ui.lockOnScene = function(uuid, _name) {
 
     const selectedObject = getSceneObjectByUuid(uuid);
     const hierarchyItem = document.getElementById(uuid);
@@ -1021,7 +1023,7 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
 
     // 1. Delete object from js array (if it exists. Usually it is saved after reload)
     for (const obj of Object.values(VRODOS.data.scene_data.objects)) {
-        if (typeof obj === 'object' && obj !== null && obj.uuid == uuid) {
+        if (typeof obj === 'object' && obj !== null && String(obj.uuid) === String(uuid)) {
             delete VRODOS.data.scene_data.objects[obj.name];
             break;
         }

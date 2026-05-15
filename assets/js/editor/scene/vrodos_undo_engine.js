@@ -64,7 +64,11 @@ VRODOS.editor.UndoManager = class {
         this.isExecuting = true;
         
         try {
-            command.redo ? command.redo() : command.execute();
+            if (typeof command.redo === 'function') {
+                command.redo();
+            } else {
+                command.execute();
+            }
             this.undoStack.push(command);
         } catch (e) {
             console.error("Redo failed:", e);

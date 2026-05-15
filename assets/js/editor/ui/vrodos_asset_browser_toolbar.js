@@ -184,7 +184,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
     // Listening for keyboard input on the search field.
     const searchInput = filemanager.querySelector('input');
     if (searchInput) {
-        searchInput.addEventListener('input', function (e) {
+        searchInput.addEventListener('input', function () {
             const value = this.value.trim();
             if (value.length) {
                 filemanager.classList.add('searching');
@@ -200,7 +200,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
         searchInput.addEventListener('keyup', function (e) {
             if (e.keyCode === 27) this.blur();
         });
-        searchInput.addEventListener('focusout', function (e) {
+        searchInput.addEventListener('focusout', function () {
             if (!this.value.trim().length) {
                 this.style.display = 'none';
                 const span = this.parentElement.querySelector('span');
@@ -370,21 +370,13 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
 
     // This function escapes special html characters in names
     function escapeHTML(text) {
-        return String(text || '').replace(/\&/g, '&amp;').replace(/\</g, '&lt;').replace(/\>/g, '&gt;');
+        return String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function escapeAttribute(value) {
         return escapeHTML(String(value ?? ''))
-            .replace(/\"/g, '&quot;')
-            .replace(/\'/g, '&#039;');
-    }
-
-    // Convert file sizes from bytes to human readable units
-    function bytesToSize(bytes) {
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        if (bytes == 0) return '0 Bytes';
-        const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-        return `${Math.round(bytes / Math.pow(1024, i), 2)  } ${  sizes[i]}`;
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 
     function selectByTitleComparizon(input_data, needle) {
@@ -402,16 +394,14 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
         const categName = b.id;
 
         // Declare all variables
-        let tabcontent; let tablinks;
-
         // Get all elements with class="tabcontent" and hide them
-        tabcontent = document.getElementsByClassName("tabcontent");
+        const tabcontent = document.getElementsByClassName("tabcontent");
         for (let i = 0; i < tabcontent.length; i++) {
             tabcontent[i].style.display = "none";
         }
 
         // Get all elements with class="tablinks" and remove the class "active"
-        tablinks = document.getElementsByClassName("tablinks");
+        const tablinks = document.getElementsByClassName("tablinks");
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].classList.remove("active");
         }

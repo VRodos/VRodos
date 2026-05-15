@@ -195,9 +195,9 @@ function _hierarchyUnixTimestampToDateTime(unixTimestamp) {
 
 function _hierarchyEscapeHTML(text) {
     return String(text || '')
-        .replace(/\&/g, '&amp;')
-        .replace(/\</g, '&lt;')
-        .replace(/\>/g, '&gt;')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
@@ -464,7 +464,7 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
 function CreateDeleteButton(obj) {
     return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-red-400 tw-transition-colors" aria-label="Delete asset"` +
         ` title="Delete asset object" onclick="event.stopPropagation(); VRODOS.ui.deleteFomScene('${  obj.uuid  }', '${  obj.asset_name  }');">` +
-        `<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>` + `</a>`;
+        `<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i></a>`;
 }
 
 
@@ -472,16 +472,14 @@ function CreateLockButton(obj) {
     const lock_ic = (obj.locked) ? 'lock' : 'lock-open';
     return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-white tw-transition-colors" aria-label="Lock asset"` +
         ` title="Lock asset object" onclick="event.stopPropagation(); VRODOS.ui.lockOnScene('${  obj.uuid  }', '${  obj.asset_name  }');">` +
-        `<i data-lucide="${  lock_ic  }" class="tw-w-4 tw-h-4"></i>` + `</a>`;
+        `<i data-lucide="${  lock_ic  }" class="tw-w-4 tw-h-4"></i></a>`;
 }
 
 function CreateResetButton(obj){
     // Properly escape names for onclick
     const escapedName = (obj.name || "").replace(/'/g, "\\'");
     return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-blue-400 tw-transition-colors" aria-label="Reset asset"` +
-        ` title="Reset asset object" onclick="event.stopPropagation(); ` +
-        `VRODOS.ui.resetInScene('${  escapedName  }');`
-        + `">` +
+        ` title="Reset asset object" onclick="event.stopPropagation(); VRODOS.ui.resetInScene('${  escapedName  }');">` +
         `<i data-lucide="refresh-cw" class="tw-w-4 tw-h-4"></i>` +
         `</a>`;
 

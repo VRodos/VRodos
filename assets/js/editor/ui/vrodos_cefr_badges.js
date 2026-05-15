@@ -6,9 +6,9 @@ VRODOS.ui.badges.cefrLevels = ['A1', 'A2', 'B1', 'B2'];
 
 VRODOS.ui.badges.escapeHTML = function(value) {
     return String(value || '')
-        .replace(/\&/g, '&amp;')
-        .replace(/\</g, '&lt;')
-        .replace(/\>/g, '&gt;')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 };

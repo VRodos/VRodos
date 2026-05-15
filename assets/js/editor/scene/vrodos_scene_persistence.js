@@ -206,6 +206,10 @@ VRODOS.exporter.SceneExporter = class {
         const entryObject = {};
 
         for (const key in o) {
+            if (!Object.prototype.hasOwnProperty.call(o, key)) {
+                continue;
+            }
+
             const valueType = typeof o[key];
             if (/^\d+$/.test(key)) {
                 continue;
@@ -338,6 +342,10 @@ VRODOS.importer.SceneImporter = class {
 
         const schema = VRODOS.config.SCENE_SETTINGS_SCHEMA || {};
         for (const key in scene_json_metadata) {
+            if (!Object.prototype.hasOwnProperty.call(scene_json_metadata, key)) {
+                continue;
+            }
+
             if (Object.prototype.hasOwnProperty.call(schema, key)) {
                 resources3D_new.SceneSettings[key] = scene_json_metadata[key];
             }
@@ -347,6 +355,10 @@ VRODOS.importer.SceneImporter = class {
         let objectIndex = 0;
 
         for (const asset_key in scene_objects) {
+            if (!Object.prototype.hasOwnProperty.call(scene_objects, asset_key)) {
+                continue;
+            }
+
             const value = scene_objects[asset_key];
             delete value.follow_camera;
             delete value.follow_camera_x;
