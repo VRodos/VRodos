@@ -219,56 +219,18 @@ VRODOS.ui.finalizeSceneObjectAdd = function(object, options) {
  * Create a Sun light in the scene.
  */
 VRODOS.api.createLightSun = function(nameModel, addedAt) {
-    const lightSun = new THREE.DirectionalLight(0xffffff, 1);
-    lightSun.castShadow = true;
-    lightSun.sunSky = true;
-    lightSun.castingShadow = true;
-    lightSun.shadowMapHeight = "1024";
-    lightSun.shadowMapWidth = "1024";
-    lightSun.shadowCameraTop = "200";
-    lightSun.shadowCameraBottom = "-200";
-    lightSun.shadowCameraLeft = "-200";
-    lightSun.shadowCameraRight = "200";
-    lightSun.shadowBias = "-0.001";
-    lightSun.defaultColor = "0xffffff";
-    lightSun.name = nameModel;
-    lightSun.asset_name = "mylightSun";
-    lightSun.isSelectableMesh = true;
-    lightSun.category_name = "lightSun";
-    lightSun.category_slug = "lightSun";
-    lightSun.isLight = true;
-    lightSun.addedAt = addedAt;
-    const hexcol = 0xffffff;
-
-    // Add Sun Helper (visual representation in editor)
-    const sunSphere = VRODOS.utils.createEditorLightVisualSphere('SunSphere', {
-        radius: 1,
-        color: 0xffffff
-    });
-    lightSun.add(sunSphere);
-
-    const lightSunHelper = VRODOS.utils.createEditorLightHelper(lightSun, {
-        size: 3,
-        color: 0xcccccc
-    });
-
-    // Target spot: Where Sun points
-    const lightTargetSpot = VRODOS.utils.createEditorLightTarget(lightSun, {
-        addedAt,
+    const lightObjects = VRODOS.loader.createEditorSunLightObjects(nameModel, {
+        addedAt
+    }, {
+        addDefaults: true,
         color: 0xffffff,
-        helper: lightSunHelper
+        helperColor: 0xffffff,
+        targetColor: 0xffffff,
+        visualColor: 0xffffff
     });
-
-    // Add shadow camera helper
-    const lightSunShadowhelper = VRODOS.utils.createEditorLightShadowHelper(lightSun);
+    const lightSun = lightObjects.light;
 
     applyAddedObjectTRS(lightSun, nameModel, { yOffset: 3 });
-
-    lightSun.color.setHex(hexcol);
-    lightSun.children[0].material.color.setHex(hexcol);
-    lightSunHelper.children[0].material.color.setHex(hexcol);
-    lightSunHelper.children[1].material.color.setHex(hexcol);
-    lightTargetSpot.children[0].material.color.setHex(hexcol);
 
     const registeredLightSun = VRODOS.ui.finalizeSceneObjectAdd(lightSun, {
         registerOptions: addedObjectRegisterOptions('light-sun-added'),
@@ -278,16 +240,16 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
         return registeredLightSun;
     }
 
-    VRODOS.editor.envir.scene.add(lightSunHelper);
-    const registeredLightTarget = VRODOS.ui.finalizeSceneObjectAdd(lightTargetSpot, {
+    VRODOS.editor.envir.scene.add(lightObjects.helper);
+    const registeredLightTarget = VRODOS.ui.finalizeSceneObjectAdd(lightObjects.target, {
         registerOptions: addedObjectRegisterOptions('light-target-added'),
         select: false
     });
-    if (registeredLightTarget && registeredLightTarget !== lightTargetSpot) {
+    if (registeredLightTarget && registeredLightTarget !== lightObjects.target) {
         VRODOS.utils.linkDirectionalLightTarget(lightSun, registeredLightTarget);
     }
-    if (lightSunShadowhelper) {
-        VRODOS.editor.envir.scene.add(lightSunShadowhelper);
+    if (lightObjects.shadowHelper) {
+        VRODOS.editor.envir.scene.add(lightObjects.shadowHelper);
     }
 
     VRODOS.utils.syncEditorLightArtifacts(lightSun, VRODOS.editor.envir.scene);
@@ -299,41 +261,21 @@ VRODOS.api.createLightSun = function(nameModel, addedAt) {
  * Create a Lamp light in the scene.
  */
 VRODOS.api.createLightLamp = function(nameModel, addedAt) {
-    const lightLamp = new THREE.PointLight(0xffffff, 1, 100, 2);
-    lightLamp.name = nameModel;
-    lightLamp.asset_name = "mylightLamp";
-    lightLamp.isSelectableMesh = true;
-    lightLamp.category_name = "lightLamp";
-    lightLamp.isLight = true;
-    lightLamp.castShadow = true;
-    lightLamp.addedAt = addedAt;
-    lightLamp.lampcastingShadow = true;
-    lightLamp.lampshadowMapHeight = "1024";
-    lightLamp.lampshadowMapWidth = "1024";
-    lightLamp.lampshadowCameraTop = "200";
-    lightLamp.lampshadowCameraBottom = "-200";
-    lightLamp.lampshadowCameraLeft = "-200";
-    lightLamp.lampshadowCameraRight = "200";
-    lightLamp.lampshadowBias = "-0.001";
-
-    const hexcol = "0xffff00";
-
-    // Add Lamp Helper visual representation
-    const lampSphere = VRODOS.utils.createEditorLightVisualSphere('LampSphere', {
-        radius: 0.5,
-        color: 0xffff00
+    const lightObjects = VRODOS.loader.createEditorLampLightObjects(nameModel, {
+        addedAt,
+        lightintensity: 1,
+        lightdistance: 100,
+        lightdecay: 2
+    }, {
+        addDefaults: true,
+        color: 0xffff00,
+        visualColor: 0xffff00,
+        helperColor: 0x555500,
+        power: 10
     });
-    lightLamp.add(lampSphere);
-
-    const lightLampHelper = VRODOS.utils.createEditorLightHelper(lightLamp, {
-        size: 1,
-        color: 0x555500
-    });
+    const lightLamp = lightObjects.light;
 
     applyAddedObjectTRS(lightLamp, nameModel, { yOffset: 3 });
-
-    lightLamp.color.setHex(hexcol);
-    lightLamp.power = 10;
 
     const registeredLightLamp = VRODOS.ui.finalizeSceneObjectAdd(lightLamp, {
         registerOptions: addedObjectRegisterOptions('light-lamp-added'),
@@ -343,8 +285,8 @@ VRODOS.api.createLightLamp = function(nameModel, addedAt) {
         return registeredLightLamp;
     }
 
-    VRODOS.editor.envir.scene.add(lightLampHelper);
-    lightLampHelper.update();
+    VRODOS.editor.envir.scene.add(lightObjects.helper);
+    lightObjects.helper.update();
     VRODOS.ui.selectNewSceneObject(lightLamp, { source: 'light-lamp-added' });
     return lightLamp;
 }
@@ -353,29 +295,22 @@ VRODOS.api.createLightLamp = function(nameModel, addedAt) {
  * Create a Spot light in the scene.
  */
 VRODOS.api.createLightSpot = function(nameModel, addedAt) {
-    const lightSpot = new THREE.SpotLight(0xffffff, 1, 5, 0.39, 0, 2);
-    lightSpot.name = nameModel;
-    lightSpot.asset_name = "mylightSpot";
-    lightSpot.isSelectableMesh = true;
-    lightSpot.category_name = "lightSpot";
-    lightSpot.isLight = true;
-    lightSpot.addedAt = addedAt;
-
-    const lampSphere = VRODOS.utils.createEditorLightVisualSphere('SpotSphere', {
-        radius: 1,
-        color: 0xffff00,
-        rotation: [Math.PI / 2, 0, 0]
-    });
-    lightSpot.add(lampSphere);
-
-    const lightSpotHelper = VRODOS.utils.createEditorLightHelper(lightSpot, {
-        color: 0xffaa00
-    });
-    const lightTargetSpot = VRODOS.utils.createEditorLightTarget(lightSpot, {
+    const lightObjects = VRODOS.loader.createEditorSpotLightObjects(nameModel, {
         addedAt,
-        color: 0xffaa00,
-        helper: lightSpotHelper
+        lightintensity: 1,
+        lightdistance: 5,
+        lightangle: 0.39,
+        lightpenumbra: 0,
+        lightdecay: 2
+    }, {
+        addDefaults: true,
+        color: 0xffffff,
+        visualColor: 0xffff00,
+        helperColor: 0xffaa00,
+        targetColor: 0xffaa00,
+        visualRotation: [Math.PI / 2, 0, 0]
     });
+    const lightSpot = lightObjects.light;
 
     applyAddedObjectTRS(lightSpot, nameModel, { yOffset: 3 });
 
@@ -387,15 +322,15 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
         return registeredLightSpot;
     }
 
-    const registeredLightTarget = VRODOS.ui.finalizeSceneObjectAdd(lightTargetSpot, {
+    const registeredLightTarget = VRODOS.ui.finalizeSceneObjectAdd(lightObjects.target, {
         registerOptions: addedObjectRegisterOptions('light-target-added'),
         select: false
     });
-    if (registeredLightTarget && registeredLightTarget !== lightTargetSpot) {
+    if (registeredLightTarget && registeredLightTarget !== lightObjects.target) {
         VRODOS.utils.linkEditorLightTarget(lightSpot, registeredLightTarget);
-        registeredLightTarget.parentLightHelper = lightSpotHelper;
+        registeredLightTarget.parentLightHelper = lightObjects.helper;
     }
-    VRODOS.editor.envir.scene.add(lightSpotHelper);
+    VRODOS.editor.envir.scene.add(lightObjects.helper);
     VRODOS.utils.syncEditorLightArtifacts(lightSpot, VRODOS.editor.envir.scene);
     VRODOS.ui.selectNewSceneObject(lightSpot, { source: 'light-spot-added' });
     return lightSpot;
@@ -405,20 +340,16 @@ VRODOS.api.createLightSpot = function(nameModel, addedAt) {
  * Create an Ambient light in the scene.
  */
 VRODOS.api.createLightAmbient = function(nameModel, addedAt) {
-    const lightAmbient = new THREE.AmbientLight(0xffffff, 1);
-    lightAmbient.name = nameModel;
-    lightAmbient.asset_name = "mylightAmbient";
-    lightAmbient.isSelectableMesh = true;
-    lightAmbient.category_name = "lightAmbient";
-    lightAmbient.isLight = true;
-    lightAmbient.addedAt = addedAt;
-
-    const lampSphere = VRODOS.utils.createEditorLightVisualSphere('ambientSphere', {
-        radius: 1,
-        color: 0xffff00,
-        rotation: [Math.PI / 2, 0, 0]
+    const lightObjects = VRODOS.loader.createEditorAmbientLightObjects(nameModel, {
+        addedAt,
+        lightintensity: 1
+    }, {
+        addDefaults: true,
+        color: 0xffffff,
+        visualColor: 0xffff00,
+        visualRotation: [Math.PI / 2, 0, 0]
     });
-    lightAmbient.add(lampSphere);
+    const lightAmbient = lightObjects.light;
 
     applyAddedObjectTRS(lightAmbient, nameModel, { yOffset: 3 });
 
