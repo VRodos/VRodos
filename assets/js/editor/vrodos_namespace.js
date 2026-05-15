@@ -182,6 +182,25 @@ VRODOS.utils.normalizeCefrLevels = function(levels) {
         .filter(Boolean)));
 };
 
+VRODOS.utils.normalizeAssessmentLevels = function(levels) {
+    return VRODOS.utils.normalizeCefrLevels(levels);
+};
+
+VRODOS.utils.resolvedAssessmentLevels = function(levels) {
+    const normalizedLevels = VRODOS.utils.normalizeAssessmentLevels(levels);
+    const allLevels = ['A1', 'A2', 'B1', 'B2'];
+
+    if (!normalizedLevels.length) {
+        return allLevels;
+    }
+
+    if (normalizedLevels.includes('ALL') || normalizedLevels.includes('ALL LEVELS')) {
+        return allLevels;
+    }
+
+    return allLevels.filter((level) => normalizedLevels.includes(level));
+};
+
 VRODOS.utils.encodeAssessmentLevelsForScene = function(levels) {
     const normalizedLevels = typeof VRODOS.utils.normalizeAssessmentLevels === 'function'
         ? VRODOS.utils.normalizeAssessmentLevels(levels)

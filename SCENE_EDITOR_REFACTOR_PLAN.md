@@ -137,6 +137,8 @@
 - Verification: Phase 76 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused loading progress helper sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 77 grouped loader material/texture helper consolidation implemented.
 - Verification: Phase 77 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused loader material helper sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 78 grouped assessment object factory consolidation implemented.
+- Verification: Phase 78 JS syntax checks passed; focused assessment factory sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -264,6 +266,7 @@ assets/js/editor/
 - Done: Group add-object transform cleanup by moving safe TRS application into core helpers and routing loader scene-asset helpers plus add-object light, pawn, GLB, assessment, and text paths through shared TRS/register-option helpers.
 - Done: Group loading progress cleanup by centralizing progress show/hide/timer clearing and loading-manager configuration, then routing initial scene load, scene finalization, and add-GLB progress through the shared lifecycle helpers.
 - Done: Group loader material/texture cleanup by centralizing canvas texture setup, double-sided texture material creation, GLB fallback PBR material normalization, and generated image TRS/progress helper usage across loader and add-object paths.
+- Done: Group assessment object cleanup by moving assessment level helpers into namespace utilities and rounded info-plate drawing, labels, and placeholder mesh construction into loader object factories while preserving the legacy `VRODOS.ui` aliases.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
