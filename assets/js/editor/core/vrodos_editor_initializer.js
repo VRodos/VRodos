@@ -32,6 +32,17 @@ VRODOS.editor.showPawnPositions = VRODOS.data.showPawnPositions || 'false';
 // 3. Initialize core objects
 VRODOS.editor.manager = new THREE.LoadingManager();
 
+function getInitialSceneData() {
+    VRODOS.data.scene_data = VRODOS.data.scene_data || {};
+    return VRODOS.data.scene_data;
+}
+
+function getInitialSceneObjectResources() {
+    return typeof VRODOS.utils.getSceneDataObjectMap === 'function'
+        ? VRODOS.utils.getSceneDataObjectMap()
+        : (getInitialSceneData().objects || {});
+}
+
 VRODOS.api.deferEditorStartupTask = function(callback) {
     if (typeof callback !== 'function') {
         return;
@@ -195,10 +206,11 @@ function initVrodosEditor() {
 
     // 2. Initialize Scene State using the Schema (Phase 1 Refactoring Win)
     // We merge all possible sources to handle legacy transitions correctly
+    const initialSceneData = getInitialSceneData();
     const sceneSettings = Object.assign({},
-        VRODOS.data.scene_data,
-        VRODOS.data.scene_data.SceneSettings || {},
-        VRODOS.data.scene_data.metadata || {}
+        initialSceneData,
+        initialSceneData.SceneSettings || {},
+        initialSceneData.metadata || {}
     );
 
     if (!['walk', 'walkable', 'fly'].includes(sceneSettings.aframeNavigationMode)) {
@@ -258,8 +270,8 @@ function initVrodosEditor() {
         }
 
         // 3. Load 3D Objects
-        VRODOS.api.loadEditorSceneResources(VRODOS.data.scene_data, {
-            assetResources: VRODOS.data.scene_data.objects,
+        VRODOS.api.loadEditorSceneResources(initialSceneData, {
+            assetResources: getInitialSceneObjectResources(),
             reason: 'initial-scene-load'
         });
     });

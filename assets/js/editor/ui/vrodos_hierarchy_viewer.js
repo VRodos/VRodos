@@ -29,6 +29,12 @@ function _hierarchyGetSelectedObject() {
     return VRODOS.editor.transforms.getRealObject();
 }
 
+function _hierarchyGetSceneObjectRecord(name) {
+    return typeof VRODOS.utils.sceneGetObjectRecord === 'function'
+        ? VRODOS.utils.sceneGetObjectRecord(name, { create: false })
+        : null;
+}
+
 VRODOS.ui.resetInScene = function(name) {
     let obj = null;
 
@@ -150,11 +156,11 @@ function _hierarchyCreatedLabel(obj) {
     }
 
     let addedAt = Number(obj.addedAt || 0);
-    if ((!Number.isFinite(addedAt) || addedAt <= 0) &&
-        typeof VRODOS.data.scene_data !== 'undefined' &&
-        VRODOS.data.scene_data.objects &&
-        VRODOS.data.scene_data.objects[obj.name]) {
-        addedAt = Number(VRODOS.data.scene_data.objects[obj.name].addedAt || 0);
+    if (!Number.isFinite(addedAt) || addedAt <= 0) {
+        const sceneRecord = _hierarchyGetSceneObjectRecord(obj.name);
+        if (sceneRecord) {
+            addedAt = Number(sceneRecord.addedAt || 0);
+        }
     }
 
     if (Number.isFinite(addedAt) && addedAt > 0) {
