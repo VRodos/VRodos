@@ -88,6 +88,145 @@ function addedObjectRegisterOptions(renderReason) {
     return { selectable: true, incrementLoaded: false, renderReason };
 }
 
+function getSceneObjectRecordByUuid(uuid, object) {
+    const objects = (VRODOS.data && VRODOS.data.scene_data && VRODOS.data.scene_data.objects)
+        ? VRODOS.data.scene_data.objects
+        : {};
+    const objectName = object ? object.name : '';
+
+    for (const [key, value] of Object.entries(objects)) {
+        if (typeof value !== 'object' || value === null) {
+            continue;
+        }
+        if (String(value.uuid) === String(uuid) || (objectName && key === objectName)) {
+            return { key, value };
+        }
+    }
+
+    return objectName && objects[objectName]
+        ? { key: objectName, value: objects[objectName] }
+        : null;
+}
+
+function deleteSceneObjectRecord(record) {
+    if (!record || !record.key || !VRODOS.data || !VRODOS.data.scene_data || !VRODOS.data.scene_data.objects) {
+        return false;
+    }
+
+    delete VRODOS.data.scene_data.objects[record.key];
+    return true;
+}
+
+function captureDeleteUndoCommand(object, record) {
+    if (
+        !object ||
+        !record ||
+        typeof VRODOS.editor.undoManager === 'undefined' ||
+        VRODOS.editor.undoManager.isExecuting
+    ) {
+        return false;
+    }
+
+    const target = object.realObject || object;
+    VRODOS.editor.undoManager.add(new VRODOS.editor.DeleteObjectCommand(target.name, record.value, target));
+    return true;
+}
+
+function removeObjectAnimationMixers(object) {
+    const envir = VRODOS.editor.envir || {};
+    if (!Array.isArray(envir.animationMixers) || !object) {
+        return;
+    }
+
+    VRODOS.editor.isPaused = true;
+    envir.animationMixers = envir.animationMixers.filter((mixer) => (
+        !mixer || !mixer._root || mixer._root.name !== object.name
+    ));
+    VRODOS.editor.isPaused = false;
+}
+
+function removeObjectEditorArtifacts(object) {
+    if (!object || !object.isLight || typeof VRODOS.utils.removeEditorLightArtifacts !== 'function') {
+        return;
+    }
+
+    VRODOS.utils.removeEditorLightArtifacts(object, VRODOS.editor.envir ? VRODOS.editor.envir.scene : null, {
+        dispose: true,
+        removeHierarchy: true
+    });
+}
+
+function clearDeletedObjectSelection() {
+    VRODOS.editor.selection.clear({ source: 'object-deleted' });
+    document.dispatchEvent(new CustomEvent("mouseup", { "detail": "Example of an event" }));
+}
+
+function removeSceneObjectFromEditor(object, uuid) {
+    if (VRODOS.editor.objectFactory && typeof VRODOS.editor.objectFactory.removeSceneObject === 'function') {
+        return VRODOS.editor.objectFactory.removeSceneObject(object, {
+            reason: 'object-deleted',
+            renderReason: 'object-deleted',
+            removeHierarchy: true
+        });
+    }
+
+    VRODOS.editor.sceneRegistry.remove(object, { reason: 'object-deleted' });
+    VRODOS.ui.removeHierarchyEntriesForObject(uuid, object.name);
+    if (VRODOS.editor.render && typeof VRODOS.editor.render.request === 'function') {
+        VRODOS.editor.render.request('object-deleted');
+    }
+    return object;
+}
+
+function setDeleteDialogText(name) {
+    const titleEl = document.getElementById("confirm-asset-deletion-title");
+    const descriptionEl = document.getElementById("confirm-asset-deletion-description");
+    if (!name || !titleEl || !descriptionEl) {
+        return;
+    }
+
+    titleEl.textContent = `Delete ${name}?`;
+    descriptionEl.innerHTML = `Do you really want to delete the asset named <b>${VRODOS.utils.escapeHTML(name)}</b>?`;
+}
+
+function getSelectedTransformObject() {
+    return VRODOS.editor.transforms && typeof VRODOS.editor.transforms.getRealObject === 'function'
+        ? VRODOS.editor.transforms.getRealObject()
+        : null;
+}
+
+function restoreSelectionAfterDelete(deletedUuid, selectedUuid) {
+    if (!selectedUuid || selectedUuid === "unassigned" || deletedUuid === selectedUuid) {
+        VRODOS.ui.hideObjectControlsPanel();
+        return;
+    }
+
+    const objectToReselect = getSceneObjectByUuid(selectedUuid);
+    if (objectToReselect) {
+        VRODOS.editor.selection.select(objectToReselect, { source: 'delete-reselect' });
+    } else {
+        VRODOS.ui.hideObjectControlsPanel();
+    }
+}
+
+function updateHierarchyLockIcon(object) {
+    const hierarchyItem = object ? document.getElementById(object.uuid) : null;
+    if (!hierarchyItem) {
+        return;
+    }
+
+    const lockAnchor = hierarchyItem.querySelector('a[aria-label="Lock asset"]');
+    if (!lockAnchor) {
+        return;
+    }
+
+    const newIcon = object.locked ? 'lock' : 'lock-open';
+    lockAnchor.innerHTML = `<i data-lucide="${  newIcon  }" class="tw-w-4 tw-h-4"></i>`;
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons({ nodes: [lockAnchor] });
+    }
+}
+
 VRODOS.ui.frameNewSceneObject = function(object3D) {
     if (!object3D || !VRODOS.editor.envir || !VRODOS.editor.envir.cameraOrbit || !VRODOS.editor.envir.orbitControls) {
         return;
@@ -540,40 +679,27 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
 
 
 VRODOS.ui.deleteFomScene = function(uuid, name) {
+    setDeleteDialogText(name);
 
-    if (name) {
-        document.getElementById("confirm-asset-deletion-title").innerHTML = `Delete ${  name  }?`;
-        document.getElementById("confirm-asset-deletion-description").innerHTML = `Do you really want to delete the asset named <b>${  name  }</b>?`;
-    }
-
-    const selectedObject = VRODOS.editor.transforms.getRealObject();
-
+    const selectedObject = getSelectedTransformObject();
     VRODOS.editor.selection.clear({ source: 'delete-dialog-open', hidePanel: false });
 
     const delete_dialog_element = document.getElementById('confirm-deletion-dialog');
+    const delete_btn_element = document.getElementById("delete-asset-btn-confirmation");
+    if (!delete_dialog_element || !delete_btn_element) {
+        VRODOS.api.deleteAssetFromScene(uuid, true);
+        return;
+    }
+
     delete_dialog_element.showModal();
 
     const delUuid = uuid;
     const selUuid = selectedObject ? selectedObject.uuid : "unassigned";
-    // var selUuid = (typeof checkUuid != "undefined") ? checkUuid : "unassigned";
-    const delete_btn_element = document.getElementById("delete-asset-btn-confirmation");
     delete_btn_element.addEventListener('click', () => {
         delete_dialog_element.close();
         VRODOS.editor.selection.clear({ source: 'delete-confirmed', hidePanel: false });
         VRODOS.api.deleteAssetFromScene(uuid, true);
-        if (selUuid !== "unassigned") {
-            if (delUuid !== selUuid) {
-                const objectToReselect = getSceneObjectByUuid(selUuid);
-                if (objectToReselect) {
-                    VRODOS.editor.selection.select(objectToReselect, { source: 'delete-reselect' });
-                }
-            } else {
-                VRODOS.ui.hideObjectControlsPanel();
-            }
-        } else {
-            VRODOS.ui.hideObjectControlsPanel();
-        }
-       
+        restoreSelectionAfterDelete(delUuid, selUuid);
     }, { once: true });
 }
 
@@ -595,28 +721,18 @@ VRODOS.ui.removeHierarchyEntriesForObject = function(uuid, objectName) {
 VRODOS.ui.lockOnScene = function(uuid, _name) {
 
     const selectedObject = getSceneObjectByUuid(uuid);
-    const hierarchyItem = document.getElementById(uuid);
     if (!selectedObject) return;
 
-    if (selectedObject.locked){
-        selectedObject.locked = false;
+    selectedObject.locked = !selectedObject.locked;
+    if (!selectedObject.locked) {
         VRODOS.editor.selection.select(selectedObject, { source: 'lock-toggle' });
         VRODOS.ui.showObjectControlsPanel();
-    }else{
-        selectedObject.locked = true;
+    } else {
         VRODOS.editor.selection.clear({ source: 'lock-toggle' });
         VRODOS.ui.hideObjectControlsPanel();
     }
 
-    // Update the lock icon in the hierarchy viewer (Lucide)
-    if (hierarchyItem) {
-        const lockAnchor = hierarchyItem.querySelector('a[aria-label="Lock asset"]');
-        if (lockAnchor) {
-            const newIcon = selectedObject.locked ? 'lock' : 'lock-open';
-            lockAnchor.innerHTML = `<i data-lucide="${  newIcon  }" class="tw-w-4 tw-h-4"></i>`;
-            if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [lockAnchor] });
-        }
-    }
+    updateHierarchyLockIcon(selectedObject);
 
     VRODOS.ui.setBackgroundColorHierarchyViewer(uuid);
 
@@ -632,66 +748,27 @@ VRODOS.ui.lockOnScene = function(uuid, _name) {
  * @param preventDispose
  */
 VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
-
-    // 1. Delete object from js array (if it exists. Usually it is saved after reload)
-    for (const obj of Object.values(VRODOS.data.scene_data.objects)) {
-        if (typeof obj === 'object' && obj !== null && String(obj.uuid) === String(uuid)) {
-            delete VRODOS.data.scene_data.objects[obj.name];
-            break;
-        }
-    }
-
     const objectSelected = getSceneObjectByUuid(uuid);
+    const sceneRecord = getSceneObjectRecordByUuid(uuid, objectSelected);
 
-    if (!objectSelected) return;
-
-    // [NEW] Capture for Undo Manager before deletion
-    if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-        const target = objectSelected.realObject || objectSelected;
-        const objData = VRODOS.data.scene_data.objects[target.name];
-        if (objData) {
-            VRODOS.editor.undoManager.add(new VRODOS.editor.DeleteObjectCommand(target.name, objData, target));
-        }
+    if (!objectSelected) {
+        deleteSceneObjectRecord(sceneRecord);
+        return;
     }
 
+    captureDeleteUndoCommand(objectSelected, sceneRecord);
+    deleteSceneObjectRecord(sceneRecord);
 
-    // remove animations
-    VRODOS.editor.isPaused = true;
-    VRODOS.editor.envir.animationMixers = VRODOS.editor.envir.animationMixers.filter(el => el._root.name !== objectSelected.name);
-    VRODOS.editor.isPaused = false;
-
-    // If deleting light then remove its editor-only helper, target, and shadow helper artifacts.
-    if (objectSelected.isLight) {
-        VRODOS.utils.removeEditorLightArtifacts(objectSelected, VRODOS.editor.envir.scene, {
-            dispose: true,
-            removeHierarchy: true
-        });
-    }
-    
-
-    // Remove cel outline if present
+    removeObjectAnimationMixers(objectSelected);
+    removeObjectEditorArtifacts(objectSelected);
     if (typeof VRODOS.ui.removeCelOutline === 'function') VRODOS.ui.removeCelOutline(objectSelected);
 
-    VRODOS.editor.selection.clear({ source: 'object-deleted' });
+    clearDeletedObjectSelection();
 
-    // prevent orbiting
-    document.dispatchEvent(new CustomEvent("mouseup", { "detail": "Example of an event" }));
-
-    // Dispose GPU resources (geometry, materials, textures) to prevent VRAM leaks
     if (!preventDispose) {
         VRODOS.utils.disposeObject(objectSelected);
     }
 
-    // Remove object from scene
-    VRODOS.editor.sceneRegistry.remove(objectSelected, { reason: 'object-deleted' });
-
-    // Remove from hierarchy viewer
-    VRODOS.ui.removeHierarchyEntriesForObject(uuid, objectSelected.name);
-
-    if (VRODOS.editor.render && typeof VRODOS.editor.render.request === 'function') {
-        VRODOS.editor.render.request('object-deleted');
-    }
-
-    // Save scene
+    removeSceneObjectFromEditor(objectSelected, uuid);
     VRODOS.api.triggerAutoSave();
 }
