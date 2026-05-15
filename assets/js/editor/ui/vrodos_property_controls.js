@@ -539,6 +539,8 @@ function showPropertiesInPanel(object) {
             VRODOS.ui.displayPoiChatProperties(null, name);
             hasProperties = true;
             break;
+        default:
+            break;
     }
 
     // Dispatch by category_name (lights)
@@ -558,6 +560,8 @@ function showPropertiesInPanel(object) {
         case 'lightAmbient':
             VRODOS.ui.displayAmbientProperties(null, name);
             hasProperties = true;
+            break;
+        default:
             break;
     }
 
@@ -655,7 +659,7 @@ const gui_controls_funs = (function () {
 
 // Add variables to GUI
 let i = 0;
-for (const key in gui_controls_funs) {
+Object.keys(gui_controls_funs).forEach((key) => {
 
     const label = `${actionLabel[i]  } ${  coordLabel[i % 3]}`;
 
@@ -680,7 +684,7 @@ for (const key in gui_controls_funs) {
     _addDragScrub(dg_controller[i]);
 
     i++;
-}
+});
 
 // Global flag: true while a drag-scrub is active on any lil-gui input.
 // Used by onChange handlers to distinguish drag (apply live) vs keyboard (skip until commit).
@@ -1213,7 +1217,7 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
         VRODOS.api.triggerAutoSave();
     }
 
-    element.addEventListener("focusout", (event) => {
+    element.addEventListener("focusout", () => {
         if (!skipNextFocusoutCommit) {
             commitInputValue();
         } else {
@@ -1224,7 +1228,7 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
     });
 
     // onclick inside stop animating
-    element.addEventListener("click", (event) => {
+    element.addEventListener("click", () => {
         if (typeof VRODOS.editor.stopRenderLoop === 'function') {
             VRODOS.editor.stopRenderLoop();
         } else {
