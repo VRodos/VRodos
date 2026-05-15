@@ -99,6 +99,8 @@
 - Verification: Phase 57 edited no JS files; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 58 environment compatibility shim folder migration implemented.
 - Verification: Phase 58 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 59 editor button compatibility shim folder migration implemented.
+- Verification: Phase 59 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -198,6 +200,7 @@ assets/js/editor/
 - Done: Move editor environment state initialization, metrics setup, renderer construction, renderer attachment, and constructor orchestration out of `vrodos_3d_editor_environmentals.js` into `render/vrodos_editor_environment_bootstrap.js`.
 - Done: Group scene editor WordPress script enqueues in `VRodos_Asset_Manager` behind an ordered handle helper while preserving existing handles, dependency registrations, and vendor inline globals.
 - Done: Move the remaining environment compatibility shim under `render/vrodos_editor_environmentals.js` while preserving the `vrodos_3d_editor_environmentals` WordPress handle and `VRODOS.editor.Environmentals` public surface.
+- Done: Move the remaining editor button/drag compatibility shim under `ui/vrodos_editor_buttons_drags_compat.js` while preserving the `vrodos_3d_editor_buttons_drags` WordPress handle.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
