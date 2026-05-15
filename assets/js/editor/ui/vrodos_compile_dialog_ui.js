@@ -15,7 +15,6 @@ VRODOS.api = VRODOS.api || {};
             }
 
             bindCompileOpenControl();
-            bindOptionsOpenControl();
             bindCompileProceedControl();
             bindCompileCancelControl();
             bindCompileCloseControl();
@@ -113,15 +112,6 @@ VRODOS.api = VRODOS.api || {};
             resetCompileDialogStatusState();
             showDialog('compile-dialog');
             pauseRenderingForCompileDialog();
-        });
-    }
-
-    function bindOptionsOpenControl() {
-        const optionsButton = document.getElementById('optionsPopupBtn');
-        if (!optionsButton) return;
-
-        optionsButton.addEventListener('click', () => {
-            showDialog('options-dialog');
         });
     }
 

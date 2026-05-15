@@ -117,7 +117,7 @@ extract( $data );
 							overflow: hidden !important;
 						}
 						#sceneJsonContent .tw-modal-box {
-							width: min(95vw, 900px) !important;
+							width: min(96vw, 1120px) !important;
 							max-height: 90vh !important;
 							padding: 0 !important;
 							border-radius: 0.75rem !important;
@@ -131,6 +131,29 @@ extract( $data );
 						#sceneJsonContent textarea::-webkit-scrollbar-track { background: transparent; }
 						#sceneJsonContent textarea::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
 						#sceneJsonContent textarea::-webkit-scrollbar-thumb:hover { background: #64748b; }
+						#sceneJsonContent .scene-json-code-shell {
+							min-height: 75vh;
+						}
+						#vrodos_scene_json_input {
+							overflow-wrap: normal;
+							white-space: pre;
+						}
+						#vrodos_scene_json_line_numbers {
+							min-width: 3.5rem;
+							padding: 1rem 0.75rem 1rem 0.5rem;
+							border-right: 1px solid rgba(255, 255, 255, 0.08);
+							background: #020617;
+							color: #64748b;
+							font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+							font-size: 11px;
+							line-height: 1.625;
+							margin: 0;
+							text-align: right;
+							white-space: pre;
+							user-select: none;
+							overflow: hidden;
+							flex: 0 0 auto;
+						}
 
 						/* Ensure no scrollbars on the main window */
 						html, body {
@@ -159,13 +182,17 @@ extract( $data );
 							</div>
 						</div>
 						<!-- JSON content -->
-						<textarea id="vrodos_scene_json_input"
-								  name="vrodos_scene_json_input"
-								  title="Scene JSON data"
-								  class="tw-flex-1 tw-w-full tw-bg-slate-950 tw-text-emerald-300 tw-font-mono tw-text-[11px] tw-leading-relaxed tw-p-4 tw-border-0 tw-resize-none focus:tw-outline-none"
-								  style="min-height: 75vh;"
-								  spellcheck="false"
-						></textarea>
+						<div class="scene-json-code-shell tw-flex tw-flex-1 tw-min-h-0 tw-bg-slate-950">
+							<pre id="vrodos_scene_json_line_numbers" aria-hidden="true">1</pre>
+							<textarea id="vrodos_scene_json_input"
+									  name="vrodos_scene_json_input"
+									  title="Scene JSON data"
+									  class="tw-flex-1 tw-w-full tw-bg-slate-950 tw-text-emerald-300 tw-font-mono tw-text-[11px] tw-leading-relaxed tw-p-4 tw-border-0 tw-resize-none focus:tw-outline-none"
+									  style="min-height: 75vh;"
+									  spellcheck="false"
+									  wrap="off"
+							></textarea>
+						</div>
 					</div>
 					<form method="dialog" class="tw-modal-backdrop"><button>close</button></form>
 				</dialog>
@@ -317,15 +344,13 @@ extract( $data );
 						</a>
 					</div>
 
-					<!-- Cogwheel options -->
+					<!-- Scene screenshot -->
 					<div class="environmentButton">
-						<div id="row_cogwheel" class="row-right-panel">
-							<a type="button" id="optionsPopupBtn"
-								class="EditorToolbarBtnStyle tw-btn tw-btn-sm tw-btn-primary"
-								title="Edit scene options">
-								<i data-lucide="settings" ></i>
-							</a>
-						</div>
+						<button type="button" id="takeScreenshotBtn"
+								class="EditorToolbarBtnStyle tw-btn tw-btn-sm toggle-btn"
+								title="Take screenshot">
+							<i data-lucide="camera" class="tw-w-4 tw-h-4"></i>
+						</button>
 					</div>
 
 				</div>
@@ -488,10 +513,6 @@ extract( $data );
 				</div>
 
 			</div>   <!--   VR DIV   -->
-
-			<!--Options dialogue-->
-			<?php require __DIR__ . '/vrodos-edit-3D-scene-OptionsDialogue.php'; ?>
-
 		</div>
 
 	</div>

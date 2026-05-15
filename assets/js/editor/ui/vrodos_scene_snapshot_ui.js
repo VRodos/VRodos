@@ -5,7 +5,6 @@ VRODOS.api = VRODOS.api || {};
 VRODOS.ui = VRODOS.ui || {};
 
 VRODOS.api.newScreenshotData = null;
-VRODOS.api.isSceneIconManuallySelected = false;
 VRODOS.ui.sceneSnapshotControlsBound = false;
 
 VRODOS.ui.bindSceneSnapshotControls = function() {
@@ -25,33 +24,8 @@ function bindScreenshotControls() {
     if (takeScreenshotButton) {
         takeScreenshotButton.addEventListener('click', () => {
             VRODOS.api.takeScreenshot();
-            VRODOS.api.isSceneIconManuallySelected = false;
         });
     }
-
-    const manualScreenshotInput = document.getElementById('vrodos_scene_sshot_manual_select');
-    if (manualScreenshotInput) {
-        manualScreenshotInput.addEventListener('change', function() {
-            readLocalImageAsSceneIcon(this);
-        });
-    }
-}
-
-function readLocalImageAsSceneIcon(input) {
-    if (!input.files || !input.files[0]) {
-        return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = function(e) {
-        VRODOS.api.newScreenshotData = e.target.result;
-        VRODOS.ui.setSceneScreenshotPreview(VRODOS.api.newScreenshotData);
-        VRODOS.api.isSceneIconManuallySelected = true;
-        VRODOS.api.persistSceneScreenshot();
-    };
-
-    reader.readAsDataURL(input.files[0]);
 }
 
 function bindSceneJsonDialogControls() {
@@ -97,6 +71,12 @@ function bindSceneJsonDialogControls() {
                 });
         });
     }
+
+    const textarea = document.getElementById('vrodos_scene_json_input');
+    if (textarea) {
+        textarea.addEventListener('input', VRODOS.ui.updateSceneJsonLineNumbers);
+        textarea.addEventListener('scroll', VRODOS.ui.syncSceneJsonLineNumberScroll);
+    }
 }
 
 VRODOS.ui.refreshSceneJsonTextarea = function() {
@@ -107,6 +87,30 @@ VRODOS.ui.refreshSceneJsonTextarea = function() {
         input: textarea,
         pretty: true
     });
+    VRODOS.ui.updateSceneJsonLineNumbers();
+};
+
+VRODOS.ui.updateSceneJsonLineNumbers = function() {
+    const textarea = document.getElementById('vrodos_scene_json_input');
+    const lineNumbers = document.getElementById('vrodos_scene_json_line_numbers');
+    if (!textarea || !lineNumbers) return;
+
+    const lineCount = Math.max(1, textarea.value.split('\n').length);
+    let output = '';
+    for (let i = 1; i <= lineCount; i++) {
+        output += i;
+        if (i < lineCount) output += '\n';
+    }
+    lineNumbers.textContent = output;
+    VRODOS.ui.syncSceneJsonLineNumberScroll();
+};
+
+VRODOS.ui.syncSceneJsonLineNumberScroll = function() {
+    const textarea = document.getElementById('vrodos_scene_json_input');
+    const lineNumbers = document.getElementById('vrodos_scene_json_line_numbers');
+    if (!textarea || !lineNumbers) return;
+
+    lineNumbers.scrollTop = textarea.scrollTop;
 };
 
 VRODOS.api.waitForLatestSceneSave = function() {
@@ -130,6 +134,7 @@ VRODOS.ui.setSceneScreenshotPreview = function(src) {
     const placeholder = document.getElementById('vrodos_scene_sshot_placeholder');
 
     if (!sceneShot) {
+        VRODOS.ui.updateCurrentSceneThumbnail(src);
         return;
     }
 
@@ -146,6 +151,7 @@ VRODOS.ui.setSceneScreenshotPreview = function(src) {
             placeholder.classList.remove('tw-hidden');
         }
     }
+    VRODOS.ui.updateCurrentSceneThumbnail(src);
 };
 
 VRODOS.ui.updateCurrentSceneThumbnail = function(src) {
@@ -195,7 +201,6 @@ VRODOS.api.takeScreenshot = function() {
 
         VRODOS.api.newScreenshotData = offscreenRenderer.domElement.toDataURL('image/jpeg');
         VRODOS.ui.setSceneScreenshotPreview(VRODOS.api.newScreenshotData);
-        VRODOS.ui.updateCurrentSceneThumbnail(VRODOS.api.newScreenshotData);
     } finally {
         if (offscreenRenderer) {
             offscreenRenderer.dispose();

@@ -171,6 +171,12 @@
 - Verification: Phase 93 JS syntax check passed; `templates/pages/vrodos-edit-3D-scene-Popups.php` PHP syntax check passed; focused Spot live numeric and target relink sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 94 grouped light panel live-binding migration implemented.
 - Verification: Phase 94 JS syntax checks passed; `templates/pages/vrodos-edit-3D-scene-Popups.php` PHP syntax check passed; focused light live-binding, undo/redo color, and Lamp shadow-radius persistence sanity checks passed; `git diff --check` passed with a line-ending normalization warning on `templates/pages/vrodos-edit-3D-scene-Popups.php`; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 95 grouped scene snapshot and JSON viewer simplification implemented.
+- Verification: Phase 95 JS syntax checks passed; `templates/pages/vrodos-edit-3D-scene-template.php` PHP syntax check passed; focused JSON line-number and toolbar screenshot sanity check passed; stale scene options/manual screenshot references removed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 96 scene screenshot toolbar control polish implemented.
+- Verification: Phase 96 `templates/pages/vrodos-edit-3D-scene-template.php` PHP syntax check passed; `git diff --check` passed.
+- 2026-05-15: Phase 97 Scene JSON dialog width polish implemented.
+- Verification: Phase 97 `templates/pages/vrodos-edit-3D-scene-template.php` PHP syntax check passed; `git diff --check` passed.
 
 ## Goals
 
@@ -221,6 +227,9 @@ assets/js/editor/
 - Done: Move `saveSceneEventHandler`, `commitPendingSceneSave`, and `triggerAutoSave` into `ajax/vrodos_save_scene_ajax.js` so scene save and autosave behavior share one owner.
 - Done: Move canvas drop handlers and upper-toolbar light/pawn drag payload creation to `ui/vrodos_scene_canvas_drop_ui.js`.
 - Done: Move Sun/Lamp/Spot/Ambient light panel color and primary numeric controls out of inline template handlers into persistent JS bindings, centralize editor light visual color syncing, and persist Lamp shadow radius through scene export.
+- Done: Replace the scene options dialog with a single toolbar screenshot action, remove manual scene screenshot upload and scene description UI, and add synced line numbers to the Scene JSON dialog.
+- Done: Restyle the screenshot toolbar action as a compact icon-only environment button matching the nearby 3D, actor-view, and auto-rotate controls.
+- Done: Widen the Scene JSON dialog while preserving responsive viewport bounds.
 - Done: Move scene drawer toggle, scene reorder persistence, and delete scene dialog wiring to `ui/vrodos_scene_list_ui.js`.
 - Done: Move screenshot button/manual image selection and scene JSON view/copy dialog bindings to `ui/vrodos_scene_snapshot_ui.js`.
 - Done: Move imported/Immerse scene information floating-panel toggle, resize/close setup, and copy binding to `ui/vrodos_floating_panels.js`.

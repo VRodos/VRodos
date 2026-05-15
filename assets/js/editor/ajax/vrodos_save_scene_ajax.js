@@ -100,7 +100,7 @@ VRODOS.api.saveScene = function() {
 		'scene_id': VRODOS.config.sceneId,
 		'scene_json': document.getElementById( "vrodos_scene_json_input" ).value,
 		'scene_title': document.getElementById( "sceneTitleInput" ).value,
-		'scene_caption': document.getElementById( "sceneCaptionInput" ).value
+		'scene_caption': ''
 	});
 
 	let pendingScreenshotData = null;
