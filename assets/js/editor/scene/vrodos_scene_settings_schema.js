@@ -4,6 +4,8 @@
  * It is used by the Exporter, Importer, and Loader to process settings uniformly.
  */
 
+'use strict';
+
 const VRODOSSceneSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
 
 function vrodosEditorSceneSettingDefault(sceneSettingKey, fallback, defaultKey) {
