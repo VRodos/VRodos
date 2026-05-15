@@ -92,39 +92,8 @@ VRODOS.loader.LoaderMulti = class {
                 // Load Camera object
                 if (name === 'avatarCamera') {
 
-                    pendingLoads.push(new Promise((resolve) => {
-                        if (manager) manager.itemStart(name);
-                        loader.load(`${modelBaseUrl}director/camera.glb`,
-                            (objectMain) => {
-                                const object = VRODOS.loader.prepareDirectorCameraObject(objectMain.scene.children[0]);
-
-                                const translation = resource?.trs?.translation ?? resource?.position ?? [0, 0.2, 0];
-                                const rotation = resource?.trs?.rotation ?? resource?.rotation ?? [0, 0, 0];
-                                if (typeof VRODOS.editor.envir.installDirectorHelpers === 'function') {
-                                    VRODOS.editor.envir.installDirectorHelpers(object, null);
-                                } else {
-                                    const director = typeof VRODOS.editor.envir.getDirectorObject === 'function'
-                                        ? VRODOS.editor.envir.getDirectorObject()
-                                        : null;
-                                    if (director) {
-                                        director.add(object);
-                                    }
-                                }
-                                VRODOS.editor.envir.applyDirectorTransform(translation, rotation);
-                                VRODOS.editor.sceneRegistry.add(object, { addToScene: false, selectable: true, reason: 'director-camera-loaded' });
-                                if (manager) manager.itemEnd(name);
-                                resolve();
-                            },
-                            undefined,
-                            (error) => {
-                                console.error('Cannot load camera GLB, loading error happened. Error 1595', error);
-                                if (manager) {
-                                    manager.itemError(name);
-                                    manager.itemEnd(name);
-                                }
-                                resolve();
-                            }
-                        );
+                    pendingLoads.push(VRODOS.loader.loadDirectorCameraAsset(manager, loader, name, resource, {
+                        modelBaseUrl
                     }));
 
                 } else if (resource.category_slug === 'assessment') {
