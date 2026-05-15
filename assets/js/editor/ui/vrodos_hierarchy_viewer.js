@@ -278,6 +278,14 @@ function _hierarchyAttribute(value) {
     return VRODOS.utils.escapeAttribute(String(value || ''));
 }
 
+function _hierarchyHTML(value) {
+    return VRODOS.utils.escapeHTML(String(value || ''));
+}
+
+function _hierarchyActionLabel(obj) {
+    return VRODOS.utils.displayText(obj.asset_name || obj.name);
+}
+
 function hierarchyActionValue(actionAnchor, item, key) {
     return actionAnchor.dataset[key] || (item && item.dataset ? item.dataset[key] || '' : '');
 }
@@ -401,15 +409,21 @@ function _hierarchyItemHTML(obj, object_name, created, deleteButtonHTML, resetBu
     let iconColor = isLight ? 'tw-text-amber-400' : 'tw-text-white/40';
     if (obj.name === 'avatarCamera') iconColor = 'tw-text-blue-400';
     const assessmentBadgesHTML = _hierarchyAssessmentBadgesHTML(obj);
+    const safeId = _hierarchyAttribute(obj.uuid);
+    const safeName = _hierarchyAttribute(obj.name);
+    const safeIconName = _hierarchyAttribute(iconName);
+    const safeTitle = _hierarchyAttribute(obj.title || object_name);
+    const safeObjectName = _hierarchyHTML(object_name);
+    const safeCreated = _hierarchyHTML(created);
 
     const itemHTML = `<li class="hierarchyItem tw-flex tw-items-center tw-gap-2 tw-py-1.5 tw-px-2 tw-border-b tw-border-white/5 hover:tw-bg-white/10 tw-cursor-pointer tw-transition-colors"` +
-        ` id="${  obj.uuid  }" data-name="${  obj.name  }" data-uuid="${  obj.uuid  }">` +
-        `<i data-lucide="${  iconName  }" class="tw-w-4 tw-h-4 tw-flex-shrink-0 ${  iconColor  }"></i>` +
+        ` id="${  safeId  }" data-name="${  safeName  }" data-uuid="${  safeId  }">` +
+        `<i data-lucide="${  safeIconName  }" class="tw-w-4 tw-h-4 tw-flex-shrink-0 ${  iconColor  }"></i>` +
         `<span class="tw-flex-1 tw-min-w-0 tw-text-[9pt] tw-leading-tight tw-text-white"` +
-        ` title="${  obj.title || object_name  }">` +
-        `<span class="tw-block tw-font-medium tw-truncate">${  object_name  }</span>${ 
-        assessmentBadgesHTML 
-        }${created ? `<span class="tw-mt-1 tw-block tw-text-[7pt] tw-text-white/50 tw-font-normal">${  created  }</span>` : '' 
+        ` title="${  safeTitle  }">` +
+        `<span class="tw-block tw-font-medium tw-truncate">${  safeObjectName  }</span>${
+        assessmentBadgesHTML
+        }${created ? `<span class="tw-mt-1 tw-block tw-text-[7pt] tw-text-white/50 tw-font-normal">${  safeCreated  }</span>` : ''
         }</span>` +
         `<span class="tw-flex tw-items-center tw-gap-0.5 tw-flex-shrink-0">${ 
         deleteButtonHTML 
@@ -517,7 +531,7 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
 function CreateDeleteButton(obj) {
     return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-red-400 tw-transition-colors" aria-label="Delete asset"` +
         ` title="Delete asset object" data-hierarchy-action="delete" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
-        ` data-name="${  _hierarchyAttribute(obj.name)  }" data-asset-name="${  _hierarchyAttribute(obj.asset_name || obj.name)  }">` +
+        ` data-name="${  _hierarchyAttribute(obj.name)  }" data-asset-name="${  _hierarchyAttribute(_hierarchyActionLabel(obj))  }">` +
         `<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i></a>`;
 }
 
@@ -526,7 +540,7 @@ function CreateLockButton(obj) {
     const lock_ic = (obj.locked) ? 'lock' : 'lock-open';
     return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-white tw-transition-colors" aria-label="Lock asset"` +
         ` title="Lock asset object" data-hierarchy-action="lock" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
-        ` data-name="${  _hierarchyAttribute(obj.name)  }" data-asset-name="${  _hierarchyAttribute(obj.asset_name || obj.name)  }">` +
+        ` data-name="${  _hierarchyAttribute(obj.name)  }" data-asset-name="${  _hierarchyAttribute(_hierarchyActionLabel(obj))  }">` +
         `<i data-lucide="${  lock_ic  }" class="tw-w-4 tw-h-4"></i></a>`;
 }
 
