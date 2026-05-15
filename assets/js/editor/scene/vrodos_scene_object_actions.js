@@ -63,8 +63,8 @@ function clearSceneObjectAddPending(nameModel) {
 }
 
 function getSceneObjectRecord(nameModel) {
-    return (VRODOS.data && VRODOS.data.scene_data && VRODOS.data.scene_data.objects)
-        ? VRODOS.data.scene_data.objects[nameModel]
+    return typeof VRODOS.utils.sceneGetObjectRecord === 'function'
+        ? VRODOS.utils.sceneGetObjectRecord(nameModel, { create: false })
         : null;
 }
 
@@ -89,32 +89,15 @@ function addedObjectRegisterOptions(renderReason) {
 }
 
 function getSceneObjectRecordByUuid(uuid, object) {
-    const objects = (VRODOS.data && VRODOS.data.scene_data && VRODOS.data.scene_data.objects)
-        ? VRODOS.data.scene_data.objects
-        : {};
-    const objectName = object ? object.name : '';
-
-    for (const [key, value] of Object.entries(objects)) {
-        if (typeof value !== 'object' || value === null) {
-            continue;
-        }
-        if (String(value.uuid) === String(uuid) || (objectName && key === objectName)) {
-            return { key, value };
-        }
-    }
-
-    return objectName && objects[objectName]
-        ? { key: objectName, value: objects[objectName] }
+    return typeof VRODOS.utils.sceneFindObjectRecord === 'function'
+        ? VRODOS.utils.sceneFindObjectRecord(uuid, object)
         : null;
 }
 
 function deleteSceneObjectRecord(record) {
-    if (!record || !record.key || !VRODOS.data || !VRODOS.data.scene_data || !VRODOS.data.scene_data.objects) {
-        return false;
-    }
-
-    delete VRODOS.data.scene_data.objects[record.key];
-    return true;
+    return typeof VRODOS.utils.sceneDeleteObjectRecord === 'function'
+        ? VRODOS.utils.sceneDeleteObjectRecord(record)
+        : false;
 }
 
 function captureDeleteUndoCommand(object, record) {
@@ -528,11 +511,13 @@ VRODOS.api.createPawn = function(nameModel, addedAt, _pluginPath) {
  */
 VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
     VRODOS.api.showSceneLoadingProgress("Loading", { immediate: true });
+    const sceneRecord = getSceneObjectRecord(nameModel);
 
     const manager = new THREE.LoadingManager();
     VRODOS.api.configureSceneLoadingManager(manager, {
         onProgress: (_item, loaded, total) => {
-            const assetName = VRODOS.utils.displayText(VRODOS.data.scene_data.objects[nameModel].asset_name || nameModel);
+            const currentRecord = getSceneObjectRecord(nameModel) || sceneRecord || {};
+            const assetName = VRODOS.utils.displayText(currentRecord.asset_name || nameModel);
             VRODOS.api.setSceneLoadingProgressText(`${assetName} loading part ${loaded} / ${total}`, { immediate: true });
         },
         onLoad: () => {
@@ -557,11 +542,11 @@ VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
     });
 
     const loaderMulti = new VRODOS.loader.LoaderMulti();
-    loaderMulti.load(manager, { [nameModel]: VRODOS.data.scene_data.objects[nameModel] }, VRODOS.data.pluginPath);
+    loaderMulti.load(manager, { [nameModel]: sceneRecord }, VRODOS.data.pluginPath);
 }
 
 VRODOS.api.createAssessmentAsset = function(nameModel, addedAt) {
-    const resource = VRODOS.data.scene_data.objects[nameModel] || {};
+    const resource = getSceneObjectRecord(nameModel) || {};
     if (typeof VRODOS.utils.hasCompleteAssessmentMetadata === 'function' && !VRODOS.utils.hasCompleteAssessmentMetadata(resource)) {
         console.warn('VRodos: skipped incomplete assessment scene object', {
             name: nameModel,
@@ -587,13 +572,13 @@ VRODOS.api.createAssessmentAsset = function(nameModel, addedAt) {
 }
 
 VRODOS.api.createTextAsset = function(nameModel, addedAt) {
-    const resource = VRODOS.data.scene_data.objects[nameModel] || {};
+    const resource = getSceneObjectRecord(nameModel) || {};
     const textObject = VRODOS.loader.createTextPanelObject(nameModel, {
         ...resource,
         addedAt
     });
 
-    VRODOS.loader.setObjectProperties(textObject, nameModel, VRODOS.data.scene_data.objects);
+    VRODOS.loader.setObjectProperties(textObject, nameModel, VRODOS.utils.getSceneDataObjectMap({ create: false }) || {});
     textObject.addedAt = addedAt;
 
     VRODOS.ui.finalizeSceneObjectAdd(textObject, {
@@ -643,7 +628,10 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
     translation = Array.isArray(translation) ? translation : [0, 0, 0];
     const addedAt = VRODOS.utils.getSceneObjectAddedAt(dataDrag);
 
-    VRODOS.data.scene_data.objects[nameModel] = VRODOS.utils.sceneCreateObjectRecord(nameModel, path, categoryName, dataDrag, translation, addedAt);
+    const sceneRecord = VRODOS.utils.sceneSetObjectRecord(
+        nameModel,
+        VRODOS.utils.sceneCreateObjectRecord(nameModel, path, categoryName, dataDrag, translation, addedAt)
+    );
 
     const categoryHandlers = {
         'lightSun': () => VRODOS.api.createLightSun(nameModel, addedAt),
@@ -665,13 +653,13 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         }
     } catch (error) {
         clearSceneObjectAddPending(nameModel);
-        delete VRODOS.data.scene_data.objects[nameModel];
+        VRODOS.utils.sceneDeleteObjectRecord(nameModel);
         throw error;
     }
 
     // [NEW] Capture for Undo Manager
     if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-        VRODOS.editor.undoManager.add(new VRODOS.editor.AddObjectCommand(nameModel, VRODOS.data.scene_data.objects[nameModel]));
+        VRODOS.editor.undoManager.add(new VRODOS.editor.AddObjectCommand(nameModel, sceneRecord));
     }
 
     return getSceneObjectByName(nameModel);

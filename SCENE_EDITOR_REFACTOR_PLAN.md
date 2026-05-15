@@ -145,6 +145,8 @@
 - Verification: Phase 80 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused editor pawn factory sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 81 grouped scene delete/lock flow cleanup implemented.
 - Verification: Phase 81 JS syntax check passed; focused scene delete/lock sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 82 grouped scene-data object record lifecycle consolidation implemented.
+- Verification: Phase 82 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused scene-data record/undo sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -276,6 +278,7 @@ assets/js/editor/
 - Done: Group editor light creation cleanup by centralizing Sun, Lamp, Spot, and Ambient light object/helper/target construction in the light loader module and routing add-object light APIs through those factories.
 - Done: Group editor pawn cleanup by centralizing pawn GLB URL resolution, actor label creation, metadata assignment, and scene-load opacity defaults in the pawn loader module while preserving `VRODOS.api.createPawn`.
 - Done: Group scene delete/lock cleanup by extracting delete dialog, hierarchy lock-icon, undo capture, scene-data removal, animation cleanup, artifact cleanup, registry removal, and post-delete reselection helpers while preserving public delete/lock APIs.
+- Done: Group scene-data object record cleanup by moving scene-data map, record lookup, record set, and record deletion helpers into scene persistence, routing add/delete paths through them, and restoring delete undo into `scene_data.objects` instead of the stale legacy scene branch.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

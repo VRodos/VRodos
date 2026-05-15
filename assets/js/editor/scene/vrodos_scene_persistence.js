@@ -19,6 +19,80 @@ VRODOS.utils.sceneDecodeExportTextFields = function(resource) {
     return VRODOS.utils.normalizeDisplayTextFields(resource);
 };
 
+VRODOS.utils.getSceneDataObjectMap = function(options) {
+    const opts = Object.assign({ create: true }, options || {});
+
+    VRODOS.data = VRODOS.data || {};
+    if (!VRODOS.data.scene_data) {
+        if (!opts.create) {
+            return null;
+        }
+        VRODOS.data.scene_data = {};
+    }
+
+    if (!VRODOS.data.scene_data.objects) {
+        if (!opts.create) {
+            return null;
+        }
+        VRODOS.data.scene_data.objects = {};
+    }
+
+    return VRODOS.data.scene_data.objects;
+};
+
+VRODOS.utils.sceneGetObjectRecord = function(nameModel, options) {
+    const objects = VRODOS.utils.getSceneDataObjectMap(options);
+    return objects && nameModel ? objects[nameModel] || null : null;
+};
+
+VRODOS.utils.sceneFindObjectRecord = function(uuid, object) {
+    const objects = VRODOS.utils.getSceneDataObjectMap({ create: false }) || {};
+    const objectName = object ? object.name : '';
+
+    for (const [key, value] of Object.entries(objects)) {
+        if (typeof value !== 'object' || value === null) {
+            continue;
+        }
+        if (String(value.uuid) === String(uuid) || (objectName && key === objectName)) {
+            return { key, value };
+        }
+    }
+
+    return objectName && objects[objectName]
+        ? { key: objectName, value: objects[objectName] }
+        : null;
+};
+
+VRODOS.utils.sceneSetObjectRecord = function(nameModel, objectData) {
+    const objects = VRODOS.utils.getSceneDataObjectMap();
+    if (!objects || !nameModel || !objectData) {
+        return null;
+    }
+
+    objects[nameModel] = objectData;
+    return objects[nameModel];
+};
+
+VRODOS.utils.sceneDeleteObjectRecord = function(recordOrName, object) {
+    const objects = VRODOS.utils.getSceneDataObjectMap({ create: false });
+    if (!objects || !recordOrName) {
+        return false;
+    }
+
+    const record = typeof recordOrName === 'string'
+        ? (objects[recordOrName]
+            ? { key: recordOrName, value: objects[recordOrName] }
+            : VRODOS.utils.sceneFindObjectRecord(recordOrName, object))
+        : recordOrName;
+
+    if (!record || !record.key) {
+        return false;
+    }
+
+    delete objects[record.key];
+    return true;
+};
+
 VRODOS.utils.sceneCreateObjectRecord = function(nameModel, path, categoryName, dataDrag, translation, addedAt) {
     const dragData = Object.assign({}, dataDrag || {});
     VRODOS.utils.normalizeDisplayTextFields(dragData);

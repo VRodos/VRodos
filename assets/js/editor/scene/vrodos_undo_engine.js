@@ -15,6 +15,18 @@ function vrodosUndoGetObjectByName(name) {
     return VRODOS.editor.sceneRegistry ? VRODOS.editor.sceneRegistry.get(name) : null;
 }
 
+function vrodosUndoRunWithoutCapture(callback) {
+    if (typeof callback !== 'function') return;
+
+    const wasExecuting = VRODOS.editor.undoManager.isExecuting;
+    VRODOS.editor.undoManager.isExecuting = true;
+    try {
+        callback();
+    } finally {
+        VRODOS.editor.undoManager.isExecuting = wasExecuting;
+    }
+}
+
 VRODOS.editor.UndoManager = class {
     constructor(maxSize = 50) {
         this.undoStack = [];
@@ -206,10 +218,9 @@ VRODOS.editor.AddObjectCommand = class {
         if (typeof VRODOS.api.deleteAssetFromScene === 'function') {
             const obj = vrodosUndoGetObjectByName(this.nameModel);
             if (obj) {
-                // We call VRODOS.api.deleteAssetFromScene but we need to tell it NOT to push to undo again
-                VRODOS.editor.undoManager.isExecuting = true;
-                VRODOS.api.deleteAssetFromScene(obj.uuid);
-                VRODOS.editor.undoManager.isExecuting = false;
+                vrodosUndoRunWithoutCapture(() => {
+                    VRODOS.api.deleteAssetFromScene(obj.uuid);
+                });
             }
         }
     }
@@ -226,10 +237,10 @@ VRODOS.editor.DeleteObjectCommand = class {
 
     execute() {
         if (typeof VRODOS.api.deleteAssetFromScene === 'function') {
-            VRODOS.editor.undoManager.isExecuting = true;
-            // Redo a delete: we can allow disposal since it's going into the redo stack (or out)
-            VRODOS.api.deleteAssetFromScene(this.object3D.uuid, false);
-            VRODOS.editor.undoManager.isExecuting = false;
+            vrodosUndoRunWithoutCapture(() => {
+                // Redo a delete: we can allow disposal since it's going into the redo stack (or out)
+                VRODOS.api.deleteAssetFromScene(this.object3D.uuid, false);
+            });
         }
     }
 
@@ -257,8 +268,7 @@ VRODOS.editor.DeleteObjectCommand = class {
         
         this.object3D.updateMatrix();
         this.object3D.updateMatrixWorld(true);
-        VRODOS.data.scene.objects = VRODOS.data.scene.objects || {};
-        VRODOS.data.scene.objects[this.nameModel] = this.objectData;
+        VRODOS.utils.sceneSetObjectRecord(this.nameModel, this.objectData);
         
         let restoredLightAssociates = null;
         // Specialized restoration for lights
