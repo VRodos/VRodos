@@ -127,6 +127,13 @@ function _getFirstChildMaterialColorHex(sceneObj) {
         : null;
 }
 
+function _applyEditorLightColor(object, hexColor) {
+    const scene = VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir.scene : null;
+    if (VRODOS.utils && typeof VRODOS.utils.applyEditorLightColor === 'function') {
+        VRODOS.utils.applyEditorLightColor(object, hexColor, scene);
+    }
+}
+
 function _getObjectColorHex(sceneObj) {
     return sceneObj && sceneObj.color && typeof sceneObj.color.getHexString === 'function'
         ? `#${  sceneObj.color.getHexString()}`
@@ -141,6 +148,27 @@ function _getDoorTargetDisplayValue(sceneObj) {
         return `${sceneObj.doorName_target  } at ${  sceneObj.sceneName_target}`;
     }
     return 'Default';
+}
+
+function _getLightShadowRadius(light) {
+    if (light && Number.isFinite(Number(light.shadowRadius))) {
+        return Number(light.shadowRadius);
+    }
+    if (light && light.shadow && Number.isFinite(Number(light.shadow.radius))) {
+        return Number(light.shadow.radius);
+    }
+    return 0;
+}
+
+function _setLightShadowRadius(light, value) {
+    if (!light || !light.shadow) {
+        return false;
+    }
+
+    const numericValue = sanitizeInputValue(value);
+    light.shadow.radius = numericValue;
+    light.shadowRadius = numericValue;
+    return true;
 }
 
 // Reusable raycaster and mouse vector (avoid allocations per event)
@@ -489,7 +517,7 @@ VRODOS.ui.displaySunProperties = function(event, name) {
         _setEditorInputValue('sunColor', sunColor);
     }
 
-    _setEditorInputValue('sunIntensity', sceneObj.lightintensity || 1);
+    _setEditorInputValue('sunIntensity', sceneObj.intensity || sceneObj.lightintensity || 1);
 
     _showEditorPanel(panelState.panel);
 }
@@ -517,6 +545,7 @@ VRODOS.ui.displayLampProperties = function(event, name) {
     _setEditorInputValue('lampPower', sceneObj.power);
     _setEditorInputValue('lampDecay', sceneObj.decay);
     _setEditorInputValue('lampDistance', sceneObj.distance);
+    _setEditorInputValue('lampRadius', _getLightShadowRadius(sceneObj));
 
     _showEditorPanel(panelState.panel);
 }
@@ -677,6 +706,7 @@ function initPersistentPropertyListeners() {
             const oldValue = this._oldVal;
             const newValue = sanitizeInputValue(this.value);
             obj[prop] = newValue;
+            syncLightPropertyEdit(obj);
             if (oldValue !== newValue) {
                 if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
                     VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, prop, oldValue, newValue));
@@ -690,6 +720,81 @@ function initPersistentPropertyListeners() {
         entries.forEach((entry) => {
             bindLiveNumericProp(entry.id, entry.prop);
         });
+    };
+    const bindLiveShadowRadius = (id) => {
+        const el = _getEditorInput(id);
+        if (!el) {
+            return null;
+        }
+
+        el.addEventListener('focus', function() {
+            this._oldVal = _getLightShadowRadius(getSelectedPropertyTarget());
+        });
+        el.addEventListener('input', function () {
+            const obj = getSelectedPropertyTarget();
+            if (_setLightShadowRadius(obj, this.value)) {
+                syncLightPropertyEdit(obj);
+            }
+        });
+        el.addEventListener('change', function () {
+            const obj = getSelectedPropertyTarget();
+            if (!_setLightShadowRadius(obj, this.value)) {
+                return;
+            }
+
+            const oldValue = this._oldVal;
+            const newValue = _getLightShadowRadius(obj);
+            syncLightPropertyEdit(obj);
+            if (oldValue !== newValue) {
+                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'shadowRadius', oldValue, newValue));
+                }
+                VRODOS.api.saveChanges();
+            }
+        });
+        return el;
+    };
+    const bindLiveColor = (id, getCurrentColor) => {
+        const el = _getEditorInput(id);
+        if (!el) {
+            return null;
+        }
+
+        el.addEventListener('focus', function() {
+            const obj = getSelectedPropertyTarget();
+            this._oldVal = obj ? (getCurrentColor(obj) || this.value) : this.value;
+        });
+        el.addEventListener('input', function () {
+            const obj = getSelectedPropertyTarget();
+            if (!obj) {
+                return;
+            }
+
+            _applyEditorLightColor(obj, this.value);
+            syncLightPropertyEdit(obj);
+        });
+        el.addEventListener('change', function () {
+            const obj = getSelectedPropertyTarget();
+            if (!obj) {
+                return;
+            }
+
+            const oldVal = this._oldVal || getCurrentColor(obj);
+            const newVal = this.value;
+            if (!oldVal) {
+                return;
+            }
+
+            _applyEditorLightColor(obj, newVal);
+            syncLightPropertyEdit(obj);
+            if (oldVal !== newVal) {
+                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
+                }
+                VRODOS.api.saveChanges();
+            }
+        });
+        return el;
     };
     const bindSpotTargetObject = () => {
         _bindEditorInputChange('spotTargetObject', function () {
@@ -713,32 +818,12 @@ function initPersistentPropertyListeners() {
             VRODOS.api.saveChanges();
         });
     };
-    const bindColorUndo = (id, getCurrentColor) => {
-        _bindTrackedEditorInputChange(id, function () {
-            const obj = getSelectedPropertyTarget();
-            if (!obj) {
-                return;
-            }
-
-            const oldVal = this._oldVal || getCurrentColor(obj);
-            const newVal = this.value;
-            if (!oldVal) {
-                return;
-            }
-
-            if (oldVal !== newVal) {
-                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'color', oldVal, newVal));
-                }
-                VRODOS.api.saveChanges();
-            }
-        });
-    };
-
     // --- Sun Properties ---
-    bindColorUndo('sunColor', _getFirstChildMaterialColorHex);
+    bindLiveColor('sunColor', _getFirstChildMaterialColorHex);
+    bindLiveNumericEntries([
+        { id: 'sunIntensity', prop: 'intensity' }
+    ]);
     bindPropEntries([
-        { id: 'sunIntensity', prop: 'intensity', sanitize: true },
         { id: 'sunShadowCameraBottom', prop: 'shadowCameraBottom', sanitize: true },
         { id: 'sunShadowCameraTop', prop: 'shadowCameraTop', sanitize: true },
         { id: 'sunShadowCameraLeft', prop: 'shadowCameraLeft', sanitize: true },
@@ -751,11 +836,14 @@ function initPersistentPropertyListeners() {
     ]);
 
     // --- Lamp Properties ---
-    bindColorUndo('lampColor', _getFirstChildMaterialColorHex);
+    bindLiveColor('lampColor', _getFirstChildMaterialColorHex);
+    bindLiveNumericEntries([
+        { id: 'lampPower', prop: 'power' },
+        { id: 'lampDecay', prop: 'decay' },
+        { id: 'lampDistance', prop: 'distance' }
+    ]);
+    bindLiveShadowRadius('lampRadius');
     bindPropEntries([
-        { id: 'lampPower', prop: 'power', sanitize: true },
-        { id: 'lampDecay', prop: 'decay', sanitize: true },
-        { id: 'lampDistance', prop: 'distance', sanitize: true },
         { id: 'lampShadowCameraBottom', prop: 'lampshadowCameraBottom', sanitize: true },
         { id: 'lampShadowCameraTop', prop: 'lampshadowCameraTop', sanitize: true },
         { id: 'lampShadowCameraLeft', prop: 'lampshadowCameraLeft', sanitize: true },
@@ -767,6 +855,7 @@ function initPersistentPropertyListeners() {
     ]);
 
     // --- Spot Properties ---
+    bindLiveColor('spotColor', _getFirstChildMaterialColorHex);
     bindLiveNumericEntries([
         { id: 'spotPower', prop: 'power', sanitize: true },
         { id: 'spotDecay', prop: 'decay', sanitize: true },
@@ -777,8 +866,10 @@ function initPersistentPropertyListeners() {
     bindSpotTargetObject();
 
     // --- Ambient Properties ---
-    bindColorUndo('ambientColor', _getObjectColorHex);
-    bindProp('ambientIntensity', 'intensity', false, true);
+    bindLiveColor('ambientColor', _getObjectColorHex);
+    bindLiveNumericEntries([
+        { id: 'ambientIntensity', prop: 'intensity' }
+    ]);
 
     // --- Door & Link Properties ---
     _bindTrackedEditorInputChange('popupDoorSelect', function () {

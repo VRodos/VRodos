@@ -382,17 +382,31 @@ VRODOS.editor.PropertyCommand = class {
     apply(val) {
         const obj = vrodosUndoGetObjectByUuid(this.objectUuid);
         if (!obj) return;
-        
-        obj[this.property] = val;
-        
-        // Handle special properties like color which might live in children[0]
-        if (this.property === 'color' && obj.children && obj.children[0] && obj.children[0].material) {
-            obj.children[0].material.color.set(val);
+
+        const scene = VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir.scene : null;
+        const isLightObject = Boolean(obj.category_name && obj.category_name.includes("light"));
+
+        if (this.property === 'color') {
+            if (isLightObject && VRODOS.utils && typeof VRODOS.utils.applyEditorLightColor === 'function') {
+                VRODOS.utils.applyEditorLightColor(obj, val, scene);
+            } else if (obj.color && typeof obj.color.set === 'function' && VRODOS.utils && typeof VRODOS.utils.applyEditorObjectVisualColor === 'function') {
+                VRODOS.utils.applyEditorObjectVisualColor(obj, val);
+            } else if (obj.color && typeof obj.color.set === 'function') {
+                obj.color.set(val);
+            } else {
+                obj[this.property] = val;
+            }
+        } else {
+            obj[this.property] = val;
         }
 
         // Sync light helpers
-        if (obj.category_name && obj.category_name.includes("light")) {
-            VRODOS.utils.updateEditorLightHelper(obj, VRODOS.editor.envir.scene);
+        if (isLightObject && VRODOS.utils) {
+            if (typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
+                VRODOS.utils.syncEditorLightArtifacts(obj, scene);
+            } else if (typeof VRODOS.utils.updateEditorLightHelper === 'function') {
+                VRODOS.utils.updateEditorLightHelper(obj, scene);
+            }
         }
 
         // Update UI panels

@@ -169,6 +169,8 @@
 - Verification: Phase 92 JS syntax check passed; focused property panel hydration and Spot numeric listener sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 93 grouped Spot panel binding migration implemented.
 - Verification: Phase 93 JS syntax check passed; `templates/pages/vrodos-edit-3D-scene-Popups.php` PHP syntax check passed; focused Spot live numeric and target relink sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 94 grouped light panel live-binding migration implemented.
+- Verification: Phase 94 JS syntax checks passed; `templates/pages/vrodos-edit-3D-scene-Popups.php` PHP syntax check passed; focused light live-binding, undo/redo color, and Lamp shadow-radius persistence sanity checks passed; `git diff --check` passed with a line-ending normalization warning on `templates/pages/vrodos-edit-3D-scene-Popups.php`; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -218,6 +220,7 @@ assets/js/editor/
 - Done: Move scene JSON refresh, screenshot state, screenshot preview, current scene thumbnail updates, and offscreen screenshot capture to `ui/vrodos_scene_snapshot_ui.js`.
 - Done: Move `saveSceneEventHandler`, `commitPendingSceneSave`, and `triggerAutoSave` into `ajax/vrodos_save_scene_ajax.js` so scene save and autosave behavior share one owner.
 - Done: Move canvas drop handlers and upper-toolbar light/pawn drag payload creation to `ui/vrodos_scene_canvas_drop_ui.js`.
+- Done: Move Sun/Lamp/Spot/Ambient light panel color and primary numeric controls out of inline template handlers into persistent JS bindings, centralize editor light visual color syncing, and persist Lamp shadow radius through scene export.
 - Done: Move scene drawer toggle, scene reorder persistence, and delete scene dialog wiring to `ui/vrodos_scene_list_ui.js`.
 - Done: Move screenshot button/manual image selection and scene JSON view/copy dialog bindings to `ui/vrodos_scene_snapshot_ui.js`.
 - Done: Move imported/Immerse scene information floating-panel toggle, resize/close setup, and copy binding to `ui/vrodos_floating_panels.js`.

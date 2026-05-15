@@ -383,6 +383,15 @@ VRODOS.exporter.SceneExporter = class {
             entryObject.lightdistance = o.distance;
         }
 
+        if (o.category_name === 'lightLamp') {
+            const shadowRadius = o.shadow && Number.isFinite(Number(o.shadow.radius))
+                ? Number(o.shadow.radius)
+                : Number(o.shadowRadius);
+            if (Number.isFinite(shadowRadius)) {
+                entryObject.shadowRadius = shadowRadius;
+            }
+        }
+
         if (o.category_name === 'lightSpot') {
             entryObject.lightangle = o.angle;
             entryObject.lightpenumbra = o.penumbra;

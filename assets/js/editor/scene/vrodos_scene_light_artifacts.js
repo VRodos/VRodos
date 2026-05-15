@@ -22,6 +22,23 @@ VRODOS.utils = VRODOS.utils || {};
         return fallback;
     }
 
+    function applyEditorColor(color, hexColor) {
+        if (color && typeof color.set === 'function') {
+            color.set(hexColor);
+        }
+    }
+
+    function applyEditorMaterialColor(material, hexColor) {
+        if (Array.isArray(material)) {
+            material.forEach((entry) => applyEditorMaterialColor(entry, hexColor));
+            return;
+        }
+
+        if (material && material.color) {
+            applyEditorColor(material.color, hexColor);
+        }
+    }
+
     function getEditorScene(scene) {
         return scene || (VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
     }
@@ -162,6 +179,41 @@ VRODOS.utils = VRODOS.utils || {};
         return sphere;
     };
 
+    VRODOS.utils.applyEditorObjectVisualColor = function(object, hexColor) {
+        if (!object) return;
+
+        applyEditorColor(object.color, hexColor);
+        applyEditorMaterialColor(object.material, hexColor);
+        if (object.children && object.children[0] && object.children[0].material) {
+            applyEditorMaterialColor(object.children[0].material, hexColor);
+        }
+    };
+
+    VRODOS.utils.applyEditorLightColor = function(light, hexColor, scene) {
+        const candidate = light ? (light.realObject || light) : null;
+        const targetLight = candidate && candidate.parentLight ? candidate.parentLight : candidate;
+        if (!targetLight) return null;
+
+        VRODOS.utils.applyEditorObjectVisualColor(targetLight, hexColor);
+
+        const targetScene = getEditorScene(scene);
+        VRODOS.utils.applyEditorObjectVisualColor(
+            VRODOS.utils.getEditorLightObject('target', targetLight.name, targetScene),
+            hexColor
+        );
+
+        const helper = VRODOS.utils.getEditorLightObject('helper', targetLight.name, targetScene);
+        applyEditorColor(helper ? helper.color : null, hexColor);
+        if (helper && helper.children) {
+            helper.children.forEach((child) => {
+                applyEditorMaterialColor(child.material, hexColor);
+                applyEditorColor(child.color, hexColor);
+            });
+        }
+
+        return targetLight;
+    };
+
     VRODOS.utils.createEditorLightTarget = function(light, options) {
         if (!light || typeof THREE === 'undefined') return null;
 
@@ -274,6 +326,9 @@ VRODOS.utils = VRODOS.utils || {};
         }
         if (Object.prototype.hasOwnProperty.call(light, 'shadowBias')) {
             shadow.bias = editorLightNumber(light.shadowBias, shadow.bias || 0);
+        }
+        if (Object.prototype.hasOwnProperty.call(light, 'shadowRadius')) {
+            shadow.radius = editorLightNumber(light.shadowRadius, shadow.radius || 0);
         }
         if (shadow.mapSize && (
             Object.prototype.hasOwnProperty.call(light, 'shadowMapWidth') ||

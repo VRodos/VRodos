@@ -3,18 +3,6 @@
 <script>
 
 
-
-	function updateSpot() {
-		var targetObject = vrodosGetPopupTargetObject();
-		if (!targetObject) return;
-		VRODOS.editor.envir.scene.traverse(function (child) {
-				if (child.light != undefined)
-					if (child.light.name === targetObject.name)
-						child.update();
-			}
-		);
-	}
-
 	function vrodosGetPopupTargetObject() {
 		if (typeof _currentSelectedRealObject !== 'undefined' && _currentSelectedRealObject) {
 			return _currentSelectedRealObject;
@@ -65,98 +53,6 @@
 		VRODOS.api.saveChanges();
 	}
 
-
-
-	/// Sun Color Selector
-	function updateSunColorPickerLight(input) {
-		var targetObject = vrodosGetPopupTargetObject();
-		if (!targetObject) return;
-		var hexcol = input.value;
-
-		// Sun as object
-		if (targetObject.color) {
-			targetObject.color.set(hexcol);
-		}
-
-		// Sun as Sphere
-		if (targetObject.children && targetObject.children[0] && targetObject.children[0].material && targetObject.children[0].material.color) {
-			targetObject.children[0].material.color.set(hexcol);
-		}
-
-		// Sun Helper
-		var lightHelper = VRODOS.editor.envir.scene.getObjectByName("lightHelper_" + targetObject.name);
-		if (lightHelper && lightHelper.children && lightHelper.children.length > 1) {
-			if (lightHelper.children[0].material && lightHelper.children[0].material.color) lightHelper.children[0].material.color.set(hexcol);
-			if (lightHelper.children[1].material && lightHelper.children[1].material.color) lightHelper.children[1].material.color.set(hexcol);
-		}
-
-		// TargetSpot
-		var lightTargetSpot = VRODOS.editor.envir.scene.getObjectByName("lightTargetSpot_" + targetObject.name);
-		if (lightTargetSpot && lightTargetSpot.children && lightTargetSpot.children[0] && lightTargetSpot.children[0].material && lightTargetSpot.children[0].material.color) {
-			lightTargetSpot.children[0].material.color.set(hexcol);
-		}
-	}
-
-
-	/// Lamp Color Selector
-	function updateLampColorPickerLight(input) {
-		var targetObject = vrodosGetPopupTargetObject();
-		if (!targetObject) return;
-		var hexcol = input.value;
-		// Lamp as object
-		if (targetObject.color) {
-			targetObject.color.set(hexcol);
-		}
-		// Lamp as Sphere
-		if (targetObject.children && targetObject.children[0] && targetObject.children[0].material) {
-			targetObject.children[0].material.color.set(hexcol);
-		}
-	}
-
-
-	/// Spot Color Selector
-	function updateSpotColorPickerLight(input) {
-		var targetObject = vrodosGetPopupTargetObject();
-		if (!targetObject) return;
-		var hexcol = input.value;
-
-		// Spot as object
-		if (targetObject.color) {
-			targetObject.color.set(hexcol);
-		}
-
-		// Spot as Sphere
-		if (targetObject.children && targetObject.children[0] && targetObject.children[0].material) {
-			targetObject.children[0].material.color.set(hexcol);
-		}
-
-		// Spot as Helper rays
-		VRODOS.editor.envir.scene.traverse(function (child) {
-				if (child.light != undefined)
-					if (child.light.name === targetObject.name)
-						if (child.color) child.color.set(hexcol);
-			}
-		);
-
-		updateSpot();
-	}
-
-	/// Ambient Color Selector
-	function updateAmbientColorPickerLight(input) {
-		var targetObject = vrodosGetPopupTargetObject();
-		if (!targetObject) return;
-		var hexcol = input.value;
-		// AmbientLight as object
-		if (targetObject.color) {
-			targetObject.color.set(hexcol);
-		}
-		// AmbientLight as Sphere
-		if (targetObject.children && targetObject.children[0] && targetObject.children[0].material) {
-			targetObject.children[0].material.color.set(hexcol);
-		}
-	}
-
-
 </script>
 
 <!-- Sun Properties -->
@@ -166,14 +62,13 @@
 	<div class="prop-row">
 		<label for="sunIntensity" class="prop-label">Intensity</label>
 		<input type="text" id="sunIntensity" name="sunIntensity" title="0 to infinite, 1 is default"
-				value="1" maxlength="4" class="prop-input"
-				onkeyup="vrodosSetPopupNumericProp('intensity', this.value);" />
+				value="1" maxlength="4" class="prop-input" />
 	</div>
 
 	<div class="prop-row">
 		<label for="sunColor" class="prop-label">Color</label>
 		<input type="color" id="sunColor" name="sunColor" title="Select sun color"
-				value="#ffffff" oninput="updateSunColorPickerLight(this)"
+				value="#ffffff"
 				style="width: 100%; height: 24px; border: none; padding: 0; background: transparent; cursor: pointer;" />
 	</div>
 
@@ -239,36 +134,32 @@
 	<div class="prop-row">
 		<label for="lampPower" class="prop-label">Power</label>
 		<input type="text" id="lampPower" name="lampPower" title="0 to infinite, 1 is default"
-				value="10" maxlength="4" class="prop-input"
-				onkeyup="vrodosSetPopupNumericProp('power', this.value)" />
+				value="10" maxlength="4" class="prop-input" />
 	</div>
 
 	<div class="prop-row">
 		<label for="lampColor" class="prop-label">Color</label>
 		<input type="color" id="lampColor" name="lampColor" title="Select lamp color"
-				value="#ffffff" oninput="updateLampColorPickerLight(this)"
+				value="#ffffff"
 				style="width: 100%; height: 24px; border: none; padding: 0; background: transparent; cursor: pointer;" />
 	</div>
 
 	<div class="prop-row">
 		<label for="lampDistance" class="prop-label">Distance</label>
 		<input type="text" id="lampDistance" name="lampDistance" title="0 to infinite, 100 is default"
-				value="100" maxlength="4" class="prop-input"
-				onkeyup="vrodosSetPopupNumericProp('distance', this.value)" />
+				value="100" maxlength="4" class="prop-input" />
 	</div>
 
 	<div class="prop-row">
 		<label for="lampDecay" class="prop-label">Decay</label>
 		<input type="text" id="lampDecay" name="lampDecay" title="0 to infinite, 2 is default"
-				value="2" maxlength="4" class="prop-input"
-				onkeyup="vrodosSetPopupNumericProp('decay', this.value)" />
+				value="2" maxlength="4" class="prop-input" />
 	</div>
 
 	<div class="prop-row">
 		<label for="lampRadius" class="prop-label">Radius</label>
 		<input type="text" id="lampRadius" name="lampRadius" title="0 to infinite, 8 is default"
-				value="8" maxlength="3" class="prop-input"
-				onkeyup="if (vrodosGetPopupTargetObject() && vrodosGetPopupTargetObject().shadow) { vrodosGetPopupTargetObject().shadow.radius = parseFloat(this.value) || 0; }" />
+				value="8" maxlength="3" class="prop-input" />
 	</div>
 
 	<div class="prop-row">
@@ -340,7 +231,7 @@
 	<div class="prop-row">
 		<label for="spotColor" class="prop-label">Color</label>
 		<input type="color" id="spotColor" name="spotColor" title="Select spot color"
-				value="#ffffff" oninput="updateSpotColorPickerLight(this)"
+				value="#ffffff"
 				style="width: 100%; height: 24px; border: none; padding: 0; background: transparent; cursor: pointer;" />
 	</div>
 
@@ -376,14 +267,13 @@
 	<div class="prop-row">
 		<label for="ambientIntensity" class="prop-label">Intensity</label>
 		<input type="text" id="ambientIntensity" name="ambientIntensity"
-				title="0 to infinite, 1 is default" value="1" maxlength="4" class="prop-input"
-				onkeyup="vrodosSetPopupNumericProp('intensity', this.value);" />
+				title="0 to infinite, 1 is default" value="1" maxlength="4" class="prop-input" />
 	</div>
 
 	<div class="prop-row">
 		<label for="ambientColor" class="prop-label">Color</label>
 		<input type="color" id="ambientColor" name="ambientColor" title="Select ambient color"
-				value="#ffffff" oninput="updateAmbientColorPickerLight(this)"
+				value="#ffffff"
 				style="width: 100%; height: 24px; border: none; padding: 0; background: transparent; cursor: pointer;" />
 	</div>
 </div>
