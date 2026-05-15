@@ -402,6 +402,56 @@ VRODOS.ui.updateHierarchyViewerCount = function() {
     }
 };
 
+function _hierarchyItemMatches(item, uuid, objectName) {
+    if (!item) {
+        return false;
+    }
+
+    return item.id === uuid ||
+        item.getAttribute('data-uuid') === uuid ||
+        item.getAttribute('data-name') === objectName;
+}
+
+VRODOS.ui.getHierarchyItemsForObject = function(uuid, objectName) {
+    const directItem = uuid ? document.getElementById(uuid) : null;
+    if (directItem && _hierarchyItemMatches(directItem, uuid, objectName)) {
+        return [directItem];
+    }
+
+    return Array.from(document.querySelectorAll('#hierarchy-viewer .hierarchyItem'))
+        .filter((item) => _hierarchyItemMatches(item, uuid, objectName));
+};
+
+VRODOS.ui.getHierarchyItemForObject = function(uuid, objectName) {
+    const items = VRODOS.ui.getHierarchyItemsForObject(uuid, objectName);
+    return items.length > 0 ? items[0] : null;
+};
+
+VRODOS.ui.removeHierarchyEntriesForObject = function(uuid, objectName) {
+    VRODOS.ui.getHierarchyItemsForObject(uuid, objectName).forEach((item) => {
+        item.remove();
+    });
+    VRODOS.ui.updateHierarchyViewerCount();
+};
+
+VRODOS.ui.updateHierarchyLockIcon = function(object) {
+    const hierarchyItem = object ? VRODOS.ui.getHierarchyItemForObject(object.uuid, object.name) : null;
+    if (!hierarchyItem) {
+        return;
+    }
+
+    const lockAnchor = hierarchyItem.querySelector('a[aria-label="Lock asset"]');
+    if (!lockAnchor) {
+        return;
+    }
+
+    const newIcon = object.locked ? 'lock' : 'lock-open';
+    lockAnchor.innerHTML = `<i data-lucide="${  newIcon  }" class="tw-w-4 tw-h-4"></i>`;
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons({ nodes: [lockAnchor] });
+    }
+};
+
 function _createHierarchyItemFragment(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML) {
     const temp = document.createElement('template');
     temp.innerHTML = _hierarchyItemHTML(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML);
@@ -570,7 +620,7 @@ VRODOS.ui.addInHierarchyViewer = function(obj) {
         return;
     }
 
-    const existingItem = Array.from(document.querySelectorAll('#hierarchy-viewer .hierarchyItem')).find((item) => item.getAttribute('data-uuid') === obj.uuid || item.getAttribute('data-name') === obj.name);
+    const existingItem = VRODOS.ui.getHierarchyItemForObject(obj.uuid, obj.name);
     if (existingItem) {
         VRODOS.ui.setBackgroundColorHierarchyViewer(existingItem.id || obj.uuid);
         VRODOS.ui.updateHierarchyViewerCount();

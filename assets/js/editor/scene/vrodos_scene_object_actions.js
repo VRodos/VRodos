@@ -192,24 +192,6 @@ function restoreSelectionAfterDelete(deletedUuid, selectedUuid) {
     }
 }
 
-function updateHierarchyLockIcon(object) {
-    const hierarchyItem = object ? document.getElementById(object.uuid) : null;
-    if (!hierarchyItem) {
-        return;
-    }
-
-    const lockAnchor = hierarchyItem.querySelector('a[aria-label="Lock asset"]');
-    if (!lockAnchor) {
-        return;
-    }
-
-    const newIcon = object.locked ? 'lock' : 'lock-open';
-    lockAnchor.innerHTML = `<i data-lucide="${  newIcon  }" class="tw-w-4 tw-h-4"></i>`;
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons({ nodes: [lockAnchor] });
-    }
-}
-
 VRODOS.ui.frameNewSceneObject = function(object3D) {
     if (!object3D || !VRODOS.editor.envir || !VRODOS.editor.envir.cameraOrbit || !VRODOS.editor.envir.orbitControls) {
         return;
@@ -691,21 +673,6 @@ VRODOS.ui.deleteFomScene = function(uuid, name) {
     }, { once: true });
 }
 
-VRODOS.ui.removeHierarchyEntriesForObject = function(uuid, objectName) {
-    document.querySelectorAll('#hierarchy-viewer .hierarchyItem').forEach((item) => {
-        if (
-            item.id === uuid ||
-            item.getAttribute('data-uuid') === uuid ||
-            item.getAttribute('data-name') === objectName
-        ) {
-            item.remove();
-        }
-    });
-    if (typeof VRODOS.ui.updateHierarchyViewerCount === 'function') {
-        VRODOS.ui.updateHierarchyViewerCount();
-    }
-}
-
 VRODOS.ui.lockOnScene = function(uuid, _name) {
 
     const selectedObject = getSceneObjectByUuid(uuid);
@@ -720,7 +687,9 @@ VRODOS.ui.lockOnScene = function(uuid, _name) {
         VRODOS.ui.hideObjectControlsPanel();
     }
 
-    updateHierarchyLockIcon(selectedObject);
+    if (typeof VRODOS.ui.updateHierarchyLockIcon === 'function') {
+        VRODOS.ui.updateHierarchyLockIcon(selectedObject);
+    }
 
     VRODOS.ui.setBackgroundColorHierarchyViewer(uuid);
 
