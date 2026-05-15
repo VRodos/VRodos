@@ -167,11 +167,11 @@ class VRodos_Asset_Manager {
 		wp_enqueue_script( 'vrodos_auxControlers' );
 		wp_enqueue_script( 'vrodos_BordersFinder' );
 		wp_enqueue_script( 'vrodos_loader_object_factories' );
+		wp_enqueue_script( 'vrodos_loader_resource_metadata' );
 		wp_enqueue_script( 'vrodos_loader_scene_asset_helpers' );
 		wp_enqueue_script( 'vrodos_loader_light_assets' );
 		wp_enqueue_script( 'vrodos_loader_pawn_assets' );
 		wp_enqueue_script( 'vrodos_LightsPawn_Loader' );
-		wp_enqueue_script( 'vrodos_loader_resource_metadata' );
 		wp_enqueue_script( 'vrodos_loader_director_camera' );
 		wp_enqueue_script( 'vrodos_loader_generated_assets' );
 		wp_enqueue_script( 'vrodos_loader_glb_assets' );
@@ -337,7 +337,7 @@ class VRodos_Asset_Manager {
       ['vrodos_loader_generated_assets', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_generated_assets.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_loader_object_factories', 'vrodos_editor_services', 'vrodos_three_vendor_bundle']],
       ['vrodos_loader_glb_assets', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_glb_assets.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_loader_object_factories', 'vrodos_editor_services', 'vrodos_three_vendor_bundle']],
       ['vrodos_LoaderMulti', VRodos_Path_Manager::editor_js_url( 'vrodos_LoaderMulti.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_loader_object_factories', 'vrodos_loader_resource_metadata', 'vrodos_loader_director_camera', 'vrodos_loader_generated_assets', 'vrodos_loader_glb_assets', 'vrodos_scene_settings_sync', 'vrodos_editor_services']],
-      ['vrodos_LightsPawn_Loader', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_lights_pawn.js' ), ['vrodos_namespace', 'vrodos_loader_light_assets', 'vrodos_loader_pawn_assets', 'vrodos_editor_services', 'vrodos_three_vendor_bundle']],
+      ['vrodos_LightsPawn_Loader', VRodos_Path_Manager::editor_js_url( 'loaders/vrodos_loader_lights_pawn.js' ), ['vrodos_namespace', 'vrodos_loader_resource_metadata', 'vrodos_loader_light_assets', 'vrodos_loader_pawn_assets', 'vrodos_editor_services', 'vrodos_three_vendor_bundle']],
       ['vrodos_movePointerLocker', VRodos_Path_Manager::editor_js_url( 'vrodos_movePointerLocker.js' ), ['vrodos_namespace']],
       ['vrodos_scene_disposal', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_disposal.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
       ['vrodos_addRemoveOne', VRodos_Path_Manager::editor_js_url( 'vrodos_addRemoveOne.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_editor_core_utils', 'vrodos_editor_services', 'vrodos_scene_disposal']],

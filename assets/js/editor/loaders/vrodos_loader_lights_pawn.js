@@ -7,33 +7,6 @@ VRODOS.editor = VRODOS.editor || {};
 VRODOS.ui = VRODOS.ui || {};
 
 VRODOS.loader.LightsPawnLoader = class {
-
-    /**
-     * Update visibility of fog-related UI elements.
-     */
-    updateFogUI(fogCategory) {
-        const linearElems = document.getElementsByClassName('linearElement');
-        const expoElems = document.getElementsByClassName('exponentialElement');
-        const colorElems = document.getElementsByClassName('colorElement');
-        const fogValues = document.getElementById("FogValues");
-
-        const isLinear = String(fogCategory) === '1';
-        const isExponential = String(fogCategory) === '2';
-        const isNone = String(fogCategory) === '0';
-
-        if (fogValues) fogValues.style.display = isNone ? "none" : "flex";
-
-        for (const el of linearElems) el.style.display = isLinear ? "flex" : "none";
-        for (const el of expoElems) el.style.display = isExponential ? "flex" : "none";
-        for (const el of colorElems) el.style.display = isNone ? "none" : "flex";
-
-        const radioMap = { '0': 'RadioNoFog', '1': 'RadioLinearFog', '2': 'RadioExponentialFog' };
-        if (radioMap[fogCategory]) {
-            const radio = document.getElementById(radioMap[fogCategory]);
-            if (radio) radio.checked = true;
-        }
-    }
-
     /**
      * Main load entry point for lights and pawns.
      */
@@ -54,36 +27,7 @@ VRODOS.loader.LightsPawnLoader = class {
                 continue;
             }
 
-            // 2. Handle Special Scene Keys (Metadata)
-            if (name === 'SceneSettings') {
-                this.processSceneSettings(resource);
-                continue;
-            }
-
-            // Restore Director/Camera position
-            if (name === 'cameraCoords' && typeof resource === 'object') {
-                if (typeof VRODOS.editor.envir !== 'undefined' && typeof VRODOS.editor.envir.applyDirectorTransform === 'function') {
-                    VRODOS.editor.envir.applyDirectorTransform(resource.position, resource.rotation);
-                }
-                continue;
-            }
-
-            // Fallback for flat metadata (backward compatibility)
-            if (name === 'fogCategory' || name === 'fogcolor' || name === 'fognear' || name === 'fogfar' || name === 'fogdensity') {
-               this.processSceneSettings(resources3D);
-               continue;
-            }
-
-            if (name === 'ClearColor') {
-                if (VRODOS.editor.envir?.scene) {
-                    VRODOS.editor.envir.scene.background = new THREE.Color(resource);
-                }
-                ['sceneClearColor', 'jscolorpick'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = resource;
-                });
-                continue;
-            }
+            if (VRODOS.loader.handleResourceMetadata(name, resource, resources3D)) continue;
 
             // 3. Filter for Lights and Pawns
             const category = resource && resource.category_name;
@@ -99,46 +43,6 @@ VRODOS.loader.LightsPawnLoader = class {
         }
 
         return Promise.allSettled(pendingLoads);
-    }
-
-    processSceneSettings(settings) {
-        if (!settings) return;
-
-        // Populate UI fields
-        const fields = { 
-            'FogNear': 'fognear', 'FogFar': 'fogfar', 
-            'FogDensity': 'fogdensity' 
-        };
-        Object.entries(fields).forEach(([id, key]) => {
-            const el = document.getElementById(id);
-            if (el && settings[key] !== undefined) el.value = parseFloat(settings[key]);
-        });
-
-        // Sync Fog Type
-        if (settings.fogtype) {
-            const fogTypeInput = document.getElementById('FogType');
-            if (fogTypeInput) fogTypeInput.value = settings.fogtype;
-        }
-
-        // Sync Color Picker
-        if (settings.fogcolor) {
-            const fcolor = settings.fogcolor;
-            const colorValue = fcolor.startsWith('#') ? fcolor : `#${fcolor}`;
-            const picker = document.getElementById('jscolorpickFog');
-            if (picker) {
-                picker.value = colorValue;
-            }
-        }
-
-        // Update Visibility & Radio buttons
-        if (settings.fogCategory !== undefined) {
-            this.updateFogUI(settings.fogCategory);
-        }
-        
-        // Apply to THREE.js Scene
-        if (typeof VRODOS.ui.updateFog === 'function') {
-            VRODOS.ui.updateFog("loading");
-        }
     }
 
     dispatchToHandlers(name, resource, finalPath, category, manager) {

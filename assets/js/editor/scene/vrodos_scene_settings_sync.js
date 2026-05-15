@@ -20,6 +20,31 @@ function vrodosSceneSettingsSetChecked(id, checked) {
     return element;
 }
 
+function vrodosSceneSettingsSetValue(id, value) {
+    const element = document.getElementById(id);
+    if (element && value !== undefined && value !== null) {
+        element.value = value;
+    }
+    return element;
+}
+
+function vrodosSceneSettingsNormalizeHexColor(value, fallback) {
+    const colorValue = value || fallback || '#000000';
+    return String(colorValue).startsWith('#') ? String(colorValue) : `#${colorValue}`;
+}
+
+function vrodosSceneSettingsSyncClearColor(colorValue) {
+    const normalizedColor = vrodosSceneSettingsNormalizeHexColor(colorValue, '#000000');
+    const scene = VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir.scene : null;
+
+    vrodosSceneSettingsSetValue('sceneClearColor', normalizedColor);
+    vrodosSceneSettingsSetValue('jscolorpick', normalizedColor);
+
+    if (scene && window.THREE) {
+        scene.background = new THREE.Color(normalizedColor);
+    }
+}
+
 function vrodosSceneSettingsSyncBackground(parsedValue, resources3D) {
     const scene = VRODOS.editor.envir.scene;
     scene.bcg_selection = scene.backgroundStyleOption;
@@ -150,6 +175,36 @@ function vrodosSceneSettingsSyncFog(parsedValue) {
     }
 }
 
+function vrodosSceneSettingsSyncFogField(key, parsedValue) {
+    if (key === 'fogtype') {
+        vrodosSceneSettingsSetValue('FogType', parsedValue);
+    } else if (key === 'fogcolor') {
+        const normalizedColor = vrodosSceneSettingsNormalizeHexColor(parsedValue, '#ffffff');
+        vrodosSceneSettingsSetValue('jscolorpickFog', normalizedColor);
+        vrodosSceneSettingsSetValue('FogColor', normalizedColor);
+    } else if (key === 'fognear') {
+        vrodosSceneSettingsSetValue('FogNear', parsedValue);
+    } else if (key === 'fogfar') {
+        vrodosSceneSettingsSetValue('FogFar', parsedValue);
+    } else if (key === 'fogdensity') {
+        vrodosSceneSettingsSetValue('FogDensity', parsedValue);
+        if (VRODOS.utils && typeof VRODOS.utils.mapDensityToSlider === 'function') {
+            const sliderIndex = VRODOS.utils.mapDensityToSlider(parsedValue);
+            vrodosSceneSettingsSetValue('FogDensitySlider', sliderIndex);
+            if (VRODOS.ui && typeof VRODOS.ui.updateFogDensityLabel === 'function') {
+                VRODOS.ui.updateFogDensityLabel(sliderIndex);
+            }
+        }
+    }
+}
+
+function vrodosSceneSettingsApplyFogPreview(key) {
+    if (!key || !key.startsWith('fog')) return;
+    if (VRODOS.ui && typeof VRODOS.ui.updateFog === 'function') {
+        VRODOS.ui.updateFog("loading");
+    }
+}
+
 VRODOS.api.syncSceneSetting = function(key, value, resources3D) {
     if (!VRODOS.config.SCENE_SETTINGS_SCHEMA[key]) return;
 
@@ -204,6 +259,10 @@ VRODOS.api.syncSceneSetting = function(key, value, resources3D) {
         }
     }
 
+    if (key === 'ClearColor') {
+        vrodosSceneSettingsSyncClearColor(parsedValue);
+    }
+
     if (key === 'backgroundStyleOption') {
         vrodosSceneSettingsSyncBackground(parsedValue, resources3D);
     }
@@ -211,4 +270,7 @@ VRODOS.api.syncSceneSetting = function(key, value, resources3D) {
     if (key === 'fogCategory') {
         vrodosSceneSettingsSyncFog(parsedValue);
     }
+
+    vrodosSceneSettingsSyncFogField(key, parsedValue);
+    vrodosSceneSettingsApplyFogPreview(key);
 };
