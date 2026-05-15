@@ -73,6 +73,10 @@
 - Verification: Phase 44 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 45 loader resource metadata extraction implemented.
 - Verification: Phase 45 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 46 light/pawn loader folder migration implemented.
+- Verification: Phase 46 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 47 light and pawn loader split implemented.
+- Verification: Phase 47 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -159,6 +163,8 @@ assets/js/editor/
 - Done: Move GLB metadata fetch, URL resolution, GLTF load callbacks, animation startup, texture preparation, and scene registration out of `vrodos_LoaderMulti.js` into `loaders/vrodos_loader_glb_assets.js`.
 - Done: Move editor director/avatar camera GLB loading and helper installation out of `vrodos_LoaderMulti.js` into `loaders/vrodos_loader_director_camera.js`.
 - Done: Move loader resource metadata handling, dense-scene load profile selection, nested `SceneSettings` sync, `cameraCoords` restore, and light/pawn filtering out of `vrodos_LoaderMulti.js` into `loaders/vrodos_loader_resource_metadata.js`.
+- Done: Move the light/pawn loader implementation under `loaders/vrodos_loader_lights_pawn.js` while preserving the existing `vrodos_LightsPawn_Loader` WordPress script handle.
+- Done: Split light creation and pawn GLB loading into `loaders/vrodos_loader_light_assets.js` and `loaders/vrodos_loader_pawn_assets.js`, with shared TRS/registration helpers in `loaders/vrodos_loader_scene_asset_helpers.js` and `vrodos_loader_lights_pawn.js` kept as a compatibility coordinator.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
