@@ -1,5 +1,5 @@
 
-"use strict";
+'use strict';
 
 const VRODOS_BORDER_HELPER_NAMES = Object.freeze([
     'bbox',
