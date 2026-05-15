@@ -97,13 +97,62 @@ VRODOS.loader.applyTextureAnisotropy = function(object, maxAniso) {
     return true;
 };
 
-function vrodosLoaderApplyVideoTextureToMesh(node, texture) {
-    node.material = new THREE.MeshBasicMaterial({
+VRODOS.loader.createCanvasTexture = function(canvas) {
+    const texture = new THREE.CanvasTexture(canvas);
+    if (typeof THREE.SRGBColorSpace !== 'undefined') {
+        texture.colorSpace = THREE.SRGBColorSpace;
+    }
+    texture.needsUpdate = true;
+    return texture;
+};
+
+VRODOS.loader.createDoubleSidedTextureMaterial = function(texture, options) {
+    const material = new THREE.MeshBasicMaterial(Object.assign({
         map: texture,
         transparent: true,
         side: THREE.DoubleSide
+    }, options || {}));
+    material.needsUpdate = true;
+    return material;
+};
+
+VRODOS.loader.prepareFallbackPbrMaterial = function(material) {
+    if (!material || !Number.isNaN(Number(material.metalness))) {
+        return material;
+    }
+
+    material.metalness = 0;
+    material.roughness = 0.5;
+    material.emissiveIntensity = 0;
+
+    const color = material.color;
+    if (
+        color &&
+        Number(color.r) + Number(color.g) + Number(color.b) === 0 &&
+        typeof THREE.Color === 'function'
+    ) {
+        material.color = new THREE.Color("rgb(50%, 50%, 50%)");
+    }
+
+    return material;
+};
+
+VRODOS.loader.prepareLoadedGlbRootMaterial = function(object) {
+    const firstChild = object && object.children ? object.children[0] : null;
+    if (!firstChild || !firstChild.isMesh) {
+        return object;
+    }
+
+    const materials = Array.isArray(firstChild.material) ? firstChild.material : [firstChild.material];
+    materials.forEach((material) => {
+        VRODOS.loader.prepareFallbackPbrMaterial(material);
     });
-    node.material.needsUpdate = true;
+
+    return object;
+};
+
+function vrodosLoaderApplyVideoTextureToMesh(node, texture) {
+    node.material = VRODOS.loader.createDoubleSidedTextureMaterial(texture);
 }
 
 function vrodosLoaderIsVideoScreenMesh(node) {
@@ -265,13 +314,7 @@ VRODOS.loader.createTextPanelTexture = function(text) {
         ctx.fillText(line, paddingX, paddingY + index * lineHeight);
     });
 
-    const texture = new THREE.CanvasTexture(canvas);
-    if (THREE.SRGBColorSpace) {
-        texture.colorSpace = THREE.SRGBColorSpace;
-    }
-    texture.needsUpdate = true;
-
-    return texture;
+    return VRODOS.loader.createCanvasTexture(canvas);
 };
 
 VRODOS.loader.createTextPanelObject = function(name, resource) {
@@ -315,10 +358,7 @@ VRODOS.loader.createTextPanelObject = function(name, resource) {
 
     const textPlane = new THREE.Mesh(
         new THREE.PlaneGeometry(textWidth, textHeight),
-        new THREE.MeshBasicMaterial({
-            map: VRODOS.loader.createTextPanelTexture(text),
-            transparent: true,
-            side: THREE.DoubleSide,
+        VRODOS.loader.createDoubleSidedTextureMaterial(VRODOS.loader.createTextPanelTexture(text), {
             depthWrite: false
         })
     );
@@ -374,24 +414,11 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
     VRODOS.loader.applyVideoThumbnailTexture(object, resource);
 
     const trs = resource.trs || {};
-    const translation = VRODOS.utils.loaderSafeVector(trs.translation || resource.position || resource.translation, [0, 0, 0]);
-    const rotation = VRODOS.utils.loaderSafeVector(trs.rotation || resource.rotation, [0, 0, 0]);
-    const scale = VRODOS.utils.loaderSafeScale(trs.scale || resource.scale);
-
-    object.position.set(
-        translation[0],
-        translation[1],
-        translation[2]);
-
-    object.rotation.set(
-        rotation[0],
-        rotation[1],
-        rotation[2]);
-
-    object.scale.set(
-        scale[0],
-        scale[1],
-        scale[2]);
+    VRODOS.utils.applyTRSToObject(object, {
+        translation: trs.translation || resource.position || resource.translation,
+        rotation: trs.rotation || resource.rotation,
+        scale: trs.scale || resource.scale
+    });
 
     return object;
 };

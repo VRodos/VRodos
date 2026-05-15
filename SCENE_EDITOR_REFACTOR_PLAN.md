@@ -135,6 +135,8 @@
 - Verification: Phase 75 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused TRS helper sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 76 grouped loading progress lifecycle consolidation implemented.
 - Verification: Phase 76 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused loading progress helper sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 77 grouped loader material/texture helper consolidation implemented.
+- Verification: Phase 77 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused loader material helper sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -261,6 +263,7 @@ assets/js/editor/
 - Done: Group scene asset category cleanup by centralizing light/pawn/text/assessment/image category aliases and predicates, then routing add dispatch, loader filtering, loader routing, drop handling, and light/pawn drag payload creation through those helpers.
 - Done: Group add-object transform cleanup by moving safe TRS application into core helpers and routing loader scene-asset helpers plus add-object light, pawn, GLB, assessment, and text paths through shared TRS/register-option helpers.
 - Done: Group loading progress cleanup by centralizing progress show/hide/timer clearing and loading-manager configuration, then routing initial scene load, scene finalization, and add-GLB progress through the shared lifecycle helpers.
+- Done: Group loader material/texture cleanup by centralizing canvas texture setup, double-sided texture material creation, GLB fallback PBR material normalization, and generated image TRS/progress helper usage across loader and add-object paths.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

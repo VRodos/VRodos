@@ -304,17 +304,11 @@ VRODOS.ui.createAssessmentInfoPlate = function(type, levels) {
         currentX += levelWidth + gap;
     });
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.needsUpdate = true;
-    if (typeof THREE.SRGBColorSpace !== 'undefined') {
-        texture.colorSpace = THREE.SRGBColorSpace;
-    }
+    const texture = VRODOS.loader.createCanvasTexture(canvas);
 
     const plate = new THREE.Mesh(
         new THREE.PlaneGeometry(1.02, 0.38),
-        new THREE.MeshBasicMaterial({
-            map: texture,
-            transparent: true,
+        VRODOS.loader.createDoubleSidedTextureMaterial(texture, {
             depthWrite: false,
             side: THREE.DoubleSide
         })
@@ -747,17 +741,7 @@ VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
             }
             applyAddedObjectTRS(insertedObject, nameModel);
 
-            if (insertedObject.children[0].isMesh) {
-                const mat = insertedObject.children[0].material;
-                if (isNaN(mat.metalness)) {
-                    mat.metalness = 0;
-                    mat.roughness = 0.5;
-                    mat.emissiveIntensity = 0;
-                    if (mat.color.r + mat.color.g + mat.color.b === 0) {
-                        mat.color = new THREE.Color("rgb(50%, 50%, 50%)");
-                    }
-                }
-            }
+            VRODOS.loader.prepareLoadedGlbRootMaterial(insertedObject);
 
             VRODOS.ui.finalizeSceneObjectAdd(insertedObject, {
                 alreadyRegistered: true,

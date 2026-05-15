@@ -10,6 +10,11 @@ function vrodosLoaderShouldSelectImmediate(resource) {
 }
 
 function vrodosLoaderHideProgressWrapper() {
+    if (VRODOS.api && typeof VRODOS.api.hideSceneLoadingProgress === 'function') {
+        VRODOS.api.hideSceneLoadingProgress({ clearTimers: false });
+        return;
+    }
+
     const progressWrapper = document.getElementById("progressWrapper");
     if (progressWrapper) {
         progressWrapper.style.visibility = "hidden";
@@ -75,10 +80,6 @@ VRODOS.loader.loadImageAsset = function(manager, name, resource, resources3D) {
             return;
         }
 
-        const trs = resource.trs;
-        const pos = VRODOS.utils.loaderSafeVector((trs && trs.translation) || resource.position || resource.translation, [0, 0, 0]);
-        const rot = VRODOS.utils.loaderSafeVector((trs && trs.rotation) || resource.rotation, [0, 0, 0]);
-        const scl = VRODOS.utils.loaderSafeScale((trs && trs.scale) || resource.scale);
         const geometry = new THREE.PlaneGeometry(2, 2);
         let object = null;
 
@@ -98,13 +99,10 @@ VRODOS.loader.loadImageAsset = function(manager, name, resource, resources3D) {
                 resolve(object);
             }
         );
-        const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true });
+        const material = VRODOS.loader.createDoubleSidedTextureMaterial(texture);
         object = new THREE.Mesh(geometry, material);
         object = VRODOS.loader.setObjectProperties(object, name, resources3D);
         object.isSelectableMesh = true;
-        object.position.set(pos[0], pos[1], pos[2]);
-        object.rotation.set(rot[0], rot[1], rot[2]);
-        object.scale.set(scl[0], scl[1], scl[2]);
 
         vrodosLoaderAddGeneratedSceneObject(object, resource, {
             source: 'image-loaded',
