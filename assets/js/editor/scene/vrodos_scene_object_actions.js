@@ -62,6 +62,28 @@ function clearSceneObjectAddPending(nameModel) {
     VRODOS.editor.pendingSceneObjectAdds.delete(nameModel);
 }
 
+function createSceneObjectRecord(nameModel, path, categoryName, dataDrag, translation, addedAt) {
+    const dragData = Object.assign({}, dataDrag || {});
+    VRODOS.utils.normalizeDisplayTextFields(dragData);
+
+    const safeTranslation = VRODOS.utils.safeVector(translation, [0, 0, 0]);
+    const record = Object.assign({
+        path,
+        "trs": {
+            "translation": [safeTranslation[0], safeTranslation[1], safeTranslation[2]],
+            "rotation": [0, 0, 0],
+            "scale": [1, 1, 1]
+        },
+        "fnPath": VRODOS.utils.assetFnPathFromPath(path),
+        "asset_name": VRODOS.utils.displayText(nameModel),
+        "category_name": categoryName,
+        "isLight": String(categoryName || '').includes("light"),
+        addedAt,
+    }, dragData);
+
+    return VRODOS.utils.normalizeDisplayTextFields(record);
+}
+
 VRODOS.ui.frameNewSceneObject = function(object3D) {
     if (!object3D || !VRODOS.editor.envir || !VRODOS.editor.envir.cameraOrbit || !VRODOS.editor.envir.orbitControls) {
         return;
@@ -365,6 +387,8 @@ VRODOS.ui.createAssessmentLabel = function(title, type, levels) {
 }
 
 VRODOS.ui.createAssessmentPlaceholder = function(nameModel, resource) {
+    resource = VRODOS.utils.normalizeDisplayTextFields(Object.assign({}, resource || {}));
+
     const assessmentGroup = new THREE.Group();
     const assessmentSourceId = String(resource.assessment_source_id || '').trim();
     assessmentGroup.name = nameModel;
@@ -835,7 +859,7 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         return null;
     }
 
-    dataDrag = dataDrag || {};
+    dataDrag = VRODOS.utils.normalizeDisplayTextFields(Object.assign({}, dataDrag || {}));
     const pendingResource = Object.assign({
         category_name: categoryName,
         category_slug: dataDrag.category_slug || categoryName
@@ -868,29 +892,7 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
     translation = Array.isArray(translation) ? translation : [0, 0, 0];
     const addedAt = VRODOS.utils.getSceneObjectAddedAt(dataDrag);
 
-    // Initial persistence structure
-    VRODOS.data.scene_data.objects[nameModel] = {
-        path,
-        "trs": {
-            "translation": [translation[0], translation[1], translation[2]],
-            "rotation": [0, 0, 0],
-            "scale": [1, 1, 1]
-        },
-        "fnPath": (function() {
-            if (!path) return '';
-            const idx = path.indexOf('uploads/');
-            return idx !== -1 ? path.substring(idx + 8) : path.substring(path.lastIndexOf('/') + 1);
-        })(),
-        "asset_name": nameModel,
-        "category_name": categoryName,
-        "isLight": categoryName.includes("light"),
-        addedAt,
-    };
-
-    // Copy drag data properties
-    Object.keys(dataDrag).forEach((key) => {
-        VRODOS.data.scene_data.objects[nameModel][key] = dataDrag[key];
-    });
+    VRODOS.data.scene_data.objects[nameModel] = createSceneObjectRecord(nameModel, path, categoryName, dataDrag, translation, addedAt);
 
     const categoryHandlers = {
         'lightSun': () => VRODOS.api.createLightSun(nameModel, addedAt),

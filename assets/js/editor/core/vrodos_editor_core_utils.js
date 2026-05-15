@@ -162,6 +162,19 @@ VRODOS.importer = VRODOS.importer || {};
         return fnPath;
     }
 
+    function assetFnPathFromPath(value) {
+        const path = typeof value === 'string' ? value : '';
+        if (!path) {
+            return '';
+        }
+
+        if (path.indexOf('wp-content/uploads') !== -1 || path.indexOf('uploads/') !== -1) {
+            return normalizeRelativeUploadPath(path);
+        }
+
+        return path.substring(path.lastIndexOf('/') + 1);
+    }
+
     Object.assign(VRODOS.utils, {
         safeNumber,
         clampNumber,
@@ -178,7 +191,8 @@ VRODOS.importer = VRODOS.importer || {};
         normalizeDisplayTextFields,
         safeObjectName,
         ensureSceneObjectName,
-        normalizeRelativeUploadPath
+        normalizeRelativeUploadPath,
+        assetFnPathFromPath
     });
 
     VRODOS.utils.loaderJoinUrl = joinUrl;
