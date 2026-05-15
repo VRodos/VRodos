@@ -39,6 +39,44 @@ function _hierarchyGetSceneObjectRecord(name) {
 
 const HIERARCHY_DIRECTOR_NAME = 'avatarCamera';
 const HIERARCHY_LIGHT_TARGET_CATEGORY = 'lightTargetSpot';
+const HIERARCHY_INTERNAL_VISUAL_NAMES = new Set(['SunSphere', 'SpotSphere', 'LampSphere', 'ambientSphere']);
+
+function _hierarchyCategory(obj) {
+    return obj ? (obj.category_name || '') : '';
+}
+
+function _hierarchyIsDirector(obj) {
+    return Boolean(obj) && obj.name === HIERARCHY_DIRECTOR_NAME;
+}
+
+function _hierarchyIsLightTarget(obj) {
+    return _hierarchyCategory(obj) === HIERARCHY_LIGHT_TARGET_CATEGORY;
+}
+
+function _hierarchyIsLightCategory(obj) {
+    return _hierarchyCategory(obj).startsWith('light');
+}
+
+function _hierarchyIsLightSource(obj) {
+    return _hierarchyIsLightCategory(obj) && !_hierarchyIsLightTarget(obj);
+}
+
+function _hierarchyIsInternalVisualObject(obj) {
+    return Boolean(obj) &&
+        (obj.vrodos_internal_helper === true || HIERARCHY_INTERNAL_VISUAL_NAMES.has(obj.name));
+}
+
+function _hierarchyIsTopLevelRoot(obj) {
+    return _hierarchyIsDirector(obj) || !obj.parent || obj.parent.name === 'vrodosScene';
+}
+
+function _hierarchyShouldRenderObject(obj) {
+    if (!obj || _hierarchyIsInternalVisualObject(obj) || !_hierarchyIsTopLevelRoot(obj)) {
+        return false;
+    }
+
+    return Boolean(obj.isSelectableMesh || _hierarchyIsDirector(obj));
+}
 
 function _hierarchyCaptureTRS(obj) {
     if (!obj) {
@@ -123,7 +161,7 @@ VRODOS.ui.resetInScene = function(name) {
  * using the shared VRODOS_CATEGORY_ICONS map from vrodos_icons.js.
  */
 function _hierarchyIconForObject(obj) {
-    if (obj.name === HIERARCHY_DIRECTOR_NAME) return VRODOS.ui.getCategoryIcon('director');
+    if (_hierarchyIsDirector(obj)) return VRODOS.ui.getCategoryIcon('director');
     // Prefer category_slug (taxonomy), fall back to category_name (runtime lights/pawn)
     return VRODOS.ui.getCategoryIcon(obj.category_slug) !== VRODOS.ui.icons.categoryIconDefault
         ? VRODOS.ui.getCategoryIcon(obj.category_slug)
@@ -146,9 +184,9 @@ const _lightLabelMap = {
  * Director stays "Director".  Others keep their asset_name.
  */
 function _hierarchyDisplayName(obj) {
-    if (obj.name === HIERARCHY_DIRECTOR_NAME) return 'Director';
+    if (_hierarchyIsDirector(obj)) return 'Director';
 
-    const cat = obj.category_name || '';
+    const cat = _hierarchyCategory(obj);
 
     // For lights, count how many of the same type appear *before* this one in traversal order
     if (_lightLabelMap[cat]) {
@@ -164,7 +202,7 @@ function _hierarchyDisplayName(obj) {
         return `${_lightLabelMap[cat]  } ${  index}`;
     }
 
-    if (cat === HIERARCHY_LIGHT_TARGET_CATEGORY) {
+    if (_hierarchyIsLightTarget(obj)) {
         // Derive from the parent light's display name
         const parentName = obj.name.replace(`${HIERARCHY_LIGHT_TARGET_CATEGORY}_`, '');
         const parentObj = _hierarchyGetObjectByName(parentName);
@@ -182,9 +220,9 @@ function _hierarchyDisplayName(obj) {
  * Prefer the explicit persisted field, fall back to the legacy timestamp suffix.
  */
 function _hierarchyCreatedLabel(obj) {
-    if (!obj || obj.name === HIERARCHY_DIRECTOR_NAME) return '';
+    if (!obj || _hierarchyIsDirector(obj)) return '';
 
-    if (obj.category_name === HIERARCHY_LIGHT_TARGET_CATEGORY) {
+    if (_hierarchyIsLightTarget(obj)) {
         const parentName = String(obj.name || '').replace(`${HIERARCHY_LIGHT_TARGET_CATEGORY}_`, '');
         const parentObj = _hierarchyGetObjectByName(parentName);
         if (parentObj && parentObj !== obj) {
@@ -363,7 +401,7 @@ function _getItemCategory(item) {
     if (!name) return null;
     if (name === HIERARCHY_DIRECTOR_NAME) return 'director';
     const sceneObj = _hierarchyGetObjectByName(name);
-    return sceneObj ? (sceneObj.category_name || '') : '';
+    return _hierarchyCategory(sceneObj);
 }
 
 function _findInsertionPoint(obj) {
@@ -371,10 +409,10 @@ function _findInsertionPoint(obj) {
     if (!viewer) return null;
 
     const items = viewer.querySelectorAll('.hierarchyItem');
-    const categoryName = obj.category_name || '';
-    const isDirector = obj.name === HIERARCHY_DIRECTOR_NAME;
-    const isTarget = categoryName === HIERARCHY_LIGHT_TARGET_CATEGORY;
-    const isLight = categoryName.startsWith('light') && !isTarget;
+    const categoryName = _hierarchyCategory(obj);
+    const isDirector = _hierarchyIsDirector(obj);
+    const isTarget = _hierarchyIsLightTarget(obj);
+    const isLight = _hierarchyIsLightSource(obj);
 
     // Director always goes first
     if (isDirector) {
@@ -441,10 +479,9 @@ function _findInsertionPoint(obj) {
 
 function _hierarchyItemHTML(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML) {
     const iconName = _hierarchyIconForObject(obj);
-    const categoryName = obj.category_name || '';
-    const isLight = categoryName.startsWith('light');
+    const isLight = _hierarchyIsLightCategory(obj);
     let iconColor = isLight ? 'tw-text-amber-400' : 'tw-text-white/40';
-    if (obj.name === HIERARCHY_DIRECTOR_NAME) iconColor = 'tw-text-blue-400';
+    if (_hierarchyIsDirector(obj)) iconColor = 'tw-text-blue-400';
     const assessmentBadgesHTML = _hierarchyAssessmentBadgesHTML(obj);
     const safeId = _hierarchyAttribute(obj.uuid);
     const safeName = _hierarchyAttribute(obj.name);
@@ -591,8 +628,8 @@ function CreateResetButton(obj){
 
 function _hierarchyCanEditObject(obj) {
     return Boolean(obj) &&
-        obj.name !== HIERARCHY_DIRECTOR_NAME &&
-        obj.category_name !== HIERARCHY_LIGHT_TARGET_CATEGORY;
+        !_hierarchyIsDirector(obj) &&
+        !_hierarchyIsLightTarget(obj);
 }
 
 function _hierarchyActionButtonsForObject(obj) {
@@ -613,6 +650,73 @@ function _hierarchyCreateObjectFragment(obj) {
         actionButtons.deleteButton,
         actionButtons.resetButton,
         actionButtons.lockButton
+    );
+}
+
+function _hierarchyCreateBuckets() {
+    return {
+        director: [],
+        lights: [],
+        targets: [],
+        regular: []
+    };
+}
+
+function _hierarchyBucketObject(obj, buckets) {
+    if (_hierarchyIsDirector(obj)) {
+        buckets.director.push(obj);
+    } else if (_hierarchyIsLightTarget(obj)) {
+        buckets.targets.push(obj);
+    } else if (_hierarchyIsLightSource(obj)) {
+        buckets.lights.push(obj);
+    } else {
+        buckets.regular.push(obj);
+    }
+}
+
+function _hierarchyCollectRenderableBuckets() {
+    const buckets = _hierarchyCreateBuckets();
+
+    _hierarchyGetSelectableRoots().forEach((obj) => {
+        if (_hierarchyShouldRenderObject(obj)) {
+            _hierarchyBucketObject(obj, buckets);
+        }
+    });
+
+    return buckets;
+}
+
+function _hierarchySortLightRows(lights, targets) {
+    const sortedLights = [];
+    const matchedTargets = new Set();
+
+    _lightTypeOrder.forEach((type) => {
+        lights.filter((light) => _hierarchyCategory(light) === type).forEach((light) => {
+            sortedLights.push(light);
+            const target = targets.find((candidate) =>
+                candidate.name === `${HIERARCHY_LIGHT_TARGET_CATEGORY}_${  light.name}`);
+            if (target) {
+                sortedLights.push(target);
+                matchedTargets.add(target);
+            }
+        });
+    });
+
+    targets.forEach((target) => {
+        if (!matchedTargets.has(target)) {
+            sortedLights.push(target);
+        }
+    });
+
+    return sortedLights;
+}
+
+function _hierarchyGetRenderableObjects() {
+    const buckets = _hierarchyCollectRenderableBuckets();
+    return [].concat(
+        buckets.director,
+        _hierarchySortLightRows(buckets.lights, buckets.targets),
+        buckets.regular
     );
 }
 
@@ -661,42 +765,8 @@ VRODOS.ui.setHierarchyViewer = function() {
     // Remove only real items, keep the skeleton placeholder if present
     viewer.querySelectorAll('.hierarchyItem').forEach((el) => { el.remove(); });
 
-    // Collect all hierarchy-worthy objects
-    const director = [];
-    const lights = [];      // light sources (sun, lamp, spot, ambient)
-    const targets = [];     // light targets
-    const regular = [];
-
-    _hierarchyGetSelectableRoots().forEach((obj) => {
-        if (obj.name !== HIERARCHY_DIRECTOR_NAME && obj.parent && obj.parent.name !== 'vrodosScene') return;
-        if (obj.name === "SunSphere" || obj.name === "SpotSphere" || obj.name === "LampSphere" || obj.name === "ambientSphere") return;
-        if (obj.vrodos_internal_helper === true) return;
-        if (!obj.isSelectableMesh && obj.name !== HIERARCHY_DIRECTOR_NAME) return;
-
-        if (obj.name === HIERARCHY_DIRECTOR_NAME) { director.push(obj); }
-        else if ((obj.category_name || '') === HIERARCHY_LIGHT_TARGET_CATEGORY) { targets.push(obj); }
-        else if ((obj.category_name || '').startsWith('light')) { lights.push(obj); }
-        else { regular.push(obj); }
-    });
-
-    // Group lights by type, then each source followed by its target
-    const sortedLights = [];
-    _lightTypeOrder.forEach((type) => {
-        lights.filter((l) => l.category_name === type).forEach((light) => {
-            sortedLights.push(light);
-            const target = targets.find((t) => t.name === `${HIERARCHY_LIGHT_TARGET_CATEGORY}_${  light.name}`);
-            if (target) sortedLights.push(target);
-        });
-    });
-    // Add any orphan targets not matched above
-    targets.forEach((t) => {
-        if (sortedLights.indexOf(t) === -1) sortedLights.push(t);
-    });
-
-    const sorted = [].concat(director, sortedLights, regular);
-
     const fragment = document.createDocumentFragment();
-    sorted.forEach((obj) => {
+    _hierarchyGetRenderableObjects().forEach((obj) => {
         fragment.appendChild(_hierarchyCreateObjectFragment(obj));
     });
     viewer.appendChild(fragment);
@@ -720,7 +790,7 @@ VRODOS.ui.removeHierarchySkeleton = function() {
 
 // Single object add in Hierarchy
 VRODOS.ui.addInHierarchyViewer = function(obj) {
-    if (!obj || obj.vrodos_internal_helper === true) {
+    if (!_hierarchyShouldRenderObject(obj)) {
         return;
     }
 
