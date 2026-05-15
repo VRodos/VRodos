@@ -1,6 +1,8 @@
 // For detecting collisions while moving
 // Info at http://www.html5rocks.com/en/tutorials/pointerlock/intro/
 
+'use strict';
+
 VRODOS.editor.avatarControlsEnabled = false;
 VRODOS.editor.originalDirectorPos = null;
 VRODOS.editor.originalDirectorRot = null;
@@ -13,7 +15,6 @@ VRODOS.editor.originalRigRot = null;
 // Initialize
 VRODOS.api.initPointerLock = function() {
 
-    const firstPersonBlocker = document.getElementById('firstPersonBlocker');
     VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
     const havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
@@ -21,7 +22,7 @@ VRODOS.api.initPointerLock = function() {
     VRODOS.editor.avatarControlsEnabled = false;
     VRODOS.editor.envir.avatarControls.enabled = false;
 
-    if (!havePointerLock) {
+    if (!havePointerLock && VRODOS.editor.firstPersonBlockerBtn) {
         VRODOS.editor.firstPersonBlockerBtn.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
     }
 };

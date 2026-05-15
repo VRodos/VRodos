@@ -111,6 +111,8 @@
 - Verification: Phase 63 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 64 keyboard controls UI folder migration implemented.
 - Verification: Phase 64 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 65 pointer-lock controls UI folder migration implemented.
+- Verification: Phase 65 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -168,6 +170,7 @@ assets/js/editor/
 - Done: Move compile/options dialog open, proceed, cancel, close, status reset, and save-before-compile bindings to `ui/vrodos_compile_dialog_ui.js`.
 - Done: Move scene canvas drop/dragover binding, mouse selection/focus/context handlers, autosave event binding, property panel context-menu suppression, and light/pawn dragstart wiring to `ui/vrodos_scene_canvas_events_ui.js`.
 - Done: Move keyboard shortcut and first-person movement controls under `ui/vrodos_keyboard_controls.js` while preserving the `vrodos_keyButtons` WordPress handle and `VRODOS.api.updatePointerLockControls` / `resetAvatarMovement` globals.
+- Done: Move pointer-lock and first-person preview toggling under `ui/vrodos_pointer_lock_controls.js` while preserving the `vrodos_movePointerLocker` WordPress handle and pointer-lock API globals.
 - Done: Make `ui/vrodos_scene_editor_ui_controller.js` the direct UI subsystem orchestrator and reduce `vrodos_3d_editor_buttons_drags.js` to a compatibility alias.
 - Done: Remove routine full-scene traversal fallback from raycast selection by using non-rebuilding `sceneRegistry` and selectable cache reads in hot paths.
 - Done: Replace Clear Vision light/helper visibility traversal with cache-backed target collection from `sceneRegistry` and direct scene helper children.
