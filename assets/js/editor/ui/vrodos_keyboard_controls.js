@@ -1,3 +1,5 @@
+'use strict';
+
 let moveForward = false;
 let moveBackward = false;
 let moveLeft = false;
@@ -29,7 +31,7 @@ document.addEventListener('wheel', (event) => {
 VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
 
 document.addEventListener('remove_movement',
-    (event) => {
+    () => {
         //abortController.abort()
         document.removeEventListener('keydown', keydown_handler);
         document.removeEventListener('keyup', keyup_handler);
@@ -39,7 +41,7 @@ document.addEventListener('remove_movement',
 
 
 document.addEventListener('add_movement',
-    (event) => {
+    () => {
         document.addEventListener('keydown', keydown_handler);
         document.addEventListener('keyup', keyup_handler);
     }
@@ -76,6 +78,8 @@ const keydown_handler = (ev) => {
                 }
             }
             break; //  delete
+        default:
+            break;
     }
 };
 const keyup_handler = (ev) => {
@@ -92,6 +96,8 @@ const keyup_handler = (ev) => {
         case 81: moveUp = false; break; // e
         case 82: viewUp = false; break; // r
         case 70: viewDown = false; break; // f
+        default:
+            break;
     }
 
 };
@@ -148,5 +154,12 @@ VRODOS.api.updatePointerLockControls = function(){
 VRODOS.api.resetAvatarMovement = function() {
     velocity.set(0, 0, 0);
     torgue.set(0, 0, 0);
-    moveForward = moveBackward = moveLeft = moveRight = moveUp = moveDown = viewUp = viewDown = false;
+    moveForward = false;
+    moveBackward = false;
+    moveLeft = false;
+    moveRight = false;
+    moveUp = false;
+    moveDown = false;
+    viewUp = false;
+    viewDown = false;
 };
