@@ -67,6 +67,8 @@
 - Verification: Phase 41 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 42 generated asset loader extraction implemented.
 - Verification: Phase 42 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 43 GLB asset loader extraction implemented.
+- Verification: Phase 43 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -150,6 +152,7 @@ assets/js/editor/
 - Done: Move loaded-object property application, director camera preparation, GLB texture anisotropy, and video-thumbnail material assignment out of `vrodos_LoaderMulti.js` into `loaders/vrodos_loader_object_factories.js`.
 - Done: Move scene-setting UI/envir synchronization out of `vrodos_LoaderMulti.js` into `scene/vrodos_scene_settings_sync.js` with explicit enqueue dependencies.
 - Done: Move assessment, text-panel, and flat-image scene-object loading out of `vrodos_LoaderMulti.js` into `loaders/vrodos_loader_generated_assets.js`.
+- Done: Move GLB metadata fetch, URL resolution, GLTF load callbacks, animation startup, texture preparation, and scene registration out of `vrodos_LoaderMulti.js` into `loaders/vrodos_loader_glb_assets.js`.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
