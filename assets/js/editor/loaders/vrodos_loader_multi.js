@@ -1,5 +1,8 @@
 "use strict";
 
+window.VRODOS = window.VRODOS || {};
+VRODOS.loader = VRODOS.loader || {};
+
 VRODOS.loader.LoaderMulti = class {
 
     async load(manager, resources3D, _pluginPath) {
