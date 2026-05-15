@@ -127,6 +127,8 @@
 - Verification: Phase 71 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 72 grouped scene path/drop/add persistence consolidation implemented.
 - Verification: Phase 72 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused helper sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 73 grouped asset drag/drop payload helper consolidation implemented.
+- Verification: Phase 73 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; focused drag/drop helper sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -249,6 +251,7 @@ assets/js/editor/
 - Done: Centralize new scene-object persistence record creation so add-to-canvas uses shared `fnPath` derivation, safe translation defaults, and display-metadata normalization before loader dispatch.
 - Done: Move scene import upload-path reconstruction into core URL/path helpers while preserving `sceneResolveObjectPath` as the compatibility facade.
 - Done: Group remaining scene path/drop/add cleanup by moving canvas base-path extraction into core helpers, moving scene-object add-record construction into scene persistence, and making helper script dependencies explicit.
+- Done: Group asset drag/drop payload cleanup by moving DOM data-attribute extraction, base64 text decoding, JSON dataTransfer read/write, and drag title creation into core helpers used by the asset browser and canvas drop UI.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

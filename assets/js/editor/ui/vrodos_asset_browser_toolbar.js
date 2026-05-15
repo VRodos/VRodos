@@ -40,24 +40,6 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
           : "image-off";
     }
 
-    function vrodos_decodeBase64Unicode(value) {
-        if (typeof value !== 'string' || value === '') {
-            return '';
-        }
-
-        try {
-            const binary = window.atob(value);
-            const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-            return new TextDecoder('utf-8').decode(bytes);
-        } catch (err) {
-            try {
-                return window.atob(value);
-            } catch (fallbackErr) {
-                return '';
-            }
-        }
-    }
-
     function vrodos_buildAssessmentMetaHTML(asset) {
         if (!asset) {
             return '';
@@ -216,21 +198,8 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
         dragGhostLabel.textContent = VRODOS.utils.displayText(assetName);
         e.dataTransfer.setDragImage(dragGhost, 60, 45);
 
-        const dragData = {};
-        for (let i = 0; i < target.attributes.length; i++) {
-            const attr = target.attributes[i];
-            const name = attr.name.substring(attr.name.indexOf('-') + 1);
-            dragData[name] = attr.value;
-        }
-        if (dragData.text_content_b64) {
-            dragData.text_content = vrodos_decodeBase64Unicode(dragData.text_content_b64);
-            delete dragData.text_content_b64;
-        }
-        VRODOS.utils.normalizeDisplayTextFields(dragData);
-        const titleSlug = VRODOS.utils.displayText(target.getAttribute("data-asset_slug") || dragData.asset_slug || 'scene_object');
-        dragData.title = `${titleSlug  }_${  Date.now()}`;
-        dragData.name = dragData.title;
-        e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+        const dragData = VRODOS.utils.createAssetDragPayload(target);
+        VRODOS.utils.writeJsonDataTransfer(e, dragData);
     });
 
     fileList.addEventListener('drag', (e) => { e.preventDefault(); });

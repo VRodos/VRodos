@@ -12,24 +12,6 @@ VRODOS.ui = VRODOS.ui || {};
         'Pawn'
     ]);
 
-    function readDropPayload(ev) {
-        if (!ev.dataTransfer || typeof ev.dataTransfer.getData !== 'function') {
-            return null;
-        }
-
-        const rawPayload = ev.dataTransfer.getData('text') || ev.dataTransfer.getData('text/plain');
-        if (!rawPayload) {
-            return null;
-        }
-
-        try {
-            return JSON.parse(rawPayload);
-        } catch (error) {
-            console.warn('VRodos: ignored invalid scene canvas drop payload.', error);
-            return null;
-        }
-    }
-
     function shouldIgnoreSceneReorderDrop(ev) {
         const types = ev.dataTransfer && ev.dataTransfer.types;
         return types && typeof types.indexOf === 'function' && types.indexOf('application/vrodos-scene-reorder') !== -1;
@@ -54,7 +36,7 @@ VRODOS.ui = VRODOS.ui || {};
             return;
         }
 
-        const dataDrag = readDropPayload(ev);
+        const dataDrag = VRODOS.utils.readJsonDataTransfer(ev);
         if (!dataDrag) {
             ev.preventDefault();
             return;
@@ -124,7 +106,7 @@ VRODOS.ui = VRODOS.ui || {};
             return false;
         }
 
-        e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+        VRODOS.utils.writeJsonDataTransfer(e, dragData);
         return false;
     };
 })();

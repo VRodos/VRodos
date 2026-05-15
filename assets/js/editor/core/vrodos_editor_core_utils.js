@@ -99,6 +99,24 @@ VRODOS.importer = VRODOS.importer || {};
             .replace(/'/g, '&#039;');
     }
 
+    function decodeBase64Unicode(value) {
+        if (typeof value !== 'string' || value === '') {
+            return '';
+        }
+
+        try {
+            const binary = window.atob(value);
+            const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+            return new TextDecoder('utf-8').decode(bytes);
+        } catch (err) {
+            try {
+                return window.atob(value);
+            } catch (fallbackErr) {
+                return '';
+            }
+        }
+    }
+
     function sceneNameText(value) {
         return displayText(value).trim();
     }
@@ -222,6 +240,75 @@ VRODOS.importer = VRODOS.importer || {};
         return slashIndex === -1 ? '' : path.substring(0, slashIndex + 1);
     }
 
+    function readDataAttributes(element) {
+        const data = {};
+        if (!element || !element.attributes) {
+            return data;
+        }
+
+        for (let i = 0; i < element.attributes.length; i++) {
+            const attr = element.attributes[i];
+            if (!attr || typeof attr.name !== 'string' || !attr.name.startsWith('data-')) {
+                continue;
+            }
+
+            data[attr.name.substring(5)] = attr.value;
+        }
+
+        return data;
+    }
+
+    function createAssetDragPayload(element) {
+        const dragData = readDataAttributes(element);
+        if (dragData.text_content_b64) {
+            dragData.text_content = decodeBase64Unicode(dragData.text_content_b64);
+            delete dragData.text_content_b64;
+        }
+
+        normalizeDisplayTextFields(dragData);
+        const titleSlug = displayText((element && element.getAttribute && element.getAttribute('data-asset_slug')) || dragData.asset_slug || 'scene_object');
+        dragData.title = `${titleSlug  }_${  Date.now()}`;
+        dragData.name = dragData.title;
+        return dragData;
+    }
+
+    function readJsonDataTransfer(event, types) {
+        const dataTransfer = event && event.dataTransfer;
+        if (!dataTransfer || typeof dataTransfer.getData !== 'function') {
+            return null;
+        }
+
+        const candidateTypes = Array.isArray(types) && types.length ? types : ['text', 'text/plain'];
+        let rawPayload = '';
+        for (const type of candidateTypes) {
+            rawPayload = dataTransfer.getData(type);
+            if (rawPayload) {
+                break;
+            }
+        }
+
+        if (!rawPayload) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(rawPayload);
+        } catch (error) {
+            console.warn('VRodos: ignored invalid JSON drag/drop payload.', error);
+            return null;
+        }
+    }
+
+    function writeJsonDataTransfer(event, data, type) {
+        const dataTransfer = event && event.dataTransfer;
+        if (!dataTransfer || typeof dataTransfer.setData !== 'function') {
+            return false;
+        }
+
+        dataTransfer.setData(type || 'text/plain', JSON.stringify(data || {}));
+        return true;
+    }
+
     Object.assign(VRODOS.utils, {
         safeNumber,
         clampNumber,
@@ -235,6 +322,7 @@ VRODOS.importer = VRODOS.importer || {};
         displayTextFieldNames,
         escapeHTML,
         escapeAttribute,
+        decodeBase64Unicode,
         sceneNameText,
         isDisplayTextField,
         normalizeDisplayTextFields,
@@ -243,7 +331,11 @@ VRODOS.importer = VRODOS.importer || {};
         normalizeRelativeUploadPath,
         resolveUploadAssetPath,
         assetFnPathFromPath,
-        assetBasePathFromPath
+        assetBasePathFromPath,
+        readDataAttributes,
+        createAssetDragPayload,
+        readJsonDataTransfer,
+        writeJsonDataTransfer
     });
 
     VRODOS.utils.loaderJoinUrl = joinUrl;
