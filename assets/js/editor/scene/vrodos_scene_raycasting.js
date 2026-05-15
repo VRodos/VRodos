@@ -1,3 +1,5 @@
+'use strict';
+
 VRODOS.utils.normalizeIntersectedObjects = function(intersectedObjects) {
 
     const res = [];
@@ -40,8 +42,8 @@ VRODOS.ui.findIntersected = function(event) {
 }
 
 // Reusable raycaster and mouse vector (avoid allocations per event)
-var _reusableRaycaster = new THREE.Raycaster();
-var _reusableMouse = new THREE.Vector2();
+const _reusableRaycaster = new THREE.Raycaster();
+const _reusableMouse = new THREE.Vector2();
 
 // raycasting for picking objects
 VRODOS.ui.raycasterSetter = function(event) {
@@ -89,9 +91,9 @@ VRODOS.ui.onMouseDoubleClickFocus = function(event, id) {
 // ─── Click vs drag detection ───────────────────────────────
 // We record the mousedown position and only trigger selection on mouseup
 // if the mouse hasn't moved more than a few pixels (i.e. it was a click).
-var _mouseDownPos = { x: 0, y: 0 };
-var _mouseDownTime = 0;
-var _CLICK_THRESHOLD = 5; // pixels
+const _mouseDownPos = { x: 0, y: 0 };
+let _mouseDownTime = 0;
+const _CLICK_THRESHOLD = 5; // pixels
 VRODOS.editor.suppressNextSelection = false; // Set by drop handler to prevent selection on drop
 
 VRODOS.ui.onMouseDown = function(event) {
@@ -286,6 +288,8 @@ function showProperties(event, object) {
         // case 'lightAmbient':
         //     VRODOS.ui.displayAmbientProperties(event, name);
         //     break;
+        default:
+            break;
     }
     switch (object.category_name) {
         case 'lightSun':
@@ -300,6 +304,8 @@ function showProperties(event, object) {
         // case 'lightAmbient':
         //     VRODOS.ui.displayAmbientProperties(event, name);
         //     break;
+        default:
+            break;
     }
 }
 function sanitizeInputValue(value) {
@@ -759,12 +765,11 @@ function initPersistentPropertyListeners() {
 
     if (chboxImg) {
         chboxImg.addEventListener("change", function () {
-            const obj = getSelectedPropertyTarget();
-            if (obj) {
-                const oldContent = obj.poi_img_content;
-                const oldTitle = obj.poi_img_title;
-                const newContent = this.checked ? (setDesc && setDesc.value ? setDesc.value : '') : null;
-                const newTitle = setTitle ? setTitle.value : obj.poi_img_title;
+                const obj = getSelectedPropertyTarget();
+                if (obj) {
+                    const oldContent = obj.poi_img_content;
+                    const newContent = this.checked ? (setDesc && setDesc.value ? setDesc.value : '') : null;
+                    const newTitle = setTitle ? setTitle.value : obj.poi_img_title;
 
                 if (oldContent !== newContent) {
                     obj.poi_img_content = newContent;
@@ -833,79 +838,6 @@ VRODOS.ui.getActiveMeshes = function() {
     }
 
     return [];
-}
-
-
-function raylineVisualize(raycasterPick) {
-
-    const c = 10000;
-    const geolinecast = new THREE.BufferGeometry().setFromPoints([
-        raycasterPick.ray.origin.clone(),
-        new THREE.Vector3(
-            raycasterPick.ray.origin.x - c * raycasterPick.ray.direction.x,
-            raycasterPick.ray.origin.y - c * raycasterPick.ray.direction.y,
-            raycasterPick.ray.origin.z - c * raycasterPick.ray.direction.z
-        )
-    ]);
-
-    const myBulletLine = new THREE.Line(geolinecast, new THREE.LineBasicMaterial({ color: 0x0000ff }));
-    myBulletLine.name = 'rayLine';
-
-    VRODOS.editor.envir.scene.add(myBulletLine);
-
-
-    // This will force scene to update and show the line
-    if (VRODOS.editor.envir.cameraOrbit) {
-        VRODOS.editor.envir.cameraOrbit.position.x += 0.1;
-    }
-
-    setTimeout(() => {
-        if (VRODOS.editor.envir.cameraOrbit) {
-            VRODOS.editor.envir.cameraOrbit.position.x -= 0.1;
-        }
-    }, 1500);
-
-    // Remove the line
-    setTimeout(() => {
-        if (myBulletLine.parent) {
-            myBulletLine.parent.remove(myBulletLine);
-        }
-    }, 1500);
-
-
-}
-
-
-// Create options for a select
-function createOption(container, txt, val, sel, dis, backgr) {
-    const option = document.createElement("option");
-    option.text = txt;
-    option.value = val;
-    option.selected = sel;
-    option.disabled = dis;
-    option.style.background = backgr;
-    //option.style.fontSize = "9pt";
-    container.add(option);
-}
-
-
-function showWholePopupDiv(popUpDiv, event) {
-
-    const el = (popUpDiv instanceof HTMLElement) ? popUpDiv : popUpDiv[0];
-    el.style.display = '';
-
-    const rect = document.getElementById('vr_editor_main_div').getBoundingClientRect();
-    el.style.left = `${1 + event.clientX - rect.left  }px`;
-
-    if (el.id === 'popUpMarkerPropertiesDiv') {
-        el.style.top = '0';
-        el.style.left = '0';
-        el.style.bottom = 'auto';
-    } else {
-        el.style.top = `${event.clientY - rect.top  }px`;
-    }
-
-    event.preventDefault();
 }
 
 /**
