@@ -1,3 +1,5 @@
+'use strict';
+
 VRODOS.utils.sceneResolveObjectPath = function(value, UPLOAD_DIR) {
     let explicitPath = value && typeof value.path === 'string' ? value.path.trim() : '';
     

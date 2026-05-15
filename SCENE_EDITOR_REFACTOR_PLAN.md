@@ -105,6 +105,8 @@
 - Verification: Phase 60 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 61 undo engine scene folder migration implemented.
 - Verification: Phase 61 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 62 scene persistence folder migration implemented.
+- Verification: Phase 62 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -208,6 +210,7 @@ assets/js/editor/
 - Done: Move the remaining editor button/drag compatibility shim under `ui/vrodos_editor_buttons_drags_compat.js` while preserving the `vrodos_3d_editor_buttons_drags` WordPress handle.
 - Done: Move the remaining editor services compatibility shim under `scene/vrodos_editor_services_compat.js` while preserving the `vrodos_editor_services` WordPress handle and editor service globals.
 - Done: Move the undo/redo command engine under `scene/vrodos_undo_engine.js` while preserving the `vrodos_UndoEngine` WordPress handle and editor command globals.
+- Done: Move scene export/import persistence under `scene/vrodos_scene_persistence.js` while preserving the `vrodos_ScenePersistence` WordPress handle and `VRODOS.exporter` / importer globals.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

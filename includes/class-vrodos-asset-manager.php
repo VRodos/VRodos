@@ -323,7 +323,7 @@ class VRodos_Asset_Manager {
       ['vrodos_UndoEngine', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_undo_engine.js' ), ['vrodos_namespace', 'vrodos_scene_light_artifacts', 'vrodos_scene_disposal']],
       ['vrodos_scene_settings_schema', VRodos_Path_Manager::editor_js_url( 'vrodos_scene_settings_schema.js' ), ['vrodos_namespace', 'vrodos_runtime_settings_contract']],
       ['vrodos_scene_settings_sync', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_settings_sync.js' ), ['vrodos_namespace', 'vrodos_scene_settings_schema']],
-      ['vrodos_ScenePersistence', VRodos_Path_Manager::editor_js_url( 'vrodos_ScenePersistence.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_scene_settings_schema']],
+      ['vrodos_ScenePersistence', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_persistence.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_scene_settings_schema']],
       ['stats-gl', 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js'],
       // AJAX Scripts
       ['ajax-script_compile', VRodos_Path_Manager::editor_ajax_js_url( 'vrodos_request_compile.js' ), ['vrodos_namespace']],
