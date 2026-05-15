@@ -129,103 +129,15 @@ VRODOS.loader.LoaderMulti = class {
 
                 } else if (resource.category_slug === 'assessment') {
 
-                    pendingLoads.push(new Promise((resolve) => {
-                        const object = VRODOS.loader.createAssessmentObject(name, resource);
-                        VRODOS.loader.setObjectProperties(object, name, resources3D);
-                        VRODOS.editor.objectFactory.addSceneObject(object, {
-                            selectable: true,
-                            updateHierarchy: VRODOS.loader.shouldBuildHierarchyDuringLoad(),
-                            renderReason: 'assessment-loaded'
-                        });
-                        resolve();
-                    }));
+                    pendingLoads.push(VRODOS.loader.loadAssessmentAsset(name, resource, resources3D));
 
                 } else if (resource.category_slug === '3d-text') {
 
-                    pendingLoads.push(new Promise((resolve) => {
-                        const object = VRODOS.loader.createTextPanelObject(name, resource);
-                        VRODOS.loader.setObjectProperties(object, name, resources3D);
-                        const trs = resource.trs;
-                        const shouldSelect = trs && !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading);
-                        VRODOS.editor.objectFactory.addSceneObject(object, {
-                            selectable: true,
-                            updateHierarchy: VRODOS.loader.shouldBuildHierarchyDuringLoad() || shouldSelect,
-                            select: shouldSelect,
-                            frame: shouldSelect,
-                            autosave: shouldSelect,
-                            openPanel: false,
-                            showProperties: false,
-                            source: 'text-loaded',
-                            renderReason: 'text-loaded'
-                        });
-
-                        if (shouldSelect) {
-                            const progressWrapper = document.getElementById("progressWrapper");
-                            if (progressWrapper) progressWrapper.style.visibility = "hidden";
-                        }
-
-                        resolve();
-                    }));
+                    pendingLoads.push(VRODOS.loader.loadTextAsset(name, resource, resources3D));
 
                 } else if (resource.category_slug === 'image') { // Flat image plane
 
-                    const imageUrl = resource.image_path;
-                    if (!imageUrl) {
-                        VRODOS.editor.envir.loadedObjectsCount++;
-                    } else {
-                        // Support both scene-load format (pos/rot/scale flat arrays)
-                        // and drag-and-drop format (trs.translation/rotation/scale)
-                        const trs = resource.trs;
-                        const pos = VRODOS.utils.loaderSafeVector((trs && trs.translation) || resource.position || resource.translation, [0, 0, 0]);
-                        const rot = VRODOS.utils.loaderSafeVector((trs && trs.rotation) || resource.rotation, [0, 0, 0]);
-                        const scl = VRODOS.utils.loaderSafeScale((trs && trs.scale) || resource.scale);
-
-                        pendingLoads.push(new Promise((resolve) => {
-                            const geometry = new THREE.PlaneGeometry(2, 2);
-                            if (manager) manager.itemStart(name);
-                            const texture  = new THREE.TextureLoader(manager).load(
-                                imageUrl,
-                                () => {
-                                    if (manager) manager.itemEnd(name);
-                                    resolve();
-                                },
-                                undefined,
-                                () => {
-                                    if (manager) {
-                                        manager.itemError(name);
-                                        manager.itemEnd(name);
-                                    }
-                                    resolve();
-                                }
-                            );
-                            const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true });
-                            let object     = new THREE.Mesh(geometry, material);
-                            object = VRODOS.loader.setObjectProperties(object, name, resources3D);
-                            object.isSelectableMesh = true;
-                            object.position.set(pos[0], pos[1], pos[2]);
-                            object.rotation.set(rot[0], rot[1], rot[2]);
-                            object.scale.set(scl[0], scl[1], scl[2]);
-                            const shouldSelect = trs && !(VRODOS.editor.envir && VRODOS.editor.envir.isSceneLoading);
-                            VRODOS.editor.objectFactory.addSceneObject(object, {
-                                selectable: true,
-                                updateHierarchy: VRODOS.loader.shouldBuildHierarchyDuringLoad() || shouldSelect,
-                                select: shouldSelect,
-                                frame: shouldSelect,
-                                autosave: shouldSelect,
-                                openPanel: false,
-                                showProperties: false,
-                                source: 'image-loaded',
-                                renderReason: 'image-loaded'
-                            });
-
-                            // When dragged onto canvas (manager.onLoad won't fire — no GLTF items),
-                            // hide the progress UI immediately after service selection.
-                            if (shouldSelect) {
-                                const progressWrapper = document.getElementById("progressWrapper");
-                                if (progressWrapper) progressWrapper.style.visibility = "hidden";
-                            }
-                        }));
-                    }
+                    pendingLoads.push(VRODOS.loader.loadImageAsset(manager, name, resource, resources3D));
 
                 } else { // GLB 3D models
                     if ((resource.glb_id !== "" && resource.glb_id !== undefined) || resource.category_slug === "video") {

@@ -65,6 +65,8 @@
 - Verification: Phase 40 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 41 scene settings sync extraction implemented.
 - Verification: Phase 41 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 42 generated asset loader extraction implemented.
+- Verification: Phase 42 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -147,6 +149,7 @@ assets/js/editor/
 - Done: Move cel-shaded selection outline ownership into `scene/vrodos_scene_selection.js` and track per-object outline meshes so object-level outline removal does not re-traverse after creation.
 - Done: Move loaded-object property application, director camera preparation, GLB texture anisotropy, and video-thumbnail material assignment out of `vrodos_LoaderMulti.js` into `loaders/vrodos_loader_object_factories.js`.
 - Done: Move scene-setting UI/envir synchronization out of `vrodos_LoaderMulti.js` into `scene/vrodos_scene_settings_sync.js` with explicit enqueue dependencies.
+- Done: Move assessment, text-panel, and flat-image scene-object loading out of `vrodos_LoaderMulti.js` into `loaders/vrodos_loader_generated_assets.js`.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
