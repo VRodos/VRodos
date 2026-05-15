@@ -103,6 +103,8 @@
 - Verification: Phase 59 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 60 editor services compatibility shim folder migration implemented.
 - Verification: Phase 60 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 61 undo engine scene folder migration implemented.
+- Verification: Phase 61 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -136,9 +138,9 @@ assets/js/editor/
 
 ## Later Phases
 
-- In progress: Split `vrodos_LoaderMulti.js` into loader modules for GLB, image, text, assessment, and resource metadata.
+- Done: Split `vrodos_LoaderMulti.js` into loader modules for GLB, image, text, assessment, and resource metadata.
 - Done: Move assessment/text object factory helpers and loader task concurrency to `loaders/vrodos_loader_object_factories.js`.
-- In progress: Split `vrodos_3d_editor_environmentals.js` into render app, cameras, context lifecycle, resize, performance profile, and director helpers.
+- Done: Split `vrodos_3d_editor_environmentals.js` into render app, cameras, context lifecycle, resize, performance profile, and director helpers.
 - Done: Move environment constants, performance defaults, pointer-lock helper, director helper predicates, and environment URL resolution to `render/vrodos_editor_environment_helpers.js`.
 - Done: Move transform controls, selection, scene registry, and object factory out of `vrodos_editor_services.js` into `scene/` modules.
 - Done: Move scene registry, scene/envir lookup helpers, selectable-root cache ownership, and bounds cache to `scene/vrodos_scene_registry.js`.
@@ -146,7 +148,7 @@ assets/js/editor/
 - Done: Move selection state, object-control panel opening, transform-toolbar state, light pointer handlers, hierarchy focus, cel outline hooks, and selection clearing to `scene/vrodos_scene_selection.js`.
 - Done: Move object add/remove orchestration, duplicate registration guard, hierarchy/frame/autosave hooks, and loaded-object count updates to `scene/vrodos_scene_object_factory.js`; keep `vrodos_editor_services` as a compatibility handle.
 - Done: Move the remaining editor services compatibility shim under `scene/vrodos_editor_services_compat.js` while preserving the `vrodos_editor_services` WordPress handle and editor service globals.
-- In progress: Move toolbar/panel/floating-panel code out of `vrodos_3d_editor_buttons_drags.js` into focused UI modules.
+- Done: Move toolbar/panel/floating-panel code out of `vrodos_3d_editor_buttons_drags.js` into focused UI modules.
 - Done: Move floating panel clamp/show/hide/drag/resize helpers to `ui/vrodos_floating_panels.js`.
 - Done: Move Lucide icon swapping, focus-without-scroll, clipboard fallback helpers, and temporary button feedback to `ui/vrodos_ui_helpers.js`.
 - Done: Move scene JSON refresh, screenshot state, screenshot preview, current scene thumbnail updates, and offscreen screenshot capture to `ui/vrodos_scene_snapshot_ui.js`.
@@ -205,6 +207,7 @@ assets/js/editor/
 - Done: Move the remaining environment compatibility shim under `render/vrodos_editor_environmentals.js` while preserving the `vrodos_3d_editor_environmentals` WordPress handle and `VRODOS.editor.Environmentals` public surface.
 - Done: Move the remaining editor button/drag compatibility shim under `ui/vrodos_editor_buttons_drags_compat.js` while preserving the `vrodos_3d_editor_buttons_drags` WordPress handle.
 - Done: Move the remaining editor services compatibility shim under `scene/vrodos_editor_services_compat.js` while preserving the `vrodos_editor_services` WordPress handle and editor service globals.
+- Done: Move the undo/redo command engine under `scene/vrodos_undo_engine.js` while preserving the `vrodos_UndoEngine` WordPress handle and editor command globals.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

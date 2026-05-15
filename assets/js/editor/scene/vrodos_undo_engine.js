@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Vrodos Undo Engine
+ * VRodos Undo Engine
  * Implements a Command Pattern for internal scene editor undo/redo.
  */
 
