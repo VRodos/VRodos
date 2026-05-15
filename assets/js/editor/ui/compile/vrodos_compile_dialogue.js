@@ -1272,7 +1272,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initial synchronization moved to vrodos_EditorInitializer.js to ensure environment is ready
+    // Initial synchronization moved to vrodos_editor_initializer.js to ensure environment is ready
 
     function copyURLToClipboard() {
         const linkElement = document.getElementById("openWebLinkhref");

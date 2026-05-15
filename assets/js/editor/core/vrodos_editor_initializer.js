@@ -295,7 +295,7 @@ function syncBackgroundInitialState(settings) {
         VRODOS.ui.syncBackgroundStyleDescription(selOption);
     }
 
-    // Call bcgRadioSelect (from vrodos_scripts.js) to fix UI rows and states
+    // Call bcgRadioSelect (from vrodos_editor_legacy_helpers.js) to fix UI rows and states
     const radioIdMap = { 0: 'sceneHorizon', 1: 'sceneColorRadio', 2: 'sceneSky', 3: 'sceneCustomImage', 4: 'sceneNoBackground' };
     const radioEl = document.getElementById(radioIdMap[selOption]);
     if (radioEl) {

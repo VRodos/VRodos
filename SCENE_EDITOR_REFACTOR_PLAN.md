@@ -115,6 +115,8 @@
 - Verification: Phase 65 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 66 scene settings schema folder migration implemented.
 - Verification: Phase 66 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 67 batch scene editor file organization implemented.
+- Verification: Phase 67 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -223,6 +225,7 @@ assets/js/editor/
 - Done: Move scene export/import persistence under `scene/vrodos_scene_persistence.js` while preserving the `vrodos_ScenePersistence` WordPress handle and `VRODOS.exporter` / importer globals.
 - Done: Move scene/object bounds helpers under `scene/vrodos_scene_bounds.js` while preserving the `vrodos_BordersFinder` WordPress handle and legacy `VRODOS.utils` bounds functions.
 - Done: Move the scene settings schema under `scene/vrodos_scene_settings_schema.js` while preserving the `vrodos_scene_settings_schema` WordPress handle and `VRODOS.config.SCENE_SETTINGS_SCHEMA` contract.
+- Done: Batch-move remaining scene-editor root modules behind stable handles: scene object actions, raycast selection, property controls, hierarchy, asset browser, CEFR badges, compile dialog suite, editor initializer, and legacy helper scripts.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
