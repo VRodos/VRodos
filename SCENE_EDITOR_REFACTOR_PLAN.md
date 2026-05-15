@@ -141,6 +141,8 @@
 - Verification: Phase 78 JS syntax checks passed; focused assessment factory sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 79 grouped editor light factory consolidation implemented.
 - Verification: Phase 79 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused editor light factory sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 80 grouped editor pawn factory consolidation implemented.
+- Verification: Phase 80 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused editor pawn factory sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -270,6 +272,7 @@ assets/js/editor/
 - Done: Group loader material/texture cleanup by centralizing canvas texture setup, double-sided texture material creation, GLB fallback PBR material normalization, and generated image TRS/progress helper usage across loader and add-object paths.
 - Done: Group assessment object cleanup by moving assessment level helpers into namespace utilities and rounded info-plate drawing, labels, and placeholder mesh construction into loader object factories while preserving the legacy `VRODOS.ui` aliases.
 - Done: Group editor light creation cleanup by centralizing Sun, Lamp, Spot, and Ambient light object/helper/target construction in the light loader module and routing add-object light APIs through those factories.
+- Done: Group editor pawn cleanup by centralizing pawn GLB URL resolution, actor label creation, metadata assignment, and scene-load opacity defaults in the pawn loader module while preserving `VRODOS.api.createPawn`.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

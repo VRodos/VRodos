@@ -363,31 +363,15 @@ VRODOS.api.createLightAmbient = function(nameModel, addedAt) {
  * Handle Pawn actor creation.
  */
 VRODOS.api.createPawn = function(nameModel, addedAt, _pluginPath) {
-    const loader = new THREE.GLTFLoader();
-    const modelBaseUrl = VRODOS.utils.resolveBaseUrl(VRODOS.data.pluginPath, 'modelBaseUrl', 'assets/models/');
+    const modelBaseUrl = VRODOS.loader.resolveEditorModelBaseUrl(VRODOS.data.pluginPath);
 
-    loader.load(
-        `${modelBaseUrl  }editor/pawn.glb`,
+    VRODOS.loader.loadEditorPawnModel(
+        modelBaseUrl,
         (gltf) => {
-            const Pawn = gltf.scene.children[0];
-            Pawn.name = nameModel;
-            Pawn.asset_name = "myActor";
-            Pawn.isSelectableMesh = true;
-            Pawn.category_name = "pawn";
-            Pawn.isLight = false;
-            Pawn.addedAt = addedAt;
-
-            const indexPawn = VRODOS.utils.getNextPawnIndex(VRODOS.editor.envir.scene);
-
-            const pawnLabelDiv = document.createElement('div');
-            pawnLabelDiv.textContent = `Actor ${  indexPawn}`;
-            pawnLabelDiv.style.marginTop = '-1em';
-            pawnLabelDiv.style.fontSize = '26px';
-            pawnLabelDiv.style.color = "yellow";
-
-            const pawnLabel = new THREE.CSS2DObject(pawnLabelDiv);
-            pawnLabel.position.set(0, 1.5, 0);
-            Pawn.add(pawnLabel);
+            const Pawn = VRODOS.loader.prepareEditorPawnObject(gltf.scene.children[0], nameModel, {
+                addedAt,
+                scene: VRODOS.editor.envir ? VRODOS.editor.envir.scene : null
+            });
 
             applyAddedObjectTRS(Pawn, nameModel, { yOffset: 3 });
 
@@ -396,7 +380,6 @@ VRODOS.api.createPawn = function(nameModel, addedAt, _pluginPath) {
                 selectOptions: { source: 'pawn-added' }
             });
         },
-        null,
         (error) => console.log('Error loading Pawn GLB:', error)
     );
 }

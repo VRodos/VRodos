@@ -25,6 +25,10 @@ VRODOS.loader.registerLoadedEditorObject = function(object, options) {
 };
 
 VRODOS.loader.resolveEditorModelBaseUrl = function(finalPath) {
+    if (typeof VRODOS.utils.resolveBaseUrl === 'function') {
+        return VRODOS.utils.resolveBaseUrl(finalPath, 'modelBaseUrl', 'assets/models/');
+    }
+
     if (VRODOS.data && VRODOS.data.paths && VRODOS.data.paths.modelBaseUrl) {
         return VRODOS.data.paths.modelBaseUrl;
     }
