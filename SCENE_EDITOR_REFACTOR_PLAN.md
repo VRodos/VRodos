@@ -61,6 +61,8 @@
 - Verification: Phase 38 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-14: Phase 39 cel-outline selection ownership implemented.
 - Verification: Phase 39 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 40 loader object preparation extraction implemented.
+- Verification: Phase 40 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -141,6 +143,7 @@ assets/js/editor/
 - Done: Centralize undo object-tree visibility restoration in `scene/vrodos_scene_disposal.js` and make the undo engine depend on the lifecycle helper module.
 - Done: Move transform-control helper preparation into `scene/vrodos_scene_transforms.js` and cache prepared helper nodes so visibility refreshes do not re-traverse the helper subtree.
 - Done: Move cel-shaded selection outline ownership into `scene/vrodos_scene_selection.js` and track per-object outline meshes so object-level outline removal does not re-traverse after creation.
+- Done: Move loaded-object property application, director camera preparation, GLB texture anisotropy, and video-thumbnail material assignment out of `vrodos_LoaderMulti.js` into `loaders/vrodos_loader_object_factories.js`.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

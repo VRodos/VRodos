@@ -296,21 +296,7 @@ VRODOS.loader.LoaderMulti = class {
                         if (manager) manager.itemStart(name);
                         loader.load(`${modelBaseUrl}director/camera.glb`,
                             (objectMain) => {
-                                const object = objectMain.scene.children[0];
-                                object.name = "Camera3Dmodel";
-                                object.vrodos_internal_helper = true;
-                                object.isSelectableMesh = true;
-                                object.renderOrder = 1;
-                                object.traverse((child) => {
-                                    child.vrodos_internal_helper = true;
-                                    if (child !== object) {
-                                        child.isSelectableMesh = Boolean(child.isMesh);
-                                    }
-                                });
-
-                                if (object.children[0]) {
-                                    object.children[0].name = "Camera3DmodelMesh";
-                                }
+                                const object = VRODOS.loader.prepareDirectorCameraObject(objectMain.scene.children[0]);
 
                                 const translation = resource?.trs?.translation ?? resource?.position ?? [0, 0.2, 0];
                                 const rotation = resource?.trs?.rotation ?? resource?.rotation ?? [0, 0, 0];
@@ -509,27 +495,7 @@ VRODOS.loader.LoaderMulti = class {
                                             const finalObject = VRODOS.loader.setObjectProperties(object.scene, name, resources3D);
                                             finalObject.isSelectableMesh = true;
 
-                                            // Apply max anisotropy to all loaded textures for sharper oblique surfaces
-                                            const rendererMaxAniso = VRODOS.editor.envir.renderer.capabilities.getMaxAnisotropy();
-                                            const editorAnisoCap = (typeof VRODOS.editor.envir.getEditorTextureAnisotropyCap === 'function')
-                                                ? VRODOS.editor.envir.getEditorTextureAnisotropyCap()
-                                                : 4;
-                                            const maxAniso = Math.min(rendererMaxAniso, editorAnisoCap);
-                                            if (maxAniso > 1) {
-                                                finalObject.traverse((node) => {
-                                                    if (!node.isMesh) return;
-                                                    const mats = Array.isArray(node.material) ? node.material : [node.material];
-                                                    for (const mat of mats) {
-                                                        if (!mat) continue;
-                                                        for (const slot of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap']) {
-                                                            if (mat[slot] && mat[slot].isTexture) {
-                                                                mat[slot].anisotropy = maxAniso;
-                                                                mat[slot].needsUpdate = true;
-                                                            }
-                                                        }
-                                                    }
-                                                });
-                                            }
+                                            VRODOS.loader.applyTextureAnisotropy(finalObject, VRODOS.loader.getEditorTextureAnisotropy());
 
                                             if (finalObject.children === '') {
                                                 finalObject.children = [];
@@ -600,121 +566,3 @@ VRODOS.loader.LoaderMulti = class {
         return Promise.allSettled(pendingLoads);
     }
 };
-
-// Set loaded Object or Scene (for GLBs) properties
-VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
-    const resource = resources3D[name] || {};
-
-    // Automatically load values that are available
-    const excludeKeys = new Set([
-        'id',
-        'translation',
-        'position',
-        'rotation',
-        'scale',
-        'quaternion',
-        'children',
-        'trs',
-        'follow_camera',
-        'follow_camera_x',
-        'follow_camera_z'
-    ]);
-    for (const [key, value] of Object.entries(resource)) {
-        if (!excludeKeys.has(key)) {
-            object[key] = ['asset_name', 'assessment_title', 'assessment_type', 'assessment_group'].includes(key)
-                ? VRODOS.utils.loaderDisplayText(value)
-                : value;
-        }
-    }
-
-    object.name = VRODOS.utils.loaderSafeObjectName(name, resource, object);
-    resource.name = object.name;
-    object.isSelectableMesh = true;
-    object.isLight = resource.isLight;
-    object.fnPath = resource.path || object.fnPath || '';
-
-    object.fnPath = typeof VRODOS.utils.normalizeRelativeUploadPath === 'function'
-        ? VRODOS.utils.normalizeRelativeUploadPath(object.fnPath)
-        : object.fnPath;
-    object.glb_id = resource.glb_id;
-
-    if (String(object.category_slug || '').toLowerCase() === 'walkable-surface') {
-        object.walkableBehavior = (String(resource.walkableBehavior || object.walkableBehavior || '').toLowerCase() === 'auto')
-            ? 'auto'
-            : 'precise';
-    }
-
-    //============== Video thumbnail texture ==========
-    if (resource.category_slug === 'video') {
-        const screenshotPath = resource.screenshot_path || resource.poi_img_path || resource.poi_image_path;
-        if (screenshotPath) {
-            const texLoader = new THREE.TextureLoader();
-            texLoader.setCrossOrigin('anonymous');
-            texLoader.load(screenshotPath, 
-                (texture) => {
-                    let screenFound = false;
-                    const nodeList = [];
-                    object.traverse((node) => { nodeList.push(node); });
-
-                    // 1st pass: Look for specific screen-like names
-                    nodeList.forEach((node) => {
-                        if (node.isMesh) {
-                            const nodeName = (node.name || "").toLowerCase();
-                            if (nodeName.includes('screen') || nodeName.includes('display') || nodeName.includes('plane')) {
-                                 node.material = new THREE.MeshBasicMaterial({ 
-                                     map: texture, 
-                                     transparent: true,
-                                     side: THREE.DoubleSide
-                                 });
-                                 node.material.needsUpdate = true;
-                                 screenFound = true;
-                            }
-                        }
-                    });
-
-                    // 2nd pass: Fallback if no specific screen found
-                    if (!screenFound) {
-                        nodeList.forEach((node) => {
-                            if (node.isMesh) {
-                                node.material = new THREE.MeshBasicMaterial({ 
-                                    map: texture, 
-                                    transparent: true,
-                                    side: THREE.DoubleSide
-                                });
-                                node.material.needsUpdate = true;
-                            }
-                        });
-                    }
-                },
-                undefined,
-                (err) => {
-                    console.error("Error loading video thumbnail texture:", screenshotPath, err);
-                }
-            );
-        }
-    }
-
-
-    const trs = resource.trs || {};
-    const translation = VRODOS.utils.loaderSafeVector(trs.translation || resource.position || resource.translation, [0, 0, 0]);
-    const rotation = VRODOS.utils.loaderSafeVector(trs.rotation || resource.rotation, [0, 0, 0]);
-    const scale = VRODOS.utils.loaderSafeScale(trs.scale || resource.scale);
-
-    object.position.set(
-        translation[0],
-        translation[1],
-        translation[2]);
-
-    object.rotation.set(
-        rotation[0],
-        rotation[1],
-        rotation[2]);
-
-    object.scale.set(
-        scale[0],
-        scale[1],
-        scale[2]);
-
-
-    return object;
-}
