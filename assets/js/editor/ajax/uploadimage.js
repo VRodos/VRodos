@@ -32,25 +32,22 @@ VRODOS.api.uploadImage = function() {
 				console.log( data.url );
 				VRODOS.editor.envir.scene.img_bcg_path = data.url;
 
-				const saveBtn = document.getElementById( 'save-scene-button' );
-				saveBtn.innerHTML = "Saving...";
-				saveBtn.classList.add( "LinkDisabled" );
-				document.getElementById( "compileGameBtn" ).disabled = true;
-
-				// Export using the new VRODOS.exporter.SceneExporter
-				const exporter = new VRODOS.exporter.SceneExporter();
-				document.getElementById( 'vrodos_scene_json_input' ).value = exporter.parse( VRODOS.editor.envir.scene );
-
 				document.getElementById( 'uploadImgThumb' ).src    = data.url;
 				document.getElementById( 'uploadImgThumb' ).hidden = false;
 
-				VRODOS.api.saveScene();
+				if (
+					typeof VRODOS.api.writeCurrentSceneJsonToInput === 'function' &&
+					VRODOS.api.writeCurrentSceneJsonToInput()
+				) {
+					if (typeof VRODOS.api.setSceneSaveControlsSaving === 'function') {
+						VRODOS.api.setSceneSaveControlsSaving();
+					}
+					VRODOS.api.saveScene();
+				}
 			});
 
 		};
 		reader.readAsDataURL( input.files[0] );
 	}
 }
-
-
 

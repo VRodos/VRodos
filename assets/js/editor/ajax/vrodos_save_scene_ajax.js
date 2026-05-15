@@ -62,18 +62,8 @@ VRODOS.api.setSceneSaveControlsFailed = function() {
 }
 
 VRODOS.api.exportCurrentSceneForSave = function() {
-	if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene || !VRODOS.exporter.SceneExporter) {
-		return false;
-	}
-
-	const sceneInput = document.getElementById( "vrodos_scene_json_input" );
-	if (!sceneInput) {
-		return false;
-	}
-
-	const exporter = new VRODOS.exporter.SceneExporter();
-	sceneInput.value = exporter.parse( VRODOS.editor.envir.scene );
-	return true;
+	return typeof VRODOS.api.writeCurrentSceneJsonToInput === 'function' &&
+		VRODOS.api.writeCurrentSceneJsonToInput();
 }
 
 VRODOS.api.saveChanges = function(options) {

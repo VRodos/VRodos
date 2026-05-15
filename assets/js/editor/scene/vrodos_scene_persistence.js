@@ -64,6 +64,28 @@ VRODOS.utils.sceneUniqueObjectName = function(name, existingObjects) {
 
     return uniqueName;
 };
+
+VRODOS.utils.sceneDecodeExportTextFields = function(resource) {
+    if (!resource || typeof resource !== 'object') {
+        return resource;
+    }
+
+    [
+        'asset_name',
+        'asset_slug',
+        'assessment_title',
+        'assessment_type',
+        'assessment_group',
+        'immerse_object_type'
+    ].forEach((key) => {
+        if (typeof resource[key] === 'string') {
+            resource[key] = VRODOS.utils.decodeDisplayText(resource[key]);
+        }
+    });
+
+    return resource;
+};
+
 VRODOS.exporter.SceneExporter = class {
     parse(scene) {
         const output = {
@@ -257,6 +279,7 @@ VRODOS.exporter.SceneExporter = class {
         }
 
         entryObject.fnPath = o.fnPath ? o.fnPath : '';
+        VRODOS.utils.sceneDecodeExportTextFields(entryObject);
 
         entryObject.position = VRODOS.utils.sceneSafeVector([o.position.x, o.position.y, o.position.z], [0, 0, 0]);
         entryObject.rotation = VRODOS.utils.sceneSafeVector([o.rotation.x, o.rotation.y, o.rotation.z], [0, 0, 0]);
@@ -359,6 +382,43 @@ VRODOS.exporter.SceneExporter = class {
         entryObject.category_name = 'avatarYawObject';
     }
 };
+
+VRODOS.api.exportCurrentSceneJson = function(scene) {
+    const targetScene = scene || (VRODOS.editor.envir ? VRODOS.editor.envir.scene : null);
+    if (!targetScene || !VRODOS.exporter || !VRODOS.exporter.SceneExporter) {
+        return '';
+    }
+
+    const exporter = new VRODOS.exporter.SceneExporter();
+    return exporter.parse(targetScene);
+};
+
+VRODOS.api.formatSceneJsonForDisplay = function(sceneJson) {
+    try {
+        return JSON.stringify(JSON.parse(sceneJson), null, 2);
+    } catch (error) {
+        return sceneJson;
+    }
+};
+
+VRODOS.api.writeCurrentSceneJsonToInput = function(options) {
+    const opts = options || {};
+    const input = opts.input || document.getElementById(opts.inputId || 'vrodos_scene_json_input');
+    if (!input) {
+        return false;
+    }
+
+    const sceneJson = VRODOS.api.exportCurrentSceneJson(opts.scene);
+    if (!sceneJson) {
+        return false;
+    }
+
+    input.value = opts.pretty
+        ? VRODOS.api.formatSceneJsonForDisplay(sceneJson)
+        : sceneJson;
+    return true;
+};
+
 VRODOS.importer.SceneImporter = class {
     parse(scene_json, UPLOAD_DIR) {
         if (scene_json.length === 0) {
@@ -392,6 +452,7 @@ VRODOS.importer.SceneImporter = class {
             }
 
             const value = scene_objects[asset_key];
+            VRODOS.utils.sceneDecodeExportTextFields(value);
             delete value.follow_camera;
             delete value.follow_camera_x;
             delete value.follow_camera_z;

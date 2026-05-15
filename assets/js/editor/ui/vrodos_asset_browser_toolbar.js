@@ -249,7 +249,14 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             dragData.text_content = vrodos_decodeBase64Unicode(dragData.text_content_b64);
             delete dragData.text_content_b64;
         }
-        dragData.title = `${target.getAttribute("data-asset_slug")  }_${  Date.now()}`;
+        if (dragData.asset_slug) {
+            dragData.asset_slug = vrodos_decodeAssessmentText(dragData.asset_slug);
+        }
+        if (dragData.asset_name) {
+            dragData.asset_name = vrodos_decodeAssessmentText(dragData.asset_name);
+        }
+        const titleSlug = vrodos_decodeAssessmentText(target.getAttribute("data-asset_slug") || dragData.asset_slug || 'scene_object');
+        dragData.title = `${titleSlug  }_${  Date.now()}`;
         dragData.name = dragData.title;
         e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
     });

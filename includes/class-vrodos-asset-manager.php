@@ -330,7 +330,7 @@ class VRodos_Asset_Manager {
       ['ajax-script_deletescene', VRodos_Path_Manager::editor_ajax_js_url( 'delete_scene.js' ), ['vrodos_namespace']],
       ['ajax-script_filebrowse', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_asset_browser_toolbar.js' ), ['vrodos_namespace', 'vrodos_cefr_badges']],
       ['ajax-script_savescene', VRodos_Path_Manager::editor_ajax_js_url( 'vrodos_save_scene_ajax.js' ), ['vrodos_namespace', 'vrodos_ScenePersistence']],
-      ['ajax-script_uploadimage', VRodos_Path_Manager::editor_ajax_js_url( 'uploadimage.js' ), ['vrodos_namespace']],
+      ['ajax-script_uploadimage', VRodos_Path_Manager::editor_ajax_js_url( 'uploadimage.js' ), ['vrodos_namespace', 'ajax-script_savescene']],
       ['ajax-script_fetchasset', VRodos_Path_Manager::editor_ajax_js_url( 'fetch_asset.js' ), ['vrodos_namespace']],
       ['ajax-script_delete_game', VRodos_Path_Manager::editor_ajax_js_url( 'delete_game_scene_asset.js' ), ['vrodos_namespace']],
       ['ajax-script_deleteasset', VRodos_Path_Manager::editor_ajax_js_url( 'delete_asset.js' ), ['vrodos_namespace']],

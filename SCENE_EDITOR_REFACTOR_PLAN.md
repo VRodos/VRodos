@@ -235,6 +235,8 @@ assets/js/editor/
 - Done: Batch low-risk lint cleanup across editor AJAX, legacy helpers, undo, compile UI, hierarchy, CEFR badges, asset browser, scene object actions, and scene persistence modules without changing scene editor behavior.
 - Done: Clear the remaining editor-side lint warnings by making asset-editor template globals explicit, removing a dead local color helper/constant, and dropping unused event parameters in project/asset editor scripts.
 - Done: Remove the remaining routine full-scene export traversal by exporting from registry-backed scene roots, and cache Director ground-guide mesh targets per root between scene-root mutations.
+- Done: Centralize current-scene JSON export/input writing in scene persistence and route save, background-image upload, and JSON preview refresh through the shared facade with explicit script dependencies.
+- Done: Normalize percent-encoded scene object names and display metadata such as Greek `asset_slug` values during drag, export, and import without decoding file paths or identifiers.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

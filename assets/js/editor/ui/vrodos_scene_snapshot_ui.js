@@ -101,16 +101,12 @@ function bindSceneJsonDialogControls() {
 
 VRODOS.ui.refreshSceneJsonTextarea = function() {
     const textarea = document.getElementById('vrodos_scene_json_input');
-    if (!textarea || !VRODOS.exporter || !VRODOS.exporter.SceneExporter || !VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
+    if (!textarea || typeof VRODOS.api.writeCurrentSceneJsonToInput !== 'function') return;
 
-    const exporter = new VRODOS.exporter.SceneExporter();
-    const exportedJson = exporter.parse(VRODOS.editor.envir.scene);
-
-    try {
-        textarea.value = JSON.stringify(JSON.parse(exportedJson), null, 2);
-    } catch (error) {
-        textarea.value = exportedJson;
-    }
+    VRODOS.api.writeCurrentSceneJsonToInput({
+        input: textarea,
+        pretty: true
+    });
 };
 
 VRODOS.api.waitForLatestSceneSave = function() {

@@ -61,19 +61,23 @@ VRODOS.importer = VRODOS.importer || {};
             : (value == null ? '' : String(value));
     }
 
+    function sceneNameText(value) {
+        return displayText(value).trim();
+    }
+
     function safeObjectName(name, resource, object, fallbackIndex) {
-        const currentName = typeof name === 'string' ? name.trim() : '';
+        const currentName = sceneNameText(name);
         if (currentName !== '') {
             return currentName;
         }
 
-        const objectName = object && typeof object.name === 'string' ? object.name.trim() : '';
+        const objectName = sceneNameText(object && object.name);
         if (objectName !== '') {
             return objectName;
         }
 
         const source = resource || {};
-        const slugPart = source.asset_slug ? String(source.asset_slug).trim() : '';
+        const slugPart = sceneNameText(source.asset_slug);
         const idPart = source.asset_id ? String(source.asset_id).trim() : '';
         const uuidSource = source.uuid || (object && object.uuid) || fallbackIndex || Date.now();
         const uuidPart = String(uuidSource).split('-')[0];
@@ -122,6 +126,7 @@ VRODOS.importer = VRODOS.importer || {};
         joinUrl,
         resolveBaseUrl,
         displayText,
+        sceneNameText,
         safeObjectName,
         ensureSceneObjectName,
         normalizeRelativeUploadPath
