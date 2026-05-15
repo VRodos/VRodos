@@ -72,11 +72,6 @@ function bindSceneJsonDialogControls() {
         });
     }
 
-    const textarea = document.getElementById('vrodos_scene_json_input');
-    if (textarea) {
-        textarea.addEventListener('input', VRODOS.ui.updateSceneJsonLineNumbers);
-        textarea.addEventListener('scroll', VRODOS.ui.syncSceneJsonLineNumberScroll);
-    }
 }
 
 VRODOS.ui.refreshSceneJsonTextarea = function() {
@@ -87,30 +82,6 @@ VRODOS.ui.refreshSceneJsonTextarea = function() {
         input: textarea,
         pretty: true
     });
-    VRODOS.ui.updateSceneJsonLineNumbers();
-};
-
-VRODOS.ui.updateSceneJsonLineNumbers = function() {
-    const textarea = document.getElementById('vrodos_scene_json_input');
-    const lineNumbers = document.getElementById('vrodos_scene_json_line_numbers');
-    if (!textarea || !lineNumbers) return;
-
-    const lineCount = Math.max(1, textarea.value.split('\n').length);
-    let output = '';
-    for (let i = 1; i <= lineCount; i++) {
-        output += i;
-        if (i < lineCount) output += '\n';
-    }
-    lineNumbers.textContent = output;
-    VRODOS.ui.syncSceneJsonLineNumberScroll();
-};
-
-VRODOS.ui.syncSceneJsonLineNumberScroll = function() {
-    const textarea = document.getElementById('vrodos_scene_json_input');
-    const lineNumbers = document.getElementById('vrodos_scene_json_line_numbers');
-    if (!textarea || !lineNumbers) return;
-
-    lineNumbers.scrollTop = textarea.scrollTop;
 };
 
 VRODOS.api.waitForLatestSceneSave = function() {

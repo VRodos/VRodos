@@ -117,7 +117,7 @@ extract( $data );
 							overflow: hidden !important;
 						}
 						#sceneJsonContent .tw-modal-box {
-							width: min(96vw, 1120px) !important;
+							width: min(98vw, 1320px) !important;
 							max-height: 90vh !important;
 							padding: 0 !important;
 							border-radius: 0.75rem !important;
@@ -135,24 +135,8 @@ extract( $data );
 							min-height: 75vh;
 						}
 						#vrodos_scene_json_input {
-							overflow-wrap: normal;
-							white-space: pre;
-						}
-						#vrodos_scene_json_line_numbers {
-							min-width: 3.5rem;
-							padding: 1rem 0.75rem 1rem 0.5rem;
-							border-right: 1px solid rgba(255, 255, 255, 0.08);
-							background: #020617;
-							color: #64748b;
-							font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-							font-size: 11px;
-							line-height: 1.625;
-							margin: 0;
-							text-align: right;
-							white-space: pre;
-							user-select: none;
-							overflow: hidden;
-							flex: 0 0 auto;
+							overflow-x: hidden;
+							white-space: pre-wrap;
 						}
 
 						/* Ensure no scrollbars on the main window */
@@ -183,14 +167,12 @@ extract( $data );
 						</div>
 						<!-- JSON content -->
 						<div class="scene-json-code-shell tw-flex tw-flex-1 tw-min-h-0 tw-bg-slate-950">
-							<pre id="vrodos_scene_json_line_numbers" aria-hidden="true">1</pre>
 							<textarea id="vrodos_scene_json_input"
 									  name="vrodos_scene_json_input"
 									  title="Scene JSON data"
 									  class="tw-flex-1 tw-w-full tw-bg-slate-950 tw-text-emerald-300 tw-font-mono tw-text-[11px] tw-leading-relaxed tw-p-4 tw-border-0 tw-resize-none focus:tw-outline-none"
 									  style="min-height: 75vh;"
 									  spellcheck="false"
-									  wrap="off"
 							></textarea>
 						</div>
 					</div>
