@@ -123,6 +123,8 @@
 - Verification: Phase 69 JS syntax check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 70 scene-object add record normalization implemented.
 - Verification: Phase 70 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 71 scene import path resolution consolidation implemented.
+- Verification: Phase 71 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -243,6 +245,7 @@ assets/js/editor/
 - Done: Route remaining editor scene, selection, persistence, and property-control display decoding through `VRODOS.utils.displayText()` with explicit core-utils script dependencies.
 - Done: Centralize known display-metadata field normalization and reuse it for scene persistence, loader property application, and asset-browser drag/search handling.
 - Done: Centralize new scene-object persistence record creation so add-to-canvas uses shared `fnPath` derivation, safe translation defaults, and display-metadata normalization before loader dispatch.
+- Done: Move scene import upload-path reconstruction into core URL/path helpers while preserving `sceneResolveObjectPath` as the compatibility facade.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

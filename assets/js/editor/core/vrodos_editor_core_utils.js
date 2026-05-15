@@ -65,6 +65,19 @@ VRODOS.importer = VRODOS.importer || {};
         return String(fallbackRelative || '').replace(/^\/+/, '');
     }
 
+    function cleanRepeatedUrlText(value) {
+        let text = typeof value === 'string' ? value.trim() : '';
+        while (/https?:\/\//i.test(text) && text.lastIndexOf('http') > 0) {
+            text = text.substring(text.lastIndexOf('http'));
+        }
+
+        return text;
+    }
+
+    function isAbsoluteAssetUrl(value) {
+        return /^https?:\/\//i.test(value) || String(value || '').startsWith('//');
+    }
+
     function displayText(value) {
         return typeof VRODOS.utils.decodeDisplayText === 'function'
             ? VRODOS.utils.decodeDisplayText(value)
@@ -137,14 +150,15 @@ VRODOS.importer = VRODOS.importer || {};
         return name;
     }
 
-    function normalizeRelativeUploadPath(value) {
-        let fnPath = typeof value === 'string' ? value : '';
+    function normalizeRelativeUploadPath(value, uploadDir) {
+        let fnPath = cleanRepeatedUrlText(value);
         if (!fnPath) {
             return '';
         }
 
-        while (/https?:\/\//i.test(fnPath) && fnPath.lastIndexOf('http') > 0) {
-            fnPath = fnPath.substring(fnPath.lastIndexOf('http'));
+        const normalizedUploadDir = cleanRepeatedUrlText(uploadDir).replace(/\/+$/, '');
+        if (normalizedUploadDir && fnPath.includes(normalizedUploadDir)) {
+            fnPath = fnPath.substring(fnPath.indexOf(normalizedUploadDir) + normalizedUploadDir.length);
         }
 
         for (const tag of ['wp-content/uploads', 'uploads/']) {
@@ -160,6 +174,29 @@ VRODOS.importer = VRODOS.importer || {};
         }
 
         return fnPath;
+    }
+
+    function resolveUploadAssetPath(resource, uploadDir) {
+        const explicitPath = cleanRepeatedUrlText(resource && resource.path);
+        if (explicitPath && isAbsoluteAssetUrl(explicitPath)) {
+            return explicitPath;
+        }
+
+        const fnPath = cleanRepeatedUrlText(resource && resource.fnPath);
+        if (!fnPath) {
+            return '';
+        }
+
+        if (isAbsoluteAssetUrl(fnPath) || fnPath.startsWith('uploads/')) {
+            return fnPath;
+        }
+
+        const relativePath = normalizeRelativeUploadPath(fnPath, uploadDir);
+        if (!relativePath) {
+            return '';
+        }
+
+        return uploadDir ? joinUrl(uploadDir, relativePath) : relativePath;
     }
 
     function assetFnPathFromPath(value) {
@@ -182,6 +219,8 @@ VRODOS.importer = VRODOS.importer || {};
         safeScale,
         joinUrl,
         resolveBaseUrl,
+        cleanRepeatedUrlText,
+        isAbsoluteAssetUrl,
         displayText,
         displayTextFieldNames,
         escapeHTML,
@@ -192,6 +231,7 @@ VRODOS.importer = VRODOS.importer || {};
         safeObjectName,
         ensureSceneObjectName,
         normalizeRelativeUploadPath,
+        resolveUploadAssetPath,
         assetFnPathFromPath
     });
 
