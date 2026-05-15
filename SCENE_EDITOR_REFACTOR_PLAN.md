@@ -79,6 +79,8 @@
 - Verification: Phase 47 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 48 light/pawn metadata sync consolidation implemented.
 - Verification: Phase 48 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 49 scene loader lifecycle extraction implemented.
+- Verification: Phase 49 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -168,6 +170,7 @@ assets/js/editor/
 - Done: Move the light/pawn loader implementation under `loaders/vrodos_loader_lights_pawn.js` while preserving the existing `vrodos_LightsPawn_Loader` WordPress script handle.
 - Done: Split light creation and pawn GLB loading into `loaders/vrodos_loader_light_assets.js` and `loaders/vrodos_loader_pawn_assets.js`, with shared TRS/registration helpers in `loaders/vrodos_loader_scene_asset_helpers.js` and `vrodos_loader_lights_pawn.js` kept as a compatibility coordinator.
 - Done: Remove duplicate metadata/fog/clear-color syncing from the light/pawn compatibility coordinator and route it through `loaders/vrodos_loader_resource_metadata.js` and `scene/vrodos_scene_settings_sync.js`.
+- Done: Move scene load preparation, resource splitting, reload cleanup, loader orchestration, and scene-load finalization out of `vrodos_EditorInitializer.js` into `loaders/vrodos_loader_scene_lifecycle.js`.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
