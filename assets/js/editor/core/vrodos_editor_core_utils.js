@@ -19,6 +19,20 @@ VRODOS.importer = VRODOS.importer || {};
         'immerse_object_type'
     ]);
     const displayTextFieldSet = new Set(displayTextFieldNames);
+    const lightCategoryNames = Object.freeze(['lightSun', 'lightLamp', 'lightSpot', 'lightAmbient']);
+    const sceneCategoryAliases = Object.freeze({
+        Pawn: 'pawn',
+        pawn: 'pawn',
+        '3D Text': '3d-text',
+        '3d-text': '3d-text',
+        Assessment: 'assessment',
+        assessment: 'assessment',
+        lightSun: 'lightSun',
+        lightLamp: 'lightLamp',
+        lightSpot: 'lightSpot',
+        lightAmbient: 'lightAmbient',
+        image: 'image'
+    });
 
     function safeNumber(value, fallback) {
         const parsed = Number(value);
@@ -123,6 +137,36 @@ VRODOS.importer = VRODOS.importer || {};
 
     function isDisplayTextField(key) {
         return displayTextFieldSet.has(key);
+    }
+
+    function normalizeSceneAssetCategory(category) {
+        const value = String(category || '').trim();
+        return sceneCategoryAliases[value] || value;
+    }
+
+    function isSceneLightCategory(category) {
+        const normalized = normalizeSceneAssetCategory(category);
+        return lightCategoryNames.indexOf(normalized) !== -1 || normalized.startsWith('light');
+    }
+
+    function isScenePawnCategory(category) {
+        return normalizeSceneAssetCategory(category) === 'pawn';
+    }
+
+    function isSceneLightOrPawnCategory(category) {
+        return isSceneLightCategory(category) || isScenePawnCategory(category);
+    }
+
+    function isSceneAssessmentCategory(category) {
+        return normalizeSceneAssetCategory(category) === 'assessment';
+    }
+
+    function isSceneTextCategory(category) {
+        return normalizeSceneAssetCategory(category) === '3d-text';
+    }
+
+    function isSceneImageCategory(category) {
+        return normalizeSceneAssetCategory(category) === 'image';
     }
 
     function normalizeDisplayTextFields(resource, fields) {
@@ -272,6 +316,25 @@ VRODOS.importer = VRODOS.importer || {};
         return dragData;
     }
 
+    function createLightPawnDragPayload(lightPawnType) {
+        const type = String(lightPawnType || '').trim();
+        if (['Sun', 'Spot', 'Lamp', 'Ambient'].indexOf(type) !== -1) {
+            return {
+                category_name: `light${type}`,
+                title: `mylight${type}_${Date.now()}`
+            };
+        }
+
+        if (type === 'Pawn') {
+            return {
+                category_name: 'Pawn',
+                title: `aPawn_${Date.now()}`
+            };
+        }
+
+        return null;
+    }
+
     function readJsonDataTransfer(event, types) {
         const dataTransfer = event && event.dataTransfer;
         if (!dataTransfer || typeof dataTransfer.getData !== 'function') {
@@ -325,6 +388,13 @@ VRODOS.importer = VRODOS.importer || {};
         decodeBase64Unicode,
         sceneNameText,
         isDisplayTextField,
+        normalizeSceneAssetCategory,
+        isSceneLightCategory,
+        isScenePawnCategory,
+        isSceneLightOrPawnCategory,
+        isSceneAssessmentCategory,
+        isSceneTextCategory,
+        isSceneImageCategory,
         normalizeDisplayTextFields,
         safeObjectName,
         ensureSceneObjectName,
@@ -334,6 +404,7 @@ VRODOS.importer = VRODOS.importer || {};
         assetBasePathFromPath,
         readDataAttributes,
         createAssetDragPayload,
+        createLightPawnDragPayload,
         readJsonDataTransfer,
         writeJsonDataTransfer
     });

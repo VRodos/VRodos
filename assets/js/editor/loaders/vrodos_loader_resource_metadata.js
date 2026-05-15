@@ -60,7 +60,7 @@ VRODOS.loader.applyCameraCoordsResource = function(resource) {
 
 VRODOS.loader.isLightOrPawnResource = function(resource) {
     const categoryName = resource && resource.category_name;
-    return Boolean(categoryName && (categoryName.startsWith("light") || categoryName.startsWith("pawn")));
+    return VRODOS.utils.isSceneLightOrPawnCategory(categoryName);
 };
 
 VRODOS.loader.handleResourceMetadata = function(name, resource, resources3D) {

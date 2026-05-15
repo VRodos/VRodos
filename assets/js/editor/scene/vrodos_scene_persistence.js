@@ -34,7 +34,7 @@ VRODOS.utils.sceneCreateObjectRecord = function(nameModel, path, categoryName, d
         "fnPath": VRODOS.utils.assetFnPathFromPath(path),
         "asset_name": VRODOS.utils.displayText(nameModel),
         "category_name": categoryName,
-        "isLight": String(categoryName || '').includes("light"),
+        "isLight": VRODOS.utils.isSceneLightCategory(categoryName),
         addedAt,
     }, dragData);
 

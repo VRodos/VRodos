@@ -22,7 +22,7 @@ VRODOS.loader.LoaderMulti = class {
 
             if (VRODOS.loader.isLightOrPawnResource(resource)) continue;
 
-            const categorySlug = resource && resource.category_slug;
+            const categorySlug = VRODOS.utils.normalizeSceneAssetCategory(resource && resource.category_slug);
 
             // Load Camera object
             if (name === 'avatarCamera') {
@@ -31,15 +31,15 @@ VRODOS.loader.LoaderMulti = class {
                     modelBaseUrl
                 }));
 
-            } else if (categorySlug === 'assessment') {
+            } else if (VRODOS.utils.isSceneAssessmentCategory(categorySlug)) {
 
                 pendingLoads.push(VRODOS.loader.loadAssessmentAsset(name, resource, resources3D));
 
-            } else if (categorySlug === '3d-text') {
+            } else if (VRODOS.utils.isSceneTextCategory(categorySlug)) {
 
                 pendingLoads.push(VRODOS.loader.loadTextAsset(name, resource, resources3D));
 
-            } else if (categorySlug === 'image') { // Flat image plane
+            } else if (VRODOS.utils.isSceneImageCategory(categorySlug)) { // Flat image plane
 
                 pendingLoads.push(VRODOS.loader.loadImageAsset(manager, name, resource, resources3D));
 

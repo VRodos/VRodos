@@ -31,7 +31,7 @@ VRODOS.loader.LightsPawnLoader = class {
 
             // 3. Filter for Lights and Pawns
             const category = resource && resource.category_name;
-            if (!category || (!category.startsWith("light") && !category.startsWith("pawn"))) {
+            if (!VRODOS.utils.isSceneLightOrPawnCategory(category)) {
                 continue;
             }
 
@@ -46,12 +46,13 @@ VRODOS.loader.LightsPawnLoader = class {
     }
 
     dispatchToHandlers(name, resource, finalPath, category, manager) {
-        if (category.startsWith("light")) {
-            VRODOS.loader.loadLightAsset(name, resource, category);
+        const normalizedCategory = VRODOS.utils.normalizeSceneAssetCategory(category);
+        if (VRODOS.utils.isSceneLightCategory(normalizedCategory)) {
+            VRODOS.loader.loadLightAsset(name, resource, normalizedCategory);
             return null;
         }
 
-        if (category === 'pawn') {
+        if (VRODOS.utils.isScenePawnCategory(normalizedCategory)) {
             return VRODOS.loader.loadPawnAsset(name, resource, finalPath, manager);
         }
 

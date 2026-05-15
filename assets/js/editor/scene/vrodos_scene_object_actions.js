@@ -877,18 +877,16 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         'lightLamp': () => VRODOS.api.createLightLamp(nameModel, addedAt),
         'lightSpot': () => VRODOS.api.createLightSpot(nameModel, addedAt),
         'lightAmbient': () => VRODOS.api.createLightAmbient(nameModel, addedAt),
-        'Pawn': () => VRODOS.api.createPawn(nameModel, addedAt, VRODOS.data.pluginPath),
         'pawn': () => VRODOS.api.createPawn(nameModel, addedAt, VRODOS.data.pluginPath),
-        '3D Text': () => VRODOS.api.createTextAsset(nameModel, addedAt),
         '3d-text': () => VRODOS.api.createTextAsset(nameModel, addedAt),
-        'Assessment': () => VRODOS.api.createAssessmentAsset(nameModel, addedAt),
         'assessment': () => VRODOS.api.createAssessmentAsset(nameModel, addedAt)
     };
+    const addCategory = VRODOS.utils.normalizeSceneAssetCategory(categoryName);
 
     // Execute the specific handler or fallback to generic GLB asset loader
     try {
-        if (categoryHandlers[categoryName]) {
-            categoryHandlers[categoryName]();
+        if (categoryHandlers[addCategory]) {
+            categoryHandlers[addCategory]();
         } else {
             VRODOS.api.createGlbAsset(nameModel, addedAt, VRODOS.data.pluginPath);
         }

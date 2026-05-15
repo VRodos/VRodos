@@ -4,21 +4,13 @@ window.VRODOS = window.VRODOS || {};
 VRODOS.ui = VRODOS.ui || {};
 
 (function initVrodosSceneCanvasDropUi() {
-    const lightPawnCategories = new Set([
-        'lightSun',
-        'lightLamp',
-        'lightSpot',
-        'lightAmbient',
-        'Pawn'
-    ]);
-
     function shouldIgnoreSceneReorderDrop(ev) {
         const types = ev.dataTransfer && ev.dataTransfer.types;
         return types && typeof types.indexOf === 'function' && types.indexOf('application/vrodos-scene-reorder') !== -1;
     }
 
     function resolveAssetBasePath(dataDrag) {
-        if (!dataDrag || lightPawnCategories.has(dataDrag.category_name) || !dataDrag.path) {
+        if (!dataDrag || VRODOS.utils.isSceneLightOrPawnCategory(dataDrag.category_name) || !dataDrag.path) {
             return '';
         }
 
@@ -76,26 +68,7 @@ VRODOS.ui = VRODOS.ui || {};
     };
 
     VRODOS.ui.createLightPawnDragData = function(lightPawnType) {
-        if (
-            lightPawnType === 'Sun' ||
-            lightPawnType === 'Spot' ||
-            lightPawnType === 'Lamp' ||
-            lightPawnType === 'Ambient'
-        ) {
-            return {
-                category_name: `light${lightPawnType}`,
-                title: `mylight${lightPawnType}_${Date.now()}`
-            };
-        }
-
-        if (lightPawnType === 'Pawn') {
-            return {
-                category_name: 'Pawn',
-                title: `aPawn_${Date.now()}`
-            };
-        }
-
-        return null;
+        return VRODOS.utils.createLightPawnDragPayload(lightPawnType);
     };
 
     VRODOS.ui.handleLightPawnDragStart = function(e) {
