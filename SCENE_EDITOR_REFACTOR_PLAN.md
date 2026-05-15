@@ -95,6 +95,8 @@
 - Verification: Phase 55 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 56 editor environment bootstrap extraction implemented.
 - Verification: Phase 56 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 57 scene editor enqueue grouping implemented.
+- Verification: Phase 57 edited no JS files; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -192,6 +194,7 @@ assets/js/editor/
 - Done: Move Director visual/proxy helper tracking, first-person rig synchronization, authored Director transform helpers, and Director ground-guide raycast/update logic out of `vrodos_3d_editor_environmentals.js` into `render/vrodos_editor_director_helpers.js`.
 - Done: Move editor scene creation, HDR environment texture loading, and grid/axis helper setup out of `vrodos_3d_editor_environmentals.js` into `render/vrodos_editor_scene_environment.js`.
 - Done: Move editor environment state initialization, metrics setup, renderer construction, renderer attachment, and constructor orchestration out of `vrodos_3d_editor_environmentals.js` into `render/vrodos_editor_environment_bootstrap.js`.
+- Done: Group scene editor WordPress script enqueues in `VRodos_Asset_Manager` behind an ordered handle helper while preserving existing handles, dependency registrations, and vendor inline globals.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

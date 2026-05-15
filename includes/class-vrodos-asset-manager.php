@@ -31,6 +31,12 @@ class VRodos_Asset_Manager {
 
 		return false;
 	}
+
+	private function enqueue_script_handles( array $handles ): void {
+		foreach ( $handles as $handle ) {
+			wp_enqueue_script( $handle );
+		}
+	}
 	
 	public function enqueue_dashboard_scripts( $hook ) {
 		if ( 'toplevel_page_vrodos-plugin' !== $hook ) {
@@ -138,80 +144,91 @@ class VRodos_Asset_Manager {
 		wp_enqueue_style( 'vrodos_3D_editor' );
 		wp_enqueue_style( 'vrodos_3D_editor_browser' );
 
-		// Scripts from original enqueue_scene_editor_scripts
-		wp_enqueue_script( 'vrodos_namespace' );
-		wp_enqueue_script( 'vrodos_scene_light_artifacts' );
-		wp_enqueue_script( 'vrodos_editor_core_utils' );
-		wp_enqueue_script( 'vrodos_editor_diagnostics' );
-		wp_enqueue_script( 'vrodos_scripts' );
-		wp_enqueue_script( 'vrodos_UndoEngine' );
-		wp_enqueue_script( 'stats-gl' );
+		$scene_editor_foundation_handles = [
+			'vrodos_namespace',
+			'vrodos_scene_light_artifacts',
+			'vrodos_editor_core_utils',
+			'vrodos_editor_diagnostics',
+			'vrodos_scripts',
+			'vrodos_UndoEngine',
+			'stats-gl',
+		];
+		$this->enqueue_script_handles( $scene_editor_foundation_handles );
+
 		$this->enqueue_three_vendor_bundle();
-		wp_enqueue_script( 'vrodos_icons' );
-		wp_enqueue_script( 'vrodos_cefr_badges' );
-		wp_enqueue_script( 'vrodos_HierarchyViewer' );
-		wp_enqueue_script( 'vrodos_load_lilgui' );
-		wp_enqueue_script( 'vrodos_scene_settings_schema' );
-		wp_enqueue_script( 'vrodos_scene_settings_sync' );
-		wp_enqueue_script( 'vrodos_ScenePersistence' );
-		wp_enqueue_script( 'vrodos_editor_environment_helpers' );
-		wp_enqueue_script( 'vrodos_editor_performance_profile' );
-		wp_enqueue_script( 'vrodos_editor_renderer_lifecycle' );
-		wp_enqueue_script( 'vrodos_editor_cameras' );
-		wp_enqueue_script( 'vrodos_editor_director_helpers' );
-		wp_enqueue_script( 'vrodos_editor_scene_environment' );
-		wp_enqueue_script( 'vrodos_editor_environment_bootstrap' );
-		wp_enqueue_script( 'vrodos_3d_editor_environmentals' );
-		wp_enqueue_script( 'vrodos_scene_registry' );
-		wp_enqueue_script( 'vrodos_scene_transforms' );
-		wp_enqueue_script( 'vrodos_scene_selection' );
-		wp_enqueue_script( 'vrodos_scene_object_factory' );
-		wp_enqueue_script( 'vrodos_editor_services' );
-		wp_enqueue_script( 'vrodos_editor_render_loop' );
-		wp_enqueue_script( 'vrodos_keyButtons' );
-		wp_enqueue_script( 'vrodos_rayCasters' );
-		wp_enqueue_script( 'vrodos_auxControlers' );
-		wp_enqueue_script( 'vrodos_BordersFinder' );
-		wp_enqueue_script( 'vrodos_loader_object_factories' );
-		wp_enqueue_script( 'vrodos_loader_resource_metadata' );
-		wp_enqueue_script( 'vrodos_loader_scene_asset_helpers' );
-		wp_enqueue_script( 'vrodos_loader_light_assets' );
-		wp_enqueue_script( 'vrodos_loader_pawn_assets' );
-		wp_enqueue_script( 'vrodos_LightsPawn_Loader' );
-		wp_enqueue_script( 'vrodos_loader_director_camera' );
-		wp_enqueue_script( 'vrodos_loader_generated_assets' );
-		wp_enqueue_script( 'vrodos_loader_glb_assets' );
-		wp_enqueue_script( 'vrodos_LoaderMulti' );
-		wp_enqueue_script( 'vrodos_loader_scene_lifecycle' );
-		wp_enqueue_script( 'vrodos_movePointerLocker' );
-		wp_enqueue_script( 'vrodos_scene_disposal' );
-		wp_enqueue_script( 'vrodos_addRemoveOne' );
-		wp_enqueue_script( 'vrodos_ui_helpers' );
-		wp_enqueue_script( 'vrodos_scene_snapshot_ui' );
-		wp_enqueue_script( 'vrodos_scene_canvas_drop_ui' );
-		wp_enqueue_script( 'vrodos_scene_canvas_events_ui' );
-		wp_enqueue_script( 'vrodos_scene_list_ui' );
-		wp_enqueue_script( 'vrodos_floating_panels' );
-		wp_enqueue_script( 'vrodos_editor_shell_ui' );
-		wp_enqueue_script( 'vrodos_editor_toolbar_ui' );
-		wp_enqueue_script( 'vrodos_compile_dialog_ui' );
-		wp_enqueue_script( 'vrodos_3d_editor_buttons_drags' );
-		wp_enqueue_script( 'vrodos_scene_editor_ui_controller' );
-		wp_enqueue_script( 'vrodos_fetch_asset_scenes_request' );
-		wp_enqueue_script( 'vrodos_compile_dialogue' );
+
+		$scene_editor_runtime_handles = [
+			'vrodos_icons',
+			'vrodos_cefr_badges',
+			'vrodos_HierarchyViewer',
+			'vrodos_load_lilgui',
+			'vrodos_scene_settings_schema',
+			'vrodos_scene_settings_sync',
+			'vrodos_ScenePersistence',
+			'vrodos_editor_environment_helpers',
+			'vrodos_editor_performance_profile',
+			'vrodos_editor_renderer_lifecycle',
+			'vrodos_editor_cameras',
+			'vrodos_editor_director_helpers',
+			'vrodos_editor_scene_environment',
+			'vrodos_editor_environment_bootstrap',
+			'vrodos_3d_editor_environmentals',
+			'vrodos_scene_registry',
+			'vrodos_scene_transforms',
+			'vrodos_scene_selection',
+			'vrodos_scene_object_factory',
+			'vrodos_editor_services',
+			'vrodos_editor_render_loop',
+			'vrodos_keyButtons',
+			'vrodos_rayCasters',
+			'vrodos_auxControlers',
+			'vrodos_BordersFinder',
+			'vrodos_loader_object_factories',
+			'vrodos_loader_resource_metadata',
+			'vrodos_loader_scene_asset_helpers',
+			'vrodos_loader_light_assets',
+			'vrodos_loader_pawn_assets',
+			'vrodos_LightsPawn_Loader',
+			'vrodos_loader_director_camera',
+			'vrodos_loader_generated_assets',
+			'vrodos_loader_glb_assets',
+			'vrodos_LoaderMulti',
+			'vrodos_loader_scene_lifecycle',
+			'vrodos_movePointerLocker',
+			'vrodos_scene_disposal',
+			'vrodos_addRemoveOne',
+			'vrodos_ui_helpers',
+			'vrodos_scene_snapshot_ui',
+			'vrodos_scene_canvas_drop_ui',
+			'vrodos_scene_canvas_events_ui',
+			'vrodos_scene_list_ui',
+			'vrodos_floating_panels',
+			'vrodos_editor_shell_ui',
+			'vrodos_editor_toolbar_ui',
+			'vrodos_compile_dialog_ui',
+			'vrodos_3d_editor_buttons_drags',
+			'vrodos_scene_editor_ui_controller',
+			'vrodos_fetch_asset_scenes_request',
+			'vrodos_compile_dialogue',
+		];
+		$this->enqueue_script_handles( $scene_editor_runtime_handles );
 
 		// Prepare all data for localization
 		$template_data = VRodos_Scene_CPT_Manager::prepare_scene_editor_data();
 		$scene_data    = VRodos_Scene_CPT_Manager::get_scene_dat_for_script();
 
 		// Scripts & Localization from template
-		wp_enqueue_script( 'ajax-script_compile' );
-		wp_enqueue_script( 'ajax-script_deletescene' );
-		wp_enqueue_script( 'ajax-script_filebrowse' );
-		wp_enqueue_script( 'ajax-script_savescene' );
-		wp_enqueue_script( 'ajax-script_uploadimage' );
-		wp_enqueue_script( 'ajax-script_deleteasset' );
-		wp_enqueue_script( 'ajax-script_fetchasset' );
+		$this->enqueue_script_handles(
+			[
+				'ajax-script_compile',
+				'ajax-script_deletescene',
+				'ajax-script_filebrowse',
+				'ajax-script_savescene',
+				'ajax-script_uploadimage',
+				'ajax-script_deleteasset',
+				'ajax-script_fetchasset',
+			]
+		);
 
         wp_localize_script(
             'vrodos_namespace',
