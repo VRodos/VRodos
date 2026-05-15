@@ -731,45 +731,44 @@ VRODOS.api.createPawn = function(nameModel, addedAt, _pluginPath) {
  * Handle regular GLB asset loading.
  */
 VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
-    document.getElementById("progress").style.display = "block";
-    document.getElementById("progressWrapper").style.visibility = "visible";
-    document.getElementById("result_download").innerHTML = "Loading";
+    VRODOS.api.showSceneLoadingProgress("Loading", { immediate: true });
 
     const manager = new THREE.LoadingManager();
-    manager.onProgress = (item, loaded, total) => {
-        const progressEl = document.getElementById("result_download");
-        if (progressEl) {
+    VRODOS.api.configureSceneLoadingManager(manager, {
+        onProgress: (_item, loaded, total) => {
             const assetName = VRODOS.utils.displayText(VRODOS.data.scene_data.objects[nameModel].asset_name || nameModel);
-            progressEl.textContent = `${assetName} loading part ${loaded} / ${total}`;
-        }
-    };
+            VRODOS.api.setSceneLoadingProgressText(`${assetName} loading part ${loaded} / ${total}`, { immediate: true });
+        },
+        onLoad: () => {
+            const insertedObject = getSceneObjectByName(nameModel);
+            if (!insertedObject) {
+                VRODOS.api.hideSceneLoadingProgress();
+                return;
+            }
+            applyAddedObjectTRS(insertedObject, nameModel);
 
-    manager.onLoad = () => {
-        const insertedObject = getSceneObjectByName(nameModel);
-        if (!insertedObject) return;
-        applyAddedObjectTRS(insertedObject, nameModel);
-
-        if (insertedObject.children[0].isMesh) {
-            const mat = insertedObject.children[0].material;
-            if (isNaN(mat.metalness)) {
-                mat.metalness = 0;
-                mat.roughness = 0.5;
-                mat.emissiveIntensity = 0;
-                if (mat.color.r + mat.color.g + mat.color.b === 0) {
-                    mat.color = new THREE.Color("rgb(50%, 50%, 50%)");
+            if (insertedObject.children[0].isMesh) {
+                const mat = insertedObject.children[0].material;
+                if (isNaN(mat.metalness)) {
+                    mat.metalness = 0;
+                    mat.roughness = 0.5;
+                    mat.emissiveIntensity = 0;
+                    if (mat.color.r + mat.color.g + mat.color.b === 0) {
+                        mat.color = new THREE.Color("rgb(50%, 50%, 50%)");
+                    }
                 }
             }
-        }
 
-        VRODOS.ui.finalizeSceneObjectAdd(insertedObject, {
-            alreadyRegistered: true,
-            selectOptions: { source: 'glb-added' }
-        });
-        if (typeof VRODOS.editor.requestRender === 'function') {
-            VRODOS.editor.requestRender('asset-added');
+            VRODOS.ui.finalizeSceneObjectAdd(insertedObject, {
+                alreadyRegistered: true,
+                selectOptions: { source: 'glb-added' }
+            });
+            if (typeof VRODOS.editor.requestRender === 'function') {
+                VRODOS.editor.requestRender('asset-added');
+            }
+            VRODOS.api.hideSceneLoadingProgress();
         }
-        document.getElementById("progressWrapper").style.visibility = "hidden";
-    };
+    });
 
     const loaderMulti = new VRODOS.loader.LoaderMulti();
     loaderMulti.load(manager, { [nameModel]: VRODOS.data.scene_data.objects[nameModel] }, VRODOS.data.pluginPath);

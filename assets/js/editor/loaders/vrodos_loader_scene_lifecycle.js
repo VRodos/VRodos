@@ -10,11 +10,70 @@ VRODOS.utils = VRODOS.utils || {};
 /**
  * Preparation logic before assets start loading.
  */
+VRODOS.api.clearSceneLoadingProgressTimers = function() {
+    const loop = VRODOS.editor.renderLoop || {};
+    if (loop.loadingRenderTimer) {
+        window.clearTimeout(loop.loadingRenderTimer);
+        loop.loadingRenderTimer = null;
+    }
+    if (loop.loadingProgressTimer) {
+        window.clearTimeout(loop.loadingProgressTimer);
+        loop.loadingProgressTimer = null;
+    }
+    loop.pendingLoadingProgressText = '';
+};
+
+VRODOS.api.showSceneLoadingProgress = function(text, options) {
+    const opts = options || {};
+    const progress = document.getElementById("progress");
+    if (progress) {
+        progress.style.display = "block";
+    }
+
+    const progressWrapper = document.getElementById("progressWrapper");
+    if (progressWrapper && opts.visible !== false) {
+        progressWrapper.style.visibility = "visible";
+    }
+
+    if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
+        VRODOS.api.setSceneLoadingProgressText(text || "Loading", opts);
+    }
+};
+
+VRODOS.api.hideSceneLoadingProgress = function(options) {
+    const opts = options || {};
+    if (opts.clearTimers !== false) {
+        VRODOS.api.clearSceneLoadingProgressTimers();
+    }
+
+    const progressWrapper = document.getElementById("progressWrapper");
+    if (progressWrapper) {
+        progressWrapper.style.visibility = "hidden";
+    }
+};
+
+VRODOS.api.configureSceneLoadingManager = function(manager, options) {
+    if (!manager) {
+        return null;
+    }
+
+    const opts = options || {};
+    manager.onProgress = typeof opts.onProgress === 'function'
+        ? opts.onProgress
+        : function (_url, loaded, total) {
+            VRODOS.api.setSceneLoadingProgressText(`Loading ${loaded} / ${total}`);
+        };
+
+    if (typeof opts.onLoad === 'function') {
+        manager.onLoad = opts.onLoad;
+    }
+
+    return manager;
+};
+
 VRODOS.api.prepareSceneLoadManager = function() {
     VRODOS.editor.envir.sceneLoadFinalized = false;
-    VRODOS.editor.manager.onProgress = function (_url, loaded, total) {
-        VRODOS.api.setSceneLoadingProgressText(`Loading ${loaded} / ${total}`);
-    };
+    VRODOS.api.configureSceneLoadingManager(VRODOS.editor.manager);
 };
 
 VRODOS.api.getSceneAssetResources = function(resources3D) {
@@ -125,16 +184,7 @@ VRODOS.api.reloadSceneFromJson = function(sceneJson) {
 VRODOS.api.finalizeSceneLoad = function() {
     if (!VRODOS.editor.envir || VRODOS.editor.envir.sceneLoadFinalized) return;
 
-    const loop = VRODOS.editor.renderLoop || {};
-    if (loop.loadingRenderTimer) {
-        window.clearTimeout(loop.loadingRenderTimer);
-        loop.loadingRenderTimer = null;
-    }
-    if (loop.loadingProgressTimer) {
-        window.clearTimeout(loop.loadingProgressTimer);
-        loop.loadingProgressTimer = null;
-    }
-    loop.pendingLoadingProgressText = '';
+    VRODOS.api.clearSceneLoadingProgressTimers();
 
     VRODOS.editor.envir.sceneLoadFinalized = true;
     VRODOS.editor.envir.isSceneLoading = false;
@@ -201,8 +251,7 @@ VRODOS.api.finalizeSceneLoad = function() {
         }
     });
 
-    const progressWrapper = document.getElementById("progressWrapper");
-    if (progressWrapper) progressWrapper.style.visibility = "hidden";
+    VRODOS.api.hideSceneLoadingProgress({ clearTimers: false });
 
     const compileButton = document.getElementById("compileGameBtn");
     if (compileButton) compileButton.disabled = false;

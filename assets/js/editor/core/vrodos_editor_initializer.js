@@ -223,8 +223,7 @@ function initVrodosEditor() {
     document.getElementById("compileGameBtn").disabled = true;
 
     // Progress UI
-    document.getElementById("progress").style.display = "block";
-    VRODOS.api.setSceneLoadingProgressText("Loading", { immediate: true });
+    VRODOS.api.showSceneLoadingProgress("Loading", { immediate: true });
 
     VRODOS.api.initPointerLock();
     VRODOS.editor.requestRender('initial-load');
