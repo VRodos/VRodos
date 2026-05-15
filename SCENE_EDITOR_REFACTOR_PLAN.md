@@ -83,6 +83,8 @@
 - Verification: Phase 49 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 50 loader coordinator folder migration implemented.
 - Verification: Phase 50 JS syntax check passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 51 editor performance profile extraction implemented.
+- Verification: Phase 51 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -174,6 +176,7 @@ assets/js/editor/
 - Done: Remove duplicate metadata/fog/clear-color syncing from the light/pawn compatibility coordinator and route it through `loaders/vrodos_loader_resource_metadata.js` and `scene/vrodos_scene_settings_sync.js`.
 - Done: Move scene load preparation, resource splitting, reload cleanup, loader orchestration, and scene-load finalization out of `vrodos_EditorInitializer.js` into `loaders/vrodos_loader_scene_lifecycle.js`.
 - Done: Move the remaining `VRODOS.loader.LoaderMulti` coordinator implementation under `loaders/vrodos_loader_multi.js` while preserving the existing `vrodos_LoaderMulti` WordPress script handle.
+- Done: Move editor performance profile calculation, pixel-ratio cap application, texture anisotropy cap selection, and render-loop quality fields out of `vrodos_3d_editor_environmentals.js` into `render/vrodos_editor_performance_profile.js`.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

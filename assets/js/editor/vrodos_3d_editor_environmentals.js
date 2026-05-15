@@ -4,13 +4,11 @@ const VRODOS_EDITOR_CAMERA = VRODOS.editorRender.camera;
 const VRODOS_EDITOR_SCENE_DEFAULTS = VRODOS.editorRender.sceneDefaults;
 const VRODOS_EDITOR_ZOOM = VRODOS.editorRender.zoom;
 const VRODOS_DIRECTOR_GROUND_GUIDE = VRODOS.editorRender.directorGroundGuide;
-const VRODOS_EDITOR_PERFORMANCE_DEFAULTS = VRODOS.editorRender.performanceDefaults;
 const vrodosDirectorSafeVector = VRODOS.editorRender.directorSafeVector;
 const vrodosDirectorIsInternalHelper = VRODOS.editorRender.directorIsInternalHelper;
 const vrodosDirectorGroundGuideObjectExcluded = VRODOS.editorRender.directorGroundGuideObjectExcluded;
 const vrodosDirectorGroundGuideObjectVisible = VRODOS.editorRender.directorGroundGuideObjectVisible;
 const vrodosGetPointerLockObject = VRODOS.editorRender.getPointerLockObject;
-const vrodosEditorHardwareProfile = VRODOS.editorRender.hardwareProfile;
 const vrodosEnvironmentResolveBaseUrl = VRODOS.editorRender.resolveBaseUrl;
 
 class vrodos_3d_editor_environmentals {
@@ -180,89 +178,6 @@ class vrodos_3d_editor_environmentals {
         this.SCREEN_WIDTH = Math.max(width || 1, 1);
         this.SCREEN_HEIGHT = Math.max(height || 1, 1);
         this.ASPECT = this.SCREEN_WIDTH / this.SCREEN_HEIGHT;
-    }
-
-    getEditableObjectCount() {
-        if (this.selectableMeshes && this.selectableMeshes.size > 0) {
-            return this.selectableMeshes.size;
-        }
-
-        const registry = VRODOS.editor && VRODOS.editor.sceneRegistry ? VRODOS.editor.sceneRegistry : null;
-        if (registry && typeof registry.getSelectableRoots === 'function') {
-            const roots = registry.getSelectableRoots({ rebuildIfEmpty: false });
-            return roots.filter((node) => node && node.isSelectableMesh && node.vrodos_internal_helper !== true).length;
-        }
-
-        return 0;
-    }
-
-    getEditorPerformanceProfile() {
-        const hardware = vrodosEditorHardwareProfile();
-        const editableObjectCount = this.getEditableObjectCount();
-        const isLowEndHardware = hardware.cores <= 4 || hardware.memory <= 4;
-        const isDenseScene = editableObjectCount >= VRODOS_EDITOR_PERFORMANCE_DEFAULTS.denseSceneObjectCount;
-        const shouldDegrade = isLowEndHardware || isDenseScene;
-
-        return {
-            targetFps: shouldDegrade ? VRODOS_EDITOR_PERFORMANCE_DEFAULTS.lowEndTargetFps : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.targetFps,
-            pixelRatioCap: shouldDegrade ? VRODOS_EDITOR_PERFORMANCE_DEFAULTS.lowEndPixelRatioCap : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.pixelRatioCap,
-            labelFrameStride: shouldDegrade ? VRODOS_EDITOR_PERFORMANCE_DEFAULTS.lowEndLabelFrameStride : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.labelFrameStride,
-            loaderConcurrency: shouldDegrade ? VRODOS_EDITOR_PERFORMANCE_DEFAULTS.lowEndLoaderConcurrency : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.loaderConcurrency,
-            textureAnisotropy: shouldDegrade ? VRODOS_EDITOR_PERFORMANCE_DEFAULTS.lowEndTextureAnisotropy : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.textureAnisotropy,
-            isLowEndHardware,
-            isDenseScene,
-            editableObjectCount
-        };
-    }
-
-    applyEditorPerformanceProfile(force) {
-        const now = (typeof performance !== 'undefined' && typeof performance.now === 'function')
-            ? performance.now()
-            : Date.now();
-        const loop = VRODOS.editor && VRODOS.editor.renderLoop ? VRODOS.editor.renderLoop : null;
-
-        if (!force && loop && (now - (loop.lastQualitySampleAt || 0)) < 1000) {
-            return this.editorPerformanceProfile;
-        }
-
-        const profile = this.getEditorPerformanceProfile();
-        this.editorPerformanceProfile = profile;
-
-        if (loop) {
-            loop.targetFps = profile.targetFps;
-            loop.pixelRatioCap = profile.pixelRatioCap;
-            loop.labelFrameStride = profile.labelFrameStride;
-            loop.loaderConcurrency = profile.loaderConcurrency;
-            loop.lastQualitySampleAt = now;
-        }
-
-        if (this.renderer) {
-            this.renderer.setPixelRatio(this.getEditorPixelRatio());
-        }
-        if (this.composer) {
-            if (typeof this.composer.setPixelRatio === 'function') {
-                this.composer.setPixelRatio(this.getEditorPixelRatio());
-            } else if (this.composer.renderer) {
-                this.composer.renderer.setPixelRatio(this.getEditorPixelRatio());
-            }
-        }
-
-        return profile;
-    }
-
-    getEditorPixelRatio() {
-        const devicePixelRatio = (typeof window !== 'undefined' && Number.isFinite(window.devicePixelRatio))
-            ? window.devicePixelRatio
-            : 1;
-        const loop = VRODOS.editor && VRODOS.editor.renderLoop ? VRODOS.editor.renderLoop : {};
-        const cap = Number(loop.pixelRatioCap || VRODOS_EDITOR_PERFORMANCE_DEFAULTS.pixelRatioCap);
-
-        return Math.max(1, Math.min(devicePixelRatio || 1, cap));
-    }
-
-    getEditorTextureAnisotropyCap() {
-        const profile = this.editorPerformanceProfile || this.applyEditorPerformanceProfile(true);
-        return profile ? profile.textureAnisotropy : VRODOS_EDITOR_PERFORMANCE_DEFAULTS.textureAnisotropy;
     }
 
     loadSceneEnvironmentTexture() {
@@ -1123,4 +1038,5 @@ class vrodos_3d_editor_environmentals {
     }
 }
 
+VRODOS.editorRender.installPerformanceProfileMethods(vrodos_3d_editor_environmentals.prototype);
 VRODOS.editor.Environmentals = vrodos_3d_editor_environmentals;
