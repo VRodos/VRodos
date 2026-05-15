@@ -237,6 +237,8 @@ assets/js/editor/
 - Done: Remove the remaining routine full-scene export traversal by exporting from registry-backed scene roots, and cache Director ground-guide mesh targets per root between scene-root mutations.
 - Done: Centralize current-scene JSON export/input writing in scene persistence and route save, background-image upload, and JSON preview refresh through the shared facade with explicit script dependencies.
 - Done: Normalize percent-encoded scene object names and display metadata such as Greek `asset_slug` values during drag, export, and import without decoding file paths or identifiers.
+- Done: Consolidate duplicated UI display-text decoding and HTML/attribute escaping into editor core utils and route CEFR badges, hierarchy labels, and asset browser rendering through the shared helpers.
+- Done: Route remaining editor scene, selection, persistence, and property-control display decoding through `VRODOS.utils.displayText()` with explicit core-utils script dependencies.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

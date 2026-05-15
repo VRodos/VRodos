@@ -79,7 +79,7 @@ VRODOS.utils.sceneDecodeExportTextFields = function(resource) {
         'immerse_object_type'
     ].forEach((key) => {
         if (typeof resource[key] === 'string') {
-            resource[key] = VRODOS.utils.decodeDisplayText(resource[key]);
+            resource[key] = VRODOS.utils.displayText(resource[key]);
         }
     });
 
@@ -316,10 +316,10 @@ VRODOS.exporter.SceneExporter = class {
 
         entryObject.category_name = 'assessment';
         entryObject.category_slug = 'assessment';
-        entryObject.asset_name = VRODOS.utils.decodeDisplayText(o.asset_name || o.assessment_title || entryObject.asset_name || 'Assessment');
-        entryObject.assessment_title = VRODOS.utils.decodeDisplayText(o.assessment_title || o.asset_name || entryObject.assessment_title || 'Assessment');
-        entryObject.assessment_type = VRODOS.utils.decodeDisplayText(o.assessment_type || entryObject.assessment_type || '');
-        entryObject.assessment_group = VRODOS.utils.decodeDisplayText(o.assessment_group || entryObject.assessment_group || '');
+        entryObject.asset_name = VRODOS.utils.displayText(o.asset_name || o.assessment_title || entryObject.asset_name || 'Assessment');
+        entryObject.assessment_title = VRODOS.utils.displayText(o.assessment_title || o.asset_name || entryObject.assessment_title || 'Assessment');
+        entryObject.assessment_type = VRODOS.utils.displayText(o.assessment_type || entryObject.assessment_type || '');
+        entryObject.assessment_group = VRODOS.utils.displayText(o.assessment_group || entryObject.assessment_group || '');
         entryObject.assessment_source_id = sourceId;
         entryObject.assessment_content = o.assessment_content || entryObject.assessment_content || '';
         entryObject.assessment_levels = typeof VRODOS.utils.encodeAssessmentLevelsForScene === 'function'

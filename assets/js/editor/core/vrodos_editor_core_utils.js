@@ -61,6 +61,21 @@ VRODOS.importer = VRODOS.importer || {};
             : (value == null ? '' : String(value));
     }
 
+    function escapeHTML(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function escapeAttribute(value) {
+        return escapeHTML(String(value ?? ''))
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function sceneNameText(value) {
         return displayText(value).trim();
     }
@@ -126,6 +141,8 @@ VRODOS.importer = VRODOS.importer || {};
         joinUrl,
         resolveBaseUrl,
         displayText,
+        escapeHTML,
+        escapeAttribute,
         sceneNameText,
         safeObjectName,
         ensureSceneObjectName,

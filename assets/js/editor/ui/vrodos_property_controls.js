@@ -149,11 +149,7 @@ function getAssessmentTypeLabel(object) {
     if (!object) return '';
 
     const rawValue = object.assessment_type || object.assessment_group || '';
-    if (typeof VRODOS.utils.decodeDisplayText === 'function') {
-        return VRODOS.utils.decodeDisplayText(rawValue).trim();
-    }
-
-    return String(rawValue || '').trim();
+    return VRODOS.utils.displayText(rawValue).trim();
 }
 
 function getAssessmentLevelsList(object) {

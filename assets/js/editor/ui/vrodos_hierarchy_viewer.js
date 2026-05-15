@@ -131,11 +131,7 @@ function _hierarchyDisplayName(obj) {
         return 'Light Target';
     }
 
-    if (typeof VRODOS.utils.decodeDisplayText === 'function') {
-        return VRODOS.utils.decodeDisplayText(obj.asset_name || obj.name);
-    }
-
-    return obj.asset_name || obj.name;
+    return VRODOS.utils.displayText(obj.asset_name || obj.name);
 }
 
 /**
@@ -193,38 +189,6 @@ function _hierarchyUnixTimestampToDateTime(unixTimestamp) {
     return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
-function _hierarchyEscapeHTML(text) {
-    return String(text || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
-function _hierarchyDecodeText(value) {
-    if (typeof VRODOS.utils.decodeDisplayText === 'function') {
-        return VRODOS.utils.decodeDisplayText(value);
-    }
-
-    let text = typeof value === 'string' ? value : '';
-    if (!text) return '';
-
-    if (/%[0-9a-fA-F]{2}/.test(text)) {
-        try {
-            text = decodeURIComponent(text);
-        } catch (err) {
-            // Keep original text if decoding fails.
-        }
-    }
-
-    if (/(?:\\+|\/+)?u[0-9a-fA-F]{4}/.test(text)) {
-        text = text.replace(/(?:\\+|\/+)?u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
-    }
-
-    return text;
-}
-
 function _hierarchyAssetBrowserItemForObject(obj) {
     if (!obj || !window.vrodosAssetBrowserItemsById) {
         return null;
@@ -260,13 +224,13 @@ function _hierarchyAssessmentBadgesHTML(obj) {
         return '';
     }
 
-    const assessmentType = _hierarchyDecodeText(obj.assessment_type || obj.assessment_group || '').trim();
+    const assessmentType = VRODOS.utils.displayText(obj.assessment_type || obj.assessment_group || '').trim();
     let typeBadgeHTML = '';
 
     if (isAssessment && assessmentType) {
         typeBadgeHTML =
             `<span class="tw-inline-flex tw-items-center tw-rounded-full tw-border tw-border-sky-400/35 tw-bg-sky-500/10 tw-px-1.5 tw-py-0.5 tw-text-[7px] tw-font-bold tw-uppercase tw-tracking-[0.12em] tw-text-sky-200">${ 
-            _hierarchyEscapeHTML(assessmentType)
+            VRODOS.utils.escapeHTML(assessmentType)
             }</span>`;
     }
 

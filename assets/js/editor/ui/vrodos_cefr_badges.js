@@ -4,37 +4,11 @@ VRODOS.ui.badges = VRODOS.ui.badges || {};
 
 VRODOS.ui.badges.cefrLevels = ['A1', 'A2', 'B1', 'B2'];
 
-VRODOS.ui.badges.escapeHTML = function(value) {
-    return String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-};
-
 VRODOS.ui.badges.decodeText = function(value) {
-    if (typeof VRODOS.utils.decodeDisplayText === 'function') {
-        return VRODOS.utils.decodeDisplayText(value);
-    }
-
-    let text = typeof value === 'string' ? value : '';
-    if (!text) return '';
-
-    if (/%[0-9a-fA-F]{2}/.test(text)) {
-        try {
-            text = decodeURIComponent(text);
-        } catch (err) {
-            // Keep original text if decoding fails.
-        }
-    }
-
-    if (/(?:\\+|\/+)?u[0-9a-fA-F]{4}/.test(text)) {
-        text = text.replace(/(?:\\+|\/+)?u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
-    }
-
-    return text;
+    return VRODOS.utils.displayText(value);
 };
+
+VRODOS.ui.badges.escapeHTML = VRODOS.utils.escapeHTML;
 
 VRODOS.ui.badges.normalizeCefrLevels = function(levels) {
     let source = levels;

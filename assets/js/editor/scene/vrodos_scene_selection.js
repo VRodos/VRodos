@@ -159,9 +159,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
 
     function getObjectTitle(object) {
         const rawTitle = object ? (object.asset_name || object.name || 'Object Controls') : 'Object Controls';
-        return typeof VRODOS.utils.decodeDisplayText === 'function'
-            ? VRODOS.utils.decodeDisplayText(rawTitle)
-            : rawTitle;
+        return VRODOS.utils.displayText(rawTitle);
     }
 
     function configureTransformToolbar(object) {

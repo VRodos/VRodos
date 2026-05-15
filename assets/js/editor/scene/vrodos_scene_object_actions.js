@@ -249,7 +249,7 @@ VRODOS.ui.createAssessmentInfoPlate = function(type, levels) {
         return null;
     }
 
-    const resolvedType = VRODOS.utils.decodeDisplayText(type || 'Assessment').trim() || 'Assessment';
+    const resolvedType = VRODOS.utils.displayText(type || 'Assessment').trim() || 'Assessment';
     const resolvedLevels = VRODOS.utils.resolvedAssessmentLevels(levels);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -319,7 +319,7 @@ VRODOS.ui.createAssessmentLabel = function(title, type, levels) {
     labelEl.style.pointerEvents = 'none';
 
     const typeEl = document.createElement('div');
-    typeEl.textContent = VRODOS.utils.decodeDisplayText(type || 'Assessment');
+    typeEl.textContent = VRODOS.utils.displayText(type || 'Assessment');
     typeEl.style.fontSize = '10px';
     typeEl.style.fontWeight = '700';
     typeEl.style.textTransform = 'uppercase';
@@ -328,7 +328,7 @@ VRODOS.ui.createAssessmentLabel = function(title, type, levels) {
     typeEl.style.marginBottom = '4px';
 
     const titleEl = document.createElement('div');
-    titleEl.textContent = VRODOS.utils.decodeDisplayText(title || 'Assessment');
+    titleEl.textContent = VRODOS.utils.displayText(title || 'Assessment');
     titleEl.style.fontSize = '12px';
     titleEl.style.fontWeight = '700';
     titleEl.style.lineHeight = '1.3';
@@ -368,14 +368,14 @@ VRODOS.ui.createAssessmentPlaceholder = function(nameModel, resource) {
     const assessmentGroup = new THREE.Group();
     const assessmentSourceId = String(resource.assessment_source_id || '').trim();
     assessmentGroup.name = nameModel;
-    assessmentGroup.asset_name = VRODOS.utils.decodeDisplayText(resource.asset_name || resource.assessment_title || 'Assessment');
+    assessmentGroup.asset_name = VRODOS.utils.displayText(resource.asset_name || resource.assessment_title || 'Assessment');
     assessmentGroup.asset_slug = resource.asset_slug || '';
     assessmentGroup.asset_id = resource.asset_id || 0;
     assessmentGroup.category_name = resource.category_name || 'Assessment';
     assessmentGroup.category_slug = 'assessment';
-    assessmentGroup.assessment_title = VRODOS.utils.decodeDisplayText(resource.assessment_title || resource.asset_name || 'Assessment');
-    assessmentGroup.assessment_type = VRODOS.utils.decodeDisplayText(resource.assessment_type || '');
-    assessmentGroup.assessment_group = VRODOS.utils.decodeDisplayText(resource.assessment_group || '');
+    assessmentGroup.assessment_title = VRODOS.utils.displayText(resource.assessment_title || resource.asset_name || 'Assessment');
+    assessmentGroup.assessment_type = VRODOS.utils.displayText(resource.assessment_type || '');
+    assessmentGroup.assessment_group = VRODOS.utils.displayText(resource.assessment_group || '');
     assessmentGroup.assessment_source_id = resource.assessment_source_id || '';
     assessmentGroup.assessment_content = resource.assessment_content || '';
     assessmentGroup.assessment_levels = VRODOS.utils.normalizeAssessmentLevels(resource.assessment_levels || '');
@@ -737,7 +737,7 @@ VRODOS.api.createGlbAsset = function(nameModel, _addedAt, _pluginPath) {
     manager.onProgress = (item, loaded, total) => {
         const progressEl = document.getElementById("result_download");
         if (progressEl) {
-            const assetName = VRODOS.utils.decodeDisplayText(VRODOS.data.scene_data.objects[nameModel].asset_name || nameModel);
+            const assetName = VRODOS.utils.displayText(VRODOS.data.scene_data.objects[nameModel].asset_name || nameModel);
             progressEl.textContent = `${assetName} loading part ${loaded} / ${total}`;
         }
     };
