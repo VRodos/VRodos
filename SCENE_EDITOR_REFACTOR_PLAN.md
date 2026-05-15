@@ -151,6 +151,8 @@
 - Verification: Phase 83 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused initializer/hierarchy scene-data helper sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-15: Phase 84 grouped hierarchy ownership cleanup implemented.
 - Verification: Phase 84 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; focused hierarchy helper sanity check passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-15: Phase 85 grouped hierarchy delegated-action cleanup implemented.
+- Verification: Phase 85 JS syntax check passed; focused hierarchy action delegation sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -285,6 +287,7 @@ assets/js/editor/
 - Done: Group scene-data object record cleanup by moving scene-data map, record lookup, record set, and record deletion helpers into scene persistence, routing add/delete paths through them, and restoring delete undo into `scene_data.objects` instead of the stale legacy scene branch.
 - Done: Group scene-data helper consumer cleanup by routing editor startup asset-resource reads and hierarchy creation timestamps through scene persistence helpers with explicit script dependencies.
 - Done: Group hierarchy ownership cleanup by moving hierarchy item lookup, removal, and lock-icon updates into the hierarchy viewer module, then routing scene-object lock/delete flows through the shared `VRODOS.ui` hierarchy helpers.
+- Done: Group hierarchy delegated-action cleanup by replacing inline delete/lock/reset hierarchy handlers with data-action buttons, centralized delegated click dispatch, escaped data attributes, and an idempotent hierarchy event binder.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

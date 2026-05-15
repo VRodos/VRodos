@@ -274,6 +274,39 @@ function hierarchyClickSelect(event, uuid) {
     VRODOS.ui.selectorMajor(fakeEvent, obj, "1");
 }
 
+function _hierarchyAttribute(value) {
+    return VRODOS.utils.escapeAttribute(String(value || ''));
+}
+
+function hierarchyActionValue(actionAnchor, item, key) {
+    return actionAnchor.dataset[key] || (item && item.dataset ? item.dataset[key] || '' : '');
+}
+
+function handleHierarchyActionClick(event, actionAnchor) {
+    const item = actionAnchor.closest('.hierarchyItem');
+    const action = actionAnchor.dataset.hierarchyAction || '';
+    const uuid = hierarchyActionValue(actionAnchor, item, 'uuid');
+    const name = hierarchyActionValue(actionAnchor, item, 'name');
+    const assetName = hierarchyActionValue(actionAnchor, item, 'assetName') || name;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (action === 'delete' && typeof VRODOS.ui.deleteFomScene === 'function') {
+        VRODOS.ui.deleteFomScene(uuid, assetName);
+        return;
+    }
+
+    if (action === 'lock' && typeof VRODOS.ui.lockOnScene === 'function') {
+        VRODOS.ui.lockOnScene(uuid, assetName);
+        return;
+    }
+
+    if (action === 'reset' && typeof VRODOS.ui.resetInScene === 'function') {
+        VRODOS.ui.resetInScene(name);
+    }
+}
+
 /**
  * Determine the correct insertion point for a hierarchy item.
  * Order: Director → Lights grouped by type (Sun, Lamp, Spot, Ambient) each with target → Regular objects
@@ -483,7 +516,8 @@ function AppendObject(obj, object_name, created, deleteButtonHTML, resetButtonHT
 
 function CreateDeleteButton(obj) {
     return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-red-400 tw-transition-colors" aria-label="Delete asset"` +
-        ` title="Delete asset object" onclick="event.stopPropagation(); VRODOS.ui.deleteFomScene('${  obj.uuid  }', '${  obj.asset_name  }');">` +
+        ` title="Delete asset object" data-hierarchy-action="delete" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
+        ` data-name="${  _hierarchyAttribute(obj.name)  }" data-asset-name="${  _hierarchyAttribute(obj.asset_name || obj.name)  }">` +
         `<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i></a>`;
 }
 
@@ -491,15 +525,15 @@ function CreateDeleteButton(obj) {
 function CreateLockButton(obj) {
     const lock_ic = (obj.locked) ? 'lock' : 'lock-open';
     return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-white tw-transition-colors" aria-label="Lock asset"` +
-        ` title="Lock asset object" onclick="event.stopPropagation(); VRODOS.ui.lockOnScene('${  obj.uuid  }', '${  obj.asset_name  }');">` +
+        ` title="Lock asset object" data-hierarchy-action="lock" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
+        ` data-name="${  _hierarchyAttribute(obj.name)  }" data-asset-name="${  _hierarchyAttribute(obj.asset_name || obj.name)  }">` +
         `<i data-lucide="${  lock_ic  }" class="tw-w-4 tw-h-4"></i></a>`;
 }
 
 function CreateResetButton(obj){
-    // Properly escape names for onclick
-    const escapedName = (obj.name || "").replace(/'/g, "\\'");
     return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-blue-400 tw-transition-colors" aria-label="Reset asset"` +
-        ` title="Reset asset object" onclick="event.stopPropagation(); VRODOS.ui.resetInScene('${  escapedName  }');">` +
+        ` title="Reset asset object" data-hierarchy-action="reset" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
+        ` data-name="${  _hierarchyAttribute(obj.name)  }">` +
         `<i data-lucide="refresh-cw" class="tw-w-4 tw-h-4"></i>` +
         `</a>`;
 
@@ -653,6 +687,10 @@ VRODOS.ui.initHierarchyViewerEvents = function() {
     const viewer = document.getElementById('hierarchy-viewer');
     if (!viewer) return;
     VRODOS.ui.updateHierarchyViewerCount();
+    if (viewer.dataset.vrodosHierarchyEventsBound === 'true') {
+        return;
+    }
+    viewer.dataset.vrodosHierarchyEventsBound = 'true';
 
     viewer.addEventListener('mouseenter', (e) => {
         const item = e.target.closest('.hierarchyItem');
@@ -662,8 +700,12 @@ VRODOS.ui.initHierarchyViewerEvents = function() {
     }, true); // use capture so mouseenter fires for child elements
 
     viewer.addEventListener('click', (e) => {
-        // Ignore clicks on action buttons (delete, lock, reset)
-        if (e.target.closest('a[aria-label]')) return;
+        const actionAnchor = e.target.closest('[data-hierarchy-action]');
+        if (actionAnchor) {
+            handleHierarchyActionClick(e, actionAnchor);
+            return;
+        }
+
         const item = e.target.closest('.hierarchyItem');
         if (!item) return;
         const uuid = item.dataset.uuid;
