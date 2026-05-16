@@ -15,6 +15,11 @@ function getObjectControlsElement(key) {
     return document.getElementById(VRODOS_OBJECT_CONTROLS_IDS[key]);
 }
 
+function isObjectControlsPanelOpen() {
+    const panel = getObjectControlsElement('panel');
+    return Boolean(panel && !panel.classList.contains('tw-hidden'));
+}
+
 function setObjectControlsActionsVisible(isVisible) {
     const displayValue = isVisible ? '' : 'none';
     const manipulationToggle = getObjectControlsElement('manipulationToggle');
@@ -22,6 +27,27 @@ function setObjectControlsActionsVisible(isVisible) {
 
     if (manipulationToggle) manipulationToggle.style.display = displayValue;
     if (axisButtons) axisButtons.style.display = displayValue;
+}
+
+function positionObjectControlsPanel(panel) {
+    const panelW = panel.offsetWidth || 280;
+    const panelH = panel.offsetHeight || 300;
+    const mx = VRODOS.editor._lastClickX || (window.innerWidth / 2);
+    const my = VRODOS.editor._lastClickY || (window.innerHeight / 2);
+
+    let left = mx + 100;
+    let top = my - panelH / 2;
+
+    if (left + panelW > window.innerWidth - 8) {
+        left = mx - 100 - panelW;
+    }
+
+    left = Math.max(8, Math.min(left, window.innerWidth - panelW - 8));
+    top = Math.max(40, Math.min(top, window.innerHeight - panelH - 8));
+
+    panel.style.left = `${Math.round(left)  }px`;
+    panel.style.top = `${Math.round(top)  }px`;
+    panel.style.right = 'auto';
 }
 
 /**
@@ -37,32 +63,14 @@ function showObjectControlsPanel(objectName) {
 
     panel.classList.remove('tw-hidden');
     setObjectControlsActionsVisible(true);
+    bindObjectControlsPanelEvents();
 
     if (objectName) {
         const title = getObjectControlsElement('title');
         if (title) title.textContent = objectName;
     }
 
-    // Position 100px to the right of last click, clamped to viewport
-    const panelW = panel.offsetWidth || 280;
-    const panelH = panel.offsetHeight || 300;
-    const mx = VRODOS.editor._lastClickX || (window.innerWidth / 2);
-    const my = VRODOS.editor._lastClickY || (window.innerHeight / 2);
-
-    let left = mx + 100;
-    let top = my - panelH / 2;
-
-    // If it would go off the right edge, place it to the left of the cursor instead
-    if (left + panelW > window.innerWidth - 8) {
-        left = mx - 100 - panelW;
-    }
-    // Final clamp
-    left = Math.max(8, Math.min(left, window.innerWidth - panelW - 8));
-    top = Math.max(40, Math.min(top, window.innerHeight - panelH - 8));
-
-    panel.style.left = `${Math.round(left)  }px`;
-    panel.style.top = `${Math.round(top)  }px`;
-    panel.style.right = 'auto';
+    positionObjectControlsPanel(panel);
 }
 
 // Track last click position (updated by the canvas mousedown handler)
@@ -592,15 +600,15 @@ function showPropertiesInPanel(object) {
     }
 }
 
-// Set up drag + close once DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+function bindObjectControlsPanelEvents() {
     const panel = getObjectControlsElement('panel');
     const header = getObjectControlsElement('header');
     const closeBtn = getObjectControlsElement('closeButton');
 
     if (!panel || !header) return;
+    if (panel.dataset.vrodosObjectControlsBound === '1') return;
+    panel.dataset.vrodosObjectControlsBound = '1';
 
-    // Close button hides the panel
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
             hideObjectControlsPanel();
@@ -643,7 +651,13 @@ document.addEventListener('DOMContentLoaded', () => {
         isDragging = false;
         header.releasePointerCapture(e.pointerId);
     });
-});
+}
+
+// Set up drag + close once DOM is ready.
+document.addEventListener('DOMContentLoaded', bindObjectControlsPanelEvents);
+if (document.readyState !== 'loading') {
+    bindObjectControlsPanelEvents();
+}
 
 // GUI controls — lil-gui (successor to dat.gui)
 const controlInterface = new lil.GUI({ autoPlace: false });
@@ -1592,6 +1606,8 @@ VRODOS.editor.transforms.syncGui = syncTransformGuiFromObject;
 VRODOS.editor.transforms.syncFromControls = updatePositionsPhpAndJavsFromControlsAxes;
 VRODOS.ui.showObjectControlsPanel = showObjectControlsPanel;
 VRODOS.ui.hideObjectControlsPanel = hideObjectControlsPanel;
+VRODOS.ui.isObjectControlsPanelOpen = isObjectControlsPanelOpen;
+VRODOS.ui.bindObjectControlsPanelEvents = bindObjectControlsPanelEvents;
 VRODOS.ui.setObjectControlsActionsVisible = setObjectControlsActionsVisible;
 VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;
 VRODOS.ui.controlInterface = controlInterface;

@@ -193,6 +193,8 @@
 - Verification: Phase 104 JS syntax check passed; focused render-loop sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-16: Phase 105 grouped object-controls visibility cleanup implemented.
 - Verification: Phase 105 JS syntax checks passed; focused object-controls visibility sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-16: Phase 106 grouped object-controls panel binding cleanup implemented.
+- Verification: Phase 106 JS syntax checks passed; focused object-controls panel binding sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -348,6 +350,7 @@ assets/js/editor/
 - Done: Group toolbar control state cleanup by centralizing toolbar element IDs, explicit active/dataset state helpers, first-person active-state sync, 2D/3D mode helpers, and dimension-toggle render requests.
 - Done: Group render-loop helper cleanup by separating camera selection, continuous-render predicates, orbit/pointer control updates, animation stepping, editor/label rendering, compass updates, frame scheduling, and loading-render throttling behind focused local helpers.
 - Done: Group object-controls visibility cleanup by centralizing panel/action element IDs and action-button visibility in property controls, then routing selection show/clear flows through the shared UI helper.
+- Done: Group object-controls panel binding cleanup by extracting panel positioning, open-state checks, idempotent close/drag binding, DOM-ready fallback binding, and hierarchy hover open-panel detection through the shared UI helper.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

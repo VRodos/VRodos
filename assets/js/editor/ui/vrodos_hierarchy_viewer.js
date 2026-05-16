@@ -328,10 +328,18 @@ function _hierarchyAssessmentBadgesHTML(obj) {
 /**
  * Hover on hierarchy item: lightweight select (gizmo + outline, no panel).
  */
+function isObjectControlsPanelOpen() {
+    if (typeof VRODOS.ui.isObjectControlsPanelOpen === 'function') {
+        return VRODOS.ui.isObjectControlsPanelOpen();
+    }
+
+    const panel = document.getElementById('object-controls-panel');
+    return Boolean(panel && !panel.classList.contains('tw-hidden'));
+}
+
 function hierarchyHoverSelect(uuid) {
     // Don't change selection on hover if a properties panel is open
-    const panel = document.getElementById('object-controls-panel');
-    if (panel && !panel.classList.contains('tw-hidden')) return;
+    if (isObjectControlsPanelOpen()) return;
 
     const obj = _hierarchyGetObjectByUuid(uuid);
     if (!obj || obj.locked) return;
