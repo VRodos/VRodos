@@ -1,9 +1,22 @@
 'use strict';
 
 window.VRODOS = window.VRODOS || {};
+VRODOS.editor = VRODOS.editor || {};
 VRODOS.ui = VRODOS.ui || {};
 
 (function initVrodosEditorShellUi() {
+    const SHELL_IDS = {
+        hierarchyToggle: 'bt_close_hierarchy_toolbar',
+        hierarchyPanel: 'right-elements-panel',
+        compass: 'scene-editor-compass',
+        assetBrowserToggle: 'bt_close_file_toolbar',
+        assetBrowserToolbar: 'assetBrowserToolbar',
+        clearVisionToggle: 'toggleUIBtn',
+        scenesPanel: 'scenesInsideVREditor',
+        sceneListToggle: 'scenesList-toggle-btn',
+        objectControlsPanel: 'object-controls-panel'
+    };
+
     const shellUi = VRODOS.ui.editorShell || {
         isBound: false,
 
@@ -21,87 +34,117 @@ VRODOS.ui = VRODOS.ui || {};
         }
     };
 
+    function getElement(id) {
+        return document.getElementById(id);
+    }
+
+    function queryElement(selector) {
+        return document.querySelector(selector);
+    }
+
+    function closestTarget(event, selector) {
+        const target = event.target;
+        if (!target || typeof target.closest !== 'function') return null;
+        return target.closest(selector);
+    }
+
+    function refreshLucideIcons() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function swapIcon(button, iconName) {
+        if (typeof VRODOS.ui.swapLucideIcon === 'function') {
+            VRODOS.ui.swapLucideIcon(button, iconName);
+        }
+    }
+
+    function requestShellRender(reason) {
+        if (typeof VRODOS.editor.requestRender === 'function') {
+            VRODOS.editor.requestRender(reason || 'editor-shell');
+        }
+    }
+
+    function getEnvir() {
+        return VRODOS.editor.envir || null;
+    }
+
+    function getDirectorRig(envir) {
+        return envir && typeof envir.getDirectorRig === 'function' ? envir.getDirectorRig() : null;
+    }
+
+    function setTwoStateButton(button, isOn, onClass, offClass, onIcon, offIcon) {
+        button.classList.toggle(onClass, isOn);
+        button.classList.toggle(offClass, !isOn);
+        button.dataset.toggle = isOn ? 'on' : 'off';
+        swapIcon(button, isOn ? onIcon : offIcon);
+    }
+
+    function setClosedClass(element, isClosed) {
+        if (element) {
+            element.classList.toggle('closed', Boolean(isClosed));
+        }
+    }
+
+    function setCompassPanelClosed(compass, isClosed) {
+        if (compass) {
+            compass.classList.toggle('panel-closed', Boolean(isClosed));
+        }
+    }
+
     function bindHierarchyToggle() {
         document.addEventListener('click', (event) => {
-            const target = event.target;
-            if (!target || typeof target.closest !== 'function') return;
-
-            const button = target.closest('#bt_close_hierarchy_toolbar');
+            const button = closestTarget(event, `#${SHELL_IDS.hierarchyToggle}`);
             if (!button) return;
 
             event.preventDefault();
 
-            const panel = document.getElementById('right-elements-panel');
-            const compass = document.getElementById('scene-editor-compass');
+            const panel = getElement(SHELL_IDS.hierarchyPanel);
+            const compass = getElement(SHELL_IDS.compass);
             if (!panel) return;
 
-            if (button.classList.contains('HierarchyToggleOn')) {
-                button.classList.add('HierarchyToggleOff');
-                button.classList.remove('HierarchyToggleOn');
-                button.dataset.toggle = 'off';
-                VRODOS.ui.swapLucideIcon(button, 'chevron-left');
-                panel.classList.add('closed');
-                if (compass) compass.classList.add('panel-closed');
-            } else {
-                button.classList.add('HierarchyToggleOn');
-                button.classList.remove('HierarchyToggleOff');
-                button.dataset.toggle = 'on';
-                VRODOS.ui.swapLucideIcon(button, 'chevron-right');
-                panel.classList.remove('closed');
-                if (compass) compass.classList.remove('panel-closed');
-            }
-
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            const shouldOpen = !button.classList.contains('HierarchyToggleOn');
+            setTwoStateButton(button, shouldOpen, 'HierarchyToggleOn', 'HierarchyToggleOff', 'chevron-right', 'chevron-left');
+            setClosedClass(panel, !shouldOpen);
+            setCompassPanelClosed(compass, !shouldOpen);
+            refreshLucideIcons();
         });
     }
 
     function bindAssetBrowserToggle() {
         document.addEventListener('click', (event) => {
-            const target = event.target;
-            if (!target || typeof target.closest !== 'function') return;
-
-            const button = target.closest('#bt_close_file_toolbar');
+            const button = closestTarget(event, `#${SHELL_IDS.assetBrowserToggle}`);
             if (!button) return;
 
             event.preventDefault();
 
-            const toolbar = document.getElementById('assetBrowserToolbar');
+            const toolbar = getElement(SHELL_IDS.assetBrowserToolbar);
             if (!toolbar) return;
 
-            if (button.classList.contains('AssetsToggleOn')) {
-                button.classList.add('AssetsToggleOff');
-                button.classList.remove('AssetsToggleOn');
-                button.dataset.toggle = 'off';
-                VRODOS.ui.swapLucideIcon(button, 'chevron-right');
-                toolbar.classList.add('closed');
-            } else {
-                button.classList.add('AssetsToggleOn');
-                button.classList.remove('AssetsToggleOff');
-                button.dataset.toggle = 'on';
-                VRODOS.ui.swapLucideIcon(button, 'chevron-left');
-                toolbar.classList.remove('closed');
-            }
-
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            const shouldOpen = !button.classList.contains('AssetsToggleOn');
+            setTwoStateButton(button, shouldOpen, 'AssetsToggleOn', 'AssetsToggleOff', 'chevron-left', 'chevron-right');
+            setClosedClass(toolbar, !shouldOpen);
+            refreshLucideIcons();
         });
     }
 
     function bindClearVisionToggle() {
-        const toggleButton = document.getElementById('toggleUIBtn');
+        const toggleButton = getElement(SHELL_IDS.clearVisionToggle);
         if (!toggleButton) {
             return;
         }
 
         const elementsToToggle = [
-            document.getElementById('right-elements-panel'),
-            document.getElementById('scene-editor-compass'),
-            document.getElementById('object-controls-panel'),
-            document.querySelector('.environmentBar'),
-            document.getElementById('scenesInsideVREditor'),
-            document.getElementById('assetBrowserToolbar'),
-            document.getElementById('bt_close_file_toolbar'),
-            document.querySelector('.HierarchyToggleStyle'),
-            document.getElementById('scenesList-toggle-btn')
+            getElement(SHELL_IDS.hierarchyPanel),
+            getElement(SHELL_IDS.compass),
+            getElement(SHELL_IDS.objectControlsPanel),
+            queryElement('.environmentBar'),
+            getElement(SHELL_IDS.scenesPanel),
+            getElement(SHELL_IDS.assetBrowserToolbar),
+            getElement(SHELL_IDS.assetBrowserToggle),
+            queryElement('.HierarchyToggleStyle'),
+            getElement(SHELL_IDS.sceneListToggle)
         ].filter(Boolean);
 
         toggleButton.addEventListener('click', function() {
@@ -116,36 +159,52 @@ VRODOS.ui = VRODOS.ui || {};
             if (VRODOS.editor.envir && VRODOS.editor.envir.turboResize) {
                 VRODOS.editor.envir.turboResize();
             }
+            requestShellRender('clear-vision-toggle');
         });
+    }
+
+    function setElementsDisplayHidden(elements, isHidden) {
+        elements.forEach((element) => {
+            if (isHidden) {
+                element.style.setProperty('display', 'none', 'important');
+                return;
+            }
+
+            element.style.removeProperty('display');
+        });
+    }
+
+    function setCoreEditorHelpersVisible(isVisible) {
+        const envir = getEnvir();
+        if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.setVisible === 'function') {
+            VRODOS.editor.transforms.setVisible(isVisible);
+        }
+        if (envir && envir.gridHelper) envir.gridHelper.visible = isVisible;
+        if (envir && envir.axesHelper) envir.axesHelper.visible = isVisible;
     }
 
     function hideEditorChrome(button, elementsToToggle) {
         button.classList.add('tw-opacity-40');
-        VRODOS.ui.swapLucideIcon(button, 'eye-off');
+        swapIcon(button, 'eye-off');
         button.dataset.toggle = 'off';
 
-        elementsToToggle.forEach((element) => element.style.setProperty('display', 'none', 'important'));
+        setElementsDisplayHidden(elementsToToggle, true);
 
-        if (VRODOS.editor.transforms) VRODOS.editor.transforms.setVisible(false);
-        if (VRODOS.editor.envir && VRODOS.editor.envir.getDirectorRig()) VRODOS.editor.envir.getDirectorRig().visible = false;
-        if (VRODOS.editor.envir && VRODOS.editor.envir.gridHelper) VRODOS.editor.envir.gridHelper.visible = false;
-        if (VRODOS.editor.envir && VRODOS.editor.envir.axesHelper) VRODOS.editor.envir.axesHelper.visible = false;
+        setCoreEditorHelpersVisible(false);
+        const rig = getDirectorRig(getEnvir());
+        if (rig) rig.visible = false;
         if (typeof VRODOS.ui.removeAllCelOutlines === 'function') VRODOS.ui.removeAllCelOutlines();
         VRODOS.ui.setVisiblityLightHelpingElements(false);
     }
 
     function showEditorChrome(button, elementsToToggle) {
         button.classList.remove('tw-opacity-40');
-        VRODOS.ui.swapLucideIcon(button, 'eye');
+        swapIcon(button, 'eye');
         button.dataset.toggle = 'on';
 
-        elementsToToggle.forEach((element) => {
-            element.style.removeProperty('display');
-        });
+        setElementsDisplayHidden(elementsToToggle, false);
 
-        if (VRODOS.editor.transforms) VRODOS.editor.transforms.setVisible(true);
-        if (VRODOS.editor.envir && VRODOS.editor.envir.gridHelper) VRODOS.editor.envir.gridHelper.visible = true;
-        if (VRODOS.editor.envir && VRODOS.editor.envir.axesHelper) VRODOS.editor.envir.axesHelper.visible = true;
+        setCoreEditorHelpersVisible(true);
 
         const selectedObject = VRODOS.editor.transforms ? VRODOS.editor.transforms.getRealObject() : null;
         if (selectedObject && typeof VRODOS.ui.addCelOutline === 'function') {
@@ -154,12 +213,14 @@ VRODOS.ui = VRODOS.ui || {};
 
         VRODOS.ui.setVisiblityLightHelpingElements(true);
 
-        if (!VRODOS.editor.envir || !VRODOS.editor.envir.getDirectorRig()) return;
+        const envir = getEnvir();
+        const rig = getDirectorRig(envir);
+        if (!envir || !rig) return;
 
-        if (VRODOS.editor.envir.thirdPersonView || VRODOS.editor.avatarControlsEnabled) {
-            VRODOS.editor.envir.getDirectorRig().visible = false;
+        if (envir.thirdPersonView || VRODOS.editor.avatarControlsEnabled) {
+            rig.visible = false;
         } else {
-            VRODOS.editor.envir.getDirectorRig().visible = true;
+            rig.visible = true;
         }
     }
 

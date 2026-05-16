@@ -195,6 +195,8 @@
 - Verification: Phase 105 JS syntax checks passed; focused object-controls visibility sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-16: Phase 106 grouped object-controls panel binding cleanup implemented.
 - Verification: Phase 106 JS syntax checks passed; focused object-controls panel binding sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-16: Phase 107 grouped editor shell state cleanup implemented.
+- Verification: Phase 107 JS syntax check passed; focused editor shell controls sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -351,6 +353,7 @@ assets/js/editor/
 - Done: Group render-loop helper cleanup by separating camera selection, continuous-render predicates, orbit/pointer control updates, animation stepping, editor/label rendering, compass updates, frame scheduling, and loading-render throttling behind focused local helpers.
 - Done: Group object-controls visibility cleanup by centralizing panel/action element IDs and action-button visibility in property controls, then routing selection show/clear flows through the shared UI helper.
 - Done: Group object-controls panel binding cleanup by extracting panel positioning, open-state checks, idempotent close/drag binding, DOM-ready fallback binding, and hierarchy hover open-panel detection through the shared UI helper.
+- Done: Group editor shell state cleanup by centralizing shell element IDs, drawer toggle state, lucide refreshes, clear-vision display toggling, helper visibility, Director rig restoration, and render requests after chrome visibility changes.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
