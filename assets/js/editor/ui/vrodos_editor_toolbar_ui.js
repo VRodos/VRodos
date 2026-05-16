@@ -7,6 +7,21 @@ VRODOS.utils = VRODOS.utils || {};
 VRODOS.api = VRODOS.api || {};
 
 (function initVrodosEditorToolbarUi() {
+    const TOOLBAR_IDS = {
+        pause: 'pauseRendering',
+        save: 'save-scene-button',
+        undo: 'undo-scene-button',
+        redo: 'redo-scene-button',
+        orbitAutoRotate: 'toggle-tour-around-btn',
+        dimension: 'dim-change-btn',
+        firstPerson: 'firstPersonBlockerBtn',
+        objectManipulation: 'object-manipulation-toggle',
+        axisIncrease: 'axis-size-increase-btn',
+        axisDecrease: 'axis-size-decrease-btn',
+        translateSwitch: 'translate-switch',
+        loadingNotice: 'result_download'
+    };
+
     const toolbarUi = VRODOS.ui.editorToolbar || {
         isBound: false,
 
@@ -36,6 +51,25 @@ VRODOS.api = VRODOS.api || {};
         return VRODOS.editor.transforms || null;
     }
 
+    function getElement(id) {
+        return document.getElementById(id);
+    }
+
+    function setButtonActive(button, isActive) {
+        if (!button) return;
+        button.classList.toggle('toggle-active', Boolean(isActive));
+    }
+
+    function setToggleDataset(button, isActive) {
+        if (!button) return;
+        button.dataset.toggle = isActive ? 'on' : 'off';
+    }
+
+    function setToggleButtonState(button, isActive) {
+        setToggleDataset(button, isActive);
+        setButtonActive(button, isActive);
+    }
+
     function requestRender(reason) {
         if (typeof VRODOS.editor.requestRender === 'function') {
             VRODOS.editor.requestRender(reason || 'editor-toolbar');
@@ -43,7 +77,7 @@ VRODOS.api = VRODOS.api || {};
     }
 
     function bindPauseControl() {
-        const pauseBtn = document.getElementById('pauseRendering');
+        const pauseBtn = getElement(TOOLBAR_IDS.pause);
         if (!pauseBtn) return;
 
         pauseBtn.addEventListener('mousedown', () => {
@@ -52,13 +86,13 @@ VRODOS.api = VRODOS.api || {};
     }
 
     function bindSceneSaveControl() {
-        const saveButton = document.getElementById('save-scene-button');
+        const saveButton = getElement(TOOLBAR_IDS.save);
         if (!saveButton) return;
 
         saveButton.addEventListener('click', () => {
             const envir = getEnvir();
             if (envir && envir.isSceneLoading) {
-                const loadingNotice = document.getElementById('result_download');
+                const loadingNotice = getElement(TOOLBAR_IDS.loadingNotice);
                 if (loadingNotice) {
                     loadingNotice.innerHTML = 'Please wait until scene loading finishes before saving.';
                 }
@@ -76,7 +110,7 @@ VRODOS.api = VRODOS.api || {};
     }
 
     function bindUndoRedoControls() {
-        const undoButton = document.getElementById('undo-scene-button');
+        const undoButton = getElement(TOOLBAR_IDS.undo);
         if (undoButton) {
             undoButton.addEventListener('click', () => {
                 if (typeof VRODOS.editor.undoManager !== 'undefined') {
@@ -85,7 +119,7 @@ VRODOS.api = VRODOS.api || {};
             });
         }
 
-        const redoButton = document.getElementById('redo-scene-button');
+        const redoButton = getElement(TOOLBAR_IDS.redo);
         if (redoButton) {
             redoButton.addEventListener('click', () => {
                 if (typeof VRODOS.editor.undoManager !== 'undefined') {
@@ -96,46 +130,43 @@ VRODOS.api = VRODOS.api || {};
     }
 
     function bindOrbitAutoRotateControl() {
-        const toggleButton = document.getElementById('toggle-tour-around-btn');
+        const toggleButton = getElement(TOOLBAR_IDS.orbitAutoRotate);
         if (!toggleButton) return;
 
-        toggleButton.addEventListener('click', function() {
+        toggleButton.addEventListener('click', () => {
             const envir = getEnvir();
             if (!envir || !envir.orbitControls) return;
 
-            const dimButton = document.getElementById('dim-change-btn');
+            const dimButton = getElement(TOOLBAR_IDS.dimension);
             if (envir.is2d && dimButton) {
                 dimButton.click();
             }
 
-            if (this.dataset.toggle === 'off') {
-                envir.orbitControls.autoRotate = true;
+            const shouldAutoRotate = toggleButton.dataset.toggle !== 'on';
+            envir.orbitControls.autoRotate = shouldAutoRotate;
+            if (shouldAutoRotate) {
                 envir.orbitControls.autoRotateSpeed = 1.2;
-                this.dataset.toggle = 'on';
-            } else {
-                envir.orbitControls.autoRotate = false;
-                this.dataset.toggle = 'off';
             }
 
-            this.classList.toggle('toggle-active');
+            setToggleButtonState(toggleButton, shouldAutoRotate);
             requestRender('orbit-auto-rotate-toggle');
         });
     }
 
     function bindFirstPersonControl() {
-        const blockerButton = VRODOS.editor.firstPersonBlockerBtn || document.getElementById('firstPersonBlockerBtn');
+        const blockerButton = VRODOS.editor.firstPersonBlockerBtn || getElement(TOOLBAR_IDS.firstPerson);
         if (!blockerButton) return;
 
         blockerButton.addEventListener('click', () => {
             if (typeof VRODOS.api.firstPersonViewWithoutLock === 'function') {
                 VRODOS.api.firstPersonViewWithoutLock();
-                blockerButton.classList.toggle('toggle-active');
+                setButtonActive(blockerButton, VRODOS.editor.avatarControlsEnabled);
             }
         }, false);
     }
 
     function bindTransformModeControls() {
-        const objectManipulationToggle = document.getElementById('object-manipulation-toggle');
+        const objectManipulationToggle = getElement(TOOLBAR_IDS.objectManipulation);
         if (objectManipulationToggle) {
             objectManipulationToggle.addEventListener('click', () => {
                 const checked = document.querySelector("input[name='object-manipulation-switch']:checked");
@@ -148,7 +179,7 @@ VRODOS.api = VRODOS.api || {};
             });
         }
 
-        const axisIncreaseButton = document.getElementById('axis-size-increase-btn');
+        const axisIncreaseButton = getElement(TOOLBAR_IDS.axisIncrease);
         if (axisIncreaseButton) {
             axisIncreaseButton.addEventListener('click', () => {
                 const transforms = getTransforms();
@@ -158,7 +189,7 @@ VRODOS.api = VRODOS.api || {};
             });
         }
 
-        const axisDecreaseButton = document.getElementById('axis-size-decrease-btn');
+        const axisDecreaseButton = getElement(TOOLBAR_IDS.axisDecrease);
         if (axisDecreaseButton) {
             axisDecreaseButton.addEventListener('click', () => {
                 const transforms = getTransforms();
@@ -169,69 +200,96 @@ VRODOS.api = VRODOS.api || {};
         }
     }
 
+    function setDimensionButtonState(dimensionButton, envir) {
+        if (!dimensionButton || !envir) return;
+
+        const is3dMode = !envir.is2d;
+        dimensionButton.textContent = is3dMode ? '3D' : '2D';
+        dimensionButton.title = is3dMode ? '3D mode' : '2D mode';
+        setButtonActive(dimensionButton, is3dMode);
+    }
+
+    function setObjectManipulationVisible(isVisible) {
+        const objectManipulationToggle = getElement(TOOLBAR_IDS.objectManipulation);
+        if (objectManipulationToggle) {
+            objectManipulationToggle.style.display = isVisible ? '' : 'none';
+        }
+    }
+
+    function resetOrbitFor2d(envir) {
+        if (envir.orbitControls && typeof envir.orbitControls.reset === 'function') {
+            envir.orbitControls.reset();
+        }
+    }
+
+    function fitCameraAfterDimensionChange(envir) {
+        if (typeof VRODOS.utils.findSceneDimensions === 'function') {
+            VRODOS.utils.findSceneDimensions();
+        }
+        if (typeof envir.fitCameraToSceneLimits === 'function') {
+            envir.fitCameraToSceneLimits();
+        }
+        if (envir.orbitControls.object && typeof envir.orbitControls.object.updateProjectionMatrix === 'function') {
+            envir.orbitControls.object.updateProjectionMatrix();
+        }
+    }
+
+    function enter3dMode(envir, transforms) {
+        envir.orbitControls.enableRotate = true;
+        if (envir.gridHelper) envir.gridHelper.visible = true;
+        if (envir.axesHelper) envir.axesHelper.visible = true;
+
+        setObjectManipulationVisible(true);
+        envir.is2d = false;
+        transforms.setMode('translate');
+    }
+
+    function enter2dMode(envir, transforms) {
+        resetOrbitFor2d(envir);
+        envir.orbitControls.enableRotate = false;
+        if (envir.gridHelper) envir.gridHelper.visible = false;
+        if (envir.axesHelper) envir.axesHelper.visible = false;
+
+        setObjectManipulationVisible(false);
+        envir.is2d = true;
+        transforms.setMode('translate');
+
+        if (typeof envir.getDirectorVisualObject === 'function' && envir.getDirectorVisualObject()) {
+            envir.getDirectorVisualObject().visible = true;
+        }
+    }
+
     function bindDimensionToggle() {
-        const dimensionButton = document.getElementById('dim-change-btn');
+        const dimensionButton = getElement(TOOLBAR_IDS.dimension);
         if (!dimensionButton) return;
 
         dimensionButton.addEventListener('click', () => {
             const envir = getEnvir();
             const transforms = getTransforms();
-            const translateSwitch = document.getElementById('translate-switch');
-            const objectManipulationToggle = document.getElementById('object-manipulation-toggle');
+            const translateSwitch = getElement(TOOLBAR_IDS.translateSwitch);
 
             if (!envir || !envir.orbitControls || !transforms || typeof transforms.setMode !== 'function') return;
             if (translateSwitch) translateSwitch.click();
 
             if (envir.is2d) {
-                envir.orbitControls.enableRotate = true;
-                if (envir.gridHelper) envir.gridHelper.visible = true;
-                if (envir.axesHelper) envir.axesHelper.visible = true;
-
-                if (objectManipulationToggle) objectManipulationToggle.style.display = '';
-                dimensionButton.textContent = '3D';
-                dimensionButton.title = '3D mode';
-
-                envir.is2d = false;
-                transforms.setMode('translate');
+                enter3dMode(envir, transforms);
             } else {
-                if (typeof envir.orbitControls.reset === 'function') {
-                    envir.orbitControls.reset();
-                }
-                envir.orbitControls.enableRotate = false;
-                if (envir.gridHelper) envir.gridHelper.visible = false;
-                if (envir.axesHelper) envir.axesHelper.visible = false;
-
-                if (objectManipulationToggle) objectManipulationToggle.style.display = 'none';
-                dimensionButton.textContent = '2D';
-                dimensionButton.title = '2D mode';
-
-                envir.is2d = true;
-                transforms.setMode('translate');
-
-                if (typeof envir.getDirectorVisualObject === 'function' && envir.getDirectorVisualObject()) {
-                    envir.getDirectorVisualObject().visible = true;
-                }
+                enter2dMode(envir, transforms);
             }
 
-            if (typeof VRODOS.utils.findSceneDimensions === 'function') {
-                VRODOS.utils.findSceneDimensions();
-            }
-            if (typeof envir.fitCameraToSceneLimits === 'function') {
-                envir.fitCameraToSceneLimits();
-            }
-            if (envir.orbitControls.object && typeof envir.orbitControls.object.updateProjectionMatrix === 'function') {
-                envir.orbitControls.object.updateProjectionMatrix();
-            }
-
-            dimensionButton.classList.toggle('toggle-active');
+            setDimensionButtonState(dimensionButton, envir);
+            fitCameraAfterDimensionChange(envir);
+            requestRender('dimension-toggle');
         });
     }
 
     VRODOS.ui.pauseClickFun = function() {
         VRODOS.editor.isPaused = !VRODOS.editor.isPaused;
 
-        const pauseButton = document.getElementById('pauseRendering');
-        VRODOS.ui.swapLucideIcon(pauseButton, VRODOS.editor.isPaused ? 'pause' : 'play');
+        const pauseButton = getElement(TOOLBAR_IDS.pause);
+        if (typeof VRODOS.ui.swapLucideIcon === 'function') {
+            VRODOS.ui.swapLucideIcon(pauseButton, VRODOS.editor.isPaused ? 'pause' : 'play');
+        }
 
         if (!VRODOS.editor.isPaused) {
             if (typeof VRODOS.editor.animate === 'function') {
@@ -260,7 +318,7 @@ VRODOS.api = VRODOS.api || {};
         ];
 
         panelIds.forEach((id) => {
-            const element = document.getElementById(id);
+            const element = getElement(id);
             if (element) element.style.display = 'none';
         });
     };
@@ -268,7 +326,7 @@ VRODOS.api = VRODOS.api || {};
     VRODOS.ui.showObjectPropertiesPanel = function(type) {
         VRODOS.ui.hideObjectPropertiesPanels();
 
-        const element = document.getElementById(`${type}PanelGui`);
+        const element = getElement(`${type}PanelGui`);
         if (element) element.style.display = '';
     };
 
