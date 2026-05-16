@@ -181,6 +181,8 @@
 - Verification: Phase 98 `templates/pages/vrodos-edit-3D-scene-template.php` PHP syntax check passed; `git diff --check` passed.
 - 2026-05-15: Phase 99 Scene JSON gutter removal implemented.
 - Verification: Phase 99 JS syntax check passed; `templates/pages/vrodos-edit-3D-scene-template.php` PHP syntax check passed; stale JSON gutter references removed; `git diff --check` passed.
+- 2026-05-16: Phase 100 grouped keyboard movement cleanup implemented.
+- Verification: Phase 100 JS syntax check passed; focused keyboard controls sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -330,6 +332,7 @@ assets/js/editor/
 - Done: Group persistent property listener cleanup by centralizing input change binding, tracked focus/change binding, light color undo handling, Sun/Lamp/Ambient property entries, POI image title/content bindings, and single-owner POI chat bindings.
 - Done: Group property panel hydration cleanup by centralizing panel/object resolution, panel show, select population, Door/Link/Chat/POI image value hydration, and Spot numeric property listeners while leaving Spot target object reassignment for a dedicated synchronization pass.
 - Done: Group Spot property binding migration by moving Spot target and numeric field behavior out of inline PHP handlers, adding JS-owned live numeric light-helper sync, undo/save commits, and target relinking through `linkEditorLightTarget`.
+- Done: Group keyboard movement cleanup by encapsulating first-person movement state, making add/remove movement listener binding idempotent, null-guarding keyboard/FOV/delete handlers, and removing the stale raycast-performance TODO from keyboard controls.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

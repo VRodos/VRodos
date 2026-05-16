@@ -1,165 +1,217 @@
 'use strict';
 
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
-let moveUp = false;
-let moveDown = false;
-let viewUp = false;
-let viewDown = false;
+window.VRODOS = window.VRODOS || {};
+VRODOS.editor = VRODOS.editor || {};
+VRODOS.api = VRODOS.api || {};
+VRODOS.ui = VRODOS.ui || {};
 
-const avatar_movement_speed_factor = 0.1;
+(function initVrodosKeyboardControls() {
+    const MOVEMENT_SPEED = 0.1;
+    const movementState = {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        viewUp: false,
+        viewDown: false,
+        listenersBound: false
+    };
 
-let prevTime = performance.now();
-const velocity = new THREE.Vector3();
-const torgue = new THREE.Vector3();
+    let prevTime = performance.now();
+    const velocity = new THREE.Vector3();
+    const torque = new THREE.Vector3();
 
-document.addEventListener('wheel', (event) => {
-    if (VRODOS.editor.avatarControlsEnabled)
-        {if (event.deltaY)
-            {if (event.deltaY > 0) {
-                VRODOS.editor.envir.cameraAvatar.fov += 1;
-                VRODOS.editor.envir.cameraAvatar.updateProjectionMatrix();
-                //moveUp = true;
-            } else {
-                VRODOS.editor.envir.cameraAvatar.fov -= 1;
-                VRODOS.editor.envir.cameraAvatar.updateProjectionMatrix();
-            }}}
-}, true);
-
-VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
-
-document.addEventListener('remove_movement',
-    () => {
-        //abortController.abort()
-        document.removeEventListener('keydown', keydown_handler);
-        document.removeEventListener('keyup', keyup_handler);
-
+    function isAvatarControlsEnabled() {
+        return Boolean(VRODOS.editor && VRODOS.editor.avatarControlsEnabled);
     }
-);
 
-
-document.addEventListener('add_movement',
-    () => {
-        document.addEventListener('keydown', keydown_handler);
-        document.addEventListener('keyup', keyup_handler);
+    function getAvatarCamera() {
+        return VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir.cameraAvatar : null;
     }
-);
-const keydown_handler = (ev) => {
-    switch (ev.keyCode) {
-        //---------------------------- TRS ---------------------------------------
-        case 80: VRODOS.ui.pauseClickFun(); break; // r
-        case 82: viewUp = true; break; // r
-        case 70: viewDown = true; break; // f
-        case 187: break;
-        case 107: VRODOS.editor.transforms.scaleSize(1.1); break; // +,=,num+
-        case 189: break;
-        case 10: VRODOS.editor.transforms.scaleSize(0.9); break;// -,_,num-
-        //-------------------------------- PointerLock -----------------------
-        case 38: break;// up arrow
-        case 87: moveForward = true; break; // w
-        case 37: break;// left
-        case 65: moveLeft = true; break;// a
-        case 40: break;// down
-        case 83: moveBackward = true; break; // s
-        case 39: break; // right
-        case 68: moveRight = true; break; // d
-        case 81: moveUp = true; break; // Q
-        case 69: moveDown = true; break; // E
-        case 32: break; // space
-        case 96: break;// 0
-        case 46:
-            // If focus is on main screen but not at inputs
-            if (ev.composedPath()[0].tagName === "BODY") {
-                const selectedObject = VRODOS.editor.transforms.getRealObject();
-                if (selectedObject) {
-                    VRODOS.ui.deleteFomScene(selectedObject.uuid);
+
+    function requestKeyboardRender(reason) {
+        if (VRODOS.editor && typeof VRODOS.editor.requestRender === 'function') {
+            VRODOS.editor.requestRender(reason || 'keyboard-controls');
+        }
+    }
+
+    function setMovementFlag(keyCode, value) {
+        switch (keyCode) {
+            case 87: // W
+                movementState.forward = value;
+                return true;
+            case 83: // S
+                movementState.backward = value;
+                return true;
+            case 65: // A
+                movementState.left = value;
+                return true;
+            case 68: // D
+                movementState.right = value;
+                return true;
+            case 81: // Q
+                movementState.up = value;
+                return true;
+            case 69: // E
+                movementState.down = value;
+                return true;
+            case 82: // R
+                movementState.viewUp = value;
+                return true;
+            case 70: // F
+                movementState.viewDown = value;
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    function shouldDeleteSelectedObject(event) {
+        const composedPath = typeof event.composedPath === 'function' ? event.composedPath() : [];
+        const eventTarget = composedPath[0] || event.target;
+        return eventTarget && eventTarget.tagName === 'BODY';
+    }
+
+    function keydownHandler(event) {
+        switch (event.keyCode) {
+            case 80: // P
+                if (VRODOS.ui && typeof VRODOS.ui.pauseClickFun === 'function') {
+                    VRODOS.ui.pauseClickFun();
                 }
-            }
-            break; //  delete
-        default:
-            break;
+                break;
+            case 107: // Numpad +
+            case 187: // + / =
+                if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.scaleSize === 'function') {
+                    VRODOS.editor.transforms.scaleSize(1.1);
+                }
+                break;
+            case 109: // Numpad -
+            case 189: // - / _
+                if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.scaleSize === 'function') {
+                    VRODOS.editor.transforms.scaleSize(0.9);
+                }
+                break;
+            case 46: // Delete
+                if (shouldDeleteSelectedObject(event) && VRODOS.editor.transforms) {
+                    const selectedObject = VRODOS.editor.transforms.getRealObject();
+                    if (selectedObject && typeof VRODOS.ui.deleteFomScene === 'function') {
+                        VRODOS.ui.deleteFomScene(selectedObject.uuid);
+                    }
+                }
+                break;
+            default:
+                if (setMovementFlag(event.keyCode, true)) {
+                    requestKeyboardRender('keyboard-movement-keydown');
+                }
+                break;
+        }
     }
-};
-const keyup_handler = (ev) => {
-    switch (ev.keyCode) {
-        case 38: // up
-        case 87: moveForward = false; break; // w
-        case 37: // left
-        case 65: moveLeft = false; break; // a
-        case 40: // down
-        case 83: moveBackward = false; break; // s
-        case 39: // right
-        case 68: moveRight = false; break; // d
-        case 69: moveDown = false; break;  // e
-        case 81: moveUp = false; break; // e
-        case 82: viewUp = false; break; // r
-        case 70: viewDown = false; break; // f
-        default:
-            break;
+
+    function keyupHandler(event) {
+        if (setMovementFlag(event.keyCode, false)) {
+            requestKeyboardRender('keyboard-movement-keyup');
+        }
     }
 
-};
+    function bindMovementListeners() {
+        if (movementState.listenersBound) {
+            return;
+        }
 
+        document.addEventListener('keydown', keydownHandler);
+        document.addEventListener('keyup', keyupHandler);
+        movementState.listenersBound = true;
+    }
 
-/* Update the Director rig while moving with key presses */
-VRODOS.api.updatePointerLockControls = function(){
+    function unbindMovementListeners() {
+        if (!movementState.listenersBound) {
+            return;
+        }
 
-    const time = performance.now();
-    const delta = ( time - prevTime ) / 1000;
+        document.removeEventListener('keydown', keydownHandler);
+        document.removeEventListener('keyup', keyupHandler);
+        movementState.listenersBound = false;
+    }
 
-    // Reductors of velocity
-    velocity.x -= velocity.x * 2.0 * delta;
-    velocity.y -= velocity.y * 2.0 * delta;
-    velocity.z -= velocity.z * 2.0 * delta;
+    document.addEventListener('wheel', (event) => {
+        if (!isAvatarControlsEnabled() || !event.deltaY) {
+            return;
+        }
 
-    // Reductor of rotation along Y
-    torgue.y = torgue.y * 0.7; // * delta;
-    torgue.x = torgue.x * 0.7; // * delta;
+        const camera = getAvatarCamera();
+        if (!camera) {
+            return;
+        }
 
-    if (moveForward) velocity.z -= avatar_movement_speed_factor * delta;
-    if (moveBackward) velocity.z += avatar_movement_speed_factor * delta;
-    if (moveLeft) torgue.y += avatar_movement_speed_factor * delta;
-    if (moveRight) torgue.y -= avatar_movement_speed_factor * delta;
-    if ( moveUp ) velocity.y -= avatar_movement_speed_factor * delta;
-    if ( moveDown ) velocity.y += avatar_movement_speed_factor * delta;
-    if ( viewUp ) torgue.x -= avatar_movement_speed_factor * delta;
-    if ( viewDown ) torgue.x += avatar_movement_speed_factor * delta;
+        camera.fov += event.deltaY > 0 ? 1 : -1;
+        camera.updateProjectionMatrix();
+        requestKeyboardRender('avatar-fov-wheel');
+    }, true);
 
-    // Move avatar
-    const pointerLockObject = VRODOS.utils.getPointerLockObject(VRODOS.editor.envir.avatarControls);
+    document.addEventListener('remove_movement', () => {
+        unbindMovementListeners();
+    });
 
-    if (!pointerLockObject) {
+    document.addEventListener('add_movement', () => {
+        bindMovementListeners();
+    });
+
+    VRODOS.editor.firstPersonBlockerBtn = document.getElementById('firstPersonBlockerBtn');
+
+    /* Update the Director rig while moving with key presses. */
+    VRODOS.api.updatePointerLockControls = function() {
+        const time = performance.now();
+        const delta = (time - prevTime) / 1000;
+
+        velocity.x -= velocity.x * 2.0 * delta;
+        velocity.y -= velocity.y * 2.0 * delta;
+        velocity.z -= velocity.z * 2.0 * delta;
+
+        torque.y *= 0.7;
+        torque.x *= 0.7;
+
+        if (movementState.forward) velocity.z -= MOVEMENT_SPEED * delta;
+        if (movementState.backward) velocity.z += MOVEMENT_SPEED * delta;
+        if (movementState.left) torque.y += MOVEMENT_SPEED * delta;
+        if (movementState.right) torque.y -= MOVEMENT_SPEED * delta;
+        if (movementState.up) velocity.y -= MOVEMENT_SPEED * delta;
+        if (movementState.down) velocity.y += MOVEMENT_SPEED * delta;
+        if (movementState.viewUp) torque.x -= MOVEMENT_SPEED * delta;
+        if (movementState.viewDown) torque.x += MOVEMENT_SPEED * delta;
+
+        const controls = VRODOS.editor.envir ? VRODOS.editor.envir.avatarControls : null;
+        const pointerLockObject = VRODOS.utils.getPointerLockObject(controls);
+
+        if (!pointerLockObject) {
+            prevTime = time;
+            return;
+        }
+
+        pointerLockObject.translateX(velocity.x);
+        pointerLockObject.translateY(velocity.y);
+        pointerLockObject.translateZ(velocity.z);
+
+        pointerLockObject.rotation.y += torque.y;
+        const avatarCamera = getAvatarCamera();
+        if (avatarCamera) {
+            avatarCamera.rotation.x += torque.x;
+        }
+
         prevTime = time;
-        return;
-    }
+    };
 
-    pointerLockObject.translateX( velocity.x );
-    pointerLockObject.translateY( velocity.y );
-    pointerLockObject.translateZ( velocity.z );
-
-    // if (!VRODOS.editor.avatarControlsEnabled)
-    pointerLockObject.rotation.y += torgue.y;
-    VRODOS.editor.envir.cameraAvatar.rotation.x += torgue.x;
-
-    // moveUp = false;
-    // moveDown = false;
-
-    prevTime = time;
-};
-
-// TODO: RAYCASTING SIGNIFICANTLY DETERIORATES RENDERING SPEED
-
-VRODOS.api.resetAvatarMovement = function() {
-    velocity.set(0, 0, 0);
-    torgue.set(0, 0, 0);
-    moveForward = false;
-    moveBackward = false;
-    moveLeft = false;
-    moveRight = false;
-    moveUp = false;
-    moveDown = false;
-    viewUp = false;
-    viewDown = false;
-};
+    VRODOS.api.resetAvatarMovement = function() {
+        velocity.set(0, 0, 0);
+        torque.set(0, 0, 0);
+        movementState.forward = false;
+        movementState.backward = false;
+        movementState.left = false;
+        movementState.right = false;
+        movementState.up = false;
+        movementState.down = false;
+        movementState.viewUp = false;
+        movementState.viewDown = false;
+    };
+})();
