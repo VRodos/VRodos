@@ -185,6 +185,8 @@
 - Verification: Phase 100 JS syntax check passed; focused keyboard controls sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-16: Phase 101 first-person movement speed tuning implemented.
 - Verification: Phase 101 JS syntax check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-16: Phase 102 grouped pointer-lock toggle cleanup implemented.
+- Verification: Phase 102 JS syntax check passed; focused pointer-lock toggle sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -336,6 +338,7 @@ assets/js/editor/
 - Done: Group Spot property binding migration by moving Spot target and numeric field behavior out of inline PHP handlers, adding JS-owned live numeric light-helper sync, undo/save commits, and target relinking through `linkEditorLightTarget`.
 - Done: Group keyboard movement cleanup by encapsulating first-person movement state, making add/remove movement listener binding idempotent, null-guarding keyboard/FOV/delete handlers, and removing the stale raycast-performance TODO from keyboard controls.
 - Done: Increase first-person translation speed while keeping existing look/turn sensitivity unchanged.
+- Done: Group pointer-lock toggle cleanup by centralizing first-person enter/exit helpers, movement event dispatch, control enablement, Director/rig transform snapshot restore, and null-safe blocker/control lookups while preserving `initPointerLock()` and `firstPersonViewWithoutLock()`.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
