@@ -6,7 +6,8 @@ VRODOS.api = VRODOS.api || {};
 VRODOS.ui = VRODOS.ui || {};
 
 (function initVrodosKeyboardControls() {
-    const MOVEMENT_SPEED = 0.1;
+    const MOVEMENT_SPEED = 0.5;
+    const ROTATION_SPEED = 0.3;
     const movementState = {
         forward: false,
         backward: false,
@@ -174,12 +175,12 @@ VRODOS.ui = VRODOS.ui || {};
 
         if (movementState.forward) velocity.z -= MOVEMENT_SPEED * delta;
         if (movementState.backward) velocity.z += MOVEMENT_SPEED * delta;
-        if (movementState.left) torque.y += MOVEMENT_SPEED * delta;
-        if (movementState.right) torque.y -= MOVEMENT_SPEED * delta;
+        if (movementState.left) torque.y += ROTATION_SPEED * delta;
+        if (movementState.right) torque.y -= ROTATION_SPEED * delta;
         if (movementState.up) velocity.y -= MOVEMENT_SPEED * delta;
         if (movementState.down) velocity.y += MOVEMENT_SPEED * delta;
-        if (movementState.viewUp) torque.x -= MOVEMENT_SPEED * delta;
-        if (movementState.viewDown) torque.x += MOVEMENT_SPEED * delta;
+        if (movementState.viewUp) torque.x -= ROTATION_SPEED * delta;
+        if (movementState.viewDown) torque.x += ROTATION_SPEED * delta;
 
         const controls = VRODOS.editor.envir ? VRODOS.editor.envir.avatarControls : null;
         const pointerLockObject = VRODOS.utils.getPointerLockObject(controls);
