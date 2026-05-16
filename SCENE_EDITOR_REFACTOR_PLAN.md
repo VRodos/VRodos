@@ -189,6 +189,8 @@
 - Verification: Phase 102 JS syntax check passed; focused pointer-lock toggle sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-16: Phase 103 grouped toolbar control state cleanup implemented.
 - Verification: Phase 103 JS syntax check passed; focused toolbar controls sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-16: Phase 104 grouped render-loop helper cleanup implemented.
+- Verification: Phase 104 JS syntax check passed; focused render-loop sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -342,6 +344,7 @@ assets/js/editor/
 - Done: Increase first-person translation speed while keeping existing look/turn sensitivity unchanged.
 - Done: Group pointer-lock toggle cleanup by centralizing first-person enter/exit helpers, movement event dispatch, control enablement, Director/rig transform snapshot restore, and null-safe blocker/control lookups while preserving `initPointerLock()` and `firstPersonViewWithoutLock()`.
 - Done: Group toolbar control state cleanup by centralizing toolbar element IDs, explicit active/dataset state helpers, first-person active-state sync, 2D/3D mode helpers, and dimension-toggle render requests.
+- Done: Group render-loop helper cleanup by separating camera selection, continuous-render predicates, orbit/pointer control updates, animation stepping, editor/label rendering, compass updates, frame scheduling, and loading-render throttling behind focused local helpers.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

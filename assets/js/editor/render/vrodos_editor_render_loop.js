@@ -5,97 +5,231 @@ VRODOS.editor = VRODOS.editor || {};
 VRODOS.api = VRODOS.api || {};
 
 (function initVrodosEditorRenderLoop() {
-    VRODOS.editor.getActiveCamera = function() {
-        const curr_camera = (typeof VRODOS.editor.avatarControlsEnabled !== 'undefined' && VRODOS.editor.avatarControlsEnabled) ?
-            (VRODOS.editor.envir.thirdPersonView ? VRODOS.editor.envir.cameraThirdPerson : VRODOS.editor.envir.cameraAvatar) : VRODOS.editor.envir.cameraOrbit;
+    function getEnvir() {
+        return VRODOS.editor.envir || null;
+    }
 
-        return curr_camera;
-    };
+    function getRenderLoop() {
+        return VRODOS.editor.renderLoop || null;
+    }
 
-    VRODOS.editor.shouldRenderContinuously = function() {
-        const envir = VRODOS.editor.envir;
-        if (!envir) return false;
+    function isAvatarControlsEnabled() {
+        return Boolean(VRODOS.editor.avatarControlsEnabled);
+    }
 
-        if (VRODOS.editor.avatarControlsEnabled) return true;
-        if (VRODOS.editor.transforms && VRODOS.editor.transforms.isDragging()) return true;
-        if (envir.orbitControls && envir.orbitControls.autoRotate) return true;
-        if (envir.flagPlayAnimation && envir.animationMixers && envir.animationMixers.length > 0) return true;
+    function getNow() {
+        return window.performance && typeof window.performance.now === 'function'
+            ? window.performance.now()
+            : Date.now();
+    }
 
-        return false;
-    };
-
-    VRODOS.editor.renderFrame = function(timestamp, isContinuous) {
-        const envir = VRODOS.editor.envir;
-        if (!envir) return;
-
-        const curr_camera = VRODOS.editor.getActiveCamera();
-
-        if (!VRODOS.editor.avatarControlsEnabled &&
-            envir.orbitControls &&
-            (envir.orbitControls.enableDamping || envir.orbitControls.autoRotate)) {
-            envir.orbitControls.update();
+    function getActiveCameraForEnvir(envir) {
+        if (!envir) {
+            return null;
         }
 
-        if (VRODOS.editor.avatarControlsEnabled && typeof VRODOS.api.updatePointerLockControls === 'function') {
+        if (isAvatarControlsEnabled()) {
+            return envir.thirdPersonView ? envir.cameraThirdPerson : envir.cameraAvatar;
+        }
+
+        return envir.cameraOrbit;
+    }
+
+    function isTransformDragging() {
+        return Boolean(
+            VRODOS.editor.transforms &&
+            typeof VRODOS.editor.transforms.isDragging === 'function' &&
+            VRODOS.editor.transforms.isDragging()
+        );
+    }
+
+    function hasAutoRotate(envir) {
+        return Boolean(envir.orbitControls && envir.orbitControls.autoRotate);
+    }
+
+    function hasActiveAnimation(envir) {
+        return Boolean(envir.flagPlayAnimation && envir.animationMixers && envir.animationMixers.length > 0);
+    }
+
+    function updateOrbitControls(envir) {
+        const orbitControls = envir.orbitControls || null;
+        if (isAvatarControlsEnabled() || !orbitControls || (!orbitControls.enableDamping && !orbitControls.autoRotate)) {
+            return;
+        }
+
+        orbitControls.update();
+    }
+
+    function updatePointerLockControls() {
+        if (isAvatarControlsEnabled() && typeof VRODOS.api.updatePointerLockControls === 'function') {
             VRODOS.api.updatePointerLockControls();
         }
+    }
 
-        VRODOS.editor.transforms.setCamera(curr_camera);
+    function syncTransformCamera(camera) {
+        if (camera && VRODOS.editor.transforms && typeof VRODOS.editor.transforms.setCamera === 'function') {
+            VRODOS.editor.transforms.setCamera(camera);
+        }
+    }
 
-        if (VRODOS.editor.envir.flagPlayAnimation && VRODOS.editor.envir.animationMixers.length > 0) {
-            const new_time = VRODOS.editor.envir.clock.getDelta();
-            for (let i = 0; i < VRODOS.editor.envir.animationMixers.length; i++) {
-                VRODOS.editor.envir.animationMixers[i].update(new_time);
-            }
+    function updateAnimationMixers(envir) {
+        if (!hasActiveAnimation(envir) || !envir.clock || typeof envir.clock.getDelta !== 'function') {
+            return;
         }
 
-        if (typeof VRODOS.editor.envir.updateDirectorGroundGuide === 'function') {
-            VRODOS.editor.envir.updateDirectorGroundGuide();
+        const delta = envir.clock.getDelta();
+        for (let i = 0; i < envir.animationMixers.length; i++) {
+            envir.animationMixers[i].update(delta);
+        }
+    }
+
+    function updateDirectorGroundGuide(envir) {
+        if (typeof envir.updateDirectorGroundGuide === 'function') {
+            envir.updateDirectorGroundGuide();
+        }
+    }
+
+    function renderEditorScene(envir, camera) {
+        if (!camera) {
+            return;
         }
 
         if (typeof envir.renderEditorFrame === 'function') {
-            envir.renderEditorFrame(curr_camera);
-        } else if (envir.renderer) {
-            envir.renderer.render(envir.scene, curr_camera);
+            envir.renderEditorFrame(camera);
+            return;
         }
 
-        const loop = VRODOS.editor.renderLoop || {};
+        if (envir.renderer) {
+            envir.renderer.render(envir.scene, camera);
+        }
+    }
+
+    function shouldRenderLabels(envir, isContinuous) {
+        if (!envir.labelRenderer) {
+            return false;
+        }
+
+        const loop = getRenderLoop() || {};
         const labelStride = Math.max(1, Number(loop.labelFrameStride || 1));
-        if (envir.labelRenderer && (!isContinuous || labelStride <= 1 || (loop.frameIndex % labelStride) === 0)) {
-            envir.labelRenderer.render(envir.scene, curr_camera);
+        return !isContinuous || labelStride <= 1 || (loop.frameIndex % labelStride) === 0;
+    }
+
+    function renderLabels(envir, camera, isContinuous) {
+        if (camera && shouldRenderLabels(envir, isContinuous)) {
+            envir.labelRenderer.render(envir.scene, camera);
+        }
+    }
+
+    function updateCompassUi(envir) {
+        if (typeof envir.updateCompassUI === 'function') {
+            envir.updateCompassUI();
+        }
+    }
+
+    function stopLoop(loop) {
+        if (loop) {
+            loop.isRunning = false;
+        }
+        VRODOS.editor.id_animation_frame = null;
+    }
+
+    function shouldThrottleContinuousFrame(loop, timestamp, isContinuous) {
+        if (!isContinuous || !loop.lastFrameAt) {
+            return false;
         }
 
-        if (typeof VRODOS.editor.envir.updateCompassUI === 'function') {
-            VRODOS.editor.envir.updateCompassUI();
+        const targetFps = Math.max(1, Number(loop.targetFps || 45));
+        return (timestamp - loop.lastFrameAt) < (1000 / targetFps);
+    }
+
+    function scheduleNextFrame(step) {
+        VRODOS.editor.id_animation_frame = requestAnimationFrame(step);
+    }
+
+    function scheduleLoadingRender(loop, throttleMs, elapsed) {
+        if (loop.loadingRenderTimer) {
+            return;
         }
+
+        loop.loadingRenderTimer = window.setTimeout(() => {
+            loop.loadingRenderTimer = null;
+            loop.lastLoadingRenderAt = getNow();
+            loop.needsRender = true;
+            VRODOS.editor.startRenderLoop();
+        }, Math.max(16, throttleMs - elapsed));
+    }
+
+    function shouldDeferLoadingRender(loop, envir) {
+        if (!envir || !envir.isSceneLoading) {
+            return false;
+        }
+
+        const now = getNow();
+        const throttleMs = Math.max(0, Number(loop.loadingRenderThrottleMs || 0));
+        const elapsed = now - Number(loop.lastLoadingRenderAt || 0);
+
+        if (throttleMs > 0 && elapsed < throttleMs) {
+            scheduleLoadingRender(loop, throttleMs, elapsed);
+            return true;
+        }
+
+        loop.lastLoadingRenderAt = now;
+        return false;
+    }
+
+    VRODOS.editor.getActiveCamera = function() {
+        return getActiveCameraForEnvir(getEnvir());
+    };
+
+    VRODOS.editor.shouldRenderContinuously = function() {
+        const envir = getEnvir();
+        if (!envir) return false;
+
+        return isAvatarControlsEnabled() ||
+            isTransformDragging() ||
+            hasAutoRotate(envir) ||
+            hasActiveAnimation(envir);
+    };
+
+    VRODOS.editor.renderFrame = function(timestamp, isContinuous) {
+        const envir = getEnvir();
+        if (!envir) return;
+
+        void timestamp;
+        const camera = getActiveCameraForEnvir(envir);
+
+        updateOrbitControls(envir);
+        updatePointerLockControls();
+        syncTransformCamera(camera);
+        updateAnimationMixers(envir);
+        updateDirectorGroundGuide(envir);
+        renderEditorScene(envir, camera);
+        renderLabels(envir, camera, isContinuous);
+        updateCompassUi(envir);
     };
 
     VRODOS.editor.startRenderLoop = function() {
-        const loop = VRODOS.editor.renderLoop;
-        if (!loop || loop.isRunning || VRODOS.editor.isPaused || !VRODOS.editor.envir) {
+        const loop = getRenderLoop();
+        if (!loop || loop.isRunning || VRODOS.editor.isPaused || !getEnvir()) {
             return;
         }
 
         loop.isRunning = true;
 
         const step = (timestamp) => {
-            if (VRODOS.editor.isPaused || !VRODOS.editor.envir) {
-                loop.isRunning = false;
-                VRODOS.editor.id_animation_frame = null;
+            if (VRODOS.editor.isPaused || !getEnvir()) {
+                stopLoop(loop);
                 return;
             }
 
             const isContinuous = VRODOS.editor.shouldRenderContinuously();
             if (!loop.needsRender && !isContinuous) {
-                loop.isRunning = false;
-                VRODOS.editor.id_animation_frame = null;
+                stopLoop(loop);
                 return;
             }
 
-            const targetFps = Math.max(1, Number(loop.targetFps || 45));
-            const minFrameMs = 1000 / targetFps;
-            if (isContinuous && loop.lastFrameAt && (timestamp - loop.lastFrameAt) < minFrameMs) {
-                VRODOS.editor.id_animation_frame = requestAnimationFrame(step);
+            if (shouldThrottleContinuousFrame(loop, timestamp, isContinuous)) {
+                scheduleNextFrame(step);
                 return;
             }
 
@@ -105,19 +239,18 @@ VRODOS.api = VRODOS.api || {};
             VRODOS.editor.renderFrame(timestamp, isContinuous);
 
             if (isContinuous || loop.needsRender) {
-                VRODOS.editor.id_animation_frame = requestAnimationFrame(step);
+                scheduleNextFrame(step);
                 return;
             }
 
-            loop.isRunning = false;
-            VRODOS.editor.id_animation_frame = null;
+            stopLoop(loop);
         };
 
-        VRODOS.editor.id_animation_frame = requestAnimationFrame(step);
+        scheduleNextFrame(step);
     };
 
     VRODOS.editor.stopRenderLoop = function() {
-        const loop = VRODOS.editor.renderLoop;
+        const loop = getRenderLoop();
         if (VRODOS.editor.id_animation_frame) {
             cancelAnimationFrame(VRODOS.editor.id_animation_frame);
         }
@@ -129,34 +262,13 @@ VRODOS.api = VRODOS.api || {};
     };
 
     VRODOS.editor.requestRender = function(reason) {
-        const loop = VRODOS.editor.renderLoop;
+        const loop = getRenderLoop();
         if (!loop || VRODOS.editor.isPaused) {
             return;
         }
 
-        const envir = VRODOS.editor.envir;
-        if (envir && envir.isSceneLoading) {
-            const now = window.performance && typeof window.performance.now === 'function'
-                ? window.performance.now()
-                : Date.now();
-            const throttleMs = Math.max(0, Number(loop.loadingRenderThrottleMs || 0));
-            const elapsed = now - Number(loop.lastLoadingRenderAt || 0);
-
-            if (throttleMs > 0 && elapsed < throttleMs) {
-                if (!loop.loadingRenderTimer) {
-                    loop.loadingRenderTimer = window.setTimeout(() => {
-                        loop.loadingRenderTimer = null;
-                        loop.lastLoadingRenderAt = window.performance && typeof window.performance.now === 'function'
-                            ? window.performance.now()
-                            : Date.now();
-                        loop.needsRender = true;
-                        VRODOS.editor.startRenderLoop();
-                    }, Math.max(16, throttleMs - elapsed));
-                }
-                return;
-            }
-
-            loop.lastLoadingRenderAt = now;
+        if (shouldDeferLoadingRender(loop, getEnvir())) {
+            return;
         }
 
         void reason;
@@ -168,4 +280,3 @@ VRODOS.api = VRODOS.api || {};
         VRODOS.editor.requestRender('legacy-animate');
     };
 })();
-
