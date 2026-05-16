@@ -1,5 +1,29 @@
 // ─── Floating Object Controls Panel helpers ───
 
+const VRODOS_OBJECT_CONTROLS_IDS = {
+    panel: 'object-controls-panel',
+    header: 'object-controls-header',
+    closeButton: 'object-controls-close',
+    title: 'object-controls-title',
+    badge: 'object-controls-badge',
+    propertiesContainer: 'object-properties-container',
+    manipulationToggle: 'object-manipulation-toggle',
+    axisButtons: 'axis-manipulation-buttons'
+};
+
+function getObjectControlsElement(key) {
+    return document.getElementById(VRODOS_OBJECT_CONTROLS_IDS[key]);
+}
+
+function setObjectControlsActionsVisible(isVisible) {
+    const displayValue = isVisible ? '' : 'none';
+    const manipulationToggle = getObjectControlsElement('manipulationToggle');
+    const axisButtons = getObjectControlsElement('axisButtons');
+
+    if (manipulationToggle) manipulationToggle.style.display = displayValue;
+    if (axisButtons) axisButtons.style.display = displayValue;
+}
+
 /**
  * Show the floating Object Controls panel.
  * Positioned 100px to the right of the last mouse click,
@@ -8,15 +32,14 @@
  * @param {string} [objectName] - Title shown in the panel header
  */
 function showObjectControlsPanel(objectName) {
-    const panel = document.getElementById('object-controls-panel');
+    const panel = getObjectControlsElement('panel');
     if (!panel) return;
 
     panel.classList.remove('tw-hidden');
-    document.getElementById('object-manipulation-toggle').style.display = '';
-    document.getElementById('axis-manipulation-buttons').style.display = '';
+    setObjectControlsActionsVisible(true);
 
     if (objectName) {
-        const title = document.getElementById('object-controls-title');
+        const title = getObjectControlsElement('title');
         if (title) title.textContent = objectName;
     }
 
@@ -47,8 +70,9 @@ VRODOS.editor._lastClickX = 0;
 VRODOS.editor._lastClickY = 0;
 
 function hideObjectControlsPanel() {
-    const panel = document.getElementById('object-controls-panel');
+    const panel = getObjectControlsElement('panel');
     if (panel) panel.classList.add('tw-hidden');
+    setObjectControlsActionsVisible(false);
     updateObjectControlsMeta(null);
     hideAllPropertyPanels();
 }
@@ -94,7 +118,7 @@ function getObjectTypeLabel(object) {
 }
 
 function updateObjectControlsMeta(object) {
-    const badge = document.getElementById('object-controls-badge');
+    const badge = getObjectControlsElement('badge');
     if (!badge) return;
 
     if (!object) {
@@ -118,7 +142,7 @@ function updateObjectControlsMeta(object) {
 }
 
 function ensureAssessmentPropertiesSection() {
-    const container = document.getElementById('object-properties-container');
+    const container = getObjectControlsElement('propertiesContainer');
     if (!container) return null;
 
     let section = document.getElementById('popUpAssessmentPropertiesDiv');
@@ -201,7 +225,7 @@ function vrodosNormalizeWalkableBehavior(value) {
 }
 
 function ensureWalkableSurfacePropertiesSection() {
-    const container = document.getElementById('object-properties-container');
+    const container = getObjectControlsElement('propertiesContainer');
     if (!container) return null;
 
     let section = document.getElementById('walkableSurfacePropertiesDiv');
@@ -340,7 +364,7 @@ function vrodosCommitObjectControlsProperty(prop, nextValue) {
 }
 
 function ensureAudioPropertiesSection() {
-    const container = document.getElementById('object-properties-container');
+    const container = getObjectControlsElement('propertiesContainer');
     if (!container) return null;
 
     let section = document.getElementById('audioPropertiesDiv');
@@ -483,7 +507,7 @@ function displayAudioProperties(object) {
  * Hide all object property sections inside the floating panel.
  */
 function hideAllPropertyPanels() {
-    const container = document.getElementById('object-properties-container');
+    const container = getObjectControlsElement('propertiesContainer');
     if (!container) return;
     container.style.display = 'none';
     const sections = container.querySelectorAll('.object-property-section');
@@ -563,16 +587,16 @@ function showPropertiesInPanel(object) {
 
     // Show the container only if a property section is active
     if (hasProperties) {
-        const container = document.getElementById('object-properties-container');
+        const container = getObjectControlsElement('propertiesContainer');
         if (container) container.style.display = 'block';
     }
 }
 
 // Set up drag + close once DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    const panel = document.getElementById('object-controls-panel');
-    const header = document.getElementById('object-controls-header');
-    const closeBtn = document.getElementById('object-controls-close');
+    const panel = getObjectControlsElement('panel');
+    const header = getObjectControlsElement('header');
+    const closeBtn = getObjectControlsElement('closeButton');
 
     if (!panel || !header) return;
 
@@ -1568,6 +1592,7 @@ VRODOS.editor.transforms.syncGui = syncTransformGuiFromObject;
 VRODOS.editor.transforms.syncFromControls = updatePositionsPhpAndJavsFromControlsAxes;
 VRODOS.ui.showObjectControlsPanel = showObjectControlsPanel;
 VRODOS.ui.hideObjectControlsPanel = hideObjectControlsPanel;
+VRODOS.ui.setObjectControlsActionsVisible = setObjectControlsActionsVisible;
 VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;
 VRODOS.ui.controlInterface = controlInterface;
 VRODOS.ui.controllerDatGuiOnChange = controllerDatGuiOnChange;

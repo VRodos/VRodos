@@ -183,6 +183,19 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         }
     }
 
+    function setObjectControlsActionsVisible(isVisible) {
+        if (typeof VRODOS.ui.setObjectControlsActionsVisible === 'function') {
+            VRODOS.ui.setObjectControlsActionsVisible(isVisible);
+            return;
+        }
+
+        const displayValue = isVisible ? '' : 'none';
+        const objManipToggle = document.getElementById('object-manipulation-toggle');
+        const axisManipBtns = document.getElementById('axis-manipulation-buttons');
+        if (objManipToggle) objManipToggle.style.display = displayValue;
+        if (axisManipBtns) axisManipBtns.style.display = displayValue;
+    }
+
     const selection = VRODOS.editor.selection || {
         selected: null,
         lightDirectionalLightSpotMover: null,
@@ -249,10 +262,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
 
             if (opts.openPanel && typeof VRODOS.ui.showObjectControlsPanel === 'function') {
                 VRODOS.ui.showObjectControlsPanel(getObjectTitle(target));
-                const objManipToggle = document.getElementById('object-manipulation-toggle');
-                const axisManipBtns = document.getElementById('axis-manipulation-buttons');
-                if (objManipToggle) objManipToggle.style.display = '';
-                if (axisManipBtns) axisManipBtns.style.display = '';
+                setObjectControlsActionsVisible(true);
             }
 
             configureTransformToolbar(target);
@@ -309,10 +319,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
                 VRODOS.ui.hideObjectControlsPanel();
             }
 
-            const objManipToggle = document.getElementById('object-manipulation-toggle');
-            const axisManipBtns = document.getElementById('axis-manipulation-buttons');
-            if (objManipToggle) objManipToggle.style.display = 'none';
-            if (axisManipBtns) axisManipBtns.style.display = 'none';
+            setObjectControlsActionsVisible(false);
             render.request(`selection-cleared-${opts.source || 'unknown'}`);
         }
     };
