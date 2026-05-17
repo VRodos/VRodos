@@ -1,41 +1,5 @@
 <!--Object property sections: shown inside the floating Object Controls panel on selection -->
 
-<script>
-
-
-	function vrodosGetPopupTargetObject() {
-		if (typeof _currentSelectedRealObject !== 'undefined' && _currentSelectedRealObject) {
-			return _currentSelectedRealObject;
-		}
-
-		if (typeof VRODOS.editor.transform_controls === 'undefined' || !VRODOS.editor.transform_controls.object) {
-			return null;
-		}
-
-		if (VRODOS.editor.transform_controls.object.name === 'vrodosGizmoProxy' && VRODOS.editor.transform_controls.object.realObject) {
-			return VRODOS.editor.transform_controls.object.realObject;
-		}
-
-		return VRODOS.editor.transform_controls.object;
-	}
-
-	function vrodosSetPopupNumericProp(prop, value) {
-		var targetObject = vrodosGetPopupTargetObject();
-		if (!targetObject) return;
-
-		var numericValue = parseFloat(value);
-		targetObject[prop] = isFinite(numericValue) ? numericValue : 0;
-	}
-
-	function vrodosSetPopupProp(prop, value) {
-		var targetObject = vrodosGetPopupTargetObject();
-		if (!targetObject) return;
-		targetObject[prop] = value;
-	}
-
-
-</script>
-
 <!-- Sun Properties -->
 <div id="popUpSunPropertiesDiv" class="object-property-section" style="display:none;">
 	<div class="prop-section-title">Sun Properties</div>
@@ -288,8 +252,7 @@
 	<div class="prop-row">
 		<label for="poi_link_text" class="prop-label">URL</label>
 		<input type="text" id="poi_link_text" name="poi_link_text" placeholder="https://example.com"
-				class="prop-input tw-flex-1" value="" 
-				onkeyup="vrodosSetPopupProp('poi_link_url', this.value); VRODOS.api.saveChanges();" />
+				class="prop-input tw-flex-1" value="" />
 	</div>
 </div>
 
@@ -341,22 +304,19 @@
 	<div class="prop-row">
 		<label for="poi_chat_title" class="prop-label">Title</label>
 		<input type="text" id="poi_chat_title" name="poi_chat_title" placeholder="Help Chat"
-				class="prop-input tw-flex-1" maxlength="100" 
-				onkeyup="vrodosSetPopupProp('poi_chat_title', this.value); VRODOS.api.saveChanges();" />
+				class="prop-input tw-flex-1" maxlength="100" />
 	</div>
 
 	<div class="prop-row">
 		<label for="poi_chat_participants" class="prop-label">Max Participants</label>
 		<input type="number" id="poi_chat_participants" name="poi_chat_participants"
-				min="1" max="10" value="2" class="prop-input tw-w-16" 
-				onchange="vrodosSetPopupNumericProp('poi_chat_participants', this.value); VRODOS.api.saveChanges();" />
+				min="1" max="10" value="2" class="prop-input tw-w-16" />
 	</div>
 
 	<div class="prop-row">
 		<label for="poi_chat_indicators" class="prop-label">Show Indicators</label>
 		<input type="checkbox" id="poi_chat_indicators" name="poi_chat_indicators"
-				title="Show availability icons" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary" 
-				onchange="vrodosSetPopupProp('poi_chat_indicators', this.checked ? 1 : 0); VRODOS.api.saveChanges();" />
+				title="Show availability icons" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary" />
 	</div>
 </div>
 

@@ -578,17 +578,19 @@ function initPersistentPropertyListeners() {
 
     _bindTrackedEditorInputChange('poi_link_text', function () {
         const obj = getSelectedPropertyTarget();
-        if (obj && this.value) {
-            const oldVal = this._oldVal || obj.poi_link_url;
-            const newVal = this.value;
+        if (!obj) {
+            return;
+        }
 
-            if (oldVal !== newVal) {
-                obj.poi_link_url = newVal;
-                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_link_url', oldVal, newVal));
-                }
-                VRODOS.api.saveChanges();
+        const oldVal = this._oldVal !== undefined ? this._oldVal : (obj.poi_link_url || '');
+        const newVal = this.value;
+
+        if (oldVal !== newVal) {
+            obj.poi_link_url = newVal;
+            if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+                VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'poi_link_url', oldVal, newVal));
             }
+            VRODOS.api.saveChanges();
         }
     });
 
