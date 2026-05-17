@@ -210,10 +210,8 @@ VRODOS.exporter.SceneExporter = class {
             return [];
         }
 
-        const roots = typeof VRODOS.utils.getEditorSceneRoots === 'function'
-            ? VRODOS.utils.getEditorSceneRoots(scene, {
-                filterSelectable: true,
-                includeDirector: true,
+        const roots = typeof VRODOS.utils.getSelectableEditorSceneRoots === 'function'
+            ? VRODOS.utils.getSelectableEditorSceneRoots(scene, {
                 rebuildRegistryIfEmpty: true
             })
             : [];

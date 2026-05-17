@@ -60,14 +60,6 @@ function getSceneObjectOrSelected(name) {
     return getEditorSceneObjectByName(name) || getSelectedPropertyTarget();
 }
 
-function getSceneObjectFromHierarchyItem(item) {
-    if (!item) return null;
-    if (typeof item.getAttribute !== 'function') return null;
-    const uuid = item.getAttribute('data-uuid') || item.id;
-    const name = item.getAttribute('data-name');
-    return (uuid ? getEditorSceneObjectByUuid(uuid) : null) || (name ? getEditorSceneObjectByName(name) : null);
-}
-
 function _getPropertyPanelState(panelId, name, options) {
     const panel = document.getElementById(panelId);
     if (!panel) {
@@ -173,25 +165,9 @@ function _setLightShadowRadius(light, value) {
 }
 
 function getSpotTargetOptionObjects() {
-    const scene = VRODOS.editor.envir ? VRODOS.editor.envir.scene : null;
-    const roots = typeof VRODOS.utils.getEditorSceneRoots === 'function'
-        ? VRODOS.utils.getEditorSceneRoots(scene, {
-            filterSelectable: true,
-            includeDirector: true,
-            rebuildRegistryIfEmpty: false
-        })
+    return typeof VRODOS.utils.getSelectableEditorSceneRoots === 'function'
+        ? VRODOS.utils.getSelectableEditorSceneRoots()
         : [];
-
-    if (roots.length > 0) {
-        return roots;
-    }
-
-    const hierViewer = document.getElementById('hierarchy-viewer');
-    if (!hierViewer) return [];
-
-    return Array.from(hierViewer.querySelectorAll('.hierarchyItem'))
-        .map(getSceneObjectFromHierarchyItem)
-        .filter(Boolean);
 }
 
 VRODOS.ui.displaySunProperties = function(event, name) {

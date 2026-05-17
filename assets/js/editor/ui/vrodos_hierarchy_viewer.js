@@ -16,12 +16,8 @@ function _hierarchyGetObjectByName(name) {
 }
 
 function _hierarchyGetSelectableRoots() {
-    return typeof VRODOS.utils.getEditorSceneRoots === 'function'
-        ? VRODOS.utils.getEditorSceneRoots(VRODOS.editor.envir ? VRODOS.editor.envir.scene : null, {
-            filterSelectable: true,
-            includeDirector: true,
-            rebuildRegistryIfEmpty: false
-        })
+    return typeof VRODOS.utils.getSelectableEditorSceneRoots === 'function'
+        ? VRODOS.utils.getSelectableEditorSceneRoots()
         : [];
 }
 

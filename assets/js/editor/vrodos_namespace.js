@@ -319,6 +319,19 @@ VRODOS.utils.getEditorSceneRoots = function(scene, options) {
         : roots;
 };
 
+VRODOS.utils.getSelectableEditorSceneRoots = function(scene, options) {
+    const envir = VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir : null;
+    const targetScene = scene || (envir ? envir.scene : null);
+    const opts = Object.assign({
+        includeDirector: true,
+        rebuildRegistryIfEmpty: false
+    }, options || {});
+
+    return VRODOS.utils.getEditorSceneRoots(targetScene, Object.assign({}, opts, {
+        filterSelectable: true
+    }));
+};
+
 VRODOS.utils.getNextPawnIndex = function(scene) {
     const source = VRODOS.utils.getEditorSceneRoots(scene);
 

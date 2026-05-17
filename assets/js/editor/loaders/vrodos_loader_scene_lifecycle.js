@@ -203,12 +203,8 @@ VRODOS.api.finalizeSceneLoad = function() {
 
     let playerObject = null;
     const registry = VRODOS.editor.sceneRegistry;
-    const roots = typeof VRODOS.utils.getEditorSceneRoots === 'function'
-        ? VRODOS.utils.getEditorSceneRoots(VRODOS.editor.envir.scene, {
-            filterSelectable: true,
-            includeDirector: true,
-            rebuildRegistryIfEmpty: false
-        })
+    const roots = typeof VRODOS.utils.getSelectableEditorSceneRoots === 'function'
+        ? VRODOS.utils.getSelectableEditorSceneRoots(VRODOS.editor.envir.scene)
         : registry.getSelectableRoots();
 
     if (roots.length > 0) {
