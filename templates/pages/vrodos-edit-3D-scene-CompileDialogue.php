@@ -22,10 +22,10 @@
 					<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>
 					Build Project
 				</a>
-				<button type="button"
+				<button id="compileDialogCloseBtn"
+				        type="button"
 				        class="tw-p-1.5 tw-text-slate-400 hover:tw-text-slate-700 tw-rounded-lg hover:tw-bg-slate-100 tw-transition-colors"
-				        title="Close"
-				        onclick="document.getElementById('compile-dialog').close()">
+				        title="Close">
 					<i data-lucide="x" class="tw-w-4 tw-h-4"></i>
 				</button>
 			</div>
@@ -78,8 +78,7 @@
 						<button id="buttonCopyWebLink" type="button" class="tw-btn tw-btn-ghost tw-btn-sm tw-text-emerald-700" title="Copy compiled scene URL">
 							<i data-lucide="copy" class="tw-w-4 tw-h-4"></i>
 						</button>
-						<a id="openWebLinkhref" href="#" target="_blank" class="tw-btn tw-btn-primary tw-btn-sm"
-						   onclick="document.getElementById('compileCancelBtn').click();">
+						<a id="openWebLinkhref" href="#" target="_blank" class="tw-btn tw-btn-primary tw-btn-sm">
 							<i data-lucide="rocket" class="tw-w-4 tw-h-4"></i>
 							Launch
 						</a>

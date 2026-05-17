@@ -18,6 +18,8 @@ VRODOS.api = VRODOS.api || {};
             bindCompileOpenControl();
             bindCompileProceedControl();
             bindCompileCancelControl();
+            bindCompileDialogCloseButton();
+            bindCompileLaunchControl();
             bindCompileCloseControl();
             bindCompileCopyLinkControl();
 
@@ -48,6 +50,13 @@ VRODOS.api = VRODOS.api || {};
 
         dialog.showModal();
         VRODOS.ui.refreshLucideIcons();
+    }
+
+    function closeCompileDialogIfOpen() {
+        const dialog = dialogState.getElement('dialog');
+        if (dialog && dialog.open) {
+            dialog.close();
+        }
     }
 
     function bindCompileOpenControl() {
@@ -103,10 +112,22 @@ VRODOS.api = VRODOS.api || {};
 
         cancelButton.addEventListener('click', () => {
             resumeRenderingAfterCompileDialog();
-
-            const dialog = dialogState.getElement('dialog');
-            if (dialog && dialog.open) dialog.close();
+            closeCompileDialogIfOpen();
         });
+    }
+
+    function bindCompileDialogCloseButton() {
+        const closeButton = dialogState.getElement('closeButton');
+        if (!closeButton) return;
+
+        closeButton.addEventListener('click', closeCompileDialogIfOpen);
+    }
+
+    function bindCompileLaunchControl() {
+        const launchLink = dialogState.getElement('openWebLink');
+        if (!launchLink) return;
+
+        launchLink.addEventListener('click', closeCompileDialogIfOpen);
     }
 
     function bindCompileCloseControl() {

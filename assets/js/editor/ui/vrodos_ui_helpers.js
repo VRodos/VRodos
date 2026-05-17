@@ -158,6 +158,7 @@ VRODOS.ui.compileDialogState = (function(existing) {
     const ids = {
         appResult: 'appResultDiv',
         cancelButton: 'compileCancelBtn',
+        closeButton: 'compileDialogCloseBtn',
         constantUpdate: 'constantUpdateUser',
         copyWebLink: 'buttonCopyWebLink',
         dialog: 'compile-dialog',

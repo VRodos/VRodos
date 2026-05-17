@@ -235,6 +235,8 @@
 - Verification: Phase 124 `includes/class-vrodos-game-cpt-manager.php` PHP syntax check passed; targeted legacy compile report scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 125 legacy compile task cancellation cleanup implemented.
 - Verification: Phase 125 JS syntax checks passed; targeted legacy compile task scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 126 compile dialog inline close-handler cleanup implemented.
+- Verification: Phase 126 JS syntax checks passed; `templates/pages/vrodos-edit-3D-scene-CompileDialogue.php` and `includes/class-vrodos-game-cpt-manager.php` PHP syntax checks passed; targeted compile inline close-handler scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -411,6 +413,7 @@ assets/js/editor/
 - Done: Remove duplicate compile runtime-mode request plumbing by relying on the saved `aframeRuntimeMode` scene metadata during compile and deleting the AJAX-side `runtimeMode` query parameter/helper lookup.
 - Done: Remove orphaned legacy game compiler report markup by deleting unused compile report, ZIP report, and stdout report placeholders from the project metabox.
 - Done: Remove legacy compile task cancellation plumbing by deleting the unused `data-unity-pid` lookup, `getCompilePid()` helper, and orphaned `killCompileTask` close/cancel calls.
+- Done: Clean up compile close actions by moving dialog close/launch close behavior out of inline `onclick` attributes and into `vrodos_compile_dialog_ui.js`, while deleting the stale hidden close link from the legacy game compiler metabox.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
