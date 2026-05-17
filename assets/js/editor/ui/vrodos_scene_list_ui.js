@@ -199,7 +199,7 @@ VRODOS.ui = VRODOS.ui || {};
                 }
 
                 setDeleteDialogBusy(elements, true);
-                VRODOS.api.deleteScene(elements.dialog.dataset.sceneId, window.url_scene_redirect);
+                VRODOS.api.deleteScene(elements.dialog.dataset.sceneId, elements.dialog.dataset.redirectUrl);
             });
         }
 
@@ -233,6 +233,47 @@ VRODOS.ui = VRODOS.ui || {};
         return sceneTitle || 'this scene';
     }
 
+    function isUsableRedirectUrl(value) {
+        return typeof value === 'string' && value.trim() !== '' && value.trim() !== 'undefined';
+    }
+
+    function getSceneCardRedirectUrl(card) {
+        if (!card || typeof card.querySelector !== 'function') {
+            return '';
+        }
+
+        const link = card.querySelector('a[href]');
+        return link && isUsableRedirectUrl(link.href) ? link.href : '';
+    }
+
+    function getFirstRemainingSceneRedirectUrl(deletedSceneId, container) {
+        if (!container || typeof container.querySelectorAll !== 'function') {
+            return '';
+        }
+
+        const cards = Array.from(container.querySelectorAll(SCENE_CARD_SELECTOR));
+        const firstRemainingCard = cards.find((card) => card.dataset.sceneId !== deletedSceneId);
+        return getSceneCardRedirectUrl(firstRemainingCard);
+    }
+
+    function getDeleteRedirectUrl(sceneId, button, elements) {
+        const buttonRedirectUrl = button ? button.dataset.redirectUrl : '';
+        if (isUsableRedirectUrl(buttonRedirectUrl)) {
+            return buttonRedirectUrl;
+        }
+
+        if (isUsableRedirectUrl(window.url_scene_redirect)) {
+            return window.url_scene_redirect;
+        }
+
+        const firstRemainingUrl = getFirstRemainingSceneRedirectUrl(sceneId, elements.container);
+        if (isUsableRedirectUrl(firstRemainingUrl)) {
+            return firstRemainingUrl;
+        }
+
+        return window.location.href;
+    }
+
     function openDeleteSceneDialog(button) {
         const sceneId = getSceneIdFromDeleteButton(button);
         if (!sceneId) {
@@ -251,6 +292,7 @@ VRODOS.ui = VRODOS.ui || {};
 
         if (elements.dialog) {
             elements.dialog.dataset.sceneId = sceneId;
+            elements.dialog.dataset.redirectUrl = getDeleteRedirectUrl(sceneId, button, elements);
             setDeleteDialogBusy(elements, false);
             elements.dialog.showModal();
             refreshLucideIcons();

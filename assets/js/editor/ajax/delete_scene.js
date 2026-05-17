@@ -57,6 +57,23 @@ VRODOS.utils = VRODOS.utils || {};
 		closeDeleteSceneDialog();
 	}
 
+	function isUsableRedirectUrl(value) {
+		return typeof value === 'string' && value.trim() !== '' && value.trim() !== 'undefined';
+	}
+
+	function getFallbackRedirectUrl() {
+		const dialog = getElement(DELETE_SCENE_IDS.dialog);
+		if (dialog && isUsableRedirectUrl(dialog.dataset.redirectUrl)) {
+			return dialog.dataset.redirectUrl;
+		}
+
+		return window.location.href;
+	}
+
+	function resolveRedirectUrl(redirectUrl) {
+		return isUsableRedirectUrl(redirectUrl) ? redirectUrl : getFallbackRedirectUrl();
+	}
+
 	/**
 	 * Delete Scene.
 	 *
@@ -65,13 +82,15 @@ VRODOS.utils = VRODOS.utils || {};
 	 * - redirectUrl: URL to open after deletion.
 	 */
 	VRODOS.api.deleteScene = function(sceneId, redirectUrl) {
+		const resolvedRedirectUrl = resolveRedirectUrl(redirectUrl);
+
 		fetch(VRODOS.utils.getAjaxUrl(), {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 			body: new URLSearchParams({
 				action: 'vrodos_delete_scene_action',
 				scene_id: sceneId,
-				url_scene_redirect: redirectUrl
+				url_scene_redirect: resolvedRedirectUrl
 			})
 		})
 			.then((response) => response.text())
@@ -81,7 +100,7 @@ VRODOS.utils = VRODOS.utils || {};
 				resetDeleteSceneDialog();
 				fadeOutDeletedScene(sceneId);
 
-				window.location.replace(redirectUrl);
+				window.location.replace(resolvedRedirectUrl);
 			})
 			.catch((err) => {
 				resetDeleteSceneDialog();
