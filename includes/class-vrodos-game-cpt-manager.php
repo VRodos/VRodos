@@ -287,12 +287,9 @@ class VRodos_Game_CPT_Manager {
 		</div>
 
 		<hr class="WhiteSpaceSeparator" style="margin-top: 0;" tabIndex="0">
-		<a id="vrodos_compileButton" type="button" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" onclick="VRODOS.api.compileScene()">Compile</a>
+		<button id="vrodos_compileButton" type="button" class="button button-primary vrodos-admin-compile-button" onclick="VRODOS.api.compileScene()">Compile</button>
 		<hr class="separator" >
 		<div id="appResultDiv" style="margin-top:20px;display:none">
-			<button title="Copy link to clipboard" id="buttonCopyWebLink" style="background: transparent; border: none; color: darkslateblue" >
-				<i class="material-icons" style="cursor: pointer; float: right;">content_copy</i>
-			</button>
 			<a id="openWebLinkhref" href="#" title="Open index.html in new window" target="_blank" style="color:darkslateblue">Open experience link</a>
 		</div>
 		<?php
