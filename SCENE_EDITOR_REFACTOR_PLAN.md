@@ -233,6 +233,8 @@
 - Verification: Phase 123 JS syntax checks passed; targeted compile request runtime-mode scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 124 legacy game compiler report markup cleanup implemented.
 - Verification: Phase 124 `includes/class-vrodos-game-cpt-manager.php` PHP syntax check passed; targeted legacy compile report scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 125 legacy compile task cancellation cleanup implemented.
+- Verification: Phase 125 JS syntax checks passed; targeted legacy compile task scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -408,6 +410,7 @@ assets/js/editor/
 - Done: Remove legacy game compiler localization by deleting the dead `phpvarsA`, `phpvarsB`, `my_ajax_object_compile`, and unregistered `vrodos_assemble_request` path while routing the remaining metabox compile config through `vrodos_api_config`.
 - Done: Remove duplicate compile runtime-mode request plumbing by relying on the saved `aframeRuntimeMode` scene metadata during compile and deleting the AJAX-side `runtimeMode` query parameter/helper lookup.
 - Done: Remove orphaned legacy game compiler report markup by deleting unused compile report, ZIP report, and stdout report placeholders from the project metabox.
+- Done: Remove legacy compile task cancellation plumbing by deleting the unused `data-unity-pid` lookup, `getCompilePid()` helper, and orphaned `killCompileTask` close/cancel calls.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

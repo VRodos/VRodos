@@ -26,13 +26,6 @@ VRODOS.api = VRODOS.api || {};
         }
     };
 
-    function killCompileTaskIfNeeded() {
-        const pid = dialogState.getCompilePid();
-        if (pid && typeof VRODOS.api.killCompileTask === 'function') {
-            VRODOS.api.killCompileTask(pid);
-        }
-    }
-
     function pauseRenderingForCompileDialog() {
         VRODOS.editor.isPaused = true;
         VRODOS.ui.swapLucideIcon(document.getElementById('pauseRendering'), 'play');
@@ -110,7 +103,6 @@ VRODOS.api = VRODOS.api || {};
 
         cancelButton.addEventListener('click', () => {
             resumeRenderingAfterCompileDialog();
-            killCompileTaskIfNeeded();
 
             const dialog = dialogState.getElement('dialog');
             if (dialog && dialog.open) dialog.close();
@@ -125,8 +117,6 @@ VRODOS.api = VRODOS.api || {};
             if (VRODOS.editor.isPaused) {
                 resumeRenderingAfterCompileDialog();
             }
-
-            killCompileTaskIfNeeded();
         });
     }
 

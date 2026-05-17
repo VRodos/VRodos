@@ -281,11 +281,6 @@ VRODOS.ui.compileDialogState = (function(existing) {
         VRODOS.ui.refreshLucideIcons();
     }
 
-    function getCompilePid() {
-        const cancelButton = getElement('cancelButton');
-        return cancelButton ? cancelButton.getAttribute('data-unity-pid') : '';
-    }
-
     function getPrimaryExperienceUrl() {
         const openWebLink = getElement('openWebLink');
         return openWebLink ? (openWebLink.getAttribute('href') || openWebLink.href || '') : '';
@@ -312,7 +307,6 @@ VRODOS.ui.compileDialogState = (function(existing) {
 
     return Object.assign(existing || {}, {
         copyPrimaryExperienceUrl,
-        getCompilePid,
         getElement,
         getPrimaryExperienceUrl,
         finishBuildState,
