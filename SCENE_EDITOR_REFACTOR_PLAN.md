@@ -217,6 +217,8 @@
 - Verification: Phase 115 JS syntax check passed; PHP syntax check skipped because no PHP files changed; targeted compile request DOM helper scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 116 grouped compile dialog state helper consolidation implemented.
 - Verification: Phase 116 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; targeted compile dialog state scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 117 compile result link action cleanup implemented.
+- Verification: Phase 117 JS syntax checks passed; `templates/pages/vrodos-edit-3D-scene-CompileDialogue.php` PHP syntax check passed; targeted compile link action scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -384,6 +386,7 @@ assets/js/editor/
 - Done: Group scene-editor startup/compile Lucide cleanup by routing editor initialization and compile-result icon refreshes through `VRODOS.ui.refreshLucideIcons()` with explicit `vrodos_ui_helpers` dependencies.
 - Done: Group compile request AJAX cleanup by centralizing compile-dialog element lookup, progress/result state updates, runtime link rendering, primary link reveal, runtime-mode resolution, response parsing, and null-safe progress hiding inside `ajax/vrodos_request_compile.js`.
 - Done: Group compile dialog state helper consolidation by adding `VRODOS.ui.compileDialogState` to shared UI helpers, routing compile dialog open/proceed/cancel and compile request progress/result updates through it, and restoring progress text visibility on repeated builds.
+- Done: Clean up compile result link actions by removing the duplicate text "Copy Link" launch anchor, keeping the compact copy icon button, deleting the stale direct clipboard handler from the large settings dialog file, and routing icon-copy through the shared clipboard fallback.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

@@ -177,7 +177,6 @@ VRODOS.ui.compileDialogState = (function(existing) {
         statusRow: 'compileStatusRow',
         taskMemory: 'unityTaskMemValue',
         topResultLink: 'compileTopResultLink',
-        webLink: 'vrodos-weblink',
         zipLink: 'vrodos-ziplink'
     };
 
@@ -258,7 +257,6 @@ VRODOS.ui.compileDialogState = (function(existing) {
         setDisplay(getElement('progressTitle'), '');
         setDisplay(getElement('progressText'), '');
         setDisplay(getElement('zipLink'), 'none');
-        setDisplay(getElement('webLink'), 'none');
         setHtml(getElement('progressText'), '');
         setHtml(getElement('taskMemory'), '0');
     }
@@ -318,17 +316,12 @@ VRODOS.ui.compileDialogState = (function(existing) {
             return;
         }
 
-        const webLink = getElement('webLink');
         const openWebLink = getElement('openWebLink');
 
         setDisplay(getElement('statusRow'), 'none');
         setDisplay(getElement('appResult'), 'flex');
         setText(getElement('resultMeta'), `Ready to be shared - ${new Date().toLocaleString()}`);
 
-        if (webLink) {
-            webLink.href = primaryExperienceUrl;
-            setDisplay(webLink, '');
-        }
         if (openWebLink) {
             setHref(openWebLink, primaryExperienceUrl);
             setDisplay(openWebLink, '');
@@ -342,10 +335,36 @@ VRODOS.ui.compileDialogState = (function(existing) {
         return cancelButton ? cancelButton.getAttribute('data-unity-pid') : '';
     }
 
+    function getPrimaryExperienceUrl() {
+        const openWebLink = getElement('openWebLink');
+        return openWebLink ? (openWebLink.getAttribute('href') || openWebLink.href || '') : '';
+    }
+
+    function copyPrimaryExperienceUrl() {
+        const url = getPrimaryExperienceUrl();
+
+        if (!url || url === '#') {
+            VRODOS.ui.showTemporaryButtonWarning(ids.copyWebLink, 'No link');
+            return Promise.reject(new Error('No compiled scene URL is available to copy.'));
+        }
+
+        return VRODOS.utils.copyPlainText(url)
+            .then(() => {
+                VRODOS.ui.showTemporaryButtonSuccess(ids.copyWebLink, 'Copied');
+                return url;
+            })
+            .catch((error) => {
+                VRODOS.ui.showTemporaryButtonWarning(ids.copyWebLink, 'Press Ctrl+C');
+                throw error;
+            });
+    }
+
     return Object.assign(existing || {}, {
         clearPreview,
+        copyPrimaryExperienceUrl,
         getCompilePid,
         getElement,
+        getPrimaryExperienceUrl,
         getValue,
         hideProgress,
         releaseBuildActions,

@@ -1276,21 +1276,4 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Initial synchronization moved to vrodos_editor_initializer.js to ensure environment is ready
 
-    function copyURLToClipboard() {
-        const linkElement = document.getElementById("openWebLinkhref");
-        if(linkElement && linkElement.href) {
-            navigator.clipboard.writeText(linkElement.href)
-                .then(() => {
-                    alert(`Copied url: ${  linkElement.href}`);
-                })
-                .catch(err => {
-                    console.error('Failed to copy URL: ', err);
-                });
-        }
-    }
-
-    const copyButton = document.getElementById("buttonCopyWebLink");
-    if(copyButton) {
-        copyButton.addEventListener("click", copyURLToClipboard);
-    }
 });

@@ -79,11 +79,7 @@
 						</div>
 					</div>
 					<div class="tw-flex tw-items-center tw-gap-2">
-						<a class="tw-btn tw-btn-ghost tw-btn-sm tw-text-emerald-700" href="" id="vrodos-weblink" target="_blank">
-							<i data-lucide="external-link" class="tw-w-4 tw-h-4"></i>
-							Copy Link
-						</a>
-						<button id="buttonCopyWebLink" class="tw-btn tw-btn-ghost tw-btn-sm tw-text-emerald-700">
+						<button id="buttonCopyWebLink" type="button" class="tw-btn tw-btn-ghost tw-btn-sm tw-text-emerald-700" title="Copy compiled scene URL">
 							<i data-lucide="copy" class="tw-w-4 tw-h-4"></i>
 						</button>
 						<a id="openWebLinkhref" href="#" target="_blank" class="tw-btn tw-btn-primary tw-btn-sm"

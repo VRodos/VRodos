@@ -19,6 +19,7 @@ VRODOS.api = VRODOS.api || {};
             bindCompileProceedControl();
             bindCompileCancelControl();
             bindCompileCloseControl();
+            bindCompileCopyLinkControl();
 
             this.isBound = true;
             return true;
@@ -128,6 +129,18 @@ VRODOS.api = VRODOS.api || {};
             }
 
             killCompileTaskIfNeeded();
+        });
+    }
+
+    function bindCompileCopyLinkControl() {
+        const copyButton = dialogState.getElement('copyWebLink');
+        if (!copyButton) return;
+
+        copyButton.addEventListener('click', () => {
+            dialogState.copyPrimaryExperienceUrl()
+                .catch((error) => {
+                    console.warn('VRodos: failed to copy compiled scene URL to clipboard.', error);
+                });
         });
     }
 
