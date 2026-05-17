@@ -328,7 +328,7 @@ class VRodos_Asset_Manager {
       // AJAX Scripts
       ['ajax-script_compile', VRodos_Path_Manager::editor_ajax_js_url( 'vrodos_request_compile.js' ), ['vrodos_namespace']],
       ['ajax-script_deletescene', VRodos_Path_Manager::editor_ajax_js_url( 'delete_scene.js' ), ['vrodos_namespace']],
-      ['ajax-script_filebrowse', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_asset_browser_toolbar.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_cefr_badges']],
+      ['ajax-script_filebrowse', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_asset_browser_toolbar.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_ui_helpers', 'vrodos_cefr_badges']],
       ['ajax-script_savescene', VRodos_Path_Manager::editor_ajax_js_url( 'vrodos_save_scene_ajax.js' ), ['vrodos_namespace', 'vrodos_ScenePersistence']],
       ['ajax-script_uploadimage', VRodos_Path_Manager::editor_ajax_js_url( 'uploadimage.js' ), ['vrodos_namespace', 'ajax-script_savescene']],
       ['ajax-script_fetchasset', VRodos_Path_Manager::editor_ajax_js_url( 'fetch_asset.js' ), ['vrodos_namespace']],
@@ -383,7 +383,7 @@ class VRodos_Asset_Manager {
       ['vrodos_compile_dialog_ui', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_compile_dialog_ui.js' ), ['vrodos_namespace', 'vrodos_ui_helpers', 'vrodos_compile_dialogue', 'ajax-script_compile', 'ajax-script_savescene']],
       ['vrodos_icons', VRodos_Path_Manager::editor_js_url( 'vrodos_icons.js' ), ['vrodos_namespace']],
       ['vrodos_cefr_badges', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_cefr_badges.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils']],
-      ['vrodos_HierarchyViewer', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_hierarchy_viewer.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_ScenePersistence', 'vrodos_cefr_badges']],
+      ['vrodos_HierarchyViewer', VRodos_Path_Manager::editor_js_url( 'ui/vrodos_hierarchy_viewer.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_ui_helpers', 'vrodos_ScenePersistence', 'vrodos_cefr_badges']],
       ['vrodos_CompileUI_Shared', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_ui_shared.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_runtime_settings_contract']],
       ['vrodos_CompileUI_General', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_ui_general.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared']],
       ['vrodos_CompileUI_PostFX', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_ui_postfx.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared']],

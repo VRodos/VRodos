@@ -576,9 +576,7 @@ VRODOS.ui.updateHierarchyLockIcon = function(object) {
 
     const newIcon = object.locked ? 'lock' : 'lock-open';
     lockAnchor.innerHTML = `<i data-lucide="${  newIcon  }" class="tw-w-4 tw-h-4"></i>`;
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons({ nodes: [lockAnchor] });
-    }
+    VRODOS.ui.refreshLucideIcons({ nodes: [lockAnchor] });
 };
 
 function _createHierarchyItemFragment(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML) {
@@ -781,7 +779,7 @@ VRODOS.ui.setHierarchyViewer = function() {
     VRODOS.ui.updateHierarchyViewerCount();
 
     // Render Lucide icons in dynamically added items
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    VRODOS.ui.refreshLucideIcons();
 }
 
 /**
@@ -813,7 +811,7 @@ VRODOS.ui.addInHierarchyViewer = function(obj) {
     AppendObject(obj);
 
     // Render Lucide icons in dynamically added items
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    VRODOS.ui.refreshLucideIcons();
 
     VRODOS.ui.setBackgroundColorHierarchyViewer(obj.uuid);
     VRODOS.ui.updateHierarchyViewerCount();

@@ -191,9 +191,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             dragGhostImg.style.display = 'none';
             dragGhostFallback.style.display = 'flex';
             dragGhostFallback.innerHTML = `<i data-lucide="${  VRODOS.utils.escapeAttribute(fallbackIcon)  }" style="width:28px; height:28px;"></i>`;
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
+            VRODOS.ui.refreshLucideIcons();
         }
         dragGhostLabel.textContent = VRODOS.utils.displayText(assetName);
         e.dataTransfer.setDragImage(dragGhost, 60, 45);
@@ -292,7 +290,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                 fileList.insertAdjacentHTML('beforeend', liHTML);
             }
             // Re-initialize Lucide icons after dynamic DOM insertion
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            VRODOS.ui.refreshLucideIcons();
         } else {
             // Show empty state when no assets exist
             const emptyHTML = '<li class="asset-empty-state tw-col-span-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-16 tw-px-4 tw-text-center tw-bg-slate-800/20 tw-rounded-xl tw-border tw-border-dashed tw-border-white/10 tw-my-4">' +
@@ -303,7 +301,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                 '<p class="tw-text-[10px] tw-text-slate-300 tw-mt-2 tw-leading-relaxed">Your library is empty. Add new 3D models and media from the Asset Manager to start building.</p>' +
             '</li>';
             fileList.insertAdjacentHTML('beforeend', emptyHTML);
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            VRODOS.ui.refreshLucideIcons();
         }
 
         // Remove animation
@@ -381,7 +379,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                     '<p class="tw-text-[10px] tw-text-slate-300 tw-mt-2 tw-leading-relaxed">No assets match this category in your project library.</p>' +
                     '</li>';
                 fileList.insertAdjacentHTML('beforeend', emptyHTML);
-                if (typeof lucide !== 'undefined') lucide.createIcons();
+                VRODOS.ui.refreshLucideIcons();
             } else {
                  emptyState.style.display = '';
                  emptyState.querySelector('p:nth-of-type(1)').textContent = "Empty Category";

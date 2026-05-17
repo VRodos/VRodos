@@ -209,6 +209,8 @@
 - Verification: Phase 111 JS syntax checks passed; focused canvas interactions sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 112 grouped Lucide UI helper consolidation implemented.
 - Verification: Phase 112 JS syntax checks passed; focused UI helper Lucide sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 113 grouped dynamic Lucide refresh cleanup implemented.
+- Verification: Phase 113 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; targeted dynamic Lucide source scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -372,6 +374,7 @@ assets/js/editor/
 - Done: Group floating panel and Immerse scene-info cleanup by centralizing panel IDs/constants, making floating-panel initialization idempotent, extracting drag/resize pointer handlers, adding pointer-cancel cleanup, and consolidating imported scene-info toggle/copy behavior.
 - Done: Group canvas event and drop interaction cleanup by centralizing canvas/property-panel selectors, reusable event binding guards, drop lifecycle helpers, null-safe 2D translate-mode handling, and robust light/pawn drag payload lookup from nested toolbar targets.
 - Done: Group Lucide UI helper consolidation by adding a shared `VRODOS.ui.refreshLucideIcons()` facade and routing shared UI feedback plus recent shell, scene-list, snapshot, floating-panel, and compile-dialog icon refreshes through it.
+- Done: Group dynamic Lucide refresh cleanup by routing asset-browser drag/empty-state icons and hierarchy lock/add/rebuild icon refreshes through `VRODOS.ui.refreshLucideIcons()` with explicit `vrodos_ui_helpers` script dependencies.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
