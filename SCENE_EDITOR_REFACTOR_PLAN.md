@@ -253,6 +253,8 @@
 - Verification: Phase 133 `includes/admin/class-vrodos-admin-dashboard-page.php` PHP syntax check passed; targeted dashboard label scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 134 asset taxonomy metabox cleanup implemented.
 - Verification: Phase 134 `includes/asset-cpt/trait-vrodos-asset-cpt-taxonomy-admin.php` PHP syntax check passed; targeted asset taxonomy metabox scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 135 scene raycasting/property panel ownership split implemented.
+- Verification: Phase 135 JS syntax checks passed for raycasting and property controls; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; targeted property/raycast ownership scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -438,6 +440,7 @@ assets/js/editor/
 - Done: Clean up the scene Parent Project admin metabox by replacing dropdown HTML string rewriting with `wp_dropdown_categories()` options, adding shared constants for the taxonomy/nonce, and validating term IDs on save.
 - Done: Remove the three descriptive subtitle labels from the admin dashboard overview stat cards while preserving the totals, icons, and card layout.
 - Done: Clean up asset Project, Category, and IPR Category admin metaboxes by centralizing dropdown rendering, nonce checks, posted-term resolution, and single-term save handling while preserving assessment-category protection.
+- Done: Move legacy property panel hydration, input binding, selected-object lookup helpers, and light/POI property display methods from scene raycasting into the property-controls UI module while preserving the existing `VRODOS.ui.*Properties` compatibility methods.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
