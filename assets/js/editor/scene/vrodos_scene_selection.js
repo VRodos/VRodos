@@ -78,6 +78,46 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         return object._vrodosCelOutlineMeshes || null;
     }
 
+    function getCelOutlineSourceStore(object) {
+        if (!object) return null;
+
+        if (!object._vrodosCelOutlineSourceMeshes) {
+            Object.defineProperty(object, '_vrodosCelOutlineSourceMeshes', {
+                value: new Set(),
+                configurable: true
+            });
+        }
+
+        return object._vrodosCelOutlineSourceMeshes;
+    }
+
+    function isCelOutlineSourceMesh(mesh) {
+        return Boolean(mesh && mesh.isMesh && mesh.name !== CEL_OUTLINE_TAG && mesh.parent);
+    }
+
+    function getCelOutlineSourceMeshes(object) {
+        if (!object || typeof object.traverse !== 'function') return [];
+
+        const sourceStore = getCelOutlineSourceStore(object);
+        const cachedSources = Array.from(sourceStore).filter(isCelOutlineSourceMesh);
+
+        if (cachedSources.length > 0) {
+            if (cachedSources.length !== sourceStore.size) {
+                sourceStore.clear();
+                cachedSources.forEach((mesh) => sourceStore.add(mesh));
+            }
+            return cachedSources;
+        }
+
+        object.traverse((child) => {
+            if (isCelOutlineSourceMesh(child)) {
+                sourceStore.add(child);
+            }
+        });
+
+        return Array.from(sourceStore);
+    }
+
     function getCelOutlineTracker() {
         const envir = getEnvir();
         return envir ? envir.celOutlineMeshes : null;
@@ -110,12 +150,9 @@ VRODOS.editorScene = VRODOS.editorScene || {};
 
         const ownerStore = getCelOutlineStore(object);
         const outlineTracker = getCelOutlineTracker();
+        const sourceMeshes = getCelOutlineSourceMeshes(object);
 
-        object.traverse((child) => {
-            if (!child.isMesh || child.name === CEL_OUTLINE_TAG) {
-                return;
-            }
-
+        sourceMeshes.forEach((child) => {
             const outline = new THREE.Mesh(child.geometry, CEL_OUTLINE_MATERIAL);
             outline.name = CEL_OUTLINE_TAG;
             outline.scale.setScalar(1.04);

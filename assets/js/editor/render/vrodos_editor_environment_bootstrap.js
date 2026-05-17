@@ -39,7 +39,6 @@ VRODOS.editorRender = VRODOS.editorRender || {};
         this.editorPerformanceProfile = null;
         this.composer = null;
         this.renderPass = null;
-        this.outlinePass = null;
         this.effectFXAA = null;
 
         this.isComposerOn = false;

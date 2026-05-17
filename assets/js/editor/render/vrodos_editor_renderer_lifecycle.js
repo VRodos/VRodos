@@ -90,13 +90,6 @@ VRODOS.editor = VRODOS.editor || {};
         this.composer = new THREE.EffectComposer(this.renderer);
         this.renderPass = new THREE.RenderPass(this.scene, camera);
 
-        this.outlinePass = new THREE.OutlinePass(
-            new THREE.Vector2(this.SCREEN_WIDTH, this.SCREEN_HEIGHT),
-            this.scene,
-            camera
-        );
-        this.outlinePass.enabled = false;
-
         this.effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
         this.effectFXAA.uniforms.resolution.value.set(1 / this.SCREEN_WIDTH, 1 / this.SCREEN_HEIGHT);
         this.effectFXAA.renderToScreen = true;
@@ -104,7 +97,6 @@ VRODOS.editor = VRODOS.editor || {};
         this.turboResize();
 
         this.composer.addPass(this.renderPass);
-        this.composer.addPass(this.outlinePass);
         this.composer.addPass(this.effectFXAA);
 
         this.turboResize();
@@ -117,11 +109,6 @@ VRODOS.editor = VRODOS.editor || {};
 
         if (this.renderPass) {
             this.renderPass.camera = camera;
-        }
-
-        if (this.outlinePass) {
-            this.outlinePass.renderCamera = camera;
-            this.outlinePass.camera = camera;
         }
     }
 

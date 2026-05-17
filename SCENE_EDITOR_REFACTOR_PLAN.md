@@ -271,6 +271,8 @@
 - Verification: Phase 142 JS syntax checks passed for canvas events and hierarchy viewer; scene template PHP syntax check passed; targeted legacy hook scan passed with only the expected embedded JSON data script remaining; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 143 selectable scene-root helper consolidation implemented.
 - Verification: Phase 143 JS syntax checks passed for namespace, hierarchy, property controls, scene lifecycle, and scene persistence; targeted selectable-root helper scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 144 editor outline render cleanup implemented.
+- Verification: Phase 144 JS syntax checks passed for scene selection and renderer lifecycle/bootstrap; targeted OutlinePass/cel-outline scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -465,6 +467,7 @@ assets/js/editor/
 - Done: Remove the legacy right-click property action path entirely, keeping only canvas/panel browser-context-menu suppression and the left-click floating property panel workflow.
 - Done: Remove the stale raw `parseJSON_LoadScene` template script block, render hierarchy delegated actions as real buttons instead of `javascript:void(0)` links, and bind canvas drag/drop through the shared event binder.
 - Done: Add a shared `getSelectableEditorSceneRoots()` utility and route hierarchy rendering, Spot target options, scene-load player selection, and scene export candidates through it while removing the Spot target dropdown's DOM hierarchy fallback.
+- Done: Remove the disabled editor `OutlinePass` from the render composer and cache cel-outline source meshes per object so repeated selection does not re-walk stable object subtrees.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
