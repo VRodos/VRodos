@@ -1,257 +1,385 @@
-VRODOS.api.compileScene = function(showPawnPositions, options) {
-	const sceneId = VRODOS.config.sceneId || VRODOS.data.sceneId || VRODOS.data.scene_id || '';
-	const projectId = VRODOS.config.projectId || VRODOS.data.projectId || '';
-	const resolvedShowPawnPositions = (showPawnPositions === true || showPawnPositions === 'true') ? 'true' : 'false';
-	const compileOptions = options || {};
+'use strict';
 
-	if (!sceneId || !projectId) {
-		console.warn('VRodos: compile blocked because project or scene id is missing.', { projectId, sceneId });
-		VRODOS.api.hideCompileProgressSlider();
-		return;
-	}
+window.VRODOS = window.VRODOS || {};
+VRODOS.api = VRODOS.api || {};
+VRODOS.config = VRODOS.config || {};
+VRODOS.data = VRODOS.data || {};
+VRODOS.editor = VRODOS.editor || {};
+VRODOS.ui = VRODOS.ui || {};
+VRODOS.utils = VRODOS.utils || {};
 
-	const runCompileRequest = function() {
-	// In which platform to compile, e.g. Aframe
-	const platform = document.getElementById( "platformInput" ).value;
-	const runtimeModeControl = document.getElementById( "compileRuntimeModeSelect" );
-	const sceneRuntimeMode = VRODOS.editor && VRODOS.editor.envir && VRODOS.editor.envir.scene
-		? VRODOS.editor.envir.scene.aframeRuntimeMode
-		: '';
-	const selectedRuntimeMode = runtimeModeControl ? runtimeModeControl.value : sceneRuntimeMode;
-	const runtimeMode = selectedRuntimeMode === 'single-player'
-		? 'single-player'
-		: 'networked';
-
-	// Change UI text label
-	const compilationProgressText = document.getElementById( "compilationProgressText" );
-
-	const projectType = document.getElementById( "project-type" ).value;
-
-	// Enable cancel button
-	document.getElementById( "compileCancelBtn" ).classList.remove( "LinkDisabled" );
-
-	const statusRow = document.getElementById( "compileStatusRow" );
-	const appResultDiv = document.getElementById( "appResultDiv" );
-	const resultMeta = document.getElementById( "compileResultMeta" );
-	const topResultLink = document.getElementById( "compileTopResultLink" );
-	if (statusRow) {
-		statusRow.style.display = 'flex';
-	}
-	if (appResultDiv) {
-		appResultDiv.style.display = 'none';
-	}
-	if (resultMeta) {
-		resultMeta.textContent = 'The experience is ready to be shared';
-	}
-	if (topResultLink) {
-		topResultLink.classList.add( "tw-hidden" );
-		topResultLink.setAttribute( "href", "#" );
-	}
-
-	document.getElementById( "compileProgressTitle" ).textContent = "Step: 1 / 2";
-	compilationProgressText.append( 'Building...' );
-
-	document.getElementById( "constantUpdateUser" ).innerHTML =
-		'<i data-lucide="info" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
-		'Please wait while we build your scene';
-	VRODOS.ui.refreshLucideIcons();
-
-	// Build query string for GET request
-	const params = new URLSearchParams({
-		'action': 'vrodos_compile_action',
-		projectId,
-		
-		'showPawnPositions': resolvedShowPawnPositions,
-		'vrodos_scene': sceneId,
-		'outputFormat': platform,
-		runtimeMode
-	});
-
-	const url = `${VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl()  }?${  params.toString()}`;
-
-	// ajax for Aframe compiling : Transform VRODOS.editor.envir.scene.children to an html aframe page
-	fetch( url )
-	.then( (response) => response.text().then((text) => {
-		if (!response.ok) {
-			throw new Error(text || `Compile request failed with HTTP ${response.status}`);
-		}
-		return text;
-	}))
-	.then( (urlExperienceSequenceJSON) => {
-
-		const urlExperienceSequence = JSON.parse( urlExperienceSequenceJSON );
-		if (urlExperienceSequence && urlExperienceSequence.success === false) {
-			throw new Error(urlExperienceSequence.data || 'Compile failed.');
-		}
-		const primaryExperienceUrl = urlExperienceSequence.CurrentSceneMasterClient
-			|| (projectType === 'vrexpo_games'
-				? (urlExperienceSequence.MasterClient || urlExperienceSequence.index || urlExperienceSequence.SimpleClient || '')
-				: (urlExperienceSequence.MasterClient || urlExperienceSequence.index || urlExperienceSequence.SimpleClient || ''));
-
-		document.getElementById( "compileProgressTitle" ).style.display = 'none';
-		document.getElementById( "progressSliderSubLineDeterminateValue" ).style.width = '1px';
-		document.getElementById( "compileProgressDeterminate" ).style.display = 'none';
-		document.getElementById( "compileProgressSlider" ).style.display = 'none';
-		document.getElementById( "compilationProgressText" ).style.display = 'none';
-
-		const compile_dialogue_div       = document.getElementById( "previewApp" );
-		compile_dialogue_div.innerHTML = "";
-
-		function createLinks(url, captionText){
-			if (!url) {
-				return;
-			}
-
-			const section           = document.createElement( 'div' );
-			section.style.cssText = 'padding-top: 8px;';
-
-			const title           = document.createElement( 'span' );
-			title.style.cssText = 'color: black; font-weight:500;';
-			title.innerText     = `${captionText  }: `;
-
-			section.append( title );
-
-			const link       = document.createElement( 'a' );
-			link.innerText = url;
-			link.setAttribute( "href", url );
-			link.setAttribute( "target", '_blank' );
-			section.append( link );
-
-			compile_dialogue_div.append( section );
-		}
-
-		const hasRuntimeVariants = Boolean(
-			urlExperienceSequence.LocalMasterClient ||
-			urlExperienceSequence.PublicMasterClient ||
-			urlExperienceSequence.LocalCurrentSceneMasterClient ||
-			urlExperienceSequence.PublicCurrentSceneMasterClient
-		);
-		const isSinglePlayerRuntime = urlExperienceSequence.RuntimeMode === 'single-player';
-
-		if (isSinglePlayerRuntime) {
-			createLinks(urlExperienceSequence.CurrentSceneMasterClient || urlExperienceSequence.MasterClient, "Scene link");
-		} else if (hasRuntimeVariants) {
-			if (projectType === 'vrexpo_games') {
-				createLinks(
-					urlExperienceSequence.LocalCurrentSceneMasterClient || urlExperienceSequence.LocalMasterClient,
-					"Local network scene link"
-				);
-				if (urlExperienceSequence.PublicCurrentSceneMasterClient || urlExperienceSequence.PublicMasterClient) {
-					createLinks(
-						urlExperienceSequence.PublicCurrentSceneMasterClient || urlExperienceSequence.PublicMasterClient,
-						"Public scene link"
-					);
-				}
-				if (
-					urlExperienceSequence.LocalMasterClient &&
-					urlExperienceSequence.LocalMasterClient !== urlExperienceSequence.LocalCurrentSceneMasterClient
-				) {
-					createLinks(urlExperienceSequence.LocalMasterClient, "Local network base scene link");
-				}
-				if (
-					urlExperienceSequence.PublicMasterClient &&
-					urlExperienceSequence.PublicMasterClient !== urlExperienceSequence.PublicCurrentSceneMasterClient
-				) {
-					createLinks(urlExperienceSequence.PublicMasterClient, "Public base scene link");
-				}
-			} else {
-				createLinks(urlExperienceSequence.LocalIndex, "Local network index");
-				createLinks(
-					urlExperienceSequence.LocalCurrentSceneMasterClient || urlExperienceSequence.LocalMasterClient,
-					"Local network director (current scene)"
-				);
-				createLinks(
-					urlExperienceSequence.LocalCurrentSceneSimpleClient || urlExperienceSequence.LocalSimpleClient,
-					"Local network actor (current scene)"
-				);
-				createLinks(urlExperienceSequence.PublicIndex, "Public index");
-				createLinks(
-					urlExperienceSequence.PublicCurrentSceneMasterClient || urlExperienceSequence.PublicMasterClient,
-					"Public director (current scene)"
-				);
-				createLinks(
-					urlExperienceSequence.PublicCurrentSceneSimpleClient || urlExperienceSequence.PublicSimpleClient,
-					"Public actor (current scene)"
-				);
-			}
-		} else if (projectType === 'vrexpo_games') {
-			createLinks( urlExperienceSequence.CurrentSceneMasterClient || urlExperienceSequence.MasterClient, "Scene link" );
-			if (urlExperienceSequence.MasterClient && urlExperienceSequence.MasterClient !== urlExperienceSequence.CurrentSceneMasterClient) {
-				createLinks( urlExperienceSequence.MasterClient, "Base scene link" );
-			}
-		} else {
-			createLinks( urlExperienceSequence.index, "Index" );
-			createLinks( urlExperienceSequence.CurrentSceneMasterClient || urlExperienceSequence.MasterClient, "Director (current scene)" );
-			createLinks( urlExperienceSequence.CurrentSceneSimpleClient || urlExperienceSequence.SimpleClient,"Actor (current scene)" );
-		}
-
-		if (primaryExperienceUrl) {
-			const webLink = document.getElementById( "vrodos-weblink" );
-			const openWebLink = document.getElementById( "openWebLinkhref" );
-			const copyButton = document.getElementById( "buttonCopyWebLink" );
-
-			if (statusRow) {
-				statusRow.style.display = 'none';
-			}
-			if (appResultDiv) {
-				appResultDiv.style.display = 'flex';
-			}
-			if (resultMeta) {
-				resultMeta.textContent = `Ready to be shared - ${  new Date().toLocaleString()}`;
-			}
-			if (webLink) {
-				webLink.href = primaryExperienceUrl;
-				webLink.style.display = '';
-			}
-			if (openWebLink) {
-				openWebLink.setAttribute( "href", primaryExperienceUrl );
-				openWebLink.style.display = '';
-			}
-			if (copyButton) {
-				copyButton.style.display = '';
-			}
-			VRODOS.ui.refreshLucideIcons();
-		}
-
-	})
-	.catch( (err) => {
-		console.log( `Ajax Aframe ERROR 189: ${  err}` );
-		VRODOS.api.hideCompileProgressSlider();
-	});
+(function initVrodosCompileRequestApi() {
+	const COMPILE_ELEMENT_IDS = {
+		appResult: 'appResultDiv',
+		cancelButton: 'compileCancelBtn',
+		constantUpdate: 'constantUpdateUser',
+		copyWebLink: 'buttonCopyWebLink',
+		platform: 'platformInput',
+		preview: 'previewApp',
+		proceedButton: 'compileProceedBtn',
+		progressBarValue: 'progressSliderSubLineDeterminateValue',
+		progressDeterminate: 'compileProgressDeterminate',
+		progressSlider: 'compileProgressSlider',
+		progressText: 'compilationProgressText',
+		progressTitle: 'compileProgressTitle',
+		projectType: 'project-type',
+		resultMeta: 'compileResultMeta',
+		runtimeMode: 'compileRuntimeModeSelect',
+		saveButton: 'save-scene-button',
+		statusRow: 'compileStatusRow',
+		topResultLink: 'compileTopResultLink',
+		webLink: 'vrodos-weblink',
+		openWebLink: 'openWebLinkhref'
 	};
 
-	if (!compileOptions.skipSave && typeof VRODOS.ui.applyCompileDialogSettingsToScene === 'function') {
-		VRODOS.ui.applyCompileDialogSettingsToScene();
+	function getElement(key) {
+		return document.getElementById(COMPILE_ELEMENT_IDS[key] || key);
 	}
 
-	if (
-		!compileOptions.skipSave &&
-		typeof VRODOS.api.waitForLatestSceneSave === 'function' &&
-		typeof VRODOS.api.saveChanges === 'function' &&
-		document.getElementById('save-scene-button') &&
-		VRODOS.editor &&
-		VRODOS.editor.envir &&
-		VRODOS.editor.envir.scene
-	) {
-		VRODOS.api.waitForLatestSceneSave()
-			.then(() => VRODOS.api.saveChanges({force: true}))
-			.then(runCompileRequest)
-			.catch((error) => {
-				console.warn('VRodos: compile blocked because scene save failed.', error);
+	function getElementValue(key, fallback) {
+		const element = getElement(key);
+		return element ? element.value : fallback;
+	}
+
+	function setDisplay(element, value) {
+		if (element) {
+			element.style.display = value;
+		}
+	}
+
+	function setText(element, value) {
+		if (element) {
+			element.textContent = value;
+		}
+	}
+
+	function setHtml(element, value) {
+		if (element) {
+			element.innerHTML = value;
+		}
+	}
+
+	function setHref(element, value) {
+		if (element) {
+			element.setAttribute('href', value);
+		}
+	}
+
+	function getCompileElements() {
+		return {
+			appResult: getElement('appResult'),
+			cancelButton: getElement('cancelButton'),
+			constantUpdate: getElement('constantUpdate'),
+			copyWebLink: getElement('copyWebLink'),
+			openWebLink: getElement('openWebLink'),
+			preview: getElement('preview'),
+			proceedButton: getElement('proceedButton'),
+			progressBarValue: getElement('progressBarValue'),
+			progressDeterminate: getElement('progressDeterminate'),
+			progressSlider: getElement('progressSlider'),
+			progressText: getElement('progressText'),
+			progressTitle: getElement('progressTitle'),
+			resultMeta: getElement('resultMeta'),
+			statusRow: getElement('statusRow'),
+			topResultLink: getElement('topResultLink'),
+			webLink: getElement('webLink')
+		};
+	}
+
+	function setCompileStatusMessage(els, iconName, message) {
+		setHtml(
+			els.constantUpdate,
+			`<i data-lucide="${iconName}" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ${message}`
+		);
+		VRODOS.ui.refreshLucideIcons();
+	}
+
+	function resetCompileResultState(els) {
+		setDisplay(els.statusRow, 'flex');
+		setDisplay(els.appResult, 'none');
+		setText(els.resultMeta, 'The experience is ready to be shared');
+
+		if (els.topResultLink) {
+			els.topResultLink.classList.add('tw-hidden');
+			setHref(els.topResultLink, '#');
+		}
+	}
+
+	function showCompileStartedState(els) {
+		if (els.cancelButton) {
+			els.cancelButton.classList.remove('LinkDisabled');
+		}
+
+		resetCompileResultState(els);
+		setText(els.progressTitle, 'Step: 1 / 2');
+		if (els.progressText) {
+			els.progressText.append('Building...');
+		}
+		setCompileStatusMessage(els, 'info', 'Please wait while we build your scene');
+	}
+
+	function hideCompileProgressElements(els) {
+		setDisplay(els.progressTitle, 'none');
+		setDisplay(els.progressDeterminate, 'none');
+		setDisplay(els.progressSlider, 'none');
+		setDisplay(els.progressText, 'none');
+
+		if (els.progressBarValue) {
+			els.progressBarValue.style.width = '1px';
+		}
+	}
+
+	function clearCompilePreview(els) {
+		setHtml(els.preview, '');
+	}
+
+	function createCompileResultLink(preview, url, captionText) {
+		if (!preview || !url) {
+			return;
+		}
+
+		const section = document.createElement('div');
+		section.style.cssText = 'padding-top: 8px;';
+
+		const title = document.createElement('span');
+		title.style.cssText = 'color: black; font-weight:500;';
+		title.innerText = `${captionText}: `;
+
+		const link = document.createElement('a');
+		link.innerText = url;
+		link.setAttribute('href', url);
+		link.setAttribute('target', '_blank');
+
+		section.append(title);
+		section.append(link);
+		preview.append(section);
+	}
+
+	function hasRuntimeVariants(urls) {
+		return Boolean(
+			urls.LocalMasterClient ||
+			urls.PublicMasterClient ||
+			urls.LocalCurrentSceneMasterClient ||
+			urls.PublicCurrentSceneMasterClient
+		);
+	}
+
+	function resolvePrimaryExperienceUrl(urls, projectType) {
+		return urls.CurrentSceneMasterClient ||
+			(projectType === 'vrexpo_games'
+				? (urls.MasterClient || urls.index || urls.SimpleClient || '')
+				: (urls.MasterClient || urls.index || urls.SimpleClient || ''));
+	}
+
+	function renderRuntimeVariantLinks(preview, urls, projectType) {
+		if (projectType === 'vrexpo_games') {
+			createCompileResultLink(
+				preview,
+				urls.LocalCurrentSceneMasterClient || urls.LocalMasterClient,
+				'Local network scene link'
+			);
+			createCompileResultLink(
+				preview,
+				urls.PublicCurrentSceneMasterClient || urls.PublicMasterClient,
+				'Public scene link'
+			);
+
+			if (urls.LocalMasterClient && urls.LocalMasterClient !== urls.LocalCurrentSceneMasterClient) {
+				createCompileResultLink(preview, urls.LocalMasterClient, 'Local network base scene link');
+			}
+			if (urls.PublicMasterClient && urls.PublicMasterClient !== urls.PublicCurrentSceneMasterClient) {
+				createCompileResultLink(preview, urls.PublicMasterClient, 'Public base scene link');
+			}
+			return;
+		}
+
+		createCompileResultLink(preview, urls.LocalIndex, 'Local network index');
+		createCompileResultLink(
+			preview,
+			urls.LocalCurrentSceneMasterClient || urls.LocalMasterClient,
+			'Local network director (current scene)'
+		);
+		createCompileResultLink(
+			preview,
+			urls.LocalCurrentSceneSimpleClient || urls.LocalSimpleClient,
+			'Local network actor (current scene)'
+		);
+		createCompileResultLink(preview, urls.PublicIndex, 'Public index');
+		createCompileResultLink(
+			preview,
+			urls.PublicCurrentSceneMasterClient || urls.PublicMasterClient,
+			'Public director (current scene)'
+		);
+		createCompileResultLink(
+			preview,
+			urls.PublicCurrentSceneSimpleClient || urls.PublicSimpleClient,
+			'Public actor (current scene)'
+		);
+	}
+
+	function renderLegacyRuntimeLinks(preview, urls, projectType) {
+		if (projectType === 'vrexpo_games') {
+			createCompileResultLink(preview, urls.CurrentSceneMasterClient || urls.MasterClient, 'Scene link');
+			if (urls.MasterClient && urls.MasterClient !== urls.CurrentSceneMasterClient) {
+				createCompileResultLink(preview, urls.MasterClient, 'Base scene link');
+			}
+			return;
+		}
+
+		createCompileResultLink(preview, urls.index, 'Index');
+		createCompileResultLink(preview, urls.CurrentSceneMasterClient || urls.MasterClient, 'Director (current scene)');
+		createCompileResultLink(preview, urls.CurrentSceneSimpleClient || urls.SimpleClient, 'Actor (current scene)');
+	}
+
+	function renderCompileResultLinks(els, urls, projectType) {
+		const isSinglePlayerRuntime = urls.RuntimeMode === 'single-player';
+
+		if (isSinglePlayerRuntime) {
+			createCompileResultLink(els.preview, urls.CurrentSceneMasterClient || urls.MasterClient, 'Scene link');
+		} else if (hasRuntimeVariants(urls)) {
+			renderRuntimeVariantLinks(els.preview, urls, projectType);
+		} else {
+			renderLegacyRuntimeLinks(els.preview, urls, projectType);
+		}
+	}
+
+	function showPrimaryExperienceLink(els, primaryExperienceUrl) {
+		if (!primaryExperienceUrl) {
+			return;
+		}
+
+		setDisplay(els.statusRow, 'none');
+		setDisplay(els.appResult, 'flex');
+		setText(els.resultMeta, `Ready to be shared - ${new Date().toLocaleString()}`);
+
+		if (els.webLink) {
+			els.webLink.href = primaryExperienceUrl;
+			setDisplay(els.webLink, '');
+		}
+		if (els.openWebLink) {
+			setHref(els.openWebLink, primaryExperienceUrl);
+			setDisplay(els.openWebLink, '');
+		}
+		setDisplay(els.copyWebLink, '');
+		VRODOS.ui.refreshLucideIcons();
+	}
+
+	function getSceneRuntimeMode() {
+		return VRODOS.editor.envir && VRODOS.editor.envir.scene
+			? VRODOS.editor.envir.scene.aframeRuntimeMode
+			: '';
+	}
+
+	function resolveRuntimeMode() {
+		const selectedRuntimeMode = getElementValue('runtimeMode', getSceneRuntimeMode());
+		return selectedRuntimeMode === 'single-player' ? 'single-player' : 'networked';
+	}
+
+	function buildCompileUrl(projectId, sceneId, showPawnPositions, platform, runtimeMode) {
+		const params = new URLSearchParams({
+			action: 'vrodos_compile_action',
+			projectId,
+			showPawnPositions,
+			vrodos_scene: sceneId,
+			outputFormat: platform,
+			runtimeMode
+		});
+		const ajaxBase = VRODOS.config.isAdmin === 'back' ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl();
+		return `${ajaxBase}?${params.toString()}`;
+	}
+
+	function parseCompileResponse(response) {
+		return response.text().then((text) => {
+			if (!response.ok) {
+				throw new Error(text || `Compile request failed with HTTP ${response.status}`);
+			}
+			return JSON.parse(text);
+		});
+	}
+
+	function assertCompileSuccess(urls) {
+		if (urls && urls.success === false) {
+			throw new Error(urls.data || 'Compile failed.');
+		}
+		return urls || {};
+	}
+
+	function shouldSaveBeforeCompile(compileOptions) {
+		return !compileOptions.skipSave &&
+			typeof VRODOS.api.waitForLatestSceneSave === 'function' &&
+			typeof VRODOS.api.saveChanges === 'function' &&
+			getElement('saveButton') &&
+			VRODOS.editor.envir &&
+			VRODOS.editor.envir.scene;
+	}
+
+	function runCompileRequest(projectId, sceneId, resolvedShowPawnPositions) {
+		const els = getCompileElements();
+		const platform = getElementValue('platform', '');
+		const projectType = getElementValue('projectType', '');
+		const runtimeMode = resolveRuntimeMode();
+
+		showCompileStartedState(els);
+
+		fetch(buildCompileUrl(projectId, sceneId, resolvedShowPawnPositions, platform, runtimeMode))
+			.then(parseCompileResponse)
+			.then(assertCompileSuccess)
+			.then((urls) => {
+				const primaryExperienceUrl = resolvePrimaryExperienceUrl(urls, projectType);
+
+				hideCompileProgressElements(els);
+				clearCompilePreview(els);
+				renderCompileResultLinks(els, urls, projectType);
+				showPrimaryExperienceLink(els, primaryExperienceUrl);
+			})
+			.catch((err) => {
+				console.log(`Ajax Aframe ERROR 189: ${err}`);
 				VRODOS.api.hideCompileProgressSlider();
 			});
-		return;
 	}
 
-	runCompileRequest();
-}
+	VRODOS.api.compileScene = function(showPawnPositions, options) {
+		const sceneId = VRODOS.config.sceneId || VRODOS.data.sceneId || VRODOS.data.scene_id || '';
+		const projectId = VRODOS.config.projectId || VRODOS.data.projectId || '';
+		const resolvedShowPawnPositions = (showPawnPositions === true || showPawnPositions === 'true') ? 'true' : 'false';
+		const compileOptions = options || {};
 
+		if (!sceneId || !projectId) {
+			console.warn('VRodos: compile blocked because project or scene id is missing.', { projectId, sceneId });
+			VRODOS.api.hideCompileProgressSlider();
+			return;
+		}
 
-// Hide compile progress slider
-VRODOS.api.hideCompileProgressSlider = function() {
-	document.getElementById( "compileProgressSlider" ).style.display = 'none';
-	document.getElementById( "compileProgressTitle" ).style.display = 'none';
-	document.getElementById( "compileProgressDeterminate" ).style.display = 'none';
-	document.getElementById( "compileProceedBtn" ).classList.remove( "LinkDisabled" );
-	document.getElementById( "compileCancelBtn" ).classList.remove( "LinkDisabled" );
-}
+		if (!compileOptions.skipSave && typeof VRODOS.ui.applyCompileDialogSettingsToScene === 'function') {
+			VRODOS.ui.applyCompileDialogSettingsToScene();
+		}
+
+		if (shouldSaveBeforeCompile(compileOptions)) {
+			VRODOS.api.waitForLatestSceneSave()
+				.then(() => VRODOS.api.saveChanges({ force: true }))
+				.then(() => runCompileRequest(projectId, sceneId, resolvedShowPawnPositions))
+				.catch((error) => {
+					console.warn('VRodos: compile blocked because scene save failed.', error);
+					VRODOS.api.hideCompileProgressSlider();
+				});
+			return;
+		}
+
+		runCompileRequest(projectId, sceneId, resolvedShowPawnPositions);
+	};
+
+	VRODOS.api.hideCompileProgressSlider = function() {
+		const els = getCompileElements();
+
+		setDisplay(els.progressSlider, 'none');
+		setDisplay(els.progressTitle, 'none');
+		setDisplay(els.progressDeterminate, 'none');
+
+		if (els.proceedButton) {
+			els.proceedButton.classList.remove('LinkDisabled');
+		}
+		if (els.cancelButton) {
+			els.cancelButton.classList.remove('LinkDisabled');
+		}
+	};
+})();
