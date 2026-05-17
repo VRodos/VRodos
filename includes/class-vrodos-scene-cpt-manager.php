@@ -13,7 +13,6 @@ class VRodos_Scene_CPT_Manager {
 
 		add_action( 'add_meta_boxes', $this->scenes_taxgame_box(...) );
 		add_action( 'save_post', $this->scenes_taxgame_box_content_save(...) );
-		add_action( 'save_post', $this->scenes_taxyaml_box_content_save(...) );
 		add_filter( 'manage_vrodos_scene_posts_columns', $this->set_custom_vrodos_scene_columns(...) );
 		add_action( 'manage_vrodos_scene_posts_custom_column', $this->set_custom_vrodos_scene_columns_fill(...), 10, 2 );
 		add_action( 'add_meta_boxes', $this->scenes_meta_definitions_add(...) );
@@ -37,8 +36,6 @@ class VRodos_Scene_CPT_Manager {
 
 		// Adds a Project selection custom metabox
 		add_meta_box( 'tagsdiv-vrodos_scene_pgame', 'Parent Project', $this->scenes_taxgame_box_content(...), 'vrodos_scene', 'side', 'high' );
-		// Adds a YAML selection custom metabox
-		add_meta_box( 'tagsdiv-vrodos_scene_yamldiv', 'Scene YAML', $this->scenes_taxyaml_box_content(...), 'vrodos_scene', 'side', 'high' );
 	}
 
 	public function scenes_taxgame_box_content( $post ): void {
@@ -57,29 +54,6 @@ class VRodos_Scene_CPT_Manager {
 			$select        = preg_replace( '#<select([^>]*)>#', $replace, $select );
 			$old_option    = "<option value='-1'>";
 			$new_option    = "<option disabled selected value=''>" . 'Select project' . '</option>';
-			$select        = str_replace( $old_option, $new_option, $select );
-			echo $select;
-			?>
-		</div>
-		<?php
-	}
-
-	public function scenes_taxyaml_box_content( $post ): void {
-		$tax_name = 'vrodos_scene_yaml';
-		?>
-		<div class="tagsdiv" id="<?php echo $tax_name; ?>">
-			<p class="howto"><?php echo 'Select YAML for current Scene'; ?></p>
-			<?php
-			// Use nonce for verification
-			wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_scene_yaml_noncename' );
-			$type_ids      = wp_get_object_terms( $post->ID, 'vrodos_scene_yaml', ['fields' => 'ids'] );
-			$selected_type = empty( $type_ids ) ? '' : $type_ids[0];
-			$args          = ['show_option_none'  => 'Select YAML', 'orderby'           => 'name', 'hide_empty'        => 0, 'selected'          => $selected_type, 'name'              => 'vrodos_scene_yaml', 'taxonomy'          => 'vrodos_scene_yaml', 'echo'              => 0, 'option_none_value' => '-1', 'id'                => 'vrodos-select-yaml-dropdown'];
-			$select        = wp_dropdown_categories( $args );
-			$replace       = '<select$1 required>';
-			$select        = preg_replace( '#<select([^>]*)>#', $replace, $select );
-			$old_option    = "<option value='-1'>";
-			$new_option    = "<option disabled selected value=''>" . 'Select YAML' . '</option>';
 			$select        = str_replace( $old_option, $new_option, $select );
 			echo $select;
 			?>
@@ -111,32 +85,6 @@ class VRodos_Scene_CPT_Manager {
 		$type_ID = intval( $_POST['vrodos_scene_pgame'], 10 );
 		$type    = ( $type_ID > 0 ) ? get_term( $type_ID, 'vrodos_scene_pgame' )->slug : null;
 		wp_set_object_terms( $post_id, $type, 'vrodos_scene_pgame' );
-	}
-
-	public function scenes_taxyaml_box_content_save( $post_id ): void {
-		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) ) {
-			return;
-		}
-
-		if ( ! isset( $_POST['vrodos_scene_yaml_noncename'] ) ) {
-			return;
-		}
-
-		if ( ! wp_verify_nonce( $_POST['vrodos_scene_yaml_noncename'], plugin_basename( __FILE__ ) ) ) {
-			return;
-		}
-
-		if ( 'vrodos_scene' == $_POST['post_type'] ) {
-			if ( ! current_user_can( 'edit_pages', $post_id ) ) {
-				return;
-			}
-		} elseif ( ! current_user_can( 'edit_posts', $post_id ) ) {
-				return;
-		}
-
-		$type_ID = intval( $_POST['vrodos_scene_yaml'], 10 );
-		$type    = ( $type_ID > 0 ) ? get_term( $type_ID, 'vrodos_scene_yaml' )->slug : null;
-		wp_set_object_terms( $post_id, $type, 'vrodos_scene_yaml' );
 	}
 
 	public function set_custom_vrodos_scene_columns( $columns ): array {

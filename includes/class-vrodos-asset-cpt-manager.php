@@ -64,6 +64,7 @@ class VRodos_Asset_CPT_Manager {
 		add_action( 'save_post', $this->vrodos_asset_project_box_content_save(...) );
 		add_action( 'init', $this->vrodos_allowAuthorEditing(...) );
 		add_filter( 'wp_dropdown_users_args', $this->change_user_dropdown(...), 10, 2 );
+		add_filter( 'is_protected_meta', $this->vrodos_hide_internal_asset_custom_fields(...), 10, 3 );
 		add_action( 'add_meta_boxes', $this->vrodos_assets_taxcategory_box(...) );
 		add_action( 'add_meta_boxes', $this->vrodos_assets_databox_add(...) );
 		add_action( 'restrict_manage_posts', $this->vrodos_render_asset_type_admin_filter(...), 10, 2 );
@@ -81,6 +82,9 @@ class VRodos_Asset_CPT_Manager {
 	public function vrodos_asset_project_box_content_save( $post_id ): void { $this->controller->vrodos_asset_project_box_content_save( $post_id ); }
 	public function vrodos_allowAuthorEditing(): void { $this->controller->vrodos_allowAuthorEditing(); }
 	public function change_user_dropdown( $query_args, $r ) { return $this->controller->change_user_dropdown( $query_args, $r ); }
+	public function vrodos_hide_internal_asset_custom_fields( $protected, $meta_key, $meta_type ): bool {
+		return $this->controller->vrodos_hide_internal_asset_custom_fields( $protected, $meta_key, $meta_type );
+	}
 	public function vrodos_assets_taxcategory_box(): void { $this->controller->vrodos_assets_taxcategory_box(); }
 	public function vrodos_assets_databox_add(): void { $this->controller->vrodos_assets_databox_add(); }
 	public function vrodos_render_asset_type_admin_filter( $post_type, $which = '' ): void { $this->controller->vrodos_render_asset_type_admin_filter( $post_type, $which ); }

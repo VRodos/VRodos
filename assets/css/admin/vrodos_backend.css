@@ -11,17 +11,18 @@
 	cursor: pointer;
 }
 
-#vrodos_compileButton {
-	background-color: #4CAF50;
-	border: none;
-	color: white;
-	padding: 15px 32px;
-	text-align: center;
+#vrodos_compileButton.vrodos-admin-compile-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin: 4px 0;
 	text-decoration: none;
-	display: inline-block;
-	font-size: 16px;
-	margin: 4px 2px;
 	cursor: pointer;
+}
+
+#vrodos_compileButton.vrodos-admin-compile-button:disabled {
+	cursor: default;
+	opacity: 0.65;
 }
 
 .vrodos_fetchContentButton {

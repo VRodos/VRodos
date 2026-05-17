@@ -65,12 +65,14 @@ class VRodos_Asset_Manager {
 		}
 
 		$screen = get_current_screen();
-		if ( ! $screen || $screen->post_type !== 'vrodos_asset3d' ) {
+		if ( ! $screen || ! in_array( $screen->post_type, [ 'vrodos_asset3d', 'vrodos_game' ], true ) ) {
 			return;
 		}
 
 		wp_enqueue_style( 'vrodos_backend' );
-		$this->enqueue_three_vendor_bundle();
+		if ( 'vrodos_asset3d' === $screen->post_type ) {
+			$this->enqueue_three_vendor_bundle();
+		}
 	}
 
 	public function enqueue_assets_list_scripts() {

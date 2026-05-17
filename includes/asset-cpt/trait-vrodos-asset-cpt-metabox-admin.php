@@ -37,6 +37,24 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 		}
 	}
 
+	public function vrodos_hide_internal_asset_custom_fields( $protected, $meta_key, $meta_type ): bool {
+		if ( 'post' !== $meta_type ) {
+			return (bool) $protected;
+		}
+
+		$hidden_asset_meta_keys = [
+			'vrodos_asset3d_pathData',
+			'vrodos_asset3d_screenimage',
+			'vrodos_asset3d_glb',
+		];
+
+		if ( in_array( $meta_key, $hidden_asset_meta_keys, true ) ) {
+			return true;
+		}
+
+		return (bool) $protected;
+	}
+
 	public function vrodos_asset3d_metas_description(): void {
 		foreach ( $this->vrodos_databox1['fields'] as $meta_entry ) {
 			register_post_meta(

@@ -243,6 +243,10 @@
 - Verification: Phase 128 `includes/class-vrodos-game-cpt-manager.php` and `includes/class-vrodos-asset-manager.php` PHP syntax checks passed; targeted project admin compile button scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 129 Immerse project use-case dropdown cleanup implemented.
 - Verification: Phase 129 connector taxonomy PHP syntax check passed; targeted Immerse use-case metabox scan passed; VRodos and connector `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 130 scene admin YAML metabox removal implemented.
+- Verification: Phase 130 `includes/class-vrodos-scene-cpt-manager.php` PHP syntax check passed; targeted Scene YAML metabox scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 131 asset custom-fields metadata hiding implemented.
+- Verification: Phase 131 asset CPT PHP syntax checks passed; targeted hidden asset meta-key scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -423,6 +427,8 @@ assets/js/editor/
 - Done: Remove the unbound copy control from the legacy game compiler metabox while keeping the generated experience link visible after compile.
 - Done: Polish the legacy project admin compile control by rendering it as a real WordPress primary button and enqueueing the backend admin stylesheet for project edit screens without loading Three vendor assets there.
 - Done: Replace the default tag-style Immerse Use Cases project metabox with a single-select connector dropdown, suppress the default taxonomy box, and save at most one use-case term per project.
+- Done: Remove the Scene YAML metabox from the scene edit admin screen by deleting its custom box/render/save path while keeping WordPress's default YAML taxonomy box suppressed.
+- Done: Hide internal asset metadata keys from the WordPress Custom Fields metabox for asset posts while preserving their storage and REST/editor usage.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
