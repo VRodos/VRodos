@@ -27,9 +27,7 @@ VRODOS.ui = VRODOS.ui || {};
     }
 
     function refreshLucideIcons() {
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
+        VRODOS.ui.refreshLucideIcons();
     }
 
     function setPanelRectPosition(panel, rect) {

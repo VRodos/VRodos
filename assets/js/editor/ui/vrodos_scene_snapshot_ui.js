@@ -48,9 +48,7 @@ VRODOS.ui.sceneSnapshotControlsBound = Boolean(VRODOS.ui.sceneSnapshotControlsBo
     }
 
     function refreshLucideIcons() {
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
+        VRODOS.ui.refreshLucideIcons();
     }
 
     function getJsonDialog() {

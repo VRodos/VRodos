@@ -4,6 +4,12 @@ window.VRODOS = window.VRODOS || {};
 VRODOS.ui = VRODOS.ui || {};
 VRODOS.utils = VRODOS.utils || {};
 
+VRODOS.ui.refreshLucideIcons = function(options) {
+    if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+        lucide.createIcons(options);
+    }
+};
+
 VRODOS.ui.swapLucideIcon = function(container, iconName) {
     if (!container) return;
     const icon = container.querySelector('[data-lucide], svg');
@@ -14,7 +20,7 @@ VRODOS.ui.swapLucideIcon = function(container, iconName) {
         const origClasses = (icon.getAttribute('class') || '').replace(/lucide[^\s]*/g, '').trim();
         if (origClasses) newIcon.setAttribute('class', origClasses);
         icon.replaceWith(newIcon);
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        VRODOS.ui.refreshLucideIcons();
     }
 };
 
@@ -126,11 +132,11 @@ VRODOS.ui.showTemporaryButtonSuccess = function(buttonId, message) {
 
     const orig = btn.innerHTML;
     btn.innerHTML = `<i data-lucide="check" class="tw-w-3.5 tw-h-3.5"></i> ${  message}`;
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    VRODOS.ui.refreshLucideIcons();
 
     setTimeout(() => {
         btn.innerHTML = orig;
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        VRODOS.ui.refreshLucideIcons();
     }, 1500);
 };
 
@@ -140,10 +146,10 @@ VRODOS.ui.showTemporaryButtonWarning = function(buttonId, message) {
 
     const orig = btn.innerHTML;
     btn.innerHTML = `<i data-lucide="triangle-alert" class="tw-w-3.5 tw-h-3.5"></i> ${  message}`;
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    VRODOS.ui.refreshLucideIcons();
 
     setTimeout(() => {
         btn.innerHTML = orig;
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        VRODOS.ui.refreshLucideIcons();
     }, 2500);
 };

@@ -25,9 +25,7 @@ VRODOS.api = VRODOS.api || {};
     };
 
     function createLucideIcons() {
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
+        VRODOS.ui.refreshLucideIcons();
     }
 
     function setHtml(id, html) {
