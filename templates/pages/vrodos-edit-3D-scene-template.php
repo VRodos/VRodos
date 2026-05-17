@@ -406,7 +406,7 @@ extract( $data );
 						<input type="checkbox" title="Constrain Scale dims to one value"
 							   id="scaleLockCheckbox" name="scaleLockCheckbox" form="3dAssetForm"
 							   class="tw-checkbox tw-checkbox-xs tw-checkbox-primary tw-border-white/20"
-							   onchange="keepScaleAspectRatio(this.checked)" checked>
+							   checked>
 					</div>
 
 					<!-- Object Properties (auto-shown on selection based on category) -->

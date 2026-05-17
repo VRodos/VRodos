@@ -19,6 +19,7 @@ VRODOS.api = VRODOS.api || {};
         axisIncrease: 'axis-size-increase-btn',
         axisDecrease: 'axis-size-decrease-btn',
         translateSwitch: 'translate-switch',
+        scaleLock: 'scaleLockCheckbox',
         loadingNotice: 'result_download'
     };
 
@@ -36,6 +37,7 @@ VRODOS.api = VRODOS.api || {};
             bindOrbitAutoRotateControl();
             bindFirstPersonControl();
             bindTransformModeControls();
+            bindScaleLockControl();
             bindDimensionToggle();
 
             this.isBound = true;
@@ -198,6 +200,23 @@ VRODOS.api = VRODOS.api || {};
                 }
             });
         }
+    }
+
+    function bindScaleLockControl() {
+        const scaleLockCheckbox = getElement(TOOLBAR_IDS.scaleLock);
+        if (!scaleLockCheckbox) return;
+
+        scaleLockCheckbox.addEventListener('change', () => {
+            if (typeof VRODOS.ui.setKeepScaleAspectRatio === 'function') {
+                VRODOS.ui.setKeepScaleAspectRatio(scaleLockCheckbox.checked);
+                return;
+            }
+
+            const envir = getEnvir();
+            if (envir && envir.scene) {
+                envir.scene.keepScaleAspectRatio = scaleLockCheckbox.checked;
+            }
+        });
     }
 
     function setDimensionButtonState(dimensionButton, envir) {

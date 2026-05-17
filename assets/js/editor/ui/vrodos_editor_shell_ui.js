@@ -14,7 +14,28 @@ VRODOS.ui = VRODOS.ui || {};
         clearVisionToggle: 'toggleUIBtn',
         scenesPanel: 'scenesInsideVREditor',
         sceneListToggle: 'scenesList-toggle-btn',
-        objectControlsPanel: 'object-controls-panel'
+        objectControlsPanel: 'object-controls-panel',
+        enableGeneralChat: 'enableGeneralChatCheckbox',
+        enableAvatar: 'enableAvatarCheckbox',
+        disableMovement: 'moveDisableCheckbox',
+        navigationMode: 'aframeNavigationModeSelect',
+        backgroundToggleGroup: 'bcgToggleGroup',
+        horizonSkyPreset: 'horizonSkyPreset',
+        clearColorPicker: 'jscolorpick',
+        backgroundImageInput: 'img_upload_bcg',
+        fogTypeGroup: 'FogTypeRadioButtonList',
+        fogColorPicker: 'jscolorpickFog',
+        fogNear: 'FogNear',
+        fogFar: 'FogFar',
+        fogDensitySlider: 'FogDensitySlider'
+    };
+
+    const BACKGROUND_OPTION_BY_INPUT_ID = {
+        sceneNoBackground: 4,
+        sceneHorizon: 0,
+        sceneColorRadio: 1,
+        sceneSky: 2,
+        sceneCustomImage: 3
     };
 
     const shellUi = VRODOS.ui.editorShell || {
@@ -28,6 +49,9 @@ VRODOS.ui = VRODOS.ui || {};
             bindHierarchyToggle();
             bindAssetBrowserToggle();
             bindClearVisionToggle();
+            bindSceneOptionControls();
+            bindBackgroundControls();
+            bindFogControls();
 
             this.isBound = true;
             return true;
@@ -61,6 +85,12 @@ VRODOS.ui = VRODOS.ui || {};
     function requestShellRender(reason) {
         if (typeof VRODOS.editor.requestRender === 'function') {
             VRODOS.editor.requestRender(reason || 'editor-shell');
+        }
+    }
+
+    function callIfAvailable(owner, methodName, args) {
+        if (owner && typeof owner[methodName] === 'function') {
+            owner[methodName].apply(owner, args || []);
         }
     }
 
@@ -159,6 +189,107 @@ VRODOS.ui = VRODOS.ui || {};
             }
             requestShellRender('clear-vision-toggle');
         });
+    }
+
+    function bindSceneOptionControls() {
+        const globalChatCheckbox = getElement(SHELL_IDS.enableGeneralChat);
+        if (globalChatCheckbox) {
+            globalChatCheckbox.addEventListener('change', () => {
+                callIfAvailable(VRODOS.ui, 'toggleBroadcastChat', [globalChatCheckbox.checked]);
+            });
+        }
+
+        const avatarCheckbox = getElement(SHELL_IDS.enableAvatar);
+        if (avatarCheckbox) {
+            avatarCheckbox.addEventListener('change', () => {
+                callIfAvailable(VRODOS.ui, 'toggleEnableAvatar', [avatarCheckbox.checked]);
+            });
+        }
+
+        const disableMovementCheckbox = getElement(SHELL_IDS.disableMovement);
+        if (disableMovementCheckbox) {
+            disableMovementCheckbox.addEventListener('change', () => {
+                callIfAvailable(VRODOS.ui, 'toggleDisableMovement', [disableMovementCheckbox.checked]);
+            });
+        }
+
+        const navigationModeSelect = getElement(SHELL_IDS.navigationMode);
+        if (navigationModeSelect) {
+            navigationModeSelect.addEventListener('change', () => {
+                callIfAvailable(VRODOS.ui, 'setAframeNavigationMode', [navigationModeSelect.value]);
+            });
+        }
+    }
+
+    function bindBackgroundControls() {
+        const backgroundToggleGroup = getElement(SHELL_IDS.backgroundToggleGroup);
+        if (backgroundToggleGroup) {
+            backgroundToggleGroup.addEventListener('change', (event) => {
+                const input = event.target && event.target.closest ? event.target.closest('input[name="sceneColorTypeRadio"]') : null;
+                if (!input) return;
+
+                const selectedValue = BACKGROUND_OPTION_BY_INPUT_ID[input.id];
+                if (selectedValue === undefined) return;
+
+                callIfAvailable(VRODOS.ui, 'bcgRadioSelect', [{ value: selectedValue }]);
+            });
+        }
+
+        const horizonSkyPreset = getElement(SHELL_IDS.horizonSkyPreset);
+        if (horizonSkyPreset) {
+            horizonSkyPreset.addEventListener('change', () => {
+                callIfAvailable(VRODOS.ui, 'handleHorizonSkyPresetChange', [horizonSkyPreset]);
+            });
+        }
+
+        const clearColorPicker = getElement(SHELL_IDS.clearColorPicker);
+        if (clearColorPicker) {
+            clearColorPicker.addEventListener('input', () => {
+                callIfAvailable(VRODOS.ui, 'updateClearColorPicker', [clearColorPicker]);
+            });
+        }
+
+        const backgroundImageInput = getElement(SHELL_IDS.backgroundImageInput);
+        if (backgroundImageInput) {
+            backgroundImageInput.addEventListener('change', () => {
+                callIfAvailable(VRODOS.api, 'uploadImage');
+            });
+        }
+    }
+
+    function bindFogControls() {
+        const fogTypeGroup = getElement(SHELL_IDS.fogTypeGroup);
+        if (fogTypeGroup) {
+            fogTypeGroup.addEventListener('change', (event) => {
+                const input = event.target && event.target.closest ? event.target.closest('input[name="projectTypeRadio"]') : null;
+                if (input) {
+                    callIfAvailable(VRODOS.ui, 'loadFogType');
+                }
+            });
+        }
+
+        const fogColorPicker = getElement(SHELL_IDS.fogColorPicker);
+        if (fogColorPicker) {
+            fogColorPicker.addEventListener('input', () => {
+                callIfAvailable(VRODOS.ui, 'updateFogColorPicker', [fogColorPicker]);
+            });
+        }
+
+        [SHELL_IDS.fogNear, SHELL_IDS.fogFar].forEach((id) => {
+            const input = getElement(id);
+            if (input) {
+                input.addEventListener('change', () => {
+                    callIfAvailable(VRODOS.ui, 'updateFog');
+                });
+            }
+        });
+
+        const fogDensitySlider = getElement(SHELL_IDS.fogDensitySlider);
+        if (fogDensitySlider) {
+            fogDensitySlider.addEventListener('input', () => {
+                callIfAvailable(VRODOS.ui, 'handleFogDensitySlider', [fogDensitySlider.value]);
+            });
+        }
     }
 
     function setElementsDisplayHidden(elements, isHidden) {

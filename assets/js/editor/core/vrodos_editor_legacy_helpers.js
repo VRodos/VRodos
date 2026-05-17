@@ -116,6 +116,40 @@ VRODOS.ui.toggleAframeCollisionMode = function(isEnabled) {
     VRODOS.ui.setAframeNavigationMode(isEnabled ? 'walkable' : 'walk');
 };
 
+function getEditorSceneSettingsScene() {
+    return VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir.scene : null;
+}
+
+function normalizeEditorSceneBoolean(value) {
+    return value === true || value === 1 || value === '1' || value === 'true';
+}
+
+function setEditorSceneBooleanSetting(settingKey, value, options) {
+    const scene = getEditorSceneSettingsScene();
+    if (!scene) return;
+
+    scene[settingKey] = normalizeEditorSceneBoolean(value);
+    if (!options || options.save !== false) {
+        VRODOS.api.saveChanges();
+    }
+}
+
+VRODOS.ui.setKeepScaleAspectRatio = function(value) {
+    setEditorSceneBooleanSetting('keepScaleAspectRatio', value, { save: false });
+};
+
+VRODOS.ui.toggleBroadcastChat = function(value) {
+    setEditorSceneBooleanSetting('enableGeneralChat', value);
+};
+
+VRODOS.ui.toggleEnableAvatar = function(value) {
+    setEditorSceneBooleanSetting('enableAvatar', value);
+};
+
+VRODOS.ui.toggleDisableMovement = function(value) {
+    setEditorSceneBooleanSetting('disableMovement', value);
+};
+
 window.setAframeNavigationMode = function(mode) {
     VRODOS.ui.setAframeNavigationMode(mode);
 };
@@ -123,6 +157,11 @@ window.setAframeNavigationMode = function(mode) {
 window.toggleAframeCollisionMode = function(isEnabled) {
     VRODOS.ui.toggleAframeCollisionMode(isEnabled);
 };
+
+window.keepScaleAspectRatio = VRODOS.ui.setKeepScaleAspectRatio;
+window.toggleBroadcastChat = VRODOS.ui.toggleBroadcastChat;
+window.toggleEnableAvatar = VRODOS.ui.toggleEnableAvatar;
+window.toggleDisableMovement = VRODOS.ui.toggleDisableMovement;
 
 VRODOS.ui.syncBackgroundStyleDescription = function(selectedValue) {
     const horizonDescription = document.getElementById('sceneHorizonDescription');

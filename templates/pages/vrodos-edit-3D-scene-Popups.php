@@ -34,25 +34,6 @@
 	}
 
 
-	function keepScaleAspectRatio(value) {
-		VRODOS.editor.envir.scene.keepScaleAspectRatio = value;
-	}
-
-	function toggleBroadcastChat(value) {
-		VRODOS.editor.envir.scene.enableGeneralChat = value;
-		VRODOS.api.saveChanges();
-	}
-
-	function toggleEnableAvatar(value) {
-		VRODOS.editor.envir.scene.enableAvatar = value;
-		VRODOS.api.saveChanges();
-	}
-
-	function toggleDisableMovement(value) {
-		VRODOS.editor.envir.scene.disableMovement = value;
-		VRODOS.api.saveChanges();
-	}
-
 </script>
 
 <!-- Sun Properties -->
