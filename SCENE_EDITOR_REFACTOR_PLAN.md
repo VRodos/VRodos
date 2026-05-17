@@ -255,6 +255,8 @@
 - Verification: Phase 134 `includes/asset-cpt/trait-vrodos-asset-cpt-taxonomy-admin.php` PHP syntax check passed; targeted asset taxonomy metabox scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 135 scene raycasting/property panel ownership split implemented.
 - Verification: Phase 135 JS syntax checks passed for raycasting and property controls; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; targeted property/raycast ownership scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 136 asset browser delegated UI cleanup implemented.
+- Verification: Phase 136 `assets/js/editor/ui/vrodos_asset_browser_toolbar.js` JS syntax check passed; targeted inline asset edit/action scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -441,6 +443,7 @@ assets/js/editor/
 - Done: Remove the three descriptive subtitle labels from the admin dashboard overview stat cards while preserving the totals, icons, and card layout.
 - Done: Clean up asset Project, Category, and IPR Category admin metaboxes by centralizing dropdown rendering, nonce checks, posted-term resolution, and single-term save handling while preserving assessment-category protection.
 - Done: Move legacy property panel hydration, input binding, selected-object lookup helpers, and light/POI property display methods from scene raycasting into the property-controls UI module while preserving the existing `VRODOS.ui.*Properties` compatibility methods.
+- Done: Clean up the editor asset browser by centralizing toolbar/list/tab lookups, moving edit-button navigation from inline generated HTML to a delegated data-action handler, and making category-tab filtering use one delegated listener across rerenders.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

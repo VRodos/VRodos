@@ -1,4 +1,63 @@
 //  AJAX: FETCH Assets 3d
+const VRODOS_ASSET_BROWSER_SELECTORS = {
+    toolbar: 'assetBrowserToolbar',
+    categoryTabs: 'assetCategTab',
+    allAssetsTab: 'allAssetsViewBt',
+    dataList: '.data',
+    assetCard: 'li:not(.asset-empty-state)',
+    editButton: '[data-vrodos-asset-edit-url]',
+    emptyState: '.asset-empty-state',
+    skeleton: '.asset-skeleton'
+};
+
+function getAssetBrowserElement(id) {
+    return document.getElementById(id);
+}
+
+function getAssetBrowserElements() {
+    const toolbar = getAssetBrowserElement(VRODOS_ASSET_BROWSER_SELECTORS.toolbar);
+    const categoryTabs = getAssetBrowserElement(VRODOS_ASSET_BROWSER_SELECTORS.categoryTabs);
+    const fileList = toolbar ? toolbar.querySelector(VRODOS_ASSET_BROWSER_SELECTORS.dataList) : null;
+
+    return { toolbar, categoryTabs, fileList };
+}
+
+function buildAssetEditUrl(editBaseUrl, assetId) {
+    return `${editBaseUrl}${assetId}&scene_type=scene&preview=0&editable=true`;
+}
+
+function bindAssetListControls(fileList) {
+    if (!fileList || fileList.dataset.vrodosAssetListBound === '1') {
+        return;
+    }
+
+    fileList.dataset.vrodosAssetListBound = '1';
+    fileList.addEventListener('click', (event) => {
+        event.preventDefault();
+
+        const editButton = event.target.closest(VRODOS_ASSET_BROWSER_SELECTORS.editButton);
+        if (editButton && editButton.dataset.vrodosAssetEditUrl) {
+            window.location.href = editButton.dataset.vrodosAssetEditUrl;
+        }
+    });
+}
+
+function bindAssetCategoryTabs(categoryTabs, openCategoryTab) {
+    if (!categoryTabs || categoryTabs.dataset.vrodosAssetTabsBound === '1') {
+        return;
+    }
+
+    categoryTabs.dataset.vrodosAssetTabsBound = '1';
+    categoryTabs.addEventListener('click', (event) => {
+        const button = event.target.closest('.tablinks');
+        if (!button || !categoryTabs.contains(button)) {
+            return;
+        }
+
+        openCategoryTab(button);
+    });
+}
+
 VRODOS.api.fetchListAvailableAssets = function(isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) {
 
     const url = VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl();
@@ -73,8 +132,10 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             }</div>`;
     }
 
-    const filemanager = document.getElementById('assetBrowserToolbar');
-    const fileList = filemanager.querySelector('.data');
+    const { toolbar: filemanager, categoryTabs, fileList } = getAssetBrowserElements();
+    if (!filemanager || !fileList) {
+        return;
+    }
 
     // Persistent drag ghost element — styled card with thumbnail + name
     const dragGhost = document.createElement('div');
@@ -124,6 +185,8 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
         window.vrodosAssetBrowserItemsById[String(asset.asset_id)] = asset;
     });
 
+    bindAssetListControls(fileList);
+    bindAssetCategoryTabs(categoryTabs, openCategoryTab);
     render(responseData, gameProjectSlug, urlforAssetEdit);
     if (typeof VRODOS.ui.setHierarchyViewer === 'function') {
         VRODOS.ui.setHierarchyViewer();
@@ -168,9 +231,6 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
         });
     }
 
-
-    fileList.addEventListener('click', (e) => { e.preventDefault(); });
-
     fileList.addEventListener('dragstart', (e) => {
         const target = e.target.closest('li[draggable]') || e.target;
         const screenshotImage = target.getAttribute("data-screenshot_path");
@@ -208,19 +268,14 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
     function render(enlistData, gameProjectSlug, urlforAssetEdit) {
 
         // Remove skeleton placeholders on first render
-        fileList.querySelectorAll('.asset-skeleton').forEach((el) => { el.remove(); });
+        fileList.querySelectorAll(VRODOS_ASSET_BROWSER_SELECTORS.skeleton).forEach((el) => { el.remove(); });
 
         // Remove any previous empty state
-        fileList.querySelectorAll('.asset-empty-state').forEach((el) => { el.remove(); });
+        fileList.querySelectorAll(VRODOS_ASSET_BROWSER_SELECTORS.emptyState).forEach((el) => { el.remove(); });
 
         let f; let name;
 
         if (enlistData && enlistData.length > 0) {
-
-            // allAssetsViewBt
-            document.getElementById("assetCategTab").children[0].addEventListener("click",
-                function (event) { openCategoryTab(event, this); }
-            );
 
             for (let i = 0; i < enlistData.length; i++) {
                 f = enlistData[i];
@@ -230,16 +285,15 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                 const lucideIconName = VRODOS.ui.getCategoryIcon(f.category_slug || f.category_icon);
 
                 // Add the category in tabs if not yet added
-                if (!document.getElementById(f.category_slug)) {
+                if (categoryTabs && !document.getElementById(f.category_slug)) {
                     //Create an input type dynamically.
                     const element = document.createElement("button");
                     //Assign different attributes to the element.
                     element.className = "tablinks tw-btn tw-btn-xs tw-btn-ghost";
                     element.id = f.category_slug;
                     element.innerHTML = `<i data-lucide='${  VRODOS.utils.escapeAttribute(lucideIconName)  }' title='${  VRODOS.utils.escapeAttribute(f.category_name)  }' style='width:18px; height:18px;'></i>`;
-                    element.addEventListener("click", function (event) { openCategoryTab(event, this); });
 
-                    document.getElementById("assetCategTab").appendChild(element);
+                    categoryTabs.appendChild(element);
                 }
 
                 let draggable_string = '';
@@ -275,8 +329,9 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                     (function() {
                         const canEditThis = Boolean(VRODOS.data.isUserAdmin) || (String(f.author_id) === String(VRODOS.data.current_user_id));
                         if (canEditThis) {
+                            const editUrl = buildAssetEditUrl(urlforAssetEdit, f.asset_id);
                             return `<div class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-p-2 tw-z-10 tw-transform tw-translate-y-1 group-hover:tw-translate-y-0 tw-transition-transform">` +
-                                `<button class="tw-w-full tw-bg-indigo-500/80 hover:tw-bg-indigo-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" onclick="window.location.href='${  urlforAssetEdit  }${f.asset_id  }&scene_type=scene&preview=0&editable=true'">EDIT</button>` +
+                                `<button type="button" class="tw-w-full tw-bg-indigo-500/80 hover:tw-bg-indigo-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" data-vrodos-asset-edit-url="${  VRODOS.utils.escapeAttribute(editUrl)  }">EDIT</button>` +
                             `</div>`;
                         }
                         return '';
@@ -333,7 +388,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
     }
 
 
-    function openCategoryTab(evt, b) {
+    function openCategoryTab(b) {
 
         const categName = b.id;
 
@@ -351,7 +406,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
         }
 
         // Show the current tab, and add an "active" class to the button that opened the tab
-        const items = fileList.querySelectorAll("li:not(.asset-empty-state)");
+        const items = fileList.querySelectorAll(VRODOS_ASSET_BROWSER_SELECTORS.assetCard);
         let visibleCount = 0;
         for (let i = 0; i < items.length; ++i) {
             if (categName === "allAssetsViewBt") {
@@ -368,7 +423,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
         }
 
         // Show/hide empty state based on visibility
-        const emptyState = fileList.querySelector(".asset-empty-state");
+        const emptyState = fileList.querySelector(VRODOS_ASSET_BROWSER_SELECTORS.emptyState);
         if (visibleCount === 0) {
             if (!emptyState) {
                 const emptyHTML = '<li class="asset-empty-state tw-col-span-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-16 tw-px-4 tw-text-center tw-bg-slate-800/20 tw-rounded-xl tw-border tw-border-dashed tw-border-white/10 tw-my-4">' +
@@ -389,6 +444,6 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             if (emptyState) emptyState.style.display = 'none';
         }
 
-        evt.currentTarget.classList.add("active");
+        b.classList.add("active");
     }
 };
