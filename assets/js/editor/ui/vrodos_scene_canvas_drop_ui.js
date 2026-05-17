@@ -1,12 +1,28 @@
 'use strict';
 
 window.VRODOS = window.VRODOS || {};
+VRODOS.api = VRODOS.api || {};
+VRODOS.data = VRODOS.data || {};
+VRODOS.editor = VRODOS.editor || {};
 VRODOS.ui = VRODOS.ui || {};
+VRODOS.utils = VRODOS.utils || {};
 
 (function initVrodosSceneCanvasDropUi() {
+    const SCENE_REORDER_MIME = 'application/vrodos-scene-reorder';
+    const TRANSLATE_PANEL_GUI_ID = 'translatePanelGui';
+    const LIGHT_PAWN_SELECTOR = '.lightpawnbutton';
+
+    function getElement(id) {
+        return document.getElementById(id);
+    }
+
+    function isFunction(value) {
+        return typeof value === 'function';
+    }
+
     function shouldIgnoreSceneReorderDrop(ev) {
         const types = ev.dataTransfer && ev.dataTransfer.types;
-        return types && typeof types.indexOf === 'function' && types.indexOf('application/vrodos-scene-reorder') !== -1;
+        return types && typeof types.indexOf === 'function' && types.indexOf(SCENE_REORDER_MIME) !== -1;
     }
 
     function resolveAssetBasePath(dataDrag) {
@@ -17,48 +33,102 @@ VRODOS.ui = VRODOS.ui || {};
         return VRODOS.utils.assetBasePathFromPath(dataDrag.path);
     }
 
-    VRODOS.ui.onDrop = function(ev) {
+    function markDropHandled(ev) {
         if (ev.vrodosSceneDropHandled) {
             ev.preventDefault();
-            return;
+            return false;
         }
+
         ev.vrodosSceneDropHandled = true;
+        return true;
+    }
 
-        if (shouldIgnoreSceneReorderDrop(ev)) {
-            return;
+    function readSceneDropData(ev) {
+        return isFunction(VRODOS.utils.readJsonDataTransfer)
+            ? VRODOS.utils.readJsonDataTransfer(ev)
+            : null;
+    }
+
+    function clearDropSelection() {
+        VRODOS.editor.suppressNextSelection = true;
+
+        if (VRODOS.editor.selection && isFunction(VRODOS.editor.selection.clear)) {
+            VRODOS.editor.selection.clear({ source: 'canvas-drop', hidePanel: false });
         }
+        if (isFunction(VRODOS.ui.removeAllCelOutlines)) {
+            VRODOS.ui.removeAllCelOutlines();
+        }
+        VRODOS.editor.selected_object_name = null;
+    }
 
-        const dataDrag = VRODOS.utils.readJsonDataTransfer(ev);
-        if (!dataDrag) {
-            ev.preventDefault();
+    function addDroppedAssetToCanvas(dataDrag, translation) {
+        if (!isFunction(VRODOS.api.addAssetToCanvas)) {
             return;
         }
 
         const categoryName = dataDrag.category_name;
         const nameModel = dataDrag.title;
         const path = resolveAssetBasePath(dataDrag);
-        const translation = VRODOS.api.dragDropVerticalRayCasting(ev);
+        VRODOS.api.addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, VRODOS.data.pluginPath);
+    }
 
-        VRODOS.editor.suppressNextSelection = true;
-
-        VRODOS.editor.selection.clear({ source: 'canvas-drop', hidePanel: false });
-        if (typeof VRODOS.ui.removeAllCelOutlines === 'function') {
-            VRODOS.ui.removeAllCelOutlines();
-        }
-        VRODOS.editor.selected_object_name = null;
-
-        if (typeof VRODOS.api.addAssetToCanvas === 'function') {
-            VRODOS.api.addAssetToCanvas(nameModel, path, categoryName, dataDrag, translation, VRODOS.data.pluginPath);
+    function showDroppedObjectPanel() {
+        if (!isFunction(VRODOS.ui.showObjectPropertiesPanel)) {
+            return;
         }
 
-        if (typeof VRODOS.ui.showObjectPropertiesPanel === 'function') {
-            VRODOS.ui.showObjectPropertiesPanel(VRODOS.editor.transforms.getMode());
+        const mode = VRODOS.editor.transforms && isFunction(VRODOS.editor.transforms.getMode)
+            ? VRODOS.editor.transforms.getMode()
+            : undefined;
+        VRODOS.ui.showObjectPropertiesPanel(mode);
+    }
+
+    function set2dDropTranslateMode() {
+        const envir = VRODOS.editor.envir || null;
+        const transforms = VRODOS.editor.transforms || null;
+        if (!envir || !envir.is2d || !transforms || !isFunction(transforms.setMode)) {
+            return;
         }
 
-        if (VRODOS.editor.envir.is2d) {
-            VRODOS.editor.transforms.setMode('translate');
-            document.getElementById('translatePanelGui').style.display = '';
+        transforms.setMode('translate');
+        const translatePanel = getElement(TRANSLATE_PANEL_GUI_ID);
+        if (translatePanel) {
+            translatePanel.style.display = '';
         }
+    }
+
+    function getDropTranslation(ev) {
+        return isFunction(VRODOS.api.dragDropVerticalRayCasting)
+            ? VRODOS.api.dragDropVerticalRayCasting(ev)
+            : [0, 0, 0];
+    }
+
+    function getLightPawnType(event) {
+        const source = event.currentTarget || event.target;
+        const button = source && isFunction(source.closest) ? source.closest(LIGHT_PAWN_SELECTOR) : source;
+        return button && button.dataset ? button.dataset.lightpawn || '' : '';
+    }
+
+    VRODOS.ui.onDrop = function(ev) {
+        if (!markDropHandled(ev)) {
+            return;
+        }
+
+        if (shouldIgnoreSceneReorderDrop(ev)) {
+            return;
+        }
+
+        const dataDrag = readSceneDropData(ev);
+        if (!dataDrag) {
+            ev.preventDefault();
+            return;
+        }
+
+        const translation = getDropTranslation(ev);
+        clearDropSelection();
+        addDroppedAssetToCanvas(dataDrag, translation);
+        showDroppedObjectPanel();
+        set2dDropTranslateMode();
 
         ev.preventDefault();
     };
@@ -68,18 +138,22 @@ VRODOS.ui = VRODOS.ui || {};
     };
 
     VRODOS.ui.createLightPawnDragData = function(lightPawnType) {
-        return VRODOS.utils.createLightPawnDragPayload(lightPawnType);
+        return isFunction(VRODOS.utils.createLightPawnDragPayload)
+            ? VRODOS.utils.createLightPawnDragPayload(lightPawnType)
+            : null;
     };
 
     VRODOS.ui.handleLightPawnDragStart = function(e) {
-        const lightPawnType = e.target && e.target.dataset ? e.target.dataset.lightpawn : '';
+        const lightPawnType = getLightPawnType(e);
         const dragData = VRODOS.ui.createLightPawnDragData(lightPawnType);
 
         if (!dragData || !e.dataTransfer) {
             return false;
         }
 
-        VRODOS.utils.writeJsonDataTransfer(e, dragData);
+        if (isFunction(VRODOS.utils.writeJsonDataTransfer)) {
+            VRODOS.utils.writeJsonDataTransfer(e, dragData);
+        }
         return false;
     };
 })();
