@@ -248,65 +248,10 @@ VRODOS.ui.contextMenuClick = function(event) {
     // Check if right-clicked is the one selected already with left-click
     const selectedTransformObject = VRODOS.ui.getSelectedPropertyTarget();
     if (selectedTransformObject && intersected[0].name === selectedTransformObject.name) {
-        showProperties(event, intersected[0]);
+        VRODOS.ui.showLegacyContextProperties(event, intersected[0]);
     }
 
 
-}
-
-// Right click raycast operations
-function showProperties(event, object) {
-
-    //var objectParent  = inters.object.parent;
-    const name = object.name;
-    switch (object.category_slug) {
-        case 'decoration':
-            // Don't display a popup in decoration. You can only change name and glb file from asset editor!
-            break;
-        case 'poi-imagetext':
-            VRODOS.ui.displayPoiImageTextProperties(event, name);
-            break;
-        case 'door':
-            VRODOS.ui.displayDoorProperties(event, name);
-            break;
-        case 'poi-link':
-            VRODOS.ui.displayLinkProperties(event, name);
-            break;
-        case 'chat':
-        case 'poi-chat':
-            VRODOS.ui.displayPoiChatProperties(event, name);
-            break;
-        // case 'lightSun':
-        //     VRODOS.ui.displaySunProperties(event, name);
-        //     break;
-        // case 'lightLamp':
-        //     VRODOS.ui.displayLampProperties(event, name);
-        //     break;
-        // case 'lightSpot':
-        //     VRODOS.ui.displaySpotProperties(event, name);
-        //     break;
-        // case 'lightAmbient':
-        //     VRODOS.ui.displayAmbientProperties(event, name);
-        //     break;
-        default:
-            break;
-    }
-    switch (object.category_name) {
-        case 'lightSun':
-            VRODOS.ui.displaySunProperties(event, name);
-            break;
-        case 'lightLamp':
-            VRODOS.ui.displayLampProperties(event, name);
-            break;
-        // case 'lightSpot':
-        //     VRODOS.ui.displaySpotProperties(event, name);
-        //     break;
-        // case 'lightAmbient':
-        //     VRODOS.ui.displayAmbientProperties(event, name);
-        //     break;
-        default:
-            break;
-    }
 }
 
 /**

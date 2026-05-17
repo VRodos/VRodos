@@ -329,6 +329,69 @@ VRODOS.ui.displayPoiImageTextProperties = function(event, name) {
     _showEditorPanel(panelState.panel);
 }
 
+function displaySharedPropertySections(event, object, options) {
+    if (!object) return false;
+
+    const opts = options || {};
+    const name = object.name;
+    let hasProperties = false;
+
+    switch (object.category_slug) {
+        case 'poi-imagetext':
+            VRODOS.ui.displayPoiImageTextProperties(event, name);
+            hasProperties = true;
+            break;
+        case 'door':
+            VRODOS.ui.displayDoorProperties(event, name);
+            hasProperties = true;
+            break;
+        case 'poi-link':
+            VRODOS.ui.displayLinkProperties(event, name);
+            hasProperties = true;
+            break;
+        case 'chat':
+        case 'poi-chat':
+            VRODOS.ui.displayPoiChatProperties(event, name);
+            hasProperties = true;
+            break;
+        default:
+            break;
+    }
+
+    switch (object.category_name) {
+        case 'lightSun':
+            VRODOS.ui.displaySunProperties(event, name);
+            hasProperties = true;
+            break;
+        case 'lightLamp':
+            VRODOS.ui.displayLampProperties(event, name);
+            hasProperties = true;
+            break;
+        case 'lightSpot':
+            if (opts.includeSpotAndAmbient) {
+                VRODOS.ui.displaySpotProperties(event, name);
+                hasProperties = true;
+            }
+            break;
+        case 'lightAmbient':
+            if (opts.includeSpotAndAmbient) {
+                VRODOS.ui.displayAmbientProperties(event, name);
+                hasProperties = true;
+            }
+            break;
+        default:
+            break;
+    }
+
+    return hasProperties;
+}
+
+function showLegacyContextProperties(event, object) {
+    displaySharedPropertySections(event, object, {
+        includeSpotAndAmbient: false
+    });
+}
+
 function initPersistentPropertyListeners() {
     const setProp = (prop, isCheckbox, sanitize = false) => function () {
         const obj = getSelectedPropertyTarget();
@@ -1154,7 +1217,6 @@ function showPropertiesInPanel(object) {
     hideAllPropertyPanels();
     updateObjectControlsMeta(object);
 
-    const name = object.name;
     let hasProperties = false;
 
     // Dispatch by category_slug first
@@ -1167,52 +1229,17 @@ function showPropertiesInPanel(object) {
             displayWalkableSurfaceProperties(object);
             hasProperties = true;
             break;
-        case 'poi-imagetext':
-            VRODOS.ui.displayPoiImageTextProperties(null, name);
-            hasProperties = true;
-            break;
         case 'audio':
             displayAudioProperties(object);
-            hasProperties = true;
-            break;
-        case 'door':
-            VRODOS.ui.displayDoorProperties(null, name);
-            hasProperties = true;
-            break;
-        case 'poi-link':
-            VRODOS.ui.displayLinkProperties(null, name);
-            hasProperties = true;
-            break;
-        case 'chat':
-        case 'poi-chat':
-            VRODOS.ui.displayPoiChatProperties(null, name);
             hasProperties = true;
             break;
         default:
             break;
     }
 
-    // Dispatch by category_name (lights)
-    switch (object.category_name) {
-        case 'lightSun':
-            VRODOS.ui.displaySunProperties(null, name);
-            hasProperties = true;
-            break;
-        case 'lightLamp':
-            VRODOS.ui.displayLampProperties(null, name);
-            hasProperties = true;
-            break;
-        case 'lightSpot':
-            VRODOS.ui.displaySpotProperties(null, name);
-            hasProperties = true;
-            break;
-        case 'lightAmbient':
-            VRODOS.ui.displayAmbientProperties(null, name);
-            hasProperties = true;
-            break;
-        default:
-            break;
-    }
+    hasProperties = displaySharedPropertySections(null, object, {
+        includeSpotAndAmbient: true
+    }) || hasProperties;
 
     // Show the container only if a property section is active
     if (hasProperties) {
@@ -2235,6 +2262,7 @@ VRODOS.ui.isObjectControlsPanelOpen = isObjectControlsPanelOpen;
 VRODOS.ui.bindObjectControlsPanelEvents = bindObjectControlsPanelEvents;
 VRODOS.ui.setObjectControlsActionsVisible = setObjectControlsActionsVisible;
 VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;
+VRODOS.ui.showLegacyContextProperties = showLegacyContextProperties;
 VRODOS.ui.controlInterface = controlInterface;
 VRODOS.ui.controllerDatGuiOnChange = controllerDatGuiOnChange;
 VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes = updatePositionsPhpAndJavsFromControlsAxes;

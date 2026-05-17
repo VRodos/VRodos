@@ -263,6 +263,8 @@
 - Verification: Phase 138 `assets/js/editor/ui/vrodos_property_controls.js` JS syntax check passed; `templates/pages/vrodos-edit-3D-scene-Popups.php` PHP syntax check passed; targeted popup inline-handler/helper scan passed; `git diff --check` passed with the existing Git CRLF normalization warning for the edited popup template; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 139 delete-dialog inline close cleanup implemented.
 - Verification: Phase 139 JS syntax checks passed for scene object actions and scene list UI; PHP syntax checks passed for edited scene templates; targeted delete-dialog inline close scan passed; `git diff --check` passed with the existing Git CRLF normalization warning for the edited Other Scenes template; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 140 context property dispatch ownership cleanup implemented.
+- Verification: Phase 140 JS syntax checks passed for raycasting and property controls; targeted context/property dispatch scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -453,6 +455,7 @@ assets/js/editor/
 - Done: Move right-panel Scene Options, background, fog, and scale-lock event ownership out of inline template handlers and into editor shell/toolbar binders while preserving legacy global wrappers for compatibility.
 - Done: Remove the remaining POI Link/Chat popup inline property handlers and their legacy helper script, relying on the property-controls module as the single owner while allowing external-link values to be cleared.
 - Done: Move object-delete and scene-delete dialog close controls out of inline template handlers, and make object-delete confirmation use one persistent JS binding with the current target stored on the dialog to avoid stale callbacks after cancel/reopen.
+- Done: Move right-click context property dispatch out of scene raycasting into the property-controls UI module, sharing POI/light property routing while preserving the legacy right-click scope.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
