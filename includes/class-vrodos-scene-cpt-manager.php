@@ -4,6 +4,9 @@ require_once __DIR__ . '/class-vrodos-runtime-settings-contract.php';
 
 class VRodos_Scene_CPT_Manager {
 
+	private const SCENE_PROJECT_TAXONOMY = 'vrodos_scene_pgame';
+	private const SCENE_PROJECT_NONCE_NAME = 'vrodos_scene_pgame_noncename';
+
 	private array $vrodos_scenes_metas_definition;
 
 	public function __construct() {
@@ -39,23 +42,29 @@ class VRodos_Scene_CPT_Manager {
 	}
 
 	public function scenes_taxgame_box_content( $post ): void {
-		$tax_name = 'vrodos_scene_pgame';
+		$tax_name = self::SCENE_PROJECT_TAXONOMY;
 		?>
-		<div class="tagsdiv" id="<?php echo $tax_name; ?>">
+		<div class="tagsdiv" id="<?php echo esc_attr( $tax_name ); ?>">
 			<p class="howto"><?php echo 'Select Project for current Scene'; ?></p>
 			<?php
-			// Use nonce for verification
-			wp_nonce_field( plugin_basename( __FILE__ ), 'vrodos_scene_pgame_noncename' );
-			$type_ids      = wp_get_object_terms( $post->ID, 'vrodos_scene_pgame', ['fields' => 'ids'] );
-			$selected_type = empty( $type_ids ) ? '' : $type_ids[0];
-			$args          = ['show_option_none'  => 'Select Project', 'orderby'           => 'name', 'hide_empty'        => 0, 'selected'          => $selected_type, 'name'              => 'vrodos_scene_pgame', 'taxonomy'          => 'vrodos_scene_pgame', 'echo'              => 0, 'option_none_value' => '-1', 'id'                => 'vrodos-select-pgame-dropdown'];
-			$select        = wp_dropdown_categories( $args );
-			$replace       = '<select$1 required>';
-			$select        = preg_replace( '#<select([^>]*)>#', $replace, $select );
-			$old_option    = "<option value='-1'>";
-			$new_option    = "<option disabled selected value=''>" . 'Select project' . '</option>';
-			$select        = str_replace( $old_option, $new_option, $select );
-			echo $select;
+			wp_nonce_field( plugin_basename( __FILE__ ), self::SCENE_PROJECT_NONCE_NAME );
+
+			$type_ids      = wp_get_object_terms( $post->ID, $tax_name, ['fields' => 'ids'] );
+			$selected_type = ( ! is_wp_error( $type_ids ) && ! empty( $type_ids ) ) ? (int) $type_ids[0] : 0;
+
+			echo wp_dropdown_categories( [
+				'show_option_none'  => 'Select project',
+				'orderby'           => 'name',
+				'hide_empty'        => false,
+				'selected'          => $selected_type,
+				'name'              => $tax_name,
+				'taxonomy'          => $tax_name,
+				'echo'              => 0,
+				'option_none_value' => '',
+				'id'                => 'vrodos-select-pgame-dropdown',
+				'class'             => 'widefat',
+				'required'          => true,
+			] );
 			?>
 		</div>
 		<?php
@@ -66,25 +75,29 @@ class VRodos_Scene_CPT_Manager {
 			return;
 		}
 
-		if ( ! isset( $_POST['vrodos_scene_pgame_noncename'] ) ) {
+		if ( get_post_type( $post_id ) !== 'vrodos_scene' ) {
 			return;
 		}
 
-		if ( ! wp_verify_nonce( $_POST['vrodos_scene_pgame_noncename'], plugin_basename( __FILE__ ) ) ) {
+		if ( ! isset( $_POST[ self::SCENE_PROJECT_NONCE_NAME ] ) ) {
 			return;
 		}
 
-		if ( 'vrodos_scene' == $_POST['post_type'] ) {
-			if ( ! current_user_can( 'edit_pages', $post_id ) ) {
-				return;
-			}
-		} elseif ( ! current_user_can( 'edit_posts', $post_id ) ) {
-				return;
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ self::SCENE_PROJECT_NONCE_NAME ] ) ), plugin_basename( __FILE__ ) ) ) {
+			return;
 		}
 
-		$type_ID = intval( $_POST['vrodos_scene_pgame'], 10 );
-		$type    = ( $type_ID > 0 ) ? get_term( $type_ID, 'vrodos_scene_pgame' )->slug : null;
-		wp_set_object_terms( $post_id, $type, 'vrodos_scene_pgame' );
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		$type_id = isset( $_POST[ self::SCENE_PROJECT_TAXONOMY ] ) ? absint( wp_unslash( $_POST[ self::SCENE_PROJECT_TAXONOMY ] ) ) : 0;
+		if ( $type_id > 0 && term_exists( $type_id, self::SCENE_PROJECT_TAXONOMY ) ) {
+			wp_set_object_terms( $post_id, [ $type_id ], self::SCENE_PROJECT_TAXONOMY, false );
+			return;
+		}
+
+		wp_set_object_terms( $post_id, [], self::SCENE_PROJECT_TAXONOMY, false );
 	}
 
 	public function set_custom_vrodos_scene_columns( $columns ): array {

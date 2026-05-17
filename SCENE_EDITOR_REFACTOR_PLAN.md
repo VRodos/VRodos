@@ -247,6 +247,10 @@
 - Verification: Phase 130 `includes/class-vrodos-scene-cpt-manager.php` PHP syntax check passed; targeted Scene YAML metabox scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 131 asset custom-fields metadata hiding implemented.
 - Verification: Phase 131 asset CPT PHP syntax checks passed; targeted hidden asset meta-key scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 132 scene parent-project metabox cleanup implemented.
+- Verification: Phase 132 `includes/class-vrodos-scene-cpt-manager.php` PHP syntax check passed; targeted Parent Project metabox scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 133 dashboard overview stat-label cleanup implemented.
+- Verification: Phase 133 `includes/admin/class-vrodos-admin-dashboard-page.php` PHP syntax check passed; targeted dashboard label scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -429,6 +433,8 @@ assets/js/editor/
 - Done: Replace the default tag-style Immerse Use Cases project metabox with a single-select connector dropdown, suppress the default taxonomy box, and save at most one use-case term per project.
 - Done: Remove the Scene YAML metabox from the scene edit admin screen by deleting its custom box/render/save path while keeping WordPress's default YAML taxonomy box suppressed.
 - Done: Hide internal asset metadata keys from the WordPress Custom Fields metabox for asset posts while preserving their storage and REST/editor usage.
+- Done: Clean up the scene Parent Project admin metabox by replacing dropdown HTML string rewriting with `wp_dropdown_categories()` options, adding shared constants for the taxonomy/nonce, and validating term IDs on save.
+- Done: Remove the three descriptive subtitle labels from the admin dashboard overview stat cards while preserving the totals, icons, and card layout.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

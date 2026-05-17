@@ -112,7 +112,6 @@ class VRodos_Admin_Dashboard_Page {
 						</div>
 						<div class="tw-stat-title tw-text-slate-400 tw-font-bold tw-uppercase tw-tracking-wider tw-text-[10px]">Total Projects</div>
 						<div class="tw-stat-value tw-text-slate-900 tw-text-4xl tw-font-black"><?php echo $projects_count; ?></div>
-						<div class="tw-stat-desc tw-text-slate-400 tw-mt-1">Manage your 3D worlds</div>
 					</div>
 					
 					<div class="tw-stat tw-bg-white tw-rounded-2xl tw-shadow-sm tw-border tw-border-slate-100 tw-p-6" data-theme="emerald">
@@ -121,7 +120,6 @@ class VRodos_Admin_Dashboard_Page {
 						</div>
 						<div class="tw-stat-title tw-text-slate-400 tw-font-bold tw-uppercase tw-tracking-wider tw-text-[10px]">Total Scenes</div>
 						<div class="tw-stat-value tw-text-slate-900 tw-text-4xl tw-font-black"><?php echo $scenes_count; ?></div>
-						<div class="tw-stat-desc tw-text-slate-400 tw-mt-1">Environment compositions</div>
 					</div>
 					
 					<div class="tw-stat tw-bg-white tw-rounded-2xl tw-shadow-sm tw-border tw-border-slate-100 tw-p-6" data-theme="emerald">
@@ -130,7 +128,6 @@ class VRodos_Admin_Dashboard_Page {
 						</div>
 						<div class="tw-stat-title tw-text-slate-400 tw-font-bold tw-uppercase tw-tracking-wider tw-text-[10px]">Total Assets</div>
 						<div class="tw-stat-value tw-text-slate-900 tw-text-4xl tw-font-black"><?php echo $assets_count; ?></div>
-						<div class="tw-stat-desc tw-text-slate-400 tw-mt-1">3D models & Media</div>
 					</div>
 				</div>
 
