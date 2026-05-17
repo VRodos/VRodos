@@ -77,7 +77,7 @@ VRODOS.api = VRODOS.api || {};
         if (!proceedButton) return;
 
         proceedButton.addEventListener('click', () => {
-            dialogState.resetProgressState();
+            dialogState.resetBuildState();
 
             if (typeof VRODOS.ui.applyCompileDialogSettingsToScene === 'function') {
                 VRODOS.ui.applyCompileDialogSettingsToScene();
@@ -97,9 +97,7 @@ VRODOS.api = VRODOS.api || {};
                     }
                 })
                 .catch((error) => {
-                    if (typeof VRODOS.api.hideCompileProgressSlider === 'function') {
-                        VRODOS.api.hideCompileProgressSlider();
-                    }
+                    dialogState.finishBuildState();
                     dialogState.showSaveFailedMessage();
                     console.warn('VRodos: compile blocked because scene save failed.', error);
                 });

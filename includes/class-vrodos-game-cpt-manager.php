@@ -260,76 +260,42 @@ class VRodos_Game_CPT_Manager {
 
 	public function games_compilerbox_show(): void {
 		global $post;
-		$DS = DIRECTORY_SEPARATOR;
 
 		wp_enqueue_script( 'ajax-script_compile' );
-		$slug = $post->post_name;
-
-		$isAdmin = is_admin() ? 'back' : 'front';
-		echo '<script>let isAdmin="' . $isAdmin . '";</script>';
-
-		wp_localize_script(
-			'ajax-script_compile',
-			'my_ajax_object_compile',
-			['ajax_url'  => admin_url( 'admin-ajax.php' ), 'projectId' => $post->ID, 'slug'      => $slug, 'sceneId'   => vrodos_get_project_scene_id( $post->ID )]
-		);
+		$project_id = absint( $post->ID );
+		$slug       = $post->post_name;
+		$scene_id   = vrodos_get_project_scene_id( $project_id );
+		$is_admin   = is_admin() ? 'back' : 'front';
 
 		wp_localize_script(
-			'ajax-script_compile',
-			'phpvarsA',
-			['pluginsUrl'   => plugins_url(), 'PHP_OS'       => PHP_OS, 'game_dirpath' => realpath( __DIR__ . '/..' ) . $DS . 'games_assemble' . $DS . $slug, 'game_urlpath' => plugins_url( 'vrodos' ) . '/games_assemble/' . $slug]
+			'vrodos_namespace',
+			'vrodos_api_config',
+			[
+				'ajax_url'  => admin_url( 'admin-ajax.php' ),
+				'projectId' => $project_id,
+				'slug'      => $slug,
+				'sceneId'   => $scene_id,
+				'isAdmin'   => $is_admin,
+			]
 		);
 
-		wp_enqueue_script( 'vrodos_assemble_request' );
-		wp_localize_script(
-			'vrodos_assemble_request',
-			'phpvarsB',
-			['pluginsUrl'          => plugins_url(), 'PHP_OS'              => PHP_OS, 'source'              => realpath( __DIR__ . '/../../..' ) . $DS . 'uploads' . $DS . $slug, 'target'              => realpath( __DIR__ . '/..' ) . $DS . 'games_assemble' . $DS . $slug, 'game_libraries_path' => realpath( __DIR__ . '/..' ) . $DS . 'unity_game_libraries', 'game_id'             => $post->ID]
-		);
-
-		$project_type_terms = wp_get_object_terms( $post->ID, 'vrodos_game_type' );
-		$project_type_slug  = ! empty( $project_type_terms ) ? $project_type_terms[0]->slug : '';
 		?>
-
-		<input id="platformInput" type="hidden" value="Aframe">
-		<input id="project-type" type="hidden" value="<?php echo esc_attr( $project_type_slug ); ?>">
 
 		<div id="constantUpdateUser" class="mdc-typography--caption mdc-theme--text-primary-on-background">
 			<i title="Instructions" class="material-icons AlignIconToBottom">help</i>
 			Click on "Compile" in order to construct the virtual world.
 		</div>
 
-		<h2 id="compileProgressTitle" style="display: none" class="CenterContents mdc-typography--headline"></h2>
-
-		<div class="progressSlider" id="compileProgressDeterminate" style="display: none;">
-			<div class="progressSliderLine"></div>
-			<div class="progressSliderSubLineDeterminate" id="progressSliderSubLineDeterminateValue"></div>
-		</div>
-
-		<div class="progressSlider" id="compileProgressSlider" style="display: none;">
-			<div class="progressSliderLine"></div>
-			<div class="progressSliderSubLine progressIncrease"></div>
-			<div class="progressSliderSubLine progressDecrease"></div>
-		</div>
-
-		<div id="compilationProgressText" class="mdc-typography--title"></div>
 		<hr class="WhiteSpaceSeparator" style="margin-top: 0;" tabIndex="0">
 		<a id="vrodos_compileButton" type="button" class="mdc-button mdc-button--primary mdc-dialog__footer__button mdc-button--raised" onclick="VRODOS.api.compileScene()">Compile</a>
 		<hr class="separator" >
-		<div id="previewApp" class="previewApp" style="display:inline-block"></div>
 		<div id="appResultDiv" style="margin-top:20px;display:none">
-			<a class="mdc-typography--title" href="" id="vrodos-weblink" style="margin-left:30px" target="_blank">Web link</a>
 			<button title="Copy link to clipboard" id="buttonCopyWebLink" style="background: transparent; border: none; color: darkslateblue" >
 				<i class="material-icons" style="cursor: pointer; float: right;">content_copy</i>
 			</button>
 			<a id="openWebLinkhref" href="#" title="Open index.html in new window" target="_blank" style="color:darkslateblue" onclick="document.getElementById('compileCancelBtn').click();">Open experience link</a>
 		</div>
 		<a id="compileCancelBtn" class="mdc-button mdc-dialog__footer__button--cancel mdc-dialog__footer__button" style="display:none;">Close</a>
-		<div id="vrodos_compile_report1"></div>
-		<div id="vrodos_compile_report2"></div>
-		<div id="vrodos_zipgame_report"></div>
-		<br /><br />Analytic report of compile:<br />
-		<div id="vrodos_compile_game_stdoutlog_report" style="font-size: x-small"></div>
 		<?php
 	}
 

@@ -142,50 +142,6 @@ i.ButtonIcon {
 	vertical-align: sub;
 }
 
-.progressSlider{
-	display: block;
-	position: relative;
-	width: 100%;
-	height: 4px;
-	overflow: hidden;
-}
-
-.progressSliderLine{
-	position:absolute;
-	opacity: 0.4;
-	background: #3F51B5;
-	width: 150%;
-	height: 5px;
-}
-
-.progressSliderSubLine, .progressSliderSubLineDeterminate {
-	position: absolute;
-	background: #3F51B5;
-	height: 5px;
-}
-
-.progressSliderSubLineDeterminate {
-	left: 0;
-}
-
-
-.progressIncrease{
-	animation: increase 2s infinite;
-}
-.progressDecrease{
-	animation: decrease 2s 0.5s infinite;
-}
-
-@keyframes increase {
-	from { left: -5%; width: 5%; }
-	to { left: 130%; width: 100%;}
-}
-@keyframes decrease {
-	from { left: -80%; width: 80%; }
-	to { left: 110%; width: 10%;}
-}
-
-
 /*Override default theme to correctly show jQuery UI styles*/
 .ui-slider .ui-slider-handle:last-child {
 	margin-left: 0 !important;

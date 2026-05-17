@@ -219,6 +219,20 @@
 - Verification: Phase 116 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; targeted compile dialog state scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 117 compile result link action cleanup implemented.
 - Verification: Phase 117 JS syntax checks passed; `templates/pages/vrodos-edit-3D-scene-CompileDialogue.php` PHP syntax check passed; targeted compile link action scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 118 stale compile ZIP link state removal implemented.
+- Verification: Phase 118 JS syntax check passed; PHP syntax check skipped because no PHP files changed; targeted compile ZIP link scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 119 stale compile task-memory state removal implemented.
+- Verification: Phase 119 JS syntax check passed; PHP syntax check skipped because no PHP files changed; targeted compile task-memory scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 120 stale compile preview/platform state removal implemented.
+- Verification: Phase 120 JS syntax checks passed; `templates/pages/vrodos-edit-3D-scene-CompileDialogue.php` and `includes/class-vrodos-game-cpt-manager.php` PHP syntax checks passed; targeted compile preview/platform scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 121 stale compile progress UI removal implemented.
+- Verification: Phase 121 JS syntax checks passed; `templates/pages/vrodos-edit-3D-scene-CompileDialogue.php` and `includes/class-vrodos-game-cpt-manager.php` PHP syntax checks passed; targeted compile progress scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 122 legacy game compiler localization cleanup implemented.
+- Verification: Phase 122 `includes/class-vrodos-game-cpt-manager.php` PHP syntax check passed; targeted legacy compiler global scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 123 duplicate compile runtime-mode request cleanup implemented.
+- Verification: Phase 123 JS syntax checks passed; targeted compile request runtime-mode scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 124 legacy game compiler report markup cleanup implemented.
+- Verification: Phase 124 `includes/class-vrodos-game-cpt-manager.php` PHP syntax check passed; targeted legacy compile report scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -387,6 +401,13 @@ assets/js/editor/
 - Done: Group compile request AJAX cleanup by centralizing compile-dialog element lookup, progress/result state updates, runtime link rendering, primary link reveal, runtime-mode resolution, response parsing, and null-safe progress hiding inside `ajax/vrodos_request_compile.js`.
 - Done: Group compile dialog state helper consolidation by adding `VRODOS.ui.compileDialogState` to shared UI helpers, routing compile dialog open/proceed/cancel and compile request progress/result updates through it, and restoring progress text visibility on repeated builds.
 - Done: Clean up compile result link actions by removing the duplicate text "Copy Link" launch anchor, keeping the compact copy icon button, deleting the stale direct clipboard handler from the large settings dialog file, and routing icon-copy through the shared clipboard fallback.
+- Done: Remove stale compile ZIP link state by deleting the unused `vrodos-ziplink` ID and reset branch from shared compile dialog state now that scene builds no longer expose a ZIP download.
+- Done: Remove stale compile task-memory state by deleting the unused `unityTaskMemValue` ID and reset branch from shared compile dialog state.
+- Done: Remove stale compile preview/platform state by deleting the unused `previewApp`, `platformInput`, `project-type`, `outputFormat`, and legacy result-list rendering paths while keeping the primary Launch/copy URL flow.
+- Done: Remove stale compile progress UI by deleting the progress title/bar/text IDs, legacy progress markup, progress slider CSS, and old progress API/state calls while keeping status messages and the primary Launch/copy result flow.
+- Done: Remove legacy game compiler localization by deleting the dead `phpvarsA`, `phpvarsB`, `my_ajax_object_compile`, and unregistered `vrodos_assemble_request` path while routing the remaining metabox compile config through `vrodos_api_config`.
+- Done: Remove duplicate compile runtime-mode request plumbing by relying on the saved `aframeRuntimeMode` scene metadata during compile and deleting the AJAX-side `runtimeMode` query parameter/helper lookup.
+- Done: Remove orphaned legacy game compiler report markup by deleting unused compile report, ZIP report, and stdout report placeholders from the project metabox.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

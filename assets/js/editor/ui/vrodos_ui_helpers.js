@@ -162,31 +162,15 @@ VRODOS.ui.compileDialogState = (function(existing) {
         copyWebLink: 'buttonCopyWebLink',
         dialog: 'compile-dialog',
         openWebLink: 'openWebLinkhref',
-        platform: 'platformInput',
-        preview: 'previewApp',
         proceedButton: 'compileProceedBtn',
-        progressBarValue: 'progressSliderSubLineDeterminateValue',
-        progressDeterminate: 'compileProgressDeterminate',
-        progressSlider: 'compileProgressSlider',
-        progressText: 'compilationProgressText',
-        progressTitle: 'compileProgressTitle',
-        projectType: 'project-type',
         resultMeta: 'compileResultMeta',
-        runtimeMode: 'compileRuntimeModeSelect',
         saveButton: 'save-scene-button',
         statusRow: 'compileStatusRow',
-        taskMemory: 'unityTaskMemValue',
-        topResultLink: 'compileTopResultLink',
-        zipLink: 'vrodos-ziplink'
+        topResultLink: 'compileTopResultLink'
     };
 
     function getElement(key) {
         return document.getElementById(ids[key] || key);
-    }
-
-    function getValue(key, fallback) {
-        const element = getElement(key);
-        return element ? element.value : fallback;
     }
 
     function setDisplay(element, value) {
@@ -251,14 +235,8 @@ VRODOS.ui.compileDialogState = (function(existing) {
         setStatusMessage('info', 'Configure your scene quality settings and click "Build" to construct the virtual world.');
     }
 
-    function resetProgressState() {
+    function resetBuildState() {
         resetDialogStatusState();
-        setDisplay(getElement('progressSlider'), '');
-        setDisplay(getElement('progressTitle'), '');
-        setDisplay(getElement('progressText'), '');
-        setDisplay(getElement('zipLink'), 'none');
-        setHtml(getElement('progressText'), '');
-        setHtml(getElement('taskMemory'), '0');
     }
 
     function showSavePendingMessage() {
@@ -270,7 +248,6 @@ VRODOS.ui.compileDialogState = (function(existing) {
     }
 
     function showStartedState() {
-        const progressText = getElement('progressText');
         const cancelButton = getElement('cancelButton');
 
         if (cancelButton) {
@@ -278,37 +255,11 @@ VRODOS.ui.compileDialogState = (function(existing) {
         }
 
         resetResultState();
-        setText(getElement('progressTitle'), 'Step: 1 / 2');
-        if (progressText) {
-            progressText.style.display = '';
-            progressText.textContent = '';
-            progressText.append('Building...');
-        }
         setStatusMessage('info', 'Please wait while we build your scene');
     }
 
-    function hideProgress(options) {
-        const opts = options || {};
-
-        setDisplay(getElement('progressSlider'), 'none');
-        setDisplay(getElement('progressTitle'), 'none');
-        setDisplay(getElement('progressDeterminate'), 'none');
-        if (opts.hideText) {
-            setDisplay(getElement('progressText'), 'none');
-        }
-        if (opts.resetDeterminateWidth) {
-            const progressBarValue = getElement('progressBarValue');
-            if (progressBarValue) {
-                progressBarValue.style.width = '1px';
-            }
-        }
-        if (opts.releaseActions !== false) {
-            releaseBuildActions();
-        }
-    }
-
-    function clearPreview() {
-        setHtml(getElement('preview'), '');
+    function finishBuildState() {
+        releaseBuildActions();
     }
 
     function showPrimaryExperienceLink(primaryExperienceUrl) {
@@ -360,16 +311,14 @@ VRODOS.ui.compileDialogState = (function(existing) {
     }
 
     return Object.assign(existing || {}, {
-        clearPreview,
         copyPrimaryExperienceUrl,
         getCompilePid,
         getElement,
         getPrimaryExperienceUrl,
-        getValue,
-        hideProgress,
+        finishBuildState,
         releaseBuildActions,
         resetDialogStatusState,
-        resetProgressState,
+        resetBuildState,
         resetResultState,
         setStatusMessage,
         showPrimaryExperienceLink,

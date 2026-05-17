@@ -34,10 +34,6 @@
 		<!-- Body -->
 		<div class="tw-p-6 tw-overflow-y-auto tw-flex-1">
 
-			<!--Values are important. Dont delete these hidden inputs (yet)-->
-			<input id="platformInput" type="hidden" value="platform-Aframe">
-			<input id="project-type" type="hidden" value="<?php echo esc_attr( strtolower( $project_type ) ); ?>">
-
 			<div class="tw-mb-3 tw-rounded-lg tw-border tw-border-emerald-200 tw-bg-emerald-50/80 tw-px-3 tw-py-2">
 				<div class="tw-flex tw-flex-col tw-gap-2 sm:tw-flex-row sm:tw-items-center sm:tw-justify-between">
 					<div class="tw-flex tw-items-center tw-gap-2 tw-min-w-0">
@@ -803,27 +799,6 @@
 					</div>
 				</div>
 			</div>
-
-
-			<!-- Build Progress Area -->
-			<div id="compilationProgressContainer" class="tw-mb-4" style="display: none;">
-				<h2 id="compileProgressTitle" class="tw-text-center tw-text-lg tw-font-bold tw-text-slate-700 tw-mb-2">Developing Virtual World...</h2>
-
-				<div class="progressSlider" id="compileProgressDeterminate" style="display: none;">
-					<div class="progressSliderLine"></div>
-					<div class="progressSliderSubLineDeterminate" id="progressSliderSubLineDeterminateValue"></div>
-				</div>
-
-				<div class="progressSlider" id="compileProgressSlider" style="display: none;">
-					<div class="progressSliderLine"></div>
-					<div class="progressSliderSubLine progressIncrease"></div>
-					<div class="progressSliderSubLine progressDecrease"></div>
-				</div>
-
-				<div id="compilationProgressText" class="tw-text-center tw-text-xs tw-font-semibold tw-text-slate-500 tw-mt-2"></div>
-			</div>
-
-			<div id="previewApp" class="previewApp" style="display:none"></div>
 
 		</div>
 
