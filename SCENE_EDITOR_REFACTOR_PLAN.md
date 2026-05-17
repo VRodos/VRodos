@@ -215,6 +215,8 @@
 - Verification: Phase 114 JS syntax checks passed; `includes/class-vrodos-asset-manager.php` PHP syntax check passed; targeted scene-editor Lucide source scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 115 grouped compile request AJAX cleanup implemented.
 - Verification: Phase 115 JS syntax check passed; PHP syntax check skipped because no PHP files changed; targeted compile request DOM helper scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 116 grouped compile dialog state helper consolidation implemented.
+- Verification: Phase 116 JS syntax checks passed; PHP syntax check skipped because no PHP files changed; targeted compile dialog state scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -381,6 +383,7 @@ assets/js/editor/
 - Done: Group dynamic Lucide refresh cleanup by routing asset-browser drag/empty-state icons and hierarchy lock/add/rebuild icon refreshes through `VRODOS.ui.refreshLucideIcons()` with explicit `vrodos_ui_helpers` script dependencies.
 - Done: Group scene-editor startup/compile Lucide cleanup by routing editor initialization and compile-result icon refreshes through `VRODOS.ui.refreshLucideIcons()` with explicit `vrodos_ui_helpers` dependencies.
 - Done: Group compile request AJAX cleanup by centralizing compile-dialog element lookup, progress/result state updates, runtime link rendering, primary link reveal, runtime-mode resolution, response parsing, and null-safe progress hiding inside `ajax/vrodos_request_compile.js`.
+- Done: Group compile dialog state helper consolidation by adding `VRODOS.ui.compileDialogState` to shared UI helpers, routing compile dialog open/proceed/cancel and compile request progress/result updates through it, and restoring progress text visibility on repeated builds.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

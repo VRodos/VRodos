@@ -6,6 +6,7 @@ VRODOS.ui = VRODOS.ui || {};
 VRODOS.api = VRODOS.api || {};
 
 (function initVrodosCompileDialogUi() {
+    const dialogState = VRODOS.ui.compileDialogState;
     const compileDialogUi = VRODOS.ui.compileDialog || {
         isBound: false,
 
@@ -24,54 +25,11 @@ VRODOS.api = VRODOS.api || {};
         }
     };
 
-    function createLucideIcons() {
-        VRODOS.ui.refreshLucideIcons();
-    }
-
-    function setHtml(id, html) {
-        const element = document.getElementById(id);
-        if (element) element.innerHTML = html;
-    }
-
-    function setDisplay(id, value) {
-        const element = document.getElementById(id);
-        if (element) element.style.display = value;
-    }
-
-      function getCompilePid() {
-        const cancelButton = document.getElementById('compileCancelBtn');
-        return cancelButton ? cancelButton.getAttribute('data-unity-pid') : '';
-    }
-
     function killCompileTaskIfNeeded() {
-        const pid = getCompilePid();
+        const pid = dialogState.getCompilePid();
         if (pid && typeof VRODOS.api.killCompileTask === 'function') {
             VRODOS.api.killCompileTask(pid);
         }
-    }
-
-    function resetCompileDialogStatusState() {
-        const statusRow = document.getElementById('compileStatusRow');
-        const appResultDiv = document.getElementById('appResultDiv');
-        const topResultLink = document.getElementById('compileTopResultLink');
-        const resultMeta = document.getElementById('compileResultMeta');
-
-        if (statusRow) statusRow.style.display = 'flex';
-        if (appResultDiv) appResultDiv.style.display = 'none';
-        if (topResultLink) {
-            topResultLink.classList.add('tw-hidden');
-            topResultLink.setAttribute('href', '#');
-        }
-        if (resultMeta) {
-            resultMeta.textContent = 'The experience is ready to be shared';
-        }
-
-        setHtml(
-            'constantUpdateUser',
-            '<i data-lucide="info" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
-            'Configure your scene quality settings and click "Build" to construct the virtual world.'
-        );
-        createLucideIcons();
     }
 
     function pauseRenderingForCompileDialog() {
@@ -95,7 +53,7 @@ VRODOS.api = VRODOS.api || {};
         }
 
         dialog.showModal();
-        createLucideIcons();
+        VRODOS.ui.refreshLucideIcons();
     }
 
     function bindCompileOpenControl() {
@@ -107,38 +65,10 @@ VRODOS.api = VRODOS.api || {};
                 VRODOS.ui.syncCompileDialogFromSceneSettings();
             }
 
-            resetCompileDialogStatusState();
+            dialogState.resetDialogStatusState();
             showDialog('compile-dialog');
             pauseRenderingForCompileDialog();
         });
-    }
-
-    function resetCompileProgressState() {
-        resetCompileDialogStatusState();
-        setDisplay('compileProgressSlider', '');
-        setDisplay('compileProgressTitle', '');
-        setDisplay('vrodos-ziplink', 'none');
-        setDisplay('vrodos-weblink', 'none');
-        setHtml('compilationProgressText', '');
-        setHtml('unityTaskMemValue', '0');
-    }
-
-    function showCompileSavePendingMessage() {
-        setHtml(
-            'constantUpdateUser',
-            '<i data-lucide="save" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
-            'Saving build settings and latest scene changes before build...'
-        );
-        createLucideIcons();
-    }
-
-    function showCompileSaveFailedMessage() {
-        setHtml(
-            'constantUpdateUser',
-            '<i data-lucide="triangle-alert" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
-            'Could not save the latest scene changes. Please try again.'
-        );
-        createLucideIcons();
     }
 
     function bindCompileProceedControl() {
@@ -146,13 +76,13 @@ VRODOS.api = VRODOS.api || {};
         if (!proceedButton) return;
 
         proceedButton.addEventListener('click', () => {
-            resetCompileProgressState();
+            dialogState.resetProgressState();
 
             if (typeof VRODOS.ui.applyCompileDialogSettingsToScene === 'function') {
                 VRODOS.ui.applyCompileDialogSettingsToScene();
             }
 
-            showCompileSavePendingMessage();
+            dialogState.showSavePendingMessage();
 
             const waitForLatestSave = typeof VRODOS.api.waitForLatestSceneSave === 'function'
                 ? VRODOS.api.waitForLatestSceneSave()
@@ -169,7 +99,7 @@ VRODOS.api = VRODOS.api || {};
                     if (typeof VRODOS.api.hideCompileProgressSlider === 'function') {
                         VRODOS.api.hideCompileProgressSlider();
                     }
-                    showCompileSaveFailedMessage();
+                    dialogState.showSaveFailedMessage();
                     console.warn('VRodos: compile blocked because scene save failed.', error);
                 });
         });
@@ -183,13 +113,13 @@ VRODOS.api = VRODOS.api || {};
             resumeRenderingAfterCompileDialog();
             killCompileTaskIfNeeded();
 
-            const dialog = document.getElementById('compile-dialog');
+            const dialog = dialogState.getElement('dialog');
             if (dialog && dialog.open) dialog.close();
         });
     }
 
     function bindCompileCloseControl() {
-        const compileDialog = document.getElementById('compile-dialog');
+        const compileDialog = dialogState.getElement('dialog');
         if (!compileDialog) return;
 
         compileDialog.addEventListener('close', () => {

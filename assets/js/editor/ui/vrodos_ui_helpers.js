@@ -153,3 +153,209 @@ VRODOS.ui.showTemporaryButtonWarning = function(buttonId, message) {
         VRODOS.ui.refreshLucideIcons();
     }, 2500);
 };
+
+VRODOS.ui.compileDialogState = (function(existing) {
+    const ids = {
+        appResult: 'appResultDiv',
+        cancelButton: 'compileCancelBtn',
+        constantUpdate: 'constantUpdateUser',
+        copyWebLink: 'buttonCopyWebLink',
+        dialog: 'compile-dialog',
+        openWebLink: 'openWebLinkhref',
+        platform: 'platformInput',
+        preview: 'previewApp',
+        proceedButton: 'compileProceedBtn',
+        progressBarValue: 'progressSliderSubLineDeterminateValue',
+        progressDeterminate: 'compileProgressDeterminate',
+        progressSlider: 'compileProgressSlider',
+        progressText: 'compilationProgressText',
+        progressTitle: 'compileProgressTitle',
+        projectType: 'project-type',
+        resultMeta: 'compileResultMeta',
+        runtimeMode: 'compileRuntimeModeSelect',
+        saveButton: 'save-scene-button',
+        statusRow: 'compileStatusRow',
+        taskMemory: 'unityTaskMemValue',
+        topResultLink: 'compileTopResultLink',
+        webLink: 'vrodos-weblink',
+        zipLink: 'vrodos-ziplink'
+    };
+
+    function getElement(key) {
+        return document.getElementById(ids[key] || key);
+    }
+
+    function getValue(key, fallback) {
+        const element = getElement(key);
+        return element ? element.value : fallback;
+    }
+
+    function setDisplay(element, value) {
+        if (element) {
+            element.style.display = value;
+        }
+    }
+
+    function setText(element, value) {
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    function setHtml(element, value) {
+        if (element) {
+            element.innerHTML = value;
+        }
+    }
+
+    function setHref(element, value) {
+        if (element) {
+            element.setAttribute('href', value);
+        }
+    }
+
+    function releaseBuildActions() {
+        const proceedButton = getElement('proceedButton');
+        const cancelButton = getElement('cancelButton');
+
+        if (proceedButton) {
+            proceedButton.classList.remove('LinkDisabled');
+        }
+        if (cancelButton) {
+            cancelButton.classList.remove('LinkDisabled');
+        }
+    }
+
+    function resetResultState() {
+        const topResultLink = getElement('topResultLink');
+
+        setDisplay(getElement('statusRow'), 'flex');
+        setDisplay(getElement('appResult'), 'none');
+        setText(getElement('resultMeta'), 'The experience is ready to be shared');
+
+        if (topResultLink) {
+            topResultLink.classList.add('tw-hidden');
+            setHref(topResultLink, '#');
+        }
+    }
+
+    function setStatusMessage(iconName, message) {
+        setHtml(
+            getElement('constantUpdate'),
+            `<i data-lucide="${iconName}" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ${message}`
+        );
+        VRODOS.ui.refreshLucideIcons();
+    }
+
+    function resetDialogStatusState() {
+        resetResultState();
+        setStatusMessage('info', 'Configure your scene quality settings and click "Build" to construct the virtual world.');
+    }
+
+    function resetProgressState() {
+        resetDialogStatusState();
+        setDisplay(getElement('progressSlider'), '');
+        setDisplay(getElement('progressTitle'), '');
+        setDisplay(getElement('progressText'), '');
+        setDisplay(getElement('zipLink'), 'none');
+        setDisplay(getElement('webLink'), 'none');
+        setHtml(getElement('progressText'), '');
+        setHtml(getElement('taskMemory'), '0');
+    }
+
+    function showSavePendingMessage() {
+        setStatusMessage('save', 'Saving build settings and latest scene changes before build...');
+    }
+
+    function showSaveFailedMessage() {
+        setStatusMessage('triangle-alert', 'Could not save the latest scene changes. Please try again.');
+    }
+
+    function showStartedState() {
+        const progressText = getElement('progressText');
+        const cancelButton = getElement('cancelButton');
+
+        if (cancelButton) {
+            cancelButton.classList.remove('LinkDisabled');
+        }
+
+        resetResultState();
+        setText(getElement('progressTitle'), 'Step: 1 / 2');
+        if (progressText) {
+            progressText.style.display = '';
+            progressText.textContent = '';
+            progressText.append('Building...');
+        }
+        setStatusMessage('info', 'Please wait while we build your scene');
+    }
+
+    function hideProgress(options) {
+        const opts = options || {};
+
+        setDisplay(getElement('progressSlider'), 'none');
+        setDisplay(getElement('progressTitle'), 'none');
+        setDisplay(getElement('progressDeterminate'), 'none');
+        if (opts.hideText) {
+            setDisplay(getElement('progressText'), 'none');
+        }
+        if (opts.resetDeterminateWidth) {
+            const progressBarValue = getElement('progressBarValue');
+            if (progressBarValue) {
+                progressBarValue.style.width = '1px';
+            }
+        }
+        if (opts.releaseActions !== false) {
+            releaseBuildActions();
+        }
+    }
+
+    function clearPreview() {
+        setHtml(getElement('preview'), '');
+    }
+
+    function showPrimaryExperienceLink(primaryExperienceUrl) {
+        if (!primaryExperienceUrl) {
+            return;
+        }
+
+        const webLink = getElement('webLink');
+        const openWebLink = getElement('openWebLink');
+
+        setDisplay(getElement('statusRow'), 'none');
+        setDisplay(getElement('appResult'), 'flex');
+        setText(getElement('resultMeta'), `Ready to be shared - ${new Date().toLocaleString()}`);
+
+        if (webLink) {
+            webLink.href = primaryExperienceUrl;
+            setDisplay(webLink, '');
+        }
+        if (openWebLink) {
+            setHref(openWebLink, primaryExperienceUrl);
+            setDisplay(openWebLink, '');
+        }
+        setDisplay(getElement('copyWebLink'), '');
+        VRODOS.ui.refreshLucideIcons();
+    }
+
+    function getCompilePid() {
+        const cancelButton = getElement('cancelButton');
+        return cancelButton ? cancelButton.getAttribute('data-unity-pid') : '';
+    }
+
+    return Object.assign(existing || {}, {
+        clearPreview,
+        getCompilePid,
+        getElement,
+        getValue,
+        hideProgress,
+        releaseBuildActions,
+        resetDialogStatusState,
+        resetProgressState,
+        resetResultState,
+        setStatusMessage,
+        showPrimaryExperienceLink,
+        showSaveFailedMessage,
+        showSavePendingMessage,
+        showStartedState
+    });
+})(VRODOS.ui.compileDialogState);
