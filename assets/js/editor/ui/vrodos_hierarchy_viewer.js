@@ -608,27 +608,27 @@ function AppendObject(obj) {
 
 
 function CreateDeleteButton(obj) {
-    return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-red-400 tw-transition-colors" aria-label="Delete asset"` +
+    return `<button type="button" class="tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-pointer tw-p-1 tw-text-white/40 hover:tw-text-red-400 tw-transition-colors" aria-label="Delete asset"` +
         ` title="Delete asset object" data-hierarchy-action="delete" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
         ` data-name="${  _hierarchyAttribute(obj.name)  }" data-asset-name="${  _hierarchyAttribute(_hierarchyActionLabel(obj))  }">` +
-        `<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i></a>`;
+        `<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i></button>`;
 }
 
 
 function CreateLockButton(obj) {
     const lock_ic = (obj.locked) ? 'lock' : 'lock-open';
-    return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-white tw-transition-colors" aria-label="Lock asset"` +
+    return `<button type="button" class="tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-pointer tw-p-1 tw-text-white/40 hover:tw-text-white tw-transition-colors" aria-label="Lock asset"` +
         ` title="Lock asset object" data-hierarchy-action="lock" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
         ` data-name="${  _hierarchyAttribute(obj.name)  }" data-asset-name="${  _hierarchyAttribute(_hierarchyActionLabel(obj))  }">` +
-        `<i data-lucide="${  lock_ic  }" class="tw-w-4 tw-h-4"></i></a>`;
+        `<i data-lucide="${  lock_ic  }" class="tw-w-4 tw-h-4"></i></button>`;
 }
 
 function CreateResetButton(obj){
-    return `<a href="javascript:void(0);" class="tw-p-1 tw-text-white/40 hover:tw-text-blue-400 tw-transition-colors" aria-label="Reset asset"` +
+    return `<button type="button" class="tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-pointer tw-p-1 tw-text-white/40 hover:tw-text-blue-400 tw-transition-colors" aria-label="Reset asset"` +
         ` title="Reset asset object" data-hierarchy-action="reset" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
         ` data-name="${  _hierarchyAttribute(obj.name)  }">` +
         `<i data-lucide="refresh-cw" class="tw-w-4 tw-h-4"></i>` +
-        `</a>`;
+        `</button>`;
 
 }
 

@@ -78,13 +78,8 @@ VRODOS.api = VRODOS.api || {};
     }
 
     function bindEditorDropTargets(mainDiv) {
-        if (isFunction(VRODOS.ui.onDrop)) {
-            mainDiv.ondrop = VRODOS.ui.onDrop;
-        }
-
-        if (isFunction(VRODOS.ui.onDragOver)) {
-            mainDiv.ondragover = VRODOS.ui.onDragOver;
-        }
+        bindEventIfAvailable(mainDiv, 'drop', VRODOS.ui.onDrop, false);
+        bindEventIfAvailable(mainDiv, 'dragover', VRODOS.ui.onDragOver, false);
     }
 
     function bindCanvasPointerEvents(canvas3D) {

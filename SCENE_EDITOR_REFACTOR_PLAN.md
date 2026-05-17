@@ -267,6 +267,8 @@
 - Verification: Phase 140 JS syntax checks passed for raycasting and property controls; targeted context/property dispatch scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 141 legacy right-click property path removal implemented.
 - Verification: Phase 141 JS syntax checks passed for raycasting, canvas events, and property controls; targeted right-click/context dispatch scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 142 legacy inline scene-editor hook cleanup implemented.
+- Verification: Phase 142 JS syntax checks passed for canvas events and hierarchy viewer; scene template PHP syntax check passed; targeted legacy hook scan passed with only the expected embedded JSON data script remaining; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -459,6 +461,7 @@ assets/js/editor/
 - Done: Move object-delete and scene-delete dialog close controls out of inline template handlers, and make object-delete confirmation use one persistent JS binding with the current target stored on the dialog to avoid stale callbacks after cancel/reopen.
 - Done: Move right-click context property dispatch out of scene raycasting into the property-controls UI module, sharing POI/light property routing while preserving the legacy right-click scope.
 - Done: Remove the legacy right-click property action path entirely, keeping only canvas/panel browser-context-menu suppression and the left-click floating property panel workflow.
+- Done: Remove the stale raw `parseJSON_LoadScene` template script block, render hierarchy delegated actions as real buttons instead of `javascript:void(0)` links, and bind canvas drag/drop through the shared event binder.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

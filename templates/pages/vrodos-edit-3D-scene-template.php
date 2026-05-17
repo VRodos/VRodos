@@ -532,16 +532,6 @@ extract( $data );
 			<button class="tw-cursor-default tw-outline-none tw-bg-slate-900/40 tw-backdrop-blur-sm tw-appearance-none tw-border-none tw-text-transparent">close</button>
 		</form>
 	</dialog>
-
-	<!-- Scripts part 1: The GUIs -->
-
-		// Only in Undo redo as javascript not php!
-		function parseJSON_LoadScene(scene_json) {
-			return VRODOS.api.reloadSceneFromJson(scene_json);
-		}
-		<!--  Part 3: Start 3D with Javascript   -->
-
-	</script>
 	<?php
 }
 
