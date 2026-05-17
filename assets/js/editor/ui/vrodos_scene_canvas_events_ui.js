@@ -73,6 +73,10 @@ VRODOS.api = VRODOS.api || {};
         }
     }
 
+    function suppressContextMenu(event) {
+        event.preventDefault();
+    }
+
     function bindEditorDropTargets(mainDiv) {
         if (isFunction(VRODOS.ui.onDrop)) {
             mainDiv.ondrop = VRODOS.ui.onDrop;
@@ -93,7 +97,7 @@ VRODOS.api = VRODOS.api || {};
         bindEventIfAvailable(canvas3D, 'mousedown', VRODOS.ui.onMouseDown, false);
         bindEventIfAvailable(canvas3D, 'mouseup', VRODOS.ui.onMouseUp, false);
         bindEventIfAvailable(canvas3D, 'dblclick', VRODOS.ui.onMouseDoubleClickFocus, false);
-        bindEventIfAvailable(canvas3D, 'contextmenu', VRODOS.ui.contextMenuClick, false);
+        bindEventIfAvailable(canvas3D, 'contextmenu', suppressContextMenu, false);
     }
 
     function bindCanvasAutosaveEvents(canvas3D) {
@@ -110,9 +114,7 @@ VRODOS.api = VRODOS.api || {};
     function bindPropertyPanelContextMenus() {
         PROPERTY_PANEL_IDS.forEach((id) => {
             const element = getElement(id);
-            bindEventIfAvailable(element, 'contextmenu', (event) => {
-                event.preventDefault();
-            });
+            bindEventIfAvailable(element, 'contextmenu', suppressContextMenu);
         });
     }
 

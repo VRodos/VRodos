@@ -236,24 +236,6 @@ VRODOS.ui.selectorMajor = function(event, objectSel, whocalls) {
     });
 }
 
-// Right Click: Show properties
-VRODOS.ui.contextMenuClick = function(event) {
-    event.preventDefault();
-    const intersected = VRODOS.ui.findIntersected(event);
-
-    if (intersected.length === 0)
-        {return;}
-
-       
-    // Check if right-clicked is the one selected already with left-click
-    const selectedTransformObject = VRODOS.ui.getSelectedPropertyTarget();
-    if (selectedTransformObject && intersected[0].name === selectedTransformObject.name) {
-        VRODOS.ui.showLegacyContextProperties(event, intersected[0]);
-    }
-
-
-}
-
 /**
  * Get active meshes for raycast picking method
  *

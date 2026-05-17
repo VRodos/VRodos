@@ -265,6 +265,8 @@
 - Verification: Phase 139 JS syntax checks passed for scene object actions and scene list UI; PHP syntax checks passed for edited scene templates; targeted delete-dialog inline close scan passed; `git diff --check` passed with the existing Git CRLF normalization warning for the edited Other Scenes template; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 140 context property dispatch ownership cleanup implemented.
 - Verification: Phase 140 JS syntax checks passed for raycasting and property controls; targeted context/property dispatch scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 141 legacy right-click property path removal implemented.
+- Verification: Phase 141 JS syntax checks passed for raycasting, canvas events, and property controls; targeted right-click/context dispatch scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -456,6 +458,7 @@ assets/js/editor/
 - Done: Remove the remaining POI Link/Chat popup inline property handlers and their legacy helper script, relying on the property-controls module as the single owner while allowing external-link values to be cleared.
 - Done: Move object-delete and scene-delete dialog close controls out of inline template handlers, and make object-delete confirmation use one persistent JS binding with the current target stored on the dialog to avoid stale callbacks after cancel/reopen.
 - Done: Move right-click context property dispatch out of scene raycasting into the property-controls UI module, sharing POI/light property routing while preserving the legacy right-click scope.
+- Done: Remove the legacy right-click property action path entirely, keeping only canvas/panel browser-context-menu suppression and the left-click floating property panel workflow.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

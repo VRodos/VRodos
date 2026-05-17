@@ -329,10 +329,9 @@ VRODOS.ui.displayPoiImageTextProperties = function(event, name) {
     _showEditorPanel(panelState.panel);
 }
 
-function displaySharedPropertySections(event, object, options) {
+function displaySharedPropertySections(event, object) {
     if (!object) return false;
 
-    const opts = options || {};
     const name = object.name;
     let hasProperties = false;
 
@@ -368,28 +367,18 @@ function displaySharedPropertySections(event, object, options) {
             hasProperties = true;
             break;
         case 'lightSpot':
-            if (opts.includeSpotAndAmbient) {
-                VRODOS.ui.displaySpotProperties(event, name);
-                hasProperties = true;
-            }
+            VRODOS.ui.displaySpotProperties(event, name);
+            hasProperties = true;
             break;
         case 'lightAmbient':
-            if (opts.includeSpotAndAmbient) {
-                VRODOS.ui.displayAmbientProperties(event, name);
-                hasProperties = true;
-            }
+            VRODOS.ui.displayAmbientProperties(event, name);
+            hasProperties = true;
             break;
         default:
             break;
     }
 
     return hasProperties;
-}
-
-function showLegacyContextProperties(event, object) {
-    displaySharedPropertySections(event, object, {
-        includeSpotAndAmbient: false
-    });
 }
 
 function initPersistentPropertyListeners() {
@@ -1237,9 +1226,7 @@ function showPropertiesInPanel(object) {
             break;
     }
 
-    hasProperties = displaySharedPropertySections(null, object, {
-        includeSpotAndAmbient: true
-    }) || hasProperties;
+    hasProperties = displaySharedPropertySections(null, object) || hasProperties;
 
     // Show the container only if a property section is active
     if (hasProperties) {
@@ -2262,7 +2249,6 @@ VRODOS.ui.isObjectControlsPanelOpen = isObjectControlsPanelOpen;
 VRODOS.ui.bindObjectControlsPanelEvents = bindObjectControlsPanelEvents;
 VRODOS.ui.setObjectControlsActionsVisible = setObjectControlsActionsVisible;
 VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;
-VRODOS.ui.showLegacyContextProperties = showLegacyContextProperties;
 VRODOS.ui.controlInterface = controlInterface;
 VRODOS.ui.controllerDatGuiOnChange = controllerDatGuiOnChange;
 VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes = updatePositionsPhpAndJavsFromControlsAxes;
