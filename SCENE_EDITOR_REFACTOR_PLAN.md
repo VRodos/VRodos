@@ -201,6 +201,8 @@
 - Verification: Phase 108 JS syntax checks passed; focused scene-list/delete sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Scene delete redirect fallback fix implemented.
 - Verification: Scene delete redirect JS syntax checks passed; focused undefined-redirect sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 109 grouped screenshot button and JSON dialog cleanup implemented.
+- Verification: Phase 109 JS syntax check passed; focused screenshot button/JSON dialog sanity check passed; PHP syntax check skipped because no PHP files changed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -360,6 +362,7 @@ assets/js/editor/
 - Done: Group editor shell state cleanup by centralizing shell element IDs, drawer toggle state, lucide refreshes, clear-vision display toggling, helper visibility, Director rig restoration, and render requests after chrome visibility changes.
 - Done: Group scene-list drawer/reorder/delete cleanup by centralizing scene-list element IDs, drawer open-state toggling, drag-reorder guards, delete dialog busy/reset state, delegated delete buttons, safe delete copy text, and null-safe AJAX delete reset behavior.
 - Done: Fix scene deletion redirect by storing a valid delete-dialog redirect URL from the legacy default-scene global or the first remaining scene card, and rejecting empty or literal `undefined` redirect values in the AJAX callback.
+- Done: Group screenshot button and JSON dialog cleanup by centralizing snapshot element IDs, idempotent binding state, JSON dialog open/close/copy helpers, thumbnail replacement, screenshot camera selection, offscreen renderer creation, and renderer disposal.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
