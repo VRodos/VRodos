@@ -158,7 +158,7 @@ function vrodosPatchTransformControlsAttach(controls, sceneRoot) {
  */
 function initVrodosEditor() {
     // Lucide icons
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    VRODOS.ui.refreshLucideIcons();
 
     const mainDiv = document.getElementById('vr_editor_main_div');
     if (!mainDiv) return;

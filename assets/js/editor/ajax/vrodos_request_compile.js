@@ -54,7 +54,7 @@ VRODOS.api.compileScene = function(showPawnPositions, options) {
 	document.getElementById( "constantUpdateUser" ).innerHTML =
 		'<i data-lucide="info" class="tw-w-4 tw-h-4 tw-inline-block tw-align-text-bottom tw-mr-1"></i> ' +
 		'Please wait while we build your scene';
-	if (typeof lucide !== 'undefined') lucide.createIcons();
+	VRODOS.ui.refreshLucideIcons();
 
 	// Build query string for GET request
 	const params = new URLSearchParams({
@@ -210,7 +210,7 @@ VRODOS.api.compileScene = function(showPawnPositions, options) {
 			if (copyButton) {
 				copyButton.style.display = '';
 			}
-			if (typeof lucide !== 'undefined') lucide.createIcons();
+			VRODOS.ui.refreshLucideIcons();
 		}
 
 	})
