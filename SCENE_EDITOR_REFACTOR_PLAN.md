@@ -251,6 +251,8 @@
 - Verification: Phase 132 `includes/class-vrodos-scene-cpt-manager.php` PHP syntax check passed; targeted Parent Project metabox scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 133 dashboard overview stat-label cleanup implemented.
 - Verification: Phase 133 `includes/admin/class-vrodos-admin-dashboard-page.php` PHP syntax check passed; targeted dashboard label scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-17: Phase 134 asset taxonomy metabox cleanup implemented.
+- Verification: Phase 134 `includes/asset-cpt/trait-vrodos-asset-cpt-taxonomy-admin.php` PHP syntax check passed; targeted asset taxonomy metabox scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -435,6 +437,7 @@ assets/js/editor/
 - Done: Hide internal asset metadata keys from the WordPress Custom Fields metabox for asset posts while preserving their storage and REST/editor usage.
 - Done: Clean up the scene Parent Project admin metabox by replacing dropdown HTML string rewriting with `wp_dropdown_categories()` options, adding shared constants for the taxonomy/nonce, and validating term IDs on save.
 - Done: Remove the three descriptive subtitle labels from the admin dashboard overview stat cards while preserving the totals, icons, and card layout.
+- Done: Clean up asset Project, Category, and IPR Category admin metaboxes by centralizing dropdown rendering, nonce checks, posted-term resolution, and single-term save handling while preserving assessment-category protection.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan
