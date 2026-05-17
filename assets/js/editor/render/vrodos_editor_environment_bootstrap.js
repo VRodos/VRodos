@@ -37,11 +37,7 @@ VRODOS.editorRender = VRODOS.editorRender || {};
 
         this.compassDirection = new THREE.Vector3();
         this.editorPerformanceProfile = null;
-        this.composer = null;
-        this.renderPass = null;
-        this.effectFXAA = null;
 
-        this.isComposerOn = false;
         this.is2d = false;
         this.thirdPersonView = false;
         this.isSceneLoading = false;

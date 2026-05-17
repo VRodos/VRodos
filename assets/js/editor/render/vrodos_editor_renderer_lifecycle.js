@@ -80,51 +80,12 @@ VRODOS.editor = VRODOS.editor || {};
         this.ASPECT = this.SCREEN_WIDTH / this.SCREEN_HEIGHT;
     }
 
-    function setComposerAndPasses(transformControls) {
-        const camera = this.isAvatarControlsEnabled() ? this.cameraAvatar : this.cameraOrbit;
-
-        if (transformControls) {
-            transformControls.camera = camera;
-        }
-
-        this.composer = new THREE.EffectComposer(this.renderer);
-        this.renderPass = new THREE.RenderPass(this.scene, camera);
-
-        this.effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
-        this.effectFXAA.uniforms.resolution.value.set(1 / this.SCREEN_WIDTH, 1 / this.SCREEN_HEIGHT);
-        this.effectFXAA.renderToScreen = true;
-
-        this.turboResize();
-
-        this.composer.addPass(this.renderPass);
-        this.composer.addPass(this.effectFXAA);
-
-        this.turboResize();
-    }
-
-    function updateComposerCamera(camera) {
-        if (!camera) {
-            return;
-        }
-
-        if (this.renderPass) {
-            this.renderPass.camera = camera;
-        }
-    }
-
     function renderEditorFrame(camera) {
         if (!camera || !this.renderer || !this.scene) {
             return;
         }
 
         this.applyEditorPerformanceProfile(false);
-
-        if (this.isComposerOn && this.composer && this.renderPass) {
-            this.updateComposerCamera(camera);
-            this.composer.render();
-            return;
-        }
-
         this.renderer.render(this.scene, camera);
     }
 
@@ -147,26 +108,6 @@ VRODOS.editor = VRODOS.editor || {};
             this.cameraThirdPerson.updateProjectionMatrix();
         }
 
-        const pixelRatio = this.getEditorPixelRatio();
-        if (this.composer) {
-            if (typeof this.composer.setSize === 'function') {
-                this.composer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
-            } else if (this.composer.renderer) {
-                this.composer.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
-            }
-            if (typeof this.composer.setPixelRatio === 'function') {
-                this.composer.setPixelRatio(pixelRatio);
-            } else if (this.composer.renderer) {
-                this.composer.renderer.setPixelRatio(pixelRatio);
-            }
-        }
-
-        if (this.effectFXAA && this.effectFXAA.uniforms && this.effectFXAA.uniforms.resolution) {
-            this.effectFXAA.uniforms.resolution.value.set(
-                1 / (this.SCREEN_WIDTH * pixelRatio),
-                1 / (this.SCREEN_HEIGHT * pixelRatio)
-            );
-        }
     }
 
     function updateCameraProjectionForResize() {
@@ -204,8 +145,6 @@ VRODOS.editor = VRODOS.editor || {};
         prototype.bindRendererContextHandlers = bindRendererContextHandlers;
         prototype.configureLabelRenderer = configureLabelRenderer;
         prototype.updateScreenMetrics = updateScreenMetrics;
-        prototype.setComposerAndPasses = setComposerAndPasses;
-        prototype.updateComposerCamera = updateComposerCamera;
         prototype.renderEditorFrame = renderEditorFrame;
         prototype.turboResize = turboResize;
         prototype.updateCameraProjectionForResize = updateCameraProjectionForResize;

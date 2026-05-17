@@ -65,13 +65,6 @@ VRODOS.editor = VRODOS.editor || {};
         if (this.renderer) {
             this.renderer.setPixelRatio(this.getEditorPixelRatio());
         }
-        if (this.composer) {
-            if (typeof this.composer.setPixelRatio === 'function') {
-                this.composer.setPixelRatio(this.getEditorPixelRatio());
-            } else if (this.composer.renderer) {
-                this.composer.renderer.setPixelRatio(this.getEditorPixelRatio());
-            }
-        }
 
         return profile;
     }
