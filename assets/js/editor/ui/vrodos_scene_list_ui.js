@@ -13,6 +13,7 @@ VRODOS.ui = VRODOS.ui || {};
         deleteDescription: 'delete-dialog-description',
         deleteProgress: 'delete-scene-dialog-progress-bar',
         deleteButton: 'deleteSceneDialogDeleteBtn',
+        closeButton: 'deleteSceneDialogCloseBtn',
         cancelButton: 'deleteSceneDialogCancelBtn'
     };
     const SCENE_CARD_SELECTOR = '.SceneCardContainer[draggable]';
@@ -164,6 +165,7 @@ VRODOS.ui = VRODOS.ui || {};
             description: getElement(SCENE_LIST_IDS.deleteDescription),
             progress: getElement(SCENE_LIST_IDS.deleteProgress),
             deleteButton: getElement(SCENE_LIST_IDS.deleteButton),
+            closeButton: getElement(SCENE_LIST_IDS.closeButton),
             cancelButton: getElement(SCENE_LIST_IDS.cancelButton),
             container: getElement(SCENE_LIST_IDS.container)
         };
@@ -203,6 +205,13 @@ VRODOS.ui = VRODOS.ui || {};
 
         if (elements.cancelButton) {
             elements.cancelButton.addEventListener('click', () => {
+                setDeleteDialogBusy(elements, false);
+                closeDeleteDialog(elements.dialog);
+            });
+        }
+
+        if (elements.closeButton) {
+            elements.closeButton.addEventListener('click', () => {
                 setDeleteDialogBusy(elements, false);
                 closeDeleteDialog(elements.dialog);
             });

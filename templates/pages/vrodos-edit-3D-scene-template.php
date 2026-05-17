@@ -504,9 +504,9 @@ extract( $data );
 			<!-- Header -->
 			<div class="tw-relative tw-p-8 tw-pb-4 tw-flex tw-flex-col tw-items-center tw-text-center">
 				<button type="button"
+						id="confirmAssetDeletionCloseBtn"
 						class="tw-absolute tw-top-4 tw-right-4 tw-p-1.5 tw-text-slate-400 hover:tw-text-slate-700 tw-rounded-lg hover:tw-bg-slate-100 tw-transition-colors"
-						title="Close"
-						onclick="document.getElementById('confirm-deletion-dialog').close()">
+						title="Close">
 					<i data-lucide="x" class="tw-w-4 tw-h-4"></i>
 				</button>
 				<div class="tw-w-16 tw-h-16 tw-bg-rose-50 tw-text-rose-500 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mb-4">
@@ -523,8 +523,8 @@ extract( $data );
 			</div>
 			<!-- Actions -->
 			<div class="tw-modal-action tw-bg-white tw-p-6 tw-pt-2 tw-flex tw-justify-center tw-gap-3">
-				<button class="tw-btn tw-btn-ghost tw-text-slate-400 hover:tw-text-slate-600 tw-px-8"
-						onclick="document.getElementById('confirm-deletion-dialog').close()">CANCEL</button>
+				<button id="confirmAssetDeletionCancelBtn" type="button"
+						class="tw-btn tw-btn-ghost tw-text-slate-400 hover:tw-text-slate-600 tw-px-8">CANCEL</button>
 				<button id="delete-asset-btn-confirmation" class="tw-btn vrodos-btn-premium-error tw-px-10">DELETE</button>
 			</div>
 		</div>

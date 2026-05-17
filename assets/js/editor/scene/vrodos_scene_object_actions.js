@@ -172,6 +172,44 @@ function setDeleteDialogText(name) {
     descriptionEl.innerHTML = `Do you really want to delete the asset named <b>${VRODOS.utils.escapeHTML(name)}</b>?`;
 }
 
+function closeObjectDeleteDialog(dialog) {
+    if (dialog && dialog.open && typeof dialog.close === 'function') {
+        dialog.close();
+    }
+}
+
+function bindObjectDeleteDialogActions(dialog, deleteButton) {
+    if (!dialog || !deleteButton || dialog.dataset.vrodosObjectDeleteBound === '1') {
+        return;
+    }
+
+    dialog.dataset.vrodosObjectDeleteBound = '1';
+    ['confirmAssetDeletionCloseBtn', 'confirmAssetDeletionCancelBtn'].forEach((id) => {
+        const button = document.getElementById(id);
+        if (!button) return;
+
+        button.addEventListener('click', () => {
+            closeObjectDeleteDialog(dialog);
+        });
+    });
+
+    deleteButton.addEventListener('click', () => {
+        const delUuid = dialog.dataset.deleteUuid || '';
+        const selectedUuid = dialog.dataset.selectedUuid || 'unassigned';
+        if (!delUuid) {
+            closeObjectDeleteDialog(dialog);
+            return;
+        }
+
+        closeObjectDeleteDialog(dialog);
+        delete dialog.dataset.deleteUuid;
+        delete dialog.dataset.selectedUuid;
+        VRODOS.editor.selection.clear({ source: 'delete-confirmed', hidePanel: false });
+        VRODOS.api.deleteAssetFromScene(delUuid, true);
+        restoreSelectionAfterDelete(delUuid, selectedUuid);
+    });
+}
+
 function getSelectedTransformObject() {
     return VRODOS.editor.transforms && typeof VRODOS.editor.transforms.getRealObject === 'function'
         ? VRODOS.editor.transforms.getRealObject()
@@ -661,16 +699,11 @@ VRODOS.ui.deleteFomScene = function(uuid, name) {
         return;
     }
 
-    delete_dialog_element.showModal();
-
-    const delUuid = uuid;
     const selUuid = selectedObject ? selectedObject.uuid : "unassigned";
-    delete_btn_element.addEventListener('click', () => {
-        delete_dialog_element.close();
-        VRODOS.editor.selection.clear({ source: 'delete-confirmed', hidePanel: false });
-        VRODOS.api.deleteAssetFromScene(uuid, true);
-        restoreSelectionAfterDelete(delUuid, selUuid);
-    }, { once: true });
+    delete_dialog_element.dataset.deleteUuid = uuid;
+    delete_dialog_element.dataset.selectedUuid = selUuid;
+    bindObjectDeleteDialogActions(delete_dialog_element, delete_btn_element);
+    delete_dialog_element.showModal();
 }
 
 VRODOS.ui.lockOnScene = function(uuid, _name) {
