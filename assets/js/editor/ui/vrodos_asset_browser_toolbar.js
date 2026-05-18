@@ -99,7 +99,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
           : "image-off";
     }
 
-    function vrodos_buildAssessmentMetaHTML(asset) {
+    function vrodos_buildAssetMetaHTML(asset) {
         if (!asset) {
             return '';
         }
@@ -126,10 +126,11 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             return '';
         }
 
-        return `<div class="tw-mt-1 tw-flex tw-flex-col tw-gap-1">${ 
-            typeBadgeHTML ? `<div class="tw-flex tw-flex-wrap tw-gap-1">${  typeBadgeHTML  }</div>` : '' 
-            }${levelBadgesHTML ? `<div class="tw-flex tw-flex-wrap tw-gap-1">${  levelBadgesHTML  }</div>` : '' 
-            }</div>`;
+        return `<div class="vrodos-asset-card-meta">${
+            typeBadgeHTML ? `<div class="vrodos-asset-card-meta-row">${  typeBadgeHTML  }</div>` : ''
+        }${
+            levelBadgesHTML ? `<div class="vrodos-asset-card-meta-row">${  levelBadgesHTML  }</div>` : ''
+        }</div>`;
     }
 
     const { toolbar: filemanager, categoryTabs, fileList } = getAssetBrowserElements();
@@ -302,7 +303,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                 }
 
                 const previewFallbackIcon = vrodos_getAssetPreviewFallbackIcon(f);
-                const assessmentMetaHTML = vrodos_buildAssessmentMetaHTML(f);
+                const assetMetaHTML = vrodos_buildAssetMetaHTML(f);
                 const previewMarkup = f.screenshot_path
                     ? `<img class="assetImg tw-w-full tw-h-full tw-object-cover tw-transition-transform tw-duration-700 group-hover:tw-scale-110" draggable="false" src="${  encodeURI(f.screenshot_path)  }">`
                     : `<div class="assetImg tw-flex tw-items-center tw-justify-center tw-bg-slate-700/80">` +
@@ -318,9 +319,8 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                     }<div class="tw-absolute tw-inset-0 tw-bg-gradient-to-t tw-from-slate-900/80 tw-via-transparent tw-to-transparent tw-opacity-60 group-hover:tw-opacity-90 tw-transition-opacity"></div>` +
 
                     `<div class="tw-absolute tw-top-1.5 tw-left-1.5 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-px-1.5 tw-py-1 tw-rounded-md tw-border tw-border-white/10 tw-z-10 tw-max-w-[78%]">` +
-                         `<span class="tw-text-[9px] tw-font-bold tw-text-slate-200 tw-truncate tw-block">${  name  }</span>${ 
-                         assessmentMetaHTML 
-                    }</div>` +
+                         `<span class="tw-text-[9px] tw-font-bold tw-text-slate-200 tw-truncate tw-block">${  name  }</span>` +
+                    `</div>${  assetMetaHTML  }` +
 
                     `<div class="tw-absolute tw-top-1.5 tw-right-1.5 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-p-1 tw-rounded-md tw-border tw-border-white/10 tw-z-10">` +
                         `<i data-lucide="${  VRODOS.utils.escapeAttribute(lucideIconName)  }" class="tw-w-3 tw-h-3 tw-text-slate-200"></i>` +

@@ -487,6 +487,7 @@ assets/js/editor/
 - Done: Scope light target/helper document-level pointer handlers to active selection, remove them on selection clear, and skip helper sync work unless transform controls are dragging.
 - Done: Centralize raycast viewport/camera setup, remove duplicate width/height DOM reads from raycaster setup, and return empty intersections when viewport or camera state is unavailable.
 - Done: Centralize reusable fixed-panel drag behavior in shared UI helpers, route scene-info and object-controls panels through it, and capture viewport clamp bounds once per drag start instead of reading layout on every floating-panel move.
+- Done: Polish asset-browser cards so metadata badges such as assessment type and CEFR levels stay aligned below the title while rendering outside the title-overlay background.
 - Status: The staged modular scene-editor refactor is substantially complete. Remaining work should be validation, profiling, and targeted bug fixes rather than broad structural reshaping.
 
 ## Test Plan
