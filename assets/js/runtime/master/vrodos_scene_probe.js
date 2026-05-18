@@ -99,7 +99,10 @@
         return true;
     };
     H.requestSceneProbeRefresh = function (waitForModelSettle) {
-        if (this.getReflectionSource() !== 'scene-probe') {
+        const effectiveSource = typeof this.getEffectiveReflectionSource === 'function'
+            ? this.getEffectiveReflectionSource()
+            : (this.getReflectionSource ? this.getReflectionSource() : 'none');
+        if (effectiveSource !== 'scene-probe') {
             return;
         }
 
@@ -185,6 +188,19 @@
         const hiddenObjects = [];
         const hiddenLookup = {};
 
+        const shouldHideRenderNode = function (node) {
+            if (!node || !node.visible) {
+                return false;
+            }
+            if (node.userData && node.userData.vrodosPmndrsAtmosphereSky) {
+                return false;
+            }
+            if (node.userData && node.userData.vrodosPmndrsAtmosphereStars) {
+                return true;
+            }
+            return false;
+        };
+
         Array.prototype.forEach.call(this.getCachedSceneQuery('photorealLights', '[data-vrodos-photoreal-light="true"]'), (entityEl) => {
             if (entityEl && entityEl.object3D) {
                 self.hideSceneProbeObject(entityEl.object3D, hiddenObjects, hiddenLookup);
@@ -200,6 +216,14 @@
         const cameraRig = document.getElementById('cameraA');
         if (cameraRig && cameraRig.object3D) {
             this.hideSceneProbeObject(cameraRig.object3D, hiddenObjects, hiddenLookup);
+        }
+
+        if (this.el && this.el.object3D && typeof this.el.object3D.traverse === 'function') {
+            this.el.object3D.traverse((node) => {
+                if (shouldHideRenderNode(node)) {
+                    self.hideSceneProbeObject(node, hiddenObjects, hiddenLookup);
+                }
+            });
         }
 
         return hiddenObjects;
