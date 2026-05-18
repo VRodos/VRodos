@@ -92,12 +92,35 @@ VRODOS.ui = VRODOS.ui || {};
         if (!container) return;
 
         let dragItem = null;
+        let dragMidpointCache = new WeakMap();
+
+        function clearDragMidpointCache() {
+            dragMidpointCache = new WeakMap();
+        }
+
+        function getSceneCardMidX(card) {
+            if (!dragMidpointCache.has(card)) {
+                const rect = card.getBoundingClientRect();
+                dragMidpointCache.set(card, rect.left + rect.width / 2);
+            }
+            return dragMidpointCache.get(card);
+        }
+
+        function insertDragItemBefore(referenceNode) {
+            if (!dragItem || dragItem === referenceNode || dragItem.nextSibling === referenceNode) {
+                return;
+            }
+
+            container.insertBefore(dragItem, referenceNode);
+            clearDragMidpointCache();
+        }
 
         container.addEventListener('dragstart', (e) => {
             const card = findSceneCard(e);
             if (!card) return;
 
             dragItem = card;
+            clearDragMidpointCache();
             card.classList.add('dragging');
             if (e.dataTransfer) {
                 e.dataTransfer.effectAllowed = 'move';
@@ -116,19 +139,15 @@ VRODOS.ui = VRODOS.ui || {};
             const card = findSceneCard(e);
             if (!card || card === dragItem) return;
 
-            const rect = card.getBoundingClientRect();
-            const midX = rect.left + rect.width / 2;
-            if (e.clientX < midX) {
-                container.insertBefore(dragItem, card);
-            } else {
-                container.insertBefore(dragItem, card.nextSibling);
-            }
+            const referenceNode = e.clientX < getSceneCardMidX(card) ? card : card.nextSibling;
+            insertDragItemBefore(referenceNode);
         });
 
         container.addEventListener('dragend', () => {
             const hadDraggedScene = Boolean(dragItem);
             if (dragItem) dragItem.classList.remove('dragging');
             dragItem = null;
+            clearDragMidpointCache();
 
             if (!hadDraggedScene) {
                 return;
