@@ -28,6 +28,30 @@ It combines:
 - Dedicated `Walkable Surfaces` helper category for compiled navigation meshes
 - Drag/drop placement from the scene-side asset browser
 
+## Scene Editor Architecture
+
+The scene editor is implemented as classic WordPress-enqueued scripts under [`assets/js/editor/`](assets/js/editor/). It is intentionally modular internally while preserving legacy script handles and globals used by templates, AJAX localization, and older inline integrations.
+
+Current editor subsystems:
+
+- `core/`: namespace bootstrap, shared helpers, diagnostics, and startup coordination
+- `scene/`: registry, selection, transforms, undo, bounds, disposal, and scene persistence
+- `render/`: Three.js scene/camera/renderer lifecycle, direct render loop, performance profile, and editor helpers
+- `loaders/`: scene-load lifecycle plus GLB, generated asset, light, pawn, and director camera loading
+- `ui/`: toolbar, panels, hierarchy, asset browser, scene list, screenshot, compile dialog, keyboard, and pointer-lock controls
+- `ajax/`: editor persistence, compile, upload, delete, and project/asset AJAX entry points
+
+Compatibility surfaces remain part of the contract during this staged architecture: `window.VRODOS`, `VRODOS.editor.envir`, editor registry/factory/selection/transform facades, `VRODOS.api.saveChanges`, scene loading/autosave APIs, `VRODOS.ui.*` template hooks, `vrodos_data.*`, and the current Three vendor globals.
+
+Important ownership rules:
+
+- `ajax/vrodos_save_scene_ajax.js` owns save queueing, save button state, export-before-save, and follow-up saves.
+- `scene/vrodos_scene_persistence.js` owns scene import/export helpers and scene-data object records.
+- `scene/vrodos_scene_registry.js` is the default source for selectable/editor roots; hot paths should avoid routine full-scene traversals.
+- The editor render path is direct WebGL plus cel-outline selection helpers; the old editor `EffectComposer`, `RenderPass`, `FXAA`, and disabled `OutlinePass` paths have been removed.
+- The render loop is request-driven and diagnostics expose RAF/timer state, renderer memory, object counts, and related profiling signals.
+- UI modules own event binding with idempotent guards; new template inline handlers should be avoided.
+
 ### Compiled A-Frame output
 
 - One-click scene compilation to A-Frame HTML output
