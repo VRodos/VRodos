@@ -259,6 +259,9 @@ window.addEventListener('DOMContentLoaded', () => {
         if (typeof VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure !== 'number') {
             VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure, 1, 20, 1.0);
         }
+        if (typeof VRODOS.editor.envir.scene.aframePmndrsLowLightAutoExposureEnabled === 'undefined') {
+            VRODOS.editor.envir.scene.aframePmndrsLowLightAutoExposureEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.lowLightAutoExposureEnabled;
+        }
         VRODOS.editor.envir.scene.aframePmndrsToneMappingMode = VRodosCompileUI.PostFX.normalizePmndrsToneMappingMode(VRODOS.editor.envir.scene.aframePmndrsToneMappingMode);
         if (typeof VRODOS.editor.envir.scene.aframePmndrsLensFlareEnabled === 'undefined') {
             VRODOS.editor.envir.scene.aframePmndrsLensFlareEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.lensFlareEnabled;
@@ -360,6 +363,10 @@ window.addEventListener('DOMContentLoaded', () => {
         if (typeof VRODOS.editor.envir.scene.aframePmndrsMoonEnabled === 'undefined') {
             VRODOS.editor.envir.scene.aframePmndrsMoonEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.moonEnabled;
         }
+        VRODOS.editor.envir.scene.aframePmndrsStarsEnabled = Shared.normalizePmndrsStarsEnabled(
+            VRODOS.editor.envir.scene.aframePmndrsStarsEnabled,
+            Shared.PMNDRS_TWEAK_DEFAULTS.starsEnabled
+        );
         const lightingPresetFallback = Shared.normalizePmndrsHorizonLightingPreset(
             VRODOS.editor.envir.scene.aframeHorizonSkyPreset,
             Shared.PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset

@@ -16,6 +16,7 @@ class VRodos_Render_Runtime_Manager {
 	private const FALLBACK_THREE_VENDOR_VERSION = '0.181.0';
 	private const FALLBACK_THREE_VENDOR_DIR     = 'three-r181';
 	private const FALLBACK_THREE_VENDOR_BUNDLE  = 'vrodos-three-r181.bundle.js';
+	private const FALLBACK_TAKRAM_STARS_DATA_PATH = 'assets/vendor/takram-atmosphere/stars.bin';
 
 	private static ?array $manifest = null;
 
@@ -25,6 +26,12 @@ class VRodos_Render_Runtime_Manager {
 		$three    = is_array( $manifest['three'] ?? null ) ? $manifest['three'] : [];
 		$postfx   = is_array( $manifest['postprocessing'] ?? null ) ? $manifest['postprocessing'] : [];
 		$takram   = is_array( $manifest['takram'] ?? null ) ? $manifest['takram'] : [];
+		$takram_assets = is_array( $takram['assets'] ?? null ) ? $takram['assets'] : [];
+		$takram_stars_data_path = self::string_value(
+			$takram_assets,
+			'starsDataPath',
+			self::string_value( $takram, 'starsDataPath', self::FALLBACK_TAKRAM_STARS_DATA_PATH )
+		);
 
 		return [
 			'aframe_runtime_label' => self::string_value( $aframe, 'label', self::FALLBACK_AFRAME_RUNTIME_LABEL ),
@@ -39,6 +46,8 @@ class VRodos_Render_Runtime_Manager {
 			'takram_atmosphere_version' => self::string_value( $takram, 'atmosphereVersion', '' ),
 			'takram_clouds_version' => self::string_value( $takram, 'cloudsVersion', '' ),
 			'takram_bundle' => self::string_value( $takram, 'bundleFile', 'vrodos-takram-atmosphere.bundle.js' ),
+			'takram_stars_data_path' => $takram_stars_data_path,
+			'takram_stars_data_url' => VRodos_Path_Manager::plugin_url( $takram_stars_data_path ),
 		];
 	}
 

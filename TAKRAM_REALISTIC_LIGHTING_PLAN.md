@@ -16,6 +16,8 @@ Summary of the active baseline:
 - Horizon/Takram scenes use Takram `SkyMaterial` for sky/sun ownership and Takram `SunDirectionalLight` / `SkyLightProbe` with a VRodos PBR indirect bridge for authored GLB materials.
 - The legacy helper-light path is retained behind `?vrodos_debug_helper_horizon_lights=1` for comparison and fallback.
 - Takram procedural ground is disabled in local Horizon scenes; authored walkable-surface/navmesh GLBs remain the real scene ground.
+- Low-light presets are calibrated as a PBR/light-source fix, not a renderer rewrite: night adds a cool VRodos-managed moon `DirectionalLight`, dawn/night use stronger Takram sky/PBR fill support, and default low-light exposure is raised only when tone-mapping exposure is not authored.
+- Takram stars are a sky realism layer only. `stars.bin` is shipped locally from `assets/vendor/takram-atmosphere/stars.bin`; stars must not be treated as scene lights.
 
 ## Findings To Preserve
 
@@ -23,6 +25,7 @@ Summary of the active baseline:
 - Takram's vanilla post-process mode does not use scene `SunLight` / `SkyLight` objects. It uses `AerialPerspectiveEffect` with `sunLight` and `skyLight` enabled.
 - Takram's light-source mode is different: it uses `SunDirectionalLight` and `SkyLightProbe` with normal materials, but it approximates atmospheric radiance at one point.
 - Because that approximation can under-light authored GLB shadow sides compared with real-world sky bounce, VRodos uses a small PBR indirect bridge rather than trying to turn Takram ground into the authored scene ground.
+- Moonlit night readability requires an explicit scene light in the current PBR path. Takram's sky moon and stars are visual atmosphere layers; they do not provide practical GLB scene illumination.
 - Mixing PBR helper or physical lights with post-process `sunLight` / `skyLight` can double-light the scene or wash out colors.
 - Takram lens flare is tied to the Takram Horizon sun. Its `LensFlareEffect` is a convolution effect and must stay in its own `EffectPass`.
 - Takram `DitheringEffect` can add visible grain to texture-heavy compiled A-Frame scenes. Keep it out of the default path unless it is reintroduced as a measured opt-in.

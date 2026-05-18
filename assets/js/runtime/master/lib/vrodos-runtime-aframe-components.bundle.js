@@ -529,6 +529,8 @@
       pmndrsVignetteEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsVignetteEnabled", "0") },
       pmndrsVignetteDarkness: { type: "string", default: vrodosSceneSettingDefault("pmndrsVignetteDarkness", "0.5") },
       pmndrsToneMappingExposure: { type: "string", default: vrodosSceneSettingDefault("pmndrsToneMappingExposure", "1.0") },
+      pmndrsLowLightAutoExposureEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsLowLightAutoExposureEnabled", "1") },
+      pmndrsToneMappingExposureAuthored: { type: "string", default: vrodosSceneSettingDefault("pmndrsToneMappingExposureAuthored", "0") },
       pmndrsToneMappingMode: { type: "string", default: vrodosSceneSettingDefault("pmndrsToneMappingMode", "agx") },
       pmndrsLensFlareEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsLensFlareEnabled", "0") },
       pmndrsLutEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsLutEnabled", "0") },
@@ -568,6 +570,7 @@
       pmndrsMiePhaseG: { type: "string", default: vrodosSceneSettingDefault("pmndrsMiePhaseG", "0.74") },
       pmndrsAbsorptionScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsAbsorptionScale", "0.94") },
       pmndrsMoonEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsMoonEnabled", "0") },
+      pmndrsStarsEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsStarsEnabled", "auto") },
       pmndrsHorizonKeyLightIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsHorizonKeyLightIntensity", "1.15") },
       pmndrsHorizonFillLightIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsHorizonFillLightIntensity", "0.45") }
     },

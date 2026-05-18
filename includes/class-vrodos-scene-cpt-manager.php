@@ -283,6 +283,7 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsVignetteEnabled'] = $json_metadata->aframePmndrsVignetteEnabled ?? false;
 		$scene_data['aframePmndrsVignetteDarkness'] = isset( $json_metadata->aframePmndrsVignetteDarkness ) ? (float) $json_metadata->aframePmndrsVignetteDarkness : 0.5;
 		$scene_data['aframePmndrsToneMappingExposure'] = isset( $json_metadata->aframePmndrsToneMappingExposure ) ? (float) $json_metadata->aframePmndrsToneMappingExposure : 1.0;
+		$scene_data['aframePmndrsLowLightAutoExposureEnabled'] = $json_metadata->aframePmndrsLowLightAutoExposureEnabled ?? true;
 		$pmndrs_tone_mapping_mode_raw = $json_metadata->aframePmndrsToneMappingMode ?? 'agx';
 		$scene_data['aframePmndrsToneMappingMode'] = in_array( $pmndrs_tone_mapping_mode_raw, [ 'agx', 'reinhard', 'cineon', 'aces-filmic', 'linear' ], true ) ? $pmndrs_tone_mapping_mode_raw : 'agx';
 		$scene_data['aframePmndrsLensFlareEnabled'] = $json_metadata->aframePmndrsLensFlareEnabled ?? false;
@@ -331,6 +332,8 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsMiePhaseG'] = isset( $json_metadata->aframePmndrsMiePhaseG ) ? (float) $json_metadata->aframePmndrsMiePhaseG : 0.8;
 		$scene_data['aframePmndrsAbsorptionScale'] = isset( $json_metadata->aframePmndrsAbsorptionScale ) ? (float) $json_metadata->aframePmndrsAbsorptionScale : 1.0;
 		$scene_data['aframePmndrsMoonEnabled'] = $json_metadata->aframePmndrsMoonEnabled ?? false;
+		$pmndrs_stars_enabled_raw = $json_metadata->aframePmndrsStarsEnabled ?? 'auto';
+		$scene_data['aframePmndrsStarsEnabled'] = in_array( $pmndrs_stars_enabled_raw, [ 'auto', 'off', 'on' ], true ) ? $pmndrs_stars_enabled_raw : 'auto';
 		$scene_data['aframePmndrsHorizonLightingPreset'] = isset( $json_metadata->aframePmndrsHorizonLightingPreset )
 			? $json_metadata->aframePmndrsHorizonLightingPreset
 			: $scene_data['aframeHorizonSkyPreset'];

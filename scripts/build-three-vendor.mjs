@@ -35,6 +35,10 @@ const postprocessingRuntimeBundlePath = path.join(runtimeVendorDir, 'vrodos-post
 const postprocessingRuntimeEntryPath = path.join(rootDir, 'scripts', '.tmp-build-postprocessing-runtime-entry.mjs');
 const takramBundlePath = path.join(runtimeVendorDir, 'vrodos-takram-atmosphere.bundle.js');
 const takramEntryPath = path.join(rootDir, 'scripts', '.tmp-build-takram-atmosphere-entry.mjs');
+const takramAssetsSourceDir = path.join(rootDir, 'node_modules', '@takram', 'three-atmosphere', 'assets');
+const takramStarsSourcePath = path.join(takramAssetsSourceDir, 'stars.bin');
+const takramAssetsOutputDir = path.join(rootDir, 'assets', 'vendor', 'takram-atmosphere');
+const takramStarsOutputPath = path.join(takramAssetsOutputDir, 'stars.bin');
 const collisionBvhBundlePath = path.join(runtimeVendorDir, 'vrodos-collision-bvh.bundle.js');
 const collisionBvhEntryPath = path.join(rootDir, 'scripts', '.tmp-build-collision-bvh-entry.mjs');
 const threeShimPath = path.join(rootDir, 'scripts', '.tmp-three-global-shim.mjs');
@@ -200,16 +204,19 @@ async function copySupportAssets() {
   await ensurePathExists(basisSourceDir, 'Basis/KTX2 transcoder assets');
   await ensurePathExists(meshoptSourcePath, 'Meshopt decoder asset');
   await ensurePathExists(fontSourcePath, 'Helvetiker font asset');
+  await ensurePathExists(takramStarsSourcePath, 'Takram stars data asset');
 
   await mkdir(dracoOutputDir, { recursive: true });
   await mkdir(basisOutputDir, { recursive: true });
   await mkdir(meshoptOutputDir, { recursive: true });
   await mkdir(fontOutputDir, { recursive: true });
+  await mkdir(takramAssetsOutputDir, { recursive: true });
   await cp(dracoSourceDir, dracoOutputDir, { recursive: true, force: true });
   await cp(basisSourceDir, basisOutputDir, { recursive: true, force: true });
   await cp(meshoptSourcePath, meshoptOutputPath, { force: true });
   await cp(meshoptSourcePath, meshoptCompatOutputPath, { force: true });
   await cp(fontSourcePath, fontOutputPath, { force: true });
+  await cp(takramStarsSourcePath, takramStarsOutputPath, { force: true });
 }
 
 function createAliasPlugin(aliases) {
@@ -409,6 +416,10 @@ async function writeRuntimeManifest() {
       global: 'VRODOS_TAKRAM_ATMOSPHERE',
       bundleFile: path.basename(takramBundlePath),
       bundlePath: 'assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js',
+      starsDataPath: 'assets/vendor/takram-atmosphere/stars.bin',
+      assets: {
+        starsDataPath: 'assets/vendor/takram-atmosphere/stars.bin',
+      },
     },
     collisionBvh: {
       version: collisionBvhVersion,

@@ -432,6 +432,7 @@ class VRodos_Asset_Manager {
 			. 'window.vrodos_three_basis_transcoder_path = ' . wp_json_encode( $three_vendor_base . 'basis/' ) . ';'
 			. 'window.vrodos_three_meshopt_decoder_path = ' . wp_json_encode( $three_vendor_base . 'meshopt/meshopt_decoder.js' ) . ';'
 			. 'window.vrodos_three_font_path = ' . wp_json_encode( $three_vendor_base . 'fonts/helvetiker_bold.typeface.json' ) . ';'
+			. 'window.vrodos_takram_stars_data_url = ' . wp_json_encode( $runtime_config['takram_stars_data_url'] ?? VRodos_Path_Manager::vendor_url( 'takram-atmosphere/stars.bin' ) ) . ';'
 			. 'window.vrodos_render_runtime = ' . wp_json_encode( $runtime_config ) . ';';
 		wp_add_inline_script( 'vrodos_three_vendor_bundle', $inline_script, 'before' );
 	}

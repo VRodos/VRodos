@@ -34,6 +34,7 @@ VRodosCompileUI.Shared = (function () {
         noiseOpacity: contractDefault('pmndrsNoiseOpacity', 0.04),
         chromaticAberrationEnabled: contractDefault('pmndrsChromaticAberrationEnabled', false),
         chromaticAberrationOffset: contractDefault('pmndrsChromaticAberrationOffset', 0.0015),
+        lowLightAutoExposureEnabled: contractDefault('pmndrsLowLightAutoExposureEnabled', true),
         atmosphereEnabled: contractDefault('pmndrsAtmosphereEnabled', true),
         atmospherePreset: contractDefault('pmndrsAtmospherePreset', 'midday'),
         atmospherePresetIntensity: contractDefault('pmndrsAtmospherePresetIntensity', 1.0),
@@ -64,6 +65,7 @@ VRodosCompileUI.Shared = (function () {
         miePhaseG: contractDefault('pmndrsMiePhaseG', 0.8),
         absorptionScale: contractDefault('pmndrsAbsorptionScale', 1.0),
         moonEnabled: contractDefault('pmndrsMoonEnabled', false),
+        starsEnabled: contractDefault('pmndrsStarsEnabled', 'auto'),
         horizonLightingPreset: contractDefault('pmndrsHorizonLightingPreset', 'natural'),
         horizonKeyLightIntensity: contractDefault('pmndrsHorizonKeyLightIntensity', 1.15),
         horizonFillLightIntensity: contractDefault('pmndrsHorizonFillLightIntensity', 0.45)
@@ -92,6 +94,17 @@ VRodosCompileUI.Shared = (function () {
                 return value;
             default:
                 return fallback || PMNDRS_TWEAK_DEFAULTS.horizonLightingPreset;
+        }
+    }
+
+    function normalizePmndrsStarsEnabled(value, fallback) {
+        switch (value) {
+            case 'auto':
+            case 'off':
+            case 'on':
+                return value;
+            default:
+                return fallback || PMNDRS_TWEAK_DEFAULTS.starsEnabled;
         }
     }
 
@@ -134,6 +147,7 @@ VRodosCompileUI.Shared = (function () {
         SCENE_PROBE_DEFAULTS,
         getPmndrsHorizonHelperDefaults,
         normalizePmndrsHorizonLightingPreset,
+        normalizePmndrsStarsEnabled,
         clampNumber,
         normalizeColorHex,
         formatNumber,

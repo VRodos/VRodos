@@ -102,6 +102,16 @@
           "min": 1,
           "max": 20
         },
+        "pmndrsLowLightAutoExposureEnabled": {
+          "metadataKey": "aframePmndrsLowLightAutoExposureEnabled",
+          "type": "boolean",
+          "default": true
+        },
+        "pmndrsToneMappingExposureAuthored": {
+          "metadataKey": "aframePmndrsToneMappingExposureAuthored",
+          "type": "boolean",
+          "default": false
+        },
         "pmndrsToneMappingMode": {
           "metadataKey": "aframePmndrsToneMappingMode",
           "type": "enum",
@@ -379,6 +389,16 @@
           "metadataKey": "aframePmndrsMoonEnabled",
           "type": "boolean",
           "default": false
+        },
+        "pmndrsStarsEnabled": {
+          "metadataKey": "aframePmndrsStarsEnabled",
+          "type": "enum",
+          "default": "auto",
+          "allowed": [
+            "auto",
+            "off",
+            "on"
+          ]
         },
         "pmndrsHorizonLightingPreset": {
           "metadataKey": "aframePmndrsHorizonLightingPreset",
@@ -2277,6 +2297,10 @@
     const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 4675e-6;
     const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.18;
+    const PMNDRS_NIGHT_MOON_LIGHT_INTENSITY = 0.28;
+    const PMNDRS_NIGHT_AUTO_EXPOSURE = 3;
+    const PMNDRS_DAWN_AUTO_EXPOSURE = 2.2;
+    const PMNDRS_TAKRAM_STARS_RELATIVE_PATH = "assets/vendor/takram-atmosphere/stars.bin";
     const PERFORMANCE_DESKTOP_RENDER_PIXEL_BUDGET = 165e4;
     const DPR_PIXEL_BUDGET_QUERY_PARAM = "vrodos_dpr_pixel_budget";
     const WGS84_EQUATORIAL_RADIUS = 6378137;
@@ -2625,6 +2649,16 @@
           return "midday";
       }
     }
+    function normalizePmndrsStarsEnabled(value) {
+      switch (value) {
+        case "on":
+        case "off":
+        case "auto":
+          return value;
+        default:
+          return "auto";
+      }
+    }
     function normalizePmndrsDate(value, fallback) {
       const candidate = typeof value === "string" ? value.trim() : "";
       if (/^\d{4}-\d{2}-\d{2}$/.test(candidate)) {
@@ -2720,6 +2754,59 @@
     function isPmndrsPresetTimeNight(config) {
       return Boolean(config && (getResolvedPmndrsSkyTimePreset(config) === "night" || config.celestialMode === "datetime" && typeof config.sunElevationDeg === "number" && config.sunElevationDeg <= -12));
     }
+    function isPmndrsLowLightDawn(config) {
+      if (!config) {
+        return false;
+      }
+      const sunElevation = typeof config.sunElevationDeg === "number" ? config.sunElevationDeg : null;
+      return getResolvedPmndrsSkyTimePreset(config) === "dawn" || config.celestialMode === "datetime" && sunElevation !== null && sunElevation > -12 && sunElevation < 0;
+    }
+    function shouldUsePmndrsMoonSceneLight(config) {
+      return Boolean(isPmndrsPresetTimeNight(config) && config.moonEnabled !== false);
+    }
+    function getPmndrsMoonSceneLightDirection(config) {
+      if (!config) {
+        return null;
+      }
+      return config.localMoonDirection || config.moonDirection || config.localSunDirection || config.sunDirection || null;
+    }
+    function getPmndrsStarsIntensity(config) {
+      if (!config || config.enabled === false) {
+        return 0;
+      }
+      const mode = normalizePmndrsStarsEnabled(config.starsEnabled);
+      if (mode === "off") {
+        return 0;
+      }
+      if (isPmndrsPresetTimeNight(config)) {
+        return 1;
+      }
+      if (isPmndrsLowLightDawn(config)) {
+        return mode === "on" ? 0.12 : 0;
+      }
+      const sunElevation = typeof config.sunElevationDeg === "number" ? config.sunElevationDeg : null;
+      if (mode === "on" && sunElevation !== null && sunElevation < 0) {
+        return 0.18;
+      }
+      return 0;
+    }
+    function joinPmndrsRuntimeUrl(base, relativePath) {
+      const rel = String(relativePath || "").replace(/^\/+/, "");
+      if (!base) {
+        return rel;
+      }
+      return `${String(base).replace(/\/+$/, "")}/${rel}`;
+    }
+    function getPmndrsTakramStarsDataUrl() {
+      const runtime = window.vrodos_render_runtime || {};
+      const configuredUrl = window.vrodos_takram_stars_data_url || runtime.takram_stars_data_url || runtime.takramStarsDataUrl;
+      if (typeof configuredUrl === "string" && configuredUrl.trim()) {
+        return configuredUrl.trim();
+      }
+      const configuredPath = runtime.takram_stars_data_path || runtime.takramStarsDataPath || PMNDRS_TAKRAM_STARS_RELATIVE_PATH;
+      const pluginBase = window.VRODOS_PLUGIN_URL || window.vrodos_data && (window.vrodos_data.pluginUrl || window.vrodos_data.plugin_url || window.vrodos_data.pluginPath) || "";
+      return joinPmndrsRuntimeUrl(pluginBase, configuredPath);
+    }
     function getPmndrsNightReflectionIntensityScale(self, config, reflectionSource) {
       const source = reflectionSource || (self && typeof self.getEffectiveReflectionSource === "function" ? self.getEffectiveReflectionSource() : "none");
       if (source !== "hdr" && source !== "scene-probe") {
@@ -2750,15 +2837,15 @@
         const moonEnabled = atmosphereConfig.moonEnabled !== false;
         keyColor = moonEnabled ? "#b8c8ff" : "#39425c";
         fillColor = moonEnabled ? "#3f4f78" : "#111827";
-        keyIntensity = Math.min(keyIntensity, moonEnabled ? 0.16 : 0.03);
-        fillIntensity = Math.min(fillIntensity, moonEnabled ? 0.035 : 0.015);
+        keyIntensity = Math.min(keyIntensity, moonEnabled ? PMNDRS_NIGHT_MOON_LIGHT_INTENSITY : 0.03);
+        fillIntensity = Math.min(fillIntensity, moonEnabled ? 0.08 : 0.015);
         useMoonDirection = moonEnabled;
         directionOwner = moonEnabled ? "moon" : "none";
       } else if (atmosphereConfig && (skyTimePreset === "dawn" || sunElevation !== null && sunElevation < 0)) {
         keyColor = "#9fb7ff";
         fillColor = "#223354";
-        keyIntensity = Math.min(keyIntensity, 0.22);
-        fillIntensity = Math.min(fillIntensity, 0.12);
+        keyIntensity = Math.min(keyIntensity, 0.45);
+        fillIntensity = Math.min(fillIntensity, 0.3);
       } else if (atmosphereConfig && (skyTimePreset === "sunrise" || skyTimePreset === "golden-hour" || skyTimePreset === "sunset" || sunElevation !== null && sunElevation < 18)) {
         keyColor = skyTimePreset === "sunset" ? "#ff9f64" : skyTimePreset === "sunrise" ? "#ffd1a3" : "#ffba7a";
         fillColor = "#5f78ab";
@@ -2794,16 +2881,16 @@
       const sunElevation = atmosphereConfig && typeof atmosphereConfig.sunElevationDeg === "number" ? atmosphereConfig.sunElevationDeg : null;
       if (isPmndrsPresetTimeNight(atmosphereConfig)) {
         return {
-          skyLightIntensity: 0.16,
-          pbrFillIntensity: 0.08,
+          skyLightIntensity: 0.28,
+          pbrFillIntensity: 0.16,
           groundFillColor: "#0a0d14"
         };
       }
       if (skyTimePreset === "dawn" || sunElevation !== null && sunElevation < 0) {
         return {
-          skyLightIntensity: 0.62,
-          pbrFillIntensity: 0.38,
-          groundFillColor: "#252b38"
+          skyLightIntensity: 0.85,
+          pbrFillIntensity: 0.55,
+          groundFillColor: "#303848"
         };
       }
       if (skyTimePreset === "sunrise" || skyTimePreset === "golden-hour" || skyTimePreset === "sunset" || sunElevation !== null && sunElevation < 18) {
@@ -2848,7 +2935,7 @@
       const authoredFill = helperConfig && typeof helperConfig.authoredFillIntensity === "number" ? helperConfig.authoredFillIntensity : null;
       const helperFill = helperConfig && typeof helperConfig.fillIntensity === "number" ? helperConfig.fillIntensity : 0;
       if (isPmndrsPresetTimeNight(atmosphereConfig)) {
-        return Math.min(0.08, Math.max(helperFill, profile.pbrFillIntensity));
+        return Math.min(0.18, Math.max(helperFill, profile.pbrFillIntensity));
       }
       const authoredBridge = authoredFill !== null ? authoredFill * 0.8 : 0;
       const profileBridge = profile.pbrFillIntensity * 0.65;
@@ -3581,6 +3668,15 @@
         return;
       }
       const state = self._pmndrsAtmosphereState;
+      if (state.starsMesh && state.starsMesh.parent) {
+        state.starsMesh.parent.remove(state.starsMesh);
+      }
+      if (state.starsMaterial && typeof state.starsMaterial.dispose === "function") {
+        state.starsMaterial.dispose();
+      }
+      if (state.starsGeometry && typeof state.starsGeometry.dispose === "function") {
+        state.starsGeometry.dispose();
+      }
       if (state.skyMesh && state.skyMesh.parent) {
         state.skyMesh.parent.remove(state.skyMesh);
       }
@@ -3593,13 +3689,26 @@
       state.skyMesh = null;
       state.skyMaterial = null;
       state.skyGeometry = null;
+      state.starsMesh = null;
+      state.starsMaterial = null;
+      state.starsGeometry = null;
+      state.starsIntensity = 0;
     }
     function setPmndrsAtmosphereSkyVisibility(self, visible) {
-      if (!self || !self._pmndrsAtmosphereState || !self._pmndrsAtmosphereState.skyMesh) {
+      if (!self || !self._pmndrsAtmosphereState) {
         return false;
       }
-      self._pmndrsAtmosphereState.skyMesh.visible = Boolean(visible);
-      return true;
+      const state = self._pmndrsAtmosphereState;
+      let changed = false;
+      if (state.skyMesh) {
+        state.skyMesh.visible = Boolean(visible);
+        changed = true;
+      }
+      if (state.starsMesh) {
+        state.starsMesh.visible = Boolean(visible) && state.starsIntensity > 0;
+        changed = true;
+      }
+      return changed;
     }
     function isPmndrsAtmosphereSkyVisible(self) {
       return Boolean(self && self._pmndrsAtmosphereState && self._pmndrsAtmosphereState.skyMesh && self._pmndrsAtmosphereState.skyMesh.visible);
@@ -3892,7 +4001,7 @@
       if (!state) {
         return;
       }
-      ["sunLight", "skyLight", "fillLight", "target"].forEach((key) => {
+      ["sunLight", "skyLight", "fillLight", "moonLight", "target", "moonTarget"].forEach((key) => {
         const object = state[key];
         if (object && object.parent) {
           object.parent.remove(object);
@@ -3903,8 +4012,8 @@
     function ensurePmndrsFallbackHorizonLights(self, config, preset) {
       const shadowEnabled = self.data.shadowQuality !== "off";
       const shadowMap = self.data.shadowQuality === "high" ? 2048 : 1024;
-      const castShadow = shadowEnabled ? "true" : "false";
       const helperConfig = getPmndrsHorizonHelperLightConfig(self, preset, config);
+      const castShadow = shadowEnabled && !helperConfig.useMoonDirection ? "true" : "false";
       const fallbackFillIntensity = getPmndrsFallbackAmbientFillIntensity(helperConfig, config);
       const keyDirection = helperConfig.useMoonDirection ? config.localMoonDirection || config.moonDirection || config.localSunDirection || config.sunDirection : config.localSunDirection || config.sunDirection;
       self.ensurePhotorealHelperLight(
@@ -3992,6 +4101,17 @@
           fillLight2.name = "vrodosPmndrsTakramPbrFillLight";
           fillLight2.userData.vrodosPmndrsTakramLightSource = true;
         }
+        const moonLight2 = typeof THREE.DirectionalLight === "function" ? new THREE.DirectionalLight("#b8c8ff", PMNDRS_NIGHT_MOON_LIGHT_INTENSITY) : null;
+        const moonTarget2 = moonLight2 ? moonLight2.target : null;
+        if (moonLight2) {
+          moonLight2.name = "vrodosPmndrsTakramMoonLight";
+          moonLight2.userData.vrodosPmndrsTakramLightSource = true;
+          moonLight2.castShadow = false;
+        }
+        if (moonTarget2) {
+          moonTarget2.name = "vrodosPmndrsTakramMoonTarget";
+          moonTarget2.userData.vrodosPmndrsTakramLightSource = true;
+        }
         const target = sunLight2.target;
         target.name = "vrodosPmndrsTakramSunTarget";
         target.userData.vrodosPmndrsTakramLightSource = true;
@@ -4001,7 +4121,13 @@
         if (fillLight2) {
           scene.add(fillLight2);
         }
-        state = { sunLight: sunLight2, skyLight: skyLight2, fillLight: fillLight2, target };
+        if (moonLight2) {
+          scene.add(moonLight2);
+        }
+        if (moonTarget2) {
+          scene.add(moonTarget2);
+        }
+        state = { sunLight: sunLight2, skyLight: skyLight2, fillLight: fillLight2, moonLight: moonLight2, target, moonTarget: moonTarget2 };
         self._pmndrsTakramLightSources = state;
       } else {
         if (state.sunLight && state.sunLight.parent !== scene) {
@@ -4021,25 +4147,49 @@
         if (state.fillLight && state.fillLight.parent !== scene) {
           scene.add(state.fillLight);
         }
+        if (!state.moonLight && typeof THREE.DirectionalLight === "function") {
+          state.moonLight = new THREE.DirectionalLight("#b8c8ff", PMNDRS_NIGHT_MOON_LIGHT_INTENSITY);
+          state.moonLight.name = "vrodosPmndrsTakramMoonLight";
+          state.moonLight.userData.vrodosPmndrsTakramLightSource = true;
+          state.moonLight.castShadow = false;
+          state.moonTarget = state.moonLight.target;
+          if (state.moonTarget) {
+            state.moonTarget.name = "vrodosPmndrsTakramMoonTarget";
+            state.moonTarget.userData.vrodosPmndrsTakramLightSource = true;
+          }
+        }
+        if (state.moonLight && state.moonLight.parent !== scene) {
+          scene.add(state.moonLight);
+        }
+        if (state.moonTarget && state.moonTarget.parent !== scene) {
+          scene.add(state.moonTarget);
+        }
       }
       const shadowEnabled = self.data.shadowQuality !== "off";
       const shadowMap = self.data.shadowQuality === "high" ? 2048 : 1024;
       const sunLight = state.sunLight;
       const skyLight = state.skyLight;
       const fillLight = state.fillLight;
+      const moonLight = state.moonLight;
+      const moonTarget = state.moonTarget;
       if (state.target) {
         state.target.position.set(0, 0, 0);
         state.target.updateMatrixWorld(true);
       }
+      if (moonTarget) {
+        moonTarget.position.set(0, 0, 0);
+        moonTarget.updateMatrixWorld(true);
+      }
       if (sunLight) {
-        sunLight.visible = helperConfig.keyIntensity > 0;
+        const useSunKey = !helperConfig.useMoonDirection;
+        sunLight.visible = useSunKey && helperConfig.keyIntensity > 0;
         sunLight.intensity = hasTakramSunRadiance ? 1 : helperConfig.keyIntensity;
         sunLight.color.set(helperConfig.keyColor);
         sunLight.distance = 28;
         if (typeof sunLight.correctAltitude !== "undefined") {
           sunLight.correctAltitude = config.correctAltitudeEnabled !== false;
         }
-        sunLight.castShadow = shadowEnabled;
+        sunLight.castShadow = shadowEnabled && useSunKey;
         sunLight.transmittanceTexture = textures ? textures.transmittanceTexture || null : null;
         if (config.sunDirection && sunLight.sunDirection) {
           sunLight.sunDirection.copy(config.sunDirection);
@@ -4063,6 +4213,24 @@
           sunLight.update();
         }
         scheduleAdaptiveShadowFit(self);
+      }
+      if (moonLight) {
+        const moonLightEnabled = shouldUsePmndrsMoonSceneLight(config);
+        const moonDirection = getPmndrsMoonSceneLightDirection(config);
+        moonLight.visible = moonLightEnabled && Boolean(moonDirection);
+        moonLight.intensity = moonLight.visible ? PMNDRS_NIGHT_MOON_LIGHT_INTENSITY : 0;
+        moonLight.castShadow = false;
+        if (moonLight.color && typeof moonLight.color.set === "function") {
+          moonLight.color.set("#b8c8ff");
+        }
+        if (moonTarget) {
+          moonLight.target = moonTarget;
+        }
+        if (moonDirection && moonLight.position && typeof moonLight.position.copy === "function") {
+          moonLight.position.copy(moonDirection).normalize().multiplyScalar(28);
+          moonLight.position.y += 4;
+          moonLight.updateMatrixWorld(true);
+        }
       }
       if (skyLight) {
         skyLight.visible = helperConfig.fillIntensity > 0 && hasTakramSkyIrradiance;
@@ -4202,6 +4370,9 @@
         resolvedLookPreset,
         presetIntensity,
         quality,
+        lowLightAutoExposureEnabled: readPmndrsAtmosphereBool(this, "pmndrsLowLightAutoExposureEnabled", true),
+        toneMappingExposureAuthored: readPmndrsAtmosphereBool(this, "pmndrsToneMappingExposureAuthored", false),
+        starsEnabled: normalizePmndrsStarsEnabled(this.data.pmndrsStarsEnabled),
         geospatialEnabled,
         geospatialLatitudeDeg: readPmndrsAtmosphereNumber(this, "pmndrsGeospatialLatitudeDeg", -90, 90, 0),
         geospatialLongitudeDeg: readPmndrsAtmosphereNumber(this, "pmndrsGeospatialLongitudeDeg", -180, 180, 0),
@@ -4393,6 +4564,14 @@
         skyMesh: null,
         skyMaterial: null,
         skyGeometry: null,
+        starsMesh: null,
+        starsMaterial: null,
+        starsGeometry: null,
+        starsData: null,
+        starsDataUrl: "",
+        starsDataPromise: null,
+        starsFailed: false,
+        starsIntensity: 0,
         ready: false,
         failed: false,
         profileSignature: profile.signature,
@@ -4457,6 +4636,104 @@
       }
       this._pmndrsAtmosphereState = null;
     };
+    function loadPmndrsTakramStarsData(self, state) {
+      if (!state || state.starsData || state.starsDataPromise || state.starsFailed) {
+        return state ? state.starsDataPromise : null;
+      }
+      if (!THREE.FileLoader || typeof THREE.FileLoader !== "function") {
+        state.starsFailed = true;
+        return null;
+      }
+      const url = getPmndrsTakramStarsDataUrl();
+      state.starsDataUrl = url;
+      const loader = new THREE.FileLoader();
+      loader.setResponseType("arraybuffer");
+      state.starsDataPromise = new Promise((resolve, reject) => {
+        loader.load(url, resolve, void 0, reject);
+      }).then((data) => {
+        state.starsData = data;
+        return data;
+      }).catch((err) => {
+        state.starsFailed = true;
+        console.warn("[VRodos] Takram stars data failed to load:", err);
+        return null;
+      });
+      state.starsDataPromise.then(() => {
+        if (self && self._pmndrsAtmosphereState === state && state.starsData && state.starsIntensity > 0) {
+          const latestConfig = self.getPmndrsAtmosphereConfig ? self.getPmndrsAtmosphereConfig() : null;
+          ensurePmndrsAtmosphereStars(self, latestConfig, state, window.VRODOS_TAKRAM_ATMOSPHERE);
+        }
+      });
+      return state.starsDataPromise;
+    }
+    function ensurePmndrsAtmosphereStars(self, config, state, vta) {
+      if (!self || !state || !config || !vta || state.failed || state.starsFailed || !self.el || !self.el.object3D) {
+        return false;
+      }
+      const intensity = getPmndrsStarsIntensity(config);
+      state.starsIntensity = intensity;
+      if (intensity <= 0) {
+        if (state.starsMesh) {
+          state.starsMesh.visible = false;
+        }
+        if (state.starsMaterial) {
+          state.starsMaterial.intensity = 0;
+        }
+        return false;
+      }
+      if (!vta.StarsGeometry || !vta.StarsMaterial || !THREE.Points) {
+        return false;
+      }
+      if (!state.starsData) {
+        loadPmndrsTakramStarsData(self, state);
+        return false;
+      }
+      if (!state.starsMesh) {
+        state.starsGeometry = new vta.StarsGeometry(state.starsData);
+        state.starsMaterial = new vta.StarsMaterial({
+          irradianceTexture: state.textures.irradianceTexture || null,
+          scatteringTexture: state.textures.scatteringTexture || null,
+          transmittanceTexture: state.textures.transmittanceTexture || null,
+          singleMieScatteringTexture: state.textures.singleMieScatteringTexture || null,
+          higherOrderScatteringTexture: state.textures.higherOrderScatteringTexture || null,
+          pointSize: 1,
+          intensity,
+          background: true,
+          ground: config.groundEnabled
+        });
+        state.starsMesh = new THREE.Points(state.starsGeometry, state.starsMaterial);
+        state.starsMesh.frustumCulled = false;
+        state.starsMesh.renderOrder = -999;
+        state.starsMesh.userData.vrodosPmndrsAtmosphereStars = true;
+        state.starsMesh.name = "vrodosPmndrsAtmosphereStars";
+        self.el.object3D.add(state.starsMesh);
+      } else if (state.starsMesh.parent !== self.el.object3D) {
+        self.el.object3D.add(state.starsMesh);
+      }
+      if (state.starsMaterial) {
+        self.applyPmndrsAtmosphereConfigToTarget(state.starsMaterial, config);
+        state.starsMaterial.irradianceTexture = state.textures.irradianceTexture || null;
+        state.starsMaterial.scatteringTexture = state.textures.scatteringTexture || null;
+        state.starsMaterial.transmittanceTexture = state.textures.transmittanceTexture || null;
+        state.starsMaterial.singleMieScatteringTexture = state.textures.singleMieScatteringTexture || null;
+        state.starsMaterial.higherOrderScatteringTexture = state.textures.higherOrderScatteringTexture || null;
+        state.starsMaterial.intensity = intensity;
+        state.starsMaterial.pointSize = 1;
+        state.starsMaterial.background = true;
+        state.starsMaterial.ground = config.groundEnabled;
+        state.starsMaterial.depthWrite = false;
+        state.starsMaterial.needsUpdate = true;
+      }
+      if (state.starsMesh) {
+        state.starsMesh.visible = true;
+        if (config.inertialToECEFMatrix && typeof state.starsMesh.setRotationFromMatrix === "function") {
+          state.starsMesh.setRotationFromMatrix(config.inertialToECEFMatrix);
+        } else if (state.starsMesh.rotation && typeof state.starsMesh.rotation.set === "function") {
+          state.starsMesh.rotation.set(0, 0, 0);
+        }
+      }
+      return true;
+    }
     function ensurePmndrsAtmosphereSky(self, config) {
       const state = self.ensurePmndrsAtmosphereResources ? self.ensurePmndrsAtmosphereResources() : null;
       const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
@@ -4497,6 +4774,7 @@
       if (state.skyMesh) {
         state.skyMesh.visible = true;
       }
+      ensurePmndrsAtmosphereStars(self, config, state, vta);
       return true;
     }
     function showPmndrsAtmosphereSkyForSceneProbe(self, config) {
@@ -4517,6 +4795,18 @@
       let raw = parseFloat(self.data.pmndrsToneMappingExposure);
       if (isNaN(raw)) {
         raw = 1;
+      }
+      const autoExposureEnabled = readPmndrsAtmosphereBool(self, "pmndrsLowLightAutoExposureEnabled", true);
+      const exposureAuthored = readPmndrsAtmosphereBool(self, "pmndrsToneMappingExposureAuthored", false);
+      if (autoExposureEnabled && !exposureAuthored && typeof self.getPmndrsAtmosphereConfig === "function") {
+        const config = self.getPmndrsAtmosphereConfig();
+        if (config && config.enabled !== false) {
+          if (isPmndrsPresetTimeNight(config)) {
+            raw = Math.max(raw, PMNDRS_NIGHT_AUTO_EXPOSURE);
+          } else if (isPmndrsLowLightDawn(config)) {
+            raw = Math.max(raw, PMNDRS_DAWN_AUTO_EXPOSURE);
+          }
+        }
       }
       return Math.max(1, Math.min(20, raw));
     }

@@ -101,6 +101,16 @@
             "min": 1,
             "max": 20
         },
+        "pmndrsLowLightAutoExposureEnabled": {
+            "metadataKey": "aframePmndrsLowLightAutoExposureEnabled",
+            "type": "boolean",
+            "default": true
+        },
+        "pmndrsToneMappingExposureAuthored": {
+            "metadataKey": "aframePmndrsToneMappingExposureAuthored",
+            "type": "boolean",
+            "default": false
+        },
         "pmndrsToneMappingMode": {
             "metadataKey": "aframePmndrsToneMappingMode",
             "type": "enum",
@@ -378,6 +388,16 @@
             "metadataKey": "aframePmndrsMoonEnabled",
             "type": "boolean",
             "default": false
+        },
+        "pmndrsStarsEnabled": {
+            "metadataKey": "aframePmndrsStarsEnabled",
+            "type": "enum",
+            "default": "auto",
+            "allowed": [
+                "auto",
+                "off",
+                "on"
+            ]
         },
         "pmndrsHorizonLightingPreset": {
             "metadataKey": "aframePmndrsHorizonLightingPreset",
