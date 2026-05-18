@@ -17,6 +17,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private array $diagnostic_notes = [];
 	private array $diagnostic_category_counts = [];
 	private int $diagnostic_object_count = 0;
+	private int $diagnostic_collider_count = 0;
 
 	public function __construct( VRodos_Compiler_Runtime_Assets $runtime_assets, VRodos_Compiler_Scene_Repository $scene_repository, callable $normalize_url ) {
 		$this->runtime_assets   = $runtime_assets;
@@ -37,6 +38,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->diagnostic_notes           = [];
 		$this->diagnostic_category_counts = [];
 		$this->diagnostic_object_count    = 0;
+		$this->diagnostic_collider_count  = 0;
 	}
 
 	private function normalize_url( $url ) {
@@ -253,6 +255,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			'raycastableElements'  => $xpath->query( '//*[contains(concat(" ", normalize-space(@class), " "), " raycastable ")]' )->length,
 			'shadowAttributes'     => $xpath->query( '//*[@shadow]' )->length,
 			'clearFrustumElements' => $xpath->query( '//*[@clear-frustum-culling]' )->length,
+			'playerColliders'      => $this->diagnostic_collider_count,
 		];
 
 		if ( $metrics['clearFrustumElements'] > 0 ) {
@@ -357,6 +360,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		);
 		$model->setAttribute( 'rotation', '-90 0 0' );
 		$model->setAttribute( 'class', 'raycastable hideable non-vr' );
+		$this->apply_compiled_collision_attributes( $model, $contentObject, 'assessment-model' );
 		if ( $this->isHoverEnabled ) {
 			$model->setAttribute( 'vrodos-hypnotic-hover', '' );
 		}
@@ -470,6 +474,62 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		return $material;
 	}
 
+	private function is_compiled_collision_enabled( $obj ): bool {
+		if ( is_object( $obj ) && property_exists( $obj, 'compiledCollisionEnabled' ) ) {
+			$value = $obj->compiledCollisionEnabled;
+			if ( is_bool( $value ) ) {
+				return $value;
+			}
+
+			$normalized = strtolower( trim( (string) $value ) );
+			return ! in_array( $normalized, [ '0', 'false', 'no', 'off' ], true );
+		}
+
+		return true;
+	}
+
+	private function append_class( DOMElement $entity, string $class_name ): void {
+		$class_name = trim( $class_name );
+		if ( '' === $class_name ) {
+			return;
+		}
+
+		$current = preg_split( '/\s+/', trim( $entity->getAttribute( 'class' ) ) ) ?: [];
+		if ( ! in_array( $class_name, $current, true ) ) {
+			$current[] = $class_name;
+		}
+
+		$entity->setAttribute( 'class', trim( implode( ' ', array_filter( $current ) ) ) );
+	}
+
+	private function apply_compiled_collision_attributes( DOMElement $entity, $obj, string $source = 'mesh' ): void {
+		if ( ! $this->is_compiled_collision_enabled( $obj ) ) {
+			return;
+		}
+
+		$category = sanitize_title( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) );
+		$uuid     = $this->sanitize_text_attr( (string) ( $obj->uuid ?? $obj->name ?? '' ) );
+		$role     = 'walkable-surface' === $category ? 'navmesh' : 'solid';
+
+		$this->append_class( $entity, 'vrodos-collider' );
+		$entity->setAttribute( 'data-vrodos-collider', 'true' );
+		$entity->setAttribute( 'data-vrodos-collision-source', $source );
+		$entity->setAttribute( 'data-vrodos-collision-role', $role );
+		if ( '' !== $category ) {
+			$entity->setAttribute( 'data-vrodos-collision-category', $category );
+		}
+		if ( '' !== $uuid ) {
+			$entity->setAttribute( 'data-vrodos-collision-object', $uuid );
+		}
+
+		if ( in_array( $category, [ 'collision-proxy', 'blocking-obstacles' ], true ) ) {
+			$entity->setAttribute( 'data-vrodos-collision-hidden', 'true' );
+			$entity->setAttribute( 'vrodos-collider-helper', '' );
+		}
+
+		$this->diagnostic_collider_count++;
+	}
+
 
 	private function includeDoorFunctionality( $a_entity, $door_link ) {
 		// Use a relative path for the baked HTML door link so it works across IPs/localhost without CORS.
@@ -564,9 +624,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 				break;
 			case 'decoration':
 			case 'walkable-surface':
+			case 'collision-proxy':
+			case 'blocking-obstacles':
 			case 'door':
 			case 'poi-link':
 			case 'chat':
+			case 'poi-chat':
 				$this->render_gltf_entity( $dom, $ascene, $assets, $obj, (int) ($config['scene_id'] ?? 0) );
 				break;
 			case 'audio':
@@ -616,6 +679,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$entity = $dom->createElement( 'a-entity' );
 		$entity->setAttribute( 'id', 'text-panel_' . $uuid );
 		$entity->setAttribute( 'class', 'hideable' );
+		$this->apply_compiled_collision_attributes( $entity, $obj, 'text-panel' );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
 		$this->setAffineTransformations( $entity, $obj );
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
@@ -763,7 +827,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		$this->setAffineTransformations( $entity, $obj, true );
 
-		$class = 'override-materials hideable';
+		$is_collision_proxy = in_array( $cat, [ 'collision-proxy', 'blocking-obstacles' ], true );
+		$class = $is_collision_proxy ? 'override-materials' : 'override-materials hideable';
 
 		if ( $cat === 'walkable-surface' ) {
 			$class .= ' vrodos-navmesh';
@@ -787,7 +852,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			if ( $this->isHoverEnabled ) {
 				$entity->setAttribute( 'vrodos-hypnotic-hover', '' );
 			}
-		} elseif ( $cat === 'chat' ) {
+		} elseif ( $cat === 'chat' || $cat === 'poi-chat' ) {
 			// Help Chat POI
 			$class .= ' raycastable';
 			$entity->setAttribute( 'id', "entity_$uuid" );
@@ -816,6 +881,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->setMaterial( $material, $obj );
 		$entity->setAttribute( 'material', $material );
 		$entity->setAttribute( 'class', $class );
+		$this->apply_compiled_collision_attributes( $entity, $obj, 'gltf' );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
 		$this->set_world_lighting_attributes( $entity );
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
@@ -919,6 +985,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 
 		$entity->setAttribute( 'class', $entity_class );
+		$this->apply_compiled_collision_attributes( $entity, $obj, 'audio-marker' );
 
 		$entity->setAttribute(
 			'sound',
@@ -974,6 +1041,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$parent->setAttribute( 'id', 'image-display_' . $uuid );
 			$this->setAffineTransformations( $parent, $obj );
 			$parent->setAttribute( 'class', 'override-materials hideable' );
+			$this->apply_compiled_collision_attributes( $parent, $obj, 'image-plane' );
 			$parent->setAttribute( 'clear-frustum-culling', '' );
 			$this->set_world_lighting_attributes( $parent );
 			$this->apply_immerse_cefr_gating_attributes( $parent, $obj );
@@ -1068,6 +1136,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			}
 			$display->setAttribute( 'material', $material_attr );
 			$display->setAttribute( 'class', 'override-materials clickable raycastable hideable' );
+			$this->apply_compiled_collision_attributes( $display, $obj, 'video-plane' );
 			$display->setAttribute( 'original-scale', '1 1 1' );
 			$video_url = $this->normalize_url( $obj->video_path ?? '' );
 			$display->setAttribute( 'data-vrodos-video-src', $video_url );
@@ -1206,6 +1275,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->track_runtime_asset( 'gltf-inline', $button_glb_url, 'poi-imagetext-button:' . $uuid );
 		$button->setAttribute( 'highlight', 'button_poi_' . $uuid );
 		$button->setAttribute( 'class', 'override-materials raycastable menu-button hideable' );
+		$this->apply_compiled_collision_attributes( $button, $obj, 'poi-button' );
 		if ( $this->isHoverEnabled ) {
 			$button->setAttribute( 'vrodos-hypnotic-hover', '' );
 		}

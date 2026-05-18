@@ -35,6 +35,8 @@ const postprocessingRuntimeBundlePath = path.join(runtimeVendorDir, 'vrodos-post
 const postprocessingRuntimeEntryPath = path.join(rootDir, 'scripts', '.tmp-build-postprocessing-runtime-entry.mjs');
 const takramBundlePath = path.join(runtimeVendorDir, 'vrodos-takram-atmosphere.bundle.js');
 const takramEntryPath = path.join(rootDir, 'scripts', '.tmp-build-takram-atmosphere-entry.mjs');
+const collisionBvhBundlePath = path.join(runtimeVendorDir, 'vrodos-collision-bvh.bundle.js');
+const collisionBvhEntryPath = path.join(rootDir, 'scripts', '.tmp-build-collision-bvh-entry.mjs');
 const threeShimPath = path.join(rootDir, 'scripts', '.tmp-three-global-shim.mjs');
 const postprocessingShimPath = path.join(rootDir, 'scripts', '.tmp-postprocessing-global-shim.mjs');
 const manifestPath = path.join(rootDir, 'assets', RUNTIME_MANIFEST_FILE);
@@ -47,6 +49,7 @@ const requiredPackages = [
   '@takram/three-atmosphere',
   '@takram/three-geospatial-effects',
   '@takram/three-clouds',
+  'three-mesh-bvh',
 ];
 
 const bundleEntrySource = `
@@ -327,11 +330,49 @@ window.VRODOS_TAKRAM_EFFECTS = VRODOSTakramEffects;
   }
 }
 
+async function buildCollisionBvhBundle() {
+  await mkdir(runtimeVendorDir, { recursive: true });
+  await writeGlobalShim('three', 'window.THREE || {}', threeShimPath);
+
+  const entrySource = `
+import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree } from 'three-mesh-bvh';
+
+window.VRODOS_COLLISION_BVH = {
+  acceleratedRaycast,
+  computeBoundsTree,
+  disposeBoundsTree
+};
+`;
+
+  await writeFile(collisionBvhEntryPath, entrySource, 'utf8');
+
+  try {
+    await build({
+      entryPoints: [collisionBvhEntryPath],
+      bundle: true,
+      format: 'iife',
+      platform: 'browser',
+      target: ['es2019'],
+      outfile: collisionBvhBundlePath,
+      legalComments: 'none',
+      plugins: [
+        createAliasPlugin({
+          three: threeShimPath
+        })
+      ]
+    });
+  } finally {
+    await rm(collisionBvhEntryPath, { force: true });
+    await rm(threeShimPath, { force: true });
+  }
+}
+
 async function writeRuntimeManifest() {
   const postprocessingVersion = getLockedPackageVersion('postprocessing');
   const takramAtmosphereVersion = getLockedPackageVersion('@takram/three-atmosphere');
   const takramCloudsVersion = getLockedPackageVersion('@takram/three-clouds');
   const takramEffectsVersion = getLockedPackageVersion('@takram/three-geospatial-effects');
+  const collisionBvhVersion = getLockedPackageVersion('three-mesh-bvh');
 
   const manifest = {
     schemaVersion: 1,
@@ -369,6 +410,12 @@ async function writeRuntimeManifest() {
       bundleFile: path.basename(takramBundlePath),
       bundlePath: 'assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js',
     },
+    collisionBvh: {
+      version: collisionBvhVersion,
+      global: 'VRODOS_COLLISION_BVH',
+      bundleFile: path.basename(collisionBvhBundlePath),
+      bundlePath: 'assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js',
+    },
   };
 
   await mkdir(path.dirname(manifestPath), { recursive: true });
@@ -380,11 +427,13 @@ async function main() {
   await buildBundle();
   await buildPostprocessingRuntimeBundle();
   await buildTakramAtmosphereBundle();
+  await buildCollisionBvhBundle();
   await copySupportAssets();
   await writeRuntimeManifest();
   console.log(`Built ${path.relative(rootDir, bundlePath)}`);
   console.log(`Built ${path.relative(rootDir, postprocessingRuntimeBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, takramBundlePath)}`);
+  console.log(`Built ${path.relative(rootDir, collisionBvhBundlePath)}`);
   console.log(`Wrote ${path.relative(rootDir, manifestPath)}`);
 }
 

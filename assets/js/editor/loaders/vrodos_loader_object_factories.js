@@ -499,6 +499,15 @@ VRODOS.loader.wrapTextPanelLines = function(ctx, text, maxWidth, maxLines) {
     return lines;
 };
 
+VRODOS.loader.normalizeCompiledCollisionEnabled = function(value) {
+    if (value === undefined || value === null || value === '') {
+        return true;
+    }
+
+    const normalized = String(value).trim().toLowerCase();
+    return !(normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off');
+};
+
 VRODOS.loader.createTextPanelTexture = function(text) {
     const canvas = document.createElement('canvas');
     canvas.width = 768;
@@ -611,6 +620,11 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
         ? VRODOS.utils.normalizeRelativeUploadPath(object.fnPath)
         : object.fnPath;
     object.glb_id = resource.glb_id;
+    object.compiledCollisionEnabled = VRODOS.loader.normalizeCompiledCollisionEnabled(
+        resource.compiledCollisionEnabled !== undefined
+            ? resource.compiledCollisionEnabled
+            : object.compiledCollisionEnabled
+    );
 
     if (String(object.category_slug || '').toLowerCase() === 'walkable-surface') {
         object.walkableBehavior = (String(resource.walkableBehavior || object.walkableBehavior || '').toLowerCase() === 'auto')

@@ -24,6 +24,7 @@ Presentation mode is part of the rendering contract:
 | File | Role |
 | --- | --- |
 | `assets/js/runtime/master/components/vrodos_scene_settings.component.js` | A-Frame schema, lifecycle, settings getters, engine dispatcher |
+| `assets/js/runtime/master/components/vrodos_navigation.component.js` | Compiled-scene walk/fly navigation, walkable-surface ground sampling, static player collision, wall sliding, and nav diagnostics |
 | `assets/js/runtime/master/vrodos_master_rendering.js` | HDR loader and shared material/runtime helpers |
 | `assets/js/runtime/master/vrodos_spector_debug.js` | Debug-only Spector.js loader for `?vrodos_spector=1` |
 | `assets/js/runtime/master/vrodos_scene_probe.js` | HDR and scene-probe environment map support |
@@ -31,6 +32,7 @@ Presentation mode is part of the rendering contract:
 | `assets/js/runtime/master/lib/vrodos-runtime-core.bundle.js` | Generated compiled-scene core runtime bundle |
 | `assets/js/runtime/master/lib/vrodos-runtime-scene-components.bundle.js` | Generated compiled-scene POI/media/assessment component bundle |
 | `assets/js/runtime/master/lib/vrodos-runtime-aframe-components.bundle.js` | Generated compiled-scene master A-Frame component bundle |
+| `assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js` | Bundled `three-mesh-bvh` helpers exposed as `window.VRODOS_COLLISION_BVH` for static player/world collision acceleration |
 | `assets/runtime-build-manifest.json` | Generated runtime chunk manifest consumed by the compiler script planner |
 
 ### Legacy custom pipeline files
@@ -64,6 +66,7 @@ AFRAME_RUNTIME_URL_PLACEHOLDER
 lib/vrodos-runtime-scene-components.bundle.js
 lib/vrodos-runtime-core.bundle.js
 optional FPS meter inline module
+optional lib/vrodos-collision-bvh.bundle.js
 optional lib/vrodos-runtime-legacy-postfx.bundle.js
 optional lib/vrodos-postprocessing.bundle.js
 optional lib/vrodos-takram-atmosphere.bundle.js
@@ -71,7 +74,7 @@ optional lib/vrodos-runtime-pmndrs-postfx.bundle.js
 lib/vrodos-runtime-aframe-components.bundle.js
 ```
 
-The optional runtime bundle set is selected by `VRodos_Compiler_Runtime_Script_Planner`, not by hardcoded template script tags. PMNDRS and Takram bundles are generated from root `package.json` and `package-lock.json`. They must use A-Frame's `window.THREE`; compiled scenes must not load a second Three instance.
+The optional runtime bundle set is selected by `VRodos_Compiler_Runtime_Script_Planner`, not by hardcoded template script tags. PMNDRS, Takram, and collision BVH bundles are generated from root `package.json` and `package-lock.json`. They must use A-Frame's `window.THREE`; compiled scenes must not load a second Three instance.
 
 ## 3a. Debug And Profiling Hooks
 
@@ -166,6 +169,39 @@ Use the browser-global Meshopt decoder file, `meshopt_decoder.js`, in generated 
 A short smoke profile on `Master_Client_766.html` confirmed the generated root scene attribute points at `meshopt_decoder.js` and no longer throws the previous Meshopt `Unexpected token 'export'` / `MeshoptDecoder.ready` errors. For future captures, inspect `scene.gltfModel` in `scripts/profile-master-client.mjs` output to confirm the root scene attribute and decoder globals.
 
 The first compiled-scene safe Draco trial substituted only `asphalt_injection8_-_monacoazure_coast.glb` through `--resource-override`. It reduced transfer/encoded/decoded resource bytes by about `11.2MB`, kept object/material/texture counts unchanged, and produced no loader exceptions. This validates the compressed-geometry loader path, but it does not reduce draw calls or material switches by itself.
+
+### Static Navigation And Collision Runtime
+
+Compiled walkable mode uses a native static player/world collision layer owned by `custom-movement`, not a general rigid-body physics engine.
+
+Authoring and compile contract:
+
+- Geometry-bearing compiled objects are player-collidable by default.
+- The editor stores a per-object `compiledCollisionEnabled` flag through the `Collides with player` checkbox.
+- Objects with missing collision metadata are treated as collidable during compile for backward compatibility.
+- The compiler emits `.vrodos-collider` plus `data-vrodos-collision-*` metadata for enabled geometry sources.
+- `Walkable Surfaces` compile as both `.vrodos-navmesh` and `.vrodos-collider`: upward faces feed ground sampling, while steep/vertical faces can block horizontal movement.
+- `Collision Proxy` and legacy/internal `blocking-obstacles` assets compile as hidden collision-only geometry through `vrodos-collider-helper`.
+
+Runtime behavior:
+
+- `custom-movement` rebuilds static collision targets when relevant models load, attach, detach, or become dirty.
+- `three-mesh-bvh` is bundled into `vrodos-collision-bvh.bundle.js` and exposed as `window.VRODOS_COLLISION_BVH`.
+- The runtime patches Three mesh raycasts with BVH acceleration when available; if BVH construction fails for a mesh, collision continues with standard Three.js raycasts.
+- Ground movement still uses the existing downward navmesh sampling, slope filtering, max-step, max-drop, and recovery logic.
+- Horizontal movement performs multi-height capsule sweep raycasts against blocker meshes before committing a candidate position.
+- When a blocker is hit, movement tries axis sliding and rejects the movement if sliding would leave valid walkable ground or hit another blocker.
+- Fly mode remains non-colliding in v1.
+
+Collision is CPU-side Three.js geometry work. It is independent of the post-processing engine, Takram atmosphere, scene probes, shadow profiles, and material overrides. PMNDRS/Takram settings can change the rendered scene, but they do not change which mesh geometry participates in player blocking.
+
+Performance notes:
+
+- BVH construction has an upfront load-time and memory cost.
+- Per-frame collision cost is paid only while movement is being resolved.
+- Default-collidable high-poly art is the main risk; use `Collision Proxy` assets for cheaper blocker geometry around complex models.
+- The nav performance overlay (`?vrodos_debug_nav_perf=1`) reports navmesh target count, blocker target count, raycast count, intersection count, and timing.
+- Remaining diagnostics planned in `AFRAME_COLLISION_ROADMAP.md` include collider triangle counts, BVH build time, spawn clearance checks, blocked/slid state, and richer proxy visualization.
 
 ## 4. Legacy Pipeline
 
@@ -372,7 +408,7 @@ If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`,
 - Root `package.json` and `package-lock.json` define runtime package intent.
 - `npm run build:three` generates `assets/runtime-version-manifest.json`.
 - `npm run build:runtime` generates the compiled-scene runtime bundles and the browser settings-contract script from `assets/runtime-settings-contract.json`.
-- `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, and Takram metadata.
+- `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, Takram, and collision BVH metadata.
 - The current live vendor bundle is Three.js r181.
 - The classic compiled A-Frame runtime must not load a second Three instance. The preferred near-term upgrade path is A-Frame's planned Three r184 runtime work (`aframevr/aframe#5818`) rather than a VRodos-only Three fork.
 - WebGPU remains an experimental renderer mode after r184, with separate validation for PMNDRS post-processing, GLSL/onBeforeCompile material hooks, Takram integration, and XR behavior.

@@ -26,6 +26,7 @@ It combines:
 - Image, video, audio, light, and helper asset usage inside scenes
 - Taxonomy-driven asset organization inside WordPress
 - Dedicated `Walkable Surfaces` helper category for compiled navigation meshes
+- Optional `Collision Proxy` helper category for hidden/inexpensive compiled-scene blockers
 - Drag/drop placement from the scene-side asset browser
 
 ## Scene Editor Architecture
@@ -78,7 +79,7 @@ That runtime powers:
 - a global reflections switch for compiled scenes
 - shadow-aware direct-sun glint suppression for compiled-scene PBR materials
 - PMNDRS/Takram tone mapping, lens flare, and atmosphere controls for desktop compiled scenes
-- compiled walkable-surface collision workflows
+- compiled walkable-surface and static player/world collision workflows
 
 The runtime version source of truth is root [`package.json`](package.json) plus [`package-lock.json`](package-lock.json). `npm run build:three` generates [`assets/runtime-version-manifest.json`](assets/runtime-version-manifest.json), and [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php) reads that manifest at runtime with conservative fallbacks.
 
@@ -95,7 +96,30 @@ Compiled scenes can currently offer:
 - reflection source selection between HDR presets and scene probes
 - global reflection enable/disable control plus shadow-aware direct-sun reflection occlusion
 - PMNDRS selectable tone mapping, exposure, generated LUT looks, Takram correct-altitude, and Takram Horizon lens flare
-- walkable-surface collisions using helper meshes authored in the editor
+- walkable-surface ground collisions plus default static player blocking for compiled scene geometry
+
+## Compiled Scene Navigation And Collisions
+
+Compiled walkable mode uses native VRodos static collisions instead of a full physics engine.
+
+Authoring model:
+
+- Geometry-bearing compiled objects collide with the player by default.
+- Each eligible object exposes a `Collides with player` opt-out toggle in the object controls panel.
+- Missing collision metadata from older scenes is treated as enabled during compile.
+- `Walkable Surfaces` still define valid ground, slope, step, and drop behavior.
+- `Collision Proxy` assets are optional hidden blockers for invisible walls, simplified collider geometry, and high-poly scenes where visible art would be too expensive or too detailed as an exact collider.
+
+Compiled runtime model:
+
+- The compiler emits `.vrodos-collider` metadata for enabled player blockers.
+- Walkable surfaces are also collider sources, so steep/vertical navmesh faces block horizontal movement.
+- Hidden collision proxies remain in the scene graph through `vrodos-collider-helper` but receive hidden materials.
+- `custom-movement` owns player motion, ground sampling, blocker tests, and wall-slide fallback.
+- The runtime bundles `three-mesh-bvh` as `assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js` and exposes `window.VRODOS_COLLISION_BVH`.
+- Collision uses A-Frame's existing `window.THREE` and does not load a second Three.js copy.
+
+Rapier is intentionally not part of v1 static locomotion. It remains a future option for dynamic physics such as pushable props, thrown objects, joints, or gameplay collision events. For the deeper roadmap and remaining hardening work, see [`AFRAME_COLLISION_ROADMAP.md`](AFRAME_COLLISION_ROADMAP.md).
 
 ## Rendering Paths for Compiled Scenes
 
@@ -238,9 +262,11 @@ The plugin follows a manager-class architecture, with dedicated managers for ass
 2. Create one or more scenes.
 3. Upload or edit assets.
 4. Add assets to the scene editor and configure transforms, lights, background, and movement helpers.
-5. Add helper meshes to the `Walkable Surfaces` category if the compiled scene needs guided collisions.
-6. Open the compile dialog and choose the rendering engine and quality settings.
-7. Build the project to generate compiled A-Frame output.
+5. Add helper meshes to the `Walkable Surfaces` category if the compiled scene needs guided ground traversal.
+6. Leave default object collision enabled, or turn off `Collides with player` for pass-through visuals.
+7. Add `Collision Proxy` assets when a scene needs hidden walls or cheaper blockers than the visible art.
+8. Open the compile dialog and choose the rendering engine and quality settings.
+9. Build the project to generate compiled A-Frame output.
 
 ## Technology Stack
 
@@ -251,6 +277,7 @@ The plugin follows a manager-class architecture, with dedicated managers for ass
 - Pinned A-Frame runtime metadata from root `package.json`
 - `pmndrs/postprocessing` bundled into the compiled-scene postprocessing runtime bundle
 - Takram atmosphere runtime bundle built from root `@takram/*` package versions
+- `three-mesh-bvh` bundled into the compiled-scene static collision runtime
 - Node.js server for networked and collaborative features
 
 ## Local Development
@@ -303,6 +330,7 @@ npm run build
    - `assets/vendor/<three-dir>/<three-bundle>`
    - `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`
    - `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js`
+   - `assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js`
    - `assets/css/vrodos_modern_compiled.css` when the full build changes CSS
 
 Do not manually copy `postprocessing.min.js` into the runtime. PMNDRS globals are exported by `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` as `window.POSTPROCESSING`, using A-Frame's existing `window.THREE`.
@@ -343,6 +371,14 @@ If large assets fail to upload, check:
 - Ensure the helper asset belongs to the `Walkable Surfaces` category.
 - Rebuild the scene after changing walkable geometry.
 - Prefer simpler helper meshes when the visible GLB is noisy or irregular.
+
+### Player walks through objects or walls
+
+- Rebuild the compiled scene after changing object collision settings.
+- Verify the object has `Collides with player` enabled in the scene editor.
+- Use `Collision Proxy` assets for invisible walls, thin blockers, or cheaper colliders around complex visible art.
+- If a navmesh includes wall geometry, confirm the wall faces are steep enough to be treated as blockers instead of walkable ground.
+- Append `?vrodos_debug_nav_perf=1` to the compiled client URL to inspect navmesh and blocker target counts.
 
 ### Large uploads fail
 

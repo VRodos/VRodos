@@ -134,6 +134,17 @@ const externalChunks = [
     generatedBy: 'build:three'
   },
   {
+    id: 'collision-bvh-vendor',
+    label: 'Static collision BVH vendor',
+    type: 'script',
+    file: 'vrodos-collision-bvh.bundle.js',
+    src: runtimeLibrarySrc('vrodos-collision-bvh.bundle.js'),
+    order: 32,
+    dependencies: [],
+    features: ['collision-bvh', 'navigation', 'player-collision'],
+    generatedBy: 'build:three'
+  },
+  {
     id: 'fps-meter',
     label: 'FPS meter tooling',
     type: 'inline-module',

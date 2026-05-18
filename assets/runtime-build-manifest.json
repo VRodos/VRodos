@@ -182,6 +182,21 @@
       ],
       "generatedBy": "build:three"
     },
+    "collision-bvh-vendor": {
+      "id": "collision-bvh-vendor",
+      "label": "Static collision BVH vendor",
+      "type": "script",
+      "file": "vrodos-collision-bvh.bundle.js",
+      "src": "js/master/lib/vrodos-collision-bvh.bundle.js",
+      "order": 32,
+      "dependencies": [],
+      "features": [
+        "collision-bvh",
+        "navigation",
+        "player-collision"
+      ],
+      "generatedBy": "build:three"
+    },
     "fps-meter": {
       "id": "fps-meter",
       "label": "FPS meter tooling",

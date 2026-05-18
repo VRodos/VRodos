@@ -64,6 +64,44 @@ AFRAME.registerComponent('vrodos-navmesh-helper', {
     }
 });
 
+AFRAME.registerComponent('vrodos-collider-helper', {
+    init: function () {
+        this.applyHiddenColliderState = this.applyHiddenColliderState.bind(this);
+        this.createHiddenColliderMaterial = VRODOSMaster.createHiddenNavmeshMaterial || window.vrodosCreateHiddenNavmeshMaterial || function (material) { return material; };
+        this.el.addEventListener('model-loaded', this.applyHiddenColliderState);
+
+        if (this.el.getObject3D('mesh')) {
+            this.applyHiddenColliderState();
+        }
+    },
+    applyHiddenColliderState: function () {
+        const meshRoot = this.el.getObject3D('mesh') || this.el.object3D;
+        if (!meshRoot) {
+            return;
+        }
+
+        meshRoot.visible = true;
+        meshRoot.traverse((node) => {
+            if (!node.isMesh) {
+                return;
+            }
+
+            node.frustumCulled = false;
+            node.castShadow = false;
+            node.receiveShadow = false;
+
+            if (Array.isArray(node.material)) {
+                node.material = node.material.map((material) => this.createHiddenColliderMaterial(material));
+            } else if (node.material) {
+                node.material = this.createHiddenColliderMaterial(node.material);
+            }
+        });
+    },
+    remove: function () {
+        this.el.removeEventListener('model-loaded', this.applyHiddenColliderState);
+    }
+});
+
 
 AFRAME.registerComponent('custom-movement', {
     schema: {
@@ -77,6 +115,7 @@ AFRAME.registerComponent('custom-movement', {
         this.sceneEl = this.el.sceneEl;
         this.cameraEl = document.querySelector('#cameraA') || document.querySelector('a-camera');
         this.navMeshEntitySelector = '.vrodos-navmesh';
+        this.colliderEntitySelector = '.vrodos-collider';
         this.thumbInput = { x: 0, y: 0 };
         this.leftThumbInput = { x: 0, y: 0 };
         this.rightThumbInput = { x: 0, y: 0 };
@@ -84,8 +123,15 @@ AFRAME.registerComponent('custom-movement', {
         this.navMeshRoots = [];
         this.navMeshCollisionTargets = [];
         this.navMeshDirty = true;
+        this.collisionWorldDirty = true;
+        this.colliderRoots = [];
+        this.blockerCollisionTargets = [];
+        this.bvhTargets = new Set();
+        this.bvhInstalled = false;
         this.navMeshBounds = new THREE.Box3();
         this.navMeshRootBounds = new THREE.Box3();
+        this.collisionWorldBounds = new THREE.Box3();
+        this.collisionRootBounds = new THREE.Box3();
         this.heightOffset = null;
         this.lastResolvedPosition = new THREE.Vector3();
         this.lastGroundHit = this.createGroundHit();
@@ -109,6 +155,24 @@ AFRAME.registerComponent('custom-movement', {
         this.raycastDirection = new THREE.Vector3(0, -1, 0);
         this.tempWorldNormal = new THREE.Vector3();
         this.raycaster = new THREE.Raycaster();
+        this.blockerRaycaster = new THREE.Raycaster();
+        this.blockerRayOrigin = new THREE.Vector3();
+        this.blockerRayDirection = new THREE.Vector3();
+        this.blockerSideOffset = new THREE.Vector3();
+        this.blockerHitNormal = new THREE.Vector3();
+        this.blockerSlideStepX = {
+            position: new THREE.Vector3(),
+            ground: this.createGroundHit()
+        };
+        this.blockerSlideStepZ = {
+            position: new THREE.Vector3(),
+            ground: this.createGroundHit()
+        };
+        this.blockerCapsuleRadius = 0.32;
+        this.blockerCapsuleHeight = 1.65;
+        this.blockerSkin = 0.05;
+        this.blockerSweepHeights = [0.25, 0.9, 1.55];
+        this.blockerSweepOffsets = [0, 1, -1];
         this.groundProbeOffsets = [
             new THREE.Vector2(0, 0),
             new THREE.Vector2(0.18, 0),
@@ -215,21 +279,34 @@ AFRAME.registerComponent('custom-movement', {
     },
     markNavMeshDirty: function () {
         this.navMeshDirty = true;
+        this.collisionWorldDirty = true;
         this.hasLastGroundHit = false;
         this.hasLastAutoGroundSample = false;
     },
+    markCollisionWorldDirty: function () {
+        this.collisionWorldDirty = true;
+    },
     handleSceneLoaded: function () {
         this.markNavMeshDirty();
+        this.markCollisionWorldDirty();
         this.positionPrimed = false;
     },
     handleSceneChildAttached: function (event) {
-        if (event && event.detail && event.detail.el && event.detail.el.classList && event.detail.el.classList.contains('vrodos-navmesh')) {
+        const classList = event && event.detail && event.detail.el && event.detail.el.classList ? event.detail.el.classList : null;
+        if (classList && classList.contains('vrodos-navmesh')) {
             this.markNavMeshDirty();
+        }
+        if (classList && classList.contains('vrodos-collider')) {
+            this.markCollisionWorldDirty();
         }
     },
     handleSceneChildDetached: function (event) {
-        if (event && event.detail && event.detail.el && event.detail.el.classList && event.detail.el.classList.contains('vrodos-navmesh')) {
+        const classList = event && event.detail && event.detail.el && event.detail.el.classList ? event.detail.el.classList : null;
+        if (classList && classList.contains('vrodos-navmesh')) {
             this.markNavMeshDirty();
+        }
+        if (classList && classList.contains('vrodos-collider')) {
+            this.markCollisionWorldDirty();
         }
     },
     handleThumbstickMove: function (event) {
@@ -264,12 +341,18 @@ AFRAME.registerComponent('custom-movement', {
             : this.rightThumbInput.y;
     },
     handleNavmeshModelLoad: function (event) {
-        if (!event || !event.target || !event.target.classList || !event.target.classList.contains('vrodos-navmesh')) {
+        if (!event || !event.target || !event.target.classList) {
             return;
         }
 
-        this.markNavMeshDirty();
-        this.syncHeightOffset();
+        if (event.target.classList.contains('vrodos-navmesh')) {
+            this.markNavMeshDirty();
+            this.syncHeightOffset();
+        }
+
+        if (event.target.classList.contains('vrodos-collider')) {
+            this.markCollisionWorldDirty();
+        }
     },
     shouldIgnoreKeyboardEvent: function (event) {
         const target = event ? event.target : null;
@@ -478,6 +561,7 @@ AFRAME.registerComponent('custom-movement', {
             'NAV PERF DEBUG',
             `moving: ${  frame.moving ? 'yes' : 'no'}`,
             `collisions: ${  frame.collisionsEnabled ? 'on' : 'off'}`,
+            `targets: nav ${  this.navMeshCollisionTargets.length  } block ${  this.blockerCollisionTargets.length}`,
             `tick ms: ${  frame.tickMs.toFixed(2)  } avg ${  this.navPerfDebug.avgTickMs.toFixed(2)}`,
             `constrained ms: ${  frame.constrainedMs.toFixed(2)  } avg ${  this.navPerfDebug.avgConstrainedMs.toFixed(2)}`,
             `sample ms: ${  frame.sampleMs.toFixed(2)  } avg ${  this.navPerfDebug.avgSampleMs.toFixed(2)}`,
@@ -511,7 +595,9 @@ AFRAME.registerComponent('custom-movement', {
             movingFrames: this.navPerfDebug.movingFrames,
             collisionFrames: this.navPerfDebug.collisionFrames,
             collisionTargets: this.navMeshCollisionTargets.length,
+            blockerTargets: this.blockerCollisionTargets.length,
             navMeshRoots: this.navMeshRoots.length,
+            colliderRoots: this.colliderRoots.length,
             averages: {
                 tickMs: this.navPerfDebug.totalTickMs / frames,
                 constrainedMs: this.navPerfDebug.totalConstrainedMs / frames,
@@ -660,6 +746,97 @@ AFRAME.registerComponent('custom-movement', {
 
         this.navMeshDirty = false;
     },
+    installCollisionBvhSupport: function () {
+        if (this.bvhInstalled) {
+            return Boolean(window.VRODOS_COLLISION_BVH);
+        }
+
+        const bvh = window.VRODOS_COLLISION_BVH;
+        if (!bvh || typeof THREE === 'undefined' || !THREE.BufferGeometry || !THREE.Mesh) {
+            return false;
+        }
+
+        if (typeof bvh.computeBoundsTree === 'function') {
+            THREE.BufferGeometry.prototype.computeBoundsTree = bvh.computeBoundsTree;
+        }
+        if (typeof bvh.disposeBoundsTree === 'function') {
+            THREE.BufferGeometry.prototype.disposeBoundsTree = bvh.disposeBoundsTree;
+        }
+        if (typeof bvh.acceleratedRaycast === 'function') {
+            THREE.Mesh.prototype.raycast = bvh.acceleratedRaycast;
+        }
+
+        this.bvhInstalled = true;
+        return true;
+    },
+    prepareCollisionMesh: function (node, role) {
+        if (!node || !node.isMesh || !node.geometry) {
+            return false;
+        }
+
+        node.userData = node.userData || {};
+        node.userData.vrodosCollisionRole = role || 'solid';
+        node.updateMatrixWorld(true);
+
+        if (
+            this.installCollisionBvhSupport() &&
+            typeof node.geometry.computeBoundsTree === 'function' &&
+            !node.geometry.boundsTree &&
+            !this.bvhTargets.has(node.uuid)
+        ) {
+            try {
+                node.geometry.computeBoundsTree();
+            } catch (err) {
+                if (!this.loggedBvhBuildWarning) {
+                    console.warn('VRodos: failed to build one or more static collision BVHs; falling back to standard raycasts.', err);
+                    this.loggedBvhBuildWarning = true;
+                }
+            }
+            this.bvhTargets.add(node.uuid);
+        }
+
+        return true;
+    },
+    getColliderRootObject: function (entity) {
+        if (!entity) {
+            return null;
+        }
+
+        return entity.getObject3D('mesh') || entity.object3D || null;
+    },
+    refreshCollisionWorld: function () {
+        if (!this.collisionWorldDirty) {
+            return;
+        }
+
+        this.colliderRoots = [];
+        this.blockerCollisionTargets = [];
+        this.collisionWorldBounds.makeEmpty();
+
+        const colliderEntities = this.sceneEl.querySelectorAll(this.colliderEntitySelector);
+        for (let i = 0; i < colliderEntities.length; i++) {
+            const entity = colliderEntities[i];
+            const root = this.getColliderRootObject(entity);
+            if (!root) {
+                continue;
+            }
+
+            const role = String(entity.getAttribute('data-vrodos-collision-role') || (entity.classList.contains('vrodos-navmesh') ? 'navmesh' : 'solid')).toLowerCase();
+            this.colliderRoots.push(root);
+            root.traverse((node) => {
+                if (this.prepareCollisionMesh(node, role)) {
+                    this.blockerCollisionTargets.push(node);
+                }
+            });
+
+            this.collisionRootBounds.setFromObject(root);
+            if (!this.collisionRootBounds.isEmpty()) {
+                this.collisionWorldBounds.union(this.collisionRootBounds);
+            }
+        }
+
+        this.collisionWorldDirty = false;
+    },
     normalizeWalkBehavior: function (value) {
         return String(value || '').toLowerCase() === 'auto' ? 'auto' : 'precise';
     },
@@ -759,6 +936,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         this.refreshNavMeshRoots();
+        this.refreshCollisionWorld();
         return this.navMeshCollisionTargets.length > 0;
     },
     getMovementDeltaFromInput: function (inputX, inputY, distance) {
@@ -1290,6 +1468,152 @@ AFRAME.registerComponent('custom-movement', {
         this.copyGroundHit(bestGround, outputStep.ground);
         return outputStep;
     },
+    getCollisionRoleFromObject: function (object3D) {
+        let current = object3D;
+        while (current) {
+            if (current.userData && current.userData.vrodosCollisionRole) {
+                return current.userData.vrodosCollisionRole;
+            }
+            current = current.parent || null;
+        }
+
+        return 'solid';
+    },
+    isBlockingCollisionHit: function (hit) {
+        if (!hit || !hit.face || !hit.object) {
+            return false;
+        }
+
+        this.blockerHitNormal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld).normalize();
+        const upDot = this.blockerHitNormal.dot(this.upVector);
+        const role = this.getCollisionRoleFromObject(hit.object);
+        if (role === 'navmesh') {
+            const slope = THREE.MathUtils.radToDeg(Math.acos(VRODOSMaster.clamp(upDot, -1, 1)));
+            return slope > this.data.maxSlope + 0.5;
+        }
+
+        if (upDot > 0.65) {
+            return false;
+        }
+
+        return true;
+    },
+    raycastBlockingColliders: function (origin, direction, far) {
+        const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
+        this.blockerRaycaster.set(origin, direction);
+        this.blockerRaycaster.near = 0;
+        this.blockerRaycaster.far = Math.max(0.001, far);
+
+        const raycastStart = navPerfFrame ? performance.now() : 0;
+        const intersections = this.blockerRaycaster.intersectObjects(this.blockerCollisionTargets, false);
+        if (navPerfFrame) {
+            navPerfFrame.raycastMs += performance.now() - raycastStart;
+            navPerfFrame.raycasts += 1;
+            navPerfFrame.intersections += intersections.length;
+        }
+
+        for (let i = 0; i < intersections.length; i++) {
+            if (this.isBlockingCollisionHit(intersections[i])) {
+                return intersections[i];
+            }
+        }
+
+        return null;
+    },
+    getGroundYForBlockerSweep: function (position, groundHit) {
+        if (groundHit && groundHit.point && typeof groundHit.point.y === 'number') {
+            return groundHit.point.y;
+        }
+
+        if (this.heightOffset !== null) {
+            return position.y - this.heightOffset;
+        }
+
+        return position.y - 1.6;
+    },
+    isHorizontalPathBlocked: function (fromPosition, toPosition, fromGround, toGround) {
+        this.refreshCollisionWorld();
+        if (this.blockerCollisionTargets.length === 0) {
+            return false;
+        }
+
+        this.blockerRayDirection.set(toPosition.x - fromPosition.x, 0, toPosition.z - fromPosition.z);
+        const travelDistance = this.blockerRayDirection.length();
+        if (travelDistance < 0.00001) {
+            return false;
+        }
+
+        this.blockerRayDirection.multiplyScalar(1 / travelDistance);
+        this.rightVector.crossVectors(this.blockerRayDirection, this.upVector);
+        if (this.rightVector.lengthSq() < 0.000001) {
+            this.rightVector.set(1, 0, 0);
+        } else {
+            this.rightVector.normalize();
+        }
+
+        const fromGroundY = this.getGroundYForBlockerSweep(fromPosition, fromGround);
+        const toGroundY = this.getGroundYForBlockerSweep(toPosition, toGround);
+        const far = travelDistance + this.blockerCapsuleRadius + this.blockerSkin;
+
+        for (let heightIndex = 0; heightIndex < this.blockerSweepHeights.length; heightIndex++) {
+            const height = Math.min(this.blockerSweepHeights[heightIndex], this.blockerCapsuleHeight);
+            const originY = THREE.MathUtils.lerp(fromGroundY, toGroundY, 0.5) + height;
+
+            for (let offsetIndex = 0; offsetIndex < this.blockerSweepOffsets.length; offsetIndex++) {
+                const offsetFactor = this.blockerSweepOffsets[offsetIndex];
+                this.blockerSideOffset.copy(this.rightVector).multiplyScalar(offsetFactor * this.blockerCapsuleRadius);
+                this.blockerRayOrigin.set(
+                    fromPosition.x + this.blockerSideOffset.x,
+                    originY,
+                    fromPosition.z + this.blockerSideOffset.z
+                );
+
+                if (this.raycastBlockingColliders(this.blockerRayOrigin, this.blockerRayDirection, far)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    },
+    resolveMovementAgainstBlockers: function (currentPosition, deltaX, deltaZ, currentGround, resolvedStep) {
+        if (!resolvedStep || !resolvedStep.position) {
+            return resolvedStep;
+        }
+
+        if (!this.isHorizontalPathBlocked(currentPosition, resolvedStep.position, currentGround, resolvedStep.ground)) {
+            return resolvedStep;
+        }
+
+        let bestStep = null;
+        let bestDistanceSq = 0;
+
+        const trySlideStep = (candidateDeltaX, candidateDeltaZ, outputStep) => {
+            if (Math.abs(candidateDeltaX) < 0.00001 && Math.abs(candidateDeltaZ) < 0.00001) {
+                return;
+            }
+
+            const candidateStep = this.resolveMovementAgainstGround(currentPosition, candidateDeltaX, candidateDeltaZ, currentGround, outputStep);
+            if (!candidateStep) {
+                return;
+            }
+
+            if (this.isHorizontalPathBlocked(currentPosition, candidateStep.position, currentGround, candidateStep.ground)) {
+                return;
+            }
+
+            const distanceSq = this.horizontalDistanceSquared(currentPosition, candidateStep.position);
+            if (distanceSq > bestDistanceSq) {
+                bestDistanceSq = distanceSq;
+                bestStep = candidateStep;
+            }
+        };
+
+        trySlideStep(deltaX, 0, this.blockerSlideStepX);
+        trySlideStep(0, deltaZ, this.blockerSlideStepZ);
+
+        return bestStep;
+    },
     snapNavigationVerticallyToGround: function (groundHit, horizontalPosition) {
         if (!groundHit) {
             return false;
@@ -1446,7 +1770,12 @@ AFRAME.registerComponent('custom-movement', {
             currentPosition.copy(this.lastResolvedPosition);
         }
 
-        const resolvedStep = this.resolveMovementAgainstGround(currentPosition, deltaX, deltaZ, currentGround, this.resolvedMovementStep);
+        let resolvedStep = this.resolveMovementAgainstGround(currentPosition, deltaX, deltaZ, currentGround, this.resolvedMovementStep);
+        if (!resolvedStep) {
+            return finalizeConstrained(false);
+        }
+
+        resolvedStep = this.resolveMovementAgainstBlockers(currentPosition, deltaX, deltaZ, currentGround, resolvedStep);
         if (!resolvedStep) {
             return finalizeConstrained(false);
         }

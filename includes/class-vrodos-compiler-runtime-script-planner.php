@@ -27,6 +27,10 @@ class VRodos_Compiler_Runtime_Script_Planner {
 			$requested[] = 'fps-meter';
 		}
 
+		if ( $this->is_static_collision_enabled( $metadata ) ) {
+			$requested[] = 'collision-bvh-vendor';
+		}
+
 		if ( $this->is_post_fx_enabled( $metadata ) ) {
 			if ( $this->post_fx_engine( $metadata ) === 'pmndrs' ) {
 				$requested[] = 'pmndrs-postfx';
@@ -105,6 +109,16 @@ class VRodos_Compiler_Runtime_Script_Planner {
 	private function is_fps_meter_enabled( $metadata ): bool {
 		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->enableFPSMeter ?? false )
 			|| VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeFPSMeterEnabled ?? false );
+	}
+
+	private function is_static_collision_enabled( $metadata ): bool {
+		$collision_mode = (string) ( $metadata->aframeCollisionMode ?? 'auto' );
+		if ( 'off' === $collision_mode ) {
+			return false;
+		}
+
+		$navigation_mode = (string) ( $metadata->aframeNavigationMode ?? '' );
+		return ! in_array( $navigation_mode, [ 'walk', 'fly' ], true );
 	}
 
 	private function is_networked_runtime( string $runtime_mode ): bool {

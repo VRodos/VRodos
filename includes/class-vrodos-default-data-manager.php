@@ -11,7 +11,74 @@ class VRodos_Default_Data_Manager {
 	}
 
 	public function create_asset_categories(): void {
-		$categories = ['decoration'    => ['name'        => 'Decoration', 'slug'        => 'decoration', 'description' => 'Decorations are 3D models that serve to build the 3D space. They are not interactable.', 'ic'          => 'leaf'], 'walkable-surface' => ['name'        => 'Walkable Surfaces', 'slug'        => 'walkable-surface', 'description' => 'Walkable surfaces are rendered 3D meshes for floors, ramps, and stairs. In compiled A-Frame scenes they remain visible and also guide player movement.', 'ic'          => 'footprints'], 'door'          => ['name'        => 'Door', 'slug'        => 'door', 'description' => 'Doors are 3D objects that serve as entry points to other scenes.', 'ic'          => 'door-open'], 'audio'         => ['name'        => 'Audio', 'slug'        => 'audio', 'description' => 'A positional audio source represented by a bundled 3D marker. It can autoplay or start on interaction.', 'ic'          => 'volume-2'], 'video'         => ['name'        => 'Video', 'slug'        => 'video', 'description' => 'A video canvas that can be placed inside the 3D space. The user can maximize it to full screen.', 'ic'          => 'clapperboard'], '3d-text'      => ['name'        => '3D Text', 'slug'        => '3d-text', 'description' => 'A readable text panel rendered directly inside the 3D scene.', 'ic'          => 'type'], 'poi-imagetext' => ['name'        => 'POI - Image / Text', 'slug'        => 'poi-imagetext', 'description' => 'An interactable 3D object. Launches a popup window on click that features an image and a description.', 'ic'          => 'image-play'], 'image'         => ['name'        => 'Image', 'slug'        => 'image', 'description' => 'A flat image rendered directly in 3D space.', 'ic'          => 'image'], 'chat'          => ['name'        => 'Chat', 'slug'        => 'chat', 'description' => 'A chatbox component. It is a 3D object that when clicked, a user can join a chat session', 'ic'          => 'message-square'], 'poi-link'      => ['name'        => 'POI - Link', 'slug'        => 'poi-link', 'description' => 'An interactable 3D object. Launches an external url, for example a website or a document file.', 'ic'          => 'external-link']];
+		$categories = [
+			'decoration'       => [
+				'name'        => 'Decoration',
+				'slug'        => 'decoration',
+				'description' => 'Decorations are 3D models that serve to build the 3D space. They collide with the player by default in compiled scenes.',
+				'ic'          => 'leaf',
+			],
+			'walkable-surface' => [
+				'name'        => 'Walkable Surfaces',
+				'slug'        => 'walkable-surface',
+				'description' => 'Walkable surfaces are rendered 3D meshes for floors, ramps, and stairs. In compiled A-Frame scenes they remain visible, guide player movement, and block steep geometry.',
+				'ic'          => 'footprints',
+			],
+			'collision-proxy'  => [
+				'name'        => 'Collision Proxy',
+				'slug'        => 'collision-proxy',
+				'description' => 'Hidden low-poly geometry used as a cheap compiled-scene player collider, invisible wall, or blocking obstacle.',
+				'ic'          => 'brick-wall',
+			],
+			'door'             => [
+				'name'        => 'Door',
+				'slug'        => 'door',
+				'description' => 'Doors are 3D objects that serve as entry points to other scenes.',
+				'ic'          => 'door-open',
+			],
+			'audio'            => [
+				'name'        => 'Audio',
+				'slug'        => 'audio',
+				'description' => 'A positional audio source represented by a bundled 3D marker. It can autoplay or start on interaction.',
+				'ic'          => 'volume-2',
+			],
+			'video'            => [
+				'name'        => 'Video',
+				'slug'        => 'video',
+				'description' => 'A video canvas that can be placed inside the 3D space. The user can maximize it to full screen.',
+				'ic'          => 'clapperboard',
+			],
+			'3d-text'          => [
+				'name'        => '3D Text',
+				'slug'        => '3d-text',
+				'description' => 'A readable text panel rendered directly inside the 3D scene.',
+				'ic'          => 'type',
+			],
+			'poi-imagetext'    => [
+				'name'        => 'POI - Image / Text',
+				'slug'        => 'poi-imagetext',
+				'description' => 'An interactable 3D object. Launches a popup window on click that features an image and a description.',
+				'ic'          => 'image-play',
+			],
+			'image'            => [
+				'name'        => 'Image',
+				'slug'        => 'image',
+				'description' => 'A flat image rendered directly in 3D space.',
+				'ic'          => 'image',
+			],
+			'chat'             => [
+				'name'        => 'Chat',
+				'slug'        => 'chat',
+				'description' => 'A chatbox component. It is a 3D object that when clicked, a user can join a chat session',
+				'ic'          => 'message-square',
+			],
+			'poi-link'         => [
+				'name'        => 'POI - Link',
+				'slug'        => 'poi-link',
+				'description' => 'An interactable 3D object. Launches an external url, for example a website or a document file.',
+				'ic'          => 'external-link',
+			],
+		];
 
 		foreach ( $categories as $cat ) {
 			if ( ! term_exists( $cat['slug'], 'vrodos_asset3d_cat' ) ) {

@@ -16,6 +16,8 @@ VRODOS.ui.icons.categoryIcons = {
     // ── Asset taxonomy categories (slug) ──────────────────────
     'decoration':      'leaf',
     'walkable-surface':'footprints',
+    'collision-proxy': 'brick-wall',
+    'blocking-obstacles': 'brick-wall',
     'door':            'door-open',
     'audio':           'volume-2',
     'video':           'clapperboard',

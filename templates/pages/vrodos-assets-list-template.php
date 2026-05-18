@@ -17,6 +17,8 @@ function vrodos_get_asset_category_icon($category_slug) {
     $map = [
         'decoration'    => 'leaf',
         'walkable-surface' => 'footprints',
+        'collision-proxy' => 'brick-wall',
+        'blocking-obstacles' => 'brick-wall',
         'door'          => 'door-open',
         'video'         => 'clapperboard',
         '3d-text'       => 'type',

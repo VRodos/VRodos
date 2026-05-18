@@ -956,6 +956,103 @@ function displayWalkableSurfaceProperties(object) {
     section.style.display = 'block';
 }
 
+const VRODOS_COLLIDABLE_CATEGORY_SLUGS = new Set([
+    'decoration',
+    'walkable-surface',
+    'collision-proxy',
+    'blocking-obstacles',
+    'door',
+    'poi-link',
+    'chat',
+    'poi-chat',
+    'audio',
+    'video',
+    'image',
+    '3d-text',
+    'poi-imagetext',
+    'assessment'
+]);
+
+function vrodosNormalizeCompiledCollisionEnabled(value) {
+    if (value === undefined || value === null || value === '') {
+        return true;
+    }
+
+    const normalized = String(value).trim().toLowerCase();
+    return !(normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off');
+}
+
+function vrodosIsPlayerCollisionEligible(object) {
+    if (!object || object.isLight) {
+        return false;
+    }
+
+    const categorySlug = String(object.category_slug || '').toLowerCase();
+    if (VRODOS_COLLIDABLE_CATEGORY_SLUGS.has(categorySlug)) {
+        return true;
+    }
+
+    if (object.name === 'avatarCamera' || object.category_name === 'pawn') {
+        return false;
+    }
+
+    return Boolean(object.glb_path || object.image_path || object.video_path || object.poi_img_path || object.poi_image_path || object.text_content);
+}
+
+function ensureCollisionPropertiesSection() {
+    const container = getObjectControlsElement('propertiesContainer');
+    if (!container) return null;
+
+    let section = document.getElementById('compiledCollisionPropertiesDiv');
+    if (section) {
+        return section;
+    }
+
+    section = document.createElement('div');
+    section.id = 'compiledCollisionPropertiesDiv';
+    section.className = 'object-property-section';
+    section.style.display = 'none';
+    section.innerHTML =
+        '<div class="prop-section-title" style="padding-bottom:2px; margin-bottom:2px;">Player Collision</div>' +
+        '<div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
+        '<label class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-semibold tw-text-slate-200">' +
+        '<input type="checkbox" id="compiledCollisionEnabledCheckbox" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary">' +
+        '<span>Collides with player</span>' +
+        '</label>' +
+        '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Enabled by default for compiled geometry. Disable only for thin visuals, effects, or objects the player should pass through.</div>' +
+        '</div>';
+
+    container.appendChild(section);
+
+    const checkbox = document.getElementById('compiledCollisionEnabledCheckbox');
+    if (checkbox) {
+        checkbox.addEventListener('change', function () {
+            vrodosCommitObjectControlsProperty('compiledCollisionEnabled', Boolean(this.checked));
+        });
+    }
+
+    return section;
+}
+
+function displayCollisionProperties(object) {
+    const section = ensureCollisionPropertiesSection();
+    if (!section || !object) return;
+
+    const checkbox = document.getElementById('compiledCollisionEnabledCheckbox');
+    const enabled = vrodosNormalizeCompiledCollisionEnabled(object.compiledCollisionEnabled);
+    object.compiledCollisionEnabled = enabled;
+    if (!object.userData) {
+        object.userData = {};
+    }
+    object.userData.compiledCollisionEnabled = enabled;
+
+    if (checkbox) {
+        checkbox.checked = enabled;
+    }
+
+    section.style.display = 'block';
+}
+
 function getObjectControlsTargetObject() {
     if (typeof VRODOS.ui.getPopupTargetObject === 'function') {
         return VRODOS.ui.getPopupTargetObject();
@@ -1200,6 +1297,11 @@ function showPropertiesInPanel(object) {
             break;
         default:
             break;
+    }
+
+    if (vrodosIsPlayerCollisionEligible(object)) {
+        displayCollisionProperties(object);
+        hasProperties = true;
     }
 
     hasProperties = displaySharedPropertySections(null, object) || hasProperties;
