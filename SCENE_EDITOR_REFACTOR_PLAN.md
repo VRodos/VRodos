@@ -275,6 +275,8 @@
 - Verification: Phase 144 JS syntax checks passed for scene selection and renderer lifecycle/bootstrap; targeted OutlinePass/cel-outline scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-17: Phase 145 editor composer cleanup implemented.
 - Verification: Phase 145 JS syntax checks passed for renderer lifecycle, environment bootstrap, and performance profile; targeted composer/FXAA scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-18: Phase 146 render-loop timer lifecycle and diagnostics cleanup implemented.
+- Verification: Phase 146 JS syntax checks passed for render loop and diagnostics; targeted render-loop timer/diagnostics scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -471,6 +473,7 @@ assets/js/editor/
 - Done: Add a shared `getSelectableEditorSceneRoots()` utility and route hierarchy rendering, Spot target options, scene-load player selection, and scene export candidates through it while removing the Spot target dropdown's DOM hierarchy fallback.
 - Done: Remove the disabled editor `OutlinePass` from the render composer and cache cel-outline source meshes per object so repeated selection does not re-walk stable object subtrees.
 - Done: Remove the unused editor EffectComposer/RenderPass/FXAA setup and related resize/profile updates now that the editor render path is direct WebGL plus cel-outline meshes.
+- Done: Make render-loop stop paths clear pending loading-render timers when rendering is paused/stopped, and expose active RAF/timer timestamps in editor diagnostics snapshots.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

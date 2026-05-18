@@ -45,9 +45,13 @@ VRODOS.editor = VRODOS.editor || {};
 
         return {
             renderLoop: {
+                activeRaf: Boolean(VRODOS.editor.id_animation_frame),
                 isRunning: Boolean(loop.isRunning),
                 needsRender: Boolean(loop.needsRender),
+                loadingRenderTimerActive: Boolean(loop.loadingRenderTimer),
                 frameIndex: Number(loop.frameIndex || 0),
+                lastFrameAt: Number(loop.lastFrameAt || 0),
+                lastLoadingRenderAt: Number(loop.lastLoadingRenderAt || 0),
                 targetFps: Number(loop.targetFps || 0),
                 pixelRatioCap: Number(loop.pixelRatioCap || 0),
                 labelFrameStride: Number(loop.labelFrameStride || 0)

@@ -126,9 +126,19 @@ VRODOS.api = VRODOS.api || {};
         }
     }
 
-    function stopLoop(loop) {
+    function clearLoadingRenderTimer(loop) {
+        if (loop && loop.loadingRenderTimer) {
+            window.clearTimeout(loop.loadingRenderTimer);
+            loop.loadingRenderTimer = null;
+        }
+    }
+
+    function stopLoop(loop, options) {
         if (loop) {
             loop.isRunning = false;
+            if (options && options.clearLoadingRenderTimer) {
+                clearLoadingRenderTimer(loop);
+            }
         }
         VRODOS.editor.id_animation_frame = null;
     }
@@ -218,7 +228,7 @@ VRODOS.api = VRODOS.api || {};
 
         const step = (timestamp) => {
             if (VRODOS.editor.isPaused || !getEnvir()) {
-                stopLoop(loop);
+                stopLoop(loop, { clearLoadingRenderTimer: true });
                 return;
             }
 
@@ -256,6 +266,7 @@ VRODOS.api = VRODOS.api || {};
         }
         VRODOS.editor.id_animation_frame = null;
         if (loop) {
+            clearLoadingRenderTimer(loop);
             loop.isRunning = false;
             loop.needsRender = false;
         }
