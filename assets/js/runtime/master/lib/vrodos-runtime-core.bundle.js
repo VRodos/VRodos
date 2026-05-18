@@ -1851,7 +1851,23 @@
     if (typeof overrides.emissive !== "undefined" && overrides.emissive !== null && overrides.emissive !== "" && material.emissive) {
       material.emissive.set(overrides.emissive);
     }
-    if (overrides.vrodosShadowReceiver === true && typeof material.emissiveIntensity !== "undefined") {
+    if (overrides.vrodosReadableMedia === true && material.emissive && typeof material.emissiveIntensity !== "undefined") {
+      if (typeof material.userData.vrodosBaseEmissiveIntensity === "undefined") {
+        material.userData.vrodosBaseEmissiveIntensity = material.emissiveIntensity || 1;
+      }
+      material.emissive.set(16777215);
+      if (material.map && typeof material.emissiveMap !== "undefined") {
+        material.emissiveMap = material.map;
+      }
+      material.emissiveIntensity = Math.max(material.userData.vrodosBaseEmissiveIntensity, 0.8);
+      if (typeof material.roughness !== "undefined") {
+        material.roughness = 0.85;
+      }
+      if (typeof material.metalness !== "undefined") {
+        material.metalness = 0;
+      }
+      material.needsUpdate = true;
+    } else if (overrides.vrodosShadowReceiver === true && typeof material.emissiveIntensity !== "undefined") {
       if (typeof material.userData.vrodosBaseEmissiveIntensity === "undefined") {
         material.userData.vrodosBaseEmissiveIntensity = material.emissiveIntensity || 1;
       }
@@ -2769,6 +2785,52 @@
         directionOwner
       };
     }
+    function getPmndrsTakramSkyLightIntensity(helperConfig, atmosphereConfig) {
+      const helperFill = helperConfig && typeof helperConfig.fillIntensity === "number" ? helperConfig.fillIntensity : 0.45;
+      const skyTimePreset = getResolvedPmndrsSkyTimePreset(atmosphereConfig);
+      const sunElevation = atmosphereConfig && typeof atmosphereConfig.sunElevationDeg === "number" ? atmosphereConfig.sunElevationDeg : null;
+      if (isPmndrsPresetTimeNight(atmosphereConfig)) {
+        return helperFill;
+      }
+      let minimumFill = 0.45;
+      if (skyTimePreset === "dawn" || sunElevation !== null && sunElevation < 0) {
+        minimumFill = 0.18;
+      } else if (skyTimePreset === "sunrise" || skyTimePreset === "golden-hour" || skyTimePreset === "sunset" || sunElevation !== null && sunElevation < 18) {
+        minimumFill = 0.42;
+      } else if (skyTimePreset === "early-morning" || sunElevation !== null && sunElevation < 35) {
+        minimumFill = 0.62;
+      } else if (skyTimePreset === "midday" || sunElevation !== null && sunElevation >= 35) {
+        minimumFill = 0.85;
+      }
+      return Math.min(1, Math.max(helperFill, minimumFill));
+    }
+    function getPmndrsTakramPbrFillIntensity(helperConfig, atmosphereConfig) {
+      const skyTimePreset = getResolvedPmndrsSkyTimePreset(atmosphereConfig);
+      const sunElevation = atmosphereConfig && typeof atmosphereConfig.sunElevationDeg === "number" ? atmosphereConfig.sunElevationDeg : null;
+      if (isPmndrsPresetTimeNight(atmosphereConfig)) {
+        return 0.035;
+      }
+      if (skyTimePreset === "dawn" || sunElevation !== null && sunElevation < 0) {
+        return 0.12;
+      }
+      if (skyTimePreset === "sunrise" || skyTimePreset === "golden-hour" || skyTimePreset === "sunset" || sunElevation !== null && sunElevation < 18) {
+        return 0.3;
+      }
+      if (skyTimePreset === "early-morning" || sunElevation !== null && sunElevation < 35) {
+        return 0.36;
+      }
+      return 0.42;
+    }
+    function getPmndrsTakramGroundFillColor(atmosphereConfig) {
+      const skyTimePreset = getResolvedPmndrsSkyTimePreset(atmosphereConfig);
+      if (isPmndrsPresetTimeNight(atmosphereConfig)) {
+        return "#05070d";
+      }
+      if (skyTimePreset === "sunrise" || skyTimePreset === "golden-hour" || skyTimePreset === "sunset") {
+        return "#312219";
+      }
+      return "#2c2a25";
+    }
     function getPmndrsAtmosphereResourceProfile(self, renderer) {
       const quality = normalizePmndrsAtmosphereQuality(self && typeof self.getPmndrsAtmosphereQuality === "function" ? self.getPmndrsAtmosphereQuality() : self && self.data ? self.data.pmndrsAtmosphereQuality : "balanced");
       const supportsFloatLinear = Boolean(renderer && renderer.extensions && renderer.extensions.get("OES_texture_float_linear"));
@@ -2858,7 +2920,7 @@
         return false;
       }
       const id = entityEl.id || "";
-      return id.indexOf("video-display_") === 0 || id.indexOf("image-display_") === 0 || id.indexOf("button_poi_") === 0 || entityEl.hasAttribute("data-vrodos-video-src") || entityHasClass(entityEl, "menu-button");
+      return id.indexOf("video-display_") === 0 || id.indexOf("image-display_") === 0 || entityEl.hasAttribute("data-vrodos-video-src");
     }
     function isFlatMediaShadowCastingEnabled() {
       if (hasPmndrsDebugFlag("castFlatMediaShadows", "vrodos_debug_cast_flat_media_shadows")) {
@@ -3802,7 +3864,7 @@
       if (!state) {
         return;
       }
-      ["sunLight", "skyLight", "target"].forEach((key) => {
+      ["sunLight", "skyLight", "fillLight", "target"].forEach((key) => {
         const object = state[key];
         if (object && object.parent) {
           object.parent.remove(object);
@@ -3896,13 +3958,21 @@
         });
         skyLight2.name = "vrodosPmndrsTakramSkyLight";
         skyLight2.userData.vrodosPmndrsTakramLightSource = true;
+        const fillLight2 = typeof THREE.HemisphereLight === "function" ? new THREE.HemisphereLight("#cfe3ff", "#2c2a25", 0.3) : null;
+        if (fillLight2) {
+          fillLight2.name = "vrodosPmndrsTakramPbrFillLight";
+          fillLight2.userData.vrodosPmndrsTakramLightSource = true;
+        }
         const target = sunLight2.target;
         target.name = "vrodosPmndrsTakramSunTarget";
         target.userData.vrodosPmndrsTakramLightSource = true;
         scene.add(sunLight2);
         scene.add(target);
         scene.add(skyLight2);
-        state = { sunLight: sunLight2, skyLight: skyLight2, target };
+        if (fillLight2) {
+          scene.add(fillLight2);
+        }
+        state = { sunLight: sunLight2, skyLight: skyLight2, fillLight: fillLight2, target };
         self._pmndrsTakramLightSources = state;
       } else {
         if (state.sunLight && state.sunLight.parent !== scene) {
@@ -3914,11 +3984,20 @@
         if (state.skyLight && state.skyLight.parent !== scene) {
           scene.add(state.skyLight);
         }
+        if (!state.fillLight && typeof THREE.HemisphereLight === "function") {
+          state.fillLight = new THREE.HemisphereLight("#cfe3ff", "#2c2a25", 0.3);
+          state.fillLight.name = "vrodosPmndrsTakramPbrFillLight";
+          state.fillLight.userData.vrodosPmndrsTakramLightSource = true;
+        }
+        if (state.fillLight && state.fillLight.parent !== scene) {
+          scene.add(state.fillLight);
+        }
       }
       const shadowEnabled = self.data.shadowQuality !== "off";
       const shadowMap = self.data.shadowQuality === "high" ? 2048 : 1024;
       const sunLight = state.sunLight;
       const skyLight = state.skyLight;
+      const fillLight = state.fillLight;
       if (state.target) {
         state.target.position.set(0, 0, 0);
         state.target.updateMatrixWorld(true);
@@ -3958,7 +4037,7 @@
       }
       if (skyLight) {
         skyLight.visible = helperConfig.fillIntensity > 0 && hasTakramSkyIrradiance;
-        skyLight.intensity = hasTakramSkyIrradiance ? 1 : helperConfig.fillIntensity;
+        skyLight.intensity = getPmndrsTakramSkyLightIntensity(helperConfig, config);
         if (typeof skyLight.correctAltitude !== "undefined") {
           skyLight.correctAltitude = config.correctAltitudeEnabled !== false;
         }
@@ -3969,6 +4048,16 @@
         ensurePmndrsWorldToEcefMatrix(skyLight, config);
         if (typeof skyLight.update === "function") {
           skyLight.update();
+        }
+      }
+      if (fillLight) {
+        fillLight.visible = helperConfig.fillIntensity > 0;
+        fillLight.intensity = getPmndrsTakramPbrFillIntensity(helperConfig, config);
+        if (fillLight.color && typeof fillLight.color.set === "function") {
+          fillLight.color.set(helperConfig.fillColor || "#cfe3ff");
+        }
+        if (fillLight.groundColor && typeof fillLight.groundColor.set === "function") {
+          fillLight.groundColor.set(getPmndrsTakramGroundFillColor(config));
         }
       }
     }
@@ -4986,6 +5075,9 @@
         if (getEntityShadowRole(entityEl) !== "none") {
           overrides.vrodosShadowReceiver = true;
         }
+        if (isFlatMediaShadowEntity(entityEl)) {
+          overrides.vrodosReadableMedia = true;
+        }
         meshRoot.traverse((node) => {
           if (!node.isMesh || !node.material || isHiddenNavmeshMaterial(node.material)) {
             return;
@@ -5005,7 +5097,13 @@
             return;
           }
           const nodeShadowRole = getObjectShadowRole(node);
-          const nodeOverrides = nodeShadowRole !== "none" && isWorldLightingParticipantMesh(node) ? { vrodosShadowReceiver: true } : {};
+          const nodeOverrides = {};
+          if (nodeShadowRole !== "none" && isWorldLightingParticipantMesh(node)) {
+            nodeOverrides.vrodosShadowReceiver = true;
+          }
+          if (objectEntityChainHas(node, isFlatMediaShadowEntity)) {
+            nodeOverrides.vrodosReadableMedia = true;
+          }
           if (Array.isArray(node.material)) {
             node.material.forEach((material) => {
               enhanceMaterialOnce(material, nodeOverrides);

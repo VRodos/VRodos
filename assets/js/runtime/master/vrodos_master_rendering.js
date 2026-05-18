@@ -733,7 +733,23 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
         material.emissive.set(overrides.emissive);
     }
 
-    if (overrides.vrodosShadowReceiver === true && typeof material.emissiveIntensity !== 'undefined') {
+    if (overrides.vrodosReadableMedia === true && material.emissive && typeof material.emissiveIntensity !== 'undefined') {
+        if (typeof material.userData.vrodosBaseEmissiveIntensity === 'undefined') {
+            material.userData.vrodosBaseEmissiveIntensity = material.emissiveIntensity || 1;
+        }
+        material.emissive.set(0xffffff);
+        if (material.map && typeof material.emissiveMap !== 'undefined') {
+            material.emissiveMap = material.map;
+        }
+        material.emissiveIntensity = Math.max(material.userData.vrodosBaseEmissiveIntensity, 0.8);
+        if (typeof material.roughness !== 'undefined') {
+            material.roughness = 0.85;
+        }
+        if (typeof material.metalness !== 'undefined') {
+            material.metalness = 0;
+        }
+        material.needsUpdate = true;
+    } else if (overrides.vrodosShadowReceiver === true && typeof material.emissiveIntensity !== 'undefined') {
         if (typeof material.userData.vrodosBaseEmissiveIntensity === 'undefined') {
             material.userData.vrodosBaseEmissiveIntensity = material.emissiveIntensity || 1;
         }

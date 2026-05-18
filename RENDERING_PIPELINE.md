@@ -347,7 +347,7 @@ Runtime behavior:
 - The night preset turns the moon path on through `pmndrsMoonEnabled` unless the author explicitly overrides it in the compile dialog.
 - Horizon PMNDRS night uses Takram physical light sources when available; if the helper fallback is forced, it uses dim cool moonlight instead of daytime Horizon helper-light intensities.
 - HDR/scene-probe env-map intensity is scaled down at night without changing authored material roughness or metalness.
-- Horizon uses Takram physical `SunDirectionalLight` and `SkyLightProbe` by default for PMNDRS/Takram scenes when the Takram lighting resources are ready.
+- Horizon uses Takram physical `SunDirectionalLight` and `SkyLightProbe` by default for PMNDRS/Takram scenes when the Takram lighting resources are ready. A low-cost hemisphere fill light bridges Takram sky irradiance into A-Frame/PBR-authored assets, so surfaces away from the sun remain readable without returning to full global illumination.
 - The legacy helper-light path remains as a comparison and fallback path behind `?vrodos_debug_helper_horizon_lights=1`; startup diagnostics report `lightSource=takram` or `lightSource=helper`.
 - Horizon `AerialPerspectiveEffect` is constrained to haze/transmittance in the current PBR path so it does not re-light the scene as albedo.
 - The future Takram-vanilla target is an explicit `post-process-albedo` lighting mode, documented in `TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
@@ -370,7 +370,7 @@ Scene settings:
 Lighting participation:
 
 - Visible compiled world meshes cast and receive shadows by default when `shadowQuality` is not `off`.
-- Image assets, video display planes, POI link objects, POI image/text trigger objects, and visible POI image/text panel surfaces participate like decoration meshes.
+- Image assets, video display planes, POI link objects, POI image/text trigger objects, and visible POI image/text panel surfaces participate like decoration meshes for shadow casting. Only actual flat image/video display surfaces get the media readability material treatment; POI trigger GLBs stay on normal scene lighting.
 - Hidden navmesh helper materials, camera-attached UI, skies, avatars, helper lights, and debug objects are excluded.
 - Walkable/navmesh world surfaces receive shadows but do not cast by default, preventing large shallow terrain self-shadow banding. Visible architecture, media, POIs, and props still cast by default.
 - Directional Takram/helper sun lights receive an adaptive orthographic shadow-camera fit around nearby world bounds and the current camera region.

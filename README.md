@@ -129,7 +129,7 @@ High-quality compiled desktop scenes keep the PMNDRS/Takram look while avoiding 
 - `shadowUpdateMode` defaults to `static`, which updates shadow maps on load, delayed reveal, and explicit dirty events instead of every frame.
 - `dynamic` shadow updates remain available for authored scenes with moving shadow casters.
 - Visible compiled geometry casts and receives shadows by default for realism. Walkable/navmesh ground is receiver-only to avoid large-terrain self-shadow banding; the performance guardrail is cached/static shadow-map updates, not making authored objects shadowless.
-- PMNDRS/Takram Horizon scenes use Takram physical `SunDirectionalLight` / `SkyLightProbe` by default when available; `?vrodos_debug_helper_horizon_lights=1` temporarily restores the legacy helper-light path for comparison.
+- PMNDRS/Takram Horizon scenes use Takram physical `SunDirectionalLight` / `SkyLightProbe` by default when available, with a low-cost hemisphere fill for A-Frame PBR assets and readable self-lit media materials so low-sun scenes do not crush unlit faces to black; `?vrodos_debug_helper_horizon_lights=1` temporarily restores the legacy helper-light path for comparison.
 - The PMNDRS AO budget keeps the final color buffer full-resolution while scaling the NormalPass/SSAO workload per AO preset.
 - `?vrodos_debug_shadow_perf=1` shows live shadow cache diagnostics.
 - `scripts/profile-master-client.mjs --disable-fps-meter` appends `vrodos_debug_disable_fps_meter=1` so StatsGL does not initialize before profiling.
