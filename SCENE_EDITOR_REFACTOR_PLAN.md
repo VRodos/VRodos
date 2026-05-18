@@ -283,6 +283,8 @@
 - Verification: Phase 148 `assets/js/editor/ui/vrodos_scene_list_ui.js` JS syntax check passed; targeted scene reorder midpoint/no-op insert scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-18: Phase 149 light selection pointer-handler cleanup implemented.
 - Verification: Phase 149 `assets/js/editor/scene/vrodos_scene_selection.js` JS syntax check passed; targeted light pointer-handler ownership scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-18: Phase 150 raycast viewport setup cleanup implemented.
+- Verification: Phase 150 `assets/js/editor/scene/vrodos_scene_raycasting.js` JS syntax check passed; targeted raycast viewport/camera setup scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -483,6 +485,7 @@ assets/js/editor/
 - Done: Gate transform GUI syncs from canvas `mousemove` to active transform dragging only, while making reset/pointer-lock callers request explicit forced syncs.
 - Done: Cache scene-card midpoint measurements during scene-strip drag reorder and skip no-op DOM inserts to reduce repeated drag-over layout reads.
 - Done: Scope light target/helper document-level pointer handlers to active selection, remove them on selection clear, and skip helper sync work unless transform controls are dragging.
+- Done: Centralize raycast viewport/camera setup, remove duplicate width/height DOM reads from raycaster setup, and return empty intersections when viewport or camera state is unavailable.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

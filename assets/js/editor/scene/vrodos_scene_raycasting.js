@@ -29,6 +29,9 @@ VRODOS.utils.normalizeIntersectedObjects = function(intersectedObjects) {
 VRODOS.ui.findIntersectedRaw = function(event) {
 
     const raycasterPick = VRODOS.ui.raycasterSetter(event);
+    if (!raycasterPick) {
+        return [];
+    }
 
     // All 3D meshes that can be clicked
     const activeMeshes = VRODOS.ui.getActiveMeshes();
@@ -45,17 +48,48 @@ VRODOS.ui.findIntersected = function(event) {
 const _reusableRaycaster = new THREE.Raycaster();
 const _reusableMouse = new THREE.Vector2();
 
+function getRaycastViewport() {
+    const mainDiv = document.getElementById('vr_editor_main_div');
+    if (!mainDiv || typeof mainDiv.getBoundingClientRect !== 'function') {
+        return null;
+    }
+
+    const rect = mainDiv.getBoundingClientRect();
+    const width = rect.width || mainDiv.clientWidth || 1;
+    const height = rect.height || mainDiv.clientHeight || 1;
+
+    return {
+        left: rect.left,
+        top: rect.top,
+        width: Math.max(width, 1),
+        height: Math.max(height, 1)
+    };
+}
+
+function getRaycastCamera() {
+    const envir = VRODOS.editor.envir || null;
+    if (!envir) {
+        return null;
+    }
+
+    return VRODOS.editor.avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit;
+}
+
 // raycasting for picking objects
 VRODOS.ui.raycasterSetter = function(event) {
 
     // calculate mouse position in normalized device coordinates
-    const mainDiv = document.getElementById('vr_editor_main_div');
-    const rect = mainDiv.getBoundingClientRect();
-    _reusableMouse.x = ((event.clientX - rect.left) / mainDiv.clientWidth) * 2 - 1;
-    _reusableMouse.y = - ((event.clientY - rect.top) / mainDiv.clientHeight) * 2 + 1;
+    const viewport = getRaycastViewport();
+    const camera = getRaycastCamera();
+    if (!viewport || !camera) {
+        return null;
+    }
+
+    _reusableMouse.x = ((event.clientX - viewport.left) / viewport.width) * 2 - 1;
+    _reusableMouse.y = - ((event.clientY - viewport.top) / viewport.height) * 2 + 1;
 
     // Main Raycast object
-    _reusableRaycaster.setFromCamera(_reusableMouse, VRODOS.editor.avatarControlsEnabled ? VRODOS.editor.envir.cameraAvatar : VRODOS.editor.envir.cameraOrbit);
+    _reusableRaycaster.setFromCamera(_reusableMouse, camera);
 
     return _reusableRaycaster;
 }
@@ -92,14 +126,12 @@ VRODOS.ui.onMouseDoubleClickFocus = function(event, id) {
 // We record the mousedown position and only trigger selection on mouseup
 // if the mouse hasn't moved more than a few pixels (i.e. it was a click).
 const _mouseDownPos = { x: 0, y: 0 };
-let _mouseDownTime = 0;
 const _CLICK_THRESHOLD = 5; // pixels
 VRODOS.editor.suppressNextSelection = false; // Set by drop handler to prevent selection on drop
 
 VRODOS.ui.onMouseDown = function(event) {
     _mouseDownPos.x = event.clientX;
     _mouseDownPos.y = event.clientY;
-    _mouseDownTime = performance.now();
     // Store for panel positioning
     VRODOS.editor._lastClickX = event.clientX;
     VRODOS.editor._lastClickY = event.clientY;
