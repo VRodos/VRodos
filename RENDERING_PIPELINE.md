@@ -347,7 +347,7 @@ Runtime behavior:
 - The night preset turns the moon path on through `pmndrsMoonEnabled` unless the author explicitly overrides it in the compile dialog.
 - Horizon PMNDRS night uses Takram physical light sources when available; if the helper fallback is forced, it uses dim cool moonlight instead of daytime Horizon helper-light intensities.
 - HDR/scene-probe env-map intensity is scaled down at night without changing authored material roughness or metalness.
-- Horizon uses Takram physical `SunDirectionalLight` and `SkyLightProbe` by default for PMNDRS/Takram scenes when the Takram lighting resources are ready. A low-cost hemisphere fill light bridges Takram sky irradiance into A-Frame/PBR-authored assets, so surfaces away from the sun remain readable without returning to full global illumination.
+- Horizon uses Takram physical `SunDirectionalLight` and `SkyLightProbe` by default for PMNDRS/Takram scenes when the Takram lighting resources are ready. Because Takram's documented light-source mode approximates sky irradiance at one point and the VRodos local-Horizon path disables Takram ground rendering, VRodos applies a separate sun-elevation-based PBR indirect profile: boosted `SkyLightProbe` scale plus a low-cost hemisphere sky/ground fill. This preserves directional sun/shadow contrast while keeping shadow-side GLB surfaces readable.
 - The legacy helper-light path remains as a comparison and fallback path behind `?vrodos_debug_helper_horizon_lights=1`; startup diagnostics report `lightSource=takram` or `lightSource=helper`.
 - Horizon `AerialPerspectiveEffect` is constrained to haze/transmittance in the current PBR path so it does not re-light the scene as albedo.
 - The future Takram-vanilla target is an explicit `post-process-albedo` lighting mode, documented in `TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
@@ -390,6 +390,28 @@ Diagnostics:
 - Use `?vrodos_debug_pmndrs_horizon=1` for repeated debug-level diagnostic lines when the diagnostic signature changes.
 - Use `?vrodos_debug_pmndrs_horizon_verbose=1` for info-level diagnostic lines.
 - Expanded diagnostic fields include `shadowCasters`, `shadowReceivers`, `shadowReceiverOnly`, `dirShadowLights`, `fittedDirLights`, and `shadowFit`.
+
+Debug query flags:
+
+- `vrodos_debug_disable_fps_meter=1`: prevents StatsGL/FPS meter initialization before it can wrap `renderer.render`; use for timing captures.
+- `vrodos_debug_shadow_perf=1`: shows static-shadow mode, `autoUpdate`, dirty reason, shadow update count, caster/receiver counts, and shadow-light counts.
+- `vrodos_debug_dynamic_shadows=1`: forces dynamic shadow-map updates for comparison against cached static shadows.
+- `vrodos_debug_disable_shadows=1`: disables shadows to isolate total shadow cost.
+- `vrodos_debug_nav_perf=1`: shows navigation/collision target counts and tick timing.
+- `vrodos_debug_helper_horizon_lights=1`: forces the legacy Horizon helper-light path for A/B comparison; startup logs should change `lightSource=takram` to `lightSource=helper`.
+- `vrodos_debug_pmndrs_horizon=1`: logs PMNDRS/Takram horizon diagnostics when the diagnostic signature changes.
+- `vrodos_debug_pmndrs_horizon_verbose=1`: logs verbose PMNDRS/Takram horizon diagnostics.
+- `vrodos_debug_enable_pmndrs_horizon_aerial=1`: enables the experimental Horizon aerial perspective path for visual checks.
+- `vrodos_debug_disable_pmndrs_sun=1`: hides the Takram sky sun disk for sun/flare isolation.
+- `vrodos_debug_disable_pmndrs_composer=1`: bypasses the PMNDRS composer.
+- `vrodos_debug_disable_pmndrs_ao=1`: disables PMNDRS AO.
+- `vrodos_debug_disable_pmndrs_aa=1`: disables PMNDRS AA selection.
+- `vrodos_debug_disable_pmndrs_smaa=1`: disables SMAA specifically.
+- `vrodos_debug_disable_pmndrs_msaa=1`: disables MSAA specifically.
+- `vrodos_debug_pmndrs_aa=1`: shows the PMNDRS AA debug overlay.
+- `vrodos_debug_disable_pmndrs_lens_flare=1`: disables Takram/PMNDRS lens flare.
+- `vrodos_debug_cast_flat_media_shadows=1`: forces flat media shadow casting for older scenes or scene settings where it was disabled. New compiled scenes cast flat media shadows by default.
+- `vrodos_spector=1`: enables the runtime Spector capture hook when the Spector debug helper is present. Prefer `scripts/profile-master-client.mjs --spector` for repeatable captures.
 
 ## 10. Legacy Effect Notes
 

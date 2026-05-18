@@ -4,25 +4,25 @@
 
 This is the handoff plan for making compiled VRodos scenes look closer to the Takram vanilla atmosphere demo while preserving the A-Frame XR runtime.
 
-The important finding is architectural: Takram's vanilla `post-process` atmosphere story is not just a tone-mapping preset. It renders scene geometry as albedo/unlit material and lets `AerialPerspectiveEffect` apply sun and sky lighting in post-process. VRodos currently renders authored A-Frame/GLB PBR content with helper lights by default, so it cannot fully match the vanilla demo through exposure and fill-light tuning alone.
+The important finding is architectural: Takram's vanilla `post-process` atmosphere story is not just a tone-mapping preset. It renders scene geometry as albedo/unlit material and lets `AerialPerspectiveEffect` apply sun and sky lighting in post-process. VRodos currently renders authored A-Frame/GLB PBR content with Takram light-source lighting plus a PBR indirect bridge, so it cannot fully match the vanilla demo through exposure and fill-light tuning alone.
 
 ## Current State
 
-- Compiled scenes target the A-Frame runtime declared in root `package.json` and the generated Three r181 manifest.
-- PMNDRS and Takram bundles use A-Frame's existing `window.THREE`; compiled scenes must not load a second Three instance.
-- PMNDRS supports SMAA/MSAA, native SSAO, bloom, selectable tone mapping, exposure, generated LUT looks, color grading, vignette, noise, chromatic aberration, Takram atmosphere, Takram lens flare, and Takram correct-altitude controls.
-- Takram atmosphere resources and `@takram/three-geospatial-effects` are bundled through `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js`.
-- Horizon/Takram scenes disable A-Frame default lights and use Takram `SkyMaterial` for sky and sun disk ownership.
-- Local Horizon currently uses the stable VRodos helper-light path by default for A-Frame/PBR material-authored content.
-- Takram physical `SunDirectionalLight` and `SkyLightProbe` are available only through the debug flag `?vrodos_debug_takram_physical_lights=1`.
-- PMNDRS composer interception is bypassed during immersive XR so A-Frame stereo rendering remains intact.
-- Reflections are removed when reflection source is `none`; material env-map intensity is scaled down for night HDR/scene-probe scenes.
+Current runtime behavior is owned by [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). This file only tracks the realism roadmap and the architectural findings that should guide future Takram work.
+
+Summary of the active baseline:
+
+- Compiled scenes use the A-Frame/Three runtime declared in root package metadata; PMNDRS and Takram share A-Frame's existing `window.THREE`.
+- Horizon/Takram scenes use Takram `SkyMaterial` for sky/sun ownership and Takram `SunDirectionalLight` / `SkyLightProbe` with a VRodos PBR indirect bridge for authored GLB materials.
+- The legacy helper-light path is retained behind `?vrodos_debug_helper_horizon_lights=1` for comparison and fallback.
+- Takram procedural ground is disabled in local Horizon scenes; authored walkable-surface/navmesh GLBs remain the real scene ground.
 
 ## Findings To Preserve
 
 - Takram's vanilla demo `lighting: post-process` mode uses unlit materials for scene geometry. In the Basic story, terrain and foreground geometry switch to `MeshBasicMaterial` in post-process mode.
 - Takram's vanilla post-process mode does not use scene `SunLight` / `SkyLight` objects. It uses `AerialPerspectiveEffect` with `sunLight` and `skyLight` enabled.
 - Takram's light-source mode is different: it uses `SunDirectionalLight` and `SkyLightProbe` with normal materials, but it approximates atmospheric radiance at one point.
+- Because that approximation can under-light authored GLB shadow sides compared with real-world sky bounce, VRodos uses a small PBR indirect bridge rather than trying to turn Takram ground into the authored scene ground.
 - Mixing PBR helper or physical lights with post-process `sunLight` / `skyLight` can double-light the scene or wash out colors.
 - Takram lens flare is tied to the Takram Horizon sun. Its `LensFlareEffect` is a convolution effect and must stay in its own `EffectPass`.
 - Takram `DitheringEffect` can add visible grain to texture-heavy compiled A-Frame scenes. Keep it out of the default path unless it is reintroduced as a measured opt-in.
@@ -37,16 +37,19 @@ The important finding is architectural: Takram's vanilla `post-process` atmosphe
 
 Goal: keep the current stabilized runtime reproducible before adding a new lighting mode.
 
+Status: landed for the current PBR/light-source path.
+
 Deliverables:
 
-- Keep current default Horizon light source as `helper`.
-- Keep `?vrodos_debug_takram_physical_lights=1` as the validation route for Takram physical lights.
+- Keep current default Horizon light source as `light-source` for compiled desktop scenes when Takram resources are ready.
+- Keep `?vrodos_debug_helper_horizon_lights=1` as the validation route for the legacy helper-light fallback.
 - Keep diagnostics reporting owner, reflection source, time preset, sun direction, helper intensities, reflection scale, sun radius, A-Frame default-light state, LUT readiness, exposure, tone mapping, lens flare, correct altitude, and light source.
 - Keep PMNDRS composer disabled during immersive XR.
 
 Acceptance:
 
-- Midday and sunset scenes load without the previous delayed Takram light-source flash.
+- Midday, early-morning, and golden-hour scenes keep readable shadow-side objects without returning to flat global illumination.
+- Takram precompute startup uses a temporary fallback ambient bridge, then switches to `SunDirectionalLight` / `SkyLightProbe` / hemisphere fill when textures are ready.
 - `reflection=none` produces no material env-map reflections.
 - Lens flare on/off no longer breaks the composer.
 
@@ -62,15 +65,15 @@ pmndrsHorizonLightingMode: "helper" | "light-source" | "post-process-albedo"
 
 Behavior:
 
-- `helper`: current default and XR fallback.
-- `light-source`: Takram `SunDirectionalLight` plus `SkyLightProbe`, promoted from the current debug flag.
+- `helper`: legacy comparison path and XR fallback if needed.
+- `light-source`: current default using Takram `SunDirectionalLight` plus `SkyLightProbe`, with VRodos PBR indirect fill.
 - `post-process-albedo`: desktop-only Takram vanilla target, implemented in later phases.
 
 Acceptance:
 
-- Existing scenes default to `helper`.
+- Existing scenes default to `light-source` on compiled desktop Horizon unless `?vrodos_debug_helper_horizon_lights=1` is present.
 - Diagnostics show `lightingMode`.
-- The current debug flag can still force `light-source` during validation.
+- The current debug flag can still force `helper` during validation.
 
 ### Phase 2 - Post-Process Albedo Prototype
 
@@ -97,10 +100,11 @@ Goal: tune realism against representative VRodos scenes after the correct lighti
 
 Tasks:
 
-- Compare `helper`, `light-source`, and `post-process-albedo` at exposure `1`, `5`, and `10`.
+- Compare helper fallback, current `light-source`, and future `post-process-albedo` at exposure `1`, `5`, and `10`.
 - Validate AgX, Reinhard, Cineon, ACES Filmic, and Linear tone mapping.
 - Test midday, sunset, night, and dark/interior scenes.
 - Re-evaluate SSAO strength, material env-map intensity, and horizon helper values only after post-process albedo is working.
+- Re-evaluate the PBR indirect profile only against representative scenes and profiler captures, not as a substitute for the future albedo lighting mode.
 - Keep DitheringEffect off unless it is opt-in and verified not to add objectionable grain.
 
 Acceptance:
@@ -180,6 +184,7 @@ Run visual checks at `http://wp.local:5832/Master_Client_766.html`:
 
 - Midday exposure `1`, `5`, `10`.
 - Sunset exposure `1`, `5`, `10`.
+- Early-morning and golden-hour with Takram light-source default and `?vrodos_debug_helper_horizon_lights=1` comparison.
 - Night with HDR/scene-probe reflection on and off.
 - Lens flare on/off.
 - Reflection source `none`.

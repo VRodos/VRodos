@@ -9,6 +9,16 @@ It combines:
 - dual compiled-scene rendering paths for different visual goals
 - built-in controls for environment, reflections, movement, and post-processing
 
+## Documentation Map
+
+Keep current behavior in one place where possible:
+
+- [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md): canonical compiled runtime rendering, PMNDRS/Takram, shadows, diagnostics, and future render-track notes.
+- [`PERFORMANCE_OPTIMIZATION_PLAN.md`](PERFORMANCE_OPTIMIZATION_PLAN.md): profiler findings, performance decisions, shadow/AO refactor notes, and asset-optimization measurements.
+- [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md): Takram realism roadmap and future `post-process-albedo` work; it should not duplicate the full current runtime reference.
+- [`AFRAME_COLLISION_ROADMAP.md`](AFRAME_COLLISION_ROADMAP.md): compiled-scene collision architecture, roadmap, and remaining hardening work.
+- [`RENDERING_MIGRATION_IMPLEMENTATION_LOG.md`](RENDERING_MIGRATION_IMPLEMENTATION_LOG.md) and [`POSTFX_DEBUG_NOTES.md`](POSTFX_DEBUG_NOTES.md): historical migration/debug records only.
+
 ## What VRodos Supports Today
 
 ### Scene authoring
@@ -129,7 +139,7 @@ High-quality compiled desktop scenes keep the PMNDRS/Takram look while avoiding 
 - `shadowUpdateMode` defaults to `static`, which updates shadow maps on load, delayed reveal, and explicit dirty events instead of every frame.
 - `dynamic` shadow updates remain available for authored scenes with moving shadow casters.
 - Visible compiled geometry casts and receives shadows by default for realism. Walkable/navmesh ground is receiver-only to avoid large-terrain self-shadow banding; the performance guardrail is cached/static shadow-map updates, not making authored objects shadowless.
-- PMNDRS/Takram Horizon scenes use Takram physical `SunDirectionalLight` / `SkyLightProbe` by default when available, with a low-cost hemisphere fill for A-Frame PBR assets and readable self-lit media materials so low-sun scenes do not crush unlit faces to black; `?vrodos_debug_helper_horizon_lights=1` temporarily restores the legacy helper-light path for comparison.
+- PMNDRS/Takram Horizon scenes use Takram physical `SunDirectionalLight` / `SkyLightProbe` by default when available, with a separate PBR indirect-light profile and low-cost hemisphere ground/sky fill for A-Frame assets. Flat media surfaces get a narrowly scoped readability material treatment; `?vrodos_debug_helper_horizon_lights=1` temporarily restores the legacy helper-light path for comparison.
 - The PMNDRS AO budget keeps the final color buffer full-resolution while scaling the NormalPass/SSAO workload per AO preset.
 - `?vrodos_debug_shadow_perf=1` shows live shadow cache diagnostics.
 - `scripts/profile-master-client.mjs --disable-fps-meter` appends `vrodos_debug_disable_fps_meter=1` so StatsGL does not initialize before profiling.
@@ -138,47 +148,26 @@ Draco compression helps transfer size and startup bandwidth. Runtime FPS only im
 
 ## Compiled Scene Diagnostics
 
-Append these query parameters to a compiled client URL when profiling or comparing rendering paths. Combine flags with `&`, for example:
+Append query parameters to a compiled client URL when profiling or comparing rendering paths. Combine flags with `&`, for example:
 
 `Master_Client_8980.html?vrodos_debug_disable_fps_meter=1&vrodos_debug_shadow_perf=1`
 
-Core performance flags:
+Most-used flags:
 
 - `vrodos_debug_disable_fps_meter=1`: prevents StatsGL/FPS meter initialization before it can wrap `renderer.render`; use for timing captures.
 - `vrodos_debug_shadow_perf=1`: shows shadow mode, `autoUpdate`, dirty reason, shadow update count, caster/receiver counts, and shadow-light counts.
-- `vrodos_debug_dynamic_shadows=1`: forces dynamic shadow-map updates for comparison against cached static shadows.
-- `vrodos_debug_disable_shadows=1`: disables shadows to isolate total shadow cost.
 - `vrodos_debug_nav_perf=1`: shows navigation/collision target counts and tick timing.
-
-PMNDRS/Takram comparison flags:
-
-- Default PMNDRS/Takram Horizon lighting uses Takram physical `SunDirectionalLight` / `SkyLightProbe` when available.
 - `vrodos_debug_helper_horizon_lights=1`: forces the legacy helper-light path for A/B comparison; startup logs should change `lightSource=takram` to `lightSource=helper`.
-- `vrodos_debug_pmndrs_horizon=1`: logs PMNDRS/Takram horizon diagnostics when the diagnostic signature changes.
 - `vrodos_debug_pmndrs_horizon_verbose=1`: logs verbose PMNDRS/Takram horizon diagnostics.
-- `vrodos_debug_enable_pmndrs_horizon_aerial=1`: enables the experimental Horizon aerial perspective path for visual checks.
-- `vrodos_debug_disable_pmndrs_sun=1`: hides the Takram sky sun disk for sun/flare isolation.
-
-Post-processing isolation flags:
-
-- `vrodos_debug_disable_pmndrs_composer=1`: bypasses the PMNDRS composer.
-- `vrodos_debug_disable_pmndrs_ao=1`: disables PMNDRS AO.
-- `vrodos_debug_disable_pmndrs_aa=1`: disables PMNDRS AA selection.
-- `vrodos_debug_disable_pmndrs_smaa=1`: disables SMAA specifically.
-- `vrodos_debug_disable_pmndrs_msaa=1`: disables MSAA specifically.
-- `vrodos_debug_pmndrs_aa=1`: shows the PMNDRS AA debug overlay.
-- `vrodos_debug_disable_pmndrs_lens_flare=1`: disables Takram/PMNDRS lens flare.
-
-Shadow/media flags:
-
-- `vrodos_debug_cast_flat_media_shadows=1`: forces flat media shadow casting for older scenes or scene settings where it was disabled. New compiled scenes cast flat media shadows by default.
 - `vrodos_spector=1`: enables the runtime Spector capture hook when the Spector debug helper is present. Prefer `scripts/profile-master-client.mjs --spector` for repeatable captures.
+
+The complete current flag list lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). Performance capture workflow details live in [`PERFORMANCE_OPTIMIZATION_PLAN.md`](PERFORMANCE_OPTIMIZATION_PLAN.md).
 
 ## Rendering Paths for Compiled Scenes
 
 VRodos now ships two compiled-scene post-processing engines. The engine is selected per scene through the compile dialog.
 
-Desktop inline mode and desktop fullscreen use the same post-processing pipeline, so entering fullscreen should not change the authored look. Real immersive WebXR sessions keep the scene-owned visual baseline active and use targeted fallbacks for screen-space composer passes that are not XR-safe. In practice, Horizon/Takram sky, helper lights, fog, renderer tone mapping/exposure, env-map state, and material profiles are re-synced on fullscreen, `enter-vr`, `exit-vr`, and resize transitions.
+Desktop inline mode and desktop fullscreen use the same post-processing pipeline, so entering fullscreen should not change the authored look. Real immersive WebXR sessions keep the scene-owned visual baseline active and use targeted fallbacks for screen-space composer passes that are not XR-safe. In practice, Horizon/Takram sky, scene-owned lights, fog, renderer tone mapping/exposure, env-map state, and material profiles are re-synced on fullscreen, `enter-vr`, `exit-vr`, and resize transitions.
 
 ### Legacy engine
 
@@ -226,7 +215,7 @@ Important current limitations:
 - SSR is not available on the PMNDRS path
 - TAA is not available on the PMNDRS path
 - composer MSAA is disabled when PMNDRS ambient occlusion is active; use SMAA for AO scenes
-- the current Horizon PMNDRS path is stable helper-lit A-Frame/PBR, not yet Takram vanilla post-process albedo lighting
+- the current Horizon PMNDRS path uses Takram light-source lighting for A-Frame/PBR content; it is not yet the Takram vanilla `post-process-albedo` lighting model
 
 For current-state PMNDRS/Takram decisions and phased follow-up work, see [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md). For the technical render-stack reference, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md).
 
@@ -243,6 +232,7 @@ Takram support in VRodos currently means atmosphere and sky integration, not clo
 - Takram correct-altitude toggle
 - atmospheric tuning for sun position, scattering, ground, and aerial-strength behavior
 - Takram physical light ownership for PMNDRS/Takram Horizon scenes, with helper lights kept as a debug fallback
+- local Horizon keeps Takram procedural ground disabled so authored walkable-surface/navmesh geometry remains the actual scene ground
 
 ### Not shipped yet
 
@@ -417,7 +407,7 @@ If large assets fail to upload, check:
   - `Legacy` for SSR/TAA/custom AO needs
   - `Pmndrs` for composer-based AA and Takram atmosphere controls
 - Review authored materials, textures, lighting, and reflection settings.
-- For Takram realism work, follow [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md) instead of tuning helper lights as if they were the Takram vanilla post-process lighting model.
+- For Takram realism work, follow [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md) instead of treating exposure, fill light, SSGI, or bloom as substitutes for Takram's vanilla post-process lighting model.
 
 ### Walkable surfaces do not behave as expected
 

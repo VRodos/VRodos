@@ -6,29 +6,17 @@ Track the staged rendering migration work so each phase stays small, reviewable,
 
 This log is consolidated for current and future agents. It replaces the older granular Phase 1-17 history with the current architecture, recent landed work, and next verification targets.
 
-## Current Architecture and State
+## Scope
 
-The project has migrated from a legacy Three.js r173 setup to a pinned A-Frame master + Three.js r181 stack.
+This file is a historical migration log. Current compiled runtime architecture lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md); performance decisions live in [`PERFORMANCE_OPTIMIZATION_PLAN.md`](PERFORMANCE_OPTIMIZATION_PLAN.md); Takram follow-up work lives in [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md).
 
-Completed work:
-
-- Root `package.json` and `package-lock.json` are the source of truth for runtime package versions.
-- `npm run build:three` builds the Three vendor bundle, PMNDRS bundle, Takram atmosphere bundle, and `assets/runtime-version-manifest.json`.
-- `includes/class-vrodos-render-runtime-manager.php` reads the manifest and resolves runtime assets.
-- Compiled scenes load `vrodos-postprocessing.bundle.js` and `vrodos-takram-atmosphere.bundle.js`.
-- PMNDRS and Takram bundles alias `three` to A-Frame's `window.THREE` to avoid multiple Three instances.
-- PMNDRS supports SMAA/MSAA, native `SSAOEffect` ambient occlusion, bloom, selectable tone mapping, exposure, basic color/contrast grading, built-in LUT looks, vignette, noise, chromatic aberration, Takram atmosphere, Takram celestial preset controls, Takram correct-altitude, and Takram Horizon lens flare.
-- PMNDRS Horizon scenes use Takram SkyMaterial for the sky and real sun disk, with A-Frame default lights disabled.
-- Local Horizon scenes use stable helper lighting by default; Takram physical `SunDirectionalLight` and `SkyLightProbe` remain available behind `?vrodos_debug_takram_physical_lights=1`.
-- Legacy rendering remains available for SSR and TAA.
-- Obsolete `threejs173` directories, scripts, and hardcoded references have been removed.
-- `RGBELoader` usage has been updated to `HDRLoader`.
+The migration from legacy Three.js r173 to the pinned A-Frame master + Three.js r181 stack is complete. Root `package.json` and `package-lock.json` remain the source of truth, `npm run build:three` generates the runtime manifest and vendor bundles, and obsolete `threejs173` paths have been removed.
 
 ## Current Focus and Next Steps
 
 1. Maintain the r181 baseline before adding a new lighting mode.
 2. Keep one Horizon PMNDRS scene and one non-Horizon PMNDRS scene in manual smoke coverage.
-3. Add explicit Horizon lighting modes: `helper`, `light-source`, and `post-process-albedo`.
+3. Add an author-visible explicit Horizon lighting mode control for `helper`, `light-source`, and `post-process-albedo`.
 4. Prototype desktop-only Takram-vanilla `post-process-albedo` lighting.
 5. Preserve the immersive XR composer bypass and direct stereo fallback.
 6. Defer Three latest testing to a separate A-Frame module/import-map runtime spike.
@@ -134,7 +122,10 @@ Completed work:
 - Removed the synthetic Horizon sun sprite and let Takram SkyMaterial own the real sun disk.
 - Disabled A-Frame default lights for Takram Horizon scenes.
 - Fixed reflection source `none` so material env maps are removed and env-map intensity becomes zero.
-- Kept local Horizon on helper lights by default to avoid the delayed LUT-ready physical-light handoff.
+- Promoted local Horizon to Takram light-source lighting by default for compiled desktop scenes: `SunDirectionalLight`, `SkyLightProbe`, and a VRodos hemisphere fill for authored PBR assets.
+- Added a sun-elevation-based PBR indirect profile and startup fallback ambient bridge so early-morning, midday, and golden-hour scenes keep readable shadow-side objects without flat global illumination.
+- Kept Takram procedural ground disabled for local scenes so authored walkable-surface/navmesh GLBs remain the real scene ground.
+- Kept local Horizon helper lights available behind `?vrodos_debug_helper_horizon_lights=1` for A/B comparison and fallback.
 - Added diagnostic logging for LUT readiness, tone mapping, exposure, lens flare, correct altitude, A-Frame default lights, sun radius, reflection scale, and active light source.
 - Confirmed the remaining Takram realism gap is architectural: the vanilla demo uses post-process albedo lighting, while VRodos currently renders A-Frame/GLB PBR content.
 - Captured the phased follow-up plan in `TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
@@ -173,5 +164,5 @@ Manual smoke:
 - Horizon PMNDRS midday and sunset with tone mapping modes and exposure `1`, `5`, and `10`.
 - Horizon PMNDRS with lens flare on/off.
 - Horizon PMNDRS with reflection source `none`.
-- Horizon PMNDRS with `?vrodos_debug_takram_physical_lights=1`.
+- Horizon PMNDRS with default Takram light-source lighting and `?vrodos_debug_helper_horizon_lights=1` comparison.
 - Immersive XR entry/exit with PMNDRS enabled should bypass the composer and keep stable direct lighting.

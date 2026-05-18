@@ -1093,6 +1093,7 @@ async function captureSceneSnapshot(cdp) {
         const geometries = new Set();
         const materials = new Set();
         const textures = new Set();
+        const lights = [];
         const counts = {
             objects: 0,
             meshes: 0,
@@ -1189,6 +1190,24 @@ async function captureSceneSnapshot(cdp) {
                 counts.objects += 1;
                 if (node.isLight) {
                     counts.lights += 1;
+                    const light = {
+                        name: node.name || '',
+                        type: node.type || '',
+                        visible: node.visible !== false,
+                        intensity: typeof node.intensity === 'number' ? node.intensity : null,
+                        color: node.color && typeof node.color.getHexString === 'function' ? \`#\${node.color.getHexString()}\` : null,
+                        groundColor: node.groundColor && typeof node.groundColor.getHexString === 'function' ? \`#\${node.groundColor.getHexString()}\` : null,
+                        castShadow: Boolean(node.castShadow),
+                        vrodosTakram: Boolean(node.userData && node.userData.vrodosPmndrsTakramLightSource)
+                    };
+                    if (node.isLightProbe && node.sh && Array.isArray(node.sh.coefficients)) {
+                        light.shCoefficientLengths = node.sh.coefficients.map((coefficient) => (
+                            coefficient && typeof coefficient.length === 'function'
+                                ? Number(coefficient.length().toFixed(6))
+                                : null
+                        ));
+                    }
+                    lights.push(light);
                 }
                 if (!node.isMesh) {
                     return;
@@ -1292,6 +1311,7 @@ async function captureSceneSnapshot(cdp) {
                 materials: materials.size,
                 textures: textures.size
             }),
+            lighting: lights,
             domCounts: {
                 gltfModelElements: document.querySelectorAll('[gltf-model]').length,
                 assetItems: document.querySelectorAll('a-assets > a-asset-item').length,
