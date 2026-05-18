@@ -281,6 +281,8 @@
 - Verification: Phase 147 JS syntax checks passed for editor initializer, canvas events, hierarchy viewer, and pointer-lock controls; targeted transform GUI sync call scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-18: Phase 148 scene strip drag-over layout cleanup implemented.
 - Verification: Phase 148 `assets/js/editor/ui/vrodos_scene_list_ui.js` JS syntax check passed; targeted scene reorder midpoint/no-op insert scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-18: Phase 149 light selection pointer-handler cleanup implemented.
+- Verification: Phase 149 `assets/js/editor/scene/vrodos_scene_selection.js` JS syntax check passed; targeted light pointer-handler ownership scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -480,6 +482,7 @@ assets/js/editor/
 - Done: Make render-loop stop paths clear pending loading-render timers when rendering is paused/stopped, and expose active RAF/timer timestamps in editor diagnostics snapshots.
 - Done: Gate transform GUI syncs from canvas `mousemove` to active transform dragging only, while making reset/pointer-lock callers request explicit forced syncs.
 - Done: Cache scene-card midpoint measurements during scene-strip drag reorder and skip no-op DOM inserts to reduce repeated drag-over layout reads.
+- Done: Scope light target/helper document-level pointer handlers to active selection, remove them on selection clear, and skip helper sync work unless transform controls are dragging.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

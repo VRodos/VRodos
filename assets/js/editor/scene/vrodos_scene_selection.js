@@ -237,24 +237,39 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         selected: null,
         lightDirectionalLightSpotMover: null,
         lightSpotLightMover: null,
+        lightPointerHandlerDocument: null,
 
         get() {
             return transforms.getRealObject() || this.selected || null;
         },
 
-        bindLightPointerHandlers(object) {
+        getTransformControlsDocument() {
             const controls = VRODOS.editor.transform_controls;
-            if (!controls || !controls.domElement || !controls.domElement.ownerDocument) return;
+            return controls && controls.domElement ? controls.domElement.ownerDocument : null;
+        },
 
-            const doc = controls.domElement.ownerDocument;
-            if (this.lightDirectionalLightSpotMover) {
+        unbindLightPointerHandlers() {
+            const doc = this.lightPointerHandlerDocument || this.getTransformControlsDocument();
+            if (doc && this.lightDirectionalLightSpotMover) {
                 doc.removeEventListener('pointermove', this.lightDirectionalLightSpotMover);
             }
-            if (this.lightSpotLightMover) {
+            if (doc && this.lightSpotLightMover) {
                 doc.removeEventListener('pointermove', this.lightSpotLightMover);
             }
 
+            this.lightDirectionalLightSpotMover = null;
+            this.lightSpotLightMover = null;
+            this.lightPointerHandlerDocument = null;
+        },
+
+        bindLightPointerHandlers(object) {
+            this.unbindLightPointerHandlers();
+
+            const doc = this.getTransformControlsDocument();
+            if (!doc) return;
+
             this.lightDirectionalLightSpotMover = () => {
+                if (!transforms.isDragging()) return;
                 const attached = transforms.getAttachedObject();
                 if (!attached || !attached.parentLight) return;
                 attached.parentLight.target.position.setFromMatrixPosition(attached.matrix);
@@ -265,6 +280,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             };
 
             this.lightSpotLightMover = () => {
+                if (!transforms.isDragging()) return;
                 const realObject = transforms.getRealObject();
                 if (!realObject || !realObject.parentLight) return;
                 VRODOS.utils.updateEditorLightHelper(realObject, getScene());
@@ -277,6 +293,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             if (category === 'lightSpot') {
                 doc.addEventListener('pointermove', this.lightSpotLightMover);
             }
+            this.lightPointerHandlerDocument = doc;
         },
 
         select(object, options) {
@@ -347,6 +364,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             const opts = options || {};
             this.selected = null;
             VRODOS.editor.selected_object_name = null;
+            this.unbindLightPointerHandlers();
             transforms.detach();
 
             if (typeof VRODOS.ui.removeAllCelOutlines === 'function') {
