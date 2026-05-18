@@ -254,6 +254,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			'videos'               => $dom->getElementsByTagName( 'video' )->length,
 			'raycastableElements'  => $xpath->query( '//*[contains(concat(" ", normalize-space(@class), " "), " raycastable ")]' )->length,
 			'shadowAttributes'     => $xpath->query( '//*[@shadow]' )->length,
+			'shadowRoleAttributes' => $xpath->query( '//*[@data-vrodos-shadow-role]' )->length,
 			'clearFrustumElements' => $xpath->query( '//*[@clear-frustum-culling]' )->length,
 			'playerColliders'      => $this->diagnostic_collider_count,
 		];
@@ -365,7 +366,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$model->setAttribute( 'vrodos-hypnotic-hover', '' );
 		}
 		$model->setAttribute( 'immerse-assessment-launcher', '' );
-		$model->setAttribute( 'shadow', 'cast: true; receive: true' );
+		$this->set_world_lighting_attributes( $model );
 		$model->setAttribute( 'data-assessment-title', $assessment_title );
 		$model->setAttribute( 'data-assessment-type', $assessment_type );
 		$model->setAttribute( 'data-assessment-group', $assessment_group );
@@ -457,9 +458,26 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 	}
 
-	private function set_world_lighting_attributes( DOMElement $entity ): void {
+	private function normalize_shadow_role( string $role ): string {
+		return in_array( $role, [ 'caster-receiver', 'receiver', 'none' ], true ) ? $role : 'caster-receiver';
+	}
+
+	private function shadow_attribute_for_role( string $role ): string {
+		switch ( $this->normalize_shadow_role( $role ) ) {
+			case 'receiver':
+				return 'cast: false; receive: true';
+			case 'none':
+				return 'cast: false; receive: false';
+			default:
+				return 'cast: true; receive: true';
+		}
+	}
+
+	private function set_world_lighting_attributes( DOMElement $entity, string $shadow_role = 'caster-receiver' ): void {
+		$shadow_role = $this->normalize_shadow_role( $shadow_role );
 		$entity->setAttribute( 'data-vrodos-world-lighting', 'true' );
-		$entity->setAttribute( 'shadow', 'cast: true; receive: true' );
+		$entity->setAttribute( 'data-vrodos-shadow-role', $shadow_role );
+		$entity->setAttribute( 'shadow', $this->shadow_attribute_for_role( $shadow_role ) );
 	}
 
 	private function set_overlay_ui_attributes( DOMElement $entity ): void {
@@ -524,6 +542,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		if ( in_array( $category, [ 'collision-proxy', 'blocking-obstacles' ], true ) ) {
 			$entity->setAttribute( 'data-vrodos-collision-hidden', 'true' );
+			$entity->setAttribute( 'data-vrodos-shadow-role', 'none' );
+			$entity->setAttribute( 'shadow', $this->shadow_attribute_for_role( 'none' ) );
 			$entity->setAttribute( 'vrodos-collider-helper', '' );
 		}
 
@@ -681,6 +701,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$entity->setAttribute( 'class', 'hideable' );
 		$this->apply_compiled_collision_attributes( $entity, $obj, 'text-panel' );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
+		$this->set_world_lighting_attributes( $entity );
 		$this->setAffineTransformations( $entity, $obj );
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 
@@ -829,11 +850,14 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		$is_collision_proxy = in_array( $cat, [ 'collision-proxy', 'blocking-obstacles' ], true );
 		$class = $is_collision_proxy ? 'override-materials' : 'override-materials hideable';
+		$shadow_role = $is_collision_proxy ? 'none' : 'caster-receiver';
 
 		if ( $cat === 'walkable-surface' ) {
+			$shadow_role = 'receiver';
 			$class .= ' vrodos-navmesh';
 			$walk_behavior = ( isset( $obj->walkableBehavior ) && 'auto' === strtolower( (string) $obj->walkableBehavior ) ) ? 'auto' : 'precise';
 			$entity->setAttribute( 'data-vrodos-navmesh', 'true' );
+			$entity->setAttribute( 'data-vrodos-shadow-receiver-only', 'true' );
 			$entity->setAttribute( 'data-vrodos-walk-behavior', $walk_behavior );
 		} elseif ( $cat === 'door' ) {
 			$class .= ' raycastable';
@@ -883,7 +907,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$entity->setAttribute( 'class', $class );
 		$this->apply_compiled_collision_attributes( $entity, $obj, 'gltf' );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
-		$this->set_world_lighting_attributes( $entity );
+		$this->set_world_lighting_attributes( $entity, $shadow_role );
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 
 		$ascene->appendChild( $entity );
@@ -956,7 +980,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$entity->setAttribute( 'id', 'audio_entity_' . $uuid );
 		$entity->setAttribute( 'gltf-model', '#' . $uuid );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
-		$entity->setAttribute( 'shadow', 'cast: true; receive: true' );
+		$this->set_world_lighting_attributes( $entity );
 		$entity->setAttribute( 'material', '' );
 		$entity->setAttribute( 'original-scale', implode( ' ', [
 			(float) ( $obj->scale[0] ?? 1 ),
@@ -1036,13 +1060,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$assets->appendChild( $a_img );
 			$this->track_runtime_asset( 'image', $image_url, 'image:' . $uuid );
 
-			// Parent entity for dual planes
+			// Parent entity keeps transform/collision metadata; the visible media is one double-sided plane.
 			$parent = $dom->createElement( 'a-entity' );
 			$parent->setAttribute( 'id', 'image-display_' . $uuid );
 			$this->setAffineTransformations( $parent, $obj );
 			$parent->setAttribute( 'class', 'override-materials hideable' );
 			$this->apply_compiled_collision_attributes( $parent, $obj, 'image-plane' );
-			$parent->setAttribute( 'clear-frustum-culling', '' );
 			$this->set_world_lighting_attributes( $parent );
 			$this->apply_immerse_cefr_gating_attributes( $parent, $obj );
 
@@ -1050,23 +1073,14 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$is_transparent = isset($obj->transparent) ? ($obj->transparent ? 'true' : 'false') : 'true';
 			$is_transparent_bool = $is_transparent === 'true';
 
-			$front = $dom->createElement( 'a-plane' );
-			$front->setAttribute( 'height', '2' );
-			$front->setAttribute( 'width', '2' );
-			$front->setAttribute( 'position', '0 0 0.001' );
-			$front->setAttribute( 'material', $this->world_media_material( "#image_$uuid", 'front', $is_transparent_bool ) );
-			$this->set_world_lighting_attributes( $front );
+			$plane = $dom->createElement( 'a-plane' );
+			$plane->setAttribute( 'height', '2' );
+			$plane->setAttribute( 'width', '2' );
+			$plane->setAttribute( 'position', '0 0 0' );
+			$plane->setAttribute( 'material', $this->world_media_material( "#image_$uuid", 'double', $is_transparent_bool ) );
+			$this->set_world_lighting_attributes( $plane );
 
-			$back = $dom->createElement( 'a-plane' );
-			$back->setAttribute( 'height', '2' );
-			$back->setAttribute( 'width', '2' );
-			$back->setAttribute( 'position', '0 0 -0.001' );
-			$back->setAttribute( 'rotation', '0 180 0' );
-			$back->setAttribute( 'material', $this->world_media_material( "#image_$uuid", 'front', $is_transparent_bool ) );
-			$this->set_world_lighting_attributes( $back );
-
-			$parent->appendChild( $front );
-			$parent->appendChild( $back );
+			$parent->appendChild( $plane );
 			$ascene->appendChild( $parent );
 
 		} elseif ( $cat === 'video' ) {
@@ -1142,7 +1156,6 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$display->setAttribute( 'data-vrodos-video-src', $video_url );
 			$display->setAttribute( 'data-vrodos-video-loop', ($obj->video_loop ?? 0) == 1 ? 'true' : 'false' );
 			$this->track_runtime_asset( 'video', $video_url, 'video:' . $uuid );
-			$display->setAttribute( 'clear-frustum-culling', '' );
 			$this->set_world_lighting_attributes( $display );
 			$display->setAttribute( 'video-controls', "id: $uuid" );
 			$this->setAffineTransformations( $display, $obj );
@@ -1279,7 +1292,6 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		if ( $this->isHoverEnabled ) {
 			$button->setAttribute( 'vrodos-hypnotic-hover', '' );
 		}
-		$button->setAttribute( 'clear-frustum-culling', '' );
 		$this->set_world_lighting_attributes( $button );
 		$this->setAffineTransformations( $button, $obj ); // Trigger stays in 3D world
 		$ascene->appendChild( $button );

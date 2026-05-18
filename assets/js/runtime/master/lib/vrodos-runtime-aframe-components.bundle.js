@@ -318,6 +318,10 @@
         target.setAttribute("visible", "true");
         target.removeAttribute("data-vrodos-delayed-reveal");
       });
+      const settingsComponent = this.sceneEl && this.sceneEl.components && this.sceneEl.components["scene-settings"];
+      if (settingsComponent && typeof settingsComponent.markShadowDirty === "function") {
+        settingsComponent.markShadowDirty("scene-reveal");
+      }
       if (this.loadingOverlay) {
         this.loadingOverlay.style.opacity = "0";
         this.loadingOverlay.style.pointerEvents = "none";
@@ -473,6 +477,8 @@
       navigationMode: { type: "string", default: vrodosSceneSettingDefault("navigationMode", "walkable") },
       renderQuality: { type: "string", default: "standard" },
       shadowQuality: { type: "string", default: "medium" },
+      shadowUpdateMode: { type: "string", default: vrodosSceneSettingDefault("shadowUpdateMode", "static") },
+      flatMediaShadowCasting: { type: "string", default: vrodosSceneSettingDefault("flatMediaShadowCasting", "1") },
       rootShadowType: { type: "string", default: "pcf" },
       aaQuality: { type: "string", default: "balanced" },
       fpsMeterEnabled: { type: "string", default: "0" },
@@ -882,6 +888,9 @@
       return shadowQuality === "high" ? { bias: -16e-5, normalBias: 0.018, helperKeyIntensity: 0.94, helperFillIntensity: 0.34, helperPosition: "6 10 4" } : { bias: -1e-4, normalBias: 0.012, helperKeyIntensity: 0.9, helperFillIntensity: 0.32, helperPosition: "6.2 10 4.2" };
     },
     isFPSMeterRequested: function() {
+      if (vrodosRuntimeDebugFlag("disableFpsMeter", "vrodos_debug_disable_fps_meter")) {
+        return false;
+      }
       return this.data.fpsMeterEnabled !== "0";
     },
     shouldShowFPSMeter: function() {
@@ -1146,6 +1155,16 @@
     // --- Quality profile methods (extracted to vrodos_quality_profiles.js) ---
     applyRenderQualityProfile: VRODOSMaster.SceneSettingsHelpers.applyRenderQualityProfile,
     applyShadowQualityProfile: VRODOSMaster.SceneSettingsHelpers.applyShadowQualityProfile,
+    getShadowUpdateMode: VRODOSMaster.SceneSettingsHelpers.getShadowUpdateMode || function() {
+      return this.data.shadowUpdateMode || "static";
+    },
+    isStaticShadowMode: VRODOSMaster.SceneSettingsHelpers.isStaticShadowMode || vrodosRuntimeFalse,
+    markShadowDirty: VRODOSMaster.SceneSettingsHelpers.markShadowDirty || vrodosRuntimeNoop,
+    flushShadowUpdate: VRODOSMaster.SceneSettingsHelpers.flushShadowUpdate || vrodosRuntimeNoop,
+    syncStaticShadowMode: VRODOSMaster.SceneSettingsHelpers.syncStaticShadowMode || vrodosRuntimeNoop,
+    getShadowDiagnosticState: VRODOSMaster.SceneSettingsHelpers.getShadowDiagnosticState || function() {
+      return null;
+    },
     applyMaterialProfiles: VRODOSMaster.SceneSettingsHelpers.applyMaterialProfiles,
     ensurePhotorealHelperLight: VRODOSMaster.SceneSettingsHelpers.ensurePhotorealHelperLight,
     removePhotorealHelperLights: VRODOSMaster.SceneSettingsHelpers.removePhotorealHelperLights,
@@ -1184,15 +1203,18 @@
     init: function() {
       this.handleQualityModelLoad = function() {
         this.markSceneCollectionsDirty();
+        this.markShadowDirty("model-loaded");
         this.queueQualityRefresh(true);
       }.bind(this);
       this.handleSceneMutation = function() {
         this.markSceneCollectionsDirty();
+        this.markShadowDirty("scene-mutation");
       }.bind(this);
       this.handleResize = function() {
         this.updatePostProcessingSize();
         this.updatePmndrsPostProcessingSize();
         this.updatePmndrsHorizonSun();
+        this.markShadowDirty("resize");
       }.bind(this);
       this.handlePresentationModeChange = function() {
         this.syncPresentationVisualState(true);
@@ -1260,6 +1282,12 @@
       this._blackBloomTexture = null;
       this._whiteSAOTexture = null;
       this._blackSSRTexture = null;
+      this._vrodosShadowDirty = false;
+      this._vrodosShadowDirtyReason = null;
+      this._vrodosShadowDirtyRequests = 0;
+      this._vrodosShadowUpdateCount = 0;
+      this._vrodosShadowFlushHandle = null;
+      this._vrodosShadowLastUpdateMs = 0;
       window.addEventListener("resize", this.handleResize);
       document.addEventListener("fullscreenchange", this.handlePresentationModeChange);
       document.addEventListener("webkitfullscreenchange", this.handlePresentationModeChange);
@@ -1324,6 +1352,7 @@
           }
         }
         this.queueQualityRefresh(true);
+        this.markShadowDirty("scene-loaded");
       });
       this.el.addEventListener("model-loaded", this.handleQualityModelLoad);
       this.el.addEventListener("enter-vr", () => {
@@ -1447,6 +1476,17 @@
         clearTimeout(this.queuedQualityRefreshId);
         this.queuedQualityRefreshId = null;
       }
+      if (this._vrodosShadowFlushHandle) {
+        if (typeof cancelAnimationFrame === "function") {
+          cancelAnimationFrame(this._vrodosShadowFlushHandle);
+        }
+        clearTimeout(this._vrodosShadowFlushHandle);
+        this._vrodosShadowFlushHandle = null;
+      }
+      if (this._vrodosShadowPerfOverlay && this._vrodosShadowPerfOverlay.parentNode) {
+        this._vrodosShadowPerfOverlay.parentNode.removeChild(this._vrodosShadowPerfOverlay);
+        this._vrodosShadowPerfOverlay = null;
+      }
       this.disablePostProcessing();
       this.disablePmndrsPostProcessing();
       this.disposePmndrsAtmosphere();
@@ -1546,7 +1586,7 @@
       if (!meshRoot) {
         return;
       }
-      meshRoot.visible = true;
+      meshRoot.visible = false;
       meshRoot.traverse((node) => {
         if (!node.isMesh) {
           return;
@@ -1581,7 +1621,7 @@
       if (!meshRoot) {
         return;
       }
-      meshRoot.visible = true;
+      meshRoot.visible = false;
       meshRoot.traverse((node) => {
         if (!node.isMesh) {
           return;

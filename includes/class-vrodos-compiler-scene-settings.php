@@ -87,6 +87,8 @@ class VRodos_Compiler_Scene_Settings {
 			'navigationMode'                     => $navigation_mode,
 			'renderQuality'                      => $metadata->aframeRenderQuality ?? 'standard',
 			'shadowQuality'                      => $metadata->aframeShadowQuality ?? 'medium',
+			'shadowUpdateMode'                   => $this->normalize_shadow_update_mode( $metadata ),
+			'flatMediaShadowCasting'             => VRodos_Runtime_Settings_Contract::bool_string( $metadata->aframeFlatMediaShadowCasting ?? true, true, '1', '0' ),
 			'aaQuality'                          => $metadata->aframeAAQuality ?? 'balanced',
 			'fpsMeterEnabled'                    => $this->fps_meter_enabled( $metadata ),
 			'legacyHorizonStageSize'             => max( 500, min( 8000, (int) ( $metadata->aframeLegacyHorizonStageSize ?? 5000 ) ) ),
@@ -203,11 +205,12 @@ class VRodos_Compiler_Scene_Settings {
 	private function apply_shadow_profile( DOMElement $ascene, array $settings, $metadata ): void {
 		$shadow_quality = $this->get_effective_shadow_quality( $settings, $metadata );
 		$shadows_enabled = 'off' !== $shadow_quality;
+		$shadow_update_mode = (string) ( $settings['shadowUpdateMode'] ?? $this->normalize_shadow_update_mode( $metadata ) );
 
 		$shadow = $this->parse_component_attribute( $ascene->getAttribute( 'shadow' ) );
 		$shadow['enabled']    = $this->bool_attr( $shadows_enabled );
 		$shadow['type']       = (string) ( $settings['rootShadowType'] ?? $this->get_shadow_map_type_attr( $shadow_quality, $metadata ) );
-		$shadow['autoUpdate'] = $this->bool_attr( $this->should_enable_shadow_auto_update( $metadata ) );
+		$shadow['autoUpdate'] = $this->bool_attr( 'dynamic' === $shadow_update_mode && $this->should_enable_shadow_auto_update( $metadata ) );
 
 		$ascene->setAttribute( 'shadow', $this->serialize_component_attribute( $shadow ) );
 	}
@@ -526,6 +529,23 @@ class VRodos_Compiler_Scene_Settings {
 		}
 
 		return true;
+	}
+
+	private function normalize_shadow_update_mode( $metadata ): string {
+		foreach ( [ 'shadowUpdateMode', 'aframeShadowUpdateMode' ] as $key ) {
+			if ( property_exists( $metadata, $key ) ) {
+				$value = strtolower( trim( (string) $metadata->{$key} ) );
+				if ( in_array( $value, [ 'static', 'dynamic' ], true ) ) {
+					return $value;
+				}
+			}
+		}
+
+		if ( property_exists( $metadata, 'aframeShadowAutoUpdate' ) && VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeShadowAutoUpdate, true ) ) {
+			return 'dynamic';
+		}
+
+		return 'static';
 	}
 
 	private function enum_value( $value, array $allowed, string $fallback ): string {

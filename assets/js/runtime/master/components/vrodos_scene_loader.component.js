@@ -383,6 +383,13 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             target.removeAttribute('data-vrodos-delayed-reveal');
         });
 
+        const settingsComponent = this.sceneEl &&
+            this.sceneEl.components &&
+            this.sceneEl.components['scene-settings'];
+        if (settingsComponent && typeof settingsComponent.markShadowDirty === 'function') {
+            settingsComponent.markShadowDirty('scene-reveal');
+        }
+
         if (this.loadingOverlay) {
             this.loadingOverlay.style.opacity = '0';
             this.loadingOverlay.style.pointerEvents = 'none';

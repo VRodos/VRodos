@@ -432,12 +432,38 @@ class CDPClient {
                 clearTimeout(timeout);
                 resolve();
             }, { once: true });
-            this.socket.addEventListener('message', (event) => this.handleMessage(event.data));
+            this.socket.addEventListener('message', (event) => {
+                this.normalizeMessageData(event.data)
+                    .then((messageData) => this.handleMessage(messageData))
+                    .catch((error) => {
+                        console.warn(`Could not decode Chrome DevTools WebSocket message: ${error.message || error}`);
+                    });
+            });
             this.socket.addEventListener('error', (event) => {
                 clearTimeout(timeout);
                 reject(new Error(`Chrome DevTools WebSocket error: ${event.message || event.type || 'unknown error'}`));
             }, { once: true });
         });
+    }
+
+    async normalizeMessageData(data) {
+        if (typeof data === 'string') {
+            return data;
+        }
+
+        if (data && typeof data.text === 'function') {
+            return data.text();
+        }
+
+        if (data instanceof ArrayBuffer) {
+            return Buffer.from(data).toString('utf8');
+        }
+
+        if (ArrayBuffer.isView(data)) {
+            return Buffer.from(data.buffer, data.byteOffset, data.byteLength).toString('utf8');
+        }
+
+        return String(data);
     }
 
     handleMessage(data) {
@@ -918,10 +944,13 @@ async function disableRuntimeFpsMeter(cdp) {
     return evaluate(cdp, `(() => {
         const scene = document.querySelector('a-scene');
         const settingsComponent = scene && scene.components && scene.components['scene-settings'];
+        const params = new URLSearchParams(window.location.search || '');
+        const preinitDisabled = params.get('vrodos_debug_disable_fps_meter') === '1';
         if (!settingsComponent || !settingsComponent.data) {
             return {
                 disabled: false,
-                reason: 'scene-settings component was not available'
+                reason: 'scene-settings component was not available',
+                preinitDisabled
             };
         }
 
@@ -935,9 +964,14 @@ async function disableRuntimeFpsMeter(cdp) {
 
         return {
             disabled: true,
+            preinitDisabled,
             before,
             after: settingsComponent.data.fpsMeterEnabled,
-            statsElementPresent: Boolean(document.getElementById('vrodos-stats-meter'))
+            statsObjectPresent: Boolean(settingsComponent.fpsStats),
+            statsElementPresent: Boolean(document.getElementById('vrodos-stats-meter')),
+            requestedAfterOverride: typeof settingsComponent.isFPSMeterRequested === 'function'
+                ? settingsComponent.isFPSMeterRequested()
+                : null
         };
     })()`);
 }
@@ -1198,7 +1232,17 @@ async function captureSceneSnapshot(cdp) {
                 pmndrsLensFlareEnabled: typeof settingsComponent.isPmndrsLensFlareEnabled === 'function' ? settingsComponent.isPmndrsLensFlareEnabled() : settingsComponent.data.pmndrsLensFlareEnabled,
                 postProcessingRequested: typeof settingsComponent.hasPostProcessingPipelineRequest === 'function' ? settingsComponent.hasPostProcessingPipelineRequest() : null,
                 postProcessingActive: Boolean(settingsComponent.postProcessingActive || settingsComponent.pmndrsActive),
-                shouldUsePostProcessing: typeof settingsComponent.shouldUsePostProcessing === 'function' ? settingsComponent.shouldUsePostProcessing() : null
+                shouldUsePostProcessing: typeof settingsComponent.shouldUsePostProcessing === 'function' ? settingsComponent.shouldUsePostProcessing() : null,
+                shadowUpdateMode: typeof settingsComponent.getShadowUpdateMode === 'function' ? settingsComponent.getShadowUpdateMode() : settingsComponent.data.shadowUpdateMode,
+                shadowDiagnostics: typeof settingsComponent.getShadowDiagnosticState === 'function' ? settingsComponent.getShadowDiagnosticState() : null,
+                pmndrsNativeSsaoBudget: settingsComponent._pmndrsNativeSsaoBudget || null,
+                fpsMeter: {
+                    requested: typeof settingsComponent.isFPSMeterRequested === 'function' ? settingsComponent.isFPSMeterRequested() : null,
+                    enabledSetting: settingsComponent.data.fpsMeterEnabled,
+                    statsObjectPresent: Boolean(settingsComponent.fpsStats),
+                    statsElementPresent: Boolean(document.getElementById('vrodos-stats-meter')),
+                    preinitDisabled: new URLSearchParams(window.location.search || '').get('vrodos_debug_disable_fps_meter') === '1'
+                }
             } : null,
             renderer: renderer ? {
                 sceneAttribute: scene ? scene.getAttribute('renderer') : null,
@@ -1212,6 +1256,8 @@ async function captureSceneSnapshot(cdp) {
                     : null,
                 sortObjects: typeof renderer.sortObjects !== 'undefined' ? renderer.sortObjects : null,
                 shadowMapEnabled: Boolean(renderer.shadowMap && renderer.shadowMap.enabled),
+                shadowMapAutoUpdate: renderer.shadowMap ? renderer.shadowMap.autoUpdate : null,
+                shadowMapNeedsUpdate: renderer.shadowMap ? renderer.shadowMap.needsUpdate : null,
                 shadowMapType: renderer.shadowMap ? renderer.shadowMap.type : null,
                 shadowMapTypeName: renderer.shadowMap ? threeConstantName(renderer.shadowMap.type, [
                     'BasicShadowMap',
@@ -1657,9 +1703,13 @@ function printSummary(result) {
 
 async function run() {
     const options = parseArgs(process.argv.slice(2));
-    const targetUrl = options.navProfile
-        ? addUrlQueryParam(options.url, 'vrodos_debug_nav_perf', '1')
-        : options.url;
+    let targetUrl = options.url;
+    if (options.navProfile) {
+        targetUrl = addUrlQueryParam(targetUrl, 'vrodos_debug_nav_perf', '1');
+    }
+    if (options.disableFpsMeter) {
+        targetUrl = addUrlQueryParam(targetUrl, 'vrodos_debug_disable_fps_meter', '1');
+    }
     const resourceOverrides = await prepareResourceOverrides(options.resourceOverrides);
     const WebSocketClass = await loadWebSocketClass();
     const port = await getFreePort();
@@ -1670,6 +1720,7 @@ async function run() {
     const chromePath = findChrome(options.chrome);
     const chromeArgs = [
         `--remote-debugging-port=${port}`,
+        '--remote-allow-origins=*',
         `--user-data-dir=${userDataDir}`,
         '--no-first-run',
         '--no-default-browser-check',

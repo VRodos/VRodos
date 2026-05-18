@@ -28,6 +28,21 @@
                 "fly"
             ]
         },
+        "shadowUpdateMode": {
+            "metadataKey": "aframeShadowUpdateMode",
+            "type": "enum",
+            "default": "static",
+            "editorDefault": "static",
+            "allowed": [
+                "static",
+                "dynamic"
+            ]
+        },
+        "flatMediaShadowCasting": {
+            "metadataKey": "aframeFlatMediaShadowCasting",
+            "type": "boolean",
+            "default": true
+        },
         "pmndrsAAMode": {
             "metadataKey": "aframePmndrsAAMode",
             "type": "enum",

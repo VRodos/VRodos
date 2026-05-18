@@ -311,6 +311,24 @@ LOD can reduce the render-side cost that Draco alone does not touch. It should b
 
 Do not add automatic LOD substitution until visual thresholds, distance bands, shadow behavior, and collision/interaction expectations are defined.
 
+## Compiled Shadow And AO Refactor
+
+`Master_Client_8980` showed that player collision/nav was not the FPS bottleneck. The high-cost steady-state work was repeated shadow-map rendering plus PMNDRS SSAO/NormalPass work.
+
+Current implementation direction:
+
+- Compiled desktop scenes default `shadowUpdateMode` to `static`.
+- Runtime `markShadowDirty(reason)` and `flushShadowUpdate()` update shadow maps on load/reveal and scene-light/material/visibility changes, then keep `renderer.shadowMap.autoUpdate = false`.
+- The compiler emits `data-vrodos-shadow-role` so visible GLB world geometry, media planes, and POI panels cast/receive by default, walkable/navmesh ground receives without self-casting, and hidden collision proxies render into neither the main frame nor shadow maps.
+- Point/spot lights no longer become shadow casters just because shadows are globally enabled; they must be authored that way.
+- PMNDRS AO keeps final color full-resolution but uses cheaper NormalPass/SSAO budgets for `soft` and `balanced`.
+- The profiler appends `vrodos_debug_disable_fps_meter=1` when `--disable-fps-meter` is used, preventing StatsGL from initializing before it can wrap the renderer.
+- `?vrodos_debug_shadow_perf=1` exposes static-shadow diagnostics in the compiled scene.
+
+Simplified Draco derivatives can help after this pass, but only if the derivative actually reduces render triangles/material cost. Draco compression by itself reduces transfer/decode size and does not reduce per-frame triangle submission after decode.
+
+Research TODO: `steep-face shadow proxy`. Keep navmeshes receiver-only for this pass to avoid terrain self-shadow banding. Later, evaluate generating a shadow-only proxy from steep navmesh faces so mountains/walls can block direct light and shadow-aware reflections without making broad flat ground cast onto itself.
+
 ## Policy
 
 - `high` must remain visually equivalent to the current look.

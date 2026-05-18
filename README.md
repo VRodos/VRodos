@@ -80,6 +80,7 @@ That runtime powers:
 - shadow-aware direct-sun glint suppression for compiled-scene PBR materials
 - PMNDRS/Takram tone mapping, lens flare, and atmosphere controls for desktop compiled scenes
 - compiled walkable-surface and static player/world collision workflows
+- static cached desktop shadows where visible compiled geometry casts and receives by default
 
 The runtime version source of truth is root [`package.json`](package.json) plus [`package-lock.json`](package-lock.json). `npm run build:three` generates [`assets/runtime-version-manifest.json`](assets/runtime-version-manifest.json), and [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php) reads that manifest at runtime with conservative fallbacks.
 
@@ -92,7 +93,7 @@ Compiled scenes can currently offer:
 - desktop high-quality rendering mode
 - fullscreen and immersive XR preservation of the authored desktop visual baseline, with targeted fallbacks for XR-unsafe screen-space effects
 - shadow presets for performance vs visual quality
-- shadow participation for visible world meshes, decoration objects, image/video surfaces, POI links, and POI image/text world surfaces
+- semantic shadow participation: visible world GLBs, media planes, and POI panels cast/receive by default; walkable/navmesh ground receives shadows without self-casting; hidden collision proxies do not render into shadow maps
 - reflection source selection between HDR presets and scene probes
 - global reflection enable/disable control plus shadow-aware direct-sun reflection occlusion
 - PMNDRS selectable tone mapping, exposure, generated LUT looks, Takram correct-altitude, and Takram Horizon lens flare
@@ -120,6 +121,58 @@ Compiled runtime model:
 - Collision uses A-Frame's existing `window.THREE` and does not load a second Three.js copy.
 
 Rapier is intentionally not part of v1 static locomotion. It remains a future option for dynamic physics such as pushable props, thrown objects, joints, or gameplay collision events. For the deeper roadmap and remaining hardening work, see [`AFRAME_COLLISION_ROADMAP.md`](AFRAME_COLLISION_ROADMAP.md).
+
+## Compiled Scene Performance Model
+
+High-quality compiled desktop scenes keep the PMNDRS/Takram look while avoiding avoidable per-frame render work:
+
+- `shadowUpdateMode` defaults to `static`, which updates shadow maps on load, delayed reveal, and explicit dirty events instead of every frame.
+- `dynamic` shadow updates remain available for authored scenes with moving shadow casters.
+- Visible compiled geometry casts and receives shadows by default for realism. Walkable/navmesh ground is receiver-only to avoid large-terrain self-shadow banding; the performance guardrail is cached/static shadow-map updates, not making authored objects shadowless.
+- PMNDRS/Takram Horizon scenes use Takram physical `SunDirectionalLight` / `SkyLightProbe` by default when available; `?vrodos_debug_helper_horizon_lights=1` temporarily restores the legacy helper-light path for comparison.
+- The PMNDRS AO budget keeps the final color buffer full-resolution while scaling the NormalPass/SSAO workload per AO preset.
+- `?vrodos_debug_shadow_perf=1` shows live shadow cache diagnostics.
+- `scripts/profile-master-client.mjs --disable-fps-meter` appends `vrodos_debug_disable_fps_meter=1` so StatsGL does not initialize before profiling.
+
+Draco compression helps transfer size and startup bandwidth. Runtime FPS only improves when the derivative is also simplified or has fewer draw-cost inputs, because decoded Draco geometry still renders as normal triangles. VRodos therefore keeps optimized GLB substitution explicit and per-asset opt-in; future LOD families should be measured with profiler/Spector before becoming default compile behavior.
+
+## Compiled Scene Diagnostics
+
+Append these query parameters to a compiled client URL when profiling or comparing rendering paths. Combine flags with `&`, for example:
+
+`Master_Client_8980.html?vrodos_debug_disable_fps_meter=1&vrodos_debug_shadow_perf=1`
+
+Core performance flags:
+
+- `vrodos_debug_disable_fps_meter=1`: prevents StatsGL/FPS meter initialization before it can wrap `renderer.render`; use for timing captures.
+- `vrodos_debug_shadow_perf=1`: shows shadow mode, `autoUpdate`, dirty reason, shadow update count, caster/receiver counts, and shadow-light counts.
+- `vrodos_debug_dynamic_shadows=1`: forces dynamic shadow-map updates for comparison against cached static shadows.
+- `vrodos_debug_disable_shadows=1`: disables shadows to isolate total shadow cost.
+- `vrodos_debug_nav_perf=1`: shows navigation/collision target counts and tick timing.
+
+PMNDRS/Takram comparison flags:
+
+- Default PMNDRS/Takram Horizon lighting uses Takram physical `SunDirectionalLight` / `SkyLightProbe` when available.
+- `vrodos_debug_helper_horizon_lights=1`: forces the legacy helper-light path for A/B comparison; startup logs should change `lightSource=takram` to `lightSource=helper`.
+- `vrodos_debug_pmndrs_horizon=1`: logs PMNDRS/Takram horizon diagnostics when the diagnostic signature changes.
+- `vrodos_debug_pmndrs_horizon_verbose=1`: logs verbose PMNDRS/Takram horizon diagnostics.
+- `vrodos_debug_enable_pmndrs_horizon_aerial=1`: enables the experimental Horizon aerial perspective path for visual checks.
+- `vrodos_debug_disable_pmndrs_sun=1`: hides the Takram sky sun disk for sun/flare isolation.
+
+Post-processing isolation flags:
+
+- `vrodos_debug_disable_pmndrs_composer=1`: bypasses the PMNDRS composer.
+- `vrodos_debug_disable_pmndrs_ao=1`: disables PMNDRS AO.
+- `vrodos_debug_disable_pmndrs_aa=1`: disables PMNDRS AA selection.
+- `vrodos_debug_disable_pmndrs_smaa=1`: disables SMAA specifically.
+- `vrodos_debug_disable_pmndrs_msaa=1`: disables MSAA specifically.
+- `vrodos_debug_pmndrs_aa=1`: shows the PMNDRS AA debug overlay.
+- `vrodos_debug_disable_pmndrs_lens_flare=1`: disables Takram/PMNDRS lens flare.
+
+Shadow/media flags:
+
+- `vrodos_debug_cast_flat_media_shadows=1`: forces flat media shadow casting for older scenes or scene settings where it was disabled. New compiled scenes cast flat media shadows by default.
+- `vrodos_spector=1`: enables the runtime Spector capture hook when the Spector debug helper is present. Prefer `scripts/profile-master-client.mjs --spector` for repeatable captures.
 
 ## Rendering Paths for Compiled Scenes
 
@@ -189,7 +242,7 @@ Takram support in VRodos currently means atmosphere and sky integration, not clo
 - Takram LensFlareEffect for the Horizon sun
 - Takram correct-altitude toggle
 - atmospheric tuning for sun position, scattering, ground, and aerial-strength behavior
-- stable helper-light ownership for existing A-Frame/PBR Horizon scenes, with Takram physical lights kept as a validation path
+- Takram physical light ownership for PMNDRS/Takram Horizon scenes, with helper lights kept as a debug fallback
 
 ### Not shipped yet
 

@@ -63,30 +63,39 @@
         switch (preset) {
             case 'soft':
                 return Object.assign({}, defaults, {
-                    samples: 9,
-                    rings: 7,
+                    samples: 8,
+                    rings: 5,
                     radius: 0.06,
                     intensity: 1.33,
                     resolutionScale: 0.5
                 });
             case 'strong':
                 return Object.assign({}, defaults, {
-                    samples: 32,
+                    samples: 20,
                     rings: 7,
                     radius: 0.06,
                     intensity: 2.01,
-                    resolutionScale: 1.0
+                    resolutionScale: 0.75
                 });
             case 'balanced':
             default:
                 return Object.assign({}, defaults, {
-                    samples: 20,
-                    rings: 7,
+                    samples: 12,
+                    rings: 5,
                     radius: 0.06,
                     intensity: 1.67,
-                    resolutionScale: 0.75
+                    resolutionScale: 0.5
                 });
         }
+    }
+
+    function nativeSsaoNormalPassResolutionScale(options) {
+        const scale = Number(options && options.resolutionScale);
+        if (!Number.isFinite(scale) || scale <= 0) {
+            return 0.5;
+        }
+
+        return Math.max(0.35, Math.min(1.0, scale));
     }
 
     /**
@@ -1057,6 +1066,7 @@
         self.pmndrsLensFlarePass = null;
         self.pmndrsNativeNormalPass = null;
         self.pmndrsNativeSsaoEffect = null;
+        self._pmndrsNativeSsaoBudget = null;
         self.pmndrsBloomEffect = null;
         self.pmndrsLensFlareEffect = null;
         self.pmndrsSmaaEffect = null;
@@ -1248,9 +1258,19 @@
             if (PP.NormalPass && PP.SSAOEffect) {
                 try {
                     const nativeSsaoOptions = nativeSsaoOptionsForPreset(PP, aoPreset);
-                    this.pmndrsNativeNormalPass = new PP.NormalPass(scene, camera, { resolutionScale: 1.0 });
+                    const normalPassResolutionScale = nativeSsaoNormalPassResolutionScale(nativeSsaoOptions);
+                    this.pmndrsNativeNormalPass = new PP.NormalPass(scene, camera, {
+                        resolutionScale: normalPassResolutionScale
+                    });
                     composer.addPass(this.pmndrsNativeNormalPass);
                     this.pmndrsNativeSsaoEffect = new PP.SSAOEffect(camera, this.pmndrsNativeNormalPass.texture, nativeSsaoOptions);
+                    this._pmndrsNativeSsaoBudget = {
+                        preset: aoPreset,
+                        samples: nativeSsaoOptions.samples,
+                        rings: nativeSsaoOptions.rings,
+                        resolutionScale: nativeSsaoOptions.resolutionScale,
+                        normalPassResolutionScale
+                    };
                     if (this.pmndrsNativeSsaoEffect.defines && this.pmndrsNativeSsaoEffect.defines.set) {
                         this.pmndrsNativeSsaoEffect.defines.set('THRESHOLD', String(nativeSsaoOptions.depthAwareUpsamplingThreshold));
                     }
@@ -1260,6 +1280,7 @@
                     disposePmndrsNativeSsaoResources(this);
                     this.pmndrsNativeNormalPass = null;
                     this.pmndrsNativeSsaoEffect = null;
+                    this._pmndrsNativeSsaoBudget = null;
                 }
             } else if (!this._pmndrsNativeSsaoSkipWarned) {
                 console.info(`[VRodos] pmndrs pipeline: AO preset "${  aoPreset  }" requested but POSTPROCESSING.NormalPass/SSAOEffect is not loaded.`);

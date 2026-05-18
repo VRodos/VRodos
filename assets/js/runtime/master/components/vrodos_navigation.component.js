@@ -42,7 +42,7 @@ AFRAME.registerComponent('vrodos-navmesh-helper', {
             return;
         }
 
-        meshRoot.visible = true;
+        meshRoot.visible = false;
         meshRoot.traverse((node) => {
             if (!node.isMesh) {
                 return;
@@ -80,7 +80,7 @@ AFRAME.registerComponent('vrodos-collider-helper', {
             return;
         }
 
-        meshRoot.visible = true;
+        meshRoot.visible = false;
         meshRoot.traverse((node) => {
             if (!node.isMesh) {
                 return;

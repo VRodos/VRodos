@@ -29,6 +29,21 @@
             "fly"
           ]
         },
+        "shadowUpdateMode": {
+          "metadataKey": "aframeShadowUpdateMode",
+          "type": "enum",
+          "default": "static",
+          "editorDefault": "static",
+          "allowed": [
+            "static",
+            "dynamic"
+          ]
+        },
+        "flatMediaShadowCasting": {
+          "metadataKey": "aframeFlatMediaShadowCasting",
+          "type": "boolean",
+          "default": true
+        },
         "pmndrsAAMode": {
           "metadataKey": "aframePmndrsAAMode",
           "type": "enum",
@@ -1836,7 +1851,13 @@
     if (typeof overrides.emissive !== "undefined" && overrides.emissive !== null && overrides.emissive !== "" && material.emissive) {
       material.emissive.set(overrides.emissive);
     }
-    if (typeof overrides.emissiveIntensity !== "undefined" && overrides.emissiveIntensity !== null && overrides.emissiveIntensity !== "" && typeof material.emissiveIntensity !== "undefined") {
+    if (overrides.vrodosShadowReceiver === true && typeof material.emissiveIntensity !== "undefined") {
+      if (typeof material.userData.vrodosBaseEmissiveIntensity === "undefined") {
+        material.userData.vrodosBaseEmissiveIntensity = material.emissiveIntensity || 1;
+      }
+      material.emissiveIntensity = Math.min(material.userData.vrodosBaseEmissiveIntensity, 0.08);
+      material.needsUpdate = true;
+    } else if (typeof overrides.emissiveIntensity !== "undefined" && overrides.emissiveIntensity !== null && overrides.emissiveIntensity !== "" && typeof material.emissiveIntensity !== "undefined") {
       material.emissiveIntensity = parseFloat(overrides.emissiveIntensity);
     } else if (options.renderQuality === "high" && material.emissive && material.emissiveMap && typeof material.emissiveIntensity !== "undefined") {
       if (typeof material.userData.vrodosBaseEmissiveIntensity === "undefined") {
@@ -2832,6 +2853,80 @@
       const id = entityEl.id || "";
       return entityEl.hasAttribute("data-vrodos-world-lighting") || id.indexOf("video-display_") === 0 || id.indexOf("image-display_") === 0 || id.indexOf("button_poi_") === 0 || entityEl.hasAttribute("link-listener") || entityEl.hasAttribute("data-vrodos-video-src") || entityHasClass(entityEl, "menu-button");
     }
+    function isFlatMediaShadowEntity(entityEl) {
+      if (!entityEl) {
+        return false;
+      }
+      const id = entityEl.id || "";
+      return id.indexOf("video-display_") === 0 || id.indexOf("image-display_") === 0 || id.indexOf("button_poi_") === 0 || entityEl.hasAttribute("data-vrodos-video-src") || entityHasClass(entityEl, "menu-button");
+    }
+    function isFlatMediaShadowCastingEnabled() {
+      if (hasPmndrsDebugFlag("castFlatMediaShadows", "vrodos_debug_cast_flat_media_shadows")) {
+        return true;
+      }
+      const sceneEl = typeof document !== "undefined" ? document.querySelector("a-scene") : null;
+      const sceneSettings = sceneEl && sceneEl.components ? sceneEl.components["scene-settings"] : null;
+      const value = sceneSettings && sceneSettings.data ? sceneSettings.data.flatMediaShadowCasting : "1";
+      return value === true || value === "true" || value === "1" || value === 1 || typeof value === "undefined" || value === null || value === "";
+    }
+    function normalizeShadowRole(value) {
+      const role = String(value || "").trim().toLowerCase();
+      if (role === "caster-receiver" || role === "receiver" || role === "none") {
+        return role;
+      }
+      return null;
+    }
+    function getEntityShadowRole(entityEl) {
+      if (!entityEl) {
+        return null;
+      }
+      if (entityEl.hasAttribute("data-vrodos-collision-hidden") || entityEl.hasAttribute("vrodos-collider-helper") || entityEl.hasAttribute("data-vrodos-overlay-ui")) {
+        return "none";
+      }
+      if (entityHasClass(entityEl, "vrodos-navmesh") || entityEl.hasAttribute("data-vrodos-navmesh")) {
+        return "receiver";
+      }
+      const authoredRole = normalizeShadowRole(entityEl.getAttribute("data-vrodos-shadow-role"));
+      if (authoredRole === "receiver" && !entityEl.hasAttribute("data-vrodos-shadow-receiver-only")) {
+        if (isFlatMediaShadowEntity(entityEl) && !isFlatMediaShadowCastingEnabled()) {
+          return "receiver";
+        }
+        return "caster-receiver";
+      }
+      if (authoredRole) {
+        return authoredRole;
+      }
+      return null;
+    }
+    function getObjectShadowRole(object) {
+      let current = object;
+      let resolvedRole = null;
+      let hasFlatMedia = false;
+      while (current) {
+        if (current.el) {
+          if (isFlatMediaShadowEntity(current.el)) {
+            hasFlatMedia = true;
+          }
+          const role = getEntityShadowRole(current.el);
+          if (role === "none") {
+            return "none";
+          }
+          if (role && !resolvedRole) {
+            resolvedRole = role;
+          }
+        }
+        current = current.parent || null;
+      }
+      if (hasFlatMedia) {
+        return isFlatMediaShadowCastingEnabled() ? "caster-receiver" : "receiver";
+      }
+      return resolvedRole;
+    }
+    function isVrodosManagedShadowLight(node) {
+      return Boolean(
+        node && (node.userData && node.userData.vrodosPmndrsTakramLightSource || objectEntityChainHas(node, (entityEl) => entityEl.hasAttribute("data-vrodos-photoreal-light")))
+      );
+    }
     function getMaterialList(material) {
       if (!material) {
         return [];
@@ -2872,13 +2967,14 @@
       if (objectEntityChainHas(node, isLightingExcludedEntity)) {
         return false;
       }
-      return objectEntityChainHas(node, isDecorativeLightingEntity) || isShadowEligibleMaterial(node.material);
-    }
-    function isReceiverOnlyLightingMesh(node) {
-      if (!node || !node.isMesh) {
+      const shadowRole = getObjectShadowRole(node);
+      if (shadowRole === "none") {
         return false;
       }
-      return objectEntityChainHas(node, (entityEl) => entityHasClass(entityEl, "vrodos-navmesh") || entityEl.hasAttribute("data-vrodos-navmesh"));
+      if (shadowRole === "receiver" || shadowRole === "caster-receiver") {
+        return true;
+      }
+      return objectEntityChainHas(node, isDecorativeLightingEntity) || isShadowEligibleMaterial(node.material);
     }
     function collectAdaptiveShadowBounds(self) {
       const sceneObj = self && self.el ? self.el.object3D : null;
@@ -3044,13 +3140,22 @@
         return;
       }
       applyAdaptiveShadowFit(self);
+      if (typeof self.markShadowDirty === "function") {
+        self.markShadowDirty("adaptive-shadow-fit");
+      }
       if (typeof requestAnimationFrame === "function") {
         requestAnimationFrame(() => {
           applyAdaptiveShadowFit(self);
+          if (typeof self.markShadowDirty === "function") {
+            self.markShadowDirty("adaptive-shadow-fit-frame");
+          }
         });
       }
       setTimeout(() => {
         applyAdaptiveShadowFit(self);
+        if (typeof self.markShadowDirty === "function") {
+          self.markShadowDirty("adaptive-shadow-fit-settle");
+        }
       }, 80);
     }
     function getShadowDiagnosticState(self) {
@@ -3062,10 +3167,21 @@
         dirLights: 0,
         dirShadowLights: 0,
         fittedDirLights: 0,
-        fitted: "pending"
+        fitted: "pending",
+        mode: self ? getShadowUpdateMode(self) : "static",
+        autoUpdate: null,
+        needsUpdate: null,
+        updateCount: self && self._vrodosShadowUpdateCount ? self._vrodosShadowUpdateCount : 0,
+        dirtyRequests: self && self._vrodosShadowDirtyRequests ? self._vrodosShadowDirtyRequests : 0,
+        lastDirtyReason: self && self._vrodosShadowDirtyReason ? self._vrodosShadowDirtyReason : null
       };
       if (!sceneObj) {
         return state;
+      }
+      const renderer = self && self.el ? self.el.renderer : null;
+      if (renderer && renderer.shadowMap) {
+        state.autoUpdate = renderer.shadowMap.autoUpdate;
+        state.needsUpdate = renderer.shadowMap.needsUpdate;
       }
       sceneObj.traverse((node) => {
         if (node && node.isMesh) {
@@ -3090,6 +3206,89 @@
       });
       state.fitted = self && self._vrodosShadowFitLastMs ? "yes" : "pending";
       return state;
+    }
+    function getShadowUpdateMode(self) {
+      if (hasPmndrsDebugFlag("dynamicShadows", "vrodos_debug_dynamic_shadows")) {
+        return "dynamic";
+      }
+      const value = self && self.data ? String(self.data.shadowUpdateMode || "static").toLowerCase() : "static";
+      return value === "dynamic" ? "dynamic" : "static";
+    }
+    function isStaticShadowMode(self) {
+      if (!self || !self.el) {
+        return false;
+      }
+      const shadowQuality = typeof self.getEffectiveShadowQuality === "function" ? self.getEffectiveShadowQuality() : self.data && self.data.shadowQuality ? self.data.shadowQuality : "medium";
+      if (shadowQuality === "off") {
+        return false;
+      }
+      if (typeof self.isVrPresentationActive === "function" && self.isVrPresentationActive()) {
+        return false;
+      }
+      return getShadowUpdateMode(self) === "static";
+    }
+    function markAllShadowLightsDirty(self) {
+      const sceneObj = self && self.el ? self.el.object3D : null;
+      if (!sceneObj) {
+        return;
+      }
+      sceneObj.traverse((node) => {
+        if ((node.isDirectionalLight || node.isSpotLight || node.isPointLight) && node.shadow) {
+          node.shadow.needsUpdate = true;
+        }
+      });
+    }
+    function shadowPerfDebugEnabled() {
+      return hasPmndrsDebugFlag("shadowPerf", "vrodos_debug_shadow_perf");
+    }
+    function ensureShadowPerfDebugOverlay(self) {
+      if (!shadowPerfDebugEnabled() || typeof document === "undefined") {
+        return null;
+      }
+      if (self._vrodosShadowPerfOverlay && self._vrodosShadowPerfOverlay.parentNode) {
+        return self._vrodosShadowPerfOverlay;
+      }
+      const overlay = document.createElement("pre");
+      overlay.id = "vrodos-shadow-perf-debug";
+      overlay.style.position = "fixed";
+      overlay.style.right = "16px";
+      overlay.style.bottom = "16px";
+      overlay.style.zIndex = "9999";
+      overlay.style.margin = "0";
+      overlay.style.padding = "10px 12px";
+      overlay.style.maxWidth = "360px";
+      overlay.style.maxHeight = "40vh";
+      overlay.style.overflow = "auto";
+      overlay.style.background = "rgba(15, 23, 42, 0.86)";
+      overlay.style.color = "#e2e8f0";
+      overlay.style.font = "12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+      overlay.style.border = "1px solid rgba(148, 163, 184, 0.35)";
+      overlay.style.borderRadius = "8px";
+      overlay.style.pointerEvents = "none";
+      document.body.appendChild(overlay);
+      self._vrodosShadowPerfOverlay = overlay;
+      return overlay;
+    }
+    function updateShadowPerfDebugOverlay(self) {
+      const overlay = ensureShadowPerfDebugOverlay(self);
+      if (!overlay) {
+        return;
+      }
+      const state = getShadowDiagnosticState(self);
+      overlay.textContent = [
+        "VRodos shadow perf",
+        `mode: ${state.mode}`,
+        `autoUpdate: ${state.autoUpdate}`,
+        `needsUpdate: ${state.needsUpdate}`,
+        `updates: ${state.updateCount}`,
+        `dirty requests: ${state.dirtyRequests}`,
+        `last reason: ${state.lastDirtyReason || "none"}`,
+        `casters: ${state.casters}`,
+        `receivers: ${state.receivers}`,
+        `receiver-only: ${state.receiverOnly}`,
+        `dir shadow lights: ${state.dirShadowLights}/${state.dirLights}`,
+        `fit: ${state.fittedDirLights} ${state.fitted}`
+      ].join("\n");
     }
     function buildPmndrsLocalSunDirection(elevationDeg, azimuthDeg) {
       const elevation = THREE.MathUtils.degToRad(elevationDeg);
@@ -3527,7 +3726,10 @@
       return shouldUsePmndrsTakramHorizonPath(self) && (readPmndrsAtmosphereBool(self, "pmndrsAerialPerspectiveEnabled", false) || hasPmndrsDebugFlag("enablePmndrsHorizonAerial", "vrodos_debug_enable_pmndrs_horizon_aerial"));
     }
     function shouldUsePmndrsTakramPhysicalHorizonLights() {
-      return hasPmndrsDebugFlag("useTakramPhysicalHorizonLights", "vrodos_debug_takram_physical_lights");
+      if (hasPmndrsDebugFlag("useHelperHorizonLights", "vrodos_debug_helper_horizon_lights")) {
+        return false;
+      }
+      return true;
     }
     function formatVectorPosition(vector, distance, minY) {
       let y = vector.y * distance;
@@ -4585,6 +4787,75 @@
         }
       }
     };
+    H.getShadowUpdateMode = function() {
+      return getShadowUpdateMode(this);
+    };
+    H.isStaticShadowMode = function() {
+      return isStaticShadowMode(this);
+    };
+    H.getShadowDiagnosticState = function() {
+      return getShadowDiagnosticState(this);
+    };
+    H.markShadowDirty = function(reason) {
+      if (!this || !this.el) {
+        return;
+      }
+      const shadowQuality = typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data && this.data.shadowQuality ? this.data.shadowQuality : "medium";
+      if (shadowQuality === "off") {
+        return;
+      }
+      const dirtyReason = reason || "manual";
+      this._vrodosShadowDirty = true;
+      this._vrodosShadowDirtyReason = dirtyReason;
+      this._vrodosShadowDirtyRequests = (this._vrodosShadowDirtyRequests || 0) + 1;
+      if (this.el && typeof this.el.setAttribute === "function") {
+        this.el.setAttribute("data-vrodos-shadow-dirty-source", dirtyReason);
+      }
+      if (this._vrodosShadowFlushHandle) {
+        updateShadowPerfDebugOverlay(this);
+        return;
+      }
+      const flush = () => {
+        this._vrodosShadowFlushHandle = null;
+        if (typeof this.flushShadowUpdate === "function") {
+          this.flushShadowUpdate();
+        }
+      };
+      this._vrodosShadowFlushHandle = typeof requestAnimationFrame === "function" ? requestAnimationFrame(flush) : setTimeout(flush, 16);
+      updateShadowPerfDebugOverlay(this);
+    };
+    H.flushShadowUpdate = function() {
+      if (!this || !this.el) {
+        return;
+      }
+      const renderer = this.el.renderer;
+      const shadowQuality = typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data && this.data.shadowQuality ? this.data.shadowQuality : "medium";
+      if (!renderer || !renderer.shadowMap || shadowQuality === "off") {
+        return;
+      }
+      const staticMode = isStaticShadowMode(this);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.autoUpdate = !staticMode;
+      renderer.shadowMap.needsUpdate = true;
+      markAllShadowLightsDirty(this);
+      this._vrodosShadowDirty = false;
+      this._vrodosShadowUpdateCount = (this._vrodosShadowUpdateCount || 0) + 1;
+      this._vrodosShadowLastUpdateMs = typeof performance !== "undefined" ? performance.now() : Date.now();
+      updateShadowPerfDebugOverlay(this);
+    };
+    H.syncStaticShadowMode = function(reason) {
+      if (!this || !this.el || !this.el.renderer || !this.el.renderer.shadowMap) {
+        return;
+      }
+      const shadowQuality = typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data && this.data.shadowQuality ? this.data.shadowQuality : "medium";
+      const shadowsEnabled = shadowQuality !== "off";
+      const staticMode = shadowsEnabled && isStaticShadowMode(this);
+      this.el.renderer.shadowMap.autoUpdate = shadowsEnabled && !staticMode;
+      if (shadowsEnabled && staticMode) {
+        this.markShadowDirty(reason || "static-shadow-sync");
+      }
+      updateShadowPerfDebugOverlay(this);
+    };
     H.applyShadowQualityProfile = function() {
       const renderer = this.el.renderer;
       const shadowQuality = typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data.shadowQuality || "medium";
@@ -4593,17 +4864,21 @@
       const profileShadowType = shadowQuality === "high" ? "pcfsoft" : "pcf";
       const shadowTypeAttr = shadowsEnabled ? normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType) : "pcf";
       const shadowMapType = getThreeShadowMapType(shadowTypeAttr);
+      const staticShadowMode = shadowsEnabled && isStaticShadowMode(this);
       if (renderer && renderer.shadowMap) {
         renderer.shadowMap.enabled = shadowsEnabled;
         renderer.shadowMap.type = shadowMapType;
+        renderer.shadowMap.autoUpdate = shadowsEnabled && !staticShadowMode;
         renderer.shadowMap.needsUpdate = true;
       }
       if (this.el && typeof this.el.setAttribute === "function") {
         const currentShadow = this.el.getAttribute("shadow") || {};
         const currentEnabled = currentShadow.enabled === true || currentShadow.enabled === "true";
         const currentType = typeof currentShadow.type === "string" ? currentShadow.type.toLowerCase() : "";
-        if (currentEnabled !== shadowsEnabled || currentType !== shadowTypeAttr) {
-          this.el.setAttribute("shadow", `enabled: ${shadowsEnabled ? "true" : "false"}; type: ${shadowTypeAttr}; autoUpdate: true`);
+        const currentAutoUpdate = currentShadow.autoUpdate === true || currentShadow.autoUpdate === "true";
+        const targetAutoUpdate = shadowsEnabled && !staticShadowMode;
+        if (currentEnabled !== shadowsEnabled || currentType !== shadowTypeAttr || currentAutoUpdate !== targetAutoUpdate) {
+          this.el.setAttribute("shadow", `enabled: ${shadowsEnabled ? "true" : "false"}; type: ${shadowTypeAttr}; autoUpdate: ${targetAutoUpdate ? "true" : "false"}`);
         }
       }
       if (this.el.hasAttribute("environment")) {
@@ -4617,15 +4892,21 @@
             node.receiveShadow = false;
             return;
           }
-          node.castShadow = shadowsEnabled && !isReceiverOnlyLightingMesh(node);
-          node.receiveShadow = shadowsEnabled;
+          const shadowRole = getObjectShadowRole(node);
+          node.castShadow = shadowsEnabled && shadowRole !== "receiver" && shadowRole !== "none";
+          node.receiveShadow = shadowsEnabled && shadowRole !== "none";
         }
         if (node.isDirectionalLight || node.isSpotLight || node.isPointLight) {
-          node.castShadow = shadowsEnabled;
+          node.userData = node.userData || {};
+          const isVrodosManagedLight = isVrodosManagedShadowLight(node);
+          if (typeof node.userData.vrodosAuthoredCastShadow === "undefined") {
+            node.userData.vrodosAuthoredCastShadow = node.castShadow === true;
+          }
+          node.castShadow = shadowsEnabled && (isVrodosManagedLight || node.userData.vrodosAuthoredCastShadow === true);
           if (!node.shadow) {
             return;
           }
-          if (shadowsEnabled) {
+          if (node.castShadow) {
             const targetMapSize = shadowQuality === "high" ? node.isDirectionalLight ? 2048 : 1024 : node.isDirectionalLight ? 1024 : 512;
             if (node.shadow.mapSize) {
               node.shadow.mapSize.x = Math.max(node.shadow.mapSize.x || 0, targetMapSize);
@@ -4637,7 +4918,6 @@
             if (typeof node.userData.vrodosBaseShadowNormalBias === "undefined") {
               node.userData.vrodosBaseShadowNormalBias = typeof node.shadow.normalBias === "number" ? node.shadow.normalBias : 0;
             }
-            const isVrodosManagedLight = Boolean(node.userData && node.userData.vrodosPmndrsTakramLightSource || node.el && typeof node.el.hasAttribute === "function" && node.el.hasAttribute("data-vrodos-photoreal-light"));
             const managedShadowBias = shadowQuality === "high" ? 4e-5 : 8e-5;
             const managedNormalBias = shadowQuality === "high" ? 0.045 : 0.065;
             if (typeof node.shadow.bias !== "undefined") {
@@ -4647,12 +4927,18 @@
               node.shadow.normalBias = isVrodosManagedLight ? managedNormalBias : node.userData.vrodosBaseShadowNormalBias !== 0 ? node.userData.vrodosBaseShadowNormalBias : contactShadowSettings.normalBias;
             }
           }
-          node.shadow.needsUpdate = true;
+          node.shadow.needsUpdate = node.castShadow;
         }
       });
       if (shadowsEnabled) {
         applyAdaptiveShadowFit(this);
+        if (typeof this.syncStaticShadowMode === "function") {
+          this.syncStaticShadowMode("shadow-profile");
+        }
+      } else if (renderer && renderer.shadowMap) {
+        renderer.shadowMap.autoUpdate = false;
       }
+      updateShadowPerfDebugOverlay(this);
     };
     H.applyMaterialProfiles = function() {
       const renderer = this.el.renderer;
@@ -4697,6 +4983,9 @@
           return;
         }
         const overrides = vrodosGetExplicitMaterialOverrides(entityEl);
+        if (getEntityShadowRole(entityEl) !== "none") {
+          overrides.vrodosShadowReceiver = true;
+        }
         meshRoot.traverse((node) => {
           if (!node.isMesh || !node.material || isHiddenNavmeshMaterial(node.material)) {
             return;
@@ -4715,28 +5004,49 @@
           if (!node.isMesh || !node.material || isHiddenNavmeshMaterial(node.material)) {
             return;
           }
+          const nodeShadowRole = getObjectShadowRole(node);
+          const nodeOverrides = nodeShadowRole !== "none" && isWorldLightingParticipantMesh(node) ? { vrodosShadowReceiver: true } : {};
           if (Array.isArray(node.material)) {
             node.material.forEach((material) => {
-              enhanceMaterialOnce(material, {});
+              enhanceMaterialOnce(material, nodeOverrides);
             });
           } else {
-            enhanceMaterialOnce(node.material, {});
+            enhanceMaterialOnce(node.material, nodeOverrides);
           }
         });
+      }
+      if (typeof this.markShadowDirty === "function") {
+        this.markShadowDirty("material-profile");
       }
     };
     H.ensurePhotorealHelperLight = function(id, attributes, position) {
       let lightEl = document.getElementById(id);
+      let changed = false;
       if (!lightEl) {
         lightEl = document.createElement("a-entity");
         lightEl.setAttribute("id", id);
         this.el.appendChild(lightEl);
         this.markSceneCollectionsDirty();
+        changed = true;
       }
-      lightEl.setAttribute("light", attributes);
-      lightEl.setAttribute("position", position);
-      lightEl.setAttribute("data-vrodos-photoreal-light", "true");
-      lightEl.setAttribute("visible", "true");
+      const signature = `${attributes}|${position}`;
+      if (lightEl.getAttribute("data-vrodos-photoreal-light-signature") !== signature) {
+        lightEl.setAttribute("light", attributes);
+        lightEl.setAttribute("position", position);
+        lightEl.setAttribute("data-vrodos-photoreal-light-signature", signature);
+        changed = true;
+      }
+      if (lightEl.getAttribute("data-vrodos-photoreal-light") !== "true") {
+        lightEl.setAttribute("data-vrodos-photoreal-light", "true");
+        changed = true;
+      }
+      if (lightEl.getAttribute("visible") !== "true") {
+        lightEl.setAttribute("visible", "true");
+        changed = true;
+      }
+      if (changed && typeof this.markShadowDirty === "function") {
+        this.markShadowDirty("photoreal-light");
+      }
       return lightEl;
     };
     H.removePhotorealHelperLights = function() {
@@ -4901,6 +5211,9 @@
       if (!this || !this.el || !this.el.camera || (typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data.shadowQuality) === "off") {
         return;
       }
+      if (!force && isStaticShadowMode(this)) {
+        return;
+      }
       const now = typeof performance !== "undefined" ? performance.now() : Date.now();
       if (!force && this._vrodosShadowFitLastMs && now - this._vrodosShadowFitLastMs < 300) {
         return;
@@ -4917,6 +5230,9 @@
       this._vrodosShadowFitCameraPosition.copy(this._vrodosShadowFitCurrentCameraPosition);
       this._vrodosShadowFitLastMs = now;
       applyAdaptiveShadowFit(this);
+      if (typeof this.markShadowDirty === "function") {
+        this.markShadowDirty(force ? "adaptive-shadow-force" : "adaptive-shadow-camera");
+      }
     };
     H.hidePmndrsHorizonEnvironmentVisuals = function() {
       hidePmndrsHorizonEnvironmentVisuals(this);

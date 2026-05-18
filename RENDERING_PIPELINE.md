@@ -15,7 +15,7 @@ Presentation mode is part of the rendering contract:
 
 - Inline desktop and desktop fullscreen use the same eligible post-FX path.
 - Real immersive WebXR is detected through `renderer.xr.isPresenting`.
-- In immersive XR, XR-unsafe screen-space composer passes can fall back to direct stereo rendering while scene-owned visuals remain active: Horizon/Takram sky, helper lights, fog, exposure/tone mapping, environment maps, and material profiles.
+- In immersive XR, XR-unsafe screen-space composer passes can fall back to direct stereo rendering while scene-owned visuals remain active: Horizon/Takram sky, Takram/helper lights, fog, exposure/tone mapping, environment maps, and material profiles.
 
 ## 2. File Organization
 
@@ -232,7 +232,27 @@ this.postProcessingTarget.texture.colorSpace = THREE.SRGBColorSpace;
 
 This compatibility behavior is retained for the pinned r181 stack.
 
-## 5. PMNDRS Pipeline
+## 5. Static Shadows And Shadow Roles
+
+Compiled desktop scenes default to cached static shadow updates through the `scene-settings.shadowUpdateMode` field:
+
+- `static`: render shadow maps on load/reveal and explicit dirty events, then keep `renderer.shadowMap.autoUpdate = false` for steady frames.
+- `dynamic`: keep per-frame shadow-map updates for authored scenes that genuinely need moving shadow casters.
+
+Runtime dirty events call `markShadowDirty(reason)` and are flushed through a debounced `flushShadowUpdate()` path. Current dirty sources include model load, delayed scene reveal, resize, material profile changes, photoreal/Takram helper light changes, and forced adaptive shadow refits. `?vrodos_debug_shadow_perf=1` shows shadow mode, update count, dirty reason, caster/receiver counts, and shadow-light counts.
+
+The compiler emits semantic shadow roles so runtime profiles can exclude non-visual helpers while keeping visible authored content realistic:
+
+- GLB world/solid geometry: `data-vrodos-shadow-role="caster-receiver"` by default.
+- Walkable/navmesh geometry: `receiver` plus `data-vrodos-shadow-receiver-only`, so large ground surfaces receive shadows without self-shadow banding.
+- Image planes, video planes, audio markers, 3D text/POI panels, and POI trigger buttons: `caster-receiver` by default.
+- Collision proxies and hidden blockers: `none`.
+
+Receiver-only shadows are an explicit optimization path for surfaces that should not self-cast. Legacy compiled non-navmesh entities that still carry `data-vrodos-shadow-role="receiver"` are upgraded to caster/receivers at runtime unless they also carry `data-vrodos-shadow-receiver-only`.
+
+Point and spot lights only cast shadows when authored to do so. VRodos-managed photoreal/Takram directional lights may still cast shadows because they are the intentional scene-lighting source.
+
+## 6. PMNDRS Pipeline
 
 The PMNDRS engine uses `POSTPROCESSING.EffectComposer` and builds a scene-specific composer lazily on the first valid render frame.
 
@@ -271,16 +291,16 @@ PMNDRS AO backends:
 - Default: `POSTPROCESSING.NormalPass` plus `POSTPROCESSING.SSAOEffect`, with `SSAOEffect` merged into the fused `EffectPass`.
 - The PMNDRS debug overlay reports `ao: native-ssao` or `ao: off`.
 
-Native SSAO presets are tuned around the upstream PMNDRS SSAO demo, with `strong` matching the current tested high-quality screenshot values:
+Native SSAO presets are budgeted so the final color buffer stays full-resolution while the AO normal/depth work scales with the AO preset:
 
 - Shared defaults: `distanceThreshold: 0.02`, `distanceFalloff: 0.0025`, `rangeThreshold: 0.0003`, `rangeFalloff: 0.0001`, `luminanceInfluence: 0.7`, `minRadiusScale: 0.33`, `depthAwareUpsamplingThreshold: 0.997`, `bias: 0.025`, `fade: 0.01`.
-- `soft`: `resolutionScale: 0.5`, `samples: 9`, `rings: 7`, `radius: 0.1`, `intensity: 1.33`.
-- `balanced`: `resolutionScale: 0.75`, `samples: 20`, `rings: 7`, `radius: 0.072`, `intensity: 1.67`.
-- `strong`: `resolutionScale: 1.0`, `samples: 32`, `rings: 7`, `radius: 0.045`, `intensity: 2.01`.
+- `soft`: `resolutionScale: 0.5`, `samples: 8`, `rings: 5`, `radius: 0.06`, `intensity: 1.33`.
+- `balanced`: `resolutionScale: 0.5`, `samples: 12`, `rings: 5`, `radius: 0.06`, `intensity: 1.67`.
+- `strong`: `resolutionScale: 0.75`, `samples: 20`, `rings: 7`, `radius: 0.06`, `intensity: 2.01`.
 
 Takram LensFlareEffect is intentionally not merged into the fused `EffectPass`. It is a convolution effect, so it runs as its own pass when `pmndrsLensFlareEnabled` is true and the Horizon Takram sun is active.
 
-## 6. PMNDRS Built-In LUT Looks
+## 7. PMNDRS Built-In LUT Looks
 
 PMNDRS LUT v1 uses generated built-in 3D lookup textures. It does not load uploaded `.cube` or `.3dl` assets.
 
@@ -306,7 +326,7 @@ Runtime behavior:
 - Strength is applied through the effect blend opacity.
 - LUT failure logs once and falls back to the rest of the PMNDRS pipeline.
 
-## 7. PMNDRS/Takram Atmosphere and Horizon Lighting
+## 8. PMNDRS/Takram Atmosphere and Horizon Lighting
 
 Takram controls are author-facing artistic presets today, not full geospatial solar simulation. Horizon scenes use Takram `SkyMaterial` for the sky and sun disk. A-Frame default lights are disabled for Takram Horizon scenes.
 
@@ -325,16 +345,16 @@ Runtime behavior:
 - `manual` preserves the existing sun elevation/azimuth slider behavior.
 - `preset-time` resolves the selected time preset through the existing Takram atmosphere look defaults before building local and ECEF sun/moon directions.
 - The night preset turns the moon path on through `pmndrsMoonEnabled` unless the author explicitly overrides it in the compile dialog.
-- Horizon PMNDRS night uses dim cool helper moonlight instead of daytime Horizon helper-light intensities; if the moon path is disabled, helper lights fall back to near black.
+- Horizon PMNDRS night uses Takram physical light sources when available; if the helper fallback is forced, it uses dim cool moonlight instead of daytime Horizon helper-light intensities.
 - HDR/scene-probe env-map intensity is scaled down at night without changing authored material roughness or metalness.
-- Horizon uses stable helper lights by default for A-Frame/PBR material-authored scenes.
-- Takram physical `SunDirectionalLight` and `SkyLightProbe` remain available for validation behind `?vrodos_debug_takram_physical_lights=1`.
+- Horizon uses Takram physical `SunDirectionalLight` and `SkyLightProbe` by default for PMNDRS/Takram scenes when the Takram lighting resources are ready.
+- The legacy helper-light path remains as a comparison and fallback path behind `?vrodos_debug_helper_horizon_lights=1`; startup diagnostics report `lightSource=takram` or `lightSource=helper`.
 - Horizon `AerialPerspectiveEffect` is constrained to haze/transmittance in the current PBR path so it does not re-light the scene as albedo.
 - The future Takram-vanilla target is an explicit `post-process-albedo` lighting mode, documented in `TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
 
 This phase does not add stars, author-facing geospatial latitude/longitude UI, `LightingMaskPass`, SSGI, or volumetric clouds.
 
-## 8. Shadow-Aware Lighting And Reflections
+## 9. Shadow-Aware Lighting And Reflections
 
 Compiled scenes run a lighting-participation pass from `vrodos_quality_profiles.js` and material shader hooks from `vrodos_master_rendering.js`.
 
@@ -352,8 +372,10 @@ Lighting participation:
 - Visible compiled world meshes cast and receive shadows by default when `shadowQuality` is not `off`.
 - Image assets, video display planes, POI link objects, POI image/text trigger objects, and visible POI image/text panel surfaces participate like decoration meshes.
 - Hidden navmesh helper materials, camera-attached UI, skies, avatars, helper lights, and debug objects are excluded.
-- Walkable/navmesh world surfaces are receiver-only to avoid low-angle ground self-shadow banding.
-- Directional sun/helper lights receive an adaptive orthographic shadow-camera fit around nearby world bounds and the current camera region.
+- Walkable/navmesh world surfaces receive shadows but do not cast by default, preventing large shallow terrain self-shadow banding. Visible architecture, media, POIs, and props still cast by default.
+- Directional Takram/helper sun lights receive an adaptive orthographic shadow-camera fit around nearby world bounds and the current camera region.
+
+Research TODO: `steep-face shadow proxy`. Terrain-heavy scenes may need mountains, cliffs, or walls embedded in a walkable/navmesh GLB to occlude direct light and shadow-aware reflections without letting flat ground self-cast. The likely approach is to generate a shadow-only proxy from steep navmesh faces while keeping shallow walkable ground receiver-only. This should be profiled separately before becoming default behavior.
 
 Reflection/glint handling:
 
@@ -369,7 +391,7 @@ Diagnostics:
 - Use `?vrodos_debug_pmndrs_horizon_verbose=1` for info-level diagnostic lines.
 - Expanded diagnostic fields include `shadowCasters`, `shadowReceivers`, `shadowReceiverOnly`, `dirShadowLights`, `fittedDirLights`, and `shadowFit`.
 
-## 9. Legacy Effect Notes
+## 10. Legacy Effect Notes
 
 ### TAA
 
@@ -383,7 +405,7 @@ Legacy SSR is half-resolution screen-space ray marching using the shared depth t
 
 Legacy SAO is half-resolution, depth-only ambient occlusion with bilateral blur and optional adaptive half-rate updates under low FPS.
 
-## 10. HDR Environment Maps and Scene Probe
+## 11. HDR Environment Maps and Scene Probe
 
 HDR environment presets are loaded through the runtime HDR loader and processed through `PMREMGenerator` for `scene.environment` and PBR material `envMap`.
 
@@ -403,7 +425,7 @@ Scene-probe capture is intentionally smooth-first by default:
 
 If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`, scene environment maps are cleared, material `envMapIntensity` becomes zero, and direct specular/glint output is suppressed by the material shader hook.
 
-## 11. Version Source of Truth
+## 12. Version Source of Truth
 
 - Root `package.json` and `package-lock.json` define runtime package intent.
 - `npm run build:three` generates `assets/runtime-version-manifest.json`.
@@ -413,7 +435,7 @@ If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`,
 - The classic compiled A-Frame runtime must not load a second Three instance. The preferred near-term upgrade path is A-Frame's planned Three r184 runtime work (`aframevr/aframe#5818`) rather than a VRodos-only Three fork.
 - WebGPU remains an experimental renderer mode after r184, with separate validation for PMNDRS post-processing, GLSL/onBeforeCompile material hooks, Takram integration, and XR behavior.
 
-## 12. Future Ideas
+## 13. Future Ideas
 
 These are backlog items, not current implementation requirements:
 
