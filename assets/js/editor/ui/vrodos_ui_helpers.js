@@ -10,6 +10,106 @@ VRODOS.ui.refreshLucideIcons = function(options) {
     }
 };
 
+function safeSetPointerCapture(element, pointerId) {
+    if (element && typeof element.setPointerCapture === 'function') {
+        element.setPointerCapture(pointerId);
+    }
+}
+
+function safeReleasePointerCapture(element, pointerId) {
+    if (!element || typeof element.releasePointerCapture !== 'function') {
+        return;
+    }
+
+    try {
+        element.releasePointerCapture(pointerId);
+    } catch (error) {
+        // Pointer capture can already be released when the pointer leaves the window.
+    }
+}
+
+function clampNumber(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+}
+
+VRODOS.ui.bindDraggablePanel = function(panel, handle, options) {
+    if (!panel || !handle) {
+        return false;
+    }
+
+    options = options || {};
+    const ignoreSelector = options.ignoreSelector === undefined ? 'button, a' : options.ignoreSelector;
+    const clampToViewport = Boolean(options.clampToViewport);
+    const margin = Number.isFinite(options.margin) ? options.margin : 0;
+    const topMargin = Number.isFinite(options.topMargin) ? options.topMargin : margin;
+    let dragState = null;
+
+    handle.addEventListener('pointerdown', (event) => {
+        if (event.button !== undefined && event.button !== 0) {
+            return;
+        }
+
+        if (
+            ignoreSelector
+            && event.target
+            && typeof event.target.closest === 'function'
+            && event.target.closest(ignoreSelector)
+        ) {
+            return;
+        }
+
+        const rect = panel.getBoundingClientRect();
+        dragState = {
+            startX: event.clientX,
+            startY: event.clientY,
+            startLeft: rect.left,
+            startTop: rect.top,
+            minLeft: margin,
+            minTop: topMargin,
+            maxLeft: Math.max(margin, window.innerWidth - rect.width - margin),
+            maxTop: Math.max(topMargin, window.innerHeight - rect.height - margin)
+        };
+
+        panel.style.left = `${rect.left}px`;
+        panel.style.top = `${rect.top}px`;
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+
+        safeSetPointerCapture(handle, event.pointerId);
+        event.preventDefault();
+    });
+
+    handle.addEventListener('pointermove', (event) => {
+        if (!dragState) {
+            return;
+        }
+
+        let nextLeft = dragState.startLeft + event.clientX - dragState.startX;
+        let nextTop = dragState.startTop + event.clientY - dragState.startY;
+
+        if (clampToViewport) {
+            nextLeft = clampNumber(nextLeft, dragState.minLeft, dragState.maxLeft);
+            nextTop = clampNumber(nextTop, dragState.minTop, dragState.maxTop);
+        }
+
+        panel.style.left = `${nextLeft}px`;
+        panel.style.top = `${nextTop}px`;
+    });
+
+    const finishDrag = (event) => {
+        if (!dragState) {
+            return;
+        }
+
+        dragState = null;
+        safeReleasePointerCapture(handle, event.pointerId);
+    };
+
+    handle.addEventListener('pointerup', finishDrag);
+    handle.addEventListener('pointercancel', finishDrag);
+    return true;
+};
+
 VRODOS.ui.swapLucideIcon = function(container, iconName) {
     if (!container) return;
     const icon = container.querySelector('[data-lucide], svg');

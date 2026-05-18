@@ -59,10 +59,6 @@ VRODOS.ui = VRODOS.ui || {};
         return panel && !panel.classList.contains('tw-hidden');
     }
 
-    function isInteractiveHeaderTarget(target) {
-        return target && typeof target.closest === 'function' && target.closest('button, a');
-    }
-
     function getPanelMinSize(panel) {
         const computedStyle = window.getComputedStyle(panel);
         return {
@@ -77,41 +73,11 @@ VRODOS.ui = VRODOS.ui || {};
     }
 
     function bindFloatingPanelDrag(panel, header) {
-        let dragState = null;
-
-        header.addEventListener('pointerdown', (event) => {
-            if (isInteractiveHeaderTarget(event.target)) return;
-
-            const rect = panel.getBoundingClientRect();
-            dragState = {
-                startX: event.clientX,
-                startY: event.clientY,
-                startLeft: rect.left,
-                startTop: rect.top
-            };
-
-            setPanelRectPosition(panel, rect);
-            safeSetPointerCapture(header, event.pointerId);
-            event.preventDefault();
+        VRODOS.ui.bindDraggablePanel(panel, header, {
+            clampToViewport: true,
+            margin: FLOATING_PANEL.margin,
+            topMargin: FLOATING_PANEL.topChrome
         });
-
-        header.addEventListener('pointermove', (event) => {
-            if (!dragState) return;
-
-            panel.style.left = `${dragState.startLeft + event.clientX - dragState.startX}px`;
-            panel.style.top = `${dragState.startTop + event.clientY - dragState.startY}px`;
-            VRODOS.ui.clampFloatingPanelToViewport(panel);
-        });
-
-        const finishDrag = (event) => {
-            if (!dragState) return;
-
-            dragState = null;
-            safeReleasePointerCapture(header, event.pointerId);
-        };
-
-        header.addEventListener('pointerup', finishDrag);
-        header.addEventListener('pointercancel', finishDrag);
     }
 
     function bindFloatingPanelResize(panel, resizeHandle) {

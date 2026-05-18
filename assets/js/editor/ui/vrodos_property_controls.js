@@ -1226,41 +1226,9 @@ function bindObjectControlsPanelEvents() {
         });
     }
 
-    // Draggable via header — use delta from initial pointer position
-    // Panel is position:fixed, so coordinates are viewport-relative
-    let isDragging = false; let startX = 0; let startY = 0; let startLeft = 0; let startTop = 0;
-
-    header.addEventListener('pointerdown', (e) => {
-        if (e.target.closest('button')) return; // don't drag on close button
-        isDragging = true;
-
-        // For fixed positioning, getBoundingClientRect gives viewport coords directly
-        const rect = panel.getBoundingClientRect();
-        startLeft = rect.left;
-        startTop = rect.top;
-
-        // Convert to left/top positioning (from right)
-        panel.style.left = `${startLeft  }px`;
-        panel.style.top = `${startTop  }px`;
-        panel.style.right = 'auto';
-
-        // Remember the starting pointer position
-        startX = e.clientX;
-        startY = e.clientY;
-
-        header.setPointerCapture(e.pointerId);
-        e.preventDefault();
-    });
-
-    header.addEventListener('pointermove', (e) => {
-        if (!isDragging) return;
-        panel.style.left = `${startLeft + e.clientX - startX  }px`;
-        panel.style.top = `${startTop + e.clientY - startY  }px`;
-    });
-
-    header.addEventListener('pointerup', (e) => {
-        isDragging = false;
-        header.releasePointerCapture(e.pointerId);
+    // Draggable via header; panel coordinates are viewport-relative.
+    VRODOS.ui.bindDraggablePanel(panel, header, {
+        ignoreSelector: 'button'
     });
 }
 
