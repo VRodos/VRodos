@@ -554,6 +554,8 @@
       pmndrsCelestialTimePreset: { type: "string", default: vrodosSceneSettingDefault("pmndrsCelestialTimePreset", "midday") },
       pmndrsCelestialDate: { type: "string", default: vrodosSceneSettingDefault("pmndrsCelestialDate", "2026-06-21") },
       pmndrsCelestialUtcTime: { type: "string", default: vrodosSceneSettingDefault("pmndrsCelestialUtcTime", "12:00") },
+      pmndrsDayNightCycleEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsDayNightCycleEnabled", "0") },
+      pmndrsDayNightCycleDurationMinutes: { type: "string", default: vrodosSceneSettingDefault("pmndrsDayNightCycleDurationMinutes", "1.0") },
       pmndrsSunElevationDeg: { type: "string", default: vrodosSceneSettingDefault("pmndrsSunElevationDeg", "62") },
       pmndrsSunAzimuthDeg: { type: "string", default: vrodosSceneSettingDefault("pmndrsSunAzimuthDeg", "20") },
       pmndrsSunDistance: { type: "string", default: vrodosSceneSettingDefault("pmndrsSunDistance", "5200") },
@@ -1191,6 +1193,10 @@
     },
     updatePmndrsHorizonSun: VRODOSMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || function() {
     },
+    syncPmndrsAerialPerspectiveEffect: VRODOSMaster.SceneSettingsHelpers.syncPmndrsAerialPerspectiveEffect || function() {
+    },
+    isPmndrsDayNightCycleActive: VRODOSMaster.SceneSettingsHelpers.isPmndrsDayNightCycleActive || vrodosRuntimeFalse,
+    updatePmndrsDayNightCycleFrame: VRODOSMaster.SceneSettingsHelpers.updatePmndrsDayNightCycleFrame || vrodosRuntimeNoop,
     hidePmndrsHorizonEnvironmentVisuals: VRODOSMaster.SceneSettingsHelpers.hidePmndrsHorizonEnvironmentVisuals || function() {
     },
     showPmndrsAtmosphereSkyForSceneProbe: VRODOSMaster.SceneSettingsHelpers.showPmndrsAtmosphereSkyForSceneProbe || function() {
@@ -1291,6 +1297,9 @@
       this._vrodosShadowUpdateCount = 0;
       this._vrodosShadowFlushHandle = null;
       this._vrodosShadowLastUpdateMs = 0;
+      this._pmndrsTickTimeMs = null;
+      this._pmndrsDayNightCycleState = null;
+      this._pmndrsDayNightCycleShadowLastMs = 0;
       window.addEventListener("resize", this.handleResize);
       document.addEventListener("fullscreenchange", this.handlePresentationModeChange);
       document.addEventListener("webkitfullscreenchange", this.handlePresentationModeChange);
@@ -1520,7 +1529,11 @@
       if (this.fpsStats && typeof this.fpsStats.update === "function") {
         this.fpsStats.update();
       }
+      this._pmndrsTickTimeMs = typeof time === "number" ? time : null;
       this.updatePmndrsHorizonSun();
+      if (typeof this.updatePmndrsDayNightCycleFrame === "function") {
+        this.updatePmndrsDayNightCycleFrame(time);
+      }
       this.updateAdaptiveShadowFit(false);
       if (this.getEffectiveReflectionSource() !== "scene-probe") {
         return;

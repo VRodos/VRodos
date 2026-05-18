@@ -58,7 +58,7 @@ class VRodos_Compiler_Scene_Settings {
 		$celestial_mode       = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCelestialMode' );
 		$celestial_time       = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCelestialTimePreset' );
 		$tone_mapping_exposure = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsToneMappingExposure' );
-		$tone_mapping_exposure_authored = $this->is_pmndrs_tone_mapping_exposure_authored( $metadata, $tone_mapping_exposure );
+		$tone_mapping_exposure_authored = $this->is_pmndrs_tone_mapping_exposure_authored( $metadata );
 		if ( 'datetime' !== $celestial_mode && 'custom' !== $atmosphere_preset ) {
 			$celestial_mode = 'preset-time';
 			$celestial_time = $atmosphere_preset;
@@ -156,6 +156,8 @@ class VRodos_Compiler_Scene_Settings {
 			'pmndrsCelestialTimePreset'          => $celestial_time,
 			'pmndrsCelestialDate'                => $this->date_attr( $metadata, 'pmndrsCelestialDate' ),
 			'pmndrsCelestialUtcTime'             => $this->time_attr( $metadata, 'pmndrsCelestialUtcTime' ),
+			'pmndrsDayNightCycleEnabled'         => $this->pmndrs_bool_attr( $metadata, 'pmndrsDayNightCycleEnabled' ),
+			'pmndrsDayNightCycleDurationMinutes' => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsDayNightCycleDurationMinutes' ),
 			'pmndrsSunElevationDeg'              => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsSunElevationDeg' ),
 			'pmndrsSunAzimuthDeg'                => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsSunAzimuthDeg' ),
 			'pmndrsSunDistance'                  => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsSunDistance' ),
@@ -417,8 +419,7 @@ class VRodos_Compiler_Scene_Settings {
 		$exposure = max( 1.0, min( 20.0, (float) ( $settings['pmndrsToneMappingExposure'] ?? 1.0 ) ) );
 		if (
 			! $this->setting_bool( $settings, 'pmndrsAtmosphereEnabled' ) ||
-			! $this->setting_bool( $settings, 'pmndrsLowLightAutoExposureEnabled' ) ||
-			$this->setting_bool( $settings, 'pmndrsToneMappingExposureAuthored' )
+			! $this->setting_bool( $settings, 'pmndrsLowLightAutoExposureEnabled' )
 		) {
 			return $exposure;
 		}
@@ -615,19 +616,13 @@ class VRodos_Compiler_Scene_Settings {
 		return ( $legacy_enabled || $modern_enabled ) ? '1' : '0';
 	}
 
-	private function is_pmndrs_tone_mapping_exposure_authored( $metadata, $normalized_exposure ): bool {
+	private function is_pmndrs_tone_mapping_exposure_authored( $metadata ): bool {
 		$authored_key = VRodos_Runtime_Settings_Contract::metadata_key( 'pmndrsToneMappingExposureAuthored' );
 		if ( property_exists( $metadata, $authored_key ) ) {
 			return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->{$authored_key}, false );
 		}
 
-		$exposure_key = VRodos_Runtime_Settings_Contract::metadata_key( 'pmndrsToneMappingExposure' );
-		if ( ! property_exists( $metadata, $exposure_key ) ) {
-			return false;
-		}
-
-		$default_exposure = (float) VRodos_Runtime_Settings_Contract::default( 'pmndrsToneMappingExposure', 1.0 );
-		return abs( (float) $normalized_exposure - $default_exposure ) > 0.0001;
+		return false;
 	}
 
 	private function pmndrs_bool_attr( $metadata, string $scene_setting_key, bool $fallback = false ): string {

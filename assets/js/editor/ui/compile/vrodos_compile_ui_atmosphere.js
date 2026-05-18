@@ -338,6 +338,7 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsAtmospherePreset,
             controls.pmndrsAtmospherePresetIntensity,
             controls.pmndrsAtmosphereQuality,
+            controls.pmndrsDayNightCycle,
             controls.pmndrsAerialPerspective,
             controls.pmndrsCorrectAltitude,
             controls.pmndrsGeospatial,
@@ -377,7 +378,8 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsCelestialTimePreset.disabled = true;
         }
 
-        const dateTimeEnabled = isEnabled && celestialMode === 'datetime';
+        const dayNightCycleEnabled = isEnabled && controls.pmndrsDayNightCycle && controls.pmndrsDayNightCycle.checked === true;
+        const dateTimeEnabled = isEnabled && (celestialMode === 'datetime' || dayNightCycleEnabled);
         if (controls.pmndrsCelestialDateTimeWrapper) {
             controls.pmndrsCelestialDateTimeWrapper.style.display = dateTimeEnabled ? '' : 'none';
         }
@@ -386,6 +388,9 @@ VRodosCompileUI.Atmosphere = (function () {
         }
         if (controls.pmndrsCelestialUtcTime) {
             controls.pmndrsCelestialUtcTime.disabled = !dateTimeEnabled;
+        }
+        if (controls.pmndrsDayNightCycleDuration) {
+            controls.pmndrsDayNightCycleDuration.disabled = !dayNightCycleEnabled;
         }
 
         const geospatialEnabled = isEnabled && controls.pmndrsGeospatial && controls.pmndrsGeospatial.checked === true;
@@ -429,6 +434,13 @@ VRodosCompileUI.Atmosphere = (function () {
             : normalizeCelestialTimePreset(controls.pmndrsCelestialTimePreset ? controls.pmndrsCelestialTimePreset.value : d.celestialTimePreset);
         VRODOS.editor.envir.scene.aframePmndrsCelestialDate = normalizeDate(controls.pmndrsCelestialDate ? controls.pmndrsCelestialDate.value : d.celestialDate, d.celestialDate);
         VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime = normalizeUtcTime(controls.pmndrsCelestialUtcTime ? controls.pmndrsCelestialUtcTime.value : d.celestialUtcTime, d.celestialUtcTime);
+        VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled = pmndrsRuntimeEnabled && controls.pmndrsDayNightCycle ? controls.pmndrsDayNightCycle.checked === true : d.dayNightCycleEnabled;
+        VRODOS.editor.envir.scene.aframePmndrsDayNightCycleDurationMinutes = Shared.clampNumber(
+            controls.pmndrsDayNightCycleDuration ? controls.pmndrsDayNightCycleDuration.value : d.dayNightCycleDurationMinutes,
+            0.25,
+            1440,
+            d.dayNightCycleDurationMinutes
+        );
         VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled = (pmndrsRuntimeEnabled && controls.pmndrsAerialPerspective) ? controls.pmndrsAerialPerspective.checked === true : false;
         VRODOS.editor.envir.scene.aframePmndrsCorrectAltitudeEnabled = controls.pmndrsCorrectAltitude ? controls.pmndrsCorrectAltitude.checked === true : d.correctAltitudeEnabled;
         VRODOS.editor.envir.scene.aframePmndrsGeospatialEnabled = (pmndrsRuntimeEnabled && controls.pmndrsGeospatial) ? controls.pmndrsGeospatial.checked === true : false;
@@ -499,5 +511,4 @@ VRodosCompileUI.Atmosphere = (function () {
         normalizeUtcTime
     };
 })();
-
 

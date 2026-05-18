@@ -910,6 +910,10 @@ ${selectedSummaries.join("\n")}`);
         constrainPmndrsHorizonAerialToVanillaLightSourceMode(self.pmndrsAerialPerspectiveEffect);
       }
     }
+    H.syncPmndrsAerialPerspectiveEffect = function(camera, atmosphereConfig) {
+      const config = atmosphereConfig || (typeof this.getPmndrsAtmosphereConfig === "function" ? this.getPmndrsAtmosphereConfig() : null);
+      syncPmndrsAerialPerspectiveEffect(this, camera || (this.el ? this.el.camera : null), config);
+    };
     H._buildPmndrsComposer = function(scene, camera) {
       const renderer = this.el.renderer;
       const PP = window.POSTPROCESSING;

@@ -104,6 +104,8 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsCelestialDateTimeWrapper: document.getElementById('compilePmndrsCelestialDateTimeWrapper'),
             pmndrsCelestialDate: document.getElementById('compilePmndrsCelestialDateInput'),
             pmndrsCelestialUtcTime: document.getElementById('compilePmndrsCelestialUtcTimeInput'),
+            pmndrsDayNightCycle: document.getElementById('compilePmndrsDayNightCycleToggle'),
+            pmndrsDayNightCycleDuration: document.getElementById('compilePmndrsDayNightCycleDurationInput'),
             pmndrsGeospatial: document.getElementById('compilePmndrsGeospatialToggle'),
             pmndrsGeospatialLatitude: document.getElementById('compilePmndrsGeospatialLatitudeInput'),
             pmndrsGeospatialLongitude: document.getElementById('compilePmndrsGeospatialLongitudeInput'),
@@ -262,6 +264,14 @@ window.addEventListener('DOMContentLoaded', () => {
         if (typeof VRODOS.editor.envir.scene.aframePmndrsLowLightAutoExposureEnabled === 'undefined') {
             VRODOS.editor.envir.scene.aframePmndrsLowLightAutoExposureEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.lowLightAutoExposureEnabled;
         }
+        if (typeof VRODOS.editor.envir.scene.aframePmndrsToneMappingExposureAuthored === 'undefined') {
+            VRODOS.editor.envir.scene.aframePmndrsToneMappingExposureAuthored = false;
+        } else {
+            VRODOS.editor.envir.scene.aframePmndrsToneMappingExposureAuthored = VRODOS.editor.envir.scene.aframePmndrsToneMappingExposureAuthored === true ||
+                VRODOS.editor.envir.scene.aframePmndrsToneMappingExposureAuthored === 'true' ||
+                VRODOS.editor.envir.scene.aframePmndrsToneMappingExposureAuthored === '1' ||
+                VRODOS.editor.envir.scene.aframePmndrsToneMappingExposureAuthored === 1;
+        }
         VRODOS.editor.envir.scene.aframePmndrsToneMappingMode = VRodosCompileUI.PostFX.normalizePmndrsToneMappingMode(VRODOS.editor.envir.scene.aframePmndrsToneMappingMode);
         if (typeof VRODOS.editor.envir.scene.aframePmndrsLensFlareEnabled === 'undefined') {
             VRODOS.editor.envir.scene.aframePmndrsLensFlareEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.lensFlareEnabled;
@@ -317,6 +327,20 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         VRODOS.editor.envir.scene.aframePmndrsCelestialDate = VRodosCompileUI.Atmosphere.normalizeDate(VRODOS.editor.envir.scene.aframePmndrsCelestialDate, Shared.PMNDRS_TWEAK_DEFAULTS.celestialDate);
         VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime = VRodosCompileUI.Atmosphere.normalizeUtcTime(VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime, Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime);
+        if (typeof VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled === 'undefined') {
+            VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.dayNightCycleEnabled;
+        } else {
+            VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled = VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled === true ||
+                VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled === 'true' ||
+                VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled === '1' ||
+                VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled === 1;
+        }
+        VRODOS.editor.envir.scene.aframePmndrsDayNightCycleDurationMinutes = Shared.clampNumber(
+            VRODOS.editor.envir.scene.aframePmndrsDayNightCycleDurationMinutes,
+            0.25,
+            1440,
+            Shared.PMNDRS_TWEAK_DEFAULTS.dayNightCycleDurationMinutes
+        );
         if (typeof VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg !== 'number') {
             VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsSunElevationDeg, -18, 85, Shared.PMNDRS_TWEAK_DEFAULTS.sunElevationDeg);
         }
@@ -819,6 +843,17 @@ window.addEventListener('DOMContentLoaded', () => {
                 ? VRodosCompileUI.Atmosphere.normalizeUtcTime(VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime, Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime)
                 : Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime;
         }
+        if (controls.pmndrsDayNightCycle) {
+            controls.pmndrsDayNightCycle.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled);
+        }
+        if (controls.pmndrsDayNightCycleDuration) {
+            controls.pmndrsDayNightCycleDuration.value = Shared.clampNumber(
+                VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsDayNightCycleDurationMinutes : Shared.PMNDRS_TWEAK_DEFAULTS.dayNightCycleDurationMinutes,
+                0.25,
+                1440,
+                Shared.PMNDRS_TWEAK_DEFAULTS.dayNightCycleDurationMinutes
+            );
+        }
         if (controls.pmndrsGeospatial) {
             controls.pmndrsGeospatial.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsGeospatialEnabled);
         }
@@ -1058,7 +1093,16 @@ window.addEventListener('DOMContentLoaded', () => {
             el.addEventListener('input', updatePmndrsValueLabels);
         }
     });
-        [
+    if (controls.pmndrsExposure) {
+        const markPmndrsExposureAuthored = () => {
+            if (VRODOS.editor && VRODOS.editor.envir && VRODOS.editor.envir.scene) {
+                VRODOS.editor.envir.scene.aframePmndrsToneMappingExposureAuthored = true;
+            }
+        };
+        controls.pmndrsExposure.addEventListener('input', markPmndrsExposureAuthored);
+        controls.pmndrsExposure.addEventListener('change', markPmndrsExposureAuthored);
+    }
+    [
         controls.pmndrsSunElevation,
         controls.pmndrsSunAzimuth,
         controls.pmndrsSunAngularRadius,
@@ -1186,6 +1230,24 @@ window.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+    if (controls.pmndrsDayNightCycle) {
+        controls.pmndrsDayNightCycle.addEventListener('change', () => {
+            syncCompilePostFxState();
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
+        });
+    }
+    if (controls.pmndrsDayNightCycleDuration) {
+        controls.pmndrsDayNightCycleDuration.addEventListener('change', () => {
+            controls.pmndrsDayNightCycleDuration.value = Shared.clampNumber(
+                controls.pmndrsDayNightCycleDuration.value,
+                0.25,
+                1440,
+                Shared.PMNDRS_TWEAK_DEFAULTS.dayNightCycleDurationMinutes
+            );
+            syncCompilePostFxState();
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
+        });
+    }
     [
         controls.pmndrsGeospatial,
         controls.pmndrsCorrectAltitude,
@@ -1261,6 +1323,8 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsCelestialTimePreset) c.pmndrsCelestialTimePreset.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset;
             if (c.pmndrsCelestialDate) c.pmndrsCelestialDate.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialDate;
             if (c.pmndrsCelestialUtcTime) c.pmndrsCelestialUtcTime.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime;
+            if (c.pmndrsDayNightCycle) c.pmndrsDayNightCycle.checked = Shared.PMNDRS_TWEAK_DEFAULTS.dayNightCycleEnabled;
+            if (c.pmndrsDayNightCycleDuration) c.pmndrsDayNightCycleDuration.value = Shared.PMNDRS_TWEAK_DEFAULTS.dayNightCycleDurationMinutes;
             if (c.pmndrsGeospatial) c.pmndrsGeospatial.checked = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialEnabled;
             if (c.pmndrsAerialPerspective) c.pmndrsAerialPerspective.checked = Shared.PMNDRS_TWEAK_DEFAULTS.aerialPerspectiveEnabled;
             if (c.pmndrsCorrectAltitude) c.pmndrsCorrectAltitude.checked = Shared.PMNDRS_TWEAK_DEFAULTS.correctAltitudeEnabled;
@@ -1275,6 +1339,9 @@ window.addEventListener('DOMContentLoaded', () => {
             const helperDefaults = Shared.getPmndrsHorizonHelperDefaults(lightingPresetFallback);
             if (c.pmndrsHorizonKeyLightIntensity) c.pmndrsHorizonKeyLightIntensity.value = helperDefaults.keyLightIntensity;
             if (c.pmndrsHorizonFillLightIntensity) c.pmndrsHorizonFillLightIntensity.value = helperDefaults.fillLightIntensity;
+            if (VRODOS.editor && VRODOS.editor.envir && VRODOS.editor.envir.scene) {
+                VRODOS.editor.envir.scene.aframePmndrsToneMappingExposureAuthored = false;
+            }
             VRodosCompileUI.Atmosphere.applyLookPreset(c, Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset);
             updatePmndrsValueLabels();
             syncCompilePostFxState();

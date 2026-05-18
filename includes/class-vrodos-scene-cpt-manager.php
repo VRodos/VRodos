@@ -284,6 +284,7 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsVignetteDarkness'] = isset( $json_metadata->aframePmndrsVignetteDarkness ) ? (float) $json_metadata->aframePmndrsVignetteDarkness : 0.5;
 		$scene_data['aframePmndrsToneMappingExposure'] = isset( $json_metadata->aframePmndrsToneMappingExposure ) ? (float) $json_metadata->aframePmndrsToneMappingExposure : 1.0;
 		$scene_data['aframePmndrsLowLightAutoExposureEnabled'] = $json_metadata->aframePmndrsLowLightAutoExposureEnabled ?? true;
+		$scene_data['aframePmndrsToneMappingExposureAuthored'] = $json_metadata->aframePmndrsToneMappingExposureAuthored ?? false;
 		$pmndrs_tone_mapping_mode_raw = $json_metadata->aframePmndrsToneMappingMode ?? 'agx';
 		$scene_data['aframePmndrsToneMappingMode'] = in_array( $pmndrs_tone_mapping_mode_raw, [ 'agx', 'reinhard', 'cineon', 'aces-filmic', 'linear' ], true ) ? $pmndrs_tone_mapping_mode_raw : 'agx';
 		$scene_data['aframePmndrsLensFlareEnabled'] = $json_metadata->aframePmndrsLensFlareEnabled ?? false;
@@ -316,6 +317,9 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsCelestialDate'] = preg_match( '/^\d{4}-\d{2}-\d{2}$/', $pmndrs_celestial_date_raw ) ? $pmndrs_celestial_date_raw : '2026-06-21';
 		$pmndrs_celestial_time_raw = (string) ( $json_metadata->aframePmndrsCelestialUtcTime ?? '12:00' );
 		$scene_data['aframePmndrsCelestialUtcTime'] = preg_match( '/^([01]\d|2[0-3]):([0-5]\d)$/', $pmndrs_celestial_time_raw ) ? $pmndrs_celestial_time_raw : '12:00';
+		$scene_data['aframePmndrsDayNightCycleEnabled'] = VRodos_Runtime_Settings_Contract::normalize_bool( $json_metadata->aframePmndrsDayNightCycleEnabled ?? false );
+		$pmndrs_day_night_cycle_duration = isset( $json_metadata->aframePmndrsDayNightCycleDurationMinutes ) ? (float) $json_metadata->aframePmndrsDayNightCycleDurationMinutes : 1.0;
+		$scene_data['aframePmndrsDayNightCycleDurationMinutes'] = max( 0.25, min( 1440.0, $pmndrs_day_night_cycle_duration ) );
 		$scene_data['aframePmndrsSunElevationDeg'] = isset( $json_metadata->aframePmndrsSunElevationDeg ) ? (float) $json_metadata->aframePmndrsSunElevationDeg : 62;
 		$scene_data['aframePmndrsSunAzimuthDeg'] = isset( $json_metadata->aframePmndrsSunAzimuthDeg ) ? (float) $json_metadata->aframePmndrsSunAzimuthDeg : 20;
 		$scene_data['aframePmndrsSunDistance'] = isset( $json_metadata->aframePmndrsSunDistance ) ? (float) $json_metadata->aframePmndrsSunDistance : 5200;

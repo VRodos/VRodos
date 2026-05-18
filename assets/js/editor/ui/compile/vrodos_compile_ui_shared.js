@@ -49,6 +49,8 @@ VRodosCompileUI.Shared = (function () {
         celestialTimePreset: contractDefault('pmndrsCelestialTimePreset', 'midday'),
         celestialDate: contractDefault('pmndrsCelestialDate', '2026-06-21'),
         celestialUtcTime: contractDefault('pmndrsCelestialUtcTime', '12:00'),
+        dayNightCycleEnabled: contractDefault('pmndrsDayNightCycleEnabled', false),
+        dayNightCycleDurationMinutes: contractDefault('pmndrsDayNightCycleDurationMinutes', 1.0),
         sunElevationDeg: contractDefault('pmndrsSunElevationDeg', 62),
         sunAzimuthDeg: contractDefault('pmndrsSunAzimuthDeg', 20),
         sunDistance: contractDefault('pmndrsSunDistance', 5200),

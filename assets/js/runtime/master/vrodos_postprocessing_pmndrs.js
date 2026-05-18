@@ -1118,6 +1118,11 @@
         }
     }
 
+    H.syncPmndrsAerialPerspectiveEffect = function (camera, atmosphereConfig) {
+        const config = atmosphereConfig || ((typeof this.getPmndrsAtmosphereConfig === 'function') ? this.getPmndrsAtmosphereConfig() : null);
+        syncPmndrsAerialPerspectiveEffect(this, camera || (this.el ? this.el.camera : null), config);
+    };
+
     /**
      * Lazily build the EffectComposer on the first intercepted render call.
      * Deferring construction until the first real frame guarantees that

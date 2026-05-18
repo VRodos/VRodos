@@ -287,6 +287,18 @@
             "default": "12:00",
             "pattern": "^\\d{2}:\\d{2}$"
         },
+        "pmndrsDayNightCycleEnabled": {
+            "metadataKey": "aframePmndrsDayNightCycleEnabled",
+            "type": "boolean",
+            "default": false
+        },
+        "pmndrsDayNightCycleDurationMinutes": {
+            "metadataKey": "aframePmndrsDayNightCycleDurationMinutes",
+            "type": "number",
+            "default": 1,
+            "min": 0.25,
+            "max": 1440
+        },
         "pmndrsSunElevationDeg": {
             "metadataKey": "aframePmndrsSunElevationDeg",
             "type": "number",

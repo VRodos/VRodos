@@ -615,6 +615,17 @@
 										</label>
 									</div>
 
+									<div class="tw-grid tw-grid-cols-2 tw-gap-3 tw-items-end">
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-pb-1">
+											<input id="compilePmndrsDayNightCycleToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Autoplay a looping Takram sun, moon, stars, and sky cycle from the authored UTC date/time.">Day / Night Cycle</span>
+										</label>
+										<label class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Cycle Minutes</span>
+											<input id="compilePmndrsDayNightCycleDurationInput" type="number" min="0.25" max="1440" step="0.25" value="1" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1">
+										</label>
+									</div>
+
 									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
 										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 											<input id="compilePmndrsGeospatialToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
