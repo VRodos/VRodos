@@ -277,6 +277,8 @@
 - Verification: Phase 145 JS syntax checks passed for renderer lifecycle, environment bootstrap, and performance profile; targeted composer/FXAA scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 - 2026-05-18: Phase 146 render-loop timer lifecycle and diagnostics cleanup implemented.
 - Verification: Phase 146 JS syntax checks passed for render loop and diagnostics; targeted render-loop timer/diagnostics scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
+- 2026-05-18: Phase 147 transform GUI mousemove throttling cleanup implemented.
+- Verification: Phase 147 JS syntax checks passed for editor initializer, canvas events, hierarchy viewer, and pointer-lock controls; targeted transform GUI sync call scan passed; `git diff --check` passed; `npm.cmd run lint` passed with existing warnings only.
 
 ## Goals
 
@@ -474,6 +476,7 @@ assets/js/editor/
 - Done: Remove the disabled editor `OutlinePass` from the render composer and cache cel-outline source meshes per object so repeated selection does not re-walk stable object subtrees.
 - Done: Remove the unused editor EffectComposer/RenderPass/FXAA setup and related resize/profile updates now that the editor render path is direct WebGL plus cel-outline meshes.
 - Done: Make render-loop stop paths clear pending loading-render timers when rendering is paused/stopped, and expose active RAF/timer timestamps in editor diagnostics snapshots.
+- Done: Gate transform GUI syncs from canvas `mousemove` to active transform dragging only, while making reset/pointer-lock callers request explicit forced syncs.
 - Continue reducing remaining non-serialization subtree traversals where focused modules can own explicit caches.
 
 ## Test Plan

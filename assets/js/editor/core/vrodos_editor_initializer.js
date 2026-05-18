@@ -281,13 +281,17 @@ function initVrodosEditor() {
  * Update the translation and rotation input texts from transform controls
  * (Restored from legacy template logic)
  */
-VRODOS.editor.updatePositionsAndControls = function() {
+VRODOS.editor.updatePositionsAndControls = function(options) {
+    const opts = options || {};
     const selectedObject = VRODOS.editor.transforms.getRealObject();
 
     if (!selectedObject || !VRODOS.ui.controlInterface) return;
     if ((window.vrodosGuiKeyboardEditing || 0) > 0) return;
 
-    if (VRODOS.editor.transforms.isDragging() &&
+    const isDragging = VRODOS.editor.transforms.isDragging();
+    if (!opts.force && !isDragging) return;
+
+    if (isDragging &&
         typeof VRODOS.editor.transforms.syncFromControls === 'function') {
         VRODOS.editor.transforms.syncFromControls();
     }

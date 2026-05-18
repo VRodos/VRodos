@@ -77,6 +77,14 @@ VRODOS.api = VRODOS.api || {};
         event.preventDefault();
     }
 
+    function isTransformDragging() {
+        return Boolean(
+            VRODOS.editor.transforms &&
+            isFunction(VRODOS.editor.transforms.isDragging) &&
+            VRODOS.editor.transforms.isDragging()
+        );
+    }
+
     function bindEditorDropTargets(mainDiv) {
         bindEventIfAvailable(mainDiv, 'drop', VRODOS.ui.onDrop, false);
         bindEventIfAvailable(mainDiv, 'dragover', VRODOS.ui.onDragOver, false);
@@ -84,7 +92,7 @@ VRODOS.api = VRODOS.api || {};
 
     function bindCanvasPointerEvents(canvas3D) {
         canvas3D.addEventListener('mousemove', () => {
-            if (isFunction(VRODOS.editor.updatePositionsAndControls)) {
+            if (isTransformDragging() && isFunction(VRODOS.editor.updatePositionsAndControls)) {
                 VRODOS.editor.updatePositionsAndControls();
             }
         });

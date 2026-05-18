@@ -104,7 +104,7 @@ VRODOS.ui = VRODOS.ui || {};
         }
 
         if (typeof VRODOS.editor.updatePositionsAndControls === 'function') {
-            VRODOS.editor.updatePositionsAndControls();
+            VRODOS.editor.updatePositionsAndControls({ force: true });
         }
         if (typeof VRODOS.ui.setHierarchyViewer === 'function') {
             VRODOS.ui.setHierarchyViewer();

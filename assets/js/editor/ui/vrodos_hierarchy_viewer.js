@@ -118,7 +118,7 @@ function _hierarchySyncResetSideEffects(obj) {
     }
 
     if (_hierarchyGetSelectedObject() === obj && typeof VRODOS.editor.updatePositionsAndControls === 'function') {
-        VRODOS.editor.updatePositionsAndControls();
+        VRODOS.editor.updatePositionsAndControls({ force: true });
     }
     if (VRODOS.editor.sceneRegistry && typeof VRODOS.editor.sceneRegistry.invalidateBounds === 'function') {
         VRODOS.editor.sceneRegistry.invalidateBounds(obj);
