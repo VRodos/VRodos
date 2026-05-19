@@ -21,7 +21,8 @@ Our current state-of-the-art rendering pipeline is the result of a continuous ev
 2. **Post-Processing with PMNDRS**: We wanted advanced post-processing effects (like bloom, SSAO, tone mapping, and LUTs). Default Three.js and A-Frame did not support these optimally or efficiently, so we integrated **PMNDRS `postprocessing`**, a highly optimized screen-space effects engine.
 3. **Dynamic Lighting with Takram**: We needed realistic, dynamic atmospheric lighting—a physical sky, sun, moon, and a day-night cycle. We integrated **Takram**, which provided these capabilities while elegantly sharing our existing Three.js renderer.
 4. **Optimized Collisions with BVH**: We required physics and collisions for navigation. Full rigid-body physics engines like Rapier, or custom Three.js raycasting, were too computationally expensive for complex scenes. We adopted **`three-mesh-bvh`**, which massively accelerates static collision queries for walkable navigation.
-5. **On-the-Fly Asset Conversion**: A-Frame natively supports only the `.glb` format for optimal performance. However, our users uploaded assets in various 3D formats (OBJ, FBX, etc.). To solve this, we implemented a server-side **Blender CLI pipeline** to automatically convert all uploaded 3D files into optimized `.glb` format on the fly during the upload process.
+5. **Multiplayer Collaborative Worlds**: We wanted our worlds to be collaborative and multiplayer. To achieve this, we integrated **Networked-Aframe**, backed by a dedicated Node/WebRTC server (`services/networked-aframe/`). To keep single-player scenes lightweight, multiplayer is an explicit runtime mode that only loads networking components when explicitly requested by the scene's metadata.
+6. **On-the-Fly Asset Conversion**: A-Frame natively supports only the `.glb` format for optimal performance. However, our users uploaded assets in various 3D formats (OBJ, FBX, etc.). To solve this, we implemented a server-side **Blender CLI pipeline** to automatically convert all uploaded 3D files into optimized `.glb` format on the fly during the upload process.
 
 ### Runtime Architecture Diagram
 
@@ -45,6 +46,7 @@ graph TD
         Three --> PMNDRS[PMNDRS Post-Processing]
         Three --> Takram[Takram Atmosphere & Lighting]
         Three --> BVH[three-mesh-bvh Collision]
+        AFrame --> NAF[Networked-Aframe Multiplayer]
     end
 ```
 
@@ -74,7 +76,7 @@ The important architectural rule is that these generated bundles must use A-Fram
 
 Runtime scripts are selected by scene metadata, not by hardcoded script tags in the template.
 
-`VRodos_Compiler_Runtime_Script_Planner` starts with required scene components, optionally adds networked components, always adds the core runtime, then adds feature-specific chunks:
+`VRodos_Compiler_Runtime_Script_Planner` starts with required scene components, always adds the core runtime, and then conditionally adds feature-specific chunks. For example, multiplayer is treated as an explicit runtime mode (`networked` vs `single-player`). When networking is enabled in the scene metadata, the planner injects `networked-components` into the compiled client. This ensures that single-player scenes don't pay the overhead of multiplayer components. Other conditionally loaded features include:
 
 - FPS meter when enabled;
 - `collision-bvh-vendor` when navigation mode resolves to `walkable`;
