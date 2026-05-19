@@ -784,6 +784,19 @@
         return PMNDRS_CALIBRATED_LIGHTING_ANCHORS[preset] ? preset : null;
     }
 
+    function shouldUsePmndrsDynamicIndirectProfile(config, skyTimePreset, sunElevation) {
+        if (!config || typeof sunElevation !== 'number') {
+            return false;
+        }
+        if (isPmndrsDynamicCelestialConfig(config)) {
+            return true;
+        }
+        if (config.celestialMode !== 'preset-time') {
+            return false;
+        }
+        return Boolean(PMNDRS_CALIBRATED_LIGHTING_ANCHORS[skyTimePreset]);
+    }
+
     function getPmndrsCalibratedCelestialLightingProfile(config) {
         if (!config || typeof config.sunElevationDeg !== 'number') {
             return null;
@@ -1122,12 +1135,12 @@
         const sunElevation = atmosphereConfig && typeof atmosphereConfig.sunElevationDeg === 'number'
             ? atmosphereConfig.sunElevationDeg
             : null;
-        const calibratedProfile = getPmndrsCalibratedCelestialLightingProfile(atmosphereConfig);
 
-        if (isPmndrsDynamicCelestialConfig(atmosphereConfig) && sunElevation !== null) {
+        if (shouldUsePmndrsDynamicIndirectProfile(atmosphereConfig, skyTimePreset, sunElevation)) {
             return getPmndrsDynamicIndirectLightingProfile(atmosphereConfig, sunElevation);
         }
 
+        const calibratedProfile = getPmndrsCalibratedCelestialLightingProfile(atmosphereConfig);
         if (calibratedProfile) {
             return {
                 skyLightIntensity: calibratedProfile.skyLightIntensity,
