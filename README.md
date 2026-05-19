@@ -139,7 +139,7 @@ High-quality compiled desktop scenes keep the PMNDRS/Takram look while avoiding 
 - `shadowUpdateMode` defaults to `static`, which updates shadow maps on load, delayed reveal, and explicit dirty events instead of every frame.
 - `dynamic` shadow updates remain available for authored scenes with moving shadow casters.
 - Visible compiled geometry casts and receives shadows by default for realism. Walkable/navmesh ground is receiver-only to avoid large-terrain self-shadow banding; the performance guardrail is cached/static shadow-map updates, not making authored objects shadowless.
-- PMNDRS/Takram Horizon scenes use Takram physical `SunDirectionalLight` / `SkyLightProbe` by default when available, with a separate PBR indirect-light profile and low-cost hemisphere ground/sky fill for A-Frame assets. Flat media surfaces get a narrowly scoped readability material treatment; `?vrodos_debug_helper_horizon_lights=1` temporarily restores the legacy helper-light path for comparison.
+- PMNDRS/Takram Horizon scenes use Takram physical `SunDirectionalLight` / `SkyLightProbe` when available, with a separate PBR indirect-light profile and low-cost hemisphere ground/sky fill for A-Frame assets. Flat media surfaces get a narrowly scoped readability material treatment.
 - The PMNDRS AO budget keeps the final color buffer full-resolution while scaling the NormalPass/SSAO workload per AO preset.
 - `?vrodos_debug_shadow_perf=1` shows live shadow cache diagnostics.
 - `scripts/profile-master-client.mjs --disable-fps-meter` appends `vrodos_debug_disable_fps_meter=1` so StatsGL does not initialize before profiling.
@@ -157,7 +157,6 @@ Most-used flags:
 - `vrodos_debug_disable_fps_meter=1`: prevents StatsGL/FPS meter initialization before it can wrap `renderer.render`; use for timing captures.
 - `vrodos_debug_shadow_perf=1`: shows shadow mode, `autoUpdate`, dirty reason, shadow update count, caster/receiver counts, and shadow-light counts.
 - `vrodos_debug_nav_perf=1`: shows navigation/collision target counts and tick timing.
-- `vrodos_debug_helper_horizon_lights=1`: forces the legacy helper-light path for A/B comparison; startup logs should change `lightSource=takram` to `lightSource=helper`.
 - `vrodos_debug_pmndrs_horizon_verbose=1`: logs verbose PMNDRS/Takram horizon diagnostics.
 - `vrodos_spector=1`: enables the runtime Spector capture hook when the Spector debug helper is present. Prefer `scripts/profile-master-client.mjs --spector` for repeatable captures.
 
@@ -231,7 +230,7 @@ Takram support in VRodos currently means atmosphere and sky integration, not clo
 - Takram LensFlareEffect for the Horizon sun
 - Takram correct-altitude toggle
 - atmospheric tuning for sun position, scattering, ground, and aerial-strength behavior
-- Takram physical light ownership for PMNDRS/Takram Horizon scenes, with helper lights kept as a debug fallback
+- Takram physical light ownership for PMNDRS/Takram Horizon scenes, with an internal safety fallback only if Takram light-source classes are unavailable
 - local Horizon keeps Takram procedural ground disabled so authored walkable-surface/navmesh geometry remains the actual scene ground
 
 ### Not shipped yet

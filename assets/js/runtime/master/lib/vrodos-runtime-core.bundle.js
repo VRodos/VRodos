@@ -4652,9 +4652,6 @@
       return shouldUsePmndrsTakramHorizonPath(self) && (readPmndrsAtmosphereBool(self, "pmndrsAerialPerspectiveEnabled", false) || hasPmndrsDebugFlag("enablePmndrsHorizonAerial", "vrodos_debug_enable_pmndrs_horizon_aerial"));
     }
     function shouldUsePmndrsTakramPhysicalHorizonLights() {
-      if (hasPmndrsDebugFlag("useHelperHorizonLights", "vrodos_debug_helper_horizon_lights")) {
-        return false;
-      }
       return true;
     }
     function formatVectorPosition(vector, distance, minY) {

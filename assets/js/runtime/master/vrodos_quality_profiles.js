@@ -2606,10 +2606,6 @@
     }
 
     function shouldUsePmndrsTakramPhysicalHorizonLights() {
-        if (hasPmndrsDebugFlag('useHelperHorizonLights', 'vrodos_debug_helper_horizon_lights')) {
-            return false;
-        }
-
         return true;
     }
 
@@ -3129,11 +3125,10 @@
             return config;
         }
 
-        // Local Horizon scenes keep Takram's own sky sun enabled and use the
-        // stable VRodos helper-light path for A-Frame PBR/material-authored
-        // content. Takram's physical light sources remain available behind a
-        // debug flag; the Basic Storybook post-process look uses MeshBasic
-        // materials and is not a drop-in match for shipped GLBs.
+        // Local Horizon scenes keep Takram's own sky sun enabled and use
+        // Takram light sources when their LUTs are ready. The stable VRodos
+        // helper-light path remains an internal fallback for missing Takram
+        // resources, not an author-facing render mode.
         config.groundEnabled = false;
         config.takramSunEnabled = true;
         config.useTakramLightSources = shouldUsePmndrsTakramPhysicalHorizonLights();

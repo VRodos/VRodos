@@ -53,7 +53,8 @@ class VRodos_Compiler_Scene_Settings {
 		$post_fx_enabled_bool = VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePostFXEnabled ?? false );
 		$post_fx_engine       = ( $post_fx_enabled_bool && ( $metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ) ? 'pmndrs' : 'legacy';
 		$horizon_preset       = $this->enum_value( $metadata->aframeHorizonSkyPreset ?? 'natural', [ 'natural', 'clear', 'crisp' ], 'natural' );
-		$horizon_defaults     = VRodos_Runtime_Settings_Contract::horizon_helper_defaults( $horizon_preset );
+		$horizon_lighting_preset = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsHorizonLightingPreset', $horizon_preset );
+		$horizon_defaults     = VRodos_Runtime_Settings_Contract::horizon_helper_defaults( 'custom' === $horizon_lighting_preset ? $horizon_preset : $horizon_lighting_preset );
 		$atmosphere_preset    = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmospherePreset' );
 		$celestial_mode       = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCelestialMode' );
 		$celestial_time       = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCelestialTimePreset' );
@@ -175,6 +176,7 @@ class VRodos_Compiler_Scene_Settings {
 			'pmndrsAbsorptionScale'              => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAbsorptionScale' ),
 			'pmndrsMoonEnabled'                  => $moon_enabled ? 'true' : 'false',
 			'pmndrsStarsEnabled'                 => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsStarsEnabled' ),
+			'pmndrsHorizonLightingPreset'        => $horizon_lighting_preset,
 			'pmndrsHorizonKeyLightIntensity'     => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsHorizonKeyLightIntensity', $horizon_defaults['keyLightIntensity'] ),
 			'pmndrsHorizonFillLightIntensity'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsHorizonFillLightIntensity', $horizon_defaults['fillLightIntensity'] ),
 		];

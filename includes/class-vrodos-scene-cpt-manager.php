@@ -338,9 +338,16 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsMoonEnabled'] = $json_metadata->aframePmndrsMoonEnabled ?? false;
 		$pmndrs_stars_enabled_raw = $json_metadata->aframePmndrsStarsEnabled ?? 'auto';
 		$scene_data['aframePmndrsStarsEnabled'] = in_array( $pmndrs_stars_enabled_raw, [ 'auto', 'off', 'on' ], true ) ? $pmndrs_stars_enabled_raw : 'auto';
-		$scene_data['aframePmndrsHorizonLightingPreset'] = isset( $json_metadata->aframePmndrsHorizonLightingPreset )
-			? $json_metadata->aframePmndrsHorizonLightingPreset
-			: $scene_data['aframeHorizonSkyPreset'];
+		$scene_data['aframePmndrsHorizonLightingPreset'] = VRodos_Runtime_Settings_Contract::normalize_metadata_value(
+			$json_metadata,
+			'pmndrsHorizonLightingPreset',
+			$scene_data['aframeHorizonSkyPreset']
+		);
+		$pmndrs_horizon_helper_defaults = VRodos_Runtime_Settings_Contract::horizon_helper_defaults(
+			'custom' === $scene_data['aframePmndrsHorizonLightingPreset']
+				? (string) $scene_data['aframeHorizonSkyPreset']
+				: (string) $scene_data['aframePmndrsHorizonLightingPreset']
+		);
 		$scene_data['aframePmndrsHorizonKeyLightIntensity'] = isset( $json_metadata->aframePmndrsHorizonKeyLightIntensity ) ? (float) $json_metadata->aframePmndrsHorizonKeyLightIntensity : $pmndrs_horizon_helper_defaults['keyLightIntensity'];
 		$scene_data['aframePmndrsHorizonFillLightIntensity'] = isset( $json_metadata->aframePmndrsHorizonFillLightIntensity ) ? (float) $json_metadata->aframePmndrsHorizonFillLightIntensity : $pmndrs_horizon_helper_defaults['fillLightIntensity'];
 		$scene_data['backgroundPresetOption'] = $json_metadata->backgroundPresetOption ?? '1';

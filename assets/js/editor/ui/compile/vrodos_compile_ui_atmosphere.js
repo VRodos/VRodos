@@ -325,6 +325,29 @@ VRodosCompileUI.Atmosphere = (function () {
         }
     }
 
+    function isLocalPmndrsHorizonSelected(controls) {
+        const scene = VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir.scene : null;
+        const postFxEngine = controls && controls.postFxEngine ? controls.postFxEngine.value : '';
+        return Boolean(scene && parseInt(scene.backgroundStyleOption, 10) === 0 && postFxEngine === 'pmndrs');
+    }
+
+    function syncLocalHorizonGroundControls(controls, isEnabled) {
+        const localHorizon = isEnabled && isLocalPmndrsHorizonSelected(controls);
+        const title = localHorizon
+            ? 'Local Horizon uses authored VRodos geometry for ground and bounce; Takram atmosphere ground stays off.'
+            : '';
+
+        if (controls.pmndrsGround) {
+            controls.pmndrsGround.disabled = localHorizon || controls.pmndrsGround.disabled;
+            controls.pmndrsGround.checked = localHorizon ? false : controls.pmndrsGround.checked;
+            controls.pmndrsGround.title = title;
+        }
+        if (controls.pmndrsGroundAlbedo) {
+            controls.pmndrsGroundAlbedo.disabled = localHorizon || controls.pmndrsGroundAlbedo.disabled;
+            controls.pmndrsGroundAlbedo.title = title;
+        }
+    }
+
     function setAdvancedState(controls, enabled) {
         const isEnabled = enabled === true;
         if (controls.pmndrsAtmosphereAdvanced) {
@@ -398,6 +421,7 @@ VRodosCompileUI.Atmosphere = (function () {
         if (controls.pmndrsDayNightCycleDuration) {
             controls.pmndrsDayNightCycleDuration.disabled = !dayNightCycleEnabled;
         }
+        syncLocalHorizonGroundControls(controls, isEnabled);
 
         const geospatialEnabled = isEnabled && controls.pmndrsGeospatial && controls.pmndrsGeospatial.checked === true;
         [
@@ -467,7 +491,9 @@ VRodosCompileUI.Atmosphere = (function () {
 
         VRODOS.editor.envir.scene.aframePmndrsTransmittanceEnabled = controls.pmndrsTransmittance ? controls.pmndrsTransmittance.checked === true : true;
         VRODOS.editor.envir.scene.aframePmndrsInscatterEnabled = controls.pmndrsInscatter ? controls.pmndrsInscatter.checked === true : true;
-        VRODOS.editor.envir.scene.aframePmndrsGroundEnabled = controls.pmndrsGround ? controls.pmndrsGround.checked === true : true;
+        VRODOS.editor.envir.scene.aframePmndrsGroundEnabled = isLocalPmndrsHorizonSelected(controls)
+            ? false
+            : (controls.pmndrsGround ? controls.pmndrsGround.checked === true : true);
         VRODOS.editor.envir.scene.aframePmndrsGroundAlbedo = Shared.normalizeColorHex(controls.pmndrsGroundAlbedo ? controls.pmndrsGroundAlbedo.value : d.groundAlbedo, d.groundAlbedo);
 
         VRODOS.editor.envir.scene.aframePmndrsRayleighScale = Shared.clampNumber(controls.pmndrsRayleighScale ? controls.pmndrsRayleighScale.value : d.rayleighScale, 0.1, 3, d.rayleighScale);

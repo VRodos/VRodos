@@ -710,7 +710,7 @@
 											</div>
 										</div>
 
-										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<div class="tw-grid tw-grid-cols-1 tw-gap-3">
 											<label class="tw-form-control tw-w-full">
 												<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Horizon Lighting Preset</span>
 												<select id="compilePmndrsHorizonLightingPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
@@ -720,9 +720,6 @@
 													<option value="custom">Custom</option>
 												</select>
 											</label>
-											<div class="tw-flex tw-items-end tw-text-[10px] tw-leading-relaxed tw-text-slate-400">
-												Visible helper-light presets for the Takram Horizon path. Manual slider edits switch this to Custom.
-											</div>
 										</div>
 
 										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
@@ -753,7 +750,7 @@
 											</label>
 											<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 												<input id="compilePmndrsGroundToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Ground</span>
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Atmosphere Ground</span>
 											</label>
 											<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 												<input id="compilePmndrsMoonToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
@@ -798,7 +795,7 @@
 												<input id="compilePmndrsAbsorptionScaleSlider" type="range" min="0.2" max="2.5" step="0.01" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 											</div>
 											<label class="tw-form-control">
-												<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Ground Albedo</span>
+												<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Atmosphere Ground Albedo</span>
 												<input id="compilePmndrsGroundAlbedoInput" type="color" value="#f0e6d6" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1 tw-h-8 tw-p-1">
 											</label>
 										</div>

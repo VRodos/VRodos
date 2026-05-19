@@ -155,6 +155,7 @@ AFRAME.registerComponent('scene-settings', {
         pmndrsAbsorptionScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsAbsorptionScale", "0.94") },
         pmndrsMoonEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsMoonEnabled", "0") },
         pmndrsStarsEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsStarsEnabled", "auto") },
+        pmndrsHorizonLightingPreset: { type: "string", default: vrodosSceneSettingDefault("pmndrsHorizonLightingPreset", "natural") },
         pmndrsHorizonKeyLightIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsHorizonKeyLightIntensity", "1.15") },
         pmndrsHorizonFillLightIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsHorizonFillLightIntensity", "0.45") },
     },

@@ -15,7 +15,7 @@ Presentation mode is part of the rendering contract:
 
 - Inline desktop and desktop fullscreen use the same eligible post-FX path.
 - Real immersive WebXR is detected through `renderer.xr.isPresenting`.
-- In immersive XR, XR-unsafe screen-space composer passes can fall back to direct stereo rendering while scene-owned visuals remain active: Horizon/Takram sky, Takram/helper lights, fog, exposure/tone mapping, environment maps, and material profiles.
+- In immersive XR, XR-unsafe screen-space composer passes can fall back to direct stereo rendering while scene-owned visuals remain active: Horizon/Takram sky, scene-owned lights, fog, exposure/tone mapping, environment maps, and material profiles.
 
 ## 2. File Organization
 
@@ -345,10 +345,10 @@ Runtime behavior:
 - `manual` preserves the existing sun elevation/azimuth slider behavior.
 - `preset-time` resolves the selected time preset through the existing Takram atmosphere look defaults before building local and ECEF sun/moon directions.
 - The night preset turns the moon path on through `pmndrsMoonEnabled` unless the author explicitly overrides it in the compile dialog.
-- Horizon PMNDRS night uses Takram physical light sources when available; if the helper fallback is forced, it uses dim cool moonlight instead of daytime Horizon helper-light intensities.
+- Horizon PMNDRS night uses Takram physical light sources when available, with dim cool moonlight instead of daytime Horizon key-light intensity.
 - HDR/scene-probe env-map intensity is scaled down at night without changing authored material roughness or metalness.
-- Horizon uses Takram physical `SunDirectionalLight` and `SkyLightProbe` by default for PMNDRS/Takram scenes when the Takram lighting resources are ready. Because Takram's documented light-source mode approximates sky irradiance at one point and the VRodos local-Horizon path disables Takram ground rendering, VRodos applies a separate sun-elevation-based PBR indirect profile: boosted `SkyLightProbe` scale plus a low-cost hemisphere sky/ground fill. This preserves directional sun/shadow contrast while keeping shadow-side GLB surfaces readable.
-- The legacy helper-light path remains as a comparison and fallback path behind `?vrodos_debug_helper_horizon_lights=1`; startup diagnostics report `lightSource=takram` or `lightSource=helper`.
+- Horizon uses one PMNDRS/Takram light-source path for local PBR scenes. Because Takram's documented light-source mode approximates sky irradiance at one point and the VRodos local-Horizon path disables Takram ground rendering, VRodos applies a separate sun-elevation-based PBR indirect profile: `SkyLightProbe` plus a low-cost hemisphere sky/ground fill and a small ambient floor. This preserves directional sun/shadow contrast while keeping shadow-side GLB surfaces readable.
+- The old helper-light debug mode is not exposed as a runtime option. If Takram light-source classes are unavailable, the runtime can use an internal safety fallback only to avoid a black scene.
 - Horizon `AerialPerspectiveEffect` is constrained to haze/transmittance in the current PBR path so it does not re-light the scene as albedo.
 - The future Takram-vanilla target is an explicit `post-process-albedo` lighting mode, documented in `TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
 
@@ -398,7 +398,6 @@ Debug query flags:
 - `vrodos_debug_dynamic_shadows=1`: forces dynamic shadow-map updates for comparison against cached static shadows.
 - `vrodos_debug_disable_shadows=1`: disables shadows to isolate total shadow cost.
 - `vrodos_debug_nav_perf=1`: shows navigation/collision target counts and tick timing.
-- `vrodos_debug_helper_horizon_lights=1`: forces the legacy Horizon helper-light path for A/B comparison; startup logs should change `lightSource=takram` to `lightSource=helper`.
 - `vrodos_debug_pmndrs_horizon=1`: logs PMNDRS/Takram horizon diagnostics when the diagnostic signature changes.
 - `vrodos_debug_pmndrs_horizon_verbose=1`: logs verbose PMNDRS/Takram horizon diagnostics.
 - `vrodos_debug_enable_pmndrs_horizon_aerial=1`: enables the experimental Horizon aerial perspective path for visual checks.
@@ -461,7 +460,6 @@ If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`,
 
 These are backlog items, not current implementation requirements:
 
-- Explicit `pmndrsHorizonLightingMode` with `helper`, `light-source`, and `post-process-albedo`.
 - Desktop-only Takram-vanilla `post-process-albedo` mode.
 - Continue validating native `POSTPROCESSING.SSAOEffect` across broader Horizon and non-Horizon scenes.
 - Track A-Frame r184 and run a WebGPU compatibility spike after the shared runtime upgrade is available.
