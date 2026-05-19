@@ -874,6 +874,8 @@ ${selectedSummaries.join("\n")}`);
       self.pmndrsComposer = null;
       self.pmndrsRenderPass = null;
       self.pmndrsEffectPass = null;
+      self.pmndrsChromaticAberrationPass = null;
+      self.pmndrsSmaaPass = null;
       self.pmndrsLensFlarePass = null;
       self.pmndrsNativeNormalPass = null;
       self.pmndrsNativeSsaoEffect = null;
@@ -1192,6 +1194,7 @@ ${selectedSummaries.join("\n")}`);
         }
       }
       this.pmndrsChromaticAberrationEffect = null;
+      this.pmndrsChromaticAberrationPass = null;
       if (readPmndrsBool(this, "pmndrsChromaticAberrationEnabled")) {
         try {
           const chromaOffset = readPmndrsNumber(this, "pmndrsChromaticAberrationOffset", 0, 6e-3, 15e-4);
@@ -1200,17 +1203,16 @@ ${selectedSummaries.join("\n")}`);
             radialModulation: true,
             modulationOffset: 0.25
           });
-          effects.push(this.pmndrsChromaticAberrationEffect);
         } catch (err) {
           console.warn("[VRodos] pmndrs ChromaticAberrationEffect failed, skipping:", err);
           this.pmndrsChromaticAberrationEffect = null;
         }
       }
       const smaaPreset = getPmndrsSmaaPreset(this, PP);
+      this.pmndrsSmaaPass = null;
       if (smaaPreset !== null) {
         try {
           this.pmndrsSmaaEffect = new PP.SMAAEffect({ preset: smaaPreset });
-          effects.push(this.pmndrsSmaaEffect);
           this._pmndrsAppliedSmaaPreset = smaaPreset;
         } catch (err) {
           console.warn("[VRodos] pmndrs SMAAEffect construction failed, continuing without SMAA:", err);
@@ -1258,6 +1260,29 @@ ${selectedSummaries.join("\n")}`);
           } catch (e) {
           }
           return false;
+        }
+      }
+      if (this.pmndrsChromaticAberrationEffect) {
+        try {
+          this.pmndrsChromaticAberrationPass = new PP.EffectPass(camera, this.pmndrsChromaticAberrationEffect);
+          composer.addPass(this.pmndrsChromaticAberrationPass);
+        } catch (err) {
+          console.warn("[VRodos] pmndrs ChromaticAberrationEffect pass failed, skipping:", err);
+          disposeRuntimeResource(this.pmndrsChromaticAberrationPass || this.pmndrsChromaticAberrationEffect);
+          this.pmndrsChromaticAberrationEffect = null;
+          this.pmndrsChromaticAberrationPass = null;
+        }
+      }
+      if (this.pmndrsSmaaEffect) {
+        try {
+          this.pmndrsSmaaPass = new PP.EffectPass(camera, this.pmndrsSmaaEffect);
+          composer.addPass(this.pmndrsSmaaPass);
+        } catch (err) {
+          console.warn("[VRodos] pmndrs SMAAEffect pass failed, continuing without SMAA:", err);
+          disposeRuntimeResource(this.pmndrsSmaaPass || this.pmndrsSmaaEffect);
+          this.pmndrsSmaaEffect = null;
+          this.pmndrsSmaaPass = null;
+          this._pmndrsAppliedSmaaPreset = null;
         }
       }
       this.pmndrsComposer = composer;
@@ -1309,6 +1334,12 @@ ${selectedSummaries.join("\n")}`);
           self.pmndrsRenderPass.mainCamera = camera;
           if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== "undefined") {
             self.pmndrsEffectPass.mainCamera = camera;
+          }
+          if (self.pmndrsChromaticAberrationPass && typeof self.pmndrsChromaticAberrationPass.mainCamera !== "undefined") {
+            self.pmndrsChromaticAberrationPass.mainCamera = camera;
+          }
+          if (self.pmndrsSmaaPass && typeof self.pmndrsSmaaPass.mainCamera !== "undefined") {
+            self.pmndrsSmaaPass.mainCamera = camera;
           }
           if (self.pmndrsLensFlarePass && typeof self.pmndrsLensFlarePass.mainCamera !== "undefined") {
             self.pmndrsLensFlarePass.mainCamera = camera;

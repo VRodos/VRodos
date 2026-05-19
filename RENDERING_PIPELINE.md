@@ -310,8 +310,8 @@ Current PMNDRS ordering:
 ```text
 RenderPass
   -> optional NormalPass for native SSAO
-  -> optional standalone LensFlareEffect pass
-  -> fused EffectPass:
+  -> optional standalone Takram sun LensFlareEffect pass
+  -> primary EffectPass:
        optional Takram AerialPerspectiveEffect for non-Horizon or Horizon aerial-haze path
        SSAOEffect
        BloomEffect
@@ -321,8 +321,8 @@ RenderPass
        LUT3DEffect
        VignetteEffect
        NoiseEffect
-       ChromaticAberrationEffect
-       SMAAEffect
+  -> optional standalone ChromaticAberrationEffect pass
+  -> optional standalone SMAAEffect pass
   -> screen
 ```
 
@@ -347,12 +347,12 @@ Native SSAO presets are budgeted so the final color buffer stays full-resolution
 - `balanced`: `resolutionScale: 0.5`, `samples: 12`, `rings: 5`, `radius: 0.06`, `intensity: 1.67`.
 - `strong`: `resolutionScale: 0.75`, `samples: 20`, `rings: 7`, `radius: 0.06`, `intensity: 2.01`.
 
-Takram LensFlareEffect is intentionally not merged into the fused `EffectPass`. It is a convolution effect, so it runs as its own pass when `pmndrsLensFlareEnabled` is true and the Horizon Takram sun is active.
+Takram LensFlareEffect is intentionally not merged into the primary `EffectPass`. It is a convolution effect, so it runs as its own pass when `pmndrsLensFlareEnabled` is true and the Horizon Takram sun is active. Chromatic aberration also runs as a late standalone convolution pass after Takram/tone/color processing, and SMAA runs as the final standalone pass when enabled.
 
 Composer lifecycle:
 
 - `RenderPass` stays first.
-- Fullscreen effects are merged into the fewest practical `EffectPass` instances.
+- Compatible fullscreen effects are merged into the fewest practical `EffectPass` instances; convolution effects stay isolated when PMNDRS cannot merge them safely.
 - Resize flows through the PMNDRS composer/update helpers instead of direct target mutation.
 - Composer, passes, effects, lookup textures, and render targets are disposed through their own lifecycle and the shared runtime resource helper.
 

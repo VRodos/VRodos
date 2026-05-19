@@ -88,7 +88,7 @@ That runtime powers:
 - scene-probe reflections for authored environments
 - a global reflections switch for compiled scenes
 - shadow-aware direct-sun glint suppression for compiled-scene PBR materials
-- PMNDRS/Takram tone mapping, lens flare, and atmosphere controls for desktop compiled scenes
+- PMNDRS/Takram tone mapping, sun lens flare, and atmosphere controls for desktop compiled scenes
 - compiled walkable-surface and static player/world collision workflows
 - static cached desktop shadows where visible compiled geometry casts and receives by default
 
@@ -207,7 +207,7 @@ It currently supports:
 - PMNDRS noise and chromatic aberration controls
 - Takram atmosphere/celestial presets and advanced controls
 - Takram correct-altitude control
-- Takram Horizon sky, sun disk, and lens flare ownership
+- Takram Horizon sky, sun disk, and sun lens flare ownership
 
 Important current limitations:
 
@@ -227,7 +227,7 @@ Takram support in VRodos currently means atmosphere and sky integration, not clo
 - Takram atmosphere resources bundled with the runtime
 - PMNDRS compile-dialog controls for visual atmosphere looks, celestial presets, Takram resource quality, preset intensity, and advanced tuning
 - Takram-driven sky and real sun-disk ownership on the PMNDRS Horizon path
-- Takram LensFlareEffect for the Horizon sun
+- Takram Horizon sun LensFlareEffect
 - Takram correct-altitude toggle
 - atmospheric tuning for sun position, scattering, ground, and aerial-strength behavior
 - Takram physical light ownership for PMNDRS/Takram Horizon scenes, with an internal safety fallback only if Takram light-source classes are unavailable

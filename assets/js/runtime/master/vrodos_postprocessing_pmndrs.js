@@ -2,9 +2,9 @@
  * VRodos pmndrs Post-Processing Pipeline (clean-room sibling to vrodos_postprocessing.js)
  *
  * Uses pmndrs/postprocessing 6.39 (window.POSTPROCESSING, bundled by
- * scripts/build-three-vendor.mjs) to drive an EffectComposer that fuses every
- * supported effect into a single EffectPass for the lowest possible per-frame
- * cost. This module is selected per-scene via the postFXEngine scene-settings
+ * scripts/build-three-vendor.mjs) to drive an EffectComposer that fuses
+ * compatible effects into as few EffectPasses as possible. This module is
+ * selected per-scene via the postFXEngine scene-settings
  * field. See POSTPROCESSING_MIGRATION_PLAN.md §11 for the architectural decision.
  *
  * Effects merged into one EffectPass when their flags are set:
@@ -14,13 +14,13 @@
  *   - LUT3DEffect          (pmndrsLutEnabled)
  *   - VignetteEffect       (postFXVignetteEnabled)
  *   - NoiseEffect          (pmndrsNoiseEnabled)
- *   - ChromaticAberration  (pmndrsChromaticAberrationEnabled)
  *   - ToneMappingEffect    (always, selectable; AGX by default)
- *   - SMAAEffect           (pmndrsAAMode === 'smaa')
  *
  * Effects inserted as standalone pmndrs-compatible passes:
  *   - NormalPass           (ambientOcclusionPreset !== 'off', native SSAO support pass)
  *   - LensFlareEffect      (pmndrsLensFlareEnabled; convolution effects cannot be merged)
+ *   - ChromaticAberration  (pmndrsChromaticAberrationEnabled; late convolution pass)
+ *   - SMAAEffect           (pmndrsAAMode === 'smaa'; final convolution pass)
  *
  * Multisample AA is applied at the composer level when
  * pmndrsAAMode === 'msaa', WebGL2 multisampling is available, and
@@ -1083,6 +1083,8 @@
         self.pmndrsComposer = null;
         self.pmndrsRenderPass = null;
         self.pmndrsEffectPass = null;
+        self.pmndrsChromaticAberrationPass = null;
+        self.pmndrsSmaaPass = null;
         self.pmndrsLensFlarePass = null;
         self.pmndrsNativeNormalPass = null;
         self.pmndrsNativeSsaoEffect = null;
@@ -1452,6 +1454,7 @@
         }
 
         this.pmndrsChromaticAberrationEffect = null;
+        this.pmndrsChromaticAberrationPass = null;
         if (readPmndrsBool(this, 'pmndrsChromaticAberrationEnabled')) {
             try {
                 const chromaOffset = readPmndrsNumber(this, 'pmndrsChromaticAberrationOffset', 0, 0.006, 0.0015);
@@ -1460,7 +1463,6 @@
                     radialModulation: true,
                     modulationOffset: 0.25
                 });
-                effects.push(this.pmndrsChromaticAberrationEffect);
             } catch (err) {
                 console.warn('[VRodos] pmndrs ChromaticAberrationEffect failed, skipping:', err);
                 this.pmndrsChromaticAberrationEffect = null;
@@ -1474,10 +1476,10 @@
         // FXAA stays disabled due the Horizon sun halo artifact it introduced on
         // the pinned r181 stack.
         const smaaPreset = getPmndrsSmaaPreset(this, PP);
+        this.pmndrsSmaaPass = null;
         if (smaaPreset !== null) {
             try {
                 this.pmndrsSmaaEffect = new PP.SMAAEffect({ preset: smaaPreset });
-                effects.push(this.pmndrsSmaaEffect);
                 this._pmndrsAppliedSmaaPreset = smaaPreset;
             } catch (err) {
                 console.warn('[VRodos] pmndrs SMAAEffect construction failed, continuing without SMAA:', err);
@@ -1530,6 +1532,31 @@
                 console.error('[VRodos] pmndrs EffectPass construction failed:', err);
                 try { composer.dispose(); } catch (e) { /* swallow */ }
                 return false;
+            }
+        }
+
+        if (this.pmndrsChromaticAberrationEffect) {
+            try {
+                this.pmndrsChromaticAberrationPass = new PP.EffectPass(camera, this.pmndrsChromaticAberrationEffect);
+                composer.addPass(this.pmndrsChromaticAberrationPass);
+            } catch (err) {
+                console.warn('[VRodos] pmndrs ChromaticAberrationEffect pass failed, skipping:', err);
+                disposeRuntimeResource(this.pmndrsChromaticAberrationPass || this.pmndrsChromaticAberrationEffect);
+                this.pmndrsChromaticAberrationEffect = null;
+                this.pmndrsChromaticAberrationPass = null;
+            }
+        }
+
+        if (this.pmndrsSmaaEffect) {
+            try {
+                this.pmndrsSmaaPass = new PP.EffectPass(camera, this.pmndrsSmaaEffect);
+                composer.addPass(this.pmndrsSmaaPass);
+            } catch (err) {
+                console.warn('[VRodos] pmndrs SMAAEffect pass failed, continuing without SMAA:', err);
+                disposeRuntimeResource(this.pmndrsSmaaPass || this.pmndrsSmaaEffect);
+                this.pmndrsSmaaEffect = null;
+                this.pmndrsSmaaPass = null;
+                this._pmndrsAppliedSmaaPreset = null;
             }
         }
 
@@ -1599,6 +1626,12 @@
                 self.pmndrsRenderPass.mainCamera = camera;
                 if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== 'undefined') {
                     self.pmndrsEffectPass.mainCamera = camera;
+                }
+                if (self.pmndrsChromaticAberrationPass && typeof self.pmndrsChromaticAberrationPass.mainCamera !== 'undefined') {
+                    self.pmndrsChromaticAberrationPass.mainCamera = camera;
+                }
+                if (self.pmndrsSmaaPass && typeof self.pmndrsSmaaPass.mainCamera !== 'undefined') {
+                    self.pmndrsSmaaPass.mainCamera = camera;
                 }
                 if (self.pmndrsLensFlarePass && typeof self.pmndrsLensFlarePass.mainCamera !== 'undefined') {
                     self.pmndrsLensFlarePass.mainCamera = camera;

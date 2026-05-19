@@ -472,7 +472,7 @@
 								<div class="tw-pt-2">
 									<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 										<input id="compilePmndrsLensFlareToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Enable Takram LensFlareEffect in the PMNDRS composer.">Lens Flare</span>
+										<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Enable the Takram Horizon sun LensFlareEffect in the PMNDRS composer.">Sun Lens Flare</span>
 									</label>
 								</div>
 

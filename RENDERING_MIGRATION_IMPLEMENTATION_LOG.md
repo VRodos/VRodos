@@ -83,6 +83,7 @@ The migration from legacy Three.js r173 to the pinned A-Frame master + Three.js 
 - Added PMNDRS-only controls for noise and chromatic aberration.
 - Persisted and serialized the new scene metadata.
 - Added runtime construction through PMNDRS `NoiseEffect` and `ChromaticAberrationEffect`.
+- Kept `ChromaticAberrationEffect` in a late standalone pass and `SMAAEffect` in the final standalone pass so convolution effects do not break the PMNDRS composer or run before Takram/tone/color processing.
 
 ### PMNDRS built-in LUT looks
 
@@ -186,7 +187,8 @@ Manual smoke:
 - Horizon PMNDRS `preset-time/night` with no HDR/scene-probe reflection should have no bright road light streak.
 - Horizon PMNDRS `preset-time/night` with HDR or scene-probe reflection should keep reflections subdued.
 - Horizon PMNDRS midday and sunset with tone mapping modes and exposure `1`, `5`, and `10`.
-- Horizon PMNDRS with lens flare on/off.
+- Horizon PMNDRS with Takram sun lens flare on/off.
+- Horizon PMNDRS with chromatic aberration on, with and without SMAA.
 - Horizon PMNDRS with reflection source `none`.
 - Horizon PMNDRS with default Takram light-source lighting.
 - Immersive XR entry/exit with PMNDRS enabled should bypass the composer and keep stable direct lighting.
