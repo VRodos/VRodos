@@ -49,6 +49,8 @@ Important managers:
 - `VRodos_Asset_Manager`: script/style registration and enqueueing
 - `VRodos_Scene_CPT_Manager`: scene editor data preparation
 - `VRodos_Compiler_Manager`: compiled A-Frame scene generation
+- `VRodos_Compiler_Runtime_Page_Builder`: shared compiled-client assembly path for Master/Simple template loading, DOM setup, scene settings, decoder config, object rendering, diagnostics, and output writing
+- `VRodos_Compiler_Runtime_Manifest` / `VRodos_Compiler_Runtime_Script_Planner`: runtime chunk validation, dependency ordering, and lazy compiled-scene script selection
 - `VRodos_Render_Runtime_Manager`: active runtime/version configuration
 - `VRodos_Asset_CPT_Manager`: thin hook registrar and compatibility facade for asset admin/editor behavior; implementation lives in `includes/asset-cpt/`
 - `VRodos_Asset_Optimization_Manager`: thin hook coordinator for read-only GLB benefit analysis, dashboard actionable assets, admin-side GLB derivative generation, derivative metadata, cache cleanup, and opt-in compile selection; implementation lives in `includes/asset-optimization/`
@@ -65,6 +67,17 @@ The active compiled runtime targets:
 - Takram atmosphere/effects bundle exported as `window.VRODOS_TAKRAM_ATMOSPHERE`
 
 Root `package.json` plus `package-lock.json` are the version source of truth. `npm run build:three` generates `assets/runtime-version-manifest.json`, and `VRodos_Render_Runtime_Manager` reads that manifest.
+
+`assets/runtime-build-manifest.json` is the compiled runtime chunk source of truth. It must validate missing script files, undeclared dependencies, duplicate chunk ordering, and feature coverage. Keep PMNDRS, Takram, collision BVH, FPS meter, and networked bundles lazy: do not include PMNDRS unless PMNDRS post-FX is selected, do not include Takram unless PMNDRS atmosphere is enabled, and do not include networked components in single-player output.
+
+Compiled scenes keep `scene-settings` as the compatibility data contract, but focused runtime behavior lives in A-Frame components/systems:
+
+- `vrodos-render-profile`: renderer, shadows, quality, FPS
+- `vrodos-postfx-router`: legacy vs PMNDRS composer ownership
+- `vrodos-atmosphere`: Takram sky, sun/moon, day-night cycle
+- `vrodos-reflections`: HDR env maps, scene probe, Takram sky PMREM
+
+Runtime defaults for PMNDRS/Takram settings come from `assets/runtime-settings-contract.json` through the generated browser contract script. GPU resources and event listeners created by runtime helpers should be tracked through `window.VRODOSMaster.RuntimeResources` and disposed from A-Frame lifecycle cleanup.
 
 Rendering docs:
 

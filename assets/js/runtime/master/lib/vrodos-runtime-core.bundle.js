@@ -619,6 +619,71 @@
         }
       }
     };
+    window.VRODOS_RUNTIME_SETTINGS_SCHEMA_DEFAULTS = {
+      "runtimeMode": "single-player",
+      "postFXColorEnabled": "0",
+      "navigationMode": "walkable",
+      "shadowUpdateMode": "static",
+      "flatMediaShadowCasting": "1",
+      "pmndrsAAMode": "inherit",
+      "pmndrsAAPreset": "inherit",
+      "pmndrsBloomIntensity": "1",
+      "pmndrsBloomThreshold": "0.62",
+      "pmndrsVignetteEnabled": "0",
+      "pmndrsVignetteDarkness": "0.5",
+      "pmndrsToneMappingExposure": "1",
+      "pmndrsLowLightAutoExposureEnabled": "1",
+      "pmndrsToneMappingExposureAuthored": "0",
+      "pmndrsToneMappingMode": "agx",
+      "pmndrsLensFlareEnabled": "0",
+      "pmndrsLutEnabled": "0",
+      "pmndrsLutLook": "neutral",
+      "pmndrsLutStrength": "1",
+      "pmndrsNoiseEnabled": "0",
+      "pmndrsNoiseOpacity": "0.04",
+      "pmndrsChromaticAberrationEnabled": "0",
+      "pmndrsChromaticAberrationOffset": "0.0015",
+      "pmndrsAtmosphereEnabled": "1",
+      "pmndrsAtmospherePreset": "midday",
+      "pmndrsAtmospherePresetIntensity": "1",
+      "pmndrsAtmosphereQuality": "balanced",
+      "pmndrsAerialPerspectiveEnabled": "0",
+      "pmndrsCorrectAltitudeEnabled": "1",
+      "pmndrsGeospatialEnabled": "0",
+      "pmndrsGeospatialLatitudeDeg": "0",
+      "pmndrsGeospatialLongitudeDeg": "0",
+      "pmndrsGeospatialAltitudeMeters": "0",
+      "pmndrsCelestialMode": "manual",
+      "pmndrsCelestialTimePreset": "midday",
+      "pmndrsCelestialDate": "2026-06-21",
+      "pmndrsCelestialUtcTime": "12:00",
+      "pmndrsDayNightCycleEnabled": "0",
+      "pmndrsDayNightCycleDurationMinutes": "1",
+      "pmndrsSunElevationDeg": "62",
+      "pmndrsSunAzimuthDeg": "20",
+      "pmndrsSunDistance": "5200",
+      "pmndrsSunAngularRadius": "0.004675",
+      "pmndrsAerialStrength": "0.55",
+      "pmndrsAlbedoScale": "1",
+      "pmndrsTransmittanceEnabled": "1",
+      "pmndrsInscatterEnabled": "1",
+      "pmndrsGroundEnabled": "1",
+      "pmndrsGroundAlbedo": "#1a1a1a",
+      "pmndrsRayleighScale": "1",
+      "pmndrsMieScatteringScale": "1",
+      "pmndrsMieExtinctionScale": "1",
+      "pmndrsMiePhaseG": "0.8",
+      "pmndrsAbsorptionScale": "1",
+      "pmndrsMoonEnabled": "0",
+      "pmndrsStarsEnabled": "auto",
+      "pmndrsHorizonLightingPreset": "natural",
+      "pmndrsHorizonKeyLightIntensity": "1.15",
+      "pmndrsHorizonFillLightIntensity": "0.45",
+      "reflectionsEnabled": "1",
+      "sceneProbeUpdateMode": "static",
+      "sceneProbeResolution": "128",
+      "reflectionOcclusionMode": "auto"
+    };
   })();
   var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
   var browsingModeVR = typeof window.browsingModeVR === "boolean" ? window.browsingModeVR : false;
@@ -811,6 +876,65 @@
         const minute = parseInt(parts[1], 10);
         return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
       });
+    };
+  })();
+  window.VRODOSMaster = window.VRODOSMaster || {};
+  (function() {
+    const Master = window.VRODOSMaster;
+    if (!Master.RuntimeResources) {
+      Master.RuntimeResources = {};
+    }
+    const Resources = Master.RuntimeResources;
+    function disposeOne(resource) {
+      if (!resource) {
+        return;
+      }
+      if (Array.isArray(resource)) {
+        resource.forEach(disposeOne);
+        return;
+      }
+      if (resource.geometry) {
+        disposeOne(resource.geometry);
+      }
+      if (Array.isArray(resource.material)) {
+        resource.material.forEach(disposeOne);
+      } else if (resource.material) {
+        disposeOne(resource.material);
+      }
+      if (typeof resource.dispose === "function") {
+        resource.dispose();
+      }
+    }
+    Resources.dispose = disposeOne;
+    Resources.createRegistry = function() {
+      const resources = [];
+      const listeners = [];
+      return {
+        track: function(resource) {
+          if (resource) {
+            resources.push(resource);
+          }
+          return resource;
+        },
+        listen: function(target, type, handler, options) {
+          if (!target || typeof target.addEventListener !== "function") {
+            return;
+          }
+          target.addEventListener(type, handler, options);
+          listeners.push({ target, type, handler, options });
+        },
+        disposeAll: function() {
+          while (listeners.length) {
+            const listener = listeners.pop();
+            if (listener.target && typeof listener.target.removeEventListener === "function") {
+              listener.target.removeEventListener(listener.type, listener.handler, listener.options);
+            }
+          }
+          while (resources.length) {
+            disposeOne(resources.pop());
+          }
+        }
+      };
     };
   })();
   (function() {
@@ -2120,37 +2244,32 @@
   (function() {
     VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     const H = VRODOSMaster.SceneSettingsHelpers;
-    H.clearHdrEnvironmentMap = function(clearSceneEnvironment) {
-      if (this._envMapRenderTarget) {
-        this._envMapRenderTarget.dispose();
-        this._envMapRenderTarget = null;
+    const disposeRuntimeResource = VRODOSMaster.RuntimeResources && VRODOSMaster.RuntimeResources.dispose ? VRODOSMaster.RuntimeResources.dispose : function(resource) {
+      if (resource && typeof resource.dispose === "function") {
+        resource.dispose();
       }
+    };
+    H.clearHdrEnvironmentMap = function(clearSceneEnvironment) {
+      disposeRuntimeResource(this._envMapRenderTarget);
+      this._envMapRenderTarget = null;
       this._currentEnvMapPreset = null;
       if (clearSceneEnvironment && this.el && this.el.object3D) {
         this.el.object3D.environment = null;
       }
     };
     H.disposeSceneProbe = function(clearSceneEnvironment) {
-      if (this._sceneProbePmremTarget) {
-        this._sceneProbePmremTarget.dispose();
-        this._sceneProbePmremTarget = null;
-      }
-      if (this._takramSkyPmremTarget) {
-        this._takramSkyPmremTarget.dispose();
-        this._takramSkyPmremTarget = null;
-      }
-      if (this._sceneProbePmremGenerator) {
-        this._sceneProbePmremGenerator.dispose();
-        this._sceneProbePmremGenerator = null;
-      }
+      disposeRuntimeResource(this._sceneProbePmremTarget);
+      this._sceneProbePmremTarget = null;
+      disposeRuntimeResource(this._takramSkyPmremTarget);
+      this._takramSkyPmremTarget = null;
+      disposeRuntimeResource(this._sceneProbePmremGenerator);
+      this._sceneProbePmremGenerator = null;
       if (this._sceneProbeCubeCamera && this._sceneProbeCubeCamera.parent) {
         this._sceneProbeCubeCamera.parent.remove(this._sceneProbeCubeCamera);
       }
       this._sceneProbeCubeCamera = null;
-      if (this._sceneProbeCubeRenderTarget) {
-        this._sceneProbeCubeRenderTarget.dispose();
-        this._sceneProbeCubeRenderTarget = null;
-      }
+      disposeRuntimeResource(this._sceneProbeCubeRenderTarget);
+      this._sceneProbeCubeRenderTarget = null;
       this._sceneProbeNeedsUpdate = false;
       this._sceneProbeLastCaptureMs = 0;
       this._sceneProbeLastModelEventMs = 0;
@@ -2169,20 +2288,16 @@
       }
       const resolution = typeof this.getSceneProbeResolution === "function" ? this.getSceneProbeResolution() : 128;
       if (this._sceneProbeCubeRenderTarget && this._sceneProbeResolution !== resolution) {
-        this._sceneProbeCubeRenderTarget.dispose();
+        disposeRuntimeResource(this._sceneProbeCubeRenderTarget);
         this._sceneProbeCubeRenderTarget = null;
         if (this._sceneProbeCubeCamera && this._sceneProbeCubeCamera.parent) {
           this._sceneProbeCubeCamera.parent.remove(this._sceneProbeCubeCamera);
         }
         this._sceneProbeCubeCamera = null;
-        if (this._sceneProbePmremTarget) {
-          this._sceneProbePmremTarget.dispose();
-          this._sceneProbePmremTarget = null;
-        }
-        if (this._takramSkyPmremTarget) {
-          this._takramSkyPmremTarget.dispose();
-          this._takramSkyPmremTarget = null;
-        }
+        disposeRuntimeResource(this._sceneProbePmremTarget);
+        this._sceneProbePmremTarget = null;
+        disposeRuntimeResource(this._takramSkyPmremTarget);
+        this._takramSkyPmremTarget = null;
         this._takramSkyEnvironmentNeedsUpdate = true;
       }
       if (!this._sceneProbeCubeRenderTarget) {
@@ -2401,9 +2516,7 @@
       if (!probeTarget || !probeTarget.texture) {
         return false;
       }
-      if (this._sceneProbePmremTarget) {
-        this._sceneProbePmremTarget.dispose();
-      }
+      disposeRuntimeResource(this._sceneProbePmremTarget);
       this._sceneProbePmremTarget = probeTarget;
       sceneObj.environment = probeTarget.texture;
       this._sceneProbeLastCaptureMs = now;
@@ -2521,9 +2634,7 @@
       if (!probeTarget || !probeTarget.texture) {
         return false;
       }
-      if (this._takramSkyPmremTarget) {
-        this._takramSkyPmremTarget.dispose();
-      }
+      disposeRuntimeResource(this._takramSkyPmremTarget);
       this._takramSkyPmremTarget = probeTarget;
       sceneObj.environment = probeTarget.texture;
       this._sceneProbeLastCaptureMs = now;
@@ -2580,10 +2691,8 @@
         return;
       }
       if (effectiveSource === "scene-probe") {
-        if (this._takramSkyPmremTarget) {
-          this._takramSkyPmremTarget.dispose();
-          this._takramSkyPmremTarget = null;
-        }
+        disposeRuntimeResource(this._takramSkyPmremTarget);
+        this._takramSkyPmremTarget = null;
         this.clearHdrEnvironmentMap(this._currentReflectionSource !== "scene-probe");
         if (!this.ensureSceneProbeResources()) {
           sceneObj.environment = null;
@@ -2634,12 +2743,10 @@
         const envMapRenderTarget = pmremGenerator.fromEquirectangular(texture);
         const envMap = envMapRenderTarget.texture;
         sceneObj.environment = envMap;
-        if (self._envMapRenderTarget) {
-          self._envMapRenderTarget.dispose();
-        }
+        disposeRuntimeResource(self._envMapRenderTarget);
         self._envMapRenderTarget = envMapRenderTarget;
-        texture.dispose();
-        pmremGenerator.dispose();
+        disposeRuntimeResource(texture);
+        disposeRuntimeResource(pmremGenerator);
         self._currentReflectionSource = "hdr";
         self._currentEnvMapPreset = preset;
         self.applyMaterialProfiles();

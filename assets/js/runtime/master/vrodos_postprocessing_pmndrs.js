@@ -40,6 +40,13 @@
     }
     const H = VRODOSMaster.PmndrsHelpers = VRODOSMaster.PmndrsHelpers || {};
     const RuntimeSettings = VRODOSMaster.RuntimeSettings || {};
+    const disposeRuntimeResource = VRODOSMaster.RuntimeResources && VRODOSMaster.RuntimeResources.dispose
+        ? VRODOSMaster.RuntimeResources.dispose
+        : function (resource) {
+            if (resource && typeof resource.dispose === 'function') {
+                resource.dispose();
+            }
+        };
 
     /**
      * Convert the shared ambientOcclusionPreset string to native PMNDRS SSAOEffect settings.
@@ -1054,12 +1061,8 @@
             return;
         }
 
-        if (self.pmndrsNativeSsaoEffect && typeof self.pmndrsNativeSsaoEffect.dispose === 'function') {
-            self.pmndrsNativeSsaoEffect.dispose();
-        }
-        if (self.pmndrsNativeNormalPass && typeof self.pmndrsNativeNormalPass.dispose === 'function') {
-            self.pmndrsNativeNormalPass.dispose();
-        }
+        disposeRuntimeResource(self.pmndrsNativeSsaoEffect);
+        disposeRuntimeResource(self.pmndrsNativeNormalPass);
     }
 
     function disposePmndrsComposerResources(self) {
@@ -1071,7 +1074,7 @@
 
         if (self.pmndrsComposer) {
             try {
-                self.pmndrsComposer.dispose();
+                disposeRuntimeResource(self.pmndrsComposer);
             } catch (err) {
                 console.warn('[VRodos] pmndrs composer.dispose failed:', err);
             }
@@ -1087,9 +1090,7 @@
         self.pmndrsBloomEffect = null;
         self.pmndrsLensFlareEffect = null;
         self.pmndrsSmaaEffect = null;
-        if (self.pmndrsLutTexture && typeof self.pmndrsLutTexture.dispose === 'function') {
-            self.pmndrsLutTexture.dispose();
-        }
+        disposeRuntimeResource(self.pmndrsLutTexture);
         self.pmndrsLutTexture = null;
         self.pmndrsLutEffect = null;
         self.pmndrsNoiseEffect = null;

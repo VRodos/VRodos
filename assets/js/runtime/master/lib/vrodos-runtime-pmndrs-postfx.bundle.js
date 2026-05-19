@@ -6,6 +6,11 @@
     }
     const H = VRODOSMaster.PmndrsHelpers = VRODOSMaster.PmndrsHelpers || {};
     const RuntimeSettings = VRODOSMaster.RuntimeSettings || {};
+    const disposeRuntimeResource = VRODOSMaster.RuntimeResources && VRODOSMaster.RuntimeResources.dispose ? VRODOSMaster.RuntimeResources.dispose : function(resource) {
+      if (resource && typeof resource.dispose === "function") {
+        resource.dispose();
+      }
+    };
     function nativeSsaoOptionsForPreset(PP, preset) {
       const blendFunction = PP && PP.BlendFunction ? PP.BlendFunction.MULTIPLY : void 0;
       const defaults = {
@@ -851,12 +856,8 @@ ${selectedSummaries.join("\n")}`);
       if (!self) {
         return;
       }
-      if (self.pmndrsNativeSsaoEffect && typeof self.pmndrsNativeSsaoEffect.dispose === "function") {
-        self.pmndrsNativeSsaoEffect.dispose();
-      }
-      if (self.pmndrsNativeNormalPass && typeof self.pmndrsNativeNormalPass.dispose === "function") {
-        self.pmndrsNativeNormalPass.dispose();
-      }
+      disposeRuntimeResource(self.pmndrsNativeSsaoEffect);
+      disposeRuntimeResource(self.pmndrsNativeNormalPass);
     }
     function disposePmndrsComposerResources(self) {
       if (!self) {
@@ -865,7 +866,7 @@ ${selectedSummaries.join("\n")}`);
       disposePmndrsNativeSsaoResources(self);
       if (self.pmndrsComposer) {
         try {
-          self.pmndrsComposer.dispose();
+          disposeRuntimeResource(self.pmndrsComposer);
         } catch (err) {
           console.warn("[VRodos] pmndrs composer.dispose failed:", err);
         }
@@ -880,9 +881,7 @@ ${selectedSummaries.join("\n")}`);
       self.pmndrsBloomEffect = null;
       self.pmndrsLensFlareEffect = null;
       self.pmndrsSmaaEffect = null;
-      if (self.pmndrsLutTexture && typeof self.pmndrsLutTexture.dispose === "function") {
-        self.pmndrsLutTexture.dispose();
-      }
+      disposeRuntimeResource(self.pmndrsLutTexture);
       self.pmndrsLutTexture = null;
       self.pmndrsLutEffect = null;
       self.pmndrsNoiseEffect = null;

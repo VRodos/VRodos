@@ -72,6 +72,7 @@
         "assets/js/runtime/master/lib/vrodos-runtime-settings-contract.generated.js",
         "assets/js/runtime/master/vrodos_master_shared.js",
         "assets/js/runtime/master/vrodos_runtime_settings_helpers.js",
+        "assets/js/runtime/master/vrodos_runtime_resources.js",
         "assets/js/runtime/master/vrodos_ui_helpers.js",
         "assets/js/runtime/master/vrodos_master_bootstrap.js",
         "assets/js/runtime/master/vrodos_spector_debug.js",
@@ -148,6 +149,7 @@
         "assets/js/runtime/master/components/vrodos_scene_loader.component.js",
         "assets/js/runtime/master/components/vrodos_avatar.component.js",
         "assets/js/runtime/master/components/vrodos_scene_settings.component.js",
+        "assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js",
         "assets/js/runtime/master/components/vrodos_navigation.component.js",
         "assets/js/runtime/master/components/vrodos_misc.component.js"
       ],

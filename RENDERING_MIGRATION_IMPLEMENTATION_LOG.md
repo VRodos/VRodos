@@ -16,14 +16,32 @@ The migration from legacy Three.js r173 to the pinned A-Frame master + Three.js 
 
 1. Maintain the r181 baseline before adding a new lighting mode.
 2. Keep one Horizon PMNDRS scene and one non-Horizon PMNDRS scene in manual smoke coverage.
-3. Add an author-visible explicit Horizon lighting mode control for `helper`, `light-source`, and `post-process-albedo`.
-4. Prototype desktop-only Takram-vanilla `post-process-albedo` lighting.
-5. Preserve the immersive XR composer bypass and direct stereo fallback.
-6. Defer Three latest testing to a separate A-Frame module/import-map runtime spike.
-7. Defer SSGI until Takram lighting ownership is correct.
-8. Keep Takram volumetric clouds in backlog and out of scope for the current lighting phase.
+3. Keep compiler/runtime chunk golden checks current when runtime bundles move.
+4. Add an author-visible explicit Horizon lighting mode control for `helper`, `light-source`, and `post-process-albedo`.
+5. Prototype desktop-only Takram-vanilla `post-process-albedo` lighting.
+6. Preserve the immersive XR composer bypass and direct stereo fallback.
+7. Defer Three latest testing to a separate A-Frame module/import-map runtime spike.
+8. Defer SSGI until Takram lighting ownership is correct.
+9. Keep Takram volumetric clouds in backlog and out of scope for the current lighting phase.
 
 ## Recent Landed Work
+
+### Compiled runtime pipeline refactor
+
+- Extracted shared compiled-client assembly into `VRodos_Compiler_Runtime_Page_Builder` so Master/Simple clients use one path for template loading, DOM setup, scene settings, root glTF decoder config, object rendering, compile diagnostics, and output writing.
+- Kept Master/Simple differences as small strategies around player/network UI and action buttons.
+- Hardened `assets/runtime-build-manifest.json` as the runtime chunk source of truth with validation for missing script files, missing script `src`, undeclared dependencies, duplicate order conflicts, and missing feature coverage.
+- Preserved lazy runtime loading: PMNDRS vendor/runtime loads only for PMNDRS post-FX, Takram loads only for PMNDRS atmosphere, networked components are omitted from single-player output, and the FPS meter remains optional.
+- Split the large `scene-settings` runtime into focused A-Frame components while preserving the compiled `scene-settings` attribute as the compatibility data contract:
+  - `vrodos-render-profile`
+  - `vrodos-postfx-router`
+  - `vrodos-atmosphere`
+  - `vrodos-reflections`
+- Generated runtime schema defaults from `assets/runtime-settings-contract.json` into `window.VRODOS_RUNTIME_SETTINGS_SCHEMA_DEFAULTS`, removing duplicated PMNDRS defaults from source JS.
+- Added `window.VRODOSMaster.RuntimeResources` for shared disposal of Three resources, PMNDRS composers/passes/effects, PMREM/render targets, and event listeners.
+- Rebuilt runtime bundles with `npm.cmd run build:runtime`.
+- Verification passed for PHP syntax checks, `scripts/test-compiler-runtime-script-planner.php`, targeted `node --check`, `npm.cmd run lint` with existing warnings only, `npm.cmd run build:runtime`, and `git diff --check`.
+- Browser smoke profiling was attempted against a reachable local compiled scene, but the CDP profiler timed out during `Page.enable`, so no profile JSON was produced for this pass.
 
 ### Smooth scene-probe defaults
 
@@ -147,11 +165,16 @@ Static checks:
 
 - `node --check` for edited editor and runtime JS files.
 - PHP syntax checks for edited PHP files.
+- `scripts/test-compiler-runtime-script-planner.php` for runtime chunk planning, generated manifest validation, and golden script-order checks.
+- `npm.cmd run build:runtime` after runtime source or settings-contract changes.
 - `git diff --check`.
 - `npm.cmd run lint` for runtime master JS when available.
 
 Manual smoke:
 
+- No post-FX compiled scene: no PMNDRS/Takram scripts, successful first render, no console errors.
+- PMNDRS compiled scene without Takram: PMNDRS vendor before PMNDRS runtime, no Takram bundle, successful first render, no console errors.
+- PMNDRS + Takram compiled scene: PMNDRS vendor before Takram before PMNDRS runtime, successful first render, no console errors.
 - PMNDRS scene with LUT off.
 - PMNDRS scene with each built-in LUT look at strength `1.0`.
 - PMNDRS scene with LUT strength `0.0`.

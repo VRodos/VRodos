@@ -471,62 +471,28 @@
   function vrodosRuntimeFalse() {
     return false;
   }
-  const VRODOS_PMNDRS_SCHEMA_DEFAULTS = {
-    pmndrsAAMode: "inherit",
-    pmndrsAAPreset: "inherit",
-    pmndrsBloomIntensity: "1.0",
-    pmndrsBloomThreshold: "0.62",
-    pmndrsVignetteEnabled: "0",
-    pmndrsVignetteDarkness: "0.5",
-    pmndrsToneMappingExposure: "1.0",
-    pmndrsLowLightAutoExposureEnabled: "1",
-    pmndrsToneMappingExposureAuthored: "0",
-    pmndrsToneMappingMode: "agx",
-    pmndrsLensFlareEnabled: "0",
-    pmndrsLutEnabled: "0",
-    pmndrsLutLook: "neutral",
-    pmndrsLutStrength: "1.0",
-    pmndrsNoiseEnabled: "0",
-    pmndrsNoiseOpacity: "0.04",
-    pmndrsChromaticAberrationEnabled: "0",
-    pmndrsChromaticAberrationOffset: "0.0015",
-    pmndrsAtmosphereEnabled: "1",
-    pmndrsAtmospherePreset: "midday",
-    pmndrsAtmospherePresetIntensity: "1.0",
-    pmndrsAtmosphereQuality: "balanced",
-    pmndrsAerialPerspectiveEnabled: "0",
-    pmndrsCorrectAltitudeEnabled: "1",
-    pmndrsGeospatialEnabled: "0",
-    pmndrsGeospatialLatitudeDeg: "0",
-    pmndrsGeospatialLongitudeDeg: "0",
-    pmndrsGeospatialAltitudeMeters: "0",
-    pmndrsCelestialMode: "manual",
-    pmndrsCelestialTimePreset: "midday",
-    pmndrsCelestialDate: "2026-06-21",
-    pmndrsCelestialUtcTime: "12:00",
-    pmndrsDayNightCycleEnabled: "0",
-    pmndrsDayNightCycleDurationMinutes: "1.0",
-    pmndrsSunElevationDeg: "62",
-    pmndrsSunAzimuthDeg: "20",
-    pmndrsSunDistance: "5200",
-    pmndrsSunAngularRadius: "0.0047",
-    pmndrsAerialStrength: "0.55",
-    pmndrsAlbedoScale: "1.0",
-    pmndrsTransmittanceEnabled: "1",
-    pmndrsInscatterEnabled: "1",
-    pmndrsGroundEnabled: "1",
-    pmndrsGroundAlbedo: "#d8d8d0",
-    pmndrsRayleighScale: "1.18",
-    pmndrsMieScatteringScale: "0.42",
-    pmndrsMieExtinctionScale: "0.56",
-    pmndrsMiePhaseG: "0.74",
-    pmndrsAbsorptionScale: "0.94",
-    pmndrsMoonEnabled: "0",
-    pmndrsStarsEnabled: "auto",
-    pmndrsHorizonLightingPreset: "natural",
-    pmndrsHorizonKeyLightIntensity: "1.15",
-    pmndrsHorizonFillLightIntensity: "0.45"
-  };
+  function vrodosDisposeRuntimeResource(resource) {
+    if (VRODOSSceneSettingsMaster.RuntimeResources && VRODOSSceneSettingsMaster.RuntimeResources.dispose) {
+      VRODOSSceneSettingsMaster.RuntimeResources.dispose(resource);
+      return;
+    }
+    if (resource && typeof resource.dispose === "function") {
+      resource.dispose();
+    }
+  }
+  function vrodosRuntimeSettingsDefaultsForPrefix(prefix) {
+    const defaults = {};
+    const generatedDefaults = window.VRODOS_RUNTIME_SETTINGS_SCHEMA_DEFAULTS || {};
+    const contractSettings = VRODOSRuntimeSettingsContract.sceneSettings || {};
+    Object.keys(contractSettings).forEach((key) => {
+      if (key.indexOf(prefix) !== 0) {
+        return;
+      }
+      defaults[key] = Object.prototype.hasOwnProperty.call(generatedDefaults, key) ? generatedDefaults[key] : vrodosSceneSettingDefault(key, "");
+    });
+    return defaults;
+  }
+  const VRODOS_PMNDRS_SCHEMA_DEFAULTS = vrodosRuntimeSettingsDefaultsForPrefix("pmndrs");
   function vrodosRuntimeStringSchema(defaults) {
     if (VRODOSRuntimeSettings.schemaStringMap) {
       return VRODOSRuntimeSettings.schemaStringMap(defaults);
@@ -1119,6 +1085,18 @@
       }
       return this.hasPostProcessingPipelineRequest() && !this.isDirectVrPresentationActive();
     },
+    ensureRuntimePipelineComponents: function() {
+      [
+        "vrodos-render-profile",
+        "vrodos-postfx-router",
+        "vrodos-atmosphere",
+        "vrodos-reflections"
+      ].forEach((componentName) => {
+        if (!this.el.hasAttribute(componentName)) {
+          this.el.setAttribute(componentName, "");
+        }
+      });
+    },
     // --- Post-processing methods: LEGACY engine (extracted to vrodos_postprocessing.js) ---
     updatePostProcessingSize: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePostProcessingSize || vrodosRuntimeNoop,
     enablePostProcessing: VRODOSSceneSettingsMaster.SceneSettingsHelpers.enablePostProcessing || vrodosRuntimeNoop,
@@ -1136,6 +1114,11 @@
     // down before bringing the new one up. Defensive disable of the OTHER engine on every
     // call protects against drift if data.postFXEngine ever changes mid-session.
     syncPostProcessingState: function() {
+      const router = this.el.components && this.el.components["vrodos-postfx-router"];
+      if (router && typeof router.sync === "function") {
+        router.sync();
+        return;
+      }
       this.warnImmersiveXrPostProcessingFallback();
       if (this.data.postFXEngine === "pmndrs") {
         if (this.postProcessingActive) {
@@ -1243,6 +1226,8 @@
     applyPostFXProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPostFXProfile,
     applyQualityProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyQualityProfiles,
     init: function() {
+      this.ensureRuntimePipelineComponents();
+      this.runtimeResources = VRODOSSceneSettingsMaster.RuntimeResources && VRODOSSceneSettingsMaster.RuntimeResources.createRegistry ? VRODOSSceneSettingsMaster.RuntimeResources.createRegistry() : null;
       this.handleQualityModelLoad = function() {
         this.markSceneCollectionsDirty();
         this.markShadowDirty("model-loaded");
@@ -1548,10 +1533,8 @@
       this.disablePostProcessing();
       this.disablePmndrsPostProcessing();
       this.disposePmndrsAtmosphere();
-      if (this._envMapRenderTarget) {
-        this._envMapRenderTarget.dispose();
-        this._envMapRenderTarget = null;
-      }
+      vrodosDisposeRuntimeResource(this._envMapRenderTarget);
+      this._envMapRenderTarget = null;
       this.disposeSceneProbe(false);
       if (this.el && this.el.object3D) {
         this.el.object3D.environment = null;
@@ -1570,8 +1553,16 @@
       if (pmndrsSunHaze && pmndrsSunHaze.parentNode) {
         pmndrsSunHaze.parentNode.removeChild(pmndrsSunHaze);
       }
+      if (this.runtimeResources) {
+        this.runtimeResources.disposeAll();
+        this.runtimeResources = null;
+      }
     },
     tick: function(time) {
+      const hasFocusedPipeline = this.el.components && this.el.components["vrodos-render-profile"] && this.el.components["vrodos-atmosphere"] && this.el.components["vrodos-reflections"];
+      if (hasFocusedPipeline) {
+        return;
+      }
       if (this.fpsStats && typeof this.fpsStats.update === "function") {
         this.fpsStats.update();
       }
@@ -1622,6 +1613,118 @@
       this.captureSceneProbe(time);
     }
   });
+  (function() {
+    function sceneSettings(el) {
+      return el && el.components ? el.components["scene-settings"] : null;
+    }
+    AFRAME.registerSystem("vrodos-runtime-pipeline", {
+      getSceneSettings: function(el) {
+        return sceneSettings(el || this.sceneEl);
+      }
+    });
+    AFRAME.registerComponent("vrodos-render-profile", {
+      tick: function() {
+        const settings = sceneSettings(this.el);
+        if (!settings) {
+          return;
+        }
+        if (settings.fpsStats && typeof settings.fpsStats.update === "function") {
+          settings.fpsStats.update();
+        }
+        settings.updateAdaptiveShadowFit(false);
+      }
+    });
+    AFRAME.registerComponent("vrodos-postfx-router", {
+      sync: function() {
+        const settings = sceneSettings(this.el);
+        if (!settings) {
+          return;
+        }
+        settings.warnImmersiveXrPostProcessingFallback();
+        if (settings.data.postFXEngine === "pmndrs") {
+          if (settings.postProcessingActive) {
+            settings.disablePostProcessing();
+          }
+          if (settings.shouldUsePostProcessing()) {
+            settings.enablePmndrsPostProcessing();
+            settings.updatePmndrsPostProcessingSize();
+          } else {
+            settings.disablePmndrsPostProcessing();
+          }
+          return;
+        }
+        if (settings.pmndrsActive) {
+          settings.disablePmndrsPostProcessing();
+        }
+        if (settings.shouldUsePostProcessing()) {
+          settings.enablePostProcessing();
+          settings.updatePostProcessingSize();
+        } else {
+          settings.disablePostProcessing();
+        }
+      }
+    });
+    AFRAME.registerComponent("vrodos-atmosphere", {
+      tick: function(time) {
+        const settings = sceneSettings(this.el);
+        if (!settings) {
+          return;
+        }
+        settings._pmndrsTickTimeMs = typeof time === "number" ? time : null;
+        settings.updatePmndrsHorizonSun();
+        if (typeof settings.updatePmndrsDayNightCycleFrame === "function") {
+          settings.updatePmndrsDayNightCycleFrame(time);
+        }
+      }
+    });
+    AFRAME.registerComponent("vrodos-reflections", {
+      tick: function(time) {
+        const settings = sceneSettings(this.el);
+        if (!settings) {
+          return;
+        }
+        const effectiveReflectionSource = settings.getEffectiveReflectionSource();
+        if (typeof settings.updateReflectionEnvironmentIntensity === "function") {
+          settings.updateReflectionEnvironmentIntensity(time, effectiveReflectionSource);
+        }
+        if (effectiveReflectionSource === "takram-sky") {
+          if (typeof settings.updateTakramSkyEnvironment === "function") {
+            settings.updateTakramSkyEnvironment(time);
+          }
+          return;
+        }
+        if (effectiveReflectionSource !== "scene-probe") {
+          return;
+        }
+        const sceneProbeUpdateMode = settings.getSceneProbeUpdateMode();
+        if (sceneProbeUpdateMode === "static" && !settings._sceneProbeNeedsUpdate && settings._sceneProbeLastYaw !== null) {
+          return;
+        }
+        if (sceneProbeUpdateMode === "slow-dynamic" && !settings._sceneProbeNeedsUpdate && settings._sceneProbeLastYaw !== null) {
+          const anchorObject = settings.getSceneProbeAnchorObject();
+          if (anchorObject) {
+            anchorObject.updateMatrixWorld(true);
+            anchorObject.getWorldPosition(settings._sceneProbeCurrentPosition);
+            if (settings._sceneProbeCurrentPosition.distanceToSquared(settings._sceneProbeLastPosition) > 6 * 6 || settings.getSceneProbeYawDeltaDegrees(settings.getSceneProbeAnchorYaw(anchorObject), settings._sceneProbeLastYaw) > 45) {
+              settings._sceneProbeNeedsUpdate = true;
+            }
+          }
+        }
+        if (!settings._sceneProbeNeedsUpdate) {
+          return;
+        }
+        const captureCooldownMs = sceneProbeUpdateMode === "slow-dynamic" ? 5e3 : 500;
+        if (time - settings._sceneProbeLastCaptureMs < captureCooldownMs) {
+          return;
+        }
+        const modelSettleMs = sceneProbeUpdateMode === "slow-dynamic" ? 750 : 350;
+        if (settings._sceneProbeLastModelEventMs && time - settings._sceneProbeLastModelEventMs < modelSettleMs) {
+          return;
+        }
+        settings.captureSceneProbe(time);
+      }
+    });
+  })();
   var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
   var VRODOSNavmeshDefaults = VRODOSMaster.NAVMESH_DEFAULTS || window.VRODOS_NAVMESH_DEFAULTS || {
     maxStepHeight: 0.6,

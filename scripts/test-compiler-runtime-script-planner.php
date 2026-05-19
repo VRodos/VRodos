@@ -30,84 +30,85 @@ function vrodos_assert_same( array $expected, array $actual, string $label ): vo
 	exit( 1 );
 }
 
+function vrodos_assert_contains( string $haystack, string $needle, string $label ): void {
+	if ( str_contains( $haystack, $needle ) ) {
+		return;
+	}
+
+	fwrite( STDERR, $label . " failed: missing " . $needle . "\n" );
+	exit( 1 );
+}
+
+function vrodos_assert_not_contains( string $haystack, string $needle, string $label ): void {
+	if ( ! str_contains( $haystack, $needle ) ) {
+		return;
+	}
+
+	fwrite( STDERR, $label . " failed: unexpected " . $needle . "\n" );
+	exit( 1 );
+}
+
+function vrodos_assert_order( string $haystack, string $first, string $second, string $label ): void {
+	$first_pos  = strpos( $haystack, $first );
+	$second_pos = strpos( $haystack, $second );
+	if ( false !== $first_pos && false !== $second_pos && $first_pos < $second_pos ) {
+		return;
+	}
+
+	fwrite( STDERR, $label . " failed: expected " . $first . " before " . $second . "\n" );
+	exit( 1 );
+}
+
+function vrodos_test_chunk( string $id, string $type, string $src, int $order, array $dependencies = [], array $extra = [] ): array {
+	return array_merge(
+		[
+			'id'           => $id,
+			'type'         => $type,
+			'src'          => $src,
+			'order'        => $order,
+			'dependencies' => $dependencies,
+			'features'     => [ $id ],
+		],
+		$extra
+	);
+}
+
+function vrodos_assert_manifest_error( array $manifest, string $expected_message, string $label ): void {
+	try {
+		new VRodos_Compiler_Runtime_Manifest( null, $manifest );
+	} catch ( RuntimeException $error ) {
+		if ( str_contains( $error->getMessage(), $expected_message ) ) {
+			return;
+		}
+
+		fwrite( STDERR, $label . " failed with wrong error.\nExpected message containing: " . $expected_message . "\nActual: " . $error->getMessage() . "\n" );
+		exit( 1 );
+	}
+
+	fwrite( STDERR, $label . " failed: manifest was accepted.\n" );
+	exit( 1 );
+}
+
 $manifest = new VRodos_Compiler_Runtime_Manifest(
 	null,
 	[
 		'schemaVersion' => 1,
 		'chunks'        => [
-			'scene-components'             => [
-				'id'           => 'scene-components',
-				'type'         => 'script',
-				'src'          => 'js/master/lib/vrodos-runtime-scene-components.bundle.js',
-				'order'        => 10,
-				'dependencies' => [],
-			],
-			'networked-components'         => [
-				'id'           => 'networked-components',
-				'type'         => 'script',
-				'src'          => 'js/master/lib/vrodos-runtime-networked-components.bundle.js',
-				'order'        => 15,
-				'dependencies' => [],
-			],
-			'core-runtime'                 => [
-				'id'           => 'core-runtime',
-				'type'         => 'script',
-				'src'          => 'js/master/lib/vrodos-runtime-core.bundle.js',
-				'order'        => 20,
-				'dependencies' => [],
-			],
-			'fps-meter'                    => [
-				'id'           => 'fps-meter',
-				'type'         => 'inline-module',
+			'scene-components'             => vrodos_test_chunk( 'scene-components', 'script', 'js/master/lib/vrodos-runtime-scene-components.bundle.js', 10 ),
+			'networked-components'         => vrodos_test_chunk( 'networked-components', 'script', 'js/master/lib/vrodos-runtime-networked-components.bundle.js', 15 ),
+			'core-runtime'                 => vrodos_test_chunk( 'core-runtime', 'script', 'js/master/lib/vrodos-runtime-core.bundle.js', 20 ),
+			'fps-meter'                    => vrodos_test_chunk( 'fps-meter', 'inline-module', '', 30, [], [
 				'moduleImport' => 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js',
 				'readyGlobal'  => 'VRODOS_STATS_READY',
 				'global'       => 'Stats',
 				'export'       => 'default',
-				'order'        => 30,
-				'dependencies' => [],
-			],
-			'collision-bvh-vendor'         => [
-				'id'           => 'collision-bvh-vendor',
-				'type'         => 'script',
-				'src'          => 'js/master/lib/vrodos-collision-bvh.bundle.js',
-				'order'        => 32,
-				'dependencies' => [],
-			],
-			'pmndrs-postprocessing-vendor' => [
-				'id'           => 'pmndrs-postprocessing-vendor',
-				'type'         => 'script',
-				'src'          => 'js/master/lib/vrodos-postprocessing.bundle.js',
-				'order'        => 35,
-				'dependencies' => [],
-			],
-			'legacy-postfx'                => [
-				'id'           => 'legacy-postfx',
-				'type'         => 'script',
-				'src'          => 'js/master/lib/vrodos-runtime-legacy-postfx.bundle.js',
-				'order'        => 40,
-				'dependencies' => [],
-			],
-			'takram-atmosphere'            => [
-				'id'           => 'takram-atmosphere',
-				'type'         => 'script',
-				'src'          => 'js/master/lib/vrodos-takram-atmosphere.bundle.js',
-				'order'        => 45,
-				'dependencies' => [],
-			],
-			'pmndrs-postfx'                => [
-				'id'           => 'pmndrs-postfx',
-				'type'         => 'script',
-				'src'          => 'js/master/lib/vrodos-runtime-pmndrs-postfx.bundle.js',
-				'order'        => 50,
-				'dependencies' => [ 'pmndrs-postprocessing-vendor' ],
-			],
-			'aframe-components'            => [
-				'id'           => 'aframe-components',
-				'type'         => 'script',
-				'src'          => 'js/master/lib/vrodos-runtime-aframe-components.bundle.js',
-				'order'        => 90,
-				'dependencies' => [ 'core-runtime' ],
-			],
+			] ),
+			'collision-bvh-vendor'         => vrodos_test_chunk( 'collision-bvh-vendor', 'script', 'js/master/lib/vrodos-collision-bvh.bundle.js', 32 ),
+			'pmndrs-postprocessing-vendor' => vrodos_test_chunk( 'pmndrs-postprocessing-vendor', 'script', 'js/master/lib/vrodos-postprocessing.bundle.js', 35 ),
+			'legacy-postfx'                => vrodos_test_chunk( 'legacy-postfx', 'script', 'js/master/lib/vrodos-runtime-legacy-postfx.bundle.js', 40 ),
+			'takram-atmosphere'            => vrodos_test_chunk( 'takram-atmosphere', 'script', 'js/master/lib/vrodos-takram-atmosphere.bundle.js', 45 ),
+			'pmndrs-postfx'                => vrodos_test_chunk( 'pmndrs-postfx', 'script', 'js/master/lib/vrodos-runtime-pmndrs-postfx.bundle.js', 50, [ 'pmndrs-postprocessing-vendor' ] ),
+			'aframe-components'            => vrodos_test_chunk( 'aframe-components', 'script', 'js/master/lib/vrodos-runtime-aframe-components.bundle.js', 90, [ 'core-runtime' ] ),
 		],
 	]
 );
@@ -160,6 +161,63 @@ vrodos_assert_same(
 	[ 'scene-components', 'networked-components', 'core-runtime', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframeCollisionMode' => 'off' ] ) ),
 	'collision disabled'
+);
+
+$no_postfx_html = $planner->render_scripts_for_scene( vrodos_test_scene( [] ) );
+vrodos_assert_contains( $no_postfx_html, 'vrodos-runtime-scene-components.bundle.js', 'no post-FX script tags' );
+vrodos_assert_contains( $no_postfx_html, 'vrodos-runtime-networked-components.bundle.js', 'no post-FX script tags' );
+vrodos_assert_contains( $no_postfx_html, 'vrodos-runtime-core.bundle.js', 'no post-FX script tags' );
+vrodos_assert_contains( $no_postfx_html, 'vrodos-collision-bvh.bundle.js', 'no post-FX script tags' );
+vrodos_assert_contains( $no_postfx_html, 'vrodos-runtime-aframe-components.bundle.js', 'no post-FX script tags' );
+vrodos_assert_not_contains( $no_postfx_html, 'vrodos-postprocessing.bundle.js', 'no post-FX script tags' );
+vrodos_assert_not_contains( $no_postfx_html, 'vrodos-takram-atmosphere.bundle.js', 'no post-FX script tags' );
+
+$pmndrs_takram_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true ] ) );
+vrodos_assert_order( $pmndrs_takram_html, 'vrodos-postprocessing.bundle.js', 'vrodos-takram-atmosphere.bundle.js', 'PMNDRS Takram script order' );
+vrodos_assert_order( $pmndrs_takram_html, 'vrodos-takram-atmosphere.bundle.js', 'vrodos-runtime-pmndrs-postfx.bundle.js', 'PMNDRS Takram script order' );
+
+$single_player_html = $planner->render_scripts_for_scene( vrodos_test_scene( [] ), 'single-player' );
+vrodos_assert_not_contains( $single_player_html, 'vrodos-runtime-networked-components.bundle.js', 'single-player script tags' );
+
+vrodos_assert_manifest_error(
+	[
+		'schemaVersion' => 1,
+		'chunks'        => [
+			'a' => vrodos_test_chunk( 'a', 'script', 'a.js', 10 ),
+			'b' => vrodos_test_chunk( 'b', 'script', 'b.js', 10 ),
+		],
+	],
+	'share order',
+	'duplicate chunk order validation'
+);
+
+vrodos_assert_manifest_error(
+	[
+		'schemaVersion' => 1,
+		'chunks'        => [
+			'a' => vrodos_test_chunk( 'a', 'script', 'a.js', 10, [ 'missing' ] ),
+		],
+	],
+	'undeclared dependency',
+	'undeclared dependency validation'
+);
+
+vrodos_assert_manifest_error(
+	[
+		'schemaVersion' => 1,
+		'chunks'        => [
+			'a' => vrodos_test_chunk( 'a', 'script', 'a.js', 10, [], [ 'features' => [] ] ),
+		],
+	],
+	'no feature coverage',
+	'feature coverage validation'
+);
+
+$actual_manifest = new VRodos_Compiler_Runtime_Manifest();
+vrodos_assert_same(
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
+	$actual_manifest->resolve_chunk_ids( [ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ] ),
+	'actual generated manifest validation'
 );
 
 echo "Runtime script planner fixtures passed.\n";

@@ -55,62 +55,34 @@ function vrodosRuntimeFalse() {
     return false;
 }
 
-const VRODOS_PMNDRS_SCHEMA_DEFAULTS = {
-    pmndrsAAMode: "inherit",
-    pmndrsAAPreset: "inherit",
-    pmndrsBloomIntensity: "1.0",
-    pmndrsBloomThreshold: "0.62",
-    pmndrsVignetteEnabled: "0",
-    pmndrsVignetteDarkness: "0.5",
-    pmndrsToneMappingExposure: "1.0",
-    pmndrsLowLightAutoExposureEnabled: "1",
-    pmndrsToneMappingExposureAuthored: "0",
-    pmndrsToneMappingMode: "agx",
-    pmndrsLensFlareEnabled: "0",
-    pmndrsLutEnabled: "0",
-    pmndrsLutLook: "neutral",
-    pmndrsLutStrength: "1.0",
-    pmndrsNoiseEnabled: "0",
-    pmndrsNoiseOpacity: "0.04",
-    pmndrsChromaticAberrationEnabled: "0",
-    pmndrsChromaticAberrationOffset: "0.0015",
-    pmndrsAtmosphereEnabled: "1",
-    pmndrsAtmospherePreset: "midday",
-    pmndrsAtmospherePresetIntensity: "1.0",
-    pmndrsAtmosphereQuality: "balanced",
-    pmndrsAerialPerspectiveEnabled: "0",
-    pmndrsCorrectAltitudeEnabled: "1",
-    pmndrsGeospatialEnabled: "0",
-    pmndrsGeospatialLatitudeDeg: "0",
-    pmndrsGeospatialLongitudeDeg: "0",
-    pmndrsGeospatialAltitudeMeters: "0",
-    pmndrsCelestialMode: "manual",
-    pmndrsCelestialTimePreset: "midday",
-    pmndrsCelestialDate: "2026-06-21",
-    pmndrsCelestialUtcTime: "12:00",
-    pmndrsDayNightCycleEnabled: "0",
-    pmndrsDayNightCycleDurationMinutes: "1.0",
-    pmndrsSunElevationDeg: "62",
-    pmndrsSunAzimuthDeg: "20",
-    pmndrsSunDistance: "5200",
-    pmndrsSunAngularRadius: "0.0047",
-    pmndrsAerialStrength: "0.55",
-    pmndrsAlbedoScale: "1.0",
-    pmndrsTransmittanceEnabled: "1",
-    pmndrsInscatterEnabled: "1",
-    pmndrsGroundEnabled: "1",
-    pmndrsGroundAlbedo: "#d8d8d0",
-    pmndrsRayleighScale: "1.18",
-    pmndrsMieScatteringScale: "0.42",
-    pmndrsMieExtinctionScale: "0.56",
-    pmndrsMiePhaseG: "0.74",
-    pmndrsAbsorptionScale: "0.94",
-    pmndrsMoonEnabled: "0",
-    pmndrsStarsEnabled: "auto",
-    pmndrsHorizonLightingPreset: "natural",
-    pmndrsHorizonKeyLightIntensity: "1.15",
-    pmndrsHorizonFillLightIntensity: "0.45"
-};
+function vrodosDisposeRuntimeResource(resource) {
+    if (VRODOSSceneSettingsMaster.RuntimeResources && VRODOSSceneSettingsMaster.RuntimeResources.dispose) {
+        VRODOSSceneSettingsMaster.RuntimeResources.dispose(resource);
+        return;
+    }
+    if (resource && typeof resource.dispose === 'function') {
+        resource.dispose();
+    }
+}
+
+function vrodosRuntimeSettingsDefaultsForPrefix(prefix) {
+    const defaults = {};
+    const generatedDefaults = window.VRODOS_RUNTIME_SETTINGS_SCHEMA_DEFAULTS || {};
+    const contractSettings = VRODOSRuntimeSettingsContract.sceneSettings || {};
+
+    Object.keys(contractSettings).forEach((key) => {
+        if (key.indexOf(prefix) !== 0) {
+            return;
+        }
+        defaults[key] = Object.prototype.hasOwnProperty.call(generatedDefaults, key)
+            ? generatedDefaults[key]
+            : vrodosSceneSettingDefault(key, '');
+    });
+
+    return defaults;
+}
+
+const VRODOS_PMNDRS_SCHEMA_DEFAULTS = vrodosRuntimeSettingsDefaultsForPrefix('pmndrs');
 
 function vrodosRuntimeStringSchema(defaults) {
     if (VRODOSRuntimeSettings.schemaStringMap) {
@@ -827,6 +799,18 @@ AFRAME.registerComponent('scene-settings', {
 
         return this.hasPostProcessingPipelineRequest() && !this.isDirectVrPresentationActive();
     },
+    ensureRuntimePipelineComponents: function () {
+        [
+            'vrodos-render-profile',
+            'vrodos-postfx-router',
+            'vrodos-atmosphere',
+            'vrodos-reflections'
+        ].forEach((componentName) => {
+            if (!this.el.hasAttribute(componentName)) {
+                this.el.setAttribute(componentName, '');
+            }
+        });
+    },
     // --- Post-processing methods: LEGACY engine (extracted to vrodos_postprocessing.js) ---
     updatePostProcessingSize: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePostProcessingSize || vrodosRuntimeNoop,
     enablePostProcessing: VRODOSSceneSettingsMaster.SceneSettingsHelpers.enablePostProcessing || vrodosRuntimeNoop,
@@ -844,6 +828,12 @@ AFRAME.registerComponent('scene-settings', {
     // down before bringing the new one up. Defensive disable of the OTHER engine on every
     // call protects against drift if data.postFXEngine ever changes mid-session.
     syncPostProcessingState: function () {
+        const router = this.el.components && this.el.components['vrodos-postfx-router'];
+        if (router && typeof router.sync === 'function') {
+            router.sync();
+            return;
+        }
+
         this.warnImmersiveXrPostProcessingFallback();
 
         if (this.data.postFXEngine === 'pmndrs') {
@@ -933,6 +923,10 @@ AFRAME.registerComponent('scene-settings', {
     applyPostFXProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPostFXProfile,
     applyQualityProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyQualityProfiles,
     init: function () {
+        this.ensureRuntimePipelineComponents();
+        this.runtimeResources = VRODOSSceneSettingsMaster.RuntimeResources && VRODOSSceneSettingsMaster.RuntimeResources.createRegistry
+            ? VRODOSSceneSettingsMaster.RuntimeResources.createRegistry()
+            : null;
         this.handleQualityModelLoad = function () {
             this.markSceneCollectionsDirty();
             this.markShadowDirty('model-loaded');
@@ -1253,10 +1247,8 @@ AFRAME.registerComponent('scene-settings', {
         this.disablePostProcessing();
         this.disablePmndrsPostProcessing();
         this.disposePmndrsAtmosphere();
-        if (this._envMapRenderTarget) {
-            this._envMapRenderTarget.dispose();
-            this._envMapRenderTarget = null;
-        }
+        vrodosDisposeRuntimeResource(this._envMapRenderTarget);
+        this._envMapRenderTarget = null;
         this.disposeSceneProbe(false);
         if (this.el && this.el.object3D) {
             this.el.object3D.environment = null;
@@ -1275,8 +1267,21 @@ AFRAME.registerComponent('scene-settings', {
         if (pmndrsSunHaze && pmndrsSunHaze.parentNode) {
             pmndrsSunHaze.parentNode.removeChild(pmndrsSunHaze);
         }
+        if (this.runtimeResources) {
+            this.runtimeResources.disposeAll();
+            this.runtimeResources = null;
+        }
     },
     tick: function (time) {
+        const hasFocusedPipeline = this.el.components &&
+            this.el.components['vrodos-render-profile'] &&
+            this.el.components['vrodos-atmosphere'] &&
+            this.el.components['vrodos-reflections'];
+
+        if (hasFocusedPipeline) {
+            return;
+        }
+
         if (this.fpsStats && typeof this.fpsStats.update === 'function') {
             this.fpsStats.update();
         }

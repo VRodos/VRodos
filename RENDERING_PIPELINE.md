@@ -1,6 +1,6 @@
 # VRodos Rendering Pipeline - Technical Reference
 
-Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame master + Three r181 runtime. For end-user feature summaries, see `README.md`. For the phased Takram realism roadmap, see `TAKRAM_REALISTIC_LIGHTING_PLAN.md`. For historical WebGLRenderer debugging notes, see `POSTFX_DEBUG_NOTES.md`.
+Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r181 runtime. For end-user feature summaries, see `README.md`. For the phased Takram realism roadmap, see `TAKRAM_REALISTIC_LIGHTING_PLAN.md`. For historical WebGLRenderer debugging notes, see `POSTFX_DEBUG_NOTES.md`.
 
 ## 1. Runtime Overview
 
@@ -9,7 +9,14 @@ Compiled scenes support two mutually exclusive post-processing engines selected 
 - `legacy`: VRodos custom render-target pipeline with SAO, SSR, bloom, color grading, FXAA, and TAA.
 - `pmndrs`: PMNDRS `EffectComposer` path using bundled `postprocessing` and optional Takram atmosphere integration.
 
-Both engines are driven by the `scene-settings` component at `assets/js/runtime/master/components/vrodos_scene_settings.component.js`.
+The compiled `scene-settings` attribute remains the compatibility data contract. Runtime behavior is split into focused A-Frame components registered before `<a-scene>`:
+
+- `vrodos-render-profile`: renderer quality, static/dynamic shadows, adaptive shadow fit, and FPS updates.
+- `vrodos-postfx-router`: legacy vs PMNDRS ownership and composer enable/disable routing.
+- `vrodos-atmosphere`: Takram sky, sun/moon state, and day-night cycle updates.
+- `vrodos-reflections`: HDR environment maps, scene probe capture, and Takram sky PMREM updates.
+
+`scene-settings` still owns schema parsing, compatibility helpers, and existing public methods used by those components.
 
 Presentation mode is part of the rendering contract:
 
@@ -24,8 +31,10 @@ Presentation mode is part of the rendering contract:
 | File | Role |
 | --- | --- |
 | `assets/js/runtime/master/components/vrodos_scene_settings.component.js` | A-Frame schema, lifecycle, settings getters, engine dispatcher |
+| `assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js` | Focused A-Frame components/systems for render profile, post-FX routing, atmosphere, and reflections |
 | `assets/js/runtime/master/components/vrodos_navigation.component.js` | Compiled-scene walk/fly navigation, walkable-surface ground sampling, static player collision, wall sliding, and nav diagnostics |
 | `assets/js/runtime/master/vrodos_master_rendering.js` | HDR loader and shared material/runtime helpers |
+| `assets/js/runtime/master/vrodos_runtime_resources.js` | Runtime resource registry for disposing Three resources, postprocessing objects, and event listeners |
 | `assets/js/runtime/master/vrodos_spector_debug.js` | Debug-only Spector.js loader for `?vrodos_spector=1` |
 | `assets/js/runtime/master/vrodos_scene_probe.js` | HDR and scene-probe environment map support |
 | `assets/js/runtime/master/vrodos_quality_profiles.js` | Source for render, shadow, material, background, post-FX, Horizon, and Takram quality profiles |
@@ -34,6 +43,16 @@ Presentation mode is part of the rendering contract:
 | `assets/js/runtime/master/lib/vrodos-runtime-aframe-components.bundle.js` | Generated compiled-scene master A-Frame component bundle |
 | `assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js` | Bundled `three-mesh-bvh` helpers exposed as `window.VRODOS_COLLISION_BVH` for static player/world collision acceleration |
 | `assets/runtime-build-manifest.json` | Generated runtime chunk manifest consumed by the compiler script planner |
+
+### Compiler and build files
+
+| File | Role |
+| --- | --- |
+| `includes/class-vrodos-compiler-runtime-page-builder.php` | Shared Master/Simple page assembly: template load, DOM setup, scene settings, decoder config, object rendering, diagnostics, and output writing |
+| `includes/class-vrodos-compiler-runtime-manifest.php` | Runtime chunk manifest validation and dependency resolution |
+| `includes/class-vrodos-compiler-runtime-script-planner.php` | Scene metadata to lazy runtime script selection |
+| `scripts/build-runtime-master-bundles.mjs` | Builds runtime bundles, generated settings-contract script, and `assets/runtime-build-manifest.json` |
+| `assets/runtime-settings-contract.json` | Source of truth for compiled `scene-settings` defaults and related runtime presets |
 
 ### Legacy custom pipeline files
 
@@ -75,6 +94,36 @@ lib/vrodos-runtime-aframe-components.bundle.js
 ```
 
 The optional runtime bundle set is selected by `VRodos_Compiler_Runtime_Script_Planner`, not by hardcoded template script tags. PMNDRS, Takram, and collision BVH bundles are generated from root `package.json` and `package-lock.json`. They must use A-Frame's `window.THREE`; compiled scenes must not load a second Three instance.
+
+`assets/runtime-build-manifest.json` is the compiled-client chunk source of truth. The build and PHP manifest loader validate:
+
+- missing script files
+- script chunks without `src`
+- undeclared dependency ids
+- duplicate order conflicts
+- missing feature coverage declarations
+
+Lazy-loading expectations:
+
+- PMNDRS vendor and PMNDRS runtime load only when PMNDRS post-FX is selected.
+- Takram loads only when PMNDRS atmosphere is enabled.
+- Networked components are pruned from single-player output.
+- The FPS meter remains an optional inline module.
+
+`VRodos_Compiler_Runtime_Page_Builder` owns the common generated-page path for Master and Simple clients. Master/Simple differences should stay as small strategies around player/network UI, not as duplicated template/DOM/rendering code.
+
+### Runtime lifecycle and disposal
+
+The compiled runtime does not add a second `requestAnimationFrame` render loop. Continuous work stays inside A-Frame component `tick()` handlers or the existing A-Frame render path. The post-FX router controls which engine owns post-processing, while the PMNDRS and legacy helpers continue to integrate with A-Frame's renderer instead of running an independent loop.
+
+Runtime helpers should use `window.VRODOSMaster.RuntimeResources` for resources that need explicit cleanup:
+
+- geometries, materials, textures, and render targets
+- PMNDRS composers, passes, and effects
+- PMREM targets and scene-probe/HDR environment targets
+- event listeners registered by runtime helpers
+
+Removing an object from the scene is not cleanup; obsolete GPU resources still need `dispose()` through the owning lifecycle path.
 
 ## 3a. Debug And Profiling Hooks
 
@@ -300,6 +349,13 @@ Native SSAO presets are budgeted so the final color buffer stays full-resolution
 
 Takram LensFlareEffect is intentionally not merged into the fused `EffectPass`. It is a convolution effect, so it runs as its own pass when `pmndrsLensFlareEnabled` is true and the Horizon Takram sun is active.
 
+Composer lifecycle:
+
+- `RenderPass` stays first.
+- Fullscreen effects are merged into the fewest practical `EffectPass` instances.
+- Resize flows through the PMNDRS composer/update helpers instead of direct target mutation.
+- Composer, passes, effects, lookup textures, and render targets are disposed through their own lifecycle and the shared runtime resource helper.
+
 ## 7. PMNDRS Built-In LUT Looks
 
 PMNDRS LUT v1 uses generated built-in 3D lookup textures. It does not load uploaded `.cube` or `.3dl` assets.
@@ -451,7 +507,8 @@ If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`,
 
 - Root `package.json` and `package-lock.json` define runtime package intent.
 - `npm run build:three` generates `assets/runtime-version-manifest.json`.
-- `npm run build:runtime` generates the compiled-scene runtime bundles and the browser settings-contract script from `assets/runtime-settings-contract.json`.
+- `npm run build:runtime` generates the compiled-scene runtime bundles, the browser settings-contract script from `assets/runtime-settings-contract.json`, and validates/writes `assets/runtime-build-manifest.json`.
+- `assets/runtime-build-manifest.json` defines compiled runtime chunks, dependency order, lazy feature coverage, and generated script URLs consumed by `VRodos_Compiler_Runtime_Script_Planner`.
 - `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, Takram, and collision BVH metadata.
 - The current live vendor bundle is Three.js r181.
 - The classic compiled A-Frame runtime must not load a second Three instance. The preferred near-term upgrade path is A-Frame's planned Three r184 runtime work (`aframevr/aframe#5818`) rather than a VRodos-only Three fork.

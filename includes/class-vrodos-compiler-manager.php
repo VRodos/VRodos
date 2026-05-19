@@ -13,6 +13,7 @@ require_once __DIR__ . '/class-vrodos-compiler-scene-settings.php';
 require_once __DIR__ . '/class-vrodos-compiler-aframe-entity-renderer.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-manifest.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
+require_once __DIR__ . '/class-vrodos-compiler-runtime-page-builder.php';
 
 class VRodos_Compiler_Manager {
 	public const RUNTIME_MODE_NETWORKED     = 'networked';
@@ -29,6 +30,7 @@ class VRodos_Compiler_Manager {
 	private VRodos_Compiler_Scene_Repository $scene_repository;
 	private VRodos_Compiler_Scene_Settings $scene_settings;
 	private VRodos_Compiler_AFrame_Entity_Renderer $entity_renderer;
+	private VRodos_Compiler_Runtime_Page_Builder $runtime_page_builder;
 	private ?VRodos_Compiler_Runtime_Script_Planner $runtime_script_planner = null;
 
 	public function __construct() {
@@ -42,6 +44,16 @@ class VRodos_Compiler_Manager {
 			$this->runtime_assets,
 			$this->scene_repository,
 			[ $this, 'normalize_url' ]
+		);
+		$this->runtime_page_builder = new VRodos_Compiler_Runtime_Page_Builder(
+			$this->runtime_assets,
+			$this->template_renderer,
+			$this->scene_settings,
+			$this->entity_renderer,
+			[ $this, 'normalize_url' ],
+			function (): string {
+				return $this->build_gltf_decoder_config();
+			}
 		);
 
 		$this->website_root_url = $this->detect_request_host();
@@ -327,17 +339,7 @@ class VRodos_Compiler_Manager {
 
 
 	private function create_runtime_dom_structure( string $content, $scene_json, string $body_id ): array {
-		$dom                   = new DOMDocument( '1.0', 'UTF-8' );
-		$dom->resolveExternals = true;
-		@$dom->loadHTML( $content, LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS | LIBXML_NOERROR );
-		$html       = $dom->documentElement;
-		$body       = $dom->getElementById( $body_id );
-		$actionsDiv = $dom->getElementById( 'actionsDiv' );
-		$ascene     = $dom->getElementById( 'aframe-scene-container' );
-		$metadata   = $scene_json->metadata;
-		$objects    = $scene_json->objects;
-
-		return ['dom'        => $dom, 'html'       => $html, 'body'       => $body, 'ascene'     => $ascene, 'metadata'   => $metadata, 'objects'    => $objects, 'actionsDiv' => $actionsDiv];
+		return $this->runtime_page_builder->create_dom_structure( $content, $scene_json, $body_id );
 	}
 
 	private function createBasicDomStructureAframeActor( $content, $scene_json ) {
@@ -411,12 +413,7 @@ class VRodos_Compiler_Manager {
 	}
 
 	private function prepare_runtime_template( string $template, array $replacements ): string {
-		$content = $this->template_renderer->read_runtime_template( $template );
-		foreach ( $replacements as $search => $replace ) {
-			$content = str_replace( (string) $search, (string) $replace, $content );
-		}
-
-		return $this->runtime_assets->redirect_runtime_template_urls( $content );
+		return $this->runtime_page_builder->prepare_template( $template, $replacements );
 	}
 
 	private function createIndexFile( $project_title, $scene_id, $scene_title ) {
@@ -454,14 +451,7 @@ class VRodos_Compiler_Manager {
 
 		$projectType = $this->get_project_type_slug( (int) $project_id );
 		
-		// Use helper to ensure a-assets exists and is attached
-		$a_asset = $this->entity_renderer->get_or_create_assets_container( $dom, $ascene );
-
 		$dom->getElementsByTagName( 'title' )->item( 0 )->nodeValue = $scene_title[ $index ];
-
-		$this->apply_scene_environment( $dom, $ascene, $scene_json, (int) $project_id );
-		$this->apply_gltf_decoder_config( $ascene );
-		$ascene->setAttribute( 'vrodos-scene-loader', '' );
 
 		if ( $this->is_networked_runtime() ) {
 			$enable_director_audio = ( $projectType == 'vrexpo_games' ) ? 'false' : 'true';
@@ -550,23 +540,30 @@ class VRodos_Compiler_Manager {
 		// print($scene_id)
 
 
-		// 3. Render Objects using the new modular pipeline (Phase 3 Refactoring Win)
-		$this->entity_renderer->render_scene_objects( $dom, $ascene, $a_asset, $objects, $project_id, $scene_id, [
-			'showPawnPositions' => $showPawnPositions
-		] );
+		$this->runtime_page_builder->apply_scene_core(
+			$dom,
+			$ascene,
+			$scene_json,
+			(int) $project_id,
+			(int) $scene_id,
+			[
+				'scene_loader'    => true,
+				'render_options'  => [
+					'showPawnPositions' => $showPawnPositions,
+				],
+			]
+		);
 
 		if ( $this->is_single_player_runtime() ) {
 			$this->apply_single_player_runtime_dom( $dom, $ascene );
 		}
 
-		$this->entity_renderer->markDelayedRevealEntities( $dom );
-		$this->append_compile_diagnostics_script( $dom, $this->entity_renderer->build_compile_diagnostics( $dom ) );
-
-		$contentNew = $dom->saveHTML();
-		$contentNew = "<!-- Detected Hostname: {$this->website_root_url} -->\n" . $contentNew;
-
-		// Write compiled HTML into the generated runtime build directory.
-		return $this->template_renderer->write_runtime_build( 'Master_Client_' . $scene_id . '.html', $contentNew );
+		return $this->runtime_page_builder->write_dom(
+			$dom,
+			'Master_Client_' . $scene_id . '.html',
+			false,
+			"<!-- Detected Hostname: {$this->website_root_url} -->\n"
+		);
 	}
 
 	private function apply_single_player_runtime_dom( DOMDocument $dom, DOMElement $ascene ): void {
@@ -673,16 +670,7 @@ class VRodos_Compiler_Manager {
 		$actionsDiv = $basicDomElements['actionsDiv'];
 		$ascene     = $basicDomElements['ascene'];
 
-		$this->apply_scene_environment( $dom, $ascene, $scene_json, (int) $project_id );
-		$this->apply_gltf_decoder_config( $ascene );
-
-		// Use helper to ensure a-assets exists and is attached
-		$a_asset = $this->entity_renderer->get_or_create_assets_container( $dom, $ascene );
-
-		// Render scene objects modularly
-		$this->entity_renderer->render_scene_objects( $dom, $ascene, $a_asset, $objects, $project_id, $scene_id );
-
-		$this->entity_renderer->markDelayedRevealEntities( $dom );
+		$this->runtime_page_builder->apply_scene_core( $dom, $ascene, $scene_json, (int) $project_id, (int) $scene_id );
 		$i = 0;
 		foreach ( $objects as $contentObject ) {
 
@@ -723,23 +711,7 @@ class VRodos_Compiler_Manager {
 			}
 		}
 
-		$this->append_compile_diagnostics_script( $dom, $this->entity_renderer->build_compile_diagnostics( $dom ) );
-
-		$contentNew = $dom->saveHTML( $dom->documentElement );
-
-		// Write compiled HTML into the generated runtime build directory.
-		return $this->template_renderer->write_runtime_build( 'Simple_Client_' . $scene_id . '.html', $contentNew );
-	}
-
-	/**
-	 * Apply normalized scene-settings metadata and scene-level environment DOM.
-	 */
-	private function apply_scene_environment( DOMDocument $dom, DOMElement $ascene, $scene_json, int $project_id ): void {
-		$this->scene_settings->apply( $dom, $ascene, $scene_json, $project_id, [ $this, 'normalize_url' ] );
-	}
-
-	private function apply_gltf_decoder_config( DOMElement $ascene ): void {
-		$ascene->setAttribute( 'gltf-model', $this->build_gltf_decoder_config() );
+		return $this->runtime_page_builder->write_dom( $dom, 'Simple_Client_' . $scene_id . '.html', true );
 	}
 
 	private function build_gltf_decoder_config(): string {
@@ -755,38 +727,6 @@ class VRodos_Compiler_Manager {
 				'meshoptDecoderPath: ' . $this->normalize_url( $three_vendor_base . 'meshopt/meshopt_decoder.js' ) . ';',
 			]
 		);
-	}
-
-	private function append_compile_diagnostics_script( DOMDocument $dom, array $diagnostics ): void {
-		$body = $dom->getElementsByTagName( 'body' )->item( 0 );
-		if ( ! $body ) {
-			return;
-		}
-
-		$json = wp_json_encode(
-			$diagnostics,
-			JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES
-		);
-		if ( ! is_string( $json ) || '' === $json ) {
-			return;
-		}
-
-		$script = $dom->createElement( 'script' );
-		$script->setAttribute( 'id', 'vrodos-compile-diagnostics' );
-		$script->appendChild(
-			$dom->createTextNode(
-				"(function () {\n" .
-				"    var diagnostics = {$json};\n" .
-				"    window.VRODOS_COMPILE_DIAGNOSTICS = diagnostics;\n" .
-				"    if (diagnostics.warnings && diagnostics.warnings.length) {\n" .
-				"        console.warn('[VRodos] Compile performance diagnostics', diagnostics);\n" .
-				"    } else if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.compileDiagnostics) {\n" .
-				"        console.info('[VRodos] Compile performance diagnostics', diagnostics);\n" .
-				"    }\n" .
-				"}());"
-			)
-		);
-		$body->appendChild( $script );
 	}
 
 	private function runtime_script_planner(): VRodos_Compiler_Runtime_Script_Planner {

@@ -8,6 +8,7 @@ class VRodos_Compiler_Runtime_Manifest {
 	private const DEFAULT_RELATIVE_PATH = 'assets/runtime-build-manifest.json';
 
 	private array $manifest;
+	private bool $validate_files = false;
 
 	public function __construct( ?string $manifest_path = null, ?array $manifest = null ) {
 		if ( null !== $manifest ) {
@@ -16,6 +17,7 @@ class VRodos_Compiler_Runtime_Manifest {
 		}
 
 		$path = $manifest_path ?: VRodos_Path_Manager::plugin_path( self::DEFAULT_RELATIVE_PATH );
+		$this->validate_files = true;
 		if ( ! is_readable( $path ) ) {
 			throw new RuntimeException( '[VRodos] Runtime build manifest is missing: ' . $path );
 		}
@@ -89,6 +91,7 @@ class VRodos_Compiler_Runtime_Manifest {
 			throw new RuntimeException( '[VRodos] Runtime build manifest has no chunks.' );
 		}
 
+		$order_to_chunk_id = [];
 		foreach ( $manifest['chunks'] as $chunk_id => $chunk ) {
 			if ( ! is_array( $chunk ) ) {
 				throw new RuntimeException( '[VRodos] Runtime chunk entry is invalid: ' . $chunk_id );
@@ -102,6 +105,16 @@ class VRodos_Compiler_Runtime_Manifest {
 				throw new RuntimeException( '[VRodos] Runtime chunk is missing type/order: ' . $chunk_id );
 			}
 
+			$order = (int) $chunk['order'];
+			if ( isset( $order_to_chunk_id[ $order ] ) ) {
+				throw new RuntimeException( '[VRodos] Runtime chunks share order ' . $order . ': ' . $order_to_chunk_id[ $order ] . ', ' . $chunk_id );
+			}
+			$order_to_chunk_id[ $order ] = (string) $chunk_id;
+
+			if ( ! isset( $chunk['features'] ) || ! is_array( $chunk['features'] ) || empty( $chunk['features'] ) ) {
+				throw new RuntimeException( '[VRodos] Runtime chunk has no feature coverage declaration: ' . $chunk_id );
+			}
+
 			if ( 'script' === $chunk['type'] && empty( $chunk['src'] ) ) {
 				throw new RuntimeException( '[VRodos] Runtime script chunk is missing src: ' . $chunk_id );
 			}
@@ -109,8 +122,35 @@ class VRodos_Compiler_Runtime_Manifest {
 			if ( 'inline-module' === $chunk['type'] && empty( $chunk['moduleImport'] ) ) {
 				throw new RuntimeException( '[VRodos] Runtime inline module chunk is missing moduleImport: ' . $chunk_id );
 			}
+
+			foreach ( (array) ( $chunk['dependencies'] ?? [] ) as $dependency_id ) {
+				if ( ! isset( $manifest['chunks'][ (string) $dependency_id ] ) ) {
+					throw new RuntimeException( '[VRodos] Runtime chunk has an undeclared dependency: ' . $chunk_id . ' -> ' . (string) $dependency_id );
+				}
+			}
+
+			if ( $this->validate_files && 'script' === $chunk['type'] ) {
+				$this->validate_chunk_file_exists( $manifest, (string) $chunk_id, $chunk );
+			}
 		}
 
 		return $manifest;
+	}
+
+	private function validate_chunk_file_exists( array $manifest, string $chunk_id, array $chunk ): void {
+		$file = (string) ( $chunk['file'] ?? '' );
+		if ( '' === $file ) {
+			throw new RuntimeException( '[VRodos] Runtime script chunk is missing file: ' . $chunk_id );
+		}
+
+		$runtime_root = (string) ( $manifest['runtimeRoot'] ?? '' );
+		$relative     = ltrim( str_replace( '\\', '/', $runtime_root . '/' . $file ), '/' );
+		$path         = class_exists( 'VRodos_Path_Manager' )
+			? VRodos_Path_Manager::plugin_path( $relative )
+			: dirname( __DIR__ ) . '/' . $relative;
+
+		if ( ! is_readable( $path ) ) {
+			throw new RuntimeException( '[VRodos] Runtime script chunk file is missing: ' . $chunk_id . ' at ' . $path );
+		}
 	}
 }

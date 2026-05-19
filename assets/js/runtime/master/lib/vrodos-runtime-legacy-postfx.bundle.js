@@ -775,6 +775,11 @@
   })();
   (function() {
     const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
+    const disposeRuntimeResource = VRODOSMaster.RuntimeResources && VRODOSMaster.RuntimeResources.dispose ? VRODOSMaster.RuntimeResources.dispose : function(resource) {
+      if (resource && typeof resource.dispose === "function") {
+        resource.dispose();
+      }
+    };
     H.updatePostProcessingSize = function() {
       if (!this.postProcessingTarget || !this.el.renderer) {
         return;
@@ -1156,90 +1161,31 @@
       if (this.postProcessingOriginalRender) {
         this.el.renderer.render = this.postProcessingOriginalRender;
       }
-      if (this.postProcessingQuad) {
-        if (this.postProcessingQuad.geometry) {
-          this.postProcessingQuad.geometry.dispose();
-        }
-        if (this.postProcessingQuad.material) {
-          this.postProcessingQuad.material.dispose();
-        }
-      }
-      if (this.postProcessingTarget) {
-        this.postProcessingTarget.dispose();
-      }
-      if (this.bloomTargetA) {
-        this.bloomTargetA.dispose();
-      }
-      if (this.bloomTargetB) {
-        this.bloomTargetB.dispose();
-      }
-      if (this.bloomBrightPassMaterial) {
-        this.bloomBrightPassMaterial.dispose();
-      }
-      if (this.bloomBlurMaterial) {
-        this.bloomBlurMaterial.dispose();
-      }
-      if (this.bloomQuad) {
-        if (this.bloomQuad.geometry) {
-          this.bloomQuad.geometry.dispose();
-        }
-      }
-      if (this.fxaaTarget) {
-        this.fxaaTarget.dispose();
-      }
-      if (this.fxaaMaterial) {
-        this.fxaaMaterial.dispose();
-      }
-      if (this.fxaaQuad) {
-        if (this.fxaaQuad.geometry) {
-          this.fxaaQuad.geometry.dispose();
-        }
-      }
-      if (this.saoTargetA) {
-        this.saoTargetA.dispose();
-      }
-      if (this.saoTargetB) {
-        this.saoTargetB.dispose();
-      }
-      if (this.saoMaterial) {
-        this.saoMaterial.dispose();
-      }
-      if (this.saoBlurMaterial) {
-        this.saoBlurMaterial.dispose();
-      }
-      if (this.saoQuad) {
-        if (this.saoQuad.geometry) {
-          this.saoQuad.geometry.dispose();
-        }
-      }
-      if (this.taaTargetA) {
-        this.taaTargetA.dispose();
-      }
-      if (this.taaTargetB) {
-        this.taaTargetB.dispose();
-      }
-      if (this.taaMaterial) {
-        this.taaMaterial.dispose();
-      }
-      if (this.taaBlitMaterial) {
-        this.taaBlitMaterial.dispose();
-      }
-      if (this.taaQuad) {
-        if (this.taaQuad.geometry) {
-          this.taaQuad.geometry.dispose();
-        }
-      }
-      if (this.ssrTargetA) {
-        this.ssrTargetA.dispose();
-      }
-      if (this.ssrMaterial) {
-        this.ssrMaterial.dispose();
-      }
-      if (this.ssrQuad) {
-        if (this.ssrQuad.geometry) {
-          this.ssrQuad.geometry.dispose();
-        }
-      }
+      disposeRuntimeResource([
+        this.postProcessingQuad,
+        this.postProcessingTarget,
+        this.bloomTargetA,
+        this.bloomTargetB,
+        this.bloomBrightPassMaterial,
+        this.bloomBlurMaterial,
+        this.bloomQuad,
+        this.fxaaTarget,
+        this.fxaaMaterial,
+        this.fxaaQuad,
+        this.saoTargetA,
+        this.saoTargetB,
+        this.saoMaterial,
+        this.saoBlurMaterial,
+        this.saoQuad,
+        this.taaTargetA,
+        this.taaTargetB,
+        this.taaMaterial,
+        this.taaBlitMaterial,
+        this.taaQuad,
+        this.ssrTargetA,
+        this.ssrMaterial,
+        this.ssrQuad
+      ]);
       this.postProcessingTarget = null;
       this.postProcessingMaterial = null;
       this.postProcessingScene = null;
@@ -1278,17 +1224,11 @@
       this.ssrMaterial = null;
       this.ssrQuad = null;
       this.ssrScene = null;
-      if (this._blackSSRTexture) {
-        this._blackSSRTexture.dispose();
-      }
+      disposeRuntimeResource(this._blackSSRTexture);
       this._blackSSRTexture = null;
-      if (this._blackBloomTexture) {
-        this._blackBloomTexture.dispose();
-      }
+      disposeRuntimeResource(this._blackBloomTexture);
       this._blackBloomTexture = null;
-      if (this._whiteSAOTexture) {
-        this._whiteSAOTexture.dispose();
-      }
+      disposeRuntimeResource(this._whiteSAOTexture);
       this._whiteSAOTexture = null;
     };
     H.syncPostProcessingState = function() {
