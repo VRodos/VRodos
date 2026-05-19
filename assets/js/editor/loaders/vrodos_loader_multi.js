@@ -44,12 +44,24 @@ VRODOS.loader.LoaderMulti = class {
                 pendingLoads.push(VRODOS.loader.loadImageAsset(manager, name, resource, resources3D));
 
             } else { // GLB 3D models
-                if ((resource && resource.glb_id !== "" && resource.glb_id !== undefined) || categorySlug === "video") {
+                if (VRODOS.loader.isGlbSceneResource(name, resource, categorySlug)) {
                     glbLoadTasks.push(() => VRODOS.loader.loadGlbAsset(manager, loader, name, resource, resources3D, {
                         modelBaseUrl
                     }));
                 }
             }
+        }
+
+        if (
+            VRODOS.editor &&
+            VRODOS.editor.diagnostics &&
+            typeof VRODOS.editor.diagnostics.updateCurrentLoad === 'function'
+        ) {
+            VRODOS.editor.diagnostics.updateCurrentLoad({
+                glbCount: glbLoadTasks.length,
+                loadConcurrency: glbLoadTasks.length > 0 ? loadProfile.loadConcurrency : 0,
+                isDenseScene: Boolean(loadProfile.isDenseScene)
+            });
         }
 
         if (glbLoadTasks.length > 0) {

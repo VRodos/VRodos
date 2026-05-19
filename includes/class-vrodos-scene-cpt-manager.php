@@ -197,6 +197,124 @@ class VRodos_Scene_CPT_Manager {
 		return $post_id;
 	}
 
+	private static function normalize_editor_scene_asset_url( string $url ): string {
+		if ( '' === $url ) {
+			return '';
+		}
+
+		if ( class_exists( 'VRodos_Compiler_Manager' ) ) {
+			static $compiler = null;
+
+			if ( ! $compiler instanceof VRodos_Compiler_Manager ) {
+				$compiler = new VRodos_Compiler_Manager();
+			}
+
+			return (string) $compiler->normalize_url( $url );
+		}
+
+		return $url;
+	}
+
+	private static function collect_scene_object_asset_ids( $objects ): array {
+		if ( ! is_array( $objects ) && ! is_object( $objects ) ) {
+			return [];
+		}
+
+		$asset_ids = [];
+		foreach ( $objects as $value ) {
+			$asset_id = is_object( $value )
+				? absint( $value->asset_id ?? 0 )
+				: ( is_array( $value ) ? absint( $value['asset_id'] ?? 0 ) : 0 );
+
+			if ( $asset_id > 0 ) {
+				$asset_ids[] = $asset_id;
+			}
+		}
+
+		return array_values( array_unique( $asset_ids ) );
+	}
+
+	private static function prime_scene_object_asset_caches( array $asset_ids ): void {
+		if ( empty( $asset_ids ) ) {
+			return;
+		}
+
+		if ( function_exists( '_prime_post_caches' ) ) {
+			_prime_post_caches( $asset_ids, true, true );
+			return;
+		}
+
+		update_meta_cache( 'post', $asset_ids );
+		update_object_term_cache( $asset_ids, 'vrodos_asset3d' );
+	}
+
+	private static function get_editor_scene_asset_metadata( int $asset_id ): array {
+		static $metadata_by_asset_id = [];
+
+		if ( $asset_id <= 0 ) {
+			return [];
+		}
+
+		if ( isset( $metadata_by_asset_id[ $asset_id ] ) ) {
+			return $metadata_by_asset_id[ $asset_id ];
+		}
+
+		$asset_post = get_post( $asset_id );
+		if ( ! $asset_post || 'vrodos_asset3d' !== $asset_post->post_type ) {
+			$metadata_by_asset_id[ $asset_id ] = [];
+			return [];
+		}
+
+		$terms         = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
+		$category_slug = ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? (string) $terms[0]->slug : '';
+		$glb_id        = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
+		$glb_url       = VRodos_Core_Manager::resolve_media_meta_url( $glb_id );
+		$screenshot_id = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
+
+		if ( ! $screenshot_id ) {
+			$screenshot_id = get_post_thumbnail_id( $asset_id );
+		}
+		if ( ! $screenshot_id && 'image' === $category_slug ) {
+			$screenshot_id = get_post_meta( $asset_id, '_immerse_original_url', true );
+		}
+
+		$screenshot_url = $screenshot_id ? VRodos_Core_Manager::resolve_media_meta_url( $screenshot_id ) : '';
+		$metadata       = [
+			'category_slug'   => $category_slug,
+			'glb_id'          => $glb_id,
+			'glb_path'        => self::normalize_editor_scene_asset_url( $glb_url ),
+			'path'            => self::normalize_editor_scene_asset_url( $glb_url ),
+			'screenshot_id'   => $screenshot_id,
+			'screenshot_path' => self::normalize_editor_scene_asset_url( $screenshot_url ),
+		];
+
+		$metadata_by_asset_id[ $asset_id ] = array_filter(
+			$metadata,
+			static fn( $value ) => '' !== $value && null !== $value && false !== $value
+		);
+
+		return $metadata_by_asset_id[ $asset_id ];
+	}
+
+	private static function enrich_editor_scene_object_asset_metadata( array $object_data ): array {
+		$asset_id = absint( $object_data['asset_id'] ?? 0 );
+		if ( $asset_id > 0 ) {
+			foreach ( self::get_editor_scene_asset_metadata( $asset_id ) as $key => $value ) {
+				$object_data[ $key ] = $value;
+			}
+		}
+
+		if ( empty( $object_data['glb_path'] ) && ! empty( $object_data['glb_id'] ) ) {
+			$glb_url = VRodos_Core_Manager::resolve_media_meta_url( $object_data['glb_id'] );
+			if ( '' !== $glb_url ) {
+				$object_data['glb_path'] = self::normalize_editor_scene_asset_url( $glb_url );
+				$object_data['path']     = $object_data['glb_path'];
+			}
+		}
+
+		return $object_data;
+	}
+
 	public static function parse_scene_json_and_prepare_script_data( $scene_json, $relative_path ): array {
 		$scene_data   = [];
 		$scene_json   = htmlspecialchars_decode( (string) $scene_json );
@@ -375,6 +493,8 @@ class VRodos_Scene_CPT_Manager {
 		// Objects
 		$scene_data['objects'] = [];
 		if ( isset( $content_json->objects ) ) {
+			self::prime_scene_object_asset_caches( self::collect_scene_object_asset_ids( $content_json->objects ) );
+
 			foreach ( $content_json->objects as $key => $value ) {
 				$name        = $key;
 				$object_data = (array) $value;
@@ -407,6 +527,7 @@ class VRodos_Scene_CPT_Manager {
 					$object_data['is_joker']         = $value->is_joker ?? 'false';
 				}
 
+				$object_data = self::enrich_editor_scene_object_asset_metadata( $object_data );
 				$object_data['isLight'] = $is_light;
 
 				// Recreate the 'trs' object that the frontend scripts expect.

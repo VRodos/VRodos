@@ -133,10 +133,6 @@ VRODOS.api.loadEditorSceneResources = function(resources3D, options) {
     const envir = VRODOS.editor.envir;
     if (!envir) return Promise.resolve([]);
 
-    if (VRODOS.editor.diagnostics && typeof VRODOS.editor.diagnostics.markLoadStart === 'function') {
-        VRODOS.editor.diagnostics.markLoadStart(opts.reason || 'scene-load');
-    }
-
     envir.isSceneLoading = true;
     envir.sceneLoadFinalized = false;
     VRODOS.api.prepareSceneLoadManager();
@@ -144,6 +140,13 @@ VRODOS.api.loadEditorSceneResources = function(resources3D, options) {
     const assetResources = opts.assetResources || VRODOS.api.getSceneAssetResources(resources3D);
     if (typeof VRODOS.utils.dedupeSceneDataObjects === 'function') {
         VRODOS.utils.dedupeSceneDataObjects(assetResources, { reason: opts.reason || 'scene-load' });
+    }
+
+    if (VRODOS.editor.diagnostics && typeof VRODOS.editor.diagnostics.markLoadStart === 'function') {
+        const resourceStats = typeof VRODOS.loader.getSceneResourceStats === 'function'
+            ? VRODOS.loader.getSceneResourceStats(assetResources)
+            : { resourceCount: Object.keys(assetResources || {}).length, glbCount: 0 };
+        VRODOS.editor.diagnostics.markLoadStart(opts.reason || 'scene-load', resourceStats);
     }
 
     const lightsPawnLoader = new VRODOS.loader.LightsPawnLoader();

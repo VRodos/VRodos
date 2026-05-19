@@ -86,6 +86,38 @@ VRODOS.loader.fetchGlbMetadata = async function(name, resource) {
     }
 };
 
+function vrodosLoaderHasLocalGlbMetadata(resource) {
+    if (!resource) {
+        return false;
+    }
+
+    if (VRODOS.utils.normalizeSceneAssetCategory(resource.category_slug) === 'video') {
+        return true;
+    }
+
+    return Boolean(resource.glb_path || resource.path);
+}
+
+function vrodosLoaderRecordGlbMetadataCache(result) {
+    if (
+        VRODOS.editor &&
+        VRODOS.editor.diagnostics &&
+        typeof VRODOS.editor.diagnostics.recordGlbMetadataCache === 'function'
+    ) {
+        VRODOS.editor.diagnostics.recordGlbMetadataCache(result);
+    }
+}
+
+async function vrodosLoaderResolveGlbMetadata(name, resource) {
+    if (vrodosLoaderHasLocalGlbMetadata(resource)) {
+        vrodosLoaderRecordGlbMetadataCache('hit');
+        return {};
+    }
+
+    vrodosLoaderRecordGlbMetadataCache('miss');
+    return VRODOS.loader.fetchGlbMetadata(name, resource);
+}
+
 VRODOS.loader.loadGlbAsset = function(manager, gltfLoader, name, resource, resources3D, options) {
     const opts = options || {};
     const modelBaseUrl = opts.modelBaseUrl || '';
@@ -95,7 +127,7 @@ VRODOS.loader.loadGlbAsset = function(manager, gltfLoader, name, resource, resou
             try {
                 if (manager) manager.itemStart(name);
 
-                const resourcesGLB = await VRODOS.loader.fetchGlbMetadata(name, resource);
+                const resourcesGLB = await vrodosLoaderResolveGlbMetadata(name, resource);
                 vrodosLoaderMergeGlbMetadata(resource, resourcesGLB);
 
                 const glbURL = vrodosLoaderResolveGlbUrl(resource, resourcesGLB, modelBaseUrl);

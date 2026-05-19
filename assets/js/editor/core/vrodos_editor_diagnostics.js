@@ -9,12 +9,43 @@ VRODOS.editor = VRODOS.editor || {};
     diagnostics.loadTimings = diagnostics.loadTimings || [];
     diagnostics.currentLoad = null;
 
-    diagnostics.markLoadStart = function(reason) {
-        this.currentLoad = {
+    diagnostics.markLoadStart = function(reason, details) {
+        this.currentLoad = Object.assign({
             reason: reason || 'scene-load',
-            startedAt: typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now()
-        };
+            startedAt: typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now(),
+            glbMetadataCache: {
+                hits: 0,
+                misses: 0
+            }
+        }, details || {});
         return this.currentLoad;
+    };
+
+    diagnostics.updateCurrentLoad = function(details) {
+        if (!this.currentLoad || !details) {
+            return this.currentLoad;
+        }
+
+        Object.assign(this.currentLoad, details);
+        return this.currentLoad;
+    };
+
+    diagnostics.recordGlbMetadataCache = function(result) {
+        if (!this.currentLoad) {
+            return null;
+        }
+
+        if (!this.currentLoad.glbMetadataCache) {
+            this.currentLoad.glbMetadataCache = { hits: 0, misses: 0 };
+        }
+
+        if (result === 'hit') {
+            this.currentLoad.glbMetadataCache.hits++;
+        } else {
+            this.currentLoad.glbMetadataCache.misses++;
+        }
+
+        return this.currentLoad.glbMetadataCache;
     };
 
     diagnostics.markLoadEnd = function(status) {

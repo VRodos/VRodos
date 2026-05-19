@@ -38,7 +38,7 @@ Object.assign(window.VRODOS, {
             targetFps: 45,
             pixelRatioCap: 1.25,
             labelFrameStride: 2,
-            loaderConcurrency: 2
+            loaderConcurrency: 3
         }
     },
     runtime: window.VRODOS.runtime || {},

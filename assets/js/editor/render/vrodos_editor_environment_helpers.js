@@ -46,7 +46,7 @@ VRODOS.utils = VRODOS.utils || {};
         lowEndPixelRatioCap: 1,
         labelFrameStride: 2,
         lowEndLabelFrameStride: 3,
-        loaderConcurrency: 2,
+        loaderConcurrency: 3,
         lowEndLoaderConcurrency: 1,
         textureAnisotropy: 4,
         lowEndTextureAnisotropy: 2,
