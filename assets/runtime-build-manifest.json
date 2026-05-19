@@ -71,6 +71,7 @@
       "sourceFiles": [
         "assets/js/runtime/master/lib/vrodos-runtime-settings-contract.generated.js",
         "assets/js/runtime/master/vrodos_master_shared.js",
+        "assets/js/runtime/master/vrodos_runtime_settings_helpers.js",
         "assets/js/runtime/master/vrodos_ui_helpers.js",
         "assets/js/runtime/master/vrodos_master_bootstrap.js",
         "assets/js/runtime/master/vrodos_spector_debug.js",

@@ -691,6 +691,128 @@
       cameraA.setAttribute("player-info", "avatarType", selectedValue);
     }
   };
+  window.VRODOSMaster = window.VRODOSMaster || {};
+  (function() {
+    const Master = window.VRODOSMaster;
+    if (!Master.RuntimeSettings) {
+      Master.RuntimeSettings = {};
+    }
+    const H = Master.RuntimeSettings;
+    const contract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
+    function setting(key) {
+      return contract.sceneSettings && contract.sceneSettings[key] ? contract.sceneSettings[key] : {};
+    }
+    function defaultValue(key, fallback, defaultKey) {
+      const config = setting(key);
+      const field = defaultKey || "default";
+      return Object.prototype.hasOwnProperty.call(config, field) ? config[field] : fallback;
+    }
+    function defaultString(key, fallback) {
+      const value = defaultValue(key, fallback);
+      if (typeof value === "boolean") {
+        return value ? "1" : "0";
+      }
+      return String(value);
+    }
+    function normalizeBool(value, fallback) {
+      if (typeof value === "boolean") {
+        return value;
+      }
+      if (value === null || typeof value === "undefined") {
+        return Boolean(fallback);
+      }
+      if (value === 1 || value === "1" || value === "true" || value === "yes" || value === "on") {
+        return true;
+      }
+      if (value === 0 || value === "0" || value === "false" || value === "no" || value === "off") {
+        return false;
+      }
+      return Boolean(fallback);
+    }
+    function normalizeNumber(key, value, fallback, min, max) {
+      const config = setting(key);
+      const resolvedFallback = defaultValue(key, fallback);
+      let number = parseFloat(value);
+      if (isNaN(number)) {
+        number = parseFloat(resolvedFallback);
+      }
+      if (isNaN(number)) {
+        number = parseFloat(fallback);
+      }
+      if (isNaN(number)) {
+        number = 0;
+      }
+      const lower = typeof min === "number" ? min : typeof config.min === "number" ? config.min : null;
+      const upper = typeof max === "number" ? max : typeof config.max === "number" ? config.max : null;
+      if (lower !== null && number < lower) {
+        number = lower;
+      }
+      if (upper !== null && number > upper) {
+        number = upper;
+      }
+      return number;
+    }
+    function normalizeEnum(key, value, fallback) {
+      const config = setting(key);
+      const allowed = Array.isArray(config.allowed) ? config.allowed : [];
+      if (allowed.indexOf(value) !== -1) {
+        return value;
+      }
+      return defaultValue(key, fallback);
+    }
+    function normalizeColor(key, value, fallback) {
+      const raw = typeof value === "string" ? value.trim() : "";
+      if (/^#?[0-9a-fA-F]{6}$/.test(raw)) {
+        return raw.charAt(0) === "#" ? raw : `#${raw}`;
+      }
+      return defaultValue(key, fallback);
+    }
+    function normalizePattern(key, value, fallback, validator) {
+      const candidate = typeof value === "string" ? value.trim() : "";
+      if (validator(candidate)) {
+        return candidate;
+      }
+      return defaultValue(key, fallback);
+    }
+    H.setting = setting;
+    H.defaultValue = defaultValue;
+    H.defaultString = defaultString;
+    H.schemaString = function(key, fallback) {
+      return { type: "string", default: defaultString(key, fallback) };
+    };
+    H.schemaStringMap = function(defaults) {
+      const schema = {};
+      Object.keys(defaults || {}).forEach((key) => {
+        schema[key] = H.schemaString(key, defaults[key]);
+      });
+      return schema;
+    };
+    H.bool = normalizeBool;
+    H.readBool = function(data, key, fallback) {
+      return normalizeBool(data && data[key] !== void 0 ? data[key] : fallback, fallback);
+    };
+    H.number = normalizeNumber;
+    H.readNumber = function(data, key, fallback, min, max) {
+      const raw = data && data[key] !== void 0 ? data[key] : fallback;
+      return normalizeNumber(key, raw, fallback, min, max);
+    };
+    H.normalizeEnum = normalizeEnum;
+    H.normalizeColor = normalizeColor;
+    H.normalizeDate = function(key, value, fallback) {
+      return normalizePattern(key, value, fallback, (candidate) => /^\d{4}-\d{2}-\d{2}$/.test(candidate));
+    };
+    H.normalizeUtcTime = function(key, value, fallback) {
+      return normalizePattern(key, value, fallback, (candidate) => {
+        if (!/^\d{2}:\d{2}$/.test(candidate)) {
+          return false;
+        }
+        const parts = candidate.split(":");
+        const hour = parseInt(parts[0], 10);
+        const minute = parseInt(parts[1], 10);
+        return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
+      });
+    };
+  })();
   (function() {
     window.VRODOSMasterUI = window.VRODOSMasterUI || {};
     const api = window.VRODOSMasterUI;
@@ -2550,6 +2672,7 @@
     const WGS84_EQUATORIAL_RADIUS = 6378137;
     const WGS84_POLAR_RADIUS = 6356752314245179e-9;
     const runtimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
+    const RuntimeSettings = VRODOSMaster.RuntimeSettings || {};
     const PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS = runtimeSettingsContract.horizonHelperLightPresets || {
       natural: {
         keyIntensity: 1.15,
@@ -2788,6 +2911,9 @@
       return n;
     }
     function normalizePmndrsAtmosphereQuality(value) {
+      if (RuntimeSettings.normalizeEnum) {
+        return RuntimeSettings.normalizeEnum("pmndrsAtmosphereQuality", value, "balanced");
+      }
       switch (value) {
         case "performance":
         case "balanced":
@@ -2799,6 +2925,9 @@
       }
     }
     function normalizePmndrsToneMappingMode(value) {
+      if (RuntimeSettings.normalizeEnum) {
+        return RuntimeSettings.normalizeEnum("pmndrsToneMappingMode", value, "agx");
+      }
       switch (value) {
         case "agx":
         case "reinhard":
@@ -2860,6 +2989,9 @@
       }
     }
     function normalizePmndrsAtmospherePreset(value) {
+      if (RuntimeSettings.normalizeEnum) {
+        return RuntimeSettings.normalizeEnum("pmndrsAtmospherePreset", value, "midday");
+      }
       switch (value) {
         case "night":
         case "dawn":
@@ -2874,12 +3006,18 @@
       }
     }
     function normalizePmndrsCelestialMode(value) {
+      if (RuntimeSettings.normalizeEnum) {
+        return RuntimeSettings.normalizeEnum("pmndrsCelestialMode", value, "manual");
+      }
       if (value === "preset-time" || value === "datetime") {
         return value;
       }
       return "manual";
     }
     function normalizePmndrsCelestialTimePreset(value) {
+      if (RuntimeSettings.normalizeEnum) {
+        return RuntimeSettings.normalizeEnum("pmndrsCelestialTimePreset", value, "midday");
+      }
       switch (value) {
         case "night":
         case "dawn":
@@ -2894,6 +3032,9 @@
       }
     }
     function normalizePmndrsStarsEnabled(value) {
+      if (RuntimeSettings.normalizeEnum) {
+        return RuntimeSettings.normalizeEnum("pmndrsStarsEnabled", value, "auto");
+      }
       switch (value) {
         case "on":
         case "off":
@@ -2904,6 +3045,9 @@
       }
     }
     function normalizePmndrsDate(value, fallback) {
+      if (RuntimeSettings.normalizeDate) {
+        return RuntimeSettings.normalizeDate("pmndrsCelestialDate", value, fallback || "2026-06-21");
+      }
       const candidate = typeof value === "string" ? value.trim() : "";
       if (/^\d{4}-\d{2}-\d{2}$/.test(candidate)) {
         return candidate;
@@ -2911,6 +3055,9 @@
       return fallback || "2026-06-21";
     }
     function normalizePmndrsUtcTime(value, fallback) {
+      if (RuntimeSettings.normalizeUtcTime) {
+        return RuntimeSettings.normalizeUtcTime("pmndrsCelestialUtcTime", value, fallback || "12:00");
+      }
       const candidate = typeof value === "string" ? value.trim() : "";
       if (/^\d{2}:\d{2}$/.test(candidate)) {
         const parts = candidate.split(":");
@@ -3748,12 +3895,18 @@
       };
     }
     function readPmndrsAtmosphereNumber(self, key, min, max, fallback) {
+      if (RuntimeSettings.readNumber) {
+        return RuntimeSettings.readNumber(self && self.data, key, fallback, min, max);
+      }
       if (!self || !self.data) {
         return fallback;
       }
       return clampPmndrsNumber(self.data[key], min, max, fallback);
     }
     function readPmndrsAtmosphereBool(self, key, fallback) {
+      if (RuntimeSettings.readBool) {
+        return RuntimeSettings.readBool(self && self.data, key, fallback);
+      }
       if (!self || !self.data || self.data[key] === void 0) {
         return Boolean(fallback);
       }

@@ -26,6 +26,7 @@
     const WGS84_EQUATORIAL_RADIUS = 6378137;
     const WGS84_POLAR_RADIUS = 6356752.3142451793;
     const runtimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
+    const RuntimeSettings = VRODOSMaster.RuntimeSettings || {};
     const PMNDRS_HORIZON_HELPER_LIGHT_DEFAULTS = runtimeSettingsContract.horizonHelperLightPresets || {
         natural: {
             keyIntensity: 1.15,
@@ -279,6 +280,10 @@
     }
 
     function normalizePmndrsAtmosphereQuality(value) {
+        if (RuntimeSettings.normalizeEnum) {
+            return RuntimeSettings.normalizeEnum('pmndrsAtmosphereQuality', value, 'balanced');
+        }
+
         switch (value) {
             case 'performance':
             case 'balanced':
@@ -291,6 +296,10 @@
     }
 
     function normalizePmndrsToneMappingMode(value) {
+        if (RuntimeSettings.normalizeEnum) {
+            return RuntimeSettings.normalizeEnum('pmndrsToneMappingMode', value, 'agx');
+        }
+
         switch (value) {
             case 'agx':
             case 'reinhard':
@@ -359,6 +368,10 @@
     }
 
     function normalizePmndrsAtmospherePreset(value) {
+        if (RuntimeSettings.normalizeEnum) {
+            return RuntimeSettings.normalizeEnum('pmndrsAtmospherePreset', value, 'midday');
+        }
+
         switch (value) {
             case 'night':
             case 'dawn':
@@ -374,6 +387,10 @@
     }
 
     function normalizePmndrsCelestialMode(value) {
+        if (RuntimeSettings.normalizeEnum) {
+            return RuntimeSettings.normalizeEnum('pmndrsCelestialMode', value, 'manual');
+        }
+
         if (value === 'preset-time' || value === 'datetime') {
             return value;
         }
@@ -381,6 +398,10 @@
     }
 
     function normalizePmndrsCelestialTimePreset(value) {
+        if (RuntimeSettings.normalizeEnum) {
+            return RuntimeSettings.normalizeEnum('pmndrsCelestialTimePreset', value, 'midday');
+        }
+
         switch (value) {
             case 'night':
             case 'dawn':
@@ -396,6 +417,10 @@
     }
 
     function normalizePmndrsStarsEnabled(value) {
+        if (RuntimeSettings.normalizeEnum) {
+            return RuntimeSettings.normalizeEnum('pmndrsStarsEnabled', value, 'auto');
+        }
+
         switch (value) {
             case 'on':
             case 'off':
@@ -407,6 +432,10 @@
     }
 
     function normalizePmndrsDate(value, fallback) {
+        if (RuntimeSettings.normalizeDate) {
+            return RuntimeSettings.normalizeDate('pmndrsCelestialDate', value, fallback || '2026-06-21');
+        }
+
         const candidate = typeof value === 'string' ? value.trim() : '';
         if (/^\d{4}-\d{2}-\d{2}$/.test(candidate)) {
             return candidate;
@@ -415,6 +444,10 @@
     }
 
     function normalizePmndrsUtcTime(value, fallback) {
+        if (RuntimeSettings.normalizeUtcTime) {
+            return RuntimeSettings.normalizeUtcTime('pmndrsCelestialUtcTime', value, fallback || '12:00');
+        }
+
         const candidate = typeof value === 'string' ? value.trim() : '';
         if (/^\d{2}:\d{2}$/.test(candidate)) {
             const parts = candidate.split(':');
@@ -1424,6 +1457,10 @@
     }
 
     function readPmndrsAtmosphereNumber(self, key, min, max, fallback) {
+        if (RuntimeSettings.readNumber) {
+            return RuntimeSettings.readNumber(self && self.data, key, fallback, min, max);
+        }
+
         if (!self || !self.data) {
             return fallback;
         }
@@ -1431,6 +1468,10 @@
     }
 
     function readPmndrsAtmosphereBool(self, key, fallback) {
+        if (RuntimeSettings.readBool) {
+            return RuntimeSettings.readBool(self && self.data, key, fallback);
+        }
+
         if (!self || !self.data || self.data[key] === undefined) {
             return Boolean(fallback);
         }

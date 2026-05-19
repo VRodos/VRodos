@@ -4,11 +4,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-vrodos-compiler-runtime-feature-flags.php';
+
 class VRodos_Compiler_Scene_Settings {
 	private VRodos_Compiler_Scene_Repository $scene_repository;
+	private VRodos_Compiler_Runtime_Feature_Flags $feature_flags;
 
-	public function __construct( VRodos_Compiler_Scene_Repository $scene_repository ) {
+	public function __construct( VRodos_Compiler_Scene_Repository $scene_repository, ?VRodos_Compiler_Runtime_Feature_Flags $feature_flags = null ) {
 		$this->scene_repository = $scene_repository;
+		$this->feature_flags    = $feature_flags ?: new VRodos_Compiler_Runtime_Feature_Flags();
 	}
 
 	public function apply( DOMDocument $dom, DOMElement $ascene, $scene_json, int $project_id, callable $normalize_url ): void {
@@ -50,8 +54,8 @@ class VRodos_Compiler_Scene_Settings {
 
 	public function build_settings( $metadata, $scene_json, int $project_id ): array {
 		$project_type_slug    = $this->scene_repository->get_project_type_slug( $project_id );
-		$post_fx_enabled_bool = VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePostFXEnabled ?? false );
-		$post_fx_engine       = ( $post_fx_enabled_bool && ( $metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ) ? 'pmndrs' : 'legacy';
+		$post_fx_enabled_bool = $this->feature_flags->is_post_fx_enabled( $metadata );
+		$post_fx_engine       = $this->feature_flags->post_fx_engine( $metadata );
 		$horizon_preset       = $this->enum_value( $metadata->aframeHorizonSkyPreset ?? 'natural', [ 'natural', 'clear', 'crisp' ], 'natural' );
 		$horizon_lighting_preset = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsHorizonLightingPreset', $horizon_preset );
 		$horizon_defaults     = VRodos_Runtime_Settings_Contract::horizon_helper_defaults( 'custom' === $horizon_lighting_preset ? $horizon_preset : $horizon_lighting_preset );
@@ -75,7 +79,7 @@ class VRodos_Compiler_Scene_Settings {
 		$camera_rotation_y = isset( $scene_json->objects->avatarCamera )
 			? ( 180 / pi() * $scene_json->objects->avatarCamera->rotation[1] )
 			: '0';
-		$navigation_mode = $this->normalize_navigation_mode( $metadata->aframeNavigationMode ?? null, $metadata->aframeCollisionMode ?? 'auto' );
+		$navigation_mode = $this->feature_flags->navigation_mode( $metadata );
 
 		return [
 			'color'                              => $metadata->ClearColor ?? '#ffffff',
@@ -85,15 +89,15 @@ class VRodos_Compiler_Scene_Settings {
 			'presetGroundEnabled'                => VRodos_Runtime_Settings_Contract::bool_string( $metadata->backgroundPresetGroundEnabled ?? false, false, '1', '0' ),
 			'movement_disabled'                  => VRodos_Runtime_Settings_Contract::bool_string( $metadata->disableMovement ?? false ),
 			'avatar_enabled'                     => VRodos_Runtime_Settings_Contract::bool_string( $metadata->enableAvatar ?? false ),
-			'runtimeMode'                        => ( $metadata->aframeRuntimeMode ?? 'single-player' ) === 'networked' ? 'networked' : 'single-player',
-			'collisionMode'                      => 'walkable' === $navigation_mode ? 'auto' : 'off',
+			'runtimeMode'                        => $this->feature_flags->runtime_mode_from_metadata( $metadata ),
+			'collisionMode'                      => $this->feature_flags->collision_mode_attr( $metadata ),
 			'navigationMode'                     => $navigation_mode,
 			'renderQuality'                      => $metadata->aframeRenderQuality ?? 'standard',
 			'shadowQuality'                      => $metadata->aframeShadowQuality ?? 'medium',
 			'shadowUpdateMode'                   => $this->normalize_shadow_update_mode( $metadata ),
 			'flatMediaShadowCasting'             => VRodos_Runtime_Settings_Contract::bool_string( $metadata->aframeFlatMediaShadowCasting ?? true, true, '1', '0' ),
 			'aaQuality'                          => $metadata->aframeAAQuality ?? 'balanced',
-			'fpsMeterEnabled'                    => $this->fps_meter_enabled( $metadata ),
+			'fpsMeterEnabled'                    => $this->feature_flags->fps_meter_attr( $metadata ),
 			'legacyHorizonStageSize'             => max( 500, min( 8000, (int) ( $metadata->aframeLegacyHorizonStageSize ?? 5000 ) ) ),
 			'ambientOcclusionPreset'             => $this->enum_value( $metadata->aframeAmbientOcclusionPreset ?? 'balanced', [ 'off', 'soft', 'balanced', 'strong' ], 'balanced' ),
 			'contactShadowPreset'                => $this->enum_value( $metadata->aframeContactShadowPreset ?? 'soft', [ 'off', 'soft', 'balanced', 'strong' ], 'soft' ),
@@ -143,7 +147,7 @@ class VRodos_Compiler_Scene_Settings {
 			'pmndrsNoiseOpacity'                 => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsNoiseOpacity' ),
 			'pmndrsChromaticAberrationEnabled'   => $this->pmndrs_bool_attr( $metadata, 'pmndrsChromaticAberrationEnabled' ),
 			'pmndrsChromaticAberrationOffset'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsChromaticAberrationOffset' ),
-			'pmndrsAtmosphereEnabled'            => ( $post_fx_enabled_bool && 'pmndrs' === $post_fx_engine && VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmosphereEnabled' ) ) ? 'true' : 'false',
+			'pmndrsAtmosphereEnabled'            => $this->feature_flags->is_pmndrs_atmosphere_enabled( $metadata ) ? 'true' : 'false',
 			'pmndrsAtmospherePreset'             => $atmosphere_preset,
 			'pmndrsAtmospherePresetIntensity'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmospherePresetIntensity' ),
 			'pmndrsAtmosphereQuality'            => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmosphereQuality' ),
@@ -600,22 +604,6 @@ class VRodos_Compiler_Scene_Settings {
 
 	private function enum_value( $value, array $allowed, string $fallback ): string {
 		return in_array( $value, $allowed, true ) ? (string) $value : $fallback;
-	}
-
-	private function normalize_navigation_mode( $value, $collision_mode ): string {
-		$value = is_string( $value ) ? trim( $value ) : '';
-		if ( in_array( $value, [ 'walk', 'walkable', 'fly' ], true ) ) {
-			return $value;
-		}
-
-		return 'off' === (string) $collision_mode ? 'walk' : 'walkable';
-	}
-
-	private function fps_meter_enabled( $metadata ): string {
-		$legacy_enabled = VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->enableFPSMeter ?? false );
-		$modern_enabled = VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeFPSMeterEnabled ?? false );
-
-		return ( $legacy_enabled || $modern_enabled ) ? '1' : '0';
 	}
 
 	private function is_pmndrs_tone_mapping_exposure_authored( $metadata ): bool {

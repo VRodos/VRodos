@@ -428,9 +428,14 @@
       }
     }
   });
-  var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
-  var VRODOSRuntimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
+  window.VRODOSMaster = window.VRODOSMaster || {};
+  const VRODOSSceneSettingsMaster = window.VRODOSMaster;
+  const VRODOSRuntimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
+  const VRODOSRuntimeSettings = VRODOSSceneSettingsMaster.RuntimeSettings || {};
   function vrodosSceneSettingDefault(key, fallback) {
+    if (VRODOSRuntimeSettings.defaultString) {
+      return VRODOSRuntimeSettings.defaultString(key, fallback);
+    }
     const setting = VRODOSRuntimeSettingsContract.sceneSettings && VRODOSRuntimeSettingsContract.sceneSettings[key];
     if (!setting || setting.default === void 0) {
       return fallback;
@@ -455,6 +460,9 @@
     }
   }
   function vrodosRuntimeTruthy(value) {
+    if (VRODOSRuntimeSettings.bool) {
+      return VRODOSRuntimeSettings.bool(value, false);
+    }
     return value === true || value === "true" || value === "1" || value === 1;
   }
   function vrodosRuntimeNoop() {
@@ -463,8 +471,74 @@
   function vrodosRuntimeFalse() {
     return false;
   }
+  const VRODOS_PMNDRS_SCHEMA_DEFAULTS = {
+    pmndrsAAMode: "inherit",
+    pmndrsAAPreset: "inherit",
+    pmndrsBloomIntensity: "1.0",
+    pmndrsBloomThreshold: "0.62",
+    pmndrsVignetteEnabled: "0",
+    pmndrsVignetteDarkness: "0.5",
+    pmndrsToneMappingExposure: "1.0",
+    pmndrsLowLightAutoExposureEnabled: "1",
+    pmndrsToneMappingExposureAuthored: "0",
+    pmndrsToneMappingMode: "agx",
+    pmndrsLensFlareEnabled: "0",
+    pmndrsLutEnabled: "0",
+    pmndrsLutLook: "neutral",
+    pmndrsLutStrength: "1.0",
+    pmndrsNoiseEnabled: "0",
+    pmndrsNoiseOpacity: "0.04",
+    pmndrsChromaticAberrationEnabled: "0",
+    pmndrsChromaticAberrationOffset: "0.0015",
+    pmndrsAtmosphereEnabled: "1",
+    pmndrsAtmospherePreset: "midday",
+    pmndrsAtmospherePresetIntensity: "1.0",
+    pmndrsAtmosphereQuality: "balanced",
+    pmndrsAerialPerspectiveEnabled: "0",
+    pmndrsCorrectAltitudeEnabled: "1",
+    pmndrsGeospatialEnabled: "0",
+    pmndrsGeospatialLatitudeDeg: "0",
+    pmndrsGeospatialLongitudeDeg: "0",
+    pmndrsGeospatialAltitudeMeters: "0",
+    pmndrsCelestialMode: "manual",
+    pmndrsCelestialTimePreset: "midday",
+    pmndrsCelestialDate: "2026-06-21",
+    pmndrsCelestialUtcTime: "12:00",
+    pmndrsDayNightCycleEnabled: "0",
+    pmndrsDayNightCycleDurationMinutes: "1.0",
+    pmndrsSunElevationDeg: "62",
+    pmndrsSunAzimuthDeg: "20",
+    pmndrsSunDistance: "5200",
+    pmndrsSunAngularRadius: "0.0047",
+    pmndrsAerialStrength: "0.55",
+    pmndrsAlbedoScale: "1.0",
+    pmndrsTransmittanceEnabled: "1",
+    pmndrsInscatterEnabled: "1",
+    pmndrsGroundEnabled: "1",
+    pmndrsGroundAlbedo: "#d8d8d0",
+    pmndrsRayleighScale: "1.18",
+    pmndrsMieScatteringScale: "0.42",
+    pmndrsMieExtinctionScale: "0.56",
+    pmndrsMiePhaseG: "0.74",
+    pmndrsAbsorptionScale: "0.94",
+    pmndrsMoonEnabled: "0",
+    pmndrsStarsEnabled: "auto",
+    pmndrsHorizonLightingPreset: "natural",
+    pmndrsHorizonKeyLightIntensity: "1.15",
+    pmndrsHorizonFillLightIntensity: "0.45"
+  };
+  function vrodosRuntimeStringSchema(defaults) {
+    if (VRODOSRuntimeSettings.schemaStringMap) {
+      return VRODOSRuntimeSettings.schemaStringMap(defaults);
+    }
+    const schema = {};
+    Object.keys(defaults || {}).forEach((key) => {
+      schema[key] = { type: "string", default: vrodosSceneSettingDefault(key, defaults[key]) };
+    });
+    return schema;
+  }
   AFRAME.registerComponent("scene-settings", {
-    schema: {
+    schema: Object.assign({
       color: { type: "string", default: "#ffffff" },
       pr_type: { type: "string", default: "default" },
       img_link: { type: "string", default: "no_link" },
@@ -519,64 +593,8 @@
       // EffectComposer with fused EffectPass; supports clouds in Phase 5 but no
       // SSR/TRAA). Default 'legacy' for v1 — flips to 'pmndrs' once Phase 3 confirms
       // visual parity. See POSTPROCESSING_MIGRATION_PLAN.md §11.
-      postFXEngine: { type: "string", default: "legacy" },
-      // Pmndrs-only tweakable knobs. Numbers serialized as strings since
-      // A-Frame string-typed schema is what the rest of this component uses.
-      pmndrsAAMode: { type: "string", default: vrodosSceneSettingDefault("pmndrsAAMode", "inherit") },
-      pmndrsAAPreset: { type: "string", default: vrodosSceneSettingDefault("pmndrsAAPreset", "inherit") },
-      pmndrsBloomIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsBloomIntensity", "1.0") },
-      pmndrsBloomThreshold: { type: "string", default: vrodosSceneSettingDefault("pmndrsBloomThreshold", "0.62") },
-      pmndrsVignetteEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsVignetteEnabled", "0") },
-      pmndrsVignetteDarkness: { type: "string", default: vrodosSceneSettingDefault("pmndrsVignetteDarkness", "0.5") },
-      pmndrsToneMappingExposure: { type: "string", default: vrodosSceneSettingDefault("pmndrsToneMappingExposure", "1.0") },
-      pmndrsLowLightAutoExposureEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsLowLightAutoExposureEnabled", "1") },
-      pmndrsToneMappingExposureAuthored: { type: "string", default: vrodosSceneSettingDefault("pmndrsToneMappingExposureAuthored", "0") },
-      pmndrsToneMappingMode: { type: "string", default: vrodosSceneSettingDefault("pmndrsToneMappingMode", "agx") },
-      pmndrsLensFlareEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsLensFlareEnabled", "0") },
-      pmndrsLutEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsLutEnabled", "0") },
-      pmndrsLutLook: { type: "string", default: vrodosSceneSettingDefault("pmndrsLutLook", "neutral") },
-      pmndrsLutStrength: { type: "string", default: vrodosSceneSettingDefault("pmndrsLutStrength", "1.0") },
-      pmndrsNoiseEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsNoiseEnabled", "0") },
-      pmndrsNoiseOpacity: { type: "string", default: vrodosSceneSettingDefault("pmndrsNoiseOpacity", "0.04") },
-      pmndrsChromaticAberrationEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsChromaticAberrationEnabled", "0") },
-      pmndrsChromaticAberrationOffset: { type: "string", default: vrodosSceneSettingDefault("pmndrsChromaticAberrationOffset", "0.0015") },
-      pmndrsAtmosphereEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsAtmosphereEnabled", "1") },
-      pmndrsAtmospherePreset: { type: "string", default: vrodosSceneSettingDefault("pmndrsAtmospherePreset", "midday") },
-      pmndrsAtmospherePresetIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsAtmospherePresetIntensity", "1.0") },
-      pmndrsAtmosphereQuality: { type: "string", default: vrodosSceneSettingDefault("pmndrsAtmosphereQuality", "balanced") },
-      pmndrsAerialPerspectiveEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsAerialPerspectiveEnabled", "0") },
-      pmndrsCorrectAltitudeEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsCorrectAltitudeEnabled", "1") },
-      pmndrsGeospatialEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsGeospatialEnabled", "0") },
-      pmndrsGeospatialLatitudeDeg: { type: "string", default: vrodosSceneSettingDefault("pmndrsGeospatialLatitudeDeg", "0") },
-      pmndrsGeospatialLongitudeDeg: { type: "string", default: vrodosSceneSettingDefault("pmndrsGeospatialLongitudeDeg", "0") },
-      pmndrsGeospatialAltitudeMeters: { type: "string", default: vrodosSceneSettingDefault("pmndrsGeospatialAltitudeMeters", "0") },
-      pmndrsCelestialMode: { type: "string", default: vrodosSceneSettingDefault("pmndrsCelestialMode", "manual") },
-      pmndrsCelestialTimePreset: { type: "string", default: vrodosSceneSettingDefault("pmndrsCelestialTimePreset", "midday") },
-      pmndrsCelestialDate: { type: "string", default: vrodosSceneSettingDefault("pmndrsCelestialDate", "2026-06-21") },
-      pmndrsCelestialUtcTime: { type: "string", default: vrodosSceneSettingDefault("pmndrsCelestialUtcTime", "12:00") },
-      pmndrsDayNightCycleEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsDayNightCycleEnabled", "0") },
-      pmndrsDayNightCycleDurationMinutes: { type: "string", default: vrodosSceneSettingDefault("pmndrsDayNightCycleDurationMinutes", "1.0") },
-      pmndrsSunElevationDeg: { type: "string", default: vrodosSceneSettingDefault("pmndrsSunElevationDeg", "62") },
-      pmndrsSunAzimuthDeg: { type: "string", default: vrodosSceneSettingDefault("pmndrsSunAzimuthDeg", "20") },
-      pmndrsSunDistance: { type: "string", default: vrodosSceneSettingDefault("pmndrsSunDistance", "5200") },
-      pmndrsSunAngularRadius: { type: "string", default: vrodosSceneSettingDefault("pmndrsSunAngularRadius", "0.0047") },
-      pmndrsAerialStrength: { type: "string", default: vrodosSceneSettingDefault("pmndrsAerialStrength", "0.55") },
-      pmndrsAlbedoScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsAlbedoScale", "1.0") },
-      pmndrsTransmittanceEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsTransmittanceEnabled", "1") },
-      pmndrsInscatterEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsInscatterEnabled", "1") },
-      pmndrsGroundEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsGroundEnabled", "1") },
-      pmndrsGroundAlbedo: { type: "string", default: vrodosSceneSettingDefault("pmndrsGroundAlbedo", "#d8d8d0") },
-      pmndrsRayleighScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsRayleighScale", "1.18") },
-      pmndrsMieScatteringScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsMieScatteringScale", "0.42") },
-      pmndrsMieExtinctionScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsMieExtinctionScale", "0.56") },
-      pmndrsMiePhaseG: { type: "string", default: vrodosSceneSettingDefault("pmndrsMiePhaseG", "0.74") },
-      pmndrsAbsorptionScale: { type: "string", default: vrodosSceneSettingDefault("pmndrsAbsorptionScale", "0.94") },
-      pmndrsMoonEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsMoonEnabled", "0") },
-      pmndrsStarsEnabled: { type: "string", default: vrodosSceneSettingDefault("pmndrsStarsEnabled", "auto") },
-      pmndrsHorizonLightingPreset: { type: "string", default: vrodosSceneSettingDefault("pmndrsHorizonLightingPreset", "natural") },
-      pmndrsHorizonKeyLightIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsHorizonKeyLightIntensity", "1.15") },
-      pmndrsHorizonFillLightIntensity: { type: "string", default: vrodosSceneSettingDefault("pmndrsHorizonFillLightIntensity", "0.45") }
-    },
+      postFXEngine: { type: "string", default: "legacy" }
+    }, vrodosRuntimeStringSchema(VRODOS_PMNDRS_SCHEMA_DEFAULTS)),
     getSSRStrengthValue: function() {
       switch (this.data.postFXSSRStrength) {
         case "subtle":
@@ -873,27 +891,27 @@
       return "none";
     },
     // --- Scene probe & environment map methods (extracted to vrodos_scene_probe.js) ---
-    clearHdrEnvironmentMap: VRODOSMaster.SceneSettingsHelpers.clearHdrEnvironmentMap,
-    disposeSceneProbe: VRODOSMaster.SceneSettingsHelpers.disposeSceneProbe,
-    ensureSceneProbeResources: VRODOSMaster.SceneSettingsHelpers.ensureSceneProbeResources,
-    requestSceneProbeRefresh: VRODOSMaster.SceneSettingsHelpers.requestSceneProbeRefresh,
-    markSceneCollectionsDirty: VRODOSMaster.SceneSettingsHelpers.markSceneCollectionsDirty,
-    getCachedSceneQuery: VRODOSMaster.SceneSettingsHelpers.getCachedSceneQuery,
-    queueQualityRefresh: VRODOSMaster.SceneSettingsHelpers.queueQualityRefresh,
-    getSceneProbeAnchorObject: VRODOSMaster.SceneSettingsHelpers.getSceneProbeAnchorObject,
-    getSceneProbeAnchorYaw: VRODOSMaster.SceneSettingsHelpers.getSceneProbeAnchorYaw,
-    getSceneProbeYawDeltaDegrees: VRODOSMaster.SceneSettingsHelpers.getSceneProbeYawDeltaDegrees,
-    hideSceneProbeObject: VRODOSMaster.SceneSettingsHelpers.hideSceneProbeObject,
-    collectSceneProbeExcludedObjects: VRODOSMaster.SceneSettingsHelpers.collectSceneProbeExcludedObjects,
-    collectTakramSkyEnvironmentExcludedObjects: VRODOSMaster.SceneSettingsHelpers.collectTakramSkyEnvironmentExcludedObjects,
-    restoreSceneProbeExcludedObjects: VRODOSMaster.SceneSettingsHelpers.restoreSceneProbeExcludedObjects,
-    getTakramSkyEnvironmentSignature: VRODOSMaster.SceneSettingsHelpers.getTakramSkyEnvironmentSignature,
-    applyTakramSkyEnvironmentIntensity: VRODOSMaster.SceneSettingsHelpers.applyTakramSkyEnvironmentIntensity,
-    requestTakramSkyEnvironmentRefresh: VRODOSMaster.SceneSettingsHelpers.requestTakramSkyEnvironmentRefresh,
-    captureTakramSkyEnvironment: VRODOSMaster.SceneSettingsHelpers.captureTakramSkyEnvironment,
-    updateTakramSkyEnvironment: VRODOSMaster.SceneSettingsHelpers.updateTakramSkyEnvironment,
-    captureSceneProbe: VRODOSMaster.SceneSettingsHelpers.captureSceneProbe,
-    applyEnvMapProfile: VRODOSMaster.SceneSettingsHelpers.applyEnvMapProfile,
+    clearHdrEnvironmentMap: VRODOSSceneSettingsMaster.SceneSettingsHelpers.clearHdrEnvironmentMap,
+    disposeSceneProbe: VRODOSSceneSettingsMaster.SceneSettingsHelpers.disposeSceneProbe,
+    ensureSceneProbeResources: VRODOSSceneSettingsMaster.SceneSettingsHelpers.ensureSceneProbeResources,
+    requestSceneProbeRefresh: VRODOSSceneSettingsMaster.SceneSettingsHelpers.requestSceneProbeRefresh,
+    markSceneCollectionsDirty: VRODOSSceneSettingsMaster.SceneSettingsHelpers.markSceneCollectionsDirty,
+    getCachedSceneQuery: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getCachedSceneQuery,
+    queueQualityRefresh: VRODOSSceneSettingsMaster.SceneSettingsHelpers.queueQualityRefresh,
+    getSceneProbeAnchorObject: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getSceneProbeAnchorObject,
+    getSceneProbeAnchorYaw: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getSceneProbeAnchorYaw,
+    getSceneProbeYawDeltaDegrees: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getSceneProbeYawDeltaDegrees,
+    hideSceneProbeObject: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hideSceneProbeObject,
+    collectSceneProbeExcludedObjects: VRODOSSceneSettingsMaster.SceneSettingsHelpers.collectSceneProbeExcludedObjects,
+    collectTakramSkyEnvironmentExcludedObjects: VRODOSSceneSettingsMaster.SceneSettingsHelpers.collectTakramSkyEnvironmentExcludedObjects,
+    restoreSceneProbeExcludedObjects: VRODOSSceneSettingsMaster.SceneSettingsHelpers.restoreSceneProbeExcludedObjects,
+    getTakramSkyEnvironmentSignature: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getTakramSkyEnvironmentSignature,
+    applyTakramSkyEnvironmentIntensity: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyTakramSkyEnvironmentIntensity,
+    requestTakramSkyEnvironmentRefresh: VRODOSSceneSettingsMaster.SceneSettingsHelpers.requestTakramSkyEnvironmentRefresh,
+    captureTakramSkyEnvironment: VRODOSSceneSettingsMaster.SceneSettingsHelpers.captureTakramSkyEnvironment,
+    updateTakramSkyEnvironment: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updateTakramSkyEnvironment,
+    captureSceneProbe: VRODOSSceneSettingsMaster.SceneSettingsHelpers.captureSceneProbe,
+    applyEnvMapProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyEnvMapProfile,
     getContactShadowSettings: function() {
       const shadowQuality = this.data.shadowQuality || "medium";
       const preset = this.getContactShadowPreset();
@@ -1102,18 +1120,16 @@
       return this.hasPostProcessingPipelineRequest() && !this.isDirectVrPresentationActive();
     },
     // --- Post-processing methods: LEGACY engine (extracted to vrodos_postprocessing.js) ---
-    updatePostProcessingSize: VRODOSMaster.SceneSettingsHelpers.updatePostProcessingSize || vrodosRuntimeNoop,
-    enablePostProcessing: VRODOSMaster.SceneSettingsHelpers.enablePostProcessing || vrodosRuntimeNoop,
-    disablePostProcessing: VRODOSMaster.SceneSettingsHelpers.disablePostProcessing || vrodosRuntimeNoop,
-    _syncLegacyPostProcessingState: VRODOSMaster.SceneSettingsHelpers.syncPostProcessingState || vrodosRuntimeNoop,
+    updatePostProcessingSize: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePostProcessingSize || vrodosRuntimeNoop,
+    enablePostProcessing: VRODOSSceneSettingsMaster.SceneSettingsHelpers.enablePostProcessing || vrodosRuntimeNoop,
+    disablePostProcessing: VRODOSSceneSettingsMaster.SceneSettingsHelpers.disablePostProcessing || vrodosRuntimeNoop,
     // --- Post-processing methods: PMNDRS engine (extracted to vrodos_postprocessing_pmndrs.js) ---
     // The compiler only includes the selected engine chunk. Missing helper bags here mean
     // the other engine was intentionally omitted from this freshly compiled scene.
-    enablePmndrsPostProcessing: VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.enablePmndrsPostProcessing || vrodosRuntimeNoop,
-    disablePmndrsPostProcessing: VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.disablePmndrsPostProcessing || vrodosRuntimeNoop,
-    updatePmndrsPostProcessingSize: VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers.updatePmndrsPostProcessingSize || vrodosRuntimeNoop,
-    _buildPmndrsComposer: VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers._buildPmndrsComposer || vrodosRuntimeFalse,
-    _updatePmndrsAdaptiveAO: VRODOSMaster.PmndrsHelpers && VRODOSMaster.PmndrsHelpers._updatePmndrsAdaptiveAO || vrodosRuntimeNoop,
+    enablePmndrsPostProcessing: VRODOSSceneSettingsMaster.PmndrsHelpers && VRODOSSceneSettingsMaster.PmndrsHelpers.enablePmndrsPostProcessing || vrodosRuntimeNoop,
+    disablePmndrsPostProcessing: VRODOSSceneSettingsMaster.PmndrsHelpers && VRODOSSceneSettingsMaster.PmndrsHelpers.disablePmndrsPostProcessing || vrodosRuntimeNoop,
+    updatePmndrsPostProcessingSize: VRODOSSceneSettingsMaster.PmndrsHelpers && VRODOSSceneSettingsMaster.PmndrsHelpers.updatePmndrsPostProcessingSize || vrodosRuntimeNoop,
+    _buildPmndrsComposer: VRODOSSceneSettingsMaster.PmndrsHelpers && VRODOSSceneSettingsMaster.PmndrsHelpers._buildPmndrsComposer || vrodosRuntimeFalse,
     // --- Engine dispatcher: routes to legacy or pmndrs path based on data.postFXEngine ---
     // Engines are mutually exclusive: switching
     // from one to the other (e.g. via a future runtime toggle) tears the previous engine
@@ -1171,61 +1187,61 @@
       setTimeout(resync, 240);
     },
     // --- Quality profile methods (extracted to vrodos_quality_profiles.js) ---
-    applyRenderQualityProfile: VRODOSMaster.SceneSettingsHelpers.applyRenderQualityProfile,
-    applyShadowQualityProfile: VRODOSMaster.SceneSettingsHelpers.applyShadowQualityProfile,
-    getShadowUpdateMode: VRODOSMaster.SceneSettingsHelpers.getShadowUpdateMode || function() {
+    applyRenderQualityProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyRenderQualityProfile,
+    applyShadowQualityProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyShadowQualityProfile,
+    getShadowUpdateMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getShadowUpdateMode || function() {
       return this.data.shadowUpdateMode || "static";
     },
-    isStaticShadowMode: VRODOSMaster.SceneSettingsHelpers.isStaticShadowMode || vrodosRuntimeFalse,
-    markShadowDirty: VRODOSMaster.SceneSettingsHelpers.markShadowDirty || vrodosRuntimeNoop,
-    flushShadowUpdate: VRODOSMaster.SceneSettingsHelpers.flushShadowUpdate || vrodosRuntimeNoop,
-    syncStaticShadowMode: VRODOSMaster.SceneSettingsHelpers.syncStaticShadowMode || vrodosRuntimeNoop,
-    getShadowDiagnosticState: VRODOSMaster.SceneSettingsHelpers.getShadowDiagnosticState || function() {
+    isStaticShadowMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isStaticShadowMode || vrodosRuntimeFalse,
+    markShadowDirty: VRODOSSceneSettingsMaster.SceneSettingsHelpers.markShadowDirty || vrodosRuntimeNoop,
+    flushShadowUpdate: VRODOSSceneSettingsMaster.SceneSettingsHelpers.flushShadowUpdate || vrodosRuntimeNoop,
+    syncStaticShadowMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncStaticShadowMode || vrodosRuntimeNoop,
+    getShadowDiagnosticState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getShadowDiagnosticState || function() {
       return null;
     },
-    applyMaterialProfiles: VRODOSMaster.SceneSettingsHelpers.applyMaterialProfiles,
-    ensurePhotorealHelperLight: VRODOSMaster.SceneSettingsHelpers.ensurePhotorealHelperLight,
-    removePhotorealHelperLights: VRODOSMaster.SceneSettingsHelpers.removePhotorealHelperLights,
-    updateAdaptiveShadowFit: VRODOSMaster.SceneSettingsHelpers.updateAdaptiveShadowFit || vrodosRuntimeNoop,
-    applyHorizonSkyPreset: VRODOSMaster.SceneSettingsHelpers.applyHorizonSkyPreset,
-    ensurePmndrsAtmosphereResources: VRODOSMaster.SceneSettingsHelpers.ensurePmndrsAtmosphereResources || function() {
+    applyMaterialProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyMaterialProfiles,
+    ensurePhotorealHelperLight: VRODOSSceneSettingsMaster.SceneSettingsHelpers.ensurePhotorealHelperLight,
+    removePhotorealHelperLights: VRODOSSceneSettingsMaster.SceneSettingsHelpers.removePhotorealHelperLights,
+    updateAdaptiveShadowFit: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updateAdaptiveShadowFit || vrodosRuntimeNoop,
+    applyHorizonSkyPreset: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyHorizonSkyPreset,
+    ensurePmndrsAtmosphereResources: VRODOSSceneSettingsMaster.SceneSettingsHelpers.ensurePmndrsAtmosphereResources || function() {
       return null;
     },
-    disposePmndrsAtmosphere: VRODOSMaster.SceneSettingsHelpers.disposePmndrsAtmosphere || function() {
+    disposePmndrsAtmosphere: VRODOSSceneSettingsMaster.SceneSettingsHelpers.disposePmndrsAtmosphere || function() {
     },
-    getPmndrsAtmosphereConfig: VRODOSMaster.SceneSettingsHelpers.getPmndrsAtmosphereConfig || function() {
+    getPmndrsAtmosphereConfig: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsAtmosphereConfig || function() {
       return null;
     },
-    getPmndrsToneMappingExposure: VRODOSMaster.SceneSettingsHelpers.getPmndrsToneMappingExposure || function() {
+    getPmndrsToneMappingExposure: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsToneMappingExposure || function() {
       return 1;
     },
-    getPmndrsToneMappingMode: VRODOSMaster.SceneSettingsHelpers.getPmndrsToneMappingMode || function() {
+    getPmndrsToneMappingMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsToneMappingMode || function() {
       return "agx";
     },
-    getPmndrsReflectionIntensityScale: VRODOSMaster.SceneSettingsHelpers.getPmndrsReflectionIntensityScale || function() {
+    getPmndrsReflectionIntensityScale: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsReflectionIntensityScale || function() {
       return 1;
     },
-    updateReflectionEnvironmentIntensity: VRODOSMaster.SceneSettingsHelpers.updateReflectionEnvironmentIntensity || vrodosRuntimeNoop,
-    applyPmndrsAtmosphereConfigToTarget: VRODOSMaster.SceneSettingsHelpers.applyPmndrsAtmosphereConfigToTarget || function() {
+    updateReflectionEnvironmentIntensity: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updateReflectionEnvironmentIntensity || vrodosRuntimeNoop,
+    applyPmndrsAtmosphereConfigToTarget: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPmndrsAtmosphereConfigToTarget || function() {
     },
-    updatePmndrsHorizonSun: VRODOSMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || function() {
+    updatePmndrsHorizonSun: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || function() {
     },
-    syncPmndrsAerialPerspectiveEffect: VRODOSMaster.SceneSettingsHelpers.syncPmndrsAerialPerspectiveEffect || function() {
+    syncPmndrsAerialPerspectiveEffect: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPmndrsAerialPerspectiveEffect || function() {
     },
-    isPmndrsDayNightCycleActive: VRODOSMaster.SceneSettingsHelpers.isPmndrsDayNightCycleActive || vrodosRuntimeFalse,
-    updatePmndrsDayNightCycleFrame: VRODOSMaster.SceneSettingsHelpers.updatePmndrsDayNightCycleFrame || vrodosRuntimeNoop,
-    hidePmndrsHorizonEnvironmentVisuals: VRODOSMaster.SceneSettingsHelpers.hidePmndrsHorizonEnvironmentVisuals || function() {
+    isPmndrsDayNightCycleActive: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isPmndrsDayNightCycleActive || vrodosRuntimeFalse,
+    updatePmndrsDayNightCycleFrame: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePmndrsDayNightCycleFrame || vrodosRuntimeNoop,
+    hidePmndrsHorizonEnvironmentVisuals: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsHorizonEnvironmentVisuals || function() {
     },
-    showPmndrsAtmosphereSkyForSceneProbe: VRODOSMaster.SceneSettingsHelpers.showPmndrsAtmosphereSkyForSceneProbe || function() {
+    showPmndrsAtmosphereSkyForSceneProbe: VRODOSSceneSettingsMaster.SceneSettingsHelpers.showPmndrsAtmosphereSkyForSceneProbe || function() {
       return false;
     },
-    hidePmndrsAtmosphereSky: VRODOSMaster.SceneSettingsHelpers.hidePmndrsAtmosphereSky || function() {
+    hidePmndrsAtmosphereSky: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsAtmosphereSky || function() {
     },
-    logPmndrsHorizonDiagnostic: VRODOSMaster.SceneSettingsHelpers.logPmndrsHorizonDiagnostic || function() {
+    logPmndrsHorizonDiagnostic: VRODOSSceneSettingsMaster.SceneSettingsHelpers.logPmndrsHorizonDiagnostic || function() {
     },
-    applyBackgroundQualityProfile: VRODOSMaster.SceneSettingsHelpers.applyBackgroundQualityProfile,
-    applyPostFXProfile: VRODOSMaster.SceneSettingsHelpers.applyPostFXProfile,
-    applyQualityProfiles: VRODOSMaster.SceneSettingsHelpers.applyQualityProfiles,
+    applyBackgroundQualityProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyBackgroundQualityProfile,
+    applyPostFXProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPostFXProfile,
+    applyQualityProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyQualityProfiles,
     init: function() {
       this.handleQualityModelLoad = function() {
         this.markSceneCollectionsDirty();
@@ -1398,12 +1414,12 @@
       });
       this.el.addEventListener("model-loaded", this.handleQualityModelLoad);
       this.el.addEventListener("enter-vr", () => {
-        VRODOSMaster.setBrowsingModeVR(true);
+        VRODOSSceneSettingsMaster.setBrowsingModeVR(true);
         this.syncPresentationVisualState(true);
         if (typeof window.gtag === "function") window.gtag("event", "vr_enabled");
       });
       this.el.addEventListener("exit-vr", () => {
-        VRODOSMaster.setBrowsingModeVR(false);
+        VRODOSSceneSettingsMaster.setBrowsingModeVR(false);
         this.syncPresentationVisualState(true);
         if (typeof window.gtag === "function") window.gtag("event", "vr_disabled");
       });

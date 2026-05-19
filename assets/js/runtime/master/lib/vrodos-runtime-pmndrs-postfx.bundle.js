@@ -5,6 +5,7 @@
       return;
     }
     const H = VRODOSMaster.PmndrsHelpers = VRODOSMaster.PmndrsHelpers || {};
+    const RuntimeSettings = VRODOSMaster.RuntimeSettings || {};
     function nativeSsaoOptionsForPreset(PP, preset) {
       const blendFunction = PP && PP.BlendFunction ? PP.BlendFunction.MULTIPLY : void 0;
       const defaults = {
@@ -71,6 +72,9 @@
       return options;
     }
     function readPmndrsNumber(self, key, min, max, fallback) {
+      if (RuntimeSettings.readNumber) {
+        return RuntimeSettings.readNumber(self && self.data, key, fallback, min, max);
+      }
       const raw = self && self.data && self.data[key] !== void 0 ? self.data[key] : fallback;
       const n = parseFloat(raw);
       if (isNaN(n)) return fallback;
@@ -79,6 +83,9 @@
       return n;
     }
     function readPmndrsBool(self, key) {
+      if (RuntimeSettings.readBool) {
+        return RuntimeSettings.readBool(self && self.data, key, false);
+      }
       if (!self || !self.data) return false;
       const v = self.data[key];
       return v === true || v === "true" || v === "1" || v === 1;
@@ -96,6 +103,9 @@
       return readPmndrsBool(self, "pmndrsLensFlareEnabled");
     }
     function normalizePmndrsLutLook(value) {
+      if (RuntimeSettings.normalizeEnum) {
+        return RuntimeSettings.normalizeEnum("pmndrsLutLook", value, "neutral");
+      }
       switch (value) {
         case "warm-film":
         case "cool-clarity":
@@ -107,6 +117,9 @@
       }
     }
     function normalizePmndrsToneMappingMode(value) {
+      if (RuntimeSettings.normalizeEnum) {
+        return RuntimeSettings.normalizeEnum("pmndrsToneMappingMode", value, "agx");
+      }
       switch (value) {
         case "agx":
         case "reinhard":
@@ -1252,15 +1265,6 @@ ${selectedSummaries.join("\n")}`);
       this.pmndrsRenderPass = renderPass;
       this._pmndrsLastW = 0;
       this._pmndrsLastH = 0;
-      this._pmndrsAdaptive = {
-        halfRate: false,
-        frameCounter: 0,
-        fpsHistory: new Float32Array(30),
-        fpsHistoryIdx: 0,
-        fpsHistoryFilled: false,
-        lastStateChange: typeof performance !== "undefined" ? performance.now() : Date.now(),
-        lastFrameTime: typeof performance !== "undefined" ? performance.now() : Date.now()
-      };
       updatePmndrsAADebugOverlay(this);
       return true;
     };
@@ -1329,7 +1333,6 @@ ${selectedSummaries.join("\n")}`);
           applyPmndrsHorizonFoliageMaterialNormalization(self);
         }
         self.updatePmndrsPostProcessingSize();
-        self._updatePmndrsAdaptiveAO();
         self.pmndrsRendering = true;
         try {
           self.pmndrsComposer.render();
@@ -1357,8 +1360,6 @@ ${selectedSummaries.join("\n")}`);
         this._pmndrsLastH = h;
       }
     };
-    H._updatePmndrsAdaptiveAO = function() {
-    };
     H.disablePmndrsPostProcessing = function() {
       if (!this.pmndrsActive || !this.el.renderer) {
         return;
@@ -1378,7 +1379,6 @@ ${selectedSummaries.join("\n")}`);
       this.pmndrsOriginalRender = null;
       this.pmndrsActive = false;
       this.pmndrsRendering = false;
-      this._pmndrsAdaptive = null;
       this._pmndrsSsrTraaWarned = false;
       this._pmndrsAtmosphereWarned = false;
       this._pmndrsLensFlareSkipWarned = false;
@@ -1386,14 +1386,6 @@ ${selectedSummaries.join("\n")}`);
         this.applyRenderQualityProfile();
       }
       updatePmndrsAADebugOverlay(this);
-    };
-    H.syncPmndrsPostProcessingState = function() {
-      if (this.shouldUsePostProcessing()) {
-        this.enablePmndrsPostProcessing();
-        this.updatePmndrsPostProcessingSize();
-        return;
-      }
-      this.disablePmndrsPostProcessing();
     };
   })();
 })();

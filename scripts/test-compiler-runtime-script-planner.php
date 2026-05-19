@@ -2,7 +2,16 @@
 
 define( 'ABSPATH', __DIR__ );
 
+if ( ! class_exists( 'VRodos_Path_Manager' ) ) {
+	class VRodos_Path_Manager {
+		public static function plugin_path( string $relative = '' ): string {
+			return dirname( __DIR__ ) . '/' . ltrim( str_replace( '\\', '/', $relative ), '/' );
+		}
+	}
+}
+
 require_once __DIR__ . '/../includes/class-vrodos-runtime-settings-contract.php';
+require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-feature-flags.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-manifest.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-script-planner.php';
 
@@ -57,6 +66,13 @@ $manifest = new VRodos_Compiler_Runtime_Manifest(
 				'order'        => 30,
 				'dependencies' => [],
 			],
+			'collision-bvh-vendor'         => [
+				'id'           => 'collision-bvh-vendor',
+				'type'         => 'script',
+				'src'          => 'js/master/lib/vrodos-collision-bvh.bundle.js',
+				'order'        => 32,
+				'dependencies' => [],
+			],
 			'pmndrs-postprocessing-vendor' => [
 				'id'           => 'pmndrs-postprocessing-vendor',
 				'type'         => 'script',
@@ -99,45 +115,51 @@ $manifest = new VRodos_Compiler_Runtime_Manifest(
 $planner = new VRodos_Compiler_Runtime_Script_Planner( $manifest );
 
 vrodos_assert_same(
-	[ 'scene-components', 'networked-components', 'core-runtime', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [] ) ),
 	'no post-FX'
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'networked-components', 'core-runtime', 'legacy-postfx', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'legacy-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'legacy' ] ) ),
 	'legacy post-FX'
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'networked-components', 'core-runtime', 'pmndrs-postprocessing-vendor', 'pmndrs-postfx', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'pmndrs-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => false ] ) ),
 	'PMNDRS without Takram'
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'networked-components', 'core-runtime', 'pmndrs-postprocessing-vendor', 'pmndrs-postfx', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'pmndrs-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => false, 'aframePmndrsGeospatialEnabled' => true ] ) ),
 	'PMNDRS geospatial disabled by Takram atmosphere gate'
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'networked-components', 'core-runtime', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'pmndrs-postfx', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'pmndrs-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true ] ) ),
 	'PMNDRS with Takram'
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'networked-components', 'core-runtime', 'fps-meter', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'fps-meter', 'collision-bvh-vendor', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframeFPSMeterEnabled' => true ] ) ),
 	'FPS meter'
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'core-runtime', 'aframe-components' ],
+	[ 'scene-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [] ), 'single-player' ),
 	'single-player no networked components'
+);
+
+vrodos_assert_same(
+	[ 'scene-components', 'networked-components', 'core-runtime', 'aframe-components' ],
+	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframeCollisionMode' => 'off' ] ) ),
+	'collision disabled'
 );
 
 echo "Runtime script planner fixtures passed.\n";

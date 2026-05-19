@@ -4,37 +4,41 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-vrodos-compiler-runtime-feature-flags.php';
+
 class VRodos_Compiler_Runtime_Script_Planner {
 	private VRodos_Compiler_Runtime_Manifest $manifest;
+	private VRodos_Compiler_Runtime_Feature_Flags $feature_flags;
 
-	public function __construct( VRodos_Compiler_Runtime_Manifest $manifest ) {
-		$this->manifest = $manifest;
+	public function __construct( VRodos_Compiler_Runtime_Manifest $manifest, ?VRodos_Compiler_Runtime_Feature_Flags $feature_flags = null ) {
+		$this->manifest      = $manifest;
+		$this->feature_flags = $feature_flags ?: new VRodos_Compiler_Runtime_Feature_Flags();
 	}
 
 	public function script_ids_for_scene( $scene_json, string $runtime_mode = 'networked' ): array {
-		$metadata  = is_object( $scene_json->metadata ?? null ) ? $scene_json->metadata : new stdClass();
+		$metadata  = $this->feature_flags->metadata( $scene_json );
 		$requested = [
 			'scene-components',
 		];
 
-		if ( $this->is_networked_runtime( $runtime_mode ) ) {
+		if ( $this->feature_flags->is_networked_runtime( $runtime_mode ) ) {
 			$requested[] = 'networked-components';
 		}
 
 		$requested[] = 'core-runtime';
 
-		if ( $this->is_fps_meter_enabled( $metadata ) ) {
+		if ( $this->feature_flags->is_fps_meter_enabled( $metadata ) ) {
 			$requested[] = 'fps-meter';
 		}
 
-		if ( $this->is_static_collision_enabled( $metadata ) ) {
+		if ( $this->feature_flags->is_static_collision_enabled( $metadata ) ) {
 			$requested[] = 'collision-bvh-vendor';
 		}
 
-		if ( $this->is_post_fx_enabled( $metadata ) ) {
-			if ( $this->post_fx_engine( $metadata ) === 'pmndrs' ) {
+		if ( $this->feature_flags->is_post_fx_enabled( $metadata ) ) {
+			if ( $this->feature_flags->post_fx_engine( $metadata ) === VRodos_Compiler_Runtime_Feature_Flags::POST_FX_ENGINE_PMNDRS ) {
 				$requested[] = 'pmndrs-postfx';
-				if ( $this->is_pmndrs_atmosphere_enabled( $metadata ) ) {
+				if ( $this->feature_flags->is_pmndrs_atmosphere_enabled( $metadata ) ) {
 					$requested[] = 'takram-atmosphere';
 				}
 			} else {
@@ -92,37 +96,6 @@ class VRodos_Compiler_Runtime_Script_Planner {
             .then((m) => { window.' . $global . ' = ' . $export_expression . '; return window.' . $global . '; })
             .catch((e) => { console.warn("VRodos Error: runtime module failed to load.", e); return null; });
     </script>';
-	}
-
-	private function is_post_fx_enabled( $metadata ): bool {
-		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePostFXEnabled ?? false );
-	}
-
-	private function post_fx_engine( $metadata ): string {
-		return ( ( $metadata->aframePostFXEngine ?? 'legacy' ) === 'pmndrs' ) ? 'pmndrs' : 'legacy';
-	}
-
-	private function is_pmndrs_atmosphere_enabled( $metadata ): bool {
-		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePmndrsAtmosphereEnabled ?? true, true );
-	}
-
-	private function is_fps_meter_enabled( $metadata ): bool {
-		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->enableFPSMeter ?? false )
-			|| VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeFPSMeterEnabled ?? false );
-	}
-
-	private function is_static_collision_enabled( $metadata ): bool {
-		$collision_mode = (string) ( $metadata->aframeCollisionMode ?? 'auto' );
-		if ( 'off' === $collision_mode ) {
-			return false;
-		}
-
-		$navigation_mode = (string) ( $metadata->aframeNavigationMode ?? '' );
-		return ! in_array( $navigation_mode, [ 'walk', 'fly' ], true );
-	}
-
-	private function is_networked_runtime( string $runtime_mode ): bool {
-		return 'single-player' !== $runtime_mode;
 	}
 
 	private function safe_global_name( string $name ): string {
