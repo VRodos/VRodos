@@ -1232,6 +1232,9 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     if (controls.pmndrsDayNightCycle) {
         controls.pmndrsDayNightCycle.addEventListener('change', () => {
+            if (controls.pmndrsDayNightCycle.checked === true && controls.pmndrsCelestialMode) {
+                controls.pmndrsCelestialMode.value = 'datetime';
+            }
             syncCompilePostFxState();
             VRodosCompileUI.Atmosphere.syncToScene(controls);
         });

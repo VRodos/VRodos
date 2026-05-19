@@ -24,6 +24,11 @@
             this._sceneProbePmremTarget = null;
         }
 
+        if (this._takramSkyPmremTarget) {
+            this._takramSkyPmremTarget.dispose();
+            this._takramSkyPmremTarget = null;
+        }
+
         if (this._sceneProbePmremGenerator) {
             this._sceneProbePmremGenerator.dispose();
             this._sceneProbePmremGenerator = null;
@@ -72,6 +77,11 @@
                 this._sceneProbePmremTarget.dispose();
                 this._sceneProbePmremTarget = null;
             }
+            if (this._takramSkyPmremTarget) {
+                this._takramSkyPmremTarget.dispose();
+                this._takramSkyPmremTarget = null;
+            }
+            this._takramSkyEnvironmentNeedsUpdate = true;
         }
 
         if (!this._sceneProbeCubeRenderTarget) {
@@ -228,6 +238,26 @@
 
         return hiddenObjects;
     };
+    H.collectTakramSkyEnvironmentExcludedObjects = function () {
+        const hiddenObjects = [];
+        const hiddenLookup = {};
+        const sceneObj = this.el && this.el.object3D ? this.el.object3D : null;
+        if (!sceneObj || typeof sceneObj.traverse !== 'function') {
+            return hiddenObjects;
+        }
+
+        sceneObj.traverse((node) => {
+            if (!node || node === sceneObj || !node.visible) {
+                return;
+            }
+            if (node.userData && node.userData.vrodosPmndrsAtmosphereSky) {
+                return;
+            }
+            this.hideSceneProbeObject(node, hiddenObjects, hiddenLookup);
+        });
+
+        return hiddenObjects;
+    };
     H.restoreSceneProbeExcludedObjects = function (hiddenObjects) {
         if (!hiddenObjects || !hiddenObjects.length) {
             return;
@@ -329,12 +359,213 @@
         }
         return true;
     };
+    H.getTakramSkyEnvironmentSignature = function (atmosphereConfig) {
+        if (!atmosphereConfig) {
+            return '';
+        }
+
+        const sunElevation = typeof atmosphereConfig.sunElevationDeg === 'number'
+            ? atmosphereConfig.sunElevationDeg
+            : 0;
+        const sunAzimuth = typeof atmosphereConfig.sunAzimuthDeg === 'number'
+            ? atmosphereConfig.sunAzimuthDeg
+            : 0;
+        const moonDirection = atmosphereConfig.localMoonDirection || null;
+        const moonY = moonDirection && typeof moonDirection.y === 'number' ? moonDirection.y : -1;
+        const starsIntensity = typeof this.getPmndrsStarsIntensity === 'function'
+            ? this.getPmndrsStarsIntensity(atmosphereConfig)
+            : 0;
+
+        return [
+            Math.round(sunElevation * 2) / 2,
+            Math.round(sunAzimuth * 0.25) / 0.25,
+            Math.round(moonY * 20) / 20,
+            Math.round(starsIntensity * 10) / 10
+        ].join('|');
+    };
+    H.applyTakramSkyEnvironmentIntensity = function (atmosphereConfig, now) {
+        const sceneObj = this.el && this.el.object3D ? this.el.object3D : null;
+        if (!sceneObj || !sceneObj.environment) {
+            return;
+        }
+
+        const targetScale = typeof this.getPmndrsReflectionIntensityScale === 'function'
+            ? this.getPmndrsReflectionIntensityScale(atmosphereConfig, 'takram-sky')
+            : 1;
+        const timeMs = typeof now === 'number'
+            ? now
+            : (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
+        const previousTimeMs = typeof this._takramSkyEnvironmentLastSmoothMs === 'number'
+            ? this._takramSkyEnvironmentLastSmoothMs
+            : timeMs;
+        const deltaMs = Math.max(0, Math.min(250, timeMs - previousTimeMs));
+        const previousScale = typeof this._takramSkyEnvironmentSmoothedScale === 'number'
+            ? this._takramSkyEnvironmentSmoothedScale
+            : targetScale;
+        const smoothingMs = atmosphereConfig && atmosphereConfig.dayNightCycleEnabled ? 420 : 900;
+        const alpha = deltaMs > 0 ? 1 - Math.exp(-deltaMs / smoothingMs) : 1;
+        const reflectionScale = previousScale + ((targetScale - previousScale) * alpha);
+
+        this._takramSkyEnvironmentLastSmoothMs = timeMs;
+        this._takramSkyEnvironmentSmoothedScale = reflectionScale;
+        this._takramSkyEnvironmentLastProfileScale = targetScale;
+
+        if (typeof sceneObj.environmentIntensity !== 'undefined') {
+            sceneObj.environmentIntensity = reflectionScale;
+        }
+    };
+    H.requestTakramSkyEnvironmentRefresh = function () {
+        this._takramSkyEnvironmentNeedsUpdate = true;
+    };
+    function getTakramSkyEnvironmentTimeMs(now) {
+        return typeof now === 'number'
+            ? now
+            : (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
+    }
+    function scheduleTakramSkyEnvironmentRetry(self, now) {
+        self._takramSkyEnvironmentNeedsUpdate = true;
+        self._takramSkyEnvironmentNextRetryMs = getTakramSkyEnvironmentTimeMs(now) + 500;
+    }
+    function isTakramSkyEnvironmentReady(self) {
+        const state = self && self._pmndrsAtmosphereState ? self._pmndrsAtmosphereState : null;
+        if (!state || state.failed || !state.ready || !state.skyMesh || !state.skyMaterial) {
+            return false;
+        }
+
+        return Boolean(state.textures &&
+            state.textures.irradianceTexture &&
+            state.textures.scatteringTexture &&
+            state.textures.transmittanceTexture);
+    }
+    H.captureTakramSkyEnvironment = function (now, atmosphereConfig) {
+        const renderer = this.el.renderer;
+        const sceneObj = this.el.object3D;
+        const anchorObject = this.getSceneProbeAnchorObject();
+        if (!renderer || !sceneObj || !anchorObject || !this.ensureSceneProbeResources()) {
+            return false;
+        }
+        if (!atmosphereConfig || !atmosphereConfig.enabled || !window.VRODOS_TAKRAM_ATMOSPHERE) {
+            return false;
+        }
+        if (typeof this.showPmndrsAtmosphereSkyForSceneProbe !== 'function') {
+            return false;
+        }
+        const showedTakramSky = Boolean(this.showPmndrsAtmosphereSkyForSceneProbe(atmosphereConfig));
+        if (!isTakramSkyEnvironmentReady(this)) {
+            if (showedTakramSky && typeof this.hidePmndrsAtmosphereSky === 'function') {
+                this.hidePmndrsAtmosphereSky();
+            }
+            scheduleTakramSkyEnvironmentRetry(this, now);
+            return false;
+        }
+
+        anchorObject.updateMatrixWorld(true);
+        anchorObject.getWorldPosition(this._sceneProbeCurrentPosition);
+        this._sceneProbeCubeCamera.position.copy(this._sceneProbeCurrentPosition);
+        this._sceneProbeCubeCamera.updateMatrixWorld(true);
+
+        const previousEnvironment = sceneObj.environment;
+        const hiddenObjects = this.collectTakramSkyEnvironmentExcludedObjects();
+        sceneObj.environment = null;
+        this.sceneProbeCapturing = true;
+
+        try {
+            this._sceneProbeCubeCamera.update(renderer, sceneObj);
+        } catch (error) {
+            console.warn('[VRodos] Takram sky environment capture failed.', error);
+            sceneObj.environment = previousEnvironment;
+            this.restoreSceneProbeExcludedObjects(hiddenObjects);
+            if (showedTakramSky && typeof this.hidePmndrsAtmosphereSky === 'function') {
+                this.hidePmndrsAtmosphereSky();
+            }
+            this.sceneProbeCapturing = false;
+            return false;
+        }
+
+        this.restoreSceneProbeExcludedObjects(hiddenObjects);
+        this.sceneProbeCapturing = false;
+        sceneObj.environment = previousEnvironment;
+        if (showedTakramSky && typeof this.hidePmndrsAtmosphereSky === 'function') {
+            this.hidePmndrsAtmosphereSky();
+        }
+
+        const probeTarget = this._sceneProbePmremGenerator.fromCubemap(this._sceneProbeCubeRenderTarget.texture);
+        if (!probeTarget || !probeTarget.texture) {
+            return false;
+        }
+
+        if (this._takramSkyPmremTarget) {
+            this._takramSkyPmremTarget.dispose();
+        }
+
+        this._takramSkyPmremTarget = probeTarget;
+        sceneObj.environment = probeTarget.texture;
+        this._sceneProbeLastCaptureMs = now;
+        this._takramSkyEnvironmentLastCaptureMs = now;
+        this._takramSkyEnvironmentNeedsUpdate = false;
+        this._takramSkyEnvironmentNextRetryMs = 0;
+        this._takramSkyEnvironmentSignature = this.getTakramSkyEnvironmentSignature(atmosphereConfig);
+        this._currentReflectionSource = 'takram-sky';
+        this.applyMaterialProfiles();
+        this.applyTakramSkyEnvironmentIntensity(atmosphereConfig, now);
+        return true;
+    };
+    H.updateTakramSkyEnvironment = function (now) {
+        const atmosphereConfig = typeof this.getPmndrsAtmosphereConfig === 'function'
+            ? this.getPmndrsAtmosphereConfig()
+            : null;
+        if (!atmosphereConfig || !atmosphereConfig.enabled) {
+            return;
+        }
+
+        const sceneObj = this.el && this.el.object3D ? this.el.object3D : null;
+        const skyTarget = this._takramSkyPmremTarget;
+        const hasSkyTarget = Boolean(skyTarget && skyTarget.texture);
+        if (sceneObj && hasSkyTarget && sceneObj.environment !== skyTarget.texture) {
+            sceneObj.environment = skyTarget.texture;
+            this._currentReflectionSource = 'takram-sky';
+            this.applyMaterialProfiles();
+        }
+
+        const needsCapture = this._takramSkyEnvironmentNeedsUpdate || !hasSkyTarget;
+        const timeMs = getTakramSkyEnvironmentTimeMs(now);
+
+        this.applyTakramSkyEnvironmentIntensity(atmosphereConfig, now);
+        if (needsCapture) {
+            if (this._takramSkyEnvironmentNextRetryMs && timeMs < this._takramSkyEnvironmentNextRetryMs) {
+                return;
+            }
+            this.captureTakramSkyEnvironment(now, atmosphereConfig);
+        }
+    };
     H.applyEnvMapProfile = function () {
         const preset = this.data.envMapPreset || 'none';
         const sceneObj = this.el.object3D;
         const effectiveSource = this.getEffectiveReflectionSource();
 
+        if (effectiveSource === 'takram-sky') {
+            if (!this.ensureSceneProbeResources()) {
+                sceneObj.environment = null;
+                this._currentReflectionSource = 'none';
+                this.applyMaterialProfiles();
+                return;
+            }
+
+            if (this._takramSkyPmremTarget && this._takramSkyPmremTarget.texture) {
+                this.clearHdrEnvironmentMap(this._currentReflectionSource !== 'takram-sky');
+                sceneObj.environment = this._takramSkyPmremTarget.texture;
+                this._currentReflectionSource = 'takram-sky';
+                this.applyMaterialProfiles();
+            }
+            this.requestTakramSkyEnvironmentRefresh();
+            return;
+        }
+
         if (effectiveSource === 'scene-probe') {
+            if (this._takramSkyPmremTarget) {
+                this._takramSkyPmremTarget.dispose();
+                this._takramSkyPmremTarget = null;
+            }
             this.clearHdrEnvironmentMap(this._currentReflectionSource !== 'scene-probe');
             if (!this.ensureSceneProbeResources()) {
                 sceneObj.environment = null;

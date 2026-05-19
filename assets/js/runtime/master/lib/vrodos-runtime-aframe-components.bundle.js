@@ -853,12 +853,18 @@
     canUseSceneProbe: function() {
       return this.getReflectionSource() === "scene-probe" && this.data.renderQuality === "high" && !this.isVrPresentationActive() && !this.isMobileDevice() && Boolean(this.el.renderer) && typeof THREE.WebGLCubeRenderTarget !== "undefined" && typeof THREE.CubeCamera !== "undefined" && typeof THREE.PMREMGenerator !== "undefined";
     },
+    canUseTakramSkyEnvironment: function() {
+      return vrodosRuntimeDebugFlag("enableTakramSkyEnvironment", "vrodos_debug_takram_sky_environment") && this.data.renderQuality === "high" && this.data.postFXEngine === "pmndrs" && typeof this.isPmndrsAtmosphereEnabled === "function" && this.isPmndrsAtmosphereEnabled() && typeof this.isPmndrsDayNightCycleActive === "function" && this.isPmndrsDayNightCycleActive() && !this.isVrPresentationActive() && !this.isMobileDevice() && Boolean(this.el.renderer) && typeof THREE.WebGLCubeRenderTarget !== "undefined" && typeof THREE.CubeCamera !== "undefined" && typeof THREE.PMREMGenerator !== "undefined";
+    },
     getEffectiveReflectionSource: function() {
       if (!this.areReflectionsEnabled()) {
         return "none";
       }
       if (this.canUseSceneProbe()) {
         return "scene-probe";
+      }
+      if (this.canUseTakramSkyEnvironment()) {
+        return "takram-sky";
       }
       if ((this.data.envMapPreset || "none") !== "none") {
         return "hdr";
@@ -878,7 +884,13 @@
     getSceneProbeYawDeltaDegrees: VRODOSMaster.SceneSettingsHelpers.getSceneProbeYawDeltaDegrees,
     hideSceneProbeObject: VRODOSMaster.SceneSettingsHelpers.hideSceneProbeObject,
     collectSceneProbeExcludedObjects: VRODOSMaster.SceneSettingsHelpers.collectSceneProbeExcludedObjects,
+    collectTakramSkyEnvironmentExcludedObjects: VRODOSMaster.SceneSettingsHelpers.collectTakramSkyEnvironmentExcludedObjects,
     restoreSceneProbeExcludedObjects: VRODOSMaster.SceneSettingsHelpers.restoreSceneProbeExcludedObjects,
+    getTakramSkyEnvironmentSignature: VRODOSMaster.SceneSettingsHelpers.getTakramSkyEnvironmentSignature,
+    applyTakramSkyEnvironmentIntensity: VRODOSMaster.SceneSettingsHelpers.applyTakramSkyEnvironmentIntensity,
+    requestTakramSkyEnvironmentRefresh: VRODOSMaster.SceneSettingsHelpers.requestTakramSkyEnvironmentRefresh,
+    captureTakramSkyEnvironment: VRODOSMaster.SceneSettingsHelpers.captureTakramSkyEnvironment,
+    updateTakramSkyEnvironment: VRODOSMaster.SceneSettingsHelpers.updateTakramSkyEnvironment,
     captureSceneProbe: VRODOSMaster.SceneSettingsHelpers.captureSceneProbe,
     applyEnvMapProfile: VRODOSMaster.SceneSettingsHelpers.applyEnvMapProfile,
     getContactShadowSettings: function() {
@@ -1189,6 +1201,10 @@
     getPmndrsToneMappingMode: VRODOSMaster.SceneSettingsHelpers.getPmndrsToneMappingMode || function() {
       return "agx";
     },
+    getPmndrsReflectionIntensityScale: VRODOSMaster.SceneSettingsHelpers.getPmndrsReflectionIntensityScale || function() {
+      return 1;
+    },
+    updateReflectionEnvironmentIntensity: VRODOSMaster.SceneSettingsHelpers.updateReflectionEnvironmentIntensity || vrodosRuntimeNoop,
     applyPmndrsAtmosphereConfigToTarget: VRODOSMaster.SceneSettingsHelpers.applyPmndrsAtmosphereConfigToTarget || function() {
     },
     updatePmndrsHorizonSun: VRODOSMaster.SceneSettingsHelpers.updatePmndrsHorizonSun || function() {
@@ -1300,6 +1316,19 @@
       this._pmndrsTickTimeMs = null;
       this._pmndrsDayNightCycleState = null;
       this._pmndrsDayNightCycleShadowLastMs = 0;
+      this._pmndrsRuntimeLightSmoothValues = {};
+      this._pmndrsRuntimeLightSmoothColors = {};
+      this._pmndrsRuntimeLightSmoothTimes = {};
+      this._vrodosReflectionIntensityMaterials = [];
+      this._takramSkyPmremTarget = null;
+      this._takramSkyEnvironmentNeedsUpdate = false;
+      this._takramSkyEnvironmentLastCaptureMs = 0;
+      this._takramSkyEnvironmentNextRetryMs = 0;
+      this._takramSkyEnvironmentLastMaterialScale = 0;
+      this._takramSkyEnvironmentLastSmoothMs = 0;
+      this._takramSkyEnvironmentSmoothedScale = null;
+      this._takramSkyEnvironmentLastProfileScale = 1;
+      this._takramSkyEnvironmentSignature = "";
       window.addEventListener("resize", this.handleResize);
       document.addEventListener("fullscreenchange", this.handlePresentationModeChange);
       document.addEventListener("webkitfullscreenchange", this.handlePresentationModeChange);
@@ -1535,7 +1564,17 @@
         this.updatePmndrsDayNightCycleFrame(time);
       }
       this.updateAdaptiveShadowFit(false);
-      if (this.getEffectiveReflectionSource() !== "scene-probe") {
+      const effectiveReflectionSource = this.getEffectiveReflectionSource();
+      if (typeof this.updateReflectionEnvironmentIntensity === "function") {
+        this.updateReflectionEnvironmentIntensity(time, effectiveReflectionSource);
+      }
+      if (effectiveReflectionSource === "takram-sky") {
+        if (typeof this.updateTakramSkyEnvironment === "function") {
+          this.updateTakramSkyEnvironment(time);
+        }
+        return;
+      }
+      if (effectiveReflectionSource !== "scene-probe") {
         return;
       }
       const sceneProbeUpdateMode = this.getSceneProbeUpdateMode();

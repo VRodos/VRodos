@@ -371,6 +371,13 @@ VRodosCompileUI.Atmosphere = (function () {
         });
 
         const celestialMode = normalizeCelestialMode(controls.pmndrsCelestialMode ? controls.pmndrsCelestialMode.value : Shared.PMNDRS_TWEAK_DEFAULTS.celestialMode);
+        const dayNightCycleEnabled = isEnabled && controls.pmndrsDayNightCycle && controls.pmndrsDayNightCycle.checked === true;
+        if (controls.pmndrsAtmospherePreset) {
+            controls.pmndrsAtmospherePreset.disabled = !isEnabled || dayNightCycleEnabled;
+        }
+        if (controls.pmndrsCelestialMode) {
+            controls.pmndrsCelestialMode.disabled = !isEnabled || dayNightCycleEnabled;
+        }
         if (controls.pmndrsCelestialTimePresetWrapper) {
             controls.pmndrsCelestialTimePresetWrapper.style.display = 'none';
         }
@@ -378,7 +385,6 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsCelestialTimePreset.disabled = true;
         }
 
-        const dayNightCycleEnabled = isEnabled && controls.pmndrsDayNightCycle && controls.pmndrsDayNightCycle.checked === true;
         const dateTimeEnabled = isEnabled && (celestialMode === 'datetime' || dayNightCycleEnabled);
         if (controls.pmndrsCelestialDateTimeWrapper) {
             controls.pmndrsCelestialDateTimeWrapper.style.display = dateTimeEnabled ? '' : 'none';
@@ -417,8 +423,11 @@ VRodosCompileUI.Atmosphere = (function () {
 
         VRODOS.editor.envir.scene.aframePmndrsAtmosphereEnabled = pmndrsRuntimeEnabled && controls.pmndrsAtmosphere.checked === true;
         const atmospherePreset = normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : d.atmospherePreset);
+        const dayNightCycleEnabled = pmndrsRuntimeEnabled && controls.pmndrsDayNightCycle ? controls.pmndrsDayNightCycle.checked === true : d.dayNightCycleEnabled;
         const celestialMode = normalizeCelestialMode(controls.pmndrsCelestialMode ? controls.pmndrsCelestialMode.value : d.celestialMode);
-        const usesSkyTimePreset = celestialMode === 'preset-time' || (celestialMode !== 'datetime' && atmospherePreset !== 'custom');
+        const effectiveCelestialMode = dayNightCycleEnabled ? 'datetime' : celestialMode;
+        const usesSkyTimePreset = !dayNightCycleEnabled &&
+            (effectiveCelestialMode === 'preset-time' || (effectiveCelestialMode !== 'datetime' && atmospherePreset !== 'custom'));
 
         VRODOS.editor.envir.scene.aframePmndrsAtmospherePreset = atmospherePreset;
         VRODOS.editor.envir.scene.aframePmndrsAtmospherePresetIntensity = Shared.clampNumber(
@@ -428,13 +437,13 @@ VRodosCompileUI.Atmosphere = (function () {
             d.atmospherePresetIntensity
         );
         VRODOS.editor.envir.scene.aframePmndrsAtmosphereQuality = normalizeQuality(controls.pmndrsAtmosphereQuality ? controls.pmndrsAtmosphereQuality.value : d.atmosphereQuality);
-        VRODOS.editor.envir.scene.aframePmndrsCelestialMode = usesSkyTimePreset ? 'preset-time' : celestialMode;
+        VRODOS.editor.envir.scene.aframePmndrsCelestialMode = dayNightCycleEnabled ? 'datetime' : (usesSkyTimePreset ? 'preset-time' : effectiveCelestialMode);
         VRODOS.editor.envir.scene.aframePmndrsCelestialTimePreset = usesSkyTimePreset
             ? normalizeCelestialTimePreset(atmospherePreset)
             : normalizeCelestialTimePreset(controls.pmndrsCelestialTimePreset ? controls.pmndrsCelestialTimePreset.value : d.celestialTimePreset);
         VRODOS.editor.envir.scene.aframePmndrsCelestialDate = normalizeDate(controls.pmndrsCelestialDate ? controls.pmndrsCelestialDate.value : d.celestialDate, d.celestialDate);
         VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime = normalizeUtcTime(controls.pmndrsCelestialUtcTime ? controls.pmndrsCelestialUtcTime.value : d.celestialUtcTime, d.celestialUtcTime);
-        VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled = pmndrsRuntimeEnabled && controls.pmndrsDayNightCycle ? controls.pmndrsDayNightCycle.checked === true : d.dayNightCycleEnabled;
+        VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled = dayNightCycleEnabled;
         VRODOS.editor.envir.scene.aframePmndrsDayNightCycleDurationMinutes = Shared.clampNumber(
             controls.pmndrsDayNightCycleDuration ? controls.pmndrsDayNightCycleDuration.value : d.dayNightCycleDurationMinutes,
             0.25,
@@ -511,4 +520,3 @@ VRodosCompileUI.Atmosphere = (function () {
         normalizeUtcTime
     };
 })();
-

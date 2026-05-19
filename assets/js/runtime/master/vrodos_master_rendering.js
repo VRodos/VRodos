@@ -649,6 +649,45 @@ function vrodosInstallReflectionShadowPatch(material) {
     material.needsUpdate = true;
 }
 
+function vrodosGetTargetEnvMapIntensity(material, options) {
+    if (!material || typeof material.envMapIntensity === 'undefined') {
+        return 0;
+    }
+
+    const reflectionSource = options.reflectionSource || (options.environmentMap ? 'hdr' : 'none');
+    const globalReflectionStrength = vrodosGetGlobalReflectionStrength(options);
+    const reflectionsDisabled = globalReflectionStrength <= 0 || reflectionSource === 'none';
+    material.userData = material.userData || {};
+    if (typeof material.userData.vrodosBaseEnvMapIntensity === 'undefined') {
+        material.userData.vrodosBaseEnvMapIntensity = material.envMapIntensity || 1;
+    }
+
+    let targetEnvMapIntensity = material.userData.vrodosBaseEnvMapIntensity;
+    if (reflectionsDisabled) {
+        targetEnvMapIntensity = 0;
+    } else if (options.reflectionProfile === 'soft') {
+        targetEnvMapIntensity = reflectionSource === 'takram-sky'
+            ? Math.max(material.userData.vrodosBaseEnvMapIntensity * 0.9, 0.75)
+            : Math.max(material.userData.vrodosBaseEnvMapIntensity * 0.5, 0.3);
+    } else if (options.renderQuality === 'high') {
+        targetEnvMapIntensity = options.reflectionProfile === 'enhanced'
+            ? Math.max(material.userData.vrodosBaseEnvMapIntensity, 2.0)
+            : Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.0);
+    } else if (options.reflectionProfile === 'enhanced') {
+        targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.5);
+    }
+
+    if (options.environmentMap && typeof options.reflectionIntensityScale === 'number') {
+        targetEnvMapIntensity *= options.reflectionIntensityScale;
+    }
+
+    return targetEnvMapIntensity;
+}
+
+if (typeof window !== 'undefined') {
+    window.vrodosGetTargetEnvMapIntensity = vrodosGetTargetEnvMapIntensity;
+}
+
 function vrodosEnhanceMeshMaterial(material, overrides, options) {
     if (!material) {
         return;
@@ -684,28 +723,7 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
     }
 
     if (typeof material.envMapIntensity !== 'undefined') {
-        if (typeof material.userData.vrodosBaseEnvMapIntensity === 'undefined') {
-            material.userData.vrodosBaseEnvMapIntensity = material.envMapIntensity || 1;
-        }
-
-        let targetEnvMapIntensity = material.userData.vrodosBaseEnvMapIntensity;
-        if (reflectionsDisabled) {
-            targetEnvMapIntensity = 0;
-        } else if (options.reflectionProfile === 'soft') {
-            targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity * 0.5, 0.3);
-        } else if (options.renderQuality === 'high') {
-            targetEnvMapIntensity = options.reflectionProfile === 'enhanced'
-                ? Math.max(material.userData.vrodosBaseEnvMapIntensity, 2.0)
-                : Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.0);
-        } else if (options.reflectionProfile === 'enhanced') {
-            targetEnvMapIntensity = Math.max(material.userData.vrodosBaseEnvMapIntensity, 1.5);
-        }
-
-        if (options.environmentMap && typeof options.reflectionIntensityScale === 'number') {
-            targetEnvMapIntensity *= options.reflectionIntensityScale;
-        }
-
-        material.envMapIntensity = targetEnvMapIntensity;
+        material.envMapIntensity = vrodosGetTargetEnvMapIntensity(material, options);
     }
 
     if (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial || material.isMeshPhongMaterial) {
