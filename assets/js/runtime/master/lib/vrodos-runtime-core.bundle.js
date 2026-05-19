@@ -3195,11 +3195,17 @@
           return mixPmndrsLightingAnchors(
             previous,
             next,
-            (sunElevation - previous.elevation) / (next.elevation - previous.elevation)
+            smoothstepNumber(previous.elevation, next.elevation, sunElevation)
           );
         }
       }
       return clonePmndrsLightingAnchor(sequence[sequence.length - 1]);
+    }
+    function getPmndrsSettingSunBlend(config, sunElevation) {
+      const localSunDirection = config && config.localSunDirection ? config.localSunDirection : null;
+      const azimuthBlend = localSunDirection && typeof localSunDirection.x === "number" ? 1 - smoothstepNumber(-0.18, 0.05, localSunDirection.x) : 0;
+      const lowSunBlend = 1 - smoothstepNumber(18, 32, sunElevation);
+      return Math.max(0, Math.min(1, azimuthBlend * lowSunBlend));
     }
     function getPmndrsStaticLightingAnchorKey(config) {
       const preset = getResolvedPmndrsSkyTimePreset(config);
@@ -3214,15 +3220,8 @@
       }
       const sunElevation = config.sunElevationDeg;
       const isDynamic = isPmndrsDynamicCelestialConfig(config);
-      const isSunset = Boolean(config.localSunDirection && typeof config.localSunDirection.x === "number" && config.localSunDirection.x < -0.05);
       const staticAnchorKey = !isDynamic && config.celestialMode === "preset-time" ? getPmndrsStaticLightingAnchorKey(config) : null;
-      const sequence = isSunset ? [
-        PMNDRS_CALIBRATED_LIGHTING_ANCHORS.night,
-        PMNDRS_CALIBRATED_LIGHTING_ANCHORS.dawn,
-        PMNDRS_CALIBRATED_LIGHTING_ANCHORS.sunset,
-        PMNDRS_CALIBRATED_LIGHTING_ANCHORS["early-morning"],
-        PMNDRS_CALIBRATED_LIGHTING_ANCHORS.midday
-      ] : [
+      const morningSequence = [
         PMNDRS_CALIBRATED_LIGHTING_ANCHORS.night,
         PMNDRS_CALIBRATED_LIGHTING_ANCHORS.dawn,
         PMNDRS_CALIBRATED_LIGHTING_ANCHORS.sunrise,
@@ -3230,7 +3229,18 @@
         PMNDRS_CALIBRATED_LIGHTING_ANCHORS["early-morning"],
         PMNDRS_CALIBRATED_LIGHTING_ANCHORS.midday
       ];
-      const profile = staticAnchorKey ? clonePmndrsLightingAnchor(PMNDRS_CALIBRATED_LIGHTING_ANCHORS[staticAnchorKey]) : samplePmndrsLightingAnchorSequence(sequence, sunElevation);
+      const settingSequence = [
+        PMNDRS_CALIBRATED_LIGHTING_ANCHORS.night,
+        PMNDRS_CALIBRATED_LIGHTING_ANCHORS.dawn,
+        PMNDRS_CALIBRATED_LIGHTING_ANCHORS.sunset,
+        PMNDRS_CALIBRATED_LIGHTING_ANCHORS["early-morning"],
+        PMNDRS_CALIBRATED_LIGHTING_ANCHORS.midday
+      ];
+      const profile = staticAnchorKey ? clonePmndrsLightingAnchor(PMNDRS_CALIBRATED_LIGHTING_ANCHORS[staticAnchorKey]) : mixPmndrsLightingAnchors(
+        samplePmndrsLightingAnchorSequence(morningSequence, sunElevation),
+        samplePmndrsLightingAnchorSequence(settingSequence, sunElevation),
+        getPmndrsSettingSunBlend(config, sunElevation)
+      );
       const moonY = config.localMoonDirection && typeof config.localMoonDirection.y === "number" ? config.localMoonDirection.y : -1;
       const moonVisibility = config.moonEnabled === false ? 0 : smoothstepNumber(-0.04, 0.38, moonY);
       const nightAmount = 1 - smoothstepNumber(-14, -4, sunElevation);
