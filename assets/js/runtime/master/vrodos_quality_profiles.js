@@ -1091,6 +1091,10 @@
             : null;
         const calibratedProfile = getPmndrsCalibratedCelestialLightingProfile(atmosphereConfig);
 
+        if (isPmndrsDynamicCelestialConfig(atmosphereConfig) && sunElevation !== null) {
+            return getPmndrsDynamicIndirectLightingProfile(atmosphereConfig, sunElevation);
+        }
+
         if (calibratedProfile) {
             return {
                 skyLightIntensity: calibratedProfile.skyLightIntensity,
@@ -1145,6 +1149,100 @@
         };
     }
 
+    function getPmndrsDynamicIndirectLightingProfile(atmosphereConfig, sunElevation) {
+        const profile = samplePmndrsIndirectLightingSequence([
+            {
+                elevation: -18,
+                skyLightIntensity: 0.50,
+                pbrFillIntensity: 0.38,
+                ambientBounceIntensity: 0.08,
+                groundFillColor: '#111722'
+            },
+            {
+                elevation: -12,
+                skyLightIntensity: 0.58,
+                pbrFillIntensity: 0.46,
+                ambientBounceIntensity: 0.12,
+                groundFillColor: '#1b2434'
+            },
+            {
+                elevation: -6,
+                skyLightIntensity: 0.82,
+                pbrFillIntensity: 0.64,
+                ambientBounceIntensity: 0.18,
+                groundFillColor: '#283347'
+            },
+            {
+                elevation: 0,
+                skyLightIntensity: 1.18,
+                pbrFillIntensity: 0.88,
+                ambientBounceIntensity: 0.26,
+                groundFillColor: '#4d5160'
+            },
+            {
+                elevation: 6,
+                skyLightIntensity: 1.45,
+                pbrFillIntensity: 1.02,
+                ambientBounceIntensity: 0.34,
+                groundFillColor: '#684a36'
+            },
+            {
+                elevation: 22,
+                skyLightIntensity: 1.56,
+                pbrFillIntensity: 1.12,
+                ambientBounceIntensity: 0.42,
+                groundFillColor: '#56605a'
+            },
+            {
+                elevation: 62,
+                skyLightIntensity: 1.68,
+                pbrFillIntensity: 1.18,
+                ambientBounceIntensity: 0.46,
+                groundFillColor: '#68675d'
+            }
+        ], sunElevation);
+        const horizonWarmth = smoothstepNumber(-4, 6, sunElevation) * (1 - smoothstepNumber(12, 28, sunElevation));
+        const settingBlend = getPmndrsSettingSunBlend(atmosphereConfig, sunElevation);
+
+        profile.groundFillColor = lerpPmndrsColor(
+            profile.groundFillColor,
+            lerpPmndrsColor('#4f5262', '#684a36', settingBlend),
+            horizonWarmth * 0.6
+        );
+
+        return profile;
+    }
+
+    function samplePmndrsIndirectLightingSequence(sequence, sunElevation) {
+        if (!sequence || !sequence.length) {
+            return {
+                skyLightIntensity: 1.2,
+                pbrFillIntensity: 0.95,
+                ambientBounceIntensity: 0.32,
+                groundFillColor: '#56605a'
+            };
+        }
+        if (sunElevation <= sequence[0].elevation) {
+            return clonePmndrsLightingAnchor(sequence[0]);
+        }
+
+        for (let i = 1; i < sequence.length; i += 1) {
+            const previous = sequence[i - 1];
+            const next = sequence[i];
+            if (sunElevation <= next.elevation) {
+                const mix = smoothstepNumber(previous.elevation, next.elevation, sunElevation);
+                return {
+                    skyLightIntensity: lerpNumber(previous.skyLightIntensity, next.skyLightIntensity, mix),
+                    pbrFillIntensity: lerpNumber(previous.pbrFillIntensity, next.pbrFillIntensity, mix),
+                    ambientBounceIntensity: lerpNumber(previous.ambientBounceIntensity, next.ambientBounceIntensity, mix),
+                    groundFillColor: lerpPmndrsColor(previous.groundFillColor, next.groundFillColor, mix)
+                };
+            }
+        }
+
+        return clonePmndrsLightingAnchor(sequence[sequence.length - 1]);
+    }
+
     function getPmndrsTakramSkyLightIntensity(helperConfig, atmosphereConfig) {
         const authoredFill = helperConfig && typeof helperConfig.authoredFillIntensity === 'number'
             ? helperConfig.authoredFillIntensity
@@ -1153,6 +1251,10 @@
             ? authoredFill
             : 0.45;
         const profile = getPmndrsTakramIndirectProfile(atmosphereConfig);
+
+        if (isPmndrsDynamicCelestialConfig(atmosphereConfig)) {
+            return Math.min(4.0, Math.max(0, profile.skyLightIntensity));
+        }
 
         if (isPmndrsPresetTimeNight(atmosphereConfig)) {
             return profile.skyLightIntensity;
@@ -1166,6 +1268,10 @@
             ? helperConfig.authoredFillIntensity
             : null;
         const profile = getPmndrsTakramIndirectProfile(atmosphereConfig);
+
+        if (isPmndrsDynamicCelestialConfig(atmosphereConfig)) {
+            return Math.min(3.0, Math.max(0, profile.pbrFillIntensity));
+        }
 
         if (isPmndrsPresetTimeNight(atmosphereConfig)) {
             return profile.pbrFillIntensity;
@@ -1212,6 +1318,18 @@
 
     function getPmndrsRuntimeLightingSmoothingMs(config) {
         return config && config.dayNightCycleEnabled ? 1200 : 0;
+    }
+
+    function getPmndrsRuntimeIndirectLightingSmoothingMs(config) {
+        if (!(config && config.dayNightCycleEnabled)) {
+            return 0;
+        }
+
+        const durationMinutes = typeof config.dayNightCycleDurationMinutes === 'number' && isFinite(config.dayNightCycleDurationMinutes)
+            ? config.dayNightCycleDurationMinutes
+            : PMNDRS_DAY_NIGHT_CYCLE_DEFAULT_MINUTES;
+        const cycleMs = Math.max(PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES * 60000, durationMinutes * 60000);
+        return Math.max(2800, Math.min(9000, cycleMs * 0.08));
     }
 
     function getPmndrsRuntimeLightSmoothingAlpha(self, key, smoothingMs) {
@@ -2926,6 +3044,7 @@
         const moonLight = state.moonLight;
         const moonTarget = state.moonTarget;
         const lightingSmoothingMs = getPmndrsRuntimeLightingSmoothingMs(config);
+        const indirectLightingSmoothingMs = getPmndrsRuntimeIndirectLightingSmoothingMs(config);
 
         if (state.target) {
             state.target.position.set(0, 0, 0);
@@ -3035,7 +3154,7 @@
                 self,
                 'takramSkyIntensity',
                 targetSkyIntensity,
-                lightingSmoothingMs,
+                indirectLightingSmoothingMs,
                 skyLight.intensity
             );
             skyLight.visible = skyIntensity > 0.001 || targetSkyIntensity > 0.001;
@@ -3061,7 +3180,7 @@
                 self,
                 'takramFillIntensity',
                 targetFillIntensity,
-                lightingSmoothingMs,
+                indirectLightingSmoothingMs,
                 fillLight.intensity
             );
             fillLight.visible = fillIntensity > 0.001 || targetFillIntensity > 0.001;
@@ -3071,7 +3190,7 @@
                     self,
                     'takramFillColor',
                     helperConfig.fillColor || '#cfe3ff',
-                    lightingSmoothingMs,
+                    indirectLightingSmoothingMs,
                     fillLight.color
                 ));
             } else if (fillLight.color && typeof fillLight.color.set === 'function') {
@@ -3082,7 +3201,7 @@
                     self,
                     'takramFillGroundColor',
                     getPmndrsTakramGroundFillColor(config),
-                    lightingSmoothingMs,
+                    indirectLightingSmoothingMs,
                     fillLight.groundColor
                 ));
             } else if (fillLight.groundColor && typeof fillLight.groundColor.set === 'function') {
@@ -3096,7 +3215,7 @@
                 self,
                 'takramAmbientIntensity',
                 ambientBounceIntensity,
-                lightingSmoothingMs,
+                indirectLightingSmoothingMs,
                 ambientLight.intensity
             );
             ambientLight.visible = smoothedAmbientIntensity > 0.001 || ambientBounceIntensity > 0.001;
@@ -3106,7 +3225,7 @@
                     self,
                     'takramAmbientColor',
                     helperConfig.fillColor || '#dcecff',
-                    lightingSmoothingMs,
+                    indirectLightingSmoothingMs,
                     ambientLight.color
                 ));
             } else if (ambientLight.color && typeof ambientLight.color.set === 'function') {

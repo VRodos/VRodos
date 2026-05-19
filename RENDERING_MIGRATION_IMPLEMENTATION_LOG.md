@@ -124,6 +124,7 @@ The migration from legacy Three.js r173 to the pinned A-Frame master + Three.js 
 - Fixed reflection source `none` so material env maps are removed and env-map intensity becomes zero.
 - Promoted local Horizon to Takram light-source lighting by default for compiled desktop scenes: `SunDirectionalLight`, `SkyLightProbe`, and a VRodos hemisphere fill for authored PBR assets.
 - Added a sun-elevation-based PBR indirect profile and startup fallback ambient bridge so early-morning, midday, and golden-hour scenes keep readable shadow-side objects without flat global illumination.
+- Stabilized dynamic day-night indirect diffuse lighting by keeping sun/moon directional behavior unchanged and smoothing only sky probe, hemisphere fill, ambient bounce, and ground bounce color. Visual validation used `Master_Client_766.html`.
 - Kept Takram procedural ground disabled for local scenes so authored walkable-surface/navmesh GLBs remain the real scene ground.
 - Removed the local Horizon helper-light comparison mode from the shipped runtime; only an internal safety fallback remains for missing Takram light-source support.
 - Added diagnostic logging for LUT readiness, tone mapping, exposure, lens flare, correct altitude, A-Frame default lights, sun radius, reflection scale, and active light source.

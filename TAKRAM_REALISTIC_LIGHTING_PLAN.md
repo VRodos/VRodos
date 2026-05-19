@@ -16,6 +16,7 @@ Summary of the active baseline:
 - Horizon/Takram scenes use Takram `SkyMaterial` for sky/sun ownership and Takram `SunDirectionalLight` / `SkyLightProbe` with a VRodos PBR indirect bridge for authored GLB materials.
 - The shipped path is PMNDRS/Takram light-source PBR. Helper-light comparison mode is not exposed because it caused confusing non-product behavior during day-night validation.
 - Takram procedural ground is disabled in local Horizon scenes; authored walkable-surface/navmesh GLBs remain the real scene ground.
+- Day-night underside readability is an indirect diffuse problem, not a sun/moon key-light problem. Keep celestial directional lights intact and tune only the PBR indirect bridge: `SkyLightProbe`, hemisphere fill, tiny ambient bounce, and ground bounce color.
 - Low-light presets are calibrated as a PBR/light-source fix, not a renderer rewrite: night adds a cool VRodos-managed moon `DirectionalLight`, dawn/night use stronger Takram sky/PBR fill support, and default low-light exposure is raised only when tone-mapping exposure is not authored.
 - Takram stars are a sky realism layer only. `stars.bin` is shipped locally from `assets/vendor/takram-atmosphere/stars.bin`; stars must not be treated as scene lights.
 
@@ -25,6 +26,7 @@ Summary of the active baseline:
 - Takram's vanilla post-process mode does not use scene `SunLight` / `SkyLight` objects. It uses `AerialPerspectiveEffect` with `sunLight` and `skyLight` enabled.
 - Takram's light-source mode is different: it uses `SunDirectionalLight` and `SkyLightProbe` with normal materials, but it approximates atmospheric radiance at one point.
 - Because that approximation can under-light authored GLB shadow sides compared with real-world sky bounce, VRodos uses a small PBR indirect bridge rather than trying to turn Takram ground into the authored scene ground.
+- Dynamic day-night indirect lighting should follow a continuous sun-elevation curve with slower smoothing than direct celestial lights. Do not reintroduce discrete preset jumps for sky probe, hemisphere fill, ambient bounce, or ground bounce color.
 - Moonlit night readability requires an explicit scene light in the current PBR path. Takram's sky moon and stars are visual atmosphere layers; they do not provide practical GLB scene illumination.
 - Mixing PBR helper or physical lights with post-process `sunLight` / `skyLight` can double-light the scene or wash out colors.
 - Takram lens flare is tied to the Takram Horizon sun. Its `LensFlareEffect` is a convolution effect and must stay in its own `EffectPass`.
@@ -98,7 +100,7 @@ Tasks:
 - Validate AgX, Reinhard, Cineon, ACES Filmic, and Linear tone mapping.
 - Test midday, sunset, night, and dark/interior scenes.
 - Re-evaluate SSAO strength, material env-map intensity, and PBR indirect values only after any post-process albedo prototype is working.
-- Re-evaluate the PBR indirect profile only against representative scenes and profiler captures, not as a substitute for the future albedo lighting mode.
+- Re-evaluate the PBR indirect profile only against representative scenes and profiler captures, not as a substitute for the future albedo lighting mode and not by changing accepted sun/moon directional behavior.
 - Keep DitheringEffect off unless it is opt-in and verified not to add objectionable grain.
 
 Acceptance:
