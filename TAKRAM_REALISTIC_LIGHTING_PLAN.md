@@ -34,7 +34,6 @@ Summary of the active baseline:
 - A-Frame classic script builds already own their Three instance. Loading latest Three beside classic A-Frame risks duplicate `THREE` instances, broken materials, mismatched render targets, and PMNDRS/Takram incompatibilities.
 - The near-term Three upgrade route is A-Frame's planned r184 work, tracked at `aframevr/aframe#5818`, so VRodos should follow the shared A-Frame runtime upgrade instead of maintaining a separate r184 fork/import-map track.
 - WebGPU stays experimental after the r184 upgrade. PMNDRS `EffectComposer`, GLSL/onBeforeCompile material hooks, Takram integration, and XR behavior still require separate validation before WebGPU can be a production performance fix.
-- SSGI is not the first realism fix. It may help with near-field bounce/contact realism later, but it does not replace the Takram atmosphere lighting model.
 
 ## Phased Roadmap
 
@@ -52,7 +51,7 @@ Deliverables:
 
 Acceptance:
 
-- Midday, early-morning, and golden-hour scenes keep readable shadow-side objects without returning to flat global illumination.
+- Midday, early-morning, and golden-hour scenes keep readable shadow-side objects without returning to flat ambient fill.
 - Takram precompute startup keeps `SunDirectionalLight` / `SkyLightProbe` objects active while the hemisphere/ambient PBR bridge keeps the scene readable until irradiance textures are ready.
 - `reflection=none` produces no material env-map reflections.
 - Lens flare on/off no longer breaks the composer.
@@ -129,28 +128,7 @@ Acceptance:
 - Classic r181 remains available as the production fallback.
 - WebGPU validation records which post-processing, material hook, Takram, and XR paths are compatible or need replacements.
 
-### Phase 5 - SSGI Research Spike
-
-Goal: evaluate screen-space global illumination only after the Takram lighting model is correct.
-
-Candidate paths:
-
-- Revalidate `realism-effects` against the active Three baseline.
-- Evaluate newer Three SSGI/TSL options only inside the module-runtime spike.
-
-Constraints:
-
-- Desktop-only at first.
-- Off in immersive XR.
-- Must account for depth, normal, roughness, transparency, sky/fog, and custom material limitations.
-- Must not be used to hide incorrect atmosphere/light ownership.
-
-Acceptance:
-
-- SSGI improves near-field bounce/contact realism in a controlled scene.
-- It does not wash out midday, brighten night globally, or conflict with Takram atmosphere.
-
-### Phase 6 - Clouds And Geospatial Expansion
+### Phase 5 - Clouds And Geospatial Expansion
 
 Goal: add heavier Takram features only after the baseline lighting model is stable.
 
@@ -191,5 +169,3 @@ Run visual checks at `http://wp.local:5832/Master_Client_766.html`:
 - Takram atmosphere docs: https://github.com/takram-design-engineering/three-geospatial/blob/main/packages/atmosphere/README.md
 - Takram Basic story source: https://github.com/takram-design-engineering/three-geospatial/blob/main/storybook/src/atmosphere/Atmosphere-Basic.tsx
 - A-Frame module/import-map FAQ: https://aframe.io/docs/1.7.0/introduction/faq.html
-- Three.js SSGI discussion: https://discourse.threejs.org/t/ssgi-screen-space-global-illumination/85190
-- `realism-effects`: https://github.com/0beqz/realism-effects

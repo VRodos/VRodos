@@ -301,4 +301,4 @@ The old Horizon aerial foliage investigation remains useful as failure history, 
 
 This file is now historical debug context. Current Takram Horizon runtime behavior lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md); the forward roadmap lives in [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md).
 
-The important Takram vanilla finding is that the demo's `post-process` lighting uses unlit/albedo geometry and lets `AerialPerspectiveEffect` apply sun and sky lighting. VRodos needs an explicit desktop-only `post-process-albedo` mode to pursue that exact look safely. Do not try to recreate it by only raising helper fill, exposure, SSGI, or bloom.
+The important Takram vanilla finding is that the demo's `post-process` lighting uses unlit/albedo geometry and lets `AerialPerspectiveEffect` apply sun and sky lighting. VRodos needs an explicit desktop-only `post-process-albedo` mode to pursue that exact look safely. Do not try to recreate it by only raising helper fill, exposure, or bloom.

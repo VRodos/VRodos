@@ -409,7 +409,7 @@ Runtime behavior:
 - Horizon `AerialPerspectiveEffect` is constrained to haze/transmittance in the current PBR path so it does not re-light the scene as albedo.
 - The future Takram-vanilla target is an explicit `post-process-albedo` lighting mode, documented in `TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
 
-This phase does not add stars, author-facing geospatial latitude/longitude UI, `LightingMaskPass`, SSGI, or volumetric clouds.
+This phase does not add stars, author-facing geospatial latitude/longitude UI, `LightingMaskPass`, or volumetric clouds.
 
 ## 9. Shadow-Aware Lighting And Reflections
 
@@ -521,12 +521,11 @@ These are backlog items, not current implementation requirements:
 - Desktop-only Takram-vanilla `post-process-albedo` mode.
 - Continue validating native `POSTPROCESSING.SSAOEffect` across broader Horizon and non-Horizon scenes.
 - Track A-Frame r184 and run a WebGPU compatibility spike after the shared runtime upgrade is available.
-- SSGI desktop research after Takram lighting ownership is correct.
 - Takram stars, geospatial date/time solar simulation, `LightingMaskPass`, and geospatial helpers.
 - Volumetric clouds after the PMNDRS/Takram lighting baseline remains stable.
 
 ## References
 
-- `TAKRAM_REALISTIC_LIGHTING_PLAN.md` - phased Takram realism and Three/SSGI roadmap.
+- `TAKRAM_REALISTIC_LIGHTING_PLAN.md` - phased Takram realism and Three-version roadmap.
 - `RENDERING_MIGRATION_IMPLEMENTATION_LOG.md` - staged migration history.
 - `POSTFX_DEBUG_NOTES.md` - color-encoding and WebGLRenderer debugging history.

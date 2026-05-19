@@ -21,8 +21,7 @@ The migration from legacy Three.js r173 to the pinned A-Frame master + Three.js 
 5. Prototype desktop-only Takram-vanilla `post-process-albedo` lighting.
 6. Preserve the immersive XR composer bypass and direct stereo fallback.
 7. Defer Three latest testing to a separate A-Frame module/import-map runtime spike.
-8. Defer SSGI until Takram lighting ownership is correct.
-9. Keep Takram volumetric clouds in backlog and out of scope for the current lighting phase.
+8. Keep Takram volumetric clouds in backlog and out of scope for the current lighting phase.
 
 ## Recent Landed Work
 
@@ -142,7 +141,7 @@ The migration from legacy Three.js r173 to the pinned A-Frame master + Three.js 
 - Disabled A-Frame default lights for Takram Horizon scenes.
 - Fixed reflection source `none` so material env maps are removed and env-map intensity becomes zero.
 - Promoted local Horizon to Takram light-source lighting by default for compiled desktop scenes: `SunDirectionalLight`, `SkyLightProbe`, and a VRodos hemisphere fill for authored PBR assets.
-- Added a sun-elevation-based PBR indirect profile and startup fallback ambient bridge so early-morning, midday, and golden-hour scenes keep readable shadow-side objects without flat global illumination.
+- Added a sun-elevation-based PBR indirect profile and startup fallback ambient bridge so early-morning, midday, and golden-hour scenes keep readable shadow-side objects without flat ambient fill.
 - Stabilized dynamic day-night indirect diffuse lighting by keeping sun/moon directional behavior unchanged and smoothing only sky probe, hemisphere fill, ambient bounce, and ground bounce color. Visual validation used `Master_Client_766.html`.
 - Kept Takram procedural ground disabled for local scenes so authored walkable-surface/navmesh GLBs remain the real scene ground.
 - Removed the local Horizon helper-light comparison mode from the shipped runtime; only an internal safety fallback remains for missing Takram light-source support.
@@ -158,7 +157,7 @@ The migration from legacy Three.js r173 to the pinned A-Frame master + Three.js 
 - Phases 13-16: Diagnosed PMNDRS Horizon artifacts, moved from FXAA to PMNDRS-native AA, optimized navigation raycasting, and updated scene-settings persistence.
 - Phase 17: Synchronized runtime packages with `package.json`, generated `runtime-version-manifest.json`, and rebuilt PMNDRS/Takram bundles to alias A-Frame's `THREE`.
 - Takram atmosphere rollout: upgraded Takram packages, rebuilt the runtime bundle, added atmosphere look presets, fixed compiler serialization, and confirmed preset propagation in compiled PMNDRS scenes.
-- Takram realism audit: identified the need for explicit Horizon lighting modes and a desktop-only post-process albedo path before SSGI or clouds.
+- Takram realism audit: identified the need for explicit Horizon lighting modes and a desktop-only post-process albedo path before clouds.
 
 ## Verification Targets
 

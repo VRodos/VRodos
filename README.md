@@ -238,7 +238,6 @@ Takram support in VRodos currently means atmosphere and sky integration, not clo
 
 - desktop Takram-vanilla `post-process-albedo` lighting mode
 - Takram volumetric clouds
-- SSGI
 
 ## Compile Dialog Controls
 
@@ -407,7 +406,7 @@ If large assets fail to upload, check:
   - `Legacy` for SSR/TAA/custom AO needs
   - `Pmndrs` for composer-based AA and Takram atmosphere controls
 - Review authored materials, textures, lighting, and reflection settings.
-- For Takram realism work, follow [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md) instead of treating exposure, fill light, SSGI, or bloom as substitutes for Takram's vanilla post-process lighting model.
+- For Takram realism work, follow [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md) instead of treating exposure, fill light, or bloom as substitutes for Takram's vanilla post-process lighting model.
 
 ### Walkable surfaces do not behave as expected
 

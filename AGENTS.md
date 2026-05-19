@@ -83,7 +83,7 @@ Rendering docs:
 
 - `RENDERING_PIPELINE.md`: current technical render-stack reference
 - `PERFORMANCE_OPTIMIZATION_PLAN.md`: profiler, Spector, asset-audit, and derivative-optimization findings
-- `TAKRAM_REALISTIC_LIGHTING_PLAN.md`: phased Takram realism, Three-version, and SSGI roadmap
+- `TAKRAM_REALISTIC_LIGHTING_PLAN.md`: phased Takram realism and Three-version roadmap
 - `RENDERING_MIGRATION_IMPLEMENTATION_LOG.md`: consolidated migration history
 - `POSTFX_DEBUG_NOTES.md`: historical color/Horizon debug findings
 
