@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-VRodos compiled scenes make A-Frame, Three.js, PMNDRS, Takram, and `three-mesh-bvh` work together by avoiding the usual integration traps:
+VRodos compiled scenes make [A-Frame](https://github.com/aframevr/aframe), [Three.js](https://github.com/mrdoob/three.js), [PMNDRS](https://github.com/pmndrs/postprocessing), [Takram](https://github.com/takram-design-engineering/three-geospatial), [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh), and [Networked-Aframe](https://github.com/networked-aframe/networked-aframe) work together by avoiding the usual integration traps:
 
 - one compiled `<a-scene>` is the runtime container;
 - one shared Three.js runtime is the rendering substrate;
