@@ -15,7 +15,7 @@ The result is not several frameworks fighting for the frame. The compiled client
 
 ## The Evolution of Our Architecture
 
-Our current state-of-the-art rendering pipeline is the result of a continuous evolution driven by specific project needs. Here is the story of how our architecture came to be:
+Our current state-of-the-art rendering pipeline is the result of a continuous evolution driven by specific needs. Here is the story of how our architecture came to be:
 
 1. **A-Frame for XR Experiences**: We started with A-Frame because it provides a robust entity-component system (ECS) and excellent out-of-the-box support for immersive WebXR experiences.
 2. **Post-Processing with PMNDRS**: We wanted advanced post-processing effects (like bloom, SSAO, tone mapping, and LUTs). Default Three.js and A-Frame did not support these optimally or efficiently, so we integrated **PMNDRS `postprocessing`**, a highly optimized screen-space effects engine.

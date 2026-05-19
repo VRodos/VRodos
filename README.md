@@ -32,6 +32,7 @@ Keep current behavior in one place where possible:
 
 ### Asset workflows
 
+- On-the-fly 3D asset conversion: Built-in server-side Blender CLI pipeline that automatically converts uploaded 3D files of various formats (such as OBJ, FBX, etc.) into highly optimized Web-ready `.glb` format during upload
 - 3D asset workflows for GLB content
 - Image, video, audio, light, and helper asset usage inside scenes
 - Taxonomy-driven asset organization inside WordPress
