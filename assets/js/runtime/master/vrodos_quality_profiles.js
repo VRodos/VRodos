@@ -784,21 +784,26 @@
         const moonVisibility = config.moonEnabled === false ? 0 : smoothstepNumber(-0.04, 0.38, moonY);
         const nightAmount = 1 - smoothstepNumber(-14, -4, sunElevation);
         const moonWeight = nightAmount * moonVisibility;
-        const useMoonDirection = moonWeight > 0.45 && sunElevation < -3;
+        const moonKeyBlend = smoothstepNumber(0.35, 0.62, moonWeight) *
+            (1 - smoothstepNumber(-4, -2, sunElevation));
+        const useMoonDirection = moonKeyBlend > 0.5;
 
         profile.moonLightIntensity = PMNDRS_NIGHT_MOON_LIGHT_INTENSITY * moonWeight;
         profile.useMoonDirection = useMoonDirection;
-        if (useMoonDirection) {
-            profile.keyColor = lerpPmndrsColor(profile.keyColor, '#b8c8ff', moonWeight);
-            profile.keyIntensity = Math.max(profile.keyIntensity * (0.35 + moonWeight * 0.45), profile.moonLightIntensity);
-        }
-        if (sunElevation < -10 && moonVisibility < 0.2) {
-            profile.keyIntensity *= 0.45;
-            profile.skyLightIntensity *= 0.72;
-            profile.pbrFillIntensity *= 0.70;
-            profile.ambientBounceIntensity *= 0.75;
-            profile.reflectionIntensityScale *= 0.78;
-        }
+        profile.keyColor = lerpPmndrsColor(profile.keyColor, '#b8c8ff', moonKeyBlend);
+        profile.keyIntensity = lerpNumber(
+            profile.keyIntensity,
+            Math.max(profile.keyIntensity * (0.35 + moonWeight * 0.45), profile.moonLightIntensity),
+            moonKeyBlend
+        );
+
+        const noMoonDeepNightAmount = (1 - smoothstepNumber(-12, -8, sunElevation)) *
+            (1 - smoothstepNumber(0.12, 0.28, moonVisibility));
+        profile.keyIntensity *= lerpNumber(1, 0.45, noMoonDeepNightAmount);
+        profile.skyLightIntensity *= lerpNumber(1, 0.72, noMoonDeepNightAmount);
+        profile.pbrFillIntensity *= lerpNumber(1, 0.70, noMoonDeepNightAmount);
+        profile.ambientBounceIntensity *= lerpNumber(1, 0.75, noMoonDeepNightAmount);
+        profile.reflectionIntensityScale *= lerpNumber(1, 0.78, noMoonDeepNightAmount);
         profile.starsIntensity *= (1 - moonVisibility * 0.35);
         profile.skyLightIntensity = Math.max(0, Math.min(4.0, profile.skyLightIntensity));
         profile.pbrFillIntensity = Math.max(0, Math.min(3.0, profile.pbrFillIntensity));
@@ -1197,7 +1202,7 @@
     }
 
     function getPmndrsRuntimeLightingSmoothingMs(config) {
-        return config && config.dayNightCycleEnabled ? 850 : 0;
+        return config && config.dayNightCycleEnabled ? 1200 : 0;
     }
 
     function getPmndrsRuntimeLightSmoothingAlpha(self, key, smoothingMs) {
@@ -4599,6 +4604,11 @@
             reflectionOcclusionMode !== 'off' &&
             (typeof this.getEffectiveShadowQuality === 'function' ? this.getEffectiveShadowQuality() : this.data.shadowQuality) !== 'off' &&
             !(typeof this.isVrPresentationActive === 'function' && this.isVrPresentationActive());
+        const reflectionTargetScale = getPmndrsNightReflectionIntensityScale(this, atmosphereConfig, reflectionSource);
+        const reflectionSmoothingMs = getPmndrsRuntimeLightingSmoothingMs(atmosphereConfig);
+        const reflectionIntensityScale = reflectionSmoothingMs > 0 && typeof this._vrodosReflectionEnvironmentIntensityScale === 'number'
+            ? this._vrodosReflectionEnvironmentIntensityScale
+            : reflectionTargetScale;
         const options = {
             renderQuality: this.data.renderQuality || 'standard',
             maxAnisotropy,
@@ -4607,7 +4617,7 @@
             reflectionSource,
             reflectionOcclusionMode,
             shadowAwareReflections,
-            reflectionIntensityScale: getPmndrsNightReflectionIntensityScale(this, atmosphereConfig, reflectionSource),
+            reflectionIntensityScale,
             ambientOcclusionPreset: this.getAmbientOcclusionPreset(),
             environmentMap: sceneObj ? (sceneObj.environment || null) : null
         };
