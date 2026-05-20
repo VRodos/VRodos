@@ -6,6 +6,10 @@
     const buildAssessmentResult = namespace.buildAssessmentResult;
     const renderEmptyState = namespace.renderEmptyState;
     const resolveRenderer = namespace.resolveRenderer;
+    const DEFAULT_DIALOG_FRAME = {
+        width: "min(900px, calc(100vw - 48px))",
+        height: "min(84vh, 820px)"
+    };
 
     function getOverlayRuntimeV2() {
         if (window.__vrodosImmerseAssessmentRuntime) {
@@ -22,6 +26,7 @@
             nextButton: null,
             dismissButton: null,
             status: null,
+            panel: null,
             title: null,
             kicker: null
         };
@@ -40,9 +45,11 @@
         root.style.fontFamily = "'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
         const panel = document.createElement("div");
-        panel.style.width = "min(720px, 100%)";
-        panel.style.maxHeight = "min(84vh, 860px)";
-        panel.style.overflow = "auto";
+        panel.style.width = DEFAULT_DIALOG_FRAME.width;
+        panel.style.height = DEFAULT_DIALOG_FRAME.height;
+        panel.style.display = "flex";
+        panel.style.flexDirection = "column";
+        panel.style.overflow = "hidden";
         panel.style.borderRadius = "22px";
         panel.style.background = "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)";
         panel.style.color = "#1e293b";
@@ -56,8 +63,12 @@
         header.style.gap = "16px";
         header.style.padding = "20px 22px 14px";
         header.style.borderBottom = "1px solid rgba(226, 232, 240, 0.9)";
+        header.style.flex = "0 0 auto";
+        header.style.minHeight = "0";
 
         const titleWrap = document.createElement("div");
+        titleWrap.style.minWidth = "0";
+        titleWrap.style.flex = "1 1 auto";
         titleWrap.innerHTML = [
             '<div id="vrodos-immerse-assessment-kicker" style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#3b82f6;margin-bottom:6px;"></div>',
             '<div id="vrodos-immerse-assessment-title" style="font-size:24px;font-weight:800;line-height:1.2;color:#0f172a;"></div>'
@@ -68,19 +79,24 @@
         dismissButton.setAttribute("aria-label", "Close assessment");
         dismissButton.style.border = "1px solid rgba(203, 213, 225, 0.95)";
         dismissButton.style.borderRadius = "999px";
-        dismissButton.style.width = "42px";
-        dismissButton.style.height = "42px";
+        dismissButton.style.width = "54px";
+        dismissButton.style.height = "54px";
+        dismissButton.style.flex = "0 0 54px";
+        dismissButton.style.display = "inline-flex";
+        dismissButton.style.alignItems = "center";
+        dismissButton.style.justifyContent = "center";
+        dismissButton.style.padding = "0";
         dismissButton.style.cursor = "pointer";
         dismissButton.style.background = "#ffffff";
         dismissButton.style.color = "#475569";
-        dismissButton.style.fontSize = "24px";
-        dismissButton.style.lineHeight = "1";
-        dismissButton.style.fontWeight = "500";
-        dismissButton.innerHTML = "&times;";
+        dismissButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>';
 
         const body = document.createElement("div");
         body.id = "vrodos-immerse-assessment-body";
         body.style.padding = "22px";
+        body.style.flex = "1 1 auto";
+        body.style.minHeight = "0";
+        body.style.overflow = "hidden";
 
         const footer = document.createElement("div");
         footer.style.display = "flex";
@@ -88,6 +104,8 @@
         footer.style.alignItems = "center";
         footer.style.gap = "12px";
         footer.style.padding = "0 22px 22px";
+        footer.style.flex = "0 0 auto";
+        footer.style.minHeight = "0";
 
         const status = document.createElement("div");
         status.id = "vrodos-immerse-assessment-status";
@@ -121,8 +139,15 @@
         runtime.nextButton = nextButton;
         runtime.dismissButton = dismissButton;
         runtime.status = status;
+        runtime.panel = panel;
         runtime.title = titleWrap.querySelector("#vrodos-immerse-assessment-title");
         runtime.kicker = titleWrap.querySelector("#vrodos-immerse-assessment-kicker");
+
+        runtime.configureDialogFrame = function (config) {
+            const options = config || {};
+            panel.style.width = options.width || DEFAULT_DIALOG_FRAME.width;
+            panel.style.height = options.height || DEFAULT_DIALOG_FRAME.height;
+        };
 
         runtime.configurePrimaryAction = function (config) {
             const options = config || {};
@@ -149,6 +174,7 @@
             runtime.body.innerHTML = "";
             runtime.setStatus("");
             runtime.configurePrimaryAction({ visible: false });
+            runtime.configureDialogFrame();
         };
 
         runtime.hide = function () {
