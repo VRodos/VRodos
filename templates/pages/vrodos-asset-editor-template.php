@@ -241,8 +241,8 @@ else { ?>
                                 </div>
                                 <div>
                                     <p id="fileUploadInputLabel" class="tw-text-xs tw-font-bold tw-text-slate-800">Model Upload</p>
-                                    <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold tw-uppercase">GLB, ZIP, BLEND, FBX, OBJ, DAE, GLTF MAX <?php echo esc_html( strtoupper( $max_upload_label ) ); ?></p>
-                                    <p class="tw-text-[9px] tw-text-slate-400">Use ZIP for OBJ/MTL textures or glTF sidecar files.</p>
+                                    <p class="tw-text-[9px] tw-text-slate-400 tw-font-bold tw-uppercase">GLB, ZIP, BLEND, FBX, OBJ, DAE, GLTF</p>
+                                    <p class="tw-text-[9px] tw-text-slate-400">Use ZIP for OBJ/MTL textures, FBX texture folders, or glTF sidecar files.</p>
                                 </div>
                             </label>
                         </div>
