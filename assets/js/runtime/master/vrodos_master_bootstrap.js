@@ -84,6 +84,35 @@
         element.dataset.vrodosBootstrap += `|${  key}`;
     }
 
+    function describeDisplayCaptureError(error) {
+        if (!error) {
+            return 'Screen capture could not start.';
+        }
+
+        if (error.name === 'NotAllowedError') {
+            return 'Screen capture was cancelled or denied by the browser.';
+        }
+
+        if (error.name === 'NotFoundError') {
+            return 'No screen capture source was available.';
+        }
+
+        if (error.name === 'NotReadableError') {
+            return 'The selected screen capture source could not be read.';
+        }
+
+        return error.message || 'Screen capture could not start.';
+    }
+
+    function handleDisplayCaptureError(error, context, labelEl) {
+        const message = describeDisplayCaptureError(error);
+        if (labelEl) {
+            labelEl.innerHTML = message;
+        }
+
+        console.warn(`[VRodos] ${context}: ${message}`, error);
+    }
+
     function registerAvatarSchema() {
         if (typeof NAF === 'undefined') {
             return;
@@ -144,7 +173,13 @@
                         typeof window.NAF.connection.adapter.addLocalMediaStream === 'function'
                     ) {
                         window.NAF.connection.adapter.addLocalMediaStream(stream, 'screen');
+                    } else {
+                        stream.getTracks().forEach((track) => {
+                            track.stop();
+                        });
                     }
+                }).catch((error) => {
+                    handleDisplayCaptureError(error, 'Screen share request failed');
                 });
             });
         });
@@ -382,6 +417,22 @@
                     if (captureLabel) {
                         captureLabel.innerHTML = `Recorded ${  VRODOSMaster.formatBytes(window.recordedBlob.size)  } of ${  window.recordedBlob.type  } media.`;
                     }
+                }).catch((error) => {
+                    buttonEl.disabled = false;
+                    if (downloadButton) {
+                        downloadButton.style.visibility = window.recordedBlob ? 'visible' : 'hidden';
+                    }
+                    if (uploadButton) {
+                        uploadButton.disabled = false;
+                    }
+                    if (videoPreview) {
+                        videoPreview.style.display = 'none';
+                        if (videoPreview.srcObject) {
+                            stopRecording(videoPreview.srcObject);
+                            videoPreview.srcObject = null;
+                        }
+                    }
+                    handleDisplayCaptureError(error, 'Recording capture request failed', captureLabel);
                 });
             }, false);
         });
