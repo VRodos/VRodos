@@ -462,6 +462,24 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		return in_array( $role, [ 'caster-receiver', 'receiver', 'none' ], true ) ? $role : 'caster-receiver';
 	}
 
+	private function normalize_authored_shadow_role( $value ): string {
+		$role = strtolower( trim( (string) ( $value ?? '' ) ) );
+		return in_array( $role, [ 'auto', 'caster-receiver', 'receiver', 'none' ], true ) ? $role : 'auto';
+	}
+
+	private function resolve_object_shadow_role( $obj, string $default_role = 'caster-receiver' ): string {
+		$authored_role = 'auto';
+		if ( is_object( $obj ) ) {
+			if ( property_exists( $obj, 'vrodosShadowRole' ) ) {
+				$authored_role = $this->normalize_authored_shadow_role( $obj->vrodosShadowRole );
+			} elseif ( property_exists( $obj, 'shadowRole' ) ) {
+				$authored_role = $this->normalize_authored_shadow_role( $obj->shadowRole );
+			}
+		}
+
+		return 'auto' === $authored_role ? $this->normalize_shadow_role( $default_role ) : $this->normalize_shadow_role( $authored_role );
+	}
+
 	private function shadow_attribute_for_role( string $role ): string {
 		switch ( $this->normalize_shadow_role( $role ) ) {
 			case 'receiver':
@@ -853,11 +871,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$shadow_role = $is_collision_proxy ? 'none' : 'caster-receiver';
 
 		if ( $cat === 'walkable-surface' ) {
-			$shadow_role = 'receiver';
 			$class .= ' vrodos-navmesh';
 			$walk_behavior = ( isset( $obj->walkableBehavior ) && 'auto' === strtolower( (string) $obj->walkableBehavior ) ) ? 'auto' : 'precise';
 			$entity->setAttribute( 'data-vrodos-navmesh', 'true' );
-			$entity->setAttribute( 'data-vrodos-shadow-receiver-only', 'true' );
 			$entity->setAttribute( 'data-vrodos-walk-behavior', $walk_behavior );
 		} elseif ( $cat === 'door' ) {
 			$class .= ' raycastable';
@@ -907,6 +923,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$entity->setAttribute( 'class', $class );
 		$this->apply_compiled_collision_attributes( $entity, $obj, 'gltf' );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
+		if ( ! $is_collision_proxy ) {
+			$shadow_role = $this->resolve_object_shadow_role( $obj, $shadow_role );
+		}
 		$this->set_world_lighting_attributes( $entity, $shadow_role );
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 

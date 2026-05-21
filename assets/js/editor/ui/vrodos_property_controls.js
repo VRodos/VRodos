@@ -982,6 +982,11 @@ function vrodosNormalizeCompiledCollisionEnabled(value) {
     return !(normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off');
 }
 
+function vrodosNormalizeObjectShadowRole(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    return ['auto', 'caster-receiver', 'receiver', 'none'].includes(normalized) ? normalized : 'auto';
+}
+
 function vrodosIsPlayerCollisionEligible(object) {
     if (!object || object.isLight) {
         return false;
@@ -992,6 +997,22 @@ function vrodosIsPlayerCollisionEligible(object) {
         return true;
     }
 
+    if (object.name === 'avatarCamera' || object.category_name === 'pawn') {
+        return false;
+    }
+
+    return Boolean(object.glb_path || object.image_path || object.video_path || object.poi_img_path || object.poi_image_path || object.text_content);
+}
+
+function vrodosIsShadowRoleEligible(object) {
+    if (!object || object.isLight) {
+        return false;
+    }
+
+    const categorySlug = String(object.category_slug || '').toLowerCase();
+    if (categorySlug === 'collision-proxy' || categorySlug === 'blocking-obstacles') {
+        return false;
+    }
     if (object.name === 'avatarCamera' || object.category_name === 'pawn') {
         return false;
     }
@@ -1048,6 +1069,63 @@ function displayCollisionProperties(object) {
 
     if (checkbox) {
         checkbox.checked = enabled;
+    }
+
+    section.style.display = 'block';
+}
+
+function ensureShadowRolePropertiesSection() {
+    const container = getObjectControlsElement('propertiesContainer');
+    if (!container) return null;
+
+    let section = document.getElementById('shadowRolePropertiesDiv');
+    if (section) {
+        return section;
+    }
+
+    section = document.createElement('div');
+    section.id = 'shadowRolePropertiesDiv';
+    section.className = 'object-property-section';
+    section.style.display = 'none';
+    section.innerHTML =
+        '<div class="prop-section-title" style="padding-bottom:2px; margin-bottom:2px;">Lighting</div>' +
+        '<div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
+        '<label for="shadowRoleSelect" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Shadow Role</label>' +
+        '<select id="shadowRoleSelect" class="tw-select tw-select-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
+        '<option value="auto">Auto</option>' +
+        '<option value="caster-receiver">Cast and Receive</option>' +
+        '<option value="receiver">Receive Only</option>' +
+        '<option value="none">No Shadows</option>' +
+        '</select>' +
+        '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Use Cast and Receive for visible terrain that should self-shadow. Use Receive Only for flat floors and No Shadows for effects or helper visuals.</div>' +
+        '</div>';
+
+    container.appendChild(section);
+
+    const select = document.getElementById('shadowRoleSelect');
+    if (select) {
+        select.addEventListener('change', function () {
+            vrodosCommitObjectControlsProperty('vrodosShadowRole', vrodosNormalizeObjectShadowRole(this.value));
+        });
+    }
+
+    return section;
+}
+
+function displayShadowRoleProperties(object) {
+    const section = ensureShadowRolePropertiesSection();
+    if (!section || !object) return;
+
+    const select = document.getElementById('shadowRoleSelect');
+    const role = vrodosNormalizeObjectShadowRole(object.vrodosShadowRole || object.shadowRole);
+    object.vrodosShadowRole = role;
+    if (!object.userData) {
+        object.userData = {};
+    }
+    object.userData.vrodosShadowRole = role;
+
+    if (select) {
+        select.value = role;
     }
 
     section.style.display = 'block';
@@ -1301,6 +1379,11 @@ function showPropertiesInPanel(object) {
 
     if (vrodosIsPlayerCollisionEligible(object)) {
         displayCollisionProperties(object);
+        hasProperties = true;
+    }
+
+    if (vrodosIsShadowRoleEligible(object)) {
+        displayShadowRoleProperties(object);
         hasProperties = true;
     }
 

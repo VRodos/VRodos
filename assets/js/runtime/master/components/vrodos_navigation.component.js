@@ -346,8 +346,13 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         if (event.target.classList.contains('vrodos-navmesh')) {
+            const hadResolvedGround = this.hasLastGroundHit;
             this.markNavMeshDirty();
-            this.syncHeightOffset();
+            if (this.positionPrimed && hadResolvedGround) {
+                this.syncHeightOffset();
+            } else {
+                this.syncInitialHeightOffset();
+            }
         }
 
         if (event.target.classList.contains('vrodos-collider')) {
@@ -711,7 +716,7 @@ AFRAME.registerComponent('custom-movement', {
         this.hasLastGroundHit = false;
 
         if (this.areCollisionsEnabled()) {
-            this.syncHeightOffset();
+            this.syncInitialHeightOffset();
             this.lastResolvedPosition.copy(this.getNavigationWorldPosition());
         }
 
@@ -1682,6 +1687,27 @@ AFRAME.registerComponent('custom-movement', {
 
             this.heightOffset = VRODOSMaster.clamp(navigationPosition.y - currentGround.point.y, 0.2, 2.5);
             this.snapNavigationToRecoveredGround(currentGround);
+            return;
+        }
+
+        this.heightOffset = VRODOSMaster.clamp(navigationPosition.y - currentGround.point.y, 0.2, 2.5);
+        this.snapNavigationVerticallyToGround(currentGround, navigationPosition);
+    },
+    syncInitialHeightOffset: function () {
+        if (!this.areCollisionsEnabled()) {
+            return;
+        }
+
+        const navigationPosition = this.getNavigationWorldPosition();
+        const currentGround = this.sampleGroundAt(
+            navigationPosition,
+            this.hasLastGroundHit ? this.lastGroundHit.point.y : undefined,
+            this.sampledGroundHit
+        );
+
+        if (!currentGround) {
+            this.lastResolvedPosition.copy(navigationPosition);
+            this.hasLastGroundHit = false;
             return;
         }
 
