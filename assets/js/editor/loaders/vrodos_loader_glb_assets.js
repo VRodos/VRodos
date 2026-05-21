@@ -23,7 +23,11 @@ function vrodosLoaderResolveGlbUrl(resource, resourcesGLB, modelBaseUrl) {
         return `${modelBaseUrl  }editor/tv_flat_scaled_rotated.glb`;
     }
 
-    return resourcesGLB && resourcesGLB.glbURL ? resourcesGLB.glbURL : (resource.glb_path || resource.path || '');
+    if (resourcesGLB && Object.prototype.hasOwnProperty.call(resourcesGLB, 'glbURL')) {
+        return resourcesGLB.glbURL || '';
+    }
+
+    return resource.glb_path || resource.path || '';
 }
 
 function vrodosLoaderStartGlbAnimations(object) {
@@ -91,6 +95,14 @@ function vrodosLoaderHasLocalGlbMetadata(resource) {
         return false;
     }
 
+    if (resource.asset_missing) {
+        return true;
+    }
+
+    if (resource.asset_id) {
+        return false;
+    }
+
     if (VRODOS.utils.normalizeSceneAssetCategory(resource.category_slug) === 'video') {
         return true;
     }
@@ -136,7 +148,10 @@ VRODOS.loader.loadGlbAsset = function(manager, gltfLoader, name, resource, resou
                         manager.itemError(name);
                         manager.itemEnd(name);
                     }
-                    console.warn(`Asset '${name}' has no GLB path and will be skipped.`);
+                    console.warn(`Asset '${name}' has no GLB path and will be skipped.`, {
+                        asset_id: resource.asset_id || '',
+                        asset_missing: Boolean(resource.asset_missing)
+                    });
                     resolve(null);
                     return;
                 }

@@ -1131,8 +1131,14 @@ else { ?>
 				if (vrodosSubmittingChunkedGlb) {
 					return;
 				}
+				if (typeof window.vrodos_set_asset_editor_submit_locked === 'function') {
+					window.vrodos_set_asset_editor_submit_locked(true, 'Saving Asset...');
+				}
 				if (!window.vrodos_validate_selected_model()) {
 					event.preventDefault();
+					if (typeof window.vrodos_set_asset_editor_submit_locked === 'function') {
+						window.vrodos_set_asset_editor_submit_locked(false);
+					}
 					return;
 				}
 				if (typeof window.vrodos_upload_selected_model_in_chunks === 'function') {
@@ -1140,7 +1146,12 @@ else { ?>
 					const uploaded = await window.vrodos_upload_selected_model_in_chunks(assetForm);
 					if (uploaded) {
 						vrodosSubmittingChunkedGlb = true;
+						if (typeof window.vrodos_set_asset_editor_submit_locked === 'function') {
+							window.vrodos_set_asset_editor_submit_locked(true, 'Saving Asset...');
+						}
 						assetForm.submit();
+					} else if (typeof window.vrodos_set_asset_editor_submit_locked === 'function') {
+						window.vrodos_set_asset_editor_submit_locked(false);
 					}
 				}
 			});

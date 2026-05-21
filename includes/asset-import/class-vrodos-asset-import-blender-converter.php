@@ -606,6 +606,17 @@ def normalize_materials():
 
     print("Material cleanup:", opaque_count, "material(s) forced opaque,", alpha_count, "material(s) kept with linked alpha")
 
+def relink_missing_files():
+    search_root = os.getcwd()
+    if not search_root or not os.path.isdir(search_root):
+        return
+
+    try:
+        bpy.ops.file.find_missing_files(directory=search_root)
+        print("Blender missing-file relink searched:", search_root)
+    except Exception as exc:
+        print("Blender missing-file relink skipped:", exc)
+
 def require_scene_geometry():
     convert_supported_objects_to_mesh()
     mesh_objects = [
@@ -722,6 +733,8 @@ try:
         else:
             raise RuntimeError("Unsupported source type: " + kind)
 
+    progress(38, "Relinking package textures")
+    relink_missing_files()
     progress(45, "Validating geometry")
     require_scene_geometry()
     progress(58, "Resolving textures and materials")

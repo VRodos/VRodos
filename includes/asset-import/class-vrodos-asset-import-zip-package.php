@@ -107,6 +107,7 @@ class VRodos_Asset_Import_Zip_Package {
 						'container_path' => $zip_path,
 						'extension'      => $extension,
 						'size'           => $size,
+						'gltf_info'      => 'gltf' === $extension ? self::inspect_gltf_entry( $zip, $raw_entry ) : [],
 					]
 				);
 			}
@@ -183,6 +184,10 @@ class VRodos_Asset_Import_Zip_Package {
 			$parts[] = 'selected GLB: ' . (string) $selection['glb']['display_entry'];
 		} elseif ( ! empty( $selection['candidate']['display_entry'] ) ) {
 			$parts[] = 'selected conversion source: ' . (string) $selection['candidate']['display_entry'];
+			$gltf_info = (array) ( $selection['candidate']['gltf_info'] ?? [] );
+			if ( ! empty( $gltf_info['textureless_vertex_color_mesh'] ) ) {
+				$parts[] = 'selected glTF has vertex colors but no images, textures, or materials, so no external desert texture can be restored from this ZIP';
+			}
 		}
 
 		$scan_errors = array_filter( array_map( 'strval', (array) ( $selection['scan_errors'] ?? [] ) ) );
@@ -207,6 +212,44 @@ class VRodos_Asset_Import_Zip_Package {
 		$zip->close();
 
 		return $result;
+	}
+
+	private static function inspect_gltf_entry( ZipArchive $zip, string $raw_entry ): array {
+		$source = $zip->getStream( $raw_entry );
+		if ( ! is_resource( $source ) ) {
+			return [];
+		}
+
+		$json = stream_get_contents( $source );
+		fclose( $source );
+		$data = json_decode( is_string( $json ) ? $json : '', true );
+		if ( ! is_array( $data ) ) {
+			return [];
+		}
+
+		$image_count    = count( (array) ( $data['images'] ?? [] ) );
+		$texture_count  = count( (array) ( $data['textures'] ?? [] ) );
+		$material_count = count( (array) ( $data['materials'] ?? [] ) );
+		$has_vertex_colors = false;
+		foreach ( (array) ( $data['meshes'] ?? [] ) as $mesh ) {
+			foreach ( (array) ( $mesh['primitives'] ?? [] ) as $primitive ) {
+				$attributes = (array) ( $primitive['attributes'] ?? [] );
+				foreach ( array_keys( $attributes ) as $attribute_name ) {
+					if ( str_starts_with( (string) $attribute_name, 'COLOR_' ) ) {
+						$has_vertex_colors = true;
+						break 3;
+					}
+				}
+			}
+		}
+
+		return [
+			'image_count'                   => $image_count,
+			'texture_count'                 => $texture_count,
+			'material_count'                => $material_count,
+			'has_vertex_colors'             => $has_vertex_colors,
+			'textureless_vertex_color_mesh' => $has_vertex_colors && 0 === $image_count && 0 === $texture_count && 0 === $material_count,
+		];
 	}
 
 	public static function extract_safe_package( string $zip_path, string $source_entry ): array|WP_Error {

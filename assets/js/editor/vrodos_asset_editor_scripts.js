@@ -82,6 +82,30 @@ let vrodosModelSelectionSerial = 0;
 const VRODOS_MODEL_UPLOAD_EXTENSIONS = ['glb', 'zip', 'blend', 'fbx', 'obj', 'dae', 'gltf'];
 const VRODOS_MODEL_CONVERSION_EXTENSIONS = ['blend', 'fbx', 'obj', 'dae', 'gltf'];
 
+function vrodos_set_asset_editor_submit_locked(isLocked, label) {
+    const submitBtn = document.getElementById('formSubmitBtn');
+    if (!submitBtn) {
+        return;
+    }
+
+    if (!submitBtn.dataset.vrodosDefaultHtml) {
+        submitBtn.dataset.vrodosDefaultHtml = submitBtn.innerHTML;
+    }
+
+    submitBtn.disabled = Boolean(isLocked);
+    submitBtn.setAttribute('aria-busy', isLocked ? 'true' : 'false');
+
+    if (label) {
+        submitBtn.textContent = label;
+        return;
+    }
+
+    if (!isLocked) {
+        submitBtn.innerHTML = submitBtn.dataset.vrodosDefaultHtml;
+    }
+}
+window.vrodos_set_asset_editor_submit_locked = vrodos_set_asset_editor_submit_locked;
+
 function vrodos_get_asset_editor_ajax_url() {
     return (window.VRODOS && VRODOS.utils && typeof VRODOS.utils.getAjaxUrl === 'function')
         ? VRODOS.utils.getAjaxUrl()
@@ -521,6 +545,7 @@ window.vrodos_prepare_selected_zip_upload = async function (form, selectionSeria
 
 window.vrodos_prepare_selected_model_upload = async function (form, selectionSerial) {
     const tokenInput = document.getElementById('assetImportUploadToken');
+    vrodos_set_asset_editor_submit_locked(true, 'Preparing Model...');
     vrodos_set_zip_preflight_state({
         status: 'uploading',
         token: '',
@@ -543,9 +568,11 @@ window.vrodos_prepare_selected_model_upload = async function (form, selectionSer
             canSave: false,
             message: window.vrodosZipPreflightState.message || 'Model package preparation failed.'
         });
+        vrodos_set_asset_editor_submit_locked(false);
         return false;
     }
 
+    vrodos_set_asset_editor_submit_locked(false);
     return true;
 };
 
@@ -554,7 +581,6 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
     const tokenInput = document.getElementById('assetImportUploadToken');
     const oldGlbTokenInput = document.getElementById('glbChunkUploadToken');
     const nonceInput = form ? form.querySelector('[name="post_nonce_field"]') : null;
-    const submitBtn = document.getElementById('formSubmitBtn');
     const file = fileInput && fileInput.files && fileInput.files.length ? fileInput.files[0] : null;
 
     if (!file) {
@@ -602,9 +628,7 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
         return `Uploading model ${percent}% (${uploadedMb}/${totalMb} MB)`;
     };
 
-    if (submitBtn) {
-        submitBtn.disabled = true;
-    }
+    vrodos_set_asset_editor_submit_locked(true, shouldPrepareModel ? 'Preparing Model...' : 'Uploading Model...');
 
     try {
         let finalPayload = null;
@@ -740,9 +764,7 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
         vrodos_set_asset_editor_notice(message);
         return false;
     } finally {
-        if (submitBtn) {
-            submitBtn.disabled = false;
-        }
+        vrodos_set_asset_editor_submit_locked(false);
     }
 };
 

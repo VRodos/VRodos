@@ -299,7 +299,14 @@ class VRodos_Scene_CPT_Manager {
 	private static function enrich_editor_scene_object_asset_metadata( array $object_data ): array {
 		$asset_id = absint( $object_data['asset_id'] ?? 0 );
 		if ( $asset_id > 0 ) {
-			foreach ( self::get_editor_scene_asset_metadata( $asset_id ) as $key => $value ) {
+			$asset_metadata = self::get_editor_scene_asset_metadata( $asset_id );
+			if ( empty( $asset_metadata ) ) {
+				unset( $object_data['glb_path'], $object_data['path'], $object_data['glb_id'] );
+				$object_data['asset_missing'] = true;
+				return $object_data;
+			}
+
+			foreach ( $asset_metadata as $key => $value ) {
 				$object_data[ $key ] = $value;
 			}
 		}
