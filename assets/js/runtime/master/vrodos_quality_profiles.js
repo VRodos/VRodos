@@ -4268,7 +4268,7 @@
             targets.push({
                 node,
                 triangleCount,
-                boundsOnly: triangleCount > 60000 && !node.geometry.boundsTree
+                precise: triangleCount <= 60000 || Boolean(node.geometry.boundsTree)
             });
         });
 
@@ -4321,9 +4321,8 @@
                 continue;
             }
 
-            if (target.boundsOnly) {
-                factor = 0;
-                break;
+            if (!target.precise) {
+                continue;
             }
 
             self._pmndrsSunOcclusionHits.length = 0;

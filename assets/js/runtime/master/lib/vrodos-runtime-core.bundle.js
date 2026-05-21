@@ -6383,7 +6383,7 @@
         targets.push({
           node,
           triangleCount,
-          boundsOnly: triangleCount > 6e4 && !node.geometry.boundsTree
+          precise: triangleCount <= 6e4 || Boolean(node.geometry.boundsTree)
         });
       });
       self._pmndrsSunOcclusionTargets = targets;
@@ -6427,9 +6427,8 @@
         if (!raycaster.ray.intersectsBox(self._pmndrsSunOcclusionWorldBox)) {
           continue;
         }
-        if (target.boundsOnly) {
-          factor = 0;
-          break;
+        if (!target.precise) {
+          continue;
         }
         self._pmndrsSunOcclusionHits.length = 0;
         raycaster.intersectObject(node, false, self._pmndrsSunOcclusionHits);
