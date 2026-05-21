@@ -626,26 +626,116 @@ class VRodos_Asset_Import_Manager {
 
 		$extension   = strtolower( (string) ( $manifest['extension'] ?? '' ) );
 		$source_path = trailingslashit( $session_dir ) . 'upload.' . $extension;
-		if ( 'zip' !== $extension || ! is_file( $source_path ) ) {
+		if ( ! is_file( $source_path ) || ( 'zip' !== $extension && ! self::is_conversion_extension( $extension ) ) ) {
 			return [
 				'success'  => false,
 				'can_save' => false,
-				'message'  => 'Only staged ZIP packages can be prepared before asset save.',
+				'message'  => 'Only staged ZIP, BLEND, FBX, OBJ, DAE, and glTF packages can be prepared before asset save.',
 			];
 		}
 
-		$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, 5, 'Inspecting ZIP package...', 'inspecting' );
+		$manifest = self::update_staged_prepare_progress(
+			$session_dir,
+			$manifest,
+			5,
+			'zip' === $extension ? 'Inspecting ZIP package...' : 'Preparing Blender conversion...',
+			'zip' === $extension ? 'inspecting' : 'converting'
+		);
 
 		$existing_prepared_path = self::prepared_glb_path_from_manifest( $session_dir, $manifest );
 		if ( '' !== $existing_prepared_path && is_file( $existing_prepared_path ) ) {
-			$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, 100, 'ZIP package is already prepared.', 'ready' );
+			$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, 100, 'Model package is already prepared.', 'ready' );
 			return [
 				'success'          => true,
 				'can_save'         => true,
-				'message'          => 'ZIP package is already prepared. Saving will attach the generated GLB.',
+				'message'          => 'Model package is already prepared. Saving will attach the generated GLB.',
 				'selected'         => (string) ( $manifest['selected_entry'] ?? '' ),
 				'diagnostic'       => (string) ( $manifest['prepared_diagnostic'] ?? '' ),
 				'requires_blender' => ! empty( $manifest['prepared_conversion_tool'] ),
+				'prepared_url'     => self::prepared_glb_url_from_manifest( $session_url, $manifest ),
+			];
+		}
+
+		if ( self::is_conversion_extension( $extension ) ) {
+			wp_raise_memory_limit( 'admin' );
+			@set_time_limit( 600 );
+
+			$prepared_path = trailingslashit( $session_dir ) . 'prepared.glb';
+			$selected      = (string) ( $manifest['file_name'] ?? basename( $source_path ) );
+			$progress_callback = static function ( int $percent, string $message ) use ( $session_dir, &$manifest ): void {
+				$manifest = self::update_staged_prepare_progress( $session_dir, $manifest, $percent, $message, 'converting' );
+			};
+
+			$conversion = VRodos_Asset_Import_Blender_Converter::convert_to_glb(
+				$source_path,
+				$extension,
+				$prepared_path,
+				$session_dir,
+				$progress_callback
+			);
+
+			if ( empty( $conversion['success'] ) ) {
+				$diagnostic = (string) ( $conversion['code'] ?? '' ) === 'unsupported-ascii-fbx'
+					? ''
+					: trim( (string) ( $conversion['stderr'] ?? '' ) . ' ' . (string) ( $conversion['stdout'] ?? '' ) );
+				$manifest   = self::update_staged_prepare_progress(
+					$session_dir,
+					$manifest,
+					(int) ( $manifest['prepare_percent'] ?? 0 ),
+					(string) ( $conversion['message'] ?? 'Blender conversion failed.' ),
+					'failed'
+				);
+				$manifest['prepared_diagnostic'] = $diagnostic;
+				self::write_staged_manifest( $session_dir, $manifest );
+
+				return [
+					'success'    => false,
+					'can_save'   => false,
+					'message'    => (string) ( $conversion['message'] ?? 'Blender conversion failed.' ),
+					'diagnostic' => $diagnostic,
+				];
+			}
+
+			$converted_path = (string) ( $conversion['path'] ?? $prepared_path );
+			if ( $converted_path !== $prepared_path ) {
+				@unlink( $prepared_path );
+				@copy( $converted_path, $prepared_path );
+			}
+
+			if ( ! is_file( $prepared_path ) ) {
+				$diagnostic = trim( (string) ( $conversion['stderr'] ?? '' ) . ' ' . (string) ( $conversion['stdout'] ?? '' ) );
+				$manifest   = self::update_staged_prepare_progress( $session_dir, $manifest, (int) ( $manifest['prepare_percent'] ?? 0 ), 'Blender conversion succeeded but the generated GLB could not be staged for asset save.', 'failed' );
+				$manifest['prepared_diagnostic'] = $diagnostic;
+				self::write_staged_manifest( $session_dir, $manifest );
+
+				return [
+					'success'    => false,
+					'can_save'   => false,
+					'message'    => 'Blender conversion succeeded but the generated GLB could not be staged for asset save.',
+					'diagnostic' => $diagnostic,
+				];
+			}
+
+			$manifest['prepared_glb']                = 'prepared.glb';
+			$manifest['prepared_at']                 = time();
+			$manifest['selected_entry']              = $selected;
+			$manifest['prepared_source_extension']   = $extension;
+			$manifest['prepared_diagnostic']         = trim( 'Blender conversion succeeded for ' . $selected . '. ' . (string) ( $conversion['stdout'] ?? '' ) );
+			$manifest['prepared_conversion_tool']    = 'blender';
+			$manifest['prepared_conversion_version'] = self::CONVERSION_VERSION;
+			$manifest['prepare_status']              = 'ready';
+			$manifest['prepare_percent']             = 100;
+			$manifest['prepare_message']             = 'GLB conversion complete.';
+			$manifest['prepare_updated_at']          = time();
+			self::write_staged_manifest( $session_dir, $manifest );
+
+			return [
+				'success'          => true,
+				'can_save'         => true,
+				'message'          => strtoupper( $extension ) . ' model converted to GLB and is ready to save.',
+				'selected'         => $selected,
+				'diagnostic'       => (string) $manifest['prepared_diagnostic'],
+				'requires_blender' => true,
 				'prepared_url'     => self::prepared_glb_url_from_manifest( $session_url, $manifest ),
 			];
 		}
@@ -1202,10 +1292,14 @@ class VRodos_Asset_Import_Manager {
 			);
 
 			if ( empty( $conversion['success'] ) ) {
+				$diagnostic = (string) ( $conversion['code'] ?? '' ) === 'unsupported-ascii-fbx'
+					? ''
+					: trim( (string) ( $conversion['stderr'] ?? '' ) . ' ' . (string) ( $conversion['stdout'] ?? '' ) );
+
 				return self::fail_job(
 					$asset_id,
 					(string) ( $conversion['message'] ?? 'Blender conversion failed.' ),
-					trim( (string) ( $conversion['stderr'] ?? '' ) . ' ' . (string) ( $conversion['stdout'] ?? '' ) )
+					$diagnostic
 				);
 			}
 

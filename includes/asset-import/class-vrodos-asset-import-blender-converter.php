@@ -81,6 +81,15 @@ class VRodos_Asset_Import_Blender_Converter {
 			];
 		}
 
+		if ( 'fbx' === $source_extension && self::is_ascii_fbx( $source_path ) ) {
+			return [
+				'success' => false,
+				'code'    => 'unsupported-ascii-fbx',
+				'label'   => 'Unsupported FBX encoding',
+				'message' => 'This is an ASCII FBX file. Blender only supports binary FBX import, so re-export the model as Binary FBX, glTF/GLB, OBJ, DAE, or package it as a ZIP with a supported source.',
+			];
+		}
+
 		$script_path = self::write_conversion_script();
 		if ( is_wp_error( $script_path ) ) {
 			return [
@@ -119,12 +128,16 @@ class VRodos_Asset_Import_Blender_Converter {
 			$failure_code = (string) ( $result['code'] ?? '' ) === 'process-start-failed'
 				? 'invalid'
 				: 'conversion-failed';
+			$output = trim( (string) ( $result['stderr'] ?? '' ) . "\n" . (string) ( $result['stdout'] ?? '' ) );
+			$message = 'fbx' === $source_extension && stripos( $output, 'ASCII FBX files are not supported' ) !== false
+				? 'This is an ASCII FBX file. Blender only supports binary FBX import, so re-export the model as Binary FBX, glTF/GLB, OBJ, DAE, or package it as a ZIP with a supported source.'
+				: self::summarize_process_output( $result );
 
 			return [
 				'success' => false,
 				'code'    => $failure_code,
 				'label'   => 'Conversion failed',
-				'message' => self::summarize_process_output( $result ),
+				'message' => $message,
 				'stdout'  => self::truncate_text( (string) ( $result['stdout'] ?? '' ), 2000 ),
 				'stderr'  => self::truncate_text( (string) ( $result['stderr'] ?? '' ), 2000 ),
 			];
@@ -306,6 +319,29 @@ class VRodos_Asset_Import_Blender_Converter {
 		}
 
 		return false;
+	}
+
+	private static function is_ascii_fbx( string $path ): bool {
+		if ( ! is_file( $path ) || ! is_readable( $path ) ) {
+			return false;
+		}
+
+		$handle = @fopen( $path, 'rb' );
+		if ( ! $handle ) {
+			return false;
+		}
+		$header = (string) fread( $handle, 4096 );
+		fclose( $handle );
+
+		if ( str_starts_with( $header, "Kaydara FBX Binary  \x00\x1a\x00" ) ) {
+			return false;
+		}
+
+		if ( preg_match( '/^\s*(;|FBXHeaderExtension\s*:|Kaydara FBX)/i', $header ) ) {
+			return true;
+		}
+
+		return ! str_contains( $header, "\x00" ) && stripos( $header, 'FBXHeaderExtension' ) !== false;
 	}
 
 	private static function create_temp_file( string $prefix, string $extension = '' ): string|WP_Error {

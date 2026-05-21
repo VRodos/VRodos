@@ -80,6 +80,7 @@ window.vrodosZipPreflightState = window.vrodosZipPreflightState || {
 
 let vrodosModelSelectionSerial = 0;
 const VRODOS_MODEL_UPLOAD_EXTENSIONS = ['glb', 'zip', 'blend', 'fbx', 'obj', 'dae', 'gltf'];
+const VRODOS_MODEL_CONVERSION_EXTENSIONS = ['blend', 'fbx', 'obj', 'dae', 'gltf'];
 
 function vrodos_get_asset_editor_ajax_url() {
     return (window.VRODOS && VRODOS.utils && typeof VRODOS.utils.getAjaxUrl === 'function')
@@ -320,10 +321,10 @@ function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputEl
             chunkTokenInput.value = '';
         }
 
-        if (extension === 'zip') {
-            vrodos_set_asset_editor_notice('Uploading ZIP package for inspection...', false);
+        if (extension === 'zip' || VRODOS_MODEL_CONVERSION_EXTENSIONS.includes(extension)) {
+            vrodos_set_asset_editor_notice(extension === 'zip' ? 'Uploading ZIP package for inspection...' : `Uploading ${extension.toUpperCase()} model for conversion...`, false);
             const form = document.getElementById('3dAssetForm');
-            window.vrodos_prepare_selected_zip_upload(form, selectionSerial);
+            window.vrodos_prepare_selected_model_upload(form, selectionSerial);
             return;
         }
 
@@ -515,15 +516,19 @@ function vrodos_start_staged_zip_progress_polling(token, form) {
 }
 
 window.vrodos_prepare_selected_zip_upload = async function (form, selectionSerial) {
+    return window.vrodos_prepare_selected_model_upload(form, selectionSerial);
+};
+
+window.vrodos_prepare_selected_model_upload = async function (form, selectionSerial) {
     const tokenInput = document.getElementById('assetImportUploadToken');
     vrodos_set_zip_preflight_state({
         status: 'uploading',
         token: '',
         canSave: false,
-        message: 'Uploading ZIP package for inspection...'
+        message: 'Uploading model package for preparation...'
     });
 
-    const uploaded = await window.vrodos_upload_selected_model_in_chunks(form, { inspectZip: true, source: 'selection' });
+    const uploaded = await window.vrodos_upload_selected_model_in_chunks(form, { prepareModel: true, source: 'selection' });
     if (selectionSerial !== vrodosModelSelectionSerial) {
         return false;
     }
@@ -536,7 +541,7 @@ window.vrodos_prepare_selected_zip_upload = async function (form, selectionSeria
             status: 'failed',
             token: '',
             canSave: false,
-            message: window.vrodosZipPreflightState.message || 'ZIP package inspection failed.'
+            message: window.vrodosZipPreflightState.message || 'Model package preparation failed.'
         });
         return false;
     }
@@ -582,7 +587,7 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
     const totalChunks = Math.max(1, Math.ceil(file.size / chunkSize));
     const uploadId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
     const extension = (file.name.split('.').pop() || '').toLowerCase();
-    const shouldInspectZip = extension === 'zip' && options.inspectZip !== false;
+    const shouldPrepareModel = options.prepareModel === true || (extension === 'zip' && options.inspectZip !== false);
     if (!VRODOS_MODEL_UPLOAD_EXTENSIONS.includes(extension)) {
         vrodos_set_asset_editor_notice('Supported model uploads are GLB, ZIP, BLEND, FBX, OBJ, DAE, and glTF files.');
         return false;
@@ -643,34 +648,41 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
             oldGlbTokenInput.value = '';
         }
 
-        if (shouldInspectZip) {
-            vrodos_set_zip_preflight_state({
-                status: 'inspecting',
-                token: uploadId,
-                canSave: false,
-                message: 'Inspecting ZIP package contents...'
-            });
-            vrodos_set_asset_editor_notice('Inspecting ZIP package contents...', false);
-            const inspection = await window.vrodos_inspect_staged_zip_upload(uploadId, form);
-            if (!inspection.can_save) {
-                throw new Error(inspection.message || 'ZIP package has no usable model source.');
+        if (shouldPrepareModel) {
+            let inspection = null;
+            let prepareStatus = 'converting';
+            let prepareMessage = `Blender is converting the selected ${extension.toUpperCase()} model to GLB. This can take a few minutes...`;
+
+            if (extension === 'zip') {
+                vrodos_set_zip_preflight_state({
+                    status: 'inspecting',
+                    token: uploadId,
+                    canSave: false,
+                    message: 'Inspecting ZIP package contents...'
+                });
+                vrodos_set_asset_editor_notice('Inspecting ZIP package contents...', false);
+                inspection = await window.vrodos_inspect_staged_zip_upload(uploadId, form);
+                if (!inspection.can_save) {
+                    throw new Error(inspection.message || 'ZIP package has no usable model source.');
+                }
+
+                prepareStatus = inspection.requires_blender ? 'converting' : 'preparing';
+                prepareMessage = inspection.requires_blender
+                    ? 'Blender is converting the selected ZIP source to GLB. This can take a few minutes...'
+                    : 'Extracting the selected GLB from the ZIP package...';
             }
 
-            const prepareStatus = inspection.requires_blender ? 'converting' : 'preparing';
-            const prepareMessage = inspection.requires_blender
-                ? 'Blender is converting the selected ZIP source to GLB. This can take a few minutes...'
-                : 'Extracting the selected GLB from the ZIP package...';
             vrodos_set_zip_preflight_state({
                 status: prepareStatus,
                 token: uploadId,
                 canSave: false,
                 message: prepareMessage,
-                diagnostic: inspection.diagnostic || '',
-                selected: inspection.selected || ''
+                diagnostic: inspection ? inspection.diagnostic || '' : '',
+                selected: inspection ? inspection.selected || file.name : file.name
             });
             vrodos_set_asset_editor_notice(prepareMessage, false);
 
-            const stopProgressPolling = inspection.requires_blender
+            const stopProgressPolling = prepareStatus === 'converting'
                 ? vrodos_start_staged_zip_progress_polling(uploadId, form)
                 : null;
             let prepared = null;
@@ -689,12 +701,12 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
                 status: 'ready',
                 token: uploadId,
                 canSave: true,
-                message: prepared.message || 'ZIP package is ready. Saving will attach the prepared GLB.',
-                diagnostic: prepared.diagnostic || inspection.diagnostic || '',
-                selected: prepared.selected || inspection.selected || ''
+                message: prepared.message || 'Model package is ready. Saving will attach the prepared GLB.',
+                diagnostic: prepared.diagnostic || (inspection ? inspection.diagnostic || '' : ''),
+                selected: prepared.selected || (inspection ? inspection.selected || '' : file.name)
             });
             fileInput.value = '';
-            let readyMessage = prepared.message || 'ZIP package is ready. Saving will attach the prepared GLB.';
+            let readyMessage = prepared.message || 'Model package is ready. Saving will attach the prepared GLB.';
             if (prepared.prepared_url) {
                 try {
                     const previewLoaded = await vrodos_preview_prepared_glb_url(prepared.prepared_url);
@@ -714,7 +726,7 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
         return true;
     } catch (error) {
         const message = error && error.message ? error.message : 'The model upload failed.';
-        if (extension === 'zip') {
+        if (shouldPrepareModel) {
             if (tokenInput) {
                 tokenInput.value = '';
             }

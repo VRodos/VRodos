@@ -1031,15 +1031,15 @@ else { ?>
 			const zipState = window.vrodosZipPreflightState || {};
 			const importTokenInput = document.getElementById('assetImportUploadToken');
 			if (['uploading', 'inspecting', 'preparing', 'converting'].includes(zipState.status)) {
-				setAssetEditorNotice(zipState.message || 'ZIP package preparation is still running. Wait for it to finish before saving.');
+				setAssetEditorNotice(zipState.message || 'Model package preparation is still running. Wait for it to finish before saving.');
 				return false;
 			}
 			if (zipState.status === 'failed') {
-				setAssetEditorNotice(zipState.message || 'ZIP package inspection failed. Select a supported ZIP package before saving.');
+				setAssetEditorNotice(zipState.message || 'Model package preparation failed. Select a supported model package before saving.');
 				return false;
 			}
 			if (importTokenInput && importTokenInput.value && zipState.token === importTokenInput.value && zipState.canSave === false) {
-				setAssetEditorNotice(zipState.message || 'ZIP package inspection did not find a usable model source.');
+				setAssetEditorNotice(zipState.message || 'Model package preparation did not produce a usable GLB.');
 				return false;
 			}
 
