@@ -4226,13 +4226,64 @@
         return isShadowEligibleMaterial(node.material);
     }
 
+    function getPmndrsSunOccluderTriangleCount(node) {
+        const geometry = node && node.geometry ? node.geometry : null;
+        if (!geometry) {
+            return 0;
+        }
+
+        if (geometry.index && typeof geometry.index.count === 'number') {
+            return Math.floor(geometry.index.count / 3);
+        }
+
+        const position = geometry.attributes ? geometry.attributes.position : null;
+        return position && typeof position.count === 'number' ? Math.floor(position.count / 3) : 0;
+    }
+
+    function refreshPmndrsSunOccluderCache(self) {
+        if (!self || !self.el || !self.el.object3D) {
+            return [];
+        }
+
+        const now = typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
+        if (Array.isArray(self._pmndrsSunOcclusionTargets) && self._pmndrsSunOcclusionTargetsLastMs && (now - self._pmndrsSunOcclusionTargetsLastMs) < 2500) {
+            return self._pmndrsSunOcclusionTargets;
+        }
+
+        const targets = [];
+        self.el.object3D.traverse((node) => {
+            if (!isPmndrsSunOccluderMesh(node) || !node.geometry) {
+                return;
+            }
+
+            if (!node.geometry.boundingBox && typeof node.geometry.computeBoundingBox === 'function') {
+                node.geometry.computeBoundingBox();
+            }
+
+            if (!node.geometry.boundingBox) {
+                return;
+            }
+
+            const triangleCount = getPmndrsSunOccluderTriangleCount(node);
+            targets.push({
+                node,
+                triangleCount,
+                boundsOnly: triangleCount > 60000 && !node.geometry.boundsTree
+            });
+        });
+
+        self._pmndrsSunOcclusionTargets = targets;
+        self._pmndrsSunOcclusionTargetsLastMs = now;
+        return targets;
+    }
+
     function computePmndrsSunOcclusionFactor(self, sunDirection, maxDistance) {
         if (!self || !self.el || !self.el.object3D || !self.el.camera || !sunDirection || sunDirection.lengthSq() < 0.0001 || typeof THREE.Raycaster !== 'function') {
             return 1;
         }
 
         const now = typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
-        if (self._pmndrsSunOcclusionLastMs && (now - self._pmndrsSunOcclusionLastMs) < 120 && typeof self._pmndrsSunOcclusionFactor === 'number') {
+        if (self._pmndrsSunOcclusionLastMs && (now - self._pmndrsSunOcclusionLastMs) < 300 && typeof self._pmndrsSunOcclusionFactor === 'number') {
             return self._pmndrsSunOcclusionFactor;
         }
 
@@ -4240,6 +4291,8 @@
             self._pmndrsSunOcclusionRaycaster = new THREE.Raycaster();
             self._pmndrsSunOcclusionOrigin = new THREE.Vector3();
             self._pmndrsSunOcclusionDirection = new THREE.Vector3();
+            self._pmndrsSunOcclusionWorldBox = new THREE.Box3();
+            self._pmndrsSunOcclusionHits = [];
         }
 
         const origin = self._pmndrsSunOcclusionOrigin;
@@ -4252,16 +4305,35 @@
         raycaster.set(origin, direction);
         raycaster.near = 0.1;
         raycaster.far = far;
+        raycaster.firstHitOnly = true;
 
-        const meshes = [];
-        self.el.object3D.traverse((node) => {
-            if (isPmndrsSunOccluderMesh(node)) {
-                meshes.push(node);
+        const targets = refreshPmndrsSunOccluderCache(self);
+        let factor = 1;
+        for (let i = 0; i < targets.length; i++) {
+            const target = targets[i];
+            const node = target.node;
+            if (!node || !node.geometry || !node.geometry.boundingBox) {
+                continue;
             }
-        });
 
-        const hits = meshes.length ? raycaster.intersectObjects(meshes, false) : [];
-        const factor = hits.some((hit) => hit && hit.distance > 0.1 && hit.distance < far * 0.985) ? 0 : 1;
+            self._pmndrsSunOcclusionWorldBox.copy(node.geometry.boundingBox).applyMatrix4(node.matrixWorld);
+            if (!raycaster.ray.intersectsBox(self._pmndrsSunOcclusionWorldBox)) {
+                continue;
+            }
+
+            if (target.boundsOnly) {
+                factor = 0;
+                break;
+            }
+
+            self._pmndrsSunOcclusionHits.length = 0;
+            raycaster.intersectObject(node, false, self._pmndrsSunOcclusionHits);
+            if (self._pmndrsSunOcclusionHits.some((hit) => hit && hit.distance > 0.1 && hit.distance < far * 0.985)) {
+                factor = 0;
+                break;
+            }
+        }
+
         self._pmndrsSunOcclusionFactor = factor;
         self._pmndrsSunOcclusionLastMs = now;
         return factor;
