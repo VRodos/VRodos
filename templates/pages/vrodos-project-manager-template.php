@@ -28,21 +28,48 @@ $multiple = 'projects';
 <!-- if user not logged in then show a hint to login -->
 <?php
 if (!is_user_logged_in() || !current_user_can('administrator')) {
+	$login_url    = wp_login_url( get_permalink() );
+	$register_url = wp_registration_url();
+	$can_register = (bool) get_option( 'users_can_register' );
 ?>
-	<div class="tw-flex tw-flex-col tw-h-screen tw-items-center tw-justify-center tw-p-12 tw-text-center tw-bg-slate-50 vr-mesh-bg">
-		<img class="tw-rounded-3xl tw-shadow-2xl tw-mb-10 tw-max-w-4xl tw-w-full tw-border-8 tw-border-white tw-animate-fade-in-up" src="<?php echo esc_url( VRodos_Path_Manager::image_url( 'screenshots/authtoolimage.jpg' ) ); ?>" alt="editor screenshot" />
-		<div class="tw-bg-white/80 tw-p-10 tw-rounded-[3rem] tw-shadow-2xl tw-border tw-border-white/50 tw-max-w-xl tw-animate-fade-in-up tw-stagger-1 vr-glass-panel">
-            <div class="tw-flex tw-justify-center tw-mb-6">
-                <div class="tw-w-24 tw-h-24 tw-bg-primary/10 tw-rounded-full tw-flex tw-items-center tw-justify-center">
-                    <i data-lucide="user-circle" class="tw-w-14 tw-h-14 tw-text-primary"></i>
-                </div>
-            </div>
-            <h2 class="tw-text-4xl tw-font-black tw-text-slate-900 tw-mb-4">Members Only</h2>
-            <p class="tw-text-slate-600 tw-text-xl tw-mb-8 tw-font-medium"> Please <a class="tw-link tw-link-primary tw-font-black transition-all" href="<?php echo wp_login_url(get_permalink()); ?>">Login</a> to access the Project Manager.
-                <br><span class="tw-text-sm tw-opacity-50">Or register if you don't have an account.</span></p>
-            <a href="<?php echo wp_login_url(get_permalink()); ?>" class="tw-btn tw-btn-primary tw-btn-lg tw-px-12 tw-rounded-2xl tw-font-black tw-text-white tw-shadow-2xl tw-shadow-primary/30">LOG IN NOW</a>
-        </div>
-	</div>
+	<main class="vrodos-auth-splash vr-mesh-bg">
+		<section class="vrodos-auth-shell tw-animate-fade-in-up" aria-labelledby="vrodos-auth-title">
+			<div class="vrodos-auth-showcase">
+				<div class="vrodos-auth-kicker">
+					<span>VRodos</span>
+					<span>Project Manager</span>
+				</div>
+				<h1 id="vrodos-auth-title">Create and manage immersive 3D environments.</h1>
+				<div class="vrodos-auth-preview" aria-label="VRodos scene editor preview">
+					<div class="vrodos-auth-preview-bar">
+						<span></span>
+						<span></span>
+						<span></span>
+						<strong>Scene workspace</strong>
+					</div>
+					<img src="<?php echo esc_url( VRodos_Path_Manager::image_url( 'screenshots/authtoolimage.jpg' ) ); ?>" alt="VRodos 3D scene editor showing a virtual museum project." />
+				</div>
+			</div>
+
+			<div class="vrodos-auth-panel vr-glass-panel">
+				<div class="vrodos-auth-icon">
+					<i data-lucide="shield-check" aria-hidden="true"></i>
+				</div>
+				<h2>Administrator Access Needed</h2>
+				<p>Use your WordPress account to continue to the VRodos Project Manager.</p>
+				<a href="<?php echo esc_url( $login_url ); ?>" class="vrodos-auth-primary tw-btn tw-btn-primary">
+					<span>Log in</span>
+					<i data-lucide="arrow-right" aria-hidden="true"></i>
+				</a>
+				<div class="vrodos-auth-links">
+					<?php if ( $can_register ) : ?>
+						<a href="<?php echo esc_url( $register_url ); ?>">Create an account</a>
+					<?php endif; ?>
+					<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Back</a>
+				</div>
+			</div>
+		</section>
+	</main>
 
 	<?php
 }

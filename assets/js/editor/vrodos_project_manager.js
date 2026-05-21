@@ -5,7 +5,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(modalWrapper);
     }
 
-    lucide.createIcons();
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        lucide.createIcons();
+    }
+
+    const projectManager = document.getElementById('vrodos-project-manager');
+    if (!projectManager) {
+        return;
+    }
+
     VRODOS.api.fetchAllProjectsAndAddToDOM(VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass, -1, true);
     setupProjectCountSync();
 

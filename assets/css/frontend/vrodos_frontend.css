@@ -35,6 +35,274 @@ label {
 	opacity: .54;
 }
 
+/* Project Manager logged-out access screen */
+.vrodos-auth-splash,
+.vrodos-auth-splash *,
+.vrodos-auth-splash *::before,
+.vrodos-auth-splash *::after {
+	box-sizing: border-box;
+}
+
+.vrodos-auth-splash {
+	min-height: calc(100vh - var(--wp-admin-bar-height, 0px));
+	overflow-y: auto;
+	background:
+		radial-gradient(circle at top left, rgba(102, 204, 138, 0.18), transparent 34rem),
+		linear-gradient(135deg, #f8fafc 0%, #eef2f7 52%, #f7fbf9 100%);
+	padding: clamp(1.5rem, 3vw, 3rem);
+	display: grid;
+	place-items: center;
+	color: #0f172a;
+}
+
+.vrodos-auth-shell {
+	width: min(1180px, 100%);
+	min-height: min(640px, calc(100vh - var(--wp-admin-bar-height, 0px) - clamp(3rem, 6vw, 6rem)));
+	display: grid;
+	grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.65fr);
+	align-items: stretch;
+	overflow: hidden;
+	border: 1px solid rgba(255, 255, 255, 0.78);
+	border-radius: 2rem;
+	background: rgba(255, 255, 255, 0.74);
+	box-shadow: 0 30px 80px rgba(15, 23, 42, 0.16);
+}
+
+.vrodos-auth-showcase {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 1.05rem;
+	padding: clamp(1.75rem, 4vw, 3.5rem);
+	background:
+		linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(241, 245, 249, 0.7)),
+		linear-gradient(145deg, rgba(59, 130, 246, 0.08), rgba(102, 204, 138, 0.1));
+}
+
+.vrodos-auth-kicker {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+	color: #475569;
+	font-size: 0.78rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.vrodos-auth-kicker span:first-child {
+	color: #0f766e;
+}
+
+.vrodos-auth-kicker span + span::before {
+	content: "";
+	display: inline-block;
+	width: 0.36rem;
+	height: 0.36rem;
+	margin-right: 0.5rem;
+	border-radius: 999px;
+	background: #94a3b8;
+	vertical-align: 0.08rem;
+}
+
+.vrodos-auth-showcase h1 {
+	max-width: 10.5em;
+	margin: 0;
+	color: #0f172a;
+	font-size: clamp(2.25rem, 4vw, 3.75rem);
+	font-weight: 900;
+	line-height: 0.98;
+	letter-spacing: 0;
+}
+
+.vrodos-auth-showcase p {
+	max-width: 38rem;
+	margin: 0;
+	color: #475569;
+	font-size: clamp(1rem, 1.45vw, 1.2rem);
+	font-weight: 600;
+	line-height: 1.55;
+}
+
+.vrodos-auth-preview {
+	margin-top: 0.75rem;
+	overflow: hidden;
+	border: 1px solid rgba(148, 163, 184, 0.35);
+	border-radius: 1.15rem;
+	background: #fff;
+	box-shadow: 0 22px 50px rgba(15, 23, 42, 0.18);
+}
+
+.vrodos-auth-preview-bar {
+	height: 2.5rem;
+	display: flex;
+	align-items: center;
+	gap: 0.42rem;
+	padding: 0 0.9rem;
+	border-bottom: 1px solid #e2e8f0;
+	background: #f8fafc;
+	color: #64748b;
+	font-size: 0.72rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.vrodos-auth-preview-bar span {
+	width: 0.62rem;
+	height: 0.62rem;
+	border-radius: 999px;
+	background: #cbd5e1;
+}
+
+.vrodos-auth-preview-bar span:first-child {
+	background: #66cc8a;
+}
+
+.vrodos-auth-preview-bar strong {
+	margin-left: 0.4rem;
+	font: inherit;
+}
+
+.vrodos-auth-preview img {
+	width: 100%;
+	height: clamp(190px, 20vw, 270px);
+	object-fit: cover;
+	object-position: center top;
+}
+
+.vrodos-auth-panel {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 1rem;
+	padding: clamp(1.75rem, 3vw, 2.75rem);
+	border-left: 1px solid rgba(226, 232, 240, 0.9);
+	background: rgba(255, 255, 255, 0.86);
+}
+
+.vrodos-auth-icon {
+	width: 4.25rem;
+	height: 4.25rem;
+	display: grid;
+	place-items: center;
+	border-radius: 1.25rem;
+	background: #ecfdf3;
+	color: #16a35f;
+	box-shadow: inset 0 0 0 1px rgba(102, 204, 138, 0.26);
+}
+
+.vrodos-auth-icon svg {
+	width: 2.15rem;
+	height: 2.15rem;
+	stroke-width: 1.8;
+}
+
+.vrodos-auth-panel h2 {
+	margin: 0.5rem 0 0;
+	color: #0f172a;
+	font-size: clamp(1.75rem, 2.4vw, 2.4rem);
+	font-weight: 900;
+	line-height: 1.05;
+	letter-spacing: 0;
+}
+
+.vrodos-auth-panel p {
+	margin: 0 0 0.55rem;
+	color: #526173;
+	font-size: 1rem;
+	font-weight: 600;
+	line-height: 1.55;
+}
+
+.vrodos-auth-primary {
+	width: 100%;
+	min-height: 3.35rem;
+	border-radius: 0.9rem !important;
+	gap: 0.55rem;
+	font-size: 0.95rem;
+	font-weight: 900 !important;
+	text-transform: none !important;
+	box-shadow: 0 18px 38px rgba(22, 163, 95, 0.22) !important;
+}
+
+.vrodos-auth-primary svg {
+	width: 1rem;
+	height: 1rem;
+}
+
+.vrodos-auth-links {
+	width: 100%;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-start;
+	gap: 0.75rem 1.4rem;
+	padding-top: 0.15rem;
+}
+
+.vrodos-auth-links a {
+	color: #0f766e;
+	font-size: 0.88rem;
+	font-weight: 800;
+	text-decoration: none;
+}
+
+.vrodos-auth-links a:hover,
+.vrodos-auth-links a:focus {
+	color: #115e59;
+	text-decoration: underline;
+}
+
+@media screen and (max-width: 960px) {
+	.vrodos-auth-splash {
+		place-items: start center;
+		padding: 1rem;
+	}
+
+	.vrodos-auth-shell {
+		min-height: 0;
+		grid-template-columns: 1fr;
+		border-radius: 1.25rem;
+	}
+
+	.vrodos-auth-showcase {
+		padding: 2rem;
+	}
+
+	.vrodos-auth-showcase h1 {
+		max-width: 9em;
+	}
+
+	.vrodos-auth-panel {
+		border-top: 1px solid rgba(226, 232, 240, 0.9);
+		border-left: 0;
+		padding: 2rem;
+	}
+}
+
+@media screen and (max-width: 560px) {
+	.vrodos-auth-showcase,
+	.vrodos-auth-panel {
+		padding: 1.35rem;
+	}
+
+	.vrodos-auth-showcase {
+		gap: 1rem;
+	}
+
+	.vrodos-auth-preview img {
+		aspect-ratio: 4 / 3;
+	}
+
+	.vrodos-auth-links {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+}
+
 /* Breadcrumbs style */
 ul.EditPageBreadcrumb {
 	list-style: none;
