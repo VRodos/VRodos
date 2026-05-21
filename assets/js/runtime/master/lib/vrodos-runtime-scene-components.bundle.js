@@ -104,6 +104,11 @@
       this.el.removeEventListener("click", this.onClick);
     }
   });
+  function vrodosPoiImageHasValidUrl(url) {
+    if (!url) return false;
+    const normalized = String(url).trim().toLowerCase();
+    return normalized !== "" && normalized !== "false" && normalized !== "null" && normalized !== "undefined" && normalized !== "0";
+  }
   AFRAME.registerComponent("info-panel", {
     schema: { type: "string", default: "default value" },
     init: function() {
@@ -142,11 +147,6 @@
       this.desc_list = [];
       this.readingPos = 0;
       this.cam.add(this.infoPanel);
-      const isValidImageUrl = (url) => {
-        if (!url) return false;
-        const normalized = String(url).trim().toLowerCase();
-        return normalized !== "" && normalized !== "false" && normalized !== "null" && normalized !== "undefined" && normalized !== "0";
-      };
       const getMeta = (url, cb) => {
         const img = new Image();
         img.onload = () => cb(null, img);
@@ -187,7 +187,7 @@
         exceed_height = 1.4;
       }
       const imageSrc = this.ImageAsset ? this.ImageAsset.getAttribute("src") : "";
-      if (isValidImageUrl(imageSrc)) {
+      if (vrodosPoiImageHasValidUrl(imageSrc)) {
         getMeta(imageSrc, (err, img) => {
           if (err || !img || !img.naturalWidth || !img.naturalHeight) {
             return;
@@ -294,7 +294,7 @@
       if (!browsingModeVR) {
         if (this.TitleEl)
           document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
-        if (this.ImageAsset.getAttribute("src")) {
+        if (this.ImageAsset && vrodosPoiImageHasValidUrl(this.ImageAsset.getAttribute("src"))) {
           document.getElementById("poi-img-dialog-image").style.display = "inline";
           document.getElementById("poi-img-dialog-image").src = this.ImageAsset.getAttribute("src");
         } else {
@@ -348,7 +348,7 @@
           this.TitleEl.components.text.material.depthTest = false;
           this.TitleEl.object3D.renderOrder = 99999;
         }
-        if (!this.ImageAsset.getAttribute("src")) {
+        if (!this.ImageAsset || !vrodosPoiImageHasValidUrl(this.ImageAsset.getAttribute("src"))) {
           console.log("No Image");
         } else {
           this.ImageEl.components.material.material.depthTest = false;

@@ -1,3 +1,9 @@
+function vrodosPoiImageHasValidUrl(url) {
+    if (!url) return false;
+    const normalized = String(url).trim().toLowerCase();
+    return normalized !== '' && normalized !== 'false' && normalized !== 'null' && normalized !== 'undefined' && normalized !== '0';
+}
+
 AFRAME.registerComponent('info-panel', {
     schema: { type: "string", default: "default value" },
     init: function () {
@@ -46,12 +52,6 @@ AFRAME.registerComponent('info-panel', {
         this.readingPos = 0;
 
         this.cam.add(this.infoPanel);
-
-        const isValidImageUrl = (url) => {
-            if (!url) return false;
-            const normalized = String(url).trim().toLowerCase();
-            return normalized !== '' && normalized !== 'false' && normalized !== 'null' && normalized !== 'undefined' && normalized !== '0';
-        };
 
         const getMeta = (url, cb) => {
             const img = new Image();
@@ -108,7 +108,7 @@ AFRAME.registerComponent('info-panel', {
             exceed_height = 1.4;
         }
         const imageSrc = this.ImageAsset ? this.ImageAsset.getAttribute("src") : '';
-        if (isValidImageUrl(imageSrc)){
+        if (vrodosPoiImageHasValidUrl(imageSrc)){
             getMeta(imageSrc, (err, img) => {
                 if (err || !img || !img.naturalWidth || !img.naturalHeight) {
                     return;
@@ -272,7 +272,7 @@ AFRAME.registerComponent('info-panel', {
             if(this.TitleEl)
                 document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
 
-            if (this.ImageAsset.getAttribute("src")) {
+            if (this.ImageAsset && vrodosPoiImageHasValidUrl(this.ImageAsset.getAttribute("src"))) {
                 document.getElementById("poi-img-dialog-image").style.display = "inline";
                 document.getElementById("poi-img-dialog-image").src = this.ImageAsset.getAttribute("src");
             } else  {
@@ -345,7 +345,7 @@ AFRAME.registerComponent('info-panel', {
                 this.TitleEl.object3D.renderOrder = 99999;
             }
 
-            if (!this.ImageAsset.getAttribute("src")) {
+            if (!this.ImageAsset || !vrodosPoiImageHasValidUrl(this.ImageAsset.getAttribute("src"))) {
                 console.log("No Image");
 
             }
