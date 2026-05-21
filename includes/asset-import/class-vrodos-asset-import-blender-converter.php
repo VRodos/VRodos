@@ -403,7 +403,9 @@ class VRodos_Asset_Import_Blender_Converter {
 
 		$script = <<<'PY'
 import argparse
+import json
 import os
+import shutil
 import sys
 import traceback
 
@@ -625,6 +627,70 @@ def require_scene_geometry():
             + (object_summary if object_summary else "none")
         )
 
+def repair_gltf_sidecar_paths():
+    try:
+        with open(source, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except Exception as exc:
+        print("Could not inspect glTF sidecar references:", exc)
+        return
+
+    uris = []
+    for key in ("buffers", "images"):
+        for item in data.get(key, []):
+            if isinstance(item, dict) and item.get("uri"):
+                uris.append(str(item["uri"]))
+
+    if not uris:
+        return
+
+    search_roots = []
+    for root in (os.path.dirname(source), os.getcwd()):
+        if root and os.path.isdir(root) and root not in search_roots:
+            search_roots.append(root)
+
+    basename_index = {}
+    extension_index = {}
+    for root in search_roots:
+        for current_root, dirs, files in os.walk(root):
+            dirs[:] = [
+                item for item in dirs
+                if item not in {"__MACOSX"} and not item.startswith(".")
+            ]
+            for filename in files:
+                file_path = os.path.join(current_root, filename)
+                basename_index.setdefault(filename.lower(), file_path)
+                extension = os.path.splitext(filename)[1].lower().lstrip(".")
+                if extension:
+                    extension_index.setdefault(extension, []).append(file_path)
+
+    repaired = 0
+    missing = []
+    source_dir = os.path.dirname(source)
+    for uri in sorted(set(item.strip() for item in uris if item and not item.lower().startswith("data:"))):
+        uri_path = uri.split("?", 1)[0].split("#", 1)[0].replace("\\", "/")
+        if not uri_path or uri_path.startswith("/") or "://" in uri_path or ".." in uri_path.split("/"):
+            continue
+
+        expected_path = os.path.normpath(os.path.join(source_dir, uri_path))
+        if os.path.exists(expected_path):
+            continue
+
+        fallback = basename_index.get(os.path.basename(uri_path).lower(), "")
+        expected_extension = os.path.splitext(uri_path)[1].lower().lstrip(".")
+        if not fallback and expected_extension and len(extension_index.get(expected_extension, [])) == 1:
+            fallback = extension_index[expected_extension][0]
+        if fallback and os.path.exists(fallback):
+            os.makedirs(os.path.dirname(expected_path), exist_ok=True)
+            shutil.copy2(fallback, expected_path)
+            repaired += 1
+        else:
+            missing.append(uri)
+
+    print("glTF sidecar repair:", repaired, "file(s) copied,", len(missing), "reference(s) still missing")
+    if missing:
+        print("Missing glTF sidecars:", ", ".join(missing[:8]))
+
 try:
     progress(8, "Preparing Blender scene")
     if kind == "blend":
@@ -650,6 +716,8 @@ try:
             bpy.ops.wm.collada_import(filepath=source)
         elif kind in {"gltf", "glb"}:
             progress(12, "Importing glTF/GLB source")
+            if kind == "gltf":
+                repair_gltf_sidecar_paths()
             bpy.ops.import_scene.gltf(filepath=source)
         else:
             raise RuntimeError("Unsupported source type: " + kind)

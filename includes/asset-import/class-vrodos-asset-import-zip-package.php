@@ -272,6 +272,10 @@ class VRodos_Asset_Import_Zip_Package {
 			return new WP_Error( 'source_missing', 'Selected conversion source was not extracted.' );
 		}
 
+		if ( strtolower( pathinfo( $source_path, PATHINFO_EXTENSION ) ) === 'gltf' ) {
+			self::repair_gltf_sidecar_paths( $source_path, $target_dir );
+		}
+
 		return [
 			'dir'         => $target_dir,
 			'source_path' => $source_path,
@@ -440,6 +444,117 @@ class VRodos_Asset_Import_Zip_Package {
 
 	private static function is_embedded_uri( string $uri ): bool {
 		return str_starts_with( strtolower( $uri ), 'data:' );
+	}
+
+	private static function repair_gltf_sidecar_paths( string $gltf_path, string $package_dir ): void {
+		$data = json_decode( (string) file_get_contents( $gltf_path ), true );
+		if ( ! is_array( $data ) ) {
+			return;
+		}
+
+		$uris = [];
+		foreach ( [ 'buffers', 'images' ] as $collection_key ) {
+			foreach ( (array) ( $data[ $collection_key ] ?? [] ) as $item ) {
+				if ( is_array( $item ) && isset( $item['uri'] ) ) {
+					$uris[] = (string) $item['uri'];
+				}
+			}
+		}
+
+		$basename_index = self::build_extracted_basename_index( $package_dir );
+		$extension_index = self::build_extracted_extension_index( $package_dir );
+		$source_dir     = dirname( $gltf_path );
+		foreach ( array_unique( array_filter( array_map( 'trim', $uris ) ) ) as $uri ) {
+			if ( self::is_embedded_uri( $uri ) ) {
+				continue;
+			}
+
+			$relative_path = self::normalize_entry_name( rawurldecode( preg_split( '/[?#]/', $uri )[0] ?? '' ) );
+			if ( '' === $relative_path || str_starts_with( $relative_path, '/' ) || preg_match( '/^[a-z][a-z0-9+.-]*:/i', $relative_path ) || preg_match( '/^[A-Za-z]:\//', $relative_path ) ) {
+				continue;
+			}
+
+			$expected_relative = self::collapse_relative_path( $relative_path );
+			if ( '' === $expected_relative || ! self::is_safe_file_entry( $expected_relative ) ) {
+				continue;
+			}
+
+			$expected_path = $source_dir . DIRECTORY_SEPARATOR . str_replace( '/', DIRECTORY_SEPARATOR, $expected_relative );
+			if ( is_file( $expected_path ) ) {
+				continue;
+			}
+
+			$expected_extension = strtolower( pathinfo( $expected_relative, PATHINFO_EXTENSION ) );
+			$fallback = $basename_index[ strtolower( basename( $expected_relative ) ) ] ?? '';
+			if ( '' === $fallback && $expected_extension && count( $extension_index[ $expected_extension ] ?? [] ) === 1 ) {
+				$fallback = (string) $extension_index[ $expected_extension ][0];
+			}
+			if ( '' === $fallback || ! is_file( $fallback ) ) {
+				continue;
+			}
+
+			$expected_parent = dirname( $expected_path );
+			if ( ! is_dir( $expected_parent ) ) {
+				wp_mkdir_p( $expected_parent );
+			}
+			if ( is_dir( $expected_parent ) ) {
+				@copy( $fallback, $expected_path );
+			}
+		}
+	}
+
+	private static function build_extracted_basename_index( string $package_dir ): array {
+		$index = [];
+		if ( ! is_dir( $package_dir ) ) {
+			return $index;
+		}
+
+		try {
+			$items = new RecursiveIteratorIterator(
+				new RecursiveDirectoryIterator( $package_dir, FilesystemIterator::SKIP_DOTS ),
+				RecursiveIteratorIterator::SELF_FIRST
+			);
+			foreach ( $items as $item ) {
+				if ( ! $item->isFile() ) {
+					continue;
+				}
+				$basename = strtolower( $item->getBasename() );
+				$index[ $basename ] ??= $item->getPathname();
+			}
+		} catch ( UnexpectedValueException ) {
+			return $index;
+		}
+
+		return $index;
+	}
+
+	private static function build_extracted_extension_index( string $package_dir ): array {
+		$index = [];
+		if ( ! is_dir( $package_dir ) ) {
+			return $index;
+		}
+
+		try {
+			$items = new RecursiveIteratorIterator(
+				new RecursiveDirectoryIterator( $package_dir, FilesystemIterator::SKIP_DOTS ),
+				RecursiveIteratorIterator::SELF_FIRST
+			);
+			foreach ( $items as $item ) {
+				if ( ! $item->isFile() ) {
+					continue;
+				}
+				$extension = strtolower( pathinfo( $item->getBasename(), PATHINFO_EXTENSION ) );
+				if ( '' === $extension ) {
+					continue;
+				}
+				$index[ $extension ] ??= [];
+				$index[ $extension ][] = $item->getPathname();
+			}
+		} catch ( UnexpectedValueException ) {
+			return $index;
+		}
+
+		return $index;
 	}
 
 	private static function resolve_glb_resource_entry( string $local_entry, string $uri ): string {
