@@ -299,11 +299,12 @@ class VRodos_Compiler_Manager {
 	 * This fixes CORS and PNA issues when accessed via IP, because Node.js serves them as relative to itself.
 	 */
 	public function normalize_url( $url ) {
-		if ( ! $url || $url === 'false' ) {
-			return $url;
+		$url = trim( (string) $url );
+		if ( '' === $url || in_array( strtolower( $url ), [ 'false', 'null', 'undefined', '0' ], true ) ) {
+			return '';
 		}
 
-		$parsed = wp_parse_url( (string) $url );
+		$parsed = wp_parse_url( $url );
 		if ( ! is_array( $parsed ) ) {
 			return $url;
 		}

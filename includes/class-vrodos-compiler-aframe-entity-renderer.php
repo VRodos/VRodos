@@ -1254,8 +1254,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$main_img = $dom->createElement( 'img' );
 		$main_img->setAttribute( 'id', 'main_img_' . $uuid );
 		$main_img_url = $this->normalize_url( $obj->poi_img_path ?? $obj->poi_image_path ?? '' );
-		$main_img->setAttribute( 'src', $main_img_url );
-		$main_img->setAttribute( 'crossorigin', 'anonymous' );
+		if ( '' !== $main_img_url ) {
+			$main_img->setAttribute( 'src', $main_img_url );
+			$main_img->setAttribute( 'crossorigin', 'anonymous' );
+		}
 		$assets->appendChild( $main_img );
 		$this->track_runtime_asset( 'poi-image', $main_img_url, 'poi-imagetext:' . $uuid );
 

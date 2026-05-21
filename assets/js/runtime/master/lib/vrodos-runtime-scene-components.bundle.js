@@ -142,10 +142,15 @@
       this.desc_list = [];
       this.readingPos = 0;
       this.cam.add(this.infoPanel);
+      const isValidImageUrl = (url) => {
+        if (!url) return false;
+        const normalized = String(url).trim().toLowerCase();
+        return normalized !== "" && normalized !== "false" && normalized !== "null" && normalized !== "undefined" && normalized !== "0";
+      };
       const getMeta = (url, cb) => {
         const img = new Image();
         img.onload = () => cb(null, img);
-        img.onerror = (err) => cb(err);
+        img.onerror = (err) => cb(err, null);
         img.src = url;
       };
       let content_length = 90;
@@ -181,8 +186,12 @@
         expected_height = 1.4;
         exceed_height = 1.4;
       }
-      if (this.ImageAsset.getAttribute("src")) {
-        getMeta(this.ImageAsset.getAttribute("src"), (err, img) => {
+      const imageSrc = this.ImageAsset ? this.ImageAsset.getAttribute("src") : "";
+      if (isValidImageUrl(imageSrc)) {
+        getMeta(imageSrc, (err, img) => {
+          if (err || !img || !img.naturalWidth || !img.naturalHeight) {
+            return;
+          }
           let aspect_ratio;
           img.naturalWidth > img.naturalHeight ? aspect_ratio = img.naturalWidth / img.naturalHeight : aspect_ratio = img.naturalHeight / img.naturalWidth;
           img.naturalWidth > img.naturalHeight ? expected_height = expected_width / aspect_ratio : expected_width = expected_height / aspect_ratio;
