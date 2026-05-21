@@ -521,6 +521,147 @@ def build_texture_index():
                 index.setdefault(key, path)
     return index
 
+def texture_kind_score(path, kind, material_name):
+    filename = os.path.basename(path).lower()
+    stem = os.path.splitext(filename)[0]
+    tokens = [item for item in material_name.lower().replace("-", "_").split("_") if len(item) > 2]
+    score = 0
+
+    kind_keywords = {
+        "base": ["basecolor", "base_color", "albedo", "diffuse", "color_light", "colour", "color", "col"],
+        "normal": ["normal", "_nrm", "nrm", "bump"],
+        "roughness": ["roughness", "rough"],
+        "metallic": ["metalness", "metallic", "metal"],
+        "alpha": ["opacity", "alpha", "transparency"],
+    }
+    exclusions = {
+        "base": ["normal", "nrm", "bump", "rough", "metal", "opacity", "alpha", "ao", "ambient", "height", "displace", "spec"],
+        "normal": ["rough", "metal", "opacity", "alpha", "color", "albedo", "diffuse"],
+        "roughness": ["normal", "metal", "opacity", "alpha", "color", "albedo", "diffuse"],
+        "metallic": ["normal", "rough", "opacity", "alpha", "color", "albedo", "diffuse"],
+        "alpha": ["normal", "rough", "metal", "color", "albedo", "diffuse"],
+    }
+
+    for bad in exclusions.get(kind, []):
+        if bad in stem:
+            score -= 20
+    for keyword in kind_keywords.get(kind, []):
+        if keyword in stem:
+            score += 30
+    if kind == "base" and "color_dark" in stem:
+        score -= 4
+
+    for token in tokens:
+        if token in stem:
+            score += 3
+
+    return score
+
+def choose_texture(texture_paths, kind, material_name):
+    scored = [
+        (texture_kind_score(path, kind, material_name), path)
+        for path in texture_paths
+    ]
+    scored = [item for item in scored if item[0] > 0]
+    if not scored:
+        return ""
+    scored.sort(key=lambda item: (item[0], -len(os.path.basename(item[1]))), reverse=True)
+    return scored[0][1]
+
+def get_principled_node(material):
+    if not material.use_nodes:
+        material.use_nodes = True
+    if material.node_tree is None:
+        return None
+    for node in material.node_tree.nodes:
+        if node.bl_idname == "ShaderNodeBsdfPrincipled":
+            return node
+    return None
+
+def has_linked_input(node, input_name):
+    socket = node.inputs.get(input_name) if node else None
+    return bool(socket and socket.is_linked)
+
+def attach_image_to_input(material, principled, input_name, image_path, color_space="sRGB"):
+    if not image_path or not os.path.exists(image_path):
+        return False
+    socket = principled.inputs.get(input_name)
+    if socket is None or socket.is_linked:
+        return False
+
+    try:
+        image = bpy.data.images.load(image_path, check_existing=True)
+        if hasattr(image, "colorspace_settings"):
+            image.colorspace_settings.name = color_space
+        image_node = material.node_tree.nodes.new("ShaderNodeTexImage")
+        image_node.image = image
+        image_node.label = os.path.basename(image_path)
+        material.node_tree.links.new(image_node.outputs["Color"], socket)
+        return True
+    except Exception as exc:
+        print("Could not attach texture:", image_path, "to", material.name, input_name, exc)
+        return False
+
+def attach_normal_map(material, principled, image_path):
+    normal_socket = principled.inputs.get("Normal") if principled else None
+    if not image_path or not os.path.exists(image_path) or normal_socket is None or normal_socket.is_linked:
+        return False
+
+    try:
+        image = bpy.data.images.load(image_path, check_existing=True)
+        if hasattr(image, "colorspace_settings"):
+            image.colorspace_settings.name = "Non-Color"
+        image_node = material.node_tree.nodes.new("ShaderNodeTexImage")
+        image_node.image = image
+        image_node.label = os.path.basename(image_path)
+        normal_node = material.node_tree.nodes.new("ShaderNodeNormalMap")
+        material.node_tree.links.new(image_node.outputs["Color"], normal_node.inputs["Color"])
+        material.node_tree.links.new(normal_node.outputs["Normal"], normal_socket)
+        return True
+    except Exception as exc:
+        print("Could not attach normal texture:", image_path, "to", material.name, exc)
+        return False
+
+def ensure_materials_for_texture_inference(texture_paths):
+    if bpy.data.materials or not texture_paths:
+        return
+
+    material = bpy.data.materials.new("VRodos inferred material")
+    material.use_nodes = True
+    for obj in bpy.context.scene.objects:
+        if obj.type == "MESH" and obj.data is not None:
+            obj.data.materials.append(material)
+
+def infer_material_textures(texture_index):
+    texture_paths = sorted(set(texture_index.values()))
+    ensure_materials_for_texture_inference(texture_paths)
+    if not texture_paths:
+        print("Texture inference: no texture files available")
+        return 0
+
+    attached = 0
+    for material in bpy.data.materials:
+        principled = get_principled_node(material)
+        if principled is None:
+            continue
+
+        base_path = choose_texture(texture_paths, "base", material.name)
+        normal_path = choose_texture(texture_paths, "normal", material.name)
+        roughness_path = choose_texture(texture_paths, "roughness", material.name)
+        metallic_path = choose_texture(texture_paths, "metallic", material.name)
+
+        if not has_linked_input(principled, "Base Color") and attach_image_to_input(material, principled, "Base Color", base_path, "sRGB"):
+            attached += 1
+        if not has_linked_input(principled, "Normal") and attach_normal_map(material, principled, normal_path):
+            attached += 1
+        if not has_linked_input(principled, "Roughness") and attach_image_to_input(material, principled, "Roughness", roughness_path, "Non-Color"):
+            attached += 1
+        if not has_linked_input(principled, "Metallic") and attach_image_to_input(material, principled, "Metallic", metallic_path, "Non-Color"):
+            attached += 1
+
+    print("Texture inference:", attached, "texture link(s) attached from", len(texture_paths), "texture file(s)")
+    return attached
+
 def resolve_image_paths(texture_index):
     resolved = 0
     missing = 0
@@ -576,6 +717,7 @@ def material_has_alpha_texture(material):
 def normalize_materials():
     texture_index = build_texture_index()
     resolve_image_paths(texture_index)
+    infer_material_textures(texture_index)
 
     opaque_count = 0
     alpha_count = 0
