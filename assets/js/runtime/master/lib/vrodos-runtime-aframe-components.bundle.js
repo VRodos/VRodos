@@ -1818,6 +1818,9 @@
   AFRAME.registerComponent("custom-movement", {
     schema: {
       movementSpeed: { type: "number", default: 3.2 },
+      flyMovementSpeed: { type: "number", default: 16 },
+      flyPitchVerticalMultiplier: { type: "number", default: 1.75 },
+      flyVerticalSpeedMultiplier: { type: "number", default: 1.5 },
       maxStepHeight: { type: "number", default: VRODOSNavmeshDefaults.maxStepHeight },
       maxDropHeight: { type: "number", default: VRODOSNavmeshDefaults.maxDropHeight },
       maxSlope: { type: "number", default: VRODOSNavmeshDefaults.maxSlope }
@@ -2748,7 +2751,7 @@
       }
       return {
         x: (-this.forwardVector.x * inputY + this.rightVector.x * inputX) * distance,
-        y: (-this.forwardVector.y * inputY + inputVertical) * distance,
+        y: (-this.forwardVector.y * inputY * this.data.flyPitchVerticalMultiplier + inputVertical * this.data.flyVerticalSpeedMultiplier) * distance,
         z: (-this.forwardVector.z * inputY + this.rightVector.z * inputX) * distance
       };
     },
@@ -3358,7 +3361,8 @@
           }
           return;
         }
-        const movementDistance = this.data.movementSpeed * (Math.min(timeDelta, 50) / 1e3);
+        const movementSpeed = flyMode ? this.data.flyMovementSpeed : this.data.movementSpeed;
+        const movementDistance = movementSpeed * (Math.min(timeDelta, 50) / 1e3);
         const movementDelta = flyMode ? this.getFlyMovementDeltaFromInput(inputX, inputY, inputVertical, movementDistance) : this.getMovementDeltaFromInput(inputX, inputY, movementDistance);
         if (!movementDelta) {
           return;
