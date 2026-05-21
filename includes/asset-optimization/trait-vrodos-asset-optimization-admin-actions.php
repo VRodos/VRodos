@@ -17,7 +17,16 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 			return;
 		}
 
-		self::refresh_asset_analysis( $asset_id );
+		$analysis = self::refresh_asset_analysis( $asset_id );
+		if ( ! is_wp_error( $analysis ) ) {
+			$source = self::get_source_glb( $asset_id );
+			if ( ! is_wp_error( $source ) ) {
+				$decision = self::editor_preview_decision( (int) $source['sizeBytes'], is_array( $analysis ) ? $analysis : [] );
+				if ( ! empty( $decision['shouldPreview'] ) ) {
+					self::maybe_queue_editor_preview( $asset_id, $source, is_array( $analysis ) ? $analysis : [], $decision );
+				}
+			}
+		}
 	}
 
 	public function handle_asset_glb_meta_delete( $meta_ids, int $asset_id, string $meta_key, $meta_value ): void {
@@ -28,6 +37,16 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 		}
 
 		delete_post_meta( $asset_id, self::ANALYSIS_META_KEY );
+		self::store_editor_preview_record(
+			$asset_id,
+			[
+				'status'  => 'none',
+				'url'     => '',
+				'path'    => '',
+				'file'    => '',
+				'message' => 'Asset has no GLB source for editor preview.',
+			]
+		);
 	}
 
 	public function handle_asset_delete( int $post_id, WP_Post $post ): void {
@@ -92,7 +111,7 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 
 		$ready_derivatives = array_filter(
 			(array) ( $meta['derivatives'] ?? [] ),
-			static fn( $derivative ) => is_array( $derivative ) && ( $derivative['status'] ?? '' ) === 'ready'
+			static fn( $derivative ) => is_array( $derivative ) && ( $derivative['status'] ?? '' ) === 'ready' && empty( $derivative['editorOnly'] )
 		);
 
 		if ( empty( $ready_derivatives ) ) {

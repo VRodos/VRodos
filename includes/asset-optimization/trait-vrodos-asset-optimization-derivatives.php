@@ -144,7 +144,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		}
 
 		wp_raise_memory_limit( 'admin' );
-		@set_time_limit( 600 );
+		@set_time_limit( self::EDITOR_PREVIEW_PROFILE === $profile ? 1800 : 600 );
 
 		$node = (string) apply_filters( 'vrodos_asset_optimizer_node_command', 'node' );
 		$script = VRodos_Path_Manager::plugin_path( 'scripts/prototype-optimize-master-client-assets.mjs' );

@@ -228,6 +228,28 @@ class VRodos_Asset_AJAX {
 		$output = new stdClass();
 		$output->glbIDs = $glbID;
 		$output->glbURL = $compiler->normalize_url( $glbURL );
+		$output->sourceSizeBytes = 0;
+		$output->editorPreviewGlbURL = '';
+		$output->editorPreviewStatus = 'none';
+		$output->editorPreviewMessage = '';
+		$output->editorPreviewUsed = false;
+		$output->editorPreviewShouldUse = false;
+		$output->editorPreviewMustAvoidSource = false;
+		$output->editorPreviewReasons = [];
+		$output->glbAnalysis = [];
+
+		if ( class_exists( 'VRodos_Asset_Optimization_Manager' ) && '' !== $glbURL ) {
+			$preview_state = VRodos_Asset_Optimization_Manager::get_editor_preview_asset_state( $asset_id );
+			$output->sourceSizeBytes = (int) ( $preview_state['sourceSizeBytes'] ?? 0 );
+			$output->editorPreviewGlbURL = $compiler->normalize_url( (string) ( $preview_state['url'] ?? '' ) );
+			$output->editorPreviewStatus = (string) ( $preview_state['status'] ?? 'none' );
+			$output->editorPreviewMessage = (string) ( $preview_state['message'] ?? '' );
+			$output->editorPreviewUsed = ! empty( $preview_state['used'] );
+			$output->editorPreviewShouldUse = ! empty( $preview_state['shouldPreview'] );
+			$output->editorPreviewMustAvoidSource = ! empty( $preview_state['mustAvoidSource'] );
+			$output->editorPreviewReasons = is_array( $preview_state['reasons'] ?? null ) ? $preview_state['reasons'] : [];
+			$output->glbAnalysis = is_array( $preview_state['analysis'] ?? null ) ? $preview_state['analysis'] : [];
+		}
 
 		// Fetch category slug
 		$terms = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );

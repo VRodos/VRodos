@@ -10,6 +10,7 @@ require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-dash
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-scanner.php';
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-analysis.php';
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-derivatives.php';
+require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-editor-preview.php';
 require_once __DIR__ . '/asset-optimization/class-vrodos-asset-optimization-admin-controller.php';
 
 class VRodos_Asset_Optimization_Manager {
@@ -32,6 +33,7 @@ class VRodos_Asset_Optimization_Manager {
 		add_action( 'updated_post_meta', [ $this->controller, 'handle_asset_glb_meta_change' ], 10, 4 );
 		add_action( 'deleted_post_meta', [ $this->controller, 'handle_asset_glb_meta_delete' ], 10, 4 );
 		add_action( 'before_delete_post', [ $this->controller, 'handle_asset_delete' ], 10, 2 );
+		add_action( VRodos_Asset_Optimization_Admin_Controller::EDITOR_PREVIEW_CRON_HOOK, [ $this->controller, 'process_editor_preview_job' ], 10, 1 );
 		add_filter( 'vrodos_settings_tabs', [ $this->controller, 'register_settings_tab' ] );
 		add_action( 'vrodos_render_settings_tab_' . VRodos_Asset_Optimization_Admin_Controller::SETTINGS_TAB_KEY, [ $this->controller, 'render_asset_optimization_settings' ] );
 	}
@@ -46,5 +48,9 @@ class VRodos_Asset_Optimization_Manager {
 
 	public static function render_dashboard_actionable_assets_table( int $limit = 10 ): void {
 		VRodos_Asset_Optimization_Admin_Controller::render_dashboard_actionable_assets_table( $limit );
+	}
+
+	public static function get_editor_preview_asset_state( int $asset_id ): array {
+		return VRodos_Asset_Optimization_Admin_Controller::get_editor_preview_asset_state( $asset_id );
 	}
 }

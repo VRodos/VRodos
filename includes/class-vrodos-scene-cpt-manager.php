@@ -288,6 +288,18 @@ class VRodos_Scene_CPT_Manager {
 			'screenshot_path' => self::normalize_editor_scene_asset_url( $screenshot_url ),
 		];
 
+		if ( class_exists( 'VRodos_Asset_Optimization_Manager' ) && '' !== $glb_url ) {
+			$preview_state = VRodos_Asset_Optimization_Manager::get_editor_preview_asset_state( $asset_id );
+			$metadata['sourceSizeBytes'] = (int) ( $preview_state['sourceSizeBytes'] ?? 0 );
+			$metadata['editorPreviewGlbURL'] = self::normalize_editor_scene_asset_url( (string) ( $preview_state['url'] ?? '' ) );
+			$metadata['editorPreviewStatus'] = (string) ( $preview_state['status'] ?? 'none' );
+			$metadata['editorPreviewMessage'] = (string) ( $preview_state['message'] ?? '' );
+			$metadata['editorPreviewShouldUse'] = ! empty( $preview_state['shouldPreview'] );
+			$metadata['editorPreviewMustAvoidSource'] = ! empty( $preview_state['mustAvoidSource'] );
+			$metadata['editorPreviewReasons'] = is_array( $preview_state['reasons'] ?? null ) ? $preview_state['reasons'] : [];
+			$metadata['glbAnalysis'] = is_array( $preview_state['analysis'] ?? null ) ? $preview_state['analysis'] : [];
+		}
+
 		$metadata_by_asset_id[ $asset_id ] = array_filter(
 			$metadata,
 			static fn( $value ) => '' !== $value && null !== $value && false !== $value

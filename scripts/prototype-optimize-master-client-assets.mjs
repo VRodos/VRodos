@@ -130,7 +130,7 @@ Options:
   --source PATH           Optimize one local GLB instead of selecting assets from an audit.
   --source-url URL        Source URL metadata to record with --source.
   --output-file PATH      Exact derivative GLB path for --source mode.
-  --profile NAME          One of safe-draco, safe-meshopt. Default: safe-draco.
+  --profile NAME          One of safe-draco, safe-meshopt, editor-preview. Default: safe-draco.
   --limit N               Number of top GLBs to process. Default: 3.
   --include REGEX         Only process assets whose URL or filename matches.
   --gltf-transform PATH   Optional glTF Transform CLI executable.
@@ -429,6 +429,8 @@ async function runCommand(runner, args, timeoutMs = 10 * 60 * 1000) {
 function profileSteps(profile, inputPath, outputPath, workDir) {
     const step1 = path.join(workDir, '01-prune.glb');
     const step2 = path.join(workDir, '02-dedup.glb');
+    const step3 = path.join(workDir, '03-weld.glb');
+    const step4 = path.join(workDir, '04-simplify.glb');
 
     if (profile === 'safe-draco') {
         return [
@@ -443,6 +445,16 @@ function profileSteps(profile, inputPath, outputPath, workDir) {
             ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
             ['dedup', step1, step2],
             ['meshopt', step2, outputPath, '--level', 'medium']
+        ];
+    }
+
+    if (profile === 'editor-preview') {
+        return [
+            ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
+            ['dedup', step1, step2],
+            ['weld', step2, step3],
+            ['simplify', step3, step4, '--ratio', '0.35', '--error', '0.01', '--lock-border', 'true'],
+            ['resize', step4, outputPath, '--width', '1024', '--height', '1024']
         ];
     }
 
@@ -501,6 +513,10 @@ async function optimizeAsset(asset, index, options, runner) {
     if (options.profile === 'safe-draco') {
         record.runtimeNotes.push('Requires compiled runtime/A-Frame GLTFLoader Draco decoder wiring verification before compile-time substitution.');
     }
+    if (options.profile === 'editor-preview') {
+        record.runtimeNotes.push('Editor-only preview derivative. Do not enable for compiled-scene substitution.');
+        record.runtimeNotes.push('Uses geometry simplification and texture resize without Draco compression to avoid editor decode stalls.');
+    }
     record.runtimeNotes.push('Derivative is for prototype review only; source upload is untouched.');
 
     if (options.dryRun) {
@@ -510,8 +526,9 @@ async function optimizeAsset(asset, index, options, runner) {
     await mkdir(path.dirname(derivativePath), { recursive: true });
     await mkdir(workDir, { recursive: true });
     const steps = profileSteps(options.profile, sourcePath, derivativePath, workDir);
+    const stepTimeoutMs = options.profile === 'editor-preview' ? 30 * 60 * 1000 : 10 * 60 * 1000;
     for (const args of steps) {
-        const command = await runCommand(runner, args);
+        const command = await runCommand(runner, args, stepTimeoutMs);
         record.commands.push(command);
         if (command.code !== 0) {
             record.status = 'error';
