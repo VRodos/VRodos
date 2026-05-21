@@ -94,8 +94,16 @@ VRODOS.syncLocalizedData = function() {
 };
 
 VRODOS.utils.getAjaxUrl = function() {
+    if (window.ajaxurl) {
+        return window.ajaxurl;
+    }
+
     if (VRODOS.config && VRODOS.config.ajax_url) {
         return VRODOS.config.ajax_url;
+    }
+
+    if (VRODOS.config && VRODOS.config.ajaxUrl) {
+        return VRODOS.config.ajaxUrl;
     }
 
     if (VRODOS.data && VRODOS.data.ajax_url) {
@@ -104,6 +112,27 @@ VRODOS.utils.getAjaxUrl = function() {
 
     if (VRODOS.data && VRODOS.data.siteurl) {
         return `${String(VRODOS.data.siteurl).replace(/\/+$/, '')}/wp-admin/admin-ajax.php`;
+    }
+
+    const restLink = document.querySelector('link[rel="https://api.w.org/"]');
+    if (restLink && restLink.href) {
+        try {
+            const restUrl = new URL(restLink.href, window.location.href);
+            const sitePath = restUrl.pathname
+                .replace(/\/wp-json\/?$/, '')
+                .replace(/\/index\.php$/, '')
+                .replace(/\/+$/, '');
+            return `${restUrl.origin}${sitePath}/wp-admin/admin-ajax.php`;
+        } catch (_error) {
+            // Continue to the location-based fallback below.
+        }
+    }
+
+    if (window.location && window.location.pathname) {
+        const adminIndex = window.location.pathname.indexOf('/wp-admin/');
+        if (adminIndex >= 0) {
+            return `${window.location.origin}${window.location.pathname.slice(0, adminIndex)}/wp-admin/admin-ajax.php`;
+        }
     }
 
     return '/wp-admin/admin-ajax.php';

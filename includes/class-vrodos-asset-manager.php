@@ -292,9 +292,18 @@ class VRodos_Asset_Manager {
 		wp_enqueue_style( 'vrodos_asseteditor_stylesheet' );
 		wp_enqueue_style( 'vrodos_modern_compiled' );
 		wp_enqueue_script( 'lucide-icons' );
+		$isAdmin = is_admin() ? 'back' : 'front';
 
 		// Three js : for simple rendering
 		wp_enqueue_script( 'vrodos_namespace' );
+		wp_localize_script(
+			'vrodos_namespace',
+			'vrodos_api_config',
+			[
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'isAdmin'  => $isAdmin,
+			]
+		);
 		wp_enqueue_script( 'vrodos_scripts' );
 
 		// 1. Three js library
