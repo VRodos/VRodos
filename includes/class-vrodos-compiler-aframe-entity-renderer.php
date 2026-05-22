@@ -623,7 +623,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 				$ascene->appendChild( $a_asset );
 			}
 		}
-		$a_asset->setAttribute( 'timeout', '5000' );
+		$a_asset->setAttribute( 'timeout', VRodos_Compiler_Runtime_Assets::aframe_asset_timeout_ms() );
 		return $a_asset;
 	}
 

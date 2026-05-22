@@ -637,7 +637,7 @@ class VRodos_Compiler_Scene_Settings {
 	private function get_or_create_assets_container( DOMDocument $dom, DOMElement $ascene ): DOMElement {
 		$a_asset = $dom->getElementsByTagName( 'a-assets' )->item( 0 );
 		if ( $a_asset instanceof DOMElement ) {
-			$a_asset->setAttribute( 'timeout', '5000' );
+			$a_asset->setAttribute( 'timeout', VRodos_Compiler_Runtime_Assets::aframe_asset_timeout_ms() );
 			return $a_asset;
 		}
 
@@ -647,7 +647,7 @@ class VRodos_Compiler_Scene_Settings {
 		} else {
 			$ascene->appendChild( $a_asset );
 		}
-		$a_asset->setAttribute( 'timeout', '5000' );
+		$a_asset->setAttribute( 'timeout', VRodos_Compiler_Runtime_Assets::aframe_asset_timeout_ms() );
 
 		return $a_asset;
 	}

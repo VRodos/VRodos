@@ -5,6 +5,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class VRodos_Compiler_Runtime_Assets {
+	private const DEFAULT_AFRAME_ASSET_TIMEOUT_MS = 120000;
+
+	public static function aframe_asset_timeout_ms(): string {
+		$timeout = absint( apply_filters( 'vrodos_compiled_aframe_asset_timeout_ms', self::DEFAULT_AFRAME_ASSET_TIMEOUT_MS ) );
+
+		return (string) max( 3000, $timeout );
+	}
+
 	public function replace_placeholders( string $content ): string {
 		$replacements = [
 			'VRODOS_CSS_URL_PLACEHOLDER'         => $this->same_origin_path( VRodos_Path_Manager::css_url() ),
