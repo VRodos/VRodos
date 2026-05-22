@@ -33473,7 +33473,7 @@
   var LOD_MIN = 4;
   var EXTRA_LOD_SIGMA = [0.125, 0.215, 0.35, 0.446, 0.526, 0.582];
   var MAX_SAMPLES = 20;
-  var GGX_SAMPLES = 512;
+  var GGX_SAMPLES = 256;
   var _flatCamera = /* @__PURE__ */ new OrthographicCamera();
   var _clearColor = /* @__PURE__ */ new Color();
   var _oldTarget = null;
@@ -33652,6 +33652,7 @@
         const { _lodMax } = this;
         ({ lodMeshes: this._lodMeshes, sizeLods: this._sizeLods, sigmas: this._sigmas } = _createPlanes(_lodMax));
         this._blurMaterial = _getBlurShader(_lodMax, width, height);
+        this._ggxMaterial = _getGGXShader(_lodMax, width, height);
       }
       return cubeUVRenderTarget;
     }
@@ -33776,11 +33777,6 @@
     _applyGGXFilter(cubeUVRenderTarget, lodIn, lodOut) {
       const renderer = this._renderer;
       const pingPongRenderTarget = this._pingPongRenderTarget;
-      if (this._ggxMaterial === null) {
-        const width = 3 * Math.max(this._cubeSize, 16);
-        const height = 4 * this._cubeSize;
-        this._ggxMaterial = _getGGXShader(this._lodMax, width, height);
-      }
       const ggxMaterial = this._ggxMaterial;
       const ggxMesh = this._lodMeshes[lodOut];
       ggxMesh.material = ggxMaterial;
@@ -33993,8 +33989,8 @@
         /* glsl */
         `
 
-			precision mediump float;
-			precision mediump int;
+			precision highp float;
+			precision highp int;
 
 			varying vec3 vOutputDirection;
 

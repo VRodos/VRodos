@@ -485,6 +485,22 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		return 'auto' === $authored_role ? $this->normalize_shadow_role( $default_role ) : $this->normalize_shadow_role( $authored_role );
 	}
 
+	private function has_authored_shadow_role( $obj ): bool {
+		if ( ! is_object( $obj ) ) {
+			return false;
+		}
+
+		if ( property_exists( $obj, 'vrodosShadowRole' ) ) {
+			return 'auto' !== $this->normalize_authored_shadow_role( $obj->vrodosShadowRole );
+		}
+
+		if ( property_exists( $obj, 'shadowRole' ) ) {
+			return 'auto' !== $this->normalize_authored_shadow_role( $obj->shadowRole );
+		}
+
+		return false;
+	}
+
 	private function resolve_object_material_role( $obj ): string {
 		if ( is_object( $obj ) ) {
 			if ( property_exists( $obj, 'vrodosMaterialRole' ) ) {
@@ -890,6 +906,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		if ( $cat === 'walkable-surface' ) {
 			$class .= ' vrodos-navmesh';
+			$shadow_role = 'receiver';
 			$walk_behavior = ( isset( $obj->walkableBehavior ) && 'auto' === strtolower( (string) $obj->walkableBehavior ) ) ? 'auto' : 'precise';
 			$entity->setAttribute( 'data-vrodos-navmesh', 'true' );
 			$entity->setAttribute( 'data-vrodos-walk-behavior', $walk_behavior );
@@ -945,6 +962,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$shadow_role = $this->resolve_object_shadow_role( $obj, $shadow_role );
 		}
 		$this->set_world_lighting_attributes( $entity, $shadow_role );
+		if ( $this->has_authored_shadow_role( $obj ) ) {
+			$entity->setAttribute( 'data-vrodos-shadow-role-authored', 'true' );
+		}
 		if ( ! $is_collision_proxy ) {
 			$entity->setAttribute( 'data-vrodos-material-role', $this->resolve_object_material_role( $obj ) );
 		}

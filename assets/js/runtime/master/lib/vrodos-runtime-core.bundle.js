@@ -2883,7 +2883,6 @@
     const PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES = 0.25;
     const PMNDRS_DAY_NIGHT_CYCLE_MAX_MINUTES = 1440;
     const PMNDRS_DAY_NIGHT_CYCLE_DAY_MS = 864e5;
-    const PMNDRS_DAY_NIGHT_CYCLE_SHADOW_MS = 2e3;
     const PERFORMANCE_DESKTOP_RENDER_PIXEL_BUDGET = 165e4;
     const DPR_PIXEL_BUDGET_QUERY_PARAM = "vrodos_dpr_pixel_budget";
     const WGS84_EQUATORIAL_RADIUS = 6378137;
@@ -4214,12 +4213,18 @@
       }
       return null;
     }
+    function isNavmeshShadowEntity(entityEl) {
+      return Boolean(entityEl && (entityHasClass(entityEl, "vrodos-navmesh") || entityEl.hasAttribute("data-vrodos-navmesh")));
+    }
     function getEntityShadowRole(entityEl) {
       if (!entityEl) {
         return null;
       }
       if (entityEl.hasAttribute("data-vrodos-collision-hidden") || entityEl.hasAttribute("vrodos-collider-helper") || entityEl.hasAttribute("data-vrodos-overlay-ui")) {
         return "none";
+      }
+      if (isNavmeshShadowEntity(entityEl) && entityEl.getAttribute("data-vrodos-shadow-role-authored") !== "true") {
+        return "receiver";
       }
       const authoredRole = normalizeShadowRole(entityEl.getAttribute("data-vrodos-shadow-role"));
       if (authoredRole) {
@@ -4228,7 +4233,7 @@
         }
         return authoredRole;
       }
-      if (entityHasClass(entityEl, "vrodos-navmesh") || entityEl.hasAttribute("data-vrodos-navmesh")) {
+      if (isNavmeshShadowEntity(entityEl)) {
         return "receiver";
       }
       return null;
@@ -4323,12 +4328,26 @@
       const maxFitDistanceSq = maxFitDistance * maxFitDistance;
       const focusedBounds = new THREE.Box3();
       const fallbackBounds = new THREE.Box3();
+      const cameraLocalBounds = new THREE.Box3();
       const nodeBounds = new THREE.Box3();
       const nodeCenter = new THREE.Vector3();
+      const clippedNodeBounds = new THREE.Box3();
       let hasFocusedBounds = false;
       let hasFallbackBounds = false;
       if (canUseCamera) {
         camera.getWorldPosition(cameraPosition);
+        cameraLocalBounds.set(
+          new THREE.Vector3(
+            cameraPosition.x - maxFitDistance,
+            cameraPosition.y - maxFitDistance,
+            cameraPosition.z - maxFitDistance
+          ),
+          new THREE.Vector3(
+            cameraPosition.x + maxFitDistance,
+            cameraPosition.y + maxFitDistance,
+            cameraPosition.z + maxFitDistance
+          )
+        );
       }
       sceneObj.updateMatrixWorld(true);
       sceneObj.traverse((node) => {
@@ -4347,7 +4366,15 @@
           return;
         }
         nodeBounds.getCenter(nodeCenter);
-        if (nodeBounds.containsPoint(cameraPosition) || nodeCenter.distanceToSquared(cameraPosition) <= maxFitDistanceSq) {
+        if (nodeBounds.containsPoint(cameraPosition)) {
+          clippedNodeBounds.copy(nodeBounds).intersect(cameraLocalBounds);
+          if (!clippedNodeBounds.isEmpty()) {
+            focusedBounds.union(clippedNodeBounds);
+            hasFocusedBounds = true;
+          }
+          return;
+        }
+        if (nodeCenter.distanceToSquared(cameraPosition) <= maxFitDistanceSq) {
           focusedBounds.union(nodeBounds);
           hasFocusedBounds = true;
         }
@@ -4532,11 +4559,6 @@
         }
       }, 80);
     }
-    function getPmndrsDayNightCycleShadowIntervalMs(config) {
-      const durationMinutes = config && typeof config.dayNightCycleDurationMinutes === "number" && isFinite(config.dayNightCycleDurationMinutes) ? config.dayNightCycleDurationMinutes : PMNDRS_DAY_NIGHT_CYCLE_DEFAULT_MINUTES;
-      const cycleMs = Math.max(PMNDRS_DAY_NIGHT_CYCLE_MIN_MINUTES * 6e4, durationMinutes * 6e4);
-      return Math.max(1e3, Math.min(PMNDRS_DAY_NIGHT_CYCLE_SHADOW_MS, cycleMs * 0.02));
-    }
     function schedulePmndrsAtmosphereShadowFit(self, config) {
       if (!isPmndrsDayNightCycleEnabled(self)) {
         scheduleAdaptiveShadowFit(self);
@@ -4545,16 +4567,9 @@
       if (hasPmndrsDebugFlag("disablePmndrsDayNightCycleDynamicShadows", "vrodos_debug_disable_day_night_dynamic_shadows")) {
         return;
       }
-      const now = typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
-      const last = typeof self._pmndrsDayNightCycleShadowLastMs === "number" ? self._pmndrsDayNightCycleShadowLastMs : 0;
-      const intervalMs = getPmndrsDayNightCycleShadowIntervalMs(config);
-      if (last > 0 && now - last < intervalMs) {
-        return;
-      }
-      self._pmndrsDayNightCycleShadowLastMs = now;
-      applyAdaptiveShadowFit(self, { stableFrustum: true });
-      if (typeof self.markShadowDirty === "function") {
-        self.markShadowDirty("day-night-shadow-fit");
+      if (!self._vrodosShadowFitLastMs) {
+        self._pmndrsDayNightCycleShadowLastMs = typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+        applyAdaptiveShadowFit(self, { stableFrustum: true });
       }
       if (config && config.localSunDirection) {
         self._pmndrsDayNightCycleLastShadowSunDirection = self._pmndrsDayNightCycleLastShadowSunDirection || new THREE.Vector3();
@@ -4564,6 +4579,11 @@
     function arePmndrsDayNightCycleDynamicShadowsEnabled(self, config) {
       return Boolean(
         config && config.dayNightCycleEnabled && self && self.data && self.data.shadowQuality !== "off" && !hasPmndrsDebugFlag("disablePmndrsDayNightCycleDynamicShadows", "vrodos_debug_disable_day_night_dynamic_shadows")
+      );
+    }
+    function shouldUseDayNightPcfShadowMap(self) {
+      return Boolean(
+        self && self.data && isPmndrsDayNightCycleEnabled(self) && self.data.shadowQuality !== "off" && !hasPmndrsDebugFlag("disablePmndrsDayNightCycleDynamicShadows", "vrodos_debug_disable_day_night_dynamic_shadows")
       );
     }
     function getShadowDiagnosticState(self) {
@@ -5263,11 +5283,11 @@
       }
     }
     function removePhotorealHelperLightElements(self) {
-      if (!self || typeof self.getCachedSceneQuery !== "function") {
+      if (!self || !self.el || typeof self.el.querySelectorAll !== "function") {
         return;
       }
       let removed = false;
-      Array.prototype.forEach.call(self.getCachedSceneQuery("photorealLights", '[data-vrodos-photoreal-light="true"]'), (lightEl) => {
+      Array.prototype.forEach.call(self.el.querySelectorAll('[data-vrodos-photoreal-light="true"]'), (lightEl) => {
         if (lightEl.parentNode) {
           lightEl.parentNode.removeChild(lightEl);
           removed = true;
@@ -5275,6 +5295,9 @@
       });
       if (removed) {
         self.markSceneCollectionsDirty();
+        if (typeof self.markShadowDirty === "function") {
+          self.markShadowDirty("remove-photoreal-light");
+        }
       }
     }
     function removePmndrsTakramLightSources(self) {
@@ -5465,6 +5488,7 @@
       }
       const shadowEnabled = self.data.shadowQuality !== "off";
       const shadowMap = self.data.shadowQuality === "high" ? 2048 : 1024;
+      const contactShadowSettings = typeof self.getContactShadowSettings === "function" ? self.getContactShadowSettings() : self.data.shadowQuality === "high" ? { bias: -16e-5, normalBias: 0.018 } : { bias: -1e-4, normalBias: 0.012 };
       const sunLight = state.sunLight;
       const skyLight = state.skyLight;
       const fillLight = state.fillLight;
@@ -5523,7 +5547,10 @@
         ensurePmndrsWorldToEcefMatrix(sunLight, config);
         if (sunLight.shadow) {
           sunLight.shadow.mapSize.set(shadowMap, shadowMap);
-          sunLight.shadow.bias = -12e-5;
+          sunLight.shadow.bias = contactShadowSettings.bias;
+          if (typeof sunLight.shadow.normalBias !== "undefined") {
+            sunLight.shadow.normalBias = contactShadowSettings.normalBias;
+          }
           const adaptiveShadowFitted = sunLight.userData && sunLight.userData.vrodosAdaptiveShadowFitted;
           if (sunLight.shadow.camera && !adaptiveShadowFitted) {
             const shadowExtent = getDirectionalShadowDistanceForScene(self, 28);
@@ -7122,7 +7149,7 @@
       const shadowsEnabled = shadowQuality !== "off";
       const contactShadowSettings = this.getContactShadowSettings();
       const profileShadowType = shadowQuality === "high" ? "pcfsoft" : "pcf";
-      const shadowTypeAttr = shadowsEnabled ? normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType) : "pcf";
+      const shadowTypeAttr = shadowsEnabled ? shouldUseDayNightPcfShadowMap(this) ? "pcf" : normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType) : "pcf";
       const shadowMapType = getThreeShadowMapType(shadowTypeAttr);
       const staticShadowMode = shadowsEnabled && isStaticShadowMode(this);
       if (renderer && renderer.shadowMap) {
@@ -7180,11 +7207,13 @@
             }
             const managedShadowBias = shadowQuality === "high" ? 4e-5 : 8e-5;
             const managedNormalBias = shadowQuality === "high" ? 0.045 : 0.065;
+            const managedContactShadowBias = typeof contactShadowSettings.bias === "number" ? contactShadowSettings.bias : managedShadowBias;
+            const managedContactShadowNormalBias = typeof contactShadowSettings.normalBias === "number" ? contactShadowSettings.normalBias : managedNormalBias;
             if (typeof node.shadow.bias !== "undefined") {
-              node.shadow.bias = isVrodosManagedLight ? managedShadowBias : node.userData.vrodosBaseShadowBias !== 0 ? node.userData.vrodosBaseShadowBias : contactShadowSettings.bias;
+              node.shadow.bias = isVrodosManagedLight ? managedContactShadowBias : node.userData.vrodosBaseShadowBias !== 0 ? node.userData.vrodosBaseShadowBias : contactShadowSettings.bias;
             }
             if (typeof node.shadow.normalBias !== "undefined") {
-              node.shadow.normalBias = isVrodosManagedLight ? managedNormalBias : node.userData.vrodosBaseShadowNormalBias !== 0 ? node.userData.vrodosBaseShadowNormalBias : contactShadowSettings.normalBias;
+              node.shadow.normalBias = isVrodosManagedLight ? managedContactShadowNormalBias : node.userData.vrodosBaseShadowNormalBias !== 0 ? node.userData.vrodosBaseShadowNormalBias : contactShadowSettings.normalBias;
             }
           }
           node.shadow.needsUpdate = node.castShadow;
