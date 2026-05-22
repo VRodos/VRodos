@@ -5,17 +5,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class VRodos_Compiler_AFrame_Entity_Renderer {
+	private const GLTF_LOAD_PHASE_CRITICAL = 'critical';
+	private const GLTF_LOAD_PHASE_LAZY     = 'lazy';
+	private const CRITICAL_GLTF_CATEGORIES = [ 'walkable-surface', 'collision-proxy', 'blocking-obstacles' ];
+	private const INTERACTIVE_GLTF_CATEGORIES = [ 'door', 'poi-link', 'chat', 'poi-chat', 'audio', 'poi-imagetext', 'assessment' ];
+	private const NEAR_GLTF_DISTANCE_METERS = 35.0;
+	private const INTERACTIVE_GLTF_DISTANCE_METERS = 60.0;
+	private const SMALL_GLTF_ASSET_BYTES = 5 * 1024 * 1024;
+
 	private VRodos_Compiler_Runtime_Assets $runtime_assets;
 	private VRodos_Compiler_Scene_Repository $scene_repository;
 	private $normalize_url;
 	private string $plugin_path_url = '';
 	private bool $isHoverEnabled = true;
+	private array $compile_camera_position = [ 0.0, 1.6, 0.0 ];
 	private array $diagnostic_asset_refs = [];
 	private array $diagnostic_asset_entries = [];
 	private array $diagnostic_warning_keys = [];
 	private array $diagnostic_warnings = [];
 	private array $diagnostic_notes = [];
 	private array $diagnostic_category_counts = [];
+	private array $diagnostic_load_phases = [];
 	private int $diagnostic_object_count = 0;
 	private int $diagnostic_collider_count = 0;
 
@@ -37,6 +47,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->diagnostic_warnings        = [];
 		$this->diagnostic_notes           = [];
 		$this->diagnostic_category_counts = [];
+		$this->diagnostic_load_phases     = [];
 		$this->diagnostic_object_count    = 0;
 		$this->diagnostic_collider_count  = 0;
 	}
@@ -66,6 +77,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->diagnostic_asset_refs[ $key ]['contexts'][] = $context;
 
 		if ( isset( $this->diagnostic_asset_entries[ $key ] ) ) {
+			$this->diagnostic_asset_entries[ $key ]['contexts'][] = $context;
 			return;
 		}
 
@@ -75,9 +87,19 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			'url'       => $url,
 			'sizeBytes' => $size,
 			'sizeLabel' => null !== $size ? $this->format_bytes( $size ) : null,
+			'contexts'  => [ $context ],
 		];
 
 		$this->maybe_add_asset_size_warning( $type, $url, $size, $context );
+	}
+
+	private function annotate_runtime_asset_entry( string $type, string $url, array $attributes ): void {
+		$key = trim( $type ) . '|' . trim( $url );
+		if ( ! isset( $this->diagnostic_asset_entries[ $key ] ) ) {
+			return;
+		}
+
+		$this->diagnostic_asset_entries[ $key ] = array_merge( $this->diagnostic_asset_entries[ $key ], $attributes );
 	}
 
 	private function resolve_local_asset_size( string $url ): ?int {
@@ -223,6 +245,166 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		return $bytes . ' B';
 	}
 
+	private function load_phase_label( string $phase ): string {
+		return self::GLTF_LOAD_PHASE_LAZY === $phase ? 'lazy' : 'critical';
+	}
+
+	private function set_load_phase_stat( string $phase ): void {
+		$phase = $this->load_phase_label( $phase );
+		$this->diagnostic_load_phases[ $phase ] = ( $this->diagnostic_load_phases[ $phase ] ?? 0 ) + 1;
+	}
+
+	private function extract_vector3( $value ): ?array {
+		if ( is_object( $value ) ) {
+			$value = [
+				$value->x ?? null,
+				$value->y ?? null,
+				$value->z ?? null,
+			];
+		}
+
+		if ( ! is_array( $value ) || count( $value ) < 3 ) {
+			return null;
+		}
+
+		$vector = [];
+		for ( $index = 0; $index < 3; $index++ ) {
+			if ( ! is_numeric( $value[ $index ] ) ) {
+				return null;
+			}
+			$vector[] = (float) $value[ $index ];
+		}
+
+		return $vector;
+	}
+
+	private function extract_camera_position( $objects ): array {
+		if ( ! is_object( $objects ) || empty( $objects->avatarCamera ) || ! is_object( $objects->avatarCamera ) ) {
+			return [ 0.0, 1.6, 0.0 ];
+		}
+
+		return $this->extract_vector3( $objects->avatarCamera->position ?? null ) ?: [ 0.0, 1.6, 0.0 ];
+	}
+
+	private function object_distance_to_camera( $obj ): ?float {
+		$position = $this->extract_vector3( $obj->position ?? null );
+		if ( null === $position ) {
+			return null;
+		}
+
+		$dx = $position[0] - $this->compile_camera_position[0];
+		$dy = $position[1] - $this->compile_camera_position[1];
+		$dz = $position[2] - $this->compile_camera_position[2];
+
+		return sqrt( $dx * $dx + $dy * $dy + $dz * $dz );
+	}
+
+	private function resolve_gltf_load_plan( $obj, string $glb_url, ?int $size_bytes ): array {
+		$cat      = sanitize_title( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) );
+		$distance = $this->object_distance_to_camera( $obj );
+		$priority = 500;
+		$phase    = self::GLTF_LOAD_PHASE_LAZY;
+		$reason   = 'deferred optional asset';
+
+		if ( in_array( $cat, self::CRITICAL_GLTF_CATEGORIES, true ) ) {
+			$phase    = self::GLTF_LOAD_PHASE_CRITICAL;
+			$priority = 10;
+			$reason   = 'navigation or collision shell';
+		} elseif ( null !== $distance && $distance <= self::NEAR_GLTF_DISTANCE_METERS ) {
+			$phase    = self::GLTF_LOAD_PHASE_CRITICAL;
+			$priority = 50 + (int) round( $distance );
+			$reason   = 'near initial camera';
+		} elseif ( in_array( $cat, self::INTERACTIVE_GLTF_CATEGORIES, true ) && null !== $distance && $distance <= self::INTERACTIVE_GLTF_DISTANCE_METERS ) {
+			$phase    = self::GLTF_LOAD_PHASE_CRITICAL;
+			$priority = 120 + (int) round( $distance );
+			$reason   = 'near interaction target';
+		} elseif ( null !== $size_bytes && $size_bytes <= self::SMALL_GLTF_ASSET_BYTES ) {
+			$priority = 250 + ( null !== $distance ? min( 200, (int) round( $distance ) ) : 100 );
+			$reason   = 'small deferred asset';
+		} else {
+			$priority = 400 + ( null !== $distance ? min( 300, (int) round( $distance ) ) : 150 );
+		}
+
+		$this->set_load_phase_stat( $phase );
+
+		return [
+			'phase'     => $phase,
+			'priority'  => $priority,
+			'distance'  => $distance,
+			'reason'    => $reason,
+			'sizeBytes' => $size_bytes,
+			'url'       => $glb_url,
+		];
+	}
+
+	private function apply_gltf_load_plan_attributes( DOMElement $entity, array $load_plan ): void {
+		$entity->setAttribute( 'data-vrodos-load-phase', $this->load_phase_label( (string) $load_plan['phase'] ) );
+		$entity->setAttribute( 'data-vrodos-load-priority', (string) (int) $load_plan['priority'] );
+		$entity->setAttribute( 'data-vrodos-load-reason', $this->sanitize_text_attr( (string) $load_plan['reason'] ) );
+
+		if ( null !== $load_plan['distance'] ) {
+			$entity->setAttribute( 'data-vrodos-load-distance', number_format( (float) $load_plan['distance'], 2, '.', '' ) );
+		}
+
+		if ( null !== $load_plan['sizeBytes'] ) {
+			$entity->setAttribute( 'data-vrodos-asset-size-bytes', (string) (int) $load_plan['sizeBytes'] );
+			$entity->setAttribute( 'data-vrodos-asset-size-label', $this->format_bytes( (int) $load_plan['sizeBytes'] ) );
+		}
+	}
+
+	private function apply_compiled_gltf_source(
+		DOMDocument $dom,
+		?DOMElement $assets,
+		DOMElement $entity,
+		$obj,
+		string $glb_url,
+		string $asset_dom_id,
+		string $asset_type,
+		string $context
+	): array {
+		$glb_url      = $this->normalize_url( $glb_url );
+		$asset_dom_id = sanitize_key( $asset_dom_id );
+		if ( '' === $glb_url || '' === $asset_dom_id ) {
+			return [];
+		}
+
+		$glb_size_bytes = $this->resolve_local_asset_size( $glb_url );
+		$load_plan      = $this->resolve_gltf_load_plan( $obj, $glb_url, $glb_size_bytes );
+		$this->track_runtime_asset( $asset_type, $glb_url, $context );
+		$this->annotate_runtime_asset_entry(
+			$asset_type,
+			$glb_url,
+			[
+				'loadPhase'    => $this->load_phase_label( (string) $load_plan['phase'] ),
+				'loadPriority' => (int) $load_plan['priority'],
+				'loadDistance' => null !== $load_plan['distance'] ? round( (float) $load_plan['distance'], 2 ) : null,
+				'loadReason'   => (string) $load_plan['reason'],
+			]
+		);
+
+		$this->apply_gltf_load_plan_attributes( $entity, $load_plan );
+		if ( ! empty( $obj->asset_id ) ) {
+			$entity->setAttribute( 'data-vrodos-asset-id', (string) absint( $obj->asset_id ) );
+		}
+
+		if ( self::GLTF_LOAD_PHASE_CRITICAL === $load_plan['phase'] && $assets instanceof DOMElement ) {
+			$asset_item = $dom->createElement( 'a-asset-item' );
+			$asset_item->setAttribute( 'id', $asset_dom_id );
+			$asset_item->setAttribute( 'src', $glb_url );
+			$asset_item->setAttribute( 'response-type', 'arraybuffer' );
+			$asset_item->setAttribute( 'crossorigin', 'anonymous' );
+			$asset_item->setAttribute( 'data-vrodos-load-phase', self::GLTF_LOAD_PHASE_CRITICAL );
+			$asset_item->setAttribute( 'data-vrodos-load-priority', (string) (int) $load_plan['priority'] );
+			$assets->appendChild( $asset_item );
+			$entity->setAttribute( 'gltf-model', '#' . $asset_dom_id );
+		} else {
+			$entity->setAttribute( 'data-vrodos-lazy-gltf-src', 'url(' . $glb_url . ')' );
+			$entity->setAttribute( 'data-vrodos-lazy-state', 'queued' );
+		}
+
+		return $load_plan;
+	}
+
 	public function build_compile_diagnostics( DOMDocument $dom ): array {
 		foreach ( $this->diagnostic_asset_refs as $asset ) {
 			$type = $asset['type'];
@@ -249,6 +431,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			'objects'              => $this->diagnostic_object_count,
 			'categories'           => $this->diagnostic_category_counts,
 			'gltfModelElements'    => $xpath->query( '//*[@gltf-model]' )->length,
+			'lazyGltfElements'     => $xpath->query( '//*[@data-vrodos-lazy-gltf-src]' )->length,
 			'assetItems'           => $dom->getElementsByTagName( 'a-asset-item' )->length,
 			'images'               => $dom->getElementsByTagName( 'img' )->length,
 			'videos'               => $dom->getElementsByTagName( 'video' )->length,
@@ -257,6 +440,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			'shadowRoleAttributes' => $xpath->query( '//*[@data-vrodos-shadow-role]' )->length,
 			'clearFrustumElements' => $xpath->query( '//*[@clear-frustum-culling]' )->length,
 			'playerColliders'      => $this->diagnostic_collider_count,
+			'gltfLoadPhases'       => $this->diagnostic_load_phases,
 		];
 
 		if ( $metrics['clearFrustumElements'] > 0 ) {
@@ -266,14 +450,32 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			);
 		}
 
-		if ( $metrics['gltfModelElements'] > 8 || $metrics['assetItems'] > 8 ) {
+		$total_gltf_entities = (int) $metrics['gltfModelElements'] + (int) $metrics['lazyGltfElements'];
+		if ( $total_gltf_entities > 8 || $metrics['assetItems'] > 8 ) {
 			$this->diagnostic_notes[] = 'Scene has many GLTF/model entries. Compare profiler draw calls and consider asset merging or instancing for repeated static props.';
 		}
+
+		if ( $metrics['lazyGltfElements'] > 0 ) {
+			$this->diagnostic_notes[] = sprintf(
+				'%d GLB entities are deferred to the progressive runtime loader so first render waits only for critical navigation, collision, and nearby scene assets.',
+				$metrics['lazyGltfElements']
+			);
+		}
+
+		$asset_entries = array_map(
+			static function ( array $asset ): array {
+				if ( isset( $asset['contexts'] ) && is_array( $asset['contexts'] ) ) {
+					$asset['contexts'] = array_values( array_unique( array_filter( array_map( 'strval', $asset['contexts'] ) ) ) );
+				}
+				return $asset;
+			},
+			array_values( $this->diagnostic_asset_entries )
+		);
 
 		return [
 			'schemaVersion' => 1,
 			'metrics'       => $metrics,
-			'assets'        => array_values( $this->diagnostic_asset_entries ),
+			'assets'        => $asset_entries,
 			'warnings'      => $this->diagnostic_warnings,
 			'notes'         => array_values( array_unique( $this->diagnostic_notes ) ),
 		];
@@ -343,21 +545,28 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		return $text;
 	}
 
-	private function append_immerse_assessment_entity( DOMDocument $dom, DOMElement $ascene, $contentObject ): void {
+	private function append_immerse_assessment_entity( DOMDocument $dom, DOMElement $ascene, DOMElement $assets, $contentObject ): void {
 		$assessment_title   = $this->sanitize_text_attr( (string) ( $contentObject->assessment_title ?? 'Assessment' ) );
 		$assessment_type    = $this->sanitize_text_attr( (string) ( $contentObject->assessment_type ?? '' ) );
 		$assessment_group   = $this->sanitize_text_attr( (string) ( $contentObject->assessment_group ?? '' ) );
 		$assessment_content = (string) ( $contentObject->assessment_content ?? '' );
 		$assessment_levels  = (string) ( $contentObject->assessment_levels ?? '' );
 		$is_supported       = (string) ( $contentObject->assessment_supported ?? 'false' );
+		$uuid               = $contentObject->uuid ?? wp_generate_uuid4();
 
 		$anchor = $dom->createElement( 'a-entity' );
 		$this->setAffineTransformations( $anchor, $contentObject );
 
 		$model = $dom->createElement( 'a-entity' );
-		$model->setAttribute(
-			'gltf-model',
-			'url(' . $this->normalize_url( VRodos_Path_Manager::model_url( 'runtime/assessment.glb' ) ) . ')'
+		$this->apply_compiled_gltf_source(
+			$dom,
+			$assets,
+			$model,
+			$contentObject,
+			VRodos_Path_Manager::model_url( 'runtime/assessment.glb' ),
+			'assessment_' . $uuid,
+			'gltf-inline',
+			'assessment:' . $uuid
 		);
 		$model->setAttribute( 'rotation', '-90 0 0' );
 		$model->setAttribute( 'class', 'raycastable hideable non-vr' );
@@ -632,6 +841,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	 */
 	public function render_scene_objects( $dom, $ascene, $assets, $objects, $project_id, $scene_id, $config = [] ) {
 		$this->reset_compile_diagnostics();
+		$this->compile_camera_position = $this->extract_camera_position( $objects );
 		foreach ( $objects as $object_key => $obj ) {
 			if ( is_object( $obj ) ) {
 				unset( $obj->follow_camera, $obj->follow_camera_x, $obj->follow_camera_z );
@@ -718,20 +928,41 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 				$this->render_poi_imagetext_entity( $dom, $ascene, $assets, $obj );
 				break;
 			case 'pawn':
-				$this->render_pawn_entity( $dom, $ascene, $obj, $config );
+				$this->render_pawn_entity( $dom, $ascene, $assets, $obj, $config );
 				break;
 			case 'assessment':
 				if ( $this->is_immerse_project( (int) $config['project_id'] ) ) {
-					$this->append_immerse_assessment_entity( $dom, $ascene, $obj );
+					$this->append_immerse_assessment_entity( $dom, $ascene, $assets, $obj );
+				}
+				break;
+			default:
+				if ( '' !== trim( (string) $cat ) ) {
+					$this->add_diagnostic_warning(
+						'unhandled-category|' . sanitize_key( (string) $cat ),
+						sprintf(
+							'Skipped unsupported compiled asset category "%s". Add it to VRodos_Compiler_AFrame_Entity_Renderer before relying on it in compiled scenes.',
+							(string) $cat
+						)
+					);
 				}
 				break;
 		}
 	}
 
-	private function render_pawn_entity( $dom, $ascene, $obj, $config ) {
+	private function render_pawn_entity( $dom, $ascene, $assets, $obj, $config ) {
 		if ( isset( $config['showPawnPositions'] ) && $config['showPawnPositions'] === 'true' ) {
+			$uuid = $obj->uuid ?? wp_generate_uuid4();
 			$pawn = $dom->createElement( 'a-entity' );
-			$pawn->setAttribute( 'gltf-model', 'url(' . $this->normalize_url( VRodos_Path_Manager::model_url( 'editor/pawn.glb' ) ) . ')' );
+			$this->apply_compiled_gltf_source(
+				$dom,
+				$assets,
+				$pawn,
+				$obj,
+				VRodos_Path_Manager::model_url( 'editor/pawn.glb' ),
+				'pawn_' . $uuid,
+				'gltf-inline',
+				'pawn:' . $uuid
+			);
 			$this->setAffineTransformations( $pawn, $obj );
 			$ascene->appendChild( $pawn );
 		}
@@ -879,19 +1110,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			return;
 		}
 
-		// Add to assets
-		$asset_item = $dom->createElement( 'a-asset-item' );
-		$asset_item->setAttribute( 'id', $uuid );
-		$asset_item->setAttribute( 'src', $glb_url );
-		$asset_item->setAttribute( 'response-type', 'arraybuffer' );
-		$asset_item->setAttribute( 'crossorigin', 'anonymous' );
-		$assets->appendChild( $asset_item );
-		$this->track_runtime_asset( 'gltf', $glb_url, $context );
-		$this->track_gltf_derivative_usage( $glb_resolution, $obj, $context );
-
 		// Create entity
 		$entity = $dom->createElement( 'a-entity' );
-		$entity->setAttribute( 'gltf-model', '#' . $uuid );
+		$this->apply_compiled_gltf_source( $dom, $assets, $entity, $obj, $glb_url, $uuid, 'gltf', $context );
+		$this->track_gltf_derivative_usage( $glb_resolution, $obj, $context );
 
 		$sc_x = $obj->scale[0] ?? 1;
 		$sc_y = $obj->scale[1] ?? 1;
@@ -1019,14 +1241,6 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			return;
 		}
 
-		$asset_item = $dom->createElement( 'a-asset-item' );
-		$asset_item->setAttribute( 'id', $uuid );
-		$asset_item->setAttribute( 'src', $glb_path );
-		$asset_item->setAttribute( 'response-type', 'arraybuffer' );
-		$asset_item->setAttribute( 'crossorigin', 'anonymous' );
-		$assets->appendChild( $asset_item );
-		$this->track_runtime_asset( 'audio-model', $glb_path, 'audio:' . $uuid );
-
 		$audio_asset_id = 'audio_src_' . $uuid;
 		$audio_asset = $dom->createElement( 'audio' );
 		$audio_asset->setAttribute( 'id', $audio_asset_id );
@@ -1038,7 +1252,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		$entity = $dom->createElement( 'a-entity' );
 		$entity->setAttribute( 'id', 'audio_entity_' . $uuid );
-		$entity->setAttribute( 'gltf-model', '#' . $uuid );
+		$this->apply_compiled_gltf_source( $dom, $assets, $entity, $obj, $glb_path, $uuid, 'audio-model', 'audio:' . $uuid );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
 		$this->set_world_lighting_attributes( $entity );
 		$entity->setAttribute( 'material', '' );
@@ -1346,8 +1560,16 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$button = $dom->createElement( 'a-entity' );
 		$button->setAttribute( 'id', 'button_poi_' . $uuid );
 		$button_glb_url = $this->normalize_url( $obj->glb_path ?? '' );
-		$button->setAttribute( 'gltf-model', 'url(' . $button_glb_url . ')' );
-		$this->track_runtime_asset( 'gltf-inline', $button_glb_url, 'poi-imagetext-button:' . $uuid );
+		$this->apply_compiled_gltf_source(
+			$dom,
+			$assets,
+			$button,
+			$obj,
+			$button_glb_url,
+			'poi_button_' . $uuid,
+			'gltf-inline',
+			'poi-imagetext-button:' . $uuid
+		);
 		$button->setAttribute( 'highlight', 'button_poi_' . $uuid );
 		$button->setAttribute( 'class', 'override-materials raycastable menu-button hideable' );
 		$this->apply_compiled_collision_attributes( $button, $obj, 'poi-button' );

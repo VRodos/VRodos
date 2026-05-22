@@ -36,11 +36,21 @@ AFRAME.registerComponent('clear-frustum-culling', {
 
 AFRAME.registerComponent('vrodos-scene-loader', {
     schema: {
-        minimumVisibleMs: { type: 'number', default: 350 }
+        minimumVisibleMs: { type: 'number', default: 350 },
+        lazyConcurrentLoads: { type: 'int', default: 2 },
+        lazyBatchDelayMs: { type: 'int', default: 120 }
     },
     init: function () {
         this.sceneEl = this.el.sceneEl || this.el;
         this.revealTargets = [];
+        this.lazyTargets = [];
+        this.lazyQueue = [];
+        this.lazyStarted = false;
+        this.lazyActiveCount = 0;
+        this.lazyLoadedCount = 0;
+        this.lazyTotalCount = 0;
+        this.lazyScheduleTimer = null;
+        this.lazyScheduleIsIdle = false;
         this.pendingModelIds = {};
         this.pendingModelCount = 0;
         this.pendingAssetIds = {};
@@ -55,6 +65,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.boundHandleModelLoaded = this.handleModelLoaded.bind(this);
         this.boundHandleModelError = this.handleModelError.bind(this);
         this.boundHandleAssetReady = this.handleAssetReady.bind(this);
+        this.boundHandleLazyModelReady = this.handleLazyModelReady.bind(this);
 
         this.createOverlay();
 
@@ -148,6 +159,10 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.revealTargets = Array.prototype.slice.call(
             this.sceneEl.querySelectorAll('[data-vrodos-delayed-reveal="true"]')
         );
+        this.lazyTargets = this.collectLazyTargets();
+        this.lazyQueue = this.lazyTargets.slice();
+        this.lazyLoadedCount = 0;
+        this.lazyTotalCount = this.lazyTargets.length;
 
         this.trackBlockingAssets(this.sceneEl.querySelector('#scene-assets'));
 
@@ -174,6 +189,19 @@ AFRAME.registerComponent('vrodos-scene-loader', {
 
         this.updateProgress();
         this.maybeRevealScene();
+        if (this.isReady) {
+            this.startLazyLoading();
+        }
+    },
+    collectLazyTargets: function () {
+        return Array.prototype.slice.call(
+            this.sceneEl.querySelectorAll('[data-vrodos-lazy-gltf-src]')
+        ).sort(function (a, b) {
+            const aPriority = parseInt(a.getAttribute('data-vrodos-load-priority'), 10);
+            const bPriority = parseInt(b.getAttribute('data-vrodos-load-priority'), 10);
+            return (Number.isFinite(aPriority) ? aPriority : 9999) -
+                (Number.isFinite(bPriority) ? bPriority : 9999);
+        });
     },
     trackBlockingAssets: function (assetsEl) {
         this.clearPendingAssets();
@@ -244,6 +272,10 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         }
 
         const tagName = assetEl.tagName.toUpperCase();
+
+        if (assetEl.getAttribute('data-vrodos-load-phase') === 'lazy') {
+            return false;
+        }
 
         if (tagName === 'VIDEO' || tagName === 'AUDIO' || tagName === 'SOURCE') {
             return false;
@@ -371,6 +403,80 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         const remainingDelay = Math.max(0, this.data.minimumVisibleMs - elapsed);
         window.setTimeout(this.revealScene.bind(this), remainingDelay);
     },
+    startLazyLoading: function () {
+        if (this.lazyStarted || !this.lazyQueue.length) {
+            return;
+        }
+
+        this.lazyStarted = true;
+        this.scheduleLazyBatch(this.data.lazyBatchDelayMs);
+    },
+    scheduleLazyBatch: function (delayMs) {
+        if (!this.lazyQueue.length || this.lazyScheduleTimer) {
+            return;
+        }
+
+        const run = () => {
+            this.lazyScheduleTimer = null;
+            this.lazyScheduleIsIdle = false;
+            this.loadLazyBatch();
+        };
+
+        const delay = Math.max(0, Number(delayMs) || 0);
+        if (delay > 0) {
+            this.lazyScheduleIsIdle = false;
+            this.lazyScheduleTimer = window.setTimeout(run, delay);
+            return;
+        }
+
+        if (typeof window.requestIdleCallback === 'function') {
+            this.lazyScheduleIsIdle = true;
+            this.lazyScheduleTimer = window.requestIdleCallback(run, { timeout: 750 });
+            return;
+        }
+
+        this.lazyScheduleIsIdle = false;
+        this.lazyScheduleTimer = window.setTimeout(run, 0);
+    },
+    loadLazyBatch: function () {
+        const concurrency = Math.max(1, Number(this.data.lazyConcurrentLoads) || 1);
+
+        while (this.lazyActiveCount < concurrency && this.lazyQueue.length) {
+            this.startLazyTarget(this.lazyQueue.shift());
+        }
+    },
+    startLazyTarget: function (target) {
+        if (!target || target.getAttribute('data-vrodos-lazy-state') === 'loading' || target.hasAttribute('gltf-model')) {
+            return;
+        }
+
+        const src = target.getAttribute('data-vrodos-lazy-gltf-src');
+        if (!src) {
+            this.lazyLoadedCount += 1;
+            return;
+        }
+
+        this.lazyActiveCount += 1;
+        target.setAttribute('data-vrodos-lazy-state', 'loading');
+        target.addEventListener('model-loaded', this.boundHandleLazyModelReady, { once: true });
+        target.addEventListener('model-error', this.boundHandleLazyModelReady, { once: true });
+        target.setAttribute('gltf-model', src);
+    },
+    handleLazyModelReady: function (event) {
+        const target = event && event.target ? event.target : null;
+        if (target) {
+            target.removeEventListener('model-loaded', this.boundHandleLazyModelReady);
+            target.removeEventListener('model-error', this.boundHandleLazyModelReady);
+            target.setAttribute('data-vrodos-lazy-state', event.type === 'model-error' ? 'error' : 'loaded');
+        }
+
+        this.lazyActiveCount = Math.max(0, this.lazyActiveCount - 1);
+        this.lazyLoadedCount = Math.min(this.lazyTotalCount, this.lazyLoadedCount + 1);
+
+        if (this.lazyQueue.length) {
+            this.scheduleLazyBatch(this.data.lazyBatchDelayMs);
+        }
+    },
     revealScene: function () {
         if (this.isReady) {
             return;
@@ -401,6 +507,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             }, 260);
         }
 
+        this.startLazyLoading();
 
 
 
@@ -411,6 +518,18 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.sceneEl.removeEventListener('model-loaded', this.boundHandleModelLoaded);
         this.sceneEl.removeEventListener('model-error', this.boundHandleModelError);
         this.clearPendingAssets();
+        if (this.lazyScheduleTimer) {
+            if (this.lazyScheduleIsIdle && typeof window.cancelIdleCallback === 'function') {
+                window.cancelIdleCallback(this.lazyScheduleTimer);
+            } else {
+                window.clearTimeout(this.lazyScheduleTimer);
+            }
+            this.lazyScheduleTimer = null;
+        }
+        this.lazyTargets.forEach((target) => {
+            target.removeEventListener('model-loaded', this.boundHandleLazyModelReady);
+            target.removeEventListener('model-error', this.boundHandleLazyModelReady);
+        });
 
         if (this.loadingOverlay && this.loadingOverlay.parentNode) {
             this.loadingOverlay.parentNode.removeChild(this.loadingOverlay);

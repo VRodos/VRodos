@@ -187,6 +187,16 @@ function contextFromWarnings(warnings, url) {
     return match ? match[1] : '';
 }
 
+function contextForAsset(asset, warnings) {
+    if (Array.isArray(asset.contexts) && asset.contexts.length) {
+        return asset.contexts.filter(Boolean).join(', ');
+    }
+    if (asset.context) {
+        return String(asset.context);
+    }
+    return contextFromWarnings(warnings, asset.url);
+}
+
 function parseGlbJson(buffer, filePath) {
     if (buffer.length < 20 || buffer.toString('utf8', 0, 4) !== GLB_MAGIC) {
         throw new Error(`${filePath} is not a GLB file.`);
@@ -416,7 +426,7 @@ function recommendationsFor(record) {
 
 async function auditGlbAsset(asset, wordpressRoot, duplicateCount, warnings) {
     const localPath = resolveLocalPath(asset.url, wordpressRoot);
-    const context = contextFromWarnings(warnings, asset.url);
+    const context = contextForAsset(asset, warnings);
     const result = {
         type: asset.type || 'gltf',
         url: asset.url,
@@ -425,6 +435,9 @@ async function auditGlbAsset(asset, wordpressRoot, duplicateCount, warnings) {
         duplicateCount,
         sizeBytes: Number(asset.sizeBytes) || null,
         sizeLabel: asset.sizeLabel || null,
+        loadPhase: asset.loadPhase || '',
+        loadPriority: Number.isFinite(Number(asset.loadPriority)) ? Number(asset.loadPriority) : null,
+        loadReason: asset.loadReason || '',
         exists: false,
         error: null,
         gltf: null,
@@ -469,10 +482,13 @@ function auditNonGlbAsset(asset, duplicateCount, warnings) {
     return {
         type: asset.type || '',
         url: asset.url,
-        context: contextFromWarnings(warnings, asset.url),
+        context: contextForAsset(asset, warnings),
         duplicateCount,
         sizeBytes: sizeBytes || null,
         sizeLabel: asset.sizeLabel || null,
+        loadPhase: asset.loadPhase || '',
+        loadPriority: Number.isFinite(Number(asset.loadPriority)) ? Number(asset.loadPriority) : null,
+        loadReason: asset.loadReason || '',
         flags,
         recommendations: flags.includes('large_media_file')
             ? ['Audit resolution/codec; HTTP compression alone will not reduce GPU texture/video decode cost.']
@@ -557,7 +573,7 @@ function renderMarkdown(audit) {
 
     if (topGlbs.length) {
         lines.push(markdownTable(
-            ['Asset', 'Context', 'Size', 'Triangles', 'Prims', 'Materials', 'Compression', 'Flags'],
+            ['Asset', 'Context', 'Load', 'Size', 'Triangles', 'Prims', 'Materials', 'Compression', 'Flags'],
             topGlbs.map((asset) => {
                 const fileName = path.basename(normalizeUrlPath(asset.url));
                 const gltf = asset.gltf || {};
@@ -571,6 +587,7 @@ function renderMarkdown(audit) {
                 return [
                     fileName,
                     asset.context || '',
+                    asset.loadPhase || '',
                     asset.sizeLabel || formatBytes(asset.sizeBytes || asset.localSizeBytes || 0),
                     formatNumber(gltf.geometry?.estimatedTriangles),
                     formatNumber(gltf.counts?.primitives),

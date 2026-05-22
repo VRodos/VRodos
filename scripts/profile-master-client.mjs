@@ -1314,6 +1314,11 @@ async function captureSceneSnapshot(cdp) {
             lighting: lights,
             domCounts: {
                 gltfModelElements: document.querySelectorAll('[gltf-model]').length,
+                lazyGltfElements: document.querySelectorAll('[data-vrodos-lazy-gltf-src]').length,
+                lazyGltfQueued: document.querySelectorAll('[data-vrodos-lazy-state="queued"]').length,
+                lazyGltfLoading: document.querySelectorAll('[data-vrodos-lazy-state="loading"]').length,
+                lazyGltfLoaded: document.querySelectorAll('[data-vrodos-lazy-state="loaded"]').length,
+                lazyGltfErrors: document.querySelectorAll('[data-vrodos-lazy-state="error"]').length,
                 assetItems: document.querySelectorAll('a-assets > a-asset-item').length,
                 images: document.querySelectorAll('img, a-image').length,
                 videos: document.querySelectorAll('video, a-video').length,
