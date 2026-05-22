@@ -22,6 +22,8 @@
     const PMNDRS_DAY_NIGHT_CYCLE_DAY_MS = 86400000;
     const PERFORMANCE_DESKTOP_RENDER_PIXEL_BUDGET = 1650000;
     const DPR_PIXEL_BUDGET_QUERY_PARAM = 'vrodos_dpr_pixel_budget';
+    const TERRAIN_SHADOW_DEPTH_OFFSET_FACTOR = 4;
+    const TERRAIN_SHADOW_DEPTH_OFFSET_UNITS = 8;
     const WGS84_EQUATORIAL_RADIUS = 6378137;
     const WGS84_POLAR_RADIUS = 6356752.3142451793;
     const runtimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
@@ -1516,6 +1518,47 @@
         }
     }
 
+    function readPmndrsDebugNumber(debugKey, queryKey, fallback, minValue, maxValue) {
+        let value = null;
+        if (window.VRODOS_DEBUG && typeof window.VRODOS_DEBUG[debugKey] === 'number') {
+            value = window.VRODOS_DEBUG[debugKey];
+        } else if (typeof window.location !== 'undefined' && window.location.search) {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.has(queryKey)) {
+                    value = Number(params.get(queryKey));
+                }
+            } catch (err) {
+                value = null;
+            }
+        }
+
+        if (!Number.isFinite(value)) {
+            return fallback;
+        }
+
+        return Math.max(minValue, Math.min(maxValue, value));
+    }
+
+    function getTerrainShadowDepthOffset() {
+        return {
+            factor: readPmndrsDebugNumber(
+                'terrainShadowDepthOffsetFactor',
+                'vrodos_debug_terrain_shadow_depth_offset_factor',
+                TERRAIN_SHADOW_DEPTH_OFFSET_FACTOR,
+                0,
+                8
+            ),
+            units: readPmndrsDebugNumber(
+                'terrainShadowDepthOffsetUnits',
+                'vrodos_debug_terrain_shadow_depth_offset_units',
+                TERRAIN_SHADOW_DEPTH_OFFSET_UNITS,
+                0,
+                16
+            )
+        };
+    }
+
     function objectEntityChainHas(object, predicate) {
         let current = object;
         while (current) {
@@ -1739,6 +1782,60 @@
         }
 
         return objectEntityChainHas(node, isDecorativeLightingEntity) || isShadowEligibleMaterial(node.material);
+    }
+
+    function isTerrainSelfShadowCasterMesh(node) {
+        return Boolean(
+            node &&
+            node.isMesh &&
+            objectEntityChainHas(node, isTerrainShadowEntity) &&
+            getObjectShadowRole(node) === 'caster-receiver'
+        );
+    }
+
+    function syncTerrainShadowDepthMaterial(self, node, enabled) {
+        if (!node || !node.isMesh) {
+            return;
+        }
+
+        node.userData = node.userData || {};
+        const existingDepthMaterial = node.userData.vrodosTerrainShadowDepthMaterial || null;
+        const disabled = hasPmndrsDebugFlag(
+            'disableTerrainShadowDepthOffset',
+            'vrodos_debug_disable_terrain_shadow_depth_offset'
+        );
+
+        if (!enabled || disabled || typeof THREE.MeshDepthMaterial !== 'function') {
+            if (existingDepthMaterial && node.customDepthMaterial === existingDepthMaterial) {
+                node.customDepthMaterial = node.userData.vrodosTerrainShadowPreviousCustomDepthMaterial || undefined;
+            }
+            return;
+        }
+
+        let depthMaterial = existingDepthMaterial;
+        if (!depthMaterial) {
+            depthMaterial = new THREE.MeshDepthMaterial({
+                depthPacking: typeof THREE.RGBADepthPacking !== 'undefined' ? THREE.RGBADepthPacking : undefined
+            });
+            depthMaterial.name = 'vrodosTerrainShadowDepthMaterial';
+            depthMaterial.userData = depthMaterial.userData || {};
+            depthMaterial.userData.vrodosTerrainShadowDepthMaterial = true;
+            node.userData.vrodosTerrainShadowPreviousCustomDepthMaterial = node.customDepthMaterial || null;
+            node.userData.vrodosTerrainShadowDepthMaterial = depthMaterial;
+            if (self && self.runtimeResources && typeof self.runtimeResources.track === 'function') {
+                self.runtimeResources.track(depthMaterial);
+            }
+        }
+
+        const offset = getTerrainShadowDepthOffset();
+        if (typeof THREE.RGBADepthPacking !== 'undefined') {
+            depthMaterial.depthPacking = THREE.RGBADepthPacking;
+        }
+        depthMaterial.polygonOffset = true;
+        depthMaterial.polygonOffsetFactor = offset.factor;
+        depthMaterial.polygonOffsetUnits = offset.units;
+        depthMaterial.needsUpdate = true;
+        node.customDepthMaterial = depthMaterial;
     }
 
     function hasSelfShadowingTerrain(self) {
@@ -5186,12 +5283,14 @@
                 if (!isLightingParticipant) {
                     node.castShadow = false;
                     node.receiveShadow = false;
+                    syncTerrainShadowDepthMaterial(this, node, false);
                     return;
                 }
 
                 const shadowRole = getObjectShadowRole(node);
                 node.castShadow = shadowsEnabled && shadowRole !== 'receiver' && shadowRole !== 'none';
                 node.receiveShadow = shadowsEnabled && shadowRole !== 'none';
+                syncTerrainShadowDepthMaterial(this, node, node.castShadow && isTerrainSelfShadowCasterMesh(node));
             }
 
             if (node.isDirectionalLight || node.isSpotLight || node.isPointLight) {
