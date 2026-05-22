@@ -987,6 +987,11 @@ function vrodosNormalizeObjectShadowRole(value) {
     return ['auto', 'caster-receiver', 'receiver', 'none'].includes(normalized) ? normalized : 'auto';
 }
 
+function vrodosNormalizeObjectMaterialRole(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    return ['auto', 'terrain-matte', 'authored-pbr', 'wet-glossy'].includes(normalized) ? normalized : 'auto';
+}
+
 function vrodosIsPlayerCollisionEligible(object) {
     if (!object || object.isLight) {
         return false;
@@ -1018,6 +1023,22 @@ function vrodosIsShadowRoleEligible(object) {
     }
 
     return Boolean(object.glb_path || object.image_path || object.video_path || object.poi_img_path || object.poi_image_path || object.text_content);
+}
+
+function vrodosIsMaterialRoleEligible(object) {
+    if (!object || object.isLight) {
+        return false;
+    }
+
+    const categorySlug = String(object.category_slug || '').toLowerCase();
+    if (categorySlug === 'collision-proxy' || categorySlug === 'blocking-obstacles') {
+        return false;
+    }
+    if (object.name === 'avatarCamera' || object.category_name === 'pawn') {
+        return false;
+    }
+
+    return Boolean(object.glb_path);
 }
 
 function ensureCollisionPropertiesSection() {
@@ -1123,6 +1144,63 @@ function displayShadowRoleProperties(object) {
         object.userData = {};
     }
     object.userData.vrodosShadowRole = role;
+
+    if (select) {
+        select.value = role;
+    }
+
+    section.style.display = 'block';
+}
+
+function ensureMaterialRolePropertiesSection() {
+    const container = getObjectControlsElement('propertiesContainer');
+    if (!container) return null;
+
+    let section = document.getElementById('materialRolePropertiesDiv');
+    if (section) {
+        return section;
+    }
+
+    section = document.createElement('div');
+    section.id = 'materialRolePropertiesDiv';
+    section.className = 'object-property-section';
+    section.style.display = 'none';
+    section.innerHTML =
+        '<div class="prop-section-title" style="padding-bottom:2px; margin-bottom:2px;">Material</div>' +
+        '<div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
+        '<label for="materialRoleSelect" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Material Role</label>' +
+        '<select id="materialRoleSelect" class="tw-select tw-select-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
+        '<option value="auto">Auto</option>' +
+        '<option value="terrain-matte">Terrain Matte</option>' +
+        '<option value="authored-pbr">Authored PBR</option>' +
+        '<option value="wet-glossy">Wet / Glossy</option>' +
+        '</select>' +
+        '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Use Terrain Matte for rocky/photogrammetry terrain. Use Authored PBR or Wet / Glossy when shine is intentional.</div>' +
+        '</div>';
+
+    container.appendChild(section);
+
+    const select = document.getElementById('materialRoleSelect');
+    if (select) {
+        select.addEventListener('change', function () {
+            vrodosCommitObjectControlsProperty('vrodosMaterialRole', vrodosNormalizeObjectMaterialRole(this.value));
+        });
+    }
+
+    return section;
+}
+
+function displayMaterialRoleProperties(object) {
+    const section = ensureMaterialRolePropertiesSection();
+    if (!section || !object) return;
+
+    const select = document.getElementById('materialRoleSelect');
+    const role = vrodosNormalizeObjectMaterialRole(object.vrodosMaterialRole || object.materialRole);
+    object.vrodosMaterialRole = role;
+    if (!object.userData) {
+        object.userData = {};
+    }
+    object.userData.vrodosMaterialRole = role;
 
     if (select) {
         select.value = role;
@@ -1384,6 +1462,11 @@ function showPropertiesInPanel(object) {
 
     if (vrodosIsShadowRoleEligible(object)) {
         displayShadowRoleProperties(object);
+        hasProperties = true;
+    }
+
+    if (vrodosIsMaterialRoleEligible(object)) {
+        displayMaterialRoleProperties(object);
         hasProperties = true;
     }
 

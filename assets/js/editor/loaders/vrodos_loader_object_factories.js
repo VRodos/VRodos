@@ -628,6 +628,9 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
     object.vrodosShadowRole = ['auto', 'caster-receiver', 'receiver', 'none'].includes(String(resource.vrodosShadowRole || resource.shadowRole || object.vrodosShadowRole || '').toLowerCase())
         ? String(resource.vrodosShadowRole || resource.shadowRole || object.vrodosShadowRole).toLowerCase()
         : 'auto';
+    object.vrodosMaterialRole = ['auto', 'terrain-matte', 'authored-pbr', 'wet-glossy'].includes(String(resource.vrodosMaterialRole || resource.materialRole || object.vrodosMaterialRole || '').toLowerCase())
+        ? String(resource.vrodosMaterialRole || resource.materialRole || object.vrodosMaterialRole).toLowerCase()
+        : 'auto';
 
     if (String(object.category_slug || '').toLowerCase() === 'walkable-surface') {
         object.walkableBehavior = (String(resource.walkableBehavior || object.walkableBehavior || '').toLowerCase() === 'auto')

@@ -519,11 +519,99 @@ function vrodosGetExplicitMaterialOverrides(entityEl) {
         return {};
     }
 
-    if (typeof entityEl.getDOMAttribute === 'function') {
-        return entityEl.getDOMAttribute('material') || {};
+    const rawOverrides = typeof entityEl.getDOMAttribute === 'function'
+        ? (entityEl.getDOMAttribute('material') || {})
+        : (entityEl.getAttribute('material') || {});
+    const overrides = rawOverrides && typeof rawOverrides === 'object' ? rawOverrides : {};
+
+    if (entityEl.getAttribute) {
+        overrides.vrodosMaterialRole = entityEl.getAttribute('data-vrodos-material-role') || 'auto';
+        overrides.vrodosTerrainMaterialCandidate =
+            entityEl.hasAttribute('data-vrodos-navmesh') ||
+            entityEl.getAttribute('data-vrodos-collision-category') === 'walkable-surface';
     }
 
-    return entityEl.getAttribute('material') || {};
+    return overrides;
+}
+
+function vrodosNormalizeMaterialRole(value) {
+    const role = String(value || '').trim().toLowerCase();
+    return ['auto', 'terrain-matte', 'authored-pbr', 'wet-glossy'].includes(role) ? role : 'auto';
+}
+
+function vrodosHasStrongAuthoredPbrIntent(material) {
+    if (!material) {
+        return false;
+    }
+
+    const metalness = typeof material.userData.vrodosBaseMetalness === 'number'
+        ? material.userData.vrodosBaseMetalness
+        : material.metalness;
+    const roughness = typeof material.userData.vrodosBaseRoughness === 'number'
+        ? material.userData.vrodosBaseRoughness
+        : material.roughness;
+    const envMapIntensity = typeof material.userData.vrodosBaseEnvMapIntensity === 'number'
+        ? material.userData.vrodosBaseEnvMapIntensity
+        : material.envMapIntensity;
+
+    return (typeof metalness === 'number' && metalness > 0.35) ||
+        (typeof roughness === 'number' && roughness < 0.28) ||
+        (typeof envMapIntensity === 'number' && envMapIntensity > 1.25) ||
+        (typeof material.clearcoat === 'number' && material.clearcoat > 0.15) ||
+        (typeof material.transmission === 'number' && material.transmission > 0.05);
+}
+
+function vrodosApplyMaterialRole(material, overrides) {
+    if (!material || !material.userData) {
+        return;
+    }
+
+    if (typeof material.userData.vrodosBaseRoughness === 'undefined' && typeof material.roughness === 'number') {
+        material.userData.vrodosBaseRoughness = material.roughness;
+    }
+    if (typeof material.userData.vrodosBaseMetalness === 'undefined' && typeof material.metalness === 'number') {
+        material.userData.vrodosBaseMetalness = material.metalness;
+    }
+    if (!material.userData.vrodosBaseNormalScale && material.normalScale && typeof material.normalScale.clone === 'function') {
+        material.userData.vrodosBaseNormalScale = material.normalScale.clone();
+    }
+
+    const authoredRole = vrodosNormalizeMaterialRole(overrides.vrodosMaterialRole);
+    let role = authoredRole;
+    if (role === 'auto') {
+        role = overrides.vrodosTerrainMaterialCandidate && !vrodosHasStrongAuthoredPbrIntent(material)
+            ? 'terrain-matte'
+            : 'authored-pbr';
+    }
+
+    material.userData.vrodosMaterialRole = role;
+    material.userData.vrodosMaterialRoleEnvMapCap = null;
+
+    if (role === 'terrain-matte') {
+        if (typeof material.metalness === 'number') {
+            material.metalness = 0;
+        }
+        if (typeof material.roughness === 'number') {
+            material.roughness = Math.max(material.roughness, 0.85);
+        }
+        if (typeof material.envMapIntensity === 'number') {
+            material.envMapIntensity = Math.min(material.envMapIntensity, 0.15);
+        }
+        material.userData.vrodosMaterialRoleEnvMapCap = 0.15;
+        if (material.normalMap && material.normalScale && material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === 'function') {
+            material.normalScale.copy(material.userData.vrodosBaseNormalScale).multiplyScalar(0.65);
+        }
+    } else if (role === 'wet-glossy') {
+        if (typeof material.envMapIntensity === 'number') {
+            material.envMapIntensity = Math.min(material.envMapIntensity, 1.25);
+        }
+        material.userData.vrodosMaterialRoleEnvMapCap = 1.25;
+        if (material.normalMap && material.normalScale && material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === 'function') {
+            material.normalScale.copy(material.userData.vrodosBaseNormalScale);
+        }
+    } else if (material.normalMap && material.normalScale && material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === 'function') {
+        material.normalScale.copy(material.userData.vrodosBaseNormalScale);
+    }
 }
 
 function vrodosGetReflectionShadowStrength(options) {
@@ -679,6 +767,10 @@ function vrodosGetTargetEnvMapIntensity(material, options) {
 
     if (options.environmentMap && typeof options.reflectionIntensityScale === 'number') {
         targetEnvMapIntensity *= options.reflectionIntensityScale;
+    }
+
+    if (typeof material.userData.vrodosMaterialRoleEnvMapCap === 'number') {
+        targetEnvMapIntensity = Math.min(targetEnvMapIntensity, material.userData.vrodosMaterialRoleEnvMapCap);
     }
 
     return targetEnvMapIntensity;
@@ -849,6 +941,7 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
         }
     }
 
+    vrodosApplyMaterialRole(material, overrides || {});
     material.needsUpdate = true;
 }
 

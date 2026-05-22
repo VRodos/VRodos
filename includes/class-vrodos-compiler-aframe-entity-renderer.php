@@ -467,6 +467,11 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		return in_array( $role, [ 'auto', 'caster-receiver', 'receiver', 'none' ], true ) ? $role : 'auto';
 	}
 
+	private function normalize_authored_material_role( $value ): string {
+		$role = strtolower( trim( (string) ( $value ?? '' ) ) );
+		return in_array( $role, [ 'auto', 'terrain-matte', 'authored-pbr', 'wet-glossy' ], true ) ? $role : 'auto';
+	}
+
 	private function resolve_object_shadow_role( $obj, string $default_role = 'caster-receiver' ): string {
 		$authored_role = 'auto';
 		if ( is_object( $obj ) ) {
@@ -478,6 +483,19 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 
 		return 'auto' === $authored_role ? $this->normalize_shadow_role( $default_role ) : $this->normalize_shadow_role( $authored_role );
+	}
+
+	private function resolve_object_material_role( $obj ): string {
+		if ( is_object( $obj ) ) {
+			if ( property_exists( $obj, 'vrodosMaterialRole' ) ) {
+				return $this->normalize_authored_material_role( $obj->vrodosMaterialRole );
+			}
+			if ( property_exists( $obj, 'materialRole' ) ) {
+				return $this->normalize_authored_material_role( $obj->materialRole );
+			}
+		}
+
+		return 'auto';
 	}
 
 	private function shadow_attribute_for_role( string $role ): string {
@@ -927,6 +945,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$shadow_role = $this->resolve_object_shadow_role( $obj, $shadow_role );
 		}
 		$this->set_world_lighting_attributes( $entity, $shadow_role );
+		if ( ! $is_collision_proxy ) {
+			$entity->setAttribute( 'data-vrodos-material-role', $this->resolve_object_material_role( $obj ) );
+		}
 		$this->apply_immerse_cefr_gating_attributes( $entity, $obj );
 
 		$ascene->appendChild( $entity );
