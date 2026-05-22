@@ -1958,8 +1958,36 @@
     maxDropHeight: 1,
     maxSlope: 45
   };
+  var VRODOS_TERRAIN_MATTE_NORMAL_SCALE = 0.22;
+  var VRODOS_TERRAIN_MATTE_ENV_MAP_CAP = 0.08;
   function vrodosClamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
+  }
+  function vrodosGetTerrainMatteNormalScale() {
+    if (typeof window !== "undefined") {
+      if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.disableTerrainNormalMap === true) {
+        return 0;
+      }
+      if (window.VRODOS_DEBUG && typeof window.VRODOS_DEBUG.terrainNormalScale === "number") {
+        return vrodosClamp(window.VRODOS_DEBUG.terrainNormalScale, 0, 1);
+      }
+      if (window.location && window.location.search) {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          if (params.get("vrodos_debug_disable_terrain_normal_map") === "1") {
+            return 0;
+          }
+          if (params.has("vrodos_debug_terrain_normal_scale")) {
+            const value = parseFloat(params.get("vrodos_debug_terrain_normal_scale"));
+            if (isFinite(value)) {
+              return vrodosClamp(value, 0, 1);
+            }
+          }
+        } catch (err) {
+        }
+      }
+    }
+    return VRODOS_TERRAIN_MATTE_NORMAL_SCALE;
   }
   function vrodosCreateHiddenNavmeshMaterial(_sourceMaterial) {
     const material = new THREE.MeshBasicMaterial({
@@ -2041,18 +2069,23 @@
     material.userData.vrodosMaterialRole = role;
     material.userData.vrodosMaterialRoleEnvMapCap = null;
     if (role === "terrain-matte") {
+      if (typeof material.side !== "undefined" && typeof THREE.FrontSide !== "undefined") {
+        material.side = THREE.FrontSide;
+      }
       if (typeof material.metalness === "number") {
         material.metalness = 0;
       }
       if (typeof material.roughness === "number") {
-        material.roughness = Math.max(material.roughness, 0.85);
+        material.roughness = Math.max(material.roughness, 0.94);
       }
       if (typeof material.envMapIntensity === "number") {
-        material.envMapIntensity = Math.min(material.envMapIntensity, 0.15);
+        material.envMapIntensity = Math.min(material.envMapIntensity, VRODOS_TERRAIN_MATTE_ENV_MAP_CAP);
       }
-      material.userData.vrodosMaterialRoleEnvMapCap = 0.15;
+      material.userData.vrodosMaterialRoleEnvMapCap = VRODOS_TERRAIN_MATTE_ENV_MAP_CAP;
       if (material.normalMap && material.normalScale && material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === "function") {
-        material.normalScale.copy(material.userData.vrodosBaseNormalScale).multiplyScalar(0.65);
+        const terrainNormalScale = vrodosGetTerrainMatteNormalScale();
+        material.normalScale.copy(material.userData.vrodosBaseNormalScale).multiplyScalar(terrainNormalScale);
+        material.userData.vrodosTerrainNormalScaleFactor = terrainNormalScale;
       }
     } else if (role === "wet-glossy") {
       if (typeof material.envMapIntensity === "number") {
@@ -2064,6 +2097,18 @@
       }
     } else if (material.normalMap && material.normalScale && material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === "function") {
       material.normalScale.copy(material.userData.vrodosBaseNormalScale);
+    }
+  }
+  function vrodosApplyShadowCastingSide(material) {
+    if (!material || typeof material.shadowSide === "undefined") {
+      return;
+    }
+    if (material.userData && material.userData.vrodosMaterialRole === "terrain-matte") {
+      material.shadowSide = null;
+      return;
+    }
+    if (typeof THREE.FrontSide !== "undefined") {
+      material.shadowSide = THREE.FrontSide;
     }
   }
   function vrodosGetReflectionShadowStrength(options) {
@@ -2239,9 +2284,6 @@
         material.userData.vrodosReflectionGlobalUniform.value = globalReflectionStrength;
       }
     }
-    if (typeof material.shadowSide !== "undefined" && typeof THREE.FrontSide !== "undefined") {
-      material.shadowSide = THREE.FrontSide;
-    }
     if (material.transparent && typeof material.alphaTest !== "undefined") {
       material.alphaTest = Math.max(material.alphaTest || 0, 3e-3);
     }
@@ -2343,6 +2385,7 @@
       }
     }
     vrodosApplyMaterialRole(material, overrides || {});
+    vrodosApplyShadowCastingSide(material);
     material.needsUpdate = true;
   }
   VRODOSMaster.NAVMESH_DEFAULTS = VRODOS_NAVMESH_DEFAULTS;
@@ -4216,6 +4259,9 @@
     function isNavmeshShadowEntity(entityEl) {
       return Boolean(entityEl && (entityHasClass(entityEl, "vrodos-navmesh") || entityEl.hasAttribute("data-vrodos-navmesh")));
     }
+    function isTerrainShadowEntity(entityEl) {
+      return Boolean(entityEl && (isNavmeshShadowEntity(entityEl) || entityEl.getAttribute("data-vrodos-collision-category") === "walkable-surface" || entityEl.getAttribute("data-vrodos-material-role") === "terrain-matte"));
+    }
     function getEntityShadowRole(entityEl) {
       if (!entityEl) {
         return null;
@@ -4315,6 +4361,38 @@
         return true;
       }
       return objectEntityChainHas(node, isDecorativeLightingEntity) || isShadowEligibleMaterial(node.material);
+    }
+    function hasSelfShadowingTerrain(self) {
+      if (!self || !self.el || typeof self.el.querySelectorAll !== "function") {
+        return false;
+      }
+      const terrainEls = self.el.querySelectorAll('[data-vrodos-navmesh], [data-vrodos-collision-category="walkable-surface"], [data-vrodos-material-role="terrain-matte"]');
+      for (let i = 0; i < terrainEls.length; i++) {
+        if (isTerrainShadowEntity(terrainEls[i]) && getEntityShadowRole(terrainEls[i]) === "caster-receiver") {
+          return true;
+        }
+      }
+      return false;
+    }
+    function getTerrainSafeContactShadowSettings(self, settings) {
+      if (!settings || !hasSelfShadowingTerrain(self)) {
+        return settings;
+      }
+      const preset = typeof self.getContactShadowPreset === "function" ? self.getContactShadowPreset() : self.data && self.data.contactShadowPreset;
+      if (preset !== "strong") {
+        return settings;
+      }
+      const shadowQuality = self.data && self.data.shadowQuality === "high" ? "high" : "medium";
+      const safeSettings = Object.assign({}, settings);
+      const biasFloor = shadowQuality === "high" ? -12e-5 : -9e-5;
+      const normalBiasFloor = shadowQuality === "high" ? 0.032 : 0.024;
+      if (typeof safeSettings.bias === "number") {
+        safeSettings.bias = Math.min(-1e-5, Math.max(safeSettings.bias, biasFloor));
+      }
+      if (typeof safeSettings.normalBias === "number") {
+        safeSettings.normalBias = Math.max(safeSettings.normalBias, normalBiasFloor);
+      }
+      return safeSettings;
     }
     function collectAdaptiveShadowBounds(self) {
       const sceneObj = self && self.el ? self.el.object3D : null;
@@ -5488,7 +5566,7 @@
       }
       const shadowEnabled = self.data.shadowQuality !== "off";
       const shadowMap = self.data.shadowQuality === "high" ? 2048 : 1024;
-      const contactShadowSettings = typeof self.getContactShadowSettings === "function" ? self.getContactShadowSettings() : self.data.shadowQuality === "high" ? { bias: -16e-5, normalBias: 0.018 } : { bias: -1e-4, normalBias: 0.012 };
+      const contactShadowSettings = getTerrainSafeContactShadowSettings(self, typeof self.getContactShadowSettings === "function" ? self.getContactShadowSettings() : self.data.shadowQuality === "high" ? { bias: -16e-5, normalBias: 0.018 } : { bias: -1e-4, normalBias: 0.012 });
       const sunLight = state.sunLight;
       const skyLight = state.skyLight;
       const fillLight = state.fillLight;
@@ -7147,7 +7225,7 @@
       const renderer = this.el.renderer;
       const shadowQuality = typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data.shadowQuality || "medium";
       const shadowsEnabled = shadowQuality !== "off";
-      const contactShadowSettings = this.getContactShadowSettings();
+      const contactShadowSettings = getTerrainSafeContactShadowSettings(this, this.getContactShadowSettings());
       const profileShadowType = shadowQuality === "high" ? "pcfsoft" : "pcf";
       const shadowTypeAttr = shadowsEnabled ? shouldUseDayNightPcfShadowMap(this) ? "pcf" : normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType) : "pcf";
       const shadowMapType = getThreeShadowMapType(shadowTypeAttr);
@@ -7497,7 +7575,7 @@
       const reflectionProfile = this.data.reflectionProfile || "balanced";
       const enhancedReflections = reflectionProfile === "enhanced";
       const softReflections = reflectionProfile === "soft";
-      const contactShadowSettings = this.getContactShadowSettings();
+      const contactShadowSettings = getTerrainSafeContactShadowSettings(this, this.getContactShadowSettings());
       const hasAuthorLights = Array.prototype.some.call(this.getCachedSceneQuery("lightEntities", "[light]"), (lightEl) => !lightEl.hasAttribute("data-vrodos-photoreal-light"));
       syncLegacyHorizonCameraFar(this);
       if (shouldUsePmndrsTakramHorizonPath(this)) {

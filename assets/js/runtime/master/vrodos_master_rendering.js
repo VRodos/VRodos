@@ -468,8 +468,40 @@ var VRODOS_NAVMESH_DEFAULTS = {
     maxSlope: 45
 };
 
+var VRODOS_TERRAIN_MATTE_NORMAL_SCALE = 0.22;
+var VRODOS_TERRAIN_MATTE_ENV_MAP_CAP = 0.08;
+
 function vrodosClamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
+}
+
+function vrodosGetTerrainMatteNormalScale() {
+    if (typeof window !== 'undefined') {
+        if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.disableTerrainNormalMap === true) {
+            return 0;
+        }
+        if (window.VRODOS_DEBUG && typeof window.VRODOS_DEBUG.terrainNormalScale === 'number') {
+            return vrodosClamp(window.VRODOS_DEBUG.terrainNormalScale, 0, 1);
+        }
+        if (window.location && window.location.search) {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('vrodos_debug_disable_terrain_normal_map') === '1') {
+                    return 0;
+                }
+                if (params.has('vrodos_debug_terrain_normal_scale')) {
+                    const value = parseFloat(params.get('vrodos_debug_terrain_normal_scale'));
+                    if (isFinite(value)) {
+                        return vrodosClamp(value, 0, 1);
+                    }
+                }
+            } catch (err) {
+                // Ignore malformed debug query strings.
+            }
+        }
+    }
+
+    return VRODOS_TERRAIN_MATTE_NORMAL_SCALE;
 }
 
 function vrodosCreateHiddenNavmeshMaterial(_sourceMaterial) {
@@ -588,18 +620,23 @@ function vrodosApplyMaterialRole(material, overrides) {
     material.userData.vrodosMaterialRoleEnvMapCap = null;
 
     if (role === 'terrain-matte') {
+        if (typeof material.side !== 'undefined' && typeof THREE.FrontSide !== 'undefined') {
+            material.side = THREE.FrontSide;
+        }
         if (typeof material.metalness === 'number') {
             material.metalness = 0;
         }
         if (typeof material.roughness === 'number') {
-            material.roughness = Math.max(material.roughness, 0.85);
+            material.roughness = Math.max(material.roughness, 0.94);
         }
         if (typeof material.envMapIntensity === 'number') {
-            material.envMapIntensity = Math.min(material.envMapIntensity, 0.15);
+            material.envMapIntensity = Math.min(material.envMapIntensity, VRODOS_TERRAIN_MATTE_ENV_MAP_CAP);
         }
-        material.userData.vrodosMaterialRoleEnvMapCap = 0.15;
+        material.userData.vrodosMaterialRoleEnvMapCap = VRODOS_TERRAIN_MATTE_ENV_MAP_CAP;
         if (material.normalMap && material.normalScale && material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === 'function') {
-            material.normalScale.copy(material.userData.vrodosBaseNormalScale).multiplyScalar(0.65);
+            const terrainNormalScale = vrodosGetTerrainMatteNormalScale();
+            material.normalScale.copy(material.userData.vrodosBaseNormalScale).multiplyScalar(terrainNormalScale);
+            material.userData.vrodosTerrainNormalScaleFactor = terrainNormalScale;
         }
     } else if (role === 'wet-glossy') {
         if (typeof material.envMapIntensity === 'number') {
@@ -611,6 +648,21 @@ function vrodosApplyMaterialRole(material, overrides) {
         }
     } else if (material.normalMap && material.normalScale && material.userData.vrodosBaseNormalScale && typeof material.normalScale.copy === 'function') {
         material.normalScale.copy(material.userData.vrodosBaseNormalScale);
+    }
+}
+
+function vrodosApplyShadowCastingSide(material) {
+    if (!material || typeof material.shadowSide === 'undefined') {
+        return;
+    }
+
+    if (material.userData && material.userData.vrodosMaterialRole === 'terrain-matte') {
+        material.shadowSide = null;
+        return;
+    }
+
+    if (typeof THREE.FrontSide !== 'undefined') {
+        material.shadowSide = THREE.FrontSide;
     }
 }
 
@@ -827,10 +879,6 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
         }
     }
 
-    if (typeof material.shadowSide !== 'undefined' && typeof THREE.FrontSide !== 'undefined') {
-        material.shadowSide = THREE.FrontSide;
-    }
-
     if (material.transparent && typeof material.alphaTest !== 'undefined') {
         material.alphaTest = Math.max(material.alphaTest || 0, 0.003);
     }
@@ -942,6 +990,7 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
     }
 
     vrodosApplyMaterialRole(material, overrides || {});
+    vrodosApplyShadowCastingSide(material);
     material.needsUpdate = true;
 }
 

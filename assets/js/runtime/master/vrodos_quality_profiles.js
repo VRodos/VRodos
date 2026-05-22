@@ -1601,6 +1601,14 @@
         return Boolean(entityEl && (entityHasClass(entityEl, 'vrodos-navmesh') || entityEl.hasAttribute('data-vrodos-navmesh')));
     }
 
+    function isTerrainShadowEntity(entityEl) {
+        return Boolean(entityEl && (
+            isNavmeshShadowEntity(entityEl) ||
+            entityEl.getAttribute('data-vrodos-collision-category') === 'walkable-surface' ||
+            entityEl.getAttribute('data-vrodos-material-role') === 'terrain-matte'
+        ));
+    }
+
     function getEntityShadowRole(entityEl) {
         if (!entityEl) {
             return null;
@@ -1731,6 +1739,48 @@
         }
 
         return objectEntityChainHas(node, isDecorativeLightingEntity) || isShadowEligibleMaterial(node.material);
+    }
+
+    function hasSelfShadowingTerrain(self) {
+        if (!self || !self.el || typeof self.el.querySelectorAll !== 'function') {
+            return false;
+        }
+
+        const terrainEls = self.el.querySelectorAll('[data-vrodos-navmesh], [data-vrodos-collision-category="walkable-surface"], [data-vrodos-material-role="terrain-matte"]');
+        for (let i = 0; i < terrainEls.length; i++) {
+            if (isTerrainShadowEntity(terrainEls[i]) && getEntityShadowRole(terrainEls[i]) === 'caster-receiver') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function getTerrainSafeContactShadowSettings(self, settings) {
+        if (!settings || !hasSelfShadowingTerrain(self)) {
+            return settings;
+        }
+
+        const preset = typeof self.getContactShadowPreset === 'function'
+            ? self.getContactShadowPreset()
+            : (self.data && self.data.contactShadowPreset);
+        if (preset !== 'strong') {
+            return settings;
+        }
+
+        const shadowQuality = self.data && self.data.shadowQuality === 'high' ? 'high' : 'medium';
+        const safeSettings = Object.assign({}, settings);
+        const biasFloor = shadowQuality === 'high' ? -0.00012 : -0.00009;
+        const normalBiasFloor = shadowQuality === 'high' ? 0.032 : 0.024;
+
+        if (typeof safeSettings.bias === 'number') {
+            safeSettings.bias = Math.min(-0.00001, Math.max(safeSettings.bias, biasFloor));
+        }
+        if (typeof safeSettings.normalBias === 'number') {
+            safeSettings.normalBias = Math.max(safeSettings.normalBias, normalBiasFloor);
+        }
+
+        return safeSettings;
     }
 
     function collectAdaptiveShadowBounds(self) {
@@ -3209,11 +3259,11 @@
 
         const shadowEnabled = self.data.shadowQuality !== 'off';
         const shadowMap = self.data.shadowQuality === 'high' ? 2048 : 1024;
-        const contactShadowSettings = typeof self.getContactShadowSettings === 'function'
+        const contactShadowSettings = getTerrainSafeContactShadowSettings(self, typeof self.getContactShadowSettings === 'function'
             ? self.getContactShadowSettings()
             : (self.data.shadowQuality === 'high'
                 ? { bias: -0.00016, normalBias: 0.018 }
-                : { bias: -0.0001, normalBias: 0.012 });
+                : { bias: -0.0001, normalBias: 0.012 }));
         const sunLight = state.sunLight;
         const skyLight = state.skyLight;
         const fillLight = state.fillLight;
@@ -5098,7 +5148,7 @@
             ? this.getEffectiveShadowQuality()
             : (this.data.shadowQuality || 'medium');
         const shadowsEnabled = shadowQuality !== 'off';
-        const contactShadowSettings = this.getContactShadowSettings();
+        const contactShadowSettings = getTerrainSafeContactShadowSettings(this, this.getContactShadowSettings());
         const profileShadowType = shadowQuality === 'high' ? 'pcfsoft' : 'pcf';
         const shadowTypeAttr = shadowsEnabled
             ? (shouldUseDayNightPcfShadowMap(this)
@@ -5518,7 +5568,7 @@
         const reflectionProfile = this.data.reflectionProfile || 'balanced';
         const enhancedReflections = reflectionProfile === 'enhanced';
         const softReflections = reflectionProfile === 'soft';
-        const contactShadowSettings = this.getContactShadowSettings();
+        const contactShadowSettings = getTerrainSafeContactShadowSettings(this, this.getContactShadowSettings());
         const hasAuthorLights = Array.prototype.some.call(this.getCachedSceneQuery('lightEntities', '[light]'), (lightEl) => !lightEl.hasAttribute('data-vrodos-photoreal-light'));
 
         syncLegacyHorizonCameraFar(this);
