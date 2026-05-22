@@ -109,6 +109,8 @@ AFRAME.registerComponent('custom-movement', {
         flyMovementSpeed: { type: 'number', default: 16 },
         flyPitchVerticalMultiplier: { type: 'number', default: 1.75 },
         flyVerticalSpeedMultiplier: { type: 'number', default: 1.5 },
+        thumbstickDeadzone: { type: 'number', default: 0.08 },
+        turnSpeed: { type: 'number', default: 90 },
         maxStepHeight: { type: 'number', default: VRODOSNavmeshDefaults.maxStepHeight },
         maxDropHeight: { type: 'number', default: VRODOSNavmeshDefaults.maxDropHeight },
         maxSlope: { type: 'number', default: VRODOSNavmeshDefaults.maxSlope }
@@ -119,7 +121,6 @@ AFRAME.registerComponent('custom-movement', {
         this.cameraEl = document.querySelector('#cameraA') || document.querySelector('a-camera');
         this.navMeshEntitySelector = '.vrodos-navmesh';
         this.colliderEntitySelector = '.vrodos-collider';
-        this.thumbInput = { x: 0, y: 0 };
         this.leftThumbInput = { x: 0, y: 0 };
         this.rightThumbInput = { x: 0, y: 0 };
         this.keyboardInput = { x: 0, y: 0, vertical: 0 };
@@ -321,7 +322,6 @@ AFRAME.registerComponent('custom-movement', {
         const targetInput = source === this.thumbR ? this.rightThumbInput : this.leftThumbInput;
         targetInput.x = event.detail.x || 0;
         targetInput.y = event.detail.y || 0;
-        this.syncThumbInput();
     },
     handleThumbstickEnd: function (event) {
         const source = event ? (event.currentTarget || event.target) : null;
@@ -333,15 +333,6 @@ AFRAME.registerComponent('custom-movement', {
             this.rightThumbInput.x = 0;
             this.rightThumbInput.y = 0;
         }
-        this.syncThumbInput();
-    },
-    syncThumbInput: function () {
-        this.thumbInput.x = Math.abs(this.leftThumbInput.x) >= Math.abs(this.rightThumbInput.x)
-            ? this.leftThumbInput.x
-            : this.rightThumbInput.x;
-        this.thumbInput.y = Math.abs(this.leftThumbInput.y) >= Math.abs(this.rightThumbInput.y)
-            ? this.leftThumbInput.y
-            : this.rightThumbInput.y;
     },
     handleNavmeshModelLoad: function (event) {
         if (!event || !event.target || !event.target.classList) {
@@ -1208,6 +1199,34 @@ AFRAME.registerComponent('custom-movement', {
             this.wasdControlsSuppressed = null;
         }
     },
+    applyRightThumbstickTurn: function (timeDelta) {
+        const turnInput = Math.abs(this.rightThumbInput.x) > this.data.thumbstickDeadzone ? this.rightThumbInput.x : 0;
+        if (!turnInput || !this.el || !this.el.object3D) {
+            return false;
+        }
+
+        const deltaSeconds = Math.min(timeDelta || 0, 50) / 1000;
+        const yawDelta = (this.data.turnSpeed * turnInput * Math.PI / 180) * deltaSeconds;
+        const lookControls = this.getLookControlsComponent();
+        if (
+            lookControls &&
+            lookControls.el === this.el &&
+            lookControls.yawObject &&
+            lookControls.yawObject.rotation
+        ) {
+            lookControls.yawObject.rotation.y -= yawDelta;
+        }
+
+        this.el.object3D.rotation.y -= yawDelta;
+
+        if (typeof this.el.object3D.updateMatrixWorld === 'function') {
+            this.el.object3D.updateMatrixWorld(true);
+        } else {
+            this.el.object3D.matrixWorldNeedsUpdate = true;
+        }
+
+        return true;
+    },
     sampleGroundAtSingle: function (position, referenceGroundY, outputGround) {
         const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
         const sampleStart = navPerfFrame ? performance.now() : 0;
@@ -1867,18 +1886,17 @@ AFRAME.registerComponent('custom-movement', {
                 }
             }
 
-            const horizontalThumbInput = flyMode ? this.leftThumbInput : this.thumbInput;
-            const thumbstickX = Math.abs(horizontalThumbInput.x) > 0.08 ? horizontalThumbInput.x : 0;
-            const thumbstickY = Math.abs(horizontalThumbInput.y) > 0.08 ? horizontalThumbInput.y : 0;
-            const rightThumbstickY = Math.abs(this.rightThumbInput.y) > 0.08 ? this.rightThumbInput.y : 0;
+            const turnedWithRightStick = this.applyRightThumbstickTurn(timeDelta);
+            const thumbstickX = Math.abs(this.leftThumbInput.x) > this.data.thumbstickDeadzone ? this.leftThumbInput.x : 0;
+            const thumbstickY = Math.abs(this.leftThumbInput.y) > this.data.thumbstickDeadzone ? this.leftThumbInput.y : 0;
             const keyboardX = (collisionsEnabled || flyMode) ? this.keyboardInput.x : 0;
             const keyboardY = (collisionsEnabled || flyMode) ? this.keyboardInput.y : 0;
             const keyboardVertical = flyMode ? this.keyboardInput.vertical : 0;
             const inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
             const inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
-            const inputVertical = flyMode ? VRODOSMaster.clamp(keyboardVertical - rightThumbstickY, -1, 1) : 0;
+            const inputVertical = flyMode ? VRODOSMaster.clamp(keyboardVertical, -1, 1) : 0;
             if (this.navPerfDebug && this.navPerfDebug.frame) {
-                this.navPerfDebug.frame.moving = hasExternalMovement || inputX !== 0 || inputY !== 0 || inputVertical !== 0;
+                this.navPerfDebug.frame.moving = hasExternalMovement || turnedWithRightStick || inputX !== 0 || inputY !== 0 || inputVertical !== 0;
             }
 
             if (inputX === 0 && inputY === 0 && inputVertical === 0) {
