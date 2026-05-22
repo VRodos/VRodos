@@ -302,3 +302,17 @@ The old Horizon aerial foliage investigation remains useful as failure history, 
 This file is now historical debug context. Current Takram Horizon runtime behavior lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md); the forward roadmap lives in [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md).
 
 The important Takram vanilla finding is that the demo's `post-process` lighting uses unlit/albedo geometry and lets `AerialPerspectiveEffect` apply sun and sky lighting. VRodos needs an explicit desktop-only `post-process-albedo` mode to pursue that exact look safely. Do not try to recreate it by only raising helper fill, exposure, or bloom.
+
+## Current Terrain Shadow Status (2026-05-22)
+
+The PMNDRS/Takram large-terrain triangle/band artifact was confirmed as a directional shadow precision and terrain self-shadow problem, not SSAO, aerial perspective, or light refraction.
+
+Current behavior is documented in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md):
+
+- adaptive directional shadow bounds are camera-focused for large terrain;
+- Takram and VRodos-managed directional lights share contact-shadow bias/normalBias tuning;
+- day/night PCF shadow radius provides the soft edge budget;
+- `terrain-matte` materials use custom depth offset and a near-depth terrain soft-shadow lift;
+- direct sun and moon scene lights are horizon-gated so below-horizon celestial bodies do not light peaks.
+
+Use this file only as historical debugging context. New shadow fixes should update the current runtime reference and avoid reopening the old SSAO diagnosis unless a fresh reduction proves AO involvement.

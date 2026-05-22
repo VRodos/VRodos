@@ -321,13 +321,16 @@ Current implementation direction:
 - Runtime `markShadowDirty(reason)` and `flushShadowUpdate()` update shadow maps on load/reveal and scene-light/material/visibility changes, then keep `renderer.shadowMap.autoUpdate = false`.
 - The compiler emits `data-vrodos-shadow-role` so visible GLB world geometry, media planes, and POI panels cast/receive by default, walkable/navmesh ground receives without self-casting, and hidden collision proxies render into neither the main frame nor shadow maps.
 - Point/spot lights no longer become shadow casters just because shadows are globally enabled; they must be authored that way.
+- Directional sun/helper shadow maps use camera-focused adaptive bounds for large terrain instead of fitting the entire GLB. High quality focuses about `180` world units around the camera; medium focuses about `120`.
+- PMNDRS/Takram day-night shadows keep PCF filtering, use shared contact-shadow bias/normalBias settings, and apply a small directional shadow radius for edge softness.
+- Large terrain that must self-cast uses `terrain-matte` material stabilization, a terrain custom depth-material polygon offset, and a targeted shader lift for near-depth self-shadow samples. This was the fix for the visible soft triangle/band pattern; it was not an SSAO cost or quality issue.
 - PMNDRS AO keeps final color full-resolution but uses cheaper NormalPass/SSAO budgets for `soft` and `balanced`.
 - The profiler appends `vrodos_debug_disable_fps_meter=1` when `--disable-fps-meter` is used, preventing StatsGL from initializing before it can wrap the renderer.
 - `?vrodos_debug_shadow_perf=1` exposes static-shadow diagnostics in the compiled scene.
 
 Simplified Draco derivatives can help after this pass, but only if the derivative actually reduces render triangles/material cost. Draco compression by itself reduces transfer/decode size and does not reduce per-frame triangle submission after decode.
 
-Research TODO: `steep-face shadow proxy`. Keep navmeshes receiver-only for this pass to avoid terrain self-shadow banding. Later, evaluate generating a shadow-only proxy from steep navmesh faces so mountains/walls can block direct light and shadow-aware reflections without making broad flat ground cast onto itself.
+Research TODO: `steep-face shadow proxy`. Keep default navmeshes receiver-only for broad compatibility, but the runtime now has a safe path for explicitly self-casting terrain. Later, evaluate generating a shadow-only proxy from steep navmesh faces so mountains/walls can block direct light and shadow-aware reflections without making broad flat ground cast onto itself.
 
 ## Policy
 

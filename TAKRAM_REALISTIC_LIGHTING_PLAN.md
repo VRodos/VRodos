@@ -19,6 +19,9 @@ Summary of the active baseline:
 - Day-night underside readability is an indirect diffuse problem, not a sun/moon key-light problem. Keep celestial directional lights intact and tune only the PBR indirect bridge: `SkyLightProbe`, hemisphere fill, tiny ambient bounce, and ground bounce color.
 - Low-light presets are calibrated as a PBR/light-source fix, not a renderer rewrite: night adds a cool VRodos-managed moon `DirectionalLight`, dawn/night use stronger Takram sky/PBR fill support, and default low-light exposure is raised only when tone-mapping exposure is not authored.
 - Takram stars are a sky realism layer only. `stars.bin` is shipped locally from `assets/vendor/takram-atmosphere/stars.bin`; stars must not be treated as scene lights.
+- Direct sun and moon scene lights are horizon-gated. If the local celestial direction is below the horizon threshold, the corresponding direct light intensity and shadow casting go to zero; sky, stars, environment, and indirect fill remain separate.
+- Large-terrain day/night shadow banding is treated as a shadow precision and terrain self-shadow problem, not as SSAO or light refraction. The current fix is adaptive camera-focused directional shadow fitting, negative/small contact-shadow bias, terrain custom depth-material polygon offset, and a `terrain-matte` shader lift for near-depth self-shadow samples.
+- Authored emissive materials and readable media emissive boosts are material output only. They do not participate as scene light sources and must not be used to fake sun/moon illumination.
 
 ## Findings To Preserve
 
@@ -28,6 +31,8 @@ Summary of the active baseline:
 - Because that approximation can under-light authored GLB shadow sides compared with real-world sky bounce, VRodos uses a small PBR indirect bridge rather than trying to turn Takram ground into the authored scene ground.
 - Dynamic day-night indirect lighting should follow a continuous sun-elevation curve with slower smoothing than direct celestial lights. Do not reintroduce discrete preset jumps for sky probe, hemisphere fill, ambient bounce, or ground bounce color.
 - Moonlit night readability requires an explicit scene light in the current PBR path. Takram's sky moon and stars are visual atmosphere layers; they do not provide practical GLB scene illumination.
+- Direct celestial lights should be present only while their celestial body is above the local horizon threshold; the indirect bridge carries low-angle readability.
+- Moonlight must not keep smoothing toward a stale positive intensity after the moon has set. When the moon direct visibility is zero, the VRodos moon scene light is hidden immediately.
 - Mixing PBR helper or physical lights with post-process `sunLight` / `skyLight` can double-light the scene or wash out colors.
 - Takram lens flare is tied to the Takram Horizon sun. Its `LensFlareEffect` is a convolution effect and must stay in its own `EffectPass`.
 - Takram `DitheringEffect` can add visible grain to texture-heavy compiled A-Frame scenes. Keep it out of the default path unless it is reintroduced as a measured opt-in.
@@ -48,6 +53,7 @@ Deliverables:
 - Keep one Horizon light-source path for compiled desktop scenes.
 - Keep diagnostics reporting owner, reflection source, time preset, sun direction, light intensities, reflection scale, sun radius, A-Frame default-light state, LUT readiness, exposure, tone mapping, lens flare, correct altitude, and light source.
 - Keep PMNDRS composer disabled during immersive XR.
+- Keep day/night direct light horizon gating, camera-focused adaptive directional shadow fitting, and terrain self-shadow stabilization as part of the baseline.
 
 Acceptance:
 
@@ -55,6 +61,8 @@ Acceptance:
 - Takram precompute startup keeps `SunDirectionalLight` / `SkyLightProbe` objects active while the hemisphere/ambient PBR bridge keeps the scene readable until irradiance textures are ready.
 - `reflection=none` produces no material env-map reflections.
 - Lens flare on/off no longer breaks the composer.
+- Night scenes do not show white moving peak highlights from a sun or moon scene light whose celestial body is below the horizon.
+- Large terrain can cast mountain/peak shadows without reintroducing soft triangle/band self-shadow artifacts on broad slopes.
 
 ### Phase 1 - Explicit Horizon Lighting Mode
 

@@ -135,8 +135,21 @@ In compiled Horizon scenes, Takram owns the sky and sun disk. VRodos then bridge
 - `SkyLightProbe`, hemisphere fill, ambient floor, and ground bounce keep GLB surfaces readable;
 - day-night changes smooth indirect lighting separately from direct sun/moon movement;
 - Takram sky can be captured into PMREM for scene environment reflections.
+- direct sun and moon scene lights are horizon-gated, so a celestial body below the local horizon does not continue to illuminate peaks or cast shadows;
+- large terrain shadows are kept stable through camera-focused directional shadow fitting, terrain depth offset, and a terrain-specific soft self-shadow shader patch.
 
-## 8. BVH Collision And Navigation
+## 8. Lighting, Shadows, And Emissive Materials
+
+Lighting in the compiled client is split into separate responsibilities:
+
+- Takram sky and sun disk are visual atmosphere.
+- Takram/VRodos directional sun and moon lights provide direct scene lighting and shadows only while above the local horizon threshold.
+- `SkyLightProbe`, hemisphere fill, ambient floor, and ground bounce provide indirect readability and move more slowly than direct celestial lights.
+- Shadow maps are fitted near the camera for large terrain instead of to the whole scene bounds.
+- Terrain that must self-cast uses `terrain-matte` material handling plus custom depth offset and a near-depth soft-shadow lift. This keeps real mountain shadows while avoiding shallow terrain triangle/band artifacts.
+- Authored emissive values and media readability emissive boosts are material output only. They do not light neighboring objects, do not cast shadows, and should not be used to replace the sun/moon/indirect-light pipeline.
+
+## 9. BVH Collision And Navigation
 
 Compiled walkable mode uses a native static player/world collision layer inside `custom-movement`. It is not a general rigid-body physics engine.
 
@@ -148,13 +161,13 @@ Movement remains CPU-side geometry work:
 - multi-height capsule sweep raycasts block horizontal movement;
 - axis sliding is attempted when movement hits a blocker.
 
-## 9. XR Compatibility Strategy
+## 10. XR Compatibility Strategy
 
 Desktop and desktop fullscreen can use the eligible post-FX path. Immersive WebXR is different because stereo rendering and screen-space composer passes are not always safe.
 
 VRodos detects real immersive XR through `renderer.xr.isPresenting`. In immersive XR, unsafe screen-space composer passes can fall back to direct stereo rendering. Scene-owned visuals remain active (Takram sky, scene-owned lights, fog, A-Frame movement). The strategy is to skip unsafe screen-space ownership while preserving scene-owned visual systems.
 
-## 10. Future Features & Roadmap
+## 11. Future Features & Roadmap
 
 As we continue to push the boundaries of realism and performance, several advanced features are planned for future integration into our pipeline:
 

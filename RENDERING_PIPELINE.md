@@ -301,6 +301,48 @@ Receiver-only shadows are an explicit optimization path for surfaces that should
 
 Point and spot lights only cast shadows when authored to do so. VRodos-managed photoreal/Takram directional lights may still cast shadows because they are the intentional scene-lighting source.
 
+### Directional shadow precision
+
+Directional sun/helper lights use an adaptive orthographic shadow-camera fit rather than one scene-wide shadow frustum. The fit is camera-focused for large terrain:
+
+- High shadow quality builds focused terrain bounds about `180` world units around the camera.
+- Medium shadow quality builds focused terrain bounds about `120` world units around the camera.
+- Large walkable/terrain meshes that contain the camera are intersected with that local box before being unioned into the light fit.
+- Whole-scene bounds are a fallback only when a camera-focused fit cannot be built.
+
+This keeps shadow-map texels concentrated near the player and avoids low-angle day/night terrain banding caused by fitting the directional light to an entire large GLB.
+
+Day/night cycle shadows keep runtime-forced `pcf` filtering. The current PMNDRS/Takram shadow softness defaults are:
+
+- High shadow quality: directional `shadow.radius = 2.4`.
+- Medium shadow quality: directional `shadow.radius = 1.8`.
+- Debug override: `?vrodos_debug_day_night_shadow_radius=VALUE`, clamped to `0..6`.
+
+Takram sun shadows and VRodos-managed directional helper shadows use the same contact-shadow profile. Bias remains negative, `normalBias` remains small, and the old hardcoded positive Takram bias values must not be reintroduced.
+
+### Terrain self-shadow stabilization
+
+Large authored terrain can legitimately need to cast shadows from steep peaks while broad walkable slopes must avoid low-angle self-shadow acne. VRodos handles that with a terrain material role plus terrain-specific shadow-map writes:
+
+- `data-vrodos-material-role="terrain-matte"` or walkable/navmesh terrain candidates resolve to the `terrain-matte` role unless the material has strong authored glossy/PBR intent.
+- `terrain-matte` materials are forced to `FrontSide`, `metalness = 0`, roughness at least `0.94`, env-map intensity capped at `0.08`, and normal-map scale reduced to `0.22` by default.
+- Terrain shadow casting side is `FrontSide`; using backside/null shadow casting caused incorrect peak lighting in high-altitude terrain.
+- Self-shadowing terrain receives a custom `MeshDepthMaterial` with polygon offset. Defaults are factor `4`, units `8`.
+- The terrain material shader lifts only near-depth directional self-shadow samples. Real mountain-cast hard shadows remain intact, while soft triangle/band patterns from shallow terrain self-shadow are suppressed.
+
+Terrain shadow debug flags:
+
+- `vrodos_debug_disable_terrain_normal_map=1`
+- `vrodos_debug_terrain_normal_scale=VALUE`
+- `vrodos_debug_disable_terrain_shadow_depth_offset=1`
+- `vrodos_debug_terrain_shadow_depth_offset_factor=VALUE`
+- `vrodos_debug_terrain_shadow_depth_offset_units=VALUE`
+- `vrodos_debug_disable_terrain_soft_shadow_lift=1`
+- `vrodos_debug_terrain_soft_shadow_lift_strength=VALUE`
+- `vrodos_debug_terrain_soft_shadow_target=VALUE`
+- `vrodos_debug_terrain_soft_shadow_gap_start=VALUE`
+- `vrodos_debug_terrain_soft_shadow_gap_end=VALUE`
+
 ## 6. PMNDRS Pipeline
 
 The PMNDRS engine uses `POSTPROCESSING.EffectComposer` and builds a scene-specific composer lazily on the first valid render frame.
@@ -402,6 +444,7 @@ Runtime behavior:
 - `preset-time` resolves the selected time preset through the existing Takram atmosphere look defaults before building local and ECEF sun/moon directions.
 - The night preset turns the moon path on through `pmndrsMoonEnabled` unless the author explicitly overrides it in the compile dialog.
 - Horizon PMNDRS night uses Takram physical light sources when available, with dim cool moonlight instead of daytime Horizon key-light intensity.
+- Direct sun and moon scene lights are gated by local celestial elevation. The sun fades in only above the horizon, and the moon fades in only after it is visibly above the horizon; when either body is below that threshold, its scene light intensity and shadow casting are zero. The sky, stars, indirect fill, and environment behavior can still contribute separately.
 - HDR/scene-probe env-map intensity is scaled down at night without changing authored material roughness or metalness.
 - Horizon uses one PMNDRS/Takram light-source path for local PBR scenes. Because Takram's documented light-source mode approximates sky irradiance at one point and the VRodos local-Horizon path disables Takram ground rendering, VRodos applies a separate sun-elevation-based PBR indirect profile: `SkyLightProbe` plus a low-cost hemisphere sky/ground fill and a small ambient floor. This preserves directional sun/shadow contrast while keeping shadow-side GLB surfaces readable.
 - Direct celestial lighting stays separate from the indirect bridge: Takram `SunDirectionalLight` owns sun key light, and the VRodos moon directional light owns night shape when visible. Dynamic day-night underside readability is tuned only through indirect diffuse lighting: `SkyLightProbe`, `HemisphereLight`, tiny `AmbientLight`, and ground bounce color follow a continuous sun-elevation curve with slower smoothing than direct celestial lights so the fill does not step during the cycle.
@@ -432,14 +475,24 @@ Lighting participation:
 - Walkable/navmesh world surfaces receive shadows but do not cast by default, preventing large shallow terrain self-shadow banding. Visible architecture, media, POIs, and props still cast by default.
 - Directional Takram/helper sun lights receive an adaptive orthographic shadow-camera fit around nearby world bounds and the current camera region.
 
-Research TODO: `steep-face shadow proxy`. Terrain-heavy scenes may need mountains, cliffs, or walls embedded in a walkable/navmesh GLB to occlude direct light and shadow-aware reflections without letting flat ground self-cast. The likely approach is to generate a shadow-only proxy from steep navmesh faces while keeping shallow walkable ground receiver-only. This should be profiled separately before becoming default behavior.
+Research TODO: `steep-face shadow proxy`. The current runtime can stabilize authored terrain that is allowed to self-cast, but compiler-generated terrain splitting may still be useful later. The likely approach is to generate a shadow-only proxy from steep navmesh faces while keeping shallow walkable ground receiver-only. This should be profiled separately before becoming default behavior.
 
 Reflection/glint handling:
 
 - Standard, Physical, and Phong materials get a runtime shader hook when shadow-aware reflections or global reflection suppression is active.
 - Direct specular, indirect specular, clearcoat, sheen, and bright glint output are multiplied by a shadow-aware specular factor.
 - This is separate from SSR. In PMNDRS scenes, a bright road glint with `reflection=none` is direct sun/specular energy, so the shader hook is what suppresses it under a blocker.
+- `terrain-matte` skips the reflection-shadow shader patch because its own matte material caps and terrain soft-shadow patch are the safer stabilization path for large ground meshes.
 - In immersive XR the custom shadow-aware reflection attenuation is disabled and the runtime keeps the safer scene-owned fallback behavior.
+
+Emissive/readability handling:
+
+- Authored `material.emissive` and `material.emissiveIntensity` values are serialized by the compiler and reapplied by runtime material enhancement.
+- Emissive maps are texture-quality managed like base color maps.
+- High-quality PBR materials with an emissive map get a small readability floor of `emissiveIntensity >= 1.05` unless an authored override is present.
+- Flat readable media surfaces map the visible texture into `emissiveMap`, set white emissive color, and keep `emissiveIntensity >= 0.8` so image/video content remains legible under changing day/night light.
+- Shadow-receiver terrain/material overrides cap emissive intensity to `0.08` so terrain does not glow and fake away real shadow contrast.
+- Emissive material output is not a scene light. It does not illuminate neighboring GLBs, does not cast shadows, and should not be used as a substitute for the Takram sun/moon/direct/indirect lighting pipeline.
 
 Diagnostics:
 
@@ -454,6 +507,15 @@ Debug query flags:
 - `vrodos_debug_shadow_perf=1`: shows static-shadow mode, `autoUpdate`, dirty reason, shadow update count, caster/receiver counts, and shadow-light counts.
 - `vrodos_debug_dynamic_shadows=1`: forces dynamic shadow-map updates for comparison against cached static shadows.
 - `vrodos_debug_disable_shadows=1`: disables shadows to isolate total shadow cost.
+- `vrodos_debug_day_night_shadow_radius=VALUE`: overrides directional day/night PCF shadow softness for sun/helper lights.
+- `vrodos_debug_disable_terrain_shadow_depth_offset=1`: disables terrain custom depth-material polygon offset.
+- `vrodos_debug_terrain_shadow_depth_offset_factor=VALUE`: overrides terrain depth polygon offset factor.
+- `vrodos_debug_terrain_shadow_depth_offset_units=VALUE`: overrides terrain depth polygon offset units.
+- `vrodos_debug_disable_terrain_soft_shadow_lift=1`: disables the terrain shader lift that suppresses shallow self-shadow bands.
+- `vrodos_debug_terrain_soft_shadow_lift_strength=VALUE`: scales terrain soft-shadow lift strength.
+- `vrodos_debug_terrain_soft_shadow_target=VALUE`: adjusts the target visibility for lifted terrain self-shadow samples.
+- `vrodos_debug_terrain_soft_shadow_gap_start=VALUE`: adjusts the near-depth terrain self-shadow mask start.
+- `vrodos_debug_terrain_soft_shadow_gap_end=VALUE`: adjusts the near-depth terrain self-shadow mask end.
 - `vrodos_debug_nav_perf=1`: shows navigation/collision target counts and tick timing.
 - `vrodos_debug_pmndrs_horizon=1`: logs PMNDRS/Takram horizon diagnostics when the diagnostic signature changes.
 - `vrodos_debug_pmndrs_horizon_verbose=1`: logs verbose PMNDRS/Takram horizon diagnostics.

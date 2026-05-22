@@ -24,6 +24,12 @@
     const DPR_PIXEL_BUDGET_QUERY_PARAM = 'vrodos_dpr_pixel_budget';
     const TERRAIN_SHADOW_DEPTH_OFFSET_FACTOR = 4;
     const TERRAIN_SHADOW_DEPTH_OFFSET_UNITS = 8;
+    const PMNDRS_SUN_DIRECT_LIGHT_START_Y = 0.0;
+    const PMNDRS_SUN_DIRECT_LIGHT_FULL_Y = 0.08;
+    const PMNDRS_MOON_DIRECT_LIGHT_START_Y = 0.02;
+    const PMNDRS_MOON_DIRECT_LIGHT_FULL_Y = 0.16;
+    const PMNDRS_DAY_NIGHT_SHADOW_RADIUS_HIGH = 2.4;
+    const PMNDRS_DAY_NIGHT_SHADOW_RADIUS_MEDIUM = 1.8;
     const WGS84_EQUATORIAL_RADIUS = 6378137;
     const WGS84_POLAR_RADIUS = 6356752.3142451793;
     const runtimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
@@ -890,11 +896,15 @@
         if (!config || config.moonEnabled === false) {
             return 0;
         }
+        const directVisibility = getPmndrsMoonDirectLightVisibility(config);
+        if (directVisibility <= 0) {
+            return 0;
+        }
         const calibratedProfile = getPmndrsCalibratedCelestialLightingProfile(config);
         if (calibratedProfile) {
-            return calibratedProfile.moonLightIntensity;
+            return calibratedProfile.moonLightIntensity * directVisibility;
         }
-        return isPmndrsPresetTimeNight(config) ? PMNDRS_NIGHT_MOON_LIGHT_INTENSITY : 0;
+        return isPmndrsPresetTimeNight(config) ? PMNDRS_NIGHT_MOON_LIGHT_INTENSITY * directVisibility : 0;
     }
 
     function getPmndrsMoonSceneLightDirection(config) {
@@ -902,6 +912,36 @@
             return null;
         }
         return config.localMoonDirection || config.moonDirection || config.localSunDirection || config.sunDirection || null;
+    }
+
+    function getPmndrsLocalDirectionY(direction) {
+        return direction && typeof direction.y === 'number' && isFinite(direction.y) ? direction.y : -1;
+    }
+
+    function getPmndrsSunDirectLightVisibility(config) {
+        return smoothstepNumber(
+            PMNDRS_SUN_DIRECT_LIGHT_START_Y,
+            PMNDRS_SUN_DIRECT_LIGHT_FULL_Y,
+            getPmndrsLocalDirectionY(config && (config.localSunDirection || config.sunDirection))
+        );
+    }
+
+    function getPmndrsMoonDirectLightVisibility(config) {
+        if (!config || config.moonEnabled === false) {
+            return 0;
+        }
+
+        return smoothstepNumber(
+            PMNDRS_MOON_DIRECT_LIGHT_START_Y,
+            PMNDRS_MOON_DIRECT_LIGHT_FULL_Y,
+            getPmndrsLocalDirectionY(config.localMoonDirection || config.moonDirection)
+        );
+    }
+
+    function getPmndrsDirectLightVisibility(config, useMoonDirection) {
+        return useMoonDirection
+            ? getPmndrsMoonDirectLightVisibility(config)
+            : getPmndrsSunDirectLightVisibility(config);
     }
 
     function getPmndrsStarsIntensity(config) {
@@ -1557,6 +1597,20 @@
                 16
             )
         };
+    }
+
+    function getPmndrsDayNightShadowRadius(self) {
+        const shadowQuality = self && self.data && self.data.shadowQuality === 'high' ? 'high' : 'medium';
+        const fallback = shadowQuality === 'high'
+            ? PMNDRS_DAY_NIGHT_SHADOW_RADIUS_HIGH
+            : PMNDRS_DAY_NIGHT_SHADOW_RADIUS_MEDIUM;
+        return readPmndrsDebugNumber(
+            'dayNightShadowRadius',
+            'vrodos_debug_day_night_shadow_radius',
+            fallback,
+            0,
+            6
+        );
     }
 
     function objectEntityChainHas(object, predicate) {
@@ -3153,7 +3207,9 @@
         const shadowEnabled = self.data.shadowQuality !== 'off';
         const shadowMap = self.data.shadowQuality === 'high' ? 2048 : 1024;
         const helperConfig = getPmndrsHorizonHelperLightConfig(self, preset, config);
-        const castShadow = shadowEnabled && !helperConfig.useMoonDirection ? 'true' : 'false';
+        const directVisibility = getPmndrsDirectLightVisibility(config, helperConfig.useMoonDirection);
+        const keyIntensity = helperConfig.keyIntensity * directVisibility;
+        const castShadow = shadowEnabled && !helperConfig.useMoonDirection && directVisibility > 0.001 ? 'true' : 'false';
         const fallbackFillIntensity = getPmndrsFallbackAmbientFillIntensity(helperConfig, config);
         const keyDirection = helperConfig.useMoonDirection
             ? (config.localMoonDirection || config.moonDirection || config.localSunDirection || config.sunDirection)
@@ -3162,7 +3218,7 @@
 
         self.ensurePhotorealHelperLight(
             'vrodos-pmndrs-horizon-key-light',
-            `type: directional; color: ${  helperConfig.keyColor  }; intensity: ${  helperConfig.keyIntensity.toFixed(2)  }; castShadow: ${  castShadow  }; shadowMapWidth: ${  shadowMap  }; shadowMapHeight: ${  shadowMap  }; shadowCameraTop: 28; shadowCameraRight: 28; shadowCameraLeft: -28; shadowCameraBottom: -28; shadowBias: -0.00012;`,
+            `type: directional; color: ${  helperConfig.keyColor  }; intensity: ${  keyIntensity.toFixed(2)  }; castShadow: ${  castShadow  }; shadowMapWidth: ${  shadowMap  }; shadowMapHeight: ${  shadowMap  }; shadowCameraTop: 28; shadowCameraRight: 28; shadowCameraLeft: -28; shadowCameraBottom: -28; shadowBias: -0.00012; shadowRadius: ${  getPmndrsDayNightShadowRadius(self).toFixed(2)  };`,
             formatVectorPosition(keyDirection, shadowDistance, helperConfig.useMoonDirection ? 4 : 8)
         );
 
@@ -3386,15 +3442,20 @@
         }
         if (sunLight) {
             const useSunKey = !helperConfig.useMoonDirection;
-            const targetSunVisible = useSunKey && helperConfig.keyIntensity > 0;
-            const targetSunIntensity = targetSunVisible ? (hasTakramSunRadiance ? 1 : helperConfig.keyIntensity) : 0;
-            const sunIntensity = smoothPmndrsRuntimeLightValue(
-                self,
-                'takramSunIntensity',
-                targetSunIntensity,
-                lightingSmoothingMs,
-                sunLight.intensity
-            );
+            const sunDirectVisibility = getPmndrsSunDirectLightVisibility(config);
+            const targetSunVisible = useSunKey && helperConfig.keyIntensity > 0 && sunDirectVisibility > 0.001;
+            const targetSunIntensity = targetSunVisible
+                ? (hasTakramSunRadiance ? 1 : helperConfig.keyIntensity) * sunDirectVisibility
+                : 0;
+            const sunIntensity = targetSunVisible
+                ? smoothPmndrsRuntimeLightValue(
+                    self,
+                    'takramSunIntensity',
+                    targetSunIntensity,
+                    lightingSmoothingMs,
+                    sunLight.intensity
+                )
+                : 0;
             sunLight.visible = sunIntensity > 0.001 || targetSunVisible;
             sunLight.intensity = sunIntensity;
             if (sunLight.color && typeof sunLight.color.copy === 'function') {
@@ -3421,6 +3482,7 @@
             if (sunLight.shadow) {
                 sunLight.shadow.mapSize.set(shadowMap, shadowMap);
                 sunLight.shadow.bias = contactShadowSettings.bias;
+                sunLight.shadow.radius = getPmndrsDayNightShadowRadius(self);
                 if (typeof sunLight.shadow.normalBias !== 'undefined') {
                     sunLight.shadow.normalBias = contactShadowSettings.normalBias;
                 }
@@ -3450,13 +3512,15 @@
             const moonDirection = getPmndrsMoonSceneLightDirection(config);
             const moonIntensity = getPmndrsMoonSceneLightIntensity(config);
             const targetMoonIntensity = moonLightEnabled && Boolean(moonDirection) ? moonIntensity : 0;
-            const smoothedMoonIntensity = smoothPmndrsRuntimeLightValue(
-                self,
-                'takramMoonIntensity',
-                targetMoonIntensity,
-                lightingSmoothingMs,
-                moonLight.intensity
-            );
+            const smoothedMoonIntensity = targetMoonIntensity > 0
+                ? smoothPmndrsRuntimeLightValue(
+                    self,
+                    'takramMoonIntensity',
+                    targetMoonIntensity,
+                    lightingSmoothingMs,
+                    moonLight.intensity
+                )
+                : 0;
             moonLight.visible = smoothedMoonIntensity > 0.001 || targetMoonIntensity > 0.001;
             moonLight.intensity = smoothedMoonIntensity;
             moonLight.castShadow = false;
@@ -5339,6 +5403,10 @@
                             ? managedContactShadowNormalBias
                             : (node.userData.vrodosBaseShadowNormalBias !== 0 ? node.userData.vrodosBaseShadowNormalBias : contactShadowSettings.normalBias);
                     }
+
+                    if (isVrodosManagedLight && node.isDirectionalLight && typeof node.shadow.radius !== 'undefined') {
+                        node.shadow.radius = getPmndrsDayNightShadowRadius(this);
+                    }
                 }
 
                 node.shadow.needsUpdate = node.castShadow;
@@ -5706,7 +5774,7 @@
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-key-light',
-            `type: directional; color: #fff2d8; intensity: ${  enhancedReflections ? Math.max(contactShadowSettings.helperKeyIntensity, 1.0).toFixed(2) : (softReflections ? Math.max(contactShadowSettings.helperKeyIntensity - 0.08, 0.72).toFixed(2) : contactShadowSettings.helperKeyIntensity.toFixed(2))  }; castShadow: ${  castShadow  }; shadowMapWidth: ${  keyShadowMap  }; shadowMapHeight: ${  keyShadowMap  }; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: ${  contactShadowSettings.bias  };`,
+            `type: directional; color: #fff2d8; intensity: ${  enhancedReflections ? Math.max(contactShadowSettings.helperKeyIntensity, 1.0).toFixed(2) : (softReflections ? Math.max(contactShadowSettings.helperKeyIntensity - 0.08, 0.72).toFixed(2) : contactShadowSettings.helperKeyIntensity.toFixed(2))  }; castShadow: ${  castShadow  }; shadowMapWidth: ${  keyShadowMap  }; shadowMapHeight: ${  keyShadowMap  }; shadowCameraTop: 16; shadowCameraRight: 16; shadowCameraLeft: -16; shadowCameraBottom: -16; shadowBias: ${  contactShadowSettings.bias  }; shadowRadius: ${  getPmndrsDayNightShadowRadius(this).toFixed(2)  };`,
             contactShadowSettings.helperPosition
         );
 

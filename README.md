@@ -13,7 +13,7 @@ It combines:
 
 Keep current behavior in one place where possible:
 
-- [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md): canonical compiled runtime rendering, PMNDRS/Takram, shadows, diagnostics, and future render-track notes.
+- [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md): canonical compiled runtime rendering, PMNDRS/Takram, day-night lighting, shadows, emissive/readability handling, diagnostics, and future render-track notes.
 - [`PERFORMANCE_OPTIMIZATION_PLAN.md`](PERFORMANCE_OPTIMIZATION_PLAN.md): profiler findings, performance decisions, shadow/AO refactor notes, and asset-optimization measurements.
 - [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md): Takram realism roadmap and future `post-process-albedo` work; it should not duplicate the full current runtime reference.
 - [`AFRAME_COLLISION_ROADMAP.md`](AFRAME_COLLISION_ROADMAP.md): compiled-scene collision architecture, roadmap, and remaining hardening work.
@@ -90,6 +90,7 @@ That runtime powers:
 - a global reflections switch for compiled scenes
 - shadow-aware direct-sun glint suppression for compiled-scene PBR materials
 - PMNDRS/Takram tone mapping, sun lens flare, and atmosphere controls for desktop compiled scenes
+- PMNDRS/Takram day-night lighting with horizon-gated direct sun/moon lights and separate indirect sky/fill support
 - compiled walkable-surface and static player/world collision workflows
 - static cached desktop shadows where visible compiled geometry casts and receives by default
 
@@ -105,9 +106,11 @@ Compiled scenes can currently offer:
 - fullscreen and immersive XR preservation of the authored desktop visual baseline, with targeted fallbacks for XR-unsafe screen-space effects
 - shadow presets for performance vs visual quality
 - semantic shadow participation: visible world GLBs, media planes, and POI panels cast/receive by default; walkable/navmesh ground receives shadows without self-casting; hidden collision proxies do not render into shadow maps
+- large-terrain shadow stabilization through camera-focused directional shadow fitting, terrain depth offset, and terrain soft self-shadow suppression
 - reflection source selection between HDR presets and scene probes
 - global reflection enable/disable control plus shadow-aware direct-sun reflection occlusion
 - PMNDRS selectable tone mapping, exposure, generated LUT looks, Takram correct-altitude, and Takram Horizon lens flare
+- authored emissive materials plus scoped media readability emissive handling; emissive output is not treated as a scene light
 - walkable-surface ground collisions plus default static player blocking for compiled scene geometry
 
 ## Compiled Scene Navigation And Collisions
@@ -140,7 +143,8 @@ High-quality compiled desktop scenes keep the PMNDRS/Takram look while avoiding 
 - `shadowUpdateMode` defaults to `static`, which updates shadow maps on load, delayed reveal, and explicit dirty events instead of every frame.
 - `dynamic` shadow updates remain available for authored scenes with moving shadow casters.
 - Visible compiled geometry casts and receives shadows by default for realism. Walkable/navmesh ground is receiver-only to avoid large-terrain self-shadow banding; the performance guardrail is cached/static shadow-map updates, not making authored objects shadowless.
-- PMNDRS/Takram Horizon scenes use Takram physical `SunDirectionalLight` / `SkyLightProbe` when available, with a separate PBR indirect-light profile and low-cost hemisphere ground/sky fill for A-Frame assets. Flat media surfaces get a narrowly scoped readability material treatment.
+- PMNDRS/Takram Horizon scenes use Takram physical `SunDirectionalLight` / `SkyLightProbe` when available, with a separate PBR indirect-light profile and low-cost hemisphere ground/sky fill for A-Frame assets. Direct sun/moon scene lights are disabled below the local horizon threshold. Flat media surfaces get a narrowly scoped readability material treatment.
+- Terrain-heavy scenes use a camera-focused directional shadow fit, terrain custom depth offset, and terrain soft self-shadow suppression so mountain-cast shadows remain while shallow slope banding is reduced.
 - The PMNDRS AO budget keeps the final color buffer full-resolution while scaling the NormalPass/SSAO workload per AO preset.
 - `?vrodos_debug_shadow_perf=1` shows live shadow cache diagnostics.
 - `scripts/profile-master-client.mjs --disable-fps-meter` appends `vrodos_debug_disable_fps_meter=1` so StatsGL does not initialize before profiling.
@@ -157,6 +161,8 @@ Most-used flags:
 
 - `vrodos_debug_disable_fps_meter=1`: prevents StatsGL/FPS meter initialization before it can wrap `renderer.render`; use for timing captures.
 - `vrodos_debug_shadow_perf=1`: shows shadow mode, `autoUpdate`, dirty reason, shadow update count, caster/receiver counts, and shadow-light counts.
+- `vrodos_debug_day_night_shadow_radius=VALUE`: adjusts PMNDRS/Takram directional day-night shadow softness.
+- `vrodos_debug_disable_terrain_soft_shadow_lift=1`: isolates terrain soft-shadow lift from the rest of the shadow pipeline.
 - `vrodos_debug_nav_perf=1`: shows navigation/collision target counts and tick timing.
 - `vrodos_debug_pmndrs_horizon_verbose=1`: logs verbose PMNDRS/Takram horizon diagnostics.
 - `vrodos_spector=1`: enables the runtime Spector capture hook when the Spector debug helper is present. Prefer `scripts/profile-master-client.mjs --spector` for repeatable captures.

@@ -79,6 +79,14 @@ Compiled scenes keep `scene-settings` as the compatibility data contract, but fo
 
 Runtime defaults for PMNDRS/Takram settings come from `assets/runtime-settings-contract.json` through the generated browser contract script. GPU resources and event listeners created by runtime helpers should be tracked through `window.VRODOSMaster.RuntimeResources` and disposed from A-Frame lifecycle cleanup.
 
+Lighting/shadow ownership:
+
+- `RENDERING_PIPELINE.md` is the canonical current reference for PMNDRS/Takram day-night lighting, adaptive directional shadows, terrain self-shadow stabilization, and emissive/readability handling.
+- Direct sun and moon scene lights are horizon-gated. Do not reintroduce below-horizon sun/moon key light to fix night readability; tune the indirect bridge instead.
+- Large-terrain soft triangle/band artifacts are a shadow precision and terrain self-shadow issue, not an SSAO/refraction issue. Fixes belong in `assets/js/runtime/master/vrodos_quality_profiles.js` and `assets/js/runtime/master/vrodos_master_rendering.js`.
+- Do not hardcode Takram shadow bias/normalBias values. Use the existing contact-shadow profile and keep day/night shadow radius changes shared across Takram and VRodos-managed directional lights.
+- Emissive material output and flat-media readability boosts are not scene lights. Do not use emissive settings as substitutes for direct sun/moon lighting or the indirect PBR fill profile.
+
 Rendering docs:
 
 - `RENDERING_PIPELINE.md`: current technical render-stack reference
@@ -144,6 +152,8 @@ Common checks:
 - `node --check` for edited JS files
 - PHP syntax checks for edited PHP files
 - `git diff --check`
+
+If the local Windows `npm` shim is broken but runtime source changed, use `node .\scripts\build-runtime-master-bundles.mjs` as the direct runtime bundle build and mention that fallback in the handoff.
 
 Performance tooling:
 

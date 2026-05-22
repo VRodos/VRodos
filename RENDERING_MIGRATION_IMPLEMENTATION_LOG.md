@@ -63,6 +63,16 @@ The migration from legacy Three.js r173 to the pinned A-Frame master + Three.js 
 - Patched compiled-scene PBR/Phong material shaders so shadowed pixels suppress direct sun specular, indirect specular, clearcoat, sheen, and bright glint output.
 - Reduced PMNDRS Horizon console noise to one default startup state line, with expanded diagnostics behind `?vrodos_debug_pmndrs_horizon=1` and `?vrodos_debug_pmndrs_horizon_verbose=1`.
 
+### PMNDRS/Takram day-night terrain shadow stabilization
+
+- Stabilized compiled-scene day/night shadows for large terrain by focusing adaptive directional shadow bounds around the active camera instead of expanding the shadow camera to the full terrain GLB.
+- Replaced hardcoded Takram sun shadow bias tuning with the shared contact-shadow preset so Takram and VRodos-managed directional lights use the same negative bias and small `normalBias`.
+- Added day/night directional shadow radius defaults for softer PCF edges: high `2.4`, medium `1.8`, with `?vrodos_debug_day_night_shadow_radius=VALUE` for visual tuning.
+- Kept runtime-forced PCF for day/night cycle shadows.
+- Added `terrain-matte` self-shadow stabilization for large authored terrain: front-side terrain shadow casting, terrain custom depth-material polygon offset, reduced terrain normal-map scale, matte reflection caps, and a terrain shader lift that suppresses near-depth soft self-shadow triangle/band artifacts without removing real hard mountain-cast shadows.
+- Added horizon gating for direct sun and moon scene lights. When the local sun or moon direction is below its horizon threshold, direct light intensity and shadow casting go to zero so hidden celestial bodies do not create moving white peak highlights.
+- Preserved authored emissive material support while documenting that emissive output and media readability boosts are material output only, not light sources.
+
 ### VR/XR visual parity
 
 - Added presentation-mode detection to separate inline desktop, desktop fullscreen/A-Frame fullscreen, and real immersive WebXR.
