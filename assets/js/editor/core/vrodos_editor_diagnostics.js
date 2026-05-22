@@ -85,7 +85,20 @@ VRODOS.editor = VRODOS.editor || {};
                 lastLoadingRenderAt: Number(loop.lastLoadingRenderAt || 0),
                 targetFps: Number(loop.targetFps || 0),
                 pixelRatioCap: Number(loop.pixelRatioCap || 0),
-                labelFrameStride: Number(loop.labelFrameStride || 0)
+                labelFrameStride: Number(loop.labelFrameStride || 0),
+                cameraInteractiveLabelFrameStride: Number(loop.cameraInteractiveLabelFrameStride || 0),
+                cameraInteractionActive: Boolean(
+                    VRODOS.editor.isCameraInteractionActive &&
+                    VRODOS.editor.isCameraInteractionActive()
+                ),
+                cameraInteractionRawActive: Boolean(loop.cameraInteractionActive),
+                cameraInteractionNeedsFinalFrame: Boolean(loop.cameraInteractionNeedsFinalFrame),
+                cameraInteractionLastAt: Number(loop.cameraInteractionLastAt || 0),
+                lastRenderDurationMs: Number(loop.lastRenderDurationMs || 0),
+                averageRenderDurationMs: Number(loop.averageRenderDurationMs || 0),
+                maxRenderDurationMs: Number(loop.maxRenderDurationMs || 0),
+                slowFrameCount: Number(loop.slowFrameCount || 0),
+                slowFrameThresholdMs: Number(loop.slowFrameThresholdMs || 0)
             },
             scene: {
                 children: envir.scene && envir.scene.children ? envir.scene.children.length : 0,

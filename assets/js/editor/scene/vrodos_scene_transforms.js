@@ -344,7 +344,12 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         const controls = VRODOS.editor.transform_controls;
         if (!controls || typeof controls.setSize !== 'function') return false;
 
-        controls.setSize(Math.max(Number(size) || 1, 0.1));
+        const nextSize = Math.max(Number(size) || 1, 0.1);
+        if (Math.abs(Number(controls.size || 1) - nextSize) < 0.0001) {
+            return true;
+        }
+
+        controls.setSize(nextSize);
         render.request('transform-size');
         return true;
     };

@@ -86,14 +86,31 @@ VRODOS.editor = VRODOS.editor || {};
         }
 
         this.applyEditorPerformanceProfile(false);
+        this.applyEditorPixelRatio(false);
         this.renderer.render(this.scene, camera);
+    }
+
+    function applyEditorPixelRatio(force) {
+        if (!this.renderer || typeof this.getEditorPixelRatio !== 'function') {
+            return 1;
+        }
+
+        const nextPixelRatio = this.getEditorPixelRatio();
+        const currentPixelRatio = Number(this.currentEditorPixelRatio || 0);
+
+        if (force || Math.abs(currentPixelRatio - nextPixelRatio) > 0.001) {
+            this.renderer.setPixelRatio(nextPixelRatio);
+            this.currentEditorPixelRatio = nextPixelRatio;
+        }
+
+        return nextPixelRatio;
     }
 
     function turboResize() {
         this.updateScreenMetrics();
 
         this.renderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
-        this.renderer.setPixelRatio(this.getEditorPixelRatio());
+        this.applyEditorPixelRatio(false);
 
         this.labelRenderer.setSize(this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
         this.updateCameraProjectionForResize();
@@ -146,6 +163,7 @@ VRODOS.editor = VRODOS.editor || {};
         prototype.configureLabelRenderer = configureLabelRenderer;
         prototype.updateScreenMetrics = updateScreenMetrics;
         prototype.renderEditorFrame = renderEditorFrame;
+        prototype.applyEditorPixelRatio = applyEditorPixelRatio;
         prototype.turboResize = turboResize;
         prototype.updateCameraProjectionForResize = updateCameraProjectionForResize;
     };

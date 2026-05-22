@@ -62,7 +62,9 @@ VRODOS.editor = VRODOS.editor || {};
             loop.lastQualitySampleAt = now;
         }
 
-        if (this.renderer) {
+        if (typeof this.applyEditorPixelRatio === 'function') {
+            this.applyEditorPixelRatio(false);
+        } else if (this.renderer) {
             this.renderer.setPixelRatio(this.getEditorPixelRatio());
         }
 

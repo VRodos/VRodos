@@ -23,6 +23,11 @@ VRODOS.api = VRODOS.api || {};
             : Date.now();
     }
 
+    function safeLoopNumber(loop, key, fallback) {
+        const value = Number(loop && loop[key]);
+        return Number.isFinite(value) ? value : fallback;
+    }
+
     function getActiveCameraForEnvir(envir) {
         if (!envir) {
             return null;
@@ -49,6 +54,33 @@ VRODOS.api = VRODOS.api || {};
 
     function hasActiveAnimation(envir) {
         return Boolean(envir.flagPlayAnimation && envir.animationMixers && envir.animationMixers.length > 0);
+    }
+
+    function isCameraInteractionActiveForLoop(loop, timestamp) {
+        if (!loop) {
+            return false;
+        }
+
+        if (loop.cameraInteractionActive) {
+            return true;
+        }
+
+        const lastInteractionAt = Number(loop.cameraInteractionLastAt || 0);
+        if (!lastInteractionAt) {
+            return false;
+        }
+
+        const now = Number.isFinite(timestamp) && timestamp > 0 ? timestamp : getNow();
+        const settleMs = Math.max(0, safeLoopNumber(loop, 'cameraInteractionSettleMs', 140));
+        return (now - lastInteractionAt) < settleMs;
+    }
+
+    function hasPendingCameraFinalFrame(loop, timestamp) {
+        return Boolean(
+            loop &&
+            loop.cameraInteractionNeedsFinalFrame &&
+            !isCameraInteractionActiveForLoop(loop, timestamp)
+        );
     }
 
     function updateOrbitControls(envir) {
@@ -83,7 +115,11 @@ VRODOS.api = VRODOS.api || {};
         }
     }
 
-    function updateDirectorGroundGuide(envir) {
+    function updateDirectorGroundGuide(envir, isCameraInteraction) {
+        if (isCameraInteraction && !isAvatarControlsEnabled() && !isTransformDragging()) {
+            return;
+        }
+
         if (typeof envir.updateDirectorGroundGuide === 'function') {
             envir.updateDirectorGroundGuide();
         }
@@ -104,18 +140,19 @@ VRODOS.api = VRODOS.api || {};
         }
     }
 
-    function shouldRenderLabels(envir, isContinuous) {
+    function shouldRenderLabels(envir, isContinuous, isCameraInteraction) {
         if (!envir.labelRenderer) {
             return false;
         }
 
         const loop = getRenderLoop() || {};
-        const labelStride = Math.max(1, Number(loop.labelFrameStride || 1));
+        const strideKey = isCameraInteraction ? 'cameraInteractiveLabelFrameStride' : 'labelFrameStride';
+        const labelStride = Math.max(1, Number(loop[strideKey] || loop.labelFrameStride || 1));
         return !isContinuous || labelStride <= 1 || (loop.frameIndex % labelStride) === 0;
     }
 
-    function renderLabels(envir, camera, isContinuous) {
-        if (camera && shouldRenderLabels(envir, isContinuous)) {
+    function renderLabels(envir, camera, isContinuous, isCameraInteraction) {
+        if (camera && shouldRenderLabels(envir, isContinuous, isCameraInteraction)) {
             envir.labelRenderer.render(envir.scene, camera);
         }
     }
@@ -187,16 +224,78 @@ VRODOS.api = VRODOS.api || {};
         return false;
     }
 
+    function recordFrameTiming(loop, startedAt) {
+        if (!loop) {
+            return;
+        }
+
+        const duration = Math.max(0, getNow() - startedAt);
+        const previousAverage = Number(loop.averageRenderDurationMs || 0);
+        const slowFrameThreshold = Math.max(1, safeLoopNumber(loop, 'slowFrameThresholdMs', 32));
+
+        loop.lastRenderDurationMs = duration;
+        loop.averageRenderDurationMs = previousAverage > 0
+            ? (previousAverage * 0.85) + (duration * 0.15)
+            : duration;
+        loop.maxRenderDurationMs = Math.max(Number(loop.maxRenderDurationMs || 0), duration);
+
+        if (duration > slowFrameThreshold) {
+            loop.slowFrameCount = Number(loop.slowFrameCount || 0) + 1;
+        }
+    }
+
     VRODOS.editor.getActiveCamera = function() {
         return getActiveCameraForEnvir(getEnvir());
+    };
+
+    VRODOS.editor.isCameraInteractionActive = function(timestamp) {
+        return isCameraInteractionActiveForLoop(getRenderLoop(), timestamp);
+    };
+
+    VRODOS.editor.beginCameraInteraction = function(reason) {
+        const loop = getRenderLoop();
+        if (!loop || VRODOS.editor.isPaused) {
+            return;
+        }
+
+        loop.cameraInteractionActive = true;
+        loop.cameraInteractionNeedsFinalFrame = false;
+        loop.cameraInteractionLastAt = getNow();
+        VRODOS.editor.requestRender(reason || 'camera-interaction-start');
+    };
+
+    VRODOS.editor.markCameraInteraction = function(reason) {
+        const loop = getRenderLoop();
+        if (!loop || VRODOS.editor.isPaused) {
+            return;
+        }
+
+        loop.cameraInteractionLastAt = getNow();
+        loop.cameraInteractionNeedsFinalFrame = true;
+        VRODOS.editor.requestRender(reason || 'camera-interaction-change');
+    };
+
+    VRODOS.editor.endCameraInteraction = function(reason) {
+        const loop = getRenderLoop();
+        if (!loop || VRODOS.editor.isPaused) {
+            return;
+        }
+
+        loop.cameraInteractionActive = false;
+        loop.cameraInteractionLastAt = getNow();
+        loop.cameraInteractionNeedsFinalFrame = true;
+        VRODOS.editor.requestRender(reason || 'camera-interaction-end');
     };
 
     VRODOS.editor.shouldRenderContinuously = function() {
         const envir = getEnvir();
         if (!envir) return false;
 
+        const loop = getRenderLoop();
+
         return isAvatarControlsEnabled() ||
             isTransformDragging() ||
+            isCameraInteractionActiveForLoop(loop) ||
             hasAutoRotate(envir) ||
             hasActiveAnimation(envir);
     };
@@ -205,17 +304,26 @@ VRODOS.api = VRODOS.api || {};
         const envir = getEnvir();
         if (!envir) return;
 
-        void timestamp;
+        const loop = getRenderLoop();
+        const startedAt = getNow();
+        const isCameraInteraction = isCameraInteractionActiveForLoop(loop, timestamp);
         const camera = getActiveCameraForEnvir(envir);
 
-        updateOrbitControls(envir);
-        updatePointerLockControls();
-        syncTransformCamera(camera);
-        updateAnimationMixers(envir);
-        updateDirectorGroundGuide(envir);
-        renderEditorScene(envir, camera);
-        renderLabels(envir, camera, isContinuous);
-        updateCompassUi(envir);
+        try {
+            updateOrbitControls(envir);
+            updatePointerLockControls();
+            syncTransformCamera(camera);
+            updateAnimationMixers(envir);
+            updateDirectorGroundGuide(envir, isCameraInteraction);
+            renderEditorScene(envir, camera);
+            renderLabels(envir, camera, isContinuous, isCameraInteraction);
+            updateCompassUi(envir);
+        } finally {
+            recordFrameTiming(loop, startedAt);
+            if (loop && !isCameraInteraction) {
+                loop.cameraInteractionNeedsFinalFrame = false;
+            }
+        }
     };
 
     VRODOS.editor.startRenderLoop = function() {
@@ -234,8 +342,12 @@ VRODOS.api = VRODOS.api || {};
 
             const isContinuous = VRODOS.editor.shouldRenderContinuously();
             if (!loop.needsRender && !isContinuous) {
-                stopLoop(loop);
-                return;
+                if (hasPendingCameraFinalFrame(loop, timestamp)) {
+                    loop.needsRender = true;
+                } else {
+                    stopLoop(loop);
+                    return;
+                }
             }
 
             if (shouldThrottleContinuousFrame(loop, timestamp, isContinuous)) {
@@ -269,6 +381,8 @@ VRODOS.api = VRODOS.api || {};
             clearLoadingRenderTimer(loop);
             loop.isRunning = false;
             loop.needsRender = false;
+            loop.cameraInteractionActive = false;
+            loop.cameraInteractionNeedsFinalFrame = false;
         }
     };
 

@@ -38,7 +38,17 @@ Object.assign(window.VRODOS, {
             targetFps: 45,
             pixelRatioCap: 1.25,
             labelFrameStride: 2,
-            loaderConcurrency: 3
+            cameraInteractiveLabelFrameStride: 4,
+            loaderConcurrency: 3,
+            cameraInteractionActive: false,
+            cameraInteractionLastAt: 0,
+            cameraInteractionSettleMs: 140,
+            cameraInteractionNeedsFinalFrame: false,
+            lastRenderDurationMs: 0,
+            averageRenderDurationMs: 0,
+            maxRenderDurationMs: 0,
+            slowFrameCount: 0,
+            slowFrameThresholdMs: 32
         }
     },
     runtime: window.VRODOS.runtime || {},

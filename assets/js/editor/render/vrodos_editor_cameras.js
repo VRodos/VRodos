@@ -16,6 +16,33 @@ VRODOS.ui = VRODOS.ui || {};
         }
     }
 
+    function beginCameraInteraction(reason) {
+        if (VRODOS.editor && typeof VRODOS.editor.beginCameraInteraction === 'function') {
+            VRODOS.editor.beginCameraInteraction(reason);
+            return;
+        }
+
+        requestEditorRender(reason);
+    }
+
+    function markCameraInteraction(reason) {
+        if (VRODOS.editor && typeof VRODOS.editor.markCameraInteraction === 'function') {
+            VRODOS.editor.markCameraInteraction(reason);
+            return;
+        }
+
+        requestEditorRender(reason);
+    }
+
+    function endCameraInteraction(reason) {
+        if (VRODOS.editor && typeof VRODOS.editor.endCameraInteraction === 'function') {
+            VRODOS.editor.endCameraInteraction(reason);
+            return;
+        }
+
+        requestEditorRender(reason);
+    }
+
     function isAvatarControlsEnabled() {
         return typeof VRODOS.editor.avatarControlsEnabled !== 'undefined' && VRODOS.editor.avatarControlsEnabled;
     }
@@ -46,16 +73,25 @@ VRODOS.ui = VRODOS.ui || {};
         direction.y = 0;
 
         if (direction.lengthSq() < 1e-6) {
-            needleElement.style.transform = 'rotate(0deg)';
+            if (this.lastCompassHeadingDegrees !== 0) {
+                this.lastCompassHeadingDegrees = 0;
+                needleElement.style.transform = 'rotate(0deg)';
+            }
             return;
         }
 
         direction.normalize();
 
         const headingRadians = Math.atan2(direction.x, -direction.z);
-        const headingDegrees = (THREE.MathUtils.radToDeg(headingRadians) + 360) % 360;
+        const headingDegrees = Number(((THREE.MathUtils.radToDeg(headingRadians) + 360) % 360).toFixed(1));
 
-        needleElement.style.transform = `rotate(${  headingDegrees.toFixed(2)  }deg)`;
+        if (Number.isFinite(this.lastCompassHeadingDegrees) &&
+            Math.abs(headingDegrees - this.lastCompassHeadingDegrees) < 0.1) {
+            return;
+        }
+
+        this.lastCompassHeadingDegrees = headingDegrees;
+        needleElement.style.transform = `rotate(${  headingDegrees.toFixed(1)  }deg)`;
     }
 
     function setOrbitCamera() {
@@ -82,12 +118,9 @@ VRODOS.ui = VRODOS.ui || {};
         this.orbitControls.maxZoom = 10000;
         this.orbitControls.enableRotate = true;
 
-        this.orbitControls.addEventListener('change', () => {
-            if (VRODOS.ui.transform && typeof VRODOS.ui.transform.setSize === 'function') {
-                VRODOS.ui.transform.setSize();
-            }
-            requestEditorRender('orbit-change');
-        });
+        this.orbitControls.addEventListener('start', () => beginCameraInteraction('orbit-start'));
+        this.orbitControls.addEventListener('change', () => markCameraInteraction('orbit-change'));
+        this.orbitControls.addEventListener('end', () => endCameraInteraction('orbit-end'));
     }
 
     function setAvatarCamera() {
