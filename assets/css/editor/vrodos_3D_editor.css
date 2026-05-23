@@ -308,42 +308,66 @@
 }
 
 .prop-label {
-	font-size: 10px;
-	color: rgba(203, 213, 225, 0.9); /* slate-300 */
-	min-width: 80px;
-	flex-shrink: 0;
+	font-size: 10px !important;
+	color: rgba(203, 213, 225, 0.9) !important; /* slate-300 */
+	min-width: 80px !important;
+	flex-shrink: 0 !important;
+	margin: 0 !important;
 }
 
 .prop-input {
-	background: rgba(15, 23, 42, 0.6); /* slate-900 */
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	border-radius: 4px;
-	color: #e2e8f0; /* slate-200 */
-	font-size: 11px;
-	padding: 2px 6px;
-	width: 70px;
-	text-align: right;
+	background: rgba(15, 23, 42, 0.6) !important; /* slate-900 */
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	border-radius: 4px !important;
+	box-shadow: none !important;
+	color: #e2e8f0 !important; /* slate-200 */
+	font-family: inherit !important;
+	font-size: 11px !important;
+	height: auto !important;
+	line-height: 1.4 !important;
+	margin: 0 !important;
+	padding: 2px 6px !important;
+	text-align: right !important;
+	width: 70px !important;
 }
 
 .prop-input:focus {
-	outline: none;
-	border-color: rgba(52, 211, 153, 0.5); /* emerald */
+	outline: none !important;
+	border-color: rgba(52, 211, 153, 0.5) !important; /* emerald */
 }
 
 .prop-select {
-	background: rgba(15, 23, 42, 0.6);
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	border-radius: 4px;
-	color: #e2e8f0;
-	font-size: 11px;
-	padding: 2px 4px;
-	flex: 1;
-	min-width: 0;
+	background: rgba(15, 23, 42, 0.6) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	border-radius: 4px !important;
+	box-shadow: none !important;
+	color: #e2e8f0 !important;
+	flex: 1 !important;
+	font-family: inherit !important;
+	font-size: 11px !important;
+	height: auto !important;
+	line-height: 1.4 !important;
+	margin: 0 !important;
+	min-width: 0 !important;
+	padding: 2px 4px !important;
 }
 
 .prop-select:focus {
-	outline: none;
-	border-color: rgba(52, 211, 153, 0.5);
+	outline: none !important;
+	border-color: rgba(52, 211, 153, 0.5) !important;
+}
+
+#vrodos-scene-editor #object-properties-container .tw-checkbox {
+	width: 1rem !important;
+	height: 1rem !important;
+	min-width: 1rem !important;
+	min-height: 1rem !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border-radius: 0.25rem !important;
+	box-shadow: none !important;
+	-webkit-appearance: none !important;
+	appearance: none !important;
 }
 
 /* leftPanelToggleOnOff*/

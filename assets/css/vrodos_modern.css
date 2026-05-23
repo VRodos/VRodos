@@ -90,8 +90,6 @@ body.vrodos-manager-wrapper {
 
 :where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(button, [type="button"], [type="reset"], [type="submit"], .tw-btn) {
   font-family: inherit !important;
-  letter-spacing: inherit !important;
-  text-transform: none !important;
   text-decoration: none !important;
   -webkit-appearance: none !important;
   appearance: none !important;
@@ -105,28 +103,57 @@ body.vrodos-manager-wrapper {
 :where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   max-width: 100% !important;
   font-family: inherit !important;
-  font-size: inherit !important;
-  line-height: inherit !important;
-  letter-spacing: inherit !important;
 }
 
-:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(.tw-input, .tw-select, .tw-textarea) {
-  border-style: solid !important;
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow, 0 0 #0000) !important;
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) input[type="text"] {
+  font-family: inherit !important;
+  -webkit-appearance: textfield !important;
+  appearance: textfield !important;
 }
 
-:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(.tw-checkbox, .tw-radio, .tw-toggle) {
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) input[type="checkbox"] {
   flex-shrink: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
   cursor: pointer !important;
-  border-style: solid !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) input[type="checkbox"].tw-checkbox {
   -webkit-appearance: none !important;
   appearance: none !important;
 }
 
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) input[type="checkbox"]:not(.tw-checkbox):not(.tw-toggle) {
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) select {
+  font-family: inherit !important;
+  max-width: 100% !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) select:not(.tw-select):not(.prop-select) {
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(.tw-input, .tw-select, .tw-textarea) {
+  border-style: solid !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(.tw-checkbox, .tw-radio, .tw-toggle) {
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  border-style: solid !important;
+}
+
 :where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) label {
   margin: 0 !important;
+  font-family: inherit !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
   font-family: inherit !important;
 }
 
