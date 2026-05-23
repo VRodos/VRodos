@@ -94,6 +94,27 @@ function getSceneObjectRecordByUuid(uuid, object) {
         : null;
 }
 
+function isSceneObjectLocked(objectOrValue) {
+    return typeof VRODOS.utils.isEditorObjectLocked === 'function'
+        ? VRODOS.utils.isEditorObjectLocked(objectOrValue)
+        : Boolean(objectOrValue && objectOrValue.locked);
+}
+
+function setSceneObjectLocked(object, locked) {
+    if (!object) {
+        return false;
+    }
+
+    const nextLocked = typeof VRODOS.utils.setEditorObjectLocked === 'function'
+        ? VRODOS.utils.setEditorObjectLocked(object, locked)
+        : Boolean(object.locked = Boolean(locked));
+    const record = getSceneObjectRecordByUuid(object.uuid, object);
+    if (record && record.value && typeof record.value === 'object') {
+        record.value.locked = nextLocked;
+    }
+    return nextLocked;
+}
+
 function deleteSceneObjectRecord(record) {
     return typeof VRODOS.utils.sceneDeleteObjectRecord === 'function'
         ? VRODOS.utils.sceneDeleteObjectRecord(record)
@@ -711,12 +732,25 @@ VRODOS.ui.lockOnScene = function(uuid, _name) {
     const selectedObject = getSceneObjectByUuid(uuid);
     if (!selectedObject) return;
 
-    selectedObject.locked = !selectedObject.locked;
-    if (!selectedObject.locked) {
+    const previousLocked = isSceneObjectLocked(selectedObject);
+    const nextLocked = setSceneObjectLocked(selectedObject, !previousLocked);
+
+    if (
+        typeof VRODOS.editor.LockCommand === 'function' &&
+        typeof VRODOS.editor.undoManager !== 'undefined' &&
+        !VRODOS.editor.undoManager.isExecuting
+    ) {
+        VRODOS.editor.undoManager.add(new VRODOS.editor.LockCommand(selectedObject, previousLocked, nextLocked));
+    }
+
+    if (!nextLocked) {
         VRODOS.editor.selection.select(selectedObject, { source: 'lock-toggle' });
         VRODOS.ui.showObjectControlsPanel();
     } else {
         VRODOS.editor.selection.clear({ source: 'lock-toggle' });
+        if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.detach === 'function') {
+            VRODOS.editor.transforms.detach();
+        }
         VRODOS.ui.hideObjectControlsPanel();
     }
 

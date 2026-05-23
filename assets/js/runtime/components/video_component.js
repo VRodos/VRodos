@@ -616,22 +616,21 @@ AFRAME.registerComponent('vrodos-3d-play-icon', {
 
         const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
         
-        // Material 0: Front and back faces (Vibrant red)
-        const frontMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0xff0000,
-            emissive: 0xff0000,
-            emissiveIntensity: 0.4,
-            roughness: 0.8,
-            metalness: 0.0 // Removed metalness to avoid black look in shadow
+        // Keep the play glyph as UI, not a scene-lit physical object.
+        const frontMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff2f2f,
+            side: THREE.DoubleSide,
+            depthTest: false,
+            depthWrite: false,
+            toneMapped: false
         });
 
-        // Material 1: Sides and bevel (Realistic falloff red)
-        const sideMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0xcc0000,
-            emissive: 0x880000,
-            emissiveIntensity: 0.3,
-            roughness: 0.8,
-            metalness: 0.0
+        const sideMaterial = new THREE.MeshBasicMaterial({
+            color: 0xb91c1c,
+            side: THREE.DoubleSide,
+            depthTest: false,
+            depthWrite: false,
+            toneMapped: false
         });
 
         const mesh = new THREE.Mesh(geometry, [frontMaterial, sideMaterial]);
@@ -641,13 +640,11 @@ AFRAME.registerComponent('vrodos-3d-play-icon', {
         geometry.boundingBox.getCenter(center);
         geometry.translate(-center.x, -center.y, -center.z);
 
-        // Add a dedicated small light so the 3D bevels are always visible
-        const light = new THREE.PointLight(0xffffff, 1, 2);
-        light.position.set(0.5, 0.5, 1); 
-        this.el.setObject3D('light', light);
-
         // Standard play button points right. 
         mesh.rotation.z = 0;
+        mesh.renderOrder = 999999;
+        mesh.frustumCulled = false;
+        this.el.object3D.renderOrder = 999999;
         this.el.setObject3D('mesh', mesh);
     }
 });

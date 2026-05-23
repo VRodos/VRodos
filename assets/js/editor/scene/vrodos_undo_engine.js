@@ -27,6 +27,82 @@ function vrodosUndoRunWithoutCapture(callback) {
     }
 }
 
+function vrodosUndoIsLocked(objectOrValue) {
+    return typeof VRODOS.utils.isEditorObjectLocked === 'function'
+        ? VRODOS.utils.isEditorObjectLocked(objectOrValue)
+        : Boolean(objectOrValue && objectOrValue.locked);
+}
+
+function vrodosUndoFindObjectRecord(object) {
+    return object && typeof VRODOS.utils.sceneFindObjectRecord === 'function'
+        ? VRODOS.utils.sceneFindObjectRecord(object.uuid, object)
+        : null;
+}
+
+function vrodosUndoSetLocked(object, locked) {
+    if (!object) {
+        return false;
+    }
+
+    const nextLocked = typeof VRODOS.utils.setEditorObjectLocked === 'function'
+        ? VRODOS.utils.setEditorObjectLocked(object, locked)
+        : Boolean(object.locked = Boolean(locked));
+    const record = vrodosUndoFindObjectRecord(object);
+    if (record && record.value && typeof record.value === 'object') {
+        record.value.locked = nextLocked;
+    }
+    return nextLocked;
+}
+
+function vrodosUndoReconcileLockState(object) {
+    if (!object) {
+        return false;
+    }
+
+    const isLocked = vrodosUndoSetLocked(object, vrodosUndoIsLocked(object));
+
+    if (typeof VRODOS.ui.updateHierarchyLockIcon === 'function') {
+        VRODOS.ui.updateHierarchyLockIcon(object);
+    }
+
+    if (!isLocked) {
+        return false;
+    }
+
+    const transforms = VRODOS.editor.transforms;
+    const selectedObject = VRODOS.editor.selection && typeof VRODOS.editor.selection.get === 'function'
+        ? VRODOS.editor.selection.get()
+        : null;
+    const transformObject = transforms && typeof transforms.getRealObject === 'function'
+        ? transforms.getRealObject()
+        : null;
+
+    if ((selectedObject === object || transformObject === object) &&
+        VRODOS.editor.selection && typeof VRODOS.editor.selection.clear === 'function') {
+        VRODOS.editor.selection.clear({ source: 'undo-lock-reconcile' });
+    } else if (transformObject === object && transforms && typeof transforms.detach === 'function') {
+        transforms.detach();
+    }
+
+    if (typeof VRODOS.ui.removeCelOutline === 'function') {
+        VRODOS.ui.removeCelOutline(object);
+    }
+    if (typeof VRODOS.ui.hideObjectControlsPanel === 'function') {
+        VRODOS.ui.hideObjectControlsPanel();
+    }
+
+    return true;
+}
+
+function vrodosUndoApplyRecordLockState(object, objectData) {
+    if (!objectData || typeof objectData !== 'object' ||
+        !Object.prototype.hasOwnProperty.call(objectData, 'locked')) {
+        return;
+    }
+
+    vrodosUndoSetLocked(object, objectData.locked);
+}
+
 VRODOS.editor.UndoManager = class {
     constructor(maxSize = 50) {
         this.undoStack = [];
@@ -188,8 +264,10 @@ VRODOS.editor.TransformCommand = class {
             VRODOS.utils.updateEditorLightHelper(obj, VRODOS.editor.envir.scene);
         }
 
+        const isLocked = vrodosUndoReconcileLockState(obj);
+
         // Update UI
-        if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
+        if (!isLocked && typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
             VRODOS.ui.setDatGuiInitialVales(obj);
         }
         
@@ -252,6 +330,8 @@ VRODOS.editor.DeleteObjectCommand = class {
     }
 
     undo() {
+        vrodosUndoApplyRecordLockState(this.object3D, this.objectData);
+
         // Restore 3D object to scene
         if (typeof VRODOS.utils.setObjectTreeVisible === 'function') {
             VRODOS.utils.setObjectTreeVisible(this.object3D, true);
@@ -290,6 +370,8 @@ VRODOS.editor.DeleteObjectCommand = class {
         if (restoredLightAssociates && restoredLightAssociates.createdTarget && typeof VRODOS.ui.setHierarchyViewer === 'function') {
             VRODOS.ui.setHierarchyViewer();
         }
+
+        vrodosUndoReconcileLockState(this.object3D);
         
         if (typeof VRODOS.editor.animate === 'function') VRODOS.editor.animate();
         if (typeof VRODOS.api.triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
@@ -367,6 +449,48 @@ VRODOS.editor.DeleteObjectCommand = class {
         this.execute();
     }
 };
+
+/**
+ * Command for locking and unlocking scene objects.
+ */
+VRODOS.editor.LockCommand = class {
+    constructor(object, oldValue, newValue) {
+        const target = object && (object.realObject || object);
+        this.objectUuid = target ? target.uuid : null;
+        this.objectName = target ? target.name : null;
+        this.oldValue = vrodosUndoIsLocked(oldValue);
+        this.newValue = vrodosUndoIsLocked(newValue);
+    }
+
+    apply(value) {
+        let obj = vrodosUndoGetObjectByUuid(this.objectUuid);
+        if (!obj) {
+            obj = vrodosUndoGetObjectByName(this.objectName);
+        }
+        if (!obj) return;
+
+        vrodosUndoSetLocked(obj, value);
+        vrodosUndoReconcileLockState(obj);
+
+        if (!vrodosUndoIsLocked(obj) &&
+            VRODOS.editor.selection &&
+            typeof VRODOS.editor.selection.select === 'function') {
+            VRODOS.editor.selection.select(obj, { source: 'lock-undo-redo' });
+        }
+
+        if (typeof VRODOS.editor.animate === 'function') VRODOS.editor.animate();
+        if (typeof VRODOS.api.triggerAutoSave === 'function') VRODOS.api.triggerAutoSave();
+    }
+
+    undo() {
+        this.apply(this.oldValue);
+    }
+
+    redo() {
+        this.apply(this.newValue);
+    }
+};
+
 /**
  * Command for Property Changes (Color, Intensity, etc.)
  */
@@ -386,7 +510,9 @@ VRODOS.editor.PropertyCommand = class {
         const scene = VRODOS.editor && VRODOS.editor.envir ? VRODOS.editor.envir.scene : null;
         const isLightObject = Boolean(obj.category_name && obj.category_name.includes("light"));
 
-        if (this.property === 'color') {
+        if (this.property === 'locked') {
+            vrodosUndoSetLocked(obj, val);
+        } else if (this.property === 'color') {
             if (isLightObject && VRODOS.utils && typeof VRODOS.utils.applyEditorLightColor === 'function') {
                 VRODOS.utils.applyEditorLightColor(obj, val, scene);
             } else if (obj.color && typeof obj.color.set === 'function' && VRODOS.utils && typeof VRODOS.utils.applyEditorObjectVisualColor === 'function') {
@@ -400,6 +526,8 @@ VRODOS.editor.PropertyCommand = class {
             obj[this.property] = val;
         }
 
+        const isLocked = vrodosUndoReconcileLockState(obj);
+
         // Sync light helpers
         if (isLightObject && VRODOS.utils) {
             if (typeof VRODOS.utils.syncEditorLightArtifacts === 'function') {
@@ -410,11 +538,11 @@ VRODOS.editor.PropertyCommand = class {
         }
 
         // Update UI panels
-        if (typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
+        if (!isLocked && typeof VRODOS.ui.setDatGuiInitialVales === 'function') {
             VRODOS.ui.setDatGuiInitialVales(obj);
         }
         
-        if (typeof VRODOS.ui.showPropertiesInPanel === 'function') {
+        if (!isLocked && typeof VRODOS.ui.showPropertiesInPanel === 'function') {
             VRODOS.ui.showPropertiesInPanel(obj);
         }
 

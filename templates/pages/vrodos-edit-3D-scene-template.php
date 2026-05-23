@@ -369,8 +369,8 @@ extract( $data );
 							<span id="object-controls-title" class="tw-text-xs tw-font-semibold tw-text-slate-300 tw-uppercase tw-tracking-wider tw-truncate">Object Controls</span>
 							<span id="object-controls-badge" class="tw-hidden tw-text-[9px] tw-font-black tw-uppercase tw-tracking-widest tw-bg-slate-500/15 tw-text-slate-200 tw-border tw-border-white/10 tw-rounded-full tw-px-2 tw-py-0.5">Object Type</span>
 						</div>
-						<button id="object-controls-close" class="tw-p-0.5 tw-text-slate-400 hover:tw-text-white tw-transition-colors" title="Close panel">
-							<i data-lucide="x" class="tw-w-3.5 tw-h-3.5"></i>
+						<button id="object-controls-close" class="tw-flex tw-h-7 tw-w-7 tw-flex-shrink-0 tw-items-center tw-justify-center tw-rounded-md tw-border tw-border-white/10 tw-bg-white/5 tw-p-0 tw-text-slate-300 tw-transition-colors hover:tw-bg-white/10 hover:tw-text-white" title="Close panel" aria-label="Close panel">
+							<i data-lucide="x" class="tw-h-4 tw-w-4"></i>
 						</button>
 					</div>
 

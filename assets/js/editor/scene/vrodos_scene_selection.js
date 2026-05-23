@@ -45,6 +45,12 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         return scene.getObjectByProperty('uuid', objectOrId) || scene.getObjectByName(objectOrId);
     }
 
+    function isLockedObject(object) {
+        return typeof VRODOS.utils.isEditorObjectLocked === 'function'
+            ? VRODOS.utils.isEditorObjectLocked(object)
+            : Boolean(object && object.locked);
+    }
+
     const render = VRODOS.editor.render || {
         request(reason) {
             requestRender(reason || 'render-service');
@@ -308,7 +314,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             }, options || {});
 
             const target = resolveObject(object);
-            if (!target || target.locked) return null;
+            if (!target || isLockedObject(target)) return null;
 
             this.selected = target;
             VRODOS.editor.selected_object_name = target.name;

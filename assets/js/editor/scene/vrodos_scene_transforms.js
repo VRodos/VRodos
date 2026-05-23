@@ -101,6 +101,11 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         if (!controls) return;
 
         const helper = getTransformHelper(controls);
+        if (controls.object && transforms.isLockedObject(controls.object)) {
+            transforms.detach();
+            return;
+        }
+
         controls.enabled = true;
 
         if (helper) {
@@ -144,6 +149,13 @@ VRODOS.editorScene = VRODOS.editorScene || {};
     transforms.getAttachedObject = function() {
         const controls = VRODOS.editor.transform_controls;
         return controls ? controls.object : null;
+    };
+
+    transforms.isLockedObject = function(object) {
+        const target = transforms.getRealObject(object);
+        return typeof VRODOS.utils.isEditorObjectLocked === 'function'
+            ? VRODOS.utils.isEditorObjectLocked(target)
+            : Boolean(target && target.locked);
     };
 
     transforms.bindControls = function() {
@@ -214,6 +226,10 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             target = target.realObject;
         }
         if (!target || target.name === 'vrodosGizmoProxy') return null;
+        if (transforms.isLockedObject(target)) {
+            transforms.detach();
+            return null;
+        }
 
         VRODOS.editor.currentSelectedRealObject = target;
 
@@ -233,7 +249,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
             proxy.asset_name = target.asset_name;
             proxy.isLight = target.isLight;
             proxy.parentLight = target.parentLight;
-            proxy.locked = target.locked;
+            proxy.locked = transforms.isLockedObject(target);
             proxy.position.copy(target.position);
             proxy.quaternion.copy(target.quaternion);
             proxy.scale.copy(target.scale);
@@ -271,6 +287,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
     transforms.applyGuiChange = transforms.applyGuiChange || function(opCode, value, options) {
         const target = transforms.getRealObject();
         if (!target) return;
+        if (transforms.isLockedObject(target)) return;
 
         const parsed = Number(value);
         const safeValue = Number.isFinite(parsed) ? parsed : 0;
@@ -313,6 +330,7 @@ VRODOS.editorScene = VRODOS.editorScene || {};
     transforms.canUseMode = function(mode, object) {
         const target = transforms.getRealObject(object);
         if (!target) return false;
+        if (transforms.isLockedObject(target)) return false;
 
         const category = target.category_name || '';
         if (mode === 'rotate' && (
@@ -380,6 +398,10 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         const attachedObject = transforms.getAttachedObject();
         const target = transforms.getRealObject();
         if (!controls || !attachedObject || !target) return null;
+        if (transforms.isLockedObject(target)) {
+            transforms.detach();
+            return null;
+        }
 
         dragState.oldTRS = cloneTRS(target);
         dragState.scaleStart = target.scale.clone();
@@ -399,6 +421,13 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         const target = transforms.getRealObject();
         const oldTRS = dragState.oldTRS;
         if (!controls || !target || !oldTRS) return null;
+        if (transforms.isLockedObject(target)) {
+            dragState.oldTRS = null;
+            dragState.scaleStart = null;
+            transforms.syncProxyToObject(target);
+            render.request('locked-transform-drag-ended');
+            return target;
+        }
 
         const newTRS = cloneTRS(target);
         if (hasTRSChanged(target, oldTRS) &&
@@ -423,6 +452,14 @@ VRODOS.editorScene = VRODOS.editorScene || {};
         }
 
         if (event.value) {
+            if (transforms.isLockedObject()) {
+                if (envir && envir.orbitControls) {
+                    envir.orbitControls.enabled = true;
+                }
+                transforms.detach();
+                render.request('locked-transform-blocked');
+                return;
+            }
             transforms.captureDragStart();
             render.request('transform-drag-started');
         } else {

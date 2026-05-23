@@ -2207,6 +2207,18 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
     // Determine the real object we are actually trying to move
     const realObject = getSelectedTransformObject();
     if (!realObject) return;
+    const isLocked = typeof VRODOS.utils.isEditorObjectLocked === 'function'
+        ? VRODOS.utils.isEditorObjectLocked(realObject)
+        : Boolean(realObject.locked);
+    if (isLocked) {
+        if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.syncProxyToObject === 'function') {
+            VRODOS.editor.transforms.syncProxyToObject(realObject);
+        }
+        if (VRODOS.editor.transforms && typeof VRODOS.editor.transforms.detach === 'function') {
+            VRODOS.editor.transforms.detach();
+        }
+        return;
+    }
 
     const isDragging = VRODOS.editor.transforms.isDragging();
     const activeAxis = VRODOS.editor.transforms.getAxis();

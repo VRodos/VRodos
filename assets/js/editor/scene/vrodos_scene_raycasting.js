@@ -75,6 +75,12 @@ function getRaycastCamera() {
     return VRODOS.editor.avatarControlsEnabled ? envir.cameraAvatar : envir.cameraOrbit;
 }
 
+function isRaycastObjectLocked(object) {
+    return typeof VRODOS.utils.isEditorObjectLocked === 'function'
+        ? VRODOS.utils.isEditorObjectLocked(object)
+        : Boolean(object && object.locked);
+}
+
 // raycasting for picking objects
 VRODOS.ui.raycasterSetter = function(event) {
 
@@ -112,7 +118,7 @@ VRODOS.ui.onMouseDoubleClickFocus = function(event, id) {
 
     if (arguments.length === 2) {
         const obj = VRODOS.ui.getEditorSceneObjectByUuid(id);
-        if (obj && !obj.locked) {
+        if (obj && !isRaycastObjectLocked(obj)) {
             VRODOS.ui.selectorMajor(event, obj, "1");
         }
     }
@@ -205,7 +211,7 @@ VRODOS.ui.onLeftMouseClick = function(event) {
     // If only one object is intersected
     if (intersects.length === 1) {
 
-        if (!intersects[0].locked)
+        if (!isRaycastObjectLocked(intersects[0]))
             {VRODOS.ui.selectorMajor(event, intersects[0], "2");}
         return;
     }
@@ -225,8 +231,9 @@ VRODOS.ui.onLeftMouseClick = function(event) {
     if (!selectNext || i === intersects.length - 1)
         {i = -1;}
 
-    if (!intersects[0].locked)
-        {VRODOS.ui.selectorMajor(event, intersects[i + 1], "3");}
+    const nextObject = intersects[i + 1];
+    if (!isRaycastObjectLocked(nextObject))
+        {VRODOS.ui.selectorMajor(event, nextObject, "3");}
 
 }// onMouseDown
 

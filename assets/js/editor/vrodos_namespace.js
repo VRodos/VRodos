@@ -319,6 +319,32 @@ VRODOS.utils.isEditorInternalObject = function(object, name) {
     return Boolean(object && object.vrodos_internal_helper === true);
 };
 
+VRODOS.utils.isEditorObjectLocked = function(objectOrValue) {
+    const value = objectOrValue && typeof objectOrValue === 'object'
+        ? objectOrValue.locked
+        : objectOrValue;
+
+    if (value === true || value === 1) {
+        return true;
+    }
+
+    if (typeof value === 'string') {
+        const normalizedValue = value.trim().toLowerCase();
+        return normalizedValue === 'true' || normalizedValue === '1' || normalizedValue === 'locked';
+    }
+
+    return false;
+};
+
+VRODOS.utils.setEditorObjectLocked = function(object, locked) {
+    if (!object) {
+        return false;
+    }
+
+    object.locked = VRODOS.utils.isEditorObjectLocked(locked);
+    return object.locked;
+};
+
 VRODOS.utils.getEditorSceneRoots = function(scene, options) {
     const opts = Object.assign({
         filterSelectable: false,

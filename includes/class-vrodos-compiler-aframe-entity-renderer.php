@@ -570,6 +570,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		);
 		$model->setAttribute( 'rotation', '-90 0 0' );
 		$model->setAttribute( 'class', 'raycastable hideable non-vr' );
+		$model->setAttribute( 'highlight', 'assessment_' . $uuid );
 		$this->apply_compiled_collision_attributes( $model, $contentObject, 'assessment-model' );
 		if ( $this->isHoverEnabled ) {
 			$model->setAttribute( 'vrodos-hypnotic-hover', '' );
@@ -1424,6 +1425,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			}
 			$display->setAttribute( 'material', $material_attr );
 			$display->setAttribute( 'class', 'override-materials clickable raycastable hideable' );
+			$display->setAttribute( 'highlight', 'video-display_' . $uuid );
 			$this->apply_compiled_collision_attributes( $display, $obj, 'video-plane' );
 			$display->setAttribute( 'original-scale', '1 1 1' );
 			$video_url = $this->normalize_url( $obj->video_path ?? '' );
@@ -1462,6 +1464,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$exit_frame->setAttribute( 'id', 'exit_vid_panel_' . $uuid );
 			$exit_frame->setAttribute( 'mixin', 'poiVidEscFrame' );
 			$exit_frame->setAttribute( 'class', 'raycastable' );
+			$exit_frame->setAttribute( 'highlight', 'exit_vid_panel_' . $uuid );
 			$this->set_overlay_ui_attributes( $exit_frame );
 			$panel->appendChild( $exit_frame );
 
@@ -1471,6 +1474,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$exit_btn->setAttribute( 'mixin', 'poiVidEscFrame' );
 			$exit_btn->setAttribute( 'material', 'transparent: true' );
 			$exit_btn->setAttribute( 'class', 'raycastable' );
+			$exit_btn->setAttribute( 'highlight', 'ent_ex_' . $uuid );
 			$this->set_overlay_ui_attributes( $exit_btn );
 			$panel->appendChild( $exit_btn );
 
@@ -1504,6 +1508,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$fs_btn->setAttribute( 'height', '0.1' );
 			$fs_btn->setAttribute( 'material', 'transparent: true' );
 			$fs_btn->setAttribute( 'class', 'raycastable' );
+			$fs_btn->setAttribute( 'highlight', 'ent_fs_' . $uuid );
 			$this->set_overlay_ui_attributes( $fs_btn );
 			$panel->appendChild( $fs_btn );
 
@@ -1646,6 +1651,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$next_panel->setAttribute( 'height', '0.1' );
 		$next_panel->setAttribute( 'color', '#444444' );
 		$next_panel->setAttribute( 'class', 'raycastable' );
+		$next_panel->setAttribute( 'highlight', 'next_panel_' . $uuid );
 		$this->set_overlay_ui_attributes( $next_panel );
 		$ui->appendChild( $next_panel );
 
@@ -1654,6 +1660,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$next_btn->setAttribute( 'position', '0.5 -0.7 0.02' );
 		$next_btn->setAttribute( 'text', 'value: NEXT; color: #ffffff; align: center; width: 1' );
 		$next_btn->setAttribute( 'class', 'raycastable' );
+		$next_btn->setAttribute( 'highlight', 'next_' . $uuid );
 		$this->set_overlay_ui_attributes( $next_btn );
 		$ui->appendChild( $next_btn );
 
@@ -1665,6 +1672,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$prev_panel->setAttribute( 'height', '0.1' );
 		$prev_panel->setAttribute( 'color', '#444444' );
 		$prev_panel->setAttribute( 'class', 'raycastable' );
+		$prev_panel->setAttribute( 'highlight', 'prev_panel_' . $uuid );
 		$this->set_overlay_ui_attributes( $prev_panel );
 		$ui->appendChild( $prev_panel );
 
@@ -1673,6 +1681,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$prev_btn->setAttribute( 'position', '-0.5 -0.7 0.02' );
 		$prev_btn->setAttribute( 'text', 'value: PREV; color: #ffffff; align: center; width: 1' );
 		$prev_btn->setAttribute( 'class', 'raycastable' );
+		$prev_btn->setAttribute( 'highlight', 'prev_' . $uuid );
 		$this->set_overlay_ui_attributes( $prev_btn );
 		$ui->appendChild( $prev_btn );
 
@@ -1684,6 +1693,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$exit_panel->setAttribute( 'height', '0.12' );
 		$exit_panel->setAttribute( 'color', '#cc0000' );
 		$exit_panel->setAttribute( 'class', 'raycastable' );
+		$exit_panel->setAttribute( 'highlight', 'exit_panel_' . $uuid );
 		$this->set_overlay_ui_attributes( $exit_panel );
 		$ui->appendChild( $exit_panel );
 
@@ -1695,6 +1705,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$exit_btn->setAttribute( 'height', '0.1' );
 		$exit_btn->setAttribute( 'material', 'transparent: true' );
 		$exit_btn->setAttribute( 'class', 'raycastable' );
+		$exit_btn->setAttribute( 'highlight', 'exit_' . $uuid );
 		$exit_btn->setAttribute( 'original-scale', '1 1 1' );
 		$this->set_overlay_ui_attributes( $exit_btn );
 		$ui->appendChild( $exit_btn );

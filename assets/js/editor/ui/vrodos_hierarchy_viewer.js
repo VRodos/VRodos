@@ -36,6 +36,8 @@ function _hierarchyGetSceneObjectRecord(name) {
 const HIERARCHY_DIRECTOR_NAME = 'avatarCamera';
 const HIERARCHY_LIGHT_TARGET_CATEGORY = 'lightTargetSpot';
 const HIERARCHY_INTERNAL_VISUAL_NAMES = new Set(['SunSphere', 'SpotSphere', 'LampSphere', 'ambientSphere']);
+const HIERARCHY_RESET_BUTTON_CLASS = 'tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-pointer tw-p-1 tw-text-white/40 hover:tw-text-blue-400 tw-transition-colors';
+const HIERARCHY_RESET_BUTTON_LOCKED_CLASS = 'tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-not-allowed tw-p-1 tw-text-white/20 tw-transition-colors';
 
 function _hierarchyCategory(obj) {
     return obj ? (obj.category_name || '') : '';
@@ -55,6 +57,12 @@ function _hierarchyIsLightCategory(obj) {
 
 function _hierarchyIsLightSource(obj) {
     return _hierarchyIsLightCategory(obj) && !_hierarchyIsLightTarget(obj);
+}
+
+function _hierarchyIsLockedObject(obj) {
+    return typeof VRODOS.utils.isEditorObjectLocked === 'function'
+        ? VRODOS.utils.isEditorObjectLocked(obj)
+        : Boolean(obj && obj.locked);
 }
 
 function _hierarchyIsInternalVisualObject(obj) {
@@ -112,6 +120,20 @@ function _hierarchyApplyDefaultTRS(obj) {
     obj.updateMatrixWorld(true);
 }
 
+function _hierarchyApplyResetButtonState(resetButton, obj) {
+    if (!resetButton) {
+        return;
+    }
+
+    const isLocked = _hierarchyIsLockedObject(obj);
+    const label = isLocked ? 'Reset disabled while asset is locked' : 'Reset asset';
+    resetButton.disabled = isLocked;
+    resetButton.setAttribute('aria-disabled', isLocked ? 'true' : 'false');
+    resetButton.setAttribute('aria-label', label);
+    resetButton.setAttribute('title', isLocked ? 'Unlock asset before resetting object' : 'Reset asset object');
+    resetButton.className = isLocked ? HIERARCHY_RESET_BUTTON_LOCKED_CLASS : HIERARCHY_RESET_BUTTON_CLASS;
+}
+
 function _hierarchySyncResetSideEffects(obj) {
     if (!obj) {
         return;
@@ -142,6 +164,15 @@ VRODOS.ui.resetInScene = function(name) {
     } else {
         obj = _hierarchyGetObjectByName(name);
         if (obj) {
+            if (_hierarchyIsLockedObject(obj)) {
+                if (typeof VRODOS.ui.updateHierarchyLockIcon === 'function') {
+                    VRODOS.ui.updateHierarchyLockIcon(obj);
+                }
+                if (typeof VRODOS.editor.requestRender === 'function') {
+                    VRODOS.editor.requestRender('hierarchy-reset-locked');
+                }
+                return;
+            }
             const oldTRS = _hierarchyCaptureTRS(obj);
             _hierarchyApplyDefaultTRS(obj);
             _hierarchyCommitResetUndo(obj, oldTRS);
@@ -338,7 +369,7 @@ function hierarchyHoverSelect(uuid) {
     if (isObjectControlsPanelOpen()) return;
 
     const obj = _hierarchyGetObjectByUuid(uuid);
-    if (!obj || obj.locked) return;
+    if (!obj || _hierarchyIsLockedObject(obj)) return;
     VRODOS.ui.selectObjectPreview(obj);
 }
 
@@ -347,7 +378,7 @@ function hierarchyHoverSelect(uuid) {
  */
 function hierarchyClickSelect(event, uuid) {
     const obj = _hierarchyGetObjectByUuid(uuid);
-    if (!obj || obj.locked) return;
+    if (!obj || _hierarchyIsLockedObject(obj)) return;
     // Simulate left-click event for VRODOS.ui.selectorMajor
     const fakeEvent = { button: 0 };
     VRODOS.ui.selectorMajor(fakeEvent, obj, "1");
@@ -565,13 +596,20 @@ VRODOS.ui.updateHierarchyLockIcon = function(object) {
         return;
     }
 
-    const lockAnchor = hierarchyItem.querySelector('a[aria-label="Lock asset"]');
+    const lockAnchor = hierarchyItem.querySelector('[data-hierarchy-action="lock"]');
     if (!lockAnchor) {
         return;
     }
 
-    const newIcon = object.locked ? 'lock' : 'lock-open';
+    const isLocked = _hierarchyIsLockedObject(object);
+    const newIcon = isLocked ? 'lock' : 'lock-open';
+    const newLabel = isLocked ? 'Unlock asset' : 'Lock asset';
+    lockAnchor.setAttribute('aria-label', newLabel);
+    lockAnchor.setAttribute('title', `${newLabel} object`);
     lockAnchor.innerHTML = `<i data-lucide="${  newIcon  }" class="tw-w-4 tw-h-4"></i>`;
+
+    const resetButton = hierarchyItem.querySelector('[data-hierarchy-action="reset"]');
+    _hierarchyApplyResetButtonState(resetButton, object);
     VRODOS.ui.refreshLucideIcons({ nodes: [lockAnchor] });
 };
 
@@ -612,16 +650,24 @@ function CreateDeleteButton(obj) {
 
 
 function CreateLockButton(obj) {
-    const lock_ic = (obj.locked) ? 'lock' : 'lock-open';
-    return `<button type="button" class="tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-pointer tw-p-1 tw-text-white/40 hover:tw-text-white tw-transition-colors" aria-label="Lock asset"` +
-        ` title="Lock asset object" data-hierarchy-action="lock" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
+    const isLocked = _hierarchyIsLockedObject(obj);
+    const lock_ic = isLocked ? 'lock' : 'lock-open';
+    const lock_label = isLocked ? 'Unlock asset' : 'Lock asset';
+    return `<button type="button" class="tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-pointer tw-p-1 tw-text-white/40 hover:tw-text-white tw-transition-colors" aria-label="${  lock_label  }"` +
+        ` title="${  lock_label  } object" data-hierarchy-action="lock" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
         ` data-name="${  _hierarchyAttribute(obj.name)  }" data-asset-name="${  _hierarchyAttribute(_hierarchyActionLabel(obj))  }">` +
         `<i data-lucide="${  lock_ic  }" class="tw-w-4 tw-h-4"></i></button>`;
 }
 
 function CreateResetButton(obj){
-    return `<button type="button" class="tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-pointer tw-p-1 tw-text-white/40 hover:tw-text-blue-400 tw-transition-colors" aria-label="Reset asset"` +
-        ` title="Reset asset object" data-hierarchy-action="reset" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
+    const isLocked = _hierarchyIsLockedObject(obj);
+    const resetClass = isLocked ? HIERARCHY_RESET_BUTTON_LOCKED_CLASS : HIERARCHY_RESET_BUTTON_CLASS;
+    const resetLabel = isLocked ? 'Reset disabled while asset is locked' : 'Reset asset';
+    const resetTitle = isLocked ? 'Unlock asset before resetting object' : 'Reset asset object';
+    const disabledAttr = isLocked ? ' disabled aria-disabled="true"' : ' aria-disabled="false"';
+
+    return `<button type="button" class="${  resetClass  }" aria-label="${  resetLabel  }"` +
+        ` title="${  resetTitle  }" data-hierarchy-action="reset" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"${  disabledAttr  }` +
         ` data-name="${  _hierarchyAttribute(obj.name)  }">` +
         `<i data-lucide="refresh-cw" class="tw-w-4 tw-h-4"></i>` +
         `</button>`;
