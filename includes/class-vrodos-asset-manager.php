@@ -12,10 +12,10 @@ class VRodos_Asset_Manager {
 		add_action( 'wp_enqueue_scripts', $this->register_styles(...) );
 		add_action( 'admin_enqueue_scripts', $this->register_styles(...) );
 		add_action( 'admin_enqueue_scripts', $this->enqueue_dashboard_scripts(...) );
-		add_action( 'wp_enqueue_scripts', $this->enqueue_asset_editor_scripts(...) );
+		add_action( 'wp_enqueue_scripts', $this->enqueue_asset_editor_scripts(...), 999 );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_scene_editor_scripts(...), 999 );
 		add_action( 'wp_enqueue_scripts', $this->enqueue_project_manager_scripts(...), 999 );
-		add_action( 'wp_enqueue_scripts', $this->enqueue_assets_list_scripts(...) );
+		add_action( 'wp_enqueue_scripts', $this->enqueue_assets_list_scripts(...), 999 );
 		add_action( 'admin_enqueue_scripts', $this->enqueue_asset_admin_scripts(...) );
 
         // Modern stats-gl module loader
@@ -289,8 +289,8 @@ class VRodos_Asset_Manager {
 
 		// Styles
 		wp_enqueue_style( 'vrodos_frontend_stylesheet' );
-		wp_enqueue_style( 'vrodos_asseteditor_stylesheet' );
 		wp_enqueue_style( 'vrodos_modern_compiled' );
+		wp_enqueue_style( 'vrodos_asseteditor_stylesheet' );
 		wp_enqueue_script( 'lucide-icons' );
 		$isAdmin = is_admin() ? 'back' : 'front';
 

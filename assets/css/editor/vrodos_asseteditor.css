@@ -1,21 +1,21 @@
-.fusion-row {
+body.vrodos-manager-wrapper .fusion-row {
 	margin-left: 0 !important;
 	display: inline
 }
 
-.panel {
+#vrodos-asset-editor .panel {
 	display: none;
 }
 
-.panel.active {
+#vrodos-asset-editor .panel.active {
 	display: block;
 }
 
-.custom-header {
+body.vrodos-manager-wrapper .custom-header {
 	display: none;
 }
 
-.main-navigation a {
+body.vrodos-manager-wrapper .main-navigation a {
 	padding: 0.2em 1em;
 	font-size: 9pt !important;
 }
@@ -214,7 +214,7 @@
 }
 
 
-a.animationButton {
+#vrodos-asset-editor a.animationButton {
 	display: inline-block;
 	position: absolute;
 	left: 50%;
@@ -235,20 +235,20 @@ a.animationButton {
 	display: none;
 }
 
-.animationButton:hover {
+#vrodos-asset-editor .animationButton:hover {
 	color: #000000;
 	background-color: #FFFFFF;
 }
 
 @media all and (max-width:30em) {
-	a.animationButton {
+	#vrodos-asset-editor a.animationButton {
 		display: block;
 		margin: 0.4em auto;
 	}
 }
 
 
-a.boundingSphereButton {
+#vrodos-asset-editor a.boundingSphereButton {
 	display: inline-block;
 	position: absolute;
 	left: 10px;
@@ -265,7 +265,7 @@ a.boundingSphereButton {
 	transition: all 0.2s;
 }
 
-.boundingSphereButton:hover {
+#vrodos-asset-editor .boundingSphereButton:hover {
 	color: #FFFFFF;
 	background-color: #000000;
 }

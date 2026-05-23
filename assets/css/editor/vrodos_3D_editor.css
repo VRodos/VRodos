@@ -1,8 +1,8 @@
-.panel {
+#vrodos-scene-editor .panel {
 	display: none;
 }
 
-.panel.active {
+#vrodos-scene-editor .panel.active {
 	display: block;
 }
 
@@ -764,10 +764,10 @@
 	line-height: 1.5em;
 }
 
-button,
-html [type="button"],
-[type="reset"],
-[type="submit"] {
+#vrodos-scene-editor button,
+#vrodos-scene-editor [type="button"],
+#vrodos-scene-editor [type="reset"],
+#vrodos-scene-editor [type="submit"] {
 	-moz-appearance: none;
 	-webkit-appearance: none;
 	appearance: none;
@@ -960,20 +960,20 @@ html [type="button"],
 	margin-bottom: 2px;
 }
 
-.custom-header {
+body#vrodos-scene-editor .custom-header {
 	display: none;
 }
 
-.main-navigation a {
+body#vrodos-scene-editor .main-navigation a {
 	padding: 0.2em 1em;
 	font-size: 9pt !important;
 }
 
-.site-branding {
+body#vrodos-scene-editor .site-branding {
 	display: none;
 }
 
-#content {
+body#vrodos-scene-editor #content {
 	padding: 0px;
 }
 

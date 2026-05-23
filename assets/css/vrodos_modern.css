@@ -69,13 +69,87 @@ body.vrodos-manager-wrapper {
   margin: 0 !important;
 }
 
-/* Global box-sizing reset for all VRodos containers */
-#vrodos-project-manager *, #vrodos-project-manager *:before, #vrodos-project-manager *:after,
-#vrodos-assets-manager *, #vrodos-assets-manager *:before, #vrodos-assets-manager *:after,
-#vrodos-asset-editor *, #vrodos-asset-editor *:before, #vrodos-asset-editor *:after,
-#vrodos-scene-editor *, #vrodos-scene-editor *:before, #vrodos-scene-editor *:after,
-#vrodos-modal-wrapper *, #vrodos-modal-wrapper *:before, #vrodos-modal-wrapper *:after {
+/* VRodos-owned roots only. Avoid .vrodos-manager-wrapper * because WP admin-bar lives inside body. */
+:is(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper),
+:is(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) *,
+:is(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) *::before,
+:is(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) *::after {
   box-sizing: border-box !important;
+}
+
+:is(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  line-height: 1.5 !important;
+  text-size-adjust: 100% !important;
+  -webkit-text-size-adjust: 100% !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :where(form) {
+  margin: 0 !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(button, [type="button"], [type="reset"], [type="submit"], .tw-btn) {
+  font-family: inherit !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
+  text-decoration: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(a.tw-btn, .tw-btn, [role="button"]) {
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  max-width: 100% !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  letter-spacing: inherit !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(.tw-input, .tw-select, .tw-textarea) {
+  border-style: solid !important;
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow, 0 0 #0000) !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(.tw-checkbox, .tw-radio, .tw-toggle) {
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  border-style: solid !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) label {
+  margin: 0 !important;
+  font-family: inherit !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(img, video, canvas, svg) {
+  max-width: 100% !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) video {
+  height: auto !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(.tw-modal, .tw-modal-box, .tw-card, .tw-tab, .tw-tabs, .tw-menu) {
+  font-family: inherit !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is(.tw-tabs, .tw-menu) {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) :is([data-lucide], button svg, a svg, .tw-btn svg) {
+  flex-shrink: 0 !important;
 }
 
 /* Project manager container reset */
@@ -101,26 +175,26 @@ body.vrodos-manager-wrapper {
    ═══════════════════════════════════════════ */
 
 /* WP themes set text-decoration on anchors — kill it for btn */
-.vrodos-manager-wrapper .tw-btn {
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) .tw-btn {
   text-decoration: none !important;
 }
 
 /* WP themes aggressively style <input> — protect checkbox/radio */
-.vrodos-manager-wrapper .tw-checkbox,
-.vrodos-manager-wrapper .tw-radio,
-.vrodos-manager-wrapper .tw-toggle {
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) .tw-checkbox,
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) .tw-radio,
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) .tw-toggle {
   cursor: pointer !important;
 }
 
-.vrodos-manager-wrapper .tw-toggle {
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) .tw-toggle {
   appearance: none !important;
   -webkit-appearance: none !important;
   border-radius: 2rem !important;
 }
 
 /* Input focus ring — emerald accent */
-.vrodos-manager-wrapper .tw-input:focus,
-.vrodos-manager-wrapper .tw-select:focus {
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) .tw-input:focus,
+:where(#vrodos-project-manager-wrapper, #vrodos-project-manager, .vrodos-auth-splash, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) .tw-select:focus {
   border-color: #66cc8a !important;
   outline: 2px solid #66cc8a22 !important;
   box-shadow: 0 0 0 4px rgba(102, 204, 138, 0.1) !important;

@@ -6,7 +6,12 @@
 	min-height: 500px;
 }
 
-label {
+.vrodos-auth-splash label,
+#vrodos-project-manager-wrapper label,
+#vrodos-assets-manager label,
+#vrodos-asset-editor label,
+#vrodos-scene-editor label,
+#vrodos-modal-wrapper label {
 	margin-bottom: 0;
 }
 
@@ -667,11 +672,11 @@ i.ButtonIcon {
 
 
 
-#content {
+body.vrodos-manager-wrapper #content {
 	padding:0!important;
 }
 
-video {
+:is(.vrodos-auth-splash, #vrodos-project-manager-wrapper, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) video {
 	width: 100%;
 	height: auto;
 }
@@ -951,7 +956,7 @@ video {
 	left:0; right: 0; top: 26px;color:white !important; mix-blend-mode: difference;
 }
 
-input[type=checkbox] {
+:is(.vrodos-auth-splash, #vrodos-project-manager-wrapper, #vrodos-assets-manager, #vrodos-asset-editor, #vrodos-scene-editor, #vrodos-modal-wrapper) input[type=checkbox]:not(.tw-checkbox):not(.tw-toggle) {
 	-webkit-appearance: auto;
 }
 
