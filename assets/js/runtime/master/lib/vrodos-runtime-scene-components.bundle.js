@@ -1437,6 +1437,7 @@
     "use strict";
     const namespace = window.VRodosImmerseAssessment = window.VRodosImmerseAssessment || {};
     const CEFR_LEVELS = ["A1", "A2", "B1", "B2"];
+    const CEFR_ALL_MARKERS = ["ALL", "ALL LEVELS"];
     function decodeDisplayText(value) {
       let text = typeof value === "string" ? value : "";
       if (!text) {
@@ -1463,22 +1464,27 @@
     function normalizeAssessmentLineBreaks(value) {
       return String(value || "").replace(/\r\n?/g, "\n").replace(/([.!?;:])nn(?=\S)/g, "$1\n\n").replace(/(:)n(?=\S)/g, "$1\n").replace(/([.!?;:])n(?=\s*[Α-ΩΆΈΉΊΌΎΏ])/g, "$1\n").replace(/([.!?;:])n(?=\s*(?:\d+\.|[A-ZΑ-ΩΆΈΉΊΌΎΏ]))/g, "$1\n").replace(/([^A-Za-z])nn(?=\S)/g, "$1\n\n").replace(/ntn(?=[Α-ΩΆΈΉΊΌΎΏ])/g, "\n\n").replace(/([^\s])nn(?=[Α-ΩΆΈΉΊΌΎΏ])/g, "$1\n\n").replace(/([^\s])n(?=\d+\.)/g, "$1\n");
     }
-    function normalizeLevel(value) {
+    function normalizeLevelToken(value) {
       if (value && typeof value === "object") {
         return "";
       }
-      const normalized = String(value || "").trim().toUpperCase();
+      return decodeDisplayText(String(value || "")).trim().toUpperCase();
+    }
+    function isAllLevel(value) {
+      return CEFR_ALL_MARKERS.includes(normalizeLevelToken(value));
+    }
+    function normalizeLevel(value) {
+      const normalized = normalizeLevelToken(value);
       return CEFR_LEVELS.includes(normalized) ? normalized : "";
     }
     function normalizeLevels(values) {
       if (!Array.isArray(values)) {
         return [];
       }
-      return Array.from(
-        new Set(
-          values.map((value) => normalizeLevel(value)).filter(Boolean)
-        )
-      );
+      if (values.some((value) => isAllLevel(value))) {
+        return CEFR_LEVELS.slice();
+      }
+      return Array.from(new Set(values.map((value) => normalizeLevel(value)).filter(Boolean)));
     }
     function decodeBase64Json(value, fallback) {
       if (!value) {
@@ -1629,6 +1635,7 @@
     namespace.decodeDisplayText = decodeDisplayText;
     namespace.normalizeAssessmentLineBreaks = normalizeAssessmentLineBreaks;
     namespace.normalizeLevel = normalizeLevel;
+    namespace.isAllLevel = isAllLevel;
     namespace.normalizeLevels = normalizeLevels;
     namespace.decodeBase64Json = decodeBase64Json;
     namespace.escapeHtml = escapeHtml;

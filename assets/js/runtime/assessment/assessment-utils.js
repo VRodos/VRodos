@@ -3,6 +3,7 @@
 
     const namespace = window.VRodosImmerseAssessment = window.VRodosImmerseAssessment || {};
     const CEFR_LEVELS = ["A1", "A2", "B1", "B2"];
+    const CEFR_ALL_MARKERS = ["ALL", "ALL LEVELS"];
 
     function decodeDisplayText(value) {
         let text = typeof value === "string" ? value : "";
@@ -46,12 +47,20 @@
             .replace(/([^\s])n(?=\d+\.)/g, "$1\n");
     }
 
-    function normalizeLevel(value) {
+    function normalizeLevelToken(value) {
         if (value && typeof value === "object") {
             return "";
         }
 
-        const normalized = String(value || "").trim().toUpperCase();
+        return decodeDisplayText(String(value || "")).trim().toUpperCase();
+    }
+
+    function isAllLevel(value) {
+        return CEFR_ALL_MARKERS.includes(normalizeLevelToken(value));
+    }
+
+    function normalizeLevel(value) {
+        const normalized = normalizeLevelToken(value);
         return CEFR_LEVELS.includes(normalized) ? normalized : "";
     }
 
@@ -60,13 +69,11 @@
             return [];
         }
 
-        return Array.from(
-            new Set(
-                values
-                    .map((value) => normalizeLevel(value))
-                    .filter(Boolean)
-            )
-        );
+        if (values.some((value) => isAllLevel(value))) {
+            return CEFR_LEVELS.slice();
+        }
+
+        return Array.from(new Set(values.map((value) => normalizeLevel(value)).filter(Boolean)));
     }
 
     function decodeBase64Json(value, fallback) {
@@ -275,6 +282,7 @@
     namespace.decodeDisplayText = decodeDisplayText;
     namespace.normalizeAssessmentLineBreaks = normalizeAssessmentLineBreaks;
     namespace.normalizeLevel = normalizeLevel;
+    namespace.isAllLevel = isAllLevel;
     namespace.normalizeLevels = normalizeLevels;
     namespace.decodeBase64Json = decodeBase64Json;
     namespace.escapeHtml = escapeHtml;

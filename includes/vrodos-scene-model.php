@@ -238,8 +238,10 @@ class Vrodos_Scene_Model {
 			return [];
 		}
 
-		$allowed    = [ 'A1', 'A2', 'B1', 'B2', 'ALL', 'ALL LEVELS' ];
+		$cefr_levels = [ 'A1', 'A2', 'B1', 'B2' ];
+		$all_markers = [ 'ALL', 'ALL LEVELS' ];
 		$normalized = [];
+		$has_all    = false;
 
 		foreach ( $source as $level ) {
 			if ( is_array( $level ) || is_object( $level ) ) {
@@ -247,13 +249,18 @@ class Vrodos_Scene_Model {
 			}
 
 			$level = strtoupper( trim( (string) $level ) );
-			if ( $level === '' || ! in_array( $level, $allowed, true ) || in_array( $level, $normalized, true ) ) {
+			if ( in_array( $level, $all_markers, true ) ) {
+				$has_all = true;
+				continue;
+			}
+
+			if ( $level === '' || ! in_array( $level, $cefr_levels, true ) || in_array( $level, $normalized, true ) ) {
 				continue;
 			}
 
 			$normalized[] = $level;
 		}
 
-		return $normalized;
+		return $has_all ? $cefr_levels : $normalized;
 	}
 }

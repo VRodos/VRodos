@@ -244,9 +244,13 @@ VRODOS.utils.encodeAssessmentLevelsForScene = function(levels) {
     const normalizedLevels = typeof VRODOS.utils.normalizeAssessmentLevels === 'function'
         ? VRODOS.utils.normalizeAssessmentLevels(levels)
         : VRODOS.utils.normalizeCefrLevels(levels);
+    const allLevels = ['A1', 'A2', 'B1', 'B2'];
+    const resolvedLevels = normalizedLevels.includes('ALL') || normalizedLevels.includes('ALL LEVELS')
+        ? allLevels
+        : allLevels.filter((level) => normalizedLevels.includes(level));
 
-    return normalizedLevels.length > 0
-        ? VRODOS.utils.encodeBase64Json(normalizedLevels)
+    return resolvedLevels.length > 0
+        ? VRODOS.utils.encodeBase64Json(resolvedLevels)
         : '';
 };
 
