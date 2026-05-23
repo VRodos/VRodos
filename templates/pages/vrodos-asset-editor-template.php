@@ -373,8 +373,8 @@ else { ?>
                                    class="vrodos-input"
                                    name="assetTitle"
                                    placeholder="e.g. Ancient Temple"
-                                   required minlength="3" maxlength="25"
-                                   value="<?php echo $asset_title_value; ?>">
+                                   required minlength="3" maxlength="<?php echo (int) $asset_title_max_length; ?>"
+                                   value="<?php echo esc_attr($asset_title_value); ?>">
                         </div>
                     </div>
 

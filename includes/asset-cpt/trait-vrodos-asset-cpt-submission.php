@@ -35,7 +35,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$assetPGameSlug = $assetPGame ? $assetPGame->slug : '';
 		$isShared       = ( $assetPGameSlug && str_contains( $assetPGameSlug, 'joker' ) ) ? 'true' : 'false';
 
-		$assetTitle   = isset( $_POST['assetTitle'] ) ? esc_attr( strip_tags( (string) $_POST['assetTitle'] ) ) : '';
+		$assetTitle   = self::sanitize_asset_title( $_POST['assetTitle'] ?? '' );
 		$assetCatID   = isset( $_POST['term_id'] ) ? intval( $_POST['term_id'] ) : 0; // Legacy hidden input.
 		if ( $assetCatID <= 0 && ! empty( $_POST['term_id_native'] ) ) {
 			$asset_cat_term = get_term_by( 'slug', sanitize_text_field( (string) $_POST['term_id_native'] ), 'vrodos_asset3d_cat' );
@@ -259,11 +259,30 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		update_post_meta( $asset_id, 'vrodos_asset3d_assettrs', $asset_trs );
 	}
 
+	private static function sanitize_asset_title( $value ): string {
+		if ( is_array( $value ) ) {
+			return '';
+		}
+
+		$title = trim( sanitize_text_field( wp_unslash( (string) $value ) ) );
+
+		if ( function_exists( 'mb_strlen' ) && function_exists( 'mb_substr' ) ) {
+			if ( mb_strlen( $title ) > self::ASSET_TITLE_MAX_LENGTH ) {
+				return mb_substr( $title, 0, self::ASSET_TITLE_MAX_LENGTH );
+			}
+
+			return $title;
+		}
+
+		return strlen( $title ) > self::ASSET_TITLE_MAX_LENGTH ? substr( $title, 0, self::ASSET_TITLE_MAX_LENGTH ) : $title;
+	}
+
 	public static function prepare_asset_editor_template_data(): array {
 		$data = [];
 
 		$data['asset_id']   = isset( $_GET['vrodos_asset'] ) ? sanitize_text_field( intval( $_GET['vrodos_asset'] ) ) : null;
 		$data['project_id'] = isset( $_GET['vrodos_game'] ) ? sanitize_text_field( intval( $_GET['vrodos_game'] ) ) : null;
+		$data['asset_title_max_length'] = self::ASSET_TITLE_MAX_LENGTH;
 
 		$data['isUserloggedIn'] = is_user_logged_in();
 		$data['current_user']   = wp_get_current_user();
