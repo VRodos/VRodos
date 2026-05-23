@@ -67,6 +67,18 @@ window.VRODOSMaster = window.VRODOSMaster || {};
         if (upper !== null && number > upper) {
             number = upper;
         }
+        const step = typeof config.step === 'number' ? config.step : null;
+        if (step !== null && step > 0) {
+            const base = lower !== null ? lower : 0;
+            number = base + Math.round((number - base) / step) * step;
+            number = Number(number.toFixed(6));
+            if (lower !== null && number < lower) {
+                number = lower;
+            }
+            if (upper !== null && number > upper) {
+                number = upper;
+            }
+        }
         return number;
     }
 

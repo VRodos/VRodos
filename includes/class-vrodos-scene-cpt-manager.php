@@ -419,7 +419,7 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsBloomThreshold'] = isset( $json_metadata->aframePmndrsBloomThreshold ) ? (float) $json_metadata->aframePmndrsBloomThreshold : 0.62;
 		$scene_data['aframePmndrsVignetteEnabled'] = $json_metadata->aframePmndrsVignetteEnabled ?? false;
 		$scene_data['aframePmndrsVignetteDarkness'] = isset( $json_metadata->aframePmndrsVignetteDarkness ) ? (float) $json_metadata->aframePmndrsVignetteDarkness : 0.5;
-		$scene_data['aframePmndrsToneMappingExposure'] = isset( $json_metadata->aframePmndrsToneMappingExposure ) ? (float) $json_metadata->aframePmndrsToneMappingExposure : 1.0;
+		$scene_data['aframePmndrsToneMappingExposure'] = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $json_metadata, 'pmndrsToneMappingExposure' );
 		$scene_data['aframePmndrsLowLightAutoExposureEnabled'] = $json_metadata->aframePmndrsLowLightAutoExposureEnabled ?? true;
 		$scene_data['aframePmndrsToneMappingExposureAuthored'] = $json_metadata->aframePmndrsToneMappingExposureAuthored ?? false;
 		$pmndrs_tone_mapping_mode_raw = $json_metadata->aframePmndrsToneMappingMode ?? 'agx';

@@ -110,16 +110,27 @@ VRodosCompileUI.Shared = (function () {
         }
     }
 
-    function clampNumber(value, min, max, fallback) {
+    function clampNumber(value, min, max, fallback, step) {
+        let number;
         if (window.VRODOS && VRODOS.utils && typeof VRODOS.utils.clampNumber === 'function') {
-            return VRODOS.utils.clampNumber(value, min, max, fallback);
+            number = VRODOS.utils.clampNumber(value, min, max, fallback);
+        } else {
+            number = parseFloat(value);
+            if (isNaN(number)) return fallback;
+            if (number < min) number = min;
+            if (number > max) number = max;
         }
 
-        const n = parseFloat(value);
-        if (isNaN(n)) return fallback;
-        if (n < min) return min;
-        if (n > max) return max;
-        return n;
+        const increment = parseFloat(step);
+        if (!isNaN(increment) && increment > 0) {
+            const base = typeof min === 'number' ? min : 0;
+            number = base + Math.round((number - base) / increment) * increment;
+            number = Number(number.toFixed(6));
+            if (number < min) number = min;
+            if (number > max) number = max;
+        }
+
+        return number;
     }
 
     function normalizeColorHex(value, fallback) {

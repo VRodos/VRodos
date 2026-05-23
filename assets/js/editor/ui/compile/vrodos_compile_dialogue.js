@@ -259,7 +259,7 @@ window.addEventListener('DOMContentLoaded', () => {
             VRODOS.editor.envir.scene.aframePmndrsVignetteDarkness = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsVignetteDarkness, 0, 1, 0.5);
         }
         if (typeof VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure !== 'number') {
-            VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure, 1, 20, 1.0);
+            VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure, 0.1, 5, 1.0, 0.1);
         }
         if (typeof VRODOS.editor.envir.scene.aframePmndrsLowLightAutoExposureEnabled === 'undefined') {
             VRODOS.editor.envir.scene.aframePmndrsLowLightAutoExposureEnabled = Shared.PMNDRS_TWEAK_DEFAULTS.lowLightAutoExposureEnabled;
@@ -751,7 +751,7 @@ window.addEventListener('DOMContentLoaded', () => {
             controls.pmndrsBloomThreshold.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsBloomThreshold : 0.62, 0, 1, 0.62);
         }
         if (controls.pmndrsExposure) {
-            controls.pmndrsExposure.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure : 1.0, 1, 20, 1.0);
+            controls.pmndrsExposure.value = Shared.clampNumber(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure : 1.0, 0.1, 5, 1.0, 0.1);
         }
         if (controls.pmndrsToneMapping) {
             controls.pmndrsToneMapping.value = VRODOS.editor.envir && VRODOS.editor.envir.scene

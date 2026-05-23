@@ -750,8 +750,26 @@ function vrodosGetGlobalReflectionStrength(options) {
     return options && options.reflectionsEnabled === false ? 0 : 1;
 }
 
+function vrodosCanUseReflectionShadowPatch(material) {
+    return Boolean(material && (
+        material.isMeshStandardMaterial ||
+        material.isMeshPhysicalMaterial ||
+        material.isMeshPhongMaterial
+    ));
+}
+
+function vrodosCanUseTerrainSoftShadowPatch(material) {
+    return Boolean(material && (
+        material.isMeshStandardMaterial ||
+        material.isMeshPhysicalMaterial ||
+        material.isMeshPhongMaterial ||
+        material.isMeshLambertMaterial ||
+        material.isMeshToonMaterial
+    ));
+}
+
 function vrodosInstallReflectionShadowPatch(material) {
-    if (!material || material.userData.vrodosReflectionShadowPatched) {
+    if (!material || !material.userData || !vrodosCanUseReflectionShadowPatch(material) || material.userData.vrodosReflectionShadowPatched) {
         return;
     }
 
@@ -854,7 +872,7 @@ function vrodosInstallReflectionShadowPatch(material) {
 }
 
 function vrodosInstallTerrainSoftShadowPatch(material) {
-    if (!material || !material.userData) {
+    if (!material || !material.userData || !vrodosCanUseTerrainSoftShadowPatch(material)) {
         return;
     }
 
@@ -1171,7 +1189,7 @@ function vrodosEnhanceMeshMaterial(material, overrides, options) {
 
     vrodosApplyMaterialRole(material, overrides || {});
     vrodosApplyShadowCastingSide(material);
-    if (material.userData && material.userData.vrodosMaterialRole === 'terrain-matte') {
+    if (material.userData && material.userData.vrodosMaterialRole === 'terrain-matte' && vrodosCanUseTerrainSoftShadowPatch(material)) {
         vrodosInstallTerrainSoftShadowPatch(material);
         material.userData.vrodosTerrainShadowLiftUniform.value = vrodosGetTerrainSoftShadowLiftStrength();
         material.userData.vrodosTerrainShadowTargetUniform.value = vrodosGetTerrainSoftShadowNumber(

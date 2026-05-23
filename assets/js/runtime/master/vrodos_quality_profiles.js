@@ -4549,7 +4549,9 @@
             return 1.0;
         }
 
-        let raw = parseFloat(self.data.pmndrsToneMappingExposure);
+        let raw = RuntimeSettings.readNumber
+            ? RuntimeSettings.readNumber(self.data, 'pmndrsToneMappingExposure', 1.0, 0.1, 5)
+            : parseFloat(self.data.pmndrsToneMappingExposure);
         if (isNaN(raw)) {
             raw = 1.0;
         }
@@ -4571,7 +4573,7 @@
             }
         }
 
-        return Math.max(1, Math.min(20, raw));
+        return Math.max(0.1, Math.min(5, raw));
     }
 
     function getLegacyHorizonStageSizeValue(self) {

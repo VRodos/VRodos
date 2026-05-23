@@ -1114,7 +1114,7 @@ ${selectedSummaries.join("\n")}`);
           throw new Error("ToneMappingMode is unavailable.");
         }
         effects.push(new PP.ToneMappingEffect({ mode: toneMappingMode }));
-        const pmndrsExposure = typeof this.getPmndrsToneMappingExposure === "function" ? this.getPmndrsToneMappingExposure() : readPmndrsNumber(this, "pmndrsToneMappingExposure", 1, 20, 1);
+        const pmndrsExposure = typeof this.getPmndrsToneMappingExposure === "function" ? this.getPmndrsToneMappingExposure() : readPmndrsNumber(this, "pmndrsToneMappingExposure", 0.1, 5, 1);
         if (renderer && typeof renderer.toneMappingExposure !== "undefined") {
           this._pmndrsPrevToneMappingExposure = renderer.toneMappingExposure;
           renderer.toneMappingExposure = pmndrsExposure;

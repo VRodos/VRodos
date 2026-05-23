@@ -81,6 +81,18 @@ class VRodos_Runtime_Settings_Contract {
 			if ( isset( $setting['max'] ) ) {
 				$number = min( (float) $setting['max'], $number );
 			}
+			if ( isset( $setting['step'] ) && is_numeric( $setting['step'] ) && (float) $setting['step'] > 0 ) {
+				$step = (float) $setting['step'];
+				$base = isset( $setting['min'] ) ? (float) $setting['min'] : 0.0;
+				$number = $base + round( ( $number - $base ) / $step ) * $step;
+				$number = round( $number, 6 );
+				if ( isset( $setting['min'] ) ) {
+					$number = max( (float) $setting['min'], $number );
+				}
+				if ( isset( $setting['max'] ) ) {
+					$number = min( (float) $setting['max'], $number );
+				}
+			}
 			return $number;
 		}
 

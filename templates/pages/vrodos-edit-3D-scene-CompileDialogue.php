@@ -425,7 +425,7 @@
 											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Tone-mapping exposure multiplier applied before the selected PMNDRS tone mapping operator.">Tone Map Exposure</span>
 											<span id="compilePmndrsExposureValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
 										</div>
-										<input id="compilePmndrsExposureSlider" type="range" min="1" max="20" step="0.1" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+										<input id="compilePmndrsExposureSlider" type="range" min="0.1" max="5" step="0.1" value="1.0" class="tw-range tw-range-primary tw-range-xs">
 									</div>
 								</div>
 

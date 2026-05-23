@@ -1357,7 +1357,6 @@
         // grading (brightness/contrast, hue/saturation, vignette) operates
         // on perceptually uniform (LDR) colours, preventing washed-out results.
         // Per-scene exposure multiplier is applied via the renderer's toneMappingExposure.
-        // The Takram vanilla atmosphere story uses AGX tone mapping with exposure 10.
         try {
             const toneMappingMode = resolvePmndrsToneMappingMode(PP, getPmndrsToneMappingMode(this));
             if (toneMappingMode === null) {
@@ -1366,7 +1365,7 @@
             effects.push(new PP.ToneMappingEffect({ mode: toneMappingMode }));
             const pmndrsExposure = typeof this.getPmndrsToneMappingExposure === 'function'
                 ? this.getPmndrsToneMappingExposure()
-                : readPmndrsNumber(this, 'pmndrsToneMappingExposure', 1, 20, 1.0);
+                : readPmndrsNumber(this, 'pmndrsToneMappingExposure', 0.1, 5, 1.0);
             if (renderer && typeof renderer.toneMappingExposure !== 'undefined') {
                 this._pmndrsPrevToneMappingExposure = renderer.toneMappingExposure;
                 renderer.toneMappingExposure = pmndrsExposure;

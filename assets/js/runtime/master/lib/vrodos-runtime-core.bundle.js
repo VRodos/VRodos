@@ -99,8 +99,9 @@
           "metadataKey": "aframePmndrsToneMappingExposure",
           "type": "number",
           "default": 1,
-          "min": 1,
-          "max": 20
+          "min": 0.1,
+          "max": 5,
+          "step": 0.1
         },
         "pmndrsLowLightAutoExposureEnabled": {
           "metadataKey": "aframePmndrsLowLightAutoExposureEnabled",
@@ -814,6 +815,18 @@
       }
       if (upper !== null && number > upper) {
         number = upper;
+      }
+      const step = typeof config.step === "number" ? config.step : null;
+      if (step !== null && step > 0) {
+        const base = lower !== null ? lower : 0;
+        number = base + Math.round((number - base) / step) * step;
+        number = Number(number.toFixed(6));
+        if (lower !== null && number < lower) {
+          number = lower;
+        }
+        if (upper !== null && number > upper) {
+          number = upper;
+        }
       }
       return number;
     }
@@ -2185,8 +2198,14 @@
   function vrodosGetGlobalReflectionStrength(options) {
     return options && options.reflectionsEnabled === false ? 0 : 1;
   }
+  function vrodosCanUseReflectionShadowPatch(material) {
+    return Boolean(material && (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial || material.isMeshPhongMaterial));
+  }
+  function vrodosCanUseTerrainSoftShadowPatch(material) {
+    return Boolean(material && (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial || material.isMeshPhongMaterial || material.isMeshLambertMaterial || material.isMeshToonMaterial));
+  }
   function vrodosInstallReflectionShadowPatch(material) {
-    if (!material || material.userData.vrodosReflectionShadowPatched) {
+    if (!material || !material.userData || !vrodosCanUseReflectionShadowPatch(material) || material.userData.vrodosReflectionShadowPatched) {
       return;
     }
     const previousOnBeforeCompile = material.onBeforeCompile;
@@ -2274,7 +2293,7 @@
     material.needsUpdate = true;
   }
   function vrodosInstallTerrainSoftShadowPatch(material) {
-    if (!material || !material.userData) {
+    if (!material || !material.userData || !vrodosCanUseTerrainSoftShadowPatch(material)) {
       return;
     }
     const terrainShadowLiftUniform = material.userData.vrodosTerrainShadowLiftUniform || { value: 0 };
@@ -2545,7 +2564,7 @@
     }
     vrodosApplyMaterialRole(material, overrides || {});
     vrodosApplyShadowCastingSide(material);
-    if (material.userData && material.userData.vrodosMaterialRole === "terrain-matte") {
+    if (material.userData && material.userData.vrodosMaterialRole === "terrain-matte" && vrodosCanUseTerrainSoftShadowPatch(material)) {
       vrodosInstallTerrainSoftShadowPatch(material);
       material.userData.vrodosTerrainShadowLiftUniform.value = vrodosGetTerrainSoftShadowLiftStrength();
       material.userData.vrodosTerrainShadowTargetUniform.value = vrodosGetTerrainSoftShadowNumber(
@@ -6906,7 +6925,7 @@
       if (!self || !self.data) {
         return 1;
       }
-      let raw = parseFloat(self.data.pmndrsToneMappingExposure);
+      let raw = RuntimeSettings.readNumber ? RuntimeSettings.readNumber(self.data, "pmndrsToneMappingExposure", 1, 0.1, 5) : parseFloat(self.data.pmndrsToneMappingExposure);
       if (isNaN(raw)) {
         raw = 1;
       }
@@ -6926,7 +6945,7 @@
           }
         }
       }
-      return Math.max(1, Math.min(20, raw));
+      return Math.max(0.1, Math.min(5, raw));
     }
     function getLegacyHorizonStageSizeValue(self) {
       if (!self || !self.data) {

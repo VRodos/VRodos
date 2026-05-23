@@ -422,7 +422,7 @@ class VRodos_Compiler_Scene_Settings {
 	}
 
 	private function get_effective_pmndrs_initial_exposure( array $settings ): float {
-		$exposure = max( 1.0, min( 20.0, (float) ( $settings['pmndrsToneMappingExposure'] ?? 1.0 ) ) );
+		$exposure = max( 0.1, min( 5.0, (float) ( $settings['pmndrsToneMappingExposure'] ?? 1.0 ) ) );
 		if (
 			! $this->setting_bool( $settings, 'pmndrsAtmosphereEnabled' ) ||
 			! $this->setting_bool( $settings, 'pmndrsLowLightAutoExposureEnabled' )

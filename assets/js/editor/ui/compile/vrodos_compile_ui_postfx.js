@@ -282,7 +282,7 @@ VRodosCompileUI.PostFX = (function () {
             VRODOS.editor.envir.scene.aframePmndrsBloomThreshold = Shared.clampNumber(controls.pmndrsBloomThreshold.value, 0, 1, d.bloomThreshold);
         }
         if (controls.pmndrsExposure) {
-            VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(controls.pmndrsExposure.value, 1, 20, d.toneMappingExposure);
+            VRODOS.editor.envir.scene.aframePmndrsToneMappingExposure = Shared.clampNumber(controls.pmndrsExposure.value, 0.1, 5, d.toneMappingExposure, 0.1);
         }
         if (controls.pmndrsToneMapping) {
             VRODOS.editor.envir.scene.aframePmndrsToneMappingMode = normalizePmndrsToneMappingMode(controls.pmndrsToneMapping.value);

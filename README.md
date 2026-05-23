@@ -208,7 +208,7 @@ It currently supports:
 - ambient occlusion through the shared AO presets
 - bloom controls
 - selectable tone mapping: AgX, Reinhard, Cineon, ACES Filmic, Linear
-- tone-map exposure range `1..20`
+- tone-map exposure range `0.1..5.0` in `0.1` increments
 - generated built-in LUT looks
 - vignette controls
 - PMNDRS noise and chromatic aberration controls

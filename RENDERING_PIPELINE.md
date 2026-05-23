@@ -431,7 +431,7 @@ Takram controls are author-facing artistic presets today, not full geospatial so
 Scene settings:
 
 - `pmndrsToneMappingMode`: `agx`, `reinhard`, `cineon`, `aces-filmic`, or `linear`
-- `pmndrsToneMappingExposure`: `1.0` to `20.0`
+- `pmndrsToneMappingExposure`: `0.1` to `5.0`, in `0.1` increments
 - `pmndrsLensFlareEnabled`
 - `pmndrsCorrectAltitudeEnabled`
 - `pmndrsCelestialMode`: `manual` or `preset-time`
