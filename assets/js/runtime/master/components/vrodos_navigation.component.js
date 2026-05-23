@@ -187,16 +187,76 @@ AFRAME.registerComponent('custom-movement', {
         this.groundProbePosition = new THREE.Vector3();
         this.groundProbeReferenceTolerance = 0.45;
         this.groundProbeStepTolerance = 0.05;
+        this.autoGroundBridgeOffsets = [
+            new THREE.Vector2(0.32, 0),
+            new THREE.Vector2(-0.32, 0),
+            new THREE.Vector2(0, 0.32),
+            new THREE.Vector2(0, -0.32),
+            new THREE.Vector2(0.42, 0.42),
+            new THREE.Vector2(-0.42, 0.42),
+            new THREE.Vector2(0.42, -0.42),
+            new THREE.Vector2(-0.42, -0.42),
+            new THREE.Vector2(0.58, 0),
+            new THREE.Vector2(-0.58, 0),
+            new THREE.Vector2(0, 0.58),
+            new THREE.Vector2(0, -0.58)
+        ];
+        this.autoRecoveryOffsets = [
+            new THREE.Vector2(0, 0),
+            new THREE.Vector2(0.45, 0),
+            new THREE.Vector2(-0.45, 0),
+            new THREE.Vector2(0, 0.45),
+            new THREE.Vector2(0, -0.45),
+            new THREE.Vector2(0.75, 0.75),
+            new THREE.Vector2(-0.75, 0.75),
+            new THREE.Vector2(0.75, -0.75),
+            new THREE.Vector2(-0.75, -0.75)
+        ];
+        this.autoRecoverySearchRadii = [0.35, 0.7, 1.1, 1.5, 2.0, 2.6, 3.4, 4.5];
+        this.autoRecoverySearchAngles = [0, 45, 90, 135, 180, 225, 270, 315];
+        this.autoGroundBridgeMinSupport = 2;
+        this.autoGroundPitDropThreshold = 0.12;
+        this.autoGroundSupportHeightTolerance = 0.2;
+        this.autoGroundStepAssistMaxHeight = 0.95;
+        this.autoNavmeshRiserBypassHeight = 0.45;
+        this.autoRecoveryNavmeshBypassHeight = 0.95;
+        this.autoRecoveryMaxLift = 3.2;
+        this.autoRecoveryCooldownMs = 700;
+        this.autoStableGroundMaxAgeMs = 10000;
+        this.autoStableGroundMaxDistance = 4.5;
         this.wasdControlsSuppressed = null;
         this.lastRecoveryAttemptAt = 0;
+        this.lastManualRecoveryAttemptAt = 0;
+        this.lastAutoRecoveryStatus = 'none';
+        this.lastAutoRecoveryAt = 0;
         this.positionPrimed = false;
         this.sampledGroundHit = this.createGroundHit();
         this.candidateGroundHit = this.createGroundHit();
         this.bestGroundHit = this.createGroundHit();
         this.recoveryGroundHit = this.createGroundHit();
         this.offsetGroundHit = this.createGroundHit();
+        this.autoSupportProbeGroundHit = this.createGroundHit();
+        this.autoSupportBestGroundHit = this.createGroundHit();
+        this.autoSupportResolvedGroundHit = this.createGroundHit();
+        this.autoRecoveryProbeGroundHit = this.createGroundHit();
+        this.autoRecoveryBestGroundHit = this.createGroundHit();
         this.autoGroundSampleHit = this.createGroundHit();
         this.autoGroundSamplePosition = new THREE.Vector3();
+        this.autoSupportProbePosition = new THREE.Vector3();
+        this.autoRecoveryProbePosition = new THREE.Vector3();
+        this.autoRecoveryCandidatePosition = new THREE.Vector3();
+        this.autoRecoveryTargetPosition = new THREE.Vector3();
+        this.autoStableGroundHistorySize = 8;
+        this.autoStableGroundHistoryIndex = 0;
+        this.autoStableGroundHistory = [];
+        for (let stableIndex = 0; stableIndex < this.autoStableGroundHistorySize; stableIndex++) {
+            this.autoStableGroundHistory.push({
+                valid: false,
+                time: 0,
+                position: new THREE.Vector3(),
+                ground: this.createGroundHit()
+            });
+        }
         this.autoGroundSampleMinIntervalMs = 90;
         this.autoGroundSampleMinDistance = 0.35;
         this.autoGroundHeightDeadband = 0.06;
@@ -221,9 +281,12 @@ AFRAME.registerComponent('custom-movement', {
         this.handleSceneChildDetached = this.handleSceneChildDetached.bind(this);
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleKeyUp = this.handleKeyUp.bind(this);
+        this.handleRecoveryButtonDown = this.handleRecoveryButtonDown.bind(this);
 
         this.thumbL = document.querySelector('#leftHand');
         this.thumbR = document.querySelector('#rightHand');
+        this.recoveryButtonEvents = ['abuttondown', 'xbuttondown'];
+        this.recoveryButtonEls = [];
 
         if (this.thumbL) {
             this.thumbL.addEventListener('thumbstickmoved', this.handleThumbstickMove);
@@ -233,13 +296,25 @@ AFRAME.registerComponent('custom-movement', {
             this.thumbR.addEventListener('thumbstickmoved', this.handleThumbstickMove);
         }
 
+        ['#leftHand', '#rightHand', '#oculusLeft', '#oculusRight'].forEach((selector) => {
+            const buttonEl = document.querySelector(selector);
+            if (!buttonEl || this.recoveryButtonEls.indexOf(buttonEl) !== -1) {
+                return;
+            }
+
+            this.recoveryButtonEvents.forEach((eventName) => {
+                buttonEl.addEventListener(eventName, this.handleRecoveryButtonDown);
+            });
+            this.recoveryButtonEls.push(buttonEl);
+        });
+
         this.sceneEl.addEventListener('model-loaded', this.handleNavmeshModelLoad);
         this.sceneEl.addEventListener('loaded', this.handleSceneLoaded);
         this.sceneEl.addEventListener('child-attached', this.handleSceneChildAttached);
         this.sceneEl.addEventListener('child-detached', this.handleSceneChildDetached);
 
-        window.addEventListener('keydown', this.handleKeyDown);
-        window.addEventListener('keyup', this.handleKeyUp);
+        window.addEventListener('keydown', this.handleKeyDown, true);
+        window.addEventListener('keyup', this.handleKeyUp, true);
     },
     createGroundHit: function () {
         return {
@@ -334,6 +409,11 @@ AFRAME.registerComponent('custom-movement', {
             this.rightThumbInput.y = 0;
         }
     },
+    handleRecoveryButtonDown: function (event) {
+        if (this.requestAutoTerrainRecovery('controller') && event && typeof event.preventDefault === 'function') {
+            event.preventDefault();
+        }
+    },
     handleNavmeshModelLoad: function (event) {
         if (!event || !event.target || !event.target.classList) {
             return;
@@ -409,6 +489,14 @@ AFRAME.registerComponent('custom-movement', {
             return;
         }
 
+        if (this.isRecoveryKeyEvent(event)) {
+            const recovered = this.requestAutoTerrainRecovery('keyboard');
+            if (recovered || this.getNavigationMode() === 'walkable') {
+                event.preventDefault();
+            }
+            return;
+        }
+
         if (this.updateKeyboardAxis(event.code, true)) {
             event.preventDefault();
         }
@@ -422,6 +510,14 @@ AFRAME.registerComponent('custom-movement', {
             event.preventDefault();
         }
     },
+    isRecoveryKeyEvent: function (event) {
+        return Boolean(event && (
+            event.code === 'Space' ||
+            event.key === ' ' ||
+            event.key === 'Spacebar' ||
+            event.keyCode === 32
+        ));
+    },
     remove: function () {
         if (this.thumbL) {
             this.thumbL.removeEventListener('thumbstickmoved', this.handleThumbstickMove);
@@ -429,12 +525,20 @@ AFRAME.registerComponent('custom-movement', {
         if (this.thumbR) {
             this.thumbR.removeEventListener('thumbstickmoved', this.handleThumbstickMove);
         }
+        if (this.recoveryButtonEls && this.recoveryButtonEvents) {
+            this.recoveryButtonEls.forEach((buttonEl) => {
+                this.recoveryButtonEvents.forEach((eventName) => {
+                    buttonEl.removeEventListener(eventName, this.handleRecoveryButtonDown);
+                });
+            });
+            this.recoveryButtonEls = [];
+        }
         this.sceneEl.removeEventListener('model-loaded', this.handleNavmeshModelLoad);
         this.sceneEl.removeEventListener('loaded', this.handleSceneLoaded);
         this.sceneEl.removeEventListener('child-attached', this.handleSceneChildAttached);
         this.sceneEl.removeEventListener('child-detached', this.handleSceneChildDetached);
-        window.removeEventListener('keydown', this.handleKeyDown);
-        window.removeEventListener('keyup', this.handleKeyUp);
+        window.removeEventListener('keydown', this.handleKeyDown, true);
+        window.removeEventListener('keyup', this.handleKeyUp, true);
         if (this.navPerfDebug && this.navPerfDebug.overlay && this.navPerfDebug.overlay.parentNode) {
             this.navPerfDebug.overlay.parentNode.removeChild(this.navPerfDebug.overlay);
             this.navPerfDebug.overlay = null;
@@ -566,7 +670,8 @@ AFRAME.registerComponent('custom-movement', {
             `sample ms: ${  frame.sampleMs.toFixed(2)  } avg ${  this.navPerfDebug.avgSampleMs.toFixed(2)}`,
             `raycast ms: ${  frame.raycastMs.toFixed(2)  } avg ${  this.navPerfDebug.avgRaycastMs.toFixed(2)}`,
             `raycasts: ${  frame.raycasts  } avg ${  this.navPerfDebug.avgRaycasts.toFixed(1)}`,
-            `intersections: ${  frame.intersections  } avg ${  this.navPerfDebug.avgIntersections.toFixed(1)}`
+            `intersections: ${  frame.intersections  } avg ${  this.navPerfDebug.avgIntersections.toFixed(1)}`,
+            `auto recovery: ${  this.lastAutoRecoveryStatus}`
         ].join('\n');
     },
     getNavPerfDebugSnapshot: function () {
@@ -618,6 +723,11 @@ AFRAME.registerComponent('custom-movement', {
                 raycastMs: this.navPerfDebug.totalRaycastMs,
                 raycasts: this.navPerfDebug.totalRaycasts,
                 intersections: this.navPerfDebug.totalIntersections
+            },
+            autoRecovery: {
+                status: this.lastAutoRecoveryStatus,
+                lastAt: this.lastAutoRecoveryAt,
+                recentStableCount: this.autoStableGroundHistory.filter((entry) => entry.valid).length
             },
             lastFrame: {
                 moving: Boolean(frame.moving),
@@ -861,6 +971,12 @@ AFRAME.registerComponent('custom-movement', {
 
         return 'precise';
     },
+    getAutoStepAssistHeight: function () {
+        return Math.max(this.data.maxStepHeight, this.autoGroundStepAssistMaxHeight);
+    },
+    getMaxStepHeightForGround: function (groundHit) {
+        return this.isAutoGroundHit(groundHit) ? this.getAutoStepAssistHeight() : this.data.maxStepHeight;
+    },
     shouldReuseAutoGroundSample: function (position, referenceGroundY) {
         if (!this.hasLastAutoGroundSample) {
             return false;
@@ -900,6 +1016,124 @@ AFRAME.registerComponent('custom-movement', {
         this.copyGroundHit(groundHit, this.autoGroundSampleHit);
         this.lastAutoGroundSampleAt = performance.now();
         this.hasLastAutoGroundSample = true;
+    },
+    isAutoGroundHit: function (groundHit) {
+        return Boolean(groundHit && groundHit.behavior === 'auto');
+    },
+    findAutoSupportGroundAt: function (position, referenceGroundY, outputGround, options) {
+        const hasReferenceGround = typeof referenceGroundY === 'number' && isFinite(referenceGroundY);
+        if (!hasReferenceGround) {
+            return null;
+        }
+
+        options = options || {};
+        const offsets = options.offsets || this.autoGroundBridgeOffsets;
+        const minSupport = typeof options.minSupport === 'number' ? options.minSupport : this.autoGroundBridgeMinSupport;
+        const limits = options.limits || null;
+        const maxStepHeight = limits && typeof limits.maxStepHeight === 'number'
+            ? limits.maxStepHeight
+            : this.data.maxStepHeight;
+        const maxDropHeight = limits && typeof limits.maxDropHeight === 'number'
+            ? limits.maxDropHeight
+            : this.data.maxDropHeight;
+        const heightTolerance = typeof options.heightTolerance === 'number'
+            ? options.heightTolerance
+            : this.autoGroundSupportHeightTolerance;
+        let supportCount = 0;
+        let bestScore = Infinity;
+        let foundBest = false;
+
+        for (let i = 0; i < offsets.length; i++) {
+            const offset = offsets[i];
+            this.autoSupportProbePosition.set(
+                position.x + offset.x,
+                position.y,
+                position.z + offset.y
+            );
+
+            const candidateGround = this.sampleGroundAtSingle(
+                this.autoSupportProbePosition,
+                referenceGroundY,
+                this.autoSupportProbeGroundHit,
+                limits
+            );
+            if (!this.isAutoGroundHit(candidateGround)) {
+                continue;
+            }
+
+            const heightDelta = candidateGround.point.y - referenceGroundY;
+            if (heightDelta > maxStepHeight + this.groundProbeStepTolerance ||
+                heightDelta < -(maxDropHeight + this.groundProbeStepTolerance)) {
+                continue;
+            }
+
+            supportCount++;
+            const score = Math.abs(heightDelta) +
+                (offset.lengthSq() * 0.08) +
+                (candidateGround.slope * 0.002);
+            if (score < bestScore) {
+                bestScore = score;
+                foundBest = true;
+                this.copyGroundHit(candidateGround, this.autoSupportBestGroundHit);
+                if (Math.abs(heightDelta) <= heightTolerance) {
+                    this.autoSupportBestGroundHit.point.y = referenceGroundY;
+                }
+                this.autoSupportBestGroundHit.point.x = position.x;
+                this.autoSupportBestGroundHit.point.z = position.z;
+            }
+        }
+
+        if (!foundBest || supportCount < minSupport) {
+            return null;
+        }
+
+        outputGround = outputGround || this.autoSupportResolvedGroundHit;
+        return this.copyGroundHit(this.autoSupportBestGroundHit, outputGround);
+    },
+    shouldPreferAutoSupportGround: function (directGround, referenceGroundY) {
+        return this.isAutoGroundHit(directGround) &&
+            typeof referenceGroundY === 'number' &&
+            isFinite(referenceGroundY) &&
+            referenceGroundY - directGround.point.y > this.autoGroundPitDropThreshold;
+    },
+    hasAutoGroundSupportAt: function (position, referenceGroundY, minSupport, limits) {
+        if (typeof referenceGroundY !== 'number' || !isFinite(referenceGroundY)) {
+            return false;
+        }
+
+        const requiredSupport = typeof minSupport === 'number' ? minSupport : this.autoGroundBridgeMinSupport;
+        let supportCount = 0;
+
+        for (let i = 0; i < this.autoRecoveryOffsets.length; i++) {
+            const offset = this.autoRecoveryOffsets[i];
+            this.autoSupportProbePosition.set(
+                position.x + offset.x,
+                position.y,
+                position.z + offset.y
+            );
+
+            const supportGround = this.sampleGroundAtSingle(
+                this.autoSupportProbePosition,
+                referenceGroundY,
+                this.autoRecoveryProbeGroundHit,
+                limits
+            );
+            if (!this.isAutoGroundHit(supportGround)) {
+                continue;
+            }
+
+            if (Math.abs(supportGround.point.y - referenceGroundY) >
+                (this.getAutoStepAssistHeight() + this.autoGroundSupportHeightTolerance)) {
+                continue;
+            }
+
+            supportCount++;
+            if (supportCount >= requiredSupport) {
+                return true;
+            }
+        }
+
+        return false;
     },
     canUseAutoGroundMissGrace: function (groundHit, fromPosition, toPosition, missCount) {
         if (!groundHit || groundHit.behavior !== 'auto') {
@@ -1227,7 +1461,7 @@ AFRAME.registerComponent('custom-movement', {
 
         return true;
     },
-    sampleGroundAtSingle: function (position, referenceGroundY, outputGround) {
+    sampleGroundAtSingle: function (position, referenceGroundY, outputGround, limits) {
         const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
         const sampleStart = navPerfFrame ? performance.now() : 0;
         const finalizeSample = function (result) {
@@ -1242,13 +1476,19 @@ AFRAME.registerComponent('custom-movement', {
             return finalizeSample(null);
         }
 
+        const maxStepHeight = limits && typeof limits.maxStepHeight === 'number'
+            ? Math.max(0, limits.maxStepHeight)
+            : this.data.maxStepHeight;
+        const maxDropHeight = limits && typeof limits.maxDropHeight === 'number'
+            ? Math.max(0, limits.maxDropHeight)
+            : this.data.maxDropHeight;
         const originY = typeof referenceGroundY === 'number'
-            ? referenceGroundY + this.data.maxStepHeight + 2
-            : position.y + this.data.maxStepHeight + 2;
+            ? referenceGroundY + maxStepHeight + 2
+            : position.y + maxStepHeight + 2;
 
         this.raycastOrigin.set(position.x, originY, position.z);
         this.raycaster.set(this.raycastOrigin, this.raycastDirection);
-        this.raycaster.far = this.data.maxStepHeight + this.data.maxDropHeight + 20;
+        this.raycaster.far = maxStepHeight + maxDropHeight + 20;
 
         const raycastStart = navPerfFrame ? performance.now() : 0;
         const intersections = this.raycaster.intersectObjects(this.navMeshCollisionTargets, false);
@@ -1258,8 +1498,8 @@ AFRAME.registerComponent('custom-movement', {
             navPerfFrame.intersections += intersections.length;
         }
         const hasReferenceGround = typeof referenceGroundY === 'number' && isFinite(referenceGroundY);
-        const minAllowedY = hasReferenceGround ? referenceGroundY - (this.data.maxDropHeight + this.groundProbeStepTolerance) : -Infinity;
-        const maxAllowedY = hasReferenceGround ? referenceGroundY + this.data.maxStepHeight + this.groundProbeStepTolerance : Infinity;
+        const minAllowedY = hasReferenceGround ? referenceGroundY - (maxDropHeight + this.groundProbeStepTolerance) : -Infinity;
+        const maxAllowedY = hasReferenceGround ? referenceGroundY + maxStepHeight + this.groundProbeStepTolerance : Infinity;
         let bestAutoHit = null;
         let bestAutoHeightDelta = Infinity;
         let bestScore = Infinity;
@@ -1292,6 +1532,9 @@ AFRAME.registerComponent('custom-movement', {
                 return finalizeSample(outputGround);
             }
 
+            const autoMaxAllowedY = hasReferenceGround
+                ? referenceGroundY + Math.max(maxStepHeight, this.getAutoStepAssistHeight()) + this.groundProbeStepTolerance
+                : Infinity;
             if (!hasReferenceGround) {
                 outputGround = outputGround || this.createGroundHit();
                 outputGround.point.set(position.x, hit.point.y, position.z);
@@ -1302,7 +1545,7 @@ AFRAME.registerComponent('custom-movement', {
                 return finalizeSample(outputGround);
             }
 
-            if (hit.point.y < minAllowedY || hit.point.y > maxAllowedY) {
+            if (hit.point.y < minAllowedY || hit.point.y > autoMaxAllowedY) {
                 continue;
             }
 
@@ -1339,12 +1582,38 @@ AFRAME.registerComponent('custom-movement', {
 
         const directGround = this.sampleGroundAtSingle(position, referenceGroundY, outputGround);
         if (directGround) {
+            if (this.shouldPreferAutoSupportGround(directGround, referenceGroundY)) {
+                const supportedGround = this.findAutoSupportGroundAt(
+                    position,
+                    referenceGroundY,
+                    this.autoSupportResolvedGroundHit
+                );
+                if (supportedGround && supportedGround.point.y > directGround.point.y + this.autoGroundPitDropThreshold) {
+                    outputGround = outputGround || this.createGroundHit();
+                    this.copyGroundHit(supportedGround, outputGround);
+                    this.storeAutoGroundSample(position, outputGround);
+                    return outputGround;
+                }
+            }
+
             this.storeAutoGroundSample(position, directGround);
             return directGround;
         }
 
         const hasReferenceGround = typeof referenceGroundY === 'number' && isFinite(referenceGroundY);
-        let bestCandidate = null;
+        const bridgedAutoGround = this.findAutoSupportGroundAt(
+            position,
+            referenceGroundY,
+            this.autoSupportResolvedGroundHit
+        );
+        if (bridgedAutoGround) {
+            outputGround = outputGround || this.createGroundHit();
+            this.copyGroundHit(bridgedAutoGround, outputGround);
+            this.storeAutoGroundSample(position, outputGround);
+            return outputGround;
+        }
+
+        let foundBestCandidate = false;
         let bestScore = Infinity;
 
         for (let i = 1; i < this.groundProbeOffsets.length; i++) {
@@ -1372,16 +1641,17 @@ AFRAME.registerComponent('custom-movement', {
 
             if (score < bestScore) {
                 bestScore = score;
-                bestCandidate = candidateGround;
+                foundBestCandidate = true;
+                this.copyGroundHit(candidateGround, this.candidateGroundHit);
             }
         }
 
-        if (!bestCandidate) {
+        if (!foundBestCandidate) {
             return null;
         }
 
         outputGround = outputGround || this.createGroundHit();
-        this.copyGroundHit(bestCandidate, outputGround);
+        this.copyGroundHit(this.candidateGroundHit, outputGround);
         outputGround.point.x = position.x;
         outputGround.point.z = position.z;
         this.storeAutoGroundSample(position, outputGround);
@@ -1438,6 +1708,251 @@ AFRAME.registerComponent('custom-movement', {
 
         return foundBestGround ? bestGround : null;
     },
+    recordStableAutoGround: function (position, groundHit) {
+        if (!this.isAutoGroundHit(groundHit) || !position) {
+            return;
+        }
+
+        const slot = this.autoStableGroundHistory[this.autoStableGroundHistoryIndex];
+        slot.valid = true;
+        slot.time = performance.now();
+        slot.position.copy(position);
+        this.copyGroundHit(groundHit, slot.ground);
+        this.autoStableGroundHistoryIndex = (this.autoStableGroundHistoryIndex + 1) % this.autoStableGroundHistory.length;
+    },
+    hasRecentStableAutoGround: function (currentPosition) {
+        const now = performance.now();
+        const maxDistanceSq = this.autoStableGroundMaxDistance * this.autoStableGroundMaxDistance;
+        for (let i = 0; i < this.autoStableGroundHistory.length; i++) {
+            const slot = this.autoStableGroundHistory[i];
+            if (!slot.valid || now - slot.time > this.autoStableGroundMaxAgeMs) {
+                continue;
+            }
+
+            if (this.horizontalDistanceSquared(slot.position, currentPosition) <= maxDistanceSq) {
+                return true;
+            }
+        }
+
+        return false;
+    },
+    getRecoveryGroundY: function (position, currentGround) {
+        if (currentGround && currentGround.point && typeof currentGround.point.y === 'number') {
+            return currentGround.point.y;
+        }
+
+        if (this.hasLastGroundHit && this.lastGroundHit && this.lastGroundHit.point) {
+            return this.lastGroundHit.point.y;
+        }
+
+        if (this.heightOffset !== null) {
+            return position.y - this.heightOffset;
+        }
+
+        return position.y - 1.6;
+    },
+    setAutoRecoveryStatus: function (status) {
+        this.lastAutoRecoveryStatus = status || 'unknown';
+        this.lastAutoRecoveryAt = performance.now();
+    },
+    isAutoRecoveryCandidateValid: function (currentPosition, currentGround, candidatePosition, candidateGround, minSupport) {
+        if (!this.isAutoGroundHit(candidateGround) || !candidatePosition) {
+            return false;
+        }
+
+        if (candidateGround.slope > this.data.maxSlope + 0.5) {
+            return false;
+        }
+
+        const currentGroundY = this.getRecoveryGroundY(currentPosition, currentGround);
+        const lift = candidateGround.point.y - currentGroundY;
+        if (lift > this.autoRecoveryMaxLift + this.groundProbeStepTolerance ||
+            lift < -(this.data.maxDropHeight + this.groundProbeStepTolerance)) {
+            return false;
+        }
+
+        if (!this.hasAutoGroundSupportAt(candidatePosition, candidateGround.point.y, minSupport || this.autoGroundBridgeMinSupport)) {
+            return false;
+        }
+
+        const targetY = candidateGround.point.y + (this.heightOffset !== null ? this.heightOffset : 1.6);
+        this.autoRecoveryTargetPosition.set(candidatePosition.x, targetY, candidatePosition.z);
+        return !this.isHorizontalPathBlocked(
+            currentPosition,
+            this.autoRecoveryTargetPosition,
+            currentGround,
+            candidateGround,
+            {
+                ignoreNavmeshBlockers: true,
+                maxIgnoredNavmeshBlockerHeight: this.autoRecoveryNavmeshBypassHeight
+            }
+        );
+    },
+    findRecentStableAutoRecoveryGround: function (currentPosition, currentGround) {
+        const now = performance.now();
+        const maxDistanceSq = this.autoStableGroundMaxDistance * this.autoStableGroundMaxDistance;
+        let foundBest = false;
+        let bestScore = Infinity;
+
+        for (let i = 0; i < this.autoStableGroundHistory.length; i++) {
+            const slot = this.autoStableGroundHistory[i];
+            if (!slot.valid || now - slot.time > this.autoStableGroundMaxAgeMs) {
+                continue;
+            }
+
+            const distanceSq = this.horizontalDistanceSquared(slot.position, currentPosition);
+            if (distanceSq > maxDistanceSq) {
+                continue;
+            }
+
+            if (!this.isAutoRecoveryCandidateValid(currentPosition, currentGround, slot.position, slot.ground, 1)) {
+                continue;
+            }
+
+            const ageScore = (now - slot.time) / this.autoStableGroundMaxAgeMs;
+            const score = distanceSq + ageScore;
+            if (score < bestScore) {
+                bestScore = score;
+                foundBest = true;
+                this.autoRecoveryCandidatePosition.copy(slot.position);
+                this.copyGroundHit(slot.ground, this.autoRecoveryBestGroundHit);
+            }
+        }
+
+        return foundBest ? this.autoRecoveryBestGroundHit : null;
+    },
+    findNearbyAutoRecoveryGround: function (currentPosition, currentGround) {
+        const currentGroundY = this.getRecoveryGroundY(currentPosition, currentGround);
+        const recoveryLimits = {
+            maxStepHeight: this.autoRecoveryMaxLift,
+            maxDropHeight: this.data.maxDropHeight
+        };
+        let foundBest = false;
+        let bestScore = Infinity;
+
+        for (let r = 0; r < this.autoRecoverySearchRadii.length; r++) {
+            const radius = this.autoRecoverySearchRadii[r];
+            foundBest = false;
+            bestScore = Infinity;
+
+            for (let a = 0; a < this.autoRecoverySearchAngles.length; a++) {
+                const radians = THREE.MathUtils.degToRad(this.autoRecoverySearchAngles[a]);
+                this.autoRecoveryProbePosition.set(
+                    currentPosition.x + Math.cos(radians) * radius,
+                    currentPosition.y,
+                    currentPosition.z + Math.sin(radians) * radius
+                );
+
+                const candidateGround = this.sampleGroundAtSingle(
+                    this.autoRecoveryProbePosition,
+                    currentGroundY,
+                    this.autoRecoveryProbeGroundHit,
+                    recoveryLimits
+                );
+                if (!this.isAutoGroundHit(candidateGround)) {
+                    continue;
+                }
+
+                if (!this.isAutoRecoveryCandidateValid(
+                    currentPosition,
+                    currentGround,
+                    this.autoRecoveryProbePosition,
+                    candidateGround,
+                    this.autoGroundBridgeMinSupport
+                )) {
+                    continue;
+                }
+
+                const lift = candidateGround.point.y - currentGroundY;
+                const score = (radius * radius) +
+                    (Math.max(0, -lift) * 1.5) +
+                    (Math.max(0, lift) * 0.25) +
+                    (candidateGround.slope * 0.002);
+                if (score < bestScore) {
+                    bestScore = score;
+                    foundBest = true;
+                    this.autoRecoveryCandidatePosition.copy(this.autoRecoveryProbePosition);
+                    this.copyGroundHit(candidateGround, this.autoRecoveryBestGroundHit);
+                }
+            }
+
+            if (foundBest) {
+                return this.autoRecoveryBestGroundHit;
+            }
+        }
+
+        return null;
+    },
+    snapNavigationToAutoRecoveryGround: function (candidatePosition, groundHit) {
+        if (!candidatePosition || !groundHit) {
+            return false;
+        }
+
+        if (this.heightOffset === null) {
+            this.heightOffset = 1.6;
+        }
+
+        this.heightOffset = VRODOSMaster.clamp(this.heightOffset, 0.2, 2.5);
+        this.targetWorldPosition.set(
+            candidatePosition.x,
+            groundHit.point.y + this.heightOffset,
+            candidatePosition.z
+        );
+
+        if (!this.setNavigationWorldPosition(this.targetWorldPosition)) {
+            return false;
+        }
+
+        this.lastResolvedPosition.copy(this.targetWorldPosition);
+        this.setResolvedGroundHit(groundHit, this.targetWorldPosition, this.lastGroundHit);
+        this.hasLastGroundHit = true;
+        this.recordStableAutoGround(this.targetWorldPosition, this.lastGroundHit);
+        return true;
+    },
+    requestAutoTerrainRecovery: function (source) {
+        const settings = this.getSceneSettings();
+        if (!settings || this.getNavigationMode(settings) !== 'walkable' || !this.areCollisionsEnabled(settings)) {
+            this.setAutoRecoveryStatus('unavailable');
+            return false;
+        }
+
+        const movementDisabled = settings.movement_disabled === true ||
+            settings.movement_disabled === 'true' ||
+            settings.movement_disabled === '1';
+        if (movementDisabled) {
+            this.setAutoRecoveryStatus('movement-disabled');
+            return false;
+        }
+
+        const now = performance.now();
+        if (now - this.lastManualRecoveryAttemptAt < this.autoRecoveryCooldownMs) {
+            this.setAutoRecoveryStatus('cooldown');
+            return false;
+        }
+
+        const currentPosition = this.getNavigationWorldPosition();
+        const currentGround = this.sampleGroundAt(
+            currentPosition,
+            this.hasLastGroundHit ? this.lastGroundHit.point.y : undefined,
+            this.sampledGroundHit
+        );
+        this.lastManualRecoveryAttemptAt = now;
+
+        let recoveryGround = this.findRecentStableAutoRecoveryGround(currentPosition, currentGround);
+        if (recoveryGround && this.snapNavigationToAutoRecoveryGround(this.autoRecoveryCandidatePosition, recoveryGround)) {
+            this.setAutoRecoveryStatus(`${source || 'manual'}:recent`);
+            return true;
+        }
+
+        recoveryGround = this.findNearbyAutoRecoveryGround(currentPosition, currentGround);
+        if (recoveryGround && this.snapNavigationToAutoRecoveryGround(this.autoRecoveryCandidatePosition, recoveryGround)) {
+            this.setAutoRecoveryStatus(`${source || 'manual'}:nearby`);
+            return true;
+        }
+
+        this.setAutoRecoveryStatus('no-valid-target');
+        return false;
+    },
     resolveMovementAgainstGround: function (currentPosition, deltaX, deltaZ, currentGround, outputStep) {
         outputStep = outputStep || this.resolvedMovementStep;
         this.stepDelta.set(deltaX, 0, deltaZ);
@@ -1482,7 +1997,8 @@ AFRAME.registerComponent('custom-movement', {
                 deltaY = 0;
             }
 
-            if (deltaY > this.data.maxStepHeight + this.groundProbeStepTolerance ||
+            const stepMaxHeight = this.getMaxStepHeightForGround(stepGround);
+            if (deltaY > stepMaxHeight + this.groundProbeStepTolerance ||
                 deltaY < -(this.data.maxDropHeight + this.groundProbeStepTolerance)) {
                 break;
             }
@@ -1509,7 +2025,7 @@ AFRAME.registerComponent('custom-movement', {
 
         return 'solid';
     },
-    isBlockingCollisionHit: function (hit) {
+    isBlockingCollisionHit: function (hit, options) {
         if (!hit || !hit.face || !hit.object) {
             return false;
         }
@@ -1518,6 +2034,15 @@ AFRAME.registerComponent('custom-movement', {
         const upDot = this.blockerHitNormal.dot(this.upVector);
         const role = this.getCollisionRoleFromObject(hit.object);
         if (role === 'navmesh') {
+            const canIgnoreNavmeshHit = options &&
+                options.ignoreNavmeshBlockers &&
+                typeof options.sweepHeight === 'number' &&
+                typeof options.maxIgnoredNavmeshBlockerHeight === 'number' &&
+                options.sweepHeight <= options.maxIgnoredNavmeshBlockerHeight;
+            if (canIgnoreNavmeshHit) {
+                return false;
+            }
+
             const slope = THREE.MathUtils.radToDeg(Math.acos(VRODOSMaster.clamp(upDot, -1, 1)));
             return slope > this.data.maxSlope + 0.5;
         }
@@ -1528,7 +2053,7 @@ AFRAME.registerComponent('custom-movement', {
 
         return true;
     },
-    raycastBlockingColliders: function (origin, direction, far) {
+    raycastBlockingColliders: function (origin, direction, far, options) {
         const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
         this.blockerRaycaster.set(origin, direction);
         this.blockerRaycaster.near = 0;
@@ -1543,7 +2068,7 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         for (let i = 0; i < intersections.length; i++) {
-            if (this.isBlockingCollisionHit(intersections[i])) {
+            if (this.isBlockingCollisionHit(intersections[i], options)) {
                 return intersections[i];
             }
         }
@@ -1561,7 +2086,7 @@ AFRAME.registerComponent('custom-movement', {
 
         return position.y - 1.6;
     },
-    isHorizontalPathBlocked: function (fromPosition, toPosition, fromGround, toGround) {
+    isHorizontalPathBlocked: function (fromPosition, toPosition, fromGround, toGround, options) {
         this.refreshCollisionWorld();
         if (this.blockerCollisionTargets.length === 0) {
             return false;
@@ -1588,6 +2113,9 @@ AFRAME.registerComponent('custom-movement', {
         for (let heightIndex = 0; heightIndex < this.blockerSweepHeights.length; heightIndex++) {
             const height = Math.min(this.blockerSweepHeights[heightIndex], this.blockerCapsuleHeight);
             const originY = THREE.MathUtils.lerp(fromGroundY, toGroundY, 0.5) + height;
+            if (options) {
+                options.sweepHeight = height;
+            }
 
             for (let offsetIndex = 0; offsetIndex < this.blockerSweepOffsets.length; offsetIndex++) {
                 const offsetFactor = this.blockerSweepOffsets[offsetIndex];
@@ -1598,7 +2126,7 @@ AFRAME.registerComponent('custom-movement', {
                     fromPosition.z + this.blockerSideOffset.z
                 );
 
-                if (this.raycastBlockingColliders(this.blockerRayOrigin, this.blockerRayDirection, far)) {
+                if (this.raycastBlockingColliders(this.blockerRayOrigin, this.blockerRayDirection, far, options)) {
                     return true;
                 }
             }
@@ -1606,12 +2134,37 @@ AFRAME.registerComponent('custom-movement', {
 
         return false;
     },
+    getAutoStepNavmeshBlockerOptions: function (fromGround, toGround) {
+        if (!this.isAutoGroundHit(toGround)) {
+            return null;
+        }
+
+        if (!fromGround || !fromGround.point || !toGround.point) {
+            return {
+                ignoreNavmeshBlockers: true,
+                maxIgnoredNavmeshBlockerHeight: this.autoNavmeshRiserBypassHeight
+            };
+        }
+
+        const deltaY = toGround.point.y - fromGround.point.y;
+        if (deltaY > this.getAutoStepAssistHeight() + this.groundProbeStepTolerance ||
+            deltaY < -(this.data.maxDropHeight + this.groundProbeStepTolerance)) {
+            return null;
+        }
+
+        return {
+            ignoreNavmeshBlockers: true,
+            maxIgnoredNavmeshBlockerHeight: this.autoNavmeshRiserBypassHeight
+        };
+    },
     resolveMovementAgainstBlockers: function (currentPosition, deltaX, deltaZ, currentGround, resolvedStep) {
         if (!resolvedStep || !resolvedStep.position) {
             return resolvedStep;
         }
 
-        if (!this.isHorizontalPathBlocked(currentPosition, resolvedStep.position, currentGround, resolvedStep.ground)) {
+        const blockerOptions = this.getAutoStepNavmeshBlockerOptions(currentGround, resolvedStep.ground);
+
+        if (!this.isHorizontalPathBlocked(currentPosition, resolvedStep.position, currentGround, resolvedStep.ground, blockerOptions)) {
             return resolvedStep;
         }
 
@@ -1628,7 +2181,8 @@ AFRAME.registerComponent('custom-movement', {
                 return;
             }
 
-            if (this.isHorizontalPathBlocked(currentPosition, candidateStep.position, currentGround, candidateStep.ground)) {
+            const slideBlockerOptions = this.getAutoStepNavmeshBlockerOptions(currentGround, candidateStep.ground);
+            if (this.isHorizontalPathBlocked(currentPosition, candidateStep.position, currentGround, candidateStep.ground, slideBlockerOptions)) {
                 return;
             }
 
@@ -1669,6 +2223,7 @@ AFRAME.registerComponent('custom-movement', {
         this.lastResolvedPosition.copy(this.targetWorldPosition);
         this.setResolvedGroundHit(groundHit, this.targetWorldPosition, this.lastGroundHit);
         this.hasLastGroundHit = true;
+        this.recordStableAutoGround(this.lastResolvedPosition, this.lastGroundHit);
         return true;
     },
     snapNavigationToRecoveredGround: function (groundHit) {
@@ -1695,6 +2250,7 @@ AFRAME.registerComponent('custom-movement', {
         this.lastResolvedPosition.copy(this.targetWorldPosition);
         this.setResolvedGroundHit(groundHit, this.targetWorldPosition, this.lastGroundHit);
         this.hasLastGroundHit = true;
+        this.recordStableAutoGround(this.lastResolvedPosition, this.lastGroundHit);
         return true;
     },
     syncHeightOffset: function () {
@@ -1840,6 +2396,7 @@ AFRAME.registerComponent('custom-movement', {
         this.lastResolvedPosition.copy(this.targetWorldPosition);
         this.setResolvedGroundHit(resolvedStep.ground, this.targetWorldPosition, this.lastGroundHit);
         this.hasLastGroundHit = true;
+        this.recordStableAutoGround(this.lastResolvedPosition, this.lastGroundHit);
         return finalizeConstrained(true);
     },
     tick: function (time, timeDelta) {

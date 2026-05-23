@@ -238,8 +238,11 @@ Runtime behavior:
 - `three-mesh-bvh` is bundled into `vrodos-collision-bvh.bundle.js` and exposed as `window.VRODOS_COLLISION_BVH`.
 - The runtime patches Three mesh raycasts with BVH acceleration when available; if BVH construction fails for a mesh, collision continues with standard Three.js raycasts.
 - Ground movement still uses the existing downward navmesh sampling, slope filtering, max-step, max-drop, and recovery logic.
+- Walkable surfaces with `data-vrodos-walk-behavior="auto"` add rough-terrain support probes around the player footprint only after the direct ground sample fails or detects a small pit. These probes can bridge photogrammetry holes and prefer nearby stable upper support over scan pits, but only when surrounding hits are valid walkable ground.
 - Horizontal movement performs multi-height capsule sweep raycasts against blocker meshes before committing a candidate position.
 - When a blocker is hit, movement tries axis sliding and rejects the movement if sliding would leave valid walkable ground or hit another blocker.
+- For validated `auto` terrain steps/recovery, low riser-height steep hits from the walkable mesh itself can be treated as scan detail so stair risers and pit lips do not snag the capsule. Body/head-height walkable-mesh wall hits and explicit solid/collision-proxy blockers still block.
+- Manual auto-terrain recovery is available from Space or the mapped controller recovery buttons. It first tries recent stable auto ground, then nearby supported auto ground, and rejects candidates that exceed recovery lift/drop limits, lack footprint support, or hit solid/proxy blocker geometry. The wider nearby search is event-only and stops at the first radius with a valid candidate.
 - Fly mode remains non-colliding in v1.
 
 Collision is CPU-side Three.js geometry work. It is independent of the post-processing engine, Takram atmosphere, scene probes, shadow profiles, and material overrides. PMNDRS/Takram settings can change the rendered scene, but they do not change which mesh geometry participates in player blocking.

@@ -13,6 +13,7 @@ Ground collision is already implemented for compiled A-Frame scenes:
 - `Walkable Surfaces` compile as `.vrodos-navmesh` entities.
 - Scene-level `aframeCollisionMode` / `aframeNavigationMode` controls collision-aware walk mode.
 - `custom-movement` supports ground sampling, slope filtering, step-up traversal, drop limits, and nearest-ground recovery.
+- `Walkable Surface` assets can use `Walking Behavior: Auto` for rough archaeological or photogrammetry terrain. Auto mode now uses capped support probes to bridge scan holes, avoid dropping into tiny pits, and step over low walkable-mesh risers while preserving body-height walls and explicit solid/proxy blocking.
 - Compiled scenes now also support static player blockers for default-collidable scene geometry.
 
 This roadmap documents the next collision architecture: default player blocking for all geometry-bearing compiled objects, with per-object opt-out and optional hidden collision proxies for performance and authoring control.
@@ -29,6 +30,7 @@ The current implementation ships the v1 native static collision path:
 - The compiler emits `.vrodos-collider` on enabled geometry-bearing compiled objects.
 - Objects with `compiledCollisionEnabled: false` compile without player collision markers.
 - Walkable surfaces compile as both `.vrodos-navmesh` and `.vrodos-collider`, so upward faces still sample ground while steep faces can block horizontal movement.
+- Walkable surfaces marked `auto` keep the same editor UI, but runtime traversal gets extra footprint/ring probes and a manual recovery path for rough terrain holes. The extra probes are conditional or event-driven, not always-on frame work.
 - Collision proxies compile with `vrodos-collider-helper`, stay present in the scene graph, and receive hidden collision materials instead of visible rendering materials.
 - `custom-movement` builds a static collision world from `.vrodos-collider` entities after model load / attach / detach events.
 - The runtime bundles `three-mesh-bvh` as `vrodos-collision-bvh.bundle.js` and exposes it as `window.VRODOS_COLLISION_BVH`.
@@ -101,9 +103,11 @@ The runtime builds collision data after relevant `model-loaded` events:
 
 - The player is represented by a capsule with configurable radius and height.
 - Ground sampling keeps the existing step/drop/slope behavior.
+- Auto walkable ground can bridge holes only when surrounding support samples are valid, slope-safe walkable ground at compatible heights.
 - Horizontal movement tests the candidate capsule against the blocker BVH before committing movement.
 - If the capsule hits a blocker, movement resolves with wall sliding where possible.
 - If sliding would leave valid walkable ground or violate step/drop/slope limits, movement is rejected.
+- Manual auto-terrain recovery uses recent stable ground first, then nearby supported auto ground. It is cooldown-limited, stops searching after the nearest radius with a valid target, and rejects candidates that lack support, exceed recovery lift/drop limits, or cross solid/proxy blocker geometry.
 - Spawn recovery should account for both valid ground and blocker clearance.
 - Fly mode remains non-colliding for v1 unless a later phase explicitly adds fly collision.
 
