@@ -307,6 +307,8 @@ AFRAME.registerComponent('video-controls', {
         if (!videoEl) return;
         videoEl.preload = this.videoPrimed ? "auto" : "metadata";
         videoEl.loop = this.videoLoop;
+        videoEl.setAttribute("playsinline", "");
+        videoEl.setAttribute("webkit-playsinline", "");
         if (this.videoPosterUrl) videoEl.setAttribute("poster", this.videoPosterUrl);
         else videoEl.removeAttribute("poster");
     },
@@ -403,6 +405,36 @@ AFRAME.registerComponent('video-controls', {
         }
 
         return videoElement;
+    },
+
+    stopVideoElement: function (videoElement) {
+        if (!videoElement) return;
+
+        videoElement.pause();
+        try {
+            videoElement.currentTime = 0;
+        } catch (_error) {
+            // Some browsers reject currentTime changes before metadata is ready.
+        }
+    },
+
+    stopDialogPlayback: function (videoElement) {
+        this.stopVideoElement(videoElement || this.dialogVideo);
+        this.stopVideoElement(this.video);
+        this.syncUI();
+    },
+
+    playDialogPlayback: function (videoElement) {
+        if (!videoElement) return;
+
+        if (this.video && !this.video.paused) {
+            this.video.pause();
+        }
+
+        var playPromise = videoElement.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+            playPromise.catch(error => console.warn("Dialog video playback prevented:", error));
+        }
     },
 
     syncUI: function() {
@@ -527,7 +559,7 @@ AFRAME.registerComponent('video-controls', {
             }
 
             const closeDialog = () => {
-                video_element.pause();
+                this.stopDialogPlayback(video_element);
                 if (videoDialog) videoDialog.removeEventListener('close', closeDialog);
             };
 
@@ -538,6 +570,7 @@ AFRAME.registerComponent('video-controls', {
                 } else if (typeof videoDialog.showModal === 'function') {
                     videoDialog.showModal();
                 }
+                this.playDialogPlayback(video_element);
             }
         } else {
             this.primeVideoForPlayback();
@@ -600,6 +633,11 @@ AFRAME.registerComponent('video-controls', {
 
 AFRAME.registerComponent('vrodos-3d-play-icon', {
     init: function () {
+        const isOverlayUi = this.el.hasAttribute('data-vrodos-overlay-ui') ||
+            (typeof this.el.closest === 'function' && this.el.closest('[data-vrodos-overlay-ui]'));
+        const depthTest = !isOverlayUi;
+        const renderOrder = isOverlayUi ? 999999 : 9999;
+
         const shape = new THREE.Shape();
         shape.moveTo(0, 1);
         shape.lineTo(1.732, 0); 
@@ -620,7 +658,9 @@ AFRAME.registerComponent('vrodos-3d-play-icon', {
         const frontMaterial = new THREE.MeshBasicMaterial({
             color: 0xff2f2f,
             side: THREE.DoubleSide,
-            depthTest: false,
+            transparent: true,
+            opacity: 1,
+            depthTest,
             depthWrite: false,
             toneMapped: false
         });
@@ -628,7 +668,9 @@ AFRAME.registerComponent('vrodos-3d-play-icon', {
         const sideMaterial = new THREE.MeshBasicMaterial({
             color: 0xb91c1c,
             side: THREE.DoubleSide,
-            depthTest: false,
+            transparent: true,
+            opacity: 1,
+            depthTest,
             depthWrite: false,
             toneMapped: false
         });
@@ -642,9 +684,10 @@ AFRAME.registerComponent('vrodos-3d-play-icon', {
 
         // Standard play button points right. 
         mesh.rotation.z = 0;
-        mesh.renderOrder = 999999;
+        mesh.renderOrder = renderOrder;
         mesh.frustumCulled = false;
-        this.el.object3D.renderOrder = 999999;
+        this.el.object3D.renderOrder = renderOrder;
+        this.el.object3D.frustumCulled = false;
         this.el.setObject3D('mesh', mesh);
     }
 });

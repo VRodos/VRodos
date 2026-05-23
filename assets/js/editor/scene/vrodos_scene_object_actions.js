@@ -708,6 +708,17 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
 
 
 VRODOS.ui.deleteFomScene = function(uuid, name) {
+    const targetObject = getSceneObjectByUuid(uuid);
+    if (isSceneObjectLocked(targetObject)) {
+        if (typeof VRODOS.ui.updateHierarchyLockIcon === 'function') {
+            VRODOS.ui.updateHierarchyLockIcon(targetObject);
+        }
+        if (typeof VRODOS.editor.requestRender === 'function') {
+            VRODOS.editor.requestRender('delete-dialog-locked');
+        }
+        return;
+    }
+
     setDeleteDialogText(name);
 
     const selectedObject = getSelectedTransformObject();
@@ -777,6 +788,16 @@ VRODOS.api.deleteAssetFromScene = function(uuid, preventDispose = false) {
 
     if (!objectSelected) {
         deleteSceneObjectRecord(sceneRecord);
+        return;
+    }
+
+    if (isSceneObjectLocked(objectSelected)) {
+        if (typeof VRODOS.ui.updateHierarchyLockIcon === 'function') {
+            VRODOS.ui.updateHierarchyLockIcon(objectSelected);
+        }
+        if (typeof VRODOS.editor.requestRender === 'function') {
+            VRODOS.editor.requestRender('delete-locked');
+        }
         return;
     }
 

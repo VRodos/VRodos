@@ -1169,6 +1169,8 @@
       if (!videoEl) return;
       videoEl.preload = this.videoPrimed ? "auto" : "metadata";
       videoEl.loop = this.videoLoop;
+      videoEl.setAttribute("playsinline", "");
+      videoEl.setAttribute("webkit-playsinline", "");
       if (this.videoPosterUrl) videoEl.setAttribute("poster", this.videoPosterUrl);
       else videoEl.removeAttribute("poster");
     },
@@ -1247,6 +1249,29 @@
         if (typeof videoElement.load === "function") videoElement.load();
       }
       return videoElement;
+    },
+    stopVideoElement: function(videoElement) {
+      if (!videoElement) return;
+      videoElement.pause();
+      try {
+        videoElement.currentTime = 0;
+      } catch (_error) {
+      }
+    },
+    stopDialogPlayback: function(videoElement) {
+      this.stopVideoElement(videoElement || this.dialogVideo);
+      this.stopVideoElement(this.video);
+      this.syncUI();
+    },
+    playDialogPlayback: function(videoElement) {
+      if (!videoElement) return;
+      if (this.video && !this.video.paused) {
+        this.video.pause();
+      }
+      var playPromise = videoElement.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch((error) => console.warn("Dialog video playback prevented:", error));
+      }
     },
     syncUI: function() {
       window.VRODOS_VIDEO_MANAGER.updatePlayIcon(this.plEl, this.video.paused, this.data.id);
@@ -1347,7 +1372,7 @@
           }
         }
         const closeDialog = () => {
-          video_element.pause();
+          this.stopDialogPlayback(video_element);
           if (videoDialog) videoDialog.removeEventListener("close", closeDialog);
         };
         if (videoDialog) {
@@ -1357,6 +1382,7 @@
           } else if (typeof videoDialog.showModal === "function") {
             videoDialog.showModal();
           }
+          this.playDialogPlayback(video_element);
         }
       } else {
         this.primeVideoForPlayback();
@@ -1407,6 +1433,9 @@
   });
   AFRAME.registerComponent("vrodos-3d-play-icon", {
     init: function() {
+      const isOverlayUi = this.el.hasAttribute("data-vrodos-overlay-ui") || typeof this.el.closest === "function" && this.el.closest("[data-vrodos-overlay-ui]");
+      const depthTest = !isOverlayUi;
+      const renderOrder = isOverlayUi ? 999999 : 9999;
       const shape = new THREE.Shape();
       shape.moveTo(0, 1);
       shape.lineTo(1.732, 0);
@@ -1423,14 +1452,18 @@
       const frontMaterial = new THREE.MeshBasicMaterial({
         color: 16723759,
         side: THREE.DoubleSide,
-        depthTest: false,
+        transparent: true,
+        opacity: 1,
+        depthTest,
         depthWrite: false,
         toneMapped: false
       });
       const sideMaterial = new THREE.MeshBasicMaterial({
         color: 12131356,
         side: THREE.DoubleSide,
-        depthTest: false,
+        transparent: true,
+        opacity: 1,
+        depthTest,
         depthWrite: false,
         toneMapped: false
       });
@@ -1440,9 +1473,10 @@
       geometry.boundingBox.getCenter(center);
       geometry.translate(-center.x, -center.y, -center.z);
       mesh.rotation.z = 0;
-      mesh.renderOrder = 999999;
+      mesh.renderOrder = renderOrder;
       mesh.frustumCulled = false;
-      this.el.object3D.renderOrder = 999999;
+      this.el.object3D.renderOrder = renderOrder;
+      this.el.object3D.frustumCulled = false;
       this.el.setObject3D("mesh", mesh);
     }
   });

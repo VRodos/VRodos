@@ -36,6 +36,8 @@ function _hierarchyGetSceneObjectRecord(name) {
 const HIERARCHY_DIRECTOR_NAME = 'avatarCamera';
 const HIERARCHY_LIGHT_TARGET_CATEGORY = 'lightTargetSpot';
 const HIERARCHY_INTERNAL_VISUAL_NAMES = new Set(['SunSphere', 'SpotSphere', 'LampSphere', 'ambientSphere']);
+const HIERARCHY_DELETE_BUTTON_CLASS = 'tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-pointer tw-p-1 tw-text-white/40 hover:tw-text-red-400 tw-transition-colors';
+const HIERARCHY_DELETE_BUTTON_LOCKED_CLASS = 'tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-not-allowed tw-p-1 tw-text-white/20 tw-transition-colors';
 const HIERARCHY_RESET_BUTTON_CLASS = 'tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-pointer tw-p-1 tw-text-white/40 hover:tw-text-blue-400 tw-transition-colors';
 const HIERARCHY_RESET_BUTTON_LOCKED_CLASS = 'tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-not-allowed tw-p-1 tw-text-white/20 tw-transition-colors';
 
@@ -132,6 +134,20 @@ function _hierarchyApplyResetButtonState(resetButton, obj) {
     resetButton.setAttribute('aria-label', label);
     resetButton.setAttribute('title', isLocked ? 'Unlock asset before resetting object' : 'Reset asset object');
     resetButton.className = isLocked ? HIERARCHY_RESET_BUTTON_LOCKED_CLASS : HIERARCHY_RESET_BUTTON_CLASS;
+}
+
+function _hierarchyApplyDeleteButtonState(deleteButton, obj) {
+    if (!deleteButton) {
+        return;
+    }
+
+    const isLocked = _hierarchyIsLockedObject(obj);
+    const label = isLocked ? 'Delete disabled while asset is locked' : 'Delete asset';
+    deleteButton.disabled = isLocked;
+    deleteButton.setAttribute('aria-disabled', isLocked ? 'true' : 'false');
+    deleteButton.setAttribute('aria-label', label);
+    deleteButton.setAttribute('title', isLocked ? 'Unlock asset before deleting object' : 'Delete asset object');
+    deleteButton.className = isLocked ? HIERARCHY_DELETE_BUTTON_LOCKED_CLASS : HIERARCHY_DELETE_BUTTON_CLASS;
 }
 
 function _hierarchySyncResetSideEffects(obj) {
@@ -411,6 +427,16 @@ function handleHierarchyActionClick(event, actionAnchor) {
     event.stopPropagation();
 
     if (action === 'delete' && typeof VRODOS.ui.deleteFomScene === 'function') {
+        const targetObject = _hierarchyGetObjectByUuid(uuid) || _hierarchyGetObjectByName(name);
+        if (_hierarchyIsLockedObject(targetObject)) {
+            if (typeof VRODOS.ui.updateHierarchyLockIcon === 'function') {
+                VRODOS.ui.updateHierarchyLockIcon(targetObject);
+            }
+            if (typeof VRODOS.editor.requestRender === 'function') {
+                VRODOS.editor.requestRender('hierarchy-delete-locked');
+            }
+            return;
+        }
         VRODOS.ui.deleteFomScene(uuid, assetName);
         return;
     }
@@ -610,6 +636,8 @@ VRODOS.ui.updateHierarchyLockIcon = function(object) {
 
     const resetButton = hierarchyItem.querySelector('[data-hierarchy-action="reset"]');
     _hierarchyApplyResetButtonState(resetButton, object);
+    const deleteButton = hierarchyItem.querySelector('[data-hierarchy-action="delete"]');
+    _hierarchyApplyDeleteButtonState(deleteButton, object);
     VRODOS.ui.refreshLucideIcons({ nodes: [lockAnchor] });
 };
 
@@ -642,8 +670,14 @@ function AppendObject(obj) {
 
 
 function CreateDeleteButton(obj) {
-    return `<button type="button" class="tw-appearance-none tw-border-0 tw-bg-transparent tw-cursor-pointer tw-p-1 tw-text-white/40 hover:tw-text-red-400 tw-transition-colors" aria-label="Delete asset"` +
-        ` title="Delete asset object" data-hierarchy-action="delete" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"` +
+    const isLocked = _hierarchyIsLockedObject(obj);
+    const deleteClass = isLocked ? HIERARCHY_DELETE_BUTTON_LOCKED_CLASS : HIERARCHY_DELETE_BUTTON_CLASS;
+    const deleteLabel = isLocked ? 'Delete disabled while asset is locked' : 'Delete asset';
+    const deleteTitle = isLocked ? 'Unlock asset before deleting object' : 'Delete asset object';
+    const disabledAttr = isLocked ? ' disabled aria-disabled="true"' : ' aria-disabled="false"';
+
+    return `<button type="button" class="${  deleteClass  }" aria-label="${  deleteLabel  }"` +
+        ` title="${  deleteTitle  }" data-hierarchy-action="delete" data-uuid="${  _hierarchyAttribute(obj.uuid)  }"${  disabledAttr  }` +
         ` data-name="${  _hierarchyAttribute(obj.name)  }" data-asset-name="${  _hierarchyAttribute(_hierarchyActionLabel(obj))  }">` +
         `<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i></button>`;
 }
