@@ -135,12 +135,32 @@ function _getObjectColorHex(sceneObj) {
 
 function _getDoorTargetDisplayValue(sceneObj) {
     if (sceneObj.sceneID_target) {
-        return sceneObj.sceneID_target;
+        return String(sceneObj.sceneID_target);
     }
     if (sceneObj.doorName_target) {
         return `${sceneObj.doorName_target  } at ${  sceneObj.sceneName_target}`;
     }
     return 'Default';
+}
+
+function _bindDoorSelectToObject(selectEl, sceneObj) {
+    if (!selectEl || !sceneObj) {
+        return;
+    }
+
+    selectEl.dataset.vrodosObjectUuid = sceneObj.uuid || '';
+    selectEl.dataset.vrodosObjectName = sceneObj.name || '';
+}
+
+function _getDoorSelectObject(selectEl) {
+    if (!selectEl) {
+        return null;
+    }
+
+    const dataset = selectEl.dataset || {};
+    return getEditorSceneObjectByUuid(dataset.vrodosObjectUuid) ||
+        getEditorSceneObjectByName(dataset.vrodosObjectName) ||
+        getSelectedPropertyTarget();
 }
 
 function _getLightShadowRadius(light) {
@@ -265,7 +285,8 @@ VRODOS.ui.displayDoorProperties = function(event, name) {
     const panelState = _getPropertyPanelState("popUpDoorPropertiesDiv", name);
     if (!panelState) return;
 
-    _setEditorInputValue('popupDoorSelect', _getDoorTargetDisplayValue(panelState.sceneObj));
+    const doorSelect = _setEditorInputValue('popupDoorSelect', _getDoorTargetDisplayValue(panelState.sceneObj));
+    _bindDoorSelectToObject(doorSelect, panelState.sceneObj);
     _showEditorPanel(panelState.panel);
 }
 
@@ -588,21 +609,31 @@ function initPersistentPropertyListeners() {
         { id: 'ambientIntensity', prop: 'intensity' }
     ]);
 
-    _bindTrackedEditorInputChange('popupDoorSelect', function () {
-        const obj = getSelectedPropertyTarget();
-        if (obj && this.value !== "Default" && this.value) {
-            const oldVal = this._oldVal || obj.sceneID_target;
-            const newVal = this.value;
-
-            if (oldVal !== newVal) {
-                obj.sceneID_target = newVal;
-                if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
-                    VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'sceneID_target', oldVal, newVal));
-                }
-                VRODOS.api.saveChanges();
-            }
+    const commitDoorTargetSelection = function () {
+        const obj = _getDoorSelectObject(this);
+        if (!obj || this.value === "Default" || !this.value) {
+            return;
         }
-    });
+
+        const oldVal = obj.sceneID_target;
+        const newVal = String(this.value);
+
+        if (String(oldVal || '') === newVal) {
+            return;
+        }
+
+        obj.sceneID_target = newVal;
+        this._oldVal = newVal;
+
+        if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
+            VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(obj, 'sceneID_target', oldVal, newVal));
+        }
+        VRODOS.api.saveChanges();
+    };
+    const doorSelect = _bindTrackedEditorInputChange('popupDoorSelect', commitDoorTargetSelection);
+    if (doorSelect) {
+        doorSelect.addEventListener('input', commitDoorTargetSelection);
+    }
 
     _bindTrackedEditorInputChange('poi_link_text', function () {
         const obj = getSelectedPropertyTarget();

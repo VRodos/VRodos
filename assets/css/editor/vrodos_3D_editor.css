@@ -67,6 +67,20 @@
 	/*padding: 0;*/
 }
 
+#vrodos-scene-editor #object-controls-panel {
+	max-height: min(85vh, calc(100vh - 32px));
+}
+
+#vrodos-scene-editor #object-controls-panel #numerical_gui-container {
+	min-height: 0;
+	overflow-y: auto;
+}
+
+#vrodos-scene-editor #object-controls-panel #object-properties-container {
+	max-height: min(300px, 35vh) !important;
+	flex: 0 1 auto;
+}
+
 /* Editor-scoped lil-gui isolation.
    WordPress themes often ship broad input/select/checkbox rules. Keep them
    from leaking into the floating object controls panel. */
