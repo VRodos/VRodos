@@ -1140,8 +1140,11 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			if ( $this->isHoverEnabled ) {
 				$entity->setAttribute( 'vrodos-door-indicator', '' );
 			}
-			if ( ! empty( $obj->sceneID_target ) ) {
-				$this->includeDoorFunctionality( $entity, $obj->sceneID_target );
+			$door_target_scene = ! empty( $obj->sceneID_target )
+				? $obj->sceneID_target
+				: ( $obj->vrodos_asset3d_scene ?? '' );
+			if ( '' !== trim( (string) $door_target_scene ) ) {
+				$this->includeDoorFunctionality( $entity, $door_target_scene );
 			}
 		} elseif ( $cat === 'poi-link' ) {
 			$class .= ' raycastable';

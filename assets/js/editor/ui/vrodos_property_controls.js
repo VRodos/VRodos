@@ -133,14 +133,64 @@ function _getObjectColorHex(sceneObj) {
         : null;
 }
 
-function _getDoorTargetDisplayValue(sceneObj) {
-    if (sceneObj.sceneID_target) {
-        return String(sceneObj.sceneID_target);
+function _normalizeDoorTargetValue(value) {
+    const normalized = String(value || '').trim();
+    return normalized && normalized !== 'Default' ? normalized : '';
+}
+
+function _getDoorTargetValue(sceneObj) {
+    if (!sceneObj) {
+        return '';
     }
-    if (sceneObj.doorName_target) {
-        return `${sceneObj.doorName_target  } at ${  sceneObj.sceneName_target}`;
+
+    return _normalizeDoorTargetValue(
+        sceneObj.sceneID_target ||
+        sceneObj.sceneid_target ||
+        sceneObj.scene_id_target ||
+        sceneObj.vrodos_asset3d_scene ||
+        sceneObj.asset3d_scene ||
+        ''
+    );
+}
+
+function _findDoorTargetOption(selectEl, sceneObj) {
+    if (!selectEl) {
+        return null;
     }
-    return 'Default';
+
+    const targetValue = _getDoorTargetValue(sceneObj);
+    if (targetValue) {
+        const byValue = Array.from(selectEl.options).find((option) => option.value === targetValue);
+        if (byValue) {
+            return byValue;
+        }
+    }
+
+    const legacySceneName = sceneObj && sceneObj.sceneName_target
+        ? String(sceneObj.sceneName_target).trim()
+        : '';
+    if (legacySceneName) {
+        const byText = Array.from(selectEl.options).find((option) => option.textContent.trim() === legacySceneName);
+        if (byText) {
+            return byText;
+        }
+    }
+
+    return Array.from(selectEl.options).find((option) => option.value === 'Default') || selectEl.options[0] || null;
+}
+
+function _setDoorSelectValue(selectEl, sceneObj) {
+    const option = _findDoorTargetOption(selectEl, sceneObj);
+    if (!selectEl || !option) {
+        return null;
+    }
+
+    Array.from(selectEl.options).forEach((item) => {
+        item.selected = item === option;
+        item.defaultSelected = item === option;
+    });
+    selectEl.value = option.value;
+    return option.value;
 }
 
 function _bindDoorSelectToObject(selectEl, sceneObj) {
@@ -161,6 +211,21 @@ function _getDoorSelectObject(selectEl) {
     return getEditorSceneObjectByUuid(dataset.vrodosObjectUuid) ||
         getEditorSceneObjectByName(dataset.vrodosObjectName) ||
         getSelectedPropertyTarget();
+}
+
+function _syncDoorTargetSceneRecord(sceneObj, value) {
+    if (
+        !sceneObj ||
+        !VRODOS.utils ||
+        typeof VRODOS.utils.sceneFindObjectRecord !== 'function'
+    ) {
+        return;
+    }
+
+    const record = VRODOS.utils.sceneFindObjectRecord(sceneObj.uuid, sceneObj);
+    if (record && record.value && typeof record.value === 'object') {
+        record.value.sceneID_target = value;
+    }
 }
 
 function _getLightShadowRadius(light) {
@@ -285,7 +350,8 @@ VRODOS.ui.displayDoorProperties = function(event, name) {
     const panelState = _getPropertyPanelState("popUpDoorPropertiesDiv", name);
     if (!panelState) return;
 
-    const doorSelect = _setEditorInputValue('popupDoorSelect', _getDoorTargetDisplayValue(panelState.sceneObj));
+    const doorSelect = _getEditorInput('popupDoorSelect');
+    _setDoorSelectValue(doorSelect, panelState.sceneObj);
     _bindDoorSelectToObject(doorSelect, panelState.sceneObj);
     _showEditorPanel(panelState.panel);
 }
@@ -378,7 +444,14 @@ function displaySharedPropertySections(event, object) {
     return hasProperties;
 }
 
+let vrodosPersistentPropertyListenersBound = false;
+
 function initPersistentPropertyListeners() {
+    if (vrodosPersistentPropertyListenersBound) {
+        return;
+    }
+    vrodosPersistentPropertyListenersBound = true;
+
     const setProp = (prop, isCheckbox, sanitize = false) => function () {
         const obj = getSelectedPropertyTarget();
         if (!obj) {
@@ -615,14 +688,18 @@ function initPersistentPropertyListeners() {
             return;
         }
 
-        const oldVal = obj.sceneID_target;
+        const hadSceneIdTarget = Boolean(_normalizeDoorTargetValue(obj.sceneID_target));
+        const oldVal = _getDoorTargetValue(obj);
         const newVal = String(this.value);
 
-        if (String(oldVal || '') === newVal) {
+        obj.sceneID_target = newVal;
+        _syncDoorTargetSceneRecord(obj, newVal);
+        _setDoorSelectValue(this, obj);
+
+        if (String(oldVal || '') === newVal && hadSceneIdTarget) {
             return;
         }
 
-        obj.sceneID_target = newVal;
         this._oldVal = newVal;
 
         if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
@@ -689,7 +766,16 @@ function initPersistentPropertyListeners() {
     ]);
 }
 
-initPersistentPropertyListeners();
+function bindPersistentPropertyListenersWhenReady() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPersistentPropertyListeners, { once: true });
+        return;
+    }
+
+    initPersistentPropertyListeners();
+}
+
+bindPersistentPropertyListenersWhenReady();
 
 function getObjectControlsElement(key) {
     return document.getElementById(VRODOS_OBJECT_CONTROLS_IDS[key]);

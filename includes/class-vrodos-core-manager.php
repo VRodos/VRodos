@@ -608,6 +608,9 @@ class VRodos_Core_Manager {
 					case 'poi-link':
 						$data_arr['poi_link_url'] = get_post_meta( $asset_id, 'vrodos_asset3d_link', true );
 						break;
+					case 'door':
+						$data_arr['vrodos_asset3d_scene'] = get_post_meta( $asset_id, 'vrodos_asset3d_scene', true );
+						break;
 					case 'chat':
 						$data_arr['poi_chat_title']        = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chattxt_title', true );
 						$data_arr['poi_chat_participants'] = get_post_meta( $asset_id, 'vrodos_asset3d_poi_chatnum_people', true );

@@ -288,6 +288,10 @@ class VRodos_Scene_CPT_Manager {
 			'screenshot_path' => self::normalize_editor_scene_asset_url( $screenshot_url ),
 		];
 
+		if ( 'door' === $category_slug ) {
+			$metadata['vrodos_asset3d_scene'] = get_post_meta( $asset_id, 'vrodos_asset3d_scene', true );
+		}
+
 		if ( class_exists( 'VRodos_Asset_Optimization_Manager' ) && '' !== $glb_url ) {
 			$preview_state = VRodos_Asset_Optimization_Manager::get_editor_preview_asset_state( $asset_id );
 			$metadata['sourceSizeBytes'] = (int) ( $preview_state['sourceSizeBytes'] ?? 0 );
