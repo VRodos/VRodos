@@ -405,6 +405,7 @@ class VRodos_Asset_Import_Blender_Converter {
 import argparse
 import json
 import os
+import re
 import shutil
 import sys
 import traceback
@@ -555,6 +556,11 @@ def texture_kind_score(path, kind, material_name):
         if token in stem:
             score += 3
 
+    source_stem = os.path.splitext(os.path.basename(source))[0].lower()
+    source_version = re.search(r"(?:^|[_\-\s])v(\d+)(?:$|[_\-\s])", source_stem)
+    if source_version and ("v" + source_version.group(1)) in stem:
+        score += 8
+
     return score
 
 def choose_texture(texture_paths, kind, material_name):
@@ -582,14 +588,66 @@ def has_linked_input(node, input_name):
     socket = node.inputs.get(input_name) if node else None
     return bool(socket and socket.is_linked)
 
-def attach_image_to_input(material, principled, input_name, image_path, color_space="sRGB"):
+def collect_linked_image_paths(socket, seen=None):
+    if socket is None or not socket.is_linked:
+        return []
+
+    if seen is None:
+        seen = set()
+
+    paths = []
+    for link in list(socket.links):
+        node = link.from_node
+        if node is None or node.name in seen:
+            continue
+        seen.add(node.name)
+
+        if node.bl_idname == "ShaderNodeTexImage" and getattr(node, "image", None) is not None:
+            image = node.image
+            image_path = bpy.path.abspath(image.filepath) if image.filepath else ""
+            if image_path:
+                paths.append(image_path)
+
+        for input_socket in getattr(node, "inputs", []):
+            paths.extend(collect_linked_image_paths(input_socket, seen))
+
+    return paths
+
+def linked_texture_score(socket, kind, material_name):
+    paths = collect_linked_image_paths(socket)
+    if not paths:
+        return 0
+
+    return max(texture_kind_score(path, kind, material_name) for path in paths)
+
+def should_attach_texture(socket, kind, material_name, image_path):
+    if socket is None or not image_path or not os.path.exists(image_path):
+        return False
+    if not socket.is_linked:
+        return True
+
+    desired_score = texture_kind_score(image_path, kind, material_name)
+    current_score = linked_texture_score(socket, kind, material_name)
+    return desired_score > 0 and current_score <= 0
+
+def unlink_socket_inputs(material, socket):
+    if material.node_tree is None or socket is None:
+        return
+    for link in list(socket.links):
+        material.node_tree.links.remove(link)
+
+def attach_image_to_input(material, principled, input_name, image_path, color_space="sRGB", replace_existing=False):
     if not image_path or not os.path.exists(image_path):
         return False
     socket = principled.inputs.get(input_name)
-    if socket is None or socket.is_linked:
+    if socket is None:
+        return False
+    if socket.is_linked and not replace_existing:
         return False
 
     try:
+        if replace_existing:
+            unlink_socket_inputs(material, socket)
         image = bpy.data.images.load(image_path, check_existing=True)
         if hasattr(image, "colorspace_settings"):
             image.colorspace_settings.name = color_space
@@ -602,12 +660,16 @@ def attach_image_to_input(material, principled, input_name, image_path, color_sp
         print("Could not attach texture:", image_path, "to", material.name, input_name, exc)
         return False
 
-def attach_normal_map(material, principled, image_path):
+def attach_normal_map(material, principled, image_path, replace_existing=False):
     normal_socket = principled.inputs.get("Normal") if principled else None
-    if not image_path or not os.path.exists(image_path) or normal_socket is None or normal_socket.is_linked:
+    if not image_path or not os.path.exists(image_path) or normal_socket is None:
+        return False
+    if normal_socket.is_linked and not replace_existing:
         return False
 
     try:
+        if replace_existing:
+            unlink_socket_inputs(material, normal_socket)
         image = bpy.data.images.load(image_path, check_existing=True)
         if hasattr(image, "colorspace_settings"):
             image.colorspace_settings.name = "Non-Color"
@@ -650,13 +712,18 @@ def infer_material_textures(texture_index):
         roughness_path = choose_texture(texture_paths, "roughness", material.name)
         metallic_path = choose_texture(texture_paths, "metallic", material.name)
 
-        if not has_linked_input(principled, "Base Color") and attach_image_to_input(material, principled, "Base Color", base_path, "sRGB"):
+        base_socket = principled.inputs.get("Base Color")
+        normal_socket = principled.inputs.get("Normal")
+        roughness_socket = principled.inputs.get("Roughness")
+        metallic_socket = principled.inputs.get("Metallic")
+
+        if should_attach_texture(base_socket, "base", material.name, base_path) and attach_image_to_input(material, principled, "Base Color", base_path, "sRGB", bool(base_socket and base_socket.is_linked)):
             attached += 1
-        if not has_linked_input(principled, "Normal") and attach_normal_map(material, principled, normal_path):
+        if should_attach_texture(normal_socket, "normal", material.name, normal_path) and attach_normal_map(material, principled, normal_path, bool(normal_socket and normal_socket.is_linked)):
             attached += 1
-        if not has_linked_input(principled, "Roughness") and attach_image_to_input(material, principled, "Roughness", roughness_path, "Non-Color"):
+        if should_attach_texture(roughness_socket, "roughness", material.name, roughness_path) and attach_image_to_input(material, principled, "Roughness", roughness_path, "Non-Color", bool(roughness_socket and roughness_socket.is_linked)):
             attached += 1
-        if not has_linked_input(principled, "Metallic") and attach_image_to_input(material, principled, "Metallic", metallic_path, "Non-Color"):
+        if should_attach_texture(metallic_socket, "metallic", material.name, metallic_path) and attach_image_to_input(material, principled, "Metallic", metallic_path, "Non-Color", bool(metallic_socket and metallic_socket.is_linked)):
             attached += 1
 
     print("Texture inference:", attached, "texture link(s) attached from", len(texture_paths), "texture file(s)")
