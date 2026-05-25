@@ -5,25 +5,11 @@
     const RAYCAST_TARGET_CLASS = "vrodos-overlay-hit-target";
     const RAYCASTER_SELECTORS = [
       "#cursor",
-      "#rightHand",
-      "#leftHand",
       "#oculusRight",
       "#oculusLeft",
-      "[laser-controls]"
-    ];
-    const VR_EXIT_BUTTON_LABEL = "B / Y";
-    const VR_EXIT_EVENTS = ["bbuttondown", "ybuttondown"];
-    const VR_EXIT_CONTROLLER_SELECTORS = [
-      "#rightHand",
-      "#leftHand",
-      "#oculusRight",
-      "#oculusLeft",
-      "[oculus-touch-controls]"
-    ];
-    const VR_ENTRY_UI_SELECTORS = [
-      ".a-enter-vr",
-      ".a-enter-vr-button",
-      "[data-aframe-enter-vr]"
+      "[laser-controls][raycaster]",
+      "[oculus-touch-controls][raycaster]",
+      "[raycaster]"
     ];
     function queryScene() {
       return document.getElementById("aframe-scene-container") || document.querySelector("a-scene");
@@ -48,61 +34,6 @@
         return "desktop-fullscreen";
       }
       return "inline";
-    }
-    function handlePromiseRejection(result, label) {
-      if (result && typeof result.catch === "function") {
-        result.catch((error) => {
-          console.warn("[VRodos] " + label + " was ignored by the browser.", error);
-        });
-      }
-    }
-    function requestDocumentFullscreen() {
-      const scene = queryScene();
-      const target = scene || document.documentElement;
-      if (isDocumentFullscreenActive()) {
-        return true;
-      }
-      if (target && target.requestFullscreen) {
-        handlePromiseRejection(target.requestFullscreen(), "Fullscreen request");
-        return true;
-      }
-      if (target && target.webkitRequestFullscreen) {
-        handlePromiseRejection(target.webkitRequestFullscreen(), "Fullscreen request");
-        return true;
-      }
-      if (target && target.mozRequestFullScreen) {
-        handlePromiseRejection(target.mozRequestFullScreen(), "Fullscreen request");
-        return true;
-      }
-      if (target && target.msRequestFullscreen) {
-        handlePromiseRejection(target.msRequestFullscreen(), "Fullscreen request");
-        return true;
-      }
-      return false;
-    }
-    function collectVrEntryUi() {
-      const seen = /* @__PURE__ */ new Set();
-      const result = [];
-      VR_ENTRY_UI_SELECTORS.forEach((selector) => {
-        document.querySelectorAll(selector).forEach((el) => {
-          if (seen.has(el)) {
-            return;
-          }
-          seen.add(el);
-          result.push(el);
-        });
-      });
-      return result;
-    }
-    function setElementsVisible(elements, visible) {
-      elements.forEach((el) => {
-        if (!el || !el.style) {
-          return;
-        }
-        el.style.display = visible ? "" : "none";
-        el.style.visibility = visible ? "" : "hidden";
-        el.setAttribute("aria-hidden", visible ? "false" : "true");
-      });
     }
     function setAttributeEnabled(el, attrName, enabled) {
       if (!el) {
@@ -141,6 +72,38 @@
       }
       return String(attr);
     }
+    function parseComponentAttribute(value) {
+      const parsed = {};
+      if (!value) {
+        return parsed;
+      }
+      if (typeof value === "object") {
+        Object.keys(value).forEach((key) => {
+          parsed[key] = value[key];
+        });
+        return parsed;
+      }
+      String(value).split(";").forEach((part) => {
+        const index = part.indexOf(":");
+        if (index === -1) {
+          return;
+        }
+        const key = part.slice(0, index).trim();
+        const attrValue = part.slice(index + 1).trim();
+        if (key) {
+          parsed[key] = attrValue;
+        }
+      });
+      return parsed;
+    }
+    function serializeComponentAttribute(value) {
+      return Object.keys(value || {}).map((key) => key + ": " + value[key]).join("; ");
+    }
+    function setRaycasterObjects(el, selector) {
+      const attr = parseComponentAttribute(el.getAttribute("raycaster"));
+      attr.objects = selector;
+      el.setAttribute("raycaster", serializeComponentAttribute(attr));
+    }
     function collectRaycasters() {
       const seen = /* @__PURE__ */ new Set();
       const result = [];
@@ -155,19 +118,36 @@
       });
       return result;
     }
-    function collectVrExitControllers() {
-      const seen = /* @__PURE__ */ new Set();
-      const result = [];
-      VR_EXIT_CONTROLLER_SELECTORS.forEach((selector) => {
-        document.querySelectorAll(selector).forEach((el) => {
-          if (seen.has(el)) {
-            return;
-          }
-          seen.add(el);
-          result.push(el);
-        });
+    function normalizeVrControllerEntities() {
+      const realControllers = [
+        document.querySelector("#oculusLeft"),
+        document.querySelector("#oculusRight")
+      ].filter(Boolean);
+      const legacyControllers = [
+        document.querySelector("#leftHand"),
+        document.querySelector("#rightHand")
+      ].filter(Boolean);
+      realControllers.forEach((el) => {
+        if (el.hasAttribute && el.hasAttribute("blink-controls")) {
+          el.removeAttribute("blink-controls");
+        }
+        if (el.hasAttribute && el.hasAttribute("visible")) {
+          el.removeAttribute("visible");
+        }
       });
-      return result;
+      if (!realControllers.length) {
+        return;
+      }
+      legacyControllers.forEach((el) => {
+        if (el.hasAttribute && el.hasAttribute("blink-controls")) {
+          el.removeAttribute("blink-controls");
+        }
+        if (el.hasAttribute && el.hasAttribute("raycaster")) {
+          el.removeAttribute("raycaster");
+        }
+        el.setAttribute("visible", "false");
+        el.setAttribute("data-vrodos-legacy-controller", "true");
+      });
     }
     function createEntity(tagName, attributes) {
       const el = document.createElement(tagName || "a-entity");
@@ -261,12 +241,23 @@
         forward.normalize();
       }
       const position = cameraPosition.clone().addScaledVector(forward, distance);
+      const horizontalOffset = numberOrDefault(options && options.horizontalOffset, 0);
+      if (horizontalOffset !== 0) {
+        const right = new THREE2.Vector3(1, 0, 0).applyQuaternion(cameraQuaternion);
+        right.y = 0;
+        if (right.lengthSq() < 1e-6) {
+          right.crossVectors(forward, new THREE2.Vector3(0, 1, 0)).normalize();
+        } else {
+          right.normalize();
+        }
+        position.addScaledVector(right, horizontalOffset);
+      }
       position.y += verticalOffset;
       return {
         scene,
         camera,
         position,
-        faceTarget: position.clone().add(forward),
+        faceTarget: cameraPosition.clone(),
         THREE: THREE2
       };
     }
@@ -292,256 +283,10 @@
       raycasterRestore: null,
       interactionLocked: false,
       targetClass: RAYCAST_TARGET_CLASS,
-      exitShortcutInstalled: false,
-      exitShortcutScene: null,
-      exitShortcutEls: null,
-      exitHintRoot: null,
-      fullscreenFallbackButton: null,
-      vrSupported: null,
-      vrAvailabilityInstalled: false,
-      vrAvailabilityScene: null,
-      vrEntryUi: null,
-      onFullscreenFallbackClick: null,
-      onFullscreenChange: null,
-      onVrExitButtonDown: null,
-      onVrEnter: null,
-      onVrExit: null,
-      onVrControlsChanged: null,
       getPresentationMode,
+      normalizeVrControllers: normalizeVrControllerEntities,
       shouldUseVrPanel: function() {
         return getPresentationMode() === "immersive-xr";
-      },
-      installVrAvailabilityUi: function() {
-        const scene = queryScene();
-        if (!scene) {
-          return false;
-        }
-        this.vrEntryUi = collectVrEntryUi();
-        if (!this.onFullscreenFallbackClick) {
-          this.onFullscreenFallbackClick = (event) => {
-            if (event && typeof event.preventDefault === "function") {
-              event.preventDefault();
-            }
-            requestDocumentFullscreen();
-            this.updateVrEntryUi();
-          };
-        }
-        if (!this.onFullscreenChange) {
-          this.onFullscreenChange = () => this.updateVrEntryUi();
-        }
-        if (!this.vrAvailabilityInstalled || this.vrAvailabilityScene !== scene) {
-          if (this.vrAvailabilityScene) {
-            this.vrAvailabilityScene.removeEventListener("enter-vr", this.onFullscreenChange);
-            this.vrAvailabilityScene.removeEventListener("exit-vr", this.onFullscreenChange);
-          }
-          scene.addEventListener("enter-vr", this.onFullscreenChange);
-          scene.addEventListener("exit-vr", this.onFullscreenChange);
-          document.addEventListener("fullscreenchange", this.onFullscreenChange);
-          document.addEventListener("webkitfullscreenchange", this.onFullscreenChange);
-          document.addEventListener("mozfullscreenchange", this.onFullscreenChange);
-          document.addEventListener("MSFullscreenChange", this.onFullscreenChange);
-          this.vrAvailabilityScene = scene;
-          this.vrAvailabilityInstalled = true;
-        }
-        setElementsVisible(this.vrEntryUi, false);
-        this.ensureFullscreenFallbackButton();
-        this.detectImmersiveVrSupport().then((supported) => {
-          this.vrSupported = supported;
-          this.updateVrEntryUi();
-        });
-        return true;
-      },
-      detectImmersiveVrSupport: function() {
-        if (!navigator.xr || typeof navigator.xr.isSessionSupported !== "function") {
-          return Promise.resolve(false);
-        }
-        return navigator.xr.isSessionSupported("immersive-vr").then(Boolean).catch(() => false);
-      },
-      ensureFullscreenFallbackButton: function() {
-        if (this.fullscreenFallbackButton && this.fullscreenFallbackButton.isConnected) {
-          return this.fullscreenFallbackButton;
-        }
-        const button = document.createElement("button");
-        button.id = "vrodos-runtime-fullscreen-button";
-        button.type = "button";
-        button.textContent = "Enter Fullscreen";
-        button.setAttribute("aria-label", "Enter fullscreen");
-        button.style.position = "fixed";
-        button.style.right = "16px";
-        button.style.bottom = "16px";
-        button.style.zIndex = "10000000";
-        button.style.border = "0";
-        button.style.borderRadius = "12px";
-        button.style.padding = "10px 14px";
-        button.style.background = "#16a34a";
-        button.style.color = "#ffffff";
-        button.style.font = "600 14px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-        button.style.boxShadow = "0 12px 30px rgba(22, 163, 74, 0.32)";
-        button.style.cursor = "pointer";
-        button.style.display = "none";
-        button.addEventListener("click", this.onFullscreenFallbackClick);
-        document.body.appendChild(button);
-        this.fullscreenFallbackButton = button;
-        return button;
-      },
-      updateVrEntryUi: function() {
-        const vrSupported = this.vrSupported === true;
-        this.vrEntryUi = collectVrEntryUi();
-        setElementsVisible(this.vrEntryUi, vrSupported);
-        const fallback = this.ensureFullscreenFallbackButton();
-        if (fallback) {
-          const showFallback = !vrSupported && !isDocumentFullscreenActive();
-          fallback.style.display = showFallback ? "inline-flex" : "none";
-        }
-      },
-      installVrExitShortcut: function() {
-        const scene = queryScene();
-        if (!scene) {
-          return false;
-        }
-        if (!this.exitShortcutEls) {
-          this.exitShortcutEls = /* @__PURE__ */ new Set();
-        }
-        if (!this.onVrExitButtonDown) {
-          this.onVrExitButtonDown = (event) => {
-            const activeScene = queryScene();
-            if (!isImmersiveVrActive() && !(activeScene && activeScene.is && activeScene.is("vr-mode"))) {
-              return;
-            }
-            if (event && typeof event.preventDefault === "function") {
-              event.preventDefault();
-            }
-            if (event && typeof event.stopPropagation === "function") {
-              event.stopPropagation();
-            }
-            this.requestExitVr();
-          };
-        }
-        if (!this.onVrEnter) {
-          this.onVrEnter = () => {
-            requestAnimationFrame(() => {
-              this.refreshVrExitControllerBindings();
-              this.setVrExitHintVisible(true);
-            });
-          };
-        }
-        if (!this.onVrExit) {
-          this.onVrExit = () => {
-            this.setVrExitHintVisible(false);
-          };
-        }
-        if (!this.onVrControlsChanged) {
-          this.onVrControlsChanged = () => {
-            this.refreshVrExitControllerBindings();
-          };
-        }
-        if (!this.exitShortcutInstalled || this.exitShortcutScene !== scene) {
-          if (this.exitShortcutScene) {
-            this.exitShortcutScene.removeEventListener("enter-vr", this.onVrEnter);
-            this.exitShortcutScene.removeEventListener("exit-vr", this.onVrExit);
-            this.exitShortcutScene.removeEventListener("child-attached", this.onVrControlsChanged);
-          }
-          scene.addEventListener("enter-vr", this.onVrEnter);
-          scene.addEventListener("exit-vr", this.onVrExit);
-          scene.addEventListener("child-attached", this.onVrControlsChanged);
-          this.exitShortcutScene = scene;
-          this.exitShortcutInstalled = true;
-        }
-        this.refreshVrExitControllerBindings();
-        this.setVrExitHintVisible(isImmersiveVrActive());
-        return true;
-      },
-      refreshVrExitControllerBindings: function() {
-        if (!this.onVrExitButtonDown) {
-          return;
-        }
-        if (!this.exitShortcutEls) {
-          this.exitShortcutEls = /* @__PURE__ */ new Set();
-        }
-        collectVrExitControllers().forEach((el) => {
-          if (!el || this.exitShortcutEls.has(el)) {
-            return;
-          }
-          VR_EXIT_EVENTS.forEach((eventName) => {
-            el.addEventListener(eventName, this.onVrExitButtonDown);
-          });
-          this.exitShortcutEls.add(el);
-        });
-      },
-      ensureVrExitHint: function() {
-        const camera = queryCamera();
-        if (!camera) {
-          return null;
-        }
-        if (this.exitHintRoot && this.exitHintRoot.isConnected) {
-          if (this.exitHintRoot.parentNode !== camera) {
-            camera.appendChild(this.exitHintRoot);
-          }
-          return this.exitHintRoot;
-        }
-        const root = createEntity("a-entity", {
-          id: "vrodos-vr-exit-hint",
-          position: "0.62 -0.42 -1.15",
-          "data-vrodos-overlay-ui": "true",
-          visible: "false"
-        });
-        const background = createEntity("a-plane", {
-          position: "0 0 0",
-          width: "0.62",
-          height: "0.09",
-          material: "shader: flat; color: #020617; transparent: true; opacity: 0.42; depthTest: false; depthWrite: false",
-          "data-vrodos-overlay-ui": "true"
-        });
-        const label = createEntity("a-text", {
-          position: "0.27 -0.003 0.012",
-          value: VR_EXIT_BUTTON_LABEL + " to exit",
-          color: "#ffffff",
-          align: "right",
-          anchor: "right",
-          baseline: "center",
-          width: "1.25",
-          "wrap-count": "18",
-          scale: "0.2 0.2 0.2",
-          "data-vrodos-overlay-ui": "true",
-          material: "depthTest: false; depthWrite: false"
-        });
-        root.appendChild(background);
-        root.appendChild(label);
-        camera.appendChild(root);
-        this.exitHintRoot = root;
-        requestAnimationFrame(() => {
-          setOverlayObjectFlags(root);
-          setOverlayObjectFlags(background);
-          setOverlayObjectFlags(label);
-        });
-        return root;
-      },
-      setVrExitHintVisible: function(visible) {
-        if (!visible) {
-          if (this.exitHintRoot) {
-            this.exitHintRoot.setAttribute("visible", "false");
-          }
-          return;
-        }
-        const root = this.ensureVrExitHint();
-        if (root) {
-          root.setAttribute("visible", "true");
-        }
-      },
-      requestExitVr: function() {
-        const scene = queryScene();
-        this.closeActivePanel("vr-exit");
-        this.setVrExitHintVisible(false);
-        if (scene && typeof scene.exitVR === "function") {
-          scene.exitVR();
-          return true;
-        }
-        const session = scene && scene.renderer && scene.renderer.xr && typeof scene.renderer.xr.getSession === "function" ? scene.renderer.xr.getSession() : null;
-        if (session && typeof session.end === "function") {
-          session.end();
-          return true;
-        }
-        return false;
       },
       anchorElementInFrontOfCamera: function(el, options) {
         const pose = getWorldOverlayPose(options || {});
@@ -605,7 +350,7 @@
             if (!this.raycasterRestore.has(el)) {
               this.raycasterRestore.set(el, serializeRaycasterAttribute(el));
             }
-            el.setAttribute("raycaster", "objects: ." + RAYCAST_TARGET_CLASS);
+            setRaycasterObjects(el, "." + RAYCAST_TARGET_CLASS);
             if (el.components && el.components.raycaster && typeof el.components.raycaster.refreshObjects === "function") {
               el.components.raycaster.refreshObjects();
             }
@@ -859,33 +604,20 @@
       }
     };
     window.VRODOSRuntimeOverlay = api;
-    let exitShortcutInstallAttempts = 0;
-    let vrAvailabilityInstallAttempts = 0;
-    function installVrExitShortcutWhenReady() {
-      if (api.installVrExitShortcut()) {
-        return;
-      }
-      exitShortcutInstallAttempts += 1;
-      if (exitShortcutInstallAttempts < 24) {
-        window.setTimeout(installVrExitShortcutWhenReady, 250);
-      }
-    }
-    function installVrAvailabilityUiWhenReady() {
-      api.installVrAvailabilityUi();
-      vrAvailabilityInstallAttempts += 1;
-      if (vrAvailabilityInstallAttempts < 32) {
-        window.setTimeout(installVrAvailabilityUiWhenReady, 250);
+    let controllerNormalizationAttempts = 0;
+    function normalizeVrControllersWhenReady() {
+      normalizeVrControllerEntities();
+      controllerNormalizationAttempts += 1;
+      if (controllerNormalizationAttempts < 24) {
+        window.setTimeout(normalizeVrControllersWhenReady, 250);
       }
     }
     if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", installVrExitShortcutWhenReady, { once: true });
-      document.addEventListener("DOMContentLoaded", installVrAvailabilityUiWhenReady, { once: true });
+      document.addEventListener("DOMContentLoaded", normalizeVrControllersWhenReady, { once: true });
     } else {
-      installVrExitShortcutWhenReady();
-      installVrAvailabilityUiWhenReady();
+      normalizeVrControllersWhenReady();
     }
-    window.addEventListener("load", installVrExitShortcutWhenReady, { once: true });
-    window.addEventListener("load", installVrAvailabilityUiWhenReady, { once: true });
+    window.addEventListener("load", normalizeVrControllersWhenReady, { once: true });
   })();
   AFRAME.registerComponent("highlight", {
     schema: { type: "string", default: "default value" },
@@ -1979,6 +1711,7 @@
       this.cursorEl = document.querySelector("#cursor");
       this.playerEl = document.querySelector("#cameraA");
       this.rightHand = document.querySelector("#oculusRight");
+      this.leftHand = document.querySelector("#oculusLeft");
       this.cam = document.querySelector("#cameraA");
       this.media_panel = document.getElementById("mediaPanel");
       this.recording_controls = document.getElementById("upload-recording-btn");
@@ -2062,7 +1795,147 @@
       }
       const targetClass = active ? ".vrodos-overlay-hit-target" : ".raycastable";
       if (this.cursorEl) this.cursorEl.setAttribute("raycaster", "objects: " + targetClass);
+      if (this.leftHand) this.leftHand.setAttribute("raycaster", "objects: " + targetClass);
       if (this.rightHand) this.rightHand.setAttribute("raycaster", "objects: " + targetClass);
+    },
+    getVideoTitle: function() {
+      if (!this.titEl || !this.titEl.hasAttribute || !this.titEl.hasAttribute("text")) {
+        return "Video";
+      }
+      const titleAttr = this.titEl.getAttribute("text");
+      return titleAttr && titleAttr.value ? titleAttr.value : "Video";
+    },
+    hideLegacyVrPanel: function() {
+      this.panelElems.forEach((elem) => window.VRODOS_VIDEO_MANAGER.setEntityState(elem, false, true, 1));
+      window.VRODOS_VIDEO_MANAGER.setEntityState(this.titEl, false, true, 1);
+      this.markOverlayTargets(false);
+    },
+    playVideoElementSafely: function() {
+      if (!this.video) {
+        return null;
+      }
+      const playPromise = this.video.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch((error) => console.warn("VR video playback prevented:", error));
+      }
+      return playPromise || null;
+    },
+    toggleVrPanelPlayback: function(panelApi) {
+      this.primeVideoForPlayback();
+      if (this.video.paused) {
+        this.playVideoElementSafely();
+      } else {
+        this.video.pause();
+      }
+      this.syncUI();
+      requestAnimationFrame(() => this.renderVrVideoPanel(panelApi));
+    },
+    openVrVideoPanel: function() {
+      if (!window.VRODOSRuntimeOverlay || typeof window.VRODOSRuntimeOverlay.openVrPanel !== "function") {
+        this.restorePanel();
+        return;
+      }
+      this.hideLegacyVrPanel();
+      this.primeVideoForPlayback();
+      this.vrVideoPanelExpanded = false;
+      const panelApi = window.VRODOSRuntimeOverlay.openVrPanel({
+        id: "vrodos-video-vr-panel-" + this.data.id,
+        width: 2.55,
+        height: 1.65,
+        distance: 2.45,
+        verticalOffset: -0.04,
+        cleanup: () => {
+          if (this.video && !this.video.paused) {
+            this.video.pause();
+          }
+          this.vrVideoPanelApi = null;
+          this.vrVideoPanelExpanded = false;
+          this.applyWorldVideoMaterial();
+          this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
+          this.markOverlayTargets(false);
+          this.syncUI();
+        },
+        render: (api) => {
+          this.vrVideoPanelApi = api;
+          this.renderVrVideoPanel(api);
+        }
+      });
+      if (panelApi) {
+        const playPromise = this.playVideoElementSafely();
+        this.syncUI();
+        if (playPromise && typeof playPromise.then === "function") {
+          playPromise.then(() => this.renderVrVideoPanel(panelApi)).catch(() => this.renderVrVideoPanel(panelApi));
+        } else {
+          requestAnimationFrame(() => this.renderVrVideoPanel(panelApi));
+        }
+      }
+    },
+    renderVrVideoPanel: function(panelApi) {
+      if (!panelApi) {
+        return;
+      }
+      const expanded = Boolean(this.vrVideoPanelExpanded);
+      const panelWidth = expanded ? 3.25 : 2.55;
+      const panelHeight = expanded ? 1.95 : 1.65;
+      const content = panelApi.drawFrame({
+        width: panelWidth,
+        height: panelHeight,
+        title: this.getVideoTitle(),
+        background: "#020617",
+        headerColor: "#111827"
+      });
+      const videoHeight = Math.max(0.72, content.height - 0.28);
+      const videoWidth = Math.min(content.width, videoHeight * (16 / 9));
+      const videoY = content.bottom + content.height / 2 + 0.07;
+      panelApi.addPlane(panelApi.root, {
+        position: "0 0 0.012",
+        width: panelWidth + 1.1,
+        height: panelHeight + 0.85,
+        target: true,
+        material: "shader: flat; color: #000000; transparent: true; opacity: 0.001; depthTest: false; depthWrite: false",
+        onClick: panelApi.close
+      });
+      panelApi.addPlane(panelApi.root, {
+        position: "0 " + videoY + " 0.03",
+        width: videoWidth,
+        height: videoHeight,
+        target: true,
+        material: this.getOverlayVideoMaterial(this.video_id),
+        onClick: () => {
+          if (this.video && !this.video.paused) {
+            this.video.pause();
+            this.syncUI();
+            requestAnimationFrame(() => this.renderVrVideoPanel(panelApi));
+          }
+        }
+      });
+      panelApi.addButton(panelApi.root, {
+        position: -panelWidth / 2 + 0.42 + " " + (content.bottom + 0.08) + " 0.045",
+        width: 0.52,
+        height: 0.18,
+        label: this.video && this.video.paused ? "Play" : "Pause",
+        color: "#16a34a",
+        onClick: () => this.toggleVrPanelPlayback(panelApi)
+      });
+      panelApi.addButton(panelApi.root, {
+        position: "0 " + (content.bottom + 0.08) + " 0.045",
+        width: 0.58,
+        height: 0.18,
+        label: expanded ? "Smaller" : "Larger",
+        color: "#2563eb",
+        onClick: () => {
+          this.vrVideoPanelExpanded = !this.vrVideoPanelExpanded;
+          this.renderVrVideoPanel(panelApi);
+        }
+      });
+      panelApi.addButton(panelApi.root, {
+        position: panelWidth / 2 - 0.42 + " " + (content.bottom + 0.08) + " 0.045",
+        width: 0.52,
+        height: 0.18,
+        label: "Close",
+        color: "#ef4444",
+        onClick: panelApi.close
+      });
     },
     checkAutoplay: function() {
       if (this.video.getAttribute("autoplay-manual") === "true") {
@@ -2382,13 +2255,13 @@
         }
       } else {
         this.primeVideoForPlayback();
-        this.restorePanel();
         if (this.is_fs) {
           this.restoreVid();
           this.is_fs = false;
           this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
           window.VRODOS_VIDEO_MANAGER.toggleVideoEnvironment(this.backgroundEl, false);
         }
+        this.openVrVideoPanel();
       }
     },
     onFullScreenClick: function() {

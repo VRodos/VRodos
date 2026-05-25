@@ -144,6 +144,7 @@ AFRAME.registerComponent('video-controls', {
         this.cursorEl = document.querySelector('#cursor');
         this.playerEl = document.querySelector('#cameraA');
         this.rightHand = document.querySelector('#oculusRight');
+        this.leftHand = document.querySelector('#oculusLeft');
         this.cam = document.querySelector("#cameraA");
         this.media_panel = document.getElementById("mediaPanel");
         this.recording_controls = document.getElementById("upload-recording-btn");
@@ -251,7 +252,165 @@ AFRAME.registerComponent('video-controls', {
 
         const targetClass = active ? ".vrodos-overlay-hit-target" : ".raycastable";
         if (this.cursorEl) this.cursorEl.setAttribute("raycaster", "objects: " + targetClass);
+        if (this.leftHand) this.leftHand.setAttribute("raycaster", "objects: " + targetClass);
         if (this.rightHand) this.rightHand.setAttribute("raycaster", "objects: " + targetClass);
+    },
+
+    getVideoTitle: function () {
+        if (!this.titEl || !this.titEl.hasAttribute || !this.titEl.hasAttribute("text")) {
+            return "Video";
+        }
+
+        const titleAttr = this.titEl.getAttribute("text");
+        return (titleAttr && titleAttr.value) ? titleAttr.value : "Video";
+    },
+
+    hideLegacyVrPanel: function () {
+        this.panelElems.forEach(elem => window.VRODOS_VIDEO_MANAGER.setEntityState(elem, false, true, 1));
+        window.VRODOS_VIDEO_MANAGER.setEntityState(this.titEl, false, true, 1);
+        this.markOverlayTargets(false);
+    },
+
+    playVideoElementSafely: function () {
+        if (!this.video) {
+            return null;
+        }
+
+        const playPromise = this.video.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+            playPromise.catch(error => console.warn("VR video playback prevented:", error));
+        }
+        return playPromise || null;
+    },
+
+    toggleVrPanelPlayback: function (panelApi) {
+        this.primeVideoForPlayback();
+        if (this.video.paused) {
+            this.playVideoElementSafely();
+        } else {
+            this.video.pause();
+        }
+
+        this.syncUI();
+        requestAnimationFrame(() => this.renderVrVideoPanel(panelApi));
+    },
+
+    openVrVideoPanel: function () {
+        if (!window.VRODOSRuntimeOverlay || typeof window.VRODOSRuntimeOverlay.openVrPanel !== "function") {
+            this.restorePanel();
+            return;
+        }
+
+        this.hideLegacyVrPanel();
+        this.primeVideoForPlayback();
+        this.vrVideoPanelExpanded = false;
+
+        const panelApi = window.VRODOSRuntimeOverlay.openVrPanel({
+            id: "vrodos-video-vr-panel-" + this.data.id,
+            width: 2.55,
+            height: 1.65,
+            distance: 2.45,
+            verticalOffset: -0.04,
+            cleanup: () => {
+                if (this.video && !this.video.paused) {
+                    this.video.pause();
+                }
+                this.vrVideoPanelApi = null;
+                this.vrVideoPanelExpanded = false;
+                this.applyWorldVideoMaterial();
+                this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
+                this.markOverlayTargets(false);
+                this.syncUI();
+            },
+            render: (api) => {
+                this.vrVideoPanelApi = api;
+                this.renderVrVideoPanel(api);
+            }
+        });
+
+        if (panelApi) {
+            const playPromise = this.playVideoElementSafely();
+            this.syncUI();
+            if (playPromise && typeof playPromise.then === "function") {
+                playPromise.then(() => this.renderVrVideoPanel(panelApi)).catch(() => this.renderVrVideoPanel(panelApi));
+            } else {
+                requestAnimationFrame(() => this.renderVrVideoPanel(panelApi));
+            }
+        }
+    },
+
+    renderVrVideoPanel: function (panelApi) {
+        if (!panelApi) {
+            return;
+        }
+
+        const expanded = Boolean(this.vrVideoPanelExpanded);
+        const panelWidth = expanded ? 3.25 : 2.55;
+        const panelHeight = expanded ? 1.95 : 1.65;
+        const content = panelApi.drawFrame({
+            width: panelWidth,
+            height: panelHeight,
+            title: this.getVideoTitle(),
+            background: "#020617",
+            headerColor: "#111827"
+        });
+        const videoHeight = Math.max(0.72, content.height - 0.28);
+        const videoWidth = Math.min(content.width, videoHeight * (16 / 9));
+        const videoY = content.bottom + (content.height / 2) + 0.07;
+
+        panelApi.addPlane(panelApi.root, {
+            position: "0 0 0.012",
+            width: panelWidth + 1.1,
+            height: panelHeight + 0.85,
+            target: true,
+            material: "shader: flat; color: #000000; transparent: true; opacity: 0.001; depthTest: false; depthWrite: false",
+            onClick: panelApi.close
+        });
+
+        panelApi.addPlane(panelApi.root, {
+            position: "0 " + videoY + " 0.03",
+            width: videoWidth,
+            height: videoHeight,
+            target: true,
+            material: this.getOverlayVideoMaterial(this.video_id),
+            onClick: () => {
+                if (this.video && !this.video.paused) {
+                    this.video.pause();
+                    this.syncUI();
+                    requestAnimationFrame(() => this.renderVrVideoPanel(panelApi));
+                }
+            }
+        });
+
+        panelApi.addButton(panelApi.root, {
+            position: (-panelWidth / 2 + 0.42) + " " + (content.bottom + 0.08) + " 0.045",
+            width: 0.52,
+            height: 0.18,
+            label: this.video && this.video.paused ? "Play" : "Pause",
+            color: "#16a34a",
+            onClick: () => this.toggleVrPanelPlayback(panelApi)
+        });
+
+        panelApi.addButton(panelApi.root, {
+            position: "0 " + (content.bottom + 0.08) + " 0.045",
+            width: 0.58,
+            height: 0.18,
+            label: expanded ? "Smaller" : "Larger",
+            color: "#2563eb",
+            onClick: () => {
+                this.vrVideoPanelExpanded = !this.vrVideoPanelExpanded;
+                this.renderVrVideoPanel(panelApi);
+            }
+        });
+
+        panelApi.addButton(panelApi.root, {
+            position: (panelWidth / 2 - 0.42) + " " + (content.bottom + 0.08) + " 0.045",
+            width: 0.52,
+            height: 0.18,
+            label: "Close",
+            color: "#ef4444",
+            onClick: panelApi.close
+        });
     },
 
     checkAutoplay: function() {
@@ -634,13 +793,13 @@ AFRAME.registerComponent('video-controls', {
             }
         } else {
             this.primeVideoForPlayback();
-            this.restorePanel();
             if (this.is_fs) {
                 this.restoreVid();
                 this.is_fs = false;
                 this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
                 window.VRODOS_VIDEO_MANAGER.toggleVideoEnvironment(this.backgroundEl, false);
             }
+            this.openVrVideoPanel();
         }
     },
     

@@ -2100,8 +2100,8 @@
       this.handleKeyDown = this.handleKeyDown.bind(this);
       this.handleKeyUp = this.handleKeyUp.bind(this);
       this.handleRecoveryButtonDown = this.handleRecoveryButtonDown.bind(this);
-      this.thumbL = document.querySelector("#leftHand") || document.querySelector("#oculusLeft");
-      this.thumbR = document.querySelector("#rightHand") || document.querySelector("#oculusRight");
+      this.thumbL = document.querySelector("#oculusLeft") || document.querySelector("#leftHand");
+      this.thumbR = document.querySelector("#oculusRight") || document.querySelector("#rightHand");
       this.recoveryButtonEvents = ["abuttondown", "xbuttondown"];
       this.recoveryButtonEls = [];
       if (this.thumbL) {
@@ -2110,7 +2110,7 @@
       if (this.thumbR) {
         this.thumbR.addEventListener("thumbstickmoved", this.handleThumbstickMove);
       }
-      ["#leftHand", "#rightHand", "#oculusLeft", "#oculusRight"].forEach((selector) => {
+      ["#oculusLeft", "#oculusRight", "#leftHand", "#rightHand"].forEach((selector) => {
         const buttonEl = document.querySelector(selector);
         if (!buttonEl || this.recoveryButtonEls.indexOf(buttonEl) !== -1) {
           return;
