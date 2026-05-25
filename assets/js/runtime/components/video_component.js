@@ -157,6 +157,10 @@ AFRAME.registerComponent('video-controls', {
         this.visCollection = [];
         this.panelElems = [this.videoPanel, this.fsEl, this.plEl, this.exEl, this.exFrameEl];
         this.entCollection = document.getElementsByClassName("hideable");
+        this.desktopFullscreenInlineActive = false;
+        this.desktopFullscreenOffscreenSince = 0;
+        this.desktopFullscreenOffscreenDelay = 900;
+        this.videoWorldPosition = new THREE.Vector3();
 
         // Video Properties
         this.videoSourceUrl = this.videoDisplay ? (this.videoDisplay.getAttribute("data-vrodos-video-src") || "") : "";
@@ -175,6 +179,10 @@ AFRAME.registerComponent('video-controls', {
         this.restorePanel = this.restorePanel.bind(this);
         this.restoreVid = this.restoreVid.bind(this);
         this.removeVRTraces = this.removeVRTraces.bind(this);
+        this.onDesktopFullscreenKeyDown = this.onDesktopFullscreenKeyDown.bind(this);
+        this.onDesktopFullscreenChange = this.onDesktopFullscreenChange.bind(this);
+        this.onDesktopFullscreenVisibilityChange = this.onDesktopFullscreenVisibilityChange.bind(this);
+        this.onDesktopFullscreenBlur = this.onDesktopFullscreenBlur.bind(this);
 
         // Event Listeners
         document.querySelector('a-scene').addEventListener('exit-vr', this.removeVRTraces);
@@ -185,8 +193,15 @@ AFRAME.registerComponent('video-controls', {
         }
 
         this.video.addEventListener("ended", () => this.syncUI());
-        this.video.addEventListener("play", () => this.updateInlinePlayHint());
-        this.video.addEventListener("pause", () => this.updateInlinePlayHint());
+        this.video.addEventListener("play", () => {
+            this.updateInlinePlayHint();
+            this.updateDesktopFullscreenInlineGuard();
+        });
+        this.video.addEventListener("pause", () => {
+            this.updateInlinePlayHint();
+            this.stopDesktopFullscreenInlineGuard(false);
+        });
+        this.video.addEventListener("ended", () => this.stopDesktopFullscreenInlineGuard(false));
 
         if (this.videoSourceUrl) {
             this.videoDisplay.addEventListener('click', this.onVideoClick);
@@ -215,6 +230,36 @@ AFRAME.registerComponent('video-controls', {
         }
 
         return Boolean(browsingModeVR);
+    },
+
+    shouldUseInlinePlayback: function () {
+        if (this.shouldUseVrOverlay()) {
+            return true;
+        }
+
+        if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.getPresentationMode === "function") {
+            return window.VRODOSRuntimeOverlay.getPresentationMode() === "desktop-fullscreen";
+        }
+
+        return Boolean(document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement);
+    },
+
+    isDesktopFullscreenPresentation: function () {
+        if (this.shouldUseVrOverlay()) {
+            return false;
+        }
+
+        if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.getPresentationMode === "function") {
+            return window.VRODOSRuntimeOverlay.getPresentationMode() === "desktop-fullscreen";
+        }
+
+        return Boolean(document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement);
     },
 
     anchorVrOverlayEntity: function (entity, options) {
@@ -258,6 +303,112 @@ AFRAME.registerComponent('video-controls', {
         if (this.cursorEl) this.cursorEl.setAttribute("raycaster", "objects: " + targetClass);
         if (this.leftHand) this.leftHand.setAttribute("raycaster", "objects: " + targetClass);
         if (this.rightHand) this.rightHand.setAttribute("raycaster", "objects: " + targetClass);
+    },
+
+    releaseSceneInteraction: function () {
+        if (!window.VRODOSRuntimeOverlay) {
+            return;
+        }
+        if (typeof window.VRODOSRuntimeOverlay.lockSceneInteraction === "function") {
+            window.VRODOSRuntimeOverlay.lockSceneInteraction(false);
+        }
+        if (typeof window.VRODOSRuntimeOverlay.setOverlayRaycastMode === "function") {
+            window.VRODOSRuntimeOverlay.setOverlayRaycastMode(false);
+        }
+    },
+
+    startDesktopFullscreenInlineGuard: function () {
+        if (this.desktopFullscreenInlineActive || !this.isDesktopFullscreenPresentation()) {
+            return;
+        }
+
+        this.desktopFullscreenInlineActive = true;
+        this.desktopFullscreenOffscreenSince = 0;
+        this.releaseSceneInteraction();
+        document.addEventListener("keydown", this.onDesktopFullscreenKeyDown, true);
+        document.addEventListener("fullscreenchange", this.onDesktopFullscreenChange);
+        document.addEventListener("webkitfullscreenchange", this.onDesktopFullscreenChange);
+        document.addEventListener("mozfullscreenchange", this.onDesktopFullscreenChange);
+        document.addEventListener("msfullscreenchange", this.onDesktopFullscreenChange);
+        document.addEventListener("visibilitychange", this.onDesktopFullscreenVisibilityChange);
+        window.addEventListener("blur", this.onDesktopFullscreenBlur);
+    },
+
+    stopDesktopFullscreenInlineGuard: function (pauseVideo) {
+        if (!this.desktopFullscreenInlineActive) {
+            return;
+        }
+
+        this.desktopFullscreenInlineActive = false;
+        this.desktopFullscreenOffscreenSince = 0;
+        document.removeEventListener("keydown", this.onDesktopFullscreenKeyDown, true);
+        document.removeEventListener("fullscreenchange", this.onDesktopFullscreenChange);
+        document.removeEventListener("webkitfullscreenchange", this.onDesktopFullscreenChange);
+        document.removeEventListener("mozfullscreenchange", this.onDesktopFullscreenChange);
+        document.removeEventListener("msfullscreenchange", this.onDesktopFullscreenChange);
+        document.removeEventListener("visibilitychange", this.onDesktopFullscreenVisibilityChange);
+        window.removeEventListener("blur", this.onDesktopFullscreenBlur);
+        this.releaseSceneInteraction();
+
+        if (pauseVideo && this.video && !this.video.paused) {
+            this.video.pause();
+        }
+    },
+
+    updateDesktopFullscreenInlineGuard: function () {
+        if (this.video && !this.video.paused && this.isDesktopFullscreenPresentation()) {
+            this.startDesktopFullscreenInlineGuard();
+        } else {
+            this.stopDesktopFullscreenInlineGuard(false);
+        }
+    },
+
+    onDesktopFullscreenKeyDown: function (event) {
+        if (!event || event.code !== "Escape") {
+            return;
+        }
+        this.stopDesktopFullscreenInlineGuard(true);
+    },
+
+    onDesktopFullscreenChange: function () {
+        if (!this.isDesktopFullscreenPresentation()) {
+            this.stopDesktopFullscreenInlineGuard(true);
+        } else {
+            this.updateDesktopFullscreenInlineGuard();
+        }
+    },
+
+    onDesktopFullscreenVisibilityChange: function () {
+        if (document.hidden) {
+            this.stopDesktopFullscreenInlineGuard(true);
+        }
+    },
+
+    onDesktopFullscreenBlur: function () {
+        this.stopDesktopFullscreenInlineGuard(true);
+    },
+
+    isVideoDisplayInCameraView: function () {
+        const scene = this.backgroundEl || document.querySelector("a-scene");
+        const camera = scene && scene.camera;
+        if (!this.videoDisplay || !this.videoDisplay.object3D || !camera) {
+            return true;
+        }
+
+        if (scene.object3D && typeof scene.object3D.updateMatrixWorld === "function") {
+            scene.object3D.updateMatrixWorld(true);
+        }
+        if (typeof camera.updateMatrixWorld === "function") {
+            camera.updateMatrixWorld(true);
+        }
+
+        this.videoDisplay.object3D.getWorldPosition(this.videoWorldPosition);
+        this.videoWorldPosition.project(camera);
+
+        return this.videoWorldPosition.z >= -1 &&
+            this.videoWorldPosition.z <= 1 &&
+            Math.abs(this.videoWorldPosition.x) <= 1.2 &&
+            Math.abs(this.videoWorldPosition.y) <= 1.2;
     },
 
     checkAutoplay: function() {
@@ -530,6 +681,7 @@ AFRAME.registerComponent('video-controls', {
             this.trackEvent('poivideo_video_pause_vr');
         }
         this.syncUI();
+        this.updateDesktopFullscreenInlineGuard();
     },
 
     exitPanel: function () {
@@ -610,6 +762,18 @@ AFRAME.registerComponent('video-controls', {
 
         this.trackEvent('video_click');
         
+        if (this.shouldUseInlinePlayback()) {
+            this.primeVideoForPlayback();
+            if (this.is_fs) {
+                this.restoreVid();
+                this.is_fs = false;
+                this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
+                window.VRODOS_VIDEO_MANAGER.toggleVideoEnvironment(this.backgroundEl, false);
+            }
+            this.playVideo();
+            return;
+        }
+
         if (!this.shouldUseVrOverlay()) {
             let video_element = this.prepareDialogPlayback();
             if (!video_element) return;
@@ -642,15 +806,6 @@ AFRAME.registerComponent('video-controls', {
                 }
                 this.playDialogPlayback(video_element);
             }
-        } else {
-            this.primeVideoForPlayback();
-            if (this.is_fs) {
-                this.restoreVid();
-                this.is_fs = false;
-                this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
-                window.VRODOS_VIDEO_MANAGER.toggleVideoEnvironment(this.backgroundEl, false);
-            }
-            this.playVideo();
         }
     },
 
@@ -711,6 +866,46 @@ AFRAME.registerComponent('video-controls', {
         
         this.setOverlayInteractionActive(true);
         this.syncUI();
+    },
+
+    tick: function (time) {
+        if (!this.desktopFullscreenInlineActive || !this.video || this.video.paused) {
+            return;
+        }
+
+        if (!this.isDesktopFullscreenPresentation()) {
+            this.stopDesktopFullscreenInlineGuard(true);
+            return;
+        }
+
+        if (this.isVideoDisplayInCameraView()) {
+            this.desktopFullscreenOffscreenSince = 0;
+            return;
+        }
+
+        if (!this.desktopFullscreenOffscreenSince) {
+            this.desktopFullscreenOffscreenSince = time || performance.now();
+            return;
+        }
+
+        if ((time || performance.now()) - this.desktopFullscreenOffscreenSince > this.desktopFullscreenOffscreenDelay) {
+            this.stopDesktopFullscreenInlineGuard(true);
+        }
+    },
+
+    remove: function () {
+        this.stopDesktopFullscreenInlineGuard(true);
+
+        const scene = document.querySelector('a-scene');
+        if (scene) {
+            scene.removeEventListener('exit-vr', this.removeVRTraces);
+        }
+        if (this.videoDisplay) {
+            this.videoDisplay.removeEventListener('click', this.onVideoClick);
+        }
+        if (this.playHintEl) {
+            this.playHintEl.removeEventListener('click', this.onPlayHintClick);
+        }
     }
 });
 

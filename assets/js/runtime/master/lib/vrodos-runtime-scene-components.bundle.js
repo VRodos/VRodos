@@ -8,7 +8,7 @@
     const OVERLAY_LAYER_SURFACE = 20;
     const OVERLAY_LAYER_CONTROL = 40;
     const OVERLAY_LAYER_TEXT = 80;
-    const OVERLAY_FLAG_RETRY_FRAMES = 8;
+    const OVERLAY_FLAG_RETRY_FRAMES = 16;
     const RAYCASTER_SELECTORS = [
       "#cursor",
       "#oculusRight",
@@ -376,20 +376,20 @@
       }
       return "0 0 0";
     }
-    function normalizeOverlayPosition(position, root) {
-      const normalized = normalizePosition(position);
-      if (!root || !root.getAttribute || root.getAttribute("data-vrodos-overlay-static-anchor") !== "true") {
-        return normalized;
-      }
+    function normalizeOverlayPosition(position) {
+      return normalizePosition(position);
+    }
+    function offsetOverlayPositionZ(position, offset) {
+      const normalized = normalizeOverlayPosition(position);
       const parts = String(normalized).trim().split(/\s+/);
       if (parts.length < 3) {
         return normalized;
       }
       const z = Number(parts[2]);
-      if (!Number.isFinite(z) || z === 0) {
+      if (!Number.isFinite(z)) {
         return normalized;
       }
-      parts[2] = formatTransformNumber(-Math.abs(z));
+      parts[2] = formatTransformNumber(z + offset);
       return parts.join(" ");
     }
     function truncateText(value, maxLength) {
@@ -654,24 +654,35 @@
           addButton: function(parent, attrs) {
             const options2 = attrs || {};
             const disabled = Boolean(options2.disabled);
-            const background = disabled ? options2.disabledColor || "#cbd5e1" : options2.color || "#5cc887";
-            const opacity = disabled ? "0.65" : "1";
-            const transparent = disabled ? "true" : "false";
+            const buttonWidth = numberOrDefault(options2.width, 0.48);
+            const buttonHeight = numberOrDefault(options2.height, 0.18);
+            const buttonLayer = numberOrDefault(options2.layer, OVERLAY_LAYER_CONTROL);
+            const buttonPosition = options2.position || "0 0 0";
+            const background = disabled ? options2.disabledColor || "#e2e8f0" : options2.color || "#5cc887";
+            const borderColor = disabled ? options2.disabledBorderColor || "#94a3b8" : options2.borderColor || "#94a3b8";
+            const textColor = options2.textColor || (disabled ? "#475569" : "#ffffff");
+            this.addPlane(parent, {
+              position: offsetOverlayPositionZ(buttonPosition, -4e-3),
+              width: buttonWidth + 0.024,
+              height: buttonHeight + 0.024,
+              layer: buttonLayer - 1,
+              material: "shader: flat; color: " + borderColor + "; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
+            }).setAttribute("data-vrodos-overlay-button-border", "true");
             const button = this.addPlane(parent, {
               id: options2.id,
-              position: options2.position || "0 0 0",
-              width: options2.width || 0.48,
-              height: options2.height || 0.18,
+              position: buttonPosition,
+              width: buttonWidth,
+              height: buttonHeight,
               target: !disabled,
-              layer: options2.layer || OVERLAY_LAYER_CONTROL,
-              material: "shader: flat; color: " + background + "; side: double; transparent: " + transparent + "; opacity: " + opacity + "; depthTest: false; depthWrite: false",
+              layer: buttonLayer,
+              material: "shader: flat; color: " + background + "; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false",
               onClick: disabled ? null : options2.onClick
             });
             button.setAttribute("data-vrodos-overlay-button", "true");
             this.addText(button, {
               position: "0 0 0.012",
               value: options2.label || "",
-              color: options2.textColor || "#ffffff",
+              color: textColor,
               align: "center",
               anchor: "center",
               baseline: "center",
@@ -1873,6 +1884,10 @@
       this.visCollection = [];
       this.panelElems = [this.videoPanel, this.fsEl, this.plEl, this.exEl, this.exFrameEl];
       this.entCollection = document.getElementsByClassName("hideable");
+      this.desktopFullscreenInlineActive = false;
+      this.desktopFullscreenOffscreenSince = 0;
+      this.desktopFullscreenOffscreenDelay = 900;
+      this.videoWorldPosition = new THREE.Vector3();
       this.videoSourceUrl = this.videoDisplay ? this.videoDisplay.getAttribute("data-vrodos-video-src") || "" : "";
       this.videoLoop = this.videoDisplay ? this.videoDisplay.getAttribute("data-vrodos-video-loop") === "true" : false;
       this.videoPosterSelector = this.videoDisplay ? this.videoDisplay.getAttribute("data-vrodos-video-poster") || "" : "";
@@ -1887,14 +1902,25 @@
       this.restorePanel = this.restorePanel.bind(this);
       this.restoreVid = this.restoreVid.bind(this);
       this.removeVRTraces = this.removeVRTraces.bind(this);
+      this.onDesktopFullscreenKeyDown = this.onDesktopFullscreenKeyDown.bind(this);
+      this.onDesktopFullscreenChange = this.onDesktopFullscreenChange.bind(this);
+      this.onDesktopFullscreenVisibilityChange = this.onDesktopFullscreenVisibilityChange.bind(this);
+      this.onDesktopFullscreenBlur = this.onDesktopFullscreenBlur.bind(this);
       document.querySelector("a-scene").addEventListener("exit-vr", this.removeVRTraces);
       if (this.dialogVideo) {
         this.dialogVideo.addEventListener("play", () => this.trackEvent("poivideo_video_play"));
         this.dialogVideo.addEventListener("pause", () => this.trackEvent("poivideo_video_pause"));
       }
       this.video.addEventListener("ended", () => this.syncUI());
-      this.video.addEventListener("play", () => this.updateInlinePlayHint());
-      this.video.addEventListener("pause", () => this.updateInlinePlayHint());
+      this.video.addEventListener("play", () => {
+        this.updateInlinePlayHint();
+        this.updateDesktopFullscreenInlineGuard();
+      });
+      this.video.addEventListener("pause", () => {
+        this.updateInlinePlayHint();
+        this.stopDesktopFullscreenInlineGuard(false);
+      });
+      this.video.addEventListener("ended", () => this.stopDesktopFullscreenInlineGuard(false));
       if (this.videoSourceUrl) {
         this.videoDisplay.addEventListener("click", this.onVideoClick);
         if (this.playHintEl) {
@@ -1917,6 +1943,24 @@
         return window.VRODOSRuntimeOverlay.shouldUseVrPanel();
       }
       return Boolean(browsingModeVR);
+    },
+    shouldUseInlinePlayback: function() {
+      if (this.shouldUseVrOverlay()) {
+        return true;
+      }
+      if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.getPresentationMode === "function") {
+        return window.VRODOSRuntimeOverlay.getPresentationMode() === "desktop-fullscreen";
+      }
+      return Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    },
+    isDesktopFullscreenPresentation: function() {
+      if (this.shouldUseVrOverlay()) {
+        return false;
+      }
+      if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.getPresentationMode === "function") {
+        return window.VRODOSRuntimeOverlay.getPresentationMode() === "desktop-fullscreen";
+      }
+      return Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
     },
     anchorVrOverlayEntity: function(entity, options) {
       if (!entity || !this.shouldUseVrOverlay()) {
@@ -1952,6 +1996,94 @@
       if (this.cursorEl) this.cursorEl.setAttribute("raycaster", "objects: " + targetClass);
       if (this.leftHand) this.leftHand.setAttribute("raycaster", "objects: " + targetClass);
       if (this.rightHand) this.rightHand.setAttribute("raycaster", "objects: " + targetClass);
+    },
+    releaseSceneInteraction: function() {
+      if (!window.VRODOSRuntimeOverlay) {
+        return;
+      }
+      if (typeof window.VRODOSRuntimeOverlay.lockSceneInteraction === "function") {
+        window.VRODOSRuntimeOverlay.lockSceneInteraction(false);
+      }
+      if (typeof window.VRODOSRuntimeOverlay.setOverlayRaycastMode === "function") {
+        window.VRODOSRuntimeOverlay.setOverlayRaycastMode(false);
+      }
+    },
+    startDesktopFullscreenInlineGuard: function() {
+      if (this.desktopFullscreenInlineActive || !this.isDesktopFullscreenPresentation()) {
+        return;
+      }
+      this.desktopFullscreenInlineActive = true;
+      this.desktopFullscreenOffscreenSince = 0;
+      this.releaseSceneInteraction();
+      document.addEventListener("keydown", this.onDesktopFullscreenKeyDown, true);
+      document.addEventListener("fullscreenchange", this.onDesktopFullscreenChange);
+      document.addEventListener("webkitfullscreenchange", this.onDesktopFullscreenChange);
+      document.addEventListener("mozfullscreenchange", this.onDesktopFullscreenChange);
+      document.addEventListener("msfullscreenchange", this.onDesktopFullscreenChange);
+      document.addEventListener("visibilitychange", this.onDesktopFullscreenVisibilityChange);
+      window.addEventListener("blur", this.onDesktopFullscreenBlur);
+    },
+    stopDesktopFullscreenInlineGuard: function(pauseVideo) {
+      if (!this.desktopFullscreenInlineActive) {
+        return;
+      }
+      this.desktopFullscreenInlineActive = false;
+      this.desktopFullscreenOffscreenSince = 0;
+      document.removeEventListener("keydown", this.onDesktopFullscreenKeyDown, true);
+      document.removeEventListener("fullscreenchange", this.onDesktopFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", this.onDesktopFullscreenChange);
+      document.removeEventListener("mozfullscreenchange", this.onDesktopFullscreenChange);
+      document.removeEventListener("msfullscreenchange", this.onDesktopFullscreenChange);
+      document.removeEventListener("visibilitychange", this.onDesktopFullscreenVisibilityChange);
+      window.removeEventListener("blur", this.onDesktopFullscreenBlur);
+      this.releaseSceneInteraction();
+      if (pauseVideo && this.video && !this.video.paused) {
+        this.video.pause();
+      }
+    },
+    updateDesktopFullscreenInlineGuard: function() {
+      if (this.video && !this.video.paused && this.isDesktopFullscreenPresentation()) {
+        this.startDesktopFullscreenInlineGuard();
+      } else {
+        this.stopDesktopFullscreenInlineGuard(false);
+      }
+    },
+    onDesktopFullscreenKeyDown: function(event) {
+      if (!event || event.code !== "Escape") {
+        return;
+      }
+      this.stopDesktopFullscreenInlineGuard(true);
+    },
+    onDesktopFullscreenChange: function() {
+      if (!this.isDesktopFullscreenPresentation()) {
+        this.stopDesktopFullscreenInlineGuard(true);
+      } else {
+        this.updateDesktopFullscreenInlineGuard();
+      }
+    },
+    onDesktopFullscreenVisibilityChange: function() {
+      if (document.hidden) {
+        this.stopDesktopFullscreenInlineGuard(true);
+      }
+    },
+    onDesktopFullscreenBlur: function() {
+      this.stopDesktopFullscreenInlineGuard(true);
+    },
+    isVideoDisplayInCameraView: function() {
+      const scene = this.backgroundEl || document.querySelector("a-scene");
+      const camera = scene && scene.camera;
+      if (!this.videoDisplay || !this.videoDisplay.object3D || !camera) {
+        return true;
+      }
+      if (scene.object3D && typeof scene.object3D.updateMatrixWorld === "function") {
+        scene.object3D.updateMatrixWorld(true);
+      }
+      if (typeof camera.updateMatrixWorld === "function") {
+        camera.updateMatrixWorld(true);
+      }
+      this.videoDisplay.object3D.getWorldPosition(this.videoWorldPosition);
+      this.videoWorldPosition.project(camera);
+      return this.videoWorldPosition.z >= -1 && this.videoWorldPosition.z <= 1 && Math.abs(this.videoWorldPosition.x) <= 1.2 && Math.abs(this.videoWorldPosition.y) <= 1.2;
     },
     checkAutoplay: function() {
       if (this.video.getAttribute("autoplay-manual") === "true") {
@@ -2183,6 +2315,7 @@
         this.trackEvent("poivideo_video_pause_vr");
       }
       this.syncUI();
+      this.updateDesktopFullscreenInlineGuard();
     },
     exitPanel: function() {
       this.exEl.removeEventListener("click", this.exitPanel);
@@ -2245,6 +2378,17 @@
       const viewport = window.VRODOS_VIDEO_MANAGER.getViewportAtDepth(this.panel_z);
       this.panel_pos_dynamic = viewport.width / 2 - 1 + " -0.3 " + this.panel_z;
       this.trackEvent("video_click");
+      if (this.shouldUseInlinePlayback()) {
+        this.primeVideoForPlayback();
+        if (this.is_fs) {
+          this.restoreVid();
+          this.is_fs = false;
+          this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
+          window.VRODOS_VIDEO_MANAGER.toggleVideoEnvironment(this.backgroundEl, false);
+        }
+        this.playVideo();
+        return;
+      }
       if (!this.shouldUseVrOverlay()) {
         let video_element = this.prepareDialogPlayback();
         if (!video_element) return;
@@ -2273,15 +2417,6 @@
           }
           this.playDialogPlayback(video_element);
         }
-      } else {
-        this.primeVideoForPlayback();
-        if (this.is_fs) {
-          this.restoreVid();
-          this.is_fs = false;
-          this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
-          window.VRODOS_VIDEO_MANAGER.toggleVideoEnvironment(this.backgroundEl, false);
-        }
-        this.playVideo();
       }
     },
     onPlayHintClick: function(evt) {
@@ -2330,6 +2465,39 @@
       }
       this.setOverlayInteractionActive(true);
       this.syncUI();
+    },
+    tick: function(time) {
+      if (!this.desktopFullscreenInlineActive || !this.video || this.video.paused) {
+        return;
+      }
+      if (!this.isDesktopFullscreenPresentation()) {
+        this.stopDesktopFullscreenInlineGuard(true);
+        return;
+      }
+      if (this.isVideoDisplayInCameraView()) {
+        this.desktopFullscreenOffscreenSince = 0;
+        return;
+      }
+      if (!this.desktopFullscreenOffscreenSince) {
+        this.desktopFullscreenOffscreenSince = time || performance.now();
+        return;
+      }
+      if ((time || performance.now()) - this.desktopFullscreenOffscreenSince > this.desktopFullscreenOffscreenDelay) {
+        this.stopDesktopFullscreenInlineGuard(true);
+      }
+    },
+    remove: function() {
+      this.stopDesktopFullscreenInlineGuard(true);
+      const scene = document.querySelector("a-scene");
+      if (scene) {
+        scene.removeEventListener("exit-vr", this.removeVRTraces);
+      }
+      if (this.videoDisplay) {
+        this.videoDisplay.removeEventListener("click", this.onVideoClick);
+      }
+      if (this.playHintEl) {
+        this.playHintEl.removeEventListener("click", this.onPlayHintClick);
+      }
     }
   });
   AFRAME.registerComponent("vrodos-3d-play-icon", {

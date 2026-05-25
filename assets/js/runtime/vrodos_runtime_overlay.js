@@ -7,7 +7,7 @@
     const OVERLAY_LAYER_SURFACE = 20;
     const OVERLAY_LAYER_CONTROL = 40;
     const OVERLAY_LAYER_TEXT = 80;
-    const OVERLAY_FLAG_RETRY_FRAMES = 8;
+    const OVERLAY_FLAG_RETRY_FRAMES = 16;
     const RAYCASTER_SELECTORS = [
         "#cursor",
         "#oculusRight",
@@ -442,23 +442,23 @@
         return "0 0 0";
     }
 
-    function normalizeOverlayPosition(position, root) {
-        const normalized = normalizePosition(position);
-        if (!root || !root.getAttribute || root.getAttribute("data-vrodos-overlay-static-anchor") !== "true") {
-            return normalized;
-        }
+    function normalizeOverlayPosition(position) {
+        return normalizePosition(position);
+    }
 
+    function offsetOverlayPositionZ(position, offset) {
+        const normalized = normalizeOverlayPosition(position);
         const parts = String(normalized).trim().split(/\s+/);
         if (parts.length < 3) {
             return normalized;
         }
 
         const z = Number(parts[2]);
-        if (!Number.isFinite(z) || z === 0) {
+        if (!Number.isFinite(z)) {
             return normalized;
         }
 
-        parts[2] = formatTransformNumber(-Math.abs(z));
+        parts[2] = formatTransformNumber(z + offset);
         return parts.join(" ");
     }
 
@@ -759,26 +759,39 @@
                 addButton: function (parent, attrs) {
                     const options = attrs || {};
                     const disabled = Boolean(options.disabled);
+                    const buttonWidth = numberOrDefault(options.width, 0.48);
+                    const buttonHeight = numberOrDefault(options.height, 0.18);
+                    const buttonLayer = numberOrDefault(options.layer, OVERLAY_LAYER_CONTROL);
+                    const buttonPosition = options.position || "0 0 0";
                     const background = disabled
-                        ? (options.disabledColor || "#cbd5e1")
+                        ? (options.disabledColor || "#e2e8f0")
                         : (options.color || "#5cc887");
-                    const opacity = disabled ? "0.65" : "1";
-                    const transparent = disabled ? "true" : "false";
+                    const borderColor = disabled
+                        ? (options.disabledBorderColor || "#94a3b8")
+                        : (options.borderColor || "#94a3b8");
+                    const textColor = options.textColor || (disabled ? "#475569" : "#ffffff");
+                    this.addPlane(parent, {
+                        position: offsetOverlayPositionZ(buttonPosition, -0.004),
+                        width: buttonWidth + 0.024,
+                        height: buttonHeight + 0.024,
+                        layer: buttonLayer - 1,
+                        material: "shader: flat; color: " + borderColor + "; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
+                    }).setAttribute("data-vrodos-overlay-button-border", "true");
                     const button = this.addPlane(parent, {
                         id: options.id,
-                        position: options.position || "0 0 0",
-                        width: options.width || 0.48,
-                        height: options.height || 0.18,
+                        position: buttonPosition,
+                        width: buttonWidth,
+                        height: buttonHeight,
                         target: !disabled,
-                        layer: options.layer || OVERLAY_LAYER_CONTROL,
-                        material: "shader: flat; color: " + background + "; side: double; transparent: " + transparent + "; opacity: " + opacity + "; depthTest: false; depthWrite: false",
+                        layer: buttonLayer,
+                        material: "shader: flat; color: " + background + "; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false",
                         onClick: disabled ? null : options.onClick
                     });
                     button.setAttribute("data-vrodos-overlay-button", "true");
                     this.addText(button, {
                         position: "0 0 0.012",
                         value: options.label || "",
-                        color: options.textColor || "#ffffff",
+                        color: textColor,
                         align: "center",
                         anchor: "center",
                         baseline: "center",
