@@ -60,7 +60,10 @@
             continueButton: null,
             initialized: false,
             promptScheduled: false,
-            vrPromptActive: false
+            vrPromptActive: false,
+            vrPanelApi: null,
+            levelApplied: false,
+            presentationEventsBound: false
         };
 
         runtime.register = function (element) {
@@ -71,6 +74,10 @@
             runtime.elements.push(element);
             element.removeAttribute("data-vrodos-delayed-reveal");
             setCefrControlledVisible(element, false);
+            if (runtime.levelApplied && runtime.selectedLevel) {
+                setCefrControlledVisible(element, runtime.matchesLevel(element, runtime.selectedLevel));
+                return;
+            }
             runtime.schedulePrompt();
         };
 
@@ -94,6 +101,7 @@
                 return;
             }
 
+            runtime.levelApplied = true;
             runtime.elements.forEach((element) => {
                 setCefrControlledVisible(element, runtime.matchesLevel(element, normalizedLevel));
             });
@@ -201,6 +209,26 @@
             runtime.selectLevel(runtime.selectedLevel || "");
         };
 
+        runtime.isImmersiveVrActive = function () {
+            const overlayApi = window.VRODOSRuntimeOverlay || null;
+            if (overlayApi && typeof overlayApi.getPresentationMode === "function") {
+                return overlayApi.getPresentationMode() === "immersive-xr";
+            }
+
+            const scene = document.querySelector("a-scene");
+            return Boolean(scene && scene.renderer && scene.renderer.xr && scene.renderer.xr.isPresenting);
+        };
+
+        runtime.hideDomPrompt = function () {
+            if (runtime.root) {
+                runtime.root.style.display = "none";
+            }
+            const host = document.getElementById("vrodos-runtime-overlay-host");
+            if (host && !host.querySelector("dialog[open]")) {
+                host.style.pointerEvents = "none";
+            }
+        };
+
         runtime.selectLevel = function (level) {
             runtime.selectedLevel = normalizeLevel(level);
 
@@ -219,82 +247,150 @@
             }
         };
 
+        runtime.renderVrPrompt = function (api) {
+            const panelApi = api || runtime.vrPanelApi;
+            if (!panelApi) {
+                return;
+            }
+
+            const width = 2.42;
+            const height = 1.42;
+            panelApi.clear();
+            panelApi.addPlane(panelApi.root, {
+                position: "0 0 0",
+                width,
+                height,
+                layer: 10,
+                material: "shader: flat; color: #f8fafc; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
+            });
+            panelApi.addPlane(panelApi.root, {
+                position: "0 0.48 0.01",
+                width,
+                height: 0.34,
+                layer: 20,
+                material: "shader: flat; color: #0f172a; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
+            });
+            panelApi.addText(panelApi.root, {
+                position: "-1.04 0.54 0.025",
+                value: "CEFR Level",
+                color: "#93c5fd",
+                align: "left",
+                anchor: "left",
+                width: 1.8,
+                wrapCount: "28",
+                scale: "0.34 0.34 0.34"
+            });
+            panelApi.addText(panelApi.root, {
+                position: "-1.04 0.42 0.025",
+                value: "Choose your level",
+                color: "#ffffff",
+                align: "left",
+                anchor: "left",
+                width: 2,
+                wrapCount: "28",
+                scale: "0.52 0.52 0.52"
+            });
+            panelApi.addText(panelApi.root, {
+                position: "-1.04 0.18 0.025",
+                value: "Use your controller ray or gaze cursor to select a level, then start the experience.",
+                color: "#334155",
+                align: "left",
+                anchor: "left",
+                width: 2.05,
+                wrapCount: "50",
+                maxLength: 160,
+                scale: "0.32 0.32 0.32"
+            });
+
+            CEFR_LEVELS.forEach((level, index) => {
+                const active = level === runtime.selectedLevel;
+                panelApi.addButton(panelApi.root, {
+                    position: (-0.75 + index * 0.5) + " -0.12 0.04",
+                    width: 0.38,
+                    height: 0.26,
+                    label: level,
+                    color: active ? "#bbf7d0" : "#ffffff",
+                    textColor: active ? "#166534" : "#0f172a",
+                    textScale: "0.5 0.5 0.5",
+                    wrapCount: "4",
+                    onClick: function () {
+                        runtime.selectedLevel = level;
+                        runtime.renderVrPrompt(panelApi);
+                    }
+                });
+            });
+
+            panelApi.addButton(panelApi.root, {
+                position: "0 -0.48 0.04",
+                width: 1.02,
+                height: 0.22,
+                label: "Start experience",
+                disabled: !runtime.selectedLevel,
+                color: "#5cc887",
+                textScale: "0.36 0.36 0.36",
+                onClick: function () {
+                    if (!runtime.selectedLevel) {
+                        return;
+                    }
+                    runtime.applyLevel(runtime.selectedLevel);
+                    runtime.hidePrompt();
+                }
+            });
+
+            if (typeof panelApi.refreshTargets === "function") {
+                panelApi.refreshTargets();
+            }
+        };
+
         runtime.showVrPrompt = function () {
             const overlayApi = window.VRODOSRuntimeOverlay || null;
             if (!overlayApi || !overlayApi.shouldUseVrPanel || !overlayApi.shouldUseVrPanel()) {
                 return false;
             }
 
+            runtime.hideDomPrompt();
+            if (runtime.vrPromptActive && runtime.vrPanelApi) {
+                runtime.renderVrPrompt(runtime.vrPanelApi);
+                return true;
+            }
+
             runtime.vrPromptActive = true;
-            overlayApi.openVrPanel({
+            runtime.vrPanelApi = overlayApi.openVrPanel({
                 id: "vrodos-immerse-cefr-vr-overlay",
-                width: 2.2,
-                height: 1.35,
-                distance: 2.2,
+                width: 2.42,
+                height: 1.42,
+                distance: 3.05,
+                verticalOffset: -0.08,
+                lockInteraction: false,
+                retargetRaycasters: false,
                 cleanup: function () {
                     runtime.vrPromptActive = false;
+                    runtime.vrPanelApi = null;
                 },
                 render: function (api) {
-                    const bounds = api.drawFrame({
-                        title: "Choose CEFR level",
-                        width: 2.2,
-                        height: 1.35,
-                        onClose: function () {
-                            overlayApi.closeActivePanel("cefr-close");
-                        }
-                    });
-
-                    api.addText(api.root, {
-                        position: bounds.left + " " + (bounds.top - 0.05) + " 0.03",
-                        value: "Select the level for this experience.",
-                        color: "#334155",
-                        align: "left",
-                        anchor: "left",
-                        width: bounds.width,
-                        wrapCount: "42",
-                        scale: "0.4 0.4 0.4"
-                    });
-
-                    CEFR_LEVELS.forEach((level, index) => {
-                        const active = level === runtime.selectedLevel;
-                        api.addButton(api.root, {
-                            position: (-0.66 + index * 0.44) + " " + (bounds.top - 0.36) + " 0.04",
-                            width: 0.34,
-                            height: 0.24,
-                            label: level,
-                            color: active ? "#bbf7d0" : "#ffffff",
-                            textColor: active ? "#166534" : "#0f172a",
-                            textScale: "0.48 0.48 0.48",
-                            onClick: function () {
-                                runtime.selectedLevel = level;
-                                runtime.showVrPrompt();
-                            }
-                        });
-                    });
-
-                    api.addButton(api.root, {
-                        position: "0 " + (bounds.bottom + 0.08) + " 0.04",
-                        width: 0.78,
-                        height: 0.2,
-                        label: "Start experience",
-                        disabled: !runtime.selectedLevel,
-                        color: "#5cc887",
-                        onClick: function () {
-                            if (!runtime.selectedLevel) {
-                                return;
-                            }
-                            runtime.applyLevel(runtime.selectedLevel);
-                            runtime.hidePrompt();
-                        }
-                    });
+                    runtime.vrPanelApi = api;
+                    runtime.renderVrPrompt(api);
                 }
             });
 
-            return true;
+            if (!runtime.vrPanelApi) {
+                runtime.vrPromptActive = false;
+            }
+            return Boolean(runtime.vrPanelApi);
         };
 
         runtime.showPrompt = function () {
             if (runtime.showVrPrompt()) {
+                return;
+            }
+
+            if (runtime.isImmersiveVrActive()) {
+                runtime.hideDomPrompt();
+                window.setTimeout(() => {
+                    if (!runtime.levelApplied) {
+                        runtime.showPrompt();
+                    }
+                }, 180);
                 return;
             }
 
@@ -308,14 +404,38 @@
             if (runtime.vrPromptActive && window.VRODOSRuntimeOverlay) {
                 window.VRODOSRuntimeOverlay.closeActivePanel("cefr-start");
                 runtime.vrPromptActive = false;
+                runtime.vrPanelApi = null;
             }
-            if (runtime.root) {
-                runtime.root.style.display = "none";
+            runtime.hideDomPrompt();
+        };
+
+        runtime.bindPresentationEvents = function () {
+            if (runtime.presentationEventsBound) {
+                return;
             }
-            const host = document.getElementById("vrodos-runtime-overlay-host");
-            if (host && !host.querySelector("dialog[open]")) {
-                host.style.pointerEvents = "none";
-            }
+
+            const bind = function () {
+                const scene = document.querySelector("a-scene");
+                if (!scene) {
+                    window.setTimeout(bind, 120);
+                    return;
+                }
+
+                runtime.presentationEventsBound = true;
+                scene.addEventListener("enter-vr", () => {
+                    if (!runtime.levelApplied && runtime.elements.length) {
+                        window.setTimeout(() => runtime.showPrompt(), 160);
+                    }
+                });
+                scene.addEventListener("exit-vr", () => {
+                    if (!runtime.levelApplied && runtime.vrPromptActive) {
+                        runtime.hidePrompt();
+                        window.setTimeout(() => runtime.showPrompt(), 120);
+                    }
+                });
+            };
+
+            bind();
         };
 
         runtime.schedulePrompt = function () {
@@ -324,6 +444,7 @@
             }
 
             runtime.promptScheduled = true;
+            runtime.bindPresentationEvents();
 
             const waitForSceneReady = () => {
                 const scene = document.querySelector("a-scene");

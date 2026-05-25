@@ -44,10 +44,17 @@
             kicker: null
         };
 
-        const root = document.createElement("div");
+        const root = document.createElement("dialog");
         root.id = "vrodos-immerse-assessment-overlay";
         root.style.position = "fixed";
         root.style.inset = "0";
+        root.style.width = "100vw";
+        root.style.height = "100vh";
+        root.style.maxWidth = "100vw";
+        root.style.maxHeight = "100vh";
+        root.style.margin = "0";
+        root.style.border = "0";
+        root.style.boxSizing = "border-box";
         root.style.zIndex = "2147482000";
         root.style.display = "none";
         root.style.alignItems = "center";
@@ -176,6 +183,25 @@
             runtime.status.textContent = message || "";
         };
 
+        runtime.show = function () {
+            ensureDomOverlayParent(runtime.root);
+            if (runtime.root.open && typeof runtime.root.close === "function") {
+                runtime.root.style.display = "none";
+                runtime.root.close();
+            }
+            runtime.root.style.display = "flex";
+            if (typeof runtime.root.showModal === "function") {
+                try {
+                    runtime.root.showModal();
+                } catch (error) {
+                    runtime.root.setAttribute("open", "open");
+                }
+            } else {
+                runtime.root.setAttribute("open", "open");
+            }
+            return runtime.root.open || runtime.root.getAttribute("open") !== null || runtime.root.style.display === "flex";
+        };
+
         runtime.resetState = function () {
             if (runtime.state && typeof runtime.state.cleanup === "function") {
                 runtime.state.cleanup();
@@ -192,6 +218,11 @@
 
         runtime.hide = function () {
             runtime.root.style.display = "none";
+            if (runtime.root.open && typeof runtime.root.close === "function") {
+                runtime.root.close();
+            } else {
+                runtime.root.removeAttribute("open");
+            }
             setAssessmentSceneInteractionLocked(false);
             runtime.resetState();
             const host = document.getElementById("vrodos-runtime-overlay-host");
@@ -248,9 +279,10 @@
             } else {
                 runtime.title.textContent = decodeDisplayText(payload.title || "Assessment");
             }
-            ensureDomOverlayParent(runtime.root);
-            runtime.root.style.display = "flex";
-            setAssessmentSceneInteractionLocked(true);
+            const didShow = runtime.show();
+            if (didShow) {
+                setAssessmentSceneInteractionLocked(true);
+            }
 
             runtime.renderer = resolveRenderer(payload);
             if (!runtime.renderer) {
@@ -265,6 +297,18 @@
         };
 
         dismissButton.addEventListener("click", runtime.hide);
+        root.addEventListener("close", () => {
+            if (runtime.root.style.display === "none") {
+                return;
+            }
+            runtime.root.style.display = "none";
+            setAssessmentSceneInteractionLocked(false);
+            runtime.resetState();
+            const host = document.getElementById("vrodos-runtime-overlay-host");
+            if (host && !host.querySelector("dialog[open]")) {
+                host.style.pointerEvents = "none";
+            }
+        });
         nextButton.addEventListener("click", () => {
             if (!runtime.renderer || typeof runtime.renderer.onPrimaryAction !== "function") {
                 return;

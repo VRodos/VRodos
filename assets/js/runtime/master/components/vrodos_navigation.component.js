@@ -290,10 +290,14 @@ AFRAME.registerComponent('custom-movement', {
 
         if (this.thumbL) {
             this.thumbL.addEventListener('thumbstickmoved', this.handleThumbstickMove);
+            this.thumbL.addEventListener('thumbsticktouchend', this.handleThumbstickEnd);
+            this.thumbL.addEventListener('thumbstickup', this.handleThumbstickEnd);
         }
 
         if (this.thumbR) {
             this.thumbR.addEventListener('thumbstickmoved', this.handleThumbstickMove);
+            this.thumbR.addEventListener('thumbsticktouchend', this.handleThumbstickEnd);
+            this.thumbR.addEventListener('thumbstickup', this.handleThumbstickEnd);
         }
 
         ['#oculusLeft', '#oculusRight', '#leftHand', '#rightHand'].forEach((selector) => {
@@ -399,7 +403,9 @@ AFRAME.registerComponent('custom-movement', {
             ? this.rightThumbInput
             : this.leftThumbInput;
         targetInput.x = event.detail.x || 0;
-        targetInput.y = (event.detail.y || 0) * (targetInput === this.leftThumbInput ? -1 : 1);
+        const rawY = event.detail.y || 0;
+        // Meta/A-Frame reports the movement stick Y axis opposite to VRodos movement math; this normalization is intentional.
+        targetInput.y = targetInput === this.leftThumbInput ? -rawY : rawY;
     },
     handleThumbstickEnd: function (event) {
         const source = event ? (event.currentTarget || event.target) : null;
@@ -524,9 +530,13 @@ AFRAME.registerComponent('custom-movement', {
     remove: function () {
         if (this.thumbL) {
             this.thumbL.removeEventListener('thumbstickmoved', this.handleThumbstickMove);
+            this.thumbL.removeEventListener('thumbsticktouchend', this.handleThumbstickEnd);
+            this.thumbL.removeEventListener('thumbstickup', this.handleThumbstickEnd);
         }
         if (this.thumbR) {
             this.thumbR.removeEventListener('thumbstickmoved', this.handleThumbstickMove);
+            this.thumbR.removeEventListener('thumbsticktouchend', this.handleThumbstickEnd);
+            this.thumbR.removeEventListener('thumbstickup', this.handleThumbstickEnd);
         }
         if (this.recoveryButtonEls && this.recoveryButtonEvents) {
             this.recoveryButtonEls.forEach((buttonEl) => {

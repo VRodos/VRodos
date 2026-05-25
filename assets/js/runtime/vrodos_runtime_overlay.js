@@ -2,11 +2,18 @@
     "use strict";
 
     const RAYCAST_TARGET_CLASS = "vrodos-overlay-hit-target";
+    const OVERLAY_RENDER_BASE = 100000;
+    const OVERLAY_LAYER_BACKGROUND = 10;
+    const OVERLAY_LAYER_SURFACE = 20;
+    const OVERLAY_LAYER_CONTROL = 40;
+    const OVERLAY_LAYER_TEXT = 80;
+    const OVERLAY_FLAG_RETRY_FRAMES = 8;
     const RAYCASTER_SELECTORS = [
         "#cursor",
         "#oculusRight",
         "#oculusLeft",
         "[laser-controls][raycaster]",
+        "[meta-touch-controls][raycaster]",
         "[oculus-touch-controls][raycaster]",
         "[raycaster]"
     ];
@@ -138,6 +145,26 @@
         el.setAttribute("raycaster", serializeComponentAttribute(attr));
     }
 
+    function refreshRaycasterObjects() {
+        collectRaycasters().forEach((el) => {
+            if (el.components && el.components.raycaster && typeof el.components.raycaster.refreshObjects === "function") {
+                el.components.raycaster.refreshObjects();
+            }
+        });
+    }
+
+    function queueRaycasterRefresh(frames) {
+        let remaining = Number.isFinite(Number(frames)) ? Number(frames) : OVERLAY_FLAG_RETRY_FRAMES;
+        const refresh = function () {
+            refreshRaycasterObjects();
+            remaining -= 1;
+            if (remaining > 0) {
+                requestAnimationFrame(refresh);
+            }
+        };
+        requestAnimationFrame(refresh);
+    }
+
     function collectRaycasters() {
         const seen = new Set();
         const result = [];
@@ -201,25 +228,113 @@
         return el;
     }
 
+    function getOverlayRenderOrder(el) {
+        const layer = el && el.getAttribute ? Number(el.getAttribute("data-vrodos-overlay-layer")) : 0;
+        return OVERLAY_RENDER_BASE + (Number.isFinite(layer) ? layer : 0);
+    }
+
+    function isOverlayTextEntity(el) {
+        return Boolean(el && el.tagName && String(el.tagName).toLowerCase() === "a-text");
+    }
+
+    function forEachMaterial(material, callback) {
+        if (!material) {
+            return;
+        }
+        if (Array.isArray(material)) {
+            material.forEach((entry) => {
+                if (entry) {
+                    callback(entry);
+                }
+            });
+            return;
+        }
+        callback(material);
+    }
+
+    function applyOverlayMaterialFlags(material, isText) {
+        const THREE = getThreeRuntime();
+        forEachMaterial(material, (entry) => {
+            entry.depthTest = false;
+            entry.depthWrite = false;
+            if (THREE && typeof THREE.DoubleSide !== "undefined") {
+                entry.side = THREE.DoubleSide;
+            }
+            if (isText) {
+                entry.transparent = true;
+                if (typeof entry.alphaTest === "number") {
+                    entry.alphaTest = Math.max(entry.alphaTest || 0, 0.001);
+                }
+            } else if (typeof entry.opacity === "number" && entry.opacity < 1) {
+                entry.transparent = true;
+            } else if (!entry.map && !entry.alphaMap) {
+                entry.transparent = false;
+            }
+            entry.needsUpdate = true;
+        });
+    }
+
     function setOverlayObjectFlags(el) {
         if (!el || !el.object3D) {
             return;
         }
 
-        el.object3D.renderOrder = 999999;
+        const renderOrder = getOverlayRenderOrder(el);
+        const isText = isOverlayTextEntity(el);
+        el.object3D.renderOrder = renderOrder;
         el.object3D.frustumCulled = false;
         if (typeof el.object3D.traverse === "function") {
             el.object3D.traverse((node) => {
-                node.renderOrder = 999999;
+                node.renderOrder = renderOrder;
                 node.frustumCulled = false;
                 if (node.material) {
-                    node.material.depthTest = false;
-                    node.material.depthWrite = false;
-                    node.material.transparent = true;
-                    node.material.needsUpdate = true;
+                    applyOverlayMaterialFlags(node.material, isText);
                 }
             });
         }
+    }
+
+    function bindOverlayFlagRefresh(el) {
+        if (!el || el.__vrodosOverlayFlagRefreshBound) {
+            return;
+        }
+        el.__vrodosOverlayFlagRefreshBound = true;
+        const refresh = function () {
+            queueOverlayObjectFlags(el);
+        };
+        el.addEventListener("loaded", refresh);
+        el.addEventListener("object3dset", refresh);
+        el.addEventListener("componentchanged", function (event) {
+            const name = event && event.detail && event.detail.name;
+            if (!name || name === "text" || name === "material" || name === "geometry") {
+                refresh();
+            }
+        });
+    }
+
+    function queueOverlayObjectFlags(el, frames) {
+        if (!el) {
+            return;
+        }
+        bindOverlayFlagRefresh(el);
+        let remaining = Number.isFinite(Number(frames)) ? Number(frames) : OVERLAY_FLAG_RETRY_FRAMES;
+        const apply = function () {
+            setOverlayObjectFlags(el);
+            remaining -= 1;
+            if (remaining > 0) {
+                requestAnimationFrame(apply);
+            }
+        };
+        requestAnimationFrame(apply);
+    }
+
+    function refreshOverlayTargets(root) {
+        if (!root) {
+            refreshRaycasterObjects();
+            return;
+        }
+        root.querySelectorAll("[data-vrodos-overlay-ui]").forEach((el) => queueOverlayObjectFlags(el));
+        queueRaycasterRefresh();
     }
 
     function getThreeRuntime() {
@@ -327,6 +442,26 @@
         return "0 0 0";
     }
 
+    function normalizeOverlayPosition(position, root) {
+        const normalized = normalizePosition(position);
+        if (!root || !root.getAttribute || root.getAttribute("data-vrodos-overlay-static-anchor") !== "true") {
+            return normalized;
+        }
+
+        const parts = String(normalized).trim().split(/\s+/);
+        if (parts.length < 3) {
+            return normalized;
+        }
+
+        const z = Number(parts[2]);
+        if (!Number.isFinite(z) || z === 0) {
+            return normalized;
+        }
+
+        parts[2] = formatTransformNumber(-Math.abs(z));
+        return parts.join(" ");
+    }
+
     function truncateText(value, maxLength) {
         const text = String(value || "");
         const max = Number(maxLength) || 0;
@@ -410,6 +545,7 @@
         },
 
         setOverlayRaycastMode: function (active) {
+            normalizeVrControllerEntities();
             const raycasters = collectRaycasters();
 
             if (active) {
@@ -449,6 +585,8 @@
             this.raycasterRestore = null;
         },
 
+        refreshRaycasters: refreshRaycasterObjects,
+
         markOverlayTarget: function (el, enabled) {
             if (!el || !el.classList) {
                 return;
@@ -471,7 +609,11 @@
             if (active.root && active.root.parentNode) {
                 active.root.parentNode.removeChild(active.root);
             }
-            this.setOverlayRaycastMode(false);
+            if (active.retargetRaycasters) {
+                this.setOverlayRaycastMode(false);
+            } else {
+                refreshRaycasterObjects();
+            }
             this.lockSceneInteraction(false);
         },
 
@@ -518,18 +660,25 @@
             this.activePanel = {
                 root,
                 cleanup: options.cleanup || null,
-                api: panelApi
+                api: panelApi,
+                locked: options.lockInteraction !== false,
+                retargetRaycasters: options.retargetRaycasters !== false
             };
-            this.lockSceneInteraction(true, { preserveLookInVr: true });
-            this.setOverlayRaycastMode(true);
+            if (this.activePanel.locked) {
+                this.lockSceneInteraction(true, { preserveLookInVr: true });
+            }
+            if (this.activePanel.retargetRaycasters) {
+                this.setOverlayRaycastMode(true);
+            } else {
+                normalizeVrControllerEntities();
+            }
 
             if (typeof options.render === "function") {
                 options.render(panelApi);
             }
 
             requestAnimationFrame(() => {
-                root.querySelectorAll("[data-vrodos-overlay-ui]").forEach(setOverlayObjectFlags);
-                setOverlayObjectFlags(root);
+                refreshOverlayTargets(root);
             });
 
             return panelApi;
@@ -550,14 +699,19 @@
                     }
                 },
 
+                refreshTargets: function () {
+                    refreshOverlayTargets(root);
+                },
+
                 addPlane: function (parent, attrs) {
                     const options = attrs || {};
                     const plane = createEntity("a-plane", {
-                        position: normalizePosition(options.position),
+                        position: normalizeOverlayPosition(options.position, root),
                         width: options.width || "1",
                         height: options.height || "1",
-                        material: options.material || "shader: flat; color: #ffffff; transparent: true; opacity: 1; depthTest: false; depthWrite: false",
-                        "data-vrodos-overlay-ui": "true"
+                        material: options.material || "shader: flat; color: #ffffff; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false",
+                        "data-vrodos-overlay-ui": "true",
+                        "data-vrodos-overlay-layer": String(options.layer || OVERLAY_LAYER_SURFACE)
                     });
                     if (options.id) {
                         plane.id = options.id;
@@ -572,14 +726,14 @@
                         plane.addEventListener("click", options.onClick);
                     }
                     (parent || root).appendChild(plane);
-                    requestAnimationFrame(() => setOverlayObjectFlags(plane));
+                    queueOverlayObjectFlags(plane);
                     return plane;
                 },
 
                 addText: function (parent, attrs) {
                     const options = attrs || {};
                     const text = createEntity("a-text", {
-                        position: normalizePosition(options.position),
+                        position: normalizeOverlayPosition(options.position, root),
                         value: truncateText(options.value || "", options.maxLength || 0),
                         color: options.color || "#0f172a",
                         align: options.align || "left",
@@ -587,14 +741,18 @@
                         baseline: options.baseline || "center",
                         width: options.width || "2",
                         "wrap-count": options.wrapCount || "32",
+                        side: "double",
+                        transparent: "true",
+                        opacity: "1",
+                        "alpha-test": "0.001",
                         "data-vrodos-overlay-ui": "true",
-                        material: "depthTest: false; depthWrite: false"
+                        "data-vrodos-overlay-layer": String(options.layer || OVERLAY_LAYER_TEXT)
                     });
                     if (options.scale) {
                         text.setAttribute("scale", options.scale);
                     }
                     (parent || root).appendChild(text);
-                    requestAnimationFrame(() => setOverlayObjectFlags(text));
+                    queueOverlayObjectFlags(text);
                     return text;
                 },
 
@@ -604,13 +762,16 @@
                     const background = disabled
                         ? (options.disabledColor || "#cbd5e1")
                         : (options.color || "#5cc887");
+                    const opacity = disabled ? "0.65" : "1";
+                    const transparent = disabled ? "true" : "false";
                     const button = this.addPlane(parent, {
                         id: options.id,
                         position: options.position || "0 0 0",
                         width: options.width || 0.48,
                         height: options.height || 0.18,
                         target: !disabled,
-                        material: "shader: flat; color: " + background + "; transparent: true; opacity: " + (disabled ? "0.55" : "1") + "; depthTest: false; depthWrite: false",
+                        layer: options.layer || OVERLAY_LAYER_CONTROL,
+                        material: "shader: flat; color: " + background + "; side: double; transparent: " + transparent + "; opacity: " + opacity + "; depthTest: false; depthWrite: false",
                         onClick: disabled ? null : options.onClick
                     });
                     button.setAttribute("data-vrodos-overlay-button", "true");
@@ -624,7 +785,8 @@
                         width: Math.max(0.8, Number(options.width || 0.48) * 4),
                         wrapCount: options.wrapCount || "18",
                         maxLength: options.maxLength || 70,
-                        scale: options.textScale || "0.45 0.45 0.45"
+                        scale: options.textScale || "0.45 0.45 0.45",
+                        layer: (options.textLayer || OVERLAY_LAYER_TEXT)
                     });
                     return button;
                 },
@@ -635,7 +797,8 @@
                         position: options.position || "0 0 0",
                         width: options.width || 1,
                         height: options.height || 0.6,
-                        material: "shader: flat; src: url(" + String(options.src || "").replace(/\)/g, "%29") + "); transparent: true; opacity: 1; depthTest: false; depthWrite: false"
+                        layer: options.layer || OVERLAY_LAYER_SURFACE,
+                        material: "shader: flat; src: url(" + String(options.src || "").replace(/\)/g, "%29") + "); side: double; transparent: true; opacity: 1; depthTest: false; depthWrite: false"
                     });
                 },
 
@@ -648,13 +811,15 @@
                         position: "0 0 0",
                         width: panelWidth,
                         height: panelHeight,
-                        material: "shader: flat; color: " + (options.background || "#f8fafc") + "; transparent: true; opacity: 0.97; depthTest: false; depthWrite: false"
+                        layer: OVERLAY_LAYER_BACKGROUND,
+                        material: "shader: flat; color: " + (options.background || "#f8fafc") + "; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
                     });
                     this.addPlane(root, {
                         position: "0 " + ((panelHeight / 2) - 0.18) + " 0.006",
                         width: panelWidth,
                         height: 0.36,
-                        material: "shader: flat; color: " + (options.headerColor || "#0f172a") + "; transparent: true; opacity: 0.96; depthTest: false; depthWrite: false"
+                        layer: OVERLAY_LAYER_SURFACE,
+                        material: "shader: flat; color: " + (options.headerColor || "#0f172a") + "; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
                     });
                     this.addText(root, {
                         position: (-panelWidth / 2 + 0.16) + " " + ((panelHeight / 2) - 0.18) + " 0.02",
@@ -694,6 +859,7 @@
             panelApi.addImage = panelApi.addImage.bind(panelApi);
             panelApi.drawFrame = panelApi.drawFrame.bind(panelApi);
             panelApi.clear = panelApi.clear.bind(panelApi);
+            panelApi.refreshTargets = panelApi.refreshTargets.bind(panelApi);
 
             panelApi.markTarget = overlayApi.markOverlayTarget.bind(overlayApi);
             return panelApi;

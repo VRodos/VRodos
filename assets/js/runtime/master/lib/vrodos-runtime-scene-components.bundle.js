@@ -3,11 +3,18 @@
   (function() {
     "use strict";
     const RAYCAST_TARGET_CLASS = "vrodos-overlay-hit-target";
+    const OVERLAY_RENDER_BASE = 1e5;
+    const OVERLAY_LAYER_BACKGROUND = 10;
+    const OVERLAY_LAYER_SURFACE = 20;
+    const OVERLAY_LAYER_CONTROL = 40;
+    const OVERLAY_LAYER_TEXT = 80;
+    const OVERLAY_FLAG_RETRY_FRAMES = 8;
     const RAYCASTER_SELECTORS = [
       "#cursor",
       "#oculusRight",
       "#oculusLeft",
       "[laser-controls][raycaster]",
+      "[meta-touch-controls][raycaster]",
       "[oculus-touch-controls][raycaster]",
       "[raycaster]"
     ];
@@ -104,6 +111,24 @@
       attr.objects = selector;
       el.setAttribute("raycaster", serializeComponentAttribute(attr));
     }
+    function refreshRaycasterObjects() {
+      collectRaycasters().forEach((el) => {
+        if (el.components && el.components.raycaster && typeof el.components.raycaster.refreshObjects === "function") {
+          el.components.raycaster.refreshObjects();
+        }
+      });
+    }
+    function queueRaycasterRefresh(frames) {
+      let remaining = Number.isFinite(Number(frames)) ? Number(frames) : OVERLAY_FLAG_RETRY_FRAMES;
+      const refresh = function() {
+        refreshRaycasterObjects();
+        remaining -= 1;
+        if (remaining > 0) {
+          requestAnimationFrame(refresh);
+        }
+      };
+      requestAnimationFrame(refresh);
+    }
     function collectRaycasters() {
       const seen = /* @__PURE__ */ new Set();
       const result = [];
@@ -160,24 +185,105 @@
       });
       return el;
     }
+    function getOverlayRenderOrder(el) {
+      const layer = el && el.getAttribute ? Number(el.getAttribute("data-vrodos-overlay-layer")) : 0;
+      return OVERLAY_RENDER_BASE + (Number.isFinite(layer) ? layer : 0);
+    }
+    function isOverlayTextEntity(el) {
+      return Boolean(el && el.tagName && String(el.tagName).toLowerCase() === "a-text");
+    }
+    function forEachMaterial(material, callback) {
+      if (!material) {
+        return;
+      }
+      if (Array.isArray(material)) {
+        material.forEach((entry) => {
+          if (entry) {
+            callback(entry);
+          }
+        });
+        return;
+      }
+      callback(material);
+    }
+    function applyOverlayMaterialFlags(material, isText) {
+      const THREE2 = getThreeRuntime();
+      forEachMaterial(material, (entry) => {
+        entry.depthTest = false;
+        entry.depthWrite = false;
+        if (THREE2 && typeof THREE2.DoubleSide !== "undefined") {
+          entry.side = THREE2.DoubleSide;
+        }
+        if (isText) {
+          entry.transparent = true;
+          if (typeof entry.alphaTest === "number") {
+            entry.alphaTest = Math.max(entry.alphaTest || 0, 1e-3);
+          }
+        } else if (typeof entry.opacity === "number" && entry.opacity < 1) {
+          entry.transparent = true;
+        } else if (!entry.map && !entry.alphaMap) {
+          entry.transparent = false;
+        }
+        entry.needsUpdate = true;
+      });
+    }
     function setOverlayObjectFlags(el) {
       if (!el || !el.object3D) {
         return;
       }
-      el.object3D.renderOrder = 999999;
+      const renderOrder = getOverlayRenderOrder(el);
+      const isText = isOverlayTextEntity(el);
+      el.object3D.renderOrder = renderOrder;
       el.object3D.frustumCulled = false;
       if (typeof el.object3D.traverse === "function") {
         el.object3D.traverse((node) => {
-          node.renderOrder = 999999;
+          node.renderOrder = renderOrder;
           node.frustumCulled = false;
           if (node.material) {
-            node.material.depthTest = false;
-            node.material.depthWrite = false;
-            node.material.transparent = true;
-            node.material.needsUpdate = true;
+            applyOverlayMaterialFlags(node.material, isText);
           }
         });
       }
+    }
+    function bindOverlayFlagRefresh(el) {
+      if (!el || el.__vrodosOverlayFlagRefreshBound) {
+        return;
+      }
+      el.__vrodosOverlayFlagRefreshBound = true;
+      const refresh = function() {
+        queueOverlayObjectFlags(el);
+      };
+      el.addEventListener("loaded", refresh);
+      el.addEventListener("object3dset", refresh);
+      el.addEventListener("componentchanged", function(event) {
+        const name = event && event.detail && event.detail.name;
+        if (!name || name === "text" || name === "material" || name === "geometry") {
+          refresh();
+        }
+      });
+    }
+    function queueOverlayObjectFlags(el, frames) {
+      if (!el) {
+        return;
+      }
+      bindOverlayFlagRefresh(el);
+      let remaining = Number.isFinite(Number(frames)) ? Number(frames) : OVERLAY_FLAG_RETRY_FRAMES;
+      const apply = function() {
+        setOverlayObjectFlags(el);
+        remaining -= 1;
+        if (remaining > 0) {
+          requestAnimationFrame(apply);
+        }
+      };
+      requestAnimationFrame(apply);
+    }
+    function refreshOverlayTargets(root) {
+      if (!root) {
+        refreshRaycasterObjects();
+        return;
+      }
+      root.querySelectorAll("[data-vrodos-overlay-ui]").forEach((el) => queueOverlayObjectFlags(el));
+      queueRaycasterRefresh();
     }
     function getThreeRuntime() {
       return window.THREE || window.AFRAME && window.AFRAME.THREE || null;
@@ -270,6 +376,22 @@
       }
       return "0 0 0";
     }
+    function normalizeOverlayPosition(position, root) {
+      const normalized = normalizePosition(position);
+      if (!root || !root.getAttribute || root.getAttribute("data-vrodos-overlay-static-anchor") !== "true") {
+        return normalized;
+      }
+      const parts = String(normalized).trim().split(/\s+/);
+      if (parts.length < 3) {
+        return normalized;
+      }
+      const z = Number(parts[2]);
+      if (!Number.isFinite(z) || z === 0) {
+        return normalized;
+      }
+      parts[2] = formatTransformNumber(-Math.abs(z));
+      return parts.join(" ");
+    }
     function truncateText(value, maxLength) {
       const text = String(value || "");
       const max = Number(maxLength) || 0;
@@ -341,6 +463,7 @@
         }
       },
       setOverlayRaycastMode: function(active) {
+        normalizeVrControllerEntities();
         const raycasters = collectRaycasters();
         if (active) {
           if (!this.raycasterRestore) {
@@ -375,6 +498,7 @@
         });
         this.raycasterRestore = null;
       },
+      refreshRaycasters: refreshRaycasterObjects,
       markOverlayTarget: function(el, enabled) {
         if (!el || !el.classList) {
           return;
@@ -395,7 +519,11 @@
         if (active.root && active.root.parentNode) {
           active.root.parentNode.removeChild(active.root);
         }
-        this.setOverlayRaycastMode(false);
+        if (active.retargetRaycasters) {
+          this.setOverlayRaycastMode(false);
+        } else {
+          refreshRaycasterObjects();
+        }
         this.lockSceneInteraction(false);
       },
       openVrPanel: function(config) {
@@ -436,16 +564,23 @@
         this.activePanel = {
           root,
           cleanup: options.cleanup || null,
-          api: panelApi
+          api: panelApi,
+          locked: options.lockInteraction !== false,
+          retargetRaycasters: options.retargetRaycasters !== false
         };
-        this.lockSceneInteraction(true, { preserveLookInVr: true });
-        this.setOverlayRaycastMode(true);
+        if (this.activePanel.locked) {
+          this.lockSceneInteraction(true, { preserveLookInVr: true });
+        }
+        if (this.activePanel.retargetRaycasters) {
+          this.setOverlayRaycastMode(true);
+        } else {
+          normalizeVrControllerEntities();
+        }
         if (typeof options.render === "function") {
           options.render(panelApi);
         }
         requestAnimationFrame(() => {
-          root.querySelectorAll("[data-vrodos-overlay-ui]").forEach(setOverlayObjectFlags);
-          setOverlayObjectFlags(root);
+          refreshOverlayTargets(root);
         });
         return panelApi;
       },
@@ -462,14 +597,18 @@
               root.removeChild(root.firstChild);
             }
           },
+          refreshTargets: function() {
+            refreshOverlayTargets(root);
+          },
           addPlane: function(parent, attrs) {
             const options2 = attrs || {};
             const plane = createEntity("a-plane", {
-              position: normalizePosition(options2.position),
+              position: normalizeOverlayPosition(options2.position, root),
               width: options2.width || "1",
               height: options2.height || "1",
-              material: options2.material || "shader: flat; color: #ffffff; transparent: true; opacity: 1; depthTest: false; depthWrite: false",
-              "data-vrodos-overlay-ui": "true"
+              material: options2.material || "shader: flat; color: #ffffff; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false",
+              "data-vrodos-overlay-ui": "true",
+              "data-vrodos-overlay-layer": String(options2.layer || OVERLAY_LAYER_SURFACE)
             });
             if (options2.id) {
               plane.id = options2.id;
@@ -484,13 +623,13 @@
               plane.addEventListener("click", options2.onClick);
             }
             (parent || root).appendChild(plane);
-            requestAnimationFrame(() => setOverlayObjectFlags(plane));
+            queueOverlayObjectFlags(plane);
             return plane;
           },
           addText: function(parent, attrs) {
             const options2 = attrs || {};
             const text = createEntity("a-text", {
-              position: normalizePosition(options2.position),
+              position: normalizeOverlayPosition(options2.position, root),
               value: truncateText(options2.value || "", options2.maxLength || 0),
               color: options2.color || "#0f172a",
               align: options2.align || "left",
@@ -498,27 +637,34 @@
               baseline: options2.baseline || "center",
               width: options2.width || "2",
               "wrap-count": options2.wrapCount || "32",
+              side: "double",
+              transparent: "true",
+              opacity: "1",
+              "alpha-test": "0.001",
               "data-vrodos-overlay-ui": "true",
-              material: "depthTest: false; depthWrite: false"
+              "data-vrodos-overlay-layer": String(options2.layer || OVERLAY_LAYER_TEXT)
             });
             if (options2.scale) {
               text.setAttribute("scale", options2.scale);
             }
             (parent || root).appendChild(text);
-            requestAnimationFrame(() => setOverlayObjectFlags(text));
+            queueOverlayObjectFlags(text);
             return text;
           },
           addButton: function(parent, attrs) {
             const options2 = attrs || {};
             const disabled = Boolean(options2.disabled);
             const background = disabled ? options2.disabledColor || "#cbd5e1" : options2.color || "#5cc887";
+            const opacity = disabled ? "0.65" : "1";
+            const transparent = disabled ? "true" : "false";
             const button = this.addPlane(parent, {
               id: options2.id,
               position: options2.position || "0 0 0",
               width: options2.width || 0.48,
               height: options2.height || 0.18,
               target: !disabled,
-              material: "shader: flat; color: " + background + "; transparent: true; opacity: " + (disabled ? "0.55" : "1") + "; depthTest: false; depthWrite: false",
+              layer: options2.layer || OVERLAY_LAYER_CONTROL,
+              material: "shader: flat; color: " + background + "; side: double; transparent: " + transparent + "; opacity: " + opacity + "; depthTest: false; depthWrite: false",
               onClick: disabled ? null : options2.onClick
             });
             button.setAttribute("data-vrodos-overlay-button", "true");
@@ -532,7 +678,8 @@
               width: Math.max(0.8, Number(options2.width || 0.48) * 4),
               wrapCount: options2.wrapCount || "18",
               maxLength: options2.maxLength || 70,
-              scale: options2.textScale || "0.45 0.45 0.45"
+              scale: options2.textScale || "0.45 0.45 0.45",
+              layer: options2.textLayer || OVERLAY_LAYER_TEXT
             });
             return button;
           },
@@ -542,7 +689,8 @@
               position: options2.position || "0 0 0",
               width: options2.width || 1,
               height: options2.height || 0.6,
-              material: "shader: flat; src: url(" + String(options2.src || "").replace(/\)/g, "%29") + "); transparent: true; opacity: 1; depthTest: false; depthWrite: false"
+              layer: options2.layer || OVERLAY_LAYER_SURFACE,
+              material: "shader: flat; src: url(" + String(options2.src || "").replace(/\)/g, "%29") + "); side: double; transparent: true; opacity: 1; depthTest: false; depthWrite: false"
             });
           },
           drawFrame: function(attrs) {
@@ -554,13 +702,15 @@
               position: "0 0 0",
               width: panelWidth,
               height: panelHeight,
-              material: "shader: flat; color: " + (options2.background || "#f8fafc") + "; transparent: true; opacity: 0.97; depthTest: false; depthWrite: false"
+              layer: OVERLAY_LAYER_BACKGROUND,
+              material: "shader: flat; color: " + (options2.background || "#f8fafc") + "; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
             });
             this.addPlane(root, {
               position: "0 " + (panelHeight / 2 - 0.18) + " 0.006",
               width: panelWidth,
               height: 0.36,
-              material: "shader: flat; color: " + (options2.headerColor || "#0f172a") + "; transparent: true; opacity: 0.96; depthTest: false; depthWrite: false"
+              layer: OVERLAY_LAYER_SURFACE,
+              material: "shader: flat; color: " + (options2.headerColor || "#0f172a") + "; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
             });
             this.addText(root, {
               position: -panelWidth / 2 + 0.16 + " " + (panelHeight / 2 - 0.18) + " 0.02",
@@ -599,6 +749,7 @@
         panelApi.addImage = panelApi.addImage.bind(panelApi);
         panelApi.drawFrame = panelApi.drawFrame.bind(panelApi);
         panelApi.clear = panelApi.clear.bind(panelApi);
+        panelApi.refreshTargets = panelApi.refreshTargets.bind(panelApi);
         panelApi.markTarget = overlayApi.markOverlayTarget.bind(overlayApi);
         return panelApi;
       }
@@ -1729,6 +1880,7 @@
       this.video = this.ensureVideoElement();
       this.applyWorldVideoMaterial();
       this.onVideoClick = this.onVideoClick.bind(this);
+      this.onPlayHintClick = this.onPlayHintClick.bind(this);
       this.onFullScreenClick = this.onFullScreenClick.bind(this);
       this.exitPanel = this.exitPanel.bind(this);
       this.playVideo = this.playVideo.bind(this);
@@ -1745,6 +1897,9 @@
       this.video.addEventListener("pause", () => this.updateInlinePlayHint());
       if (this.videoSourceUrl) {
         this.videoDisplay.addEventListener("click", this.onVideoClick);
+        if (this.playHintEl) {
+          this.playHintEl.addEventListener("click", this.onPlayHintClick);
+        }
       }
       if (!window.VRODOSRuntimeOverlay && this.cam && this.videoPanel && this.videoPanel.parentNode !== this.cam) {
         this.cam.appendChild(this.videoPanel);
@@ -1797,145 +1952,6 @@
       if (this.cursorEl) this.cursorEl.setAttribute("raycaster", "objects: " + targetClass);
       if (this.leftHand) this.leftHand.setAttribute("raycaster", "objects: " + targetClass);
       if (this.rightHand) this.rightHand.setAttribute("raycaster", "objects: " + targetClass);
-    },
-    getVideoTitle: function() {
-      if (!this.titEl || !this.titEl.hasAttribute || !this.titEl.hasAttribute("text")) {
-        return "Video";
-      }
-      const titleAttr = this.titEl.getAttribute("text");
-      return titleAttr && titleAttr.value ? titleAttr.value : "Video";
-    },
-    hideLegacyVrPanel: function() {
-      this.panelElems.forEach((elem) => window.VRODOS_VIDEO_MANAGER.setEntityState(elem, false, true, 1));
-      window.VRODOS_VIDEO_MANAGER.setEntityState(this.titEl, false, true, 1);
-      this.markOverlayTargets(false);
-    },
-    playVideoElementSafely: function() {
-      if (!this.video) {
-        return null;
-      }
-      const playPromise = this.video.play();
-      if (playPromise && typeof playPromise.catch === "function") {
-        playPromise.catch((error) => console.warn("VR video playback prevented:", error));
-      }
-      return playPromise || null;
-    },
-    toggleVrPanelPlayback: function(panelApi) {
-      this.primeVideoForPlayback();
-      if (this.video.paused) {
-        this.playVideoElementSafely();
-      } else {
-        this.video.pause();
-      }
-      this.syncUI();
-      requestAnimationFrame(() => this.renderVrVideoPanel(panelApi));
-    },
-    openVrVideoPanel: function() {
-      if (!window.VRODOSRuntimeOverlay || typeof window.VRODOSRuntimeOverlay.openVrPanel !== "function") {
-        this.restorePanel();
-        return;
-      }
-      this.hideLegacyVrPanel();
-      this.primeVideoForPlayback();
-      this.vrVideoPanelExpanded = false;
-      const panelApi = window.VRODOSRuntimeOverlay.openVrPanel({
-        id: "vrodos-video-vr-panel-" + this.data.id,
-        width: 2.55,
-        height: 1.65,
-        distance: 2.45,
-        verticalOffset: -0.04,
-        cleanup: () => {
-          if (this.video && !this.video.paused) {
-            this.video.pause();
-          }
-          this.vrVideoPanelApi = null;
-          this.vrVideoPanelExpanded = false;
-          this.applyWorldVideoMaterial();
-          this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
-          this.markOverlayTargets(false);
-          this.syncUI();
-        },
-        render: (api) => {
-          this.vrVideoPanelApi = api;
-          this.renderVrVideoPanel(api);
-        }
-      });
-      if (panelApi) {
-        const playPromise = this.playVideoElementSafely();
-        this.syncUI();
-        if (playPromise && typeof playPromise.then === "function") {
-          playPromise.then(() => this.renderVrVideoPanel(panelApi)).catch(() => this.renderVrVideoPanel(panelApi));
-        } else {
-          requestAnimationFrame(() => this.renderVrVideoPanel(panelApi));
-        }
-      }
-    },
-    renderVrVideoPanel: function(panelApi) {
-      if (!panelApi) {
-        return;
-      }
-      const expanded = Boolean(this.vrVideoPanelExpanded);
-      const panelWidth = expanded ? 3.25 : 2.55;
-      const panelHeight = expanded ? 1.95 : 1.65;
-      const content = panelApi.drawFrame({
-        width: panelWidth,
-        height: panelHeight,
-        title: this.getVideoTitle(),
-        background: "#020617",
-        headerColor: "#111827"
-      });
-      const videoHeight = Math.max(0.72, content.height - 0.28);
-      const videoWidth = Math.min(content.width, videoHeight * (16 / 9));
-      const videoY = content.bottom + content.height / 2 + 0.07;
-      panelApi.addPlane(panelApi.root, {
-        position: "0 0 0.012",
-        width: panelWidth + 1.1,
-        height: panelHeight + 0.85,
-        target: true,
-        material: "shader: flat; color: #000000; transparent: true; opacity: 0.001; depthTest: false; depthWrite: false",
-        onClick: panelApi.close
-      });
-      panelApi.addPlane(panelApi.root, {
-        position: "0 " + videoY + " 0.03",
-        width: videoWidth,
-        height: videoHeight,
-        target: true,
-        material: this.getOverlayVideoMaterial(this.video_id),
-        onClick: () => {
-          if (this.video && !this.video.paused) {
-            this.video.pause();
-            this.syncUI();
-            requestAnimationFrame(() => this.renderVrVideoPanel(panelApi));
-          }
-        }
-      });
-      panelApi.addButton(panelApi.root, {
-        position: -panelWidth / 2 + 0.42 + " " + (content.bottom + 0.08) + " 0.045",
-        width: 0.52,
-        height: 0.18,
-        label: this.video && this.video.paused ? "Play" : "Pause",
-        color: "#16a34a",
-        onClick: () => this.toggleVrPanelPlayback(panelApi)
-      });
-      panelApi.addButton(panelApi.root, {
-        position: "0 " + (content.bottom + 0.08) + " 0.045",
-        width: 0.58,
-        height: 0.18,
-        label: expanded ? "Smaller" : "Larger",
-        color: "#2563eb",
-        onClick: () => {
-          this.vrVideoPanelExpanded = !this.vrVideoPanelExpanded;
-          this.renderVrVideoPanel(panelApi);
-        }
-      });
-      panelApi.addButton(panelApi.root, {
-        position: panelWidth / 2 - 0.42 + " " + (content.bottom + 0.08) + " 0.045",
-        width: 0.52,
-        height: 0.18,
-        label: "Close",
-        color: "#ef4444",
-        onClick: panelApi.close
-      });
     },
     checkAutoplay: function() {
       if (this.video.getAttribute("autoplay-manual") === "true") {
@@ -2039,6 +2055,7 @@
       if (!this.playHintEl) return;
       var shouldShow = !this.videoPrimed || !this.video || this.video.paused;
       this.playHintEl.setAttribute("visible", shouldShow ? "true" : "false");
+      this.playHintEl.classList.toggle("raycastable", shouldShow);
     },
     tuneVideoTexture: function() {
       if (!this.videoDisplay || !this.videoDisplay.getObject3D || typeof THREE === "undefined") return;
@@ -2156,7 +2173,10 @@
     playVideo: function() {
       this.primeVideoForPlayback();
       if (this.video.paused) {
-        this.video.play();
+        const playPromise = this.video.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch((error) => console.warn("VR video playback prevented:", error));
+        }
         this.trackEvent("poivideo_video_play_vr");
       } else {
         this.video.pause();
@@ -2261,8 +2281,14 @@
           this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
           window.VRODOS_VIDEO_MANAGER.toggleVideoEnvironment(this.backgroundEl, false);
         }
-        this.openVrVideoPanel();
+        this.playVideo();
       }
+    },
+    onPlayHintClick: function(evt) {
+      if (evt && typeof evt.stopPropagation === "function") {
+        evt.stopPropagation();
+      }
+      this.onVideoClick(evt || {});
     },
     onFullScreenClick: function() {
       this.primeVideoForPlayback();
@@ -2650,7 +2676,10 @@
         continueButton: null,
         initialized: false,
         promptScheduled: false,
-        vrPromptActive: false
+        vrPromptActive: false,
+        vrPanelApi: null,
+        levelApplied: false,
+        presentationEventsBound: false
       };
       runtime.register = function(element) {
         if (!element || runtime.elements.includes(element)) {
@@ -2659,6 +2688,10 @@
         runtime.elements.push(element);
         element.removeAttribute("data-vrodos-delayed-reveal");
         setCefrControlledVisible(element, false);
+        if (runtime.levelApplied && runtime.selectedLevel) {
+          setCefrControlledVisible(element, runtime.matchesLevel(element, runtime.selectedLevel));
+          return;
+        }
         runtime.schedulePrompt();
       };
       runtime.matchesLevel = function(element, level) {
@@ -2677,6 +2710,7 @@
         if (!normalizedLevel) {
           return;
         }
+        runtime.levelApplied = true;
         runtime.elements.forEach((element) => {
           setCefrControlledVisible(element, runtime.matchesLevel(element, normalizedLevel));
         });
@@ -2771,6 +2805,23 @@
         runtime.initialized = true;
         runtime.selectLevel(runtime.selectedLevel || "");
       };
+      runtime.isImmersiveVrActive = function() {
+        const overlayApi = window.VRODOSRuntimeOverlay || null;
+        if (overlayApi && typeof overlayApi.getPresentationMode === "function") {
+          return overlayApi.getPresentationMode() === "immersive-xr";
+        }
+        const scene = document.querySelector("a-scene");
+        return Boolean(scene && scene.renderer && scene.renderer.xr && scene.renderer.xr.isPresenting);
+      };
+      runtime.hideDomPrompt = function() {
+        if (runtime.root) {
+          runtime.root.style.display = "none";
+        }
+        const host = document.getElementById("vrodos-runtime-overlay-host");
+        if (host && !host.querySelector("dialog[open]")) {
+          host.style.pointerEvents = "none";
+        }
+      };
       runtime.selectLevel = function(level) {
         runtime.selectedLevel = normalizeLevel(level);
         Object.entries(runtime.levelButtons || {}).forEach(([buttonLevel, button]) => {
@@ -2786,76 +2837,140 @@
           runtime.continueButton.style.pointerEvents = enabled ? "auto" : "none";
         }
       };
+      runtime.renderVrPrompt = function(api) {
+        const panelApi = api || runtime.vrPanelApi;
+        if (!panelApi) {
+          return;
+        }
+        const width = 2.42;
+        const height = 1.42;
+        panelApi.clear();
+        panelApi.addPlane(panelApi.root, {
+          position: "0 0 0",
+          width,
+          height,
+          layer: 10,
+          material: "shader: flat; color: #f8fafc; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
+        });
+        panelApi.addPlane(panelApi.root, {
+          position: "0 0.48 0.01",
+          width,
+          height: 0.34,
+          layer: 20,
+          material: "shader: flat; color: #0f172a; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
+        });
+        panelApi.addText(panelApi.root, {
+          position: "-1.04 0.54 0.025",
+          value: "CEFR Level",
+          color: "#93c5fd",
+          align: "left",
+          anchor: "left",
+          width: 1.8,
+          wrapCount: "28",
+          scale: "0.34 0.34 0.34"
+        });
+        panelApi.addText(panelApi.root, {
+          position: "-1.04 0.42 0.025",
+          value: "Choose your level",
+          color: "#ffffff",
+          align: "left",
+          anchor: "left",
+          width: 2,
+          wrapCount: "28",
+          scale: "0.52 0.52 0.52"
+        });
+        panelApi.addText(panelApi.root, {
+          position: "-1.04 0.18 0.025",
+          value: "Use your controller ray or gaze cursor to select a level, then start the experience.",
+          color: "#334155",
+          align: "left",
+          anchor: "left",
+          width: 2.05,
+          wrapCount: "50",
+          maxLength: 160,
+          scale: "0.32 0.32 0.32"
+        });
+        CEFR_LEVELS.forEach((level, index) => {
+          const active = level === runtime.selectedLevel;
+          panelApi.addButton(panelApi.root, {
+            position: -0.75 + index * 0.5 + " -0.12 0.04",
+            width: 0.38,
+            height: 0.26,
+            label: level,
+            color: active ? "#bbf7d0" : "#ffffff",
+            textColor: active ? "#166534" : "#0f172a",
+            textScale: "0.5 0.5 0.5",
+            wrapCount: "4",
+            onClick: function() {
+              runtime.selectedLevel = level;
+              runtime.renderVrPrompt(panelApi);
+            }
+          });
+        });
+        panelApi.addButton(panelApi.root, {
+          position: "0 -0.48 0.04",
+          width: 1.02,
+          height: 0.22,
+          label: "Start experience",
+          disabled: !runtime.selectedLevel,
+          color: "#5cc887",
+          textScale: "0.36 0.36 0.36",
+          onClick: function() {
+            if (!runtime.selectedLevel) {
+              return;
+            }
+            runtime.applyLevel(runtime.selectedLevel);
+            runtime.hidePrompt();
+          }
+        });
+        if (typeof panelApi.refreshTargets === "function") {
+          panelApi.refreshTargets();
+        }
+      };
       runtime.showVrPrompt = function() {
         const overlayApi = window.VRODOSRuntimeOverlay || null;
         if (!overlayApi || !overlayApi.shouldUseVrPanel || !overlayApi.shouldUseVrPanel()) {
           return false;
         }
+        runtime.hideDomPrompt();
+        if (runtime.vrPromptActive && runtime.vrPanelApi) {
+          runtime.renderVrPrompt(runtime.vrPanelApi);
+          return true;
+        }
         runtime.vrPromptActive = true;
-        overlayApi.openVrPanel({
+        runtime.vrPanelApi = overlayApi.openVrPanel({
           id: "vrodos-immerse-cefr-vr-overlay",
-          width: 2.2,
-          height: 1.35,
-          distance: 2.2,
+          width: 2.42,
+          height: 1.42,
+          distance: 3.05,
+          verticalOffset: -0.08,
+          lockInteraction: false,
+          retargetRaycasters: false,
           cleanup: function() {
             runtime.vrPromptActive = false;
+            runtime.vrPanelApi = null;
           },
           render: function(api) {
-            const bounds = api.drawFrame({
-              title: "Choose CEFR level",
-              width: 2.2,
-              height: 1.35,
-              onClose: function() {
-                overlayApi.closeActivePanel("cefr-close");
-              }
-            });
-            api.addText(api.root, {
-              position: bounds.left + " " + (bounds.top - 0.05) + " 0.03",
-              value: "Select the level for this experience.",
-              color: "#334155",
-              align: "left",
-              anchor: "left",
-              width: bounds.width,
-              wrapCount: "42",
-              scale: "0.4 0.4 0.4"
-            });
-            CEFR_LEVELS.forEach((level, index) => {
-              const active = level === runtime.selectedLevel;
-              api.addButton(api.root, {
-                position: -0.66 + index * 0.44 + " " + (bounds.top - 0.36) + " 0.04",
-                width: 0.34,
-                height: 0.24,
-                label: level,
-                color: active ? "#bbf7d0" : "#ffffff",
-                textColor: active ? "#166534" : "#0f172a",
-                textScale: "0.48 0.48 0.48",
-                onClick: function() {
-                  runtime.selectedLevel = level;
-                  runtime.showVrPrompt();
-                }
-              });
-            });
-            api.addButton(api.root, {
-              position: "0 " + (bounds.bottom + 0.08) + " 0.04",
-              width: 0.78,
-              height: 0.2,
-              label: "Start experience",
-              disabled: !runtime.selectedLevel,
-              color: "#5cc887",
-              onClick: function() {
-                if (!runtime.selectedLevel) {
-                  return;
-                }
-                runtime.applyLevel(runtime.selectedLevel);
-                runtime.hidePrompt();
-              }
-            });
+            runtime.vrPanelApi = api;
+            runtime.renderVrPrompt(api);
           }
         });
-        return true;
+        if (!runtime.vrPanelApi) {
+          runtime.vrPromptActive = false;
+        }
+        return Boolean(runtime.vrPanelApi);
       };
       runtime.showPrompt = function() {
         if (runtime.showVrPrompt()) {
+          return;
+        }
+        if (runtime.isImmersiveVrActive()) {
+          runtime.hideDomPrompt();
+          window.setTimeout(() => {
+            if (!runtime.levelApplied) {
+              runtime.showPrompt();
+            }
+          }, 180);
           return;
         }
         runtime.ensureUi();
@@ -2867,20 +2982,41 @@
         if (runtime.vrPromptActive && window.VRODOSRuntimeOverlay) {
           window.VRODOSRuntimeOverlay.closeActivePanel("cefr-start");
           runtime.vrPromptActive = false;
+          runtime.vrPanelApi = null;
         }
-        if (runtime.root) {
-          runtime.root.style.display = "none";
+        runtime.hideDomPrompt();
+      };
+      runtime.bindPresentationEvents = function() {
+        if (runtime.presentationEventsBound) {
+          return;
         }
-        const host = document.getElementById("vrodos-runtime-overlay-host");
-        if (host && !host.querySelector("dialog[open]")) {
-          host.style.pointerEvents = "none";
-        }
+        const bind = function() {
+          const scene = document.querySelector("a-scene");
+          if (!scene) {
+            window.setTimeout(bind, 120);
+            return;
+          }
+          runtime.presentationEventsBound = true;
+          scene.addEventListener("enter-vr", () => {
+            if (!runtime.levelApplied && runtime.elements.length) {
+              window.setTimeout(() => runtime.showPrompt(), 160);
+            }
+          });
+          scene.addEventListener("exit-vr", () => {
+            if (!runtime.levelApplied && runtime.vrPromptActive) {
+              runtime.hidePrompt();
+              window.setTimeout(() => runtime.showPrompt(), 120);
+            }
+          });
+        };
+        bind();
       };
       runtime.schedulePrompt = function() {
         if (runtime.promptScheduled) {
           return;
         }
         runtime.promptScheduled = true;
+        runtime.bindPresentationEvents();
         const waitForSceneReady = () => {
           const scene = document.querySelector("a-scene");
           const loaderOverlay = document.getElementById("vrodos-scene-loader-overlay");
@@ -4114,7 +4250,7 @@
         position: "0 " + bounds.top + " 0.02",
         width: bounds.width,
         height: 0.17,
-        material: "shader: flat; color: #e0f2fe; transparent: true; opacity: 1; depthTest: false; depthWrite: false"
+        material: "shader: flat; color: #e0f2fe; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
       });
       api.addText(api.root, {
         position: bounds.left + " " + bounds.top + " 0.035",
@@ -4954,12 +5090,24 @@
         }
         runtime.reset();
       };
+      runtime.refreshTargets = function() {
+        if (runtime.api && typeof runtime.api.refreshTargets === "function") {
+          runtime.api.refreshTargets();
+          return;
+        }
+        const overlayApi = getOverlayApi();
+        if (overlayApi && typeof overlayApi.refreshRaycasters === "function") {
+          overlayApi.refreshRaycasters();
+        }
+      };
       runtime.rerender = function() {
         if (!runtime.renderer || typeof runtime.renderer.render !== "function") {
           renderUnsupported(runtime);
+          runtime.refreshTargets();
           return;
         }
         runtime.renderer.render(runtime);
+        runtime.refreshTargets();
       };
       runtime.open = function(payload) {
         const overlayApi = getOverlayApi();
@@ -4973,7 +5121,10 @@
           id: "vrodos-immerse-assessment-vr-overlay",
           width: PANEL_WIDTH,
           height: PANEL_HEIGHT,
-          distance: 2.45,
+          distance: 3.15,
+          verticalOffset: -0.08,
+          lockInteraction: false,
+          retargetRaycasters: false,
           cleanup: function() {
             runtime.reset();
           },
@@ -5029,10 +5180,17 @@
         title: null,
         kicker: null
       };
-      const root = document.createElement("div");
+      const root = document.createElement("dialog");
       root.id = "vrodos-immerse-assessment-overlay";
       root.style.position = "fixed";
       root.style.inset = "0";
+      root.style.width = "100vw";
+      root.style.height = "100vh";
+      root.style.maxWidth = "100vw";
+      root.style.maxHeight = "100vh";
+      root.style.margin = "0";
+      root.style.border = "0";
+      root.style.boxSizing = "border-box";
       root.style.zIndex = "2147482000";
       root.style.display = "none";
       root.style.alignItems = "center";
@@ -5147,6 +5305,24 @@
       runtime.setStatus = function(message) {
         runtime.status.textContent = message || "";
       };
+      runtime.show = function() {
+        ensureDomOverlayParent(runtime.root);
+        if (runtime.root.open && typeof runtime.root.close === "function") {
+          runtime.root.style.display = "none";
+          runtime.root.close();
+        }
+        runtime.root.style.display = "flex";
+        if (typeof runtime.root.showModal === "function") {
+          try {
+            runtime.root.showModal();
+          } catch (error) {
+            runtime.root.setAttribute("open", "open");
+          }
+        } else {
+          runtime.root.setAttribute("open", "open");
+        }
+        return runtime.root.open || runtime.root.getAttribute("open") !== null || runtime.root.style.display === "flex";
+      };
       runtime.resetState = function() {
         if (runtime.state && typeof runtime.state.cleanup === "function") {
           runtime.state.cleanup();
@@ -5161,6 +5337,11 @@
       };
       runtime.hide = function() {
         runtime.root.style.display = "none";
+        if (runtime.root.open && typeof runtime.root.close === "function") {
+          runtime.root.close();
+        } else {
+          runtime.root.removeAttribute("open");
+        }
         setAssessmentSceneInteractionLocked(false);
         runtime.resetState();
         const host = document.getElementById("vrodos-runtime-overlay-host");
@@ -5206,9 +5387,10 @@
         } else {
           runtime.title.textContent = decodeDisplayText(payload.title || "Assessment");
         }
-        ensureDomOverlayParent(runtime.root);
-        runtime.root.style.display = "flex";
-        setAssessmentSceneInteractionLocked(true);
+        const didShow = runtime.show();
+        if (didShow) {
+          setAssessmentSceneInteractionLocked(true);
+        }
         runtime.renderer = resolveRenderer(payload);
         if (!runtime.renderer) {
           runtime.renderUnsupported();
@@ -5218,6 +5400,18 @@
         runtime.rerender();
       };
       dismissButton.addEventListener("click", runtime.hide);
+      root.addEventListener("close", () => {
+        if (runtime.root.style.display === "none") {
+          return;
+        }
+        runtime.root.style.display = "none";
+        setAssessmentSceneInteractionLocked(false);
+        runtime.resetState();
+        const host = document.getElementById("vrodos-runtime-overlay-host");
+        if (host && !host.querySelector("dialog[open]")) {
+          host.style.pointerEvents = "none";
+        }
+      });
       nextButton.addEventListener("click", () => {
         if (!runtime.renderer || typeof runtime.renderer.onPrimaryAction !== "function") {
           return;

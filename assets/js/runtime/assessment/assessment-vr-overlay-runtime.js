@@ -90,7 +90,7 @@
             position: "0 " + bounds.top + " 0.02",
             width: bounds.width,
             height: 0.17,
-            material: "shader: flat; color: #e0f2fe; transparent: true; opacity: 1; depthTest: false; depthWrite: false"
+            material: "shader: flat; color: #e0f2fe; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
         });
         api.addText(api.root, {
             position: bounds.left + " " + bounds.top + " 0.035",
@@ -993,12 +993,25 @@
             runtime.reset();
         };
 
+        runtime.refreshTargets = function () {
+            if (runtime.api && typeof runtime.api.refreshTargets === "function") {
+                runtime.api.refreshTargets();
+                return;
+            }
+            const overlayApi = getOverlayApi();
+            if (overlayApi && typeof overlayApi.refreshRaycasters === "function") {
+                overlayApi.refreshRaycasters();
+            }
+        };
+
         runtime.rerender = function () {
             if (!runtime.renderer || typeof runtime.renderer.render !== "function") {
                 renderUnsupported(runtime);
+                runtime.refreshTargets();
                 return;
             }
             runtime.renderer.render(runtime);
+            runtime.refreshTargets();
         };
 
         runtime.open = function (payload) {
@@ -1017,7 +1030,10 @@
                 id: "vrodos-immerse-assessment-vr-overlay",
                 width: PANEL_WIDTH,
                 height: PANEL_HEIGHT,
-                distance: 2.45,
+                distance: 3.15,
+                verticalOffset: -0.08,
+                lockInteraction: false,
+                retargetRaycasters: false,
                 cleanup: function () {
                     runtime.reset();
                 },

@@ -487,19 +487,15 @@ class VRodos_Compiler_Manager {
 
 			$a_entity_oc_right = $dom->createElement( 'a-entity' );
 			$a_entity_oc_right->setAttribute( 'id', 'oculusRight' );
-			$a_entity_oc_right->setAttribute( 'oculus-touch-controls', 'hand: right' );
+			$a_entity_oc_right->setAttribute( 'meta-touch-controls', 'hand: right' );
 			$a_entity_oc_right->setAttribute( 'laser-controls', 'hand: right' );
-			$a_entity_oc_right->setAttribute( 'raycaster', 'lineColor: black; objects: .raycastable' );
-			$a_entity_oc_right->setAttribute( 'transparent', 'true' );
-			$a_entity_oc_right->setAttribute( 'render-order', '9999999' );
+			$a_entity_oc_right->setAttribute( 'raycaster', 'objects: .raycastable' );
 
 			$a_entity_oc_left = $dom->createElement( 'a-entity' );
 			$a_entity_oc_left->setAttribute( 'id', 'oculusLeft' );
-			$a_entity_oc_left->setAttribute( 'oculus-touch-controls', 'hand: left' );
+			$a_entity_oc_left->setAttribute( 'meta-touch-controls', 'hand: left' );
 			$a_entity_oc_left->setAttribute( 'laser-controls', 'hand: left' );
-			$a_entity_oc_left->setAttribute( 'raycaster', 'lineColor: black; objects: .raycastable' );
-			$a_entity_oc_left->setAttribute( 'transparent', 'true' ); // Ensure transparency is set to true
-			$a_entity_oc_left->setAttribute( 'render-order', '9999999' );
+			$a_entity_oc_left->setAttribute( 'raycaster', 'objects: .raycastable' );
 
 			$a_camera->appendChild( $a_cursor );
 			$ascenePlayer->appendChild( $a_camera );
