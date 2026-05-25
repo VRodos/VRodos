@@ -958,6 +958,35 @@
         window.lucide.createIcons(options);
       }
     };
+    api.getFullscreenElement = function() {
+      return document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
+    };
+    api.canHostOverlayChildren = function(element) {
+      if (!element || typeof element.appendChild !== "function") {
+        return false;
+      }
+      const tagName = element.tagName ? element.tagName.toLowerCase() : "";
+      return ["canvas", "video", "img", "iframe"].indexOf(tagName) === -1;
+    };
+    api.ensureOverlayHost = function() {
+      let host = document.getElementById("vrodos-runtime-overlay-host");
+      if (!host) {
+        host = document.createElement("div");
+        host.id = "vrodos-runtime-overlay-host";
+        host.className = "vrodos-manager-wrapper";
+        host.style.position = "fixed";
+        host.style.inset = "0";
+        host.style.zIndex = "2147481000";
+        host.style.pointerEvents = "none";
+        host.style.overflow = "hidden";
+      }
+      const fullscreenElement = api.getFullscreenElement();
+      const targetParent = api.canHostOverlayChildren(fullscreenElement) ? fullscreenElement : document.body;
+      if (host.parentNode !== targetParent) {
+        targetParent.appendChild(host);
+      }
+      return host;
+    };
     api.ensureDialog = function(dialog) {
       if (!dialog || dialog.dataset.vrodosDialogBound === "true") {
         return dialog;
@@ -972,6 +1001,12 @@
           dialog.close("backdrop");
         }
       });
+      dialog.addEventListener("close", () => {
+        const overlayHost = document.getElementById("vrodos-runtime-overlay-host");
+        if (overlayHost && !overlayHost.querySelector("dialog[open]")) {
+          overlayHost.style.pointerEvents = "none";
+        }
+      });
       return dialog;
     };
     api.showDialog = function(dialogOrSelector) {
@@ -979,6 +1014,11 @@
       if (!dialog) {
         return null;
       }
+      const overlayHost = api.ensureOverlayHost();
+      if (overlayHost && dialog.parentNode !== overlayHost) {
+        overlayHost.appendChild(dialog);
+      }
+      overlayHost.style.pointerEvents = "auto";
       api.ensureDialog(dialog);
       if (dialog.open) {
         dialog.close();
@@ -1000,6 +1040,10 @@
         dialog.close(returnValue || "");
       } else {
         dialog.removeAttribute("open");
+      }
+      const overlayHost = document.getElementById("vrodos-runtime-overlay-host");
+      if (overlayHost && !overlayHost.querySelector("dialog[open]")) {
+        overlayHost.style.pointerEvents = "none";
       }
     };
     api.setButtonVisible = function(buttonOrId, visible) {

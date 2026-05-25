@@ -24,6 +24,7 @@ const chunks = [
     order: 10,
     features: ['scene-components', 'poi', 'media', 'audio', 'assessment'],
     files: [
+      'vrodos_runtime_overlay.js',
       'highlight_img.js',
       'components/poi-image_component.js',
       'components/poi-link_component.js',
@@ -34,6 +35,7 @@ const chunks = [
       'assessment/assessment-utils.js',
       'assessment/assessment-cefr-runtime.js',
       'assessment/assessment-renderers.js',
+      'assessment/assessment-vr-overlay-runtime.js',
       'assessment/assessment-overlay-runtime.js',
       'components/immerse-assessment_component.js'
     ].map((file) => path.join(runtimeDir, file))

@@ -18,6 +18,19 @@
         return normalizeLevels(decodeBase64Json(genericLevels, []));
     }
 
+    function ensureDomOverlayParent(root) {
+        const host = window.VRODOSMasterUI && typeof window.VRODOSMasterUI.ensureOverlayHost === "function"
+            ? window.VRODOSMasterUI.ensureOverlayHost()
+            : document.body;
+        if (host && root && root.parentNode !== host) {
+            host.appendChild(root);
+        }
+        if (host && host.style) {
+            host.style.pointerEvents = "auto";
+        }
+        return host;
+    }
+
     function setCefrControlledVisible(element, isVisible) {
         element.setAttribute("visible", isVisible ? "true" : "false");
 
@@ -46,7 +59,8 @@
             root: null,
             continueButton: null,
             initialized: false,
-            promptScheduled: false
+            promptScheduled: false,
+            vrPromptActive: false
         };
 
         runtime.register = function (element) {
@@ -177,7 +191,7 @@
             panel.appendChild(buttonRow);
             panel.appendChild(footer);
             root.appendChild(panel);
-            document.body.appendChild(root);
+            ensureDomOverlayParent(root);
 
             runtime.root = root;
             runtime.levelButtons = buttons;
@@ -205,15 +219,102 @@
             }
         };
 
+        runtime.showVrPrompt = function () {
+            const overlayApi = window.VRODOSRuntimeOverlay || null;
+            if (!overlayApi || !overlayApi.shouldUseVrPanel || !overlayApi.shouldUseVrPanel()) {
+                return false;
+            }
+
+            runtime.vrPromptActive = true;
+            overlayApi.openVrPanel({
+                id: "vrodos-immerse-cefr-vr-overlay",
+                width: 2.2,
+                height: 1.35,
+                distance: 2.2,
+                cleanup: function () {
+                    runtime.vrPromptActive = false;
+                },
+                render: function (api) {
+                    const bounds = api.drawFrame({
+                        title: "Choose CEFR level",
+                        width: 2.2,
+                        height: 1.35,
+                        onClose: function () {
+                            overlayApi.closeActivePanel("cefr-close");
+                        }
+                    });
+
+                    api.addText(api.root, {
+                        position: bounds.left + " " + (bounds.top - 0.05) + " 0.03",
+                        value: "Select the level for this experience.",
+                        color: "#334155",
+                        align: "left",
+                        anchor: "left",
+                        width: bounds.width,
+                        wrapCount: "42",
+                        scale: "0.4 0.4 0.4"
+                    });
+
+                    CEFR_LEVELS.forEach((level, index) => {
+                        const active = level === runtime.selectedLevel;
+                        api.addButton(api.root, {
+                            position: (-0.66 + index * 0.44) + " " + (bounds.top - 0.36) + " 0.04",
+                            width: 0.34,
+                            height: 0.24,
+                            label: level,
+                            color: active ? "#bbf7d0" : "#ffffff",
+                            textColor: active ? "#166534" : "#0f172a",
+                            textScale: "0.48 0.48 0.48",
+                            onClick: function () {
+                                runtime.selectedLevel = level;
+                                runtime.showVrPrompt();
+                            }
+                        });
+                    });
+
+                    api.addButton(api.root, {
+                        position: "0 " + (bounds.bottom + 0.08) + " 0.04",
+                        width: 0.78,
+                        height: 0.2,
+                        label: "Start experience",
+                        disabled: !runtime.selectedLevel,
+                        color: "#5cc887",
+                        onClick: function () {
+                            if (!runtime.selectedLevel) {
+                                return;
+                            }
+                            runtime.applyLevel(runtime.selectedLevel);
+                            runtime.hidePrompt();
+                        }
+                    });
+                }
+            });
+
+            return true;
+        };
+
         runtime.showPrompt = function () {
+            if (runtime.showVrPrompt()) {
+                return;
+            }
+
             runtime.ensureUi();
+            ensureDomOverlayParent(runtime.root);
             runtime.root.style.display = "flex";
             runtime.selectLevel(runtime.selectedLevel || "");
         };
 
         runtime.hidePrompt = function () {
+            if (runtime.vrPromptActive && window.VRODOSRuntimeOverlay) {
+                window.VRODOSRuntimeOverlay.closeActivePanel("cefr-start");
+                runtime.vrPromptActive = false;
+            }
             if (runtime.root) {
                 runtime.root.style.display = "none";
+            }
+            const host = document.getElementById("vrodos-runtime-overlay-host");
+            if (host && !host.querySelector("dialog[open]")) {
+                host.style.pointerEvents = "none";
             }
         };
 

@@ -283,8 +283,8 @@ AFRAME.registerComponent('custom-movement', {
         this.handleKeyUp = this.handleKeyUp.bind(this);
         this.handleRecoveryButtonDown = this.handleRecoveryButtonDown.bind(this);
 
-        this.thumbL = document.querySelector('#leftHand');
-        this.thumbR = document.querySelector('#rightHand');
+        this.thumbL = document.querySelector('#leftHand') || document.querySelector('#oculusLeft');
+        this.thumbR = document.querySelector('#rightHand') || document.querySelector('#oculusRight');
         this.recoveryButtonEvents = ['abuttondown', 'xbuttondown'];
         this.recoveryButtonEls = [];
 
@@ -394,9 +394,12 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         const source = event.currentTarget || event.target;
-        const targetInput = source === this.thumbR ? this.rightThumbInput : this.leftThumbInput;
+        const sourceId = source && source.id ? source.id : '';
+        const targetInput = (source === this.thumbR || sourceId === 'rightHand' || sourceId === 'oculusRight')
+            ? this.rightThumbInput
+            : this.leftThumbInput;
         targetInput.x = event.detail.x || 0;
-        targetInput.y = event.detail.y || 0;
+        targetInput.y = (event.detail.y || 0) * (targetInput === this.leftThumbInput ? -1 : 1);
     },
     handleThumbstickEnd: function (event) {
         const source = event ? (event.currentTarget || event.target) : null;

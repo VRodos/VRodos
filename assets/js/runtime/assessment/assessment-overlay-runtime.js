@@ -11,6 +11,19 @@
         height: "min(84vh, 820px)"
     };
 
+    function ensureDomOverlayParent(root) {
+        const host = window.VRODOSMasterUI && typeof window.VRODOSMasterUI.ensureOverlayHost === "function"
+            ? window.VRODOSMasterUI.ensureOverlayHost()
+            : document.body;
+        if (host && root && root.parentNode !== host) {
+            host.appendChild(root);
+        }
+        if (host && host.style) {
+            host.style.pointerEvents = "auto";
+        }
+        return host;
+    }
+
     function getOverlayRuntimeV2() {
         if (window.__vrodosImmerseAssessmentRuntime) {
             return window.__vrodosImmerseAssessmentRuntime;
@@ -132,7 +145,7 @@
         panel.appendChild(body);
         panel.appendChild(footer);
         root.appendChild(panel);
-        document.body.appendChild(root);
+        ensureDomOverlayParent(root);
 
         runtime.root = root;
         runtime.body = body;
@@ -181,6 +194,10 @@
             runtime.root.style.display = "none";
             setAssessmentSceneInteractionLocked(false);
             runtime.resetState();
+            const host = document.getElementById("vrodos-runtime-overlay-host");
+            if (host && !host.querySelector("dialog[open]")) {
+                host.style.pointerEvents = "none";
+            }
         };
 
         runtime.finish = function (response, extra) {
@@ -215,6 +232,14 @@
         };
 
         runtime.open = function (payload) {
+            const overlayApi = window.VRODOSRuntimeOverlay || null;
+            const vrRuntime = typeof namespace.getVrOverlayRuntime === "function"
+                ? namespace.getVrOverlayRuntime()
+                : null;
+            if (overlayApi && overlayApi.shouldUseVrPanel && overlayApi.shouldUseVrPanel() && vrRuntime && vrRuntime.open(payload)) {
+                return;
+            }
+
             runtime.resetState();
             runtime.payload = payload;
             runtime.kicker.textContent = payload.type || payload.group || "Assessment";
@@ -223,6 +248,7 @@
             } else {
                 runtime.title.textContent = decodeDisplayText(payload.title || "Assessment");
             }
+            ensureDomOverlayParent(runtime.root);
             runtime.root.style.display = "flex";
             setAssessmentSceneInteractionLocked(true);
 
@@ -283,6 +309,11 @@
     }
 
     function setAssessmentSceneInteractionLocked(isLocked) {
+        if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.lockSceneInteraction === "function") {
+            window.VRODOSRuntimeOverlay.lockSceneInteraction(isLocked);
+            return;
+        }
+
         const player = document.getElementById("player");
         const camera = document.getElementById("cameraA");
         const scene = document.querySelector("a-scene");

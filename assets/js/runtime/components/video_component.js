@@ -191,7 +191,9 @@ AFRAME.registerComponent('video-controls', {
         }
 
         // Final Setup
-        this.cam.add(this.videoPanel);
+        if (!window.VRODOSRuntimeOverlay && this.cam && this.videoPanel && this.videoPanel.parentNode !== this.cam) {
+            this.cam.appendChild(this.videoPanel);
+        }
         this.checkAutoplay();
         this.updateInlinePlayHint();
     },
@@ -200,6 +202,56 @@ AFRAME.registerComponent('video-controls', {
         if (typeof window.gtag === 'function') {
             window.gtag('event', eventName);
         }
+    },
+
+    shouldUseVrOverlay: function () {
+        if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.shouldUseVrPanel === "function") {
+            return window.VRODOSRuntimeOverlay.shouldUseVrPanel();
+        }
+
+        return Boolean(browsingModeVR);
+    },
+
+    anchorVrOverlayEntity: function (entity, options) {
+        if (!entity || !this.shouldUseVrOverlay()) {
+            return false;
+        }
+
+        if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.anchorElementInFrontOfCamera === "function") {
+            return window.VRODOSRuntimeOverlay.anchorElementInFrontOfCamera(entity, options || {});
+        }
+
+        return false;
+    },
+
+    markOverlayTargets: function (enabled) {
+        const targets = [this.videoPanel, this.fsEl, this.plEl, this.exEl, this.exFrameEl, this.titEl];
+        if (this.is_fs) {
+            targets.push(this.videoDisplay);
+        }
+
+        targets.forEach((target) => {
+            if (!target || !target.classList) return;
+            target.classList.toggle("vrodos-overlay-hit-target", enabled !== false);
+        });
+    },
+
+    setOverlayInteractionActive: function (active) {
+        this.markOverlayTargets(active);
+
+        if (window.VRODOSRuntimeOverlay) {
+            if (typeof window.VRODOSRuntimeOverlay.lockSceneInteraction === "function") {
+                window.VRODOSRuntimeOverlay.lockSceneInteraction(active, { preserveLookInVr: true });
+            }
+            if (typeof window.VRODOSRuntimeOverlay.setOverlayRaycastMode === "function") {
+                window.VRODOSRuntimeOverlay.setOverlayRaycastMode(active);
+            }
+            return;
+        }
+
+        const targetClass = active ? ".vrodos-overlay-hit-target" : ".raycastable";
+        if (this.cursorEl) this.cursorEl.setAttribute("raycaster", "objects: " + targetClass);
+        if (this.rightHand) this.rightHand.setAttribute("raycaster", "objects: " + targetClass);
     },
 
     checkAutoplay: function() {
@@ -445,10 +497,15 @@ AFRAME.registerComponent('video-controls', {
     removeVRTraces: function() {
         this.exitPanel();
         this.restoreVid();
-        browsingModeVR = false;
+        if (window.VRODOSMaster && typeof window.VRODOSMaster.setBrowsingModeVR === "function") {
+            window.VRODOSMaster.setBrowsingModeVR(false);
+        } else {
+            browsingModeVR = false;
+            window.browsingModeVR = false;
+        }
         if (this.is_fs) {
             this.is_fs = false;
-            this.videoDisplay.classList.remove("non-clickable");
+            this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
             window.VRODOS_VIDEO_MANAGER.toggleVideoEnvironment(this.backgroundEl, false);
         }
     },
@@ -476,18 +533,18 @@ AFRAME.registerComponent('video-controls', {
         window.VRODOS_VIDEO_MANAGER.setEntityState(this.titEl, false, true, 1);
 
         if (!this.video.paused) this.video.pause();
-        
-        this.cursorEl.setAttribute("raycaster", "objects: .raycastable");
-        if (this.rightHand) this.rightHand.setAttribute("raycaster", "objects: .raycastable");
+
+        this.setOverlayInteractionActive(false);
     },
     
     restorePanel: function () {
         this.panelElems.forEach(elem => window.VRODOS_VIDEO_MANAGER.setEntityState(elem, true, true, 1));
         window.VRODOS_VIDEO_MANAGER.setEntityState(this.titEl, true, true, 1);
         
-        this.videoPanel.setAttribute("position", this.panel_pos_dynamic);
-        this.cursorEl.setAttribute("raycaster", "objects: .non-clickable");
-        if (this.rightHand) this.rightHand.setAttribute("raycaster", "objects: .non-clickable");
+        if (!this.anchorVrOverlayEntity(this.videoPanel, { distance: 2.25, verticalOffset: -0.22 })) {
+            this.videoPanel.setAttribute("position", this.panel_pos_dynamic);
+        }
+        this.setOverlayInteractionActive(true);
         
         this.syncUI();
 
@@ -518,7 +575,9 @@ AFRAME.registerComponent('video-controls', {
             this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:20");
         }
         
-        this.backgroundEl.add(this.videoDisplay);
+        if (this.videoDisplay && this.backgroundEl && this.videoDisplay.parentNode !== this.backgroundEl) {
+            this.backgroundEl.appendChild(this.videoDisplay);
+        }
         
         let p_x = this.data.orig_pos.join(' ');
         let r_x = this.data.orig_rot.map(r => r * (180 / Math.PI)).join(' ');
@@ -529,6 +588,7 @@ AFRAME.registerComponent('video-controls', {
         this.videoDisplay.setAttribute("scale", this.videoDisplay.getAttribute("original-scale"));
         this.videoDisplay.setAttribute("rotation", r_x);
         this.applyWorldVideoMaterial();
+        this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
         this.visCollection = [];
     },
    
@@ -540,7 +600,7 @@ AFRAME.registerComponent('video-controls', {
 
         this.trackEvent('video_click');
         
-        if (!browsingModeVR) {
+        if (!this.shouldUseVrOverlay()) {
             let video_element = this.prepareDialogPlayback();
             if (!video_element) return;
 
@@ -578,7 +638,7 @@ AFRAME.registerComponent('video-controls', {
             if (this.is_fs) {
                 this.restoreVid();
                 this.is_fs = false;
-                this.videoDisplay.classList.remove("non-clickable");
+                this.videoDisplay.classList.remove("vrodos-overlay-hit-target");
                 window.VRODOS_VIDEO_MANAGER.toggleVideoEnvironment(this.backgroundEl, false);
             }
         }
@@ -598,16 +658,21 @@ AFRAME.registerComponent('video-controls', {
 
         window.VRODOS_VIDEO_MANAGER.toggleVideoEnvironment(this.backgroundEl, true);
 
-        this.videoDisplay.classList.add("non-clickable");
-        this.cam.add(this.videoDisplay);        
+        this.videoDisplay.classList.add("vrodos-overlay-hit-target");
         this.applyOverlayVideoMaterial();
-        
-        const viewport = window.VRODOS_VIDEO_MANAGER.getViewportAtDepth(-25);
-        this.videoDisplay.setAttribute("height", viewport.height);
-        this.videoDisplay.setAttribute("width", viewport.width);
-        this.videoDisplay.setAttribute("position", "0 0 -25");
+
+        const fullscreenDistance = this.shouldUseVrOverlay() ? 2.65 : 25;
+        const viewport = window.VRODOS_VIDEO_MANAGER.getViewportAtDepth(-fullscreenDistance);
+        this.videoDisplay.setAttribute("height", viewport.height * 0.92);
+        this.videoDisplay.setAttribute("width", viewport.width * 0.92);
         this.videoDisplay.setAttribute("scale", "1 1 1");
-        this.videoDisplay.setAttribute("rotation", "0 0 0");
+        if (!this.anchorVrOverlayEntity(this.videoDisplay, { distance: fullscreenDistance, verticalOffset: 0 })) {
+            if (this.cam && this.videoDisplay.parentNode !== this.cam) {
+                this.cam.appendChild(this.videoDisplay);
+            }
+            this.videoDisplay.setAttribute("position", "0 0 -" + fullscreenDistance);
+            this.videoDisplay.setAttribute("rotation", "0 0 0");
+        }
         
         this.panelElems.forEach(elem => window.VRODOS_VIDEO_MANAGER.setEntityState(elem, false, true, 1));
         window.VRODOS_VIDEO_MANAGER.setEntityState(this.titEl, false, true, 1);
@@ -627,6 +692,7 @@ AFRAME.registerComponent('video-controls', {
             this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
         }
         
+        this.setOverlayInteractionActive(true);
         this.syncUI();
     }
 });

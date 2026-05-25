@@ -51,7 +51,9 @@ AFRAME.registerComponent('info-panel', {
         this.desc_list = [];
         this.readingPos = 0;
 
-        this.cam.add(this.infoPanel);
+        if (!window.VRODOSRuntimeOverlay && this.cam && this.infoPanel && this.infoPanel.parentNode !== this.cam) {
+            this.cam.appendChild(this.infoPanel);
+        }
 
         const getMeta = (url, cb) => {
             const img = new Image();
@@ -176,6 +178,7 @@ AFRAME.registerComponent('info-panel', {
 
         this.onMenuButtonClick = this.onMenuButtonClick.bind(this);
         this.onBackgroundClick = this.onBackgroundClick.bind(this);
+        this.onVrExit = this.onVrExit.bind(this);
         if (this.buttonNextEl)
             this.onNextButtonClick = this.onNextButtonClick.bind(this);
         if (this.buttonPrevEl)
@@ -199,7 +202,70 @@ AFRAME.registerComponent('info-panel', {
         //     console.log("Intersected");
         // });
 
+        if (this.scen) {
+            this.scen.addEventListener('exit-vr', this.onVrExit);
+        }
 
+    },
+
+    shouldUseVrOverlay: function () {
+        if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.shouldUseVrPanel === "function") {
+            return window.VRODOSRuntimeOverlay.shouldUseVrPanel();
+        }
+
+        return Boolean(browsingModeVR);
+    },
+
+    anchorVrOverlayEntity: function (entity, options) {
+        if (!entity || !this.shouldUseVrOverlay()) {
+            return false;
+        }
+
+        if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.anchorElementInFrontOfCamera === "function") {
+            return window.VRODOSRuntimeOverlay.anchorElementInFrontOfCamera(entity, options || {});
+        }
+
+        return false;
+    },
+
+    setOverlayInteractionActive: function (active) {
+        [
+            this.el,
+            this.infoPanel,
+            this.ImageEl,
+            this.TitleEl,
+            this.DescriptionEl,
+            this.PageEl,
+            this.backgroundEl,
+            this.buttonNextEl,
+            this.buttonPrevEl,
+            this.buttonNextPanelEl,
+            this.buttonPrevPanelEl,
+            this.buttonEscPanelEl
+        ].forEach((target) => {
+            if (!target || !target.classList) return;
+            target.classList.toggle("vrodos-overlay-hit-target", active !== false);
+        });
+
+        if (window.VRODOSRuntimeOverlay) {
+            if (typeof window.VRODOSRuntimeOverlay.lockSceneInteraction === "function") {
+                window.VRODOSRuntimeOverlay.lockSceneInteraction(active, { preserveLookInVr: true });
+            }
+            if (typeof window.VRODOSRuntimeOverlay.setOverlayRaycastMode === "function") {
+                window.VRODOSRuntimeOverlay.setOverlayRaycastMode(active);
+            }
+            return;
+        }
+
+        if (this.cursorEl) {
+            this.cursorEl.setAttribute("raycaster", "objects: " + (active ? ".vrodos-overlay-hit-target" : ".raycastable"));
+        }
+    },
+
+    onVrExit: function () {
+        if (this.el && this.el.classList && this.el.classList.contains("openPOI")) {
+            this.onBackgroundClick({});
+        }
     },
 
     onNextButtonClick: function (evt) {
@@ -267,7 +333,7 @@ AFRAME.registerComponent('info-panel', {
             window.gtag('event', 'poiimgtext_open');
         }
 
-        if (!browsingModeVR) {
+        if (!this.shouldUseVrOverlay()) {
 
             if(this.TitleEl)
                 document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
@@ -302,12 +368,13 @@ AFRAME.registerComponent('info-panel', {
             this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
             // this.backgroundEl.setAttribute("material", "color", "white");
             this.backgroundEl.object3D.visible = true;
-            this.cursorEl.setAttribute("raycaster","objects: .non-clickable");
+            this.setOverlayInteractionActive(true);
 
             this.el.object3D.scale.set(1, 1, 1);
-            this.el.object3D.position.z = -2.5;
-
             if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
+            if (!this.anchorVrOverlayEntity(this.el, { distance: 2.35, verticalOffset: -0.08 })) {
+                this.el.object3D.position.z = -2.5;
+            }
             this.el.object3D.visible = true;
 
             this.el.components.material.material.depthTest = false;
@@ -392,7 +459,7 @@ AFRAME.registerComponent('info-panel', {
         //     this.cam.setAttribute("wasd-controls-enabled", "true");
         //this.playerEl.setAttribute("look-controls", "enabled: true");
 
-        this.cursorEl.setAttribute("raycaster","objects: .raycastable");
+        this.setOverlayInteractionActive(false);
 
         this.el.components.material.material.depthTest = true;
         this.ImageEl.components.material.material.depthTest = true;
