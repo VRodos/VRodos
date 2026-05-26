@@ -138,6 +138,13 @@
             return "";
         }
 
+        if (typeof namespace.resolveAssessmentRendererKey === "function") {
+            const sharedKey = namespace.resolveAssessmentRendererKey(payload, { ignoreSupported: true });
+            if (sharedKey && VR_RENDERERS[sharedKey]) {
+                return sharedKey;
+            }
+        }
+
         const rawGroup = String(payload.group || "");
         if (VR_RENDERERS[rawGroup]) {
             return rawGroup;
@@ -1127,6 +1134,9 @@
                 group: payload && payload.group || "",
                 type: payload && payload.type || "",
                 supported: Boolean(payload && payload.supported),
+                desktopRendererKey: typeof namespace.resolveAssessmentRendererKey === "function"
+                    ? namespace.resolveAssessmentRendererKey(payload)
+                    : "",
                 rendererKey: runtime.rendererKey || "",
                 usesSpatialUi: true
             };

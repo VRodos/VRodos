@@ -15684,6 +15684,10 @@
       const object = pointerIntersectionObject(bridge);
       return Boolean(object && object.isVoidObject !== true);
     }
+    function isStalePointerIntersectionError(error2) {
+      const message = String(error2 && error2.message || error2 || "");
+      return message.indexOf("this.intersection") !== -1 && message.indexOf("object") !== -1;
+    }
     function safePointerDown(bridge, nativeEvent) {
       if (!bridge || !bridge.pointer || typeof bridge.pointer.down !== "function" || !pointerHasConcreteTarget(bridge)) {
         if (bridge) {
@@ -15715,6 +15719,10 @@
         bridge.pointer.up(nativeEvent);
         return true;
       } catch (error2) {
+        if (isStalePointerIntersectionError(error2)) {
+          bridge.stalePointerUpCount = (bridge.stalePointerUpCount || 0) + 1;
+          return false;
+        }
         recordDiagnostic("warn", "Spatial UI pointer up failed.", {
           source: bridge.source || "",
           error: error2 && error2.message || String(error2)

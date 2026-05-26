@@ -141,6 +141,8 @@ Camera-anchored prompts should use `topAtEyeLevel: true` and a deliberate `verti
 
 Controller rays must remain visible while crossing a modal panel. The spatial runtime promotes controller ray line objects above the panel render order and disables depth testing/writing on those ray materials. Do not retarget A-Frame raycasters to `.vrodos-overlay-hit-target`, hide controller line meshes, or add invisible A-Frame hit planes for PMNDRS panels.
 
+When a PMNDRS click closes or rerenders the active panel, the underlying pointer can clear `this.intersection` before `pointer.up()` finishes its internal bookkeeping. The spatial runtime treats that stale-intersection exception as a benign post-click cleanup path. Do not re-log it as a warning or use it as a reason to add A-Frame fallback hit geometry.
+
 Short labels such as CEFR levels should use explicit `label`, `textColor`, `fontWeight`, and enough button height. If labels vanish in Quest Browser while buttons are still clickable, first check for clipped frame layout or missing explicit text color before changing the shared spatial UI scale.
 
 ### Migrated Surfaces

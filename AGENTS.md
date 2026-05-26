@@ -82,6 +82,7 @@ VR spatial UI current state:
 - The spatial UI runtime passes the MSDF worker an `application/wasm` data URL for the vendored WASM asset so local servers that omit `.wasm` MIME types do not trigger streaming-compile warnings.
 - Spatial UI panel sizing uses physical meters plus calculated `designWidthPx`/`pixelSize`; keep the default immersive panel scale at `1` and tune panel width/height, design pixels, and internal frame spacing instead of globally scaling the group.
 - Controller ray visuals are intentionally promoted above spatial UI panel render order with depth testing disabled; do not hide/retarget controller rays or add A-Frame hit planes for PMNDRS panels.
+- PMNDRS can clear its pointer intersection during a click that closes/rerenders a panel; treat that stale `pointer.up()` intersection error as benign cleanup, not as a failed click or a reason to add fallback hit geometry.
 - Desktop and inline assessment/video dialogs remain DOM-based.
 - Recompile generated scenes after runtime changes so spatial UI scripts receive the planner's cache-busting `?ver=` query.
 

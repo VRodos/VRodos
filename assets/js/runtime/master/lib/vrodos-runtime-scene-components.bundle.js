@@ -4199,7 +4199,7 @@
           const typeKey = normalizeComparableText(payload && payload.type);
           return {
             items: normalizeQuestionItems(payload),
-            isImageQuiz: payload && payload.group === "ImageQuiz",
+            isImageQuiz: resolveAssessmentRendererKey(payload, { ignoreSupported: true }) === "ImageQuiz",
             isTrueFalse: typeKey === "true or false" || typeKey === "true/false",
             activeIndex: 0,
             selectedByIndex: []
@@ -5268,13 +5268,53 @@
       Grid: createGridRenderer(),
       Text: createTextRenderer()
     };
-    function resolveRenderer(payload) {
-      if (!payload || !payload.supported) {
-        return null;
+    function comparable(value) {
+      if (typeof normalizeComparableText === "function") {
+        return normalizeComparableText(value);
       }
-      return ASSESSMENT_RENDERERS[payload.group] || null;
+      return String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
+    }
+    function compactComparable(value) {
+      return comparable(value).replace(/[^a-z0-9]+/g, "");
+    }
+    function resolveAssessmentRendererKey(payload, options) {
+      const cfg = options || {};
+      if (!payload || !cfg.ignoreSupported && !payload.supported) {
+        return "";
+      }
+      const rawGroup = String(payload.group || "");
+      if (ASSESSMENT_RENDERERS[rawGroup]) {
+        return rawGroup;
+      }
+      const candidates = [
+        comparable(payload.group),
+        compactComparable(payload.group),
+        comparable(payload.type),
+        compactComparable(payload.type)
+      ].filter(Boolean);
+      if (candidates.some((key) => ["question", "questions", "quiz", "multiple choice", "multiplechoice", "true or false", "true/false", "truefalse"].includes(key))) {
+        return "Question";
+      }
+      if (candidates.some((key) => ["image quiz", "imagequiz", "image question", "imagequestion", "visual quiz", "visualquiz"].includes(key))) {
+        return "ImageQuiz";
+      }
+      if (candidates.some((key) => ["pair", "pairs", "matching", "match", "match pairs", "matchpairs", "drag and drop", "draganddrop", "drag drop", "dragdrop"].includes(key))) {
+        return "Pair";
+      }
+      if (candidates.some((key) => ["grid", "word search", "wordsearch", "vocabulary bingo", "vocabularybingo", "bingo"].includes(key))) {
+        return "Grid";
+      }
+      if (candidates.some((key) => ["text", "fill in the gaps", "fillinthegaps", "fill gaps", "fillgaps", "fill in gaps", "fillingaps", "highlight", "highlight text", "highlighttext"].includes(key))) {
+        return "Text";
+      }
+      return "";
+    }
+    function resolveRenderer(payload) {
+      const rendererKey = resolveAssessmentRendererKey(payload);
+      return rendererKey ? ASSESSMENT_RENDERERS[rendererKey] || null : null;
     }
     namespace.renderEmptyState = renderEmptyState;
+    namespace.resolveAssessmentRendererKey = resolveAssessmentRendererKey;
     namespace.resolveRenderer = resolveRenderer;
     namespace.ASSESSMENT_RENDERERS = ASSESSMENT_RENDERERS;
   })();
@@ -5400,6 +5440,12 @@
     function resolveVrRendererKey(payload) {
       if (!payload) {
         return "";
+      }
+      if (typeof namespace.resolveAssessmentRendererKey === "function") {
+        const sharedKey = namespace.resolveAssessmentRendererKey(payload, { ignoreSupported: true });
+        if (sharedKey && VR_RENDERERS[sharedKey]) {
+          return sharedKey;
+        }
       }
       const rawGroup = String(payload.group || "");
       if (VR_RENDERERS[rawGroup]) {
@@ -6313,6 +6359,7 @@
           group: payload && payload.group || "",
           type: payload && payload.type || "",
           supported: Boolean(payload && payload.supported),
+          desktopRendererKey: typeof namespace.resolveAssessmentRendererKey === "function" ? namespace.resolveAssessmentRendererKey(payload) : "",
           rendererKey: runtime.rendererKey || "",
           usesSpatialUi: true
         };
