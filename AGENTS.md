@@ -70,6 +70,25 @@ Root `package.json` plus `package-lock.json` are the version source of truth. `n
 
 `assets/runtime-build-manifest.json` is the compiled runtime chunk source of truth. It must validate missing script files, undeclared dependencies, duplicate chunk ordering, and feature coverage. Keep PMNDRS, Takram, collision BVH, FPS meter, and networked bundles lazy: do not include PMNDRS unless PMNDRS post-FX is selected, do not include Takram unless PMNDRS atmosphere is enabled, and do not include networked components in single-player output.
 
+VR spatial UI current state:
+
+- `documentation/vrodos-compiled-scene-framework-integration.md` section 4.1 is the current handoff reference for immersive CEFR, assessment, and video control UI.
+- A-Frame remains the compiled scene host: scene, renderer, XR session, `cameraA`, controllers, navigation, collision, media objects, and render loop.
+- Immersive CEFR, assessment, and VR video modal UI should use `window.VRODOSSpatialUI`, backed by `@pmndrs/uikit`, `@pmndrs/uikit-horizon`, and `@pmndrs/pointer-events`.
+- The spatial UI chunk mounts a PMNDRS/Horizon `THREE.Group` under `a-scene.object3D`; the A-Frame host component only forwards `tick()` and must not create visible UI primitives.
+- Do not route immersive CEFR/assessment/video dialogs through `VRODOSRuntimeOverlay.openVrPanel()`, A-Frame `a-plane`, A-Frame `a-text`, A-Frame modal buttons, or `.vrodos-overlay-hit-target` raycaster retargeting.
+- If `spatial-ui` is unavailable in immersive XR, log diagnostics and fail closed instead of showing a broken A-Frame fallback.
+- Greek assessment/CEFR text in spatial UI depends on Noto Sans assets under `assets/vendor/fonts/noto-sans/` and the Zappar MSDF worker/WASM under `assets/vendor/zappar-msdf-generator/`. Do not transliterate Greek or restore A-Frame text primitives to suppress glyph warnings.
+- The spatial UI runtime passes the MSDF worker an `application/wasm` data URL for the vendored WASM asset so local servers that omit `.wasm` MIME types do not trigger streaming-compile warnings.
+- Desktop and inline assessment/video dialogs remain DOM-based.
+- Recompile generated scenes after runtime changes so spatial UI scripts receive the planner's cache-busting `?ver=` query.
+
+WebXR entry current state:
+
+- Compiled clients hide `XRWebGLBinding` by default before A-Frame initializes so Three r181 stays on the `XRWebGLLayer` path. This avoids desktop Immersive Web Emulator failures where a polyfilled layer binding is not a real `XRSession`.
+- Only opt into WebXR Layers by setting `window.VRODOS_ENABLE_NATIVE_WEBXR_LAYERS === true` or `window.VRODOS_ENABLE_WEBXR_LAYERS === true` before the prototype shim runs.
+- A-Frame Environment is a legacy background/preset provider only; it does not own WebXR session creation, layer selection, or controller input.
+
 Compiled scenes keep `scene-settings` as the compatibility data contract, but focused runtime behavior lives in A-Frame components/systems:
 
 - `vrodos-render-profile`: renderer, shadows, quality, FPS
@@ -90,6 +109,7 @@ Lighting/shadow ownership:
 Rendering docs:
 
 - `RENDERING_PIPELINE.md`: current technical render-stack reference
+- `documentation/vrodos-compiled-scene-framework-integration.md`: compiled-scene framework boundaries, runtime ownership, lazy chunks, and immersive PMNDRS/Horizon VR dialog ownership
 - `PERFORMANCE_OPTIMIZATION_PLAN.md`: profiler, Spector, asset-audit, and derivative-optimization findings
 - `TAKRAM_REALISTIC_LIGHTING_PLAN.md`: phased Takram realism and Three-version roadmap
 - `RENDERING_MIGRATION_IMPLEMENTATION_LOG.md`: consolidated migration history
@@ -145,6 +165,8 @@ Runtime package updates:
 2. Run `npm run build:three`.
 3. Run `npm run build:runtime`.
 4. Commit generated runtime outputs that changed intentionally.
+
+For spatial UI runtime package changes, also commit `assets/js/runtime/master/lib/vrodos-runtime-spatial-ui.bundle.js`, keep `assets/runtime-build-manifest.json` declaring the `spatial-ui` chunk correctly, and deploy the spatial font/worker assets when text rendering changes.
 
 Common checks:
 

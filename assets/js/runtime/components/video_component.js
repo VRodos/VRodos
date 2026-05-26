@@ -161,6 +161,9 @@ AFRAME.registerComponent('video-controls', {
         this.desktopFullscreenOffscreenSince = 0;
         this.desktopFullscreenOffscreenDelay = 900;
         this.videoWorldPosition = new THREE.Vector3();
+        this.videoVrPanelApi = null;
+        this.videoVrPanelOpen = false;
+        this.videoSpatialUiLoadPending = false;
 
         // Video Properties
         this.videoSourceUrl = this.videoDisplay ? (this.videoDisplay.getAttribute("data-vrodos-video-src") || "") : "";
@@ -179,6 +182,7 @@ AFRAME.registerComponent('video-controls', {
         this.restorePanel = this.restorePanel.bind(this);
         this.restoreVid = this.restoreVid.bind(this);
         this.removeVRTraces = this.removeVRTraces.bind(this);
+        this.closeVrVideoPanel = this.closeVrVideoPanel.bind(this);
         this.onDesktopFullscreenKeyDown = this.onDesktopFullscreenKeyDown.bind(this);
         this.onDesktopFullscreenChange = this.onDesktopFullscreenChange.bind(this);
         this.onDesktopFullscreenVisibilityChange = this.onDesktopFullscreenVisibilityChange.bind(this);
@@ -293,16 +297,7 @@ AFRAME.registerComponent('video-controls', {
             if (typeof window.VRODOSRuntimeOverlay.lockSceneInteraction === "function") {
                 window.VRODOSRuntimeOverlay.lockSceneInteraction(active, { preserveLookInVr: true });
             }
-            if (typeof window.VRODOSRuntimeOverlay.setOverlayRaycastMode === "function") {
-                window.VRODOSRuntimeOverlay.setOverlayRaycastMode(active);
-            }
-            return;
         }
-
-        const targetClass = active ? ".vrodos-overlay-hit-target" : ".raycastable";
-        if (this.cursorEl) this.cursorEl.setAttribute("raycaster", "objects: " + targetClass);
-        if (this.leftHand) this.leftHand.setAttribute("raycaster", "objects: " + targetClass);
-        if (this.rightHand) this.rightHand.setAttribute("raycaster", "objects: " + targetClass);
     },
 
     releaseSceneInteraction: function () {
@@ -311,9 +306,6 @@ AFRAME.registerComponent('video-controls', {
         }
         if (typeof window.VRODOSRuntimeOverlay.lockSceneInteraction === "function") {
             window.VRODOSRuntimeOverlay.lockSceneInteraction(false);
-        }
-        if (typeof window.VRODOSRuntimeOverlay.setOverlayRaycastMode === "function") {
-            window.VRODOSRuntimeOverlay.setOverlayRaycastMode(false);
         }
     },
 
@@ -524,7 +516,7 @@ AFRAME.registerComponent('video-controls', {
 
     updateInlinePlayHint: function () {
         if (!this.playHintEl) return;
-        var shouldShow = !this.videoPrimed || !this.video || this.video.paused;
+        var shouldShow = !this.videoVrPanelOpen && (!this.videoPrimed || !this.video || this.video.paused);
         this.playHintEl.setAttribute("visible", shouldShow ? "true" : "false");
         this.playHintEl.classList.toggle("raycastable", shouldShow);
     },
@@ -653,6 +645,9 @@ AFRAME.registerComponent('video-controls', {
     },
 
     removeVRTraces: function() {
+        if (this.videoVrPanelOpen) {
+            this.closeVrVideoPanel("exit-vr");
+        }
         this.exitPanel();
         this.restoreVid();
         if (window.VRODOSMaster && typeof window.VRODOSMaster.setBrowsingModeVR === "function") {
@@ -682,6 +677,136 @@ AFRAME.registerComponent('video-controls', {
         }
         this.syncUI();
         this.updateDesktopFullscreenInlineGuard();
+    },
+
+    getVideoTitle: function () {
+        var titleVal = "";
+        if (this.titEl && this.titEl.hasAttribute && this.titEl.hasAttribute("text")) {
+            var textAttr = this.titEl.getAttribute("text");
+            titleVal = textAttr && textAttr.value ? String(textAttr.value) : "";
+        }
+        titleVal = titleVal.trim();
+        if (!titleVal || titleVal === "video-title" || titleVal === "Video Viewer") {
+            return "Video";
+        }
+        return titleVal;
+    },
+
+    closeVrVideoPanel: function (reason) {
+        this.videoVrPanelOpen = false;
+        this.videoVrPanelApi = null;
+        this.updateInlinePlayHint();
+
+        if (window.VRODOSSpatialUI && typeof window.VRODOSSpatialUI.closePanel === "function") {
+            window.VRODOSSpatialUI.closePanel(reason || "video-close");
+        }
+    },
+
+    renderVrVideoPanel: function (api) {
+        if (!api || typeof api.frame !== "function") {
+            return;
+        }
+
+        var isPaused = !this.video || this.video.paused;
+        var statusLabel = isPaused ? "Paused" : "Playing";
+        var frame = api.frame({
+            title: this.getVideoTitle(),
+            headerColor: "#272727",
+            paddingX: 76,
+            paddingY: 58,
+            footerHeight: 130,
+            status: statusLabel,
+            onClose: () => this.closeVrVideoPanel("video-close"),
+            primary: {
+                label: isPaused ? "Play" : "Pause",
+                variant: isPaused ? "primary" : "secondary",
+                width: 220,
+                height: 64,
+                textSize: 28,
+                onClick: () => {
+                    this.playVideo();
+                    this.renderVrVideoPanel(api);
+                    if (typeof api.refreshTargets === "function") {
+                        api.refreshTargets();
+                    }
+                }
+            }
+        });
+
+        api.text(frame.content, {
+            text: "VR video controls",
+            color: "#272727",
+            fontSize: 32,
+            fontWeight: 600,
+            lineHeight: "120%"
+        });
+        api.text(frame.content, {
+            text: statusLabel,
+            color: isPaused ? "#5a5a5a" : "#047857",
+            align: "center",
+            fontSize: 46,
+            fontWeight: 600,
+            lineHeight: "120%",
+            width: "100%"
+        });
+        if (typeof api.refreshTargets === "function") {
+            api.refreshTargets();
+        }
+    },
+
+    openVrVideoPanel: function () {
+        if (!this.shouldUseVrOverlay()) {
+            return false;
+        }
+
+        var spatialUi = window.VRODOSSpatialUI &&
+            typeof window.VRODOSSpatialUI.isAvailable === "function" &&
+            window.VRODOSSpatialUI.isAvailable()
+            ? window.VRODOSSpatialUI
+            : null;
+        if (!spatialUi || typeof spatialUi.openPanel !== "function") {
+            if (window.VRODOSRuntimeOverlay &&
+                    typeof window.VRODOSRuntimeOverlay.ensureSpatialUiRuntime === "function" &&
+                    !this.videoSpatialUiLoadPending) {
+                this.videoSpatialUiLoadPending = true;
+                window.VRODOSRuntimeOverlay.ensureSpatialUiRuntime({ timeoutMs: 8000 }).then((available) => {
+                    this.videoSpatialUiLoadPending = false;
+                    if (available) {
+                        this.openVrVideoPanel();
+                    } else {
+                        console.warn("[VRodos Video] VR video controls requested but pmndrs spatial UI could not be loaded.");
+                    }
+                });
+            } else {
+                console.warn("[VRodos Video] VR video controls requested but pmndrs spatial UI is unavailable.");
+            }
+            return true;
+        }
+
+        var panelOptions = {
+            id: "vrodos-video-vr-controls-" + this.data.id,
+            width: 1.82,
+            height: 1.08,
+            distance: 2.65,
+            verticalOffset: -0.18,
+            lockInteraction: false,
+            cleanup: () => {
+                this.videoVrPanelOpen = false;
+                this.videoVrPanelApi = null;
+                this.updateInlinePlayHint();
+            },
+            render: (api) => {
+                this.videoVrPanelOpen = true;
+                this.videoVrPanelApi = api;
+                this.renderVrVideoPanel(api);
+                this.updateInlinePlayHint();
+            }
+        };
+
+        this.videoVrPanelApi = spatialUi.openPanel(panelOptions);
+        this.videoVrPanelOpen = Boolean(this.videoVrPanelApi);
+        this.updateInlinePlayHint();
+        return this.videoVrPanelOpen;
     },
 
     exitPanel: function () {
@@ -761,6 +886,13 @@ AFRAME.registerComponent('video-controls', {
         this.panel_pos_dynamic = (viewport.width / 2 - 1) + " -0.3 " + this.panel_z;
 
         this.trackEvent('video_click');
+
+        if (this.shouldUseVrOverlay()) {
+            if (!this.openVrVideoPanel()) {
+                console.warn("[VRodos Video] VR video click ignored because spatial UI controls are unavailable.");
+            }
+            return;
+        }
         
         if (this.shouldUseInlinePlayback()) {
             this.primeVideoForPlayback();
@@ -895,6 +1027,9 @@ AFRAME.registerComponent('video-controls', {
 
     remove: function () {
         this.stopDesktopFullscreenInlineGuard(true);
+        if (this.videoVrPanelOpen) {
+            this.closeVrVideoPanel("remove");
+        }
 
         const scene = document.querySelector('a-scene');
         if (scene) {
@@ -914,7 +1049,7 @@ AFRAME.registerComponent('vrodos-3d-play-icon', {
         const isOverlayUi = this.el.hasAttribute('data-vrodos-overlay-ui') ||
             (typeof this.el.closest === 'function' && this.el.closest('[data-vrodos-overlay-ui]'));
         const depthTest = !isOverlayUi;
-        const renderOrder = isOverlayUi ? 999999 : 9999;
+        const renderOrder = isOverlayUi ? 90080 : 9000;
 
         const shape = new THREE.Shape();
         shape.moveTo(0, 1);

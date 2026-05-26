@@ -9,6 +9,7 @@ VRodos compiled scenes make [A-Frame](https://github.com/aframevr/aframe), [Thre
 - `scene-settings` is the compatibility contract between compiler output and runtime behavior;
 - `assets/runtime-build-manifest.json` controls script order, dependencies, and lazy feature loading;
 - focused A-Frame components own lifecycle hooks and delegate to VRodos helpers;
+- immersive dialog UI is a PMNDRS/Horizon island mounted in the same A-Frame/Three scene, not a second renderer and not A-Frame UI primitives;
 - optional systems such as PMNDRS, Takram atmosphere, BVH collision, FPS tooling, and networking load only when scene metadata requests them.
 
 The result is not several frameworks fighting for the frame. The compiled client is a single A-Frame scene with a carefully planned set of helpers attached to the same renderer, scene graph, material system, loader configuration, and lifecycle.
@@ -44,6 +45,7 @@ graph TD
         AFrame --> Three[Three.js Substrate]
 
         Three --> PMNDRS[PMNDRS Post-Processing]
+        Three --> SpatialUI[PMNDRS UIKit Horizon Spatial UI]
         Three --> Takram[Takram Atmosphere & Lighting]
         Three --> BVH[three-mesh-bvh Collision]
         AFrame --> NAF[Networked-Aframe Multiplayer]
@@ -67,6 +69,7 @@ The current compiled runtime stack is declared in the root package files and gen
 - A-Frame runtime: 1.7.1 master commit `63600d331e8eca9bec786bf030bc66040625750b`
 - Three.js: `0.181.0`, revision `181`
 - PMNDRS `postprocessing`: `6.39.1`, exported as `window.POSTPROCESSING`
+- PMNDRS spatial UI packages: `@pmndrs/uikit` `1.0.72`, `@pmndrs/uikit-horizon` `1.0.72`, `@pmndrs/uikit-lucide` `1.0.72`, and `@pmndrs/pointer-events` `6.6.29`, exported through `window.VRODOSSpatialUI` when the `spatial-ui` chunk loads
 - Takram atmosphere packages: atmosphere `0.19.1`, clouds `0.7.6`, geospatial effects `0.6.4`, exported as `window.VRODOS_TAKRAM_ATMOSPHERE`
 - `three-mesh-bvh`: `0.9.10`, exported as `window.VRODOS_COLLISION_BVH`
 
@@ -81,6 +84,7 @@ Runtime scripts are selected by scene metadata, not by hardcoded script tags in 
 - FPS meter when enabled;
 - `collision-bvh-vendor` when navigation mode resolves to `walkable`;
 - `pmndrs-postfx` when post-FX is enabled and the engine is `pmndrs`;
+- `spatial-ui` when scene metadata contains assessment surfaces, CEFR-gated Immerse assets, or video assets that need immersive controls;
 - `takram-atmosphere` only when PMNDRS atmosphere is enabled;
 - `legacy-postfx` when post-FX uses the legacy engine;
 - final A-Frame runtime components at the end.
@@ -95,6 +99,114 @@ VRodos uses A-Frame as the orchestration layer:
 - `vrodos-postfx-router` decides whether legacy post-FX or PMNDRS owns composer behavior;
 - `vrodos-atmosphere` updates PMNDRS/Takram sun state and day-night animation;
 - `vrodos-reflections` updates HDR, scene-probe, or Takram-sky environment behavior.
+
+## 4.1 Immersive Dialog UI Ownership
+
+Current state: 2026-05-26.
+
+CEFR, assessment, and VR video control dialogs in immersive XR are not rendered with A-Frame `a-plane`, `a-text`, or A-Frame button entities. They use `window.VRODOSSpatialUI`, a PMNDRS UIKit/Horizon layer that creates a `THREE.Group` under `a-scene.object3D` and renders Horizon components through the same A-Frame-owned Three runtime.
+
+A-Frame still owns the scene, WebXR session, camera, controllers, movement, media objects, and render loop. The spatial UI layer owns the modal panel tree and pointer-event handling for that modal. Its A-Frame component exists only to forward `tick()` into the PMNDRS component tree.
+
+Do not use `VRODOSRuntimeOverlay.openVrPanel()` or `.vrodos-overlay-hit-target` raycaster retargeting for immersive CEFR, assessment, or video controls. If the spatial bundle is unavailable in immersive XR, the correct behavior is to log diagnostics and fail closed instead of opening the old A-Frame fallback. Desktop and inline mode still use the existing DOM dialogs.
+
+### Spatial UI Source Files
+
+- Spatial UI source: `assets/js/runtime/spatial-ui/vrodos_spatial_ui.js`
+- Generated spatial bundle: `assets/js/runtime/master/lib/vrodos-runtime-spatial-ui.bundle.js`
+- Runtime chunk manifest: `assets/runtime-build-manifest.json`
+- Runtime bundle builder: `scripts/build-runtime-master-bundles.mjs`
+- Spatial UI font assets: `assets/vendor/fonts/noto-sans/`
+- Spatial UI MSDF worker assets: `assets/vendor/zappar-msdf-generator/`
+- Feature detection: `includes/class-vrodos-compiler-runtime-feature-flags.php`
+- Script planning/cache busting: `includes/class-vrodos-compiler-runtime-manifest.php` and `includes/class-vrodos-compiler-runtime-script-planner.php`
+- CEFR runtime: `assets/js/runtime/assessment/assessment-cefr-runtime.js`
+- Assessment runtime: `assets/js/runtime/assessment/assessment-overlay-runtime.js` and `assets/js/runtime/assessment/assessment-vr-overlay-runtime.js`
+- Video component: `assets/js/runtime/components/video_component.js`
+- Legacy overlay diagnostics and spatial loader helper: `assets/js/runtime/vrodos_runtime_overlay.js`
+
+### Spatial UI API
+
+`window.VRODOSSpatialUI` exposes `isAvailable()`, `openPanel()`, `closePanel(reason)`, `refreshInteractionTargets()`, `dispose()`, `getActivePanel()`, `getDiagnostics()`, and `recordDiagnostic(level, message, details)`.
+
+Panel render callbacks receive `frame()`, `text()`, `button()`, `image()`, `row()`, `column()`, `grid()`, `clear()`, and `close()`. Use Horizon buttons and variants for immersive VR UI. Selected states should use a positive or otherwise explicit variant. Disabled actions should use the Horizon disabled state, not hidden raycaster targets or custom A-Frame materials.
+
+### Migrated Surfaces
+
+The immersive VR surfaces expected to use `window.VRODOSSpatialUI` are:
+
+- CEFR start/level prompt
+- assessment question and answer layouts
+- image quiz layouts
+- pair matching layouts
+- fill-gap and highlight layouts
+- grid wordsearch/bingo layouts
+- VR video play/pause modal
+
+Desktop and inline browser modes keep the existing DOM dialogs. The DOM assessment dialog remains the source of truth outside immersive XR.
+
+### Text And Font Coverage
+
+PMNDRS' packaged MSDF fonts only cover a small Latin/German character set. Assessment and CEFR content can contain Greek text, so the spatial UI runtime explicitly uses Noto Sans assets under `assets/vendor/fonts/noto-sans/` and generates a same-origin MSDF atlas through the vendored Zappar worker/WASM files under `assets/vendor/zappar-msdf-generator/`.
+
+The runtime loads the vendored WASM bytes and passes the worker an `application/wasm` data URL. This avoids noisy `wasm streaming compile failed: Incorrect response MIME type` warnings on local hosts that serve `.wasm` without a MIME type, while still allowing the direct same-origin WASM URL as a fallback when the data URL preparation fails.
+
+The spatial UI source normalizes non-breaking spaces to regular spaces before layout. Do not strip or transliterate Greek content to work around font warnings. Repeated console warnings like `Missing glyph info for character ...` while opening assessment panels usually mean one of these is stale or missing:
+
+- `assets/js/runtime/master/lib/vrodos-runtime-spatial-ui.bundle.js`
+- `assets/vendor/fonts/noto-sans/NotoSans-Regular.ttf`
+- `assets/vendor/fonts/noto-sans/NotoSans-Bold.ttf`
+- `assets/vendor/zappar-msdf-generator/worker.js`
+- `assets/vendor/zappar-msdf-generator/msdfgen_wasm.wasm`
+- regenerated compiled HTML with a fresh spatial bundle `?ver=` query
+
+If font atlas generation fails, the runtime falls back to PMNDRS Inter so the panel lifecycle still works, but Greek glyphs will not render correctly. Fix the asset/bundle deployment instead of restoring A-Frame text primitives.
+
+### Input Model
+
+PMNDRS pointer events are the modal interaction path. The spatial runtime forwards mouse events from the scene canvas through `forwardHtmlEvents`, attaches native WebXR controller ray pointers through `renderer.xr.getController(index)` when available, and falls back to A-Frame controller elements for trigger/grip/mouse events when needed.
+
+While a modal is open, canvas click/context events are blocked so underlying scene objects do not receive modal clicks. Legacy video play hint entities are temporarily suppressed while the PMNDRS modal is active. A-Frame controller raycasters should not be retargeted to overlay classes.
+
+Controller rays should remain visible before, during, and after modal panels. If rays disappear after close or finish, inspect scene interaction locking and any direct controller raycaster mutation first.
+
+### Orientation, Rendering, And Loading Rules
+
+Panels are anchored in front of `cameraA` by world transform, not by an A-Frame plane orientation. The group uses world-up orientation and faces the camera from the front. Do not fix mirrored or back-facing panels by flipping A-Frame primitives; the PMNDRS root group transform is the source of truth.
+
+The Horizon panel uses explicit background, border, depth, render order, and sorting settings so it appears as a stable VR modal rather than as scene geometry. UI elements are flex/grid based. Avoid absolute A-Frame coordinate layouts for assessment content. Long text is paginated for v1; do not depend on VR controller scrolling for assessment completion.
+
+Generated script tags include a version query derived from the runtime bundle file's mtime and size. Recompile generated clients after runtime changes so production pages receive updated script URLs. Clearing Quest Browser cache helps, but old generated HTML without the new query string can still point to a stale URL.
+
+The spatial bundle is built against A-Frame's shared Three runtime. Do not load a second Three.js copy for UI.
+
+### Debugging Checklist
+
+Useful console checks in a compiled client:
+
+```js
+window.VRODOSRuntimeOverlay && window.VRODOSRuntimeOverlay.getDiagnostics()
+window.VRODOSRuntimeOverlay && window.VRODOSRuntimeOverlay.getSceneDiagnostics()
+window.VRODOSRuntimeOverlay && window.VRODOSRuntimeOverlay.ensureSpatialUiRuntime().then(console.log)
+window.VRODOSSpatialUI && window.VRODOSSpatialUI.getDiagnostics()
+window.__vrodosSpatialUIDiagnostics
+window.__VRODOS_WEBXR_LAYERS_DISABLED
+```
+
+Production acceptance checklist:
+
+1. Upload source/runtime files, package changes, generated bundle files, and compiler/planner changes.
+2. Recompile the scene after upload.
+3. Confirm the generated HTML includes `vrodos-runtime-spatial-ui.bundle.js`.
+4. Confirm the generated script URL has a cache-busting `?ver=...` query after recompilation.
+5. Confirm Noto Sans font files and Zappar MSDF worker/WASM files return HTTP 200 from the same plugin origin.
+6. Clear Quest Browser cache before testing.
+7. Enter immersive VR and confirm the CEFR prompt appears after WebXR presentation starts.
+8. Open an assessment with Greek text and confirm there are no repeated `Missing glyph info` warnings.
+9. Confirm video and assessment objects still receive native controller clicks when no modal is open.
+10. Confirm controller rays remain visible during and after modal close/finish.
+
+Quest Browser manual acceptance is required before considering a spatial UI change stable. Desktop WebXR emulators are useful for smoke checks but do not prove controller behavior or native WebXR timing.
 
 ## 5. Three.js As The Shared Substrate
 
@@ -166,6 +278,10 @@ Movement remains CPU-side geometry work:
 Desktop and desktop fullscreen can use the eligible post-FX path. Immersive WebXR is different because stereo rendering and screen-space composer passes are not always safe.
 
 VRodos detects real immersive XR through `renderer.xr.isPresenting`. In immersive XR, unsafe screen-space composer passes can fall back to direct stereo rendering. Scene-owned visuals remain active (Takram sky, scene-owned lights, fog, A-Frame movement). The strategy is to skip unsafe screen-space ownership while preserving scene-owned visual systems.
+
+Compiled clients disable Three r181's WebXR Layers path by default by hiding `XRWebGLBinding` unless `window.VRODOS_ENABLE_NATIVE_WEBXR_LAYERS === true` or `window.VRODOS_ENABLE_WEBXR_LAYERS === true` is set before the prototype shim runs. This keeps A-Frame on the `XRWebGLLayer` path and avoids desktop Immersive Web Emulator failures where polyfilled layer bindings throw `Failed to construct 'XRWebGLBinding': parameter 1 is not of type 'XRSession'`. Real Quest Browser validation is still required for immersive UI and controller behavior.
+
+The A-Frame Environment component is still a legacy preset-background provider for non-Takram compiled scenes. It is not the owner of WebXR session creation, WebXR layers, or controller input. Moving more backgrounds to PMNDRS/Takram is desirable, but it is a separate rendering-pipeline migration from the `XRWebGLBinding` VR-entry fix.
 
 ## 11. Future Features & Roadmap
 

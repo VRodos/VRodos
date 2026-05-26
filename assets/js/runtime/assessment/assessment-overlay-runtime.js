@@ -267,7 +267,19 @@
             const vrRuntime = typeof namespace.getVrOverlayRuntime === "function"
                 ? namespace.getVrOverlayRuntime()
                 : null;
-            if (overlayApi && overlayApi.shouldUseVrPanel && overlayApi.shouldUseVrPanel() && vrRuntime && vrRuntime.open(payload)) {
+            const shouldUseVrPanel = overlayApi && overlayApi.shouldUseVrPanel && overlayApi.shouldUseVrPanel();
+            if (shouldUseVrPanel) {
+                if (vrRuntime && vrRuntime.open(payload)) {
+                    return;
+                }
+                if (overlayApi && typeof overlayApi.recordDiagnostic === "function") {
+                    overlayApi.recordDiagnostic("warn", "assessment: immersive VR assessment requested but spatial UI did not open; DOM fallback suppressed", {
+                        group: payload && payload.group || "",
+                        type: payload && payload.type || ""
+                    });
+                } else {
+                    console.warn("[VRodos Assessment] Immersive VR assessment requested but spatial UI did not open; DOM fallback suppressed.");
+                }
                 return;
             }
 

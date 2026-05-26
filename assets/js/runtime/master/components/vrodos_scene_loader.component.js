@@ -507,6 +507,11 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             }, 260);
         }
 
+        this.sceneEl.emit('vrodos-scene-loader-ready', {
+            revealTargets: this.revealTargets.length,
+            lazyTargets: this.lazyTotalCount
+        }, false);
+
         this.startLazyLoading();
 
 

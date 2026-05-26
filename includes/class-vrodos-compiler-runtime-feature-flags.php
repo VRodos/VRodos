@@ -31,6 +31,84 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 		return is_object( $scene_json->metadata ?? null ) ? $scene_json->metadata : new stdClass();
 	}
 
+	public function has_spatial_ui_content( $scene_json ): bool {
+		foreach ( $this->scene_objects( $scene_json ) as $object ) {
+			if ( $this->object_requires_spatial_ui( $object ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private function scene_objects( $scene_json ): array {
+		$objects = [];
+		$source  = is_object( $scene_json ) ? ( $scene_json->objects ?? null ) : null;
+		$seen    = [];
+		$this->collect_scene_objects( $source, $objects, $seen );
+		return $objects;
+	}
+
+	private function collect_scene_objects( $value, array &$objects, array &$seen ): void {
+		if ( is_array( $value ) ) {
+			foreach ( $value as $entry ) {
+				$this->collect_scene_objects( $entry, $objects, $seen );
+			}
+			return;
+		}
+
+		if ( ! is_object( $value ) ) {
+			return;
+		}
+
+		$object_id = spl_object_id( $value );
+		if ( isset( $seen[ $object_id ] ) ) {
+			return;
+		}
+		$seen[ $object_id ] = true;
+
+		$objects[] = $value;
+		foreach ( get_object_vars( $value ) as $entry ) {
+			if ( is_array( $entry ) || is_object( $entry ) ) {
+				$this->collect_scene_objects( $entry, $objects, $seen );
+			}
+		}
+	}
+
+	private function object_requires_spatial_ui( object $object ): bool {
+		$category = $this->normalize_scene_key( (string) ( $object->category_slug ?? $object->category_name ?? '' ) );
+		if ( 'assessment' === $category ) {
+			return true;
+		}
+
+		if ( 'video' === $category ) {
+			return true;
+		}
+
+		if ( '' !== $this->first_non_empty_string( $object, [ 'assessment_group', 'assessment_type', 'assessment_content' ] ) ) {
+			return true;
+		}
+
+		return '' !== trim( (string) ( $object->immerse_cefr_levels ?? '' ) );
+	}
+
+	private function first_non_empty_string( object $object, array $keys ): string {
+		foreach ( $keys as $key ) {
+			$value = trim( (string) ( $object->{$key} ?? '' ) );
+			if ( '' !== $value ) {
+				return $value;
+			}
+		}
+
+		return '';
+	}
+
+	private function normalize_scene_key( string $value ): string {
+		$value = strtolower( trim( $value ) );
+		$value = preg_replace( '/[^a-z0-9]+/', '-', $value ) ?? $value;
+		return trim( $value, '-' );
+	}
+
 	public function runtime_mode_for_scene( $scene_json, $requested_runtime_mode = null ): string {
 		if ( null === $requested_runtime_mode || '' === $requested_runtime_mode ) {
 			$metadata               = $this->metadata( $scene_json );

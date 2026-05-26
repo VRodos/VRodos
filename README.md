@@ -13,6 +13,7 @@ It combines:
 
 Keep current behavior in one place where possible:
 
+- [`documentation/vrodos-compiled-scene-framework-integration.md`](documentation/vrodos-compiled-scene-framework-integration.md): compiled-scene framework boundaries, shared Three.js ownership, lazy runtime chunks, and immersive PMNDRS UIKit Horizon dialog ownership.
 - [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md): canonical compiled runtime rendering, PMNDRS/Takram, day-night lighting, shadows, emissive/readability handling, diagnostics, and future render-track notes.
 - [`PERFORMANCE_OPTIMIZATION_PLAN.md`](PERFORMANCE_OPTIMIZATION_PLAN.md): profiler findings, performance decisions, shadow/AO refactor notes, and asset-optimization measurements.
 - [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md): Takram realism roadmap and future `post-process-albedo` work; it should not duplicate the full current runtime reference.
@@ -93,6 +94,8 @@ That runtime powers:
 - PMNDRS/Takram day-night lighting with horizon-gated direct sun/moon lights and separate indirect sky/fill support
 - compiled walkable-surface and static player/world collision workflows
 - static cached desktop shadows where visible compiled geometry casts and receives by default
+- PMNDRS UIKit Horizon immersive VR dialogs for CEFR prompts, assessment panels, and VR video controls while A-Frame remains the scene/XR host
+- Greek-capable spatial UI text rendering through vendored Noto Sans and same-origin MSDF worker assets
 
 The runtime version source of truth is root [`package.json`](package.json) plus [`package-lock.json`](package-lock.json). `npm run build:three` generates [`assets/runtime-version-manifest.json`](assets/runtime-version-manifest.json), and [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php) reads that manifest at runtime with conservative fallbacks.
 
@@ -326,6 +329,8 @@ The plugin follows a manager-class architecture, with dedicated managers for ass
 - `pmndrs/postprocessing` bundled into the compiled-scene postprocessing runtime bundle
 - Takram atmosphere runtime bundle built from root `@takram/*` package versions
 - `three-mesh-bvh` bundled into the compiled-scene static collision runtime
+- `@pmndrs/uikit`, `@pmndrs/uikit-horizon`, and `@pmndrs/pointer-events` bundled into the compiled-scene spatial UI runtime only when needed
+- Noto Sans plus Zappar MSDF worker/WASM assets vendored for Greek spatial UI glyph coverage
 - Node.js server for networked and collaborative features
 
 ## Local Development

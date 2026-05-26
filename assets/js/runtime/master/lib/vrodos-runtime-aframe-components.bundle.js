@@ -426,6 +426,10 @@
           this.loadingOverlay = null;
         }, 260);
       }
+      this.sceneEl.emit("vrodos-scene-loader-ready", {
+        revealTargets: this.revealTargets.length,
+        lazyTargets: this.lazyTotalCount
+      }, false);
       this.startLazyLoading();
     },
     remove: function() {

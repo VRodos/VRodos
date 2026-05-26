@@ -7497,7 +7497,10 @@
         minPixelRatio: isPerformanceQuality ? 0.75 : 1,
         maxPixelRatio: isHighQuality ? 1.5 : isPerformanceQuality ? 0.9 : 1
       });
-      renderer.setPixelRatio(targetPixelRatio);
+      const isXrPresenting = typeof this.isImmersiveXrActive === "function" ? this.isImmersiveXrActive() : Boolean(renderer.xr && renderer.xr.isPresenting);
+      if (!isXrPresenting) {
+        renderer.setPixelRatio(targetPixelRatio);
+      }
       if (typeof renderer.sortObjects !== "undefined") {
         const rendererSettings = this.el.getAttribute("renderer") || {};
         renderer.sortObjects = rendererSettings.sortTransparentObjects === true || rendererSettings.sortTransparentObjects === "true";

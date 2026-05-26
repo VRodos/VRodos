@@ -31,7 +31,11 @@
             state: null,
             api: null,
             lastResult: null,
-            renderer: null
+            renderer: null,
+            renderCount: 0,
+            lastOpenDiagnostics: null,
+            spatialUiLoadPending: false,
+            pendingPayload: null
         };
     }
 
@@ -39,98 +43,81 @@
         return window.VRODOSRuntimeOverlay || null;
     }
 
+    function getSpatialUiApi() {
+        const spatialUi = window.VRODOSSpatialUI || null;
+        return spatialUi && typeof spatialUi.isAvailable === "function" && spatialUi.isAvailable()
+            ? spatialUi
+            : null;
+    }
+
+    function recordVrDiagnostic(level, message, details) {
+        const spatialUi = window.VRODOSSpatialUI || null;
+        if (spatialUi && typeof spatialUi.recordDiagnostic === "function") {
+            spatialUi.recordDiagnostic(level || "info", "assessment: " + (message || ""), details || {});
+            return;
+        }
+        const overlayApi = getOverlayApi();
+        if (overlayApi && typeof overlayApi.recordDiagnostic === "function") {
+            overlayApi.recordDiagnostic(level || "info", "assessment: " + (message || ""), details || {});
+        }
+    }
+
     function createFrame(runtime, status, primary) {
         const api = runtime.api;
         const payload = runtime.payload || {};
-        const bounds = api.drawFrame({
+        return api.frame({
             title: value(payload.title, "Assessment"),
-            width: PANEL_WIDTH,
-            height: PANEL_HEIGHT,
+            status: status || "",
+            paddingX: 84,
+            paddingY: 58,
+            gapY: 26,
             onClose: function () {
                 runtime.close("close");
-            }
+            },
+            primary
         });
-
-        api.addText(api.root, {
-            position: bounds.left + " " + (bounds.bottom + 0.02) + " 0.03",
-            value: status || "",
-            color: "#475569",
-            align: "left",
-            anchor: "left",
-            width: 1.6,
-            wrapCount: "34",
-            maxLength: 96,
-            scale: "0.36 0.36 0.36"
-        });
-
-        if (primary && primary.visible !== false) {
-            api.addButton(api.root, {
-                position: (bounds.right - 0.3) + " " + (bounds.bottom + 0.04) + " 0.03",
-                width: 0.56,
-                height: 0.17,
-                label: primary.label || "Finish",
-                disabled: Boolean(primary.disabled),
-                color: "#5cc887",
-                onClick: primary.onClick
-            });
-        }
-
-        return {
-            left: bounds.left,
-            right: bounds.right,
-            top: bounds.top,
-            bottom: bounds.bottom + 0.22,
-            width: bounds.width,
-            height: bounds.height - 0.18
-        };
     }
 
-    function addInfo(api, bounds, message) {
-        api.addPlane(api.root, {
-            position: "0 " + bounds.top + " 0.02",
-            width: bounds.width,
-            height: 0.17,
-            material: "shader: flat; color: #e0f2fe; side: double; transparent: false; opacity: 1; depthTest: false; depthWrite: false"
+    function addInfo(api, frame, message) {
+        const info = api.container(frame.content, {
+            backgroundColor: "#e0f2fe",
+            borderRadius: 16,
+            paddingX: 24,
+            paddingY: 16,
+            width: "100%"
         });
-        api.addText(api.root, {
-            position: bounds.left + " " + bounds.top + " 0.035",
-            value: message,
+        api.text(info, {
+            text: message,
             color: "#075985",
-            align: "left",
-            anchor: "left",
-            width: bounds.width - 0.1,
-            wrapCount: "58",
-            maxLength: 160,
-            scale: "0.34 0.34 0.34"
+            fontSize: 26,
+            lineHeight: "120%"
         });
     }
 
-    function addButtonGrid(api, items, options) {
-        const cfg = options || {};
-        const columns = cfg.columns || 2;
-        const width = cfg.width || 0.92;
-        const height = cfg.height || 0.18;
-        const gapX = cfg.gapX || 0.08;
-        const gapY = cfg.gapY || 0.06;
-        const startX = cfg.startX || -((columns - 1) * (width + gapX)) / 2;
-        const startY = cfg.startY || 0;
+    function buttonVariant(item, selectedFallback) {
+        if (item.variant) {
+            return item.variant;
+        }
+        if (item.selected || selectedFallback) {
+            return "positive";
+        }
+        if (item.negative) {
+            return "negative";
+        }
+        return item.secondary === false ? "primary" : "secondary";
+    }
 
-        items.forEach((item, index) => {
-            const col = index % columns;
-            const row = Math.floor(index / columns);
-            api.addButton(api.root, {
-                position: (startX + col * (width + gapX)) + " " + (startY - row * (height + gapY)) + " 0.035",
-                width,
-                height,
-                label: item.label,
-                color: item.color || "#ffffff",
-                textColor: item.textColor || "#0f172a",
-                disabled: item.disabled,
-                onClick: item.onClick,
-                maxLength: item.maxLength || 80,
-                wrapCount: item.wrapCount || "24",
-                textScale: item.textScale || "0.35 0.35 0.35"
-            });
+    function addButtonGrid(api, parent, items, options) {
+        const cfg = options || {};
+        api.grid(parent || api.content, items.map((item) => Object.assign({}, item, {
+            variant: buttonVariant(item),
+            textSize: item.textSize || cfg.textSize || 24,
+            minHeight: item.minHeight || cfg.itemHeight || 64
+        })), {
+            columns: cfg.columns || 2,
+            gapX: cfg.gapX || 18,
+            gapY: cfg.gapY || 18,
+            itemHeight: cfg.itemHeight || cfg.height || 66
         });
     }
 
@@ -161,7 +148,7 @@
                 const selectedIndex = Number.isInteger(state.selectedByIndex[state.activeIndex])
                     ? state.selectedByIndex[state.activeIndex]
                     : null;
-                const bounds = createFrame(runtime, "Question " + (state.activeIndex + 1) + " of " + state.items.length, {
+                const frame = createFrame(runtime, "Question " + (state.activeIndex + 1) + " of " + state.items.length, {
                     label: state.activeIndex >= state.items.length - 1 ? "Finish" : "Next",
                     disabled: selectedIndex === null,
                     onClick: function () {
@@ -177,35 +164,27 @@
                     }
                 });
 
-                runtime.api.addText(runtime.api.root, {
-                    position: bounds.left + " " + bounds.top + " 0.03",
-                    value: item.prompt || "Question " + (state.activeIndex + 1),
+                runtime.api.text(frame.content, {
+                    text: item.prompt || "Question " + (state.activeIndex + 1),
                     color: "#0f172a",
-                    align: "left",
-                    anchor: "left",
-                    width: bounds.width,
-                    wrapCount: "48",
-                    maxLength: 260,
-                    scale: "0.48 0.48 0.48"
+                    fontSize: 38,
+                    fontWeight: 500,
+                    lineHeight: "125%"
                 });
 
-                let gridStartY = bounds.top - 0.34;
                 if (item.imageUrl) {
-                    runtime.api.addImage(runtime.api.root, {
-                        position: "0 " + (bounds.top - 0.28) + " 0.025",
-                        width: 1.1,
-                        height: 0.5,
+                    runtime.api.image(frame.content, {
+                        width: 720,
+                        height: 320,
                         src: item.imageUrl
                     });
-                    gridStartY = bounds.top - 0.86;
                 }
 
-                addButtonGrid(runtime.api, item.answers.map((answer, index) => {
+                addButtonGrid(runtime.api, frame.content, item.answers.map((answer, index) => {
                     const selected = selectedIndex === index;
                     return {
                         label: answer || "Option " + (index + 1),
-                        color: selected ? "#bbf7d0" : "#ffffff",
-                        textColor: selected ? "#166534" : "#0f172a",
+                        selected,
                         onClick: function () {
                             state.selectedByIndex[state.activeIndex] = index;
                             runtime.rerender();
@@ -213,9 +192,8 @@
                     };
                 }), {
                     columns: state.isTrueFalse ? 1 : 2,
-                    width: state.isTrueFalse ? 1.8 : 1.22,
-                    height: 0.2,
-                    startY: gridStartY
+                    itemHeight: 78,
+                    textSize: 26
                 });
             }
         };
@@ -272,54 +250,56 @@
                 const placed = state.mode === "dragdrop"
                     ? Object.keys(state.assignmentsByTarget).length
                     : Object.keys(state.matchesBySource).length;
-                const bounds = createFrame(runtime, "Matched " + placed + " of " + state.entries.length + " pairs", {
+                const frame = createFrame(runtime, "Matched " + placed + " of " + state.entries.length + " pairs", {
                     label: "Finish",
                     disabled: placed !== state.entries.length,
                     onClick: function () {
                         finishPair(runtime);
                     }
                 });
-                addInfo(runtime.api, bounds, "Tap a source, then tap its target. Tap a completed pair to clear it.");
+                addInfo(runtime.api, frame, "Tap a source, then tap its target. Tap a completed pair to clear it.");
 
-                const topY = bounds.top - 0.25;
-                runtime.api.addText(runtime.api.root, {
-                    position: (bounds.left + 0.08) + " " + topY + " 0.03",
-                    value: "Sources",
-                    color: "#334155",
-                    align: "left",
-                    anchor: "left",
-                    width: 1,
-                    wrapCount: "20",
-                    scale: "0.36 0.36 0.36"
+                const columns = runtime.api.row(frame.content, {
+                    alignItems: "flex-start",
+                    gapColumn: 34,
+                    width: "100%"
                 });
-                runtime.api.addText(runtime.api.root, {
-                    position: "0.2 " + topY + " 0.03",
-                    value: "Targets",
-                    color: "#334155",
-                    align: "left",
-                    anchor: "left",
-                    width: 1,
-                    wrapCount: "20",
-                    scale: "0.36 0.36 0.36"
+                const sourceColumn = runtime.api.column(columns, {
+                    flexGrow: 1,
+                    gapRow: 14,
+                    width: "50%"
+                });
+                const targetColumn = runtime.api.column(columns, {
+                    flexGrow: 1,
+                    gapRow: 14,
+                    width: "50%"
+                });
+                const buttonHeight = state.entries.length > 6 ? 54 : 66;
+                const buttonTextSize = state.entries.length > 6 ? 20 : 24;
+                runtime.api.text(sourceColumn, {
+                    text: "Sources",
+                    color: "#475569",
+                    fontSize: 24,
+                    fontWeight: 600
+                });
+                runtime.api.text(targetColumn, {
+                    text: "Targets",
+                    color: "#475569",
+                    fontSize: 24,
+                    fontWeight: 600
                 });
 
-                const buttonHeight = Math.max(0.115, Math.min(0.17, 0.9 / Math.max(1, state.entries.length)));
-                const yStart = topY - 0.16;
-                const yStep = buttonHeight + 0.035;
-
-                state.sourceOrder.forEach((sourceId, index) => {
+                state.sourceOrder.forEach((sourceId) => {
                     const entry = state.entriesById[sourceId];
                     const matchedTargetId = state.matchesBySource[sourceId] || "";
                     const assigned = state.mode === "matching" ? Boolean(matchedTargetId) : Object.values(state.assignmentsByTarget).includes(sourceId);
                     const selected = state.selectedSourceId === sourceId;
-                    runtime.api.addButton(runtime.api.root, {
-                        position: "-0.68 " + (yStart - index * yStep) + " 0.035",
-                        width: 1.18,
-                        height: buttonHeight,
+                    runtime.api.button(sourceColumn, {
                         label: entry ? entry.source || "Source" : "Source",
-                        color: assigned ? "#bbf7d0" : (selected ? "#dbeafe" : "#ffffff"),
-                        textColor: assigned ? "#166534" : "#0f172a",
-                        textScale: "0.28 0.28 0.28",
+                        variant: assigned ? "positive" : (selected ? "primary" : "secondary"),
+                        width: "100%",
+                        minHeight: buttonHeight,
+                        textSize: buttonTextSize,
                         onClick: function () {
                             if (state.mode === "matching" && state.matchesBySource[sourceId]) {
                                 delete state.matchesBySource[sourceId];
@@ -331,17 +311,18 @@
                     });
                 });
 
-                state.targetOrder.forEach((targetId, index) => {
+                state.targetOrder.forEach((targetId) => {
                     const entry = state.entriesById[targetId];
                     const sourceId = sourceForTarget(state, targetId);
-                    runtime.api.addButton(runtime.api.root, {
-                        position: "0.68 " + (yStart - index * yStep) + " 0.035",
-                        width: 1.18,
-                        height: buttonHeight,
-                        label: entry ? entry.target || "Target" : "Target",
-                        color: sourceId ? "#bbf7d0" : "#ffffff",
-                        textColor: sourceId ? "#166534" : "#0f172a",
-                        textScale: "0.28 0.28 0.28",
+                    const sourceEntry = sourceId ? state.entriesById[sourceId] : null;
+                    runtime.api.button(targetColumn, {
+                        label: entry
+                            ? (entry.target || "Target") + (sourceEntry ? " <- " + (sourceEntry.source || "Source") : "")
+                            : "Target",
+                        variant: sourceId ? "positive" : "secondary",
+                        width: "100%",
+                        minHeight: buttonHeight,
+                        textSize: buttonTextSize,
                         onClick: function () {
                             if (sourceId) {
                                 clearTarget(state, targetId);
@@ -358,7 +339,7 @@
 
     function sourceForTarget(state, targetId) {
         if (state.mode === "dragdrop") {
-            return Object.keys(state.assignmentsByTarget).find((key) => key === targetId && state.assignmentsByTarget[key]) || "";
+            return state.assignmentsByTarget[targetId] || "";
         }
         return Object.keys(state.matchesBySource).find((sourceId) => state.matchesBySource[sourceId] === targetId) || "";
     }
@@ -580,7 +561,7 @@
             renderUnsupported(runtime, "This word search could not be built.");
             return;
         }
-        const bounds = createFrame(runtime, "Found " + state.foundIds.size + " of " + state.puzzle.entries.length + " words", {
+        const frame = createFrame(runtime, "Found " + state.foundIds.size + " of " + state.puzzle.entries.length + " words", {
             label: "Finish",
             disabled: state.foundIds.size !== state.puzzle.entries.length,
             onClick: function () {
@@ -596,25 +577,22 @@
                 );
             }
         });
-        addInfo(runtime.api, bounds, "Tap the first and last letter of a hidden word in a straight line.");
+        addInfo(runtime.api, frame, "Tap the first and last letter of a hidden word in a straight line.");
 
-        runtime.api.addText(runtime.api.root, {
-            position: bounds.left + " " + (bounds.top - 0.2) + " 0.03",
-            value: state.puzzle.entries.map((entry) => (state.foundIds.has(entry.id) ? "[x] " : "[ ] ") + entry.text).join("  "),
+        runtime.api.text(frame.content, {
+            text: state.puzzle.entries.map((entry) => (state.foundIds.has(entry.id) ? "[x] " : "[ ] ") + entry.text).join("  "),
             color: "#334155",
-            align: "left",
-            anchor: "left",
-            width: bounds.width,
-            wrapCount: "64",
-            maxLength: 180,
-            scale: "0.28 0.28 0.28"
+            fontSize: 20,
+            lineHeight: "120%"
         });
 
         const size = state.puzzle.size;
-        const cellSize = Math.min(0.09, 1.02 / size);
-        const boardWidth = size * cellSize;
-        const startX = -boardWidth / 2 + cellSize / 2;
-        const startY = bounds.top - 0.42;
+        const cellSize = Math.max(34, Math.min(54, Math.floor(660 / Math.max(1, size))));
+        const board = runtime.api.column(frame.content, {
+            alignItems: "center",
+            gapRow: 7,
+            width: "100%"
+        });
         const foundCells = new Set();
         state.puzzle.entries.forEach((entry) => {
             if (state.foundIds.has(entry.id)) {
@@ -623,18 +601,23 @@
         });
 
         state.puzzle.cells.forEach((row, rowIndex) => {
+            const rowContainer = runtime.api.row(board, {
+                justifyContent: "center",
+                gapColumn: 7,
+                width: "100%"
+            });
             row.forEach((letter, colIndex) => {
                 const key = rowIndex + ":" + colIndex;
                 const selected = state.selectionStart === key;
-                runtime.api.addButton(runtime.api.root, {
-                    position: (startX + colIndex * cellSize) + " " + (startY - rowIndex * cellSize) + " 0.04",
-                    width: cellSize * 0.9,
-                    height: cellSize * 0.9,
+                runtime.api.button(rowContainer, {
                     label: letter,
-                    color: foundCells.has(key) ? "#bbf7d0" : (selected ? "#dbeafe" : "#ffffff"),
-                    textColor: foundCells.has(key) ? "#166534" : "#0f172a",
-                    textScale: "0.22 0.22 0.22",
-                    wrapCount: "2",
+                    variant: foundCells.has(key) ? "positive" : (selected ? "primary" : "secondary"),
+                    width: cellSize,
+                    height: cellSize,
+                    minWidth: cellSize,
+                    minHeight: cellSize,
+                    textSize: Math.max(16, Math.min(22, cellSize - 20)),
+                    flexShrink: 0,
                     onClick: function () {
                         if (!state.selectionStart) {
                             state.selectionStart = key;
@@ -662,7 +645,7 @@
         const state = runtime.state;
         const currentPromptId = state.promptOrder[state.currentPromptIndex] || "";
         const currentPrompt = currentPromptId ? state.entriesById[currentPromptId] : null;
-        const bounds = createFrame(runtime, "Completed " + state.markedIds.size + " of " + state.entries.length + " prompts", {
+        const frame = createFrame(runtime, "Completed " + state.markedIds.size + " of " + state.entries.length + " prompts", {
             label: "Finish",
             disabled: state.markedIds.size !== state.entries.length,
             onClick: function () {
@@ -683,67 +666,73 @@
             }
         });
 
-        runtime.api.addText(runtime.api.root, {
-            position: bounds.left + " " + bounds.top + " 0.03",
-            value: currentPrompt ? "Prompt: " + (currentPrompt.hint || currentPrompt.text) : "All prompts completed.",
+        runtime.api.text(frame.content, {
+            text: currentPrompt ? "Prompt: " + (currentPrompt.hint || currentPrompt.text) : "All prompts completed.",
             color: currentPrompt ? "#1d4ed8" : "#166534",
-            align: "left",
-            anchor: "left",
-            width: bounds.width,
-            wrapCount: "54",
-            maxLength: 180,
-            scale: "0.42 0.42 0.42"
+            fontSize: 32,
+            fontWeight: 600,
+            lineHeight: "120%"
         });
         if (state.feedback) {
-            runtime.api.addText(runtime.api.root, {
-                position: bounds.left + " " + (bounds.top - 0.2) + " 0.03",
-                value: state.feedback,
+            runtime.api.text(frame.content, {
+                text: state.feedback,
                 color: "#dc2626",
-                align: "left",
-                anchor: "left",
-                width: bounds.width,
-                wrapCount: "54",
-                maxLength: 120,
-                scale: "0.32 0.32 0.32"
+                fontSize: 24,
+                lineHeight: "120%"
             });
         }
 
         const boardSize = Math.ceil(Math.sqrt(state.entries.length));
         const slots = state.boardOrder.concat(Array.from({ length: boardSize * boardSize - state.entries.length }, () => ""));
-        const cellSize = Math.min(0.38, 1.08 / boardSize);
-        const startX = -(boardSize - 1) * cellSize / 2;
-        const startY = bounds.top - 0.42;
-        slots.forEach((entryId, index) => {
-            if (!entryId) {
-                return;
-            }
-            const entry = state.entriesById[entryId];
-            const row = Math.floor(index / boardSize);
-            const col = index % boardSize;
-            const marked = state.markedIds.has(entryId);
-            runtime.api.addButton(runtime.api.root, {
-                position: (startX + col * cellSize) + " " + (startY - row * cellSize) + " 0.04",
-                width: cellSize * 0.9,
-                height: cellSize * 0.9,
-                label: entry.text,
-                color: marked ? "#bbf7d0" : "#ffffff",
-                textColor: marked ? "#166534" : "#0f172a",
-                textScale: "0.27 0.27 0.27",
-                onClick: function () {
-                    if (!currentPrompt || marked) {
-                        return;
-                    }
-                    if (entryId === currentPrompt.id) {
-                        state.markedIds.add(entryId);
-                        state.feedback = "";
-                        state.currentPromptIndex += 1;
-                    } else {
-                        state.feedback = "That tile does not match the current prompt.";
-                    }
-                    runtime.rerender();
-                }
-            });
+        const cellSize = Math.max(72, Math.min(138, Math.floor(560 / Math.max(1, boardSize))));
+        const board = runtime.api.column(frame.content, {
+            alignItems: "center",
+            gapRow: 12,
+            width: "100%"
         });
+        for (let row = 0; row < boardSize; row += 1) {
+            const rowContainer = runtime.api.row(board, {
+                justifyContent: "center",
+                gapColumn: 12,
+                width: "100%"
+            });
+            for (let col = 0; col < boardSize; col += 1) {
+                const entryId = slots[row * boardSize + col];
+                if (!entryId) {
+                    runtime.api.container(rowContainer, {
+                        width: cellSize,
+                        height: cellSize,
+                        flexShrink: 0
+                    });
+                    continue;
+                }
+                const entry = state.entriesById[entryId];
+                const marked = state.markedIds.has(entryId);
+                runtime.api.button(rowContainer, {
+                    label: entry.text,
+                    variant: marked ? "positive" : "secondary",
+                    width: cellSize,
+                    height: cellSize,
+                    minWidth: cellSize,
+                    minHeight: cellSize,
+                    textSize: boardSize > 3 ? 18 : 22,
+                    flexShrink: 0,
+                    onClick: function () {
+                        if (!currentPrompt || marked) {
+                            return;
+                        }
+                        if (entryId === currentPrompt.id) {
+                            state.markedIds.add(entryId);
+                            state.feedback = "";
+                            state.currentPromptIndex += 1;
+                        } else {
+                            state.feedback = "That tile does not match the current prompt.";
+                        }
+                        runtime.rerender();
+                    }
+                });
+            }
+        }
     }
 
     function createTextRenderer() {
@@ -819,7 +808,7 @@
             return;
         }
         const filledCount = state.annotations.filter((annotation) => normalizeFreeText(state.values[annotation.id] || "")).length;
-        const bounds = createFrame(runtime, "Filled " + filledCount + " of " + state.annotations.length + " blanks", {
+        const frame = createFrame(runtime, "Filled " + filledCount + " of " + state.annotations.length + " blanks", {
             label: "Submit",
             disabled: filledCount !== state.annotations.length,
             onClick: function () {
@@ -842,37 +831,41 @@
                 );
             }
         });
-        addInfo(runtime.api, bounds, "Tap a word, then tap the blank where it belongs.");
+        addInfo(runtime.api, frame, "Tap a word, then tap the blank where it belongs.");
 
         const assignedWordIds = new Set(Object.values(state.assignmentsByBlank || {}));
         const availableWords = state.wordBank.filter((word) => !assignedWordIds.has(word.id));
-        addButtonGrid(runtime.api, availableWords.map((word) => ({
+        runtime.api.text(frame.content, {
+            text: "Word bank",
+            color: "#475569",
+            fontSize: 24,
+            fontWeight: 600
+        });
+        addButtonGrid(runtime.api, frame.content, availableWords.map((word) => ({
             label: word.text,
-            color: state.selectedWordId === word.id ? "#dbeafe" : "#ffffff",
+            variant: state.selectedWordId === word.id ? "primary" : "secondary",
             onClick: function () {
                 state.selectedWordId = state.selectedWordId === word.id ? "" : word.id;
                 runtime.rerender();
             }
         })), {
             columns: 4,
-            width: 0.58,
-            height: 0.15,
-            startY: bounds.top - 0.25,
-            textScale: "0.25 0.25 0.25"
+            itemHeight: 58,
+            textSize: 20
         });
 
-        state.annotations.forEach((annotation, index) => {
-            const row = Math.floor(index / 2);
-            const col = index % 2;
+        runtime.api.text(frame.content, {
+            text: "Blanks",
+            color: "#475569",
+            fontSize: 24,
+            fontWeight: 600
+        });
+        addButtonGrid(runtime.api, frame.content, state.annotations.map((annotation, index) => {
             const assignedWordId = state.assignmentsByBlank[annotation.id] || "";
             const assigned = state.wordBank.find((word) => word.id === assignedWordId);
-            runtime.api.addButton(runtime.api.root, {
-                position: (-0.62 + col * 1.24) + " " + (bounds.top - 0.62 - row * 0.22) + " 0.04",
-                width: 1.1,
-                height: 0.17,
+            return {
                 label: assigned ? assigned.text : "Blank " + (index + 1),
-                color: assigned ? "#bbf7d0" : "#f1f5f9",
-                textColor: assigned ? "#166534" : "#475569",
+                variant: assigned ? "positive" : "secondary",
                 onClick: function () {
                     if (!state.selectedWordId) {
                         delete state.assignmentsByBlank[annotation.id];
@@ -882,7 +875,11 @@
                     }
                     runtime.rerender();
                 }
-            });
+            };
+        }), {
+            columns: 2,
+            itemHeight: 64,
+            textSize: 22
         });
     }
 
@@ -892,7 +889,7 @@
             renderUnsupported(runtime, "This highlight assessment is empty.");
             return;
         }
-        const bounds = createFrame(runtime, "Selected " + state.selectedIds.size + " of " + state.annotations.length + " highlights", {
+        const frame = createFrame(runtime, "Selected " + state.selectedIds.size + " of " + state.annotations.length + " highlights", {
             label: "Finish",
             disabled: state.selectedIds.size !== state.annotations.length,
             onClick: function () {
@@ -908,13 +905,12 @@
                 );
             }
         });
-        addInfo(runtime.api, bounds, "Select every target highlight to finish.");
-        addButtonGrid(runtime.api, state.annotations.map((annotation) => {
+        addInfo(runtime.api, frame, "Select every target highlight to finish.");
+        addButtonGrid(runtime.api, frame.content, state.annotations.map((annotation) => {
             const selected = state.selectedIds.has(annotation.id);
             return {
                 label: state.sourceText.slice(annotation.start, annotation.end),
-                color: selected ? "#bbf7d0" : "#fef3c7",
-                textColor: selected ? "#166534" : "#92400e",
+                variant: selected ? "positive" : "secondary",
                 onClick: function () {
                     if (selected) {
                         state.selectedIds.delete(annotation.id);
@@ -926,26 +922,20 @@
             };
         }), {
             columns: 2,
-            width: 1.2,
-            height: 0.17,
-            startY: bounds.top - 0.28
+            itemHeight: 64,
+            textSize: 22
         });
     }
 
     function renderUnsupported(runtime, message) {
-        const bounds = createFrame(runtime, runtime.payload && (runtime.payload.type || runtime.payload.group) || "Assessment", {
+        const frame = createFrame(runtime, runtime.payload && (runtime.payload.type || runtime.payload.group) || "Assessment", {
             visible: false
         });
-        runtime.api.addText(runtime.api.root, {
-            position: bounds.left + " " + (bounds.top - 0.08) + " 0.03",
-            value: message || "This assessment type is not interactive in VRodos yet.",
+        runtime.api.text(frame.content, {
+            text: message || "This assessment type is not interactive in VRodos yet.",
             color: "#334155",
-            align: "left",
-            anchor: "left",
-            width: bounds.width,
-            wrapCount: "46",
-            maxLength: 240,
-            scale: "0.48 0.48 0.48"
+            fontSize: 32,
+            lineHeight: "125%"
         });
     }
 
@@ -965,11 +955,12 @@
         const runtime = makeRuntime();
 
         runtime.close = function () {
-            const overlayApi = getOverlayApi();
-            if (overlayApi) {
-                overlayApi.closeActivePanel("assessment-close");
+            const spatialUi = window.VRODOSSpatialUI || null;
+            if (spatialUi && typeof spatialUi.closePanel === "function") {
+                spatialUi.closePanel("assessment-close");
+            } else {
+                runtime.reset();
             }
-            runtime.reset();
         };
 
         runtime.reset = function () {
@@ -977,6 +968,9 @@
             runtime.state = null;
             runtime.renderer = null;
             runtime.api = null;
+            runtime.renderCount = 0;
+            runtime.lastOpenDiagnostics = null;
+            runtime.pendingPayload = null;
         };
 
         runtime.finish = function (response, extra) {
@@ -986,21 +980,22 @@
             runtime.lastResult = buildAssessmentResult(runtime.payload, response, extra);
             runtime.payload.result = runtime.lastResult;
             window.__vrodosLastAssessmentResult = runtime.lastResult;
-            const overlayApi = getOverlayApi();
-            if (overlayApi) {
-                overlayApi.closeActivePanel("assessment-finish");
+            const spatialUi = window.VRODOSSpatialUI || null;
+            if (spatialUi && typeof spatialUi.closePanel === "function") {
+                spatialUi.closePanel("assessment-finish");
+            } else {
+                runtime.reset();
             }
-            runtime.reset();
         };
 
         runtime.refreshTargets = function () {
-            if (runtime.api && typeof runtime.api.refreshTargets === "function") {
-                runtime.api.refreshTargets();
+            const spatialUi = window.VRODOSSpatialUI || null;
+            if (spatialUi && typeof spatialUi.refreshInteractionTargets === "function") {
+                spatialUi.refreshInteractionTargets();
                 return;
             }
-            const overlayApi = getOverlayApi();
-            if (overlayApi && typeof overlayApi.refreshRaycasters === "function") {
-                overlayApi.refreshRaycasters();
+            if (runtime.api && typeof runtime.api.refreshTargets === "function") {
+                runtime.api.refreshTargets();
             }
         };
 
@@ -1010,14 +1005,61 @@
                 runtime.refreshTargets();
                 return;
             }
+            runtime.renderCount += 1;
+            recordVrDiagnostic("debug", "rendering assessment VR panel", {
+                renderCount: runtime.renderCount,
+                group: runtime.payload && runtime.payload.group || "",
+                type: runtime.payload && runtime.payload.type || ""
+            });
             runtime.renderer.render(runtime);
             runtime.refreshTargets();
         };
 
         runtime.open = function (payload) {
             const overlayApi = getOverlayApi();
-            if (!overlayApi || !overlayApi.shouldUseVrPanel()) {
+            const fallbackBrowsingMode = (typeof window.browsingModeVR !== "undefined" && window.browsingModeVR) ||
+                (typeof browsingModeVR !== "undefined" && browsingModeVR);
+            const shouldUseVrPanel = overlayApi && typeof overlayApi.shouldUseVrPanel === "function"
+                ? overlayApi.shouldUseVrPanel()
+                : Boolean(fallbackBrowsingMode);
+            if (!shouldUseVrPanel) {
+                recordVrDiagnostic("debug", "assessment opened outside immersive XR; desktop DOM overlay remains active", {
+                    hasOverlayApi: Boolean(overlayApi),
+                    presentationMode: overlayApi && typeof overlayApi.getPresentationMode === "function"
+                        ? overlayApi.getPresentationMode()
+                        : "unknown"
+                });
                 return false;
+            }
+
+            const spatialUi = getSpatialUiApi();
+            if (!spatialUi) {
+                runtime.pendingPayload = payload;
+                if (overlayApi && typeof overlayApi.ensureSpatialUiRuntime === "function" && !runtime.spatialUiLoadPending) {
+                    runtime.spatialUiLoadPending = true;
+                    recordVrDiagnostic("debug", "assessment VR panel is loading spatial UI runtime on demand", {
+                        group: payload && payload.group || "",
+                        type: payload && payload.type || ""
+                    });
+                    overlayApi.ensureSpatialUiRuntime({ timeoutMs: 8000 }).then((available) => {
+                        const pending = runtime.pendingPayload;
+                        runtime.spatialUiLoadPending = false;
+                        runtime.pendingPayload = null;
+                        if (available && pending) {
+                            runtime.open(pending);
+                        } else if (!available) {
+                            recordVrDiagnostic("error", "assessment VR panel could not load spatial UI runtime", {
+                                hasSpatialUi: Boolean(window.VRODOSSpatialUI)
+                            });
+                        }
+                    });
+                }
+                recordVrDiagnostic("warn", "assessment VR panel requested but pmndrs spatial UI is unavailable", {
+                    group: payload && payload.group || "",
+                    type: payload && payload.type || "",
+                    supported: Boolean(payload && payload.supported)
+                });
+                return true;
             }
 
             runtime.payload = payload;
@@ -1025,15 +1067,20 @@
             runtime.state = runtime.renderer && typeof runtime.renderer.createState === "function"
                 ? runtime.renderer.createState(payload)
                 : {};
+            runtime.lastOpenDiagnostics = {
+                group: payload && payload.group || "",
+                type: payload && payload.type || "",
+                supported: Boolean(payload && payload.supported),
+                usesSpatialUi: true
+            };
 
-            runtime.api = overlayApi.openVrPanel({
+            const panelOptions = {
                 id: "vrodos-immerse-assessment-vr-overlay",
                 width: PANEL_WIDTH,
                 height: PANEL_HEIGHT,
                 distance: 3.15,
                 verticalOffset: -0.08,
                 lockInteraction: false,
-                retargetRaycasters: false,
                 cleanup: function () {
                     runtime.reset();
                 },
@@ -1041,8 +1088,18 @@
                     runtime.api = api;
                     runtime.rerender();
                 }
-            });
+            };
 
+            runtime.api = spatialUi.openPanel(panelOptions);
+
+            recordVrDiagnostic(runtime.api ? "debug" : "warn", "assessment VR panel open result", Object.assign({}, runtime.lastOpenDiagnostics, {
+                opened: Boolean(runtime.api),
+                panelApi: runtime.api && runtime.api.__spatialUi ? "spatial-ui" : "unavailable"
+            }));
+
+            if (!runtime.api) {
+                runtime.reset();
+            }
             return Boolean(runtime.api);
         };
 

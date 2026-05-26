@@ -21,6 +21,10 @@ class VRodos_Compiler_Runtime_Script_Planner {
 			'scene-components',
 		];
 
+		if ( $this->feature_flags->has_spatial_ui_content( $scene_json ) ) {
+			$requested[] = 'spatial-ui';
+		}
+
 		if ( $this->feature_flags->is_networked_runtime( $runtime_mode ) ) {
 			$requested[] = 'networked-components';
 		}
@@ -68,7 +72,7 @@ class VRodos_Compiler_Runtime_Script_Planner {
 
 	private function render_chunk( array $chunk ): string {
 		if ( 'script' === (string) $chunk['type'] ) {
-			return '<script src="' . $this->escape_attr( (string) $chunk['src'] ) . '"></script>';
+			return '<script src="' . $this->escape_attr( $this->cache_busted_script_src( (string) $chunk['src'], $chunk ) ) . '"></script>';
 		}
 
 		if ( 'inline-module' === (string) $chunk['type'] ) {
@@ -76,6 +80,16 @@ class VRodos_Compiler_Runtime_Script_Planner {
 		}
 
 		throw new RuntimeException( '[VRodos] Unsupported runtime chunk type: ' . (string) $chunk['type'] );
+	}
+
+	private function cache_busted_script_src( string $src, array $chunk ): string {
+		$version = $this->manifest->script_version_for_chunk( $chunk );
+		if ( '' === $version ) {
+			return $src;
+		}
+
+		$separator = str_contains( $src, '?' ) ? '&' : '?';
+		return $src . $separator . 'ver=' . rawurlencode( $version );
 	}
 
 	private function render_inline_module_chunk( array $chunk ): string {

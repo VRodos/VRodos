@@ -15,10 +15,15 @@ require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-feature-flags
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-manifest.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-script-planner.php';
 
-function vrodos_test_scene( array $metadata ) {
-	return (object) [
+function vrodos_test_scene( array $metadata, $objects = null ) {
+	$scene = (object) [
 		'metadata' => (object) $metadata,
 	];
+	if ( null !== $objects ) {
+		$scene->objects = $objects;
+	}
+
+	return $scene;
 }
 
 function vrodos_assert_same( array $expected, array $actual, string $label ): void {
@@ -95,6 +100,7 @@ $manifest = new VRodos_Compiler_Runtime_Manifest(
 		'schemaVersion' => 1,
 		'chunks'        => [
 			'scene-components'             => vrodos_test_chunk( 'scene-components', 'script', 'js/master/lib/vrodos-runtime-scene-components.bundle.js', 10 ),
+			'spatial-ui'                   => vrodos_test_chunk( 'spatial-ui', 'script', 'js/master/lib/vrodos-runtime-spatial-ui.bundle.js', 12, [ 'scene-components' ] ),
 			'networked-components'         => vrodos_test_chunk( 'networked-components', 'script', 'js/master/lib/vrodos-runtime-networked-components.bundle.js', 15 ),
 			'core-runtime'                 => vrodos_test_chunk( 'core-runtime', 'script', 'js/master/lib/vrodos-runtime-core.bundle.js', 20 ),
 			'fps-meter'                    => vrodos_test_chunk( 'fps-meter', 'inline-module', '', 30, [], [
@@ -115,10 +121,83 @@ $manifest = new VRodos_Compiler_Runtime_Manifest(
 
 $planner = new VRodos_Compiler_Runtime_Script_Planner( $manifest );
 
+$versioned_manifest = new VRodos_Compiler_Runtime_Manifest(
+	null,
+	[
+		'schemaVersion' => 1,
+		'chunks'        => [
+			'scene-components' => vrodos_test_chunk(
+				'scene-components',
+				'script',
+				'js/master/lib/vrodos-runtime-scene-components.bundle.js',
+				10,
+				[],
+				[ 'version' => 'cache-test-1' ]
+			),
+		],
+	]
+);
+$versioned_planner  = new VRodos_Compiler_Runtime_Script_Planner( $versioned_manifest );
+vrodos_assert_contains(
+	$versioned_planner->render_scripts_for_chunk_ids( [ 'scene-components' ] ),
+	'vrodos-runtime-scene-components.bundle.js?ver=cache-test-1',
+	'runtime script cache busting'
+);
+
 vrodos_assert_same(
 	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [] ) ),
 	'no post-FX'
+);
+
+vrodos_assert_same(
+	[ 'scene-components', 'spatial-ui', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
+	$planner->script_ids_for_scene(
+		vrodos_test_scene(
+			[],
+			(object) [
+				'assessment_one' => (object) [
+					'category_slug'     => 'assessment',
+					'assessment_group'  => 'Question',
+					'assessment_levels' => 'WyJBMSJd',
+				],
+			]
+		)
+	),
+	'assessment spatial UI'
+);
+
+vrodos_assert_same(
+	[ 'scene-components', 'spatial-ui', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
+	$planner->script_ids_for_scene(
+		vrodos_test_scene(
+			[],
+			(object) [
+				'cefr_attachment' => (object) [
+					'category_slug'         => 'image',
+					'immerse_object_type'   => 'attachment',
+					'immerse_cefr_levels'   => 'WyJBMiJd',
+				],
+			]
+		)
+	),
+	'CEFR spatial UI'
+);
+
+vrodos_assert_same(
+	[ 'scene-components', 'spatial-ui', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
+	$planner->script_ids_for_scene(
+		vrodos_test_scene(
+			[],
+			(object) [
+				'video_one' => (object) [
+					'category_slug' => 'video',
+					'video_url'     => 'https://example.test/video.mp4',
+				],
+			]
+		)
+	),
+	'video spatial UI'
 );
 
 vrodos_assert_same(
@@ -169,8 +248,23 @@ vrodos_assert_contains( $no_postfx_html, 'vrodos-runtime-networked-components.bu
 vrodos_assert_contains( $no_postfx_html, 'vrodos-runtime-core.bundle.js', 'no post-FX script tags' );
 vrodos_assert_contains( $no_postfx_html, 'vrodos-collision-bvh.bundle.js', 'no post-FX script tags' );
 vrodos_assert_contains( $no_postfx_html, 'vrodos-runtime-aframe-components.bundle.js', 'no post-FX script tags' );
+vrodos_assert_not_contains( $no_postfx_html, 'vrodos-runtime-spatial-ui.bundle.js', 'no post-FX script tags' );
 vrodos_assert_not_contains( $no_postfx_html, 'vrodos-postprocessing.bundle.js', 'no post-FX script tags' );
 vrodos_assert_not_contains( $no_postfx_html, 'vrodos-takram-atmosphere.bundle.js', 'no post-FX script tags' );
+
+$assessment_html = $planner->render_scripts_for_scene(
+	vrodos_test_scene(
+		[],
+		(object) [
+			'assessment_one' => (object) [
+				'category_name' => 'Assessment',
+			],
+		]
+	)
+);
+vrodos_assert_contains( $assessment_html, 'vrodos-runtime-spatial-ui.bundle.js', 'assessment spatial UI script tags' );
+vrodos_assert_order( $assessment_html, 'vrodos-runtime-scene-components.bundle.js', 'vrodos-runtime-spatial-ui.bundle.js', 'assessment spatial UI script order' );
+vrodos_assert_order( $assessment_html, 'vrodos-runtime-spatial-ui.bundle.js', 'vrodos-runtime-networked-components.bundle.js', 'assessment spatial UI script order' );
 
 $pmndrs_takram_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true ] ) );
 vrodos_assert_order( $pmndrs_takram_html, 'vrodos-postprocessing.bundle.js', 'vrodos-takram-atmosphere.bundle.js', 'PMNDRS Takram script order' );

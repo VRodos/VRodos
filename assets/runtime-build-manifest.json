@@ -36,6 +36,27 @@
       ],
       "generatedBy": "build:runtime"
     },
+    "spatial-ui": {
+      "id": "spatial-ui",
+      "label": "Spatial UI runtime",
+      "type": "script",
+      "file": "vrodos-runtime-spatial-ui.bundle.js",
+      "src": "js/master/lib/vrodos-runtime-spatial-ui.bundle.js",
+      "order": 12,
+      "dependencies": [
+        "scene-components"
+      ],
+      "features": [
+        "spatial-ui",
+        "horizon-ui",
+        "assessment",
+        "video"
+      ],
+      "sourceFiles": [
+        "assets/js/runtime/spatial-ui/vrodos_spatial_ui.js"
+      ],
+      "generatedBy": "build:runtime"
+    },
     "networked-components": {
       "id": "networked-components",
       "label": "Networked scene components",

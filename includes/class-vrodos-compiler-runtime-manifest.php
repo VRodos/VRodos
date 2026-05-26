@@ -71,6 +71,44 @@ class VRodos_Compiler_Runtime_Manifest {
 		);
 	}
 
+	public function script_version_for_chunk( array $chunk ): string {
+		$declared_version = (string) ( $chunk['version'] ?? '' );
+		if ( '' !== $declared_version ) {
+			return $declared_version;
+		}
+
+		if ( 'script' !== (string) ( $chunk['type'] ?? '' ) ) {
+			return '';
+		}
+
+		$file = (string) ( $chunk['file'] ?? '' );
+		if ( '' === $file ) {
+			return '';
+		}
+
+		$runtime_root = (string) ( $this->manifest['runtimeRoot'] ?? '' );
+		if ( '' === $runtime_root ) {
+			return '';
+		}
+
+		$relative = ltrim( str_replace( '\\', '/', $runtime_root . '/' . $file ), '/' );
+		$path     = class_exists( 'VRodos_Path_Manager' )
+			? VRodos_Path_Manager::plugin_path( $relative )
+			: dirname( __DIR__ ) . '/' . $relative;
+
+		if ( ! is_readable( $path ) ) {
+			return '';
+		}
+
+		$mtime = filemtime( $path );
+		$size  = filesize( $path );
+		if ( false === $mtime || false === $size ) {
+			return '';
+		}
+
+		return (string) $mtime . '-' . (string) $size;
+	}
+
 	private function append_chunk_with_dependencies( string $chunk_id, array &$resolved ): void {
 		$chunk = $this->chunk( $chunk_id );
 		foreach ( (array) ( $chunk['dependencies'] ?? [] ) as $dependency_id ) {
