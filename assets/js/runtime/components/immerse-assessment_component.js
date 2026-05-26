@@ -17,7 +17,8 @@
             group,
             supported,
             content,
-            levels
+            levels,
+            anchorElement: element
         };
     }
 

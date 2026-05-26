@@ -613,17 +613,11 @@
           bridge.lastClickAt = performance.now();
         };
         const handleDown = (event) => {
-          if (controllerEl.components && controllerEl.components.cursor) {
-            return;
-          }
           const hit = currentControllerIntersection(controllerEl);
           controllerEl.__vrodosControllerClickBridge.downTarget = hit && hit.target || null;
           controllerEl.__vrodosControllerClickBridge.downAt = performance.now();
         };
         const handleUp = (event) => {
-          if (controllerEl.components && controllerEl.components.cursor) {
-            return;
-          }
           const bridge = controllerEl.__vrodosControllerClickBridge;
           const hit = currentControllerIntersection(controllerEl);
           const downTarget = bridge && bridge.downTarget || null;
@@ -641,9 +635,6 @@
           rememberEmittedClick(hit.target);
         };
         const handleSelect = (event) => {
-          if (controllerEl.components && controllerEl.components.cursor) {
-            return;
-          }
           const hit = currentControllerIntersection(controllerEl);
           if (!hit || !hit.target || recentlyEmittedClick(hit.target)) {
             return;
@@ -2590,12 +2581,16 @@
       this.videoVrPanelApi = null;
       this.videoVrPanelOpen = false;
       this.videoSpatialUiLoadPending = false;
+      this.videoClickLastAt = 0;
       this.videoSourceUrl = this.videoDisplay ? this.videoDisplay.getAttribute("data-vrodos-video-src") || "" : "";
       this.videoLoop = this.videoDisplay ? this.videoDisplay.getAttribute("data-vrodos-video-loop") === "true" : false;
       this.videoPosterSelector = this.videoDisplay ? this.videoDisplay.getAttribute("data-vrodos-video-poster") || "" : "";
       this.videoPosterUrl = this.resolvePosterUrl();
       this.video = this.ensureVideoElement();
       this.applyWorldVideoMaterial();
+      if (this.videoDisplay && this.videoDisplay.classList) {
+        this.videoDisplay.classList.add("raycastable");
+      }
       this.onVideoClick = this.onVideoClick.bind(this);
       this.onPlayHintClick = this.onPlayHintClick.bind(this);
       this.onFullScreenClick = this.onFullScreenClick.bind(this);
@@ -2847,6 +2842,9 @@
       this.videoDisplay.setAttribute("material", this.getWorldVideoMaterial(source));
       this.videoDisplay.setAttribute("data-vrodos-world-lighting", "true");
       this.videoDisplay.removeAttribute("data-vrodos-overlay-ui");
+      if (this.videoDisplay.classList) {
+        this.videoDisplay.classList.add("raycastable");
+      }
       this.setVideoDisplayShadowState(true);
       requestAnimationFrame(() => this.tuneVideoTexture());
       this.requestSceneLightingRefresh();
@@ -3085,6 +3083,7 @@
       if (!this.shouldUseVrOverlay()) {
         return false;
       }
+      this.primeVideoForPlayback();
       var spatialUi = window.VRODOSSpatialUI && typeof window.VRODOSSpatialUI.isAvailable === "function" && window.VRODOSSpatialUI.isAvailable() ? window.VRODOSSpatialUI : null;
       if (!spatialUi || typeof spatialUi.openPanel !== "function") {
         if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.ensureSpatialUiRuntime === "function" && !this.videoSpatialUiLoadPending) {
@@ -3104,10 +3103,14 @@
       }
       var panelOptions = {
         id: "vrodos-video-vr-controls-" + this.data.id,
-        width: 1.82,
-        height: 1.08,
-        distance: 2.65,
-        verticalOffset: -0.18,
+        width: 2.25,
+        height: 1.22,
+        distance: 2.3,
+        verticalOffset: -0.03,
+        topAtEyeLevel: true,
+        anchorElement: this.videoDisplay || null,
+        anchorSide: "right",
+        anchorRefreshFrames: this.videoDisplay ? 1 : 8,
         lockInteraction: false,
         cleanup: () => {
           this.videoVrPanelOpen = false;
@@ -3184,13 +3187,22 @@
     },
     onVideoClick: function(evt) {
       if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== void 0 && evt.detail.originalEvent.button !== 0) return;
+      const now = typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+      if (now - (this.videoClickLastAt || 0) < 320) {
+        if (evt && typeof evt.stopPropagation === "function") {
+          evt.stopPropagation();
+        }
+        return;
+      }
+      this.videoClickLastAt = now;
       const viewport = window.VRODOS_VIDEO_MANAGER.getViewportAtDepth(this.panel_z);
       this.panel_pos_dynamic = viewport.width / 2 - 1 + " -0.3 " + this.panel_z;
       this.trackEvent("video_click");
       if (this.shouldUseVrOverlay()) {
-        if (!this.openVrVideoPanel()) {
-          console.warn("[VRodos Video] VR video click ignored because spatial UI controls are unavailable.");
+        if (this.videoVrPanelOpen) {
+          this.closeVrVideoPanel("video-direct-toggle");
         }
+        this.playVideo();
         return;
       }
       if (this.shouldUseInlinePlayback()) {
@@ -3950,10 +3962,12 @@
         runtime.vrPromptActive = true;
         const panelOptions = {
           id: "vrodos-immerse-cefr-vr-overlay",
-          width: 2.42,
-          height: 1.42,
-          distance: 3.05,
-          verticalOffset: -0.42,
+          width: 1.85,
+          height: 1.05,
+          distance: 1.95,
+          verticalOffset: -0.03,
+          topAtEyeLevel: true,
+          anchorRefreshFrames: 8,
           lockInteraction: false,
           cleanup: function() {
             runtime.vrPromptActive = false;
@@ -5280,8 +5294,8 @@
     const normalizeGridEntries = namespace.normalizeGridEntries;
     const normalizeTextAnnotations = namespace.normalizeTextAnnotations;
     const buildAssessmentResult = namespace.buildAssessmentResult;
-    const PANEL_WIDTH = 2.8;
-    const PANEL_HEIGHT = 1.85;
+    const PANEL_WIDTH = 2.05;
+    const PANEL_HEIGHT = 1.44;
     function value(value2, fallback) {
       const text = decodeDisplayText ? decodeDisplayText(value2 || "") : String(value2 || "");
       return text || fallback || "";
@@ -5293,6 +5307,7 @@
         api: null,
         lastResult: null,
         renderer: null,
+        rendererKey: "",
         renderCount: 0,
         lastOpenDiagnostics: null,
         spatialUiLoadPending: false,
@@ -5323,9 +5338,9 @@
       return api.frame({
         title: value(payload.title, "Assessment"),
         status: status || "",
-        paddingX: 84,
-        paddingY: 58,
-        gapY: 26,
+        paddingX: 96,
+        paddingY: 68,
+        gapY: 30,
         onClose: function() {
           runtime.close("close");
         },
@@ -5343,7 +5358,7 @@
       api.text(info, {
         text: message,
         color: "#075985",
-        fontSize: 26,
+        fontSize: 30,
         lineHeight: "120%"
       });
     }
@@ -5363,17 +5378,61 @@
       const cfg = options || {};
       api.grid(parent || api.content, items.map((item) => Object.assign({}, item, {
         variant: buttonVariant(item),
-        textSize: item.textSize || cfg.textSize || 24,
-        minHeight: item.minHeight || cfg.itemHeight || 64
+        textSize: item.textSize || cfg.textSize || 30,
+        minHeight: item.minHeight || cfg.itemHeight || 82
       })), {
         columns: cfg.columns || 2,
-        gapX: cfg.gapX || 18,
-        gapY: cfg.gapY || 18,
-        itemHeight: cfg.itemHeight || cfg.height || 66
+        gapX: cfg.gapX || 22,
+        gapY: cfg.gapY || 22,
+        itemHeight: cfg.itemHeight || cfg.height || 84
       });
     }
+    function comparable(value2) {
+      if (typeof normalizeComparableText === "function") {
+        return normalizeComparableText(value2);
+      }
+      return String(value2 || "").replace(/\s+/g, " ").trim().toLowerCase();
+    }
+    function compactComparable(value2) {
+      return comparable(value2).replace(/[^a-z0-9]+/g, "");
+    }
+    function resolveVrRendererKey(payload) {
+      if (!payload) {
+        return "";
+      }
+      const rawGroup = String(payload.group || "");
+      if (VR_RENDERERS[rawGroup]) {
+        return rawGroup;
+      }
+      const candidates = [
+        comparable(payload.group),
+        compactComparable(payload.group),
+        comparable(payload.type),
+        compactComparable(payload.type)
+      ].filter(Boolean);
+      if (candidates.some((key) => ["question", "questions", "quiz", "multiple choice", "multiplechoice", "true or false", "true/false", "truefalse"].includes(key))) {
+        return "Question";
+      }
+      if (candidates.some((key) => ["image quiz", "imagequiz", "image question", "imagequestion", "visual quiz", "visualquiz"].includes(key))) {
+        return "ImageQuiz";
+      }
+      if (candidates.some((key) => ["pair", "pairs", "matching", "match", "match pairs", "matchpairs", "drag and drop", "draganddrop", "drag drop", "dragdrop"].includes(key))) {
+        return "Pair";
+      }
+      if (candidates.some((key) => ["grid", "word search", "wordsearch", "vocabulary bingo", "vocabularybingo", "bingo"].includes(key))) {
+        return "Grid";
+      }
+      if (candidates.some((key) => ["text", "fill in the gaps", "fillinthegaps", "fill gaps", "fillgaps", "fill in gaps", "fillingaps", "highlight", "highlight text", "highlighttext"].includes(key))) {
+        return "Text";
+      }
+      return "";
+    }
+    function isImageQuizPayload(payload) {
+      return resolveVrRendererKey(payload) === "ImageQuiz";
+    }
     function isQuestionPayload(payload) {
-      return payload && (payload.group === "Question" || payload.group === "ImageQuiz");
+      const rendererKey = resolveVrRendererKey(payload);
+      return rendererKey === "Question" || rendererKey === "ImageQuiz";
     }
     function createQuestionRenderer() {
       return {
@@ -5381,7 +5440,7 @@
           const typeKey = normalizeComparableText(payload && payload.type);
           return {
             items: normalizeQuestionItems(payload),
-            isImageQuiz: payload && payload.group === "ImageQuiz",
+            isImageQuiz: isImageQuizPayload(payload),
             isTrueFalse: typeKey === "true or false" || typeKey === "true/false",
             activeIndex: 0,
             selectedByIndex: []
@@ -5413,14 +5472,14 @@
           runtime.api.text(frame.content, {
             text: item.prompt || "Question " + (state.activeIndex + 1),
             color: "#0f172a",
-            fontSize: 38,
+            fontSize: 44,
             fontWeight: 500,
             lineHeight: "125%"
           });
           if (item.imageUrl) {
             runtime.api.image(frame.content, {
-              width: 720,
-              height: 320,
+              width: 820,
+              height: 360,
               src: item.imageUrl
             });
           }
@@ -5436,8 +5495,8 @@
             };
           }), {
             columns: state.isTrueFalse ? 1 : 2,
-            itemHeight: 78,
-            textSize: 26
+            itemHeight: 92,
+            textSize: 32
           });
         }
       };
@@ -6159,6 +6218,7 @@
         runtime.payload = null;
         runtime.state = null;
         runtime.renderer = null;
+        runtime.rendererKey = "";
         runtime.api = null;
         runtime.renderCount = 0;
         runtime.lastOpenDiagnostics = null;
@@ -6198,7 +6258,8 @@
         recordVrDiagnostic("debug", "rendering assessment VR panel", {
           renderCount: runtime.renderCount,
           group: runtime.payload && runtime.payload.group || "",
-          type: runtime.payload && runtime.payload.type || ""
+          type: runtime.payload && runtime.payload.type || "",
+          rendererKey: runtime.rendererKey || ""
         });
         runtime.renderer.render(runtime);
         runtime.refreshTargets();
@@ -6244,20 +6305,26 @@
           return true;
         }
         runtime.payload = payload;
-        runtime.renderer = payload && payload.supported ? VR_RENDERERS[payload.group] : null;
+        runtime.rendererKey = resolveVrRendererKey(payload);
+        runtime.renderer = payload && runtime.rendererKey ? VR_RENDERERS[runtime.rendererKey] : null;
         runtime.state = runtime.renderer && typeof runtime.renderer.createState === "function" ? runtime.renderer.createState(payload) : {};
         runtime.lastOpenDiagnostics = {
           group: payload && payload.group || "",
           type: payload && payload.type || "",
           supported: Boolean(payload && payload.supported),
+          rendererKey: runtime.rendererKey || "",
           usesSpatialUi: true
         };
         const panelOptions = {
           id: "vrodos-immerse-assessment-vr-overlay",
           width: PANEL_WIDTH,
           height: PANEL_HEIGHT,
-          distance: 3.15,
-          verticalOffset: -0.08,
+          distance: 2.25,
+          verticalOffset: -0.03,
+          topAtEyeLevel: true,
+          anchorElement: payload && payload.anchorElement || null,
+          anchorSide: "right",
+          anchorRefreshFrames: payload && payload.anchorElement ? 1 : 8,
           lockInteraction: false,
           cleanup: function() {
             runtime.reset();
@@ -6644,7 +6711,8 @@
         group,
         supported,
         content,
-        levels
+        levels,
+        anchorElement: element
       };
     }
     if (typeof AFRAME !== "undefined") {

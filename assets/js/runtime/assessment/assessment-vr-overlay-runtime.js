@@ -17,8 +17,8 @@
     const normalizeTextAnnotations = namespace.normalizeTextAnnotations;
     const buildAssessmentResult = namespace.buildAssessmentResult;
 
-    const PANEL_WIDTH = 2.8;
-    const PANEL_HEIGHT = 1.85;
+    const PANEL_WIDTH = 2.05;
+    const PANEL_HEIGHT = 1.44;
 
     function value(value, fallback) {
         const text = decodeDisplayText ? decodeDisplayText(value || "") : String(value || "");
@@ -32,6 +32,7 @@
             api: null,
             lastResult: null,
             renderer: null,
+            rendererKey: "",
             renderCount: 0,
             lastOpenDiagnostics: null,
             spatialUiLoadPending: false,
@@ -68,9 +69,9 @@
         return api.frame({
             title: value(payload.title, "Assessment"),
             status: status || "",
-            paddingX: 84,
-            paddingY: 58,
-            gapY: 26,
+            paddingX: 96,
+            paddingY: 68,
+            gapY: 30,
             onClose: function () {
                 runtime.close("close");
             },
@@ -89,7 +90,7 @@
         api.text(info, {
             text: message,
             color: "#075985",
-            fontSize: 26,
+            fontSize: 30,
             lineHeight: "120%"
         });
     }
@@ -111,18 +112,70 @@
         const cfg = options || {};
         api.grid(parent || api.content, items.map((item) => Object.assign({}, item, {
             variant: buttonVariant(item),
-            textSize: item.textSize || cfg.textSize || 24,
-            minHeight: item.minHeight || cfg.itemHeight || 64
+            textSize: item.textSize || cfg.textSize || 30,
+            minHeight: item.minHeight || cfg.itemHeight || 82
         })), {
             columns: cfg.columns || 2,
-            gapX: cfg.gapX || 18,
-            gapY: cfg.gapY || 18,
-            itemHeight: cfg.itemHeight || cfg.height || 66
+            gapX: cfg.gapX || 22,
+            gapY: cfg.gapY || 22,
+            itemHeight: cfg.itemHeight || cfg.height || 84
         });
     }
 
+    function comparable(value) {
+        if (typeof normalizeComparableText === "function") {
+            return normalizeComparableText(value);
+        }
+        return String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
+    }
+
+    function compactComparable(value) {
+        return comparable(value).replace(/[^a-z0-9]+/g, "");
+    }
+
+    function resolveVrRendererKey(payload) {
+        if (!payload) {
+            return "";
+        }
+
+        const rawGroup = String(payload.group || "");
+        if (VR_RENDERERS[rawGroup]) {
+            return rawGroup;
+        }
+
+        const candidates = [
+            comparable(payload.group),
+            compactComparable(payload.group),
+            comparable(payload.type),
+            compactComparable(payload.type)
+        ].filter(Boolean);
+
+        if (candidates.some((key) => ["question", "questions", "quiz", "multiple choice", "multiplechoice", "true or false", "true/false", "truefalse"].includes(key))) {
+            return "Question";
+        }
+        if (candidates.some((key) => ["image quiz", "imagequiz", "image question", "imagequestion", "visual quiz", "visualquiz"].includes(key))) {
+            return "ImageQuiz";
+        }
+        if (candidates.some((key) => ["pair", "pairs", "matching", "match", "match pairs", "matchpairs", "drag and drop", "draganddrop", "drag drop", "dragdrop"].includes(key))) {
+            return "Pair";
+        }
+        if (candidates.some((key) => ["grid", "word search", "wordsearch", "vocabulary bingo", "vocabularybingo", "bingo"].includes(key))) {
+            return "Grid";
+        }
+        if (candidates.some((key) => ["text", "fill in the gaps", "fillinthegaps", "fill gaps", "fillgaps", "fill in gaps", "fillingaps", "highlight", "highlight text", "highlighttext"].includes(key))) {
+            return "Text";
+        }
+
+        return "";
+    }
+
+    function isImageQuizPayload(payload) {
+        return resolveVrRendererKey(payload) === "ImageQuiz";
+    }
+
     function isQuestionPayload(payload) {
-        return payload && (payload.group === "Question" || payload.group === "ImageQuiz");
+        const rendererKey = resolveVrRendererKey(payload);
+        return rendererKey === "Question" || rendererKey === "ImageQuiz";
     }
 
     function createQuestionRenderer() {
@@ -131,7 +184,7 @@
                 const typeKey = normalizeComparableText(payload && payload.type);
                 return {
                     items: normalizeQuestionItems(payload),
-                    isImageQuiz: payload && payload.group === "ImageQuiz",
+                    isImageQuiz: isImageQuizPayload(payload),
                     isTrueFalse: typeKey === "true or false" || typeKey === "true/false",
                     activeIndex: 0,
                     selectedByIndex: []
@@ -167,15 +220,15 @@
                 runtime.api.text(frame.content, {
                     text: item.prompt || "Question " + (state.activeIndex + 1),
                     color: "#0f172a",
-                    fontSize: 38,
+                    fontSize: 44,
                     fontWeight: 500,
                     lineHeight: "125%"
                 });
 
                 if (item.imageUrl) {
                     runtime.api.image(frame.content, {
-                        width: 720,
-                        height: 320,
+                        width: 820,
+                        height: 360,
                         src: item.imageUrl
                     });
                 }
@@ -192,8 +245,8 @@
                     };
                 }), {
                     columns: state.isTrueFalse ? 1 : 2,
-                    itemHeight: 78,
-                    textSize: 26
+                    itemHeight: 92,
+                    textSize: 32
                 });
             }
         };
@@ -967,6 +1020,7 @@
             runtime.payload = null;
             runtime.state = null;
             runtime.renderer = null;
+            runtime.rendererKey = "";
             runtime.api = null;
             runtime.renderCount = 0;
             runtime.lastOpenDiagnostics = null;
@@ -1009,7 +1063,8 @@
             recordVrDiagnostic("debug", "rendering assessment VR panel", {
                 renderCount: runtime.renderCount,
                 group: runtime.payload && runtime.payload.group || "",
-                type: runtime.payload && runtime.payload.type || ""
+                type: runtime.payload && runtime.payload.type || "",
+                rendererKey: runtime.rendererKey || ""
             });
             runtime.renderer.render(runtime);
             runtime.refreshTargets();
@@ -1063,7 +1118,8 @@
             }
 
             runtime.payload = payload;
-            runtime.renderer = payload && payload.supported ? VR_RENDERERS[payload.group] : null;
+            runtime.rendererKey = resolveVrRendererKey(payload);
+            runtime.renderer = payload && runtime.rendererKey ? VR_RENDERERS[runtime.rendererKey] : null;
             runtime.state = runtime.renderer && typeof runtime.renderer.createState === "function"
                 ? runtime.renderer.createState(payload)
                 : {};
@@ -1071,6 +1127,7 @@
                 group: payload && payload.group || "",
                 type: payload && payload.type || "",
                 supported: Boolean(payload && payload.supported),
+                rendererKey: runtime.rendererKey || "",
                 usesSpatialUi: true
             };
 
@@ -1078,8 +1135,12 @@
                 id: "vrodos-immerse-assessment-vr-overlay",
                 width: PANEL_WIDTH,
                 height: PANEL_HEIGHT,
-                distance: 3.15,
-                verticalOffset: -0.08,
+                distance: 2.25,
+                verticalOffset: -0.03,
+                topAtEyeLevel: true,
+                anchorElement: payload && payload.anchorElement || null,
+                anchorSide: "right",
+                anchorRefreshFrames: payload && payload.anchorElement ? 1 : 8,
                 lockInteraction: false,
                 cleanup: function () {
                     runtime.reset();

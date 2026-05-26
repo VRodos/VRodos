@@ -164,6 +164,7 @@ AFRAME.registerComponent('video-controls', {
         this.videoVrPanelApi = null;
         this.videoVrPanelOpen = false;
         this.videoSpatialUiLoadPending = false;
+        this.videoClickLastAt = 0;
 
         // Video Properties
         this.videoSourceUrl = this.videoDisplay ? (this.videoDisplay.getAttribute("data-vrodos-video-src") || "") : "";
@@ -172,6 +173,9 @@ AFRAME.registerComponent('video-controls', {
         this.videoPosterUrl = this.resolvePosterUrl();
         this.video = this.ensureVideoElement();
         this.applyWorldVideoMaterial();
+        if (this.videoDisplay && this.videoDisplay.classList) {
+            this.videoDisplay.classList.add("raycastable");
+        }
 
         // Bind Methods
         this.onVideoClick = this.onVideoClick.bind(this);
@@ -482,6 +486,9 @@ AFRAME.registerComponent('video-controls', {
         this.videoDisplay.setAttribute("material", this.getWorldVideoMaterial(source));
         this.videoDisplay.setAttribute("data-vrodos-world-lighting", "true");
         this.videoDisplay.removeAttribute("data-vrodos-overlay-ui");
+        if (this.videoDisplay.classList) {
+            this.videoDisplay.classList.add("raycastable");
+        }
         this.setVideoDisplayShadowState(true);
         requestAnimationFrame(() => this.tuneVideoTexture());
         this.requestSceneLightingRefresh();
@@ -759,6 +766,8 @@ AFRAME.registerComponent('video-controls', {
             return false;
         }
 
+        this.primeVideoForPlayback();
+
         var spatialUi = window.VRODOSSpatialUI &&
             typeof window.VRODOSSpatialUI.isAvailable === "function" &&
             window.VRODOSSpatialUI.isAvailable()
@@ -785,10 +794,14 @@ AFRAME.registerComponent('video-controls', {
 
         var panelOptions = {
             id: "vrodos-video-vr-controls-" + this.data.id,
-            width: 1.82,
-            height: 1.08,
-            distance: 2.65,
-            verticalOffset: -0.18,
+            width: 2.25,
+            height: 1.22,
+            distance: 2.3,
+            verticalOffset: -0.03,
+            topAtEyeLevel: true,
+            anchorElement: this.videoDisplay || null,
+            anchorSide: "right",
+            anchorRefreshFrames: this.videoDisplay ? 1 : 8,
             lockInteraction: false,
             cleanup: () => {
                 this.videoVrPanelOpen = false;
@@ -881,6 +894,14 @@ AFRAME.registerComponent('video-controls', {
    
     onVideoClick: function (evt) {
         if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== undefined && evt.detail.originalEvent.button !== 0) return;
+        const now = typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+        if (now - (this.videoClickLastAt || 0) < 320) {
+            if (evt && typeof evt.stopPropagation === "function") {
+                evt.stopPropagation();
+            }
+            return;
+        }
+        this.videoClickLastAt = now;
 
         const viewport = window.VRODOS_VIDEO_MANAGER.getViewportAtDepth(this.panel_z);
         this.panel_pos_dynamic = (viewport.width / 2 - 1) + " -0.3 " + this.panel_z;
@@ -888,9 +909,10 @@ AFRAME.registerComponent('video-controls', {
         this.trackEvent('video_click');
 
         if (this.shouldUseVrOverlay()) {
-            if (!this.openVrVideoPanel()) {
-                console.warn("[VRodos Video] VR video click ignored because spatial UI controls are unavailable.");
+            if (this.videoVrPanelOpen) {
+                this.closeVrVideoPanel("video-direct-toggle");
             }
+            this.playVideo();
             return;
         }
         

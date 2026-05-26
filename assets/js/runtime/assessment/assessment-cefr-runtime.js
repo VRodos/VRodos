@@ -394,10 +394,12 @@
             runtime.vrPromptActive = true;
             const panelOptions = {
                 id: "vrodos-immerse-cefr-vr-overlay",
-                width: 2.42,
-                height: 1.42,
-                distance: 3.05,
-                verticalOffset: -0.42,
+                width: 1.85,
+                height: 1.05,
+                distance: 1.95,
+                verticalOffset: -0.03,
+                topAtEyeLevel: true,
+                anchorRefreshFrames: 8,
                 lockInteraction: false,
                 cleanup: function () {
                     runtime.vrPromptActive = false;

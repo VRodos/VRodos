@@ -21,12 +21,18 @@ import { MSDF } from "@zappar/msdf-generator";
     "use strict";
 
     const DIAGNOSTIC_LIMIT = 160;
-    const PIXEL_SIZE = 0.001;
     const DEFAULT_WIDTH = 2.6;
     const DEFAULT_HEIGHT = 1.7;
-    const DEFAULT_DISTANCE = 3.0;
+    const DEFAULT_DISTANCE = 1.95;
     const DEFAULT_VERTICAL_OFFSET = -0.08;
-    const DEFAULT_XR_ANCHOR_REFRESH_FRAMES = 120;
+    const DEFAULT_XR_PANEL_SCALE = 1;
+    const DEFAULT_INLINE_PANEL_SCALE = 1;
+    const PANEL_ADAPTIVE_SCALE_DISTANCE = 1.75;
+    const PANEL_ADAPTIVE_SCALE_MAX = 1.8;
+    const DEFAULT_PANEL_DESIGN_WIDTH_PX = 1040;
+    const MIN_PANEL_DESIGN_WIDTH_PX = 760;
+    const MAX_PANEL_DESIGN_WIDTH_PX = 1440;
+    const DEFAULT_XR_ANCHOR_REFRESH_FRAMES = 10;
     const DEFAULT_INLINE_ANCHOR_REFRESH_FRAMES = 24;
     const PANEL_RENDER_ORDER = 100000;
     const SPATIAL_UI_FONT_FAMILY = "vrodos-noto-sans";
@@ -480,12 +486,30 @@ import { MSDF } from "@zappar/msdf-generator";
         return Number.isFinite(parsed) ? parsed : fallback;
     }
 
-    function worldToPx(value) {
-        return Math.max(1, Math.round(numberOrDefault(value, 0) / PIXEL_SIZE));
-    }
-
     function px(value, fallback) {
         return Math.round(numberOrDefault(value, fallback || 0));
+    }
+
+    function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+    }
+
+    function resolvePanelMetrics(config, width, height) {
+        const configuredWidth = Number(config && (
+            config.designWidthPx !== undefined ? config.designWidthPx :
+                (config.pixelWidth !== undefined ? config.pixelWidth : config.designWidth)
+        ));
+        const designWidthPx = clamp(
+            Math.round(Number.isFinite(configuredWidth) && configuredWidth > 0 ? configuredWidth : DEFAULT_PANEL_DESIGN_WIDTH_PX),
+            MIN_PANEL_DESIGN_WIDTH_PX,
+            MAX_PANEL_DESIGN_WIDTH_PX
+        );
+        const pixelSize = Math.max(0.0005, numberOrDefault(width, DEFAULT_WIDTH) / designWidthPx);
+        return {
+            designWidthPx,
+            designHeightPx: Math.max(1, Math.round(numberOrDefault(height, DEFAULT_HEIGHT) / pixelSize)),
+            pixelSize
+        };
     }
 
     function disposeComponentTree(component) {
@@ -549,6 +573,112 @@ import { MSDF } from "@zappar/msdf-generator";
         }
     }
 
+    function updateControllerPointerSpace(bridge) {
+        const THREE = getThreeRuntime();
+        if (!THREE || !bridge || !bridge.raySpace || !bridge.el) {
+            return false;
+        }
+
+        const raycasterComponent = bridge.el.components && bridge.el.components.raycaster;
+        const ray = raycasterComponent &&
+            raycasterComponent.raycaster &&
+            raycasterComponent.raycaster.ray;
+        if (ray && ray.origin && ray.direction && ray.direction.lengthSq && ray.direction.lengthSq() > 0.000001) {
+            const direction = ray.direction.clone().normalize();
+            bridge.raySpace.position.copy(ray.origin);
+            bridge.raySpace.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), direction);
+            bridge.raySpace.scale.set(1, 1, 1);
+            bridge.raySpace.updateMatrix();
+            bridge.raySpace.updateMatrixWorld(true);
+            bridge.usesAFrameRaycasterRay = true;
+            return true;
+        }
+
+        if (bridge.el.object3D && bridge.el.object3D.matrixWorld) {
+            bridge.el.object3D.updateMatrixWorld(true);
+            bridge.el.object3D.matrixWorld.decompose(
+                bridge.raySpace.position,
+                bridge.raySpace.quaternion,
+                bridge.raySpace.scale
+            );
+            bridge.raySpace.updateMatrix();
+            bridge.raySpace.updateMatrixWorld(true);
+            bridge.usesAFrameRaycasterRay = false;
+            return true;
+        }
+
+        return false;
+    }
+
+    function createPointerEventAndMove(bridge, target, type, sourceEvent) {
+        const nativeEvent = createNativePointerEvent(type, sourceEvent);
+        updateControllerPointerSpace(bridge);
+        if (bridge && bridge.pointer && typeof bridge.pointer.move === "function") {
+            bridge.pointer.move(target, nativeEvent);
+            updateBridgeIntersectionDiagnostics(bridge);
+        }
+        return nativeEvent;
+    }
+
+    function pointerIntersectionObject(bridge) {
+        if (!bridge || !bridge.pointer || typeof bridge.pointer.getIntersection !== "function") {
+            return null;
+        }
+        try {
+            const intersection = bridge.pointer.getIntersection();
+            return intersection && intersection.object || null;
+        } catch (_error) {
+            return null;
+        }
+    }
+
+    function pointerHasConcreteTarget(bridge) {
+        const object = pointerIntersectionObject(bridge);
+        return Boolean(object && object.isVoidObject !== true);
+    }
+
+    function safePointerDown(bridge, nativeEvent) {
+        if (!bridge || !bridge.pointer || typeof bridge.pointer.down !== "function" || !pointerHasConcreteTarget(bridge)) {
+            if (bridge) {
+                bridge.isDown = false;
+            }
+            return false;
+        }
+        try {
+            bridge.pointer.down(nativeEvent);
+            bridge.isDown = true;
+            return true;
+        } catch (error) {
+            bridge.isDown = false;
+            recordDiagnostic("warn", "Spatial UI pointer down failed.", {
+                source: bridge.source || "",
+                error: error && error.message || String(error)
+            });
+            return false;
+        }
+    }
+
+    function safePointerUp(bridge, nativeEvent) {
+        if (!bridge || !bridge.pointer || typeof bridge.pointer.up !== "function" || !bridge.isDown || !pointerHasConcreteTarget(bridge)) {
+            if (bridge) {
+                bridge.isDown = false;
+            }
+            return false;
+        }
+        try {
+            bridge.pointer.up(nativeEvent);
+            return true;
+        } catch (error) {
+            recordDiagnostic("warn", "Spatial UI pointer up failed.", {
+                source: bridge.source || "",
+                error: error && error.message || String(error)
+            });
+            return false;
+        } finally {
+            bridge.isDown = false;
+        }
+    }
+
     function collectControllerPointerElements() {
         const seen = new Set();
         const result = [];
@@ -594,22 +724,18 @@ import { MSDF } from "@zappar/msdf-generator";
                     lastUpAt: 0,
                     lastIntersectionName: "",
                     lastIntersectionDistance: null,
-                    lastIntersectionIsVoid: false
+                    lastIntersectionIsVoid: false,
+                    rayVisualPromoted: false
                 };
+                promoteControllerRayVisual(bridge);
                 const down = (event) => {
-                    const nativeEvent = createNativePointerEvent("pointerdown", event);
-                    pointer.move(target, nativeEvent);
-                    pointer.down(nativeEvent);
-                    bridge.isDown = true;
+                    const nativeEvent = createPointerEventAndMove(bridge, target, "pointerdown", event);
+                    safePointerDown(bridge, nativeEvent);
                     stopNativeEvent(event);
                 };
                 const up = (event) => {
-                    const nativeEvent = createNativePointerEvent("pointerup", event);
-                    pointer.move(target, nativeEvent);
-                    if (bridge.isDown) {
-                        pointer.up(nativeEvent);
-                    }
-                    bridge.isDown = false;
+                    const nativeEvent = createPointerEventAndMove(bridge, target, "pointerup", event);
+                    safePointerUp(bridge, nativeEvent);
                     bridge.lastUpAt = performance.now();
                     stopNativeEvent(event);
                 };
@@ -618,13 +744,10 @@ import { MSDF } from "@zappar/msdf-generator";
                         stopNativeEvent(event);
                         return;
                     }
-                    const nativeDownEvent = createNativePointerEvent("pointerdown", event);
-                    const nativeUpEvent = createNativePointerEvent("pointerup", event);
-                    pointer.move(target, nativeDownEvent);
-                    pointer.down(nativeDownEvent);
-                    pointer.move(target, nativeUpEvent);
-                    pointer.up(nativeUpEvent);
-                    bridge.isDown = false;
+                    const nativeDownEvent = createPointerEventAndMove(bridge, target, "pointerdown", event);
+                    safePointerDown(bridge, nativeDownEvent);
+                    const nativeUpEvent = createPointerEventAndMove(bridge, target, "pointerup", event);
+                    safePointerUp(bridge, nativeUpEvent);
                     bridge.lastUpAt = performance.now();
                     stopNativeEvent(event);
                 };
@@ -664,10 +787,16 @@ import { MSDF } from "@zappar/msdf-generator";
                 return;
             }
             try {
+                const THREE = getThreeRuntime();
                 const source = el.id || "controller-" + index;
+                const raySpace = THREE ? new THREE.Object3D() : null;
+                if (raySpace) {
+                    raySpace.name = "VRODOSSpatialUIPointerRay_" + source;
+                    updateControllerPointerSpace({ el, raySpace });
+                }
                 const pointer = createRayPointer(
                     () => getPointerCamera(scene),
-                    { current: el.object3D },
+                    { current: raySpace || el.object3D },
                     { source },
                     { minDistance: 0 },
                     "ray"
@@ -675,28 +804,25 @@ import { MSDF } from "@zappar/msdf-generator";
                 const bridge = {
                     el,
                     pointer,
+                    raySpace,
                     listeners: [],
                     source,
                     isDown: false,
                     lastUpAt: 0,
                     lastIntersectionName: "",
                     lastIntersectionDistance: null,
-                    lastIntersectionIsVoid: false
+                    lastIntersectionIsVoid: false,
+                    rayVisualPromoted: false
                 };
+                promoteControllerRayVisual(bridge);
                 const down = (event) => {
-                    const nativeEvent = createNativePointerEvent("pointerdown", event);
-                    pointer.move(target, nativeEvent);
-                    pointer.down(nativeEvent);
-                    bridge.isDown = true;
+                    const nativeEvent = createPointerEventAndMove(bridge, target, "pointerdown", event);
+                    safePointerDown(bridge, nativeEvent);
                     stopNativeEvent(event);
                 };
                 const up = (event) => {
-                    const nativeEvent = createNativePointerEvent("pointerup", event);
-                    pointer.move(target, nativeEvent);
-                    if (bridge.isDown) {
-                        pointer.up(nativeEvent);
-                    }
-                    bridge.isDown = false;
+                    const nativeEvent = createPointerEventAndMove(bridge, target, "pointerup", event);
+                    safePointerUp(bridge, nativeEvent);
                     bridge.lastUpAt = performance.now();
                     stopNativeEvent(event);
                 };
@@ -705,13 +831,10 @@ import { MSDF } from "@zappar/msdf-generator";
                         stopNativeEvent(event);
                         return;
                     }
-                    const nativeDownEvent = createNativePointerEvent("pointerdown", event);
-                    const nativeUpEvent = createNativePointerEvent("pointerup", event);
-                    pointer.move(target, nativeDownEvent);
-                    pointer.down(nativeDownEvent);
-                    pointer.move(target, nativeUpEvent);
-                    pointer.up(nativeUpEvent);
-                    bridge.isDown = false;
+                    const nativeDownEvent = createPointerEventAndMove(bridge, target, "pointerdown", event);
+                    safePointerDown(bridge, nativeDownEvent);
+                    const nativeUpEvent = createPointerEventAndMove(bridge, target, "pointerup", event);
+                    safePointerUp(bridge, nativeUpEvent);
                     bridge.lastUpAt = performance.now();
                     stopNativeEvent(event);
                 };
@@ -798,6 +921,32 @@ import { MSDF } from "@zappar/msdf-generator";
             ? Math.round(intersection.distance * 1000) / 1000
             : null;
         bridge.lastIntersectionIsVoid = object.isVoidObject === true;
+    }
+
+    function promoteControllerRayVisual(bridge) {
+        const root = bridge && bridge.el && (bridge.el.object3D || (typeof bridge.el.traverse === "function" ? bridge.el : null));
+        if (!root || typeof root.traverse !== "function") {
+            return false;
+        }
+        let promoted = false;
+        root.traverse((object) => {
+            if (!object || !(object.isLine || object.type === "Line" || object.type === "LineSegments")) {
+                return;
+            }
+            object.renderOrder = PANEL_RENDER_ORDER + 100;
+            object.frustumCulled = false;
+            if (object.material) {
+                object.material.depthTest = false;
+                object.material.depthWrite = false;
+                object.material.transparent = true;
+                object.material.needsUpdate = true;
+            }
+            promoted = true;
+        });
+        if (promoted) {
+            bridge.rayVisualPromoted = true;
+        }
+        return promoted;
     }
 
     function attachInput(panelState) {
@@ -925,6 +1074,138 @@ import { MSDF } from "@zappar/msdf-generator";
         }
     }
 
+    function panelScaleForOptions(options) {
+        const configured = Number(options && (options.panelScale !== undefined ? options.panelScale : options.spatialScale));
+        if (Number.isFinite(configured) && configured > 0) {
+            return configured;
+        }
+        return getPresentationMode() === "immersive-xr"
+            ? DEFAULT_XR_PANEL_SCALE
+            : DEFAULT_INLINE_PANEL_SCALE;
+    }
+
+    function adaptivePanelScale(baseScale, cameraPosition, worldPosition) {
+        const configured = Number(baseScale);
+        const scale = Number.isFinite(configured) && configured > 0 ? configured : 1;
+        if (!cameraPosition || !worldPosition || typeof cameraPosition.distanceTo !== "function") {
+            return scale;
+        }
+        const distance = cameraPosition.distanceTo(worldPosition);
+        if (!Number.isFinite(distance) || distance <= PANEL_ADAPTIVE_SCALE_DISTANCE) {
+            return scale;
+        }
+        const growth = 1 + ((distance - PANEL_ADAPTIVE_SCALE_DISTANCE) * 0.5 / PANEL_ADAPTIVE_SCALE_DISTANCE);
+        return scale * Math.min(PANEL_ADAPTIVE_SCALE_MAX, growth);
+    }
+
+    function resolveAnchorObject(options) {
+        if (!options) {
+            return null;
+        }
+        if (options.anchorObject3D) {
+            return options.anchorObject3D;
+        }
+        if (options.anchorElement && options.anchorElement.object3D) {
+            return options.anchorElement.object3D;
+        }
+        if (options.anchorElementId && typeof document !== "undefined") {
+            const el = document.getElementById(String(options.anchorElementId));
+            return el && el.object3D || null;
+        }
+        return null;
+    }
+
+    function orientGroupTowardCamera(group, worldPosition, cameraPosition, poseSource, scale) {
+        const THREE = getThreeRuntime();
+        if (!THREE || !group || !worldPosition || !cameraPosition) {
+            return false;
+        }
+        const zAxis = cameraPosition.clone().sub(worldPosition);
+        zAxis.y = 0;
+        if (zAxis.lengthSq() < 0.000001) {
+            zAxis.set(0, 0, 1);
+        } else {
+            zAxis.normalize();
+        }
+        const up = new THREE.Vector3(0, 1, 0);
+        let xAxis = up.clone().cross(zAxis);
+        if (xAxis.lengthSq() < 0.000001) {
+            xAxis = new THREE.Vector3(1, 0, 0);
+        } else {
+            xAxis.normalize();
+        }
+        const yAxis = zAxis.clone().cross(xAxis).normalize();
+        const matrix = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+
+        group.position.copy(worldPosition);
+        group.quaternion.setFromRotationMatrix(matrix);
+        group.scale.setScalar(Math.max(0.1, numberOrDefault(scale, 1)));
+        group.userData = group.userData || {};
+        group.userData.vrodosAnchorPoseSource = poseSource || "unknown";
+        group.userData.vrodosSpatialPanelScale = Math.max(0.1, numberOrDefault(scale, 1));
+        group.updateMatrixWorld(true);
+        return true;
+    }
+
+    function anchorGroupNearObject(group, options) {
+        const THREE = getThreeRuntime();
+        const scene = getScene();
+        const cameraPose = getAnchorCameraObject(scene);
+        const cameraObject = cameraPose && cameraPose.object;
+        const anchorObject = resolveAnchorObject(options);
+        if (!THREE || !scene || !group || !cameraObject || !anchorObject) {
+            return false;
+        }
+
+        if (scene.object3D && typeof scene.object3D.updateMatrixWorld === "function") {
+            scene.object3D.updateMatrixWorld(true);
+        }
+        if (typeof cameraObject.updateMatrixWorld === "function") {
+            cameraObject.updateMatrixWorld(true);
+        }
+        if (typeof anchorObject.updateMatrixWorld === "function") {
+            anchorObject.updateMatrixWorld(true);
+        }
+
+        const cameraPosition = new THREE.Vector3();
+        const anchorPosition = new THREE.Vector3();
+        cameraObject.getWorldPosition(cameraPosition);
+        anchorObject.getWorldPosition(anchorPosition);
+
+        const towardCamera = cameraPosition.clone().sub(anchorPosition);
+        towardCamera.y = 0;
+        if (towardCamera.lengthSq() < 0.000001) {
+            towardCamera.set(0, 0, 1);
+        } else {
+            towardCamera.normalize();
+        }
+
+        let right = new THREE.Vector3(0, 1, 0).cross(towardCamera);
+        if (right.lengthSq() < 0.000001) {
+            right.set(1, 0, 0);
+        } else {
+            right.normalize();
+        }
+
+        const baseScale = panelScaleForOptions(options);
+        const width = Math.max(0.1, numberOrDefault(options && options.width, DEFAULT_WIDTH)) * baseScale;
+        const height = Math.max(0.1, numberOrDefault(options && options.height, DEFAULT_HEIGHT)) * baseScale;
+        const side = options && options.anchorSide === "left" ? -1 : 1;
+        const horizontalOffset = numberOrDefault(options && options.anchorHorizontalOffset, (width * 0.5) + 0.45);
+        const verticalOffset = numberOrDefault(options && options.verticalOffset, 0);
+        const worldPosition = anchorPosition.clone().addScaledVector(right, horizontalOffset * side);
+        const finalScale = adaptivePanelScale(baseScale, cameraPosition, worldPosition);
+        const finalHeight = Math.max(0.1, numberOrDefault(options && options.height, DEFAULT_HEIGHT)) * finalScale;
+
+        if (options && options.topAtEyeLevel === true) {
+            worldPosition.y = cameraPosition.y - (finalHeight * 0.5) + verticalOffset;
+        } else {
+            worldPosition.y += numberOrDefault(options && options.anchorVerticalOffset, 0.25);
+        }
+
+        return orientGroupTowardCamera(group, worldPosition, cameraPosition, "object-anchor", finalScale);
+    }
+
     function anchorGroupInFrontOfCamera(group, options) {
         const THREE = getThreeRuntime();
         const scene = getScene();
@@ -944,6 +1225,8 @@ import { MSDF } from "@zappar/msdf-generator";
         const distance = Math.max(0.25, numberOrDefault(options && options.distance, DEFAULT_DISTANCE));
         const verticalOffset = numberOrDefault(options && options.verticalOffset, DEFAULT_VERTICAL_OFFSET);
         const horizontalOffset = numberOrDefault(options && options.horizontalOffset, 0);
+        const panelScale = panelScaleForOptions(options);
+        const height = Math.max(0.1, numberOrDefault(options && options.height, DEFAULT_HEIGHT)) * panelScale;
         const cameraPosition = new THREE.Vector3();
         const cameraQuaternion = new THREE.Quaternion();
         const forward = new THREE.Vector3(0, 0, -1);
@@ -968,31 +1251,13 @@ import { MSDF } from "@zappar/msdf-generator";
                 worldPosition.addScaledVector(right.normalize(), horizontalOffset);
             }
         }
-        worldPosition.y += verticalOffset;
-
-        const zAxis = cameraPosition.clone().sub(worldPosition);
-        if (zAxis.lengthSq() < 0.000001) {
-            zAxis.set(0, 0, 1);
+        if (options && options.topAtEyeLevel === true) {
+            worldPosition.y = cameraPosition.y - (height * 0.5) + verticalOffset;
         } else {
-            zAxis.normalize();
+            worldPosition.y += verticalOffset;
         }
-        const up = new THREE.Vector3(0, 1, 0);
-        let xAxis = up.clone().cross(zAxis);
-        if (xAxis.lengthSq() < 0.000001) {
-            xAxis = new THREE.Vector3(1, 0, 0);
-        } else {
-            xAxis.normalize();
-        }
-        const yAxis = zAxis.clone().cross(xAxis).normalize();
-        const matrix = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
 
-        group.position.copy(worldPosition);
-        group.quaternion.setFromRotationMatrix(matrix);
-        group.scale.set(1, 1, 1);
-        group.userData = group.userData || {};
-        group.userData.vrodosAnchorPoseSource = cameraPose.source || "unknown";
-        group.updateMatrixWorld(true);
-        return true;
+        return orientGroupTowardCamera(group, worldPosition, cameraPosition, cameraPose.source || "unknown", panelScale);
     }
 
     function initialAnchorRefreshFrames(config) {
@@ -1009,7 +1274,9 @@ import { MSDF } from "@zappar/msdf-generator";
         if (!panelState || !panelState.group) {
             return false;
         }
-        const anchored = anchorGroupInFrontOfCamera(panelState.group, panelState.anchorOptions || panelState.config || {});
+        const options = panelState.anchorOptions || panelState.config || {};
+        const anchored = anchorGroupNearObject(panelState.group, options) ||
+            anchorGroupInFrontOfCamera(panelState.group, options);
         if (anchored) {
             panelState.anchorPoseSource = panelState.group &&
                 panelState.group.userData &&
@@ -1343,7 +1610,9 @@ import { MSDF } from "@zappar/msdf-generator";
                         source: bridge.source || "",
                         lastIntersectionName: bridge.lastIntersectionName || "",
                         lastIntersectionDistance: bridge.lastIntersectionDistance,
-                        lastIntersectionIsVoid: bridge.lastIntersectionIsVoid === true
+                        lastIntersectionIsVoid: bridge.lastIntersectionIsVoid === true,
+                        usesAFrameRaycasterRay: bridge.usesAFrameRaycasterRay === true,
+                        rayVisualPromoted: bridge.rayVisualPromoted === true
                     })),
                     presentationMode: getPresentationMode()
                 };
@@ -1357,13 +1626,15 @@ import { MSDF } from "@zappar/msdf-generator";
         const scene = getScene();
         const width = numberOrDefault(config && config.width, DEFAULT_WIDTH);
         const height = numberOrDefault(config && config.height, DEFAULT_HEIGHT);
+        const panelScale = panelScaleForOptions(config || {});
+        const metrics = resolvePanelMetrics(config || {}, width, height);
         const group = new THREE.Group();
         const root = new HorizonPanel(Object.assign({
-            width: worldToPx(width),
-            height: worldToPx(height),
+            width: metrics.designWidthPx,
+            height: metrics.designHeightPx,
             sizeX: width,
             sizeY: height,
-            pixelSize: PIXEL_SIZE,
+            pixelSize: metrics.pixelSize,
             anchorX: "center",
             anchorY: "center",
             flexDirection: "column",
@@ -1395,8 +1666,9 @@ import { MSDF } from "@zappar/msdf-generator";
             root,
             width,
             height,
+            metrics,
             config,
-            anchorOptions: Object.assign({}, config || {}),
+            anchorOptions: Object.assign({ panelScale }, config || {}),
             anchorRefreshFrames: initialAnchorRefreshFrames(config || {}),
             anchorPoseSource: "",
             api: null,
@@ -1404,6 +1676,7 @@ import { MSDF } from "@zappar/msdf-generator";
             htmlEventForwarder: null,
             controllerPointerBridges: [],
             controllerPointerAttachAttempts: 0,
+            rayVisualPromoteFrames: 90,
             hasAFrameControllerPointers: false,
             nativeListeners: [],
             suppressedControls: new Map(),
@@ -1494,6 +1767,9 @@ import { MSDF } from "@zappar/msdf-generator";
                 id: panelState.id,
                 width: panelState.width,
                 height: panelState.height,
+                designWidthPx: panelState.metrics && panelState.metrics.designWidthPx,
+                designHeightPx: panelState.metrics && panelState.metrics.designHeightPx,
+                pixelSize: panelState.metrics && panelState.metrics.pixelSize,
                 controllers: panelState.controllerPointerBridges.length,
                 anchorPoseSource: panelState.anchorPoseSource,
                 anchorRefreshFrames: panelState.anchorRefreshFrames
@@ -1598,11 +1874,16 @@ import { MSDF } from "@zappar/msdf-generator";
                 }
             }
             activePanel.controllerPointerBridges.forEach((bridge) => {
+                if (activePanel.rayVisualPromoteFrames > 0) {
+                    promoteControllerRayVisual(bridge);
+                }
                 if (bridge && bridge.pointer && typeof bridge.pointer.move === "function") {
-                    bridge.pointer.move(activePanel.root, createNativePointerEvent("pointermove"));
-                    updateBridgeIntersectionDiagnostics(bridge);
+                    createPointerEventAndMove(bridge, activePanel.root, "pointermove");
                 }
             });
+            if (activePanel.rayVisualPromoteFrames > 0) {
+                activePanel.rayVisualPromoteFrames -= 1;
+            }
         }
     };
 

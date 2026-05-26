@@ -720,18 +720,12 @@
             };
 
             const handleDown = (event) => {
-                if (controllerEl.components && controllerEl.components.cursor) {
-                    return;
-                }
                 const hit = currentControllerIntersection(controllerEl);
                 controllerEl.__vrodosControllerClickBridge.downTarget = hit && hit.target || null;
                 controllerEl.__vrodosControllerClickBridge.downAt = performance.now();
             };
 
             const handleUp = (event) => {
-                if (controllerEl.components && controllerEl.components.cursor) {
-                    return;
-                }
                 const bridge = controllerEl.__vrodosControllerClickBridge;
                 const hit = currentControllerIntersection(controllerEl);
                 const downTarget = bridge && bridge.downTarget || null;
@@ -750,9 +744,6 @@
             };
 
             const handleSelect = (event) => {
-                if (controllerEl.components && controllerEl.components.cursor) {
-                    return;
-                }
                 const hit = currentControllerIntersection(controllerEl);
                 if (!hit || !hit.target || recentlyEmittedClick(hit.target)) {
                     return;
