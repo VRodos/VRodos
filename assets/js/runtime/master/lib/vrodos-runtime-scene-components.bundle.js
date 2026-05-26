@@ -3882,38 +3882,39 @@
           title: "Choose your level",
           showClose: false,
           headerColor: "#272727",
-          paddingX: 104,
-          paddingY: 72,
-          footerHeight: 140
+          headerHeight: 128,
+          titleSize: 40,
+          paddingX: 72,
+          paddingY: 42,
+          gapY: 26,
+          footerHeight: 112,
+          footerPaddingBottom: 42
         });
         panelApi.text(frame.content, {
           text: "CEFR Level",
           color: "#2563eb",
-          fontSize: 28,
-          fontWeight: 700,
+          fontSize: 32,
+          fontWeight: 800,
           whiteSpace: "normal"
         });
-        panelApi.text(frame.content, {
-          text: "Use your controller ray to select a level, then start the experience.",
-          color: "#334155",
-          fontSize: 32,
-          lineHeight: "130%"
-        });
         const levelRow = panelApi.row(frame.content, {
-          gapColumn: 28,
+          gapColumn: 24,
           justifyContent: "center",
           alignItems: "stretch",
           width: "100%",
-          marginTop: 28
+          marginTop: 10
         });
         CEFR_LEVELS.forEach((level, index) => {
           const active = level === runtime.selectedLevel;
+          const label = String(level || "").trim() || "L" + (index + 1);
           panelApi.button(levelRow, {
-            label: level,
+            label,
             variant: active ? "positive" : "secondary",
-            width: 142,
-            height: 88,
-            textSize: 34,
+            width: 156,
+            height: 92,
+            textSize: 40,
+            fontWeight: 800,
+            textColor: active ? "#ffffff" : "#0f172a",
             onClick: function() {
               runtime.selectedLevel = level;
               runtime.renderVrPrompt(panelApi);
@@ -3924,9 +3925,9 @@
           label: "Start experience",
           variant: "primary",
           disabled: !runtime.selectedLevel,
-          width: 360,
-          height: 68,
-          textSize: 28,
+          width: 380,
+          height: 74,
+          textSize: 30,
           onClick: function() {
             if (!runtime.selectedLevel) {
               return;
@@ -3965,7 +3966,7 @@
           width: 1.85,
           height: 1.05,
           distance: 1.95,
-          verticalOffset: -0.03,
+          verticalOffset: -0.2,
           topAtEyeLevel: true,
           anchorRefreshFrames: 8,
           lockInteraction: false,

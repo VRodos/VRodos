@@ -80,6 +80,8 @@ VR spatial UI current state:
 - If `spatial-ui` is unavailable in immersive XR, log diagnostics and fail closed instead of showing a broken A-Frame fallback.
 - Greek assessment/CEFR text in spatial UI depends on Noto Sans assets under `assets/vendor/fonts/noto-sans/` and the Zappar MSDF worker/WASM under `assets/vendor/zappar-msdf-generator/`. Do not transliterate Greek or restore A-Frame text primitives to suppress glyph warnings.
 - The spatial UI runtime passes the MSDF worker an `application/wasm` data URL for the vendored WASM asset so local servers that omit `.wasm` MIME types do not trigger streaming-compile warnings.
+- Spatial UI panel sizing uses physical meters plus calculated `designWidthPx`/`pixelSize`; keep the default immersive panel scale at `1` and tune panel width/height, design pixels, and internal frame spacing instead of globally scaling the group.
+- Controller ray visuals are intentionally promoted above spatial UI panel render order with depth testing disabled; do not hide/retarget controller rays or add A-Frame hit planes for PMNDRS panels.
 - Desktop and inline assessment/video dialogs remain DOM-based.
 - Recompile generated scenes after runtime changes so spatial UI scripts receive the planner's cache-busting `?ver=` query.
 

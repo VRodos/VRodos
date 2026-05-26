@@ -131,6 +131,18 @@ Do not use `VRODOSRuntimeOverlay.openVrPanel()` or `.vrodos-overlay-hit-target` 
 
 Panel render callbacks receive `frame()`, `text()`, `button()`, `image()`, `row()`, `column()`, `grid()`, `clear()`, and `close()`. Use Horizon buttons and variants for immersive VR UI. Selected states should use a positive or otherwise explicit variant. Disabled actions should use the Horizon disabled state, not hidden raycaster targets or custom A-Frame materials.
 
+### Spatial UI Sizing, Placement, And Rays
+
+`openPanel({ width, height })` uses meters for the physical panel size. The spatial UI root then calculates a design-pixel surface from that physical size: default `designWidthPx` is 1040 px, `designHeightPx` is derived from the aspect ratio, and `pixelSize = width / designWidthPx`. This is the sizing contract that keeps PMNDRS UIKit text, Horizon buttons, hit targets, and physical size aligned.
+
+Do not fix small or clipped VR dialogs by scaling the `THREE.Group` globally. Keep the default XR panel scale at `1` and change the physical `width`/`height`, `designWidthPx`, or the panel's internal frame paddings/control sizes. Global scale changes break pointer intersections and make controller rays appear to pass through the dialog.
+
+Camera-anchored prompts should use `topAtEyeLevel: true` and a deliberate `verticalOffset`. CEFR is intentionally compact and lower than a literal top-at-eye center so its center lands near the proven assessment-panel height. Assessment and video panels should anchor to the clicked object with `anchorElement`, usually on the object's right side, so they materialize beside the authored object instead of following the user's head.
+
+Controller rays must remain visible while crossing a modal panel. The spatial runtime promotes controller ray line objects above the panel render order and disables depth testing/writing on those ray materials. Do not retarget A-Frame raycasters to `.vrodos-overlay-hit-target`, hide controller line meshes, or add invisible A-Frame hit planes for PMNDRS panels.
+
+Short labels such as CEFR levels should use explicit `label`, `textColor`, `fontWeight`, and enough button height. If labels vanish in Quest Browser while buttons are still clickable, first check for clipped frame layout or missing explicit text color before changing the shared spatial UI scale.
+
 ### Migrated Surfaces
 
 The immersive VR surfaces expected to use `window.VRODOSSpatialUI` are:
