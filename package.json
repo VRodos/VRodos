@@ -45,9 +45,9 @@
   },
   "dependencies": {
     "@pmndrs/pointer-events": "^6.6.29",
-    "@pmndrs/uikit": "^1.0.72",
-    "@pmndrs/uikit-horizon": "^1.0.72",
-    "@pmndrs/uikit-lucide": "^1.0.72",
+    "@pmndrs/uikit": "^1.0.73",
+    "@pmndrs/uikit-horizon": "^1.0.73",
+    "@pmndrs/uikit-lucide": "^1.0.73",
     "@zappar/msdf-generator": "^1.2.4",
     "@takram/three-atmosphere": "^0.19.1",
     "@takram/three-clouds": "^0.7.6",

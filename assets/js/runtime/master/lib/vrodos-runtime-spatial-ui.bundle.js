@@ -13695,6 +13695,15 @@
   var X = XIcon;
 
   // node_modules/@pmndrs/uikit-horizon/dist/progress-bar/index.js
+  function formatProgressWidth(value) {
+    if (value == null) {
+      return "0%";
+    }
+    if (typeof value === "string" && value.endsWith("%")) {
+      return value;
+    }
+    return `${Number(value)}%`;
+  }
   var ProgressBar = class extends Container {
     constructor(inputProperties, initialClasses, config) {
       super(inputProperties, initialClasses, {
@@ -13712,10 +13721,7 @@
           height: 12,
           borderRadius: 1e3,
           backgroundColor: theme.component.progressBar.determinate.fill.fill.value,
-          width: g(() => {
-            var _a4;
-            return `${(_a4 = this.properties.value.value) != null ? _a4 : 0}%`;
-          }),
+          width: g(() => formatProgressWidth(this.properties.value.value)),
           minWidth: 12
         }
       }));
