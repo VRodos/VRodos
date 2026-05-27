@@ -72,12 +72,13 @@ Root `package.json` plus `package-lock.json` are the version source of truth. `n
 
 VR spatial UI current state:
 
-- `documentation/vrodos-compiled-scene-framework-integration.md` section 4.1 is the current handoff reference for immersive CEFR, assessment, and video control UI.
+- `documentation/vrodos-compiled-scene-framework-integration.md` section 4.1 is the current handoff reference for immersive CEFR, assessment, and video interaction UI.
 - A-Frame remains the compiled scene host: scene, renderer, XR session, `cameraA`, controllers, navigation, collision, media objects, and render loop.
-- Immersive CEFR, assessment, and VR video modal UI should use `window.VRODOSSpatialUI`, backed by `@pmndrs/uikit`, `@pmndrs/uikit-horizon`, and `@pmndrs/pointer-events`.
+- Immersive CEFR and assessment dialogs should use `window.VRODOSSpatialUI`, backed by `@pmndrs/uikit`, `@pmndrs/uikit-horizon`, and `@pmndrs/pointer-events`; VR video trigger clicks should toggle playback directly and must not open a play/pause dialog.
 - The spatial UI chunk mounts a PMNDRS/Horizon `THREE.Group` under `a-scene.object3D`; the A-Frame host component only forwards `tick()` and must not create visible UI primitives.
-- Do not route immersive CEFR/assessment/video dialogs through `VRODOSRuntimeOverlay.openVrPanel()`, A-Frame `a-plane`, A-Frame `a-text`, A-Frame modal buttons, or `.vrodos-overlay-hit-target` raycaster retargeting.
+- Do not route immersive CEFR/assessment dialogs through `VRODOSRuntimeOverlay.openVrPanel()`, A-Frame `a-plane`, A-Frame `a-text`, A-Frame modal buttons, or `.vrodos-overlay-hit-target` raycaster retargeting.
 - If `spatial-ui` is unavailable in immersive XR, log diagnostics and fail closed instead of showing a broken A-Frame fallback.
+- Desktop and VR assessment runtimes share renderer-key resolution through `window.VRodosImmerseAssessment.resolveAssessmentRendererKey()`; keep question/image quiz/pair/grid/text aliases there so desktop-supported assessments do not regress to the VR unsupported state.
 - Greek assessment/CEFR text in spatial UI depends on Noto Sans assets under `assets/vendor/fonts/noto-sans/` and the Zappar MSDF worker/WASM under `assets/vendor/zappar-msdf-generator/`. Do not transliterate Greek or restore A-Frame text primitives to suppress glyph warnings.
 - The spatial UI runtime passes the MSDF worker an `application/wasm` data URL for the vendored WASM asset so local servers that omit `.wasm` MIME types do not trigger streaming-compile warnings.
 - Spatial UI panel sizing uses physical meters plus calculated `designWidthPx`/`pixelSize`; keep the default immersive panel scale at `1` and tune panel width/height, design pixels, and internal frame spacing instead of globally scaling the group.

@@ -94,7 +94,8 @@ That runtime powers:
 - PMNDRS/Takram day-night lighting with horizon-gated direct sun/moon lights and separate indirect sky/fill support
 - compiled walkable-surface and static player/world collision workflows
 - static cached desktop shadows where visible compiled geometry casts and receives by default
-- PMNDRS UIKit Horizon immersive VR dialogs for CEFR prompts, assessment panels, and VR video controls while A-Frame remains the scene/XR host
+- PMNDRS UIKit Horizon immersive VR dialogs for CEFR prompts and assessment panels while A-Frame remains the scene/XR host
+- direct immersive VR video trigger controls that toggle authored video playback without opening a play/pause dialog
 - Greek-capable spatial UI text rendering through vendored Noto Sans and same-origin MSDF worker assets
 
 The runtime version source of truth is root [`package.json`](package.json) plus [`package-lock.json`](package-lock.json). `npm run build:three` generates [`assets/runtime-version-manifest.json`](assets/runtime-version-manifest.json), and [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php) reads that manifest at runtime with conservative fallbacks.

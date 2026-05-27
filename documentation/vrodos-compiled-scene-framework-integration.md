@@ -29,26 +29,46 @@ Our current state-of-the-art rendering pipeline is the result of a continuous ev
 
 ```mermaid
 graph TD
-    subgraph WordPress Backend
-        Upload[Asset Upload] -->|Various Formats| Blender[Blender CLI]
-        Blender -->|Conversion| GLB[Optimized GLB]
-        GLB --> AssetManager[VRodos Asset Manager]
+    subgraph WordPress["WordPress Backend"]
+        Upload["Asset Upload"] --> Blender["Blender CLI Conversion"]
+        Blender --> GLB["Optimized GLB"]
+        GLB --> AssetManager["VRodos Asset Manager"]
+        SceneData["Scene + Assessment Metadata"] --> Compiler["VRodos Compiler"]
+        AssetManager --> Compiler
     end
 
-    subgraph Compiler Pipeline
-        AssetManager --> Compiler[VRodos Compiler]
-        Compiler -->|Manifest & Contracts| HTML[Compiled HTML Client]
+    subgraph Compile["Compiler Pipeline"]
+        Compiler --> Builder["Runtime Page Builder"]
+        Builder --> Planner["Runtime Script Planner"]
+        Planner --> Manifest["runtime-build-manifest.json"]
+        Builder --> HTML["Compiled HTML Client"]
+        Manifest --> HTML
     end
 
-    subgraph Runtime Client
-        HTML --> AFrame[A-Frame XR Engine]
-        AFrame --> Three[Three.js Substrate]
+    subgraph Runtime["Compiled Runtime Client"]
+        HTML --> AFrame["A-Frame Host<br/>scene, XR session, camera, controllers"]
+        AFrame --> Three["Shared Three.js r181 Substrate"]
+        AFrame --> Media["Scene Objects + Media Components"]
+        AFrame --> AssessmentHost["Assessment/CEFR Components"]
 
-        Three --> PMNDRS[PMNDRS Post-Processing]
-        Three --> SpatialUI[PMNDRS UIKit Horizon Spatial UI]
-        Three --> Takram[Takram Atmosphere & Lighting]
-        Three --> BVH[three-mesh-bvh Collision]
-        AFrame --> NAF[Networked-Aframe Multiplayer]
+        Three --> PMNDRSPost["PMNDRS Post-FX"]
+        Three --> Takram["Takram Atmosphere + Lighting"]
+        Three --> BVH["three-mesh-bvh Collision"]
+        AFrame --> NAF["Networked-Aframe Multiplayer"]
+
+        AssessmentHost --> Resolver["Shared Assessment Renderer-Key Resolver"]
+        Resolver --> DesktopDOM["Desktop/Inline DOM Assessment UI"]
+        Resolver --> VRPanels["VR PMNDRS/Horizon Assessment Panels"]
+
+        Three --> SpatialUI["VRODOSSpatialUI<br/>PMNDRS UIKit/Horizon Group"]
+        SpatialUI --> VRPanels
+        SpatialUI --> CEFR["VR CEFR Prompt"]
+        Media --> VideoToggle["VR Video Trigger<br/>direct play/pause toggle"]
+
+        Controllers["Quest/WebXR Controllers"] --> AFramePointers["A-Frame Cursor/Ray Events"]
+        AFramePointers --> Media
+        AFramePointers --> SpatialBridge["Spatial UI Pointer Bridge"]
+        SpatialBridge --> SpatialUI
     end
 ```
 
@@ -104,11 +124,11 @@ VRodos uses A-Frame as the orchestration layer:
 
 Current state: 2026-05-26.
 
-CEFR, assessment, and VR video control dialogs in immersive XR are not rendered with A-Frame `a-plane`, `a-text`, or A-Frame button entities. They use `window.VRODOSSpatialUI`, a PMNDRS UIKit/Horizon layer that creates a `THREE.Group` under `a-scene.object3D` and renders Horizon components through the same A-Frame-owned Three runtime.
+CEFR prompts and assessment dialogs in immersive XR are not rendered with A-Frame `a-plane`, `a-text`, or A-Frame button entities. They use `window.VRODOSSpatialUI`, a PMNDRS UIKit/Horizon layer that creates a `THREE.Group` under `a-scene.object3D` and renders Horizon components through the same A-Frame-owned Three runtime. VR video playback is different by design: trigger clicks on the authored video object should toggle play/pause directly and should not open a play/pause dialog.
 
 A-Frame still owns the scene, WebXR session, camera, controllers, movement, media objects, and render loop. The spatial UI layer owns the modal panel tree and pointer-event handling for that modal. Its A-Frame component exists only to forward `tick()` into the PMNDRS component tree.
 
-Do not use `VRODOSRuntimeOverlay.openVrPanel()` or `.vrodos-overlay-hit-target` raycaster retargeting for immersive CEFR, assessment, or video controls. If the spatial bundle is unavailable in immersive XR, the correct behavior is to log diagnostics and fail closed instead of opening the old A-Frame fallback. Desktop and inline mode still use the existing DOM dialogs.
+Do not use `VRODOSRuntimeOverlay.openVrPanel()` or `.vrodos-overlay-hit-target` raycaster retargeting for immersive CEFR or assessment dialogs. If the spatial bundle is unavailable in immersive XR, the correct behavior is to log diagnostics and fail closed instead of opening the old A-Frame fallback. Desktop and inline mode still use the existing DOM dialogs. Video objects should keep their normal scene click path and direct play/pause behavior when no modal is open.
 
 ### Spatial UI Source Files
 
@@ -125,6 +145,12 @@ Do not use `VRODOSRuntimeOverlay.openVrPanel()` or `.vrodos-overlay-hit-target` 
 - Video component: `assets/js/runtime/components/video_component.js`
 - Legacy overlay diagnostics and spatial loader helper: `assets/js/runtime/vrodos_runtime_overlay.js`
 
+### Assessment Renderer Resolution
+
+Desktop and VR assessment surfaces share renderer-key resolution through `window.VRodosImmerseAssessment.resolveAssessmentRendererKey()`. The desktop DOM runtime exports the resolver, and the VR runtime consumes it before falling back to its local alias table. Keep aliases for question/image quiz/pair/grid/text assessment families in this shared resolver so supported desktop assessment types do not regress into the VR unsupported state.
+
+The resolver maps raw `group` values first, then normalized `group` and `type` aliases. The VR runtime may call the resolver with `{ ignoreSupported: true }` because compiled immersive metadata can arrive from older generated clients while still containing playable normalized content. A VR unsupported panel should mean there is no renderer family or no playable normalized content, not merely that an alias differed from the exact desktop group key.
+
 ### Spatial UI API
 
 `window.VRODOSSpatialUI` exposes `isAvailable()`, `openPanel()`, `closePanel(reason)`, `refreshInteractionTargets()`, `dispose()`, `getActivePanel()`, `getDiagnostics()`, and `recordDiagnostic(level, message, details)`.
@@ -137,7 +163,7 @@ Panel render callbacks receive `frame()`, `text()`, `button()`, `image()`, `row(
 
 Do not fix small or clipped VR dialogs by scaling the `THREE.Group` globally. Keep the default XR panel scale at `1` and change the physical `width`/`height`, `designWidthPx`, or the panel's internal frame paddings/control sizes. Global scale changes break pointer intersections and make controller rays appear to pass through the dialog.
 
-Camera-anchored prompts should use `topAtEyeLevel: true` and a deliberate `verticalOffset`. CEFR is intentionally compact and lower than a literal top-at-eye center so its center lands near the proven assessment-panel height. Assessment and video panels should anchor to the clicked object with `anchorElement`, usually on the object's right side, so they materialize beside the authored object instead of following the user's head.
+Camera-anchored prompts should use `topAtEyeLevel: true` and a deliberate `verticalOffset`. CEFR is intentionally compact and lower than a literal top-at-eye center so its center lands near the proven assessment-panel height. Assessment panels should anchor to the clicked object with `anchorElement`, usually on the object's right side, so they materialize beside the authored object instead of following the user's head.
 
 Controller rays must remain visible while crossing a modal panel. The spatial runtime promotes controller ray line objects above the panel render order and disables depth testing/writing on those ray materials. Do not retarget A-Frame raycasters to `.vrodos-overlay-hit-target`, hide controller line meshes, or add invisible A-Frame hit planes for PMNDRS panels.
 
@@ -155,9 +181,10 @@ The immersive VR surfaces expected to use `window.VRODOSSpatialUI` are:
 - pair matching layouts
 - fill-gap and highlight layouts
 - grid wordsearch/bingo layouts
-- VR video play/pause modal
 
 Desktop and inline browser modes keep the existing DOM dialogs. The DOM assessment dialog remains the source of truth outside immersive XR.
+
+VR video objects are intentionally not in the modal surface list. Controller trigger clicks should directly toggle playback on the video asset. If a video click opens a spatial UI dialog, that is a regression in the video component click path.
 
 ### Text And Font Coverage
 
@@ -181,6 +208,8 @@ If font atlas generation fails, the runtime falls back to PMNDRS Inter so the pa
 PMNDRS pointer events are the modal interaction path. The spatial runtime forwards mouse events from the scene canvas through `forwardHtmlEvents`, attaches native WebXR controller ray pointers through `renderer.xr.getController(index)` when available, and falls back to A-Frame controller elements for trigger/grip/mouse events when needed.
 
 While a modal is open, canvas click/context events are blocked so underlying scene objects do not receive modal clicks. Legacy video play hint entities are temporarily suppressed while the PMNDRS modal is active. A-Frame controller raycasters should not be retargeted to overlay classes.
+
+When no modal is open, scene object clicks remain owned by A-Frame components. Video trigger clicks should go straight to the video component and toggle playback. Assessment trigger clicks should open a spatial panel anchored beside the clicked assessment object in immersive XR, or the DOM dialog in desktop/inline mode.
 
 Controller rays should remain visible before, during, and after modal panels. If rays disappear after close or finish, inspect scene interaction locking and any direct controller raycaster mutation first.
 
@@ -217,8 +246,10 @@ Production acceptance checklist:
 6. Clear Quest Browser cache before testing.
 7. Enter immersive VR and confirm the CEFR prompt appears after WebXR presentation starts.
 8. Open an assessment with Greek text and confirm there are no repeated `Missing glyph info` warnings.
-9. Confirm video and assessment objects still receive native controller clicks when no modal is open.
-10. Confirm controller rays remain visible during and after modal close/finish.
+9. Confirm video trigger clicks directly toggle play/pause in immersive XR and do not open a play/pause dialog.
+10. Confirm assessment objects open spatial panels beside the clicked object in immersive XR and remain DOM-based in desktop/inline mode.
+11. Confirm video and assessment objects still receive native controller clicks when no modal is open.
+12. Confirm controller rays remain visible during and after modal close/finish.
 
 Quest Browser manual acceptance is required before considering a spatial UI change stable. Desktop WebXR emulators are useful for smoke checks but do not prove controller behavior or native WebXR timing.
 
