@@ -42,7 +42,7 @@
     "three-mesh-bvh": "^0.9.10"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=22.13.0"
   },
   "dependencies": {
     "@pmndrs/pointer-events": "^6.6.29",
