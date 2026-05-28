@@ -95,6 +95,8 @@ lib/vrodos-runtime-aframe-components.bundle.js
 
 The optional runtime bundle set is selected by `VRodos_Compiler_Runtime_Script_Planner`, not by hardcoded template script tags. PMNDRS, Takram, and collision BVH bundles are generated from root `package.json` and `package-lock.json`. They must use A-Frame's `window.THREE`; compiled scenes must not load a second Three instance.
 
+Current A-Frame master builds expose Three through the `super-three` package alias. Treat that as A-Frame's implementation detail, not as permission to load a separate fork or stock Three copy beside A-Frame. VRodos build-time bundles may be produced from the locked root `three` package, but compiled runtime imports for PMNDRS, Takram, spatial UI, and BVH must resolve to the already-loaded A-Frame `window.THREE` object.
+
 `assets/runtime-build-manifest.json` is the compiled-client chunk source of truth. The build and PHP manifest loader validate:
 
 - missing script files
@@ -321,6 +323,8 @@ Day/night cycle shadows keep runtime-forced `pcf` filtering. The current PMNDRS/
 - Medium shadow quality: directional `shadow.radius = 1.8`.
 - Debug override: `?vrodos_debug_day_night_shadow_radius=VALUE`, clamped to `0..6`.
 
+Root A-Frame `shadow.type` is kept compatible with newer A-Frame master schemas by emitting only `basic` or `pcf`. VRodos still preserves the authored/internal `pcfsoft` shadow intent in `scene-settings.rootShadowType` and applies `THREE.PCFSoftShadowMap` directly to `renderer.shadowMap.type` for high-quality non-day/night shadows. Do not reintroduce `pcfsoft` into the A-Frame `shadow` attribute as a way to get soft shadows; it creates schema warnings and can be overwritten by A-Frame's shadow system.
+
 Takram sun shadows and VRodos-managed directional helper shadows use the same contact-shadow profile. Bias remains negative, `normalBias` remains small, and the old hardcoded positive Takram bias values must not be reintroduced.
 
 ### Terrain self-shadow stabilization
@@ -349,6 +353,8 @@ Terrain shadow debug flags:
 ## 6. PMNDRS Pipeline
 
 The PMNDRS engine uses `POSTPROCESSING.EffectComposer` and builds a scene-specific composer lazily on the first valid render frame.
+
+PMNDRS composer ownership is a desktop/inline rendering feature by default. In immersive WebXR, VRodos intentionally bypasses screen-space composer ownership and keeps direct A-Frame stereo rendering unless an explicit Quest-validated experiment proves safe. Super-three includes WebXR/postprocessing helper patches, but they do not by themselves make the full VRodos PMNDRS stack production-safe in stereo XR.
 
 Current PMNDRS ordering:
 

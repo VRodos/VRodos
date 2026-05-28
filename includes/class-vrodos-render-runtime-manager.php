@@ -10,8 +10,8 @@ class VRodos_Render_Runtime_Manager {
 	private const FALLBACK_AFRAME_RUNTIME_LABEL   = 'A-Frame master';
 	private const FALLBACK_AFRAME_RUNTIME_SOURCE  = 'cdn-master';
 	private const FALLBACK_AFRAME_RUNTIME_VERSION = '1.7.1';
-	private const FALLBACK_AFRAME_RUNTIME_URL     = 'https://cdn.jsdelivr.net/gh/aframevr/aframe@96cc74fa7a4640f394a78985a637a788daf56186/dist/aframe-master.min.js';
-	private const FALLBACK_AFRAME_RUNTIME_COMMIT  = '96cc74fa7a4640f394a78985a637a788daf56186';
+	private const FALLBACK_AFRAME_RUNTIME_URL     = 'https://cdn.jsdelivr.net/gh/aframevr/aframe@b5e2580e8aeb49914d716cfc67c25743b07b304a/dist/aframe-master.min.js';
+	private const FALLBACK_AFRAME_RUNTIME_COMMIT  = 'b5e2580e8aeb49914d716cfc67c25743b07b304a';
 
 	private const FALLBACK_THREE_VENDOR_VERSION = '0.181.0';
 	private const FALLBACK_THREE_VENDOR_DIR     = 'three-r181';

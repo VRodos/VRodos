@@ -86,7 +86,7 @@ The root scene contract has three critical parts:
 
 The current compiled runtime stack is declared in the root package files and generated manifests:
 
-- A-Frame runtime: 1.7.1 master commit `63600d331e8eca9bec786bf030bc66040625750b`
+- A-Frame runtime: 1.7.1 master dist commit `b5e2580e8aeb49914d716cfc67c25743b07b304a`
 - Three.js: `0.181.0`, revision `181`
 - PMNDRS `postprocessing`: `6.39.1`, exported as `window.POSTPROCESSING`
 - PMNDRS spatial UI packages: `@pmndrs/uikit` `1.0.72`, `@pmndrs/uikit-horizon` `1.0.72`, `@pmndrs/uikit-lucide` `1.0.72`, and `@pmndrs/pointer-events` `6.6.29`, exported through `window.VRODOSSpatialUI` when the `spatial-ui` chunk loads
@@ -255,7 +255,7 @@ Quest Browser manual acceptance is required before considering a spatial UI chan
 
 ## 5. Three.js As The Shared Substrate
 
-Three r181 is the shared low-level substrate under A-Frame and the optional VRodos runtime systems.
+Three r181 is the shared low-level substrate under A-Frame and the optional VRodos runtime systems. Current A-Frame master builds provide that substrate through the `super-three` package alias; VRodos treats this as A-Frame's runtime implementation detail and still binds every optional runtime system to the single live `window.THREE` object.
 
 Three provides:
 - the WebGL renderer used by A-Frame;
@@ -265,7 +265,7 @@ Three provides:
 - raycasting used by navigation and collision;
 - GPU resource objects that must be disposed through lifecycle cleanup.
 
-PMNDRS, Takram, and BVH work because they attach to this same Three universe. They do not operate on a separate renderer or a separate copy of Three classes.
+PMNDRS, Takram, spatial UI, and BVH work because they attach to this same Three universe. They do not operate on a separate renderer or a separate copy of Three classes. Build-time helper bundles may be generated from the locked root `three` package, but their compiled-scene imports must resolve to A-Frame's already-loaded `window.THREE`.
 
 ## 6. PMNDRS Composer And Post-FX Routing
 
@@ -325,6 +325,8 @@ Desktop and desktop fullscreen can use the eligible post-FX path. Immersive WebX
 VRodos detects real immersive XR through `renderer.xr.isPresenting`. In immersive XR, unsafe screen-space composer passes can fall back to direct stereo rendering. Scene-owned visuals remain active (Takram sky, scene-owned lights, fog, A-Frame movement). The strategy is to skip unsafe screen-space ownership while preserving scene-owned visual systems.
 
 Compiled clients disable Three r181's WebXR Layers path by default by hiding `XRWebGLBinding` unless `window.VRODOS_ENABLE_NATIVE_WEBXR_LAYERS === true` or `window.VRODOS_ENABLE_WEBXR_LAYERS === true` is set before the prototype shim runs. This keeps A-Frame on the `XRWebGLLayer` path and avoids desktop Immersive Web Emulator failures where polyfilled layer bindings throw `Failed to construct 'XRWebGLBinding': parameter 1 is not of type 'XRSession'`. Real Quest Browser validation is still required for immersive UI and controller behavior.
+
+Super-three's WebXR layer, multiview, and postprocessing helpers are opt-in validation targets, not production defaults. Do not enable native layers, multiview stereo, or PMNDRS composer rendering inside immersive XR without a Quest Browser pass that covers controller rays, spatial UI panels, video trigger clicks, navigation, shadows, and enter/exit session cleanup.
 
 The A-Frame Environment component is still a legacy preset-background provider for non-Takram compiled scenes. It is not the owner of WebXR session creation, WebXR layers, or controller input. Moving more backgrounds to PMNDRS/Takram is desirable, but it is a separate rendering-pipeline migration from the `XRWebGLBinding` VR-entry fix.
 

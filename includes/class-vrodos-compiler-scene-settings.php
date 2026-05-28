@@ -222,7 +222,7 @@ class VRodos_Compiler_Scene_Settings {
 
 		$shadow = $this->parse_component_attribute( $ascene->getAttribute( 'shadow' ) );
 		$shadow['enabled']    = $this->bool_attr( $shadows_enabled );
-		$shadow['type']       = (string) ( $settings['rootShadowType'] ?? $this->get_shadow_map_type_attr( $shadow_quality, $metadata ) );
+		$shadow['type']       = $this->get_aframe_shadow_type_attr( (string) ( $settings['rootShadowType'] ?? $this->get_shadow_map_type_attr( $shadow_quality, $metadata ) ) );
 		$shadow['autoUpdate'] = $this->bool_attr( 'dynamic' === $shadow_update_mode && $this->should_enable_shadow_auto_update( $metadata ) );
 
 		$ascene->setAttribute( 'shadow', $this->serialize_component_attribute( $shadow ) );
@@ -575,6 +575,18 @@ class VRodos_Compiler_Scene_Settings {
 		}
 
 		return 'high' === $shadow_quality ? 'pcfsoft' : 'pcf';
+	}
+
+	private function get_aframe_shadow_type_attr( string $shadow_type ): string {
+		$shadow_type = strtolower( trim( $shadow_type ) );
+		if ( 'basic' === $shadow_type ) {
+			return 'basic';
+		}
+
+		// Newer A-Frame master no longer accepts pcfsoft in the shadow component
+		// schema. VRodos still applies PCFSoftShadowMap directly in the renderer
+		// profile when high-quality shadows are requested.
+		return 'pcf';
 	}
 
 	private function should_enable_shadow_auto_update( $metadata ): bool {

@@ -3495,6 +3495,10 @@
           return THREE.PCFShadowMap;
       }
     }
+    function getAFrameShadowComponentType(type) {
+      const normalized = normalizeAFrameShadowMapType(type, "pcf");
+      return normalized === "basic" ? "basic" : "pcf";
+    }
     function normalizeReflectionOcclusionMode(value) {
       switch (value) {
         case "off":
@@ -7612,23 +7616,24 @@
       const contactShadowSettings = getTerrainSafeContactShadowSettings(this, this.getContactShadowSettings());
       const profileShadowType = shadowQuality === "high" ? "pcfsoft" : "pcf";
       const shadowTypeAttr = shadowsEnabled ? shouldUseDayNightPcfShadowMap(this) ? "pcf" : normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType) : "pcf";
+      const aframeShadowTypeAttr = getAFrameShadowComponentType(shadowTypeAttr);
       const shadowMapType = getThreeShadowMapType(shadowTypeAttr);
       const staticShadowMode = shadowsEnabled && isStaticShadowMode(this);
-      if (renderer && renderer.shadowMap) {
-        renderer.shadowMap.enabled = shadowsEnabled;
-        renderer.shadowMap.type = shadowMapType;
-        renderer.shadowMap.autoUpdate = shadowsEnabled && !staticShadowMode;
-        renderer.shadowMap.needsUpdate = true;
-      }
       if (this.el && typeof this.el.setAttribute === "function") {
         const currentShadow = this.el.getAttribute("shadow") || {};
         const currentEnabled = currentShadow.enabled === true || currentShadow.enabled === "true";
         const currentType = typeof currentShadow.type === "string" ? currentShadow.type.toLowerCase() : "";
         const currentAutoUpdate = currentShadow.autoUpdate === true || currentShadow.autoUpdate === "true";
         const targetAutoUpdate = shadowsEnabled && !staticShadowMode;
-        if (currentEnabled !== shadowsEnabled || currentType !== shadowTypeAttr || currentAutoUpdate !== targetAutoUpdate) {
-          this.el.setAttribute("shadow", `enabled: ${shadowsEnabled ? "true" : "false"}; type: ${shadowTypeAttr}; autoUpdate: ${targetAutoUpdate ? "true" : "false"}`);
+        if (currentEnabled !== shadowsEnabled || currentType !== aframeShadowTypeAttr || currentAutoUpdate !== targetAutoUpdate) {
+          this.el.setAttribute("shadow", `enabled: ${shadowsEnabled ? "true" : "false"}; type: ${aframeShadowTypeAttr}; autoUpdate: ${targetAutoUpdate ? "true" : "false"}`);
         }
+      }
+      if (renderer && renderer.shadowMap) {
+        renderer.shadowMap.enabled = shadowsEnabled;
+        renderer.shadowMap.type = shadowMapType;
+        renderer.shadowMap.autoUpdate = shadowsEnabled && !staticShadowMode;
+        renderer.shadowMap.needsUpdate = true;
       }
       if (this.el.hasAttribute("environment")) {
         this.el.setAttribute("environment", "shadow", shadowsEnabled ? "true" : "false");
