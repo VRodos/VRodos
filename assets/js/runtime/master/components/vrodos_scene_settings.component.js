@@ -1064,12 +1064,13 @@ AFRAME.registerComponent('scene-settings', {
 
             const sceneContainer = document.getElementById("aframe-scene-container");
             if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.applyChatTabs === 'function') {
-                window.VRODOSMasterUI.applyChatTabs(this.data.public_chat === "1" ? 'public' : 'private');
+                window.VRODOSMasterUI.applyChatTabs(vrodosRuntimeTruthy(this.data.public_chat) ? 'public' : 'private');
             } else if (sceneContainer) {
-                const settings = sceneContainer.getAttribute("scene-settings");
+                const settings = sceneContainer ? sceneContainer.getAttribute("scene-settings") : null;
                 if (publicChatBtn) {
-                    publicChatBtn.style.visibility = settings && settings.public_chat == "1" ? 'visible' : 'hidden';
-                    publicChatBtn.disabled = settings && settings.public_chat != "1";
+                    const hasPublicChat = Boolean(settings && vrodosRuntimeTruthy(settings.public_chat));
+                    publicChatBtn.style.visibility = hasPublicChat ? 'visible' : 'hidden';
+                    publicChatBtn.disabled = !hasPublicChat;
                 }
                 if (privateChatBtn) {
                     const hasPrivateChat = Boolean(document.querySelector('[chat-poi]'));
@@ -1089,7 +1090,7 @@ AFRAME.registerComponent('scene-settings', {
                 };
 
                 const settings = sceneContainer.getAttribute("scene-settings");
-                if (settings && settings.avatar_enabled == 1) {
+                if (settings && vrodosRuntimeTruthy(settings.avatar_enabled)) {
                     avatarDialog.addEventListener('close', closeAvatarDialogListener);
                     if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === 'function') {
                         window.VRODOSMasterUI.showDialog(avatarDialog);

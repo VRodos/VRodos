@@ -159,7 +159,7 @@ class VRodos_Compiler_Manager {
 		}
 
 		$strCmd = 'node ' . escapeshellarg( $server_script );
-		if ( ! $this->processExists( 'networked-afr' ) ) {
+		if ( ! $this->processExists( 'vrodos-network-runtime' ) ) {
 			shell_exec( $strCmd . ' > /dev/null 2>/dev/null &' );
 		}
 	}

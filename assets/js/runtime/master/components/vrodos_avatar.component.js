@@ -75,10 +75,15 @@ AFRAME.registerComponent('player-info', {
 
         if (this.data.avatarType) {
             if (this.data.avatarType === 'no-avatar') {
+                if (isRemote) elem.setAttribute('visible', 'false');
                 if (this.head) this.head.setAttribute("visible", "false");
                 if (this.face) this.face.setAttribute("visible", "false");
                 if (this.nametag) this.nametag.setAttribute("visible", "false");
             } else if (this.data.avatarType === 'blob') {
+                if (isRemote) {
+                    elem.setAttribute('visible', 'true');
+                    elem.removeAttribute('data-vrodos-delayed-reveal');
+                }
                 if (this.head) {
                     this.head.setAttribute('material', { color: this.data.color });
                     this.head.setAttribute('visible', 'true');
@@ -100,4 +105,3 @@ AFRAME.registerComponent('player-info', {
         }
     }
 });
-

@@ -117,6 +117,7 @@ fabric.properties
 /includes/translate/
 /build/
 /services/networked-aframe/server/keys.json
+/services/vrodos-network-runtime/server/keys.json
 
 /runtime/build/
 /runtime/assets/

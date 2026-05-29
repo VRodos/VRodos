@@ -15,8 +15,10 @@
   },
   "scripts": {
     "build": "npm run build:three && npm run build:runtime && npm run build:css",
+    "build:all": "npm run build:naf && npm run build",
     "build:three": "node ./scripts/build-three-vendor.mjs",
     "build:runtime": "node ./scripts/build-runtime-master-bundles.mjs",
+    "build:naf": "node ./scripts/build-networked-aframe-vendor.mjs",
     "build:vendor": "npm run build:three",
     "assets:audit:master": "node ./scripts/audit-master-client-assets.mjs",
     "assets:optimize:prototype": "node ./scripts/prototype-optimize-master-client-assets.mjs",

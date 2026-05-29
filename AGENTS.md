@@ -12,7 +12,7 @@ It provides:
 - a compiled A-Frame runtime for published desktop/VR experiences
 - WordPress CPT and AJAX integration for persistence and asset management
 - runtime support for post-processing, Takram atmosphere, navigation, and scene-probe reflections
-- optional collaborative/runtime serving through `services/networked-aframe/`
+- optional collaborative/runtime serving through `services/vrodos-network-runtime/`
 
 ## Current Architecture
 
@@ -31,7 +31,7 @@ VRodos/
   assets/css/                      Source and generated CSS
   assets/vendor/                   Vendored browser bundles such as Three r181
   runtime/build/                   Generated compiled HTML output only
-  services/networked-aframe/       Node/WebRTC collaborative runtime server
+  services/vrodos-network-runtime/ Node/WebRTC collaborative runtime server
   scripts/                         Build and maintenance scripts
 ```
 
@@ -170,6 +170,15 @@ Runtime package updates:
 3. Run `npm run build:runtime`.
 4. Commit generated runtime outputs that changed intentionally.
 
+Networked-Aframe runtime updates:
+
+1. Update `patches/networked-aframe/config.json`.
+2. Update the matching patch file under `patches/networked-aframe/`.
+3. Run `npm run build:naf`.
+4. Commit the regenerated `assets/vendor/networked-aframe/dist/` files when behavior changes intentionally.
+
+Keep new VRodos multiplayer features outside patched NAF by default. Prefer first-party A-Frame components, `window.NAF` data-channel APIs, or a custom `NAF.adapters.register()` transport adapter; patch NAF only for compatibility fixes that cannot live at those boundaries.
+
 For spatial UI runtime package changes, also commit `assets/js/runtime/master/lib/vrodos-runtime-spatial-ui.bundle.js`, keep `assets/runtime-build-manifest.json` declaring the `spatial-ui` chunk correctly, and deploy the spatial font/worker assets when text rendering changes.
 
 Common checks:
@@ -212,10 +221,9 @@ Local setup:
 Collaborative/runtime server:
 
 ```bash
-cd wp-content/plugins/VRodos/services/networked-aframe
+cd wp-content/plugins/VRodos/services/vrodos-network-runtime
 npm install
-cd server
-node easyrtc-server.js
+npm start
 ```
 
 The local runtime server is typically used on port `5832`.
@@ -225,7 +233,7 @@ The local runtime server is typically used on port `5832`.
 - Use `absint()` for WordPress IDs.
 - Use `sanitize_text_field()` for strings.
 - Do not log or print secrets.
-- Protect `.env` and `services/networked-aframe/server/keys.json`.
+- Protect `.env` and `services/vrodos-network-runtime/server/keys.json`.
 
 ## Cleanup Rules
 

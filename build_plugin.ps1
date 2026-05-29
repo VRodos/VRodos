@@ -33,7 +33,9 @@ foreach ($item in $items) {
 
 # 2b. Remove generated or local-only directories from the distributable
 $pathsToRemove = @(
-    "$targetDir\services\networked-aframe\node_modules",
+    "$targetDir\services\networked-aframe",
+    "$targetDir\services\vrodos-network-runtime\node_modules",
+    "$targetDir\services\vrodos-network-runtime\server\keys.json",
     "$targetDir\runtime\build"
 )
 

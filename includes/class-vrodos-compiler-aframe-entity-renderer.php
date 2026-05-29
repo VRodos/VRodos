@@ -613,6 +613,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 				continue;
 			}
 
+			for ( $parent = $node->parentNode; $parent; $parent = $parent->parentNode ) {
+				if ( $parent instanceof DOMElement && strtolower( $parent->tagName ) === 'template' ) {
+					continue 2;
+				}
+			}
+
 			$visible_attr = strtolower( trim( $node->getAttribute( 'visible' ) ) );
 			if ( $node->hasAttribute( 'visible' ) && $visible_attr === 'false' ) {
 				continue;

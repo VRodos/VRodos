@@ -125,7 +125,7 @@ class VRodos_Path_Manager {
 	}
 
 	public static function networked_aframe_server_path(): string {
-		return self::plugin_path( self::SERVICES_DIR . 'networked-aframe/server/easyrtc-server.js' );
+		return self::plugin_path( self::SERVICES_DIR . 'vrodos-network-runtime/server/easyrtc-server.js' );
 	}
 
 	public static function standard_scene_path(): string {
