@@ -85,6 +85,18 @@ function vrodosCreateSpecGlossMaterialExtension(parser) {
     };
 }
 
+function vrodosAssetViewerCreateFrameTimer() {
+    if (THREE && typeof THREE.Timer === 'function') {
+        const timer = new THREE.Timer();
+        if (typeof timer.connect === 'function' && typeof document !== 'undefined') {
+            timer.connect(document);
+        }
+        return timer;
+    }
+
+    return new THREE.Clock();
+}
+
 class VRodos_AssetViewer_3D_kernel {
 
     setZeroVars() {
@@ -122,7 +134,7 @@ class VRodos_AssetViewer_3D_kernel {
         this.assettrs = (assettrs || '0,0,0,0,0,0,0,0,-100').split(',');
         this.mixers = [];
         this.action = null;
-        this.clock = new THREE.Clock();
+        this.clock = vrodosAssetViewerCreateFrameTimer();
         this.idRequestFrame = null;
 
         this.setZeroVars();
@@ -336,6 +348,9 @@ class VRodos_AssetViewer_3D_kernel {
         this.labelRenderer.render(this.scene, this.camera);
 
         if (this.mixers.length > 0) {
+            if (typeof this.clock.update === 'function') {
+                this.clock.update();
+            }
             this.mixers[0].update(this.clock.getDelta());
         }
 
@@ -482,7 +497,7 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     getDracoDecoderPath() {
-        const vendorDir = window.vrodos_three_vendor_dir || 'three-r181';
+        const vendorDir = window.vrodos_three_vendor_dir || 'three-r184';
         const vendorBaseUrl = vrodosAssetViewerResolveBaseUrl(
             'vendorBaseUrl',
             typeof VRODOS.data !== 'undefined' ? VRODOS.data.pluginPath : '',
@@ -501,10 +516,14 @@ class VRodos_AssetViewer_3D_kernel {
     }
 
     createGlbLoader() {
-        const loader = new THREE.GLTFLoader();
-        const dracoLoader = new THREE.DRACOLoader();
-        dracoLoader.setDecoderPath(this.getDracoDecoderPath());
-        loader.setDRACOLoader(dracoLoader);
+        const loader = VRODOS.loader && typeof VRODOS.loader.createGltfLoader === 'function'
+            ? VRODOS.loader.createGltfLoader(null, { renderer: this.renderer })
+            : new THREE.GLTFLoader();
+        if ((!VRODOS.loader || typeof VRODOS.loader.createGltfLoader !== 'function') && THREE.DRACOLoader) {
+            const dracoLoader = new THREE.DRACOLoader();
+            dracoLoader.setDecoderPath(this.getDracoDecoderPath());
+            loader.setDRACOLoader(dracoLoader);
+        }
         loader.register(vrodosCreateSpecGlossMaterialExtension);
         return loader;
     }

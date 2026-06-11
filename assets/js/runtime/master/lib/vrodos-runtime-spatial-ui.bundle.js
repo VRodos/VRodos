@@ -1004,6 +1004,7 @@
   var BasicDepthPacking = moduleValue["BasicDepthPacking"];
   var BasicShadowMap = moduleValue["BasicShadowMap"];
   var BatchedMesh = moduleValue["BatchedMesh"];
+  var BezierInterpolant = moduleValue["BezierInterpolant"];
   var Bone = moduleValue["Bone"];
   var BooleanKeyframeTrack = moduleValue["BooleanKeyframeTrack"];
   var Box2 = moduleValue["Box2"];
@@ -1028,6 +1029,7 @@
   var Color = moduleValue["Color"];
   var ColorKeyframeTrack = moduleValue["ColorKeyframeTrack"];
   var ColorManagement = moduleValue["ColorManagement"];
+  var Compatibility = moduleValue["Compatibility"];
   var CompressedArrayTexture = moduleValue["CompressedArrayTexture"];
   var CompressedCubeTexture = moduleValue["CompressedCubeTexture"];
   var CompressedTexture = moduleValue["CompressedTexture"];
@@ -1037,6 +1039,7 @@
   var ConstantColorFactor = moduleValue["ConstantColorFactor"];
   var Controls = moduleValue["Controls"];
   var CubeCamera = moduleValue["CubeCamera"];
+  var CubeDepthTexture = moduleValue["CubeDepthTexture"];
   var CubeReflectionMapping = moduleValue["CubeReflectionMapping"];
   var CubeRefractionMapping = moduleValue["CubeRefractionMapping"];
   var CubeTexture = moduleValue["CubeTexture"];
@@ -1109,6 +1112,7 @@
   var GreaterStencilFunc = moduleValue["GreaterStencilFunc"];
   var GridHelper = moduleValue["GridHelper"];
   var Group = moduleValue["Group"];
+  var HTMLTexture = moduleValue["HTMLTexture"];
   var HalfFloatType = moduleValue["HalfFloatType"];
   var HemisphereLight = moduleValue["HemisphereLight"];
   var HemisphereLightHelper = moduleValue["HemisphereLightHelper"];
@@ -1129,6 +1133,7 @@
   var InterleavedBuffer = moduleValue["InterleavedBuffer"];
   var InterleavedBufferAttribute = moduleValue["InterleavedBufferAttribute"];
   var Interpolant = moduleValue["Interpolant"];
+  var InterpolateBezier = moduleValue["InterpolateBezier"];
   var InterpolateDiscrete = moduleValue["InterpolateDiscrete"];
   var InterpolateLinear = moduleValue["InterpolateLinear"];
   var InterpolateSmooth = moduleValue["InterpolateSmooth"];
@@ -1173,6 +1178,7 @@
   var LoopRepeat = moduleValue["LoopRepeat"];
   var MOUSE = moduleValue["MOUSE"];
   var Material = moduleValue["Material"];
+  var MaterialBlending = moduleValue["MaterialBlending"];
   var MaterialLoader = moduleValue["MaterialLoader"];
   var MathUtils = moduleValue["MathUtils"];
   var Matrix2 = moduleValue["Matrix2"];
@@ -1206,9 +1212,12 @@
   var NeverStencilFunc = moduleValue["NeverStencilFunc"];
   var NoBlending = moduleValue["NoBlending"];
   var NoColorSpace = moduleValue["NoColorSpace"];
+  var NoNormalPacking = moduleValue["NoNormalPacking"];
   var NoToneMapping = moduleValue["NoToneMapping"];
   var NormalAnimationBlendMode = moduleValue["NormalAnimationBlendMode"];
   var NormalBlending = moduleValue["NormalBlending"];
+  var NormalGAPacking = moduleValue["NormalGAPacking"];
+  var NormalRGPacking = moduleValue["NormalRGPacking"];
   var NotEqualCompare = moduleValue["NotEqualCompare"];
   var NotEqualDepth = moduleValue["NotEqualDepth"];
   var NotEqualStencilFunc = moduleValue["NotEqualStencilFunc"];
@@ -1247,9 +1256,11 @@
   var Quaternion = moduleValue["Quaternion"];
   var QuaternionKeyframeTrack = moduleValue["QuaternionKeyframeTrack"];
   var QuaternionLinearInterpolant = moduleValue["QuaternionLinearInterpolant"];
+  var R11_EAC_Format = moduleValue["R11_EAC_Format"];
   var RED_GREEN_RGTC2_Format = moduleValue["RED_GREEN_RGTC2_Format"];
   var RED_RGTC1_Format = moduleValue["RED_RGTC1_Format"];
   var REVISION = moduleValue["REVISION"];
+  var RG11_EAC_Format = moduleValue["RG11_EAC_Format"];
   var RGBADepthPacking = moduleValue["RGBADepthPacking"];
   var RGBAFormat = moduleValue["RGBAFormat"];
   var RGBAIntegerFormat = moduleValue["RGBAIntegerFormat"];
@@ -1300,8 +1311,10 @@
   var ReplaceStencilOp = moduleValue["ReplaceStencilOp"];
   var ReverseSubtractEquation = moduleValue["ReverseSubtractEquation"];
   var RingGeometry = moduleValue["RingGeometry"];
+  var SIGNED_R11_EAC_Format = moduleValue["SIGNED_R11_EAC_Format"];
   var SIGNED_RED_GREEN_RGTC2_Format = moduleValue["SIGNED_RED_GREEN_RGTC2_Format"];
   var SIGNED_RED_RGTC1_Format = moduleValue["SIGNED_RED_RGTC1_Format"];
+  var SIGNED_RG11_EAC_Format = moduleValue["SIGNED_RG11_EAC_Format"];
   var SRGBColorSpace = moduleValue["SRGBColorSpace"];
   var SRGBTransfer = moduleValue["SRGBTransfer"];
   var Scene = moduleValue["Scene"];
@@ -9149,7 +9162,7 @@
             return v2;
           };
           if (node.hasAttribute(svgName)) style[jsName] = adjustFunction(node.getAttribute(svgName));
-          if (stylesheetStyles[svgName]) style[jsName] = adjustFunction(stylesheetStyles[svgName]);
+          if (stylesheetStyles[jsName]) style[jsName] = adjustFunction(stylesheetStyles[jsName]);
           if (node.style && node.style[svgName] !== "") style[jsName] = adjustFunction(node.style[svgName]);
         }
         function clamp2(v2) {
@@ -10279,7 +10292,7 @@
           addVertex(center, u2, 0.5);
           tempV2_3.copy(tempV2_4);
         }
-        addVertex(tempV2_4, u2, v2);
+        addVertex(tempV2_3, u2, v2);
         addVertex(p2, u2, v2);
         addVertex(center, u2, 0.5);
       }
@@ -14411,17 +14424,14 @@
       return ((_a4 = this.pointerCapture) == null ? void 0 : _a4.object) === object;
     }
     setCapture(object) {
-      var _a4, _b, _c;
+      var _a4, _b;
       if (((_a4 = this.pointerCapture) == null ? void 0 : _a4.object) === object) {
         return;
       }
-      if (this.pointerCapture != null) {
-        (_b = this.parentReleasePointerCapture) == null ? void 0 : _b.call(this);
-        this.pointerCapture = void 0;
-      }
+      this.clearPointerCapture();
       if (object != null && this.intersection != null) {
         this.pointerCapture = { object, intersection: this.intersection };
-        (_c = this.parentSetPointerCapture) == null ? void 0 : _c.call(this);
+        (_b = this.parentSetPointerCapture) == null ? void 0 : _b.call(this);
       }
     }
     getButtonsDown() {
@@ -14437,13 +14447,11 @@
       return this.enabled;
     }
     setEnabled(enabled, nativeEvent, commit = true) {
-      var _a4;
       if (this.enabled === enabled) {
         return;
       }
       if (!enabled && this.pointerCapture != null) {
-        (_a4 = this.parentReleasePointerCapture) == null ? void 0 : _a4.call(this);
-        this.pointerCapture = void 0;
+        this.clearPointerCapture();
       }
       this.enabled = enabled;
       if (commit) {
@@ -14559,7 +14567,7 @@
         return;
       }
       const { clickThesholdMs, contextMenuButton = 2, dblClickThresholdMs = 500, clickThresholdMs = clickThesholdMs != null ? clickThesholdMs : 300 } = this.options;
-      this.pointerCapture = void 0;
+      this.clearPointerCapture();
       const isClicked = getIsClicked(this.buttonsDownTime, this.intersection.object[buttonsDownTimeKey], nativeEvent.button, nativeEvent.timeStamp, clickThresholdMs);
       const camera = this.getCamera();
       if (isClicked && nativeEvent.button === contextMenuButton) {
@@ -14581,14 +14589,11 @@
       buttonsClickTime.delete(nativeEvent.button);
     }
     cancel(nativeEvent) {
-      if (!this.enabled) {
-        return;
-      }
-      if (!this.wasMoved) {
-        this.onFirstMove.push(this.cancel.bind(this, nativeEvent));
-        return;
-      }
-      if (this.intersection == null) {
+      this.buttonsDown.clear();
+      this.buttonsDownTime.clear();
+      this.clearPointerCapture();
+      this.onFirstMove.length = 0;
+      if (!this.enabled || !this.wasMoved || this.intersection == null) {
         return;
       }
       emitPointerEvent(new PointerEvent("pointercancel", true, nativeEvent, this, this.intersection, this.getCamera()));
@@ -14625,17 +14630,23 @@
       emitPointerEvent(new WheelEvent(nativeEvent, this, intersection, this.getCamera()));
     }
     exit(nativeEvent) {
-      var _a4;
+      if (this.buttonsDown.size > 0 || this.pointerCapture != null) {
+        this.cancel(nativeEvent);
+      }
       if (this.wasMoved) {
-        if (this.pointerCapture != null) {
-          (_a4 = this.parentReleasePointerCapture) == null ? void 0 : _a4.call(this);
-          this.pointerCapture = void 0;
-        }
         this.intersection = void 0;
         this.commit(nativeEvent, false);
       }
       this.onFirstMove.length = 0;
       this.wasMoved = false;
+    }
+    clearPointerCapture() {
+      var _a4;
+      if (this.pointerCapture == null) {
+        return;
+      }
+      (_a4 = this.parentReleasePointerCapture) == null ? void 0 : _a4.call(this);
+      this.pointerCapture = void 0;
     }
   };
   function computeEnterLeave(currentObject, targetAllAncestors, targeDiffRemovedAncestors, targetDiffAddedAncestors) {

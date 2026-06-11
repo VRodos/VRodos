@@ -83,7 +83,9 @@
       "file": "vrodos-runtime-core.bundle.js",
       "src": "js/master/lib/vrodos-runtime-core.bundle.js",
       "order": 20,
-      "dependencies": [],
+      "dependencies": [
+        "three-addons-vendor"
+      ],
       "features": [
         "runtime-core",
         "ui",
@@ -177,6 +179,20 @@
         "assets/js/runtime/master/components/vrodos_misc.component.js"
       ],
       "generatedBy": "build:runtime"
+    },
+    "three-addons-vendor": {
+      "id": "three-addons-vendor",
+      "label": "Three addons vendor",
+      "type": "script",
+      "file": "vrodos-three-addons.bundle.js",
+      "src": "js/master/lib/vrodos-three-addons.bundle.js",
+      "order": 18,
+      "dependencies": [],
+      "features": [
+        "three-addons",
+        "hdr-loader"
+      ],
+      "generatedBy": "build:three"
     },
     "pmndrs-postprocessing-vendor": {
       "id": "pmndrs-postprocessing-vendor",

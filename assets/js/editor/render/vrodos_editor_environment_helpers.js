@@ -179,6 +179,18 @@ VRODOS.utils = VRODOS.utils || {};
         return VRODOS.utils.resolveBaseUrl(pluginPath, localizedKey, fallbackRelative);
     }
 
+    function createFrameTimer() {
+        if (THREE && typeof THREE.Timer === 'function') {
+            const timer = new THREE.Timer();
+            if (typeof timer.connect === 'function' && typeof document !== 'undefined') {
+                timer.connect(document);
+            }
+            return timer;
+        }
+
+        return new THREE.Clock();
+    }
+
     Object.assign(VRODOS.editorRender, {
         camera,
         sceneDefaults,
@@ -193,7 +205,8 @@ VRODOS.utils = VRODOS.utils || {};
         directorGroundGuideObjectVisible,
         getPointerLockObject,
         hardwareProfile,
-        resolveBaseUrl
+        resolveBaseUrl,
+        createFrameTimer
     });
 
     VRODOS.utils.orthoFitZoom = orthoFitZoom;

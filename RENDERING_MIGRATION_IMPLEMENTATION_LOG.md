@@ -10,11 +10,11 @@ This log is consolidated for current and future agents. It replaces the older gr
 
 This file is a historical migration log. Current compiled runtime architecture lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md); performance decisions live in [`PERFORMANCE_OPTIMIZATION_PLAN.md`](PERFORMANCE_OPTIMIZATION_PLAN.md); Takram follow-up work lives in [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md).
 
-The migration from legacy Three.js r173 to the pinned A-Frame master + Three.js r181 stack is complete. Root `package.json` and `package-lock.json` remain the source of truth, `npm run build:three` generates the runtime manifest and vendor bundles, and obsolete `threejs173` paths have been removed.
+The earlier migration from legacy Three.js r173 to the pinned A-Frame master + Three.js r181 stack is superseded by `THREE_R184_MIGRATION_PLAN.md` and the current r184 runtime. Root `package.json` and `package-lock.json` remain the source of truth, `npm run build:three` generates the runtime manifest and vendor bundles, and obsolete versioned vendor paths are removed when they are no longer referenced.
 
 ## Current Focus and Next Steps
 
-1. Maintain the r181 baseline before adding a new lighting mode.
+1. Maintain the r184 baseline before adding a new lighting mode.
 2. Keep one Horizon PMNDRS scene and one non-Horizon PMNDRS scene in manual smoke coverage.
 3. Keep compiler/runtime chunk golden checks current when runtime bundles move.
 4. Add an author-visible explicit Horizon lighting mode control for `helper`, `light-source`, and `post-process-albedo`.
@@ -162,7 +162,7 @@ The migration from legacy Three.js r173 to the pinned A-Frame master + Three.js 
 ## Historical Phases Summary
 
 - Phases 1-4: Consolidated plans, removed hardcoded r173 paths, and prepared version-neutral vendor management.
-- Phases 5-10: Upgraded local vendor build to Three r181, migrated A-Frame to a pinned master commit, removed obsolete r173 assets, and introduced `VRodos_Render_Runtime_Manager`.
+- Phases 5-10: Upgraded local vendor build to Three r181, migrated A-Frame to a pinned master commit, removed obsolete r173 assets, and introduced `VRodos_Render_Runtime_Manager`. This is historical context; the active runtime is now r184.
 - Phases 11-12: Updated HDR loader logic and canonical markdown documentation.
 - Phases 13-16: Diagnosed PMNDRS Horizon artifacts, moved from FXAA to PMNDRS-native AA, optimized navigation raycasting, and updated scene-settings persistence.
 - Phase 17: Synchronized runtime packages with `package.json`, generated `runtime-version-manifest.json`, and rebuilt PMNDRS/Takram bundles to alias A-Frame's `THREE`.

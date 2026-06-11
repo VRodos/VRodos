@@ -119,13 +119,12 @@ Acceptance:
 
 ### Phase 4 - A-Frame r184 / WebGPU Spike
 
-Goal: determine whether compiled scenes can move from the current Three r181 baseline to A-Frame's planned Three r184 runtime without breaking A-Frame XR.
+Goal: validate the current A-Frame/Three r184 baseline before any separate WebGPU renderer experiment.
 
 Approach:
 
-- Keep production on `classic-aframe-r181`.
-- Track A-Frame's r184 upgrade work, especially `aframevr/aframe#5818`.
-- Prefer the official A-Frame r184 upgrade path before any VRodos-specific runtime fork.
+- Keep production on the classic A-Frame/WebGL r184 path.
+- Track A-Frame's r184 upgrade work and follow the official A-Frame runtime path before any VRodos-specific runtime fork.
 - Require exactly one shared Three instance for A-Frame, VRodos, loaders, PMNDRS, Takram, and addons.
 - Test WebGPU only as an opt-in experimental renderer after r184 is stable.
 
@@ -133,7 +132,7 @@ Acceptance:
 
 - A-Frame core, `aframe-extras`, networked-aframe, VRodos components, loaders, PMNDRS composer, and Takram atmosphere all bind to the same `THREE`.
 - No duplicate Three globals or class-instance mismatches.
-- Classic r181 remains available as the production fallback.
+- Classic A-Frame/WebGL r184 remains the production baseline.
 - WebGPU validation records which post-processing, material hook, Takram, and XR paths are compatible or need replacements.
 
 ### Phase 5 - Clouds And Geospatial Expansion

@@ -46,7 +46,9 @@ VRODOS.loader.prepareEditorPawnObject = function(pawn, name, options) {
 };
 
 VRODOS.loader.loadEditorPawnModel = function(modelBaseUrl, onLoad, onError) {
-    const loader = new THREE.GLTFLoader();
+    const loader = typeof VRODOS.loader.createGltfLoader === 'function'
+        ? VRODOS.loader.createGltfLoader(null, { renderer: VRODOS.editor.envir && VRODOS.editor.envir.renderer })
+        : new THREE.GLTFLoader();
     loader.load(
         `${modelBaseUrl}editor/pawn.glb`,
         onLoad,

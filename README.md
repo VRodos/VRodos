@@ -77,8 +77,8 @@ Important ownership rules:
 
 VRodos currently targets one active compiled-scene runtime pair:
 
-- A-Frame master dist commit `b5e2580e8aeb49914d716cfc67c25743b07b304a`, declared in root `package.json`
-- Three.js vendor stack `r181`, derived from the locked root `three` package
+- A-Frame master dist commit `adf8f4e02b0499223b2c4fa93165e49b50384564`, declared in root `package.json`
+- Three.js vendor stack `r184`, derived from the locked root `three` package alias `npm:super-three@0.184.0`
 
 That runtime powers:
 

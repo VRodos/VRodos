@@ -218,6 +218,7 @@
   var BasicDepthPacking = moduleValue2["BasicDepthPacking"];
   var BasicShadowMap = moduleValue2["BasicShadowMap"];
   var BatchedMesh = moduleValue2["BatchedMesh"];
+  var BezierInterpolant = moduleValue2["BezierInterpolant"];
   var Bone = moduleValue2["Bone"];
   var BooleanKeyframeTrack = moduleValue2["BooleanKeyframeTrack"];
   var Box2 = moduleValue2["Box2"];
@@ -242,6 +243,7 @@
   var Color = moduleValue2["Color"];
   var ColorKeyframeTrack = moduleValue2["ColorKeyframeTrack"];
   var ColorManagement = moduleValue2["ColorManagement"];
+  var Compatibility = moduleValue2["Compatibility"];
   var CompressedArrayTexture = moduleValue2["CompressedArrayTexture"];
   var CompressedCubeTexture = moduleValue2["CompressedCubeTexture"];
   var CompressedTexture = moduleValue2["CompressedTexture"];
@@ -251,6 +253,7 @@
   var ConstantColorFactor = moduleValue2["ConstantColorFactor"];
   var Controls = moduleValue2["Controls"];
   var CubeCamera = moduleValue2["CubeCamera"];
+  var CubeDepthTexture = moduleValue2["CubeDepthTexture"];
   var CubeReflectionMapping = moduleValue2["CubeReflectionMapping"];
   var CubeRefractionMapping = moduleValue2["CubeRefractionMapping"];
   var CubeTexture = moduleValue2["CubeTexture"];
@@ -323,6 +326,7 @@
   var GreaterStencilFunc = moduleValue2["GreaterStencilFunc"];
   var GridHelper = moduleValue2["GridHelper"];
   var Group = moduleValue2["Group"];
+  var HTMLTexture = moduleValue2["HTMLTexture"];
   var HalfFloatType = moduleValue2["HalfFloatType"];
   var HemisphereLight = moduleValue2["HemisphereLight"];
   var HemisphereLightHelper = moduleValue2["HemisphereLightHelper"];
@@ -343,6 +347,7 @@
   var InterleavedBuffer = moduleValue2["InterleavedBuffer"];
   var InterleavedBufferAttribute = moduleValue2["InterleavedBufferAttribute"];
   var Interpolant = moduleValue2["Interpolant"];
+  var InterpolateBezier = moduleValue2["InterpolateBezier"];
   var InterpolateDiscrete = moduleValue2["InterpolateDiscrete"];
   var InterpolateLinear = moduleValue2["InterpolateLinear"];
   var InterpolateSmooth = moduleValue2["InterpolateSmooth"];
@@ -387,6 +392,7 @@
   var LoopRepeat = moduleValue2["LoopRepeat"];
   var MOUSE = moduleValue2["MOUSE"];
   var Material = moduleValue2["Material"];
+  var MaterialBlending = moduleValue2["MaterialBlending"];
   var MaterialLoader = moduleValue2["MaterialLoader"];
   var MathUtils = moduleValue2["MathUtils"];
   var Matrix2 = moduleValue2["Matrix2"];
@@ -420,9 +426,12 @@
   var NeverStencilFunc = moduleValue2["NeverStencilFunc"];
   var NoBlending = moduleValue2["NoBlending"];
   var NoColorSpace = moduleValue2["NoColorSpace"];
+  var NoNormalPacking = moduleValue2["NoNormalPacking"];
   var NoToneMapping = moduleValue2["NoToneMapping"];
   var NormalAnimationBlendMode = moduleValue2["NormalAnimationBlendMode"];
   var NormalBlending = moduleValue2["NormalBlending"];
+  var NormalGAPacking = moduleValue2["NormalGAPacking"];
+  var NormalRGPacking = moduleValue2["NormalRGPacking"];
   var NotEqualCompare = moduleValue2["NotEqualCompare"];
   var NotEqualDepth = moduleValue2["NotEqualDepth"];
   var NotEqualStencilFunc = moduleValue2["NotEqualStencilFunc"];
@@ -461,9 +470,11 @@
   var Quaternion = moduleValue2["Quaternion"];
   var QuaternionKeyframeTrack = moduleValue2["QuaternionKeyframeTrack"];
   var QuaternionLinearInterpolant = moduleValue2["QuaternionLinearInterpolant"];
+  var R11_EAC_Format = moduleValue2["R11_EAC_Format"];
   var RED_GREEN_RGTC2_Format = moduleValue2["RED_GREEN_RGTC2_Format"];
   var RED_RGTC1_Format = moduleValue2["RED_RGTC1_Format"];
   var REVISION = moduleValue2["REVISION"];
+  var RG11_EAC_Format = moduleValue2["RG11_EAC_Format"];
   var RGBADepthPacking = moduleValue2["RGBADepthPacking"];
   var RGBAFormat = moduleValue2["RGBAFormat"];
   var RGBAIntegerFormat = moduleValue2["RGBAIntegerFormat"];
@@ -514,8 +525,10 @@
   var ReplaceStencilOp = moduleValue2["ReplaceStencilOp"];
   var ReverseSubtractEquation = moduleValue2["ReverseSubtractEquation"];
   var RingGeometry = moduleValue2["RingGeometry"];
+  var SIGNED_R11_EAC_Format = moduleValue2["SIGNED_R11_EAC_Format"];
   var SIGNED_RED_GREEN_RGTC2_Format = moduleValue2["SIGNED_RED_GREEN_RGTC2_Format"];
   var SIGNED_RED_RGTC1_Format = moduleValue2["SIGNED_RED_RGTC1_Format"];
+  var SIGNED_RG11_EAC_Format = moduleValue2["SIGNED_RG11_EAC_Format"];
   var SRGBColorSpace = moduleValue2["SRGBColorSpace"];
   var SRGBTransfer = moduleValue2["SRGBTransfer"];
   var Scene = moduleValue2["Scene"];
@@ -1206,6 +1219,7 @@
       super(manager);
       this.type = HalfFloatType;
       this.outputFormat = RGBAFormat;
+      this.part = 0;
     }
     /**
      * Parses the given EXR texture data.
@@ -1238,6 +1252,7 @@
       const LOSSY_DCT = 1;
       const RLE = 2;
       const logBase = Math.pow(2.7182818, 2.2);
+      let b44LogTable = null;
       function reverseLutFromBitmap(bitmap, lut) {
         let k3 = 0;
         for (let i3 = 0; i3 < USHORT_RANGE; ++i3) {
@@ -2060,6 +2075,111 @@
         }
         return viewer;
       }
+      function uncompressB44(info) {
+        const src = info.array;
+        let srcOffset = info.offset.value;
+        const width = info.columns;
+        const height = info.lines;
+        const channels = info.inputChannels;
+        const totalBytes = info.totalBytes;
+        const isB44A = EXRHeader.compression === "B44A_COMPRESSION";
+        const outBuffer = new Uint8Array(height * width * totalBytes);
+        const block = new Uint16Array(16);
+        let chByteOffset = 0;
+        for (let c4 = 0; c4 < channels.length; c4++) {
+          const channel = channels[c4];
+          const pixelSize = channel.pixelType * 2;
+          const chanWidth = Math.ceil(width / channel.xSampling);
+          const chanHeight = Math.ceil(height / channel.ySampling);
+          const isFullRes = channel.xSampling === 1 && channel.ySampling === 1;
+          if (channel.pixelType !== 1) {
+            for (let y4 = 0; y4 < chanHeight; y4++) {
+              if (isFullRes) {
+                const lineBase = y4 * width * totalBytes + chByteOffset * width;
+                for (let x3 = 0; x3 < chanWidth * pixelSize; x3++) {
+                  outBuffer[lineBase + x3] = src[srcOffset++];
+                }
+              } else {
+                srcOffset += chanWidth * pixelSize;
+              }
+            }
+            chByteOffset += pixelSize;
+            continue;
+          }
+          const numBlocksX = Math.ceil(chanWidth / 4);
+          const numBlocksY = Math.ceil(chanHeight / 4);
+          for (let by = 0; by < numBlocksY; by++) {
+            for (let bx = 0; bx < numBlocksX; bx++) {
+              if (isB44A && src[srcOffset + 2] >= 52) {
+                const t2 = src[srcOffset] << 8 | src[srcOffset + 1];
+                const h3 = t2 & 32768 ? t2 & 32767 : ~t2 & 65535;
+                block.fill(h3);
+                srcOffset += 3;
+              } else {
+                const s0 = src[srcOffset] << 8 | src[srcOffset + 1];
+                const shift = src[srcOffset + 2] >> 2;
+                const bias = 32 << shift;
+                const s4 = s0 + ((src[srcOffset + 2] << 4 | src[srcOffset + 3] >> 4) & 63) * (1 << shift) - bias & 65535;
+                const s8 = s4 + ((src[srcOffset + 3] << 2 | src[srcOffset + 4] >> 6) & 63) * (1 << shift) - bias & 65535;
+                const s12 = s8 + (src[srcOffset + 4] & 63) * (1 << shift) - bias & 65535;
+                const s1 = s0 + (src[srcOffset + 5] >> 2 & 63) * (1 << shift) - bias & 65535;
+                const s5 = s4 + ((src[srcOffset + 5] << 4 | src[srcOffset + 6] >> 4) & 63) * (1 << shift) - bias & 65535;
+                const s9 = s8 + ((src[srcOffset + 6] << 2 | src[srcOffset + 7] >> 6) & 63) * (1 << shift) - bias & 65535;
+                const s13 = s12 + (src[srcOffset + 7] & 63) * (1 << shift) - bias & 65535;
+                const s2 = s1 + (src[srcOffset + 8] >> 2 & 63) * (1 << shift) - bias & 65535;
+                const s6 = s5 + ((src[srcOffset + 8] << 4 | src[srcOffset + 9] >> 4) & 63) * (1 << shift) - bias & 65535;
+                const s10 = s9 + ((src[srcOffset + 9] << 2 | src[srcOffset + 10] >> 6) & 63) * (1 << shift) - bias & 65535;
+                const s14 = s13 + (src[srcOffset + 10] & 63) * (1 << shift) - bias & 65535;
+                const s3 = s2 + (src[srcOffset + 11] >> 2 & 63) * (1 << shift) - bias & 65535;
+                const s7 = s6 + ((src[srcOffset + 11] << 4 | src[srcOffset + 12] >> 4) & 63) * (1 << shift) - bias & 65535;
+                const s11 = s10 + ((src[srcOffset + 12] << 2 | src[srcOffset + 13] >> 6) & 63) * (1 << shift) - bias & 65535;
+                const s15 = s14 + (src[srcOffset + 13] & 63) * (1 << shift) - bias & 65535;
+                const t2 = [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15];
+                for (let i3 = 0; i3 < 16; i3++) {
+                  block[i3] = t2[i3] & 32768 ? t2[i3] & 32767 : ~t2[i3] & 65535;
+                }
+                srcOffset += 14;
+              }
+              if (channel.pLinear) {
+                if (b44LogTable === null) {
+                  b44LogTable = new Uint16Array(65536);
+                  for (let i3 = 0; i3 < 65536; i3++) {
+                    if ((i3 & 31744) === 31744 || i3 > 32768) {
+                      b44LogTable[i3] = 0;
+                    } else {
+                      const f3 = decodeFloat16(i3);
+                      b44LogTable[i3] = f3 <= 0 ? 0 : DataUtils.toHalfFloat(8 * Math.log(f3));
+                    }
+                  }
+                }
+                for (let i3 = 0; i3 < 16; i3++) block[i3] = b44LogTable[block[i3]];
+              }
+              for (let py = 0; py < 4; py++) {
+                const chanY = by * 4 + py;
+                if (chanY >= chanHeight) continue;
+                for (let px = 0; px < 4; px++) {
+                  const chanX = bx * 4 + px;
+                  if (chanX >= chanWidth) continue;
+                  const val = block[py * 4 + px];
+                  for (let dy = 0; dy < channel.ySampling; dy++) {
+                    const fullY = chanY * channel.ySampling + dy;
+                    if (fullY >= height) continue;
+                    for (let dx = 0; dx < channel.xSampling; dx++) {
+                      const fullX = chanX * channel.xSampling + dx;
+                      if (fullX >= width) continue;
+                      const outIdx = fullY * width * totalBytes + chByteOffset * width + fullX * 2;
+                      outBuffer[outIdx] = val & 255;
+                      outBuffer[outIdx + 1] = val >> 8 & 255;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          chByteOffset += 2;
+        }
+        return new DataView(outBuffer.buffer);
+      }
       function uncompressDWA(info) {
         const inDataView = info.viewer;
         const inOffset = { value: info.offset.value };
@@ -2114,9 +2234,11 @@
         };
         for (let offset2 = 0; offset2 < info.inputChannels.length; ++offset2) {
           const cd = channelData[offset2];
+          const dotIndex = cd.name.lastIndexOf(".");
+          const suffix = dotIndex >= 0 ? cd.name.substring(dotIndex + 1) : cd.name;
           for (let i3 = 0; i3 < channelRules.length; ++i3) {
             const rule = channelRules[i3];
-            if (cd.name == rule.name) {
+            if (suffix === rule.name && cd.type === rule.type) {
               cd.compression = rule.compression;
               if (rule.index >= 0) {
                 cscSet.idx[rule.index] = offset2;
@@ -2246,12 +2368,7 @@
         return Uint8;
       }
       const parseInt64 = function(dataView, offset2) {
-        let int;
-        if ("getBigInt64" in DataView.prototype) {
-          int = Number(dataView.getBigInt64(offset2.value, true));
-        } else {
-          int = dataView.getUint32(offset2.value + 4, true) + Number(dataView.getUint32(offset2.value, true) << 32);
-        }
+        const int = Number(dataView.getBigInt64(offset2.value, true));
         offset2.value += ULONG_SIZE;
         return int;
       };
@@ -2407,7 +2524,7 @@
           return parseRational(dataView, offset2);
         } else if (type === "timecode") {
           return parseTimecode(dataView, offset2);
-        } else if (type === "preview") {
+        } else if (type === "preview" || type === "deepImageState" || type === "idmanifest") {
           offset2.value += size;
           return "skipped";
         } else {
@@ -2510,41 +2627,198 @@
           }
         }
       }
+      function parseMultiPartScanline() {
+        const EXRDecoder2 = this;
+        const chunkOffsets = EXRDecoder2.chunkOffsets;
+        const tmpOffset = { value: 0 };
+        for (let chunkIdx = 0; chunkIdx < chunkOffsets.length; chunkIdx++) {
+          const offset2 = { value: chunkOffsets[chunkIdx] };
+          offset2.value += INT32_SIZE;
+          const line = parseInt32(EXRDecoder2.viewer, offset2) - EXRHeader.dataWindow.yMin;
+          EXRDecoder2.size = parseUint32(EXRDecoder2.viewer, offset2);
+          EXRDecoder2.lines = line + EXRDecoder2.blockHeight > EXRDecoder2.height ? EXRDecoder2.height - line : EXRDecoder2.blockHeight;
+          const bytesPerLine = EXRDecoder2.columns * EXRDecoder2.totalBytes;
+          const isCompressed = EXRDecoder2.size < EXRDecoder2.lines * bytesPerLine;
+          const savedOffset = EXRDecoder2.offset;
+          EXRDecoder2.offset = offset2;
+          const viewer = isCompressed ? EXRDecoder2.uncompress(EXRDecoder2) : uncompressRAW(EXRDecoder2);
+          EXRDecoder2.offset = savedOffset;
+          for (let line_y = 0; line_y < EXRDecoder2.blockHeight; line_y++) {
+            const true_y = line_y + line;
+            if (true_y >= EXRDecoder2.height) continue;
+            const lineOffset = line_y * bytesPerLine;
+            const outLineOffset = (EXRDecoder2.height - 1 - true_y) * EXRDecoder2.outLineWidth;
+            for (let channelID = 0; channelID < EXRDecoder2.inputChannels.length; channelID++) {
+              const name = EXRHeader.channels[channelID].name;
+              const lOff = EXRDecoder2.channelByteOffsets[name] * EXRDecoder2.columns;
+              const cOff = EXRDecoder2.decodeChannels[name];
+              if (cOff === void 0) continue;
+              tmpOffset.value = lineOffset + lOff;
+              for (let x3 = 0; x3 < EXRDecoder2.columns; x3++) {
+                const outIndex = outLineOffset + x3 * EXRDecoder2.outputChannels + cOff;
+                EXRDecoder2.byteArray[outIndex] = EXRDecoder2.getter(viewer, tmpOffset);
+              }
+            }
+          }
+        }
+      }
+      function decompressDeepData(array, compressedOffset, compressedSize, compression) {
+        if (compressedSize === 0) return null;
+        const compressed = array.slice(compressedOffset, compressedOffset + compressedSize);
+        switch (compression) {
+          case "NO_COMPRESSION":
+            return new DataView(compressed.buffer, compressed.byteOffset, compressed.byteLength);
+          case "RLE_COMPRESSION": {
+            const rawBuffer = new Uint8Array(decodeRunLength(compressed.buffer.slice(compressed.byteOffset, compressed.byteOffset + compressed.byteLength)));
+            const tmpBuffer = new Uint8Array(rawBuffer.length);
+            predictor(rawBuffer);
+            interleaveScalar(rawBuffer, tmpBuffer);
+            return new DataView(tmpBuffer.buffer);
+          }
+          case "ZIPS_COMPRESSION": {
+            const rawBuffer = unzlibSync(compressed);
+            const tmpBuffer = new Uint8Array(rawBuffer.length);
+            predictor(rawBuffer);
+            interleaveScalar(rawBuffer, tmpBuffer);
+            return new DataView(tmpBuffer.buffer);
+          }
+          default:
+            throw new Error("EXRLoader.parse: " + compression + " is unsupported for deep data");
+        }
+      }
+      function parseDeepScanline() {
+        const EXRDecoder2 = this;
+        const chunkOffsets = EXRDecoder2.chunkOffsets;
+        const width = EXRDecoder2.width;
+        const height = EXRDecoder2.height;
+        const deepChannels = EXRDecoder2.deepChannels;
+        const compression = EXRHeader.compression;
+        const isMultiPart = EXRDecoder2.multiPart;
+        const decodeChannels = EXRDecoder2.decodeChannels;
+        const outputChannels = EXRDecoder2.outputChannels;
+        const isHalfOutput = EXRDecoder2.byteArray instanceof Uint16Array;
+        let alphaChannelIdx = -1;
+        for (let i3 = 0; i3 < deepChannels.length; i3++) {
+          if (deepChannels[i3].name === "A") {
+            alphaChannelIdx = i3;
+            break;
+          }
+        }
+        for (let chunkIdx = 0; chunkIdx < chunkOffsets.length; chunkIdx++) {
+          const chunkOffset = { value: chunkOffsets[chunkIdx] };
+          if (isMultiPart) chunkOffset.value += INT32_SIZE;
+          const line = parseInt32(EXRDecoder2.viewer, chunkOffset) - EXRHeader.dataWindow.yMin;
+          const sctCompressedSize = parseInt64(EXRDecoder2.viewer, chunkOffset);
+          const dataCompressedSize = parseInt64(EXRDecoder2.viewer, chunkOffset);
+          parseInt64(EXRDecoder2.viewer, chunkOffset);
+          const sctView = decompressDeepData(EXRDecoder2.array, chunkOffset.value, sctCompressedSize, compression);
+          chunkOffset.value += sctCompressedSize;
+          if (sctView === null) continue;
+          const cumulativeCounts = new Uint32Array(width);
+          for (let x3 = 0; x3 < width; x3++) {
+            cumulativeCounts[x3] = sctView.getUint32(x3 * 4, true);
+          }
+          const totalSamples = cumulativeCounts[width - 1];
+          if (totalSamples === 0) {
+            chunkOffset.value += dataCompressedSize;
+            continue;
+          }
+          const pixelView = decompressDeepData(EXRDecoder2.array, chunkOffset.value, dataCompressedSize, compression);
+          const channelOffsets = [];
+          let bytePos = 0;
+          for (let i3 = 0; i3 < deepChannels.length; i3++) {
+            channelOffsets.push(bytePos);
+            bytePos += totalSamples * deepChannels[i3].bytesPerSample;
+          }
+          const outLineOffset = (height - 1 - line) * EXRDecoder2.outLineWidth;
+          for (let x3 = 0; x3 < width; x3++) {
+            const startSample = x3 === 0 ? 0 : cumulativeCounts[x3 - 1];
+            const endSample = cumulativeCounts[x3];
+            const numSamples = endSample - startSample;
+            if (numSamples === 0) continue;
+            const composited = new Float32Array(outputChannels);
+            let compositedAlpha = 0;
+            for (let s2 = 0; s2 < numSamples; s2++) {
+              const sampleIdx = startSample + s2;
+              const factor = 1 - compositedAlpha;
+              if (factor <= 0) break;
+              let sampleAlpha = 1;
+              if (alphaChannelIdx >= 0) {
+                const aBps = deepChannels[alphaChannelIdx].bytesPerSample;
+                const aOff = channelOffsets[alphaChannelIdx] + sampleIdx * aBps;
+                sampleAlpha = aBps === 2 ? decodeFloat16(pixelView.getUint16(aOff, true)) : pixelView.getFloat32(aOff, true);
+              }
+              for (let ci2 = 0; ci2 < deepChannels.length; ci2++) {
+                const ch = deepChannels[ci2];
+                const cOff = decodeChannels[ch.name];
+                if (cOff === void 0) continue;
+                const bps = ch.bytesPerSample;
+                const dataOff = channelOffsets[ci2] + sampleIdx * bps;
+                const value = bps === 2 ? decodeFloat16(pixelView.getUint16(dataOff, true)) : pixelView.getFloat32(dataOff, true);
+                composited[cOff] += value * factor;
+              }
+              compositedAlpha += sampleAlpha * factor;
+            }
+            if (decodeChannels["A"] !== void 0) {
+              composited[decodeChannels["A"]] = compositedAlpha;
+            }
+            const outIndex = outLineOffset + x3 * outputChannels;
+            for (let c4 = 0; c4 < outputChannels; c4++) {
+              EXRDecoder2.byteArray[outIndex + c4] = isHalfOutput ? DataUtils.toHalfFloat(composited[c4]) : composited[c4];
+            }
+          }
+        }
+      }
+      function parsePartHeader(dataView, buffer2, offset2) {
+        const header = {};
+        let hasAttributes = false;
+        while (true) {
+          const attributeName = parseNullTerminatedString(buffer2, offset2);
+          if (attributeName === "") break;
+          hasAttributes = true;
+          const attributeType = parseNullTerminatedString(buffer2, offset2);
+          const attributeSize = parseUint32(dataView, offset2);
+          const attributeValue = parseValue(dataView, buffer2, offset2, attributeType, attributeSize);
+          if (attributeValue === void 0) {
+            console.warn(`THREE.EXRLoader: Skipped unknown header attribute type '${attributeType}'.`);
+          } else {
+            header[attributeName] = attributeValue;
+          }
+        }
+        return hasAttributes ? header : null;
+      }
       function parseHeader(dataView, buffer2, offset2) {
-        const EXRHeader2 = {};
         if (dataView.getUint32(0, true) != 20000630) {
           throw new Error("THREE.EXRLoader: Provided file doesn't appear to be in OpenEXR format.");
         }
-        EXRHeader2.version = dataView.getUint8(4);
+        const version2 = dataView.getUint8(4);
         const spec = dataView.getUint8(5);
-        EXRHeader2.spec = {
+        const flags = {
           singleTile: !!(spec & 2),
           longName: !!(spec & 4),
           deepFormat: !!(spec & 8),
           multiPart: !!(spec & 16)
         };
         offset2.value = 8;
-        let keepReading = true;
-        while (keepReading) {
-          const attributeName = parseNullTerminatedString(buffer2, offset2);
-          if (attributeName === "") {
-            keepReading = false;
-          } else {
-            const attributeType = parseNullTerminatedString(buffer2, offset2);
-            const attributeSize = parseUint32(dataView, offset2);
-            const attributeValue = parseValue(dataView, buffer2, offset2, attributeType, attributeSize);
-            if (attributeValue === void 0) {
-              console.warn(`THREE.EXRLoader: Skipped unknown header attribute type '${attributeType}'.`);
-            } else {
-              EXRHeader2[attributeName] = attributeValue;
-            }
+        const headers = [];
+        if (flags.multiPart) {
+          while (true) {
+            const header = parsePartHeader(dataView, buffer2, offset2);
+            if (header === null) break;
+            header.version = version2;
+            header.spec = flags;
+            headers.push(header);
           }
+          if (headers.length === 0) {
+            throw new Error("THREE.EXRLoader: No valid part headers found.");
+          }
+        } else {
+          const header = parsePartHeader(dataView, buffer2, offset2);
+          header.version = version2;
+          header.spec = flags;
+          headers.push(header);
         }
-        if ((spec & ~6) != 0) {
-          console.error("THREE.EXRHeader:", EXRHeader2);
-          throw new Error("THREE.EXRLoader: Provided file is currently unsupported.");
-        }
-        return EXRHeader2;
+        return headers;
       }
       function setupDecoder(EXRHeader2, dataView, uInt8Array2, offset2, outputType, outputFormat) {
         const EXRDecoder2 = {
@@ -2557,6 +2831,7 @@
           inputChannels: EXRHeader2.channels,
           channelByteOffsets: {},
           shouldExpand: false,
+          yCbCr: false,
           scanOrder: null,
           totalBytes: null,
           columns: null,
@@ -2592,6 +2867,11 @@
             EXRDecoder2.blockHeight = 16;
             EXRDecoder2.uncompress = uncompressPXR;
             break;
+          case "B44_COMPRESSION":
+          case "B44A_COMPRESSION":
+            EXRDecoder2.blockHeight = 32;
+            EXRDecoder2.uncompress = uncompressB44;
+            break;
           case "DWAA_COMPRESSION":
             EXRDecoder2.blockHeight = 32;
             EXRDecoder2.uncompress = uncompressDWA;
@@ -2606,6 +2886,8 @@
         const channels = {};
         for (const channel of EXRHeader2.channels) {
           switch (channel.name) {
+            case "BY":
+            case "RY":
             case "Y":
             case "R":
             case "G":
@@ -2617,7 +2899,10 @@
         }
         let fillAlpha = false;
         let invalidOutput = false;
-        if (channels.R && channels.G && channels.B) {
+        if (channels.Y && channels.RY && channels.BY) {
+          EXRDecoder2.outputChannels = 4;
+          EXRDecoder2.yCbCr = true;
+        } else if (channels.R && channels.G && channels.B) {
           EXRDecoder2.outputChannels = 4;
         } else if (channels.Y) {
           EXRDecoder2.outputChannels = 1;
@@ -2673,6 +2958,12 @@
             invalidOutput = true;
         }
         if (invalidOutput) throw new Error("EXRLoader.parse: invalid output format for specified file.");
+        if (EXRDecoder2.yCbCr) {
+          EXRDecoder2.format = RGBAFormat;
+          EXRDecoder2.outputChannels = 4;
+          EXRDecoder2.decodeChannels = { Y: 0, RY: 1, BY: 2 };
+          fillAlpha = true;
+        }
         if (EXRDecoder2.type == 1) {
           switch (outputType) {
             case FloatType:
@@ -2724,7 +3015,23 @@
         } else {
           EXRDecoder2.scanOrder = (y4) => EXRDecoder2.height - 1 - y4;
         }
-        if (EXRHeader2.spec.singleTile) {
+        if (EXRHeader2.spec.deepFormat) {
+          EXRDecoder2.deepChannels = [];
+          let deepBytesPerSample = 0;
+          for (const channel of EXRHeader2.channels) {
+            const bytesPerSample = channel.pixelType === 0 ? 4 : channel.pixelType * 2;
+            EXRDecoder2.deepChannels.push({
+              name: channel.name,
+              pixelType: channel.pixelType,
+              bytesPerSample
+            });
+            deepBytesPerSample += bytesPerSample;
+          }
+          EXRDecoder2.deepBytesPerSample = deepBytesPerSample;
+          EXRDecoder2.chunkOffsets = EXRHeader2._chunkOffsets;
+          EXRDecoder2.multiPart = EXRHeader2.spec.multiPart;
+          EXRDecoder2.decode = parseDeepScanline.bind(EXRDecoder2);
+        } else if (EXRHeader2.spec.singleTile) {
           EXRDecoder2.blockHeight = EXRHeader2.tiles.ySize;
           EXRDecoder2.blockWidth = EXRHeader2.tiles.xSize;
           const numXLevels = calculateTileLevels(EXRHeader2.tiles, EXRDecoder2.width, EXRDecoder2.height);
@@ -2736,6 +3043,10 @@
               for (let x3 = 0; x3 < numXTiles[l3]; x3++)
                 parseInt64(dataView, offset2);
           EXRDecoder2.decode = parseTiles.bind(EXRDecoder2);
+        } else if (EXRHeader2.spec.multiPart) {
+          EXRDecoder2.blockWidth = EXRDecoder2.width;
+          EXRDecoder2.chunkOffsets = EXRHeader2._chunkOffsets;
+          EXRDecoder2.decode = parseMultiPartScanline.bind(EXRDecoder2);
         } else {
           EXRDecoder2.blockWidth = EXRDecoder2.width;
           const blockCount = Math.ceil(EXRDecoder2.height / EXRDecoder2.blockHeight);
@@ -2748,7 +3059,22 @@
       const offset = { value: 0 };
       const bufferDataView = new DataView(buffer);
       const uInt8Array = new Uint8Array(buffer);
-      const EXRHeader = parseHeader(bufferDataView, buffer, offset);
+      const EXRHeaders = parseHeader(bufferDataView, buffer, offset);
+      const partIndex = Math.max(0, Math.min(this.part, EXRHeaders.length - 1));
+      const EXRHeader = EXRHeaders[partIndex];
+      if (EXRHeader.spec.multiPart || EXRHeader.spec.deepFormat) {
+        for (let p5 = 0; p5 < EXRHeaders.length; p5++) {
+          const chunkCount = EXRHeaders[p5].chunkCount;
+          if (p5 === partIndex) {
+            EXRHeader._chunkOffsets = [];
+            for (let i3 = 0; i3 < chunkCount; i3++)
+              EXRHeader._chunkOffsets.push(parseInt64(bufferDataView, offset));
+          } else {
+            for (let i3 = 0; i3 < chunkCount; i3++)
+              parseInt64(bufferDataView, offset);
+          }
+        }
+      }
       const EXRDecoder = setupDecoder(EXRHeader, bufferDataView, uInt8Array, offset, this.type, this.outputFormat);
       EXRDecoder.decode();
       if (EXRDecoder.shouldExpand) {
@@ -2759,6 +3085,36 @@
         } else if (this.outputFormat == RGFormat) {
           for (let i3 = 0; i3 < byteArray.length; i3 += 2)
             byteArray[i3 + 1] = byteArray[i3];
+        }
+      }
+      if (EXRDecoder.yCbCr) {
+        const byteArray = EXRDecoder.byteArray;
+        const nPixels = EXRDecoder.width * EXRDecoder.height;
+        if (this.type === HalfFloatType) {
+          for (let i3 = 0; i3 < nPixels; i3++) {
+            const base = i3 * 4;
+            const Y4 = decodeFloat16(byteArray[base]);
+            const RY = decodeFloat16(byteArray[base + 1]);
+            const BY = decodeFloat16(byteArray[base + 2]);
+            const R6 = (1 + RY) * Y4;
+            const B2 = (1 + BY) * Y4;
+            const G5 = (Y4 - R6 * 0.2126 - B2 * 0.0722) / 0.7152;
+            byteArray[base] = DataUtils.toHalfFloat(Math.max(0, R6));
+            byteArray[base + 1] = DataUtils.toHalfFloat(Math.max(0, G5));
+            byteArray[base + 2] = DataUtils.toHalfFloat(Math.max(0, B2));
+          }
+        } else {
+          for (let i3 = 0; i3 < nPixels; i3++) {
+            const base = i3 * 4;
+            const Y4 = byteArray[base];
+            const RY = byteArray[base + 1];
+            const BY = byteArray[base + 2];
+            const R6 = (1 + RY) * Y4;
+            const B2 = (1 + BY) * Y4;
+            byteArray[base] = Math.max(0, R6);
+            byteArray[base + 1] = Math.max(0, (Y4 - R6 * 0.2126 - B2 * 0.0722) / 0.7152);
+            byteArray[base + 2] = Math.max(0, B2);
+          }
         }
       }
       return {
@@ -2789,6 +3145,16 @@
      */
     setOutputFormat(value) {
       this.outputFormat = value;
+      return this;
+    }
+    /**
+     * For multi-part EXR files, sets which part to load.
+     *
+     * @param {number} value - The part index to load.
+     * @return {EXRLoader} A reference to this loader.
+     */
+    setPart(value) {
+      this.part = value;
       return this;
     }
     load(url, onLoad, onProgress, onError) {

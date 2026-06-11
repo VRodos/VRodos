@@ -5,20 +5,25 @@
     "label": "A-Frame master",
     "source": "cdn-master",
     "version": "1.7.1",
-    "commit": "b5e2580e8aeb49914d716cfc67c25743b07b304a",
-    "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@b5e2580e8aeb49914d716cfc67c25743b07b304a/dist/aframe-master.min.js"
+    "commit": "adf8f4e02b0499223b2c4fa93165e49b50384564",
+    "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@adf8f4e02b0499223b2c4fa93165e49b50384564/dist/aframe-master.min.js"
   },
   "three": {
-    "version": "0.181.0",
-    "revision": "181",
-    "vendorDir": "three-r181",
-    "bundleFile": "vrodos-three-r181.bundle.js",
-    "bundlePath": "assets/vendor/three-r181/vrodos-three-r181.bundle.js",
+    "version": "0.184.0",
+    "revision": "184",
+    "vendorDir": "three-r184",
+    "bundleFile": "vrodos-three-r184.bundle.js",
+    "bundlePath": "assets/vendor/three-r184/vrodos-three-r184.bundle.js",
     "decoders": {
-      "dracoDecoderPath": "assets/vendor/three-r181/draco/gltf/",
-      "basisTranscoderPath": "assets/vendor/three-r181/basis/",
-      "meshoptDecoderPath": "assets/vendor/three-r181/meshopt/meshopt_decoder.js"
+      "dracoDecoderPath": "assets/vendor/three-r184/draco/gltf/",
+      "basisTranscoderPath": "assets/vendor/three-r184/basis/",
+      "meshoptDecoderPath": "assets/vendor/three-r184/meshopt/meshopt_decoder.js"
     }
+  },
+  "threeAddons": {
+    "global": "VRODOS_THREE_ADDONS",
+    "bundleFile": "vrodos-three-addons.bundle.js",
+    "bundlePath": "assets/js/runtime/master/lib/vrodos-three-addons.bundle.js"
   },
   "postprocessing": {
     "version": "6.39.1",

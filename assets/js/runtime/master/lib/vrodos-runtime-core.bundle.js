@@ -1725,6 +1725,9 @@
     texture.colorSpace = THREE.LinearSRGBColorSpace;
   }
   (function() {
+    if (THREE.HDRLoader || THREE.RGBELoader) {
+      return;
+    }
     class RGBELoader extends THREE.DataTextureLoader {
       constructor(manager) {
         super(manager);
@@ -2368,12 +2371,22 @@
         "uniform float vrodosTerrainShadowGapStart;",
         "uniform float vrodosTerrainShadowGapEnd;",
         "#if defined( USE_SHADOWMAP ) && NUM_DIR_LIGHT_SHADOWS > 0",
+        "#ifndef SHADOWMAP_TYPE_PCF",
         "float vrodosGetTerrainSelfShadowSampleMask( sampler2D shadowMap, vec2 uv, float compareDepth ) {",
-        "  float sampleDepth = unpackRGBAToDepth( texture2D( shadowMap, uv ) );",
+        "  #ifdef SHADOWMAP_TYPE_VSM",
+        "    float sampleDepth = texture2D( shadowMap, uv ).r;",
+        "  #else",
+        "    float sampleDepth = texture2D( shadowMap, uv ).r;",
+        "  #endif",
+        "  #ifdef USE_REVERSED_DEPTH_BUFFER",
+        "    float sampleGap = sampleDepth - compareDepth;",
+        "  #else",
         "  float sampleGap = compareDepth - sampleDepth;",
+        "  #endif",
         "  float occluding = step( 0.0, sampleGap );",
         "  return occluding * ( 1.0 - smoothstep( vrodosTerrainShadowGapStart, vrodosTerrainShadowGapEnd, sampleGap ) );",
         "}",
+        "#endif",
         "#endif",
         "float vrodosGetTerrainDirectionalShadowLift() {",
         "  float shadowLift = 1.0;",
@@ -2390,6 +2403,9 @@
         "      bool terrainShadowInFrustum = terrainShadowCoord.x >= 0.0 && terrainShadowCoord.x <= 1.0 && terrainShadowCoord.y >= 0.0 && terrainShadowCoord.y <= 1.0 && terrainShadowCoord.z <= 1.0;",
         "      if ( receiveShadow && terrainShadowInFrustum ) {",
         "        float terrainShadowVisibility = getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowIntensity, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] );",
+        "        #ifdef SHADOWMAP_TYPE_PCF",
+        "        float terrainSelfShadowMask = 0.0;",
+        "        #else",
         "        terrainShadowTexel = vec2( 1.0 ) / directionalLightShadow.shadowMapSize;",
         "        float terrainSelfShadowMask = vrodosGetTerrainSelfShadowSampleMask( directionalShadowMap[ i ], terrainShadowCoord.xy, terrainShadowCoord.z );",
         "        terrainSelfShadowMask = max( terrainSelfShadowMask, vrodosGetTerrainSelfShadowSampleMask( directionalShadowMap[ i ], terrainShadowCoord.xy + terrainShadowTexel * vec2( 1.0, 0.0 ), terrainShadowCoord.z ) );",
@@ -2400,6 +2416,7 @@
         "        terrainSelfShadowMask = max( terrainSelfShadowMask, vrodosGetTerrainSelfShadowSampleMask( directionalShadowMap[ i ], terrainShadowCoord.xy + terrainShadowTexel * vec2( -1.0, 1.0 ), terrainShadowCoord.z ) );",
         "        terrainSelfShadowMask = max( terrainSelfShadowMask, vrodosGetTerrainSelfShadowSampleMask( directionalShadowMap[ i ], terrainShadowCoord.xy + terrainShadowTexel * vec2( 1.0, -1.0 ), terrainShadowCoord.z ) );",
         "        terrainSelfShadowMask = max( terrainSelfShadowMask, vrodosGetTerrainSelfShadowSampleMask( directionalShadowMap[ i ], terrainShadowCoord.xy + terrainShadowTexel * vec2( -1.0, -1.0 ), terrainShadowCoord.z ) );",
+        "        #endif",
         "        float terrainSoftShadowMask = 1.0 - smoothstep( 0.90, 0.995, terrainShadowVisibility );",
         "        float terrainLiftTarget = max( terrainShadowVisibility, vrodosTerrainShadowTarget );",
         "        float terrainLift = mix( 1.0, terrainLiftTarget / max( terrainShadowVisibility, 0.001 ), terrainSelfShadowMask * terrainSoftShadowMask * vrodosTerrainShadowLiftStrength );",
@@ -2430,7 +2447,7 @@
     };
     material.customProgramCacheKey = function() {
       const previousKey = typeof previousCustomProgramCacheKey === "function" ? previousCustomProgramCacheKey.call(this) : "";
-      return `${previousKey}|vrodos-terrain-soft-shadow-v3`;
+      return `${previousKey}|vrodos-terrain-soft-shadow-v4`;
     };
     material.needsUpdate = true;
   }
@@ -3487,13 +3504,17 @@
         case "basic":
           return typeof THREE.BasicShadowMap !== "undefined" ? THREE.BasicShadowMap : THREE.PCFShadowMap;
         case "pcfsoft":
-          return typeof THREE.PCFSoftShadowMap !== "undefined" ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+          return THREE.PCFShadowMap;
         case "vsm":
           return typeof THREE.VSMShadowMap !== "undefined" ? THREE.VSMShadowMap : THREE.PCFShadowMap;
         case "pcf":
         default:
           return THREE.PCFShadowMap;
       }
+    }
+    function isThreeR184OrNewer() {
+      const revision = THREE && typeof THREE.REVISION !== "undefined" ? Number(THREE.REVISION) : NaN;
+      return Number.isFinite(revision) && revision >= 184;
     }
     function getAFrameShadowComponentType(type) {
       const normalized = normalizeAFrameShadowMapType(type, "pcf");
@@ -5045,6 +5066,14 @@
         self && self.data && isPmndrsDayNightCycleEnabled(self) && self.data.shadowQuality !== "off" && !hasPmndrsDebugFlag("disablePmndrsDayNightCycleDynamicShadows", "vrodos_debug_disable_day_night_dynamic_shadows")
       );
     }
+    function isPmndrsTakramHorizonRequested(self) {
+      return Boolean(self && self.data && self.data.selChoice === "0" && self.data.postFXEngine === "pmndrs" && self.data.pmndrsAtmosphereEnabled !== "0");
+    }
+    function shouldUseTakramR184BasicShadowMap(self) {
+      return Boolean(
+        isThreeR184OrNewer() && typeof THREE.BasicShadowMap !== "undefined" && isPmndrsTakramHorizonRequested(self) && !hasPmndrsDebugFlag("enableR184TakramPcfShadows", "vrodos_debug_enable_r184_takram_pcf_shadows")
+      );
+    }
     function getShadowDiagnosticState(self) {
       const sceneObj = self && self.el ? self.el.object3D : null;
       const state = {
@@ -5682,7 +5711,7 @@
       }
     }
     function shouldUsePmndrsTakramHorizonPath(self) {
-      return Boolean(self && self.data && self.data.selChoice === "0" && self.data.postFXEngine === "pmndrs" && self.data.pmndrsAtmosphereEnabled !== "0" && window.VRODOS_TAKRAM_ATMOSPHERE);
+      return Boolean(isPmndrsTakramHorizonRequested(self) && window.VRODOS_TAKRAM_ATMOSPHERE);
     }
     function shouldUsePmndrsHorizonAerialPerspectivePath(self) {
       return shouldUsePmndrsTakramHorizonPath(self) && (readPmndrsAtmosphereBool(self, "pmndrsAerialPerspectiveEnabled", false) || hasPmndrsDebugFlag("enablePmndrsHorizonAerial", "vrodos_debug_enable_pmndrs_horizon_aerial"));
@@ -7616,8 +7645,9 @@
       const contactShadowSettings = getTerrainSafeContactShadowSettings(this, this.getContactShadowSettings());
       const profileShadowType = shadowQuality === "high" ? "pcfsoft" : "pcf";
       const shadowTypeAttr = shadowsEnabled ? shouldUseDayNightPcfShadowMap(this) ? "pcf" : normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType) : "pcf";
-      const aframeShadowTypeAttr = getAFrameShadowComponentType(shadowTypeAttr);
-      const shadowMapType = getThreeShadowMapType(shadowTypeAttr);
+      const runtimeShadowTypeAttr = shadowsEnabled && shouldUseTakramR184BasicShadowMap(this) ? "basic" : shadowTypeAttr;
+      const aframeShadowTypeAttr = getAFrameShadowComponentType(runtimeShadowTypeAttr);
+      const shadowMapType = getThreeShadowMapType(runtimeShadowTypeAttr);
       const staticShadowMode = shadowsEnabled && isStaticShadowMode(this);
       if (this.el && typeof this.el.setAttribute === "function") {
         const currentShadow = this.el.getAttribute("shadow") || {};

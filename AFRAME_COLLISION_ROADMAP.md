@@ -116,7 +116,7 @@ The runtime builds collision data after relevant `model-loaded` events:
 - Collision runs on CPU-side Three.js geometry and does not depend on the render pipeline.
 - PMNDRS post-processing, Takram atmosphere, scene probes, shadows, and material overrides should not affect collision behavior.
 - Day-night lighting, terrain self-shadow stabilization, and emissive/readability behavior are documented in `RENDERING_PIPELINE.md`; collision code should not duplicate or special-case those render concerns.
-- Collision helpers should use the same pinned Three.js r181 runtime stack and must not load another Three.js copy.
+- Collision helpers should use the same pinned Three.js r184 runtime stack and must not load another Three.js copy.
 - Generated collision/vendor bundles should follow the existing runtime manifest and build process.
 
 ### Performance Guardrails

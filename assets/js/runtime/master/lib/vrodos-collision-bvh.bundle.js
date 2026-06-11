@@ -32,6 +32,7 @@
   var BasicDepthPacking = moduleValue["BasicDepthPacking"];
   var BasicShadowMap = moduleValue["BasicShadowMap"];
   var BatchedMesh = moduleValue["BatchedMesh"];
+  var BezierInterpolant = moduleValue["BezierInterpolant"];
   var Bone = moduleValue["Bone"];
   var BooleanKeyframeTrack = moduleValue["BooleanKeyframeTrack"];
   var Box2 = moduleValue["Box2"];
@@ -56,6 +57,7 @@
   var Color = moduleValue["Color"];
   var ColorKeyframeTrack = moduleValue["ColorKeyframeTrack"];
   var ColorManagement = moduleValue["ColorManagement"];
+  var Compatibility = moduleValue["Compatibility"];
   var CompressedArrayTexture = moduleValue["CompressedArrayTexture"];
   var CompressedCubeTexture = moduleValue["CompressedCubeTexture"];
   var CompressedTexture = moduleValue["CompressedTexture"];
@@ -65,6 +67,7 @@
   var ConstantColorFactor = moduleValue["ConstantColorFactor"];
   var Controls = moduleValue["Controls"];
   var CubeCamera = moduleValue["CubeCamera"];
+  var CubeDepthTexture = moduleValue["CubeDepthTexture"];
   var CubeReflectionMapping = moduleValue["CubeReflectionMapping"];
   var CubeRefractionMapping = moduleValue["CubeRefractionMapping"];
   var CubeTexture = moduleValue["CubeTexture"];
@@ -137,6 +140,7 @@
   var GreaterStencilFunc = moduleValue["GreaterStencilFunc"];
   var GridHelper = moduleValue["GridHelper"];
   var Group = moduleValue["Group"];
+  var HTMLTexture = moduleValue["HTMLTexture"];
   var HalfFloatType = moduleValue["HalfFloatType"];
   var HemisphereLight = moduleValue["HemisphereLight"];
   var HemisphereLightHelper = moduleValue["HemisphereLightHelper"];
@@ -157,6 +161,7 @@
   var InterleavedBuffer = moduleValue["InterleavedBuffer"];
   var InterleavedBufferAttribute = moduleValue["InterleavedBufferAttribute"];
   var Interpolant = moduleValue["Interpolant"];
+  var InterpolateBezier = moduleValue["InterpolateBezier"];
   var InterpolateDiscrete = moduleValue["InterpolateDiscrete"];
   var InterpolateLinear = moduleValue["InterpolateLinear"];
   var InterpolateSmooth = moduleValue["InterpolateSmooth"];
@@ -201,6 +206,7 @@
   var LoopRepeat = moduleValue["LoopRepeat"];
   var MOUSE = moduleValue["MOUSE"];
   var Material = moduleValue["Material"];
+  var MaterialBlending = moduleValue["MaterialBlending"];
   var MaterialLoader = moduleValue["MaterialLoader"];
   var MathUtils = moduleValue["MathUtils"];
   var Matrix2 = moduleValue["Matrix2"];
@@ -234,9 +240,12 @@
   var NeverStencilFunc = moduleValue["NeverStencilFunc"];
   var NoBlending = moduleValue["NoBlending"];
   var NoColorSpace = moduleValue["NoColorSpace"];
+  var NoNormalPacking = moduleValue["NoNormalPacking"];
   var NoToneMapping = moduleValue["NoToneMapping"];
   var NormalAnimationBlendMode = moduleValue["NormalAnimationBlendMode"];
   var NormalBlending = moduleValue["NormalBlending"];
+  var NormalGAPacking = moduleValue["NormalGAPacking"];
+  var NormalRGPacking = moduleValue["NormalRGPacking"];
   var NotEqualCompare = moduleValue["NotEqualCompare"];
   var NotEqualDepth = moduleValue["NotEqualDepth"];
   var NotEqualStencilFunc = moduleValue["NotEqualStencilFunc"];
@@ -275,9 +284,11 @@
   var Quaternion = moduleValue["Quaternion"];
   var QuaternionKeyframeTrack = moduleValue["QuaternionKeyframeTrack"];
   var QuaternionLinearInterpolant = moduleValue["QuaternionLinearInterpolant"];
+  var R11_EAC_Format = moduleValue["R11_EAC_Format"];
   var RED_GREEN_RGTC2_Format = moduleValue["RED_GREEN_RGTC2_Format"];
   var RED_RGTC1_Format = moduleValue["RED_RGTC1_Format"];
   var REVISION = moduleValue["REVISION"];
+  var RG11_EAC_Format = moduleValue["RG11_EAC_Format"];
   var RGBADepthPacking = moduleValue["RGBADepthPacking"];
   var RGBAFormat = moduleValue["RGBAFormat"];
   var RGBAIntegerFormat = moduleValue["RGBAIntegerFormat"];
@@ -328,8 +339,10 @@
   var ReplaceStencilOp = moduleValue["ReplaceStencilOp"];
   var ReverseSubtractEquation = moduleValue["ReverseSubtractEquation"];
   var RingGeometry = moduleValue["RingGeometry"];
+  var SIGNED_R11_EAC_Format = moduleValue["SIGNED_R11_EAC_Format"];
   var SIGNED_RED_GREEN_RGTC2_Format = moduleValue["SIGNED_RED_GREEN_RGTC2_Format"];
   var SIGNED_RED_RGTC1_Format = moduleValue["SIGNED_RED_RGTC1_Format"];
+  var SIGNED_RG11_EAC_Format = moduleValue["SIGNED_RG11_EAC_Format"];
   var SRGBColorSpace = moduleValue["SRGBColorSpace"];
   var SRGBTransfer = moduleValue["SRGBTransfer"];
   var Scene = moduleValue["Scene"];

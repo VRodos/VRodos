@@ -355,13 +355,20 @@
             case 'basic':
                 return typeof THREE.BasicShadowMap !== 'undefined' ? THREE.BasicShadowMap : THREE.PCFShadowMap;
             case 'pcfsoft':
-                return typeof THREE.PCFSoftShadowMap !== 'undefined' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+                return THREE.PCFShadowMap;
             case 'vsm':
                 return typeof THREE.VSMShadowMap !== 'undefined' ? THREE.VSMShadowMap : THREE.PCFShadowMap;
             case 'pcf':
             default:
                 return THREE.PCFShadowMap;
         }
+    }
+
+    function isThreeR184OrNewer() {
+        const revision = THREE && typeof THREE.REVISION !== 'undefined'
+            ? Number(THREE.REVISION)
+            : NaN;
+        return Number.isFinite(revision) && revision >= 184;
     }
 
     function getAFrameShadowComponentType(type) {
@@ -2264,6 +2271,23 @@
         );
     }
 
+    function isPmndrsTakramHorizonRequested(self) {
+        return Boolean(self &&
+            self.data &&
+            self.data.selChoice === "0" &&
+            self.data.postFXEngine === 'pmndrs' &&
+            self.data.pmndrsAtmosphereEnabled !== '0');
+    }
+
+    function shouldUseTakramR184BasicShadowMap(self) {
+        return Boolean(
+            isThreeR184OrNewer() &&
+            typeof THREE.BasicShadowMap !== 'undefined' &&
+            isPmndrsTakramHorizonRequested(self) &&
+            !hasPmndrsDebugFlag('enableR184TakramPcfShadows', 'vrodos_debug_enable_r184_takram_pcf_shadows')
+        );
+    }
+
     function getShadowDiagnosticState(self) {
         const sceneObj = self && self.el ? self.el.object3D : null;
         const state = {
@@ -3083,11 +3107,7 @@
     }
 
     function shouldUsePmndrsTakramHorizonPath(self) {
-        return Boolean(self &&
-            self.data &&
-            self.data.selChoice === "0" &&
-            self.data.postFXEngine === 'pmndrs' &&
-            self.data.pmndrsAtmosphereEnabled !== '0' &&
+        return Boolean(isPmndrsTakramHorizonRequested(self) &&
             window.VRODOS_TAKRAM_ATMOSPHERE);
     }
 
@@ -5328,8 +5348,9 @@
                 ? 'pcf'
                 : normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType))
             : 'pcf';
-        const aframeShadowTypeAttr = getAFrameShadowComponentType(shadowTypeAttr);
-        const shadowMapType = getThreeShadowMapType(shadowTypeAttr);
+        const runtimeShadowTypeAttr = shadowsEnabled && shouldUseTakramR184BasicShadowMap(this) ? 'basic' : shadowTypeAttr;
+        const aframeShadowTypeAttr = getAFrameShadowComponentType(runtimeShadowTypeAttr);
+        const shadowMapType = getThreeShadowMapType(runtimeShadowTypeAttr);
         const staticShadowMode = shadowsEnabled && isStaticShadowMode(this);
 
         if (this.el && typeof this.el.setAttribute === 'function') {

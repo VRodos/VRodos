@@ -584,8 +584,8 @@ class VRodos_Compiler_Scene_Settings {
 		}
 
 		// Newer A-Frame master no longer accepts pcfsoft in the shadow component
-		// schema. VRodos still applies PCFSoftShadowMap directly in the renderer
-		// profile when high-quality shadows are requested.
+		// schema. VRodos preserves the authored pcfsoft intent for compatibility,
+		// but Three r184 renders it through PCFShadowMap.
 		return 'pcf';
 	}
 

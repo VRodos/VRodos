@@ -104,9 +104,13 @@ VRODOS.api = VRODOS.api || {};
         }
     }
 
-    function updateAnimationMixers(envir) {
+    function updateAnimationMixers(envir, timestamp) {
         if (!hasActiveAnimation(envir) || !envir.clock || typeof envir.clock.getDelta !== 'function') {
             return;
+        }
+
+        if (typeof envir.clock.update === 'function') {
+            envir.clock.update(timestamp);
         }
 
         const delta = envir.clock.getDelta();
@@ -313,7 +317,7 @@ VRODOS.api = VRODOS.api || {};
             updateOrbitControls(envir);
             updatePointerLockControls();
             syncTransformCamera(camera);
-            updateAnimationMixers(envir);
+            updateAnimationMixers(envir, timestamp);
             updateDirectorGroundGuide(envir, isCameraInteraction);
             renderEditorScene(envir, camera);
             renderLabels(envir, camera, isContinuous, isCameraInteraction);

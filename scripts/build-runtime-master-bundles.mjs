@@ -77,6 +77,7 @@ const chunks = [
     label: 'Core runtime',
     output: 'vrodos-runtime-core.bundle.js',
     order: 20,
+    dependencies: ['three-addons-vendor'],
     features: ['runtime-core', 'ui', 'rendering', 'quality-profiles', 'scene-probe'],
     files: [
       contractOutputPath,
@@ -137,6 +138,17 @@ const chunks = [
 ];
 
 const externalChunks = [
+  {
+    id: 'three-addons-vendor',
+    label: 'Three addons vendor',
+    type: 'script',
+    file: 'vrodos-three-addons.bundle.js',
+    src: runtimeLibrarySrc('vrodos-three-addons.bundle.js'),
+    order: 18,
+    dependencies: [],
+    features: ['three-addons', 'hdr-loader'],
+    generatedBy: 'build:three'
+  },
   {
     id: 'pmndrs-postprocessing-vendor',
     label: 'PMNDRS postprocessing vendor',

@@ -140,9 +140,9 @@ A-Frame's `gltf-model` component supports Draco, Meshopt, and Basis/KTX2 decoder
 Implemented support:
 
 - `npm run build:three` now copies decoder assets into the Three vendor directory:
-  - `assets/vendor/three-r181/draco/gltf/`
-  - `assets/vendor/three-r181/basis/`
-  - `assets/vendor/three-r181/meshopt/meshopt_decoder.js`
+  - `assets/vendor/three-r184/draco/gltf/`
+  - `assets/vendor/three-r184/basis/`
+  - `assets/vendor/three-r184/meshopt/meshopt_decoder.js`
 - `assets/runtime-version-manifest.json` records those decoder paths under `three.decoders`.
 - `VRodos_Asset_Manager` exposes decoder URL globals for editor/runtime consumers:
   - `window.vrodos_three_draco_decoder_path`
@@ -151,7 +151,7 @@ Implemented support:
 - `VRodos_Compiler_Manager` stamps both master and simple compiled clients with root scene decoder config:
 
 ```html
-<a-scene gltf-model="dracoDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/draco/gltf/; basisTranscoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/basis/; meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/meshopt/meshopt_decoder.js;">
+<a-scene gltf-model="dracoDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r184/draco/gltf/; basisTranscoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r184/basis/; meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r184/meshopt/meshopt_decoder.js;">
 ```
 
 Verification:
@@ -160,7 +160,7 @@ Verification:
 - A compiled-scene smoke test exposed that A-Frame loads `meshoptDecoderPath` as a classic script. The first implementation published Three's ESM `meshopt_decoder.module.js`, which threw `Unexpected token 'export'` and then broke A-Frame's `MeshoptDecoder.ready` access. The vendor build now publishes the browser-global Meshopt decoder at `meshopt_decoder.js` and refreshes `meshopt_decoder.module.js` as a compatibility copy for already-compiled clients.
 - Smoke profile after the fix:
   `node scripts/profile-master-client.mjs http://wp.local:5832/Master_Client_766.html --frames 60 --warmup-ms 1000 --trace-ms 0 --timeout-ms 30000 --output C:\tmp\vrodos-master-client-smoke.json`
-- The smoke profile recorded root scene `meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/meshopt/meshopt_decoder.js`, `exceptions: []`, and no `Unexpected token 'export'` / `MeshoptDecoder.ready` console errors.
+- The smoke profile recorded root scene `meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r184/meshopt/meshopt_decoder.js`, `exceptions: []`, and no `Unexpected token 'export'` / `MeshoptDecoder.ready` console errors.
 - The remaining console warning in that smoke profile is the expected `[VRodos] Compile performance diagnostics` warning. Captured `net::ERR_ABORTED` fetch failures did not include thrown page exceptions and should be reviewed only if they appear during a longer manual session.
 - The profiler now records root scene `gltf-model` attributes and decoder globals in `scene.gltfModel` for future captures.
 

@@ -9,7 +9,9 @@ VRODOS.editorRender = VRODOS.editorRender || {};
 
     function initializeEditorState() {
         this.animationMixers = [];
-        this.clock = new THREE.Clock();
+        this.clock = typeof VRODOS.editorRender.createFrameTimer === 'function'
+            ? VRODOS.editorRender.createFrameTimer()
+            : new THREE.Clock();
         this.flagPlayAnimation = true;
 
         this.selectableMeshes = new Set();

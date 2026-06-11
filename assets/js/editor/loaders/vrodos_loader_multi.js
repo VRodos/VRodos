@@ -7,7 +7,9 @@ VRODOS.loader.LoaderMulti = class {
 
     async load(manager, resources3D, _pluginPath) {
 
-        const loader = new THREE.GLTFLoader(manager);
+        const loader = typeof VRODOS.loader.createGltfLoader === 'function'
+            ? VRODOS.loader.createGltfLoader(manager, { renderer: VRODOS.editor.envir && VRODOS.editor.envir.renderer })
+            : new THREE.GLTFLoader(manager);
         const pendingLoads = [];
         const glbLoadTasks = [];
         const modelBaseUrl = VRODOS.utils.loaderResolveBaseUrl(VRODOS.data.pluginPath, 'modelBaseUrl', 'assets/models/');

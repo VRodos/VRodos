@@ -1,6 +1,6 @@
 # VRodos Rendering Pipeline - Technical Reference
 
-Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r181 runtime. For end-user feature summaries, see `README.md`. For the phased Takram realism roadmap, see `TAKRAM_REALISTIC_LIGHTING_PLAN.md`. For historical WebGLRenderer debugging notes, see `POSTFX_DEBUG_NOTES.md`.
+Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For end-user feature summaries, see `README.md`. For the phased Takram realism roadmap, see `TAKRAM_REALISTIC_LIGHTING_PLAN.md`. For historical WebGLRenderer debugging notes, see `POSTFX_DEBUG_NOTES.md`.
 
 ## 1. Runtime Overview
 
@@ -211,7 +211,7 @@ LOD should follow the same derivative contract: generated alternatives are store
 The compiler now writes A-Frame decoder paths onto the root scene:
 
 ```html
-<a-scene gltf-model="dracoDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/draco/gltf/; basisTranscoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/basis/; meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r181/meshopt/meshopt_decoder.js;">
+<a-scene gltf-model="dracoDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r184/draco/gltf/; basisTranscoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r184/basis/; meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r184/meshopt/meshopt_decoder.js;">
 ```
 
 Decoder files are copied by `npm run build:three` and recorded in `assets/runtime-version-manifest.json` under `three.decoders`.
@@ -284,7 +284,7 @@ this.postProcessingTarget.isXRRenderTarget = true;
 this.postProcessingTarget.texture.colorSpace = THREE.SRGBColorSpace;
 ```
 
-This compatibility behavior is retained for the pinned r181 stack.
+This compatibility behavior is retained for the pinned r184 stack.
 
 ## 5. Static Shadows And Shadow Roles
 
@@ -323,7 +323,7 @@ Day/night cycle shadows keep runtime-forced `pcf` filtering. The current PMNDRS/
 - Medium shadow quality: directional `shadow.radius = 1.8`.
 - Debug override: `?vrodos_debug_day_night_shadow_radius=VALUE`, clamped to `0..6`.
 
-Root A-Frame `shadow.type` is kept compatible with newer A-Frame master schemas by emitting only `basic` or `pcf`. VRodos still preserves the authored/internal `pcfsoft` shadow intent in `scene-settings.rootShadowType` and applies `THREE.PCFSoftShadowMap` directly to `renderer.shadowMap.type` for high-quality non-day/night shadows. Do not reintroduce `pcfsoft` into the A-Frame `shadow` attribute as a way to get soft shadows; it creates schema warnings and can be overwritten by A-Frame's shadow system.
+Root A-Frame `shadow.type` is kept compatible with newer A-Frame master schemas by emitting only `basic` or `pcf`. VRodos still preserves the authored/internal `pcfsoft` shadow intent in `scene-settings.rootShadowType`, but Three r184 renders that intent through `THREE.PCFShadowMap`. Do not reintroduce `pcfsoft` into the A-Frame `shadow` attribute as a way to get soft shadows; it creates schema warnings and can be overwritten by A-Frame's shadow system.
 
 Takram sun shadows and VRodos-managed directional helper shadows use the same contact-shadow profile. Bias remains negative, `normalBias` remains small, and the old hardcoded positive Takram bias values must not be reintroduced.
 
@@ -581,8 +581,8 @@ If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`,
 - `npm run build:runtime` generates the compiled-scene runtime bundles, the browser settings-contract script from `assets/runtime-settings-contract.json`, and validates/writes `assets/runtime-build-manifest.json`.
 - `assets/runtime-build-manifest.json` defines compiled runtime chunks, dependency order, lazy feature coverage, and generated script URLs consumed by `VRodos_Compiler_Runtime_Script_Planner`.
 - `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, Takram, and collision BVH metadata.
-- The current live vendor bundle is Three.js r181.
-- The classic compiled A-Frame runtime must not load a second Three instance. The preferred near-term upgrade path is A-Frame's planned Three r184 runtime work (`aframevr/aframe#5818`) rather than a VRodos-only Three fork.
+- The current live vendor bundle is Three.js r184.
+- The classic compiled A-Frame runtime must not load a second Three instance. VRodos follows A-Frame's `super-three@0.184.0` substrate rather than a VRodos-only Three fork.
 - WebGPU remains an experimental renderer mode after r184, with separate validation for PMNDRS post-processing, GLSL/onBeforeCompile material hooks, Takram integration, and XR behavior.
 
 ## 13. Future Ideas

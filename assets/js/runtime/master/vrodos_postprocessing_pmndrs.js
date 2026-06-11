@@ -1473,7 +1473,7 @@
         //   - smaa: SMAAEffect only
         //   - msaa: composer multisampling only
         // FXAA stays disabled due the Horizon sun halo artifact it introduced on
-        // the pinned r181 stack.
+        // the current pinned stack.
         const smaaPreset = getPmndrsSmaaPreset(this, PP);
         this.pmndrsSmaaPass = null;
         if (smaaPreset !== null) {

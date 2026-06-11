@@ -31,6 +31,8 @@ const fontOutputDir = path.join(outputDir, 'fonts');
 const fontOutputPath = path.join(fontOutputDir, 'helvetiker_bold.typeface.json');
 const tempEntryPath = path.join(rootDir, 'scripts', THREE_VENDOR_BUILD_ENTRY_FILE);
 const runtimeVendorDir = path.join(rootDir, 'assets', 'js', 'runtime', 'master', 'lib');
+const threeAddonsRuntimeBundlePath = path.join(runtimeVendorDir, 'vrodos-three-addons.bundle.js');
+const threeAddonsRuntimeEntryPath = path.join(rootDir, 'scripts', '.tmp-build-three-addons-runtime-entry.mjs');
 const postprocessingRuntimeBundlePath = path.join(runtimeVendorDir, 'vrodos-postprocessing.bundle.js');
 const postprocessingRuntimeEntryPath = path.join(rootDir, 'scripts', '.tmp-build-postprocessing-runtime-entry.mjs');
 const takramBundlePath = path.join(runtimeVendorDir, 'vrodos-takram-atmosphere.bundle.js');
@@ -65,6 +67,8 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
+import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -96,7 +100,9 @@ Object.assign(THREE, { ...THREEBase }, {
   GLTFLoader,
   DRACOLoader,
   HDRLoader,
-  // Temporary compatibility alias during the r181 migration window.
+  KTX2Loader,
+  MeshoptDecoder,
+  // Compatibility alias for older VRodos editor/runtime code paths.
   RGBELoader: HDRLoader,
   CSS2DRenderer,
   CSS2DObject,
@@ -138,6 +144,11 @@ function parseSemver(version) {
 function versionSatisfiesDeclaration(version, declaration) {
   if (!declaration) {
     return false;
+  }
+
+  const npmAliasMatch = /^npm:(?:@[^/]+\/[^@]+|[^@]+)@(.+)$/.exec(declaration);
+  if (npmAliasMatch) {
+    return versionSatisfiesDeclaration(version, npmAliasMatch[1]);
   }
 
   if (declaration.startsWith('^')) {
@@ -264,6 +275,47 @@ async function buildBundle() {
     });
   } finally {
     await rm(tempEntryPath, { force: true });
+  }
+}
+
+async function buildThreeAddonsRuntimeBundle() {
+  await mkdir(runtimeVendorDir, { recursive: true });
+  await writeGlobalShim('three', 'window.THREE || (window.AFRAME && window.AFRAME.THREE) || {}', threeShimPath);
+
+  const entrySource = `
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+
+const THREE = window.THREE || (window.AFRAME && window.AFRAME.THREE) || {};
+THREE.HDRLoader = HDRLoader;
+THREE.RGBELoader = RGBELoader || HDRLoader;
+window.THREE = THREE;
+window.VRODOS_THREE_ADDONS = {
+  HDRLoader,
+  RGBELoader: THREE.RGBELoader
+};
+`;
+
+  await writeFile(threeAddonsRuntimeEntryPath, entrySource, 'utf8');
+
+  try {
+    await build({
+      entryPoints: [threeAddonsRuntimeEntryPath],
+      bundle: true,
+      format: 'iife',
+      platform: 'browser',
+      target: ['es2019'],
+      outfile: threeAddonsRuntimeBundlePath,
+      legalComments: 'none',
+      plugins: [
+        createAliasPlugin({
+          three: threeShimPath
+        })
+      ]
+    });
+  } finally {
+    await rm(threeAddonsRuntimeEntryPath, { force: true });
+    await rm(threeShimPath, { force: true });
   }
 }
 
@@ -403,6 +455,11 @@ async function writeRuntimeManifest() {
         meshoptDecoderPath: `assets/vendor/${threeRuntimeConfig.vendorDir}/meshopt/meshopt_decoder.js`,
       },
     },
+    threeAddons: {
+      global: 'VRODOS_THREE_ADDONS',
+      bundleFile: path.basename(threeAddonsRuntimeBundlePath),
+      bundlePath: 'assets/js/runtime/master/lib/vrodos-three-addons.bundle.js',
+    },
     postprocessing: {
       version: postprocessingVersion,
       global: 'POSTPROCESSING',
@@ -436,12 +493,14 @@ async function writeRuntimeManifest() {
 async function main() {
   validateRuntimeVersions();
   await buildBundle();
+  await buildThreeAddonsRuntimeBundle();
   await buildPostprocessingRuntimeBundle();
   await buildTakramAtmosphereBundle();
   await buildCollisionBvhBundle();
   await copySupportAssets();
   await writeRuntimeManifest();
   console.log(`Built ${path.relative(rootDir, bundlePath)}`);
+  console.log(`Built ${path.relative(rootDir, threeAddonsRuntimeBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, postprocessingRuntimeBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, takramBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, collisionBvhBundlePath)}`);

@@ -2263,7 +2263,7 @@ function setEventListenerKeyPressControllerConstrained(element, controller) {
 // =================================================================================
 // 3D TRANSFORMATION PROXY SYSTEM
 // =================================================================================
-// Purpose: Enables high-sensitivity rotation in Three.js r181.
+// Purpose: Enables high-sensitivity rotation in the current Three.js editor stack.
 // Why: Modern Three.js clamps slerp(t) to [0,1]. To achieve >1x scaling, we use an 
 // interactive Proxy handles object and manually extrapolate the Delta Axis-Angle.
 // =================================================================================
@@ -2346,7 +2346,7 @@ function updatePositionsPhpAndJavsFromControlsAxes() {
 
     if (isDragging) {
         if (VRODOS.editor.transforms.getMode() === 'rotate' && isWorkingOnProxy) {
-            // High-Sensitivity Booster Logic (Unclamped for r181)
+            // High-Sensitivity Booster Logic (unclamped rotation scale)
             // Extract the Axis and Angle of the proxy's change
             const qProxyCurrent = attachedObject.quaternion.clone();
             const dragState = VRODOS.editor.transforms.dragState;

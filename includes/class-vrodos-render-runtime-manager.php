@@ -10,12 +10,12 @@ class VRodos_Render_Runtime_Manager {
 	private const FALLBACK_AFRAME_RUNTIME_LABEL   = 'A-Frame master';
 	private const FALLBACK_AFRAME_RUNTIME_SOURCE  = 'cdn-master';
 	private const FALLBACK_AFRAME_RUNTIME_VERSION = '1.7.1';
-	private const FALLBACK_AFRAME_RUNTIME_URL     = 'https://cdn.jsdelivr.net/gh/aframevr/aframe@b5e2580e8aeb49914d716cfc67c25743b07b304a/dist/aframe-master.min.js';
-	private const FALLBACK_AFRAME_RUNTIME_COMMIT  = 'b5e2580e8aeb49914d716cfc67c25743b07b304a';
+	private const FALLBACK_AFRAME_RUNTIME_URL     = 'https://cdn.jsdelivr.net/gh/aframevr/aframe@adf8f4e02b0499223b2c4fa93165e49b50384564/dist/aframe-master.min.js';
+	private const FALLBACK_AFRAME_RUNTIME_COMMIT  = 'adf8f4e02b0499223b2c4fa93165e49b50384564';
 
-	private const FALLBACK_THREE_VENDOR_VERSION = '0.181.0';
-	private const FALLBACK_THREE_VENDOR_DIR     = 'three-r181';
-	private const FALLBACK_THREE_VENDOR_BUNDLE  = 'vrodos-three-r181.bundle.js';
+	private const FALLBACK_THREE_VENDOR_VERSION = '0.184.0';
+	private const FALLBACK_THREE_VENDOR_DIR     = 'three-r184';
+	private const FALLBACK_THREE_VENDOR_BUNDLE  = 'vrodos-three-r184.bundle.js';
 	private const FALLBACK_TAKRAM_STARS_DATA_PATH = 'assets/vendor/takram-atmosphere/stars.bin';
 
 	private static ?array $manifest = null;

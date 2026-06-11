@@ -16,6 +16,10 @@ function vrodosSetLinearWorkingTextureColorSpace( texture ) {
 
 ( function () {
 
+	if ( THREE.HDRLoader || THREE.RGBELoader ) {
+		return;
+	}
+
 	// https://github.com/mrdoob/three.js/issues/5552
 	// http://en.wikipedia.org/wiki/RGBE_image_format
 
@@ -903,18 +907,30 @@ function vrodosInstallTerrainSoftShadowPatch(material) {
         shader.uniforms.vrodosTerrainShadowGapStart = terrainShadowGapStartUniform;
         shader.uniforms.vrodosTerrainShadowGapEnd = terrainShadowGapEndUniform;
 
+        // Three r184 uses sampler2DShadow for PCF shadow maps, so raw depth reads
+        // must only be emitted for non-PCF shadow map variants.
         const functionSource = [
             'uniform float vrodosTerrainShadowLiftStrength;',
             'uniform float vrodosTerrainShadowTarget;',
             'uniform float vrodosTerrainShadowGapStart;',
             'uniform float vrodosTerrainShadowGapEnd;',
             '#if defined( USE_SHADOWMAP ) && NUM_DIR_LIGHT_SHADOWS > 0',
+            '#ifndef SHADOWMAP_TYPE_PCF',
             'float vrodosGetTerrainSelfShadowSampleMask( sampler2D shadowMap, vec2 uv, float compareDepth ) {',
-            '  float sampleDepth = unpackRGBAToDepth( texture2D( shadowMap, uv ) );',
+            '  #ifdef SHADOWMAP_TYPE_VSM',
+            '    float sampleDepth = texture2D( shadowMap, uv ).r;',
+            '  #else',
+            '    float sampleDepth = texture2D( shadowMap, uv ).r;',
+            '  #endif',
+            '  #ifdef USE_REVERSED_DEPTH_BUFFER',
+            '    float sampleGap = sampleDepth - compareDepth;',
+            '  #else',
             '  float sampleGap = compareDepth - sampleDepth;',
+            '  #endif',
             '  float occluding = step( 0.0, sampleGap );',
             '  return occluding * ( 1.0 - smoothstep( vrodosTerrainShadowGapStart, vrodosTerrainShadowGapEnd, sampleGap ) );',
             '}',
+            '#endif',
             '#endif',
             'float vrodosGetTerrainDirectionalShadowLift() {',
             '  float shadowLift = 1.0;',
@@ -931,6 +947,9 @@ function vrodosInstallTerrainSoftShadowPatch(material) {
             '      bool terrainShadowInFrustum = terrainShadowCoord.x >= 0.0 && terrainShadowCoord.x <= 1.0 && terrainShadowCoord.y >= 0.0 && terrainShadowCoord.y <= 1.0 && terrainShadowCoord.z <= 1.0;',
             '      if ( receiveShadow && terrainShadowInFrustum ) {',
             '        float terrainShadowVisibility = getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowIntensity, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] );',
+            '        #ifdef SHADOWMAP_TYPE_PCF',
+            '        float terrainSelfShadowMask = 0.0;',
+            '        #else',
             '        terrainShadowTexel = vec2( 1.0 ) / directionalLightShadow.shadowMapSize;',
             '        float terrainSelfShadowMask = vrodosGetTerrainSelfShadowSampleMask( directionalShadowMap[ i ], terrainShadowCoord.xy, terrainShadowCoord.z );',
             '        terrainSelfShadowMask = max( terrainSelfShadowMask, vrodosGetTerrainSelfShadowSampleMask( directionalShadowMap[ i ], terrainShadowCoord.xy + terrainShadowTexel * vec2( 1.0, 0.0 ), terrainShadowCoord.z ) );',
@@ -941,6 +960,7 @@ function vrodosInstallTerrainSoftShadowPatch(material) {
             '        terrainSelfShadowMask = max( terrainSelfShadowMask, vrodosGetTerrainSelfShadowSampleMask( directionalShadowMap[ i ], terrainShadowCoord.xy + terrainShadowTexel * vec2( -1.0, 1.0 ), terrainShadowCoord.z ) );',
             '        terrainSelfShadowMask = max( terrainSelfShadowMask, vrodosGetTerrainSelfShadowSampleMask( directionalShadowMap[ i ], terrainShadowCoord.xy + terrainShadowTexel * vec2( 1.0, -1.0 ), terrainShadowCoord.z ) );',
             '        terrainSelfShadowMask = max( terrainSelfShadowMask, vrodosGetTerrainSelfShadowSampleMask( directionalShadowMap[ i ], terrainShadowCoord.xy + terrainShadowTexel * vec2( -1.0, -1.0 ), terrainShadowCoord.z ) );',
+            '        #endif',
             '        float terrainSoftShadowMask = 1.0 - smoothstep( 0.90, 0.995, terrainShadowVisibility );',
             '        float terrainLiftTarget = max( terrainShadowVisibility, vrodosTerrainShadowTarget );',
             '        float terrainLift = mix( 1.0, terrainLiftTarget / max( terrainShadowVisibility, 0.001 ), terrainSelfShadowMask * terrainSoftShadowMask * vrodosTerrainShadowLiftStrength );',
@@ -977,7 +997,7 @@ function vrodosInstallTerrainSoftShadowPatch(material) {
         const previousKey = typeof previousCustomProgramCacheKey === 'function'
             ? previousCustomProgramCacheKey.call(this)
             : '';
-        return `${previousKey}|vrodos-terrain-soft-shadow-v3`;
+        return `${previousKey}|vrodos-terrain-soft-shadow-v4`;
     };
 
     material.needsUpdate = true;

@@ -242,14 +242,14 @@ VRODOS.editor.TransformCommand = class {
         // Apply TRS with NaN / Finite safety
         if (state.pos && isFinite(state.pos.x)) obj.position.set(state.pos.x, state.pos.y, state.pos.z);
         if (state.rot && isFinite(state.rot.x)) {
-            // r181: Euler.set(x,y,z,order) is standard. JSON strings are parsed to plain objects.
+            // Euler.set(x,y,z,order) is standard. JSON strings are parsed to plain objects.
             obj.rotation.set(state.rot.x, state.rot.y, state.rot.z, state.rot.order || 'XYZ');
         }
         if (state.scale && isFinite(state.scale.x) && state.scale.x !== 0) {
             obj.scale.set(state.scale.x, state.scale.y, state.scale.z);
         }
 
-        // r181 stability: Force deep matrix and visibility update
+        // Force deep matrix and visibility update after restoring serialized state.
         obj.updateMatrix();
         obj.updateMatrixWorld(true);
         if (typeof VRODOS.utils.setObjectTreeVisible === 'function') {

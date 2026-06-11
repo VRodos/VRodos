@@ -29,7 +29,7 @@ VRODOS.editor = VRODOS.editor || {};
 
     function configureRenderer() {
         this.renderer.shadowMap.enabled = false;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.shadowMap.type = THREE.PCFShadowMap;
         this.renderer.autoClear = true;
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;

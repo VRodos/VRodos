@@ -4,8 +4,8 @@
 
 Historical note:
 - This document records the investigation that originally happened on the older r173-based runtime.
-- The current live stack is package-synchronized through root `package.json`, `package-lock.json`, and `assets/runtime-version-manifest.json`; it currently resolves to A-Frame master + Three r181.
-- The notes remain useful because the legacy post-FX path still carries the same `isXRRenderTarget` workaround, but they should be treated as debugging history until fully re-validated on r181.
+- The current live stack is package-synchronized through root `package.json`, `package-lock.json`, and `assets/runtime-version-manifest.json`; it currently resolves to A-Frame master + Three r184.
+- The notes remain useful because the legacy post-FX path still carries the same `isXRRenderTarget` workaround, but they should be treated as debugging history until fully re-validated on r184.
 
 - Runtime page tested: `http://wp.local:5832/Master_Client_766.html`
 - Main runtime files: `assets/js/runtime/master/vrodos_master_rendering.js` (shaders) + `assets/js/runtime/master/components/vrodos_scene_settings.component.js` (render loop)
