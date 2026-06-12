@@ -90,7 +90,8 @@ The current compiled runtime stack is declared in the root package files and gen
 - Three.js: `0.184.0`, revision `184`, through the `three: npm:super-three@0.184.0` root package alias
 - PMNDRS `postprocessing`: `6.39.1`, exported as `window.POSTPROCESSING`
 - PMNDRS spatial UI packages: `@pmndrs/uikit` `1.0.73`, `@pmndrs/uikit-horizon` `1.0.73`, `@pmndrs/uikit-lucide` `1.0.73`, and `@pmndrs/pointer-events` `6.6.29`, exported through `window.VRODOSSpatialUI` when the `spatial-ui` chunk loads
-- Takram atmosphere packages: atmosphere `0.19.1`, clouds `0.7.6`, geospatial effects `0.6.4`, exported as `window.VRODOS_TAKRAM_ATMOSPHERE`
+- Takram atmosphere packages: atmosphere `0.19.1`, geospatial effects `0.6.4`, exported as `window.VRODOS_TAKRAM_ATMOSPHERE`
+- Takram clouds package: clouds `0.7.6`, exported as `window.VRODOS_TAKRAM_CLOUDS` when the `takram-clouds` chunk loads
 - `three-mesh-bvh`: `0.9.10`, exported as `window.VRODOS_COLLISION_BVH`
 
 The important architectural rule is that these generated bundles must use A-Frame's `window.THREE`. Compiled scenes must not load a second Three instance beside A-Frame.
@@ -106,6 +107,7 @@ Runtime scripts are selected by scene metadata, not by hardcoded script tags in 
 - `pmndrs-postfx` when post-FX is enabled and the engine is `pmndrs`;
 - `spatial-ui` when scene metadata contains assessment surfaces, CEFR-gated Immerse assets, or video assets that need immersive controls;
 - `takram-atmosphere` only when PMNDRS atmosphere is enabled;
+- `takram-clouds` only when PMNDRS atmosphere and clouds are enabled;
 - `legacy-postfx` when post-FX uses the legacy engine;
 - final A-Frame runtime components at the end.
 
@@ -276,7 +278,7 @@ When active, `window.POSTPROCESSING` provides the PMNDRS composer and effect cla
 1. `RenderPass`
 2. optional `NormalPass` for native SSAO
 3. optional standalone Takram sun `LensFlareEffect`
-4. primary `EffectPass` for aerial perspective, SSAO, bloom, tone mapping, color, LUT, vignette, and noise
+4. primary `EffectPass` for optional Takram clouds, aerial perspective, SSAO, bloom, tone mapping, color, LUT, vignette, and noise
 5. optional standalone chromatic aberration
 6. optional standalone SMAA
 7. screen
@@ -294,6 +296,22 @@ In compiled Horizon scenes, Takram owns the sky and sun disk. VRodos then bridge
 - Takram sky can be captured into PMREM for scene environment reflections.
 - direct sun and moon scene lights are horizon-gated, so a celestial body below the local horizon does not continue to illuminate peaks or cast shadows;
 - large terrain shadows are kept stable through camera-focused directional shadow fitting, terrain depth offset, and a terrain-specific soft self-shadow shader patch.
+
+### Takram Volumetric Clouds
+
+Takram clouds are optional and desktop-only in v1. They load through the `takram-clouds` chunk only when PMNDRS post-FX, high render quality, Takram atmosphere, and cloud settings are all enabled.
+
+Runtime contract:
+
+- `window.VRODOS_TAKRAM_CLOUDS` exposes `CloudsEffect`, `CloudLayer`, `CloudLayers`, and local binary texture helpers.
+- Cloud assets are served from `assets/vendor/takram-clouds/`.
+- `CloudsEffect` is created before `AerialPerspectiveEffect`.
+- `CloudsEffect.skipRendering` stays `true`; its atmosphere overlay, atmosphere shadow, and atmosphere shadow length buffers are routed into `AerialPerspectiveEffect`.
+- Each frame syncs camera, active Takram atmosphere textures, sun direction, world-to-ECEF matrix, correct-altitude mode, coverage, quality profile, and local cloud textures.
+- Supported quality values are Takram's four performance profiles: `low`, `medium`, `high`, and `ultra`.
+- Real immersive WebXR skips clouds because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`.
+
+The cloud path must fail closed. Missing WebGL2/Data3DTexture support, mobile, missing local assets, missing or crashed cloud bundle, disabled PMNDRS composer, and immersive XR all produce cloud diagnostics instead of breaking first render.
 
 ## 8. Lighting, Shadows, And Emissive Materials
 
@@ -334,5 +352,5 @@ The A-Frame Environment component is still a legacy preset-background provider f
 
 As we continue to push the boundaries of realism and performance, several advanced features are planned for future integration into our pipeline:
 
-- **Takram Volumetric Clouds & Geospatial Expansion**: Expanding the Takram integration to include volumetric clouds, full geospatial date/time solar simulation, and a realistic physical star layer.
+- **Takram Geospatial Expansion**: Expanding the Takram integration to include full geospatial date/time solar simulation, mixed-lighting masks, and validated immersive headset cloud rendering.
 - **WebGPU Migration**: Validate WebGPU as a separate opt-in experimental renderer after the classic A-Frame/WebGL r184 baseline is stable.

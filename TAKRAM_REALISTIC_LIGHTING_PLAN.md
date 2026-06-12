@@ -19,6 +19,7 @@ Summary of the active baseline:
 - Day-night underside readability is an indirect diffuse problem, not a sun/moon key-light problem. Keep celestial directional lights intact and tune only the PBR indirect bridge: `SkyLightProbe`, hemisphere fill, tiny ambient bounce, and ground bounce color.
 - Low-light presets are calibrated as a PBR/light-source fix, not a renderer rewrite: night adds a cool VRodos-managed moon `DirectionalLight`, dawn/night use stronger Takram sky/PBR fill support, and default low-light exposure is raised only when tone-mapping exposure is not authored.
 - Takram stars are a sky realism layer only. `stars.bin` is shipped locally from `assets/vendor/takram-atmosphere/stars.bin`; stars must not be treated as scene lights.
+- Takram volumetric clouds v1 are shipped as an opt-in desktop/inline PMNDRS + Takram atmosphere feature. Cloud assets are local under `assets/vendor/takram-clouds/`, cloud code is lazy-loaded through `window.VRODOS_TAKRAM_CLOUDS`, and immersive WebXR skips clouds because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`.
 - Direct sun and moon scene lights are horizon-gated. If the local celestial direction is below the horizon threshold, the corresponding direct light intensity and shadow casting go to zero; sky, stars, environment, and indirect fill remain separate.
 - Large-terrain day/night shadow banding is treated as a shadow precision and terrain self-shadow problem, not as SSAO or light refraction. The current fix is adaptive camera-focused directional shadow fitting, negative/small contact-shadow bias, terrain custom depth-material polygon offset, and a `terrain-matte` shader lift for near-depth self-shadow samples.
 - Authored emissive materials and readable media emissive boosts are material output only. They do not participate as scene light sources and must not be used to fake sun/moon illumination.
@@ -39,6 +40,7 @@ Summary of the active baseline:
 - A-Frame classic script builds already own their Three instance. Loading latest Three beside classic A-Frame risks duplicate `THREE` instances, broken materials, mismatched render targets, and PMNDRS/Takram incompatibilities.
 - The near-term Three upgrade route is A-Frame's planned r184 work, tracked at `aframevr/aframe#5818`, so VRodos should follow the shared A-Frame runtime upgrade instead of maintaining a separate r184 fork/import-map track.
 - WebGPU stays experimental after the r184 upgrade. PMNDRS `EffectComposer`, GLSL/onBeforeCompile material hooks, Takram integration, and XR behavior still require separate validation before WebGPU can be a production performance fix.
+- Takram cloud performance follows Takram's documented `low`, `medium`, `high`, and `ultra` profiles. VRodos keeps temporal upscaling enabled, applies the London demo's `shadow.farScale = 0.25`, renders high/ultra clouds at full resolution, and keeps light shafts disabled until they have a dedicated validation pass.
 
 ## Phased Roadmap
 
@@ -139,16 +141,19 @@ Acceptance:
 
 Goal: add heavier Takram features only after the baseline lighting model is stable.
 
+Status: desktop/inline volumetric clouds v1 landed. Headset clouds, light-shafts controls, and broader geospatial expansion remain future work.
+
 Candidates:
 
-- Stars.
 - Full geospatial date/time solar simulation.
 - `LightingMaskPass` for mixed lighting.
-- Volumetric clouds.
+- Immersive XR/headset volumetric clouds after PMNDRS stereo composer behavior is Quest-validated.
+- Author-facing cloud light-shafts controls after a measured visual/performance pass.
 
 Acceptance:
 
 - Each feature has its own visual smoke scene and does not regress the Horizon lighting modes.
+- Desktop clouds remain opt-in, fail closed with diagnostics, and load no external cloud assets at runtime.
 
 ## Verification Matrix
 
@@ -169,10 +174,16 @@ Run visual checks at `http://wp.local:5832/Master_Client_766.html`:
 - Night with HDR/scene-probe reflection on and off.
 - Lens flare on/off.
 - Reflection source `none`.
+- Clouds off/on across low, medium, high, and ultra profiles.
+- Clouds at midday, golden hour, sunset, and night.
 - Enter and exit immersive XR with PMNDRS enabled.
+- Enter immersive XR with clouds enabled and confirm clouds are skipped once with diagnostics while the scene continues rendering.
 
 ## References
 
 - Takram atmosphere docs: https://github.com/takram-design-engineering/three-geospatial/blob/main/packages/atmosphere/README.md
+- Takram clouds docs: https://github.com/takram-design-engineering/three-geospatial/tree/main/packages/clouds
+- Takram clouds performance tweaks: https://github.com/takram-design-engineering/three-geospatial/tree/main/packages/clouds#performance-tweaks
+- Takram London cloud story source: https://github.com/takram-design-engineering/three-geospatial/blob/main/storybook/src/clouds/3DTilesRenderer-Story.tsx
 - Takram Basic story source: https://github.com/takram-design-engineering/three-geospatial/blob/main/storybook/src/atmosphere/Atmosphere-Basic.tsx
 - A-Frame module/import-map FAQ: https://aframe.io/docs/1.7.0/introduction/faq.html
