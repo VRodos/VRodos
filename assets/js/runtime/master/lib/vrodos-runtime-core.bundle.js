@@ -222,6 +222,29 @@
           "type": "boolean",
           "default": false
         },
+        "pmndrsCloudsEnabled": {
+          "metadataKey": "aframePmndrsCloudsEnabled",
+          "type": "boolean",
+          "default": false
+        },
+        "pmndrsCloudsQuality": {
+          "metadataKey": "aframePmndrsCloudsQuality",
+          "type": "enum",
+          "default": "low",
+          "allowed": [
+            "low",
+            "medium",
+            "high",
+            "ultra"
+          ]
+        },
+        "pmndrsCloudsCoverage": {
+          "metadataKey": "aframePmndrsCloudsCoverage",
+          "type": "number",
+          "default": 0.35,
+          "min": 0,
+          "max": 1
+        },
         "pmndrsCorrectAltitudeEnabled": {
           "metadataKey": "aframePmndrsCorrectAltitudeEnabled",
           "type": "boolean",
@@ -649,6 +672,9 @@
       "pmndrsAtmospherePresetIntensity": "1",
       "pmndrsAtmosphereQuality": "balanced",
       "pmndrsAerialPerspectiveEnabled": "0",
+      "pmndrsCloudsEnabled": "0",
+      "pmndrsCloudsQuality": "low",
+      "pmndrsCloudsCoverage": "0.35",
       "pmndrsCorrectAltitudeEnabled": "1",
       "pmndrsGeospatialEnabled": "0",
       "pmndrsGeospatialLatitudeDeg": "0",

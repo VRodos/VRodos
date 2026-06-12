@@ -74,7 +74,9 @@ Presentation mode is part of the rendering contract:
 | `assets/js/runtime/master/vrodos_postprocessing_pmndrs.js` | PMNDRS composer construction, effect ordering, AA, native SSAO, LUT, Takram lens flare, runtime debug overlay |
 | `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` | Bundled `window.POSTPROCESSING` |
 | `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js` | Bundled `window.VRODOS_TAKRAM_ATMOSPHERE`, including Takram atmosphere and geospatial effects |
+| `assets/js/runtime/master/lib/vrodos-takram-clouds.bundle.js` | Bundled `window.VRODOS_TAKRAM_CLOUDS`, including Takram CloudsEffect and local binary texture helpers |
 | `assets/js/runtime/master/lib/vrodos-runtime-pmndrs-postfx.bundle.js` | Generated compiled-scene PMNDRS post-FX adapter bundle |
+| `assets/vendor/takram-clouds/` | Local cloud assets: `local_weather.png`, `shape.bin`, `shape_detail.bin`, `turbulence.png`, and `stbn.bin` |
 
 ## 3. Load Order
 
@@ -89,6 +91,7 @@ optional lib/vrodos-collision-bvh.bundle.js
 optional lib/vrodos-runtime-legacy-postfx.bundle.js
 optional lib/vrodos-postprocessing.bundle.js
 optional lib/vrodos-takram-atmosphere.bundle.js
+optional lib/vrodos-takram-clouds.bundle.js
 optional lib/vrodos-runtime-pmndrs-postfx.bundle.js
 lib/vrodos-runtime-aframe-components.bundle.js
 ```
@@ -109,6 +112,7 @@ Lazy-loading expectations:
 
 - PMNDRS vendor and PMNDRS runtime load only when PMNDRS post-FX is selected.
 - Takram loads only when PMNDRS atmosphere is enabled.
+- Takram clouds load only when PMNDRS post-FX, high render quality, Takram atmosphere, and clouds are enabled.
 - Networked components are pruned from single-player output.
 - The FPS meter remains an optional inline module.
 
@@ -363,6 +367,7 @@ RenderPass
   -> optional NormalPass for native SSAO
   -> optional standalone Takram sun LensFlareEffect pass
   -> primary EffectPass:
+       optional Takram CloudsEffect before AerialPerspectiveEffect
        optional Takram AerialPerspectiveEffect for non-Horizon or Horizon aerial-haze path
        SSAOEffect
        BloomEffect
@@ -399,6 +404,8 @@ Native SSAO presets are budgeted so the final color buffer stays full-resolution
 - `strong`: `resolutionScale: 0.75`, `samples: 20`, `rings: 7`, `radius: 0.06`, `intensity: 2.01`.
 
 Takram LensFlareEffect is intentionally not merged into the primary `EffectPass`. It is a convolution effect, so it runs as its own pass when `pmndrsLensFlareEnabled` is true and the Horizon Takram sun is active. Chromatic aberration also runs as a late standalone convolution pass after Takram/tone/color processing, and SMAA runs as the final standalone pass when enabled.
+
+Takram CloudsEffect is created before AerialPerspectiveEffect when cloud settings are active. The runtime keeps `cloudsEffect.skipRendering = true` and routes `cloudsEffect.atmosphereOverlay`, `cloudsEffect.atmosphereShadow`, and `cloudsEffect.atmosphereShadowLength` into AerialPerspectiveEffect. Clouds are therefore a PMNDRS/Takram atmospheric composition feature, not separate scene geometry.
 
 Composer lifecycle:
 
@@ -446,6 +453,9 @@ Scene settings:
 - `pmndrsCelestialMode`: `manual` or `preset-time`
 - `pmndrsCelestialTimePreset`: `sunrise`, `midday`, `golden-hour`, `sunset`, or `night`
 - Existing manual controls remain valid: `pmndrsSunElevationDeg`, `pmndrsSunAzimuthDeg`, and `pmndrsMoonEnabled`
+- `pmndrsCloudsEnabled`: opt-in desktop volumetric clouds
+- `pmndrsCloudsQuality`: `low`, `medium`, `high`, or `ultra`
+- `pmndrsCloudsCoverage`: `0..1`
 
 Runtime behavior:
 
@@ -459,9 +469,28 @@ Runtime behavior:
 - Direct celestial lighting stays separate from the indirect bridge: Takram `SunDirectionalLight` owns sun key light, and the VRodos moon directional light owns night shape when visible. Dynamic day-night underside readability is tuned only through indirect diffuse lighting: `SkyLightProbe`, `HemisphereLight`, tiny `AmbientLight`, and ground bounce color follow a continuous sun-elevation curve with slower smoothing than direct celestial lights so the fill does not step during the cycle.
 - The old helper-light debug mode is not exposed as a runtime option. If Takram light-source classes are unavailable, the runtime can use an internal safety fallback only to avoid a black scene.
 - Horizon `AerialPerspectiveEffect` is constrained to haze/transmittance in the current PBR path so it does not re-light the scene as albedo.
+- Optional Takram clouds synchronize every frame with the active Takram atmosphere, camera, sun direction, world-to-ECEF matrix, correct-altitude mode, precomputed atmosphere textures, local cloud textures, quality profile, and coverage.
 - The future Takram-vanilla target is an explicit `post-process-albedo` lighting mode, documented in `TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
 
-This phase does not add stars, author-facing geospatial latitude/longitude UI, `LightingMaskPass`, or volumetric clouds.
+Takram cloud v1 behavior:
+
+- Desktop inline and desktop fullscreen can render clouds.
+- Real immersive WebXR skips clouds because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`.
+- Mobile skips clouds in v1.
+- WebGL2 and `Data3DTexture` support are required.
+- Runtime uses only local assets under `assets/vendor/takram-clouds/`; generated cloud bundles must not depend on GitHub or `media.githubusercontent.com` at runtime.
+- Cloud effect construction is fail-closed. Missing assets, missing bundle globals, missing WebGL2/3D texture support, disabled PMNDRS composer, and immersive XR each emit a diagnostic skip reason.
+
+Cloud performance profiles follow Takram's documented presets, with VRodos profile overlays:
+
+| VRodos setting | Takram preset | Resolution scale | Temporal upscale | Shape detail | Turbulence | Light shafts | Notes |
+| --- | --- | ---: | --- | --- | --- | --- | --- |
+| `low` | `low` | `0.62` | on | off | off | off | Conservative desktop baseline; visibly grainier by design |
+| `medium` | `medium` | `0.82` | on | on | off | off | Balanced preview profile |
+| `high` | `high` | `1.0` | on | on | on | off | Full-resolution clarity profile |
+| `ultra` | `ultra` | `1.0` | on | on | on | off | Reference profile using Takram ultra shadow/raymarch settings |
+
+All four profiles keep `shadow.farScale = 0.25`, matching Takram's London Storybook cloud demo. Light shafts remain disabled in v1 until they have a separate performance and visual validation pass.
 
 ## 9. Shadow-Aware Lighting And Reflections
 
@@ -509,6 +538,7 @@ Diagnostics:
 - Use `?vrodos_debug_pmndrs_horizon=1` for repeated debug-level diagnostic lines when the diagnostic signature changes.
 - Use `?vrodos_debug_pmndrs_horizon_verbose=1` for info-level diagnostic lines.
 - Expanded diagnostic fields include `shadowCasters`, `shadowReceivers`, `shadowReceiverOnly`, `dirShadowLights`, `fittedDirLights`, and `shadowFit`.
+- PMNDRS cloud diagnostics include `cloudsActive`, `cloudsSkippedReason`, `quality`, `profile`, `takramQuality`, `resolutionScale`, `temporalUpscale`, `coverage`, texture readiness/counts, and XR skip state.
 
 Debug query flags:
 
@@ -592,8 +622,9 @@ These are backlog items, not current implementation requirements:
 - Desktop-only Takram-vanilla `post-process-albedo` mode.
 - Continue validating native `POSTPROCESSING.SSAOEffect` across broader Horizon and non-Horizon scenes.
 - Track A-Frame r184 and run a WebGPU compatibility spike after the shared runtime upgrade is available.
-- Takram stars, geospatial date/time solar simulation, `LightingMaskPass`, and geospatial helpers.
-- Volumetric clouds after the PMNDRS/Takram lighting baseline remains stable.
+- Geospatial date/time solar simulation, `LightingMaskPass`, and geospatial helpers.
+- Immersive XR/headset cloud validation after PMNDRS stereo composer behavior is proven safe.
+- Author-facing Takram cloud light-shafts controls after a measured performance pass.
 
 ## References
 

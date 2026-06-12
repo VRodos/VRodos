@@ -332,6 +332,27 @@ Simplified Draco derivatives can help after this pass, but only if the derivativ
 
 Research TODO: `steep-face shadow proxy`. Keep default navmeshes receiver-only for broad compatibility, but the runtime now has a safe path for explicitly self-casting terrain. Later, evaluate generating a shadow-only proxy from steep navmesh faces so mountains/walls can block direct light and shadow-aware reflections without making broad flat ground cast onto itself.
 
+## Takram Cloud Performance Profiles
+
+Takram volumetric clouds are an opt-in desktop/inline PMNDRS + Takram atmosphere feature. They should be profiled separately from the base PMNDRS/Takram lighting path because the cost is dominated by cloud ray marching, temporal upscaling, cloud texture sampling, and cloud shadow work.
+
+Current profile contract:
+
+- `low`: Takram `low`, `resolutionScale=0.62`, temporal upscaling on, shape detail/turbulence/light shafts off.
+- `medium`: Takram `medium`, `resolutionScale=0.82`, temporal upscaling on, shape detail on, turbulence/light shafts off.
+- `high`: Takram `high`, `resolutionScale=1.0`, temporal upscaling on, shape detail/turbulence on, light shafts off.
+- `ultra`: Takram `ultra`, `resolutionScale=1.0`, temporal upscaling on, Takram ultra shadow/raymarch settings, light shafts off.
+
+All profiles apply `shadow.farScale=0.25`, matching Takram's London Storybook demo. Light shafts remain disabled in v1 until they have their own visual/performance capture.
+
+Recommended cloud timing matrix:
+
+- Capture with the FPS meter disabled.
+- Compare clouds off, then `low`, `medium`, `high`, and `ultra` at the same camera/time-of-day.
+- Use midday, golden hour, sunset, and night smoke scenes.
+- Record the PMNDRS diagnostics fields: cloud active/skip state, profile, Takram preset, render scale, temporal upscale, coverage, and texture readiness.
+- Keep immersive XR as a skip validation only; do not compare headset cloud FPS until PMNDRS stereo composer rendering is a separate validated experiment.
+
 ## Policy
 
 - `high` must remain visually equivalent to the current look.

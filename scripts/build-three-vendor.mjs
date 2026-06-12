@@ -41,6 +41,19 @@ const takramAssetsSourceDir = path.join(rootDir, 'node_modules', '@takram', 'thr
 const takramStarsSourcePath = path.join(takramAssetsSourceDir, 'stars.bin');
 const takramAssetsOutputDir = path.join(rootDir, 'assets', 'vendor', 'takram-atmosphere');
 const takramStarsOutputPath = path.join(takramAssetsOutputDir, 'stars.bin');
+const takramCloudsBundlePath = path.join(runtimeVendorDir, 'vrodos-takram-clouds.bundle.js');
+const takramCloudsEntryPath = path.join(rootDir, 'scripts', '.tmp-build-takram-clouds-entry.mjs');
+const takramAtmosphereShimPath = path.join(rootDir, 'scripts', '.tmp-takram-atmosphere-global-shim.mjs');
+const takramGeospatialShimPath = path.join(rootDir, 'scripts', '.tmp-takram-geospatial-clouds-shim.mjs');
+const takramCloudsAssetsSourceDir = path.join(rootDir, 'node_modules', '@takram', 'three-clouds', 'assets');
+const takramCloudsAssetsOutputDir = path.join(rootDir, 'assets', 'vendor', 'takram-clouds');
+const takramCloudAssetFiles = [
+  'local_weather.png',
+  'shape.bin',
+  'shape_detail.bin',
+  'turbulence.png',
+];
+const takramStbnOutputPath = path.join(takramCloudsAssetsOutputDir, 'stbn.bin');
 const collisionBvhBundlePath = path.join(runtimeVendorDir, 'vrodos-collision-bvh.bundle.js');
 const collisionBvhEntryPath = path.join(rootDir, 'scripts', '.tmp-build-collision-bvh-entry.mjs');
 const threeShimPath = path.join(rootDir, 'scripts', '.tmp-three-global-shim.mjs');
@@ -216,18 +229,30 @@ async function copySupportAssets() {
   await ensurePathExists(meshoptSourcePath, 'Meshopt decoder asset');
   await ensurePathExists(fontSourcePath, 'Helvetiker font asset');
   await ensurePathExists(takramStarsSourcePath, 'Takram stars data asset');
+  for (const assetFile of takramCloudAssetFiles) {
+    await ensurePathExists(path.join(takramCloudsAssetsSourceDir, assetFile), `Takram cloud ${assetFile} asset`);
+  }
 
   await mkdir(dracoOutputDir, { recursive: true });
   await mkdir(basisOutputDir, { recursive: true });
   await mkdir(meshoptOutputDir, { recursive: true });
   await mkdir(fontOutputDir, { recursive: true });
   await mkdir(takramAssetsOutputDir, { recursive: true });
+  await mkdir(takramCloudsAssetsOutputDir, { recursive: true });
+  await ensurePathExists(takramStbnOutputPath, 'Takram cloud STBN data asset');
   await cp(dracoSourceDir, dracoOutputDir, { recursive: true, force: true });
   await cp(basisSourceDir, basisOutputDir, { recursive: true, force: true });
   await cp(meshoptSourcePath, meshoptOutputPath, { force: true });
   await cp(meshoptSourcePath, meshoptCompatOutputPath, { force: true });
   await cp(fontSourcePath, fontOutputPath, { force: true });
   await cp(takramStarsSourcePath, takramStarsOutputPath, { force: true });
+  for (const assetFile of takramCloudAssetFiles) {
+    await cp(
+      path.join(takramCloudsAssetsSourceDir, assetFile),
+      path.join(takramCloudsAssetsOutputDir, assetFile),
+      { force: true }
+    );
+  }
 }
 
 function createAliasPlugin(aliases) {
@@ -389,6 +414,183 @@ window.VRODOS_TAKRAM_EFFECTS = VRODOSTakramEffects;
   }
 }
 
+async function rewriteTakramCloudBundleAssetDefaults() {
+  const source = await readFile(takramCloudsBundlePath, 'utf8');
+  const rewritten = source
+    .replace(
+      /`https:\/\/media\.githubusercontent\.com\/media\/takram-design-engineering\/three-geospatial\/\$\{[^}]+\}\/packages\/core\/assets\/stbn\.bin`/g,
+      "'assets/vendor/takram-clouds/stbn.bin'"
+    )
+    .replace(
+      /`https:\/\/media\.githubusercontent\.com\/media\/takram-design-engineering\/three-geospatial\/\$\{[^}]+\}\/packages\/clouds\/assets\/local_weather\.png`/g,
+      "'assets/vendor/takram-clouds/local_weather.png'"
+    )
+    .replace(
+      /`https:\/\/media\.githubusercontent\.com\/media\/takram-design-engineering\/three-geospatial\/\$\{[^}]+\}\/packages\/clouds\/assets\/shape\.bin`/g,
+      "'assets/vendor/takram-clouds/shape.bin'"
+    )
+    .replace(
+      /`https:\/\/media\.githubusercontent\.com\/media\/takram-design-engineering\/three-geospatial\/\$\{[^}]+\}\/packages\/clouds\/assets\/shape_detail\.bin`/g,
+      "'assets/vendor/takram-clouds/shape_detail.bin'"
+    )
+    .replace(
+      /`https:\/\/media\.githubusercontent\.com\/media\/takram-design-engineering\/three-geospatial\/\$\{[^}]+\}\/packages\/clouds\/assets\/turbulence\.png`/g,
+      "'assets/vendor/takram-clouds/turbulence.png'"
+    );
+
+  if (rewritten !== source) {
+    await writeFile(takramCloudsBundlePath, rewritten, 'utf8');
+  }
+}
+
+async function buildTakramCloudsBundle() {
+  await mkdir(runtimeVendorDir, { recursive: true });
+  await writeGlobalShim('three', 'window.THREE || {}', threeShimPath);
+  await writeGlobalShim('postprocessing', 'window.POSTPROCESSING || {}', postprocessingShimPath);
+  await writeGlobalShim('@takram/three-atmosphere', 'window.VRODOS_TAKRAM_ATMOSPHERE || {}', takramAtmosphereShimPath);
+  await writeFile(takramGeospatialShimPath, `
+export {
+  Geodetic,
+  define,
+  defineExpression,
+  defineFloat,
+  defineInt,
+  definePropertyShorthand,
+  defineUniformShorthand,
+  lerp,
+  reinterpretType,
+  resolveIncludes,
+  unrollLoops
+} from '../node_modules/@takram/three-geospatial/build/index.js';
+export const UniformMap = Map;
+`, 'utf8');
+
+  const entrySource = `
+import {
+  C as CLOUD_SHAPE_TEXTURE_SIZE,
+  a as CLOUD_SHAPE_DETAIL_TEXTURE_SIZE,
+  b as CloudLayer,
+  c as CloudLayers,
+  d as CloudsEffect
+} from '../node_modules/@takram/three-clouds/build/shared.js';
+import {
+  ByteType,
+  FileLoader,
+  FloatType,
+  HalfFloatType,
+  IntType,
+  LinearFilter,
+  Loader,
+  RGBAFormat,
+  ShortType,
+  UnsignedByteType,
+  UnsignedIntType,
+  UnsignedShortType
+} from 'three';
+
+function parseUint8Array(buffer) {
+  return new Uint8Array(buffer);
+}
+
+function getTextureDataType(array) {
+  if (array instanceof Int8Array) return ByteType;
+  if (array instanceof Uint8Array || array instanceof Uint8ClampedArray) return UnsignedByteType;
+  if (array instanceof Int16Array) return ShortType;
+  if (array instanceof Uint16Array) return UnsignedShortType;
+  if (array instanceof Int32Array) return IntType;
+  if (array instanceof Uint32Array) return UnsignedIntType;
+  if (array instanceof Float32Array || array instanceof Float64Array) return FloatType;
+  if (typeof Float16Array !== 'undefined' && array instanceof Float16Array) return HalfFloatType;
+  return UnsignedByteType;
+}
+
+class DataTextureLoader extends Loader {
+  constructor(textureClass, parser, options = {}, manager) {
+    super(manager);
+    this.textureClass = textureClass;
+    this.parser = parser;
+    this.options = {
+      format: RGBAFormat,
+      minFilter: LinearFilter,
+      magFilter: LinearFilter,
+      ...options
+    };
+  }
+
+  load(url, onLoad, onProgress, onError) {
+    const texture = new this.textureClass();
+    const loader = new FileLoader(this.manager);
+    loader.setRequestHeader(this.requestHeader);
+    loader.setPath(this.path);
+    loader.setWithCredentials(this.withCredentials);
+    loader.setResponseType('arraybuffer');
+    loader.load(url, (buffer) => {
+      const array = this.parser(buffer);
+      texture.image.data = array;
+      const { width, height, depth, ...options } = this.options;
+      if (width != null) texture.image.width = width;
+      if (height != null) texture.image.height = height;
+      if (texture.image && 'depth' in texture.image && depth != null) {
+        texture.image.depth = depth;
+      }
+      texture.type = getTextureDataType(array);
+      Object.assign(texture, options);
+      texture.needsUpdate = true;
+      if (typeof onLoad === 'function') onLoad(texture);
+    }, onProgress, onError);
+    return texture;
+  }
+}
+
+window.VRODOS_TAKRAM_CLOUDS = {
+  CloudsEffect,
+  CloudLayer,
+  CloudLayers,
+  CLOUD_SHAPE_TEXTURE_SIZE,
+  CLOUD_SHAPE_DETAIL_TEXTURE_SIZE,
+  DataTextureLoader,
+  parseUint8Array,
+  STBN_TEXTURE_WIDTH: 128,
+  STBN_TEXTURE_HEIGHT: 128,
+  STBN_TEXTURE_DEPTH: 64
+};
+`;
+
+  await writeFile(takramCloudsEntryPath, entrySource, 'utf8');
+
+  try {
+    await build({
+      entryPoints: [takramCloudsEntryPath],
+      bundle: true,
+      format: 'iife',
+      platform: 'browser',
+      target: ['es2019'],
+      outfile: takramCloudsBundlePath,
+      legalComments: 'none',
+      loader: {
+        '.frag': 'text',
+        '.vert': 'text',
+        '.glsl': 'text'
+      },
+      plugins: [
+        createAliasPlugin({
+          three: threeShimPath,
+          postprocessing: postprocessingShimPath,
+          '@takram/three-atmosphere': takramAtmosphereShimPath,
+          '@takram/three-geospatial': takramGeospatialShimPath
+        })
+      ]
+    });
+    await rewriteTakramCloudBundleAssetDefaults();
+  } finally {
+    await rm(takramCloudsEntryPath, { force: true });
+    await rm(threeShimPath, { force: true });
+    await rm(postprocessingShimPath, { force: true });
+    await rm(takramAtmosphereShimPath, { force: true });
+    await rm(takramGeospatialShimPath, { force: true });
+  }
+}
+
 async function buildCollisionBvhBundle() {
   await mkdir(runtimeVendorDir, { recursive: true });
   await writeGlobalShim('three', 'window.THREE || {}', threeShimPath);
@@ -473,9 +675,18 @@ async function writeRuntimeManifest() {
       global: 'VRODOS_TAKRAM_ATMOSPHERE',
       bundleFile: path.basename(takramBundlePath),
       bundlePath: 'assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js',
+      cloudsGlobal: 'VRODOS_TAKRAM_CLOUDS',
+      cloudsBundleFile: path.basename(takramCloudsBundlePath),
+      cloudsBundlePath: 'assets/js/runtime/master/lib/vrodos-takram-clouds.bundle.js',
       starsDataPath: 'assets/vendor/takram-atmosphere/stars.bin',
       assets: {
         starsDataPath: 'assets/vendor/takram-atmosphere/stars.bin',
+        cloudsBasePath: 'assets/vendor/takram-clouds/',
+        cloudsLocalWeatherPath: 'assets/vendor/takram-clouds/local_weather.png',
+        cloudsShapePath: 'assets/vendor/takram-clouds/shape.bin',
+        cloudsShapeDetailPath: 'assets/vendor/takram-clouds/shape_detail.bin',
+        cloudsTurbulencePath: 'assets/vendor/takram-clouds/turbulence.png',
+        cloudsStbnPath: 'assets/vendor/takram-clouds/stbn.bin',
       },
     },
     collisionBvh: {
@@ -496,6 +707,7 @@ async function main() {
   await buildThreeAddonsRuntimeBundle();
   await buildPostprocessingRuntimeBundle();
   await buildTakramAtmosphereBundle();
+  await buildTakramCloudsBundle();
   await buildCollisionBvhBundle();
   await copySupportAssets();
   await writeRuntimeManifest();
@@ -503,6 +715,7 @@ async function main() {
   console.log(`Built ${path.relative(rootDir, threeAddonsRuntimeBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, postprocessingRuntimeBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, takramBundlePath)}`);
+  console.log(`Built ${path.relative(rootDir, takramCloudsBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, collisionBvhBundlePath)}`);
   console.log(`Wrote ${path.relative(rootDir, manifestPath)}`);
 }

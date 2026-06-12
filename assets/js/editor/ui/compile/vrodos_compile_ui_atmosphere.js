@@ -147,6 +147,13 @@ VRodosCompileUI.Atmosphere = (function () {
         return 'balanced';
     }
 
+    function normalizeCloudsQuality(value) {
+        if (['low', 'medium', 'high', 'ultra'].indexOf(value) !== -1) {
+            return value;
+        }
+        return Shared.PMNDRS_TWEAK_DEFAULTS.cloudsQuality;
+    }
+
     function normalizePreset(value) {
         if (SKY_TIME_PRESETS.concat(['custom']).indexOf(value) !== -1) {
             return value;
@@ -363,6 +370,9 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsAtmosphereQuality,
             controls.pmndrsDayNightCycle,
             controls.pmndrsAerialPerspective,
+            controls.pmndrsClouds,
+            controls.pmndrsCloudsQuality,
+            controls.pmndrsCloudsCoverage,
             controls.pmndrsCorrectAltitude,
             controls.pmndrsGeospatial,
             controls.pmndrsGeospatialLatitude,
@@ -423,6 +433,35 @@ VRodosCompileUI.Atmosphere = (function () {
         }
         syncLocalHorizonGroundControls(controls, isEnabled);
 
+        const highRenderQuality = controls.renderQuality
+            ? VRodosCompileUI.General.normalizeRenderQuality(controls.renderQuality.value) === 'high'
+            : false;
+        const cloudsAvailable = isEnabled && highRenderQuality;
+        const cloudsActive = cloudsAvailable && controls.pmndrsClouds && controls.pmndrsClouds.checked === true;
+        const cloudsTitle = cloudsAvailable
+            ? ''
+            : 'Clouds require High render quality, PMNDRS post-FX, and Takram atmosphere.';
+        if (controls.pmndrsClouds) {
+            controls.pmndrsClouds.disabled = !cloudsAvailable;
+            controls.pmndrsClouds.title = cloudsTitle;
+            if (!cloudsAvailable) {
+                controls.pmndrsClouds.checked = false;
+            }
+        }
+        if (controls.pmndrsCloudsWrapper) {
+            controls.pmndrsCloudsWrapper.style.display = cloudsActive ? '' : 'none';
+            controls.pmndrsCloudsWrapper.classList.toggle('tw-opacity-50', !cloudsActive);
+        }
+        [
+            controls.pmndrsCloudsQuality,
+            controls.pmndrsCloudsCoverage
+        ].forEach((el) => {
+            if (el) {
+                el.disabled = !cloudsActive;
+                el.title = cloudsTitle;
+            }
+        });
+
         const geospatialEnabled = isEnabled && controls.pmndrsGeospatial && controls.pmndrsGeospatial.checked === true;
         [
             controls.pmndrsGeospatialLatitude,
@@ -445,7 +484,12 @@ VRodosCompileUI.Atmosphere = (function () {
         const pmndrsEngineSelected = controls.postFxEngine && controls.postFxEngine.value === 'pmndrs';
         const pmndrsRuntimeEnabled = controls.postFx && controls.postFx.checked === true && pmndrsEngineSelected;
 
-        VRODOS.editor.envir.scene.aframePmndrsAtmosphereEnabled = pmndrsRuntimeEnabled && controls.pmndrsAtmosphere.checked === true;
+        const atmosphereEnabled = pmndrsRuntimeEnabled && controls.pmndrsAtmosphere.checked === true;
+        const highRenderQuality = controls.renderQuality
+            ? VRodosCompileUI.General.normalizeRenderQuality(controls.renderQuality.value) === 'high'
+            : false;
+
+        VRODOS.editor.envir.scene.aframePmndrsAtmosphereEnabled = atmosphereEnabled;
         const atmospherePreset = normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : d.atmospherePreset);
         const dayNightCycleEnabled = pmndrsRuntimeEnabled && controls.pmndrsDayNightCycle ? controls.pmndrsDayNightCycle.checked === true : d.dayNightCycleEnabled;
         const celestialMode = normalizeCelestialMode(controls.pmndrsCelestialMode ? controls.pmndrsCelestialMode.value : d.celestialMode);
@@ -475,6 +519,15 @@ VRodosCompileUI.Atmosphere = (function () {
             d.dayNightCycleDurationMinutes
         );
         VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled = (pmndrsRuntimeEnabled && controls.pmndrsAerialPerspective) ? controls.pmndrsAerialPerspective.checked === true : false;
+        VRODOS.editor.envir.scene.aframePmndrsCloudsEnabled = Boolean(atmosphereEnabled && highRenderQuality && controls.pmndrsClouds && controls.pmndrsClouds.checked === true);
+        VRODOS.editor.envir.scene.aframePmndrsCloudsQuality = normalizeCloudsQuality(controls.pmndrsCloudsQuality ? controls.pmndrsCloudsQuality.value : d.cloudsQuality);
+        VRODOS.editor.envir.scene.aframePmndrsCloudsCoverage = Shared.clampNumber(
+            controls.pmndrsCloudsCoverage ? controls.pmndrsCloudsCoverage.value : d.cloudsCoverage,
+            0,
+            1,
+            d.cloudsCoverage,
+            0.01
+        );
         VRODOS.editor.envir.scene.aframePmndrsCorrectAltitudeEnabled = controls.pmndrsCorrectAltitude ? controls.pmndrsCorrectAltitude.checked === true : d.correctAltitudeEnabled;
         VRODOS.editor.envir.scene.aframePmndrsGeospatialEnabled = (pmndrsRuntimeEnabled && controls.pmndrsGeospatial) ? controls.pmndrsGeospatial.checked === true : false;
         VRODOS.editor.envir.scene.aframePmndrsGeospatialLatitudeDeg = Shared.clampNumber(controls.pmndrsGeospatialLatitude ? controls.pmndrsGeospatialLatitude.value : d.geospatialLatitudeDeg, -90, 90, d.geospatialLatitudeDeg);
@@ -539,6 +592,7 @@ VRodosCompileUI.Atmosphere = (function () {
         setAdvancedState,
         syncToScene,
         normalizeQuality,
+        normalizeCloudsQuality,
         normalizePreset,
         normalizeCelestialMode,
         normalizeCelestialTimePreset,

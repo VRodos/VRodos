@@ -111,6 +111,11 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsGeospatialLongitude: document.getElementById('compilePmndrsGeospatialLongitudeInput'),
             pmndrsGeospatialAltitude: document.getElementById('compilePmndrsGeospatialAltitudeInput'),
             pmndrsAerialPerspective: document.getElementById('compilePmndrsAerialPerspectiveToggle'),
+            pmndrsClouds: document.getElementById('compilePmndrsCloudsToggle'),
+            pmndrsCloudsWrapper: document.getElementById('compilePmndrsCloudsWrapper'),
+            pmndrsCloudsQuality: document.getElementById('compilePmndrsCloudsQualitySelect'),
+            pmndrsCloudsCoverage: document.getElementById('compilePmndrsCloudsCoverageSlider'),
+            pmndrsCloudsCoverageValue: document.getElementById('compilePmndrsCloudsCoverageValue'),
             pmndrsCorrectAltitude: document.getElementById('compilePmndrsCorrectAltitudeToggle'),
             pmndrsAtmosphereAdvanced: document.getElementById('compilePmndrsAtmosphereAdvanced'),
             pmndrsSunElevation: document.getElementById('compilePmndrsSunElevationSlider'),
@@ -434,6 +439,15 @@ window.addEventListener('DOMContentLoaded', () => {
         VRODOS.editor.envir.scene.aframePmndrsAAPreset = VRodosCompileUI.PostFX.normalizePmndrsAAPreset(VRODOS.editor.envir.scene.aframePmndrsAAPreset);
         VRODOS.editor.envir.scene.aframePmndrsAtmospherePreset = VRodosCompileUI.Atmosphere.normalizePreset(VRODOS.editor.envir.scene.aframePmndrsAtmospherePreset);
         VRODOS.editor.envir.scene.aframePmndrsAtmosphereQuality = VRodosCompileUI.Atmosphere.normalizeQuality(VRODOS.editor.envir.scene.aframePmndrsAtmosphereQuality);
+        VRODOS.editor.envir.scene.aframePmndrsCloudsEnabled = Boolean(VRODOS.editor.envir.scene.aframePmndrsCloudsEnabled);
+        VRODOS.editor.envir.scene.aframePmndrsCloudsQuality = VRodosCompileUI.Atmosphere.normalizeCloudsQuality(VRODOS.editor.envir.scene.aframePmndrsCloudsQuality);
+        VRODOS.editor.envir.scene.aframePmndrsCloudsCoverage = Shared.clampNumber(
+            VRODOS.editor.envir.scene.aframePmndrsCloudsCoverage,
+            0,
+            1,
+            Shared.PMNDRS_TWEAK_DEFAULTS.cloudsCoverage,
+            0.01
+        );
         VRODOS.editor.envir.scene.aframePmndrsCelestialMode = VRodosCompileUI.Atmosphere.normalizeCelestialMode(VRODOS.editor.envir.scene.aframePmndrsCelestialMode);
         VRODOS.editor.envir.scene.aframePmndrsCelestialTimePreset = VRodosCompileUI.Atmosphere.normalizeCelestialTimePreset(VRODOS.editor.envir.scene.aframePmndrsCelestialTimePreset);
         
@@ -561,6 +575,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (c.pmndrsAtmospherePresetIntensity && c.pmndrsAtmospherePresetIntensityValue) {
             c.pmndrsAtmospherePresetIntensityValue.textContent = Shared.formatNumber(parseFloat(c.pmndrsAtmospherePresetIntensity.value));
+        }
+        if (c.pmndrsCloudsCoverage && c.pmndrsCloudsCoverageValue) {
+            c.pmndrsCloudsCoverageValue.textContent = Shared.formatNumber(parseFloat(c.pmndrsCloudsCoverage.value));
         }
         if (c.pmndrsAerialStrength && c.pmndrsAerialStrengthValue) {
             c.pmndrsAerialStrengthValue.textContent = Shared.formatNumber(parseFloat(c.pmndrsAerialStrength.value));
@@ -860,6 +877,23 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls.pmndrsAerialPerspective) {
             controls.pmndrsAerialPerspective.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled);
         }
+        if (controls.pmndrsClouds) {
+            controls.pmndrsClouds.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsCloudsEnabled);
+        }
+        if (controls.pmndrsCloudsQuality) {
+            controls.pmndrsCloudsQuality.value = VRODOS.editor.envir && VRODOS.editor.envir.scene
+                ? VRodosCompileUI.Atmosphere.normalizeCloudsQuality(VRODOS.editor.envir.scene.aframePmndrsCloudsQuality)
+                : Shared.PMNDRS_TWEAK_DEFAULTS.cloudsQuality;
+        }
+        if (controls.pmndrsCloudsCoverage) {
+            controls.pmndrsCloudsCoverage.value = Shared.clampNumber(
+                VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsCloudsCoverage : Shared.PMNDRS_TWEAK_DEFAULTS.cloudsCoverage,
+                0,
+                1,
+                Shared.PMNDRS_TWEAK_DEFAULTS.cloudsCoverage,
+                0.01
+            );
+        }
         if (controls.pmndrsCorrectAltitude) {
             controls.pmndrsCorrectAltitude.checked = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) || VRODOS.editor.envir.scene.aframePmndrsCorrectAltitudeEnabled !== false;
         }
@@ -1088,7 +1122,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     bindEngineTab(controls.postFxEngineTabLegacy);
     bindEngineTab(controls.postFxEngineTabPmndrs);
-    [controls.pmndrsBloomIntensity, controls.pmndrsBloomThreshold, controls.pmndrsExposure, controls.pmndrsLutStrength, controls.pmndrsVignetteDarkness, controls.pmndrsNoiseOpacity, controls.pmndrsChromaticAberrationOffset, controls.pmndrsAtmospherePresetIntensity].forEach((el) => {
+    [controls.pmndrsBloomIntensity, controls.pmndrsBloomThreshold, controls.pmndrsExposure, controls.pmndrsLutStrength, controls.pmndrsVignetteDarkness, controls.pmndrsNoiseOpacity, controls.pmndrsChromaticAberrationOffset, controls.pmndrsAtmospherePresetIntensity, controls.pmndrsCloudsCoverage].forEach((el) => {
         if (el) {
             el.addEventListener('input', updatePmndrsValueLabels);
         }
@@ -1255,6 +1289,8 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.pmndrsGeospatial,
         controls.pmndrsCorrectAltitude,
         controls.pmndrsAerialPerspective,
+        controls.pmndrsClouds,
+        controls.pmndrsCloudsQuality,
         controls.pmndrsGeospatialLatitude,
         controls.pmndrsGeospatialLongitude,
         controls.pmndrsGeospatialAltitude
@@ -1298,6 +1334,20 @@ window.addEventListener('DOMContentLoaded', () => {
     if (controls.pmndrsAtmosphereQuality) {
         controls.pmndrsAtmosphereQuality.addEventListener('change', syncCompilePostFxState);
     }
+    if (controls.pmndrsCloudsCoverage) {
+        controls.pmndrsCloudsCoverage.addEventListener('change', () => {
+            controls.pmndrsCloudsCoverage.value = Shared.clampNumber(
+                controls.pmndrsCloudsCoverage.value,
+                0,
+                1,
+                Shared.PMNDRS_TWEAK_DEFAULTS.cloudsCoverage,
+                0.01
+            );
+            updatePmndrsValueLabels();
+            syncCompilePostFxState();
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
+        });
+    }
     if (controls.pmndrsResetBtn) {
         controls.pmndrsResetBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1322,6 +1372,9 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsAtmospherePreset) c.pmndrsAtmospherePreset.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePreset;
             if (c.pmndrsAtmospherePresetIntensity) c.pmndrsAtmospherePresetIntensity.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePresetIntensity;
             if (c.pmndrsAtmosphereQuality) c.pmndrsAtmosphereQuality.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
+            if (c.pmndrsClouds) c.pmndrsClouds.checked = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsEnabled;
+            if (c.pmndrsCloudsQuality) c.pmndrsCloudsQuality.value = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsQuality;
+            if (c.pmndrsCloudsCoverage) c.pmndrsCloudsCoverage.value = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsCoverage;
             if (c.pmndrsCelestialMode) c.pmndrsCelestialMode.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialMode;
             if (c.pmndrsCelestialTimePreset) c.pmndrsCelestialTimePreset.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset;
             if (c.pmndrsCelestialDate) c.pmndrsCelestialDate.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialDate;

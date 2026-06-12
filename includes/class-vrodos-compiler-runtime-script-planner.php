@@ -44,6 +44,9 @@ class VRodos_Compiler_Runtime_Script_Planner {
 				$requested[] = 'pmndrs-postfx';
 				if ( $this->feature_flags->is_pmndrs_atmosphere_enabled( $metadata ) ) {
 					$requested[] = 'takram-atmosphere';
+					if ( $this->feature_flags->is_pmndrs_clouds_enabled( $metadata ) ) {
+						$requested[] = 'takram-clouds';
+					}
 				}
 			} else {
 				$requested[] = 'legacy-postfx';

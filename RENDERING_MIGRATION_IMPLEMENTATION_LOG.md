@@ -21,9 +21,29 @@ The earlier migration from legacy Three.js r173 to the pinned A-Frame master + T
 5. Prototype desktop-only Takram-vanilla `post-process-albedo` lighting.
 6. Preserve the immersive XR composer bypass and direct stereo fallback.
 7. Defer Three latest testing to a separate A-Frame module/import-map runtime spike.
-8. Keep Takram volumetric clouds in backlog and out of scope for the current lighting phase.
+8. Treat Takram volumetric clouds v1 as shipped for desktop/inline PMNDRS scenes only; keep immersive XR clouds as a separate validation spike.
 
 ## Recent Landed Work
+
+### Takram volumetric clouds v1
+
+- Added an opt-in PMNDRS/Takram cloud path for desktop inline and desktop fullscreen compiled scenes.
+- Added `assets/js/runtime/master/lib/vrodos-takram-clouds.bundle.js`, exported as `window.VRODOS_TAKRAM_CLOUDS`.
+- Kept cloud loading lazy: `takram-clouds` is planned only when PMNDRS post-FX, Takram atmosphere, high render quality, and clouds are enabled.
+- Vendored cloud assets locally under `assets/vendor/takram-clouds/`: `local_weather.png`, `shape.bin`, `shape_detail.bin`, `turbulence.png`, and `stbn.bin`.
+- Reworked the cloud vendor build to consume Takram's compiled package output instead of TypeScript source so legacy decorators evaluate correctly in the browser bundle.
+- Sanitized Takram's bundled default asset URL constants to local asset paths so the generated cloud bundle contains no `media.githubusercontent.com` runtime dependency.
+- Added scene metadata and compiled `scene-settings` keys:
+  - `aframePmndrsCloudsEnabled` / `pmndrsCloudsEnabled`
+  - `aframePmndrsCloudsQuality` / `pmndrsCloudsQuality`
+  - `aframePmndrsCloudsCoverage` / `pmndrsCloudsCoverage`
+- Expanded cloud quality to the four Takram performance profiles: `low`, `medium`, `high`, and `ultra`.
+- Applied VRodos profile overlays per quality: temporal upscaling stays enabled, `shadow.farScale` matches Takram's London Storybook demo at `0.25`, high/ultra render clouds at full resolution, and light shafts remain off in v1.
+- Created `CloudsEffect` before `AerialPerspectiveEffect`, kept `skipRendering = true`, and routed cloud overlay/shadow/shadow-length buffers into Takram aerial perspective composition.
+- Added per-frame cloud sync with active Takram atmosphere state, camera, sun direction, world-to-ECEF matrix, correct-altitude mode, precomputed atmosphere textures, quality, coverage, and local cloud textures.
+- Added skip diagnostics for disabled settings, missing PMNDRS composer, missing WebGL2/Data3DTexture support, mobile, immersive XR, missing cloud assets, and missing/crashed cloud bundle.
+- Real immersive WebXR explicitly skips clouds in v1 because VRodos bypasses the PMNDRS composer while `renderer.xr.isPresenting`.
+- Verification passed for `npm.cmd run build:three`, `npm.cmd run build:runtime`, targeted JS checks, PHP syntax checks, planner fixtures, URL/decorator absence scans, `npm.cmd run lint` with existing warnings only, and `git diff --check`.
 
 ### Compiled runtime pipeline refactor
 

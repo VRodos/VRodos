@@ -435,6 +435,14 @@ class VRodos_Asset_Manager {
 		$runtime_config = VRodos_Render_Runtime_Manager::get_config();
 		$three_vendor_dir = (string) ( $runtime_config['three_vendor_dir'] ?? VRodos_Render_Runtime_Manager::get_three_vendor_dir() );
 		$three_vendor_base = VRodos_Path_Manager::vendor_url( $three_vendor_dir . '/' );
+		$takram_cloud_assets = [
+			'baseUrl' => $runtime_config['takram_clouds_assets_base_url'] ?? VRodos_Path_Manager::vendor_url( 'takram-clouds/' ),
+			'localWeatherUrl' => $runtime_config['takram_clouds_local_weather_url'] ?? VRodos_Path_Manager::vendor_url( 'takram-clouds/local_weather.png' ),
+			'shapeUrl' => $runtime_config['takram_clouds_shape_url'] ?? VRodos_Path_Manager::vendor_url( 'takram-clouds/shape.bin' ),
+			'shapeDetailUrl' => $runtime_config['takram_clouds_shape_detail_url'] ?? VRodos_Path_Manager::vendor_url( 'takram-clouds/shape_detail.bin' ),
+			'turbulenceUrl' => $runtime_config['takram_clouds_turbulence_url'] ?? VRodos_Path_Manager::vendor_url( 'takram-clouds/turbulence.png' ),
+			'stbnUrl' => $runtime_config['takram_clouds_stbn_url'] ?? VRodos_Path_Manager::vendor_url( 'takram-clouds/stbn.bin' ),
+		];
 		$inline_script = 'window.vrodos_three_vendor_dir = ' . wp_json_encode( $three_vendor_dir ) . ';'
 			. 'window.vrodos_three_vendor_base = ' . wp_json_encode( $three_vendor_base ) . ';'
 			. 'window.vrodos_three_decoder_path = ' . wp_json_encode( $three_vendor_base . 'draco/' ) . ';'
@@ -443,6 +451,7 @@ class VRodos_Asset_Manager {
 			. 'window.vrodos_three_meshopt_decoder_path = ' . wp_json_encode( $three_vendor_base . 'meshopt/meshopt_decoder.js' ) . ';'
 			. 'window.vrodos_three_font_path = ' . wp_json_encode( $three_vendor_base . 'fonts/helvetiker_bold.typeface.json' ) . ';'
 			. 'window.vrodos_takram_stars_data_url = ' . wp_json_encode( $runtime_config['takram_stars_data_url'] ?? VRodos_Path_Manager::vendor_url( 'takram-atmosphere/stars.bin' ) ) . ';'
+			. 'window.vrodos_takram_cloud_assets = ' . wp_json_encode( $takram_cloud_assets ) . ';'
 			. 'window.vrodos_render_runtime = ' . wp_json_encode( $runtime_config ) . ';';
 		wp_add_inline_script( 'vrodos_three_vendor_bundle', $inline_script, 'before' );
 	}

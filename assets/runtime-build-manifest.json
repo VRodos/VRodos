@@ -224,6 +224,23 @@
       ],
       "generatedBy": "build:three"
     },
+    "takram-clouds": {
+      "id": "takram-clouds",
+      "label": "Takram volumetric clouds vendor",
+      "type": "script",
+      "file": "vrodos-takram-clouds.bundle.js",
+      "src": "js/master/lib/vrodos-takram-clouds.bundle.js",
+      "order": 46,
+      "dependencies": [
+        "takram-atmosphere"
+      ],
+      "features": [
+        "takram-clouds",
+        "pmndrs-clouds",
+        "volumetric-clouds"
+      ],
+      "generatedBy": "build:three"
+    },
     "collision-bvh-vendor": {
       "id": "collision-bvh-vendor",
       "label": "Static collision BVH vendor",

@@ -636,9 +636,32 @@
 											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Takram AerialPerspectiveEffect distance haze. Sky and PBR lighting stay owned by Takram SkyMaterial, SunDirectionalLight, and SkyLightProbe.">Aerial Haze</span>
 										</label>
 										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+											<input id="compilePmndrsCloudsToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Takram volumetric clouds in the desktop PMNDRS composer.">Clouds</span>
+										</label>
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 											<input id="compilePmndrsCorrectAltitudeToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
 											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Takram correctAltitude compensation for the atmospheric ellipsoid.">Correct Altitude</span>
 										</label>
+									</div>
+
+									<div id="compilePmndrsCloudsWrapper" class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<label class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Cloud Quality</span>
+											<select id="compilePmndrsCloudsQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+												<option value="low">Low</option>
+												<option value="medium">Medium</option>
+												<option value="high">High</option>
+												<option value="ultra">Ultra</option>
+											</select>
+										</label>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Cloud Coverage</span>
+												<span id="compilePmndrsCloudsCoverageValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.35</span>
+											</div>
+											<input id="compilePmndrsCloudsCoverageSlider" type="range" min="0" max="1" step="0.01" value="0.35" class="tw-range tw-range-primary tw-range-xs">
+										</div>
 									</div>
 
 									<div class="tw-grid tw-grid-cols-3 tw-gap-3">

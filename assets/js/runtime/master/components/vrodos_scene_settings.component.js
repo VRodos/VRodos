@@ -396,6 +396,13 @@ AFRAME.registerComponent('scene-settings', {
             (vrodosRuntimeTruthy(this.data.pmndrsAerialPerspectiveEnabled) ||
                 vrodosRuntimeDebugFlag('enablePmndrsHorizonAerial', 'vrodos_debug_enable_pmndrs_horizon_aerial'));
     },
+    isPmndrsCloudsEnabled: function () {
+        return this.getRenderQualityLevel() === 'high' &&
+            this.data.postFXEngine === 'pmndrs' &&
+            this.data.postFXEnabled !== '0' &&
+            this.isPmndrsAtmosphereEnabled() &&
+            vrodosRuntimeTruthy(this.data.pmndrsCloudsEnabled);
+    },
     getReflectionSource: function () {
         return this.data.reflectionSource === 'scene-probe' ? 'scene-probe' : 'hdr';
     },
@@ -696,7 +703,8 @@ AFRAME.registerComponent('scene-settings', {
             (this.data.postFXEngine === 'pmndrs' && vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled)) ||
             (this.data.postFXEngine === 'pmndrs' && vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled)) ||
             (this.data.postFXEngine === 'pmndrs' && vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled)) ||
-            this.isPmndrsAerialPerspectiveEffectEnabled();
+            this.isPmndrsAerialPerspectiveEffectEnabled() ||
+            this.isPmndrsCloudsEnabled();
     },
     hasCinematicShaderOptions: function () {
         return this.hasBloomEffectEnabled() ||
@@ -711,7 +719,8 @@ AFRAME.registerComponent('scene-settings', {
             this.isPostFXOptionEnabled('postFXTAAEnabled') ||
             this.isPostFXOptionEnabled('postFXSSREnabled') ||
             this.getAmbientOcclusionPreset() !== 'off' ||
-            this.isPmndrsAerialPerspectiveEffectEnabled();
+            this.isPmndrsAerialPerspectiveEffectEnabled() ||
+            this.isPmndrsCloudsEnabled();
     },
     hasPmndrsComposerEffectRequest: function () {
         return this.data.postFXEngine === 'pmndrs' &&
@@ -727,7 +736,8 @@ AFRAME.registerComponent('scene-settings', {
                 vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) ||
                 vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) ||
                 this.getAmbientOcclusionPreset() !== 'off' ||
-                this.isPmndrsAerialPerspectiveEffectEnabled()
+                this.isPmndrsAerialPerspectiveEffectEnabled() ||
+                this.isPmndrsCloudsEnabled()
             );
     },
     hasPostProcessingPipelineRequest: function () {

@@ -150,6 +150,11 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 			&& VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmosphereEnabled', true );
 	}
 
+	public function is_pmndrs_clouds_enabled( $metadata ): bool {
+		return $this->is_pmndrs_atmosphere_enabled( $metadata )
+			&& VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCloudsEnabled', false );
+	}
+
 	public function is_fps_meter_enabled( $metadata ): bool {
 		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->enableFPSMeter ?? false )
 			|| VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeFPSMeterEnabled ?? false );

@@ -445,6 +445,11 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsAtmospherePresetIntensity'] = isset( $json_metadata->aframePmndrsAtmospherePresetIntensity ) ? (float) $json_metadata->aframePmndrsAtmospherePresetIntensity : 1.0;
 		$scene_data['aframePmndrsAtmosphereQuality'] = $json_metadata->aframePmndrsAtmosphereQuality ?? 'balanced';
 		$scene_data['aframePmndrsAerialPerspectiveEnabled'] = $json_metadata->aframePmndrsAerialPerspectiveEnabled ?? false;
+		$scene_data['aframePmndrsCloudsEnabled'] = VRodos_Runtime_Settings_Contract::normalize_bool( $json_metadata->aframePmndrsCloudsEnabled ?? false );
+		$pmndrs_clouds_quality_raw = $json_metadata->aframePmndrsCloudsQuality ?? 'low';
+		$scene_data['aframePmndrsCloudsQuality'] = in_array( $pmndrs_clouds_quality_raw, [ 'low', 'medium', 'high', 'ultra' ], true ) ? $pmndrs_clouds_quality_raw : 'low';
+		$pmndrs_clouds_coverage = isset( $json_metadata->aframePmndrsCloudsCoverage ) ? (float) $json_metadata->aframePmndrsCloudsCoverage : 0.35;
+		$scene_data['aframePmndrsCloudsCoverage'] = max( 0.0, min( 1.0, $pmndrs_clouds_coverage ) );
 		$scene_data['aframePmndrsCorrectAltitudeEnabled'] = $json_metadata->aframePmndrsCorrectAltitudeEnabled ?? true;
 		$scene_data['aframePmndrsGeospatialEnabled'] = $json_metadata->aframePmndrsGeospatialEnabled ?? false;
 		$scene_data['aframePmndrsGeospatialLatitudeDeg'] = isset( $json_metadata->aframePmndrsGeospatialLatitudeDeg ) ? (float) $json_metadata->aframePmndrsGeospatialLatitudeDeg : 0.0;

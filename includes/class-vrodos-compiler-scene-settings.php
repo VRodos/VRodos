@@ -152,6 +152,9 @@ class VRodos_Compiler_Scene_Settings {
 			'pmndrsAtmospherePresetIntensity'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmospherePresetIntensity' ),
 			'pmndrsAtmosphereQuality'            => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmosphereQuality' ),
 			'pmndrsAerialPerspectiveEnabled'     => $this->pmndrs_bool_attr( $metadata, 'pmndrsAerialPerspectiveEnabled' ),
+			'pmndrsCloudsEnabled'                => $this->feature_flags->is_pmndrs_clouds_enabled( $metadata ) ? 'true' : 'false',
+			'pmndrsCloudsQuality'                => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCloudsQuality' ),
+			'pmndrsCloudsCoverage'               => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCloudsCoverage' ),
 			'pmndrsCorrectAltitudeEnabled'       => $this->pmndrs_bool_attr( $metadata, 'pmndrsCorrectAltitudeEnabled', true ),
 			'pmndrsGeospatialEnabled'            => $this->pmndrs_bool_attr( $metadata, 'pmndrsGeospatialEnabled' ),
 			'pmndrsGeospatialLatitudeDeg'        => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsGeospatialLatitudeDeg' ),
@@ -492,7 +495,8 @@ class VRodos_Compiler_Scene_Settings {
 			$this->setting_bool( $settings, 'pmndrsVignetteEnabled' ) ||
 			$this->setting_bool( $settings, 'pmndrsNoiseEnabled' ) ||
 			$this->setting_bool( $settings, 'pmndrsChromaticAberrationEnabled' ) ||
-			$this->setting_bool( $settings, 'pmndrsAerialPerspectiveEnabled' );
+			$this->setting_bool( $settings, 'pmndrsAerialPerspectiveEnabled' ) ||
+			$this->setting_bool( $settings, 'pmndrsCloudsEnabled' );
 	}
 
 	private function should_apply_color_grading( array $settings ): bool {

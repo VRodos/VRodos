@@ -113,6 +113,7 @@ $manifest = new VRodos_Compiler_Runtime_Manifest(
 			'pmndrs-postprocessing-vendor' => vrodos_test_chunk( 'pmndrs-postprocessing-vendor', 'script', 'js/master/lib/vrodos-postprocessing.bundle.js', 35 ),
 			'legacy-postfx'                => vrodos_test_chunk( 'legacy-postfx', 'script', 'js/master/lib/vrodos-runtime-legacy-postfx.bundle.js', 40 ),
 			'takram-atmosphere'            => vrodos_test_chunk( 'takram-atmosphere', 'script', 'js/master/lib/vrodos-takram-atmosphere.bundle.js', 45 ),
+			'takram-clouds'                => vrodos_test_chunk( 'takram-clouds', 'script', 'js/master/lib/vrodos-takram-clouds.bundle.js', 46, [ 'takram-atmosphere' ] ),
 			'pmndrs-postfx'                => vrodos_test_chunk( 'pmndrs-postfx', 'script', 'js/master/lib/vrodos-runtime-pmndrs-postfx.bundle.js', 50, [ 'pmndrs-postprocessing-vendor' ] ),
 			'aframe-components'            => vrodos_test_chunk( 'aframe-components', 'script', 'js/master/lib/vrodos-runtime-aframe-components.bundle.js', 90, [ 'core-runtime' ] ),
 		],
@@ -225,6 +226,18 @@ vrodos_assert_same(
 );
 
 vrodos_assert_same(
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'takram-clouds', 'pmndrs-postfx', 'aframe-components' ],
+	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframePmndrsCloudsEnabled' => true ] ) ),
+	'PMNDRS with Takram clouds'
+);
+
+vrodos_assert_same(
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'pmndrs-postfx', 'aframe-components' ],
+	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => false, 'aframePmndrsCloudsEnabled' => true ] ) ),
+	'PMNDRS clouds disabled by Takram atmosphere gate'
+);
+
+vrodos_assert_same(
 	[ 'scene-components', 'networked-components', 'core-runtime', 'fps-meter', 'collision-bvh-vendor', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframeFPSMeterEnabled' => true ] ) ),
 	'FPS meter'
@@ -269,6 +282,12 @@ vrodos_assert_order( $assessment_html, 'vrodos-runtime-spatial-ui.bundle.js', 'v
 $pmndrs_takram_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true ] ) );
 vrodos_assert_order( $pmndrs_takram_html, 'vrodos-postprocessing.bundle.js', 'vrodos-takram-atmosphere.bundle.js', 'PMNDRS Takram script order' );
 vrodos_assert_order( $pmndrs_takram_html, 'vrodos-takram-atmosphere.bundle.js', 'vrodos-runtime-pmndrs-postfx.bundle.js', 'PMNDRS Takram script order' );
+vrodos_assert_not_contains( $pmndrs_takram_html, 'vrodos-takram-clouds.bundle.js', 'PMNDRS Takram script order' );
+
+$pmndrs_clouds_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframePmndrsCloudsEnabled' => true ] ) );
+vrodos_assert_contains( $pmndrs_clouds_html, 'vrodos-takram-clouds.bundle.js', 'PMNDRS clouds script tags' );
+vrodos_assert_order( $pmndrs_clouds_html, 'vrodos-takram-atmosphere.bundle.js', 'vrodos-takram-clouds.bundle.js', 'PMNDRS clouds script order' );
+vrodos_assert_order( $pmndrs_clouds_html, 'vrodos-takram-clouds.bundle.js', 'vrodos-runtime-pmndrs-postfx.bundle.js', 'PMNDRS clouds script order' );
 
 $single_player_html = $planner->render_scripts_for_scene( vrodos_test_scene( [] ), 'single-player' );
 vrodos_assert_not_contains( $single_player_html, 'vrodos-runtime-networked-components.bundle.js', 'single-player script tags' );
@@ -309,7 +328,7 @@ vrodos_assert_manifest_error(
 
 $actual_manifest = new VRodos_Compiler_Runtime_Manifest();
 vrodos_assert_same(
-	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'three-addons-vendor', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
 	$actual_manifest->resolve_chunk_ids( [ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ] ),
 	'actual generated manifest validation'
 );

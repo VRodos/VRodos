@@ -172,6 +172,17 @@ const externalChunks = [
     generatedBy: 'build:three'
   },
   {
+    id: 'takram-clouds',
+    label: 'Takram volumetric clouds vendor',
+    type: 'script',
+    file: 'vrodos-takram-clouds.bundle.js',
+    src: runtimeLibrarySrc('vrodos-takram-clouds.bundle.js'),
+    order: 46,
+    dependencies: ['takram-atmosphere'],
+    features: ['takram-clouds', 'pmndrs-clouds', 'volumetric-clouds'],
+    generatedBy: 'build:three'
+  },
+  {
     id: 'collision-bvh-vendor',
     label: 'Static collision BVH vendor',
     type: 'script',

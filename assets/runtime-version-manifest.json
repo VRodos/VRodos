@@ -38,9 +38,18 @@
     "global": "VRODOS_TAKRAM_ATMOSPHERE",
     "bundleFile": "vrodos-takram-atmosphere.bundle.js",
     "bundlePath": "assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js",
+    "cloudsGlobal": "VRODOS_TAKRAM_CLOUDS",
+    "cloudsBundleFile": "vrodos-takram-clouds.bundle.js",
+    "cloudsBundlePath": "assets/js/runtime/master/lib/vrodos-takram-clouds.bundle.js",
     "starsDataPath": "assets/vendor/takram-atmosphere/stars.bin",
     "assets": {
-      "starsDataPath": "assets/vendor/takram-atmosphere/stars.bin"
+      "starsDataPath": "assets/vendor/takram-atmosphere/stars.bin",
+      "cloudsBasePath": "assets/vendor/takram-clouds/",
+      "cloudsLocalWeatherPath": "assets/vendor/takram-clouds/local_weather.png",
+      "cloudsShapePath": "assets/vendor/takram-clouds/shape.bin",
+      "cloudsShapeDetailPath": "assets/vendor/takram-clouds/shape_detail.bin",
+      "cloudsTurbulencePath": "assets/vendor/takram-clouds/turbulence.png",
+      "cloudsStbnPath": "assets/vendor/takram-clouds/stbn.bin"
     }
   },
   "collisionBvh": {

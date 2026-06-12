@@ -905,6 +905,9 @@
     isPmndrsAerialPerspectiveEffectEnabled: function() {
       return this.data.postFXEngine === "pmndrs" && (vrodosRuntimeTruthy(this.data.pmndrsAerialPerspectiveEnabled) || vrodosRuntimeDebugFlag("enablePmndrsHorizonAerial", "vrodos_debug_enable_pmndrs_horizon_aerial"));
     },
+    isPmndrsCloudsEnabled: function() {
+      return this.getRenderQualityLevel() === "high" && this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && this.isPmndrsAtmosphereEnabled() && vrodosRuntimeTruthy(this.data.pmndrsCloudsEnabled);
+    },
     getReflectionSource: function() {
       return this.data.reflectionSource === "scene-probe" ? "scene-probe" : "hdr";
     },
@@ -1135,13 +1138,13 @@
       return this.data.postFXEngine !== "pmndrs" && this.isPostFXOptionEnabled("postFXEdgeAAEnabled");
     },
     hasEnabledPostFXOptions: function() {
-      return this.hasBloomEffectEnabled() || this.hasPostFXColorGradingEffectEnabled() || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) || this.isPmndrsAerialPerspectiveEffectEnabled();
+      return this.hasBloomEffectEnabled() || this.hasPostFXColorGradingEffectEnabled() || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) || this.isPmndrsAerialPerspectiveEffectEnabled() || this.isPmndrsCloudsEnabled();
     },
     hasCinematicShaderOptions: function() {
-      return this.hasBloomEffectEnabled() || this.hasPostFXColorGradingEffectEnabled() || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) || this.isPostFXOptionEnabled("postFXTAAEnabled") || this.isPostFXOptionEnabled("postFXSSREnabled") || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAerialPerspectiveEffectEnabled();
+      return this.hasBloomEffectEnabled() || this.hasPostFXColorGradingEffectEnabled() || this.isLegacyEdgeAAEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) || this.data.postFXEngine === "pmndrs" && vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) || this.isPostFXOptionEnabled("postFXTAAEnabled") || this.isPostFXOptionEnabled("postFXSSREnabled") || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAerialPerspectiveEffectEnabled() || this.isPmndrsCloudsEnabled();
     },
     hasPmndrsComposerEffectRequest: function() {
-      return this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && this.getRenderQualityLevel() === "high" && (this.hasBloomEffectEnabled() || this.hasPostFXColorGradingEffectEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled) || vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) || vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAerialPerspectiveEffectEnabled());
+      return this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && this.getRenderQualityLevel() === "high" && (this.hasBloomEffectEnabled() || this.hasPostFXColorGradingEffectEnabled() || this.isPmndrsAAEnabled() || this.isPmndrsLutEnabled() || this.isPmndrsLensFlareEnabled() || vrodosRuntimeTruthy(this.data.pmndrsVignetteEnabled) || vrodosRuntimeTruthy(this.data.pmndrsNoiseEnabled) || vrodosRuntimeTruthy(this.data.pmndrsChromaticAberrationEnabled) || this.getAmbientOcclusionPreset() !== "off" || this.isPmndrsAerialPerspectiveEffectEnabled() || this.isPmndrsCloudsEnabled());
     },
     hasPostProcessingPipelineRequest: function() {
       if (this.data.postFXEngine === "pmndrs") {

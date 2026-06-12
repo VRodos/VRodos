@@ -92,6 +92,7 @@ That runtime powers:
 - shadow-aware direct-sun glint suppression for compiled-scene PBR materials
 - PMNDRS/Takram tone mapping, sun lens flare, and atmosphere controls for desktop compiled scenes
 - PMNDRS/Takram day-night lighting with horizon-gated direct sun/moon lights and separate indirect sky/fill support
+- opt-in Takram volumetric clouds for desktop inline/fullscreen PMNDRS + Takram atmosphere scenes
 - compiled walkable-surface and static player/world collision workflows
 - static cached desktop shadows where visible compiled geometry casts and receives by default
 - PMNDRS UIKit Horizon immersive VR dialogs for CEFR prompts and assessment panels while A-Frame remains the scene/XR host
@@ -114,6 +115,7 @@ Compiled scenes can currently offer:
 - reflection source selection between HDR presets and scene probes
 - global reflection enable/disable control plus shadow-aware direct-sun reflection occlusion
 - PMNDRS selectable tone mapping, exposure, generated LUT looks, Takram correct-altitude, and Takram Horizon lens flare
+- opt-in desktop PMNDRS/Takram volumetric clouds with local vendored cloud textures and four Takram quality profiles
 - authored emissive materials plus scoped media readability emissive handling; emissive output is not treated as a scene light
 - walkable-surface ground collisions plus default static player blocking for compiled scene geometry
 
@@ -150,6 +152,7 @@ High-quality compiled desktop scenes keep the PMNDRS/Takram look while avoiding 
 - PMNDRS/Takram Horizon scenes use Takram physical `SunDirectionalLight` / `SkyLightProbe` when available, with a separate PBR indirect-light profile and low-cost hemisphere ground/sky fill for A-Frame assets. Direct sun/moon scene lights are disabled below the local horizon threshold. Flat media surfaces get a narrowly scoped readability material treatment.
 - Terrain-heavy scenes use a camera-focused directional shadow fit, terrain custom depth offset, and terrain soft self-shadow suppression so mountain-cast shadows remain while shallow slope banding is reduced.
 - The PMNDRS AO budget keeps the final color buffer full-resolution while scaling the NormalPass/SSAO workload per AO preset.
+- Takram clouds are desktop/inline only in v1. They require PMNDRS post-FX, high render quality, Takram atmosphere, WebGL2/Data3DTexture support, and local cloud assets. The four cloud profiles map to Takram `low`, `medium`, `high`, and `ultra`; temporal upscaling stays enabled, light shafts remain off, and immersive WebXR skips clouds while keeping the rest of the scene visible.
 - `?vrodos_debug_shadow_perf=1` shows live shadow cache diagnostics.
 - `scripts/profile-master-client.mjs --disable-fps-meter` appends `vrodos_debug_disable_fps_meter=1` so StatsGL does not initialize before profiling.
 
@@ -219,19 +222,21 @@ It currently supports:
 - Takram atmosphere/celestial presets and advanced controls
 - Takram correct-altitude control
 - Takram Horizon sky, sun disk, and sun lens flare ownership
+- Takram volumetric clouds for desktop inline/fullscreen PMNDRS scenes
 
 Important current limitations:
 
 - SSR is not available on the PMNDRS path
 - TAA is not available on the PMNDRS path
 - composer MSAA is disabled when PMNDRS ambient occlusion is active; use SMAA for AO scenes
+- immersive WebXR skips PMNDRS/Takram clouds in v1 because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`
 - the current Horizon PMNDRS path uses Takram light-source lighting for A-Frame/PBR content; it is not yet the Takram vanilla `post-process-albedo` lighting model
 
 For current-state PMNDRS/Takram decisions and phased follow-up work, see [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md). For the technical render-stack reference, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md).
 
 ## Takram Support
 
-Takram support in VRodos currently means atmosphere and sky integration, not clouds.
+Takram support in VRodos currently means desktop PMNDRS atmosphere, sky, lighting, lens flare, stars, and opt-in volumetric clouds. Immersive XR keeps the scene-owned Takram sky/lighting baseline but skips PMNDRS cloud composition in v1.
 
 ### Shipped now
 
@@ -240,6 +245,9 @@ Takram support in VRodos currently means atmosphere and sky integration, not clo
 - Takram-driven sky and real sun-disk ownership on the PMNDRS Horizon path
 - Takram Horizon sun LensFlareEffect
 - Takram correct-altitude toggle
+- Takram stars from local `assets/vendor/takram-atmosphere/stars.bin`
+- Takram volumetric clouds from local `assets/vendor/takram-clouds/` assets
+- four cloud performance profiles: `low`, `medium`, `high`, and `ultra`
 - atmospheric tuning for sun position, scattering, ground, and aerial-strength behavior
 - Takram physical light ownership for PMNDRS/Takram Horizon scenes, with an internal safety fallback only if Takram light-source classes are unavailable
 - local Horizon keeps Takram procedural ground disabled so authored walkable-surface/navmesh geometry remains the actual scene ground
@@ -247,7 +255,8 @@ Takram support in VRodos currently means atmosphere and sky integration, not clo
 ### Not shipped yet
 
 - desktop Takram-vanilla `post-process-albedo` lighting mode
-- Takram volumetric clouds
+- immersive XR/headset Takram clouds
+- author-facing cloud light-shafts controls
 
 ## Compile Dialog Controls
 
@@ -289,6 +298,9 @@ The compile dialog exposes both shared controls and engine-specific controls.
 - celestial mode: `manual` or `preset-time`
 - celestial time preset: `sunrise`, `midday`, `golden-hour`, `sunset`, `night`
 - Takram quality: `performance`, `balanced`, `quality`, `cinematic`
+- Takram clouds toggle
+- cloud quality: `low`, `medium`, `high`, `ultra`
+- cloud coverage: `0..1`
 - correct-altitude toggle
 - preset intensity
 - advanced atmosphere controls for:
@@ -329,6 +341,7 @@ The plugin follows a manager-class architecture, with dedicated managers for ass
 - Pinned A-Frame runtime metadata from root `package.json`
 - `pmndrs/postprocessing` bundled into the compiled-scene postprocessing runtime bundle
 - Takram atmosphere runtime bundle built from root `@takram/*` package versions
+- Takram clouds runtime bundle and local cloud assets for opt-in desktop PMNDRS scenes
 - `three-mesh-bvh` bundled into the compiled-scene static collision runtime
 - `@pmndrs/uikit`, `@pmndrs/uikit-horizon`, and `@pmndrs/pointer-events` bundled into the compiled-scene spatial UI runtime only when needed
 - Noto Sans plus Zappar MSDF worker/WASM assets vendored for Greek spatial UI glyph coverage
@@ -384,6 +397,8 @@ npm run build
    - `assets/vendor/<three-dir>/<three-bundle>`
    - `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js`
    - `assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js`
+   - `assets/js/runtime/master/lib/vrodos-takram-clouds.bundle.js`
+   - `assets/vendor/takram-clouds/`
    - `assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js`
    - `assets/css/vrodos_modern_compiled.css` when the full build changes CSS
 

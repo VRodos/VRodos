@@ -158,6 +158,491 @@
         return v === true || v === 'true' || v === '1' || v === 1;
     }
 
+    function normalizePmndrsCloudsQuality(value) {
+        if (RuntimeSettings.normalizeEnum) {
+            return RuntimeSettings.normalizeEnum('pmndrsCloudsQuality', value, 'low');
+        }
+
+        switch (value) {
+            case 'low':
+            case 'medium':
+            case 'high':
+            case 'ultra':
+                return value;
+            default:
+                return 'low';
+        }
+    }
+
+    function getPmndrsCloudsQuality(self) {
+        return normalizePmndrsCloudsQuality(self && self.data ? self.data.pmndrsCloudsQuality : 'low');
+    }
+
+    function getPmndrsCloudsCoverage(self) {
+        return readPmndrsNumber(self, 'pmndrsCloudsCoverage', 0, 1, 0.35);
+    }
+
+    const PMNDRS_CLOUD_PERFORMANCE_PROFILES = {
+        low: {
+            id: 'low-performance',
+            takramQuality: 'low',
+            resolutionScale: 0.62,
+            temporalUpscale: true,
+            lightShafts: false,
+            shapeDetail: false,
+            turbulence: false,
+            shadowFarScale: 0.25,
+            localWeatherRepeat: 72,
+            localWeatherVelocity: [0.0002, 0],
+            shapeRepeat: 0.00024,
+            shapeDetailRepeat: 0.004,
+            turbulenceRepeat: 16,
+            turbulenceDisplacement: 0
+        },
+        medium: {
+            id: 'medium-balanced',
+            takramQuality: 'medium',
+            resolutionScale: 0.82,
+            temporalUpscale: true,
+            lightShafts: false,
+            shapeDetail: true,
+            turbulence: false,
+            shadowFarScale: 0.25,
+            localWeatherRepeat: 84,
+            localWeatherVelocity: [0.00025, 0],
+            shapeRepeat: 0.00026,
+            shapeDetailRepeat: 0.0045,
+            turbulenceRepeat: 18,
+            turbulenceDisplacement: 160
+        },
+        high: {
+            id: 'high-clarity',
+            takramQuality: 'high',
+            resolutionScale: 1,
+            temporalUpscale: true,
+            lightShafts: false,
+            shapeDetail: true,
+            turbulence: true,
+            shadowFarScale: 0.25,
+            localWeatherRepeat: 92,
+            localWeatherVelocity: [0.0003, 0],
+            shapeRepeat: 0.00028,
+            shapeDetailRepeat: 0.00475,
+            turbulenceRepeat: 20,
+            turbulenceDisplacement: 240
+        },
+        ultra: {
+            id: 'ultra-reference',
+            takramQuality: 'ultra',
+            resolutionScale: 1,
+            temporalUpscale: true,
+            lightShafts: false,
+            shapeDetail: true,
+            turbulence: true,
+            shadowFarScale: 0.25,
+            localWeatherRepeat: 100,
+            localWeatherVelocity: [0.00035, 0],
+            shapeRepeat: 0.0003,
+            shapeDetailRepeat: 0.006,
+            turbulenceRepeat: 20,
+            turbulenceDisplacement: 300
+        }
+    };
+
+    function getPmndrsCloudPerformanceProfile(quality) {
+        return PMNDRS_CLOUD_PERFORMANCE_PROFILES[normalizePmndrsCloudsQuality(quality)] ||
+            PMNDRS_CLOUD_PERFORMANCE_PROFILES.low;
+    }
+
+    function getPmndrsCloudsResolutionScale(quality) {
+        return getPmndrsCloudPerformanceProfile(quality).resolutionScale;
+    }
+
+    function setPmndrsCloudVector(target, value) {
+        if (!target || value === undefined || value === null) {
+            return;
+        }
+
+        if (Array.isArray(value)) {
+            if (typeof target.set === 'function') {
+                target.set(value[0] || 0, value[1] || 0, value[2] || 0);
+            } else {
+                target.x = value[0] || 0;
+                target.y = value[1] || 0;
+                if (value.length > 2 && 'z' in target) {
+                    target.z = value[2] || 0;
+                }
+            }
+            return;
+        }
+
+        if (typeof target.setScalar === 'function') {
+            target.setScalar(value);
+            return;
+        }
+
+        target.x = value;
+        target.y = value;
+        if ('z' in target) {
+            target.z = value;
+        }
+    }
+
+    function applyPmndrsCloudPerformanceProfile(effect, quality) {
+        if (!effect) {
+            return getPmndrsCloudPerformanceProfile(quality);
+        }
+
+        const profile = getPmndrsCloudPerformanceProfile(quality);
+        const signature = [
+            profile.id,
+            profile.takramQuality,
+            profile.resolutionScale,
+            profile.temporalUpscale ? 1 : 0,
+            profile.lightShafts ? 1 : 0,
+            profile.shapeDetail ? 1 : 0,
+            profile.turbulence ? 1 : 0
+        ].join('|');
+
+        if (effect._vrodosCloudsProfileSignature === signature) {
+            return profile;
+        }
+
+        effect.qualityPreset = profile.takramQuality;
+        effect.resolutionScale = profile.resolutionScale;
+        if (typeof effect.temporalUpscale !== 'undefined') {
+            effect.temporalUpscale = profile.temporalUpscale;
+        }
+        if (typeof effect.lightShafts !== 'undefined') {
+            effect.lightShafts = profile.lightShafts;
+        }
+        if (typeof effect.shapeDetail !== 'undefined') {
+            effect.shapeDetail = profile.shapeDetail;
+        }
+        if (typeof effect.turbulence !== 'undefined') {
+            effect.turbulence = profile.turbulence;
+        }
+        if (typeof effect.turbulenceDisplacement !== 'undefined') {
+            effect.turbulenceDisplacement = profile.turbulenceDisplacement;
+        }
+        if (effect.shadow && typeof effect.shadow.farScale !== 'undefined') {
+            effect.shadow.farScale = profile.shadowFarScale;
+        }
+        setPmndrsCloudVector(effect.localWeatherRepeat, profile.localWeatherRepeat);
+        setPmndrsCloudVector(effect.localWeatherVelocity, profile.localWeatherVelocity);
+        setPmndrsCloudVector(effect.shapeRepeat, profile.shapeRepeat);
+        setPmndrsCloudVector(effect.shapeDetailRepeat, profile.shapeDetailRepeat);
+        setPmndrsCloudVector(effect.turbulenceRepeat, profile.turbulenceRepeat);
+
+        effect._vrodosCloudsProfileSignature = signature;
+        return profile;
+    }
+
+    function joinPmndrsRuntimeUrl(base, relativePath) {
+        const rel = String(relativePath || '').replace(/^\/+/, '');
+        if (!base) {
+            return rel;
+        }
+        return `${String(base).replace(/\/+$/, '')  }/${  rel}`;
+    }
+
+    function resolvePmndrsCloudAssetUrls() {
+        const runtime = window.vrodos_render_runtime || {};
+        const globals = window.vrodos_takram_cloud_assets || {};
+        const pluginBase = window.VRODOS_PLUGIN_URL ||
+            (window.vrodos_data && (window.vrodos_data.pluginUrl || window.vrodos_data.plugin_url || window.vrodos_data.pluginPath)) ||
+            '';
+
+        function assetUrl(globalKey, runtimeKey, fallbackPath) {
+            const configuredUrl = globals[globalKey] || runtime[runtimeKey] || runtime[runtimeKey.replace(/_([a-z])/g, (match, letter) => letter.toUpperCase())];
+            if (typeof configuredUrl === 'string' && configuredUrl.trim()) {
+                return configuredUrl.trim();
+            }
+            return joinPmndrsRuntimeUrl(pluginBase, fallbackPath);
+        }
+
+        return {
+            localWeatherUrl: assetUrl('localWeatherUrl', 'takram_clouds_local_weather_url', 'assets/vendor/takram-clouds/local_weather.png'),
+            shapeUrl: assetUrl('shapeUrl', 'takram_clouds_shape_url', 'assets/vendor/takram-clouds/shape.bin'),
+            shapeDetailUrl: assetUrl('shapeDetailUrl', 'takram_clouds_shape_detail_url', 'assets/vendor/takram-clouds/shape_detail.bin'),
+            turbulenceUrl: assetUrl('turbulenceUrl', 'takram_clouds_turbulence_url', 'assets/vendor/takram-clouds/turbulence.png'),
+            stbnUrl: assetUrl('stbnUrl', 'takram_clouds_stbn_url', 'assets/vendor/takram-clouds/stbn.bin')
+        };
+    }
+
+    function hasCompletePmndrsCloudAssetUrls(urls) {
+        return Boolean(urls &&
+            urls.localWeatherUrl &&
+            urls.shapeUrl &&
+            urls.shapeDetailUrl &&
+            urls.turbulenceUrl &&
+            urls.stbnUrl);
+    }
+
+    function pmndrsCloudAssetSignature(urls) {
+        if (!urls) {
+            return 'none';
+        }
+        return [
+            urls.localWeatherUrl,
+            urls.shapeUrl,
+            urls.shapeDetailUrl,
+            urls.turbulenceUrl,
+            urls.stbnUrl
+        ].join('|');
+    }
+
+    function updatePmndrsCloudDiagnostics(self, updates) {
+        if (!self) {
+            return null;
+        }
+
+        const previous = self._pmndrsCloudsDiagnostics || {};
+        const profile = getPmndrsCloudPerformanceProfile(getPmndrsCloudsQuality(self));
+        const next = Object.assign({
+            cloudsActive: false,
+            cloudsSkippedReason: 'disabled',
+            quality: getPmndrsCloudsQuality(self),
+            profile: profile.id,
+            takramQuality: profile.takramQuality,
+            resolutionScale: profile.resolutionScale,
+            temporalUpscale: profile.temporalUpscale,
+            coverage: getPmndrsCloudsCoverage(self),
+            textureReady: false,
+            xrSkipped: false
+        }, previous, updates || {});
+
+        self._pmndrsCloudsDiagnostics = next;
+        self.pmndrsCloudsDiagnostics = next;
+        return next;
+    }
+
+    function markPmndrsCloudsSkipped(self, reason, updates) {
+        const next = updatePmndrsCloudDiagnostics(self, Object.assign({
+            cloudsActive: false,
+            cloudsSkippedReason: reason || 'disabled',
+            xrSkipped: reason === 'immersive-xr'
+        }, updates || {}));
+
+        if (self && reason && reason !== 'disabled' && reason !== 'cloud-assets-loading' && self._pmndrsCloudsWarnedReason !== reason) {
+            const message = `[VRodos] Takram volumetric clouds skipped: ${reason}.`;
+            if (reason === 'immersive-xr') {
+                console.warn(message);
+            } else {
+                console.info(message);
+            }
+            self._pmndrsCloudsWarnedReason = reason;
+        }
+
+        return next;
+    }
+
+    function markPmndrsCloudsActive(self, updates) {
+        if (self) {
+            self._pmndrsCloudsWarnedReason = '';
+        }
+        return updatePmndrsCloudDiagnostics(self, Object.assign({
+            cloudsActive: true,
+            cloudsSkippedReason: '',
+            xrSkipped: false
+        }, updates || {}));
+    }
+
+    function getPmndrsCloudsBundle() {
+        return window.VRODOS_TAKRAM_CLOUDS || null;
+    }
+
+    function loadPmndrsCloudTexture2D(url, onLoad, onError) {
+        const THREE = window.THREE;
+        if (!THREE || typeof THREE.TextureLoader !== 'function') {
+            throw new Error('THREE.TextureLoader is unavailable.');
+        }
+
+        return new THREE.TextureLoader().load(
+            url,
+            (texture) => {
+                if (typeof THREE.LinearMipMapLinearFilter !== 'undefined') {
+                    texture.minFilter = THREE.LinearMipMapLinearFilter;
+                }
+                if (typeof THREE.LinearFilter !== 'undefined') {
+                    texture.magFilter = THREE.LinearFilter;
+                }
+                if (typeof THREE.RepeatWrapping !== 'undefined') {
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                }
+                if (typeof THREE.NoColorSpace !== 'undefined') {
+                    texture.colorSpace = THREE.NoColorSpace;
+                }
+                texture.needsUpdate = true;
+                if (typeof onLoad === 'function') {
+                    onLoad(texture);
+                }
+            },
+            undefined,
+            onError
+        );
+    }
+
+    function loadPmndrsCloudTexture3D(url, size, onLoad, onError) {
+        const THREE = window.THREE;
+        const VTC = getPmndrsCloudsBundle();
+        if (!THREE || typeof THREE.Data3DTexture !== 'function' || !VTC || typeof VTC.DataTextureLoader !== 'function' || typeof VTC.parseUint8Array !== 'function') {
+            throw new Error('Takram DataTextureLoader support is unavailable.');
+        }
+
+        return new VTC.DataTextureLoader(THREE.Data3DTexture, VTC.parseUint8Array, {
+            width: size,
+            height: size,
+            depth: size,
+            format: THREE.RedFormat,
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+            wrapS: THREE.RepeatWrapping,
+            wrapT: THREE.RepeatWrapping,
+            wrapR: THREE.RepeatWrapping,
+            colorSpace: THREE.NoColorSpace
+        }).load(url, onLoad, undefined, onError);
+    }
+
+    function loadPmndrsCloudStbnTexture(url, onLoad, onError) {
+        const THREE = window.THREE;
+        const VTC = getPmndrsCloudsBundle();
+        if (!THREE || typeof THREE.Data3DTexture !== 'function' || typeof THREE.FileLoader !== 'function') {
+            throw new Error('THREE FileLoader/Data3DTexture support is unavailable.');
+        }
+
+        const texture = new THREE.Data3DTexture();
+        const loader = new THREE.FileLoader();
+        loader.setResponseType('arraybuffer');
+        loader.load(
+            url,
+            (arrayBuffer) => {
+                texture.image.data = new Uint8Array(arrayBuffer);
+                texture.image.width = VTC && VTC.STBN_TEXTURE_WIDTH ? VTC.STBN_TEXTURE_WIDTH : 128;
+                texture.image.height = VTC && VTC.STBN_TEXTURE_HEIGHT ? VTC.STBN_TEXTURE_HEIGHT : 128;
+                texture.image.depth = VTC && VTC.STBN_TEXTURE_DEPTH ? VTC.STBN_TEXTURE_DEPTH : 64;
+                texture.type = THREE.UnsignedByteType;
+                texture.format = THREE.RedFormat;
+                texture.minFilter = THREE.NearestFilter;
+                texture.magFilter = THREE.NearestFilter;
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.wrapR = THREE.RepeatWrapping;
+                texture.needsUpdate = true;
+                if (typeof onLoad === 'function') {
+                    onLoad(texture);
+                }
+            },
+            undefined,
+            onError
+        );
+        return texture;
+    }
+
+    function disposePmndrsCloudTextureState(self) {
+        const state = self && self._pmndrsCloudTextureState;
+        if (!state || !state.textures) {
+            if (self) {
+                self._pmndrsCloudTextureState = null;
+            }
+            return;
+        }
+
+        Object.keys(state.textures).forEach((key) => {
+            disposeRuntimeResource(state.textures[key]);
+        });
+        self._pmndrsCloudTextureState = null;
+    }
+
+    function ensurePmndrsCloudTextures(self) {
+        if (!self) {
+            return null;
+        }
+
+        const VTC = getPmndrsCloudsBundle();
+        const THREE = window.THREE;
+        const urls = resolvePmndrsCloudAssetUrls();
+        const signature = pmndrsCloudAssetSignature(urls);
+
+        if (!VTC || !THREE || !hasCompletePmndrsCloudAssetUrls(urls)) {
+            return null;
+        }
+
+        if (self._pmndrsCloudTextureState && self._pmndrsCloudTextureState.signature === signature) {
+            return self._pmndrsCloudTextureState;
+        }
+
+        disposePmndrsCloudTextureState(self);
+
+        const state = {
+            signature,
+            urls,
+            textures: {},
+            loaded: 0,
+            total: 5,
+            ready: false,
+            failed: false,
+            error: ''
+        };
+        self._pmndrsCloudTextureState = state;
+
+        const markLoaded = function (key, texture) {
+            if (state.failed || state.ready) {
+                return;
+            }
+            state.textures[key] = texture;
+            state.loaded += 1;
+            if (state.loaded >= state.total) {
+                state.ready = true;
+                updatePmndrsCloudDiagnostics(self, {
+                    textureReady: true,
+                    textureLoaded: state.loaded,
+                    textureTotal: state.total
+                });
+                self._pmndrsComposerSignature = '';
+            } else {
+                updatePmndrsCloudDiagnostics(self, {
+                    textureReady: false,
+                    textureLoaded: state.loaded,
+                    textureTotal: state.total
+                });
+            }
+        };
+
+        const markFailed = function (key, error) {
+            if (state.failed) {
+                return;
+            }
+            state.failed = true;
+            state.error = key;
+            markPmndrsCloudsSkipped(self, 'cloud-assets-failed', {
+                textureReady: false,
+                textureError: key,
+                textureErrorDetail: error && error.message ? error.message : String(error || '')
+            });
+            self._pmndrsComposerSignature = '';
+        };
+
+        try {
+            state.textures.localWeatherTexture = loadPmndrsCloudTexture2D(urls.localWeatherUrl, (texture) => markLoaded('localWeatherTexture', texture), (error) => markFailed('localWeatherTexture', error));
+            state.textures.shapeTexture = loadPmndrsCloudTexture3D(urls.shapeUrl, VTC.CLOUD_SHAPE_TEXTURE_SIZE || 128, (texture) => markLoaded('shapeTexture', texture), (error) => markFailed('shapeTexture', error));
+            state.textures.shapeDetailTexture = loadPmndrsCloudTexture3D(urls.shapeDetailUrl, VTC.CLOUD_SHAPE_DETAIL_TEXTURE_SIZE || 32, (texture) => markLoaded('shapeDetailTexture', texture), (error) => markFailed('shapeDetailTexture', error));
+            state.textures.turbulenceTexture = loadPmndrsCloudTexture2D(urls.turbulenceUrl, (texture) => markLoaded('turbulenceTexture', texture), (error) => markFailed('turbulenceTexture', error));
+            state.textures.stbnTexture = loadPmndrsCloudStbnTexture(urls.stbnUrl, (texture) => markLoaded('stbnTexture', texture), (error) => markFailed('stbnTexture', error));
+        } catch (err) {
+            markFailed('cloud-texture-loader', err);
+        }
+
+        updatePmndrsCloudDiagnostics(self, {
+            textureReady: false,
+            textureLoaded: 0,
+            textureTotal: state.total
+        });
+
+        return state;
+    }
+
     function isPmndrsLutEnabled(self) {
         if (self && typeof self.isPmndrsLutEnabled === 'function') {
             return self.isPmndrsLutEnabled();
@@ -419,9 +904,81 @@
         }
     }
 
+    function isPmndrsCloudsRequested(self) {
+        if (self && typeof self.isPmndrsCloudsEnabled === 'function') {
+            return self.isPmndrsCloudsEnabled();
+        }
+
+        return Boolean(self &&
+            self.data &&
+            self.data.postFXEnabled !== '0' &&
+            self.data.postFXEngine === 'pmndrs' &&
+            self.data.pmndrsAtmosphereEnabled !== '0' &&
+            readPmndrsBool(self, 'pmndrsCloudsEnabled'));
+    }
+
+    function getPmndrsCloudSkipReason(self, renderer, atmosphereConfig, textureState) {
+        const THREE = window.THREE;
+        const VTC = getPmndrsCloudsBundle();
+        const urls = resolvePmndrsCloudAssetUrls();
+
+        if (!isPmndrsCloudsRequested(self)) {
+            return 'disabled';
+        }
+        if (!(atmosphereConfig && atmosphereConfig.enabled)) {
+            return 'atmosphere-disabled';
+        }
+        if (isPmndrsDirectVrPresentationActive(self)) {
+            return 'immersive-xr';
+        }
+        if (self && typeof self.isMobileDevice === 'function' && self.isMobileDevice()) {
+            return 'mobile';
+        }
+        if (!renderer || !renderer.capabilities || renderer.capabilities.isWebGL2 !== true || !THREE || typeof THREE.Data3DTexture !== 'function') {
+            return 'missing-webgl2-3d-textures';
+        }
+        if (!window.POSTPROCESSING || !(self && self.pmndrsActive)) {
+            return 'pmndrs-composer-disabled';
+        }
+        if (!VTC || typeof VTC.CloudsEffect !== 'function') {
+            return 'missing-clouds-bundle';
+        }
+        if (!hasCompletePmndrsCloudAssetUrls(urls)) {
+            return 'missing-cloud-assets';
+        }
+        if (!textureState) {
+            return 'cloud-assets-loading';
+        }
+        if (textureState.failed) {
+            return 'cloud-assets-failed';
+        }
+        if (!textureState.ready) {
+            return 'cloud-assets-loading';
+        }
+
+        return '';
+    }
+
+    function getPmndrsCloudTextureSignature(self, renderer, atmosphereConfig) {
+        if (!isPmndrsCloudsRequested(self)) {
+            return 'clouds:off';
+        }
+
+        const state = ensurePmndrsCloudTextures(self);
+        const reason = getPmndrsCloudSkipReason(self, renderer, atmosphereConfig, state);
+        if (reason) {
+            return `clouds:${reason}:${  state ? `${state.loaded || 0}/${state.total || 0}` : '0/0'}`;
+        }
+
+        return 'clouds:ready';
+    }
+
     function getPmndrsComposerSignature(self, renderer, atmosphereConfig, PP) {
         const smaaPreset = getPmndrsSmaaPreset(self, PP);
         return `${getPmndrsAtmosphereModeSignature(self, atmosphereConfig) 
+            }|${  getPmndrsCloudTextureSignature(self, renderer, atmosphereConfig)
+            }:${  getPmndrsCloudsQuality(self)
+            }:${  getPmndrsCloudsCoverage(self)
             }|ao:${  (self && typeof self.getAmbientOcclusionPreset === 'function') ? self.getAmbientOcclusionPreset() : 'off' 
             }|aoBackend:${  getPmndrsAmbientOcclusionBackend(self) 
             }|aaMode:${  getPmndrsAAMode(self) 
@@ -441,6 +998,7 @@
 
     function shouldEnablePmndrsAerialPerspective(self) {
         return readPmndrsBool(self, 'pmndrsAerialPerspectiveEnabled') ||
+            Boolean(self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudsActive === true) ||
             (isHorizonBackground(self) &&
                 hasPmndrsDebugFlag('enablePmndrsHorizonAerial', 'vrodos_debug_enable_pmndrs_horizon_aerial'));
     }
@@ -1036,6 +1594,15 @@
             `noise: ${  self && self.pmndrsNoiseEffect ? 'yes' : 'off'}`,
             `chromatic: ${  self && self.pmndrsChromaticAberrationEffect ? 'yes' : 'off'}`,
             `atmosphere: ${  self && self.pmndrsAerialPerspectiveEffect ? 'effect' : ((self && typeof self.isPmndrsAtmosphereEnabled === 'function' && self.isPmndrsAtmosphereEnabled()) ? 'takram-only' : 'off')}`,
+            `clouds active: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudsActive ? 'yes' : 'no'}`,
+            `clouds skip: ${  self && self._pmndrsCloudsDiagnostics ? (self._pmndrsCloudsDiagnostics.cloudsSkippedReason || 'none') : 'none'}`,
+            `clouds quality: ${  getPmndrsCloudsQuality(self)}`,
+            `clouds profile: ${  self && self._pmndrsCloudsDiagnostics ? (self._pmndrsCloudsDiagnostics.profile || 'off') : 'off'}`,
+            `clouds render: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.takramQuality || getPmndrsCloudsQuality(self)} @ ${Number(self._pmndrsCloudsDiagnostics.resolutionScale || getPmndrsCloudsResolutionScale(getPmndrsCloudsQuality(self))).toFixed(2)}x` : 'off'}`,
+            `clouds temporal: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.temporalUpscale ? 'yes' : 'no'}`,
+            `clouds coverage: ${  getPmndrsCloudsCoverage(self).toFixed(2)}`,
+            `clouds textures: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.textureReady ? 'ready' : ((self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.textureLoaded !== undefined) ? `${self._pmndrsCloudsDiagnostics.textureLoaded}/${self._pmndrsCloudsDiagnostics.textureTotal || 0}` : 'off')}`,
+            `clouds xr skip: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.xrSkipped ? 'yes' : 'no'}`,
             `horizon aerial: ${  shouldEnablePmndrsHorizonAerial(self) ? 'experimental-on' : 'off'}`,
             `msaa fallback: ${  (self && self._pmndrsMsaaFallbackReason) ? self._pmndrsMsaaFallbackReason : 'none'}`
         ];
@@ -1065,12 +1632,26 @@
         disposeRuntimeResource(self.pmndrsNativeNormalPass);
     }
 
+    function disposePmndrsCloudEffect(self) {
+        if (!self) {
+            return;
+        }
+
+        if (self.pmndrsCloudsEffect && self._pmndrsCloudsEffectChangeHandler && self.pmndrsCloudsEffect.events && typeof self.pmndrsCloudsEffect.events.removeEventListener === 'function') {
+            self.pmndrsCloudsEffect.events.removeEventListener('change', self._pmndrsCloudsEffectChangeHandler);
+        }
+        disposeRuntimeResource(self.pmndrsCloudsEffect);
+        self.pmndrsCloudsEffect = null;
+        self._pmndrsCloudsEffectChangeHandler = null;
+    }
+
     function disposePmndrsComposerResources(self) {
         if (!self) {
             return;
         }
 
         disposePmndrsNativeSsaoResources(self);
+        disposePmndrsCloudEffect(self);
 
         if (self.pmndrsComposer) {
             try {
@@ -1098,6 +1679,7 @@
         self.pmndrsNoiseEffect = null;
         self.pmndrsChromaticAberrationEffect = null;
         self.pmndrsAerialPerspectiveEffect = null;
+        self.pmndrsCloudsEffect = null;
         self.pmndrsHorizonFoliageOverlayPass = null;
         restoreAllPmndrsHorizonFoliageMaterials(self);
         self._pmndrsAtmosphereSignature = null;
@@ -1110,6 +1692,89 @@
         self._pmndrsLastW = 0;
         self._pmndrsLastH = 0;
         updatePmndrsAADebugOverlay(self);
+    }
+
+    function routePmndrsCloudsIntoAerial(self) {
+        if (!self || !self.pmndrsAerialPerspectiveEffect) {
+            return;
+        }
+
+        if (self.pmndrsCloudsEffect) {
+            self.pmndrsAerialPerspectiveEffect.overlay = self.pmndrsCloudsEffect.atmosphereOverlay || null;
+            self.pmndrsAerialPerspectiveEffect.shadow = self.pmndrsCloudsEffect.atmosphereShadow || null;
+            self.pmndrsAerialPerspectiveEffect.shadowLength = self.pmndrsCloudsEffect.atmosphereShadowLength || null;
+            return;
+        }
+
+        if (self.pmndrsHorizonFoliageOverlayPass) {
+            self.pmndrsAerialPerspectiveEffect.overlay = self.pmndrsHorizonFoliageOverlayPass;
+            self.pmndrsAerialPerspectiveEffect.shadow = null;
+            self.pmndrsAerialPerspectiveEffect.shadowLength = null;
+            return;
+        }
+
+        self.pmndrsAerialPerspectiveEffect.overlay = null;
+        self.pmndrsAerialPerspectiveEffect.shadow = null;
+        self.pmndrsAerialPerspectiveEffect.shadowLength = null;
+    }
+
+    function syncPmndrsCloudsEffect(self, camera, atmosphereConfig) {
+        if (!self || !self.pmndrsCloudsEffect || !(atmosphereConfig && atmosphereConfig.enabled)) {
+            return;
+        }
+
+        const renderer = self.el && self.el.renderer ? self.el.renderer : null;
+        const textureState = ensurePmndrsCloudTextures(self);
+        const skipReason = getPmndrsCloudSkipReason(self, renderer, atmosphereConfig, textureState);
+        if (skipReason) {
+            markPmndrsCloudsSkipped(self, skipReason, {
+                textureReady: Boolean(textureState && textureState.ready),
+                textureLoaded: textureState ? textureState.loaded : 0,
+                textureTotal: textureState ? textureState.total : 0,
+                quality: getPmndrsCloudsQuality(self),
+                coverage: getPmndrsCloudsCoverage(self)
+            });
+            return;
+        }
+
+        const atmosphereState = (typeof self.ensurePmndrsAtmosphereResources === 'function') ? self.ensurePmndrsAtmosphereResources() : null;
+        if (atmosphereState && !atmosphereState.failed && atmosphereState.textures) {
+            self.pmndrsCloudsEffect.irradianceTexture = atmosphereState.textures.irradianceTexture || null;
+            self.pmndrsCloudsEffect.scatteringTexture = atmosphereState.textures.scatteringTexture || null;
+            self.pmndrsCloudsEffect.transmittanceTexture = atmosphereState.textures.transmittanceTexture || null;
+            self.pmndrsCloudsEffect.singleMieScatteringTexture = atmosphereState.textures.singleMieScatteringTexture || null;
+            self.pmndrsCloudsEffect.higherOrderScatteringTexture = atmosphereState.textures.higherOrderScatteringTexture || null;
+        }
+
+        if (camera && typeof self.pmndrsCloudsEffect.mainCamera !== 'undefined') {
+            self.pmndrsCloudsEffect.mainCamera = camera;
+        }
+
+        if (typeof self.applyPmndrsAtmosphereConfigToTarget === 'function') {
+            self.applyPmndrsAtmosphereConfigToTarget(self.pmndrsCloudsEffect, atmosphereConfig);
+        }
+
+        self.pmndrsCloudsEffect.localWeatherTexture = textureState.textures.localWeatherTexture || null;
+        self.pmndrsCloudsEffect.shapeTexture = textureState.textures.shapeTexture || null;
+        self.pmndrsCloudsEffect.shapeDetailTexture = textureState.textures.shapeDetailTexture || null;
+        self.pmndrsCloudsEffect.turbulenceTexture = textureState.textures.turbulenceTexture || null;
+        self.pmndrsCloudsEffect.stbnTexture = textureState.textures.stbnTexture || null;
+        const profile = applyPmndrsCloudPerformanceProfile(self.pmndrsCloudsEffect, getPmndrsCloudsQuality(self));
+        self.pmndrsCloudsEffect.coverage = getPmndrsCloudsCoverage(self);
+        self.pmndrsCloudsEffect.skipRendering = true;
+
+        markPmndrsCloudsActive(self, {
+            textureReady: true,
+            textureLoaded: textureState.loaded,
+            textureTotal: textureState.total,
+            quality: getPmndrsCloudsQuality(self),
+            profile: profile.id,
+            takramQuality: profile.takramQuality,
+            resolutionScale: profile.resolutionScale,
+            temporalUpscale: profile.temporalUpscale,
+            coverage: getPmndrsCloudsCoverage(self)
+        });
+        routePmndrsCloudsIntoAerial(self);
     }
 
     function syncPmndrsAerialPerspectiveEffect(self, camera, atmosphereConfig) {
@@ -1136,10 +1801,12 @@
         if (shouldEnablePmndrsHorizonAerial(self)) {
             constrainPmndrsHorizonAerialToVanillaLightSourceMode(self.pmndrsAerialPerspectiveEffect);
         }
+        routePmndrsCloudsIntoAerial(self);
     }
 
     H.syncPmndrsAerialPerspectiveEffect = function (camera, atmosphereConfig) {
         const config = atmosphereConfig || ((typeof this.getPmndrsAtmosphereConfig === 'function') ? this.getPmndrsAtmosphereConfig() : null);
+        syncPmndrsCloudsEffect(this, camera || (this.el ? this.el.camera : null), config);
         syncPmndrsAerialPerspectiveEffect(this, camera || (this.el ? this.el.camera : null), config);
     };
 
@@ -1210,6 +1877,62 @@
             this._pmndrsMsaaFallbackReason = 'ao-disables-msaa';
         }
 
+        this.pmndrsCloudsEffect = null;
+        if (isPmndrsCloudsRequested(this)) {
+            const VTC = getPmndrsCloudsBundle();
+            const textureState = ensurePmndrsCloudTextures(this);
+            const cloudsSkipReason = getPmndrsCloudSkipReason(this, renderer, atmosphereConfig, textureState);
+            if (cloudsSkipReason) {
+                markPmndrsCloudsSkipped(this, cloudsSkipReason, {
+                    textureReady: Boolean(textureState && textureState.ready),
+                    textureLoaded: textureState ? textureState.loaded : 0,
+                    textureTotal: textureState ? textureState.total : 0,
+                    quality: getPmndrsCloudsQuality(this),
+                    coverage: getPmndrsCloudsCoverage(this)
+                });
+            } else {
+                try {
+                    const cloudsQuality = getPmndrsCloudsQuality(this);
+                    this.pmndrsCloudsEffect = new VTC.CloudsEffect(camera, {
+                        resolutionScale: getPmndrsCloudsResolutionScale(cloudsQuality)
+                    });
+                    const cloudsProfile = applyPmndrsCloudPerformanceProfile(this.pmndrsCloudsEffect, cloudsQuality);
+                    this.pmndrsCloudsEffect.coverage = getPmndrsCloudsCoverage(this);
+                    this.pmndrsCloudsEffect.skipRendering = true;
+                    updatePmndrsCloudDiagnostics(this, {
+                        quality: cloudsQuality,
+                        profile: cloudsProfile.id,
+                        takramQuality: cloudsProfile.takramQuality,
+                        resolutionScale: cloudsProfile.resolutionScale,
+                        temporalUpscale: cloudsProfile.temporalUpscale,
+                        coverage: getPmndrsCloudsCoverage(this)
+                    });
+                    this._pmndrsCloudsEffectChangeHandler = () => {
+                        routePmndrsCloudsIntoAerial(this);
+                    };
+                    if (this.pmndrsCloudsEffect.events && typeof this.pmndrsCloudsEffect.events.addEventListener === 'function') {
+                        this.pmndrsCloudsEffect.events.addEventListener('change', this._pmndrsCloudsEffectChangeHandler);
+                    }
+                    syncPmndrsCloudsEffect(this, camera, atmosphereConfig);
+                    effects.push(this.pmndrsCloudsEffect);
+                } catch (err) {
+                    console.warn('[VRodos] pmndrs Takram CloudsEffect construction failed, skipping:', err);
+                    disposePmndrsCloudEffect(this);
+                    markPmndrsCloudsSkipped(this, 'clouds-effect-construction-failed', {
+                        textureReady: Boolean(textureState && textureState.ready),
+                        quality: getPmndrsCloudsQuality(this),
+                        coverage: getPmndrsCloudsCoverage(this)
+                    });
+                }
+            }
+        } else {
+            markPmndrsCloudsSkipped(this, 'disabled', {
+                textureReady: false,
+                quality: getPmndrsCloudsQuality(this),
+                coverage: getPmndrsCloudsCoverage(this)
+            });
+        }
+
         if (atmosphereConfig && atmosphereConfig.enabled && shouldEnablePmndrsAerialPerspective(this)) {
             const VTA = window.VRODOS_TAKRAM_ATMOSPHERE;
             const atmosphereState = (typeof this.ensurePmndrsAtmosphereResources === 'function') ? this.ensurePmndrsAtmosphereResources() : null;
@@ -1243,7 +1966,7 @@
                     if (useHorizonAerial) {
                         constrainPmndrsHorizonAerialToVanillaLightSourceMode(this.pmndrsAerialPerspectiveEffect);
                     }
-                    if (useHorizonAerial && PP && PP.Selection && PP.RenderPass) {
+                    if (useHorizonAerial && !this.pmndrsCloudsEffect && PP && PP.Selection && PP.RenderPass) {
                         this.pmndrsHorizonFoliageOverlayPass = new PmndrsHorizonFoliageOverlayPass(scene, camera, PP, THREE);
                         refreshPmndrsHorizonFoliageOverlaySelection(this, scene);
                         applyPmndrsHorizonFoliageMaterialNormalization(this);
@@ -1253,6 +1976,7 @@
                         this.pmndrsHorizonFoliageOverlayPass = null;
                         restoreAllPmndrsHorizonFoliageMaterials(this);
                     }
+                    routePmndrsCloudsIntoAerial(this);
                     effects.push(this.pmndrsAerialPerspectiveEffect);
                 } catch (err) {
                     console.warn('[VRodos] pmndrs Takram AerialPerspectiveEffect construction failed, skipping:', err);
@@ -1273,6 +1997,9 @@
             this.pmndrsAerialPerspectiveEffect = null;
             restoreAllPmndrsHorizonFoliageMaterials(this);
         }
+
+        this._pmndrsAtmosphereSignature = getPmndrsAtmosphereModeSignature(this, atmosphereConfig);
+        this._pmndrsComposerSignature = getPmndrsComposerSignature(this, renderer, atmosphereConfig, PP);
 
         // SSAO through the shared ambientOcclusionPreset control.
         // Native POSTPROCESSING.SSAOEffect is the default PMNDRS AO backend.
@@ -1575,10 +2302,16 @@
             return;
         }
         if (!window.POSTPROCESSING) {
+            if (isPmndrsCloudsRequested(this)) {
+                markPmndrsCloudsSkipped(this, 'missing-pmndrs-postprocessing');
+            }
             console.error('[VRodos] pmndrs engine selected but window.POSTPROCESSING is not loaded — post-FX disabled');
             return;
         }
         if (typeof THREE === 'undefined' && typeof window.THREE === 'undefined') {
+            if (isPmndrsCloudsRequested(this)) {
+                markPmndrsCloudsSkipped(this, 'missing-three');
+            }
             console.error('[VRodos] pmndrs engine selected but window.THREE is not loaded — post-FX disabled');
             return;
         }
@@ -1594,6 +2327,14 @@
 
         const self = this;
         renderer.render = function (scene, camera) {
+            if (isPmndrsCloudsRequested(self) && isPmndrsDirectVrPresentationActive(self)) {
+                markPmndrsCloudsSkipped(self, 'immersive-xr', {
+                    textureReady: Boolean(self._pmndrsCloudTextureState && self._pmndrsCloudTextureState.ready),
+                    quality: getPmndrsCloudsQuality(self),
+                    coverage: getPmndrsCloudsCoverage(self)
+                });
+            }
+
             const shouldIntercept = self.pmndrsActive &&
                 self.shouldUsePostProcessing() &&
                 !self.pmndrsRendering &&
@@ -1644,11 +2385,15 @@
                 if (self.pmndrsAerialPerspectiveEffect && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== 'undefined') {
                     self.pmndrsAerialPerspectiveEffect.mainCamera = camera;
                 }
+                if (self.pmndrsCloudsEffect && typeof self.pmndrsCloudsEffect.mainCamera !== 'undefined') {
+                    self.pmndrsCloudsEffect.mainCamera = camera;
+                }
                 if (self.pmndrsHorizonFoliageOverlayPass && typeof self.pmndrsHorizonFoliageOverlayPass.mainCamera !== 'undefined') {
                     self.pmndrsHorizonFoliageOverlayPass.mainCamera = camera;
                 }
             }
 
+            syncPmndrsCloudsEffect(self, camera, atmosphereConfig);
             syncPmndrsAerialPerspectiveEffect(self, camera, atmosphereConfig);
             if (self.pmndrsHorizonFoliageOverlayPass && self.sceneCollectionsDirty) {
                 refreshPmndrsHorizonFoliageOverlaySelection(self, scene);
@@ -1708,6 +2453,10 @@
             this._pmndrsPrevToneMapping = undefined;
         }
         disposePmndrsComposerResources(this);
+        disposePmndrsCloudTextureState(this);
+        if (isPmndrsCloudsRequested(this)) {
+            markPmndrsCloudsSkipped(this, 'pmndrs-composer-disabled');
+        }
         this.pmndrsOriginalRender = null;
         this.pmndrsActive = false;
         this.pmndrsRendering = false;

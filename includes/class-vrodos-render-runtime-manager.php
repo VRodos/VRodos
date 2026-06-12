@@ -17,6 +17,12 @@ class VRodos_Render_Runtime_Manager {
 	private const FALLBACK_THREE_VENDOR_DIR     = 'three-r184';
 	private const FALLBACK_THREE_VENDOR_BUNDLE  = 'vrodos-three-r184.bundle.js';
 	private const FALLBACK_TAKRAM_STARS_DATA_PATH = 'assets/vendor/takram-atmosphere/stars.bin';
+	private const FALLBACK_TAKRAM_CLOUDS_BASE_PATH = 'assets/vendor/takram-clouds/';
+	private const FALLBACK_TAKRAM_CLOUDS_LOCAL_WEATHER_PATH = 'assets/vendor/takram-clouds/local_weather.png';
+	private const FALLBACK_TAKRAM_CLOUDS_SHAPE_PATH = 'assets/vendor/takram-clouds/shape.bin';
+	private const FALLBACK_TAKRAM_CLOUDS_SHAPE_DETAIL_PATH = 'assets/vendor/takram-clouds/shape_detail.bin';
+	private const FALLBACK_TAKRAM_CLOUDS_TURBULENCE_PATH = 'assets/vendor/takram-clouds/turbulence.png';
+	private const FALLBACK_TAKRAM_CLOUDS_STBN_PATH = 'assets/vendor/takram-clouds/stbn.bin';
 
 	private static ?array $manifest = null;
 
@@ -32,6 +38,12 @@ class VRodos_Render_Runtime_Manager {
 			'starsDataPath',
 			self::string_value( $takram, 'starsDataPath', self::FALLBACK_TAKRAM_STARS_DATA_PATH )
 		);
+		$takram_clouds_base_path = self::string_value( $takram_assets, 'cloudsBasePath', self::FALLBACK_TAKRAM_CLOUDS_BASE_PATH );
+		$takram_clouds_local_weather_path = self::string_value( $takram_assets, 'cloudsLocalWeatherPath', self::FALLBACK_TAKRAM_CLOUDS_LOCAL_WEATHER_PATH );
+		$takram_clouds_shape_path = self::string_value( $takram_assets, 'cloudsShapePath', self::FALLBACK_TAKRAM_CLOUDS_SHAPE_PATH );
+		$takram_clouds_shape_detail_path = self::string_value( $takram_assets, 'cloudsShapeDetailPath', self::FALLBACK_TAKRAM_CLOUDS_SHAPE_DETAIL_PATH );
+		$takram_clouds_turbulence_path = self::string_value( $takram_assets, 'cloudsTurbulencePath', self::FALLBACK_TAKRAM_CLOUDS_TURBULENCE_PATH );
+		$takram_clouds_stbn_path = self::string_value( $takram_assets, 'cloudsStbnPath', self::FALLBACK_TAKRAM_CLOUDS_STBN_PATH );
 
 		return [
 			'aframe_runtime_label' => self::string_value( $aframe, 'label', self::FALLBACK_AFRAME_RUNTIME_LABEL ),
@@ -46,8 +58,16 @@ class VRodos_Render_Runtime_Manager {
 			'takram_atmosphere_version' => self::string_value( $takram, 'atmosphereVersion', '' ),
 			'takram_clouds_version' => self::string_value( $takram, 'cloudsVersion', '' ),
 			'takram_bundle' => self::string_value( $takram, 'bundleFile', 'vrodos-takram-atmosphere.bundle.js' ),
+			'takram_clouds_bundle' => self::string_value( $takram, 'cloudsBundleFile', 'vrodos-takram-clouds.bundle.js' ),
 			'takram_stars_data_path' => $takram_stars_data_path,
 			'takram_stars_data_url' => VRodos_Path_Manager::plugin_url( $takram_stars_data_path ),
+			'takram_clouds_assets_base_path' => $takram_clouds_base_path,
+			'takram_clouds_assets_base_url' => VRodos_Path_Manager::plugin_url( $takram_clouds_base_path ),
+			'takram_clouds_local_weather_url' => VRodos_Path_Manager::plugin_url( $takram_clouds_local_weather_path ),
+			'takram_clouds_shape_url' => VRodos_Path_Manager::plugin_url( $takram_clouds_shape_path ),
+			'takram_clouds_shape_detail_url' => VRodos_Path_Manager::plugin_url( $takram_clouds_shape_detail_path ),
+			'takram_clouds_turbulence_url' => VRodos_Path_Manager::plugin_url( $takram_clouds_turbulence_path ),
+			'takram_clouds_stbn_url' => VRodos_Path_Manager::plugin_url( $takram_clouds_stbn_path ),
 		];
 	}
 
