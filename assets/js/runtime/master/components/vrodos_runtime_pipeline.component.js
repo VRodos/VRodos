@@ -14,10 +14,14 @@
     });
 
     AFRAME.registerComponent('vrodos-render-profile', {
-        tick: function () {
+        tick: function (time) {
             const settings = sceneSettings(this.el);
             if (!settings) {
                 return;
+            }
+
+            if (typeof settings.publishRuntimeFeatureState === 'function') {
+                settings.publishRuntimeFeatureState('render-profile-tick', { time, throttleMs: 1500 });
             }
 
             if (settings.fpsStats && typeof settings.fpsStats.update === 'function') {
@@ -47,6 +51,9 @@
                 } else {
                     settings.disablePmndrsPostProcessing();
                 }
+                if (typeof settings.publishRuntimeFeatureState === 'function') {
+                    settings.publishRuntimeFeatureState('postfx-router');
+                }
                 return;
             }
 
@@ -58,6 +65,9 @@
                 settings.updatePostProcessingSize();
             } else {
                 settings.disablePostProcessing();
+            }
+            if (typeof settings.publishRuntimeFeatureState === 'function') {
+                settings.publishRuntimeFeatureState('postfx-router');
             }
         }
     });

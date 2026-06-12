@@ -39,6 +39,20 @@ function vrodosRuntimeDebugFlag(debugKey, queryKey) {
     }
 }
 
+function vrodosRuntimeNowMs() {
+    return (typeof performance !== 'undefined' && typeof performance.now === 'function')
+        ? performance.now()
+        : Date.now();
+}
+
+function vrodosRuntimeFeatureStateSignature(state) {
+    try {
+        return JSON.stringify(state || {});
+    } catch (err) {
+        return '';
+    }
+}
+
 function vrodosRuntimeTruthy(value) {
     if (VRODOSRuntimeSettings.bool) {
         return VRODOSRuntimeSettings.bool(value, false);
@@ -821,6 +835,216 @@ AFRAME.registerComponent('scene-settings', {
             }
         });
     },
+    getCustomMovementComponent: function () {
+        const sceneEl = this.el;
+        const movementEl = (sceneEl && sceneEl.querySelector && sceneEl.querySelector('[custom-movement]')) ||
+            document.querySelector('[custom-movement]');
+        return movementEl && movementEl.components ? movementEl.components['custom-movement'] : null;
+    },
+    getNavigationFeatureDiagnostics: function () {
+        const movement = this.getCustomMovementComponent();
+        const navigationMode = movement && typeof movement.getNavigationMode === 'function'
+            ? movement.getNavigationMode(this.data)
+            : (this.data.navigationMode || 'walkable');
+        const collisionConfigured = this.data.collisionMode !== 'off' && navigationMode === 'walkable';
+        const navMeshTargets = movement && movement.navMeshCollisionTargets ? movement.navMeshCollisionTargets.length : 0;
+
+        return {
+            componentPresent: Boolean(movement),
+            authoredNavigationMode: this.data.navigationMode || '',
+            navigationMode,
+            collisionMode: this.data.collisionMode || 'auto',
+            collisionConfigured,
+            collisionActive: Boolean(collisionConfigured && navMeshTargets > 0),
+            bvhBundleLoaded: Boolean(window.VRODOS_COLLISION_BVH),
+            bvhInstalled: Boolean(movement && movement.bvhInstalled),
+            navMeshRoots: movement && movement.navMeshRoots ? movement.navMeshRoots.length : 0,
+            navMeshTargets,
+            colliderRoots: movement && movement.colliderRoots ? movement.colliderRoots.length : 0,
+            blockerTargets: movement && movement.blockerCollisionTargets ? movement.blockerCollisionTargets.length : 0,
+            navMeshDirty: Boolean(movement && movement.navMeshDirty),
+            collisionWorldDirty: Boolean(movement && movement.collisionWorldDirty),
+            lastAutoRecoveryStatus: movement && movement.lastAutoRecoveryStatus ? movement.lastAutoRecoveryStatus : 'none'
+        };
+    },
+    getSpatialUiFeatureDiagnostics: function () {
+        const api = window.VRODOSSpatialUI || null;
+        const activePanel = api && typeof api.getActivePanel === 'function'
+            ? api.getActivePanel()
+            : null;
+        let panelDiagnostics = null;
+
+        if (activePanel && activePanel.api && typeof activePanel.api.getDiagnostics === 'function') {
+            try {
+                panelDiagnostics = activePanel.api.getDiagnostics();
+            } catch (err) {
+                panelDiagnostics = { error: err && err.message ? err.message : String(err) };
+            }
+        }
+
+        return {
+            bundleLoaded: Boolean(api),
+            activePanel: Boolean(activePanel),
+            panelId: activePanel && activePanel.id ? activePanel.id : '',
+            controllerPointers: panelDiagnostics && typeof panelDiagnostics.controllerPointers === 'number'
+                ? panelDiagnostics.controllerPointers
+                : 0,
+            controllerPointerSources: panelDiagnostics && Array.isArray(panelDiagnostics.controllerPointerSources)
+                ? panelDiagnostics.controllerPointerSources.map((entry) => entry && entry.source ? entry.source : '')
+                : [],
+            diagnosticsCount: window.__vrodosSpatialUIDiagnostics && window.__vrodosSpatialUIDiagnostics.length
+                ? window.__vrodosSpatialUIDiagnostics.length
+                : 0
+        };
+    },
+    getActivePostProcessingOwner: function (postProcessingRequested, postProcessingAllowed) {
+        if (postProcessingAllowed) {
+            if (this.data.postFXEngine === 'pmndrs') {
+                return this.pmndrsActive ? 'pmndrs' : 'pmndrs-pending';
+            }
+            return this.postProcessingActive ? 'legacy' : 'legacy-pending';
+        }
+
+        if (postProcessingRequested && this.isDirectVrPresentationActive()) {
+            return 'direct-xr-fallback';
+        }
+
+        if (postProcessingRequested) {
+            return 'disabled';
+        }
+
+        return 'direct';
+    },
+    getRuntimeFeatureState: function () {
+        const renderer = this.el && this.el.renderer ? this.el.renderer : null;
+        const xr = renderer && renderer.xr ? renderer.xr : null;
+        const postProcessingRequested = this.hasPostProcessingPipelineRequest();
+        const postProcessingAllowed = this.shouldUsePostProcessing();
+        const effectiveReflectionSource = this.getEffectiveReflectionSource();
+        const cloudDiagnostics = this._pmndrsCloudsDiagnostics || {};
+        const atmosphereState = this._pmndrsAtmosphereState || null;
+        const shadowDiagnostics = typeof this.getShadowDiagnosticState === 'function'
+            ? this.getShadowDiagnosticState()
+            : null;
+        const horizonState = typeof this.getPmndrsTakramHorizonState === 'function'
+            ? this.getPmndrsTakramHorizonState()
+            : null;
+        let pixelRatio = null;
+
+        if (renderer && typeof renderer.getPixelRatio === 'function') {
+            try {
+                pixelRatio = renderer.getPixelRatio();
+            } catch (err) {
+                pixelRatio = null;
+            }
+        }
+
+        return {
+            presentation: {
+                mode: this.getPresentationMode(),
+                immersiveXr: this.isImmersiveXrActive(),
+                aframeVrMode: this.isAFrameVrModeActive(),
+                vrPresentation: this.isVrPresentationActive(),
+                mobile: this.isMobileDevice(),
+                xrSession: Boolean(xr && typeof xr.getSession === 'function' && xr.getSession())
+            },
+            renderer: {
+                renderQuality: this.getRenderQualityLevel(),
+                aaQuality: this.getAAQualityLevel(),
+                pixelRatio,
+                webgl2: Boolean(renderer && renderer.capabilities && renderer.capabilities.isWebGL2 === true)
+            },
+            postProcessing: {
+                engine: this.data.postFXEngine || 'legacy',
+                requested: postProcessingRequested,
+                allowed: postProcessingAllowed,
+                owner: this.getActivePostProcessingOwner(postProcessingRequested, postProcessingAllowed),
+                legacyActive: Boolean(this.postProcessingActive),
+                pmndrsActive: Boolean(this.pmndrsActive),
+                pmndrsBundleLoaded: Boolean(window.POSTPROCESSING),
+                pmndrsComposerBuilt: Boolean(this.pmndrsComposer),
+                pmndrsEffectPass: Boolean(this.pmndrsEffectPass),
+                immersiveXrFallback: Boolean(postProcessingRequested && this.isDirectVrPresentationActive())
+            },
+            takram: {
+                atmosphereRequested: Boolean(this.data.postFXEngine === 'pmndrs' && this.isPmndrsAtmosphereEnabled()),
+                atmosphereBundleLoaded: Boolean(window.VRODOS_TAKRAM_ATMOSPHERE),
+                atmosphereReady: Boolean(atmosphereState && atmosphereState.ready && !atmosphereState.failed),
+                dayNightCycleActive: Boolean(this.isPmndrsDayNightCycleActive()),
+                horizonOwner: horizonState && horizonState.owner ? horizonState.owner : '',
+                takramSunEnabled: Boolean(horizonState && horizonState.takramSunEnabled),
+                cloudsRequested: Boolean(this.isPmndrsCloudsEnabled()),
+                cloudsBundleLoaded: Boolean(window.VRODOS_TAKRAM_CLOUDS),
+                cloudsActive: Boolean(cloudDiagnostics.cloudsActive),
+                cloudsSkippedReason: cloudDiagnostics.cloudsSkippedReason || '',
+                cloudsXrSkipped: Boolean(cloudDiagnostics.xrSkipped)
+            },
+            reflections: {
+                enabled: this.areReflectionsEnabled(),
+                authoredSource: this.getReflectionSource(),
+                effectiveSource: effectiveReflectionSource,
+                envMapPreset: this.data.envMapPreset || 'none',
+                currentSource: this._currentReflectionSource || 'none',
+                hdrReady: Boolean(this._envMapRenderTarget),
+                sceneProbeCapable: this.canUseSceneProbe(),
+                sceneProbeTargetReady: Boolean(this._sceneProbePmremTarget),
+                sceneProbeNeedsUpdate: Boolean(this._sceneProbeNeedsUpdate),
+                takramSkyEnvironmentCapable: this.canUseTakramSkyEnvironment(),
+                takramSkyTargetReady: Boolean(this._takramSkyPmremTarget)
+            },
+            shadows: {
+                authoredQuality: this.data.shadowQuality || 'medium',
+                effectiveQuality: this.getEffectiveShadowQuality(),
+                updateMode: this.getShadowUpdateMode(),
+                staticMode: Boolean(this.isStaticShadowMode()),
+                diagnostics: shadowDiagnostics
+            },
+            navigation: this.getNavigationFeatureDiagnostics(),
+            spatialUi: this.getSpatialUiFeatureDiagnostics()
+        };
+    },
+    publishRuntimeFeatureState: function (reason, options) {
+        const opts = options || {};
+        const now = typeof opts.time === 'number' && isFinite(opts.time) ? opts.time : vrodosRuntimeNowMs();
+        const throttleMs = typeof opts.throttleMs === 'number' ? opts.throttleMs : 0;
+
+        if (throttleMs > 0 && this._runtimeFeatureStateLastPublishMs &&
+            (now - this._runtimeFeatureStateLastPublishMs) < throttleMs) {
+            return this._runtimeFeatureState || window.VRODOS_RUNTIME_FEATURE_STATE || null;
+        }
+
+        const state = this.getRuntimeFeatureState();
+        const signature = vrodosRuntimeFeatureStateSignature(state);
+        state.reason = reason || 'update';
+        state.updatedAtMs = Math.round(now);
+
+        this._runtimeFeatureState = state;
+        this._runtimeFeatureStateLastPublishMs = now;
+        window.VRODOS_RUNTIME_FEATURE_STATE = state;
+        window.__vrodosRuntimeFeatureState = state;
+        VRODOSSceneSettingsMaster.runtimeFeatureState = state;
+        VRODOSSceneSettingsMaster.getRuntimeFeatureState = function () {
+            const scene = document.querySelector('a-scene');
+            const component = scene && scene.components ? scene.components['scene-settings'] : null;
+            return component && typeof component.getRuntimeFeatureState === 'function'
+                ? component.getRuntimeFeatureState()
+                : (window.VRODOS_RUNTIME_FEATURE_STATE || null);
+        };
+
+        if (this.isRuntimeFeatureDiagnosticsLogEnabled() && signature && signature !== this._runtimeFeatureStateLogSignature) {
+            this._runtimeFeatureStateLogSignature = signature;
+            console.info('[VRodos] Runtime feature state:', state);
+        }
+
+        if (!this.isRuntimeFeatureDiagnosticsLogEnabled()) {
+            this._runtimeFeatureStateLogSignature = signature;
+        }
+
+        return state;
+    },
+    isRuntimeFeatureDiagnosticsLogEnabled: function () {
+        return vrodosRuntimeDebugFlag('runtimeFeatures', 'vrodos_debug_runtime_features');
+    },
     // --- Post-processing methods: LEGACY engine (extracted to vrodos_postprocessing.js) ---
     updatePostProcessingSize: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePostProcessingSize || vrodosRuntimeNoop,
     enablePostProcessing: VRODOSSceneSettingsMaster.SceneSettingsHelpers.enablePostProcessing || vrodosRuntimeNoop,
@@ -877,6 +1101,7 @@ AFRAME.registerComponent('scene-settings', {
         this.applyEnvMapProfile();
         this.applyPostFXProfile();
         this.updatePmndrsHorizonSun();
+        this.publishRuntimeFeatureState('presentation-sync');
 
         if (!waitForSettle) {
             return;
@@ -891,6 +1116,7 @@ AFRAME.registerComponent('scene-settings', {
             self.updatePostProcessingSize();
             self.updatePmndrsPostProcessingSize();
             self.updatePmndrsHorizonSun();
+            self.publishRuntimeFeatureState('presentation-resync');
         };
 
         if (typeof requestAnimationFrame === 'function') {
@@ -1040,6 +1266,9 @@ AFRAME.registerComponent('scene-settings', {
         this._takramSkyEnvironmentSmoothedScale = null;
         this._takramSkyEnvironmentLastProfileScale = 1;
         this._takramSkyEnvironmentSignature = '';
+        this._runtimeFeatureState = null;
+        this._runtimeFeatureStateLastPublishMs = 0;
+        this._runtimeFeatureStateLogSignature = '';
         window.addEventListener('resize', this.handleResize);
         document.addEventListener('fullscreenchange', this.handlePresentationModeChange);
         document.addEventListener('webkitfullscreenchange', this.handlePresentationModeChange);
@@ -1230,6 +1459,7 @@ AFRAME.registerComponent('scene-settings', {
         }
 
         this.queueQualityRefresh(true);
+        this.publishRuntimeFeatureState('init');
     },
     remove: function () {
         this.el.removeEventListener('model-loaded', this.handleQualityModelLoad);
@@ -1292,6 +1522,8 @@ AFRAME.registerComponent('scene-settings', {
         if (hasFocusedPipeline) {
             return;
         }
+
+        this.publishRuntimeFeatureState('scene-settings-tick', { time, throttleMs: 1500 });
 
         if (this.fpsStats && typeof this.fpsStats.update === 'function') {
             this.fpsStats.update();
