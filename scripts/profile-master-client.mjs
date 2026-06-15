@@ -1342,6 +1342,7 @@ async function captureSceneSnapshot(cdp) {
                 spectorDebugScriptLoaded: Boolean(document.querySelector('script[data-vrodos-spector-debug="true"]')),
                 spectorProfilerScriptLoaded: Boolean(document.querySelector('script[data-vrodos-spector-profiler="true"]'))
             },
+            runtimeFeatureState: window.VRODOS_RUNTIME_FEATURE_STATE || window.__vrodosRuntimeFeatureState || null,
             compileDiagnostics: window.VRODOS_COMPILE_DIAGNOSTICS || null
         };
     })()`);
