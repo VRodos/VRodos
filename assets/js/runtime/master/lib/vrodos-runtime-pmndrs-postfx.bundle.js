@@ -697,6 +697,21 @@
       const renderer = self && self.el ? self.el.renderer : null;
       return Boolean(renderer && renderer.xr && renderer.xr.isPresenting);
     }
+    function shouldBypassPmndrsComposerForVr(self) {
+      return isPmndrsDirectVrPresentationActive(self) && !(self && typeof self.canUseVrPmndrsComposer === "function" && self.canUseVrPmndrsComposer());
+    }
+    function shouldSkipPmndrsCloudsForVr(self) {
+      return isPmndrsDirectVrPresentationActive(self) && !(self && typeof self.canUseVrClouds === "function" && self.canUseVrClouds());
+    }
+    function getPmndrsCloudComposerDisabledReason(self) {
+      if (self && typeof self.canUsePmndrsComposerOnHeadset === "function" && !self.canUsePmndrsComposerOnHeadset()) {
+        return "headset-pmndrs-composer-disabled";
+      }
+      if (shouldSkipPmndrsCloudsForVr(self)) {
+        return "immersive-xr";
+      }
+      return "pmndrs-composer-disabled";
+    }
     function getPmndrsAmbientOcclusionBackend(self) {
       return isPmndrsAmbientOcclusionEnabled(self) ? "native-ssao" : "off";
     }
@@ -763,10 +778,10 @@
       if (!(atmosphereConfig && atmosphereConfig.enabled)) {
         return "atmosphere-disabled";
       }
-      if (isPmndrsDirectVrPresentationActive(self)) {
+      if (shouldSkipPmndrsCloudsForVr(self)) {
         return "immersive-xr";
       }
-      if (self && typeof self.isMobileDevice === "function" && self.isMobileDevice()) {
+      if (self && typeof self.isMobileDevice === "function" && self.isMobileDevice() && !isPmndrsDirectVrPresentationActive(self)) {
         return "mobile";
       }
       if (!renderer || !renderer.capabilities || renderer.capabilities.isWebGL2 !== true || !THREE2 || typeof THREE2.Data3DTexture !== "function") {
@@ -1959,14 +1974,14 @@ ${selectedSummaries.join("\n")}`);
       updatePmndrsAADebugOverlay(this);
       const self = this;
       renderer.render = function(scene, camera) {
-        if (isPmndrsCloudsRequested(self) && isPmndrsDirectVrPresentationActive(self)) {
+        if (isPmndrsCloudsRequested(self) && shouldSkipPmndrsCloudsForVr(self)) {
           markPmndrsCloudsSkipped(self, "immersive-xr", {
             textureReady: Boolean(self._pmndrsCloudTextureState && self._pmndrsCloudTextureState.ready),
             quality: getPmndrsCloudsQuality(self),
             coverage: getPmndrsCloudsCoverage(self)
           });
         }
-        const shouldIntercept = self.pmndrsActive && self.shouldUsePostProcessing() && !self.pmndrsRendering && !isPmndrsDirectVrPresentationActive(self) && !self.sceneProbeCapturing && scene === self.el.object3D && camera;
+        const shouldIntercept = self.pmndrsActive && self.shouldUsePostProcessing() && !self.pmndrsRendering && !shouldBypassPmndrsComposerForVr(self) && !self.sceneProbeCapturing && scene === self.el.object3D && camera;
         if (!shouldIntercept) {
           return self.pmndrsOriginalRender(scene, camera);
         }
@@ -2046,7 +2061,12 @@ ${selectedSummaries.join("\n")}`);
       }
     };
     H.disablePmndrsPostProcessing = function() {
+      const cloudsRequested = isPmndrsCloudsRequested(this);
+      const cloudSkipReason = getPmndrsCloudComposerDisabledReason(this);
       if (!this.pmndrsActive || !this.el.renderer) {
+        if (cloudsRequested) {
+          markPmndrsCloudsSkipped(this, cloudSkipReason);
+        }
         return;
       }
       if (this.pmndrsOriginalRender) {
@@ -2062,8 +2082,8 @@ ${selectedSummaries.join("\n")}`);
       }
       disposePmndrsComposerResources(this);
       disposePmndrsCloudTextureState(this);
-      if (isPmndrsCloudsRequested(this)) {
-        markPmndrsCloudsSkipped(this, "pmndrs-composer-disabled");
+      if (cloudsRequested) {
+        markPmndrsCloudsSkipped(this, cloudSkipReason);
       }
       this.pmndrsOriginalRender = null;
       this.pmndrsActive = false;

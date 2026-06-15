@@ -25,6 +25,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function getCompileDialogElements() {
         return {
+            runtimeTarget: document.getElementById('compileRuntimeTargetSelect'),
+            runtimeTargetHint: document.getElementById('compileRuntimeTargetHint'),
+            vrHeadsetPolicyPanel: document.getElementById('compileVrHeadsetPolicyPanel'),
             runtimeMode: document.getElementById('compileRuntimeModeSelect'),
             renderQuality: document.getElementById('compileRenderQualitySelect'),
             shadowQuality: document.getElementById('compileShadowQualitySelect'),
@@ -174,6 +177,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (typeof VRODOS.editor.envir.scene.aframeFPSMeterEnabled === 'undefined') {
             VRODOS.editor.envir.scene.aframeFPSMeterEnabled = false;
+        }
+        if (!VRODOS.editor.envir.scene.aframeVrRuntimeProfile) {
+            VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'baseline';
         }
         if (typeof VRODOS.editor.envir.scene.aframeHoveringInteractables === 'undefined') {
             VRODOS.editor.envir.scene.aframeHoveringInteractables = true;
@@ -464,6 +470,8 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        VRodosCompileUI.General.clearRuntimeTargetUI(controls);
+
         const postFxEnabled = controls.postFx.checked;
         const colorGradingEnabled = postFxEnabled && controls.postFxColor.checked;
         const reflectionsEnabled = !controls.reflectionsEnabled || controls.reflectionsEnabled.checked === true;
@@ -555,6 +563,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         VRodosCompileUI.Atmosphere.setAdvancedState(controls, pmndrsAtmoChecked);
         VRodosCompileUI.General.updateValueLabels(controls);
+        VRodosCompileUI.General.applyRuntimeTargetUI(controls);
     }
 
     function updatePmndrsValueLabels() {
@@ -661,6 +670,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
         ensureCompileSceneSettingsDefaults();
 
+        if (controls.runtimeTarget) {
+            controls.runtimeTarget.value = VRodosCompileUI.General.runtimeTargetFromVrRuntimeProfile(VRODOS.editor.envir.scene.aframeVrRuntimeProfile);
+        }
         controls.renderQuality.value = VRODOS.editor.envir.scene.aframeRenderQuality || 'standard';
         controls.shadowQuality.value = VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeShadowQuality
             ? VRODOS.editor.envir.scene.aframeShadowQuality
@@ -1014,6 +1026,11 @@ window.addEventListener('DOMContentLoaded', () => {
     VRODOS.ui.syncCompileDialogFromSceneSettings = syncCompileDialogFromSceneSettings;
 
     const controls = getCompileDialogElements();
+    if (controls.runtimeTarget) {
+        controls.runtimeTarget.addEventListener('change', () => {
+            syncCompilePostFxState();
+        });
+    }
     if (controls.renderQuality) {
         controls.renderQuality.addEventListener('change', () => {
             syncCompilePostFxState();

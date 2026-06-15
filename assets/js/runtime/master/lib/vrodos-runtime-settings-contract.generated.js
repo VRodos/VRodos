@@ -12,6 +12,55 @@
                 "single-player"
             ]
         },
+        "vrRuntimeProfile": {
+            "metadataKey": "aframeVrRuntimeProfile",
+            "type": "enum",
+            "default": "baseline",
+            "editorDefault": "baseline",
+            "allowed": [
+                "desktop",
+                "baseline",
+                "safe",
+                "balanced",
+                "max"
+            ]
+        },
+        "vrFramebufferScale": {
+            "metadataKey": "aframeVrFramebufferScale",
+            "type": "number",
+            "default": 0,
+            "min": 0,
+            "max": 1.5,
+            "step": 0.05
+        },
+        "vrFoveationStrength": {
+            "metadataKey": "aframeVrFoveationStrength",
+            "type": "number",
+            "default": -1,
+            "min": -1,
+            "max": 1,
+            "step": 0.05
+        },
+        "vrPmndrsComposerEnabled": {
+            "metadataKey": "aframeVrPmndrsComposerEnabled",
+            "type": "boolean",
+            "default": false
+        },
+        "vrSceneProbeEnabled": {
+            "metadataKey": "aframeVrSceneProbeEnabled",
+            "type": "boolean",
+            "default": false
+        },
+        "vrTakramSkyEnvironmentEnabled": {
+            "metadataKey": "aframeVrTakramSkyEnvironmentEnabled",
+            "type": "boolean",
+            "default": false
+        },
+        "vrCloudsEnabled": {
+            "metadataKey": "aframeVrCloudsEnabled",
+            "type": "boolean",
+            "default": false
+        },
         "postFXColorEnabled": {
             "metadataKey": "aframePostFXColorEnabled",
             "type": "boolean",
@@ -644,6 +693,13 @@
 };
     window.VRODOS_RUNTIME_SETTINGS_SCHEMA_DEFAULTS = {
     "runtimeMode": "single-player",
+    "vrRuntimeProfile": "baseline",
+    "vrFramebufferScale": "0",
+    "vrFoveationStrength": "-1",
+    "vrPmndrsComposerEnabled": "0",
+    "vrSceneProbeEnabled": "0",
+    "vrTakramSkyEnvironmentEnabled": "0",
+    "vrCloudsEnabled": "0",
     "postFXColorEnabled": "0",
     "navigationMode": "walkable",
     "shadowUpdateMode": "static",

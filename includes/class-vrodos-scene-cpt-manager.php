@@ -362,6 +362,13 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframeShadowQuality']    = $json_metadata->aframeShadowQuality ?? 'medium';
 		$scene_data['aframeAAQuality']        = $json_metadata->aframeAAQuality ?? 'balanced';
 		$scene_data['aframeFPSMeterEnabled']  = $json_metadata->aframeFPSMeterEnabled ?? false;
+		$scene_data['aframeVrRuntimeProfile'] = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $json_metadata, 'vrRuntimeProfile' );
+		$scene_data['aframeVrFramebufferScale'] = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $json_metadata, 'vrFramebufferScale' );
+		$scene_data['aframeVrFoveationStrength'] = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $json_metadata, 'vrFoveationStrength' );
+		$scene_data['aframeVrPmndrsComposerEnabled'] = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $json_metadata, 'vrPmndrsComposerEnabled' );
+		$scene_data['aframeVrSceneProbeEnabled'] = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $json_metadata, 'vrSceneProbeEnabled' );
+		$scene_data['aframeVrTakramSkyEnvironmentEnabled'] = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $json_metadata, 'vrTakramSkyEnvironmentEnabled' );
+		$scene_data['aframeVrCloudsEnabled'] = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $json_metadata, 'vrCloudsEnabled' );
 		$scene_data['aframeLegacyHorizonStageSize'] = isset( $json_metadata->aframeLegacyHorizonStageSize ) ? max( 500, min( 8000, (int) $json_metadata->aframeLegacyHorizonStageSize ) ) : 5000;
 		$scene_data['aframeAmbientOcclusionPreset'] = $json_metadata->aframeAmbientOcclusionPreset ?? 'balanced';
 		$scene_data['aframeContactShadowPreset'] = $json_metadata->aframeContactShadowPreset ?? 'soft';

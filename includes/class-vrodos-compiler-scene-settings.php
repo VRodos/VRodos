@@ -98,6 +98,13 @@ class VRodos_Compiler_Scene_Settings {
 			'flatMediaShadowCasting'             => VRodos_Runtime_Settings_Contract::bool_string( $metadata->aframeFlatMediaShadowCasting ?? true, true, '1', '0' ),
 			'aaQuality'                          => $metadata->aframeAAQuality ?? 'balanced',
 			'fpsMeterEnabled'                    => $this->feature_flags->fps_meter_attr( $metadata ),
+			'vrRuntimeProfile'                   => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrRuntimeProfile' ),
+			'vrFramebufferScale'                 => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrFramebufferScale' ),
+			'vrFoveationStrength'                => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrFoveationStrength' ),
+			'vrPmndrsComposerEnabled'            => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrPmndrsComposerEnabled' ), false, '1', '0' ),
+			'vrSceneProbeEnabled'                => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrSceneProbeEnabled' ), false, '1', '0' ),
+			'vrTakramSkyEnvironmentEnabled'      => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrTakramSkyEnvironmentEnabled' ), false, '1', '0' ),
+			'vrCloudsEnabled'                    => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrCloudsEnabled' ), false, '1', '0' ),
 			'legacyHorizonStageSize'             => max( 500, min( 8000, (int) ( $metadata->aframeLegacyHorizonStageSize ?? 5000 ) ) ),
 			'ambientOcclusionPreset'             => $this->enum_value( $metadata->aframeAmbientOcclusionPreset ?? 'balanced', [ 'off', 'soft', 'balanced', 'strong' ], 'balanced' ),
 			'contactShadowPreset'                => $this->enum_value( $metadata->aframeContactShadowPreset ?? 'soft', [ 'off', 'soft', 'balanced', 'strong' ], 'soft' ),
@@ -284,7 +291,17 @@ class VRodos_Compiler_Scene_Settings {
 			return false;
 		}
 
+		if ( $this->should_preserve_native_antialiasing_for_vr( $settings ) ) {
+			return true;
+		}
+
 		return ! $this->should_pmndrs_own_antialiasing( $settings );
+	}
+
+	private function should_preserve_native_antialiasing_for_vr( array $settings ): bool {
+		$profile = (string) ( $settings['vrRuntimeProfile'] ?? 'baseline' );
+
+		return in_array( $profile, [ 'baseline', 'safe', 'balanced', 'max' ], true );
 	}
 
 	private function should_enable_color_management( $metadata ): bool {

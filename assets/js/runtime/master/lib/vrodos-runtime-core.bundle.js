@@ -13,6 +13,55 @@
             "single-player"
           ]
         },
+        "vrRuntimeProfile": {
+          "metadataKey": "aframeVrRuntimeProfile",
+          "type": "enum",
+          "default": "baseline",
+          "editorDefault": "baseline",
+          "allowed": [
+            "desktop",
+            "baseline",
+            "safe",
+            "balanced",
+            "max"
+          ]
+        },
+        "vrFramebufferScale": {
+          "metadataKey": "aframeVrFramebufferScale",
+          "type": "number",
+          "default": 0,
+          "min": 0,
+          "max": 1.5,
+          "step": 0.05
+        },
+        "vrFoveationStrength": {
+          "metadataKey": "aframeVrFoveationStrength",
+          "type": "number",
+          "default": -1,
+          "min": -1,
+          "max": 1,
+          "step": 0.05
+        },
+        "vrPmndrsComposerEnabled": {
+          "metadataKey": "aframeVrPmndrsComposerEnabled",
+          "type": "boolean",
+          "default": false
+        },
+        "vrSceneProbeEnabled": {
+          "metadataKey": "aframeVrSceneProbeEnabled",
+          "type": "boolean",
+          "default": false
+        },
+        "vrTakramSkyEnvironmentEnabled": {
+          "metadataKey": "aframeVrTakramSkyEnvironmentEnabled",
+          "type": "boolean",
+          "default": false
+        },
+        "vrCloudsEnabled": {
+          "metadataKey": "aframeVrCloudsEnabled",
+          "type": "boolean",
+          "default": false
+        },
         "postFXColorEnabled": {
           "metadataKey": "aframePostFXColorEnabled",
           "type": "boolean",
@@ -645,6 +694,13 @@
     };
     window.VRODOS_RUNTIME_SETTINGS_SCHEMA_DEFAULTS = {
       "runtimeMode": "single-player",
+      "vrRuntimeProfile": "baseline",
+      "vrFramebufferScale": "0",
+      "vrFoveationStrength": "-1",
+      "vrPmndrsComposerEnabled": "0",
+      "vrSceneProbeEnabled": "0",
+      "vrTakramSkyEnvironmentEnabled": "0",
+      "vrCloudsEnabled": "0",
       "postFXColorEnabled": "0",
       "navigationMode": "walkable",
       "shadowUpdateMode": "static",
@@ -5737,7 +5793,10 @@
       }
     }
     function shouldUsePmndrsTakramHorizonPath(self) {
-      return Boolean(isPmndrsTakramHorizonRequested(self) && window.VRODOS_TAKRAM_ATMOSPHERE);
+      return Boolean(isPmndrsTakramHorizonRequested(self) && window.VRODOS_TAKRAM_ATMOSPHERE && !shouldUseVrBaselineHorizon(self));
+    }
+    function shouldUseVrBaselineHorizon(self) {
+      return Boolean(self && typeof self.isVrBaselineRuntimeActive === "function" && self.isVrBaselineRuntimeActive() && self.data && self.data.selChoice === "0");
     }
     function shouldUsePmndrsHorizonAerialPerspectivePath(self) {
       return shouldUsePmndrsTakramHorizonPath(self) && (readPmndrsAtmosphereBool(self, "pmndrsAerialPerspectiveEnabled", false) || hasPmndrsDebugFlag("enablePmndrsHorizonAerial", "vrodos_debug_enable_pmndrs_horizon_aerial"));
@@ -7498,7 +7557,7 @@
       applyPmndrsSunOcclusion(self, self._pmndrsSunDirection, self._pmndrsSunDistance || 5200);
     }
     H.updatePmndrsHorizonSun = function() {
-      if (!this || !this.el || this.data.selChoice !== "0" || this.data.postFXEngine !== "pmndrs") {
+      if (!this || !this.el || this.data.selChoice !== "0" || this.data.postFXEngine !== "pmndrs" || shouldUseVrBaselineHorizon(this)) {
         removePmndrsAtmosphereSky(this);
         clearPmndrsHorizonSun(this);
         return;
@@ -7539,6 +7598,9 @@
       const renderer = this.el.renderer;
       if (!renderer) {
         return;
+      }
+      if (typeof this.applyVrRenderBudgetPolicy === "function") {
+        this.applyVrRenderBudgetPolicy("quality-profile");
       }
       const renderQuality = typeof this.getRenderQualityLevel === "function" ? this.getRenderQualityLevel() : this.data.renderQuality === "high" ? "high" : "standard";
       const isHighQuality = renderQuality === "high";
@@ -7945,7 +8007,8 @@
         return;
       }
       const preset = this.getHorizonSkyPreset();
-      const isPmndrs = this.data.postFXEngine === "pmndrs";
+      const useVrBaselineHorizon = shouldUseVrBaselineHorizon(this);
+      const isPmndrs = this.data.postFXEngine === "pmndrs" && !useVrBaselineHorizon;
       const usesTakramHorizon = shouldUsePmndrsTakramHorizonPath(this);
       const shadowEnabled = (typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data.shadowQuality) !== "off";
       if (!usesTakramHorizon) {
@@ -7955,6 +8018,7 @@
         removeLegacySunSkyEntitiesForPmndrs(this);
       }
       const environmentConfig = {
+        active: true,
         preset: "default",
         ground: "none",
         fog: this.data.fogCategory === "2" ? parseFloat(this.data.fogdensity) * 1.5 : 0,
@@ -8028,7 +8092,7 @@
       const contactShadowSettings = getTerrainSafeContactShadowSettings(this, this.getContactShadowSettings());
       const hasAuthorLights = Array.prototype.some.call(this.getCachedSceneQuery("lightEntities", "[light]"), (lightEl) => !lightEl.hasAttribute("data-vrodos-photoreal-light"));
       syncLegacyHorizonCameraFar(this);
-      if (shouldUsePmndrsTakramHorizonPath(this)) {
+      if (shouldUsePmndrsTakramHorizonPath(this) || shouldUseVrBaselineHorizon(this)) {
         this.applyHorizonSkyPreset();
         return;
       }

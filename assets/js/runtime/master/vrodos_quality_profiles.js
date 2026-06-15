@@ -3108,7 +3108,16 @@
 
     function shouldUsePmndrsTakramHorizonPath(self) {
         return Boolean(isPmndrsTakramHorizonRequested(self) &&
-            window.VRODOS_TAKRAM_ATMOSPHERE);
+            window.VRODOS_TAKRAM_ATMOSPHERE &&
+            !shouldUseVrBaselineHorizon(self));
+    }
+
+    function shouldUseVrBaselineHorizon(self) {
+        return Boolean(self &&
+            typeof self.isVrBaselineRuntimeActive === 'function' &&
+            self.isVrBaselineRuntimeActive() &&
+            self.data &&
+            self.data.selChoice === "0");
     }
 
     function shouldUsePmndrsHorizonAerialPerspectivePath(self) {
@@ -5131,7 +5140,7 @@
     }
 
     H.updatePmndrsHorizonSun = function () {
-        if (!this || !this.el || this.data.selChoice !== "0" || this.data.postFXEngine !== 'pmndrs') {
+        if (!this || !this.el || this.data.selChoice !== "0" || this.data.postFXEngine !== 'pmndrs' || shouldUseVrBaselineHorizon(this)) {
             removePmndrsAtmosphereSky(this);
             clearPmndrsHorizonSun(this);
             return;
@@ -5179,6 +5188,10 @@
         const renderer = this.el.renderer;
         if (!renderer) {
             return;
+        }
+
+        if (typeof this.applyVrRenderBudgetPolicy === 'function') {
+            this.applyVrRenderBudgetPolicy('quality-profile');
         }
 
         const renderQuality = typeof this.getRenderQualityLevel === 'function' ? this.getRenderQualityLevel() : (this.data.renderQuality === 'high' ? 'high' : 'standard');
@@ -5672,7 +5685,8 @@
         }
 
         const preset = this.getHorizonSkyPreset();
-        const isPmndrs = this.data.postFXEngine === 'pmndrs';
+        const useVrBaselineHorizon = shouldUseVrBaselineHorizon(this);
+        const isPmndrs = this.data.postFXEngine === 'pmndrs' && !useVrBaselineHorizon;
         const usesTakramHorizon = shouldUsePmndrsTakramHorizonPath(this);
         const shadowEnabled = (typeof this.getEffectiveShadowQuality === 'function' ? this.getEffectiveShadowQuality() : this.data.shadowQuality) !== 'off';
 
@@ -5685,6 +5699,7 @@
         }
 
         const environmentConfig = {
+            active: true,
             preset: 'default',
             ground: 'none',
             fog: (this.data.fogCategory === "2") ? (parseFloat(this.data.fogdensity) * 1.5) : 0,
@@ -5774,7 +5789,7 @@
 
         syncLegacyHorizonCameraFar(this);
 
-        if (shouldUsePmndrsTakramHorizonPath(this)) {
+        if (shouldUsePmndrsTakramHorizonPath(this) || shouldUseVrBaselineHorizon(this)) {
             this.applyHorizonSkyPreset();
             return;
         }

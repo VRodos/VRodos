@@ -575,11 +575,46 @@
       return false;
     }
   }
+  function vrodosRuntimeQueryValue(queryKey) {
+    if (typeof window.location === "undefined" || !window.location.search) {
+      return null;
+    }
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(queryKey);
+    } catch (err) {
+      return null;
+    }
+  }
+  function vrodosRuntimeNowMs() {
+    return typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+  }
+  function vrodosRuntimeFeatureStateSignature(state) {
+    try {
+      return JSON.stringify(state || {});
+    } catch (err) {
+      return "";
+    }
+  }
   function vrodosRuntimeTruthy(value) {
     if (VRODOSRuntimeSettings.bool) {
       return VRODOSRuntimeSettings.bool(value, false);
     }
     return value === true || value === "true" || value === "1" || value === 1;
+  }
+  function vrodosRuntimeNumber(value, fallback, min, max) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
+    let number = parsed;
+    if (Number.isFinite(min)) {
+      number = Math.max(min, number);
+    }
+    if (Number.isFinite(max)) {
+      number = Math.min(max, number);
+    }
+    return number;
   }
   function vrodosRuntimeNoop() {
     return void 0;
@@ -638,6 +673,13 @@
       rootShadowType: { type: "string", default: "pcf" },
       aaQuality: { type: "string", default: "balanced" },
       fpsMeterEnabled: { type: "string", default: "0" },
+      vrRuntimeProfile: { type: "string", default: vrodosSceneSettingDefault("vrRuntimeProfile", "baseline") },
+      vrFramebufferScale: { type: "string", default: vrodosSceneSettingDefault("vrFramebufferScale", "0") },
+      vrFoveationStrength: { type: "string", default: vrodosSceneSettingDefault("vrFoveationStrength", "-1") },
+      vrPmndrsComposerEnabled: { type: "string", default: vrodosSceneSettingDefault("vrPmndrsComposerEnabled", "0") },
+      vrSceneProbeEnabled: { type: "string", default: vrodosSceneSettingDefault("vrSceneProbeEnabled", "0") },
+      vrTakramSkyEnvironmentEnabled: { type: "string", default: vrodosSceneSettingDefault("vrTakramSkyEnvironmentEnabled", "0") },
+      vrCloudsEnabled: { type: "string", default: vrodosSceneSettingDefault("vrCloudsEnabled", "0") },
       legacyHorizonStageSize: { type: "string", default: "5000" },
       ambientOcclusionPreset: { type: "string", default: "balanced" },
       contactShadowPreset: { type: "string", default: "soft" },
@@ -954,13 +996,252 @@
     isMobileDevice: function() {
       return Boolean(AFRAME.utils && AFRAME.utils.device && typeof AFRAME.utils.device.isMobile === "function" && AFRAME.utils.device.isMobile());
     },
+    isHeadsetBrowserDevice: function() {
+      if (typeof navigator === "undefined" || !navigator.userAgent) {
+        return false;
+      }
+      return /OculusBrowser|Quest\s*\d*|Meta Quest|VR Safari/i.test(navigator.userAgent);
+    },
+    isHeadsetPmndrsComposerForceEnabled: function() {
+      return vrodosRuntimeDebugFlag("forceHeadsetPmndrsComposer", "vrodos_force_headset_pmndrs_composer") || vrodosRuntimeDebugFlag("forceXrPmndrsComposer", "vrodos_force_xr_pmndrs_composer");
+    },
+    canUsePmndrsComposerOnHeadset: function() {
+      return !this.isHeadsetBrowserDevice() || this.isHeadsetPmndrsComposerForceEnabled();
+    },
+    getVrRuntimeProfile: function() {
+      const debugConfig = window.VRODOS_DEBUG || {};
+      const override = typeof debugConfig.vrRuntimeProfile === "string" && debugConfig.vrRuntimeProfile || typeof debugConfig.vrProfile === "string" && debugConfig.vrProfile || vrodosRuntimeQueryValue("vrodos_vr_profile");
+      const rawProfile = String(override || this.data.vrRuntimeProfile || "baseline").toLowerCase();
+      switch (rawProfile) {
+        case "desktop":
+        case "baseline":
+        case "safe":
+        case "balanced":
+        case "max":
+          return rawProfile;
+        default:
+          return "baseline";
+      }
+    },
+    isVrRuntimePolicyActive: function() {
+      if (this.getVrRuntimeProfile() === "desktop") {
+        return false;
+      }
+      return this.isVrPresentationActive() || this.isHeadsetBrowserDevice();
+    },
+    isVrRuntimeBaselineProfile: function() {
+      return this.getVrRuntimeProfile() === "baseline";
+    },
+    isVrBaselineRuntimeActive: function() {
+      return this.isVrRuntimeBaselineProfile() && this.isVrRuntimePolicyActive();
+    },
+    isVrRuntimeMaxProfile: function() {
+      return this.getVrRuntimeProfile() === "max";
+    },
+    isVrFeatureExperimentEnabled: function(dataKey, debugKey, queryKey) {
+      if (this.getVrRuntimeProfile() === "desktop") {
+        return false;
+      }
+      if (this.isVrRuntimeBaselineProfile()) {
+        return false;
+      }
+      return this.isVrRuntimeMaxProfile() || vrodosRuntimeTruthy(this.data[dataKey]) || vrodosRuntimeDebugFlag(debugKey, queryKey);
+    },
+    getVrRenderProfileDefaults: function(profile) {
+      switch (profile) {
+        case "desktop":
+        case "max":
+          return {
+            framebufferScale: 1,
+            foveation: 0.5
+          };
+        case "balanced":
+          return {
+            framebufferScale: 0.9,
+            foveation: 0.75
+          };
+        case "safe":
+        case "baseline":
+        default:
+          return {
+            framebufferScale: 1,
+            foveation: 0.5
+          };
+      }
+    },
+    readVrRenderBudgetOverride: function(dataKey, debugKey, queryKey, options) {
+      const opts = options || {};
+      const debugConfig = window.VRODOS_DEBUG || {};
+      const candidates = [];
+      if (Object.prototype.hasOwnProperty.call(debugConfig, debugKey)) {
+        candidates.push({ source: "debug", value: debugConfig[debugKey] });
+      }
+      const queryValue = vrodosRuntimeQueryValue(queryKey);
+      if (queryValue !== null && queryValue !== "") {
+        candidates.push({ source: "query", value: queryValue });
+      }
+      if (this.data && Object.prototype.hasOwnProperty.call(this.data, dataKey)) {
+        candidates.push({ source: "scene", value: this.data[dataKey] });
+      }
+      for (let i = 0; i < candidates.length; i += 1) {
+        const candidate = candidates[i];
+        const rawNumber = Number(candidate.value);
+        if (!Number.isFinite(rawNumber)) {
+          continue;
+        }
+        if (typeof opts.autoBelowOrEqual === "number" && rawNumber <= opts.autoBelowOrEqual) {
+          continue;
+        }
+        if (typeof opts.autoBelow === "number" && rawNumber < opts.autoBelow) {
+          continue;
+        }
+        return {
+          value: vrodosRuntimeNumber(rawNumber, opts.fallback, opts.min, opts.max),
+          source: candidate.source
+        };
+      }
+      return null;
+    },
+    getVrRenderBudgetPolicy: function() {
+      const profile = this.getVrRuntimeProfile();
+      const defaults = this.getVrRenderProfileDefaults(profile);
+      const framebufferScaleOverride = this.readVrRenderBudgetOverride(
+        "vrFramebufferScale",
+        "vrFramebufferScale",
+        "vrodos_vr_framebuffer_scale",
+        { min: 0.5, max: 1.5, fallback: defaults.framebufferScale, autoBelowOrEqual: 0 }
+      );
+      const foveationOverride = this.readVrRenderBudgetOverride(
+        "vrFoveationStrength",
+        "vrFoveationStrength",
+        "vrodos_vr_foveation",
+        { min: 0, max: 1, fallback: defaults.foveation, autoBelow: 0 }
+      );
+      return {
+        profile,
+        framebufferScale: framebufferScaleOverride ? framebufferScaleOverride.value : defaults.framebufferScale,
+        framebufferScaleSource: framebufferScaleOverride ? framebufferScaleOverride.source : "profile",
+        foveation: foveationOverride ? foveationOverride.value : defaults.foveation,
+        foveationSource: foveationOverride ? foveationOverride.source : "profile"
+      };
+    },
+    applyVrRenderBudgetPolicy: function(reason) {
+      const renderer = this.el && this.el.renderer ? this.el.renderer : null;
+      const xr = renderer && renderer.xr ? renderer.xr : null;
+      const policy = this.getVrRenderBudgetPolicy();
+      const state = Object.assign({
+        reason: reason || "manual",
+        policyActive: policy.profile !== "desktop",
+        supportsFramebufferScale: false,
+        supportsFoveation: false,
+        framebufferScaleApplied: false,
+        framebufferScaleBlocked: false,
+        foveationApplied: false,
+        currentFoveation: null
+      }, policy);
+      if (!xr) {
+        this._vrodosVrRenderBudget = state;
+        return state;
+      }
+      if (policy.profile === "desktop") {
+        this._vrodosVrRenderBudget = state;
+        return state;
+      }
+      const activeSession = Boolean(typeof xr.getSession === "function" && xr.getSession() || xr.isPresenting);
+      state.activeSession = activeSession;
+      if (typeof xr.setFramebufferScaleFactor === "function") {
+        state.supportsFramebufferScale = true;
+        if (!activeSession) {
+          try {
+            xr.setFramebufferScaleFactor(policy.framebufferScale);
+            state.framebufferScaleApplied = true;
+          } catch (err) {
+            state.framebufferScaleError = err && err.message ? err.message : String(err);
+          }
+        } else {
+          state.framebufferScaleBlocked = true;
+        }
+      }
+      if (typeof xr.setFoveation === "function") {
+        state.supportsFoveation = true;
+        try {
+          xr.setFoveation(policy.foveation);
+          state.foveationApplied = true;
+        } catch (err) {
+          state.foveationError = err && err.message ? err.message : String(err);
+        }
+      }
+      if (typeof xr.getFoveation === "function") {
+        try {
+          const currentFoveation = xr.getFoveation();
+          state.currentFoveation = typeof currentFoveation === "number" ? currentFoveation : null;
+        } catch (err) {
+          state.currentFoveation = null;
+        }
+      }
+      this._vrodosVrRenderBudget = state;
+      return state;
+    },
+    getVrRuntimeFeaturePolicy: function() {
+      const active = this.isDirectVrPresentationActive();
+      const profileActive = this.isVrRuntimePolicyActive();
+      const profile = this.getVrRuntimeProfile();
+      const pmndrsComposer = active && this.data.postFXEngine === "pmndrs" && !this.isVrRuntimeBaselineProfile() && this.canUsePmndrsComposerOnHeadset() && this.isVrFeatureExperimentEnabled("vrPmndrsComposerEnabled", "enableXrPmndrsComposer", "vrodos_enable_xr_pmndrs_composer");
+      const sceneProbe = active && !this.isVrRuntimeBaselineProfile() && this.isVrFeatureExperimentEnabled("vrSceneProbeEnabled", "enableXrSceneProbe", "vrodos_enable_xr_scene_probe");
+      const takramSkyEnvironment = active && !this.isVrRuntimeBaselineProfile() && this.isVrFeatureExperimentEnabled("vrTakramSkyEnvironmentEnabled", "enableXrTakramSkyEnvironment", "vrodos_enable_xr_takram_sky_environment");
+      const clouds = active && this.data.postFXEngine === "pmndrs" && !this.isVrRuntimeBaselineProfile() && this.isVrFeatureExperimentEnabled("vrCloudsEnabled", "enableXrClouds", "vrodos_enable_xr_clouds");
+      return {
+        profile,
+        active,
+        profileActive,
+        baseline: this.isVrRuntimeBaselineProfile(),
+        headsetBrowser: this.isHeadsetBrowserDevice(),
+        headsetPmndrsComposerForced: this.isHeadsetPmndrsComposerForceEnabled(),
+        pmndrsComposer,
+        sceneProbe,
+        takramSkyEnvironment,
+        clouds,
+        renderBudget: this._vrodosVrRenderBudget || this.getVrRenderBudgetPolicy()
+      };
+    },
+    canUseVrPmndrsComposer: function() {
+      return this.getVrRuntimeFeaturePolicy().pmndrsComposer;
+    },
+    canUseVrSceneProbe: function() {
+      return this.getVrRuntimeFeaturePolicy().sceneProbe;
+    },
+    canUseVrTakramSkyEnvironment: function() {
+      return this.getVrRuntimeFeaturePolicy().takramSkyEnvironment;
+    },
+    canUseVrClouds: function() {
+      const policy = this.getVrRuntimeFeaturePolicy();
+      return policy.clouds && policy.pmndrsComposer;
+    },
+    canUsePostProcessingForPresentation: function() {
+      if (this.isVrBaselineRuntimeActive()) {
+        return false;
+      }
+      if (this.data.postFXEngine === "pmndrs" && !this.canUsePmndrsComposerOnHeadset()) {
+        return false;
+      }
+      if (!this.isDirectVrPresentationActive()) {
+        return true;
+      }
+      return this.canUseVrPmndrsComposer();
+    },
     canUseSceneProbe: function() {
-      return this.getReflectionSource() === "scene-probe" && this.data.renderQuality === "high" && !this.isVrPresentationActive() && !this.isMobileDevice() && Boolean(this.el.renderer) && typeof THREE.WebGLCubeRenderTarget !== "undefined" && typeof THREE.CubeCamera !== "undefined" && typeof THREE.PMREMGenerator !== "undefined";
+      const presentationEligible = !this.isVrPresentationActive() && !this.isMobileDevice() || this.canUseVrSceneProbe();
+      return this.getReflectionSource() === "scene-probe" && this.data.renderQuality === "high" && presentationEligible && Boolean(this.el.renderer) && typeof THREE.WebGLCubeRenderTarget !== "undefined" && typeof THREE.CubeCamera !== "undefined" && typeof THREE.PMREMGenerator !== "undefined";
     },
     canUseTakramSkyEnvironment: function() {
-      return vrodosRuntimeDebugFlag("enableTakramSkyEnvironment", "vrodos_debug_takram_sky_environment") && this.data.renderQuality === "high" && this.data.postFXEngine === "pmndrs" && typeof this.isPmndrsAtmosphereEnabled === "function" && this.isPmndrsAtmosphereEnabled() && typeof this.isPmndrsDayNightCycleActive === "function" && this.isPmndrsDayNightCycleActive() && !this.isVrPresentationActive() && !this.isMobileDevice() && Boolean(this.el.renderer) && typeof THREE.WebGLCubeRenderTarget !== "undefined" && typeof THREE.CubeCamera !== "undefined" && typeof THREE.PMREMGenerator !== "undefined";
+      const presentationEligible = !this.isVrPresentationActive() && !this.isMobileDevice() || this.canUseVrTakramSkyEnvironment();
+      const takramSkyEnvironmentRequested = vrodosRuntimeDebugFlag("enableTakramSkyEnvironment", "vrodos_debug_takram_sky_environment") || this.canUseVrTakramSkyEnvironment();
+      return takramSkyEnvironmentRequested && this.data.renderQuality === "high" && this.data.postFXEngine === "pmndrs" && typeof this.isPmndrsAtmosphereEnabled === "function" && this.isPmndrsAtmosphereEnabled() && typeof this.isPmndrsDayNightCycleActive === "function" && this.isPmndrsDayNightCycleActive() && presentationEligible && Boolean(this.el.renderer) && typeof THREE.WebGLCubeRenderTarget !== "undefined" && typeof THREE.CubeCamera !== "undefined" && typeof THREE.PMREMGenerator !== "undefined";
     },
     getEffectiveReflectionSource: function() {
+      if (this.isVrBaselineRuntimeActive()) {
+        return "none";
+      }
       if (!this.areReflectionsEnabled()) {
         return "none";
       }
@@ -1157,7 +1438,7 @@
         this._immersiveXrPostFXFallbackWarned = false;
         return;
       }
-      if (!this.hasPostProcessingPipelineRequest() || this._immersiveXrPostFXFallbackWarned) {
+      if (!this.hasPostProcessingPipelineRequest() || this.canUsePostProcessingForPresentation() || this._immersiveXrPostFXFallbackWarned) {
         return;
       }
       this._immersiveXrPostFXFallbackWarned = true;
@@ -1202,7 +1483,7 @@
       if (this.data.postFXEngine === "pmndrs" && vrodosRuntimeDebugFlag("disablePmndrsComposer", "vrodos_debug_disable_pmndrs_composer")) {
         return false;
       }
-      return this.hasPostProcessingPipelineRequest() && !this.isDirectVrPresentationActive();
+      return this.hasPostProcessingPipelineRequest() && this.canUsePostProcessingForPresentation();
     },
     ensureRuntimePipelineComponents: function() {
       [
@@ -1215,6 +1496,192 @@
           this.el.setAttribute(componentName, "");
         }
       });
+    },
+    getCustomMovementComponent: function() {
+      const sceneEl = this.el;
+      const movementEl = sceneEl && sceneEl.querySelector && sceneEl.querySelector("[custom-movement]") || document.querySelector("[custom-movement]");
+      return movementEl && movementEl.components ? movementEl.components["custom-movement"] : null;
+    },
+    getNavigationFeatureDiagnostics: function() {
+      const movement = this.getCustomMovementComponent();
+      const navigationMode = movement && typeof movement.getNavigationMode === "function" ? movement.getNavigationMode(this.data) : this.data.navigationMode || "walkable";
+      const collisionConfigured = this.data.collisionMode !== "off" && navigationMode === "walkable";
+      const navMeshTargets = movement && movement.navMeshCollisionTargets ? movement.navMeshCollisionTargets.length : 0;
+      return {
+        componentPresent: Boolean(movement),
+        authoredNavigationMode: this.data.navigationMode || "",
+        navigationMode,
+        collisionMode: this.data.collisionMode || "auto",
+        collisionConfigured,
+        collisionActive: Boolean(collisionConfigured && navMeshTargets > 0),
+        bvhBundleLoaded: Boolean(window.VRODOS_COLLISION_BVH),
+        bvhInstalled: Boolean(movement && movement.bvhInstalled),
+        navMeshRoots: movement && movement.navMeshRoots ? movement.navMeshRoots.length : 0,
+        navMeshTargets,
+        colliderRoots: movement && movement.colliderRoots ? movement.colliderRoots.length : 0,
+        blockerTargets: movement && movement.blockerCollisionTargets ? movement.blockerCollisionTargets.length : 0,
+        navMeshDirty: Boolean(movement && movement.navMeshDirty),
+        collisionWorldDirty: Boolean(movement && movement.collisionWorldDirty),
+        lastAutoRecoveryStatus: movement && movement.lastAutoRecoveryStatus ? movement.lastAutoRecoveryStatus : "none"
+      };
+    },
+    getSpatialUiFeatureDiagnostics: function() {
+      const api = window.VRODOSSpatialUI || null;
+      const activePanel = api && typeof api.getActivePanel === "function" ? api.getActivePanel() : null;
+      let panelDiagnostics = null;
+      if (activePanel && activePanel.api && typeof activePanel.api.getDiagnostics === "function") {
+        try {
+          panelDiagnostics = activePanel.api.getDiagnostics();
+        } catch (err) {
+          panelDiagnostics = { error: err && err.message ? err.message : String(err) };
+        }
+      }
+      return {
+        bundleLoaded: Boolean(api),
+        activePanel: Boolean(activePanel),
+        panelId: activePanel && activePanel.id ? activePanel.id : "",
+        controllerPointers: panelDiagnostics && typeof panelDiagnostics.controllerPointers === "number" ? panelDiagnostics.controllerPointers : 0,
+        controllerPointerSources: panelDiagnostics && Array.isArray(panelDiagnostics.controllerPointerSources) ? panelDiagnostics.controllerPointerSources.map((entry) => entry && entry.source ? entry.source : "") : [],
+        diagnosticsCount: window.__vrodosSpatialUIDiagnostics && window.__vrodosSpatialUIDiagnostics.length ? window.__vrodosSpatialUIDiagnostics.length : 0
+      };
+    },
+    getActivePostProcessingOwner: function(postProcessingRequested, postProcessingAllowed) {
+      if (postProcessingAllowed) {
+        if (this.data.postFXEngine === "pmndrs") {
+          return this.pmndrsActive ? "pmndrs" : "pmndrs-pending";
+        }
+        return this.postProcessingActive ? "legacy" : "legacy-pending";
+      }
+      if (postProcessingRequested && this.isVrBaselineRuntimeActive()) {
+        return "vr-baseline-disabled";
+      }
+      if (postProcessingRequested && this.isDirectVrPresentationActive()) {
+        return "direct-xr-fallback";
+      }
+      if (postProcessingRequested) {
+        return "disabled";
+      }
+      return "direct";
+    },
+    getRuntimeFeatureState: function() {
+      const renderer = this.el && this.el.renderer ? this.el.renderer : null;
+      const xr = renderer && renderer.xr ? renderer.xr : null;
+      const postProcessingRequested = this.hasPostProcessingPipelineRequest();
+      const postProcessingAllowed = this.shouldUsePostProcessing();
+      const effectiveReflectionSource = this.getEffectiveReflectionSource();
+      const cloudDiagnostics = this._pmndrsCloudsDiagnostics || {};
+      const atmosphereState = this._pmndrsAtmosphereState || null;
+      const shadowDiagnostics = typeof this.getShadowDiagnosticState === "function" ? this.getShadowDiagnosticState() : null;
+      const horizonState = typeof this.getPmndrsTakramHorizonState === "function" ? this.getPmndrsTakramHorizonState() : null;
+      const vrFeaturePolicy = this.getVrRuntimeFeaturePolicy();
+      const vrBaselineActive = this.isVrBaselineRuntimeActive();
+      let pixelRatio = null;
+      if (renderer && typeof renderer.getPixelRatio === "function") {
+        try {
+          pixelRatio = renderer.getPixelRatio();
+        } catch (err) {
+          pixelRatio = null;
+        }
+      }
+      return {
+        presentation: {
+          mode: this.getPresentationMode(),
+          immersiveXr: this.isImmersiveXrActive(),
+          aframeVrMode: this.isAFrameVrModeActive(),
+          vrPresentation: this.isVrPresentationActive(),
+          mobile: this.isMobileDevice(),
+          headsetBrowser: this.isHeadsetBrowserDevice(),
+          xrSession: Boolean(xr && typeof xr.getSession === "function" && xr.getSession())
+        },
+        renderer: {
+          renderQuality: this.getRenderQualityLevel(),
+          aaQuality: this.getAAQualityLevel(),
+          pixelRatio,
+          webgl2: Boolean(renderer && renderer.capabilities && renderer.capabilities.isWebGL2 === true),
+          vrRenderBudget: this._vrodosVrRenderBudget || this.getVrRenderBudgetPolicy()
+        },
+        vrProfile: vrFeaturePolicy,
+        postProcessing: {
+          engine: this.data.postFXEngine || "legacy",
+          requested: postProcessingRequested,
+          allowed: postProcessingAllowed,
+          owner: this.getActivePostProcessingOwner(postProcessingRequested, postProcessingAllowed),
+          legacyActive: Boolean(this.postProcessingActive),
+          pmndrsActive: Boolean(this.pmndrsActive),
+          pmndrsBundleLoaded: Boolean(window.POSTPROCESSING),
+          pmndrsComposerBuilt: Boolean(this.pmndrsComposer),
+          pmndrsEffectPass: Boolean(this.pmndrsEffectPass),
+          immersiveXrFallback: Boolean(postProcessingRequested && this.isDirectVrPresentationActive() && !this.canUsePostProcessingForPresentation())
+        },
+        takram: {
+          atmosphereRequested: Boolean(!vrBaselineActive && this.data.postFXEngine === "pmndrs" && this.isPmndrsAtmosphereEnabled()),
+          atmosphereBundleLoaded: Boolean(window.VRODOS_TAKRAM_ATMOSPHERE),
+          atmosphereReady: Boolean(!vrBaselineActive && atmosphereState && atmosphereState.ready && !atmosphereState.failed),
+          dayNightCycleActive: Boolean(!vrBaselineActive && this.isPmndrsDayNightCycleActive()),
+          horizonOwner: vrBaselineActive ? "aframe-environment" : horizonState && horizonState.owner ? horizonState.owner : "",
+          takramSunEnabled: Boolean(!vrBaselineActive && horizonState && horizonState.takramSunEnabled),
+          cloudsRequested: Boolean(!vrBaselineActive && this.isPmndrsCloudsEnabled()),
+          cloudsBundleLoaded: Boolean(window.VRODOS_TAKRAM_CLOUDS),
+          cloudsActive: Boolean(!vrBaselineActive && cloudDiagnostics.cloudsActive),
+          cloudsSkippedReason: cloudDiagnostics.cloudsSkippedReason || "",
+          cloudsXrSkipped: Boolean(cloudDiagnostics.xrSkipped)
+        },
+        reflections: {
+          enabled: this.areReflectionsEnabled(),
+          authoredSource: this.getReflectionSource(),
+          effectiveSource: effectiveReflectionSource,
+          envMapPreset: this.data.envMapPreset || "none",
+          currentSource: this._currentReflectionSource || "none",
+          hdrReady: Boolean(this._envMapRenderTarget),
+          sceneProbeCapable: this.canUseSceneProbe(),
+          sceneProbeTargetReady: Boolean(this._sceneProbePmremTarget),
+          sceneProbeNeedsUpdate: Boolean(this._sceneProbeNeedsUpdate),
+          takramSkyEnvironmentCapable: this.canUseTakramSkyEnvironment(),
+          takramSkyTargetReady: Boolean(this._takramSkyPmremTarget)
+        },
+        shadows: {
+          authoredQuality: this.data.shadowQuality || "medium",
+          effectiveQuality: this.getEffectiveShadowQuality(),
+          updateMode: this.getShadowUpdateMode(),
+          staticMode: Boolean(this.isStaticShadowMode()),
+          diagnostics: shadowDiagnostics
+        },
+        navigation: this.getNavigationFeatureDiagnostics(),
+        spatialUi: this.getSpatialUiFeatureDiagnostics()
+      };
+    },
+    publishRuntimeFeatureState: function(reason, options) {
+      const opts = options || {};
+      const now = typeof opts.time === "number" && isFinite(opts.time) ? opts.time : vrodosRuntimeNowMs();
+      const throttleMs = typeof opts.throttleMs === "number" ? opts.throttleMs : 0;
+      if (throttleMs > 0 && this._runtimeFeatureStateLastPublishMs && now - this._runtimeFeatureStateLastPublishMs < throttleMs) {
+        return this._runtimeFeatureState || window.VRODOS_RUNTIME_FEATURE_STATE || null;
+      }
+      const state = this.getRuntimeFeatureState();
+      const signature = vrodosRuntimeFeatureStateSignature(state);
+      state.reason = reason || "update";
+      state.updatedAtMs = Math.round(now);
+      this._runtimeFeatureState = state;
+      this._runtimeFeatureStateLastPublishMs = now;
+      window.VRODOS_RUNTIME_FEATURE_STATE = state;
+      window.__vrodosRuntimeFeatureState = state;
+      VRODOSSceneSettingsMaster.runtimeFeatureState = state;
+      VRODOSSceneSettingsMaster.getRuntimeFeatureState = function() {
+        const scene = document.querySelector("a-scene");
+        const component = scene && scene.components ? scene.components["scene-settings"] : null;
+        return component && typeof component.getRuntimeFeatureState === "function" ? component.getRuntimeFeatureState() : window.VRODOS_RUNTIME_FEATURE_STATE || null;
+      };
+      if (this.isRuntimeFeatureDiagnosticsLogEnabled() && signature && signature !== this._runtimeFeatureStateLogSignature) {
+        this._runtimeFeatureStateLogSignature = signature;
+        console.info("[VRodos] Runtime feature state:", state);
+      }
+      if (!this.isRuntimeFeatureDiagnosticsLogEnabled()) {
+        this._runtimeFeatureStateLogSignature = signature;
+      }
+      return state;
+    },
+    isRuntimeFeatureDiagnosticsLogEnabled: function() {
+      return vrodosRuntimeDebugFlag("runtimeFeatures", "vrodos_debug_runtime_features");
     },
     // --- Post-processing methods: LEGACY engine (extracted to vrodos_postprocessing.js) ---
     updatePostProcessingSize: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updatePostProcessingSize || vrodosRuntimeNoop,
@@ -1269,6 +1736,7 @@
       this.applyEnvMapProfile();
       this.applyPostFXProfile();
       this.updatePmndrsHorizonSun();
+      this.publishRuntimeFeatureState("presentation-sync");
       if (!waitForSettle) {
         return;
       }
@@ -1281,6 +1749,7 @@
         self.updatePostProcessingSize();
         self.updatePmndrsPostProcessingSize();
         self.updatePmndrsHorizonSun();
+        self.publishRuntimeFeatureState("presentation-resync");
       };
       if (typeof requestAnimationFrame === "function") {
         requestAnimationFrame(resync);
@@ -1312,6 +1781,9 @@
     disposePmndrsAtmosphere: VRODOSSceneSettingsMaster.SceneSettingsHelpers.disposePmndrsAtmosphere || function() {
     },
     getPmndrsAtmosphereConfig: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsAtmosphereConfig || function() {
+      return null;
+    },
+    getPmndrsTakramHorizonState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsTakramHorizonState || function() {
       return null;
     },
     getPmndrsToneMappingExposure: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getPmndrsToneMappingExposure || function() {
@@ -1450,6 +1922,10 @@
       this._takramSkyEnvironmentSmoothedScale = null;
       this._takramSkyEnvironmentLastProfileScale = 1;
       this._takramSkyEnvironmentSignature = "";
+      this._runtimeFeatureState = null;
+      this._runtimeFeatureStateLastPublishMs = 0;
+      this._runtimeFeatureStateLogSignature = "";
+      this._vrodosVrRenderBudget = null;
       window.addEventListener("resize", this.handleResize);
       document.addEventListener("fullscreenchange", this.handlePresentationModeChange);
       document.addEventListener("webkitfullscreenchange", this.handlePresentationModeChange);
@@ -1516,15 +1992,18 @@
         }
         this.queueQualityRefresh(true);
         this.markShadowDirty("scene-loaded");
+        this.applyVrRenderBudgetPolicy("scene-loaded");
       });
       this.el.addEventListener("model-loaded", this.handleQualityModelLoad);
       this.el.addEventListener("enter-vr", () => {
         VRODOSSceneSettingsMaster.setBrowsingModeVR(true);
+        this.applyVrRenderBudgetPolicy("enter-vr");
         this.syncPresentationVisualState(true);
         if (typeof window.gtag === "function") window.gtag("event", "vr_enabled");
       });
       this.el.addEventListener("exit-vr", () => {
         VRODOSSceneSettingsMaster.setBrowsingModeVR(false);
+        this.applyVrRenderBudgetPolicy("exit-vr");
         this.syncPresentationVisualState(true);
         if (typeof window.gtag === "function") window.gtag("event", "vr_disabled");
       });
@@ -1625,6 +2104,8 @@
           break;
       }
       this.queueQualityRefresh(true);
+      this.applyVrRenderBudgetPolicy("init");
+      this.publishRuntimeFeatureState("init");
     },
     remove: function() {
       this.el.removeEventListener("model-loaded", this.handleQualityModelLoad);
@@ -1683,6 +2164,7 @@
       if (hasFocusedPipeline) {
         return;
       }
+      this.publishRuntimeFeatureState("scene-settings-tick", { time, throttleMs: 1500 });
       if (this.fpsStats && typeof this.fpsStats.update === "function") {
         this.fpsStats.update();
       }
@@ -1743,10 +2225,13 @@
       }
     });
     AFRAME.registerComponent("vrodos-render-profile", {
-      tick: function() {
+      tick: function(time) {
         const settings = sceneSettings(this.el);
         if (!settings) {
           return;
+        }
+        if (typeof settings.publishRuntimeFeatureState === "function") {
+          settings.publishRuntimeFeatureState("render-profile-tick", { time, throttleMs: 1500 });
         }
         if (settings.fpsStats && typeof settings.fpsStats.update === "function") {
           settings.fpsStats.update();
@@ -1771,6 +2256,9 @@
           } else {
             settings.disablePmndrsPostProcessing();
           }
+          if (typeof settings.publishRuntimeFeatureState === "function") {
+            settings.publishRuntimeFeatureState("postfx-router");
+          }
           return;
         }
         if (settings.pmndrsActive) {
@@ -1781,6 +2269,9 @@
           settings.updatePostProcessingSize();
         } else {
           settings.disablePostProcessing();
+        }
+        if (typeof settings.publishRuntimeFeatureState === "function") {
+          settings.publishRuntimeFeatureState("postfx-router");
         }
       }
     });

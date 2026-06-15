@@ -98,6 +98,60 @@
 						</div>
 
 						<div class="tw-space-y-4">
+							<label class="tw-form-control">
+								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Runtime Target</span>
+								<select id="compileRuntimeTargetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+									<option value="desktop">Desktop</option>
+									<option value="vr-headset">VR Headset</option>
+								</select>
+								<p id="compileRuntimeTargetHint" class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-1"></p>
+							</label>
+
+							<div id="compileVrHeadsetPolicyPanel" class="tw-rounded-lg tw-border tw-border-emerald-200 tw-bg-emerald-50/70 tw-p-3 tw-space-y-3" style="display:none;">
+								<div class="tw-flex tw-items-center tw-justify-between tw-gap-3">
+									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">VR Headset Effective Policy</span>
+									<span class="tw-badge tw-badge-success tw-badge-xs tw-text-[9px] tw-uppercase">Active</span>
+								</div>
+								<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+									<label class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Environment</span>
+										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
+											<option>A-Frame Horizon</option>
+										</select>
+									</label>
+									<label class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Post-FX</span>
+										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
+											<option>Disabled</option>
+										</select>
+									</label>
+									<label class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Takram / Clouds</span>
+										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
+											<option>Disabled</option>
+										</select>
+									</label>
+									<label class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Scene Probe</span>
+										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
+											<option>Disabled</option>
+										</select>
+									</label>
+									<label class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Native AA</span>
+										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
+											<option>Enabled</option>
+										</select>
+									</label>
+									<label class="tw-form-control">
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">XR Budget</span>
+										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
+											<option>Scale 1.0 / Foveation 0.5</option>
+										</select>
+									</label>
+								</div>
+							</div>
+
 							<div class="tw-grid tw-grid-cols-2 tw-gap-3">
 								<label class="tw-form-control">
 									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Render</span>

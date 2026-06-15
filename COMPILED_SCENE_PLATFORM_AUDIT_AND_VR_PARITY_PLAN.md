@@ -128,6 +128,59 @@ Legend:
 
 ## VR Parity Roadmap
 
+### Operating Rule - Desktop Stays Intact
+
+- Desktop is the reference pipeline and must remain unchanged unless a change is explicitly desktop-scoped.
+- VR work happens behind named VR runtime profiles and headset/runtime presentation checks.
+- A VR profile may disable or replace a desktop feature only for headset/VR execution; it must not silently alter the desktop authored pipeline.
+- Move one step at a time. A stage is accepted only after headset testing confirms browser-panel stability, immersive stability, sane midday horizon/lighting, no compositor artifacts, and runtime diagnostics that match the expected feature set.
+
+### VR Profile Ladder
+
+The compile UI exposes this as `Runtime Target`: `Desktop` or `VR Headset`.
+
+- `Desktop` maps to the internal `desktop` profile and leaves the authored desktop rendering pipeline active without headset-specific overrides.
+- `VR Headset` maps to the accepted internal `baseline` headset profile for now.
+
+Only `desktop`, `baseline`, `safe`, `balanced`, and `max` are runtime-recognized today. `safe`, `balanced`, and `max` remain internal/debug ladder stages until they are promoted into the UI. The intermediate stage names below are the planned activation order; add them to the runtime contract only when that stage is implemented and tested.
+
+0. `baseline`
+   - Goal: known-good Quest starting point.
+   - Enabled: A-Frame scene host, A-Frame sun/sky/environment, controllers, navigation, collision, normal authored objects/media.
+   - Disabled: PMNDRS composer, PMNDRS effects, Takram visible sky, Takram sky PMREM, Takram clouds, scene probes, experimental post-FX.
+   - Quality budget: native renderer antialiasing on, framebuffer scale `1.0`, foveation `0.5`.
+   - Acceptance: stable in Quest Browser tab mode and immersive VR, with normal midday horizon brightness.
+1. `safe`
+   - Goal: restore scene-owned runtime features that do not require PMNDRS composer ownership.
+   - Candidate features: shadows, tone mapping/exposure, material profiles, basic lighting budget, spatial UI, collisions/navigation.
+2. `takram-lights`
+   - Goal: test Takram-derived light sources only, while keeping the baseline visible A-Frame horizon.
+   - Candidate features: Takram sun/moon/sky light probes or helper bridge lights, no Takram sky material.
+3. `takram-sky`
+   - Goal: test Takram visible sky/horizon without clouds and without PMNDRS composer effects.
+4. `reflections`
+   - Goal: test HDR/env-map and later scene-probe/Takram-sky PMREM separately from post-FX.
+5. `pmndrs-composer-empty`
+   - Goal: validate PMNDRS composer ownership with no visual effects.
+6. `pmndrs-effects`
+   - Goal: add cheap composer effects one at a time: color, LUT, vignette/noise, bloom, AA, then AO.
+7. `clouds`
+   - Goal: test Takram volumetric clouds only after composer and sky ownership are stable.
+8. `max`
+   - Goal: lab-only combined profile after every lower stage is accepted.
+
+### Current Implementation Checkpoint
+
+- Phase 1 diagnostics expose `window.VRODOS_RUNTIME_FEATURE_STATE` and `window.__vrodosRuntimeFeatureState`.
+- VR profile work has started with user-facing `Runtime Target` values `Desktop` and `VR Headset`; internally these map to `desktop` and `baseline`.
+- `desktop` keeps the authored desktop rendering pipeline active and disables the headset-specific override policy.
+- `baseline` is the strict headset starting point: A-Frame horizon/environment, no PMNDRS composer, no Takram sky/clouds, no scene probes.
+- `baseline`, `safe`, `balanced`, and `max` now also apply a VR-only WebXR render budget before session start when supported: framebuffer scale/foveation defaults are `1.0/0.5`, `1.0/0.5`, `0.9/0.75`, and `1.0/0.5`.
+- `max` attempts requested PMNDRS composer, scene probe, Takram sky PMREM, and Takram clouds only in immersive VR and only when runtime support checks pass.
+- Individual experiments can be enabled with scene metadata or query flags: `vrodos_vr_profile=max`, `vrodos_enable_xr_pmndrs_composer=1`, `vrodos_enable_xr_scene_probe=1`, `vrodos_enable_xr_takram_sky_environment=1`, and `vrodos_enable_xr_clouds=1`.
+- Render-budget overrides can be tested with `vrodos_vr_framebuffer_scale=...` and `vrodos_vr_foveation=...`; effective support/application state is published at `window.VRODOS_RUNTIME_FEATURE_STATE.renderer.vrRenderBudget`.
+- Real Quest 2 testing found that PMNDRS composer/cloud ownership can tile the stereo framebuffer and destabilize the wider headset UI/compositor. Quest-class browser sessions now fail closed for PMNDRS composer/clouds by default, including inline browser-panel mode; `vrodos_force_headset_pmndrs_composer=1` is reserved for short isolation tests only.
+
 ### Phase 1 - Baseline And Diagnostics
 
 1. Keep the current direct-stereo VR rendering path unchanged.

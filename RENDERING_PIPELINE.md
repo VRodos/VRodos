@@ -23,6 +23,10 @@ Presentation mode is part of the rendering contract:
 - Inline desktop and desktop fullscreen use the same eligible post-FX path.
 - Real immersive WebXR is detected through `renderer.xr.isPresenting`.
 - In immersive XR, XR-unsafe screen-space composer passes can fall back to direct stereo rendering while scene-owned visuals remain active: Horizon/Takram sky, scene-owned lights, fog, exposure/tone mapping, environment maps, and material profiles.
+- VR feature parity is selected in the compile UI as `Runtime Target`: `Desktop` or `VR Headset`. Internally this is still stored as `scene-settings.vrRuntimeProfile`: `Desktop` maps to `desktop`, and `VR Headset` maps to the accepted `baseline` headset profile. Desktop remains the reference pipeline and `desktop` disables headset-specific overrides. `baseline` is the headset starting point and keeps the A-Frame horizon/environment while disabling PMNDRS composer, Takram visible sky/clouds, scene probes, and experimental reflections. Baseline keeps native renderer antialiasing because PMNDRS AA is intentionally disabled in that profile. `safe`, `balanced`, and `max` are internal later headset stages; `max` remains lab-only until lower stages pass real headset testing. The headset profile also owns a WebXR render budget: `baseline`/`safe` use framebuffer scale `1.0` with foveation `0.5`, `balanced` uses `0.9` with foveation `0.75`, and `max` uses `1.0` with foveation `0.5`.
+- Individual experiment gates can also be enabled with `aframeVrPmndrsComposerEnabled`, `aframeVrSceneProbeEnabled`, `aframeVrTakramSkyEnvironmentEnabled`, `aframeVrCloudsEnabled`, or query flags such as `vrodos_vr_profile=max` and `vrodos_enable_xr_pmndrs_composer=1`. The render budget can be overridden per scene with `aframeVrFramebufferScale` / `aframeVrFoveationStrength`, or per test with `vrodos_vr_framebuffer_scale=...` / `vrodos_vr_foveation=...`.
+- Quest-class headset browsers fail closed for PMNDRS composer ownership, including browser-panel inline mode, because real Quest 2 testing showed tiled stereo artifacts and headset UI/compositor instability with the PMNDRS XR composer/cloud path. Use `vrodos_force_headset_pmndrs_composer=1` only for short lab isolation passes.
+- The active profile and policy are exposed through `window.VRODOS_RUNTIME_FEATURE_STATE.vrProfile`, and applied WebXR budget details are exposed through `window.VRODOS_RUNTIME_FEATURE_STATE.renderer.vrRenderBudget`, alongside post-FX owner, reflection source, Takram/cloud skip state, shadow diagnostics, navigation/collision state, and spatial UI state.
 
 ## 2. File Organization
 
@@ -475,8 +479,8 @@ Runtime behavior:
 Takram cloud v1 behavior:
 
 - Desktop inline and desktop fullscreen can render clouds.
-- Real immersive WebXR skips clouds because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`.
-- Mobile skips clouds in v1.
+- Real immersive WebXR skips clouds in the default `safe` profile because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`. Quest-class headset browsers also skip clouds in `max` unless `vrodos_force_headset_pmndrs_composer=1` is present, because clouds depend on the PMNDRS composer.
+- Mobile inline mode skips clouds in v1; immersive headset sessions use the explicit VR policy instead of the generic mobile guard.
 - WebGL2 and `Data3DTexture` support are required.
 - Runtime uses only local assets under `assets/vendor/takram-clouds/`; generated cloud bundles must not depend on GitHub or `media.githubusercontent.com` at runtime.
 - Cloud effect construction is fail-closed. Missing assets, missing bundle globals, missing WebGL2/3D texture support, disabled PMNDRS composer, and immersive XR each emit a diagnostic skip reason.
