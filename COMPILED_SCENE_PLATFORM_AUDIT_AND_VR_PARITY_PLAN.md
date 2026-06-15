@@ -1,6 +1,6 @@
 # Compiled Scene Platform Audit And VR Parity Plan
 
-Date: 2026-06-12
+Date: 2026-06-15
 
 ## Goal
 
@@ -18,7 +18,38 @@ The immediate strategy is conservative: first make the current runtime state mea
 - Spatial UI is loaded lazily for immersive CEFR, assessment, and video interaction flows.
 - A-Frame owns the WebXR session, camera, controllers, scene graph, media objects, navigation, collision, and render loop.
 - Desktop and inline modes can use screen-space post-processing when enabled by metadata and quality gates.
-- Real immersive WebXR intentionally bypasses screen-space composer ownership and renders direct stereo unless an explicit experiment enables otherwise.
+- Real immersive WebXR intentionally bypasses screen-space composer ownership and renders direct stereo. Composer experiments require explicit lab flags and real headset validation.
+
+## Clean Thread Handoff
+
+Use this section as the starting point when continuing VR work in a fresh thread.
+
+Accepted current state:
+
+- The user-facing compile selector is `Runtime Target`: `Desktop` or `VR Headset`.
+- `Desktop` maps to internal `desktop` and preserves the authored Desktop rendering pipeline.
+- `VR Headset` maps to internal `baseline`.
+- `baseline` is accepted on Quest 2: A-Frame horizon/environment, authored 3D objects/media, controller input, thumbstick navigation, walkable collision/BVH, static shadows, native renderer antialiasing, and readable midday lighting.
+- Minor far-edge shimmer is acceptable for the current baseline and should be treated as solved unless it regresses.
+- VR Headset baseline compiles without PMNDRS/Takram chunks even when Desktop settings use PMNDRS/Takram.
+
+Rejected or blocked paths:
+
+- PMNDRS composer/cloud ownership produced tiled stereo/compositor instability on Quest 2 and remains disabled by default.
+- Legacy post-FX/FXAA produced black-screen/tiled-framebuffer artifacts in immersive XR and must not be promoted.
+- TAA, SSAO/SAO, SSR, bloom, lens flare, and cloud rendering should not be enabled in VR through either existing composer path until a new XR-safe path is validated.
+
+Next work:
+
+1. Keep Desktop and accepted VR Headset baseline unchanged.
+2. Promote already-working scene-owned baseline features in docs/UI terminology, especially navigation and collision, as accepted rather than experimental.
+3. Start the next feature-parity stage with scene-owned lighting/material parity only:
+   - compare object readability across a few scenes;
+   - confirm static shadows and material profiles remain stable;
+   - avoid compositor/post-FX paths.
+4. After that, test Takram-derived lighting only while keeping the A-Frame horizon visible.
+5. Only after lighting is accepted, test Takram visible sky without clouds.
+6. Reflections and any PMNDRS composer work remain later stages.
 
 ## Platform Capability Matrix
 
@@ -152,7 +183,8 @@ Only `desktop`, `baseline`, `safe`, `balanced`, and `max` are runtime-recognized
    - Acceptance: stable in Quest Browser tab mode and immersive VR, with normal midday horizon brightness.
 1. `safe`
    - Goal: restore scene-owned runtime features that do not require PMNDRS composer ownership.
-   - Candidate features: shadows, tone mapping/exposure, material profiles, basic lighting budget, spatial UI, collisions/navigation.
+   - Candidate features: shadows, tone mapping/exposure, material profiles, basic lighting budget, and spatial UI diagnostics.
+   - Already accepted in baseline: controller input, thumbstick navigation, walkable navigation, and collision/BVH.
 2. `takram-lights`
    - Goal: test Takram-derived light sources only, while keeping the baseline visible A-Frame horizon.
    - Candidate features: Takram sun/moon/sky light probes or helper bridge lights, no Takram sky material.
@@ -176,6 +208,8 @@ Only `desktop`, `baseline`, `safe`, `balanced`, and `max` are runtime-recognized
 - `desktop` keeps the authored desktop rendering pipeline active and disables the headset-specific override policy.
 - `baseline` is the strict headset starting point: A-Frame horizon/environment, no PMNDRS composer, no Takram sky/clouds, no scene probes. Baseline compiles without PMNDRS/Takram runtime chunks even if the authored Desktop settings still use them.
 - `baseline`, `safe`, `balanced`, and `max` now also apply a VR-only WebXR render budget before session start when supported: framebuffer scale/foveation defaults are `1.0/0.5`, `1.0/0.5`, `0.9/0.75`, and `1.0/0.5`.
+- Quest 2 baseline testing accepted visual quality with only minor far-edge shimmer. Framebuffer scale/foveation changes did not materially affect the shimmer, so it is not an active blocker.
+- Controller input, thumbstick navigation, walkable navigation, and collision/BVH are accepted as working VR Headset baseline features.
 - `max` attempts requested PMNDRS composer, scene probe, Takram sky PMREM, and Takram clouds only in immersive VR and only when runtime support checks pass.
 - Individual experiments can be enabled with scene metadata or query flags: `vrodos_vr_profile=max`, `vrodos_enable_xr_pmndrs_composer=1`, `vrodos_enable_xr_scene_probe=1`, `vrodos_enable_xr_takram_sky_environment=1`, and `vrodos_enable_xr_clouds=1`.
 - Render-budget overrides can be tested with `vrodos_vr_framebuffer_scale=...` and `vrodos_vr_foveation=...`; effective support/application state is published at `window.VRODOS_RUNTIME_FEATURE_STATE.renderer.vrRenderBudget`.
@@ -205,15 +239,17 @@ Only `desktop`, `baseline`, `safe`, `balanced`, and `max` are runtime-recognized
 ### Phase 2 - Harden Scene-Owned VR Features
 
 1. Confirm VR keeps scene-owned Takram/Horizon sky, sun/moon, day-night lighting, fog, tone mapping, material profiles, and HDR environment maps where safe.
-2. Confirm walkable collision, controller thumbstick movement, and spatial UI are stable in headset runtime.
-3. Fix any VR-only regressions in these existing scene-owned features before enabling composer effects.
+2. Treat walkable collision and controller thumbstick movement as accepted baseline features; retest them only after changes that could affect navigation/collision.
+3. Confirm spatial UI only on scenes that actually contain immersive CEFR, assessment, or video interaction flows.
+4. Fix any VR-only regressions in these existing scene-owned features before enabling composer effects.
 
 ### Phase 3 - Add Headset Quality Controls
 
-1. Add headset-safe render budget controls separate from Desktop DPR behavior.
+1. Keep the current accepted baseline budget unless a real quality problem appears: native renderer AA on, framebuffer scale `1.0`, foveation `0.5`.
 2. Avoid calling `renderer.setPixelRatio()` while XR is presenting.
 3. Prefer asset derivatives, LOD, texture budgets, and shadow budget controls over global visual feature downgrades.
 4. Record effective render scale and quality decisions in the Phase 1 diagnostic state.
+5. Do not solve shimmer with legacy FXAA/TAA; Quest testing showed that path corrupts immersive XR.
 
 ### Phase 4 - XR PMNDRS Composer Experiment
 
@@ -282,5 +318,7 @@ Only `desktop`, `baseline`, `safe`, `balanced`, and `max` are runtime-recognized
 - Keep WebXR layers disabled by default.
 - Keep PMNDRS/legacy composer disabled by default in real immersive XR.
 - Treat HDR environment maps and scene-owned Takram/Horizon visuals as the first visual parity candidates.
+- Treat controller navigation and collision/BVH as accepted VR Headset baseline features.
+- Treat minor current far-edge shimmer as acceptable/solved unless it regresses.
 - Treat AR and MR as separate future platform work.
 - Prefer measurable runtime diagnostics before enabling new headset visual effects.

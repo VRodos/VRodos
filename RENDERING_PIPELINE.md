@@ -1,6 +1,6 @@
 # VRodos Rendering Pipeline - Technical Reference
 
-Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For end-user feature summaries, see `README.md`. For the phased Takram realism roadmap, see `TAKRAM_REALISTIC_LIGHTING_PLAN.md`. For historical WebGLRenderer debugging notes, see `POSTFX_DEBUG_NOTES.md`.
+Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For the current VR Headset continuation note, see `VR_HEADSET_RUNTIME_HANDOFF.md`. For the full platform audit and VR parity roadmap, see `COMPILED_SCENE_PLATFORM_AUDIT_AND_VR_PARITY_PLAN.md`. For the phased Takram realism roadmap, see `TAKRAM_REALISTIC_LIGHTING_PLAN.md`. For historical WebGLRenderer debugging notes, see `POSTFX_DEBUG_NOTES.md`.
 
 ## 1. Runtime Overview
 
