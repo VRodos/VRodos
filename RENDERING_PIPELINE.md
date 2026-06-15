@@ -284,6 +284,8 @@ Scene render
 
 Disabled legacy effects do not allocate their render targets or compile their shader materials.
 
+Quest 2 headset testing on 2026-06-15 showed that this legacy `renderer.render` override is not compatible with real immersive XR presentation: an FXAA-only trial corrupted the stereo framebuffer, causing black-screen/tiled artifacts during head movement. Keep the legacy pipeline as a desktop/inline path. VR Headset should use direct stereo rendering unless a future XR-native post-processing path is built and validated.
+
 The legacy path still uses the `isXRRenderTarget` color-encoding workaround on its main post target so Three applies tone mapping and output color-space conversion when rendering to the target:
 
 ```javascript

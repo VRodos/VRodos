@@ -180,6 +180,7 @@ Only `desktop`, `baseline`, `safe`, `balanced`, and `max` are runtime-recognized
 - Individual experiments can be enabled with scene metadata or query flags: `vrodos_vr_profile=max`, `vrodos_enable_xr_pmndrs_composer=1`, `vrodos_enable_xr_scene_probe=1`, `vrodos_enable_xr_takram_sky_environment=1`, and `vrodos_enable_xr_clouds=1`.
 - Render-budget overrides can be tested with `vrodos_vr_framebuffer_scale=...` and `vrodos_vr_foveation=...`; effective support/application state is published at `window.VRODOS_RUNTIME_FEATURE_STATE.renderer.vrRenderBudget`.
 - Real Quest 2 testing found that PMNDRS composer/cloud ownership can tile the stereo framebuffer and destabilize the wider headset UI/compositor. Quest-class browser sessions now fail closed for PMNDRS composer/clouds by default, including inline browser-panel mode; `vrodos_force_headset_pmndrs_composer=1` is reserved for short isolation tests only.
+- Quest 2 testing on 2026-06-15 found that the legacy post-FX renderer override is also not safe in immersive XR: an FXAA-only legacy-composer trial produced black-screen/tiled-framebuffer artifacts during head movement. Do not promote legacy FXAA/TAA/SAO/SSR into the VR Headset profile without a new XR-native implementation.
 
 ### Phase 1 - Baseline And Diagnostics
 
