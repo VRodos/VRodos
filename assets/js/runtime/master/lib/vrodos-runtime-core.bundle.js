@@ -5796,7 +5796,7 @@
       return Boolean(isPmndrsTakramHorizonRequested(self) && window.VRODOS_TAKRAM_ATMOSPHERE && !shouldUseVrBaselineHorizon(self));
     }
     function shouldUseVrBaselineHorizon(self) {
-      return Boolean(self && typeof self.isVrBaselineRuntimeActive === "function" && self.isVrBaselineRuntimeActive() && self.data && self.data.selChoice === "0");
+      return Boolean(self && (typeof self.isVrSceneOwnedRuntimeActive === "function" && self.isVrSceneOwnedRuntimeActive() || typeof self.isVrBaselineRuntimeActive === "function" && self.isVrBaselineRuntimeActive()) && self.data && self.data.selChoice === "0");
     }
     function shouldUsePmndrsHorizonAerialPerspectivePath(self) {
       return shouldUsePmndrsTakramHorizonPath(self) && (readPmndrsAtmosphereBool(self, "pmndrsAerialPerspectiveEnabled", false) || hasPmndrsDebugFlag("enablePmndrsHorizonAerial", "vrodos_debug_enable_pmndrs_horizon_aerial"));

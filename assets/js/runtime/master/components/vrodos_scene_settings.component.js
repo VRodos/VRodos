@@ -548,8 +548,17 @@ AFRAME.registerComponent('scene-settings', {
     isVrRuntimeBaselineProfile: function () {
         return this.getVrRuntimeProfile() === 'baseline';
     },
+    isVrRuntimeSafeProfile: function () {
+        return this.getVrRuntimeProfile() === 'safe';
+    },
+    isVrRuntimeSceneOwnedProfile: function () {
+        return this.isVrRuntimeBaselineProfile() || this.isVrRuntimeSafeProfile();
+    },
     isVrBaselineRuntimeActive: function () {
         return this.isVrRuntimeBaselineProfile() && this.isVrRuntimePolicyActive();
+    },
+    isVrSceneOwnedRuntimeActive: function () {
+        return this.isVrRuntimeSceneOwnedProfile() && this.isVrRuntimePolicyActive();
     },
     isVrRuntimeMaxProfile: function () {
         return this.getVrRuntimeProfile() === 'max';
@@ -559,7 +568,7 @@ AFRAME.registerComponent('scene-settings', {
             return false;
         }
 
-        if (this.isVrRuntimeBaselineProfile()) {
+        if (this.isVrRuntimeSceneOwnedProfile()) {
             return false;
         }
 
@@ -720,20 +729,21 @@ AFRAME.registerComponent('scene-settings', {
         const active = this.isDirectVrPresentationActive();
         const profileActive = this.isVrRuntimePolicyActive();
         const profile = this.getVrRuntimeProfile();
+        const sceneOwnedProfile = this.isVrRuntimeSceneOwnedProfile();
         const pmndrsComposer = active &&
             this.data.postFXEngine === 'pmndrs' &&
-            !this.isVrRuntimeBaselineProfile() &&
+            !sceneOwnedProfile &&
             this.canUsePmndrsComposerOnHeadset() &&
             this.isVrFeatureExperimentEnabled('vrPmndrsComposerEnabled', 'enableXrPmndrsComposer', 'vrodos_enable_xr_pmndrs_composer');
         const sceneProbe = active &&
-            !this.isVrRuntimeBaselineProfile() &&
+            !sceneOwnedProfile &&
             this.isVrFeatureExperimentEnabled('vrSceneProbeEnabled', 'enableXrSceneProbe', 'vrodos_enable_xr_scene_probe');
         const takramSkyEnvironment = active &&
-            !this.isVrRuntimeBaselineProfile() &&
+            !sceneOwnedProfile &&
             this.isVrFeatureExperimentEnabled('vrTakramSkyEnvironmentEnabled', 'enableXrTakramSkyEnvironment', 'vrodos_enable_xr_takram_sky_environment');
         const clouds = active &&
             this.data.postFXEngine === 'pmndrs' &&
-            !this.isVrRuntimeBaselineProfile() &&
+            !sceneOwnedProfile &&
             this.isVrFeatureExperimentEnabled('vrCloudsEnabled', 'enableXrClouds', 'vrodos_enable_xr_clouds');
 
         return {
@@ -741,6 +751,8 @@ AFRAME.registerComponent('scene-settings', {
             active,
             profileActive,
             baseline: this.isVrRuntimeBaselineProfile(),
+            safe: this.isVrRuntimeSafeProfile(),
+            sceneOwnedProfile,
             headsetBrowser: this.isHeadsetBrowserDevice(),
             headsetPmndrsComposerForced: this.isHeadsetPmndrsComposerForceEnabled(),
             pmndrsComposer,
@@ -764,7 +776,7 @@ AFRAME.registerComponent('scene-settings', {
         return policy.clouds && policy.pmndrsComposer;
     },
     canUsePostProcessingForPresentation: function () {
-        if (this.isVrBaselineRuntimeActive()) {
+        if (this.isVrSceneOwnedRuntimeActive()) {
             return false;
         }
 
@@ -810,7 +822,7 @@ AFRAME.registerComponent('scene-settings', {
             typeof THREE.PMREMGenerator !== 'undefined';
     },
     getEffectiveReflectionSource: function () {
-        if (this.isVrBaselineRuntimeActive()) {
+        if (this.isVrSceneOwnedRuntimeActive()) {
             return 'none';
         }
 
@@ -1219,8 +1231,8 @@ AFRAME.registerComponent('scene-settings', {
             return this.postProcessingActive ? 'legacy' : 'legacy-pending';
         }
 
-        if (postProcessingRequested && this.isVrBaselineRuntimeActive()) {
-            return 'vr-baseline-disabled';
+        if (postProcessingRequested && this.isVrSceneOwnedRuntimeActive()) {
+            return this.isVrRuntimeSafeProfile() ? 'vr-safe-disabled' : 'vr-baseline-disabled';
         }
 
         if (postProcessingRequested && this.isDirectVrPresentationActive()) {
@@ -1248,7 +1260,7 @@ AFRAME.registerComponent('scene-settings', {
             ? this.getPmndrsTakramHorizonState()
             : null;
         const vrFeaturePolicy = this.getVrRuntimeFeaturePolicy();
-        const vrBaselineActive = this.isVrBaselineRuntimeActive();
+        const vrSceneOwnedActive = this.isVrSceneOwnedRuntimeActive();
         let pixelRatio = null;
 
         if (renderer && typeof renderer.getPixelRatio === 'function') {
@@ -1290,15 +1302,15 @@ AFRAME.registerComponent('scene-settings', {
                 immersiveXrFallback: Boolean(postProcessingRequested && this.isDirectVrPresentationActive() && !this.canUsePostProcessingForPresentation())
             },
             takram: {
-                atmosphereRequested: Boolean(!vrBaselineActive && this.data.postFXEngine === 'pmndrs' && this.isPmndrsAtmosphereEnabled()),
+                atmosphereRequested: Boolean(!vrSceneOwnedActive && this.data.postFXEngine === 'pmndrs' && this.isPmndrsAtmosphereEnabled()),
                 atmosphereBundleLoaded: Boolean(window.VRODOS_TAKRAM_ATMOSPHERE),
-                atmosphereReady: Boolean(!vrBaselineActive && atmosphereState && atmosphereState.ready && !atmosphereState.failed),
-                dayNightCycleActive: Boolean(!vrBaselineActive && this.isPmndrsDayNightCycleActive()),
-                horizonOwner: vrBaselineActive ? 'aframe-environment' : (horizonState && horizonState.owner ? horizonState.owner : ''),
-                takramSunEnabled: Boolean(!vrBaselineActive && horizonState && horizonState.takramSunEnabled),
-                cloudsRequested: Boolean(!vrBaselineActive && this.isPmndrsCloudsEnabled()),
+                atmosphereReady: Boolean(!vrSceneOwnedActive && atmosphereState && atmosphereState.ready && !atmosphereState.failed),
+                dayNightCycleActive: Boolean(!vrSceneOwnedActive && this.isPmndrsDayNightCycleActive()),
+                horizonOwner: vrSceneOwnedActive ? 'aframe-environment' : (horizonState && horizonState.owner ? horizonState.owner : ''),
+                takramSunEnabled: Boolean(!vrSceneOwnedActive && horizonState && horizonState.takramSunEnabled),
+                cloudsRequested: Boolean(!vrSceneOwnedActive && this.isPmndrsCloudsEnabled()),
                 cloudsBundleLoaded: Boolean(window.VRODOS_TAKRAM_CLOUDS),
-                cloudsActive: Boolean(!vrBaselineActive && cloudDiagnostics.cloudsActive),
+                cloudsActive: Boolean(!vrSceneOwnedActive && cloudDiagnostics.cloudsActive),
                 cloudsSkippedReason: cloudDiagnostics.cloudsSkippedReason || '',
                 cloudsXrSkipped: Boolean(cloudDiagnostics.xrSkipped)
             },

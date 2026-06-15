@@ -3114,8 +3114,10 @@
 
     function shouldUseVrBaselineHorizon(self) {
         return Boolean(self &&
-            typeof self.isVrBaselineRuntimeActive === 'function' &&
-            self.isVrBaselineRuntimeActive() &&
+            (
+                (typeof self.isVrSceneOwnedRuntimeActive === 'function' && self.isVrSceneOwnedRuntimeActive()) ||
+                (typeof self.isVrBaselineRuntimeActive === 'function' && self.isVrBaselineRuntimeActive())
+            ) &&
             self.data &&
             self.data.selChoice === "0");
     }

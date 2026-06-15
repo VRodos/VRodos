@@ -131,7 +131,7 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function is_post_fx_enabled( $metadata ): bool {
-		if ( $this->is_vr_baseline_profile( $metadata ) ) {
+		if ( $this->is_vr_scene_owned_profile( $metadata ) ) {
 			return false;
 		}
 
@@ -145,6 +145,10 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 
 	public function is_vr_baseline_profile( $metadata ): bool {
 		return 'baseline' === $this->vr_runtime_profile( $metadata );
+	}
+
+	public function is_vr_scene_owned_profile( $metadata ): bool {
+		return in_array( $this->vr_runtime_profile( $metadata ), [ 'baseline', 'safe' ], true );
 	}
 
 	public function post_fx_engine( $metadata ): string {

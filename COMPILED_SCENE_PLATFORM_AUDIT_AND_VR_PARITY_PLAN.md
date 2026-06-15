@@ -184,6 +184,7 @@ Only `desktop`, `baseline`, `safe`, `balanced`, and `max` are runtime-recognized
 1. `safe`
    - Goal: restore scene-owned runtime features that do not require PMNDRS composer ownership.
    - Candidate features: shadows, tone mapping/exposure, material profiles, basic lighting budget, and spatial UI diagnostics.
+   - Disabled: PMNDRS/legacy composer, Takram visible sky/clouds, scene probes, HDR/reflection sources, and experiment flags.
    - Already accepted in baseline: controller input, thumbstick navigation, walkable navigation, and collision/BVH.
 2. `takram-lights`
    - Goal: test Takram-derived light sources only, while keeping the baseline visible A-Frame horizon.
@@ -207,6 +208,7 @@ Only `desktop`, `baseline`, `safe`, `balanced`, and `max` are runtime-recognized
 - VR profile work has started with user-facing `Runtime Target` values `Desktop` and `VR Headset`; internally these map to `desktop` and `baseline`.
 - `desktop` keeps the authored desktop rendering pipeline active and disables the headset-specific override policy.
 - `baseline` is the strict headset starting point: A-Frame horizon/environment, no PMNDRS composer, no Takram sky/clouds, no scene probes. Baseline compiles without PMNDRS/Takram runtime chunks even if the authored Desktop settings still use them.
+- `safe` is now hardened as a hidden scene-owned parity validation profile: it keeps the A-Frame horizon/direct-stereo policy, disables post-FX/Takram chunks when compiled as `safe`, suppresses experiment flags, and reports `vrProfile.safe=true` in diagnostics.
 - `baseline`, `safe`, `balanced`, and `max` now also apply a VR-only WebXR render budget before session start when supported: framebuffer scale/foveation defaults are `1.0/0.5`, `1.0/0.5`, `0.9/0.75`, and `1.0/0.5`.
 - Quest 2 baseline testing accepted visual quality with only minor far-edge shimmer. Framebuffer scale/foveation changes did not materially affect the shimmer, so it is not an active blocker.
 - Controller input, thumbstick navigation, walkable navigation, and collision/BVH are accepted as working VR Headset baseline features.
