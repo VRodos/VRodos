@@ -529,7 +529,7 @@ AFRAME.registerComponent('scene-settings', {
         const override = (typeof debugConfig.vrRuntimeProfile === 'string' && debugConfig.vrRuntimeProfile) ||
             (typeof debugConfig.vrProfile === 'string' && debugConfig.vrProfile) ||
             vrodosRuntimeQueryValue('vrodos_vr_profile');
-        const rawProfile = String(override || this.data.vrRuntimeProfile || 'baseline').toLowerCase();
+        const rawProfile = String(override || this.data.vrRuntimeProfile || 'desktop').toLowerCase();
 
         switch (rawProfile) {
             case 'desktop':
@@ -539,15 +539,11 @@ AFRAME.registerComponent('scene-settings', {
             case 'max':
                 return rawProfile;
             default:
-                return 'baseline';
+                return 'desktop';
         }
     },
     isVrRuntimePolicyActive: function () {
-        if (this.getVrRuntimeProfile() === 'desktop') {
-            return false;
-        }
-
-        return this.isVrPresentationActive() || this.isHeadsetBrowserDevice();
+        return this.getVrRuntimeProfile() !== 'desktop';
     },
     isVrRuntimeBaselineProfile: function () {
         return this.getVrRuntimeProfile() === 'baseline';

@@ -179,7 +179,7 @@ window.addEventListener('DOMContentLoaded', () => {
             VRODOS.editor.envir.scene.aframeFPSMeterEnabled = false;
         }
         if (!VRODOS.editor.envir.scene.aframeVrRuntimeProfile) {
-            VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'baseline';
+            VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'desktop';
         }
         if (typeof VRODOS.editor.envir.scene.aframeHoveringInteractables === 'undefined') {
             VRODOS.editor.envir.scene.aframeHoveringInteractables = true;

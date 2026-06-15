@@ -15,8 +15,8 @@
         "vrRuntimeProfile": {
             "metadataKey": "aframeVrRuntimeProfile",
             "type": "enum",
-            "default": "baseline",
-            "editorDefault": "baseline",
+            "default": "desktop",
+            "editorDefault": "desktop",
             "allowed": [
                 "desktop",
                 "baseline",
@@ -693,7 +693,7 @@
 };
     window.VRODOS_RUNTIME_SETTINGS_SCHEMA_DEFAULTS = {
     "runtimeMode": "single-player",
-    "vrRuntimeProfile": "baseline",
+    "vrRuntimeProfile": "desktop",
     "vrFramebufferScale": "0",
     "vrFoveationStrength": "-1",
     "vrPmndrsComposerEnabled": "0",

@@ -131,7 +131,20 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function is_post_fx_enabled( $metadata ): bool {
+		if ( $this->is_vr_baseline_profile( $metadata ) ) {
+			return false;
+		}
+
 		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePostFXEnabled ?? false );
+	}
+
+	public function vr_runtime_profile( $metadata ): string {
+		$value = VRodos_Runtime_Settings_Contract::normalize_metadata_value( is_object( $metadata ) ? $metadata : new stdClass(), 'vrRuntimeProfile', 'desktop' );
+		return is_string( $value ) && '' !== $value ? $value : 'desktop';
+	}
+
+	public function is_vr_baseline_profile( $metadata ): bool {
+		return 'baseline' === $this->vr_runtime_profile( $metadata );
 	}
 
 	public function post_fx_engine( $metadata ): string {

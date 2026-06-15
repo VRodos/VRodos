@@ -41,7 +41,7 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     'aframeCollisionMode': { type: 'string', default: 'auto', envirKey: 'aframeCollisionMode' },
     'aframeNavigationMode': { type: 'string', default: vrodosEditorSceneSettingDefault('navigationMode', 'walkable'), envirKey: 'aframeNavigationMode' },
     'aframeFPSMeterEnabled': { type: 'boolean', default: false, envirKey: 'aframeFPSMeterEnabled' },
-    'aframeVrRuntimeProfile': { type: 'string', default: vrodosEditorSceneSettingDefault('vrRuntimeProfile', 'baseline'), envirKey: 'aframeVrRuntimeProfile' },
+    'aframeVrRuntimeProfile': { type: 'string', default: vrodosEditorSceneSettingDefault('vrRuntimeProfile', 'desktop'), envirKey: 'aframeVrRuntimeProfile' },
     'aframeVrFramebufferScale': { type: 'number', default: vrodosEditorSceneSettingDefault('vrFramebufferScale', 0), envirKey: 'aframeVrFramebufferScale' },
     'aframeVrFoveationStrength': { type: 'number', default: vrodosEditorSceneSettingDefault('vrFoveationStrength', -1), envirKey: 'aframeVrFoveationStrength' },
     'aframeVrPmndrsComposerEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('vrPmndrsComposerEnabled', false), envirKey: 'aframeVrPmndrsComposerEnabled' },

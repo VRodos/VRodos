@@ -10,8 +10,8 @@
     "vrRuntimeProfile": {
       "metadataKey": "aframeVrRuntimeProfile",
       "type": "enum",
-      "default": "baseline",
-      "editorDefault": "baseline",
+      "default": "desktop",
+      "editorDefault": "desktop",
       "allowed": ["desktop", "baseline", "safe", "balanced", "max"]
     },
     "vrFramebufferScale": {

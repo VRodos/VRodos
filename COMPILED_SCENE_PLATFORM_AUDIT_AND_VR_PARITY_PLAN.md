@@ -140,7 +140,7 @@ Legend:
 The compile UI exposes this as `Runtime Target`: `Desktop` or `VR Headset`.
 
 - `Desktop` maps to the internal `desktop` profile and leaves the authored desktop rendering pipeline active without headset-specific overrides.
-- `VR Headset` maps to the accepted internal `baseline` headset profile for now.
+- `VR Headset` maps to the accepted internal `baseline` headset profile for now and applies that policy immediately in inline/browser-tab mode as well as immersive VR.
 
 Only `desktop`, `baseline`, `safe`, `balanced`, and `max` are runtime-recognized today. `safe`, `balanced`, and `max` remain internal/debug ladder stages until they are promoted into the UI. The intermediate stage names below are the planned activation order; add them to the runtime contract only when that stage is implemented and tested.
 
@@ -174,7 +174,7 @@ Only `desktop`, `baseline`, `safe`, `balanced`, and `max` are runtime-recognized
 - Phase 1 diagnostics expose `window.VRODOS_RUNTIME_FEATURE_STATE` and `window.__vrodosRuntimeFeatureState`.
 - VR profile work has started with user-facing `Runtime Target` values `Desktop` and `VR Headset`; internally these map to `desktop` and `baseline`.
 - `desktop` keeps the authored desktop rendering pipeline active and disables the headset-specific override policy.
-- `baseline` is the strict headset starting point: A-Frame horizon/environment, no PMNDRS composer, no Takram sky/clouds, no scene probes.
+- `baseline` is the strict headset starting point: A-Frame horizon/environment, no PMNDRS composer, no Takram sky/clouds, no scene probes. Baseline compiles without PMNDRS/Takram runtime chunks even if the authored Desktop settings still use them.
 - `baseline`, `safe`, `balanced`, and `max` now also apply a VR-only WebXR render budget before session start when supported: framebuffer scale/foveation defaults are `1.0/0.5`, `1.0/0.5`, `0.9/0.75`, and `1.0/0.5`.
 - `max` attempts requested PMNDRS composer, scene probe, Takram sky PMREM, and Takram clouds only in immersive VR and only when runtime support checks pass.
 - Individual experiments can be enabled with scene metadata or query flags: `vrodos_vr_profile=max`, `vrodos_enable_xr_pmndrs_composer=1`, `vrodos_enable_xr_scene_probe=1`, `vrodos_enable_xr_takram_sky_environment=1`, and `vrodos_enable_xr_clouds=1`.
