@@ -338,6 +338,29 @@ class VRodos_Compiler_Manager {
 		return implode( ' ', $values );
 	}
 
+	private function split_vrexpo_camera_rig_position( string $camera_position_attr ): array {
+		$parts      = preg_split( '/\s+/', trim( $camera_position_attr ) );
+		$eye_height = 1.6;
+		$authored   = [];
+
+		for ( $i = 0; $i < 3; $i++ ) {
+			$value      = $parts[ $i ] ?? ( 1 === $i ? $eye_height : 0 );
+			$authored[] = is_numeric( $value ) ? (float) $value : ( 1 === $i ? $eye_height : 0.0 );
+		}
+
+		return [
+			'player' => implode(
+				' ',
+				[
+					(string) $authored[0],
+					(string) ( $authored[1] - $eye_height ),
+					(string) $authored[2],
+				]
+			),
+			'camera' => '0 ' . (string) $eye_height . ' 0',
+		];
+	}
+
 
 	private function create_runtime_dom_structure( string $content, $scene_json, string $body_id ): array {
 		return $this->runtime_page_builder->create_dom_structure( $content, $scene_json, $body_id );
@@ -463,15 +486,17 @@ class VRodos_Compiler_Manager {
 		}
 
 		if ( $projectType == 'vrexpo_games' ) {
+			$vrexpo_camera_rig = $this->split_vrexpo_camera_rig_position( $camera_position_attr );
 
+			$ascenePlayer->setAttribute( 'position', $vrexpo_camera_rig['player'] );
 			$ascenePlayer->setAttribute( 'custom-movement', '' );
 			$ascenePlayer->setAttribute( 'show-position', '' );
 
 			// OCULUS
 			$a_camera = $dom->createElement( 'a-camera' );
-			$a_camera->setAttribute( 'camera', '' );
+			$a_camera->setAttribute( 'camera', 'active: true; near: 0.1; far: 7000; fov: 60' );
 			$a_camera->setAttribute( 'id', 'cameraA' );
-			$a_camera->setAttribute( 'position', $camera_position_attr );
+			$a_camera->setAttribute( 'position', $vrexpo_camera_rig['camera'] );
 			if ( $this->is_networked_runtime() ) {
 				$a_camera->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
 			}

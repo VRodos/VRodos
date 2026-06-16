@@ -51,6 +51,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.lazyTotalCount = 0;
         this.lazyScheduleTimer = null;
         this.lazyScheduleIsIdle = false;
+        this.runtimeReadyTimer = null;
         this.pendingModelIds = {};
         this.pendingModelCount = 0;
         this.pendingAssetIds = {};
@@ -399,9 +400,82 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return;
         }
 
+        if (!this.isRuntimeReadyForReveal()) {
+            this.scheduleRuntimeReadyCheck();
+            return;
+        }
+
         const elapsed = performance.now() - this.startedAt;
         const remainingDelay = Math.max(0, this.data.minimumVisibleMs - elapsed);
         window.setTimeout(this.revealScene.bind(this), remainingDelay);
+    },
+    isRuntimeReadyForReveal: function () {
+        const settingsComponent = this.sceneEl &&
+            this.sceneEl.components &&
+            this.sceneEl.components['scene-settings'];
+        if (!settingsComponent) {
+            if (this.sceneEl && this.sceneEl.hasAttribute && this.sceneEl.hasAttribute('scene-settings')) {
+                if (this.progressLabel) {
+                    this.progressLabel.textContent = 'Preparing scene runtime...';
+                }
+                return false;
+            }
+            return true;
+        }
+
+        if (typeof settingsComponent.getRuntimeRevealReadinessState === 'function') {
+            const readiness = settingsComponent.getRuntimeRevealReadinessState();
+            if (!readiness.ready && this.progressLabel) {
+                this.progressLabel.textContent = readiness.message || 'Preparing scene rendering...';
+            }
+            return Boolean(readiness.ready);
+        }
+
+        const isVisibleTakramProfile = typeof settingsComponent.isVrRuntimePolicyActive === 'function' &&
+            settingsComponent.isVrRuntimePolicyActive() &&
+            (
+                (typeof settingsComponent.isVrRuntimeTakramSkyProfile === 'function' && settingsComponent.isVrRuntimeTakramSkyProfile()) ||
+                (typeof settingsComponent.isVrRuntimeHdrReflectionsProfile === 'function' && settingsComponent.isVrRuntimeHdrReflectionsProfile())
+            );
+        if (!isVisibleTakramProfile) {
+            return true;
+        }
+
+        if (settingsComponent.data.postFXEngine !== 'pmndrs' ||
+            typeof settingsComponent.isPmndrsAtmosphereEnabled !== 'function' ||
+            !settingsComponent.isPmndrsAtmosphereEnabled()) {
+            return true;
+        }
+        if (!window.VRODOS_TAKRAM_ATMOSPHERE) {
+            return true;
+        }
+
+        if (typeof settingsComponent.prepareVrTakramVisibleSkyForReveal === 'function') {
+            const ready = settingsComponent.prepareVrTakramVisibleSkyForReveal();
+            if (!ready && this.progressLabel) {
+                this.progressLabel.textContent = 'Preparing Takram sky...';
+            }
+            return ready;
+        }
+
+        const atmosphereState = settingsComponent._pmndrsAtmosphereState || null;
+        const material = atmosphereState && atmosphereState.skyMaterial ? atmosphereState.skyMaterial : null;
+        const userData = material && material.userData ? material.userData : null;
+        const ready = Boolean(atmosphereState && atmosphereState.ready && userData && userData.vrodosVrTakramSkyDirectShaderPatched && !userData.vrodosVrTakramSkyDirectPatchFailed);
+        if (!ready && this.progressLabel) {
+            this.progressLabel.textContent = 'Preparing Takram sky...';
+        }
+        return ready;
+    },
+    scheduleRuntimeReadyCheck: function () {
+        if (this.runtimeReadyTimer) {
+            return;
+        }
+
+        this.runtimeReadyTimer = window.setTimeout(() => {
+            this.runtimeReadyTimer = null;
+            this.maybeRevealScene();
+        }, 120);
     },
     startLazyLoading: function () {
         if (this.lazyStarted || !this.lazyQueue.length) {
@@ -483,6 +557,10 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         }
 
         this.isReady = true;
+        if (this.runtimeReadyTimer) {
+            window.clearTimeout(this.runtimeReadyTimer);
+            this.runtimeReadyTimer = null;
+        }
 
         this.revealTargets.forEach((target) => {
             target.setAttribute('visible', 'true');
@@ -530,6 +608,10 @@ AFRAME.registerComponent('vrodos-scene-loader', {
                 window.clearTimeout(this.lazyScheduleTimer);
             }
             this.lazyScheduleTimer = null;
+        }
+        if (this.runtimeReadyTimer) {
+            window.clearTimeout(this.runtimeReadyTimer);
+            this.runtimeReadyTimer = null;
         }
         this.lazyTargets.forEach((target) => {
             target.removeEventListener('model-loaded', this.boundHandleLazyModelReady);

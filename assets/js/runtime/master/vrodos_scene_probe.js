@@ -18,6 +18,12 @@
         this._envMapRenderTarget = null;
 
         this._currentEnvMapPreset = null;
+        this._pendingHdrEnvMapPreset = null;
+        this._pendingHdrEnvMapUrl = '';
+        this._hdrEnvMapLoadId = (this._hdrEnvMapLoadId || 0) + 1;
+        this._hdrEnvMapLoading = false;
+        this._hdrEnvMapFailed = false;
+        this._hdrEnvMapError = '';
 
         if (clearSceneEnvironment && this.el && this.el.object3D) {
             this.el.object3D.environment = null;
@@ -528,7 +534,9 @@
         }
     };
     H.applyEnvMapProfile = function () {
-        const preset = this.data.envMapPreset || 'none';
+        const preset = typeof this.getEffectiveEnvMapPreset === 'function'
+            ? this.getEffectiveEnvMapPreset()
+            : (this.data.envMapPreset || 'none');
         const sceneObj = this.el.object3D;
         const effectiveSource = this.getEffectiveReflectionSource();
 
@@ -586,24 +594,50 @@
             return;
         }
 
+        if (this._hdrEnvMapLoading && this._pendingHdrEnvMapPreset === preset) {
+            return;
+        }
+
         this.clearHdrEnvironmentMap(false);
 
         const HDRLoaderClass = THREE.HDRLoader || THREE.RGBELoader;
         if (typeof HDRLoaderClass === 'undefined') {
+            this._hdrEnvMapFailed = true;
+            this._hdrEnvMapError = 'HDRLoader not available';
             console.warn('[VRodos] HDRLoader not available; HDR env map skipped.');
             return;
         }
 
         const hdrFile = this.getEnvMapPath();
-        if (!hdrFile) { return; }
+        if (!hdrFile) {
+            this._hdrEnvMapFailed = true;
+            this._hdrEnvMapError = `No HDR file configured for preset "${preset}"`;
+            return;
+        }
 
         const baseUrl = window.VRODOS_ASSET_IMAGE_URL || '../../assets/images/';
         const hdrUrl = `${baseUrl  }hdr/${  hdrFile}`;
         const renderer = this.el.renderer;
         const self = this;
 
+        this._hdrEnvMapLoading = true;
+        this._hdrEnvMapFailed = false;
+        this._hdrEnvMapError = '';
+        this._pendingHdrEnvMapPreset = preset;
+        this._pendingHdrEnvMapUrl = hdrUrl;
+        const hdrLoadId = (this._hdrEnvMapLoadId || 0) + 1;
+        this._hdrEnvMapLoadId = hdrLoadId;
         const loader = new HDRLoaderClass();
         loader.load(hdrUrl, (texture) => {
+            if (self._hdrEnvMapLoadId !== hdrLoadId ||
+                self._pendingHdrEnvMapPreset !== preset ||
+                self._pendingHdrEnvMapUrl !== hdrUrl) {
+                disposeRuntimeResource(texture);
+                return;
+            }
+            self._hdrEnvMapLoading = false;
+            self._pendingHdrEnvMapPreset = null;
+            self._pendingHdrEnvMapUrl = '';
             texture.mapping = THREE.EquirectangularReflectionMapping;
 
             const pmremGenerator = new THREE.PMREMGenerator(renderer);
@@ -624,6 +658,16 @@
 
             console.log('[VRodos] HDR environment map loaded:', hdrFile);
         }, undefined, (err) => {
+            if (self._hdrEnvMapLoadId !== hdrLoadId ||
+                self._pendingHdrEnvMapPreset !== preset ||
+                self._pendingHdrEnvMapUrl !== hdrUrl) {
+                return;
+            }
+            self._hdrEnvMapLoading = false;
+            self._pendingHdrEnvMapPreset = null;
+            self._pendingHdrEnvMapUrl = '';
+            self._hdrEnvMapFailed = true;
+            self._hdrEnvMapError = err && err.message ? err.message : String(err || 'unknown HDR load error');
             console.warn('[VRodos] Failed to load HDR env map:', hdrUrl, err);
         });
     };

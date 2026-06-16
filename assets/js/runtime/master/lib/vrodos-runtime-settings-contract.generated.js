@@ -23,6 +23,7 @@
                 "safe",
                 "takram-lights",
                 "takram-sky",
+                "hdr-reflections",
                 "balanced",
                 "max"
             ]
