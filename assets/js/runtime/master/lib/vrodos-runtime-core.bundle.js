@@ -22,6 +22,7 @@
             "desktop",
             "baseline",
             "safe",
+            "takram-lights",
             "balanced",
             "max"
           ]
@@ -5691,7 +5692,7 @@
       const shadowState = getShadowDiagnosticState(self);
       const resolvedSkyTimePreset = getResolvedPmndrsSkyTimePreset(atmosphereConfig);
       const starsIntensity = atmosphereConfig ? getPmndrsStarsIntensity(atmosphereConfig) : 0;
-      const owner = atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsHorizonAerialPerspectivePath(self) ? "takram-sky+aerial" : atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self) ? "takram-sky" : atmosphereConfig && atmosphereConfig.enabled ? "takram-fallback" : "legacy-fallback";
+      const owner = atmosphereConfig && atmosphereConfig.enabled && shouldUseVrTakramLightsOnly(self) ? "takram-lights-only" : atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsHorizonAerialPerspectivePath(self) ? "takram-sky+aerial" : atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self) ? "takram-sky" : atmosphereConfig && atmosphereConfig.enabled ? "takram-fallback" : "legacy-fallback";
       const signature = [
         context,
         owner,
@@ -5761,6 +5762,110 @@
         }
       });
     }
+    function isPmndrsAtmosphereVisualNode(node) {
+      return Boolean(node && node.userData && (node.userData.vrodosPmndrsAtmosphereSky || node.userData.vrodosPmndrsAtmosphereStars || node.userData.vrodosPmndrsAtmosphereMoon));
+    }
+    function disposePmndrsAtmosphereVisualNode(node) {
+      if (!node) {
+        return;
+      }
+      if (node.parent) {
+        node.parent.remove(node);
+      }
+      const disposeRuntimeResource = VRODOSMaster && VRODOSMaster.RuntimeResources && typeof VRODOSMaster.RuntimeResources.dispose === "function" ? VRODOSMaster.RuntimeResources.dispose : null;
+      if (disposeRuntimeResource) {
+        disposeRuntimeResource(node);
+        return;
+      }
+      if (node.geometry && typeof node.geometry.dispose === "function") {
+        node.geometry.dispose();
+      }
+      if (Array.isArray(node.material)) {
+        node.material.forEach((material) => {
+          if (material && typeof material.dispose === "function") {
+            material.dispose();
+          }
+        });
+      } else if (node.material && typeof node.material.dispose === "function") {
+        node.material.dispose();
+      }
+    }
+    function removePmndrsAtmosphereVisualObjects(self) {
+      if (!self || !self.el || !self.el.object3D) {
+        return;
+      }
+      const visualNodes = [];
+      self.el.object3D.traverse((node) => {
+        if (isPmndrsAtmosphereVisualNode(node)) {
+          visualNodes.push(node);
+        }
+      });
+      visualNodes.forEach(disposePmndrsAtmosphereVisualNode);
+    }
+    function isPmndrsGeneratedSunElement(el) {
+      if (!el) {
+        return false;
+      }
+      const id = (typeof el.id === "string" ? el.id : "").toLowerCase();
+      return id === "vrodos-pmndrs-sun" || id === "vrodos-pmndrs-sun-haze" || el.hasAttribute && el.hasAttribute("data-vrodos-pmndrs-sun");
+    }
+    function restorePmndrsHorizonEnvironmentVisuals(self) {
+      if (!self || !self.el || !self.el.object3D) {
+        return;
+      }
+      const restoredElements = [];
+      self.el.object3D.traverse((node) => {
+        if (!node || !node.userData || !node.userData.vrodosPmndrsLegacySuppressed) {
+          return;
+        }
+        if (isPmndrsGeneratedSunElement(node.el)) {
+          delete node.userData.vrodosPmndrsLegacySuppressed;
+          return;
+        }
+        node.visible = true;
+        delete node.userData.vrodosPmndrsLegacySuppressed;
+        if (node.el && restoredElements.indexOf(node.el) === -1) {
+          restoredElements.push(node.el);
+        }
+      });
+      restoredElements.forEach((el) => {
+        if (el && typeof el.setAttribute === "function") {
+          el.setAttribute("visible", "true");
+        }
+      });
+      Array.prototype.forEach.call(self.el.querySelectorAll('#default-sky, #default-sun, a-sun-sky, a-sky[data-vrodos-preset-sky="true"], .environmentSun, .environment-sun, .environmentSky, .environment-sky, [class*="environmentSun"], [class*="environmentSky"]'), (el) => {
+        if (el && !isPmndrsGeneratedSunElement(el) && typeof el.setAttribute === "function") {
+          el.setAttribute("visible", "true");
+        }
+      });
+    }
+    function syncVrTakramLightsOnlyHorizonVisuals(self, force) {
+      if (!self) {
+        return;
+      }
+      if (!force && self._vrTakramLightsOnlyHorizonVisualsSynced) {
+        return;
+      }
+      removePmndrsAtmosphereSky(self);
+      removePmndrsAtmosphereVisualObjects(self);
+      restorePmndrsHorizonEnvironmentVisuals(self);
+      self._vrTakramLightsOnlyHorizonVisualsSynced = true;
+    }
+    function scheduleVrTakramLightsOnlyHorizonVisualSync(self) {
+      if (!self) {
+        return;
+      }
+      const sync = function() {
+        syncVrTakramLightsOnlyHorizonVisuals(self, true);
+      };
+      self._vrTakramLightsOnlyHorizonVisualsSynced = false;
+      sync();
+      if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(sync);
+      }
+      setTimeout(sync, 50);
+      setTimeout(sync, 200);
+    }
     function removeLegacySunSkyEntitiesForPmndrs(self) {
       if (!self || !self.el) {
         return;
@@ -5792,11 +5897,17 @@
         });
       }
     }
-    function shouldUsePmndrsTakramHorizonPath(self) {
-      return Boolean(isPmndrsTakramHorizonRequested(self) && window.VRODOS_TAKRAM_ATMOSPHERE && !shouldUseVrBaselineHorizon(self));
-    }
     function shouldUseVrBaselineHorizon(self) {
       return Boolean(self && (typeof self.isVrSceneOwnedRuntimeActive === "function" && self.isVrSceneOwnedRuntimeActive() || typeof self.isVrBaselineRuntimeActive === "function" && self.isVrBaselineRuntimeActive()) && self.data && self.data.selChoice === "0");
+    }
+    function isVrTakramLightsOnlyProfile(self) {
+      return Boolean(self && typeof self.isVrRuntimePolicyActive === "function" && self.isVrRuntimePolicyActive() && typeof self.isVrRuntimeTakramLightsProfile === "function" && self.isVrRuntimeTakramLightsProfile() && self.data && self.data.selChoice === "0");
+    }
+    function shouldUseVrTakramLightsOnly(self) {
+      return Boolean(isVrTakramLightsOnlyProfile(self) && isPmndrsTakramHorizonRequested(self));
+    }
+    function shouldUsePmndrsTakramHorizonPath(self) {
+      return Boolean(isPmndrsTakramHorizonRequested(self) && window.VRODOS_TAKRAM_ATMOSPHERE && !shouldUseVrBaselineHorizon(self) && !isVrTakramLightsOnlyProfile(self));
     }
     function shouldUsePmndrsHorizonAerialPerspectivePath(self) {
       return shouldUsePmndrsTakramHorizonPath(self) && (readPmndrsAtmosphereBool(self, "pmndrsAerialPerspectiveEnabled", false) || hasPmndrsDebugFlag("enablePmndrsHorizonAerial", "vrodos_debug_enable_pmndrs_horizon_aerial"));
@@ -5908,47 +6019,69 @@
       );
       schedulePmndrsAtmosphereShadowFit(self, config);
     }
-    function schedulePmndrsTakramLightSourceRefresh(self, atmosphereState, config, preset) {
+    function schedulePmndrsTakramLightSourceRefresh(self, atmosphereState, config, preset, options) {
       if (!self || !atmosphereState || !atmosphereState.promise) {
         return;
       }
       if (self._pmndrsTakramLightSourcesPendingPromise === atmosphereState.promise) {
         return;
       }
+      const opts = options || {};
       self._pmndrsTakramLightSourcesPendingPromise = atmosphereState.promise;
       atmosphereState.promise.then(() => {
         if (!self || self._pmndrsAtmosphereState !== atmosphereState || atmosphereState.failed) {
           return;
         }
         const latestConfig = self.getPmndrsAtmosphereConfig ? self.getPmndrsAtmosphereConfig() : config;
-        if (!latestConfig || latestConfig.enabled === false || !shouldUsePmndrsTakramHorizonPath(self)) {
+        if (!latestConfig || latestConfig.enabled === false || !(shouldUsePmndrsTakramHorizonPath(self) || shouldUseVrTakramLightsOnly(self))) {
           return;
         }
         const latestPreset = self.getHorizonSkyPreset ? self.getHorizonSkyPreset() : preset;
-        ensurePmndrsTakramHorizonLights(self, latestConfig, latestPreset);
-        ensurePmndrsAtmosphereSky(self, latestConfig);
+        if (shouldUseVrTakramLightsOnly(self)) {
+          const lightsReady2 = ensurePmndrsTakramHorizonLights(self, latestConfig, latestPreset, {
+            fallback: false,
+            ensureSky: false
+          });
+          if (!lightsReady2) {
+            setAFrameDefaultLightsEnabled(self, true);
+          }
+          scheduleVrTakramLightsOnlyHorizonVisualSync(self);
+          logPmndrsHorizonDiagnostic(self, "apply-horizon-lights-only", latestConfig);
+          return;
+        }
+        const lightsReady = ensurePmndrsTakramHorizonLights(self, latestConfig, latestPreset, opts);
+        if (lightsReady && opts.ensureSky !== false) {
+          ensurePmndrsAtmosphereSky(self, latestConfig);
+        }
         logPmndrsHorizonDiagnostic(self, "apply-horizon", latestConfig);
       }).catch((err) => {
         self._pmndrsTakramLightSourcesPendingError = err;
       });
     }
-    function ensurePmndrsTakramHorizonLights(self, config, preset) {
+    function ensurePmndrsTakramHorizonLights(self, config, preset, options) {
       if (!self || !config) {
-        return;
+        return false;
       }
+      const opts = options || {};
+      const fallbackAllowed = opts.fallback !== false;
       const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
       const scene = self.el && self.el.object3D;
       const helperConfig = getPmndrsHorizonHelperLightConfig(self, preset, config);
-      setAFrameDefaultLightsEnabled(self, false);
       if (!vta || !scene || !vta.SunDirectionalLight || !vta.SkyLightProbe) {
         removePmndrsTakramLightSources(self);
-        ensurePmndrsFallbackHorizonLights(self, config, preset);
-        return;
+        if (fallbackAllowed) {
+          setAFrameDefaultLightsEnabled(self, false);
+          ensurePmndrsFallbackHorizonLights(self, config, preset);
+        }
+        return false;
       }
       if (config.useTakramLightSources !== true) {
         removePmndrsTakramLightSources(self);
-        ensurePmndrsFallbackHorizonLights(self, config, preset);
-        return;
+        if (fallbackAllowed) {
+          setAFrameDefaultLightsEnabled(self, false);
+          ensurePmndrsFallbackHorizonLights(self, config, preset);
+        }
+        return false;
       }
       const atmosphereState = self.ensurePmndrsAtmosphereResources ? self.ensurePmndrsAtmosphereResources() : null;
       const textures = atmosphereState && !atmosphereState.failed && atmosphereState.ready ? atmosphereState.textures : null;
@@ -5956,12 +6089,16 @@
       const hasTakramSkyIrradiance = Boolean(textures && textures.irradianceTexture);
       if (!hasTakramSunRadiance || !hasTakramSkyIrradiance) {
         removePmndrsTakramLightSources(self);
-        ensurePmndrsFallbackHorizonLights(self, config, preset);
-        if (atmosphereState && !atmosphereState.failed) {
-          schedulePmndrsTakramLightSourceRefresh(self, atmosphereState, config, preset);
+        if (fallbackAllowed) {
+          setAFrameDefaultLightsEnabled(self, false);
+          ensurePmndrsFallbackHorizonLights(self, config, preset);
         }
-        return;
+        if (atmosphereState && !atmosphereState.failed) {
+          schedulePmndrsTakramLightSourceRefresh(self, atmosphereState, config, preset, opts);
+        }
+        return false;
       }
+      setAFrameDefaultLightsEnabled(self, false);
       removePhotorealHelperLightElements(self);
       let state = self._pmndrsTakramLightSources;
       if (!state) {
@@ -6263,6 +6400,49 @@
           ambientLight.color.set(helperConfig.fillColor || "#dcecff");
         }
       }
+      return true;
+    }
+    function getPmndrsTakramLightSourceCount(self) {
+      const state = self && self._pmndrsTakramLightSources;
+      if (!state) {
+        return 0;
+      }
+      return ["sunLight", "skyLight", "fillLight", "ambientLight", "moonLight"].reduce((count, key) => {
+        const object = state[key];
+        return count + (object && object.parent ? 1 : 0);
+      }, 0);
+    }
+    function getVrTakramLightsOnlyUnavailableReason(self, atmosphereState) {
+      if (!isVrTakramLightsOnlyProfile(self)) {
+        return "";
+      }
+      if (!self.data || self.data.selChoice !== "0") {
+        return "not-horizon-scene";
+      }
+      if (self.data.postFXEngine !== "pmndrs") {
+        return "pmndrs-atmosphere-not-compiled";
+      }
+      if (self.data.pmndrsAtmosphereEnabled === "0") {
+        return "pmndrs-atmosphere-disabled";
+      }
+      const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
+      if (!vta) {
+        return "takram-bundle-missing";
+      }
+      if (!vta.SunDirectionalLight || !vta.SkyLightProbe) {
+        return "takram-light-classes-missing";
+      }
+      if (atmosphereState && atmosphereState.failed) {
+        return "takram-resources-failed";
+      }
+      if (!atmosphereState || !atmosphereState.ready) {
+        return "takram-resources-pending";
+      }
+      const textures = atmosphereState.textures || null;
+      if (!(textures && textures.transmittanceTexture && textures.irradianceTexture)) {
+        return "takram-luts-pending";
+      }
+      return "";
     }
     function isPmndrsTakramLocalHorizonMode(self) {
       return Boolean(self && self.data && self.data.selChoice === "0");
@@ -6347,6 +6527,23 @@
     }
     H.getPmndrsTakramHorizonState = function() {
       return ensurePmndrsTakramHorizonState(this);
+    };
+    H.getVrTakramLightsOnlyState = function() {
+      const requested = isVrTakramLightsOnlyProfile(this);
+      const eligible = shouldUseVrTakramLightsOnly(this);
+      const atmosphereState = this._pmndrsAtmosphereState || null;
+      const sourceCount = getPmndrsTakramLightSourceCount(this);
+      const unavailableReason = getVrTakramLightsOnlyUnavailableReason(this, atmosphereState);
+      const active = Boolean(requested && eligible && sourceCount > 0 && unavailableReason === "");
+      return {
+        requested,
+        eligible,
+        active,
+        owner: active ? "takram-light-source" : "aframe-environment",
+        sourceCount,
+        unavailableReason: active ? "" : unavailableReason,
+        aFrameHorizon: true
+      };
     };
     H.getPmndrsAtmosphereConfig = function() {
       if (!this || !this.data) {
@@ -6486,6 +6683,16 @@
         const preset = typeof this.getHorizonSkyPreset === "function" ? this.getHorizonSkyPreset() : "natural";
         ensurePmndrsTakramHorizonLights(this, atmosphereConfig, preset);
         ensurePmndrsAtmosphereSky(this, atmosphereConfig);
+      } else if (atmosphereConfig && atmosphereConfig.enabled && shouldUseVrTakramLightsOnly(this)) {
+        const preset = typeof this.getHorizonSkyPreset === "function" ? this.getHorizonSkyPreset() : "natural";
+        const lightsReady = ensurePmndrsTakramHorizonLights(this, atmosphereConfig, preset, {
+          fallback: false,
+          ensureSky: false
+        });
+        if (!lightsReady) {
+          setAFrameDefaultLightsEnabled(this, true);
+        }
+        syncVrTakramLightsOnlyHorizonVisuals(this, false);
       }
     };
     H.getPmndrsToneMappingMode = function() {
@@ -7557,8 +7764,11 @@
       applyPmndrsSunOcclusion(self, self._pmndrsSunDirection, self._pmndrsSunDistance || 5200);
     }
     H.updatePmndrsHorizonSun = function() {
-      if (!this || !this.el || this.data.selChoice !== "0" || this.data.postFXEngine !== "pmndrs" || shouldUseVrBaselineHorizon(this)) {
+      if (!this || !this.el || this.data.selChoice !== "0" || this.data.postFXEngine !== "pmndrs" || shouldUseVrBaselineHorizon(this) || shouldUseVrTakramLightsOnly(this)) {
         removePmndrsAtmosphereSky(this);
+        if (shouldUseVrTakramLightsOnly(this)) {
+          syncVrTakramLightsOnlyHorizonVisuals(this, false);
+        }
         clearPmndrsHorizonSun(this);
         return;
       }
@@ -8008,13 +8218,15 @@
       }
       const preset = this.getHorizonSkyPreset();
       const useVrBaselineHorizon = shouldUseVrBaselineHorizon(this);
+      const useVrTakramLightsOnly = shouldUseVrTakramLightsOnly(this);
       const isPmndrs = this.data.postFXEngine === "pmndrs" && !useVrBaselineHorizon;
+      const usePmndrsEnvironmentVisuals = isPmndrs && !useVrTakramLightsOnly;
       const usesTakramHorizon = shouldUsePmndrsTakramHorizonPath(this);
       const shadowEnabled = (typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data.shadowQuality) !== "off";
       if (!usesTakramHorizon) {
         setAFrameDefaultLightsEnabled(this, true);
       }
-      if (isPmndrs) {
+      if (usePmndrsEnvironmentVisuals) {
         removeLegacySunSkyEntitiesForPmndrs(this);
       }
       const environmentConfig = {
@@ -8027,21 +8239,21 @@
         stageSize: getLegacyHorizonStageSizeValue(this)
       };
       if (preset === "clear") {
-        environmentConfig.skyType = isPmndrs ? "gradient" : "atmosphere";
-        environmentConfig.skyColor = isPmndrs ? "#82c7fb" : "#bfe0ff";
-        environmentConfig.horizonColor = isPmndrs ? "#fff0d3" : "#fff8ee";
+        environmentConfig.skyType = usePmndrsEnvironmentVisuals ? "gradient" : "atmosphere";
+        environmentConfig.skyColor = usePmndrsEnvironmentVisuals ? "#82c7fb" : "#bfe0ff";
+        environmentConfig.horizonColor = usePmndrsEnvironmentVisuals ? "#fff0d3" : "#fff8ee";
         environmentConfig.lighting = "distant";
         environmentConfig.lightPosition = "0.08 0.98 -0.12";
       } else if (preset === "crisp") {
-        environmentConfig.skyType = isPmndrs ? "gradient" : "atmosphere";
-        environmentConfig.skyColor = isPmndrs ? "#8fc8f6" : "#abd7ff";
-        environmentConfig.horizonColor = isPmndrs ? "#fff1d8" : "#fffaf2";
+        environmentConfig.skyType = usePmndrsEnvironmentVisuals ? "gradient" : "atmosphere";
+        environmentConfig.skyColor = usePmndrsEnvironmentVisuals ? "#8fc8f6" : "#abd7ff";
+        environmentConfig.horizonColor = usePmndrsEnvironmentVisuals ? "#fff1d8" : "#fffaf2";
         environmentConfig.lighting = "distant";
         environmentConfig.lightPosition = "0.1 0.99 -0.12";
       } else {
-        environmentConfig.skyType = isPmndrs ? "gradient" : "atmosphere";
-        environmentConfig.skyColor = isPmndrs ? "#94c9f5" : "#b8dcff";
-        environmentConfig.horizonColor = isPmndrs ? "#ffefd8" : "#fff7ec";
+        environmentConfig.skyType = usePmndrsEnvironmentVisuals ? "gradient" : "atmosphere";
+        environmentConfig.skyColor = usePmndrsEnvironmentVisuals ? "#94c9f5" : "#b8dcff";
+        environmentConfig.horizonColor = usePmndrsEnvironmentVisuals ? "#ffefd8" : "#fff7ec";
         environmentConfig.lighting = "distant";
         environmentConfig.lightPosition = "0.08 0.99 -0.1";
       }
@@ -8058,6 +8270,19 @@
         return;
       }
       const atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
+      if (useVrTakramLightsOnly) {
+        clearPmndrsHorizonSun(this);
+        const lightsReady = atmosphereConfig && atmosphereConfig.enabled ? ensurePmndrsTakramHorizonLights(this, atmosphereConfig, preset, {
+          fallback: false,
+          ensureSky: false
+        }) : false;
+        if (!lightsReady) {
+          setAFrameDefaultLightsEnabled(this, true);
+        }
+        scheduleVrTakramLightsOnlyHorizonVisualSync(this);
+        logPmndrsHorizonDiagnostic(this, "apply-horizon-lights-only", atmosphereConfig);
+        return;
+      }
       if (usesTakramHorizon && atmosphereConfig && atmosphereConfig.enabled) {
         removeLegacySunSkyEntitiesForPmndrs(this);
         schedulePmndrsHorizonEnvironmentCleanup(this);
@@ -8092,7 +8317,7 @@
       const contactShadowSettings = getTerrainSafeContactShadowSettings(this, this.getContactShadowSettings());
       const hasAuthorLights = Array.prototype.some.call(this.getCachedSceneQuery("lightEntities", "[light]"), (lightEl) => !lightEl.hasAttribute("data-vrodos-photoreal-light"));
       syncLegacyHorizonCameraFar(this);
-      if (shouldUsePmndrsTakramHorizonPath(this) || shouldUseVrBaselineHorizon(this)) {
+      if (shouldUsePmndrsTakramHorizonPath(this) || shouldUseVrBaselineHorizon(this) || isVrTakramLightsOnlyProfile(this)) {
         this.applyHorizonSkyPreset();
         return;
       }

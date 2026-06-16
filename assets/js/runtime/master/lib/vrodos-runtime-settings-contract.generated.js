@@ -21,6 +21,7 @@
                 "desktop",
                 "baseline",
                 "safe",
+                "takram-lights",
                 "balanced",
                 "max"
             ]
