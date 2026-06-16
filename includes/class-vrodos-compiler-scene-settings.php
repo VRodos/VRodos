@@ -301,7 +301,7 @@ class VRodos_Compiler_Scene_Settings {
 	private function should_preserve_native_antialiasing_for_vr( array $settings ): bool {
 		$profile = (string) ( $settings['vrRuntimeProfile'] ?? 'baseline' );
 
-		return in_array( $profile, [ 'baseline', 'safe', 'takram-lights', 'balanced', 'max' ], true );
+		return in_array( $profile, [ 'baseline', 'safe', 'takram-lights', 'takram-sky', 'balanced', 'max' ], true );
 	}
 
 	private function should_enable_color_management( $metadata ): bool {

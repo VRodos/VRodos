@@ -22,6 +22,7 @@
                 "baseline",
                 "safe",
                 "takram-lights",
+                "takram-sky",
                 "balanced",
                 "max"
             ]

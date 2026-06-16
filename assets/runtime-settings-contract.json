@@ -12,7 +12,7 @@
       "type": "enum",
       "default": "desktop",
       "editorDefault": "desktop",
-      "allowed": ["desktop", "baseline", "safe", "takram-lights", "balanced", "max"]
+      "allowed": ["desktop", "baseline", "safe", "takram-lights", "takram-sky", "balanced", "max"]
     },
     "vrFramebufferScale": {
       "metadataKey": "aframeVrFramebufferScale",

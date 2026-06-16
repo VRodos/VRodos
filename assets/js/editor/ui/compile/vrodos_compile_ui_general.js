@@ -137,7 +137,7 @@ VRodosCompileUI.General = (function () {
     }
 
     function normalizeVrRuntimeProfile(value) {
-        if (value === 'desktop' || value === 'baseline' || value === 'safe' || value === 'takram-lights' || value === 'balanced' || value === 'max') {
+        if (value === 'desktop' || value === 'baseline' || value === 'safe' || value === 'takram-lights' || value === 'takram-sky' || value === 'balanced' || value === 'max') {
             return value;
         }
         return 'baseline';

@@ -87,8 +87,13 @@ function vrodosSerializeComponentAttribute(values) {
     return Object.keys(values || {}).map((key) => `${key}: ${values[key]}`).join('; ');
 }
 
-function vrodosPatchTakramLightsRendererAntialias(sceneEl) {
-    if (!sceneEl || vrodosRuntimeProfileOverrideValue() !== 'takram-lights') {
+function vrodosRuntimeProfileUsesNativeAntialias(profile) {
+    return profile === 'takram-lights' || profile === 'takram-sky';
+}
+
+function vrodosPatchVrNativeRendererAntialias(sceneEl) {
+    const profile = vrodosRuntimeProfileOverrideValue();
+    if (!sceneEl || !vrodosRuntimeProfileUsesNativeAntialias(profile)) {
         return false;
     }
 
@@ -99,18 +104,18 @@ function vrodosPatchTakramLightsRendererAntialias(sceneEl) {
 
     renderer.antialias = 'true';
     sceneEl.setAttribute('renderer', vrodosSerializeComponentAttribute(renderer));
-    sceneEl.setAttribute('data-vrodos-vr-native-antialias-forced', 'takram-lights');
+    sceneEl.setAttribute('data-vrodos-vr-native-antialias-forced', profile);
     return true;
 }
 
-function vrodosInstallTakramLightsRendererPreinitPatch() {
-    if (typeof document === 'undefined' || vrodosRuntimeProfileOverrideValue() !== 'takram-lights') {
+function vrodosInstallVrNativeRendererPreinitPatch() {
+    if (typeof document === 'undefined' || !vrodosRuntimeProfileUsesNativeAntialias(vrodosRuntimeProfileOverrideValue())) {
         return;
     }
 
     const patchExistingScene = () => {
         const sceneEl = document.querySelector && document.querySelector('a-scene');
-        return vrodosPatchTakramLightsRendererAntialias(sceneEl);
+        return vrodosPatchVrNativeRendererAntialias(sceneEl);
     };
 
     if (patchExistingScene()) {
@@ -131,7 +136,7 @@ function vrodosInstallTakramLightsRendererPreinitPatch() {
     }
 }
 
-vrodosInstallTakramLightsRendererPreinitPatch();
+vrodosInstallVrNativeRendererPreinitPatch();
 
 function vrodosRuntimeNowMs() {
     return (typeof performance !== 'undefined' && typeof performance.now === 'function')
@@ -617,6 +622,7 @@ AFRAME.registerComponent('scene-settings', {
             case 'baseline':
             case 'safe':
             case 'takram-lights':
+            case 'takram-sky':
             case 'balanced':
             case 'max':
                 return rawProfile;
@@ -635,6 +641,9 @@ AFRAME.registerComponent('scene-settings', {
     },
     isVrRuntimeTakramLightsProfile: function () {
         return this.getVrRuntimeProfile() === 'takram-lights';
+    },
+    isVrRuntimeTakramSkyProfile: function () {
+        return this.getVrRuntimeProfile() === 'takram-sky';
     },
     isVrRuntimeSceneOwnedProfile: function () {
         return this.isVrRuntimeBaselineProfile() || this.isVrRuntimeSafeProfile();
@@ -657,7 +666,7 @@ AFRAME.registerComponent('scene-settings', {
             return false;
         }
 
-        if (this.isVrRuntimeTakramLightsProfile()) {
+        if (this.isVrRuntimeTakramLightsProfile() || this.isVrRuntimeTakramSkyProfile()) {
             return false;
         }
 
@@ -820,24 +829,29 @@ AFRAME.registerComponent('scene-settings', {
         const profile = this.getVrRuntimeProfile();
         const sceneOwnedProfile = this.isVrRuntimeSceneOwnedProfile();
         const takramLightsOnly = this.isVrRuntimeTakramLightsProfile();
+        const takramVisibleSky = this.isVrRuntimeTakramSkyProfile();
         const pmndrsComposer = active &&
             this.data.postFXEngine === 'pmndrs' &&
             !sceneOwnedProfile &&
             !takramLightsOnly &&
+            !takramVisibleSky &&
             this.canUsePmndrsComposerOnHeadset() &&
             this.isVrFeatureExperimentEnabled('vrPmndrsComposerEnabled', 'enableXrPmndrsComposer', 'vrodos_enable_xr_pmndrs_composer');
         const sceneProbe = active &&
             !sceneOwnedProfile &&
             !takramLightsOnly &&
+            !takramVisibleSky &&
             this.isVrFeatureExperimentEnabled('vrSceneProbeEnabled', 'enableXrSceneProbe', 'vrodos_enable_xr_scene_probe');
         const takramSkyEnvironment = active &&
             !sceneOwnedProfile &&
             !takramLightsOnly &&
+            !takramVisibleSky &&
             this.isVrFeatureExperimentEnabled('vrTakramSkyEnvironmentEnabled', 'enableXrTakramSkyEnvironment', 'vrodos_enable_xr_takram_sky_environment');
         const clouds = active &&
             this.data.postFXEngine === 'pmndrs' &&
             !sceneOwnedProfile &&
             !takramLightsOnly &&
+            !takramVisibleSky &&
             this.isVrFeatureExperimentEnabled('vrCloudsEnabled', 'enableXrClouds', 'vrodos_enable_xr_clouds');
 
         return {
@@ -847,6 +861,7 @@ AFRAME.registerComponent('scene-settings', {
             baseline: this.isVrRuntimeBaselineProfile(),
             safe: this.isVrRuntimeSafeProfile(),
             takramLightsOnly,
+            takramVisibleSky,
             sceneOwnedProfile,
             headsetBrowser: this.isHeadsetBrowserDevice(),
             headsetPmndrsComposerForced: this.isHeadsetPmndrsComposerForceEnabled(),
@@ -876,6 +891,10 @@ AFRAME.registerComponent('scene-settings', {
         }
 
         if (this.isVrRuntimePolicyActive() && this.isVrRuntimeTakramLightsProfile()) {
+            return false;
+        }
+
+        if (this.isVrRuntimePolicyActive() && this.isVrRuntimeTakramSkyProfile()) {
             return false;
         }
 
@@ -922,7 +941,7 @@ AFRAME.registerComponent('scene-settings', {
     },
     getEffectiveReflectionSource: function () {
         if (this.isVrSceneOwnedRuntimeActive() ||
-            (this.isVrRuntimePolicyActive() && this.isVrRuntimeTakramLightsProfile())) {
+            (this.isVrRuntimePolicyActive() && (this.isVrRuntimeTakramLightsProfile() || this.isVrRuntimeTakramSkyProfile()))) {
             return 'none';
         }
 
@@ -1339,6 +1358,10 @@ AFRAME.registerComponent('scene-settings', {
             return 'vr-takram-lights-disabled';
         }
 
+        if (postProcessingRequested && this.isVrRuntimePolicyActive() && this.isVrRuntimeTakramSkyProfile()) {
+            return 'vr-takram-sky-disabled';
+        }
+
         if (postProcessingRequested && this.isDirectVrPresentationActive()) {
             return 'direct-xr-fallback';
         }
@@ -1369,6 +1392,9 @@ AFRAME.registerComponent('scene-settings', {
         const vrFeaturePolicy = this.getVrRuntimeFeaturePolicy();
         const vrSceneOwnedActive = this.isVrSceneOwnedRuntimeActive();
         const vrTakramLightsOnlyActive = this.isVrRuntimePolicyActive() && this.isVrRuntimeTakramLightsProfile();
+        const vrTakramVisibleSkyActive = this.isVrRuntimePolicyActive() && this.isVrRuntimeTakramSkyProfile();
+        const pmndrsAtmosphereSkyVisible = typeof this.isPmndrsAtmosphereSkyVisible === 'function' &&
+            this.isPmndrsAtmosphereSkyVisible();
         let pixelRatio = null;
 
         if (renderer && typeof renderer.getPixelRatio === 'function') {
@@ -1413,10 +1439,21 @@ AFRAME.registerComponent('scene-settings', {
                 atmosphereRequested: Boolean(!vrSceneOwnedActive && !vrTakramLightsOnlyActive && this.data.postFXEngine === 'pmndrs' && this.isPmndrsAtmosphereEnabled()),
                 atmosphereBundleLoaded: Boolean(window.VRODOS_TAKRAM_ATMOSPHERE),
                 atmosphereReady: Boolean(!vrSceneOwnedActive && atmosphereState && atmosphereState.ready && !atmosphereState.failed),
+                atmosphereProfile: atmosphereState && atmosphereState.profileSignature ? atmosphereState.profileSignature : '',
+                atmospherePrecision: atmosphereState && atmosphereState.precision ? atmosphereState.precision : '',
+                atmosphereHigherOrderScattering: Boolean(atmosphereState && atmosphereState.higherOrderScattering),
                 dayNightCycleActive: Boolean(!vrSceneOwnedActive && this.isPmndrsDayNightCycleActive()),
-                horizonOwner: (vrSceneOwnedActive || vrTakramLightsOnlyActive) ? 'aframe-environment' : (horizonState && horizonState.owner ? horizonState.owner : ''),
+                horizonOwner: vrTakramVisibleSkyActive && pmndrsAtmosphereSkyVisible
+                    ? 'takram-sky'
+                    : ((vrSceneOwnedActive || vrTakramLightsOnlyActive) ? 'aframe-environment' : (horizonState && horizonState.owner ? horizonState.owner : '')),
                 lightOwner: takramLightsOnlyState && takramLightsOnlyState.active ? takramLightsOnlyState.owner : (horizonState && horizonState.owner ? horizonState.owner : ''),
                 takramSunEnabled: Boolean(!vrSceneOwnedActive && horizonState && horizonState.takramSunEnabled),
+                visibleSkyRequested: Boolean(vrTakramVisibleSkyActive),
+                visibleSkyActive: Boolean(vrTakramVisibleSkyActive && pmndrsAtmosphereSkyVisible),
+                visibleSkyDirectCalibrated: Boolean(vrTakramVisibleSkyActive && atmosphereState && atmosphereState.vrTakramSkyDirectCalibrated),
+                visibleSkyDirectExposure: atmosphereState && typeof atmosphereState.vrTakramSkyDirectExposure === 'number'
+                    ? atmosphereState.vrTakramSkyDirectExposure
+                    : null,
                 lightsOnlyRequested: Boolean(takramLightsOnlyState && takramLightsOnlyState.requested),
                 lightsOnlyEligible: Boolean(takramLightsOnlyState && takramLightsOnlyState.eligible),
                 lightsOnlyActive: Boolean(takramLightsOnlyState && takramLightsOnlyState.active),
@@ -1605,6 +1642,7 @@ AFRAME.registerComponent('scene-settings', {
     hidePmndrsHorizonEnvironmentVisuals: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsHorizonEnvironmentVisuals || function () {},
     showPmndrsAtmosphereSkyForSceneProbe: VRODOSSceneSettingsMaster.SceneSettingsHelpers.showPmndrsAtmosphereSkyForSceneProbe || function () { return false; },
     hidePmndrsAtmosphereSky: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsAtmosphereSky || function () {},
+    isPmndrsAtmosphereSkyVisible: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isPmndrsAtmosphereSkyVisible || function () { return false; },
     logPmndrsHorizonDiagnostic: VRODOSSceneSettingsMaster.SceneSettingsHelpers.logPmndrsHorizonDiagnostic || function () {},
     applyBackgroundQualityProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyBackgroundQualityProfile,
     applyPostFXProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPostFXProfile,
