@@ -114,27 +114,6 @@
       overlay.appendChild(spinner);
       overlay.appendChild(title);
       overlay.appendChild(progress);
-      const skipBtn = document.createElement("button");
-      skipBtn.textContent = "Reveal Scene Anyway";
-      skipBtn.style.marginTop = "20px";
-      skipBtn.style.padding = "8px 16px";
-      skipBtn.style.background = "rgba(255,255,255,0.1)";
-      skipBtn.style.border = "1px solid rgba(255,255,255,0.2)";
-      skipBtn.style.borderRadius = "20px";
-      skipBtn.style.color = "#fff";
-      skipBtn.style.cursor = "pointer";
-      skipBtn.style.fontSize = "12px";
-      skipBtn.style.opacity = "0";
-      skipBtn.style.transition = "opacity 0.5s ease";
-      skipBtn.style.pointerEvents = "none";
-      skipBtn.onclick = this.revealScene.bind(this);
-      overlay.appendChild(skipBtn);
-      setTimeout(() => {
-        if (!this.isReady) {
-          skipBtn.style.opacity = "1";
-          skipBtn.style.pointerEvents = "auto";
-        }
-      }, 3e3);
       document.body.appendChild(overlay);
       this.loadingOverlay = overlay;
       this.progressLabel = progress;
@@ -375,7 +354,7 @@
       if (typeof settingsComponent.prepareVrTakramVisibleSkyForReveal === "function") {
         const ready2 = settingsComponent.prepareVrTakramVisibleSkyForReveal();
         if (!ready2 && this.progressLabel) {
-          this.progressLabel.textContent = "Preparing Takram sky...";
+          this.progressLabel.textContent = "Preparing sky...";
         }
         return ready2;
       }
@@ -384,7 +363,7 @@
       const userData = material && material.userData ? material.userData : null;
       const ready = Boolean(atmosphereState && atmosphereState.ready && userData && userData.vrodosVrTakramSkyDirectShaderPatched && !userData.vrodosVrTakramSkyDirectPatchFailed);
       if (!ready && this.progressLabel) {
-        this.progressLabel.textContent = "Preparing Takram sky...";
+        this.progressLabel.textContent = "Preparing sky...";
       }
       return ready;
     },
@@ -1917,7 +1896,7 @@
         state.takramSkyWarmupMs = atmosphereState && typeof atmosphereState.vrTakramSkyDirectWarmupMs === "number" ? atmosphereState.vrTakramSkyDirectWarmupMs : typeof userData.vrodosVrTakramSkyDirectWarmupMs === "number" ? userData.vrodosVrTakramSkyDirectWarmupMs : 0;
         state.takramSkyWarmupRemainingMs = atmosphereState && typeof atmosphereState.vrTakramSkyDirectWarmupRemainingMs === "number" ? atmosphereState.vrTakramSkyDirectWarmupRemainingMs : typeof userData.vrodosVrTakramSkyDirectWarmupRemainingMs === "number" ? userData.vrodosVrTakramSkyDirectWarmupRemainingMs : 0;
         if (!state.takramSkyReady && !state.takramSkyFailed) {
-          addPending("takram-sky", "Preparing Takram sky...");
+          addPending("takram-sky", "Preparing sky...");
         }
       }
       const wantsHdrReflections = typeof this.isVrRuntimePolicyActive === "function" && this.isVrRuntimePolicyActive() && typeof this.isVrRuntimeHdrReflectionsProfile === "function" && this.isVrRuntimeHdrReflectionsProfile() && typeof this.getEffectiveReflectionSource === "function" && this.getEffectiveReflectionSource() === "hdr";

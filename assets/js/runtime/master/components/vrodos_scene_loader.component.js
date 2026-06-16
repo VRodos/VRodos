@@ -128,28 +128,6 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         overlay.appendChild(spinner);
         overlay.appendChild(title);
         overlay.appendChild(progress);
-        const skipBtn = document.createElement('button');
-        skipBtn.textContent = 'Reveal Scene Anyway';
-        skipBtn.style.marginTop = '20px';
-        skipBtn.style.padding = '8px 16px';
-        skipBtn.style.background = 'rgba(255,255,255,0.1)';
-        skipBtn.style.border = '1px solid rgba(255,255,255,0.2)';
-        skipBtn.style.borderRadius = '20px';
-        skipBtn.style.color = '#fff';
-        skipBtn.style.cursor = 'pointer';
-        skipBtn.style.fontSize = '12px';
-        skipBtn.style.opacity = '0';
-        skipBtn.style.transition = 'opacity 0.5s ease';
-        skipBtn.style.pointerEvents = 'none';
-        skipBtn.onclick = this.revealScene.bind(this);
-        overlay.appendChild(skipBtn);
-
-        setTimeout(() => {
-            if (!this.isReady) {
-                skipBtn.style.opacity = '1';
-                skipBtn.style.pointerEvents = 'auto';
-            }
-        }, 3000);
 
         document.body.appendChild(overlay);
 
@@ -453,7 +431,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         if (typeof settingsComponent.prepareVrTakramVisibleSkyForReveal === 'function') {
             const ready = settingsComponent.prepareVrTakramVisibleSkyForReveal();
             if (!ready && this.progressLabel) {
-                this.progressLabel.textContent = 'Preparing Takram sky...';
+                this.progressLabel.textContent = 'Preparing sky...';
             }
             return ready;
         }
@@ -463,7 +441,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         const userData = material && material.userData ? material.userData : null;
         const ready = Boolean(atmosphereState && atmosphereState.ready && userData && userData.vrodosVrTakramSkyDirectShaderPatched && !userData.vrodosVrTakramSkyDirectPatchFailed);
         if (!ready && this.progressLabel) {
-            this.progressLabel.textContent = 'Preparing Takram sky...';
+            this.progressLabel.textContent = "Preparing sky...";
         }
         return ready;
     },

@@ -1591,7 +1591,7 @@ AFRAME.registerComponent('scene-settings', {
                 ? atmosphereState.vrTakramSkyDirectWarmupRemainingMs
                 : (typeof userData.vrodosVrTakramSkyDirectWarmupRemainingMs === 'number' ? userData.vrodosVrTakramSkyDirectWarmupRemainingMs : 0);
             if (!state.takramSkyReady && !state.takramSkyFailed) {
-                addPending('takram-sky', 'Preparing Takram sky...');
+                addPending('takram-sky', 'Preparing sky...');
             }
         }
 
