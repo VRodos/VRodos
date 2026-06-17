@@ -409,12 +409,10 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return Boolean(readiness.ready);
         }
 
-        const isVisibleTakramProfile = typeof settingsComponent.isVrRuntimePolicyActive === 'function' &&
-            settingsComponent.isVrRuntimePolicyActive() &&
-            (
-                (typeof settingsComponent.isVrRuntimeTakramSkyProfile === 'function' && settingsComponent.isVrRuntimeTakramSkyProfile()) ||
-                (typeof settingsComponent.isVrRuntimeHdrReflectionsProfile === 'function' && settingsComponent.isVrRuntimeHdrReflectionsProfile())
-            );
+        const vrFeaturePolicy = typeof settingsComponent.getVrRuntimeFeaturePolicy === 'function'
+            ? settingsComponent.getVrRuntimeFeaturePolicy()
+            : null;
+        const isVisibleTakramProfile = Boolean(vrFeaturePolicy && vrFeaturePolicy.takramVisibleSky);
         if (!isVisibleTakramProfile) {
             return true;
         }

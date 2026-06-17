@@ -131,11 +131,8 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function is_post_fx_enabled( $metadata ): bool {
-		if ( $this->is_vr_scene_owned_profile( $metadata ) ) {
-			return false;
-		}
-
-		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePostFXEnabled ?? false );
+		return in_array( $this->vr_runtime_profile( $metadata ), [ 'desktop', 'max' ], true )
+			&& $this->is_authored_post_fx_enabled( $metadata );
 	}
 
 	public function vr_runtime_profile( $metadata ): string {
@@ -143,32 +140,43 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 		return is_string( $value ) && '' !== $value ? $value : 'desktop';
 	}
 
-	public function is_vr_baseline_profile( $metadata ): bool {
-		return 'baseline' === $this->vr_runtime_profile( $metadata );
-	}
-
 	public function is_vr_scene_owned_profile( $metadata ): bool {
 		return in_array( $this->vr_runtime_profile( $metadata ), [ 'baseline', 'safe' ], true );
 	}
 
-	public function post_fx_engine( $metadata ): string {
-		if ( ! $this->is_post_fx_enabled( $metadata ) ) {
-			return self::POST_FX_ENGINE_LEGACY;
-		}
+	public function is_authored_post_fx_enabled( $metadata ): bool {
+		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePostFXEnabled ?? false );
+	}
 
+	public function authored_post_fx_engine( $metadata ): string {
 		return ( $metadata->aframePostFXEngine ?? self::POST_FX_ENGINE_LEGACY ) === self::POST_FX_ENGINE_PMNDRS
 			? self::POST_FX_ENGINE_PMNDRS
 			: self::POST_FX_ENGINE_LEGACY;
 	}
 
+	public function post_fx_engine( $metadata ): string {
+		$authored_engine = $this->authored_post_fx_engine( $metadata );
+		if ( self::POST_FX_ENGINE_PMNDRS === $authored_engine && $this->is_pmndrs_atmosphere_enabled( $metadata ) ) {
+			return self::POST_FX_ENGINE_PMNDRS;
+		}
+
+		if ( ! $this->is_post_fx_enabled( $metadata ) ) {
+			return self::POST_FX_ENGINE_LEGACY;
+		}
+
+		return $authored_engine;
+	}
+
 	public function is_pmndrs_atmosphere_enabled( $metadata ): bool {
-		return $this->is_post_fx_enabled( $metadata )
-			&& self::POST_FX_ENGINE_PMNDRS === $this->post_fx_engine( $metadata )
+		return ! $this->is_vr_scene_owned_profile( $metadata )
+			&& $this->is_authored_post_fx_enabled( $metadata )
+			&& self::POST_FX_ENGINE_PMNDRS === $this->authored_post_fx_engine( $metadata )
 			&& VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmosphereEnabled', true );
 	}
 
 	public function is_pmndrs_clouds_enabled( $metadata ): bool {
-		return $this->is_pmndrs_atmosphere_enabled( $metadata )
+		return in_array( $this->vr_runtime_profile( $metadata ), [ 'desktop', 'max' ], true )
+			&& $this->is_pmndrs_atmosphere_enabled( $metadata )
 			&& VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCloudsEnabled', false );
 	}
 

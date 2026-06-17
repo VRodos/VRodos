@@ -299,9 +299,9 @@ class VRodos_Compiler_Scene_Settings {
 	}
 
 	private function should_preserve_native_antialiasing_for_vr( array $settings ): bool {
-		$profile = (string) ( $settings['vrRuntimeProfile'] ?? 'baseline' );
+		$profile = (string) ( $settings['vrRuntimeProfile'] ?? 'desktop' );
 
-		return in_array( $profile, [ 'baseline', 'safe', 'takram-lights', 'takram-sky', 'hdr-reflections', 'balanced', 'max' ], true );
+		return 'desktop' !== $profile;
 	}
 
 	private function should_enable_color_management( $metadata ): bool {

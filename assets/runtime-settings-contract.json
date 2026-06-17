@@ -12,7 +12,7 @@
       "type": "enum",
       "default": "desktop",
       "editorDefault": "desktop",
-      "allowed": ["desktop", "baseline", "safe", "takram-lights", "takram-sky", "hdr-reflections", "balanced", "max"]
+      "allowed": ["desktop", "headset", "baseline", "safe", "takram-lights", "takram-sky", "hdr-reflections", "balanced", "max"]
     },
     "vrFramebufferScale": {
       "metadataKey": "aframeVrFramebufferScale",

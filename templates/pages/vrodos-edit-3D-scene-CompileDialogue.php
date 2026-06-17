@@ -116,7 +116,7 @@
 									<label class="tw-form-control">
 										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Environment</span>
 										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-											<option>A-Frame Horizon</option>
+											<option>Takram sky if authored</option>
 										</select>
 									</label>
 									<label class="tw-form-control">
@@ -126,9 +126,9 @@
 										</select>
 									</label>
 									<label class="tw-form-control">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Takram / Clouds</span>
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Reflections</span>
 										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-											<option>Disabled</option>
+											<option>HDR env map if authored</option>
 										</select>
 									</label>
 									<label class="tw-form-control">

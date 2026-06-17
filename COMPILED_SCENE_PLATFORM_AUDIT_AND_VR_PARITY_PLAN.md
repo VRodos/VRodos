@@ -28,10 +28,10 @@ Accepted current state:
 
 - The user-facing compile selector is `Runtime Target`: `Desktop` or `VR Headset`.
 - `Desktop` maps to internal `desktop` and preserves the authored Desktop rendering pipeline.
-- `VR Headset` maps to internal `baseline`.
-- `baseline` is accepted on Quest 2: A-Frame horizon/environment, authored 3D objects/media, controller input, thumbstick navigation, walkable collision/BVH, static shadows, native renderer antialiasing, and readable midday lighting.
+- `VR Headset` maps to internal `headset`.
+- Accepted public `headset` features on Quest 2: A-Frame scene host, authored 3D objects/media, controller input, thumbstick navigation, walkable collision/BVH, static shadows, native renderer antialiasing, readable midday lighting, authored Takram visible sky/light sources, and authored HDR env-map reflections.
 - Minor far-edge shimmer is acceptable for the current baseline and should be treated as solved unless it regresses.
-- VR Headset baseline compiles without PMNDRS/Takram chunks even when Desktop settings use PMNDRS/Takram.
+- Hidden `baseline` remains the strict A-Frame-horizon regression profile and compiles without PMNDRS/Takram chunks even when Desktop settings use PMNDRS/Takram.
 
 Rejected or blocked paths:
 
@@ -41,7 +41,7 @@ Rejected or blocked paths:
 
 Next work:
 
-1. Keep Desktop and accepted VR Headset baseline unchanged.
+1. Keep Desktop and accepted public `headset` behavior unchanged.
 2. Promote already-working scene-owned baseline features in docs/UI terminology, especially navigation and collision, as accepted rather than experimental.
 3. Start the next feature-parity stage with scene-owned lighting/material parity only:
    - compare object readability across a few scenes;
@@ -210,14 +210,15 @@ Only `desktop`, `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-reflecti
 ### Current Implementation Checkpoint
 
 - Phase 1 diagnostics expose `window.VRODOS_RUNTIME_FEATURE_STATE` and `window.__vrodosRuntimeFeatureState`.
-- VR profile work has started with user-facing `Runtime Target` values `Desktop` and `VR Headset`; internally these map to `desktop` and `baseline`.
+- VR profile work has user-facing `Runtime Target` values `Desktop` and `VR Headset`; internally these map to `desktop` and the public `headset` policy.
 - `desktop` keeps the authored desktop rendering pipeline active and disables the headset-specific override policy.
-- `baseline` is the strict headset starting point: A-Frame horizon/environment, no PMNDRS composer, no Takram sky/clouds, no scene probes. Baseline compiles without PMNDRS/Takram runtime chunks even if the authored Desktop settings still use them.
+- `headset` is the public Quest-safe profile: native renderer antialiasing, authored Takram sky/light sources and HDR env-map reflections, no PMNDRS/legacy composer ownership, no clouds, no scene probes, no Takram sky PMREM capture, and no WebXR layers.
+- `baseline` is retained as the hidden strict regression profile: A-Frame horizon/environment, no PMNDRS composer, no Takram sky/clouds, no scene probes. Baseline compiles without PMNDRS/Takram runtime chunks even if the authored Desktop settings still use them.
 - `safe` is now hardened as a hidden scene-owned parity validation profile: it keeps the A-Frame horizon/direct-stereo policy, disables post-FX/Takram chunks when compiled as `safe`, suppresses experiment flags, and reports `vrProfile.safe=true` in diagnostics.
 - `takram-lights` is now wired as a hidden lighting-only validation profile. It keeps the visible A-Frame horizon, blocks PMNDRS/legacy composer ownership, clouds, scene probes, and reflections, and can attach real Takram light sources only when the page was intentionally compiled with PMNDRS/Takram atmosphere resources. Diagnostics report `takram.lightsOnlyRequested`, `takram.lightsOnlyActive`, `takram.lightOwner`, and `takram.lightsOnlyUnavailableReason`.
 - `takram-sky` is now wired as a hidden visible-sky validation profile. It allows the Takram visible sky/horizon and Takram light-source bridge while keeping PMNDRS composer/effects, clouds, reflections, Takram sky PMREM capture, scene probes, and WebXR layers disabled. On Quest, this profile uses the cheaper half-float/basic Takram LUT path plus a direct-sky exposure/gamma shader calibration hook because the first headset pass rendered the direct SkyMaterial nearly black without the PMNDRS composer tone step. During startup the scene loader asks `scene-settings.getRuntimeRevealReadinessState()` and keeps the loading overlay visible until Takram resources exist, the patched direct-sky shader is compiled, and the Quest warm-up window has elapsed. Diagnostics report `reveal.ready`, `reveal.pending`, `vrProfile.takramVisibleSky=true`, `takram.visibleSkyActive`, `takram.visibleSkyDirectCalibrated`, `takram.visibleSkyDirectExposure`, `takram.visibleSkyDirectShaderPatched`, `takram.visibleSkyDirectPatchFailed`, `takram.visibleSkyDirectWarmed`, `takram.visibleSkyDirectWarmupRemainingMs`, and `takram.atmosphereProfile`.
 - `hdr-reflections` is now wired as a hidden HDR/env-map-only validation profile. It inherits the accepted Takram visible-sky path and loader-gated Takram reveal, defaults authored `envMapPreset=none` to the small `studio` HDR, waits for the HDR env-map load before reveal, and keeps scene probes, Takram sky PMREM capture, PMNDRS composer/effects, clouds, and WebXR layers disabled. Diagnostics report `vrProfile.hdrReflections=true`, `reflections.effectiveSource=hdr`, `reflections.hdrEnvMapOnly=true`, `reflections.effectiveEnvMapPreset`, `reflections.hdrReady`, `reflections.hdrLoading`, `reflections.hdrFailed`, and `reflections.hdrError`. `vrexpo_games` camera-rig diagnostics are exposed under `cameraRig` to compare the active A-Frame camera, `#player`, `#cameraA`, and controller world positions during headset testing.
-- `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-reflections`, `balanced`, and `max` now also apply a VR-only WebXR render budget before session start when supported: framebuffer scale/foveation defaults are `1.0/0.5`, `1.0/0.5`, `1.0/0.5`, `1.0/0.5`, `1.0/0.5`, `0.9/0.75`, and `1.0/0.5`.
+- `headset`, `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-reflections`, `balanced`, and `max` now also apply a VR-only WebXR render budget before session start when supported: framebuffer scale/foveation defaults are `1.0/0.5`, `1.0/0.5`, `1.0/0.5`, `1.0/0.5`, `1.0/0.5`, `1.0/0.5`, `0.9/0.75`, and `1.0/0.5`.
 - Quest 2 baseline testing accepted visual quality with only minor far-edge shimmer. Framebuffer scale/foveation changes did not materially affect the shimmer, so it is not an active blocker.
 - Controller input, thumbstick navigation, walkable navigation, and collision/BVH are accepted as working VR Headset baseline features.
 - `max` attempts requested PMNDRS composer, scene probe, Takram sky PMREM, and Takram clouds only in immersive VR and only when runtime support checks pass.

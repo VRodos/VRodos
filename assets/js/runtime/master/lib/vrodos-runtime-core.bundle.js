@@ -20,6 +20,7 @@
           "editorDefault": "desktop",
           "allowed": [
             "desktop",
+            "headset",
             "baseline",
             "safe",
             "takram-lights",
@@ -6055,7 +6056,7 @@
       return Boolean(isVrTakramLightsOnlyProfile(self) && isPmndrsTakramHorizonRequested(self));
     }
     function isVrTakramSkyProfile(self) {
-      return Boolean(self && typeof self.isVrRuntimePolicyActive === "function" && self.isVrRuntimePolicyActive() && typeof self.isVrRuntimeTakramSkyProfile === "function" && (self.isVrRuntimeTakramSkyProfile() || typeof self.isVrRuntimeHdrReflectionsProfile === "function" && self.isVrRuntimeHdrReflectionsProfile()) && self.data && self.data.selChoice === "0");
+      return Boolean(self && typeof self.isVrRuntimePolicyActive === "function" && self.isVrRuntimePolicyActive() && typeof self.vrRuntimeAllows === "function" && self.vrRuntimeAllows("takramVisibleSky", isPmndrsTakramHorizonRequested(self)) && self.data && self.data.selChoice === "0");
     }
     function shouldUseVrTakramVisibleSky(self) {
       return Boolean(isVrTakramSkyProfile(self) && isPmndrsTakramHorizonRequested(self));

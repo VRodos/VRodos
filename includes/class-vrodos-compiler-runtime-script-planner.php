@@ -40,17 +40,17 @@ class VRodos_Compiler_Runtime_Script_Planner {
 		}
 
 		if ( $this->feature_flags->is_post_fx_enabled( $metadata ) ) {
-			if ( $this->feature_flags->post_fx_engine( $metadata ) === VRodos_Compiler_Runtime_Feature_Flags::POST_FX_ENGINE_PMNDRS ) {
-				$requested[] = 'pmndrs-postfx';
-				if ( $this->feature_flags->is_pmndrs_atmosphere_enabled( $metadata ) ) {
-					$requested[] = 'takram-atmosphere';
-					if ( $this->feature_flags->is_pmndrs_clouds_enabled( $metadata ) ) {
-						$requested[] = 'takram-clouds';
-					}
-				}
-			} else {
-				$requested[] = 'legacy-postfx';
-			}
+			$requested[] = VRodos_Compiler_Runtime_Feature_Flags::POST_FX_ENGINE_PMNDRS === $this->feature_flags->post_fx_engine( $metadata )
+				? 'pmndrs-postfx'
+				: 'legacy-postfx';
+		}
+
+		if ( $this->feature_flags->is_pmndrs_atmosphere_enabled( $metadata ) ) {
+			$requested[] = 'takram-atmosphere';
+		}
+
+		if ( $this->feature_flags->is_pmndrs_clouds_enabled( $metadata ) ) {
+			$requested[] = 'takram-clouds';
 		}
 
 		$requested[] = 'aframe-components';

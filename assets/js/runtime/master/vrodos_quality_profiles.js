@@ -3399,9 +3399,8 @@
         return Boolean(self &&
             typeof self.isVrRuntimePolicyActive === 'function' &&
             self.isVrRuntimePolicyActive() &&
-            typeof self.isVrRuntimeTakramSkyProfile === 'function' &&
-            (self.isVrRuntimeTakramSkyProfile() ||
-                (typeof self.isVrRuntimeHdrReflectionsProfile === 'function' && self.isVrRuntimeHdrReflectionsProfile())) &&
+            typeof self.vrRuntimeAllows === 'function' &&
+            self.vrRuntimeAllows('takramVisibleSky', isPmndrsTakramHorizonRequested(self)) &&
             self.data &&
             self.data.selChoice === "0");
     }

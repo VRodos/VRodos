@@ -137,10 +137,10 @@ VRodosCompileUI.General = (function () {
     }
 
     function normalizeVrRuntimeProfile(value) {
-        if (value === 'desktop' || value === 'baseline' || value === 'safe' || value === 'takram-lights' || value === 'takram-sky' || value === 'hdr-reflections' || value === 'balanced' || value === 'max') {
+        if (value === 'desktop' || value === 'headset' || value === 'baseline' || value === 'safe' || value === 'takram-lights' || value === 'takram-sky' || value === 'hdr-reflections' || value === 'balanced' || value === 'max') {
             return value;
         }
-        return 'baseline';
+        return 'desktop';
     }
 
     function runtimeTargetFromVrRuntimeProfile(value) {
@@ -148,7 +148,7 @@ VRodosCompileUI.General = (function () {
     }
 
     function runtimeTargetToVrRuntimeProfile(value) {
-        return normalizeRuntimeTarget(value) === 'vr-headset' ? 'baseline' : 'desktop';
+        return normalizeRuntimeTarget(value) === 'vr-headset' ? 'headset' : 'desktop';
     }
 
     function normalizeEdgeAAStrengthLevel(value) {
@@ -235,7 +235,7 @@ VRodosCompileUI.General = (function () {
 
         if (controls.runtimeTargetHint) {
             controls.runtimeTargetHint.textContent = headsetTarget
-                ? 'Applies the headset-safe runtime policy while preserving the authored desktop settings.'
+                ? 'Uses the accepted headset policy: Takram sky and HDR env maps when authored, with composer effects, clouds, scene probes, and WebXR layers disabled.'
                 : 'Uses the authored desktop rendering pipeline without headset-specific overrides.';
         }
     }

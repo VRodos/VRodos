@@ -19,6 +19,7 @@
             "editorDefault": "desktop",
             "allowed": [
                 "desktop",
+                "headset",
                 "baseline",
                 "safe",
                 "takram-lights",
