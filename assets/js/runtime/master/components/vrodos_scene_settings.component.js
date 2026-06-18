@@ -1383,16 +1383,41 @@ AFRAME.registerComponent('scene-settings', {
                 : 0,
             immersiveWorldIncludesVideoDisplays: Boolean(immersiveWorldRoots && immersiveWorldRoots.includesVideoDisplays),
             immersiveWorldIncludesAssessmentWrappers: Boolean(immersiveWorldRoots && immersiveWorldRoots.includesAssessmentWrappers),
-            immersiveEntryWorldYOffset: movement && typeof movement.immersiveEntryWorldYOffset === 'number'
-                ? Number(movement.immersiveEntryWorldYOffset.toFixed(3))
+            immersiveCollisionRootsCovered: Boolean(!immersiveWorldRoots || immersiveWorldRoots.collisionRootsCovered),
+            immersiveMissingCollisionRootCount: immersiveWorldRoots && typeof immersiveWorldRoots.missingCollisionRootCount === 'number'
+                ? immersiveWorldRoots.missingCollisionRootCount
                 : 0,
-            immersiveEntryWorldYOffsetApplied: Boolean(movement && movement.immersiveEntryWorldYOffsetApplied),
-            immersiveWorldYOffsetTotal: movement && typeof movement.immersiveWorldYOffsetTotal === 'number'
-                ? Number(movement.immersiveWorldYOffsetTotal.toFixed(3))
+            immersiveMissingCollisionRootSamples: immersiveWorldRoots && Array.isArray(immersiveWorldRoots.missingCollisionRootSamples)
+                ? immersiveWorldRoots.missingCollisionRootSamples
+                : [],
+            immersiveAuthoredNavPosition: movement && movement.immersiveVirtualNavPosition
+                ? {
+                    x: Number(movement.immersiveVirtualNavPosition.x.toFixed(3)),
+                    y: Number(movement.immersiveVirtualNavPosition.y.toFixed(3)),
+                    z: Number(movement.immersiveVirtualNavPosition.z.toFixed(3))
+                }
+                : null,
+            immersivePhysicalAnchorPosition: movement && movement.immersivePhysicalAnchorPosition
+                ? {
+                    x: Number(movement.immersivePhysicalAnchorPosition.x.toFixed(3)),
+                    y: Number(movement.immersivePhysicalAnchorPosition.y.toFixed(3)),
+                    z: Number(movement.immersivePhysicalAnchorPosition.z.toFixed(3))
+                }
+                : null,
+            immersiveRenderOffset: movement && movement.immersiveRenderOffset
+                ? {
+                    x: Number(movement.immersiveRenderOffset.x.toFixed(3)),
+                    y: Number(movement.immersiveRenderOffset.y.toFixed(3)),
+                    z: Number(movement.immersiveRenderOffset.z.toFixed(3))
+                }
+                : null,
+            immersiveRenderYawDeg: movement && typeof movement.immersiveRenderYaw === 'number'
+                ? Number((movement.immersiveRenderYaw * 180 / Math.PI).toFixed(2))
                 : 0,
-            immersiveLastGroundAlignmentY: movement && typeof movement.immersiveLastGroundAlignmentY === 'number'
-                ? Number(movement.immersiveLastGroundAlignmentY.toFixed(3))
+            immersiveLastStepDeltaY: movement && typeof movement.immersiveLastStepDeltaY === 'number'
+                ? Number(movement.immersiveLastStepDeltaY.toFixed(3))
                 : 0,
+            immersivePresentationTransformActive: Boolean(immersiveXrPresenting && movement && movement.immersiveWorldBaseTransforms && movement.immersiveWorldBaseTransforms.size > 0),
             lastNonImmersiveHeightOffset: movement && typeof movement.lastNonImmersiveHeightOffset === 'number'
                 ? Number(movement.lastNonImmersiveHeightOffset.toFixed(3))
                 : null,
