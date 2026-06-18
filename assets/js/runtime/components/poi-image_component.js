@@ -263,9 +263,219 @@ AFRAME.registerComponent('info-panel', {
     },
 
     onVrExit: function () {
+        this.closeSpatialPoiPanel("exit-vr");
         if (this.el && this.el.classList && this.el.classList.contains("openPOI")) {
             this.onBackgroundClick({});
         }
+    },
+    getSpatialUiApi: function () {
+        const spatialUi = window.VRODOSSpatialUI || null;
+        return spatialUi && typeof spatialUi.isAvailable === "function" && spatialUi.isAvailable()
+            ? spatialUi
+            : null;
+    },
+    recordSpatialPoiDiagnostic: function (level, message, details) {
+        const spatialUi = window.VRODOSSpatialUI || null;
+        if (spatialUi && typeof spatialUi.recordDiagnostic === "function") {
+            spatialUi.recordDiagnostic(level || "info", "poi-image: " + (message || ""), details || {});
+            return;
+        }
+        const overlayApi = window.VRODOSRuntimeOverlay || null;
+        if (overlayApi && typeof overlayApi.recordDiagnostic === "function") {
+            overlayApi.recordDiagnostic(level || "info", "poi-image: " + (message || ""), details || {});
+        }
+    },
+    getElementTextValue: function (el, fallbackAttribute) {
+        if (!el || typeof el.getAttribute !== "function") {
+            return "";
+        }
+
+        const textAttr = el.getAttribute("text");
+        if (textAttr && typeof textAttr === "object" && textAttr.value) {
+            return textAttr.value;
+        }
+
+        const directValue = el.getAttribute("value");
+        if (directValue) {
+            return directValue;
+        }
+
+        return fallbackAttribute ? (el.getAttribute(fallbackAttribute) || "") : "";
+    },
+    getPoiTitleText: function () {
+        return this.TitleEl && this.TitleEl.getAttribute("title_to_add")
+            ? this.TitleEl.getAttribute("title_to_add")
+            : (this.getElementTextValue(this.TitleEl, "title_to_add") || "Info");
+    },
+    getPoiDescriptionText: function () {
+        return this.DescriptionEl && this.DescriptionEl.getAttribute("text_to_add")
+            ? this.DescriptionEl.getAttribute("text_to_add")
+            : (this.getElementTextValue(this.DescriptionEl, "text_to_add") || "");
+    },
+    getPoiImageUrl: function () {
+        return this.ImageAsset && typeof this.ImageAsset.getAttribute === "function"
+            ? this.ImageAsset.getAttribute("src")
+            : "";
+    },
+    buildSpatialDescriptionPages: function () {
+        const text = this.getPoiDescriptionText();
+        const maxLength = 420;
+        if (!text || text.length <= maxLength) {
+            return text ? [text] : [];
+        }
+
+        const pages = [];
+        let cursor = 0;
+        while (cursor < text.length) {
+            let next = Math.min(text.length, cursor + maxLength);
+            if (next < text.length) {
+                const breakIndex = text.lastIndexOf(" ", next);
+                if (breakIndex > cursor + 120) {
+                    next = breakIndex;
+                }
+            }
+            pages.push(text.slice(cursor, next).trim());
+            cursor = next;
+            while (text[cursor] === " ") {
+                cursor += 1;
+            }
+        }
+
+        return pages.filter(Boolean);
+    },
+    closeSpatialPoiPanel: function (reason) {
+        if (!this.spatialPoiPanelApi) {
+            return;
+        }
+
+        const spatialUi = window.VRODOSSpatialUI || null;
+        if (spatialUi && typeof spatialUi.closePanel === "function") {
+            spatialUi.closePanel(reason || "poi-close");
+        } else if (this.spatialPoiPanelApi && typeof this.spatialPoiPanelApi.close === "function") {
+            this.spatialPoiPanelApi.close(reason || "poi-close");
+        }
+        this.spatialPoiPanelApi = null;
+    },
+    renderSpatialPoiPanel: function () {
+        const api = this.spatialPoiPanelApi;
+        if (!api || typeof api.frame !== "function") {
+            return;
+        }
+
+        const pages = this.spatialPoiDescriptionPages || [];
+        const pageIndex = Math.max(0, Math.min(this.spatialPoiPage || 0, Math.max(0, pages.length - 1)));
+        const imageUrl = this.getPoiImageUrl();
+        const frame = api.frame({
+            title: this.getPoiTitleText(),
+            status: pages.length > 1 ? "Page " + (pageIndex + 1) + " of " + pages.length : "",
+            paddingX: 78,
+            paddingY: 58,
+            gapY: 24,
+            primary: {
+                label: "Close",
+                variant: "secondary",
+                onClick: () => {
+                    this.closeSpatialPoiPanel("poi-close");
+                }
+            },
+            onClose: () => {
+                this.closeSpatialPoiPanel("poi-close");
+            }
+        });
+
+        if (vrodosPoiImageHasValidUrl(imageUrl)) {
+            api.image(frame.content, {
+                src: imageUrl,
+                width: 820,
+                height: pages.length ? 310 : 520,
+                objectFit: "contain",
+                borderRadius: 14
+            });
+        }
+
+        if (pages[pageIndex]) {
+            api.text(frame.content, {
+                text: pages[pageIndex],
+                color: "#0f172a",
+                fontSize: 31,
+                lineHeight: "128%",
+                width: "100%"
+            });
+        }
+
+        if (pages.length > 1) {
+            const nav = api.row(frame.content, {
+                justifyContent: "center",
+                gapColumn: 24,
+                width: "100%"
+            });
+            api.button(nav, {
+                label: "Prev",
+                variant: "secondary",
+                disabled: pageIndex <= 0,
+                width: 190,
+                height: 62,
+                textSize: 26,
+                onClick: () => {
+                    this.spatialPoiPage = Math.max(0, pageIndex - 1);
+                    this.renderSpatialPoiPanel();
+                }
+            });
+            api.button(nav, {
+                label: "Next",
+                variant: "primary",
+                disabled: pageIndex >= pages.length - 1,
+                width: 190,
+                height: 62,
+                textSize: 26,
+                onClick: () => {
+                    this.spatialPoiPage = Math.min(pages.length - 1, pageIndex + 1);
+                    this.renderSpatialPoiPanel();
+                }
+            });
+        }
+    },
+    openSpatialPoiPanel: function () {
+        const spatialUi = this.getSpatialUiApi();
+        const diagnostics = {
+            id: this.data || "",
+            title: this.getPoiTitleText(),
+            hasImage: vrodosPoiImageHasValidUrl(this.getPoiImageUrl()),
+            descriptionLength: this.getPoiDescriptionText().length
+        };
+
+        if (!spatialUi) {
+            this.recordSpatialPoiDiagnostic("warn", "spatial UI unavailable; suppressing legacy immersive POI panel", diagnostics);
+            return true;
+        }
+
+        this.closeSpatialPoiPanel("replace");
+        this.spatialPoiPage = 0;
+        this.spatialPoiDescriptionPages = this.buildSpatialDescriptionPages();
+        this.spatialPoiPanelApi = spatialUi.openPanel({
+            id: "vrodos-poi-image-vr-" + (this.data || "panel"),
+            width: 1.95,
+            height: 1.38,
+            distance: 2.25,
+            verticalOffset: -0.03,
+            topAtEyeLevel: true,
+            anchorElement: this.buttonEl || null,
+            anchorSide: "right",
+            anchorRefreshFrames: this.buttonEl ? 1 : 8,
+            lockInteraction: false,
+            cleanup: () => {
+                this.spatialPoiPanelApi = null;
+            },
+            render: (api) => {
+                this.spatialPoiPanelApi = api;
+                this.renderSpatialPoiPanel();
+            }
+        });
+
+        this.recordSpatialPoiDiagnostic(this.spatialPoiPanelApi ? "debug" : "warn", "spatial POI panel open result", Object.assign({}, diagnostics, {
+            opened: Boolean(this.spatialPoiPanelApi)
+        }));
+        return true;
     },
 
     onNextButtonClick: function (evt) {
@@ -333,112 +543,29 @@ AFRAME.registerComponent('info-panel', {
             window.gtag('event', 'poiimgtext_open');
         }
 
-        if (!this.shouldUseVrOverlay()) {
-
-            if(this.TitleEl)
-                document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
-
-            if (this.ImageAsset && vrodosPoiImageHasValidUrl(this.ImageAsset.getAttribute("src"))) {
-                document.getElementById("poi-img-dialog-image").style.display = "inline";
-                document.getElementById("poi-img-dialog-image").src = this.ImageAsset.getAttribute("src");
-            } else  {
-                document.getElementById("poi-img-dialog-image").style.display = "none";
-            }
-
-            if(this.DescriptionEl)
-                document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text_to_add");
-            let imageDialog = document.querySelector('#poi-img-dialog');
-            if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === 'function') {
-                window.VRODOSMasterUI.showDialog(imageDialog);
-            } else if (imageDialog && typeof imageDialog.showModal === 'function') {
-                imageDialog.showModal();
-            }
-
-
-        } else {
-
-            //this.el.emit("force-close",{value: this.data, el: this.el});
-            let poi_elems = document.getElementsByClassName('openPOI');
-            for (let i = 0; i < poi_elems.length; ++i) {
-                poi_elems[i].object3D.scale.set(0.001, 0.001, 0.001);
-                poi_elems[i].object3D.visible = false;
-            }
-            this.el.classList.add("openPOI");
-            // this.scen.components.raycaster.refreshObjects();
-            this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
-            // this.backgroundEl.setAttribute("material", "color", "white");
-            this.backgroundEl.object3D.visible = true;
-            this.setOverlayInteractionActive(true);
-
-            this.el.object3D.scale.set(1, 1, 1);
-            if (AFRAME.utils.device.isMobile()) { this.el.object3D.scale.set(1.4, 1.4, 1.4); }
-            if (!this.anchorVrOverlayEntity(this.el, { distance: 2.35, verticalOffset: -0.08 })) {
-                this.el.object3D.position.z = -2.5;
-            }
-            this.el.object3D.visible = true;
-
-            this.el.components.material.material.depthTest = false;
-            //this.backgroundEl.sceneEl.renderer.sortObjects = true;
-            this.backgroundEl.components.material.material.depthTest = false;
-            //this.backgroundEl.components.material.material.clipIntersection = false;
-            this.buttonEl.object3D.depthTest = false;
-
-            this.backgroundEl.object3D.renderOrder = 99999999;
-            this.buttonEl.object3D.renderOrder = 99999;
-            //clipIntersection
-            this.buttonEl.components.material.material.depthTest = false;
-
-
-            if (!this.DescriptionEl) {
-                console.log("No Desc");
-            }
-            else {
-                this.DescriptionEl.components.text.material.depthTest = false;
-                this.DescriptionEl.object3D.renderOrder = 99999;
-            }
-            if (!this.PageEl) {
-                console.log("No Desc");
-            }
-            else {
-                this.PageEl.components.text.material.depthTest = false;
-                this.PageEl.object3D.renderOrder = 99999;
-            }
-
-            if (!this.TitleEl) {
-                console.log("No Title");
-            }
-            else {
-                this.TitleEl.components.text.material.depthTest = false;
-                this.TitleEl.object3D.renderOrder = 99999;
-            }
-
-            if (!this.ImageAsset || !vrodosPoiImageHasValidUrl(this.ImageAsset.getAttribute("src"))) {
-                console.log("No Image");
-
-            }
-            else {
-                this.ImageEl.components.material.material.depthTest = false;
-                this.ImageEl.object3D.renderOrder = 99999;
-                console.log(this.ImageEl.components);
-            }
-
-            this.infoPanel.components.material.material.depthTest = false;
-            this.infoPanel.object3D.renderOrder = 9999;
-
-            if (this.playerEl.getAttribute("wasd-controls")){
-                this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
-            }
-            // else
-            //     this.cam.setAttribute("wasd-controls-enabled", "false");
-            //playerEl.setAttribute("look-controls", "enabled: false");
-            //this.playerEl.setAttribute("movement-controls", "speed: 0");
-            //this.playerEl.setAttribute("look-controls", "enabled: false");
-
-
-            this.ImageEl.object3D.visible = true;
-
+        if (this.shouldUseVrOverlay()) {
+            this.openSpatialPoiPanel();
+            return;
         }
 
+        if(this.TitleEl)
+            document.getElementById("poi-img-dialog-title").innerHTML = this.getPoiTitleText();
+
+        if (this.ImageAsset && vrodosPoiImageHasValidUrl(this.ImageAsset.getAttribute("src"))) {
+            document.getElementById("poi-img-dialog-image").style.display = "inline";
+            document.getElementById("poi-img-dialog-image").src = this.ImageAsset.getAttribute("src");
+        } else  {
+            document.getElementById("poi-img-dialog-image").style.display = "none";
+        }
+
+        if(this.DescriptionEl)
+            document.getElementById("poi-img-dialog-description").innerHTML = this.getPoiDescriptionText();
+        let imageDialog = document.querySelector('#poi-img-dialog');
+        if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === 'function') {
+            window.VRODOSMasterUI.showDialog(imageDialog);
+        } else if (imageDialog && typeof imageDialog.showModal === 'function') {
+            imageDialog.showModal();
+        }
     },
 
     onBackgroundClick: function (evt) {

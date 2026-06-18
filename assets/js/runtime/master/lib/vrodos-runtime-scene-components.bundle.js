@@ -1807,9 +1807,198 @@
       }
     },
     onVrExit: function() {
+      this.closeSpatialPoiPanel("exit-vr");
       if (this.el && this.el.classList && this.el.classList.contains("openPOI")) {
         this.onBackgroundClick({});
       }
+    },
+    getSpatialUiApi: function() {
+      const spatialUi = window.VRODOSSpatialUI || null;
+      return spatialUi && typeof spatialUi.isAvailable === "function" && spatialUi.isAvailable() ? spatialUi : null;
+    },
+    recordSpatialPoiDiagnostic: function(level, message, details) {
+      const spatialUi = window.VRODOSSpatialUI || null;
+      if (spatialUi && typeof spatialUi.recordDiagnostic === "function") {
+        spatialUi.recordDiagnostic(level || "info", "poi-image: " + (message || ""), details || {});
+        return;
+      }
+      const overlayApi = window.VRODOSRuntimeOverlay || null;
+      if (overlayApi && typeof overlayApi.recordDiagnostic === "function") {
+        overlayApi.recordDiagnostic(level || "info", "poi-image: " + (message || ""), details || {});
+      }
+    },
+    getElementTextValue: function(el, fallbackAttribute) {
+      if (!el || typeof el.getAttribute !== "function") {
+        return "";
+      }
+      const textAttr = el.getAttribute("text");
+      if (textAttr && typeof textAttr === "object" && textAttr.value) {
+        return textAttr.value;
+      }
+      const directValue = el.getAttribute("value");
+      if (directValue) {
+        return directValue;
+      }
+      return fallbackAttribute ? el.getAttribute(fallbackAttribute) || "" : "";
+    },
+    getPoiTitleText: function() {
+      return this.TitleEl && this.TitleEl.getAttribute("title_to_add") ? this.TitleEl.getAttribute("title_to_add") : this.getElementTextValue(this.TitleEl, "title_to_add") || "Info";
+    },
+    getPoiDescriptionText: function() {
+      return this.DescriptionEl && this.DescriptionEl.getAttribute("text_to_add") ? this.DescriptionEl.getAttribute("text_to_add") : this.getElementTextValue(this.DescriptionEl, "text_to_add") || "";
+    },
+    getPoiImageUrl: function() {
+      return this.ImageAsset && typeof this.ImageAsset.getAttribute === "function" ? this.ImageAsset.getAttribute("src") : "";
+    },
+    buildSpatialDescriptionPages: function() {
+      const text = this.getPoiDescriptionText();
+      const maxLength = 420;
+      if (!text || text.length <= maxLength) {
+        return text ? [text] : [];
+      }
+      const pages = [];
+      let cursor = 0;
+      while (cursor < text.length) {
+        let next = Math.min(text.length, cursor + maxLength);
+        if (next < text.length) {
+          const breakIndex = text.lastIndexOf(" ", next);
+          if (breakIndex > cursor + 120) {
+            next = breakIndex;
+          }
+        }
+        pages.push(text.slice(cursor, next).trim());
+        cursor = next;
+        while (text[cursor] === " ") {
+          cursor += 1;
+        }
+      }
+      return pages.filter(Boolean);
+    },
+    closeSpatialPoiPanel: function(reason) {
+      if (!this.spatialPoiPanelApi) {
+        return;
+      }
+      const spatialUi = window.VRODOSSpatialUI || null;
+      if (spatialUi && typeof spatialUi.closePanel === "function") {
+        spatialUi.closePanel(reason || "poi-close");
+      } else if (this.spatialPoiPanelApi && typeof this.spatialPoiPanelApi.close === "function") {
+        this.spatialPoiPanelApi.close(reason || "poi-close");
+      }
+      this.spatialPoiPanelApi = null;
+    },
+    renderSpatialPoiPanel: function() {
+      const api = this.spatialPoiPanelApi;
+      if (!api || typeof api.frame !== "function") {
+        return;
+      }
+      const pages = this.spatialPoiDescriptionPages || [];
+      const pageIndex = Math.max(0, Math.min(this.spatialPoiPage || 0, Math.max(0, pages.length - 1)));
+      const imageUrl = this.getPoiImageUrl();
+      const frame = api.frame({
+        title: this.getPoiTitleText(),
+        status: pages.length > 1 ? "Page " + (pageIndex + 1) + " of " + pages.length : "",
+        paddingX: 78,
+        paddingY: 58,
+        gapY: 24,
+        primary: {
+          label: "Close",
+          variant: "secondary",
+          onClick: () => {
+            this.closeSpatialPoiPanel("poi-close");
+          }
+        },
+        onClose: () => {
+          this.closeSpatialPoiPanel("poi-close");
+        }
+      });
+      if (vrodosPoiImageHasValidUrl(imageUrl)) {
+        api.image(frame.content, {
+          src: imageUrl,
+          width: 820,
+          height: pages.length ? 310 : 520,
+          objectFit: "contain",
+          borderRadius: 14
+        });
+      }
+      if (pages[pageIndex]) {
+        api.text(frame.content, {
+          text: pages[pageIndex],
+          color: "#0f172a",
+          fontSize: 31,
+          lineHeight: "128%",
+          width: "100%"
+        });
+      }
+      if (pages.length > 1) {
+        const nav = api.row(frame.content, {
+          justifyContent: "center",
+          gapColumn: 24,
+          width: "100%"
+        });
+        api.button(nav, {
+          label: "Prev",
+          variant: "secondary",
+          disabled: pageIndex <= 0,
+          width: 190,
+          height: 62,
+          textSize: 26,
+          onClick: () => {
+            this.spatialPoiPage = Math.max(0, pageIndex - 1);
+            this.renderSpatialPoiPanel();
+          }
+        });
+        api.button(nav, {
+          label: "Next",
+          variant: "primary",
+          disabled: pageIndex >= pages.length - 1,
+          width: 190,
+          height: 62,
+          textSize: 26,
+          onClick: () => {
+            this.spatialPoiPage = Math.min(pages.length - 1, pageIndex + 1);
+            this.renderSpatialPoiPanel();
+          }
+        });
+      }
+    },
+    openSpatialPoiPanel: function() {
+      const spatialUi = this.getSpatialUiApi();
+      const diagnostics = {
+        id: this.data || "",
+        title: this.getPoiTitleText(),
+        hasImage: vrodosPoiImageHasValidUrl(this.getPoiImageUrl()),
+        descriptionLength: this.getPoiDescriptionText().length
+      };
+      if (!spatialUi) {
+        this.recordSpatialPoiDiagnostic("warn", "spatial UI unavailable; suppressing legacy immersive POI panel", diagnostics);
+        return true;
+      }
+      this.closeSpatialPoiPanel("replace");
+      this.spatialPoiPage = 0;
+      this.spatialPoiDescriptionPages = this.buildSpatialDescriptionPages();
+      this.spatialPoiPanelApi = spatialUi.openPanel({
+        id: "vrodos-poi-image-vr-" + (this.data || "panel"),
+        width: 1.95,
+        height: 1.38,
+        distance: 2.25,
+        verticalOffset: -0.03,
+        topAtEyeLevel: true,
+        anchorElement: this.buttonEl || null,
+        anchorSide: "right",
+        anchorRefreshFrames: this.buttonEl ? 1 : 8,
+        lockInteraction: false,
+        cleanup: () => {
+          this.spatialPoiPanelApi = null;
+        },
+        render: (api) => {
+          this.spatialPoiPanelApi = api;
+          this.renderSpatialPoiPanel();
+        }
+      });
+      this.recordSpatialPoiDiagnostic(this.spatialPoiPanelApi ? "debug" : "warn", "spatial POI panel open result", Object.assign({}, diagnostics, {
+        opened: Boolean(this.spatialPoiPanelApi)
+      }));
+      return true;
     },
     onNextButtonClick: function(evt) {
       if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== void 0) {
@@ -1858,78 +2047,25 @@
       if (typeof window.gtag === "function") {
         window.gtag("event", "poiimgtext_open");
       }
-      if (!this.shouldUseVrOverlay()) {
-        if (this.TitleEl)
-          document.getElementById("poi-img-dialog-title").innerHTML = this.TitleEl.getAttribute("text").value;
-        if (this.ImageAsset && vrodosPoiImageHasValidUrl(this.ImageAsset.getAttribute("src"))) {
-          document.getElementById("poi-img-dialog-image").style.display = "inline";
-          document.getElementById("poi-img-dialog-image").src = this.ImageAsset.getAttribute("src");
-        } else {
-          document.getElementById("poi-img-dialog-image").style.display = "none";
-        }
-        if (this.DescriptionEl)
-          document.getElementById("poi-img-dialog-description").innerHTML = this.DescriptionEl.getAttribute("text_to_add");
-        let imageDialog = document.querySelector("#poi-img-dialog");
-        if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === "function") {
-          window.VRODOSMasterUI.showDialog(imageDialog);
-        } else if (imageDialog && typeof imageDialog.showModal === "function") {
-          imageDialog.showModal();
-        }
+      if (this.shouldUseVrOverlay()) {
+        this.openSpatialPoiPanel();
+        return;
+      }
+      if (this.TitleEl)
+        document.getElementById("poi-img-dialog-title").innerHTML = this.getPoiTitleText();
+      if (this.ImageAsset && vrodosPoiImageHasValidUrl(this.ImageAsset.getAttribute("src"))) {
+        document.getElementById("poi-img-dialog-image").style.display = "inline";
+        document.getElementById("poi-img-dialog-image").src = this.ImageAsset.getAttribute("src");
       } else {
-        let poi_elems = document.getElementsByClassName("openPOI");
-        for (let i = 0; i < poi_elems.length; ++i) {
-          poi_elems[i].object3D.scale.set(1e-3, 1e-3, 1e-3);
-          poi_elems[i].object3D.visible = false;
-        }
-        this.el.classList.add("openPOI");
-        this.backgroundEl.setAttribute("scale", this.backgroundEl.getAttribute("original-scale"));
-        this.backgroundEl.object3D.visible = true;
-        this.setOverlayInteractionActive(true);
-        this.el.object3D.scale.set(1, 1, 1);
-        if (AFRAME.utils.device.isMobile()) {
-          this.el.object3D.scale.set(1.4, 1.4, 1.4);
-        }
-        if (!this.anchorVrOverlayEntity(this.el, { distance: 2.35, verticalOffset: -0.08 })) {
-          this.el.object3D.position.z = -2.5;
-        }
-        this.el.object3D.visible = true;
-        this.el.components.material.material.depthTest = false;
-        this.backgroundEl.components.material.material.depthTest = false;
-        this.buttonEl.object3D.depthTest = false;
-        this.backgroundEl.object3D.renderOrder = 99999999;
-        this.buttonEl.object3D.renderOrder = 99999;
-        this.buttonEl.components.material.material.depthTest = false;
-        if (!this.DescriptionEl) {
-          console.log("No Desc");
-        } else {
-          this.DescriptionEl.components.text.material.depthTest = false;
-          this.DescriptionEl.object3D.renderOrder = 99999;
-        }
-        if (!this.PageEl) {
-          console.log("No Desc");
-        } else {
-          this.PageEl.components.text.material.depthTest = false;
-          this.PageEl.object3D.renderOrder = 99999;
-        }
-        if (!this.TitleEl) {
-          console.log("No Title");
-        } else {
-          this.TitleEl.components.text.material.depthTest = false;
-          this.TitleEl.object3D.renderOrder = 99999;
-        }
-        if (!this.ImageAsset || !vrodosPoiImageHasValidUrl(this.ImageAsset.getAttribute("src"))) {
-          console.log("No Image");
-        } else {
-          this.ImageEl.components.material.material.depthTest = false;
-          this.ImageEl.object3D.renderOrder = 99999;
-          console.log(this.ImageEl.components);
-        }
-        this.infoPanel.components.material.material.depthTest = false;
-        this.infoPanel.object3D.renderOrder = 9999;
-        if (this.playerEl.getAttribute("wasd-controls")) {
-          this.playerEl.setAttribute("wasd-controls", "fly: false; acceleration:0");
-        }
-        this.ImageEl.object3D.visible = true;
+        document.getElementById("poi-img-dialog-image").style.display = "none";
+      }
+      if (this.DescriptionEl)
+        document.getElementById("poi-img-dialog-description").innerHTML = this.getPoiDescriptionText();
+      let imageDialog = document.querySelector("#poi-img-dialog");
+      if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.showDialog === "function") {
+        window.VRODOSMasterUI.showDialog(imageDialog);
+      } else if (imageDialog && typeof imageDialog.showModal === "function") {
+        imageDialog.showModal();
       }
     },
     onBackgroundClick: function(evt) {
@@ -2578,9 +2714,6 @@
       this.desktopFullscreenOffscreenSince = 0;
       this.desktopFullscreenOffscreenDelay = 900;
       this.videoWorldPosition = new THREE.Vector3();
-      this.videoVrPanelApi = null;
-      this.videoVrPanelOpen = false;
-      this.videoSpatialUiLoadPending = false;
       this.videoClickLastAt = 0;
       this.videoSourceUrl = this.videoDisplay ? this.videoDisplay.getAttribute("data-vrodos-video-src") || "" : "";
       this.videoLoop = this.videoDisplay ? this.videoDisplay.getAttribute("data-vrodos-video-loop") === "true" : false;
@@ -2599,7 +2732,6 @@
       this.restorePanel = this.restorePanel.bind(this);
       this.restoreVid = this.restoreVid.bind(this);
       this.removeVRTraces = this.removeVRTraces.bind(this);
-      this.closeVrVideoPanel = this.closeVrVideoPanel.bind(this);
       this.onDesktopFullscreenKeyDown = this.onDesktopFullscreenKeyDown.bind(this);
       this.onDesktopFullscreenChange = this.onDesktopFullscreenChange.bind(this);
       this.onDesktopFullscreenVisibilityChange = this.onDesktopFullscreenVisibilityChange.bind(this);
@@ -2875,7 +3007,7 @@
     },
     updateInlinePlayHint: function() {
       if (!this.playHintEl) return;
-      var shouldShow = !this.videoVrPanelOpen && (!this.videoPrimed || !this.video || this.video.paused);
+      var shouldShow = !this.videoPrimed || !this.video || this.video.paused;
       this.playHintEl.setAttribute("visible", shouldShow ? "true" : "false");
       this.playHintEl.classList.toggle("raycastable", shouldShow);
     },
@@ -2978,9 +3110,6 @@
       this.updateInlinePlayHint();
     },
     removeVRTraces: function() {
-      if (this.videoVrPanelOpen) {
-        this.closeVrVideoPanel("exit-vr");
-      }
       this.exitPanel();
       this.restoreVid();
       if (window.VRODOSMaster && typeof window.VRODOSMaster.setBrowsingModeVR === "function") {
@@ -3009,125 +3138,6 @@
       }
       this.syncUI();
       this.updateDesktopFullscreenInlineGuard();
-    },
-    getVideoTitle: function() {
-      var titleVal = "";
-      if (this.titEl && this.titEl.hasAttribute && this.titEl.hasAttribute("text")) {
-        var textAttr = this.titEl.getAttribute("text");
-        titleVal = textAttr && textAttr.value ? String(textAttr.value) : "";
-      }
-      titleVal = titleVal.trim();
-      if (!titleVal || titleVal === "video-title" || titleVal === "Video Viewer") {
-        return "Video";
-      }
-      return titleVal;
-    },
-    closeVrVideoPanel: function(reason) {
-      this.videoVrPanelOpen = false;
-      this.videoVrPanelApi = null;
-      this.updateInlinePlayHint();
-      if (window.VRODOSSpatialUI && typeof window.VRODOSSpatialUI.closePanel === "function") {
-        window.VRODOSSpatialUI.closePanel(reason || "video-close");
-      }
-    },
-    renderVrVideoPanel: function(api) {
-      if (!api || typeof api.frame !== "function") {
-        return;
-      }
-      var isPaused = !this.video || this.video.paused;
-      var statusLabel = isPaused ? "Paused" : "Playing";
-      var frame = api.frame({
-        title: this.getVideoTitle(),
-        headerColor: "#272727",
-        paddingX: 76,
-        paddingY: 58,
-        footerHeight: 130,
-        status: statusLabel,
-        onClose: () => this.closeVrVideoPanel("video-close"),
-        primary: {
-          label: isPaused ? "Play" : "Pause",
-          variant: isPaused ? "primary" : "secondary",
-          width: 220,
-          height: 64,
-          textSize: 28,
-          onClick: () => {
-            this.playVideo();
-            this.renderVrVideoPanel(api);
-            if (typeof api.refreshTargets === "function") {
-              api.refreshTargets();
-            }
-          }
-        }
-      });
-      api.text(frame.content, {
-        text: "VR video controls",
-        color: "#272727",
-        fontSize: 32,
-        fontWeight: 600,
-        lineHeight: "120%"
-      });
-      api.text(frame.content, {
-        text: statusLabel,
-        color: isPaused ? "#5a5a5a" : "#047857",
-        align: "center",
-        fontSize: 46,
-        fontWeight: 600,
-        lineHeight: "120%",
-        width: "100%"
-      });
-      if (typeof api.refreshTargets === "function") {
-        api.refreshTargets();
-      }
-    },
-    openVrVideoPanel: function() {
-      if (!this.shouldUseVrOverlay()) {
-        return false;
-      }
-      this.primeVideoForPlayback();
-      var spatialUi = window.VRODOSSpatialUI && typeof window.VRODOSSpatialUI.isAvailable === "function" && window.VRODOSSpatialUI.isAvailable() ? window.VRODOSSpatialUI : null;
-      if (!spatialUi || typeof spatialUi.openPanel !== "function") {
-        if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.ensureSpatialUiRuntime === "function" && !this.videoSpatialUiLoadPending) {
-          this.videoSpatialUiLoadPending = true;
-          window.VRODOSRuntimeOverlay.ensureSpatialUiRuntime({ timeoutMs: 8e3 }).then((available) => {
-            this.videoSpatialUiLoadPending = false;
-            if (available) {
-              this.openVrVideoPanel();
-            } else {
-              console.warn("[VRodos Video] VR video controls requested but pmndrs spatial UI could not be loaded.");
-            }
-          });
-        } else {
-          console.warn("[VRodos Video] VR video controls requested but pmndrs spatial UI is unavailable.");
-        }
-        return true;
-      }
-      var panelOptions = {
-        id: "vrodos-video-vr-controls-" + this.data.id,
-        width: 2.25,
-        height: 1.22,
-        distance: 2.3,
-        verticalOffset: -0.03,
-        topAtEyeLevel: true,
-        anchorElement: this.videoDisplay || null,
-        anchorSide: "right",
-        anchorRefreshFrames: this.videoDisplay ? 1 : 8,
-        lockInteraction: false,
-        cleanup: () => {
-          this.videoVrPanelOpen = false;
-          this.videoVrPanelApi = null;
-          this.updateInlinePlayHint();
-        },
-        render: (api) => {
-          this.videoVrPanelOpen = true;
-          this.videoVrPanelApi = api;
-          this.renderVrVideoPanel(api);
-          this.updateInlinePlayHint();
-        }
-      };
-      this.videoVrPanelApi = spatialUi.openPanel(panelOptions);
-      this.videoVrPanelOpen = Boolean(this.videoVrPanelApi);
-      this.updateInlinePlayHint();
-      return this.videoVrPanelOpen;
     },
     exitPanel: function() {
       this.exEl.removeEventListener("click", this.exitPanel);
@@ -3199,9 +3209,6 @@
       this.panel_pos_dynamic = viewport.width / 2 - 1 + " -0.3 " + this.panel_z;
       this.trackEvent("video_click");
       if (this.shouldUseVrOverlay()) {
-        if (this.videoVrPanelOpen) {
-          this.closeVrVideoPanel("video-direct-toggle");
-        }
         this.playVideo();
         return;
       }
@@ -3315,9 +3322,6 @@
     },
     remove: function() {
       this.stopDesktopFullscreenInlineGuard(true);
-      if (this.videoVrPanelOpen) {
-        this.closeVrVideoPanel("remove");
-      }
       const scene = document.querySelector("a-scene");
       if (scene) {
         scene.removeEventListener("exit-vr", this.removeVRTraces);
@@ -5437,6 +5441,29 @@
     function compactComparable(value2) {
       return comparable(value2).replace(/[^a-z0-9]+/g, "");
     }
+    function resolveVrRendererKeyFromContent(payload) {
+      const content = payload && payload.content;
+      if (!content || typeof content !== "object") {
+        return "";
+      }
+      if (Array.isArray(content)) {
+        return content.length ? "Question" : "";
+      }
+      const questions = Array.isArray(content.questions) ? content.questions : [];
+      if (questions.length) {
+        return questions.some((question) => question && question.imageUrl) ? "ImageQuiz" : "Question";
+      }
+      if (Array.isArray(content.pairs) && content.pairs.length) {
+        return "Pair";
+      }
+      if (Array.isArray(content.words) && content.words.length) {
+        return "Grid";
+      }
+      if (content.text || Array.isArray(content.annotations) && content.annotations.length) {
+        return "Text";
+      }
+      return "";
+    }
     function resolveVrRendererKey(payload) {
       if (!payload) {
         return "";
@@ -5472,7 +5499,136 @@
       if (candidates.some((key) => ["text", "fill in the gaps", "fillinthegaps", "fill gaps", "fillgaps", "fill in gaps", "fillingaps", "highlight", "highlight text", "highlighttext"].includes(key))) {
         return "Text";
       }
-      return "";
+      return resolveVrRendererKeyFromContent(payload);
+    }
+    function normalizeVrPayloadForRenderer(payload, rendererKey) {
+      if (!payload || !rendererKey || !payload.content || typeof payload.content !== "object") {
+        return payload;
+      }
+      const content = payload.content;
+      let normalizedContent = content;
+      let normalizedFrom = "";
+      if (Array.isArray(content)) {
+        if (rendererKey === "Question" || rendererKey === "ImageQuiz") {
+          normalizedContent = { questions: content };
+          normalizedFrom = "array:questions";
+        } else if (rendererKey === "Pair") {
+          normalizedContent = { pairs: content };
+          normalizedFrom = "array:pairs";
+        } else if (rendererKey === "Grid") {
+          normalizedContent = { words: content };
+          normalizedFrom = "array:words";
+        } else if (rendererKey === "Text") {
+          normalizedContent = { text: "", annotations: content };
+          normalizedFrom = "array:annotations";
+        }
+      } else if (Array.isArray(content.items)) {
+        if (rendererKey === "Question" || rendererKey === "ImageQuiz") {
+          normalizedContent = Object.assign({}, content, { questions: content.items });
+          normalizedFrom = "items:questions";
+        } else if (rendererKey === "Pair") {
+          normalizedContent = Object.assign({}, content, { pairs: content.items });
+          normalizedFrom = "items:pairs";
+        } else if (rendererKey === "Grid") {
+          normalizedContent = Object.assign({}, content, { words: content.items });
+          normalizedFrom = "items:words";
+        }
+      }
+      if (normalizedContent === content) {
+        return payload;
+      }
+      return Object.assign({}, payload, {
+        content: normalizedContent,
+        vrContentNormalizedFrom: normalizedFrom
+      });
+    }
+    function getContentArray(content, fieldName) {
+      return content && typeof content === "object" && Array.isArray(content[fieldName]) ? content[fieldName] : [];
+    }
+    function getPayloadContentLength(payload) {
+      if (payload && typeof payload.contentEncodedLength === "number") {
+        return payload.contentEncodedLength;
+      }
+      if (!payload || typeof payload.content === "undefined") {
+        return 0;
+      }
+      try {
+        return JSON.stringify(payload.content).length;
+      } catch (err) {
+        return 0;
+      }
+    }
+    function getStateCountDiagnostics(rendererKey, state) {
+      const diagnostics = {
+        normalizedQuestionCount: 0,
+        normalizedPlayableQuestionCount: 0,
+        normalizedPairCount: 0,
+        normalizedGridCount: 0,
+        normalizedTextAnnotationCount: 0,
+        normalizedTextWordBankCount: 0
+      };
+      if (!state || typeof state !== "object") {
+        return diagnostics;
+      }
+      if ((rendererKey === "Question" || rendererKey === "ImageQuiz") && Array.isArray(state.items)) {
+        diagnostics.normalizedQuestionCount = state.items.length;
+        diagnostics.normalizedPlayableQuestionCount = state.items.filter(
+          (item) => item && (item.prompt || item.imageUrl) && Array.isArray(item.answers) && item.answers.length > 0
+        ).length;
+      }
+      if (rendererKey === "Pair" && Array.isArray(state.entries)) {
+        diagnostics.normalizedPairCount = state.entries.length;
+      }
+      if (rendererKey === "Grid" && Array.isArray(state.entries)) {
+        diagnostics.normalizedGridCount = state.entries.length;
+      }
+      if (rendererKey === "Text") {
+        diagnostics.normalizedTextAnnotationCount = Array.isArray(state.annotations) ? state.annotations.length : 0;
+        diagnostics.normalizedTextWordBankCount = Array.isArray(state.wordBank) ? state.wordBank.length : 0;
+      }
+      return diagnostics;
+    }
+    function isVrAssessmentStateEmpty(rendererKey, state) {
+      if (!rendererKey || !state || typeof state !== "object") {
+        return true;
+      }
+      if (rendererKey === "Question" || rendererKey === "ImageQuiz") {
+        return !Array.isArray(state.items) || state.items.length === 0;
+      }
+      if (rendererKey === "Pair" || rendererKey === "Grid") {
+        return !Array.isArray(state.entries) || state.entries.length === 0;
+      }
+      if (rendererKey === "Text") {
+        if (!Array.isArray(state.annotations) || state.annotations.length === 0) {
+          return true;
+        }
+        return state.mode !== "highlight" && (!Array.isArray(state.wordBank) || state.wordBank.length === 0);
+      }
+      return false;
+    }
+    function getVrAssessmentPayloadDiagnostics(payload, rendererKey, state) {
+      const content = payload ? payload.content : null;
+      const contentIsArray = Array.isArray(content);
+      const contentObject = content && typeof content === "object" && !contentIsArray ? content : {};
+      const contentKeys = contentObject ? Object.keys(contentObject).slice(0, 12) : [];
+      const stateCounts = getStateCountDiagnostics(rendererKey, state);
+      return Object.assign({
+        sourceId: payload && payload.sourceId || "",
+        group: payload && payload.group || "",
+        type: payload && payload.type || "",
+        supported: Boolean(payload && payload.supported),
+        contentLength: getPayloadContentLength(payload),
+        contentType: contentIsArray ? "array" : typeof content,
+        contentKeys,
+        contentNormalizedFrom: payload && payload.vrContentNormalizedFrom || "",
+        questionCount: contentIsArray && (rendererKey === "Question" || rendererKey === "ImageQuiz") ? content.length : getContentArray(contentObject, "questions").length,
+        pairCount: contentIsArray && rendererKey === "Pair" ? content.length : getContentArray(contentObject, "pairs").length,
+        wordCount: contentIsArray && rendererKey === "Grid" ? content.length : getContentArray(contentObject, "words").length,
+        annotationCount: contentIsArray && rendererKey === "Text" ? content.length : getContentArray(contentObject, "annotations").length,
+        rendererKey: rendererKey || "",
+        desktopRendererKey: typeof namespace.resolveAssessmentRendererKey === "function" ? namespace.resolveAssessmentRendererKey(payload) : "",
+        stateEmpty: isVrAssessmentStateEmpty(rendererKey, state)
+      }, stateCounts);
     }
     function isImageQuizPayload(payload) {
       return resolveVrRendererKey(payload) === "ImageQuiz";
@@ -6297,6 +6453,7 @@
       };
       runtime.rerender = function() {
         if (!runtime.renderer || typeof runtime.renderer.render !== "function") {
+          recordVrDiagnostic("warn", "assessment VR renderer unavailable during render", runtime.lastOpenDiagnostics || {});
           renderUnsupported(runtime);
           runtime.refreshTargets();
           return;
@@ -6351,18 +6508,21 @@
           });
           return true;
         }
-        runtime.payload = payload;
-        runtime.rendererKey = resolveVrRendererKey(payload);
-        runtime.renderer = payload && runtime.rendererKey ? VR_RENDERERS[runtime.rendererKey] : null;
-        runtime.state = runtime.renderer && typeof runtime.renderer.createState === "function" ? runtime.renderer.createState(payload) : {};
-        runtime.lastOpenDiagnostics = {
-          group: payload && payload.group || "",
-          type: payload && payload.type || "",
-          supported: Boolean(payload && payload.supported),
-          desktopRendererKey: typeof namespace.resolveAssessmentRendererKey === "function" ? namespace.resolveAssessmentRendererKey(payload) : "",
-          rendererKey: runtime.rendererKey || "",
+        const initialRendererKey = resolveVrRendererKey(payload);
+        runtime.payload = normalizeVrPayloadForRenderer(payload, initialRendererKey);
+        runtime.rendererKey = resolveVrRendererKey(runtime.payload);
+        runtime.renderer = runtime.payload && runtime.rendererKey ? VR_RENDERERS[runtime.rendererKey] : null;
+        runtime.state = runtime.renderer && typeof runtime.renderer.createState === "function" ? runtime.renderer.createState(runtime.payload) : {};
+        runtime.lastOpenDiagnostics = Object.assign(getVrAssessmentPayloadDiagnostics(runtime.payload, runtime.rendererKey, runtime.state), {
           usesSpatialUi: true
-        };
+        });
+        window.__vrodosLastAssessmentVrOpenDiagnostics = runtime.lastOpenDiagnostics;
+        const payloadDiagnosticMessage = runtime.renderer ? runtime.lastOpenDiagnostics.stateEmpty ? "assessment VR payload normalized as empty" : "assessment VR payload normalized" : "assessment VR renderer unavailable";
+        recordVrDiagnostic(
+          runtime.renderer && !runtime.lastOpenDiagnostics.stateEmpty ? "debug" : "warn",
+          payloadDiagnosticMessage,
+          runtime.lastOpenDiagnostics
+        );
         const panelOptions = {
           id: "vrodos-immerse-assessment-vr-overlay",
           width: PANEL_WIDTH,
@@ -6370,9 +6530,9 @@
           distance: 2.25,
           verticalOffset: -0.03,
           topAtEyeLevel: true,
-          anchorElement: payload && payload.anchorElement || null,
+          anchorElement: runtime.payload && runtime.payload.anchorElement || null,
           anchorSide: "right",
-          anchorRefreshFrames: payload && payload.anchorElement ? 1 : 8,
+          anchorRefreshFrames: runtime.payload && runtime.payload.anchorElement ? 1 : 8,
           lockInteraction: false,
           cleanup: function() {
             runtime.reset();
@@ -6397,6 +6557,7 @@
     }
     namespace.getVrOverlayRuntime = getVrOverlayRuntime;
     namespace.isQuestionPayload = isQuestionPayload;
+    namespace.resolveVrRendererKey = resolveVrRendererKey;
   })();
   (function() {
     "use strict";
@@ -6751,14 +6912,17 @@
       const type = namespace.decodeDisplayText(element.getAttribute("data-assessment-type") || "");
       const group = namespace.decodeDisplayText(element.getAttribute("data-assessment-group") || "");
       const supported = element.getAttribute("data-assessment-supported") === "true";
-      const content = namespace.decodeBase64Json(element.getAttribute("data-assessment-content"), {});
+      const encodedContent = element.getAttribute("data-assessment-content") || "";
+      const content = namespace.decodeBase64Json(encodedContent, {});
       const levels = namespace.decodeBase64Json(element.getAttribute("data-assessment-levels"), []);
       return {
+        sourceId: element.id || "",
         title,
         type,
         group,
         supported,
         content,
+        contentEncodedLength: encodedContent.length,
         levels,
         anchorElement: element
       };

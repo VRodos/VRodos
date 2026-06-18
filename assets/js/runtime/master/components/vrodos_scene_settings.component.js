@@ -1333,6 +1333,9 @@ AFRAME.registerComponent('scene-settings', {
             : (this.data.navigationMode || 'walkable');
         const collisionConfigured = this.data.collisionMode !== 'off' && navigationMode === 'walkable';
         const navMeshTargets = movement && movement.navMeshCollisionTargets ? movement.navMeshCollisionTargets.length : 0;
+        const immersiveWorldRoots = movement && typeof movement.getImmersiveWorldRootDiagnostics === 'function'
+            ? movement.getImmersiveWorldRootDiagnostics()
+            : null;
 
         return {
             componentPresent: Boolean(movement),
@@ -1349,6 +1352,30 @@ AFRAME.registerComponent('scene-settings', {
             blockerTargets: movement && movement.blockerCollisionTargets ? movement.blockerCollisionTargets.length : 0,
             navMeshDirty: Boolean(movement && movement.navMeshDirty),
             collisionWorldDirty: Boolean(movement && movement.collisionWorldDirty),
+            immersiveWorldRootCount: immersiveWorldRoots && typeof immersiveWorldRoots.count === 'number'
+                ? immersiveWorldRoots.count
+                : 0,
+            immersiveWorldRootSamples: immersiveWorldRoots && Array.isArray(immersiveWorldRoots.samples)
+                ? immersiveWorldRoots.samples
+                : [],
+            immersiveWorldVideoDisplayRootCount: immersiveWorldRoots && typeof immersiveWorldRoots.videoDisplayRootCount === 'number'
+                ? immersiveWorldRoots.videoDisplayRootCount
+                : 0,
+            immersiveWorldAssessmentRootCount: immersiveWorldRoots && typeof immersiveWorldRoots.assessmentRootCount === 'number'
+                ? immersiveWorldRoots.assessmentRootCount
+                : 0,
+            immersiveWorldAssessmentWrapperRootCount: immersiveWorldRoots && typeof immersiveWorldRoots.assessmentWrapperRootCount === 'number'
+                ? immersiveWorldRoots.assessmentWrapperRootCount
+                : 0,
+            immersiveWorldCefrRootCount: immersiveWorldRoots && typeof immersiveWorldRoots.cefrRootCount === 'number'
+                ? immersiveWorldRoots.cefrRootCount
+                : 0,
+            immersiveWorldIncludesVideoDisplays: Boolean(immersiveWorldRoots && immersiveWorldRoots.includesVideoDisplays),
+            immersiveWorldIncludesAssessmentWrappers: Boolean(immersiveWorldRoots && immersiveWorldRoots.includesAssessmentWrappers),
+            immersiveEntryWorldYOffset: movement && typeof movement.immersiveEntryWorldYOffset === 'number'
+                ? Number(movement.immersiveEntryWorldYOffset.toFixed(3))
+                : 0,
+            immersiveEntryWorldYOffsetApplied: Boolean(movement && movement.immersiveEntryWorldYOffsetApplied),
             lastAutoRecoveryStatus: movement && movement.lastAutoRecoveryStatus ? movement.lastAutoRecoveryStatus : 'none'
         };
     },

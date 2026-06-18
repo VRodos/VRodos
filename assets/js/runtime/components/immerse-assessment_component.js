@@ -8,15 +8,18 @@
         const type = namespace.decodeDisplayText(element.getAttribute("data-assessment-type") || "");
         const group = namespace.decodeDisplayText(element.getAttribute("data-assessment-group") || "");
         const supported = element.getAttribute("data-assessment-supported") === "true";
-        const content = namespace.decodeBase64Json(element.getAttribute("data-assessment-content"), {});
+        const encodedContent = element.getAttribute("data-assessment-content") || "";
+        const content = namespace.decodeBase64Json(encodedContent, {});
         const levels = namespace.decodeBase64Json(element.getAttribute("data-assessment-levels"), []);
 
         return {
+            sourceId: element.id || "",
             title,
             type,
             group,
             supported,
             content,
+            contentEncodedLength: encodedContent.length,
             levels,
             anchorElement: element
         };

@@ -133,6 +133,33 @@
         return comparable(value).replace(/[^a-z0-9]+/g, "");
     }
 
+    function resolveVrRendererKeyFromContent(payload) {
+        const content = payload && payload.content;
+        if (!content || typeof content !== "object") {
+            return "";
+        }
+
+        if (Array.isArray(content)) {
+            return content.length ? "Question" : "";
+        }
+
+        const questions = Array.isArray(content.questions) ? content.questions : [];
+        if (questions.length) {
+            return questions.some((question) => question && question.imageUrl) ? "ImageQuiz" : "Question";
+        }
+        if (Array.isArray(content.pairs) && content.pairs.length) {
+            return "Pair";
+        }
+        if (Array.isArray(content.words) && content.words.length) {
+            return "Grid";
+        }
+        if ((content.text || (Array.isArray(content.annotations) && content.annotations.length))) {
+            return "Text";
+        }
+
+        return "";
+    }
+
     function resolveVrRendererKey(payload) {
         if (!payload) {
             return "";
@@ -173,7 +200,162 @@
             return "Text";
         }
 
-        return "";
+        return resolveVrRendererKeyFromContent(payload);
+    }
+
+    function normalizeVrPayloadForRenderer(payload, rendererKey) {
+        if (!payload || !rendererKey || !payload.content || typeof payload.content !== "object") {
+            return payload;
+        }
+
+        const content = payload.content;
+        let normalizedContent = content;
+        let normalizedFrom = "";
+
+        if (Array.isArray(content)) {
+            if (rendererKey === "Question" || rendererKey === "ImageQuiz") {
+                normalizedContent = { questions: content };
+                normalizedFrom = "array:questions";
+            } else if (rendererKey === "Pair") {
+                normalizedContent = { pairs: content };
+                normalizedFrom = "array:pairs";
+            } else if (rendererKey === "Grid") {
+                normalizedContent = { words: content };
+                normalizedFrom = "array:words";
+            } else if (rendererKey === "Text") {
+                normalizedContent = { text: "", annotations: content };
+                normalizedFrom = "array:annotations";
+            }
+        } else if (Array.isArray(content.items)) {
+            if (rendererKey === "Question" || rendererKey === "ImageQuiz") {
+                normalizedContent = Object.assign({}, content, { questions: content.items });
+                normalizedFrom = "items:questions";
+            } else if (rendererKey === "Pair") {
+                normalizedContent = Object.assign({}, content, { pairs: content.items });
+                normalizedFrom = "items:pairs";
+            } else if (rendererKey === "Grid") {
+                normalizedContent = Object.assign({}, content, { words: content.items });
+                normalizedFrom = "items:words";
+            }
+        }
+
+        if (normalizedContent === content) {
+            return payload;
+        }
+
+        return Object.assign({}, payload, {
+            content: normalizedContent,
+            vrContentNormalizedFrom: normalizedFrom
+        });
+    }
+
+    function getContentArray(content, fieldName) {
+        return content && typeof content === "object" && Array.isArray(content[fieldName])
+            ? content[fieldName]
+            : [];
+    }
+
+    function getPayloadContentLength(payload) {
+        if (payload && typeof payload.contentEncodedLength === "number") {
+            return payload.contentEncodedLength;
+        }
+        if (!payload || typeof payload.content === "undefined") {
+            return 0;
+        }
+        try {
+            return JSON.stringify(payload.content).length;
+        } catch (err) {
+            return 0;
+        }
+    }
+
+    function getStateCountDiagnostics(rendererKey, state) {
+        const diagnostics = {
+            normalizedQuestionCount: 0,
+            normalizedPlayableQuestionCount: 0,
+            normalizedPairCount: 0,
+            normalizedGridCount: 0,
+            normalizedTextAnnotationCount: 0,
+            normalizedTextWordBankCount: 0
+        };
+
+        if (!state || typeof state !== "object") {
+            return diagnostics;
+        }
+
+        if ((rendererKey === "Question" || rendererKey === "ImageQuiz") && Array.isArray(state.items)) {
+            diagnostics.normalizedQuestionCount = state.items.length;
+            diagnostics.normalizedPlayableQuestionCount = state.items.filter((item) =>
+                item && (item.prompt || item.imageUrl) && Array.isArray(item.answers) && item.answers.length > 0
+            ).length;
+        }
+        if (rendererKey === "Pair" && Array.isArray(state.entries)) {
+            diagnostics.normalizedPairCount = state.entries.length;
+        }
+        if (rendererKey === "Grid" && Array.isArray(state.entries)) {
+            diagnostics.normalizedGridCount = state.entries.length;
+        }
+        if (rendererKey === "Text") {
+            diagnostics.normalizedTextAnnotationCount = Array.isArray(state.annotations) ? state.annotations.length : 0;
+            diagnostics.normalizedTextWordBankCount = Array.isArray(state.wordBank) ? state.wordBank.length : 0;
+        }
+
+        return diagnostics;
+    }
+
+    function isVrAssessmentStateEmpty(rendererKey, state) {
+        if (!rendererKey || !state || typeof state !== "object") {
+            return true;
+        }
+        if (rendererKey === "Question" || rendererKey === "ImageQuiz") {
+            return !Array.isArray(state.items) || state.items.length === 0;
+        }
+        if (rendererKey === "Pair" || rendererKey === "Grid") {
+            return !Array.isArray(state.entries) || state.entries.length === 0;
+        }
+        if (rendererKey === "Text") {
+            if (!Array.isArray(state.annotations) || state.annotations.length === 0) {
+                return true;
+            }
+            return state.mode !== "highlight" && (!Array.isArray(state.wordBank) || state.wordBank.length === 0);
+        }
+        return false;
+    }
+
+    function getVrAssessmentPayloadDiagnostics(payload, rendererKey, state) {
+        const content = payload ? payload.content : null;
+        const contentIsArray = Array.isArray(content);
+        const contentObject = content && typeof content === "object" && !contentIsArray ? content : {};
+        const contentKeys = contentObject ? Object.keys(contentObject).slice(0, 12) : [];
+        const stateCounts = getStateCountDiagnostics(rendererKey, state);
+
+        return Object.assign({
+            sourceId: payload && payload.sourceId || "",
+            group: payload && payload.group || "",
+            type: payload && payload.type || "",
+            supported: Boolean(payload && payload.supported),
+            contentLength: getPayloadContentLength(payload),
+            contentType: contentIsArray ? "array" : typeof content,
+            contentKeys,
+            contentNormalizedFrom: payload && payload.vrContentNormalizedFrom || "",
+            questionCount: contentIsArray && (rendererKey === "Question" || rendererKey === "ImageQuiz")
+                ? content.length
+                : getContentArray(contentObject, "questions").length,
+            pairCount: contentIsArray && rendererKey === "Pair"
+                ? content.length
+                : getContentArray(contentObject, "pairs").length,
+            wordCount: contentIsArray && rendererKey === "Grid"
+                ? content.length
+                : getContentArray(contentObject, "words").length,
+            annotationCount: contentIsArray && rendererKey === "Text"
+                ? content.length
+                : getContentArray(contentObject, "annotations").length,
+            rendererKey: rendererKey || "",
+            desktopRendererKey: typeof namespace.resolveAssessmentRendererKey === "function"
+                ? namespace.resolveAssessmentRendererKey(payload)
+                : "",
+            stateEmpty: isVrAssessmentStateEmpty(rendererKey, state)
+        }, stateCounts);
     }
 
     function isImageQuizPayload(payload) {
@@ -1062,6 +1244,7 @@
 
         runtime.rerender = function () {
             if (!runtime.renderer || typeof runtime.renderer.render !== "function") {
+                recordVrDiagnostic("warn", "assessment VR renderer unavailable during render", runtime.lastOpenDiagnostics || {});
                 renderUnsupported(runtime);
                 runtime.refreshTargets();
                 return;
@@ -1124,22 +1307,25 @@
                 return true;
             }
 
-            runtime.payload = payload;
-            runtime.rendererKey = resolveVrRendererKey(payload);
-            runtime.renderer = payload && runtime.rendererKey ? VR_RENDERERS[runtime.rendererKey] : null;
+            const initialRendererKey = resolveVrRendererKey(payload);
+            runtime.payload = normalizeVrPayloadForRenderer(payload, initialRendererKey);
+            runtime.rendererKey = resolveVrRendererKey(runtime.payload);
+            runtime.renderer = runtime.payload && runtime.rendererKey ? VR_RENDERERS[runtime.rendererKey] : null;
             runtime.state = runtime.renderer && typeof runtime.renderer.createState === "function"
-                ? runtime.renderer.createState(payload)
+                ? runtime.renderer.createState(runtime.payload)
                 : {};
-            runtime.lastOpenDiagnostics = {
-                group: payload && payload.group || "",
-                type: payload && payload.type || "",
-                supported: Boolean(payload && payload.supported),
-                desktopRendererKey: typeof namespace.resolveAssessmentRendererKey === "function"
-                    ? namespace.resolveAssessmentRendererKey(payload)
-                    : "",
-                rendererKey: runtime.rendererKey || "",
+            runtime.lastOpenDiagnostics = Object.assign(getVrAssessmentPayloadDiagnostics(runtime.payload, runtime.rendererKey, runtime.state), {
                 usesSpatialUi: true
-            };
+            });
+            window.__vrodosLastAssessmentVrOpenDiagnostics = runtime.lastOpenDiagnostics;
+            const payloadDiagnosticMessage = runtime.renderer
+                ? (runtime.lastOpenDiagnostics.stateEmpty ? "assessment VR payload normalized as empty" : "assessment VR payload normalized")
+                : "assessment VR renderer unavailable";
+            recordVrDiagnostic(
+                runtime.renderer && !runtime.lastOpenDiagnostics.stateEmpty ? "debug" : "warn",
+                payloadDiagnosticMessage,
+                runtime.lastOpenDiagnostics
+            );
 
             const panelOptions = {
                 id: "vrodos-immerse-assessment-vr-overlay",
@@ -1148,9 +1334,9 @@
                 distance: 2.25,
                 verticalOffset: -0.03,
                 topAtEyeLevel: true,
-                anchorElement: payload && payload.anchorElement || null,
+                anchorElement: runtime.payload && runtime.payload.anchorElement || null,
                 anchorSide: "right",
-                anchorRefreshFrames: payload && payload.anchorElement ? 1 : 8,
+                anchorRefreshFrames: runtime.payload && runtime.payload.anchorElement ? 1 : 8,
                 lockInteraction: false,
                 cleanup: function () {
                     runtime.reset();
@@ -1180,4 +1366,5 @@
 
     namespace.getVrOverlayRuntime = getVrOverlayRuntime;
     namespace.isQuestionPayload = isQuestionPayload;
+    namespace.resolveVrRendererKey = resolveVrRendererKey;
 })();

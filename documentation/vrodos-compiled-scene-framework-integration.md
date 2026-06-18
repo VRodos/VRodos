@@ -105,7 +105,7 @@ Runtime scripts are selected by scene metadata, not by hardcoded script tags in 
 - FPS meter when enabled;
 - `collision-bvh-vendor` when navigation mode resolves to `walkable`;
 - `pmndrs-postfx` when post-FX is enabled and the engine is `pmndrs`;
-- `spatial-ui` when scene metadata contains assessment surfaces, CEFR-gated Immerse assets, or video assets that need immersive controls;
+- `spatial-ui` when scene metadata contains assessment surfaces or CEFR-gated Immerse assets; plain video assets do not request this chunk unless they also carry CEFR/assessment metadata;
 - `takram-atmosphere` only when PMNDRS atmosphere is enabled;
 - `takram-clouds` only when PMNDRS atmosphere and clouds are enabled;
 - `legacy-postfx` when post-FX uses the legacy engine;
@@ -124,7 +124,7 @@ VRodos uses A-Frame as the orchestration layer:
 
 ## 4.1 Immersive Dialog UI Ownership
 
-Current state: 2026-05-26.
+Current state: 2026-06-18.
 
 CEFR prompts and assessment dialogs in immersive XR are not rendered with A-Frame `a-plane`, `a-text`, or A-Frame button entities. They use `window.VRODOSSpatialUI`, a PMNDRS UIKit/Horizon layer that creates a `THREE.Group` under `a-scene.object3D` and renders Horizon components through the same A-Frame-owned Three runtime. VR video playback is different by design: trigger clicks on the authored video object should toggle play/pause directly and should not open a play/pause dialog.
 

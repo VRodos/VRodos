@@ -81,10 +81,6 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 			return true;
 		}
 
-		if ( 'video' === $category ) {
-			return true;
-		}
-
 		if ( '' !== $this->first_non_empty_string( $object, [ 'assessment_group', 'assessment_type', 'assessment_content' ] ) ) {
 			return true;
 		}
