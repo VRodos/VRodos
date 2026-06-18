@@ -215,7 +215,9 @@
       "file": "vrodos-takram-atmosphere.bundle.js",
       "src": "js/master/lib/vrodos-takram-atmosphere.bundle.js",
       "order": 45,
-      "dependencies": [],
+      "dependencies": [
+        "pmndrs-postprocessing-vendor"
+      ],
       "features": [
         "takram-atmosphere",
         "pmndrs-atmosphere",

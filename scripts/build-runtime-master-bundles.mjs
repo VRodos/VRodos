@@ -167,7 +167,7 @@ const externalChunks = [
     file: 'vrodos-takram-atmosphere.bundle.js',
     src: runtimeLibrarySrc('vrodos-takram-atmosphere.bundle.js'),
     order: 45,
-    dependencies: [],
+    dependencies: ['pmndrs-postprocessing-vendor'],
     features: ['takram-atmosphere', 'pmndrs-atmosphere', 'takram-celestial', 'takram-geospatial'],
     generatedBy: 'build:three'
   },

@@ -1047,6 +1047,27 @@
     api.getFullscreenElement = function() {
       return document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
     };
+    api.isImmersiveXrPresenting = function() {
+      const sceneEl = document.getElementById("aframe-scene-container") || document.querySelector("a-scene");
+      const xr = sceneEl && sceneEl.renderer ? sceneEl.renderer.xr : null;
+      if (xr && xr.isPresenting) {
+        return true;
+      }
+      return Boolean(sceneEl && sceneEl.is && (sceneEl.is("vr-mode") || sceneEl.is("ar-mode")));
+    };
+    api.closeOpenRuntimeDialogs = function(returnValue) {
+      document.querySelectorAll("dialog.vrodos-runtime-dialog[open], dialog.tw-modal[open]").forEach((dialog) => {
+        if (typeof dialog.close === "function") {
+          dialog.close(returnValue || "");
+        } else {
+          dialog.removeAttribute("open");
+        }
+      });
+      const overlayHost = document.getElementById("vrodos-runtime-overlay-host");
+      if (overlayHost && !overlayHost.querySelector("dialog[open]")) {
+        overlayHost.style.pointerEvents = "none";
+      }
+    };
     api.canHostOverlayChildren = function(element) {
       if (!element || typeof element.appendChild !== "function") {
         return false;
@@ -1098,6 +1119,15 @@
     api.showDialog = function(dialogOrSelector) {
       const dialog = typeof dialogOrSelector === "string" ? document.querySelector(dialogOrSelector) : dialogOrSelector;
       if (!dialog) {
+        return null;
+      }
+      if (api.isImmersiveXrPresenting()) {
+        api.closeOpenRuntimeDialogs("immersive-vr-suppressed");
+        if (window.console && typeof window.console.warn === "function") {
+          window.console.warn("[VRodos] Suppressed desktop runtime dialog during immersive VR.", {
+            dialog: dialog.id || dialog.className || dialog.tagName || "unknown"
+          });
+        }
         return null;
       }
       const overlayHost = api.ensureOverlayHost();

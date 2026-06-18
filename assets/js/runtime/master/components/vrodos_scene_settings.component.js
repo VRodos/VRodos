@@ -1382,69 +1382,6 @@ AFRAME.registerComponent('scene-settings', {
                 : 0
         };
     },
-    parseRuntimeVector3: function (value, fallback) {
-        const defaults = Array.isArray(fallback) ? fallback : [0, 0, 0];
-        const source = typeof value === 'string' ? value.trim().split(/\s+/) : [];
-        return [0, 1, 2].map((index) => {
-            const parsed = Number(source[index]);
-            return Number.isFinite(parsed) ? parsed : defaults[index];
-        });
-    },
-    getVrexpoCameraEyeHeight: function () {
-        const fallback = 1.6;
-        let value = fallback;
-
-        if (window.VRODOS_DEBUG && typeof window.VRODOS_DEBUG.vrexpoCameraEyeHeight === 'number') {
-            value = window.VRODOS_DEBUG.vrexpoCameraEyeHeight;
-        } else if (typeof window.location !== 'undefined' && window.location.search) {
-            try {
-                const params = new URLSearchParams(window.location.search);
-                if (params.has('vrodos_vrexpo_camera_eye_height')) {
-                    value = Number(params.get('vrodos_vrexpo_camera_eye_height'));
-                }
-            } catch (err) {
-                value = fallback;
-            }
-        }
-
-        return Number.isFinite(value) ? Math.max(0, Math.min(3, value)) : fallback;
-    },
-    formatRuntimeVector3: function (parts) {
-        return parts.map((value) => {
-            const parsed = Number(value);
-            return Number.isFinite(parsed) ? String(parsed) : '0';
-        }).join(' ');
-    },
-    getVrexpoCameraRigPose: function () {
-        const authored = this.parseRuntimeVector3(this.data.cam_position, [0, 1.6, 0]);
-        const eyeHeight = this.getVrexpoCameraEyeHeight();
-        return {
-            authoredPosition: this.formatRuntimeVector3(authored),
-            playerPosition: this.formatRuntimeVector3([authored[0], authored[1] - eyeHeight, authored[2]]),
-            cameraPosition: this.formatRuntimeVector3([0, eyeHeight, 0]),
-            eyeHeight
-        };
-    },
-    normalizeVrexpoCameraRig: function () {
-        if (this.data.pr_type !== "vrexpo_games") {
-            return null;
-        }
-
-        const playerRig = document.getElementById("player");
-        const cameraEl = document.getElementById("cameraA");
-        const pose = this.getVrexpoCameraRigPose();
-
-        if (playerRig) {
-            playerRig.setAttribute("position", pose.playerPosition);
-        }
-
-        if (cameraEl) {
-            cameraEl.setAttribute("position", pose.cameraPosition);
-            cameraEl.setAttribute("camera", "active: true; near: 0.1; far: 7000; fov: 60");
-        }
-
-        return pose;
-    },
     readWorldPositionForDiagnostics: function (el) {
         if (!el || !el.object3D || typeof THREE === 'undefined') {
             return null;
@@ -1465,17 +1402,13 @@ AFRAME.registerComponent('scene-settings', {
         const rightController = document.getElementById("oculusRight");
         const leftController = document.getElementById("oculusLeft");
         const activeCameraEl = sceneEl && sceneEl.camera && sceneEl.camera.el ? sceneEl.camera.el : null;
-        const pose = this.data.pr_type === "vrexpo_games" ? this.getVrexpoCameraRigPose() : null;
 
         return {
             projectType: this.data.pr_type || '',
             activeCameraId: activeCameraEl && activeCameraEl.id ? activeCameraEl.id : '',
             expectedCameraId: cameraEl && cameraEl.id ? cameraEl.id : '',
             activeCameraMatchesExpected: Boolean(activeCameraEl && cameraEl && activeCameraEl === cameraEl),
-            authoredCameraPosition: pose ? pose.authoredPosition : (this.data.cam_position || ''),
-            expectedPlayerPosition: pose ? pose.playerPosition : '',
-            expectedCameraLocalPosition: pose ? pose.cameraPosition : '',
-            eyeHeight: pose ? pose.eyeHeight : null,
+            authoredCameraPosition: this.data.cam_position || '',
             playerPosition: playerRig ? playerRig.getAttribute("position") : null,
             cameraLocalPosition: cameraEl ? cameraEl.getAttribute("position") : null,
             playerWorldPosition: this.readWorldPositionForDiagnostics(playerRig),
@@ -2045,7 +1978,6 @@ AFRAME.registerComponent('scene-settings', {
         // Event - When scene is loaded
         this.el.addEventListener("loaded", () => {
             this.markSceneCollectionsDirty();
-            this.normalizeVrexpoCameraRig();
 
             const privateChatBtn = document.getElementById("private-chat-button");
             if (privateChatBtn) {
@@ -2113,14 +2045,12 @@ AFRAME.registerComponent('scene-settings', {
 
         this.el.addEventListener("enter-vr", () => {
             VRODOSSceneSettingsMaster.setBrowsingModeVR(true);
-            this.normalizeVrexpoCameraRig();
             this.applyVrRenderBudgetPolicy('enter-vr');
             this.syncPresentationVisualState(true);
             if (typeof window.gtag === 'function') window.gtag('event', 'vr_enabled');
         });
         this.el.addEventListener("exit-vr", () => {
             VRODOSSceneSettingsMaster.setBrowsingModeVR(false);
-            this.normalizeVrexpoCameraRig();
             this.applyVrRenderBudgetPolicy('exit-vr');
             this.syncPresentationVisualState(true);
             if (typeof window.gtag === 'function') window.gtag('event', 'vr_disabled');
