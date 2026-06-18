@@ -94,7 +94,7 @@ WebXR entry current state:
 - A-Frame Environment is a legacy background/preset provider only; it does not own WebXR session creation, layer selection, or controller input.
 - Quest Browser immersive locomotion uses a single-owner tracking model: WebXR/A-Frame owns the HMD and controller tracking poses, while VRodos `custom-movement` owns a virtual navigation position and moves/rotates authored world roots in immersive XR. Do not restore immersive locomotion by moving/rotating `#player`, baking the authored camera pose into `#player`, applying `renderer.xr.setPoseTarget(cameraA.object3D)`, or offsetting the WebXR reference space; those approaches reproduced the "controllers move but HMD stays fixed" split.
 - In generated `vrexpo_games`, keep `#player` as an unpositioned tracking rig with `custom-movement`, keep authored `cam_position` on `#cameraA`, and keep `#oculusLeft` / `#oculusRight` under `#player`.
-- Immersive controller ray visuals are owned by WebXR target-ray spaces through `renderer.xr.getController(index)`, not by grip-space debug lines on the A-Frame controller entities. Do not hide or retarget controller rays to work around spatial UI interactions.
+- Immersive controller ray visuals must match the active A-Frame controller raycasters because those raycasters own scene selection. Do not add separate display-only WebXR target-ray lines unless selection is also moved to that same ray path; the display-only target-ray experiment showed shifted hits.
 
 Compiled scenes keep `scene-settings` as the compatibility data contract, but focused runtime behavior lives in A-Frame components/systems:
 

@@ -944,7 +944,7 @@ AFRAME.registerComponent('custom-movement', {
             });
         }
     },
-    suppressAFrameControllerRayVisuals: function () {
+    ensureAFrameControllerRayVisuals: function () {
         const controllerEls = [this.thumbL, this.thumbR];
         for (let i = 0; i < controllerEls.length; i++) {
             const controllerEl = controllerEls[i];
@@ -952,10 +952,19 @@ AFRAME.registerComponent('custom-movement', {
                 continue;
             }
 
+            const currentRaycaster = controllerEl.getAttribute ? (controllerEl.getAttribute('raycaster') || {}) : {};
+            const objects = currentRaycaster.objects || '.raycastable';
+            const far = currentRaycaster.far || 100;
+            if (controllerEl.setAttribute) {
+                controllerEl.setAttribute('raycaster', `objects: ${objects}; showLine: true; far: ${far}; lineColor: white; lineOpacity: 1`);
+            }
+
             const raycaster = controllerEl.components ? controllerEl.components.raycaster : null;
             if (raycaster && raycaster.data) {
                 const oldData = Object.assign({}, raycaster.data);
-                raycaster.data.showLine = false;
+                raycaster.data.showLine = true;
+                raycaster.data.lineColor = 'white';
+                raycaster.data.lineOpacity = 1;
                 if (typeof raycaster.update === 'function') {
                     raycaster.update(oldData);
                 }
@@ -963,20 +972,12 @@ AFRAME.registerComponent('custom-movement', {
 
             const lineObject = controllerEl.getObject3D ? controllerEl.getObject3D('line') : null;
             if (lineObject) {
-                lineObject.visible = false;
+                lineObject.visible = true;
             }
 
             const lineComponent = controllerEl.components ? controllerEl.components.line : null;
             if (lineComponent && lineComponent.line) {
-                lineComponent.line.visible = false;
-            }
-
-            if (controllerEl.object3D) {
-                controllerEl.object3D.traverse((object) => {
-                    if (object.type === 'Line' && object.name !== 'vrodos-immersive-target-ray-line') {
-                        object.visible = false;
-                    }
-                });
+                lineComponent.line.visible = true;
             }
         }
     },
@@ -1003,57 +1004,6 @@ AFRAME.registerComponent('custom-movement', {
                 }
             });
             el.setAttribute('shadow', 'cast: false; receive: false');
-        }
-    },
-    ensureImmersiveTargetRayLines: function () {
-        const renderer = this.sceneEl && this.sceneEl.renderer ? this.sceneEl.renderer : null;
-        const xr = renderer ? renderer.xr : null;
-        if (!xr || !xr.isPresenting || typeof xr.getController !== 'function') {
-            return;
-        }
-
-        if (!this.immersiveTargetRayGeometry) {
-            this.immersiveTargetRayGeometry = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(0, 0, -0.02),
-                new THREE.Vector3(0, 0, -18)
-            ]);
-        }
-
-        if (!this.immersiveTargetRayMaterial) {
-            this.immersiveTargetRayMaterial = new THREE.LineBasicMaterial({
-                color: 0xffffff,
-                transparent: true,
-                opacity: 0.95,
-                depthTest: false,
-                depthWrite: false
-            });
-        }
-
-        for (let i = 0; i < 2; i++) {
-            const controller = xr.getController(i);
-            if (!controller) {
-                continue;
-            }
-
-            if (!controller.parent && this.sceneEl.object3D) {
-                this.sceneEl.object3D.add(controller);
-            }
-
-            let rayLine = this.immersiveTargetRayLines[i];
-            if (!rayLine) {
-                rayLine = new THREE.Line(this.immersiveTargetRayGeometry, this.immersiveTargetRayMaterial);
-                rayLine.name = 'vrodos-immersive-target-ray-line';
-                rayLine.renderOrder = 1000000;
-                rayLine.frustumCulled = false;
-                this.immersiveTargetRayLines[i] = rayLine;
-            }
-
-            if (rayLine.parent !== controller) {
-                controller.add(rayLine);
-            }
-
-            controller.visible = true;
-            rayLine.visible = true;
         }
     },
     disposeImmersiveTargetRayLines: function () {
@@ -1083,10 +1033,10 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         this.resetImmersiveRigTransform();
-        this.ensureImmersiveTargetRayLines();
-        // Keep A-Frame's grip-space raycaster active for events, but hide its visual
-        // line; the visible immersive ray is the WebXR target-ray line above.
-        this.suppressAFrameControllerRayVisuals();
+        this.disposeImmersiveTargetRayLines();
+        // The visible controller ray must be the same A-Frame raycaster line that
+        // performs selection; separate display-only WebXR target rays drift from hits.
+        this.ensureAFrameControllerRayVisuals();
         this.suppressImmersiveControllerShadows();
 
         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
