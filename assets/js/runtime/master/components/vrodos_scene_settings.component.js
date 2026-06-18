@@ -1333,6 +1333,9 @@ AFRAME.registerComponent('scene-settings', {
             : (this.data.navigationMode || 'walkable');
         const collisionConfigured = this.data.collisionMode !== 'off' && navigationMode === 'walkable';
         const navMeshTargets = movement && movement.navMeshCollisionTargets ? movement.navMeshCollisionTargets.length : 0;
+        const immersiveXrPresenting = movement && typeof movement.isImmersiveXrPresenting === 'function'
+            ? movement.isImmersiveXrPresenting()
+            : false;
         const immersiveWorldRoots = movement && typeof movement.getImmersiveWorldRootDiagnostics === 'function'
             ? movement.getImmersiveWorldRootDiagnostics()
             : null;
@@ -1344,6 +1347,14 @@ AFRAME.registerComponent('scene-settings', {
             collisionMode: this.data.collisionMode || 'auto',
             collisionConfigured,
             collisionActive: Boolean(collisionConfigured && navMeshTargets > 0),
+            immersiveCollisionActive: Boolean(immersiveXrPresenting && collisionConfigured && navMeshTargets > 0),
+            immersivePseudoGravityActive: Boolean(immersiveXrPresenting && collisionConfigured && navMeshTargets > 0 && movement && movement.heightOffset !== null),
+            immersiveHeightOffset: movement && typeof movement.heightOffset === 'number'
+                ? Number(movement.heightOffset.toFixed(3))
+                : null,
+            immersiveLastGroundY: movement && movement.hasLastGroundHit && movement.lastGroundHit && movement.lastGroundHit.point
+                ? Number(movement.lastGroundHit.point.y.toFixed(3))
+                : null,
             bvhBundleLoaded: Boolean(window.VRODOS_COLLISION_BVH),
             bvhInstalled: Boolean(movement && movement.bvhInstalled),
             navMeshRoots: movement && movement.navMeshRoots ? movement.navMeshRoots.length : 0,
@@ -1376,6 +1387,15 @@ AFRAME.registerComponent('scene-settings', {
                 ? Number(movement.immersiveEntryWorldYOffset.toFixed(3))
                 : 0,
             immersiveEntryWorldYOffsetApplied: Boolean(movement && movement.immersiveEntryWorldYOffsetApplied),
+            immersiveWorldYOffsetTotal: movement && typeof movement.immersiveWorldYOffsetTotal === 'number'
+                ? Number(movement.immersiveWorldYOffsetTotal.toFixed(3))
+                : 0,
+            immersiveLastGroundAlignmentY: movement && typeof movement.immersiveLastGroundAlignmentY === 'number'
+                ? Number(movement.immersiveLastGroundAlignmentY.toFixed(3))
+                : 0,
+            lastNonImmersiveHeightOffset: movement && typeof movement.lastNonImmersiveHeightOffset === 'number'
+                ? Number(movement.lastNonImmersiveHeightOffset.toFixed(3))
+                : null,
             lastAutoRecoveryStatus: movement && movement.lastAutoRecoveryStatus ? movement.lastAutoRecoveryStatus : 'none'
         };
     },

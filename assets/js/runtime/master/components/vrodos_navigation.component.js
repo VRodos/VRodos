@@ -271,6 +271,12 @@ AFRAME.registerComponent('custom-movement', {
         this.hasLastNonImmersiveNavigationPosition = false;
         this.immersiveEntryWorldYOffset = 0;
         this.immersiveEntryWorldYOffsetApplied = false;
+        this.immersiveWorldYOffsetTotal = 0;
+        this.lastNonImmersiveGroundY = 0;
+        this.lastNonImmersiveHeightOffset = 1.6;
+        this.hasLastNonImmersiveGround = false;
+        this.lastNonImmersiveGroundRememberedAt = 0;
+        this.immersiveLastGroundAlignmentY = 0;
         this.autoStableGroundHistorySize = 8;
         this.autoStableGroundHistoryIndex = 0;
         this.autoStableGroundHistory = [];
@@ -422,6 +428,7 @@ AFRAME.registerComponent('custom-movement', {
         }
     },
     handleEnterVr: function () {
+        this.rememberNonImmersiveNavigationPosition(true);
         window.setTimeout(() => {
             if (this.isImmersiveXrPresenting()) {
                 this.resetImmersiveWorldLocomotion();
@@ -671,6 +678,7 @@ AFRAME.registerComponent('custom-movement', {
             raycasts: 0,
             intersections: 0,
             collisionsEnabled: false,
+            immersiveCollisionsEnabled: false,
             moving: false
         };
     },
@@ -725,6 +733,7 @@ AFRAME.registerComponent('custom-movement', {
             'NAV PERF DEBUG',
             `moving: ${  frame.moving ? 'yes' : 'no'}`,
             `collisions: ${  frame.collisionsEnabled ? 'on' : 'off'}`,
+            `immersive collisions: ${  frame.immersiveCollisionsEnabled ? 'on' : 'off'}`,
             `targets: nav ${  this.navMeshCollisionTargets.length  } block ${  this.blockerCollisionTargets.length}`,
             `tick ms: ${  frame.tickMs.toFixed(2)  } avg ${  this.navPerfDebug.avgTickMs.toFixed(2)}`,
             `constrained ms: ${  frame.constrainedMs.toFixed(2)  } avg ${  this.navPerfDebug.avgConstrainedMs.toFixed(2)}`,
@@ -793,6 +802,7 @@ AFRAME.registerComponent('custom-movement', {
             lastFrame: {
                 moving: Boolean(frame.moving),
                 collisionsEnabled: Boolean(frame.collisionsEnabled),
+                immersiveCollisionsEnabled: Boolean(frame.immersiveCollisionsEnabled),
                 tickMs: frame.tickMs || 0,
                 constrainedMs: frame.constrainedMs || 0,
                 sampleMs: frame.sampleMs || 0,
@@ -871,7 +881,7 @@ AFRAME.registerComponent('custom-movement', {
         anchorObject.updateMatrixWorld(true);
         return anchorObject.getWorldPosition(output);
     },
-    rememberNonImmersiveNavigationPosition: function () {
+    rememberNonImmersiveNavigationPosition: function (forceGroundSample) {
         if (this.isImmersiveXrPresenting()) {
             return;
         }
@@ -886,6 +896,33 @@ AFRAME.registerComponent('custom-movement', {
         }
         anchorObject.getWorldPosition(this.lastNonImmersiveNavigationPosition);
         this.hasLastNonImmersiveNavigationPosition = true;
+
+        const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        if (!forceGroundSample && this.hasLastNonImmersiveGround && (now - this.lastNonImmersiveGroundRememberedAt) < 500) {
+            return;
+        }
+
+        if (!this.areCollisionsEnabled()) {
+            return;
+        }
+
+        const groundHit = this.sampleGroundAt(
+            this.lastNonImmersiveNavigationPosition,
+            this.hasLastGroundHit ? this.lastGroundHit.point.y : undefined,
+            this.sampledGroundHit
+        );
+        if (!groundHit) {
+            return;
+        }
+
+        this.lastNonImmersiveGroundY = groundHit.point.y;
+        this.lastNonImmersiveHeightOffset = VRODOSMaster.clamp(
+            this.lastNonImmersiveNavigationPosition.y - groundHit.point.y,
+            0.2,
+            2.5
+        );
+        this.hasLastNonImmersiveGround = true;
+        this.lastNonImmersiveGroundRememberedAt = now;
     },
     getAuthoredNavigationHeightForImmersiveEntry: function () {
         if (this.hasLastNonImmersiveNavigationPosition) {
@@ -901,6 +938,49 @@ AFRAME.registerComponent('custom-movement', {
 
         return 0;
     },
+    getDesiredImmersiveEyeToGroundOffset: function () {
+        if (this.hasLastNonImmersiveGround && typeof this.lastNonImmersiveHeightOffset === 'number') {
+            return VRODOSMaster.clamp(this.lastNonImmersiveHeightOffset, 0.2, 2.5);
+        }
+
+        if (this.immersivePhysicalAnchorPosition && typeof this.immersivePhysicalAnchorPosition.y === 'number') {
+            return VRODOSMaster.clamp(this.immersivePhysicalAnchorPosition.y, 0.2, 2.5);
+        }
+
+        return 1.6;
+    },
+    offsetImmersiveWorldRootsY: function (yOffset) {
+        if (!Number.isFinite(yOffset) || Math.abs(yOffset) < 0.001) {
+            return false;
+        }
+
+        const roots = this.getImmersiveWorldRoots();
+        if (!roots.length) {
+            return false;
+        }
+
+        for (let i = 0; i < roots.length; i++) {
+            roots[i].object3D.position.y += yOffset;
+            roots[i].object3D.updateMatrixWorld(true);
+        }
+
+        this.immersiveWorldYOffsetTotal += yOffset;
+        this.requestShadowMapRefresh();
+        return true;
+    },
+    applyGroundYOffsetToHit: function (groundHit, yOffset) {
+        if (!groundHit || !Number.isFinite(yOffset) || Math.abs(yOffset) < 0.001) {
+            return groundHit;
+        }
+
+        if (groundHit.point) {
+            groundHit.point.y += yOffset;
+        }
+        if (groundHit.rawPoint) {
+            groundHit.rawPoint.y += yOffset;
+        }
+        return groundHit;
+    },
     applyImmersiveEntryHeightOffset: function () {
         if (this.immersiveEntryWorldYOffsetApplied) {
             return;
@@ -908,45 +988,90 @@ AFRAME.registerComponent('custom-movement', {
 
         const authoredHeight = this.getAuthoredNavigationHeightForImmersiveEntry();
         const physicalHeight = this.immersivePhysicalAnchorPosition.y;
-        const yOffset = physicalHeight - authoredHeight;
+        const desiredEyeToGround = this.getDesiredImmersiveEyeToGroundOffset();
+        const entryGround = this.sampleGroundAt(
+            this.immersiveVirtualNavPosition,
+            this.hasLastNonImmersiveGround ? this.lastNonImmersiveGroundY : undefined,
+            this.sampledGroundHit
+        );
+        const currentGroundY = entryGround && entryGround.point
+            ? entryGround.point.y
+            : authoredHeight - desiredEyeToGround;
+        const desiredGroundY = physicalHeight - desiredEyeToGround;
+        const yOffset = desiredGroundY - currentGroundY;
         if (!Number.isFinite(yOffset) || Math.abs(yOffset) < 0.001) {
+            this.heightOffset = desiredEyeToGround;
+            if (entryGround) {
+                this.setResolvedGroundHit(entryGround, this.immersiveVirtualNavPosition, this.lastGroundHit);
+                this.hasLastGroundHit = true;
+            }
             return;
         }
 
-        const roots = this.getImmersiveWorldRoots();
-        for (let i = 0; i < roots.length; i++) {
-            roots[i].object3D.position.y += yOffset;
-            roots[i].object3D.updateMatrixWorld(true);
+        if (!this.offsetImmersiveWorldRootsY(yOffset)) {
+            this.heightOffset = desiredEyeToGround;
+            return;
         }
+
+        this.applyGroundYOffsetToHit(entryGround, yOffset);
 
         this.immersiveEntryWorldYOffset = yOffset;
         this.immersiveEntryWorldYOffsetApplied = true;
+        this.immersiveLastGroundAlignmentY = yOffset;
+        this.heightOffset = desiredEyeToGround;
+        if (entryGround) {
+            this.setResolvedGroundHit(entryGround, this.immersiveVirtualNavPosition, this.lastGroundHit);
+            this.hasLastGroundHit = true;
+        }
 
         const overlayApi = window.VRODOSRuntimeOverlay || null;
         if (overlayApi && typeof overlayApi.recordDiagnostic === 'function') {
             overlayApi.recordDiagnostic('debug', 'navigation: applied immersive entry height offset', {
                 authoredHeight: Number(authoredHeight.toFixed(3)),
                 physicalHeight: Number(physicalHeight.toFixed(3)),
+                desiredEyeToGround: Number(desiredEyeToGround.toFixed(3)),
+                currentGroundY: Number(currentGroundY.toFixed(3)),
+                desiredGroundY: Number(desiredGroundY.toFixed(3)),
                 yOffset: Number(yOffset.toFixed(3)),
-                rootCount: roots.length
+                rootCount: this.immersiveWorldRootDiagnostics && this.immersiveWorldRootDiagnostics.count || 0
             });
         }
     },
     restoreImmersiveEntryHeightOffset: function () {
-        if (!this.immersiveEntryWorldYOffsetApplied || !this.immersiveEntryWorldYOffset) {
+        const restoreOffset = this.immersiveWorldYOffsetTotal || this.immersiveEntryWorldYOffset;
+        if (!this.immersiveEntryWorldYOffsetApplied && !restoreOffset) {
             this.immersiveEntryWorldYOffset = 0;
             this.immersiveEntryWorldYOffsetApplied = false;
+            this.immersiveWorldYOffsetTotal = 0;
             return;
         }
 
         const roots = this.getImmersiveWorldRoots();
         for (let i = 0; i < roots.length; i++) {
-            roots[i].object3D.position.y -= this.immersiveEntryWorldYOffset;
+            roots[i].object3D.position.y -= restoreOffset;
             roots[i].object3D.updateMatrixWorld(true);
         }
 
         this.immersiveEntryWorldYOffset = 0;
         this.immersiveEntryWorldYOffsetApplied = false;
+        this.immersiveWorldYOffsetTotal = 0;
+        this.immersiveLastGroundAlignmentY = 0;
+    },
+    alignImmersiveWorldGroundToPhysicalEye: function (groundHit) {
+        if (!this.isImmersiveXrPresenting() || !groundHit || !groundHit.point || this.heightOffset === null) {
+            return false;
+        }
+
+        this.getImmersivePhysicalAnchorPosition(this.immersivePhysicalAnchorPosition);
+        const desiredGroundY = this.immersivePhysicalAnchorPosition.y - this.heightOffset;
+        const yOffset = desiredGroundY - groundHit.point.y;
+        if (!this.offsetImmersiveWorldRootsY(yOffset)) {
+            return false;
+        }
+
+        this.applyGroundYOffsetToHit(groundHit, yOffset);
+        this.immersiveLastGroundAlignmentY = yOffset;
+        return true;
     },
     getElementClassSummary: function (el) {
         if (!el || !el.classList || typeof Array.from !== 'function') {
@@ -1179,12 +1304,12 @@ AFRAME.registerComponent('custom-movement', {
         this.resetImmersiveRigTransform();
         this.getImmersivePhysicalAnchorPosition(this.immersiveVirtualNavPosition);
         this.immersivePhysicalAnchorPosition.copy(this.immersiveVirtualNavPosition);
-        this.applyImmersiveEntryHeightOffset();
-        this.lastResolvedPosition.copy(this.immersiveVirtualNavPosition);
         this.heightOffset = null;
         this.hasLastGroundHit = false;
         this.positionPrimed = true;
         this.immersiveWasPresenting = true;
+        this.applyImmersiveEntryHeightOffset();
+        this.lastResolvedPosition.copy(this.immersiveVirtualNavPosition);
     },
     requestShadowMapRefresh: function () {
         const renderer = this.sceneEl && this.sceneEl.renderer ? this.sceneEl.renderer : null;
@@ -2983,7 +3108,17 @@ AFRAME.registerComponent('custom-movement', {
             return finalizeConstrained(false);
         }
 
-        const nextY = resolvedStep.ground.point.y + (this.heightOffset !== null ? this.heightOffset : 0);
+        const immersivePresenting = this.isImmersiveXrPresenting();
+        if (immersivePresenting) {
+            if (this.heightOffset === null) {
+                this.heightOffset = this.getDesiredImmersiveEyeToGroundOffset();
+            }
+            this.alignImmersiveWorldGroundToPhysicalEye(resolvedStep.ground);
+        }
+
+        const nextY = immersivePresenting
+            ? this.immersivePhysicalAnchorPosition.y
+            : resolvedStep.ground.point.y + (this.heightOffset !== null ? this.heightOffset : 0);
         this.targetWorldPosition.set(resolvedStep.position.x, nextY, resolvedStep.position.z);
         if (!this.setNavigationWorldPosition(this.targetWorldPosition)) {
             return finalizeConstrained(false);
@@ -3038,10 +3173,11 @@ AFRAME.registerComponent('custom-movement', {
                 hasExternalMovement = false;
             }
 
-            const collisionsEnabled = immersivePresenting ? false : this.areCollisionsEnabled(settings);
+            const collisionsEnabled = this.areCollisionsEnabled(settings);
             this.updateWASDControlsState(navigationMode, collisionsEnabled);
             if (this.navPerfDebug && this.navPerfDebug.frame) {
                 this.navPerfDebug.frame.collisionsEnabled = collisionsEnabled;
+                this.navPerfDebug.frame.immersiveCollisionsEnabled = immersivePresenting && collisionsEnabled;
             }
 
             if (hasExternalMovement) {
