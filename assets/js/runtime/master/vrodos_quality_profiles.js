@@ -5213,6 +5213,49 @@
         return dir.normalize();
     }
 
+    function getImmersiveNavigationComponent() {
+        if (typeof document === 'undefined') {
+            return null;
+        }
+
+        const playerEl = document.getElementById('player');
+        return playerEl && playerEl.components ? playerEl.components['custom-movement'] || null : null;
+    }
+
+    function getImmersivePresentationYaw() {
+        const navigation = getImmersiveNavigationComponent();
+        if (
+            !navigation ||
+            typeof navigation.isImmersiveXrPresenting !== 'function' ||
+            !navigation.isImmersiveXrPresenting() ||
+            typeof navigation.immersiveRenderYaw !== 'number' ||
+            !Number.isFinite(navigation.immersiveRenderYaw)
+        ) {
+            return 0;
+        }
+
+        return navigation.immersiveRenderYaw;
+    }
+
+    function getImmersivePresentedSunDirection(self, sourceDirection) {
+        const yaw = getImmersivePresentationYaw();
+        if (!sourceDirection || !Number.isFinite(yaw) || Math.abs(yaw) < 0.000001) {
+            return sourceDirection;
+        }
+
+        if (!self._pmndrsPresentedSunDirection) {
+            self._pmndrsPresentedSunDirection = new THREE.Vector3();
+        }
+        if (!self._pmndrsPresentedSunUp) {
+            self._pmndrsPresentedSunUp = new THREE.Vector3(0, 1, 0);
+        }
+
+        return self._pmndrsPresentedSunDirection
+            .copy(sourceDirection)
+            .applyAxisAngle(self._pmndrsPresentedSunUp, yaw)
+            .normalize();
+    }
+
     function isPmndrsSunOccluderMesh(node) {
         if (!node || !node.isMesh || !node.visible) {
             return false;
@@ -5659,11 +5702,12 @@
 
         sunEl.object3D.visible = true;
         camera.getWorldPosition(self._pmndrsSunCameraPosition);
-        sunEl.object3D.position.copy(self._pmndrsSunCameraPosition).addScaledVector(self._pmndrsSunDirection, self._pmndrsSunDistance || 5200);
+        const presentedSunDirection = getImmersivePresentedSunDirection(self, self._pmndrsSunDirection);
+        sunEl.object3D.position.copy(self._pmndrsSunCameraPosition).addScaledVector(presentedSunDirection, self._pmndrsSunDistance || 5200);
         if (hazeEl && hazeEl.object3D) {
             hazeEl.object3D.position.copy(sunEl.object3D.position);
         }
-        applyPmndrsSunOcclusion(self, self._pmndrsSunDirection, self._pmndrsSunDistance || 5200);
+        applyPmndrsSunOcclusion(self, presentedSunDirection, self._pmndrsSunDistance || 5200);
     }
 
     H.updatePmndrsHorizonSun = function () {
@@ -5690,7 +5734,11 @@
                 clearPmndrsHorizonSun(this);
             }
             ensurePmndrsAtmosphereSky(this, atmosphereConfig);
-            applyPmndrsSunOcclusion(this, atmosphereConfig.localSunDirection || atmosphereConfig.sunDirection, atmosphereConfig.sunDistance || 5200);
+            applyPmndrsSunOcclusion(
+                this,
+                getImmersivePresentedSunDirection(this, atmosphereConfig.localSunDirection || atmosphereConfig.sunDirection),
+                atmosphereConfig.sunDistance || 5200
+            );
             return;
         }
 
@@ -5710,8 +5758,9 @@
 
         sunEl.object3D.visible = true;
         camera.getWorldPosition(this._pmndrsSunCameraPosition);
-        sunEl.object3D.position.copy(this._pmndrsSunCameraPosition).addScaledVector(this._pmndrsSunDirection, this._pmndrsSunDistance || 5200);
-        applyPmndrsSunOcclusion(this, this._pmndrsSunDirection, this._pmndrsSunDistance || 5200);
+        const presentedSunDirection = getImmersivePresentedSunDirection(this, this._pmndrsSunDirection);
+        sunEl.object3D.position.copy(this._pmndrsSunCameraPosition).addScaledVector(presentedSunDirection, this._pmndrsSunDistance || 5200);
+        applyPmndrsSunOcclusion(this, presentedSunDirection, this._pmndrsSunDistance || 5200);
     };
 
     H.applyRenderQualityProfile = function () {
