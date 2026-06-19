@@ -32,6 +32,8 @@ function createSpatialApi() {
         images: [],
         grids: [],
         refreshed: 0,
+        updatedButtons: 0,
+        updatedTexts: 0,
 
         clear() {
             this.frames = [];
@@ -50,11 +52,16 @@ function createSpatialApi() {
                 kind: "frame",
                 options: options || {},
                 content: createNode("frame-content"),
-                footer: createNode("frame-footer")
+                footer: createNode("frame-footer"),
+                statusText: null,
+                primaryButton: null
             };
             this.frames.push(frame);
+            if (options && options.status) {
+                frame.statusText = this.text(frame.footer, { text: options.status });
+            }
             if (options && options.primary && options.primary.visible !== false) {
-                this.button(frame.footer, options.primary);
+                frame.primaryButton = this.button(frame.footer, options.primary);
             }
             return frame;
         },
@@ -85,6 +92,9 @@ function createSpatialApi() {
 
         text(parent, options) {
             const node = createNode("text", options);
+            node.setProperties = (nextOptions) => {
+                node.options = Object.assign({}, node.options || {}, nextOptions || {});
+            };
             this.texts.push(options || {});
             if (parent && parent.children) {
                 parent.children.push(node);
@@ -92,13 +102,32 @@ function createSpatialApi() {
             return node;
         },
 
+        updateText(text, options) {
+            if (text && typeof text.setProperties === "function") {
+                text.setProperties(options || {});
+            }
+            this.updatedTexts += 1;
+            return text;
+        },
+
         button(parent, options) {
             const node = createNode("button", options);
+            node.setProperties = (nextOptions) => {
+                node.options = Object.assign({}, node.options || {}, nextOptions || {});
+            };
             this.buttons.push(options || {});
             if (parent && parent.children) {
                 parent.children.push(node);
             }
             return node;
+        },
+
+        updateButton(button, options) {
+            if (button && typeof button.setProperties === "function") {
+                button.setProperties(options || {});
+            }
+            this.updatedButtons += 1;
+            return button;
         },
 
         grid(parent, items, options) {
@@ -301,6 +330,37 @@ fixtures.forEach((fixture) => {
         String(entry.text || "").includes("This assessment type is not interactive in VRodos yet")
     );
     assert(!genericUnsupported, `${fixture.name}: rendered generic unsupported message`);
+    const frameOptions = activePanel.api.frames[0] && activePanel.api.frames[0].options || {};
+    const supportedWordBreak = new Set(["keep-all", "break-all", "break-word"]);
+    assert(supportedWordBreak.has(frameOptions.titleWordBreak), `${fixture.name}: unsupported title wordBreak ${frameOptions.titleWordBreak}`);
+    assert(frameOptions.titleMaxLines === 2, `${fixture.name}: expected two-line assessment header clamp`);
+    if (fixture.expected === "Pair") {
+        assert(frameOptions.headerHeight === 124, `${fixture.name}: expected compact two-line pair header`);
+        assert(frameOptions.titleWhiteSpace === "normal", `${fixture.name}: expected pair title to wrap`);
+        assert(frameOptions.titleWordBreak === "break-word", `${fixture.name}: expected pair title to wrap safely`);
+        assert(frameOptions.scrollContent === true, `${fixture.name}: expected scrollable assessment content`);
+        assert(frameOptions.statusFontSize === 20, `${fixture.name}: expected compact pair footer status`);
+        assert(frameOptions.paddingTop === 24, `${fixture.name}: expected pair content to start near the header`);
+        assert(!activePanel.api.texts.some((entry) =>
+            String(entry.text || "").includes("Tap a source")
+        ), `${fixture.name}: pair help callout should be hidden`);
+        assert(activePanel.api.buttons.some((entry) => entry.label === "Complete"), `${fixture.name}: Complete button was not rendered`);
+        const sourceText = fixture.payload.content.items
+            ? fixture.payload.content.items[0].source
+            : fixture.payload.content.pairs[0].source;
+        const targetText = fixture.payload.content.items
+            ? fixture.payload.content.items[0].target
+            : fixture.payload.content.pairs[0].target;
+        const sourceButton = activePanel.api.buttons.find((entry) => entry.label === sourceText);
+        const targetButton = activePanel.api.buttons.find((entry) => entry.label === targetText);
+        assert(sourceButton && typeof sourceButton.onClick === "function", `${fixture.name}: source button missing click handler`);
+        assert(targetButton && typeof targetButton.onClick === "function", `${fixture.name}: target button missing click handler`);
+        const frameCountBeforeSelection = activePanel.api.frames.length;
+        sourceButton.onClick();
+        targetButton.onClick();
+        assert(activePanel.api.frames.length === frameCountBeforeSelection, `${fixture.name}: pair click recreated the frame`);
+        assert(activePanel.api.updatedButtons > 0, `${fixture.name}: pair click did not update buttons in place`);
+    }
     windowStub.VRODOSSpatialUI.closePanel("test-reset");
 });
 

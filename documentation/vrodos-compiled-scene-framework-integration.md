@@ -158,7 +158,13 @@ The resolver maps raw `group` values first, then normalized `group` and `type` a
 
 `window.VRODOSSpatialUI` exposes `isAvailable()`, `openPanel()`, `closePanel(reason)`, `refreshInteractionTargets()`, `dispose()`, `prewarm()`, `getActivePanel()`, `getDiagnostics()`, and `recordDiagnostic(level, message, details)`.
 
-Panel render callbacks receive `frame()`, `text()`, `button()`, `image()`, `row()`, `column()`, `grid()`, `clear()`, and `close()`. Use Horizon buttons and variants for immersive VR UI. Selected states should use a positive or otherwise explicit variant. Disabled actions should use the Horizon disabled state, not hidden raycaster targets or custom A-Frame materials.
+Panel render callbacks receive `frame()`, `text()`, `button()`, `image()`, `row()`, `column()`, `grid()`, `clear()`, and `close()`. Mutable controls can be updated through `updateText()` and `updateButton()` when the same panel remains open. Use Horizon buttons and variants for immersive VR UI. Selected states should use a positive or otherwise explicit variant. Disabled actions should use the Horizon disabled state, not hidden raycaster targets or custom A-Frame materials.
+
+`frame()` is the standard immersive dialog shell. It owns the black header, title layout, close button, scrollable content host, fixed footer, optional status text, and optional primary action. Assessment, CEFR, and image/text POI runtimes should reuse this shell instead of rebuilding their own header/footer structures. The frame return value includes stable references such as `content`, `contentOuter`, `footer`, `statusText`, and `primaryButton` so a renderer can update state without clearing the whole PMNDRS tree.
+
+Dialog headers should reserve a fixed close-button column and keep the title inside the remaining flex space. Long assessment titles should use a two-line clamp with ellipsis, valid PMNDRS `wordBreak` values (`keep-all`, `break-all`, or `break-word`), and a line height large enough for Greek text. Do not use unsupported CSS-style values such as `wordBreak: "normal"` in PMNDRS text properties; they can throw inside the text wrapper.
+
+Renderers that only change selection state, progress text, or button enabled/variant state should prefer in-place updates over full panel redraws. For example, Pair assessment source/target selection updates existing source buttons, target buttons, footer status, and the Complete button through `updateButton()` / `updateText()` so the content does not flash or lose pointer continuity on every controller click. Full redraw remains appropriate when the content structure changes, such as moving to the next question or replacing a dialog.
 
 ### Spatial UI Sizing, Placement, And Rays
 
@@ -227,6 +233,8 @@ Scenes that contain assessment, CEFR, or image/text POI surfaces should preload 
 
 The Horizon panel uses explicit background, border, depth, render order, and sorting settings so it appears as a stable VR modal rather than as scene geometry. UI elements are flex/grid based. Avoid absolute A-Frame coordinate layouts for assessment content. Long text is paginated for v1; do not depend on VR controller scrolling for assessment completion.
 
+Assessment panels use the shared frame's scrollable content host when content exceeds the fixed header/footer area. Header and footer controls stay fixed; only the middle content region should scroll. Controller scrolling should be treated as a readability fallback, not as the only way to complete an assessment.
+
 Generated script tags include a version query derived from the runtime bundle file's mtime and size. Recompile generated clients after runtime changes so production pages receive updated script URLs. Clearing Quest Browser cache helps, but old generated HTML without the new query string can still point to a stale URL.
 
 The spatial bundle is built against A-Frame's shared Three runtime. Do not load a second Three.js copy for UI.
@@ -259,6 +267,8 @@ Production acceptance checklist:
 11. Confirm video, assessment, and image/text POI objects still receive native controller clicks when no modal is open.
 12. Confirm normal scene `.raycastable` targets show the ray endpoint dot in immersive XR when no modal is open.
 13. Confirm controller rays stop at the PMNDRS dialog surface while a modal is active, show a small surface dot or larger actionable dot as appropriate, and return to normal length after modal close/finish.
+14. Open a Pair assessment and confirm selecting a source/target updates button state in place without flashing the whole dialog.
+15. Confirm long assessment titles wrap to at most two header lines, ellipsize beyond that, and never overlap the close button.
 
 Quest Browser manual acceptance is required before considering a spatial UI change stable. Desktop WebXR emulators are useful for smoke checks but do not prove controller behavior or native WebXR timing.
 

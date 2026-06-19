@@ -65,20 +65,42 @@
         }
     }
 
-    function createFrame(runtime, status, primary) {
+    function createFrame(runtime, status, primary, options) {
         const api = runtime.api;
         const payload = runtime.payload || {};
-        return api.frame({
+        const frameOptions = Object.assign({
             title: value(payload.title, "Assessment"),
             status: status || "",
-            paddingX: 96,
-            paddingY: 68,
+            headerHeight: 112,
+            headerPaddingX: 56,
+            titleSize: 28,
+            titleLineHeight: "118%",
+            titleWhiteSpace: "normal",
+            titleWordBreak: "break-word",
+            titleMaxLines: 2,
+            titleMaxCharsPerLine: 54,
+            titleHeight: 66,
+            headerGapColumn: 24,
+            closeButtonWidth: 82,
+            closeButtonHeight: 64,
+            closeButtonMinWidth: 72,
+            closeButtonTextSize: 34,
+            closeButtonFontWeight: 700,
+            paddingX: 72,
+            paddingY: 52,
+            footerHeight: 104,
+            footerPaddingBottom: 34,
+            statusFontSize: 22,
+            statusLineHeight: "110%",
+            scrollContent: true,
+            scrollGapY: 24,
             gapY: 30,
             onClose: function () {
                 runtime.close("close");
             },
             primary
-        });
+        }, options || {});
+        return api.frame(frameOptions);
     }
 
     function addInfo(api, frame, message) {
@@ -375,7 +397,8 @@
                     targetOrder: shuffleArray(ids),
                     matchesBySource: {},
                     assignmentsByTarget: {},
-                    selectedSourceId: ""
+                    selectedSourceId: "",
+                    view: null
                 };
             },
             render: function (runtime) {
@@ -388,14 +411,31 @@
                 const placed = state.mode === "dragdrop"
                     ? Object.keys(state.assignmentsByTarget).length
                     : Object.keys(state.matchesBySource).length;
-                const frame = createFrame(runtime, "Matched " + placed + " of " + state.entries.length + " pairs", {
-                    label: "Finish",
-                    disabled: placed !== state.entries.length,
-                    onClick: function () {
-                        finishPair(runtime);
-                    }
+                if (state.view && state.view.api === runtime.api && typeof runtime.api.updateButton === "function") {
+                    updatePairView(runtime, placed);
+                    return;
+                }
+
+                const completeButtonOptions = pairCompleteButtonOptions(runtime, state, placed);
+                const frame = createFrame(runtime, pairStatusText(state, placed), completeButtonOptions, {
+                    headerHeight: 124,
+                    paddingX: 62,
+                    paddingTop: 24,
+                    paddingBottom: 18,
+                    gapY: 12,
+                    footerHeight: 88,
+                    footerPaddingBottom: 24,
+                    statusFontSize: 20,
+                    statusWhiteSpace: "nowrap",
+                    scrollGapY: 12
                 });
-                addInfo(runtime.api, frame, "Tap a source, then tap its target. Tap a completed pair to clear it.");
+                state.view = {
+                    api: runtime.api,
+                    statusText: frame.statusText || null,
+                    primaryButton: frame.primaryButton || null,
+                    sourceButtons: {},
+                    targetButtons: {}
+                };
 
                 const columns = runtime.api.row(frame.content, {
                     alignItems: "flex-start",
@@ -412,8 +452,6 @@
                     gapRow: 14,
                     width: "50%"
                 });
-                const buttonHeight = state.entries.length > 6 ? 54 : 66;
-                const buttonTextSize = state.entries.length > 6 ? 20 : 24;
                 runtime.api.text(sourceColumn, {
                     text: "Sources",
                     color: "#475569",
@@ -427,52 +465,141 @@
                     fontWeight: 600
                 });
 
+                const buttonSizing = getPairButtonSizing(state);
                 state.sourceOrder.forEach((sourceId) => {
-                    const entry = state.entriesById[sourceId];
-                    const matchedTargetId = state.matchesBySource[sourceId] || "";
-                    const assigned = state.mode === "matching" ? Boolean(matchedTargetId) : Object.values(state.assignmentsByTarget).includes(sourceId);
-                    const selected = state.selectedSourceId === sourceId;
-                    runtime.api.button(sourceColumn, {
-                        label: entry ? entry.source || "Source" : "Source",
-                        variant: assigned ? "positive" : (selected ? "primary" : "secondary"),
-                        width: "100%",
-                        minHeight: buttonHeight,
-                        textSize: buttonTextSize,
-                        onClick: function () {
-                            if (state.mode === "matching" && state.matchesBySource[sourceId]) {
-                                delete state.matchesBySource[sourceId];
-                            } else {
-                                state.selectedSourceId = state.selectedSourceId === sourceId ? "" : sourceId;
-                            }
-                            runtime.rerender();
+                    state.view.sourceButtons[sourceId] = runtime.api.button(sourceColumn, Object.assign(
+                        pairSourceButtonOptions(runtime, state, sourceId),
+                        {
+                            width: "100%",
+                            minHeight: buttonSizing.height,
+                            textSize: buttonSizing.textSize,
+                            lineHeight: buttonSizing.lineHeight
                         }
-                    });
+                    ));
                 });
 
                 state.targetOrder.forEach((targetId) => {
-                    const entry = state.entriesById[targetId];
-                    const sourceId = sourceForTarget(state, targetId);
-                    const sourceEntry = sourceId ? state.entriesById[sourceId] : null;
-                    runtime.api.button(targetColumn, {
-                        label: entry
-                            ? (entry.target || "Target") + (sourceEntry ? " <- " + (sourceEntry.source || "Source") : "")
-                            : "Target",
-                        variant: sourceId ? "positive" : "secondary",
-                        width: "100%",
-                        minHeight: buttonHeight,
-                        textSize: buttonTextSize,
-                        onClick: function () {
-                            if (sourceId) {
-                                clearTarget(state, targetId);
-                            } else if (state.selectedSourceId) {
-                                assignPair(state, state.selectedSourceId, targetId);
-                            }
-                            runtime.rerender();
+                    state.view.targetButtons[targetId] = runtime.api.button(targetColumn, Object.assign(
+                        pairTargetButtonOptions(runtime, state, targetId),
+                        {
+                            width: "100%",
+                            minHeight: buttonSizing.height,
+                            textSize: buttonSizing.textSize,
+                            lineHeight: buttonSizing.lineHeight
                         }
-                    });
+                    ));
                 });
             }
         };
+    }
+
+    function getPairButtonSizing(state) {
+        return {
+            height: state.entries.length > 6 ? 58 : 76,
+            textSize: state.entries.length > 6 ? 19 : 22,
+            lineHeight: "126%"
+        };
+    }
+
+    function pairStatusText(state, placed) {
+        return "Matched " + placed + " of " + state.entries.length + " pairs";
+    }
+
+    function pairCompleteButtonOptions(runtime, state, placed) {
+        return {
+            label: "Complete",
+            disabled: placed !== state.entries.length,
+            width: 190,
+            height: 56,
+            textSize: 22,
+            lineHeight: "118%",
+            onClick: function () {
+                finishPair(runtime);
+            }
+        };
+    }
+
+    function pairSourceButtonOptions(runtime, state, sourceId) {
+        const entry = state.entriesById[sourceId];
+        const matchedTargetId = state.matchesBySource[sourceId] || "";
+        const assigned = state.mode === "matching" ? Boolean(matchedTargetId) : Object.values(state.assignmentsByTarget).includes(sourceId);
+        const selected = state.selectedSourceId === sourceId;
+        return {
+            label: entry ? entry.source || "Source" : "Source",
+            variant: assigned ? "positive" : (selected ? "primary" : "secondary"),
+            onClick: function () {
+                if (state.mode === "matching" && state.matchesBySource[sourceId]) {
+                    delete state.matchesBySource[sourceId];
+                } else {
+                    state.selectedSourceId = state.selectedSourceId === sourceId ? "" : sourceId;
+                }
+                runtime.rerender();
+            }
+        };
+    }
+
+    function pairTargetButtonOptions(runtime, state, targetId) {
+        const entry = state.entriesById[targetId];
+        const sourceId = sourceForTarget(state, targetId);
+        const sourceEntry = sourceId ? state.entriesById[sourceId] : null;
+        return {
+            label: entry
+                ? (entry.target || "Target") + (sourceEntry ? " <- " + (sourceEntry.source || "Source") : "")
+                : "Target",
+            variant: sourceId ? "positive" : "secondary",
+            onClick: function () {
+                if (sourceId) {
+                    clearTarget(state, targetId);
+                } else if (state.selectedSourceId) {
+                    assignPair(state, state.selectedSourceId, targetId);
+                }
+                runtime.rerender();
+            }
+        };
+    }
+
+    function updatePairView(runtime, placed) {
+        const state = runtime.state;
+        const view = state && state.view;
+        if (!view) {
+            return;
+        }
+        const buttonSizing = getPairButtonSizing(state);
+        if (view.statusText && typeof runtime.api.updateText === "function") {
+            runtime.api.updateText(view.statusText, {
+                text: pairStatusText(state, placed),
+                color: "#5a5a5a",
+                fontSize: 20,
+                lineHeight: "110%",
+                flexGrow: 1,
+                flexShrink: 1,
+                wordBreak: "keep-all",
+                whiteSpace: "nowrap"
+            });
+        }
+        runtime.api.updateButton(view.primaryButton, pairCompleteButtonOptions(runtime, state, placed));
+        state.sourceOrder.forEach((sourceId) => {
+            runtime.api.updateButton(view.sourceButtons[sourceId], Object.assign(
+                pairSourceButtonOptions(runtime, state, sourceId),
+                {
+                    width: "100%",
+                    minHeight: buttonSizing.height,
+                    textSize: buttonSizing.textSize,
+                    lineHeight: buttonSizing.lineHeight
+                }
+            ));
+        });
+        state.targetOrder.forEach((targetId) => {
+            runtime.api.updateButton(view.targetButtons[targetId], Object.assign(
+                pairTargetButtonOptions(runtime, state, targetId),
+                {
+                    width: "100%",
+                    minHeight: buttonSizing.height,
+                    textSize: buttonSizing.textSize,
+                    lineHeight: buttonSizing.lineHeight
+                }
+            ));
+        });
     }
 
     function sourceForTarget(state, targetId) {

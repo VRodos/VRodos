@@ -500,6 +500,20 @@ import { MSDF } from "@zappar/msdf-generator";
         return Math.min(max, Math.max(min, value));
     }
 
+    function clampTextToApproximateLines(value, maxLines, charsPerLine) {
+        const text = normalizeSpatialText(value || "").replace(/\s+/g, " ").trim();
+        const lineCount = Math.max(1, Math.floor(Number(maxLines) || 1));
+        const lineChars = Math.max(12, Math.floor(Number(charsPerLine) || 48));
+        const maxLength = lineCount * lineChars;
+        if (!text || text.length <= maxLength) {
+            return text;
+        }
+        return text
+            .slice(0, Math.max(0, maxLength - 3))
+            .trim()
+            .replace(/[\s,.;:!?-]+$/, "") + "...";
+    }
+
     function resolvePanelMetrics(config, width, height) {
         const configuredWidth = Number(config && (
             config.designWidthPx !== undefined ? config.designWidthPx :
@@ -1913,6 +1927,43 @@ import { MSDF } from "@zappar/msdf-generator";
     }
 
     function createPanelApi(panelState) {
+        function resolveButtonProps(options) {
+            const opts = options || {};
+            const disabled = Boolean(opts.disabled);
+            return baseContainerProps({
+                variant: opts.variant || (opts.negative ? "negative" : "primary"),
+                size: opts.size || "lg",
+                disabled,
+                width: opts.width,
+                height: opts.height,
+                minWidth: opts.minWidth,
+                minHeight: opts.minHeight,
+                flexGrow: opts.flexGrow,
+                flexShrink: opts.flexShrink !== undefined ? opts.flexShrink : 0,
+                pointerEvents: disabled ? "none" : "auto",
+                zIndex: opts.zIndex || 30,
+                onClick: disabled ? undefined : opts.onClick
+            });
+        }
+
+        function resolveButtonTextProps(options) {
+            const opts = options || {};
+            const disabled = Boolean(opts.disabled);
+            return baseContainerProps(Object.assign({
+                text: normalizeSpatialText(opts.label || ""),
+                color: opts.textColor || (disabled ? "rgba(39,39,39,0.35)" : undefined),
+                fontSize: px(opts.fontSize, opts.textSize || 30),
+                lineHeight: opts.lineHeight || opts.textLineHeight || "118%",
+                fontWeight: opts.fontWeight || 500,
+                textAlign: "center",
+                verticalAlign: "center",
+                width: "100%",
+                wordBreak: opts.wordBreak || "break-word",
+                whiteSpace: "normal",
+                pointerEvents: "none"
+            }, fontProps(opts)));
+        }
+
         const api = {
             __spatialUi: true,
             root: panelState.root,
@@ -1964,6 +2015,23 @@ import { MSDF } from "@zappar/msdf-generator";
                 }, options || {}));
             },
 
+            scroll: function (parent, options) {
+                return this.container(parent, Object.assign({
+                    flexDirection: "column",
+                    alignItems: "stretch",
+                    justifyContent: "flex-start",
+                    flexGrow: 1,
+                    width: "100%",
+                    overflow: "scroll",
+                    scrollbarWidth: 12,
+                    scrollbarColor: "rgba(39,39,39,0.38)",
+                    scrollbarBorderRadius: 999,
+                    gapRow: 24,
+                    pointerEvents: "listener",
+                    zIndex: 8
+                }, options || {}));
+            },
+
             text: function (parent, options) {
                 const opts = options || {};
                 const text = new Text(baseContainerProps(Object.assign({
@@ -1988,26 +2056,41 @@ import { MSDF } from "@zappar/msdf-generator";
                 return append(parent || this.content || this.root, text);
             },
 
+            updateText: function (text, options) {
+                if (!text || typeof text.setProperties !== "function") {
+                    return text || null;
+                }
+                const opts = options || {};
+                text.setProperties(baseContainerProps(Object.assign({
+                    text: normalizeSpatialText(opts.text !== undefined ? opts.text : (opts.value || "")),
+                    color: opts.color || "#272727",
+                    fontSize: px(opts.fontSize, opts.size || 34),
+                    lineHeight: opts.lineHeight || "120%",
+                    fontWeight: opts.fontWeight || "normal",
+                    textAlign: opts.align || opts.textAlign || "left",
+                    verticalAlign: opts.verticalAlign || "center",
+                    width: opts.width,
+                    height: opts.height,
+                    minHeight: opts.minHeight,
+                    maxWidth: opts.maxWidth,
+                    flexGrow: opts.flexGrow,
+                    flexShrink: opts.flexShrink !== undefined ? opts.flexShrink : 1,
+                    wordBreak: opts.wordBreak || "break-word",
+                    whiteSpace: opts.whiteSpace || "normal",
+                    pointerEvents: "none",
+                    zIndex: opts.zIndex || 20
+                }, fontProps(opts))));
+                return text;
+            },
+
             button: function (parent, options) {
                 const opts = options || {};
                 const disabled = Boolean(opts.disabled);
-                const button = new HorizonButton(baseContainerProps({
-                    variant: opts.variant || (opts.negative ? "negative" : "primary"),
-                    size: opts.size || "lg",
-                    disabled,
-                    width: opts.width,
-                    height: opts.height,
-                    minWidth: opts.minWidth,
-                    minHeight: opts.minHeight,
-                    flexGrow: opts.flexGrow,
-                    flexShrink: opts.flexShrink !== undefined ? opts.flexShrink : 0,
-                    pointerEvents: disabled ? "none" : "auto",
-                    zIndex: opts.zIndex || 30,
-                    onClick: disabled ? undefined : opts.onClick
-                }));
+                const button = new HorizonButton(resolveButtonProps(opts));
                 button.name = "VRODOSSpatialUIActionButton";
                 button.userData = button.userData || {};
                 button.userData.vrodosSpatialActionable = !disabled && typeof opts.onClick === "function";
+                button.userData.vrodosSpatialButtonOptions = Object.assign({}, opts);
                 const label = new ButtonLabel(baseContainerProps({
                     justifyContent: "center",
                     alignItems: "center",
@@ -2016,20 +2099,30 @@ import { MSDF } from "@zappar/msdf-generator";
                     height: "100%",
                     pointerEvents: "none"
                 }));
-                label.add(new Text(baseContainerProps(Object.assign({
-                    text: normalizeSpatialText(opts.label || ""),
-                    color: opts.textColor || (disabled ? "rgba(39,39,39,0.35)" : undefined),
-                    fontSize: px(opts.fontSize, opts.textSize || 30),
-                    fontWeight: opts.fontWeight || 500,
-                    textAlign: "center",
-                    verticalAlign: "center",
-                    width: "100%",
-                    wordBreak: opts.wordBreak || "break-word",
-                    whiteSpace: "normal",
-                    pointerEvents: "none"
-                }, fontProps(opts)))));
+                const labelText = new Text(resolveButtonTextProps(opts));
+                label.add(labelText);
                 button.add(label);
+                button.userData.vrodosSpatialButtonLabel = labelText;
                 return append(parent || this.content || this.root, button);
+            },
+
+            updateButton: function (button, options) {
+                if (!button) {
+                    return null;
+                }
+                button.userData = button.userData || {};
+                const opts = Object.assign({}, button.userData.vrodosSpatialButtonOptions || {}, options || {});
+                const disabled = Boolean(opts.disabled);
+                button.userData.vrodosSpatialButtonOptions = Object.assign({}, opts);
+                button.userData.vrodosSpatialActionable = !disabled && typeof opts.onClick === "function";
+                if (typeof button.setProperties === "function") {
+                    button.setProperties(resolveButtonProps(opts));
+                }
+                const labelText = button.userData.vrodosSpatialButtonLabel;
+                if (labelText && typeof labelText.setProperties === "function") {
+                    labelText.setProperties(resolveButtonTextProps(opts));
+                }
+                return button;
             },
 
             image: function (parent, options) {
@@ -2077,15 +2170,21 @@ import { MSDF } from "@zappar/msdf-generator";
                 this.renderCount += 1;
                 panelState.renderCount = this.renderCount;
                 this.clear();
+                const rawTitle = opts.title || "";
+                const titleValue = opts.titleMaxLines
+                    ? clampTextToApproximateLines(rawTitle, opts.titleMaxLines, opts.titleMaxCharsPerLine)
+                    : (opts.titleMaxLength && String(rawTitle).length > opts.titleMaxLength
+                        ? String(rawTitle).slice(0, Math.max(0, opts.titleMaxLength - 3)).trimEnd() + "..."
+                        : rawTitle);
 
                 const header = new Container(baseContainerProps({
                     flexDirection: "row",
                     alignItems: "center",
                     justifyContent: "space-between",
                     backgroundColor: opts.headerColor || "#272727",
-                    paddingX: 72,
+                    paddingX: opts.headerPaddingX !== undefined ? opts.headerPaddingX : 72,
                     height: opts.headerHeight || 168,
-                    gapColumn: 32,
+                    gapColumn: opts.headerGapColumn !== undefined ? opts.headerGapColumn : 32,
                     pointerEvents: "none",
                     zIndex: 10
                 }));
@@ -2093,16 +2192,23 @@ import { MSDF } from "@zappar/msdf-generator";
                     flexDirection: "column",
                     justifyContent: "center",
                     flexGrow: 1,
+                    flexShrink: 1,
+                    flexBasis: 0,
+                    minWidth: 0,
                     pointerEvents: "none"
                 }));
                 titleColumn.add(new Text(baseContainerProps(Object.assign({
-                    text: normalizeSpatialText(opts.title || ""),
+                    text: normalizeSpatialText(titleValue),
                     color: "#ffffff",
                     fontSize: opts.titleSize || 46,
+                    lineHeight: opts.titleLineHeight || "112%",
                     fontWeight: 600,
                     textAlign: "left",
                     verticalAlign: "center",
                     width: "100%",
+                    height: opts.titleHeight,
+                    wordBreak: opts.titleWordBreak || "keep-all",
+                    whiteSpace: opts.titleWhiteSpace || "normal",
                     pointerEvents: "none"
                 }, fontProps(opts)))));
                 header.add(titleColumn);
@@ -2110,10 +2216,12 @@ import { MSDF } from "@zappar/msdf-generator";
                     this.button(header, {
                         label: "X",
                         variant: "negative",
-                        width: 74,
-                        height: 58,
-                        minWidth: 58,
-                        textSize: 24,
+                        width: opts.closeButtonWidth || 74,
+                        height: opts.closeButtonHeight || 58,
+                        minWidth: opts.closeButtonMinWidth || 58,
+                        textSize: opts.closeButtonTextSize || 24,
+                        fontWeight: opts.closeButtonFontWeight || 500,
+                        flexShrink: 0,
                         onClick: opts.onClose || this.close.bind(this)
                     });
                 }
@@ -2125,10 +2233,31 @@ import { MSDF } from "@zappar/msdf-generator";
                     flexGrow: 1,
                     paddingX: opts.paddingX !== undefined ? opts.paddingX : 88,
                     paddingY: opts.paddingY !== undefined ? opts.paddingY : 70,
+                    paddingTop: opts.paddingTop,
+                    paddingBottom: opts.paddingBottom,
                     gapRow: opts.gapY !== undefined ? opts.gapY : 34,
                     pointerEvents: "none",
                     zIndex: 5
                 }));
+                const contentHost = opts.scrollContent === true
+                    ? new Container(baseContainerProps({
+                        flexDirection: "column",
+                        alignItems: "stretch",
+                        justifyContent: "flex-start",
+                        flexGrow: 1,
+                        width: "100%",
+                        overflow: "scroll",
+                        scrollbarWidth: opts.scrollbarWidth || 12,
+                        scrollbarColor: opts.scrollbarColor || "rgba(39,39,39,0.38)",
+                        scrollbarBorderRadius: opts.scrollbarBorderRadius || 999,
+                        gapRow: opts.scrollGapY !== undefined ? opts.scrollGapY : (opts.gapY !== undefined ? opts.gapY : 34),
+                        pointerEvents: "listener",
+                        zIndex: 8
+                    }))
+                    : content;
+                if (contentHost !== content) {
+                    content.add(contentHost);
+                }
                 const footer = new Container(baseContainerProps({
                     flexDirection: "row",
                     alignItems: "center",
@@ -2144,21 +2273,28 @@ import { MSDF } from "@zappar/msdf-generator";
                 this.appendRoot(header);
                 this.appendRoot(content);
                 this.appendRoot(footer);
-                this.content = content;
+                this.content = contentHost;
                 this.footer = footer;
 
                 if (opts.status) {
-                    this.text(footer, {
+                    const statusText = this.text(footer, {
                         text: opts.status,
                         color: "#5a5a5a",
-                        fontSize: 28,
-                        flexGrow: 1
+                        fontSize: opts.statusFontSize || 28,
+                        lineHeight: opts.statusLineHeight || "112%",
+                        flexGrow: 1,
+                        flexShrink: 1,
+                        wordBreak: opts.statusWordBreak || "keep-all",
+                        whiteSpace: opts.statusWhiteSpace || "normal"
                     });
+                    footer.userData = footer.userData || {};
+                    footer.userData.vrodosSpatialStatusText = statusText;
                 } else {
                     footer.add(new Container(baseContainerProps({ flexGrow: 1 })));
                 }
+                let primaryButton = null;
                 if (opts.primary && opts.primary.visible !== false) {
-                    this.button(footer, {
+                    primaryButton = this.button(footer, {
                         label: opts.primary.label || "Finish",
                         variant: opts.primary.variant || "positive",
                         disabled: Boolean(opts.primary.disabled),
@@ -2178,8 +2314,11 @@ import { MSDF } from "@zappar/msdf-generator";
                 return {
                     root: this.root,
                     header,
-                    content,
-                    footer
+                    content: contentHost,
+                    contentOuter: content,
+                    footer,
+                    statusText: footer.userData && footer.userData.vrodosSpatialStatusText || null,
+                    primaryButton
                 };
             },
 
