@@ -1356,6 +1356,17 @@ AFRAME.registerComponent('scene-settings', {
                 ? Number(movement.immersiveRawHeightOffset.toFixed(3))
                 : null,
             immersiveHeightCalibrationApplied: Boolean(movement && movement.immersiveHeightCalibrationApplied),
+            immersiveHeightSource: movement && movement.immersiveHeightSource ? movement.immersiveHeightSource : 'none',
+            desktopVisionHeightOffset: movement && typeof movement.desktopVisionHeightOffset === 'number'
+                ? Number(movement.desktopVisionHeightOffset.toFixed(3))
+                : null,
+            desktopVisionGroundY: movement && typeof movement.desktopVisionGroundY === 'number'
+                ? Number(movement.desktopVisionGroundY.toFixed(3))
+                : null,
+            desktopVisionNavigationY: movement && typeof movement.desktopVisionNavigationY === 'number'
+                ? Number(movement.desktopVisionNavigationY.toFixed(3))
+                : null,
+            desktopVisionHeightSource: movement && movement.desktopVisionHeightSource ? movement.desktopVisionHeightSource : 'none',
             immersiveLastGroundY: movement && movement.hasLastGroundHit && movement.lastGroundHit && movement.lastGroundHit.point
                 ? Number(movement.lastGroundHit.point.y.toFixed(3))
                 : null,

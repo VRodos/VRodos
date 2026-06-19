@@ -1697,6 +1697,11 @@
         immersiveHeightOffset: movement && typeof movement.heightOffset === "number" ? Number(movement.heightOffset.toFixed(3)) : null,
         immersiveRawHeightOffset: movement && typeof movement.immersiveRawHeightOffset === "number" ? Number(movement.immersiveRawHeightOffset.toFixed(3)) : null,
         immersiveHeightCalibrationApplied: Boolean(movement && movement.immersiveHeightCalibrationApplied),
+        immersiveHeightSource: movement && movement.immersiveHeightSource ? movement.immersiveHeightSource : "none",
+        desktopVisionHeightOffset: movement && typeof movement.desktopVisionHeightOffset === "number" ? Number(movement.desktopVisionHeightOffset.toFixed(3)) : null,
+        desktopVisionGroundY: movement && typeof movement.desktopVisionGroundY === "number" ? Number(movement.desktopVisionGroundY.toFixed(3)) : null,
+        desktopVisionNavigationY: movement && typeof movement.desktopVisionNavigationY === "number" ? Number(movement.desktopVisionNavigationY.toFixed(3)) : null,
+        desktopVisionHeightSource: movement && movement.desktopVisionHeightSource ? movement.desktopVisionHeightSource : "none",
         immersiveLastGroundY: movement && movement.hasLastGroundHit && movement.lastGroundHit && movement.lastGroundHit.point ? Number(movement.lastGroundHit.point.y.toFixed(3)) : null,
         bvhBundleLoaded: Boolean(window.VRODOS_COLLISION_BVH),
         bvhInstalled: Boolean(movement && movement.bvhInstalled),
@@ -2983,6 +2988,13 @@
       this.lastNonImmersiveHeightOffset = 1.6;
       this.hasLastNonImmersiveGround = false;
       this.lastNonImmersiveGroundRememberedAt = 0;
+      this.desktopVisionHeightOffset = null;
+      this.desktopVisionGroundY = null;
+      this.desktopVisionNavigationY = null;
+      this.desktopVisionHeightSource = "none";
+      this.desktopVisionHeightCapturedAt = 0;
+      this.desktopVisionMinEyeToGroundOffset = 0.8;
+      this.desktopVisionMaxEyeToGroundOffset = 2.8;
       this.immersiveLastStepDeltaY = 0;
       this.immersiveLastRenderAppliedAt = 0;
       this.immersiveMinEyeToGroundOffset = 1.2;
@@ -2990,6 +3002,7 @@
       this.immersiveMaxEyeToGroundOffset = 2.2;
       this.immersiveRawHeightOffset = null;
       this.immersiveHeightCalibrationApplied = false;
+      this.immersiveHeightSource = "none";
       this.autoStableGroundHistorySize = 8;
       this.autoStableGroundHistoryIndex = 0;
       this.autoStableGroundHistory = [];
@@ -3549,6 +3562,9 @@
       anchorObject.updateMatrixWorld(true);
       return anchorObject.getWorldPosition(output);
     },
+    getRuntimeNow: function() {
+      return typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+    },
     rememberNonImmersiveNavigationPosition: function(forceGroundSample) {
       if (this.isImmersiveXrPresenting()) {
         return;
@@ -3562,7 +3578,7 @@
       }
       anchorObject.getWorldPosition(this.lastNonImmersiveNavigationPosition);
       this.hasLastNonImmersiveNavigationPosition = true;
-      const now = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+      const now = this.getRuntimeNow();
       if (!forceGroundSample && this.hasLastNonImmersiveGround && now - this.lastNonImmersiveGroundRememberedAt < 500) {
         return;
       }
@@ -3577,40 +3593,67 @@
       if (!groundHit) {
         return;
       }
-      this.lastNonImmersiveGroundY = groundHit.point.y;
-      this.lastNonImmersiveHeightOffset = VRODOSMaster.clamp(
-        this.lastNonImmersiveNavigationPosition.y - groundHit.point.y,
-        0.2,
-        2.5
+      this.recordDesktopVisionHeightOffset(this.lastNonImmersiveNavigationPosition, groundHit, "desktop-sample", now);
+    },
+    recordDesktopVisionHeightOffset: function(navigationPosition, groundHit, source, now) {
+      if (this.isImmersiveXrPresenting() || !navigationPosition || !groundHit || !groundHit.point) {
+        return false;
+      }
+      const navigationY = Number(navigationPosition.y);
+      const groundY = Number(groundHit.point.y);
+      const rawHeightOffset = navigationY - groundY;
+      if (!Number.isFinite(navigationY) || !Number.isFinite(groundY) || !Number.isFinite(rawHeightOffset)) {
+        return false;
+      }
+      const trustedHeightOffset = VRODOSMaster.clamp(
+        rawHeightOffset,
+        this.desktopVisionMinEyeToGroundOffset,
+        this.desktopVisionMaxEyeToGroundOffset
       );
+      this.desktopVisionHeightOffset = trustedHeightOffset;
+      this.desktopVisionGroundY = groundY;
+      this.desktopVisionNavigationY = navigationY;
+      this.desktopVisionHeightSource = source || "desktop";
+      this.desktopVisionHeightCapturedAt = typeof now === "number" ? now : this.getRuntimeNow();
+      this.lastNonImmersiveGroundY = groundY;
+      this.lastNonImmersiveHeightOffset = trustedHeightOffset;
       this.hasLastNonImmersiveGround = true;
-      this.lastNonImmersiveGroundRememberedAt = now;
+      this.lastNonImmersiveGroundRememberedAt = this.desktopVisionHeightCapturedAt;
+      return true;
+    },
+    getTrustedDesktopVisionHeightOffset: function() {
+      return Number.isFinite(this.desktopVisionHeightOffset) ? this.desktopVisionHeightOffset : null;
     },
     getDesiredImmersiveEyeToGroundOffset: function() {
-      if (this.hasLastNonImmersiveGround && typeof this.lastNonImmersiveHeightOffset === "number") {
-        return this.resolveImmersiveEyeToGroundOffset(this.lastNonImmersiveHeightOffset);
+      const desktopHeightOffset = this.getTrustedDesktopVisionHeightOffset();
+      if (desktopHeightOffset !== null) {
+        this.immersiveRawHeightOffset = desktopHeightOffset;
+        this.immersiveHeightCalibrationApplied = false;
+        this.immersiveHeightSource = "desktop";
+        return desktopHeightOffset;
       }
-      if (this.immersivePhysicalAnchorPosition && typeof this.immersivePhysicalAnchorPosition.y === "number") {
-        return this.resolveImmersiveEyeToGroundOffset(this.immersivePhysicalAnchorPosition.y);
-      }
-      return this.immersiveDefaultEyeToGroundOffset;
-    },
-    getImmersiveEyeToGroundFallback: function() {
-      const physicalHeight = this.immersivePhysicalAnchorPosition && typeof this.immersivePhysicalAnchorPosition.y === "number" ? this.immersivePhysicalAnchorPosition.y : null;
-      if (Number.isFinite(physicalHeight) && physicalHeight >= this.immersiveMinEyeToGroundOffset && physicalHeight <= this.immersiveMaxEyeToGroundOffset) {
-        return physicalHeight;
-      }
-      return this.immersiveDefaultEyeToGroundOffset;
+      return this.resolveImmersiveEyeToGroundOffset(null);
     },
     resolveImmersiveEyeToGroundOffset: function(rawHeightOffset) {
+      const desktopHeightOffset = this.getTrustedDesktopVisionHeightOffset();
+      if (desktopHeightOffset !== null) {
+        const numericRawHeightOffset = Number(rawHeightOffset);
+        this.immersiveRawHeightOffset = Number.isFinite(numericRawHeightOffset) ? numericRawHeightOffset : desktopHeightOffset;
+        this.immersiveHeightCalibrationApplied = false;
+        this.immersiveHeightSource = "desktop";
+        return desktopHeightOffset;
+      }
       const numericHeightOffset = Number(rawHeightOffset);
       this.immersiveRawHeightOffset = Number.isFinite(numericHeightOffset) ? numericHeightOffset : null;
-      if (Number.isFinite(numericHeightOffset) && numericHeightOffset >= this.immersiveMinEyeToGroundOffset && numericHeightOffset <= this.immersiveMaxEyeToGroundOffset) {
+      const physicalHeight = this.immersivePhysicalAnchorPosition && typeof this.immersivePhysicalAnchorPosition.y === "number" ? this.immersivePhysicalAnchorPosition.y : null;
+      if (Number.isFinite(physicalHeight) && physicalHeight >= this.immersiveMinEyeToGroundOffset && physicalHeight <= this.immersiveMaxEyeToGroundOffset) {
         this.immersiveHeightCalibrationApplied = false;
-        return numericHeightOffset;
+        this.immersiveHeightSource = "physical";
+        return physicalHeight;
       }
       this.immersiveHeightCalibrationApplied = true;
-      return this.getImmersiveEyeToGroundFallback();
+      this.immersiveHeightSource = "default";
+      return this.immersiveDefaultEyeToGroundOffset;
     },
     resolveNavigationHeightOffset: function(rawHeightOffset) {
       if (this.isImmersiveXrPresenting()) {
@@ -3771,6 +3814,10 @@
           heightOffset: typeof this.heightOffset === "number" ? Number(this.heightOffset.toFixed(3)) : null,
           rawHeightOffset: typeof this.immersiveRawHeightOffset === "number" ? Number(this.immersiveRawHeightOffset.toFixed(3)) : null,
           heightCalibrationApplied: Boolean(this.immersiveHeightCalibrationApplied),
+          heightSource: this.immersiveHeightSource || "none",
+          desktopVisionHeightOffset: typeof this.desktopVisionHeightOffset === "number" ? Number(this.desktopVisionHeightOffset.toFixed(3)) : null,
+          desktopVisionGroundY: typeof this.desktopVisionGroundY === "number" ? Number(this.desktopVisionGroundY.toFixed(3)) : null,
+          desktopVisionNavigationY: typeof this.desktopVisionNavigationY === "number" ? Number(this.desktopVisionNavigationY.toFixed(3)) : null,
           rootCount: this.immersiveWorldRootDiagnostics && this.immersiveWorldRootDiagnostics.count || 0
         });
       }
@@ -5379,10 +5426,12 @@
         if (!currentGround) {
           return;
         }
+        this.recordDesktopVisionHeightOffset(navigationPosition, currentGround, "desktop-recovery-sync");
         this.heightOffset = this.resolveNavigationHeightOffset(navigationPosition.y - currentGround.point.y);
         this.snapNavigationToRecoveredGround(currentGround);
         return;
       }
+      this.recordDesktopVisionHeightOffset(navigationPosition, currentGround, "desktop-sync");
       this.heightOffset = this.resolveNavigationHeightOffset(navigationPosition.y - currentGround.point.y);
       this.snapNavigationVerticallyToGround(currentGround, navigationPosition);
     },
@@ -5401,6 +5450,7 @@
         this.hasLastGroundHit = false;
         return;
       }
+      this.recordDesktopVisionHeightOffset(navigationPosition, currentGround, "desktop-initial-sync");
       this.heightOffset = this.resolveNavigationHeightOffset(navigationPosition.y - currentGround.point.y);
       this.snapNavigationVerticallyToGround(currentGround, navigationPosition);
     },
