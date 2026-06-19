@@ -1571,6 +1571,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->setAffineTransformations( $ui, $obj );
 
 		// 3. The Button (Trigger GLTF)
+		$button_anchor = $dom->createElement( 'a-entity' );
+		$button_anchor->setAttribute( 'id', 'button_poi_root_' . $uuid );
+		$this->setAffineTransformations( $button_anchor, $obj ); // Static authored world root.
+
 		$button = $dom->createElement( 'a-entity' );
 		$button->setAttribute( 'id', 'button_poi_' . $uuid );
 		$button_glb_url = $this->normalize_url( $obj->glb_path ?? '' );
@@ -1591,8 +1595,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$button->setAttribute( 'vrodos-hypnotic-hover', '' );
 		}
 		$this->set_world_lighting_attributes( $button );
-		$this->setAffineTransformations( $button, $obj ); // Trigger stays in 3D world
-		$ascene->appendChild( $button );
+		$button_anchor->appendChild( $button );
+		$ascene->appendChild( $button_anchor );
 
 		// 4. The Info Panel (Inside UI Container)
 		// Geometric Background

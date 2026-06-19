@@ -49,7 +49,7 @@ AFRAME.registerComponent('vrodos-hypnotic-hover', {
 
         // Calculate sine wave bounce
         var bounce = Math.sin((time / 1000 * this.data.speed) + this.offset) * this.data.amplitude;
-        
+
         // Apply to position
         this.el.object3D.position.y = this.initialY + bounce;
     },
