@@ -1352,6 +1352,10 @@ AFRAME.registerComponent('scene-settings', {
             immersiveHeightOffset: movement && typeof movement.heightOffset === 'number'
                 ? Number(movement.heightOffset.toFixed(3))
                 : null,
+            immersiveRawHeightOffset: movement && typeof movement.immersiveRawHeightOffset === 'number'
+                ? Number(movement.immersiveRawHeightOffset.toFixed(3))
+                : null,
+            immersiveHeightCalibrationApplied: Boolean(movement && movement.immersiveHeightCalibrationApplied),
             immersiveLastGroundY: movement && movement.hasLastGroundHit && movement.lastGroundHit && movement.lastGroundHit.point
                 ? Number(movement.lastGroundHit.point.y.toFixed(3))
                 : null,

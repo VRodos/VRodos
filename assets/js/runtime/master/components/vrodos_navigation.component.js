@@ -284,6 +284,11 @@ AFRAME.registerComponent('custom-movement', {
         this.lastNonImmersiveGroundRememberedAt = 0;
         this.immersiveLastStepDeltaY = 0;
         this.immersiveLastRenderAppliedAt = 0;
+        this.immersiveMinEyeToGroundOffset = 1.2;
+        this.immersiveDefaultEyeToGroundOffset = 1.6;
+        this.immersiveMaxEyeToGroundOffset = 2.2;
+        this.immersiveRawHeightOffset = null;
+        this.immersiveHeightCalibrationApplied = false;
         this.autoStableGroundHistorySize = 8;
         this.autoStableGroundHistoryIndex = 0;
         this.autoStableGroundHistory = [];
@@ -938,14 +943,51 @@ AFRAME.registerComponent('custom-movement', {
     },
     getDesiredImmersiveEyeToGroundOffset: function () {
         if (this.hasLastNonImmersiveGround && typeof this.lastNonImmersiveHeightOffset === 'number') {
-            return VRODOSMaster.clamp(this.lastNonImmersiveHeightOffset, 0.2, 2.5);
+            return this.resolveImmersiveEyeToGroundOffset(this.lastNonImmersiveHeightOffset);
         }
 
         if (this.immersivePhysicalAnchorPosition && typeof this.immersivePhysicalAnchorPosition.y === 'number') {
-            return VRODOSMaster.clamp(this.immersivePhysicalAnchorPosition.y, 0.2, 2.5);
+            return this.resolveImmersiveEyeToGroundOffset(this.immersivePhysicalAnchorPosition.y);
         }
 
-        return 1.6;
+        return this.immersiveDefaultEyeToGroundOffset;
+    },
+    getImmersiveEyeToGroundFallback: function () {
+        const physicalHeight = this.immersivePhysicalAnchorPosition && typeof this.immersivePhysicalAnchorPosition.y === 'number'
+            ? this.immersivePhysicalAnchorPosition.y
+            : null;
+        if (
+            Number.isFinite(physicalHeight) &&
+            physicalHeight >= this.immersiveMinEyeToGroundOffset &&
+            physicalHeight <= this.immersiveMaxEyeToGroundOffset
+        ) {
+            return physicalHeight;
+        }
+
+        return this.immersiveDefaultEyeToGroundOffset;
+    },
+    resolveImmersiveEyeToGroundOffset: function (rawHeightOffset) {
+        const numericHeightOffset = Number(rawHeightOffset);
+        this.immersiveRawHeightOffset = Number.isFinite(numericHeightOffset) ? numericHeightOffset : null;
+
+        if (
+            Number.isFinite(numericHeightOffset) &&
+            numericHeightOffset >= this.immersiveMinEyeToGroundOffset &&
+            numericHeightOffset <= this.immersiveMaxEyeToGroundOffset
+        ) {
+            this.immersiveHeightCalibrationApplied = false;
+            return numericHeightOffset;
+        }
+
+        this.immersiveHeightCalibrationApplied = true;
+        return this.getImmersiveEyeToGroundFallback();
+    },
+    resolveNavigationHeightOffset: function (rawHeightOffset) {
+        if (this.isImmersiveXrPresenting()) {
+            return this.resolveImmersiveEyeToGroundOffset(rawHeightOffset);
+        }
+
+        return VRODOSMaster.clamp(rawHeightOffset, 0.2, 2.5);
     },
     clearImmersiveGroundCaches: function () {
         this.hasLastGroundHit = false;
@@ -1107,6 +1149,8 @@ AFRAME.registerComponent('custom-movement', {
                     z: Number(this.immersiveRenderOffset.z.toFixed(3))
                 },
                 heightOffset: typeof this.heightOffset === 'number' ? Number(this.heightOffset.toFixed(3)) : null,
+                rawHeightOffset: typeof this.immersiveRawHeightOffset === 'number' ? Number(this.immersiveRawHeightOffset.toFixed(3)) : null,
+                heightCalibrationApplied: Boolean(this.immersiveHeightCalibrationApplied),
                 rootCount: this.immersiveWorldRootDiagnostics && this.immersiveWorldRootDiagnostics.count || 0
             });
         }
@@ -2713,7 +2757,7 @@ AFRAME.registerComponent('custom-movement', {
             this.heightOffset = 1.6;
         }
 
-        this.heightOffset = VRODOSMaster.clamp(this.heightOffset, 0.2, 2.5);
+        this.heightOffset = this.resolveNavigationHeightOffset(this.heightOffset);
         this.targetWorldPosition.set(
             candidatePosition.x,
             groundHit.point.y + this.heightOffset,
@@ -3039,7 +3083,7 @@ AFRAME.registerComponent('custom-movement', {
             this.heightOffset = currentPosition.y - groundHit.point.y;
         }
 
-        this.heightOffset = VRODOSMaster.clamp(this.heightOffset, 0.2, 2.5);
+        this.heightOffset = this.resolveNavigationHeightOffset(this.heightOffset);
         horizontalPosition = horizontalPosition || this.getNavigationWorldPosition();
         this.targetWorldPosition.set(
             horizontalPosition.x,
@@ -3067,7 +3111,7 @@ AFRAME.registerComponent('custom-movement', {
             this.heightOffset = currentPosition.y - groundHit.point.y;
         }
 
-        this.heightOffset = VRODOSMaster.clamp(this.heightOffset, 0.2, 2.5);
+        this.heightOffset = this.resolveNavigationHeightOffset(this.heightOffset);
         this.targetWorldPosition.set(
             groundHit.rawPoint.x,
             groundHit.point.y + this.heightOffset,
@@ -3097,12 +3141,12 @@ AFRAME.registerComponent('custom-movement', {
                 return;
             }
 
-            this.heightOffset = VRODOSMaster.clamp(navigationPosition.y - currentGround.point.y, 0.2, 2.5);
+            this.heightOffset = this.resolveNavigationHeightOffset(navigationPosition.y - currentGround.point.y);
             this.snapNavigationToRecoveredGround(currentGround);
             return;
         }
 
-        this.heightOffset = VRODOSMaster.clamp(navigationPosition.y - currentGround.point.y, 0.2, 2.5);
+        this.heightOffset = this.resolveNavigationHeightOffset(navigationPosition.y - currentGround.point.y);
         this.snapNavigationVerticallyToGround(currentGround, navigationPosition);
     },
     syncInitialHeightOffset: function () {
@@ -3123,7 +3167,7 @@ AFRAME.registerComponent('custom-movement', {
             return;
         }
 
-        this.heightOffset = VRODOSMaster.clamp(navigationPosition.y - currentGround.point.y, 0.2, 2.5);
+        this.heightOffset = this.resolveNavigationHeightOffset(navigationPosition.y - currentGround.point.y);
         this.snapNavigationVerticallyToGround(currentGround, navigationPosition);
     },
     applyDirectMovement: function (deltaX, deltaZ) {
@@ -3198,7 +3242,7 @@ AFRAME.registerComponent('custom-movement', {
             }
 
             if (this.heightOffset === null) {
-                this.heightOffset = VRODOSMaster.clamp(navigationPosition.y - currentGround.point.y, 0.2, 2.5);
+                this.heightOffset = this.resolveNavigationHeightOffset(navigationPosition.y - currentGround.point.y);
             }
 
             if (!this.snapNavigationToRecoveredGround(currentGround)) {
