@@ -1023,11 +1023,20 @@ AFRAME.registerComponent('custom-movement', {
             }
 
             this.immersiveWorldBaseTransforms.set(el, {
-                position: object.position.clone(),
+                position: this.getImmersiveWorldBasePosition(el, object),
                 quaternion: object.quaternion.clone(),
                 scale: object.scale.clone()
             });
         }
+    },
+    getImmersiveWorldBasePosition: function (el, object) {
+        const position = object.position.clone();
+        const hover = el && el.components ? el.components['vrodos-hypnotic-hover'] : null;
+        if (hover && Number.isFinite(hover.initialY)) {
+            position.y = hover.initialY;
+        }
+
+        return position;
     },
     restoreImmersiveWorldBaseTransforms: function () {
         this.immersiveWorldBaseTransforms.forEach((base, el) => {

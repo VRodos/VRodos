@@ -3393,17 +3393,37 @@
     },
     init: function() {
       this.initialY = this.el.object3D.position.y;
+      this.deferredToImmersiveWorldTransform = false;
       this.offset = Math.random() * Math.PI * 2;
+    },
+    isImmersiveXrPresenting: function() {
+      const sceneEl = this.el && this.el.sceneEl ? this.el.sceneEl : null;
+      const renderer = sceneEl && sceneEl.renderer ? sceneEl.renderer : null;
+      return Boolean(
+        sceneEl && typeof sceneEl.is === "function" && sceneEl.is("vr-mode") && renderer && renderer.xr && renderer.xr.isPresenting
+      );
+    },
+    isTopLevelSceneRoot: function() {
+      const sceneEl = this.el && this.el.sceneEl ? this.el.sceneEl : null;
+      return Boolean(sceneEl && this.el && this.el.parentElement === sceneEl);
+    },
+    shouldDeferToImmersiveWorldTransform: function() {
+      return this.isImmersiveXrPresenting() && this.isTopLevelSceneRoot();
     },
     tick: function(time, timeDelta) {
       if (!this.data.enabled) {
         return;
       }
+      if (this.shouldDeferToImmersiveWorldTransform()) {
+        this.deferredToImmersiveWorldTransform = true;
+        return;
+      }
+      this.deferredToImmersiveWorldTransform = false;
       var bounce = Math.sin(time / 1e3 * this.data.speed + this.offset) * this.data.amplitude;
       this.el.object3D.position.y = this.initialY + bounce;
     },
     remove: function() {
-      if (this.el.object3D) {
+      if (this.el.object3D && !this.shouldDeferToImmersiveWorldTransform()) {
         this.el.object3D.position.y = this.initialY;
       }
     }
