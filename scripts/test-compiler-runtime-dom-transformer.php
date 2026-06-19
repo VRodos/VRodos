@@ -2,8 +2,22 @@
 
 define( 'ABSPATH', __DIR__ );
 
+if ( ! function_exists( 'absint' ) ) {
+	function absint( $value ): int {
+		return abs( (int) $value );
+	}
+}
+
+if ( ! function_exists( 'apply_filters' ) ) {
+	function apply_filters( $hook_name, $value ) {
+		return $value;
+	}
+}
+
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-dom-transformer.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-template-renderer.php';
+require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-assets.php';
+require_once __DIR__ . '/../includes/class-vrodos-compiler-aframe-dom-helper.php';
 
 function vrodos_dom_transformer_assert( bool $condition, string $message ): void {
 	if ( $condition ) {
@@ -61,6 +75,28 @@ vrodos_dom_transformer_assert( null === $dom->getElementById( 'avatar-selection-
 vrodos_dom_transformer_assert( 'single-player' === $dom->getElementById( 'roomNameShow' )->nodeValue, 'room name should become single-player' );
 vrodos_dom_transformer_assert( 'false' === $dom->getElementById( 'occupants-wrapper' )->getAttribute( 'data-visible' ), 'occupants wrapper should be hidden' );
 vrodos_dom_transformer_assert( str_contains( $html, 'vrodos-runtime-scene-components.bundle.js' ), 'non-networked runtime scripts should remain' );
+
+$helper_dom = new DOMDocument( '1.0', 'UTF-8' );
+@$helper_dom->loadHTML( '<a-scene id="scene"><a-entity id="existing"></a-entity></a-scene>', LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS | LIBXML_NOERROR );
+$helper_scene = $helper_dom->getElementById( 'scene' );
+vrodos_dom_transformer_assert( $helper_scene instanceof DOMElement, 'helper fixture scene missing' );
+$assets = VRodos_Compiler_AFrame_DOM_Helper::get_or_create_assets_container( $helper_dom, $helper_scene );
+vrodos_dom_transformer_assert( $assets instanceof DOMElement && 'a-assets' === $assets->tagName, 'helper should create a-assets' );
+vrodos_dom_transformer_assert( $helper_scene->firstChild === $assets, 'helper should insert a-assets before scene children' );
+vrodos_dom_transformer_assert( (string) VRodos_Compiler_Runtime_Assets::aframe_asset_timeout_ms() === $assets->getAttribute( 'timeout' ), 'helper should set a-assets timeout' );
+vrodos_dom_transformer_assert( $assets === VRodos_Compiler_AFrame_DOM_Helper::get_or_create_assets_container( $helper_dom, $helper_scene ), 'helper should reuse existing a-assets' );
+
+$component_attr = VRodos_Compiler_AFrame_DOM_Helper::parse_component_attribute( 'antialias: true; stencil: false; logarithmicDepthBuffer' );
+vrodos_dom_transformer_assert( 'true' === $component_attr['antialias'], 'helper should parse component key/value attrs' );
+vrodos_dom_transformer_assert( 'false' === $component_attr['stencil'], 'helper should parse component false attrs' );
+vrodos_dom_transformer_assert( 'true' === $component_attr['logarithmicDepthBuffer'], 'helper should parse bare component flags' );
+vrodos_dom_transformer_assert(
+	'antialias: true; stencil: false;' === VRodos_Compiler_AFrame_DOM_Helper::serialize_component_attribute( [
+		'antialias' => 'true',
+		'stencil'   => 'false',
+	] ),
+	'helper should serialize component attrs'
+);
 
 $renderer = new VRodos_Compiler_Template_Renderer();
 $threw   = false;

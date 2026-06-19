@@ -30,6 +30,12 @@ class VRodos_Compiler_Runtime_Page_Builder {
 
 	public function prepare_template( string $template, array $replacements ): string {
 		$content = $this->template_renderer->read_runtime_template( $template );
+		$replacements = array_merge(
+			[
+				'VRODOS_WEBXR_LAYER_SHIM_PLACEHOLDER' => $this->template_renderer->read_runtime_template( 'WebXR_Layer_Shim.html' ),
+			],
+			$replacements
+		);
 		foreach ( $replacements as $search => $replace ) {
 			$content = str_replace( (string) $search, (string) $replace, $content );
 		}

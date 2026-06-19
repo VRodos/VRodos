@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-vrodos-compiler-aframe-dom-helper.php';
+
 class VRodos_Compiler_AFrame_Entity_Renderer {
 	private const GLTF_LOAD_PHASE_CRITICAL = 'critical';
 	private const GLTF_LOAD_PHASE_LAZY     = 'lazy';
@@ -825,22 +827,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	}
 
 
-	/**
-	 * Asset Registry Helper
-	 */
-	public function get_or_create_assets_container( $dom, $ascene ) {
-		$a_asset = $dom->getElementsByTagName( 'a-assets' )->item(0);
-		if ( ! $a_asset ) {
-			$a_asset = $dom->createElement( 'a-assets' );
-			// Insert as the first child of the scene for A-Frame best practices
-			if ( $ascene->firstChild ) {
-				$ascene->insertBefore( $a_asset, $ascene->firstChild );
-			} else {
-				$ascene->appendChild( $a_asset );
-			}
-		}
-		$a_asset->setAttribute( 'timeout', VRodos_Compiler_Runtime_Assets::aframe_asset_timeout_ms() );
-		return $a_asset;
+	public function get_or_create_assets_container( DOMDocument $dom, DOMElement $ascene ): DOMElement {
+		return VRodos_Compiler_AFrame_DOM_Helper::get_or_create_assets_container( $dom, $ascene );
 	}
 
 	/**

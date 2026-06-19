@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/class-vrodos-compiler-runtime-feature-flags.php';
+require_once __DIR__ . '/class-vrodos-compiler-aframe-dom-helper.php';
 
 class VRodos_Compiler_Scene_Settings {
 	private VRodos_Compiler_Scene_Repository $scene_repository;
@@ -30,7 +31,7 @@ class VRodos_Compiler_Scene_Settings {
 		}
 
 		if ( '3' === (string) $settings['selChoice'] && ! empty( $metadata->backgroundImagePath ) ) {
-			$a_asset     = $this->get_or_create_assets_container( $dom, $ascene );
+			$a_asset     = VRodos_Compiler_AFrame_DOM_Helper::get_or_create_assets_container( $dom, $ascene );
 			$a_asset_sky = $dom->createElement( 'img' );
 			$a_asset_sky->setAttribute( 'id', 'custom_sky' );
 			$a_asset_sky->setAttribute( 'src', (string) call_user_func( $normalize_url, $metadata->backgroundImagePath ) );
@@ -210,7 +211,7 @@ class VRodos_Compiler_Scene_Settings {
 	}
 
 	private function apply_renderer_profile( DOMElement $ascene, array $settings, $metadata, $scene_json ): void {
-		$renderer = $this->parse_component_attribute( $ascene->getAttribute( 'renderer' ) );
+		$renderer = VRodos_Compiler_AFrame_DOM_Helper::parse_component_attribute( $ascene->getAttribute( 'renderer' ) );
 
 		$renderer['antialias']              = $this->bool_attr( $this->should_enable_renderer_antialias( $settings, $metadata ) );
 		$renderer['colorManagement']        = $this->bool_attr( $this->should_enable_color_management( $metadata ) );
@@ -222,7 +223,7 @@ class VRodos_Compiler_Scene_Settings {
 		$renderer['alpha']                  = $this->bool_attr( $this->should_enable_renderer_alpha( $metadata ) );
 		$renderer['stencil']                = $this->bool_attr( $this->should_enable_renderer_stencil( $metadata ) );
 
-		$ascene->setAttribute( 'renderer', $this->serialize_component_attribute( $renderer ) );
+		$ascene->setAttribute( 'renderer', VRodos_Compiler_AFrame_DOM_Helper::serialize_component_attribute( $renderer ) );
 	}
 
 	private function apply_shadow_profile( DOMElement $ascene, array $settings, $metadata ): void {
@@ -230,45 +231,12 @@ class VRodos_Compiler_Scene_Settings {
 		$shadows_enabled = 'off' !== $shadow_quality;
 		$shadow_update_mode = (string) ( $settings['shadowUpdateMode'] ?? $this->normalize_shadow_update_mode( $metadata ) );
 
-		$shadow = $this->parse_component_attribute( $ascene->getAttribute( 'shadow' ) );
+		$shadow = VRodos_Compiler_AFrame_DOM_Helper::parse_component_attribute( $ascene->getAttribute( 'shadow' ) );
 		$shadow['enabled']    = $this->bool_attr( $shadows_enabled );
 		$shadow['type']       = $this->get_aframe_shadow_type_attr( (string) ( $settings['rootShadowType'] ?? $this->get_shadow_map_type_attr( $shadow_quality, $metadata ) ) );
 		$shadow['autoUpdate'] = $this->bool_attr( 'dynamic' === $shadow_update_mode && $this->should_enable_shadow_auto_update( $metadata ) );
 
-		$ascene->setAttribute( 'shadow', $this->serialize_component_attribute( $shadow ) );
-	}
-
-	private function parse_component_attribute( string $attribute ): array {
-		$values = [];
-		foreach ( explode( ';', $attribute ) as $entry ) {
-			$entry = trim( $entry );
-			if ( '' === $entry ) {
-				continue;
-			}
-
-			$separator = strpos( $entry, ':' );
-			if ( false === $separator ) {
-				$values[ $entry ] = 'true';
-				continue;
-			}
-
-			$key = trim( substr( $entry, 0, $separator ) );
-			if ( '' === $key ) {
-				continue;
-			}
-			$values[ $key ] = trim( substr( $entry, $separator + 1 ) );
-		}
-
-		return $values;
-	}
-
-	private function serialize_component_attribute( array $values ): string {
-		$parts = [];
-		foreach ( $values as $key => $value ) {
-			$parts[] = $key . ': ' . $value;
-		}
-
-		return implode( '; ', $parts ) . ';';
+		$ascene->setAttribute( 'shadow', VRodos_Compiler_AFrame_DOM_Helper::serialize_component_attribute( $shadow ) );
 	}
 
 	private function bool_attr( bool $value ): string {
