@@ -749,6 +749,19 @@
       return "";
     }
   }
+  function vrodosRuntimeCloneSerializable(value) {
+    if (value === null || value === void 0 || typeof value !== "object") {
+      return value;
+    }
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch (err) {
+      if (Array.isArray(value)) {
+        return value.slice();
+      }
+      return Object.assign({}, value);
+    }
+  }
   function vrodosRuntimeTruthy(value) {
     if (VRODOSRuntimeSettings.bool) {
       return VRODOSRuntimeSettings.bool(value, false);
@@ -2129,6 +2142,673 @@
       setTimeout(resync, 80);
       setTimeout(resync, 240);
     },
+    normalizeXrExitEnabledValue: function(value, fallback) {
+      if (value === void 0 || value === null || value === "") {
+        return Boolean(fallback);
+      }
+      return !(value === false || value === "false" || value === "0" || value === 0);
+    },
+    getXrSession: function() {
+      const renderer = this.el && this.el.renderer ? this.el.renderer : null;
+      const xr = renderer && renderer.xr ? renderer.xr : null;
+      if (!xr || typeof xr.getSession !== "function") {
+        return null;
+      }
+      try {
+        return xr.getSession();
+      } catch (err) {
+        return null;
+      }
+    },
+    getXrExitRestoreFlags: function() {
+      const renderer = this.el && this.el.renderer ? this.el.renderer : null;
+      const xr = renderer && renderer.xr ? renderer.xr : null;
+      let xrSession = null;
+      if (xr && typeof xr.getSession === "function") {
+        try {
+          xrSession = xr.getSession();
+        } catch (err) {
+          xrSession = null;
+        }
+      }
+      return {
+        xrPresenting: Boolean(xr && xr.isPresenting),
+        xrSession: Boolean(xrSession),
+        aframeVrMode: Boolean(this.el && this.el.is && this.el.is("vr-mode")),
+        aframeArMode: Boolean(this.el && this.el.is && this.el.is("ar-mode")),
+        documentHidden: Boolean(typeof document !== "undefined" && document.visibilityState === "hidden")
+      };
+    },
+    isXrExitRestoreReady: function(flags) {
+      const currentFlags = flags || this.getXrExitRestoreFlags();
+      return !currentFlags.xrPresenting && !currentFlags.xrSession && !currentFlags.aframeVrMode && !currentFlags.aframeArMode && !currentFlags.documentHidden;
+    },
+    getXrExitCameraElement: function() {
+      if (typeof document === "undefined") {
+        return null;
+      }
+      return document.getElementById("cameraA") || (this.el && this.el.camera && this.el.camera.el ? this.el.camera.el : null) || (document.querySelector ? document.querySelector("[camera]") : null);
+    },
+    getXrExitCameraObject: function(cameraEl) {
+      const targetEl = cameraEl || this.getXrExitCameraElement();
+      if (targetEl && targetEl.components && targetEl.components.camera && targetEl.components.camera.camera) {
+        return targetEl.components.camera.camera;
+      }
+      if (this.el && this.el.camera) {
+        return this.el.camera;
+      }
+      return null;
+    },
+    getXrExitInlineCanvasSize: function() {
+      const renderer = this.el && this.el.renderer ? this.el.renderer : null;
+      const canvas = renderer && renderer.domElement ? renderer.domElement : this.el && this.el.canvas ? this.el.canvas : null;
+      let width = 0;
+      let height = 0;
+      if (renderer && typeof renderer.getSize === "function") {
+        try {
+          const sizeTarget = typeof THREE !== "undefined" && THREE.Vector2 ? new THREE.Vector2() : { x: 0, y: 0, width: 0, height: 0 };
+          renderer.getSize(sizeTarget);
+          width = Number(sizeTarget.x || sizeTarget.width || 0);
+          height = Number(sizeTarget.y || sizeTarget.height || 0);
+        } catch (err) {
+          width = 0;
+          height = 0;
+        }
+      }
+      const parent = canvas && canvas.parentElement ? canvas.parentElement : null;
+      const cssWidth = Number(canvas && canvas.clientWidth ? canvas.clientWidth : 0) || Number(parent && parent.clientWidth ? parent.clientWidth : 0) || Number(typeof window !== "undefined" ? window.innerWidth : 0) || width || 1;
+      const cssHeight = Number(canvas && canvas.clientHeight ? canvas.clientHeight : 0) || Number(parent && parent.clientHeight ? parent.clientHeight : 0) || Number(typeof window !== "undefined" ? window.innerHeight : 0) || height || 1;
+      return {
+        width: Math.max(1, Math.round(cssWidth)),
+        height: Math.max(1, Math.round(cssHeight)),
+        rendererWidth: Math.max(0, Math.round(width)),
+        rendererHeight: Math.max(0, Math.round(height))
+      };
+    },
+    captureXrExitCameraSnapshot: function(reason) {
+      const cameraEl = this.getXrExitCameraElement();
+      const camera = this.getXrExitCameraObject(cameraEl);
+      const rawAttribute = cameraEl && cameraEl.getAttribute ? cameraEl.getAttribute("camera") : null;
+      const attribute = typeof rawAttribute === "string" ? vrodosParseComponentAttribute(rawAttribute) : vrodosRuntimeCloneSerializable(rawAttribute || {});
+      const inlineSize = this.getXrExitInlineCanvasSize();
+      const aspectFallback = inlineSize.width / inlineSize.height;
+      return {
+        reason: reason || "",
+        capturedAt: Date.now(),
+        cameraElId: cameraEl && cameraEl.id ? cameraEl.id : "",
+        attribute,
+        fov: vrodosRuntimeNumber(
+          camera && Number.isFinite(camera.fov) ? camera.fov : attribute.fov,
+          60,
+          1,
+          179
+        ),
+        near: vrodosRuntimeNumber(
+          camera && Number.isFinite(camera.near) ? camera.near : attribute.near,
+          0.1,
+          1e-3,
+          1e5
+        ),
+        far: vrodosRuntimeNumber(
+          camera && Number.isFinite(camera.far) ? camera.far : attribute.far,
+          7e3,
+          1,
+          1e6
+        ),
+        zoom: vrodosRuntimeNumber(
+          camera && Number.isFinite(camera.zoom) ? camera.zoom : attribute.zoom,
+          1,
+          0.01,
+          100
+        ),
+        aspect: vrodosRuntimeNumber(
+          camera && Number.isFinite(camera.aspect) ? camera.aspect : aspectFallback,
+          aspectFallback,
+          0.01,
+          100
+        )
+      };
+    },
+    captureXrExitControlSnapshot: function() {
+      const controls = [];
+      const selectors = ["#player", "#cameraA"];
+      const componentNames = ["custom-movement", "look-controls", "wasd-controls", "movement-controls"];
+      const seen = [];
+      selectors.forEach((selector) => {
+        const el = typeof document !== "undefined" && document.querySelector ? document.querySelector(selector) : null;
+        if (!el || seen.indexOf(el) !== -1) {
+          return;
+        }
+        seen.push(el);
+        componentNames.forEach((componentName) => {
+          const component = el.components && el.components[componentName] ? el.components[componentName] : null;
+          const rawAttribute = el.getAttribute ? el.getAttribute(componentName) : null;
+          if (!component && (rawAttribute === null || rawAttribute === void 0)) {
+            return;
+          }
+          const attribute = typeof rawAttribute === "string" ? vrodosParseComponentAttribute(rawAttribute) : vrodosRuntimeCloneSerializable(rawAttribute || {});
+          const hasAttributeEnabled = Boolean(attribute && Object.prototype.hasOwnProperty.call(attribute, "enabled"));
+          const hasDataEnabled = Boolean(component && component.data && Object.prototype.hasOwnProperty.call(component.data, "enabled"));
+          const fallback = component && Object.prototype.hasOwnProperty.call(component, "isPlaying") ? component.isPlaying !== false : true;
+          const enabled = hasAttributeEnabled ? this.normalizeXrExitEnabledValue(attribute.enabled, fallback) : hasDataEnabled ? this.normalizeXrExitEnabledValue(component.data.enabled, fallback) : fallback;
+          controls.push({
+            el,
+            id: el.id || "",
+            component: componentName,
+            enabled,
+            hadAttribute: rawAttribute !== null && rawAttribute !== void 0,
+            hadEnabledProperty: hasAttributeEnabled || hasDataEnabled,
+            attribute
+          });
+        });
+      });
+      return controls;
+    },
+    captureXrExitRaycasterSnapshot: function() {
+      const raycasters = [];
+      const raycasterEls = typeof document !== "undefined" && document.querySelectorAll ? document.querySelectorAll("[raycaster]") : [];
+      Array.prototype.forEach.call(raycasterEls, (el) => {
+        const rawAttribute = el && el.getAttribute ? el.getAttribute("raycaster") : null;
+        if (rawAttribute === null || rawAttribute === void 0) {
+          return;
+        }
+        const attribute = typeof rawAttribute === "string" ? vrodosParseComponentAttribute(rawAttribute) : vrodosRuntimeCloneSerializable(rawAttribute || {});
+        raycasters.push({
+          el,
+          id: el.id || "",
+          attribute,
+          objects: attribute && attribute.objects !== void 0 ? attribute.objects : "",
+          far: attribute && attribute.far !== void 0 ? attribute.far : "",
+          enabled: attribute && attribute.enabled !== void 0 ? this.normalizeXrExitEnabledValue(attribute.enabled, true) : true
+        });
+      });
+      return raycasters;
+    },
+    isXrControllerRaycasterElement: function(el) {
+      if (!el) {
+        return false;
+      }
+      const id = el.id || "";
+      if (/^(oculusLeft|oculusRight|leftHand|rightHand)$/i.test(id)) {
+        return true;
+      }
+      return Boolean(el.hasAttribute && (el.hasAttribute("laser-controls") || el.hasAttribute("meta-touch-controls") || el.hasAttribute("oculus-touch-controls") || el.hasAttribute("tracked-controls")));
+    },
+    captureXrExitRestoreBaseline: function(reason) {
+      if (this.isVrPresentationActive()) {
+        return this._xrExitRestoreBaseline || null;
+      }
+      this._xrExitRestoreBaseline = {
+        reason: reason || "",
+        capturedAt: Date.now(),
+        camera: this.captureXrExitCameraSnapshot(reason),
+        controls: this.captureXrExitControlSnapshot(),
+        raycasters: this.captureXrExitRaycasterSnapshot()
+      };
+      return this._xrExitRestoreBaseline;
+    },
+    clearXrExitRestoreTimers: function() {
+      if (this._xrExitRestoreTimers && this._xrExitRestoreTimers.length) {
+        this._xrExitRestoreTimers.forEach((timerId) => clearTimeout(timerId));
+      }
+      this._xrExitRestoreTimers = [];
+    },
+    clearXrExitSessionAttachTimers: function() {
+      if (this._xrExitSessionAttachTimers && this._xrExitSessionAttachTimers.length) {
+        this._xrExitSessionAttachTimers.forEach((timerId) => clearTimeout(timerId));
+      }
+      this._xrExitSessionAttachTimers = [];
+    },
+    detachXrExitSessionEndListener: function() {
+      if (this._xrExitObservedSession && this.handleXrSessionEnd && typeof this._xrExitObservedSession.removeEventListener === "function") {
+        try {
+          this._xrExitObservedSession.removeEventListener("end", this.handleXrSessionEnd);
+        } catch (err) {
+        }
+      }
+      this._xrExitObservedSession = null;
+    },
+    attachXrExitSessionEndListener: function(reason) {
+      const session = this.getXrSession();
+      if (!session || typeof session.addEventListener !== "function") {
+        return false;
+      }
+      if (this._xrExitObservedSession === session) {
+        return true;
+      }
+      this.detachXrExitSessionEndListener();
+      try {
+        session.addEventListener("end", this.handleXrSessionEnd);
+        this._xrExitObservedSession = session;
+        this._xrExitObservedSessionReason = reason || "";
+        return true;
+      } catch (err) {
+        this._xrExitObservedSession = null;
+        return false;
+      }
+    },
+    scheduleXrExitSessionObservation: function(reason) {
+      this.clearXrExitSessionAttachTimers();
+      this.attachXrExitSessionEndListener(reason);
+      [40, 160, 420].forEach((delay) => {
+        this._xrExitSessionAttachTimers.push(setTimeout(() => {
+          this.attachXrExitSessionEndListener(reason);
+        }, delay));
+      });
+    },
+    shouldScheduleXrExitRestoreFromResume: function() {
+      if (!this._xrExitRestoreHasSeenVr && !this._xrExitRestoreActive) {
+        return false;
+      }
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return false;
+      }
+      if (this._xrExitRestoreCompletedGeneration === this._xrExitRestoreGeneration) {
+        return false;
+      }
+      return true;
+    },
+    handleXrEnter: function() {
+      if (!this._xrExitRestoreBaseline) {
+        this.captureXrExitRestoreBaseline("enter-vr-baseline");
+      }
+      this._xrExitRestoreGeneration += 1;
+      this._xrExitRestoreCompletedGeneration = -1;
+      this._xrExitRestoreHasSeenVr = true;
+      this._xrExitRestoreActive = false;
+      this._xrExitRestoreTriggers = [];
+      this.clearXrExitRestoreTimers();
+      this.scheduleXrExitSessionObservation("enter-vr");
+      VRODOSSceneSettingsMaster.setBrowsingModeVR(true);
+      this.applyVrRenderBudgetPolicy("enter-vr");
+      this.syncPresentationVisualState(true);
+      if (typeof window.gtag === "function") window.gtag("event", "vr_enabled");
+    },
+    handleXrExit: function() {
+      VRODOSSceneSettingsMaster.setBrowsingModeVR(false);
+      this.applyVrRenderBudgetPolicy("exit-vr");
+      this.syncPresentationVisualState(true);
+      this.scheduleXrExitRestore("aframe-exit-vr");
+      if (typeof window.gtag === "function") window.gtag("event", "vr_disabled");
+    },
+    handleXrSessionEnd: function() {
+      this.scheduleXrExitRestore("webxr-session-end");
+    },
+    handleXrExitResumeSignal: function(event) {
+      if (!this.shouldScheduleXrExitRestoreFromResume()) {
+        return;
+      }
+      const type = event && event.type ? event.type : "resume";
+      this.scheduleXrExitRestore(`window-${type}`);
+    },
+    scheduleXrExitRestore: function(trigger) {
+      this._xrExitRestoreGeneration = this._xrExitRestoreGeneration || 0;
+      this._xrExitRestoreCompletedGeneration = typeof this._xrExitRestoreCompletedGeneration === "number" ? this._xrExitRestoreCompletedGeneration : -1;
+      this._xrExitRestoreTriggers = Array.isArray(this._xrExitRestoreTriggers) ? this._xrExitRestoreTriggers : [];
+      if (this._xrExitRestoreCompletedGeneration === this._xrExitRestoreGeneration) {
+        return this._xrExitRestoreDiagnostics || window.__vrodosLastXrExitRestoreDiagnostics || null;
+      }
+      const normalizedTrigger = trigger || "unknown";
+      if (this._xrExitRestoreTriggers.indexOf(normalizedTrigger) === -1) {
+        this._xrExitRestoreTriggers.push(normalizedTrigger);
+      }
+      this._xrExitRestoreActive = true;
+      this.clearXrExitRestoreTimers();
+      const delays = [0, 50, 140, 320, 650, 1e3];
+      delays.forEach((delay, attemptIndex) => {
+        const timerId = setTimeout(() => {
+          this.runXrExitRestoreAttempt(normalizedTrigger, attemptIndex, delays.length);
+        }, delay);
+        this._xrExitRestoreTimers.push(timerId);
+      });
+      return true;
+    },
+    runXrExitRestoreAttempt: function(trigger, attemptIndex, attemptCount) {
+      if (this._xrExitRestoreCompletedGeneration === this._xrExitRestoreGeneration) {
+        return this._xrExitRestoreDiagnostics || null;
+      }
+      const flags = this.getXrExitRestoreFlags();
+      const ready = this.isXrExitRestoreReady(flags);
+      const isFinalAttempt = attemptIndex >= attemptCount - 1;
+      if (!ready) {
+        const diagnostics = {
+          status: isFinalAttempt ? "pending-xr-active" : "waiting-for-inline",
+          trigger,
+          triggers: this._xrExitRestoreTriggers.slice(),
+          generation: this._xrExitRestoreGeneration,
+          attempt: attemptIndex,
+          flags,
+          timestamp: Date.now()
+        };
+        this._xrExitRestoreDiagnostics = diagnostics;
+        window.__vrodosLastXrExitRestoreDiagnostics = diagnostics;
+        return diagnostics;
+      }
+      this.clearXrExitRestoreTimers();
+      return this.restoreXrExitInlineState(trigger, attemptIndex, flags);
+    },
+    closeXrExitPanels: function(reason) {
+      const result = {
+        spatialPanelClosed: false,
+        legacyPanelClosed: false,
+        errors: []
+      };
+      const spatial = window.VRODOSSpatialUI || null;
+      const overlay = window.VRODOSRuntimeOverlay || null;
+      if (spatial && typeof spatial.getActivePanel === "function" && spatial.getActivePanel() && typeof spatial.closePanel === "function") {
+        try {
+          spatial.closePanel(reason);
+          result.spatialPanelClosed = true;
+        } catch (err) {
+          result.errors.push(`spatial:${err && err.message ? err.message : err}`);
+        }
+      }
+      if (overlay && typeof overlay.getSceneDiagnostics === "function") {
+        const before = overlay.getSceneDiagnostics();
+        if (before && before.activePanel && typeof overlay.closeActivePanel === "function") {
+          try {
+            overlay.closeActivePanel(reason);
+            result.legacyPanelClosed = true;
+          } catch (err) {
+            result.errors.push(`legacy:${err && err.message ? err.message : err}`);
+          }
+        }
+      } else if (overlay && typeof overlay.closeActivePanel === "function") {
+        try {
+          overlay.closeActivePanel(reason);
+        } catch (err) {
+          result.errors.push(`legacy:${err && err.message ? err.message : err}`);
+        }
+      }
+      return result;
+    },
+    restoreXrExitInteractionState: function(reason) {
+      const overlay = window.VRODOSRuntimeOverlay || null;
+      const spatial = window.VRODOSSpatialUI || null;
+      const result = {
+        interactionUnlocked: false,
+        sceneControlsRestored: false,
+        overlayRaycastModeRestored: false,
+        overlayRaycastersRefreshed: false,
+        spatialTargetsRefreshed: false,
+        errors: []
+      };
+      if (overlay && typeof overlay.lockSceneInteraction === "function") {
+        try {
+          overlay.lockSceneInteraction(false, { reason });
+          result.interactionUnlocked = true;
+        } catch (err) {
+          result.errors.push(`lock:${err && err.message ? err.message : err}`);
+        }
+      }
+      if (overlay && typeof overlay.setSceneControlsSuppressed === "function") {
+        try {
+          overlay.setSceneControlsSuppressed(false, null);
+          result.sceneControlsRestored = true;
+        } catch (err) {
+          result.errors.push(`controls:${err && err.message ? err.message : err}`);
+        }
+      }
+      if (overlay && typeof overlay.setOverlayRaycastMode === "function") {
+        try {
+          overlay.setOverlayRaycastMode(false);
+          result.overlayRaycastModeRestored = true;
+        } catch (err) {
+          result.errors.push(`raycast-mode:${err && err.message ? err.message : err}`);
+        }
+      }
+      if (overlay && typeof overlay.refreshRaycasters === "function") {
+        try {
+          overlay.refreshRaycasters();
+          result.overlayRaycastersRefreshed = true;
+        } catch (err) {
+          result.errors.push(`overlay-raycasters:${err && err.message ? err.message : err}`);
+        }
+      }
+      if (spatial && typeof spatial.refreshInteractionTargets === "function") {
+        try {
+          spatial.refreshInteractionTargets();
+          result.spatialTargetsRefreshed = true;
+        } catch (err) {
+          result.errors.push(`spatial-targets:${err && err.message ? err.message : err}`);
+        }
+      }
+      return result;
+    },
+    restoreXrExitControls: function(baseline) {
+      const result = {
+        restored: 0,
+        entries: [],
+        errors: []
+      };
+      const controls = baseline && Array.isArray(baseline.controls) ? baseline.controls : [];
+      controls.forEach((entry) => {
+        if (!entry || !entry.el || !entry.component) {
+          return;
+        }
+        const el = entry.el;
+        const component = el.components && el.components[entry.component] ? el.components[entry.component] : null;
+        try {
+          if (entry.hadEnabledProperty && el.setAttribute) {
+            el.setAttribute(entry.component, "enabled", Boolean(entry.enabled));
+          }
+          if (component && component.data && entry.hadEnabledProperty) {
+            component.data.enabled = Boolean(entry.enabled);
+          }
+          if (component && !entry.hadEnabledProperty) {
+            if (entry.enabled && component.isPlaying === false && typeof component.play === "function") {
+              component.play();
+            } else if (!entry.enabled && component.isPlaying !== false && typeof component.pause === "function") {
+              component.pause();
+            }
+          }
+          result.restored += 1;
+          result.entries.push({
+            id: entry.id,
+            component: entry.component,
+            enabled: Boolean(entry.enabled)
+          });
+        } catch (err) {
+          result.errors.push(`${entry.id || entry.component}:${err && err.message ? err.message : err}`);
+        }
+      });
+      return result;
+    },
+    restoreXrExitControllerRaycaster: function(entry) {
+      return {
+        mode: "controller-skipped-exit",
+        restored: false,
+        id: entry && entry.id ? entry.id : "",
+        reason: "controller raycasters are owned by live XR controller components and are rebuilt on immersive entry"
+      };
+    },
+    restoreXrExitRaycasters: function(baseline) {
+      const result = {
+        restored: 0,
+        refreshed: 0,
+        controllerSelectiveRestored: 0,
+        controllerSkipped: 0,
+        entries: [],
+        errors: []
+      };
+      const raycasters = baseline && Array.isArray(baseline.raycasters) ? baseline.raycasters : [];
+      raycasters.forEach((entry) => {
+        if (!entry || !entry.el || !entry.el.setAttribute) {
+          return;
+        }
+        try {
+          if (this.isXrControllerRaycasterElement(entry.el)) {
+            const controllerResult = this.restoreXrExitControllerRaycaster(entry);
+            result.controllerSelectiveRestored += controllerResult.restored ? 1 : 0;
+            result.controllerSkipped += controllerResult.restored ? 0 : 1;
+            result.entries.push(controllerResult);
+            return;
+          }
+          entry.el.setAttribute("raycaster", vrodosRuntimeCloneSerializable(entry.attribute || {}));
+          result.restored += 1;
+          result.entries.push({
+            mode: "full",
+            id: entry.id,
+            objects: entry.objects,
+            far: entry.far,
+            enabled: entry.enabled
+          });
+        } catch (err) {
+          result.errors.push(`${entry.id || "raycaster"}:${err && err.message ? err.message : err}`);
+        }
+      });
+      const raycasterEls = typeof document !== "undefined" && document.querySelectorAll ? document.querySelectorAll("[raycaster]") : [];
+      Array.prototype.forEach.call(raycasterEls, (el) => {
+        const component = el && el.components ? el.components.raycaster : null;
+        if (component && typeof component.refreshObjects === "function") {
+          try {
+            component.refreshObjects();
+            result.refreshed += 1;
+          } catch (err) {
+            result.errors.push(`${el.id || "raycaster-refresh"}:${err && err.message ? err.message : err}`);
+          }
+        }
+      });
+      return result;
+    },
+    forceXrExitRendererResize: function() {
+      const renderer = this.el && this.el.renderer ? this.el.renderer : null;
+      const size = this.getXrExitInlineCanvasSize();
+      if (this.el && typeof this.el.resize === "function") {
+        try {
+          this.el.resize();
+        } catch (err) {
+        }
+      }
+      if (renderer && typeof renderer.setSize === "function") {
+        try {
+          renderer.setSize(size.width, size.height, false);
+        } catch (err) {
+        }
+      }
+      const updatedSize = this.getXrExitInlineCanvasSize();
+      return {
+        width: updatedSize.width,
+        height: updatedSize.height,
+        rendererWidth: updatedSize.rendererWidth,
+        rendererHeight: updatedSize.rendererHeight
+      };
+    },
+    restoreXrExitCameraState: function(baseline) {
+      const cameraEl = this.getXrExitCameraElement();
+      const camera = this.getXrExitCameraObject(cameraEl);
+      const cameraBaseline = baseline && baseline.camera ? baseline.camera : this.captureXrExitCameraSnapshot("restore-fallback");
+      const size = this.forceXrExitRendererResize();
+      const aspect = size.width / size.height;
+      const fov = 60;
+      const near = vrodosRuntimeNumber(cameraBaseline.near, 0.1, 1e-3, 1e5);
+      const far = vrodosRuntimeNumber(cameraBaseline.far, 7e3, 1, 1e6);
+      const zoom = vrodosRuntimeNumber(cameraBaseline.zoom, 1, 0.01, 100);
+      const cameraAttribute = Object.assign({}, cameraBaseline.attribute || {}, {
+        active: true,
+        fov,
+        near,
+        far,
+        zoom
+      });
+      if (cameraEl && cameraEl.setAttribute) {
+        try {
+          cameraEl.setAttribute("camera", cameraAttribute);
+        } catch (err) {
+          cameraEl.setAttribute("camera", `active: true; fov: ${fov}; near: ${near}; far: ${far}; zoom: ${zoom}`);
+        }
+      }
+      if (camera) {
+        camera.fov = fov;
+        camera.near = near;
+        camera.far = far;
+        camera.zoom = zoom;
+        camera.aspect = aspect;
+        camera.el = cameraEl || camera.el || null;
+        if (typeof camera.updateProjectionMatrix === "function") {
+          camera.updateProjectionMatrix();
+        }
+        if (typeof camera.updateMatrixWorld === "function") {
+          camera.updateMatrixWorld(true);
+        }
+      }
+      if (this.el) {
+        if (camera) {
+          this.el.camera = camera;
+        }
+        if (this.el.object3D && typeof this.el.object3D.updateMatrixWorld === "function") {
+          this.el.object3D.updateMatrixWorld(true);
+        }
+      }
+      if (cameraEl && cameraEl.object3D && typeof cameraEl.object3D.updateMatrixWorld === "function") {
+        cameraEl.object3D.updateMatrixWorld(true);
+      }
+      return {
+        cameraElId: cameraEl && cameraEl.id ? cameraEl.id : "",
+        activeCameraRestored: Boolean(this.el && camera && this.el.camera === camera),
+        fov,
+        near,
+        far,
+        zoom,
+        aspect: Number(aspect.toFixed(6)),
+        rendererSize: size
+      };
+    },
+    finalizeXrExitNavigationHandoff: function(reason) {
+      const player = typeof document !== "undefined" && document.getElementById ? document.getElementById("player") : null;
+      const movement = player && player.components ? player.components["custom-movement"] : null;
+      if (movement && typeof movement.finalizeImmersiveExitNavigationHandoff === "function") {
+        return movement.finalizeImmersiveExitNavigationHandoff(reason);
+      }
+      return {
+        status: movement ? "missing-finalizer" : "missing-custom-movement",
+        applied: false
+      };
+    },
+    restoreXrExitInlineState: function(trigger, attemptIndex, flags) {
+      const reason = `xr-exit-restore:${trigger || "unknown"}`;
+      const baseline = this._xrExitRestoreBaseline || this.captureXrExitRestoreBaseline("restore-inline");
+      const panels = this.closeXrExitPanels(reason);
+      const interaction = this.restoreXrExitInteractionState(reason);
+      const navigation = this.finalizeXrExitNavigationHandoff(reason);
+      const camera = this.restoreXrExitCameraState(baseline);
+      const controls = this.restoreXrExitControls(baseline);
+      const raycasters = this.restoreXrExitRaycasters(baseline);
+      VRODOSSceneSettingsMaster.setBrowsingModeVR(false);
+      this.applyVrRenderBudgetPolicy("xr-exit-restore");
+      this.syncPresentationVisualState(true);
+      if (typeof this.updatePostProcessingSize === "function") {
+        this.updatePostProcessingSize();
+      }
+      if (typeof this.updatePmndrsPostProcessingSize === "function") {
+        this.updatePmndrsPostProcessingSize();
+      }
+      const afterFlags = this.getXrExitRestoreFlags();
+      const diagnostics = {
+        status: "restored",
+        trigger,
+        triggers: this._xrExitRestoreTriggers.slice(),
+        generation: this._xrExitRestoreGeneration,
+        attempt: attemptIndex,
+        timestamp: Date.now(),
+        beforeFlags: flags || this.getXrExitRestoreFlags(),
+        afterFlags,
+        presentationMode: this.getPresentationMode(),
+        camera,
+        panels,
+        interaction,
+        controls,
+        raycasters,
+        navigation,
+        baselineReason: baseline && baseline.reason ? baseline.reason : ""
+      };
+      this._xrExitRestoreCompletedGeneration = this._xrExitRestoreGeneration;
+      this._xrExitRestoreActive = false;
+      this._xrExitRestoreDiagnostics = diagnostics;
+      window.__vrodosLastXrExitRestoreDiagnostics = diagnostics;
+      this.publishRuntimeFeatureState("xr-exit-restore");
+      return diagnostics;
+    },
     // --- Quality profile methods (extracted to vrodos_quality_profiles.js) ---
     applyRenderQualityProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyRenderQualityProfile,
     applyShadowQualityProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyShadowQualityProfile,
@@ -2216,8 +2896,15 @@
         this.markShadowDirty("resize");
       }.bind(this);
       this.handlePresentationModeChange = function() {
+        if (!this.isVrPresentationActive()) {
+          this.captureXrExitRestoreBaseline("presentation-mode-change");
+        }
         this.syncPresentationVisualState(true);
       }.bind(this);
+      this.handleXrEnter = this.handleXrEnter.bind(this);
+      this.handleXrExit = this.handleXrExit.bind(this);
+      this.handleXrSessionEnd = this.handleXrSessionEnd.bind(this);
+      this.handleXrExitResumeSignal = this.handleXrExitResumeSignal.bind(this);
       this.postProcessingSize = new THREE.Vector2();
       this.sceneQueryCache = {};
       this.sceneCollectionsDirty = true;
@@ -2313,7 +3000,21 @@
       this._runtimeFeatureStateLastPublishMs = 0;
       this._runtimeFeatureStateLogSignature = "";
       this._vrodosVrRenderBudget = null;
+      this._xrExitRestoreBaseline = null;
+      this._xrExitRestoreTimers = [];
+      this._xrExitSessionAttachTimers = [];
+      this._xrExitObservedSession = null;
+      this._xrExitObservedSessionReason = "";
+      this._xrExitRestoreGeneration = 0;
+      this._xrExitRestoreCompletedGeneration = -1;
+      this._xrExitRestoreHasSeenVr = false;
+      this._xrExitRestoreActive = false;
+      this._xrExitRestoreTriggers = [];
+      this._xrExitRestoreDiagnostics = null;
       window.addEventListener("resize", this.handleResize);
+      window.addEventListener("focus", this.handleXrExitResumeSignal);
+      window.addEventListener("pageshow", this.handleXrExitResumeSignal);
+      document.addEventListener("visibilitychange", this.handleXrExitResumeSignal);
       document.addEventListener("fullscreenchange", this.handlePresentationModeChange);
       document.addEventListener("webkitfullscreenchange", this.handlePresentationModeChange);
       document.addEventListener("mozfullscreenchange", this.handlePresentationModeChange);
@@ -2379,18 +3080,8 @@
         this.applyVrRenderBudgetPolicy("scene-loaded");
       });
       this.el.addEventListener("model-loaded", this.handleQualityModelLoad);
-      this.el.addEventListener("enter-vr", () => {
-        VRODOSSceneSettingsMaster.setBrowsingModeVR(true);
-        this.applyVrRenderBudgetPolicy("enter-vr");
-        this.syncPresentationVisualState(true);
-        if (typeof window.gtag === "function") window.gtag("event", "vr_enabled");
-      });
-      this.el.addEventListener("exit-vr", () => {
-        VRODOSSceneSettingsMaster.setBrowsingModeVR(false);
-        this.applyVrRenderBudgetPolicy("exit-vr");
-        this.syncPresentationVisualState(true);
-        if (typeof window.gtag === "function") window.gtag("event", "vr_disabled");
-      });
+      this.el.addEventListener("enter-vr", this.handleXrEnter);
+      this.el.addEventListener("exit-vr", this.handleXrExit);
       const cam = document.querySelector("#cameraA");
       if (cam) {
         if (this.data.pr_type !== "vrexpo_games") {
@@ -2401,6 +3092,7 @@
           if (my_face) my_face.setAttribute("visible", "false");
         }
       }
+      this.captureXrExitRestoreBaseline("init");
       const backgroundEl = this.el;
       const presetGroundEnabled = this.data.presetGroundEnabled !== "0";
       if (!this.data.selChoice) this.data.selChoice = "0";
@@ -2494,11 +3186,19 @@
       this.el.removeEventListener("model-loaded", this.handleQualityModelLoad);
       this.el.removeEventListener("child-attached", this.handleSceneMutation);
       this.el.removeEventListener("child-detached", this.handleSceneMutation);
+      this.el.removeEventListener("enter-vr", this.handleXrEnter);
+      this.el.removeEventListener("exit-vr", this.handleXrExit);
       window.removeEventListener("resize", this.handleResize);
+      window.removeEventListener("focus", this.handleXrExitResumeSignal);
+      window.removeEventListener("pageshow", this.handleXrExitResumeSignal);
+      document.removeEventListener("visibilitychange", this.handleXrExitResumeSignal);
       document.removeEventListener("fullscreenchange", this.handlePresentationModeChange);
       document.removeEventListener("webkitfullscreenchange", this.handlePresentationModeChange);
       document.removeEventListener("mozfullscreenchange", this.handlePresentationModeChange);
       document.removeEventListener("MSFullscreenChange", this.handlePresentationModeChange);
+      this.clearXrExitRestoreTimers();
+      this.clearXrExitSessionAttachTimers();
+      this.detachXrExitSessionEndListener();
       if (this.queuedQualityRefreshId) {
         clearTimeout(this.queuedQualityRefreshId);
         this.queuedQualityRefreshId = null;
@@ -2974,6 +3674,13 @@
       this.immersiveTargetRayGeometry = null;
       this.immersiveShadowSuppressedAt = 0;
       this.immersiveWasPresenting = false;
+      this.immersiveControllerRayVisualResetFrames = 0;
+      this.lastImmersiveControllerRayVisualDiagnostics = null;
+      this.pendingImmersiveExitNavigationPosition = null;
+      this.pendingImmersiveExitNavigationReason = "";
+      this.pendingImmersiveExitNavigationCapturedAt = 0;
+      this.immersiveExitHandoffTimers = [];
+      this.lastImmersiveExitHandoffDiagnostics = null;
       this.immersiveWorldRootDiagnostics = {
         count: 0,
         samples: [],
@@ -3153,7 +3860,82 @@
         this.markCollisionWorldDirty();
       }
     },
+    clearImmersiveExitNavigationHandoffTimers: function() {
+      if (this.immersiveExitHandoffTimers && this.immersiveExitHandoffTimers.length) {
+        this.immersiveExitHandoffTimers.forEach((timerId) => window.clearTimeout(timerId));
+      }
+      this.immersiveExitHandoffTimers = [];
+    },
+    scheduleImmersiveExitNavigationHandoff: function(reason) {
+      this.clearImmersiveExitNavigationHandoffTimers();
+      [80, 240, 560, 1e3].forEach((delay) => {
+        const timerId = window.setTimeout(() => {
+          this.finalizeImmersiveExitNavigationHandoff(reason || "custom-movement-exit-poll");
+        }, delay);
+        this.immersiveExitHandoffTimers.push(timerId);
+      });
+    },
+    getImmersiveExitNavigationVectorDiagnostics: function(position) {
+      if (!position) {
+        return null;
+      }
+      return {
+        x: Number(Number(position.x || 0).toFixed(4)),
+        y: Number(Number(position.y || 0).toFixed(4)),
+        z: Number(Number(position.z || 0).toFixed(4))
+      };
+    },
+    finalizeImmersiveExitNavigationHandoff: function(reason) {
+      const pendingPosition = this.pendingImmersiveExitNavigationPosition;
+      const diagnostics = {
+        reason: reason || "",
+        capturedReason: this.pendingImmersiveExitNavigationReason || "",
+        capturedAt: this.pendingImmersiveExitNavigationCapturedAt || 0,
+        timestamp: Date.now(),
+        applied: false,
+        pendingPosition: this.getImmersiveExitNavigationVectorDiagnostics(pendingPosition),
+        immersiveActive: this.isImmersiveXrPresenting(),
+        status: "no-pending-position"
+      };
+      if (!pendingPosition) {
+        this.lastImmersiveExitHandoffDiagnostics = diagnostics;
+        return diagnostics;
+      }
+      if (diagnostics.immersiveActive) {
+        diagnostics.status = "deferred-xr-active";
+        this.lastImmersiveExitHandoffDiagnostics = diagnostics;
+        return diagnostics;
+      }
+      const targetPosition = pendingPosition.clone ? pendingPosition.clone() : pendingPosition;
+      const applied = this.setNavigationWorldPosition(targetPosition);
+      diagnostics.applied = Boolean(applied);
+      diagnostics.status = applied ? "applied" : "apply-failed";
+      diagnostics.finalPosition = this.getImmersiveExitNavigationVectorDiagnostics(this.getNavigationWorldPosition());
+      if (applied) {
+        if (this.lastResolvedPosition && typeof this.lastResolvedPosition.copy === "function") {
+          this.lastResolvedPosition.copy(targetPosition);
+        }
+        if (this.lastNonImmersiveNavigationPosition && typeof this.lastNonImmersiveNavigationPosition.copy === "function") {
+          this.lastNonImmersiveNavigationPosition.copy(targetPosition);
+          this.hasLastNonImmersiveNavigationPosition = true;
+          this.lastNonImmersiveGroundRememberedAt = this.getRuntimeNow();
+        }
+        this.pendingImmersiveExitNavigationPosition = null;
+        this.pendingImmersiveExitNavigationReason = "";
+        this.pendingImmersiveExitNavigationCapturedAt = 0;
+        this.positionPrimed = true;
+        this.hasLastGroundHit = false;
+        this.clearImmersiveExitNavigationHandoffTimers();
+      }
+      this.lastImmersiveExitHandoffDiagnostics = diagnostics;
+      return diagnostics;
+    },
     handleEnterVr: function() {
+      this.pendingImmersiveExitNavigationPosition = null;
+      this.pendingImmersiveExitNavigationReason = "";
+      this.pendingImmersiveExitNavigationCapturedAt = 0;
+      this.clearImmersiveExitNavigationHandoffTimers();
+      this.immersiveControllerRayVisualResetFrames = 8;
       this.rememberNonImmersiveNavigationPosition(true);
       window.setTimeout(() => {
         if (this.isImmersiveXrPresenting()) {
@@ -3164,6 +3946,9 @@
     },
     handleExitVr: function() {
       const finalImmersiveNavigationPosition = this.immersiveVirtualNavPosition.clone();
+      this.pendingImmersiveExitNavigationPosition = finalImmersiveNavigationPosition.clone();
+      this.pendingImmersiveExitNavigationReason = "handle-exit-vr";
+      this.pendingImmersiveExitNavigationCapturedAt = Date.now();
       this.restoreImmersiveWorldBaseTransforms();
       this.immersiveWasPresenting = false;
       this.heightOffset = null;
@@ -3173,7 +3958,9 @@
       this.clearImmersiveEntryPoseSettle();
       this.disposeImmersiveTargetRayLines();
       if (!this.isImmersiveXrPresenting()) {
-        this.setNavigationWorldPosition(finalImmersiveNavigationPosition);
+        this.finalizeImmersiveExitNavigationHandoff("handle-exit-vr");
+      } else {
+        this.scheduleImmersiveExitNavigationHandoff("handle-exit-vr");
       }
     },
     handleThumbstickMove: function(event) {
@@ -3322,6 +4109,7 @@
       this.sceneEl.removeEventListener("exit-vr", this.handleExitVr);
       window.removeEventListener("keydown", this.handleKeyDown, true);
       window.removeEventListener("keyup", this.handleKeyUp, true);
+      this.clearImmersiveExitNavigationHandoffTimers();
       this.disposeImmersiveTargetRayLines();
       if (this.navPerfDebug && this.navPerfDebug.overlay && this.navPerfDebug.overlay.parentNode) {
         this.navPerfDebug.overlay.parentNode.removeChild(this.navPerfDebug.overlay);
@@ -4268,8 +5056,160 @@
         });
       }
     },
+    normalizeRayVector: function(value, fallback) {
+      const base = fallback || { x: 0, y: 0, z: -1 };
+      if (!value) {
+        return { x: base.x, y: base.y, z: base.z };
+      }
+      let x;
+      let y;
+      let z;
+      if (typeof value === "string") {
+        const parts = value.trim().split(/\s+/).map(Number);
+        x = parts[0];
+        y = parts[1];
+        z = parts[2];
+      } else {
+        x = Number(value.x);
+        y = Number(value.y);
+        z = Number(value.z);
+      }
+      if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+        return { x: base.x, y: base.y, z: base.z };
+      }
+      const length = Math.sqrt(x * x + y * y + z * z);
+      if (!Number.isFinite(length) || length <= 1e-6) {
+        return { x: base.x, y: base.y, z: base.z };
+      }
+      return {
+        x: x / length,
+        y: y / length,
+        z: z / length
+      };
+    },
+    getControllerRayDirection: function(controllerEl, raycaster, raycasterAttribute) {
+      const fallback = { x: 0, y: 0, z: -1 };
+      if (raycaster && raycaster.data && raycaster.data.direction) {
+        return this.normalizeRayVector(raycaster.data.direction, fallback);
+      }
+      if (raycasterAttribute && raycasterAttribute.direction) {
+        return this.normalizeRayVector(raycasterAttribute.direction, fallback);
+      }
+      if (controllerEl && controllerEl.components && controllerEl.components.raycaster && controllerEl.components.raycaster.data && controllerEl.components.raycaster.data.direction) {
+        return this.normalizeRayVector(controllerEl.components.raycaster.data.direction, fallback);
+      }
+      return fallback;
+    },
+    setLineGeometryEndpoints: function(lineObject, direction, far) {
+      if (!lineObject || !lineObject.geometry) {
+        return false;
+      }
+      const geometry = lineObject.geometry;
+      const attribute = typeof geometry.getAttribute === "function" ? geometry.getAttribute("position") : geometry.attributes && geometry.attributes.position;
+      if (!attribute || !attribute.array || attribute.itemSize < 3 || attribute.count < 2) {
+        return false;
+      }
+      const distance = Math.max(0.02, Number(far) || 100);
+      const lastIndex = (attribute.count - 1) * attribute.itemSize;
+      attribute.array[0] = 0;
+      attribute.array[1] = 0;
+      attribute.array[2] = 0;
+      attribute.array[lastIndex] = direction.x * distance;
+      attribute.array[lastIndex + 1] = direction.y * distance;
+      attribute.array[lastIndex + 2] = direction.z * distance;
+      attribute.needsUpdate = true;
+      if (geometry && typeof geometry.computeBoundingSphere === "function") {
+        geometry.computeBoundingSphere();
+      }
+      return true;
+    },
+    resetLineObjectTransform: function(lineObject) {
+      if (!lineObject) {
+        return false;
+      }
+      if (lineObject.position && typeof lineObject.position.set === "function") {
+        lineObject.position.set(0, 0, 0);
+      }
+      if (lineObject.rotation && typeof lineObject.rotation.set === "function") {
+        lineObject.rotation.set(0, 0, 0);
+      }
+      if (lineObject.quaternion && typeof lineObject.quaternion.identity === "function") {
+        lineObject.quaternion.identity();
+      }
+      if (lineObject.scale && typeof lineObject.scale.set === "function") {
+        lineObject.scale.set(1, 1, 1);
+      }
+      lineObject.visible = true;
+      lineObject.matrixAutoUpdate = true;
+      if (typeof lineObject.updateMatrix === "function") {
+        lineObject.updateMatrix();
+      }
+      if (typeof lineObject.updateMatrixWorld === "function") {
+        lineObject.updateMatrixWorld(true);
+      }
+      return true;
+    },
+    resetAFrameControllerRayVisual: function(controllerEl, direction, far, forceRecreate) {
+      const diagnostics = {
+        id: controllerEl && controllerEl.id ? controllerEl.id : "",
+        forceRecreate: Boolean(forceRecreate),
+        lineAttributeRemoved: false,
+        lineObjectRemoved: false,
+        lineAttributeSet: false,
+        lineObjectsNormalized: 0,
+        lineGeometriesReset: 0
+      };
+      if (!controllerEl) {
+        return diagnostics;
+      }
+      const distance = Math.max(0.02, Number(far) || 100);
+      const existingLine = controllerEl.getObject3D ? controllerEl.getObject3D("line") : null;
+      const shouldSetLineAttribute = forceRecreate || !existingLine || controllerEl.hasAttribute && !controllerEl.hasAttribute("line");
+      if (controllerEl.setAttribute) {
+        if (shouldSetLineAttribute) {
+          controllerEl.setAttribute("line", {
+            start: "0 0 0",
+            end: `${direction.x * distance} ${direction.y * distance} ${direction.z * distance}`,
+            color: "white",
+            opacity: 1,
+            visible: true
+          });
+          diagnostics.lineAttributeSet = true;
+        }
+      }
+      const seen = [];
+      const lineObject = controllerEl.getObject3D ? controllerEl.getObject3D("line") : null;
+      if (lineObject) {
+        seen.push(lineObject);
+      }
+      const lineComponent = controllerEl.components ? controllerEl.components.line : null;
+      if (lineComponent && lineComponent.line && seen.indexOf(lineComponent.line) === -1) {
+        seen.push(lineComponent.line);
+      }
+      if (controllerEl.object3D && typeof controllerEl.object3D.traverse === "function") {
+        controllerEl.object3D.traverse((object) => {
+          if (!object || seen.indexOf(object) !== -1) {
+            return;
+          }
+          if (object.isLine || object.type === "Line" || object.type === "LineSegments") {
+            seen.push(object);
+          }
+        });
+      }
+      seen.forEach((object) => {
+        if (this.resetLineObjectTransform(object)) {
+          diagnostics.lineObjectsNormalized += 1;
+        }
+        if (this.setLineGeometryEndpoints(object, direction, distance)) {
+          diagnostics.lineGeometriesReset += 1;
+        }
+      });
+      return diagnostics;
+    },
     ensureAFrameControllerRayVisuals: function() {
       const controllerEls = [this.thumbL, this.thumbR];
+      const diagnostics = [];
+      const forceReset = this.immersiveControllerRayVisualResetFrames > 0;
       for (let i = 0; i < controllerEls.length; i++) {
         const controllerEl = controllerEls[i];
         if (!controllerEl) {
@@ -4278,10 +5218,20 @@
         const currentRaycaster = controllerEl.getAttribute ? controllerEl.getAttribute("raycaster") || {} : {};
         const objects = currentRaycaster.objects || ".raycastable";
         const far = currentRaycaster.far || 100;
+        const nextRaycaster = Object.assign({}, currentRaycaster, {
+          objects,
+          showLine: true,
+          far,
+          lineColor: "white",
+          lineOpacity: 1
+        });
+        let raycaster = controllerEl.components ? controllerEl.components.raycaster : null;
+        const direction = this.getControllerRayDirection(controllerEl, raycaster, currentRaycaster);
+        const visualDiagnostics = this.resetAFrameControllerRayVisual(controllerEl, direction, far, forceReset);
         if (controllerEl.setAttribute) {
-          controllerEl.setAttribute("raycaster", `objects: ${objects}; showLine: true; far: ${far}; lineColor: white; lineOpacity: 1`);
+          controllerEl.setAttribute("raycaster", nextRaycaster);
         }
-        const raycaster = controllerEl.components ? controllerEl.components.raycaster : null;
+        raycaster = controllerEl.components ? controllerEl.components.raycaster : null;
         if (raycaster && raycaster.data) {
           const oldData = Object.assign({}, raycaster.data);
           raycaster.data.showLine = true;
@@ -4299,6 +5249,24 @@
         if (lineComponent && lineComponent.line) {
           lineComponent.line.visible = true;
         }
+        if (forceReset) {
+          const finalRaycasterAttribute = controllerEl.getAttribute ? controllerEl.getAttribute("raycaster") || nextRaycaster : nextRaycaster;
+          const finalDirection = this.getControllerRayDirection(controllerEl, raycaster, finalRaycasterAttribute);
+          const finalVisualDiagnostics = this.resetAFrameControllerRayVisual(controllerEl, finalDirection, far, false);
+          visualDiagnostics.lineAttributeSet = visualDiagnostics.lineAttributeSet || finalVisualDiagnostics.lineAttributeSet;
+          visualDiagnostics.lineObjectsNormalized += finalVisualDiagnostics.lineObjectsNormalized;
+          visualDiagnostics.lineGeometriesReset += finalVisualDiagnostics.lineGeometriesReset;
+        }
+        diagnostics.push(visualDiagnostics);
+      }
+      if (forceReset) {
+        this.immersiveControllerRayVisualResetFrames -= 1;
+        this.lastImmersiveControllerRayVisualDiagnostics = {
+          framesRemaining: this.immersiveControllerRayVisualResetFrames,
+          controllers: diagnostics,
+          timestamp: Date.now()
+        };
+        window.__vrodosLastControllerRayVisualResetDiagnostics = this.lastImmersiveControllerRayVisualDiagnostics;
       }
     },
     suppressImmersiveOverlayShadows: function() {

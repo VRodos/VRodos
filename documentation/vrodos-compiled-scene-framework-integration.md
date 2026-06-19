@@ -225,6 +225,14 @@ When no modal is open in immersive XR, the runtime shows a small ray endpoint do
 
 Controller rays should remain visible before, during, and after modal panels. If rays disappear after close or finish, inspect scene interaction locking, raycaster `far` restoration, and scene raycast-target restoration first.
 
+### Quest WebXR Exit Handoff
+
+Quest Browser can leave immersive WebXR through the Oculus/system UI without matching the clean timing of desktop `Esc`. The compiled runtime handles this through the `scene-settings` XR exit restore coordinator. It listens to A-Frame `exit-vr`, WebXR session `end`, `visibilitychange`, `pageshow`, and window `focus`, then polls briefly until `renderer.xr.isPresenting`, `xr.getSession()`, and A-Frame `vr-mode`/`ar-mode` are all inactive before doing final restoration.
+
+The coordinator must keep the final immersive navigation position, then restore inline desktop state: `#cameraA` active camera, `fov: 60`, near/far/zoom, aspect/projection matrix, renderer/canvas sizing, modal locks, suppressed scene controls, raycaster target mode, and the captured pre-VR control enabled states. Do not move `#player`, change WebXR reference spaces, or apply the immersive navigation handoff while the XR session is still half-active. `custom-movement.finalizeImmersiveExitNavigationHandoff()` is the handoff point for applying the pending VR navigation position once inline mode is real.
+
+Diagnostics for this path are stored in `window.__vrodosLastXrExitRestoreDiagnostics`. A healthy Quest exit should report `status: "restored"`, no active XR session/presentation flags, `presentationMode: "inline"`, camera aspect matching the canvas, interaction unlocked, raycasters refreshed, and navigation handoff `status: "applied"` or `status: "no-pending-position"` when no VR locomotion occurred.
+
 ### Orientation, Rendering, And Loading Rules
 
 Panels are anchored in front of `cameraA` by world transform, not by an A-Frame plane orientation. The group uses world-up orientation and faces the camera from the front. Do not fix mirrored or back-facing panels by flipping A-Frame primitives; the PMNDRS root group transform is the source of truth.
@@ -249,6 +257,7 @@ window.VRODOSRuntimeOverlay && window.VRODOSRuntimeOverlay.getSceneDiagnostics()
 window.VRODOSRuntimeOverlay && window.VRODOSRuntimeOverlay.ensureSpatialUiRuntime().then(console.log)
 window.VRODOSSpatialUI && window.VRODOSSpatialUI.getDiagnostics()
 window.__vrodosSpatialUIDiagnostics
+window.__vrodosLastXrExitRestoreDiagnostics
 window.__VRODOS_WEBXR_LAYERS_DISABLED
 ```
 
@@ -269,6 +278,7 @@ Production acceptance checklist:
 13. Confirm controller rays stop at the PMNDRS dialog surface while a modal is active, show a small surface dot or larger actionable dot as appropriate, and return to normal length after modal close/finish.
 14. Open a Pair assessment and confirm selecting a source/target updates button state in place without flashing the whole dialog.
 15. Confirm long assessment titles wrap to at most two header lines, ellipsize beyond that, and never overlap the close button.
+16. Exit immersive VR through the Quest Browser/Oculus system UI, not only desktop `Esc`, and confirm desktop returns without fisheye projection, clicks work for video/assessment/CEFR/POI objects, and `window.__vrodosLastXrExitRestoreDiagnostics` reports inline mode with interaction unlocked.
 
 Quest Browser manual acceptance is required before considering a spatial UI change stable. Desktop WebXR emulators are useful for smoke checks but do not prove controller behavior or native WebXR timing.
 

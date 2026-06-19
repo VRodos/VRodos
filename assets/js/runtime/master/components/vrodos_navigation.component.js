@@ -268,6 +268,13 @@ AFRAME.registerComponent('custom-movement', {
         this.immersiveTargetRayGeometry = null;
         this.immersiveShadowSuppressedAt = 0;
         this.immersiveWasPresenting = false;
+        this.immersiveControllerRayVisualResetFrames = 0;
+        this.lastImmersiveControllerRayVisualDiagnostics = null;
+        this.pendingImmersiveExitNavigationPosition = null;
+        this.pendingImmersiveExitNavigationReason = '';
+        this.pendingImmersiveExitNavigationCapturedAt = 0;
+        this.immersiveExitHandoffTimers = [];
+        this.lastImmersiveExitHandoffDiagnostics = null;
         this.immersiveWorldRootDiagnostics = {
             count: 0,
             samples: [],
@@ -458,7 +465,88 @@ AFRAME.registerComponent('custom-movement', {
             this.markCollisionWorldDirty();
         }
     },
+    clearImmersiveExitNavigationHandoffTimers: function () {
+        if (this.immersiveExitHandoffTimers && this.immersiveExitHandoffTimers.length) {
+            this.immersiveExitHandoffTimers.forEach((timerId) => window.clearTimeout(timerId));
+        }
+        this.immersiveExitHandoffTimers = [];
+    },
+    scheduleImmersiveExitNavigationHandoff: function (reason) {
+        this.clearImmersiveExitNavigationHandoffTimers();
+        [80, 240, 560, 1000].forEach((delay) => {
+            const timerId = window.setTimeout(() => {
+                this.finalizeImmersiveExitNavigationHandoff(reason || 'custom-movement-exit-poll');
+            }, delay);
+            this.immersiveExitHandoffTimers.push(timerId);
+        });
+    },
+    getImmersiveExitNavigationVectorDiagnostics: function (position) {
+        if (!position) {
+            return null;
+        }
+
+        return {
+            x: Number(Number(position.x || 0).toFixed(4)),
+            y: Number(Number(position.y || 0).toFixed(4)),
+            z: Number(Number(position.z || 0).toFixed(4))
+        };
+    },
+    finalizeImmersiveExitNavigationHandoff: function (reason) {
+        const pendingPosition = this.pendingImmersiveExitNavigationPosition;
+        const diagnostics = {
+            reason: reason || '',
+            capturedReason: this.pendingImmersiveExitNavigationReason || '',
+            capturedAt: this.pendingImmersiveExitNavigationCapturedAt || 0,
+            timestamp: Date.now(),
+            applied: false,
+            pendingPosition: this.getImmersiveExitNavigationVectorDiagnostics(pendingPosition),
+            immersiveActive: this.isImmersiveXrPresenting(),
+            status: 'no-pending-position'
+        };
+
+        if (!pendingPosition) {
+            this.lastImmersiveExitHandoffDiagnostics = diagnostics;
+            return diagnostics;
+        }
+
+        if (diagnostics.immersiveActive) {
+            diagnostics.status = 'deferred-xr-active';
+            this.lastImmersiveExitHandoffDiagnostics = diagnostics;
+            return diagnostics;
+        }
+
+        const targetPosition = pendingPosition.clone ? pendingPosition.clone() : pendingPosition;
+        const applied = this.setNavigationWorldPosition(targetPosition);
+        diagnostics.applied = Boolean(applied);
+        diagnostics.status = applied ? 'applied' : 'apply-failed';
+        diagnostics.finalPosition = this.getImmersiveExitNavigationVectorDiagnostics(this.getNavigationWorldPosition());
+
+        if (applied) {
+            if (this.lastResolvedPosition && typeof this.lastResolvedPosition.copy === 'function') {
+                this.lastResolvedPosition.copy(targetPosition);
+            }
+            if (this.lastNonImmersiveNavigationPosition && typeof this.lastNonImmersiveNavigationPosition.copy === 'function') {
+                this.lastNonImmersiveNavigationPosition.copy(targetPosition);
+                this.hasLastNonImmersiveNavigationPosition = true;
+                this.lastNonImmersiveGroundRememberedAt = this.getRuntimeNow();
+            }
+            this.pendingImmersiveExitNavigationPosition = null;
+            this.pendingImmersiveExitNavigationReason = '';
+            this.pendingImmersiveExitNavigationCapturedAt = 0;
+            this.positionPrimed = true;
+            this.hasLastGroundHit = false;
+            this.clearImmersiveExitNavigationHandoffTimers();
+        }
+
+        this.lastImmersiveExitHandoffDiagnostics = diagnostics;
+        return diagnostics;
+    },
     handleEnterVr: function () {
+        this.pendingImmersiveExitNavigationPosition = null;
+        this.pendingImmersiveExitNavigationReason = '';
+        this.pendingImmersiveExitNavigationCapturedAt = 0;
+        this.clearImmersiveExitNavigationHandoffTimers();
+        this.immersiveControllerRayVisualResetFrames = 8;
         this.rememberNonImmersiveNavigationPosition(true);
         window.setTimeout(() => {
             if (this.isImmersiveXrPresenting()) {
@@ -469,6 +557,9 @@ AFRAME.registerComponent('custom-movement', {
     },
     handleExitVr: function () {
         const finalImmersiveNavigationPosition = this.immersiveVirtualNavPosition.clone();
+        this.pendingImmersiveExitNavigationPosition = finalImmersiveNavigationPosition.clone();
+        this.pendingImmersiveExitNavigationReason = 'handle-exit-vr';
+        this.pendingImmersiveExitNavigationCapturedAt = Date.now();
         this.restoreImmersiveWorldBaseTransforms();
         this.immersiveWasPresenting = false;
         this.heightOffset = null;
@@ -479,7 +570,9 @@ AFRAME.registerComponent('custom-movement', {
         this.disposeImmersiveTargetRayLines();
 
         if (!this.isImmersiveXrPresenting()) {
-            this.setNavigationWorldPosition(finalImmersiveNavigationPosition);
+            this.finalizeImmersiveExitNavigationHandoff('handle-exit-vr');
+        } else {
+            this.scheduleImmersiveExitNavigationHandoff('handle-exit-vr');
         }
     },
     handleThumbstickMove: function (event) {
@@ -644,6 +737,7 @@ AFRAME.registerComponent('custom-movement', {
         this.sceneEl.removeEventListener('exit-vr', this.handleExitVr);
         window.removeEventListener('keydown', this.handleKeyDown, true);
         window.removeEventListener('keyup', this.handleKeyUp, true);
+        this.clearImmersiveExitNavigationHandoffTimers();
         this.disposeImmersiveTargetRayLines();
         if (this.navPerfDebug && this.navPerfDebug.overlay && this.navPerfDebug.overlay.parentNode) {
             this.navPerfDebug.overlay.parentNode.removeChild(this.navPerfDebug.overlay);
@@ -1783,8 +1877,174 @@ AFRAME.registerComponent('custom-movement', {
             });
         }
     },
+    normalizeRayVector: function (value, fallback) {
+        const base = fallback || { x: 0, y: 0, z: -1 };
+        if (!value) {
+            return { x: base.x, y: base.y, z: base.z };
+        }
+
+        let x;
+        let y;
+        let z;
+        if (typeof value === 'string') {
+            const parts = value.trim().split(/\s+/).map(Number);
+            x = parts[0];
+            y = parts[1];
+            z = parts[2];
+        } else {
+            x = Number(value.x);
+            y = Number(value.y);
+            z = Number(value.z);
+        }
+
+        if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+            return { x: base.x, y: base.y, z: base.z };
+        }
+
+        const length = Math.sqrt((x * x) + (y * y) + (z * z));
+        if (!Number.isFinite(length) || length <= 0.000001) {
+            return { x: base.x, y: base.y, z: base.z };
+        }
+
+        return {
+            x: x / length,
+            y: y / length,
+            z: z / length
+        };
+    },
+    getControllerRayDirection: function (controllerEl, raycaster, raycasterAttribute) {
+        const fallback = { x: 0, y: 0, z: -1 };
+        if (raycaster && raycaster.data && raycaster.data.direction) {
+            return this.normalizeRayVector(raycaster.data.direction, fallback);
+        }
+        if (raycasterAttribute && raycasterAttribute.direction) {
+            return this.normalizeRayVector(raycasterAttribute.direction, fallback);
+        }
+        if (controllerEl && controllerEl.components && controllerEl.components.raycaster &&
+            controllerEl.components.raycaster.data && controllerEl.components.raycaster.data.direction) {
+            return this.normalizeRayVector(controllerEl.components.raycaster.data.direction, fallback);
+        }
+        return fallback;
+    },
+    setLineGeometryEndpoints: function (lineObject, direction, far) {
+        if (!lineObject || !lineObject.geometry) {
+            return false;
+        }
+        const geometry = lineObject.geometry;
+        const attribute = typeof geometry.getAttribute === 'function'
+            ? geometry.getAttribute('position')
+            : (geometry.attributes && geometry.attributes.position);
+        if (!attribute || !attribute.array || attribute.itemSize < 3 || attribute.count < 2) {
+            return false;
+        }
+
+        const distance = Math.max(0.02, Number(far) || 100);
+        const lastIndex = (attribute.count - 1) * attribute.itemSize;
+        attribute.array[0] = 0;
+        attribute.array[1] = 0;
+        attribute.array[2] = 0;
+        attribute.array[lastIndex] = direction.x * distance;
+        attribute.array[lastIndex + 1] = direction.y * distance;
+        attribute.array[lastIndex + 2] = direction.z * distance;
+        attribute.needsUpdate = true;
+        if (geometry && typeof geometry.computeBoundingSphere === 'function') {
+            geometry.computeBoundingSphere();
+        }
+        return true;
+    },
+    resetLineObjectTransform: function (lineObject) {
+        if (!lineObject) {
+            return false;
+        }
+        if (lineObject.position && typeof lineObject.position.set === 'function') {
+            lineObject.position.set(0, 0, 0);
+        }
+        if (lineObject.rotation && typeof lineObject.rotation.set === 'function') {
+            lineObject.rotation.set(0, 0, 0);
+        }
+        if (lineObject.quaternion && typeof lineObject.quaternion.identity === 'function') {
+            lineObject.quaternion.identity();
+        }
+        if (lineObject.scale && typeof lineObject.scale.set === 'function') {
+            lineObject.scale.set(1, 1, 1);
+        }
+        lineObject.visible = true;
+        lineObject.matrixAutoUpdate = true;
+        if (typeof lineObject.updateMatrix === 'function') {
+            lineObject.updateMatrix();
+        }
+        if (typeof lineObject.updateMatrixWorld === 'function') {
+            lineObject.updateMatrixWorld(true);
+        }
+        return true;
+    },
+    resetAFrameControllerRayVisual: function (controllerEl, direction, far, forceRecreate) {
+        const diagnostics = {
+            id: controllerEl && controllerEl.id ? controllerEl.id : '',
+            forceRecreate: Boolean(forceRecreate),
+            lineAttributeRemoved: false,
+            lineObjectRemoved: false,
+            lineAttributeSet: false,
+            lineObjectsNormalized: 0,
+            lineGeometriesReset: 0
+        };
+
+        if (!controllerEl) {
+            return diagnostics;
+        }
+
+        const distance = Math.max(0.02, Number(far) || 100);
+        const existingLine = controllerEl.getObject3D ? controllerEl.getObject3D('line') : null;
+        const shouldSetLineAttribute = forceRecreate || !existingLine ||
+            (controllerEl.hasAttribute && !controllerEl.hasAttribute('line'));
+        if (controllerEl.setAttribute) {
+            if (shouldSetLineAttribute) {
+                controllerEl.setAttribute('line', {
+                    start: '0 0 0',
+                    end: `${direction.x * distance} ${direction.y * distance} ${direction.z * distance}`,
+                    color: 'white',
+                    opacity: 1,
+                    visible: true
+                });
+                diagnostics.lineAttributeSet = true;
+            }
+        }
+
+        const seen = [];
+        const lineObject = controllerEl.getObject3D ? controllerEl.getObject3D('line') : null;
+        if (lineObject) {
+            seen.push(lineObject);
+        }
+        const lineComponent = controllerEl.components ? controllerEl.components.line : null;
+        if (lineComponent && lineComponent.line && seen.indexOf(lineComponent.line) === -1) {
+            seen.push(lineComponent.line);
+        }
+        if (controllerEl.object3D && typeof controllerEl.object3D.traverse === 'function') {
+            controllerEl.object3D.traverse((object) => {
+                if (!object || seen.indexOf(object) !== -1) {
+                    return;
+                }
+                if (object.isLine || object.type === 'Line' || object.type === 'LineSegments') {
+                    seen.push(object);
+                }
+            });
+        }
+
+        seen.forEach((object) => {
+            if (this.resetLineObjectTransform(object)) {
+                diagnostics.lineObjectsNormalized += 1;
+            }
+            if (this.setLineGeometryEndpoints(object, direction, distance)) {
+                diagnostics.lineGeometriesReset += 1;
+            }
+        });
+
+        return diagnostics;
+    },
     ensureAFrameControllerRayVisuals: function () {
         const controllerEls = [this.thumbL, this.thumbR];
+        const diagnostics = [];
+        const forceReset = this.immersiveControllerRayVisualResetFrames > 0;
         for (let i = 0; i < controllerEls.length; i++) {
             const controllerEl = controllerEls[i];
             if (!controllerEl) {
@@ -1794,11 +2054,22 @@ AFRAME.registerComponent('custom-movement', {
             const currentRaycaster = controllerEl.getAttribute ? (controllerEl.getAttribute('raycaster') || {}) : {};
             const objects = currentRaycaster.objects || '.raycastable';
             const far = currentRaycaster.far || 100;
+            const nextRaycaster = Object.assign({}, currentRaycaster, {
+                objects,
+                showLine: true,
+                far,
+                lineColor: 'white',
+                lineOpacity: 1
+            });
+
+            let raycaster = controllerEl.components ? controllerEl.components.raycaster : null;
+            const direction = this.getControllerRayDirection(controllerEl, raycaster, currentRaycaster);
+            const visualDiagnostics = this.resetAFrameControllerRayVisual(controllerEl, direction, far, forceReset);
             if (controllerEl.setAttribute) {
-                controllerEl.setAttribute('raycaster', `objects: ${objects}; showLine: true; far: ${far}; lineColor: white; lineOpacity: 1`);
+                controllerEl.setAttribute('raycaster', nextRaycaster);
             }
 
-            const raycaster = controllerEl.components ? controllerEl.components.raycaster : null;
+            raycaster = controllerEl.components ? controllerEl.components.raycaster : null;
             if (raycaster && raycaster.data) {
                 const oldData = Object.assign({}, raycaster.data);
                 raycaster.data.showLine = true;
@@ -1818,6 +2089,27 @@ AFRAME.registerComponent('custom-movement', {
             if (lineComponent && lineComponent.line) {
                 lineComponent.line.visible = true;
             }
+
+            if (forceReset) {
+                const finalRaycasterAttribute = controllerEl.getAttribute ? (controllerEl.getAttribute('raycaster') || nextRaycaster) : nextRaycaster;
+                const finalDirection = this.getControllerRayDirection(controllerEl, raycaster, finalRaycasterAttribute);
+                const finalVisualDiagnostics = this.resetAFrameControllerRayVisual(controllerEl, finalDirection, far, false);
+                visualDiagnostics.lineAttributeSet = visualDiagnostics.lineAttributeSet || finalVisualDiagnostics.lineAttributeSet;
+                visualDiagnostics.lineObjectsNormalized += finalVisualDiagnostics.lineObjectsNormalized;
+                visualDiagnostics.lineGeometriesReset += finalVisualDiagnostics.lineGeometriesReset;
+            }
+
+            diagnostics.push(visualDiagnostics);
+        }
+
+        if (forceReset) {
+            this.immersiveControllerRayVisualResetFrames -= 1;
+            this.lastImmersiveControllerRayVisualDiagnostics = {
+                framesRemaining: this.immersiveControllerRayVisualResetFrames,
+                controllers: diagnostics,
+                timestamp: Date.now()
+            };
+            window.__vrodosLastControllerRayVisualResetDiagnostics = this.lastImmersiveControllerRayVisualDiagnostics;
         }
     },
     suppressImmersiveOverlayShadows: function () {
