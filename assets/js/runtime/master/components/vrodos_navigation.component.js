@@ -10,7 +10,7 @@ var VRODOSNavmeshDefaults = VRODOSMaster.NAVMESH_DEFAULTS || window.VRODOS_NAVME
 };
 
 function vrodosNavPerfDebugEnabled() {
-    if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.navPerfOverlay === true) {
+    if (window.VRODOS_DEBUG && (window.VRODOS_DEBUG.navPerf === true || window.VRODOS_DEBUG.navPerfOverlay === true)) {
         return true;
     }
 
@@ -739,10 +739,6 @@ AFRAME.registerComponent('custom-movement', {
         window.removeEventListener('keyup', this.handleKeyUp, true);
         this.clearImmersiveExitNavigationHandoffTimers();
         this.disposeImmersiveTargetRayLines();
-        if (this.navPerfDebug && this.navPerfDebug.overlay && this.navPerfDebug.overlay.parentNode) {
-            this.navPerfDebug.overlay.parentNode.removeChild(this.navPerfDebug.overlay);
-            this.navPerfDebug.overlay = null;
-        }
     },
     createNavPerfDebugState: function () {
         if (!vrodosNavPerfDebugEnabled()) {
@@ -750,8 +746,6 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         return {
-            overlay: null,
-            lastOverlayAt: 0,
             frames: 0,
             movingFrames: 0,
             collisionFrames: 0,
@@ -769,32 +763,6 @@ AFRAME.registerComponent('custom-movement', {
             avgIntersections: 0,
             frame: null
         };
-    },
-    ensureNavPerfDebugOverlay: function () {
-        if (!this.navPerfDebug || typeof document === 'undefined' || !document.body) {
-            return null;
-        }
-
-        if (!this.navPerfDebug.overlay) {
-            const overlay = document.createElement('div');
-            overlay.style.position = 'fixed';
-            overlay.style.left = '12px';
-            overlay.style.top = '12px';
-            overlay.style.zIndex = '99998';
-            overlay.style.padding = '8px 10px';
-            overlay.style.borderRadius = '8px';
-            overlay.style.background = 'rgba(10, 16, 28, 0.88)';
-            overlay.style.color = '#9ef7b3';
-            overlay.style.font = '12px/1.35 Consolas, Monaco, monospace';
-            overlay.style.whiteSpace = 'pre';
-            overlay.style.pointerEvents = 'none';
-            overlay.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.28)';
-            overlay.textContent = 'NAV PERF DEBUG\nwaiting for movement...';
-            document.body.appendChild(overlay);
-            this.navPerfDebug.overlay = overlay;
-        }
-
-        return this.navPerfDebug.overlay;
     },
     beginNavPerfDebugFrame: function () {
         if (!this.navPerfDebug) {
@@ -844,37 +812,6 @@ AFRAME.registerComponent('custom-movement', {
         this.navPerfDebug.avgRaycastMs = this.navPerfDebug.avgRaycastMs === 0 ? frame.raycastMs : (this.navPerfDebug.avgRaycastMs * (1 - alpha)) + (frame.raycastMs * alpha);
         this.navPerfDebug.avgRaycasts = this.navPerfDebug.avgRaycasts === 0 ? frame.raycasts : (this.navPerfDebug.avgRaycasts * (1 - alpha)) + (frame.raycasts * alpha);
         this.navPerfDebug.avgIntersections = this.navPerfDebug.avgIntersections === 0 ? frame.intersections : (this.navPerfDebug.avgIntersections * (1 - alpha)) + (frame.intersections * alpha);
-
-        if ((now - this.navPerfDebug.lastOverlayAt) >= 150) {
-            this.updateNavPerfDebugOverlay();
-            this.navPerfDebug.lastOverlayAt = now;
-        }
-    },
-    updateNavPerfDebugOverlay: function () {
-        if (!this.navPerfDebug || !this.navPerfDebug.frame) {
-            return;
-        }
-
-        const overlay = this.ensureNavPerfDebugOverlay();
-        if (!overlay) {
-            return;
-        }
-
-        const frame = this.navPerfDebug.frame;
-        overlay.textContent = [
-            'NAV PERF DEBUG',
-            `moving: ${  frame.moving ? 'yes' : 'no'}`,
-            `collisions: ${  frame.collisionsEnabled ? 'on' : 'off'}`,
-            `immersive collisions: ${  frame.immersiveCollisionsEnabled ? 'on' : 'off'}`,
-            `targets: nav ${  this.navMeshCollisionTargets.length  } block ${  this.blockerCollisionTargets.length}`,
-            `tick ms: ${  frame.tickMs.toFixed(2)  } avg ${  this.navPerfDebug.avgTickMs.toFixed(2)}`,
-            `constrained ms: ${  frame.constrainedMs.toFixed(2)  } avg ${  this.navPerfDebug.avgConstrainedMs.toFixed(2)}`,
-            `sample ms: ${  frame.sampleMs.toFixed(2)  } avg ${  this.navPerfDebug.avgSampleMs.toFixed(2)}`,
-            `raycast ms: ${  frame.raycastMs.toFixed(2)  } avg ${  this.navPerfDebug.avgRaycastMs.toFixed(2)}`,
-            `raycasts: ${  frame.raycasts  } avg ${  this.navPerfDebug.avgRaycasts.toFixed(1)}`,
-            `intersections: ${  frame.intersections  } avg ${  this.navPerfDebug.avgIntersections.toFixed(1)}`,
-            `auto recovery: ${  this.lastAutoRecoveryStatus}`
-        ].join('\n');
     },
     getNavPerfDebugSnapshot: function () {
         const currentPosition = this.getNavigationWorldPosition();

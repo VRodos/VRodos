@@ -363,13 +363,7 @@
         vrModeFlag: Boolean(scene && scene.is && scene.is("vr-mode")),
         camera: describeElement(camera),
         raycasters: getRaycasterDiagnostics(),
-        activePanel: api.activePanel ? {
-          id: api.activePanel.root && api.activePanel.root.id || "",
-          locked: Boolean(api.activePanel.locked),
-          retargetRaycasters: Boolean(api.activePanel.retargetRaycasters),
-          renderCount: api.activePanel.api && api.activePanel.api.renderCount || 0,
-          targets: api.activePanel.root ? api.activePanel.root.querySelectorAll("." + RAYCAST_TARGET_CLASS).length : 0
-        } : null
+        activePanel: null
       };
     }
     function normalizeVrControllerEntities() {
@@ -536,7 +530,7 @@
     }
     function sceneRayFeedbackAllowed() {
       const overlayApi = window.VRODOSRuntimeOverlay || null;
-      return window.VRODOS_DISABLE_SCENE_RAY_HIT_DOTS !== true && getPresentationMode() === "immersive-xr" && !hasSpatialModalOpen() && !(overlayApi && overlayApi.activePanel);
+      return window.VRODOS_DISABLE_SCENE_RAY_HIT_DOTS !== true && getPresentationMode() === "immersive-xr" && !hasSpatialModalOpen();
     }
     function sceneRayHitPoint(hit) {
       const point = hit && hit.intersection && hit.intersection.point;
@@ -830,7 +824,6 @@
       queueRaycasterRefresh();
     }
     const api = {
-      activePanel: null,
       raycasterRestore: null,
       suppressedSceneControls: null,
       interactionLocked: false,
@@ -964,39 +957,16 @@
       },
       refreshRaycasters: refreshRaycasterObjects,
       refreshInteractionTargets: function() {
-        const activeRoot = this.activePanel && this.activePanel.root;
-        refreshOverlayTargets(activeRoot || null);
+        refreshOverlayTargets();
       },
       closeActivePanel: function(reason) {
-        const active = this.activePanel;
-        if (!active) {
-          this.setSceneControlsSuppressed(false);
-          this.setOverlayRaycastMode(false);
-          this.lockSceneInteraction(false);
-          recordDiagnostic("debug", "closeActivePanel called with no active panel.", {
-            reason: reason || "close"
-          });
-          return;
-        }
-        this.activePanel = null;
-        recordDiagnostic("debug", "Closing VR overlay panel.", {
-          reason: reason || "close",
-          id: active.root && active.root.id || "",
-          renderCount: active.api && active.api.renderCount || 0
-        });
         this.setSceneControlsSuppressed(false);
-        if (typeof active.cleanup === "function") {
-          active.cleanup(reason || "close");
-        }
-        if (active.root && active.root.parentNode) {
-          active.root.parentNode.removeChild(active.root);
-        }
-        if (active.retargetRaycasters) {
-          this.setOverlayRaycastMode(false);
-        } else {
-          refreshRaycasterObjects();
-        }
+        this.setOverlayRaycastMode(false);
+        refreshRaycasterObjects();
         this.lockSceneInteraction(false);
+        recordDiagnostic("debug", "closeActivePanel restored legacy overlay state.", {
+          reason: reason || "close"
+        });
       }
     };
     window.VRODOSRuntimeOverlay = api;

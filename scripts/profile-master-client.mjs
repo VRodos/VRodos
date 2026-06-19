@@ -1001,7 +1001,7 @@ async function captureNavigationProfile(cdp, durationMs, input, pitchDeg = null)
 
         if (!component.navPerfDebug && typeof component.createNavPerfDebugState === 'function') {
             window.VRODOS_DEBUG = window.VRODOS_DEBUG || {};
-            window.VRODOS_DEBUG.navPerfOverlay = true;
+            window.VRODOS_DEBUG.navPerf = true;
             component.navPerfDebug = component.createNavPerfDebugState();
         }
 
