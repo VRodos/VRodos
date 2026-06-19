@@ -324,6 +324,7 @@ fixtures.forEach((fixture) => {
     assert(diagnostics.rendererKey === fixture.expected, `${fixture.name}: expected VR renderer ${fixture.expected}, got ${diagnostics.rendererKey}`);
     assert(diagnostics.stateEmpty === false, `${fixture.name}: normalized VR state was empty`);
     assert(activePanel && activePanel.api.buttons.length > 0, `${fixture.name}: no interactive buttons rendered`);
+    assert(activePanel.config.distance === 2.15, `${fixture.name}: expected readable assessment panel distance`);
     assert(activePanel.api.refreshed > 0, `${fixture.name}: spatial targets were not refreshed`);
 
     const genericUnsupported = activePanel.api.texts.some((entry) =>
@@ -334,6 +335,30 @@ fixtures.forEach((fixture) => {
     const supportedWordBreak = new Set(["keep-all", "break-all", "break-word"]);
     assert(supportedWordBreak.has(frameOptions.titleWordBreak), `${fixture.name}: unsupported title wordBreak ${frameOptions.titleWordBreak}`);
     assert(frameOptions.titleMaxLines === 2, `${fixture.name}: expected two-line assessment header clamp`);
+    if (fixture.expected === "Question" || fixture.expected === "ImageQuiz") {
+        const content = fixture.payload.content || {};
+        const question = Array.isArray(content.items) ? content.items[0] : (Array.isArray(content.questions) ? content.questions[0] : null);
+        const answers = question && (question.options || question.answers) || [];
+        const answerButton = activePanel.api.buttons.find((entry) => entry.label === answers[0]);
+        assert(answerButton && typeof answerButton.onClick === "function", `${fixture.name}: answer button missing click handler`);
+        const frameCountBeforeSelection = activePanel.api.frames.length;
+        const updatedButtonsBeforeSelection = activePanel.api.updatedButtons;
+        answerButton.onClick();
+        assert(activePanel.api.frames.length === frameCountBeforeSelection, `${fixture.name}: answer click recreated the frame`);
+        assert(activePanel.api.updatedButtons > updatedButtonsBeforeSelection, `${fixture.name}: answer click did not update buttons in place`);
+    }
+    if (fixture.expected === "ImageQuiz") {
+        const image = activePanel.api.images[0] || {};
+        assert(image.width === 636, `${fixture.name}: expected image quiz fixed 70% column width`);
+        assert(image.height === undefined, `${fixture.name}: expected image quiz auto height`);
+        assert(image.maxHeight === 392, `${fixture.name}: expected constrained image quiz visual height`);
+        assert(image.objectFit === "contain", `${fixture.name}: expected image quiz to preserve full image`);
+        assert(image.keepAspectRatio === true, `${fixture.name}: expected image quiz to keep aspect ratio`);
+        const answerButton = activePanel.api.buttons.find((entry) => entry.label === "A") || {};
+        assert(answerButton.width === "100%", `${fixture.name}: expected vertical answer button column`);
+        assert(answerButton.minHeight === 78, `${fixture.name}: expected readable image quiz answer height`);
+        assert(answerButton.lineHeight === "126%", `${fixture.name}: expected readable image quiz answer line height`);
+    }
     if (fixture.expected === "Pair") {
         assert(frameOptions.headerHeight === 124, `${fixture.name}: expected compact two-line pair header`);
         assert(frameOptions.titleWhiteSpace === "normal", `${fixture.name}: expected pair title to wrap`);

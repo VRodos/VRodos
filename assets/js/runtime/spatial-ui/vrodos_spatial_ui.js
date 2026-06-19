@@ -2132,7 +2132,10 @@ import { MSDF } from "@zappar/msdf-generator";
                     objectFit: opts.objectFit || "cover",
                     width: opts.width,
                     height: opts.height,
+                    maxWidth: opts.maxWidth,
+                    maxHeight: opts.maxHeight,
                     minHeight: opts.minHeight,
+                    keepAspectRatio: opts.keepAspectRatio !== false,
                     borderRadius: opts.borderRadius || 16,
                     pointerEvents: "none",
                     zIndex: opts.zIndex || 15

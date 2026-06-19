@@ -5950,7 +5950,8 @@
             isImageQuiz: isImageQuizPayload(payload),
             isTrueFalse: typeKey === "true or false" || typeKey === "true/false",
             activeIndex: 0,
-            selectedByIndex: []
+            selectedByIndex: [],
+            view: null
           };
         },
         render: function(runtime) {
@@ -5961,21 +5962,35 @@
             return;
           }
           const selectedIndex = Number.isInteger(state.selectedByIndex[state.activeIndex]) ? state.selectedByIndex[state.activeIndex] : null;
-          const frame = createFrame(runtime, "Question " + (state.activeIndex + 1) + " of " + state.items.length, {
-            label: state.activeIndex >= state.items.length - 1 ? "Finish" : "Next",
-            disabled: selectedIndex === null,
-            onClick: function() {
-              if (selectedIndex === null) {
-                return;
-              }
-              if (state.activeIndex >= state.items.length - 1) {
-                finishQuestion(runtime);
-                return;
-              }
-              state.activeIndex += 1;
-              runtime.rerender();
-            }
-          });
+          if (state.view && state.view.api === runtime.api && state.view.activeIndex === state.activeIndex && typeof runtime.api.updateButton === "function") {
+            updateQuestionView(runtime, selectedIndex);
+            return;
+          }
+          const frame = createFrame(
+            runtime,
+            "Question " + (state.activeIndex + 1) + " of " + state.items.length,
+            questionPrimaryButtonOptions(runtime, selectedIndex),
+            state.isImageQuiz ? {
+              paddingX: 48,
+              paddingTop: 28,
+              paddingBottom: 20,
+              gapY: 18,
+              footerHeight: 92,
+              footerPaddingBottom: 24,
+              statusFontSize: 20,
+              scrollGapY: 18
+            } : void 0
+          );
+          state.view = {
+            api: runtime.api,
+            activeIndex: state.activeIndex,
+            primaryButton: frame.primaryButton || null,
+            answerButtons: []
+          };
+          if (state.isImageQuiz && item.imageUrl) {
+            renderImageQuizQuestion(runtime, frame, item, selectedIndex);
+            return;
+          }
           runtime.api.text(frame.content, {
             text: item.prompt || "Question " + (state.activeIndex + 1),
             color: "#0f172a",
@@ -5990,23 +6005,152 @@
               src: item.imageUrl
             });
           }
-          addButtonGrid(runtime.api, frame.content, item.answers.map((answer, index) => {
-            const selected = selectedIndex === index;
-            return {
-              label: answer || "Option " + (index + 1),
-              selected,
-              onClick: function() {
-                state.selectedByIndex[state.activeIndex] = index;
-                runtime.rerender();
-              }
-            };
-          }), {
+          renderQuestionAnswerGrid(runtime, frame.content, item, selectedIndex, {
             columns: state.isTrueFalse ? 1 : 2,
             itemHeight: 92,
             textSize: 32
           });
         }
       };
+    }
+    function getQuestionSelectedIndex(state) {
+      return Number.isInteger(state.selectedByIndex[state.activeIndex]) ? state.selectedByIndex[state.activeIndex] : null;
+    }
+    function questionPrimaryButtonOptions(runtime, selectedIndex) {
+      const state = runtime.state;
+      return {
+        label: state.activeIndex >= state.items.length - 1 ? "Finish" : "Next",
+        disabled: selectedIndex === null,
+        onClick: function() {
+          if (getQuestionSelectedIndex(state) === null) {
+            return;
+          }
+          if (state.activeIndex >= state.items.length - 1) {
+            finishQuestion(runtime);
+            return;
+          }
+          state.activeIndex += 1;
+          runtime.rerender();
+        }
+      };
+    }
+    function questionAnswerButtonOptions(runtime, item, index, selectedIndex, options) {
+      const opts = options || {};
+      const selected = selectedIndex === index;
+      return {
+        label: item.answers[index] || "Option " + (index + 1),
+        variant: selected ? "positive" : "secondary",
+        width: opts.width,
+        minHeight: opts.minHeight || opts.itemHeight,
+        textSize: opts.textSize,
+        lineHeight: opts.lineHeight,
+        onClick: function() {
+          runtime.state.selectedByIndex[runtime.state.activeIndex] = index;
+          runtime.rerender();
+        }
+      };
+    }
+    function renderQuestionAnswerGrid(runtime, parent, item, selectedIndex, options) {
+      const cfg = options || {};
+      const columns = Math.max(1, Number(cfg.columns) || 2);
+      const grid = runtime.api.column(parent, {
+        gapRow: cfg.gapY !== void 0 ? cfg.gapY : 22,
+        width: cfg.width || "100%"
+      });
+      for (let index = 0; index < item.answers.length; index += columns) {
+        const row = runtime.api.row(grid, {
+          gapColumn: cfg.gapX !== void 0 ? cfg.gapX : 22,
+          alignItems: "stretch",
+          justifyContent: "center",
+          width: "100%"
+        });
+        item.answers.slice(index, index + columns).forEach((answer, offset) => {
+          const answerIndex = index + offset;
+          const button = runtime.api.button(row, questionAnswerButtonOptions(runtime, item, answerIndex, selectedIndex, {
+            width: "100%",
+            minHeight: cfg.itemHeight || cfg.height || 84,
+            textSize: cfg.textSize || 30,
+            lineHeight: cfg.lineHeight || "120%"
+          }));
+          runtime.state.view.answerButtons[answerIndex] = button;
+        });
+      }
+    }
+    function renderImageQuizQuestion(runtime, frame, item, selectedIndex) {
+      const contentWidth = 920;
+      const gapWidth = 28;
+      const imageWidth = 636;
+      const answerWidth = contentWidth - imageWidth - gapWidth;
+      const visualMaxHeight = 392;
+      const layout = runtime.api.row(frame.content, {
+        alignItems: "stretch",
+        justifyContent: "flex-start",
+        gapColumn: gapWidth,
+        width: contentWidth,
+        minHeight: visualMaxHeight
+      });
+      const imageColumn = runtime.api.column(layout, {
+        flexGrow: 0,
+        flexShrink: 0,
+        width: imageWidth,
+        maxWidth: imageWidth,
+        minHeight: visualMaxHeight
+      });
+      const answerColumn = runtime.api.column(layout, {
+        flexGrow: 0,
+        flexShrink: 0,
+        width: answerWidth,
+        maxWidth: answerWidth,
+        minHeight: visualMaxHeight,
+        gapRow: 14
+      });
+      runtime.api.image(imageColumn, {
+        width: imageWidth,
+        maxHeight: visualMaxHeight,
+        src: item.imageUrl,
+        objectFit: "contain",
+        keepAspectRatio: true,
+        borderRadius: 14
+      });
+      if (item.prompt) {
+        runtime.api.text(answerColumn, {
+          text: item.prompt,
+          color: "#334155",
+          fontSize: 21,
+          lineHeight: "122%",
+          fontWeight: 600
+        });
+      }
+      item.answers.forEach((answer, index) => {
+        runtime.state.view.answerButtons[index] = runtime.api.button(answerColumn, questionAnswerButtonOptions(runtime, item, index, selectedIndex, {
+          width: "100%",
+          minHeight: 78,
+          textSize: 22,
+          lineHeight: "126%"
+        }));
+      });
+    }
+    function updateQuestionView(runtime, selectedIndex) {
+      const state = runtime.state;
+      const item = state.items[state.activeIndex];
+      const view = state.view || {};
+      runtime.api.updateButton(view.primaryButton, questionPrimaryButtonOptions(runtime, selectedIndex));
+      (view.answerButtons || []).forEach((button, index) => {
+        if (!button) {
+          return;
+        }
+        runtime.api.updateButton(button, questionAnswerButtonOptions(runtime, item, index, selectedIndex, state.isImageQuiz ? {
+          width: "100%",
+          minHeight: 78,
+          textSize: 22,
+          lineHeight: "126%"
+        } : {
+          width: "100%",
+          minHeight: state.isTrueFalse ? 92 : 92,
+          textSize: 32,
+          lineHeight: "120%"
+        }));
+      });
     }
     function finishQuestion(runtime) {
       const state = runtime.state;
@@ -6933,7 +7077,7 @@
           id: "vrodos-immerse-assessment-vr-overlay",
           width: PANEL_WIDTH,
           height: PANEL_HEIGHT,
-          distance: 1.85,
+          distance: 2.15,
           verticalOffset: 0,
           centerAtEyeLevel: true,
           anchorRefreshFrames: 2,
