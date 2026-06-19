@@ -171,7 +171,6 @@ Most-used flags:
 - `vrodos_debug_shadow_perf=1`: shows shadow mode, `autoUpdate`, dirty reason, shadow update count, caster/receiver counts, and shadow-light counts.
 - `vrodos_debug_day_night_shadow_radius=VALUE`: adjusts PMNDRS/Takram directional day-night shadow softness.
 - `vrodos_debug_disable_terrain_soft_shadow_lift=1`: isolates terrain soft-shadow lift from the rest of the shadow pipeline.
-- `vrodos_debug_nav_perf=1`: shows navigation/collision target counts and tick timing.
 - `vrodos_debug_pmndrs_horizon_verbose=1`: logs verbose PMNDRS/Takram horizon diagnostics.
 - `vrodos_spector=1`: enables the runtime Spector capture hook when the Spector debug helper is present. Prefer `scripts/profile-master-client.mjs --spector` for repeatable captures.
 
@@ -447,7 +446,7 @@ If large assets fail to upload, check:
 - Verify the object has `Collides with player` enabled in the scene editor.
 - Use `Collision Proxy` assets for invisible walls, thin blockers, or cheaper colliders around complex visible art.
 - If a navmesh includes wall geometry, confirm the wall faces are steep enough to be treated as blockers instead of walkable ground.
-- Append `?vrodos_debug_nav_perf=1` to the compiled client URL to inspect navmesh and blocker target counts.
+- Use `node scripts/profile-master-client.mjs URL --nav-profile` to inspect navmesh and blocker target counts while simulating movement.
 
 ### Large uploads fail
 

@@ -263,7 +263,7 @@ Performance notes:
 - BVH construction has an upfront load-time and memory cost.
 - Per-frame collision cost is paid only while movement is being resolved.
 - Default-collidable high-poly art is the main risk; use `Collision Proxy` assets for cheaper blocker geometry around complex models.
-- The nav performance overlay (`?vrodos_debug_nav_perf=1`) reports navmesh target count, blocker target count, raycast count, intersection count, and timing.
+- `scripts/profile-master-client.mjs --nav-profile` reports navmesh and blocker target counts while simulating movement without adding runtime debug UI.
 - Remaining diagnostics planned in `AFRAME_COLLISION_ROADMAP.md` include collider triangle counts, BVH build time, spawn clearance checks, blocked/slid state, and richer proxy visualization.
 
 ## 4. Legacy Pipeline
@@ -562,7 +562,6 @@ Debug query flags:
 - `vrodos_debug_terrain_soft_shadow_target=VALUE`: adjusts the target visibility for lifted terrain self-shadow samples.
 - `vrodos_debug_terrain_soft_shadow_gap_start=VALUE`: adjusts the near-depth terrain self-shadow mask start.
 - `vrodos_debug_terrain_soft_shadow_gap_end=VALUE`: adjusts the near-depth terrain self-shadow mask end.
-- `vrodos_debug_nav_perf=1`: shows navigation/collision target counts and tick timing.
 - `vrodos_debug_pmndrs_horizon=1`: logs PMNDRS/Takram horizon diagnostics when the diagnostic signature changes.
 - `vrodos_debug_pmndrs_horizon_verbose=1`: logs verbose PMNDRS/Takram horizon diagnostics.
 - `vrodos_debug_enable_pmndrs_horizon_aerial=1`: enables the experimental Horizon aerial perspective path for visual checks.

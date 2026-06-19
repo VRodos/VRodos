@@ -174,7 +174,7 @@ Options:
   --spector               Capture one Spector.js WebGL frame after timing samples.
   --spector-output PATH   Write the Spector capture JSON to PATH. Defaults next to --output.
   --disable-fps-meter     Disable the runtime FPS meter before warmup; this does not persist scene data.
-  --nav-profile           Simulate movement and collect custom-movement/navmesh raycast timing.
+  --nav-profile           Simulate movement and collect custom-movement/navmesh target counts and movement delta.
   --nav-profile-ms N      Movement profile duration in ms. Default: 3000.
   --nav-profile-input X,Y Movement input vector during nav profile. Default: 0,-1.
   --nav-profile-pitch-deg Degrees to set desktop look-controls pitch during nav profile.
@@ -999,15 +999,34 @@ async function captureNavigationProfile(cdp, durationMs, input, pitchDeg = null)
             };
         }
 
-        if (!component.navPerfDebug && typeof component.createNavPerfDebugState === 'function') {
-            window.VRODOS_DEBUG = window.VRODOS_DEBUG || {};
-            window.VRODOS_DEBUG.navPerf = true;
-            component.navPerfDebug = component.createNavPerfDebugState();
+        function snapshot() {
+            if (typeof component.refreshNavMeshRoots === 'function') {
+                component.refreshNavMeshRoots();
+            }
+            const position = typeof component.getNavigationWorldPosition === 'function'
+                ? component.getNavigationWorldPosition()
+                : component.lastResolvedPosition;
+            return {
+                enabled: true,
+                collisionTargets: component.navMeshCollisionTargets ? component.navMeshCollisionTargets.length : 0,
+                blockerTargets: component.blockerCollisionTargets ? component.blockerCollisionTargets.length : 0,
+                navMeshRoots: component.navMeshRoots ? component.navMeshRoots.length : 0,
+                colliderRoots: component.colliderRoots ? component.colliderRoots.length : 0,
+                autoRecovery: {
+                    status: component.lastAutoRecoveryStatus || '',
+                    recentStableCount: component.autoStableGroundHistory
+                        ? component.autoStableGroundHistory.filter((entry) => entry && entry.valid).length
+                        : 0
+                },
+                position: position ? {
+                    x: position.x,
+                    y: position.y,
+                    z: position.z
+                } : null
+            };
         }
 
-        const startSnapshot = typeof component.getNavPerfDebugSnapshot === 'function'
-            ? component.getNavPerfDebugSnapshot()
-            : null;
+        const startSnapshot = snapshot();
         const previousKeyboard = {
             x: component.keyboardInput ? component.keyboardInput.x : 0,
             y: component.keyboardInput ? component.keyboardInput.y : 0
@@ -1063,9 +1082,7 @@ async function captureNavigationProfile(cdp, durationMs, input, pitchDeg = null)
             window.setTimeout(async () => {
                 restoreInput();
                 await nextFrame();
-                const endSnapshot = typeof component.getNavPerfDebugSnapshot === 'function'
-                    ? component.getNavPerfDebugSnapshot()
-                    : null;
+                const endSnapshot = snapshot();
                 resolve({
                     enabled: Boolean(endSnapshot && endSnapshot.enabled),
                     durationMs,
@@ -1730,9 +1747,6 @@ function printSummary(result) {
 async function run() {
     const options = parseArgs(process.argv.slice(2));
     let targetUrl = options.url;
-    if (options.navProfile) {
-        targetUrl = addUrlQueryParam(targetUrl, 'vrodos_debug_nav_perf', '1');
-    }
     if (options.disableFpsMeter) {
         targetUrl = addUrlQueryParam(targetUrl, 'vrodos_debug_disable_fps_meter', '1');
     }

@@ -36,7 +36,7 @@ The current implementation ships the v1 native static collision path:
 - The runtime bundles `three-mesh-bvh` as `vrodos-collision-bvh.bundle.js` and exposes it as `window.VRODOS_COLLISION_BVH`.
 - Runtime blocker raycasts use BVH acceleration when available and fall back to standard Three.js raycasts if a BVH cannot be built.
 - Horizontal player movement performs a multi-height capsule sweep against blocker geometry and falls back to axis sliding when the full movement vector is blocked.
-- The nav performance overlay/report now includes blocker target counts in addition to existing navmesh raycast timing and intersection totals.
+- The profiler nav profile reports navmesh and blocker target counts without a shipped runtime overlay.
 
 Remaining hardening work is tracked in later roadmap phases: spawn clearance, collision triangle-count diagnostics, traversal presets, tighter corner handling, and browser smoke tests on representative compiled scenes.
 
@@ -263,4 +263,4 @@ Implementation phases should additionally run:
 - PHP syntax checks for edited PHP files.
 - `npm run build:runtime` after runtime component changes.
 - `npm run build:three` only when collision/vendor bundle generation changes.
-- Compiled-scene smoke tests with the profiler and nav performance overlay.
+- Compiled-scene smoke tests with the profiler nav profile.

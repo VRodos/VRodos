@@ -3402,20 +3402,6 @@
     maxDropHeight: 1,
     maxSlope: 45
   };
-  function vrodosNavPerfDebugEnabled() {
-    if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.navPerf === true) {
-      return true;
-    }
-    if (typeof window.location === "undefined" || !window.location.search) {
-      return false;
-    }
-    try {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("vrodos_debug_nav_perf") === "1";
-    } catch (err) {
-      return false;
-    }
-  }
   AFRAME.registerComponent("vrodos-navmesh-helper", {
     init: function() {
       this.applyHiddenNavmeshState = this.applyHiddenNavmeshState.bind(this);
@@ -3723,7 +3709,6 @@
       };
       this.searchRadii = [0.5, 1, 2, 4, 6];
       this.searchAngles = [0, 45, 90, 135, 180, 225, 270, 315];
-      this.navPerfDebug = this.createNavPerfDebugState();
       this.handleThumbstickMove = this.handleThumbstickMove.bind(this);
       this.handleThumbstickEnd = this.handleThumbstickEnd.bind(this);
       this.handleNavmeshModelLoad = this.handleNavmeshModelLoad.bind(this);
@@ -4088,145 +4073,6 @@
       window.removeEventListener("keyup", this.handleKeyUp, true);
       this.clearImmersiveExitNavigationHandoffTimers();
       this.disposeImmersiveTargetRayLines();
-    },
-    createNavPerfDebugState: function() {
-      if (!vrodosNavPerfDebugEnabled()) {
-        return null;
-      }
-      return {
-        frames: 0,
-        movingFrames: 0,
-        collisionFrames: 0,
-        totalTickMs: 0,
-        totalConstrainedMs: 0,
-        totalSampleMs: 0,
-        totalRaycastMs: 0,
-        totalRaycasts: 0,
-        totalIntersections: 0,
-        avgTickMs: 0,
-        avgConstrainedMs: 0,
-        avgSampleMs: 0,
-        avgRaycastMs: 0,
-        avgRaycasts: 0,
-        avgIntersections: 0,
-        frame: null
-      };
-    },
-    beginNavPerfDebugFrame: function() {
-      if (!this.navPerfDebug) {
-        return;
-      }
-      this.navPerfDebug.frame = {
-        tickStart: performance.now(),
-        tickMs: 0,
-        constrainedMs: 0,
-        sampleMs: 0,
-        raycastMs: 0,
-        raycasts: 0,
-        intersections: 0,
-        collisionsEnabled: false,
-        immersiveCollisionsEnabled: false,
-        moving: false
-      };
-    },
-    finishNavPerfDebugFrame: function() {
-      if (!this.navPerfDebug || !this.navPerfDebug.frame) {
-        return;
-      }
-      const now = performance.now();
-      const frame = this.navPerfDebug.frame;
-      const alpha = 0.2;
-      frame.tickMs = now - frame.tickStart;
-      this.navPerfDebug.frames += 1;
-      this.navPerfDebug.totalTickMs += frame.tickMs;
-      this.navPerfDebug.totalConstrainedMs += frame.constrainedMs;
-      this.navPerfDebug.totalSampleMs += frame.sampleMs;
-      this.navPerfDebug.totalRaycastMs += frame.raycastMs;
-      this.navPerfDebug.totalRaycasts += frame.raycasts;
-      this.navPerfDebug.totalIntersections += frame.intersections;
-      if (frame.moving) {
-        this.navPerfDebug.movingFrames += 1;
-      }
-      if (frame.collisionsEnabled) {
-        this.navPerfDebug.collisionFrames += 1;
-      }
-      this.navPerfDebug.avgTickMs = this.navPerfDebug.avgTickMs === 0 ? frame.tickMs : this.navPerfDebug.avgTickMs * (1 - alpha) + frame.tickMs * alpha;
-      this.navPerfDebug.avgConstrainedMs = this.navPerfDebug.avgConstrainedMs === 0 ? frame.constrainedMs : this.navPerfDebug.avgConstrainedMs * (1 - alpha) + frame.constrainedMs * alpha;
-      this.navPerfDebug.avgSampleMs = this.navPerfDebug.avgSampleMs === 0 ? frame.sampleMs : this.navPerfDebug.avgSampleMs * (1 - alpha) + frame.sampleMs * alpha;
-      this.navPerfDebug.avgRaycastMs = this.navPerfDebug.avgRaycastMs === 0 ? frame.raycastMs : this.navPerfDebug.avgRaycastMs * (1 - alpha) + frame.raycastMs * alpha;
-      this.navPerfDebug.avgRaycasts = this.navPerfDebug.avgRaycasts === 0 ? frame.raycasts : this.navPerfDebug.avgRaycasts * (1 - alpha) + frame.raycasts * alpha;
-      this.navPerfDebug.avgIntersections = this.navPerfDebug.avgIntersections === 0 ? frame.intersections : this.navPerfDebug.avgIntersections * (1 - alpha) + frame.intersections * alpha;
-    },
-    getNavPerfDebugSnapshot: function() {
-      const currentPosition = this.getNavigationWorldPosition();
-      this.refreshNavMeshRoots();
-      if (!this.navPerfDebug) {
-        return {
-          enabled: false,
-          collisionTargets: this.navMeshCollisionTargets.length,
-          navMeshRoots: this.navMeshRoots.length,
-          position: {
-            x: currentPosition.x,
-            y: currentPosition.y,
-            z: currentPosition.z
-          }
-        };
-      }
-      const frames = Math.max(1, this.navPerfDebug.frames);
-      const frame = this.navPerfDebug.frame || {};
-      return {
-        enabled: true,
-        frames: this.navPerfDebug.frames,
-        movingFrames: this.navPerfDebug.movingFrames,
-        collisionFrames: this.navPerfDebug.collisionFrames,
-        collisionTargets: this.navMeshCollisionTargets.length,
-        blockerTargets: this.blockerCollisionTargets.length,
-        navMeshRoots: this.navMeshRoots.length,
-        colliderRoots: this.colliderRoots.length,
-        averages: {
-          tickMs: this.navPerfDebug.totalTickMs / frames,
-          constrainedMs: this.navPerfDebug.totalConstrainedMs / frames,
-          sampleMs: this.navPerfDebug.totalSampleMs / frames,
-          raycastMs: this.navPerfDebug.totalRaycastMs / frames,
-          raycasts: this.navPerfDebug.totalRaycasts / frames,
-          intersections: this.navPerfDebug.totalIntersections / frames,
-          emaTickMs: this.navPerfDebug.avgTickMs,
-          emaConstrainedMs: this.navPerfDebug.avgConstrainedMs,
-          emaSampleMs: this.navPerfDebug.avgSampleMs,
-          emaRaycastMs: this.navPerfDebug.avgRaycastMs,
-          emaRaycasts: this.navPerfDebug.avgRaycasts,
-          emaIntersections: this.navPerfDebug.avgIntersections
-        },
-        totals: {
-          tickMs: this.navPerfDebug.totalTickMs,
-          constrainedMs: this.navPerfDebug.totalConstrainedMs,
-          sampleMs: this.navPerfDebug.totalSampleMs,
-          raycastMs: this.navPerfDebug.totalRaycastMs,
-          raycasts: this.navPerfDebug.totalRaycasts,
-          intersections: this.navPerfDebug.totalIntersections
-        },
-        autoRecovery: {
-          status: this.lastAutoRecoveryStatus,
-          lastAt: this.lastAutoRecoveryAt,
-          recentStableCount: this.autoStableGroundHistory.filter((entry) => entry.valid).length
-        },
-        lastFrame: {
-          moving: Boolean(frame.moving),
-          collisionsEnabled: Boolean(frame.collisionsEnabled),
-          immersiveCollisionsEnabled: Boolean(frame.immersiveCollisionsEnabled),
-          tickMs: frame.tickMs || 0,
-          constrainedMs: frame.constrainedMs || 0,
-          sampleMs: frame.sampleMs || 0,
-          raycastMs: frame.raycastMs || 0,
-          raycasts: frame.raycasts || 0,
-          intersections: frame.intersections || 0
-        },
-        position: {
-          x: currentPosition.x,
-          y: currentPosition.y,
-          z: currentPosition.z
-        }
-      };
     },
     getSceneSettings: function() {
       return this.sceneEl ? this.sceneEl.getAttribute("scene-settings") : null;
@@ -5847,17 +5693,9 @@
       return true;
     },
     sampleGroundAtSingle: function(position, referenceGroundY, outputGround, limits) {
-      const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
-      const sampleStart = navPerfFrame ? performance.now() : 0;
-      const finalizeSample = function(result) {
-        if (navPerfFrame) {
-          navPerfFrame.sampleMs += performance.now() - sampleStart;
-        }
-        return result;
-      };
       this.refreshNavMeshRoots();
       if (this.navMeshCollisionTargets.length === 0) {
-        return finalizeSample(null);
+        return null;
       }
       const maxStepHeight = limits && typeof limits.maxStepHeight === "number" ? Math.max(0, limits.maxStepHeight) : this.data.maxStepHeight;
       const maxDropHeight = limits && typeof limits.maxDropHeight === "number" ? Math.max(0, limits.maxDropHeight) : this.data.maxDropHeight;
@@ -5868,13 +5706,7 @@
       const rayDirection = immersivePresenting ? this.authoredToRenderedDirection(this.raycastDirection, this.immersiveRenderedRayDirection) : this.raycastDirection;
       this.raycaster.set(rayOrigin, rayDirection);
       this.raycaster.far = maxStepHeight + maxDropHeight + 20;
-      const raycastStart = navPerfFrame ? performance.now() : 0;
       const intersections = this.raycaster.intersectObjects(this.navMeshCollisionTargets, false);
-      if (navPerfFrame) {
-        navPerfFrame.raycastMs += performance.now() - raycastStart;
-        navPerfFrame.raycasts += 1;
-        navPerfFrame.intersections += intersections.length;
-      }
       const hasReferenceGround = typeof referenceGroundY === "number" && isFinite(referenceGroundY);
       const minAllowedY = hasReferenceGround ? referenceGroundY - (maxDropHeight + this.groundProbeStepTolerance) : -Infinity;
       const maxAllowedY = hasReferenceGround ? referenceGroundY + maxStepHeight + this.groundProbeStepTolerance : Infinity;
@@ -5907,7 +5739,7 @@
           outputGround.normal.copy(this.tempWorldNormal);
           outputGround.slope = slope;
           outputGround.behavior = behavior;
-          return finalizeSample(outputGround);
+          return outputGround;
         }
         const autoMaxAllowedY = hasReferenceGround ? referenceGroundY + Math.max(maxStepHeight, this.getAutoStepAssistHeight()) + this.groundProbeStepTolerance : Infinity;
         if (!hasReferenceGround) {
@@ -5917,7 +5749,7 @@
           outputGround.normal.copy(this.tempWorldNormal);
           outputGround.slope = slope;
           outputGround.behavior = behavior;
-          return finalizeSample(outputGround);
+          return outputGround;
         }
         if (authoredHitY < minAllowedY || authoredHitY > autoMaxAllowedY) {
           continue;
@@ -5940,7 +5772,7 @@
           outputGround.behavior = behavior;
         }
       }
-      return finalizeSample(bestAutoHit ? outputGround : null);
+      return bestAutoHit ? outputGround : null;
     },
     sampleGroundAt: function(position, referenceGroundY, outputGround) {
       if (this.shouldReuseAutoGroundSample(position, referenceGroundY)) {
@@ -6348,20 +6180,13 @@
       return true;
     },
     raycastBlockingColliders: function(origin, direction, far, options) {
-      const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
       const immersivePresenting = this.isImmersiveXrPresenting();
       const rayOrigin = immersivePresenting ? this.authoredToRenderedPosition(origin, this.immersiveRenderedRayOrigin) : origin;
       const rayDirection = immersivePresenting ? this.authoredToRenderedDirection(direction, this.immersiveRenderedRayDirection) : direction;
       this.blockerRaycaster.set(rayOrigin, rayDirection);
       this.blockerRaycaster.near = 0;
       this.blockerRaycaster.far = Math.max(1e-3, far);
-      const raycastStart = navPerfFrame ? performance.now() : 0;
       const intersections = this.blockerRaycaster.intersectObjects(this.blockerCollisionTargets, false);
-      if (navPerfFrame) {
-        navPerfFrame.raycastMs += performance.now() - raycastStart;
-        navPerfFrame.raycasts += 1;
-        navPerfFrame.intersections += intersections.length;
-      }
       for (let i = 0; i < intersections.length; i++) {
         if (this.isBlockingCollisionHit(intersections[i], options)) {
           return intersections[i];
@@ -6583,13 +6408,8 @@
       }
     },
     applyConstrainedMovement: function(deltaX, deltaZ) {
-      const navPerfFrame = this.navPerfDebug ? this.navPerfDebug.frame : null;
-      const constrainedStart = navPerfFrame ? performance.now() : 0;
       const clearFirstMovementGroundLock = this.isImmersiveXrPresenting() && this.immersiveFirstMovementGroundLock && (Math.abs(deltaX) >= 1e-5 || Math.abs(deltaZ) >= 1e-5);
       const finalizeConstrained = (result) => {
-        if (navPerfFrame) {
-          navPerfFrame.constrainedMs += performance.now() - constrainedStart;
-        }
         if (clearFirstMovementGroundLock) {
           this.clearImmersiveFirstMovementGroundLock();
         }
@@ -6655,86 +6475,74 @@
       if (!settings) {
         return;
       }
-      this.beginNavPerfDebugFrame();
-      try {
-        const immersivePresenting = this.isImmersiveXrPresenting();
-        if (immersivePresenting) {
-          if (!this.immersiveWasPresenting) {
-            this.resetImmersiveWorldLocomotion();
-          }
-          this.ensureImmersiveRuntimeHelpers();
-          this.settleImmersiveEntryPose();
-        } else if (this.immersiveWasPresenting) {
-          this.handleExitVr();
-        } else {
-          this.rememberNonImmersiveNavigationPosition();
+      const immersivePresenting = this.isImmersiveXrPresenting();
+      if (immersivePresenting) {
+        if (!this.immersiveWasPresenting) {
+          this.resetImmersiveWorldLocomotion();
         }
-        const movementDisabled = settings.movement_disabled === true || settings.movement_disabled === "true" || settings.movement_disabled === "1";
-        if (movementDisabled) {
-          this.setNavigationWorldPosition(this.lastResolvedPosition);
-          return;
-        }
-        this.ensureNavigationStatePrimed();
-        const currentPosition = this.tickWorldPosition.copy(this.getNavigationWorldPosition());
-        const externalDeltaX = currentPosition.x - this.lastResolvedPosition.x;
-        const externalDeltaY = currentPosition.y - this.lastResolvedPosition.y;
-        const externalDeltaZ = currentPosition.z - this.lastResolvedPosition.z;
-        const navigationMode = this.getNavigationMode(settings);
-        const flyMode = navigationMode === "fly";
-        let hasExternalMovement = Math.abs(externalDeltaX) > 1e-4 || Math.abs(externalDeltaZ) > 1e-4 || flyMode && Math.abs(externalDeltaY) > 1e-4;
-        if (immersivePresenting && hasExternalMovement) {
-          this.lastResolvedPosition.copy(currentPosition);
-          hasExternalMovement = false;
-        }
-        const collisionsEnabled = this.areCollisionsEnabled(settings);
-        this.updateWASDControlsState(navigationMode, collisionsEnabled);
-        if (this.navPerfDebug && this.navPerfDebug.frame) {
-          this.navPerfDebug.frame.collisionsEnabled = collisionsEnabled;
-          this.navPerfDebug.frame.immersiveCollisionsEnabled = immersivePresenting && collisionsEnabled;
-        }
-        if (hasExternalMovement) {
-          this.setNavigationWorldPosition(this.lastResolvedPosition);
-          if (flyMode) {
-            this.applyFreeMovement(externalDeltaX, externalDeltaY, externalDeltaZ);
-          } else if (collisionsEnabled) {
-            this.applyConstrainedMovement(externalDeltaX, externalDeltaZ);
-          } else {
-            this.applyDirectMovement(externalDeltaX, externalDeltaZ);
-          }
-        }
-        const turnedWithRightStick = this.applyRightThumbstickTurn(timeDelta);
-        const thumbstickX = Math.abs(this.leftThumbInput.x) > this.data.thumbstickDeadzone ? this.leftThumbInput.x : 0;
-        const thumbstickY = Math.abs(this.leftThumbInput.y) > this.data.thumbstickDeadzone ? this.leftThumbInput.y : 0;
-        const keyboardX = collisionsEnabled || flyMode ? this.keyboardInput.x : 0;
-        const keyboardY = collisionsEnabled || flyMode ? this.keyboardInput.y : 0;
-        const keyboardVertical = flyMode ? this.keyboardInput.vertical : 0;
-        const inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
-        const inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
-        const inputVertical = flyMode ? VRODOSMaster.clamp(keyboardVertical, -1, 1) : 0;
-        if (this.navPerfDebug && this.navPerfDebug.frame) {
-          this.navPerfDebug.frame.moving = hasExternalMovement || turnedWithRightStick || inputX !== 0 || inputY !== 0 || inputVertical !== 0;
-        }
-        if (inputX === 0 && inputY === 0 && inputVertical === 0) {
-          if (!hasExternalMovement) {
-            this.lastResolvedPosition.copy(currentPosition);
-          }
-          return;
-        }
-        const movementSpeed = flyMode ? this.data.flyMovementSpeed : this.data.movementSpeed;
-        const movementDistance = movementSpeed * (Math.min(timeDelta, 50) / 1e3);
-        const movementDelta = flyMode ? this.getFlyMovementDeltaFromInput(inputX, inputY, inputVertical, movementDistance) : this.getMovementDeltaFromInput(inputX, inputY, movementDistance);
-        if (!movementDelta) {
-          return;
-        }
+        this.ensureImmersiveRuntimeHelpers();
+        this.settleImmersiveEntryPose();
+      } else if (this.immersiveWasPresenting) {
+        this.handleExitVr();
+      } else {
+        this.rememberNonImmersiveNavigationPosition();
+      }
+      const movementDisabled = settings.movement_disabled === true || settings.movement_disabled === "true" || settings.movement_disabled === "1";
+      if (movementDisabled) {
+        this.setNavigationWorldPosition(this.lastResolvedPosition);
+        return;
+      }
+      this.ensureNavigationStatePrimed();
+      const currentPosition = this.tickWorldPosition.copy(this.getNavigationWorldPosition());
+      const externalDeltaX = currentPosition.x - this.lastResolvedPosition.x;
+      const externalDeltaY = currentPosition.y - this.lastResolvedPosition.y;
+      const externalDeltaZ = currentPosition.z - this.lastResolvedPosition.z;
+      const navigationMode = this.getNavigationMode(settings);
+      const flyMode = navigationMode === "fly";
+      let hasExternalMovement = Math.abs(externalDeltaX) > 1e-4 || Math.abs(externalDeltaZ) > 1e-4 || flyMode && Math.abs(externalDeltaY) > 1e-4;
+      if (immersivePresenting && hasExternalMovement) {
+        this.lastResolvedPosition.copy(currentPosition);
+        hasExternalMovement = false;
+      }
+      const collisionsEnabled = this.areCollisionsEnabled(settings);
+      this.updateWASDControlsState(navigationMode, collisionsEnabled);
+      if (hasExternalMovement) {
+        this.setNavigationWorldPosition(this.lastResolvedPosition);
         if (flyMode) {
-          this.applyFreeMovement(movementDelta.x, movementDelta.y, movementDelta.z);
+          this.applyFreeMovement(externalDeltaX, externalDeltaY, externalDeltaZ);
         } else if (collisionsEnabled) {
-          this.applyConstrainedMovement(movementDelta.x, movementDelta.z);
+          this.applyConstrainedMovement(externalDeltaX, externalDeltaZ);
         } else {
-          this.applyDirectMovement(movementDelta.x, movementDelta.z);
+          this.applyDirectMovement(externalDeltaX, externalDeltaZ);
         }
-      } finally {
-        this.finishNavPerfDebugFrame();
+      }
+      this.applyRightThumbstickTurn(timeDelta);
+      const thumbstickX = Math.abs(this.leftThumbInput.x) > this.data.thumbstickDeadzone ? this.leftThumbInput.x : 0;
+      const thumbstickY = Math.abs(this.leftThumbInput.y) > this.data.thumbstickDeadzone ? this.leftThumbInput.y : 0;
+      const keyboardX = collisionsEnabled || flyMode ? this.keyboardInput.x : 0;
+      const keyboardY = collisionsEnabled || flyMode ? this.keyboardInput.y : 0;
+      const keyboardVertical = flyMode ? this.keyboardInput.vertical : 0;
+      const inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
+      const inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
+      const inputVertical = flyMode ? VRODOSMaster.clamp(keyboardVertical, -1, 1) : 0;
+      if (inputX === 0 && inputY === 0 && inputVertical === 0) {
+        if (!hasExternalMovement) {
+          this.lastResolvedPosition.copy(currentPosition);
+        }
+        return;
+      }
+      const movementSpeed = flyMode ? this.data.flyMovementSpeed : this.data.movementSpeed;
+      const movementDistance = movementSpeed * (Math.min(timeDelta, 50) / 1e3);
+      const movementDelta = flyMode ? this.getFlyMovementDeltaFromInput(inputX, inputY, inputVertical, movementDistance) : this.getMovementDeltaFromInput(inputX, inputY, movementDistance);
+      if (!movementDelta) {
+        return;
+      }
+      if (flyMode) {
+        this.applyFreeMovement(movementDelta.x, movementDelta.y, movementDelta.z);
+      } else if (collisionsEnabled) {
+        this.applyConstrainedMovement(movementDelta.x, movementDelta.z);
+      } else {
+        this.applyDirectMovement(movementDelta.x, movementDelta.z);
       }
     }
   });
