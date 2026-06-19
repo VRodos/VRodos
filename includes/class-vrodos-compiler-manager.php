@@ -13,6 +13,7 @@ require_once __DIR__ . '/class-vrodos-compiler-scene-settings.php';
 require_once __DIR__ . '/class-vrodos-compiler-aframe-entity-renderer.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-manifest.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
+require_once __DIR__ . '/class-vrodos-compiler-runtime-dom-transformer.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-page-builder.php';
 
 class VRodos_Compiler_Manager {
@@ -30,6 +31,7 @@ class VRodos_Compiler_Manager {
 	private VRodos_Compiler_Scene_Repository $scene_repository;
 	private VRodos_Compiler_Scene_Settings $scene_settings;
 	private VRodos_Compiler_AFrame_Entity_Renderer $entity_renderer;
+	private VRodos_Compiler_Runtime_DOM_Transformer $runtime_dom_transformer;
 	private VRodos_Compiler_Runtime_Page_Builder $runtime_page_builder;
 	private ?VRodos_Compiler_Runtime_Script_Planner $runtime_script_planner = null;
 
@@ -40,6 +42,7 @@ class VRodos_Compiler_Manager {
 		$this->template_renderer = new VRodos_Compiler_Template_Renderer();
 		$this->scene_repository = new VRodos_Compiler_Scene_Repository();
 		$this->scene_settings   = new VRodos_Compiler_Scene_Settings( $this->scene_repository, $this->runtime_feature_flags );
+		$this->runtime_dom_transformer = new VRodos_Compiler_Runtime_DOM_Transformer();
 		$this->entity_renderer  = new VRodos_Compiler_AFrame_Entity_Renderer(
 			$this->runtime_assets,
 			$this->scene_repository,
@@ -548,7 +551,7 @@ class VRodos_Compiler_Manager {
 		);
 
 		if ( $this->is_single_player_runtime() ) {
-			$this->apply_single_player_runtime_dom( $dom, $ascene );
+			$this->runtime_dom_transformer->apply_single_player_mode( $dom, $ascene );
 		}
 
 		return $this->runtime_page_builder->write_dom(
@@ -557,87 +560,6 @@ class VRodos_Compiler_Manager {
 			false,
 			"<!-- Detected Hostname: {$this->website_root_url} -->\n"
 		);
-	}
-
-	private function apply_single_player_runtime_dom( DOMDocument $dom, DOMElement $ascene ): void {
-		$ascene->removeAttribute( 'networked-scene' );
-
-		$this->remove_scripts_containing( $dom, [
-			'socket.io',
-			'easyrtc.js',
-			'networked-aframe',
-			'chat_component.js',
-		] );
-
-		foreach ( [ 'networked', 'networked-audio-source', 'networked-video-source', 'chat-poi', 'indicator-availability' ] as $attribute ) {
-			$this->remove_attribute_everywhere( $dom, $attribute );
-		}
-
-		foreach ( [ 'chat-wrapper-el', 'obtainStatusAndSetSizeControls', 'screen-btn-sendscreen' ] as $element_id ) {
-			$this->hide_dom_element( $dom->getElementById( $element_id ) );
-		}
-
-		$this->remove_dom_element( $dom->getElementById( 'avatar-selection-dialog' ) );
-
-		$occupants = $dom->getElementById( 'occupantsNumberShow' );
-		if ( $occupants instanceof DOMElement && $occupants->parentNode instanceof DOMElement ) {
-			$this->hide_dom_element( $occupants->parentNode );
-		}
-
-		$room = $dom->getElementById( 'roomNameShow' );
-		if ( $room instanceof DOMElement ) {
-			$room->nodeValue = 'single-player';
-		}
-	}
-
-	private function remove_dom_element( ?DOMElement $element ): void {
-		if ( ! $element instanceof DOMElement || ! $element->parentNode ) {
-			return;
-		}
-
-		$element->parentNode->removeChild( $element );
-	}
-
-	private function remove_scripts_containing( DOMDocument $dom, array $needles ): void {
-		$remove = [];
-		foreach ( $dom->getElementsByTagName( 'script' ) as $script ) {
-			if ( ! $script instanceof DOMElement || ! $script->hasAttribute( 'src' ) ) {
-				continue;
-			}
-
-			$src = $script->getAttribute( 'src' );
-			foreach ( $needles as $needle ) {
-				if ( str_contains( $src, (string) $needle ) ) {
-					$remove[] = $script;
-					break;
-				}
-			}
-		}
-
-		foreach ( $remove as $script ) {
-			if ( $script->parentNode ) {
-				$script->parentNode->removeChild( $script );
-			}
-		}
-	}
-
-	private function remove_attribute_everywhere( DOMDocument $dom, string $attribute ): void {
-		foreach ( $dom->getElementsByTagName( '*' ) as $element ) {
-			if ( $element instanceof DOMElement && $element->hasAttribute( $attribute ) ) {
-				$element->removeAttribute( $attribute );
-			}
-		}
-	}
-
-	private function hide_dom_element( ?DOMElement $element ): void {
-		if ( ! $element instanceof DOMElement ) {
-			return;
-		}
-
-		$style = trim( $element->getAttribute( 'style' ) );
-		$style = '' === $style ? '' : rtrim( $style, ';' ) . '; ';
-		$element->setAttribute( 'style', $style . 'display: none; visibility: hidden;' );
-		$element->setAttribute( 'data-visible', 'false' );
 	}
 
 	private function createSimpleClient( $scene_id, $scene_json, $project_id ) {

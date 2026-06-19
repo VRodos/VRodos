@@ -186,7 +186,7 @@ vrodos_assert_same(
 );
 
 vrodos_assert_same(
-	[ 'scene-components', 'spatial-ui', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
 	$planner->script_ids_for_scene(
 		vrodos_test_scene(
 			[],
@@ -198,7 +198,7 @@ vrodos_assert_same(
 			]
 		)
 	),
-	'video spatial UI'
+	'video direct playback without spatial UI'
 );
 
 vrodos_assert_same(

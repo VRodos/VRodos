@@ -148,9 +148,39 @@ const baseRules = {
     'yoda': 'warn'
 };
 
+const runtimeRules = {
+    ...baseRules,
+    curly: ['warn', 'multi-line'],
+    'no-floating-decimal': 'warn',
+    'no-lone-blocks': 'warn',
+    'no-prototype-builtins': 'warn',
+    'no-return-assign': ['warn', 'except-parens'],
+    'no-sequences': 'warn',
+    'prefer-template': 'warn'
+};
+
+const runtimeGlobals = {
+    ...browserGlobals,
+    AFRAME: 'readonly',
+    THREE: 'readonly',
+    NAF: 'readonly',
+    Stats: 'readonly',
+    lil: 'readonly',
+    easyrtc: 'readonly',
+    gtag: 'readonly',
+    VRODOSMaster: 'readonly',
+    VRODOS_TAKRAM_ATMOSPHERE: 'readonly',
+    browsingModeVR: 'writable',
+    vrodosDecodeDisplayText: 'readonly',
+    getChatCurrentTimeString: 'readonly',
+    publicChatIsActive: 'writable',
+    chatLogPublicHistory: 'writable',
+    sendPublicMessage: 'readonly'
+};
+
 module.exports = [
     {
-        ignores: ['**/node_modules/**', 'assets/js/runtime/master/lib/**/*.js']
+        ignores: ['**/node_modules/**', 'assets/js/runtime/master/lib/**/*.js', 'assets/js/runtime/**/*.min.js']
     },
     {
         files: ['assets/js/editor/**/*.js'],
@@ -171,22 +201,33 @@ module.exports = [
         rules: baseRules
     },
     {
+        files: [
+            'assets/js/runtime/*.js',
+            'assets/js/runtime/assessment/**/*.js',
+            'assets/js/runtime/components/**/*.js'
+        ],
+        languageOptions: {
+            ecmaVersion: 'latest',
+            sourceType: 'script',
+            globals: runtimeGlobals
+        },
+        rules: runtimeRules
+    },
+    {
+        files: ['assets/js/runtime/spatial-ui/**/*.js'],
+        languageOptions: {
+            ecmaVersion: 'latest',
+            sourceType: 'module',
+            globals: runtimeGlobals
+        },
+        rules: runtimeRules
+    },
+    {
         files: ['assets/js/runtime/master/**/*.js'],
         languageOptions: {
             ecmaVersion: 'latest',
             sourceType: 'script',
-            globals: {
-                ...browserGlobals,
-                AFRAME: 'readonly',
-                THREE: 'readonly',
-                NAF: 'readonly',
-                Stats: 'readonly',
-                lil: 'readonly',
-                easyrtc: 'readonly',
-                gtag: 'readonly',
-                VRODOSMaster: 'readonly',
-                VRODOS_TAKRAM_ATMOSPHERE: 'readonly'
-            }
+            globals: runtimeGlobals
         },
         rules: baseRules
     }
