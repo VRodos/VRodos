@@ -30,6 +30,7 @@ Accepted current state:
 - `Desktop` maps to internal `desktop` and preserves the authored Desktop rendering pipeline.
 - `VR Headset` maps to internal `headset`.
 - Accepted public `headset` features on Quest 2: A-Frame scene host, authored 3D objects/media, HMD tracking without camera freeze, controller input, thumbstick navigation, walkable collision/BVH, static shadows, native renderer antialiasing, readable midday lighting, authored Takram visible sky/light sources, and authored HDR env-map reflections.
+- 2026-06-19 open rendering caveat: immersive right-stick world rotation can still make object shadows appear player-relative/rotating. Keep the accepted locomotion/collision and authored-object placement baseline intact, and defer this to a later shadow-space audit around directional shadow/light fitting under immersive presentation yaw.
 - Minor far-edge shimmer is acceptable for the current baseline and should be treated as solved unless it regresses.
 - Hidden `baseline` remains the strict A-Frame-horizon regression profile and compiles without PMNDRS/Takram chunks even when Desktop settings use PMNDRS/Takram.
 

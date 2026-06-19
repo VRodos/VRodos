@@ -15,6 +15,7 @@ Keep the Desktop compiled-scene pipeline intact while enabling as much Desktop f
 - `VR Headset` maps to internal `headset`.
 - `baseline` and `safe` remain hidden strict regression profiles.
 - Accepted VR Headset features: A-Frame scene host, authored GLB/media rendering, HMD tracking without camera freeze, controller input, thumbstick navigation, walkable navigation, static collision/BVH, static shadows, native renderer antialiasing, readable midday lighting, Takram visible sky/light sources when authored, and HDR env-map reflections when authored.
+- 2026-06-19 open rendering caveat: in immersive XR, right-stick world rotation can still make object shadows appear to rotate with the player. Entry height, authored-object placement, video placement, POI image/text placement, collision/BVH walking, and locomotion remain accepted on `Master_Client_8980.html`; defer the shadow-yaw issue to a later rendering pass focused on directional shadow/light-space fitting under immersive presentation yaw.
 - Minor far-edge shimmer is acceptable and should be treated as solved unless it regresses.
 - VR Headset compiles the Takram atmosphere chunk only when authored, but keeps PMNDRS/legacy composers, clouds, scene probes, Takram sky PMREM capture, and WebXR layers disabled.
 
