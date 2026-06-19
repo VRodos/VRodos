@@ -55,13 +55,7 @@ import { MSDF } from "@zappar/msdf-generator";
     ];
     const LEGACY_CONTROL_SELECTORS = [
         "[vrodos-3d-play-icon]",
-        "[id^='video-playhint_']",
-        "[id^='vid-panel_']",
-        "[id^='ent_fs_']",
-        "[id^='ent_pl_']",
-        "[id^='ent_ex_']",
-        "[id^='exit_vid_panel_']",
-        "[id^='ent_tit_']"
+        "[id^='video-playhint_']"
     ];
 
     let activePanel = null;

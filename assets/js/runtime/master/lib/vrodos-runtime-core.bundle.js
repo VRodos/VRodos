@@ -4771,7 +4771,7 @@
       }
       const id = entityEl.id || "";
       const tagName = entityEl.tagName ? entityEl.tagName.toUpperCase() : "";
-      return tagName === "A-SKY" || tagName === "A-SUN-SKY" || id === "cameraA" || id === "default-sky" || id === "default-sun" || id.indexOf("vid-panel_") === 0 || entityHasClass(entityEl, "avatar") || entityHasClass(entityEl, "non-vr") || entityEl.hasAttribute("data-vrodos-overlay-ui") || entityEl.hasAttribute("data-vrodos-photoreal-light");
+      return tagName === "A-SKY" || tagName === "A-SUN-SKY" || id === "cameraA" || id === "default-sky" || id === "default-sun" || entityHasClass(entityEl, "avatar") || entityHasClass(entityEl, "non-vr") || entityEl.hasAttribute("data-vrodos-overlay-ui") || entityEl.hasAttribute("data-vrodos-photoreal-light");
     }
     function isDecorativeLightingEntity(entityEl) {
       if (!entityEl) {

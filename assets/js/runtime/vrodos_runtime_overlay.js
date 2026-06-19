@@ -20,13 +20,7 @@
     ];
     const SCENE_CONTROL_SUPPRESSION_SELECTORS = [
         "[vrodos-3d-play-icon]",
-        "[id^='video-playhint_']",
-        "[id^='vid-panel_']",
-        "[id^='ent_fs_']",
-        "[id^='ent_pl_']",
-        "[id^='ent_ex_']",
-        "[id^='exit_vid_panel_']",
-        "[id^='ent_tit_']"
+        "[id^='video-playhint_']"
     ];
     let spatialUiRuntimePromise = null;
     let sceneRayFeedbackComponentRegistered = false;
@@ -974,97 +968,6 @@
         queueRaycasterRefresh();
     }
 
-    function numberOrDefault(value, fallback) {
-        const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : fallback;
-    }
-
-    function formatTransformNumber(value) {
-        const safeValue = Math.abs(value) < 0.000001 ? 0 : value;
-        return String(Number(safeValue.toFixed(5)));
-    }
-
-    function formatVectorAttribute(vector) {
-        return [
-            formatTransformNumber(vector.x),
-            formatTransformNumber(vector.y),
-            formatTransformNumber(vector.z)
-        ].join(" ");
-    }
-
-    function formatRotationAttribute(rotation, THREE) {
-        const radToDeg = THREE && THREE.MathUtils && typeof THREE.MathUtils.radToDeg === "function"
-            ? THREE.MathUtils.radToDeg
-            : function (value) { return value * 180 / Math.PI; };
-        return [
-            formatTransformNumber(radToDeg(rotation.x)),
-            formatTransformNumber(radToDeg(rotation.y)),
-            formatTransformNumber(radToDeg(rotation.z))
-        ].join(" ");
-    }
-
-    function getWorldOverlayPose(options) {
-        const THREE = getThreeRuntime();
-        const scene = queryScene();
-        const camera = queryCamera();
-        if (!THREE || !scene || !camera || !camera.object3D) {
-            return null;
-        }
-
-        if (scene.object3D && typeof scene.object3D.updateMatrixWorld === "function") {
-            scene.object3D.updateMatrixWorld(true);
-        }
-        if (typeof camera.object3D.updateMatrixWorld === "function") {
-            camera.object3D.updateMatrixWorld(true);
-        }
-
-        const distance = Math.max(0.25, numberOrDefault(options && options.distance, 2.35));
-        const verticalOffset = numberOrDefault(options && options.verticalOffset, 0);
-        const cameraPosition = new THREE.Vector3();
-        const cameraQuaternion = new THREE.Quaternion();
-        const forward = new THREE.Vector3(0, 0, -1);
-
-        camera.object3D.getWorldPosition(cameraPosition);
-        camera.object3D.getWorldQuaternion(cameraQuaternion);
-        forward.applyQuaternion(cameraQuaternion);
-
-        if (!(options && options.useCameraPitch === true)) {
-            forward.y = 0;
-            if (forward.lengthSq() < 0.000001) {
-                const euler = new THREE.Euler().setFromQuaternion(cameraQuaternion, "YXZ");
-                forward.set(-Math.sin(euler.y), 0, -Math.cos(euler.y));
-            }
-        }
-
-        if (forward.lengthSq() < 0.000001) {
-            forward.set(0, 0, -1);
-        } else {
-            forward.normalize();
-        }
-
-        const position = cameraPosition.clone().addScaledVector(forward, distance);
-        const horizontalOffset = numberOrDefault(options && options.horizontalOffset, 0);
-        if (horizontalOffset !== 0) {
-            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(cameraQuaternion);
-            right.y = 0;
-            if (right.lengthSq() < 0.000001) {
-                right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-            } else {
-                right.normalize();
-            }
-            position.addScaledVector(right, horizontalOffset);
-        }
-        position.y += verticalOffset;
-
-        return {
-            scene,
-            camera,
-            position,
-            faceTarget: cameraPosition.clone(),
-            THREE
-        };
-    }
-
     const api = {
         activePanel: null,
         raycasterRestore: null,
@@ -1092,53 +995,6 @@
                 recordDiagnostic("debug", "VR panel skipped because presentation is not immersive XR.", getSceneDiagnostics());
             }
             return shouldUse;
-        },
-
-        anchorElementInFrontOfCamera: function (el, options) {
-            const pose = getWorldOverlayPose(options || {});
-            if (!el || !pose || !pose.scene || !el.object3D) {
-                return false;
-            }
-
-            if (el.parentNode !== pose.scene) {
-                pose.scene.appendChild(el);
-            }
-
-            el.object3D.position.copy(pose.position);
-            if (pose.THREE && pose.THREE.Vector3 && pose.THREE.Matrix4 && pose.THREE.Quaternion) {
-                const zAxis = pose.faceTarget.clone().sub(pose.position);
-                if (zAxis.lengthSq() < 0.000001) {
-                    zAxis.set(0, 0, 1);
-                } else {
-                    zAxis.normalize();
-                }
-                const up = new pose.THREE.Vector3(0, 1, 0);
-                let xAxis = up.clone().cross(zAxis);
-                if (xAxis.lengthSq() < 0.000001) {
-                    xAxis = new pose.THREE.Vector3(1, 0, 0);
-                } else {
-                    xAxis.normalize();
-                }
-                const yAxis = zAxis.clone().cross(xAxis).normalize();
-                const matrix = new pose.THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
-                el.object3D.quaternion.setFromRotationMatrix(matrix);
-            } else {
-                el.object3D.up.set(0, 1, 0);
-                if (typeof el.object3D.lookAt === "function") {
-                    el.object3D.lookAt(pose.faceTarget);
-                    el.object3D.rotateY(Math.PI);
-                }
-            }
-            if (typeof el.object3D.updateMatrixWorld === "function") {
-                el.object3D.updateMatrixWorld(true);
-            } else {
-                el.object3D.matrixWorldNeedsUpdate = true;
-            }
-
-            el.setAttribute("position", formatVectorAttribute(el.object3D.position));
-            el.setAttribute("rotation", formatRotationAttribute(el.object3D.rotation, pose.THREE));
-            el.setAttribute("data-vrodos-overlay-static-anchor", "true");
-            return true;
         },
 
         lockSceneInteraction: function (isLocked, options) {
@@ -1269,13 +1125,6 @@
         refreshInteractionTargets: function () {
             const activeRoot = this.activePanel && this.activePanel.root;
             refreshOverlayTargets(activeRoot || null);
-        },
-
-        markOverlayTarget: function (el, enabled) {
-            if (!el || !el.classList) {
-                return;
-            }
-            el.classList.toggle(RAYCAST_TARGET_CLASS, enabled !== false);
         },
 
         closeActivePanel: function (reason) {

@@ -1348,39 +1348,6 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 				$assets->appendChild( $poster );
 			}
 
-			// Video Assets (Controls)
-			$v_pl = $dom->createElement( 'img' );
-			$v_pl->setAttribute( 'id', 'video_pl_' . $uuid );
-			$play_icon_url = $this->runtime_image_url( 'ui/play_2f3542.png' );
-			$v_pl->setAttribute( 'src', $play_icon_url );
-			$v_pl->setAttribute( 'crossorigin', 'anonymous' );
-			$assets->appendChild( $v_pl );
-			$this->track_runtime_asset( 'runtime-ui-image', $play_icon_url, 'video-controls:' . $uuid );
-
-			$v_pas = $dom->createElement( 'img' );
-			$v_pas->setAttribute( 'id', 'video_pas_' . $uuid );
-			$pause_icon_url = $this->runtime_image_url( 'ui/pause_2f3542.png' );
-			$v_pas->setAttribute( 'src', $pause_icon_url );
-			$v_pas->setAttribute( 'crossorigin', 'anonymous' );
-			$assets->appendChild( $v_pas );
-			$this->track_runtime_asset( 'runtime-ui-image', $pause_icon_url, 'video-controls:' . $uuid );
-
-			$v_fs = $dom->createElement( 'img' );
-			$v_fs->setAttribute( 'id', 'video_fs_' . $uuid );
-			$fullscreen_icon_url = $this->runtime_image_url( 'ui/fullscreen_2f3542.png' );
-			$v_fs->setAttribute( 'src', $fullscreen_icon_url );
-			$v_fs->setAttribute( 'crossorigin', 'anonymous' );
-			$assets->appendChild( $v_fs );
-			$this->track_runtime_asset( 'runtime-ui-image', $fullscreen_icon_url, 'video-controls:' . $uuid );
-
-			$v_ex = $dom->createElement( 'img' );
-			$v_ex->setAttribute( 'id', 'video_ex_' . $uuid );
-			$exit_icon_url = $this->runtime_image_url( 'ui/exit_2f3542.png' );
-			$v_ex->setAttribute( 'src', $exit_icon_url );
-			$v_ex->setAttribute( 'crossorigin', 'anonymous' );
-			$assets->appendChild( $v_ex );
-			$this->track_runtime_asset( 'runtime-ui-image', $exit_icon_url, 'video-controls:' . $uuid );
-
 			// Video Display
 			$display = $dom->createElement( 'a-plane' );
 			$display->setAttribute( 'id', 'video-display_' . $uuid );
@@ -1401,6 +1368,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$video_url = $this->normalize_url( $obj->video_path ?? '' );
 			$display->setAttribute( 'data-vrodos-video-src', $video_url );
 			$display->setAttribute( 'data-vrodos-video-loop', ($obj->video_loop ?? 0) == 1 ? 'true' : 'false' );
+			$display->setAttribute( 'data-vrodos-video-title', $this->sanitize_text_attr( $obj->video_title ?? 'Video' ) );
 			$this->track_runtime_asset( 'video', $video_url, 'video:' . $uuid );
 			$this->set_world_lighting_attributes( $display );
 			$display->setAttribute( 'video-controls', "id: $uuid" );
@@ -1420,121 +1388,20 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$display->appendChild( $play_hint );
 
 			$ascene->appendChild( $display );
-
-			// Video Panel (Hidden by default, attached to camera by JS)
-			$panel = $dom->createElement( 'a-entity' );
-			$panel->setAttribute( 'id', 'vid-panel_' . $uuid );
-			$panel->setAttribute( 'mixin', 'vid_panel' );
-			$panel->setAttribute( 'visible', 'false' );
-			$panel->setAttribute( 'scale', '0.0001 0.0001 0.0001' );
-			$this->set_overlay_ui_attributes( $panel );
-
-			// Exit Frame & Button
-			$exit_frame = $dom->createElement( 'a-entity' );
-			$exit_frame->setAttribute( 'id', 'exit_vid_panel_' . $uuid );
-			$exit_frame->setAttribute( 'mixin', 'poiVidEscFrame' );
-			$exit_frame->setAttribute( 'class', 'raycastable' );
-			$exit_frame->setAttribute( 'highlight', 'exit_vid_panel_' . $uuid );
-			$this->set_overlay_ui_attributes( $exit_frame );
-			$panel->appendChild( $exit_frame );
-
-			$exit_btn = $dom->createElement( 'a-plane' );
-			$exit_btn->setAttribute( 'id', 'ent_ex_' . $uuid );
-			$exit_btn->setAttribute( 'src', '#video_ex_' . $uuid );
-			$exit_btn->setAttribute( 'mixin', 'poiVidEscFrame' );
-			$exit_btn->setAttribute( 'material', 'transparent: true' );
-			$exit_btn->setAttribute( 'class', 'raycastable' );
-			$exit_btn->setAttribute( 'highlight', 'ent_ex_' . $uuid );
-			$this->set_overlay_ui_attributes( $exit_btn );
-			$panel->appendChild( $exit_btn );
-
-			// Play Button (Switches between 3D Play and 2D Pause)
-			$play_btn = $dom->createElement( 'a-entity' );
-			$play_btn->setAttribute( 'id', 'ent_pl_' . $uuid );
-			$play_btn->setAttribute( 'position', '0 -0.2 0.001' );
-			$play_btn->setAttribute( 'geometry', 'primitive: plane; width: 0.1; height: 0.1' );
-			$play_btn->setAttribute( 'material', 'transparent: true; visible: false' );
-			$play_btn->setAttribute( 'class', 'raycastable' );
-			$play_btn->setAttribute( 'highlight', 'ent_pl_' . $uuid );
-			$this->set_overlay_ui_attributes( $play_btn );
-			if ( $this->isHoverEnabled ) {
-				$play_btn->setAttribute( 'vrodos-hypnotic-hover', '' );
-			}
-
-			$play_btn_3d = $dom->createElement( 'a-entity' );
-			$play_btn_3d->setAttribute( 'vrodos-3d-play-icon', '' );
-			$play_btn_3d->setAttribute( 'scale', '0.04 0.04 0.04' );
-			$this->set_overlay_ui_attributes( $play_btn_3d );
-			$play_btn->appendChild( $play_btn_3d );
-
-			$panel->appendChild( $play_btn );
-
-			// Fullscreen Button
-			$fs_btn = $dom->createElement( 'a-plane' );
-			$fs_btn->setAttribute( 'id', 'ent_fs_' . $uuid );
-			$fs_btn->setAttribute( 'src', '#video_fs_' . $uuid );
-			$fs_btn->setAttribute( 'position', '0.2 -0.2 0.001' );
-			$fs_btn->setAttribute( 'width', '0.1' );
-			$fs_btn->setAttribute( 'height', '0.1' );
-			$fs_btn->setAttribute( 'material', 'transparent: true' );
-			$fs_btn->setAttribute( 'class', 'raycastable' );
-			$fs_btn->setAttribute( 'highlight', 'ent_fs_' . $uuid );
-			$this->set_overlay_ui_attributes( $fs_btn );
-			$panel->appendChild( $fs_btn );
-
-			// Title
-			$title = $dom->createElement( 'a-text' );
-			$title->setAttribute( 'id', 'ent_tit_' . $uuid );
-			$title->setAttribute( 'value', $this->sanitize_text_attr( $obj->video_title ?? 'Video' ) );
-			$title->setAttribute( 'position', '0 0.3 0.001' );
-			$title->setAttribute( 'align', 'center' );
-			$title->setAttribute( 'width', '0.5' );
-			$this->set_overlay_ui_attributes( $title );
-			$panel->appendChild( $title );
-
-			$ascene->appendChild( $panel );
 		}
 	}
 
 	private function render_poi_imagetext_entity( $dom, $ascene, $assets, $obj ) {
 		$uuid = $obj->uuid ?? '';
 
-		// 1. Assets
 		$main_img_url = $this->normalize_url( $obj->poi_img_path ?? $obj->poi_image_path ?? '' );
-		if ( '' !== $main_img_url ) {
-			$main_img = $dom->createElement( 'img' );
-			$main_img->setAttribute( 'id', 'main_img_' . $uuid );
-			$main_img->setAttribute( 'src', $main_img_url );
-			$main_img->setAttribute( 'crossorigin', 'anonymous' );
-			$assets->appendChild( $main_img );
-		}
+		$title_text   = $obj->poi_img_title ?? $obj->poi_title ?? '';
+		$desc_text    = $obj->poi_img_content ?? $obj->poi_description ?? '';
 		$this->track_runtime_asset( 'poi-image', $main_img_url, 'poi-imagetext:' . $uuid );
 
-		$esc_img = $dom->createElement( 'img' );
-		$esc_img->setAttribute( 'id', 'esc_img_' . $uuid );
-		$esc_icon_url = $this->runtime_image_url( 'ui/x_2f3542.png' );
-		$esc_img->setAttribute( 'src', $esc_icon_url );
-		$esc_img->setAttribute( 'crossorigin', 'anonymous' );
-		$assets->appendChild( $esc_img );
-		$this->track_runtime_asset( 'runtime-ui-image', $esc_icon_url, 'poi-imagetext:' . $uuid );
-
-		// 2. UI Container (attached to scene, moved by JS)
-		$ui = $dom->createElement( 'a-entity' );
-		$ui->setAttribute( 'id', $uuid );
-		$ui->setAttribute( 'class', 'hideable raycastable' );
-		$ui->setAttribute( 'visible', 'false' );
-		$ui->setAttribute( 'scale', '0.001 0.001 0.001' );
-		$this->set_overlay_ui_attributes( $ui );
-		// Add invisible geometry to satisfy this.el.components.material access in legacy JS
-		$ui->setAttribute( 'geometry', 'primitive: plane; width: 0.001; height: 0.001' );
-		$ui->setAttribute( 'material', 'visible: false; depthTest: true' );
-		$ui->setAttribute( 'info-panel', $uuid );
-		$this->setAffineTransformations( $ui, $obj );
-
-		// 3. The Button (Trigger GLTF)
 		$button_anchor = $dom->createElement( 'a-entity' );
 		$button_anchor->setAttribute( 'id', 'button_poi_root_' . $uuid );
-		$this->setAffineTransformations( $button_anchor, $obj ); // Static authored world root.
+		$this->setAffineTransformations( $button_anchor, $obj );
 
 		$button = $dom->createElement( 'a-entity' );
 		$button->setAttribute( 'id', 'button_poi_' . $uuid );
@@ -1551,6 +1418,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		);
 		$button->setAttribute( 'highlight', 'button_poi_' . $uuid );
 		$button->setAttribute( 'class', 'override-materials raycastable menu-button hideable' );
+		$button->setAttribute( 'info-panel', $uuid );
+		$button->setAttribute( 'data-vrodos-poi-title', $this->sanitize_text_attr( $title_text ) );
+		$button->setAttribute( 'data-vrodos-poi-description', $this->sanitize_text_attr( $desc_text ) );
+		$button->setAttribute( 'data-vrodos-poi-image-src', $main_img_url );
 		$this->apply_compiled_collision_attributes( $button, $obj, 'poi-button' );
 		if ( $this->isHoverEnabled ) {
 			$button->setAttribute( 'vrodos-hypnotic-hover', '' );
@@ -1558,133 +1429,6 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->set_world_lighting_attributes( $button );
 		$button_anchor->appendChild( $button );
 		$ascene->appendChild( $button_anchor );
-
-		// 4. The Info Panel (Inside UI Container)
-		// Geometric Background
-		$infoPanel = $dom->createElement( 'a-entity' );
-		$infoPanel->setAttribute( 'id', 'infoPanel_' . $uuid );
-		$infoPanel->setAttribute( 'geometry', 'primitive: plane; width: 1.5; height: 1.8' );
-		$infoPanel->setAttribute( 'material', 'color: #333333; shader: flat; transparent: true; opacity: 0.9' );
-		$infoPanel->setAttribute( 'position', '0 0 0.005' );
-		$this->set_overlay_ui_attributes( $infoPanel );
-		$ui->appendChild( $infoPanel );
-
-		// Image Display Plane
-		$top_img = $dom->createElement( 'a-entity' );
-		$top_img->setAttribute( 'id', 'top_img_' . $uuid );
-		$top_img->setAttribute( 'geometry', 'primitive: plane; width: 1.4; height: 0.8' );
-		$top_img->setAttribute( 'material', 'shader: flat; transparent: true' );
-		$top_img->setAttribute( 'position', '0 0.35 0.01' );
-		$this->set_overlay_ui_attributes( $top_img );
-		$ui->appendChild( $top_img );
-
-		// Title Text (Using fallbacks for common mismatched keys)
-		$title_text = $obj->poi_img_title ?? $obj->poi_title ?? '';
-
-		$title = $dom->createElement( 'a-text' );
-		$title->setAttribute( 'id', 'title_' . $uuid );
-		$title->setAttribute( 'position', '0 0.82 0.01' );
-		$title->setAttribute( 'value', $this->sanitize_text_attr( $title_text ) );
-		$title->setAttribute( 'color', '#eeeeee' );
-		$title->setAttribute( 'align', 'center' );
-		$title->setAttribute( 'font', 'https://cdn.aframe.io/fonts/DejaVu-sdf.fnt' );
-		$title->setAttribute( 'width', '1.4' );
-		$title->setAttribute( 'title_to_add', $this->sanitize_text_attr( $title_text ) );
-		$this->set_overlay_ui_attributes( $title );
-		$ui->appendChild( $title );
-
-		// Description Text (Using fallbacks for common mismatched keys)
-		$desc_text = $obj->poi_img_content ?? $obj->poi_description ?? '';
-
-		$desc = $dom->createElement( 'a-text' );
-		$desc->setAttribute( 'id', 'desc_' . $uuid );
-		$desc->setAttribute( 'position', '0 -0.25 0.01' );
-		$desc->setAttribute( 'value', $this->sanitize_text_attr( $desc_text ) );
-		$desc->setAttribute( 'color', '#cccccc' );
-		$desc->setAttribute( 'align', 'left' );
-		$desc->setAttribute( 'font', 'https://cdn.aframe.io/fonts/DejaVu-sdf.fnt' );
-		$desc->setAttribute( 'width', '1.3' );
-		$desc->setAttribute( 'text_to_add', $this->sanitize_text_attr( $desc_text ) );
-		$this->set_overlay_ui_attributes( $desc );
-		$ui->appendChild( $desc );
-
-		// Page Indicator
-		$page = $dom->createElement( 'a-entity' );
-		$page->setAttribute( 'id', 'page_' . $uuid );
-		$page->setAttribute( 'position', '0 -0.7 0.01' );
-		$page->setAttribute( 'text', 'value: page 1; color: #aaaaaa; align: center; font: https://cdn.aframe.io/fonts/DejaVu-sdf.fnt; width: 1' );
-		$this->set_overlay_ui_attributes( $page );
-		$ui->appendChild( $page );
-
-		// Navigation Buttons
-		// Next
-		$next_panel = $dom->createElement( 'a-plane' );
-		$next_panel->setAttribute( 'id', 'next_panel_' . $uuid );
-		$next_panel->setAttribute( 'position', '0.5 -0.7 0.01' );
-		$next_panel->setAttribute( 'width', '0.2' );
-		$next_panel->setAttribute( 'height', '0.1' );
-		$next_panel->setAttribute( 'color', '#444444' );
-		$next_panel->setAttribute( 'class', 'raycastable' );
-		$next_panel->setAttribute( 'highlight', 'next_panel_' . $uuid );
-		$this->set_overlay_ui_attributes( $next_panel );
-		$ui->appendChild( $next_panel );
-
-		$next_btn = $dom->createElement( 'a-entity' );
-		$next_btn->setAttribute( 'id', 'next_' . $uuid );
-		$next_btn->setAttribute( 'position', '0.5 -0.7 0.02' );
-		$next_btn->setAttribute( 'text', 'value: NEXT; color: #ffffff; align: center; width: 1' );
-		$next_btn->setAttribute( 'class', 'raycastable' );
-		$next_btn->setAttribute( 'highlight', 'next_' . $uuid );
-		$this->set_overlay_ui_attributes( $next_btn );
-		$ui->appendChild( $next_btn );
-
-		// Prev
-		$prev_panel = $dom->createElement( 'a-plane' );
-		$prev_panel->setAttribute( 'id', 'prev_panel_' . $uuid );
-		$prev_panel->setAttribute( 'position', '-0.5 -0.7 0.01' );
-		$prev_panel->setAttribute( 'width', '0.2' );
-		$prev_panel->setAttribute( 'height', '0.1' );
-		$prev_panel->setAttribute( 'color', '#444444' );
-		$prev_panel->setAttribute( 'class', 'raycastable' );
-		$prev_panel->setAttribute( 'highlight', 'prev_panel_' . $uuid );
-		$this->set_overlay_ui_attributes( $prev_panel );
-		$ui->appendChild( $prev_panel );
-
-		$prev_btn = $dom->createElement( 'a-entity' );
-		$prev_btn->setAttribute( 'id', 'prev_' . $uuid );
-		$prev_btn->setAttribute( 'position', '-0.5 -0.7 0.02' );
-		$prev_btn->setAttribute( 'text', 'value: PREV; color: #ffffff; align: center; width: 1' );
-		$prev_btn->setAttribute( 'class', 'raycastable' );
-		$prev_btn->setAttribute( 'highlight', 'prev_' . $uuid );
-		$this->set_overlay_ui_attributes( $prev_btn );
-		$ui->appendChild( $prev_btn );
-
-		// Exit Button
-		$exit_panel = $dom->createElement( 'a-plane' );
-		$exit_panel->setAttribute( 'id', 'exit_panel_' . $uuid );
-		$exit_panel->setAttribute( 'position', '0.65 0.8 0.01' );
-		$exit_panel->setAttribute( 'width', '0.12' );
-		$exit_panel->setAttribute( 'height', '0.12' );
-		$exit_panel->setAttribute( 'color', '#cc0000' );
-		$exit_panel->setAttribute( 'class', 'raycastable' );
-		$exit_panel->setAttribute( 'highlight', 'exit_panel_' . $uuid );
-		$this->set_overlay_ui_attributes( $exit_panel );
-		$ui->appendChild( $exit_panel );
-
-		$exit_btn = $dom->createElement( 'a-plane' );
-		$exit_btn->setAttribute( 'id', 'exit_' . $uuid );
-		$exit_btn->setAttribute( 'src', '#esc_img_' . $uuid );
-		$exit_btn->setAttribute( 'position', '0.65 0.8 0.02' );
-		$exit_btn->setAttribute( 'width', '0.1' );
-		$exit_btn->setAttribute( 'height', '0.1' );
-		$exit_btn->setAttribute( 'material', 'transparent: true' );
-		$exit_btn->setAttribute( 'class', 'raycastable' );
-		$exit_btn->setAttribute( 'highlight', 'exit_' . $uuid );
-		$exit_btn->setAttribute( 'original-scale', '1 1 1' );
-		$this->set_overlay_ui_attributes( $exit_btn );
-		$ui->appendChild( $exit_btn );
-
-		$ascene->appendChild( $ui );
 	}
 
 	private function map_light_type( $cat ) {

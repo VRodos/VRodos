@@ -423,41 +423,6 @@
                 </a-entity>
             </template>
 
-            <a-mixin id="vid_panel" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: black; shader: flat"></a-mixin>
-            <a-mixin id="frame" geometry="primitive: plane; width: 0.5783552; height: 0.8192"
-                material="color: white; shader: flat"
-                animation__scale="property: scale; to: 1.2 1.2 1.2; dur: 200;  startEvents: tmp1"
-                animation__scale_reverse="property: scale; to: 1 1 1; dur: 200; startEvents: tmp2"></a-mixin>
-            <a-mixin id="poster" geometry="primitive: plane; width: 0.544768; height: 0.786432"
-                material="color: white; shader: flat" position="0 0 0.005"></a-mixin>
-            <a-mixin id="poiImage" geometry="primitive: plane; width: 1.4; height: 0.8"
-                material="shader: flat;  transparent: true" position="0 0.455 0.002"></a-mixin>
-            <a-mixin id="poiImageFull" geometry="primitive: plane; width: 1.4; height: 1.4"
-                material="shader: flat; transparent: true" position="0 0 0.002"></a-mixin>
-            <a-mixin id="poiEsc" geometry="primitive: plane; width: 1; height: 1" position="1 0.73 0.002"
-                material="shader: flat; transparent: true"></a-mixin>
-            <a-mixin id="poiImgNext" geometry="primitive: plane; width: 1; height: 1"
-                material="shader: flat; transparent: true" position="1 -0.5 0.002"></a-mixin>
-            <a-mixin id="poiImgPrev" geometry="primitive: plane; width: 1; height: 1"
-                material="shader: flat; transparent: true" position="-1 -0.5 0.002"></a-mixin>
-            <a-mixin id="poiEscFrame" geometry="primitive: circle; radius: 0.15"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
-                position="1 0.73 0.002"></a-mixin>
-            <a-mixin id="poiImgPrevFrame" geometry="primitive: circle; radius: 0.15"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
-                position="-1 -0.5 0.002"></a-mixin>
-            <a-mixin id="poiImgNextFrame" geometry="primitive: circle; radius: 0.15"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true"
-                position=" 1 -0.5 0.002"></a-mixin>
-            <a-mixin id="vidFrame" geometry="primitive: plane; width: 0.4; height: 0.14"
-                material="shader: flat; color: #dfe4ea;" position=" 0 0 0.000001"></a-mixin>
-            <a-mixin id="poiVidEscFrame" geometry="primitive: circle; radius: 0.05"
-                material="shader: flat; color: #dfe4ea; depthTest: false; transparent: true;"
-                position="0.15 0.15 0.000001"></a-mixin>
-            <a-mixin id="vidTitleFrame" geometry="primitive: plane; width: 2; height: 0.3"
-                material="color: black; opacity: 0.7; shader: flat"></a-mixin>
-
             <a-asset-item id="check_indicator_id" src="../../assets/models/editor/checkmark.glb"></a-asset-item>
             <a-asset-item id="x_indicator_id" src="../../assets/models/editor/xmark.glb"></a-asset-item>
         </a-assets>

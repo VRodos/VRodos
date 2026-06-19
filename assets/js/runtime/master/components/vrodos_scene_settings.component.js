@@ -614,7 +614,7 @@ AFRAME.registerComponent('scene-settings', {
             vrodosRuntimeTruthy(this.data.pmndrsCloudsEnabled);
 
         return this.vrRuntimeAllows('clouds', authored) ||
-            this.isVrCapabilityExperimentEnabled('clouds', 'vrCloudsEnabled', 'enableXrClouds', 'vrodos_enable_xr_clouds');
+            this.isVrCapabilityExperimentEnabled();
     },
     getReflectionSource: function () {
         return this.data.reflectionSource === 'scene-probe' ? 'scene-probe' : 'hdr';
@@ -688,10 +688,7 @@ AFRAME.registerComponent('scene-settings', {
         return !this.isHeadsetBrowserDevice() || this.isHeadsetPmndrsComposerForceEnabled();
     },
     getVrRuntimeProfile: function () {
-        const debugConfig = window.VRODOS_DEBUG || {};
-        const override = (typeof debugConfig.vrRuntimeProfile === 'string' && debugConfig.vrRuntimeProfile) ||
-            (typeof debugConfig.vrProfile === 'string' && debugConfig.vrProfile) ||
-            vrodosRuntimeQueryValue('vrodos_vr_profile');
+        const override = vrodosRuntimeProfileOverrideValue();
         const rawProfile = String(override || this.data.vrRuntimeProfile || 'desktop').toLowerCase();
 
         return vrodosNormalizeRuntimeProfile(rawProfile);
@@ -883,26 +880,26 @@ AFRAME.registerComponent('scene-settings', {
             this.canUsePmndrsComposerOnHeadset() &&
             (
                 this.vrRuntimeAllows('pmndrsComposer', authoredPmndrsComposer) ||
-                this.isVrCapabilityExperimentEnabled('pmndrsComposer', 'vrPmndrsComposerEnabled', 'enableXrPmndrsComposer', 'vrodos_enable_xr_pmndrs_composer')
+                this.isVrCapabilityExperimentEnabled()
             );
         const sceneProbe = active &&
             profileActive &&
             (
                 this.vrRuntimeAllows('sceneProbe', authoredSceneProbe) ||
-                this.isVrCapabilityExperimentEnabled('sceneProbe', 'vrSceneProbeEnabled', 'enableXrSceneProbe', 'vrodos_enable_xr_scene_probe')
+                this.isVrCapabilityExperimentEnabled()
             );
         const takramSkyEnvironment = active &&
             profileActive &&
             (
                 this.vrRuntimeAllows('takramSkyEnvironment', authoredTakramSkyEnvironment) ||
-                this.isVrCapabilityExperimentEnabled('takramSkyEnvironment', 'vrTakramSkyEnvironmentEnabled', 'enableXrTakramSkyEnvironment', 'vrodos_enable_xr_takram_sky_environment')
+                this.isVrCapabilityExperimentEnabled()
             );
         const clouds = active &&
             profileActive &&
             this.data.postFXEngine === 'pmndrs' &&
             (
                 this.vrRuntimeAllows('clouds', this.isPmndrsCloudsEnabled()) ||
-                this.isVrCapabilityExperimentEnabled('clouds', 'vrCloudsEnabled', 'enableXrClouds', 'vrodos_enable_xr_clouds')
+                this.isVrCapabilityExperimentEnabled()
             );
 
         return {
@@ -2888,7 +2885,7 @@ AFRAME.registerComponent('scene-settings', {
 
             const publicChatBtn = document.getElementById("public-chat-button");
             if (publicChatBtn) {
-                publicChatBtn.addEventListener("click", (evt) => {
+                publicChatBtn.addEventListener("click", () => {
                     const event = new CustomEvent('chat-selected', { "detail": "public" });
                     document.dispatchEvent(event);
                     if (typeof window.gtag === 'function') window.gtag('event', 'chat_public_tab_selected');

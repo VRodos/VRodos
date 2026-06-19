@@ -1697,7 +1697,6 @@
             id === 'cameraA' ||
             id === 'default-sky' ||
             id === 'default-sun' ||
-            id.indexOf('vid-panel_') === 0 ||
             entityHasClass(entityEl, 'avatar') ||
             entityHasClass(entityEl, 'non-vr') ||
             entityEl.hasAttribute('data-vrodos-overlay-ui') ||
