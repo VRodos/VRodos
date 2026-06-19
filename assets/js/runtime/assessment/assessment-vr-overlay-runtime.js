@@ -16,6 +16,8 @@
     const normalizeGridEntries = namespace.normalizeGridEntries;
     const normalizeTextAnnotations = namespace.normalizeTextAnnotations;
     const buildAssessmentResult = namespace.buildAssessmentResult;
+    const resolveAssessmentRendererKey = namespace.resolveAssessmentRendererKey;
+    const normalizeAssessmentPayloadForRenderer = namespace.normalizeAssessmentPayloadForRenderer;
 
     const PANEL_WIDTH = 2.05;
     const PANEL_HEIGHT = 1.44;
@@ -122,131 +124,25 @@
         });
     }
 
-    function comparable(value) {
-        if (typeof normalizeComparableText === "function") {
-            return normalizeComparableText(value);
-        }
-        return String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
-    }
-
-    function compactComparable(value) {
-        return comparable(value).replace(/[^a-z0-9]+/g, "");
-    }
-
-    function resolveVrRendererKeyFromContent(payload) {
-        const content = payload && payload.content;
-        if (!content || typeof content !== "object") {
-            return "";
-        }
-
-        if (Array.isArray(content)) {
-            return content.length ? "Question" : "";
-        }
-
-        const questions = Array.isArray(content.questions) ? content.questions : [];
-        if (questions.length) {
-            return questions.some((question) => question && question.imageUrl) ? "ImageQuiz" : "Question";
-        }
-        if (Array.isArray(content.pairs) && content.pairs.length) {
-            return "Pair";
-        }
-        if (Array.isArray(content.words) && content.words.length) {
-            return "Grid";
-        }
-        if ((content.text || (Array.isArray(content.annotations) && content.annotations.length))) {
-            return "Text";
-        }
-
-        return "";
-    }
-
     function resolveVrRendererKey(payload) {
         if (!payload) {
             return "";
         }
 
-        if (typeof namespace.resolveAssessmentRendererKey === "function") {
-            const sharedKey = namespace.resolveAssessmentRendererKey(payload, { ignoreSupported: true });
+        if (typeof resolveAssessmentRendererKey === "function") {
+            const sharedKey = resolveAssessmentRendererKey(payload, { ignoreSupported: true });
             if (sharedKey && VR_RENDERERS[sharedKey]) {
                 return sharedKey;
             }
         }
 
-        const rawGroup = String(payload.group || "");
-        if (VR_RENDERERS[rawGroup]) {
-            return rawGroup;
-        }
-
-        const candidates = [
-            comparable(payload.group),
-            compactComparable(payload.group),
-            comparable(payload.type),
-            compactComparable(payload.type)
-        ].filter(Boolean);
-
-        if (candidates.some((key) => ["question", "questions", "quiz", "multiple choice", "multiplechoice", "true or false", "true/false", "truefalse"].includes(key))) {
-            return "Question";
-        }
-        if (candidates.some((key) => ["image quiz", "imagequiz", "image question", "imagequestion", "visual quiz", "visualquiz"].includes(key))) {
-            return "ImageQuiz";
-        }
-        if (candidates.some((key) => ["pair", "pairs", "matching", "match", "match pairs", "matchpairs", "drag and drop", "draganddrop", "drag drop", "dragdrop"].includes(key))) {
-            return "Pair";
-        }
-        if (candidates.some((key) => ["grid", "word search", "wordsearch", "vocabulary bingo", "vocabularybingo", "bingo"].includes(key))) {
-            return "Grid";
-        }
-        if (candidates.some((key) => ["text", "fill in the gaps", "fillinthegaps", "fill gaps", "fillgaps", "fill in gaps", "fillingaps", "highlight", "highlight text", "highlighttext"].includes(key))) {
-            return "Text";
-        }
-
-        return resolveVrRendererKeyFromContent(payload);
+        return "";
     }
 
     function normalizeVrPayloadForRenderer(payload, rendererKey) {
-        if (!payload || !rendererKey || !payload.content || typeof payload.content !== "object") {
-            return payload;
-        }
-
-        const content = payload.content;
-        let normalizedContent = content;
-        let normalizedFrom = "";
-
-        if (Array.isArray(content)) {
-            if (rendererKey === "Question" || rendererKey === "ImageQuiz") {
-                normalizedContent = { questions: content };
-                normalizedFrom = "array:questions";
-            } else if (rendererKey === "Pair") {
-                normalizedContent = { pairs: content };
-                normalizedFrom = "array:pairs";
-            } else if (rendererKey === "Grid") {
-                normalizedContent = { words: content };
-                normalizedFrom = "array:words";
-            } else if (rendererKey === "Text") {
-                normalizedContent = { text: "", annotations: content };
-                normalizedFrom = "array:annotations";
-            }
-        } else if (Array.isArray(content.items)) {
-            if (rendererKey === "Question" || rendererKey === "ImageQuiz") {
-                normalizedContent = Object.assign({}, content, { questions: content.items });
-                normalizedFrom = "items:questions";
-            } else if (rendererKey === "Pair") {
-                normalizedContent = Object.assign({}, content, { pairs: content.items });
-                normalizedFrom = "items:pairs";
-            } else if (rendererKey === "Grid") {
-                normalizedContent = Object.assign({}, content, { words: content.items });
-                normalizedFrom = "items:words";
-            }
-        }
-
-        if (normalizedContent === content) {
-            return payload;
-        }
-
-        return Object.assign({}, payload, {
-            content: normalizedContent,
-            vrContentNormalizedFrom: normalizedFrom
-        });
+        return typeof normalizeAssessmentPayloadForRenderer === "function"
+            ? normalizeAssessmentPayloadForRenderer(payload, rendererKey)
+            : payload;
     }
 
     function getContentArray(content, fieldName) {
@@ -337,7 +233,7 @@
             contentLength: getPayloadContentLength(payload),
             contentType: contentIsArray ? "array" : typeof content,
             contentKeys,
-            contentNormalizedFrom: payload && payload.vrContentNormalizedFrom || "",
+            contentNormalizedFrom: payload && (payload.assessmentContentNormalizedFrom || payload.vrContentNormalizedFrom) || "",
             questionCount: contentIsArray && (rendererKey === "Question" || rendererKey === "ImageQuiz")
                 ? content.length
                 : getContentArray(contentObject, "questions").length,
@@ -1312,6 +1208,10 @@
                     supported: Boolean(payload && payload.supported)
                 });
                 return true;
+            }
+
+            if (typeof spatialUi.closePanel === "function") {
+                spatialUi.closePanel("assessment-replace");
             }
 
             const initialRendererKey = resolveVrRendererKey(payload);

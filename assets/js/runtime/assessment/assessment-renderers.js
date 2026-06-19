@@ -17,6 +17,9 @@
     const normalizePairEntries = namespace.normalizePairEntries;
     const normalizeGridEntries = namespace.normalizeGridEntries;
     const normalizeTextAnnotations = namespace.normalizeTextAnnotations;
+    const resolveAssessmentRendererKey = namespace.resolveAssessmentRendererKey || function () {
+        return "";
+    };
 
     function renderEmptyState(runtime, title, description) {
         runtime.body.innerHTML = [
@@ -1336,54 +1339,6 @@
         Text: createTextRenderer()
     };
 
-    function comparable(value) {
-        if (typeof normalizeComparableText === "function") {
-            return normalizeComparableText(value);
-        }
-        return String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
-    }
-
-    function compactComparable(value) {
-        return comparable(value).replace(/[^a-z0-9]+/g, "");
-    }
-
-    function resolveAssessmentRendererKey(payload, options) {
-        const cfg = options || {};
-        if (!payload || (!cfg.ignoreSupported && !payload.supported)) {
-            return "";
-        }
-
-        const rawGroup = String(payload.group || "");
-        if (ASSESSMENT_RENDERERS[rawGroup]) {
-            return rawGroup;
-        }
-
-        const candidates = [
-            comparable(payload.group),
-            compactComparable(payload.group),
-            comparable(payload.type),
-            compactComparable(payload.type)
-        ].filter(Boolean);
-
-        if (candidates.some((key) => ["question", "questions", "quiz", "multiple choice", "multiplechoice", "true or false", "true/false", "truefalse"].includes(key))) {
-            return "Question";
-        }
-        if (candidates.some((key) => ["image quiz", "imagequiz", "image question", "imagequestion", "visual quiz", "visualquiz"].includes(key))) {
-            return "ImageQuiz";
-        }
-        if (candidates.some((key) => ["pair", "pairs", "matching", "match", "match pairs", "matchpairs", "drag and drop", "draganddrop", "drag drop", "dragdrop"].includes(key))) {
-            return "Pair";
-        }
-        if (candidates.some((key) => ["grid", "word search", "wordsearch", "vocabulary bingo", "vocabularybingo", "bingo"].includes(key))) {
-            return "Grid";
-        }
-        if (candidates.some((key) => ["text", "fill in the gaps", "fillinthegaps", "fill gaps", "fillgaps", "fill in gaps", "fillingaps", "highlight", "highlight text", "highlighttext"].includes(key))) {
-            return "Text";
-        }
-
-        return "";
-    }
-
     function resolveRenderer(payload) {
         const rendererKey = resolveAssessmentRendererKey(payload);
         return rendererKey ? ASSESSMENT_RENDERERS[rendererKey] || null : null;
@@ -1392,7 +1347,6 @@
 
 
     namespace.renderEmptyState = renderEmptyState;
-    namespace.resolveAssessmentRendererKey = resolveAssessmentRendererKey;
     namespace.resolveRenderer = resolveRenderer;
     namespace.ASSESSMENT_RENDERERS = ASSESSMENT_RENDERERS;
 })();

@@ -6,6 +6,8 @@
     const buildAssessmentResult = namespace.buildAssessmentResult;
     const renderEmptyState = namespace.renderEmptyState;
     const resolveRenderer = namespace.resolveRenderer;
+    const resolveAssessmentRendererKey = namespace.resolveAssessmentRendererKey;
+    const normalizeAssessmentPayloadForRenderer = namespace.normalizeAssessmentPayloadForRenderer;
     const DEFAULT_DIALOG_FRAME = {
         width: "min(900px, calc(100vw - 48px))",
         height: "min(84vh, 820px)"
@@ -283,27 +285,35 @@
                 return;
             }
 
+            const rendererKey = typeof resolveAssessmentRendererKey === "function"
+                ? resolveAssessmentRendererKey(payload)
+                : "";
+            const normalizedPayload = typeof normalizeAssessmentPayloadForRenderer === "function"
+                ? normalizeAssessmentPayloadForRenderer(payload, rendererKey)
+                : payload;
+            const panelPayload = normalizedPayload || payload || {};
+
             runtime.resetState();
-            runtime.payload = payload;
-            runtime.kicker.textContent = payload.type || payload.group || "Assessment";
+            runtime.payload = panelPayload;
+            runtime.kicker.textContent = panelPayload.type || panelPayload.group || "Assessment";
             if (typeof vrodosDecodeDisplayText === "function") {
-                runtime.title.textContent = vrodosDecodeDisplayText(payload.title || "Assessment");
+                runtime.title.textContent = vrodosDecodeDisplayText(panelPayload.title || "Assessment");
             } else {
-                runtime.title.textContent = decodeDisplayText(payload.title || "Assessment");
+                runtime.title.textContent = decodeDisplayText(panelPayload.title || "Assessment");
             }
             const didShow = runtime.show();
             if (didShow) {
                 setAssessmentSceneInteractionLocked(true);
             }
 
-            runtime.renderer = resolveRenderer(payload);
+            runtime.renderer = resolveRenderer(panelPayload);
             if (!runtime.renderer) {
                 runtime.renderUnsupported();
                 return;
             }
 
             runtime.state = typeof runtime.renderer.createState === "function"
-                ? runtime.renderer.createState(payload, runtime)
+                ? runtime.renderer.createState(panelPayload, runtime)
                 : {};
             runtime.rerender();
         };
