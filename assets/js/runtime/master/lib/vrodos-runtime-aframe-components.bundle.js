@@ -2328,7 +2328,7 @@
         return false;
       }
       const id = el.id || "";
-      if (/^(oculusLeft|oculusRight|leftHand|rightHand)$/i.test(id)) {
+      if (/^(oculusLeft|oculusRight)$/i.test(id)) {
         return true;
       }
       return Boolean(el.hasAttribute && (el.hasAttribute("laser-controls") || el.hasAttribute("meta-touch-controls") || el.hasAttribute("oculus-touch-controls") || el.hasAttribute("tracked-controls")));
@@ -2418,13 +2418,11 @@
       this._xrExitRestoreTriggers = [];
       this.clearXrExitRestoreTimers();
       this.scheduleXrExitSessionObservation("enter-vr");
-      VRODOSSceneSettingsMaster.setBrowsingModeVR(true);
       this.applyVrRenderBudgetPolicy("enter-vr");
       this.syncPresentationVisualState(true);
       if (typeof window.gtag === "function") window.gtag("event", "vr_enabled");
     },
     handleXrExit: function() {
-      VRODOSSceneSettingsMaster.setBrowsingModeVR(false);
       this.applyVrRenderBudgetPolicy("exit-vr");
       this.syncPresentationVisualState(true);
       this.scheduleXrExitRestore("aframe-exit-vr");
@@ -2489,34 +2487,15 @@
     closeXrExitPanels: function(reason) {
       const result = {
         spatialPanelClosed: false,
-        legacyPanelClosed: false,
         errors: []
       };
       const spatial = window.VRODOSSpatialUI || null;
-      const overlay = window.VRODOSRuntimeOverlay || null;
       if (spatial && typeof spatial.getActivePanel === "function" && spatial.getActivePanel() && typeof spatial.closePanel === "function") {
         try {
           spatial.closePanel(reason);
           result.spatialPanelClosed = true;
         } catch (err) {
           result.errors.push(`spatial:${err && err.message ? err.message : err}`);
-        }
-      }
-      if (overlay && typeof overlay.getSceneDiagnostics === "function") {
-        const before = overlay.getSceneDiagnostics();
-        if (before && before.activePanel && typeof overlay.closeActivePanel === "function") {
-          try {
-            overlay.closeActivePanel(reason);
-            result.legacyPanelClosed = true;
-          } catch (err) {
-            result.errors.push(`legacy:${err && err.message ? err.message : err}`);
-          }
-        }
-      } else if (overlay && typeof overlay.closeActivePanel === "function") {
-        try {
-          overlay.closeActivePanel(reason);
-        } catch (err) {
-          result.errors.push(`legacy:${err && err.message ? err.message : err}`);
         }
       }
       return result;
@@ -2773,7 +2752,6 @@
       const camera = this.restoreXrExitCameraState(baseline);
       const controls = this.restoreXrExitControls(baseline);
       const raycasters = this.restoreXrExitRaycasters(baseline);
-      VRODOSSceneSettingsMaster.setBrowsingModeVR(false);
       this.applyVrRenderBudgetPolicy("xr-exit-restore");
       this.syncPresentationVisualState(true);
       if (typeof this.updatePostProcessingSize === "function") {
@@ -3425,7 +3403,7 @@
     maxSlope: 45
   };
   function vrodosNavPerfDebugEnabled() {
-    if (window.VRODOS_DEBUG && (window.VRODOS_DEBUG.navPerf === true || window.VRODOS_DEBUG.navPerfOverlay === true)) {
+    if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.navPerf === true) {
       return true;
     }
     if (typeof window.location === "undefined" || !window.location.search) {
@@ -3757,8 +3735,8 @@
       this.handleRecoveryButtonDown = this.handleRecoveryButtonDown.bind(this);
       this.handleEnterVr = this.handleEnterVr.bind(this);
       this.handleExitVr = this.handleExitVr.bind(this);
-      this.thumbL = document.querySelector("#oculusLeft") || document.querySelector("#leftHand");
-      this.thumbR = document.querySelector("#oculusRight") || document.querySelector("#rightHand");
+      this.thumbL = document.querySelector("#oculusLeft");
+      this.thumbR = document.querySelector("#oculusRight");
       this.recoveryButtonEvents = ["abuttondown", "xbuttondown"];
       this.recoveryButtonEls = [];
       if (this.thumbL) {
@@ -3771,7 +3749,7 @@
         this.thumbR.addEventListener("thumbsticktouchend", this.handleThumbstickEnd);
         this.thumbR.addEventListener("thumbstickup", this.handleThumbstickEnd);
       }
-      ["#oculusLeft", "#oculusRight", "#leftHand", "#rightHand"].forEach((selector) => {
+      ["#oculusLeft", "#oculusRight"].forEach((selector) => {
         const buttonEl = document.querySelector(selector);
         if (!buttonEl || this.recoveryButtonEls.indexOf(buttonEl) !== -1) {
           return;
@@ -3968,7 +3946,7 @@
       }
       const source = event.currentTarget || event.target;
       const sourceId = source && source.id ? source.id : "";
-      const targetInput = source === this.thumbR || sourceId === "rightHand" || sourceId === "oculusRight" ? this.rightThumbInput : this.leftThumbInput;
+      const targetInput = source === this.thumbR || sourceId === "oculusRight" ? this.rightThumbInput : this.leftThumbInput;
       targetInput.x = event.detail.x || 0;
       const rawY = event.detail.y || 0;
       targetInput.y = targetInput === this.leftThumbInput ? -rawY : rawY;
@@ -4747,7 +4725,7 @@
       const tagName = el.tagName || "";
       const id = el.id || "";
       const objectName = el.object3D.name || "";
-      return tagName === "A-ASSETS" || tagName === "SCRIPT" || this.hasElementAttribute(el, "data-vrodos-overlay-ui") || el === this.el || el === this.cameraEl || id === "actor" || id === "scene-assets" || id === "player" || id === "cameraA" || id === "cursor" || id === "oculusLeft" || id === "oculusRight" || id === "leftHand" || id === "rightHand" || id === "vrodos-pmndrs-sun" || id === "vrodos-pmndrs-sun-haze" || id.indexOf("VRODOSSpatialUI") === 0 || objectName.indexOf("VRODOSSpatialUI") === 0;
+      return tagName === "A-ASSETS" || tagName === "SCRIPT" || this.hasElementAttribute(el, "data-vrodos-overlay-ui") || el === this.el || el === this.cameraEl || id === "actor" || id === "scene-assets" || id === "player" || id === "cameraA" || id === "cursor" || id === "oculusLeft" || id === "oculusRight" || id === "vrodos-pmndrs-sun" || id === "vrodos-pmndrs-sun-haze" || id.indexOf("VRODOSSpatialUI") === 0 || objectName.indexOf("VRODOSSpatialUI") === 0;
     },
     getImmersiveWorldRootSample: function(el) {
       return {

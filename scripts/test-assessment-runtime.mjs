@@ -160,7 +160,6 @@ const windowStub = {
     atob(value) {
         return Buffer.from(String(value), "base64").toString("binary");
     },
-    browsingModeVR: true,
     VRodosImmerseAssessment: {},
     VRODOSRuntimeOverlay: {
         shouldUseVrPanel() {

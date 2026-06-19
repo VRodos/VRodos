@@ -427,8 +427,7 @@
             xrPresenting: isImmersiveVrActive(),
             vrModeFlag: Boolean(scene && scene.is && scene.is("vr-mode")),
             camera: describeElement(camera),
-            raycasters: getRaycasterDiagnostics(),
-            activePanel: null
+            raycasters: getRaycasterDiagnostics()
         };
     }
 
@@ -436,10 +435,6 @@
         const realControllers = [
             document.querySelector("#oculusLeft"),
             document.querySelector("#oculusRight")
-        ].filter(Boolean);
-        const legacyControllers = [
-            document.querySelector("#leftHand"),
-            document.querySelector("#rightHand")
         ].filter(Boolean);
 
         realControllers.forEach((el) => {
@@ -449,21 +444,6 @@
             if (el.hasAttribute && el.hasAttribute("visible")) {
                 el.removeAttribute("visible");
             }
-        });
-
-        if (!realControllers.length) {
-            return;
-        }
-
-        legacyControllers.forEach((el) => {
-            if (el.hasAttribute && el.hasAttribute("blink-controls")) {
-                el.removeAttribute("blink-controls");
-            }
-            if (el.hasAttribute && el.hasAttribute("raycaster")) {
-                el.removeAttribute("raycaster");
-            }
-            el.setAttribute("visible", "false");
-            el.setAttribute("data-vrodos-legacy-controller", "true");
         });
     }
 
@@ -965,7 +945,6 @@
         raycasterRestore: null,
         suppressedSceneControls: null,
         interactionLocked: false,
-        targetClass: RAYCAST_TARGET_CLASS,
         getPresentationMode,
         getDiagnostics: function () {
             return diagnosticsStore().slice();
@@ -1116,16 +1095,6 @@
 
         refreshInteractionTargets: function () {
             refreshOverlayTargets();
-        },
-
-        closeActivePanel: function (reason) {
-            this.setSceneControlsSuppressed(false);
-            this.setOverlayRaycastMode(false);
-            refreshRaycasterObjects();
-            this.lockSceneInteraction(false);
-            recordDiagnostic("debug", "closeActivePanel restored legacy overlay state.", {
-                reason: reason || "close"
-            });
         }
     };
 

@@ -200,10 +200,7 @@ function createVmContext() {
     windowStub.VRODOS_RUNTIME_SETTINGS_CONTRACT = { sceneSettings: {} };
     windowStub.VRODOSMaster = {
         SceneSettingsHelpers: {},
-        RuntimeSettings: {},
-        setBrowsingModeVR(value) {
-            this.browsingModeVR = value;
-        }
+        RuntimeSettings: {}
     };
 
     const components = {};
@@ -367,13 +364,6 @@ function createFixture(context) {
         suppressed: true,
         overlayMode: true,
         refreshed: 0,
-        activePanel: true,
-        closeActivePanel() {
-            this.activePanel = false;
-        },
-        getSceneDiagnostics() {
-            return { activePanel: this.activePanel };
-        },
         lockSceneInteraction(value) {
             this.locked = value;
         },

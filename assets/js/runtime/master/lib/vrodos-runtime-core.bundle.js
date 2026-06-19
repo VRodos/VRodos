@@ -773,8 +773,6 @@
     };
   })();
   var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
-  var browsingModeVR = typeof window.browsingModeVR === "boolean" ? window.browsingModeVR : false;
-  window.browsingModeVR = browsingModeVR;
   VRODOSMaster.domCache = VRODOSMaster.domCache || {};
   VRODOSMaster.getElement = function(id, refresh) {
     const cache = VRODOSMaster.domCache;
@@ -790,11 +788,6 @@
   };
   VRODOSMaster.queryOne = function(selector, root) {
     return (root || document).querySelector(selector);
-  };
-  VRODOSMaster.setBrowsingModeVR = function(value) {
-    browsingModeVR = Boolean(value);
-    window.browsingModeVR = browsingModeVR;
-    return browsingModeVR;
   };
   VRODOSMaster.vectorRequiresUpdateRotation = function(epsilon) {
     return function() {

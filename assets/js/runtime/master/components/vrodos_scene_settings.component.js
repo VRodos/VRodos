@@ -2153,7 +2153,7 @@ AFRAME.registerComponent('scene-settings', {
             return false;
         }
         const id = el.id || '';
-        if (/^(oculusLeft|oculusRight|leftHand|rightHand)$/i.test(id)) {
+        if (/^(oculusLeft|oculusRight)$/i.test(id)) {
             return true;
         }
         return Boolean(el.hasAttribute && (
@@ -2254,13 +2254,11 @@ AFRAME.registerComponent('scene-settings', {
         this._xrExitRestoreTriggers = [];
         this.clearXrExitRestoreTimers();
         this.scheduleXrExitSessionObservation('enter-vr');
-        VRODOSSceneSettingsMaster.setBrowsingModeVR(true);
         this.applyVrRenderBudgetPolicy('enter-vr');
         this.syncPresentationVisualState(true);
         if (typeof window.gtag === 'function') window.gtag('event', 'vr_enabled');
     },
     handleXrExit: function () {
-        VRODOSSceneSettingsMaster.setBrowsingModeVR(false);
         this.applyVrRenderBudgetPolicy('exit-vr');
         this.syncPresentationVisualState(true);
         this.scheduleXrExitRestore('aframe-exit-vr');
@@ -2337,11 +2335,9 @@ AFRAME.registerComponent('scene-settings', {
     closeXrExitPanels: function (reason) {
         const result = {
             spatialPanelClosed: false,
-            legacyPanelClosed: false,
             errors: []
         };
         const spatial = window.VRODOSSpatialUI || null;
-        const overlay = window.VRODOSRuntimeOverlay || null;
 
         if (spatial && typeof spatial.getActivePanel === 'function' && spatial.getActivePanel() &&
             typeof spatial.closePanel === 'function') {
@@ -2350,24 +2346,6 @@ AFRAME.registerComponent('scene-settings', {
                 result.spatialPanelClosed = true;
             } catch (err) {
                 result.errors.push(`spatial:${err && err.message ? err.message : err}`);
-            }
-        }
-
-        if (overlay && typeof overlay.getSceneDiagnostics === 'function') {
-            const before = overlay.getSceneDiagnostics();
-            if (before && before.activePanel && typeof overlay.closeActivePanel === 'function') {
-                try {
-                    overlay.closeActivePanel(reason);
-                    result.legacyPanelClosed = true;
-                } catch (err) {
-                    result.errors.push(`legacy:${err && err.message ? err.message : err}`);
-                }
-            }
-        } else if (overlay && typeof overlay.closeActivePanel === 'function') {
-            try {
-                overlay.closeActivePanel(reason);
-            } catch (err) {
-                result.errors.push(`legacy:${err && err.message ? err.message : err}`);
             }
         }
 
@@ -2650,7 +2628,6 @@ AFRAME.registerComponent('scene-settings', {
         const controls = this.restoreXrExitControls(baseline);
         const raycasters = this.restoreXrExitRaycasters(baseline);
 
-        VRODOSSceneSettingsMaster.setBrowsingModeVR(false);
         this.applyVrRenderBudgetPolicy('xr-exit-restore');
         this.syncPresentationVisualState(true);
         if (typeof this.updatePostProcessingSize === 'function') {

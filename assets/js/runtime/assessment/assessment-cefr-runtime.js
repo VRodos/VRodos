@@ -371,11 +371,9 @@
 
         runtime.showVrPrompt = function () {
             const overlayApi = window.VRODOSRuntimeOverlay || null;
-            const fallbackBrowsingMode = (typeof window.browsingModeVR !== "undefined" && window.browsingModeVR) ||
-                (typeof browsingModeVR !== "undefined" && browsingModeVR);
             const shouldUseVrPanel = overlayApi && typeof overlayApi.shouldUseVrPanel === "function"
                 ? overlayApi.shouldUseVrPanel()
-                : Boolean(fallbackBrowsingMode || runtime.isImmersiveVrActive());
+                : runtime.isImmersiveVrActive();
             if (!shouldUseVrPanel) {
                 recordVrDiagnostic("debug", "CEFR prompt using DOM because immersive XR is inactive", {
                     hasOverlayApi: Boolean(overlayApi),

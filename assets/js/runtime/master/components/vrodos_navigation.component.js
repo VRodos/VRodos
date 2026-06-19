@@ -10,7 +10,7 @@ var VRODOSNavmeshDefaults = VRODOSMaster.NAVMESH_DEFAULTS || window.VRODOS_NAVME
 };
 
 function vrodosNavPerfDebugEnabled() {
-    if (window.VRODOS_DEBUG && (window.VRODOS_DEBUG.navPerf === true || window.VRODOS_DEBUG.navPerfOverlay === true)) {
+    if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.navPerf === true) {
         return true;
     }
 
@@ -354,8 +354,8 @@ AFRAME.registerComponent('custom-movement', {
         this.handleEnterVr = this.handleEnterVr.bind(this);
         this.handleExitVr = this.handleExitVr.bind(this);
 
-        this.thumbL = document.querySelector('#oculusLeft') || document.querySelector('#leftHand');
-        this.thumbR = document.querySelector('#oculusRight') || document.querySelector('#rightHand');
+        this.thumbL = document.querySelector('#oculusLeft');
+        this.thumbR = document.querySelector('#oculusRight');
         this.recoveryButtonEvents = ['abuttondown', 'xbuttondown'];
         this.recoveryButtonEls = [];
 
@@ -371,7 +371,7 @@ AFRAME.registerComponent('custom-movement', {
             this.thumbR.addEventListener('thumbstickup', this.handleThumbstickEnd);
         }
 
-        ['#oculusLeft', '#oculusRight', '#leftHand', '#rightHand'].forEach((selector) => {
+        ['#oculusLeft', '#oculusRight'].forEach((selector) => {
             const buttonEl = document.querySelector(selector);
             if (!buttonEl || this.recoveryButtonEls.indexOf(buttonEl) !== -1) {
                 return;
@@ -582,7 +582,7 @@ AFRAME.registerComponent('custom-movement', {
 
         const source = event.currentTarget || event.target;
         const sourceId = source && source.id ? source.id : '';
-        const targetInput = (source === this.thumbR || sourceId === 'rightHand' || sourceId === 'oculusRight')
+        const targetInput = (source === this.thumbR || sourceId === 'oculusRight')
             ? this.rightThumbInput
             : this.leftThumbInput;
         targetInput.x = event.detail.x || 0;
@@ -1501,8 +1501,6 @@ AFRAME.registerComponent('custom-movement', {
             id === 'cursor' ||
             id === 'oculusLeft' ||
             id === 'oculusRight' ||
-            id === 'leftHand' ||
-            id === 'rightHand' ||
             id === 'vrodos-pmndrs-sun' ||
             id === 'vrodos-pmndrs-sun-haze' ||
             id.indexOf('VRODOSSpatialUI') === 0 ||

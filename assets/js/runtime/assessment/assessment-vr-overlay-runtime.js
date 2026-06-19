@@ -1439,11 +1439,9 @@
 
         runtime.open = function (payload) {
             const overlayApi = getOverlayApi();
-            const fallbackBrowsingMode = (typeof window.browsingModeVR !== "undefined" && window.browsingModeVR) ||
-                (typeof browsingModeVR !== "undefined" && browsingModeVR);
             const shouldUseVrPanel = overlayApi && typeof overlayApi.shouldUseVrPanel === "function"
                 ? overlayApi.shouldUseVrPanel()
-                : Boolean(fallbackBrowsingMode);
+                : false;
             if (!shouldUseVrPanel) {
                 recordVrDiagnostic("debug", "assessment opened outside immersive XR; desktop DOM overlay remains active", {
                     hasOverlayApi: Boolean(overlayApi),

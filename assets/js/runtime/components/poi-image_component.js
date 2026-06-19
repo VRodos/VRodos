@@ -41,7 +41,7 @@ AFRAME.registerComponent('info-panel', {
             return window.VRODOSRuntimeOverlay.shouldUseVrPanel();
         }
 
-        return Boolean(browsingModeVR);
+        return false;
     },
 
     onVrExit: function () {
@@ -67,44 +67,21 @@ AFRAME.registerComponent('info-panel', {
         }
     },
 
-    getLegacyElementTextValue: function (selector, fallbackAttribute) {
-        const el = document.querySelector(selector);
-        if (!el || typeof el.getAttribute !== "function") {
-            return "";
-        }
-
-        const textAttr = el.getAttribute("text");
-        if (textAttr && typeof textAttr === "object" && textAttr.value) {
-            return textAttr.value;
-        }
-
-        const directValue = el.getAttribute("value");
-        if (directValue) {
-            return directValue;
-        }
-
-        return fallbackAttribute ? (el.getAttribute(fallbackAttribute) || "") : "";
-    },
-
     getPoiTitleText: function () {
         return this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-title")
             ? this.buttonEl.getAttribute("data-vrodos-poi-title")
-            : (this.getLegacyElementTextValue("#title_" + this.data, "title_to_add") || "Info");
+            : "Info";
     },
 
     getPoiDescriptionText: function () {
         return this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-description")
             ? this.buttonEl.getAttribute("data-vrodos-poi-description")
-            : this.getLegacyElementTextValue("#desc_" + this.data, "text_to_add");
+            : "";
     },
 
     getPoiImageUrl: function () {
-        if (this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-image-src")) {
-            return this.buttonEl.getAttribute("data-vrodos-poi-image-src");
-        }
-        const legacyAsset = document.querySelector("#main_img_" + this.data);
-        return legacyAsset && typeof legacyAsset.getAttribute === "function"
-            ? legacyAsset.getAttribute("src")
+        return this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-image-src")
+            ? this.buttonEl.getAttribute("data-vrodos-poi-image-src")
             : "";
     },
 
@@ -258,7 +235,7 @@ AFRAME.registerComponent('info-panel', {
                     }
                 });
             }
-            this.recordSpatialPoiDiagnostic("warn", "spatial UI unavailable; suppressing legacy immersive POI panel", diagnostics);
+            this.recordSpatialPoiDiagnostic("warn", "spatial UI unavailable; immersive POI panel suppressed", diagnostics);
             return true;
         }
 

@@ -1394,10 +1394,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private function render_poi_imagetext_entity( $dom, $ascene, $assets, $obj ) {
 		$uuid = $obj->uuid ?? '';
 
-		$main_img_url = $this->normalize_url( $obj->poi_img_path ?? $obj->poi_image_path ?? '' );
-		$title_text   = $obj->poi_img_title ?? $obj->poi_title ?? '';
-		$desc_text    = $obj->poi_img_content ?? $obj->poi_description ?? '';
-		$this->track_runtime_asset( 'poi-image', $main_img_url, 'poi-imagetext:' . $uuid );
+		$image_url  = $this->normalize_url( $obj->poi_img_path ?? $obj->poi_image_path ?? '' );
+		$title_text = $obj->poi_img_title ?? $obj->poi_title ?? '';
+		$desc_text  = $obj->poi_img_content ?? $obj->poi_description ?? '';
+		$this->track_runtime_asset( 'poi-image', $image_url, 'poi-imagetext:' . $uuid );
 
 		$button_anchor = $dom->createElement( 'a-entity' );
 		$button_anchor->setAttribute( 'id', 'button_poi_root_' . $uuid );
@@ -1421,7 +1421,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$button->setAttribute( 'info-panel', $uuid );
 		$button->setAttribute( 'data-vrodos-poi-title', $this->sanitize_text_attr( $title_text ) );
 		$button->setAttribute( 'data-vrodos-poi-description', $this->sanitize_text_attr( $desc_text ) );
-		$button->setAttribute( 'data-vrodos-poi-image-src', $main_img_url );
+		$button->setAttribute( 'data-vrodos-poi-image-src', $image_url );
 		$this->apply_compiled_collision_attributes( $button, $obj, 'poi-button' );
 		if ( $this->isHoverEnabled ) {
 			$button->setAttribute( 'vrodos-hypnotic-hover', '' );

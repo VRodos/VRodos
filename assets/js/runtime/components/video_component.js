@@ -100,7 +100,7 @@ AFRAME.registerComponent('video-controls', {
             return window.VRODOSRuntimeOverlay.shouldUseVrPanel();
         }
 
-        return Boolean(browsingModeVR);
+        return false;
     },
 
     shouldUseInlinePlayback: function () {
@@ -463,12 +463,6 @@ AFRAME.registerComponent('video-controls', {
 
     removeVRTraces: function() {
         this.stopDesktopFullscreenInlineGuard(false);
-        if (window.VRODOSMaster && typeof window.VRODOSMaster.setBrowsingModeVR === "function") {
-            window.VRODOSMaster.setBrowsingModeVR(false);
-        } else {
-            browsingModeVR = false;
-            window.browsingModeVR = false;
-        }
         this.applyWorldVideoMaterial();
         this.syncUI();
     },

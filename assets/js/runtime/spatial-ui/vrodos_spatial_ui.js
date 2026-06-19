@@ -53,7 +53,7 @@ import { MSDF } from "@zappar/msdf-generator";
         "[meta-touch-controls]",
         "[oculus-touch-controls]"
     ];
-    const LEGACY_CONTROL_SELECTORS = [
+    const SCENE_CONTROL_SELECTORS = [
         "[vrodos-3d-play-icon]",
         "[id^='video-playhint_']"
     ];
@@ -1615,12 +1615,12 @@ import { MSDF } from "@zappar/msdf-generator";
         return restored;
     }
 
-    function suppressLegacyControls(panelState, active) {
+    function suppressSceneControls(panelState, active) {
         if (!panelState) {
             return;
         }
         if (active) {
-            const selector = LEGACY_CONTROL_SELECTORS.join(",");
+            const selector = SCENE_CONTROL_SELECTORS.join(",");
             document.querySelectorAll(selector).forEach((el) => {
                 if (!el || !el.setAttribute || panelState.suppressedControls.has(el)) {
                     return;
@@ -2488,7 +2488,7 @@ import { MSDF } from "@zappar/msdf-generator";
             if (panelState.blockSceneRaycasts) {
                 suppressSceneRaycastTargets(panelState, true);
             }
-            suppressLegacyControls(panelState, true);
+            suppressSceneControls(panelState, true);
             if (panelState.locked) {
                 setSceneInteractionLocked(true);
             }
@@ -2551,7 +2551,7 @@ import { MSDF } from "@zappar/msdf-generator";
         activePanel = null;
         detachInput(panelState);
         suppressSceneRaycastTargets(panelState, false);
-        suppressLegacyControls(panelState, false);
+        suppressSceneControls(panelState, false);
         if (panelState.locked) {
             setSceneInteractionLocked(false);
         }

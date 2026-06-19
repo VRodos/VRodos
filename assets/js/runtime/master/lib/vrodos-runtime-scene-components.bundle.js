@@ -362,18 +362,13 @@
         xrPresenting: isImmersiveVrActive(),
         vrModeFlag: Boolean(scene && scene.is && scene.is("vr-mode")),
         camera: describeElement(camera),
-        raycasters: getRaycasterDiagnostics(),
-        activePanel: null
+        raycasters: getRaycasterDiagnostics()
       };
     }
     function normalizeVrControllerEntities() {
       const realControllers = [
         document.querySelector("#oculusLeft"),
         document.querySelector("#oculusRight")
-      ].filter(Boolean);
-      const legacyControllers = [
-        document.querySelector("#leftHand"),
-        document.querySelector("#rightHand")
       ].filter(Boolean);
       realControllers.forEach((el) => {
         if (el.hasAttribute && el.hasAttribute("blink-controls")) {
@@ -382,19 +377,6 @@
         if (el.hasAttribute && el.hasAttribute("visible")) {
           el.removeAttribute("visible");
         }
-      });
-      if (!realControllers.length) {
-        return;
-      }
-      legacyControllers.forEach((el) => {
-        if (el.hasAttribute && el.hasAttribute("blink-controls")) {
-          el.removeAttribute("blink-controls");
-        }
-        if (el.hasAttribute && el.hasAttribute("raycaster")) {
-          el.removeAttribute("raycaster");
-        }
-        el.setAttribute("visible", "false");
-        el.setAttribute("data-vrodos-legacy-controller", "true");
       });
     }
     function controllerClickBridgeTargets() {
@@ -827,7 +809,6 @@
       raycasterRestore: null,
       suppressedSceneControls: null,
       interactionLocked: false,
-      targetClass: RAYCAST_TARGET_CLASS,
       getPresentationMode,
       getDiagnostics: function() {
         return diagnosticsStore().slice();
@@ -958,15 +939,6 @@
       refreshRaycasters: refreshRaycasterObjects,
       refreshInteractionTargets: function() {
         refreshOverlayTargets();
-      },
-      closeActivePanel: function(reason) {
-        this.setSceneControlsSuppressed(false);
-        this.setOverlayRaycastMode(false);
-        refreshRaycasterObjects();
-        this.lockSceneInteraction(false);
-        recordDiagnostic("debug", "closeActivePanel restored legacy overlay state.", {
-          reason: reason || "close"
-        });
       }
     };
     window.VRODOSRuntimeOverlay = api;
@@ -1185,7 +1157,7 @@
       if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.shouldUseVrPanel === "function") {
         return window.VRODOSRuntimeOverlay.shouldUseVrPanel();
       }
-      return Boolean(browsingModeVR);
+      return false;
     },
     onVrExit: function() {
       this.closeSpatialPoiPanel("exit-vr");
@@ -1205,33 +1177,14 @@
         overlayApi.recordDiagnostic(level || "info", "poi-image: " + (message || ""), details || {});
       }
     },
-    getLegacyElementTextValue: function(selector, fallbackAttribute) {
-      const el = document.querySelector(selector);
-      if (!el || typeof el.getAttribute !== "function") {
-        return "";
-      }
-      const textAttr = el.getAttribute("text");
-      if (textAttr && typeof textAttr === "object" && textAttr.value) {
-        return textAttr.value;
-      }
-      const directValue = el.getAttribute("value");
-      if (directValue) {
-        return directValue;
-      }
-      return fallbackAttribute ? el.getAttribute(fallbackAttribute) || "" : "";
-    },
     getPoiTitleText: function() {
-      return this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-title") ? this.buttonEl.getAttribute("data-vrodos-poi-title") : this.getLegacyElementTextValue("#title_" + this.data, "title_to_add") || "Info";
+      return this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-title") ? this.buttonEl.getAttribute("data-vrodos-poi-title") : "Info";
     },
     getPoiDescriptionText: function() {
-      return this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-description") ? this.buttonEl.getAttribute("data-vrodos-poi-description") : this.getLegacyElementTextValue("#desc_" + this.data, "text_to_add");
+      return this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-description") ? this.buttonEl.getAttribute("data-vrodos-poi-description") : "";
     },
     getPoiImageUrl: function() {
-      if (this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-image-src")) {
-        return this.buttonEl.getAttribute("data-vrodos-poi-image-src");
-      }
-      const legacyAsset = document.querySelector("#main_img_" + this.data);
-      return legacyAsset && typeof legacyAsset.getAttribute === "function" ? legacyAsset.getAttribute("src") : "";
+      return this.buttonEl && this.buttonEl.getAttribute("data-vrodos-poi-image-src") ? this.buttonEl.getAttribute("data-vrodos-poi-image-src") : "";
     },
     buildSpatialDescriptionPages: function() {
       const text = this.getPoiDescriptionText();
@@ -1366,7 +1319,7 @@
             }
           });
         }
-        this.recordSpatialPoiDiagnostic("warn", "spatial UI unavailable; suppressing legacy immersive POI panel", diagnostics);
+        this.recordSpatialPoiDiagnostic("warn", "spatial UI unavailable; immersive POI panel suppressed", diagnostics);
         return true;
       }
       this.closeSpatialPoiPanel("replace");
@@ -1998,7 +1951,7 @@
       if (window.VRODOSRuntimeOverlay && typeof window.VRODOSRuntimeOverlay.shouldUseVrPanel === "function") {
         return window.VRODOSRuntimeOverlay.shouldUseVrPanel();
       }
-      return Boolean(browsingModeVR);
+      return false;
     },
     shouldUseInlinePlayback: function() {
       if (this.isImmersivePresentation()) {
@@ -2293,12 +2246,6 @@
     },
     removeVRTraces: function() {
       this.stopDesktopFullscreenInlineGuard(false);
-      if (window.VRODOSMaster && typeof window.VRODOSMaster.setBrowsingModeVR === "function") {
-        window.VRODOSMaster.setBrowsingModeVR(false);
-      } else {
-        browsingModeVR = false;
-        window.browsingModeVR = false;
-      }
       this.applyWorldVideoMaterial();
       this.syncUI();
     },
@@ -3245,8 +3192,7 @@
       };
       runtime.showVrPrompt = function() {
         const overlayApi = window.VRODOSRuntimeOverlay || null;
-        const fallbackBrowsingMode = typeof window.browsingModeVR !== "undefined" && window.browsingModeVR || typeof browsingModeVR !== "undefined" && browsingModeVR;
-        const shouldUseVrPanel = overlayApi && typeof overlayApi.shouldUseVrPanel === "function" ? overlayApi.shouldUseVrPanel() : Boolean(fallbackBrowsingMode || runtime.isImmersiveVrActive());
+        const shouldUseVrPanel = overlayApi && typeof overlayApi.shouldUseVrPanel === "function" ? overlayApi.shouldUseVrPanel() : runtime.isImmersiveVrActive();
         if (!shouldUseVrPanel) {
           recordVrDiagnostic("debug", "CEFR prompt using DOM because immersive XR is inactive", {
             hasOverlayApi: Boolean(overlayApi),
@@ -5897,8 +5843,7 @@
       };
       runtime.open = function(payload) {
         const overlayApi = getOverlayApi();
-        const fallbackBrowsingMode = typeof window.browsingModeVR !== "undefined" && window.browsingModeVR || typeof browsingModeVR !== "undefined" && browsingModeVR;
-        const shouldUseVrPanel = overlayApi && typeof overlayApi.shouldUseVrPanel === "function" ? overlayApi.shouldUseVrPanel() : Boolean(fallbackBrowsingMode);
+        const shouldUseVrPanel = overlayApi && typeof overlayApi.shouldUseVrPanel === "function" ? overlayApi.shouldUseVrPanel() : false;
         if (!shouldUseVrPanel) {
           recordVrDiagnostic("debug", "assessment opened outside immersive XR; desktop DOM overlay remains active", {
             hasOverlayApi: Boolean(overlayApi),
