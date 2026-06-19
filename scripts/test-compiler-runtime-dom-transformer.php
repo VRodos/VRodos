@@ -18,6 +18,19 @@ require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-dom-transform
 require_once __DIR__ . '/../includes/class-vrodos-compiler-template-renderer.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-assets.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-aframe-dom-helper.php';
+require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-page-builder.php';
+
+class VRodos_Test_Template_Renderer extends VRodos_Compiler_Template_Renderer {
+	public function read_runtime_template( string $filename ): string {
+		return $this->read_file( __DIR__ . '/../templates/runtime/aframe/' . ltrim( $filename, '/\\' ) );
+	}
+}
+
+class VRodos_Test_Runtime_Assets extends VRodos_Compiler_Runtime_Assets {
+	public function redirect_runtime_template_urls( string $content ): string {
+		return $content;
+	}
+}
 
 function vrodos_dom_transformer_assert( bool $condition, string $message ): void {
 	if ( $condition ) {
@@ -26,6 +39,24 @@ function vrodos_dom_transformer_assert( bool $condition, string $message ): void
 
 	fwrite( STDERR, $message . "\n" );
 	exit( 1 );
+}
+
+function vrodos_runtime_page_builder_fixture(): VRodos_Compiler_Runtime_Page_Builder {
+	$reflection = new ReflectionClass( VRodos_Compiler_Runtime_Page_Builder::class );
+	$builder    = $reflection->newInstanceWithoutConstructor();
+
+	foreach (
+		[
+			'runtime_assets'    => new VRodos_Test_Runtime_Assets(),
+			'template_renderer' => new VRodos_Test_Template_Renderer(),
+		] as $property_name => $value
+	) {
+		$property = $reflection->getProperty( $property_name );
+		$property->setAccessible( true );
+		$property->setValue( $builder, $value );
+	}
+
+	return $builder;
 }
 
 $dom = new DOMDocument( '1.0', 'UTF-8' );
@@ -98,6 +129,35 @@ vrodos_dom_transformer_assert(
 	'helper should serialize component attrs'
 );
 
+$transform = $helper_dom->createElement( 'a-entity' );
+VRodos_Compiler_AFrame_DOM_Helper::apply_transform(
+	$transform,
+	(object) [
+		'position' => [ 1, 2, 3 ],
+		'rotation' => [ pi() / 2, pi(), -pi() / 4 ],
+		'scale'    => [ 2, 3, 4 ],
+	]
+);
+vrodos_dom_transformer_assert( '1 2 3' === $transform->getAttribute( 'position' ), 'helper should write position attributes' );
+vrodos_dom_transformer_assert( '-90 180 -45' === $transform->getAttribute( 'rotation' ), 'helper should write compiled rotation attributes' );
+vrodos_dom_transformer_assert( '2 3 4' === $transform->getAttribute( 'scale' ), 'helper should write scale attributes' );
+VRodos_Compiler_AFrame_DOM_Helper::append_class( $transform, 'raycastable' );
+VRodos_Compiler_AFrame_DOM_Helper::append_class( $transform, 'raycastable' );
+vrodos_dom_transformer_assert( 'raycastable' === $transform->getAttribute( 'class' ), 'helper should append classes once' );
+VRodos_Compiler_AFrame_DOM_Helper::apply_collision_attributes( $transform, 'mesh', 'solid', 'collision-proxy', 'object-1', true, 'cast: false; receive: false' );
+vrodos_dom_transformer_assert( 'raycastable vrodos-collider' === $transform->getAttribute( 'class' ), 'helper should append collider class' );
+vrodos_dom_transformer_assert( 'collision-proxy' === $transform->getAttribute( 'data-vrodos-collision-category' ), 'helper should write collision category' );
+vrodos_dom_transformer_assert( 'true' === $transform->getAttribute( 'data-vrodos-collision-hidden' ), 'helper should write hidden collision marker' );
+vrodos_dom_transformer_assert( 'cast: false; receive: false' === $transform->getAttribute( 'shadow' ), 'helper should write hidden collision shadow attr' );
+VRodos_Compiler_AFrame_DOM_Helper::apply_world_lighting_attributes( $transform, 'receiver', 'cast: false; receive: true' );
+vrodos_dom_transformer_assert( 'receiver' === $transform->getAttribute( 'data-vrodos-shadow-role' ), 'helper should write world lighting shadow role' );
+VRodos_Compiler_AFrame_DOM_Helper::apply_overlay_ui_attributes( $transform );
+vrodos_dom_transformer_assert( 'true' === $transform->getAttribute( 'data-vrodos-overlay-ui' ), 'helper should write overlay UI marker' );
+vrodos_dom_transformer_assert(
+	'src: #image; side: double; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true; transparent: true; alphaTest: 0.5' === VRodos_Compiler_AFrame_DOM_Helper::world_media_material( '#image' ),
+	'helper should build media material attrs'
+);
+
 $renderer = new VRodos_Compiler_Template_Renderer();
 $threw   = false;
 try {
@@ -106,5 +166,27 @@ try {
 	$threw = str_contains( $error->getMessage(), 'Compiler template read failed' );
 }
 vrodos_dom_transformer_assert( $threw, 'missing runtime templates should fail explicitly' );
+
+$runtime_page_build = vrodos_runtime_page_builder_fixture();
+
+foreach ( [ 'Master_Client_prototype.html', 'Simple_Client_prototype.html' ] as $template_name ) {
+	$prepared_template = $runtime_page_build->prepare_template(
+		$template_name,
+		[
+			'AFRAME_RUNTIME_URL_PLACEHOLDER'    => 'aframe-test.js',
+			'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER' => '',
+			'VRODOS_RUNTIME_MODE_PLACEHOLDER'   => 'single-player',
+			'VRODOS_PLUGIN_URL_PLACEHOLDER'     => '/wp-content/plugins/VRodos/',
+		]
+	);
+
+	vrodos_dom_transformer_assert( ! str_contains( $prepared_template, 'VRODOS_WEBXR_LAYER_SHIM_PLACEHOLDER' ), $template_name . ' should replace the WebXR shim placeholder' );
+	vrodos_dom_transformer_assert( str_contains( $prepared_template, 'window.__VRODOS_WEBXR_LAYER_SHIM_ACTIVE' ), $template_name . ' should include the shared WebXR shim' );
+	vrodos_dom_transformer_assert( str_contains( $prepared_template, 'XRWebGLBinding' ), $template_name . ' should include the WebXR layer compatibility guard' );
+
+	$shim_position   = strpos( $prepared_template, 'window.__VRODOS_WEBXR_LAYER_SHIM_ACTIVE' );
+	$aframe_position = strpos( $prepared_template, 'aframe-test.js' );
+	vrodos_dom_transformer_assert( false !== $shim_position && false !== $aframe_position && $shim_position < $aframe_position, $template_name . ' should install the WebXR shim before A-Frame' );
+}
 
 echo "Runtime DOM transformer fixtures passed.\n";

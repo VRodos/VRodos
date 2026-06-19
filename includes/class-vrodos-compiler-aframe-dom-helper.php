@@ -51,4 +51,85 @@ class VRodos_Compiler_AFrame_DOM_Helper {
 
 		return implode( '; ', $parts ) . ';';
 	}
+
+	public static function apply_transform( DOMElement $entity, $content_object, bool $preserve_editor_rotation = false ): void {
+		$entity->setAttribute( 'position', self::vector_attribute( $content_object->position ) );
+		$entity->setAttribute( 'rotation', self::rotation_attribute( $content_object->rotation, $preserve_editor_rotation ) );
+		$entity->setAttribute( 'scale', self::vector_attribute( $content_object->scale ) );
+	}
+
+	public static function append_class( DOMElement $entity, string $class_name ): void {
+		$class_name = trim( $class_name );
+		if ( '' === $class_name ) {
+			return;
+		}
+
+		$current = preg_split( '/\s+/', trim( $entity->getAttribute( 'class' ) ) ) ?: [];
+		if ( ! in_array( $class_name, $current, true ) ) {
+			$current[] = $class_name;
+		}
+
+		$entity->setAttribute( 'class', trim( implode( ' ', array_filter( $current ) ) ) );
+	}
+
+	public static function apply_collision_attributes(
+		DOMElement $entity,
+		string $source,
+		string $role,
+		string $category = '',
+		string $object_id = '',
+		bool $hidden_collision = false,
+		string $hidden_shadow_attribute = ''
+	): void {
+		self::append_class( $entity, 'vrodos-collider' );
+		$entity->setAttribute( 'data-vrodos-collider', 'true' );
+		$entity->setAttribute( 'data-vrodos-collision-source', $source );
+		$entity->setAttribute( 'data-vrodos-collision-role', $role );
+		if ( '' !== $category ) {
+			$entity->setAttribute( 'data-vrodos-collision-category', $category );
+		}
+		if ( '' !== $object_id ) {
+			$entity->setAttribute( 'data-vrodos-collision-object', $object_id );
+		}
+
+		if ( $hidden_collision ) {
+			$entity->setAttribute( 'data-vrodos-collision-hidden', 'true' );
+			$entity->setAttribute( 'data-vrodos-shadow-role', 'none' );
+			$entity->setAttribute( 'shadow', $hidden_shadow_attribute );
+			$entity->setAttribute( 'vrodos-collider-helper', '' );
+		}
+	}
+
+	public static function apply_world_lighting_attributes( DOMElement $entity, string $shadow_role, string $shadow_attribute ): void {
+		$entity->setAttribute( 'data-vrodos-world-lighting', 'true' );
+		$entity->setAttribute( 'data-vrodos-shadow-role', $shadow_role );
+		$entity->setAttribute( 'shadow', $shadow_attribute );
+	}
+
+	public static function apply_overlay_ui_attributes( DOMElement $entity ): void {
+		$entity->setAttribute( 'data-vrodos-overlay-ui', 'true' );
+	}
+
+	public static function world_media_material( string $src, string $side = 'double', bool $transparent = true ): string {
+		$material = "src: $src; side: $side; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
+		if ( $transparent ) {
+			$material .= '; transparent: true; alphaTest: 0.5';
+		}
+
+		return $material;
+	}
+
+	private static function vector_attribute( $vector ): string {
+		return implode( ' ', $vector );
+	}
+
+	private static function rotation_attribute( $rotation, bool $preserve_editor_rotation ): string {
+		$rotation = [
+			( $preserve_editor_rotation ? 1 : -1 ) * 180 / pi() * $rotation[0],
+			180 / pi() * $rotation[1],
+			180 / pi() * $rotation[2],
+		];
+
+		return implode( ' ', $rotation );
+	}
 }

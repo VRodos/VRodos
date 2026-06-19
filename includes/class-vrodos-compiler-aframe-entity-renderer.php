@@ -632,15 +632,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	}
 
 	private function setAffineTransformations( $entity, $contentObject, bool $preserve_editor_rotation = false ) {
-		$entity->setAttribute( 'position', implode( ' ', $contentObject->position ) );
-		$rotation = $preserve_editor_rotation
-			? [ 180 / pi() * $contentObject->rotation[0], 180 / pi() * $contentObject->rotation[1], 180 / pi() * $contentObject->rotation[2] ]
-			: [ - 180 / pi() * $contentObject->rotation[0], 180 / pi() * $contentObject->rotation[1], 180 / pi() * $contentObject->rotation[2] ];
-		$entity->setAttribute(
-			'rotation',
-			implode( ' ', $rotation )
-		);
-		$entity->setAttribute( 'scale', implode( ' ', $contentObject->scale ) );
+		VRodos_Compiler_AFrame_DOM_Helper::apply_transform( $entity, $contentObject, $preserve_editor_rotation );
 	}
 
 	private function colorRGB2Hex( $colorRGB ) {
@@ -745,21 +737,19 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private function set_world_lighting_attributes( DOMElement $entity, string $shadow_role = 'caster-receiver' ): void {
 		$shadow_role = $this->normalize_shadow_role( $shadow_role );
-		$entity->setAttribute( 'data-vrodos-world-lighting', 'true' );
-		$entity->setAttribute( 'data-vrodos-shadow-role', $shadow_role );
-		$entity->setAttribute( 'shadow', $this->shadow_attribute_for_role( $shadow_role ) );
+		VRodos_Compiler_AFrame_DOM_Helper::apply_world_lighting_attributes(
+			$entity,
+			$shadow_role,
+			$this->shadow_attribute_for_role( $shadow_role )
+		);
 	}
 
 	private function set_overlay_ui_attributes( DOMElement $entity ): void {
-		$entity->setAttribute( 'data-vrodos-overlay-ui', 'true' );
+		VRodos_Compiler_AFrame_DOM_Helper::apply_overlay_ui_attributes( $entity );
 	}
 
 	private function world_media_material( string $src, string $side = 'double', bool $transparent = true ): string {
-		$material = "src: $src; side: $side; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
-		if ( $transparent ) {
-			$material .= '; transparent: true; alphaTest: 0.5';
-		}
-		return $material;
+		return VRodos_Compiler_AFrame_DOM_Helper::world_media_material( $src, $side, $transparent );
 	}
 
 	private function is_compiled_collision_enabled( $obj ): bool {
@@ -777,17 +767,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	}
 
 	private function append_class( DOMElement $entity, string $class_name ): void {
-		$class_name = trim( $class_name );
-		if ( '' === $class_name ) {
-			return;
-		}
-
-		$current = preg_split( '/\s+/', trim( $entity->getAttribute( 'class' ) ) ) ?: [];
-		if ( ! in_array( $class_name, $current, true ) ) {
-			$current[] = $class_name;
-		}
-
-		$entity->setAttribute( 'class', trim( implode( ' ', array_filter( $current ) ) ) );
+		VRodos_Compiler_AFrame_DOM_Helper::append_class( $entity, $class_name );
 	}
 
 	private function apply_compiled_collision_attributes( DOMElement $entity, $obj, string $source = 'mesh' ): void {
@@ -798,24 +778,17 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$category = sanitize_title( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) );
 		$uuid     = $this->sanitize_text_attr( (string) ( $obj->uuid ?? $obj->name ?? '' ) );
 		$role     = 'walkable-surface' === $category ? 'navmesh' : 'solid';
+		$hidden_collision = in_array( $category, [ 'collision-proxy', 'blocking-obstacles' ], true );
 
-		$this->append_class( $entity, 'vrodos-collider' );
-		$entity->setAttribute( 'data-vrodos-collider', 'true' );
-		$entity->setAttribute( 'data-vrodos-collision-source', $source );
-		$entity->setAttribute( 'data-vrodos-collision-role', $role );
-		if ( '' !== $category ) {
-			$entity->setAttribute( 'data-vrodos-collision-category', $category );
-		}
-		if ( '' !== $uuid ) {
-			$entity->setAttribute( 'data-vrodos-collision-object', $uuid );
-		}
-
-		if ( in_array( $category, [ 'collision-proxy', 'blocking-obstacles' ], true ) ) {
-			$entity->setAttribute( 'data-vrodos-collision-hidden', 'true' );
-			$entity->setAttribute( 'data-vrodos-shadow-role', 'none' );
-			$entity->setAttribute( 'shadow', $this->shadow_attribute_for_role( 'none' ) );
-			$entity->setAttribute( 'vrodos-collider-helper', '' );
-		}
+		VRodos_Compiler_AFrame_DOM_Helper::apply_collision_attributes(
+			$entity,
+			$source,
+			$role,
+			$category,
+			$uuid,
+			$hidden_collision,
+			$hidden_collision ? $this->shadow_attribute_for_role( 'none' ) : ''
+		);
 
 		$this->diagnostic_collider_count++;
 	}
