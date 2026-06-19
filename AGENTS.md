@@ -74,9 +74,9 @@ VR spatial UI current state:
 
 - `documentation/vrodos-compiled-scene-framework-integration.md` section 4.1 is the current handoff reference for immersive CEFR, assessment, and video interaction UI.
 - A-Frame remains the compiled scene host: scene, renderer, XR session, `cameraA`, controllers, navigation, collision, media objects, and render loop.
-- Immersive CEFR and assessment dialogs should use `window.VRODOSSpatialUI`, backed by `@pmndrs/uikit`, `@pmndrs/uikit-horizon`, and `@pmndrs/pointer-events`; VR video trigger clicks should toggle playback directly and must not open a play/pause dialog.
+- Immersive CEFR, assessment, and image/text POI dialogs should use `window.VRODOSSpatialUI`, backed by `@pmndrs/uikit`, `@pmndrs/uikit-horizon`, and `@pmndrs/pointer-events`; VR video trigger clicks should toggle playback directly and must not open a play/pause dialog.
 - The spatial UI chunk mounts a PMNDRS/Horizon `THREE.Group` under `a-scene.object3D`; the A-Frame host component only forwards `tick()` and must not create visible UI primitives.
-- Do not route immersive CEFR/assessment dialogs through `VRODOSRuntimeOverlay.openVrPanel()`, A-Frame `a-plane`, A-Frame `a-text`, A-Frame modal buttons, or `.vrodos-overlay-hit-target` raycaster retargeting.
+- Do not route immersive CEFR, assessment, or image/text POI dialogs through `VRODOSRuntimeOverlay.openVrPanel()`, A-Frame `a-plane`, A-Frame `a-text`, A-Frame modal buttons, or `.vrodos-overlay-hit-target` raycaster retargeting.
 - If `spatial-ui` is unavailable in immersive XR, log diagnostics and fail closed instead of showing a broken A-Frame fallback.
 - Desktop and VR assessment runtimes share renderer-key resolution through `window.VRodosImmerseAssessment.resolveAssessmentRendererKey()`; keep question/image quiz/pair/grid/text aliases there so desktop-supported assessments do not regress to the VR unsupported state.
 - Greek assessment/CEFR text in spatial UI depends on Noto Sans assets under `assets/vendor/fonts/noto-sans/` and the Zappar MSDF worker/WASM under `assets/vendor/zappar-msdf-generator/`. Do not transliterate Greek or restore A-Frame text primitives to suppress glyph warnings.
@@ -86,7 +86,7 @@ VR spatial UI current state:
 - Controller ray visuals use the active A-Frame controller line, but spatial UI trims that line and clamps the active controller raycaster `far` distance to the dialog surface while a panel is active, shows a small hit dot anywhere on the surface, switches to a larger/action color over selectable controls, suppresses scene raycast targets behind the modal, and restores everything on close; do not hide/retarget controller rays or add A-Frame hit planes for PMNDRS panels.
 - When no modal is open in immersive XR, normal scene `.raycastable` targets get a ray endpoint dot through `vrodos-scene-ray-feedback`; this is feedback only and must not retarget scene raycasters or replace video/POI/assessment click paths.
 - PMNDRS can clear its pointer intersection during a click that closes/rerenders a panel; treat that stale `pointer.up()` intersection error as benign cleanup, not as a failed click or a reason to add fallback hit geometry.
-- Desktop and inline assessment/video dialogs remain DOM-based.
+- Desktop and inline assessment, image/text POI, and video dialogs remain DOM-based.
 - Recompile generated scenes after runtime changes so spatial UI scripts receive the planner's cache-busting `?ver=` query.
 
 WebXR entry current state:

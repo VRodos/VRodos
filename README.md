@@ -71,7 +71,7 @@ Important ownership rules:
 - Scene startup loader to reduce visible object pop-in
 - Desktop-oriented high-quality rendering path for compiled scenes
 - Runtime support for interactive desktop, VR, and immersive-web experiences
-- Local/networked collaboration support through the bundled `networked-aframe` server
+- Local/networked collaboration support through the bundled VRodos network runtime server
 
 ## Current Compiled Runtime
 
@@ -95,8 +95,9 @@ That runtime powers:
 - opt-in Takram volumetric clouds for desktop inline/fullscreen PMNDRS + Takram atmosphere scenes
 - compiled walkable-surface and static player/world collision workflows
 - static cached desktop shadows where visible compiled geometry casts and receives by default
-- PMNDRS UIKit Horizon immersive VR dialogs for CEFR prompts and assessment panels while A-Frame remains the scene/XR host
+- PMNDRS UIKit Horizon immersive VR dialogs for CEFR prompts, assessment panels, and image/text POI panels while A-Frame remains the scene/XR host
 - direct immersive VR video trigger controls that toggle authored video playback without opening a play/pause dialog
+- immersive VR ray endpoint feedback for normal `.raycastable` scene targets, plus modal dialog ray-stop/hit-dot feedback for spatial panels
 - Greek-capable spatial UI text rendering through vendored Noto Sans and same-origin MSDF worker assets
 
 The runtime version source of truth is root [`package.json`](package.json) plus [`package-lock.json`](package-lock.json). `npm run build:three` generates [`assets/runtime-version-manifest.json`](assets/runtime-version-manifest.json), and [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php) reads that manifest at runtime with conservative fallbacks.
@@ -343,7 +344,7 @@ The plugin follows a manager-class architecture, with dedicated managers for ass
 - Takram atmosphere runtime bundle built from root `@takram/*` package versions
 - Takram clouds runtime bundle and local cloud assets for opt-in desktop PMNDRS scenes
 - `three-mesh-bvh` bundled into the compiled-scene static collision runtime
-- `@pmndrs/uikit`, `@pmndrs/uikit-horizon`, and `@pmndrs/pointer-events` bundled into the compiled-scene spatial UI runtime only when needed
+- `@pmndrs/uikit`, `@pmndrs/uikit-horizon`, and `@pmndrs/pointer-events` bundled into the compiled-scene spatial UI runtime for CEFR, assessment, and image/text POI immersive panels
 - Noto Sans plus Zappar MSDF worker/WASM assets vendored for Greek spatial UI glyph coverage
 - Node.js server for networked and collaborative features
 
@@ -360,15 +361,14 @@ The plugin follows a manager-class architecture, with dedicated managers for ass
 
 The bundled server lives in:
 
-`services/networked-aframe/`
+`services/vrodos-network-runtime/`
 
 Install and run it with:
 
 ```bash
-cd wp-content/plugins/VRodos/services/networked-aframe/
+cd wp-content/plugins/VRodos/services/vrodos-network-runtime/
 npm install
-cd server/
-node easyrtc-server.js
+npm start
 ```
 
 The local runtime server is commonly used on port `5832`.

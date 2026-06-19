@@ -15,7 +15,7 @@ The immediate strategy is conservative: first make the current runtime state mea
 - PMNDRS `postprocessing` is exported as `window.POSTPROCESSING` and loaded lazily.
 - Takram atmosphere/cloud bundles are loaded lazily when scene metadata requests them.
 - Collision BVH support is loaded lazily when compiled navigation resolves to a walkable mode.
-- Spatial UI is loaded lazily for immersive CEFR and assessment flows; plain VR video clicks toggle playback directly and do not need a modal UI chunk.
+- Spatial UI is loaded lazily or prewarmed for immersive CEFR, assessment, and image/text POI flows; plain VR video clicks toggle playback directly and do not need a modal UI chunk.
 - A-Frame owns the WebXR session, camera, controllers, scene graph, media objects, navigation, collision, and render loop.
 - Desktop and inline modes can use screen-space post-processing when enabled by metadata and quality gates.
 - Real immersive WebXR intentionally bypasses screen-space composer ownership and renders direct stereo. Composer experiments require explicit lab flags and real headset validation.
@@ -47,9 +47,10 @@ Next work:
 3. Start immersive interaction parity:
    - plain VR video clicks toggle playback directly with no play/pause dialog;
    - CEFR prompts use `window.VRODOSSpatialUI`;
-   - assessment panels use `window.VRODOSSpatialUI` anchored beside the clicked object;
+   - assessment and image/text POI panels use `window.VRODOSSpatialUI` camera-relative in front of the headset, centered near eye height;
+   - modal controller rays stop at the dialog surface with hit-dot feedback, and normal scene `.raycastable` targets show endpoint-dot feedback when no modal is open;
    - if spatial UI is unavailable in immersive XR, log diagnostics and fail closed.
-4. Retest controller rays, HMD tracking, locomotion, and collision after opening and closing CEFR/assessment panels.
+4. Retest controller rays, HMD tracking, locomotion, and collision after opening and closing CEFR, assessment, and image/text POI panels.
 5. Reflections beyond HDR env maps, PMNDRS composer effects, clouds, scene probes, Takram sky PMREM, WebXR layers, AR, and MR remain later stages.
 
 ## Platform Capability Matrix
@@ -68,8 +69,8 @@ Legend:
 | WebXR layers | Disabled by default | Disabled by default | Disabled by default | No | No |
 | Classic XRWebGLLayer path | N/A | N/A | Yes | N/A | N/A |
 | GLB/media/POI rendering | Yes | Yes | Yes | Partial | Partial |
-| DOM overlay dialogs | Yes | Yes | No for immersive assessment/video | No | No |
-| PMNDRS/Horizon spatial UI | No, not needed | No, not needed | Yes for supported immersive flows | No | No |
+| DOM overlay dialogs | Yes | Yes | No for immersive assessment, image/text POI, or video | No | No |
+| PMNDRS/Horizon spatial UI | No, not needed | No, not needed | Yes for supported CEFR, assessment, and image/text POI immersive flows | No | No |
 | Video trigger direct playback in VR | N/A | N/A | Yes | No | No |
 | Keyboard/mouse navigation | Yes | Partial | No | No | No |
 | Controller thumbstick navigation | No | No | Yes | No | No |
@@ -137,9 +138,9 @@ Legend:
 
 ### Spatial UI
 
-- Immersive CEFR and assessment UI should use `window.VRODOSSpatialUI`.
+- Immersive CEFR, assessment, and image/text POI UI should use `window.VRODOSSpatialUI`.
 - The spatial UI chunk mounts PMNDRS/Horizon UI as a Three group under `a-scene.object3D`.
-- A-Frame should continue to host the scene and forward ticks; it should not recreate immersive assessment dialogs with `a-plane`, `a-text`, or DOM overlays.
+- A-Frame should continue to host the scene and forward ticks; it should not recreate immersive assessment or image/text POI dialogs with `a-plane`, `a-text`, or DOM overlays.
 - If spatial UI is unavailable in immersive XR, the runtime should log diagnostics and fail closed rather than showing a broken fallback.
 - Plain VR video objects are not spatial UI modal surfaces. Controller trigger clicks on video objects should toggle inline video playback directly.
 
@@ -223,7 +224,7 @@ Only `desktop`, `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-reflecti
 - `headset`, `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-reflections`, `balanced`, and `max` now also apply a VR-only WebXR render budget before session start when supported: framebuffer scale/foveation defaults are `1.0/0.5`, `1.0/0.5`, `1.0/0.5`, `1.0/0.5`, `1.0/0.5`, `1.0/0.5`, `0.9/0.75`, and `1.0/0.5`.
 - Quest 2 baseline testing accepted visual quality with only minor far-edge shimmer. Framebuffer scale/foveation changes did not materially affect the shimmer, so it is not an active blocker.
 - HMD tracking without camera freeze, controller input, thumbstick navigation, walkable navigation, and collision/BVH are accepted as working VR Headset baseline features.
-- Immersive interaction parity is the next active stage. Plain video clicks must use direct inline play/pause without loading spatial UI solely for video controls. CEFR and assessment remain spatial UI surfaces and must suppress DOM/A-Frame fallback panels in immersive XR when spatial UI is unavailable.
+- Immersive interaction parity implementation is in progress and still needs headset acceptance. Plain video clicks must use direct inline play/pause without loading spatial UI solely for video controls. CEFR, assessment, and image/text POI panels are spatial UI surfaces; assessment and image/text POI panels open camera-relative near eye height, lock locomotion while open, stop modal rays at the dialog surface with hit-dot feedback, and suppress DOM/A-Frame fallback panels in immersive XR when spatial UI is unavailable. Normal scene `.raycastable` targets expose non-modal endpoint-dot feedback without changing the A-Frame click path.
 - `max` attempts requested PMNDRS composer, scene probe, Takram sky PMREM, and Takram clouds only in immersive VR and only when runtime support checks pass.
 - Individual experiments can be enabled with scene metadata or query flags: `vrodos_vr_profile=max`, `vrodos_enable_xr_pmndrs_composer=1`, `vrodos_enable_xr_scene_probe=1`, `vrodos_enable_xr_takram_sky_environment=1`, and `vrodos_enable_xr_clouds=1`.
 - Render-budget overrides can be tested with `vrodos_vr_framebuffer_scale=...` and `vrodos_vr_foveation=...`; effective support/application state is published at `window.VRODOS_RUNTIME_FEATURE_STATE.renderer.vrRenderBudget`.
@@ -254,7 +255,7 @@ Only `desktop`, `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-reflecti
 
 1. Confirm VR keeps scene-owned Takram/Horizon sky, sun/moon, day-night lighting, fog, tone mapping, material profiles, and HDR environment maps where safe.
 2. Treat walkable collision and controller thumbstick movement as accepted baseline features; retest them only after changes that could affect navigation/collision.
-3. Confirm spatial UI only on scenes that actually contain immersive CEFR or assessment flows; plain video assets should not request the spatial UI chunk unless they also carry CEFR/assessment metadata.
+3. Confirm spatial UI is loaded or prewarmed only for scenes that actually contain immersive CEFR, assessment, or image/text POI flows; plain video-only scenes should not request the spatial UI chunk solely for video controls.
 4. Fix any VR-only regressions in these existing scene-owned features before enabling composer effects.
 
 ### Phase 3 - Add Headset Quality Controls

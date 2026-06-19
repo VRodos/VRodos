@@ -105,7 +105,7 @@ Runtime scripts are selected by scene metadata, not by hardcoded script tags in 
 - FPS meter when enabled;
 - `collision-bvh-vendor` when navigation mode resolves to `walkable`;
 - `pmndrs-postfx` when post-FX is enabled and the engine is `pmndrs`;
-- `spatial-ui` when scene metadata contains assessment surfaces or CEFR-gated Immerse assets; plain video assets do not request this chunk unless they also carry CEFR/assessment metadata;
+- `spatial-ui` when scene metadata contains assessment surfaces or CEFR-gated Immerse assets; image/text POI panels can also preload or load the spatial runtime on demand through `VRODOSRuntimeOverlay.prewarmSpatialUiRuntime()` / `ensureSpatialUiRuntime()`; plain video-only scenes do not request this chunk solely for video controls;
 - `takram-atmosphere` only when PMNDRS atmosphere is enabled;
 - `takram-clouds` only when PMNDRS atmosphere and clouds are enabled;
 - `legacy-postfx` when post-FX uses the legacy engine;
@@ -124,13 +124,13 @@ VRodos uses A-Frame as the orchestration layer:
 
 ## 4.1 Immersive Dialog UI Ownership
 
-Current state: 2026-06-18.
+Current state: 2026-06-19.
 
-CEFR prompts and assessment dialogs in immersive XR are not rendered with A-Frame `a-plane`, `a-text`, or A-Frame button entities. They use `window.VRODOSSpatialUI`, a PMNDRS UIKit/Horizon layer that creates a `THREE.Group` under `a-scene.object3D` and renders Horizon components through the same A-Frame-owned Three runtime. VR video playback is different by design: trigger clicks on the authored video object should toggle play/pause directly and should not open a play/pause dialog.
+CEFR prompts, assessment dialogs, and image/text POI dialogs in immersive XR are not rendered with A-Frame `a-plane`, `a-text`, or A-Frame button entities. They use `window.VRODOSSpatialUI`, a PMNDRS UIKit/Horizon layer that creates a `THREE.Group` under `a-scene.object3D` and renders Horizon components through the same A-Frame-owned Three runtime. VR video playback is different by design: trigger clicks on the authored video object should toggle play/pause directly and should not open a play/pause dialog.
 
 A-Frame still owns the scene, WebXR session, camera, controllers, movement, media objects, and render loop. The spatial UI layer owns the modal panel tree and pointer-event handling for that modal. Its A-Frame component exists only to forward `tick()` into the PMNDRS component tree.
 
-Do not use `VRODOSRuntimeOverlay.openVrPanel()` or `.vrodos-overlay-hit-target` raycaster retargeting for immersive CEFR or assessment dialogs. If the spatial bundle is unavailable in immersive XR, the correct behavior is to log diagnostics and fail closed instead of opening the old A-Frame fallback. Desktop and inline mode still use the existing DOM dialogs. Video objects should keep their normal scene click path and direct play/pause behavior when no modal is open.
+Do not use `VRODOSRuntimeOverlay.openVrPanel()` or `.vrodos-overlay-hit-target` raycaster retargeting for immersive CEFR, assessment, or image/text POI dialogs. If the spatial bundle is unavailable in immersive XR, the correct behavior is to log diagnostics and fail closed instead of opening the old A-Frame fallback. Desktop and inline mode still use the existing DOM dialogs. Video objects should keep their normal scene click path and direct play/pause behavior when no modal is open.
 
 ### Spatial UI Source Files
 
@@ -144,6 +144,7 @@ Do not use `VRODOSRuntimeOverlay.openVrPanel()` or `.vrodos-overlay-hit-target` 
 - Script planning/cache busting: `includes/class-vrodos-compiler-runtime-manifest.php` and `includes/class-vrodos-compiler-runtime-script-planner.php`
 - CEFR runtime: `assets/js/runtime/assessment/assessment-cefr-runtime.js`
 - Assessment runtime: `assets/js/runtime/assessment/assessment-overlay-runtime.js` and `assets/js/runtime/assessment/assessment-vr-overlay-runtime.js`
+- Image/text POI runtime: `assets/js/runtime/components/poi-image_component.js`
 - Video component: `assets/js/runtime/components/video_component.js`
 - Legacy overlay diagnostics and spatial loader helper: `assets/js/runtime/vrodos_runtime_overlay.js`
 
@@ -155,7 +156,7 @@ The resolver maps raw `group` values first, then normalized `group` and `type` a
 
 ### Spatial UI API
 
-`window.VRODOSSpatialUI` exposes `isAvailable()`, `openPanel()`, `closePanel(reason)`, `refreshInteractionTargets()`, `dispose()`, `getActivePanel()`, `getDiagnostics()`, and `recordDiagnostic(level, message, details)`.
+`window.VRODOSSpatialUI` exposes `isAvailable()`, `openPanel()`, `closePanel(reason)`, `refreshInteractionTargets()`, `dispose()`, `prewarm()`, `getActivePanel()`, `getDiagnostics()`, and `recordDiagnostic(level, message, details)`.
 
 Panel render callbacks receive `frame()`, `text()`, `button()`, `image()`, `row()`, `column()`, `grid()`, `clear()`, and `close()`. Use Horizon buttons and variants for immersive VR UI. Selected states should use a positive or otherwise explicit variant. Disabled actions should use the Horizon disabled state, not hidden raycaster targets or custom A-Frame materials.
 
@@ -183,8 +184,9 @@ The immersive VR surfaces expected to use `window.VRODOSSpatialUI` are:
 - pair matching layouts
 - fill-gap and highlight layouts
 - grid wordsearch/bingo layouts
+- image/text POI panels
 
-Desktop and inline browser modes keep the existing DOM dialogs. The DOM assessment dialog remains the source of truth outside immersive XR.
+Desktop and inline browser modes keep the existing DOM dialogs. The DOM assessment and image/text POI dialogs remain the source of truth outside immersive XR.
 
 VR video objects are intentionally not in the modal surface list. Controller trigger clicks should directly toggle playback on the video asset. If a video click opens a spatial UI dialog, that is a regression in the video component click path.
 
@@ -246,7 +248,7 @@ Production acceptance checklist:
 
 1. Upload source/runtime files, package changes, generated bundle files, and compiler/planner changes.
 2. Recompile the scene after upload.
-3. Confirm the generated HTML includes `vrodos-runtime-spatial-ui.bundle.js`.
+3. For assessment/CEFR scenes, confirm the generated HTML includes `vrodos-runtime-spatial-ui.bundle.js`; for image/text POI-only scenes, confirm `VRODOSRuntimeOverlay.ensureSpatialUiRuntime()` can load the same bundle on demand.
 4. Confirm the generated script URL has a cache-busting `?ver=...` query after recompilation.
 5. Confirm Noto Sans font files and Zappar MSDF worker/WASM files return HTTP 200 from the same plugin origin.
 6. Clear Quest Browser cache before testing.
@@ -254,8 +256,9 @@ Production acceptance checklist:
 8. Open an assessment with Greek text and confirm there are no repeated `Missing glyph info` warnings.
 9. Confirm video trigger clicks directly toggle play/pause in immersive XR and do not open a play/pause dialog.
 10. Confirm assessment and image/text POI objects open spatial panels in front of the user, centered near eye height, in immersive XR and remain DOM-based in desktop/inline mode.
-11. Confirm video and assessment objects still receive native controller clicks when no modal is open.
-12. Confirm controller rays stop at PMNDRS dialog elements while a modal is active and return to normal length after modal close/finish.
+11. Confirm video, assessment, and image/text POI objects still receive native controller clicks when no modal is open.
+12. Confirm normal scene `.raycastable` targets show the ray endpoint dot in immersive XR when no modal is open.
+13. Confirm controller rays stop at the PMNDRS dialog surface while a modal is active, show a small surface dot or larger actionable dot as appropriate, and return to normal length after modal close/finish.
 
 Quest Browser manual acceptance is required before considering a spatial UI change stable. Desktop WebXR emulators are useful for smoke checks but do not prove controller behavior or native WebXR timing.
 
