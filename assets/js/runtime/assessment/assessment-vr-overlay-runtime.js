@@ -1280,13 +1280,20 @@
             const spatialUi = getSpatialUiApi();
             if (!spatialUi) {
                 runtime.pendingPayload = payload;
-                if (overlayApi && typeof overlayApi.ensureSpatialUiRuntime === "function" && !runtime.spatialUiLoadPending) {
+                const loadSpatialUiRuntime = overlayApi && (
+                    typeof overlayApi.prewarmSpatialUiRuntime === "function"
+                        ? overlayApi.prewarmSpatialUiRuntime.bind(overlayApi)
+                        : (typeof overlayApi.ensureSpatialUiRuntime === "function"
+                            ? overlayApi.ensureSpatialUiRuntime.bind(overlayApi)
+                            : null)
+                );
+                if (loadSpatialUiRuntime && !runtime.spatialUiLoadPending) {
                     runtime.spatialUiLoadPending = true;
                     recordVrDiagnostic("debug", "assessment VR panel is loading spatial UI runtime on demand", {
                         group: payload && payload.group || "",
                         type: payload && payload.type || ""
                     });
-                    overlayApi.ensureSpatialUiRuntime({ timeoutMs: 8000 }).then((available) => {
+                    loadSpatialUiRuntime({ timeoutMs: 8000 }).then((available) => {
                         const pending = runtime.pendingPayload;
                         runtime.spatialUiLoadPending = false;
                         runtime.pendingPayload = null;
@@ -1331,13 +1338,14 @@
                 id: "vrodos-immerse-assessment-vr-overlay",
                 width: PANEL_WIDTH,
                 height: PANEL_HEIGHT,
-                distance: 2.25,
-                verticalOffset: -0.03,
-                topAtEyeLevel: true,
-                anchorElement: runtime.payload && runtime.payload.anchorElement || null,
-                anchorSide: "right",
-                anchorRefreshFrames: runtime.payload && runtime.payload.anchorElement ? 1 : 8,
-                lockInteraction: false,
+                distance: 1.85,
+                verticalOffset: 0,
+                centerAtEyeLevel: true,
+                anchorRefreshFrames: 2,
+                lockInteraction: true,
+                trimControllerRays: true,
+                showRayHitDot: true,
+                blockSceneRaycasts: true,
                 cleanup: function () {
                     runtime.reset();
                 },

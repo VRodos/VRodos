@@ -165,9 +165,9 @@ Panel render callbacks receive `frame()`, `text()`, `button()`, `image()`, `row(
 
 Do not fix small or clipped VR dialogs by scaling the `THREE.Group` globally. Keep the default XR panel scale at `1` and change the physical `width`/`height`, `designWidthPx`, or the panel's internal frame paddings/control sizes. Global scale changes break pointer intersections and make controller rays appear to pass through the dialog.
 
-Camera-anchored prompts should use `topAtEyeLevel: true` and a deliberate `verticalOffset`. CEFR is intentionally compact and lower than a literal top-at-eye center so its center lands near the proven assessment-panel height. Assessment panels should anchor to the clicked object with `anchorElement`, usually on the object's right side, so they materialize beside the authored object instead of following the user's head.
+Camera-anchored prompts should use an explicit vertical policy. CEFR remains intentionally compact and lower through `topAtEyeLevel: true` plus a deliberate `verticalOffset`. Immersive assessment and image/text POI panels should use camera-relative `centerAtEyeLevel: true`, no `anchorElement`, and a short initial `anchorRefreshFrames` window so they open at readable/controller distance in front of the user, then stay fixed while the panel is open.
 
-Controller rays must remain visible while crossing a modal panel. The spatial runtime promotes controller ray line objects above the panel render order and disables depth testing/writing on those ray materials. Do not retarget A-Frame raycasters to `.vrodos-overlay-hit-target`, hide controller line meshes, or add invisible A-Frame hit planes for PMNDRS panels.
+Controller rays remain visible, but they should stop at the active dialog surface. The spatial runtime captures and restores A-Frame controller line state, promotes ray line objects above the panel render order while active, trims the line geometry to the dialog hit distance, clamps the active controller raycaster `far` distance to the same hit, shows a small hit dot anywhere the ray crosses the dialog surface, upgrades that dot to a larger actionable color over selectable controls, and restores the normal line/raycaster state on close. Do not retarget A-Frame raycasters to `.vrodos-overlay-hit-target`, hide controller line meshes, or add invisible A-Frame hit planes for PMNDRS panels.
 
 When a PMNDRS click closes or rerenders the active panel, the underlying pointer can clear `this.intersection` before `pointer.up()` finishes its internal bookkeeping. The spatial runtime treats that stale-intersection exception as a benign post-click cleanup path. Do not re-log it as a warning or use it as a reason to add A-Frame fallback hit geometry.
 
@@ -209,15 +209,17 @@ If font atlas generation fails, the runtime falls back to PMNDRS Inter so the pa
 
 PMNDRS pointer events are the modal interaction path. The spatial runtime forwards mouse events from the scene canvas through `forwardHtmlEvents`, attaches native WebXR controller ray pointers through `renderer.xr.getController(index)` when available, and falls back to A-Frame controller elements for trigger/grip/mouse events when needed.
 
-While a modal is open, canvas click/context events are blocked so underlying scene objects do not receive modal clicks. Legacy video play hint entities are temporarily suppressed while the PMNDRS modal is active. A-Frame controller raycasters should not be retargeted to overlay classes.
+While a modal is open, canvas click/context events are blocked and scene `.raycastable`/overlay-target classes are temporarily suppressed so underlying objects do not receive modal clicks. Legacy video play hint entities are temporarily suppressed while the PMNDRS modal is active. A-Frame controller raycasters should not be retargeted to overlay classes.
 
-When no modal is open, scene object clicks remain owned by A-Frame components. Video trigger clicks should go straight to the video component and toggle playback. Assessment trigger clicks should open a spatial panel anchored beside the clicked assessment object in immersive XR, or the DOM dialog in desktop/inline mode.
+When no modal is open, scene object clicks remain owned by A-Frame components. Video trigger clicks should go straight to the video component and toggle playback. Assessment and image/text POI trigger clicks should open a camera-relative spatial panel centered near eye height in immersive XR, or the DOM dialog in desktop/inline mode.
 
-Controller rays should remain visible before, during, and after modal panels. If rays disappear after close or finish, inspect scene interaction locking and any direct controller raycaster mutation first.
+Controller rays should remain visible before, during, and after modal panels. If rays disappear after close or finish, inspect scene interaction locking, raycaster `far` restoration, and scene raycast-target restoration first.
 
 ### Orientation, Rendering, And Loading Rules
 
 Panels are anchored in front of `cameraA` by world transform, not by an A-Frame plane orientation. The group uses world-up orientation and faces the camera from the front. Do not fix mirrored or back-facing panels by flipping A-Frame primitives; the PMNDRS root group transform is the source of truth.
+
+Scenes that contain assessment, CEFR, or image/text POI surfaces should preload and prewarm the spatial UI runtime before the first controller click. `VRODOSRuntimeOverlay.prewarmSpatialUiRuntime()` loads the spatial bundle when needed and starts the Noto/MSDF font atlas work so the first dialog does not block on runtime/font startup.
 
 The Horizon panel uses explicit background, border, depth, render order, and sorting settings so it appears as a stable VR modal rather than as scene geometry. UI elements are flex/grid based. Avoid absolute A-Frame coordinate layouts for assessment content. Long text is paginated for v1; do not depend on VR controller scrolling for assessment completion.
 
@@ -249,9 +251,9 @@ Production acceptance checklist:
 7. Enter immersive VR and confirm the CEFR prompt appears after WebXR presentation starts.
 8. Open an assessment with Greek text and confirm there are no repeated `Missing glyph info` warnings.
 9. Confirm video trigger clicks directly toggle play/pause in immersive XR and do not open a play/pause dialog.
-10. Confirm assessment objects open spatial panels beside the clicked object in immersive XR and remain DOM-based in desktop/inline mode.
+10. Confirm assessment and image/text POI objects open spatial panels in front of the user, centered near eye height, in immersive XR and remain DOM-based in desktop/inline mode.
 11. Confirm video and assessment objects still receive native controller clicks when no modal is open.
-12. Confirm controller rays remain visible during and after modal close/finish.
+12. Confirm controller rays stop at PMNDRS dialog elements while a modal is active and return to normal length after modal close/finish.
 
 Quest Browser manual acceptance is required before considering a spatial UI change stable. Desktop WebXR emulators are useful for smoke checks but do not prove controller behavior or native WebXR timing.
 

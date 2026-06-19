@@ -35,6 +35,12 @@ import { MSDF } from "@zappar/msdf-generator";
     const DEFAULT_XR_ANCHOR_REFRESH_FRAMES = 10;
     const DEFAULT_INLINE_ANCHOR_REFRESH_FRAMES = 24;
     const PANEL_RENDER_ORDER = 100000;
+    const RAY_HIT_DOT_RENDER_ORDER = PANEL_RENDER_ORDER + 80;
+    const RAY_HIT_DOT_RADIUS = 0.022;
+    const RAY_HIT_DOT_ACTION_RADIUS = 0.04;
+    const RAY_HIT_DOT_COLOR = 0x55c7ff;
+    const RAY_HIT_DOT_ACTION_COLOR = 0xffc857;
+    const SCENE_RAYCAST_SUPPRESSION_REFRESH_FRAMES = 15;
     const SPATIAL_UI_FONT_FAMILY = "vrodos-noto-sans";
     const SPATIAL_UI_FONT_CHARSET_SEED = " \tABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?.,;:'\"()-[]{}@#$%&*+=/\\<>_–—«»“”‘’…≤≥°%€ΆΈΉΊΌΎΏΪΫΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίόύώϊϋΐΰαβγδεζηθικλμνξοπρστυφχψως";
     const SPATIAL_UI_FONT_TEXTURE_SIZE = [1024, 1024];
@@ -616,8 +622,22 @@ import { MSDF } from "@zappar/msdf-generator";
         if (bridge && bridge.pointer && typeof bridge.pointer.move === "function") {
             bridge.pointer.move(target, nativeEvent);
             updateBridgeIntersectionDiagnostics(bridge);
+            if (activePanel && activePanel.rayTrimEnabled) {
+                updateControllerRayVisualTrim(bridge, true);
+            }
         }
         return nativeEvent;
+    }
+
+    function resetBridgeIntersectionDiagnostics(bridge) {
+        if (!bridge) {
+            return;
+        }
+        bridge.lastIntersectionName = "";
+        bridge.lastIntersectionDistance = null;
+        bridge.lastIntersectionDistanceRaw = null;
+        bridge.lastIntersectionPoint = null;
+        bridge.lastIntersectionIsVoid = false;
     }
 
     function pointerIntersectionObject(bridge) {
@@ -630,6 +650,17 @@ import { MSDF } from "@zappar/msdf-generator";
         } catch (_error) {
             return null;
         }
+    }
+
+    function isActionablePointerObject(object) {
+        let current = object || null;
+        while (current) {
+            if (current.userData && current.userData.vrodosSpatialActionable === true) {
+                return true;
+            }
+            current = current.parent || null;
+        }
+        return false;
     }
 
     function pointerHasConcreteTarget(bridge) {
@@ -733,7 +764,12 @@ import { MSDF } from "@zappar/msdf-generator";
                     lastUpAt: 0,
                     lastIntersectionName: "",
                     lastIntersectionDistance: null,
+                    lastIntersectionDistanceRaw: null,
+                    lastIntersectionPoint: null,
                     lastIntersectionIsVoid: false,
+                    lastRayHitSource: "",
+                    rayHitActionable: false,
+                    showRayHitDot: panelState.showRayHitDot !== false,
                     rayVisualPromoted: false
                 };
                 promoteControllerRayVisual(bridge);
@@ -820,7 +856,12 @@ import { MSDF } from "@zappar/msdf-generator";
                     lastUpAt: 0,
                     lastIntersectionName: "",
                     lastIntersectionDistance: null,
+                    lastIntersectionDistanceRaw: null,
+                    lastIntersectionPoint: null,
                     lastIntersectionIsVoid: false,
+                    lastRayHitSource: "",
+                    rayHitActionable: false,
+                    showRayHitDot: panelState.showRayHitDot !== false,
                     rayVisualPromoted: false
                 };
                 promoteControllerRayVisual(bridge);
@@ -880,7 +921,13 @@ import { MSDF } from "@zappar/msdf-generator";
     }
 
     function detachControllerPointerBridge(bridge) {
-        if (!bridge || !bridge.el || !Array.isArray(bridge.listeners)) {
+        if (!bridge) {
+            return;
+        }
+        restoreControllerRayVisual(bridge);
+        restoreControllerRaycasterFar(bridge);
+        disposeRayHitMarker(bridge);
+        if (!bridge.el || !Array.isArray(bridge.listeners)) {
             return;
         }
         if (bridge.pointer && typeof bridge.pointer.exit === "function") {
@@ -917,19 +964,220 @@ import { MSDF } from "@zappar/msdf-generator";
         if (!bridge || !bridge.pointer || typeof bridge.pointer.getIntersection !== "function") {
             return;
         }
-        const intersection = bridge.pointer.getIntersection();
+        let intersection = null;
+        try {
+            intersection = bridge.pointer.getIntersection();
+        } catch (_error) {
+            resetBridgeIntersectionDiagnostics(bridge);
+            return;
+        }
         if (!intersection || !intersection.object) {
-            bridge.lastIntersectionName = "";
-            bridge.lastIntersectionDistance = null;
-            bridge.lastIntersectionIsVoid = false;
+            resetBridgeIntersectionDiagnostics(bridge);
             return;
         }
         const object = intersection.object;
         bridge.lastIntersectionName = object.name || object.constructor && object.constructor.name || "";
+        bridge.lastIntersectionDistanceRaw = Number.isFinite(intersection.distance)
+            ? intersection.distance
+            : null;
+        bridge.lastIntersectionPoint = resolveIntersectionPoint(bridge, intersection);
         bridge.lastIntersectionDistance = Number.isFinite(intersection.distance)
             ? Math.round(intersection.distance * 1000) / 1000
             : null;
         bridge.lastIntersectionIsVoid = object.isVoidObject === true;
+    }
+
+    function resolveIntersectionPoint(bridge, intersection) {
+        const THREE = getThreeRuntime();
+        if (!THREE || !intersection) {
+            return null;
+        }
+        if (intersection.point && typeof intersection.point.clone === "function") {
+            return intersection.point.clone();
+        }
+        const distance = Number(intersection.distance);
+        if (!Number.isFinite(distance) || distance <= 0 || !bridge || !bridge.raySpace) {
+            return null;
+        }
+        const origin = new THREE.Vector3();
+        const direction = new THREE.Vector3(0, 0, -1);
+        const rotation = new THREE.Matrix4();
+        bridge.raySpace.updateMatrixWorld(true);
+        origin.setFromMatrixPosition(bridge.raySpace.matrixWorld);
+        rotation.extractRotation(bridge.raySpace.matrixWorld);
+        direction.applyMatrix4(rotation).normalize();
+        return origin.addScaledVector(direction, distance);
+    }
+
+    function resolveBridgeRay(bridge) {
+        const THREE = getThreeRuntime();
+        if (!THREE || !bridge) {
+            return null;
+        }
+        const object = bridge.raySpace ||
+            bridge.el && (bridge.el.object3D || (bridge.el.isObject3D || typeof bridge.el.updateMatrixWorld === "function" ? bridge.el : null));
+        if (!object) {
+            return null;
+        }
+        if (typeof object.updateMatrixWorld === "function") {
+            object.updateMatrixWorld(true);
+        }
+        const origin = new THREE.Vector3();
+        const direction = new THREE.Vector3(0, 0, -1);
+        const rotation = new THREE.Matrix4();
+        origin.setFromMatrixPosition(object.matrixWorld);
+        rotation.extractRotation(object.matrixWorld);
+        direction.applyMatrix4(rotation).normalize();
+        return { origin, direction };
+    }
+
+    function resolvePanelSurfaceHit(bridge, panelState) {
+        const THREE = getThreeRuntime();
+        const group = panelState && panelState.group;
+        if (!THREE || !group) {
+            return null;
+        }
+        const ray = resolveBridgeRay(bridge);
+        if (!ray) {
+            return null;
+        }
+        if (typeof group.updateMatrixWorld === "function") {
+            group.updateMatrixWorld(true);
+        }
+        const inverse = new THREE.Matrix4().copy(group.matrixWorld).invert();
+        const localOrigin = ray.origin.clone().applyMatrix4(inverse);
+        const localDirection = ray.direction.clone().transformDirection(inverse);
+        if (Math.abs(localDirection.z) < 0.000001) {
+            return null;
+        }
+        const localT = -localOrigin.z / localDirection.z;
+        if (!Number.isFinite(localT) || localT <= 0) {
+            return null;
+        }
+        const localPoint = localOrigin.clone().addScaledVector(localDirection, localT);
+        const width = Math.max(0.1, Number(panelState.width) || DEFAULT_WIDTH);
+        const height = Math.max(0.1, Number(panelState.height) || DEFAULT_HEIGHT);
+        const tolerance = 0.035;
+        if (Math.abs(localPoint.x) > (width * 0.5) + tolerance ||
+            Math.abs(localPoint.y) > (height * 0.5) + tolerance) {
+            return null;
+        }
+        const point = localPoint.clone().applyMatrix4(group.matrixWorld);
+        const distance = ray.origin.distanceTo(point);
+        if (!Number.isFinite(distance) || distance <= 0) {
+            return null;
+        }
+        return {
+            point,
+            distance,
+            source: "panel-surface",
+            actionable: false
+        };
+    }
+
+    function resolveDialogRayHit(bridge, panelState) {
+        const object = pointerIntersectionObject(bridge);
+        const pmndrsDistance = bridge && Number(bridge.lastIntersectionDistanceRaw);
+        if (object && object.isVoidObject !== true &&
+            Number.isFinite(pmndrsDistance) && pmndrsDistance > 0 && bridge.lastIntersectionPoint) {
+            return {
+                point: bridge.lastIntersectionPoint,
+                distance: pmndrsDistance,
+                source: "pmndrs",
+                actionable: isActionablePointerObject(object)
+            };
+        }
+        return resolvePanelSurfaceHit(bridge, panelState);
+    }
+
+    function getLinePositionAttribute(object) {
+        const geometry = object && object.geometry;
+        if (!geometry) {
+            return null;
+        }
+        if (typeof geometry.getAttribute === "function") {
+            return geometry.getAttribute("position");
+        }
+        return geometry.attributes && geometry.attributes.position || null;
+    }
+
+    function captureLinePositions(object) {
+        const attribute = getLinePositionAttribute(object);
+        if (!attribute || !attribute.array || attribute.itemSize < 3 || attribute.count < 2) {
+            return null;
+        }
+        return Array.prototype.slice.call(attribute.array, 0);
+    }
+
+    function restoreLinePositions(object, positions) {
+        const attribute = getLinePositionAttribute(object);
+        if (!attribute || !attribute.array || !positions || attribute.array.length < positions.length) {
+            return false;
+        }
+        for (let index = 0; index < positions.length; index += 1) {
+            attribute.array[index] = positions[index];
+        }
+        attribute.needsUpdate = true;
+        if (object.geometry && typeof object.geometry.computeBoundingSphere === "function") {
+            object.geometry.computeBoundingSphere();
+        }
+        return true;
+    }
+
+    function forEachMaterial(material, callback) {
+        if (!material) {
+            return;
+        }
+        if (Array.isArray(material)) {
+            material.forEach((entry) => {
+                if (entry) {
+                    callback(entry);
+                }
+            });
+            return;
+        }
+        callback(material);
+    }
+
+    function findRayVisualState(bridge, object) {
+        if (!bridge || !Array.isArray(bridge.rayVisualStates)) {
+            return null;
+        }
+        for (let index = 0; index < bridge.rayVisualStates.length; index += 1) {
+            if (bridge.rayVisualStates[index].object === object) {
+                return bridge.rayVisualStates[index];
+            }
+        }
+        return null;
+    }
+
+    function captureRayVisualState(bridge, object) {
+        if (!bridge || !object) {
+            return null;
+        }
+        bridge.rayVisualStates = bridge.rayVisualStates || [];
+        let state = findRayVisualState(bridge, object);
+        if (state) {
+            return state;
+        }
+        const materialStates = [];
+        forEachMaterial(object.material, (material) => {
+            materialStates.push({
+                material,
+                depthTest: material.depthTest,
+                depthWrite: material.depthWrite,
+                transparent: material.transparent
+            });
+        });
+        state = {
+            object,
+            renderOrder: object.renderOrder,
+            frustumCulled: object.frustumCulled,
+            positions: captureLinePositions(object),
+            materialStates
+        };
+        bridge.rayVisualStates.push(state);
+        return state;
     }
 
     function promoteControllerRayVisual(bridge) {
@@ -942,13 +1190,16 @@ import { MSDF } from "@zappar/msdf-generator";
             if (!object || !(object.isLine || object.type === "Line" || object.type === "LineSegments")) {
                 return;
             }
+            captureRayVisualState(bridge, object);
             object.renderOrder = PANEL_RENDER_ORDER + 100;
             object.frustumCulled = false;
             if (object.material) {
-                object.material.depthTest = false;
-                object.material.depthWrite = false;
-                object.material.transparent = true;
-                object.material.needsUpdate = true;
+                forEachMaterial(object.material, (material) => {
+                    material.depthTest = false;
+                    material.depthWrite = false;
+                    material.transparent = true;
+                    material.needsUpdate = true;
+                });
             }
             promoted = true;
         });
@@ -956,6 +1207,248 @@ import { MSDF } from "@zappar/msdf-generator";
             bridge.rayVisualPromoted = true;
         }
         return promoted;
+    }
+
+    function restoreControllerRayVisual(bridge) {
+        if (!bridge || !Array.isArray(bridge.rayVisualStates)) {
+            return false;
+        }
+        let restored = false;
+        bridge.rayVisualStates.forEach((state) => {
+            const object = state && state.object;
+            if (!object) {
+                return;
+            }
+            object.renderOrder = state.renderOrder;
+            object.frustumCulled = state.frustumCulled;
+            if (Array.isArray(state.materialStates)) {
+                state.materialStates.forEach((materialState) => {
+                    const material = materialState && materialState.material;
+                    if (!material) {
+                        return;
+                    }
+                    material.depthTest = materialState.depthTest;
+                    material.depthWrite = materialState.depthWrite;
+                    material.transparent = materialState.transparent;
+                    material.needsUpdate = true;
+                });
+            }
+            restored = restoreLinePositions(object, state.positions) || restored;
+        });
+        bridge.rayVisualStates = [];
+        bridge.rayVisualTrimmed = false;
+        bridge.lastRayTrimDistance = null;
+        bridge.lastRayHitSource = "";
+        bridge.rayHitActionable = false;
+        return restored;
+    }
+
+    function captureControllerRaycasterState(bridge) {
+        if (!bridge || bridge.raycasterStateCaptured || !bridge.el || !bridge.el.components) {
+            return null;
+        }
+        const component = bridge.el.components.raycaster;
+        if (!component) {
+            return null;
+        }
+        bridge.raycasterStateCaptured = true;
+        bridge.raycasterState = {
+            dataFar: component.data && component.data.far,
+            raycasterFar: component.raycaster && component.raycaster.far
+        };
+        return bridge.raycasterState;
+    }
+
+    function setControllerRaycasterFar(bridge, distance) {
+        if (!bridge || !bridge.el || !bridge.el.components) {
+            return false;
+        }
+        const component = bridge.el.components.raycaster;
+        if (!component || !component.raycaster) {
+            return false;
+        }
+        captureControllerRaycasterState(bridge);
+        const far = Math.max(0.02, Number(distance) || 0.02);
+        component.raycaster.far = far;
+        if (component.data) {
+            component.data.far = far;
+        }
+        bridge.raycasterFarTrimmed = true;
+        return true;
+    }
+
+    function restoreControllerRaycasterFar(bridge) {
+        if (!bridge || !bridge.raycasterStateCaptured || !bridge.el || !bridge.el.components) {
+            return false;
+        }
+        const component = bridge.el.components.raycaster;
+        if (!component) {
+            bridge.raycasterFarTrimmed = false;
+            return false;
+        }
+        const state = bridge.raycasterState || {};
+        if (component.raycaster && typeof state.raycasterFar === "number" && !Number.isNaN(state.raycasterFar)) {
+            component.raycaster.far = state.raycasterFar;
+        }
+        if (component.data && typeof state.dataFar === "number" && !Number.isNaN(state.dataFar)) {
+            component.data.far = state.dataFar;
+        }
+        bridge.raycasterFarTrimmed = false;
+        return true;
+    }
+
+    function ensureRayHitMarker(bridge) {
+        const THREE = getThreeRuntime();
+        const scene = getScene();
+        if (!THREE || !scene || !scene.object3D || !bridge) {
+            return null;
+        }
+        if (bridge.rayHitMarker) {
+            return bridge.rayHitMarker;
+        }
+        const marker = new THREE.Mesh(
+            new THREE.SphereGeometry(RAY_HIT_DOT_RADIUS, 18, 12),
+            new THREE.MeshBasicMaterial({
+                color: RAY_HIT_DOT_COLOR,
+                transparent: true,
+                opacity: 0.95,
+                depthTest: false,
+                depthWrite: false
+            })
+        );
+        marker.name = "VRODOSSpatialUIRayHitDot";
+        marker.renderOrder = RAY_HIT_DOT_RENDER_ORDER;
+        marker.frustumCulled = false;
+        marker.visible = false;
+        scene.object3D.add(marker);
+        bridge.rayHitMarker = marker;
+        return marker;
+    }
+
+    function updateRayHitMarker(bridge, hit) {
+        const visible = Boolean(hit && hit.point);
+        const marker = visible ? ensureRayHitMarker(bridge) : bridge && bridge.rayHitMarker;
+        if (!marker) {
+            return false;
+        }
+        if (!visible) {
+            marker.visible = false;
+            return false;
+        }
+        marker.position.copy(hit.point);
+        const actionable = hit.actionable === true;
+        const radius = actionable ? RAY_HIT_DOT_ACTION_RADIUS : RAY_HIT_DOT_RADIUS;
+        marker.scale.setScalar(radius / RAY_HIT_DOT_RADIUS);
+        forEachMaterial(marker.material, (material) => {
+            if (material && material.color && typeof material.color.setHex === "function") {
+                material.color.setHex(actionable ? RAY_HIT_DOT_ACTION_COLOR : RAY_HIT_DOT_COLOR);
+            }
+            if (material) {
+                material.opacity = actionable ? 1 : 0.9;
+                material.needsUpdate = true;
+            }
+        });
+        marker.visible = true;
+        return true;
+    }
+
+    function disposeRayHitMarker(bridge) {
+        const marker = bridge && bridge.rayHitMarker;
+        if (!marker) {
+            return;
+        }
+        if (marker.parent) {
+            marker.parent.remove(marker);
+        }
+        if (marker.geometry && typeof marker.geometry.dispose === "function") {
+            marker.geometry.dispose();
+        }
+        forEachMaterial(marker.material, (material) => {
+            if (material && typeof material.dispose === "function") {
+                material.dispose();
+            }
+        });
+        bridge.rayHitMarker = null;
+    }
+
+    function setLineVisualLength(state, distance) {
+        const THREE = getThreeRuntime();
+        const object = state && state.object;
+        const positions = state && state.positions;
+        const attribute = getLinePositionAttribute(object);
+        if (!THREE || !object || !positions || !attribute || !attribute.array || attribute.itemSize < 3 || attribute.count < 2) {
+            return false;
+        }
+
+        const lastIndex = (attribute.count - 1) * attribute.itemSize;
+        const start = new THREE.Vector3(positions[0], positions[1], positions[2]);
+        const end = new THREE.Vector3(positions[lastIndex], positions[lastIndex + 1], positions[lastIndex + 2]);
+        const localDelta = end.clone().sub(start);
+        const localLength = localDelta.length();
+        if (!Number.isFinite(localLength) || localLength <= 0.000001) {
+            return false;
+        }
+
+        const startWorld = start.clone();
+        const endWorld = end.clone();
+        object.localToWorld(startWorld);
+        object.localToWorld(endWorld);
+        const worldLength = startWorld.distanceTo(endWorld);
+        if (!Number.isFinite(worldLength) || worldLength <= 0.000001) {
+            return false;
+        }
+
+        const trimWorldLength = Math.max(0.02, Math.min(Number(distance) || 0, worldLength));
+        const trimLocalLength = localLength * (trimWorldLength / worldLength);
+        const trimmedEnd = start.clone().add(localDelta.normalize().multiplyScalar(trimLocalLength));
+
+        attribute.array[0] = start.x;
+        attribute.array[1] = start.y;
+        attribute.array[2] = start.z;
+        attribute.array[lastIndex] = trimmedEnd.x;
+        attribute.array[lastIndex + 1] = trimmedEnd.y;
+        attribute.array[lastIndex + 2] = trimmedEnd.z;
+        attribute.needsUpdate = true;
+        if (object.geometry && typeof object.geometry.computeBoundingSphere === "function") {
+            object.geometry.computeBoundingSphere();
+        }
+        return true;
+    }
+
+    function updateControllerRayVisualTrim(bridge, enabled) {
+        if (!bridge) {
+            return false;
+        }
+        const hit = resolveDialogRayHit(bridge, activePanel);
+        const hitDistance = hit && Number(hit.distance);
+        const shouldTrim = Boolean(enabled && hit && Number.isFinite(hitDistance) && hitDistance > 0);
+        let changed = false;
+
+        const states = Array.isArray(bridge.rayVisualStates) ? bridge.rayVisualStates : [];
+        states.forEach((state) => {
+            if (shouldTrim) {
+                changed = setLineVisualLength(state, hitDistance) || changed;
+            } else {
+                changed = restoreLinePositions(state.object, state.positions) || changed;
+            }
+        });
+        if (shouldTrim) {
+            changed = setControllerRaycasterFar(bridge, hitDistance) || changed;
+        } else {
+            changed = restoreControllerRaycasterFar(bridge) || changed;
+        }
+        updateRayHitMarker(bridge, shouldTrim && bridge.showRayHitDot !== false ? hit : null);
+
+        bridge.rayVisualTrimmed = shouldTrim;
+        bridge.lastRayTrimDistance = shouldTrim
+            ? Math.round(hitDistance * 1000) / 1000
+            : null;
+        bridge.lastRayHitSource = shouldTrim ? hit.source || "" : "";
+        bridge.rayHitActionable = shouldTrim && hit.actionable === true;
+        if (shouldTrim) {
+            bridge.rayVisualTrimCount = (bridge.rayVisualTrimCount || 0) + 1;
+        }
+        return changed;
     }
 
     function attachInput(panelState) {
@@ -1035,6 +1528,83 @@ import { MSDF } from "@zappar/msdf-generator";
             detachControllerPointerBridge(bridge);
         });
         panelState.controllerPointerBridges = [];
+    }
+
+    function refreshAFrameRaycasters() {
+        document.querySelectorAll("[raycaster]").forEach((el) => {
+            const component = el && el.components && el.components.raycaster;
+            if (component && typeof component.refreshObjects === "function") {
+                component.refreshObjects();
+            }
+        });
+    }
+
+    function isControllerPointerElement(el) {
+        if (!el || !el.matches) {
+            return false;
+        }
+        return CONTROLLER_POINTER_SELECTORS.some((selector) => {
+            try {
+                return el.matches(selector);
+            } catch (_error) {
+                return false;
+            }
+        });
+    }
+
+    function suppressSceneRaycastTargets(panelState, active) {
+        if (!panelState) {
+            return 0;
+        }
+        if (active) {
+            panelState.suppressedSceneRaycastTargets = panelState.suppressedSceneRaycastTargets || new Map();
+            let changed = 0;
+            document.querySelectorAll(".raycastable, .vrodos-overlay-hit-target").forEach((el) => {
+                if (!el || !el.classList || isControllerPointerElement(el)) {
+                    return;
+                }
+                if (!panelState.suppressedSceneRaycastTargets.has(el)) {
+                    panelState.suppressedSceneRaycastTargets.set(el, {
+                        raycastable: el.classList.contains("raycastable"),
+                        overlayTarget: el.classList.contains("vrodos-overlay-hit-target")
+                    });
+                }
+                if (el.classList.contains("raycastable") || el.classList.contains("vrodos-overlay-hit-target")) {
+                    el.classList.remove("raycastable", "vrodos-overlay-hit-target");
+                    changed += 1;
+                }
+            });
+            if (changed > 0) {
+                refreshAFrameRaycasters();
+                recordDiagnostic("debug", "Suppressed scene raycast targets behind spatial UI panel.", {
+                    changed,
+                    total: panelState.suppressedSceneRaycastTargets.size
+                });
+            }
+            return changed;
+        }
+
+        const suppressed = panelState.suppressedSceneRaycastTargets;
+        if (!suppressed) {
+            return 0;
+        }
+        let restored = 0;
+        suppressed.forEach((state, el) => {
+            if (!el || !el.isConnected || !el.classList) {
+                return;
+            }
+            el.classList.toggle("raycastable", Boolean(state.raycastable));
+            el.classList.toggle("vrodos-overlay-hit-target", Boolean(state.overlayTarget));
+            restored += 1;
+        });
+        panelState.suppressedSceneRaycastTargets = null;
+        if (restored > 0) {
+            refreshAFrameRaycasters();
+            recordDiagnostic("debug", "Restored scene raycast targets after spatial UI panel close.", {
+                restored
+            });
+        }
+        return restored;
     }
 
     function suppressLegacyControls(panelState, active) {
@@ -1206,7 +1776,9 @@ import { MSDF } from "@zappar/msdf-generator";
         const finalScale = adaptivePanelScale(baseScale, cameraPosition, worldPosition);
         const finalHeight = Math.max(0.1, numberOrDefault(options && options.height, DEFAULT_HEIGHT)) * finalScale;
 
-        if (options && options.topAtEyeLevel === true) {
+        if (options && options.centerAtEyeLevel === true) {
+            worldPosition.y = cameraPosition.y + verticalOffset;
+        } else if (options && options.topAtEyeLevel === true) {
             worldPosition.y = cameraPosition.y - (finalHeight * 0.5) + verticalOffset;
         } else {
             worldPosition.y += numberOrDefault(options && options.anchorVerticalOffset, 0.25);
@@ -1260,7 +1832,9 @@ import { MSDF } from "@zappar/msdf-generator";
                 worldPosition.addScaledVector(right.normalize(), horizontalOffset);
             }
         }
-        if (options && options.topAtEyeLevel === true) {
+        if (options && options.centerAtEyeLevel === true) {
+            worldPosition.y = cameraPosition.y + verticalOffset;
+        } else if (options && options.topAtEyeLevel === true) {
             worldPosition.y = cameraPosition.y - (height * 0.5) + verticalOffset;
         } else {
             worldPosition.y += verticalOffset;
@@ -1431,6 +2005,9 @@ import { MSDF } from "@zappar/msdf-generator";
                     zIndex: opts.zIndex || 30,
                     onClick: disabled ? undefined : opts.onClick
                 }));
+                button.name = "VRODOSSpatialUIActionButton";
+                button.userData = button.userData || {};
+                button.userData.vrodosSpatialActionable = !disabled && typeof opts.onClick === "function";
                 const label = new ButtonLabel(baseContainerProps({
                     justifyContent: "center",
                     alignItems: "center",
@@ -1621,9 +2198,21 @@ import { MSDF } from "@zappar/msdf-generator";
                         lastIntersectionDistance: bridge.lastIntersectionDistance,
                         lastIntersectionIsVoid: bridge.lastIntersectionIsVoid === true,
                         usesAFrameRaycasterRay: bridge.usesAFrameRaycasterRay === true,
-                        rayVisualPromoted: bridge.rayVisualPromoted === true
+                        rayVisualPromoted: bridge.rayVisualPromoted === true,
+                        rayVisualTrimmed: bridge.rayVisualTrimmed === true,
+                        lastRayTrimDistance: bridge.lastRayTrimDistance,
+                        rayVisualTrimCount: bridge.rayVisualTrimCount || 0,
+                        raycasterFarTrimmed: bridge.raycasterFarTrimmed === true,
+                        rayHitDotVisible: Boolean(bridge.rayHitMarker && bridge.rayHitMarker.visible),
+                        rayHitActionable: bridge.rayHitActionable === true,
+                        lastRayHitSource: bridge.lastRayHitSource || ""
                     })),
-                    presentationMode: getPresentationMode()
+                    presentationMode: getPresentationMode(),
+                    anchorPoseSource: panelState.anchorPoseSource || "",
+                    centerAtEyeLevel: panelState.anchorOptions && panelState.anchorOptions.centerAtEyeLevel === true,
+                    sceneRaycastTargetsSuppressed: panelState.suppressedSceneRaycastTargets
+                        ? panelState.suppressedSceneRaycastTargets.size
+                        : 0
                 };
             }
         };
@@ -1686,6 +2275,11 @@ import { MSDF } from "@zappar/msdf-generator";
             controllerPointerBridges: [],
             controllerPointerAttachAttempts: 0,
             rayVisualPromoteFrames: 90,
+            rayTrimEnabled: config.trimControllerRays !== false,
+            showRayHitDot: config.showRayHitDot !== false,
+            blockSceneRaycasts: config.blockSceneRaycasts !== false,
+            sceneRaycastSuppressionRefreshCountdown: 0,
+            suppressedSceneRaycastTargets: null,
             hasAFrameControllerPointers: false,
             nativeListeners: [],
             suppressedControls: new Map(),
@@ -1755,6 +2349,9 @@ import { MSDF } from "@zappar/msdf-generator";
             activePanel = panelState;
 
             attachInput(panelState);
+            if (panelState.blockSceneRaycasts) {
+                suppressSceneRaycastTargets(panelState, true);
+            }
             suppressLegacyControls(panelState, true);
             if (panelState.locked) {
                 setSceneInteractionLocked(true);
@@ -1781,7 +2378,14 @@ import { MSDF } from "@zappar/msdf-generator";
                 pixelSize: panelState.metrics && panelState.metrics.pixelSize,
                 controllers: panelState.controllerPointerBridges.length,
                 anchorPoseSource: panelState.anchorPoseSource,
-                anchorRefreshFrames: panelState.anchorRefreshFrames
+                anchorRefreshFrames: panelState.anchorRefreshFrames,
+                centerAtEyeLevel: panelState.anchorOptions && panelState.anchorOptions.centerAtEyeLevel === true,
+                trimControllerRays: panelState.rayTrimEnabled,
+                showRayHitDot: panelState.showRayHitDot,
+                blockSceneRaycasts: panelState.blockSceneRaycasts,
+                sceneRaycastTargetsSuppressed: panelState.suppressedSceneRaycastTargets
+                    ? panelState.suppressedSceneRaycastTargets.size
+                    : 0
             });
 
             return api;
@@ -1810,6 +2414,7 @@ import { MSDF } from "@zappar/msdf-generator";
         }
         activePanel = null;
         detachInput(panelState);
+        suppressSceneRaycastTargets(panelState, false);
         suppressLegacyControls(panelState, false);
         if (panelState.locked) {
             setSceneInteractionLocked(false);
@@ -1847,6 +2452,10 @@ import { MSDF } from "@zappar/msdf-generator";
         closePanel,
         refreshInteractionTargets,
         dispose,
+        prewarm: function () {
+            warmSpatialFonts(true);
+            return true;
+        },
         getActivePanel: function () {
             return activePanel;
         },
@@ -1867,6 +2476,13 @@ import { MSDF } from "@zappar/msdf-generator";
             }
             if (activePanel.htmlEventForwarder && typeof activePanel.htmlEventForwarder.update === "function") {
                 activePanel.htmlEventForwarder.update();
+            }
+            if (activePanel.blockSceneRaycasts) {
+                activePanel.sceneRaycastSuppressionRefreshCountdown -= 1;
+                if (activePanel.sceneRaycastSuppressionRefreshCountdown <= 0) {
+                    suppressSceneRaycastTargets(activePanel, true);
+                    activePanel.sceneRaycastSuppressionRefreshCountdown = SCENE_RAYCAST_SUPPRESSION_REFRESH_FRAMES;
+                }
             }
             if (!activePanel.hasAFrameControllerPointers && activePanel.controllerPointerAttachAttempts < 180) {
                 activePanel.controllerPointerAttachAttempts += 1;
@@ -1889,6 +2505,7 @@ import { MSDF } from "@zappar/msdf-generator";
                 if (bridge && bridge.pointer && typeof bridge.pointer.move === "function") {
                     createPointerEventAndMove(bridge, activePanel.root, "pointermove");
                 }
+                updateControllerRayVisualTrim(bridge, activePanel.rayTrimEnabled);
             });
             if (activePanel.rayVisualPromoteFrames > 0) {
                 activePanel.rayVisualPromoteFrames -= 1;

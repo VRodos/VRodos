@@ -379,6 +379,41 @@
       });
       return spatialUiRuntimePromise;
     }
+    function prewarmSpatialUiRuntime(options) {
+      return ensureSpatialUiRuntime(options || {}).then((available) => {
+        const spatialUi = getSpatialUiApi();
+        if (available && spatialUi && typeof spatialUi.prewarm === "function") {
+          spatialUi.prewarm();
+          recordDiagnostic("debug", "Prewarmed spatial UI runtime.", {
+            hasSpatialUi: true
+          });
+        }
+        return available;
+      });
+    }
+    function shouldPreloadSpatialUiRuntime() {
+      if (window.VRODOS_DISABLE_SPATIAL_UI_PRELOAD === true) {
+        return false;
+      }
+      return Boolean(document.querySelector([
+        "[immerse-assessment-launcher]",
+        "[data-assessment-content]",
+        "[info-panel]",
+        "[id^='button_poi_']",
+        "[immerse-cefr-asset]",
+        "[data-immerse-cefr-levels]"
+      ].join(",")));
+    }
+    function maybePreloadSpatialUiRuntime() {
+      if (!shouldPreloadSpatialUiRuntime()) {
+        return;
+      }
+      prewarmSpatialUiRuntime({ timeoutMs: 8e3 }).then((available) => {
+        recordDiagnostic(available ? "debug" : "warn", "Spatial UI preload completed.", {
+          available
+        });
+      });
+    }
     function getSceneDiagnostics() {
       const scene = queryScene();
       const camera = queryCamera();
@@ -967,6 +1002,7 @@
       recordDiagnostic,
       normalizeVrControllers: normalizeVrControllerEntities,
       ensureSpatialUiRuntime,
+      prewarmSpatialUiRuntime,
       shouldUseVrPanel: function() {
         const mode = getPresentationMode();
         const shouldUse = mode === "immersive-xr";
@@ -1463,12 +1499,15 @@
       document.addEventListener("DOMContentLoaded", () => {
         bindControllerBridgeLifecycle();
         normalizeVrControllersWhenReady();
+        window.setTimeout(maybePreloadSpatialUiRuntime, 250);
       }, { once: true });
     } else {
       bindControllerBridgeLifecycle();
       normalizeVrControllersWhenReady();
+      window.setTimeout(maybePreloadSpatialUiRuntime, 250);
     }
     window.addEventListener("load", normalizeVrControllersWhenReady, { once: true });
+    window.addEventListener("load", () => window.setTimeout(maybePreloadSpatialUiRuntime, 250), { once: true });
     window.setTimeout(bindControllerBridgeLifecycle, 500);
   })();
   AFRAME.registerComponent("highlight", {
@@ -1970,6 +2009,19 @@
         descriptionLength: this.getPoiDescriptionText().length
       };
       if (!spatialUi) {
+        const overlayApi = window.VRODOSRuntimeOverlay || null;
+        const loadSpatialUiRuntime = overlayApi && (typeof overlayApi.prewarmSpatialUiRuntime === "function" ? overlayApi.prewarmSpatialUiRuntime.bind(overlayApi) : typeof overlayApi.ensureSpatialUiRuntime === "function" ? overlayApi.ensureSpatialUiRuntime.bind(overlayApi) : null);
+        if (loadSpatialUiRuntime && !this.spatialPoiLoadPending) {
+          this.spatialPoiLoadPending = true;
+          loadSpatialUiRuntime({ timeoutMs: 8e3 }).then((available) => {
+            this.spatialPoiLoadPending = false;
+            if (available && this.shouldUseVrOverlay()) {
+              this.openSpatialPoiPanel();
+            } else if (!available) {
+              this.recordSpatialPoiDiagnostic("warn", "spatial UI runtime could not be loaded for immersive POI panel", diagnostics);
+            }
+          });
+        }
         this.recordSpatialPoiDiagnostic("warn", "spatial UI unavailable; suppressing legacy immersive POI panel", diagnostics);
         return true;
       }
@@ -1980,13 +2032,14 @@
         id: "vrodos-poi-image-vr-" + (this.data || "panel"),
         width: 1.95,
         height: 1.38,
-        distance: 2.25,
-        verticalOffset: -0.03,
-        topAtEyeLevel: true,
-        anchorElement: this.buttonEl || null,
-        anchorSide: "right",
-        anchorRefreshFrames: this.buttonEl ? 1 : 8,
-        lockInteraction: false,
+        distance: 1.8,
+        verticalOffset: 0,
+        centerAtEyeLevel: true,
+        anchorRefreshFrames: 2,
+        lockInteraction: true,
+        trimControllerRays: true,
+        showRayHitDot: true,
+        blockSceneRaycasts: true,
         cleanup: () => {
           this.spatialPoiPanelApi = null;
         },
@@ -6502,13 +6555,14 @@
         const spatialUi = getSpatialUiApi();
         if (!spatialUi) {
           runtime.pendingPayload = payload;
-          if (overlayApi && typeof overlayApi.ensureSpatialUiRuntime === "function" && !runtime.spatialUiLoadPending) {
+          const loadSpatialUiRuntime = overlayApi && (typeof overlayApi.prewarmSpatialUiRuntime === "function" ? overlayApi.prewarmSpatialUiRuntime.bind(overlayApi) : typeof overlayApi.ensureSpatialUiRuntime === "function" ? overlayApi.ensureSpatialUiRuntime.bind(overlayApi) : null);
+          if (loadSpatialUiRuntime && !runtime.spatialUiLoadPending) {
             runtime.spatialUiLoadPending = true;
             recordVrDiagnostic("debug", "assessment VR panel is loading spatial UI runtime on demand", {
               group: payload && payload.group || "",
               type: payload && payload.type || ""
             });
-            overlayApi.ensureSpatialUiRuntime({ timeoutMs: 8e3 }).then((available) => {
+            loadSpatialUiRuntime({ timeoutMs: 8e3 }).then((available) => {
               const pending = runtime.pendingPayload;
               runtime.spatialUiLoadPending = false;
               runtime.pendingPayload = null;
@@ -6547,13 +6601,14 @@
           id: "vrodos-immerse-assessment-vr-overlay",
           width: PANEL_WIDTH,
           height: PANEL_HEIGHT,
-          distance: 2.25,
-          verticalOffset: -0.03,
-          topAtEyeLevel: true,
-          anchorElement: runtime.payload && runtime.payload.anchorElement || null,
-          anchorSide: "right",
-          anchorRefreshFrames: runtime.payload && runtime.payload.anchorElement ? 1 : 8,
-          lockInteraction: false,
+          distance: 1.85,
+          verticalOffset: 0,
+          centerAtEyeLevel: true,
+          anchorRefreshFrames: 2,
+          lockInteraction: true,
+          trimControllerRays: true,
+          showRayHitDot: true,
+          blockSceneRaycasts: true,
           cleanup: function() {
             runtime.reset();
           },

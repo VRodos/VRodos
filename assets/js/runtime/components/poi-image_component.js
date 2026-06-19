@@ -445,6 +445,25 @@ AFRAME.registerComponent('info-panel', {
         };
 
         if (!spatialUi) {
+            const overlayApi = window.VRODOSRuntimeOverlay || null;
+            const loadSpatialUiRuntime = overlayApi && (
+                typeof overlayApi.prewarmSpatialUiRuntime === "function"
+                    ? overlayApi.prewarmSpatialUiRuntime.bind(overlayApi)
+                    : (typeof overlayApi.ensureSpatialUiRuntime === "function"
+                        ? overlayApi.ensureSpatialUiRuntime.bind(overlayApi)
+                        : null)
+            );
+            if (loadSpatialUiRuntime && !this.spatialPoiLoadPending) {
+                this.spatialPoiLoadPending = true;
+                loadSpatialUiRuntime({ timeoutMs: 8000 }).then((available) => {
+                    this.spatialPoiLoadPending = false;
+                    if (available && this.shouldUseVrOverlay()) {
+                        this.openSpatialPoiPanel();
+                    } else if (!available) {
+                        this.recordSpatialPoiDiagnostic("warn", "spatial UI runtime could not be loaded for immersive POI panel", diagnostics);
+                    }
+                });
+            }
             this.recordSpatialPoiDiagnostic("warn", "spatial UI unavailable; suppressing legacy immersive POI panel", diagnostics);
             return true;
         }
@@ -456,13 +475,14 @@ AFRAME.registerComponent('info-panel', {
             id: "vrodos-poi-image-vr-" + (this.data || "panel"),
             width: 1.95,
             height: 1.38,
-            distance: 2.25,
-            verticalOffset: -0.03,
-            topAtEyeLevel: true,
-            anchorElement: this.buttonEl || null,
-            anchorSide: "right",
-            anchorRefreshFrames: this.buttonEl ? 1 : 8,
-            lockInteraction: false,
+            distance: 1.8,
+            verticalOffset: 0,
+            centerAtEyeLevel: true,
+            anchorRefreshFrames: 2,
+            lockInteraction: true,
+            trimControllerRays: true,
+            showRayHitDot: true,
+            blockSceneRaycasts: true,
             cleanup: () => {
                 this.spatialPoiPanelApi = null;
             },

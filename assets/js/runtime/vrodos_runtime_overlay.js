@@ -450,6 +450,44 @@
         return spatialUiRuntimePromise;
     }
 
+    function prewarmSpatialUiRuntime(options) {
+        return ensureSpatialUiRuntime(options || {}).then((available) => {
+            const spatialUi = getSpatialUiApi();
+            if (available && spatialUi && typeof spatialUi.prewarm === "function") {
+                spatialUi.prewarm();
+                recordDiagnostic("debug", "Prewarmed spatial UI runtime.", {
+                    hasSpatialUi: true
+                });
+            }
+            return available;
+        });
+    }
+
+    function shouldPreloadSpatialUiRuntime() {
+        if (window.VRODOS_DISABLE_SPATIAL_UI_PRELOAD === true) {
+            return false;
+        }
+        return Boolean(document.querySelector([
+            "[immerse-assessment-launcher]",
+            "[data-assessment-content]",
+            "[info-panel]",
+            "[id^='button_poi_']",
+            "[immerse-cefr-asset]",
+            "[data-immerse-cefr-levels]"
+        ].join(",")));
+    }
+
+    function maybePreloadSpatialUiRuntime() {
+        if (!shouldPreloadSpatialUiRuntime()) {
+            return;
+        }
+        prewarmSpatialUiRuntime({ timeoutMs: 8000 }).then((available) => {
+            recordDiagnostic(available ? "debug" : "warn", "Spatial UI preload completed.", {
+                available
+            });
+        });
+    }
+
     function getSceneDiagnostics() {
         const scene = queryScene();
         const camera = queryCamera();
@@ -1122,6 +1160,7 @@
         normalizeVrControllers: normalizeVrControllerEntities,
 
         ensureSpatialUiRuntime,
+        prewarmSpatialUiRuntime,
 
         shouldUseVrPanel: function () {
             const mode = getPresentationMode();
@@ -1670,11 +1709,14 @@
         document.addEventListener("DOMContentLoaded", () => {
             bindControllerBridgeLifecycle();
             normalizeVrControllersWhenReady();
+            window.setTimeout(maybePreloadSpatialUiRuntime, 250);
         }, { once: true });
     } else {
         bindControllerBridgeLifecycle();
         normalizeVrControllersWhenReady();
+        window.setTimeout(maybePreloadSpatialUiRuntime, 250);
     }
     window.addEventListener("load", normalizeVrControllersWhenReady, { once: true });
+    window.addEventListener("load", () => window.setTimeout(maybePreloadSpatialUiRuntime, 250), { once: true });
     window.setTimeout(bindControllerBridgeLifecycle, 500);
 })();
