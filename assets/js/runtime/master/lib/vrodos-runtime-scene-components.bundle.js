@@ -69,6 +69,9 @@
     const OVERLAY_FLAG_RETRY_FRAMES = 16;
     const OVERLAY_DIAGNOSTIC_LIMIT = 160;
     const SPATIAL_UI_BUNDLE_FILE = "vrodos-runtime-spatial-ui.bundle.js";
+    const SCENE_RAY_HIT_DOT_RENDER_ORDER = OVERLAY_RENDER_BASE - 20;
+    const SCENE_RAY_HIT_DOT_RADIUS = 0.035;
+    const SCENE_RAY_HIT_DOT_COLOR = 16762967;
     const RAYCASTER_SELECTORS = [
       "#cursor",
       "#oculusRight",
@@ -89,6 +92,8 @@
       "[id^='ent_tit_']"
     ];
     let spatialUiRuntimePromise = null;
+    let sceneRayFeedbackComponentRegistered = false;
+    const sceneRayFeedbackOwners = /* @__PURE__ */ new Set();
     function diagnosticsStore() {
       window.__vrodosRuntimeOverlayDiagnostics = window.__vrodosRuntimeOverlayDiagnostics || [];
       return window.__vrodosRuntimeOverlayDiagnostics;
@@ -596,6 +601,133 @@
         }
       }
       return null;
+    }
+    function sceneRayFeedbackAllowed() {
+      const overlayApi = window.VRODOSRuntimeOverlay || null;
+      return window.VRODOS_DISABLE_SCENE_RAY_HIT_DOTS !== true && getPresentationMode() === "immersive-xr" && !hasSpatialModalOpen() && !(overlayApi && overlayApi.activePanel);
+    }
+    function sceneRayHitPoint(hit) {
+      const point = hit && hit.intersection && hit.intersection.point;
+      return point && typeof point.clone === "function" ? point.clone() : null;
+    }
+    function ensureSceneRayHitMarker(owner) {
+      const THREE2 = getThreeRuntime();
+      const scene = queryScene();
+      if (!THREE2 || !scene || !scene.object3D || !owner) {
+        return null;
+      }
+      if (owner.__vrodosSceneRayHitMarker) {
+        return owner.__vrodosSceneRayHitMarker;
+      }
+      const marker = new THREE2.Mesh(
+        new THREE2.SphereGeometry(SCENE_RAY_HIT_DOT_RADIUS, 18, 12),
+        new THREE2.MeshBasicMaterial({
+          color: SCENE_RAY_HIT_DOT_COLOR,
+          transparent: true,
+          opacity: 0.95,
+          depthTest: false,
+          depthWrite: false
+        })
+      );
+      marker.name = "VRODOSSceneRayHitDot";
+      marker.renderOrder = SCENE_RAY_HIT_DOT_RENDER_ORDER;
+      marker.frustumCulled = false;
+      marker.visible = false;
+      scene.object3D.add(marker);
+      owner.__vrodosSceneRayHitMarker = marker;
+      sceneRayFeedbackOwners.add(owner);
+      return marker;
+    }
+    function hideSceneRayHitMarker(owner) {
+      const marker = owner && owner.__vrodosSceneRayHitMarker;
+      if (marker) {
+        marker.visible = false;
+      }
+    }
+    function updateSceneRayHitMarker(owner, hit) {
+      if (!owner || !hit || !hit.target || !isControllerClickTarget(hit.target)) {
+        hideSceneRayHitMarker(owner);
+        return false;
+      }
+      const point = sceneRayHitPoint(hit);
+      if (!point) {
+        hideSceneRayHitMarker(owner);
+        return false;
+      }
+      const marker = ensureSceneRayHitMarker(owner);
+      if (!marker) {
+        return false;
+      }
+      marker.position.copy(point);
+      marker.visible = true;
+      return true;
+    }
+    function hideInactiveSceneRayHitMarkers(activeOwners) {
+      sceneRayFeedbackOwners.forEach((owner) => {
+        if (!activeOwners || !activeOwners.has(owner)) {
+          hideSceneRayHitMarker(owner);
+        }
+      });
+    }
+    function updateSceneRayFeedback() {
+      const activeOwners = /* @__PURE__ */ new Set();
+      const allowed = sceneRayFeedbackAllowed();
+      let aframeRaycasterCount = 0;
+      controllerClickBridgeTargets().forEach((controllerEl) => {
+        const raycaster = controllerEl && controllerEl.components && controllerEl.components.raycaster;
+        if (!raycaster) {
+          return;
+        }
+        aframeRaycasterCount += 1;
+        activeOwners.add(controllerEl);
+        updateSceneRayHitMarker(controllerEl, allowed ? currentControllerIntersection(controllerEl) : null);
+      });
+      if (aframeRaycasterCount === 0) {
+        const scene = queryScene();
+        const xr = scene && scene.renderer && scene.renderer.xr;
+        if (xr && typeof xr.getController === "function") {
+          for (let index = 0; index < 2; index += 1) {
+            const controllerObject = xr.getController(index);
+            if (!controllerObject) {
+              continue;
+            }
+            activeOwners.add(controllerObject);
+            updateSceneRayHitMarker(
+              controllerObject,
+              allowed ? currentNativeControllerIntersection(controllerObject) : null
+            );
+          }
+        }
+      }
+      hideInactiveSceneRayHitMarkers(activeOwners);
+    }
+    function ensureSceneRayFeedbackComponent() {
+      if (!window.AFRAME || !window.AFRAME.registerComponent) {
+        return false;
+      }
+      if (!sceneRayFeedbackComponentRegistered) {
+        if (window.AFRAME.components && window.AFRAME.components["vrodos-scene-ray-feedback"]) {
+          sceneRayFeedbackComponentRegistered = true;
+        } else {
+          window.AFRAME.registerComponent("vrodos-scene-ray-feedback", {
+            tick: function() {
+              updateSceneRayFeedback();
+            },
+            remove: function() {
+              hideInactiveSceneRayHitMarkers(/* @__PURE__ */ new Set());
+            }
+          });
+          sceneRayFeedbackComponentRegistered = true;
+        }
+      }
+      const scene = queryScene();
+      if (scene && scene.setAttribute && !scene.hasAttribute("vrodos-scene-ray-feedback")) {
+        scene.setAttribute("vrodos-scene-ray-feedback", "");
+        recordDiagnostic("debug", "Attached scene ray feedback component.", {
+          sceneId: scene.id || ""
+        });
+      }
+      return Boolean(scene);
     }
     function hasSpatialModalOpen() {
       const spatialUi = window.VRODOSSpatialUI || null;
@@ -1480,6 +1612,7 @@
       normalizeVrControllerEntities();
       installControllerClickBridge();
       installNativeWebXRClickBridge();
+      ensureSceneRayFeedbackComponent();
       controllerNormalizationAttempts += 1;
       if (controllerNormalizationAttempts < 24) {
         window.setTimeout(normalizeVrControllersWhenReady, 250);

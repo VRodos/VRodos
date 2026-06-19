@@ -213,6 +213,8 @@ While a modal is open, canvas click/context events are blocked and scene `.rayca
 
 When no modal is open, scene object clicks remain owned by A-Frame components. Video trigger clicks should go straight to the video component and toggle playback. Assessment and image/text POI trigger clicks should open a camera-relative spatial panel centered near eye height in immersive XR, or the DOM dialog in desktop/inline mode.
 
+When no modal is open in immersive XR, the runtime shows a small ray endpoint dot on normal scene `.raycastable` targets such as video objects, image/text POIs, assessment launchers, and other clickable scene objects. This is scene feedback only: it follows the existing A-Frame raycaster intersection and does not retarget raycasters, clamp scene ray length, or replace the existing click path. While a PMNDRS modal is open, this scene marker hides and the modal-owned dialog marker takes over.
+
 Controller rays should remain visible before, during, and after modal panels. If rays disappear after close or finish, inspect scene interaction locking, raycaster `far` restoration, and scene raycast-target restoration first.
 
 ### Orientation, Rendering, And Loading Rules
