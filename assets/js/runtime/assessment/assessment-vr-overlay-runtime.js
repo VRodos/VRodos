@@ -21,6 +21,13 @@
 
     const PANEL_WIDTH = 2.05;
     const PANEL_HEIGHT = 1.44;
+    const QUESTION_PROMPT_FONT_SIZE = 40;
+    const TRUE_FALSE_PROMPT_FONT_SIZE = 34;
+    const QUESTION_ANSWER_TEXT_SIZE = 30;
+    const TRUE_FALSE_ANSWER_TEXT_SIZE = 30;
+    const INFO_TEXT_FONT_SIZE = 26;
+    const BINGO_PROMPT_FONT_SIZE = 28;
+    const UNSUPPORTED_MESSAGE_FONT_SIZE = 30;
 
     function value(value, fallback) {
         const text = decodeDisplayText ? decodeDisplayText(value || "") : String(value || "");
@@ -114,7 +121,7 @@
         api.text(info, {
             text: message,
             color: "#075985",
-            fontSize: 30,
+            fontSize: INFO_TEXT_FONT_SIZE,
             lineHeight: "120%"
         });
     }
@@ -341,7 +348,7 @@
                 runtime.api.text(frame.content, {
                     text: item.prompt || "Question " + (state.activeIndex + 1),
                     color: "#0f172a",
-                    fontSize: 44,
+                    fontSize: state.isTrueFalse ? TRUE_FALSE_PROMPT_FONT_SIZE : QUESTION_PROMPT_FONT_SIZE,
                     fontWeight: 500,
                     lineHeight: "125%"
                 });
@@ -357,7 +364,7 @@
                 renderQuestionAnswerGrid(runtime, frame.content, item, selectedIndex, {
                     columns: state.isTrueFalse ? 1 : 2,
                     itemHeight: 92,
-                    textSize: 32
+                    textSize: state.isTrueFalse ? TRUE_FALSE_ANSWER_TEXT_SIZE : QUESTION_ANSWER_TEXT_SIZE
                 });
             }
         };
@@ -507,7 +514,7 @@
             } : {
                 width: "100%",
                 minHeight: state.isTrueFalse ? 92 : 92,
-                textSize: 32,
+                textSize: state.isTrueFalse ? TRUE_FALSE_ANSWER_TEXT_SIZE : QUESTION_ANSWER_TEXT_SIZE,
                 lineHeight: "120%"
             }));
         });
@@ -1088,7 +1095,7 @@
         runtime.api.text(frame.content, {
             text: currentPrompt ? "Prompt: " + (currentPrompt.hint || currentPrompt.text) : "All prompts completed.",
             color: currentPrompt ? "#1d4ed8" : "#166534",
-            fontSize: 32,
+            fontSize: BINGO_PROMPT_FONT_SIZE,
             fontWeight: 600,
             lineHeight: "120%"
         });
@@ -1353,7 +1360,7 @@
         runtime.api.text(frame.content, {
             text: message || "This assessment type is not interactive in VRodos yet.",
             color: "#334155",
-            fontSize: 32,
+            fontSize: UNSUPPORTED_MESSAGE_FONT_SIZE,
             lineHeight: "125%"
         });
     }
