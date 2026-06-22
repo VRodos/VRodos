@@ -428,22 +428,6 @@
       }
       el.setAttribute(attrName, "enabled: " + (enabled ? "true" : "false"));
     }
-    function serializeRaycasterAttribute(el) {
-      if (!el || !el.getAttribute) {
-        return null;
-      }
-      const attr = el.getAttribute("raycaster");
-      if (attr === null || attr === void 0 || attr === false) {
-        return null;
-      }
-      if (typeof attr === "string") {
-        return attr;
-      }
-      if (typeof attr === "object") {
-        return Object.keys(attr).map((key) => key + ": " + attr[key]).join("; ");
-      }
-      return String(attr);
-    }
     function parseComponentAttribute(value) {
       const parsed = {};
       if (!value) {
@@ -467,14 +451,6 @@
         }
       });
       return parsed;
-    }
-    function serializeComponentAttribute(value) {
-      return Object.keys(value || {}).map((key) => key + ": " + value[key]).join("; ");
-    }
-    function setRaycasterObjects(el, selector) {
-      const attr = parseComponentAttribute(el.getAttribute("raycaster"));
-      attr.objects = selector;
-      el.setAttribute("raycaster", serializeComponentAttribute(attr));
     }
     function refreshRaycasterObjects() {
       collectRaycasters().forEach((el) => {
@@ -1121,7 +1097,6 @@
       queueRaycasterRefresh();
     }
     const api = {
-      raycasterRestore: null,
       suppressedSceneControls: null,
       interactionLocked: false,
       getPresentationMode,
@@ -1169,42 +1144,6 @@
             scene.canvas.classList.remove("a-grab-cursor", "a-grabbing");
           }
         }
-      },
-      setOverlayRaycastMode: function(active) {
-        normalizeVrControllerEntities();
-        const raycasters = collectRaycasters();
-        if (active) {
-          if (!this.raycasterRestore) {
-            this.raycasterRestore = /* @__PURE__ */ new Map();
-          }
-          raycasters.forEach((el) => {
-            if (!this.raycasterRestore.has(el)) {
-              this.raycasterRestore.set(el, serializeRaycasterAttribute(el));
-            }
-            setRaycasterObjects(el, "." + RAYCAST_TARGET_CLASS);
-            if (el.components && el.components.raycaster && typeof el.components.raycaster.refreshObjects === "function") {
-              el.components.raycaster.refreshObjects();
-            }
-          });
-          return;
-        }
-        if (!this.raycasterRestore) {
-          return;
-        }
-        this.raycasterRestore.forEach((value, el) => {
-          if (!el || !el.isConnected) {
-            return;
-          }
-          if (value === null) {
-            el.removeAttribute("raycaster");
-          } else {
-            el.setAttribute("raycaster", value);
-          }
-          if (el.components && el.components.raycaster && typeof el.components.raycaster.refreshObjects === "function") {
-            el.components.raycaster.refreshObjects();
-          }
-        });
-        this.raycasterRestore = null;
       },
       setSceneControlsSuppressed: function(active, activeRoot) {
         if (active) {

@@ -2361,7 +2361,6 @@ AFRAME.registerComponent('scene-settings', {
         const result = {
             interactionUnlocked: false,
             sceneControlsRestored: false,
-            overlayRaycastModeRestored: false,
             overlayRaycastersRefreshed: false,
             spatialTargetsRefreshed: false,
             errors: []
@@ -2381,14 +2380,6 @@ AFRAME.registerComponent('scene-settings', {
                 result.sceneControlsRestored = true;
             } catch (err) {
                 result.errors.push(`controls:${err && err.message ? err.message : err}`);
-            }
-        }
-        if (overlay && typeof overlay.setOverlayRaycastMode === 'function') {
-            try {
-                overlay.setOverlayRaycastMode(false);
-                result.overlayRaycastModeRestored = true;
-            } catch (err) {
-                result.errors.push(`raycast-mode:${err && err.message ? err.message : err}`);
             }
         }
         if (overlay && typeof overlay.refreshRaycasters === 'function') {

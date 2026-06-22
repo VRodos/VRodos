@@ -484,16 +484,12 @@ function createFixture(context) {
     context.window.VRODOSRuntimeOverlay = {
         locked: true,
         suppressed: true,
-        overlayMode: true,
         refreshed: 0,
         lockSceneInteraction(value) {
             this.locked = value;
         },
         setSceneControlsSuppressed(value) {
             this.suppressed = value;
-        },
-        setOverlayRaycastMode(value) {
-            this.overlayMode = value;
         },
         refreshRaycasters() {
             this.refreshed += 1;
@@ -574,7 +570,6 @@ async function testAFrameExitRestore(context) {
     assertRestored(fixture, diagnostics);
     assert(context.window.VRODOSRuntimeOverlay.locked === false, "overlay interaction should unlock");
     assert(context.window.VRODOSRuntimeOverlay.suppressed === false, "suppressed scene controls should restore");
-    assert(context.window.VRODOSRuntimeOverlay.overlayMode === false, "overlay raycast mode should clear");
     assert(context.window.VRODOSSpatialUI.closed === 1, "spatial panel should close");
 }
 
@@ -725,6 +720,8 @@ function testControllerRaySourceContracts() {
     assert(!navigationSource.includes("resolvePhysicalControllerInputSource"), "navigation must not duplicate WebXR input-source readiness checks");
     assert(!navigationSource.includes("disposeImmersiveTargetRayLines"), "navigation must not keep display-only target-ray cleanup paths");
     assert(!navigationSource.includes("immersiveTargetRayLines"), "navigation must not keep display-only target-ray state");
+    assert(!overlaySource.includes("setOverlayRaycastMode"), "runtime overlay must not expose legacy raycaster retarget mode");
+    assert(!overlaySource.includes("raycasterRestore"), "runtime overlay must not retain legacy raycaster retarget restore state");
 
     assert(spatialSource.includes("canKeepStableRayThroughReadinessDrop"), "spatial UI must keep a valid stable A-Frame ray through short readiness drops");
     assert(spatialSource.includes("stableAFrameRaySeen"), "spatial UI diagnostics must expose stable A-Frame ray state");
