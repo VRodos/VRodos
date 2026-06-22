@@ -1547,11 +1547,13 @@ AFRAME.registerComponent('scene-settings', {
             pending,
             message: 'Finalizing scene...',
             takramSkyReady: true,
+            takramSkyRequested: false,
             takramSkyFailed: false,
             takramSkyWarmed: true,
             takramSkyWarmupMs: 0,
             takramSkyWarmupRemainingMs: 0,
             hdrReady: true,
+            hdrRequested: false,
             hdrLoading: false,
             hdrFailed: false,
             hdrError: ''
@@ -1572,6 +1574,7 @@ AFRAME.registerComponent('scene-settings', {
             Boolean(window.VRODOS_TAKRAM_ATMOSPHERE);
 
         if (wantsTakramSky) {
+            state.takramSkyRequested = true;
             let takramReady = true;
             let takramFailed = false;
             if (startLoads && typeof this.prepareVrTakramVisibleSkyForReveal === 'function') {
@@ -1625,6 +1628,7 @@ AFRAME.registerComponent('scene-settings', {
             this.getEffectiveReflectionSource() === 'hdr';
 
         if (wantsHdrReflections) {
+            state.hdrRequested = true;
             let hdrReady = Boolean(this._currentReflectionSource === 'hdr' && this._envMapRenderTarget);
             if (!hdrReady && !this._hdrEnvMapLoading && !this._hdrEnvMapFailed &&
                 startLoads && typeof this.applyEnvMapProfile === 'function') {

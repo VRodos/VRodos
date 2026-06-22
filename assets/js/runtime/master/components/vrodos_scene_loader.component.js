@@ -37,6 +37,7 @@ AFRAME.registerComponent('clear-frustum-culling', {
 AFRAME.registerComponent('vrodos-scene-loader', {
     schema: {
         minimumVisibleMs: { type: 'number', default: 350 },
+        minimumSkyPhaseVisibleMs: { type: 'number', default: 220 },
         lazyConcurrentLoads: { type: 'int', default: 2 },
         lazyBatchDelayMs: { type: 'int', default: 120 }
     },
@@ -62,6 +63,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.loadingOverlay = null;
         this.progressLabel = null;
         this.assetsEl = null;
+        this.runtimePhaseShownAt = {};
         this.boundHandleSceneLoaded = this.handleSceneLoaded.bind(this);
         this.boundHandleModelLoaded = this.handleModelLoaded.bind(this);
         this.boundHandleModelError = this.handleModelError.bind(this);
@@ -133,6 +135,21 @@ AFRAME.registerComponent('vrodos-scene-loader', {
 
         this.loadingOverlay = overlay;
         this.progressLabel = progress;
+    },
+    markRuntimePhaseVisible: function (phaseKey, message) {
+        const key = phaseKey || 'runtime';
+        const now = performance.now();
+        if (this.progressLabel && message) {
+            this.progressLabel.textContent = message;
+        }
+        if (!this.runtimePhaseShownAt[key]) {
+            this.runtimePhaseShownAt[key] = now;
+        }
+        return now - this.runtimePhaseShownAt[key];
+    },
+    hasRuntimePhaseBeenVisibleFor: function (phaseKey, message, minimumMs) {
+        const elapsed = this.markRuntimePhaseVisible(phaseKey, message);
+        return elapsed >= Math.max(0, Number(minimumMs) || 0);
     },
     handleSceneLoaded: function () {
         this.revealTargets = Array.prototype.slice.call(
@@ -403,8 +420,19 @@ AFRAME.registerComponent('vrodos-scene-loader', {
 
         if (typeof settingsComponent.getRuntimeRevealReadinessState === 'function') {
             const readiness = settingsComponent.getRuntimeRevealReadinessState();
+            const pendingKey = readiness.pending && readiness.pending[0] ? readiness.pending[0] : '';
             if (!readiness.ready && this.progressLabel) {
-                this.progressLabel.textContent = readiness.message || 'Preparing scene rendering...';
+                if (pendingKey) {
+                    this.markRuntimePhaseVisible(pendingKey, readiness.message || 'Preparing scene rendering...');
+                } else {
+                    this.progressLabel.textContent = readiness.message || 'Preparing scene rendering...';
+                }
+            }
+            if (readiness.ready &&
+                readiness.takramSkyRequested &&
+                !readiness.takramSkyFailed &&
+                !this.hasRuntimePhaseBeenVisibleFor('takram-sky', 'Preparing sky...', this.data.minimumSkyPhaseVisibleMs)) {
+                return false;
             }
             return Boolean(readiness.ready);
         }

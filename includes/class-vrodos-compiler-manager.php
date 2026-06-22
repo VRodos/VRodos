@@ -488,13 +488,11 @@ class VRodos_Compiler_Manager {
 
 			$a_entity_oc_right = $dom->createElement( 'a-entity' );
 			$a_entity_oc_right->setAttribute( 'id', 'oculusRight' );
-			$a_entity_oc_right->setAttribute( 'meta-touch-controls', 'hand: right' );
 			$a_entity_oc_right->setAttribute( 'laser-controls', 'hand: right' );
 			$a_entity_oc_right->setAttribute( 'raycaster', 'objects: .raycastable' );
 
 			$a_entity_oc_left = $dom->createElement( 'a-entity' );
 			$a_entity_oc_left->setAttribute( 'id', 'oculusLeft' );
-			$a_entity_oc_left->setAttribute( 'meta-touch-controls', 'hand: left' );
 			$a_entity_oc_left->setAttribute( 'laser-controls', 'hand: left' );
 			$a_entity_oc_left->setAttribute( 'raycaster', 'objects: .raycastable' );
 

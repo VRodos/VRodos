@@ -1647,137 +1647,113 @@ AFRAME.registerComponent('custom-movement', {
             });
         }
     },
-    normalizeRayVector: function (value, fallback) {
-        const base = fallback || { x: 0, y: 0, z: -1 };
-        if (!value) {
-            return { x: base.x, y: base.y, z: base.z };
+    resolveControllerHand: function (controllerEl) {
+        if (!controllerEl) {
+            return '';
+        }
+        const id = controllerEl.id || '';
+        if (/right/i.test(id)) {
+            return 'right';
+        }
+        if (/left/i.test(id)) {
+            return 'left';
+        }
+        const componentNames = ['tracked-controls', 'meta-touch-controls', 'oculus-touch-controls', 'laser-controls'];
+        for (let i = 0; i < componentNames.length; i++) {
+            const component = controllerEl.components && controllerEl.components[componentNames[i]];
+            const hand = component && component.data && component.data.hand;
+            if (hand === 'left' || hand === 'right') {
+                return hand;
+            }
+        }
+        return '';
+    },
+    resolvePhysicalControllerInputSource: function (hand) {
+        const xr = this.sceneEl && this.sceneEl.renderer && this.sceneEl.renderer.xr;
+        const session = xr && typeof xr.getSession === 'function' ? xr.getSession() : null;
+        const inputSources = session && session.inputSources ? Array.from(session.inputSources) : [];
+        for (let i = 0; i < inputSources.length; i++) {
+            const source = inputSources[i];
+            if (!source || (hand && source.handedness && source.handedness !== hand)) {
+                continue;
+            }
+            if (source.gamepad || source.gripSpace) {
+                return source;
+            }
+        }
+        return null;
+    },
+    resolveControllerTrackingStatus: function (controllerEl) {
+        if (!controllerEl) {
+            return { ready: false, reason: 'missing-controller' };
         }
 
-        let x;
-        let y;
-        let z;
-        if (typeof value === 'string') {
-            const parts = value.trim().split(/\s+/).map(Number);
-            x = parts[0];
-            y = parts[1];
-            z = parts[2];
-        } else {
-            x = Number(value.x);
-            y = Number(value.y);
-            z = Number(value.z);
+        const hand = this.resolveControllerHand(controllerEl);
+        const inputSource = this.resolvePhysicalControllerInputSource(hand);
+        if (inputSource) {
+            return {
+                ready: true,
+                reason: 'webxr-input-source',
+                hand,
+                hasGamepad: Boolean(inputSource.gamepad),
+                hasGripSpace: Boolean(inputSource.gripSpace)
+            };
         }
 
-        if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
-            return { x: base.x, y: base.y, z: base.z };
-        }
-
-        const length = Math.sqrt((x * x) + (y * y) + (z * z));
-        if (!Number.isFinite(length) || length <= 0.000001) {
-            return { x: base.x, y: base.y, z: base.z };
+        const componentNames = [
+            'tracked-controls',
+            'meta-touch-controls',
+            'oculus-touch-controls',
+            'laser-controls',
+            'generic-tracked-controller-controls'
+        ];
+        for (let i = 0; i < componentNames.length; i++) {
+            const componentName = componentNames[i];
+            const component = controllerEl.components && controllerEl.components[componentName];
+            if (!component) {
+                continue;
+            }
+            const dataController = component.data && Number(component.data.controller);
+            if (component.controllerPresent === true ||
+                component.controllerConnected === true ||
+                component.controller ||
+                (Number.isFinite(dataController) && dataController >= 0)) {
+                return {
+                    ready: true,
+                    reason: componentName,
+                    hand,
+                    controllerIndex: Number.isFinite(dataController) ? dataController : null
+                };
+            }
         }
 
         return {
-            x: x / length,
-            y: y / length,
-            z: z / length
+            ready: false,
+            reason: 'controller-not-present',
+            hand
         };
     },
-    getControllerRayDirection: function (controllerEl, raycaster, raycasterAttribute) {
-        const fallback = { x: 0, y: 0, z: -1 };
-        if (raycaster && raycaster.data && raycaster.data.direction) {
-            return this.normalizeRayVector(raycaster.data.direction, fallback);
-        }
-        if (raycasterAttribute && raycasterAttribute.direction) {
-            return this.normalizeRayVector(raycasterAttribute.direction, fallback);
-        }
-        if (controllerEl && controllerEl.components && controllerEl.components.raycaster &&
-            controllerEl.components.raycaster.data && controllerEl.components.raycaster.data.direction) {
-            return this.normalizeRayVector(controllerEl.components.raycaster.data.direction, fallback);
-        }
-        return fallback;
-    },
-    setLineGeometryEndpoints: function (lineObject, direction, far) {
-        if (!lineObject || !lineObject.geometry) {
-            return false;
-        }
-        const geometry = lineObject.geometry;
-        const attribute = typeof geometry.getAttribute === 'function'
-            ? geometry.getAttribute('position')
-            : (geometry.attributes && geometry.attributes.position);
-        if (!attribute || !attribute.array || attribute.itemSize < 3 || attribute.count < 2) {
-            return false;
+    resolveControllerRayReadiness: function (controllerEl) {
+        const api = window.VRODOSControllerRayReadiness;
+        if (api && typeof api.resolve === 'function') {
+            return api.resolve(controllerEl, {
+                requiredStableFrames: 3,
+                source: 'custom-movement'
+            });
         }
 
-        const distance = Math.max(0.02, Number(far) || 100);
-        const lastIndex = (attribute.count - 1) * attribute.itemSize;
-        attribute.array[0] = 0;
-        attribute.array[1] = 0;
-        attribute.array[2] = 0;
-        attribute.array[lastIndex] = direction.x * distance;
-        attribute.array[lastIndex + 1] = direction.y * distance;
-        attribute.array[lastIndex + 2] = direction.z * distance;
-        attribute.needsUpdate = true;
-        if (geometry && typeof geometry.computeBoundingSphere === 'function') {
-            geometry.computeBoundingSphere();
-        }
-        return true;
+        const trackingStatus = this.resolveControllerTrackingStatus(controllerEl);
+        return Object.assign({}, trackingStatus, {
+            candidateReady: trackingStatus.ready,
+            phase: trackingStatus.ready ? 'ready' : 'waiting',
+            stableFrames: trackingStatus.ready ? 1 : 0,
+            requiredStableFrames: 1,
+            fallback: true
+        });
     },
-    resetLineObjectTransform: function (lineObject) {
-        if (!lineObject) {
-            return false;
-        }
-        if (lineObject.position && typeof lineObject.position.set === 'function') {
-            lineObject.position.set(0, 0, 0);
-        }
-        if (lineObject.rotation && typeof lineObject.rotation.set === 'function') {
-            lineObject.rotation.set(0, 0, 0);
-        }
-        if (lineObject.quaternion && typeof lineObject.quaternion.identity === 'function') {
-            lineObject.quaternion.identity();
-        }
-        if (lineObject.scale && typeof lineObject.scale.set === 'function') {
-            lineObject.scale.set(1, 1, 1);
-        }
-        lineObject.visible = true;
-        lineObject.matrixAutoUpdate = true;
-        if (typeof lineObject.updateMatrix === 'function') {
-            lineObject.updateMatrix();
-        }
-        if (typeof lineObject.updateMatrixWorld === 'function') {
-            lineObject.updateMatrixWorld(true);
-        }
-        return true;
-    },
-    resetAFrameControllerRayVisual: function (controllerEl, direction, far, forceRecreate) {
-        const diagnostics = {
-            id: controllerEl && controllerEl.id ? controllerEl.id : '',
-            forceRecreate: Boolean(forceRecreate),
-            lineAttributeRemoved: false,
-            lineObjectRemoved: false,
-            lineAttributeSet: false,
-            lineObjectsNormalized: 0,
-            lineGeometriesReset: 0
-        };
-
+    setControllerRayVisualVisible: function (controllerEl, visible) {
         if (!controllerEl) {
-            return diagnostics;
-        }
-
-        const distance = Math.max(0.02, Number(far) || 100);
-        const existingLine = controllerEl.getObject3D ? controllerEl.getObject3D('line') : null;
-        const shouldSetLineAttribute = forceRecreate || !existingLine ||
-            (controllerEl.hasAttribute && !controllerEl.hasAttribute('line'));
-        if (controllerEl.setAttribute) {
-            if (shouldSetLineAttribute) {
-                controllerEl.setAttribute('line', {
-                    start: '0 0 0',
-                    end: `${direction.x * distance} ${direction.y * distance} ${direction.z * distance}`,
-                    color: 'white',
-                    opacity: 1,
-                    visible: true
-                });
-                diagnostics.lineAttributeSet = true;
-            }
+            return 0;
         }
 
         const seen = [];
@@ -1801,23 +1777,45 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         seen.forEach((object) => {
-            if (this.resetLineObjectTransform(object)) {
-                diagnostics.lineObjectsNormalized += 1;
-            }
-            if (this.setLineGeometryEndpoints(object, direction, distance)) {
-                diagnostics.lineGeometriesReset += 1;
-            }
+            object.visible = Boolean(visible);
         });
 
-        return diagnostics;
+        const raycaster = controllerEl.components ? controllerEl.components.raycaster : null;
+        if (raycaster && raycaster.data && raycaster.data.showLine !== Boolean(visible)) {
+            const oldData = Object.assign({}, raycaster.data);
+            raycaster.data.showLine = Boolean(visible);
+            if (typeof raycaster.update === 'function') {
+                raycaster.update(oldData);
+            }
+        }
+
+        if (!visible && controllerEl.hasAttribute && controllerEl.hasAttribute('line') &&
+            controllerEl.removeAttribute) {
+            controllerEl.removeAttribute('line');
+        }
+
+        return seen.length;
     },
     ensureAFrameControllerRayVisuals: function () {
         const controllerEls = [this.thumbL, this.thumbR];
         const diagnostics = [];
         const forceReset = this.immersiveControllerRayVisualResetFrames > 0;
+        let waitingForControllerTracking = false;
         for (let i = 0; i < controllerEls.length; i++) {
             const controllerEl = controllerEls[i];
             if (!controllerEl) {
+                continue;
+            }
+
+            const readiness = this.resolveControllerRayReadiness(controllerEl);
+            if (!readiness.ready) {
+                waitingForControllerTracking = true;
+                diagnostics.push({
+                    id: controllerEl.id || '',
+                    status: 'waiting-controller-ray-readiness',
+                    readiness,
+                    hiddenLineObjects: this.setControllerRayVisualVisible(controllerEl, false)
+                });
                 continue;
             }
 
@@ -1832,14 +1830,11 @@ AFRAME.registerComponent('custom-movement', {
                 lineOpacity: 1
             });
 
-            let raycaster = controllerEl.components ? controllerEl.components.raycaster : null;
-            const direction = this.getControllerRayDirection(controllerEl, raycaster, currentRaycaster);
-            const visualDiagnostics = this.resetAFrameControllerRayVisual(controllerEl, direction, far, forceReset);
             if (controllerEl.setAttribute) {
                 controllerEl.setAttribute('raycaster', nextRaycaster);
             }
 
-            raycaster = controllerEl.components ? controllerEl.components.raycaster : null;
+            const raycaster = controllerEl.components ? controllerEl.components.raycaster : null;
             if (raycaster && raycaster.data) {
                 const oldData = Object.assign({}, raycaster.data);
                 raycaster.data.showLine = true;
@@ -1859,23 +1854,25 @@ AFRAME.registerComponent('custom-movement', {
             if (lineComponent && lineComponent.line) {
                 lineComponent.line.visible = true;
             }
+            const visibleLineObjects = this.setControllerRayVisualVisible(controllerEl, true);
 
-            if (forceReset) {
-                const finalRaycasterAttribute = controllerEl.getAttribute ? (controllerEl.getAttribute('raycaster') || nextRaycaster) : nextRaycaster;
-                const finalDirection = this.getControllerRayDirection(controllerEl, raycaster, finalRaycasterAttribute);
-                const finalVisualDiagnostics = this.resetAFrameControllerRayVisual(controllerEl, finalDirection, far, false);
-                visualDiagnostics.lineAttributeSet = visualDiagnostics.lineAttributeSet || finalVisualDiagnostics.lineAttributeSet;
-                visualDiagnostics.lineObjectsNormalized += finalVisualDiagnostics.lineObjectsNormalized;
-                visualDiagnostics.lineGeometriesReset += finalVisualDiagnostics.lineGeometriesReset;
-            }
-
-            diagnostics.push(visualDiagnostics);
+            diagnostics.push({
+                id: controllerEl.id || '',
+                status: 'controller-ray-ready',
+                forceReset,
+                readiness,
+                raycasterShowLine: Boolean(raycaster && raycaster.data && raycaster.data.showLine),
+                lineObjectsVisible: visibleLineObjects
+            });
         }
 
         if (forceReset) {
-            this.immersiveControllerRayVisualResetFrames -= 1;
+            if (!waitingForControllerTracking) {
+                this.immersiveControllerRayVisualResetFrames -= 1;
+            }
             this.lastImmersiveControllerRayVisualDiagnostics = {
                 framesRemaining: this.immersiveControllerRayVisualResetFrames,
+                waitingForControllerTracking,
                 controllers: diagnostics,
                 timestamp: Date.now()
             };

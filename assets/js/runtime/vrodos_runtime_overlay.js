@@ -9,6 +9,8 @@
     const SCENE_RAY_HIT_DOT_RENDER_ORDER = OVERLAY_RENDER_BASE - 20;
     const SCENE_RAY_HIT_DOT_RADIUS = 0.035;
     const SCENE_RAY_HIT_DOT_COLOR = 0xffc857;
+    const CONTROLLER_RAY_READY_STABLE_FRAMES = 3;
+    const CONTROLLER_RAY_EPSILON = 0.000001;
     const RAYCASTER_SELECTORS = [
         "#cursor",
         "#oculusRight",
@@ -88,6 +90,352 @@
             document.querySelector("[camera]") ||
             document.querySelector("a-camera");
     }
+
+    function createControllerRayReadinessApi() {
+        const states = new Map();
+        const controllerListenerElements = new WeakSet();
+        let sceneListenersAttachedTo = null;
+        let sessionListenersAttachedTo = null;
+
+        function stateForHand(hand) {
+            const key = hand || "unknown";
+            if (!states.has(key)) {
+                states.set(key, {
+                    stableFrames: 0,
+                    lastReadyCandidate: false,
+                    lastStableFrameAt: 0,
+                    lastDirtyReason: "init",
+                    lastDirtyAt: Date.now()
+                });
+            }
+            return states.get(key);
+        }
+
+        function markDirty(reason, hand) {
+            const resetState = (state) => {
+                state.stableFrames = 0;
+                state.lastReadyCandidate = false;
+                state.lastStableFrameAt = 0;
+                state.lastDirtyReason = reason || "dirty";
+                state.lastDirtyAt = Date.now();
+            };
+
+            if (hand) {
+                resetState(stateForHand(hand));
+                return;
+            }
+
+            ["left", "right", "unknown"].forEach((key) => resetState(stateForHand(key)));
+        }
+
+        function resolveHand(el) {
+            if (!el) {
+                return "";
+            }
+            const id = el.id || "";
+            if (/right/i.test(id)) {
+                return "right";
+            }
+            if (/left/i.test(id)) {
+                return "left";
+            }
+            const componentNames = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
+            for (let i = 0; i < componentNames.length; i += 1) {
+                const component = el.components && el.components[componentNames[i]];
+                const hand = component && component.data && component.data.hand;
+                if (hand === "left" || hand === "right") {
+                    return hand;
+                }
+            }
+            const attrs = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
+            for (let i = 0; i < attrs.length; i += 1) {
+                const value = el.getAttribute && el.getAttribute(attrs[i]);
+                const hand = value && typeof value === "object" ? value.hand : "";
+                if (hand === "left" || hand === "right") {
+                    return hand;
+                }
+            }
+            return "";
+        }
+
+        function currentInputSources(scene) {
+            const xr = scene && scene.renderer && scene.renderer.xr;
+            const session = xr && typeof xr.getSession === "function" ? xr.getSession() : null;
+            return session && session.inputSources ? Array.from(session.inputSources) : [];
+        }
+
+        function resolvePhysicalInputSource(scene, hand) {
+            const inputSources = currentInputSources(scene);
+            for (let i = 0; i < inputSources.length; i += 1) {
+                const source = inputSources[i];
+                if (!source || (hand && source.handedness && source.handedness !== hand)) {
+                    continue;
+                }
+                if (source.targetRayMode === "tracked-pointer" && (source.gamepad || source.gripSpace)) {
+                    return { source, inputSources };
+                }
+            }
+            return { source: null, inputSources };
+        }
+
+        function componentSummary(component) {
+            if (!component) {
+                return {
+                    present: false,
+                    controllerPresent: false,
+                    controllerConnected: false,
+                    hasController: false,
+                    hasPose: false,
+                    modelReady: false,
+                    dataController: null
+                };
+            }
+
+            const dataController = component.data && Number(component.data.controller);
+            return {
+                present: true,
+                controllerPresent: component.controllerPresent === true,
+                controllerConnected: component.controllerConnected === true,
+                hasController: Boolean(component.controller),
+                hasPose: Boolean(component.pose),
+                modelReady: component.modelReady === true || Boolean(component.controllerObject3D),
+                dataController: Number.isFinite(dataController) ? dataController : null
+            };
+        }
+
+        function countLineObjects(el) {
+            let count = 0;
+            if (!el || !el.object3D || typeof el.object3D.traverse !== "function") {
+                return count;
+            }
+            el.object3D.traverse((object) => {
+                if (object && (object.isLine || object.isLineSegments || object.type === "Line" || object.type === "LineSegments")) {
+                    count += 1;
+                }
+            });
+            return count;
+        }
+
+        function vectorLengthSq(vector) {
+            if (!vector) {
+                return 0;
+            }
+            if (typeof vector.lengthSq === "function") {
+                return vector.lengthSq();
+            }
+            const x = Number(vector.x) || 0;
+            const y = Number(vector.y) || 0;
+            const z = Number(vector.z) || 0;
+            return x * x + y * y + z * z;
+        }
+
+        function describeVector(vector) {
+            if (!vector) {
+                return null;
+            }
+            const round = (value) => Math.round((Number(value) || 0) * 10000) / 10000;
+            return {
+                x: round(vector.x),
+                y: round(vector.y),
+                z: round(vector.z)
+            };
+        }
+
+        function resolveRayInfo(el) {
+            const raycasterComponent = el && el.components && el.components.raycaster;
+            const raycaster = raycasterComponent && raycasterComponent.raycaster;
+            const ray = raycaster && raycaster.ray;
+            const data = raycasterComponent && raycasterComponent.data;
+            const rayDirectionValid = Boolean(ray && ray.direction && vectorLengthSq(ray.direction) > CONTROLLER_RAY_EPSILON);
+            const dataDirectionValid = Boolean(data && data.direction && vectorLengthSq(data.direction) > CONTROLLER_RAY_EPSILON);
+            return {
+                hasComponent: Boolean(raycasterComponent),
+                hasRaycaster: Boolean(raycaster),
+                rayDirectionValid,
+                dataDirectionValid,
+                showLine: Boolean(data && data.showLine),
+                far: raycaster && Number.isFinite(Number(raycaster.far)) ? Number(raycaster.far) : null,
+                rayOrigin: ray ? describeVector(ray.origin) : null,
+                rayDirection: ray ? describeVector(ray.direction) : null,
+                dataOrigin: data ? describeVector(data.origin) : null,
+                dataDirection: data ? describeVector(data.direction) : null
+            };
+        }
+
+        function resolveComponentInfo(el) {
+            const components = el && el.components || {};
+            return {
+                tracked: componentSummary(components["tracked-controls"]),
+                meta: componentSummary(components["meta-touch-controls"]),
+                oculus: componentSummary(components["oculus-touch-controls"]),
+                laser: componentSummary(components["laser-controls"]),
+                generic: componentSummary(components["generic-tracked-controller-controls"])
+            };
+        }
+
+        function componentStackReady(info) {
+            const trackedPoseReady = info.tracked.present && info.tracked.hasController && info.tracked.hasPose;
+            const controllerPresent = info.meta.controllerPresent ||
+                info.oculus.controllerPresent ||
+                info.generic.controllerPresent ||
+                info.tracked.controllerPresent ||
+                (Number.isFinite(info.tracked.dataController) && info.tracked.dataController >= 0);
+            const modelReady = !info.laser.present ||
+                info.laser.modelReady ||
+                info.meta.modelReady ||
+                info.oculus.modelReady ||
+                info.generic.modelReady;
+            return {
+                ready: Boolean(trackedPoseReady && controllerPresent && modelReady),
+                trackedPoseReady,
+                controllerPresent,
+                modelReady
+            };
+        }
+
+        function controllerReason(inputSource, rayInfo, stack) {
+            if (!inputSource) {
+                return "waiting-webxr-input-source";
+            }
+            if (!stack.trackedPoseReady) {
+                return "waiting-tracked-controls-pose";
+            }
+            if (!stack.controllerPresent) {
+                return "waiting-aframe-controller-present";
+            }
+            if (!stack.modelReady) {
+                return "waiting-controller-model-ready";
+            }
+            if (!rayInfo.hasComponent || !rayInfo.hasRaycaster || !rayInfo.rayDirectionValid || !rayInfo.dataDirectionValid) {
+                return "waiting-raycaster-ray";
+            }
+            return "warming-controller-ray";
+        }
+
+        function ensureSceneListeners(scene) {
+            if (!scene || sceneListenersAttachedTo === scene) {
+                return;
+            }
+            if (sceneListenersAttachedTo && sceneListenersAttachedTo.removeEventListener) {
+                ["enter-vr", "exit-vr", "controllersupdated"].forEach((eventName) => {
+                    sceneListenersAttachedTo.removeEventListener(eventName, markAllDirtyFromEvent);
+                });
+            }
+            sceneListenersAttachedTo = scene;
+            ["enter-vr", "exit-vr", "controllersupdated"].forEach((eventName) => {
+                scene.addEventListener(eventName, markAllDirtyFromEvent);
+            });
+        }
+
+        function markAllDirtyFromEvent(event) {
+            markDirty(event && event.type || "scene-event");
+        }
+
+        function ensureSessionListener(scene) {
+            const xr = scene && scene.renderer && scene.renderer.xr;
+            const session = xr && typeof xr.getSession === "function" ? xr.getSession() : null;
+            if (!session || sessionListenersAttachedTo === session) {
+                return;
+            }
+            if (sessionListenersAttachedTo && sessionListenersAttachedTo.removeEventListener) {
+                sessionListenersAttachedTo.removeEventListener("inputsourceschange", markAllDirtyFromEvent);
+            }
+            sessionListenersAttachedTo = session;
+            session.addEventListener("inputsourceschange", markAllDirtyFromEvent);
+        }
+
+        function ensureControllerListeners(el) {
+            if (!el || controllerListenerElements.has(el) || !el.addEventListener) {
+                return;
+            }
+            controllerListenerElements.add(el);
+            ["controllerconnected", "controllerdisconnected", "controllermodelready"].forEach((eventName) => {
+                el.addEventListener(eventName, (event) => {
+                    const detailName = event && event.detail && event.detail.name || "";
+                    markDirty(`${eventName}${detailName ? `:${detailName}` : ""}`, resolveHand(el));
+                });
+            });
+        }
+
+        function resolve(controllerEl, options) {
+            const scene = controllerEl && controllerEl.sceneEl || queryScene();
+            ensureSceneListeners(scene);
+            ensureSessionListener(scene);
+            ensureControllerListeners(controllerEl);
+
+            const hand = resolveHand(controllerEl);
+            const state = stateForHand(hand);
+            const stableFrameTarget = Math.max(1, Number(options && options.requiredStableFrames) || CONTROLLER_RAY_READY_STABLE_FRAMES);
+            const input = resolvePhysicalInputSource(scene, hand);
+            const rayInfo = resolveRayInfo(controllerEl);
+            const components = resolveComponentInfo(controllerEl);
+            const stack = componentStackReady(components);
+            const lineCount = countLineObjects(controllerEl);
+            const candidateReady = Boolean(input.source &&
+                stack.ready &&
+                rayInfo.hasComponent &&
+                rayInfo.hasRaycaster &&
+                rayInfo.rayDirectionValid &&
+                rayInfo.dataDirectionValid);
+
+            const now = Date.now();
+            if (candidateReady) {
+                if (!state.lastReadyCandidate || now - state.lastStableFrameAt > 8) {
+                    state.stableFrames += 1;
+                    state.lastStableFrameAt = now;
+                }
+            } else {
+                state.stableFrames = 0;
+                state.lastStableFrameAt = 0;
+            }
+            state.lastReadyCandidate = candidateReady;
+
+            const ready = candidateReady && state.stableFrames >= stableFrameTarget;
+            const status = {
+                ready,
+                candidateReady,
+                phase: ready ? "ready" : "waiting",
+                reason: ready ? "stable-controller-ray" : controllerReason(input.source, rayInfo, stack),
+                hand,
+                stableFrames: state.stableFrames,
+                requiredStableFrames: stableFrameTarget,
+                inputSourceCount: input.inputSources.length,
+                inputSource: input.source ? {
+                    handedness: input.source.handedness || "",
+                    targetRayMode: input.source.targetRayMode || "",
+                    hasGamepad: Boolean(input.source.gamepad),
+                    hasGripSpace: Boolean(input.source.gripSpace),
+                    hasTargetRaySpace: Boolean(input.source.targetRaySpace),
+                    profiles: Array.from(input.source.profiles || [])
+                } : null,
+                ray: rayInfo,
+                components,
+                stack,
+                lineCount,
+                objectVisible: Boolean(controllerEl && controllerEl.object3D && controllerEl.object3D.visible),
+                lastDirtyReason: state.lastDirtyReason,
+                lastDirtyAt: state.lastDirtyAt,
+                timestamp: now
+            };
+
+            window.__vrodosLastControllerRayReadiness = window.__vrodosLastControllerRayReadiness || {};
+            window.__vrodosLastControllerRayReadiness[hand || "unknown"] = status;
+            return status;
+        }
+
+        function reset() {
+            states.clear();
+            markDirty("reset");
+        }
+
+        return {
+            markDirty,
+            resolve,
+            reset
+        };
+    }
+
+    window.VRODOSControllerRayReadiness = window.VRODOSControllerRayReadiness || createControllerRayReadinessApi();
 
     function isImmersiveVrActive() {
         const scene = queryScene();

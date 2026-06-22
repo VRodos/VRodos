@@ -41,6 +41,10 @@ import { MSDF } from "@zappar/msdf-generator";
     const RAY_HIT_DOT_COLOR = 0x55c7ff;
     const RAY_HIT_DOT_ACTION_COLOR = 0xffc857;
     const SCENE_RAYCAST_SUPPRESSION_REFRESH_FRAMES = 15;
+    const CONTROLLER_POINTER_ATTACH_RETRY_FRAMES = 1800;
+    const CONTROLLER_POINTER_ATTACH_RETRY_LOG_INTERVAL = 120;
+    const CONTROLLER_POSE_EPSILON = 0.000001;
+    const CONTROLLER_RAY_DEFAULT_EPSILON = 0.00001;
     const SPATIAL_UI_FONT_FAMILY = "vrodos-noto-sans";
     const SPATIAL_UI_FONT_CHARSET_SEED = " \tABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?.,;:'\"()-[]{}@#$%&*+=/\\<>_–—«»“”‘’…≤≥°%€ΆΈΉΊΌΎΏΪΫΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίόύώϊϋΐΰαβγδεζηθικλμνξοπρστυφχψως";
     const SPATIAL_UI_FONT_TEXTURE_SIZE = [1024, 1024];
@@ -357,16 +361,20 @@ import { MSDF } from "@zappar/msdf-generator";
         };
     }
 
+    function spatialFontsReady() {
+        return Promise.all([
+            spatialFontInfo("normal"),
+            spatialFontInfo("bold")
+        ]).then(() => true).catch(() => false);
+    }
+
     function warmSpatialFonts(immediate) {
         if (spatialFontWarmupStarted && !immediate) {
             return;
         }
         spatialFontWarmupStarted = true;
         const start = () => {
-            Promise.all([
-                spatialFontInfo("normal"),
-                spatialFontInfo("bold")
-            ]).catch(() => {});
+            spatialFontsReady();
         };
         if (immediate) {
             start();
@@ -597,36 +605,290 @@ import { MSDF } from "@zappar/msdf-generator";
         const ray = raycasterComponent &&
             raycasterComponent.raycaster &&
             raycasterComponent.raycaster.ray;
-        if (ray && ray.origin && ray.direction && ray.direction.lengthSq && ray.direction.lengthSq() > 0.000001) {
+        const rayReady = ray && ray.origin && ray.direction && ray.direction.lengthSq &&
+            ray.direction.lengthSq() > CONTROLLER_POSE_EPSILON;
+        const rayLooksDefaultLocal = rayReady && isDefaultLocalControllerRay(ray);
+        const trackingStatus = resolveAFrameControllerTrackingStatus(bridge.el);
+        bridge.lastControllerTrackingStatus = trackingStatus;
+        const canKeepStableRayThroughReadinessDrop = Boolean(
+            bridge.stableAFrameRaySeen === true &&
+            rayReady &&
+            !rayLooksDefaultLocal
+        );
+        if (trackingStatus.isControllerElement && !trackingStatus.ready &&
+            !canKeepStableRayThroughReadinessDrop) {
+            markControllerPointerPoseWaiting(bridge, trackingStatus.reason || "controller-not-present");
+            return false;
+        }
+
+        const objectPose = resolveControllerObjectPose(bridge.el);
+
+        if (!rayReady && (!objectPose || objectPose.localPoseIdentity)) {
+            markControllerPointerPoseWaiting(bridge, "missing-ray-and-pose");
+            return false;
+        }
+
+        if (rayLooksDefaultLocal && (!objectPose || objectPose.localPoseIdentity)) {
+            markControllerPointerPoseWaiting(bridge, "default-startup-ray");
+            return false;
+        }
+
+        if (rayReady && !rayLooksDefaultLocal) {
             const direction = ray.direction.clone().normalize();
             bridge.raySpace.position.copy(ray.origin);
             bridge.raySpace.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), direction);
             bridge.raySpace.scale.set(1, 1, 1);
             bridge.raySpace.updateMatrix();
             bridge.raySpace.updateMatrixWorld(true);
+            bridge.controllerPoseReady = true;
+            bridge.lastControllerPoseReason = "aframe-raycaster-ray";
+            bridge.usesControllerVisualRay = false;
             bridge.usesAFrameRaycasterRay = true;
+            bridge.usesControllerObjectPose = false;
+            bridge.stableAFrameRaySeen = true;
+            bridge.controllerRayReadinessBypassed = canKeepStableRayThroughReadinessDrop;
             return true;
         }
 
-        if (bridge.el.object3D && bridge.el.object3D.matrixWorld) {
-            bridge.el.object3D.updateMatrixWorld(true);
-            bridge.el.object3D.matrixWorld.decompose(
-                bridge.raySpace.position,
-                bridge.raySpace.quaternion,
-                bridge.raySpace.scale
-            );
+        if (objectPose) {
+            bridge.raySpace.position.copy(objectPose.worldPosition);
+            bridge.raySpace.quaternion.copy(objectPose.worldQuaternion);
+            bridge.raySpace.scale.set(1, 1, 1);
             bridge.raySpace.updateMatrix();
             bridge.raySpace.updateMatrixWorld(true);
+            bridge.controllerPoseReady = true;
+            bridge.lastControllerPoseReason = rayLooksDefaultLocal
+                ? "controller-object-pose-after-default-ray"
+                : "controller-object-pose";
+            bridge.usesControllerVisualRay = false;
             bridge.usesAFrameRaycasterRay = false;
+            bridge.usesControllerObjectPose = true;
+            bridge.controllerRayReadinessBypassed = false;
             return true;
         }
 
+        markControllerPointerPoseWaiting(bridge, "unresolved-controller-pose");
         return false;
+    }
+
+    function resolveAFrameControllerTrackingStatus(el) {
+        const id = el && el.id || "";
+        const hasControllerAttribute = Boolean(el && el.hasAttribute && (
+            el.hasAttribute("laser-controls") ||
+            el.hasAttribute("meta-touch-controls") ||
+            el.hasAttribute("oculus-touch-controls") ||
+            el.hasAttribute("tracked-controls")
+        ));
+        const isControllerElement = /^(oculusLeft|oculusRight)$/i.test(id) || hasControllerAttribute;
+        if (!isControllerElement) {
+            return { isControllerElement: false, ready: true, reason: "not-controller" };
+        }
+
+        const hand = resolveControllerHand(el);
+        const rayReadiness = resolveSharedControllerRayReadiness(el);
+        if (rayReadiness) {
+            return {
+                isControllerElement: true,
+                ready: rayReadiness.ready === true,
+                reason: rayReadiness.ready === true ? "controller-ray-readiness" : (rayReadiness.reason || "controller-ray-not-ready"),
+                hand: rayReadiness.hand || hand,
+                rayReadiness
+            };
+        }
+
+        const inputSource = resolvePhysicalControllerInputSource(hand);
+        if (inputSource) {
+            return {
+                isControllerElement: true,
+                ready: true,
+                reason: "webxr-input-source",
+                hand,
+                hasGamepad: Boolean(inputSource.gamepad),
+                hasGripSpace: Boolean(inputSource.gripSpace)
+            };
+        }
+
+        const componentNames = [
+            "tracked-controls",
+            "meta-touch-controls",
+            "oculus-touch-controls",
+            "laser-controls",
+            "generic-tracked-controller-controls"
+        ];
+        for (let i = 0; i < componentNames.length; i += 1) {
+            const componentName = componentNames[i];
+            const component = el.components && el.components[componentName];
+            if (!component) {
+                continue;
+            }
+            const dataController = component.data && Number(component.data.controller);
+            if (component.controllerPresent === true ||
+                component.controllerConnected === true ||
+                component.controller ||
+                (Number.isFinite(dataController) && dataController >= 0)) {
+                return {
+                    isControllerElement: true,
+                    ready: true,
+                    reason: componentName,
+                    hand,
+                    controllerIndex: Number.isFinite(dataController) ? dataController : null
+                };
+            }
+        }
+
+        return {
+            isControllerElement: true,
+            ready: false,
+            reason: "controller-not-present",
+            hand
+        };
+    }
+
+    function resolveControllerHand(el) {
+        if (!el) {
+            return "";
+        }
+        const id = el.id || "";
+        if (/right/i.test(id)) {
+            return "right";
+        }
+        if (/left/i.test(id)) {
+            return "left";
+        }
+        const componentNames = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
+        for (let i = 0; i < componentNames.length; i += 1) {
+            const component = el.components && el.components[componentNames[i]];
+            const hand = component && component.data && component.data.hand;
+            if (hand === "left" || hand === "right") {
+                return hand;
+            }
+        }
+        const attrs = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
+        for (let i = 0; i < attrs.length; i += 1) {
+            const value = el.getAttribute && el.getAttribute(attrs[i]);
+            const hand = value && typeof value === "object" ? value.hand : "";
+            if (hand === "left" || hand === "right") {
+                return hand;
+            }
+        }
+        return "";
+    }
+
+    function resolvePhysicalControllerInputSource(hand) {
+        const scene = document.querySelector("a-scene");
+        const xr = scene && scene.renderer && scene.renderer.xr;
+        const session = xr && typeof xr.getSession === "function" ? xr.getSession() : null;
+        const inputSources = session && session.inputSources ? Array.from(session.inputSources) : [];
+        for (let i = 0; i < inputSources.length; i += 1) {
+            const source = inputSources[i];
+            if (!source || (hand && source.handedness && source.handedness !== hand)) {
+                continue;
+            }
+            if (source.gamepad || source.gripSpace) {
+                return source;
+            }
+        }
+        return null;
+    }
+
+    function resolveSharedControllerRayReadiness(el) {
+        const api = window.VRODOSControllerRayReadiness;
+        if (!api || typeof api.resolve !== "function") {
+            return null;
+        }
+        try {
+            return api.resolve(el, {
+                requiredStableFrames: 3,
+                source: "spatial-ui"
+            });
+        } catch (error) {
+            recordDiagnostic("warn", "Shared controller ray readiness check failed.", {
+                controller: el && el.id || "",
+                error: error && error.message || String(error)
+            });
+            return null;
+        }
+    }
+
+    function markControllerPointerPoseWaiting(bridge, reason) {
+        if (!bridge) {
+            return;
+        }
+        bridge.controllerPoseReady = false;
+        bridge.lastControllerPoseReason = reason || "";
+        bridge.controllerPoseWaitCount = (bridge.controllerPoseWaitCount || 0) + 1;
+        bridge.usesAFrameRaycasterRay = false;
+        bridge.usesControllerObjectPose = false;
+        bridge.controllerRayReadinessBypassed = false;
+    }
+
+    function isDefaultLocalControllerRay(ray) {
+        if (!ray || !ray.origin || !ray.direction) {
+            return false;
+        }
+        const originLengthSq = vectorLengthSq(ray.origin);
+        const direction = ray.direction;
+        const dx = Number(direction.x) || 0;
+        const dy = Number(direction.y) || 0;
+        const dz = (Number(direction.z) || 0) + 1;
+        return originLengthSq < CONTROLLER_POSE_EPSILON &&
+            (dx * dx + dy * dy + dz * dz) < CONTROLLER_RAY_DEFAULT_EPSILON;
+    }
+
+    function vectorLengthSq(vector) {
+        if (!vector) {
+            return 0;
+        }
+        if (typeof vector.lengthSq === "function") {
+            return vector.lengthSq();
+        }
+        const x = Number(vector.x) || 0;
+        const y = Number(vector.y) || 0;
+        const z = Number(vector.z) || 0;
+        return x * x + y * y + z * z;
+    }
+
+    function quaternionIsIdentity(quaternion) {
+        if (!quaternion) {
+            return true;
+        }
+        const x = Number(quaternion.x) || 0;
+        const y = Number(quaternion.y) || 0;
+        const z = Number(quaternion.z) || 0;
+        const w = Number.isFinite(Number(quaternion.w)) ? Number(quaternion.w) : 1;
+        return (x * x + y * y + z * z) < CONTROLLER_POSE_EPSILON &&
+            Math.abs(w - 1) < CONTROLLER_RAY_DEFAULT_EPSILON;
+    }
+
+    function resolveControllerObjectPose(el) {
+        const THREE = getThreeRuntime();
+        if (!THREE || !el || !el.object3D || !el.object3D.matrixWorld) {
+            return null;
+        }
+        const object = el.object3D;
+        object.updateMatrixWorld(true);
+        const worldPosition = new THREE.Vector3();
+        const worldQuaternion = new THREE.Quaternion();
+        const worldScale = new THREE.Vector3();
+        object.matrixWorld.decompose(worldPosition, worldQuaternion, worldScale);
+        return {
+            worldPosition,
+            worldQuaternion,
+            worldScale,
+            localPoseIdentity: vectorLengthSq(object.position) < CONTROLLER_POSE_EPSILON &&
+                quaternionIsIdentity(object.quaternion),
+            worldPoseIdentity: worldPosition.lengthSq() < CONTROLLER_POSE_EPSILON &&
+                quaternionIsIdentity(worldQuaternion)
+        };
     }
 
     function createPointerEventAndMove(bridge, target, type, sourceEvent) {
         const nativeEvent = createNativePointerEvent(type, sourceEvent);
-        updateControllerPointerSpace(bridge);
+        const pointerSpaceReady = updateControllerPointerSpace(bridge);
+        if (bridge && bridge.raySpace && !pointerSpaceReady) {
+            resetBridgeIntersectionDiagnostics(bridge);
+            return nativeEvent;
+        }
         if (bridge && bridge.pointer && typeof bridge.pointer.move === "function") {
             bridge.pointer.move(target, nativeEvent);
             updateBridgeIntersectionDiagnostics(bridge);
@@ -742,10 +1004,37 @@ import { MSDF } from "@zappar/msdf-generator";
         return result;
     }
 
+    function firstPendingControllerRayReadiness() {
+        const elements = collectControllerPointerElements();
+        for (let i = 0; i < elements.length; i += 1) {
+            const status = resolveSharedControllerRayReadiness(elements[i]);
+            if (status && status.ready !== true) {
+                return status;
+            }
+        }
+        return null;
+    }
+
     function attachNativeWebXRControllerPointers(panelState, target) {
         const scene = panelState && panelState.scene;
         const xr = scene && scene.renderer && scene.renderer.xr;
         if (!scene || !scene.camera || !xr || typeof xr.getController !== "function" || typeof createRayPointer !== "function") {
+            return 0;
+        }
+
+        const pendingReadiness = firstPendingControllerRayReadiness();
+        if (pendingReadiness) {
+            panelState.controllerPointerPoseWaits = (panelState.controllerPointerPoseWaits || 0) + 1;
+            if (!panelState.nativePointerReadinessLogged ||
+                panelState.controllerPointerPoseWaits % CONTROLLER_POINTER_ATTACH_RETRY_LOG_INTERVAL === 0) {
+                panelState.nativePointerReadinessLogged = true;
+                recordDiagnostic("debug", "Waiting for stable controller ray before attaching native WebXR spatial pointer.", {
+                    reason: pendingReadiness.reason || "",
+                    hand: pendingReadiness.hand || "",
+                    stableFrames: pendingReadiness.stableFrames || 0,
+                    requiredStableFrames: pendingReadiness.requiredStableFrames || 0
+                });
+            }
             return 0;
         }
 
@@ -756,10 +1045,11 @@ import { MSDF } from "@zappar/msdf-generator";
                 continue;
             }
             try {
+                const source = `native-webxr-controller-${index}`;
                 const pointer = createRayPointer(
                     () => getPointerCamera(scene),
                     { current: controller },
-                    { source: "native-webxr-controller-" + index },
+                    { source },
                     { minDistance: 0 },
                     "ray"
                 );
@@ -767,7 +1057,7 @@ import { MSDF } from "@zappar/msdf-generator";
                     el: controller,
                     pointer,
                     listeners: [],
-                    source: "native-webxr-controller-" + index,
+                    source,
                     isDown: false,
                     lastUpAt: 0,
                     lastIntersectionName: "",
@@ -845,7 +1135,11 @@ import { MSDF } from "@zappar/msdf-generator";
                 const raySpace = THREE ? new THREE.Object3D() : null;
                 if (raySpace) {
                     raySpace.name = "VRODOSSpatialUIPointerRay_" + source;
-                    updateControllerPointerSpace({ el, raySpace });
+                    const pointerReady = updateControllerPointerSpace({ el, raySpace });
+                    if (!pointerReady) {
+                        panelState.controllerPointerPoseWaits = (panelState.controllerPointerPoseWaits || 0) + 1;
+                        return;
+                    }
                 }
                 const pointer = createRayPointer(
                     () => getPointerCamera(scene),
@@ -867,6 +1161,9 @@ import { MSDF } from "@zappar/msdf-generator";
                     lastIntersectionDistanceRaw: null,
                     lastIntersectionPoint: null,
                     lastIntersectionIsVoid: false,
+                    controllerPoseReady: true,
+                    controllerPoseWaitCount: 0,
+                    lastControllerPoseReason: "",
                     lastRayHitSource: "",
                     rayHitActionable: false,
                     showRayHitDot: panelState.showRayHitDot !== false,
@@ -1025,6 +1322,9 @@ import { MSDF } from "@zappar/msdf-generator";
         const object = bridge.raySpace ||
             bridge.el && (bridge.el.object3D || (bridge.el.isObject3D || typeof bridge.el.updateMatrixWorld === "function" ? bridge.el : null));
         if (!object) {
+            return null;
+        }
+        if (bridge.raySpace && bridge.controllerPoseReady === false) {
             return null;
         }
         if (typeof object.updateMatrixWorld === "function") {
@@ -1427,6 +1727,20 @@ import { MSDF } from "@zappar/msdf-generator";
         if (!bridge) {
             return false;
         }
+        if (bridge.raySpace && bridge.controllerPoseReady === false) {
+            let restored = false;
+            const states = Array.isArray(bridge.rayVisualStates) ? bridge.rayVisualStates : [];
+            states.forEach((state) => {
+                restored = restoreLinePositions(state.object, state.positions) || restored;
+            });
+            restored = restoreControllerRaycasterFar(bridge) || restored;
+            updateRayHitMarker(bridge, null);
+            bridge.rayVisualTrimmed = false;
+            bridge.lastRayTrimDistance = null;
+            bridge.lastRayHitSource = "";
+            bridge.rayHitActionable = false;
+            return restored;
+        }
         const hit = resolveDialogRayHit(bridge, activePanel);
         const hitDistance = hit && Number(hit.distance);
         const shouldTrim = Boolean(enabled && hit && Number.isFinite(hitDistance) && hitDistance > 0);
@@ -1503,7 +1817,9 @@ import { MSDF } from "@zappar/msdf-generator";
         if (aframePointerCount > 0) {
             panelState.hasAFrameControllerPointers = true;
             recordDiagnostic("debug", "Attached A-Frame pmndrs controller pointers.", {
-                count: aframePointerCount
+                count: aframePointerCount,
+                attempts: panelState.controllerPointerAttachAttempts || 0,
+                poseWaits: panelState.controllerPointerPoseWaits || 0
             });
             return;
         }
@@ -2328,12 +2644,21 @@ import { MSDF } from "@zappar/msdf-generator";
                     id: panelState.id || "",
                     renderCount: panelState.renderCount || 0,
                     controllerPointers: panelState.controllerPointerBridges.length,
+                    controllerPointerAttachAttempts: panelState.controllerPointerAttachAttempts || 0,
+                    controllerPointerPoseWaits: panelState.controllerPointerPoseWaits || 0,
                     controllerPointerSources: panelState.controllerPointerBridges.map((bridge) => ({
                         source: bridge.source || "",
                         lastIntersectionName: bridge.lastIntersectionName || "",
                         lastIntersectionDistance: bridge.lastIntersectionDistance,
                         lastIntersectionIsVoid: bridge.lastIntersectionIsVoid === true,
+                        controllerPoseReady: bridge.controllerPoseReady !== false,
+                        controllerPoseWaitCount: bridge.controllerPoseWaitCount || 0,
+                        lastControllerPoseReason: bridge.lastControllerPoseReason || "",
+                        lastControllerTrackingStatus: bridge.lastControllerTrackingStatus || null,
                         usesAFrameRaycasterRay: bridge.usesAFrameRaycasterRay === true,
+                        usesControllerObjectPose: bridge.usesControllerObjectPose === true,
+                        stableAFrameRaySeen: bridge.stableAFrameRaySeen === true,
+                        controllerRayReadinessBypassed: bridge.controllerRayReadinessBypassed === true,
                         rayVisualPromoted: bridge.rayVisualPromoted === true,
                         rayVisualTrimmed: bridge.rayVisualTrimmed === true,
                         lastRayTrimDistance: bridge.lastRayTrimDistance,
@@ -2341,7 +2666,8 @@ import { MSDF } from "@zappar/msdf-generator";
                         raycasterFarTrimmed: bridge.raycasterFarTrimmed === true,
                         rayHitDotVisible: Boolean(bridge.rayHitMarker && bridge.rayHitMarker.visible),
                         rayHitActionable: bridge.rayHitActionable === true,
-                        lastRayHitSource: bridge.lastRayHitSource || ""
+                        lastRayHitSource: bridge.lastRayHitSource || "",
+                        usesControllerVisualRay: bridge.usesControllerVisualRay === true
                     })),
                     presentationMode: getPresentationMode(),
                     anchorPoseSource: panelState.anchorPoseSource || "",
@@ -2410,6 +2736,7 @@ import { MSDF } from "@zappar/msdf-generator";
             htmlEventForwarder: null,
             controllerPointerBridges: [],
             controllerPointerAttachAttempts: 0,
+            controllerPointerPoseWaits: 0,
             rayVisualPromoteFrames: 90,
             rayTrimEnabled: config.trimControllerRays !== false,
             showRayHitDot: config.showRayHitDot !== false,
@@ -2590,7 +2917,7 @@ import { MSDF } from "@zappar/msdf-generator";
         dispose,
         prewarm: function () {
             warmSpatialFonts(true);
-            return true;
+            return spatialFontsReady();
         },
         getActivePanel: function () {
             return activePanel;
@@ -2620,7 +2947,8 @@ import { MSDF } from "@zappar/msdf-generator";
                     activePanel.sceneRaycastSuppressionRefreshCountdown = SCENE_RAYCAST_SUPPRESSION_REFRESH_FRAMES;
                 }
             }
-            if (!activePanel.hasAFrameControllerPointers && activePanel.controllerPointerAttachAttempts < 180) {
+            if (!activePanel.hasAFrameControllerPointers &&
+                activePanel.controllerPointerAttachAttempts < CONTROLLER_POINTER_ATTACH_RETRY_FRAMES) {
                 activePanel.controllerPointerAttachAttempts += 1;
                 const attached = attachAFrameControllerPointers(activePanel, activePanel.root);
                 if (attached > 0) {
@@ -2630,7 +2958,15 @@ import { MSDF } from "@zappar/msdf-generator";
                     });
                     recordDiagnostic("debug", "Switched spatial UI controller pointers to A-Frame controller entities.", {
                         attached,
-                        removedNative
+                        removedNative,
+                        attempts: activePanel.controllerPointerAttachAttempts || 0,
+                        poseWaits: activePanel.controllerPointerPoseWaits || 0
+                    });
+                } else if (activePanel.controllerPointerAttachAttempts % CONTROLLER_POINTER_ATTACH_RETRY_LOG_INTERVAL === 0 &&
+                    activePanel.controllerPointerPoseWaits > 0) {
+                    recordDiagnostic("debug", "Waiting for stable A-Frame controller pose before attaching spatial UI pointer bridge.", {
+                        attempts: activePanel.controllerPointerAttachAttempts,
+                        poseWaits: activePanel.controllerPointerPoseWaits
                     });
                 }
             }

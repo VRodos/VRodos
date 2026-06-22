@@ -88,18 +88,56 @@ class EventTargetStub {
     }
 }
 
+class ClassListStub {
+    constructor() {
+        this.classes = new Set();
+    }
+
+    add(...names) {
+        names.forEach((name) => this.classes.add(name));
+    }
+
+    remove(...names) {
+        names.forEach((name) => this.classes.delete(name));
+    }
+
+    contains(name) {
+        return this.classes.has(name);
+    }
+
+    toggle(name, force) {
+        const shouldAdd = force === undefined ? !this.classes.has(name) : Boolean(force);
+        if (shouldAdd) {
+            this.classes.add(name);
+        } else {
+            this.classes.delete(name);
+        }
+        return shouldAdd;
+    }
+}
+
 class EntityStub extends EventTargetStub {
     constructor(id) {
         super();
         this.id = id || "";
+        this.tagName = "";
         this.attributes = {};
         this.components = {};
         this.children = [];
+        this.isConnected = true;
+        this.style = {};
+        this.classList = new ClassListStub();
         this.object3D = {
             position: new Vector3(),
             updateMatrixWorldCalled: 0,
+            visible: true,
+            children: [],
             updateMatrixWorld() {
                 this.updateMatrixWorldCalled += 1;
+            },
+            traverse(callback) {
+                callback(this);
+                this.children.forEach((child) => callback(child));
             },
             getWorldPosition: (target) => target.copy(this.object3D.position)
         };
@@ -143,6 +181,10 @@ class EntityStub extends EventTargetStub {
     hasAttribute(name) {
         return Object.prototype.hasOwnProperty.call(this.attributes, name);
     }
+
+    removeAttribute(name) {
+        delete this.attributes[name];
+    }
 }
 
 function createDocumentStub() {
@@ -156,6 +198,7 @@ function createDocumentStub() {
     documentStub.mozFullScreenElement = null;
     documentStub.msFullscreenElement = null;
     documentStub.body = new EntityStub("body");
+    documentStub.body.tagName = "body";
     documentStub.registerElement = (el) => {
         if (el && el.id) {
             elements.set(el.id, el);
@@ -179,9 +222,17 @@ function createDocumentStub() {
         if (selector === "[raycaster]") {
             return Array.from(elements.values()).filter((el) => el.hasAttribute && el.hasAttribute("raycaster"));
         }
+        if (selector.startsWith("#")) {
+            const match = elements.get(selector.slice(1));
+            return match ? [match] : [];
+        }
         return [];
     };
-    documentStub.createElement = (tagName) => new EntityStub(tagName);
+    documentStub.createElement = (tagName) => {
+        const el = new EntityStub(tagName);
+        el.tagName = tagName;
+        return el;
+    };
     return documentStub;
 }
 
@@ -194,7 +245,12 @@ function createVmContext() {
     windowStub.location = { search: "" };
     windowStub.innerWidth = 1200;
     windowStub.innerHeight = 600;
-    windowStub.setTimeout = setTimeout;
+    windowStub.setTimeout = (callback, ms, ...args) => {
+        if (Number(ms) > 50) {
+            return 0;
+        }
+        return setTimeout(callback, ms, ...args);
+    };
     windowStub.clearTimeout = clearTimeout;
     windowStub.performance = { now: () => Date.now() };
     windowStub.VRODOS_RUNTIME_SETTINGS_CONTRACT = { sceneSettings: {} };
@@ -232,10 +288,13 @@ function createVmContext() {
             }
         }
     };
+    windowStub.AFRAME = context.AFRAME;
+    windowStub.THREE = context.THREE;
     context.globalThis = context;
     vm.createContext(context);
 
     [
+        "assets/js/runtime/vrodos_runtime_overlay.js",
         "assets/js/runtime/master/components/vrodos_scene_settings.component.js",
         "assets/js/runtime/master/components/vrodos_navigation.component.js"
     ].forEach((relativePath) => {
@@ -243,6 +302,69 @@ function createVmContext() {
     });
 
     return context;
+}
+
+function createControllerRayReadinessFixture(context, hand = "left") {
+    const session = new EventTargetStub();
+    session.inputSources = [{
+        handedness: hand,
+        targetRayMode: "tracked-pointer",
+        gamepad: {},
+        gripSpace: {},
+        targetRaySpace: {},
+        profiles: ["oculus-touch-v3"]
+    }];
+
+    const scene = new EntityStub("aframe-scene-container");
+    scene.tagName = "a-scene";
+    scene.renderer = {
+        xr: {
+            getSession() {
+                return session;
+            }
+        }
+    };
+    context.document.registerElement(scene);
+
+    const controller = new EntityStub(hand === "right" ? "oculusRight" : "oculusLeft");
+    controller.sceneEl = scene;
+    controller.components.raycaster = {
+        data: {
+            direction: new Vector3(0, 0, -1),
+            showLine: false
+        },
+        raycaster: {
+            far: 100,
+            ray: {
+                origin: new Vector3(0.08, 1.2, -0.2),
+                direction: new Vector3(0.1, -0.1, -1)
+            }
+        }
+    };
+    controller.components["tracked-controls"] = {
+        data: { controller: hand === "right" ? 1 : 0, hand },
+        controller: {},
+        pose: {}
+    };
+    controller.components["meta-touch-controls"] = {
+        data: { hand },
+        controllerPresent: true,
+        controllerObject3D: {}
+    };
+    controller.components["laser-controls"] = {
+        data: { hand },
+        modelReady: true
+    };
+    controller.attributes["laser-controls"] = { hand };
+    controller.attributes.raycaster = { objects: ".raycastable" };
+    context.document.registerElement(controller);
+
+    return {
+        api: context.window.VRODOSControllerRayReadiness,
+        controller,
+        scene,
+        session
+    };
 }
 
 function createRendererState() {
@@ -539,7 +661,78 @@ async function testNavigationFinalizerDefersUntilInline(context) {
     assert(inline.nav.pendingImmersiveExitNavigationPosition === null, "pending handoff should clear after apply");
 }
 
+async function testControllerRayReadinessRequiresStableFrames(context) {
+    const { api, controller } = createControllerRayReadinessFixture(context, "left");
+    assert(api && typeof api.resolve === "function", "controller ray readiness API should be exposed");
+    api.reset();
+
+    const first = api.resolve(controller, { requiredStableFrames: 3, source: "test" });
+    assert(first.candidateReady === true, "controller ray should be a ready candidate on the first valid frame");
+    assert(first.ready === false, "controller ray should wait for stable frames before ready");
+    assert(first.stableFrames === 1, "first valid frame should count as one stable frame");
+
+    await wait(10);
+    const second = api.resolve(controller, { requiredStableFrames: 3, source: "test" });
+    assert(second.ready === false, "controller ray should still wait before the third stable frame");
+    assert(second.stableFrames === 2, "second valid frame should count as two stable frames");
+
+    await wait(10);
+    const third = api.resolve(controller, { requiredStableFrames: 3, source: "test" });
+    assert(third.ready === true, "controller ray should become ready after three stable frames");
+    assert(third.reason === "stable-controller-ray", "ready controller ray should report a stable reason");
+    assert(context.window.__vrodosLastControllerRayReadiness.left.ready === true, "readiness diagnostics should be keyed by hand");
+}
+
+async function testControllerRayReadinessResetsOnControllerEvents(context) {
+    const { api, controller, session } = createControllerRayReadinessFixture(context, "right");
+    api.reset();
+
+    for (let i = 0; i < 3; i += 1) {
+        await wait(10);
+        api.resolve(controller, { requiredStableFrames: 3, source: "test" });
+    }
+    assert(api.resolve(controller, { requiredStableFrames: 3, source: "test" }).ready === true, "controller ray should start ready before dirty events");
+
+    controller.dispatchEvent({ type: "controllermodelready", detail: { name: "meta-touch-controls" } });
+    const afterModelEvent = api.resolve(controller, { requiredStableFrames: 3, source: "test" });
+    assert(afterModelEvent.ready === false, "controller model event should reset stable ray readiness");
+    assert(afterModelEvent.stableFrames === 1, "controller model event should restart stable-frame counting");
+    assert(afterModelEvent.lastDirtyReason === "controllermodelready:meta-touch-controls", "dirty reason should identify controller model event");
+
+    await wait(10);
+    api.resolve(controller, { requiredStableFrames: 3, source: "test" });
+    await wait(10);
+    assert(api.resolve(controller, { requiredStableFrames: 3, source: "test" }).ready === true, "controller ray should recover after new stable frames");
+
+    session.dispatchEvent({ type: "inputsourceschange" });
+    const afterInputChange = api.resolve(controller, { requiredStableFrames: 3, source: "test" });
+    assert(afterInputChange.ready === false, "input source changes should reset stable ray readiness");
+    assert(afterInputChange.lastDirtyReason === "inputsourceschange", "dirty reason should identify input source changes");
+}
+
+function testControllerRaySourceContracts() {
+    const navigationSource = readFileSync(resolve(root, "assets/js/runtime/master/components/vrodos_navigation.component.js"), "utf8");
+    const spatialSource = readFileSync(resolve(root, "assets/js/runtime/spatial-ui/vrodos_spatial_ui.js"), "utf8");
+    const compilerSource = readFileSync(resolve(root, "includes/class-vrodos-compiler-manager.php"), "utf8");
+
+    assert(navigationSource.includes("VRODOSControllerRayReadiness"), "navigation must use the shared controller ray readiness gate");
+    assert(!/setAttribute\(\s*['"]line['"]/.test(navigationSource), "navigation must not inject A-Frame controller line attributes");
+    assert(!navigationSource.includes("setLineGeometryEndpoints"), "navigation must not rewrite controller line geometry");
+    assert(!navigationSource.includes("resetAFrameControllerRayVisual"), "navigation must not recreate controller ray visuals manually");
+
+    assert(spatialSource.includes("canKeepStableRayThroughReadinessDrop"), "spatial UI must keep a valid stable A-Frame ray through short readiness drops");
+    assert(spatialSource.includes("stableAFrameRaySeen"), "spatial UI diagnostics must expose stable A-Frame ray state");
+    assert(spatialSource.includes("controllerRayReadinessBypassed"), "spatial UI diagnostics must expose readiness bypass state");
+
+    assert(compilerSource.includes("$a_entity_oc_right->setAttribute( 'laser-controls', 'hand: right' )"), "compiler must keep laser-controls as right controller owner");
+    assert(compilerSource.includes("$a_entity_oc_left->setAttribute( 'laser-controls', 'hand: left' )"), "compiler must keep laser-controls as left controller owner");
+    assert(!compilerSource.includes("meta-touch-controls"), "compiler must not emit explicit meta-touch-controls beside laser-controls");
+}
+
 async function main() {
+    testControllerRaySourceContracts();
+    await testControllerRayReadinessRequiresStableFrames(createVmContext());
+    await testControllerRayReadinessResetsOnControllerEvents(createVmContext());
     await testAFrameExitRestore(createVmContext());
     await testWebXrSessionEndRestore(createVmContext());
     await testQuestResumeRestore(createVmContext());

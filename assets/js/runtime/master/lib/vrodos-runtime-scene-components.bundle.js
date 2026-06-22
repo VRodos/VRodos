@@ -10,6 +10,8 @@
     const SCENE_RAY_HIT_DOT_RENDER_ORDER = OVERLAY_RENDER_BASE - 20;
     const SCENE_RAY_HIT_DOT_RADIUS = 0.035;
     const SCENE_RAY_HIT_DOT_COLOR = 16762967;
+    const CONTROLLER_RAY_READY_STABLE_FRAMES = 3;
+    const CONTROLLER_RAY_EPSILON = 1e-6;
     const RAYCASTER_SELECTORS = [
       "#cursor",
       "#oculusRight",
@@ -77,6 +79,310 @@
       const scene = queryScene();
       return document.getElementById("cameraA") || scene && scene.camera && scene.camera.el || document.querySelector("[camera]") || document.querySelector("a-camera");
     }
+    function createControllerRayReadinessApi() {
+      const states = /* @__PURE__ */ new Map();
+      const controllerListenerElements = /* @__PURE__ */ new WeakSet();
+      let sceneListenersAttachedTo = null;
+      let sessionListenersAttachedTo = null;
+      function stateForHand(hand) {
+        const key = hand || "unknown";
+        if (!states.has(key)) {
+          states.set(key, {
+            stableFrames: 0,
+            lastReadyCandidate: false,
+            lastStableFrameAt: 0,
+            lastDirtyReason: "init",
+            lastDirtyAt: Date.now()
+          });
+        }
+        return states.get(key);
+      }
+      function markDirty(reason, hand) {
+        const resetState = (state) => {
+          state.stableFrames = 0;
+          state.lastReadyCandidate = false;
+          state.lastStableFrameAt = 0;
+          state.lastDirtyReason = reason || "dirty";
+          state.lastDirtyAt = Date.now();
+        };
+        if (hand) {
+          resetState(stateForHand(hand));
+          return;
+        }
+        ["left", "right", "unknown"].forEach((key) => resetState(stateForHand(key)));
+      }
+      function resolveHand(el) {
+        if (!el) {
+          return "";
+        }
+        const id = el.id || "";
+        if (/right/i.test(id)) {
+          return "right";
+        }
+        if (/left/i.test(id)) {
+          return "left";
+        }
+        const componentNames = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
+        for (let i = 0; i < componentNames.length; i += 1) {
+          const component = el.components && el.components[componentNames[i]];
+          const hand = component && component.data && component.data.hand;
+          if (hand === "left" || hand === "right") {
+            return hand;
+          }
+        }
+        const attrs = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
+        for (let i = 0; i < attrs.length; i += 1) {
+          const value = el.getAttribute && el.getAttribute(attrs[i]);
+          const hand = value && typeof value === "object" ? value.hand : "";
+          if (hand === "left" || hand === "right") {
+            return hand;
+          }
+        }
+        return "";
+      }
+      function currentInputSources(scene) {
+        const xr = scene && scene.renderer && scene.renderer.xr;
+        const session = xr && typeof xr.getSession === "function" ? xr.getSession() : null;
+        return session && session.inputSources ? Array.from(session.inputSources) : [];
+      }
+      function resolvePhysicalInputSource(scene, hand) {
+        const inputSources = currentInputSources(scene);
+        for (let i = 0; i < inputSources.length; i += 1) {
+          const source = inputSources[i];
+          if (!source || hand && source.handedness && source.handedness !== hand) {
+            continue;
+          }
+          if (source.targetRayMode === "tracked-pointer" && (source.gamepad || source.gripSpace)) {
+            return { source, inputSources };
+          }
+        }
+        return { source: null, inputSources };
+      }
+      function componentSummary(component) {
+        if (!component) {
+          return {
+            present: false,
+            controllerPresent: false,
+            controllerConnected: false,
+            hasController: false,
+            hasPose: false,
+            modelReady: false,
+            dataController: null
+          };
+        }
+        const dataController = component.data && Number(component.data.controller);
+        return {
+          present: true,
+          controllerPresent: component.controllerPresent === true,
+          controllerConnected: component.controllerConnected === true,
+          hasController: Boolean(component.controller),
+          hasPose: Boolean(component.pose),
+          modelReady: component.modelReady === true || Boolean(component.controllerObject3D),
+          dataController: Number.isFinite(dataController) ? dataController : null
+        };
+      }
+      function countLineObjects(el) {
+        let count = 0;
+        if (!el || !el.object3D || typeof el.object3D.traverse !== "function") {
+          return count;
+        }
+        el.object3D.traverse((object) => {
+          if (object && (object.isLine || object.isLineSegments || object.type === "Line" || object.type === "LineSegments")) {
+            count += 1;
+          }
+        });
+        return count;
+      }
+      function vectorLengthSq(vector) {
+        if (!vector) {
+          return 0;
+        }
+        if (typeof vector.lengthSq === "function") {
+          return vector.lengthSq();
+        }
+        const x = Number(vector.x) || 0;
+        const y = Number(vector.y) || 0;
+        const z = Number(vector.z) || 0;
+        return x * x + y * y + z * z;
+      }
+      function describeVector(vector) {
+        if (!vector) {
+          return null;
+        }
+        const round = (value) => Math.round((Number(value) || 0) * 1e4) / 1e4;
+        return {
+          x: round(vector.x),
+          y: round(vector.y),
+          z: round(vector.z)
+        };
+      }
+      function resolveRayInfo(el) {
+        const raycasterComponent = el && el.components && el.components.raycaster;
+        const raycaster = raycasterComponent && raycasterComponent.raycaster;
+        const ray = raycaster && raycaster.ray;
+        const data = raycasterComponent && raycasterComponent.data;
+        const rayDirectionValid = Boolean(ray && ray.direction && vectorLengthSq(ray.direction) > CONTROLLER_RAY_EPSILON);
+        const dataDirectionValid = Boolean(data && data.direction && vectorLengthSq(data.direction) > CONTROLLER_RAY_EPSILON);
+        return {
+          hasComponent: Boolean(raycasterComponent),
+          hasRaycaster: Boolean(raycaster),
+          rayDirectionValid,
+          dataDirectionValid,
+          showLine: Boolean(data && data.showLine),
+          far: raycaster && Number.isFinite(Number(raycaster.far)) ? Number(raycaster.far) : null,
+          rayOrigin: ray ? describeVector(ray.origin) : null,
+          rayDirection: ray ? describeVector(ray.direction) : null,
+          dataOrigin: data ? describeVector(data.origin) : null,
+          dataDirection: data ? describeVector(data.direction) : null
+        };
+      }
+      function resolveComponentInfo(el) {
+        const components = el && el.components || {};
+        return {
+          tracked: componentSummary(components["tracked-controls"]),
+          meta: componentSummary(components["meta-touch-controls"]),
+          oculus: componentSummary(components["oculus-touch-controls"]),
+          laser: componentSummary(components["laser-controls"]),
+          generic: componentSummary(components["generic-tracked-controller-controls"])
+        };
+      }
+      function componentStackReady(info) {
+        const trackedPoseReady = info.tracked.present && info.tracked.hasController && info.tracked.hasPose;
+        const controllerPresent = info.meta.controllerPresent || info.oculus.controllerPresent || info.generic.controllerPresent || info.tracked.controllerPresent || Number.isFinite(info.tracked.dataController) && info.tracked.dataController >= 0;
+        const modelReady = !info.laser.present || info.laser.modelReady || info.meta.modelReady || info.oculus.modelReady || info.generic.modelReady;
+        return {
+          ready: Boolean(trackedPoseReady && controllerPresent && modelReady),
+          trackedPoseReady,
+          controllerPresent,
+          modelReady
+        };
+      }
+      function controllerReason(inputSource, rayInfo, stack) {
+        if (!inputSource) {
+          return "waiting-webxr-input-source";
+        }
+        if (!stack.trackedPoseReady) {
+          return "waiting-tracked-controls-pose";
+        }
+        if (!stack.controllerPresent) {
+          return "waiting-aframe-controller-present";
+        }
+        if (!stack.modelReady) {
+          return "waiting-controller-model-ready";
+        }
+        if (!rayInfo.hasComponent || !rayInfo.hasRaycaster || !rayInfo.rayDirectionValid || !rayInfo.dataDirectionValid) {
+          return "waiting-raycaster-ray";
+        }
+        return "warming-controller-ray";
+      }
+      function ensureSceneListeners(scene) {
+        if (!scene || sceneListenersAttachedTo === scene) {
+          return;
+        }
+        if (sceneListenersAttachedTo && sceneListenersAttachedTo.removeEventListener) {
+          ["enter-vr", "exit-vr", "controllersupdated"].forEach((eventName) => {
+            sceneListenersAttachedTo.removeEventListener(eventName, markAllDirtyFromEvent);
+          });
+        }
+        sceneListenersAttachedTo = scene;
+        ["enter-vr", "exit-vr", "controllersupdated"].forEach((eventName) => {
+          scene.addEventListener(eventName, markAllDirtyFromEvent);
+        });
+      }
+      function markAllDirtyFromEvent(event) {
+        markDirty(event && event.type || "scene-event");
+      }
+      function ensureSessionListener(scene) {
+        const xr = scene && scene.renderer && scene.renderer.xr;
+        const session = xr && typeof xr.getSession === "function" ? xr.getSession() : null;
+        if (!session || sessionListenersAttachedTo === session) {
+          return;
+        }
+        if (sessionListenersAttachedTo && sessionListenersAttachedTo.removeEventListener) {
+          sessionListenersAttachedTo.removeEventListener("inputsourceschange", markAllDirtyFromEvent);
+        }
+        sessionListenersAttachedTo = session;
+        session.addEventListener("inputsourceschange", markAllDirtyFromEvent);
+      }
+      function ensureControllerListeners(el) {
+        if (!el || controllerListenerElements.has(el) || !el.addEventListener) {
+          return;
+        }
+        controllerListenerElements.add(el);
+        ["controllerconnected", "controllerdisconnected", "controllermodelready"].forEach((eventName) => {
+          el.addEventListener(eventName, (event) => {
+            const detailName = event && event.detail && event.detail.name || "";
+            markDirty(`${eventName}${detailName ? `:${detailName}` : ""}`, resolveHand(el));
+          });
+        });
+      }
+      function resolve(controllerEl, options) {
+        const scene = controllerEl && controllerEl.sceneEl || queryScene();
+        ensureSceneListeners(scene);
+        ensureSessionListener(scene);
+        ensureControllerListeners(controllerEl);
+        const hand = resolveHand(controllerEl);
+        const state = stateForHand(hand);
+        const stableFrameTarget = Math.max(1, Number(options && options.requiredStableFrames) || CONTROLLER_RAY_READY_STABLE_FRAMES);
+        const input = resolvePhysicalInputSource(scene, hand);
+        const rayInfo = resolveRayInfo(controllerEl);
+        const components = resolveComponentInfo(controllerEl);
+        const stack = componentStackReady(components);
+        const lineCount = countLineObjects(controllerEl);
+        const candidateReady = Boolean(input.source && stack.ready && rayInfo.hasComponent && rayInfo.hasRaycaster && rayInfo.rayDirectionValid && rayInfo.dataDirectionValid);
+        const now = Date.now();
+        if (candidateReady) {
+          if (!state.lastReadyCandidate || now - state.lastStableFrameAt > 8) {
+            state.stableFrames += 1;
+            state.lastStableFrameAt = now;
+          }
+        } else {
+          state.stableFrames = 0;
+          state.lastStableFrameAt = 0;
+        }
+        state.lastReadyCandidate = candidateReady;
+        const ready = candidateReady && state.stableFrames >= stableFrameTarget;
+        const status = {
+          ready,
+          candidateReady,
+          phase: ready ? "ready" : "waiting",
+          reason: ready ? "stable-controller-ray" : controllerReason(input.source, rayInfo, stack),
+          hand,
+          stableFrames: state.stableFrames,
+          requiredStableFrames: stableFrameTarget,
+          inputSourceCount: input.inputSources.length,
+          inputSource: input.source ? {
+            handedness: input.source.handedness || "",
+            targetRayMode: input.source.targetRayMode || "",
+            hasGamepad: Boolean(input.source.gamepad),
+            hasGripSpace: Boolean(input.source.gripSpace),
+            hasTargetRaySpace: Boolean(input.source.targetRaySpace),
+            profiles: Array.from(input.source.profiles || [])
+          } : null,
+          ray: rayInfo,
+          components,
+          stack,
+          lineCount,
+          objectVisible: Boolean(controllerEl && controllerEl.object3D && controllerEl.object3D.visible),
+          lastDirtyReason: state.lastDirtyReason,
+          lastDirtyAt: state.lastDirtyAt,
+          timestamp: now
+        };
+        window.__vrodosLastControllerRayReadiness = window.__vrodosLastControllerRayReadiness || {};
+        window.__vrodosLastControllerRayReadiness[hand || "unknown"] = status;
+        return status;
+      }
+      function reset() {
+        states.clear();
+        markDirty("reset");
+      }
+      return {
+        markDirty,
+        resolve,
+        reset
+      };
+    }
+    window.VRODOSControllerRayReadiness = window.VRODOSControllerRayReadiness || createControllerRayReadinessApi();
     function isImmersiveVrActive() {
       const scene = queryScene();
       const xr = scene && scene.renderer && scene.renderer.xr;
@@ -2879,6 +3185,15 @@
     const normalizeLevels = namespace.normalizeLevels;
     const VR_PROMPT_RETRY_DELAY_MS = 250;
     const VR_PROMPT_RETRY_LIMIT = 240;
+    const VR_PROMPT_XR_OPEN_DELAYS_MS = [0, 80, 180, 400, 900];
+    const VR_PANEL_WIDTH = 1.95;
+    const VR_PANEL_HEIGHT = 1.16;
+    const VR_PANEL_DISTANCE = 2.05;
+    const VR_PANEL_VERTICAL_OFFSET = -0.04;
+    const VR_TITLE_SIZE = 34;
+    const VR_KICKER_SIZE = 24;
+    const VR_LEVEL_BUTTON_TEXT_SIZE = 34;
+    const VR_START_BUTTON_TEXT_SIZE = 26;
     function getElementLevels(element) {
       const assessmentLevels = element.getAttribute("data-assessment-levels");
       const genericLevels = element.getAttribute("data-immerse-cefr-levels");
@@ -2925,11 +3240,8 @@
         element.classList.remove("raycastable");
       }
     }
-    function isLoaderOverlayBlockingPrompt(overlay, startedAt) {
+    function isLoaderOverlayVisible(overlay) {
       if (!overlay || !overlay.isConnected) {
-        return false;
-      }
-      if (performance.now() - startedAt > 12e3) {
         return false;
       }
       const style = window.getComputedStyle ? window.getComputedStyle(overlay) : overlay.style;
@@ -2957,7 +3269,12 @@
         presentationEventsBound: false,
         vrPromptRetryCount: 0,
         spatialUiLoadPending: false,
-        xrSessionEventsBound: false
+        spatialUiFontWarmupPending: false,
+        spatialUiFontsReady: false,
+        vrLevelButtons: {},
+        vrStartButton: null,
+        xrSessionEventsBound: false,
+        pendingVrPromptLock: false
       };
       runtime.register = function(element) {
         if (!element || runtime.elements.includes(element)) {
@@ -3104,6 +3421,33 @@
           host.style.pointerEvents = "none";
         }
       };
+      runtime.setPendingVrPromptLock = function(locked) {
+        const overlayApi = window.VRODOSRuntimeOverlay || null;
+        if (!overlayApi || typeof overlayApi.lockSceneInteraction !== "function") {
+          return;
+        }
+        const shouldLock = Boolean(locked);
+        if (runtime.pendingVrPromptLock === shouldLock) {
+          return;
+        }
+        runtime.pendingVrPromptLock = shouldLock;
+        overlayApi.lockSceneInteraction(shouldLock, { preserveLookInVr: true });
+        recordVrDiagnostic("debug", "CEFR VR pending prompt interaction lock changed", {
+          locked: shouldLock
+        });
+      };
+      runtime.isSceneReadyForPrompt = function() {
+        const scene = document.querySelector("a-scene");
+        if (!scene || !scene.hasLoaded) {
+          return false;
+        }
+        const loader = scene.components && scene.components["vrodos-scene-loader"];
+        if (loader && loader.isReady !== true) {
+          return false;
+        }
+        const loaderOverlay = document.getElementById("vrodos-scene-loader-overlay");
+        return !isLoaderOverlayVisible(loaderOverlay);
+      };
       runtime.selectLevel = function(level) {
         runtime.selectedLevel = normalizeLevel(level);
         Object.entries(runtime.levelButtons || {}).forEach(([buttonLevel, button]) => {
@@ -3124,63 +3468,49 @@
         if (!panelApi) {
           return;
         }
+        runtime.vrLevelButtons = {};
+        runtime.vrStartButton = null;
         const frame = panelApi.frame({
           title: "Choose your level",
           showClose: false,
           headerColor: "#272727",
-          headerHeight: 128,
-          titleSize: 40,
-          paddingX: 72,
-          paddingY: 42,
-          gapY: 26,
-          footerHeight: 112,
-          footerPaddingBottom: 42
+          headerHeight: 118,
+          titleSize: VR_TITLE_SIZE,
+          titleLineHeight: "116%",
+          titleWordBreak: "keep-all",
+          paddingX: 64,
+          paddingY: 34,
+          gapY: 22,
+          footerHeight: 106,
+          footerPaddingBottom: 32,
+          primary: runtime.vrStartButtonOptions()
         });
+        runtime.vrStartButton = frame.primaryButton || null;
         panelApi.text(frame.content, {
           text: "CEFR Level",
           color: "#2563eb",
-          fontSize: 32,
+          fontSize: VR_KICKER_SIZE,
           fontWeight: 800,
+          lineHeight: "118%",
           whiteSpace: "normal"
         });
         const levelRow = panelApi.row(frame.content, {
-          gapColumn: 24,
+          gapColumn: 20,
           justifyContent: "center",
           alignItems: "stretch",
           width: "100%",
-          marginTop: 10
+          minHeight: 90
         });
         CEFR_LEVELS.forEach((level, index) => {
-          const active = level === runtime.selectedLevel;
-          const label = String(level || "").trim() || "L" + (index + 1);
-          panelApi.button(levelRow, {
-            label,
-            variant: active ? "positive" : "secondary",
-            width: 156,
-            height: 92,
-            textSize: 40,
-            fontWeight: 800,
-            textColor: active ? "#ffffff" : "#0f172a",
-            onClick: function() {
-              runtime.selectedLevel = level;
-              runtime.renderVrPrompt(panelApi);
+          const button = panelApi.button(levelRow, Object.assign(
+            runtime.vrLevelButtonOptions(level, index),
+            {
+              onClick: function() {
+                runtime.selectVrLevel(level, panelApi);
+              }
             }
-          });
-        });
-        panelApi.button(frame.footer, {
-          label: "Start experience",
-          variant: "primary",
-          disabled: !runtime.selectedLevel,
-          width: 380,
-          height: 74,
-          textSize: 30,
-          onClick: function() {
-            if (!runtime.selectedLevel) {
-              return;
-            }
-            runtime.applyLevel(runtime.selectedLevel);
-            runtime.hidePrompt();
-          }
+          ));
+          runtime.vrLevelButtons[level] = button;
         });
         if (typeof panelApi.refreshTargets === "function") {
           panelApi.refreshTargets();
@@ -3189,6 +3519,106 @@
           selectedLevel: runtime.selectedLevel || "",
           panelApi: panelApi.__spatialUi ? "spatial-ui" : "unavailable"
         });
+      };
+      runtime.vrLevelButtonOptions = function(level, index) {
+        const active = level === runtime.selectedLevel;
+        return {
+          label: String(level || "").trim() || "L" + (index + 1),
+          variant: active ? "positive" : "secondary",
+          width: 148,
+          height: 88,
+          minHeight: 88,
+          textSize: VR_LEVEL_BUTTON_TEXT_SIZE,
+          fontWeight: 800,
+          textColor: active ? "#ffffff" : "#0f172a"
+        };
+      };
+      runtime.vrStartButtonOptions = function() {
+        return {
+          label: "Start experience",
+          variant: "primary",
+          disabled: !runtime.selectedLevel,
+          width: 360,
+          height: 66,
+          textSize: VR_START_BUTTON_TEXT_SIZE,
+          fontWeight: 800,
+          textColor: runtime.selectedLevel ? "#ffffff" : "rgba(39,39,39,0.35)",
+          onClick: function() {
+            if (!runtime.selectedLevel) {
+              return;
+            }
+            runtime.applyLevel(runtime.selectedLevel);
+            runtime.hidePrompt();
+          }
+        };
+      };
+      runtime.updateVrPromptSelection = function(panelApi, previousLevel) {
+        if (!panelApi || typeof panelApi.updateButton !== "function") {
+          runtime.renderVrPrompt(panelApi);
+          return;
+        }
+        const levelsToUpdate = /* @__PURE__ */ new Set();
+        if (previousLevel) {
+          levelsToUpdate.add(previousLevel);
+        }
+        if (runtime.selectedLevel) {
+          levelsToUpdate.add(runtime.selectedLevel);
+        }
+        levelsToUpdate.forEach((level) => {
+          const index = CEFR_LEVELS.indexOf(level);
+          const button = runtime.vrLevelButtons[level];
+          if (button && index > -1) {
+            panelApi.updateButton(button, runtime.vrLevelButtonOptions(level, index));
+          }
+        });
+        if (runtime.vrStartButton && Boolean(previousLevel) !== Boolean(runtime.selectedLevel)) {
+          panelApi.updateButton(runtime.vrStartButton, runtime.vrStartButtonOptions());
+        }
+        if (typeof panelApi.refreshTargets === "function") {
+          panelApi.refreshTargets();
+        }
+        recordVrDiagnostic("debug", "updated CEFR VR prompt selection", {
+          selectedLevel: runtime.selectedLevel || "",
+          panelApi: panelApi.__spatialUi ? "spatial-ui" : "unavailable"
+        });
+      };
+      runtime.selectVrLevel = function(level, panelApi) {
+        const nextLevel = normalizeLevel(level);
+        if (!nextLevel || runtime.selectedLevel === nextLevel) {
+          return;
+        }
+        const previousLevel = runtime.selectedLevel;
+        runtime.selectedLevel = nextLevel;
+        runtime.updateVrPromptSelection(panelApi || runtime.vrPanelApi, previousLevel);
+      };
+      runtime.ensureSpatialUiFontsReady = function(spatialUi) {
+        if (runtime.spatialUiFontsReady) {
+          return true;
+        }
+        if (!spatialUi || typeof spatialUi.prewarm !== "function") {
+          runtime.spatialUiFontsReady = true;
+          return true;
+        }
+        if (runtime.spatialUiFontWarmupPending) {
+          return true;
+        }
+        const prewarmResult = spatialUi.prewarm();
+        if (!prewarmResult || typeof prewarmResult.then !== "function") {
+          runtime.spatialUiFontsReady = true;
+          return true;
+        }
+        runtime.spatialUiFontWarmupPending = true;
+        prewarmResult.then(() => {
+          runtime.spatialUiFontsReady = true;
+        }).catch((error) => {
+          runtime.spatialUiFontsReady = true;
+          recordVrDiagnostic("warn", "CEFR VR prompt font prewarm failed; opening with spatial UI fallback font", {
+            error: error && error.message || String(error)
+          });
+        }).finally(() => {
+          runtime.spatialUiFontWarmupPending = false;
+        });
+        return true;
       };
       runtime.showVrPrompt = function() {
         const overlayApi = window.VRODOSRuntimeOverlay || null;
@@ -3202,19 +3632,20 @@
         }
         runtime.hideDomPrompt();
         if (runtime.vrPromptActive && runtime.vrPanelApi) {
-          runtime.renderVrPrompt(runtime.vrPanelApi);
           return true;
         }
-        runtime.vrPromptActive = true;
         const panelOptions = {
           id: "vrodos-immerse-cefr-vr-overlay",
-          width: 1.85,
-          height: 1.05,
-          distance: 1.95,
-          verticalOffset: -0.2,
-          topAtEyeLevel: true,
-          anchorRefreshFrames: 8,
-          lockInteraction: false,
+          width: VR_PANEL_WIDTH,
+          height: VR_PANEL_HEIGHT,
+          distance: VR_PANEL_DISTANCE,
+          verticalOffset: VR_PANEL_VERTICAL_OFFSET,
+          centerAtEyeLevel: true,
+          anchorRefreshFrames: 2,
+          lockInteraction: true,
+          trimControllerRays: true,
+          showRayHitDot: true,
+          blockSceneRaycasts: true,
           cleanup: function() {
             runtime.vrPromptActive = false;
             runtime.vrPanelApi = null;
@@ -3249,9 +3680,13 @@
           });
           return false;
         }
+        runtime.ensureSpatialUiFontsReady(spatialUi);
+        runtime.vrPromptActive = true;
         runtime.vrPanelApi = spatialUi.openPanel(panelOptions);
         if (!runtime.vrPanelApi) {
           runtime.vrPromptActive = false;
+        } else {
+          runtime.pendingVrPromptLock = false;
         }
         recordVrDiagnostic(runtime.vrPanelApi || runtime.vrPromptRetryCount === 0 || runtime.vrPromptRetryCount % 20 === 0 ? runtime.vrPanelApi ? "debug" : "warn" : "debug", "CEFR VR prompt open result", {
           opened: Boolean(runtime.vrPanelApi),
@@ -3260,13 +3695,23 @@
         return Boolean(runtime.vrPanelApi);
       };
       runtime.scheduleVrPromptRetry = function(delayMs) {
+        const parsedDelay = Number(delayMs);
+        const delay = Number.isFinite(parsedDelay) ? Math.max(0, parsedDelay) : VR_PROMPT_RETRY_DELAY_MS;
         window.setTimeout(() => {
           if (!runtime.levelApplied && runtime.isImmersiveVrActive()) {
             runtime.showPrompt();
           }
-        }, Number(delayMs) || VR_PROMPT_RETRY_DELAY_MS);
+        }, delay);
       };
       runtime.showPrompt = function() {
+        if (!runtime.isSceneReadyForPrompt()) {
+          if (runtime.isImmersiveVrActive()) {
+            runtime.hideDomPrompt();
+            runtime.setPendingVrPromptLock(true);
+            runtime.scheduleVrPromptRetry(120);
+          }
+          return;
+        }
         if (runtime.showVrPrompt()) {
           runtime.vrPromptRetryCount = 0;
           return;
@@ -3306,6 +3751,7 @@
           runtime.vrPromptActive = false;
           runtime.vrPanelApi = null;
         }
+        runtime.setPendingVrPromptLock(false);
         runtime.hideDomPrompt();
       };
       runtime.bindPresentationEvents = function() {
@@ -3323,7 +3769,7 @@
             if (!runtime.levelApplied && runtime.elements.length) {
               runtime.vrPromptRetryCount = 0;
               runtime.hideDomPrompt();
-              [0, 250, 750, 1500, 3e3].forEach((delay) => {
+              VR_PROMPT_XR_OPEN_DELAYS_MS.forEach((delay) => {
                 runtime.scheduleVrPromptRetry(delay);
               });
             }
@@ -3335,6 +3781,8 @@
             if (!runtime.levelApplied && runtime.vrPromptActive) {
               runtime.hidePrompt();
               window.setTimeout(() => runtime.showPrompt(), 120);
+            } else {
+              runtime.setPendingVrPromptLock(false);
             }
           });
           scene.addEventListener("loaded", () => {
@@ -3371,11 +3819,8 @@
         }
         runtime.promptScheduled = true;
         runtime.bindPresentationEvents();
-        const startedAt = performance.now();
         const waitForSceneReady = () => {
-          const scene = document.querySelector("a-scene");
-          const loaderOverlay = document.getElementById("vrodos-scene-loader-overlay");
-          if (!scene || !scene.hasLoaded || isLoaderOverlayBlockingPrompt(loaderOverlay, startedAt)) {
+          if (!runtime.isSceneReadyForPrompt()) {
             window.setTimeout(waitForSceneReady, 180);
             return;
           }
