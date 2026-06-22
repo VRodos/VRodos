@@ -722,6 +722,8 @@ function testControllerRaySourceContracts() {
     assert(!navigationSource.includes("immersiveTargetRayLines"), "navigation must not keep display-only target-ray state");
     assert(!overlaySource.includes("setOverlayRaycastMode"), "runtime overlay must not expose legacy raycaster retarget mode");
     assert(!overlaySource.includes("raycasterRestore"), "runtime overlay must not retain legacy raycaster retarget restore state");
+    assert(!overlaySource.includes("normalizeVrControllers"), "runtime overlay must not expose legacy controller normalization mutations");
+    assert(!overlaySource.includes("blink-controls"), "runtime overlay must not strip legacy controller controls at startup");
 
     assert(spatialSource.includes("canKeepStableRayThroughReadinessDrop"), "spatial UI must keep a valid stable A-Frame ray through short readiness drops");
     assert(spatialSource.includes("stableAFrameRaySeen"), "spatial UI diagnostics must expose stable A-Frame ray state");

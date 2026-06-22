@@ -656,20 +656,6 @@
         raycasters: getRaycasterDiagnostics()
       };
     }
-    function normalizeVrControllerEntities() {
-      const realControllers = [
-        document.querySelector("#oculusLeft"),
-        document.querySelector("#oculusRight")
-      ].filter(Boolean);
-      realControllers.forEach((el) => {
-        if (el.hasAttribute && el.hasAttribute("blink-controls")) {
-          el.removeAttribute("blink-controls");
-        }
-        if (el.hasAttribute && el.hasAttribute("visible")) {
-          el.removeAttribute("visible");
-        }
-      });
-    }
     function controllerClickBridgeTargets() {
       const selectors = [
         "#oculusRight",
@@ -1105,7 +1091,6 @@
       },
       getSceneDiagnostics,
       recordDiagnostic,
-      normalizeVrControllers: normalizeVrControllerEntities,
       ensureSpatialUiRuntime,
       prewarmSpatialUiRuntime,
       shouldUseVrPanel: function() {
@@ -1196,15 +1181,14 @@
       }
     };
     window.VRODOSRuntimeOverlay = api;
-    let controllerNormalizationAttempts = 0;
-    function normalizeVrControllersWhenReady() {
-      normalizeVrControllerEntities();
+    let controllerRuntimeInstallAttempts = 0;
+    function installControllerRuntimeWhenReady() {
       installControllerClickBridge();
       installNativeWebXRClickBridge();
       ensureSceneRayFeedbackComponent();
-      controllerNormalizationAttempts += 1;
-      if (controllerNormalizationAttempts < 24) {
-        window.setTimeout(normalizeVrControllersWhenReady, 250);
+      controllerRuntimeInstallAttempts += 1;
+      if (controllerRuntimeInstallAttempts < 24) {
+        window.setTimeout(installControllerRuntimeWhenReady, 250);
       }
     }
     function bindControllerBridgeLifecycle() {
@@ -1213,22 +1197,22 @@
         return Boolean(scene);
       }
       scene.__vrodosControllerBridgeLifecycleBound = true;
-      scene.addEventListener("enter-vr", normalizeVrControllersWhenReady);
-      scene.addEventListener("loaded", normalizeVrControllersWhenReady);
+      scene.addEventListener("enter-vr", installControllerRuntimeWhenReady);
+      scene.addEventListener("loaded", installControllerRuntimeWhenReady);
       return true;
     }
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => {
         bindControllerBridgeLifecycle();
-        normalizeVrControllersWhenReady();
+        installControllerRuntimeWhenReady();
         window.setTimeout(maybePreloadSpatialUiRuntime, 250);
       }, { once: true });
     } else {
       bindControllerBridgeLifecycle();
-      normalizeVrControllersWhenReady();
+      installControllerRuntimeWhenReady();
       window.setTimeout(maybePreloadSpatialUiRuntime, 250);
     }
-    window.addEventListener("load", normalizeVrControllersWhenReady, { once: true });
+    window.addEventListener("load", installControllerRuntimeWhenReady, { once: true });
     window.addEventListener("load", () => window.setTimeout(maybePreloadSpatialUiRuntime, 250), { once: true });
     window.setTimeout(bindControllerBridgeLifecycle, 500);
   })();
