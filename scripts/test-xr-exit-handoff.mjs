@@ -714,6 +714,8 @@ function testControllerRaySourceContracts() {
     const navigationSource = readFileSync(resolve(root, "assets/js/runtime/master/components/vrodos_navigation.component.js"), "utf8");
     const spatialSource = readFileSync(resolve(root, "assets/js/runtime/spatial-ui/vrodos_spatial_ui.js"), "utf8");
     const compilerSource = readFileSync(resolve(root, "includes/class-vrodos-compiler-manager.php"), "utf8");
+    const cefrSource = readFileSync(resolve(root, "assets/js/runtime/assessment/assessment-cefr-runtime.js"), "utf8");
+    const overlaySource = readFileSync(resolve(root, "assets/js/runtime/vrodos_runtime_overlay.js"), "utf8");
 
     assert(navigationSource.includes("VRODOSControllerRayReadiness"), "navigation must use the shared controller ray readiness gate");
     assert(!/setAttribute\(\s*['"]line['"]/.test(navigationSource), "navigation must not inject A-Frame controller line attributes");
@@ -727,6 +729,17 @@ function testControllerRaySourceContracts() {
     assert(compilerSource.includes("$a_entity_oc_right->setAttribute( 'laser-controls', 'hand: right' )"), "compiler must keep laser-controls as right controller owner");
     assert(compilerSource.includes("$a_entity_oc_left->setAttribute( 'laser-controls', 'hand: left' )"), "compiler must keep laser-controls as left controller owner");
     assert(!compilerSource.includes("meta-touch-controls"), "compiler must not emit explicit meta-touch-controls beside laser-controls");
+
+    const fontGateIndex = cefrSource.indexOf("runtime.prewarmSpatialUiFonts(spatialUi)");
+    const openPanelIndex = cefrSource.indexOf("runtime.vrPanelApi = spatialUi.openPanel(panelOptions)");
+    assert(fontGateIndex > -1, "CEFR VR prompt must start spatial UI font prewarm");
+    assert(openPanelIndex > fontGateIndex, "CEFR VR prompt must start font prewarm before opening the spatial panel");
+    assert(cefrSource.includes("useImmediateFont: true"), "CEFR VR prompt must use the immediate Latin font path");
+    assert(!cefrSource.includes("if (!runtime.ensureSpatialUiFontsReady(spatialUi))"), "CEFR VR prompt must not block on heavy Noto/MSDF font readiness");
+    assert(cefrSource.includes("runtime.spatialUiFontWarmupPending = true"), "CEFR VR prompt must track pending spatial font warmup");
+    assert(overlaySource.includes("Promise.resolve(spatialUi.prewarm())"), "overlay prewarm must await the spatial UI font prewarm promise");
+    assert(spatialSource.includes("spatialFontWarmupPromise"), "spatial UI prewarm must cache and return the font readiness promise");
+    assert(spatialSource.includes("SPATIAL_UI_IMMEDIATE_FONT_FAMILY"), "spatial UI must expose an immediate font path for CEFR");
 }
 
 async function main() {

@@ -113,6 +113,7 @@
             spatialUiLoadPending: false,
             spatialUiFontWarmupPending: false,
             spatialUiFontsReady: false,
+            spatialUiFontWarmupPromise: null,
             vrLevelButtons: {},
             vrStartButton: null,
             xrSessionEventsBound: false,
@@ -474,7 +475,7 @@
             runtime.updateVrPromptSelection(panelApi || runtime.vrPanelApi, previousLevel);
         };
 
-        runtime.ensureSpatialUiFontsReady = function (spatialUi) {
+        runtime.prewarmSpatialUiFonts = function (spatialUi) {
             if (runtime.spatialUiFontsReady) {
                 return true;
             }
@@ -493,8 +494,13 @@
             }
 
             runtime.spatialUiFontWarmupPending = true;
-            prewarmResult.then(() => {
+            runtime.spatialUiFontWarmupPromise = prewarmResult;
+            recordVrDiagnostic("debug", "CEFR VR prompt started spatial UI font prewarm in the background", {});
+            prewarmResult.then((available) => {
                 runtime.spatialUiFontsReady = true;
+                if (available === false) {
+                    recordVrDiagnostic("warn", "CEFR VR prompt spatial font prewarm returned fallback state", {});
+                }
             }).catch((error) => {
                 runtime.spatialUiFontsReady = true;
                 recordVrDiagnostic("warn", "CEFR VR prompt font prewarm failed; opening with spatial UI fallback font", {
@@ -502,6 +508,7 @@
                 });
             }).finally(() => {
                 runtime.spatialUiFontWarmupPending = false;
+                runtime.spatialUiFontWarmupPromise = null;
             });
             return true;
         };
@@ -538,6 +545,7 @@
                 trimControllerRays: true,
                 showRayHitDot: true,
                 blockSceneRaycasts: true,
+                useImmediateFont: true,
                 cleanup: function () {
                     runtime.vrPromptActive = false;
                     runtime.vrPanelApi = null;
@@ -550,6 +558,7 @@
             const spatialUi = getSpatialUiApi();
             if (!spatialUi) {
                 runtime.vrPromptActive = false;
+                runtime.setPendingVrPromptLock(true);
                 if (overlayApi && typeof overlayApi.ensureSpatialUiRuntime === "function" && !runtime.spatialUiLoadPending) {
                     runtime.spatialUiLoadPending = true;
                     recordVrDiagnostic("debug", "CEFR VR prompt is loading spatial UI runtime on demand", {
@@ -573,7 +582,7 @@
                 return false;
             }
 
-            runtime.ensureSpatialUiFontsReady(spatialUi);
+            runtime.prewarmSpatialUiFonts(spatialUi);
 
             runtime.vrPromptActive = true;
             runtime.vrPanelApi = spatialUi.openPanel(panelOptions);
@@ -674,6 +683,7 @@
                 const scheduleVrOpenAttempts = function () {
                     if (!runtime.levelApplied && runtime.elements.length) {
                         runtime.vrPromptRetryCount = 0;
+                        runtime.setPendingVrPromptLock(true);
                         runtime.hideDomPrompt();
                         VR_PROMPT_XR_OPEN_DELAYS_MS.forEach((delay) => {
                             runtime.scheduleVrPromptRetry(delay);

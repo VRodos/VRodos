@@ -46,6 +46,7 @@ import { MSDF } from "@zappar/msdf-generator";
     const CONTROLLER_POSE_EPSILON = 0.000001;
     const CONTROLLER_RAY_DEFAULT_EPSILON = 0.00001;
     const SPATIAL_UI_FONT_FAMILY = "vrodos-noto-sans";
+    const SPATIAL_UI_IMMEDIATE_FONT_FAMILY = "vrodos-inter-immediate";
     const SPATIAL_UI_FONT_CHARSET_SEED = " \tABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?.,;:'\"()-[]{}@#$%&*+=/\\<>_–—«»“”‘’…≤≥°%€ΆΈΉΊΌΎΏΪΫΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίόύώϊϋΐΰαβγδεζηθικλμνξοπρστυφχψως";
     const SPATIAL_UI_FONT_TEXTURE_SIZE = [1024, 1024];
     const SPATIAL_UI_FONT_SIZE = 48;
@@ -69,6 +70,7 @@ import { MSDF } from "@zappar/msdf-generator";
     let spatialFontGenerationPromise = null;
     let spatialMsdfWasmDataUrlPromise = null;
     let spatialFontWarmupStarted = false;
+    let spatialFontWarmupPromise = null;
     const spatialFontInfoPromises = new Map();
 
     const vendor = Object.freeze({
@@ -353,8 +355,35 @@ import { MSDF } from "@zappar/msdf-generator";
         };
     }
 
+    function immediateSpatialFontInfo(weight) {
+        if (weight === "bold") {
+            return InterFontFamily.bold || InterFontFamily.medium || InterFontFamily.light;
+        }
+        return InterFontFamily.medium || InterFontFamily.light || InterFontFamily.bold;
+    }
+
+    function immediateSpatialFontFamilies() {
+        return {
+            [SPATIAL_UI_IMMEDIATE_FONT_FAMILY]: {
+                normal: () => immediateSpatialFontInfo("normal"),
+                medium: () => immediateSpatialFontInfo("normal"),
+                "500": () => immediateSpatialFontInfo("normal"),
+                "semi-bold": () => immediateSpatialFontInfo("bold"),
+                "600": () => immediateSpatialFontInfo("bold"),
+                bold: () => immediateSpatialFontInfo("bold"),
+                "700": () => immediateSpatialFontInfo("bold")
+            }
+        };
+    }
+
     function fontProps(options) {
         const opts = options || {};
+        if (opts.useImmediateFont === true) {
+            return {
+                fontFamily: opts.fontFamily || SPATIAL_UI_IMMEDIATE_FONT_FAMILY,
+                fontFamilies: opts.fontFamilies || immediateSpatialFontFamilies()
+            };
+        }
         return {
             fontFamily: opts.fontFamily || SPATIAL_UI_FONT_FAMILY,
             fontFamilies: opts.fontFamilies || spatialFontFamilies()
@@ -362,29 +391,38 @@ import { MSDF } from "@zappar/msdf-generator";
     }
 
     function spatialFontsReady() {
-        return Promise.all([
-            spatialFontInfo("normal"),
-            spatialFontInfo("bold")
-        ]).then(() => true).catch(() => false);
+        if (!spatialFontWarmupPromise) {
+            spatialFontWarmupPromise = Promise.all([
+                spatialFontInfo("normal"),
+                spatialFontInfo("bold")
+            ]).then(() => true).catch((error) => {
+                recordDiagnostic("warn", "Spatial UI font prewarm failed.", {
+                    error: error && error.message || String(error)
+                });
+                return false;
+            });
+        }
+        return spatialFontWarmupPromise;
     }
 
     function warmSpatialFonts(immediate) {
-        if (spatialFontWarmupStarted && !immediate) {
-            return;
+        if (spatialFontWarmupStarted && spatialFontWarmupPromise) {
+            return spatialFontWarmupPromise;
         }
         spatialFontWarmupStarted = true;
         const start = () => {
-            spatialFontsReady();
+            spatialFontWarmupPromise = spatialFontsReady();
+            return spatialFontWarmupPromise;
         };
         if (immediate) {
-            start();
-            return;
+            return start();
         }
         if (typeof window.requestIdleCallback === "function") {
             window.requestIdleCallback(start, { timeout: 8000 });
         } else {
             window.setTimeout(start, 1200);
         }
+        return spatialFontWarmupPromise || Promise.resolve(false);
     }
 
     function getScene() {
@@ -2237,6 +2275,22 @@ import { MSDF } from "@zappar/msdf-generator";
     }
 
     function createPanelApi(panelState) {
+        function withPanelFontDefaults(options) {
+            const opts = options || {};
+            const config = panelState && panelState.config || {};
+            if (opts.useImmediateFont !== undefined || opts.fontFamily || opts.fontFamilies) {
+                return opts;
+            }
+            if (config.useImmediateFont !== true && !config.fontFamily && !config.fontFamilies) {
+                return opts;
+            }
+            return Object.assign({
+                useImmediateFont: config.useImmediateFont === true,
+                fontFamily: config.fontFamily,
+                fontFamilies: config.fontFamilies
+            }, opts);
+        }
+
         function resolveButtonProps(options) {
             const opts = options || {};
             const disabled = Boolean(opts.disabled);
@@ -2257,7 +2311,7 @@ import { MSDF } from "@zappar/msdf-generator";
         }
 
         function resolveButtonTextProps(options) {
-            const opts = options || {};
+            const opts = withPanelFontDefaults(options);
             const disabled = Boolean(opts.disabled);
             return baseContainerProps(Object.assign({
                 text: normalizeSpatialText(opts.label || ""),
@@ -2343,7 +2397,7 @@ import { MSDF } from "@zappar/msdf-generator";
             },
 
             text: function (parent, options) {
-                const opts = options || {};
+                const opts = withPanelFontDefaults(options);
                 const text = new Text(baseContainerProps(Object.assign({
                     text: normalizeSpatialText(opts.text !== undefined ? opts.text : (opts.value || "")),
                     color: opts.color || "#272727",
@@ -2370,7 +2424,7 @@ import { MSDF } from "@zappar/msdf-generator";
                 if (!text || typeof text.setProperties !== "function") {
                     return text || null;
                 }
-                const opts = options || {};
+                const opts = withPanelFontDefaults(options);
                 text.setProperties(baseContainerProps(Object.assign({
                     text: normalizeSpatialText(opts.text !== undefined ? opts.text : (opts.value || "")),
                     color: opts.color || "#272727",
@@ -2479,7 +2533,7 @@ import { MSDF } from "@zappar/msdf-generator";
             },
 
             frame: function (options) {
-                const opts = options || {};
+                const opts = withPanelFontDefaults(options);
                 this.renderCount += 1;
                 panelState.renderCount = this.renderCount;
                 this.clear();

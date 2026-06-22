@@ -730,9 +730,18 @@
         return ensureSpatialUiRuntime(options || {}).then((available) => {
             const spatialUi = getSpatialUiApi();
             if (available && spatialUi && typeof spatialUi.prewarm === "function") {
-                spatialUi.prewarm();
-                recordDiagnostic("debug", "Prewarmed spatial UI runtime.", {
-                    hasSpatialUi: true
+                return Promise.resolve(spatialUi.prewarm()).then((fontsReady) => {
+                    recordDiagnostic(fontsReady === false ? "warn" : "debug", "Prewarmed spatial UI runtime.", {
+                        hasSpatialUi: true,
+                        fontsReady: fontsReady !== false
+                    });
+                    return true;
+                }).catch((error) => {
+                    recordDiagnostic("warn", "Spatial UI runtime prewarm failed; continuing with runtime fallback.", {
+                        hasSpatialUi: true,
+                        error: error && error.message || String(error)
+                    });
+                    return true;
                 });
             }
             return available;

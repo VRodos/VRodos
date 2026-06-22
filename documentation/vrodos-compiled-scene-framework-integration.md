@@ -241,6 +241,8 @@ Panels are anchored in front of `cameraA` by world transform, not by an A-Frame 
 
 Scenes that contain assessment, CEFR, or image/text POI surfaces should preload and prewarm the spatial UI runtime before the first controller click. `VRODOSRuntimeOverlay.prewarmSpatialUiRuntime()` loads the spatial bundle when needed and starts the Noto/MSDF font atlas work so the first dialog does not block on runtime/font startup.
 
+CEFR is a blocking first-run immersive prompt, but it only uses Latin labels. It should opt into the spatial UI immediate font path and start `VRODOSSpatialUI.prewarm()` in the background before calling `openPanel()`, not wait for Noto/MSDF font generation. Waiting on the heavy Greek-capable atlas can delay the CEFR popup for several seconds in Quest Browser.
+
 The Horizon panel uses explicit background, border, depth, render order, and sorting settings so it appears as a stable VR modal rather than as scene geometry. UI elements are flex/grid based. Avoid absolute A-Frame coordinate layouts for assessment content. Long text is paginated for v1; do not depend on VR controller scrolling for assessment completion.
 
 Assessment panels use the shared frame's scrollable content host when content exceeds the fixed header/footer area. Header and footer controls stay fixed; only the middle content region should scroll. Controller scrolling should be treated as a readability fallback, not as the only way to complete an assessment.

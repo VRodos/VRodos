@@ -15184,6 +15184,7 @@
     const CONTROLLER_POSE_EPSILON = 1e-6;
     const CONTROLLER_RAY_DEFAULT_EPSILON = 1e-5;
     const SPATIAL_UI_FONT_FAMILY = "vrodos-noto-sans";
+    const SPATIAL_UI_IMMEDIATE_FONT_FAMILY = "vrodos-inter-immediate";
     const SPATIAL_UI_FONT_CHARSET_SEED = ` 	ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?.,;:'"()-[]{}@#$%&*+=/\\<>_\u2013\u2014\xAB\xBB\u201C\u201D\u2018\u2019\u2026\u2264\u2265\xB0%\u20AC\u0386\u0388\u0389\u038A\u038C\u038E\u038F\u03AA\u03AB\u0391\u0392\u0393\u0394\u0395\u0396\u0397\u0398\u0399\u039A\u039B\u039C\u039D\u039E\u039F\u03A0\u03A1\u03A3\u03A4\u03A5\u03A6\u03A7\u03A8\u03A9\u03AC\u03AD\u03AE\u03AF\u03CC\u03CD\u03CE\u03CA\u03CB\u0390\u03B0\u03B1\u03B2\u03B3\u03B4\u03B5\u03B6\u03B7\u03B8\u03B9\u03BA\u03BB\u03BC\u03BD\u03BE\u03BF\u03C0\u03C1\u03C3\u03C4\u03C5\u03C6\u03C7\u03C8\u03C9\u03C2`;
     const SPATIAL_UI_FONT_TEXTURE_SIZE = [1024, 1024];
     const SPATIAL_UI_FONT_SIZE = 48;
@@ -15206,6 +15207,7 @@
     let spatialFontGenerationPromise = null;
     let spatialMsdfWasmDataUrlPromise = null;
     let spatialFontWarmupStarted = false;
+    let spatialFontWarmupPromise = null;
     const spatialFontInfoPromises = /* @__PURE__ */ new Map();
     const vendor = Object.freeze({
       uikit: {
@@ -15459,36 +15461,70 @@
         }
       };
     }
+    function immediateSpatialFontInfo(weight) {
+      if (weight === "bold") {
+        return inter.bold || inter.medium || inter.light;
+      }
+      return inter.medium || inter.light || inter.bold;
+    }
+    function immediateSpatialFontFamilies() {
+      return {
+        [SPATIAL_UI_IMMEDIATE_FONT_FAMILY]: {
+          normal: () => immediateSpatialFontInfo("normal"),
+          medium: () => immediateSpatialFontInfo("normal"),
+          "500": () => immediateSpatialFontInfo("normal"),
+          "semi-bold": () => immediateSpatialFontInfo("bold"),
+          "600": () => immediateSpatialFontInfo("bold"),
+          bold: () => immediateSpatialFontInfo("bold"),
+          "700": () => immediateSpatialFontInfo("bold")
+        }
+      };
+    }
     function fontProps(options) {
       const opts = options || {};
+      if (opts.useImmediateFont === true) {
+        return {
+          fontFamily: opts.fontFamily || SPATIAL_UI_IMMEDIATE_FONT_FAMILY,
+          fontFamilies: opts.fontFamilies || immediateSpatialFontFamilies()
+        };
+      }
       return {
         fontFamily: opts.fontFamily || SPATIAL_UI_FONT_FAMILY,
         fontFamilies: opts.fontFamilies || spatialFontFamilies()
       };
     }
     function spatialFontsReady() {
-      return Promise.all([
-        spatialFontInfo("normal"),
-        spatialFontInfo("bold")
-      ]).then(() => true).catch(() => false);
+      if (!spatialFontWarmupPromise) {
+        spatialFontWarmupPromise = Promise.all([
+          spatialFontInfo("normal"),
+          spatialFontInfo("bold")
+        ]).then(() => true).catch((error2) => {
+          recordDiagnostic("warn", "Spatial UI font prewarm failed.", {
+            error: error2 && error2.message || String(error2)
+          });
+          return false;
+        });
+      }
+      return spatialFontWarmupPromise;
     }
     function warmSpatialFonts(immediate) {
-      if (spatialFontWarmupStarted && !immediate) {
-        return;
+      if (spatialFontWarmupStarted && spatialFontWarmupPromise) {
+        return spatialFontWarmupPromise;
       }
       spatialFontWarmupStarted = true;
       const start = () => {
-        spatialFontsReady();
+        spatialFontWarmupPromise = spatialFontsReady();
+        return spatialFontWarmupPromise;
       };
       if (immediate) {
-        start();
-        return;
+        return start();
       }
       if (typeof window.requestIdleCallback === "function") {
         window.requestIdleCallback(start, { timeout: 8e3 });
       } else {
         window.setTimeout(start, 1200);
       }
+      return spatialFontWarmupPromise || Promise.resolve(false);
     }
     function getScene() {
       const byId = document.getElementById("aframe-scene-container");
@@ -17159,6 +17195,21 @@
       return props;
     }
     function createPanelApi(panelState) {
+      function withPanelFontDefaults(options) {
+        const opts = options || {};
+        const config = panelState && panelState.config || {};
+        if (opts.useImmediateFont !== void 0 || opts.fontFamily || opts.fontFamilies) {
+          return opts;
+        }
+        if (config.useImmediateFont !== true && !config.fontFamily && !config.fontFamilies) {
+          return opts;
+        }
+        return Object.assign({
+          useImmediateFont: config.useImmediateFont === true,
+          fontFamily: config.fontFamily,
+          fontFamilies: config.fontFamilies
+        }, opts);
+      }
       function resolveButtonProps(options) {
         const opts = options || {};
         const disabled = Boolean(opts.disabled);
@@ -17178,7 +17229,7 @@
         });
       }
       function resolveButtonTextProps(options) {
-        const opts = options || {};
+        const opts = withPanelFontDefaults(options);
         const disabled = Boolean(opts.disabled);
         return baseContainerProps(Object.assign({
           text: normalizeSpatialText(opts.label || ""),
@@ -17255,7 +17306,7 @@
           }, options || {}));
         },
         text: function(parent, options) {
-          const opts = options || {};
+          const opts = withPanelFontDefaults(options);
           const text = new Text(baseContainerProps(Object.assign({
             text: normalizeSpatialText(opts.text !== void 0 ? opts.text : opts.value || ""),
             color: opts.color || "#272727",
@@ -17281,7 +17332,7 @@
           if (!text || typeof text.setProperties !== "function") {
             return text || null;
           }
-          const opts = options || {};
+          const opts = withPanelFontDefaults(options);
           text.setProperties(baseContainerProps(Object.assign({
             text: normalizeSpatialText(opts.text !== void 0 ? opts.text : opts.value || ""),
             color: opts.color || "#272727",
@@ -17385,7 +17436,7 @@
           return grid;
         },
         frame: function(options) {
-          const opts = options || {};
+          const opts = withPanelFontDefaults(options);
           this.renderCount += 1;
           panelState.renderCount = this.renderCount;
           this.clear();
