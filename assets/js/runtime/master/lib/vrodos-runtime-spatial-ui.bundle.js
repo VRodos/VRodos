@@ -15189,13 +15189,8 @@
     const SPATIAL_UI_FONT_TEXTURE_SIZE = [1024, 1024];
     const SPATIAL_UI_FONT_SIZE = 48;
     const SPATIAL_UI_ASSET_ROOT = "assets/vendor/";
-    const CONTROLLER_POINTER_SELECTORS = [
-      "#oculusRight",
-      "#oculusLeft",
-      "[laser-controls]",
-      "[meta-touch-controls]",
-      "[oculus-touch-controls]"
-    ];
+    const CONTROLLER_POINTER_SELECTOR = "#oculusRight, #oculusLeft, [laser-controls]";
+    const CONTROLLER_COMPONENT_NAMES = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
     const SCENE_CONTROL_SELECTORS = [
       "[vrodos-3d-play-icon]",
       "[id^='video-playhint_']"
@@ -15759,7 +15754,7 @@
     }
     function resolveAFrameControllerTrackingStatus(el) {
       const id = el && el.id || "";
-      const hasControllerAttribute = Boolean(el && el.hasAttribute && (el.hasAttribute("laser-controls") || el.hasAttribute("meta-touch-controls") || el.hasAttribute("oculus-touch-controls") || el.hasAttribute("tracked-controls")));
+      const hasControllerAttribute = Boolean(el && el.hasAttribute && CONTROLLER_COMPONENT_NAMES.some((componentName) => el.hasAttribute(componentName)));
       const isControllerElement = /^(oculusLeft|oculusRight)$/i.test(id) || hasControllerAttribute;
       if (!isControllerElement) {
         return { isControllerElement: false, ready: true, reason: "not-controller" };
@@ -15793,17 +15788,15 @@
       if (/left/i.test(id)) {
         return "left";
       }
-      const componentNames = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
-      for (let i2 = 0; i2 < componentNames.length; i2 += 1) {
-        const component = el.components && el.components[componentNames[i2]];
+      for (let i2 = 0; i2 < CONTROLLER_COMPONENT_NAMES.length; i2 += 1) {
+        const component = el.components && el.components[CONTROLLER_COMPONENT_NAMES[i2]];
         const hand = component && component.data && component.data.hand;
         if (hand === "left" || hand === "right") {
           return hand;
         }
       }
-      const attrs = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
-      for (let i2 = 0; i2 < attrs.length; i2 += 1) {
-        const value = el.getAttribute && el.getAttribute(attrs[i2]);
+      for (let i2 = 0; i2 < CONTROLLER_COMPONENT_NAMES.length; i2 += 1) {
+        const value = el.getAttribute && el.getAttribute(CONTROLLER_COMPONENT_NAMES[i2]);
         const hand = value && typeof value === "object" ? value.hand : "";
         if (hand === "left" || hand === "right") {
           return hand;
@@ -16012,14 +16005,12 @@
     function collectControllerPointerElements() {
       const seen = /* @__PURE__ */ new Set();
       const result = [];
-      CONTROLLER_POINTER_SELECTORS.forEach((selector) => {
-        document.querySelectorAll(selector).forEach((el) => {
-          if (seen.has(el) || !el.object3D) {
-            return;
-          }
-          seen.add(el);
-          result.push(el);
-        });
+      document.querySelectorAll(CONTROLLER_POINTER_SELECTOR).forEach((el) => {
+        if (seen.has(el) || !el.object3D) {
+          return;
+        }
+        seen.add(el);
+        result.push(el);
       });
       return result;
     }
@@ -16827,13 +16818,7 @@
       if (!el || !el.matches) {
         return false;
       }
-      return CONTROLLER_POINTER_SELECTORS.some((selector) => {
-        try {
-          return el.matches(selector);
-        } catch (_error) {
-          return false;
-        }
-      });
+      return el.id === "oculusRight" || el.id === "oculusLeft" || Boolean(el.hasAttribute && el.hasAttribute("laser-controls"));
     }
     function suppressSceneRaycastTargets(panelState, active) {
       if (!panelState) {

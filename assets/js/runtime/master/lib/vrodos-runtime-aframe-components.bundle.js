@@ -2360,7 +2360,7 @@
       if (/^(oculusLeft|oculusRight)$/i.test(id)) {
         return true;
       }
-      return Boolean(el.hasAttribute && (el.hasAttribute("laser-controls") || el.hasAttribute("meta-touch-controls") || el.hasAttribute("oculus-touch-controls") || el.hasAttribute("tracked-controls")));
+      return Boolean(el.hasAttribute && el.hasAttribute("laser-controls"));
     },
     captureXrExitRestoreBaseline: function(reason) {
       if (this.isVrPresentationActive()) {

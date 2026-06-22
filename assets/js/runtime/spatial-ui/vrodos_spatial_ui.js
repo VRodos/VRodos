@@ -51,13 +51,8 @@ import { MSDF } from "@zappar/msdf-generator";
     const SPATIAL_UI_FONT_TEXTURE_SIZE = [1024, 1024];
     const SPATIAL_UI_FONT_SIZE = 48;
     const SPATIAL_UI_ASSET_ROOT = "assets/vendor/";
-    const CONTROLLER_POINTER_SELECTORS = [
-        "#oculusRight",
-        "#oculusLeft",
-        "[laser-controls]",
-        "[meta-touch-controls]",
-        "[oculus-touch-controls]"
-    ];
+    const CONTROLLER_POINTER_SELECTOR = "#oculusRight, #oculusLeft, [laser-controls]";
+    const CONTROLLER_COMPONENT_NAMES = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
     const SCENE_CONTROL_SELECTORS = [
         "[vrodos-3d-play-icon]",
         "[id^='video-playhint_']"
@@ -711,12 +706,8 @@ import { MSDF } from "@zappar/msdf-generator";
 
     function resolveAFrameControllerTrackingStatus(el) {
         const id = el && el.id || "";
-        const hasControllerAttribute = Boolean(el && el.hasAttribute && (
-            el.hasAttribute("laser-controls") ||
-            el.hasAttribute("meta-touch-controls") ||
-            el.hasAttribute("oculus-touch-controls") ||
-            el.hasAttribute("tracked-controls")
-        ));
+        const hasControllerAttribute = Boolean(el && el.hasAttribute &&
+            CONTROLLER_COMPONENT_NAMES.some((componentName) => el.hasAttribute(componentName)));
         const isControllerElement = /^(oculusLeft|oculusRight)$/i.test(id) || hasControllerAttribute;
         if (!isControllerElement) {
             return { isControllerElement: false, ready: true, reason: "not-controller" };
@@ -753,17 +744,15 @@ import { MSDF } from "@zappar/msdf-generator";
         if (/left/i.test(id)) {
             return "left";
         }
-        const componentNames = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
-        for (let i = 0; i < componentNames.length; i += 1) {
-            const component = el.components && el.components[componentNames[i]];
+        for (let i = 0; i < CONTROLLER_COMPONENT_NAMES.length; i += 1) {
+            const component = el.components && el.components[CONTROLLER_COMPONENT_NAMES[i]];
             const hand = component && component.data && component.data.hand;
             if (hand === "left" || hand === "right") {
                 return hand;
             }
         }
-        const attrs = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
-        for (let i = 0; i < attrs.length; i += 1) {
-            const value = el.getAttribute && el.getAttribute(attrs[i]);
+        for (let i = 0; i < CONTROLLER_COMPONENT_NAMES.length; i += 1) {
+            const value = el.getAttribute && el.getAttribute(CONTROLLER_COMPONENT_NAMES[i]);
             const hand = value && typeof value === "object" ? value.hand : "";
             if (hand === "left" || hand === "right") {
                 return hand;
@@ -991,14 +980,12 @@ import { MSDF } from "@zappar/msdf-generator";
     function collectControllerPointerElements() {
         const seen = new Set();
         const result = [];
-        CONTROLLER_POINTER_SELECTORS.forEach((selector) => {
-            document.querySelectorAll(selector).forEach((el) => {
-                if (seen.has(el) || !el.object3D) {
-                    return;
-                }
-                seen.add(el);
-                result.push(el);
-            });
+        document.querySelectorAll(CONTROLLER_POINTER_SELECTOR).forEach((el) => {
+            if (seen.has(el) || !el.object3D) {
+                return;
+            }
+            seen.add(el);
+            result.push(el);
         });
         return result;
     }
@@ -1866,13 +1853,9 @@ import { MSDF } from "@zappar/msdf-generator";
         if (!el || !el.matches) {
             return false;
         }
-        return CONTROLLER_POINTER_SELECTORS.some((selector) => {
-            try {
-                return el.matches(selector);
-            } catch (_error) {
-                return false;
-            }
-        });
+        return el.id === "oculusRight" ||
+            el.id === "oculusLeft" ||
+            Boolean(el.hasAttribute && el.hasAttribute("laser-controls"));
     }
 
     function suppressSceneRaycastTargets(panelState, active) {

@@ -10,15 +10,9 @@
     const SCENE_RAY_HIT_DOT_COLOR = 0xffc857;
     const CONTROLLER_RAY_READY_STABLE_FRAMES = 3;
     const CONTROLLER_RAY_EPSILON = 0.000001;
-    const RAYCASTER_SELECTORS = [
-        "#cursor",
-        "#oculusRight",
-        "#oculusLeft",
-        "[laser-controls][raycaster]",
-        "[meta-touch-controls][raycaster]",
-        "[oculus-touch-controls][raycaster]",
-        "[raycaster]"
-    ];
+    const RAYCASTER_SELECTOR = "[raycaster]";
+    const CONTROLLER_CLICK_BRIDGE_SELECTOR = "#oculusRight, #oculusLeft, [laser-controls][raycaster]";
+    const CONTROLLER_COMPONENT_NAMES = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
     const SCENE_CONTROL_SUPPRESSION_SELECTORS = [
         "[vrodos-3d-play-icon]",
         "[id^='video-playhint_']"
@@ -138,17 +132,15 @@
             if (/left/i.test(id)) {
                 return "left";
             }
-            const componentNames = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
-            for (let i = 0; i < componentNames.length; i += 1) {
-                const component = el.components && el.components[componentNames[i]];
+            for (let i = 0; i < CONTROLLER_COMPONENT_NAMES.length; i += 1) {
+                const component = el.components && el.components[CONTROLLER_COMPONENT_NAMES[i]];
                 const hand = component && component.data && component.data.hand;
                 if (hand === "left" || hand === "right") {
                     return hand;
                 }
             }
-            const attrs = ["tracked-controls", "meta-touch-controls", "oculus-touch-controls", "laser-controls"];
-            for (let i = 0; i < attrs.length; i += 1) {
-                const value = el.getAttribute && el.getAttribute(attrs[i]);
+            for (let i = 0; i < CONTROLLER_COMPONENT_NAMES.length; i += 1) {
+                const value = el.getAttribute && el.getAttribute(CONTROLLER_COMPONENT_NAMES[i]);
                 const hand = value && typeof value === "object" ? value.hand : "";
                 if (hand === "left" || hand === "right") {
                     return hand;
@@ -542,19 +534,7 @@
     }
 
     function collectRaycasters() {
-        const seen = new Set();
-        const result = [];
-        RAYCASTER_SELECTORS.forEach((selector) => {
-            document.querySelectorAll(selector).forEach((el) => {
-                if (seen.has(el)) {
-                    return;
-                }
-                seen.add(el);
-                result.push(el);
-            });
-        });
-
-        return result;
+        return Array.from(document.querySelectorAll(RAYCASTER_SELECTOR));
     }
 
     function getRaycasterDiagnostics() {
@@ -753,23 +733,14 @@
     }
 
     function controllerClickBridgeTargets() {
-        const selectors = [
-            "#oculusRight",
-            "#oculusLeft",
-            "[laser-controls][raycaster]",
-            "[meta-touch-controls][raycaster]",
-            "[oculus-touch-controls][raycaster]"
-        ];
         const seen = new Set();
         const targets = [];
-        selectors.forEach((selector) => {
-            document.querySelectorAll(selector).forEach((el) => {
-                if (!el || seen.has(el)) {
-                    return;
-                }
-                seen.add(el);
-                targets.push(el);
-            });
+        document.querySelectorAll(CONTROLLER_CLICK_BRIDGE_SELECTOR).forEach((el) => {
+            if (!el || seen.has(el)) {
+                return;
+            }
+            seen.add(el);
+            targets.push(el);
         });
         return targets;
     }

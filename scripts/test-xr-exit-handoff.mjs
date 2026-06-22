@@ -542,8 +542,8 @@ function damageInlineState(fixture) {
     fixture.cameraEl.components["look-controls"].data.enabled = false;
     fixture.player.attributes["wasd-controls"] = { enabled: true };
     fixture.player.components["wasd-controls"].data.enabled = true;
-    fixture.cursor.attributes.raycaster = { objects: ".vrodos-overlay-hit-target", far: 0.75, enabled: true };
-    fixture.right.attributes.raycaster = { objects: ".vrodos-overlay-hit-target", far: 0.75, enabled: true };
+    fixture.cursor.attributes.raycaster = { objects: ".temporary-modal-ray-target", far: 0.75, enabled: true };
+    fixture.right.attributes.raycaster = { objects: ".temporary-modal-ray-target", far: 0.75, enabled: true };
 }
 
 function assertRestored(fixture, diagnostics) {
@@ -558,7 +558,7 @@ function assertRestored(fixture, diagnostics) {
     assert(fixture.cursor.attributes.raycaster.objects === ".raycastable", "desktop cursor raycaster objects should restore");
     assert(fixture.cursor.attributes.raycaster.far === 100, "desktop cursor raycaster far should restore");
     assert(fixture.cursor.components.raycaster.refreshes === 1, "desktop cursor raycaster should refresh");
-    assert(fixture.right.attributes.raycaster.objects === ".vrodos-overlay-hit-target", "controller raycaster should not be mutated on exit");
+    assert(fixture.right.attributes.raycaster.objects === ".temporary-modal-ray-target", "controller raycaster should not be mutated on exit");
     assert(diagnostics.raycasters.controllerSkipped === 1, "controller raycaster should be skipped on exit restore");
     assert(fixture.player.components["custom-movement"].finalizeCalls === 1, "navigation handoff should finalize once");
 }
@@ -725,7 +725,13 @@ function testControllerRaySourceContracts() {
     assert(!overlaySource.includes("normalizeVrControllers"), "runtime overlay must not expose legacy controller normalization mutations");
     assert(!overlaySource.includes("blink-controls"), "runtime overlay must not strip legacy controller controls at startup");
     assert(!overlaySource.includes("vrodos-overlay-hit-target"), "runtime overlay must not carry legacy overlay hit-target class handling");
+    assert(!overlaySource.includes("[meta-touch-controls][raycaster]"), "runtime overlay must not scan duplicate meta controller raycaster selectors");
+    assert(!overlaySource.includes("[oculus-touch-controls][raycaster]"), "runtime overlay must not scan duplicate oculus controller raycaster selectors");
+    assert(!overlaySource.includes("RAYCASTER_SELECTORS"), "runtime overlay must not maintain a duplicate raycaster selector list");
     assert(!spatialSource.includes("vrodos-overlay-hit-target"), "spatial UI must not carry legacy overlay hit-target class handling");
+    assert(!spatialSource.includes("[meta-touch-controls]"), "spatial UI must not scan duplicate meta controller pointer selectors");
+    assert(!spatialSource.includes("[oculus-touch-controls]"), "spatial UI must not scan duplicate oculus controller pointer selectors");
+    assert(!spatialSource.includes("CONTROLLER_POINTER_SELECTORS"), "spatial UI must not maintain a duplicate controller pointer selector list");
 
     assert(spatialSource.includes("canKeepStableRayThroughReadinessDrop"), "spatial UI must keep a valid stable A-Frame ray through short readiness drops");
     assert(spatialSource.includes("stableAFrameRaySeen"), "spatial UI diagnostics must expose stable A-Frame ray state");
