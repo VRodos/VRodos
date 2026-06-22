@@ -592,10 +592,22 @@ AFRAME.registerComponent('scene-settings', {
         if (vrodosRuntimeDebugFlag('disablePmndrsLensFlare', 'vrodos_debug_disable_pmndrs_lens_flare')) {
             return false;
         }
+        if (this.isVrLensFlareSuppressed()) {
+            return false;
+        }
 
         return this.getRenderQualityLevel() === 'high' &&
             this.data.postFXEngine === 'pmndrs' &&
             vrodosRuntimeTruthy(this.data.pmndrsLensFlareEnabled);
+    },
+    isVrLensFlareSuppressed: function () {
+        if (vrodosRuntimeDebugFlag('enableVrLensFlare', 'vrodos_debug_enable_vr_lens_flare')) {
+            return false;
+        }
+
+        return this.data.postFXEngine === 'pmndrs' &&
+            this.isDirectVrPresentationActive() &&
+            (this.isVrRuntimeHeadsetProfile() || this.isHeadsetBrowserDevice());
     },
     isPmndrsAtmosphereEnabled: function () {
         const authored = this.data.postFXEngine === 'pmndrs' && this.data.pmndrsAtmosphereEnabled !== '0';
@@ -1745,6 +1757,9 @@ AFRAME.registerComponent('scene-settings', {
                 pmndrsBundleLoaded: Boolean(window.POSTPROCESSING),
                 pmndrsComposerBuilt: Boolean(this.pmndrsComposer),
                 pmndrsEffectPass: Boolean(this.pmndrsEffectPass),
+                lensFlareAuthored: Boolean(vrodosRuntimeTruthy(this.data.pmndrsLensFlareEnabled)),
+                lensFlareEffective: Boolean(this.isPmndrsLensFlareEnabled()),
+                vrLensFlareSuppressed: Boolean(this.isVrLensFlareSuppressed()),
                 immersiveXrFallback: Boolean(postProcessingRequested && this.isDirectVrPresentationActive() && !this.canUsePostProcessingForPresentation())
             },
             takram: {
@@ -1754,6 +1769,12 @@ AFRAME.registerComponent('scene-settings', {
                 atmosphereProfile: atmosphereState && atmosphereState.profileSignature ? atmosphereState.profileSignature : '',
                 atmospherePrecision: atmosphereState && atmosphereState.precision ? atmosphereState.precision : '',
                 atmosphereHigherOrderScattering: Boolean(atmosphereState && atmosphereState.higherOrderScattering),
+                authoredSunDirection: this._pmndrsAuthoredSunDirectionDiagnostic || null,
+                presentedSunDirection: this._pmndrsPresentedSunDirectionDiagnostic || null,
+                immersiveRenderYawDeg: typeof this._pmndrsImmersiveRenderYawDeg === 'number'
+                    ? this._pmndrsImmersiveRenderYawDeg
+                    : null,
+                sunSpriteActive: Boolean(this._pmndrsSunSpriteActive),
                 dayNightCycleActive: Boolean(!vrSceneOwnedActive && this.isPmndrsDayNightCycleActive()),
                 horizonOwner: vrTakramVisibleSkyActive && pmndrsAtmosphereSkyVisible
                     ? 'takram-sky'
