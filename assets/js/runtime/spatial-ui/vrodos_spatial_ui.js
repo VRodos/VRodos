@@ -734,50 +734,10 @@ import { MSDF } from "@zappar/msdf-generator";
             };
         }
 
-        const inputSource = resolvePhysicalControllerInputSource(hand);
-        if (inputSource) {
-            return {
-                isControllerElement: true,
-                ready: true,
-                reason: "webxr-input-source",
-                hand,
-                hasGamepad: Boolean(inputSource.gamepad),
-                hasGripSpace: Boolean(inputSource.gripSpace)
-            };
-        }
-
-        const componentNames = [
-            "tracked-controls",
-            "meta-touch-controls",
-            "oculus-touch-controls",
-            "laser-controls",
-            "generic-tracked-controller-controls"
-        ];
-        for (let i = 0; i < componentNames.length; i += 1) {
-            const componentName = componentNames[i];
-            const component = el.components && el.components[componentName];
-            if (!component) {
-                continue;
-            }
-            const dataController = component.data && Number(component.data.controller);
-            if (component.controllerPresent === true ||
-                component.controllerConnected === true ||
-                component.controller ||
-                (Number.isFinite(dataController) && dataController >= 0)) {
-                return {
-                    isControllerElement: true,
-                    ready: true,
-                    reason: componentName,
-                    hand,
-                    controllerIndex: Number.isFinite(dataController) ? dataController : null
-                };
-            }
-        }
-
         return {
             isControllerElement: true,
             ready: false,
-            reason: "controller-not-present",
+            reason: "missing-controller-ray-readiness-helper",
             hand
         };
     }
@@ -812,27 +772,18 @@ import { MSDF } from "@zappar/msdf-generator";
         return "";
     }
 
-    function resolvePhysicalControllerInputSource(hand) {
-        const scene = document.querySelector("a-scene");
-        const xr = scene && scene.renderer && scene.renderer.xr;
-        const session = xr && typeof xr.getSession === "function" ? xr.getSession() : null;
-        const inputSources = session && session.inputSources ? Array.from(session.inputSources) : [];
-        for (let i = 0; i < inputSources.length; i += 1) {
-            const source = inputSources[i];
-            if (!source || (hand && source.handedness && source.handedness !== hand)) {
-                continue;
-            }
-            if (source.gamepad || source.gripSpace) {
-                return source;
-            }
-        }
-        return null;
-    }
-
     function resolveSharedControllerRayReadiness(el) {
         const api = window.VRODOSControllerRayReadiness;
         if (!api || typeof api.resolve !== "function") {
-            return null;
+            return {
+                ready: false,
+                candidateReady: false,
+                phase: "waiting",
+                reason: "missing-controller-ray-readiness-helper",
+                hand: resolveControllerHand(el),
+                stableFrames: 0,
+                requiredStableFrames: 3
+            };
         }
         try {
             return api.resolve(el, {
@@ -840,11 +791,21 @@ import { MSDF } from "@zappar/msdf-generator";
                 source: "spatial-ui"
             });
         } catch (error) {
+            const reason = error && error.message || String(error);
             recordDiagnostic("warn", "Shared controller ray readiness check failed.", {
                 controller: el && el.id || "",
-                error: error && error.message || String(error)
+                error: reason
             });
-            return null;
+            return {
+                ready: false,
+                candidateReady: false,
+                phase: "waiting",
+                reason: "controller-ray-readiness-error",
+                error: reason,
+                hand: resolveControllerHand(el),
+                stableFrames: 0,
+                requiredStableFrames: 3
+            };
         }
     }
 

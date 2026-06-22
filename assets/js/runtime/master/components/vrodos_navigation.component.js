@@ -246,9 +246,6 @@ AFRAME.registerComponent('custom-movement', {
         this.immersiveInitialRenderYaw = 0;
         this.immersiveInitialYawSource = 'default';
         this.immersiveWorldBaseTransforms = new Map();
-        this.immersiveTargetRayLines = [];
-        this.immersiveTargetRayMaterial = null;
-        this.immersiveTargetRayGeometry = null;
         this.immersiveShadowSuppressedAt = 0;
         this.immersiveWasPresenting = false;
         this.immersiveControllerRayVisualResetFrames = 0;
@@ -548,8 +545,6 @@ AFRAME.registerComponent('custom-movement', {
         this.positionPrimed = false;
         this.clearImmersiveFirstMovementGroundLock();
         this.clearImmersiveEntryPoseSettle();
-        this.disposeImmersiveTargetRayLines();
-
         if (!this.isImmersiveXrPresenting()) {
             this.finalizeImmersiveExitNavigationHandoff('handle-exit-vr');
         } else {
@@ -719,7 +714,6 @@ AFRAME.registerComponent('custom-movement', {
         window.removeEventListener('keydown', this.handleKeyDown, true);
         window.removeEventListener('keyup', this.handleKeyUp, true);
         this.clearImmersiveExitNavigationHandoffTimers();
-        this.disposeImmersiveTargetRayLines();
     },
     getSceneSettings: function () {
         return this.sceneEl ? this.sceneEl.getAttribute('scene-settings') : null;
@@ -1647,92 +1641,6 @@ AFRAME.registerComponent('custom-movement', {
             });
         }
     },
-    resolveControllerHand: function (controllerEl) {
-        if (!controllerEl) {
-            return '';
-        }
-        const id = controllerEl.id || '';
-        if (/right/i.test(id)) {
-            return 'right';
-        }
-        if (/left/i.test(id)) {
-            return 'left';
-        }
-        const componentNames = ['tracked-controls', 'meta-touch-controls', 'oculus-touch-controls', 'laser-controls'];
-        for (let i = 0; i < componentNames.length; i++) {
-            const component = controllerEl.components && controllerEl.components[componentNames[i]];
-            const hand = component && component.data && component.data.hand;
-            if (hand === 'left' || hand === 'right') {
-                return hand;
-            }
-        }
-        return '';
-    },
-    resolvePhysicalControllerInputSource: function (hand) {
-        const xr = this.sceneEl && this.sceneEl.renderer && this.sceneEl.renderer.xr;
-        const session = xr && typeof xr.getSession === 'function' ? xr.getSession() : null;
-        const inputSources = session && session.inputSources ? Array.from(session.inputSources) : [];
-        for (let i = 0; i < inputSources.length; i++) {
-            const source = inputSources[i];
-            if (!source || (hand && source.handedness && source.handedness !== hand)) {
-                continue;
-            }
-            if (source.gamepad || source.gripSpace) {
-                return source;
-            }
-        }
-        return null;
-    },
-    resolveControllerTrackingStatus: function (controllerEl) {
-        if (!controllerEl) {
-            return { ready: false, reason: 'missing-controller' };
-        }
-
-        const hand = this.resolveControllerHand(controllerEl);
-        const inputSource = this.resolvePhysicalControllerInputSource(hand);
-        if (inputSource) {
-            return {
-                ready: true,
-                reason: 'webxr-input-source',
-                hand,
-                hasGamepad: Boolean(inputSource.gamepad),
-                hasGripSpace: Boolean(inputSource.gripSpace)
-            };
-        }
-
-        const componentNames = [
-            'tracked-controls',
-            'meta-touch-controls',
-            'oculus-touch-controls',
-            'laser-controls',
-            'generic-tracked-controller-controls'
-        ];
-        for (let i = 0; i < componentNames.length; i++) {
-            const componentName = componentNames[i];
-            const component = controllerEl.components && controllerEl.components[componentName];
-            if (!component) {
-                continue;
-            }
-            const dataController = component.data && Number(component.data.controller);
-            if (component.controllerPresent === true ||
-                component.controllerConnected === true ||
-                component.controller ||
-                (Number.isFinite(dataController) && dataController >= 0)) {
-                return {
-                    ready: true,
-                    reason: componentName,
-                    hand,
-                    controllerIndex: Number.isFinite(dataController) ? dataController : null
-                };
-            }
-        }
-
-        return {
-            ready: false,
-            reason: 'controller-not-present',
-            hand
-        };
-    },
     resolveControllerRayReadiness: function (controllerEl) {
         const api = window.VRODOSControllerRayReadiness;
         if (api && typeof api.resolve === 'function') {
@@ -1742,14 +1650,15 @@ AFRAME.registerComponent('custom-movement', {
             });
         }
 
-        const trackingStatus = this.resolveControllerTrackingStatus(controllerEl);
-        return Object.assign({}, trackingStatus, {
-            candidateReady: trackingStatus.ready,
-            phase: trackingStatus.ready ? 'ready' : 'waiting',
-            stableFrames: trackingStatus.ready ? 1 : 0,
-            requiredStableFrames: 1,
-            fallback: true
-        });
+        return {
+            ready: false,
+            candidateReady: false,
+            phase: 'waiting',
+            reason: 'missing-controller-ray-readiness-helper',
+            hand: '',
+            stableFrames: 0,
+            requiredStableFrames: 3
+        };
     },
     setControllerRayVisualVisible: function (controllerEl, visible) {
         if (!controllerEl) {
@@ -1904,34 +1813,12 @@ AFRAME.registerComponent('custom-movement', {
             el.setAttribute('shadow', 'cast: false; receive: false');
         }
     },
-    disposeImmersiveTargetRayLines: function () {
-        if (this.immersiveTargetRayLines) {
-            for (let i = 0; i < this.immersiveTargetRayLines.length; i++) {
-                const rayLine = this.immersiveTargetRayLines[i];
-                if (rayLine && rayLine.parent) {
-                    rayLine.parent.remove(rayLine);
-                }
-            }
-            this.immersiveTargetRayLines = [];
-        }
-
-        if (this.immersiveTargetRayGeometry && typeof this.immersiveTargetRayGeometry.dispose === 'function') {
-            this.immersiveTargetRayGeometry.dispose();
-        }
-        if (this.immersiveTargetRayMaterial && typeof this.immersiveTargetRayMaterial.dispose === 'function') {
-            this.immersiveTargetRayMaterial.dispose();
-        }
-
-        this.immersiveTargetRayGeometry = null;
-        this.immersiveTargetRayMaterial = null;
-    },
     ensureImmersiveRuntimeHelpers: function () {
         if (!this.isImmersiveXrPresenting()) {
             return;
         }
 
         this.resetImmersiveRigTransform();
-        this.disposeImmersiveTargetRayLines();
         // The visible controller ray must be the same A-Frame raycaster line that
         // performs selection; separate display-only WebXR target rays drift from hits.
         this.ensureAFrameControllerRayVisuals();

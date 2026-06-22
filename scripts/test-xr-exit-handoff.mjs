@@ -721,10 +721,17 @@ function testControllerRaySourceContracts() {
     assert(!/setAttribute\(\s*['"]line['"]/.test(navigationSource), "navigation must not inject A-Frame controller line attributes");
     assert(!navigationSource.includes("setLineGeometryEndpoints"), "navigation must not rewrite controller line geometry");
     assert(!navigationSource.includes("resetAFrameControllerRayVisual"), "navigation must not recreate controller ray visuals manually");
+    assert(!navigationSource.includes("resolveControllerTrackingStatus"), "navigation must not keep a local controller readiness fallback");
+    assert(!navigationSource.includes("resolvePhysicalControllerInputSource"), "navigation must not duplicate WebXR input-source readiness checks");
+    assert(!navigationSource.includes("disposeImmersiveTargetRayLines"), "navigation must not keep display-only target-ray cleanup paths");
+    assert(!navigationSource.includes("immersiveTargetRayLines"), "navigation must not keep display-only target-ray state");
 
     assert(spatialSource.includes("canKeepStableRayThroughReadinessDrop"), "spatial UI must keep a valid stable A-Frame ray through short readiness drops");
     assert(spatialSource.includes("stableAFrameRaySeen"), "spatial UI diagnostics must expose stable A-Frame ray state");
     assert(spatialSource.includes("controllerRayReadinessBypassed"), "spatial UI diagnostics must expose readiness bypass state");
+    assert(spatialSource.includes("missing-controller-ray-readiness-helper"), "spatial UI must fail closed when the shared readiness helper is unavailable");
+    assert(!spatialSource.includes("resolvePhysicalControllerInputSource"), "spatial UI must not duplicate WebXR input-source readiness checks");
+    assert(!spatialSource.includes("generic-tracked-controller-controls"), "spatial UI must not keep a local component-stack readiness fallback");
 
     assert(compilerSource.includes("$a_entity_oc_right->setAttribute( 'laser-controls', 'hand: right' )"), "compiler must keep laser-controls as right controller owner");
     assert(compilerSource.includes("$a_entity_oc_left->setAttribute( 'laser-controls', 'hand: left' )"), "compiler must keep laser-controls as left controller owner");

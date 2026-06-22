@@ -15775,45 +15775,10 @@
           rayReadiness
         };
       }
-      const inputSource = resolvePhysicalControllerInputSource(hand);
-      if (inputSource) {
-        return {
-          isControllerElement: true,
-          ready: true,
-          reason: "webxr-input-source",
-          hand,
-          hasGamepad: Boolean(inputSource.gamepad),
-          hasGripSpace: Boolean(inputSource.gripSpace)
-        };
-      }
-      const componentNames = [
-        "tracked-controls",
-        "meta-touch-controls",
-        "oculus-touch-controls",
-        "laser-controls",
-        "generic-tracked-controller-controls"
-      ];
-      for (let i2 = 0; i2 < componentNames.length; i2 += 1) {
-        const componentName = componentNames[i2];
-        const component = el.components && el.components[componentName];
-        if (!component) {
-          continue;
-        }
-        const dataController = component.data && Number(component.data.controller);
-        if (component.controllerPresent === true || component.controllerConnected === true || component.controller || Number.isFinite(dataController) && dataController >= 0) {
-          return {
-            isControllerElement: true,
-            ready: true,
-            reason: componentName,
-            hand,
-            controllerIndex: Number.isFinite(dataController) ? dataController : null
-          };
-        }
-      }
       return {
         isControllerElement: true,
         ready: false,
-        reason: "controller-not-present",
+        reason: "missing-controller-ray-readiness-helper",
         hand
       };
     }
@@ -15846,26 +15811,18 @@
       }
       return "";
     }
-    function resolvePhysicalControllerInputSource(hand) {
-      const scene = document.querySelector("a-scene");
-      const xr = scene && scene.renderer && scene.renderer.xr;
-      const session = xr && typeof xr.getSession === "function" ? xr.getSession() : null;
-      const inputSources = session && session.inputSources ? Array.from(session.inputSources) : [];
-      for (let i2 = 0; i2 < inputSources.length; i2 += 1) {
-        const source = inputSources[i2];
-        if (!source || hand && source.handedness && source.handedness !== hand) {
-          continue;
-        }
-        if (source.gamepad || source.gripSpace) {
-          return source;
-        }
-      }
-      return null;
-    }
     function resolveSharedControllerRayReadiness(el) {
       const api2 = window.VRODOSControllerRayReadiness;
       if (!api2 || typeof api2.resolve !== "function") {
-        return null;
+        return {
+          ready: false,
+          candidateReady: false,
+          phase: "waiting",
+          reason: "missing-controller-ray-readiness-helper",
+          hand: resolveControllerHand(el),
+          stableFrames: 0,
+          requiredStableFrames: 3
+        };
       }
       try {
         return api2.resolve(el, {
@@ -15873,11 +15830,21 @@
           source: "spatial-ui"
         });
       } catch (error2) {
+        const reason = error2 && error2.message || String(error2);
         recordDiagnostic("warn", "Shared controller ray readiness check failed.", {
           controller: el && el.id || "",
-          error: error2 && error2.message || String(error2)
+          error: reason
         });
-        return null;
+        return {
+          ready: false,
+          candidateReady: false,
+          phase: "waiting",
+          reason: "controller-ray-readiness-error",
+          error: reason,
+          hand: resolveControllerHand(el),
+          stableFrames: 0,
+          requiredStableFrames: 3
+        };
       }
     }
     function markControllerPointerPoseWaiting(bridge, reason) {
