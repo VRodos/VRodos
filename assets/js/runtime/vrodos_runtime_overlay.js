@@ -1,7 +1,6 @@
 (function () {
     "use strict";
 
-    const RAYCAST_TARGET_CLASS = "vrodos-overlay-hit-target";
     const OVERLAY_RENDER_BASE = 100000;
     const OVERLAY_FLAG_RETRY_FRAMES = 16;
     const OVERLAY_DIAGNOSTIC_LIMIT = 160;
@@ -1318,13 +1317,12 @@
                     if (!this.suppressedSceneControls.has(el)) {
                         this.suppressedSceneControls.set(el, {
                             visible: el.getAttribute ? el.getAttribute("visible") : null,
-                            raycastTarget: el.classList && el.classList.contains(RAYCAST_TARGET_CLASS),
                             raycastable: el.classList && el.classList.contains("raycastable")
                         });
                     }
                     el.setAttribute("visible", "false");
                     if (el.classList) {
-                        el.classList.remove(RAYCAST_TARGET_CLASS, "raycastable");
+                        el.classList.remove("raycastable");
                     }
                 });
                 queueRaycasterRefresh();
@@ -1345,7 +1343,6 @@
                     el.setAttribute("visible", state.visible);
                 }
                 if (el.classList) {
-                    el.classList.toggle(RAYCAST_TARGET_CLASS, Boolean(state.raycastTarget));
                     el.classList.toggle("raycastable", Boolean(state.raycastable));
                 }
             });

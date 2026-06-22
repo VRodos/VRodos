@@ -1882,18 +1882,17 @@ import { MSDF } from "@zappar/msdf-generator";
         if (active) {
             panelState.suppressedSceneRaycastTargets = panelState.suppressedSceneRaycastTargets || new Map();
             let changed = 0;
-            document.querySelectorAll(".raycastable, .vrodos-overlay-hit-target").forEach((el) => {
+            document.querySelectorAll(".raycastable").forEach((el) => {
                 if (!el || !el.classList || isControllerPointerElement(el)) {
                     return;
                 }
                 if (!panelState.suppressedSceneRaycastTargets.has(el)) {
                     panelState.suppressedSceneRaycastTargets.set(el, {
-                        raycastable: el.classList.contains("raycastable"),
-                        overlayTarget: el.classList.contains("vrodos-overlay-hit-target")
+                        raycastable: el.classList.contains("raycastable")
                     });
                 }
-                if (el.classList.contains("raycastable") || el.classList.contains("vrodos-overlay-hit-target")) {
-                    el.classList.remove("raycastable", "vrodos-overlay-hit-target");
+                if (el.classList.contains("raycastable")) {
+                    el.classList.remove("raycastable");
                     changed += 1;
                 }
             });
@@ -1917,7 +1916,6 @@ import { MSDF } from "@zappar/msdf-generator";
                 return;
             }
             el.classList.toggle("raycastable", Boolean(state.raycastable));
-            el.classList.toggle("vrodos-overlay-hit-target", Boolean(state.overlayTarget));
             restored += 1;
         });
         panelState.suppressedSceneRaycastTargets = null;
@@ -1942,12 +1940,11 @@ import { MSDF } from "@zappar/msdf-generator";
                 }
                 panelState.suppressedControls.set(el, {
                     visible: el.getAttribute("visible"),
-                    raycastable: el.classList && el.classList.contains("raycastable"),
-                    target: el.classList && el.classList.contains("vrodos-overlay-hit-target")
+                    raycastable: el.classList && el.classList.contains("raycastable")
                 });
                 el.setAttribute("visible", "false");
                 if (el.classList) {
-                    el.classList.remove("raycastable", "vrodos-overlay-hit-target");
+                    el.classList.remove("raycastable");
                 }
             });
             return;
@@ -1963,7 +1960,6 @@ import { MSDF } from "@zappar/msdf-generator";
             }
             if (el.classList) {
                 el.classList.toggle("raycastable", Boolean(state.raycastable));
-                el.classList.toggle("vrodos-overlay-hit-target", Boolean(state.target));
             }
         });
         panelState.suppressedControls.clear();

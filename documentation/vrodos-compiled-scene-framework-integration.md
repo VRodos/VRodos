@@ -221,7 +221,7 @@ If font atlas generation fails, the runtime falls back to PMNDRS Inter so the pa
 
 PMNDRS pointer events are the modal interaction path. The spatial runtime forwards mouse events from the scene canvas through `forwardHtmlEvents`, attaches native WebXR controller ray pointers through `renderer.xr.getController(index)` when available, and falls back to A-Frame controller elements for trigger/grip/mouse events when needed.
 
-While a modal is open, canvas click/context events are blocked and scene `.raycastable`/overlay-target classes are temporarily suppressed so underlying objects do not receive modal clicks. Legacy video play hint entities are temporarily suppressed while the PMNDRS modal is active. A-Frame controller raycasters should not be retargeted to overlay classes.
+While a modal is open, canvas click/context events are blocked and scene `.raycastable` classes are temporarily suppressed so underlying objects do not receive modal clicks. Legacy video play hint entities are temporarily suppressed while the PMNDRS modal is active. A-Frame controller raycasters should not be retargeted to overlay classes.
 
 When no modal is open, scene object clicks remain owned by A-Frame components. Video trigger clicks should go straight to the video component and toggle playback. Assessment and image/text POI trigger clicks should open a camera-relative spatial panel centered near eye height in immersive XR, or the DOM dialog in desktop/inline mode.
 
