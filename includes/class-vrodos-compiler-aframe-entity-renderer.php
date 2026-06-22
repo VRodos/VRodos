@@ -28,6 +28,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private array $diagnostic_notes = [];
 	private array $diagnostic_category_counts = [];
 	private array $diagnostic_load_phases = [];
+	private array $critical_gltf_asset_dom_ids = [];
+	private bool $suppress_flat_media_shadow_casting = false;
 	private int $diagnostic_object_count = 0;
 	private int $diagnostic_collider_count = 0;
 
@@ -50,6 +52,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->diagnostic_notes           = [];
 		$this->diagnostic_category_counts = [];
 		$this->diagnostic_load_phases     = [];
+		$this->critical_gltf_asset_dom_ids = [];
 		$this->diagnostic_object_count    = 0;
 		$this->diagnostic_collider_count  = 0;
 	}
@@ -390,6 +393,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 
 		if ( self::GLTF_LOAD_PHASE_CRITICAL === $load_plan['phase'] && $assets instanceof DOMElement ) {
+			if ( isset( $this->critical_gltf_asset_dom_ids[ $glb_url ] ) ) {
+				$entity->setAttribute( 'gltf-model', '#' . $this->critical_gltf_asset_dom_ids[ $glb_url ] );
+				$entity->setAttribute( 'data-vrodos-deduped-gltf-asset', 'true' );
+				return $load_plan;
+			}
+
 			$asset_item = $dom->createElement( 'a-asset-item' );
 			$asset_item->setAttribute( 'id', $asset_dom_id );
 			$asset_item->setAttribute( 'src', $glb_url );
@@ -398,6 +407,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$asset_item->setAttribute( 'data-vrodos-load-phase', self::GLTF_LOAD_PHASE_CRITICAL );
 			$asset_item->setAttribute( 'data-vrodos-load-priority', (string) (int) $load_plan['priority'] );
 			$assets->appendChild( $asset_item );
+			$this->critical_gltf_asset_dom_ids[ $glb_url ] = $asset_dom_id;
 			$entity->setAttribute( 'gltf-model', '#' . $asset_dom_id );
 		} else {
 			$entity->setAttribute( 'data-vrodos-lazy-gltf-src', 'url(' . $glb_url . ')' );
@@ -578,7 +588,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$model->setAttribute( 'vrodos-hypnotic-hover', '' );
 		}
 		$model->setAttribute( 'immerse-assessment-launcher', '' );
-		$this->set_world_lighting_attributes( $model );
+		$this->set_world_lighting_attributes( $model, $this->flat_media_shadow_role() );
 		$model->setAttribute( 'data-assessment-title', $assessment_title );
 		$model->setAttribute( 'data-assessment-type', $assessment_type );
 		$model->setAttribute( 'data-assessment-group', $assessment_group );
@@ -670,6 +680,20 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private function normalize_shadow_role( string $role ): string {
 		return in_array( $role, [ 'caster-receiver', 'receiver', 'none' ], true ) ? $role : 'caster-receiver';
+	}
+
+	private function should_suppress_flat_media_shadow_casting( array $scene_settings ): bool {
+		$profile = (string) ( $scene_settings['vrRuntimeProfile'] ?? 'desktop' );
+		if ( ! in_array( $profile, [ 'desktop', 'max' ], true ) ) {
+			return true;
+		}
+
+		$value = $scene_settings['flatMediaShadowCasting'] ?? '1';
+		return ! ( true === $value || 'true' === $value || '1' === (string) $value || 1 === $value );
+	}
+
+	private function flat_media_shadow_role(): string {
+		return $this->suppress_flat_media_shadow_casting ? 'receiver' : 'caster-receiver';
 	}
 
 	private function normalize_authored_shadow_role( $value ): string {
@@ -810,6 +834,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	public function render_scene_objects( $dom, $ascene, $assets, $objects, $project_id, $scene_id, $config = [] ) {
 		$this->reset_compile_diagnostics();
 		$this->compile_camera_position = $this->extract_camera_position( $objects );
+		$scene_settings = is_array( $config['scene_settings'] ?? null ) ? $config['scene_settings'] : [];
+		$this->suppress_flat_media_shadow_casting = $this->should_suppress_flat_media_shadow_casting( $scene_settings );
 		foreach ( $objects as $object_key => $obj ) {
 			if ( is_object( $obj ) ) {
 				unset( $obj->follow_camera, $obj->follow_camera_x, $obj->follow_camera_z );
@@ -1009,9 +1035,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$a_light = $dom->createElement( 'a-light' );
 		$a_light->appendChild( $dom->createTextNode( '' ) );
 		$this->setAffineTransformations( $a_light, $obj );
+		$a_light->setAttribute( 'data-vrodos-light-category', sanitize_title( (string) $cat ) );
+		$a_light->setAttribute( 'data-vrodos-light-type', $type );
 
 		if ( $cat === 'lightSun' ) {
 			$a_light->setAttribute( 'id', 'lighttarget' );
+			$a_light->setAttribute( 'data-vrodos-celestial-light', 'true' );
 		}
 
 		$color = $this->colorRGB2Hex( $obj->lightcolor ?? null );
@@ -1311,7 +1340,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$this->setAffineTransformations( $parent, $obj );
 			$parent->setAttribute( 'class', 'override-materials hideable' );
 			$this->apply_compiled_collision_attributes( $parent, $obj, 'image-plane' );
-			$this->set_world_lighting_attributes( $parent );
+			$this->set_world_lighting_attributes( $parent, $this->flat_media_shadow_role() );
 			$this->apply_immerse_cefr_gating_attributes( $parent, $obj );
 
 			// Determine if transparent (usually yes for PNG POIs)
@@ -1323,7 +1352,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$plane->setAttribute( 'width', '2' );
 			$plane->setAttribute( 'position', '0 0 0' );
 			$plane->setAttribute( 'material', $this->world_media_material( "#image_$uuid", 'double', $is_transparent_bool ) );
-			$this->set_world_lighting_attributes( $plane );
+			$this->set_world_lighting_attributes( $plane, $this->flat_media_shadow_role() );
 
 			$parent->appendChild( $plane );
 			$ascene->appendChild( $parent );
@@ -1370,7 +1399,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$display->setAttribute( 'data-vrodos-video-loop', ($obj->video_loop ?? 0) == 1 ? 'true' : 'false' );
 			$display->setAttribute( 'data-vrodos-video-title', $this->sanitize_text_attr( $obj->video_title ?? 'Video' ) );
 			$this->track_runtime_asset( 'video', $video_url, 'video:' . $uuid );
-			$this->set_world_lighting_attributes( $display );
+			$this->set_world_lighting_attributes( $display, $this->flat_media_shadow_role() );
 			$display->setAttribute( 'video-controls', "id: $uuid" );
 			$this->setAffineTransformations( $display, $obj );
 			$this->apply_immerse_cefr_gating_attributes( $display, $obj );
@@ -1426,7 +1455,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		if ( $this->isHoverEnabled ) {
 			$button->setAttribute( 'vrodos-hypnotic-hover', '' );
 		}
-		$this->set_world_lighting_attributes( $button );
+		$this->set_world_lighting_attributes( $button, $this->flat_media_shadow_role() );
 		$button_anchor->appendChild( $button );
 		$ascene->appendChild( $button_anchor );
 	}

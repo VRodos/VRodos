@@ -16,7 +16,7 @@ class VRodos_Compiler_Scene_Settings {
 		$this->feature_flags    = $feature_flags ?: new VRodos_Compiler_Runtime_Feature_Flags();
 	}
 
-	public function apply( DOMDocument $dom, DOMElement $ascene, $scene_json, int $project_id, callable $normalize_url ): void {
+	public function apply( DOMDocument $dom, DOMElement $ascene, $scene_json, int $project_id, callable $normalize_url ): array {
 		$metadata = is_object( $scene_json->metadata ?? null ) ? $scene_json->metadata : new stdClass();
 		$settings = $this->build_settings( $metadata, $scene_json, $project_id );
 		$effective_shadow_quality = $this->get_effective_shadow_quality( $settings, $metadata );
@@ -51,6 +51,8 @@ class VRodos_Compiler_Scene_Settings {
 		} else {
 			$ascene->removeAttribute( 'fog' );
 		}
+
+		return $settings;
 	}
 
 	public function build_settings( $metadata, $scene_json, int $project_id ): array {
@@ -96,7 +98,7 @@ class VRodos_Compiler_Scene_Settings {
 			'renderQuality'                      => $metadata->aframeRenderQuality ?? 'standard',
 			'shadowQuality'                      => $metadata->aframeShadowQuality ?? 'medium',
 			'shadowUpdateMode'                   => $this->normalize_shadow_update_mode( $metadata ),
-			'flatMediaShadowCasting'             => VRodos_Runtime_Settings_Contract::bool_string( $metadata->aframeFlatMediaShadowCasting ?? true, true, '1', '0' ),
+			'flatMediaShadowCasting'             => $this->get_flat_media_shadow_casting_attr( $metadata ),
 			'aaQuality'                          => $metadata->aframeAAQuality ?? 'balanced',
 			'fpsMeterEnabled'                    => $this->feature_flags->fps_meter_attr( $metadata ),
 			'vrRuntimeProfile'                   => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrRuntimeProfile' ),
@@ -557,13 +559,13 @@ class VRodos_Compiler_Scene_Settings {
 		foreach ( [ 'aframeRootShadowType', 'aframeShadowType' ] as $key ) {
 			if ( property_exists( $metadata, $key ) ) {
 				$value = strtolower( trim( (string) $metadata->{$key} ) );
-				if ( in_array( $value, [ 'basic', 'pcf', 'pcfsoft' ], true ) ) {
+				if ( in_array( $value, [ 'basic', 'pcf' ], true ) ) {
 					return $value;
 				}
 			}
 		}
 
-		return 'high' === $shadow_quality ? 'pcfsoft' : 'pcf';
+		return 'pcf';
 	}
 
 	private function get_aframe_shadow_type_attr( string $shadow_type ): string {
@@ -572,10 +574,16 @@ class VRodos_Compiler_Scene_Settings {
 			return 'basic';
 		}
 
-		// Newer A-Frame master no longer accepts pcfsoft in the shadow component
-		// schema. VRodos preserves the authored pcfsoft intent for compatibility,
-		// but Three r184 renders it through PCFShadowMap.
 		return 'pcf';
+	}
+
+	private function get_flat_media_shadow_casting_attr( $metadata ): string {
+		$profile = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrRuntimeProfile', 'desktop' );
+		if ( ! in_array( (string) $profile, [ 'desktop', 'max' ], true ) ) {
+			return '0';
+		}
+
+		return VRodos_Runtime_Settings_Contract::bool_string( $metadata->aframeFlatMediaShadowCasting ?? true, true, '1', '0' );
 	}
 
 	private function should_enable_shadow_auto_update( $metadata ): bool {

@@ -90,7 +90,7 @@ function vrodosRuntimeProfileAllows(profile, capability, authored) {
         case 'takramLights':
             return Boolean(authored);
         case 'takramVisibleSky':
-            return normalized !== 'takram-lights' && Boolean(authored);
+            return (normalized === 'headset' || normalized === 'takram-sky' || normalized === 'max') && Boolean(authored);
         case 'reflections':
         case 'hdrEnvMap':
             return VRODOS_VR_HDR_PROFILES.indexOf(normalized) !== -1 && Boolean(authored);
@@ -709,7 +709,10 @@ AFRAME.registerComponent('scene-settings', {
         return this.getVrRuntimeProfile() === 'safe';
     },
     isVrRuntimeTakramLightsProfile: function () {
-        return this.getVrRuntimeProfile() === 'takram-lights';
+        const profile = this.getVrRuntimeProfile();
+        return profile === 'takram-lights' ||
+            profile === 'hdr-reflections' ||
+            profile === 'balanced';
     },
     isVrRuntimeSceneOwnedProfile: function () {
         return this.vrRuntimeAllows('sceneOwned', true);
@@ -1445,6 +1448,30 @@ AFRAME.registerComponent('scene-settings', {
                 ? Number(movement.immersiveLastStepDeltaY.toFixed(3))
                 : 0,
             immersivePresentationTransformActive: Boolean(immersiveXrPresenting && movement && movement.immersiveWorldBaseTransforms && movement.immersiveWorldBaseTransforms.size > 0),
+            immersiveRootTransformCount: movement && typeof movement.immersiveRootTransformCount === 'number'
+                ? movement.immersiveRootTransformCount
+                : 0,
+            immersiveRootTransformObjectCount: movement && typeof movement.immersiveRootTransformObjectCount === 'number'
+                ? movement.immersiveRootTransformObjectCount
+                : 0,
+            immersiveLastTransformRootCount: movement && typeof movement.immersiveLastTransformRootCount === 'number'
+                ? movement.immersiveLastTransformRootCount
+                : 0,
+            immersivePresentationRootCacheCount: movement && movement.immersivePresentationRoots
+                ? movement.immersivePresentationRoots.length
+                : 0,
+            immersiveWorldRootsDirty: Boolean(movement && movement.immersiveWorldRootsDirty),
+            immersivePresentationRootsDirty: Boolean(movement && movement.immersivePresentationRootsDirty),
+            immersiveShadowRefreshRequests: movement && typeof movement.immersiveShadowRefreshRequests === 'number'
+                ? movement.immersiveShadowRefreshRequests
+                : 0,
+            immersiveShadowRefreshApplied: movement && typeof movement.immersiveShadowRefreshApplied === 'number'
+                ? movement.immersiveShadowRefreshApplied
+                : 0,
+            immersiveShadowRefreshPending: Boolean(movement && movement.immersiveShadowRefreshPendingTimer),
+            immersiveLastShadowRefreshReason: movement && movement.immersiveLastShadowRefreshReason
+                ? movement.immersiveLastShadowRefreshReason
+                : '',
             lastNonImmersiveHeightOffset: movement && typeof movement.lastNonImmersiveHeightOffset === 'number'
                 ? Number(movement.lastNonImmersiveHeightOffset.toFixed(3))
                 : null,
@@ -1730,7 +1757,9 @@ AFRAME.registerComponent('scene-settings', {
                 dayNightCycleActive: Boolean(!vrSceneOwnedActive && this.isPmndrsDayNightCycleActive()),
                 horizonOwner: vrTakramVisibleSkyActive && pmndrsAtmosphereSkyVisible
                     ? 'takram-sky'
-                    : ((vrSceneOwnedActive || vrTakramLightsOnlyActive) ? 'aframe-environment' : (horizonState && horizonState.owner ? horizonState.owner : '')),
+                    : (vrTakramLightsOnlyActive
+                        ? 'vrodos-gradient-sky'
+                        : (vrSceneOwnedActive ? 'aframe-environment' : (horizonState && horizonState.owner ? horizonState.owner : ''))),
                 lightOwner: takramLightsOnlyState && takramLightsOnlyState.active ? takramLightsOnlyState.owner : (horizonState && horizonState.owner ? horizonState.owner : ''),
                 takramSunEnabled: Boolean(!vrSceneOwnedActive && horizonState && horizonState.takramSunEnabled),
                 visibleSkyRequested: Boolean(vrTakramVisibleSkyActive),

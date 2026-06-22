@@ -3638,8 +3638,6 @@
       switch (String(value || "").toLowerCase()) {
         case "basic":
         case "pcf":
-        case "pcfsoft":
-        case "vsm":
           return String(value).toLowerCase();
         default:
           return fallback || "pcf";
@@ -3649,18 +3647,21 @@
       switch (normalizeAFrameShadowMapType(type, "pcf")) {
         case "basic":
           return typeof THREE.BasicShadowMap !== "undefined" ? THREE.BasicShadowMap : THREE.PCFShadowMap;
-        case "pcfsoft":
-          return THREE.PCFShadowMap;
-        case "vsm":
-          return typeof THREE.VSMShadowMap !== "undefined" ? THREE.VSMShadowMap : THREE.PCFShadowMap;
         case "pcf":
         default:
           return THREE.PCFShadowMap;
       }
     }
-    function isThreeR184OrNewer() {
-      const revision = THREE && typeof THREE.REVISION !== "undefined" ? Number(THREE.REVISION) : NaN;
-      return Number.isFinite(revision) && revision >= 184;
+    function getThreeShadowMapTypeName(type) {
+      if (typeof THREE !== "undefined") {
+        if (typeof THREE.BasicShadowMap !== "undefined" && type === THREE.BasicShadowMap) {
+          return "BasicShadowMap";
+        }
+        if (type === THREE.PCFShadowMap) {
+          return "PCFShadowMap";
+        }
+      }
+      return typeof type === "number" ? `ShadowMap(${type})` : String(type || "unknown");
     }
     function getAFrameShadowComponentType(type) {
       const normalized = normalizeAFrameShadowMapType(type, "pcf");
@@ -5252,11 +5253,6 @@
     function isPmndrsTakramHorizonRequested(self) {
       return Boolean(self && self.data && self.data.selChoice === "0" && self.data.postFXEngine === "pmndrs" && self.data.pmndrsAtmosphereEnabled !== "0");
     }
-    function shouldUseTakramR184BasicShadowMap(self) {
-      return Boolean(
-        isThreeR184OrNewer() && typeof THREE.BasicShadowMap !== "undefined" && isPmndrsTakramHorizonRequested(self) && !hasPmndrsDebugFlag("enableR184TakramPcfShadows", "vrodos_debug_enable_r184_takram_pcf_shadows")
-      );
-    }
     function getShadowDiagnosticState(self) {
       const sceneObj = self && self.el ? self.el.object3D : null;
       const state = {
@@ -5270,9 +5266,12 @@
         mode: self ? getShadowUpdateMode(self) : "static",
         autoUpdate: null,
         needsUpdate: null,
+        type: null,
+        typeName: null,
         updateCount: self && self._vrodosShadowUpdateCount ? self._vrodosShadowUpdateCount : 0,
         dirtyRequests: self && self._vrodosShadowDirtyRequests ? self._vrodosShadowDirtyRequests : 0,
-        lastDirtyReason: self && self._vrodosShadowDirtyReason ? self._vrodosShadowDirtyReason : null
+        lastDirtyReason: self && self._vrodosShadowDirtyReason ? self._vrodosShadowDirtyReason : null,
+        lastUpdateReason: self && self._vrodosShadowLastUpdateReason ? self._vrodosShadowLastUpdateReason : null
       };
       if (!sceneObj) {
         return state;
@@ -5281,6 +5280,8 @@
       if (renderer && renderer.shadowMap) {
         state.autoUpdate = renderer.shadowMap.autoUpdate;
         state.needsUpdate = renderer.shadowMap.needsUpdate;
+        state.type = renderer.shadowMap.type;
+        state.typeName = getThreeShadowMapTypeName(renderer.shadowMap.type);
       }
       sceneObj.traverse((node) => {
         if (node && node.isMesh) {
@@ -5321,9 +5322,6 @@
       if (shadowQuality === "off") {
         return false;
       }
-      if (typeof self.isVrPresentationActive === "function" && self.isVrPresentationActive()) {
-        return false;
-      }
       if (isPmndrsDayNightCycleEnabled(self) && !hasPmndrsDebugFlag("disablePmndrsDayNightCycleDynamicShadows", "vrodos_debug_disable_day_night_dynamic_shadows")) {
         return false;
       }
@@ -5339,6 +5337,79 @@
           node.shadow.needsUpdate = true;
         }
       });
+    }
+    function markShadowProgramMaterialsDirty(self) {
+      const sceneObj = self && self.el ? self.el.object3D : null;
+      if (!sceneObj) {
+        return;
+      }
+      sceneObj.traverse((node) => {
+        if (!node || !node.material) {
+          return;
+        }
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        materials.forEach((material) => {
+          if (material) {
+            material.needsUpdate = true;
+          }
+        });
+      });
+    }
+    function disposeLightShadowMap(shadow) {
+      if (!shadow || !shadow.map) {
+        return false;
+      }
+      if (shadow.map.depthTexture && typeof shadow.map.depthTexture.dispose === "function") {
+        shadow.map.depthTexture.dispose();
+      }
+      if (typeof shadow.map.dispose === "function") {
+        shadow.map.dispose();
+      }
+      shadow.map = null;
+      if (shadow.mapPass) {
+        if (shadow.mapPass.depthTexture && typeof shadow.mapPass.depthTexture.dispose === "function") {
+          shadow.mapPass.depthTexture.dispose();
+        }
+        if (typeof shadow.mapPass.dispose === "function") {
+          shadow.mapPass.dispose();
+        }
+        shadow.mapPass = null;
+      }
+      shadow.needsUpdate = true;
+      return true;
+    }
+    function isLightShadowMapCompatibleWithType(shadow, shadowMapType) {
+      if (!shadow || !shadow.map || typeof THREE === "undefined") {
+        return true;
+      }
+      const depthTexture = shadow.map.depthTexture || null;
+      if (shadowMapType === THREE.PCFShadowMap) {
+        return Boolean(depthTexture && depthTexture.compareFunction);
+      }
+      if (typeof THREE.BasicShadowMap !== "undefined" && shadowMapType === THREE.BasicShadowMap) {
+        return Boolean(!depthTexture || !depthTexture.compareFunction);
+      }
+      return true;
+    }
+    function refreshShadowMapResourcesForType(self, shadowMapType, force) {
+      const sceneObj = self && self.el ? self.el.object3D : null;
+      if (!sceneObj) {
+        return false;
+      }
+      let refreshed = false;
+      sceneObj.traverse((node) => {
+        if (!node || !(node.isDirectionalLight || node.isSpotLight || node.isPointLight) || !node.shadow) {
+          return;
+        }
+        if (force || !isLightShadowMapCompatibleWithType(node.shadow, shadowMapType)) {
+          refreshed = disposeLightShadowMap(node.shadow) || refreshed;
+        }
+        node.shadow.needsUpdate = true;
+      });
+      if (refreshed || force) {
+        markShadowProgramMaterialsDirty(self);
+      }
+      return refreshed;
     }
     function shadowPerfDebugEnabled() {
       return hasPmndrsDebugFlag("shadowPerf", "vrodos_debug_shadow_perf");
@@ -5380,11 +5451,13 @@
       overlay.textContent = [
         "VRodos shadow perf",
         `mode: ${state.mode}`,
+        `type: ${state.typeName || state.type}`,
         `autoUpdate: ${state.autoUpdate}`,
         `needsUpdate: ${state.needsUpdate}`,
         `updates: ${state.updateCount}`,
         `dirty requests: ${state.dirtyRequests}`,
         `last reason: ${state.lastDirtyReason || "none"}`,
+        `last update: ${state.lastUpdateReason || "none"}`,
         `casters: ${state.casters}`,
         `receivers: ${state.receivers}`,
         `receiver-only: ${state.receiverOnly}`,
@@ -5902,6 +5975,105 @@
       });
       visualNodes.forEach(disposePmndrsAtmosphereVisualNode);
     }
+    function getVrTakramLightsOnlySkyColors(preset) {
+      if (preset === "clear") {
+        return {
+          top: "#82c7fb",
+          horizon: "#fff0d3",
+          bottom: "#f8fbff"
+        };
+      }
+      if (preset === "crisp") {
+        return {
+          top: "#8fc8f6",
+          horizon: "#fff1d8",
+          bottom: "#f8fbff"
+        };
+      }
+      return {
+        top: "#94c9f5",
+        horizon: "#ffefd8",
+        bottom: "#f8fbff"
+      };
+    }
+    function removeVrTakramLightsOnlyGradientSky(self) {
+      const sky = self && self._vrTakramLightsOnlyGradientSky;
+      if (!sky) {
+        return;
+      }
+      if (sky.parent) {
+        sky.parent.remove(sky);
+      }
+      if (sky.geometry && typeof sky.geometry.dispose === "function") {
+        sky.geometry.dispose();
+      }
+      if (sky.material && typeof sky.material.dispose === "function") {
+        sky.material.dispose();
+      }
+      self._vrTakramLightsOnlyGradientSky = null;
+    }
+    function ensureVrTakramLightsOnlyGradientSky(self, preset) {
+      if (!self || !self.el || !self.el.object3D || typeof THREE === "undefined") {
+        return null;
+      }
+      let sky = self._vrTakramLightsOnlyGradientSky || null;
+      if (!sky) {
+        const geometry = new THREE.SphereGeometry(4e3, 32, 16);
+        const material = new THREE.ShaderMaterial({
+          side: THREE.BackSide,
+          depthWrite: false,
+          depthTest: false,
+          fog: false,
+          uniforms: {
+            topColor: { value: new THREE.Color("#94c9f5") },
+            horizonColor: { value: new THREE.Color("#ffefd8") },
+            bottomColor: { value: new THREE.Color("#f8fbff") }
+          },
+          vertexShader: [
+            "varying vec3 vSkyDirection;",
+            "void main() {",
+            "  vSkyDirection = normalize(position);",
+            "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);",
+            "}"
+          ].join("\n"),
+          fragmentShader: [
+            "uniform vec3 topColor;",
+            "uniform vec3 horizonColor;",
+            "uniform vec3 bottomColor;",
+            "varying vec3 vSkyDirection;",
+            "void main() {",
+            "  float h = clamp(vSkyDirection.y * 0.5 + 0.5, 0.0, 1.0);",
+            "  vec3 lower = mix(bottomColor, horizonColor, smoothstep(0.0, 0.48, h));",
+            "  vec3 upper = mix(horizonColor, topColor, smoothstep(0.48, 1.0, h));",
+            "  vec3 color = mix(lower, upper, smoothstep(0.42, 0.66, h));",
+            "  gl_FragColor = vec4(color, 1.0);",
+            "}"
+          ].join("\n")
+        });
+        material.toneMapped = false;
+        sky = new THREE.Mesh(geometry, material);
+        sky.name = "vrodosVrTakramLightsOnlyGradientSky";
+        sky.frustumCulled = false;
+        sky.renderOrder = -1e3;
+        sky.userData.vrodosVrTakramLightsOnlySky = true;
+        sky.castShadow = false;
+        sky.receiveShadow = false;
+        sky.raycast = function() {
+        };
+        self.el.object3D.add(sky);
+        self._vrTakramLightsOnlyGradientSky = sky;
+      } else if (sky.parent !== self.el.object3D) {
+        self.el.object3D.add(sky);
+      }
+      const colors = getVrTakramLightsOnlySkyColors(preset);
+      if (sky.material && sky.material.uniforms) {
+        sky.material.uniforms.topColor.value.set(colors.top);
+        sky.material.uniforms.horizonColor.value.set(colors.horizon);
+        sky.material.uniforms.bottomColor.value.set(colors.bottom);
+      }
+      sky.visible = true;
+      return sky;
+    }
     function isPmndrsGeneratedSunElement(el) {
       if (!el) {
         return false;
@@ -6005,6 +6177,7 @@
         return;
       }
       setPmndrsAtmosphereSkyVisibility(self, true);
+      removeVrTakramLightsOnlyGradientSky(self);
       removeLegacySunSkyEntitiesForPmndrs(self);
       schedulePmndrsHorizonEnvironmentCleanup(self);
       if (self.el.hasAttribute("environment")) {
@@ -6020,7 +6193,14 @@
       }
       removePmndrsAtmosphereSky(self);
       removePmndrsAtmosphereVisualObjects(self);
-      restorePmndrsHorizonEnvironmentVisuals(self);
+      removeLegacySunSkyEntitiesForPmndrs(self);
+      if (self.el && typeof self.el.hasAttribute === "function" && self.el.hasAttribute("environment")) {
+        self.el.removeAttribute("environment");
+      }
+      ensureVrTakramLightsOnlyGradientSky(
+        self,
+        typeof self.getHorizonSkyPreset === "function" ? self.getHorizonSkyPreset() : "natural"
+      );
       self._vrTakramLightsOnlyHorizonVisualsSynced = true;
     }
     function scheduleVrTakramLightsOnlyHorizonVisualSync(self) {
@@ -6221,7 +6401,8 @@
             ensureSky: false
           });
           if (!lightsReady2) {
-            setAFrameDefaultLightsEnabled(self, true);
+            setAFrameDefaultLightsEnabled(self, false);
+            ensurePmndrsFallbackHorizonLights(self, latestConfig, latestPreset);
           }
           scheduleVrTakramLightsOnlyHorizonVisualSync(self);
           logPmndrsHorizonDiagnostic(self, "apply-horizon-lights-only", latestConfig);
@@ -6730,10 +6911,11 @@
         requested,
         eligible,
         active,
-        owner: active ? "takram-light-source" : "aframe-environment",
+        owner: active ? "takram-light-source" : "vrodos-managed-light",
+        skyOwner: "vrodos-gradient-sky",
         sourceCount,
         unavailableReason: active ? "" : unavailableReason,
-        aFrameHorizon: true
+        aFrameHorizon: false
       };
     };
     H.getPmndrsAtmosphereConfig = function() {
@@ -6881,7 +7063,8 @@
           ensureSky: false
         });
         if (!lightsReady) {
-          setAFrameDefaultLightsEnabled(this, true);
+          setAFrameDefaultLightsEnabled(this, false);
+          ensurePmndrsFallbackHorizonLights(this, atmosphereConfig, preset);
         }
         syncVrTakramLightsOnlyHorizonVisuals(this, false);
       }
@@ -7668,25 +7851,18 @@ ${shader.fragmentShader}` : withUniform;
       const playerEl = document.getElementById("player");
       return playerEl && playerEl.components ? playerEl.components["custom-movement"] || null : null;
     }
-    function getImmersivePresentationYaw() {
-      const navigation = getImmersiveNavigationComponent();
-      if (!navigation || typeof navigation.isImmersiveXrPresenting !== "function" || !navigation.isImmersiveXrPresenting() || typeof navigation.immersiveRenderYaw !== "number" || !Number.isFinite(navigation.immersiveRenderYaw)) {
-        return 0;
-      }
-      return navigation.immersiveRenderYaw;
-    }
     function getImmersivePresentedSunDirection(self, sourceDirection) {
-      const yaw = getImmersivePresentationYaw();
-      if (!sourceDirection || !Number.isFinite(yaw) || Math.abs(yaw) < 1e-6) {
+      if (!sourceDirection || !self) {
         return sourceDirection;
       }
       if (!self._pmndrsPresentedSunDirection) {
         self._pmndrsPresentedSunDirection = new THREE.Vector3();
       }
-      if (!self._pmndrsPresentedSunUp) {
-        self._pmndrsPresentedSunUp = new THREE.Vector3(0, 1, 0);
+      const navigation = getImmersiveNavigationComponent();
+      if (navigation && typeof navigation.isImmersiveXrPresenting === "function" && navigation.isImmersiveXrPresenting() && typeof navigation.authoredToRenderedDirection === "function") {
+        return navigation.authoredToRenderedDirection(sourceDirection, self._pmndrsPresentedSunDirection);
       }
-      return self._pmndrsPresentedSunDirection.copy(sourceDirection).applyAxisAngle(self._pmndrsPresentedSunUp, yaw).normalize();
+      return self._pmndrsPresentedSunDirection.copy(sourceDirection).normalize();
     }
     function isPmndrsSunOccluderMesh(node) {
       if (!node || !node.isMesh || !node.visible) {
@@ -8236,6 +8412,7 @@ ${shader.fragmentShader}` : withUniform;
       markAllShadowLightsDirty(this);
       this._vrodosShadowDirty = false;
       this._vrodosShadowUpdateCount = (this._vrodosShadowUpdateCount || 0) + 1;
+      this._vrodosShadowLastUpdateReason = this._vrodosShadowDirtyReason || "manual";
       this._vrodosShadowLastUpdateMs = typeof performance !== "undefined" ? performance.now() : Date.now();
       updateShadowPerfDebugOverlay(this);
     };
@@ -8257,12 +8434,14 @@ ${shader.fragmentShader}` : withUniform;
       const shadowQuality = typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data.shadowQuality || "medium";
       const shadowsEnabled = shadowQuality !== "off";
       const contactShadowSettings = getTerrainSafeContactShadowSettings(this, this.getContactShadowSettings());
-      const profileShadowType = shadowQuality === "high" ? "pcfsoft" : "pcf";
+      const profileShadowType = "pcf";
       const shadowTypeAttr = shadowsEnabled ? shouldUseDayNightPcfShadowMap(this) ? "pcf" : normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType) : "pcf";
-      const runtimeShadowTypeAttr = shadowsEnabled && shouldUseTakramR184BasicShadowMap(this) ? "basic" : shadowTypeAttr;
+      const runtimeShadowTypeAttr = shadowTypeAttr;
       const aframeShadowTypeAttr = getAFrameShadowComponentType(runtimeShadowTypeAttr);
       const shadowMapType = getThreeShadowMapType(runtimeShadowTypeAttr);
       const staticShadowMode = shadowsEnabled && isStaticShadowMode(this);
+      const previousShadowMapType = renderer && renderer.shadowMap ? renderer.shadowMap.type : null;
+      const shadowMapTypeChanged = previousShadowMapType !== null && previousShadowMapType !== shadowMapType;
       if (this.el && typeof this.el.setAttribute === "function") {
         const currentShadow = this.el.getAttribute("shadow") || {};
         const currentEnabled = currentShadow.enabled === true || currentShadow.enabled === "true";
@@ -8336,6 +8515,9 @@ ${shader.fragmentShader}` : withUniform;
         }
       });
       if (shadowsEnabled) {
+        if (refreshShadowMapResourcesForType(this, shadowMapType, shadowMapTypeChanged) && renderer && renderer.shadowMap) {
+          renderer.shadowMap.needsUpdate = true;
+        }
         applyAdaptiveShadowFit(this);
         if (typeof this.syncStaticShadowMode === "function") {
           this.syncStaticShadowMode("shadow-profile");
@@ -8515,6 +8697,10 @@ ${shader.fragmentShader}` : withUniform;
         lightEl.setAttribute("data-vrodos-photoreal-light", "true");
         changed = true;
       }
+      if (lightEl.getAttribute("data-vrodos-celestial-light") !== "true") {
+        lightEl.setAttribute("data-vrodos-celestial-light", "true");
+        changed = true;
+      }
       if (lightEl.getAttribute("visible") !== "true") {
         lightEl.setAttribute("visible", "true");
         changed = true;
@@ -8538,9 +8724,10 @@ ${shader.fragmentShader}` : withUniform;
       const useVrTakramVisibleSky = shouldUseVrTakramVisibleSky(this);
       const isPmndrs = this.data.postFXEngine === "pmndrs" && !useVrBaselineHorizon;
       const usePmndrsEnvironmentVisuals = isPmndrs && !useVrTakramLightsOnly;
+      const useGradientEnvironmentSky = usePmndrsEnvironmentVisuals;
       const usesTakramHorizon = shouldUsePmndrsTakramHorizonPath(this);
       const shadowEnabled = (typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data.shadowQuality) !== "off";
-      if (!usesTakramHorizon) {
+      if (!usesTakramHorizon && !useVrTakramLightsOnly) {
         setAFrameDefaultLightsEnabled(this, true);
       }
       if (usePmndrsEnvironmentVisuals && !useVrTakramVisibleSky) {
@@ -8556,30 +8743,38 @@ ${shader.fragmentShader}` : withUniform;
         stageSize: getLegacyHorizonStageSizeValue(this)
       };
       if (preset === "clear") {
-        environmentConfig.skyType = usePmndrsEnvironmentVisuals ? "gradient" : "atmosphere";
-        environmentConfig.skyColor = usePmndrsEnvironmentVisuals ? "#82c7fb" : "#bfe0ff";
-        environmentConfig.horizonColor = usePmndrsEnvironmentVisuals ? "#fff0d3" : "#fff8ee";
+        environmentConfig.skyType = useGradientEnvironmentSky ? "gradient" : "atmosphere";
+        environmentConfig.skyColor = useGradientEnvironmentSky ? "#82c7fb" : "#bfe0ff";
+        environmentConfig.horizonColor = useGradientEnvironmentSky ? "#fff0d3" : "#fff8ee";
         environmentConfig.lighting = "distant";
         environmentConfig.lightPosition = "0.08 0.98 -0.12";
       } else if (preset === "crisp") {
-        environmentConfig.skyType = usePmndrsEnvironmentVisuals ? "gradient" : "atmosphere";
-        environmentConfig.skyColor = usePmndrsEnvironmentVisuals ? "#8fc8f6" : "#abd7ff";
-        environmentConfig.horizonColor = usePmndrsEnvironmentVisuals ? "#fff1d8" : "#fffaf2";
+        environmentConfig.skyType = useGradientEnvironmentSky ? "gradient" : "atmosphere";
+        environmentConfig.skyColor = useGradientEnvironmentSky ? "#8fc8f6" : "#abd7ff";
+        environmentConfig.horizonColor = useGradientEnvironmentSky ? "#fff1d8" : "#fffaf2";
         environmentConfig.lighting = "distant";
         environmentConfig.lightPosition = "0.1 0.99 -0.12";
       } else {
-        environmentConfig.skyType = usePmndrsEnvironmentVisuals ? "gradient" : "atmosphere";
-        environmentConfig.skyColor = usePmndrsEnvironmentVisuals ? "#94c9f5" : "#b8dcff";
-        environmentConfig.horizonColor = usePmndrsEnvironmentVisuals ? "#ffefd8" : "#fff7ec";
+        environmentConfig.skyType = useGradientEnvironmentSky ? "gradient" : "atmosphere";
+        environmentConfig.skyColor = useGradientEnvironmentSky ? "#94c9f5" : "#b8dcff";
+        environmentConfig.horizonColor = useGradientEnvironmentSky ? "#ffefd8" : "#fff7ec";
         environmentConfig.lighting = "distant";
         environmentConfig.lightPosition = "0.08 0.99 -0.1";
       }
-      if (!usesTakramHorizon || useVrTakramVisibleSky && this._vrTakramVisibleSkyFallbackActive) {
+      if (useVrTakramLightsOnly) {
+        if (this.el.hasAttribute("environment")) {
+          this.el.removeAttribute("environment");
+        }
+        ensureVrTakramLightsOnlyGradientSky(this, preset);
+      } else if (!usesTakramHorizon || useVrTakramVisibleSky && this._vrTakramVisibleSkyFallbackActive) {
+        removeVrTakramLightsOnlyGradientSky(this);
         this.el.setAttribute("environment", environmentConfig);
       } else if (this.el.hasAttribute("environment")) {
+        removeVrTakramLightsOnlyGradientSky(this);
         this.el.removeAttribute("environment");
       }
       if (!isPmndrs) {
+        removeVrTakramLightsOnlyGradientSky(this);
         setAFrameDefaultLightsEnabled(this, true);
         this.removePhotorealHelperLights();
         removePmndrsAtmosphereSky(this);
@@ -8594,7 +8789,12 @@ ${shader.fragmentShader}` : withUniform;
           ensureSky: false
         }) : false;
         if (!lightsReady) {
-          setAFrameDefaultLightsEnabled(this, true);
+          if (atmosphereConfig && atmosphereConfig.enabled) {
+            setAFrameDefaultLightsEnabled(this, false);
+            ensurePmndrsFallbackHorizonLights(this, atmosphereConfig, preset);
+          } else {
+            setAFrameDefaultLightsEnabled(this, true);
+          }
         }
         scheduleVrTakramLightsOnlyHorizonVisualSync(this);
         logPmndrsHorizonDiagnostic(this, "apply-horizon-lights-only", atmosphereConfig);
@@ -8613,6 +8813,7 @@ ${shader.fragmentShader}` : withUniform;
         return;
       }
       this.removePhotorealHelperLights();
+      removeVrTakramLightsOnlyGradientSky(this);
       if (atmosphereConfig && atmosphereConfig.enabled && window.VRODOS_TAKRAM_ATMOSPHERE) {
         schedulePmndrsHorizonEnvironmentCleanup(this);
         clearPmndrsHorizonSun(this);

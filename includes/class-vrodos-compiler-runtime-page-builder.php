@@ -60,7 +60,7 @@ class VRodos_Compiler_Runtime_Page_Builder {
 	}
 
 	public function apply_scene_core( DOMDocument $dom, DOMElement $ascene, $scene_json, int $project_id, int $scene_id, array $options = [] ): DOMElement {
-		$this->scene_settings->apply( $dom, $ascene, $scene_json, $project_id, $this->normalize_url );
+		$scene_settings = $this->scene_settings->apply( $dom, $ascene, $scene_json, $project_id, $this->normalize_url );
 		$ascene->setAttribute( 'gltf-model', (string) call_user_func( $this->decoder_config ) );
 		$this->apply_runtime_pipeline_components( $ascene );
 
@@ -76,7 +76,9 @@ class VRodos_Compiler_Runtime_Page_Builder {
 			$scene_json->objects ?? [],
 			$project_id,
 			$scene_id,
-			(array) ( $options['render_options'] ?? [] )
+			array_merge( (array) ( $options['render_options'] ?? [] ), [
+				'scene_settings' => $scene_settings,
+			] )
 		);
 
 		$this->entity_renderer->markDelayedRevealEntities( $dom );
