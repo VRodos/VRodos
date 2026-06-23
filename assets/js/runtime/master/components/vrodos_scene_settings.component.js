@@ -1555,6 +1555,9 @@ AFRAME.registerComponent('scene-settings', {
             immersiveLastShadowRefreshReason: movement && movement.immersiveLastShadowRefreshReason
                 ? movement.immersiveLastShadowRefreshReason
                 : '',
+            immersiveSmoothness: movement && typeof movement.getImmersiveSmoothnessDiagnostics === 'function'
+                ? movement.getImmersiveSmoothnessDiagnostics()
+                : null,
             lastNonImmersiveHeightOffset: movement && typeof movement.lastNonImmersiveHeightOffset === 'number'
                 ? Number(movement.lastNonImmersiveHeightOffset.toFixed(3))
                 : null,

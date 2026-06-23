@@ -54,6 +54,16 @@ Then run the ADB reverse/open command. The Quest URL should stay `http://localho
 
 Before sending a new headset test URL, close existing Quest Browser scene tabs when possible. Stale scene tabs can ignore a fresh Android VIEW intent and keep an older `vrodos_cache_bust` URL active; if that happens, use the Quest Browser DevTools target to navigate the existing `Scene 1` page directly or close the page target before launching the next URL.
 
+## Immersive Smoothness Diagnostics
+
+Desktop `scripts/profile-master-client.mjs` captures tab-mode regressions only; do not treat it as proof of native Quest immersive frame pacing. For headset movement/yaw smoothness, load the scene with `vrodos_debug_immersive_smoothness=1`, enter immersive VR, then sample Quest Browser DevTools:
+
+```powershell
+node scripts\capture-quest-immersive-diagnostics.mjs --duration-ms 30000 --target-url Master_Client_8980.html
+```
+
+The runtime publishes `window.__vrodosImmersiveSmoothnessDiagnostics` while the flag is active. The capture JSON includes frame-delta buckets for `idle`, `move`, `yaw`, and `move+yaw`, plus navigation transform, collision/ground, shadow, input, and renderer facts. Use this to decide whether an issue is rendering/frame pacing, navigation work, input/yaw integration, or headset/browser reprojection before changing locomotion behavior.
+
 ## VR Headset Parity Checklist
 
 Track every stage here before promoting it. Keep `Status` as `Pending`, `In Progress`, `Blocked`, or `Accepted`.
