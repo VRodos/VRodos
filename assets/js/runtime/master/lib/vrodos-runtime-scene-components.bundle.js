@@ -5218,6 +5218,9 @@
         label: item.answers[index] || "Option " + (index + 1),
         variant: selected ? "positive" : "secondary",
         width: opts.width,
+        minWidth: opts.minWidth,
+        flexGrow: opts.flexGrow,
+        flexShrink: opts.flexShrink,
         minHeight: opts.minHeight || opts.itemHeight,
         textSize: opts.textSize,
         lineHeight: opts.lineHeight,
@@ -5225,6 +5228,17 @@
           runtime.state.selectedByIndex[runtime.state.activeIndex] = index;
           runtime.rerender();
         }
+      };
+    }
+    function questionAnswerGridButtonLayout(options) {
+      const cfg = options || {};
+      return {
+        minWidth: cfg.itemMinWidth !== void 0 ? cfg.itemMinWidth : 0,
+        flexGrow: cfg.itemFlexGrow !== void 0 ? cfg.itemFlexGrow : 1,
+        flexShrink: cfg.itemFlexShrink !== void 0 ? cfg.itemFlexShrink : 1,
+        minHeight: cfg.itemHeight || cfg.height || 84,
+        textSize: cfg.textSize || 30,
+        lineHeight: cfg.lineHeight || "120%"
       };
     }
     function renderQuestionAnswerGrid(runtime, parent, item, selectedIndex, options) {
@@ -5241,14 +5255,15 @@
           justifyContent: "center",
           width: "100%"
         });
-        item.answers.slice(index, index + columns).forEach((answer, offset) => {
+        item.answers.slice(index, index + columns).forEach((_answer, offset) => {
           const answerIndex = index + offset;
-          const button = runtime.api.button(row, questionAnswerButtonOptions(runtime, item, answerIndex, selectedIndex, {
-            width: "100%",
-            minHeight: cfg.itemHeight || cfg.height || 84,
-            textSize: cfg.textSize || 30,
-            lineHeight: cfg.lineHeight || "120%"
-          }));
+          const button = runtime.api.button(row, questionAnswerButtonOptions(
+            runtime,
+            item,
+            answerIndex,
+            selectedIndex,
+            questionAnswerGridButtonLayout(cfg)
+          ));
           runtime.state.view.answerButtons[answerIndex] = button;
         });
       }
@@ -5321,12 +5336,10 @@
           minHeight: 78,
           textSize: 22,
           lineHeight: "126%"
-        } : {
-          width: "100%",
-          minHeight: state.isTrueFalse ? 92 : 92,
-          textSize: state.isTrueFalse ? TRUE_FALSE_ANSWER_TEXT_SIZE : QUESTION_ANSWER_TEXT_SIZE,
-          lineHeight: "120%"
-        }));
+        } : questionAnswerGridButtonLayout({
+          itemHeight: 92,
+          textSize: state.isTrueFalse ? TRUE_FALSE_ANSWER_TEXT_SIZE : QUESTION_ANSWER_TEXT_SIZE
+        })));
       });
     }
     function finishQuestion(runtime) {
