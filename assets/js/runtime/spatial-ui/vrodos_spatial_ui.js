@@ -9,6 +9,7 @@ import {
     Button as HorizonButton,
     ButtonIcon,
     ButtonLabel,
+    InputField as HorizonInputField,
     Panel as HorizonPanel,
     ProgressBar as HorizonProgressBar,
     theme as HorizonTheme
@@ -2458,6 +2459,38 @@ import { MSDF } from "@zappar/msdf-generator";
                     zIndex: opts.zIndex || 20
                 }, fontProps(opts))));
                 return text;
+            },
+
+            inputField: function (parent, options) {
+                const opts = withPanelFontDefaults(options);
+                const input = new HorizonInputField(baseContainerProps(Object.assign({
+                    label: opts.label || "",
+                    placeholder: opts.placeholder || "",
+                    defaultValue: opts.defaultValue || "",
+                    value: opts.value,
+                    disabled: Boolean(opts.disabled),
+                    autocomplete: opts.autocomplete || "off",
+                    type: opts.type || "text",
+                    onValueChange: typeof opts.onValueChange === "function" ? opts.onValueChange : undefined,
+                    onFocusChange: typeof opts.onFocusChange === "function" ? opts.onFocusChange : undefined,
+                    width: opts.width || "100%",
+                    minHeight: opts.minHeight || 74,
+                    borderRadius: opts.borderRadius || 14,
+                    pointerEvents: "listener",
+                    zIndex: opts.zIndex || 18
+                }, fontProps(opts))), undefined, {
+                    defaultOverrides: {
+                        backgroundColor: opts.backgroundColor || "rgba(255,255,255,0.92)",
+                        borderColor: opts.borderColor || "rgba(203,213,225,0.95)",
+                        borderWidth: opts.borderWidth !== undefined ? opts.borderWidth : 1,
+                        paddingX: opts.paddingX !== undefined ? opts.paddingX : 18,
+                        paddingY: opts.paddingY !== undefined ? opts.paddingY : 10
+                    }
+                });
+                input.name = "VRODOSSpatialUIInputField";
+                input.userData = input.userData || {};
+                input.userData.vrodosSpatialInput = true;
+                return append(parent || this.content || this.root, input);
             },
 
             button: function (parent, options) {

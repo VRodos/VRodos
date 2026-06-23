@@ -6227,6 +6227,117 @@
     return new Matrix4().compose(textMatrixPosition, IdentityQuaternion, IdentityScale).premultiply(globalMatrix);
   }
 
+  // node_modules/@pmndrs/uikit/dist/text/layout/query.js
+  var noSelectionTransformations = [];
+  function getCharIndex(layout, x2, y2, position) {
+    if (layout == null) {
+      return 0;
+    }
+    y2 -= -getTextYOffset(layout, layout.verticalAlign);
+    const lineIndex = Math.floor(y2 / -getOffsetToNextLine(layout.lineHeight));
+    const lines = layout.lines;
+    if (lineIndex < 0 || lines.length === 0) {
+      return 0;
+    }
+    if (lineIndex >= lines.length) {
+      const lastLine = lines[lines.length - 1];
+      return lastLine.charIndexOffset + lastLine.charLength + 1;
+    }
+    const line = lines[lineIndex];
+    for (let i2 = 0; i2 < line.entries.length; i2++) {
+      const entry = line.entries[i2];
+      if (x2 < getEntryX(entry, position === "between" ? 0.5 : 1) + layout.availableWidth / 2) {
+        return i2 + line.charIndexOffset;
+      }
+    }
+    return line.charIndexOffset + line.charLength + 1;
+  }
+  function getCaretTransformation(layout, charIndex) {
+    if (layout == null || layout.lines.length === 0) {
+      return void 0;
+    }
+    const whitespaceWidth = getWhitespaceWidth(layout);
+    const { lineIndex, x: x2 } = getGlyphLineAndX(layout, charIndex, true, whitespaceWidth);
+    const y2 = -(getTextYOffset(layout, layout.verticalAlign) - layout.availableHeight / 2 + lineIndex * getOffsetToNextLine(layout.lineHeight) + getGlyphOffsetY(layout.fontSize, layout.lineHeight));
+    return { position: [x2, y2 - layout.fontSize / 2], height: layout.fontSize };
+  }
+  function getSelectionTransformations(layout, range) {
+    if (range == null || layout == null || layout.lines.length === 0) {
+      return { caret: void 0, selections: noSelectionTransformations };
+    }
+    const whitespaceWidth = getWhitespaceWidth(layout);
+    const [startCharIndexIncl, endCharIndexExcl] = range;
+    if (endCharIndexExcl <= startCharIndexIncl) {
+      return {
+        caret: getCaretTransformation(layout, endCharIndexExcl),
+        selections: noSelectionTransformations
+      };
+    }
+    const start = getGlyphLineAndX(layout, startCharIndexIncl, true, whitespaceWidth);
+    const end = getGlyphLineAndX(layout, endCharIndexExcl - 1, false, whitespaceWidth);
+    if (start.lineIndex === end.lineIndex) {
+      return {
+        caret: void 0,
+        selections: [computeSelectionTransformation(start.lineIndex, start.x, end.x, layout, whitespaceWidth)]
+      };
+    }
+    const selections = [
+      computeSelectionTransformation(start.lineIndex, start.x, void 0, layout, whitespaceWidth)
+    ];
+    for (let i2 = start.lineIndex + 1; i2 < end.lineIndex; i2++) {
+      selections.push(computeSelectionTransformation(i2, void 0, void 0, layout, whitespaceWidth));
+    }
+    selections.push(computeSelectionTransformation(end.lineIndex, void 0, end.x, layout, whitespaceWidth));
+    return { caret: void 0, selections };
+  }
+  function computeSelectionTransformation(lineIndex, startX, endX, layout, whitespaceWidth) {
+    const line = layout.lines[lineIndex];
+    const firstEntry = line.entries[0];
+    const lastEntry = line.entries[line.entries.length - 1];
+    if (startX == null) {
+      startX = firstEntry == null ? getTextXOffset(layout.availableWidth, line.nonWhitespaceWidth, layout.textAlign) - layout.availableWidth / 2 : getEntryX(firstEntry, 0);
+    }
+    if (endX == null) {
+      endX = lastEntry == null ? startX : getEntryX(lastEntry, 1, whitespaceWidth);
+    }
+    const height = getOffsetToNextLine(layout.lineHeight);
+    const y2 = -(getTextYOffset(layout, layout.verticalAlign) - layout.availableHeight / 2 + lineIndex * height);
+    const width = endX - startX;
+    return { position: [startX + width / 2, y2 - height / 2], size: [width, height] };
+  }
+  function getGlyphLineAndX(layout, charIndex, start, whitespaceWidth) {
+    const { lines, availableWidth, textAlign } = layout;
+    const linesLength = lines.length;
+    if (charIndex >= lines[0].charIndexOffset) {
+      for (let lineIndex = 0; lineIndex < linesLength; lineIndex++) {
+        const line = lines[lineIndex];
+        if (charIndex >= line.charIndexOffset + line.charLength) {
+          continue;
+        }
+        const entry = line.entries[Math.max(charIndex - line.charIndexOffset, 0)];
+        if (entry != null) {
+          return { lineIndex, x: getEntryX(entry, start ? 0 : 1, whitespaceWidth) };
+        }
+        return {
+          lineIndex,
+          x: getTextXOffset(availableWidth, line.nonWhitespaceWidth, textAlign) - availableWidth / 2
+        };
+      }
+    }
+    const lastLine = lines[linesLength - 1];
+    if (lastLine.entries.length === 0 || charIndex < lastLine.charIndexOffset) {
+      return {
+        lineIndex: linesLength - 1,
+        x: getTextXOffset(availableWidth, lastLine.nonWhitespaceWidth, textAlign) - availableWidth / 2
+      };
+    }
+    const lastEntry = lastLine.entries[lastLine.entries.length - 1];
+    return { lineIndex: linesLength - 1, x: getEntryX(lastEntry, 1, whitespaceWidth) };
+  }
+  function getEntryX(entry, widthMultiplier, fallbackWidth) {
+    return entry.x + widthMultiplier * (entry.type === "whitespace" ? fallbackWidth != null ? fallbackWidth : entry.width : entry.width);
+  }
+
   // node_modules/@pmndrs/uikit/dist/text/layout/index.js
   function setupTextLayout(target) {
     const layoutProperties = computedGlyphOutProperties(target.properties, target.fontSignal);
@@ -6907,6 +7018,234 @@
         fn(glyph);
       }
     }
+  }
+
+  // node_modules/@pmndrs/uikit/dist/text/selection/caret.js
+  var caretBorderKeys = [
+    "caretBorderRightWidth",
+    "caretBorderTopWidth",
+    "caretBorderLeftWidth",
+    "caretBorderBottomWidth"
+  ];
+  var caretMaterialConfig;
+  function getCaretMaterialConfig() {
+    caretMaterialConfig != null ? caretMaterialConfig : caretMaterialConfig = createPanelMaterialConfig({
+      backgroundColor: "caretColor",
+      borderBend: "caretBorderBend",
+      borderBottomLeftRadius: "caretBorderBottomLeftRadius",
+      borderBottomRightRadius: "caretBorderBottomRightRadius",
+      borderColor: "caretBorderColor",
+      borderTopLeftRadius: "caretBorderTopLeftRadius",
+      borderTopRightRadius: "caretBorderTopRightRadius"
+    }, {
+      backgroundColor: 0
+    });
+    return caretMaterialConfig;
+  }
+  function setupCaret(properties, globalMatrix, caretTransformation, isVisible, parentOrderInfo, parentGroupDeps, parentClippingRect, root, abortSignal) {
+    const orderInfo = y(void 0);
+    setupOrderInfo(orderInfo, properties, "zIndex", ElementType.Panel, parentGroupDeps, parentOrderInfo, abortSignal);
+    const blinkingCaretTransformation = y(void 0);
+    abortableEffect(() => {
+      const pos = caretTransformation.value;
+      if (pos == null) {
+        blinkingCaretTransformation.value = void 0;
+        return;
+      }
+      blinkingCaretTransformation.value = pos;
+      const ref = setInterval(() => blinkingCaretTransformation.value = blinkingCaretTransformation.peek() == null ? pos : void 0, 500);
+      return () => clearInterval(ref);
+    }, abortSignal);
+    const borderInset = computedBorderInset(properties, caretBorderKeys);
+    const panelSize = g(() => {
+      var _a4, _b;
+      const height = (_a4 = blinkingCaretTransformation.value) == null ? void 0 : _a4.height;
+      if (height == null) {
+        return [0, 0];
+      }
+      return [parseAbsoluteLengthValue((_b = properties.value.caretWidth) != null ? _b : 0), height];
+    });
+    const panelOffset = g(() => {
+      var _a4, _b;
+      const position = (_a4 = blinkingCaretTransformation.value) == null ? void 0 : _a4.position;
+      if (position == null) {
+        return [0, 0];
+      }
+      return [position[0] - parseAbsoluteLengthValue((_b = properties.value.caretWidth) != null ? _b : 0) / 2, position[1]];
+    });
+    const panelMatrix = computedPanelMatrix(properties, globalMatrix, panelSize, panelOffset);
+    setupInstancedPanel(properties, root, orderInfo, parentGroupDeps, panelMatrix, panelSize, borderInset, parentClippingRect, isVisible, getCaretMaterialConfig(), abortSignal);
+  }
+
+  // node_modules/@pmndrs/uikit/dist/text/selection/pointer.js
+  var cancelSet = /* @__PURE__ */ new Set();
+  function cancelBlur(event) {
+    cancelSet.add(event);
+  }
+  var segmenter = typeof Intl === "undefined" ? void 0 : new Intl.Segmenter(void 0, { granularity: "word" });
+  function setupSelectionHandlers(target, properties, text, component, textLayout, focus, abortSignal) {
+    abortableEffect(() => {
+      if (properties.value.disabled) {
+        target.value = void 0;
+        return;
+      }
+      let dragState;
+      const onPointerFinish = (e2) => {
+        var _a4;
+        if (dragState == null || dragState.pointerId != e2.pointerId) {
+          return;
+        }
+        (_a4 = e2.stopImmediatePropagation) == null ? void 0 : _a4.call(e2);
+        dragState = void 0;
+      };
+      target.value = {
+        onPointerDown: (e2) => {
+          var _a4;
+          const layout = textLayout.peek();
+          if (dragState != null || e2.uv == null || layout == null) {
+            return;
+          }
+          cancelBlur(e2.nativeEvent);
+          (_a4 = e2.stopImmediatePropagation) == null ? void 0 : _a4.call(e2);
+          if ("setPointerCapture" in e2.object && typeof e2.object.setPointerCapture === "function" && e2.pointerId != null) {
+            e2.object.setPointerCapture(e2.pointerId);
+          }
+          const startCharIndex = uvToCharIndex(component, e2.uv, layout, "between");
+          dragState = {
+            pointerId: e2.pointerId,
+            startCharIndex
+          };
+          setTimeout(() => focus(startCharIndex, startCharIndex));
+        },
+        onDblClick: (e2) => {
+          var _a4;
+          const layout = textLayout.peek();
+          if (segmenter == null || e2.uv == null || layout == null) {
+            return;
+          }
+          (_a4 = e2.stopImmediatePropagation) == null ? void 0 : _a4.call(e2);
+          if (properties.peek().type === "password") {
+            setTimeout(() => focus(0, text.peek().length, "none"));
+            return;
+          }
+          const charIndex = uvToCharIndex(component, e2.uv, layout, "on");
+          const segments = segmenter.segment(text.peek());
+          let segmentLengthSum = 0;
+          for (const { segment } of segments) {
+            const segmentLength = segment.length;
+            if (charIndex < segmentLengthSum + segmentLength) {
+              setTimeout(() => focus(segmentLengthSum, segmentLengthSum + segmentLength, "none"));
+              break;
+            }
+            segmentLengthSum += segmentLength;
+          }
+        },
+        onPointerUp: onPointerFinish,
+        onPointerLeave: onPointerFinish,
+        onPointerCancel: onPointerFinish,
+        onPointerMove: (e2) => {
+          var _a4;
+          const layout = textLayout.peek();
+          if (dragState == null || (dragState == null ? void 0 : dragState.pointerId) != e2.pointerId || e2.uv == null || layout == null) {
+            return;
+          }
+          (_a4 = e2.stopImmediatePropagation) == null ? void 0 : _a4.call(e2);
+          const charIndex = uvToCharIndex(component, e2.uv, layout, "between");
+          const start = Math.min(dragState.startCharIndex, charIndex);
+          const end = Math.max(dragState.startCharIndex, charIndex);
+          const direction = dragState.startCharIndex < charIndex ? "forward" : "backward";
+          setTimeout(() => focus(start, end, direction));
+        }
+      };
+    }, abortSignal);
+  }
+  function uvToCharIndex({ size: s2, borderInset: b2, paddingInset: p2 }, uv, layout, position) {
+    const size = s2.peek();
+    const borderInset = b2.peek();
+    const paddingInset = p2.peek();
+    if (size == null || borderInset == null || paddingInset == null) {
+      return 0;
+    }
+    const [width, height] = size;
+    const [bTop, , , bLeft] = borderInset;
+    const [pTop, , , pLeft] = paddingInset;
+    const x2 = uv.x * width - bLeft - pLeft;
+    const y2 = (uv.y - 1) * height + bTop + pTop;
+    return getCharIndex(layout, x2, y2, position);
+  }
+
+  // node_modules/@pmndrs/uikit/dist/text/selection/ranges.js
+  var selectionBorderKeys = [
+    "selectionBorderRightWidth",
+    "selectionBorderTopWidth",
+    "selectionBorderLeftWidth",
+    "selectionBorderBottomWidth"
+  ];
+  var selectionMaterialConfig;
+  function getSelectionMaterialConfig() {
+    selectionMaterialConfig != null ? selectionMaterialConfig : selectionMaterialConfig = createPanelMaterialConfig({
+      backgroundColor: "selectionColor",
+      borderBend: "selectionBorderBend",
+      borderBottomLeftRadius: "selectionBorderBottomLeftRadius",
+      borderBottomRightRadius: "selectionBorderBottomRightRadius",
+      borderColor: "selectionBorderColor",
+      borderTopLeftRadius: "selectionBorderTopLeftRadius",
+      borderTopRightRadius: "selectionBorderTopRightRadius"
+    }, {
+      backgroundColor: 11851775
+    });
+    return selectionMaterialConfig;
+  }
+  function createSelection(properties, root, globalMatrix, selectionTransformations, isVisible, prevOrderInfo, prevPanelDeps, parentClippingRect, abortSignal) {
+    const panels = [];
+    const orderInfo = y(void 0);
+    setupOrderInfo(orderInfo, properties, "zIndex", ElementType.Panel, prevPanelDeps, prevOrderInfo, abortSignal);
+    const borderInset = computedBorderInset(properties, selectionBorderKeys);
+    abortableEffect(() => {
+      const selections = selectionTransformations.value;
+      const selectionsLength = selections.length;
+      for (let i2 = 0; i2 < selectionsLength; i2++) {
+        let panelData = panels[i2];
+        if (panelData == null) {
+          const size = y([0, 0]);
+          const offset = y([0, 0]);
+          const abortController = new AbortController();
+          const panelMatrix = computedPanelMatrix(properties, globalMatrix, size, offset);
+          setupInstancedPanel(properties, root, orderInfo, prevPanelDeps, panelMatrix, size, borderInset, parentClippingRect, isVisible, getSelectionMaterialConfig(), abortController.signal);
+          panels[i2] = panelData = {
+            abortController,
+            offset,
+            size
+          };
+        }
+        const selection = selections[i2];
+        panelData.size.value = selection.size;
+        panelData.offset.value = selection.position;
+      }
+      const panelsLength = panels.length;
+      for (let i2 = selectionsLength; i2 < panelsLength; i2++) {
+        panels[i2].abortController.abort();
+      }
+      panels.length = selectionsLength;
+    }, abortSignal);
+    abortSignal.addEventListener("abort", () => {
+      const panelsLength = panels.length;
+      for (let i2 = 0; i2 < panelsLength; i2++) {
+        panels[i2].abortController.abort();
+      }
+    });
+  }
+
+  // node_modules/@pmndrs/uikit/dist/text/selection/state.js
+  function updateHtmlSelectionRange(target, element) {
+    const selectionStart = element == null ? void 0 : element.selectionStart;
+    const selectionEnd = element == null ? void 0 : element.selectionEnd;
+    const next = selectionStart == null || selectionEnd == null ? void 0 : [selectionStart, selectionEnd];
+    const current = target.peek();
+    if ((current == null ? void 0 : current[0]) === (next == null ? void 0 : next[0]) && (current == null ? void 0 : current[1]) === (next == null ? void 0 : next[1])) {
+      return;
+    }
+    target.value = next;
   }
 
   // node_modules/@pmndrs/uikit/dist/context.js
@@ -10527,6 +10866,166 @@
     });
   }
 
+  // node_modules/@pmndrs/uikit/dist/text/input/hidden-input.js
+  function createHtmlInputElement(onChange, multiline, onSelectionChange) {
+    const element = document.createElement(multiline ? "textarea" : "input");
+    const style = element.style;
+    style.setProperty("position", "absolute");
+    style.setProperty("left", "-1000vw");
+    style.setProperty("top", "0");
+    style.setProperty("pointerEvents", "none");
+    style.setProperty("opacity", "0");
+    element.addEventListener("input", () => {
+      onChange == null ? void 0 : onChange(element.value);
+      onSelectionChange();
+    });
+    element.addEventListener("focus", onSelectionChange);
+    element.addEventListener("keydown", onSelectionChange);
+    element.addEventListener("keyup", onSelectionChange);
+    element.addEventListener("blur", onSelectionChange);
+    return element;
+  }
+  function setupHtmlInputElement(properties, element, value, abortSignal) {
+    document.body.appendChild(element);
+    abortSignal.addEventListener("abort", () => element.remove());
+    abortableEffect(() => {
+      element.value = value.value;
+    }, abortSignal);
+    abortableEffect(() => {
+      element.disabled = properties.value.disabled;
+    }, abortSignal);
+    abortableEffect(() => {
+      element.tabIndex = parseNumberValue(properties.value.tabIndex);
+    }, abortSignal);
+    abortableEffect(() => {
+      element.autocomplete = properties.value.autocomplete;
+    }, abortSignal);
+    abortableEffect(() => element.setAttribute("type", properties.value.type), abortSignal);
+  }
+  function setupUpdateHasFocus(element, hasFocusSignal, onFocusChange, abortSignal) {
+    if (abortSignal.aborted) {
+      return;
+    }
+    hasFocusSignal.value = document.activeElement === element;
+    const listener = () => {
+      const hasFocus = document.activeElement === element;
+      if (hasFocus == hasFocusSignal.value) {
+        return;
+      }
+      hasFocusSignal.value = hasFocus;
+      onFocusChange(hasFocus);
+    };
+    element.addEventListener("focus", listener);
+    element.addEventListener("blur", listener);
+    abortSignal.addEventListener("abort", () => {
+      element.removeEventListener("focus", listener);
+      element.removeEventListener("blur", listener);
+    });
+  }
+
+  // node_modules/@pmndrs/uikit/dist/components/input.js
+  var inputDefaults = {
+    ...textDefaults,
+    type: "text",
+    disabled: false,
+    tabIndex: 0,
+    autocomplete: "",
+    whiteSpace: "pre"
+  };
+  var Input = class _Input extends Text {
+    constructor(inputProperties, initialClasses, inputConfig) {
+      var _a4;
+      const caretColor = y(void 0);
+      const selectionHandlers = y(void 0);
+      let element;
+      const htmlSelectionRange = y(void 0);
+      const updateSelectionRange = () => updateHtmlSelectionRange(htmlSelectionRange, element);
+      const hasFocus = y(false);
+      const selectionRange = g(() => {
+        if (!hasFocus.value) {
+          return void 0;
+        }
+        return htmlSelectionRange.value;
+      });
+      super(inputProperties, initialClasses, {
+        defaults: inputDefaults,
+        dynamicHandlers: selectionHandlers,
+        hasFocus,
+        isPlaceholder: g(() => this.currentSignal.value.length === 0),
+        ...inputConfig,
+        defaultOverrides: {
+          cursor: "text",
+          ...{
+            text: g(() => {
+              var _a5;
+              return this.currentSignal.value.length === 0 ? this.properties.value.placeholder : this.properties.value.type === "password" ? "*".repeat((_a5 = this.currentSignal.value.length) != null ? _a5 : 0) : this.currentSignal.value;
+            })
+          },
+          caretColor,
+          ...inputConfig == null ? void 0 : inputConfig.defaultOverrides
+        }
+      });
+      __publicField(this, "inputConfig");
+      __publicField(this, "element");
+      __publicField(this, "selectionRange");
+      __publicField(this, "hasFocus");
+      __publicField(this, "updateSelectionRange", () => {
+      });
+      __publicField(this, "uncontrolledSignal", y(void 0));
+      __publicField(this, "currentSignal", g(() => {
+        var _a4, _b, _c;
+        return (_c = (_b = (_a4 = this.properties.value.value) != null ? _a4 : this.uncontrolledSignal.value) != null ? _b : this.properties.value.defaultValue) != null ? _c : "";
+      }));
+      this.inputConfig = inputConfig;
+      this.selectionRange = selectionRange;
+      this.hasFocus = hasFocus;
+      this.updateSelectionRange = updateSelectionRange;
+      abortableEffect(() => {
+        caretColor.value = this.properties.value.color;
+      }, this.abortSignal);
+      setupSelectionHandlers(selectionHandlers, this.properties, this.currentSignal, this, this.textLayout, this.focus.bind(this), this.abortSignal);
+      const textSelection = g(() => getSelectionTransformations(this.textLayout.value, selectionRange.value));
+      const caretTransformation = g(() => textSelection.value.caret);
+      const selectionTransformations = g(() => textSelection.value.selections);
+      const parentClippingRect = g(() => {
+        var _a5;
+        return (_a5 = this.parentContainer.value) == null ? void 0 : _a5.clippingRect.value;
+      });
+      this.element = createHtmlInputElement((newValue) => {
+        var _a5, _b;
+        if (this.properties.peek().value == null) {
+          this.uncontrolledSignal.value = newValue;
+        }
+        (_b = (_a5 = this.properties.peek()).onValueChange) == null ? void 0 : _b.call(_a5, newValue);
+      }, (_a4 = inputConfig == null ? void 0 : inputConfig.multiline) != null ? _a4 : false, updateSelectionRange);
+      element = this.element;
+      setupCaret(this.properties, this.globalTextMatrix, caretTransformation, this.isVisible, this.backgroundOrderInfo, this.backgroundGroupDeps, parentClippingRect, this.root, this.abortSignal);
+      createSelection(this.properties, this.root, this.globalTextMatrix, selectionTransformations, this.isVisible, this.backgroundOrderInfo, this.backgroundGroupDeps, parentClippingRect, this.abortSignal);
+      setupHtmlInputElement(this.properties, this.element, this.currentSignal, this.abortSignal);
+      setupUpdateHasFocus(this.element, this.hasFocus, (hasFocus2) => {
+        var _a5, _b;
+        (_b = (_a5 = this.properties.peek()).onFocusChange) == null ? void 0 : _b.call(_a5, hasFocus2);
+      }, this.abortSignal);
+    }
+    focus(start, end, direction) {
+      if (!this.hasFocus.peek()) {
+        this.element.focus();
+      }
+      if (start != null && end != null) {
+        this.element.setSelectionRange(start, end, direction);
+      }
+      this.updateSelectionRange();
+    }
+    clone(recursive) {
+      const cloned = new _Input(this.inputProperties, this.initialClasses, this.inputConfig);
+      this.copyInto(cloned, recursive);
+      return cloned;
+    }
+    blur() {
+      this.element.blur();
+    }
+  };
+
   // node_modules/@pmndrs/uikit-horizon/dist/theme.js
   var lightTheme = {
     component: {
@@ -13773,6 +14272,224 @@
     }
     add() {
       throw new Error(`the ProgressBar component can not have any children`);
+    }
+  };
+
+  // node_modules/@pmndrs/uikit-horizon/dist/input/index.js
+  var _inputSizes = {
+    lg: {
+      height: 48,
+      fontSize: 14,
+      lineHeight: "20px"
+    },
+    sm: {
+      height: 32,
+      fontSize: 12,
+      lineHeight: "16px"
+    }
+  };
+  var inputSizes = _inputSizes;
+  var Input2 = class extends Container {
+    constructor(inputProperties, initialClasses, config) {
+      var _a4;
+      const hovered = (_a4 = config == null ? void 0 : config.hovered) != null ? _a4 : g(() => this.hoveredList.value.length > 0);
+      super(inputProperties, initialClasses, {
+        ...config,
+        defaultOverrides: {
+          //exists to make sure the handlers are applied
+          hover: {},
+          cursor: "text",
+          width: "100%",
+          gap: 12,
+          flexDirection: "row",
+          alignItems: "center",
+          fontSize: g(() => {
+            var _a5;
+            return inputSizes[(_a5 = this.properties.value.size) != null ? _a5 : "lg"].fontSize;
+          }),
+          lineHeight: g(() => {
+            var _a5;
+            return inputSizes[(_a5 = this.properties.value.size) != null ? _a5 : "lg"].lineHeight;
+          }),
+          fontWeight: 500,
+          color: g(() => {
+            var _a5;
+            return ((_a5 = this.properties.value.variant) != null ? _a5 : "text") === "text" ? theme.component.textInput.label.default.value : theme.component.search.label.value;
+          }),
+          paddingX: 16,
+          height: g(() => {
+            var _a5;
+            return inputSizes[(_a5 = this.properties.value.size) != null ? _a5 : "lg"].height;
+          }),
+          borderRadius: 8,
+          backgroundColor: g(() => {
+            if (this.input.hasFocus.value) {
+              return theme.component.textInput.background.typing.value;
+            }
+            if (hovered.value) {
+              return theme.component.textInput.background.hovered.value;
+            }
+            return theme.component.textInput.background.default.value;
+          }),
+          ...config == null ? void 0 : config.defaultOverrides
+        }
+      });
+      __publicField(this, "input");
+      __publicField(this, "leftIconPlaceholder");
+      __publicField(this, "leftIcon");
+      __publicField(this, "rightIconPlaceholder");
+      __publicField(this, "rightIcon");
+      this.addEventListener("click", () => this.input.focus());
+      const iconSize = g(() => {
+        var _a5, _b;
+        return ((_a5 = this.properties.value.variant) != null ? _a5 : "text") === "search" && ((_b = this.properties.value.size) != null ? _b : "lg") === "lg" ? 24 : 16;
+      });
+      this.leftIconPlaceholder = new Container();
+      super.add(this.leftIconPlaceholder);
+      this.input = new Input(void 0, void 0, {
+        defaultOverrides: {
+          flexGrow: 1,
+          flexShrink: 0,
+          textAlign: this.properties.signal.textAlign,
+          minWidth: 100,
+          focus: {
+            color: theme.component.textInput.label.typing
+          },
+          caretColor: theme.component.textInput.cursor,
+          placeholderStyle: {
+            color: theme.component.semantic.text.placeholder
+          },
+          placeholder: this.properties.signal.placeholder,
+          defaultValue: this.properties.signal.defaultValue,
+          value: this.properties.signal.value,
+          disabled: this.properties.signal.disabled,
+          tabIndex: this.properties.signal.tabIndex,
+          autocomplete: this.properties.signal.autocomplete,
+          type: this.properties.signal.type,
+          onValueChange: this.properties.signal.onValueChange,
+          onFocusChange: this.properties.signal.onFocusChange
+        }
+      });
+      super.add(this.input);
+      this.rightIconPlaceholder = new Container();
+      super.add(this.rightIconPlaceholder);
+      const iconColor = g(() => {
+        var _a5;
+        return ((_a5 = this.properties.value.variant) != null ? _a5 : "text") === "search" ? theme.component.search.icon.value : this.input.hasFocus ? theme.component.textInput.label.typing.value : theme.component.textInput.label.default.value;
+      });
+      abortableEffect(() => {
+        const LeftIcon = this.properties.value.leftIcon;
+        if (LeftIcon == null) {
+          return;
+        }
+        const leftIcon = new LeftIcon(void 0, void 0, {
+          defaultOverrides: { width: iconSize, height: iconSize, flexShrink: 0, color: iconColor }
+        });
+        this.leftIconPlaceholder.add(leftIcon);
+        this.leftIcon = leftIcon;
+        return () => {
+          leftIcon.dispose();
+          this.leftIcon = void 0;
+        };
+      }, this.abortSignal);
+      abortableEffect(() => {
+        const RightIcon = this.properties.value.rightIcon;
+        if (RightIcon == null) {
+          return;
+        }
+        const rightIcon = new RightIcon(void 0, void 0, {
+          defaultOverrides: { width: iconSize, height: iconSize, flexShrink: 0, color: iconColor }
+        });
+        this.rightIconPlaceholder.add(rightIcon);
+        this.rightIcon = rightIcon;
+        return () => {
+          rightIcon.dispose();
+          this.rightIcon = void 0;
+        };
+      }, this.abortSignal);
+    }
+    dispose() {
+      var _a4, _b;
+      this.input.dispose();
+      this.leftIconPlaceholder.dispose();
+      this.rightIconPlaceholder.dispose();
+      (_a4 = this.leftIcon) == null ? void 0 : _a4.dispose();
+      (_b = this.rightIcon) == null ? void 0 : _b.dispose();
+      super.dispose();
+    }
+    add() {
+      throw new Error(`the Input component can not have any children`);
+    }
+  };
+
+  // node_modules/@pmndrs/uikit-horizon/dist/input-field/index.js
+  var InputField = class extends Container {
+    constructor(InputFieldProperties, initialClasses, config) {
+      const hovered = g(() => this.hoveredList.value.length > 0);
+      super(InputFieldProperties, initialClasses, {
+        ...config,
+        defaultOverrides: {
+          cursor: "text",
+          width: "100%",
+          flexDirection: "column",
+          gap: 12,
+          paddingX: 16,
+          paddingY: 8,
+          //exists to make sure the handlers are applied
+          hover: {},
+          backgroundColor: g(() => {
+            if (this.input.input.hasFocus.value) {
+              return theme.component.inputField.background.default.value;
+            }
+            if (hovered.value) {
+              return theme.component.inputField.background.hovered.value;
+            }
+            return theme.component.inputField.background.default.value;
+          }),
+          ...config == null ? void 0 : config.defaultOverrides
+        }
+      });
+      __publicField(this, "label");
+      __publicField(this, "input");
+      this.addEventListener("click", () => this.input.input.focus());
+      this.label = new Text(void 0, void 0, {
+        defaultOverrides: {
+          text: this.properties.signal.label,
+          fontSize: 12,
+          lineHeight: "16px",
+          fontWeight: 500,
+          color: theme.component.inputField.label
+        }
+      });
+      super.add(this.label);
+      this.input = new Input2(void 0, void 0, {
+        hovered,
+        defaultOverrides: {
+          placeholder: this.properties.signal.placeholder,
+          defaultValue: this.properties.signal.defaultValue,
+          value: this.properties.signal.value,
+          disabled: this.properties.signal.disabled,
+          tabIndex: this.properties.signal.tabIndex,
+          autocomplete: this.properties.signal.autocomplete,
+          type: this.properties.signal.type,
+          onValueChange: this.properties.signal.onValueChange,
+          onFocusChange: this.properties.signal.onFocusChange,
+          textAlign: "left",
+          size: "lg",
+          variant: "text",
+          leftIcon: this.properties.signal.leftIcon,
+          rightIcon: this.properties.signal.rightIcon
+        }
+      });
+      super.add(this.input);
+    }
+    dispose() {
+      this.label.dispose();
+      this.input.dispose();
+      super.dispose();
+    }
+    add() {
+      throw new Error(`the InputField component can not have any children`);
     }
   };
 
@@ -17399,6 +18116,37 @@
             zIndex: opts.zIndex || 20
           }, fontProps(opts))));
           return text;
+        },
+        inputField: function(parent, options) {
+          const opts = withPanelFontDefaults(options);
+          const input = new InputField(baseContainerProps(Object.assign({
+            label: opts.label || "",
+            placeholder: opts.placeholder || "",
+            defaultValue: opts.defaultValue || "",
+            value: opts.value,
+            disabled: Boolean(opts.disabled),
+            autocomplete: opts.autocomplete || "off",
+            type: opts.type || "text",
+            onValueChange: typeof opts.onValueChange === "function" ? opts.onValueChange : void 0,
+            onFocusChange: typeof opts.onFocusChange === "function" ? opts.onFocusChange : void 0,
+            width: opts.width || "100%",
+            minHeight: opts.minHeight || 74,
+            borderRadius: opts.borderRadius || 14,
+            pointerEvents: "listener",
+            zIndex: opts.zIndex || 18
+          }, fontProps(opts))), void 0, {
+            defaultOverrides: {
+              backgroundColor: opts.backgroundColor || "rgba(255,255,255,0.92)",
+              borderColor: opts.borderColor || "rgba(203,213,225,0.95)",
+              borderWidth: opts.borderWidth !== void 0 ? opts.borderWidth : 1,
+              paddingX: opts.paddingX !== void 0 ? opts.paddingX : 18,
+              paddingY: opts.paddingY !== void 0 ? opts.paddingY : 10
+            }
+          });
+          input.name = "VRODOSSpatialUIInputField";
+          input.userData = input.userData || {};
+          input.userData.vrodosSpatialInput = true;
+          return append(parent || this.content || this.root, input);
         },
         button: function(parent, options) {
           const opts = options || {};

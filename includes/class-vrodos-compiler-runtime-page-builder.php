@@ -84,6 +84,7 @@ class VRodos_Compiler_Runtime_Page_Builder {
 		);
 
 		$this->entity_renderer->markDelayedRevealEntities( $dom );
+		$this->append_runtime_context_script( $dom, $project_id, $scene_id, $scene_json, $scene_settings );
 		$this->append_compile_diagnostics_script( $dom, $this->entity_renderer->build_compile_diagnostics( $dom ) );
 
 		return $a_asset;
@@ -154,6 +155,64 @@ class VRodos_Compiler_Runtime_Page_Builder {
 	public function write_dom( DOMDocument $dom, string $filename, bool $document_element_only = false, string $prefix = '' ): string {
 		$content = $document_element_only ? $dom->saveHTML( $dom->documentElement ) : $dom->saveHTML();
 		return $this->template_renderer->write_runtime_build( $filename, $prefix . $content );
+	}
+
+	private function append_runtime_context_script( DOMDocument $dom, int $project_id, int $scene_id, $scene_json, array $scene_settings ): void {
+		$context = [
+			'projectId'  => absint( $project_id ),
+			'sceneId'    => absint( $scene_id ),
+			'sceneTitle' => (string) get_the_title( absint( $scene_id ) ),
+		];
+
+		$context = apply_filters( 'vrodos_compiled_runtime_context', $context, absint( $project_id ), absint( $scene_id ), $scene_json, $scene_settings );
+		if ( ! is_array( $context ) || empty( $context ) ) {
+			return;
+		}
+
+		$head = $dom->getElementsByTagName( 'head' )->item( 0 );
+		if ( ! $head ) {
+			return;
+		}
+
+		$json = wp_json_encode(
+			$context,
+			JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES
+		);
+		if ( ! is_string( $json ) || '' === $json ) {
+			return;
+		}
+
+		$script = $dom->createElement( 'script' );
+		$script->setAttribute( 'id', 'vrodos-runtime-context' );
+		$script->appendChild(
+			$dom->createTextNode(
+				"(function () {\n" .
+				"    var context = {$json};\n" .
+				"    window.VRODOS_RUNTIME_CONTEXT = Object.assign({}, window.VRODOS_RUNTIME_CONTEXT || {}, context);\n" .
+				"    if (context.immerseResults) {\n" .
+				"        window.VRODOS_IMMERSE_RESULTS_CONFIG = context.immerseResults;\n" .
+				"    }\n" .
+				"}());"
+			)
+		);
+		$runtime_script = null;
+		foreach ( $head->getElementsByTagName( 'script' ) as $candidate ) {
+			if ( ! $candidate instanceof DOMElement ) {
+				continue;
+			}
+			$src = (string) $candidate->getAttribute( 'src' );
+			if ( str_contains( $src, 'vrodos-runtime-' ) || str_contains( $src, '/assets/js/runtime/master/lib/' ) ) {
+				$runtime_script = $candidate;
+				break;
+			}
+		}
+
+		if ( $runtime_script && $runtime_script->parentNode ) {
+			$runtime_script->parentNode->insertBefore( $script, $runtime_script );
+			return;
+		}
+
+		$head->appendChild( $script );
 	}
 
 	private function append_compile_diagnostics_script( DOMDocument $dom, array $diagnostics ): void {

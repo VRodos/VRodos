@@ -241,6 +241,9 @@
             runtime.lastResult = buildAssessmentResult(runtime.payload, response, extra);
             runtime.payload.result = runtime.lastResult;
             window.__vrodosLastAssessmentResult = runtime.lastResult;
+            if (typeof namespace.getAssessmentSessionRuntime === "function") {
+                namespace.getAssessmentSessionRuntime().recordAssessmentResult(runtime.payload, runtime.lastResult);
+            }
             runtime.hide();
         };
 

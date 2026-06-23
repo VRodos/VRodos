@@ -42,6 +42,7 @@ const chunks = [
       'components/video_component.js',
       'components/vrodos_hypnotic_hover.component.js',
       'assessment/assessment-utils.js',
+      'assessment/assessment-session-runtime.js',
       'assessment/assessment-cefr-runtime.js',
       'assessment/assessment-renderers.js',
       'assessment/assessment-vr-overlay-runtime.js',

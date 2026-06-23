@@ -11,9 +11,18 @@
         const encodedContent = element.getAttribute("data-assessment-content") || "";
         const content = namespace.decodeBase64Json(encodedContent, {});
         const levels = namespace.decodeBase64Json(element.getAttribute("data-assessment-levels"), []);
+        const assetId = Number(element.getAttribute("data-assessment-asset-id") || "0") || 0;
+        const assessmentSourceId = element.getAttribute("data-assessment-source-id") || "";
 
         return {
-            sourceId: element.id || "",
+            sourceId: element.getAttribute("data-vrodos-scene-object-id") || element.id || "",
+            sceneObjectId: element.getAttribute("data-vrodos-scene-object-id") || element.id || "",
+            assetId,
+            assessmentSourceId,
+            immerseAssessmentId: assessmentSourceId,
+            projectId: Number(element.getAttribute("data-vrodos-project-id") || "0") || 0,
+            sceneId: Number(element.getAttribute("data-vrodos-scene-id") || "0") || 0,
+            sceneTitle: namespace.decodeDisplayText(element.getAttribute("data-vrodos-scene-title") || ""),
             title,
             type,
             group,

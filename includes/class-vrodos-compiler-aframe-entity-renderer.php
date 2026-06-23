@@ -34,6 +34,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private string $runtime_profile = 'desktop';
 	private int $diagnostic_object_count = 0;
 	private int $diagnostic_collider_count = 0;
+	private int $current_project_id = 0;
+	private int $current_scene_id = 0;
 
 	public function __construct( VRodos_Compiler_Runtime_Assets $runtime_assets, VRodos_Compiler_Scene_Repository $scene_repository, callable $normalize_url ) {
 		$this->runtime_assets   = $runtime_assets;
@@ -566,6 +568,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$assessment_group   = $this->sanitize_text_attr( (string) ( $contentObject->assessment_group ?? '' ) );
 		$assessment_content = (string) ( $contentObject->assessment_content ?? '' );
 		$assessment_levels  = (string) ( $contentObject->assessment_levels ?? '' );
+		$assessment_source  = $this->sanitize_text_attr( (string) ( $contentObject->assessment_source_id ?? '' ) );
+		$asset_id           = absint( $contentObject->asset_id ?? 0 );
+		$scene_object_id    = $this->sanitize_text_attr( (string) ( $contentObject->name ?? $contentObject->uuid ?? '' ) );
 		$is_supported       = (string) ( $contentObject->assessment_supported ?? 'false' );
 		$uuid               = $contentObject->uuid ?? wp_generate_uuid4();
 
@@ -591,6 +596,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$model->setAttribute( 'vrodos-hypnotic-hover', '' );
 		}
 		$model->setAttribute( 'immerse-assessment-launcher', '' );
+		$model->setAttribute( 'id', 'vrodos-assessment-' . sanitize_html_class( (string) $uuid ) );
 		$this->set_world_lighting_attributes( $model, $this->flat_media_shadow_role() );
 		$model->setAttribute( 'data-assessment-title', $assessment_title );
 		$model->setAttribute( 'data-assessment-type', $assessment_type );
@@ -598,6 +604,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$model->setAttribute( 'data-assessment-content', $assessment_content );
 		$model->setAttribute( 'data-assessment-levels', $assessment_levels );
 		$model->setAttribute( 'data-assessment-supported', $is_supported );
+		$model->setAttribute( 'data-assessment-asset-id', (string) $asset_id );
+		$model->setAttribute( 'data-assessment-source-id', $assessment_source );
+		$model->setAttribute( 'data-vrodos-project-id', (string) absint( $this->current_project_id ) );
+		$model->setAttribute( 'data-vrodos-scene-id', (string) absint( $this->current_scene_id ) );
+		$model->setAttribute( 'data-vrodos-scene-title', $this->sanitize_text_attr( (string) get_the_title( absint( $this->current_scene_id ) ) ) );
+		$model->setAttribute( 'data-vrodos-scene-object-id', $scene_object_id );
 
 		$anchor->appendChild( $model );
 		$ascene->appendChild( $anchor );
@@ -873,6 +885,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	 */
 	public function render_scene_objects( $dom, $ascene, $assets, $objects, $project_id, $scene_id, $config = [] ) {
 		$this->reset_compile_diagnostics();
+		$this->current_project_id = absint( $project_id );
+		$this->current_scene_id = absint( $scene_id );
 		$this->compile_camera_position = $this->extract_camera_position( $objects );
 		$scene_settings = is_array( $config['scene_settings'] ?? null ) ? $config['scene_settings'] : [];
 		$render_container = $config['container'] ?? $ascene;

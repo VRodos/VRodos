@@ -28,6 +28,7 @@
         "assets/js/runtime/components/video_component.js",
         "assets/js/runtime/components/vrodos_hypnotic_hover.component.js",
         "assets/js/runtime/assessment/assessment-utils.js",
+        "assets/js/runtime/assessment/assessment-session-runtime.js",
         "assets/js/runtime/assessment/assessment-cefr-runtime.js",
         "assets/js/runtime/assessment/assessment-renderers.js",
         "assets/js/runtime/assessment/assessment-vr-overlay-runtime.js",

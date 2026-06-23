@@ -3098,6 +3098,423 @@
   (function() {
     "use strict";
     const namespace = window.VRodosImmerseAssessment = window.VRodosImmerseAssessment || {};
+    const normalizeLevel = namespace.normalizeLevel || function(value) {
+      return String(value || "").trim().toUpperCase();
+    };
+    const decodeDisplayText = namespace.decodeDisplayText || function(value) {
+      return String(value || "");
+    };
+    const STORAGE_PREFIX = "vrodos:immerse-results:";
+    const MAX_PENDING_WRITES = 60;
+    const MAX_NAME_LENGTH = 120;
+    function getConfig() {
+      const config = window.VRODOS_IMMERSE_RESULTS_CONFIG || {};
+      return config && config.enabled !== false ? config : {};
+    }
+    function isEnabled() {
+      const config = getConfig();
+      return Boolean(config.restUrl && config.projectId && config.sceneId && config.token);
+    }
+    function storage() {
+      try {
+        return window.sessionStorage || null;
+      } catch (error) {
+        return null;
+      }
+    }
+    function queryRequestsNewAttempt() {
+      try {
+        const params = new URLSearchParams(window.location && window.location.search || "");
+        return params.get("vrodos_new_attempt") === "1";
+      } catch (error) {
+        return false;
+      }
+    }
+    function normalizeDisplayName(value) {
+      return decodeDisplayText(value || "").replace(/\s+/g, " ").trim().slice(0, MAX_NAME_LENGTH);
+    }
+    function normalizeUuid(value) {
+      return String(value || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80);
+    }
+    function makeUuid() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+      const random = Math.random().toString(36).slice(2);
+      return "attempt-" + Date.now().toString(36) + "-" + random;
+    }
+    function nowIso() {
+      return (/* @__PURE__ */ new Date()).toISOString();
+    }
+    function toInt(value) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : 0;
+    }
+    function currentSceneSnapshot(config) {
+      return {
+        sceneId: toInt(config.sceneId),
+        sceneTitle: String(config.sceneTitle || ""),
+        sceneSourceId: String(config.sceneSourceId || ""),
+        visitedAt: nowIso()
+      };
+    }
+    function defaultState(config) {
+      return {
+        attemptUuid: makeUuid(),
+        displayName: "",
+        cefrLevel: "",
+        projectId: toInt(config.projectId),
+        projectSlug: String(config.projectSlug || ""),
+        lessonId: String(config.lessonId || ""),
+        useCaseId: String(config.useCaseId || ""),
+        sceneVisits: [],
+        completedAssessmentKeys: [],
+        pendingWrites: [],
+        createdAt: nowIso(),
+        updatedAt: nowIso()
+      };
+    }
+    function storageKey(config) {
+      return STORAGE_PREFIX + String(config.projectId || "unknown");
+    }
+    function loadState(config) {
+      const store = storage();
+      const key = storageKey(config);
+      if (store && queryRequestsNewAttempt()) {
+        try {
+          store.removeItem(key);
+        } catch (error) {
+        }
+      }
+      if (!store) {
+        return defaultState(config);
+      }
+      try {
+        const parsed = JSON.parse(store.getItem(key) || "null");
+        if (parsed && typeof parsed === "object" && normalizeUuid(parsed.attemptUuid)) {
+          return Object.assign(defaultState(config), parsed, {
+            attemptUuid: normalizeUuid(parsed.attemptUuid),
+            projectId: toInt(config.projectId),
+            projectSlug: String(config.projectSlug || parsed.projectSlug || ""),
+            lessonId: String(config.lessonId || parsed.lessonId || ""),
+            useCaseId: String(config.useCaseId || parsed.useCaseId || ""),
+            sceneVisits: Array.isArray(parsed.sceneVisits) ? parsed.sceneVisits : [],
+            completedAssessmentKeys: Array.isArray(parsed.completedAssessmentKeys) ? parsed.completedAssessmentKeys : [],
+            pendingWrites: Array.isArray(parsed.pendingWrites) ? parsed.pendingWrites : []
+          });
+        }
+      } catch (error) {
+      }
+      return defaultState(config);
+    }
+    function trimPendingWrites(pendingWrites) {
+      return pendingWrites.slice(Math.max(0, pendingWrites.length - MAX_PENDING_WRITES));
+    }
+    function endpointUrl(config, path) {
+      const base = String(config.restUrl || "").replace(/\/+$/, "");
+      const suffix = String(path || "").replace(/^\/+/, "");
+      return base + "/" + suffix;
+    }
+    function normalizeAssessmentKey(payload) {
+      const sourceId = String(payload && (payload.assessmentSourceId || payload.immerseAssessmentId || payload.sourceId) || "");
+      const assetId = toInt(payload && payload.assetId);
+      return sourceId || (assetId ? "asset:" + assetId : "");
+    }
+    function resultUuid() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+      return "result-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+    }
+    function expectedAssessmentKeysForLevel(config, cefrLevel) {
+      const expected = Array.isArray(config.expectedAssessments) ? config.expectedAssessments : [];
+      return expected.filter((assessment) => {
+        const levels = Array.isArray(assessment && assessment.levels) ? assessment.levels : [];
+        return !levels.length || levels.includes(cefrLevel);
+      }).map((assessment) => String(assessment.assessmentSourceId || (assessment.assetId ? "asset:" + assessment.assetId : ""))).filter(Boolean);
+    }
+    function buildRuntimeSnapshot(state, config) {
+      return {
+        attemptUuid: state.attemptUuid,
+        displayName: state.displayName,
+        cefrLevel: state.cefrLevel,
+        projectId: toInt(config.projectId),
+        projectSlug: String(config.projectSlug || ""),
+        projectTitle: String(config.projectTitle || ""),
+        lessonId: String(config.lessonId || ""),
+        useCaseId: String(config.useCaseId || ""),
+        useCaseName: String(config.useCaseName || ""),
+        currentSceneId: toInt(config.sceneId),
+        currentSceneTitle: String(config.sceneTitle || ""),
+        sceneVisits: state.sceneVisits.slice(),
+        expectedAssessments: Array.isArray(config.expectedAssessments) ? config.expectedAssessments.slice() : [],
+        completedAssessmentKeys: state.completedAssessmentKeys.slice(),
+        userAgent: typeof navigator !== "undefined" && navigator.userAgent ? navigator.userAgent : "",
+        updatedAt: nowIso()
+      };
+    }
+    function getSessionRuntime() {
+      if (window.__vrodosImmerseAssessmentSessionRuntime) {
+        return window.__vrodosImmerseAssessmentSessionRuntime;
+      }
+      const config = getConfig();
+      const runtime = {
+        state: loadState(config),
+        flushing: false,
+        bootstrapped: false
+      };
+      runtime.isEnabled = function() {
+        return isEnabled();
+      };
+      runtime.save = function() {
+        runtime.state.updatedAt = nowIso();
+        const store = storage();
+        if (!store) {
+          return;
+        }
+        try {
+          runtime.state.pendingWrites = trimPendingWrites(runtime.state.pendingWrites || []);
+          store.setItem(storageKey(getConfig()), JSON.stringify(runtime.state));
+        } catch (error) {
+        }
+      };
+      runtime.recordSceneVisit = function() {
+        if (!isEnabled()) {
+          return;
+        }
+        const cfg = getConfig();
+        const sceneId = toInt(cfg.sceneId);
+        const hasVisit = runtime.state.sceneVisits.some((visit) => toInt(visit && visit.sceneId) === sceneId);
+        if (!hasVisit) {
+          runtime.state.sceneVisits.push(currentSceneSnapshot(cfg));
+          runtime.save();
+        }
+      };
+      runtime.validateIdentity = function(displayName, cefrLevel) {
+        return Boolean(normalizeDisplayName(displayName) && normalizeLevel(cefrLevel));
+      };
+      runtime.hasIdentity = function() {
+        return runtime.validateIdentity(runtime.state.displayName, runtime.state.cefrLevel);
+      };
+      runtime.getIdentity = function() {
+        return {
+          displayName: runtime.state.displayName || "",
+          cefrLevel: runtime.state.cefrLevel || ""
+        };
+      };
+      runtime.setIdentity = function(displayName, cefrLevel) {
+        const normalizedName = normalizeDisplayName(displayName);
+        const normalizedLevel = normalizeLevel(cefrLevel);
+        if (!normalizedName || !normalizedLevel) {
+          return false;
+        }
+        runtime.state.displayName = normalizedName;
+        runtime.state.cefrLevel = normalizedLevel;
+        runtime.recordSceneVisit();
+        runtime.save();
+        runtime.ensureAttemptStarted();
+        return true;
+      };
+      runtime.buildAttemptPayload = function() {
+        const cfg = getConfig();
+        const snapshot = buildRuntimeSnapshot(runtime.state, cfg);
+        const expectedKeys = expectedAssessmentKeysForLevel(cfg, runtime.state.cefrLevel);
+        return {
+          token: String(cfg.token || ""),
+          attempt_uuid: runtime.state.attemptUuid,
+          project_id: toInt(cfg.projectId),
+          scene_id: toInt(cfg.sceneId),
+          display_name: runtime.state.displayName,
+          cefr_level: runtime.state.cefrLevel,
+          lesson_id: String(cfg.lessonId || ""),
+          use_case_id: String(cfg.useCaseId || ""),
+          use_case_name: String(cfg.useCaseName || ""),
+          assessment_total: expectedKeys.length,
+          assessment_completed: runtime.state.completedAssessmentKeys.filter((key) => expectedKeys.includes(key)).length,
+          runtime: snapshot,
+          attempt: snapshot
+        };
+      };
+      runtime.enqueue = function(id, path, payload) {
+        const pending = runtime.state.pendingWrites || [];
+        const existingIndex = pending.findIndex((item2) => item2 && item2.id === id);
+        const item = {
+          id,
+          path,
+          payload,
+          attempts: existingIndex > -1 ? toInt(pending[existingIndex].attempts) : 0,
+          createdAt: existingIndex > -1 ? pending[existingIndex].createdAt : nowIso()
+        };
+        if (existingIndex > -1) {
+          pending[existingIndex] = item;
+        } else {
+          pending.push(item);
+        }
+        runtime.state.pendingWrites = trimPendingWrites(pending);
+        runtime.save();
+      };
+      runtime.postJson = function(path, payload) {
+        const cfg = getConfig();
+        if (!cfg.restUrl || typeof window.fetch !== "function") {
+          return Promise.reject(new Error("Results endpoint is unavailable."));
+        }
+        return window.fetch(endpointUrl(cfg, path), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "omit",
+          body: JSON.stringify(payload || {})
+        }).then((response) => {
+          if (!response || !response.ok) {
+            throw new Error("Results write failed with status " + (response && response.status || 0));
+          }
+          return response.json ? response.json() : {};
+        });
+      };
+      runtime.flushPending = function() {
+        if (runtime.flushing) {
+          return runtime.flushPromise || Promise.resolve(false);
+        }
+        if (!isEnabled()) {
+          return Promise.resolve(false);
+        }
+        runtime.flushing = true;
+        const runNext = () => {
+          const pending = runtime.state.pendingWrites || [];
+          if (!pending.length) {
+            runtime.flushing = false;
+            runtime.flushPromise = null;
+            runtime.save();
+            return Promise.resolve(true);
+          }
+          const item = pending[0];
+          return runtime.postJson(item.path, item.payload).then(() => {
+            runtime.state.pendingWrites = (runtime.state.pendingWrites || []).filter((entry) => entry && entry.id !== item.id);
+            runtime.save();
+            return runNext();
+          }).catch(() => {
+            item.attempts = toInt(item.attempts) + 1;
+            runtime.state.pendingWrites[0] = item;
+            runtime.flushing = false;
+            runtime.flushPromise = null;
+            runtime.save();
+            return false;
+          });
+        };
+        runtime.flushPromise = runNext();
+        return runtime.flushPromise;
+      };
+      runtime.ensureAttemptStarted = function() {
+        if (!isEnabled() || !runtime.hasIdentity()) {
+          return Promise.resolve(false);
+        }
+        const payload = runtime.buildAttemptPayload();
+        const id = "attempt-start:" + payload.attempt_uuid + ":" + payload.scene_id;
+        runtime.enqueue(id, "attempts/start", payload);
+        return runtime.flushPending();
+      };
+      runtime.maybeCompleteAttempt = function() {
+        if (!isEnabled() || !runtime.hasIdentity()) {
+          return false;
+        }
+        const cfg = getConfig();
+        const expectedKeys = expectedAssessmentKeysForLevel(cfg, runtime.state.cefrLevel);
+        if (!expectedKeys.length) {
+          return false;
+        }
+        const completed = runtime.state.completedAssessmentKeys || [];
+        const isComplete = expectedKeys.every((key) => completed.includes(key));
+        if (!isComplete) {
+          return false;
+        }
+        const payload = Object.assign(runtime.buildAttemptPayload(), {
+          completed_at: nowIso()
+        });
+        runtime.enqueue("attempt-complete:" + runtime.state.attemptUuid, "attempts/complete", payload);
+        runtime.flushPending();
+        return true;
+      };
+      runtime.recordAssessmentResult = function(payload, result) {
+        if (!isEnabled() || !runtime.hasIdentity() || !payload || !result) {
+          return;
+        }
+        runtime.recordSceneVisit();
+        const cfg = getConfig();
+        const assessmentKey = normalizeAssessmentKey(payload);
+        if (assessmentKey && !runtime.state.completedAssessmentKeys.includes(assessmentKey)) {
+          runtime.state.completedAssessmentKeys.push(assessmentKey);
+        }
+        const rendererKey = typeof namespace.resolveAssessmentRendererKey === "function" ? namespace.resolveAssessmentRendererKey(payload, { ignoreSupported: true }) : "";
+        const uuid = resultUuid();
+        const enrichedResult = Object.assign({}, result, {
+          resultUuid: uuid,
+          attemptUuid: runtime.state.attemptUuid,
+          displayName: runtime.state.displayName,
+          cefrLevel: runtime.state.cefrLevel,
+          projectId: toInt(cfg.projectId),
+          projectTitle: String(cfg.projectTitle || ""),
+          sceneId: toInt(cfg.sceneId),
+          sceneTitle: String(cfg.sceneTitle || ""),
+          assetId: toInt(payload.assetId),
+          assessmentSourceId: String(payload.assessmentSourceId || payload.immerseAssessmentId || ""),
+          sceneObjectId: String(payload.sceneObjectId || payload.sourceId || ""),
+          rendererKey
+        });
+        const postPayload = {
+          token: String(cfg.token || ""),
+          attempt_uuid: runtime.state.attemptUuid,
+          result_uuid: uuid,
+          project_id: toInt(cfg.projectId),
+          scene_id: toInt(cfg.sceneId),
+          asset_id: toInt(payload.assetId),
+          assessment_source_id: String(payload.assessmentSourceId || payload.immerseAssessmentId || ""),
+          scene_object_id: String(payload.sceneObjectId || payload.sourceId || ""),
+          display_name: runtime.state.displayName,
+          cefr_level: runtime.state.cefrLevel,
+          renderer_key: rendererKey,
+          title: String(payload.title || result.title || ""),
+          type: String(payload.type || result.type || ""),
+          group: String(payload.group || result.group || ""),
+          is_correct: result.isCorrect === true ? true : result.isCorrect === false ? false : null,
+          score: typeof result.score === "number" ? result.score : null,
+          response: result.response || {},
+          result: enrichedResult,
+          attempt: runtime.buildAttemptPayload().attempt
+        };
+        runtime.enqueue("assessment-result:" + uuid, "assessment-results", postPayload);
+        runtime.save();
+        if (!runtime.maybeCompleteAttempt()) {
+          runtime.flushPending();
+        }
+      };
+      runtime.bootstrap = function() {
+        if (runtime.bootstrapped) {
+          return;
+        }
+        runtime.bootstrapped = true;
+        runtime.recordSceneVisit();
+        if (runtime.hasIdentity()) {
+          runtime.ensureAttemptStarted();
+        }
+        runtime.flushPending();
+        if (typeof document !== "undefined" && document && typeof document.addEventListener === "function") {
+          document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState !== "hidden") {
+              runtime.flushPending();
+            }
+          });
+        }
+      };
+      runtime.bootstrap();
+      window.__vrodosImmerseAssessmentSessionRuntime = runtime;
+      return runtime;
+    }
+    namespace.getAssessmentSessionRuntime = getSessionRuntime;
+  })();
+  (function() {
+    "use strict";
+    const namespace = window.VRodosImmerseAssessment = window.VRodosImmerseAssessment || {};
     const CEFR_LEVELS = namespace.CEFR_LEVELS || ["A1", "A2", "B1", "B2"];
     const decodeBase64Json = namespace.decodeBase64Json;
     const normalizeLevel = namespace.normalizeLevel;
@@ -3105,8 +3522,8 @@
     const VR_PROMPT_RETRY_DELAY_MS = 250;
     const VR_PROMPT_RETRY_LIMIT = 240;
     const VR_PROMPT_XR_OPEN_DELAYS_MS = [0, 80, 180, 400, 900];
-    const VR_PANEL_WIDTH = 1.95;
-    const VR_PANEL_HEIGHT = 1.16;
+    const VR_PANEL_WIDTH = 2.12;
+    const VR_PANEL_HEIGHT = 1.42;
     const VR_PANEL_DISTANCE = 2.05;
     const VR_PANEL_VERTICAL_OFFSET = -0.04;
     const VR_KICKER_SIZE = 24;
@@ -3145,6 +3562,9 @@
         overlayApi.recordDiagnostic(level || "info", "cefr: " + (message || ""), details || {});
       }
     }
+    function getAssessmentSessionRuntime() {
+      return typeof namespace.getAssessmentSessionRuntime === "function" ? namespace.getAssessmentSessionRuntime() : null;
+    }
     function setCefrControlledVisible(element, isVisible) {
       element.setAttribute("visible", isVisible ? "true" : "false");
       if (!element.dataset.immerseRaycastableOriginal) {
@@ -3176,8 +3596,10 @@
       const runtime = {
         elements: [],
         selectedLevel: "",
+        participantName: "",
         selectedButton: null,
         root: null,
+        participantInput: null,
         continueButton: null,
         initialized: false,
         promptScheduled: false,
@@ -3191,6 +3613,7 @@
         spatialUiFontsReady: false,
         spatialUiFontWarmupPromise: null,
         vrLevelButtons: {},
+        vrNameInput: null,
         vrStartButton: null,
         xrSessionEventsBound: false,
         pendingVrPromptLock: false
@@ -3202,11 +3625,50 @@
         runtime.elements.push(element);
         element.removeAttribute("data-vrodos-delayed-reveal");
         setCefrControlledVisible(element, false);
+        runtime.applyStoredIdentityIfAvailable();
         if (runtime.levelApplied && runtime.selectedLevel) {
           setCefrControlledVisible(element, runtime.matchesLevel(element, runtime.selectedLevel));
           return;
         }
         runtime.schedulePrompt();
+      };
+      runtime.requiresParticipantName = function() {
+        const session = getAssessmentSessionRuntime();
+        return Boolean(session && typeof session.isEnabled === "function" && session.isEnabled());
+      };
+      runtime.normalizedParticipantName = function() {
+        return String(runtime.participantName || "").replace(/\s+/g, " ").trim();
+      };
+      runtime.canStart = function() {
+        if (!runtime.selectedLevel) {
+          return false;
+        }
+        return !runtime.requiresParticipantName() || Boolean(runtime.normalizedParticipantName());
+      };
+      runtime.applyStoredIdentityIfAvailable = function() {
+        const session = getAssessmentSessionRuntime();
+        if (!session || typeof session.hasIdentity !== "function" || !session.hasIdentity()) {
+          return false;
+        }
+        const identity = typeof session.getIdentity === "function" ? session.getIdentity() : {};
+        const level = normalizeLevel(identity.cefrLevel || "");
+        if (!level) {
+          return false;
+        }
+        runtime.participantName = String(identity.displayName || "");
+        runtime.applyLevel(level);
+        return true;
+      };
+      runtime.startExperience = function() {
+        if (!runtime.canStart()) {
+          return;
+        }
+        const session = getAssessmentSessionRuntime();
+        if (session && typeof session.setIdentity === "function" && runtime.requiresParticipantName()) {
+          session.setIdentity(runtime.normalizedParticipantName(), runtime.selectedLevel);
+        }
+        runtime.applyLevel(runtime.selectedLevel);
+        runtime.hidePrompt();
       };
       runtime.matchesLevel = function(element, level) {
         const levels = getElementLevels(element);
@@ -3261,6 +3723,35 @@
           '<div style="font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#3b82f6;margin-bottom:8px;">CEFR Level</div>',
           '<div style="font-size:28px;font-weight:800;line-height:1.15;color:#0f172a;margin-bottom:18px;">Choose your level</div>'
         ].join("");
+        const nameWrap = document.createElement("label");
+        nameWrap.style.display = runtime.requiresParticipantName() ? "block" : "none";
+        nameWrap.style.marginBottom = "18px";
+        nameWrap.style.fontSize = "12px";
+        nameWrap.style.fontWeight = "800";
+        nameWrap.style.color = "#475569";
+        nameWrap.style.letterSpacing = "0.08em";
+        nameWrap.style.textTransform = "uppercase";
+        nameWrap.textContent = "Name";
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.autocomplete = "name";
+        nameInput.placeholder = "Enter your name";
+        nameInput.value = runtime.participantName || "";
+        nameInput.style.display = "block";
+        nameInput.style.width = "100%";
+        nameInput.style.boxSizing = "border-box";
+        nameInput.style.marginTop = "8px";
+        nameInput.style.border = "1px solid rgba(203, 213, 225, 0.95)";
+        nameInput.style.borderRadius = "16px";
+        nameInput.style.padding = "13px 14px";
+        nameInput.style.fontSize = "16px";
+        nameInput.style.fontWeight = "700";
+        nameInput.style.color = "#0f172a";
+        nameInput.style.background = "#ffffff";
+        nameInput.addEventListener("input", () => {
+          runtime.setParticipantName(nameInput.value);
+        });
+        nameWrap.appendChild(nameInput);
         const buttonRow = document.createElement("div");
         buttonRow.style.display = "grid";
         buttonRow.style.gridTemplateColumns = "repeat(4, minmax(0, 1fr))";
@@ -3306,18 +3797,17 @@
         continueButton.style.opacity = "0.55";
         continueButton.style.pointerEvents = "none";
         continueButton.addEventListener("click", () => {
-          if (!runtime.selectedLevel) {
-            return;
-          }
-          runtime.applyLevel(runtime.selectedLevel);
-          runtime.hidePrompt();
+          runtime.startExperience();
         });
         footer.appendChild(continueButton);
+        panel.appendChild(nameWrap);
         panel.appendChild(buttonRow);
         panel.appendChild(footer);
         root.appendChild(panel);
         ensureDomOverlayParent(root);
         runtime.root = root;
+        runtime.participantInput = nameInput;
+        runtime.participantInputWrap = nameWrap;
         runtime.levelButtons = buttons;
         runtime.continueButton = continueButton;
         runtime.initialized = true;
@@ -3367,6 +3857,26 @@
         const loaderOverlay = document.getElementById("vrodos-scene-loader-overlay");
         return !isLoaderOverlayVisible(loaderOverlay);
       };
+      runtime.updateStartState = function() {
+        if (runtime.participantInput) {
+          runtime.participantInput.value = runtime.participantName || "";
+        }
+        if (runtime.participantInputWrap) {
+          runtime.participantInputWrap.style.display = runtime.requiresParticipantName() ? "block" : "none";
+        }
+        const enabled = runtime.canStart();
+        if (runtime.continueButton) {
+          runtime.continueButton.style.opacity = enabled ? "1" : "0.55";
+          runtime.continueButton.style.pointerEvents = enabled ? "auto" : "none";
+        }
+        if (runtime.vrStartButton && runtime.vrPanelApi && typeof runtime.vrPanelApi.updateButton === "function") {
+          runtime.vrPanelApi.updateButton(runtime.vrStartButton, runtime.vrStartButtonOptions());
+        }
+      };
+      runtime.setParticipantName = function(value) {
+        runtime.participantName = String(value || "").replace(/\s+/g, " ").trimStart();
+        runtime.updateStartState();
+      };
       runtime.selectLevel = function(level) {
         runtime.selectedLevel = normalizeLevel(level);
         Object.entries(runtime.levelButtons || {}).forEach(([buttonLevel, button]) => {
@@ -3376,11 +3886,7 @@
           button.style.borderColor = isActive ? "rgba(92, 200, 135, 0.9)" : "rgba(203, 213, 225, 0.95)";
           button.style.transform = isActive ? "translateY(-1px)" : "translateY(0)";
         });
-        if (runtime.continueButton) {
-          const enabled = Boolean(runtime.selectedLevel);
-          runtime.continueButton.style.opacity = enabled ? "1" : "0.55";
-          runtime.continueButton.style.pointerEvents = enabled ? "auto" : "none";
-        }
+        runtime.updateStartState();
       };
       runtime.renderVrPrompt = function(api) {
         const panelApi = api || runtime.vrPanelApi;
@@ -3406,6 +3912,28 @@
           lineHeight: "118%",
           whiteSpace: "normal"
         });
+        if (runtime.requiresParticipantName()) {
+          if (typeof panelApi.inputField === "function") {
+            runtime.vrNameInput = panelApi.inputField(frame.content, {
+              label: "Name",
+              placeholder: "Enter your name",
+              defaultValue: runtime.participantName || "",
+              width: "100%",
+              minHeight: 74,
+              fontSize: 24,
+              onValueChange: function(value) {
+                runtime.setParticipantName(value);
+              }
+            });
+          } else {
+            panelApi.text(frame.content, {
+              text: "Name entry is unavailable in this runtime.",
+              color: "#b45309",
+              fontSize: 24,
+              lineHeight: "120%"
+            });
+          }
+        }
         const levelRow = panelApi.row(frame.content, {
           gapColumn: 20,
           justifyContent: "center",
@@ -3449,18 +3977,14 @@
         return {
           label: "Start experience",
           variant: "primary",
-          disabled: !runtime.selectedLevel,
+          disabled: !runtime.canStart(),
           width: 360,
           height: 66,
           textSize: VR_START_BUTTON_TEXT_SIZE,
           fontWeight: 800,
-          textColor: runtime.selectedLevel ? "#ffffff" : "rgba(39,39,39,0.35)",
+          textColor: runtime.canStart() ? "#ffffff" : "rgba(39,39,39,0.35)",
           onClick: function() {
-            if (!runtime.selectedLevel) {
-              return;
-            }
-            runtime.applyLevel(runtime.selectedLevel);
-            runtime.hidePrompt();
+            runtime.startExperience();
           }
         };
       };
@@ -3483,7 +4007,7 @@
             panelApi.updateButton(button, runtime.vrLevelButtonOptions(level, index));
           }
         });
-        if (runtime.vrStartButton && Boolean(previousLevel) !== Boolean(runtime.selectedLevel)) {
+        if (runtime.vrStartButton) {
           panelApi.updateButton(runtime.vrStartButton, runtime.vrStartButtonOptions());
         }
         if (typeof panelApi.refreshTargets === "function") {
@@ -4961,6 +5485,9 @@
         title: value(payload.title, "Assessment"),
         status: status || "",
         scrollContent: true,
+        titleMaxLines: 2,
+        titleWhiteSpace: "normal",
+        titleWordBreak: "break-word",
         onClose: function() {
           runtime.close("close");
         },
@@ -5396,6 +5923,7 @@
           }
           const completeButtonOptions = pairCompleteButtonOptions(runtime, state, placed);
           const frame = createFrame(runtime, pairStatusText(state, placed), completeButtonOptions, {
+            headerHeight: 124,
             paddingX: 62,
             paddingTop: 24,
             paddingBottom: 18,
@@ -6169,6 +6697,9 @@
         runtime.lastResult = buildAssessmentResult(runtime.payload, response, extra);
         runtime.payload.result = runtime.lastResult;
         window.__vrodosLastAssessmentResult = runtime.lastResult;
+        if (typeof namespace.getAssessmentSessionRuntime === "function") {
+          namespace.getAssessmentSessionRuntime().recordAssessmentResult(runtime.payload, runtime.lastResult);
+        }
         const spatialUi = window.VRODOSSpatialUI || null;
         if (spatialUi && typeof spatialUi.closePanel === "function") {
           spatialUi.closePanel("assessment-finish");
@@ -6515,6 +7046,9 @@
         runtime.lastResult = buildAssessmentResult(runtime.payload, response, extra);
         runtime.payload.result = runtime.lastResult;
         window.__vrodosLastAssessmentResult = runtime.lastResult;
+        if (typeof namespace.getAssessmentSessionRuntime === "function") {
+          namespace.getAssessmentSessionRuntime().recordAssessmentResult(runtime.payload, runtime.lastResult);
+        }
         runtime.hide();
       };
       runtime.renderUnsupported = function() {
@@ -6659,8 +7193,17 @@
       const encodedContent = element.getAttribute("data-assessment-content") || "";
       const content = namespace.decodeBase64Json(encodedContent, {});
       const levels = namespace.decodeBase64Json(element.getAttribute("data-assessment-levels"), []);
+      const assetId = Number(element.getAttribute("data-assessment-asset-id") || "0") || 0;
+      const assessmentSourceId = element.getAttribute("data-assessment-source-id") || "";
       return {
-        sourceId: element.id || "",
+        sourceId: element.getAttribute("data-vrodos-scene-object-id") || element.id || "",
+        sceneObjectId: element.getAttribute("data-vrodos-scene-object-id") || element.id || "",
+        assetId,
+        assessmentSourceId,
+        immerseAssessmentId: assessmentSourceId,
+        projectId: Number(element.getAttribute("data-vrodos-project-id") || "0") || 0,
+        sceneId: Number(element.getAttribute("data-vrodos-scene-id") || "0") || 0,
+        sceneTitle: namespace.decodeDisplayText(element.getAttribute("data-vrodos-scene-title") || ""),
         title,
         type,
         group,

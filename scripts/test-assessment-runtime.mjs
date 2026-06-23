@@ -215,6 +215,7 @@ const context = vm.createContext({
 
 [
     "assets/js/runtime/assessment/assessment-utils.js",
+    "assets/js/runtime/assessment/assessment-session-runtime.js",
     "assets/js/runtime/assessment/assessment-renderers.js",
     "assets/js/runtime/assessment/assessment-vr-overlay-runtime.js"
 ].forEach((file) => {
@@ -396,6 +397,24 @@ assert(activePanel && !activePanel.api.texts.some((entry) =>
 ), "Replacement open rendered generic unsupported message");
 windowStub.VRODOSSpatialUI.closePanel("test-reset");
 
+const recordedAssessmentResults = [];
+namespace.getAssessmentSessionRuntime = () => ({
+    recordAssessmentResult(payload, result) {
+        recordedAssessmentResults.push({ payload, result });
+    }
+});
+const finishPayload = clone(fixtures[0].payload);
+assert(runtime.open(finishPayload) === true, "Finish hook fixture did not open");
+const finishAnswer = activePanel.api.buttons.find((entry) => entry.label === "One");
+assert(finishAnswer && typeof finishAnswer.onClick === "function", "Finish hook answer button missing");
+finishAnswer.onClick();
+const finishPrimary = activePanel.api.frames[0] && activePanel.api.frames[0].primaryButton;
+assert(finishPrimary && typeof finishPrimary.options.onClick === "function", "Finish hook primary button missing");
+finishPrimary.options.onClick();
+assert(recordedAssessmentResults.length === 1, "Assessment finish did not notify session recorder");
+assert(recordedAssessmentResults[0].result.completionState === "completed", "Recorded result is not completed");
+windowStub.VRODOSSpatialUI.closePanel("test-reset");
+
 const unsupported = makePayload("Prompt", "Prompt", "Prompt", {
     items: [{ prompt: "Read-only prompt", options: ["Continue"] }]
 });
@@ -408,4 +427,160 @@ assert(activePanel.api.texts.some((entry) =>
 ), "Prompt should render the generic unsupported message");
 windowStub.VRODOSSpatialUI.closePanel("test-reset");
 
-console.log(`Assessment runtime harness passed ${fixtures.length + 2} cases.`);
+async function runSessionRuntimeHarness() {
+    const writes = [];
+    const store = new Map();
+    let failNextResult = true;
+    const sessionWindow = {
+        console,
+        location: { search: "" },
+        navigator: { userAgent: "assessment-session-test" },
+        sessionStorage: {
+            getItem(key) {
+                return store.has(key) ? store.get(key) : null;
+            },
+            setItem(key, value) {
+                store.set(key, String(value));
+            },
+            removeItem(key) {
+                store.delete(key);
+            }
+        },
+        VRODOS_IMMERSE_RESULTS_CONFIG: {
+            enabled: true,
+            restUrl: "https://example.test/wp-json/vrodos-immerse/v1/results",
+            token: "token-1",
+            projectId: 7,
+            projectSlug: "demo-project",
+            projectTitle: "Demo Project",
+            sceneId: 11,
+            sceneTitle: "Scene 1",
+            lessonId: "lesson-1",
+            useCaseId: "usecase-1",
+            expectedAssessments: [
+                { assetId: 101, assessmentSourceId: "assessment-101", levels: ["B1"] }
+            ]
+        },
+        fetch(url, options) {
+            const body = JSON.parse(options.body || "{}");
+            writes.push({ url, body });
+            if (url.endsWith("/assessment-results") && failNextResult) {
+                failNextResult = false;
+                return Promise.reject(new Error("simulated write failure"));
+            }
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () => Promise.resolve({ success: true })
+            });
+        }
+    };
+    sessionWindow.window = sessionWindow;
+
+    const sessionContext = vm.createContext({
+        window: sessionWindow,
+        console,
+        TextDecoder,
+        Uint8Array,
+        URLSearchParams,
+        navigator: sessionWindow.navigator,
+        setTimeout,
+        clearTimeout
+    });
+    [
+        "assets/js/runtime/assessment/assessment-utils.js",
+        "assets/js/runtime/assessment/assessment-session-runtime.js"
+    ].forEach((file) => {
+        vm.runInContext(readFileSync(resolve(root, file), "utf8"), sessionContext, { filename: file });
+    });
+
+    const sessionNamespace = sessionWindow.VRodosImmerseAssessment;
+    const session = sessionNamespace.getAssessmentSessionRuntime();
+    assert(session.isEnabled() === true, "Session runtime should be enabled from config");
+    assert(session.hasIdentity() === false, "Session should not start with identity");
+    assert(session.setIdentity("", "B1") === false, "Session accepted an empty name");
+    assert(session.setIdentity("  Ada   Lovelace  ", "B1") === true, "Session rejected valid identity");
+    await session.flushPending();
+    assert(writes.some((entry) => entry.url.endsWith("/attempts/start")), "Attempt start was not posted");
+
+    session.recordAssessmentResult(
+        {
+            title: "Multiple choice",
+            type: "Multiple Choice",
+            group: "Question",
+            supported: true,
+            levels: ["B1"],
+            assetId: 101,
+            assessmentSourceId: "assessment-101",
+            sceneObjectId: "assessment-object-1",
+            content: {}
+        },
+        {
+            completedAt: "2026-06-23T10:00:00.000Z",
+            completionState: "completed",
+            response: { answers: [{ selectedIndex: 0 }] },
+            isCorrect: true
+        }
+    );
+    await session.flushPending();
+    await session.flushPending();
+    assert((session.state.pendingWrites || []).length === 0, "Pending writes did not retry successfully");
+    const resultWrite = writes.find((entry) => entry.url.endsWith("/assessment-results") && entry.body.result_uuid);
+    assert(resultWrite, "Assessment result was not posted");
+    assert(resultWrite.body.asset_id === 101, "Assessment result did not include asset id");
+    assert(resultWrite.body.assessment_source_id === "assessment-101", "Assessment result did not include source id");
+    assert(writes.some((entry) => entry.url.endsWith("/attempts/complete")), "Completed attempt was not posted");
+}
+
+function runCefrIdentityHarness() {
+    const cefrWindow = {
+        console,
+        location: { search: "" },
+        navigator: { userAgent: "cefr-identity-test" },
+        sessionStorage: {
+            getItem() {
+                return null;
+            },
+            setItem() {},
+            removeItem() {}
+        },
+        VRODOS_IMMERSE_RESULTS_CONFIG: {
+            enabled: true,
+            restUrl: "https://example.test/wp-json/vrodos-immerse/v1/results",
+            token: "token-1",
+            projectId: 7,
+            sceneId: 11
+        }
+    };
+    cefrWindow.window = cefrWindow;
+    const cefrContext = vm.createContext({
+        window: cefrWindow,
+        console,
+        TextDecoder,
+        Uint8Array,
+        URLSearchParams,
+        navigator: cefrWindow.navigator,
+        setTimeout,
+        clearTimeout
+    });
+    [
+        "assets/js/runtime/assessment/assessment-utils.js",
+        "assets/js/runtime/assessment/assessment-session-runtime.js",
+        "assets/js/runtime/assessment/assessment-cefr-runtime.js"
+    ].forEach((file) => {
+        vm.runInContext(readFileSync(resolve(root, file), "utf8"), cefrContext, { filename: file });
+    });
+
+    const cefrRuntime = cefrWindow.VRodosImmerseAssessment.getCefrRuntime();
+    assert(cefrRuntime.requiresParticipantName() === true, "CEFR runtime should require a name for Immerse results");
+    assert(cefrRuntime.canStart() === false, "CEFR runtime should not start without level and name");
+    cefrRuntime.selectLevel("B1");
+    assert(cefrRuntime.canStart() === false, "CEFR runtime should not start without a name");
+    cefrRuntime.setParticipantName("Ada");
+    assert(cefrRuntime.canStart() === true, "CEFR runtime should start with name and level");
+}
+
+runCefrIdentityHarness();
+await runSessionRuntimeHarness();
+
+console.log(`Assessment runtime harness passed ${fixtures.length + 4} cases.`);

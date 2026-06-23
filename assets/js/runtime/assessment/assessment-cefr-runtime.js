@@ -9,8 +9,8 @@
     const VR_PROMPT_RETRY_DELAY_MS = 250;
     const VR_PROMPT_RETRY_LIMIT = 240;
     const VR_PROMPT_XR_OPEN_DELAYS_MS = [0, 80, 180, 400, 900];
-    const VR_PANEL_WIDTH = 1.95;
-    const VR_PANEL_HEIGHT = 1.16;
+    const VR_PANEL_WIDTH = 2.12;
+    const VR_PANEL_HEIGHT = 1.42;
     const VR_PANEL_DISTANCE = 2.05;
     const VR_PANEL_VERTICAL_OFFSET = -0.04;
     const VR_KICKER_SIZE = 24;
@@ -60,6 +60,12 @@
         }
     }
 
+    function getAssessmentSessionRuntime() {
+        return typeof namespace.getAssessmentSessionRuntime === "function"
+            ? namespace.getAssessmentSessionRuntime()
+            : null;
+    }
+
     function setCefrControlledVisible(element, isVisible) {
         element.setAttribute("visible", isVisible ? "true" : "false");
 
@@ -99,8 +105,10 @@
         const runtime = {
             elements: [],
             selectedLevel: "",
+            participantName: "",
             selectedButton: null,
             root: null,
+            participantInput: null,
             continueButton: null,
             initialized: false,
             promptScheduled: false,
@@ -114,6 +122,7 @@
             spatialUiFontsReady: false,
             spatialUiFontWarmupPromise: null,
             vrLevelButtons: {},
+            vrNameInput: null,
             vrStartButton: null,
             xrSessionEventsBound: false,
             pendingVrPromptLock: false
@@ -127,11 +136,55 @@
             runtime.elements.push(element);
             element.removeAttribute("data-vrodos-delayed-reveal");
             setCefrControlledVisible(element, false);
+            runtime.applyStoredIdentityIfAvailable();
             if (runtime.levelApplied && runtime.selectedLevel) {
                 setCefrControlledVisible(element, runtime.matchesLevel(element, runtime.selectedLevel));
                 return;
             }
             runtime.schedulePrompt();
+        };
+
+        runtime.requiresParticipantName = function () {
+            const session = getAssessmentSessionRuntime();
+            return Boolean(session && typeof session.isEnabled === "function" && session.isEnabled());
+        };
+
+        runtime.normalizedParticipantName = function () {
+            return String(runtime.participantName || "").replace(/\s+/g, " ").trim();
+        };
+
+        runtime.canStart = function () {
+            if (!runtime.selectedLevel) {
+                return false;
+            }
+            return !runtime.requiresParticipantName() || Boolean(runtime.normalizedParticipantName());
+        };
+
+        runtime.applyStoredIdentityIfAvailable = function () {
+            const session = getAssessmentSessionRuntime();
+            if (!session || typeof session.hasIdentity !== "function" || !session.hasIdentity()) {
+                return false;
+            }
+            const identity = typeof session.getIdentity === "function" ? session.getIdentity() : {};
+            const level = normalizeLevel(identity.cefrLevel || "");
+            if (!level) {
+                return false;
+            }
+            runtime.participantName = String(identity.displayName || "");
+            runtime.applyLevel(level);
+            return true;
+        };
+
+        runtime.startExperience = function () {
+            if (!runtime.canStart()) {
+                return;
+            }
+            const session = getAssessmentSessionRuntime();
+            if (session && typeof session.setIdentity === "function" && runtime.requiresParticipantName()) {
+                session.setIdentity(runtime.normalizedParticipantName(), runtime.selectedLevel);
+            }
+            runtime.applyLevel(runtime.selectedLevel);
+            runtime.hidePrompt();
         };
 
         runtime.matchesLevel = function (element, level) {
@@ -196,6 +249,37 @@
                 '<div style="font-size:28px;font-weight:800;line-height:1.15;color:#0f172a;margin-bottom:18px;">Choose your level</div>'
             ].join("");
 
+            const nameWrap = document.createElement("label");
+            nameWrap.style.display = runtime.requiresParticipantName() ? "block" : "none";
+            nameWrap.style.marginBottom = "18px";
+            nameWrap.style.fontSize = "12px";
+            nameWrap.style.fontWeight = "800";
+            nameWrap.style.color = "#475569";
+            nameWrap.style.letterSpacing = "0.08em";
+            nameWrap.style.textTransform = "uppercase";
+            nameWrap.textContent = "Name";
+
+            const nameInput = document.createElement("input");
+            nameInput.type = "text";
+            nameInput.autocomplete = "name";
+            nameInput.placeholder = "Enter your name";
+            nameInput.value = runtime.participantName || "";
+            nameInput.style.display = "block";
+            nameInput.style.width = "100%";
+            nameInput.style.boxSizing = "border-box";
+            nameInput.style.marginTop = "8px";
+            nameInput.style.border = "1px solid rgba(203, 213, 225, 0.95)";
+            nameInput.style.borderRadius = "16px";
+            nameInput.style.padding = "13px 14px";
+            nameInput.style.fontSize = "16px";
+            nameInput.style.fontWeight = "700";
+            nameInput.style.color = "#0f172a";
+            nameInput.style.background = "#ffffff";
+            nameInput.addEventListener("input", () => {
+                runtime.setParticipantName(nameInput.value);
+            });
+            nameWrap.appendChild(nameInput);
+
             const buttonRow = document.createElement("div");
             buttonRow.style.display = "grid";
             buttonRow.style.gridTemplateColumns = "repeat(4, minmax(0, 1fr))";
@@ -244,21 +328,19 @@
             continueButton.style.opacity = "0.55";
             continueButton.style.pointerEvents = "none";
             continueButton.addEventListener("click", () => {
-                if (!runtime.selectedLevel) {
-                    return;
-                }
-
-                runtime.applyLevel(runtime.selectedLevel);
-                runtime.hidePrompt();
+                runtime.startExperience();
             });
 
             footer.appendChild(continueButton);
+            panel.appendChild(nameWrap);
             panel.appendChild(buttonRow);
             panel.appendChild(footer);
             root.appendChild(panel);
             ensureDomOverlayParent(root);
 
             runtime.root = root;
+            runtime.participantInput = nameInput;
+            runtime.participantInputWrap = nameWrap;
             runtime.levelButtons = buttons;
             runtime.continueButton = continueButton;
             runtime.initialized = true;
@@ -317,6 +399,29 @@
             return !isLoaderOverlayVisible(loaderOverlay);
         };
 
+        runtime.updateStartState = function () {
+            if (runtime.participantInput) {
+                runtime.participantInput.value = runtime.participantName || "";
+            }
+            if (runtime.participantInputWrap) {
+                runtime.participantInputWrap.style.display = runtime.requiresParticipantName() ? "block" : "none";
+            }
+
+            const enabled = runtime.canStart();
+            if (runtime.continueButton) {
+                runtime.continueButton.style.opacity = enabled ? "1" : "0.55";
+                runtime.continueButton.style.pointerEvents = enabled ? "auto" : "none";
+            }
+            if (runtime.vrStartButton && runtime.vrPanelApi && typeof runtime.vrPanelApi.updateButton === "function") {
+                runtime.vrPanelApi.updateButton(runtime.vrStartButton, runtime.vrStartButtonOptions());
+            }
+        };
+
+        runtime.setParticipantName = function (value) {
+            runtime.participantName = String(value || "").replace(/\s+/g, " ").trimStart();
+            runtime.updateStartState();
+        };
+
         runtime.selectLevel = function (level) {
             runtime.selectedLevel = normalizeLevel(level);
 
@@ -328,11 +433,7 @@
                 button.style.transform = isActive ? "translateY(-1px)" : "translateY(0)";
             });
 
-            if (runtime.continueButton) {
-                const enabled = Boolean(runtime.selectedLevel);
-                runtime.continueButton.style.opacity = enabled ? "1" : "0.55";
-                runtime.continueButton.style.pointerEvents = enabled ? "auto" : "none";
-            }
+            runtime.updateStartState();
         };
 
         runtime.renderVrPrompt = function (api) {
@@ -361,6 +462,29 @@
                 lineHeight: "118%",
                 whiteSpace: "normal"
             });
+
+            if (runtime.requiresParticipantName()) {
+                if (typeof panelApi.inputField === "function") {
+                    runtime.vrNameInput = panelApi.inputField(frame.content, {
+                        label: "Name",
+                        placeholder: "Enter your name",
+                        defaultValue: runtime.participantName || "",
+                        width: "100%",
+                        minHeight: 74,
+                        fontSize: 24,
+                        onValueChange: function (value) {
+                            runtime.setParticipantName(value);
+                        }
+                    });
+                } else {
+                    panelApi.text(frame.content, {
+                        text: "Name entry is unavailable in this runtime.",
+                        color: "#b45309",
+                        fontSize: 24,
+                        lineHeight: "120%"
+                    });
+                }
+            }
 
             const levelRow = panelApi.row(frame.content, {
                 gapColumn: 20,
@@ -408,18 +532,14 @@
             return {
                 label: "Start experience",
                 variant: "primary",
-                disabled: !runtime.selectedLevel,
+                disabled: !runtime.canStart(),
                 width: 360,
                 height: 66,
                 textSize: VR_START_BUTTON_TEXT_SIZE,
                 fontWeight: 800,
-                textColor: runtime.selectedLevel ? "#ffffff" : "rgba(39,39,39,0.35)",
+                textColor: runtime.canStart() ? "#ffffff" : "rgba(39,39,39,0.35)",
                 onClick: function () {
-                    if (!runtime.selectedLevel) {
-                        return;
-                    }
-                    runtime.applyLevel(runtime.selectedLevel);
-                    runtime.hidePrompt();
+                    runtime.startExperience();
                 }
             };
         };
@@ -445,7 +565,7 @@
                     panelApi.updateButton(button, runtime.vrLevelButtonOptions(level, index));
                 }
             });
-            if (runtime.vrStartButton && Boolean(previousLevel) !== Boolean(runtime.selectedLevel)) {
+            if (runtime.vrStartButton) {
                 panelApi.updateButton(runtime.vrStartButton, runtime.vrStartButtonOptions());
             }
             if (typeof panelApi.refreshTargets === "function") {

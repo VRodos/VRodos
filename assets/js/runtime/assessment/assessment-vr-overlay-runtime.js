@@ -79,6 +79,9 @@
             title: value(payload.title, "Assessment"),
             status: status || "",
             scrollContent: true,
+            titleMaxLines: 2,
+            titleWhiteSpace: "normal",
+            titleWordBreak: "break-word",
             onClose: function () {
                 runtime.close("close");
             },
@@ -570,6 +573,7 @@
 
                 const completeButtonOptions = pairCompleteButtonOptions(runtime, state, placed);
                 const frame = createFrame(runtime, pairStatusText(state, placed), completeButtonOptions, {
+                    headerHeight: 124,
                     paddingX: 62,
                     paddingTop: 24,
                     paddingBottom: 18,
@@ -1397,6 +1401,9 @@
             runtime.lastResult = buildAssessmentResult(runtime.payload, response, extra);
             runtime.payload.result = runtime.lastResult;
             window.__vrodosLastAssessmentResult = runtime.lastResult;
+            if (typeof namespace.getAssessmentSessionRuntime === "function") {
+                namespace.getAssessmentSessionRuntime().recordAssessmentResult(runtime.payload, runtime.lastResult);
+            }
             const spatialUi = window.VRODOSSpatialUI || null;
             if (spatialUi && typeof spatialUi.closePanel === "function") {
                 spatialUi.closePanel("assessment-finish");
