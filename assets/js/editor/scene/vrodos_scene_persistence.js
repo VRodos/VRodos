@@ -109,8 +109,13 @@ VRODOS.utils.sceneCreateObjectRecord = function(nameModel, path, categoryName, d
         "asset_name": VRODOS.utils.displayText(nameModel),
         "category_name": categoryName,
         "isLight": VRODOS.utils.isSceneLightCategory(categoryName),
+        "compiledCollisionEnabled": false,
         addedAt,
     }, dragData);
+
+    record.category_slug = typeof VRODOS.utils.normalizeSceneAssetCategory === 'function'
+        ? VRODOS.utils.normalizeSceneAssetCategory(record.category_slug || categoryName)
+        : (record.category_slug || categoryName);
 
     return VRODOS.utils.normalizeDisplayTextFields(record);
 };
@@ -320,6 +325,12 @@ VRODOS.exporter.SceneExporter = class {
 
         entryObject.fnPath = o.fnPath ? o.fnPath : '';
         VRODOS.utils.sceneDecodeExportTextFields(entryObject);
+        entryObject.category_slug = typeof VRODOS.utils.normalizeSceneAssetCategory === 'function'
+            ? VRODOS.utils.normalizeSceneAssetCategory(entryObject.category_slug || entryObject.category_name || o.category_slug || o.category_name)
+            : (entryObject.category_slug || entryObject.category_name || '');
+        entryObject.compiledCollisionEnabled = o.compiledCollisionEnabled === true ||
+            String(o.compiledCollisionEnabled).trim().toLowerCase() === 'true' ||
+            String(o.compiledCollisionEnabled).trim() === '1';
 
         entryObject.position = VRODOS.utils.sceneSafeVector([o.position.x, o.position.y, o.position.z], [0, 0, 0]);
         entryObject.rotation = VRODOS.utils.sceneSafeVector([o.rotation.x, o.rotation.y, o.rotation.z], [0, 0, 0]);

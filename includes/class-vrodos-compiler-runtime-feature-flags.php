@@ -127,7 +127,7 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function is_post_fx_enabled( $metadata ): bool {
-		return in_array( $this->vr_runtime_profile( $metadata ), [ 'desktop', 'max' ], true )
+		return in_array( $this->vr_runtime_profile( $metadata ), [ 'desktop', 'pc-rendered-vr' ], true )
 			&& $this->is_authored_post_fx_enabled( $metadata );
 	}
 
@@ -137,7 +137,7 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function is_vr_scene_owned_profile( $metadata ): bool {
-		return in_array( $this->vr_runtime_profile( $metadata ), [ 'baseline', 'safe' ], true );
+		return false;
 	}
 
 	public function is_authored_post_fx_enabled( $metadata ): bool {
@@ -171,7 +171,7 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function is_pmndrs_clouds_enabled( $metadata ): bool {
-		return in_array( $this->vr_runtime_profile( $metadata ), [ 'desktop', 'max' ], true )
+		return in_array( $this->vr_runtime_profile( $metadata ), [ 'desktop', 'pc-rendered-vr' ], true )
 			&& $this->is_pmndrs_atmosphere_enabled( $metadata )
 			&& VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCloudsEnabled', false );
 	}

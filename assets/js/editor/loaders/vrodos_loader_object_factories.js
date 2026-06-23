@@ -501,7 +501,7 @@ VRODOS.loader.wrapTextPanelLines = function(ctx, text, maxWidth, maxLines) {
 
 VRODOS.loader.normalizeCompiledCollisionEnabled = function(value) {
     if (value === undefined || value === null || value === '') {
-        return true;
+        return false;
     }
 
     const normalized = String(value).trim().toLowerCase();
@@ -620,6 +620,10 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
         ? VRODOS.utils.normalizeRelativeUploadPath(object.fnPath)
         : object.fnPath;
     object.glb_id = resource.glb_id;
+    object.category_slug = typeof VRODOS.utils.normalizeSceneAssetCategory === 'function'
+        ? VRODOS.utils.normalizeSceneAssetCategory(object.category_slug || resource.category_slug || object.category_name)
+        : object.category_slug;
+    resource.category_slug = object.category_slug || resource.category_slug;
     object.compiledCollisionEnabled = VRODOS.loader.normalizeCompiledCollisionEnabled(
         resource.compiledCollisionEnabled !== undefined
             ? resource.compiledCollisionEnabled

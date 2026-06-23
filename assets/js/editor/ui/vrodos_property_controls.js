@@ -1077,7 +1077,6 @@ const VRODOS_COLLIDABLE_CATEGORY_SLUGS = new Set([
     'decoration',
     'walkable-surface',
     'collision-proxy',
-    'blocking-obstacles',
     'door',
     'poi-link',
     'chat',
@@ -1092,7 +1091,7 @@ const VRODOS_COLLIDABLE_CATEGORY_SLUGS = new Set([
 
 function vrodosNormalizeCompiledCollisionEnabled(value) {
     if (value === undefined || value === null || value === '') {
-        return true;
+        return false;
     }
 
     const normalized = String(value).trim().toLowerCase();
@@ -1132,7 +1131,7 @@ function vrodosIsShadowRoleEligible(object) {
     }
 
     const categorySlug = String(object.category_slug || '').toLowerCase();
-    if (categorySlug === 'collision-proxy' || categorySlug === 'blocking-obstacles') {
+    if (categorySlug === 'collision-proxy') {
         return false;
     }
     if (object.name === 'avatarCamera' || object.category_name === 'pawn') {
@@ -1148,7 +1147,7 @@ function vrodosIsMaterialRoleEligible(object) {
     }
 
     const categorySlug = String(object.category_slug || '').toLowerCase();
-    if (categorySlug === 'collision-proxy' || categorySlug === 'blocking-obstacles') {
+    if (categorySlug === 'collision-proxy') {
         return false;
     }
     if (object.name === 'avatarCamera' || object.category_name === 'pawn') {
@@ -1178,7 +1177,7 @@ function ensureCollisionPropertiesSection() {
         '<input type="checkbox" id="compiledCollisionEnabledCheckbox" class="tw-checkbox tw-checkbox-xs tw-checkbox-primary">' +
         '<span>Collides with player</span>' +
         '</label>' +
-        '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Enabled by default for compiled geometry. Disable only for thin visuals, effects, or objects the player should pass through.</div>' +
+        '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Only enabled objects are compiled into the player collision world.</div>' +
         '</div>';
 
     container.appendChild(section);

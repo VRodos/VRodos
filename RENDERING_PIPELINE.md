@@ -1,6 +1,6 @@
 # VRodos Rendering Pipeline - Technical Reference
 
-Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For the current VR Headset continuation note, see `VR_HEADSET_RUNTIME_HANDOFF.md`. For the full platform audit and VR parity roadmap, see `COMPILED_SCENE_PLATFORM_AUDIT_AND_VR_PARITY_PLAN.md`. For the phased Takram realism roadmap, see `TAKRAM_REALISTIC_LIGHTING_PLAN.md`. For historical WebGLRenderer debugging notes, see `POSTFX_DEBUG_NOTES.md`.
+Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For the current VR Headset continuation note, see `VR_HEADSET_RUNTIME_HANDOFF.md`. For the active immersive cleanup checklist, see `VR_IMMERSIVE_PERFORMANCE_CLEANUP_PLAN.md`. Historical rendering plans and debug notes live under `documentation/archive/rendering-history/`.
 
 ## 1. Runtime Overview
 
@@ -23,9 +23,10 @@ Presentation mode is part of the rendering contract:
 - Inline desktop and desktop fullscreen use the same eligible post-FX path.
 - Real immersive WebXR is detected through `renderer.xr.isPresenting`.
 - In immersive XR, XR-unsafe screen-space composer passes can fall back to direct stereo rendering while scene-owned visuals remain active: Horizon/Takram sky, scene-owned lights, fog, exposure/tone mapping, environment maps, and material profiles.
-- VR feature parity is selected in the compile UI as `Runtime Target`: `Desktop` or `VR Headset`. Internally this is stored as `scene-settings.vrRuntimeProfile`: `Desktop` maps to `desktop`, and `VR Headset` maps to the public `headset` policy. Desktop remains the reference pipeline and `desktop` disables headset-specific overrides. `headset` applies in browser-tab mode and immersive VR; it preserves native renderer antialiasing, uses authored Takram atmosphere/light/visible-sky behavior and authored HDR env-map reflections, defaults authored HDR reflections with `envMapPreset=none` to `studio`, and keeps PMNDRS/legacy composer ownership, clouds, scene probes, Takram sky PMREM capture, and WebXR layers disabled. `baseline` and `safe` are now hidden strict regression profiles: they keep the A-Frame horizon/environment and compile without PMNDRS/Takram chunks even if authored Desktop settings still use them. `takram-lights`, `takram-sky`, and `hdr-reflections` remain hidden validation profiles for isolating the accepted stages. `balanced` and `max` remain internal later headset stages; `max` remains lab-only until lower stages pass real headset testing. The headset profile also owns a WebXR render budget: `headset`/`baseline`/`safe`/`takram-lights`/`takram-sky`/`hdr-reflections` use framebuffer scale `1.0` with foveation `0.5`, `balanced` uses `0.9` with foveation `0.75`, and `max` uses `1.0` with foveation `0.5`.
-- The public `headset` profile and the hidden `takram-sky` / `hdr-reflections` profiles render Takram's direct `SkyMaterial` without PMNDRS composer ownership. On Quest they use a cheaper half-float/basic Takram LUT profile and a direct-sky exposure/gamma shader calibration hook; this is intentionally scoped to visible-sky headset profiles and must not change Desktop or strict `baseline`/`safe`/`takram-lights` behavior. During startup, the scene loader asks `scene-settings.getRuntimeRevealReadinessState()` before reveal. It keeps the loading overlay visible until Takram resources are present, the direct-sky shader patch is compiled, and the Quest warm-up window has elapsed; HDR env-map reflection paths also wait for the HDR env-map load to complete before reveal.
-- Individual experiment gates can also be enabled with `aframeVrPmndrsComposerEnabled`, `aframeVrSceneProbeEnabled`, `aframeVrTakramSkyEnvironmentEnabled`, `aframeVrCloudsEnabled`, or query flags such as `vrodos_vr_profile=takram-lights`, `vrodos_vr_profile=takram-sky`, `vrodos_vr_profile=hdr-reflections`, `vrodos_vr_profile=max`, and `vrodos_enable_xr_pmndrs_composer=1`. The render budget can be overridden per scene with `aframeVrFramebufferScale` / `aframeVrFoveationStrength`, or per test with `vrodos_vr_framebuffer_scale=...` / `vrodos_vr_foveation=...`.
+- VR feature parity is selected in the compile UI as `Runtime Target`: `Desktop`, `VR Headset Full`, or `VR Headset - PC Rendered`. Internally this is stored as `scene-settings.vrRuntimeProfile`: `desktop`, `headset`, or `pc-rendered-vr`. Legacy hidden profile names normalize to `headset` for compatibility only; older compiled scenes should be recompiled into the current pipeline.
+- `headset` applies in browser-tab mode and immersive VR. It preserves native renderer antialiasing, hard-caps shadow maps, keeps PMNDRS/legacy composer ownership, clouds, scene probes, Takram sky PMREM capture, and WebXR layers disabled by default, and only keeps authored Takram/HDR paths that are allowed by the current policy.
+- `pc-rendered-vr` is a parked parent profile for the PCVR/WebXR path described in `PC_RENDERED_VR_PLAN.md`. Treat it as desktop-like until real PCVR hardware/runtime validation changes that policy.
+- The render budget can be overridden per scene with `aframeVrFramebufferScale` / `aframeVrFoveationStrength`, or per test with `vrodos_vr_framebuffer_scale=...` / `vrodos_vr_foveation=...`.
 - Quest-class headset browsers fail closed for PMNDRS composer ownership, including browser-panel inline mode, because real Quest 2 testing showed tiled stereo artifacts and headset UI/compositor instability with the PMNDRS XR composer/cloud path. Use `vrodos_force_headset_pmndrs_composer=1` only for short lab isolation passes.
 - The active profile and policy are exposed through `window.VRODOS_RUNTIME_FEATURE_STATE.vrProfile`, and applied WebXR budget details are exposed through `window.VRODOS_RUNTIME_FEATURE_STATE.renderer.vrRenderBudget`, alongside loader reveal readiness, post-FX owner, reflection source, Takram lighting/cloud skip state, shadow diagnostics, navigation/collision state, camera-rig diagnostics, and spatial UI state. The loading gate reports `reveal.ready` and `reveal.pending`; the lighting-only stage reports `takram.lightsOnlyRequested`, `takram.lightsOnlyActive`, `takram.lightOwner`, and `takram.lightsOnlyUnavailableReason`; the visible-sky stage also reports `takram.visibleSkyActive`, `takram.visibleSkyDirectCalibrated`, `takram.visibleSkyDirectExposure`, `takram.visibleSkyDirectShaderPatched`, `takram.visibleSkyDirectPatchFailed`, `takram.visibleSkyDirectCompileError`, `takram.visibleSkyDirectWarmed`, `takram.visibleSkyDirectWarmupRemainingMs`, and `takram.atmosphereProfile`; the HDR reflection stage reports `reflections.hdrEnvMapOnly`, `reflections.effectiveEnvMapPreset`, `reflections.hdrReady`, `reflections.hdrLoading`, `reflections.hdrFailed`, and `reflections.hdrError`.
 
@@ -238,16 +239,16 @@ Authoring and compile contract:
 
 - Geometry-bearing compiled objects are player-collidable by default.
 - The editor stores a per-object `compiledCollisionEnabled` flag through the `Collides with player` checkbox.
-- Objects with missing collision metadata are treated as collidable during compile for backward compatibility.
+- Objects with missing collision metadata are treated as non-colliding during compile; the editor checkbox is the source of truth.
 - The compiler emits `.vrodos-collider` plus `data-vrodos-collision-*` metadata for enabled geometry sources.
 - `Walkable Surfaces` compile as both `.vrodos-navmesh` and `.vrodos-collider`: upward faces feed ground sampling, while steep/vertical faces can block horizontal movement.
-- `Collision Proxy` and legacy/internal `blocking-obstacles` assets compile as hidden collision-only geometry through `vrodos-collider-helper`.
+- `Collision Proxy` assets compile as hidden collision-only geometry through `vrodos-collider-helper`. Legacy `blocking-obstacles` data is normalized to `collision-proxy` before runtime output.
 
 Runtime behavior:
 
 - `custom-movement` rebuilds static collision targets when relevant models load, attach, detach, or become dirty.
 - `three-mesh-bvh` is bundled into `vrodos-collision-bvh.bundle.js` and exposed as `window.VRODOS_COLLISION_BVH`.
-- The runtime patches Three mesh raycasts with BVH acceleration when available; if BVH construction fails for a mesh, collision continues with standard Three.js raycasts.
+- The runtime patches Three mesh raycasts with BVH acceleration when available. Standalone headset collision requires BVH and fails closed with diagnostics if BVH support is unavailable; desktop can continue with standard Three.js raycasts.
 - Desktop and immersive XR use the same navmesh/collider target sets and ground/blocker resolver. Desktop applies navigation by moving the camera rig; immersive XR stores a virtual authored navigation position and transforms the generated `#vrodos-authored-world` container, converting collision query rays and hit points between authored and rendered spaces.
 - Ground movement still uses the existing downward navmesh sampling, slope filtering, max-step, max-drop, and recovery logic.
 - Walkable surfaces with `data-vrodos-walk-behavior="auto"` add rough-terrain support probes around the player footprint only after the direct ground sample fails or detects a small pit. These probes can bridge photogrammetry holes and prefer nearby stable upper support over scan pits, but only when surrounding hits are valid walkable ground.
@@ -266,7 +267,7 @@ Performance notes:
 - Per-frame collision cost is paid only while movement is being resolved.
 - Default-collidable high-poly art is the main risk; use `Collision Proxy` assets for cheaper blocker geometry around complex models.
 - `scripts/profile-master-client.mjs --nav-profile` reports navmesh and blocker target counts while simulating movement without adding runtime debug UI.
-- Remaining diagnostics planned in `AFRAME_COLLISION_ROADMAP.md` include collider triangle counts, BVH build time, spawn clearance checks, blocked/slid state, and richer proxy visualization.
+- Historical collision roadmap notes live in `documentation/archive/rendering-history/AFRAME_COLLISION_ROADMAP.md`.
 
 ## 4. Legacy Pipeline
 
@@ -476,15 +477,15 @@ Runtime behavior:
 - HDR/scene-probe env-map intensity is scaled down at night without changing authored material roughness or metalness.
 - Horizon uses one PMNDRS/Takram light-source path for local PBR scenes. Because Takram's documented light-source mode approximates sky irradiance at one point and the VRodos local-Horizon path disables Takram ground rendering, VRodos applies a separate sun-elevation-based PBR indirect profile: `SkyLightProbe` plus a low-cost hemisphere sky/ground fill and a small ambient floor. This preserves directional sun/shadow contrast while keeping shadow-side GLB surfaces readable.
 - Direct celestial lighting stays separate from the indirect bridge: Takram `SunDirectionalLight` owns sun key light, and the VRodos moon directional light owns night shape when visible. Dynamic day-night underside readability is tuned only through indirect diffuse lighting: `SkyLightProbe`, `HemisphereLight`, tiny `AmbientLight`, and ground bounce color follow a continuous sun-elevation curve with slower smoothing than direct celestial lights so the fill does not step during the cycle.
-- The old helper-light debug mode is not exposed as a runtime option. If Takram light-source classes are unavailable, the runtime can use an internal safety fallback only to avoid a black scene. The hidden `takram-lights` VR profile is stricter: helper fallback is disabled there, so missing Takram resources leave the accepted A-Frame lighting in place and publish `takram.lightsOnlyUnavailableReason`.
+- The old helper-light debug mode is not exposed as a runtime option. If Takram light-source classes are unavailable, the runtime can use an internal safety fallback only to avoid a black scene.
 - Horizon `AerialPerspectiveEffect` is constrained to haze/transmittance in the current PBR path so it does not re-light the scene as albedo.
 - Optional Takram clouds synchronize every frame with the active Takram atmosphere, camera, sun direction, world-to-ECEF matrix, correct-altitude mode, precomputed atmosphere textures, local cloud textures, quality profile, and coverage.
-- The future Takram-vanilla target is an explicit `post-process-albedo` lighting mode, documented in `TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
+- The future Takram-vanilla target remains an explicit `post-process-albedo` lighting mode. Historical notes live in `documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
 
 Takram cloud v1 behavior:
 
 - Desktop inline and desktop fullscreen can render clouds.
-- Real immersive WebXR skips clouds in the default `safe` profile because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`. Quest-class headset browsers also skip clouds in `max` unless `vrodos_force_headset_pmndrs_composer=1` is present, because clouds depend on the PMNDRS composer.
+- Real immersive WebXR and the standalone `headset` profile skip clouds because clouds depend on the PMNDRS composer path.
 - Mobile inline mode skips clouds in v1; immersive headset sessions use the explicit VR policy instead of the generic mobile guard.
 - WebGL2 and `Data3DTexture` support are required.
 - Runtime uses only local assets under `assets/vendor/takram-clouds/`; generated cloud bundles must not depend on GitHub or `media.githubusercontent.com` at runtime.
@@ -636,6 +637,9 @@ These are backlog items, not current implementation requirements:
 
 ## References
 
-- `TAKRAM_REALISTIC_LIGHTING_PLAN.md` - phased Takram realism and Three-version roadmap.
-- `RENDERING_MIGRATION_IMPLEMENTATION_LOG.md` - staged migration history.
-- `POSTFX_DEBUG_NOTES.md` - color-encoding and WebGLRenderer debugging history.
+- `VR_HEADSET_RUNTIME_HANDOFF.md` - current standalone headset runtime handoff.
+- `PC_RENDERED_VR_PLAN.md` - parked PC-rendered VR parent profile plan.
+- `VR_IMMERSIVE_PERFORMANCE_CLEANUP_PLAN.md` - active headset cleanup checklist.
+- `documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md` - historical phased Takram roadmap.
+- `documentation/archive/rendering-history/RENDERING_MIGRATION_IMPLEMENTATION_LOG.md` - staged migration history.
+- `documentation/archive/rendering-history/POSTFX_DEBUG_NOTES.md` - color-encoding and WebGLRenderer debugging history.

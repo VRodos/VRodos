@@ -9,7 +9,7 @@ require_once __DIR__ . '/class-vrodos-compiler-aframe-dom-helper.php';
 class VRodos_Compiler_AFrame_Entity_Renderer {
 	private const GLTF_LOAD_PHASE_CRITICAL = 'critical';
 	private const GLTF_LOAD_PHASE_LAZY     = 'lazy';
-	private const CRITICAL_GLTF_CATEGORIES = [ 'walkable-surface', 'collision-proxy', 'blocking-obstacles' ];
+	private const CRITICAL_GLTF_CATEGORIES = [ 'walkable-surface', 'collision-proxy' ];
 	private const INTERACTIVE_GLTF_CATEGORIES = [ 'door', 'poi-link', 'chat', 'poi-chat', 'audio', 'poi-imagetext', 'assessment' ];
 	private const NEAR_GLTF_DISTANCE_METERS = 35.0;
 	private const INTERACTIVE_GLTF_DISTANCE_METERS = 60.0;
@@ -31,6 +31,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private array $critical_gltf_asset_dom_ids = [];
 	private bool $suppress_flat_media_shadow_casting = false;
 	private bool $use_flat_media_materials = false;
+	private string $runtime_profile = 'desktop';
 	private int $diagnostic_object_count = 0;
 	private int $diagnostic_collider_count = 0;
 
@@ -686,7 +687,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private function should_suppress_flat_media_shadow_casting( array $scene_settings ): bool {
 		$profile = (string) ( $scene_settings['vrRuntimeProfile'] ?? 'desktop' );
-		if ( ! in_array( $profile, [ 'desktop', 'max' ], true ) ) {
+		if ( ! in_array( $profile, [ 'desktop', 'pc-rendered-vr' ], true ) ) {
 			return true;
 		}
 
@@ -696,7 +697,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private function should_use_flat_media_materials( array $scene_settings ): bool {
 		$profile = (string) ( $scene_settings['vrRuntimeProfile'] ?? 'desktop' );
-		return ! in_array( $profile, [ 'desktop', 'max' ], true );
+		return ! in_array( $profile, [ 'desktop', 'pc-rendered-vr' ], true );
 	}
 
 	private function flat_media_shadow_role(): string {
@@ -806,7 +807,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			return ! in_array( $normalized, [ '0', 'false', 'no', 'off' ], true );
 		}
 
-		return true;
+		return false;
+	}
+
+	private function normalize_runtime_category( string $category ): string {
+		$normalized = sanitize_title( $category );
+		return 'blocking-obstacles' === $normalized ? 'collision-proxy' : $normalized;
 	}
 
 	private function append_class( DOMElement $entity, string $class_name ): void {
@@ -818,10 +824,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			return;
 		}
 
-		$category = sanitize_title( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) );
+		$category = $this->normalize_runtime_category( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) );
 		$uuid     = $this->sanitize_text_attr( (string) ( $obj->uuid ?? $obj->name ?? '' ) );
 		$role     = 'walkable-surface' === $category ? 'navmesh' : 'solid';
-		$hidden_collision = in_array( $category, [ 'collision-proxy', 'blocking-obstacles' ], true );
+		$hidden_collision = 'collision-proxy' === $category;
 
 		VRodos_Compiler_AFrame_DOM_Helper::apply_collision_attributes(
 			$entity,
@@ -875,6 +881,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 		$this->suppress_flat_media_shadow_casting = $this->should_suppress_flat_media_shadow_casting( $scene_settings );
 		$this->use_flat_media_materials = $this->should_use_flat_media_materials( $scene_settings );
+		$this->runtime_profile = (string) ( $scene_settings['vrRuntimeProfile'] ?? 'desktop' );
 		foreach ( $objects as $object_key => $obj ) {
 			if ( is_object( $obj ) ) {
 				unset( $obj->follow_camera, $obj->follow_camera_x, $obj->follow_camera_z );
@@ -926,7 +933,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	}
 
 	private function render_scene_object( $dom, $ascene, $assets, $obj, $config = [] ) {
-		$cat  = $obj->category_slug ?? $obj->category_name ?? '';
+		$cat  = $this->normalize_runtime_category( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) );
+		if ( is_object( $obj ) ) {
+			$obj->category_slug = $cat;
+		}
 		$this->diagnostic_object_count++;
 		$this->diagnostic_category_counts[ $cat ] = ( $this->diagnostic_category_counts[ $cat ] ?? 0 ) + 1;
 
@@ -940,7 +950,6 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			case 'decoration':
 			case 'walkable-surface':
 			case 'collision-proxy':
-			case 'blocking-obstacles':
 			case 'door':
 			case 'poi-link':
 			case 'chat':
@@ -1107,7 +1116,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 				$light_attr .= '; shadowCameraVisible: false';
 
 				// a-sun-sky logic
-				if ( isset( $obj->sunSky ) && $obj->sunSky == '1' && !empty($obj->position) && !empty($obj->targetposition) ) {
+				if ( 'headset' !== $this->runtime_profile && isset( $obj->sunSky ) && $obj->sunSky == '1' && !empty($obj->position) && !empty($obj->targetposition) ) {
 					$a_sun_sky = $dom->createElement( 'a-sun-sky' );
 					$sun_pos = (array) $obj->position;
 					$targ_pos = (array) $obj->targetposition;
@@ -1129,7 +1138,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private function render_gltf_entity( $dom, $ascene, $assets, $obj, $scene_id = 0 ) {
 		$uuid = $obj->uuid ?? '';
-		$cat  = $obj->category_slug ?? '';
+		$cat  = $this->normalize_runtime_category( (string) ( $obj->category_slug ?? '' ) );
 		$context = $cat . ':' . ( $uuid !== '' ? $uuid : (string) ( $obj->name ?? 'unnamed' ) );
 
 		$glb_resolution = $this->resolve_compiled_gltf_asset_url( $obj, (string) ( $obj->glb_path ?? '' ) );
@@ -1158,7 +1167,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 		$this->setAffineTransformations( $entity, $obj, true );
 
-		$is_collision_proxy = in_array( $cat, [ 'collision-proxy', 'blocking-obstacles' ], true );
+		$is_collision_proxy = 'collision-proxy' === $cat;
 		$class = $is_collision_proxy ? 'override-materials' : 'override-materials hideable';
 		$shadow_role = $is_collision_proxy ? 'none' : 'caster-receiver';
 

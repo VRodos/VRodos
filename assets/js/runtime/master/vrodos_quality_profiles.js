@@ -2259,6 +2259,10 @@
             self.markShadowDirty('adaptive-shadow-fit');
         }
 
+        if (typeof self.isVrRuntimeHeadsetProfile === 'function' && self.isVrRuntimeHeadsetProfile()) {
+            return;
+        }
+
         if (typeof requestAnimationFrame === 'function') {
             requestAnimationFrame(() => {
                 applyAdaptiveShadowFit(self);
@@ -3786,8 +3790,11 @@
     }
 
     function ensurePmndrsFallbackHorizonLights(self, config, preset) {
-        const shadowEnabled = self.data.shadowQuality !== 'off';
-        const shadowMap = self.data.shadowQuality === 'high' ? 2048 : 1024;
+        const effectiveShadowQuality = typeof self.getEffectiveShadowQuality === 'function'
+            ? self.getEffectiveShadowQuality()
+            : self.data.shadowQuality;
+        const shadowEnabled = effectiveShadowQuality !== 'off';
+        const shadowMap = effectiveShadowQuality === 'high' ? 2048 : 1024;
         const helperConfig = getPmndrsHorizonHelperLightConfig(self, preset, config);
         const directVisibility = getPmndrsDirectLightVisibility(config, helperConfig.useMoonDirection);
         const keyIntensity = helperConfig.keyIntensity * directVisibility;
@@ -4132,8 +4139,11 @@
             }
         }
 
-        const shadowEnabled = self.data.shadowQuality !== 'off';
-        const shadowMap = self.data.shadowQuality === 'high' ? 2048 : 1024;
+        const effectiveShadowQuality = typeof self.getEffectiveShadowQuality === 'function'
+            ? self.getEffectiveShadowQuality()
+            : self.data.shadowQuality;
+        const shadowEnabled = effectiveShadowQuality !== 'off';
+        const shadowMap = effectiveShadowQuality === 'high' ? 2048 : 1024;
         const contactShadowSettings = getTerrainSafeContactShadowSettings(self, typeof self.getContactShadowSettings === 'function'
             ? self.getContactShadowSettings()
             : (self.data.shadowQuality === 'high'
@@ -4202,7 +4212,14 @@
             }
             ensurePmndrsWorldToEcefMatrix(sunLight, config);
             if (sunLight.shadow) {
+                const headsetShadowCap = typeof self.isVrRuntimeHeadsetProfile === 'function' && self.isVrRuntimeHeadsetProfile();
+                const needsShadowMapShrink = sunLight.shadow.mapSize &&
+                    ((sunLight.shadow.mapSize.x || 0) > shadowMap || (sunLight.shadow.mapSize.y || 0) > shadowMap);
                 sunLight.shadow.mapSize.set(shadowMap, shadowMap);
+                if (headsetShadowCap && needsShadowMapShrink && sunLight.shadow.map && typeof sunLight.shadow.map.dispose === 'function') {
+                    sunLight.shadow.map.dispose();
+                    sunLight.shadow.map = null;
+                }
                 sunLight.shadow.bias = contactShadowSettings.bias;
                 sunLight.shadow.radius = getPmndrsDayNightShadowRadius(self);
                 if (typeof sunLight.shadow.normalBias !== 'undefined') {
@@ -6549,8 +6566,19 @@
                         : (node.isDirectionalLight ? 1024 : 512);
 
                     if (node.shadow.mapSize) {
-                        node.shadow.mapSize.x = Math.max(node.shadow.mapSize.x || 0, targetMapSize);
-                        node.shadow.mapSize.y = Math.max(node.shadow.mapSize.y || 0, targetMapSize);
+                        const headsetShadowCap = typeof this.isVrRuntimeHeadsetProfile === 'function' && this.isVrRuntimeHeadsetProfile();
+                        if (headsetShadowCap) {
+                            const needsShrink = (node.shadow.mapSize.x || 0) > targetMapSize || (node.shadow.mapSize.y || 0) > targetMapSize;
+                            node.shadow.mapSize.x = targetMapSize;
+                            node.shadow.mapSize.y = targetMapSize;
+                            if (needsShrink && node.shadow.map && typeof node.shadow.map.dispose === 'function') {
+                                node.shadow.map.dispose();
+                                node.shadow.map = null;
+                            }
+                        } else {
+                            node.shadow.mapSize.x = Math.max(node.shadow.mapSize.x || 0, targetMapSize);
+                            node.shadow.mapSize.y = Math.max(node.shadow.mapSize.y || 0, targetMapSize);
+                        }
                     }
 
                     if (typeof node.userData.vrodosBaseShadowBias === 'undefined') {

@@ -15,10 +15,10 @@ Keep current behavior in one place where possible:
 
 - [`documentation/vrodos-compiled-scene-framework-integration.md`](documentation/vrodos-compiled-scene-framework-integration.md): compiled-scene framework boundaries, shared Three.js ownership, lazy runtime chunks, and immersive PMNDRS UIKit Horizon dialog ownership.
 - [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md): canonical compiled runtime rendering, PMNDRS/Takram, day-night lighting, shadows, emissive/readability handling, diagnostics, and future render-track notes.
-- [`PERFORMANCE_OPTIMIZATION_PLAN.md`](PERFORMANCE_OPTIMIZATION_PLAN.md): profiler findings, performance decisions, shadow/AO refactor notes, and asset-optimization measurements.
-- [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md): Takram realism roadmap and future `post-process-albedo` work; it should not duplicate the full current runtime reference.
-- [`AFRAME_COLLISION_ROADMAP.md`](AFRAME_COLLISION_ROADMAP.md): compiled-scene collision architecture, roadmap, and remaining hardening work.
-- [`RENDERING_MIGRATION_IMPLEMENTATION_LOG.md`](RENDERING_MIGRATION_IMPLEMENTATION_LOG.md) and [`POSTFX_DEBUG_NOTES.md`](POSTFX_DEBUG_NOTES.md): historical migration/debug records only.
+- [`VR_HEADSET_RUNTIME_HANDOFF.md`](VR_HEADSET_RUNTIME_HANDOFF.md): current standalone headset runtime policy and validation checklist.
+- [`PC_RENDERED_VR_PLAN.md`](PC_RENDERED_VR_PLAN.md): future PC-rendered VR parent profile plan, parked until hardware/runtime validation.
+- [`VR_IMMERSIVE_PERFORMANCE_CLEANUP_PLAN.md`](VR_IMMERSIVE_PERFORMANCE_CLEANUP_PLAN.md): active cleanup checklist for headset runtime performance work.
+- Historical rendering/performance notes live under [`documentation/archive/rendering-history/`](documentation/archive/rendering-history/).
 
 ## What VRodos Supports Today
 
@@ -128,7 +128,7 @@ Authoring model:
 
 - Geometry-bearing compiled objects collide with the player by default.
 - Each eligible object exposes a `Collides with player` opt-out toggle in the object controls panel.
-- Missing collision metadata from older scenes is treated as enabled during compile.
+- Missing collision metadata is treated as disabled during compile; the editor checkbox is the source of truth.
 - `Walkable Surfaces` still define valid ground, slope, step, and drop behavior.
 - `Collision Proxy` assets are optional hidden blockers for invisible walls, simplified collider geometry, and high-poly scenes where visible art would be too expensive or too detailed as an exact collider.
 
@@ -141,7 +141,7 @@ Compiled runtime model:
 - The runtime bundles `three-mesh-bvh` as `assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js` and exposes `window.VRODOS_COLLISION_BVH`.
 - Collision uses A-Frame's existing `window.THREE` and does not load a second Three.js copy.
 
-Rapier is intentionally not part of v1 static locomotion. It remains a future option for dynamic physics such as pushable props, thrown objects, joints, or gameplay collision events. For the deeper roadmap and remaining hardening work, see [`AFRAME_COLLISION_ROADMAP.md`](AFRAME_COLLISION_ROADMAP.md).
+Rapier is intentionally not part of v1 static locomotion. It remains a future option for dynamic physics such as pushable props, thrown objects, joints, or gameplay collision events. Historical collision roadmap notes live in [`documentation/archive/rendering-history/AFRAME_COLLISION_ROADMAP.md`](documentation/archive/rendering-history/AFRAME_COLLISION_ROADMAP.md).
 
 ## Compiled Scene Performance Model
 
@@ -174,7 +174,7 @@ Most-used flags:
 - `vrodos_debug_pmndrs_horizon_verbose=1`: logs verbose PMNDRS/Takram horizon diagnostics.
 - `vrodos_spector=1`: enables the runtime Spector capture hook when the Spector debug helper is present. Prefer `scripts/profile-master-client.mjs --spector` for repeatable captures.
 
-The complete current flag list lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). Performance capture workflow details live in [`PERFORMANCE_OPTIMIZATION_PLAN.md`](PERFORMANCE_OPTIMIZATION_PLAN.md).
+The complete current flag list lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). Historical performance capture workflow notes live in [`documentation/archive/rendering-history/PERFORMANCE_OPTIMIZATION_PLAN.md`](documentation/archive/rendering-history/PERFORMANCE_OPTIMIZATION_PLAN.md).
 
 ## Rendering Paths for Compiled Scenes
 
@@ -232,7 +232,7 @@ Important current limitations:
 - immersive WebXR skips PMNDRS/Takram clouds in v1 because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`
 - the current Horizon PMNDRS path uses Takram light-source lighting for A-Frame/PBR content; it is not yet the Takram vanilla `post-process-albedo` lighting model
 
-For current-state PMNDRS/Takram decisions and phased follow-up work, see [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md). For the technical render-stack reference, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md).
+For current-state PMNDRS/Takram decisions, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). Historical phased Takram notes live in [`documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md`](documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md).
 
 ## Takram Support
 
@@ -432,7 +432,7 @@ If large assets fail to upload, check:
   - `Legacy` for SSR/TAA/custom AO needs
   - `Pmndrs` for composer-based AA and Takram atmosphere controls
 - Review authored materials, textures, lighting, and reflection settings.
-- For Takram realism work, follow [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md) instead of treating exposure, fill light, or bloom as substitutes for Takram's vanilla post-process lighting model.
+- For Takram realism work, follow [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md); historical phased notes live in [`documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md`](documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md).
 
 ### Walkable surfaces do not behave as expected
 

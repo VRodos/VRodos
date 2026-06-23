@@ -62,7 +62,7 @@ class VRodos_Compiler_Runtime_Page_Builder {
 	public function apply_scene_core( DOMDocument $dom, DOMElement $ascene, $scene_json, int $project_id, int $scene_id, array $options = [] ): DOMElement {
 		$scene_settings = $this->scene_settings->apply( $dom, $ascene, $scene_json, $project_id, $this->normalize_url );
 		$ascene->setAttribute( 'gltf-model', (string) call_user_func( $this->decoder_config ) );
-		$this->apply_runtime_pipeline_components( $ascene );
+		$this->apply_runtime_pipeline_components( $ascene, $scene_settings );
 
 		if ( ! empty( $options['scene_loader'] ) ) {
 			$ascene->setAttribute( 'vrodos-scene-loader', '' );
@@ -89,12 +89,66 @@ class VRodos_Compiler_Runtime_Page_Builder {
 		return $a_asset;
 	}
 
-	private function apply_runtime_pipeline_components( DOMElement $ascene ): void {
-		foreach ( [ 'vrodos-render-profile', 'vrodos-postfx-router', 'vrodos-atmosphere', 'vrodos-reflections' ] as $attribute ) {
+	private function apply_runtime_pipeline_components( DOMElement $ascene, array $scene_settings ): void {
+		$managed_attributes = [ 'vrodos-render-profile', 'vrodos-postfx-router', 'vrodos-atmosphere', 'vrodos-reflections' ];
+		$active_attributes  = $this->runtime_pipeline_components_for_settings( $scene_settings );
+
+		foreach ( $managed_attributes as $attribute ) {
+			if ( ! in_array( $attribute, $active_attributes, true ) && $ascene->hasAttribute( $attribute ) ) {
+				$ascene->removeAttribute( $attribute );
+			}
+		}
+
+		foreach ( $active_attributes as $attribute ) {
 			if ( ! $ascene->hasAttribute( $attribute ) ) {
 				$ascene->setAttribute( $attribute, '' );
 			}
 		}
+	}
+
+	private function runtime_pipeline_components_for_settings( array $scene_settings ): array {
+		$profile = (string) ( $scene_settings['vrRuntimeProfile'] ?? 'desktop' );
+		if ( 'headset' !== $profile ) {
+			return [ 'vrodos-render-profile', 'vrodos-postfx-router', 'vrodos-atmosphere', 'vrodos-reflections' ];
+		}
+
+		$components = [ 'vrodos-render-profile' ];
+
+		if (
+			'pmndrs' === (string) ( $scene_settings['postFXEngine'] ?? 'legacy' ) &&
+			$this->setting_bool( $scene_settings, 'pmndrsAtmosphereEnabled' )
+		) {
+			$components[] = 'vrodos-atmosphere';
+		}
+
+		$reflection_source = (string) ( $scene_settings['reflectionSource'] ?? 'hdr' );
+		$env_map_preset    = (string) ( $scene_settings['envMapPreset'] ?? 'none' );
+		if (
+			$this->setting_bool( $scene_settings, 'reflectionsEnabled', true ) &&
+			( 'hdr' === $reflection_source || 'none' !== $env_map_preset )
+		) {
+			$components[] = 'vrodos-reflections';
+		}
+
+		return $components;
+	}
+
+	private function setting_bool( array $settings, string $key, bool $default = false ): bool {
+		if ( ! array_key_exists( $key, $settings ) ) {
+			return $default;
+		}
+
+		$value = $settings[ $key ];
+		if ( is_bool( $value ) ) {
+			return $value;
+		}
+
+		$normalized = strtolower( trim( (string) $value ) );
+		if ( '' === $normalized ) {
+			return $default;
+		}
+
+		return ! in_array( $normalized, [ '0', 'false', 'no', 'off' ], true );
 	}
 
 	public function write_dom( DOMDocument $dom, string $filename, bool $document_element_only = false, string $prefix = '' ): string {

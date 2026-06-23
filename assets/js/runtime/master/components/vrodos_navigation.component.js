@@ -165,8 +165,16 @@ AFRAME.registerComponent('custom-movement', {
         this.blockerCapsuleRadius = 0.32;
         this.blockerCapsuleHeight = 1.65;
         this.blockerSkin = 0.05;
-        this.blockerSweepHeights = [0.25, 0.9, 1.55];
-        this.blockerSweepOffsets = [0, 1, -1];
+        this.desktopBlockerSweepHeights = [0.25, 0.9, 1.55];
+        this.desktopBlockerSweepOffsets = [0, 1, -1];
+        this.headsetBlockerSweepHeights = [0.35, 1.35];
+        this.headsetBlockerSweepOffsets = [0];
+        this.blockerSweepHeights = this.desktopBlockerSweepHeights;
+        this.blockerSweepOffsets = this.desktopBlockerSweepOffsets;
+        this.collisionBudgetProfile = '';
+        this.collisionBvhRequired = false;
+        this.collisionBvhUnavailable = false;
+        this.loggedHeadsetBvhWarning = false;
         this.groundProbeOffsets = [
             new THREE.Vector2(0, 0),
             new THREE.Vector2(0.18, 0),
@@ -267,6 +275,8 @@ AFRAME.registerComponent('custom-movement', {
         this.immersiveNavigationStrategy = 'none';
         this.immersiveAuthoredWorldContainerPresent = false;
         this.immersiveAuthoredWorldContainerId = '';
+        this.immersiveCachedTransformTarget = null;
+        this.immersiveCachedTransformTargetId = '';
         this.immersiveWorldBaseTransforms = new Map();
         this.immersiveWorldRoots = [];
         this.immersiveWorldRootsDirty = true;
@@ -280,8 +290,13 @@ AFRAME.registerComponent('custom-movement', {
         this.immersiveShadowRefreshPendingTimer = null;
         this.immersiveLastShadowRefreshReason = '';
         this.immersiveShadowSuppressedAt = 0;
+        this.immersiveLastPresentedShadowSyncAt = 0;
+        this.immersiveLastPresentedShadowSyncTransformCount = -1;
         this.immersiveWasPresenting = false;
         this.immersiveControllerRayVisualResetFrames = 0;
+        this.immersiveControllerRayVisualsConfigured = false;
+        this.immersiveControllerShadowsSuppressed = false;
+        this.immersiveOverlayShadowSuppressionDirty = true;
         this.lastImmersiveControllerRayVisualDiagnostics = null;
         this.pendingImmersiveExitNavigationPosition = null;
         this.pendingImmersiveExitNavigationReason = '';
@@ -376,6 +391,7 @@ AFRAME.registerComponent('custom-movement', {
         this.handleRecoveryButtonDown = this.handleRecoveryButtonDown.bind(this);
         this.handleEnterVr = this.handleEnterVr.bind(this);
         this.handleExitVr = this.handleExitVr.bind(this);
+        this.handleControllerModelLoaded = this.handleControllerModelLoaded.bind(this);
 
         this.thumbL = document.querySelector('#oculusLeft');
         this.thumbR = document.querySelector('#oculusRight');
@@ -386,12 +402,14 @@ AFRAME.registerComponent('custom-movement', {
             this.thumbL.addEventListener('thumbstickmoved', this.handleThumbstickMove);
             this.thumbL.addEventListener('thumbsticktouchend', this.handleThumbstickEnd);
             this.thumbL.addEventListener('thumbstickup', this.handleThumbstickEnd);
+            this.thumbL.addEventListener('model-loaded', this.handleControllerModelLoaded);
         }
 
         if (this.thumbR) {
             this.thumbR.addEventListener('thumbstickmoved', this.handleThumbstickMove);
             this.thumbR.addEventListener('thumbsticktouchend', this.handleThumbstickEnd);
             this.thumbR.addEventListener('thumbstickup', this.handleThumbstickEnd);
+            this.thumbR.addEventListener('model-loaded', this.handleControllerModelLoaded);
         }
 
         ['#oculusLeft', '#oculusRight'].forEach((selector) => {
@@ -772,6 +790,9 @@ AFRAME.registerComponent('custom-movement', {
         frame.counts.shadowRefreshApplied = this.immersiveShadowRefreshApplied;
         frame.counts.rootTransformCount = this.immersiveRootTransformCount;
         frame.counts.rootTransformObjectCount = this.immersiveRootTransformObjectCount;
+        frame.counts.collisionTargetCount = this.blockerCollisionTargets ? this.blockerCollisionTargets.length : 0;
+        frame.counts.blockerRayCount = (this.blockerSweepHeights ? this.blockerSweepHeights.length : 0) *
+            (this.blockerSweepOffsets ? this.blockerSweepOffsets.length : 0);
 
         this.immersiveSmoothnessFrames.push(frame);
         if (this.immersiveSmoothnessFrames.length > this.immersiveSmoothnessFrameLimit) {
@@ -848,6 +869,9 @@ AFRAME.registerComponent('custom-movement', {
         this.immersivePresentationRootsDirty = true;
         this.immersiveWorldRoots = [];
         this.immersivePresentationRoots = [];
+        this.immersiveCachedTransformTarget = null;
+        this.immersiveCachedTransformTargetId = '';
+        this.immersiveOverlayShadowSuppressionDirty = true;
         if (!(this.isImmersiveXrPresenting() && this.hasImmersiveAuthoredWorldContainer())) {
             this.clearImmersiveWorldBaseTransforms();
         }
@@ -859,6 +883,7 @@ AFRAME.registerComponent('custom-movement', {
     },
     handleSceneChildAttached: function (event) {
         const classList = event && event.detail && event.detail.el && event.detail.el.classList ? event.detail.el.classList : null;
+        this.immersiveOverlayShadowSuppressionDirty = true;
         if (classList && classList.contains('vrodos-navmesh')) {
             this.markNavMeshDirty();
         }
@@ -868,6 +893,7 @@ AFRAME.registerComponent('custom-movement', {
     },
     handleSceneChildDetached: function (event) {
         const classList = event && event.detail && event.detail.el && event.detail.el.classList ? event.detail.el.classList : null;
+        this.immersiveOverlayShadowSuppressionDirty = true;
         if (classList && classList.contains('vrodos-navmesh')) {
             this.markNavMeshDirty();
         }
@@ -958,6 +984,11 @@ AFRAME.registerComponent('custom-movement', {
         this.pendingImmersiveExitNavigationCapturedAt = 0;
         this.clearImmersiveExitNavigationHandoffTimers();
         this.immersiveControllerRayVisualResetFrames = 8;
+        this.immersiveControllerRayVisualsConfigured = false;
+        this.immersiveControllerShadowsSuppressed = false;
+        this.immersiveOverlayShadowSuppressionDirty = true;
+        this.immersiveLastPresentedShadowSyncAt = 0;
+        this.immersiveLastPresentedShadowSyncTransformCount = -1;
         this.rememberNonImmersiveNavigationPosition(true);
         window.setTimeout(() => {
             if (this.isImmersiveXrPresenting()) {
@@ -977,6 +1008,11 @@ AFRAME.registerComponent('custom-movement', {
         this.heightOffset = null;
         this.hasLastGroundHit = false;
         this.positionPrimed = false;
+        this.immersiveControllerRayVisualsConfigured = false;
+        this.immersiveControllerShadowsSuppressed = false;
+        this.immersiveOverlayShadowSuppressionDirty = true;
+        this.immersiveLastPresentedShadowSyncAt = 0;
+        this.immersiveLastPresentedShadowSyncTransformCount = -1;
         this.clearImmersiveFirstMovementGroundLock();
         this.clearImmersiveEntryPoseSettle();
         this.clearImmersiveSessionAnchor();
@@ -1049,6 +1085,10 @@ AFRAME.registerComponent('custom-movement', {
         if (event.target.classList.contains('vrodos-collider')) {
             this.markCollisionWorldDirty();
         }
+    },
+    handleControllerModelLoaded: function () {
+        this.immersiveControllerRayVisualsConfigured = false;
+        this.immersiveControllerShadowsSuppressed = false;
     },
     shouldIgnoreKeyboardEvent: function (event) {
         const target = event ? event.target : null;
@@ -1140,11 +1180,13 @@ AFRAME.registerComponent('custom-movement', {
             this.thumbL.removeEventListener('thumbstickmoved', this.handleThumbstickMove);
             this.thumbL.removeEventListener('thumbsticktouchend', this.handleThumbstickEnd);
             this.thumbL.removeEventListener('thumbstickup', this.handleThumbstickEnd);
+            this.thumbL.removeEventListener('model-loaded', this.handleControllerModelLoaded);
         }
         if (this.thumbR) {
             this.thumbR.removeEventListener('thumbstickmoved', this.handleThumbstickMove);
             this.thumbR.removeEventListener('thumbsticktouchend', this.handleThumbstickEnd);
             this.thumbR.removeEventListener('thumbstickup', this.handleThumbstickEnd);
+            this.thumbR.removeEventListener('model-loaded', this.handleControllerModelLoaded);
         }
         if (this.recoveryButtonEls && this.recoveryButtonEvents) {
             this.recoveryButtonEls.forEach((buttonEl) => {
@@ -1170,6 +1212,33 @@ AFRAME.registerComponent('custom-movement', {
     },
     getSceneSettings: function () {
         return this.sceneEl ? this.sceneEl.getAttribute('scene-settings') : null;
+    },
+    getSceneSettingsComponent: function () {
+        return this.sceneEl && this.sceneEl.components ? this.sceneEl.components['scene-settings'] : null;
+    },
+    isHeadsetCollisionProfile: function (settings) {
+        const component = this.getSceneSettingsComponent();
+        if (component && typeof component.isVrRuntimeHeadsetProfile === 'function') {
+            return component.isVrRuntimeHeadsetProfile();
+        }
+
+        const profile = String((settings && settings.vrRuntimeProfile) || '').trim().toLowerCase();
+        return profile === 'headset';
+    },
+    applyCollisionBudgetForSettings: function (settings) {
+        const headsetProfile = this.isHeadsetCollisionProfile(settings);
+        const nextProfile = headsetProfile ? 'headset' : 'desktop';
+        if (this.collisionBudgetProfile === nextProfile) {
+            return;
+        }
+
+        this.collisionBudgetProfile = nextProfile;
+        this.collisionBvhRequired = headsetProfile;
+        this.collisionBvhUnavailable = false;
+        this.blockerSweepHeights = headsetProfile ? this.headsetBlockerSweepHeights : this.desktopBlockerSweepHeights;
+        this.blockerSweepOffsets = headsetProfile ? this.headsetBlockerSweepOffsets : this.desktopBlockerSweepOffsets;
+        this.navMeshDirty = true;
+        this.collisionWorldDirty = true;
     },
     getSceneSettingsDomAttribute: function () {
         if (!this.sceneEl) {
@@ -1730,9 +1799,12 @@ AFRAME.registerComponent('custom-movement', {
 
         const settings = this.sceneEl && this.sceneEl.components ? this.sceneEl.components['scene-settings'] : null;
         if (settings && typeof settings.syncPresentedShadowLightTransforms === 'function') {
+            const now = this.getRuntimeNow();
             this.measureImmersiveSmoothness(smoothnessFrame, 'shadowSyncMs', () => {
                 settings.syncPresentedShadowLightTransforms();
             });
+            this.immersiveLastPresentedShadowSyncAt = now;
+            this.immersiveLastPresentedShadowSyncTransformCount = this.immersiveRootTransformCount;
         }
 
         if (smoothnessFrame) {
@@ -1831,9 +1903,21 @@ AFRAME.registerComponent('custom-movement', {
         return Boolean(el && typeof el.hasAttribute === 'function' && el.hasAttribute(attributeName));
     },
     getImmersiveAuthoredWorldContainer: function () {
+        if (
+            this.immersiveCachedTransformTarget &&
+            this.immersiveCachedTransformTarget.object3D &&
+            (!this.sceneEl || typeof this.sceneEl.contains !== 'function' || this.sceneEl.contains(this.immersiveCachedTransformTarget))
+        ) {
+            this.immersiveAuthoredWorldContainerPresent = true;
+            this.immersiveAuthoredWorldContainerId = this.immersiveCachedTransformTargetId || this.immersiveCachedTransformTarget.id || '';
+            return this.immersiveCachedTransformTarget;
+        }
+
         if (!this.sceneEl || typeof this.sceneEl.querySelector !== 'function') {
             this.immersiveAuthoredWorldContainerPresent = false;
             this.immersiveAuthoredWorldContainerId = '';
+            this.immersiveCachedTransformTarget = null;
+            this.immersiveCachedTransformTargetId = '';
             return null;
         }
 
@@ -1841,11 +1925,15 @@ AFRAME.registerComponent('custom-movement', {
         if (!container || !container.object3D) {
             this.immersiveAuthoredWorldContainerPresent = false;
             this.immersiveAuthoredWorldContainerId = '';
+            this.immersiveCachedTransformTarget = null;
+            this.immersiveCachedTransformTargetId = '';
             return null;
         }
 
         this.immersiveAuthoredWorldContainerPresent = true;
         this.immersiveAuthoredWorldContainerId = container.id || '';
+        this.immersiveCachedTransformTarget = container;
+        this.immersiveCachedTransformTargetId = this.immersiveAuthoredWorldContainerId;
         return container;
     },
     hasImmersiveAuthoredWorldContainer: function () {
@@ -2098,14 +2186,12 @@ AFRAME.registerComponent('custom-movement', {
         const authoredWorldContainer = this.getImmersiveAuthoredWorldContainer();
         if (authoredWorldContainer) {
             this.immersiveNavigationStrategy = 'authored-world-container';
-            this.updateImmersiveWorldRootDiagnostics([authoredWorldContainer]);
             return [authoredWorldContainer];
         }
 
         this.immersiveNavigationStrategy = 'authored-world-container-missing';
         this.immersiveAuthoredWorldContainerPresent = false;
         this.immersiveAuthoredWorldContainerId = '';
-        this.updateImmersiveWorldRootDiagnostics([]);
         return [];
     },
     resetImmersiveRigTransform: function () {
@@ -2159,7 +2245,12 @@ AFRAME.registerComponent('custom-movement', {
         this.addImmersiveSmoothnessDuration(smoothnessFrame, 'shadowRefreshRequestMs', this.getRuntimeNow() - refreshStartedAt);
     },
     suppressImmersiveControllerShadows: function () {
+        if (this.immersiveControllerShadowsSuppressed) {
+            return 0;
+        }
+
         const controllerEls = [this.thumbL, this.thumbR];
+        let visited = 0;
         for (let i = 0; i < controllerEls.length; i++) {
             const controllerEl = controllerEls[i];
             if (!controllerEl || !controllerEl.object3D) {
@@ -2167,6 +2258,7 @@ AFRAME.registerComponent('custom-movement', {
             }
 
             controllerEl.object3D.traverse((object) => {
+                visited += 1;
                 if ('castShadow' in object) {
                     object.castShadow = false;
                 }
@@ -2175,6 +2267,10 @@ AFRAME.registerComponent('custom-movement', {
                 }
             });
         }
+        if (visited > 0) {
+            this.immersiveControllerShadowsSuppressed = true;
+        }
+        return visited;
     },
     resolveControllerRayReadiness: function (controllerEl) {
         const api = window.VRODOSControllerRayReadiness;
@@ -2244,6 +2340,10 @@ AFRAME.registerComponent('custom-movement', {
         const controllerEls = [this.thumbL, this.thumbR];
         const diagnostics = [];
         const forceReset = this.immersiveControllerRayVisualResetFrames > 0;
+        if (this.immersiveControllerRayVisualsConfigured && !forceReset) {
+            return;
+        }
+
         let waitingForControllerTracking = false;
         for (let i = 0; i < controllerEls.length; i++) {
             const controllerEl = controllerEls[i];
@@ -2322,8 +2422,14 @@ AFRAME.registerComponent('custom-movement', {
             };
             window.__vrodosLastControllerRayVisualResetDiagnostics = this.lastImmersiveControllerRayVisualDiagnostics;
         }
+        if (!waitingForControllerTracking && diagnostics.length > 0 && this.immersiveControllerRayVisualResetFrames <= 0) {
+            this.immersiveControllerRayVisualsConfigured = true;
+        }
     },
     suppressImmersiveOverlayShadows: function () {
+        if (!this.immersiveOverlayShadowSuppressionDirty) {
+            return 0;
+        }
         if (!this.sceneEl || !this.sceneEl.querySelectorAll) {
             return 0;
         }
@@ -2356,6 +2462,7 @@ AFRAME.registerComponent('custom-movement', {
                 changed += 1;
             }
         }
+        this.immersiveOverlayShadowSuppressionDirty = false;
         return changed;
     },
     ensureImmersiveRuntimeHelpers: function () {
@@ -2369,13 +2476,11 @@ AFRAME.registerComponent('custom-movement', {
         this.ensureAFrameControllerRayVisuals();
         this.suppressImmersiveControllerShadows();
 
-        const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-        if (now - this.immersiveShadowSuppressedAt > 500) {
+        if (this.immersiveOverlayShadowSuppressionDirty) {
             const changed = this.suppressImmersiveOverlayShadows();
             if (changed > 0) {
                 this.requestShadowMapRefresh('immersive-overlay-shadow-suppression');
             }
-            this.immersiveShadowSuppressedAt = now;
         }
     },
     getNavigationWorldPosition: function () {
@@ -2453,6 +2558,7 @@ AFRAME.registerComponent('custom-movement', {
             return;
         }
 
+        this.applyCollisionBudgetForSettings(this.getSceneSettings());
         this.navMeshRoots = [];
         this.navMeshCollisionTargets = [];
         this.navMeshBounds.makeEmpty();
@@ -2464,7 +2570,7 @@ AFRAME.registerComponent('custom-movement', {
                 this.applyWalkBehaviorToNavMeshRoot(meshRoot, this.normalizeWalkBehavior(navMeshEntities[i].getAttribute('data-vrodos-walk-behavior')));
                 this.navMeshRoots.push(meshRoot);
                 meshRoot.traverse((node) => {
-                    if (node && node.isMesh) {
+                    if (this.prepareCollisionMesh(node, 'navmesh')) {
                         this.navMeshCollisionTargets.push(node);
                     }
                 });
@@ -2509,21 +2615,36 @@ AFRAME.registerComponent('custom-movement', {
         node.userData.vrodosCollisionRole = role || 'solid';
         node.updateMatrixWorld(true);
 
-        if (
-            this.installCollisionBvhSupport() &&
-            typeof node.geometry.computeBoundsTree === 'function' &&
-            !node.geometry.boundsTree &&
-            !this.bvhTargets.has(node.uuid)
-        ) {
+        const canBuildBvh = this.installCollisionBvhSupport() &&
+            typeof node.geometry.computeBoundsTree === 'function';
+
+        if (!canBuildBvh && this.collisionBvhRequired) {
+            if (!this.loggedHeadsetBvhWarning) {
+                console.warn('VRodos: headset collision requires BVH support; compiled collision is disabled until the collision BVH chunk is available.');
+                this.loggedHeadsetBvhWarning = true;
+            }
+            this.collisionBvhUnavailable = true;
+            return false;
+        }
+
+        if (canBuildBvh && !node.geometry.boundsTree && !this.bvhTargets.has(node.uuid)) {
             try {
                 node.geometry.computeBoundsTree();
             } catch (err) {
                 if (!this.loggedBvhBuildWarning) {
-                    console.warn('VRodos: failed to build one or more static collision BVHs; falling back to standard raycasts.', err);
+                    const message = this.collisionBvhRequired
+                        ? 'VRodos: failed to build one or more static collision BVHs; headset collision mesh skipped.'
+                        : 'VRodos: failed to build one or more static collision BVHs; falling back to standard raycasts.';
+                    console.warn(message, err);
                     this.loggedBvhBuildWarning = true;
                 }
             }
             this.bvhTargets.add(node.uuid);
+        }
+
+        if (this.collisionBvhRequired && !node.geometry.boundsTree) {
+            this.collisionBvhUnavailable = true;
+            return false;
         }
 
         return true;
@@ -2793,6 +2914,7 @@ AFRAME.registerComponent('custom-movement', {
             return false;
         }
 
+        this.applyCollisionBudgetForSettings(settings);
         this.refreshNavMeshRoots();
         this.refreshCollisionWorld();
         return this.navMeshCollisionTargets.length > 0;

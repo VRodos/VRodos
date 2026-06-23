@@ -8,7 +8,7 @@ This log is consolidated for current and future agents. It replaces the older gr
 
 ## Scope
 
-This file is a historical migration log. Current compiled runtime architecture lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md); performance decisions live in [`PERFORMANCE_OPTIMIZATION_PLAN.md`](PERFORMANCE_OPTIMIZATION_PLAN.md); Takram follow-up work lives in [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md).
+This file is a historical migration log. Current compiled runtime architecture lives in [`../../../RENDERING_PIPELINE.md`](../../../RENDERING_PIPELINE.md); performance decisions live in [`PERFORMANCE_OPTIMIZATION_PLAN.md`](PERFORMANCE_OPTIMIZATION_PLAN.md); Takram follow-up work lives in [`TAKRAM_REALISTIC_LIGHTING_PLAN.md`](TAKRAM_REALISTIC_LIGHTING_PLAN.md).
 
 The earlier migration from legacy Three.js r173 to the pinned A-Frame master + Three.js r181 stack is superseded by `THREE_R184_MIGRATION_PLAN.md` and the current r184 runtime. Root `package.json` and `package-lock.json` remain the source of truth, `npm run build:three` generates the runtime manifest and vendor bundles, and obsolete versioned vendor paths are removed when they are no longer referenced.
 

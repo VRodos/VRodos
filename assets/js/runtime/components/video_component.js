@@ -290,7 +290,7 @@ AFRAME.registerComponent('video-controls', {
             ? settings.data
             : (sceneEl && sceneEl.getAttribute ? sceneEl.getAttribute("scene-settings") : null);
         var profile = settingsData ? String(settingsData.vrRuntimeProfile || "desktop") : "desktop";
-        return profile !== "desktop" && profile !== "max";
+        return profile !== "desktop" && profile !== "pc-rendered-vr";
     },
 
     getWorldVideoMaterial: function (src) {

@@ -453,6 +453,12 @@ class VRodos_Compiler_Manager {
 		$camera_position_attr = $this->get_avatar_camera_position_attribute( $scene_json );
 
 		$projectType = $this->get_project_type_slug( (int) $project_id );
+		$runtime_profile = VRodos_Runtime_Settings_Contract::normalize_metadata_value(
+			is_object( $scene_json->metadata ?? null ) ? $scene_json->metadata : new stdClass(),
+			'vrRuntimeProfile',
+			'desktop'
+		);
+		$lean_single_player_headset = $this->is_single_player_runtime() && 'headset' === $runtime_profile;
 		
 		$dom->getElementsByTagName( 'title' )->item( 0 )->nodeValue = $scene_title[ $index ];
 
@@ -466,7 +472,9 @@ class VRodos_Compiler_Manager {
 
 		if ( $projectType == 'vrexpo_games' ) {
 			$ascenePlayer->setAttribute( 'custom-movement', '' );
-			$ascenePlayer->setAttribute( 'show-position', '' );
+			if ( ! $lean_single_player_headset ) {
+				$ascenePlayer->setAttribute( 'show-position', '' );
+			}
 
 			// OCULUS
 			$a_camera = $dom->createElement( 'a-camera' );
@@ -479,7 +487,9 @@ class VRodos_Compiler_Manager {
 			$a_camera->setAttribute( 'player-info', '' );
 			$a_camera->setAttribute( 'avatar-movement-info', '' );
 			$a_camera->setAttribute( 'look-controls', '' );
-			$a_camera->setAttribute( 'entity-movement-emitter', '' );
+			if ( ! $lean_single_player_headset ) {
+				$a_camera->setAttribute( 'entity-movement-emitter', '' );
+			}
 
 			$a_cursor = $dom->createElement( 'a-entity' );
 			$a_cursor->setAttribute( 'id', 'cursor' );
@@ -507,7 +517,9 @@ class VRodos_Compiler_Manager {
 				$ascenePlayer->setAttribute( 'networked', 'template:#avatar-template;attachTemplateToLocal:false;' );
 			}
 			$ascenePlayer->setAttribute( 'custom-movement', '' );
-			$ascenePlayer->setAttribute( 'show-position', '' );
+			if ( ! $lean_single_player_headset ) {
+				$ascenePlayer->setAttribute( 'show-position', '' );
+			}
 			$ascenePlayer->setAttribute( 'wasd-controls', 'fly:false; acceleration:20' );
 			$ascenePlayer->setAttribute( 'look-controls', 'pointerLockEnabled: false' );
 

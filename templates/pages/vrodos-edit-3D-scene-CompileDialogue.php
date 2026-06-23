@@ -102,7 +102,8 @@
 								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Runtime Target</span>
 								<select id="compileRuntimeTargetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 									<option value="desktop">Desktop</option>
-									<option value="vr-headset">VR Headset</option>
+									<option value="vr-headset">VR Headset Full</option>
+									<option value="pc-rendered-vr">VR Headset - PC Rendered</option>
 								</select>
 								<p id="compileRuntimeTargetHint" class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-1"></p>
 							</label>

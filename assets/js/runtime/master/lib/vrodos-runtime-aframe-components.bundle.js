@@ -662,44 +662,52 @@
     const override = typeof debugConfig.vrRuntimeProfile === "string" && debugConfig.vrRuntimeProfile || typeof debugConfig.vrProfile === "string" && debugConfig.vrProfile || vrodosRuntimeQueryValue("vrodos_vr_profile");
     return override ? String(override).toLowerCase() : "";
   }
-  const VRODOS_VR_RUNTIME_PROFILES = ["desktop", "headset", "baseline", "safe", "takram-lights", "takram-sky", "hdr-reflections", "balanced", "max"];
-  const VRODOS_VR_HDR_PROFILES = ["headset", "hdr-reflections", "balanced", "max"];
+  const VRODOS_VR_RUNTIME_PROFILES = ["desktop", "headset", "pc-rendered-vr"];
+  const VRODOS_LEGACY_HEADSET_PROFILES = ["baseline", "safe", "takram-lights", "takram-sky", "hdr-reflections", "balanced", "max"];
   function vrodosNormalizeRuntimeProfile(profile) {
     const normalized = String(profile || "").toLowerCase();
+    if (VRODOS_LEGACY_HEADSET_PROFILES.indexOf(normalized) !== -1) {
+      return "headset";
+    }
     return VRODOS_VR_RUNTIME_PROFILES.indexOf(normalized) !== -1 ? normalized : "desktop";
   }
   function vrodosRuntimeProfileAllows(profile, capability, authored) {
     const normalized = vrodosNormalizeRuntimeProfile(profile);
-    const strictSceneOwned = normalized === "baseline" || normalized === "safe";
     if (capability === "nativeAntialias") {
       return normalized !== "desktop";
     }
     if (normalized === "desktop") {
       return Boolean(authored);
     }
-    if (capability === "sceneOwned") {
-      return strictSceneOwned;
+    if (normalized === "pc-rendered-vr") {
+      return capability !== "sceneOwned" && Boolean(authored);
     }
-    if (strictSceneOwned) {
+    if (capability === "sceneOwned") {
       return false;
     }
     switch (capability) {
       case "takramAtmosphere":
       case "takramLights":
-        return Boolean(authored);
       case "takramVisibleSky":
-        return (normalized === "headset" || normalized === "takram-sky" || normalized === "max") && Boolean(authored);
       case "reflections":
       case "hdrEnvMap":
-        return VRODOS_VR_HDR_PROFILES.indexOf(normalized) !== -1 && Boolean(authored);
+        return Boolean(authored);
       case "postProcessing":
-        return normalized === "max" && Boolean(authored);
+      case "pmndrsComposer":
+      case "sceneProbe":
+      case "takramSkyEnvironment":
+      case "clouds":
+        return false;
       default:
         return false;
     }
   }
   function vrodosRuntimeProfileHdrFallbackPreset(profile) {
-    return VRODOS_VR_HDR_PROFILES.indexOf(vrodosNormalizeRuntimeProfile(profile)) !== -1 ? "studio" : "none";
+    const normalized = vrodosNormalizeRuntimeProfile(profile);
+    if (normalized === "headset" || normalized === "pc-rendered-vr") {
+      return "studio";
+    }
+    return "none";
   }
   function vrodosParseComponentAttribute(attribute) {
     const values = {};
@@ -867,10 +875,6 @@
       vrRuntimeProfile: { type: "string", default: vrodosSceneSettingDefault("vrRuntimeProfile", "desktop") },
       vrFramebufferScale: { type: "string", default: vrodosSceneSettingDefault("vrFramebufferScale", "0") },
       vrFoveationStrength: { type: "string", default: vrodosSceneSettingDefault("vrFoveationStrength", "-1") },
-      vrPmndrsComposerEnabled: { type: "string", default: vrodosSceneSettingDefault("vrPmndrsComposerEnabled", "0") },
-      vrSceneProbeEnabled: { type: "string", default: vrodosSceneSettingDefault("vrSceneProbeEnabled", "0") },
-      vrTakramSkyEnvironmentEnabled: { type: "string", default: vrodosSceneSettingDefault("vrTakramSkyEnvironmentEnabled", "0") },
-      vrCloudsEnabled: { type: "string", default: vrodosSceneSettingDefault("vrCloudsEnabled", "0") },
       legacyHorizonStageSize: { type: "string", default: "5000" },
       ambientOcclusionPreset: { type: "string", default: "balanced" },
       contactShadowPreset: { type: "string", default: "soft" },
@@ -950,8 +954,9 @@
       }
       switch (this.data.shadowQuality) {
         case "off":
+          return "off";
         case "high":
-          return this.data.shadowQuality;
+          return this.isVrRuntimeHeadsetProfile() ? "medium" : "high";
         default:
           return "medium";
       }
@@ -1162,7 +1167,7 @@
     },
     isPmndrsCloudsEnabled: function() {
       const authored = this.getRenderQualityLevel() === "high" && this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && this.isPmndrsAtmosphereEnabled() && vrodosRuntimeTruthy(this.data.pmndrsCloudsEnabled);
-      return this.vrRuntimeAllows("clouds", authored) || this.isVrCapabilityExperimentEnabled();
+      return this.vrRuntimeAllows("clouds", authored);
     },
     getReflectionSource: function() {
       return this.data.reflectionSource === "scene-probe" ? "scene-probe" : "hdr";
@@ -1236,18 +1241,20 @@
     isVrRuntimeHeadsetProfile: function() {
       return this.getVrRuntimeProfile() === "headset";
     },
+    isVrRuntimePcRenderedProfile: function() {
+      return this.getVrRuntimeProfile() === "pc-rendered-vr";
+    },
     isVrRuntimeBaselineProfile: function() {
-      return this.getVrRuntimeProfile() === "baseline";
+      return false;
     },
     isVrRuntimeSafeProfile: function() {
-      return this.getVrRuntimeProfile() === "safe";
+      return false;
     },
     isVrRuntimeTakramLightsProfile: function() {
-      const profile = this.getVrRuntimeProfile();
-      return profile === "takram-lights" || profile === "hdr-reflections" || profile === "balanced";
+      return false;
     },
     isVrRuntimeSceneOwnedProfile: function() {
-      return this.vrRuntimeAllows("sceneOwned", true);
+      return false;
     },
     isVrBaselineRuntimeActive: function() {
       return this.isVrRuntimeBaselineProfile() && this.isVrRuntimePolicyActive();
@@ -1256,29 +1263,22 @@
       return this.isVrRuntimeSceneOwnedProfile() && this.isVrRuntimePolicyActive();
     },
     isVrRuntimeMaxProfile: function() {
-      return this.getVrRuntimeProfile() === "max";
+      return false;
     },
     isVrCapabilityExperimentEnabled: function() {
-      return this.isVrRuntimeMaxProfile();
+      return false;
     },
     getVrRenderProfileDefaults: function(profile) {
       switch (profile) {
         case "headset":
-        case "hdr-reflections":
-        case "takram-sky":
           return {
             framebufferScale: 1,
             foveation: 0.5
           };
-        case "takram-lights":
+        case "pc-rendered-vr":
           return {
-            framebufferScale: 0.9,
-            foveation: 0.75
-          };
-        case "balanced":
-          return {
-            framebufferScale: 0.75,
-            foveation: 0.9
+            framebufferScale: 1,
+            foveation: 0
           };
         default:
           return {
@@ -1410,8 +1410,8 @@
       const active = this.isDirectVrPresentationActive();
       const profileActive = this.isVrRuntimePolicyActive();
       const profile = this.getVrRuntimeProfile();
-      const sceneOwnedProfile = this.isVrRuntimeSceneOwnedProfile();
-      const takramLightsOnly = this.isVrRuntimeTakramLightsProfile();
+      const sceneOwnedProfile = false;
+      const takramLightsOnly = false;
       const authoredTakramAtmosphere = this.data.postFXEngine === "pmndrs" && this.isPmndrsAtmosphereEnabled();
       const authoredReflections = this.areReflectionsEnabled();
       const authoredHdrReflections = authoredReflections && (this.getReflectionSource() === "hdr" || (this.data.envMapPreset || "none") !== "none");
@@ -1420,17 +1420,16 @@
       const authoredTakramSkyEnvironment = authoredReflections && authoredTakramAtmosphere;
       const takramVisibleSky = profileActive && this.vrRuntimeAllows("takramVisibleSky", authoredTakramAtmosphere);
       const hdrReflections = profileActive && this.vrRuntimeAllows("hdrEnvMap", authoredHdrReflections);
-      const pmndrsComposer = active && profileActive && this.data.postFXEngine === "pmndrs" && this.canUsePmndrsComposerOnHeadset() && (this.vrRuntimeAllows("pmndrsComposer", authoredPmndrsComposer) || this.isVrCapabilityExperimentEnabled());
-      const sceneProbe = active && profileActive && (this.vrRuntimeAllows("sceneProbe", authoredSceneProbe) || this.isVrCapabilityExperimentEnabled());
-      const takramSkyEnvironment = active && profileActive && (this.vrRuntimeAllows("takramSkyEnvironment", authoredTakramSkyEnvironment) || this.isVrCapabilityExperimentEnabled());
-      const clouds = active && profileActive && this.data.postFXEngine === "pmndrs" && (this.vrRuntimeAllows("clouds", this.isPmndrsCloudsEnabled()) || this.isVrCapabilityExperimentEnabled());
+      const pmndrsComposer = active && profileActive && this.data.postFXEngine === "pmndrs" && this.canUsePmndrsComposerOnHeadset() && this.vrRuntimeAllows("pmndrsComposer", authoredPmndrsComposer);
+      const sceneProbe = active && profileActive && this.vrRuntimeAllows("sceneProbe", authoredSceneProbe);
+      const takramSkyEnvironment = active && profileActive && this.vrRuntimeAllows("takramSkyEnvironment", authoredTakramSkyEnvironment);
+      const clouds = active && profileActive && this.data.postFXEngine === "pmndrs" && this.vrRuntimeAllows("clouds", this.isPmndrsCloudsEnabled());
       return {
         profile,
         active,
         profileActive,
         headset: this.isVrRuntimeHeadsetProfile(),
-        baseline: this.isVrRuntimeBaselineProfile(),
-        safe: this.isVrRuntimeSafeProfile(),
+        pcRenderedVr: this.isVrRuntimePcRenderedProfile(),
         takramLightsOnly,
         takramVisibleSky,
         hdrReflections,
@@ -1734,13 +1733,42 @@
       }
       return this.hasPostProcessingPipelineRequest() && this.canUsePostProcessingForPresentation();
     },
-    ensureRuntimePipelineComponents: function() {
-      [
+    getRuntimePipelineComponentNames: function() {
+      const managed = [
         "vrodos-render-profile",
         "vrodos-postfx-router",
         "vrodos-atmosphere",
         "vrodos-reflections"
-      ].forEach((componentName) => {
+      ];
+      if (!this.isVrRuntimeHeadsetProfile()) {
+        return managed;
+      }
+      const components = ["vrodos-render-profile"];
+      if (this.data.postFXEngine === "pmndrs" && this.isPmndrsAtmosphereEnabled()) {
+        components.push("vrodos-atmosphere");
+      }
+      const authoredEnvMapPreset = (this.data.envMapPreset || "none") !== "none";
+      const authoredHdrEnvMap = this.getReflectionSource() === "hdr" || authoredEnvMapPreset;
+      if (this.areReflectionsEnabled() && authoredHdrEnvMap && this.vrRuntimeAllows("hdrEnvMap", authoredHdrEnvMap)) {
+        components.push("vrodos-reflections");
+      }
+      return components;
+    },
+    ensureRuntimePipelineComponents: function() {
+      const managed = [
+        "vrodos-render-profile",
+        "vrodos-postfx-router",
+        "vrodos-atmosphere",
+        "vrodos-reflections"
+      ];
+      const active = this.getRuntimePipelineComponentNames();
+      managed.forEach((componentName) => {
+        if (active.indexOf(componentName) === -1) {
+          if (this.el.hasAttribute(componentName)) {
+            this.el.removeAttribute(componentName);
+          }
+          return;
+        }
         if (!this.el.hasAttribute(componentName)) {
           this.el.setAttribute(componentName, "");
         }
@@ -2041,11 +2069,8 @@
       const atmosphereState = this._pmndrsAtmosphereState || null;
       const shadowDiagnostics = typeof this.getShadowDiagnosticState === "function" ? this.getShadowDiagnosticState() : null;
       const horizonState = typeof this.getPmndrsTakramHorizonState === "function" ? this.getPmndrsTakramHorizonState() : null;
-      const takramLightsOnlyState = typeof this.getVrTakramLightsOnlyState === "function" ? this.getVrTakramLightsOnlyState() : null;
       const cameraRigDiagnostics = this.getCameraRigFeatureDiagnostics();
       const vrFeaturePolicy = this.getVrRuntimeFeaturePolicy();
-      const vrSceneOwnedActive = this.isVrSceneOwnedRuntimeActive();
-      const vrTakramLightsOnlyActive = Boolean(vrFeaturePolicy.takramLightsOnly);
       const vrHdrReflectionsActive = Boolean(vrFeaturePolicy.hdrReflections);
       const vrTakramVisibleSkyActive = Boolean(vrFeaturePolicy.takramVisibleSky);
       const pmndrsAtmosphereSkyVisible = typeof this.isPmndrsAtmosphereSkyVisible === "function" && this.isPmndrsAtmosphereSkyVisible();
@@ -2093,9 +2118,9 @@
           immersiveXrFallback: Boolean(postProcessingRequested && this.isDirectVrPresentationActive() && !this.canUsePostProcessingForPresentation())
         },
         takram: {
-          atmosphereRequested: Boolean(!vrSceneOwnedActive && !vrTakramLightsOnlyActive && this.data.postFXEngine === "pmndrs" && this.isPmndrsAtmosphereEnabled()),
+          atmosphereRequested: Boolean(this.data.postFXEngine === "pmndrs" && this.isPmndrsAtmosphereEnabled()),
           atmosphereBundleLoaded: Boolean(window.VRODOS_TAKRAM_ATMOSPHERE),
-          atmosphereReady: Boolean(!vrSceneOwnedActive && atmosphereState && atmosphereState.ready && !atmosphereState.failed),
+          atmosphereReady: Boolean(atmosphereState && atmosphereState.ready && !atmosphereState.failed),
           atmosphereProfile: atmosphereState && atmosphereState.profileSignature ? atmosphereState.profileSignature : "",
           atmospherePrecision: atmosphereState && atmosphereState.precision ? atmosphereState.precision : "",
           atmosphereHigherOrderScattering: Boolean(atmosphereState && atmosphereState.higherOrderScattering),
@@ -2103,10 +2128,10 @@
           presentedSunDirection: this._pmndrsPresentedSunDirectionDiagnostic || null,
           immersiveRenderYawDeg: typeof this._pmndrsImmersiveRenderYawDeg === "number" ? this._pmndrsImmersiveRenderYawDeg : null,
           sunSpriteActive: Boolean(this._pmndrsSunSpriteActive),
-          dayNightCycleActive: Boolean(!vrSceneOwnedActive && this.isPmndrsDayNightCycleActive()),
-          horizonOwner: vrTakramVisibleSkyActive && pmndrsAtmosphereSkyVisible ? "takram-sky" : vrTakramLightsOnlyActive ? "vrodos-gradient-sky" : vrSceneOwnedActive ? "aframe-environment" : horizonState && horizonState.owner ? horizonState.owner : "",
-          lightOwner: takramLightsOnlyState && takramLightsOnlyState.active ? takramLightsOnlyState.owner : horizonState && horizonState.owner ? horizonState.owner : "",
-          takramSunEnabled: Boolean(!vrSceneOwnedActive && horizonState && horizonState.takramSunEnabled),
+          dayNightCycleActive: Boolean(this.isPmndrsDayNightCycleActive()),
+          horizonOwner: vrTakramVisibleSkyActive && pmndrsAtmosphereSkyVisible ? "takram-sky" : horizonState && horizonState.owner ? horizonState.owner : "",
+          lightOwner: horizonState && horizonState.owner ? horizonState.owner : "",
+          takramSunEnabled: Boolean(horizonState && horizonState.takramSunEnabled),
           visibleSkyRequested: Boolean(vrTakramVisibleSkyActive),
           visibleSkyActive: Boolean(vrTakramVisibleSkyActive && pmndrsAtmosphereSkyVisible),
           visibleSkyDirectCalibrated: Boolean(vrTakramVisibleSkyActive && atmosphereState && atmosphereState.vrTakramSkyDirectCalibrated),
@@ -2117,11 +2142,6 @@
           visibleSkyDirectWarmed: Boolean(vrTakramVisibleSkyActive && atmosphereState && atmosphereState.vrTakramSkyDirectWarmed),
           visibleSkyDirectWarmupMs: vrTakramVisibleSkyActive && atmosphereState && typeof atmosphereState.vrTakramSkyDirectWarmupMs === "number" ? atmosphereState.vrTakramSkyDirectWarmupMs : null,
           visibleSkyDirectWarmupRemainingMs: vrTakramVisibleSkyActive && atmosphereState && typeof atmosphereState.vrTakramSkyDirectWarmupRemainingMs === "number" ? atmosphereState.vrTakramSkyDirectWarmupRemainingMs : null,
-          lightsOnlyRequested: Boolean(takramLightsOnlyState && takramLightsOnlyState.requested),
-          lightsOnlyEligible: Boolean(takramLightsOnlyState && takramLightsOnlyState.eligible),
-          lightsOnlyActive: Boolean(takramLightsOnlyState && takramLightsOnlyState.active),
-          lightsOnlyUnavailableReason: takramLightsOnlyState && takramLightsOnlyState.unavailableReason ? takramLightsOnlyState.unavailableReason : "",
-          lightsOnlySourceCount: takramLightsOnlyState && typeof takramLightsOnlyState.sourceCount === "number" ? takramLightsOnlyState.sourceCount : 0,
           cloudsRequested: Boolean(vrFeaturePolicy.clouds && this.isPmndrsCloudsEnabled()),
           cloudsBundleLoaded: Boolean(window.VRODOS_TAKRAM_CLOUDS),
           cloudsActive: Boolean(vrFeaturePolicy.clouds && cloudDiagnostics.cloudsActive),
@@ -3336,7 +3356,8 @@
       }
     },
     tick: function(time) {
-      const hasFocusedPipeline = this.el.components && this.el.components["vrodos-render-profile"] && this.el.components["vrodos-atmosphere"] && this.el.components["vrodos-reflections"];
+      const expectedPipelineComponents = typeof this.getRuntimePipelineComponentNames === "function" ? this.getRuntimePipelineComponentNames() : ["vrodos-render-profile", "vrodos-postfx-router", "vrodos-atmosphere", "vrodos-reflections"];
+      const hasFocusedPipeline = this.el.components && expectedPipelineComponents.every((componentName) => Boolean(this.el.components[componentName]));
       if (hasFocusedPipeline) {
         return;
       }
@@ -3667,8 +3688,16 @@
       this.blockerCapsuleRadius = 0.32;
       this.blockerCapsuleHeight = 1.65;
       this.blockerSkin = 0.05;
-      this.blockerSweepHeights = [0.25, 0.9, 1.55];
-      this.blockerSweepOffsets = [0, 1, -1];
+      this.desktopBlockerSweepHeights = [0.25, 0.9, 1.55];
+      this.desktopBlockerSweepOffsets = [0, 1, -1];
+      this.headsetBlockerSweepHeights = [0.35, 1.35];
+      this.headsetBlockerSweepOffsets = [0];
+      this.blockerSweepHeights = this.desktopBlockerSweepHeights;
+      this.blockerSweepOffsets = this.desktopBlockerSweepOffsets;
+      this.collisionBudgetProfile = "";
+      this.collisionBvhRequired = false;
+      this.collisionBvhUnavailable = false;
+      this.loggedHeadsetBvhWarning = false;
       this.groundProbeOffsets = [
         new THREE.Vector2(0, 0),
         new THREE.Vector2(0.18, 0),
@@ -3769,6 +3798,8 @@
       this.immersiveNavigationStrategy = "none";
       this.immersiveAuthoredWorldContainerPresent = false;
       this.immersiveAuthoredWorldContainerId = "";
+      this.immersiveCachedTransformTarget = null;
+      this.immersiveCachedTransformTargetId = "";
       this.immersiveWorldBaseTransforms = /* @__PURE__ */ new Map();
       this.immersiveWorldRoots = [];
       this.immersiveWorldRootsDirty = true;
@@ -3782,8 +3813,13 @@
       this.immersiveShadowRefreshPendingTimer = null;
       this.immersiveLastShadowRefreshReason = "";
       this.immersiveShadowSuppressedAt = 0;
+      this.immersiveLastPresentedShadowSyncAt = 0;
+      this.immersiveLastPresentedShadowSyncTransformCount = -1;
       this.immersiveWasPresenting = false;
       this.immersiveControllerRayVisualResetFrames = 0;
+      this.immersiveControllerRayVisualsConfigured = false;
+      this.immersiveControllerShadowsSuppressed = false;
+      this.immersiveOverlayShadowSuppressionDirty = true;
       this.lastImmersiveControllerRayVisualDiagnostics = null;
       this.pendingImmersiveExitNavigationPosition = null;
       this.pendingImmersiveExitNavigationReason = "";
@@ -3878,6 +3914,7 @@
       this.handleRecoveryButtonDown = this.handleRecoveryButtonDown.bind(this);
       this.handleEnterVr = this.handleEnterVr.bind(this);
       this.handleExitVr = this.handleExitVr.bind(this);
+      this.handleControllerModelLoaded = this.handleControllerModelLoaded.bind(this);
       this.thumbL = document.querySelector("#oculusLeft");
       this.thumbR = document.querySelector("#oculusRight");
       this.recoveryButtonEvents = ["abuttondown", "xbuttondown"];
@@ -3886,11 +3923,13 @@
         this.thumbL.addEventListener("thumbstickmoved", this.handleThumbstickMove);
         this.thumbL.addEventListener("thumbsticktouchend", this.handleThumbstickEnd);
         this.thumbL.addEventListener("thumbstickup", this.handleThumbstickEnd);
+        this.thumbL.addEventListener("model-loaded", this.handleControllerModelLoaded);
       }
       if (this.thumbR) {
         this.thumbR.addEventListener("thumbstickmoved", this.handleThumbstickMove);
         this.thumbR.addEventListener("thumbsticktouchend", this.handleThumbstickEnd);
         this.thumbR.addEventListener("thumbstickup", this.handleThumbstickEnd);
+        this.thumbR.addEventListener("model-loaded", this.handleControllerModelLoaded);
       }
       ["#oculusLeft", "#oculusRight"].forEach((selector) => {
         const buttonEl = document.querySelector(selector);
@@ -4238,6 +4277,8 @@
       frame.counts.shadowRefreshApplied = this.immersiveShadowRefreshApplied;
       frame.counts.rootTransformCount = this.immersiveRootTransformCount;
       frame.counts.rootTransformObjectCount = this.immersiveRootTransformObjectCount;
+      frame.counts.collisionTargetCount = this.blockerCollisionTargets ? this.blockerCollisionTargets.length : 0;
+      frame.counts.blockerRayCount = (this.blockerSweepHeights ? this.blockerSweepHeights.length : 0) * (this.blockerSweepOffsets ? this.blockerSweepOffsets.length : 0);
       this.immersiveSmoothnessFrames.push(frame);
       if (this.immersiveSmoothnessFrames.length > this.immersiveSmoothnessFrameLimit) {
         this.immersiveSmoothnessFrames.splice(0, this.immersiveSmoothnessFrames.length - this.immersiveSmoothnessFrameLimit);
@@ -4303,6 +4344,9 @@
       this.immersivePresentationRootsDirty = true;
       this.immersiveWorldRoots = [];
       this.immersivePresentationRoots = [];
+      this.immersiveCachedTransformTarget = null;
+      this.immersiveCachedTransformTargetId = "";
+      this.immersiveOverlayShadowSuppressionDirty = true;
       if (!(this.isImmersiveXrPresenting() && this.hasImmersiveAuthoredWorldContainer())) {
         this.clearImmersiveWorldBaseTransforms();
       }
@@ -4314,6 +4358,7 @@
     },
     handleSceneChildAttached: function(event) {
       const classList = event && event.detail && event.detail.el && event.detail.el.classList ? event.detail.el.classList : null;
+      this.immersiveOverlayShadowSuppressionDirty = true;
       if (classList && classList.contains("vrodos-navmesh")) {
         this.markNavMeshDirty();
       }
@@ -4323,6 +4368,7 @@
     },
     handleSceneChildDetached: function(event) {
       const classList = event && event.detail && event.detail.el && event.detail.el.classList ? event.detail.el.classList : null;
+      this.immersiveOverlayShadowSuppressionDirty = true;
       if (classList && classList.contains("vrodos-navmesh")) {
         this.markNavMeshDirty();
       }
@@ -4407,6 +4453,11 @@
       this.pendingImmersiveExitNavigationCapturedAt = 0;
       this.clearImmersiveExitNavigationHandoffTimers();
       this.immersiveControllerRayVisualResetFrames = 8;
+      this.immersiveControllerRayVisualsConfigured = false;
+      this.immersiveControllerShadowsSuppressed = false;
+      this.immersiveOverlayShadowSuppressionDirty = true;
+      this.immersiveLastPresentedShadowSyncAt = 0;
+      this.immersiveLastPresentedShadowSyncTransformCount = -1;
       this.rememberNonImmersiveNavigationPosition(true);
       window.setTimeout(() => {
         if (this.isImmersiveXrPresenting()) {
@@ -4426,6 +4477,11 @@
       this.heightOffset = null;
       this.hasLastGroundHit = false;
       this.positionPrimed = false;
+      this.immersiveControllerRayVisualsConfigured = false;
+      this.immersiveControllerShadowsSuppressed = false;
+      this.immersiveOverlayShadowSuppressionDirty = true;
+      this.immersiveLastPresentedShadowSyncAt = 0;
+      this.immersiveLastPresentedShadowSyncTransformCount = -1;
       this.clearImmersiveFirstMovementGroundLock();
       this.clearImmersiveEntryPoseSettle();
       this.clearImmersiveSessionAnchor();
@@ -4491,6 +4547,10 @@
       if (event.target.classList.contains("vrodos-collider")) {
         this.markCollisionWorldDirty();
       }
+    },
+    handleControllerModelLoaded: function() {
+      this.immersiveControllerRayVisualsConfigured = false;
+      this.immersiveControllerShadowsSuppressed = false;
     },
     shouldIgnoreKeyboardEvent: function(event) {
       const target = event ? event.target : null;
@@ -4572,11 +4632,13 @@
         this.thumbL.removeEventListener("thumbstickmoved", this.handleThumbstickMove);
         this.thumbL.removeEventListener("thumbsticktouchend", this.handleThumbstickEnd);
         this.thumbL.removeEventListener("thumbstickup", this.handleThumbstickEnd);
+        this.thumbL.removeEventListener("model-loaded", this.handleControllerModelLoaded);
       }
       if (this.thumbR) {
         this.thumbR.removeEventListener("thumbstickmoved", this.handleThumbstickMove);
         this.thumbR.removeEventListener("thumbsticktouchend", this.handleThumbstickEnd);
         this.thumbR.removeEventListener("thumbstickup", this.handleThumbstickEnd);
+        this.thumbR.removeEventListener("model-loaded", this.handleControllerModelLoaded);
       }
       if (this.recoveryButtonEls && this.recoveryButtonEvents) {
         this.recoveryButtonEls.forEach((buttonEl) => {
@@ -4602,6 +4664,31 @@
     },
     getSceneSettings: function() {
       return this.sceneEl ? this.sceneEl.getAttribute("scene-settings") : null;
+    },
+    getSceneSettingsComponent: function() {
+      return this.sceneEl && this.sceneEl.components ? this.sceneEl.components["scene-settings"] : null;
+    },
+    isHeadsetCollisionProfile: function(settings) {
+      const component = this.getSceneSettingsComponent();
+      if (component && typeof component.isVrRuntimeHeadsetProfile === "function") {
+        return component.isVrRuntimeHeadsetProfile();
+      }
+      const profile = String(settings && settings.vrRuntimeProfile || "").trim().toLowerCase();
+      return profile === "headset";
+    },
+    applyCollisionBudgetForSettings: function(settings) {
+      const headsetProfile = this.isHeadsetCollisionProfile(settings);
+      const nextProfile = headsetProfile ? "headset" : "desktop";
+      if (this.collisionBudgetProfile === nextProfile) {
+        return;
+      }
+      this.collisionBudgetProfile = nextProfile;
+      this.collisionBvhRequired = headsetProfile;
+      this.collisionBvhUnavailable = false;
+      this.blockerSweepHeights = headsetProfile ? this.headsetBlockerSweepHeights : this.desktopBlockerSweepHeights;
+      this.blockerSweepOffsets = headsetProfile ? this.headsetBlockerSweepOffsets : this.desktopBlockerSweepOffsets;
+      this.navMeshDirty = true;
+      this.collisionWorldDirty = true;
     },
     getSceneSettingsDomAttribute: function() {
       if (!this.sceneEl) {
@@ -5080,9 +5167,12 @@
       this.immersiveLastTransformRootCount = transformTargets.length;
       const settings = this.sceneEl && this.sceneEl.components ? this.sceneEl.components["scene-settings"] : null;
       if (settings && typeof settings.syncPresentedShadowLightTransforms === "function") {
+        const now = this.getRuntimeNow();
         this.measureImmersiveSmoothness(smoothnessFrame, "shadowSyncMs", () => {
           settings.syncPresentedShadowLightTransforms();
         });
+        this.immersiveLastPresentedShadowSyncAt = now;
+        this.immersiveLastPresentedShadowSyncTransformCount = this.immersiveRootTransformCount;
       }
       if (smoothnessFrame) {
         this.addImmersiveSmoothnessDuration(smoothnessFrame, "transformApplyMs", this.getRuntimeNow() - transformStartedAt);
@@ -5175,19 +5265,30 @@
       return Boolean(el && typeof el.hasAttribute === "function" && el.hasAttribute(attributeName));
     },
     getImmersiveAuthoredWorldContainer: function() {
+      if (this.immersiveCachedTransformTarget && this.immersiveCachedTransformTarget.object3D && (!this.sceneEl || typeof this.sceneEl.contains !== "function" || this.sceneEl.contains(this.immersiveCachedTransformTarget))) {
+        this.immersiveAuthoredWorldContainerPresent = true;
+        this.immersiveAuthoredWorldContainerId = this.immersiveCachedTransformTargetId || this.immersiveCachedTransformTarget.id || "";
+        return this.immersiveCachedTransformTarget;
+      }
       if (!this.sceneEl || typeof this.sceneEl.querySelector !== "function") {
         this.immersiveAuthoredWorldContainerPresent = false;
         this.immersiveAuthoredWorldContainerId = "";
+        this.immersiveCachedTransformTarget = null;
+        this.immersiveCachedTransformTargetId = "";
         return null;
       }
       const container = this.sceneEl.querySelector('#vrodos-authored-world, [data-vrodos-authored-world="true"]');
       if (!container || !container.object3D) {
         this.immersiveAuthoredWorldContainerPresent = false;
         this.immersiveAuthoredWorldContainerId = "";
+        this.immersiveCachedTransformTarget = null;
+        this.immersiveCachedTransformTargetId = "";
         return null;
       }
       this.immersiveAuthoredWorldContainerPresent = true;
       this.immersiveAuthoredWorldContainerId = container.id || "";
+      this.immersiveCachedTransformTarget = container;
+      this.immersiveCachedTransformTargetId = this.immersiveAuthoredWorldContainerId;
       return container;
     },
     hasImmersiveAuthoredWorldContainer: function() {
@@ -5378,13 +5479,11 @@
       const authoredWorldContainer = this.getImmersiveAuthoredWorldContainer();
       if (authoredWorldContainer) {
         this.immersiveNavigationStrategy = "authored-world-container";
-        this.updateImmersiveWorldRootDiagnostics([authoredWorldContainer]);
         return [authoredWorldContainer];
       }
       this.immersiveNavigationStrategy = "authored-world-container-missing";
       this.immersiveAuthoredWorldContainerPresent = false;
       this.immersiveAuthoredWorldContainerId = "";
-      this.updateImmersiveWorldRootDiagnostics([]);
       return [];
     },
     resetImmersiveRigTransform: function() {
@@ -5434,13 +5533,18 @@
       this.addImmersiveSmoothnessDuration(smoothnessFrame, "shadowRefreshRequestMs", this.getRuntimeNow() - refreshStartedAt);
     },
     suppressImmersiveControllerShadows: function() {
+      if (this.immersiveControllerShadowsSuppressed) {
+        return 0;
+      }
       const controllerEls = [this.thumbL, this.thumbR];
+      let visited = 0;
       for (let i = 0; i < controllerEls.length; i++) {
         const controllerEl = controllerEls[i];
         if (!controllerEl || !controllerEl.object3D) {
           continue;
         }
         controllerEl.object3D.traverse((object) => {
+          visited += 1;
           if ("castShadow" in object) {
             object.castShadow = false;
           }
@@ -5449,6 +5553,10 @@
           }
         });
       }
+      if (visited > 0) {
+        this.immersiveControllerShadowsSuppressed = true;
+      }
+      return visited;
     },
     resolveControllerRayReadiness: function(controllerEl) {
       const api = window.VRODOSControllerRayReadiness;
@@ -5511,6 +5619,9 @@
       const controllerEls = [this.thumbL, this.thumbR];
       const diagnostics = [];
       const forceReset = this.immersiveControllerRayVisualResetFrames > 0;
+      if (this.immersiveControllerRayVisualsConfigured && !forceReset) {
+        return;
+      }
       let waitingForControllerTracking = false;
       for (let i = 0; i < controllerEls.length; i++) {
         const controllerEl = controllerEls[i];
@@ -5581,8 +5692,14 @@
         };
         window.__vrodosLastControllerRayVisualResetDiagnostics = this.lastImmersiveControllerRayVisualDiagnostics;
       }
+      if (!waitingForControllerTracking && diagnostics.length > 0 && this.immersiveControllerRayVisualResetFrames <= 0) {
+        this.immersiveControllerRayVisualsConfigured = true;
+      }
     },
     suppressImmersiveOverlayShadows: function() {
+      if (!this.immersiveOverlayShadowSuppressionDirty) {
+        return 0;
+      }
       if (!this.sceneEl || !this.sceneEl.querySelectorAll) {
         return 0;
       }
@@ -5613,6 +5730,7 @@
           changed += 1;
         }
       }
+      this.immersiveOverlayShadowSuppressionDirty = false;
       return changed;
     },
     ensureImmersiveRuntimeHelpers: function() {
@@ -5622,13 +5740,11 @@
       this.resetImmersiveRigTransform();
       this.ensureAFrameControllerRayVisuals();
       this.suppressImmersiveControllerShadows();
-      const now = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
-      if (now - this.immersiveShadowSuppressedAt > 500) {
+      if (this.immersiveOverlayShadowSuppressionDirty) {
         const changed = this.suppressImmersiveOverlayShadows();
         if (changed > 0) {
           this.requestShadowMapRefresh("immersive-overlay-shadow-suppression");
         }
-        this.immersiveShadowSuppressedAt = now;
       }
     },
     getNavigationWorldPosition: function() {
@@ -5693,6 +5809,7 @@
       if (!this.navMeshDirty) {
         return;
       }
+      this.applyCollisionBudgetForSettings(this.getSceneSettings());
       this.navMeshRoots = [];
       this.navMeshCollisionTargets = [];
       this.navMeshBounds.makeEmpty();
@@ -5703,7 +5820,7 @@
           this.applyWalkBehaviorToNavMeshRoot(meshRoot, this.normalizeWalkBehavior(navMeshEntities[i].getAttribute("data-vrodos-walk-behavior")));
           this.navMeshRoots.push(meshRoot);
           meshRoot.traverse((node) => {
-            if (node && node.isMesh) {
+            if (this.prepareCollisionMesh(node, "navmesh")) {
               this.navMeshCollisionTargets.push(node);
             }
           });
@@ -5742,16 +5859,30 @@
       node.userData = node.userData || {};
       node.userData.vrodosCollisionRole = role || "solid";
       node.updateMatrixWorld(true);
-      if (this.installCollisionBvhSupport() && typeof node.geometry.computeBoundsTree === "function" && !node.geometry.boundsTree && !this.bvhTargets.has(node.uuid)) {
+      const canBuildBvh = this.installCollisionBvhSupport() && typeof node.geometry.computeBoundsTree === "function";
+      if (!canBuildBvh && this.collisionBvhRequired) {
+        if (!this.loggedHeadsetBvhWarning) {
+          console.warn("VRodos: headset collision requires BVH support; compiled collision is disabled until the collision BVH chunk is available.");
+          this.loggedHeadsetBvhWarning = true;
+        }
+        this.collisionBvhUnavailable = true;
+        return false;
+      }
+      if (canBuildBvh && !node.geometry.boundsTree && !this.bvhTargets.has(node.uuid)) {
         try {
           node.geometry.computeBoundsTree();
         } catch (err) {
           if (!this.loggedBvhBuildWarning) {
-            console.warn("VRodos: failed to build one or more static collision BVHs; falling back to standard raycasts.", err);
+            const message = this.collisionBvhRequired ? "VRodos: failed to build one or more static collision BVHs; headset collision mesh skipped." : "VRodos: failed to build one or more static collision BVHs; falling back to standard raycasts.";
+            console.warn(message, err);
             this.loggedBvhBuildWarning = true;
           }
         }
         this.bvhTargets.add(node.uuid);
+      }
+      if (this.collisionBvhRequired && !node.geometry.boundsTree) {
+        this.collisionBvhUnavailable = true;
+        return false;
       }
       return true;
     },
@@ -5972,6 +6103,7 @@
       if (!settings || settings.collisionMode === "off" || this.getNavigationMode(settings) !== "walkable") {
         return false;
       }
+      this.applyCollisionBudgetForSettings(settings);
       this.refreshNavMeshRoots();
       this.refreshCollisionWorld();
       return this.navMeshCollisionTargets.length > 0;

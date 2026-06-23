@@ -133,22 +133,36 @@ VRodosCompileUI.General = (function () {
     }
 
     function normalizeRuntimeTarget(value) {
-        return value === 'vr-headset' ? 'vr-headset' : 'desktop';
-    }
-
-    function normalizeVrRuntimeProfile(value) {
-        if (value === 'desktop' || value === 'headset' || value === 'baseline' || value === 'safe' || value === 'takram-lights' || value === 'takram-sky' || value === 'hdr-reflections' || value === 'balanced' || value === 'max') {
+        if (value === 'vr-headset' || value === 'pc-rendered-vr') {
             return value;
         }
         return 'desktop';
     }
 
+    function normalizeVrRuntimeProfile(value) {
+        if (value === 'desktop' || value === 'headset' || value === 'pc-rendered-vr') {
+            return value;
+        }
+        if (value === 'baseline' || value === 'safe' || value === 'takram-lights' || value === 'takram-sky' || value === 'hdr-reflections' || value === 'balanced' || value === 'max') {
+            return 'headset';
+        }
+        return 'desktop';
+    }
+
     function runtimeTargetFromVrRuntimeProfile(value) {
-        return normalizeVrRuntimeProfile(value) === 'desktop' ? 'desktop' : 'vr-headset';
+        const profile = normalizeVrRuntimeProfile(value);
+        if (profile === 'pc-rendered-vr') {
+            return 'pc-rendered-vr';
+        }
+        return profile === 'desktop' ? 'desktop' : 'vr-headset';
     }
 
     function runtimeTargetToVrRuntimeProfile(value) {
-        return normalizeRuntimeTarget(value) === 'vr-headset' ? 'headset' : 'desktop';
+        const target = normalizeRuntimeTarget(value);
+        if (target === 'pc-rendered-vr') {
+            return 'pc-rendered-vr';
+        }
+        return target === 'vr-headset' ? 'headset' : 'desktop';
     }
 
     function normalizeEdgeAAStrengthLevel(value) {
@@ -189,6 +203,10 @@ VRodosCompileUI.General = (function () {
         return Boolean(controls && controls.runtimeTarget && normalizeRuntimeTarget(controls.runtimeTarget.value) === 'vr-headset');
     }
 
+    function isPcRenderedVrTarget(controls) {
+        return Boolean(controls && controls.runtimeTarget && normalizeRuntimeTarget(controls.runtimeTarget.value) === 'pc-rendered-vr');
+    }
+
     // --- UI Logic ---
 
     function setRuntimeTargetDisabled(control, disabled) {
@@ -221,6 +239,7 @@ VRodosCompileUI.General = (function () {
 
     function applyRuntimeTargetUI(controls) {
         const headsetTarget = isVrHeadsetTarget(controls);
+        const pcRenderedVrTarget = isPcRenderedVrTarget(controls);
 
         if (!headsetTarget) {
             clearRuntimeTargetUI(controls);
@@ -235,8 +254,10 @@ VRodosCompileUI.General = (function () {
 
         if (controls.runtimeTargetHint) {
             controls.runtimeTargetHint.textContent = headsetTarget
-                ? 'Uses the accepted headset policy: Takram sky and HDR env maps when authored, with composer effects, clouds, scene probes, and WebXR layers disabled.'
-                : 'Uses the authored desktop rendering pipeline without headset-specific overrides.';
+                ? 'Uses the standalone headset policy: lean by default, with desktop-grade features added back only after headset validation.'
+                : (pcRenderedVrTarget
+                    ? 'Uses the PC-rendered VR parent profile for later PCVR/WebXR validation with desktop rendering behavior.'
+                    : 'Uses the authored desktop rendering pipeline without headset-specific overrides.');
         }
     }
 
@@ -267,10 +288,6 @@ VRodosCompileUI.General = (function () {
         if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
         VRODOS.editor.envir.scene.aframeVrRuntimeProfile = runtimeTargetToVrRuntimeProfile(controls.runtimeTarget ? controls.runtimeTarget.value : 'vr-headset');
-        VRODOS.editor.envir.scene.aframeVrPmndrsComposerEnabled = false;
-        VRODOS.editor.envir.scene.aframeVrSceneProbeEnabled = false;
-        VRODOS.editor.envir.scene.aframeVrTakramSkyEnvironmentEnabled = false;
-        VRODOS.editor.envir.scene.aframeVrCloudsEnabled = false;
 
         VRODOS.editor.envir.scene.aframeRenderQuality = normalizeRenderQuality(controls.renderQuality.value);
         VRODOS.editor.envir.scene.aframeShadowQuality = controls.shadowQuality.value || 'medium';

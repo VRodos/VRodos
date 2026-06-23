@@ -20,13 +20,7 @@
             "allowed": [
                 "desktop",
                 "headset",
-                "baseline",
-                "safe",
-                "takram-lights",
-                "takram-sky",
-                "hdr-reflections",
-                "balanced",
-                "max"
+                "pc-rendered-vr"
             ]
         },
         "vrFramebufferScale": {
@@ -44,26 +38,6 @@
             "min": -1,
             "max": 1,
             "step": 0.05
-        },
-        "vrPmndrsComposerEnabled": {
-            "metadataKey": "aframeVrPmndrsComposerEnabled",
-            "type": "boolean",
-            "default": false
-        },
-        "vrSceneProbeEnabled": {
-            "metadataKey": "aframeVrSceneProbeEnabled",
-            "type": "boolean",
-            "default": false
-        },
-        "vrTakramSkyEnvironmentEnabled": {
-            "metadataKey": "aframeVrTakramSkyEnvironmentEnabled",
-            "type": "boolean",
-            "default": false
-        },
-        "vrCloudsEnabled": {
-            "metadataKey": "aframeVrCloudsEnabled",
-            "type": "boolean",
-            "default": false
         },
         "postFXColorEnabled": {
             "metadataKey": "aframePostFXColorEnabled",
@@ -700,10 +674,6 @@
     "vrRuntimeProfile": "desktop",
     "vrFramebufferScale": "0",
     "vrFoveationStrength": "-1",
-    "vrPmndrsComposerEnabled": "0",
-    "vrSceneProbeEnabled": "0",
-    "vrTakramSkyEnvironmentEnabled": "0",
-    "vrCloudsEnabled": "0",
     "postFXColorEnabled": "0",
     "navigationMode": "walkable",
     "shadowUpdateMode": "static",

@@ -68,6 +68,17 @@ class VRodos_Runtime_Settings_Contract {
 		$type    = (string) ( $setting['type'] ?? 'string' );
 		$default = null !== $fallback ? $fallback : ( $setting['default'] ?? null );
 
+		if ( 'vrRuntimeProfile' === $scene_setting_key ) {
+			$profile = strtolower( trim( (string) $value ) );
+			$allowed = is_array( $setting['allowed'] ?? null ) ? $setting['allowed'] : [];
+			if ( in_array( $profile, $allowed, true ) ) {
+				return $profile;
+			}
+			if ( in_array( $profile, [ 'baseline', 'safe', 'takram-lights', 'takram-sky', 'hdr-reflections', 'balanced', 'max' ], true ) ) {
+				return 'headset';
+			}
+		}
+
 		if ( 'enum' === $type ) {
 			$allowed = is_array( $setting['allowed'] ?? null ) ? $setting['allowed'] : [];
 			return in_array( $value, $allowed, true ) ? $value : $default;

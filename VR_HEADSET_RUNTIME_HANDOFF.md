@@ -1,139 +1,67 @@
 # VR Headset Runtime Handoff
 
-Date: 2026-06-19
+Date: 2026-06-23
 
-This is the short continuation note for the VR Headset runtime parity effort. The detailed plan is in `COMPILED_SCENE_PLATFORM_AUDIT_AND_VR_PARITY_PLAN.md`; the renderer details are in `RENDERING_PIPELINE.md`.
+This is the current continuation note for standalone headset runtime work. Historical staged headset rendering experiments have been retired as supported runtime profiles; older generated scenes should be recompiled into the current pipeline.
 
-## Goal
+## Supported Parent Profiles
 
-Keep the Desktop compiled-scene pipeline intact while enabling as much Desktop functionality as possible in the VR headset runtime, one validated step at a time.
+- `desktop`: full desktop/browser rendering.
+- `headset`: standalone headset rendering, lean by default now and expandable only through explicit validated feature work.
+- `pc-rendered-vr`: PCVR/WebXR path from `PC_RENDERED_VR_PLAN.md`, parked until real PCVR hardware/runtime validation.
 
-## Current Accepted State
+Legacy profile names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-reflections`, `balanced`, and `max` are compatibility inputs only. Runtime/editor/compiler normalization maps them to `headset`; do not add new behavior behind those aliases.
 
-- Compile UI exposes `Runtime Target`: `Desktop` or `VR Headset`.
-- `Desktop` maps to internal `desktop` and keeps authored Desktop settings active.
-- `VR Headset` maps to internal `headset`.
-- `baseline` and `safe` remain hidden strict regression profiles.
-- Accepted VR Headset features: A-Frame scene host, authored GLB/media rendering, HMD tracking without camera freeze, controller input, thumbstick navigation, walkable navigation, static collision/BVH, static shadows, native renderer antialiasing, readable midday lighting, Takram visible sky/light sources when authored, and HDR env-map reflections when authored.
-- Immersive locomotion moves the generated `#vrodos-authored-world` container around a stable XR-session anchor captured on entry/re-entry. Live headset pose remains available for room-scale parallax and diagnostics, but joystick movement and right-stick yaw must not recenter authored content against the live `renderer.xr.getCamera()` position every frame.
-- Right-stick yaw in immersive XR uses a short input-smoothing filter by default and still integrates with real A-Frame `timeDelta`; use `vrodos_debug_disable_smooth_turn=1` only for comparison captures. Do not restore fixed-XR-frame timestep smoothing.
-- Collision and ground caches are authored-space state. Right-stick yaw rotates the rendered authored-world container, but must not clear authored ground caches by itself; cache invalidation belongs to XR entry/reset, navmesh/collider changes, and actual navigation state changes.
-- 2026-06-19 open rendering caveat: in immersive XR, right-stick world rotation can still make object shadows appear to rotate with the player. Entry height, authored-object placement, video placement, POI image/text placement, collision/BVH walking, and locomotion remain accepted on `Master_Client_8980.html`; defer the shadow-yaw issue to a later rendering pass focused on directional shadow/light-space fitting under immersive presentation yaw.
-- 2026-06-19 immersive interaction implementation note: video clicks remain direct playback; CEFR, assessment, and image/text POI panels use spatial UI; assessment and image/text POI panels spawn camera-relative near eye height; modal rays stop at the dialog surface with surface/actionable hit-dot feedback; normal scene `.raycastable` targets show endpoint-dot feedback when no modal is open. Headset acceptance for the full interaction set is still pending a recompiled representative scene.
-- Minor far-edge shimmer is acceptable and should be treated as solved unless it regresses.
-- VR Headset compiles the Takram atmosphere chunk only when authored, but keeps PMNDRS/legacy composers, clouds, scene probes, Takram sky PMREM capture, and WebXR layers disabled.
-- Public `headset`, `takram-sky`, and `hdr-reflections` preserve full Quest XR framebuffer scale `1.0` plus foveation `0.5` by default; the lower `0.8`/`0.85` render-budget trial improved cost but visibly degraded 3D environment quality. Use `vrodos_vr_framebuffer_scale` and `vrodos_vr_foveation` query overrides only for comparison captures.
-- Public VR profiles compile flat image/video planes with unlit `shader: flat` media materials. Desktop and `max` continue to use lit world-media materials.
+## Current Headset Policy
 
-## Known Blocked Paths
+- Keep WebXR/A-Frame as the owner of HMD and controller tracking.
+- Keep `#player` as an unpositioned tracking rig.
+- Keep authored camera placement on `#cameraA`.
+- Move and rotate the generated `#vrodos-authored-world` container for immersive locomotion.
+- Do not restore per-root transform fallbacks for old compiled scenes.
+- Keep PMNDRS/legacy composer ownership, clouds, scene probes, Takram sky PMREM capture, and WebXR layers disabled by default.
+- Keep native renderer antialiasing, hard headset shadow caps, authored Takram atmosphere/light/visible sky where currently allowed, and authored HDR env-map reflections where policy allows them.
+- Future standalone headset features must be added back one at a time with Quest/headset validation and updates to `VR_IMMERSIVE_PERFORMANCE_CLEANUP_PLAN.md`.
 
-- PMNDRS composer/cloud ownership caused tiled stereo/compositor instability on Quest 2.
-- Legacy post-FX/FXAA caused black-screen/tiled-framebuffer artifacts in immersive XR.
-- Do not fix locomotion wobble by moving `#player`, offsetting WebXR reference spaces, applying `renderer.xr.setPoseTarget(cameraA.object3D)`, reintroducing live-HMD-position recentering of authored content, or falling back to per-root transforms for older generated scenes. Older scenes should be recompiled into the newest pipeline.
-- Do not promote legacy FXAA, TAA, SAO/SSAO, SSR, bloom, lens flare, Takram clouds, or PMNDRS composer effects into VR Headset without a new XR-safe implementation and headset validation.
+## Interaction Contract
 
-## Current Safe Test URL Pattern
+- Video trigger clicks toggle playback directly in immersive VR.
+- CEFR, assessment, and image/text POI panels use `window.VRODOSSpatialUI`.
+- Do not route immersive panels through A-Frame planes/text, DOM overlays, or `.vrodos-overlay-hit-target` fallback geometry.
+- Controller rays remain the active A-Frame raycaster visuals because that path owns scene selection.
+- Modal panels clamp the active controller ray to the panel surface and restore ray state on close.
+- Normal scene `.raycastable` targets get endpoint-dot feedback when no modal is open.
 
-Use ADB reverse and load through Quest Browser:
+## Validation
+
+Use a freshly recompiled representative scene for headset validation. Do not treat arbitrary files already present in `runtime/build/` as current fixtures.
+
+Required checks:
+
+- HMD/controller tracking remains WebXR/A-Frame-owned.
+- VRodos only moves/rotates `#vrodos-authored-world`.
+- Movement, yaw, collision, video clicks, POI, CEFR, assessment, and scene ray feedback still work.
+- Headset shadow maps obey directional `1024` and point/spot `512` caps.
+- No repeated movement-frame DOM root diagnostics.
+- Collision target count and blocker ray count match the selected profile budget.
+
+ADB reverse test pattern:
 
 ```powershell
 $adb = 'C:\Program Files\Meta Quest Developer Hub\resources\bin\adb.exe'
-$url = 'http://localhost:5832/wp-content/plugins/VRodos/runtime/build/Master_Client_8606.html?vrodos_debug_runtime_features=1'
+$url = 'http://localhost:5832/wp-content/plugins/VRodos/runtime/build/Master_Client_RECOMPILED.html?vrodos_debug_runtime_features=1'
 & $adb reverse tcp:5832 tcp:5832
 & $adb shell "am start -a android.intent.action.VIEW -d '$url' -p com.oculus.browser"
 ```
 
-Do not test headset WebXR through `wp.local`; use `localhost:5832` through ADB reverse.
+Do not test headset WebXR through `wp.local`; use `localhost:5832` through ADB reverse or a directly reachable LAN URL.
 
-When testing through USB, `adb reverse tcp:5832 tcp:5832` only forwards the Quest's `localhost:5832` to the PC's `localhost:5832`; it does not start a server. If Quest Browser shows `empty response`, first verify that the PC is actually serving the WordPress public root on port `5832`. A reliable fallback is:
+## Diagnostics
 
-```powershell
-$php = 'C:\Users\tasos\AppData\Roaming\Local\lightning-services\php-8.3.29+1\bin\win64\php.exe'
-$root = 'D:\Development\WordPress\app\public'
-Start-Process -FilePath $php -ArgumentList @('-S', '127.0.0.1:5832', '-t', $root) -WorkingDirectory $root -WindowStyle Hidden
-Invoke-WebRequest -Uri 'http://localhost:5832/wp-content/plugins/VRodos/runtime/build/Master_Client_8606.html' -UseBasicParsing
-```
-
-Then run the ADB reverse/open command. The Quest URL should stay `http://localhost:5832/wp-content/plugins/VRodos/runtime/build/...`, not `wp.local`.
-
-Before sending a new headset test URL, close existing Quest Browser scene tabs when possible. Stale scene tabs can ignore a fresh Android VIEW intent and keep an older `vrodos_cache_bust` URL active; if that happens, use the Quest Browser DevTools target to navigate the existing `Scene 1` page directly or close the page target before launching the next URL.
-
-## Immersive Smoothness Diagnostics
-
-Desktop `scripts/profile-master-client.mjs` captures tab-mode regressions only; do not treat it as proof of native Quest immersive frame pacing. For headset movement/yaw smoothness, load the scene with `vrodos_debug_immersive_smoothness=1`, enter immersive VR, then sample Quest Browser DevTools:
+For headset movement/yaw smoothness, load the scene with `vrodos_debug_immersive_smoothness=1`, enter immersive VR, then sample Quest Browser DevTools:
 
 ```powershell
-node scripts\capture-quest-immersive-diagnostics.mjs --duration-ms 30000 --target-url Master_Client_8980.html
+node scripts\capture-quest-immersive-diagnostics.mjs --duration-ms 30000 --target-url Master_Client_RECOMPILED.html
 ```
 
-The runtime publishes `window.__vrodosImmersiveSmoothnessDiagnostics` while the flag is active. The capture JSON includes frame-delta buckets for `idle`, `move`, `yaw`, and `move+yaw`, plus navigation transform, collision/ground, shadow, input, and renderer facts. Use this to decide whether an issue is rendering/frame pacing, navigation work, input/yaw integration, or headset/browser reprojection before changing locomotion behavior.
-
-## VR Headset Parity Checklist
-
-Track every stage here before promoting it. Keep `Status` as `Pending`, `In Progress`, `Blocked`, or `Accepted`.
-
-| Stage | Status | Test URL | Expected Diagnostics | Headset Result | Next Action |
-| --- | --- | --- | --- | --- | --- |
-| Accepted baseline freeze | Accepted | `http://localhost:5832/wp-content/plugins/VRodos/runtime/build/Master_Client_8606.html?vrodos_debug_runtime_features=1` | `vrProfile.profile=baseline`, `takram.horizonOwner=aframe-environment`, `postProcessing.owner=vr-baseline-disabled`, `reflections.effectiveSource=none`, navigation/collision active | Quest 2 accepted; minor far-edge shimmer is not a blocker | Retest only after runtime changes touching renderer, navigation, collision, controller input, scene loading, or ray interaction |
-| Fixture inventory | In Progress | See current test pages below | Only intentionally built pages are tracked | `Master_Client_8606.html` is the only known current page | Add more rows only after intentionally compiling representative scenes |
-| Scene-owned lighting/material parity | Accepted | `Master_Client_8606.html?vrodos_vr_profile=safe&vrodos_debug_runtime_features=1` | `vrProfile.profile=safe`, no composer, no Takram visible sky, no clouds, no scene probe, no reflections, stable shadows/materials | User validated in Quest Browser: perfect | Move to hidden Takram-derived lighting-only stage |
-| Takram-derived lighting only | Accepted | `Master_Client_8606.html?vrodos_vr_profile=takram-lights&vrodos_debug_runtime_features=1` on a Desktop/Takram-enabled rebuild | A-Frame horizon remains visible; no composer/clouds/reflections; `takram.lightsOnlyActive=true`, `takram.lightOwner=takram-light-source`, native renderer antialiasing enabled | Quest 2 accepted after cleanup: A-Frame blue/cream sky visible, AA clean, `takramSkyVisible=0`, `legacySuppressed=0`, no runtime errors | Proceed only to an isolated Takram visible-sky stage; keep clouds, composer, reflections, scene probes, and WebXR layers disabled |
-| Takram visible sky without clouds | Accepted | `Master_Client_8606.html?vrodos_vr_profile=takram-sky&vrodos_debug_runtime_features=1` on a Desktop/Takram-enabled rebuild | Takram sky visible; `vrProfile.takramVisibleSky=true`; `takram.visibleSkyActive=true`; `takram.visibleSkyDirectCalibrated=true`; `takram.visibleSkyDirectExposure=24`; `takram.atmosphereProfile=vr-takram-sky:half:basic:combined`; PMNDRS composer/effects, clouds, reflections, scene probes, and WebXR layers remain disabled | Quest 2 accepted: sky/horizon are fine, AA remains clean, no reported browser instability after calibration | Proceed to HDR/env-map reflection validation only; keep scene probes, composer effects, clouds, and WebXR layers disabled |
-| HDR/env-map reflections | Accepted | `Master_Client_766.html?vrodos_vr_profile=hdr-reflections&vrodos_debug_runtime_features=1` | Loader may remain visible while `reveal.pending` contains `takram-sky` or `hdr-env-map`; after reveal, `reveal.ready=true`, `takram.visibleSkyDirectPatchFailed=false`, `takram.visibleSkyDirectWarmed=true`, `reflections.effectiveSource=hdr`, `reflections.hdrEnvMapOnly=true`, `reflections.effectiveEnvMapPreset=studio`, `reflections.hdrReady=true`, `reflections.hdrFailed=false`; scene probe/Takram sky PMREM/composer/clouds remain disabled | Quest 2 accepted: startup sky reveal is stable and glossy/reflective materials respond correctly to the HDR environment. Mirror-like scene reflections are not expected in this stage. `Master_Client_766.html` still has a scene-specific camera/VR-position offset that does not reproduce in newer scenes. | Defer real mirrors, scene probes, and Takram sky PMREM reflections to separate flagged experiments |
-| Quest Browser XR navigation regression | Accepted | `Master_Client_8606.html` with public `Runtime Target = VR Headset` | HMD view, controller rays, and navigation anchor remain co-located in immersive XR; desktop/tab movement stays unchanged | User validated on Quest 2: HMD camera freeze is fixed and locomotion works correctly. Accepted model: `#player` stays an identity tracking rig, WebXR/A-Frame owns HMD/controller tracking poses, and VRodos moves/rotates the generated `#vrodos-authored-world` container around a virtual navigation position. Visible controller rays must stay on the A-Frame raycaster path because that is the path that owns scene selection. | Retest only after changes touching navigation, controller input, camera rig setup, collision, scene loading, or ray interaction |
-| Public VR Headset profile promotion | Accepted | Rebuild a representative scene with public `Runtime Target = VR Headset` | `vrProfile.profile=headset`, native AA enabled, Takram visible sky/HDR env map active only when authored, PMNDRS/legacy composer/clouds/scene probe/Takram sky PMREM/WebXR layers disabled | User validated the public headset HMD/locomotion baseline after the XR navigation bundle rebuild. | Treat `headset` as the stable public VR profile and move to immersive interaction parity |
-| Immersive interaction parity | In Progress | Use `Master_Client_6129.html` or a freshly recompiled representative scene with CEFR, assessment, image/text POI, and video surfaces | Plain video clicks toggle playback directly with no VR play/pause dialog; CEFR, assessment, and image/text POI panels use `window.VRODOSSpatialUI`; assessment and image/text POI panels open camera-relative near eye height; modal rays stop at the dialog surface with surface/actionable hit-dot feedback; normal scene `.raycastable` targets show endpoint-dot feedback when no modal is open; DOM/A-Frame fallbacks are suppressed in immersive XR when spatial UI is unavailable | Pending headset validation | Validate video direct playback, scene endpoint dots, CEFR level selection, assessment answer/finish/close flows, image/text POI panel open/close/readability, controller ray stop/restore, and unchanged locomotion after panel close |
-| Composer/effects/clouds/WebXR layers/AR/MR | Pending | Lab-only future URLs | Explicit lab flags only | Not yet validated on headset | Defer until every lower stage is accepted |
-
-## Current Test Pages
-
-Do not treat arbitrary files already present in `runtime/build/` as validation fixtures. Add rows here only for pages intentionally built for this VR parity pass.
-
-| Page | Role | Current Notes |
-| --- | --- | --- |
-| `Master_Client_8606.html` | Current built test page and accepted baseline/Takram-sky/headset locomotion fixture | Test through `http://localhost:5832/wp-content/plugins/VRodos/runtime/build/Master_Client_8606.html` on Quest via ADB reverse, or through the matching IP URL when needed. Public `VR Headset` builds now use `vrRuntimeProfile=headset`; hidden query profiles remain useful for regression isolation: `safe`, `takram-lights`, `takram-sky`, and `hdr-reflections`. |
-| `Master_Client_766.html` | Intentional HDR/env-map reflection fixture | Use Quest URL `http://localhost:5832/wp-content/plugins/VRodos/runtime/build/Master_Client_766.html`, not `wp.local`. Public `VR Headset` builds should enable only authored Takram sky/HDR env-map reflections; hidden `vrodos_vr_profile=hdr-reflections` remains the regression check. |
-| `Master_Client_6129.html` | Candidate immersive interaction fixture | Contains video/CEFR/assessment-style runtime surfaces in the current checkout. Recompile or replace with a freshly generated representative scene containing video, CEFR, assessment, and image/text POI surfaces before treating headset interaction results as accepted. |
-
-## Local Automated Smoke Results
-
-- 2026-06-15 local Chrome/CDP baseline smoke passed for `Master_Client_8606.html?vrodos_debug_runtime_features=1`: effective profile `baseline`, scene-owned profile active, post-processing owner `direct`, A-Frame environment horizon, reflections `none`, high/static shadows, no network failures, no exceptions.
-- 2026-06-15 local Chrome/CDP `safe` smoke passed for `Master_Client_8606.html?vrodos_vr_profile=safe&vrodos_debug_runtime_features=1`: effective profile `safe`, scene-owned profile active, post-processing owner `direct`, A-Frame environment horizon, reflections `none`, high/static shadows, no network failures, no exceptions.
-- These local smoke results are not headset acceptance. User accepted the `safe` headset result in Quest Browser after the URL was launched through ADB reverse.
-- 2026-06-15 implementation note: hidden `takram-lights` profile is wired into the runtime contract, runtime parsing, PHP normalization, generated bundles, and diagnostics. It keeps the A-Frame horizon visible and blocks composer/clouds/reflections/scene probes. On `Master_Client_8606.html`, expected behavior is fail-closed with `takram.lightsOnlyUnavailableReason=pmndrs-atmosphere-not-compiled` because the page was compiled as baseline without Takram chunks.
-- 2026-06-15 local Chrome/CDP `takram-lights` fail-closed smoke passed for `Master_Client_8606.html?vrodos_vr_profile=takram-lights&vrodos_debug_runtime_features=1`: effective profile `takram-lights`, `vrProfile.takramLightsOnly=true`, `takram.horizonOwner=aframe-environment`, `takram.lightsOnlyRequested=true`, `takram.lightsOnlyActive=false`, `takram.lightsOnlyUnavailableReason=pmndrs-atmosphere-not-compiled`, reflections `none`, no network failures, no exceptions.
-- 2026-06-16 headset note: on a Desktop/Takram-enabled rebuild of `Master_Client_8606.html`, Quest Browser diagnostics showed `takram.lightsOnlyActive=true`, `takram.lightOwner=takram-light-source`, `postProcessing.owner=vr-takram-lights-disabled`, reflections `none`, and renderer antialiasing forced to `true`. Visual result: jaggies fixed, but the horizon was black because a visible `vrodosPmndrsAtmosphereSky` mesh survived while A-Frame environment nodes were still tagged `vrodosPmndrsLegacySuppressed`.
-- 2026-06-16 implementation note: hidden `takram-lights` now removes orphan PMNDRS/Takram atmosphere sky/star/moon visuals, restores A-Frame environment visuals that were suppressed by PMNDRS cleanup, and blocks `updatePmndrsHorizonSun()` / async Takram light refresh from recreating the visible Takram sky. Desktop and normal `VR Headset` behavior should remain unchanged because the cleanup is gated to `vrodos_vr_profile=takram-lights`.
-- 2026-06-16 Quest Browser CDP accepted `takram-lights` on `Master_Client_8606.html?vrodos_vr_profile=takram-lights&vrodos_debug_runtime_features=1&vrodos_cache_bust=1781613988`: `presentation.mode=immersive-xr`, `rendererAntialias=true`, `glAntialias=true`, environment `skyType=atmosphere`, `takram.horizonOwner=aframe-environment`, `takram.lightOwner=takram-light-source`, `takram.lightsOnlyActive=true`, `takram.lightsOnlySourceCount=5`, `postProcessing.pmndrsActive=false`, `reflections.effectiveSource=none`, object stats `takramSkyVisible=0`, `legacySuppressed=0`, no stored runtime errors.
-- 2026-06-16 implementation note: hidden `takram-sky` is wired as the visible-sky validation profile. It permits the Takram horizon sky path, preserves native renderer antialiasing, and keeps PMNDRS composer/effects, clouds, reflections, scene probes, Takram sky PMREM capture, and WebXR layers disabled unless a later isolated stage explicitly changes those gates.
-- 2026-06-16 headset result: first `takram-sky` pass loaded in immersive Quest Browser with `takram.visibleSkyActive=true`, but the sky rendered nearly black and Quest UI became briefly less responsive during page initialization. The direct Takram `SkyMaterial` path was active without the PMNDRS composer tone step.
-- 2026-06-16 implementation note: hidden `takram-sky` now forces a cheaper Takram atmosphere resource profile (`vr-takram-sky:half:basic:combined`), keeps the Takram ground-albedo branch enabled for the horizon, and applies a direct-sky exposure/gamma calibration shader hook only for that hidden profile. Default direct-sky exposure is `24`, with test override `vrodos_vr_takram_sky_exposure=...`. New diagnostics: `takram.atmosphereProfile`, `takram.atmospherePrecision`, `takram.atmosphereHigherOrderScattering`, `takram.visibleSkyDirectCalibrated`, and `takram.visibleSkyDirectExposure`.
-- 2026-06-16 diagnostic note: this dark-sky failure was not primarily an AgX renderer setting issue. Takram `SkyMaterial` is a direct `RawShaderMaterial` with `toneMapped=false`, so the renderer's AgX tone mapping does not process the sky shader. The issue was the hidden direct-XR path bypassing the PMNDRS composer/final tonemapping step.
-- 2026-06-16 Quest Browser CDP retest loaded `Master_Client_8606.html?vrodos_vr_profile=takram-sky&vrodos_debug_runtime_features=1&vrodos_cache_bust=1781621457`: tab-mode diagnostics showed `takram.visibleSkyActive=true`, `takram.visibleSkyDirectCalibrated=true`, `takram.visibleSkyDirectExposure=24`, `takram.atmosphereProfile=vr-takram-sky:half:basic:combined`, `groundAlbedo=#1a1a1a`, `postProcessing.owner=vr-takram-sky-disabled`, `reflections.effectiveSource=none`, `glAntialias=true`, and no stored runtime errors. Immersive VR visual acceptance is still pending.
-- 2026-06-16 Quest 2 user acceptance: final `takram-sky` build is visually fine in headset after direct-sky calibration. Treat Takram visible sky without clouds as accepted. Next stage is HDR/env-map reflection validation only.
-- 2026-06-16 implementation note: hidden `hdr-reflections` profile is the HDR/env-map-only validation stage. It inherits the accepted Takram visible-sky path, preserves native antialiasing, defaults an authored `envMapPreset=none` to the small `studio` HDR (`spot1Lux.hdr`), and keeps PMNDRS composer/effects, clouds, scene probes, Takram sky PMREM capture, and WebXR layers disabled. Diagnostics should report `vrProfile.hdrReflections=true`, `reflections.effectiveSource=hdr`, `reflections.hdrEnvMapOnly=true`, and `reflections.effectiveEnvMapPreset=studio`.
-- 2026-06-16 Quest Browser CDP tab-mode check loaded `Master_Client_766.html?vrodos_vr_profile=hdr-reflections&vrodos_debug_runtime_features=1&vrodos_cache_bust=1781622646`: `vrProfile.profile=hdr-reflections`, `renderer.glAntialias=true`, `takram.visibleSkyActive=true`, `takram.visibleSkyDirectCalibrated=true`, `postProcessing.owner=vr-hdr-reflections-disabled`, `postProcessing.pmndrsComposerBuilt=false`, `reflections.effectiveSource=hdr`, `reflections.hdrReady=true`, `reflections.hdrEnvMapOnly=true`, `reflections.effectiveEnvMapPreset=studio`, `reflections.sceneProbeCapable=false`, `reflections.takramSkyEnvironmentCapable=false`, `sceneEnvironmentReady=true`, and no stored runtime errors. User visual and immersive VR acceptance are still pending.
-- 2026-06-16 headset issue: user observed intermittent black Takram sky on page refresh; some refreshes were blue as intended. Treat this as a startup/cache/shader compilation race until proven otherwise. The direct Takram sky calibration hook now uses a dedicated `customProgramCacheKey`, retries `material.needsUpdate` until the shader patch actually compiles, and diagnostics distinguish hook/calibration from compiled shader patch state through `takram.visibleSkyDirectShaderPatched` and `takram.visibleSkyDirectPatchFailed`. Recompile the generated scene before retesting so the HTML gets fresh runtime bundle `?ver=` URLs.
-- 2026-06-16 Quest Browser CDP retest after cache clear and shader-patch hardening loaded `Master_Client_766.html?vrodos_vr_profile=hdr-reflections&vrodos_debug_runtime_features=1&vrodos_cache_bust=1781625201`: `takram.visibleSkyActive=true`, `takram.visibleSkyDirectCalibrated=true`, `takram.visibleSkyDirectShaderPatched=true`, `takram.visibleSkyDirectPatchFailed=false`, `reflections.effectiveSource=hdr`, `reflections.hdrReady=true`, `reflections.hdrEnvMapOnly=true`, `reflections.effectiveEnvMapPreset=studio`, `postProcessing.owner=vr-hdr-reflections-disabled`, `postProcessing.pmndrsComposerBuilt=false`, `glAntialias=true`, and no stored runtime errors. User visual refresh stability and immersive VR acceptance are still pending.
-- 2026-06-16 video review: user recording showed the scene visible with a black in-scene sky until Takram initialization completed, then the blue sky appeared. Treat this as a reveal-order bug, not a final sky-color bug. The visible-sky path no longer uses an A-Frame horizon fallback for `takram-sky`/`hdr-reflections`; instead `vrodos-scene-loader` keeps the loading overlay visible and shows `Preparing sky...` until `prepareVrTakramVisibleSkyForReveal()` confirms the Takram sky shader is patched. This keeps the HDR/Takram stage visually pure and avoids rendering the black intermediate sky.
-- 2026-06-16 headset issue: in `Master_Client_766.html`, user saw controller rays/lines below the active view and reported the immersive view was offset in X/Z as well as height. Treat that older scene as scene-history-specific unless reproduced in a newer generated scene.
-- 2026-06-16 implementation note: the scene loader now asks `scene-settings.getRuntimeRevealReadinessState()` before reveal. In `takram-sky`/`hdr-reflections` it waits for Takram direct-sky shader patch plus a 10s Quest warm-up window before revealing, and in `hdr-reflections` it also waits for the HDR env-map load to complete without restarting the same HDR request during polling. The warm-up can be overridden for focused tests with `vrodos_vr_takram_sky_reveal_delay_ms=...`. Diagnostics now expose `reveal.ready`, `reveal.pending`, `takram.visibleSkyDirectWarmed`, `takram.visibleSkyDirectWarmupRemainingMs`, `reflections.hdrLoading`, `reflections.hdrFailed`, and `reflections.hdrError`.
-- 2026-06-16 live Quest diagnostic note: after the first reveal-gate implementation, the headset page still showed the black sky because `vrodos-scene-loader` had already removed the overlay while diagnostics reported `reveal.ready=false` and `reveal.pending=["takram-sky"]`. The loaded page did contain the new runtime code; the race was earlier, when the loader could reveal before `scene-settings` existed. The loader now waits on the declared `scene-settings` component before allowing any reveal, then applies the Takram/HDR readiness gate.
-- 2026-06-16 correction: do not apply the earlier global immersive navigation height experiment. The user confirmed other levels are fine, so the current fix stays scoped to the generated `vrexpo_games` camera rig and diagnostics.
-- 2026-06-16 Quest 2 user acceptance: `hdr-reflections` on `Master_Client_766.html` has correct Takram sky startup behavior and the reflective/glossy materials look correct for the HDR env-map-only stage. A mirror object still does not behave like a real mirror, but scene-probe/mirror reflections were not in scope and should remain deferred. The persistent camera/VR position disjoint in this old scene is treated as scene-data/history-specific because newer scenes do not reproduce it.
-- 2026-06-17 implementation note: public `Runtime Target = VR Headset` is being promoted from hidden `baseline` to the new internal `headset` policy. The policy reuses the accepted Takram visible-sky and HDR env-map stages when those features are authored, keeps native antialiasing, and continues to disable PMNDRS/legacy composers, clouds, scene probes, Takram sky PMREM capture, and WebXR layers.
-- 2026-06-17 rejected experiment: direct `XRReferenceSpace` offsets can move the visible HMD, but using them for locomotion split the XR viewer/controller space from the A-Frame rig/collision body. Do not revive the full XYZ, horizontal-only, or VR-entry reference-space alignment attempts for this issue.
-- 2026-06-17 correction: the generated `vrexpo_games` camera-rig split (`#player` authored ground anchor plus `cameraA 0 1.6 0`) is rejected for the current A-Frame/WebXR path because the Immersive Web Emulator showed the controller rig moving while the rendered XR camera stayed fixed. Remove the split helper/runtime normalizer and keep the late-May generated shape (`#player` unpositioned, authored position on `cameraA`) unless a future A-Frame-native locomotion rewrite replaces it end to end.
-- 2026-06-17 rejected experiment: do not apply `renderer.xr.setPoseTarget(cameraA.object3D)` for this issue. In Quest Browser it still allowed the HMD camera path and controller/rig transforms to diverge after locomotion and session re-entry.
-- 2026-06-18 accepted live Quest direction, updated 2026-06-23: immersive locomotion must not move/rotate `#player`. WebXR/A-Frame owns the physical HMD/controller poses; `custom-movement` owns a virtual navigation position and translates/rotates the generated `#vrodos-authored-world` container in the opposite direction. `#player` is reset to identity on XR entry/re-entry, authored `cam_position` remains on `#cameraA`, controller rays remain the A-Frame raycaster visuals because those exact rays own selection, desktop DOM dialogs are suppressed in immersive VR, and POI/overlay/controller shadow casting is disabled while preserving raycastability. Do not revive reference-space offsets, `setPoseTarget(cameraA.object3D)`, a `#player` authored-position rig split, display-only WebXR target-ray lines, or per-root fallback transforms for this symptom.
-- 2026-06-18 Quest 2 user acceptance: the HMD camera freeze is fixed and public `VR Headset` locomotion works correctly. Treat the VR codebase as stable at this point and move the parity effort to immersive interaction surfaces: plain video direct playback first, then CEFR and assessment spatial UI.
-- 2026-06-19 implementation note: `vrodos-scene-ray-feedback` adds endpoint-dot feedback for normal immersive scene `.raycastable` targets without changing the A-Frame click path. Spatial UI panels now own modal ray-stop behavior: assessment and image/text POI panels open in front of the headset with `centerAtEyeLevel`, lock locomotion while open, suppress scene raycast targets behind the modal, clamp controller raycaster `far` to the dialog surface, show a small dialog-surface dot and larger/action-colored dot over selectable controls, and restore controller ray state on close.
-
-## Verification Checklist
-
-- Rebuild runtime bundles after runtime JS changes: `node scripts\build-runtime-master-bundles.mjs`.
-- Recompile generated scenes before headset testing.
-- Run `node --check` for edited JS.
-- Run PHP syntax checks for edited PHP.
-- Run `git diff --check`.
-- Validate in Quest Browser tab mode and immersive VR.
+The runtime publishes `window.__vrodosImmersiveSmoothnessDiagnostics` while the flag is active. Use frame time, shadow dirty count, transformed root count, collision target count, blocker ray count, and shadow map sizes before changing locomotion or render policy.

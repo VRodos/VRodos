@@ -2309,7 +2309,7 @@
       var settings = sceneEl && sceneEl.components ? sceneEl.components["scene-settings"] : null;
       var settingsData = settings && settings.data ? settings.data : sceneEl && sceneEl.getAttribute ? sceneEl.getAttribute("scene-settings") : null;
       var profile = settingsData ? String(settingsData.vrRuntimeProfile || "desktop") : "desktop";
-      return profile !== "desktop" && profile !== "max";
+      return profile !== "desktop" && profile !== "pc-rendered-vr";
     },
     getWorldVideoMaterial: function(src) {
       var material = this.useFlatMediaMaterial ? "shader: flat; side: double; transparent: true; alphaTest: 0.5; depthTest: true; depthWrite: true" : "side: double; transparent: true; alphaTest: 0.5; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";

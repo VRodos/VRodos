@@ -44,10 +44,6 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     'aframeVrRuntimeProfile': { type: 'string', default: vrodosEditorSceneSettingDefault('vrRuntimeProfile', 'desktop'), envirKey: 'aframeVrRuntimeProfile' },
     'aframeVrFramebufferScale': { type: 'number', default: vrodosEditorSceneSettingDefault('vrFramebufferScale', 0), envirKey: 'aframeVrFramebufferScale' },
     'aframeVrFoveationStrength': { type: 'number', default: vrodosEditorSceneSettingDefault('vrFoveationStrength', -1), envirKey: 'aframeVrFoveationStrength' },
-    'aframeVrPmndrsComposerEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('vrPmndrsComposerEnabled', false), envirKey: 'aframeVrPmndrsComposerEnabled' },
-    'aframeVrSceneProbeEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('vrSceneProbeEnabled', false), envirKey: 'aframeVrSceneProbeEnabled' },
-    'aframeVrTakramSkyEnvironmentEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('vrTakramSkyEnvironmentEnabled', false), envirKey: 'aframeVrTakramSkyEnvironmentEnabled' },
-    'aframeVrCloudsEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('vrCloudsEnabled', false), envirKey: 'aframeVrCloudsEnabled' },
     'aframeHoveringInteractables': { type: 'boolean', default: true, envirKey: 'aframeHoveringInteractables' },
     'aframeLegacyHorizonStageSize': { type: 'number', default: 5000, envirKey: 'aframeLegacyHorizonStageSize' },
 

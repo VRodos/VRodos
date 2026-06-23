@@ -119,10 +119,13 @@ Rendering docs:
 
 - `RENDERING_PIPELINE.md`: current technical render-stack reference
 - `documentation/vrodos-compiled-scene-framework-integration.md`: compiled-scene framework boundaries, runtime ownership, lazy chunks, and immersive PMNDRS/Horizon VR dialog ownership
-- `PERFORMANCE_OPTIMIZATION_PLAN.md`: profiler, Spector, asset-audit, and derivative-optimization findings
-- `TAKRAM_REALISTIC_LIGHTING_PLAN.md`: phased Takram realism and Three-version roadmap
-- `RENDERING_MIGRATION_IMPLEMENTATION_LOG.md`: consolidated migration history
-- `POSTFX_DEBUG_NOTES.md`: historical color/Horizon debug findings
+- `VR_HEADSET_RUNTIME_HANDOFF.md`: current standalone headset runtime policy and validation checklist
+- `PC_RENDERED_VR_PLAN.md`: parked PC-rendered VR parent profile plan
+- `VR_IMMERSIVE_PERFORMANCE_CLEANUP_PLAN.md`: active headset cleanup checklist and findings
+- `documentation/archive/rendering-history/PERFORMANCE_OPTIMIZATION_PLAN.md`: profiler, Spector, asset-audit, and derivative-optimization findings
+- `documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md`: phased Takram realism and Three-version roadmap
+- `documentation/archive/rendering-history/RENDERING_MIGRATION_IMPLEMENTATION_LOG.md`: consolidated migration history
+- `documentation/archive/rendering-history/POSTFX_DEBUG_NOTES.md`: historical color/Horizon debug findings
 
 Do not load a newer Three.js beside the current classic A-Frame runtime. Future Three upgrades belong in a separate A-Frame module/import-map runtime spike where A-Frame, VRodos, loaders, PMNDRS, Takram, and addons resolve to one shared `THREE`.
 
