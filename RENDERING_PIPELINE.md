@@ -248,11 +248,13 @@ Runtime behavior:
 - `custom-movement` rebuilds static collision targets when relevant models load, attach, detach, or become dirty.
 - `three-mesh-bvh` is bundled into `vrodos-collision-bvh.bundle.js` and exposed as `window.VRODOS_COLLISION_BVH`.
 - The runtime patches Three mesh raycasts with BVH acceleration when available; if BVH construction fails for a mesh, collision continues with standard Three.js raycasts.
+- Desktop and immersive XR use the same navmesh/collider target sets and ground/blocker resolver. Desktop applies navigation by moving the camera rig; immersive XR stores a virtual authored navigation position and transforms the generated `#vrodos-authored-world` container, converting collision query rays and hit points between authored and rendered spaces.
 - Ground movement still uses the existing downward navmesh sampling, slope filtering, max-step, max-drop, and recovery logic.
 - Walkable surfaces with `data-vrodos-walk-behavior="auto"` add rough-terrain support probes around the player footprint only after the direct ground sample fails or detects a small pit. These probes can bridge photogrammetry holes and prefer nearby stable upper support over scan pits, but only when surrounding hits are valid walkable ground.
 - Horizontal movement performs multi-height capsule sweep raycasts against blocker meshes before committing a candidate position.
 - When a blocker is hit, movement tries axis sliding and rejects the movement if sliding would leave valid walkable ground or hit another blocker.
 - For validated `auto` terrain steps/recovery, low riser-height steep hits from the walkable mesh itself can be treated as scan detail so stair risers and pit lips do not snag the capsule. Body/head-height walkable-mesh wall hits and explicit solid/collision-proxy blockers still block.
+- Immersive right-stick yaw smooths input by default, using real A-Frame frame delta. Yaw-only authored-world rotation must not clear authored-space ground caches; doing so makes move+yaw pay unnecessary ground sampling and can feel like collision friction.
 - Manual auto-terrain recovery is available from Space or the mapped controller recovery buttons. It first tries recent stable auto ground, then nearby supported auto ground, and rejects candidates that exceed recovery lift/drop limits, lack footprint support, or hit solid/proxy blocker geometry. The wider nearby search is event-only and stops at the first radius with a valid candidate.
 - Fly mode remains non-colliding in v1.
 

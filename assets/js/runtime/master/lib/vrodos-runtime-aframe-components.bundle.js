@@ -6269,7 +6269,6 @@
           this.resetImmersiveWorldLocomotion();
         }
         this.immersiveRenderYaw += yawDelta;
-        this.clearImmersiveGroundCaches();
         this.applyImmersiveRenderTransform();
         this.lastResolvedPosition.copy(this.immersiveVirtualNavPosition);
         return true;

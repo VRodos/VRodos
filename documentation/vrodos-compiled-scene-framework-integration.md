@@ -373,6 +373,8 @@ Movement remains CPU-side geometry work:
 - multi-height capsule sweep raycasts block horizontal movement;
 - axis sliding is attempted when movement hits a blocker.
 
+Desktop and immersive XR share the same navmesh/collider targets and collision resolver. Desktop moves the camera rig; immersive XR keeps WebXR/A-Frame as the HMD/controller owner, stores a virtual authored navigation position, and transforms `#vrodos-authored-world`. Collision query rays and hit points convert between authored and rendered spaces in immersive XR, so yaw-only authored-world rotation must not clear authored-space ground caches.
+
 ## 10. XR Compatibility Strategy
 
 Desktop and desktop fullscreen can use the eligible post-FX path. Immersive WebXR is different because stereo rendering and screen-space composer passes are not always safe.

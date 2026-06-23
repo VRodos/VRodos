@@ -3166,7 +3166,6 @@ AFRAME.registerComponent('custom-movement', {
             }
 
             this.immersiveRenderYaw += yawDelta;
-            this.clearImmersiveGroundCaches();
             this.applyImmersiveRenderTransform();
             this.lastResolvedPosition.copy(this.immersiveVirtualNavPosition);
             return true;
