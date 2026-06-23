@@ -106,6 +106,9 @@ AFRAME.registerComponent('custom-movement', {
         this.colliderEntitySelector = '.vrodos-collider';
         this.leftThumbInput = { x: 0, y: 0 };
         this.rightThumbInput = { x: 0, y: 0 };
+        this.leftThumbRawInput = { x: 0, y: 0 };
+        this.rightThumbRawInput = { x: 0, y: 0 };
+        this.lastEffectiveMoveInput = { x: 0, y: 0, vertical: 0 };
         this.keyboardInput = { x: 0, y: 0, vertical: 0 };
         this.navMeshRoots = [];
         this.navMeshCollisionTargets = [];
@@ -232,6 +235,8 @@ AFRAME.registerComponent('custom-movement', {
         this.immersiveWorldDelta = new THREE.Vector3();
         this.immersivePhysicalAnchorPosition = new THREE.Vector3();
         this.immersivePhysicalForwardDirection = new THREE.Vector3(0, 0, -1);
+        this.immersiveSessionAnchorPosition = new THREE.Vector3();
+        this.immersiveLiveAnchorDelta = new THREE.Vector3();
         this.immersiveVirtualNavPosition = new THREE.Vector3();
         this.immersiveRenderOffset = new THREE.Vector3();
         this.immersiveRenderedPoint = new THREE.Vector3();
@@ -245,6 +250,19 @@ AFRAME.registerComponent('custom-movement', {
         this.immersiveRenderYaw = 0;
         this.immersiveInitialRenderYaw = 0;
         this.immersiveInitialYawSource = 'default';
+        this.hasImmersiveSessionAnchor = false;
+        this.immersiveSessionAnchorCapturedAt = 0;
+        this.immersiveSessionAnchorSource = 'none';
+        this.lastImmersiveHorizontalForward = new THREE.Vector3(0, 0, -1);
+        this.hasLastImmersiveHorizontalForward = false;
+        this.immersiveHeadingSource = 'none';
+        this.immersiveHeadingProjectionLength = 0;
+        this.immersiveHeadingFallbackCount = 0;
+        this.immersiveHeadingMinHorizontalLengthSq = 0.0025;
+        this.immersiveMovementBasisSource = 'none';
+        this.immersiveNavigationStrategy = 'none';
+        this.immersiveAuthoredWorldContainerPresent = false;
+        this.immersiveAuthoredWorldContainerId = '';
         this.immersiveWorldBaseTransforms = new Map();
         this.immersiveWorldRoots = [];
         this.immersiveWorldRootsDirty = true;
@@ -268,6 +286,9 @@ AFRAME.registerComponent('custom-movement', {
         this.lastImmersiveExitHandoffDiagnostics = null;
         this.immersiveWorldRootDiagnostics = {
             count: 0,
+            navigationStrategy: 'none',
+            authoredWorldContainerPresent: false,
+            authoredWorldContainerId: '',
             samples: [],
             videoDisplayRootCount: 0,
             assessmentRootCount: 0,
@@ -438,7 +459,9 @@ AFRAME.registerComponent('custom-movement', {
         this.immersivePresentationRootsDirty = true;
         this.immersiveWorldRoots = [];
         this.immersivePresentationRoots = [];
-        this.clearImmersiveWorldBaseTransforms();
+        if (!(this.isImmersiveXrPresenting() && this.hasImmersiveAuthoredWorldContainer())) {
+            this.clearImmersiveWorldBaseTransforms();
+        }
     },
     handleSceneLoaded: function () {
         this.markNavMeshDirty();
@@ -565,6 +588,7 @@ AFRAME.registerComponent('custom-movement', {
         this.positionPrimed = false;
         this.clearImmersiveFirstMovementGroundLock();
         this.clearImmersiveEntryPoseSettle();
+        this.clearImmersiveSessionAnchor();
         if (!this.isImmersiveXrPresenting()) {
             this.finalizeImmersiveExitNavigationHandoff('handle-exit-vr');
         } else {
@@ -581,20 +605,30 @@ AFRAME.registerComponent('custom-movement', {
         const targetInput = (source === this.thumbR || sourceId === 'oculusRight')
             ? this.rightThumbInput
             : this.leftThumbInput;
-        targetInput.x = event.detail.x || 0;
+        const targetRawInput = targetInput === this.rightThumbInput
+            ? this.rightThumbRawInput
+            : this.leftThumbRawInput;
+        const rawX = event.detail.x || 0;
         const rawY = event.detail.y || 0;
-        // Meta/A-Frame reports the movement stick Y axis opposite to VRodos movement math; this normalization is intentional.
-        targetInput.y = targetInput === this.leftThumbInput ? -rawY : rawY;
+        targetRawInput.x = rawX;
+        targetRawInput.y = rawY;
+        targetInput.x = rawX;
+        targetInput.y = rawY;
     },
     handleThumbstickEnd: function (event) {
         const source = event ? (event.currentTarget || event.target) : null;
-        if (!source || source === this.thumbL) {
+        const sourceId = source && source.id ? source.id : '';
+        if (!source || source === this.thumbL || sourceId === 'oculusLeft') {
             this.leftThumbInput.x = 0;
             this.leftThumbInput.y = 0;
+            this.leftThumbRawInput.x = 0;
+            this.leftThumbRawInput.y = 0;
         }
-        if (!source || source === this.thumbR) {
+        if (!source || source === this.thumbR || sourceId === 'oculusRight') {
             this.rightThumbInput.x = 0;
             this.rightThumbInput.y = 0;
+            this.rightThumbRawInput.x = 0;
+            this.rightThumbRawInput.y = 0;
         }
         if (this.isImmersiveXrPresenting()) {
             this.requestShadowMapRefresh('immersive-input-settle', { deferMs: 140 });
@@ -806,6 +840,42 @@ AFRAME.registerComponent('custom-movement', {
         anchorObject.updateMatrixWorld(true);
         return anchorObject.getWorldPosition(output);
     },
+    clearImmersiveSessionAnchor: function () {
+        this.hasImmersiveSessionAnchor = false;
+        this.immersiveSessionAnchorCapturedAt = 0;
+        this.immersiveSessionAnchorSource = 'none';
+        this.immersiveLiveAnchorDelta.set(0, 0, 0);
+    },
+    captureImmersiveSessionAnchor: function (reason) {
+        this.getImmersivePhysicalAnchorPosition(this.immersiveSessionAnchorPosition);
+        this.immersivePhysicalAnchorPosition.copy(this.immersiveSessionAnchorPosition);
+        this.hasImmersiveSessionAnchor = true;
+        this.immersiveSessionAnchorCapturedAt = this.getRuntimeNow();
+        this.immersiveSessionAnchorSource = reason || 'immersive-entry';
+        this.immersiveLiveAnchorDelta.set(0, 0, 0);
+        return true;
+    },
+    ensureImmersiveSessionAnchor: function (reason) {
+        if (this.hasImmersiveSessionAnchor) {
+            return true;
+        }
+
+        return this.captureImmersiveSessionAnchor(reason || 'lazy-immersive-anchor');
+    },
+    getImmersiveRenderAnchorPosition: function () {
+        this.ensureImmersiveSessionAnchor('render-transform');
+        return this.immersiveSessionAnchorPosition;
+    },
+    updateImmersiveLiveAnchorDiagnostics: function () {
+        this.getImmersivePhysicalAnchorPosition(this.immersivePhysicalAnchorPosition);
+        if (this.hasImmersiveSessionAnchor) {
+            this.immersiveLiveAnchorDelta.subVectors(this.immersivePhysicalAnchorPosition, this.immersiveSessionAnchorPosition);
+        } else {
+            this.immersiveLiveAnchorDelta.set(0, 0, 0);
+        }
+
+        return this.immersivePhysicalAnchorPosition;
+    },
     getCameraDirectionObject: function () {
         const cameraObject = this.getFlyCameraObject ? this.getFlyCameraObject() : null;
         if (cameraObject && typeof cameraObject.getWorldDirection === 'function') {
@@ -813,6 +883,44 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         return this.getNavigationAnchorObject();
+    },
+    resolveImmersiveHorizontalForward: function (output, source) {
+        const horizontalLengthSq = output.lengthSq();
+        this.immersiveHeadingProjectionLength = Math.sqrt(horizontalLengthSq);
+
+        if (horizontalLengthSq >= this.immersiveHeadingMinHorizontalLengthSq) {
+            output.normalize();
+            this.lastImmersiveHorizontalForward.copy(output);
+            this.hasLastImmersiveHorizontalForward = true;
+            this.immersiveHeadingSource = source || 'live';
+            return output;
+        }
+
+        this.immersiveHeadingFallbackCount += 1;
+        if (this.hasLastImmersiveHorizontalForward) {
+            this.immersiveHeadingSource = `${source || 'live'}-cached`;
+            return output.copy(this.lastImmersiveHorizontalForward);
+        }
+
+        this.immersiveHeadingSource = `${source || 'live'}-default`;
+        this.hasLastImmersiveHorizontalForward = true;
+        this.lastImmersiveHorizontalForward.set(0, 0, -1);
+        return output.copy(this.lastImmersiveHorizontalForward);
+    },
+    primeImmersiveHeadingCache: function () {
+        if (this.hasLastNonImmersiveViewForward) {
+            this.lastImmersiveHorizontalForward.copy(this.lastNonImmersiveViewForward);
+            this.hasLastImmersiveHorizontalForward = true;
+            this.immersiveHeadingSource = 'desktop-view';
+            this.immersiveHeadingProjectionLength = 1;
+            return true;
+        }
+
+        this.lastImmersiveHorizontalForward.set(0, 0, -1);
+        this.hasLastImmersiveHorizontalForward = true;
+        this.immersiveHeadingSource = 'default-forward';
+        this.immersiveHeadingProjectionLength = 1;
+        return false;
     },
     getImmersivePhysicalForwardDirection: function (target) {
         const output = target || this.immersivePhysicalForwardDirection;
@@ -829,7 +937,7 @@ AFRAME.registerComponent('custom-movement', {
                     xrCamera.getWorldDirection(output);
                     output.y = 0;
                     if (output.lengthSq() > 0.000001) {
-                        return output.normalize();
+                        return this.resolveImmersiveHorizontalForward(output, 'xr-camera');
                     }
                 }
             }
@@ -848,10 +956,10 @@ AFRAME.registerComponent('custom-movement', {
         directionObject.getWorldDirection(output);
         output.y = 0;
         if (output.lengthSq() < 0.000001) {
-            return output.set(0, 0, -1);
+            return this.resolveImmersiveHorizontalForward(output, 'camera-object');
         }
 
-        return output.normalize();
+        return this.resolveImmersiveHorizontalForward(output, 'camera-object');
     },
     rememberNonImmersiveViewForward: function () {
         if (this.isImmersiveXrPresenting()) {
@@ -1113,7 +1221,7 @@ AFRAME.registerComponent('custom-movement', {
         this.immersiveWorldBaseTransforms.clear();
     },
     captureImmersiveWorldBaseTransforms: function (roots) {
-        roots = roots || this.getImmersiveWorldRoots();
+        roots = roots || this.getImmersiveTransformTargets();
         for (let i = 0; i < roots.length; i++) {
             const el = roots[i];
             const object = el && el.object3D ? el.object3D : null;
@@ -1152,9 +1260,11 @@ AFRAME.registerComponent('custom-movement', {
         this.clearImmersiveWorldBaseTransforms();
     },
     updateImmersiveRenderTransformState: function () {
+        const renderAnchorPosition = this.getImmersiveRenderAnchorPosition();
         this.immersiveRenderQuaternion.setFromAxisAngle(this.upVector, this.immersiveRenderYaw);
         this.immersiveRenderOffset.copy(this.immersiveVirtualNavPosition).applyQuaternion(this.immersiveRenderQuaternion);
-        this.immersiveRenderOffset.subVectors(this.immersivePhysicalAnchorPosition, this.immersiveRenderOffset);
+        this.immersiveRenderOffset.subVectors(renderAnchorPosition, this.immersiveRenderOffset);
+        this.updateImmersiveLiveAnchorDiagnostics();
     },
     authoredToRenderedPosition: function (source, target) {
         target = target || this.immersiveRenderedPoint;
@@ -1195,13 +1305,12 @@ AFRAME.registerComponent('custom-movement', {
             return false;
         }
 
-        this.getImmersivePhysicalAnchorPosition(this.immersivePhysicalAnchorPosition);
-        const presentationRoots = this.getImmersivePresentationRoots();
-        this.captureImmersiveWorldBaseTransforms(presentationRoots);
+        const transformTargets = this.getImmersiveTransformTargets();
+        this.captureImmersiveWorldBaseTransforms(transformTargets);
         this.updateImmersiveRenderTransformState();
 
-        for (let i = 0; i < presentationRoots.length; i++) {
-            const el = presentationRoots[i];
+        for (let i = 0; i < transformTargets.length; i++) {
+            const el = transformTargets[i];
             const object = el && el.object3D ? el.object3D : null;
             const base = this.immersiveWorldBaseTransforms.get(el);
             if (!object || !base) {
@@ -1216,20 +1325,22 @@ AFRAME.registerComponent('custom-movement', {
 
         this.immersiveLastRenderAppliedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
         this.immersiveRootTransformCount += 1;
-        this.immersiveRootTransformObjectCount += presentationRoots.length;
-        this.immersiveLastTransformRootCount = presentationRoots.length;
+        this.immersiveRootTransformObjectCount += transformTargets.length;
+        this.immersiveLastTransformRootCount = transformTargets.length;
 
         const settings = this.sceneEl && this.sceneEl.components ? this.sceneEl.components['scene-settings'] : null;
         if (settings && typeof settings.syncPresentedShadowLightTransforms === 'function') {
             settings.syncPresentedShadowLightTransforms();
         }
 
-        return presentationRoots.length > 0;
+        return transformTargets.length > 0;
     },
     initializeImmersiveCollisionState: function () {
         this.clearImmersiveWorldBaseTransforms();
-        this.getImmersivePhysicalAnchorPosition(this.immersivePhysicalAnchorPosition);
+        this.clearImmersiveSessionAnchor();
+        this.captureImmersiveSessionAnchor('immersive-entry');
         this.getImmersiveAuthoredStartPosition(this.immersiveVirtualNavPosition);
+        this.primeImmersiveHeadingCache();
         this.immersiveRenderYaw = this.getInitialImmersiveRenderYaw();
         this.heightOffset = null;
         this.immersiveLastStepDeltaY = 0;
@@ -1265,6 +1376,16 @@ AFRAME.registerComponent('custom-movement', {
                     y: Number(this.immersivePhysicalAnchorPosition.y.toFixed(3)),
                     z: Number(this.immersivePhysicalAnchorPosition.z.toFixed(3))
                 },
+                sessionAnchorPosition: {
+                    x: Number(this.immersiveSessionAnchorPosition.x.toFixed(3)),
+                    y: Number(this.immersiveSessionAnchorPosition.y.toFixed(3)),
+                    z: Number(this.immersiveSessionAnchorPosition.z.toFixed(3))
+                },
+                liveAnchorDelta: {
+                    x: Number(this.immersiveLiveAnchorDelta.x.toFixed(3)),
+                    y: Number(this.immersiveLiveAnchorDelta.y.toFixed(3)),
+                    z: Number(this.immersiveLiveAnchorDelta.z.toFixed(3))
+                },
                 renderOffset: {
                     x: Number(this.immersiveRenderOffset.x.toFixed(3)),
                     y: Number(this.immersiveRenderOffset.y.toFixed(3)),
@@ -1272,6 +1393,11 @@ AFRAME.registerComponent('custom-movement', {
                 },
                 renderYawDeg: Number(THREE.MathUtils.radToDeg(this.immersiveRenderYaw).toFixed(2)),
                 initialYawSource: this.immersiveInitialYawSource,
+                navigationStrategy: this.immersiveNavigationStrategy || 'none',
+                authoredWorldContainerPresent: Boolean(this.immersiveAuthoredWorldContainerPresent),
+                authoredWorldContainerId: this.immersiveAuthoredWorldContainerId || '',
+                headingSource: this.immersiveHeadingSource,
+                movementBasisSource: this.immersiveMovementBasisSource || 'none',
                 heightOffset: typeof this.heightOffset === 'number' ? Number(this.heightOffset.toFixed(3)) : null,
                 rawHeightOffset: typeof this.immersiveRawHeightOffset === 'number' ? Number(this.immersiveRawHeightOffset.toFixed(3)) : null,
                 heightCalibrationApplied: Boolean(this.immersiveHeightCalibrationApplied),
@@ -1280,7 +1406,8 @@ AFRAME.registerComponent('custom-movement', {
                 desktopVisionGroundY: typeof this.desktopVisionGroundY === 'number' ? Number(this.desktopVisionGroundY.toFixed(3)) : null,
                 desktopVisionNavigationY: typeof this.desktopVisionNavigationY === 'number' ? Number(this.desktopVisionNavigationY.toFixed(3)) : null,
                 entryPoseSettleFrames: this.immersiveEntryPoseSettleFrames,
-                rootCount: this.immersiveWorldRootDiagnostics && this.immersiveWorldRootDiagnostics.count || 0
+                rootCount: this.immersiveWorldRootDiagnostics && this.immersiveWorldRootDiagnostics.count || 0,
+                lastTransformRootCount: this.immersiveLastTransformRootCount
             });
         }
     },
@@ -1297,52 +1424,43 @@ AFRAME.registerComponent('custom-movement', {
     hasElementAttribute: function (el, attributeName) {
         return Boolean(el && typeof el.hasAttribute === 'function' && el.hasAttribute(attributeName));
     },
-    hasImmersiveWorldDescendantMarker: function (el) {
-        if (!el || typeof el.querySelector !== 'function') {
-            return false;
+    getImmersiveAuthoredWorldContainer: function () {
+        if (!this.sceneEl || typeof this.sceneEl.querySelector !== 'function') {
+            this.immersiveAuthoredWorldContainerPresent = false;
+            this.immersiveAuthoredWorldContainerId = '';
+            return null;
         }
 
-        return Boolean(el.querySelector([
-            '[video-controls]',
-            '[data-vrodos-video-src]',
-            '[immerse-cefr-asset]',
-            '[data-immerse-cefr-levels]',
-            '[immerse-assessment-launcher]',
-            '[data-assessment-content]',
-            '[id^="button_poi_"]',
-            '[data-vrodos-collision-category="poi-imagetext"]'
-        ].join(',')));
+        const container = this.sceneEl.querySelector('#vrodos-authored-world, [data-vrodos-authored-world="true"]');
+        if (!container || !container.object3D) {
+            this.immersiveAuthoredWorldContainerPresent = false;
+            this.immersiveAuthoredWorldContainerId = '';
+            return null;
+        }
+
+        this.immersiveAuthoredWorldContainerPresent = true;
+        this.immersiveAuthoredWorldContainerId = container.id || '';
+        return container;
     },
-    hasImmersiveWorldRootMarker: function (el) {
-        if (!el || typeof el.hasAttribute !== 'function') {
+    hasImmersiveAuthoredWorldContainer: function () {
+        return Boolean(this.getImmersiveAuthoredWorldContainer());
+    },
+    isObjectInsideImmersiveAuthoredWorld: function (object) {
+        const container = this.getImmersiveAuthoredWorldContainer();
+        const containerObject = container && container.object3D ? container.object3D : null;
+        if (!object || !containerObject) {
             return false;
         }
 
-        const id = el.id || '';
-        return (
-            id.indexOf('vrodos-reveal-') === 0 ||
-            id.indexOf('video-display_') === 0 ||
-            id.indexOf('image-display_') === 0 ||
-            id.indexOf('button_poi_') === 0 ||
-            this.hasElementAttribute(el, 'data-vrodos-load-phase') ||
-            this.hasElementAttribute(el, 'data-vrodos-delayed-reveal') ||
-            this.hasElementAttribute(el, 'data-vrodos-collider') ||
-            this.hasElementAttribute(el, 'data-vrodos-navmesh') ||
-            this.hasElementAttribute(el, 'data-vrodos-world-lighting') ||
-            this.hasElementAttribute(el, 'data-vrodos-overlay-ui') ||
-            this.hasElementAttribute(el, 'data-vrodos-lazy-gltf-src') ||
-            this.hasElementAttribute(el, 'gltf-model') ||
-            this.hasElementAttribute(el, 'video-controls') ||
-            this.hasElementAttribute(el, 'data-vrodos-video-src') ||
-            this.hasElementAttribute(el, 'immerse-cefr-asset') ||
-            this.hasElementAttribute(el, 'data-immerse-cefr-levels') ||
-            this.hasElementAttribute(el, 'immerse-assessment-launcher') ||
-            this.hasElementAttribute(el, 'data-assessment-content') ||
-            this.elementHasClass(el, 'vrodos-collider') ||
-            this.elementHasClass(el, 'vrodos-navmesh') ||
-            this.elementHasClass(el, 'raycastable') ||
-            this.hasImmersiveWorldDescendantMarker(el)
-        );
+        let current = object;
+        while (current) {
+            if (current === containerObject) {
+                return true;
+            }
+            current = current.parent || null;
+        }
+
+        return false;
     },
     isImmersiveSystemRoot: function (el) {
         if (!el || !el.object3D) {
@@ -1376,6 +1494,7 @@ AFRAME.registerComponent('custom-movement', {
             id: el && el.id ? el.id : '',
             tag: el && el.tagName ? el.tagName.toLowerCase() : '',
             classes: this.getElementClassSummary(el),
+            authoredWorld: Boolean(el && this.hasElementAttribute(el, 'data-vrodos-authored-world')),
             video: Boolean(el && (
                 this.hasElementAttribute(el, 'video-controls') ||
                 this.hasElementAttribute(el, 'data-vrodos-video-src') ||
@@ -1486,6 +1605,9 @@ AFRAME.registerComponent('custom-movement', {
 
         this.immersiveWorldRootDiagnostics = {
             count: roots.length,
+            navigationStrategy: this.immersiveNavigationStrategy || 'none',
+            authoredWorldContainerPresent: Boolean(this.immersiveAuthoredWorldContainerPresent),
+            authoredWorldContainerId: this.immersiveAuthoredWorldContainerId || '',
             samples,
             videoDisplayRootCount,
             assessmentRootCount,
@@ -1501,6 +1623,8 @@ AFRAME.registerComponent('custom-movement', {
         };
 
         const signature = [
+            this.immersiveNavigationStrategy || 'none',
+            this.immersiveAuthoredWorldContainerId || '',
             roots.length,
             videoDisplayRootCount,
             assessmentRootCount,
@@ -1514,19 +1638,42 @@ AFRAME.registerComponent('custom-movement', {
             this.immersiveWorldRootDiagnosticsSignature = signature;
             const overlayApi = window.VRODOSRuntimeOverlay || null;
             if (overlayApi && typeof overlayApi.recordDiagnostic === 'function') {
-                overlayApi.recordDiagnostic('debug', 'navigation: selected immersive world roots', this.immersiveWorldRootDiagnostics);
+                overlayApi.recordDiagnostic('debug', 'navigation: selected immersive transform target', this.immersiveWorldRootDiagnostics);
             } else if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.navigation && typeof console !== 'undefined' && typeof console.debug === 'function') {
-                console.debug('[VRodos navigation] selected immersive world roots', this.immersiveWorldRootDiagnostics);
+                console.debug('[VRodos navigation] selected immersive transform target', this.immersiveWorldRootDiagnostics);
             }
         }
     },
     getImmersiveWorldRootDiagnostics: function () {
-        if (!this.immersiveWorldRootDiagnostics || this.immersiveWorldRootsDirty) {
-            this.getImmersiveWorldRoots();
+        const authoredWorldContainer = this.getImmersiveAuthoredWorldContainer();
+        if (authoredWorldContainer) {
+            if (this.immersiveNavigationStrategy === 'none') {
+                this.immersiveNavigationStrategy = 'authored-world-container';
+            }
+            if (
+                !this.immersiveWorldRootDiagnostics ||
+                this.immersiveWorldRootsDirty ||
+                this.immersiveWorldRootDiagnostics.count !== 1 ||
+                this.immersiveWorldRootDiagnostics.authoredWorldContainerId !== (authoredWorldContainer.id || '')
+            ) {
+                this.updateImmersiveWorldRootDiagnostics([authoredWorldContainer]);
+            }
+        } else if (!this.immersiveWorldRootDiagnostics || this.immersiveWorldRootsDirty) {
+            if (this.immersiveNavigationStrategy === 'none') {
+                this.immersiveNavigationStrategy = 'authored-world-container-missing';
+            }
+            this.updateImmersiveWorldRootDiagnostics([]);
+            this.immersiveWorldRoots = [];
+            this.immersiveWorldRootsDirty = false;
+            this.immersivePresentationRoots = [];
+            this.immersivePresentationRootsDirty = false;
         }
 
         return this.immersiveWorldRootDiagnostics || {
             count: 0,
+            navigationStrategy: this.immersiveNavigationStrategy || 'none',
+            authoredWorldContainerPresent: Boolean(this.immersiveAuthoredWorldContainerPresent),
+            authoredWorldContainerId: this.immersiveAuthoredWorldContainerId || '',
             samples: [],
             videoDisplayRootCount: 0,
             assessmentRootCount: 0,
@@ -1541,164 +1688,19 @@ AFRAME.registerComponent('custom-movement', {
             collisionRootsCovered: true
         };
     },
-    addImmersivePresentationRoot: function (roots, seen, el) {
-        if (!el || !el.object3D || seen.has(el)) {
-            return;
+    getImmersiveTransformTargets: function () {
+        const authoredWorldContainer = this.getImmersiveAuthoredWorldContainer();
+        if (authoredWorldContainer) {
+            this.immersiveNavigationStrategy = 'authored-world-container';
+            this.updateImmersiveWorldRootDiagnostics([authoredWorldContainer]);
+            return [authoredWorldContainer];
         }
 
-        roots.push(el);
-        seen.add(el);
-    },
-    addImmersiveLightTargetRoot: function (roots, seen, el) {
-        if (!el || typeof el.getAttribute !== 'function') {
-            return;
-        }
-
-        const targetSelector = el.getAttribute('target');
-        if (!targetSelector || targetSelector.charAt(0) !== '#') {
-            return;
-        }
-
-        const targetEl = typeof document !== 'undefined'
-            ? document.getElementById(targetSelector.slice(1))
-            : null;
-        const topLevelTarget = this.getTopLevelSceneChild(targetEl) || targetEl;
-        this.addImmersivePresentationRoot(roots, seen, topLevelTarget);
-    },
-    isImmersiveCelestialLightRoot: function (el) {
-        if (!el || typeof el.getAttribute !== 'function') {
-            return false;
-        }
-
-        const id = el.id || '';
-        if (
-            id === 'lighttarget' ||
-            id === 'vrodos-pmndrs-sun' ||
-            id === 'vrodos-pmndrs-sun-haze' ||
-            id === 'vrodos-pmndrs-horizon-key-light' ||
-            id === 'vrodos-pmndrs-horizon-fill-light' ||
-            id === 'vrodos-photoreal-key-light' ||
-            id === 'vrodos-photoreal-fill-light'
-        ) {
-            return true;
-        }
-
-        if (
-            this.hasElementAttribute(el, 'data-vrodos-pmndrs-sun') ||
-            this.hasElementAttribute(el, 'data-vrodos-celestial-light') ||
-            this.hasElementAttribute(el, 'data-aframe-default-light')
-        ) {
-            return true;
-        }
-
-        const lightType = String(el.getAttribute('data-vrodos-light-type') || '').toLowerCase();
-        const lightCategory = String(el.getAttribute('data-vrodos-light-category') || '').toLowerCase();
-        if (lightType === 'directional' && (lightCategory === 'lightsun' || lightCategory === 'light-sun')) {
-            return true;
-        }
-
-        const lightAttr = el.getAttribute('light');
-        if (lightAttr && typeof lightAttr === 'object') {
-            const type = String(lightAttr.type || '').toLowerCase();
-            if (type === 'directional' && (
-                lightCategory === 'lightsun' ||
-                lightCategory === 'light-sun' ||
-                this.hasElementAttribute(el, 'data-vrodos-photoreal-light')
-            )) {
-                return true;
-            }
-        }
-
-        return false;
-    },
-    getImmersiveLightPresentationRoots: function () {
-        if (!this.sceneEl || typeof this.sceneEl.querySelectorAll !== 'function') {
-            return [];
-        }
-
-        const roots = [];
-        const seen = new Set();
-        const lightEls = this.sceneEl.querySelectorAll([
-            '#vrodos-pmndrs-sun',
-            '#vrodos-pmndrs-sun-haze',
-            '[data-vrodos-pmndrs-sun]',
-            '[data-vrodos-photoreal-light="true"]',
-            'a-light',
-            '[light]'
-        ].join(','));
-
-        for (let i = 0; i < lightEls.length; i++) {
-            const el = lightEls[i];
-            if (this.isImmersiveCelestialLightRoot(el)) {
-                continue;
-            }
-            const topLevelRoot = this.getTopLevelSceneChild(el) || el;
-            this.addImmersivePresentationRoot(roots, seen, topLevelRoot);
-            this.addImmersiveLightTargetRoot(roots, seen, el);
-        }
-
-        return roots;
-    },
-    getImmersivePresentationRoots: function (worldRoots) {
-        if (!worldRoots && !this.immersivePresentationRootsDirty && this.immersivePresentationRoots) {
-            return this.immersivePresentationRoots;
-        }
-
-        const roots = [];
-        const seen = new Set();
-        const addRoot = (el) => this.addImmersivePresentationRoot(roots, seen, el);
-        const authoredRoots = worldRoots || this.getImmersiveWorldRoots();
-        for (let i = 0; i < authoredRoots.length; i++) {
-            addRoot(authoredRoots[i]);
-        }
-
-        const lightRoots = this.getImmersiveLightPresentationRoots();
-        for (let i = 0; i < lightRoots.length; i++) {
-            addRoot(lightRoots[i]);
-        }
-
-        this.immersivePresentationRoots = roots;
-        this.immersivePresentationRootsDirty = false;
-        return roots;
-    },
-    getImmersiveWorldRoots: function () {
-        if (!this.immersiveWorldRootsDirty && this.immersiveWorldRoots) {
-            return this.immersiveWorldRoots;
-        }
-
-        if (!this.sceneEl || !this.sceneEl.children) {
-            this.updateImmersiveWorldRootDiagnostics([]);
-            this.immersiveWorldRoots = [];
-            this.immersiveWorldRootsDirty = false;
-            return [];
-        }
-
-        // Quest Browser/A-Frame updates the rendered HMD camera from WebXR poses even when
-        // the parent rig moves, while controllers still inherit the rig transform. In
-        // immersive XR, keep #player as an identity tracking rig and move authored top-level
-        // world roots around a virtual navigation position instead.
-        const roots = [];
-        const children = this.sceneEl.children;
-        for (let i = 0; i < children.length; i++) {
-            const el = children[i];
-            if (!el || !el.object3D || this.isImmersiveSystemRoot(el)) {
-                continue;
-            }
-
-            const tagName = el.tagName || '';
-            if (tagName.indexOf('A-') !== 0) {
-                continue;
-            }
-
-            if (this.hasImmersiveWorldRootMarker(el)) {
-                roots.push(el);
-            }
-        }
-
-        this.updateImmersiveWorldRootDiagnostics(roots);
-        this.immersiveWorldRoots = roots;
-        this.immersiveWorldRootsDirty = false;
-        return roots;
+        this.immersiveNavigationStrategy = 'authored-world-container-missing';
+        this.immersiveAuthoredWorldContainerPresent = false;
+        this.immersiveAuthoredWorldContainerId = '';
+        this.updateImmersiveWorldRootDiagnostics([]);
+        return [];
     },
     resetImmersiveRigTransform: function () {
         if (!this.el || !this.el.object3D) {
@@ -2386,27 +2388,37 @@ AFRAME.registerComponent('custom-movement', {
         return this.navMeshCollisionTargets.length > 0;
     },
     getMovementDeltaFromInput: function (inputX, inputY, distance) {
-        const referenceEl = this.cameraEl || this.cameraRig;
-        if (!referenceEl || !referenceEl.object3D) {
-            return null;
-        }
-
-        referenceEl.object3D.getWorldDirection(this.forwardVector);
-        this.forwardVector.y = 0;
-        if (this.forwardVector.lengthSq() < 0.000001) {
-            this.forwardVector.set(0, 0, -1);
+        const immersivePresenting = this.isImmersiveXrPresenting();
+        if (immersivePresenting) {
+            this.getImmersivePhysicalForwardDirection(this.forwardVector);
+            this.immersiveMovementBasisSource = 'hmd-horizontal';
         } else {
-            this.forwardVector.normalize();
+            const referenceEl = this.cameraEl || this.cameraRig;
+            if (!referenceEl || !referenceEl.object3D) {
+                return null;
+            }
+
+            referenceEl.object3D.getWorldDirection(this.forwardVector);
+            this.forwardVector.y = 0;
+            if (this.forwardVector.lengthSq() < 0.000001) {
+                this.forwardVector.set(0, 0, -1);
+            } else {
+                this.forwardVector.normalize();
+            }
+            this.immersiveMovementBasisSource = 'desktop-camera';
         }
 
-        this.rightVector.crossVectors(this.forwardVector, this.upVector).normalize().negate();
+        this.rightVector.crossVectors(this.forwardVector, this.upVector).normalize();
+        if (!immersivePresenting) {
+            this.rightVector.negate();
+        }
 
         const movementDelta = {
             x: (-this.forwardVector.x * inputY + this.rightVector.x * inputX) * distance,
             z: (-this.forwardVector.z * inputY + this.rightVector.z * inputX) * distance
         };
 
-        if (this.isImmersiveXrPresenting() && Math.abs(this.immersiveRenderYaw) > 0.000001) {
+        if (immersivePresenting && Math.abs(this.immersiveRenderYaw) > 0.000001) {
             this.immersiveRenderedDirection.set(movementDelta.x, 0, movementDelta.z);
             this.renderedToAuthoredDirection(this.immersiveRenderedDirection, this.immersiveAuthoredDirection);
             const authoredDistance = Math.sqrt((movementDelta.x * movementDelta.x) + (movementDelta.z * movementDelta.z));
@@ -3716,6 +3728,9 @@ AFRAME.registerComponent('custom-movement', {
         const inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
         const inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
         const inputVertical = flyMode ? VRODOSMaster.clamp(keyboardVertical, -1, 1) : 0;
+        this.lastEffectiveMoveInput.x = inputX;
+        this.lastEffectiveMoveInput.y = inputY;
+        this.lastEffectiveMoveInput.vertical = inputVertical;
 
         if (inputX === 0 && inputY === 0 && inputVertical === 0) {
             if (!hasExternalMovement) {

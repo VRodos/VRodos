@@ -1405,6 +1405,47 @@ AFRAME.registerComponent('scene-settings', {
             blockerTargets: movement && movement.blockerCollisionTargets ? movement.blockerCollisionTargets.length : 0,
             navMeshDirty: Boolean(movement && movement.navMeshDirty),
             collisionWorldDirty: Boolean(movement && movement.collisionWorldDirty),
+            navStrategy: movement && movement.immersiveNavigationStrategy
+                ? movement.immersiveNavigationStrategy
+                : 'none',
+            authoredWorldContainerPresent: Boolean(movement && movement.immersiveAuthoredWorldContainerPresent),
+            authoredWorldContainerId: movement && movement.immersiveAuthoredWorldContainerId
+                ? movement.immersiveAuthoredWorldContainerId
+                : '',
+            leftStickRawAxes: movement && movement.leftThumbRawInput
+                ? {
+                    x: Number(movement.leftThumbRawInput.x.toFixed(3)),
+                    y: Number(movement.leftThumbRawInput.y.toFixed(3))
+                }
+                : null,
+            leftStickAxes: movement && movement.leftThumbInput
+                ? {
+                    x: Number(movement.leftThumbInput.x.toFixed(3)),
+                    y: Number(movement.leftThumbInput.y.toFixed(3))
+                }
+                : null,
+            rightStickRawAxes: movement && movement.rightThumbRawInput
+                ? {
+                    x: Number(movement.rightThumbRawInput.x.toFixed(3)),
+                    y: Number(movement.rightThumbRawInput.y.toFixed(3))
+                }
+                : null,
+            rightStickAxes: movement && movement.rightThumbInput
+                ? {
+                    x: Number(movement.rightThumbInput.x.toFixed(3)),
+                    y: Number(movement.rightThumbInput.y.toFixed(3))
+                }
+                : null,
+            movementAxes: movement && movement.lastEffectiveMoveInput
+                ? {
+                    x: Number(movement.lastEffectiveMoveInput.x.toFixed(3)),
+                    y: Number(movement.lastEffectiveMoveInput.y.toFixed(3)),
+                    vertical: Number(movement.lastEffectiveMoveInput.vertical.toFixed(3))
+                }
+                : null,
+            movementBasis: movement && movement.immersiveMovementBasisSource
+                ? movement.immersiveMovementBasisSource
+                : 'none',
             immersiveWorldRootCount: immersiveWorldRoots && typeof immersiveWorldRoots.count === 'number'
                 ? immersiveWorldRoots.count
                 : 0,
@@ -1446,6 +1487,27 @@ AFRAME.registerComponent('scene-settings', {
                     z: Number(movement.immersivePhysicalAnchorPosition.z.toFixed(3))
                 }
                 : null,
+            immersiveSessionAnchorPosition: movement && movement.immersiveSessionAnchorPosition
+                ? {
+                    x: Number(movement.immersiveSessionAnchorPosition.x.toFixed(3)),
+                    y: Number(movement.immersiveSessionAnchorPosition.y.toFixed(3)),
+                    z: Number(movement.immersiveSessionAnchorPosition.z.toFixed(3))
+                }
+                : null,
+            immersiveSessionAnchorActive: Boolean(movement && movement.hasImmersiveSessionAnchor),
+            immersiveSessionAnchorSource: movement && movement.immersiveSessionAnchorSource
+                ? movement.immersiveSessionAnchorSource
+                : 'none',
+            immersiveSessionAnchorCapturedAt: movement && typeof movement.immersiveSessionAnchorCapturedAt === 'number'
+                ? Number(movement.immersiveSessionAnchorCapturedAt.toFixed(1))
+                : 0,
+            immersiveLiveAnchorDelta: movement && movement.immersiveLiveAnchorDelta
+                ? {
+                    x: Number(movement.immersiveLiveAnchorDelta.x.toFixed(3)),
+                    y: Number(movement.immersiveLiveAnchorDelta.y.toFixed(3)),
+                    z: Number(movement.immersiveLiveAnchorDelta.z.toFixed(3))
+                }
+                : null,
             immersiveRenderOffset: movement && movement.immersiveRenderOffset
                 ? {
                     x: Number(movement.immersiveRenderOffset.x.toFixed(3)),
@@ -1455,6 +1517,15 @@ AFRAME.registerComponent('scene-settings', {
                 : null,
             immersiveRenderYawDeg: movement && typeof movement.immersiveRenderYaw === 'number'
                 ? Number((movement.immersiveRenderYaw * 180 / Math.PI).toFixed(2))
+                : 0,
+            immersiveHeadingSource: movement && movement.immersiveHeadingSource
+                ? movement.immersiveHeadingSource
+                : 'none',
+            immersiveHeadingProjectionLength: movement && typeof movement.immersiveHeadingProjectionLength === 'number'
+                ? Number(movement.immersiveHeadingProjectionLength.toFixed(3))
+                : 0,
+            immersiveHeadingFallbackCount: movement && typeof movement.immersiveHeadingFallbackCount === 'number'
+                ? movement.immersiveHeadingFallbackCount
                 : 0,
             immersiveLastStepDeltaY: movement && typeof movement.immersiveLastStepDeltaY === 'number'
                 ? Number(movement.immersiveLastStepDeltaY.toFixed(3))

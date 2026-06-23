@@ -1758,6 +1758,31 @@
         blockerTargets: movement && movement.blockerCollisionTargets ? movement.blockerCollisionTargets.length : 0,
         navMeshDirty: Boolean(movement && movement.navMeshDirty),
         collisionWorldDirty: Boolean(movement && movement.collisionWorldDirty),
+        navStrategy: movement && movement.immersiveNavigationStrategy ? movement.immersiveNavigationStrategy : "none",
+        authoredWorldContainerPresent: Boolean(movement && movement.immersiveAuthoredWorldContainerPresent),
+        authoredWorldContainerId: movement && movement.immersiveAuthoredWorldContainerId ? movement.immersiveAuthoredWorldContainerId : "",
+        leftStickRawAxes: movement && movement.leftThumbRawInput ? {
+          x: Number(movement.leftThumbRawInput.x.toFixed(3)),
+          y: Number(movement.leftThumbRawInput.y.toFixed(3))
+        } : null,
+        leftStickAxes: movement && movement.leftThumbInput ? {
+          x: Number(movement.leftThumbInput.x.toFixed(3)),
+          y: Number(movement.leftThumbInput.y.toFixed(3))
+        } : null,
+        rightStickRawAxes: movement && movement.rightThumbRawInput ? {
+          x: Number(movement.rightThumbRawInput.x.toFixed(3)),
+          y: Number(movement.rightThumbRawInput.y.toFixed(3))
+        } : null,
+        rightStickAxes: movement && movement.rightThumbInput ? {
+          x: Number(movement.rightThumbInput.x.toFixed(3)),
+          y: Number(movement.rightThumbInput.y.toFixed(3))
+        } : null,
+        movementAxes: movement && movement.lastEffectiveMoveInput ? {
+          x: Number(movement.lastEffectiveMoveInput.x.toFixed(3)),
+          y: Number(movement.lastEffectiveMoveInput.y.toFixed(3)),
+          vertical: Number(movement.lastEffectiveMoveInput.vertical.toFixed(3))
+        } : null,
+        movementBasis: movement && movement.immersiveMovementBasisSource ? movement.immersiveMovementBasisSource : "none",
         immersiveWorldRootCount: immersiveWorldRoots && typeof immersiveWorldRoots.count === "number" ? immersiveWorldRoots.count : 0,
         immersiveWorldRootSamples: immersiveWorldRoots && Array.isArray(immersiveWorldRoots.samples) ? immersiveWorldRoots.samples : [],
         immersiveWorldVideoDisplayRootCount: immersiveWorldRoots && typeof immersiveWorldRoots.videoDisplayRootCount === "number" ? immersiveWorldRoots.videoDisplayRootCount : 0,
@@ -1779,12 +1804,28 @@
           y: Number(movement.immersivePhysicalAnchorPosition.y.toFixed(3)),
           z: Number(movement.immersivePhysicalAnchorPosition.z.toFixed(3))
         } : null,
+        immersiveSessionAnchorPosition: movement && movement.immersiveSessionAnchorPosition ? {
+          x: Number(movement.immersiveSessionAnchorPosition.x.toFixed(3)),
+          y: Number(movement.immersiveSessionAnchorPosition.y.toFixed(3)),
+          z: Number(movement.immersiveSessionAnchorPosition.z.toFixed(3))
+        } : null,
+        immersiveSessionAnchorActive: Boolean(movement && movement.hasImmersiveSessionAnchor),
+        immersiveSessionAnchorSource: movement && movement.immersiveSessionAnchorSource ? movement.immersiveSessionAnchorSource : "none",
+        immersiveSessionAnchorCapturedAt: movement && typeof movement.immersiveSessionAnchorCapturedAt === "number" ? Number(movement.immersiveSessionAnchorCapturedAt.toFixed(1)) : 0,
+        immersiveLiveAnchorDelta: movement && movement.immersiveLiveAnchorDelta ? {
+          x: Number(movement.immersiveLiveAnchorDelta.x.toFixed(3)),
+          y: Number(movement.immersiveLiveAnchorDelta.y.toFixed(3)),
+          z: Number(movement.immersiveLiveAnchorDelta.z.toFixed(3))
+        } : null,
         immersiveRenderOffset: movement && movement.immersiveRenderOffset ? {
           x: Number(movement.immersiveRenderOffset.x.toFixed(3)),
           y: Number(movement.immersiveRenderOffset.y.toFixed(3)),
           z: Number(movement.immersiveRenderOffset.z.toFixed(3))
         } : null,
         immersiveRenderYawDeg: movement && typeof movement.immersiveRenderYaw === "number" ? Number((movement.immersiveRenderYaw * 180 / Math.PI).toFixed(2)) : 0,
+        immersiveHeadingSource: movement && movement.immersiveHeadingSource ? movement.immersiveHeadingSource : "none",
+        immersiveHeadingProjectionLength: movement && typeof movement.immersiveHeadingProjectionLength === "number" ? Number(movement.immersiveHeadingProjectionLength.toFixed(3)) : 0,
+        immersiveHeadingFallbackCount: movement && typeof movement.immersiveHeadingFallbackCount === "number" ? movement.immersiveHeadingFallbackCount : 0,
         immersiveLastStepDeltaY: movement && typeof movement.immersiveLastStepDeltaY === "number" ? Number(movement.immersiveLastStepDeltaY.toFixed(3)) : 0,
         immersivePresentationTransformActive: Boolean(immersiveXrPresenting && movement && movement.immersiveWorldBaseTransforms && movement.immersiveWorldBaseTransforms.size > 0),
         immersiveRootTransformCount: movement && typeof movement.immersiveRootTransformCount === "number" ? movement.immersiveRootTransformCount : 0,
@@ -3540,6 +3581,9 @@
       this.colliderEntitySelector = ".vrodos-collider";
       this.leftThumbInput = { x: 0, y: 0 };
       this.rightThumbInput = { x: 0, y: 0 };
+      this.leftThumbRawInput = { x: 0, y: 0 };
+      this.rightThumbRawInput = { x: 0, y: 0 };
+      this.lastEffectiveMoveInput = { x: 0, y: 0, vertical: 0 };
       this.keyboardInput = { x: 0, y: 0, vertical: 0 };
       this.navMeshRoots = [];
       this.navMeshCollisionTargets = [];
@@ -3666,6 +3710,8 @@
       this.immersiveWorldDelta = new THREE.Vector3();
       this.immersivePhysicalAnchorPosition = new THREE.Vector3();
       this.immersivePhysicalForwardDirection = new THREE.Vector3(0, 0, -1);
+      this.immersiveSessionAnchorPosition = new THREE.Vector3();
+      this.immersiveLiveAnchorDelta = new THREE.Vector3();
       this.immersiveVirtualNavPosition = new THREE.Vector3();
       this.immersiveRenderOffset = new THREE.Vector3();
       this.immersiveRenderedPoint = new THREE.Vector3();
@@ -3679,6 +3725,19 @@
       this.immersiveRenderYaw = 0;
       this.immersiveInitialRenderYaw = 0;
       this.immersiveInitialYawSource = "default";
+      this.hasImmersiveSessionAnchor = false;
+      this.immersiveSessionAnchorCapturedAt = 0;
+      this.immersiveSessionAnchorSource = "none";
+      this.lastImmersiveHorizontalForward = new THREE.Vector3(0, 0, -1);
+      this.hasLastImmersiveHorizontalForward = false;
+      this.immersiveHeadingSource = "none";
+      this.immersiveHeadingProjectionLength = 0;
+      this.immersiveHeadingFallbackCount = 0;
+      this.immersiveHeadingMinHorizontalLengthSq = 25e-4;
+      this.immersiveMovementBasisSource = "none";
+      this.immersiveNavigationStrategy = "none";
+      this.immersiveAuthoredWorldContainerPresent = false;
+      this.immersiveAuthoredWorldContainerId = "";
       this.immersiveWorldBaseTransforms = /* @__PURE__ */ new Map();
       this.immersiveWorldRoots = [];
       this.immersiveWorldRootsDirty = true;
@@ -3702,6 +3761,9 @@
       this.lastImmersiveExitHandoffDiagnostics = null;
       this.immersiveWorldRootDiagnostics = {
         count: 0,
+        navigationStrategy: "none",
+        authoredWorldContainerPresent: false,
+        authoredWorldContainerId: "",
         samples: [],
         videoDisplayRootCount: 0,
         assessmentRootCount: 0,
@@ -3862,7 +3924,9 @@
       this.immersivePresentationRootsDirty = true;
       this.immersiveWorldRoots = [];
       this.immersivePresentationRoots = [];
-      this.clearImmersiveWorldBaseTransforms();
+      if (!(this.isImmersiveXrPresenting() && this.hasImmersiveAuthoredWorldContainer())) {
+        this.clearImmersiveWorldBaseTransforms();
+      }
     },
     handleSceneLoaded: function() {
       this.markNavMeshDirty();
@@ -3983,6 +4047,7 @@
       this.positionPrimed = false;
       this.clearImmersiveFirstMovementGroundLock();
       this.clearImmersiveEntryPoseSettle();
+      this.clearImmersiveSessionAnchor();
       if (!this.isImmersiveXrPresenting()) {
         this.finalizeImmersiveExitNavigationHandoff("handle-exit-vr");
       } else {
@@ -3996,19 +4061,28 @@
       const source = event.currentTarget || event.target;
       const sourceId = source && source.id ? source.id : "";
       const targetInput = source === this.thumbR || sourceId === "oculusRight" ? this.rightThumbInput : this.leftThumbInput;
-      targetInput.x = event.detail.x || 0;
+      const targetRawInput = targetInput === this.rightThumbInput ? this.rightThumbRawInput : this.leftThumbRawInput;
+      const rawX = event.detail.x || 0;
       const rawY = event.detail.y || 0;
-      targetInput.y = targetInput === this.leftThumbInput ? -rawY : rawY;
+      targetRawInput.x = rawX;
+      targetRawInput.y = rawY;
+      targetInput.x = rawX;
+      targetInput.y = rawY;
     },
     handleThumbstickEnd: function(event) {
       const source = event ? event.currentTarget || event.target : null;
-      if (!source || source === this.thumbL) {
+      const sourceId = source && source.id ? source.id : "";
+      if (!source || source === this.thumbL || sourceId === "oculusLeft") {
         this.leftThumbInput.x = 0;
         this.leftThumbInput.y = 0;
+        this.leftThumbRawInput.x = 0;
+        this.leftThumbRawInput.y = 0;
       }
-      if (!source || source === this.thumbR) {
+      if (!source || source === this.thumbR || sourceId === "oculusRight") {
         this.rightThumbInput.x = 0;
         this.rightThumbInput.y = 0;
+        this.rightThumbRawInput.x = 0;
+        this.rightThumbRawInput.y = 0;
       }
       if (this.isImmersiveXrPresenting()) {
         this.requestShadowMapRefresh("immersive-input-settle", { deferMs: 140 });
@@ -4198,12 +4272,80 @@
       anchorObject.updateMatrixWorld(true);
       return anchorObject.getWorldPosition(output);
     },
+    clearImmersiveSessionAnchor: function() {
+      this.hasImmersiveSessionAnchor = false;
+      this.immersiveSessionAnchorCapturedAt = 0;
+      this.immersiveSessionAnchorSource = "none";
+      this.immersiveLiveAnchorDelta.set(0, 0, 0);
+    },
+    captureImmersiveSessionAnchor: function(reason) {
+      this.getImmersivePhysicalAnchorPosition(this.immersiveSessionAnchorPosition);
+      this.immersivePhysicalAnchorPosition.copy(this.immersiveSessionAnchorPosition);
+      this.hasImmersiveSessionAnchor = true;
+      this.immersiveSessionAnchorCapturedAt = this.getRuntimeNow();
+      this.immersiveSessionAnchorSource = reason || "immersive-entry";
+      this.immersiveLiveAnchorDelta.set(0, 0, 0);
+      return true;
+    },
+    ensureImmersiveSessionAnchor: function(reason) {
+      if (this.hasImmersiveSessionAnchor) {
+        return true;
+      }
+      return this.captureImmersiveSessionAnchor(reason || "lazy-immersive-anchor");
+    },
+    getImmersiveRenderAnchorPosition: function() {
+      this.ensureImmersiveSessionAnchor("render-transform");
+      return this.immersiveSessionAnchorPosition;
+    },
+    updateImmersiveLiveAnchorDiagnostics: function() {
+      this.getImmersivePhysicalAnchorPosition(this.immersivePhysicalAnchorPosition);
+      if (this.hasImmersiveSessionAnchor) {
+        this.immersiveLiveAnchorDelta.subVectors(this.immersivePhysicalAnchorPosition, this.immersiveSessionAnchorPosition);
+      } else {
+        this.immersiveLiveAnchorDelta.set(0, 0, 0);
+      }
+      return this.immersivePhysicalAnchorPosition;
+    },
     getCameraDirectionObject: function() {
       const cameraObject = this.getFlyCameraObject ? this.getFlyCameraObject() : null;
       if (cameraObject && typeof cameraObject.getWorldDirection === "function") {
         return cameraObject;
       }
       return this.getNavigationAnchorObject();
+    },
+    resolveImmersiveHorizontalForward: function(output, source) {
+      const horizontalLengthSq = output.lengthSq();
+      this.immersiveHeadingProjectionLength = Math.sqrt(horizontalLengthSq);
+      if (horizontalLengthSq >= this.immersiveHeadingMinHorizontalLengthSq) {
+        output.normalize();
+        this.lastImmersiveHorizontalForward.copy(output);
+        this.hasLastImmersiveHorizontalForward = true;
+        this.immersiveHeadingSource = source || "live";
+        return output;
+      }
+      this.immersiveHeadingFallbackCount += 1;
+      if (this.hasLastImmersiveHorizontalForward) {
+        this.immersiveHeadingSource = `${source || "live"}-cached`;
+        return output.copy(this.lastImmersiveHorizontalForward);
+      }
+      this.immersiveHeadingSource = `${source || "live"}-default`;
+      this.hasLastImmersiveHorizontalForward = true;
+      this.lastImmersiveHorizontalForward.set(0, 0, -1);
+      return output.copy(this.lastImmersiveHorizontalForward);
+    },
+    primeImmersiveHeadingCache: function() {
+      if (this.hasLastNonImmersiveViewForward) {
+        this.lastImmersiveHorizontalForward.copy(this.lastNonImmersiveViewForward);
+        this.hasLastImmersiveHorizontalForward = true;
+        this.immersiveHeadingSource = "desktop-view";
+        this.immersiveHeadingProjectionLength = 1;
+        return true;
+      }
+      this.lastImmersiveHorizontalForward.set(0, 0, -1);
+      this.hasLastImmersiveHorizontalForward = true;
+      this.immersiveHeadingSource = "default-forward";
+      this.immersiveHeadingProjectionLength = 1;
+      return false;
     },
     getImmersivePhysicalForwardDirection: function(target) {
       const output = target || this.immersivePhysicalForwardDirection;
@@ -4217,7 +4359,7 @@
             xrCamera.getWorldDirection(output);
             output.y = 0;
             if (output.lengthSq() > 1e-6) {
-              return output.normalize();
+              return this.resolveImmersiveHorizontalForward(output, "xr-camera");
             }
           }
         }
@@ -4233,9 +4375,9 @@
       directionObject.getWorldDirection(output);
       output.y = 0;
       if (output.lengthSq() < 1e-6) {
-        return output.set(0, 0, -1);
+        return this.resolveImmersiveHorizontalForward(output, "camera-object");
       }
-      return output.normalize();
+      return this.resolveImmersiveHorizontalForward(output, "camera-object");
     },
     rememberNonImmersiveViewForward: function() {
       if (this.isImmersiveXrPresenting()) {
@@ -4453,7 +4595,7 @@
       this.immersiveWorldBaseTransforms.clear();
     },
     captureImmersiveWorldBaseTransforms: function(roots) {
-      roots = roots || this.getImmersiveWorldRoots();
+      roots = roots || this.getImmersiveTransformTargets();
       for (let i = 0; i < roots.length; i++) {
         const el = roots[i];
         const object = el && el.object3D ? el.object3D : null;
@@ -4489,9 +4631,11 @@
       this.clearImmersiveWorldBaseTransforms();
     },
     updateImmersiveRenderTransformState: function() {
+      const renderAnchorPosition = this.getImmersiveRenderAnchorPosition();
       this.immersiveRenderQuaternion.setFromAxisAngle(this.upVector, this.immersiveRenderYaw);
       this.immersiveRenderOffset.copy(this.immersiveVirtualNavPosition).applyQuaternion(this.immersiveRenderQuaternion);
-      this.immersiveRenderOffset.subVectors(this.immersivePhysicalAnchorPosition, this.immersiveRenderOffset);
+      this.immersiveRenderOffset.subVectors(renderAnchorPosition, this.immersiveRenderOffset);
+      this.updateImmersiveLiveAnchorDiagnostics();
     },
     authoredToRenderedPosition: function(source, target) {
       target = target || this.immersiveRenderedPoint;
@@ -4525,12 +4669,11 @@
       if (!this.isImmersiveXrPresenting()) {
         return false;
       }
-      this.getImmersivePhysicalAnchorPosition(this.immersivePhysicalAnchorPosition);
-      const presentationRoots = this.getImmersivePresentationRoots();
-      this.captureImmersiveWorldBaseTransforms(presentationRoots);
+      const transformTargets = this.getImmersiveTransformTargets();
+      this.captureImmersiveWorldBaseTransforms(transformTargets);
       this.updateImmersiveRenderTransformState();
-      for (let i = 0; i < presentationRoots.length; i++) {
-        const el = presentationRoots[i];
+      for (let i = 0; i < transformTargets.length; i++) {
+        const el = transformTargets[i];
         const object = el && el.object3D ? el.object3D : null;
         const base = this.immersiveWorldBaseTransforms.get(el);
         if (!object || !base) {
@@ -4543,18 +4686,20 @@
       }
       this.immersiveLastRenderAppliedAt = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
       this.immersiveRootTransformCount += 1;
-      this.immersiveRootTransformObjectCount += presentationRoots.length;
-      this.immersiveLastTransformRootCount = presentationRoots.length;
+      this.immersiveRootTransformObjectCount += transformTargets.length;
+      this.immersiveLastTransformRootCount = transformTargets.length;
       const settings = this.sceneEl && this.sceneEl.components ? this.sceneEl.components["scene-settings"] : null;
       if (settings && typeof settings.syncPresentedShadowLightTransforms === "function") {
         settings.syncPresentedShadowLightTransforms();
       }
-      return presentationRoots.length > 0;
+      return transformTargets.length > 0;
     },
     initializeImmersiveCollisionState: function() {
       this.clearImmersiveWorldBaseTransforms();
-      this.getImmersivePhysicalAnchorPosition(this.immersivePhysicalAnchorPosition);
+      this.clearImmersiveSessionAnchor();
+      this.captureImmersiveSessionAnchor("immersive-entry");
       this.getImmersiveAuthoredStartPosition(this.immersiveVirtualNavPosition);
+      this.primeImmersiveHeadingCache();
       this.immersiveRenderYaw = this.getInitialImmersiveRenderYaw();
       this.heightOffset = null;
       this.immersiveLastStepDeltaY = 0;
@@ -4587,6 +4732,16 @@
             y: Number(this.immersivePhysicalAnchorPosition.y.toFixed(3)),
             z: Number(this.immersivePhysicalAnchorPosition.z.toFixed(3))
           },
+          sessionAnchorPosition: {
+            x: Number(this.immersiveSessionAnchorPosition.x.toFixed(3)),
+            y: Number(this.immersiveSessionAnchorPosition.y.toFixed(3)),
+            z: Number(this.immersiveSessionAnchorPosition.z.toFixed(3))
+          },
+          liveAnchorDelta: {
+            x: Number(this.immersiveLiveAnchorDelta.x.toFixed(3)),
+            y: Number(this.immersiveLiveAnchorDelta.y.toFixed(3)),
+            z: Number(this.immersiveLiveAnchorDelta.z.toFixed(3))
+          },
           renderOffset: {
             x: Number(this.immersiveRenderOffset.x.toFixed(3)),
             y: Number(this.immersiveRenderOffset.y.toFixed(3)),
@@ -4594,6 +4749,11 @@
           },
           renderYawDeg: Number(THREE.MathUtils.radToDeg(this.immersiveRenderYaw).toFixed(2)),
           initialYawSource: this.immersiveInitialYawSource,
+          navigationStrategy: this.immersiveNavigationStrategy || "none",
+          authoredWorldContainerPresent: Boolean(this.immersiveAuthoredWorldContainerPresent),
+          authoredWorldContainerId: this.immersiveAuthoredWorldContainerId || "",
+          headingSource: this.immersiveHeadingSource,
+          movementBasisSource: this.immersiveMovementBasisSource || "none",
           heightOffset: typeof this.heightOffset === "number" ? Number(this.heightOffset.toFixed(3)) : null,
           rawHeightOffset: typeof this.immersiveRawHeightOffset === "number" ? Number(this.immersiveRawHeightOffset.toFixed(3)) : null,
           heightCalibrationApplied: Boolean(this.immersiveHeightCalibrationApplied),
@@ -4602,7 +4762,8 @@
           desktopVisionGroundY: typeof this.desktopVisionGroundY === "number" ? Number(this.desktopVisionGroundY.toFixed(3)) : null,
           desktopVisionNavigationY: typeof this.desktopVisionNavigationY === "number" ? Number(this.desktopVisionNavigationY.toFixed(3)) : null,
           entryPoseSettleFrames: this.immersiveEntryPoseSettleFrames,
-          rootCount: this.immersiveWorldRootDiagnostics && this.immersiveWorldRootDiagnostics.count || 0
+          rootCount: this.immersiveWorldRootDiagnostics && this.immersiveWorldRootDiagnostics.count || 0,
+          lastTransformRootCount: this.immersiveLastTransformRootCount
         });
       }
     },
@@ -4618,27 +4779,39 @@
     hasElementAttribute: function(el, attributeName) {
       return Boolean(el && typeof el.hasAttribute === "function" && el.hasAttribute(attributeName));
     },
-    hasImmersiveWorldDescendantMarker: function(el) {
-      if (!el || typeof el.querySelector !== "function") {
-        return false;
+    getImmersiveAuthoredWorldContainer: function() {
+      if (!this.sceneEl || typeof this.sceneEl.querySelector !== "function") {
+        this.immersiveAuthoredWorldContainerPresent = false;
+        this.immersiveAuthoredWorldContainerId = "";
+        return null;
       }
-      return Boolean(el.querySelector([
-        "[video-controls]",
-        "[data-vrodos-video-src]",
-        "[immerse-cefr-asset]",
-        "[data-immerse-cefr-levels]",
-        "[immerse-assessment-launcher]",
-        "[data-assessment-content]",
-        '[id^="button_poi_"]',
-        '[data-vrodos-collision-category="poi-imagetext"]'
-      ].join(",")));
+      const container = this.sceneEl.querySelector('#vrodos-authored-world, [data-vrodos-authored-world="true"]');
+      if (!container || !container.object3D) {
+        this.immersiveAuthoredWorldContainerPresent = false;
+        this.immersiveAuthoredWorldContainerId = "";
+        return null;
+      }
+      this.immersiveAuthoredWorldContainerPresent = true;
+      this.immersiveAuthoredWorldContainerId = container.id || "";
+      return container;
     },
-    hasImmersiveWorldRootMarker: function(el) {
-      if (!el || typeof el.hasAttribute !== "function") {
+    hasImmersiveAuthoredWorldContainer: function() {
+      return Boolean(this.getImmersiveAuthoredWorldContainer());
+    },
+    isObjectInsideImmersiveAuthoredWorld: function(object) {
+      const container = this.getImmersiveAuthoredWorldContainer();
+      const containerObject = container && container.object3D ? container.object3D : null;
+      if (!object || !containerObject) {
         return false;
       }
-      const id = el.id || "";
-      return id.indexOf("vrodos-reveal-") === 0 || id.indexOf("video-display_") === 0 || id.indexOf("image-display_") === 0 || id.indexOf("button_poi_") === 0 || this.hasElementAttribute(el, "data-vrodos-load-phase") || this.hasElementAttribute(el, "data-vrodos-delayed-reveal") || this.hasElementAttribute(el, "data-vrodos-collider") || this.hasElementAttribute(el, "data-vrodos-navmesh") || this.hasElementAttribute(el, "data-vrodos-world-lighting") || this.hasElementAttribute(el, "data-vrodos-overlay-ui") || this.hasElementAttribute(el, "data-vrodos-lazy-gltf-src") || this.hasElementAttribute(el, "gltf-model") || this.hasElementAttribute(el, "video-controls") || this.hasElementAttribute(el, "data-vrodos-video-src") || this.hasElementAttribute(el, "immerse-cefr-asset") || this.hasElementAttribute(el, "data-immerse-cefr-levels") || this.hasElementAttribute(el, "immerse-assessment-launcher") || this.hasElementAttribute(el, "data-assessment-content") || this.elementHasClass(el, "vrodos-collider") || this.elementHasClass(el, "vrodos-navmesh") || this.elementHasClass(el, "raycastable") || this.hasImmersiveWorldDescendantMarker(el);
+      let current = object;
+      while (current) {
+        if (current === containerObject) {
+          return true;
+        }
+        current = current.parent || null;
+      }
+      return false;
     },
     isImmersiveSystemRoot: function(el) {
       if (!el || !el.object3D) {
@@ -4654,6 +4827,7 @@
         id: el && el.id ? el.id : "",
         tag: el && el.tagName ? el.tagName.toLowerCase() : "",
         classes: this.getElementClassSummary(el),
+        authoredWorld: Boolean(el && this.hasElementAttribute(el, "data-vrodos-authored-world")),
         video: Boolean(el && (this.hasElementAttribute(el, "video-controls") || this.hasElementAttribute(el, "data-vrodos-video-src") || (el.id || "").indexOf("video-display_") === 0 || typeof el.querySelector === "function" && el.querySelector("[video-controls], [data-vrodos-video-src]"))),
         assessment: Boolean(el && (this.hasElementAttribute(el, "immerse-assessment-launcher") || this.hasElementAttribute(el, "data-assessment-content") || typeof el.querySelector === "function" && el.querySelector("[immerse-assessment-launcher], [data-assessment-content]"))),
         cefr: Boolean(el && (this.hasElementAttribute(el, "immerse-cefr-asset") || this.hasElementAttribute(el, "data-immerse-cefr-levels") || typeof el.querySelector === "function" && el.querySelector("[immerse-cefr-asset], [data-immerse-cefr-levels]"))),
@@ -4730,6 +4904,9 @@
       const collisionCoverage = this.getImmersiveCollisionRootCoverage(roots);
       this.immersiveWorldRootDiagnostics = {
         count: roots.length,
+        navigationStrategy: this.immersiveNavigationStrategy || "none",
+        authoredWorldContainerPresent: Boolean(this.immersiveAuthoredWorldContainerPresent),
+        authoredWorldContainerId: this.immersiveAuthoredWorldContainerId || "",
         samples,
         videoDisplayRootCount,
         assessmentRootCount,
@@ -4744,6 +4921,8 @@
         collisionRootsCovered: collisionCoverage.collisionRootsCovered
       };
       const signature = [
+        this.immersiveNavigationStrategy || "none",
+        this.immersiveAuthoredWorldContainerId || "",
         roots.length,
         videoDisplayRootCount,
         assessmentRootCount,
@@ -4756,18 +4935,36 @@
         this.immersiveWorldRootDiagnosticsSignature = signature;
         const overlayApi = window.VRODOSRuntimeOverlay || null;
         if (overlayApi && typeof overlayApi.recordDiagnostic === "function") {
-          overlayApi.recordDiagnostic("debug", "navigation: selected immersive world roots", this.immersiveWorldRootDiagnostics);
+          overlayApi.recordDiagnostic("debug", "navigation: selected immersive transform target", this.immersiveWorldRootDiagnostics);
         } else if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.navigation && typeof console !== "undefined" && typeof console.debug === "function") {
-          console.debug("[VRodos navigation] selected immersive world roots", this.immersiveWorldRootDiagnostics);
+          console.debug("[VRodos navigation] selected immersive transform target", this.immersiveWorldRootDiagnostics);
         }
       }
     },
     getImmersiveWorldRootDiagnostics: function() {
-      if (!this.immersiveWorldRootDiagnostics || this.immersiveWorldRootsDirty) {
-        this.getImmersiveWorldRoots();
+      const authoredWorldContainer = this.getImmersiveAuthoredWorldContainer();
+      if (authoredWorldContainer) {
+        if (this.immersiveNavigationStrategy === "none") {
+          this.immersiveNavigationStrategy = "authored-world-container";
+        }
+        if (!this.immersiveWorldRootDiagnostics || this.immersiveWorldRootsDirty || this.immersiveWorldRootDiagnostics.count !== 1 || this.immersiveWorldRootDiagnostics.authoredWorldContainerId !== (authoredWorldContainer.id || "")) {
+          this.updateImmersiveWorldRootDiagnostics([authoredWorldContainer]);
+        }
+      } else if (!this.immersiveWorldRootDiagnostics || this.immersiveWorldRootsDirty) {
+        if (this.immersiveNavigationStrategy === "none") {
+          this.immersiveNavigationStrategy = "authored-world-container-missing";
+        }
+        this.updateImmersiveWorldRootDiagnostics([]);
+        this.immersiveWorldRoots = [];
+        this.immersiveWorldRootsDirty = false;
+        this.immersivePresentationRoots = [];
+        this.immersivePresentationRootsDirty = false;
       }
       return this.immersiveWorldRootDiagnostics || {
         count: 0,
+        navigationStrategy: this.immersiveNavigationStrategy || "none",
+        authoredWorldContainerPresent: Boolean(this.immersiveAuthoredWorldContainerPresent),
+        authoredWorldContainerId: this.immersiveAuthoredWorldContainerId || "",
         samples: [],
         videoDisplayRootCount: 0,
         assessmentRootCount: 0,
@@ -4782,123 +4979,18 @@
         collisionRootsCovered: true
       };
     },
-    addImmersivePresentationRoot: function(roots, seen, el) {
-      if (!el || !el.object3D || seen.has(el)) {
-        return;
+    getImmersiveTransformTargets: function() {
+      const authoredWorldContainer = this.getImmersiveAuthoredWorldContainer();
+      if (authoredWorldContainer) {
+        this.immersiveNavigationStrategy = "authored-world-container";
+        this.updateImmersiveWorldRootDiagnostics([authoredWorldContainer]);
+        return [authoredWorldContainer];
       }
-      roots.push(el);
-      seen.add(el);
-    },
-    addImmersiveLightTargetRoot: function(roots, seen, el) {
-      if (!el || typeof el.getAttribute !== "function") {
-        return;
-      }
-      const targetSelector = el.getAttribute("target");
-      if (!targetSelector || targetSelector.charAt(0) !== "#") {
-        return;
-      }
-      const targetEl = typeof document !== "undefined" ? document.getElementById(targetSelector.slice(1)) : null;
-      const topLevelTarget = this.getTopLevelSceneChild(targetEl) || targetEl;
-      this.addImmersivePresentationRoot(roots, seen, topLevelTarget);
-    },
-    isImmersiveCelestialLightRoot: function(el) {
-      if (!el || typeof el.getAttribute !== "function") {
-        return false;
-      }
-      const id = el.id || "";
-      if (id === "lighttarget" || id === "vrodos-pmndrs-sun" || id === "vrodos-pmndrs-sun-haze" || id === "vrodos-pmndrs-horizon-key-light" || id === "vrodos-pmndrs-horizon-fill-light" || id === "vrodos-photoreal-key-light" || id === "vrodos-photoreal-fill-light") {
-        return true;
-      }
-      if (this.hasElementAttribute(el, "data-vrodos-pmndrs-sun") || this.hasElementAttribute(el, "data-vrodos-celestial-light") || this.hasElementAttribute(el, "data-aframe-default-light")) {
-        return true;
-      }
-      const lightType = String(el.getAttribute("data-vrodos-light-type") || "").toLowerCase();
-      const lightCategory = String(el.getAttribute("data-vrodos-light-category") || "").toLowerCase();
-      if (lightType === "directional" && (lightCategory === "lightsun" || lightCategory === "light-sun")) {
-        return true;
-      }
-      const lightAttr = el.getAttribute("light");
-      if (lightAttr && typeof lightAttr === "object") {
-        const type = String(lightAttr.type || "").toLowerCase();
-        if (type === "directional" && (lightCategory === "lightsun" || lightCategory === "light-sun" || this.hasElementAttribute(el, "data-vrodos-photoreal-light"))) {
-          return true;
-        }
-      }
-      return false;
-    },
-    getImmersiveLightPresentationRoots: function() {
-      if (!this.sceneEl || typeof this.sceneEl.querySelectorAll !== "function") {
-        return [];
-      }
-      const roots = [];
-      const seen = /* @__PURE__ */ new Set();
-      const lightEls = this.sceneEl.querySelectorAll([
-        "#vrodos-pmndrs-sun",
-        "#vrodos-pmndrs-sun-haze",
-        "[data-vrodos-pmndrs-sun]",
-        '[data-vrodos-photoreal-light="true"]',
-        "a-light",
-        "[light]"
-      ].join(","));
-      for (let i = 0; i < lightEls.length; i++) {
-        const el = lightEls[i];
-        if (this.isImmersiveCelestialLightRoot(el)) {
-          continue;
-        }
-        const topLevelRoot = this.getTopLevelSceneChild(el) || el;
-        this.addImmersivePresentationRoot(roots, seen, topLevelRoot);
-        this.addImmersiveLightTargetRoot(roots, seen, el);
-      }
-      return roots;
-    },
-    getImmersivePresentationRoots: function(worldRoots) {
-      if (!worldRoots && !this.immersivePresentationRootsDirty && this.immersivePresentationRoots) {
-        return this.immersivePresentationRoots;
-      }
-      const roots = [];
-      const seen = /* @__PURE__ */ new Set();
-      const addRoot = (el) => this.addImmersivePresentationRoot(roots, seen, el);
-      const authoredRoots = worldRoots || this.getImmersiveWorldRoots();
-      for (let i = 0; i < authoredRoots.length; i++) {
-        addRoot(authoredRoots[i]);
-      }
-      const lightRoots = this.getImmersiveLightPresentationRoots();
-      for (let i = 0; i < lightRoots.length; i++) {
-        addRoot(lightRoots[i]);
-      }
-      this.immersivePresentationRoots = roots;
-      this.immersivePresentationRootsDirty = false;
-      return roots;
-    },
-    getImmersiveWorldRoots: function() {
-      if (!this.immersiveWorldRootsDirty && this.immersiveWorldRoots) {
-        return this.immersiveWorldRoots;
-      }
-      if (!this.sceneEl || !this.sceneEl.children) {
-        this.updateImmersiveWorldRootDiagnostics([]);
-        this.immersiveWorldRoots = [];
-        this.immersiveWorldRootsDirty = false;
-        return [];
-      }
-      const roots = [];
-      const children = this.sceneEl.children;
-      for (let i = 0; i < children.length; i++) {
-        const el = children[i];
-        if (!el || !el.object3D || this.isImmersiveSystemRoot(el)) {
-          continue;
-        }
-        const tagName = el.tagName || "";
-        if (tagName.indexOf("A-") !== 0) {
-          continue;
-        }
-        if (this.hasImmersiveWorldRootMarker(el)) {
-          roots.push(el);
-        }
-      }
-      this.updateImmersiveWorldRootDiagnostics(roots);
-      this.immersiveWorldRoots = roots;
-      this.immersiveWorldRootsDirty = false;
-      return roots;
+      this.immersiveNavigationStrategy = "authored-world-container-missing";
+      this.immersiveAuthoredWorldContainerPresent = false;
+      this.immersiveAuthoredWorldContainerId = "";
+      this.updateImmersiveWorldRootDiagnostics([]);
+      return [];
     },
     resetImmersiveRigTransform: function() {
       if (!this.el || !this.el.object3D) {
@@ -5486,23 +5578,33 @@
       return this.navMeshCollisionTargets.length > 0;
     },
     getMovementDeltaFromInput: function(inputX, inputY, distance) {
-      const referenceEl = this.cameraEl || this.cameraRig;
-      if (!referenceEl || !referenceEl.object3D) {
-        return null;
-      }
-      referenceEl.object3D.getWorldDirection(this.forwardVector);
-      this.forwardVector.y = 0;
-      if (this.forwardVector.lengthSq() < 1e-6) {
-        this.forwardVector.set(0, 0, -1);
+      const immersivePresenting = this.isImmersiveXrPresenting();
+      if (immersivePresenting) {
+        this.getImmersivePhysicalForwardDirection(this.forwardVector);
+        this.immersiveMovementBasisSource = "hmd-horizontal";
       } else {
-        this.forwardVector.normalize();
+        const referenceEl = this.cameraEl || this.cameraRig;
+        if (!referenceEl || !referenceEl.object3D) {
+          return null;
+        }
+        referenceEl.object3D.getWorldDirection(this.forwardVector);
+        this.forwardVector.y = 0;
+        if (this.forwardVector.lengthSq() < 1e-6) {
+          this.forwardVector.set(0, 0, -1);
+        } else {
+          this.forwardVector.normalize();
+        }
+        this.immersiveMovementBasisSource = "desktop-camera";
       }
-      this.rightVector.crossVectors(this.forwardVector, this.upVector).normalize().negate();
+      this.rightVector.crossVectors(this.forwardVector, this.upVector).normalize();
+      if (!immersivePresenting) {
+        this.rightVector.negate();
+      }
       const movementDelta = {
         x: (-this.forwardVector.x * inputY + this.rightVector.x * inputX) * distance,
         z: (-this.forwardVector.z * inputY + this.rightVector.z * inputX) * distance
       };
-      if (this.isImmersiveXrPresenting() && Math.abs(this.immersiveRenderYaw) > 1e-6) {
+      if (immersivePresenting && Math.abs(this.immersiveRenderYaw) > 1e-6) {
         this.immersiveRenderedDirection.set(movementDelta.x, 0, movementDelta.z);
         this.renderedToAuthoredDirection(this.immersiveRenderedDirection, this.immersiveAuthoredDirection);
         const authoredDistance = Math.sqrt(movementDelta.x * movementDelta.x + movementDelta.z * movementDelta.z);
@@ -6574,6 +6676,9 @@
       const inputX = VRODOSMaster.clamp(keyboardX + thumbstickX, -1, 1);
       const inputY = VRODOSMaster.clamp(keyboardY + thumbstickY, -1, 1);
       const inputVertical = flyMode ? VRODOSMaster.clamp(keyboardVertical, -1, 1) : 0;
+      this.lastEffectiveMoveInput.x = inputX;
+      this.lastEffectiveMoveInput.y = inputY;
+      this.lastEffectiveMoveInput.vertical = inputVertical;
       if (inputX === 0 && inputY === 0 && inputVertical === 0) {
         if (!hasExternalMovement) {
           this.lastResolvedPosition.copy(currentPosition);

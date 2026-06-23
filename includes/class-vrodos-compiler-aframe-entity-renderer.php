@@ -448,11 +448,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			'images'               => $dom->getElementsByTagName( 'img' )->length,
 			'videos'               => $dom->getElementsByTagName( 'video' )->length,
 			'raycastableElements'  => $xpath->query( '//*[contains(concat(" ", normalize-space(@class), " "), " raycastable ")]' )->length,
-			'shadowAttributes'     => $xpath->query( '//*[@shadow]' )->length,
-			'shadowRoleAttributes' => $xpath->query( '//*[@data-vrodos-shadow-role]' )->length,
-			'clearFrustumElements' => $xpath->query( '//*[@clear-frustum-culling]' )->length,
-			'playerColliders'      => $this->diagnostic_collider_count,
-			'gltfLoadPhases'       => $this->diagnostic_load_phases,
+			'shadowAttributes'        => $xpath->query( '//*[@shadow]' )->length,
+			'shadowRoleAttributes'    => $xpath->query( '//*[@data-vrodos-shadow-role]' )->length,
+			'authoredWorldContainers' => $xpath->query( '//*[@data-vrodos-authored-world]' )->length,
+			'clearFrustumElements'    => $xpath->query( '//*[@clear-frustum-culling]' )->length,
+			'playerColliders'         => $this->diagnostic_collider_count,
+			'gltfLoadPhases'          => $this->diagnostic_load_phases,
 		];
 
 		if ( $metrics['clearFrustumElements'] > 0 ) {
@@ -828,6 +829,21 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		return VRodos_Compiler_AFrame_DOM_Helper::get_or_create_assets_container( $dom, $ascene );
 	}
 
+	public function get_or_create_authored_world_container( DOMDocument $dom, DOMElement $ascene ): DOMElement {
+		$existing = $dom->getElementById( 'vrodos-authored-world' );
+		if ( $existing instanceof DOMElement ) {
+			$existing->setAttribute( 'data-vrodos-authored-world', 'true' );
+			return $existing;
+		}
+
+		$container = $dom->createElement( 'a-entity' );
+		$container->setAttribute( 'id', 'vrodos-authored-world' );
+		$container->setAttribute( 'data-vrodos-authored-world', 'true' );
+		$ascene->appendChild( $container );
+
+		return $container;
+	}
+
 	/**
 	 * Modularized Object Renderer
 	 */
@@ -835,6 +851,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->reset_compile_diagnostics();
 		$this->compile_camera_position = $this->extract_camera_position( $objects );
 		$scene_settings = is_array( $config['scene_settings'] ?? null ) ? $config['scene_settings'] : [];
+		$render_container = $config['container'] ?? $ascene;
+		if ( ! $render_container instanceof DOMElement ) {
+			$render_container = $ascene;
+		}
 		$this->suppress_flat_media_shadow_casting = $this->should_suppress_flat_media_shadow_casting( $scene_settings );
 		foreach ( $objects as $object_key => $obj ) {
 			if ( is_object( $obj ) ) {
@@ -848,7 +868,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 				}
 			}
 
-			$this->render_scene_object( $dom, $ascene, $assets, $obj, array_merge( $config, [
+			$this->render_scene_object( $dom, $render_container, $assets, $obj, array_merge( $config, [
 				'project_id' => $project_id,
 				'scene_id'   => $scene_id
 			] ) );

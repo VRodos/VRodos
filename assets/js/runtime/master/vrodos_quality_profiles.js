@@ -5691,6 +5691,14 @@
                 return;
             }
 
+            if (
+                navigation.immersiveNavigationStrategy === 'authored-world-container' &&
+                typeof navigation.isObjectInsideImmersiveAuthoredWorld === 'function' &&
+                navigation.isObjectInsideImmersiveAuthoredWorld(light)
+            ) {
+                return;
+            }
+
             if (!light.userData.vrodosPresentedShadowBaseCaptured) {
                 capturePresentedShadowLightBase(self, light, { assumeAuthored: true });
             }

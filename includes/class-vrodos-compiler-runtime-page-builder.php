@@ -68,7 +68,8 @@ class VRodos_Compiler_Runtime_Page_Builder {
 			$ascene->setAttribute( 'vrodos-scene-loader', '' );
 		}
 
-		$a_asset = $this->entity_renderer->get_or_create_assets_container( $dom, $ascene );
+		$a_asset        = $this->entity_renderer->get_or_create_assets_container( $dom, $ascene );
+		$authored_world = $this->entity_renderer->get_or_create_authored_world_container( $dom, $ascene );
 		$this->entity_renderer->render_scene_objects(
 			$dom,
 			$ascene,
@@ -78,6 +79,7 @@ class VRodos_Compiler_Runtime_Page_Builder {
 			$scene_id,
 			array_merge( (array) ( $options['render_options'] ?? [] ), [
 				'scene_settings' => $scene_settings,
+				'container'      => $authored_world,
 			] )
 		);
 
