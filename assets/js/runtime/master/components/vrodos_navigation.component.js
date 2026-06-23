@@ -1218,6 +1218,12 @@ AFRAME.registerComponent('custom-movement', {
         this.immersiveRootTransformCount += 1;
         this.immersiveRootTransformObjectCount += presentationRoots.length;
         this.immersiveLastTransformRootCount = presentationRoots.length;
+
+        const settings = this.sceneEl && this.sceneEl.components ? this.sceneEl.components['scene-settings'] : null;
+        if (settings && typeof settings.syncPresentedShadowLightTransforms === 'function') {
+            settings.syncPresentedShadowLightTransforms();
+        }
+
         return presentationRoots.length > 0;
     },
     initializeImmersiveCollisionState: function () {

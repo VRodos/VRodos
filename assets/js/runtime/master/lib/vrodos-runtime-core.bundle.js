@@ -5083,6 +5083,7 @@
         return;
       }
       const opts = options || {};
+      const owner = opts.self || null;
       const stableFrustum = opts.stableFrustum === true;
       const shadowCamera = light.shadow.camera;
       const boundsCenter = new THREE.Vector3();
@@ -5126,6 +5127,7 @@
           light.updateMatrixWorld(true);
         }
       }
+      capturePresentedShadowLightBase(owner, light);
       if (light.shadow && typeof light.shadow.updateMatrices === "function") {
         light.shadow.updateMatrices(light);
       }
@@ -5192,8 +5194,9 @@
       }
       self._vrodosAdaptiveShadowCenter = self._vrodosAdaptiveShadowCenter || new THREE.Vector3();
       bounds.getCenter(self._vrodosAdaptiveShadowCenter);
+      const fitOptions = Object.assign({}, options || {}, { self });
       collectDirectionalShadowLights(self).forEach((light) => {
-        fitDirectionalShadowCameraToBounds(light, bounds, shadowQuality, options);
+        fitDirectionalShadowCameraToBounds(light, bounds, shadowQuality, fitOptions);
       });
       self._vrodosShadowFitLastMs = typeof performance !== "undefined" ? performance.now() : Date.now();
     }
@@ -5303,6 +5306,9 @@
         lastUpdateReason: self && self._vrodosShadowLastUpdateReason ? self._vrodosShadowLastUpdateReason : null,
         takramSignature: self && self._pmndrsTakramLightShadowSignature ? self._pmndrsTakramLightShadowSignature : "",
         takramSignatureReason: self && self._pmndrsTakramLightShadowSignatureReason ? self._pmndrsTakramLightShadowSignatureReason : "",
+        presentedShadowTransforms: self && self._vrodosPresentedShadowTransformCount ? self._vrodosPresentedShadowTransformCount : 0,
+        presentedShadowBaseCaptures: self && self._vrodosPresentedShadowBaseCaptureCount ? self._vrodosPresentedShadowBaseCaptureCount : 0,
+        presentedShadowLastNavigationTransformCount: self && typeof self._vrodosPresentedShadowLastNavigationTransformCount === "number" ? self._vrodosPresentedShadowLastNavigationTransformCount : null,
         shadowLights: []
       };
       if (!sceneObj) {
@@ -5492,6 +5498,8 @@
         `last reason: ${state.lastDirtyReason || "none"}`,
         `last update: ${state.lastUpdateReason || "none"}`,
         `takram signature: ${state.takramSignature || "none"}`,
+        `presented shadow transforms: ${state.presentedShadowTransforms}`,
+        `presented shadow nav transform: ${state.presentedShadowLastNavigationTransformCount === null ? "none" : state.presentedShadowLastNavigationTransformCount}`,
         `casters: ${state.casters}`,
         `receivers: ${state.receivers}`,
         `receiver-only: ${state.receiverOnly}`,
@@ -5751,6 +5759,7 @@
       state.skyMesh = null;
       state.skyMaterial = null;
       state.skyGeometry = null;
+      state.skyMaterialSignature = "";
       state.starsMesh = null;
       state.starsMaterial = null;
       state.starsGeometry = null;
@@ -6507,6 +6516,15 @@
       const skyLight = state.skyLight || null;
       const moonLight = state.moonLight || null;
       const moonTarget = state.moonTarget || null;
+      const directionSignature = [
+        vectorToSignature(presentedConfig.localSunDirection || presentedConfig.sunDirection),
+        vectorToSignature(presentedConfig.localMoonDirection || presentedConfig.moonDirection)
+      ].join("|");
+      if (self._pmndrsPresentedTakramLightDirectionSignature === directionSignature) {
+        syncPresentedShadowLightTransforms(self);
+        return false;
+      }
+      self._pmndrsPresentedTakramLightDirectionSignature = directionSignature;
       if (sunLight && presentedConfig.sunDirection && sunLight.sunDirection) {
         sunLight.sunDirection.copy(presentedConfig.sunDirection);
         ensurePmndrsWorldToEcefMatrix(sunLight, presentedConfig);
@@ -6534,6 +6552,7 @@
       }
       self._pmndrsTakramLightShadowSignature = getTakramShadowLightSignature(self, state);
       self._pmndrsTakramLightShadowSignatureReason = "takram-light-direction";
+      syncPresentedShadowLightTransforms(self);
       return true;
     }
     function ensurePmndrsTakramHorizonLights(self, config, preset, options) {
@@ -7727,6 +7746,27 @@
       }
       return true;
     }
+    function getTextureIdentity(texture) {
+      if (!texture) {
+        return "none";
+      }
+      return texture.uuid || texture.id || "texture";
+    }
+    function getPmndrsAtmosphereSkyMaterialSignature(config, state) {
+      const textures = state && state.textures ? state.textures : {};
+      return [
+        config && config.takramSunEnabled !== false ? "sun" : "no-sun",
+        config && config.correctAltitudeEnabled !== false ? "altitude" : "flat-altitude",
+        config && config.groundEnabled ? "ground" : "no-ground",
+        config ? getPmndrsEffectiveGroundAlbedo(config) : "#000000",
+        config && config.moonEnabled ? "moon" : "no-moon",
+        getTextureIdentity(textures.irradianceTexture),
+        getTextureIdentity(textures.scatteringTexture),
+        getTextureIdentity(textures.transmittanceTexture),
+        getTextureIdentity(textures.singleMieScatteringTexture),
+        getTextureIdentity(textures.higherOrderScatteringTexture)
+      ].join("|");
+    }
     function applyVrTakramSkyDirectCalibration(self, material) {
       if (!shouldUseVrTakramVisibleSky(self) || !material) {
         return false;
@@ -7843,15 +7883,20 @@ ${shader.fragmentShader}` : withUniform;
         self.el.object3D.add(state.skyMesh);
       }
       if (state.skyMaterial) {
+        const materialSignature = getPmndrsAtmosphereSkyMaterialSignature(config, state);
+        const materialSignatureChanged = state.skyMaterialSignature !== materialSignature;
         applyVrTakramSkyDirectCalibration(self, state.skyMaterial);
         self.applyPmndrsAtmosphereConfigToTarget(state.skyMaterial, config);
-        state.skyMaterial.irradianceTexture = state.textures.irradianceTexture || null;
-        state.skyMaterial.scatteringTexture = state.textures.scatteringTexture || null;
-        state.skyMaterial.transmittanceTexture = state.textures.transmittanceTexture || null;
-        state.skyMaterial.singleMieScatteringTexture = state.textures.singleMieScatteringTexture || null;
-        state.skyMaterial.higherOrderScatteringTexture = state.textures.higherOrderScatteringTexture || null;
+        if (materialSignatureChanged) {
+          state.skyMaterial.irradianceTexture = state.textures.irradianceTexture || null;
+          state.skyMaterial.scatteringTexture = state.textures.scatteringTexture || null;
+          state.skyMaterial.transmittanceTexture = state.textures.transmittanceTexture || null;
+          state.skyMaterial.singleMieScatteringTexture = state.textures.singleMieScatteringTexture || null;
+          state.skyMaterial.higherOrderScatteringTexture = state.textures.higherOrderScatteringTexture || null;
+          state.skyMaterial.needsUpdate = true;
+          state.skyMaterialSignature = materialSignature;
+        }
         state.skyMaterial.dithering = true;
-        state.skyMaterial.needsUpdate = true;
       }
       if (state.skyMesh) {
         state.skyMesh.visible = true;
@@ -7978,6 +8023,73 @@ ${shader.fragmentShader}` : withUniform;
         return navigation.authoredToRenderedDirection(sourceDirection, self._pmndrsPresentedSunDirection);
       }
       return self._pmndrsPresentedSunDirection.copy(sourceDirection).normalize();
+    }
+    function getImmersiveNavigationForPresentedTransforms() {
+      const navigation = getImmersiveNavigationComponent();
+      if (navigation && typeof navigation.isImmersiveXrPresenting === "function" && navigation.isImmersiveXrPresenting() && typeof navigation.authoredToRenderedPosition === "function" && typeof navigation.renderedToAuthoredPosition === "function") {
+        return navigation;
+      }
+      return null;
+    }
+    function capturePresentedShadowLightBase(self, light, options) {
+      if (!light || !light.position || !light.target || !light.target.position) {
+        return false;
+      }
+      const opts = options || {};
+      const navigation = getImmersiveNavigationForPresentedTransforms();
+      light.userData = light.userData || {};
+      light.userData.vrodosPresentedShadowBasePosition = light.userData.vrodosPresentedShadowBasePosition || new THREE.Vector3();
+      light.userData.vrodosPresentedShadowBaseTarget = light.userData.vrodosPresentedShadowBaseTarget || new THREE.Vector3();
+      if (navigation && opts.assumeAuthored !== true) {
+        navigation.renderedToAuthoredPosition(light.position, light.userData.vrodosPresentedShadowBasePosition);
+        navigation.renderedToAuthoredPosition(light.target.position, light.userData.vrodosPresentedShadowBaseTarget);
+      } else {
+        light.userData.vrodosPresentedShadowBasePosition.copy(light.position);
+        light.userData.vrodosPresentedShadowBaseTarget.copy(light.target.position);
+      }
+      light.userData.vrodosPresentedShadowBaseCaptured = true;
+      if (self) {
+        self._vrodosPresentedShadowBaseCaptureCount = (self._vrodosPresentedShadowBaseCaptureCount || 0) + 1;
+      }
+      return true;
+    }
+    function syncPresentedShadowLightTransforms(self) {
+      const navigation = getImmersiveNavigationForPresentedTransforms();
+      if (!self || !navigation) {
+        return false;
+      }
+      const transformCount = typeof navigation.immersiveRootTransformCount === "number" ? navigation.immersiveRootTransformCount : 0;
+      let changed = false;
+      collectDirectionalShadowLights(self).forEach((light) => {
+        if (!light || !light.target || !light.userData) {
+          return;
+        }
+        if (!light.userData.vrodosPresentedShadowBaseCaptured) {
+          capturePresentedShadowLightBase(self, light, { assumeAuthored: true });
+        }
+        const basePosition = light.userData.vrodosPresentedShadowBasePosition;
+        const baseTarget = light.userData.vrodosPresentedShadowBaseTarget;
+        if (!basePosition || !baseTarget) {
+          return;
+        }
+        if (light.userData.vrodosPresentedShadowLastTransformCount === transformCount) {
+          return;
+        }
+        navigation.authoredToRenderedPosition(basePosition, light.position);
+        navigation.authoredToRenderedPosition(baseTarget, light.target.position);
+        light.target.updateMatrixWorld(true);
+        light.updateMatrixWorld(true);
+        if (light.shadow && typeof light.shadow.updateMatrices === "function") {
+          light.shadow.updateMatrices(light);
+        }
+        light.userData.vrodosPresentedShadowLastTransformCount = transformCount;
+        changed = true;
+      });
+      if (changed) {
+        self._vrodosPresentedShadowTransformCount = (self._vrodosPresentedShadowTransformCount || 0) + 1;
+        self._vrodosPresentedShadowLastNavigationTransformCount = transformCount;
+      }
+      return changed;
     }
     function getImmersiveRenderYawDeg() {
       const navigation = getImmersiveNavigationComponent();
@@ -8531,6 +8643,9 @@ ${shader.fragmentShader}` : withUniform;
     };
     H.getShadowDiagnosticState = function() {
       return getShadowDiagnosticState(this);
+    };
+    H.syncPresentedShadowLightTransforms = function() {
+      return syncPresentedShadowLightTransforms(this);
     };
     H.markShadowDirty = function(reason) {
       if (!this || !this.el) {

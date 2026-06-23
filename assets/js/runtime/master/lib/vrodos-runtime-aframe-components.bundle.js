@@ -2846,6 +2846,7 @@
     getShadowDiagnosticState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getShadowDiagnosticState || function() {
       return null;
     },
+    syncPresentedShadowLightTransforms: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPresentedShadowLightTransforms || vrodosRuntimeNoop,
     applyMaterialProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyMaterialProfiles,
     ensurePhotorealHelperLight: VRODOSSceneSettingsMaster.SceneSettingsHelpers.ensurePhotorealHelperLight,
     removePhotorealHelperLights: VRODOSSceneSettingsMaster.SceneSettingsHelpers.removePhotorealHelperLights,
@@ -4544,6 +4545,10 @@
       this.immersiveRootTransformCount += 1;
       this.immersiveRootTransformObjectCount += presentationRoots.length;
       this.immersiveLastTransformRootCount = presentationRoots.length;
+      const settings = this.sceneEl && this.sceneEl.components ? this.sceneEl.components["scene-settings"] : null;
+      if (settings && typeof settings.syncPresentedShadowLightTransforms === "function") {
+        settings.syncPresentedShadowLightTransforms();
+      }
       return presentationRoots.length > 0;
     },
     initializeImmersiveCollisionState: function() {

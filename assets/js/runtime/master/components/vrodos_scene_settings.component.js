@@ -2713,6 +2713,7 @@ AFRAME.registerComponent('scene-settings', {
     flushShadowUpdate: VRODOSSceneSettingsMaster.SceneSettingsHelpers.flushShadowUpdate || vrodosRuntimeNoop,
     syncStaticShadowMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncStaticShadowMode || vrodosRuntimeNoop,
     getShadowDiagnosticState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getShadowDiagnosticState || function () { return null; },
+    syncPresentedShadowLightTransforms: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPresentedShadowLightTransforms || vrodosRuntimeNoop,
     applyMaterialProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyMaterialProfiles,
     ensurePhotorealHelperLight: VRODOSSceneSettingsMaster.SceneSettingsHelpers.ensurePhotorealHelperLight,
     removePhotorealHelperLights: VRODOSSceneSettingsMaster.SceneSettingsHelpers.removePhotorealHelperLights,
