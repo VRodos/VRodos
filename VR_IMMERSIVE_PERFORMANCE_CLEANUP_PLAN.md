@@ -59,12 +59,16 @@ Supported parent profiles:
 - Headset collision now uses fewer blocker rays than desktop and fails closed without BVH instead of silently falling back to slower raw mesh raycasts.
 - Editor/export now writes explicit `compiledCollisionEnabled` booleans; missing values compile as non-colliding.
 - Runtime component attachment is profile-aware so standalone headset does not attach the post-FX router and only keeps atmosphere/reflection components when the allowed authored settings can use them.
+- Recompiled headset scene `8980` still inherited `aframeFPSMeterEnabled` and pulled the remote `stats-gl` module into normal runtime output; standalone `headset` now suppresses the compiled FPS meter while `desktop` and `pc-rendered-vr` keep the author toggle.
+- `aframe-extras` survived in single-player headset output without generated components using it; lean headset compiles now remove it. `aframe-environment-component` is also removed for Takram/solid/custom/ocean headset backgrounds, but preserved when a legacy A-Frame preset background still needs it.
 
 ## Completed Implementation Pass
 
 - 2026-06-23: Implemented profile cleanup, compile target UI, movement/controller throttling, headset shadow caps, collision source-of-truth cleanup, runtime component pruning, and root documentation archive cleanup.
 - 2026-06-23: Historical root docs moved to `documentation/archive/rendering-history/`; root Markdown now keeps current references only.
 - 2026-06-23: Fixed headset dynamic-shadow yaw regression by restoring same-frame presented shadow-light transform sync while keeping adaptive shadow fitting event-driven.
+- 2026-06-23: Started runtime inclusion audit; suppressed inherited FPS meter chunk/settings for standalone headset output.
+- 2026-06-23: Pruned unused prototype CDN scripts from lean single-player headset output while preserving legacy environment backgrounds.
 - 2026-06-23: Device/headset validation remains pending after runtime rebuild and representative scene recompiles.
 
 ## Verification Notes
@@ -75,5 +79,8 @@ Supported parent profiles:
 - [x] `npm.cmd run build:runtime` completed successfully.
 - [x] `node --check` passed for rebuilt runtime bundles touched by this pass.
 - [x] `git diff --check` passed.
+- [x] Runtime script planner fixture covers FPS meter suppression for standalone headset.
+- [x] Runtime DOM transformer fixture covers lean headset CDN script pruning and legacy environment preservation.
+- [x] `node .\scripts\run-compiler-runtime-tests.mjs` passed after runtime inclusion audit changes.
 - [ ] Recompile representative `desktop`, `headset`, and `pc-rendered-vr` scenes.
 - [ ] Validate Quest/headset movement, yaw, collision, direct video clicks, POI, CEFR, assessment, scene ray feedback, headset shadow caps, and absence of repeated movement-frame root diagnostics.

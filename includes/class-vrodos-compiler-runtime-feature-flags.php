@@ -132,7 +132,11 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function vr_runtime_profile( $metadata ): string {
-		$value = VRodos_Runtime_Settings_Contract::normalize_metadata_value( is_object( $metadata ) ? $metadata : new stdClass(), 'vrRuntimeProfile', 'desktop' );
+		$metadata = is_object( $metadata ) ? $metadata : new stdClass();
+		$value    = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrRuntimeProfile', 'desktop' );
+		if ( 'desktop' === $value && property_exists( $metadata, 'vrRuntimeProfile' ) ) {
+			$value = VRodos_Runtime_Settings_Contract::normalize( 'vrRuntimeProfile', $metadata->vrRuntimeProfile, 'desktop' );
+		}
 		return is_string( $value ) && '' !== $value ? $value : 'desktop';
 	}
 
@@ -177,6 +181,10 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function is_fps_meter_enabled( $metadata ): bool {
+		if ( 'headset' === $this->vr_runtime_profile( $metadata ) ) {
+			return false;
+		}
+
 		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->enableFPSMeter ?? false )
 			|| VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeFPSMeterEnabled ?? false );
 	}

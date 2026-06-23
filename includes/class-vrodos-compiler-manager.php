@@ -560,6 +560,11 @@ class VRodos_Compiler_Manager {
 			]
 		);
 
+		if ( $lean_single_player_headset ) {
+			$compiled_scene_settings = VRodos_Compiler_AFrame_DOM_Helper::parse_component_attribute( $ascene->getAttribute( 'scene-settings' ) );
+			$this->runtime_dom_transformer->apply_lean_headset_mode( $dom, $ascene, $compiled_scene_settings );
+		}
+
 		if ( $this->is_single_player_runtime() ) {
 			$this->runtime_dom_transformer->apply_single_player_mode( $dom, $ascene );
 		}

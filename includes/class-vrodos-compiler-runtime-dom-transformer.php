@@ -13,6 +13,14 @@ class VRodos_Compiler_Runtime_DOM_Transformer {
 		'vrodos-runtime-networked-components',
 	];
 
+	private const LEAN_HEADSET_SCRIPT_NEEDLES = [
+		'aframe-extras',
+	];
+
+	private const LEGACY_ENVIRONMENT_SCRIPT_NEEDLES = [
+		'aframe-environment-component',
+	];
+
 	private const NETWORKED_ATTRIBUTES = [
 		'networked',
 		'networked-audio-source',
@@ -51,6 +59,43 @@ class VRodos_Compiler_Runtime_DOM_Transformer {
 		if ( $room instanceof DOMElement ) {
 			$room->nodeValue = 'single-player';
 		}
+	}
+
+	public function apply_lean_headset_mode( DOMDocument $dom, DOMElement $ascene, array $scene_settings ): void {
+		$this->remove_scripts_containing( $dom, self::LEAN_HEADSET_SCRIPT_NEEDLES );
+
+		if ( ! $this->uses_legacy_environment_background( $scene_settings ) ) {
+			$this->remove_scripts_containing( $dom, self::LEGACY_ENVIRONMENT_SCRIPT_NEEDLES );
+			if ( $ascene->hasAttribute( 'environment' ) ) {
+				$ascene->removeAttribute( 'environment' );
+			}
+		}
+	}
+
+	private function uses_legacy_environment_background( array $scene_settings ): bool {
+		$background_choice = (string) ( $scene_settings['selChoice'] ?? '0' );
+
+		if ( '2' === $background_choice ) {
+			return 'ocean' !== strtolower( trim( (string) ( $scene_settings['presChoice'] ?? '' ) ) );
+		}
+
+		if ( '0' === $background_choice ) {
+			return ! (
+				'pmndrs' === strtolower( trim( (string) ( $scene_settings['postFXEngine'] ?? '' ) ) ) &&
+				$this->setting_bool( $scene_settings, 'pmndrsAtmosphereEnabled' )
+			);
+		}
+
+		return false;
+	}
+
+	private function setting_bool( array $settings, string $key ): bool {
+		$value = $settings[ $key ] ?? false;
+		if ( is_bool( $value ) ) {
+			return $value;
+		}
+
+		return ! in_array( strtolower( trim( (string) $value ) ), [ '', '0', 'false', 'no', 'off' ], true );
 	}
 
 	private function remove_dom_element( ?DOMElement $element ): void {

@@ -244,6 +244,12 @@ vrodos_assert_same(
 );
 
 vrodos_assert_same(
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
+	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframeFPSMeterEnabled' => true, 'aframeVrRuntimeProfile' => 'headset' ] ) ),
+	'headset suppresses FPS meter'
+);
+
+vrodos_assert_same(
 	[ 'scene-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [] ), 'single-player' ),
 	'single-player no networked components'

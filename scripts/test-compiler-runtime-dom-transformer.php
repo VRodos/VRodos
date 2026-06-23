@@ -107,6 +107,45 @@ vrodos_dom_transformer_assert( 'single-player' === $dom->getElementById( 'roomNa
 vrodos_dom_transformer_assert( 'false' === $dom->getElementById( 'occupants-wrapper' )->getAttribute( 'data-visible' ), 'occupants wrapper should be hidden' );
 vrodos_dom_transformer_assert( str_contains( $html, 'vrodos-runtime-scene-components.bundle.js' ), 'non-networked runtime scripts should remain' );
 
+function vrodos_headset_pruning_fixture(): array {
+	$fixture_dom = new DOMDocument( '1.0', 'UTF-8' );
+	@$fixture_dom->loadHTML(
+		'<!doctype html><html><head>' .
+		'<script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.7.0/dist/aframe-extras.min.js"></script>' .
+		'<script src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.5.0/dist/aframe-environment-component.min.js"></script>' .
+		'<script src="js/master/lib/vrodos-runtime-core.bundle.js"></script>' .
+		'</head><body>' .
+		'<a-scene id="aframe-scene-container" environment="preset: default"></a-scene>' .
+		'</body></html>',
+		LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS | LIBXML_NOERROR
+	);
+
+	return [ $fixture_dom, $fixture_dom->getElementById( 'aframe-scene-container' ) ];
+}
+
+[ $headset_dom, $headset_scene ] = vrodos_headset_pruning_fixture();
+vrodos_dom_transformer_assert( $headset_scene instanceof DOMElement, 'headset fixture scene missing' );
+$transformer->apply_lean_headset_mode( $headset_dom, $headset_scene, [
+	'selChoice'                => '0',
+	'postFXEngine'             => 'pmndrs',
+	'pmndrsAtmosphereEnabled'  => 'true',
+] );
+$headset_html = $headset_dom->saveHTML();
+vrodos_dom_transformer_assert( ! str_contains( $headset_html, 'aframe-extras' ), 'lean headset should remove aframe-extras script' );
+vrodos_dom_transformer_assert( ! str_contains( $headset_html, 'aframe-environment-component' ), 'Takram headset should remove legacy environment script' );
+vrodos_dom_transformer_assert( ! $headset_scene->hasAttribute( 'environment' ), 'Takram headset should not keep stale environment attr' );
+vrodos_dom_transformer_assert( str_contains( $headset_html, 'vrodos-runtime-core.bundle.js' ), 'lean headset should keep runtime scripts' );
+
+[ $legacy_env_dom, $legacy_env_scene ] = vrodos_headset_pruning_fixture();
+vrodos_dom_transformer_assert( $legacy_env_scene instanceof DOMElement, 'legacy environment fixture scene missing' );
+$transformer->apply_lean_headset_mode( $legacy_env_dom, $legacy_env_scene, [
+	'selChoice'   => '2',
+	'presChoice'  => 'forest',
+] );
+$legacy_env_html = $legacy_env_dom->saveHTML();
+vrodos_dom_transformer_assert( ! str_contains( $legacy_env_html, 'aframe-extras' ), 'legacy headset should still remove aframe-extras script' );
+vrodos_dom_transformer_assert( str_contains( $legacy_env_html, 'aframe-environment-component' ), 'legacy preset background should keep environment script' );
+
 $helper_dom = new DOMDocument( '1.0', 'UTF-8' );
 @$helper_dom->loadHTML( '<a-scene id="scene"><a-entity id="existing"></a-entity></a-scene>', LIBXML_HTML_NOIMPLIED | LIBXML_NOBLANKS | LIBXML_NOERROR );
 $helper_scene = $helper_dom->getElementById( 'scene' );
