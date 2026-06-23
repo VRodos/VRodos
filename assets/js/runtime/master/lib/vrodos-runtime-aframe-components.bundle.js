@@ -3610,6 +3610,10 @@
       this.rightThumbInput = { x: 0, y: 0 };
       this.leftThumbRawInput = { x: 0, y: 0 };
       this.rightThumbRawInput = { x: 0, y: 0 };
+      this.immersiveTurnSmoothedInput = 0;
+      this.immersiveTurnSmoothingAlpha = 0;
+      this.immersiveTurnSmoothingLastResetReason = "init";
+      this.immersiveTurnSmoothingFrameResetReason = "init";
       this.lastEffectiveMoveInput = { x: 0, y: 0, vertical: 0 };
       this.keyboardInput = { x: 0, y: 0, vertical: 0 };
       this.navMeshRoots = [];
@@ -3961,6 +3965,31 @@
       } catch (err) {
         return false;
       }
+    },
+    isImmersiveSmoothTurnDisabled: function() {
+      if (window.VRODOS_DEBUG && window.VRODOS_DEBUG.disableSmoothTurn === true) {
+        return true;
+      }
+      if (typeof window.location === "undefined" || !window.location.search || typeof URLSearchParams === "undefined") {
+        return false;
+      }
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (!params.has("vrodos_debug_disable_smooth_turn")) {
+          return false;
+        }
+        const value = params.get("vrodos_debug_disable_smooth_turn");
+        return value === "" || value === "1" || value === "true" || value === "yes";
+      } catch (err) {
+        return false;
+      }
+    },
+    resetImmersiveTurnSmoothing: function(reason) {
+      const resetReason = reason || "reset";
+      this.immersiveTurnSmoothedInput = 0;
+      this.immersiveTurnSmoothingAlpha = 0;
+      this.immersiveTurnSmoothingLastResetReason = resetReason;
+      this.immersiveTurnSmoothingFrameResetReason = resetReason;
     },
     roundDiagnosticNumber: function(value, decimals) {
       if (!Number.isFinite(value)) {
@@ -4372,6 +4401,7 @@
       return diagnostics;
     },
     handleEnterVr: function() {
+      this.resetImmersiveTurnSmoothing("enter-vr");
       this.pendingImmersiveExitNavigationPosition = null;
       this.pendingImmersiveExitNavigationReason = "";
       this.pendingImmersiveExitNavigationCapturedAt = 0;
@@ -4386,6 +4416,7 @@
       }, 100);
     },
     handleExitVr: function() {
+      this.resetImmersiveTurnSmoothing("exit-vr");
       const finalImmersiveNavigationPosition = this.immersiveVirtualNavPosition.clone();
       this.pendingImmersiveExitNavigationPosition = finalImmersiveNavigationPosition.clone();
       this.pendingImmersiveExitNavigationReason = "handle-exit-vr";
@@ -4433,6 +4464,7 @@
         this.rightThumbInput.y = 0;
         this.rightThumbRawInput.x = 0;
         this.rightThumbRawInput.y = 0;
+        this.resetImmersiveTurnSmoothing("thumbstick-end");
       }
       if (this.isImmersiveXrPresenting()) {
         this.requestShadowMapRefresh("immersive-input-settle", { deferMs: 140 });
@@ -6181,22 +6213,58 @@
       }
       return Boolean(this.sceneEl && this.sceneEl.is && (this.sceneEl.is("vr-mode") || this.sceneEl.is("ar-mode")));
     },
+    getImmersiveSmoothedTurnInput: function(targetInput, deltaSeconds) {
+      const previousInput = Number.isFinite(this.immersiveTurnSmoothedInput) ? this.immersiveTurnSmoothedInput : 0;
+      if (previousInput !== 0 && targetInput !== 0 && Math.sign(previousInput) !== Math.sign(targetInput)) {
+        this.resetImmersiveTurnSmoothing("sign-change");
+      }
+      const currentInput = Number.isFinite(this.immersiveTurnSmoothedInput) ? this.immersiveTurnSmoothedInput : 0;
+      const deltaMs = Math.max(0, (Number.isFinite(deltaSeconds) ? deltaSeconds : 0) * 1e3);
+      const attackMs = 18;
+      const releaseMs = 8;
+      const easingMs = Math.abs(targetInput) > Math.abs(currentInput) ? attackMs : releaseMs;
+      const alpha = easingMs > 0 ? VRODOSMaster.clamp(1 - Math.exp(-deltaMs / easingMs), 0, 1) : 1;
+      this.immersiveTurnSmoothingAlpha = alpha;
+      this.immersiveTurnSmoothedInput = currentInput + ((targetInput || 0) - currentInput) * alpha;
+      if (!targetInput && Math.abs(this.immersiveTurnSmoothedInput) <= this.data.thumbstickDeadzone * 0.5) {
+        this.immersiveTurnSmoothedInput = 0;
+      }
+      return this.immersiveTurnSmoothedInput;
+    },
     applyRightThumbstickTurn: function(timeDelta) {
-      const turnInput = Math.abs(this.rightThumbInput.x) > this.data.thumbstickDeadzone ? this.rightThumbInput.x : 0;
+      const rawTurnInput = Number(this.rightThumbInput.x || 0);
+      const targetTurnInput = Math.abs(rawTurnInput) > this.data.thumbstickDeadzone ? rawTurnInput : 0;
+      const immersivePresenting = this.isImmersiveXrPresenting();
+      const smoothTurnEnabled = immersivePresenting && !this.isImmersiveSmoothTurnDisabled();
+      const deltaSeconds = Math.min(timeDelta || 0, 50) / 1e3;
+      let turnInput = targetTurnInput;
+      if (smoothTurnEnabled) {
+        turnInput = this.getImmersiveSmoothedTurnInput(targetTurnInput, deltaSeconds);
+      } else if (this.immersiveTurnSmoothedInput !== 0) {
+        this.resetImmersiveTurnSmoothing(immersivePresenting ? "smooth-turn-disabled" : "not-immersive");
+      }
       const smoothnessFrame = this.getActiveImmersiveSmoothnessFrame();
       if (smoothnessFrame) {
+        smoothnessFrame.yawRawInput = this.roundDiagnosticNumber(rawTurnInput, 4);
+        smoothnessFrame.yawTargetInput = this.roundDiagnosticNumber(targetTurnInput, 4);
         smoothnessFrame.yawInput = this.roundDiagnosticNumber(turnInput, 4);
+        smoothnessFrame.yawFilteredInput = smoothTurnEnabled ? this.roundDiagnosticNumber(this.immersiveTurnSmoothedInput, 4) : null;
+        smoothnessFrame.yawSmoothingEnabled = Boolean(smoothTurnEnabled);
+        smoothnessFrame.yawSmoothingAlpha = smoothTurnEnabled ? this.roundDiagnosticNumber(this.immersiveTurnSmoothingAlpha, 4) : null;
+        smoothnessFrame.yawSmoothingResetReason = this.immersiveTurnSmoothingFrameResetReason || "";
+        smoothnessFrame.yawSmoothingLastResetReason = this.immersiveTurnSmoothingLastResetReason || "";
+        smoothnessFrame.yawDeltaMs = this.roundDiagnosticNumber(deltaSeconds * 1e3, 4);
       }
+      this.immersiveTurnSmoothingFrameResetReason = "";
       if (!turnInput || !this.el || !this.el.object3D) {
         return false;
       }
-      const deltaSeconds = Math.min(timeDelta || 0, 50) / 1e3;
       const yawDelta = this.data.turnSpeed * turnInput * Math.PI / 180 * deltaSeconds;
       if (smoothnessFrame) {
         smoothnessFrame.yawActive = true;
         smoothnessFrame.yawDeltaDeg = this.roundDiagnosticNumber(THREE.MathUtils.radToDeg(yawDelta), 4);
       }
-      if (this.isImmersiveXrPresenting()) {
+      if (immersivePresenting) {
         if (!this.immersiveWasPresenting) {
           this.resetImmersiveWorldLocomotion();
         }
