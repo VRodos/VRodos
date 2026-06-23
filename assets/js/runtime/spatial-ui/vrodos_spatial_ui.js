@@ -7,6 +7,7 @@ import {
 } from "@pmndrs/uikit";
 import {
     Button as HorizonButton,
+    ButtonIcon,
     ButtonLabel,
     Panel as HorizonPanel,
     ProgressBar as HorizonProgressBar,
@@ -45,6 +46,31 @@ import { MSDF } from "@zappar/msdf-generator";
     const CONTROLLER_POINTER_ATTACH_RETRY_LOG_INTERVAL = 120;
     const CONTROLLER_POSE_EPSILON = 0.000001;
     const CONTROLLER_RAY_DEFAULT_EPSILON = 0.00001;
+    const DIALOG_PANEL_RADIUS = 24;
+    const DIALOG_HEADER_COLOR = "#272727";
+    const DIALOG_HEADER_HEIGHT = 124;
+    const DIALOG_HEADER_PADDING_X = 56;
+    const DIALOG_HEADER_GAP_COLUMN = 24;
+    const DIALOG_TITLE_SIZE = 32;
+    const DIALOG_TITLE_LINE_HEIGHT = "118%";
+    const DIALOG_TITLE_MAX_LINES = 2;
+    const DIALOG_TITLE_MAX_CHARS_PER_LINE = 54;
+    const DIALOG_TITLE_HEIGHT = 76;
+    const DIALOG_TITLE_WORD_BREAK = "break-word";
+    const DIALOG_CONTENT_PADDING_X = 72;
+    const DIALOG_CONTENT_PADDING_Y = 52;
+    const DIALOG_CONTENT_GAP_Y = 30;
+    const DIALOG_FOOTER_HEIGHT = 104;
+    const DIALOG_FOOTER_PADDING_BOTTOM = 34;
+    const DIALOG_STATUS_FONT_SIZE = 22;
+    const DIALOG_STATUS_LINE_HEIGHT = "110%";
+    const DIALOG_PRIMARY_BUTTON_WIDTH = 220;
+    const DIALOG_PRIMARY_BUTTON_HEIGHT = 62;
+    const DIALOG_PRIMARY_BUTTON_TEXT_SIZE = 26;
+    const DIALOG_CLOSE_BUTTON_SIZE = 64;
+    const DIALOG_CLOSE_BUTTON_VARIANT = "onMedia";
+    const DIALOG_CLOSE_ICON_SIZE = 24;
+    const DIALOG_CLOSE_ICON_COLOR = "#ffffff";
     const SPATIAL_UI_FONT_FAMILY = "vrodos-noto-sans";
     const SPATIAL_UI_IMMEDIATE_FONT_FAMILY = "vrodos-inter-immediate";
     const SPATIAL_UI_FONT_CHARSET_SEED = " \tABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?.,;:'\"()-[]{}@#$%&*+=/\\<>_–—«»“”‘’…≤≥°%€ΆΈΉΊΌΎΏΪΫΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίόύώϊϋΐΰαβγδεζηθικλμνξοπρστυφχψως";
@@ -79,6 +105,7 @@ import { MSDF } from "@zappar/msdf-generator";
         horizon: {
             Panel: HorizonPanel,
             Button: HorizonButton,
+            ButtonIcon,
             ButtonLabel,
             ProgressBar: HorizonProgressBar,
             theme: HorizonTheme
@@ -2211,7 +2238,39 @@ import { MSDF } from "@zappar/msdf-generator";
             props.paddingBottom = props.paddingBottom !== undefined ? props.paddingBottom : props.paddingY;
             delete props.paddingY;
         }
+        return normalizeRadiusProps(props);
+    }
+
+    function normalizeRadiusProps(options) {
+        const props = Object.assign({}, options || {});
+        mapRadiusAlias(props, "borderRadius", [
+            "borderTopLeftRadius",
+            "borderTopRightRadius",
+            "borderBottomLeftRadius",
+            "borderBottomRightRadius"
+        ]);
+        mapRadiusAlias(props, "borderTopRadius", [
+            "borderTopLeftRadius",
+            "borderTopRightRadius"
+        ]);
+        mapRadiusAlias(props, "borderBottomRadius", [
+            "borderBottomLeftRadius",
+            "borderBottomRightRadius"
+        ]);
         return props;
+    }
+
+    function mapRadiusAlias(props, alias, targets) {
+        if (!props || props[alias] === undefined) {
+            return;
+        }
+        const value = props[alias];
+        targets.forEach((target) => {
+            if (props[target] === undefined) {
+                props[target] = value;
+            }
+        });
+        delete props[alias];
     }
 
     function createPanelApi(panelState) {
@@ -2238,6 +2297,7 @@ import { MSDF } from "@zappar/msdf-generator";
                 variant: opts.variant || (opts.negative ? "negative" : "primary"),
                 size: opts.size || "lg",
                 disabled,
+                icon: Boolean(opts.icon === true || opts.iconComponent),
                 width: opts.width,
                 height: opts.height,
                 minWidth: opts.minWidth,
@@ -2265,7 +2325,20 @@ import { MSDF } from "@zappar/msdf-generator";
                 wordBreak: opts.wordBreak || "break-word",
                 whiteSpace: "normal",
                 pointerEvents: "none"
-            }, fontProps(opts)));
+                }, fontProps(opts)));
+        }
+
+        function resolveIconProps(options) {
+            const opts = options || {};
+            const size = px(opts.iconSize, DIALOG_CLOSE_ICON_SIZE);
+            return baseContainerProps({
+                width: size,
+                height: size,
+                color: opts.iconColor,
+                fill: opts.iconColor,
+                pointerEvents: "none",
+                zIndex: opts.zIndex ? opts.zIndex + 1 : 31
+            });
         }
 
         const api = {
@@ -2391,23 +2464,49 @@ import { MSDF } from "@zappar/msdf-generator";
                 const opts = options || {};
                 const disabled = Boolean(opts.disabled);
                 const button = new HorizonButton(resolveButtonProps(opts));
+                const IconComponent = typeof opts.iconComponent === "function" ? opts.iconComponent : null;
                 button.name = "VRODOSSpatialUIActionButton";
                 button.userData = button.userData || {};
                 button.userData.vrodosSpatialActionable = !disabled && typeof opts.onClick === "function";
                 button.userData.vrodosSpatialButtonOptions = Object.assign({}, opts);
-                const label = new ButtonLabel(baseContainerProps({
-                    justifyContent: "center",
-                    alignItems: "center",
-                    flexGrow: 1,
-                    width: "100%",
-                    height: "100%",
-                    pointerEvents: "none"
-                }));
-                const labelText = new Text(resolveButtonTextProps(opts));
-                label.add(labelText);
-                button.add(label);
-                button.userData.vrodosSpatialButtonLabel = labelText;
+
+                if (IconComponent) {
+                    const iconHost = new ButtonIcon(baseContainerProps({
+                        justifyContent: "center",
+                        alignItems: "center",
+                        flexGrow: 1,
+                        width: "100%",
+                        height: "100%",
+                        pointerEvents: "none"
+                    }));
+                    const icon = new IconComponent(resolveIconProps(opts));
+                    iconHost.add(icon);
+                    button.add(iconHost);
+                    button.userData.vrodosSpatialButtonIcon = icon;
+                    button.userData.vrodosSpatialButtonIconHost = iconHost;
+                } else {
+                    const label = new ButtonLabel(baseContainerProps({
+                        justifyContent: "center",
+                        alignItems: "center",
+                        flexGrow: 1,
+                        width: "100%",
+                        height: "100%",
+                        pointerEvents: "none"
+                    }));
+                    const labelText = new Text(resolveButtonTextProps(opts));
+                    label.add(labelText);
+                    button.add(label);
+                    button.userData.vrodosSpatialButtonLabel = labelText;
+                }
                 return append(parent || this.content || this.root, button);
+            },
+
+            iconButton: function (parent, options) {
+                return this.button(parent, Object.assign({
+                    icon: true,
+                    iconComponent: X,
+                    label: ""
+                }, options || {}));
             },
 
             updateButton: function (button, options) {
@@ -2425,6 +2524,10 @@ import { MSDF } from "@zappar/msdf-generator";
                 const labelText = button.userData.vrodosSpatialButtonLabel;
                 if (labelText && typeof labelText.setProperties === "function") {
                     labelText.setProperties(resolveButtonTextProps(opts));
+                }
+                const icon = button.userData.vrodosSpatialButtonIcon;
+                if (icon && typeof icon.setProperties === "function") {
+                    icon.setProperties(resolveIconProps(opts));
                 }
                 return button;
             },
@@ -2478,20 +2581,32 @@ import { MSDF } from "@zappar/msdf-generator";
                 panelState.renderCount = this.renderCount;
                 this.clear();
                 const rawTitle = opts.title || "";
-                const titleValue = opts.titleMaxLines
-                    ? clampTextToApproximateLines(rawTitle, opts.titleMaxLines, opts.titleMaxCharsPerLine)
+                const titleMaxLines = opts.titleMaxLines !== undefined ? opts.titleMaxLines : DIALOG_TITLE_MAX_LINES;
+                const titleMaxCharsPerLine = opts.titleMaxCharsPerLine !== undefined
+                    ? opts.titleMaxCharsPerLine
+                    : DIALOG_TITLE_MAX_CHARS_PER_LINE;
+                const titleValue = titleMaxLines
+                    ? clampTextToApproximateLines(rawTitle, titleMaxLines, titleMaxCharsPerLine)
                     : (opts.titleMaxLength && String(rawTitle).length > opts.titleMaxLength
                         ? String(rawTitle).slice(0, Math.max(0, opts.titleMaxLength - 3)).trimEnd() + "..."
                         : rawTitle);
 
+                const panelRadius = opts.panelRadius !== undefined
+                    ? opts.panelRadius
+                    : (panelState.config && panelState.config.borderRadius !== undefined
+                        ? panelState.config.borderRadius
+                        : DIALOG_PANEL_RADIUS);
                 const header = new Container(baseContainerProps({
                     flexDirection: "row",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    backgroundColor: opts.headerColor || "#272727",
-                    paddingX: opts.headerPaddingX !== undefined ? opts.headerPaddingX : 72,
-                    height: opts.headerHeight || 168,
-                    gapColumn: opts.headerGapColumn !== undefined ? opts.headerGapColumn : 32,
+                    backgroundColor: opts.headerColor || DIALOG_HEADER_COLOR,
+                    borderTopLeftRadius: panelRadius,
+                    borderTopRightRadius: panelRadius,
+                    paddingX: opts.headerPaddingX !== undefined ? opts.headerPaddingX : DIALOG_HEADER_PADDING_X,
+                    height: opts.headerHeight || DIALOG_HEADER_HEIGHT,
+                    width: "100%",
+                    gapColumn: opts.headerGapColumn !== undefined ? opts.headerGapColumn : DIALOG_HEADER_GAP_COLUMN,
                     pointerEvents: "none",
                     zIndex: 10
                 }));
@@ -2507,27 +2622,28 @@ import { MSDF } from "@zappar/msdf-generator";
                 titleColumn.add(new Text(baseContainerProps(Object.assign({
                     text: normalizeSpatialText(titleValue),
                     color: "#ffffff",
-                    fontSize: opts.titleSize || 46,
-                    lineHeight: opts.titleLineHeight || "112%",
+                    fontSize: opts.titleSize || DIALOG_TITLE_SIZE,
+                    lineHeight: opts.titleLineHeight || DIALOG_TITLE_LINE_HEIGHT,
                     fontWeight: 600,
                     textAlign: "left",
                     verticalAlign: "center",
                     width: "100%",
-                    height: opts.titleHeight,
-                    wordBreak: opts.titleWordBreak || "keep-all",
+                    height: opts.titleHeight || DIALOG_TITLE_HEIGHT,
+                    wordBreak: opts.titleWordBreak || DIALOG_TITLE_WORD_BREAK,
                     whiteSpace: opts.titleWhiteSpace || "normal",
                     pointerEvents: "none"
                 }, fontProps(opts)))));
                 header.add(titleColumn);
                 if (opts.showClose !== false) {
-                    this.button(header, {
-                        label: "X",
-                        variant: "negative",
-                        width: opts.closeButtonWidth || 74,
-                        height: opts.closeButtonHeight || 58,
-                        minWidth: opts.closeButtonMinWidth || 58,
-                        textSize: opts.closeButtonTextSize || 24,
-                        fontWeight: opts.closeButtonFontWeight || 500,
+                    this.iconButton(header, {
+                        iconComponent: opts.closeIconComponent || X,
+                        variant: opts.closeButtonVariant || DIALOG_CLOSE_BUTTON_VARIANT,
+                        width: opts.closeButtonWidth || DIALOG_CLOSE_BUTTON_SIZE,
+                        height: opts.closeButtonHeight || DIALOG_CLOSE_BUTTON_SIZE,
+                        minWidth: opts.closeButtonMinWidth || DIALOG_CLOSE_BUTTON_SIZE,
+                        minHeight: opts.closeButtonMinHeight || DIALOG_CLOSE_BUTTON_SIZE,
+                        iconSize: opts.closeIconSize || DIALOG_CLOSE_ICON_SIZE,
+                        iconColor: opts.closeIconColor || DIALOG_CLOSE_ICON_COLOR,
                         flexShrink: 0,
                         onClick: opts.onClose || this.close.bind(this)
                     });
@@ -2538,11 +2654,11 @@ import { MSDF } from "@zappar/msdf-generator";
                     alignItems: "stretch",
                     justifyContent: "flex-start",
                     flexGrow: 1,
-                    paddingX: opts.paddingX !== undefined ? opts.paddingX : 88,
-                    paddingY: opts.paddingY !== undefined ? opts.paddingY : 70,
+                    paddingX: opts.paddingX !== undefined ? opts.paddingX : DIALOG_CONTENT_PADDING_X,
+                    paddingY: opts.paddingY !== undefined ? opts.paddingY : DIALOG_CONTENT_PADDING_Y,
                     paddingTop: opts.paddingTop,
                     paddingBottom: opts.paddingBottom,
-                    gapRow: opts.gapY !== undefined ? opts.gapY : 34,
+                    gapRow: opts.gapY !== undefined ? opts.gapY : DIALOG_CONTENT_GAP_Y,
                     pointerEvents: "none",
                     zIndex: 5
                 }));
@@ -2557,7 +2673,7 @@ import { MSDF } from "@zappar/msdf-generator";
                         scrollbarWidth: opts.scrollbarWidth || 12,
                         scrollbarColor: opts.scrollbarColor || "rgba(39,39,39,0.38)",
                         scrollbarBorderRadius: opts.scrollbarBorderRadius || 999,
-                        gapRow: opts.scrollGapY !== undefined ? opts.scrollGapY : (opts.gapY !== undefined ? opts.gapY : 34),
+                        gapRow: opts.scrollGapY !== undefined ? opts.scrollGapY : (opts.gapY !== undefined ? opts.gapY : DIALOG_CONTENT_GAP_Y),
                         pointerEvents: "listener",
                         zIndex: 8
                     }))
@@ -2569,10 +2685,10 @@ import { MSDF } from "@zappar/msdf-generator";
                     flexDirection: "row",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    paddingX: opts.paddingX !== undefined ? opts.paddingX : 88,
-                    paddingBottom: opts.footerPaddingBottom !== undefined ? opts.footerPaddingBottom : 58,
+                    paddingX: opts.paddingX !== undefined ? opts.paddingX : DIALOG_CONTENT_PADDING_X,
+                    paddingBottom: opts.footerPaddingBottom !== undefined ? opts.footerPaddingBottom : DIALOG_FOOTER_PADDING_BOTTOM,
                     gapColumn: 28,
-                    height: opts.footerHeight || 120,
+                    height: opts.footerHeight || DIALOG_FOOTER_HEIGHT,
                     pointerEvents: "none",
                     zIndex: 5
                 }));
@@ -2587,11 +2703,11 @@ import { MSDF } from "@zappar/msdf-generator";
                     const statusText = this.text(footer, {
                         text: opts.status,
                         color: "#5a5a5a",
-                        fontSize: opts.statusFontSize || 28,
-                        lineHeight: opts.statusLineHeight || "112%",
+                        fontSize: opts.statusFontSize || DIALOG_STATUS_FONT_SIZE,
+                        lineHeight: opts.statusLineHeight || DIALOG_STATUS_LINE_HEIGHT,
                         flexGrow: 1,
                         flexShrink: 1,
-                        wordBreak: opts.statusWordBreak || "keep-all",
+                        wordBreak: opts.statusWordBreak || "break-word",
                         whiteSpace: opts.statusWhiteSpace || "normal"
                     });
                     footer.userData = footer.userData || {};
@@ -2605,9 +2721,9 @@ import { MSDF } from "@zappar/msdf-generator";
                         label: opts.primary.label || "Finish",
                         variant: opts.primary.variant || "positive",
                         disabled: Boolean(opts.primary.disabled),
-                        width: opts.primary.width || 220,
-                        height: opts.primary.height || 62,
-                        textSize: opts.primary.textSize || 26,
+                        width: opts.primary.width || DIALOG_PRIMARY_BUTTON_WIDTH,
+                        height: opts.primary.height || DIALOG_PRIMARY_BUTTON_HEIGHT,
+                        textSize: opts.primary.textSize || DIALOG_PRIMARY_BUTTON_TEXT_SIZE,
                         onClick: opts.primary.onClick
                     });
                 }
@@ -2682,8 +2798,9 @@ import { MSDF } from "@zappar/msdf-generator";
         const height = numberOrDefault(config && config.height, DEFAULT_HEIGHT);
         const panelScale = panelScaleForOptions(config || {});
         const metrics = resolvePanelMetrics(config || {}, width, height);
+        const panelRadius = config && config.borderRadius !== undefined ? config.borderRadius : DIALOG_PANEL_RADIUS;
         const group = new THREE.Group();
-        const root = new HorizonPanel(Object.assign({
+        const root = new HorizonPanel(normalizeRadiusProps(Object.assign({
             width: metrics.designWidthPx,
             height: metrics.designHeightPx,
             sizeX: width,
@@ -2695,7 +2812,7 @@ import { MSDF } from "@zappar/msdf-generator";
             alignItems: "stretch",
             justifyContent: "flex-start",
             overflow: "hidden",
-            borderRadius: 24,
+            borderRadius: panelRadius,
             borderWidth: 1,
             backgroundColor: config.background || "#f2f2f2",
             borderColor: config.borderColor || "#d9d9d9",
@@ -2705,7 +2822,7 @@ import { MSDF } from "@zappar/msdf-generator";
             depthWrite: false,
             renderOrder: PANEL_RENDER_ORDER,
             zIndex: 0
-        }, fontProps(config || {})));
+        }, fontProps(config || {}))));
 
         group.name = "VRODOSSpatialUIPanelGroup";
         root.name = "VRODOSSpatialUIHorizonPanel";

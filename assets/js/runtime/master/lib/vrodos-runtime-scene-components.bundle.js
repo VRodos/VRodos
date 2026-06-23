@@ -3109,7 +3109,6 @@
     const VR_PANEL_HEIGHT = 1.16;
     const VR_PANEL_DISTANCE = 2.05;
     const VR_PANEL_VERTICAL_OFFSET = -0.04;
-    const VR_TITLE_SIZE = 34;
     const VR_KICKER_SIZE = 24;
     const VR_LEVEL_BUTTON_TEXT_SIZE = 34;
     const VR_START_BUTTON_TEXT_SIZE = 26;
@@ -3393,16 +3392,9 @@
         const frame = panelApi.frame({
           title: "Choose your level",
           showClose: false,
-          headerColor: "#272727",
-          headerHeight: 118,
-          titleSize: VR_TITLE_SIZE,
-          titleLineHeight: "116%",
-          titleWordBreak: "keep-all",
           paddingX: 64,
           paddingY: 34,
           gapY: 22,
-          footerHeight: 106,
-          footerPaddingBottom: 32,
           primary: runtime.vrStartButtonOptions()
         });
         runtime.vrStartButton = frame.primaryButton || null;
@@ -4968,30 +4960,7 @@
       const frameOptions = Object.assign({
         title: value(payload.title, "Assessment"),
         status: status || "",
-        headerHeight: 112,
-        headerPaddingX: 56,
-        titleSize: 28,
-        titleLineHeight: "118%",
-        titleWhiteSpace: "normal",
-        titleWordBreak: "break-word",
-        titleMaxLines: 2,
-        titleMaxCharsPerLine: 54,
-        titleHeight: 66,
-        headerGapColumn: 24,
-        closeButtonWidth: 82,
-        closeButtonHeight: 64,
-        closeButtonMinWidth: 72,
-        closeButtonTextSize: 34,
-        closeButtonFontWeight: 700,
-        paddingX: 72,
-        paddingY: 52,
-        footerHeight: 104,
-        footerPaddingBottom: 34,
-        statusFontSize: 22,
-        statusLineHeight: "110%",
         scrollContent: true,
-        scrollGapY: 24,
-        gapY: 30,
         onClose: function() {
           runtime.close("close");
         },
@@ -5414,7 +5383,6 @@
           }
           const completeButtonOptions = pairCompleteButtonOptions(runtime, state, placed);
           const frame = createFrame(runtime, pairStatusText(state, placed), completeButtonOptions, {
-            headerHeight: 124,
             paddingX: 62,
             paddingTop: 24,
             paddingBottom: 18,

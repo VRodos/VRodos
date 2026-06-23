@@ -13457,6 +13457,35 @@
   }
   var theme = merge(lightTheme, darkTheme);
 
+  // node_modules/@pmndrs/uikit-horizon/dist/button/icon.js
+  var ButtonIcon = class extends Container {
+    constructor(inputProperties, initialClasses, config) {
+      const size = g(() => {
+        var _a4;
+        const btn = this.parentContainer.value;
+        if (!(btn instanceof Button)) {
+          return 24;
+        }
+        const size2 = (_a4 = btn.properties.value.size) != null ? _a4 : "lg";
+        if (size2 === "lg") {
+          return 24;
+        }
+        return 16;
+      });
+      super(inputProperties, initialClasses, {
+        defaults: componentDefaults,
+        ...config,
+        defaultOverrides: {
+          "*": {
+            width: size,
+            height: size
+          },
+          ...config == null ? void 0 : config.defaultOverrides
+        }
+      });
+    }
+  };
+
   // node_modules/@pmndrs/uikit-horizon/dist/button/label.js
   var ButtonLabel = class extends Container {
     constructor(inputProperties, initialClasses, config) {
@@ -15183,6 +15212,31 @@
     const CONTROLLER_POINTER_ATTACH_RETRY_LOG_INTERVAL = 120;
     const CONTROLLER_POSE_EPSILON = 1e-6;
     const CONTROLLER_RAY_DEFAULT_EPSILON = 1e-5;
+    const DIALOG_PANEL_RADIUS = 24;
+    const DIALOG_HEADER_COLOR = "#272727";
+    const DIALOG_HEADER_HEIGHT = 124;
+    const DIALOG_HEADER_PADDING_X = 56;
+    const DIALOG_HEADER_GAP_COLUMN = 24;
+    const DIALOG_TITLE_SIZE = 32;
+    const DIALOG_TITLE_LINE_HEIGHT = "118%";
+    const DIALOG_TITLE_MAX_LINES = 2;
+    const DIALOG_TITLE_MAX_CHARS_PER_LINE = 54;
+    const DIALOG_TITLE_HEIGHT = 76;
+    const DIALOG_TITLE_WORD_BREAK = "break-word";
+    const DIALOG_CONTENT_PADDING_X = 72;
+    const DIALOG_CONTENT_PADDING_Y = 52;
+    const DIALOG_CONTENT_GAP_Y = 30;
+    const DIALOG_FOOTER_HEIGHT = 104;
+    const DIALOG_FOOTER_PADDING_BOTTOM = 34;
+    const DIALOG_STATUS_FONT_SIZE = 22;
+    const DIALOG_STATUS_LINE_HEIGHT = "110%";
+    const DIALOG_PRIMARY_BUTTON_WIDTH = 220;
+    const DIALOG_PRIMARY_BUTTON_HEIGHT = 62;
+    const DIALOG_PRIMARY_BUTTON_TEXT_SIZE = 26;
+    const DIALOG_CLOSE_BUTTON_SIZE = 64;
+    const DIALOG_CLOSE_BUTTON_VARIANT = "onMedia";
+    const DIALOG_CLOSE_ICON_SIZE = 24;
+    const DIALOG_CLOSE_ICON_COLOR = "#ffffff";
     const SPATIAL_UI_FONT_FAMILY = "vrodos-noto-sans";
     const SPATIAL_UI_IMMEDIATE_FONT_FAMILY = "vrodos-inter-immediate";
     const SPATIAL_UI_FONT_CHARSET_SEED = ` 	ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?.,;:'"()-[]{}@#$%&*+=/\\<>_\u2013\u2014\xAB\xBB\u201C\u201D\u2018\u2019\u2026\u2264\u2265\xB0%\u20AC\u0386\u0388\u0389\u038A\u038C\u038E\u038F\u03AA\u03AB\u0391\u0392\u0393\u0394\u0395\u0396\u0397\u0398\u0399\u039A\u039B\u039C\u039D\u039E\u039F\u03A0\u03A1\u03A3\u03A4\u03A5\u03A6\u03A7\u03A8\u03A9\u03AC\u03AD\u03AE\u03AF\u03CC\u03CD\u03CE\u03CA\u03CB\u0390\u03B0\u03B1\u03B2\u03B3\u03B4\u03B5\u03B6\u03B7\u03B8\u03B9\u03BA\u03BB\u03BC\u03BD\u03BE\u03BF\u03C0\u03C1\u03C3\u03C4\u03C5\u03C6\u03C7\u03C8\u03C9\u03C2`;
@@ -15215,6 +15269,7 @@
       horizon: {
         Panel,
         Button,
+        ButtonIcon,
         ButtonLabel,
         ProgressBar,
         theme
@@ -17140,7 +17195,37 @@
         props.paddingBottom = props.paddingBottom !== void 0 ? props.paddingBottom : props.paddingY;
         delete props.paddingY;
       }
+      return normalizeRadiusProps(props);
+    }
+    function normalizeRadiusProps(options) {
+      const props = Object.assign({}, options || {});
+      mapRadiusAlias(props, "borderRadius", [
+        "borderTopLeftRadius",
+        "borderTopRightRadius",
+        "borderBottomLeftRadius",
+        "borderBottomRightRadius"
+      ]);
+      mapRadiusAlias(props, "borderTopRadius", [
+        "borderTopLeftRadius",
+        "borderTopRightRadius"
+      ]);
+      mapRadiusAlias(props, "borderBottomRadius", [
+        "borderBottomLeftRadius",
+        "borderBottomRightRadius"
+      ]);
       return props;
+    }
+    function mapRadiusAlias(props, alias, targets) {
+      if (!props || props[alias] === void 0) {
+        return;
+      }
+      const value = props[alias];
+      targets.forEach((target) => {
+        if (props[target] === void 0) {
+          props[target] = value;
+        }
+      });
+      delete props[alias];
     }
     function createPanelApi(panelState) {
       function withPanelFontDefaults(options) {
@@ -17165,6 +17250,7 @@
           variant: opts.variant || (opts.negative ? "negative" : "primary"),
           size: opts.size || "lg",
           disabled,
+          icon: Boolean(opts.icon === true || opts.iconComponent),
           width: opts.width,
           height: opts.height,
           minWidth: opts.minWidth,
@@ -17192,6 +17278,18 @@
           whiteSpace: "normal",
           pointerEvents: "none"
         }, fontProps(opts)));
+      }
+      function resolveIconProps(options) {
+        const opts = options || {};
+        const size = px(opts.iconSize, DIALOG_CLOSE_ICON_SIZE);
+        return baseContainerProps({
+          width: size,
+          height: size,
+          color: opts.iconColor,
+          fill: opts.iconColor,
+          pointerEvents: "none",
+          zIndex: opts.zIndex ? opts.zIndex + 1 : 31
+        });
       }
       const api2 = {
         __spatialUi: true,
@@ -17306,23 +17404,47 @@
           const opts = options || {};
           const disabled = Boolean(opts.disabled);
           const button = new Button(resolveButtonProps(opts));
+          const IconComponent = typeof opts.iconComponent === "function" ? opts.iconComponent : null;
           button.name = "VRODOSSpatialUIActionButton";
           button.userData = button.userData || {};
           button.userData.vrodosSpatialActionable = !disabled && typeof opts.onClick === "function";
           button.userData.vrodosSpatialButtonOptions = Object.assign({}, opts);
-          const label = new ButtonLabel(baseContainerProps({
-            justifyContent: "center",
-            alignItems: "center",
-            flexGrow: 1,
-            width: "100%",
-            height: "100%",
-            pointerEvents: "none"
-          }));
-          const labelText = new Text(resolveButtonTextProps(opts));
-          label.add(labelText);
-          button.add(label);
-          button.userData.vrodosSpatialButtonLabel = labelText;
+          if (IconComponent) {
+            const iconHost = new ButtonIcon(baseContainerProps({
+              justifyContent: "center",
+              alignItems: "center",
+              flexGrow: 1,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none"
+            }));
+            const icon = new IconComponent(resolveIconProps(opts));
+            iconHost.add(icon);
+            button.add(iconHost);
+            button.userData.vrodosSpatialButtonIcon = icon;
+            button.userData.vrodosSpatialButtonIconHost = iconHost;
+          } else {
+            const label = new ButtonLabel(baseContainerProps({
+              justifyContent: "center",
+              alignItems: "center",
+              flexGrow: 1,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none"
+            }));
+            const labelText = new Text(resolveButtonTextProps(opts));
+            label.add(labelText);
+            button.add(label);
+            button.userData.vrodosSpatialButtonLabel = labelText;
+          }
           return append(parent || this.content || this.root, button);
+        },
+        iconButton: function(parent, options) {
+          return this.button(parent, Object.assign({
+            icon: true,
+            iconComponent: X,
+            label: ""
+          }, options || {}));
         },
         updateButton: function(button, options) {
           if (!button) {
@@ -17339,6 +17461,10 @@
           const labelText = button.userData.vrodosSpatialButtonLabel;
           if (labelText && typeof labelText.setProperties === "function") {
             labelText.setProperties(resolveButtonTextProps(opts));
+          }
+          const icon = button.userData.vrodosSpatialButtonIcon;
+          if (icon && typeof icon.setProperties === "function") {
+            icon.setProperties(resolveIconProps(opts));
           }
           return button;
         },
@@ -17389,15 +17515,21 @@
           panelState.renderCount = this.renderCount;
           this.clear();
           const rawTitle = opts.title || "";
-          const titleValue = opts.titleMaxLines ? clampTextToApproximateLines(rawTitle, opts.titleMaxLines, opts.titleMaxCharsPerLine) : opts.titleMaxLength && String(rawTitle).length > opts.titleMaxLength ? String(rawTitle).slice(0, Math.max(0, opts.titleMaxLength - 3)).trimEnd() + "..." : rawTitle;
+          const titleMaxLines = opts.titleMaxLines !== void 0 ? opts.titleMaxLines : DIALOG_TITLE_MAX_LINES;
+          const titleMaxCharsPerLine = opts.titleMaxCharsPerLine !== void 0 ? opts.titleMaxCharsPerLine : DIALOG_TITLE_MAX_CHARS_PER_LINE;
+          const titleValue = titleMaxLines ? clampTextToApproximateLines(rawTitle, titleMaxLines, titleMaxCharsPerLine) : opts.titleMaxLength && String(rawTitle).length > opts.titleMaxLength ? String(rawTitle).slice(0, Math.max(0, opts.titleMaxLength - 3)).trimEnd() + "..." : rawTitle;
+          const panelRadius = opts.panelRadius !== void 0 ? opts.panelRadius : panelState.config && panelState.config.borderRadius !== void 0 ? panelState.config.borderRadius : DIALOG_PANEL_RADIUS;
           const header = new Container(baseContainerProps({
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
-            backgroundColor: opts.headerColor || "#272727",
-            paddingX: opts.headerPaddingX !== void 0 ? opts.headerPaddingX : 72,
-            height: opts.headerHeight || 168,
-            gapColumn: opts.headerGapColumn !== void 0 ? opts.headerGapColumn : 32,
+            backgroundColor: opts.headerColor || DIALOG_HEADER_COLOR,
+            borderTopLeftRadius: panelRadius,
+            borderTopRightRadius: panelRadius,
+            paddingX: opts.headerPaddingX !== void 0 ? opts.headerPaddingX : DIALOG_HEADER_PADDING_X,
+            height: opts.headerHeight || DIALOG_HEADER_HEIGHT,
+            width: "100%",
+            gapColumn: opts.headerGapColumn !== void 0 ? opts.headerGapColumn : DIALOG_HEADER_GAP_COLUMN,
             pointerEvents: "none",
             zIndex: 10
           }));
@@ -17413,27 +17545,28 @@
           titleColumn.add(new Text(baseContainerProps(Object.assign({
             text: normalizeSpatialText(titleValue),
             color: "#ffffff",
-            fontSize: opts.titleSize || 46,
-            lineHeight: opts.titleLineHeight || "112%",
+            fontSize: opts.titleSize || DIALOG_TITLE_SIZE,
+            lineHeight: opts.titleLineHeight || DIALOG_TITLE_LINE_HEIGHT,
             fontWeight: 600,
             textAlign: "left",
             verticalAlign: "center",
             width: "100%",
-            height: opts.titleHeight,
-            wordBreak: opts.titleWordBreak || "keep-all",
+            height: opts.titleHeight || DIALOG_TITLE_HEIGHT,
+            wordBreak: opts.titleWordBreak || DIALOG_TITLE_WORD_BREAK,
             whiteSpace: opts.titleWhiteSpace || "normal",
             pointerEvents: "none"
           }, fontProps(opts)))));
           header.add(titleColumn);
           if (opts.showClose !== false) {
-            this.button(header, {
-              label: "X",
-              variant: "negative",
-              width: opts.closeButtonWidth || 74,
-              height: opts.closeButtonHeight || 58,
-              minWidth: opts.closeButtonMinWidth || 58,
-              textSize: opts.closeButtonTextSize || 24,
-              fontWeight: opts.closeButtonFontWeight || 500,
+            this.iconButton(header, {
+              iconComponent: opts.closeIconComponent || X,
+              variant: opts.closeButtonVariant || DIALOG_CLOSE_BUTTON_VARIANT,
+              width: opts.closeButtonWidth || DIALOG_CLOSE_BUTTON_SIZE,
+              height: opts.closeButtonHeight || DIALOG_CLOSE_BUTTON_SIZE,
+              minWidth: opts.closeButtonMinWidth || DIALOG_CLOSE_BUTTON_SIZE,
+              minHeight: opts.closeButtonMinHeight || DIALOG_CLOSE_BUTTON_SIZE,
+              iconSize: opts.closeIconSize || DIALOG_CLOSE_ICON_SIZE,
+              iconColor: opts.closeIconColor || DIALOG_CLOSE_ICON_COLOR,
               flexShrink: 0,
               onClick: opts.onClose || this.close.bind(this)
             });
@@ -17443,11 +17576,11 @@
             alignItems: "stretch",
             justifyContent: "flex-start",
             flexGrow: 1,
-            paddingX: opts.paddingX !== void 0 ? opts.paddingX : 88,
-            paddingY: opts.paddingY !== void 0 ? opts.paddingY : 70,
+            paddingX: opts.paddingX !== void 0 ? opts.paddingX : DIALOG_CONTENT_PADDING_X,
+            paddingY: opts.paddingY !== void 0 ? opts.paddingY : DIALOG_CONTENT_PADDING_Y,
             paddingTop: opts.paddingTop,
             paddingBottom: opts.paddingBottom,
-            gapRow: opts.gapY !== void 0 ? opts.gapY : 34,
+            gapRow: opts.gapY !== void 0 ? opts.gapY : DIALOG_CONTENT_GAP_Y,
             pointerEvents: "none",
             zIndex: 5
           }));
@@ -17461,7 +17594,7 @@
             scrollbarWidth: opts.scrollbarWidth || 12,
             scrollbarColor: opts.scrollbarColor || "rgba(39,39,39,0.38)",
             scrollbarBorderRadius: opts.scrollbarBorderRadius || 999,
-            gapRow: opts.scrollGapY !== void 0 ? opts.scrollGapY : opts.gapY !== void 0 ? opts.gapY : 34,
+            gapRow: opts.scrollGapY !== void 0 ? opts.scrollGapY : opts.gapY !== void 0 ? opts.gapY : DIALOG_CONTENT_GAP_Y,
             pointerEvents: "listener",
             zIndex: 8
           })) : content5;
@@ -17472,10 +17605,10 @@
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
-            paddingX: opts.paddingX !== void 0 ? opts.paddingX : 88,
-            paddingBottom: opts.footerPaddingBottom !== void 0 ? opts.footerPaddingBottom : 58,
+            paddingX: opts.paddingX !== void 0 ? opts.paddingX : DIALOG_CONTENT_PADDING_X,
+            paddingBottom: opts.footerPaddingBottom !== void 0 ? opts.footerPaddingBottom : DIALOG_FOOTER_PADDING_BOTTOM,
             gapColumn: 28,
-            height: opts.footerHeight || 120,
+            height: opts.footerHeight || DIALOG_FOOTER_HEIGHT,
             pointerEvents: "none",
             zIndex: 5
           }));
@@ -17488,11 +17621,11 @@
             const statusText = this.text(footer, {
               text: opts.status,
               color: "#5a5a5a",
-              fontSize: opts.statusFontSize || 28,
-              lineHeight: opts.statusLineHeight || "112%",
+              fontSize: opts.statusFontSize || DIALOG_STATUS_FONT_SIZE,
+              lineHeight: opts.statusLineHeight || DIALOG_STATUS_LINE_HEIGHT,
               flexGrow: 1,
               flexShrink: 1,
-              wordBreak: opts.statusWordBreak || "keep-all",
+              wordBreak: opts.statusWordBreak || "break-word",
               whiteSpace: opts.statusWhiteSpace || "normal"
             });
             footer.userData = footer.userData || {};
@@ -17506,9 +17639,9 @@
               label: opts.primary.label || "Finish",
               variant: opts.primary.variant || "positive",
               disabled: Boolean(opts.primary.disabled),
-              width: opts.primary.width || 220,
-              height: opts.primary.height || 62,
-              textSize: opts.primary.textSize || 26,
+              width: opts.primary.width || DIALOG_PRIMARY_BUTTON_WIDTH,
+              height: opts.primary.height || DIALOG_PRIMARY_BUTTON_HEIGHT,
+              textSize: opts.primary.textSize || DIALOG_PRIMARY_BUTTON_TEXT_SIZE,
               onClick: opts.primary.onClick
             });
           }
@@ -17575,8 +17708,9 @@
       const height = numberOrDefault(config && config.height, DEFAULT_HEIGHT);
       const panelScale = panelScaleForOptions(config || {});
       const metrics = resolvePanelMetrics(config || {}, width, height);
+      const panelRadius = config && config.borderRadius !== void 0 ? config.borderRadius : DIALOG_PANEL_RADIUS;
       const group = new THREE.Group();
-      const root = new Panel(Object.assign({
+      const root = new Panel(normalizeRadiusProps(Object.assign({
         width: metrics.designWidthPx,
         height: metrics.designHeightPx,
         sizeX: width,
@@ -17588,7 +17722,7 @@
         alignItems: "stretch",
         justifyContent: "flex-start",
         overflow: "hidden",
-        borderRadius: 24,
+        borderRadius: panelRadius,
         borderWidth: 1,
         backgroundColor: config.background || "#f2f2f2",
         borderColor: config.borderColor || "#d9d9d9",
@@ -17598,7 +17732,7 @@
         depthWrite: false,
         renderOrder: PANEL_RENDER_ORDER,
         zIndex: 0
-      }, fontProps(config || {})));
+      }, fontProps(config || {}))));
       group.name = "VRODOSSpatialUIPanelGroup";
       root.name = "VRODOSSpatialUIHorizonPanel";
       root.frustumCulled = false;

@@ -78,30 +78,7 @@
         const frameOptions = Object.assign({
             title: value(payload.title, "Assessment"),
             status: status || "",
-            headerHeight: 112,
-            headerPaddingX: 56,
-            titleSize: 28,
-            titleLineHeight: "118%",
-            titleWhiteSpace: "normal",
-            titleWordBreak: "break-word",
-            titleMaxLines: 2,
-            titleMaxCharsPerLine: 54,
-            titleHeight: 66,
-            headerGapColumn: 24,
-            closeButtonWidth: 82,
-            closeButtonHeight: 64,
-            closeButtonMinWidth: 72,
-            closeButtonTextSize: 34,
-            closeButtonFontWeight: 700,
-            paddingX: 72,
-            paddingY: 52,
-            footerHeight: 104,
-            footerPaddingBottom: 34,
-            statusFontSize: 22,
-            statusLineHeight: "110%",
             scrollContent: true,
-            scrollGapY: 24,
-            gapY: 30,
             onClose: function () {
                 runtime.close("close");
             },
@@ -579,7 +556,6 @@
 
                 const completeButtonOptions = pairCompleteButtonOptions(runtime, state, placed);
                 const frame = createFrame(runtime, pairStatusText(state, placed), completeButtonOptions, {
-                    headerHeight: 124,
                     paddingX: 62,
                     paddingTop: 24,
                     paddingBottom: 18,
