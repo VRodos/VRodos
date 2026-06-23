@@ -3335,6 +3335,39 @@
         };
     }
 
+    function getVrTakramVisibleSkyLowerHazeColors(preset) {
+        if (preset === 'clear') {
+            return {
+                lower: '#79858e',
+                horizon: '#a9bece'
+            };
+        }
+        if (preset === 'crisp') {
+            return {
+                lower: '#737f89',
+                horizon: '#a8bfd2'
+            };
+        }
+
+        return {
+            lower: '#78828b',
+            horizon: '#a7bac9'
+        };
+    }
+
+    function setVectorFromDisplayHexColor(vector, color, fallback) {
+        if (!vector || typeof vector.set !== 'function') {
+            return vector;
+        }
+        const normalized = normalizePmndrsColor(color, fallback || '#000000');
+        vector.set(
+            parseInt(normalized.slice(1, 3), 16) / 255,
+            parseInt(normalized.slice(3, 5), 16) / 255,
+            parseInt(normalized.slice(5, 7), 16) / 255
+        );
+        return vector;
+    }
+
     function removeVrTakramLightsOnlyGradientSky(self) {
         const sky = self && self._vrTakramLightsOnlyGradientSky;
         if (!sky) {
@@ -4438,17 +4471,11 @@
             return config;
         }
 
-        // Local Horizon scenes keep Takram's own sky sun enabled and use
-        // Takram light sources when their LUTs are ready. The stable VRodos
-        // helper-light path remains an internal fallback for missing Takram
-        // resources, not an author-facing render mode.
-        if (shouldUseVrTakramVisibleSky(self)) {
-            const groundAlbedo = normalizePmndrsColor(config.groundAlbedo, '#1a1a1a');
-            config.groundEnabled = true;
-            config.groundAlbedo = groundAlbedo.toLowerCase() === '#000000' ? '#1a1a1a' : groundAlbedo;
-        } else {
-            config.groundEnabled = false;
-        }
+        // Local Horizon scenes have authored terrain/ground. Takram's sky
+        // material ground is a flat lower-hemisphere contribution, which reads
+        // as a clamp in headset direct-stereo visible-sky mode.
+        config.groundEnabled = false;
+        config.groundAlbedo = '#000000';
         config.takramSunEnabled = true;
         config.useTakramLightSources = shouldUsePmndrsTakramPhysicalHorizonLights();
         config.sunAngularRadius = TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS;
@@ -5347,6 +5374,8 @@
         }
 
         const exposure = getVrTakramSkyDirectExposure();
+        const preset = self && typeof self.getHorizonSkyPreset === 'function' ? self.getHorizonSkyPreset() : 'natural';
+        const lowerHazeColors = getVrTakramVisibleSkyLowerHazeColors(preset);
         const uniforms = material.uniforms || (material.uniforms = {});
         const state = self && self._pmndrsAtmosphereState ? self._pmndrsAtmosphereState : null;
         if (!uniforms.vrodosSkyExposure) {
@@ -5356,9 +5385,25 @@
         } else {
             uniforms.vrodosSkyExposure.value = exposure;
         }
+        if (!uniforms.vrodosVrSkyLowerHazeColor) {
+            const lowerVector = new THREE.Vector3();
+            uniforms.vrodosVrSkyLowerHazeColor = typeof THREE.Uniform === 'function'
+                ? new THREE.Uniform(lowerVector)
+                : { value: lowerVector };
+        }
+        if (!uniforms.vrodosVrSkyHorizonHazeColor) {
+            const horizonVector = new THREE.Vector3();
+            uniforms.vrodosVrSkyHorizonHazeColor = typeof THREE.Uniform === 'function'
+                ? new THREE.Uniform(horizonVector)
+                : { value: horizonVector };
+        }
+        setVectorFromDisplayHexColor(uniforms.vrodosVrSkyLowerHazeColor.value, lowerHazeColors.lower, '#78828b');
+        setVectorFromDisplayHexColor(uniforms.vrodosVrSkyHorizonHazeColor.value, lowerHazeColors.horizon, '#a7bac9');
 
         material.userData = material.userData || {};
         material.userData.vrodosVrTakramSkyDirectExposure = exposure;
+        material.userData.vrodosVrTakramSkyLowerHazeColor = lowerHazeColors.lower;
+        material.userData.vrodosVrTakramSkyHorizonHazeColor = lowerHazeColors.horizon;
 
         if (!material.userData.vrodosVrTakramSkyDirectHookInstalled) {
             const originalOnBeforeCompile = typeof material.onBeforeCompile === 'function'
@@ -5373,13 +5418,20 @@
                 }
                 shader.uniforms = shader.uniforms || {};
                 shader.uniforms.vrodosSkyExposure = uniforms.vrodosSkyExposure;
+                shader.uniforms.vrodosVrSkyLowerHazeColor = uniforms.vrodosVrSkyLowerHazeColor;
+                shader.uniforms.vrodosVrSkyHorizonHazeColor = uniforms.vrodosVrSkyHorizonHazeColor;
                 if (shader.fragmentShader.indexOf('uniform float vrodosSkyExposure;') === -1) {
+                    const calibrationUniforms = [
+                        'uniform float vrodosSkyExposure;',
+                        'uniform vec3 vrodosVrSkyLowerHazeColor;',
+                        'uniform vec3 vrodosVrSkyHorizonHazeColor;'
+                    ].join('\n');
                     const withUniform = shader.fragmentShader.replace(
                         'uniform vec3 groundAlbedo;',
-                        'uniform vec3 groundAlbedo;\nuniform float vrodosSkyExposure;'
+                        `uniform vec3 groundAlbedo;\n${  calibrationUniforms}`
                     );
                     shader.fragmentShader = withUniform === shader.fragmentShader
-                        ? `uniform float vrodosSkyExposure;\n${  shader.fragmentShader}`
+                        ? `${calibrationUniforms}\n${  shader.fragmentShader}`
                         : withUniform;
                 }
                 if (shader.fragmentShader.indexOf('vrodos-direct-sky-calibration') === -1) {
@@ -5390,11 +5442,18 @@
                             '  outputColor.rgb = max(outputColor.rgb * vrodosSkyExposure, vec3(0.0));',
                             '  outputColor.rgb = outputColor.rgb / (outputColor.rgb + vec3(1.0));',
                             '  outputColor.rgb = pow(outputColor.rgb, vec3(0.4545454545));',
+                            '  float vrodosLocalElevation = dot(normalize(cameraPosition), rayDirection);',
+                            '  float vrodosLowerHazeMix = 1.0 - smoothstep(-0.02, 0.14, vrodosLocalElevation);',
+                            '  float vrodosLowerHazeGradient = smoothstep(-0.38, 0.10, vrodosLocalElevation);',
+                            '  vec3 vrodosLowerHazeColor = mix(vrodosVrSkyLowerHazeColor, vrodosVrSkyHorizonHazeColor, vrodosLowerHazeGradient);',
+                            '  outputColor.rgb = mix(outputColor.rgb, vrodosLowerHazeColor, vrodosLowerHazeMix);',
                             '  outputColor.a = 1.0;'
                         ].join('\n')
                     );
                     const shaderPatched = patched !== shader.fragmentShader &&
-                        patched.indexOf('uniform float vrodosSkyExposure;') !== -1;
+                        patched.indexOf('uniform float vrodosSkyExposure;') !== -1 &&
+                        patched.indexOf('uniform vec3 vrodosVrSkyLowerHazeColor;') !== -1 &&
+                        patched.indexOf('uniform vec3 vrodosVrSkyHorizonHazeColor;') !== -1;
                     shader.fragmentShader = patched;
                     material.userData.vrodosVrTakramSkyDirectShaderPatched = shaderPatched;
                     material.userData.vrodosVrTakramSkyDirectPatchFailed = !shaderPatched;
@@ -5414,7 +5473,7 @@
             };
             material.customProgramCacheKey = function () {
                 const baseKey = originalCustomProgramCacheKey ? originalCustomProgramCacheKey() : '';
-                return `${baseKey}|vrodos-vr-takram-sky-direct:${  exposure.toFixed(3)}`;
+                return `${baseKey}|vrodos-vr-takram-sky-direct:${  exposure.toFixed(3)  }:lower-haze-v1`;
             };
             material.userData.vrodosVrTakramSkyDirectHookInstalled = true;
             material.userData.vrodosVrTakramSkyDirectShaderPatched = false;

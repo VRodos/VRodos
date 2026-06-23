@@ -23,6 +23,8 @@ Legacy profile names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, 
 - Keep native renderer antialiasing, hard headset shadow caps, authored Takram atmosphere/light/visible sky where currently allowed, and authored HDR env-map reflections where policy allows them.
 - Keep `vrodos-postprocessing.bundle.js` available when headset Takram atmosphere needs the full PMNDRS/Takram vendor path; do not treat the vendor library itself as forbidden in standalone VR.
 - Do not route standalone headset Takram through the retired source-only headset bundle split. That split passed static scans but produced a black sky/no sun regression on device.
+- Headset visible Takram sky follows desktop local-Horizon ground policy: keep Takram `SkyMaterial` ground disabled and let authored terrain provide the ground surface. Do not use non-black Takram ground albedo to fill the lower hemisphere.
+- Headset direct-stereo visible sky may cool only the no-ground below-horizon rays to match the desktop Horizon haze; this is a sky shader calibration, not Takram ground or a separate A-Frame environment.
 - Future standalone headset features must be added back one at a time with Quest/headset validation and updates to this handoff plus `RENDERING_PIPELINE.md` when rendering ownership changes.
 
 ## Completed Cleanup Decisions
