@@ -21,7 +21,19 @@ Legacy profile names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, 
 - Do not restore per-root transform fallbacks for old compiled scenes.
 - Keep PMNDRS/legacy composer ownership, clouds, scene probes, Takram sky PMREM capture, and WebXR layers disabled by default.
 - Keep native renderer antialiasing, hard headset shadow caps, authored Takram atmosphere/light/visible sky where currently allowed, and authored HDR env-map reflections where policy allows them.
-- Future standalone headset features must be added back one at a time with Quest/headset validation and updates to `VR_IMMERSIVE_PERFORMANCE_CLEANUP_PLAN.md`.
+- Keep `vrodos-postprocessing.bundle.js` available when headset Takram atmosphere needs the full PMNDRS/Takram vendor path; do not treat the vendor library itself as forbidden in standalone VR.
+- Do not route standalone headset Takram through the retired source-only headset bundle split. That split passed static scans but produced a black sky/no sun regression on device.
+- Future standalone headset features must be added back one at a time with Quest/headset validation and updates to this handoff plus `RENDERING_PIPELINE.md` when rendering ownership changes.
+
+## Completed Cleanup Decisions
+
+- Supported parent profiles are limited to `desktop`, `headset`, and `pc-rendered-vr`; old hidden profile names are compatibility inputs only and normalize to `headset`.
+- Recompiled scenes are required for new pipeline behavior. Do not add fallbacks for old generated scene layouts.
+- Standalone headset keeps hard defaults now: no implicit PMNDRS composer, clouds, scene probe, native WebXR layers, old movement HUD, or old movement emitter scaffolding.
+- `#vrodos-authored-world` is mandatory for immersive locomotion. WebXR/A-Frame owns tracking; VRodos moves/rotates only the authored world container.
+- Headset shadow maps are capped at directional `1024` and point/spot `512`, with adaptive fitting restricted to targeted dirty events.
+- The editor collision toggle is the compiled collision source of truth. Missing or false compiled collision metadata means no compiled collision.
+- Headset walkable collision requires BVH and uses the reduced blocker-ray budget.
 
 ## Interaction Contract
 

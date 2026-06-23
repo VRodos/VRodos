@@ -112,7 +112,7 @@ $manifest = new VRodos_Compiler_Runtime_Manifest(
 			'collision-bvh-vendor'         => vrodos_test_chunk( 'collision-bvh-vendor', 'script', 'js/master/lib/vrodos-collision-bvh.bundle.js', 32 ),
 			'pmndrs-postprocessing-vendor' => vrodos_test_chunk( 'pmndrs-postprocessing-vendor', 'script', 'js/master/lib/vrodos-postprocessing.bundle.js', 35 ),
 			'legacy-postfx'                => vrodos_test_chunk( 'legacy-postfx', 'script', 'js/master/lib/vrodos-runtime-legacy-postfx.bundle.js', 40 ),
-			'takram-atmosphere'            => vrodos_test_chunk( 'takram-atmosphere', 'script', 'js/master/lib/vrodos-takram-atmosphere.bundle.js', 45 ),
+			'takram-atmosphere'            => vrodos_test_chunk( 'takram-atmosphere', 'script', 'js/master/lib/vrodos-takram-atmosphere.bundle.js', 45, [ 'pmndrs-postprocessing-vendor' ] ),
 			'takram-clouds'                => vrodos_test_chunk( 'takram-clouds', 'script', 'js/master/lib/vrodos-takram-clouds.bundle.js', 46, [ 'takram-atmosphere' ] ),
 			'pmndrs-postfx'                => vrodos_test_chunk( 'pmndrs-postfx', 'script', 'js/master/lib/vrodos-runtime-pmndrs-postfx.bundle.js', 50, [ 'pmndrs-postprocessing-vendor' ] ),
 			'aframe-components'            => vrodos_test_chunk( 'aframe-components', 'script', 'js/master/lib/vrodos-runtime-aframe-components.bundle.js', 90, [ 'core-runtime' ] ),
@@ -226,6 +226,12 @@ vrodos_assert_same(
 );
 
 vrodos_assert_same(
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'aframe-components' ],
+	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframeVrRuntimeProfile' => 'headset' ] ) ),
+	'headset Takram keeps PMNDRS vendor without post-FX adapter'
+);
+
+vrodos_assert_same(
 	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'takram-clouds', 'pmndrs-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframePmndrsCloudsEnabled' => true ] ) ),
 	'PMNDRS with Takram clouds'
@@ -289,6 +295,12 @@ $pmndrs_takram_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ '
 vrodos_assert_order( $pmndrs_takram_html, 'vrodos-postprocessing.bundle.js', 'vrodos-takram-atmosphere.bundle.js', 'PMNDRS Takram script order' );
 vrodos_assert_order( $pmndrs_takram_html, 'vrodos-takram-atmosphere.bundle.js', 'vrodos-runtime-pmndrs-postfx.bundle.js', 'PMNDRS Takram script order' );
 vrodos_assert_not_contains( $pmndrs_takram_html, 'vrodos-takram-clouds.bundle.js', 'PMNDRS Takram script order' );
+
+$headset_takram_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframeVrRuntimeProfile' => 'headset' ] ) );
+vrodos_assert_contains( $headset_takram_html, 'vrodos-postprocessing.bundle.js', 'headset Takram script tags' );
+vrodos_assert_contains( $headset_takram_html, 'vrodos-takram-atmosphere.bundle.js', 'headset Takram script tags' );
+vrodos_assert_not_contains( $headset_takram_html, 'vrodos-takram-atmosphere-headset.bundle.js', 'headset Takram script tags' );
+vrodos_assert_not_contains( $headset_takram_html, 'vrodos-runtime-pmndrs-postfx.bundle.js', 'headset Takram script tags' );
 
 $pmndrs_clouds_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframePmndrsCloudsEnabled' => true ] ) );
 vrodos_assert_contains( $pmndrs_clouds_html, 'vrodos-takram-clouds.bundle.js', 'PMNDRS clouds script tags' );

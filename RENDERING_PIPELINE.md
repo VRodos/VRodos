@@ -1,6 +1,6 @@
 # VRodos Rendering Pipeline - Technical Reference
 
-Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For the current VR Headset continuation note, see `VR_HEADSET_RUNTIME_HANDOFF.md`. For the active immersive cleanup checklist, see `VR_IMMERSIVE_PERFORMANCE_CLEANUP_PLAN.md`. Historical rendering plans and debug notes live under `documentation/archive/rendering-history/`.
+Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For the current standalone VR Headset policy and validation checklist, see `VR_HEADSET_RUNTIME_HANDOFF.md`. Historical rendering plans and debug notes live under `documentation/archive/rendering-history/`.
 
 ## 1. Runtime Overview
 
@@ -639,7 +639,6 @@ These are backlog items, not current implementation requirements:
 
 - `VR_HEADSET_RUNTIME_HANDOFF.md` - current standalone headset runtime handoff.
 - `PC_RENDERED_VR_PLAN.md` - parked PC-rendered VR parent profile plan.
-- `VR_IMMERSIVE_PERFORMANCE_CLEANUP_PLAN.md` - active headset cleanup checklist.
 - `documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md` - historical phased Takram roadmap.
 - `documentation/archive/rendering-history/RENDERING_MIGRATION_IMPLEMENTATION_LOG.md` - staged migration history.
 - `documentation/archive/rendering-history/POSTFX_DEBUG_NOTES.md` - color-encoding and WebGLRenderer debugging history.

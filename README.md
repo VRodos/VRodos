@@ -15,9 +15,8 @@ Keep current behavior in one place where possible:
 
 - [`documentation/vrodos-compiled-scene-framework-integration.md`](documentation/vrodos-compiled-scene-framework-integration.md): compiled-scene framework boundaries, shared Three.js ownership, lazy runtime chunks, and immersive PMNDRS UIKit Horizon dialog ownership.
 - [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md): canonical compiled runtime rendering, PMNDRS/Takram, day-night lighting, shadows, emissive/readability handling, diagnostics, and future render-track notes.
-- [`VR_HEADSET_RUNTIME_HANDOFF.md`](VR_HEADSET_RUNTIME_HANDOFF.md): current standalone headset runtime policy and validation checklist.
+- [`VR_HEADSET_RUNTIME_HANDOFF.md`](VR_HEADSET_RUNTIME_HANDOFF.md): current standalone headset runtime policy, completed cleanup decisions, and validation checklist.
 - [`PC_RENDERED_VR_PLAN.md`](PC_RENDERED_VR_PLAN.md): future PC-rendered VR parent profile plan, parked until hardware/runtime validation.
-- [`VR_IMMERSIVE_PERFORMANCE_CLEANUP_PLAN.md`](VR_IMMERSIVE_PERFORMANCE_CLEANUP_PLAN.md): active cleanup checklist for headset runtime performance work.
 - Historical rendering/performance notes live under [`documentation/archive/rendering-history/`](documentation/archive/rendering-history/).
 
 ## What VRodos Supports Today
