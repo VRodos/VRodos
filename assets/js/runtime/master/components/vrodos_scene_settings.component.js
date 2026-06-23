@@ -742,10 +742,30 @@ AFRAME.registerComponent('scene-settings', {
         return this.isVrRuntimeMaxProfile();
     },
     getVrRenderProfileDefaults: function (profile) {
-        return {
-            framebufferScale: profile === 'balanced' ? 0.9 : 1.0,
-            foveation: profile === 'balanced' ? 0.75 : 0.5
-        };
+        switch (profile) {
+            case 'headset':
+            case 'hdr-reflections':
+            case 'takram-sky':
+                return {
+                    framebufferScale: 1.0,
+                    foveation: 0.5
+                };
+            case 'takram-lights':
+                return {
+                    framebufferScale: 0.9,
+                    foveation: 0.75
+                };
+            case 'balanced':
+                return {
+                    framebufferScale: 0.75,
+                    foveation: 0.9
+                };
+            default:
+                return {
+                    framebufferScale: 1.0,
+                    foveation: 0.5
+                };
+        }
     },
     readVrRenderBudgetOverride: function (dataKey, debugKey, queryKey, options) {
         const opts = options || {};
@@ -844,12 +864,19 @@ AFRAME.registerComponent('scene-settings', {
                 try {
                     xr.setFramebufferScaleFactor(policy.framebufferScale);
                     state.framebufferScaleApplied = true;
+                    this._vrodosLastVrFramebufferScaleApplied = policy.framebufferScale;
+                    this._vrodosLastVrFramebufferScaleAppliedReason = reason || 'manual';
                 } catch (err) {
                     state.framebufferScaleError = err && err.message ? err.message : String(err);
                 }
             } else {
                 state.framebufferScaleBlocked = true;
             }
+        }
+
+        if (typeof this._vrodosLastVrFramebufferScaleApplied === 'number') {
+            state.lastFramebufferScaleApplied = this._vrodosLastVrFramebufferScaleApplied;
+            state.lastFramebufferScaleAppliedReason = this._vrodosLastVrFramebufferScaleAppliedReason || '';
         }
 
         if (typeof xr.setFoveation === 'function') {

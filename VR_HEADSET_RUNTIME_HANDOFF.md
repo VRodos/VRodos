@@ -20,6 +20,8 @@ Keep the Desktop compiled-scene pipeline intact while enabling as much Desktop f
 - 2026-06-19 immersive interaction implementation note: video clicks remain direct playback; CEFR, assessment, and image/text POI panels use spatial UI; assessment and image/text POI panels spawn camera-relative near eye height; modal rays stop at the dialog surface with surface/actionable hit-dot feedback; normal scene `.raycastable` targets show endpoint-dot feedback when no modal is open. Headset acceptance for the full interaction set is still pending a recompiled representative scene.
 - Minor far-edge shimmer is acceptable and should be treated as solved unless it regresses.
 - VR Headset compiles the Takram atmosphere chunk only when authored, but keeps PMNDRS/legacy composers, clouds, scene probes, Takram sky PMREM capture, and WebXR layers disabled.
+- Public `headset`, `takram-sky`, and `hdr-reflections` preserve full Quest XR framebuffer scale `1.0` plus foveation `0.5` by default; the lower `0.8`/`0.85` render-budget trial improved cost but visibly degraded 3D environment quality. Use `vrodos_vr_framebuffer_scale` and `vrodos_vr_foveation` query overrides only for comparison captures.
+- Public VR profiles compile flat image/video planes with unlit `shader: flat` media materials. Desktop and `max` continue to use lit world-media materials.
 
 ## Known Blocked Paths
 

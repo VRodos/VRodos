@@ -43,6 +43,7 @@ AFRAME.registerComponent('video-controls', {
         this.videoPosterSelector = this.videoDisplay ? (this.videoDisplay.getAttribute("data-vrodos-video-poster") || "") : "";
         this.videoTitle = this.videoDisplay ? (this.videoDisplay.getAttribute("data-vrodos-video-title") || "") : "";
         this.videoPosterUrl = this.resolvePosterUrl();
+        this.useFlatMediaMaterial = this.shouldUseFlatVideoMaterial();
         this.video = this.ensureVideoElement();
         this.applyWorldVideoMaterial();
         if (this.videoDisplay && this.videoDisplay.classList) {
@@ -272,8 +273,30 @@ AFRAME.registerComponent('video-controls', {
         return posterAsset ? (posterAsset.getAttribute("src") || "") : "";
     },
 
+    shouldUseFlatVideoMaterial: function () {
+        if (!this.videoDisplay) return false;
+
+        var material = this.videoDisplay.getAttribute("material");
+        if (typeof material === "string" && /(?:^|;)\s*shader\s*:\s*flat(?:\s*;|$)/i.test(material)) {
+            return true;
+        }
+        if (material && typeof material === "object" && material.shader === "flat") {
+            return true;
+        }
+
+        var sceneEl = document.querySelector("a-scene");
+        var settings = sceneEl && sceneEl.components ? sceneEl.components["scene-settings"] : null;
+        var settingsData = settings && settings.data
+            ? settings.data
+            : (sceneEl && sceneEl.getAttribute ? sceneEl.getAttribute("scene-settings") : null);
+        var profile = settingsData ? String(settingsData.vrRuntimeProfile || "desktop") : "desktop";
+        return profile !== "desktop" && profile !== "max";
+    },
+
     getWorldVideoMaterial: function (src) {
-        var material = "side: double; transparent: true; alphaTest: 0.5; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
+        var material = this.useFlatMediaMaterial
+            ? "shader: flat; side: double; transparent: true; alphaTest: 0.5; depthTest: true; depthWrite: true"
+            : "side: double; transparent: true; alphaTest: 0.5; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
         if (src) material += "; src: " + src;
         return material;
     },
@@ -312,9 +335,11 @@ AFRAME.registerComponent('video-controls', {
         if (this.videoDisplay.classList) {
             this.videoDisplay.classList.add("raycastable");
         }
-        this.setVideoDisplayShadowState(true);
+        this.setVideoDisplayShadowState(!this.useFlatMediaMaterial);
         requestAnimationFrame(() => this.tuneVideoTexture());
-        this.requestSceneLightingRefresh();
+        if (!this.useFlatMediaMaterial) {
+            this.requestSceneLightingRefresh();
+        }
     },
 
     prepareVideoElement: function (videoEl) {

@@ -111,7 +111,21 @@ class VRodos_Compiler_AFrame_DOM_Helper {
 	}
 
 	public static function world_media_material( string $src, string $side = 'double', bool $transparent = true ): string {
-		$material = "src: $src; side: $side; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
+		$material = '' !== trim( $src ) ? "src: $src; " : '';
+		$material .= "side: $side; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true";
+		if ( $transparent ) {
+			$material .= '; transparent: true; alphaTest: 0.5';
+		}
+
+		return $material;
+	}
+
+	public static function flat_media_material( string $src, string $side = 'double', bool $transparent = true ): string {
+		$material = 'shader: flat; ';
+		if ( '' !== trim( $src ) ) {
+			$material .= "src: $src; ";
+		}
+		$material .= "side: $side; depthTest: true; depthWrite: true";
 		if ( $transparent ) {
 			$material .= '; transparent: true; alphaTest: 0.5';
 		}

@@ -30,6 +30,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private array $diagnostic_load_phases = [];
 	private array $critical_gltf_asset_dom_ids = [];
 	private bool $suppress_flat_media_shadow_casting = false;
+	private bool $use_flat_media_materials = false;
 	private int $diagnostic_object_count = 0;
 	private int $diagnostic_collider_count = 0;
 
@@ -693,6 +694,11 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		return ! ( true === $value || 'true' === $value || '1' === (string) $value || 1 === $value );
 	}
 
+	private function should_use_flat_media_materials( array $scene_settings ): bool {
+		$profile = (string) ( $scene_settings['vrRuntimeProfile'] ?? 'desktop' );
+		return ! in_array( $profile, [ 'desktop', 'max' ], true );
+	}
+
 	private function flat_media_shadow_role(): string {
 		return $this->suppress_flat_media_shadow_casting ? 'receiver' : 'caster-receiver';
 	}
@@ -777,6 +783,18 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		return VRodos_Compiler_AFrame_DOM_Helper::world_media_material( $src, $side, $transparent );
 	}
 
+	private function flat_media_material( string $src, string $side = 'double', bool $transparent = true ): string {
+		return VRodos_Compiler_AFrame_DOM_Helper::flat_media_material( $src, $side, $transparent );
+	}
+
+	private function media_material( string $src, string $side = 'double', bool $transparent = true ): string {
+		if ( $this->use_flat_media_materials ) {
+			return $this->flat_media_material( $src, $side, $transparent );
+		}
+
+		return $this->world_media_material( $src, $side, $transparent );
+	}
+
 	private function is_compiled_collision_enabled( $obj ): bool {
 		if ( is_object( $obj ) && property_exists( $obj, 'compiledCollisionEnabled' ) ) {
 			$value = $obj->compiledCollisionEnabled;
@@ -856,6 +874,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$render_container = $ascene;
 		}
 		$this->suppress_flat_media_shadow_casting = $this->should_suppress_flat_media_shadow_casting( $scene_settings );
+		$this->use_flat_media_materials = $this->should_use_flat_media_materials( $scene_settings );
 		foreach ( $objects as $object_key => $obj ) {
 			if ( is_object( $obj ) ) {
 				unset( $obj->follow_camera, $obj->follow_camera_x, $obj->follow_camera_z );
@@ -1371,7 +1390,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$plane->setAttribute( 'height', '2' );
 			$plane->setAttribute( 'width', '2' );
 			$plane->setAttribute( 'position', '0 0 0' );
-			$plane->setAttribute( 'material', $this->world_media_material( "#image_$uuid", 'double', $is_transparent_bool ) );
+			$plane->setAttribute( 'material', $this->media_material( "#image_$uuid", 'double', $is_transparent_bool ) );
 			$this->set_world_lighting_attributes( $plane, $this->flat_media_shadow_role() );
 
 			$parent->appendChild( $plane );
@@ -1405,9 +1424,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			if ( $poster_id ) {
 				$display->setAttribute( 'data-vrodos-video-poster', '#' . $poster_id );
 			}
-			$material_attr = 'side: double; transparent: true; alphaTest: 0.5; roughness: 0.85; metalness: 0; depthTest: true; depthWrite: true';
+			$material_attr = $this->media_material( '', 'double', true );
 			if ( $poster_id ) {
-				$material_attr .= "; src: #$poster_id";
+				$material_attr = $this->media_material( "#$poster_id", 'double', true );
 			}
 			$display->setAttribute( 'material', $material_attr );
 			$display->setAttribute( 'class', 'override-materials clickable raycastable hideable' );
