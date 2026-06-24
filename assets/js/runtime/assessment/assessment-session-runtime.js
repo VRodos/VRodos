@@ -138,8 +138,39 @@
         return pendingWrites.slice(Math.max(0, pendingWrites.length - MAX_PENDING_WRITES));
     }
 
+    function isLoopbackHost(hostname) {
+        const normalized = String(hostname || "").toLowerCase();
+        return normalized === "localhost" || normalized === "127.0.0.1" || normalized === "::1" || normalized === "[::1]";
+    }
+
+    function isLocalDevHost(hostname) {
+        const normalized = String(hostname || "").toLowerCase();
+        return isLoopbackHost(normalized) || normalized === "wp.local" || normalized.endsWith(".local");
+    }
+
+    function restBaseUrl(config) {
+        const raw = String(config.restUrl || "").trim();
+        if (!raw) {
+            return "";
+        }
+
+        try {
+            if (/^https?:\/\//i.test(raw) && window.location && window.location.href) {
+                const target = new URL(raw);
+                const current = new URL(window.location.href);
+                if (isLoopbackHost(current.hostname) && isLocalDevHost(target.hostname) && target.origin !== current.origin) {
+                    return (current.origin + target.pathname).replace(/\/+$/, "");
+                }
+            }
+        } catch (error) {
+            // Fall through to the configured URL.
+        }
+
+        return raw.replace(/\/+$/, "");
+    }
+
     function endpointUrl(config, path) {
-        const base = String(config.restUrl || "").replace(/\/+$/, "");
+        const base = restBaseUrl(config);
         const suffix = String(path || "").replace(/^\/+/, "");
         return base + "/" + suffix;
     }
@@ -402,6 +433,7 @@
                 ? namespace.resolveAssessmentRendererKey(payload, { ignoreSupported: true })
                 : "";
             const uuid = resultUuid();
+            const attemptPayload = runtime.buildAttemptPayload();
             const enrichedResult = Object.assign({}, result, {
                 resultUuid: uuid,
                 attemptUuid: runtime.state.attemptUuid,
@@ -436,7 +468,7 @@
                 score: typeof result.score === "number" ? result.score : null,
                 response: result.response || {},
                 result: enrichedResult,
-                attempt: runtime.buildAttemptPayload().attempt
+                attempt: attemptPayload
             };
 
             runtime.enqueue("assessment-result:" + uuid, "assessment-results", postPayload);

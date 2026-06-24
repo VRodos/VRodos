@@ -433,7 +433,10 @@ async function runSessionRuntimeHarness() {
     let failNextResult = true;
     const sessionWindow = {
         console,
-        location: { search: "" },
+        location: {
+            href: "http://localhost:10005/wp-content/plugins/VRodos/runtime/build/Master_Client_11.html",
+            search: ""
+        },
         navigator: { userAgent: "assessment-session-test" },
         sessionStorage: {
             getItem(key) {
@@ -448,7 +451,7 @@ async function runSessionRuntimeHarness() {
         },
         VRODOS_IMMERSE_RESULTS_CONFIG: {
             enabled: true,
-            restUrl: "https://example.test/wp-json/vrodos-immerse/v1/results",
+            restUrl: "http://wp.local/wp-json/vrodos-immerse/v1/results",
             token: "token-1",
             projectId: 7,
             projectSlug: "demo-project",
@@ -482,6 +485,7 @@ async function runSessionRuntimeHarness() {
         console,
         TextDecoder,
         Uint8Array,
+        URL,
         URLSearchParams,
         navigator: sessionWindow.navigator,
         setTimeout,
@@ -527,8 +531,10 @@ async function runSessionRuntimeHarness() {
     assert((session.state.pendingWrites || []).length === 0, "Pending writes did not retry successfully");
     const resultWrite = writes.find((entry) => entry.url.endsWith("/assessment-results") && entry.body.result_uuid);
     assert(resultWrite, "Assessment result was not posted");
+    assert(resultWrite.url.startsWith("http://localhost:10005/wp-json/"), "Local dev REST URL was not rewritten to the current origin");
     assert(resultWrite.body.asset_id === 101, "Assessment result did not include asset id");
     assert(resultWrite.body.assessment_source_id === "assessment-101", "Assessment result did not include source id");
+    assert(resultWrite.body.attempt && resultWrite.body.attempt.assessment_total === 1, "Assessment result did not include the full attempt payload");
     assert(writes.some((entry) => entry.url.endsWith("/attempts/complete")), "Completed attempt was not posted");
 }
 
