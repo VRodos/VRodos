@@ -3245,6 +3245,12 @@
       const assetId = toInt(payload && payload.assetId);
       return sourceId || (assetId ? "asset:" + assetId : "");
     }
+    function pendingWriteAttemptUuid(item) {
+      const payload = item && item.payload || {};
+      return normalizeUuid(
+        payload.attempt_uuid || payload.attemptUuid || payload.attempt && payload.attempt.attemptUuid || payload.result && payload.result.attemptUuid || ""
+      );
+    }
     function resultUuid() {
       if (window.crypto && typeof window.crypto.randomUUID === "function") {
         return window.crypto.randomUUID();
@@ -3332,6 +3338,21 @@
         const normalizedLevel = normalizeLevel(cefrLevel);
         if (!normalizedName || !normalizedLevel) {
           return false;
+        }
+        const previousName = normalizeDisplayName(runtime.state.displayName);
+        const previousLevel = normalizeLevel(runtime.state.cefrLevel);
+        const previousAttemptUuid = normalizeUuid(runtime.state.attemptUuid);
+        const identityChanged = Boolean(
+          previousAttemptUuid && (previousName || previousLevel) && (previousName !== normalizedName || previousLevel !== normalizedLevel)
+        );
+        if (identityChanged) {
+          runtime.state.attemptUuid = makeUuid();
+          runtime.state.completedAssessmentKeys = [];
+          runtime.state.sceneVisits = [];
+          runtime.state.pendingWrites = (runtime.state.pendingWrites || []).filter((item) => {
+            return pendingWriteAttemptUuid(item) !== previousAttemptUuid;
+          });
+          runtime.state.createdAt = nowIso();
         }
         runtime.state.displayName = normalizedName;
         runtime.state.cefrLevel = normalizedLevel;
@@ -3945,8 +3966,11 @@
               placeholder: "Enter your name",
               defaultValue: runtime.participantName || "",
               width: "100%",
-              minHeight: 74,
-              fontSize: 24,
+              minHeight: 96,
+              fontSize: 30,
+              labelFontSize: 20,
+              inputFontSize: 30,
+              inputHeight: 54,
               onValueChange: function(value) {
                 runtime.setParticipantName(value);
               }

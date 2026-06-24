@@ -538,6 +538,126 @@ async function runSessionRuntimeHarness() {
     assert(writes.some((entry) => entry.url.endsWith("/attempts/complete")), "Completed attempt was not posted");
 }
 
+async function runSessionIdentityChangeHarness() {
+    const writes = [];
+    const store = new Map();
+
+    const sessionWindow = {
+        console,
+        location: {
+            href: "https://example.test/Master_Client_11.html",
+            search: ""
+        },
+        navigator: { userAgent: "assessment-session-identity-change-test" },
+        sessionStorage: {
+            getItem(key) {
+                return store.has(key) ? store.get(key) : null;
+            },
+            setItem(key, value) {
+                store.set(key, String(value));
+            },
+            removeItem(key) {
+                store.delete(key);
+            }
+        },
+        VRODOS_IMMERSE_RESULTS_CONFIG: {
+            enabled: true,
+            restUrl: "https://example.test/wp-json/vrodos-immerse/v1/results",
+            token: "token-1",
+            projectId: 7,
+            projectSlug: "demo-project",
+            projectTitle: "Demo Project",
+            sceneId: 11,
+            sceneTitle: "Scene 1",
+            lessonId: "lesson-1",
+            useCaseId: "usecase-1",
+            expectedAssessments: [
+                { assetId: 101, assessmentSourceId: "assessment-a1", levels: ["A1"] },
+                { assetId: 102, assessmentSourceId: "assessment-a2", levels: ["A2"] }
+            ]
+        },
+        fetch(url, options) {
+            const body = JSON.parse(options.body || "{}");
+            writes.push({ url, body });
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () => Promise.resolve({ success: true })
+            });
+        }
+    };
+    sessionWindow.window = sessionWindow;
+
+    const sessionContext = vm.createContext({
+        window: sessionWindow,
+        console,
+        TextDecoder,
+        Uint8Array,
+        URL,
+        URLSearchParams,
+        navigator: sessionWindow.navigator,
+        setTimeout,
+        clearTimeout
+    });
+    [
+        "assets/js/runtime/assessment/assessment-utils.js",
+        "assets/js/runtime/assessment/assessment-session-runtime.js"
+    ].forEach((file) => {
+        vm.runInContext(readFileSync(resolve(root, file), "utf8"), sessionContext, { filename: file });
+    });
+
+    const session = sessionWindow.VRodosImmerseAssessment.getAssessmentSessionRuntime();
+    assert(session.hasIdentity() === false, "Identity change harness should start without stored identity");
+    assert(session.setIdentity("Ada Lovelace", "A2") === true, "Session rejected initial A2 identity");
+    await session.flushPending();
+    const oldAttemptUuid = session.state.attemptUuid;
+    session.state.completedAssessmentKeys = ["assessment-a2"];
+    session.state.pendingWrites.push({
+        id: "assessment-result:old-a2",
+        path: "assessment-results",
+        payload: {
+            attempt_uuid: oldAttemptUuid,
+            cefr_level: "A2",
+            result: { attemptUuid: oldAttemptUuid, cefrLevel: "A2" }
+        },
+        attempts: 1,
+        createdAt: "2026-06-23T09:01:00.000Z"
+    });
+    session.save();
+    assert(session.setIdentity("Ada Lovelace", "A1") === true, "Session rejected valid A1 identity change");
+    assert(session.state.cefrLevel === "A1", "Session state did not switch to A1");
+    assert(session.state.attemptUuid !== oldAttemptUuid, "Identity change did not create a new attempt");
+    assert((session.state.pendingWrites || []).every((item) => item && item.payload && item.payload.attempt_uuid !== oldAttemptUuid), "Old A2 pending write was not removed");
+
+    await session.flushPending();
+    session.recordAssessmentResult(
+        {
+            title: "A1 question",
+            type: "Multiple Choice",
+            group: "Question",
+            supported: true,
+            levels: ["A1"],
+            assetId: 101,
+            assessmentSourceId: "assessment-a1",
+            sceneObjectId: "assessment-object-a1",
+            content: {}
+        },
+        {
+            completedAt: "2026-06-23T10:15:00.000Z",
+            completionState: "completed",
+            response: { answers: [{ selectedIndex: 0 }] },
+            isCorrect: true
+        }
+    );
+    await session.flushPending();
+
+    const resultWrite = writes.find((entry) => entry.url.endsWith("/assessment-results"));
+    assert(resultWrite, "A1 assessment result was not posted after identity change");
+    assert(resultWrite.body.cefr_level === "A1", "Assessment result kept the stale A2 CEFR level");
+    assert(resultWrite.body.attempt_uuid === session.state.attemptUuid, "Assessment result did not use the new attempt UUID");
+    assert(!writes.some((entry) => entry.url.endsWith("/assessment-results") && entry.body && entry.body.cefr_level === "A2"), "Stale A2 assessment result was posted after switching to A1");
+}
+
 function runCefrIdentityHarness() {
     const cefrWindow = {
         console,
@@ -588,5 +708,6 @@ function runCefrIdentityHarness() {
 
 runCefrIdentityHarness();
 await runSessionRuntimeHarness();
+await runSessionIdentityChangeHarness();
 
-console.log(`Assessment runtime harness passed ${fixtures.length + 4} cases.`);
+console.log(`Assessment runtime harness passed ${fixtures.length + 5} cases.`);

@@ -470,8 +470,11 @@
                         placeholder: "Enter your name",
                         defaultValue: runtime.participantName || "",
                         width: "100%",
-                        minHeight: 74,
-                        fontSize: 24,
+                        minHeight: 96,
+                        fontSize: 30,
+                        labelFontSize: 20,
+                        inputFontSize: 30,
+                        inputHeight: 54,
                         onValueChange: function (value) {
                             runtime.setParticipantName(value);
                         }

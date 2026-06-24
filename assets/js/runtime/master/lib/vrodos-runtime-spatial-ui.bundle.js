@@ -16475,8 +16475,11 @@
       const rayLooksDefaultLocal = rayReady && isDefaultLocalControllerRay(ray);
       const trackingStatus = resolveAFrameControllerTrackingStatus(bridge.el);
       bridge.lastControllerTrackingStatus = trackingStatus;
+      const rayReadinessCandidateReady = Boolean(
+        trackingStatus && trackingStatus.rayReadiness && trackingStatus.rayReadiness.candidateReady === true
+      );
       const canKeepStableRayThroughReadinessDrop = Boolean(
-        bridge.stableAFrameRaySeen === true && rayReady && !rayLooksDefaultLocal
+        bridge.stableAFrameRaySeen === true && rayReady && !rayLooksDefaultLocal && rayReadinessCandidateReady
       );
       if (trackingStatus.isControllerElement && !trackingStatus.ready && !canKeepStableRayThroughReadinessDrop) {
         markControllerPointerPoseWaiting(bridge, trackingStatus.reason || "controller-not-present");
@@ -17944,6 +17947,53 @@
       });
       delete props[alias];
     }
+    function applyInputFieldTypography(input, options) {
+      if (!input) {
+        return;
+      }
+      const opts = options || {};
+      const labelSize = px(opts.labelFontSize, 18);
+      const inputSize = px(opts.inputFontSize, opts.fontSize || 28);
+      const inputHeight = px(opts.inputHeight, Math.max(44, inputSize + 22));
+      const inputLineHeight = opts.inputLineHeight || Math.round(inputSize * 1.25) + "px";
+      const inputTextProps = baseContainerProps(Object.assign({
+        fontSize: inputSize,
+        lineHeight: inputLineHeight,
+        fontWeight: opts.inputFontWeight || 500,
+        color: opts.inputTextColor || "#111827",
+        textAlign: "left",
+        minWidth: 120,
+        flexGrow: 1,
+        flexShrink: 1,
+        placeholderStyle: {
+          color: opts.placeholderColor || "rgba(15,23,42,0.45)",
+          fontSize: inputSize,
+          lineHeight: inputLineHeight
+        }
+      }, fontProps(opts)));
+      if (input.label && typeof input.label.setProperties === "function") {
+        input.label.setProperties(baseContainerProps(Object.assign({
+          fontSize: labelSize,
+          lineHeight: opts.labelLineHeight || Math.round(labelSize * 1.25) + "px",
+          fontWeight: opts.labelFontWeight || 600,
+          color: opts.labelColor || "#64748b",
+          height: opts.labelHeight || Math.max(20, labelSize + 6)
+        }, fontProps(opts))));
+      }
+      if (input.input && typeof input.input.setProperties === "function") {
+        input.input.setProperties(baseContainerProps(Object.assign({
+          height: inputHeight,
+          minHeight: inputHeight,
+          fontSize: inputSize,
+          lineHeight: inputLineHeight,
+          paddingX: opts.inputPaddingX !== void 0 ? opts.inputPaddingX : 18,
+          alignItems: "center"
+        }, fontProps(opts))));
+      }
+      if (input.input && input.input.input && typeof input.input.input.setProperties === "function") {
+        input.input.input.setProperties(inputTextProps);
+      }
+    }
     function createPanelApi(panelState) {
       function withPanelFontDefaults(options) {
         const opts = options || {};
@@ -18119,6 +18169,8 @@
         },
         inputField: function(parent, options) {
           const opts = withPanelFontDefaults(options);
+          const fieldFontSize = px(opts.inputFontSize, opts.fontSize || 28);
+          const fieldMinHeight = opts.minHeight || Math.max(88, fieldFontSize + 58);
           const input = new InputField(baseContainerProps(Object.assign({
             label: opts.label || "",
             placeholder: opts.placeholder || "",
@@ -18130,7 +18182,7 @@
             onValueChange: typeof opts.onValueChange === "function" ? opts.onValueChange : void 0,
             onFocusChange: typeof opts.onFocusChange === "function" ? opts.onFocusChange : void 0,
             width: opts.width || "100%",
-            minHeight: opts.minHeight || 74,
+            minHeight: fieldMinHeight,
             borderRadius: opts.borderRadius || 14,
             pointerEvents: "listener",
             zIndex: opts.zIndex || 18
@@ -18146,6 +18198,7 @@
           input.name = "VRODOSSpatialUIInputField";
           input.userData = input.userData || {};
           input.userData.vrodosSpatialInput = true;
+          applyInputFieldTypography(input, opts);
           return append(parent || this.content || this.root, input);
         },
         button: function(parent, options) {
