@@ -230,6 +230,13 @@ VRodosCompileUI.General = (function () {
         return isVrHeadsetTarget(controls) && getHeadsetSkyTime(controls) !== 'off';
     }
 
+    function isHeadsetStereoPostFxAuthored(controls) {
+        return Boolean(controls &&
+            controls.vrHeadsetStereoPostFx &&
+            isVrHeadsetTarget(controls) &&
+            controls.vrHeadsetStereoPostFx.checked === true);
+    }
+
     // --- UI Logic ---
 
     function setRuntimeTargetDisabled(control, disabled) {
@@ -282,6 +289,10 @@ VRodosCompileUI.General = (function () {
                     ? 'Uses the PC-rendered VR parent profile for later PCVR/WebXR validation with desktop rendering behavior.'
                     : 'Uses the authored desktop rendering pipeline without headset-specific overrides.');
         }
+
+        if (controls.vrHeadsetStereoPostFx) {
+            controls.vrHeadsetStereoPostFx.disabled = !headsetTarget;
+        }
     }
 
     function updateEdgeAAStrengthLabel(controls) {
@@ -311,6 +322,7 @@ VRodosCompileUI.General = (function () {
         if (!VRODOS.editor.envir || !VRODOS.editor.envir.scene) return;
 
         VRODOS.editor.envir.scene.aframeVrRuntimeProfile = runtimeTargetToVrRuntimeProfile(controls.runtimeTarget ? controls.runtimeTarget.value : 'vr-headset');
+        VRODOS.editor.envir.scene.aframeVrHeadsetStereoPostFxEnabled = isHeadsetStereoPostFxAuthored(controls);
 
         VRODOS.editor.envir.scene.aframeRenderQuality = normalizeRenderQuality(controls.renderQuality.value);
         VRODOS.editor.envir.scene.aframeShadowQuality = controls.shadowQuality.value || 'medium';
@@ -348,6 +360,7 @@ VRodosCompileUI.General = (function () {
         isVrHeadsetTarget,
         getHeadsetSkyTime,
         isHeadsetSkyTimeAuthored,
+        isHeadsetStereoPostFxAuthored,
         clearRuntimeTargetUI,
         applyRuntimeTargetUI,
         updateUI,

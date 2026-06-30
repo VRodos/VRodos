@@ -44,6 +44,7 @@ VRODOS.config.SCENE_SETTINGS_SCHEMA = {
     'aframeVrRuntimeProfile': { type: 'string', default: vrodosEditorSceneSettingDefault('vrRuntimeProfile', 'desktop'), envirKey: 'aframeVrRuntimeProfile' },
     'aframeVrFramebufferScale': { type: 'number', default: vrodosEditorSceneSettingDefault('vrFramebufferScale', 0), envirKey: 'aframeVrFramebufferScale' },
     'aframeVrFoveationStrength': { type: 'number', default: vrodosEditorSceneSettingDefault('vrFoveationStrength', -1), envirKey: 'aframeVrFoveationStrength' },
+    'aframeVrHeadsetStereoPostFxEnabled': { type: 'boolean', default: vrodosEditorSceneSettingDefault('vrHeadsetStereoPostFxEnabled', false), envirKey: 'aframeVrHeadsetStereoPostFxEnabled' },
     'aframeHoveringInteractables': { type: 'boolean', default: true, envirKey: 'aframeHoveringInteractables' },
     'aframeLegacyHorizonStageSize': { type: 'number', default: 5000, envirKey: 'aframeLegacyHorizonStageSize' },
 

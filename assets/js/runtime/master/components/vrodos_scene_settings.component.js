@@ -314,6 +314,7 @@ AFRAME.registerComponent('scene-settings', {
         vrRuntimeProfile: { type: "string", default: vrodosSceneSettingDefault("vrRuntimeProfile", "desktop") },
         vrFramebufferScale: { type: "string", default: vrodosSceneSettingDefault("vrFramebufferScale", "0") },
         vrFoveationStrength: { type: "string", default: vrodosSceneSettingDefault("vrFoveationStrength", "-1") },
+        vrHeadsetStereoPostFxEnabled: { type: "string", default: vrodosSceneSettingDefault("vrHeadsetStereoPostFxEnabled", "0") },
         legacyHorizonStageSize: { type: "string", default: "5000" },
         ambientOcclusionPreset: { type: "string", default: "balanced" },
         contactShadowPreset: { type: "string", default: "soft" },
@@ -700,8 +701,21 @@ AFRAME.registerComponent('scene-settings', {
         return vrodosRuntimeDebugFlag('forceHeadsetPmndrsComposer', 'vrodos_force_headset_pmndrs_composer') ||
             vrodosRuntimeDebugFlag('forceXrPmndrsComposer', 'vrodos_force_xr_pmndrs_composer');
     },
+    isHeadsetPmndrsStereoComposerForceEnabled: function () {
+        return vrodosRuntimeDebugFlag('forceXrPmndrsStereoComposer', 'vrodos_force_xr_pmndrs_stereo_composer') ||
+            vrodosRuntimeDebugFlag('xrPmndrsStereoLab', 'vrodos_xr_pmndrs_stereo_lab');
+    },
+    canUseVrHeadsetStereoPmndrsComposer: function () {
+        return this.isVrRuntimeHeadsetProfile() &&
+            this.data.postFXEngine === 'pmndrs' &&
+            this.data.postFXEnabled !== '0' &&
+            vrodosRuntimeTruthy(this.data.vrHeadsetStereoPostFxEnabled);
+    },
     canUsePmndrsComposerOnHeadset: function () {
-        return !this.isHeadsetBrowserDevice() || this.isHeadsetPmndrsComposerForceEnabled();
+        return !this.isHeadsetBrowserDevice() ||
+            this.isHeadsetPmndrsComposerForceEnabled() ||
+            this.isHeadsetPmndrsStereoComposerForceEnabled() ||
+            this.canUseVrHeadsetStereoPmndrsComposer();
     },
     getVrRuntimeProfile: function () {
         const override = vrodosRuntimeProfileOverrideValue();
@@ -710,6 +724,13 @@ AFRAME.registerComponent('scene-settings', {
         return vrodosNormalizeRuntimeProfile(rawProfile);
     },
     vrRuntimeAllows: function (capability, authored) {
+        if (
+            (capability === 'postProcessing' || capability === 'pmndrsComposer') &&
+            (this.isHeadsetPmndrsStereoComposerForceEnabled() || this.canUseVrHeadsetStereoPmndrsComposer())
+        ) {
+            return Boolean(authored);
+        }
+
         return vrodosRuntimeProfileAllows(this.getVrRuntimeProfile(), capability, authored);
     },
     isVrRuntimePolicyActive: function () {
@@ -941,6 +962,8 @@ AFRAME.registerComponent('scene-settings', {
             sceneOwnedProfile,
             headsetBrowser: this.isHeadsetBrowserDevice(),
             headsetPmndrsComposerForced: this.isHeadsetPmndrsComposerForceEnabled(),
+            headsetPmndrsStereoComposerForced: this.isHeadsetPmndrsStereoComposerForceEnabled(),
+            headsetPmndrsStereoComposerAuthored: this.canUseVrHeadsetStereoPmndrsComposer(),
             pmndrsComposer,
             sceneProbe,
             takramSkyEnvironment,
@@ -1260,6 +1283,14 @@ AFRAME.registerComponent('scene-settings', {
             this.isPmndrsCloudsEnabled();
     },
     hasPmndrsComposerEffectRequest: function () {
+        if (
+            this.data.postFXEngine === 'pmndrs' &&
+            this.getRenderQualityLevel() === 'high' &&
+            (this.isHeadsetPmndrsStereoComposerForceEnabled() || this.canUseVrHeadsetStereoPmndrsComposer())
+        ) {
+            return true;
+        }
+
         return this.data.postFXEngine === 'pmndrs' &&
             this.data.postFXEnabled !== '0' &&
             this.getRenderQualityLevel() === 'high' &&
@@ -1359,6 +1390,9 @@ AFRAME.registerComponent('scene-settings', {
         }
 
         const components = ['vrodos-render-profile'];
+        if (this.data.postFXEngine === 'pmndrs' && this.canUseVrHeadsetStereoPmndrsComposer()) {
+            components.push('vrodos-postfx-router');
+        }
         if (this.data.postFXEngine === 'pmndrs' && this.isPmndrsAtmosphereEnabled()) {
             components.push('vrodos-atmosphere');
         }

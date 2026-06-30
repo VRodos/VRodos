@@ -29,6 +29,7 @@ window.addEventListener('DOMContentLoaded', () => {
             runtimeTargetHint: document.getElementById('compileRuntimeTargetHint'),
             vrHeadsetPolicyPanel: document.getElementById('compileVrHeadsetPolicyPanel'),
             vrHeadsetSkyTime: document.getElementById('compileVrHeadsetSkyTimeSelect'),
+            vrHeadsetStereoPostFx: document.getElementById('compileVrHeadsetStereoPostFxToggle'),
             runtimeMode: document.getElementById('compileRuntimeModeSelect'),
             renderQuality: document.getElementById('compileRenderQualitySelect'),
             shadowQuality: document.getElementById('compileShadowQualitySelect'),
@@ -181,6 +182,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (!VRODOS.editor.envir.scene.aframeVrRuntimeProfile) {
             VRODOS.editor.envir.scene.aframeVrRuntimeProfile = 'desktop';
+        }
+        if (typeof VRODOS.editor.envir.scene.aframeVrHeadsetStereoPostFxEnabled === 'undefined') {
+            VRODOS.editor.envir.scene.aframeVrHeadsetStereoPostFxEnabled = false;
         }
         if (typeof VRODOS.editor.envir.scene.aframeHoveringInteractables === 'undefined') {
             VRODOS.editor.envir.scene.aframeHoveringInteractables = true;
@@ -442,6 +446,7 @@ window.addEventListener('DOMContentLoaded', () => {
         VRODOS.editor.envir.scene.aframePostFXSSRStrength = VRodosCompileUI.PostFX.normalizeSSRStrength(VRODOS.editor.envir.scene.aframePostFXSSRStrength);
         VRODOS.editor.envir.scene.aframePostFXSSREnabled = VRODOS.editor.envir.scene.aframePostFXSSRStrength !== 'off';
         VRODOS.editor.envir.scene.aframePostFXEngine = VRodosCompileUI.PostFX.normalizeEngine(VRODOS.editor.envir.scene.aframePostFXEngine);
+        VRODOS.editor.envir.scene.aframeVrHeadsetStereoPostFxEnabled = Boolean(VRODOS.editor.envir.scene.aframeVrHeadsetStereoPostFxEnabled);
         VRODOS.editor.envir.scene.aframePmndrsAAMode = VRodosCompileUI.PostFX.normalizePmndrsAAMode(VRODOS.editor.envir.scene.aframePmndrsAAMode);
         VRODOS.editor.envir.scene.aframePmndrsAAPreset = VRodosCompileUI.PostFX.normalizePmndrsAAPreset(VRODOS.editor.envir.scene.aframePmndrsAAPreset);
         VRODOS.editor.envir.scene.aframePmndrsAtmospherePreset = VRodosCompileUI.Atmosphere.normalizePreset(VRODOS.editor.envir.scene.aframePmndrsAtmospherePreset);
@@ -472,6 +477,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         VRodosCompileUI.General.clearRuntimeTargetUI(controls);
+        applyHeadsetStereoPostFxToControls(controls);
 
         const postFxEnabled = controls.postFx.checked;
         const colorGradingEnabled = postFxEnabled && controls.postFxColor.checked;
@@ -663,6 +669,25 @@ window.addEventListener('DOMContentLoaded', () => {
         updatePmndrsValueLabels();
     }
 
+    function applyHeadsetStereoPostFxToControls(controls) {
+        if (!controls || !VRodosCompileUI.General.isHeadsetStereoPostFxAuthored(controls)) {
+            return;
+        }
+
+        if (controls.postFx) {
+            controls.postFx.checked = true;
+        }
+        if (controls.postFxEngine) {
+            controls.postFxEngine.value = 'pmndrs';
+        }
+        if (controls.pmndrsAAMode) {
+            controls.pmndrsAAMode.value = 'smaa';
+        }
+        if (controls.pmndrsAAPreset) {
+            controls.pmndrsAAPreset.value = 'medium';
+        }
+    }
+
     function applyCompileDialogSettingsToScene() {
         if (typeof VRODOS.editor.envir === 'undefined' || !VRODOS.editor.envir.scene) {
             return;
@@ -682,9 +707,14 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls.hoveringInteractables) {
             VRODOS.editor.envir.scene.aframeHoveringInteractables = Boolean(controls.hoveringInteractables.checked);
         }
+        applyHeadsetStereoPostFxToControls(controls);
         VRodosCompileUI.PostFX.syncToScene(controls);
         
-        const selectedPostFxEngine = controls.postFx.checked === true
+        const headsetPolicyPostFxAuthored = VRodosCompileUI.General.isHeadsetSkyTimeAuthored(controls) ||
+            VRodosCompileUI.General.isHeadsetStereoPostFxAuthored(controls);
+        const selectedPostFxEngine = headsetPolicyPostFxAuthored
+            ? 'pmndrs'
+            : controls.postFx.checked === true
             ? VRodosCompileUI.PostFX.normalizeEngine(controls.postFxEngine.value)
             : 'legacy';
         VRODOS.editor.envir.scene.aframePostFXEngine = selectedPostFxEngine;
@@ -740,6 +770,9 @@ window.addEventListener('DOMContentLoaded', () => {
             controls.hoveringInteractables.checked = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) || VRODOS.editor.envir.scene.aframeHoveringInteractables !== false;
         }
         controls.postFx.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePostFXEnabled);
+        if (controls.vrHeadsetStereoPostFx) {
+            controls.vrHeadsetStereoPostFx.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframeVrHeadsetStereoPostFxEnabled);
+        }
         if (controls.legacyHorizonStageSize) {
             controls.legacyHorizonStageSize.value = VRodosCompileUI.General.clampLegacyHorizonStageSize(VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframeLegacyHorizonStageSize : 5000);
         }
@@ -1086,6 +1119,13 @@ window.addEventListener('DOMContentLoaded', () => {
             syncCompilePostFxState();
             VRodosCompileUI.PostFX.syncToScene(controls);
             VRodosCompileUI.Atmosphere.syncToScene(controls);
+        });
+    }
+    if (controls.vrHeadsetStereoPostFx) {
+        controls.vrHeadsetStereoPostFx.addEventListener('change', () => {
+            applyHeadsetStereoPostFxToControls(controls);
+            syncCompilePostFxState();
+            VRodosCompileUI.PostFX.syncToScene(controls);
         });
     }
     if (controls.renderQuality) {

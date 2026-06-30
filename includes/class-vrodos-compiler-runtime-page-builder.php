@@ -114,6 +114,13 @@ class VRodos_Compiler_Runtime_Page_Builder {
 		}
 
 		$components = [ 'vrodos-render-profile' ];
+		if (
+			'pmndrs' === (string) ( $scene_settings['postFXEngine'] ?? 'legacy' ) &&
+			$this->setting_bool( $scene_settings, 'postFXEnabled' ) &&
+			$this->setting_bool( $scene_settings, 'vrHeadsetStereoPostFxEnabled' )
+		) {
+			$components[] = 'vrodos-postfx-router';
+		}
 
 		if (
 			'pmndrs' === (string) ( $scene_settings['postFXEngine'] ?? 'legacy' ) &&

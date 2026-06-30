@@ -846,7 +846,52 @@
         return Boolean(renderer && renderer.xr && renderer.xr.isPresenting);
     }
 
+    function isPmndrsXrStereoComposerLabEnabled() {
+        return hasPmndrsDebugFlag('forceXrPmndrsStereoComposer', 'vrodos_force_xr_pmndrs_stereo_composer') ||
+            hasPmndrsDebugFlag('xrPmndrsStereoLab', 'vrodos_xr_pmndrs_stereo_lab');
+    }
+
+    function isPmndrsXrStereoSmaaLabEnabled() {
+        return hasPmndrsDebugFlag('forceXrPmndrsStereoSmaa', 'vrodos_force_xr_pmndrs_stereo_smaa') ||
+            hasPmndrsDebugFlag('xrPmndrsStereoSmaa', 'vrodos_xr_pmndrs_stereo_smaa');
+    }
+
+    function isPmndrsXrStereoComposerRequested(self) {
+        return isPmndrsXrStereoComposerLabEnabled() ||
+            Boolean(self && typeof self.canUseVrHeadsetStereoPmndrsComposer === 'function' && self.canUseVrHeadsetStereoPmndrsComposer());
+    }
+
+    function isPmndrsXrStereoSmaaEnabled(self) {
+        return isPmndrsXrStereoSmaaLabEnabled() ||
+            Boolean(self && typeof self.canUseVrHeadsetStereoPmndrsComposer === 'function' && self.canUseVrHeadsetStereoPmndrsComposer());
+    }
+
+    function getPmndrsXrStereoCamera(self) {
+        const renderer = self && self.el ? self.el.renderer : null;
+        const xr = renderer && renderer.xr ? renderer.xr : null;
+        if (!xr || !xr.isPresenting || typeof xr.getCamera !== 'function') {
+            return null;
+        }
+
+        try {
+            const xrCamera = xr.getCamera();
+            return xrCamera && xrCamera.isArrayCamera && xrCamera.cameras && xrCamera.cameras.length > 1
+                ? xrCamera
+                : null;
+        } catch (err) {
+            return null;
+        }
+    }
+
+    function isPmndrsXrStereoComposerActive(self) {
+        return isPmndrsXrStereoComposerRequested(self) && Boolean(getPmndrsXrStereoCamera(self));
+    }
+
     function shouldBypassPmndrsComposerForVr(self) {
+        if (isPmndrsXrStereoComposerRequested(self)) {
+            return false;
+        }
+
         return isPmndrsDirectVrPresentationActive(self) &&
             !(self && typeof self.canUseVrPmndrsComposer === 'function' && self.canUseVrPmndrsComposer());
     }
@@ -872,6 +917,135 @@
 
     function getPmndrsAmbientOcclusionBackend(self) {
         return isPmndrsAmbientOcclusionEnabled(self) ? 'native-ssao' : 'off';
+    }
+
+    function syncPmndrsComposerCamera(self, camera) {
+        if (!self || !camera) {
+            return;
+        }
+
+        if (self.pmndrsRenderPass && self.pmndrsRenderPass.mainCamera !== camera) {
+            self.pmndrsRenderPass.mainCamera = camera;
+        }
+        if (self.pmndrsEffectPass && typeof self.pmndrsEffectPass.mainCamera !== 'undefined') {
+            self.pmndrsEffectPass.mainCamera = camera;
+        }
+        if (self.pmndrsChromaticAberrationPass && typeof self.pmndrsChromaticAberrationPass.mainCamera !== 'undefined') {
+            self.pmndrsChromaticAberrationPass.mainCamera = camera;
+        }
+        if (self.pmndrsSmaaPass && typeof self.pmndrsSmaaPass.mainCamera !== 'undefined') {
+            self.pmndrsSmaaPass.mainCamera = camera;
+        }
+        if (self.pmndrsLensFlarePass && typeof self.pmndrsLensFlarePass.mainCamera !== 'undefined') {
+            self.pmndrsLensFlarePass.mainCamera = camera;
+        }
+        if (self.pmndrsNativeNormalPass && typeof self.pmndrsNativeNormalPass.mainCamera !== 'undefined') {
+            self.pmndrsNativeNormalPass.mainCamera = camera;
+        }
+        if (self.pmndrsNativeSsaoEffect && typeof self.pmndrsNativeSsaoEffect.mainCamera !== 'undefined') {
+            self.pmndrsNativeSsaoEffect.mainCamera = camera;
+        }
+        if (self.pmndrsAerialPerspectiveEffect && typeof self.pmndrsAerialPerspectiveEffect.mainCamera !== 'undefined') {
+            self.pmndrsAerialPerspectiveEffect.mainCamera = camera;
+        }
+        if (self.pmndrsCloudsEffect && typeof self.pmndrsCloudsEffect.mainCamera !== 'undefined') {
+            self.pmndrsCloudsEffect.mainCamera = camera;
+        }
+        if (self.pmndrsHorizonFoliageOverlayPass && typeof self.pmndrsHorizonFoliageOverlayPass.mainCamera !== 'undefined') {
+            self.pmndrsHorizonFoliageOverlayPass.mainCamera = camera;
+        }
+    }
+
+    function setPmndrsComposerBufferSizeWithoutRendererResize(self, width, height) {
+        if (!self || !self.pmndrsComposer) {
+            return;
+        }
+
+        const composer = self.pmndrsComposer;
+        const w = Math.max(1, Math.floor(width || 1));
+        const h = Math.max(1, Math.floor(height || 1));
+        const inputBuffer = composer.inputBuffer || null;
+        const outputBuffer = composer.outputBuffer || null;
+        const buffersMatch =
+            (!inputBuffer || (inputBuffer.width === w && inputBuffer.height === h)) &&
+            (!outputBuffer || (outputBuffer.width === w && outputBuffer.height === h));
+        if (self._pmndrsXrStereoLastW === w && self._pmndrsXrStereoLastH === h && buffersMatch) {
+            return;
+        }
+
+        if (inputBuffer && typeof inputBuffer.setSize === 'function') {
+            inputBuffer.setSize(w, h);
+        }
+        if (outputBuffer && typeof outputBuffer.setSize === 'function') {
+            outputBuffer.setSize(w, h);
+        }
+        if (composer.depthRenderTarget && typeof composer.depthRenderTarget.setSize === 'function') {
+            composer.depthRenderTarget.setSize(w, h);
+        }
+        if (Array.isArray(composer.passes)) {
+            composer.passes.forEach((pass) => {
+                if (pass && typeof pass.setSize === 'function') {
+                    pass.setSize(w, h);
+                }
+            });
+        }
+
+        self._pmndrsXrStereoLastW = w;
+        self._pmndrsXrStereoLastH = h;
+    }
+
+    function renderPmndrsComposerForXrStereo(self, scene, fallbackCamera) {
+        const renderer = self && self.el ? self.el.renderer : null;
+        const xr = renderer && renderer.xr ? renderer.xr : null;
+        const xrCamera = getPmndrsXrStereoCamera(self);
+        const xrTarget = xr && typeof xr.getRenderTarget === 'function' ? xr.getRenderTarget() : null;
+        const eyeCameras = xrCamera && Array.isArray(xrCamera.cameras) ? xrCamera.cameras : [];
+
+        if (!renderer || !xr || !self.pmndrsComposer || !xrTarget || eyeCameras.length < 2) {
+            return false;
+        }
+
+        const oldXrEnabled = xr.enabled;
+        const oldRenderTarget = renderer.getRenderTarget ? renderer.getRenderTarget() : null;
+        const oldViewport = xrTarget.viewport && typeof xrTarget.viewport.clone === 'function' ? xrTarget.viewport.clone() : null;
+        const oldScissor = xrTarget.scissor && typeof xrTarget.scissor.clone === 'function' ? xrTarget.scissor.clone() : null;
+        const oldScissorTest = xrTarget.scissorTest;
+        let renderedEyes = 0;
+
+        try {
+            xr.enabled = false;
+            for (let i = 0; i < eyeCameras.length; i += 1) {
+                const eyeCamera = eyeCameras[i];
+                const viewport = eyeCamera && eyeCamera.viewport;
+                if (!eyeCamera || !viewport || !Number.isFinite(viewport.z) || !Number.isFinite(viewport.w)) {
+                    continue;
+                }
+
+                setPmndrsComposerBufferSizeWithoutRendererResize(self, viewport.z, viewport.w);
+                syncPmndrsComposerCamera(self, eyeCamera);
+
+                xrTarget.viewport.set(viewport.x, viewport.y, viewport.z, viewport.w);
+                xrTarget.scissor.set(viewport.x, viewport.y, viewport.z, viewport.w);
+                xrTarget.scissorTest = true;
+                self.pmndrsComposer.render();
+                renderedEyes += 1;
+            }
+        } finally {
+            xr.enabled = oldXrEnabled;
+            if (oldViewport && xrTarget.viewport) {
+                xrTarget.viewport.copy(oldViewport);
+            }
+            if (oldScissor && xrTarget.scissor) {
+                xrTarget.scissor.copy(oldScissor);
+            }
+            xrTarget.scissorTest = oldScissorTest;
+            syncPmndrsComposerCamera(self, fallbackCamera);
+            if (typeof renderer.setRenderTarget === 'function') {
+                renderer.setRenderTarget(oldRenderTarget);
+            }
+        }
+
+        return renderedEyes > 0;
     }
 
     function getPmndrsRequestedMultisampling(self, renderer) {
@@ -1850,8 +2024,12 @@
             return false;
         }
 
+        const xrStereoMode = isPmndrsXrStereoComposerRequested(this);
         let composer;
         let requestedMultisampling = getPmndrsRequestedMultisampling(this, renderer);
+        if (xrStereoMode) {
+            requestedMultisampling = 0;
+        }
         const requestedMultisamplingInitial = requestedMultisampling;
         const composerOptions = {
             frameBufferType: THREE.HalfFloatType
@@ -1881,9 +2059,18 @@
         }
 
         // Defensive setSize — guard against the A-Frame zero-canvas race observed in Phase 0.
-        const w = (renderer.domElement && (renderer.domElement.clientWidth || renderer.domElement.width)) || window.innerWidth || 1;
-        const h = (renderer.domElement && (renderer.domElement.clientHeight || renderer.domElement.height)) || window.innerHeight || 1;
-        composer.setSize(Math.max(1, w), Math.max(1, h));
+        if (xrStereoMode && isPmndrsXrStereoComposerActive(this)) {
+            const xrCamera = getPmndrsXrStereoCamera(this);
+            const firstEye = xrCamera && xrCamera.cameras ? xrCamera.cameras[0] : null;
+            const viewport = firstEye && firstEye.viewport ? firstEye.viewport : null;
+            if (viewport) {
+                setPmndrsComposerBufferSizeWithoutRendererResize(this, viewport.z, viewport.w);
+            }
+        } else {
+            const w = (renderer.domElement && (renderer.domElement.clientWidth || renderer.domElement.width)) || window.innerWidth || 1;
+            const h = (renderer.domElement && (renderer.domElement.clientHeight || renderer.domElement.height)) || window.innerHeight || 1;
+            composer.setSize(Math.max(1, w), Math.max(1, h));
+        }
 
         const renderPass = new PP.RenderPass(scene, camera);
         composer.addPass(renderPass);
@@ -1902,7 +2089,7 @@
         }
 
         this.pmndrsCloudsEffect = null;
-        if (isPmndrsCloudsRequested(this)) {
+        if (!xrStereoMode && isPmndrsCloudsRequested(this)) {
             const VTC = getPmndrsCloudsBundle();
             const textureState = ensurePmndrsCloudTextures(this);
             const cloudsSkipReason = getPmndrsCloudSkipReason(this, renderer, atmosphereConfig, textureState);
@@ -1957,7 +2144,7 @@
             });
         }
 
-        if (atmosphereConfig && atmosphereConfig.enabled && shouldEnablePmndrsAerialPerspective(this)) {
+        if (!xrStereoMode && atmosphereConfig && atmosphereConfig.enabled && shouldEnablePmndrsAerialPerspective(this)) {
             const VTA = window.VRODOS_TAKRAM_ATMOSPHERE;
             const atmosphereState = (typeof this.ensurePmndrsAtmosphereResources === 'function') ? this.ensurePmndrsAtmosphereResources() : null;
             const useHorizonAerial = shouldEnablePmndrsHorizonAerial(this);
@@ -2027,7 +2214,7 @@
 
         // SSAO through the shared ambientOcclusionPreset control.
         // Native POSTPROCESSING.SSAOEffect is the default PMNDRS AO backend.
-        const aoPreset = (typeof this.getAmbientOcclusionPreset === 'function') ? this.getAmbientOcclusionPreset() : 'off';
+        const aoPreset = (!xrStereoMode && typeof this.getAmbientOcclusionPreset === 'function') ? this.getAmbientOcclusionPreset() : 'off';
         this.pmndrsNativeNormalPass = null;
         this.pmndrsNativeSsaoEffect = null;
         if (aoPreset && aoPreset !== 'off') {
@@ -2068,7 +2255,7 @@
         const bloomVal = (typeof this.getBloomStrengthValue === 'function') ? this.getBloomStrengthValue() : 0;
         const pmndrsBloomMult = readPmndrsNumber(this, 'pmndrsBloomIntensity', 0, 3, 1.0);
         const pmndrsBloomThr  = readPmndrsNumber(this, 'pmndrsBloomThreshold', 0, 1, 0.62);
-        if (bloomVal > 0 && pmndrsBloomMult > 0) {
+        if (!xrStereoMode && bloomVal > 0 && pmndrsBloomMult > 0) {
             try {
                 this.pmndrsBloomEffect = new PP.BloomEffect(bloomOptionsForLegacyValue(this, bloomVal, pmndrsBloomMult, pmndrsBloomThr));
                 effects.push(this.pmndrsBloomEffect);
@@ -2079,7 +2266,7 @@
         }
 
         this.pmndrsLensFlareEffect = null;
-        const wantsTakramLensFlare = isPmndrsLensFlareEnabled(this);
+        const wantsTakramLensFlare = !xrStereoMode && isPmndrsLensFlareEnabled(this);
         const canUseTakramSunLensFlare = wantsTakramLensFlare &&
             isHorizonBackground(this) &&
             atmosphereConfig &&
@@ -2130,7 +2317,7 @@
         }
 
         // Color grading — Brightness/Contrast + Hue/Saturation
-        if (this.hasPostFXColorGradingEffectEnabled && this.hasPostFXColorGradingEffectEnabled()) {
+        if (!xrStereoMode && this.hasPostFXColorGradingEffectEnabled && this.hasPostFXColorGradingEffectEnabled()) {
             try {
                 const contrastVal = (typeof this.getContrastValue === 'function') ? this.getContrastValue() : 1.0;
                 const saturationVal = (typeof this.getSaturationValue === 'function') ? this.getSaturationValue() : 1.0;
@@ -2143,7 +2330,7 @@
 
         this.pmndrsLutEffect = null;
         this.pmndrsLutTexture = null;
-        if (isPmndrsLutEnabled(this) && readPmndrsNumber(this, 'pmndrsLutStrength', 0, 1, 1.0) > 0) {
+        if (!xrStereoMode && isPmndrsLutEnabled(this) && readPmndrsNumber(this, 'pmndrsLutStrength', 0, 1, 1.0) > 0) {
             try {
                 const lutLook = normalizePmndrsLutLook(this.data.pmndrsLutLook);
                 const lutStrength = readPmndrsNumber(this, 'pmndrsLutStrength', 0, 1, 1.0);
@@ -2176,7 +2363,7 @@
 
         // Vignette — pmndrs engine has its own per-scene flag (legacy postFXVignetteEnabled
         // is hard-coded false, so we honour pmndrsVignetteEnabled instead)
-        const pmndrsVignetteOn = readPmndrsBool(this, 'pmndrsVignetteEnabled');
+        const pmndrsVignetteOn = !xrStereoMode && readPmndrsBool(this, 'pmndrsVignetteEnabled');
         if (pmndrsVignetteOn) {
             try {
                 const vDarkness = readPmndrsNumber(this, 'pmndrsVignetteDarkness', 0, 1, 0.5);
@@ -2187,7 +2374,7 @@
         }
 
         this.pmndrsNoiseEffect = null;
-        if (readPmndrsBool(this, 'pmndrsNoiseEnabled')) {
+        if (!xrStereoMode && readPmndrsBool(this, 'pmndrsNoiseEnabled')) {
             try {
                 this.pmndrsNoiseEffect = new PP.NoiseEffect({
                     blendFunction: PP.BlendFunction ? PP.BlendFunction.SCREEN : undefined,
@@ -2205,7 +2392,7 @@
 
         this.pmndrsChromaticAberrationEffect = null;
         this.pmndrsChromaticAberrationPass = null;
-        if (readPmndrsBool(this, 'pmndrsChromaticAberrationEnabled')) {
+        if (!xrStereoMode && readPmndrsBool(this, 'pmndrsChromaticAberrationEnabled')) {
             try {
                 const chromaOffset = readPmndrsNumber(this, 'pmndrsChromaticAberrationOffset', 0, 0.006, 0.0015);
                 this.pmndrsChromaticAberrationEffect = new PP.ChromaticAberrationEffect({
@@ -2225,7 +2412,7 @@
         //   - msaa: composer multisampling only
         // FXAA stays disabled due the Horizon sun halo artifact it introduced on
         // the current pinned stack.
-        const smaaPreset = getPmndrsSmaaPreset(this, PP);
+        const smaaPreset = xrStereoMode && !isPmndrsXrStereoSmaaEnabled(this) ? null : getPmndrsSmaaPreset(this, PP);
         this.pmndrsSmaaPass = null;
         if (smaaPreset !== null) {
             try {
@@ -2423,11 +2610,21 @@
                 refreshPmndrsHorizonFoliageOverlaySelection(self, scene);
                 applyPmndrsHorizonFoliageMaterialNormalization(self);
             }
-            self.updatePmndrsPostProcessingSize();
+            const useXrStereoComposer = isPmndrsXrStereoComposerActive(self);
+            if (!useXrStereoComposer) {
+                self.updatePmndrsPostProcessingSize();
+            }
 
             self.pmndrsRendering = true;
             try {
-                self.pmndrsComposer.render();
+                if (useXrStereoComposer) {
+                    const renderedStereo = renderPmndrsComposerForXrStereo(self, scene, camera);
+                    if (!renderedStereo) {
+                        self.pmndrsComposer.render();
+                    }
+                } else {
+                    self.pmndrsComposer.render();
+                }
             } catch (err) {
                 console.error('[VRodos] pmndrs composer.render failed:', err);
                 // Fall back to direct render so the scene keeps drawing
@@ -2441,6 +2638,15 @@
 
     H.updatePmndrsPostProcessingSize = function () {
         if (!this.pmndrsComposer || !this.el.renderer) {
+            return;
+        }
+        if (isPmndrsXrStereoComposerActive(this)) {
+            const xrCamera = getPmndrsXrStereoCamera(this);
+            const firstEye = xrCamera && xrCamera.cameras ? xrCamera.cameras[0] : null;
+            const viewport = firstEye && firstEye.viewport ? firstEye.viewport : null;
+            if (viewport) {
+                setPmndrsComposerBufferSizeWithoutRendererResize(this, viewport.z, viewport.w);
+            }
             return;
         }
         const renderer = this.el.renderer;

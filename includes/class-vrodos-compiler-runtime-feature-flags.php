@@ -77,7 +77,7 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 
 	private function object_requires_spatial_ui( object $object ): bool {
 		$category = $this->normalize_scene_key( (string) ( $object->category_slug ?? $object->category_name ?? '' ) );
-		if ( 'assessment' === $category ) {
+		if ( in_array( $category, [ 'assessment', 'poi-imagetext', 'poi-image-text' ], true ) ) {
 			return true;
 		}
 
@@ -127,8 +127,10 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function is_post_fx_enabled( $metadata ): bool {
-		return in_array( $this->vr_runtime_profile( $metadata ), [ 'desktop', 'pc-rendered-vr' ], true )
-			&& $this->is_authored_post_fx_enabled( $metadata );
+		return (
+			in_array( $this->vr_runtime_profile( $metadata ), [ 'desktop', 'pc-rendered-vr' ], true )
+			|| $this->is_headset_stereo_post_fx_enabled( $metadata )
+		) && $this->is_authored_post_fx_enabled( $metadata );
 	}
 
 	public function vr_runtime_profile( $metadata ): string {
@@ -146,6 +148,12 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 
 	public function is_authored_post_fx_enabled( $metadata ): bool {
 		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePostFXEnabled ?? false );
+	}
+
+	public function is_headset_stereo_post_fx_enabled( $metadata ): bool {
+		return 'headset' === $this->vr_runtime_profile( $metadata )
+			&& self::POST_FX_ENGINE_PMNDRS === $this->authored_post_fx_engine( $metadata )
+			&& VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrHeadsetStereoPostFxEnabled', false );
 	}
 
 	public function authored_post_fx_engine( $metadata ): string {

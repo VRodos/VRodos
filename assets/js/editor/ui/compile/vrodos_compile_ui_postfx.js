@@ -248,7 +248,10 @@ VRodosCompileUI.PostFX = (function () {
         const headsetSkyTimeAuthored = VRodosCompileUI.General &&
             typeof VRodosCompileUI.General.isHeadsetSkyTimeAuthored === 'function' &&
             VRodosCompileUI.General.isHeadsetSkyTimeAuthored(controls);
-        const postFxEnabled = controls.postFx.checked === true || headsetSkyTimeAuthored;
+        const headsetStereoPostFxAuthored = VRodosCompileUI.General &&
+            typeof VRodosCompileUI.General.isHeadsetStereoPostFxAuthored === 'function' &&
+            VRodosCompileUI.General.isHeadsetStereoPostFxAuthored(controls);
+        const postFxEnabled = controls.postFx.checked === true || headsetSkyTimeAuthored || headsetStereoPostFxAuthored;
 
         VRODOS.editor.envir.scene.aframePostFXEnabled = postFxEnabled;
         VRODOS.editor.envir.scene.aframePostFXColorEnabled = controls.postFxColor.checked === true;
@@ -275,9 +278,14 @@ VRodosCompileUI.PostFX = (function () {
         VRODOS.editor.envir.scene.aframePostFXSSREnabled = VRODOS.editor.envir.scene.aframePostFXSSRStrength !== 'off';
         
         VRODOS.editor.envir.scene.aframePostFXTAAEnabled = controls.taaEnabled.checked === true;
-        VRODOS.editor.envir.scene.aframePostFXEngine = headsetSkyTimeAuthored
+        VRODOS.editor.envir.scene.aframePostFXEngine = (headsetSkyTimeAuthored || headsetStereoPostFxAuthored)
             ? 'pmndrs'
             : (postFxEnabled ? normalizeEngine(controls.postFxEngine.value) : 'legacy');
+
+        if (headsetStereoPostFxAuthored) {
+            VRODOS.editor.envir.scene.aframePmndrsAAMode = 'smaa';
+            VRODOS.editor.envir.scene.aframePmndrsAAPreset = 'medium';
+        }
 
         // Pmndrs específicos
         if (controls.pmndrsBloomIntensity) {

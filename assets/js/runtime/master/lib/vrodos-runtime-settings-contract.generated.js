@@ -39,6 +39,11 @@
             "max": 1,
             "step": 0.05
         },
+        "vrHeadsetStereoPostFxEnabled": {
+            "metadataKey": "aframeVrHeadsetStereoPostFxEnabled",
+            "type": "boolean",
+            "default": false
+        },
         "postFXColorEnabled": {
             "metadataKey": "aframePostFXColorEnabled",
             "type": "boolean",
@@ -674,6 +679,7 @@
     "vrRuntimeProfile": "desktop",
     "vrFramebufferScale": "0",
     "vrFoveationStrength": "-1",
+    "vrHeadsetStereoPostFxEnabled": "0",
     "postFXColorEnabled": "0",
     "navigationMode": "walkable",
     "shadowUpdateMode": "static",

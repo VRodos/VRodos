@@ -127,11 +127,12 @@
 											<option value="sunset">Sunset</option>
 										</select>
 									</label>
-									<label class="tw-form-control">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Post-FX</span>
-										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-											<option>Disabled</option>
-										</select>
+									<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer tw-rounded-md tw-border tw-border-emerald-100 tw-bg-white/70 tw-p-2">
+										<input id="compileVrHeadsetStereoPostFxToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
+										<div class="tw-min-w-0">
+											<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Stereo Post-FX</span>
+											<p class="tw-text-[10px] tw-leading-relaxed tw-text-emerald-700/70 tw-mt-0.5">PMNDRS per-eye composer with SMAA.</p>
+										</div>
 									</label>
 									<label class="tw-form-control">
 										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Reflections</span>
