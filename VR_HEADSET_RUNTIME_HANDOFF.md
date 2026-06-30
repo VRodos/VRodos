@@ -52,6 +52,14 @@ Legacy profile names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, 
 
 Use a freshly recompiled representative scene for headset validation. Do not treat arbitrary files already present in `runtime/build/` as current fixtures.
 
+Latest manual headset note, 2026-06-30:
+
+- Accepted on an Immerse VR-only headset project: HMD/controller tracking, controller rays, thumbstick movement, yaw, walkable collision, CEFR spatial UI, headset shadow behavior, controller-driven modal interaction, and headset-browser interaction recovery after immersive exit.
+- Accepted after runtime cleanup: CEFR participant/session state can be continued or cleared from the startup session prompt.
+- Accepted after recompiling with the latest runtime: image/text POI spatial panels reveal image and dialog shell together through the deferred first-reveal path, plain VR video trigger clicks directly toggle play/pause, assessment panels open/read/answer/submit/close, and normal scene `.raycastable` targets show endpoint-dot feedback when no modal is open.
+- Quest Browser version recorded from ADB: `146.3.0.52.52.997435173` (`versionCode=569800627`, `lastUpdateTime=2026-06-23 19:40:28`).
+- Not explicitly recorded in this pass: runtime diagnostic values.
+
 Required checks:
 
 - HMD/controller tracking remains WebXR/A-Frame-owned.

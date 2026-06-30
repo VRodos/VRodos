@@ -37,16 +37,29 @@ Keep these baseline decisions intact:
 - HDR environment-map reflections where the current policy allows them.
 - Minor far-edge shimmer is accepted unless it regresses.
 
+## Latest Headset Validation
+
+2026-06-30 manual Immerse VR-only headset pass:
+
+- Accepted: HMD/controller tracking, controller rays, thumbstick movement, yaw, walkable collision, CEFR spatial UI interaction, headset shadow behavior, and controller-driven modal interaction were reported working well.
+- Accepted after runtime cleanup: exiting immersive mode back to the headset browser page restored page/A-Frame interaction instead of leaving the compiled client non-interactable.
+- Accepted after runtime cleanup: stored CEFR participant/session state can be continued or cleared through the startup session prompt.
+- Accepted after recompiling with the latest runtime: image/text POI spatial panels open through `window.VRODOSSpatialUI` and reveal the image with the dialog shell, with no image-only flash.
+- Accepted after recompiling with the latest runtime: plain VR video trigger clicks directly toggle play/pause without opening a dialog.
+- Accepted after recompiling with the latest runtime: assessment panels open, remain readable, accept answers, submit, and close.
+- Accepted after recompiling with the latest runtime: normal scene `.raycastable` targets show endpoint-dot feedback when no modal is open.
+- Quest Browser version recorded from ADB: `146.3.0.52.52.997435173` (`versionCode=569800627`, `lastUpdateTime=2026-06-23 19:40:28`).
+
 ## Active Headset TODOs
 
 ### Interaction Parity
 
-- Validate plain VR video trigger clicks toggle playback directly without opening a play/pause dialog.
-- Validate CEFR prompts open through `window.VRODOSSpatialUI`.
-- Validate assessment panels open through `window.VRODOSSpatialUI`, stay readable at camera-relative eye height, accept answers, submit, and close.
-- Validate image/text POI panels open through `window.VRODOSSpatialUI`.
-- Confirm modal panels lock locomotion while open, clamp the active controller ray to the panel surface, show hit-dot feedback, and restore ray state on close.
-- Confirm normal scene `.raycastable` targets show endpoint-dot feedback when no modal is open.
+- Plain VR video trigger direct play/pause was accepted on headset on 2026-06-30; retest after video interaction changes.
+- CEFR prompts opening through `window.VRODOSSpatialUI` were accepted on headset on 2026-06-30; retest after CEFR/spatial UI changes.
+- Assessment panels opening, readability, answer, submit, and close were accepted on headset on 2026-06-30; retest after assessment/spatial UI changes.
+- Image/text POI panels opening through `window.VRODOSSpatialUI` and deferred first reveal were accepted on headset on 2026-06-30; retest after POI/spatial UI changes.
+- Modal panel controller interaction was accepted on headset on 2026-06-30; keep validating locomotion lock, controller ray clamp, hit-dot feedback, and ray restore after spatial-panel changes.
+- Normal scene `.raycastable` endpoint-dot feedback with no modal open was accepted on headset on 2026-06-30; retest after controller ray/feedback changes.
 - If spatial UI is unavailable in immersive XR, log diagnostics and fail closed; do not restore A-Frame plane/text or DOM overlay fallbacks.
 - Retest HMD tracking, controller rays, locomotion, yaw, walkable collision, and video/POI/CEFR/assessment interactions after each spatial-panel change.
 
@@ -56,12 +69,12 @@ Keep these baseline decisions intact:
 - Keep yaw-only authored-world rotation from clearing authored-space ground caches.
 - Use `vrodos_debug_immersive_smoothness=1` plus `scripts/capture-quest-immersive-diagnostics.mjs` before changing locomotion or render policy.
 - Watch frame time, shadow dirty count, transformed root count, collision target count, blocker ray count, and shadow map sizes.
-- Treat walkable collision and controller thumbstick movement as accepted baseline features unless a future change touches navigation/collision.
+- Walkable collision and controller thumbstick movement were accepted again on headset on 2026-06-30; treat them as accepted baseline features unless a future change touches navigation/collision.
 - If networked headset scenes matter for a release, validate them separately on headset hardware; current support is conditional on scene/runtime/network behavior.
 
 ### Shadows And Scene-Owned Visuals
 
-- Keep headset shadow maps capped at directional `1024` and point/spot `512`.
+- Keep headset shadow maps capped at directional `1024` and point/spot `512`; visible headset shadow behavior was accepted on 2026-06-30, but diagnostic cap values should still be checked when touching shadow policy.
 - Keep adaptive shadow fitting restricted to targeted dirty events.
 - Audit the archived open caveat: immersive right-stick authored-world yaw can make object shadows appear player-relative/rotating. Investigate this as a directional shadow/light fitting problem under immersive presentation yaw without changing the accepted locomotion/collision baseline.
 - Keep headset visible Takram sky on the desktop local-Horizon ground policy: Takram `SkyMaterial` ground disabled, authored terrain provides the ground.
