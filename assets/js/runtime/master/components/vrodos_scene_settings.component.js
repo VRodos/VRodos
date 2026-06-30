@@ -2516,6 +2516,7 @@ AFRAME.registerComponent('scene-settings', {
             sceneControlsRestored: false,
             overlayRaycastersRefreshed: false,
             spatialTargetsRefreshed: false,
+            runtimeOverlaysCleaned: false,
             errors: []
         };
 
@@ -2551,8 +2552,54 @@ AFRAME.registerComponent('scene-settings', {
                 result.errors.push(`spatial-targets:${err && err.message ? err.message : err}`);
             }
         }
+        try {
+            this.cleanupXrExitRuntimeOverlays(reason);
+            result.runtimeOverlaysCleaned = true;
+        } catch (err) {
+            result.errors.push(`runtime-overlays:${err && err.message ? err.message : err}`);
+        }
 
         return result;
+    },
+    cleanupXrExitRuntimeOverlays: function (reason) {
+        const cefrRuntime = window.__vrodosImmerseCefrRuntime || null;
+        const masterUi = window.VRODOSMasterUI || null;
+
+        if (cefrRuntime && typeof cefrRuntime.handleXrExitRestore === 'function') {
+            cefrRuntime.handleXrExitRestore(reason || 'xr-exit-restore');
+        }
+
+        if (masterUi && typeof masterUi.closeOpenRuntimeDialogs === 'function') {
+            masterUi.closeOpenRuntimeDialogs(reason || 'xr-exit-restore');
+        }
+
+        ['vrodos-immerse-assessment-overlay'].forEach((id) => {
+            const root = typeof document !== 'undefined' && document.getElementById
+                ? document.getElementById(id)
+                : null;
+            if (root && root.style) {
+                root.style.display = 'none';
+            }
+            if (root && root.hasAttribute && root.hasAttribute('open')) {
+                root.removeAttribute('open');
+            }
+        });
+
+        const overlayHost = typeof document !== 'undefined' && document.getElementById
+            ? document.getElementById('vrodos-runtime-overlay-host')
+            : null;
+        if (overlayHost && overlayHost.style) {
+            const visibleBlockingOverlay = Array.prototype.some.call(
+                overlayHost.querySelectorAll('#vrodos-immerse-cefr-overlay, #vrodos-immerse-session-overlay, dialog[open]'),
+                (el) => {
+                    if (!el || !el.style) {
+                        return false;
+                    }
+                    return el.style.display !== 'none';
+                }
+            );
+            overlayHost.style.pointerEvents = visibleBlockingOverlay ? 'auto' : 'none';
+        }
     },
     restoreXrExitControls: function (baseline) {
         const result = {

@@ -18535,6 +18535,9 @@
         zIndex: 0
       }, fontProps(config || {}))));
       group.name = "VRODOSSpatialUIPanelGroup";
+      if (config.initiallyVisible === false || Number(config.initialRevealDelayMs) > 0) {
+        group.visible = false;
+      }
       root.name = "VRODOSSpatialUIHorizonPanel";
       root.frustumCulled = false;
       group.add(root);
@@ -18572,6 +18575,23 @@
       };
       refreshPanelAnchor(panelState);
       return panelState;
+    }
+    function scheduleInitialPanelReveal(panelState) {
+      if (!panelState || !panelState.group || panelState.group.visible !== false) {
+        return;
+      }
+      const configuredDelay = Number(panelState.config && panelState.config.initialRevealDelayMs);
+      const delay = Number.isFinite(configuredDelay) ? Math.max(0, configuredDelay) : 0;
+      window.setTimeout(() => {
+        if (activePanel !== panelState || !panelState.group) {
+          return;
+        }
+        panelState.group.visible = true;
+        recordDiagnostic("debug", "Revealed deferred spatial UI panel.", {
+          id: panelState.id || "",
+          delayMs: delay
+        });
+      }, delay);
     }
     function ensureAFrameHostComponent() {
       if (!window.AFRAME || !window.AFRAME.registerComponent) {
@@ -18643,6 +18663,7 @@
         if (typeof panelState.config.render === "function") {
           panelState.config.render(api2);
         }
+        scheduleInitialPanelReveal(panelState);
         recordDiagnostic("debug", "Opened pmndrs Horizon spatial UI panel.", {
           id: panelState.id,
           width: panelState.width,

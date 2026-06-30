@@ -2916,6 +2916,9 @@ import { MSDF } from "@zappar/msdf-generator";
         }, fontProps(config || {}))));
 
         group.name = "VRODOSSpatialUIPanelGroup";
+        if (config.initiallyVisible === false || Number(config.initialRevealDelayMs) > 0) {
+            group.visible = false;
+        }
         root.name = "VRODOSSpatialUIHorizonPanel";
         root.frustumCulled = false;
         group.add(root);
@@ -2954,6 +2957,25 @@ import { MSDF } from "@zappar/msdf-generator";
         };
         refreshPanelAnchor(panelState);
         return panelState;
+    }
+
+    function scheduleInitialPanelReveal(panelState) {
+        if (!panelState || !panelState.group || panelState.group.visible !== false) {
+            return;
+        }
+
+        const configuredDelay = Number(panelState.config && panelState.config.initialRevealDelayMs);
+        const delay = Number.isFinite(configuredDelay) ? Math.max(0, configuredDelay) : 0;
+        window.setTimeout(() => {
+            if (activePanel !== panelState || !panelState.group) {
+                return;
+            }
+            panelState.group.visible = true;
+            recordDiagnostic("debug", "Revealed deferred spatial UI panel.", {
+                id: panelState.id || "",
+                delayMs: delay
+            });
+        }, delay);
     }
 
     function ensureAFrameHostComponent() {
@@ -3033,6 +3055,7 @@ import { MSDF } from "@zappar/msdf-generator";
             if (typeof panelState.config.render === "function") {
                 panelState.config.render(api);
             }
+            scheduleInitialPanelReveal(panelState);
 
             recordDiagnostic("debug", "Opened pmndrs Horizon spatial UI panel.", {
                 id: panelState.id,

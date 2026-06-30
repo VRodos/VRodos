@@ -254,6 +254,7 @@ AFRAME.registerComponent('info-panel', {
             trimControllerRays: true,
             showRayHitDot: true,
             blockSceneRaycasts: true,
+            initialRevealDelayMs: 180,
             cleanup: () => {
                 this.spatialPoiPanelApi = null;
             },

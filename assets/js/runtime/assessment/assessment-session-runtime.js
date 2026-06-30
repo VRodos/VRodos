@@ -289,6 +289,22 @@
             };
         };
 
+        runtime.clearSession = function () {
+            const cfg = getConfig();
+            const store = storage();
+            if (store) {
+                try {
+                    store.removeItem(storageKey(cfg));
+                } catch (error) {
+                    // Continue with the in-memory reset when storage cleanup fails.
+                }
+            }
+            runtime.state = defaultState(cfg);
+            runtime.recordSceneVisit();
+            runtime.save();
+            return runtime.getIdentity();
+        };
+
         runtime.setIdentity = function (displayName, cefrLevel) {
             const normalizedName = normalizeDisplayName(displayName);
             const normalizedLevel = normalizeLevel(cefrLevel);

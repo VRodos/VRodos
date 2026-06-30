@@ -114,6 +114,9 @@
             promptScheduled: false,
             vrPromptActive: false,
             vrPanelApi: null,
+            sessionPromptRoot: null,
+            sessionPromptShown: false,
+            sessionPromptResolved: false,
             levelApplied: false,
             presentationEventsBound: false,
             vrPromptRetryCount: 0,
@@ -172,6 +175,7 @@
             }
             runtime.participantName = String(identity.displayName || "");
             runtime.applyLevel(level);
+            runtime.showStoredSessionPrompt(identity);
             return true;
         };
 
@@ -363,9 +367,192 @@
                 runtime.root.style.display = "none";
             }
             const host = document.getElementById("vrodos-runtime-overlay-host");
-            if (host && !host.querySelector("dialog[open]")) {
+            if (host && !host.querySelector("dialog[open]") &&
+                (!runtime.sessionPromptRoot || runtime.sessionPromptRoot.style.display === "none")) {
                 host.style.pointerEvents = "none";
             }
+        };
+
+        runtime.ensureSessionPrompt = function () {
+            if (runtime.sessionPromptRoot) {
+                return runtime.sessionPromptRoot;
+            }
+
+            const root = document.createElement("div");
+            root.id = "vrodos-immerse-session-overlay";
+            root.style.position = "fixed";
+            root.style.inset = "0";
+            root.style.zIndex = "2147481550";
+            root.style.display = "none";
+            root.style.alignItems = "center";
+            root.style.justifyContent = "center";
+            root.style.padding = "24px";
+            root.style.background = "rgba(15, 23, 42, 0.38)";
+            root.style.backdropFilter = "blur(10px)";
+
+            const panel = document.createElement("div");
+            panel.style.width = "min(520px, 100%)";
+            panel.style.borderRadius = "22px";
+            panel.style.background = "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)";
+            panel.style.border = "1px solid rgba(203, 213, 225, 0.9)";
+            panel.style.boxShadow = "0 28px 80px rgba(15, 23, 42, 0.22)";
+            panel.style.padding = "24px";
+            panel.style.color = "#0f172a";
+            panel.style.fontFamily = "'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+
+            const kicker = document.createElement("div");
+            kicker.textContent = "Current session";
+            kicker.style.fontSize = "12px";
+            kicker.style.fontWeight = "800";
+            kicker.style.letterSpacing = "0.14em";
+            kicker.style.textTransform = "uppercase";
+            kicker.style.color = "#2563eb";
+            kicker.style.marginBottom = "8px";
+
+            const title = document.createElement("div");
+            title.textContent = "Continue with this user?";
+            title.style.fontSize = "26px";
+            title.style.lineHeight = "1.15";
+            title.style.fontWeight = "800";
+            title.style.marginBottom = "16px";
+
+            const summary = document.createElement("div");
+            summary.style.display = "grid";
+            summary.style.gridTemplateColumns = "1fr 1fr";
+            summary.style.gap = "10px";
+            summary.style.marginBottom = "18px";
+
+            const makeSummaryItem = function (label, value) {
+                const item = document.createElement("div");
+                item.style.border = "1px solid rgba(203, 213, 225, 0.95)";
+                item.style.borderRadius = "16px";
+                item.style.background = "#ffffff";
+                item.style.padding = "12px";
+
+                const itemLabel = document.createElement("div");
+                itemLabel.textContent = label;
+                itemLabel.style.fontSize = "11px";
+                itemLabel.style.fontWeight = "800";
+                itemLabel.style.letterSpacing = "0.08em";
+                itemLabel.style.textTransform = "uppercase";
+                itemLabel.style.color = "#64748b";
+                itemLabel.style.marginBottom = "4px";
+
+                const itemValue = document.createElement("div");
+                itemValue.textContent = value || "-";
+                itemValue.style.fontSize = "18px";
+                itemValue.style.fontWeight = "800";
+                itemValue.style.color = "#0f172a";
+                itemValue.style.overflowWrap = "anywhere";
+
+                item.appendChild(itemLabel);
+                item.appendChild(itemValue);
+                return { item, valueEl: itemValue };
+            };
+
+            const userItem = makeSummaryItem("User", "");
+            const levelItem = makeSummaryItem("CEFR", "");
+            summary.appendChild(userItem.item);
+            summary.appendChild(levelItem.item);
+
+            const actions = document.createElement("div");
+            actions.style.display = "flex";
+            actions.style.justifyContent = "flex-end";
+            actions.style.gap = "10px";
+            actions.style.flexWrap = "wrap";
+
+            const clearButton = document.createElement("button");
+            clearButton.type = "button";
+            clearButton.textContent = "Clear session";
+            clearButton.style.border = "1px solid rgba(244, 63, 94, 0.45)";
+            clearButton.style.borderRadius = "999px";
+            clearButton.style.background = "rgba(244, 63, 94, 0.08)";
+            clearButton.style.color = "#be123c";
+            clearButton.style.padding = "11px 16px";
+            clearButton.style.fontSize = "14px";
+            clearButton.style.fontWeight = "800";
+            clearButton.style.cursor = "pointer";
+
+            const continueButton = document.createElement("button");
+            continueButton.type = "button";
+            continueButton.textContent = "Continue";
+            continueButton.style.border = "0";
+            continueButton.style.borderRadius = "999px";
+            continueButton.style.background = "#5cc887";
+            continueButton.style.color = "#ffffff";
+            continueButton.style.padding = "11px 18px";
+            continueButton.style.fontSize = "14px";
+            continueButton.style.fontWeight = "800";
+            continueButton.style.cursor = "pointer";
+
+            clearButton.addEventListener("click", () => {
+                runtime.clearStoredSession();
+            });
+            continueButton.addEventListener("click", () => {
+                runtime.sessionPromptResolved = true;
+                runtime.hideSessionPrompt();
+            });
+
+            actions.appendChild(clearButton);
+            actions.appendChild(continueButton);
+            panel.appendChild(kicker);
+            panel.appendChild(title);
+            panel.appendChild(summary);
+            panel.appendChild(actions);
+            root.appendChild(panel);
+
+            root.__vrodosSessionPromptUserValue = userItem.valueEl;
+            root.__vrodosSessionPromptLevelValue = levelItem.valueEl;
+            runtime.sessionPromptRoot = root;
+            return root;
+        };
+
+        runtime.showStoredSessionPrompt = function (identity) {
+            if (runtime.sessionPromptResolved || runtime.sessionPromptShown || runtime.isImmersiveVrActive()) {
+                return;
+            }
+            const normalizedLevel = normalizeLevel(identity && identity.cefrLevel || "");
+            const displayName = String(identity && identity.displayName || "").trim();
+            if (!normalizedLevel || !displayName) {
+                return;
+            }
+
+            const root = runtime.ensureSessionPrompt();
+            root.__vrodosSessionPromptUserValue.textContent = displayName;
+            root.__vrodosSessionPromptLevelValue.textContent = normalizedLevel;
+            ensureDomOverlayParent(root);
+            root.style.display = "flex";
+            runtime.sessionPromptShown = true;
+        };
+
+        runtime.hideSessionPrompt = function () {
+            if (runtime.sessionPromptRoot) {
+                runtime.sessionPromptRoot.style.display = "none";
+            }
+            const host = document.getElementById("vrodos-runtime-overlay-host");
+            if (host && !host.querySelector("dialog[open]") &&
+                (!runtime.root || runtime.root.style.display === "none")) {
+                host.style.pointerEvents = "none";
+            }
+        };
+
+        runtime.clearStoredSession = function () {
+            const session = getAssessmentSessionRuntime();
+            if (session && typeof session.clearSession === "function") {
+                session.clearSession();
+            }
+
+            runtime.sessionPromptResolved = true;
+            runtime.sessionPromptShown = false;
+            runtime.hideSessionPrompt();
+            runtime.participantName = "";
+            runtime.selectedLevel = "";
+            runtime.levelApplied = false;
+            runtime.elements.forEach((element) => {
+                setCefrControlledVisible(element, false);
+            });
+            runtime.applyStoredIdentityIfAvailable();
+            window.setTimeout(() => runtime.showPrompt(), 80);
         };
 
         runtime.setPendingVrPromptLock = function (locked) {
@@ -780,6 +967,19 @@
             }
             runtime.setPendingVrPromptLock(false);
             runtime.hideDomPrompt();
+        };
+
+        runtime.handleXrExitRestore = function () {
+            if (runtime.vrPromptActive && window.VRODOSSpatialUI && typeof window.VRODOSSpatialUI.closePanel === "function") {
+                window.VRODOSSpatialUI.closePanel("cefr-xr-exit-restore");
+            }
+            runtime.vrPromptActive = false;
+            runtime.vrPanelApi = null;
+            runtime.spatialUiLoadPending = false;
+            runtime.setPendingVrPromptLock(false);
+            if (runtime.levelApplied) {
+                runtime.hideDomPrompt();
+            }
         };
 
         runtime.bindPresentationEvents = function () {
