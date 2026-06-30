@@ -1,6 +1,6 @@
 # VRodos Rendering Pipeline - Technical Reference
 
-Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For the current standalone VR Headset policy and validation checklist, see `VR_HEADSET_RUNTIME_HANDOFF.md`. Historical rendering plans and debug notes live under `documentation/archive/rendering-history/`.
+Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For the current compiled desktop/non-VR cleanup and backlog, see `documentation/compiled-desktop-roadmap.md`. For the current standalone VR Headset policy and validation checklist, see `VR_HEADSET_RUNTIME_HANDOFF.md`. Historical rendering plans and debug notes live under `documentation/archive/rendering-history/`.
 
 ## 1. Runtime Overview
 
@@ -225,7 +225,7 @@ The compiler now writes A-Frame decoder paths onto the root scene:
 ```
 
 Decoder files are copied by `npm run build:three` and recorded in `assets/runtime-version-manifest.json` under `three.decoders`.
-Use the browser-global Meshopt decoder file, `meshopt_decoder.js`, in generated clients. A-Frame loads `meshoptDecoderPath` as a classic script, so the ESM `meshopt_decoder.module.js` form is not valid there. The vendor build also refreshes `meshopt_decoder.module.js` with the same browser-global payload as a compatibility copy for already-generated clients.
+Use the browser-global Meshopt decoder file, `meshopt_decoder.js`, in generated clients. A-Frame loads `meshoptDecoderPath` as a classic script, so the ESM `meshopt_decoder.module.js` form is not valid there. The vendor build no longer publishes a `.module.js` compatibility copy; regenerate compiled scenes into the current pipeline instead of relying on older generated-client shims.
 
 A short smoke profile on `Master_Client_766.html` confirmed the generated root scene attribute points at `meshopt_decoder.js` and no longer throws the previous Meshopt `Unexpected token 'export'` / `MeshoptDecoder.ready` errors. For future captures, inspect `scene.gltfModel` in `scripts/profile-master-client.mjs` output to confirm the root scene attribute and decoder globals.
 
@@ -242,7 +242,7 @@ Authoring and compile contract:
 - Objects with missing collision metadata are treated as non-colliding during compile; the editor checkbox is the source of truth.
 - The compiler emits `.vrodos-collider` plus `data-vrodos-collision-*` metadata for enabled geometry sources.
 - `Walkable Surfaces` compile as both `.vrodos-navmesh` and `.vrodos-collider`: upward faces feed ground sampling, while steep/vertical faces can block horizontal movement.
-- `Collision Proxy` assets compile as hidden collision-only geometry through `vrodos-collider-helper`. Legacy `blocking-obstacles` data is normalized to `collision-proxy` before runtime output.
+- `Collision Proxy` assets compile as hidden collision-only geometry through `vrodos-collider-helper`. New scenes should use the current `collision-proxy` category slug; the old `blocking-obstacles` alias is no longer normalized by the editor/compiler.
 
 Runtime behavior:
 
@@ -635,9 +635,12 @@ These are backlog items, not current implementation requirements:
 - Immersive XR/headset cloud validation after PMNDRS stereo composer behavior is proven safe.
 - Author-facing Takram cloud light-shafts controls after a measured performance pass.
 
+The consolidated compiled desktop backlog lives in `documentation/compiled-desktop-roadmap.md`; keep this section focused on rendering-stack ideas.
+
 ## References
 
 - `VR_HEADSET_RUNTIME_HANDOFF.md` - current standalone headset runtime handoff.
+- `documentation/compiled-desktop-roadmap.md` - current compiled desktop/non-VR cleanup goals, active backlog, deferred VR items, and historical-doc index.
 - `PC_RENDERED_VR_PLAN.md` - parked PC-rendered VR parent profile plan.
 - `documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md` - historical phased Takram roadmap.
 - `documentation/archive/rendering-history/RENDERING_MIGRATION_IMPLEMENTATION_LOG.md` - staged migration history.

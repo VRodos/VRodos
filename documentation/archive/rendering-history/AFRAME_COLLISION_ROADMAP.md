@@ -26,7 +26,7 @@ The current implementation ships the v1 native static collision path:
 
 - Editor object loading defaults `compiledCollisionEnabled` to `true`.
 - The object controls panel shows `Collides with player` for geometry-bearing assets and stores `compiledCollisionEnabled`.
-- The optional `Collision Proxy` asset category is available with a `brick-wall` icon; the legacy/internal `blocking-obstacles` slug is also treated as a hidden collider if present.
+- The optional `Collision Proxy` asset category is available with a `brick-wall` icon. Current editor/compiler cleanup supports the `collision-proxy` slug for new scenes; the older `blocking-obstacles` alias is historical and is no longer normalized.
 - The compiler emits `.vrodos-collider` on enabled geometry-bearing compiled objects.
 - Objects with `compiledCollisionEnabled: false` compile without player collision markers.
 - Walkable surfaces compile as both `.vrodos-navmesh` and `.vrodos-collider`, so upward faces still sample ground while steep faces can block horizontal movement.

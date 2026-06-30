@@ -25,7 +25,6 @@ const basisOutputDir = path.join(outputDir, 'basis');
 const meshoptSourcePath = path.join(rootDir, 'node_modules', 'meshoptimizer', 'meshopt_decoder.cjs');
 const meshoptOutputDir = path.join(outputDir, 'meshopt');
 const meshoptOutputPath = path.join(meshoptOutputDir, 'meshopt_decoder.js');
-const meshoptCompatOutputPath = path.join(meshoptOutputDir, 'meshopt_decoder.module.js');
 const fontSourcePath = path.join(rootDir, 'node_modules', 'three', 'examples', 'fonts', 'helvetiker_bold.typeface.json');
 const fontOutputDir = path.join(outputDir, 'fonts');
 const fontOutputPath = path.join(fontOutputDir, 'helvetiker_bold.typeface.json');
@@ -243,7 +242,6 @@ async function copySupportAssets() {
   await cp(dracoSourceDir, dracoOutputDir, { recursive: true, force: true });
   await cp(basisSourceDir, basisOutputDir, { recursive: true, force: true });
   await cp(meshoptSourcePath, meshoptOutputPath, { force: true });
-  await cp(meshoptSourcePath, meshoptCompatOutputPath, { force: true });
   await cp(fontSourcePath, fontOutputPath, { force: true });
   await cp(takramStarsSourcePath, takramStarsOutputPath, { force: true });
   for (const assetFile of takramCloudAssetFiles) {

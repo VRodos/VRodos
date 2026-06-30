@@ -823,8 +823,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	}
 
 	private function normalize_runtime_category( string $category ): string {
-		$normalized = sanitize_title( $category );
-		return 'blocking-obstacles' === $normalized ? 'collision-proxy' : $normalized;
+		return sanitize_title( $category );
 	}
 
 	private function append_class( DOMElement $entity, string $class_name ): void {

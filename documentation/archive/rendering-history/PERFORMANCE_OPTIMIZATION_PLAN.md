@@ -157,7 +157,7 @@ Implemented support:
 Verification:
 
 - Local server returned `200` for Draco WASM, Basis WASM, and Meshopt decoder JS.
-- A compiled-scene smoke test exposed that A-Frame loads `meshoptDecoderPath` as a classic script. The first implementation published Three's ESM `meshopt_decoder.module.js`, which threw `Unexpected token 'export'` and then broke A-Frame's `MeshoptDecoder.ready` access. The vendor build now publishes the browser-global Meshopt decoder at `meshopt_decoder.js` and refreshes `meshopt_decoder.module.js` as a compatibility copy for already-compiled clients.
+- A compiled-scene smoke test exposed that A-Frame loads `meshoptDecoderPath` as a classic script. The first implementation published Three's ESM `meshopt_decoder.module.js`, which threw `Unexpected token 'export'` and then broke A-Frame's `MeshoptDecoder.ready` access. The vendor build now publishes the browser-global Meshopt decoder at `meshopt_decoder.js`. Current cleanup removed the old `.module.js` compatibility copy; already-generated clients should be regenerated into the current pipeline.
 - Smoke profile after the fix:
   `node scripts/profile-master-client.mjs http://wp.local:5832/Master_Client_766.html --frames 60 --warmup-ms 1000 --trace-ms 0 --timeout-ms 30000 --output C:\tmp\vrodos-master-client-smoke.json`
 - The smoke profile recorded root scene `meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r184/meshopt/meshopt_decoder.js`, `exceptions: []`, and no `Unexpected token 'export'` / `MeshoptDecoder.ready` console errors.

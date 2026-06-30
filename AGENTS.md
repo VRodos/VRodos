@@ -118,6 +118,7 @@ Lighting/shadow ownership:
 Rendering docs:
 
 - `RENDERING_PIPELINE.md`: current technical render-stack reference
+- `documentation/compiled-desktop-roadmap.md`: current compiled desktop/non-VR cleanup goals, active backlog, deferred VR items, and historical-doc index
 - `documentation/vrodos-compiled-scene-framework-integration.md`: compiled-scene framework boundaries, runtime ownership, lazy chunks, and immersive PMNDRS/Horizon VR dialog ownership
 - `VR_HEADSET_RUNTIME_HANDOFF.md`: current standalone headset runtime policy and validation checklist
 - `PC_RENDERED_VR_PLAN.md`: parked PC-rendered VR parent profile plan
@@ -210,7 +211,7 @@ Performance tooling:
 - Cached derivative files are owned by the asset post. Permanent `vrodos_asset3d` deletion must remove `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/` and optimization metadata; project deletion should get this by deleting associated asset posts.
 - `npm run build:three` copies Draco, Basis/KTX2, and Meshopt decoder assets into `assets/vendor/three-r184/` and records them in `assets/runtime-version-manifest.json`.
 - Compiled scenes receive root `gltf-model` decoder paths from `VRodos_Compiler_Manager`; regenerate compiled HTML before testing compressed derivatives.
-- Use `meshopt_decoder.js` for A-Frame `meshoptDecoderPath`. A-Frame loads this path as a classic script, so do not point compiled scenes at the ESM `meshopt_decoder.module.js`; the `.module.js` filename is only kept as a compatibility copy for older generated clients.
+- Use `meshopt_decoder.js` for A-Frame `meshoptDecoderPath`. A-Frame loads this path as a classic script, so do not point compiled scenes at the ESM `meshopt_decoder.module.js`; the vendor build no longer publishes a `.module.js` compatibility copy for older generated clients.
 - Do not enable compile substitution for Draco, Meshopt, or KTX2 derivatives until the relevant A-Frame/Three decoder path is present in the generated client and visual parity is checked. Substitution must remain per-asset opt-in.
 - Treat future LOD as an explicit derivative family (`lod0`, `lod1`, `lod2`) with opt-in compile/runtime selection, not as a silent downgrade of uploaded source assets.
 

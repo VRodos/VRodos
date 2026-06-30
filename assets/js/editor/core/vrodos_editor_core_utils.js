@@ -27,7 +27,6 @@ VRODOS.importer = VRODOS.importer || {};
         '3d-text': '3d-text',
         Assessment: 'assessment',
         assessment: 'assessment',
-        'blocking-obstacles': 'collision-proxy',
         lightSun: 'lightSun',
         lightLamp: 'lightLamp',
         lightSpot: 'lightSpot',

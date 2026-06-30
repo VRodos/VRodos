@@ -89,7 +89,7 @@ The current compiled runtime stack is declared in the root package files and gen
 - A-Frame runtime: 1.7.1 master dist commit `adf8f4e02b0499223b2c4fa93165e49b50384564`
 - Three.js: `0.184.0`, revision `184`, through the `three: npm:super-three@0.184.0` root package alias
 - PMNDRS `postprocessing`: `6.39.1`, exported as `window.POSTPROCESSING`
-- PMNDRS spatial UI packages: `@pmndrs/uikit` `1.0.73`, `@pmndrs/uikit-horizon` `1.0.73`, `@pmndrs/uikit-lucide` `1.0.73`, and `@pmndrs/pointer-events` `6.6.29`, exported through `window.VRODOSSpatialUI` when the `spatial-ui` chunk loads
+- PMNDRS spatial UI packages: `@pmndrs/uikit` `1.0.74`, `@pmndrs/uikit-horizon` `1.0.74`, `@pmndrs/uikit-lucide` `1.0.74`, and `@pmndrs/pointer-events` `6.6.30`, exported through `window.VRODOSSpatialUI` when the `spatial-ui` chunk loads
 - Takram atmosphere packages: atmosphere `0.19.1`, geospatial effects `0.6.4`, exported as `window.VRODOS_TAKRAM_ATMOSPHERE`
 - Takram clouds package: clouds `0.7.6`, exported as `window.VRODOS_TAKRAM_CLOUDS` when the `takram-clouds` chunk loads
 - `three-mesh-bvh`: `0.9.10`, exported as `window.VRODOS_COLLISION_BVH`

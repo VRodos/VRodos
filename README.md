@@ -14,6 +14,7 @@ It combines:
 Keep current behavior in one place where possible:
 
 - [`documentation/vrodos-compiled-scene-framework-integration.md`](documentation/vrodos-compiled-scene-framework-integration.md): compiled-scene framework boundaries, shared Three.js ownership, lazy runtime chunks, and immersive PMNDRS UIKit Horizon dialog ownership.
+- [`documentation/compiled-desktop-roadmap.md`](documentation/compiled-desktop-roadmap.md): current compiled desktop/non-VR cleanup goals, active backlog, deferred VR items, and historical-doc index.
 - [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md): canonical compiled runtime rendering, PMNDRS/Takram, day-night lighting, shadows, emissive/readability handling, diagnostics, and future render-track notes.
 - [`VR_HEADSET_RUNTIME_HANDOFF.md`](VR_HEADSET_RUNTIME_HANDOFF.md): current standalone headset runtime policy, completed cleanup decisions, and validation checklist.
 - [`PC_RENDERED_VR_PLAN.md`](PC_RENDERED_VR_PLAN.md): future PC-rendered VR parent profile plan, parked until hardware/runtime validation.
@@ -157,6 +158,8 @@ High-quality compiled desktop scenes keep the PMNDRS/Takram look while avoiding 
 - `scripts/profile-master-client.mjs --disable-fps-meter` appends `vrodos_debug_disable_fps_meter=1` so StatsGL does not initialize before profiling.
 
 Draco compression helps transfer size and startup bandwidth. Runtime FPS only improves when the derivative is also simplified or has fewer draw-cost inputs, because decoded Draco geometry still renders as normal triangles. VRodos therefore keeps optimized GLB substitution explicit and per-asset opt-in; future LOD families should be measured with profiler/Spector before becoming default compile behavior.
+
+The current compiled desktop/non-VR cleanup and backlog are consolidated in [`documentation/compiled-desktop-roadmap.md`](documentation/compiled-desktop-roadmap.md).
 
 ## Compiled Scene Diagnostics
 
