@@ -12,6 +12,7 @@ class VRodos_Render_Runtime_Manager {
 	private const FALLBACK_AFRAME_RUNTIME_VERSION = '1.7.1';
 	private const FALLBACK_AFRAME_RUNTIME_URL     = 'https://cdn.jsdelivr.net/gh/aframevr/aframe@adf8f4e02b0499223b2c4fa93165e49b50384564/dist/aframe-master.min.js';
 	private const FALLBACK_AFRAME_RUNTIME_COMMIT  = 'adf8f4e02b0499223b2c4fa93165e49b50384564';
+	private const LOCAL_AFRAME_RUNTIME_PATH       = 'assets/vendor/aframe/aframe-master.min.js';
 
 	private const FALLBACK_THREE_VENDOR_VERSION = '0.184.0';
 	private const FALLBACK_THREE_VENDOR_DIR     = 'three-r184';
@@ -72,6 +73,11 @@ class VRodos_Render_Runtime_Manager {
 	}
 
 	public static function get_aframe_runtime_url(): string {
+		$local_runtime_url = self::get_local_aframe_runtime_url();
+		if ( '' !== $local_runtime_url ) {
+			return $local_runtime_url;
+		}
+
 		$config = self::get_config();
 		return $config['aframe_runtime_url'];
 	}
@@ -119,6 +125,26 @@ class VRodos_Render_Runtime_Manager {
 		}
 
 		return plugin_dir_path( __DIR__ ) . self::MANIFEST_RELATIVE_PATH;
+	}
+
+	private static function get_local_aframe_runtime_url(): string {
+		if ( ! class_exists( 'VRodos_Path_Manager' ) ) {
+			return '';
+		}
+
+		$path = VRodos_Path_Manager::plugin_path( self::LOCAL_AFRAME_RUNTIME_PATH );
+		if ( ! is_readable( $path ) ) {
+			return '';
+		}
+
+		$url  = VRodos_Path_Manager::plugin_url( self::LOCAL_AFRAME_RUNTIME_PATH );
+		$path = wp_parse_url( $url, PHP_URL_PATH );
+		if ( ! $path ) {
+			return $url;
+		}
+
+		$query = wp_parse_url( $url, PHP_URL_QUERY );
+		return $path . ( $query ? '?' . $query : '' );
 	}
 
 	private static function string_value( array $source, string $key, string $fallback ): string {

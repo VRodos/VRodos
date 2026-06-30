@@ -115,9 +115,16 @@
 								</div>
 								<div class="tw-grid tw-grid-cols-2 tw-gap-3">
 									<label class="tw-form-control">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Environment</span>
-										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-											<option>Takram sky if authored</option>
+										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Headset Sky Time</span>
+										<select id="compileVrHeadsetSkyTimeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+											<option value="off">Use authored default</option>
+											<option value="night">Night</option>
+											<option value="dawn">Dawn</option>
+											<option value="sunrise">Sunrise</option>
+											<option value="early-morning">Early Morning</option>
+											<option value="midday">Midday</option>
+											<option value="golden-hour">Golden Hour</option>
+											<option value="sunset">Sunset</option>
 										</select>
 									</label>
 									<label class="tw-form-control">

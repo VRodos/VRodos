@@ -2136,6 +2136,7 @@
           visibleSkyActive: Boolean(vrTakramVisibleSkyActive && pmndrsAtmosphereSkyVisible),
           visibleSkyDirectCalibrated: Boolean(vrTakramVisibleSkyActive && atmosphereState && atmosphereState.vrTakramSkyDirectCalibrated),
           visibleSkyDirectExposure: atmosphereState && typeof atmosphereState.vrTakramSkyDirectExposure === "number" ? atmosphereState.vrTakramSkyDirectExposure : null,
+          visibleSkyDirectCalibrationMode: atmosphereState && atmosphereState.vrTakramSkyDirectCalibrationMode ? atmosphereState.vrTakramSkyDirectCalibrationMode : "",
           visibleSkyDirectShaderPatched: Boolean(vrTakramVisibleSkyActive && atmosphereState && atmosphereState.vrTakramSkyDirectShaderPatched),
           visibleSkyDirectPatchFailed: Boolean(vrTakramVisibleSkyActive && atmosphereState && atmosphereState.vrTakramSkyDirectPatchFailed),
           visibleSkyDirectCompileError: vrTakramVisibleSkyActive && atmosphereState && atmosphereState.vrTakramSkyDirectCompileError ? atmosphereState.vrTakramSkyDirectCompileError : "",

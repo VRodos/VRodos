@@ -28,6 +28,7 @@ window.addEventListener('DOMContentLoaded', () => {
             runtimeTarget: document.getElementById('compileRuntimeTargetSelect'),
             runtimeTargetHint: document.getElementById('compileRuntimeTargetHint'),
             vrHeadsetPolicyPanel: document.getElementById('compileVrHeadsetPolicyPanel'),
+            vrHeadsetSkyTime: document.getElementById('compileVrHeadsetSkyTimeSelect'),
             runtimeMode: document.getElementById('compileRuntimeModeSelect'),
             renderQuality: document.getElementById('compileRenderQualitySelect'),
             shadowQuality: document.getElementById('compileShadowQualitySelect'),
@@ -617,6 +618,51 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function getSceneHeadsetSkyTime() {
+        const scene = VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene : null;
+        if (!scene ||
+            scene.aframePostFXEnabled !== true ||
+            VRodosCompileUI.PostFX.normalizeEngine(scene.aframePostFXEngine) !== 'pmndrs' ||
+            scene.aframePmndrsAtmosphereEnabled === false) {
+            return 'off';
+        }
+
+        const mode = VRodosCompileUI.Atmosphere.normalizeCelestialMode(scene.aframePmndrsCelestialMode);
+        const authoredPreset = mode === 'preset-time'
+            ? scene.aframePmndrsCelestialTimePreset
+            : scene.aframePmndrsAtmospherePreset;
+
+        return VRodosCompileUI.General.normalizeHeadsetSkyTime(authoredPreset);
+    }
+
+    function applyHeadsetSkyTimeToControls(controls) {
+        if (!controls || !controls.vrHeadsetSkyTime) {
+            return;
+        }
+
+        const preset = VRodosCompileUI.General.normalizeHeadsetSkyTime(controls.vrHeadsetSkyTime.value);
+        controls.vrHeadsetSkyTime.value = preset;
+        if (preset === 'off') {
+            return;
+        }
+
+        if (controls.postFx) {
+            controls.postFx.checked = true;
+        }
+        if (controls.postFxEngine) {
+            controls.postFxEngine.value = 'pmndrs';
+        }
+        if (controls.pmndrsAtmosphere) {
+            controls.pmndrsAtmosphere.checked = true;
+        }
+        if (controls.pmndrsDayNightCycle) {
+            controls.pmndrsDayNightCycle.checked = false;
+        }
+
+        VRodosCompileUI.Atmosphere.applyCelestialTimePreset(controls, preset);
+        updatePmndrsValueLabels();
+    }
+
     function applyCompileDialogSettingsToScene() {
         if (typeof VRODOS.editor.envir === 'undefined' || !VRODOS.editor.envir.scene) {
             return;
@@ -872,6 +918,9 @@ window.addEventListener('DOMContentLoaded', () => {
                 ? VRodosCompileUI.Atmosphere.normalizeUtcTime(VRODOS.editor.envir.scene.aframePmndrsCelestialUtcTime, Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime)
                 : Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime;
         }
+        if (controls.vrHeadsetSkyTime) {
+            controls.vrHeadsetSkyTime.value = getSceneHeadsetSkyTime();
+        }
         if (controls.pmndrsDayNightCycle) {
             controls.pmndrsDayNightCycle.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsDayNightCycleEnabled);
         }
@@ -1029,6 +1078,14 @@ window.addEventListener('DOMContentLoaded', () => {
     if (controls.runtimeTarget) {
         controls.runtimeTarget.addEventListener('change', () => {
             syncCompilePostFxState();
+        });
+    }
+    if (controls.vrHeadsetSkyTime) {
+        controls.vrHeadsetSkyTime.addEventListener('change', () => {
+            applyHeadsetSkyTimeToControls(controls);
+            syncCompilePostFxState();
+            VRodosCompileUI.PostFX.syncToScene(controls);
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
         });
     }
     if (controls.renderQuality) {

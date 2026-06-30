@@ -481,21 +481,29 @@ VRodosCompileUI.Atmosphere = (function () {
 
         const d = Shared.PMNDRS_TWEAK_DEFAULTS;
 
+        const headsetSkyTimeAuthored = VRodosCompileUI.General &&
+            typeof VRodosCompileUI.General.isHeadsetSkyTimeAuthored === 'function' &&
+            VRodosCompileUI.General.isHeadsetSkyTimeAuthored(controls);
+        const headsetSkyTime = headsetSkyTimeAuthored && VRodosCompileUI.General && typeof VRodosCompileUI.General.getHeadsetSkyTime === 'function'
+            ? VRodosCompileUI.General.getHeadsetSkyTime(controls)
+            : '';
         const pmndrsEngineSelected = controls.postFxEngine && controls.postFxEngine.value === 'pmndrs';
-        const pmndrsRuntimeEnabled = controls.postFx && controls.postFx.checked === true && pmndrsEngineSelected;
+        const pmndrsRuntimeEnabled = headsetSkyTimeAuthored || (controls.postFx && controls.postFx.checked === true && pmndrsEngineSelected);
 
-        const atmosphereEnabled = pmndrsRuntimeEnabled && controls.pmndrsAtmosphere.checked === true;
+        const atmosphereEnabled = pmndrsRuntimeEnabled && (headsetSkyTimeAuthored || controls.pmndrsAtmosphere.checked === true);
         const highRenderQuality = controls.renderQuality
             ? VRodosCompileUI.General.normalizeRenderQuality(controls.renderQuality.value) === 'high'
             : false;
 
         VRODOS.editor.envir.scene.aframePmndrsAtmosphereEnabled = atmosphereEnabled;
-        const atmospherePreset = normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : d.atmospherePreset);
+        const atmospherePreset = headsetSkyTimeAuthored
+            ? normalizePreset(headsetSkyTime)
+            : normalizePreset(controls.pmndrsAtmospherePreset ? controls.pmndrsAtmospherePreset.value : d.atmospherePreset);
         const dayNightCycleEnabled = pmndrsRuntimeEnabled && controls.pmndrsDayNightCycle ? controls.pmndrsDayNightCycle.checked === true : d.dayNightCycleEnabled;
         const celestialMode = normalizeCelestialMode(controls.pmndrsCelestialMode ? controls.pmndrsCelestialMode.value : d.celestialMode);
-        const effectiveCelestialMode = dayNightCycleEnabled ? 'datetime' : celestialMode;
+        const effectiveCelestialMode = headsetSkyTimeAuthored ? 'preset-time' : (dayNightCycleEnabled ? 'datetime' : celestialMode);
         const usesSkyTimePreset = !dayNightCycleEnabled &&
-            (effectiveCelestialMode === 'preset-time' || (effectiveCelestialMode !== 'datetime' && atmospherePreset !== 'custom'));
+            (headsetSkyTimeAuthored || effectiveCelestialMode === 'preset-time' || (effectiveCelestialMode !== 'datetime' && atmospherePreset !== 'custom'));
 
         VRODOS.editor.envir.scene.aframePmndrsAtmospherePreset = atmospherePreset;
         VRODOS.editor.envir.scene.aframePmndrsAtmospherePresetIntensity = Shared.clampNumber(

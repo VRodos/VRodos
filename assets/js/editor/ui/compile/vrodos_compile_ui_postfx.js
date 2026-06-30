@@ -245,7 +245,10 @@ VRodosCompileUI.PostFX = (function () {
 
         const d = Shared.PMNDRS_TWEAK_DEFAULTS;
 
-        const postFxEnabled = controls.postFx.checked === true;
+        const headsetSkyTimeAuthored = VRodosCompileUI.General &&
+            typeof VRodosCompileUI.General.isHeadsetSkyTimeAuthored === 'function' &&
+            VRodosCompileUI.General.isHeadsetSkyTimeAuthored(controls);
+        const postFxEnabled = controls.postFx.checked === true || headsetSkyTimeAuthored;
 
         VRODOS.editor.envir.scene.aframePostFXEnabled = postFxEnabled;
         VRODOS.editor.envir.scene.aframePostFXColorEnabled = controls.postFxColor.checked === true;
@@ -272,7 +275,9 @@ VRodosCompileUI.PostFX = (function () {
         VRODOS.editor.envir.scene.aframePostFXSSREnabled = VRODOS.editor.envir.scene.aframePostFXSSRStrength !== 'off';
         
         VRODOS.editor.envir.scene.aframePostFXTAAEnabled = controls.taaEnabled.checked === true;
-        VRODOS.editor.envir.scene.aframePostFXEngine = postFxEnabled ? normalizeEngine(controls.postFxEngine.value) : 'legacy';
+        VRODOS.editor.envir.scene.aframePostFXEngine = headsetSkyTimeAuthored
+            ? 'pmndrs'
+            : (postFxEnabled ? normalizeEngine(controls.postFxEngine.value) : 'legacy');
 
         // Pmndrs específicos
         if (controls.pmndrsBloomIntensity) {
@@ -340,4 +345,3 @@ VRodosCompileUI.PostFX = (function () {
     };
 
 })();
-

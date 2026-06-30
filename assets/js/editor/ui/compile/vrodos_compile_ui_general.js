@@ -139,6 +139,21 @@ VRodosCompileUI.General = (function () {
         return 'desktop';
     }
 
+    function normalizeHeadsetSkyTime(value) {
+        switch (value) {
+            case 'night':
+            case 'dawn':
+            case 'sunrise':
+            case 'early-morning':
+            case 'midday':
+            case 'golden-hour':
+            case 'sunset':
+                return value;
+            default:
+                return 'off';
+        }
+    }
+
     function normalizeVrRuntimeProfile(value) {
         if (value === 'desktop' || value === 'headset' || value === 'pc-rendered-vr') {
             return value;
@@ -205,6 +220,14 @@ VRodosCompileUI.General = (function () {
 
     function isPcRenderedVrTarget(controls) {
         return Boolean(controls && controls.runtimeTarget && normalizeRuntimeTarget(controls.runtimeTarget.value) === 'pc-rendered-vr');
+    }
+
+    function getHeadsetSkyTime(controls) {
+        return normalizeHeadsetSkyTime(controls && controls.vrHeadsetSkyTime ? controls.vrHeadsetSkyTime.value : 'off');
+    }
+
+    function isHeadsetSkyTimeAuthored(controls) {
+        return isVrHeadsetTarget(controls) && getHeadsetSkyTime(controls) !== 'off';
     }
 
     // --- UI Logic ---
@@ -316,12 +339,15 @@ VRodosCompileUI.General = (function () {
         normalizeContactShadowPreset,
         normalizeRuntimeTarget,
         normalizeVrRuntimeProfile,
+        normalizeHeadsetSkyTime,
         runtimeTargetFromVrRuntimeProfile,
         runtimeTargetToVrRuntimeProfile,
         normalizeEdgeAAStrengthLevel,
         getEdgeAAStrengthLabel,
         clampLegacyHorizonStageSize,
         isVrHeadsetTarget,
+        getHeadsetSkyTime,
+        isHeadsetSkyTimeAuthored,
         clearRuntimeTargetUI,
         applyRuntimeTargetUI,
         updateUI,
