@@ -2,7 +2,7 @@
 
 Status date: 2026-06-30.
 
-This is the current coordination doc for compiled desktop and non-VR scene work. It consolidates active TODOs from the rendering, performance, collision, and framework notes without deleting the historical records under `documentation/archive/rendering-history/`.
+This is the current coordination doc for compiled desktop and non-VR scene work. It consolidates active TODOs from the rendering, performance, collision, and framework notes while preserving historical findings under `documentation/archive/rendering-history/README.md`.
 
 ## Scope
 
@@ -21,14 +21,14 @@ Assume new scenes are recompiled into the current pipeline. Already-generated HT
 
 ## Current Runtime Baseline
 
-- A-Frame master dist commit `adf8f4e02b0499223b2c4fa93165e49b50384564`, declared in root `package.json`.
-- Three.js vendor stack `r184`, derived from the locked `three: npm:super-three@0.184.0` root package alias.
-- PMNDRS `postprocessing` `6.39.1`, exported as `window.POSTPROCESSING`.
-- PMNDRS spatial UI packages: `@pmndrs/uikit` `1.0.74`, `@pmndrs/uikit-horizon` `1.0.74`, `@pmndrs/uikit-lucide` `1.0.74`, and `@pmndrs/pointer-events` `6.6.30`.
-- Takram atmosphere `0.19.1`, geospatial effects `0.6.4`, and clouds `0.7.6`.
-- `three-mesh-bvh` `0.9.10` for static compiled-scene collision acceleration.
+The runtime baseline is package/manifest driven:
 
-Root `package.json`, `package-lock.json`, `assets/runtime-version-manifest.json`, and `assets/runtime-build-manifest.json` remain the generated/runtime source of truth.
+- A-Frame metadata and package intent live in root `package.json`.
+- Locked package versions live in root `package-lock.json`.
+- Generated A-Frame, Three, PMNDRS, Takram, decoder, and BVH metadata lives in `assets/runtime-version-manifest.json`.
+- Generated compiled-client chunk order, dependency, and lazy-feature coverage lives in `assets/runtime-build-manifest.json`.
+
+The current public vendor baseline remains Three r184 with A-Frame's shared `window.THREE` substrate. Do not hardcode patch-level package versions in this roadmap; use the root package files and generated manifests as source of truth.
 
 ## Code Cleanup Goals
 
@@ -36,6 +36,15 @@ Active cleanup:
 
 - Keep only `assets/vendor/three-r184/meshopt/meshopt_decoder.js` for A-Frame `meshoptDecoderPath`; the old `meshopt_decoder.module.js` generated-client compatibility copy is no longer produced.
 - Support only the current `collision-proxy` category slug for hidden compiled blockers; the legacy `blocking-obstacles` alias is no longer normalized by the editor/compiler for new scenes.
+
+Why this is code cleanup, not feature cleanup:
+
+- New compiled scenes are regenerated from the current compiler, so old generated-client compatibility shims increase build and documentation surface without supporting an active authoring feature.
+- A-Frame expects `meshoptDecoderPath` to resolve to the browser-global decoder file, so keeping the ESM `.module.js` copy beside it was only an old-output compatibility path.
+- `collision-proxy` is the current authored helper category for hidden blockers. Keeping the older `blocking-obstacles` alias would preserve a stale content name in new compiler/editor behavior, while the actual collision feature remains unchanged.
+- Runtime features with active owners stay intact: legacy post-FX, PMNDRS/Takram desktop rendering, networked clients, A-Frame Environment presets, current compiler output, and headset behavior.
+- Desktop cleanup stops at shared fallback code unless a later focused audit proves a path is unreachable by active Master/Simple clients.
+- Package versions are referenced through root package files and generated manifests because hardcoded patch numbers drift quickly during dependency updates.
 
 Deferred cleanup:
 
@@ -75,21 +84,14 @@ Deferred cleanup:
 
 ## Deferred VR And PCVR Items
 
-- Standalone headset policy and validation checklist live in `VR_HEADSET_RUNTIME_HANDOFF.md`.
+- Standalone headset policy and validation checklist live in `VR_HEADSET_RUNTIME_HANDOFF.md`; the current headset TODO list lives in `documentation/compiled-headset-roadmap.md`.
 - PC-rendered VR parent profile planning lives in `PC_RENDERED_VR_PLAN.md`.
 - Immersive XR/headset Takram clouds remain deferred until PMNDRS stereo composer behavior is proven safe.
 - Headset hidden profile cleanup should be done only when working on the VR runtime path.
 
 ## Historical Doc Index
 
-Use these files as historical evidence and detailed implementation notes, not as a competing active TODO list:
-
-- `documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md`: phased Takram realism and Three-version planning history.
-- `documentation/archive/rendering-history/RENDERING_MIGRATION_IMPLEMENTATION_LOG.md`: staged rendering migration implementation log.
-- `documentation/archive/rendering-history/POSTFX_DEBUG_NOTES.md`: color, Horizon, and post-FX debug findings.
-- `documentation/archive/rendering-history/PERFORMANCE_OPTIMIZATION_PLAN.md`: profiler, Spector, asset audit, and derivative optimization findings.
-- `documentation/archive/rendering-history/AFRAME_COLLISION_ROADMAP.md`: static collision implementation history and later hardening ideas.
-- `documentation/archive/rendering-history/COMPILED_SCENE_PLATFORM_AUDIT_AND_VR_PARITY_PLAN.md`: broader desktop/VR audit history and VR parity notes.
+Historical rendering, performance, Takram, collision, and VR-platform findings are consolidated in `documentation/archive/rendering-history/README.md`. Treat that file as evidence and implementation history, not as a competing active TODO list.
 
 Current technical references:
 

@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-VRodos compiled scenes make [A-Frame](https://github.com/aframevr/aframe), [Three.js](https://github.com/mrdoob/three.js), [PMNDRS](https://github.com/pmndrs/postprocessing), [Takram](https://github.com/takram-design-engineering/three-geospatial), [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh), and [Networked-Aframe](https://github.com/networked-aframe/networked-aframe) work together by avoiding the usual integration traps:
+VRodos compiled scenes integrate A-Frame, Three.js, PMNDRS, Takram, three-mesh-bvh, and Networked-Aframe around one runtime contract:
 
 - one compiled `<a-scene>` is the runtime container;
 - one shared Three.js runtime is the rendering substrate;
@@ -10,20 +10,21 @@ VRodos compiled scenes make [A-Frame](https://github.com/aframevr/aframe), [Thre
 - `assets/runtime-build-manifest.json` controls script order, dependencies, and lazy feature loading;
 - focused A-Frame components own lifecycle hooks and delegate to VRodos helpers;
 - immersive dialog UI is a PMNDRS/Horizon island mounted in the same A-Frame/Three scene, not a second renderer and not A-Frame UI primitives;
-- optional systems such as PMNDRS, Takram atmosphere, BVH collision, FPS tooling, and networking load only when scene metadata requests them.
+- optional systems such as PMNDRS, Takram atmosphere, BVH collision, FPS tooling, spatial UI, and networking load only when scene metadata requests them.
 
-The result is not several frameworks fighting for the frame. The compiled client is a single A-Frame scene with a carefully planned set of helpers attached to the same renderer, scene graph, material system, loader configuration, and lifecycle.
+The runtime is a single A-Frame scene with helpers attached to the same renderer, scene graph, material system, loader configuration, and lifecycle.
 
-## The Evolution of Our Architecture
+## Runtime Architecture
 
-Our current state-of-the-art rendering pipeline is the result of a continuous evolution driven by specific needs. Here is the story of how our architecture came to be:
+Core ownership:
 
-1. **A-Frame for XR Experiences**: We started with A-Frame because it provides a robust entity-component system (ECS) and excellent out-of-the-box support for immersive WebXR experiences.
-2. **Post-Processing with PMNDRS**: We wanted advanced post-processing effects (like bloom, SSAO, tone mapping, and LUTs). Default Three.js and A-Frame did not support these optimally or efficiently, so we integrated **PMNDRS `postprocessing`**, a highly optimized screen-space effects engine.
-3. **Dynamic Lighting with Takram**: We needed realistic, dynamic atmospheric lighting—a physical sky, sun, moon, and a day-night cycle. We integrated **Takram**, which provided these capabilities while elegantly sharing our existing Three.js renderer.
-4. **Optimized Collisions with BVH**: We required physics and collisions for navigation. Full rigid-body physics engines like Rapier, or custom Three.js raycasting, were too computationally expensive for complex scenes. We adopted **`three-mesh-bvh`**, which massively accelerates static collision queries for walkable navigation.
-5. **Multiplayer Collaborative Worlds**: We wanted our worlds to be collaborative and multiplayer. To achieve this, we integrated a patched **Networked-Aframe** browser runtime, backed by the first-party Node/WebRTC server (`services/vrodos-network-runtime/`). To keep single-player scenes lightweight, multiplayer is an explicit runtime mode that only loads networking components when explicitly requested by the scene's metadata.
-6. **On-the-Fly Asset Conversion**: A-Frame natively supports only the `.glb` format for optimal performance. However, our users uploaded assets in various 3D formats (OBJ, FBX, etc.). To solve this, we implemented a server-side **Blender CLI pipeline** to automatically convert all uploaded 3D files into optimized `.glb` format on the fly during the upload process.
+- A-Frame owns the runtime host, entity/component lifecycle, WebXR session, camera, controllers, and render loop.
+- Three.js is the shared substrate underneath A-Frame and all optional VRodos runtime systems.
+- PMNDRS owns eligible desktop screen-space post-processing when the scene selects the PMNDRS engine.
+- Takram owns optional atmosphere, sky, sun/moon state, and cloud inputs where the active profile allows them.
+- `three-mesh-bvh` accelerates static compiled-scene collision for walkable navigation.
+- Networked-Aframe loads only when scene metadata selects the networked runtime.
+- Blender conversion remains a server-side upload pipeline that normalizes supported 3D inputs into compiled-scene GLB assets.
 
 ### Runtime Architecture Diagram
 
@@ -86,13 +87,12 @@ The root scene contract has three critical parts:
 
 The current compiled runtime stack is declared in the root package files and generated manifests:
 
-- A-Frame runtime: 1.7.1 master dist commit `adf8f4e02b0499223b2c4fa93165e49b50384564`
-- Three.js: `0.184.0`, revision `184`, through the `three: npm:super-three@0.184.0` root package alias
-- PMNDRS `postprocessing`: `6.39.1`, exported as `window.POSTPROCESSING`
-- PMNDRS spatial UI packages: `@pmndrs/uikit` `1.0.74`, `@pmndrs/uikit-horizon` `1.0.74`, `@pmndrs/uikit-lucide` `1.0.74`, and `@pmndrs/pointer-events` `6.6.30`, exported through `window.VRODOSSpatialUI` when the `spatial-ui` chunk loads
-- Takram atmosphere packages: atmosphere `0.19.1`, geospatial effects `0.6.4`, exported as `window.VRODOS_TAKRAM_ATMOSPHERE`
-- Takram clouds package: clouds `0.7.6`, exported as `window.VRODOS_TAKRAM_CLOUDS` when the `takram-clouds` chunk loads
-- `three-mesh-bvh`: `0.9.10`, exported as `window.VRODOS_COLLISION_BVH`
+- `package.json` and `package-lock.json`: package intent and locked dependency versions.
+- `assets/runtime-version-manifest.json`: generated A-Frame, Three, PMNDRS, Takram, decoder, and BVH runtime metadata.
+- `assets/runtime-build-manifest.json`: generated compiled-client chunk graph, dependency order, and lazy-feature coverage.
+- `VRodos_Render_Runtime_Manager`: PHP reader for generated runtime metadata.
+
+The generated bundles export the browser globals consumed by compiled clients, including `window.POSTPROCESSING`, `window.VRODOSSpatialUI`, `window.VRODOS_TAKRAM_ATMOSPHERE`, `window.VRODOS_TAKRAM_CLOUDS`, and `window.VRODOS_COLLISION_BVH`.
 
 The important architectural rule is that these generated bundles must use A-Frame's `window.THREE`. Compiled scenes must not load a second Three instance beside A-Frame.
 

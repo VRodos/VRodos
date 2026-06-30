@@ -2,6 +2,8 @@
 
 Date: 2026-06-23
 
+For the current standalone VR-headset TODO list and deferred experiment backlog, see `documentation/compiled-headset-roadmap.md`.
+
 This is the current continuation note for standalone headset runtime work. Historical staged headset rendering experiments have been retired as supported runtime profiles; older generated scenes should be recompiled into the current pipeline.
 
 ## Supported Parent Profiles

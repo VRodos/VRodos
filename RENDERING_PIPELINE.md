@@ -1,6 +1,6 @@
 # VRodos Rendering Pipeline - Technical Reference
 
-Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For the current compiled desktop/non-VR cleanup and backlog, see `documentation/compiled-desktop-roadmap.md`. For the current standalone VR Headset policy and validation checklist, see `VR_HEADSET_RUNTIME_HANDOFF.md`. Historical rendering plans and debug notes live under `documentation/archive/rendering-history/`.
+Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For the current compiled desktop/non-VR cleanup and backlog, see `documentation/compiled-desktop-roadmap.md`. For the current standalone VR Headset policy, TODOs, and validation checklist, see `documentation/compiled-headset-roadmap.md` and `VR_HEADSET_RUNTIME_HANDOFF.md`. Historical rendering plans and debug notes live under `documentation/archive/rendering-history/`.
 
 ## 1. Runtime Overview
 
@@ -267,7 +267,7 @@ Performance notes:
 - Per-frame collision cost is paid only while movement is being resolved.
 - Default-collidable high-poly art is the main risk; use `Collision Proxy` assets for cheaper blocker geometry around complex models.
 - `scripts/profile-master-client.mjs --nav-profile` reports navmesh and blocker target counts while simulating movement without adding runtime debug UI.
-- Historical collision roadmap notes live in `documentation/archive/rendering-history/AFRAME_COLLISION_ROADMAP.md`.
+- Historical collision roadmap findings are summarized in `documentation/archive/rendering-history/README.md`.
 
 ## 4. Legacy Pipeline
 
@@ -480,7 +480,7 @@ Runtime behavior:
 - The old helper-light debug mode is not exposed as a runtime option. If Takram light-source classes are unavailable, the runtime can use an internal safety fallback only to avoid a black scene.
 - Horizon `AerialPerspectiveEffect` is constrained to haze/transmittance in the current PBR path so it does not re-light the scene as albedo.
 - Optional Takram clouds synchronize every frame with the active Takram atmosphere, camera, sun direction, world-to-ECEF matrix, correct-altitude mode, precomputed atmosphere textures, local cloud textures, quality profile, and coverage.
-- The future Takram-vanilla target remains an explicit `post-process-albedo` lighting mode. Historical notes live in `documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md`.
+- The future Takram-vanilla target remains an explicit `post-process-albedo` lighting mode. Historical Takram findings are summarized in `documentation/archive/rendering-history/README.md`.
 
 Takram cloud v1 behavior:
 
@@ -641,7 +641,6 @@ The consolidated compiled desktop backlog lives in `documentation/compiled-deskt
 
 - `VR_HEADSET_RUNTIME_HANDOFF.md` - current standalone headset runtime handoff.
 - `documentation/compiled-desktop-roadmap.md` - current compiled desktop/non-VR cleanup goals, active backlog, deferred VR items, and historical-doc index.
+- `documentation/compiled-headset-roadmap.md` - current standalone VR-headset baseline, active TODOs, deferred experiments, and validation focus.
 - `PC_RENDERED_VR_PLAN.md` - parked PC-rendered VR parent profile plan.
-- `documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md` - historical phased Takram roadmap.
-- `documentation/archive/rendering-history/RENDERING_MIGRATION_IMPLEMENTATION_LOG.md` - staged migration history.
-- `documentation/archive/rendering-history/POSTFX_DEBUG_NOTES.md` - color-encoding and WebGLRenderer debugging history.
+- `documentation/archive/rendering-history/README.md` - consolidated historical rendering, performance, Takram, collision, and VR-platform findings.

@@ -15,10 +15,11 @@ Keep current behavior in one place where possible:
 
 - [`documentation/vrodos-compiled-scene-framework-integration.md`](documentation/vrodos-compiled-scene-framework-integration.md): compiled-scene framework boundaries, shared Three.js ownership, lazy runtime chunks, and immersive PMNDRS UIKit Horizon dialog ownership.
 - [`documentation/compiled-desktop-roadmap.md`](documentation/compiled-desktop-roadmap.md): current compiled desktop/non-VR cleanup goals, active backlog, deferred VR items, and historical-doc index.
+- [`documentation/compiled-headset-roadmap.md`](documentation/compiled-headset-roadmap.md): current standalone VR-headset baseline, active headset TODOs, deferred experiments, and validation focus.
 - [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md): canonical compiled runtime rendering, PMNDRS/Takram, day-night lighting, shadows, emissive/readability handling, diagnostics, and future render-track notes.
 - [`VR_HEADSET_RUNTIME_HANDOFF.md`](VR_HEADSET_RUNTIME_HANDOFF.md): current standalone headset runtime policy, completed cleanup decisions, and validation checklist.
 - [`PC_RENDERED_VR_PLAN.md`](PC_RENDERED_VR_PLAN.md): future PC-rendered VR parent profile plan, parked until hardware/runtime validation.
-- Historical rendering/performance notes live under [`documentation/archive/rendering-history/`](documentation/archive/rendering-history/).
+- Historical rendering/performance findings are summarized in [`documentation/archive/rendering-history/README.md`](documentation/archive/rendering-history/README.md).
 
 ## What VRodos Supports Today
 
@@ -73,244 +74,46 @@ Important ownership rules:
 - Runtime support for interactive desktop, VR, and immersive-web experiences
 - Local/networked collaboration support through the bundled VRodos network runtime server
 
-## Current Compiled Runtime
+## Compiled Runtime Summary
 
-VRodos currently targets one active compiled-scene runtime pair:
+Runtime versions are sourced from root [`package.json`](package.json), [`package-lock.json`](package-lock.json), and generated manifests. `npm run build:three` writes [`assets/runtime-version-manifest.json`](assets/runtime-version-manifest.json), and [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php) reads that manifest at runtime.
 
-- A-Frame master dist commit `adf8f4e02b0499223b2c4fa93165e49b50384564`, declared in root `package.json`
-- Three.js vendor stack `r184`, derived from the locked root `three` package alias `npm:super-three@0.184.0`
+Current compiled scenes are A-Frame-hosted clients with one shared Three.js substrate. The runtime can load these feature families as scene metadata requires:
 
-That runtime powers:
+- desktop post-FX through either `Legacy` or `Pmndrs`;
+- Takram atmosphere, day-night lighting, lens flare, stars, and desktop-only volumetric clouds;
+- HDR environment maps, optional scene probes, and reflection controls;
+- cached/static shadows with terrain stabilization;
+- static walkable/player collision through `three-mesh-bvh`;
+- immersive PMNDRS/Horizon spatial UI for CEFR, assessment, and image/text POI panels;
+- direct immersive video trigger playback without a play/pause dialog;
+- networked/collaborative components when the scene selects the networked runtime.
 
-- PBR materials and modern Three.js lighting behavior
-- shadow quality presets
-- fog and horizon/sky presentation
-- desktop fullscreen and immersive XR visual parity for scene-owned horizon, atmosphere, lighting, fog, exposure, and material state
-- HDR environment-map reflections
-- scene-probe reflections for authored environments
-- a global reflections switch for compiled scenes
-- shadow-aware direct-sun glint suppression for compiled-scene PBR materials
-- PMNDRS/Takram tone mapping, sun lens flare, and atmosphere controls for desktop compiled scenes
-- PMNDRS/Takram day-night lighting with horizon-gated direct sun/moon lights and separate indirect sky/fill support
-- opt-in Takram volumetric clouds for desktop inline/fullscreen PMNDRS + Takram atmosphere scenes
-- compiled walkable-surface and static player/world collision workflows
-- static cached desktop shadows where visible compiled geometry casts and receives by default
-- PMNDRS UIKit Horizon immersive VR dialogs for CEFR prompts, assessment panels, and image/text POI panels while A-Frame remains the scene/XR host
-- direct immersive VR video trigger controls that toggle authored video playback without opening a play/pause dialog
-- immersive VR ray endpoint feedback for normal `.raycastable` scene targets, plus modal dialog ray-stop/hit-dot feedback for spatial panels
-- Greek-capable spatial UI text rendering through vendored Noto Sans and same-origin MSDF worker assets
+Detailed rendering, collision, performance, diagnostics, and compile-control behavior lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). Active desktop/non-VR work is tracked in [`documentation/compiled-desktop-roadmap.md`](documentation/compiled-desktop-roadmap.md). Standalone headset work is tracked in [`documentation/compiled-headset-roadmap.md`](documentation/compiled-headset-roadmap.md) and [`VR_HEADSET_RUNTIME_HANDOFF.md`](VR_HEADSET_RUNTIME_HANDOFF.md).
 
-The runtime version source of truth is root [`package.json`](package.json) plus [`package-lock.json`](package-lock.json). `npm run build:three` generates [`assets/runtime-version-manifest.json`](assets/runtime-version-manifest.json), and [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php) reads that manifest at runtime with conservative fallbacks.
+## Compiled Runtime Rules
 
-## Compiled Scene Visual Features
+- Desktop inline and desktop fullscreen share the authored post-FX look.
+- Real immersive WebXR keeps scene-owned visuals but bypasses XR-unsafe screen-space composer passes unless a headset-specific experiment proves safe.
+- `Legacy` remains the custom SAO/SSR/bloom/color/vignette/FXAA/TAA path.
+- `Pmndrs` is the composer path for desktop AA, AO, bloom, tone mapping, LUTs, color, vignette/noise/chromatic controls, and Takram atmospheric composition.
+- PMNDRS does not provide SSR or TAA; use the legacy engine when a scene depends on those.
+- Takram clouds are desktop/inline only in the current public runtime.
+- Compiled walkable mode uses native static collisions, not Rapier. Geometry-bearing compiled objects can collide with the player, `Walkable Surfaces` define ground/traversal, and `Collision Proxy` assets provide hidden blockers.
+- Draco/Meshopt/KTX2 derivative substitution must stay explicit and per asset; decoded compressed geometry still renders as normal triangles, so transfer savings are not automatically FPS savings.
 
-Compiled scenes can currently offer:
+## Compiled Diagnostics
 
-- PBR materials with HDR reflections and tuned environment intensity
-- fog, horizon, solid-color, image-sky, and preset background modes
-- desktop high-quality rendering mode
-- fullscreen and immersive XR preservation of the authored desktop visual baseline, with targeted fallbacks for XR-unsafe screen-space effects
-- shadow presets for performance vs visual quality
-- semantic shadow participation: visible world GLBs, media planes, and POI panels cast/receive by default; walkable/navmesh ground receives shadows without self-casting; hidden collision proxies do not render into shadow maps
-- large-terrain shadow stabilization through camera-focused directional shadow fitting, terrain depth offset, and terrain soft self-shadow suppression
-- reflection source selection between HDR presets and scene probes
-- global reflection enable/disable control plus shadow-aware direct-sun reflection occlusion
-- PMNDRS selectable tone mapping, exposure, generated LUT looks, Takram correct-altitude, and Takram Horizon lens flare
-- opt-in desktop PMNDRS/Takram volumetric clouds with local vendored cloud textures and four Takram quality profiles
-- authored emissive materials plus scoped media readability emissive handling; emissive output is not treated as a scene light
-- walkable-surface ground collisions plus default static player blocking for compiled scene geometry
+Use query flags for profiling and isolation. Common flags:
 
-## Compiled Scene Navigation And Collisions
+- `vrodos_debug_disable_fps_meter=1`
+- `vrodos_debug_shadow_perf=1`
+- `vrodos_debug_day_night_shadow_radius=VALUE`
+- `vrodos_debug_disable_terrain_soft_shadow_lift=1`
+- `vrodos_debug_pmndrs_horizon_verbose=1`
+- `vrodos_spector=1`
 
-Compiled walkable mode uses native VRodos static collisions instead of a full physics engine.
-
-Authoring model:
-
-- Geometry-bearing compiled objects collide with the player by default.
-- Each eligible object exposes a `Collides with player` opt-out toggle in the object controls panel.
-- Missing collision metadata is treated as disabled during compile; the editor checkbox is the source of truth.
-- `Walkable Surfaces` still define valid ground, slope, step, and drop behavior.
-- `Collision Proxy` assets are optional hidden blockers for invisible walls, simplified collider geometry, and high-poly scenes where visible art would be too expensive or too detailed as an exact collider.
-
-Compiled runtime model:
-
-- The compiler emits `.vrodos-collider` metadata for enabled player blockers.
-- Walkable surfaces are also collider sources, so steep/vertical navmesh faces block horizontal movement.
-- Hidden collision proxies remain in the scene graph through `vrodos-collider-helper` but receive hidden materials.
-- `custom-movement` owns player motion, ground sampling, blocker tests, and wall-slide fallback.
-- The runtime bundles `three-mesh-bvh` as `assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js` and exposes `window.VRODOS_COLLISION_BVH`.
-- Collision uses A-Frame's existing `window.THREE` and does not load a second Three.js copy.
-
-Rapier is intentionally not part of v1 static locomotion. It remains a future option for dynamic physics such as pushable props, thrown objects, joints, or gameplay collision events. Historical collision roadmap notes live in [`documentation/archive/rendering-history/AFRAME_COLLISION_ROADMAP.md`](documentation/archive/rendering-history/AFRAME_COLLISION_ROADMAP.md).
-
-## Compiled Scene Performance Model
-
-High-quality compiled desktop scenes keep the PMNDRS/Takram look while avoiding avoidable per-frame render work:
-
-- `shadowUpdateMode` defaults to `static`, which updates shadow maps on load, delayed reveal, and explicit dirty events instead of every frame.
-- `dynamic` shadow updates remain available for authored scenes with moving shadow casters.
-- Visible compiled geometry casts and receives shadows by default for realism. Walkable/navmesh ground is receiver-only to avoid large-terrain self-shadow banding; the performance guardrail is cached/static shadow-map updates, not making authored objects shadowless.
-- PMNDRS/Takram Horizon scenes use Takram physical `SunDirectionalLight` / `SkyLightProbe` when available, with a separate PBR indirect-light profile and low-cost hemisphere ground/sky fill for A-Frame assets. Direct sun/moon scene lights are disabled below the local horizon threshold. Flat media surfaces get a narrowly scoped readability material treatment.
-- Terrain-heavy scenes use a camera-focused directional shadow fit, terrain custom depth offset, and terrain soft self-shadow suppression so mountain-cast shadows remain while shallow slope banding is reduced.
-- The PMNDRS AO budget keeps the final color buffer full-resolution while scaling the NormalPass/SSAO workload per AO preset.
-- Takram clouds are desktop/inline only in v1. They require PMNDRS post-FX, high render quality, Takram atmosphere, WebGL2/Data3DTexture support, and local cloud assets. The four cloud profiles map to Takram `low`, `medium`, `high`, and `ultra`; temporal upscaling stays enabled, light shafts remain off, and immersive WebXR skips clouds while keeping the rest of the scene visible.
-- `?vrodos_debug_shadow_perf=1` shows live shadow cache diagnostics.
-- `scripts/profile-master-client.mjs --disable-fps-meter` appends `vrodos_debug_disable_fps_meter=1` so StatsGL does not initialize before profiling.
-
-Draco compression helps transfer size and startup bandwidth. Runtime FPS only improves when the derivative is also simplified or has fewer draw-cost inputs, because decoded Draco geometry still renders as normal triangles. VRodos therefore keeps optimized GLB substitution explicit and per-asset opt-in; future LOD families should be measured with profiler/Spector before becoming default compile behavior.
-
-The current compiled desktop/non-VR cleanup and backlog are consolidated in [`documentation/compiled-desktop-roadmap.md`](documentation/compiled-desktop-roadmap.md).
-
-## Compiled Scene Diagnostics
-
-Append query parameters to a compiled client URL when profiling or comparing rendering paths. Combine flags with `&`, for example:
-
-`Master_Client_8980.html?vrodos_debug_disable_fps_meter=1&vrodos_debug_shadow_perf=1`
-
-Most-used flags:
-
-- `vrodos_debug_disable_fps_meter=1`: prevents StatsGL/FPS meter initialization before it can wrap `renderer.render`; use for timing captures.
-- `vrodos_debug_shadow_perf=1`: shows shadow mode, `autoUpdate`, dirty reason, shadow update count, caster/receiver counts, and shadow-light counts.
-- `vrodos_debug_day_night_shadow_radius=VALUE`: adjusts PMNDRS/Takram directional day-night shadow softness.
-- `vrodos_debug_disable_terrain_soft_shadow_lift=1`: isolates terrain soft-shadow lift from the rest of the shadow pipeline.
-- `vrodos_debug_pmndrs_horizon_verbose=1`: logs verbose PMNDRS/Takram horizon diagnostics.
-- `vrodos_spector=1`: enables the runtime Spector capture hook when the Spector debug helper is present. Prefer `scripts/profile-master-client.mjs --spector` for repeatable captures.
-
-The complete current flag list lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). Historical performance capture workflow notes live in [`documentation/archive/rendering-history/PERFORMANCE_OPTIMIZATION_PLAN.md`](documentation/archive/rendering-history/PERFORMANCE_OPTIMIZATION_PLAN.md).
-
-## Rendering Paths for Compiled Scenes
-
-VRodos now ships two compiled-scene post-processing engines. The engine is selected per scene through the compile dialog.
-
-Desktop inline mode and desktop fullscreen use the same post-processing pipeline, so entering fullscreen should not change the authored look. Real immersive WebXR sessions keep the scene-owned visual baseline active and use targeted fallbacks for screen-space composer passes that are not XR-safe. In practice, Horizon/Takram sky, scene-owned lights, fog, renderer tone mapping/exposure, env-map state, and material profiles are re-synced on fullscreen, `enter-vr`, `exit-vr`, and resize transitions.
-
-### Legacy engine
-
-The `Legacy` engine is the original custom VRodos post-FX path and still covers the broadest effect set.
-
-It currently supports:
-
-- custom SAO
-- custom SSR
-- bloom
-- color grading
-- vignette
-- FXAA
-- optional TAA
-
-Choose the legacy engine when a scene depends on:
-
-- SSR
-- TAA
-- the existing custom AO/reflection look
-
-For the deep technical breakdown of the compiled rendering stack, including the legacy custom renderer and PMNDRS/Takram path, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md).
-
-### PMNDRS engine
-
-The `Pmndrs` engine is the newer composer-based path for compiled desktop scenes.
-
-It currently supports:
-
-- `EffectComposer` / `EffectPass`-based rendering
-- anti-aliasing modes: `none`, `smaa`, `msaa`
-- ambient occlusion through the shared AO presets
-- bloom controls
-- selectable tone mapping: AgX, Reinhard, Cineon, ACES Filmic, Linear
-- tone-map exposure range `0.1..5.0` in `0.1` increments
-- generated built-in LUT looks
-- vignette controls
-- PMNDRS noise and chromatic aberration controls
-- Takram atmosphere/celestial presets and advanced controls
-- Takram correct-altitude control
-- Takram Horizon sky, sun disk, and sun lens flare ownership
-- Takram volumetric clouds for desktop inline/fullscreen PMNDRS scenes
-
-Important current limitations:
-
-- SSR is not available on the PMNDRS path
-- TAA is not available on the PMNDRS path
-- composer MSAA is disabled when PMNDRS ambient occlusion is active; use SMAA for AO scenes
-- immersive WebXR skips PMNDRS/Takram clouds in v1 because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`
-- the current Horizon PMNDRS path uses Takram light-source lighting for A-Frame/PBR content; it is not yet the Takram vanilla `post-process-albedo` lighting model
-
-For current-state PMNDRS/Takram decisions, see [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). Historical phased Takram notes live in [`documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md`](documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md).
-
-## Takram Support
-
-Takram support in VRodos currently means desktop PMNDRS atmosphere, sky, lighting, lens flare, stars, and opt-in volumetric clouds. Immersive XR keeps the scene-owned Takram sky/lighting baseline but skips PMNDRS cloud composition in v1.
-
-### Shipped now
-
-- Takram atmosphere resources bundled with the runtime
-- PMNDRS compile-dialog controls for visual atmosphere looks, celestial presets, Takram resource quality, preset intensity, and advanced tuning
-- Takram-driven sky and real sun-disk ownership on the PMNDRS Horizon path
-- Takram Horizon sun LensFlareEffect
-- Takram correct-altitude toggle
-- Takram stars from local `assets/vendor/takram-atmosphere/stars.bin`
-- Takram volumetric clouds from local `assets/vendor/takram-clouds/` assets
-- four cloud performance profiles: `low`, `medium`, `high`, and `ultra`
-- atmospheric tuning for sun position, scattering, ground, and aerial-strength behavior
-- Takram physical light ownership for PMNDRS/Takram Horizon scenes, with an internal safety fallback only if Takram light-source classes are unavailable
-- local Horizon keeps Takram procedural ground disabled so authored walkable-surface/navmesh geometry remains the actual scene ground
-
-### Not shipped yet
-
-- desktop Takram-vanilla `post-process-albedo` lighting mode
-- immersive XR/headset Takram clouds
-- author-facing cloud light-shafts controls
-
-## Compile Dialog Controls
-
-The compile dialog exposes both shared controls and engine-specific controls.
-
-### Shared controls
-
-- render quality
-- shadow quality
-- global reflections toggle
-- reflection profile and reflection source
-- post-FX master toggle
-- ambient occlusion preset authoring surface
-- bloom toggle / preset
-- color grading toggle with exposure and contrast presets
-- vignette toggle
-- fog and background configuration authored from the scene
-- FPS meter toggle
-
-### Legacy-only controls
-
-- SSR strength
-- TAA toggle
-- legacy edge smoothing / FXAA tuning
-- the currently active AO implementation behind the shared AO presets
-
-### PMNDRS-only controls
-
-- AA mode: `none`, `smaa`, `msaa`
-- AA preset: `low`, `medium`, `high`, `ultra`
-- bloom multiplier
-- bloom threshold
-- tone mapping mode
-- tone-map exposure
-- lens flare toggle
-- vignette darkness
-- Takram atmosphere toggle
-- atmosphere look: `sunrise`, `midday`, `sunset`, `night`, `custom`
-- celestial mode: `manual` or `preset-time`
-- celestial time preset: `sunrise`, `midday`, `golden-hour`, `sunset`, `night`
-- Takram quality: `performance`, `balanced`, `quality`, `cinematic`
-- Takram clouds toggle
-- cloud quality: `low`, `medium`, `high`, `ultra`
-- cloud coverage: `0..1`
-- correct-altitude toggle
-- preset intensity
-- advanced atmosphere controls for:
-  - sun elevation and azimuth
-  - sun radius and distance
-  - aerial strength and albedo scale
-  - transmittance, inscatter, and ground toggles
-  - Rayleigh, Mie, absorption, and moon settings
+The complete current flag list and profiler workflow live in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md).
 
 ## Core WordPress Model
 
@@ -434,7 +237,7 @@ If large assets fail to upload, check:
   - `Legacy` for SSR/TAA/custom AO needs
   - `Pmndrs` for composer-based AA and Takram atmosphere controls
 - Review authored materials, textures, lighting, and reflection settings.
-- For Takram realism work, follow [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md); historical phased notes live in [`documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md`](documentation/archive/rendering-history/TAKRAM_REALISTIC_LIGHTING_PLAN.md).
+- For Takram realism work, follow [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md); historical findings are summarized in [`documentation/archive/rendering-history/README.md`](documentation/archive/rendering-history/README.md).
 
 ### Walkable surfaces do not behave as expected
 
