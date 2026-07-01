@@ -295,6 +295,7 @@ function createVmContext() {
 
     [
         "assets/js/runtime/vrodos_runtime_overlay.js",
+        "assets/js/runtime/master/vrodos_runtime_profile_policy.js",
         "assets/js/runtime/master/components/vrodos_scene_settings.component.js",
         "assets/js/runtime/master/components/vrodos_navigation.component.js"
     ].forEach((relativePath) => {

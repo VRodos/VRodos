@@ -619,6 +619,7 @@
   const VRODOSSceneSettingsMaster = window.VRODOSMaster;
   const VRODOSRuntimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
   const VRODOSRuntimeSettings = VRODOSSceneSettingsMaster.RuntimeSettings || {};
+  const VRODOSRuntimeProfilePolicy = VRODOSSceneSettingsMaster.RuntimeProfilePolicy;
   function vrodosSceneSettingDefault(key, fallback) {
     if (VRODOSRuntimeSettings.defaultString) {
       return VRODOSRuntimeSettings.defaultString(key, fallback);
@@ -662,52 +663,11 @@
     const override = typeof debugConfig.vrRuntimeProfile === "string" && debugConfig.vrRuntimeProfile || typeof debugConfig.vrProfile === "string" && debugConfig.vrProfile || vrodosRuntimeQueryValue("vrodos_vr_profile");
     return override ? String(override).toLowerCase() : "";
   }
-  const VRODOS_VR_RUNTIME_PROFILES = ["desktop", "headset", "pc-rendered-vr"];
-  const VRODOS_LEGACY_HEADSET_PROFILES = ["baseline", "safe", "takram-lights", "takram-sky", "hdr-reflections", "balanced", "max"];
   function vrodosNormalizeRuntimeProfile(profile) {
-    const normalized = String(profile || "").toLowerCase();
-    if (VRODOS_LEGACY_HEADSET_PROFILES.indexOf(normalized) !== -1) {
-      return "headset";
-    }
-    return VRODOS_VR_RUNTIME_PROFILES.indexOf(normalized) !== -1 ? normalized : "desktop";
-  }
-  function vrodosRuntimeProfileAllows(profile, capability, authored) {
-    const normalized = vrodosNormalizeRuntimeProfile(profile);
-    if (capability === "nativeAntialias") {
-      return normalized !== "desktop";
-    }
-    if (normalized === "desktop") {
-      return Boolean(authored);
-    }
-    if (normalized === "pc-rendered-vr") {
-      return capability !== "sceneOwned" && Boolean(authored);
-    }
-    if (capability === "sceneOwned") {
-      return false;
-    }
-    switch (capability) {
-      case "takramAtmosphere":
-      case "takramLights":
-      case "takramVisibleSky":
-      case "reflections":
-      case "hdrEnvMap":
-        return Boolean(authored);
-      case "postProcessing":
-      case "pmndrsComposer":
-      case "sceneProbe":
-      case "takramSkyEnvironment":
-      case "clouds":
-        return false;
-      default:
-        return false;
-    }
+    return VRODOSRuntimeProfilePolicy.normalizeRuntimeProfile(profile);
   }
   function vrodosRuntimeProfileHdrFallbackPreset(profile) {
-    const normalized = vrodosNormalizeRuntimeProfile(profile);
-    if (normalized === "headset" || normalized === "pc-rendered-vr") {
-      return "studio";
-    }
-    return "none";
+    return VRODOSRuntimeProfilePolicy.hdrFallbackPreset(profile);
   }
   function vrodosParseComponentAttribute(attribute) {
     const values = {};
@@ -732,7 +692,7 @@
     return Object.keys(values || {}).map((key) => `${key}: ${values[key]}`).join("; ");
   }
   function vrodosRuntimeProfileUsesNativeAntialias(profile) {
-    return vrodosRuntimeProfileAllows(profile, "nativeAntialias", true);
+    return VRODOSRuntimeProfilePolicy.usesNativeAntialias(profile);
   }
   function vrodosPatchVrNativeRendererAntialias(sceneEl) {
     const profile = vrodosRuntimeProfileOverrideValue();
@@ -1229,10 +1189,15 @@
       return vrodosRuntimeDebugFlag("forceXrPmndrsStereoComposer", "vrodos_force_xr_pmndrs_stereo_composer") || vrodosRuntimeDebugFlag("xrPmndrsStereoLab", "vrodos_xr_pmndrs_stereo_lab");
     },
     canUseVrHeadsetStereoPmndrsComposer: function() {
-      return this.isVrRuntimeHeadsetProfile() && this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && vrodosRuntimeTruthy(this.data.vrHeadsetStereoPostFxEnabled);
+      return VRODOSRuntimeProfilePolicy.isHeadsetStereoPmndrsComposerAuthored(this.getVrRuntimeProfile(), this.data);
     },
     canUsePmndrsComposerOnHeadset: function() {
-      return !this.isHeadsetBrowserDevice() || this.isHeadsetPmndrsComposerForceEnabled() || this.isHeadsetPmndrsStereoComposerForceEnabled() || this.canUseVrHeadsetStereoPmndrsComposer();
+      return VRODOSRuntimeProfilePolicy.canUsePmndrsComposerOnHeadset({
+        headsetBrowser: this.isHeadsetBrowserDevice(),
+        headsetPmndrsComposerForced: this.isHeadsetPmndrsComposerForceEnabled(),
+        headsetPmndrsStereoComposerForced: this.isHeadsetPmndrsStereoComposerForceEnabled(),
+        headsetPmndrsStereoComposerAuthored: this.canUseVrHeadsetStereoPmndrsComposer()
+      });
     },
     getVrRuntimeProfile: function() {
       const override = vrodosRuntimeProfileOverrideValue();
@@ -1243,7 +1208,13 @@
       if ((capability === "postProcessing" || capability === "pmndrsComposer") && (this.isHeadsetPmndrsStereoComposerForceEnabled() || this.canUseVrHeadsetStereoPmndrsComposer())) {
         return Boolean(authored);
       }
-      return vrodosRuntimeProfileAllows(this.getVrRuntimeProfile(), capability, authored);
+      return VRODOSRuntimeProfilePolicy.runtimeAllows({
+        profile: this.getVrRuntimeProfile(),
+        capability,
+        authored,
+        headsetPmndrsStereoComposerForced: this.isHeadsetPmndrsStereoComposerForceEnabled(),
+        headsetPmndrsStereoComposerAuthored: this.canUseVrHeadsetStereoPmndrsComposer()
+      });
     },
     isVrRuntimePolicyActive: function() {
       return this.getVrRuntimeProfile() !== "desktop";
@@ -1279,23 +1250,7 @@
       return false;
     },
     getVrRenderProfileDefaults: function(profile) {
-      switch (profile) {
-        case "headset":
-          return {
-            framebufferScale: 1,
-            foveation: 0.5
-          };
-        case "pc-rendered-vr":
-          return {
-            framebufferScale: 1,
-            foveation: 0
-          };
-        default:
-          return {
-            framebufferScale: 1,
-            foveation: 0.5
-          };
-      }
+      return VRODOSRuntimeProfilePolicy.renderProfileDefaults(profile);
     },
     readVrRenderBudgetOverride: function(dataKey, debugKey, queryKey, options) {
       const opts = options || {};
@@ -1420,40 +1375,31 @@
       const active = this.isDirectVrPresentationActive();
       const profileActive = this.isVrRuntimePolicyActive();
       const profile = this.getVrRuntimeProfile();
-      const sceneOwnedProfile = false;
-      const takramLightsOnly = false;
       const authoredTakramAtmosphere = this.data.postFXEngine === "pmndrs" && this.isPmndrsAtmosphereEnabled();
       const authoredReflections = this.areReflectionsEnabled();
       const authoredHdrReflections = authoredReflections && (this.getReflectionSource() === "hdr" || (this.data.envMapPreset || "none") !== "none");
       const authoredPmndrsComposer = this.data.postFXEngine === "pmndrs" && this.hasPmndrsComposerEffectRequest();
       const authoredSceneProbe = authoredReflections && this.getReflectionSource() === "scene-probe";
       const authoredTakramSkyEnvironment = authoredReflections && authoredTakramAtmosphere;
-      const takramVisibleSky = profileActive && this.vrRuntimeAllows("takramVisibleSky", authoredTakramAtmosphere);
-      const hdrReflections = profileActive && this.vrRuntimeAllows("hdrEnvMap", authoredHdrReflections);
-      const pmndrsComposer = active && profileActive && this.data.postFXEngine === "pmndrs" && this.canUsePmndrsComposerOnHeadset() && this.vrRuntimeAllows("pmndrsComposer", authoredPmndrsComposer);
-      const sceneProbe = active && profileActive && this.vrRuntimeAllows("sceneProbe", authoredSceneProbe);
-      const takramSkyEnvironment = active && profileActive && this.vrRuntimeAllows("takramSkyEnvironment", authoredTakramSkyEnvironment);
-      const clouds = active && profileActive && this.data.postFXEngine === "pmndrs" && this.vrRuntimeAllows("clouds", this.isPmndrsCloudsEnabled());
-      return {
+      return VRODOSRuntimeProfilePolicy.runtimeFeaturePolicy({
         profile,
         active,
         profileActive,
-        headset: this.isVrRuntimeHeadsetProfile(),
-        pcRenderedVr: this.isVrRuntimePcRenderedProfile(),
-        takramLightsOnly,
-        takramVisibleSky,
-        hdrReflections,
-        sceneOwnedProfile,
+        postFXEngine: this.data.postFXEngine,
         headsetBrowser: this.isHeadsetBrowserDevice(),
         headsetPmndrsComposerForced: this.isHeadsetPmndrsComposerForceEnabled(),
         headsetPmndrsStereoComposerForced: this.isHeadsetPmndrsStereoComposerForceEnabled(),
         headsetPmndrsStereoComposerAuthored: this.canUseVrHeadsetStereoPmndrsComposer(),
-        pmndrsComposer,
-        sceneProbe,
-        takramSkyEnvironment,
-        clouds,
+        authored: {
+          takramAtmosphere: authoredTakramAtmosphere,
+          hdrReflections: authoredHdrReflections,
+          pmndrsComposer: authoredPmndrsComposer,
+          sceneProbe: authoredSceneProbe,
+          takramSkyEnvironment: authoredTakramSkyEnvironment,
+          clouds: this.isPmndrsCloudsEnabled()
+        },
         renderBudget: this._vrodosVrRenderBudget || this.getVrRenderBudgetPolicy()
-      };
+      });
     },
     canUseVrPmndrsComposer: function() {
       return this.getVrRuntimeFeaturePolicy().pmndrsComposer;

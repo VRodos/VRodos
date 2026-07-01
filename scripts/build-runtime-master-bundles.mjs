@@ -84,6 +84,7 @@ const chunks = [
       contractOutputPath,
       path.join(runtimeMasterDir, 'vrodos_master_shared.js'),
       path.join(runtimeMasterDir, 'vrodos_runtime_settings_helpers.js'),
+      path.join(runtimeMasterDir, 'vrodos_runtime_profile_policy.js'),
       path.join(runtimeMasterDir, 'vrodos_runtime_resources.js'),
       path.join(runtimeMasterDir, 'vrodos_ui_helpers.js'),
       path.join(runtimeMasterDir, 'vrodos_master_bootstrap.js'),

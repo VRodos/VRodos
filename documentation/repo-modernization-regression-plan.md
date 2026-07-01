@@ -63,7 +63,7 @@ The implementation rule is:
 | Compiler fixture matrix | In progress | Codex | First pass added headset no-postFX, headset Takram without composer, headset stereo PMNDRS post-FX, and headset stereo PMNDRS with Takram assertions. |
 | Runtime feature-state smoke checks | In progress | Codex | Added local smoke coverage for desktop PMNDRS, headset no-postFX, headset stereo PMNDRS, headset Takram without composer, headset shadow cap, and spatial UI diagnostics. Browser/CDP fixture capture remains next. |
 | Quest diagnostic smoke path | Not started | Codex + tester | Formalize when to run `scripts/capture-quest-immersive-diagnostics.mjs` and what values must be recorded. |
-| First runtime policy extraction | Not started | Codex | Start with high-risk headset render/post-FX policy, then shadow budget and atmosphere policy if needed. |
+| First runtime policy extraction | Done | Codex | Extracted high-risk runtime profile and headset post-FX policy into `assets/js/runtime/master/vrodos_runtime_profile_policy.js`; shadow budget and atmosphere policy remain candidates if they change again. |
 | Change-location guide | In progress | Codex | Added initial scripts inventory. Still needs file-level guidance for compiler settings, runtime policy, spatial UI, headset rendering, navigation, and generated bundles. |
 | R3F feasibility spike | Deferred | Codex + tester | Revisit only after v1 guardrails exist. Must be isolated from the current A-Frame runtime. |
 
@@ -171,3 +171,9 @@ Without those proofs, R3F risks becoming the same spaghetti in a different frame
 - Added `scripts/test-runtime-feature-state.mjs` and wired it into `npm run test:runtime`.
 - Added runtime feature-state assertions for desktop PMNDRS, headset no-postFX, headset stereo PMNDRS, headset Takram without composer, headset shadow cap, and spatial UI bundle diagnostics.
 - Verified syntax checks, runtime tests, compiler tests, and runtime bundle build locally.
+
+### 2026-07-01
+
+- Extracted runtime profile normalization, capability gates, headset PMNDRS composer policy, HDR fallback selection, and render-profile defaults from `scene-settings` into `vrodos_runtime_profile_policy.js`.
+- Wired the policy module into the core runtime bundle before A-Frame components load.
+- Added direct policy assertions to `scripts/test-runtime-feature-state.mjs` so legacy headset profile aliases and PC-rendered VR defaults are covered locally.
