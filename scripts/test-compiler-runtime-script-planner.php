@@ -35,6 +35,19 @@ function vrodos_assert_same( array $expected, array $actual, string $label ): vo
 	exit( 1 );
 }
 
+function vrodos_assert_true( bool $condition, string $label ): void {
+	if ( $condition ) {
+		return;
+	}
+
+	fwrite( STDERR, $label . " failed.\n" );
+	exit( 1 );
+}
+
+function vrodos_assert_false( bool $condition, string $label ): void {
+	vrodos_assert_true( ! $condition, $label );
+}
+
 function vrodos_assert_contains( string $haystack, string $needle, string $label ): void {
 	if ( str_contains( $haystack, $needle ) ) {
 		return;
@@ -121,6 +134,29 @@ $manifest = new VRodos_Compiler_Runtime_Manifest(
 );
 
 $planner = new VRodos_Compiler_Runtime_Script_Planner( $manifest );
+$feature_flags = new VRodos_Compiler_Runtime_Feature_Flags();
+
+$headset_no_stereo_metadata = (object) [
+	'aframeVrRuntimeProfile'              => 'headset',
+	'aframePostFXEnabled'                 => true,
+	'aframePostFXEngine'                  => 'pmndrs',
+	'aframePmndrsAtmosphereEnabled'       => false,
+	'aframeVrHeadsetStereoPostFxEnabled'  => false,
+];
+vrodos_assert_false( $feature_flags->is_post_fx_enabled( $headset_no_stereo_metadata ), 'headset PMNDRS stays post-FX disabled without explicit stereo opt-in' );
+vrodos_assert_false( $feature_flags->is_headset_stereo_post_fx_enabled( $headset_no_stereo_metadata ), 'headset stereo post-FX opt-in flag remains off' );
+vrodos_assert_true( VRodos_Compiler_Runtime_Feature_Flags::POST_FX_ENGINE_LEGACY === $feature_flags->post_fx_engine( $headset_no_stereo_metadata ), 'headset no-stereo post-FX engine resolves to legacy fallback' );
+
+$headset_stereo_metadata = (object) [
+	'aframeVrRuntimeProfile'              => 'headset',
+	'aframePostFXEnabled'                 => true,
+	'aframePostFXEngine'                  => 'pmndrs',
+	'aframePmndrsAtmosphereEnabled'       => false,
+	'aframeVrHeadsetStereoPostFxEnabled'  => true,
+];
+vrodos_assert_true( $feature_flags->is_post_fx_enabled( $headset_stereo_metadata ), 'headset stereo PMNDRS post-FX opt-in enables post-FX' );
+vrodos_assert_true( $feature_flags->is_headset_stereo_post_fx_enabled( $headset_stereo_metadata ), 'headset stereo PMNDRS post-FX opt-in is detected' );
+vrodos_assert_true( VRodos_Compiler_Runtime_Feature_Flags::POST_FX_ENGINE_PMNDRS === $feature_flags->post_fx_engine( $headset_stereo_metadata ), 'headset stereo post-FX engine resolves to PMNDRS' );
 
 $versioned_manifest = new VRodos_Compiler_Runtime_Manifest(
 	null,
@@ -149,6 +185,22 @@ vrodos_assert_same(
 	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [] ) ),
 	'no post-FX'
+);
+
+vrodos_assert_same(
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
+	$planner->script_ids_for_scene(
+		vrodos_test_scene(
+			[
+				'aframeVrRuntimeProfile'              => 'headset',
+				'aframePostFXEnabled'                 => false,
+				'aframePostFXEngine'                  => 'pmndrs',
+				'aframePmndrsAtmosphereEnabled'       => false,
+				'aframeVrHeadsetStereoPostFxEnabled'  => false,
+			]
+		)
+	),
+	'headset no post-FX stable path'
 );
 
 vrodos_assert_same(
@@ -232,6 +284,18 @@ vrodos_assert_same(
 );
 
 vrodos_assert_same(
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'pmndrs-postfx', 'aframe-components' ],
+	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => false, 'aframeVrRuntimeProfile' => 'headset', 'aframeVrHeadsetStereoPostFxEnabled' => true ] ) ),
+	'headset stereo PMNDRS post-FX opt-in'
+);
+
+vrodos_assert_same(
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'pmndrs-postfx', 'aframe-components' ],
+	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframeVrRuntimeProfile' => 'headset', 'aframeVrHeadsetStereoPostFxEnabled' => true ] ) ),
+	'headset stereo PMNDRS post-FX with Takram'
+);
+
+vrodos_assert_same(
 	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'takram-clouds', 'pmndrs-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframePmndrsCloudsEnabled' => true ] ) ),
 	'PMNDRS with Takram clouds'
@@ -301,6 +365,16 @@ vrodos_assert_contains( $headset_takram_html, 'vrodos-postprocessing.bundle.js',
 vrodos_assert_contains( $headset_takram_html, 'vrodos-takram-atmosphere.bundle.js', 'headset Takram script tags' );
 vrodos_assert_not_contains( $headset_takram_html, 'vrodos-takram-atmosphere-headset.bundle.js', 'headset Takram script tags' );
 vrodos_assert_not_contains( $headset_takram_html, 'vrodos-runtime-pmndrs-postfx.bundle.js', 'headset Takram script tags' );
+
+$headset_no_postfx_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => false, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => false, 'aframeVrRuntimeProfile' => 'headset', 'aframeVrHeadsetStereoPostFxEnabled' => false ] ) );
+vrodos_assert_not_contains( $headset_no_postfx_html, 'vrodos-postprocessing.bundle.js', 'headset no post-FX script tags' );
+vrodos_assert_not_contains( $headset_no_postfx_html, 'vrodos-takram-atmosphere.bundle.js', 'headset no post-FX script tags' );
+vrodos_assert_not_contains( $headset_no_postfx_html, 'vrodos-runtime-pmndrs-postfx.bundle.js', 'headset no post-FX script tags' );
+
+$headset_stereo_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => false, 'aframeVrRuntimeProfile' => 'headset', 'aframeVrHeadsetStereoPostFxEnabled' => true ] ) );
+vrodos_assert_contains( $headset_stereo_html, 'vrodos-postprocessing.bundle.js', 'headset stereo PMNDRS script tags' );
+vrodos_assert_contains( $headset_stereo_html, 'vrodos-runtime-pmndrs-postfx.bundle.js', 'headset stereo PMNDRS script tags' );
+vrodos_assert_not_contains( $headset_stereo_html, 'vrodos-takram-atmosphere.bundle.js', 'headset stereo PMNDRS script tags' );
 
 $pmndrs_clouds_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframePmndrsCloudsEnabled' => true ] ) );
 vrodos_assert_contains( $pmndrs_clouds_html, 'vrodos-takram-clouds.bundle.js', 'PMNDRS clouds script tags' );
