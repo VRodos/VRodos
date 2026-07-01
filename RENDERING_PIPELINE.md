@@ -38,6 +38,7 @@ Presentation mode is part of the rendering contract:
 | --- | --- |
 | `assets/js/runtime/master/components/vrodos_scene_settings.component.js` | A-Frame schema, lifecycle, settings getters, engine dispatcher |
 | `assets/js/runtime/master/vrodos_runtime_profile_policy.js` | Pure runtime profile, headset post-FX, capability, HDR fallback, and render-budget default policy |
+| `assets/js/runtime/master/vrodos_runtime_render_policy.js` | Pure render-quality, headset shadow-cap, AA, contact-shadow, and VR budget override policy |
 | `assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js` | Focused A-Frame components/systems for render profile, post-FX routing, atmosphere, and reflections |
 | `assets/js/runtime/master/components/vrodos_navigation.component.js` | Compiled-scene walk/fly navigation, walkable-surface ground sampling, static player collision, wall sliding, and nav diagnostics |
 | `assets/js/runtime/master/vrodos_master_rendering.js` | HDR loader and shared material/runtime helpers |

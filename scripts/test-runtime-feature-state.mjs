@@ -143,6 +143,7 @@ function createVmContext(userAgent) {
     vm.createContext(context);
     [
         "assets/js/runtime/master/vrodos_runtime_profile_policy.js",
+        "assets/js/runtime/master/vrodos_runtime_render_policy.js",
         "assets/js/runtime/master/components/vrodos_scene_settings.component.js"
     ].forEach((relativePath) => {
         vm.runInContext(readFileSync(resolve(root, relativePath), "utf8"), context, { filename: relativePath });
@@ -306,10 +307,24 @@ const desktopPmndrs = createFeatureStateFixture({
     }
 });
 const policy = createVmContext("Mozilla/5.0 Chrome").window.VRODOSMaster.RuntimeProfilePolicy;
+const renderPolicy = createVmContext("Mozilla/5.0 Chrome").window.VRODOSMaster.RuntimeRenderPolicy;
 assertPath(policy.normalizeRuntimeProfile("balanced"), "headset", "legacy headset profile normalization");
 assertPath(policy.normalizeRuntimeProfile("pc-rendered-vr"), "pc-rendered-vr", "PC-rendered VR profile normalization");
 assertPath(policy.hdrFallbackPreset("headset"), "studio", "headset HDR fallback preset");
 assertPath(policy.renderProfileDefaults("pc-rendered-vr").foveation, 0, "PC-rendered VR foveation default");
+assertPath(renderPolicy.normalizeRenderQuality("performance"), "performance", "performance render-quality normalization");
+assertPath(renderPolicy.effectiveShadowQuality({
+    renderQuality: "high",
+    shadowQuality: "high",
+    headsetProfile: true,
+    shadowsDisabled: false
+}), "medium", "headset high shadow cap policy");
+assertPath(renderPolicy.aaSampleCount("ultra"), 8, "ultra AA sample policy");
+assertPath(renderPolicy.contactShadowSettings({ shadowQuality: "high", preset: "strong" }).normalBias, 0.012, "strong high contact shadow policy");
+assertPath(renderPolicy.selectRenderBudgetOverride(
+    [{ source: "query", value: "2" }],
+    { min: 0.5, max: 1.5, fallback: 1 }
+).value, 1.5, "VR framebuffer scale override clamp");
 assertPath(desktopPmndrs.presentation.mode, "inline", "desktop presentation mode");
 assertPath(desktopPmndrs.vrProfile.profile, "desktop", "desktop profile");
 assertPath(desktopPmndrs.postProcessing.requested, true, "desktop PMNDRS request");

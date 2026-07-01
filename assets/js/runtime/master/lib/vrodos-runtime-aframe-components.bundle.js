@@ -620,6 +620,7 @@
   const VRODOSRuntimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || { sceneSettings: {} };
   const VRODOSRuntimeSettings = VRODOSSceneSettingsMaster.RuntimeSettings || {};
   const VRODOSRuntimeProfilePolicy = VRODOSSceneSettingsMaster.RuntimeProfilePolicy;
+  const VRODOSRuntimeRenderPolicy = VRODOSSceneSettingsMaster.RuntimeRenderPolicy;
   function vrodosSceneSettingDefault(key, fallback) {
     if (VRODOSRuntimeSettings.defaultString) {
       return VRODOSRuntimeSettings.defaultString(key, fallback);
@@ -898,66 +899,27 @@
       }
     },
     getRenderQualityLevel: function() {
-      switch (this.data.renderQuality) {
-        case "high":
-        case "performance":
-          return this.data.renderQuality;
-        default:
-          return "standard";
-      }
+      return VRODOSRuntimeRenderPolicy.normalizeRenderQuality(this.data.renderQuality);
     },
     getEffectiveShadowQuality: function() {
-      if (vrodosRuntimeDebugFlag("disableShadows", "vrodos_debug_disable_shadows")) {
-        return "off";
-      }
-      if (this.getRenderQualityLevel() === "performance") {
-        return "off";
-      }
-      switch (this.data.shadowQuality) {
-        case "off":
-          return "off";
-        case "high":
-          return this.isVrRuntimeHeadsetProfile() ? "medium" : "high";
-        default:
-          return "medium";
-      }
+      return VRODOSRuntimeRenderPolicy.effectiveShadowQuality({
+        renderQuality: this.data.renderQuality,
+        shadowQuality: this.data.shadowQuality,
+        headsetProfile: this.isVrRuntimeHeadsetProfile(),
+        shadowsDisabled: vrodosRuntimeDebugFlag("disableShadows", "vrodos_debug_disable_shadows")
+      });
     },
     getAAQualityLevel: function() {
-      switch (this.data.aaQuality) {
-        case "off":
-        case "high":
-        case "ultra":
-          return this.data.aaQuality;
-        default:
-          return "balanced";
-      }
+      return VRODOSRuntimeRenderPolicy.normalizeAAQuality(this.data.aaQuality);
     },
     getAAQualityPixelRatioTarget: function() {
-      if (this.getRenderQualityLevel() !== "high") {
-        return 0;
-      }
-      switch (this.getAAQualityLevel()) {
-        case "off":
-          return 0;
-        case "high":
-          return 1.35;
-        case "ultra":
-          return 1.5;
-        default:
-          return 1.25;
-      }
+      return VRODOSRuntimeRenderPolicy.aaPixelRatioTarget({
+        renderQuality: this.data.renderQuality,
+        aaQuality: this.data.aaQuality
+      });
     },
     getAAQualitySampleCount: function() {
-      switch (this.getAAQualityLevel()) {
-        case "off":
-          return 0;
-        case "high":
-          return 4;
-        case "ultra":
-          return 8;
-        default:
-          return 2;
-      }
+      return VRODOSRuntimeRenderPolicy.aaSampleCount(this.data.aaQuality);
     },
     getAmbientOcclusionPreset: function() {
       if (this.data.postFXEngine === "pmndrs" && vrodosRuntimeDebugFlag("disablePmndrsAo", "vrodos_debug_disable_pmndrs_ao")) {
@@ -998,13 +960,7 @@
       }
     },
     getContactShadowPreset: function() {
-      switch (this.data.contactShadowPreset) {
-        case "off":
-        case "strong":
-          return this.data.contactShadowPreset;
-        default:
-          return "soft";
-      }
+      return VRODOSRuntimeRenderPolicy.normalizeContactShadowPreset(this.data.contactShadowPreset);
     },
     getHorizonSkyPreset: function() {
       switch (this.data.horizonSkyPreset) {
@@ -1266,24 +1222,7 @@
       if (this.data && Object.prototype.hasOwnProperty.call(this.data, dataKey)) {
         candidates.push({ source: "scene", value: this.data[dataKey] });
       }
-      for (let i = 0; i < candidates.length; i += 1) {
-        const candidate = candidates[i];
-        const rawNumber = Number(candidate.value);
-        if (!Number.isFinite(rawNumber)) {
-          continue;
-        }
-        if (typeof opts.autoBelowOrEqual === "number" && rawNumber <= opts.autoBelowOrEqual) {
-          continue;
-        }
-        if (typeof opts.autoBelow === "number" && rawNumber < opts.autoBelow) {
-          continue;
-        }
-        return {
-          value: vrodosRuntimeNumber(rawNumber, opts.fallback, opts.min, opts.max),
-          source: candidate.source
-        };
-      }
-      return null;
+      return VRODOSRuntimeRenderPolicy.selectRenderBudgetOverride(candidates, opts);
     },
     getVrRenderBudgetPolicy: function() {
       const profile = this.getVrRuntimeProfile();
@@ -1300,13 +1239,12 @@
         "vrodos_vr_foveation",
         { min: 0, max: 1, fallback: defaults.foveation, autoBelow: 0 }
       );
-      return {
+      return VRODOSRuntimeRenderPolicy.renderBudgetPolicy({
         profile,
-        framebufferScale: framebufferScaleOverride ? framebufferScaleOverride.value : defaults.framebufferScale,
-        framebufferScaleSource: framebufferScaleOverride ? framebufferScaleOverride.source : "profile",
-        foveation: foveationOverride ? foveationOverride.value : defaults.foveation,
-        foveationSource: foveationOverride ? foveationOverride.source : "profile"
-      };
+        defaults,
+        framebufferScaleOverride,
+        foveationOverride
+      });
     },
     applyVrRenderBudgetPolicy: function(reason) {
       const renderer = this.el && this.el.renderer ? this.el.renderer : null;
@@ -1485,15 +1423,10 @@
     captureSceneProbe: VRODOSSceneSettingsMaster.SceneSettingsHelpers.captureSceneProbe,
     applyEnvMapProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyEnvMapProfile,
     getContactShadowSettings: function() {
-      const shadowQuality = this.data.shadowQuality || "medium";
-      const preset = this.getContactShadowPreset();
-      if (preset === "off") {
-        return shadowQuality === "high" ? { bias: -8e-5, normalBias: 0.03, helperKeyIntensity: 0.88, helperFillIntensity: 0.38, helperPosition: "7 11 5" } : { bias: -5e-5, normalBias: 0.02, helperKeyIntensity: 0.84, helperFillIntensity: 0.34, helperPosition: "7 10 5" };
-      }
-      if (preset === "strong") {
-        return shadowQuality === "high" ? { bias: -22e-5, normalBias: 0.012, helperKeyIntensity: 1.02, helperFillIntensity: 0.28, helperPosition: "5.2 8.8 3.2" } : { bias: -16e-5, normalBias: 0.01, helperKeyIntensity: 0.96, helperFillIntensity: 0.3, helperPosition: "5.6 9.2 3.6" };
-      }
-      return shadowQuality === "high" ? { bias: -16e-5, normalBias: 0.018, helperKeyIntensity: 0.94, helperFillIntensity: 0.34, helperPosition: "6 10 4" } : { bias: -1e-4, normalBias: 0.012, helperKeyIntensity: 0.9, helperFillIntensity: 0.32, helperPosition: "6.2 10 4.2" };
+      return VRODOSRuntimeRenderPolicy.contactShadowSettings({
+        shadowQuality: this.data.shadowQuality || "medium",
+        preset: this.data.contactShadowPreset
+      });
     },
     isFPSMeterRequested: function() {
       if (vrodosRuntimeDebugFlag("disableFpsMeter", "vrodos_debug_disable_fps_meter")) {
