@@ -1831,6 +1831,12 @@
         );
     }
 
+    function isVrodosPhotorealHelperLight(node) {
+        return Boolean(node && objectEntityChainHas(node, (entityEl) => (
+            entityEl.hasAttribute('data-vrodos-photoreal-light')
+        )));
+    }
+
     function getMaterialList(material) {
         if (!material) {
             return [];
@@ -2321,6 +2327,10 @@
         );
     }
 
+    function sanitizePhotorealHelperLightAttributes(attributes) {
+        return String(attributes || '').replace(/castShadow\s*:\s*true/gi, 'castShadow: false');
+    }
+
     function isPmndrsTakramHorizonRequested(self) {
         return Boolean(self &&
             self.data &&
@@ -2348,6 +2358,9 @@
 
     function getShadowLightDiagnostic(node) {
         const shadow = node && node.shadow ? node.shadow : null;
+        const map = shadow && shadow.map ? shadow.map : null;
+        const mapTexture = map && map.texture ? map.texture : null;
+        const depthTexture = map && map.depthTexture ? map.depthTexture : null;
         const mapSize = shadow && shadow.mapSize
             ? `${shadow.mapSize.x || 0}x${shadow.mapSize.y || 0}`
             : '';
@@ -2361,7 +2374,14 @@
             castShadow: Boolean(node && node.castShadow),
             intensity: node && typeof node.intensity === 'number' ? Number(node.intensity.toFixed(3)) : null,
             mapSize,
-            mapAllocated: Boolean(shadow && shadow.map),
+            mapAllocated: Boolean(map),
+            mapTextureFormat: mapTexture && typeof mapTexture.format !== 'undefined' ? mapTexture.format : null,
+            mapTextureType: mapTexture && typeof mapTexture.type !== 'undefined' ? mapTexture.type : null,
+            depthTextureAllocated: Boolean(depthTexture),
+            depthTextureFormat: depthTexture && typeof depthTexture.format !== 'undefined' ? depthTexture.format : null,
+            depthTextureType: depthTexture && typeof depthTexture.type !== 'undefined' ? depthTexture.type : null,
+            depthTextureCompareFunction: depthTexture && typeof depthTexture.compareFunction !== 'undefined' ? depthTexture.compareFunction : null,
+            depthTextureIsDepthTexture: Boolean(depthTexture && depthTexture.isDepthTexture),
             needsUpdate: Boolean(shadow && shadow.needsUpdate),
             direction: vectorToRoundedArray(direction)
         };
@@ -2382,10 +2402,17 @@
             needsUpdate: null,
             type: null,
             typeName: null,
+            typeReason: self && self._vrodosShadowMapTypeReason ? self._vrodosShadowMapTypeReason : null,
             updateCount: self && self._vrodosShadowUpdateCount ? self._vrodosShadowUpdateCount : 0,
             dirtyRequests: self && self._vrodosShadowDirtyRequests ? self._vrodosShadowDirtyRequests : 0,
             lastDirtyReason: self && self._vrodosShadowDirtyReason ? self._vrodosShadowDirtyReason : null,
             lastUpdateReason: self && self._vrodosShadowLastUpdateReason ? self._vrodosShadowLastUpdateReason : null,
+            compatibilityRefreshes: self && self._vrodosShadowCompatibilityRefreshes ? self._vrodosShadowCompatibilityRefreshes : 0,
+            lastCompatibilityRefreshReason: self && self._vrodosShadowLastCompatibilityRefreshReason ? self._vrodosShadowLastCompatibilityRefreshReason : null,
+            lastCompatibilityRefreshType: self && self._vrodosShadowLastCompatibilityRefreshType ? self._vrodosShadowLastCompatibilityRefreshType : null,
+            programRefreshes: self && self._vrodosShadowProgramRefreshes ? self._vrodosShadowProgramRefreshes : 0,
+            lastProgramRefreshReason: self && self._vrodosShadowLastProgramRefreshReason ? self._vrodosShadowLastProgramRefreshReason : null,
+            lastProgramRefreshType: self && self._vrodosShadowLastProgramRefreshType ? self._vrodosShadowLastProgramRefreshType : null,
             takramSignature: self && self._pmndrsTakramLightShadowSignature ? self._pmndrsTakramLightShadowSignature : '',
             takramSignatureReason: self && self._pmndrsTakramLightShadowSignatureReason ? self._pmndrsTakramLightShadowSignatureReason : '',
             presentedShadowTransforms: self && self._vrodosPresentedShadowTransformCount ? self._vrodosPresentedShadowTransformCount : 0,
@@ -2498,6 +2525,23 @@
         });
     }
 
+    function syncShadowProgramMaterialsForType(self, shadowMapType, reason, force) {
+        if (!self || typeof shadowMapType === 'undefined' || shadowMapType === null) {
+            return false;
+        }
+
+        if (!force && self._vrodosShadowProgramShadowMapType === shadowMapType) {
+            return false;
+        }
+
+        self._vrodosShadowProgramShadowMapType = shadowMapType;
+        self._vrodosShadowProgramRefreshes = (self._vrodosShadowProgramRefreshes || 0) + 1;
+        self._vrodosShadowLastProgramRefreshReason = reason || 'shadow-map-type';
+        self._vrodosShadowLastProgramRefreshType = getThreeShadowMapTypeName(shadowMapType);
+        markShadowProgramMaterialsDirty(self);
+        return true;
+    }
+
     function disposeLightShadowMap(shadow) {
         if (!shadow || !shadow.map) {
             return false;
@@ -2541,7 +2585,7 @@
         return true;
     }
 
-    function refreshShadowMapResourcesForType(self, shadowMapType, force) {
+    function refreshShadowMapResourcesForType(self, shadowMapType, force, reason) {
         const sceneObj = self && self.el ? self.el.object3D : null;
         if (!sceneObj) {
             return false;
@@ -2559,6 +2603,11 @@
         });
 
         if (refreshed || force) {
+            if (self) {
+                self._vrodosShadowCompatibilityRefreshes = (self._vrodosShadowCompatibilityRefreshes || 0) + 1;
+                self._vrodosShadowLastCompatibilityRefreshReason = reason || (force ? 'forced' : 'incompatible');
+                self._vrodosShadowLastCompatibilityRefreshType = getThreeShadowMapTypeName(shadowMapType);
+            }
             markShadowProgramMaterialsDirty(self);
         }
 
@@ -3826,12 +3875,11 @@
         const effectiveShadowQuality = typeof self.getEffectiveShadowQuality === 'function'
             ? self.getEffectiveShadowQuality()
             : self.data.shadowQuality;
-        const shadowEnabled = effectiveShadowQuality !== 'off';
         const shadowMap = effectiveShadowQuality === 'high' ? 2048 : 1024;
         const helperConfig = getPmndrsHorizonHelperLightConfig(self, preset, config);
         const directVisibility = getPmndrsDirectLightVisibility(config, helperConfig.useMoonDirection);
         const keyIntensity = helperConfig.keyIntensity * directVisibility;
-        const castShadow = shadowEnabled && !helperConfig.useMoonDirection && directVisibility > 0.001 ? 'true' : 'false';
+        const castShadow = 'false';
         const fallbackFillIntensity = getPmndrsFallbackAmbientFillIntensity(helperConfig, config);
         const keyDirection = helperConfig.useMoonDirection
             ? (config.localMoonDirection || config.moonDirection || config.localSunDirection || config.sunDirection)
@@ -6523,6 +6571,11 @@
         const staticMode = isStaticShadowMode(this);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.autoUpdate = !staticMode;
+        const shadowProgramsRefreshed = syncShadowProgramMaterialsForType(this, renderer.shadowMap.type, 'shadow-flush', false);
+        const shadowResourcesRefreshed = refreshShadowMapResourcesForType(this, renderer.shadowMap.type, false, 'shadow-flush');
+        if ((shadowProgramsRefreshed || shadowResourcesRefreshed) && renderer.shadowMap) {
+            renderer.shadowMap.needsUpdate = true;
+        }
         renderer.shadowMap.needsUpdate = true;
         markAllShadowLightsDirty(this);
 
@@ -6557,11 +6610,13 @@
         const shadowsEnabled = shadowQuality !== 'off';
         const contactShadowSettings = getTerrainSafeContactShadowSettings(this, this.getContactShadowSettings());
         const profileShadowType = 'pcf';
+        const useDayNightPcf = shadowsEnabled && shouldUseDayNightPcfShadowMap(this);
         const shadowTypeAttr = shadowsEnabled
-            ? (shouldUseDayNightPcfShadowMap(this)
-                ? 'pcf'
-                : normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType))
+            ? (useDayNightPcf ? 'pcf' : normalizeAFrameShadowMapType(this.data.rootShadowType, profileShadowType))
             : 'pcf';
+        this._vrodosShadowMapTypeReason = shadowsEnabled
+            ? (useDayNightPcf ? 'day-night-pcf' : 'profile')
+            : 'disabled';
         const runtimeShadowTypeAttr = shadowTypeAttr;
         const aframeShadowTypeAttr = getAFrameShadowComponentType(runtimeShadowTypeAttr);
         const shadowMapType = getThreeShadowMapType(runtimeShadowTypeAttr);
@@ -6609,11 +6664,14 @@
 
             if (node.isDirectionalLight || node.isSpotLight || node.isPointLight) {
                 node.userData = node.userData || {};
+                const isPhotorealHelperLight = isVrodosPhotorealHelperLight(node);
                 const isVrodosManagedLight = isVrodosManagedShadowLight(node);
                 if (typeof node.userData.vrodosAuthoredCastShadow === 'undefined') {
                     node.userData.vrodosAuthoredCastShadow = node.castShadow === true;
                 }
-                node.castShadow = shadowsEnabled && (isVrodosManagedLight || node.userData.vrodosAuthoredCastShadow === true);
+                node.castShadow = shadowsEnabled &&
+                    !isPhotorealHelperLight &&
+                    (isVrodosManagedLight || node.userData.vrodosAuthoredCastShadow === true);
 
                 if (!node.shadow) {
                     return;
@@ -6675,7 +6733,10 @@
         });
 
         if (shadowsEnabled) {
-            if (refreshShadowMapResourcesForType(this, shadowMapType, shadowMapTypeChanged) && renderer && renderer.shadowMap) {
+            const shadowRefreshReason = shadowMapTypeChanged ? 'shadow-type-change' : 'shadow-profile';
+            const shadowProgramsRefreshed = syncShadowProgramMaterialsForType(this, shadowMapType, shadowRefreshReason, shadowMapTypeChanged);
+            const shadowResourcesRefreshed = refreshShadowMapResourcesForType(this, shadowMapType, shadowMapTypeChanged, shadowRefreshReason);
+            if ((shadowProgramsRefreshed || shadowResourcesRefreshed) && renderer && renderer.shadowMap) {
                 renderer.shadowMap.needsUpdate = true;
             }
             applyAdaptiveShadowFit(this);
@@ -6862,6 +6923,7 @@
         this._vrodosReflectionEnvironmentLastUpdateMs = typeof time === 'number' ? time : null;
     };
     H.ensurePhotorealHelperLight = function (id, attributes, position) {
+        const safeAttributes = sanitizePhotorealHelperLightAttributes(attributes);
         let lightEl = document.getElementById(id);
         let changed = false;
         if (!lightEl) {
@@ -6872,9 +6934,9 @@
             changed = true;
         }
 
-        const signature = `${attributes}|${position}`;
+        const signature = `${safeAttributes}|${position}`;
         if (lightEl.getAttribute('data-vrodos-photoreal-light-signature') !== signature) {
-            lightEl.setAttribute('light', attributes);
+            lightEl.setAttribute('light', safeAttributes);
             lightEl.setAttribute('position', position);
             lightEl.setAttribute('data-vrodos-photoreal-light-signature', signature);
             changed = true;
@@ -7075,7 +7137,7 @@
         }
 
         const keyShadowMap = effectiveShadowQuality === 'high' ? 2048 : 1024;
-        const castShadow = shadowEnabled ? 'true' : 'false';
+        const castShadow = 'false';
 
         this.ensurePhotorealHelperLight(
             'vrodos-photoreal-key-light',

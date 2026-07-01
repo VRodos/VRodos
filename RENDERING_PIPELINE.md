@@ -320,7 +320,7 @@ The compiler emits semantic shadow roles so runtime profiles can exclude non-vis
 
 Receiver-only shadows are an explicit optimization path for surfaces that should not self-cast. Legacy compiled non-navmesh entities that still carry `data-vrodos-shadow-role="receiver"` are upgraded to caster/receivers at runtime unless they also carry `data-vrodos-shadow-receiver-only`.
 
-Point and spot lights only cast shadows when authored to do so. VRodos-managed photoreal/Takram directional lights may still cast shadows because they are the intentional scene-lighting source.
+Point and spot lights only cast shadows when authored to do so. Editor/authored lights keep their PCF shadow intent. Takram sun/moon lights are VRodos-managed PCF shadow sources. Runtime-injected photoreal fallback/fill lights tagged with `data-vrodos-photoreal-light`, such as `vrodos-pmndrs-horizon-key-light` and `vrodos-photoreal-key-light`, are readability lights only and must not allocate shadow maps.
 
 ### Directional shadow precision
 
@@ -341,7 +341,9 @@ Day/night cycle shadows keep runtime-forced `pcf` filtering. The current PMNDRS/
 
 Root A-Frame `shadow.type` is kept compatible with newer A-Frame master schemas by emitting only `basic` or `pcf`. VRodos still preserves the authored/internal `pcfsoft` shadow intent in `scene-settings.rootShadowType`, but Three r184 renders that intent through `THREE.PCFShadowMap`. Do not reintroduce `pcfsoft` into the A-Frame `shadow` attribute as a way to get soft shadows; it creates schema warnings and can be overwritten by A-Frame's shadow system.
 
-Takram sun shadows and VRodos-managed directional helper shadows use the same contact-shadow profile. Bias remains negative, `normalBias` remains small, and the old hardcoded positive Takram bias values must not be reintroduced.
+Three r184 PCF shadow receivers use `sampler2DShadow` / `samplerCubeShadow` uniforms and bind `light.shadow.map.depthTexture` with a depth compare function. Any VRodos custom shader that samples scene shadow uniforms must either call Three's `getShadow(...)` helper under PCF or guard raw depth `sampler2D` reads out of the `SHADOWMAP_TYPE_PCF` path.
+
+Takram sun shadows and authored directional shadows use the same contact-shadow profile. Bias remains negative, `normalBias` remains small, and the old hardcoded positive Takram bias values must not be reintroduced.
 
 ### Terrain self-shadow stabilization
 

@@ -26,7 +26,7 @@
     "lint:fix": "eslint \"assets/js/{editor,runtime}/**/*.js\" --fix",
     "check:syntax": "node ./scripts/check-runtime-syntax.mjs",
     "check:runtime": "npm run lint && npm run check:syntax && npm run test:runtime && npm run test:compiler && npm run build:runtime && git diff --check",
-    "test:runtime": "node ./scripts/test-navigation-math.mjs && node ./scripts/test-assessment-runtime.mjs && node ./scripts/test-xr-exit-handoff.mjs && node ./scripts/test-runtime-feature-state.mjs",
+    "test:runtime": "node ./scripts/test-navigation-math.mjs && node ./scripts/test-assessment-runtime.mjs && node ./scripts/test-xr-exit-handoff.mjs && node ./scripts/test-runtime-feature-state.mjs && node ./scripts/test-shadow-map-compatibility.mjs",
     "test:compiler": "node ./scripts/run-compiler-runtime-tests.mjs",
     "format": "prettier --write \"**/*.{js,css,md,json}\"",
     "build:css": "tailwindcss -i ./assets/css/vrodos_modern.css -o ./assets/css/vrodos_modern_compiled.css --minify",
