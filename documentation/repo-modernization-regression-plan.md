@@ -63,7 +63,7 @@ The implementation rule is:
 | Aggregate runtime check command | Done | Codex | Added `npm run check:runtime` and `npm run check:syntax`. The aggregate gate runs lint, syntax checks, runtime tests, compiler tests, runtime build, and whitespace checks. |
 | Compiler fixture matrix | Done for v1 local fixtures | Codex | Script-planner and DOM-transformer fixtures now cover headset no-postFX, Takram without composer, stereo PMNDRS opt-in, spatial UI vs video direct playback, collision BVH inclusion/removal, and single-player network pruning. |
 | Runtime feature-state smoke checks | Done for v1 local/browser matrix | Codex | Added local smoke coverage for desktop PMNDRS, headset no-postFX, headset stereo PMNDRS, headset Takram without composer, headset shadow cap, and spatial UI diagnostics. Added `smoke:browser-feature-state`, `smoke:browser-feature-state:matrix`, and `check:browser-feature-state`; the default four-case generated-client browser matrix passed. |
-| Quest diagnostic smoke path | Checklist added | Codex + tester | Added the repeatable capture path and required recorded values below. Next headset pass should attach one capture summary to the headset roadmap. |
+| Quest diagnostic smoke path | First capture recorded | Codex + tester | Added the repeatable capture path and recorded the first Quest feature-state plus movement/yaw diagnostic pass in the headset roadmap. The capture also proved that per-sample frame dumps can create visible 500ms polling stalls, so future smoothness acceptance should use lighter sampling. |
 | First runtime policy extraction | Done | Codex | Extracted high-risk runtime profile and headset post-FX policy into `assets/js/runtime/master/vrodos_runtime_profile_policy.js`. |
 | Render/shadow budget policy extraction | Done | Codex | Extracted render quality normalization, headset shadow caps, AA targets, contact-shadow presets, and VR budget override selection into `assets/js/runtime/master/vrodos_runtime_render_policy.js`. |
 | Change-location guide | Done for v1 | Codex | Added scripts inventory plus file-level guidance for compiler settings, lazy chunks, runtime policy, rendering/shadows, spatial UI, navigation/collision, networking, generated bundles, and package/vendor updates. |
@@ -82,7 +82,7 @@ The shadow issue that interrupted the modernization pass is no longer blocking t
 
 Immediate next work:
 
-- Run one Quest diagnostic smoke capture after the next headset validation and paste the recorded summary into `documentation/compiled-headset-roadmap.md`.
+- Use lighter Quest smoothness captures without per-sample frame dumps when accepting headset frame pacing; reserve `--include-frames-each-sample` for short forensic captures only.
 - Add more generated-client browser matrix cases only when a new representative compiled scene exists, such as headset stereo PMNDRS or networked runtime.
 - Only extract another runtime policy module when the next risky change needs it; likely candidates are atmosphere/Takram enablement, spatial UI feature loading, or navigation/collision policy.
 
@@ -176,6 +176,8 @@ node scripts\capture-quest-immersive-diagnostics.mjs --list-targets
 node scripts\capture-quest-immersive-diagnostics.mjs --duration-ms 30000 --target-url Master_Client_RECOMPILED.html --output C:\tmp\vrodos-quest-immersive-diagnostics.json
 ```
 
+Use `--include-frames-each-sample` only for short forensic captures. On 2026-07-02, polling the full 900-frame ring every 500ms caused visible headset movement pauses and raw frame gaps of roughly `200-230ms` at the same cadence. For comfort or smoothness acceptance, capture summaries without per-sample frame dumps first.
+
 Record these values in the relevant roadmap or handoff note:
 
 - Date, Git commit, compiled client filename, scene/project name, and runtime bundle rebuild date.
@@ -191,6 +193,14 @@ Record these values in the relevant roadmap or handoff note:
 - Manual acceptance notes for HMD tracking, controller tracking, controller rays, thumbstick movement, yaw, walkable collision, video direct play/pause, POI, CEFR, assessment, scene ray feedback, and immersive exit recovery.
 
 Do not mark headset behavior accepted from desktop WebXR emulator evidence alone.
+
+First captured Quest pass:
+
+- 2026-07-02: Captured `runtime/build/Master_Client_8606.html` on Quest Browser `146.3.0.52.52.997435173` with `vrodos_debug_runtime_features=1&vrodos_debug_immersive_smoothness=1`.
+- Feature state confirmed `presentation.mode=immersive-xr`, headset profile, direct post-FX ownership, PMNDRS composer disabled, Takram visible sky active, clouds inactive, spatial UI bundle loaded, walkable collision active, BVH loaded/installed, `navMeshTargets=1`, `blockerTargets=4`, and movement ownership on `#vrodos-authored-world`.
+- The final diagnostic ring included move/yaw coverage: idle `65`, move `382`, yaw `194`, and move+yaw `259` frames.
+- Runtime locomotion timings stayed small: `collisionRefreshMs p95=0.1`, `movementApplyMs p95=0.3`, `rightStickTurnMs p95=0.3`, and `transformApplyMs p95=0.3`.
+- The temporary visible pause during movement was traced to diagnostic polling overhead, not locomotion code. After capture stopped, headset thumbstick movement was reported correct again.
 
 ## Fixture Matrix Target
 
@@ -311,3 +321,5 @@ Without those proofs, R3F risks becoming the same spaghetti in a different frame
 - Ran the first browser/CDP smoke against `Master_Client_8747.html`; stricter validation passed for desktop PMNDRS ownership, walkable navigation, active collision, 7 navmesh targets, no spatial UI bundle, no network failures, no exceptions, and no console errors/asserts.
 - Added `scripts/run-browser-feature-state-smoke-matrix.mjs` and `npm run smoke:browser-feature-state:matrix` to auto-discover generated clients for desktop PMNDRS/walkable, desktop no-postFX/walkable, desktop spatial UI, and headset-profile spatial UI browser smoke cases.
 - Ran the default four-case browser/CDP matrix successfully; all cases published the expected `runtimeFeatureState` shape with no network failures, no exceptions, and no console errors/asserts.
+- Ran the first Quest diagnostic smoke capture against `Master_Client_8606.html`; feature-state, movement ownership, walkable collision, BVH, spatial UI loading, headset post-FX policy, Takram/cloud policy, foveation, and shadow cap diagnostics matched the headset contract.
+- Captured movement/yaw smoothness buckets and confirmed the observed half-second movement pause was caused by heavy DevTools polling with per-frame dumps, not by the runtime locomotion path.

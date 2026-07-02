@@ -1,6 +1,6 @@
 # VRodos Compiled Headset Roadmap
 
-Status date: 2026-06-30.
+Status date: 2026-07-02.
 
 This is the current coordination doc for standalone VR-headset compiled scenes, meaning Quest-class browsers that open the compiled client and render on the headset hardware. PC-rendered VR is a separate path and remains parked in `PC_RENDERED_VR_PLAN.md`.
 
@@ -50,6 +50,19 @@ Keep these baseline decisions intact:
 - Accepted after recompiling with the latest runtime: normal scene `.raycastable` targets show endpoint-dot feedback when no modal is open.
 - Quest Browser version recorded from ADB: `146.3.0.52.52.997435173` (`versionCode=569800627`, `lastUpdateTime=2026-06-23 19:40:28`).
 
+2026-07-02 Quest diagnostic smoke pass:
+
+- Scene/client: `runtime/build/Master_Client_8606.html`.
+- URL flags: `vrodos_debug_runtime_features=1&vrodos_debug_immersive_smoothness=1`.
+- Quest Browser version recorded from ADB: `146.3.0.52.52.997435173` (`versionCode=569800627`, `lastUpdateTime=2026-06-23 19:40:28`).
+- Feature state confirmed real immersive XR: `presentation.mode=immersive-xr`, `xrPresenting=true`, headset profile active, `postProcessing.owner=direct`, `postProcessing.allowed=false`, PMNDRS composer disabled, Takram visible sky active, clouds inactive, and spatial UI bundle loaded with no active panel.
+- Renderer and shadow policy matched the headset budget: pixel ratio `1`, foveation `0.5` applied, framebuffer scale `1`, effective shadow quality `medium`, and Takram sun/moon directional shadow maps at `1024x1024`.
+- Navigation/collision state matched the accepted single-owner model: `mode=walkable`, collision active, BVH bundle loaded and installed, `navMeshTargets=1`, `blockerTargets=4`, `#vrodos-authored-world` present, and immersive collision roots covered.
+- Movement/yaw diagnostic buckets were captured: idle `65`, move `382`, yaw `194`, move+yaw `259` frames in the final 900-frame ring.
+- Runtime-side locomotion timings were small even during movement: `collisionRefreshMs p95=0.1`, `movementApplyMs p95=0.3`, `rightStickTurnMs p95=0.3`, and `transformApplyMs p95=0.3`.
+- The visible half-second movement pause during capture was measurement overhead. The forensic capture used `--include-frames-each-sample` with 500ms polling and produced `200-230ms` frame gaps at the same cadence. After the capture stopped, thumbstick movement was reported correct again.
+- Do not treat that forensic capture as headset frame-pacing acceptance. Use lighter captures without per-sample frame dumps for future smoothness acceptance.
+
 ## Active Headset TODOs
 
 ### Interaction Parity
@@ -68,6 +81,7 @@ Keep these baseline decisions intact:
 - Preserve the accepted single-owner tracking model: WebXR/A-Frame tracks the user; VRodos transforms only `#vrodos-authored-world`.
 - Keep yaw-only authored-world rotation from clearing authored-space ground caches.
 - Use `vrodos_debug_immersive_smoothness=1` plus `scripts/capture-quest-immersive-diagnostics.mjs` before changing locomotion or render policy.
+- For smoothness acceptance, avoid `--include-frames-each-sample` during live movement because DevTools serialization can create visible periodic stalls. Reserve per-frame dumps for short forensic captures after reproducing a problem with lighter sampling.
 - Watch frame time, shadow dirty count, transformed root count, collision target count, blocker ray count, and shadow map sizes.
 - Walkable collision and controller thumbstick movement were accepted again on headset on 2026-06-30; treat them as accepted baseline features unless a future change touches navigation/collision.
 - If networked headset scenes matter for a release, validate them separately on headset hardware; current support is conditional on scene/runtime/network behavior.

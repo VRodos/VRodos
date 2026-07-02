@@ -1,6 +1,6 @@
 # VR Headset Runtime Handoff
 
-Date: 2026-06-23
+Date: 2026-07-02
 
 For the current standalone VR-headset TODO list and deferred experiment backlog, see `documentation/compiled-headset-roadmap.md`.
 
@@ -60,6 +60,13 @@ Latest manual headset note, 2026-06-30:
 - Quest Browser version recorded from ADB: `146.3.0.52.52.997435173` (`versionCode=569800627`, `lastUpdateTime=2026-06-23 19:40:28`).
 - Not explicitly recorded in this pass: runtime diagnostic values.
 
+Latest diagnostic headset note, 2026-07-02:
+
+- Captured `runtime/build/Master_Client_8606.html` with `vrodos_debug_runtime_features=1&vrodos_debug_immersive_smoothness=1`.
+- Feature state confirmed immersive XR, headset profile, direct post-FX ownership, disabled PMNDRS composer, active Takram visible sky, inactive clouds, spatial UI bundle loaded, walkable collision active, BVH loaded/installed, `#vrodos-authored-world` movement ownership, and headset shadow caps.
+- Movement/yaw buckets were captured, and runtime locomotion timings stayed small: `collisionRefreshMs p95=0.1`, `movementApplyMs p95=0.3`, and `rightStickTurnMs p95=0.3`.
+- The visible half-second movement pause during the run was diagnostic overhead from `--include-frames-each-sample` plus 500ms polling. After capture stopped, headset movement was reported correct again.
+
 Required checks:
 
 - HMD/controller tracking remains WebXR/A-Frame-owned.
@@ -89,3 +96,5 @@ node scripts\capture-quest-immersive-diagnostics.mjs --duration-ms 30000 --targe
 ```
 
 The runtime publishes `window.__vrodosImmersiveSmoothnessDiagnostics` while the flag is active. Use frame time, shadow dirty count, transformed root count, collision target count, blocker ray count, and shadow map sizes before changing locomotion or render policy.
+
+For comfort or smoothness acceptance, start with summary-only captures. Use `--include-frames-each-sample` only for short forensic captures, because repeatedly serializing the full frame ring through DevTools can itself cause visible headset stalls.
