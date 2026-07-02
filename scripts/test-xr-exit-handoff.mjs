@@ -713,6 +713,7 @@ function testControllerRaySourceContracts() {
     const compilerSource = readFileSync(resolve(root, "includes/class-vrodos-compiler-manager.php"), "utf8");
     const cefrSource = readFileSync(resolve(root, "assets/js/runtime/assessment/assessment-cefr-runtime.js"), "utf8");
     const overlaySource = readFileSync(resolve(root, "assets/js/runtime/vrodos_runtime_overlay.js"), "utf8");
+    const pmndrsPostFxSource = readFileSync(resolve(root, "assets/js/runtime/master/vrodos_postprocessing_pmndrs.js"), "utf8");
 
     assert(navigationSource.includes("VRODOSControllerRayReadiness"), "navigation must use the shared controller ray readiness gate");
     assert(!/setAttribute\(\s*['"]line['"]/.test(navigationSource), "navigation must not inject A-Frame controller line attributes");
@@ -756,6 +757,14 @@ function testControllerRaySourceContracts() {
     assert(overlaySource.includes("Promise.resolve(spatialUi.prewarm())"), "overlay prewarm must await the spatial UI font prewarm promise");
     assert(spatialSource.includes("spatialFontWarmupPromise"), "spatial UI prewarm must cache and return the font readiness promise");
     assert(spatialSource.includes("SPATIAL_UI_IMMEDIATE_FONT_FAMILY"), "spatial UI must expose an immediate font path for CEFR");
+    assert(spatialSource.includes("borderWidth: config.borderWidth !== undefined ? config.borderWidth : 0"), "spatial UI root panel must not default to a bright 1px border");
+    assert(spatialSource.includes("borderColor: config.borderColor || \"transparent\""), "spatial UI root panel border must remain transparent unless authored");
+    assert(pmndrsPostFxSource.includes("getActiveSpatialUiPanelGroup"), "PMNDRS stereo renderer must detect the active spatial UI panel group");
+    assert(pmndrsPostFxSource.includes("renderSpatialUiPanelOverlay"), "PMNDRS stereo renderer must direct-render spatial UI after the scene composer");
+    assert(pmndrsPostFxSource.includes("spatialUiGroup.visible = false"), "PMNDRS stereo renderer must hide spatial UI during the post-FX scene pass");
+    assert(pmndrsPostFxSource.includes("collectSpatialUiRayOverlayObjects"), "PMNDRS stereo renderer must collect the active A-Frame ray visuals for UI overlay compositing");
+    assert(pmndrsPostFxSource.includes("renderSpatialUiRayOverlayObjects"), "PMNDRS stereo renderer must direct-render controller rays after the spatial UI panel");
+    assert(pmndrsPostFxSource.includes("bridge.rayVisualStates"), "PMNDRS stereo renderer must reuse spatial UI's captured A-Frame controller line objects");
 }
 
 async function main() {

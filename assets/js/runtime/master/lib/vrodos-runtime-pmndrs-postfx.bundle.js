@@ -722,6 +722,140 @@
         return null;
       }
     }
+    function isObjectDescendantOf(object, root) {
+      let current = object || null;
+      while (current) {
+        if (current === root) {
+          return true;
+        }
+        current = current.parent || null;
+      }
+      return false;
+    }
+    function getActiveSpatialUiPanelState(scene) {
+      const spatialUi = window.VRODOSSpatialUI || null;
+      const panel = spatialUi && typeof spatialUi.getActivePanel === "function" ? spatialUi.getActivePanel() : null;
+      const group = panel && panel.group ? panel.group : null;
+      if (!group || group.visible === false || !group.parent) {
+        return null;
+      }
+      if (scene && !isObjectDescendantOf(group, scene)) {
+        return null;
+      }
+      return panel;
+    }
+    function getActiveSpatialUiPanelGroup(scene) {
+      const panel = getActiveSpatialUiPanelState(scene);
+      return panel && panel.group ? panel.group : null;
+    }
+    function collectSpatialUiRayOverlayObjects(panel) {
+      const objects = [];
+      const seen = /* @__PURE__ */ new Set();
+      const add = (object) => {
+        if (!object || !object.parent || seen.has(object)) {
+          return;
+        }
+        seen.add(object);
+        objects.push(object);
+      };
+      if (!panel || !Array.isArray(panel.controllerPointerBridges)) {
+        return objects;
+      }
+      panel.controllerPointerBridges.forEach((bridge) => {
+        if (!bridge) {
+          return;
+        }
+        if (Array.isArray(bridge.rayVisualStates)) {
+          bridge.rayVisualStates.forEach((state) => {
+            add(state && state.object);
+          });
+        }
+        add(bridge.rayHitMarker);
+      });
+      return objects;
+    }
+    function captureSpatialUiOverlayObjectVisibility(objects) {
+      return (objects || []).map((object) => ({
+        object,
+        visible: object ? object.visible : false
+      }));
+    }
+    function setSpatialUiOverlayObjectsVisible(records, visible) {
+      (records || []).forEach((record) => {
+        if (record && record.object && record.visible === true) {
+          record.object.visible = visible;
+        }
+      });
+    }
+    function restoreSpatialUiOverlayObjectVisibility(records) {
+      (records || []).forEach((record) => {
+        if (record && record.object) {
+          record.object.visible = record.visible;
+        }
+      });
+    }
+    function renderSpatialUiObjectOverlay(self, object, camera, viewport) {
+      const renderer = self && self.el ? self.el.renderer : null;
+      if (!renderer || !object || !camera || typeof self.pmndrsOriginalRender !== "function") {
+        return false;
+      }
+      const THREE2 = window.THREE;
+      const previousAutoClear = renderer.autoClear;
+      const previousAutoClearColor = renderer.autoClearColor;
+      const previousAutoClearDepth = renderer.autoClearDepth;
+      const previousAutoClearStencil = renderer.autoClearStencil;
+      const previousViewport = THREE2 && renderer.getViewport ? renderer.getViewport(new THREE2.Vector4()) : null;
+      const previousScissor = THREE2 && renderer.getScissor ? renderer.getScissor(new THREE2.Vector4()) : null;
+      const previousScissorTest = renderer.getScissorTest ? renderer.getScissorTest() : null;
+      const previousVisible = object.visible;
+      try {
+        object.visible = true;
+        renderer.autoClear = false;
+        renderer.autoClearColor = false;
+        renderer.autoClearDepth = false;
+        renderer.autoClearStencil = false;
+        if (viewport && renderer.setViewport && renderer.setScissor && renderer.setScissorTest) {
+          renderer.setViewport(viewport.x, viewport.y, viewport.z, viewport.w);
+          renderer.setScissor(viewport.x, viewport.y, viewport.z, viewport.w);
+          renderer.setScissorTest(true);
+        }
+        self.pmndrsOriginalRender(object, camera);
+        return true;
+      } catch (err) {
+        if (!self._pmndrsSpatialUiOverlayWarned) {
+          console.warn("[VRodos] PMNDRS spatial UI overlay render failed; falling back to composer-rendered UI:", err);
+          self._pmndrsSpatialUiOverlayWarned = true;
+        }
+        return false;
+      } finally {
+        object.visible = previousVisible;
+        renderer.autoClear = previousAutoClear;
+        renderer.autoClearColor = previousAutoClearColor;
+        renderer.autoClearDepth = previousAutoClearDepth;
+        renderer.autoClearStencil = previousAutoClearStencil;
+        if (previousViewport && renderer.setViewport) {
+          renderer.setViewport(previousViewport);
+        }
+        if (previousScissor && renderer.setScissor) {
+          renderer.setScissor(previousScissor);
+        }
+        if (previousScissorTest !== null && renderer.setScissorTest) {
+          renderer.setScissorTest(previousScissorTest);
+        }
+      }
+    }
+    function renderSpatialUiPanelOverlay(self, group, camera, viewport) {
+      return renderSpatialUiObjectOverlay(self, group, camera, viewport);
+    }
+    function renderSpatialUiRayOverlayObjects(self, records, camera, viewport) {
+      let rendered = 0;
+      (records || []).forEach((record) => {
+        if (record && record.visible === true && renderSpatialUiObjectOverlay(self, record.object, camera, viewport)) {
+          rendered += 1;
+        }
+      });
+      return rendered;
+    }
     function isPmndrsXrStereoComposerActive(self) {
       return isPmndrsXrStereoComposerRequested(self) && Boolean(getPmndrsXrStereoCamera(self));
     }
@@ -827,9 +961,19 @@
       const oldViewport = xrTarget.viewport && typeof xrTarget.viewport.clone === "function" ? xrTarget.viewport.clone() : null;
       const oldScissor = xrTarget.scissor && typeof xrTarget.scissor.clone === "function" ? xrTarget.scissor.clone() : null;
       const oldScissorTest = xrTarget.scissorTest;
+      const spatialUiPanel = getActiveSpatialUiPanelState(scene);
+      const spatialUiGroup = spatialUiPanel && spatialUiPanel.group ? spatialUiPanel.group : null;
+      const spatialUiGroupWasVisible = spatialUiGroup ? spatialUiGroup.visible : false;
+      const spatialUiRayOverlayRecords = spatialUiPanel ? captureSpatialUiOverlayObjectVisibility(collectSpatialUiRayOverlayObjects(spatialUiPanel)) : [];
       let renderedEyes = 0;
+      let renderedSpatialUiOverlay = 0;
+      let renderedSpatialUiRayOverlays = 0;
       try {
         xr.enabled = false;
+        if (spatialUiGroup) {
+          spatialUiGroup.visible = false;
+        }
+        setSpatialUiOverlayObjectsVisible(spatialUiRayOverlayRecords, false);
         for (let i = 0; i < eyeCameras.length; i += 1) {
           const eyeCamera = eyeCameras[i];
           const viewport = eyeCamera && eyeCamera.viewport;
@@ -842,9 +986,25 @@
           xrTarget.scissor.set(viewport.x, viewport.y, viewport.z, viewport.w);
           xrTarget.scissorTest = true;
           self.pmndrsComposer.render();
+          if (spatialUiGroup) {
+            spatialUiGroup.visible = spatialUiGroupWasVisible;
+            if (renderSpatialUiPanelOverlay(self, spatialUiGroup, eyeCamera, viewport)) {
+              renderedSpatialUiOverlay += 1;
+            }
+            renderedSpatialUiRayOverlays += renderSpatialUiRayOverlayObjects(self, spatialUiRayOverlayRecords, eyeCamera, viewport);
+            spatialUiGroup.visible = false;
+          }
           renderedEyes += 1;
         }
       } finally {
+        if (spatialUiGroup) {
+          spatialUiGroup.visible = spatialUiGroupWasVisible;
+          self._pmndrsSpatialUiOverlayEyes = renderedSpatialUiOverlay;
+        } else {
+          self._pmndrsSpatialUiOverlayEyes = 0;
+        }
+        restoreSpatialUiOverlayObjectVisibility(spatialUiRayOverlayRecords);
+        self._pmndrsSpatialUiRayOverlayObjects = renderedSpatialUiRayOverlays;
         xr.enabled = oldXrEnabled;
         if (oldViewport && xrTarget.viewport) {
           xrTarget.viewport.copy(oldViewport);
