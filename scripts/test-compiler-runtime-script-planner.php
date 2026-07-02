@@ -296,6 +296,12 @@ vrodos_assert_same(
 );
 
 vrodos_assert_same(
+	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'pmndrs-postfx', 'aframe-components' ],
+	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframePmndrsCloudsEnabled' => true, 'aframeVrRuntimeProfile' => 'headset', 'aframeVrHeadsetStereoPostFxEnabled' => true ] ) ),
+	'headset stereo PMNDRS post-FX keeps Takram clouds disabled'
+);
+
+vrodos_assert_same(
 	[ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'pmndrs-postprocessing-vendor', 'takram-atmosphere', 'takram-clouds', 'pmndrs-postfx', 'aframe-components' ],
 	$planner->script_ids_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframePmndrsCloudsEnabled' => true ] ) ),
 	'PMNDRS with Takram clouds'
@@ -375,6 +381,12 @@ $headset_stereo_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 
 vrodos_assert_contains( $headset_stereo_html, 'vrodos-postprocessing.bundle.js', 'headset stereo PMNDRS script tags' );
 vrodos_assert_contains( $headset_stereo_html, 'vrodos-runtime-pmndrs-postfx.bundle.js', 'headset stereo PMNDRS script tags' );
 vrodos_assert_not_contains( $headset_stereo_html, 'vrodos-takram-atmosphere.bundle.js', 'headset stereo PMNDRS script tags' );
+
+$headset_stereo_takram_clouds_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframePmndrsCloudsEnabled' => true, 'aframeVrRuntimeProfile' => 'headset', 'aframeVrHeadsetStereoPostFxEnabled' => true ] ) );
+vrodos_assert_contains( $headset_stereo_takram_clouds_html, 'vrodos-postprocessing.bundle.js', 'headset stereo Takram script tags' );
+vrodos_assert_contains( $headset_stereo_takram_clouds_html, 'vrodos-takram-atmosphere.bundle.js', 'headset stereo Takram script tags' );
+vrodos_assert_contains( $headset_stereo_takram_clouds_html, 'vrodos-runtime-pmndrs-postfx.bundle.js', 'headset stereo Takram script tags' );
+vrodos_assert_not_contains( $headset_stereo_takram_clouds_html, 'vrodos-takram-clouds.bundle.js', 'headset stereo Takram keeps clouds script disabled' );
 
 $pmndrs_clouds_html = $planner->render_scripts_for_scene( vrodos_test_scene( [ 'aframePostFXEnabled' => true, 'aframePostFXEngine' => 'pmndrs', 'aframePmndrsAtmosphereEnabled' => true, 'aframePmndrsCloudsEnabled' => true ] ) );
 vrodos_assert_contains( $pmndrs_clouds_html, 'vrodos-takram-clouds.bundle.js', 'PMNDRS clouds script tags' );

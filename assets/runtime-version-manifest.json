@@ -26,7 +26,7 @@
     "bundlePath": "assets/js/runtime/master/lib/vrodos-three-addons.bundle.js"
   },
   "postprocessing": {
-    "version": "6.39.1",
+    "version": "6.39.2",
     "global": "POSTPROCESSING",
     "bundleFile": "vrodos-postprocessing.bundle.js",
     "bundlePath": "assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js"

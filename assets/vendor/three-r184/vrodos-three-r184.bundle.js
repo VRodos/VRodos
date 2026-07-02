@@ -52267,7 +52267,7 @@ void main() {
     WebGLExtension: () => WebGLExtension,
     version: () => version
   });
-  var version = "6.39.1";
+  var version = "6.39.2";
   var Disposable = class {
     /**
      * Frees internal resources.

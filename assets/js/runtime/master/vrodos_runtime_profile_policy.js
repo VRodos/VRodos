@@ -62,6 +62,12 @@ window.VRODOSMaster = window.VRODOSMaster || {};
         ) {
             return Boolean(opts.authored);
         }
+        if (
+            capability === 'takramSkyEnvironment' &&
+            (opts.headsetPmndrsStereoComposerForced || opts.headsetPmndrsStereoComposerAuthored)
+        ) {
+            return Boolean(opts.authored);
+        }
 
         return allowsCapability(opts.profile, capability, opts.authored);
     }
@@ -152,6 +158,7 @@ window.VRODOSMaster = window.VRODOSMaster || {};
             allows('sceneProbe', authored.sceneProbe);
         const takramSkyEnvironment = active &&
             profileActive &&
+            pmndrsComposer &&
             allows('takramSkyEnvironment', authored.takramSkyEnvironment);
         const clouds = active &&
             profileActive &&

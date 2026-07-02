@@ -25,6 +25,7 @@ Presentation mode is part of the rendering contract:
 - In immersive XR, XR-unsafe screen-space composer passes can fall back to direct stereo rendering while scene-owned visuals remain active: Horizon/Takram sky, scene-owned lights, fog, exposure/tone mapping, environment maps, and material profiles.
 - VR feature parity is selected in the compile UI as `Runtime Target`: `Desktop`, `VR Headset Full`, or `VR Headset - PC Rendered`. Internally this is stored as `scene-settings.vrRuntimeProfile`: `desktop`, `headset`, or `pc-rendered-vr`. Legacy hidden profile names normalize to `headset` for compatibility only; older compiled scenes should be recompiled into the current pipeline.
 - `headset` applies in browser-tab mode and immersive VR. It preserves native renderer antialiasing, hard-caps shadow maps, keeps PMNDRS/legacy composer ownership, clouds, scene probes, Takram sky PMREM capture, and WebXR layers disabled by default, and only keeps authored Takram/HDR paths that are allowed by the current policy.
+- The explicit headset stereo PMNDRS opt-in (`vrHeadsetStereoPostFxEnabled`) is the only standalone-headset path where new realism work should target PMNDRS composer ownership. In that profile, visible sky and Takram sky PMREM must be selected from dynamic Takram runtime state: native `SkyMaterial`, sun/moon vectors, time/date or day-night cycle, `SunDirectionalLight`, `SkyLightProbe`, and PMREM capture. Do not emulate the result with static headset color palettes, A-Frame fallback skies, fixed lower-hemisphere fills, or lower-haze shader colors.
 - `pc-rendered-vr` is a parked parent profile for the PCVR/WebXR path described in `PC_RENDERED_VR_PLAN.md`. Treat it as desktop-like until real PCVR hardware/runtime validation changes that policy.
 - The render budget can be overridden per scene with `aframeVrFramebufferScale` / `aframeVrFoveationStrength`, or per test with `vrodos_vr_framebuffer_scale=...` / `vrodos_vr_foveation=...`.
 - Quest-class headset browsers fail closed for PMNDRS composer ownership, including browser-panel inline mode, because real Quest 2 testing showed tiled stereo artifacts and headset UI/compositor instability with the PMNDRS XR composer/cloud path. Use `vrodos_force_headset_pmndrs_composer=1` only for short lab isolation passes.
@@ -121,6 +122,7 @@ Lazy-loading expectations:
 - PMNDRS vendor and PMNDRS runtime load only when PMNDRS post-FX is selected.
 - Takram loads only when PMNDRS atmosphere is enabled.
 - Takram clouds load only when PMNDRS post-FX, high render quality, Takram atmosphere, and clouds are enabled.
+- Standalone headset stereo PMNDRS keeps Takram clouds disabled even when authored; headset v1 uses the light-source sky/environment path, not Takram CloudsEffect or AerialPerspective relighting.
 - Networked components are pruned from single-player output.
 - The FPS meter remains an optional inline module.
 

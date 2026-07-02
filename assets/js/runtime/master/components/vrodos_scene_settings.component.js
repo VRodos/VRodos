@@ -884,10 +884,23 @@ AFRAME.registerComponent('scene-settings', {
             this.canUseVrTakramSkyEnvironment();
         const takramSkyEnvironmentRequested = vrodosRuntimeDebugFlag('enableTakramSkyEnvironment', 'vrodos_debug_takram_sky_environment') ||
             this.canUseVrTakramSkyEnvironment();
+        const atmosphereState = this._pmndrsAtmosphereState || null;
+        const atmosphereTextures = atmosphereState && atmosphereState.textures ? atmosphereState.textures : null;
+        const takramSkyReady = Boolean(window.VRODOS_TAKRAM_ATMOSPHERE &&
+            atmosphereState &&
+            atmosphereState.ready &&
+            !atmosphereState.failed &&
+            atmosphereState.skyMesh &&
+            atmosphereState.skyMaterial &&
+            atmosphereTextures &&
+            atmosphereTextures.irradianceTexture &&
+            atmosphereTextures.scatteringTexture &&
+            atmosphereTextures.transmittanceTexture);
 
         return takramSkyEnvironmentRequested &&
             this.data.renderQuality === 'high' &&
             this.data.postFXEngine === 'pmndrs' &&
+            takramSkyReady &&
             typeof this.isPmndrsAtmosphereEnabled === 'function' &&
             this.isPmndrsAtmosphereEnabled() &&
             typeof this.isPmndrsDayNightCycleActive === 'function' &&
@@ -1244,7 +1257,14 @@ AFRAME.registerComponent('scene-settings', {
 
         const authoredEnvMapPreset = (this.data.envMapPreset || 'none') !== 'none';
         const authoredHdrEnvMap = this.getReflectionSource() === 'hdr' || authoredEnvMapPreset;
-        if (this.areReflectionsEnabled() && authoredHdrEnvMap && this.vrRuntimeAllows('hdrEnvMap', authoredHdrEnvMap)) {
+        const canUseHdrEnvMap = this.areReflectionsEnabled() &&
+            authoredHdrEnvMap &&
+            this.vrRuntimeAllows('hdrEnvMap', authoredHdrEnvMap);
+        const canUseTakramSkyEnvironment = this.areReflectionsEnabled() &&
+            this.data.postFXEngine === 'pmndrs' &&
+            this.isPmndrsAtmosphereEnabled() &&
+            this.getVrRuntimeFeaturePolicy().takramSkyEnvironment;
+        if (canUseHdrEnvMap || canUseTakramSkyEnvironment) {
             components.push('vrodos-reflections');
         }
 
@@ -1615,6 +1635,9 @@ AFRAME.registerComponent('scene-settings', {
             state.takramSkyRequested = true;
             let takramReady = true;
             let takramFailed = false;
+            const usesDirectSkyCalibration = typeof this.usesVrTakramDirectSkyCalibration === 'function'
+                ? this.usesVrTakramDirectSkyCalibration()
+                : true;
             if (startLoads && typeof this.prepareVrTakramVisibleSkyForReveal === 'function') {
                 takramReady = this.prepareVrTakramVisibleSkyForReveal();
             } else {
@@ -1633,7 +1656,15 @@ AFRAME.registerComponent('scene-settings', {
                     (atmosphereState && atmosphereState.vrTakramSkyDirectWarmed) ||
                     userData.vrodosVrTakramSkyDirectWarmed
                 );
-                takramReady = Boolean(shaderPatched && !shaderPatchFailed && skyWarmed);
+                takramReady = usesDirectSkyCalibration
+                    ? Boolean(shaderPatched && !shaderPatchFailed && skyWarmed)
+                    : Boolean(
+                        atmosphereState &&
+                        atmosphereState.ready &&
+                        !atmosphereState.failed &&
+                        atmosphereState.skyMesh &&
+                        atmosphereState.skyMaterial
+                    );
                 takramFailed = shaderPatchFailed;
             }
 
@@ -1646,16 +1677,22 @@ AFRAME.registerComponent('scene-settings', {
             );
             state.takramSkyReady = Boolean(takramReady);
             state.takramSkyFailed = takramFailed;
-            state.takramSkyWarmed = Boolean(
-                (atmosphereState && atmosphereState.vrTakramSkyDirectWarmed) ||
-                userData.vrodosVrTakramSkyDirectWarmed
-            );
-            state.takramSkyWarmupMs = atmosphereState && typeof atmosphereState.vrTakramSkyDirectWarmupMs === 'number'
-                ? atmosphereState.vrTakramSkyDirectWarmupMs
-                : (typeof userData.vrodosVrTakramSkyDirectWarmupMs === 'number' ? userData.vrodosVrTakramSkyDirectWarmupMs : 0);
-            state.takramSkyWarmupRemainingMs = atmosphereState && typeof atmosphereState.vrTakramSkyDirectWarmupRemainingMs === 'number'
-                ? atmosphereState.vrTakramSkyDirectWarmupRemainingMs
-                : (typeof userData.vrodosVrTakramSkyDirectWarmupRemainingMs === 'number' ? userData.vrodosVrTakramSkyDirectWarmupRemainingMs : 0);
+            state.takramSkyWarmed = usesDirectSkyCalibration
+                ? Boolean(
+                    (atmosphereState && atmosphereState.vrTakramSkyDirectWarmed) ||
+                    userData.vrodosVrTakramSkyDirectWarmed
+                )
+                : true;
+            state.takramSkyWarmupMs = usesDirectSkyCalibration
+                ? (atmosphereState && typeof atmosphereState.vrTakramSkyDirectWarmupMs === 'number'
+                    ? atmosphereState.vrTakramSkyDirectWarmupMs
+                    : (typeof userData.vrodosVrTakramSkyDirectWarmupMs === 'number' ? userData.vrodosVrTakramSkyDirectWarmupMs : 0))
+                : 0;
+            state.takramSkyWarmupRemainingMs = usesDirectSkyCalibration
+                ? (atmosphereState && typeof atmosphereState.vrTakramSkyDirectWarmupRemainingMs === 'number'
+                    ? atmosphereState.vrTakramSkyDirectWarmupRemainingMs
+                    : (typeof userData.vrodosVrTakramSkyDirectWarmupRemainingMs === 'number' ? userData.vrodosVrTakramSkyDirectWarmupRemainingMs : 0))
+                : 0;
             if (!state.takramSkyReady && !state.takramSkyFailed) {
                 addPending('takram-sky', 'Preparing sky...');
             }
@@ -1927,6 +1964,7 @@ AFRAME.registerComponent('scene-settings', {
         const self = this;
 
         this.markSceneCollectionsDirty();
+        this.ensureRuntimePipelineComponents();
         this.applyRenderQualityProfile();
         this.applyBackgroundQualityProfile();
         this.applyEnvMapProfile();
@@ -1940,6 +1978,7 @@ AFRAME.registerComponent('scene-settings', {
 
         const resync = function () {
             self.markSceneCollectionsDirty();
+            self.ensureRuntimePipelineComponents();
             self.applyRenderQualityProfile();
             self.applyBackgroundQualityProfile();
             self.applyEnvMapProfile();
@@ -2774,6 +2813,7 @@ AFRAME.registerComponent('scene-settings', {
     showPmndrsAtmosphereSkyForSceneProbe: VRODOSSceneSettingsMaster.SceneSettingsHelpers.showPmndrsAtmosphereSkyForSceneProbe || function () { return false; },
     hidePmndrsAtmosphereSky: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsAtmosphereSky || function () {},
     isPmndrsAtmosphereSkyVisible: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isPmndrsAtmosphereSkyVisible || function () { return false; },
+    usesVrTakramDirectSkyCalibration: VRODOSSceneSettingsMaster.SceneSettingsHelpers.usesVrTakramDirectSkyCalibration || function () { return true; },
     prepareVrTakramVisibleSkyForReveal: VRODOSSceneSettingsMaster.SceneSettingsHelpers.prepareVrTakramVisibleSkyForReveal || function () { return true; },
     logPmndrsHorizonDiagnostic: VRODOSSceneSettingsMaster.SceneSettingsHelpers.logPmndrsHorizonDiagnostic || function () {},
     applyBackgroundQualityProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyBackgroundQualityProfile,

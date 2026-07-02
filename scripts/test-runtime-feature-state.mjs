@@ -289,7 +289,22 @@ function createFeatureStateFixture(options) {
         }
         : null;
 
-    return component.getRuntimeFeatureState();
+    if (Object.prototype.hasOwnProperty.call(options, "dayNightCycleActive")) {
+        component.isPmndrsDayNightCycleActive = () => Boolean(options.dayNightCycleActive);
+    }
+    if (Object.prototype.hasOwnProperty.call(options, "atmosphereSkyVisible")) {
+        component.isPmndrsAtmosphereSkyVisible = () => Boolean(options.atmosphereSkyVisible);
+    }
+    if (options.horizonState) {
+        component.getPmndrsTakramHorizonState = () => options.horizonState;
+    }
+    if (Object.prototype.hasOwnProperty.call(options, "usesDirectSkyCalibration")) {
+        component.usesVrTakramDirectSkyCalibration = () => Boolean(options.usesDirectSkyCalibration);
+    }
+
+    const state = component.getRuntimeFeatureState();
+    state.pipelineComponents = component.getRuntimePipelineComponentNames();
+    return state;
 }
 
 function assertPath(actual, expected, label) {
@@ -396,6 +411,92 @@ assertPath(headsetTakramNoComposer.vrProfile.takramVisibleSky, true, "headset Ta
 assertPath(headsetTakramNoComposer.vrProfile.pmndrsComposer, false, "headset Takram composer policy");
 assertPath(headsetTakramNoComposer.takram.atmosphereRequested, true, "headset Takram atmosphere request");
 assertPath(headsetTakramNoComposer.takram.atmosphereBundleLoaded, true, "headset Takram bundle loaded");
+assertPath(headsetTakramNoComposer.vrProfile.takramSkyEnvironment, false, "headset Takram no composer sky environment policy");
+assertPath(headsetTakramNoComposer.reflections.effectiveSource === "takram-sky", false, "headset Takram no composer avoids Takram sky environment");
+
+const headsetStereoTakramEnvironment = createFeatureStateFixture({
+    immersive: true,
+    userAgent: "OculusBrowser Quest",
+    pmndrsActive: true,
+    postprocessingBundle: true,
+    takramBundle: true,
+    dayNightCycleActive: true,
+    atmosphereSkyVisible: true,
+    usesDirectSkyCalibration: false,
+    horizonState: {
+        owner: "takram-horizon",
+        takramSunEnabled: true
+    },
+    atmosphereState: {
+        ready: true,
+        failed: false,
+        profileSignature: "fixture",
+        precision: "mediump",
+        skyMesh: {},
+        skyMaterial: { userData: {} },
+        textures: {
+            irradianceTexture: {},
+            scatteringTexture: {},
+            transmittanceTexture: {}
+        },
+        vrTakramSkyDirectCalibrated: false,
+        vrTakramSkyDirectCalibrationMode: "native-takram-stereo-pmndrs",
+        vrTakramSkyDirectShaderPatched: false,
+        vrTakramSkyDirectWarmed: true
+    },
+    data: {
+        vrRuntimeProfile: "headset",
+        postFXEnabled: "1",
+        postFXEngine: "pmndrs",
+        vrHeadsetStereoPostFxEnabled: "1",
+        pmndrsAtmosphereEnabled: "1",
+        pmndrsCloudsEnabled: "1",
+        pmndrsDayNightCycleEnabled: "1",
+        reflectionsEnabled: "1",
+        reflectionSource: "hdr",
+        envMapPreset: "none"
+    }
+});
+assertPath(headsetStereoTakramEnvironment.postProcessing.requested, true, "headset stereo Takram PMNDRS request");
+assertPath(headsetStereoTakramEnvironment.postProcessing.allowed, true, "headset stereo Takram PMNDRS allowed");
+assertPath(headsetStereoTakramEnvironment.postProcessing.owner, "pmndrs", "headset stereo Takram PMNDRS owner");
+assertPath(headsetStereoTakramEnvironment.vrProfile.pmndrsComposer, true, "headset stereo Takram composer policy");
+assertPath(headsetStereoTakramEnvironment.vrProfile.takramSkyEnvironment, true, "headset stereo Takram sky environment policy");
+assertPath(headsetStereoTakramEnvironment.takram.visibleSkyRequested, true, "headset stereo Takram visible sky request");
+assertPath(headsetStereoTakramEnvironment.takram.visibleSkyActive, true, "headset stereo Takram visible sky active");
+assertPath(headsetStereoTakramEnvironment.takram.dayNightCycleActive, true, "headset stereo Takram day-night active");
+assertPath(headsetStereoTakramEnvironment.takram.visibleSkyDirectCalibrated, false, "headset stereo Takram avoids direct sky calibration");
+assertPath(headsetStereoTakramEnvironment.takram.visibleSkyDirectCalibrationMode, "native-takram-stereo-pmndrs", "headset stereo Takram native sky mode");
+assertPath(headsetStereoTakramEnvironment.takram.visibleSkyDirectShaderPatched, false, "headset stereo Takram avoids lower-haze shader patch");
+assertPath(headsetStereoTakramEnvironment.takram.cloudsRequested, false, "headset stereo Takram clouds stay disabled");
+assertPath(headsetStereoTakramEnvironment.takram.cloudsActive, false, "headset stereo Takram clouds inactive");
+assertPath(headsetStereoTakramEnvironment.reflections.takramSkyEnvironmentCapable, true, "headset stereo Takram sky environment capable");
+assertPath(headsetStereoTakramEnvironment.reflections.effectiveSource, "takram-sky", "headset stereo Takram dynamic sky environment source");
+assertPath(headsetStereoTakramEnvironment.pipelineComponents.indexOf("vrodos-reflections") !== -1, true, "headset stereo Takram reflection pipeline component");
+
+const headsetStereoTakramMissingBundle = createFeatureStateFixture({
+    immersive: true,
+    userAgent: "OculusBrowser Quest",
+    pmndrsActive: true,
+    postprocessingBundle: true,
+    takramBundle: false,
+    dayNightCycleActive: true,
+    atmosphereSkyVisible: false,
+    data: {
+        vrRuntimeProfile: "headset",
+        postFXEnabled: "1",
+        postFXEngine: "pmndrs",
+        vrHeadsetStereoPostFxEnabled: "1",
+        pmndrsAtmosphereEnabled: "1",
+        pmndrsDayNightCycleEnabled: "1",
+        reflectionsEnabled: "1",
+        reflectionSource: "hdr",
+        envMapPreset: "none"
+    }
+});
+assertPath(headsetStereoTakramMissingBundle.vrProfile.takramSkyEnvironment, true, "headset stereo Takram policy remains authored with missing bundle");
+assertPath(headsetStereoTakramMissingBundle.reflections.takramSkyEnvironmentCapable, false, "headset stereo Takram missing bundle is not capable");
+assertPath(headsetStereoTakramMissingBundle.reflections.effectiveSource === "takram-sky", false, "headset stereo Takram missing bundle fails closed");
 
 const spatialUi = createFeatureStateFixture({
     spatialUi: true,

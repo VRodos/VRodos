@@ -1496,7 +1496,7 @@
         const quality = normalizePmndrsAtmosphereQuality(self && typeof self.getPmndrsAtmosphereQuality === 'function'
             ? self.getPmndrsAtmosphereQuality()
             : (self && self.data ? self.data.pmndrsAtmosphereQuality : 'balanced'));
-        if (shouldUseVrTakramVisibleSky(self)) {
+        if (shouldUseVrTakramDirectSkyCalibration(self)) {
             const type = typeof THREE.HalfFloatType !== 'undefined' ? THREE.HalfFloatType : THREE.FloatType;
             return {
                 quality: 'vr-takram-sky',
@@ -3581,6 +3581,23 @@
             return false;
         }
 
+        if (!shouldUseVrTakramDirectSkyCalibration(self)) {
+            material.userData.vrodosVrTakramSkyDirectShaderPatched = false;
+            material.userData.vrodosVrTakramSkyDirectPatchFailed = false;
+            material.userData.vrodosVrTakramSkyDirectWarmed = true;
+            material.userData.vrodosVrTakramSkyDirectWarmupMs = 0;
+            material.userData.vrodosVrTakramSkyDirectWarmupRemainingMs = 0;
+            state.vrTakramSkyDirectCalibrated = false;
+            state.vrTakramSkyDirectExposure = null;
+            state.vrTakramSkyDirectCalibrationMode = 'native-takram-stereo-pmndrs';
+            state.vrTakramSkyDirectShaderPatched = false;
+            state.vrTakramSkyDirectPatchFailed = false;
+            state.vrTakramSkyDirectWarmed = true;
+            state.vrTakramSkyDirectWarmupMs = 0;
+            state.vrTakramSkyDirectWarmupRemainingMs = 0;
+            return Boolean(state.ready && !state.failed && state.textures);
+        }
+
         if (!material.userData.vrodosVrTakramSkyDirectShaderPatched) {
             primeVrTakramSkyDirectShader(self);
         }
@@ -3744,6 +3761,20 @@
 
     function shouldUseVrTakramVisibleSky(self) {
         return Boolean(isVrTakramSkyProfile(self) && isPmndrsTakramHorizonRequested(self));
+    }
+
+    function isHeadsetStereoPmndrsTakramParityPath(self) {
+        return Boolean(self &&
+            self.data &&
+            self.data.postFXEngine === 'pmndrs' &&
+            (
+                (typeof self.canUseVrHeadsetStereoPmndrsComposer === 'function' && self.canUseVrHeadsetStereoPmndrsComposer()) ||
+                (typeof self.isHeadsetPmndrsStereoComposerForceEnabled === 'function' && self.isHeadsetPmndrsStereoComposerForceEnabled())
+            ));
+    }
+
+    function shouldUseVrTakramDirectSkyCalibration(self) {
+        return Boolean(shouldUseVrTakramVisibleSky(self) && !isHeadsetStereoPmndrsTakramParityPath(self));
     }
 
     function shouldUsePmndrsTakramHorizonPath(self) {
@@ -5417,7 +5448,13 @@
     }
 
     function applyVrTakramSkyDirectCalibration(self, material) {
-        if (!shouldUseVrTakramVisibleSky(self) || !material) {
+        if (!shouldUseVrTakramDirectSkyCalibration(self) || !material) {
+            const state = self && self._pmndrsAtmosphereState ? self._pmndrsAtmosphereState : null;
+            if (state && shouldUseVrTakramVisibleSky(self)) {
+                state.vrTakramSkyDirectCalibrated = false;
+                state.vrTakramSkyDirectExposure = null;
+                state.vrTakramSkyDirectCalibrationMode = 'native-takram-stereo-pmndrs';
+            }
             return false;
         }
 
@@ -5539,6 +5576,7 @@
         if (state) {
             state.vrTakramSkyDirectCalibrated = true;
             state.vrTakramSkyDirectExposure = exposure;
+            state.vrTakramSkyDirectCalibrationMode = 'legacy-headset-direct-sky';
             state.vrTakramSkyDirectShaderPatched = Boolean(material.userData.vrodosVrTakramSkyDirectShaderPatched);
             state.vrTakramSkyDirectPatchFailed = Boolean(material.userData.vrodosVrTakramSkyDirectPatchFailed);
             state.vrTakramSkyDirectReadySinceMs = material.userData.vrodosVrTakramSkyDirectReadySinceMs || 0;
@@ -7239,6 +7277,9 @@
     };
     H.isPmndrsAtmosphereSkyVisible = function () {
         return isPmndrsAtmosphereSkyVisible(this);
+    };
+    H.usesVrTakramDirectSkyCalibration = function () {
+        return shouldUseVrTakramDirectSkyCalibration(this);
     };
     H.prepareVrTakramVisibleSkyForReveal = function () {
         if (!shouldUseVrTakramVisibleSky(this)) {

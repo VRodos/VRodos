@@ -998,6 +998,9 @@
       if ((capability === "postProcessing" || capability === "pmndrsComposer") && (opts.headsetPmndrsStereoComposerForced || opts.headsetPmndrsStereoComposerAuthored)) {
         return Boolean(opts.authored);
       }
+      if (capability === "takramSkyEnvironment" && (opts.headsetPmndrsStereoComposerForced || opts.headsetPmndrsStereoComposerAuthored)) {
+        return Boolean(opts.authored);
+      }
       return allowsCapability(opts.profile, capability, opts.authored);
     }
     function hdrFallbackPreset(profile) {
@@ -1066,7 +1069,7 @@
       const hdrReflections = profileActive && allows("hdrEnvMap", authored.hdrReflections);
       const pmndrsComposer = active && profileActive && postFXEngine === "pmndrs" && pmndrsComposerAllowedOnHeadset && allows("pmndrsComposer", authored.pmndrsComposer);
       const sceneProbe = active && profileActive && allows("sceneProbe", authored.sceneProbe);
-      const takramSkyEnvironment = active && profileActive && allows("takramSkyEnvironment", authored.takramSkyEnvironment);
+      const takramSkyEnvironment = active && profileActive && pmndrsComposer && allows("takramSkyEnvironment", authored.takramSkyEnvironment);
       const clouds = active && profileActive && postFXEngine === "pmndrs" && allows("clouds", authored.clouds);
       return {
         profile,
@@ -4915,7 +4918,7 @@
     }
     function getPmndrsAtmosphereResourceProfile(self, renderer) {
       const quality = normalizePmndrsAtmosphereQuality(self && typeof self.getPmndrsAtmosphereQuality === "function" ? self.getPmndrsAtmosphereQuality() : self && self.data ? self.data.pmndrsAtmosphereQuality : "balanced");
-      if (shouldUseVrTakramVisibleSky(self)) {
+      if (shouldUseVrTakramDirectSkyCalibration(self)) {
         const type2 = typeof THREE.HalfFloatType !== "undefined" ? THREE.HalfFloatType : THREE.FloatType;
         return {
           quality: "vr-takram-sky",
@@ -6575,6 +6578,22 @@
       if (!state || !state.skyMesh || !material || !material.userData) {
         return false;
       }
+      if (!shouldUseVrTakramDirectSkyCalibration(self)) {
+        material.userData.vrodosVrTakramSkyDirectShaderPatched = false;
+        material.userData.vrodosVrTakramSkyDirectPatchFailed = false;
+        material.userData.vrodosVrTakramSkyDirectWarmed = true;
+        material.userData.vrodosVrTakramSkyDirectWarmupMs = 0;
+        material.userData.vrodosVrTakramSkyDirectWarmupRemainingMs = 0;
+        state.vrTakramSkyDirectCalibrated = false;
+        state.vrTakramSkyDirectExposure = null;
+        state.vrTakramSkyDirectCalibrationMode = "native-takram-stereo-pmndrs";
+        state.vrTakramSkyDirectShaderPatched = false;
+        state.vrTakramSkyDirectPatchFailed = false;
+        state.vrTakramSkyDirectWarmed = true;
+        state.vrTakramSkyDirectWarmupMs = 0;
+        state.vrTakramSkyDirectWarmupRemainingMs = 0;
+        return Boolean(state.ready && !state.failed && state.textures);
+      }
       if (!material.userData.vrodosVrTakramSkyDirectShaderPatched) {
         primeVrTakramSkyDirectShader(self);
       }
@@ -6696,6 +6715,12 @@
     }
     function shouldUseVrTakramVisibleSky(self) {
       return Boolean(isVrTakramSkyProfile(self) && isPmndrsTakramHorizonRequested(self));
+    }
+    function isHeadsetStereoPmndrsTakramParityPath(self) {
+      return Boolean(self && self.data && self.data.postFXEngine === "pmndrs" && (typeof self.canUseVrHeadsetStereoPmndrsComposer === "function" && self.canUseVrHeadsetStereoPmndrsComposer() || typeof self.isHeadsetPmndrsStereoComposerForceEnabled === "function" && self.isHeadsetPmndrsStereoComposerForceEnabled()));
+    }
+    function shouldUseVrTakramDirectSkyCalibration(self) {
+      return Boolean(shouldUseVrTakramVisibleSky(self) && !isHeadsetStereoPmndrsTakramParityPath(self));
     }
     function shouldUsePmndrsTakramHorizonPath(self) {
       return Boolean(isPmndrsTakramHorizonRequested(self) && window.VRODOS_TAKRAM_ATMOSPHERE && !shouldUseVrBaselineHorizon(self) && !isVrTakramLightsOnlyProfile(self));
@@ -8159,7 +8184,13 @@
       ].join("|");
     }
     function applyVrTakramSkyDirectCalibration(self, material) {
-      if (!shouldUseVrTakramVisibleSky(self) || !material) {
+      if (!shouldUseVrTakramDirectSkyCalibration(self) || !material) {
+        const state2 = self && self._pmndrsAtmosphereState ? self._pmndrsAtmosphereState : null;
+        if (state2 && shouldUseVrTakramVisibleSky(self)) {
+          state2.vrTakramSkyDirectCalibrated = false;
+          state2.vrTakramSkyDirectExposure = null;
+          state2.vrTakramSkyDirectCalibrationMode = "native-takram-stereo-pmndrs";
+        }
         return false;
       }
       const exposure = getVrTakramSkyDirectExposure();
@@ -8263,6 +8294,7 @@ ${shader.fragmentShader}` : withUniform;
       if (state) {
         state.vrTakramSkyDirectCalibrated = true;
         state.vrTakramSkyDirectExposure = exposure;
+        state.vrTakramSkyDirectCalibrationMode = "legacy-headset-direct-sky";
         state.vrTakramSkyDirectShaderPatched = Boolean(material.userData.vrodosVrTakramSkyDirectShaderPatched);
         state.vrTakramSkyDirectPatchFailed = Boolean(material.userData.vrodosVrTakramSkyDirectPatchFailed);
         state.vrTakramSkyDirectReadySinceMs = material.userData.vrodosVrTakramSkyDirectReadySinceMs || 0;
@@ -9672,6 +9704,9 @@ ${shader.fragmentShader}` : withUniform;
     };
     H.isPmndrsAtmosphereSkyVisible = function() {
       return isPmndrsAtmosphereSkyVisible(this);
+    };
+    H.usesVrTakramDirectSkyCalibration = function() {
+      return shouldUseVrTakramDirectSkyCalibration(this);
     };
     H.prepareVrTakramVisibleSkyForReveal = function() {
       if (!shouldUseVrTakramVisibleSky(this)) {

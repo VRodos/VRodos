@@ -15,6 +15,7 @@ Keep these baseline decisions intact:
 - `#player` stays an unpositioned tracking rig, and authored camera placement stays on `#cameraA`.
 - Freshly recompile representative scenes before headset validation; do not add compatibility fallbacks for old generated layouts.
 - PMNDRS/legacy composer ownership, Takram clouds, scene probes, Takram sky PMREM capture, native WebXR layers, old movement HUDs, and old movement emitter scaffolding stay disabled by default.
+- New headset realism work belongs only in the explicit stereo PMNDRS opt-in path (`vrHeadsetStereoPostFxEnabled`) and must be generated from dynamic Takram runtime state, not static color emulation.
 - Legacy hidden profile names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-reflections`, `balanced`, and `max` are compatibility inputs only and normalize to `headset`.
 
 ## Separation Rationale
@@ -92,7 +93,8 @@ Keep these baseline decisions intact:
 - Keep adaptive shadow fitting restricted to targeted dirty events.
 - Audit the archived open caveat: immersive right-stick authored-world yaw can make object shadows appear player-relative/rotating. Investigate this as a directional shadow/light fitting problem under immersive presentation yaw without changing the accepted locomotion/collision baseline.
 - Keep headset visible Takram sky on the desktop local-Horizon ground policy: Takram `SkyMaterial` ground disabled, authored terrain provides the ground.
-- Keep no-ground below-horizon sky cooling as a sky shader calibration only; do not use Takram ground albedo or A-Frame environment as a lower-hemisphere fill.
+- Keep no-ground below-horizon sky cooling confined to the older no-composer headset visible-sky calibration; do not use Takram ground albedo or A-Frame environment as a lower-hemisphere fill.
+- For the stereo PMNDRS opt-in path, validate native Takram sky output and Takram sky PMREM as dynamic sources from Takram sky/time-of-day/light-probe state. Do not approximate desktop realism with headset-specific static sky colors, fixed ambient palettes, lower-haze shader colors, or fallback A-Frame environments.
 - Revisit reflection/glint attenuation only after headset-specific visual and performance measurements.
 
 ### Diagnostics And Validation Fixtures
@@ -107,12 +109,12 @@ Keep these baseline decisions intact:
 
 These remain out of the public `headset` profile until a dedicated Quest/headset validation pass proves them safe:
 
-- PMNDRS composer ownership in immersive XR.
+- PMNDRS composer ownership in immersive XR outside the explicit stereo PMNDRS opt-in path.
 - Legacy post-FX composer ownership in immersive XR.
 - FXAA, TAA, SAO/SSAO, SSR, bloom, color post-FX, vignette, noise, chromatic aberration, and lens flare through the existing screen-space composer paths.
 - Takram volumetric clouds.
 - Scene probes.
-- Takram sky PMREM reflection capture.
+- Takram sky PMREM reflection capture outside the explicit stereo PMNDRS Takram path.
 - Native WebXR layers.
 - AR and MR behavior.
 

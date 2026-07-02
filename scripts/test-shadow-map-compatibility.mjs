@@ -312,8 +312,39 @@ function createShadowRoleComponent() {
     };
 }
 
+function createVrTakramSkyFixture({ stereo }) {
+    return {
+        data: {
+            selChoice: "0",
+            postFXEngine: "pmndrs",
+            pmndrsAtmosphereEnabled: "1"
+        },
+        isVrRuntimePolicyActive() {
+            return true;
+        },
+        vrRuntimeAllows(capability, authored) {
+            return capability === "takramVisibleSky" ? Boolean(authored) : false;
+        },
+        canUseVrHeadsetStereoPmndrsComposer() {
+            return Boolean(stereo);
+        },
+        isHeadsetPmndrsStereoComposerForceEnabled() {
+            return false;
+        }
+    };
+}
+
 const context = createQualityProfileContext();
 const helpers = context.VRODOSMaster.SceneSettingsHelpers;
+
+assert(
+    helpers.usesVrTakramDirectSkyCalibration.call(createVrTakramSkyFixture({ stereo: false })) === true,
+    "legacy headset Takram visible sky should keep direct calibration"
+);
+assert(
+    helpers.usesVrTakramDirectSkyCalibration.call(createVrTakramSkyFixture({ stereo: true })) === false,
+    "stereo PMNDRS headset Takram visible sky should skip direct calibration"
+);
 
 const incompatible = createFixture({ compatible: false });
 helpers.flushShadowUpdate.call(incompatible.component);
