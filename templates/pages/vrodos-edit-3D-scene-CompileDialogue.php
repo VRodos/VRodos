@@ -720,10 +720,10 @@
 										</label>
 										<div>
 											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Authored Takram coverage 0..1. Horizon mode disables Takram cloud haze so SkyMaterial and AerialPerspective own sky haze.">Cloud Coverage</span>
-												<span id="compilePmndrsCloudsCoverageValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]" title="Authored Takram coverage. Runtime passes this value through to CloudsEffect.coverage.">0.35</span>
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Authored cloudiness 0..1. Horizon maps dense authored values to Takram shader coverage below the default-layer saturation range.">Cloud Coverage</span>
+												<span id="compilePmndrsCloudsCoverageValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]" title="Authored cloudiness. Runtime diagnostics show authored -> effective Takram shader coverage.">0.35</span>
 											</div>
-											<input id="compilePmndrsCloudsCoverageSlider" type="range" min="0" max="1" step="0.01" value="0.35" class="tw-range tw-range-primary tw-range-xs" title="Authored Takram coverage 0..1. Horizon mode disables Takram cloud haze so SkyMaterial and AerialPerspective own sky haze.">
+											<input id="compilePmndrsCloudsCoverageSlider" type="range" min="0" max="1" step="0.01" value="0.35" class="tw-range tw-range-primary tw-range-xs" title="Authored cloudiness 0..1. Horizon maps dense authored values to Takram shader coverage below the default-layer saturation range.">
 										</div>
 									</div>
 

@@ -185,6 +185,8 @@
     const PMNDRS_CLOUD_LENS_FLARE_COVERAGE_START = 0.62;
     const PMNDRS_CLOUD_LIGHT_SHAFT_COVERAGE_START = 0.35;
     const PMNDRS_CLOUD_SUN_VISIBILITY_FULL_Y = 0.08;
+    const PMNDRS_CLOUD_HORIZON_COVERAGE_COMPRESS_START = 0.35;
+    const PMNDRS_CLOUD_HORIZON_COVERAGE_MAX = 0.395;
 
     function smoothStep01(value) {
         const t = clamp01(value);
@@ -192,7 +194,23 @@
     }
 
     function getPmndrsCloudsEffectiveCoverage(self) {
-        return getPmndrsCloudsCoverage(self);
+        const authoredCoverage = getPmndrsCloudsCoverage(self);
+        if (!isHorizonBackground(self) ||
+            hasPmndrsDebugFlag('disablePmndrsCloudCoverageMapper', 'vrodos_debug_disable_pmndrs_cloud_coverage_mapper') ||
+            authoredCoverage <= PMNDRS_CLOUD_HORIZON_COVERAGE_COMPRESS_START) {
+            return authoredCoverage;
+        }
+
+        // Takram's default cloud layers use coverageFilterWidth ~= 0.6. In the
+        // shader, zero-weather texels start receiving density once coverage is
+        // greater than roughly 1 - coverageFilterWidth, so Horizon compresses
+        // author-facing dense values into the non-saturating shader range.
+        const t = smoothStep01(
+            (authoredCoverage - PMNDRS_CLOUD_HORIZON_COVERAGE_COMPRESS_START) /
+            (1 - PMNDRS_CLOUD_HORIZON_COVERAGE_COMPRESS_START)
+        );
+        return PMNDRS_CLOUD_HORIZON_COVERAGE_COMPRESS_START +
+            ((PMNDRS_CLOUD_HORIZON_COVERAGE_MAX - PMNDRS_CLOUD_HORIZON_COVERAGE_COMPRESS_START) * t);
     }
 
     function getPmndrsCloudLensFlareFactorForCoverage(self) {
@@ -201,9 +219,11 @@
             return 1;
         }
 
-        const effectiveCoverage = getPmndrsCloudsEffectiveCoverage(self);
+        const authoredCoverage = typeof diagnostics.authoredCoverage === 'number'
+            ? diagnostics.authoredCoverage
+            : getPmndrsCloudsCoverage(self);
         const t = smoothStep01(
-            (effectiveCoverage - PMNDRS_CLOUD_LENS_FLARE_COVERAGE_START) /
+            (authoredCoverage - PMNDRS_CLOUD_LENS_FLARE_COVERAGE_START) /
             (1 - PMNDRS_CLOUD_LENS_FLARE_COVERAGE_START)
         );
         return Math.max(0.18, 1 - (t * 0.82));
@@ -224,6 +244,39 @@
 
     function shouldUsePmndrsCloudShadowLength(self, atmosphereConfig) {
         return getPmndrsCloudSunVisibilityForSelf(self, atmosphereConfig) > 0.001;
+    }
+
+    function shouldUsePmndrsHorizonCloudLightShafts(self) {
+        return !isHorizonBackground(self) ||
+            hasPmndrsDebugFlag('enablePmndrsCloudLightShafts', 'vrodos_debug_enable_pmndrs_cloud_light_shafts');
+    }
+
+    function getPmndrsCloudLightShaftsSkippedReason(self, profile, enabled, sunShadowVisible, lightShaftsCoverageVisible) {
+        if (!(profile && profile.lightShafts) || enabled) {
+            return '';
+        }
+        if (!shouldUsePmndrsHorizonCloudLightShafts(self)) {
+            return 'horizon-light-shafts-disabled';
+        }
+        return !sunShadowVisible ? 'sun-below-horizon' : (!lightShaftsCoverageVisible ? 'coverage-too-low' : 'profile-disabled');
+    }
+
+    function shouldRoutePmndrsCloudAerialShadow(self, atmosphereConfig) {
+        if (!shouldUsePmndrsCloudShadowLength(self, atmosphereConfig)) {
+            return false;
+        }
+        return !isHorizonBackground(self) ||
+            hasPmndrsDebugFlag('enablePmndrsCloudAerialShadow', 'vrodos_debug_enable_pmndrs_cloud_aerial_shadow');
+    }
+
+    function getPmndrsCloudAerialShadowDisabledReason(self, atmosphereConfig, routeAerialShadow) {
+        if (routeAerialShadow) {
+            return '';
+        }
+        if (!shouldUsePmndrsCloudShadowLength(self, atmosphereConfig)) {
+            return 'sun-below-horizon-or-unavailable';
+        }
+        return isHorizonBackground(self) ? 'horizon-aerial-shadow-disabled' : 'shadow-unavailable';
     }
 
     function setPmndrsCloudLightShafts(effect, enabled) {
@@ -268,6 +321,14 @@
             return '';
         }
         return isHorizonBackground(self) ? 'horizon-sky-owner' : 'profile-disabled';
+    }
+
+    function setPmndrsCloudDirectComposite(effect, enabled) {
+        if (!effect || typeof effect.skipRendering === 'undefined') {
+            return Boolean(enabled);
+        }
+        effect.skipRendering = !enabled;
+        return effect.skipRendering === false;
     }
 
     function getPmndrsCloudLayerProfileSignature(layers) {
@@ -588,6 +649,8 @@
             lightShaftsSkippedReason: '',
             haze: Boolean(profile.haze),
             hazeDisabledReason: '',
+            directCompositeEnabled: false,
+            aerialOverlayRouted: false,
             aerialShadowRouted: false,
             aerialShadowReason: '',
             skyShadowLengthReason: '',
@@ -2347,12 +2410,21 @@
         }
 
         if (!self.pmndrsAerialPerspectiveEffect) {
+            if (self.pmndrsCloudsEffect) {
+                updatePmndrsCloudLinkedDiagnostics(self, {
+                    directCompositeEnabled: setPmndrsCloudDirectComposite(self.pmndrsCloudsEffect, true),
+                    aerialOverlayRouted: false,
+                    aerialShadowRouted: false,
+                    aerialShadowReason: 'no-aerial'
+                });
+            }
             syncPmndrsCloudDependentEffects(self, 'cloud-route-no-aerial');
             return;
         }
 
         if (self.pmndrsCloudsEffect) {
-            const routeShadowLength = shouldUsePmndrsCloudShadowLength(self, atmosphereConfig);
+            const directCompositeEnabled = setPmndrsCloudDirectComposite(self.pmndrsCloudsEffect, false);
+            const routeShadowLength = shouldRoutePmndrsCloudAerialShadow(self, atmosphereConfig);
             const routeAerialShadow = routeShadowLength && Boolean(self.pmndrsCloudsEffect.atmosphereShadow);
             self.pmndrsAerialPerspectiveEffect.overlay = self.pmndrsCloudsEffect.atmosphereOverlay || null;
             self.pmndrsAerialPerspectiveEffect.shadow = routeAerialShadow
@@ -2362,8 +2434,10 @@
                 ? (self.pmndrsCloudsEffect.atmosphereShadowLength || null)
                 : null;
             updatePmndrsCloudLinkedDiagnostics(self, {
+                directCompositeEnabled,
+                aerialOverlayRouted: Boolean(self.pmndrsCloudsEffect.atmosphereOverlay),
                 aerialShadowRouted: routeAerialShadow,
-                aerialShadowReason: routeAerialShadow ? '' : 'sun-below-horizon-or-unavailable'
+                aerialShadowReason: getPmndrsCloudAerialShadowDisabledReason(self, atmosphereConfig, routeAerialShadow)
             });
             syncPmndrsCloudDependentEffects(self, 'cloud-route-aerial');
             return;
@@ -2441,17 +2515,22 @@
         const sunShadowVisible = shouldUsePmndrsCloudShadowLength(self, atmosphereConfig);
         const effectiveCoverage = getPmndrsCloudsEffectiveCoverage(self);
         const lightShaftsCoverageVisible = effectiveCoverage >= PMNDRS_CLOUD_LIGHT_SHAFT_COVERAGE_START;
+        const horizonLightShaftsAllowed = shouldUsePmndrsHorizonCloudLightShafts(self);
         const lightShaftsEnabled = setPmndrsCloudLightShafts(
             self.pmndrsCloudsEffect,
-            profile.lightShafts && sunShadowVisible && lightShaftsCoverageVisible
+            profile.lightShafts && horizonLightShaftsAllowed && sunShadowVisible && lightShaftsCoverageVisible
         );
-        const lightShaftsSkippedReason = profile.lightShafts && !lightShaftsEnabled
-            ? (!sunShadowVisible ? 'sun-below-horizon' : 'coverage-too-low')
-            : '';
+        const lightShaftsSkippedReason = getPmndrsCloudLightShaftsSkippedReason(
+            self,
+            profile,
+            lightShaftsEnabled,
+            sunShadowVisible,
+            lightShaftsCoverageVisible
+        );
         const hazeEnabled = setPmndrsCloudHaze(self.pmndrsCloudsEffect, shouldUsePmndrsCloudHaze(self, profile));
         const hazeDisabledReason = getPmndrsCloudHazeDisabledReason(self, profile, hazeEnabled);
         self.pmndrsCloudsEffect.coverage = effectiveCoverage;
-        self.pmndrsCloudsEffect.skipRendering = true;
+        const directCompositeEnabled = setPmndrsCloudDirectComposite(self.pmndrsCloudsEffect, !self.pmndrsAerialPerspectiveEffect);
 
         markPmndrsCloudsActive(self, {
             textureReady: true,
@@ -2468,6 +2547,7 @@
             lightShaftsSkippedReason,
             haze: hazeEnabled,
             hazeDisabledReason,
+            directCompositeEnabled,
             coverage: getPmndrsCloudsCoverage(self),
             authoredCoverage: getPmndrsCloudsCoverage(self),
             effectiveCoverage
@@ -2613,7 +2693,7 @@
                         this.pmndrsCloudsEffect.temporalUpscale = initialTemporalUpscale;
                     }
                     this.pmndrsCloudsEffect.coverage = getPmndrsCloudsEffectiveCoverage(this);
-                    this.pmndrsCloudsEffect.skipRendering = true;
+                    const initialDirectCompositeEnabled = setPmndrsCloudDirectComposite(this.pmndrsCloudsEffect, true);
                     updatePmndrsCloudDiagnostics(this, {
                         quality: cloudsQuality,
                         profile: cloudsProfile.id,
@@ -2624,6 +2704,7 @@
                         temporalUpscaleSkippedReason: getPmndrsCloudTemporalUpscaleSkippedReason(this, atmosphereConfig, cloudsProfile, initialTemporalUpscale),
                         haze: Boolean(cloudsProfile.haze),
                         hazeDisabledReason: '',
+                        directCompositeEnabled: initialDirectCompositeEnabled,
                         coverage: getPmndrsCloudsCoverage(this),
                         authoredCoverage: getPmndrsCloudsCoverage(this),
                         effectiveCoverage: getPmndrsCloudsEffectiveCoverage(this)

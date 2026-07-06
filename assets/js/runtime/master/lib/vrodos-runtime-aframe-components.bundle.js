@@ -2057,6 +2057,8 @@
           cloudLayerProfile: cloudDiagnostics.layerProfile || "",
           cloudHazeEnabled: Boolean(cloudDiagnostics.haze),
           cloudHazeDisabledReason: cloudDiagnostics.hazeDisabledReason || "",
+          cloudDirectCompositeEnabled: Boolean(cloudDiagnostics.directCompositeEnabled),
+          cloudAerialOverlayRouted: Boolean(cloudDiagnostics.aerialOverlayRouted),
           cloudTemporalUpscaleEnabled: Boolean(cloudDiagnostics.temporalUpscale),
           cloudTemporalUpscaleSkippedReason: cloudDiagnostics.temporalUpscaleSkippedReason || "",
           cloudLightShaftsEnabled: Boolean(cloudDiagnostics.lightShafts),

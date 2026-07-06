@@ -479,7 +479,7 @@ VRodosCompileUI.Atmosphere = (function () {
         const cloudsTitle = cloudsAvailable
             ? ''
             : 'Clouds require High render quality, PMNDRS post-FX, and Takram atmosphere.';
-        const cloudCoverageTitle = 'Authored Takram coverage 0..1. Horizon mode disables Takram cloud haze so SkyMaterial and AerialPerspective own sky haze.';
+        const cloudCoverageTitle = 'Authored cloudiness 0..1. Horizon maps dense authored values to Takram shader coverage below the default-layer saturation range; diagnostics show authored -> effective.';
         if (controls.pmndrsClouds) {
             controls.pmndrsClouds.disabled = !cloudsAvailable;
             controls.pmndrsClouds.title = cloudsTitle;

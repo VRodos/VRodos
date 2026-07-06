@@ -4961,6 +4961,7 @@
     function getPmndrsCloudSunOcclusionState(self, config, directSmoothingMs, indirectSmoothingMs) {
       const diagnostics = self && self._pmndrsCloudsDiagnostics ? self._pmndrsCloudsDiagnostics : null;
       const effectiveCoverage = diagnostics && typeof diagnostics.effectiveCoverage === "number" ? diagnostics.effectiveCoverage : null;
+      const authoredCoverage = diagnostics && typeof diagnostics.authoredCoverage === "number" ? diagnostics.authoredCoverage : effectiveCoverage;
       const cloudsActive = Boolean(diagnostics && diagnostics.cloudsActive === true);
       const sunElevationFactor = getPmndrsSunDirectLightVisibility(config);
       const defaultState = {
@@ -4974,7 +4975,7 @@
         coverageStrength: 0,
         targetStrength: 0
       };
-      if (!self || !cloudsActive || !Number.isFinite(effectiveCoverage) || sunElevationFactor <= 1e-3) {
+      if (!self || !cloudsActive || !Number.isFinite(authoredCoverage) || sunElevationFactor <= 1e-3) {
         if (self && self._pmndrsRuntimeLightSmoothValues) {
           self._pmndrsRuntimeLightSmoothValues.takramCloudSunOcclusionStrength = 0;
         }
@@ -4982,7 +4983,7 @@
           defaultState.reason = "no-runtime";
         } else if (!cloudsActive) {
           defaultState.reason = "clouds-inactive";
-        } else if (!Number.isFinite(effectiveCoverage)) {
+        } else if (!Number.isFinite(authoredCoverage)) {
           defaultState.reason = "invalid-coverage";
         } else if (sunElevationFactor <= 1e-3) {
           defaultState.reason = "sun-below-horizon";
@@ -4992,7 +4993,7 @@
       const coverageStrength = smoothstepNumber(
         PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_START,
         PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_FULL,
-        effectiveCoverage
+        authoredCoverage
       );
       const targetStrength = clamp01(coverageStrength * sunElevationFactor);
       const smoothingMs = getPmndrsCloudSunOcclusionSmoothingMs(config, directSmoothingMs, indirectSmoothingMs);
@@ -6541,6 +6542,8 @@
         diagnostics.layerProfile ? `layers-${diagnostics.layerProfile}` : "",
         diagnostics.haze ? "haze-on" : "haze-off",
         diagnostics.hazeDisabledReason ? `haze-skip-${diagnostics.hazeDisabledReason}` : "",
+        diagnostics.directCompositeEnabled ? "direct-composite-on" : "direct-composite-off",
+        diagnostics.aerialOverlayRouted ? "aerial-overlay-on" : "aerial-overlay-off",
         diagnostics.temporalUpscale ? "temporal-on" : "temporal-off",
         diagnostics.temporalUpscaleSkippedReason ? `temporal-skip-${diagnostics.temporalUpscaleSkippedReason}` : "",
         diagnostics.lightShafts ? "shafts-on" : "shafts-off",
