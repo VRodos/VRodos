@@ -6077,11 +6077,50 @@
       params.groundAlbedo.set(getPmndrsEffectiveGroundAlbedo(config));
       return params;
     }
+    function resolvePmndrsCloudShadowLengthForSky(self, explicitShadowLength) {
+      if (explicitShadowLength !== void 0) {
+        return explicitShadowLength || null;
+      }
+      const diagnostics = self && self._pmndrsCloudsDiagnostics ? self._pmndrsCloudsDiagnostics : null;
+      if (!diagnostics || diagnostics.cloudsActive !== true) {
+        return null;
+      }
+      const effect = self && self.pmndrsCloudsEffect ? self.pmndrsCloudsEffect : null;
+      return effect && effect.atmosphereShadowLength ? effect.atmosphereShadowLength : null;
+    }
+    function syncPmndrsCloudShadowLengthToSkyMaterial(self, explicitShadowLength, reason) {
+      const state = self && self._pmndrsAtmosphereState ? self._pmndrsAtmosphereState : null;
+      const material = state && state.skyMaterial ? state.skyMaterial : null;
+      const shadowLength = resolvePmndrsCloudShadowLengthForSky(self, explicitShadowLength);
+      let routed = false;
+      if (material && Object.prototype.hasOwnProperty.call(material, "shadowLength")) {
+        if (material.shadowLength !== shadowLength) {
+          material.shadowLength = shadowLength;
+          material.needsUpdate = true;
+          if (typeof material.setChanged === "function") {
+            material.setChanged();
+          }
+        }
+        routed = Boolean(shadowLength);
+      }
+      if (state) {
+        state.cloudSkyShadowLengthRouted = routed;
+        state.cloudSkyShadowLengthReason = reason || "";
+      }
+      if (self) {
+        self._pmndrsCloudSkyShadowLengthRouted = routed;
+        if (self._pmndrsCloudsDiagnostics) {
+          self._pmndrsCloudsDiagnostics.skyShadowLengthRouted = routed;
+        }
+      }
+      return routed;
+    }
     function removePmndrsAtmosphereSky(self) {
       if (!self || !self._pmndrsAtmosphereState) {
         return;
       }
       const state = self._pmndrsAtmosphereState;
+      syncPmndrsCloudShadowLengthToSkyMaterial(self, null, "sky-remove");
       if (state.starsFallbackMesh && state.starsFallbackMesh.parent) {
         state.starsFallbackMesh.parent.remove(state.starsFallbackMesh);
       }
@@ -8347,6 +8386,7 @@ ${shader.fragmentShader}` : withUniform;
           state.skyMaterialSignature = materialSignature;
         }
         state.skyMaterial.dithering = true;
+        syncPmndrsCloudShadowLengthToSkyMaterial(self, void 0, "sky-ready");
       }
       if (state.skyMesh) {
         state.skyMesh.visible = true;
@@ -9704,6 +9744,9 @@ ${shader.fragmentShader}` : withUniform;
     };
     H.isPmndrsAtmosphereSkyVisible = function() {
       return isPmndrsAtmosphereSkyVisible(this);
+    };
+    H.syncPmndrsCloudShadowLengthToSkyMaterial = function(shadowLength, reason) {
+      return syncPmndrsCloudShadowLengthToSkyMaterial(this, shadowLength, reason);
     };
     H.usesVrTakramDirectSkyCalibration = function() {
       return shouldUseVrTakramDirectSkyCalibration(this);

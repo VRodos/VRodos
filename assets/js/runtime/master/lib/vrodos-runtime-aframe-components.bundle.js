@@ -2052,6 +2052,10 @@
           cloudsBundleLoaded: Boolean(window.VRODOS_TAKRAM_CLOUDS),
           cloudsActive: Boolean(vrFeaturePolicy.clouds && cloudDiagnostics.cloudsActive),
           cloudsSkippedReason: cloudDiagnostics.cloudsSkippedReason || "",
+          cloudsAuthoredCoverage: typeof cloudDiagnostics.authoredCoverage === "number" ? cloudDiagnostics.authoredCoverage : typeof cloudDiagnostics.coverage === "number" ? cloudDiagnostics.coverage : null,
+          cloudsEffectiveCoverage: typeof cloudDiagnostics.effectiveCoverage === "number" ? cloudDiagnostics.effectiveCoverage : null,
+          cloudsSkyShadowLengthRouted: Boolean(cloudDiagnostics.skyShadowLengthRouted),
+          cloudsLensFlareCloudFactor: typeof cloudDiagnostics.lensFlareCloudFactor === "number" ? cloudDiagnostics.lensFlareCloudFactor : null,
           cloudsXrSkipped: Boolean(cloudDiagnostics.xrSkipped)
         },
         reflections: {
@@ -2927,6 +2931,9 @@
     hidePmndrsAtmosphereSky: VRODOSSceneSettingsMaster.SceneSettingsHelpers.hidePmndrsAtmosphereSky || function() {
     },
     isPmndrsAtmosphereSkyVisible: VRODOSSceneSettingsMaster.SceneSettingsHelpers.isPmndrsAtmosphereSkyVisible || function() {
+      return false;
+    },
+    syncPmndrsCloudShadowLengthToSkyMaterial: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPmndrsCloudShadowLengthToSkyMaterial || function() {
       return false;
     },
     usesVrTakramDirectSkyCalibration: VRODOSSceneSettingsMaster.SceneSettingsHelpers.usesVrTakramDirectSkyCalibration || function() {

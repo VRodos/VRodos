@@ -720,10 +720,10 @@
 										</label>
 										<div>
 											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Cloud Coverage</span>
-												<span id="compilePmndrsCloudsCoverageValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0.35</span>
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Authored 0..1. Dense overcast above 0.82 is compressed at runtime for the default Takram cloud layers.">Cloud Coverage</span>
+												<span id="compilePmndrsCloudsCoverageValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]" title="Authored coverage. Runtime effective coverage compresses values above 0.82.">0.35</span>
 											</div>
-											<input id="compilePmndrsCloudsCoverageSlider" type="range" min="0" max="1" step="0.01" value="0.35" class="tw-range tw-range-primary tw-range-xs">
+											<input id="compilePmndrsCloudsCoverageSlider" type="range" min="0" max="1" step="0.01" value="0.35" class="tw-range tw-range-primary tw-range-xs" title="Authored 0..1. Dense overcast above 0.82 is compressed at runtime for the default Takram cloud layers.">
 										</div>
 									</div>
 

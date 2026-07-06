@@ -343,8 +343,9 @@ Runtime contract:
 - `window.VRODOS_TAKRAM_CLOUDS` exposes `CloudsEffect`, `CloudLayer`, `CloudLayers`, and local binary texture helpers.
 - Cloud assets are served from `assets/vendor/takram-clouds/`.
 - `CloudsEffect` is created before `AerialPerspectiveEffect`.
-- `CloudsEffect.skipRendering` stays `true`; its atmosphere overlay, atmosphere shadow, and atmosphere shadow length buffers are routed into `AerialPerspectiveEffect`.
-- Each frame syncs camera, active Takram atmosphere textures, sun direction, world-to-ECEF matrix, correct-altitude mode, coverage, quality profile, and local cloud textures.
+- `CloudsEffect.skipRendering` stays `true`; its atmosphere overlay, atmosphere shadow, and atmosphere shadow length buffers are routed into `AerialPerspectiveEffect`, and cloud shadow length is also routed into Takram `SkyMaterial.shadowLength`.
+- Each frame syncs camera, active Takram atmosphere textures, sun direction, world-to-ECEF matrix, correct-altitude mode, authored coverage, effective Takram coverage, quality profile, and local cloud textures.
+- `pmndrsCloudsCoverage` remains authored `0..1`, but VRodos compresses the default profile's dense overcast range above `0.82` before assigning `CloudsEffect.coverage`. Existing scenes with `0.9` or `1.0` remain valid while avoiding the saturated rectangle artifact.
 - Supported quality values are Takram's four performance profiles: `low`, `medium`, `high`, and `ultra`.
 - Real immersive WebXR skips clouds because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`.
 

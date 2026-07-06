@@ -182,6 +182,39 @@
         return readPmndrsNumber(self, 'pmndrsCloudsCoverage', 0, 1, 0.35);
     }
 
+    const PMNDRS_CLOUD_COVERAGE_LINEAR_MAX = 0.82;
+    const PMNDRS_CLOUD_EFFECTIVE_COVERAGE_MAX = 0.88;
+
+    function smoothStep01(value) {
+        const t = clamp01(value);
+        return t * t * (3 - (2 * t));
+    }
+
+    function getPmndrsCloudsEffectiveCoverage(self) {
+        const authoredCoverage = getPmndrsCloudsCoverage(self);
+        if (authoredCoverage <= PMNDRS_CLOUD_COVERAGE_LINEAR_MAX) {
+            return authoredCoverage;
+        }
+
+        const authoredRange = 1 - PMNDRS_CLOUD_COVERAGE_LINEAR_MAX;
+        const effectiveRange = PMNDRS_CLOUD_EFFECTIVE_COVERAGE_MAX - PMNDRS_CLOUD_COVERAGE_LINEAR_MAX;
+        const t = authoredRange > 0
+            ? (authoredCoverage - PMNDRS_CLOUD_COVERAGE_LINEAR_MAX) / authoredRange
+            : 1;
+        return PMNDRS_CLOUD_COVERAGE_LINEAR_MAX + (smoothStep01(t) * effectiveRange);
+    }
+
+    function getPmndrsCloudLensFlareFactorForCoverage(self) {
+        const diagnostics = self && self._pmndrsCloudsDiagnostics ? self._pmndrsCloudsDiagnostics : null;
+        if (!diagnostics || diagnostics.cloudsActive !== true) {
+            return 1;
+        }
+
+        const effectiveCoverage = getPmndrsCloudsEffectiveCoverage(self);
+        const t = smoothStep01((effectiveCoverage - 0.62) / (PMNDRS_CLOUD_EFFECTIVE_COVERAGE_MAX - 0.62));
+        return Math.max(0.18, 1 - (t * 0.82));
+    }
+
     const PMNDRS_CLOUD_PERFORMANCE_PROFILES = {
         low: {
             id: 'low-performance',
@@ -399,6 +432,8 @@
 
         const previous = self._pmndrsCloudsDiagnostics || {};
         const profile = getPmndrsCloudPerformanceProfile(getPmndrsCloudsQuality(self));
+        const authoredCoverage = getPmndrsCloudsCoverage(self);
+        const effectiveCoverage = getPmndrsCloudsEffectiveCoverage(self);
         const next = Object.assign({
             cloudsActive: false,
             cloudsSkippedReason: 'disabled',
@@ -407,14 +442,81 @@
             takramQuality: profile.takramQuality,
             resolutionScale: profile.resolutionScale,
             temporalUpscale: profile.temporalUpscale,
-            coverage: getPmndrsCloudsCoverage(self),
+            coverage: authoredCoverage,
+            authoredCoverage,
+            effectiveCoverage,
+            skyShadowLengthRouted: Boolean(self._pmndrsCloudSkyShadowLengthRouted),
+            lensFlareCloudFactor: typeof self._pmndrsLensFlareCloudFactor === 'number'
+                ? self._pmndrsLensFlareCloudFactor
+                : 1,
             textureReady: false,
             xrSkipped: false
         }, previous, updates || {});
 
+        next.authoredCoverage = authoredCoverage;
+        next.effectiveCoverage = effectiveCoverage;
+        next.coverage = authoredCoverage;
         self._pmndrsCloudsDiagnostics = next;
         self.pmndrsCloudsDiagnostics = next;
         return next;
+    }
+
+    function updatePmndrsCloudLinkedDiagnostics(self, updates) {
+        if (!self) {
+            return null;
+        }
+
+        const diagnostics = self._pmndrsCloudsDiagnostics || updatePmndrsCloudDiagnostics(self);
+        Object.assign(diagnostics, {
+            authoredCoverage: getPmndrsCloudsCoverage(self),
+            effectiveCoverage: getPmndrsCloudsEffectiveCoverage(self),
+            coverage: getPmndrsCloudsCoverage(self)
+        }, updates || {});
+        self._pmndrsCloudsDiagnostics = diagnostics;
+        self.pmndrsCloudsDiagnostics = diagnostics;
+        return diagnostics;
+    }
+
+    function syncPmndrsCloudShadowLengthToSky(self, reason) {
+        const helpers = VRODOSMaster.SceneSettingsHelpers || {};
+        if (helpers && typeof helpers.syncPmndrsCloudShadowLengthToSkyMaterial === 'function') {
+            return helpers.syncPmndrsCloudShadowLengthToSkyMaterial.call(self, undefined, reason || 'cloud-sync');
+        }
+
+        if (self) {
+            self._pmndrsCloudSkyShadowLengthRouted = false;
+        }
+        return false;
+    }
+
+    function syncPmndrsLensFlareCloudFactor(self) {
+        if (!self) {
+            return 1;
+        }
+
+        const factor = getPmndrsCloudLensFlareFactorForCoverage(self);
+        self._pmndrsLensFlareCloudFactor = factor;
+        if (self.pmndrsLensFlareEffect && typeof self.pmndrsLensFlareEffect.intensity !== 'undefined') {
+            const currentIntensity = Number(self.pmndrsLensFlareEffect.intensity);
+            if (typeof self.pmndrsLensFlareEffect._vrodosBaseIntensity !== 'number') {
+                self.pmndrsLensFlareEffect._vrodosBaseIntensity = Number.isFinite(currentIntensity) ? currentIntensity : 0.005;
+            }
+            self.pmndrsLensFlareEffect.intensity = self.pmndrsLensFlareEffect._vrodosBaseIntensity * factor;
+        }
+        return factor;
+    }
+
+    function syncPmndrsCloudDependentEffects(self, reason) {
+        if (!self) {
+            return;
+        }
+
+        const skyShadowLengthRouted = syncPmndrsCloudShadowLengthToSky(self, reason);
+        const lensFlareCloudFactor = syncPmndrsLensFlareCloudFactor(self);
+        updatePmndrsCloudLinkedDiagnostics(self, {
+            skyShadowLengthRouted,
+            lensFlareCloudFactor
+        });
     }
 
     function markPmndrsCloudsSkipped(self, reason, updates) {
@@ -434,6 +536,7 @@
             self._pmndrsCloudsWarnedReason = reason;
         }
 
+        syncPmndrsCloudDependentEffects(self, reason || 'clouds-skipped');
         return next;
     }
 
@@ -441,11 +544,13 @@
         if (self) {
             self._pmndrsCloudsWarnedReason = '';
         }
-        return updatePmndrsCloudDiagnostics(self, Object.assign({
+        const next = updatePmndrsCloudDiagnostics(self, Object.assign({
             cloudsActive: true,
             cloudsSkippedReason: '',
             xrSkipped: false
         }, updates || {}));
+        syncPmndrsCloudDependentEffects(self, 'clouds-active');
+        return next;
     }
 
     function getPmndrsCloudsBundle() {
@@ -1976,7 +2081,9 @@
             `clouds profile: ${  self && self._pmndrsCloudsDiagnostics ? (self._pmndrsCloudsDiagnostics.profile || 'off') : 'off'}`,
             `clouds render: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.takramQuality || getPmndrsCloudsQuality(self)} @ ${Number(self._pmndrsCloudsDiagnostics.resolutionScale || getPmndrsCloudsResolutionScale(getPmndrsCloudsQuality(self))).toFixed(2)}x` : 'off'}`,
             `clouds temporal: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.temporalUpscale ? 'yes' : 'no'}`,
-            `clouds coverage: ${  getPmndrsCloudsCoverage(self).toFixed(2)}`,
+            `clouds coverage: ${  getPmndrsCloudsCoverage(self).toFixed(2)} -> ${  getPmndrsCloudsEffectiveCoverage(self).toFixed(2)}`,
+            `clouds sky shadow: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.skyShadowLengthRouted ? 'yes' : 'no'}`,
+            `clouds lens flare factor: ${  self && self._pmndrsCloudsDiagnostics && typeof self._pmndrsCloudsDiagnostics.lensFlareCloudFactor === 'number' ? self._pmndrsCloudsDiagnostics.lensFlareCloudFactor.toFixed(2) : '1.00'}`,
             `clouds textures: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.textureReady ? 'ready' : ((self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.textureLoaded !== undefined) ? `${self._pmndrsCloudsDiagnostics.textureLoaded}/${self._pmndrsCloudsDiagnostics.textureTotal || 0}` : 'off')}`,
             `clouds xr skip: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.xrSkipped ? 'yes' : 'no'}`,
             `horizon aerial: ${  shouldEnablePmndrsHorizonAerial(self) ? 'experimental-on' : 'off'}`,
@@ -2019,6 +2126,7 @@
         disposeRuntimeResource(self.pmndrsCloudsEffect);
         self.pmndrsCloudsEffect = null;
         self._pmndrsCloudsEffectChangeHandler = null;
+        syncPmndrsCloudDependentEffects(self, 'cloud-dispose');
     }
 
     function disposePmndrsComposerResources(self) {
@@ -2071,7 +2179,12 @@
     }
 
     function routePmndrsCloudsIntoAerial(self) {
-        if (!self || !self.pmndrsAerialPerspectiveEffect) {
+        if (!self) {
+            return;
+        }
+
+        if (!self.pmndrsAerialPerspectiveEffect) {
+            syncPmndrsCloudDependentEffects(self, 'cloud-route-no-aerial');
             return;
         }
 
@@ -2079,6 +2192,7 @@
             self.pmndrsAerialPerspectiveEffect.overlay = self.pmndrsCloudsEffect.atmosphereOverlay || null;
             self.pmndrsAerialPerspectiveEffect.shadow = self.pmndrsCloudsEffect.atmosphereShadow || null;
             self.pmndrsAerialPerspectiveEffect.shadowLength = self.pmndrsCloudsEffect.atmosphereShadowLength || null;
+            syncPmndrsCloudDependentEffects(self, 'cloud-route-aerial');
             return;
         }
 
@@ -2086,12 +2200,14 @@
             self.pmndrsAerialPerspectiveEffect.overlay = self.pmndrsHorizonFoliageOverlayPass;
             self.pmndrsAerialPerspectiveEffect.shadow = null;
             self.pmndrsAerialPerspectiveEffect.shadowLength = null;
+            syncPmndrsCloudDependentEffects(self, 'cloud-route-foliage-overlay');
             return;
         }
 
         self.pmndrsAerialPerspectiveEffect.overlay = null;
         self.pmndrsAerialPerspectiveEffect.shadow = null;
         self.pmndrsAerialPerspectiveEffect.shadowLength = null;
+        syncPmndrsCloudDependentEffects(self, 'cloud-route-clear');
     }
 
     function syncPmndrsCloudsEffect(self, camera, atmosphereConfig) {
@@ -2136,7 +2252,7 @@
         self.pmndrsCloudsEffect.turbulenceTexture = textureState.textures.turbulenceTexture || null;
         self.pmndrsCloudsEffect.stbnTexture = textureState.textures.stbnTexture || null;
         const profile = applyPmndrsCloudPerformanceProfile(self.pmndrsCloudsEffect, getPmndrsCloudsQuality(self));
-        self.pmndrsCloudsEffect.coverage = getPmndrsCloudsCoverage(self);
+        self.pmndrsCloudsEffect.coverage = getPmndrsCloudsEffectiveCoverage(self);
         self.pmndrsCloudsEffect.skipRendering = true;
 
         markPmndrsCloudsActive(self, {
@@ -2148,7 +2264,9 @@
             takramQuality: profile.takramQuality,
             resolutionScale: profile.resolutionScale,
             temporalUpscale: profile.temporalUpscale,
-            coverage: getPmndrsCloudsCoverage(self)
+            coverage: getPmndrsCloudsCoverage(self),
+            authoredCoverage: getPmndrsCloudsCoverage(self),
+            effectiveCoverage: getPmndrsCloudsEffectiveCoverage(self)
         });
         routePmndrsCloudsIntoAerial(self);
     }
@@ -2286,7 +2404,7 @@
                         resolutionScale: getPmndrsCloudsResolutionScale(cloudsQuality)
                     });
                     const cloudsProfile = applyPmndrsCloudPerformanceProfile(this.pmndrsCloudsEffect, cloudsQuality);
-                    this.pmndrsCloudsEffect.coverage = getPmndrsCloudsCoverage(this);
+                    this.pmndrsCloudsEffect.coverage = getPmndrsCloudsEffectiveCoverage(this);
                     this.pmndrsCloudsEffect.skipRendering = true;
                     updatePmndrsCloudDiagnostics(this, {
                         quality: cloudsQuality,
@@ -2294,7 +2412,9 @@
                         takramQuality: cloudsProfile.takramQuality,
                         resolutionScale: cloudsProfile.resolutionScale,
                         temporalUpscale: cloudsProfile.temporalUpscale,
-                        coverage: getPmndrsCloudsCoverage(this)
+                        coverage: getPmndrsCloudsCoverage(this),
+                        authoredCoverage: getPmndrsCloudsCoverage(this),
+                        effectiveCoverage: getPmndrsCloudsEffectiveCoverage(this)
                     });
                     this._pmndrsCloudsEffectChangeHandler = () => {
                         routePmndrsCloudsIntoAerial(this);
@@ -2459,6 +2579,7 @@
             if (typeof VTA.LensFlareEffect === 'function') {
                 try {
                     this.pmndrsLensFlareEffect = new VTA.LensFlareEffect();
+                    syncPmndrsCloudDependentEffects(this, 'lens-flare-ready');
                 } catch (err) {
                     console.warn('[VRodos] Takram LensFlareEffect construction failed, skipping:', err);
                     this.pmndrsLensFlareEffect = null;

@@ -441,6 +441,7 @@ VRodosCompileUI.Atmosphere = (function () {
         const cloudsTitle = cloudsAvailable
             ? ''
             : 'Clouds require High render quality, PMNDRS post-FX, and Takram atmosphere.';
+        const cloudCoverageTitle = 'Authored 0..1. Dense overcast above 0.82 is compressed at runtime for the default Takram cloud layers.';
         if (controls.pmndrsClouds) {
             controls.pmndrsClouds.disabled = !cloudsAvailable;
             controls.pmndrsClouds.title = cloudsTitle;
@@ -453,14 +454,20 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsCloudsWrapper.classList.toggle('tw-opacity-50', !cloudsActive);
         }
         [
-            controls.pmndrsCloudsQuality,
-            controls.pmndrsCloudsCoverage
+            controls.pmndrsCloudsQuality
         ].forEach((el) => {
             if (el) {
                 el.disabled = !cloudsActive;
                 el.title = cloudsTitle;
             }
         });
+        if (controls.pmndrsCloudsCoverage) {
+            controls.pmndrsCloudsCoverage.disabled = !cloudsActive;
+            controls.pmndrsCloudsCoverage.title = cloudsActive ? cloudCoverageTitle : cloudsTitle;
+        }
+        if (controls.pmndrsCloudsCoverageValue) {
+            controls.pmndrsCloudsCoverageValue.title = cloudCoverageTitle;
+        }
 
         const geospatialEnabled = isEnabled && controls.pmndrsGeospatial && controls.pmndrsGeospatial.checked === true;
         [
