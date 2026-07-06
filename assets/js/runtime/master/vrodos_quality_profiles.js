@@ -32,6 +32,13 @@
     const PMNDRS_MOON_DIRECT_LIGHT_FULL_Y = 0.16;
     const PMNDRS_DAY_NIGHT_SHADOW_RADIUS_HIGH = 2.4;
     const PMNDRS_DAY_NIGHT_SHADOW_RADIUS_MEDIUM = 1.8;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_START = 0.22;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_FULL = 0.82;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_DIRECT_MIN = 0.48;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_SKY_MIN = 0.72;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_FILL_MIN = 0.82;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_STATIC_SMOOTH_MS = 900;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_DAY_NIGHT_MIN_SMOOTH_MS = 1800;
     const WGS84_EQUATORIAL_RADIUS = 6378137;
     const WGS84_POLAR_RADIUS = 6356752.3142451793;
     const runtimeSettingsContract = window.VRODOS_RUNTIME_SETTINGS_CONTRACT || {};
@@ -1490,6 +1497,114 @@
 
         self._pmndrsRuntimeLightSmoothColors[key].lerp(color, alpha);
         return self._pmndrsRuntimeLightSmoothColors[key];
+    }
+
+    function roundPmndrsCloudSunOcclusionDiagnostic(value) {
+        return Number.isFinite(value) ? Number(value.toFixed(4)) : null;
+    }
+
+    function publishPmndrsCloudSunOcclusionDiagnostics(self, state) {
+        if (!self || !state) {
+            return state || null;
+        }
+
+        const diagnostics = self._pmndrsCloudsDiagnostics || {};
+        Object.assign(diagnostics, {
+            cloudSunOcclusionEnabled: Boolean(state.enabled),
+            cloudSunOcclusionStrength: roundPmndrsCloudSunOcclusionDiagnostic(state.strength),
+            cloudSunDirectFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.directFactor),
+            cloudSkyFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.skyFactor),
+            cloudFillFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.fillFactor),
+            cloudSunElevationFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.sunElevationFactor),
+            cloudSunOcclusionReason: state.reason || '',
+            cloudSunCoverageStrength: roundPmndrsCloudSunOcclusionDiagnostic(state.coverageStrength),
+            cloudSunOcclusionTargetStrength: roundPmndrsCloudSunOcclusionDiagnostic(state.targetStrength)
+        });
+        self._pmndrsCloudsDiagnostics = diagnostics;
+        self.pmndrsCloudsDiagnostics = diagnostics;
+        self._pmndrsCloudSunOcclusionState = diagnostics;
+        logPmndrsCloudSunOcclusionDiagnostic(self, diagnostics);
+        return diagnostics;
+    }
+
+    function getPmndrsCloudSunOcclusionSmoothingMs(config, directSmoothingMs, indirectSmoothingMs) {
+        if (!(config && config.dayNightCycleEnabled)) {
+            return PMNDRS_CLOUD_SUN_OCCLUSION_STATIC_SMOOTH_MS;
+        }
+
+        return Math.max(
+            PMNDRS_CLOUD_SUN_OCCLUSION_DAY_NIGHT_MIN_SMOOTH_MS,
+            directSmoothingMs || 0,
+            indirectSmoothingMs || 0
+        );
+    }
+
+    function getPmndrsCloudSunOcclusionState(self, config, directSmoothingMs, indirectSmoothingMs) {
+        const diagnostics = self && self._pmndrsCloudsDiagnostics ? self._pmndrsCloudsDiagnostics : null;
+        const effectiveCoverage = diagnostics && typeof diagnostics.effectiveCoverage === 'number'
+            ? diagnostics.effectiveCoverage
+            : null;
+        const cloudsActive = Boolean(diagnostics && diagnostics.cloudsActive === true);
+        const sunElevationFactor = getPmndrsSunDirectLightVisibility(config);
+        const defaultState = {
+            enabled: false,
+            strength: 0,
+            directFactor: 1,
+            skyFactor: 1,
+            fillFactor: 1,
+            sunElevationFactor,
+            reason: 'not-evaluated',
+            coverageStrength: 0,
+            targetStrength: 0
+        };
+
+        if (!self || !cloudsActive || !Number.isFinite(effectiveCoverage) || sunElevationFactor <= 0.001) {
+            if (self && self._pmndrsRuntimeLightSmoothValues) {
+                self._pmndrsRuntimeLightSmoothValues.takramCloudSunOcclusionStrength = 0;
+            }
+            if (!self) {
+                defaultState.reason = 'no-runtime';
+            } else if (!cloudsActive) {
+                defaultState.reason = 'clouds-inactive';
+            } else if (!Number.isFinite(effectiveCoverage)) {
+                defaultState.reason = 'invalid-coverage';
+            } else if (sunElevationFactor <= 0.001) {
+                defaultState.reason = 'sun-below-horizon';
+            }
+            return publishPmndrsCloudSunOcclusionDiagnostics(self, defaultState);
+        }
+
+        const coverageStrength = smoothstepNumber(
+            PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_START,
+            PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_FULL,
+            effectiveCoverage
+        );
+        const targetStrength = clamp01(coverageStrength * sunElevationFactor);
+        const smoothingMs = getPmndrsCloudSunOcclusionSmoothingMs(config, directSmoothingMs, indirectSmoothingMs);
+        const currentStrength = self._pmndrsCloudSunOcclusionState &&
+            typeof self._pmndrsCloudSunOcclusionState.cloudSunOcclusionStrength === 'number'
+            ? self._pmndrsCloudSunOcclusionState.cloudSunOcclusionStrength
+            : targetStrength;
+        const strength = smoothPmndrsRuntimeLightValue(
+            self,
+            'takramCloudSunOcclusionStrength',
+            targetStrength,
+            smoothingMs,
+            currentStrength
+        );
+        const state = {
+            enabled: strength > 0.0001,
+            strength,
+            directFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_DIRECT_MIN) * strength),
+            skyFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_SKY_MIN) * strength),
+            fillFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_FILL_MIN) * strength),
+            sunElevationFactor,
+            reason: 'active',
+            coverageStrength,
+            targetStrength
+        };
+
+        return publishPmndrsCloudSunOcclusionDiagnostics(self, state);
     }
 
     function getPmndrsAtmosphereResourceProfile(self, renderer) {
@@ -3100,8 +3215,19 @@
             return explicitShadowLength || null;
         }
 
+        if (!shouldRoutePmndrsCloudShadowLengthToSkyMaterial(self)) {
+            return null;
+        }
+
         const diagnostics = self && self._pmndrsCloudsDiagnostics ? self._pmndrsCloudsDiagnostics : null;
         if (!diagnostics || diagnostics.cloudsActive !== true) {
+            return null;
+        }
+
+        const atmosphereConfig = self && typeof self.getPmndrsAtmosphereConfig === 'function'
+            ? self.getPmndrsAtmosphereConfig()
+            : null;
+        if (getPmndrsSunDirectLightVisibility(atmosphereConfig) <= 0.001) {
             return null;
         }
 
@@ -3109,9 +3235,19 @@
         return effect && effect.atmosphereShadowLength ? effect.atmosphereShadowLength : null;
     }
 
+    function shouldRoutePmndrsCloudShadowLengthToSkyMaterial(self) {
+        if (hasPmndrsDebugFlag('enablePmndrsCloudSkyShadowLength', 'vrodos_debug_enable_pmndrs_cloud_sky_shadow_length')) {
+            return true;
+        }
+        return !shouldUsePmndrsTakramHorizonPath(self);
+    }
+
     function syncPmndrsCloudShadowLengthToSkyMaterial(self, explicitShadowLength, reason) {
         const state = self && self._pmndrsAtmosphereState ? self._pmndrsAtmosphereState : null;
         const material = state && state.skyMaterial ? state.skyMaterial : null;
+        const routeDisabledReason = explicitShadowLength === undefined && !shouldRoutePmndrsCloudShadowLengthToSkyMaterial(self)
+            ? 'horizon-sky-shadowlength-disabled'
+            : '';
         const shadowLength = resolvePmndrsCloudShadowLengthForSky(self, explicitShadowLength);
         let routed = false;
 
@@ -3128,12 +3264,13 @@
 
         if (state) {
             state.cloudSkyShadowLengthRouted = routed;
-            state.cloudSkyShadowLengthReason = reason || '';
+            state.cloudSkyShadowLengthReason = routed ? (reason || '') : (routeDisabledReason || 'sun-below-horizon-or-unavailable');
         }
         if (self) {
             self._pmndrsCloudSkyShadowLengthRouted = routed;
             if (self._pmndrsCloudsDiagnostics) {
                 self._pmndrsCloudsDiagnostics.skyShadowLengthRouted = routed;
+                self._pmndrsCloudsDiagnostics.skyShadowLengthReason = routed ? (reason || '') : (routeDisabledReason || 'sun-below-horizon-or-unavailable');
             }
         }
         return routed;
@@ -3343,6 +3480,96 @@
         ].join(',');
     }
 
+    function formatPmndrsNumberForLog(value, digits, fallback) {
+        return typeof value === 'number' && isFinite(value)
+            ? value.toFixed(typeof digits === 'number' ? digits : 2)
+            : (fallback || 'n/a');
+    }
+
+    function formatPmndrsCloudLightingForLog(self) {
+        const diagnostics = self && self._pmndrsCloudsDiagnostics ? self._pmndrsCloudsDiagnostics : null;
+        if (!diagnostics) {
+            return {
+                clouds: 'none',
+                cloudSun: 'none'
+            };
+        }
+
+        const authoredCoverage = typeof diagnostics.authoredCoverage === 'number'
+            ? diagnostics.authoredCoverage
+            : (typeof diagnostics.coverage === 'number' ? diagnostics.coverage : null);
+        const effectiveCoverage = typeof diagnostics.effectiveCoverage === 'number'
+            ? diagnostics.effectiveCoverage
+            : null;
+        const cloudsState = [
+            diagnostics.cloudsActive ? 'on' : 'off',
+            formatPmndrsNumberForLog(authoredCoverage, 2),
+            formatPmndrsNumberForLog(effectiveCoverage, 2),
+            diagnostics.layerProfile ? `layers-${diagnostics.layerProfile}` : '',
+            diagnostics.haze ? 'haze-on' : 'haze-off',
+            diagnostics.hazeDisabledReason ? `haze-skip-${diagnostics.hazeDisabledReason}` : '',
+            diagnostics.temporalUpscale ? 'temporal-on' : 'temporal-off',
+            diagnostics.temporalUpscaleSkippedReason ? `temporal-skip-${diagnostics.temporalUpscaleSkippedReason}` : '',
+            diagnostics.lightShafts ? 'shafts-on' : 'shafts-off',
+            diagnostics.lightShaftsSkippedReason ? `shafts-skip-${diagnostics.lightShaftsSkippedReason}` : '',
+            diagnostics.aerialShadowRouted ? 'aerial-shadow-on' : 'aerial-shadow-off',
+            diagnostics.aerialShadowReason ? `aerial-shadow-${diagnostics.aerialShadowReason}` : '',
+            diagnostics.skyShadowLengthRouted ? 'sky-shadow-on' : 'sky-shadow-off',
+            diagnostics.skyShadowLengthReason ? `sky-shadow-${diagnostics.skyShadowLengthReason}` : '',
+            diagnostics.cloudsSkippedReason ? `skip-${diagnostics.cloudsSkippedReason}` : ''
+        ].filter(Boolean).join(':');
+        const reason = diagnostics.cloudSunOcclusionReason || (diagnostics.cloudSunOcclusionEnabled ? 'active' : 'none');
+        const cloudSunState = [
+            diagnostics.cloudSunOcclusionEnabled ? 'on' : 'off',
+            reason,
+            `s${formatPmndrsNumberForLog(diagnostics.cloudSunOcclusionStrength, 2)}`,
+            `target${formatPmndrsNumberForLog(diagnostics.cloudSunOcclusionTargetStrength, 2)}`,
+            `coverage${formatPmndrsNumberForLog(diagnostics.cloudSunCoverageStrength, 2)}`,
+            `elev${formatPmndrsNumberForLog(diagnostics.cloudSunElevationFactor, 2)}`,
+            `direct${formatPmndrsNumberForLog(diagnostics.cloudSunDirectFactor, 2)}`,
+            `sky${formatPmndrsNumberForLog(diagnostics.cloudSkyFactor, 2)}`,
+            `fill${formatPmndrsNumberForLog(diagnostics.cloudFillFactor, 2)}`
+        ].join(':');
+
+        return {
+            clouds: cloudsState,
+            cloudSun: cloudSunState
+        };
+    }
+
+    function logPmndrsCloudSunOcclusionDiagnostic(self, diagnostics) {
+        if (!self || !diagnostics || diagnostics.cloudsActive !== true) {
+            return;
+        }
+
+        const diagnosticsEnabled = hasPmndrsDebugFlag('pmndrsHorizonDiagnostics', 'vrodos_debug_pmndrs_horizon') ||
+            hasPmndrsDebugFlag('pmndrsHorizonDiagnosticsVerbose', 'vrodos_debug_pmndrs_horizon_verbose');
+        const startupStateLogEnabled = !diagnosticsEnabled && !self._pmndrsCloudSunOcclusionStartupLogged;
+        if (!diagnosticsEnabled && !startupStateLogEnabled) {
+            return;
+        }
+
+        const cloudLightingLog = formatPmndrsCloudLightingForLog(self);
+        const signature = [
+            cloudLightingLog.clouds,
+            cloudLightingLog.cloudSun
+        ].join('|');
+        if (diagnosticsEnabled) {
+            self._pmndrsCloudSunOcclusionDiagSignature = self._pmndrsCloudSunOcclusionDiagSignature || '';
+            if (self._pmndrsCloudSunOcclusionDiagSignature === signature) {
+                return;
+            }
+            self._pmndrsCloudSunOcclusionDiagSignature = signature;
+        } else {
+            self._pmndrsCloudSunOcclusionStartupLogged = true;
+        }
+
+        const logMethod = diagnosticsEnabled ? 'debug' : 'info';
+        const log = console[logMethod] || console.info || console.log || function () { return undefined; };
+        log.call(console, `[VRodos] PMNDRS cloud lighting: clouds=${  cloudLightingLog.clouds
+            }, cloudSun=${  cloudLightingLog.cloudSun}`);
+    }
+
     function logPmndrsHorizonDiagnostic(self, context, atmosphereConfig) {
         if (!self || !self.data || !context) {
             return;
@@ -3397,6 +3624,7 @@
         const shadowState = getShadowDiagnosticState(self);
         const resolvedSkyTimePreset = getResolvedPmndrsSkyTimePreset(atmosphereConfig);
         const starsIntensity = atmosphereConfig ? getPmndrsStarsIntensity(atmosphereConfig) : 0;
+        const cloudLightingLog = formatPmndrsCloudLightingForLog(self);
         const owner = atmosphereConfig && atmosphereConfig.enabled && shouldUseVrTakramLightsOnly(self)
             ? 'takram-lights-only'
             : (atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsHorizonAerialPerspectivePath(self)
@@ -3434,7 +3662,9 @@
             shadowState.receiverOnly,
             shadowState.dirShadowLights,
             shadowState.fittedDirLights,
-            shadowState.fitted
+            shadowState.fitted,
+            cloudLightingLog.clouds,
+            cloudLightingLog.cloudSun
         ].join('|');
 
         if (startupStateLogEnabled) {
@@ -3454,7 +3684,9 @@
                 }, skyLight=${  fillIntensity !== null ? fillIntensity.toFixed(2) : 'n/a'
                 }, pbrFill=${  pbrFillIntensity !== null ? pbrFillIntensity.toFixed(2) : 'n/a'
                 }, reflectionScale=${  reflectionScale.toFixed(2)
-                }, stars=${  starsIntensity.toFixed(2)}`);
+                }, stars=${  starsIntensity.toFixed(2)
+                }, clouds=${  cloudLightingLog.clouds
+                }, cloudSun=${  cloudLightingLog.cloudSun}`);
             return;
         }
 
@@ -3494,7 +3726,9 @@
             }, shadowReceiverOnly=${  shadowState.receiverOnly
             }, dirShadowLights=${  shadowState.dirShadowLights
             }, fittedDirLights=${  shadowState.fittedDirLights
-            }, shadowFit=${  shadowState.fitted}`);
+            }, shadowFit=${  shadowState.fitted
+            }, clouds=${  cloudLightingLog.clouds
+            }, cloudSun=${  cloudLightingLog.cloudSun}`);
     }
 
     function hidePmndrsHorizonEnvironmentVisuals(self) {
@@ -4485,6 +4719,7 @@
         const moonTarget = state.moonTarget;
         const lightingSmoothingMs = getPmndrsRuntimeLightingSmoothingMs(config);
         const indirectLightingSmoothingMs = getPmndrsRuntimeIndirectLightingSmoothingMs(config);
+        const cloudSunOcclusion = getPmndrsCloudSunOcclusionState(self, config, lightingSmoothingMs, indirectLightingSmoothingMs);
         const dynamicCycleShadows = arePmndrsDayNightCycleDynamicShadowsEnabled(self, config);
         const adaptiveShadowCenter = dynamicCycleShadows ? getAdaptiveShadowCenter(self) : null;
 
@@ -4505,7 +4740,7 @@
             const sunDirectVisibility = getPmndrsSunDirectLightVisibility(config);
             const targetSunVisible = useSunKey && helperConfig.keyIntensity > 0 && sunDirectVisibility > 0.001;
             const targetSunIntensity = targetSunVisible
-                ? (hasTakramSunRadiance ? 1 : helperConfig.keyIntensity) * sunDirectVisibility
+                ? (hasTakramSunRadiance ? 1 : helperConfig.keyIntensity) * sunDirectVisibility * cloudSunOcclusion.cloudSunDirectFactor
                 : 0;
             const sunIntensity = targetSunVisible
                 ? smoothPmndrsRuntimeLightValue(
@@ -4614,7 +4849,7 @@
 
         if (skyLight) {
             const targetSkyIntensity = helperConfig.fillIntensity > 0 && hasTakramSkyIrradiance
-                ? getPmndrsTakramSkyLightIntensity(helperConfig, config)
+                ? getPmndrsTakramSkyLightIntensity(helperConfig, config) * cloudSunOcclusion.cloudSkyFactor
                 : 0;
             const skyIntensity = smoothPmndrsRuntimeLightValue(
                 self,
@@ -4640,7 +4875,7 @@
 
         if (fillLight) {
             const targetFillIntensity = helperConfig.fillIntensity > 0
-                ? getPmndrsTakramPbrFillIntensity(helperConfig, config)
+                ? getPmndrsTakramPbrFillIntensity(helperConfig, config) * cloudSunOcclusion.cloudFillFactor
                 : 0;
             const fillIntensity = smoothPmndrsRuntimeLightValue(
                 self,

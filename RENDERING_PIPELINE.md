@@ -422,7 +422,7 @@ Native SSAO presets are budgeted so the final color buffer stays full-resolution
 
 Takram LensFlareEffect is intentionally not merged into the primary `EffectPass`. It is a convolution effect, so it runs as its own pass when `pmndrsLensFlareEnabled` is true and the Horizon Takram sun is active. Chromatic aberration also runs as a late standalone convolution pass after Takram/tone/color processing, and SMAA runs as the final standalone pass when enabled.
 
-Takram CloudsEffect is created before AerialPerspectiveEffect when cloud settings are active. The runtime keeps `cloudsEffect.skipRendering = true` and routes `cloudsEffect.atmosphereOverlay`, `cloudsEffect.atmosphereShadow`, and `cloudsEffect.atmosphereShadowLength` into AerialPerspectiveEffect. The same cloud `atmosphereShadowLength` is also routed into Takram `SkyMaterial.shadowLength` so the sky sun disk and aerial haze use the same cloud attenuation data. Clouds are therefore a PMNDRS/Takram atmospheric composition feature, not separate scene geometry.
+Takram CloudsEffect is created before AerialPerspectiveEffect when cloud settings are active. The runtime keeps `cloudsEffect.skipRendering = true` and routes `cloudsEffect.atmosphereOverlay`, `cloudsEffect.atmosphereShadow`, and `cloudsEffect.atmosphereShadowLength` into AerialPerspectiveEffect. Horizon does not route that screen-space `atmosphereShadowLength` texture directly into Takram `SkyMaterial.shadowLength` by default because it can reveal a delayed rectangular footprint on the sky; use `?vrodos_debug_enable_pmndrs_cloud_sky_shadow_length=1` only for comparison. Clouds are therefore a PMNDRS/Takram atmospheric composition feature, not separate scene geometry.
 
 Composer lifecycle:
 
@@ -472,7 +472,8 @@ Scene settings:
 - Existing manual controls remain valid: `pmndrsSunElevationDeg`, `pmndrsSunAzimuthDeg`, and `pmndrsMoonEnabled`
 - `pmndrsCloudsEnabled`: opt-in desktop volumetric clouds
 - `pmndrsCloudsQuality`: `low`, `medium`, `high`, or `ultra`
-- `pmndrsCloudsCoverage`: authored `0..1`; the desktop runtime preserves values up to `0.82` and smoothly compresses `0.82..1.0` into an effective Takram input of `0.82..0.88` for the default cloud layers.
+- `pmndrsCloudsCoverage`: authored Takram coverage `0..1`; the desktop runtime passes this through to `CloudsEffect.coverage`. In Horizon sky-owner mode, VRodos disables Takram cloud haze instead of clamping coverage.
+- `pmndrsAerialPerspectiveEnabled`: authored Aerial Haze toggle. Active clouds require the AerialPerspective composition pass for overlay/shadow routing, so the compile dialog shows it checked/locked while clouds are enabled without treating that as authored cloud shader haze.
 
 Runtime behavior:
 
@@ -486,7 +487,7 @@ Runtime behavior:
 - Direct celestial lighting stays separate from the indirect bridge: Takram `SunDirectionalLight` owns sun key light, and the VRodos moon directional light owns night shape when visible. Dynamic day-night underside readability is tuned only through indirect diffuse lighting: `SkyLightProbe`, `HemisphereLight`, tiny `AmbientLight`, and ground bounce color follow a continuous sun-elevation curve with slower smoothing than direct celestial lights so the fill does not step during the cycle.
 - The old helper-light debug mode is not exposed as a runtime option. If Takram light-source classes are unavailable, the runtime can use an internal safety fallback only to avoid a black scene.
 - Horizon `AerialPerspectiveEffect` is constrained to haze/transmittance in the current PBR path so it does not re-light the scene as albedo.
-- Optional Takram clouds synchronize every frame with the active Takram atmosphere, camera, sun direction, world-to-ECEF matrix, correct-altitude mode, precomputed atmosphere textures, local cloud textures, quality profile, authored coverage, and effective Takram coverage.
+- Optional Takram clouds synchronize every frame with the active Takram atmosphere, camera, sun direction, world-to-ECEF matrix, correct-altitude mode, precomputed atmosphere textures, local cloud textures, quality profile, authored coverage, effective coverage diagnostics, and Horizon cloud haze ownership.
 - The future Takram-vanilla target remains an explicit `post-process-albedo` lighting mode. Historical Takram findings are summarized in `documentation/archive/rendering-history/README.md`.
 
 Takram cloud v1 behavior:
@@ -496,21 +497,26 @@ Takram cloud v1 behavior:
 - Mobile inline mode skips clouds in v1; immersive headset sessions use the explicit VR policy instead of the generic mobile guard.
 - WebGL2 and `Data3DTexture` support are required.
 - Runtime uses only local assets under `assets/vendor/takram-clouds/`; generated cloud bundles must not depend on GitHub or `media.githubusercontent.com` at runtime.
-- Authored coverage remains compatible as `0..1`, but the runtime compresses dense overcast values above `0.82` before assigning `CloudsEffect.coverage`. This avoids the default Takram cloud layers saturating into an opaque rectangular screen-space block while keeping existing scenes with `0.9` or `1.0` valid.
-- Cloud shadow-length output is shared with both `AerialPerspectiveEffect` and Takram `SkyMaterial`; do not draw the sun or lens flare above clouds as a separate ordering hack.
+- Authored coverage remains compatible as `0..1` and is passed directly to `CloudsEffect.coverage`. Takram's `CloudsEffect` has a separate `haze` path enabled by default; its shader ramps haze over coverage `0.2..0.4`, so dense Horizon scenes can otherwise double-composite sky haze as a rectangular slab. VRodos disables only `CloudsEffect.haze` in Horizon sky-owner mode while leaving Takram coverage, cloud shapes, shadows, and light shafts on their documented controls.
+- VRodos Horizon keeps Takram's default cloud layers, default `coverageFilterWidth`, default `weatherExponent`, and default `localWeatherRepeat`. Takram documents `coverageFilterWidth` near `0` as a sharp weather-signal transition and `weatherExponent > 1` as sharper weather gradients; Takram's shader also tiles local weather with cube-sphere UVs. VRodos therefore avoids custom layer/weather tuning in the default desktop profile and fixes Horizon artifacts through haze ownership and shadow-buffer routing instead of a hidden coverage cap.
+- The Aerial Haze UI toggle controls the authored `AerialPerspectiveEffect` composition path. Clouds still force that composition pass at runtime because their overlay/shadow outputs are routed through it; the Takram cloud shader haze toggle is an internal runtime option and is disabled separately for Horizon.
+- Cloud shadow-length output stays routed through `AerialPerspectiveEffect` only while the sun-shadow route is valid. The paired AerialPerspective cloud `shadow` buffer is also cleared when `shadowLength` is cleared, so below-horizon day/night frames cannot carry a stale screen-space cloud-shadow buffer. Horizon disables direct `SkyMaterial.shadowLength` routing by default because Takram's screen-space shadow-length texture can reveal a delayed rectangular footprint on the already-rendered Horizon sky during day/night motion. Use `?vrodos_debug_enable_pmndrs_cloud_sky_shadow_length=1` only for comparison. Do not draw the sun or lens flare above clouds as a separate ordering hack.
+- Because VRodos uses Takram's documented light-source path for PBR materials, active daytime clouds also drive a CPU-only global sun-occlusion scalar on `SunDirectionalLight`, `SkyLightProbe`, and the hemisphere fill. This dims dense overcast scenes without enabling incompatible `AerialPerspectiveEffect.sunLight` / `skyLight` post-process lighting or adding a projected cloud-shadow pass. It is horizon-gated, so it intentionally reports `sun-below-horizon` and leaves moon/night readability unchanged when the sun direct light is off.
+- Takram cloud temporal upscaling stays enabled by default. It renders clouds through Takram's lower-cost temporal path; use `?vrodos_debug_disable_pmndrs_cloud_temporal_upscale=1` only for visual comparison because full-resolution cloud raymarching is expensive.
+- High and ultra cloud profiles enable Takram `CloudsEffect.lightShafts` for desktop visual cloud/sun interaction only while the sun is above the local horizon and authored coverage is at least `0.35`. Low and medium keep light shafts disabled for cheaper preview profiles, and night/below-horizon scenes clear cloud `shadowLength` routing so the sky is not darkened by a flat sun-shadow buffer.
 - Takram `LensFlareEffect` keeps its standalone pass, but its intensity is multiplied by a conservative cloud factor derived from effective coverage in addition to existing scene/sun occlusion behavior.
 - Cloud effect construction is fail-closed. Missing assets, missing bundle globals, missing WebGL2/3D texture support, disabled PMNDRS composer, and immersive XR each emit a diagnostic skip reason.
 
 Cloud performance profiles follow Takram's documented presets, with VRodos profile overlays:
 
-| VRodos setting | Takram preset | Resolution scale | Temporal upscale | Shape detail | Turbulence | Light shafts | Notes |
-| --- | --- | ---: | --- | --- | --- | --- | --- |
-| `low` | `low` | `0.62` | on | off | off | off | Conservative desktop baseline; visibly grainier by design |
-| `medium` | `medium` | `0.82` | on | on | off | off | Balanced preview profile |
-| `high` | `high` | `1.0` | on | on | on | off | Full-resolution clarity profile |
-| `ultra` | `ultra` | `1.0` | on | on | on | off | Reference profile using Takram ultra shadow/raymarch settings |
+| VRodos setting | Takram preset | Resolution scale | Temporal upscale | Shape detail | Turbulence | Haze | Light shafts | Notes |
+| --- | --- | ---: | --- | --- | --- | --- | --- | --- |
+| `low` | `low` | `0.62` | on | off | off | Horizon off | off | Conservative desktop baseline; Takram default layers |
+| `medium` | `medium` | `0.82` | on | on | off | Horizon off | off | Balanced preview profile; Takram default layers |
+| `high` | `high` | `1.0` | on | on | on | Horizon off | on above coverage `0.35` | Full-resolution clarity profile with Takram light shafts and default layers |
+| `ultra` | `ultra` | `1.0` | on | on | on | Horizon off | on above coverage `0.35` | Reference profile using Takram ultra shadow/raymarch settings, light shafts, and default layers |
 
-All four profiles keep `shadow.farScale = 0.25`, matching Takram's London Storybook cloud demo. Light shafts remain disabled in v1 until they have a separate performance and visual validation pass.
+All four profiles keep `shadow.farScale = 0.25`, matching Takram's London Storybook cloud demo. Light shafts are reserved for high/ultra desktop profiles because they are a documented cloud visual feature with extra GPU cost. The `Haze` column means Takram cloud haze is still a profile feature, but Horizon mode disables it at runtime because SkyMaterial/AerialPerspective already own sky haze there.
 
 ## 9. Shadow-Aware Lighting And Reflections
 
@@ -554,11 +560,11 @@ Emissive/readability handling:
 
 Diagnostics:
 
-- Compiled PMNDRS Horizon scenes emit one default startup state line with the active engine, owner, reflection source, reflection occlusion mode, shadow quality, celestial preset, sun direction, exposure, tone mapping, lens flare, and light source.
+- Compiled PMNDRS Horizon scenes emit one default startup state line with the active engine, owner, reflection source, reflection occlusion mode, shadow quality, celestial preset, sun direction, exposure, tone mapping, lens flare, light source, cloud state, and cloud sun-occlusion state. When active clouds initialize, a separate `PMNDRS cloud lighting` line reports coverage, haze state, light shafts, and the cloud sun-occlusion reason/factors.
 - Use `?vrodos_debug_pmndrs_horizon=1` for repeated debug-level diagnostic lines when the diagnostic signature changes.
 - Use `?vrodos_debug_pmndrs_horizon_verbose=1` for info-level diagnostic lines.
 - Expanded diagnostic fields include `shadowCasters`, `shadowReceivers`, `shadowReceiverOnly`, `dirShadowLights`, `fittedDirLights`, and `shadowFit`.
-- PMNDRS cloud diagnostics include `cloudsActive`, `cloudsSkippedReason`, `quality`, `profile`, `takramQuality`, `resolutionScale`, `temporalUpscale`, `coverage`, `authoredCoverage`, `effectiveCoverage`, `skyShadowLengthRouted`, `lensFlareCloudFactor`, texture readiness/counts, and XR skip state.
+- PMNDRS cloud diagnostics include `cloudsActive`, `cloudsSkippedReason`, `quality`, `profile`, `takramQuality`, `layerProfile`, `resolutionScale`, `temporalUpscale`, `temporalUpscaleSkippedReason`, `haze`, `hazeDisabledReason`, `lightShafts`, `lightShaftsSkippedReason`, `coverage`, `authoredCoverage`, `effectiveCoverage`, `aerialShadowRouted`, `aerialShadowReason`, `skyShadowLengthRouted`, `skyShadowLengthReason`, `lensFlareCloudFactor`, `cloudSunOcclusionEnabled`, `cloudSunOcclusionStrength`, `cloudSunOcclusionReason`, `cloudSunCoverageStrength`, `cloudSunOcclusionTargetStrength`, `cloudSunDirectFactor`, `cloudSkyFactor`, `cloudFillFactor`, `cloudSunElevationFactor`, texture readiness/counts, and XR skip state.
 
 Debug query flags:
 

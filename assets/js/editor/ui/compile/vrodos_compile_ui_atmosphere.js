@@ -355,6 +355,44 @@ VRodosCompileUI.Atmosphere = (function () {
         }
     }
 
+    function getAerialPerspectiveAuthoredChecked(controls) {
+        const el = controls && controls.pmndrsAerialPerspective ? controls.pmndrsAerialPerspective : null;
+        if (!el) {
+            return false;
+        }
+        if (el.dataset && el.dataset.vrodosCloudRequired === 'true' && el.dataset.vrodosAuthoredChecked !== undefined) {
+            return el.dataset.vrodosAuthoredChecked === 'true';
+        }
+        return el.checked === true;
+    }
+
+    function syncAerialPerspectiveCloudRequirement(controls, isEnabled, cloudsActive) {
+        const el = controls && controls.pmndrsAerialPerspective ? controls.pmndrsAerialPerspective : null;
+        if (!el) {
+            return;
+        }
+
+        const defaultTitle = 'Takram AerialPerspectiveEffect distance haze. Sky and PBR lighting stay owned by Takram SkyMaterial, SunDirectionalLight, and SkyLightProbe.';
+        if (isEnabled && cloudsActive) {
+            if (!el.dataset.vrodosCloudRequired) {
+                el.dataset.vrodosAuthoredChecked = el.checked === true ? 'true' : 'false';
+            }
+            el.dataset.vrodosCloudRequired = 'true';
+            el.checked = true;
+            el.disabled = true;
+            el.title = 'Required while clouds are enabled. Clouds use AerialPerspective for overlay/shadow routing; Takram cloud shader haze is disabled internally in Horizon mode.';
+            return;
+        }
+
+        if (el.dataset.vrodosCloudRequired === 'true') {
+            el.checked = el.dataset.vrodosAuthoredChecked === 'true';
+            delete el.dataset.vrodosCloudRequired;
+            delete el.dataset.vrodosAuthoredChecked;
+        }
+        el.disabled = !isEnabled;
+        el.title = defaultTitle;
+    }
+
     function setAdvancedState(controls, enabled) {
         const isEnabled = enabled === true;
         if (controls.pmndrsAtmosphereAdvanced) {
@@ -441,7 +479,7 @@ VRodosCompileUI.Atmosphere = (function () {
         const cloudsTitle = cloudsAvailable
             ? ''
             : 'Clouds require High render quality, PMNDRS post-FX, and Takram atmosphere.';
-        const cloudCoverageTitle = 'Authored 0..1. Dense overcast above 0.82 is compressed at runtime for the default Takram cloud layers.';
+        const cloudCoverageTitle = 'Authored Takram coverage 0..1. Horizon mode disables Takram cloud haze so SkyMaterial and AerialPerspective own sky haze.';
         if (controls.pmndrsClouds) {
             controls.pmndrsClouds.disabled = !cloudsAvailable;
             controls.pmndrsClouds.title = cloudsTitle;
@@ -468,6 +506,7 @@ VRodosCompileUI.Atmosphere = (function () {
         if (controls.pmndrsCloudsCoverageValue) {
             controls.pmndrsCloudsCoverageValue.title = cloudCoverageTitle;
         }
+        syncAerialPerspectiveCloudRequirement(controls, isEnabled, cloudsActive);
 
         const geospatialEnabled = isEnabled && controls.pmndrsGeospatial && controls.pmndrsGeospatial.checked === true;
         [
@@ -533,8 +572,9 @@ VRodosCompileUI.Atmosphere = (function () {
             1440,
             d.dayNightCycleDurationMinutes
         );
-        VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled = (pmndrsRuntimeEnabled && controls.pmndrsAerialPerspective) ? controls.pmndrsAerialPerspective.checked === true : false;
-        VRODOS.editor.envir.scene.aframePmndrsCloudsEnabled = Boolean(atmosphereEnabled && highRenderQuality && controls.pmndrsClouds && controls.pmndrsClouds.checked === true);
+        const cloudsEnabled = Boolean(atmosphereEnabled && highRenderQuality && controls.pmndrsClouds && controls.pmndrsClouds.checked === true);
+        VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled = (pmndrsRuntimeEnabled && controls.pmndrsAerialPerspective) ? getAerialPerspectiveAuthoredChecked(controls) : false;
+        VRODOS.editor.envir.scene.aframePmndrsCloudsEnabled = cloudsEnabled;
         VRODOS.editor.envir.scene.aframePmndrsCloudsQuality = normalizeCloudsQuality(controls.pmndrsCloudsQuality ? controls.pmndrsCloudsQuality.value : d.cloudsQuality);
         VRODOS.editor.envir.scene.aframePmndrsCloudsCoverage = Shared.clampNumber(
             controls.pmndrsCloudsCoverage ? controls.pmndrsCloudsCoverage.value : d.cloudsCoverage,
@@ -612,6 +652,7 @@ VRodosCompileUI.Atmosphere = (function () {
         normalizeCelestialMode,
         normalizeCelestialTimePreset,
         normalizeDate,
-        normalizeUtcTime
+        normalizeUtcTime,
+        getAerialPerspectiveAuthoredChecked
     };
 })();

@@ -696,7 +696,7 @@
 										</label>
 										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 											<input id="compilePmndrsAerialPerspectiveToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Takram AerialPerspectiveEffect distance haze. Sky and PBR lighting stay owned by Takram SkyMaterial, SunDirectionalLight, and SkyLightProbe.">Aerial Haze</span>
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Takram AerialPerspectiveEffect distance haze. This pass is required while clouds are enabled; Takram cloud shader haze is disabled separately in Horizon mode.">Aerial Haze</span>
 										</label>
 										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 											<input id="compilePmndrsCloudsToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
@@ -720,10 +720,10 @@
 										</label>
 										<div>
 											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Authored 0..1. Dense overcast above 0.82 is compressed at runtime for the default Takram cloud layers.">Cloud Coverage</span>
-												<span id="compilePmndrsCloudsCoverageValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]" title="Authored coverage. Runtime effective coverage compresses values above 0.82.">0.35</span>
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Authored Takram coverage 0..1. Horizon mode disables Takram cloud haze so SkyMaterial and AerialPerspective own sky haze.">Cloud Coverage</span>
+												<span id="compilePmndrsCloudsCoverageValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]" title="Authored Takram coverage. Runtime passes this value through to CloudsEffect.coverage.">0.35</span>
 											</div>
-											<input id="compilePmndrsCloudsCoverageSlider" type="range" min="0" max="1" step="0.01" value="0.35" class="tw-range tw-range-primary tw-range-xs" title="Authored 0..1. Dense overcast above 0.82 is compressed at runtime for the default Takram cloud layers.">
+											<input id="compilePmndrsCloudsCoverageSlider" type="range" min="0" max="1" step="0.01" value="0.35" class="tw-range tw-range-primary tw-range-xs" title="Authored Takram coverage 0..1. Horizon mode disables Takram cloud haze so SkyMaterial and AerialPerspective own sky haze.">
 										</div>
 									</div>
 

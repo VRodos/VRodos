@@ -343,13 +343,18 @@ Runtime contract:
 - `window.VRODOS_TAKRAM_CLOUDS` exposes `CloudsEffect`, `CloudLayer`, `CloudLayers`, and local binary texture helpers.
 - Cloud assets are served from `assets/vendor/takram-clouds/`.
 - `CloudsEffect` is created before `AerialPerspectiveEffect`.
-- `CloudsEffect.skipRendering` stays `true`; its atmosphere overlay, atmosphere shadow, and atmosphere shadow length buffers are routed into `AerialPerspectiveEffect`, and cloud shadow length is also routed into Takram `SkyMaterial.shadowLength`.
-- Each frame syncs camera, active Takram atmosphere textures, sun direction, world-to-ECEF matrix, correct-altitude mode, authored coverage, effective Takram coverage, quality profile, and local cloud textures.
-- `pmndrsCloudsCoverage` remains authored `0..1`, but VRodos compresses the default profile's dense overcast range above `0.82` before assigning `CloudsEffect.coverage`. Existing scenes with `0.9` or `1.0` remain valid while avoiding the saturated rectangle artifact.
+- `CloudsEffect.skipRendering` stays `true`; its atmosphere overlay is routed into `AerialPerspectiveEffect`, while its atmosphere shadow and shadow-length buffers are routed together only while the sun-shadow route is valid. Horizon keeps direct `SkyMaterial.shadowLength` routing disabled by default because the screen-space shadow-length buffer can reveal a delayed rectangular footprint on the sky during day/night motion.
+- Each frame syncs camera, active Takram atmosphere textures, sun direction, world-to-ECEF matrix, correct-altitude mode, authored coverage, effective coverage diagnostics, quality profile, Horizon cloud haze ownership, and local cloud textures.
+- `pmndrsCloudsCoverage` remains authored Takram coverage `0..1` and is passed through to `CloudsEffect.coverage`. Horizon scenes disable Takram `CloudsEffect.haze` because SkyMaterial and AerialPerspective already own sky haze there; this avoids the high-coverage screen-space slab without inventing a hidden coverage cap.
+- Horizon scenes keep Takram default cloud layers and weather controls. VRodos does not alter `coverageFilterWidth`, `weatherExponent`, or `localWeatherRepeat` in the default desktop profile because the Takram docs describe those as weather-mask sharpness/repetition controls and local testing showed hard weather-cell silhouettes when they were pushed away from defaults.
+- Takram cloud temporal upscaling stays enabled by default for desktop performance. Use `?vrodos_debug_disable_pmndrs_cloud_temporal_upscale=1` only for visual comparison because full-resolution cloud raymarching is expensive.
+- `pmndrsAerialPerspectiveEnabled` remains the authored Aerial Haze toggle, but active clouds require the AerialPerspective composition pass for cloud overlay/shadow routing. The compile dialog shows that as a checked/locked effective state while preserving the authored toggle value for when clouds are later disabled.
+- Active daytime clouds also drive a CPU-only sun-occlusion scalar on Takram light-source scene lighting. It dims `SunDirectionalLight`, `SkyLightProbe`, and hemisphere fill conservatively while leaving ambient floor and moon/night readability unchanged.
+- High and ultra desktop cloud profiles enable Takram `CloudsEffect.lightShafts` only while the sun is above the local horizon and authored coverage is at least `0.35`; low and medium keep light shafts disabled for lower GPU cost.
 - Supported quality values are Takram's four performance profiles: `low`, `medium`, `high`, and `ultra`.
 - Real immersive WebXR skips clouds because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`.
 
-The cloud path must fail closed. Missing WebGL2/Data3DTexture support, mobile, missing local assets, missing or crashed cloud bundle, disabled PMNDRS composer, and immersive XR all produce cloud diagnostics instead of breaking first render.
+The cloud path must fail closed. Missing WebGL2/Data3DTexture support, mobile, missing local assets, missing or crashed cloud bundle, disabled PMNDRS composer, and immersive XR all produce cloud diagnostics instead of breaking first render. The v1 lighting bridge is global overcast dimming plus Takram light shafts, not local projected moving cloud shadows on terrain.
 
 ## 8. Lighting, Shadows, And Emissive Materials
 
