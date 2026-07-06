@@ -512,9 +512,9 @@
         }
         const from = hexToRgb(fromHex);
         const to = hexToRgb(toHex);
-        return `#${ 
-            toHex(lerpNumber(from.r, to.r, t)) 
-            }${toHex(lerpNumber(from.g, to.g, t)) 
+        return `#${
+            toHex(lerpNumber(from.r, to.r, t))
+            }${toHex(lerpNumber(from.g, to.g, t))
             }${toHex(lerpNumber(from.b, to.b, t))}`;
     }
 
@@ -2413,6 +2413,14 @@
             programRefreshes: self && self._vrodosShadowProgramRefreshes ? self._vrodosShadowProgramRefreshes : 0,
             lastProgramRefreshReason: self && self._vrodosShadowLastProgramRefreshReason ? self._vrodosShadowLastProgramRefreshReason : null,
             lastProgramRefreshType: self && self._vrodosShadowLastProgramRefreshType ? self._vrodosShadowLastProgramRefreshType : null,
+            navigationRefreshRequests: self && self._vrodosNavigationShadowRefreshRequests ? self._vrodosNavigationShadowRefreshRequests : 0,
+            navigationRefreshApplied: self && self._vrodosNavigationShadowRefreshApplied ? self._vrodosNavigationShadowRefreshApplied : 0,
+            navigationRefreshLastReason: self && self._vrodosNavigationShadowRefreshLastReason ? self._vrodosNavigationShadowRefreshLastReason : null,
+            navigationRefreshLastSkippedReason: self && self._vrodosNavigationShadowRefreshLastSkippedReason ? self._vrodosNavigationShadowRefreshLastSkippedReason : null,
+            navigationRefreshLastPresentationMode: self && self._vrodosNavigationShadowRefreshLastPresentationMode ? self._vrodosNavigationShadowRefreshLastPresentationMode : null,
+            navigationRefreshLastDistance: self && typeof self._vrodosNavigationShadowRefreshLastDistance === 'number'
+                ? Number(self._vrodosNavigationShadowRefreshLastDistance.toFixed(3))
+                : null,
             takramSignature: self && self._pmndrsTakramLightShadowSignature ? self._pmndrsTakramLightShadowSignature : '',
             takramSignatureReason: self && self._pmndrsTakramLightShadowSignatureReason ? self._pmndrsTakramLightShadowSignatureReason : '',
             presentedShadowTransforms: self && self._vrodosPresentedShadowTransformCount ? self._vrodosPresentedShadowTransformCount : 0,
@@ -2490,6 +2498,165 @@
         }
 
         return getShadowUpdateMode(self) === 'static';
+    }
+
+    function getNavigationShadowRefreshEligibility(self, options) {
+        const opts = options || {};
+        let presentationMode = typeof opts.presentationMode === 'string' && opts.presentationMode
+            ? opts.presentationMode
+            : '';
+
+        if (!presentationMode && self && typeof self.getPresentationMode === 'function') {
+            presentationMode = self.getPresentationMode();
+        }
+        if (!presentationMode) {
+            presentationMode = 'inline';
+        }
+
+        if (!self || !self.el || !self.el.camera) {
+            return { allowed: false, skippedReason: 'scene-not-ready', presentationMode };
+        }
+
+        const shadowQuality = typeof self.getEffectiveShadowQuality === 'function'
+            ? self.getEffectiveShadowQuality()
+            : (self.data && self.data.shadowQuality ? self.data.shadowQuality : 'medium');
+        if (shadowQuality === 'off') {
+            return { allowed: false, skippedReason: 'shadows-off', presentationMode };
+        }
+
+        if (!isStaticShadowMode(self)) {
+            return { allowed: false, skippedReason: 'dynamic-shadow-mode', presentationMode };
+        }
+
+        if (presentationMode === 'immersive-xr' ||
+            (typeof self.isImmersiveXrActive === 'function' && self.isImmersiveXrActive()) ||
+            (typeof self.isDirectVrPresentationActive === 'function' && self.isDirectVrPresentationActive())) {
+            return { allowed: false, skippedReason: 'immersive-xr', presentationMode };
+        }
+
+        if (presentationMode !== 'desktop-fullscreen') {
+            return { allowed: false, skippedReason: 'presentation-mode', presentationMode };
+        }
+
+        return { allowed: true, skippedReason: '', presentationMode };
+    }
+
+    function recordNavigationShadowRefreshSkip(self, skippedReason, eligibility) {
+        if (!self) {
+            return;
+        }
+
+        self._vrodosNavigationShadowRefreshLastSkippedReason = skippedReason || 'skipped';
+        self._vrodosNavigationShadowRefreshLastPresentationMode = eligibility && eligibility.presentationMode
+            ? eligibility.presentationMode
+            : null;
+        updateShadowPerfDebugOverlay(self);
+    }
+
+    function clearNavigationShadowRefreshSettleTimer(self) {
+        if (!self || !self._vrodosNavigationShadowRefreshSettleTimer) {
+            return;
+        }
+
+        const timer = self._vrodosNavigationShadowRefreshSettleTimer;
+        self._vrodosNavigationShadowRefreshSettleTimer = null;
+        if (typeof window !== 'undefined' && typeof window.clearTimeout === 'function') {
+            window.clearTimeout(timer);
+        } else if (typeof clearTimeout === 'function') {
+            clearTimeout(timer);
+        }
+    }
+
+    function scheduleNavigationShadowRefreshSettle(self, refreshReason, options) {
+        const opts = options || {};
+        const settleMs = Number(opts.settleMs);
+        if (!Number.isFinite(settleMs) || settleMs <= 0) {
+            return;
+        }
+
+        const eligibility = getNavigationShadowRefreshEligibility(self, opts);
+        if (!eligibility.allowed) {
+            clearNavigationShadowRefreshSettleTimer(self);
+            return;
+        }
+
+        clearNavigationShadowRefreshSettleTimer(self);
+        const setTimer = typeof window !== 'undefined' && typeof window.setTimeout === 'function'
+            ? window.setTimeout.bind(window)
+            : (typeof setTimeout === 'function' ? setTimeout : null);
+        if (!setTimer) {
+            return;
+        }
+
+        self._vrodosNavigationShadowRefreshSettleTimer = setTimer(() => {
+            self._vrodosNavigationShadowRefreshSettleTimer = null;
+            applyNavigationShadowRefresh(self, `${refreshReason || 'navigation-shadow-camera'}-settle`, Object.assign({}, opts, {
+                force: true,
+                settleMs: 0
+            }));
+        }, settleMs);
+    }
+
+    function applyNavigationShadowRefresh(self, reason, options) {
+        const refreshReason = reason || 'navigation-shadow-camera';
+        const opts = options || {};
+        const eligibility = getNavigationShadowRefreshEligibility(self, opts);
+        if (!eligibility.allowed) {
+            recordNavigationShadowRefreshSkip(self, eligibility.skippedReason, eligibility);
+            return false;
+        }
+
+        let force = opts.force === true;
+        const now = getRuntimeNowMs();
+        const throttleMs = Number.isFinite(Number(opts.throttleMs))
+            ? Math.max(0, Number(opts.throttleMs))
+            : 90;
+
+        if (!force &&
+            self._vrodosNavigationShadowRefreshLastAppliedMs &&
+            (now - self._vrodosNavigationShadowRefreshLastAppliedMs) < throttleMs) {
+            recordNavigationShadowRefreshSkip(self, 'throttled', eligibility);
+            return false;
+        }
+
+        if (!self._vrodosNavigationShadowRefreshCameraPosition) {
+            self._vrodosNavigationShadowRefreshCameraPosition = new THREE.Vector3();
+            self._vrodosNavigationShadowRefreshCurrentCameraPosition = new THREE.Vector3();
+            force = true;
+        }
+
+        self.el.camera.getWorldPosition(self._vrodosNavigationShadowRefreshCurrentCameraPosition);
+        const distanceSq = self._vrodosNavigationShadowRefreshCurrentCameraPosition.distanceToSquared(self._vrodosNavigationShadowRefreshCameraPosition);
+        const minDistance = Number.isFinite(Number(opts.minDistance))
+            ? Math.max(0, Number(opts.minDistance))
+            : 0.35;
+
+        self._vrodosNavigationShadowRefreshLastDistance = Math.sqrt(distanceSq);
+        if (!force && minDistance > 0 && distanceSq < (minDistance * minDistance)) {
+            recordNavigationShadowRefreshSkip(self, 'distance', eligibility);
+            return false;
+        }
+
+        self._vrodosNavigationShadowRefreshCameraPosition.copy(self._vrodosNavigationShadowRefreshCurrentCameraPosition);
+        if (!self._vrodosShadowFitCameraPosition) {
+            self._vrodosShadowFitCameraPosition = new THREE.Vector3();
+            self._vrodosShadowFitCurrentCameraPosition = new THREE.Vector3();
+        }
+        self._vrodosShadowFitCameraPosition.copy(self._vrodosNavigationShadowRefreshCurrentCameraPosition);
+        self._vrodosShadowFitCurrentCameraPosition.copy(self._vrodosNavigationShadowRefreshCurrentCameraPosition);
+
+        applyAdaptiveShadowFit(self);
+        if (typeof self.markShadowDirty === 'function') {
+            self.markShadowDirty(refreshReason);
+        }
+
+        self._vrodosNavigationShadowRefreshApplied = (self._vrodosNavigationShadowRefreshApplied || 0) + 1;
+        self._vrodosNavigationShadowRefreshLastReason = refreshReason;
+        self._vrodosNavigationShadowRefreshLastSkippedReason = '';
+        self._vrodosNavigationShadowRefreshLastPresentationMode = eligibility.presentationMode;
+        self._vrodosNavigationShadowRefreshLastAppliedMs = now;
+        updateShadowPerfDebugOverlay(self);
+        return true;
     }
 
     function markAllShadowLightsDirty(self) {
@@ -2667,6 +2834,10 @@
             `dirty requests: ${state.dirtyRequests}`,
             `last reason: ${state.lastDirtyReason || 'none'}`,
             `last update: ${state.lastUpdateReason || 'none'}`,
+            `navigation refresh: ${state.navigationRefreshApplied}/${state.navigationRefreshRequests}`,
+            `navigation refresh reason: ${state.navigationRefreshLastReason || 'none'}`,
+            `navigation refresh skip: ${state.navigationRefreshLastSkippedReason || 'none'}`,
+            `navigation refresh mode: ${state.navigationRefreshLastPresentationMode || 'none'}`,
             `takram signature: ${state.takramSignature || 'none'}`,
             `presented shadow transforms: ${state.presentedShadowTransforms}`,
             `presented shadow nav transform: ${state.presentedShadowLastNavigationTransformCount === null ? 'none' : state.presentedShadowLastNavigationTransformCount}`,
@@ -3296,12 +3467,12 @@
         const logMethod = verboseDiagnosticsEnabled ? 'info' : 'debug';
         const log = console[logMethod] || console.info || function () {};
         log.call(console, `[VRodos] PMNDRS horizon diagnostic (${  context  }): owner=${  owner
-            }, reflection=${  reflectionSource 
+            }, reflection=${  reflectionSource
             }, celestial=${  atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : 'manual'
             }/${  resolvedSkyTimePreset
-            }, ground=${  atmosphereConfig && atmosphereConfig.groundEnabled ? 'on' : 'off' 
-            }, sun=${  atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'off' : 'on' 
-            }, sunDir=${  formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null) 
+            }, ground=${  atmosphereConfig && atmosphereConfig.groundEnabled ? 'on' : 'off'
+            }, sun=${  atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? 'off' : 'on'
+            }, sunDir=${  formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null)
             }, helperKey=${  keyIntensity !== null ? keyIntensity.toFixed(2) : 'n/a'
             }, helperFill=${  fillIntensity !== null ? fillIntensity.toFixed(2) : 'n/a'
             }, pbrFill=${  pbrFillIntensity !== null ? pbrFillIntensity.toFixed(2) : 'n/a'
@@ -4905,7 +5076,7 @@
                 } else if (target.uniforms.ATMOSPHERE) {
                     atmpsVal = target.uniforms.ATMOSPHERE.value;
                 }
-                
+
                 if (atmpsVal && typeof atmpsVal.sun_angular_radius !== 'undefined') {
                     atmpsVal.sun_angular_radius = config.sunAngularRadius;
                 }
@@ -6417,10 +6588,10 @@
 
         const cfg = getPmndrsHorizonSunConfig(preset, opts.atmosphere ? 'atmosphere' : 'fallback');
         sprite.scale.set(cfg.scale, cfg.scale, 1);
-        
+
         // pmndrs applies ACES Filmic over the entire HDR framebuffer, which
-        // compresses LDR colors (<= 1.0) into dull grey. We must multiply the 
-        // sun's authored color so it sits in the HDR range and survives tone 
+        // compresses LDR colors (<= 1.0) into dull grey. We must multiply the
+        // sun's authored color so it sits in the HDR range and survives tone
         // mapping as a bright glowing light source.
         sprite.material.color.set(cfg.color).multiplyScalar(cfg.intensity || (opts.atmosphere ? 5.5 : 4.0));
         if (hazeSprite && hazeSprite.material) {
@@ -6601,6 +6772,20 @@
     };
     H.syncPresentedShadowLightTransforms = function () {
         return syncPresentedShadowLightTransforms(this);
+    };
+    H.requestNavigationShadowRefresh = function (reason, options) {
+        if (!this || !this.el) {
+            return false;
+        }
+
+        const refreshReason = reason || 'navigation-shadow-camera';
+        this._vrodosNavigationShadowRefreshRequests = (this._vrodosNavigationShadowRefreshRequests || 0) + 1;
+        const applied = applyNavigationShadowRefresh(this, refreshReason, options || {});
+        scheduleNavigationShadowRefreshSettle(this, refreshReason, options || {});
+        return applied;
+    };
+    H.clearNavigationShadowRefreshSettleTimer = function () {
+        clearNavigationShadowRefreshSettleTimer(this);
     };
     H.markShadowDirty = function (reason) {
         if (!this || !this.el) {

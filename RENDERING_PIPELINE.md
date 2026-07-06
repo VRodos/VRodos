@@ -22,6 +22,7 @@ Presentation mode is part of the rendering contract:
 
 - Inline desktop and desktop fullscreen use the same eligible post-FX path.
 - Real immersive WebXR is detected through `renderer.xr.isPresenting`.
+- A-Frame `vr-mode` without `renderer.xr.isPresenting` is desktop fullscreen shell state, not immersive XR; desktop movement, fly-pose preservation across Escape/fullscreen exit, shadow fitting, reflections, and post-FX remain on the desktop pipeline.
 - In immersive XR, XR-unsafe screen-space composer passes can fall back to direct stereo rendering while scene-owned visuals remain active: Horizon/Takram sky, scene-owned lights, fog, exposure/tone mapping, environment maps, and material profiles.
 - VR feature parity is selected in the compile UI as `Runtime Target`: `Desktop`, `VR Headset Full`, or `VR Headset - PC Rendered`. Internally this is stored as `scene-settings.vrRuntimeProfile`: `desktop`, `headset`, or `pc-rendered-vr`. Legacy hidden profile names normalize to `headset` for compatibility only; older compiled scenes should be recompiled into the current pipeline.
 - `headset` applies in browser-tab mode and immersive VR. It preserves native renderer antialiasing, hard-caps shadow maps, keeps PMNDRS/legacy composer ownership, clouds, scene probes, Takram sky PMREM capture, and WebXR layers disabled by default, and only keeps authored Takram/HDR paths that are allowed by the current policy.
@@ -311,7 +312,7 @@ Compiled desktop scenes default to cached static shadow updates through the `sce
 - `static`: render shadow maps on load/reveal and explicit dirty events, then keep `renderer.shadowMap.autoUpdate = false` for steady frames.
 - `dynamic`: keep per-frame shadow-map updates for authored scenes that genuinely need moving shadow casters.
 
-Runtime dirty events call `markShadowDirty(reason)` and are flushed through a debounced `flushShadowUpdate()` path. Current dirty sources include model load, delayed scene reveal, resize, material profile changes, photoreal/Takram helper light changes, and forced adaptive shadow refits. `?vrodos_debug_shadow_perf=1` shows shadow mode, update count, dirty reason, caster/receiver counts, and shadow-light counts.
+Runtime dirty events call `markShadowDirty(reason)` and are flushed through a debounced `flushShadowUpdate()` path. Current dirty sources include model load, delayed scene reveal, resize, material profile changes, photoreal/Takram helper light changes, forced adaptive shadow refits, and desktop fullscreen navigation refits. In static shadow mode, desktop fullscreen movement requests a throttled camera-focused adaptive shadow fit plus a short settle refresh after movement; this keeps `renderer.shadowMap.autoUpdate = false` for steady frames instead of switching the whole scene to dynamic shadows. `?vrodos_debug_shadow_perf=1` shows shadow mode, update count, dirty reason, navigation refresh counts/skips, caster/receiver counts, and shadow-light counts.
 
 The compiler emits semantic shadow roles so runtime profiles can exclude non-visual helpers while keeping visible authored content realistic:
 

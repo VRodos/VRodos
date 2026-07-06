@@ -325,6 +325,16 @@ AFRAME.registerComponent('custom-movement', {
         this.lastNonImmersiveHeightOffset = 1.6;
         this.hasLastNonImmersiveGround = false;
         this.lastNonImmersiveGroundRememberedAt = 0;
+        this.desktopFullscreenWasActive = false;
+        this.desktopFullscreenNavigationPose = new THREE.Vector3();
+        this.desktopFullscreenRestorePosition = new THREE.Vector3();
+        this.hasDesktopFullscreenNavigationPose = false;
+        this.desktopFullscreenNavigationPoseCapturedAt = 0;
+        this.desktopFullscreenNavigationPoseReason = '';
+        this.desktopFullscreenPoseRestoreTimers = [];
+        this.desktopFullscreenPoseRestoreActiveUntil = 0;
+        this.desktopFullscreenPoseRestoreAppliedAt = 0;
+        this.lastDesktopFullscreenPoseRestoreDiagnostics = null;
         this.desktopVisionHeightOffset = null;
         this.desktopVisionGroundY = null;
         this.desktopVisionNavigationY = null;
@@ -392,6 +402,7 @@ AFRAME.registerComponent('custom-movement', {
         this.handleEnterVr = this.handleEnterVr.bind(this);
         this.handleExitVr = this.handleExitVr.bind(this);
         this.handleControllerModelLoaded = this.handleControllerModelLoaded.bind(this);
+        this.handleDesktopFullscreenChange = this.handleDesktopFullscreenChange.bind(this);
 
         this.thumbL = document.querySelector('#oculusLeft');
         this.thumbR = document.querySelector('#oculusRight');
@@ -433,6 +444,10 @@ AFRAME.registerComponent('custom-movement', {
 
         window.addEventListener('keydown', this.handleKeyDown, true);
         window.addEventListener('keyup', this.handleKeyUp, true);
+        document.addEventListener('fullscreenchange', this.handleDesktopFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', this.handleDesktopFullscreenChange);
+        document.addEventListener('mozfullscreenchange', this.handleDesktopFullscreenChange);
+        document.addEventListener('MSFullscreenChange', this.handleDesktopFullscreenChange);
     },
     createGroundHit: function () {
         return {
@@ -543,10 +558,19 @@ AFRAME.registerComponent('custom-movement', {
         };
     },
     getCurrentPresentationMode: function () {
+        const settingsComponent = this.getSceneSettingsComponent ? this.getSceneSettingsComponent() : null;
+        if (settingsComponent && typeof settingsComponent.getPresentationMode === 'function') {
+            return settingsComponent.getPresentationMode();
+        }
+
         const renderer = this.sceneEl && this.sceneEl.renderer ? this.sceneEl.renderer : null;
         const xr = renderer && renderer.xr ? renderer.xr : null;
         if (xr && xr.isPresenting) {
             return 'immersive-xr';
+        }
+
+        if (this.isDocumentFullscreenActive()) {
+            return 'desktop-fullscreen';
         }
 
         if (this.sceneEl && this.sceneEl.is && this.sceneEl.is('ar-mode')) {
@@ -558,6 +582,16 @@ AFRAME.registerComponent('custom-movement', {
         }
 
         return 'inline';
+    },
+    isDocumentFullscreenActive: function () {
+        if (typeof document === 'undefined') {
+            return false;
+        }
+
+        return Boolean(document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement);
     },
     getXrFrameRate: function () {
         const renderer = this.sceneEl && this.sceneEl.renderer ? this.sceneEl.renderer : null;
@@ -977,27 +1011,216 @@ AFRAME.registerComponent('custom-movement', {
         this.lastImmersiveExitHandoffDiagnostics = diagnostics;
         return diagnostics;
     },
+    clearDesktopFullscreenPoseRestoreTimers: function () {
+        if (this.desktopFullscreenPoseRestoreTimers && this.desktopFullscreenPoseRestoreTimers.length) {
+            this.desktopFullscreenPoseRestoreTimers.forEach((timerId) => window.clearTimeout(timerId));
+        }
+        this.desktopFullscreenPoseRestoreTimers = [];
+    },
+    canPreserveDesktopFullscreenNavigationPose: function (settings) {
+        return !this.isImmersiveXrPresenting() && this.getNavigationMode(settings) === 'fly';
+    },
+    hasActiveNavigationInput: function () {
+        const deadzone = this.data && Number.isFinite(this.data.thumbstickDeadzone)
+            ? this.data.thumbstickDeadzone
+            : 0.08;
+        const input = this.lastEffectiveMoveInput || {};
+        const keyboard = this.keyboardInput || {};
+        const left = this.leftThumbInput || {};
+        const right = this.rightThumbInput || {};
+
+        return Math.abs(input.x || 0) > 0.0001 ||
+            Math.abs(input.y || 0) > 0.0001 ||
+            Math.abs(input.vertical || 0) > 0.0001 ||
+            Math.abs(keyboard.x || 0) > 0.0001 ||
+            Math.abs(keyboard.y || 0) > 0.0001 ||
+            Math.abs(keyboard.vertical || 0) > 0.0001 ||
+            Math.abs(left.x || 0) > deadzone ||
+            Math.abs(left.y || 0) > deadzone ||
+            Math.abs(right.x || 0) > deadzone ||
+            Math.abs(right.y || 0) > deadzone;
+    },
+    captureDesktopFullscreenNavigationPose: function (reason, settings) {
+        if (!this.isDocumentFullscreenActive() || !this.canPreserveDesktopFullscreenNavigationPose(settings)) {
+            return false;
+        }
+
+        const currentPosition = this.getNavigationWorldPosition();
+        if (!currentPosition) {
+            return false;
+        }
+
+        this.desktopFullscreenNavigationPose.copy(currentPosition);
+        this.hasDesktopFullscreenNavigationPose = true;
+        this.desktopFullscreenNavigationPoseCapturedAt = Date.now();
+        this.desktopFullscreenNavigationPoseReason = reason || '';
+        return true;
+    },
+    scheduleDesktopFullscreenNavigationPoseRestore: function (reason) {
+        if (!this.hasDesktopFullscreenNavigationPose) {
+            return false;
+        }
+
+        this.desktopFullscreenPoseRestoreActiveUntil = Date.now() + 1200;
+        this.desktopFullscreenPoseRestoreAppliedAt = 0;
+        this.clearDesktopFullscreenPoseRestoreTimers();
+        [0, 50, 140, 320, 650].forEach((delay, attemptIndex) => {
+            const timerId = window.setTimeout(() => {
+                this.restoreDesktopFullscreenNavigationPose(reason || 'desktop-fullscreen-exit', attemptIndex);
+            }, delay);
+            this.desktopFullscreenPoseRestoreTimers.push(timerId);
+        });
+        return true;
+    },
+    restoreDesktopFullscreenNavigationPose: function (reason, attemptIndex) {
+        const now = Date.now();
+        const diagnostics = {
+            reason: reason || '',
+            attempt: typeof attemptIndex === 'number' ? attemptIndex : -1,
+            timestamp: now,
+            applied: false,
+            status: 'not-run',
+            fullscreenActive: this.isDocumentFullscreenActive(),
+            immersiveActive: this.isImmersiveXrPresenting(),
+            navigationMode: this.getNavigationMode(),
+            capturedReason: this.desktopFullscreenNavigationPoseReason || '',
+            capturedAt: this.desktopFullscreenNavigationPoseCapturedAt || 0,
+            ageMs: this.desktopFullscreenNavigationPoseCapturedAt ? now - this.desktopFullscreenNavigationPoseCapturedAt : null,
+            pendingWindowMs: Math.max(0, (this.desktopFullscreenPoseRestoreActiveUntil || 0) - now),
+            targetPosition: this.getImmersiveExitNavigationVectorDiagnostics(this.desktopFullscreenNavigationPose)
+        };
+
+        if (!this.hasDesktopFullscreenNavigationPose) {
+            diagnostics.status = 'no-captured-position';
+            this.lastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            window.__vrodosLastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            return diagnostics;
+        }
+
+        if (diagnostics.fullscreenActive) {
+            diagnostics.status = 'still-fullscreen';
+            this.lastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            window.__vrodosLastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            return diagnostics;
+        }
+
+        if (diagnostics.immersiveActive || this.immersiveWasPresenting) {
+            diagnostics.status = 'immersive-active';
+            this.lastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            window.__vrodosLastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            return diagnostics;
+        }
+
+        if (diagnostics.navigationMode !== 'fly') {
+            diagnostics.status = 'not-fly-mode';
+            this.lastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            window.__vrodosLastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            return diagnostics;
+        }
+
+        this.desktopFullscreenRestorePosition.copy(this.desktopFullscreenNavigationPose);
+        const beforePosition = this.getNavigationWorldPosition().clone();
+        diagnostics.beforePosition = this.getImmersiveExitNavigationVectorDiagnostics(beforePosition);
+        diagnostics.distance = Number(beforePosition.distanceTo(this.desktopFullscreenRestorePosition).toFixed(4));
+        diagnostics.yDistance = Number(Math.abs(beforePosition.y - this.desktopFullscreenRestorePosition.y).toFixed(4));
+        diagnostics.inputActive = this.hasActiveNavigationInput();
+
+        if (this.desktopFullscreenPoseRestoreAppliedAt > 0 && diagnostics.inputActive && diagnostics.yDistance < 0.25) {
+            diagnostics.status = 'preserved-user-movement';
+            this.lastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            window.__vrodosLastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            return diagnostics;
+        }
+
+        if (diagnostics.distance < 0.0001) {
+            diagnostics.status = 'already-current';
+            diagnostics.applied = true;
+            this.desktopFullscreenPoseRestoreAppliedAt = now;
+            this.lastResolvedPosition.copy(this.desktopFullscreenRestorePosition);
+            this.positionPrimed = true;
+            this.lastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            window.__vrodosLastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+            return diagnostics;
+        }
+
+        const applied = this.setNavigationWorldPosition(this.desktopFullscreenRestorePosition);
+        diagnostics.applied = Boolean(applied);
+        diagnostics.status = applied ? 'applied' : 'apply-failed';
+        diagnostics.afterPosition = this.getImmersiveExitNavigationVectorDiagnostics(this.getNavigationWorldPosition());
+
+        if (applied) {
+            this.desktopFullscreenPoseRestoreAppliedAt = now;
+            this.lastResolvedPosition.copy(this.desktopFullscreenRestorePosition);
+            this.lastNonImmersiveNavigationPosition.copy(this.desktopFullscreenRestorePosition);
+            this.hasLastNonImmersiveNavigationPosition = true;
+            this.lastNonImmersiveGroundRememberedAt = this.getRuntimeNow();
+            this.positionPrimed = true;
+            this.hasLastGroundHit = false;
+            this.heightOffset = null;
+        }
+
+        this.lastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+        window.__vrodosLastDesktopFullscreenPoseRestoreDiagnostics = diagnostics;
+        return diagnostics;
+    },
+    handleDesktopFullscreenChange: function () {
+        if (this.isImmersiveXrPresenting()) {
+            return;
+        }
+
+        if (this.isDocumentFullscreenActive()) {
+            this.desktopFullscreenWasActive = true;
+            this.desktopFullscreenPoseRestoreActiveUntil = 0;
+            this.clearDesktopFullscreenPoseRestoreTimers();
+            this.captureDesktopFullscreenNavigationPose('desktop-fullscreen-enter');
+            return;
+        }
+
+        if (!this.desktopFullscreenWasActive && !this.hasDesktopFullscreenNavigationPose) {
+            return;
+        }
+
+        this.desktopFullscreenWasActive = false;
+        this.scheduleDesktopFullscreenNavigationPoseRestore('desktop-fullscreen-exit');
+    },
     handleEnterVr: function () {
-        this.resetImmersiveTurnSmoothing('enter-vr');
-        this.pendingImmersiveExitNavigationPosition = null;
-        this.pendingImmersiveExitNavigationReason = '';
-        this.pendingImmersiveExitNavigationCapturedAt = 0;
-        this.clearImmersiveExitNavigationHandoffTimers();
-        this.immersiveControllerRayVisualResetFrames = 8;
-        this.immersiveControllerRayVisualsConfigured = false;
-        this.immersiveControllerShadowsSuppressed = false;
-        this.immersiveOverlayShadowSuppressionDirty = true;
-        this.immersiveLastPresentedShadowSyncAt = 0;
-        this.immersiveLastPresentedShadowSyncTransformCount = -1;
-        this.rememberNonImmersiveNavigationPosition(true);
-        window.setTimeout(() => {
-            if (this.isImmersiveXrPresenting()) {
-                this.resetImmersiveWorldLocomotion();
-                this.ensureImmersiveRuntimeHelpers();
-            }
-        }, 100);
+        const runImmersiveEntry = () => {
+            this.resetImmersiveTurnSmoothing('enter-vr');
+            this.pendingImmersiveExitNavigationPosition = null;
+            this.pendingImmersiveExitNavigationReason = '';
+            this.pendingImmersiveExitNavigationCapturedAt = 0;
+            this.clearImmersiveExitNavigationHandoffTimers();
+            this.immersiveControllerRayVisualResetFrames = 8;
+            this.immersiveControllerRayVisualsConfigured = false;
+            this.immersiveControllerShadowsSuppressed = false;
+            this.immersiveOverlayShadowSuppressionDirty = true;
+            this.immersiveLastPresentedShadowSyncAt = 0;
+            this.immersiveLastPresentedShadowSyncTransformCount = -1;
+            this.rememberNonImmersiveNavigationPosition(true);
+            window.setTimeout(() => {
+                if (this.isImmersiveXrPresenting()) {
+                    this.resetImmersiveWorldLocomotion();
+                    this.ensureImmersiveRuntimeHelpers();
+                }
+            }, 100);
+        };
+
+        if (!this.isImmersiveXrPresenting()) {
+            window.setTimeout(() => {
+                if (this.isImmersiveXrPresenting()) {
+                    runImmersiveEntry();
+                }
+            }, 100);
+            return;
+        }
+
+        runImmersiveEntry();
     },
     handleExitVr: function () {
+        if (!this.immersiveWasPresenting && !this.isImmersiveXrPresenting()) {
+            return;
+        }
+
         this.resetImmersiveTurnSmoothing('exit-vr');
         const finalImmersiveNavigationPosition = this.immersiveVirtualNavPosition.clone();
         this.pendingImmersiveExitNavigationPosition = finalImmersiveNavigationPosition.clone();
@@ -1204,7 +1427,12 @@ AFRAME.registerComponent('custom-movement', {
         this.sceneEl.removeEventListener('exit-vr', this.handleExitVr);
         window.removeEventListener('keydown', this.handleKeyDown, true);
         window.removeEventListener('keyup', this.handleKeyUp, true);
+        document.removeEventListener('fullscreenchange', this.handleDesktopFullscreenChange);
+        document.removeEventListener('webkitfullscreenchange', this.handleDesktopFullscreenChange);
+        document.removeEventListener('mozfullscreenchange', this.handleDesktopFullscreenChange);
+        document.removeEventListener('MSFullscreenChange', this.handleDesktopFullscreenChange);
         this.clearImmersiveExitNavigationHandoffTimers();
+        this.clearDesktopFullscreenPoseRestoreTimers();
         if (this.immersiveShadowRefreshPendingTimer) {
             window.clearTimeout(this.immersiveShadowRefreshPendingTimer);
             this.immersiveShadowRefreshPendingTimer = null;
@@ -2244,6 +2472,27 @@ AFRAME.registerComponent('custom-movement', {
         }
         this.addImmersiveSmoothnessDuration(smoothnessFrame, 'shadowRefreshRequestMs', this.getRuntimeNow() - refreshStartedAt);
     },
+    notifyDesktopNavigationShadowRefresh: function (reason) {
+        const presentationMode = this.getCurrentPresentationMode();
+        if (presentationMode !== 'desktop-fullscreen') {
+            return false;
+        }
+
+        const settings = this.getSceneSettingsComponent();
+        if (!settings || typeof settings.requestNavigationShadowRefresh !== 'function') {
+            return false;
+        }
+        if (typeof settings.isStaticShadowMode === 'function' && !settings.isStaticShadowMode()) {
+            return false;
+        }
+
+        return settings.requestNavigationShadowRefresh(reason || 'desktop-navigation', {
+            presentationMode,
+            settleMs: 140,
+            throttleMs: 90,
+            minDistance: 0.35
+        });
+    },
     suppressImmersiveControllerShadows: function () {
         if (this.immersiveControllerShadowsSuppressed) {
             return 0;
@@ -3202,11 +3451,7 @@ AFRAME.registerComponent('custom-movement', {
     },
     isImmersiveXrPresenting: function () {
         const xr = this.sceneEl && this.sceneEl.renderer ? this.sceneEl.renderer.xr : null;
-        if (xr && xr.isPresenting) {
-            return true;
-        }
-
-        return Boolean(this.sceneEl && this.sceneEl.is && (this.sceneEl.is('vr-mode') || this.sceneEl.is('ar-mode')));
+        return Boolean(xr && xr.isPresenting);
     },
     getImmersiveSmoothedTurnInput: function (targetInput, deltaSeconds) {
         const previousInput = Number.isFinite(this.immersiveTurnSmoothedInput)
@@ -4156,7 +4401,7 @@ AFRAME.registerComponent('custom-movement', {
     },
     applyDirectMovement: function (deltaX, deltaZ) {
         if (Math.abs(deltaX) < 0.00001 && Math.abs(deltaZ) < 0.00001) {
-            return;
+            return false;
         }
 
         this.targetWorldPosition.copy(this.lastResolvedPosition);
@@ -4167,11 +4412,15 @@ AFRAME.registerComponent('custom-movement', {
         if (this.measureImmersiveSmoothness(smoothnessFrame, 'setPositionMs', () => this.setNavigationWorldPosition(this.targetWorldPosition))) {
             this.lastResolvedPosition.copy(this.targetWorldPosition);
             this.hasLastGroundHit = false;
+            this.notifyDesktopNavigationShadowRefresh('desktop-navigation-direct');
+            this.captureDesktopFullscreenNavigationPose('desktop-fullscreen-direct');
+            return true;
         }
+        return false;
     },
     applyFreeMovement: function (deltaX, deltaY, deltaZ) {
         if (Math.abs(deltaX) < 0.00001 && Math.abs(deltaY) < 0.00001 && Math.abs(deltaZ) < 0.00001) {
-            return;
+            return false;
         }
 
         this.targetWorldPosition.copy(this.lastResolvedPosition);
@@ -4184,7 +4433,11 @@ AFRAME.registerComponent('custom-movement', {
             this.lastResolvedPosition.copy(this.targetWorldPosition);
             this.hasLastGroundHit = false;
             this.heightOffset = null;
+            this.notifyDesktopNavigationShadowRefresh('desktop-navigation-free');
+            this.captureDesktopFullscreenNavigationPose('desktop-fullscreen-free');
+            return true;
         }
+        return false;
     },
     applyConstrainedMovement: function (deltaX, deltaZ) {
         const clearFirstMovementGroundLock = this.isImmersiveXrPresenting() &&
@@ -4263,6 +4516,8 @@ AFRAME.registerComponent('custom-movement', {
         this.setResolvedGroundHit(resolvedStep.ground, this.targetWorldPosition, this.lastGroundHit);
         this.hasLastGroundHit = true;
         this.recordStableAutoGround(this.lastResolvedPosition, this.lastGroundHit);
+        this.notifyDesktopNavigationShadowRefresh('desktop-navigation-constrained');
+        this.captureDesktopFullscreenNavigationPose('desktop-fullscreen-constrained');
         return finalizeConstrained(true);
     },
     tick: function (time, timeDelta) {
@@ -4301,12 +4556,16 @@ AFRAME.registerComponent('custom-movement', {
                 this.ensureNavigationStatePrimed();
             });
 
+            const navigationMode = this.getNavigationMode(settings);
+            const flyMode = navigationMode === 'fly';
+            if (!immersivePresenting && flyMode && this.desktopFullscreenPoseRestoreActiveUntil > Date.now()) {
+                this.restoreDesktopFullscreenNavigationPose('desktop-fullscreen-exit-tick');
+            }
+
             const currentPosition = this.tickWorldPosition.copy(this.getNavigationWorldPosition());
             const externalDeltaX = currentPosition.x - this.lastResolvedPosition.x;
             const externalDeltaY = currentPosition.y - this.lastResolvedPosition.y;
             const externalDeltaZ = currentPosition.z - this.lastResolvedPosition.z;
-            const navigationMode = this.getNavigationMode(settings);
-            const flyMode = navigationMode === 'fly';
             let hasExternalMovement = Math.abs(externalDeltaX) > 0.0001 ||
                 Math.abs(externalDeltaZ) > 0.0001 ||
                 (flyMode && Math.abs(externalDeltaY) > 0.0001);

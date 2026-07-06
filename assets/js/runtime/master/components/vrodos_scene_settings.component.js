@@ -592,7 +592,7 @@ AFRAME.registerComponent('scene-settings', {
         return 'inline';
     },
     isVrPresentationActive: function () {
-        return this.isImmersiveXrActive() || this.isAFrameVrModeActive();
+        return this.isImmersiveXrActive();
     },
     isMobileDevice: function () {
         return Boolean(AFRAME.utils &&
@@ -2332,6 +2332,15 @@ AFRAME.registerComponent('scene-settings', {
         return true;
     },
     handleXrEnter: function () {
+        if (!this.isDirectVrPresentationActive()) {
+            window.setTimeout(() => {
+                if (this.isDirectVrPresentationActive()) {
+                    this.handleXrEnter();
+                }
+            }, 100);
+            return;
+        }
+
         if (!this._xrExitRestoreBaseline) {
             this.captureXrExitRestoreBaseline('enter-vr-baseline');
         }
@@ -2347,6 +2356,11 @@ AFRAME.registerComponent('scene-settings', {
         if (typeof window.gtag === 'function') window.gtag('event', 'vr_enabled');
     },
     handleXrExit: function () {
+        if (!this._xrExitRestoreHasSeenVr && !this._xrExitRestoreActive && !this.isDirectVrPresentationActive()) {
+            this.syncPresentationVisualState(true);
+            return;
+        }
+
         this.applyVrRenderBudgetPolicy('exit-vr');
         this.syncPresentationVisualState(true);
         this.scheduleXrExitRestore('aframe-exit-vr');
@@ -2799,6 +2813,8 @@ AFRAME.registerComponent('scene-settings', {
     flushShadowUpdate: VRODOSSceneSettingsMaster.SceneSettingsHelpers.flushShadowUpdate || vrodosRuntimeNoop,
     syncStaticShadowMode: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncStaticShadowMode || vrodosRuntimeNoop,
     getShadowDiagnosticState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getShadowDiagnosticState || function () { return null; },
+    requestNavigationShadowRefresh: VRODOSSceneSettingsMaster.SceneSettingsHelpers.requestNavigationShadowRefresh || function () { return false; },
+    clearNavigationShadowRefreshSettleTimer: VRODOSSceneSettingsMaster.SceneSettingsHelpers.clearNavigationShadowRefreshSettleTimer || vrodosRuntimeNoop,
     syncPresentedShadowLightTransforms: VRODOSSceneSettingsMaster.SceneSettingsHelpers.syncPresentedShadowLightTransforms || vrodosRuntimeNoop,
     applyMaterialProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyMaterialProfiles,
     ensurePhotorealHelperLight: VRODOSSceneSettingsMaster.SceneSettingsHelpers.ensurePhotorealHelperLight,
@@ -3179,6 +3195,9 @@ AFRAME.registerComponent('scene-settings', {
             }
             clearTimeout(this._vrodosShadowFlushHandle);
             this._vrodosShadowFlushHandle = null;
+        }
+        if (typeof this.clearNavigationShadowRefreshSettleTimer === 'function') {
+            this.clearNavigationShadowRefreshSettleTimer();
         }
         if (this._vrodosShadowPerfOverlay && this._vrodosShadowPerfOverlay.parentNode) {
             this._vrodosShadowPerfOverlay.parentNode.removeChild(this._vrodosShadowPerfOverlay);
