@@ -121,6 +121,12 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsCloudsQuality: document.getElementById('compilePmndrsCloudsQualitySelect'),
             pmndrsCloudsCoverage: document.getElementById('compilePmndrsCloudsCoverageSlider'),
             pmndrsCloudsCoverageValue: document.getElementById('compilePmndrsCloudsCoverageValue'),
+            pmndrsCloudsStyle: document.getElementById('compilePmndrsCloudsStyleSelect'),
+            pmndrsCloudsWind: document.getElementById('compilePmndrsCloudsWindToggle'),
+            pmndrsCloudsWindSpeed: document.getElementById('compilePmndrsCloudsWindSpeedSlider'),
+            pmndrsCloudsWindSpeedValue: document.getElementById('compilePmndrsCloudsWindSpeedValue'),
+            pmndrsCloudsWindDirection: document.getElementById('compilePmndrsCloudsWindDirectionSlider'),
+            pmndrsCloudsWindDirectionValue: document.getElementById('compilePmndrsCloudsWindDirectionValue'),
             pmndrsCorrectAltitude: document.getElementById('compilePmndrsCorrectAltitudeToggle'),
             pmndrsAtmosphereAdvanced: document.getElementById('compilePmndrsAtmosphereAdvanced'),
             pmndrsSunElevation: document.getElementById('compilePmndrsSunElevationSlider'),
@@ -460,6 +466,22 @@ window.addEventListener('DOMContentLoaded', () => {
             Shared.PMNDRS_TWEAK_DEFAULTS.cloudsCoverage,
             0.01
         );
+        VRODOS.editor.envir.scene.aframePmndrsCloudsStyle = VRodosCompileUI.Atmosphere.normalizeCloudsStyle(VRODOS.editor.envir.scene.aframePmndrsCloudsStyle);
+        VRODOS.editor.envir.scene.aframePmndrsCloudsWindEnabled = VRODOS.editor.envir.scene.aframePmndrsCloudsWindEnabled !== false;
+        VRODOS.editor.envir.scene.aframePmndrsCloudsWindSpeed = Shared.clampNumber(
+            VRODOS.editor.envir.scene.aframePmndrsCloudsWindSpeed,
+            0,
+            2,
+            Shared.PMNDRS_TWEAK_DEFAULTS.cloudsWindSpeed,
+            0.05
+        );
+        VRODOS.editor.envir.scene.aframePmndrsCloudsWindDirectionDeg = Shared.clampNumber(
+            VRODOS.editor.envir.scene.aframePmndrsCloudsWindDirectionDeg,
+            0,
+            360,
+            Shared.PMNDRS_TWEAK_DEFAULTS.cloudsWindDirectionDeg,
+            1
+        );
         VRODOS.editor.envir.scene.aframePmndrsCelestialMode = VRodosCompileUI.Atmosphere.normalizeCelestialMode(VRODOS.editor.envir.scene.aframePmndrsCelestialMode);
         VRODOS.editor.envir.scene.aframePmndrsCelestialTimePreset = VRodosCompileUI.Atmosphere.normalizeCelestialTimePreset(VRODOS.editor.envir.scene.aframePmndrsCelestialTimePreset);
         
@@ -594,6 +616,12 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (c.pmndrsCloudsCoverage && c.pmndrsCloudsCoverageValue) {
             c.pmndrsCloudsCoverageValue.textContent = Shared.formatNumber(parseFloat(c.pmndrsCloudsCoverage.value));
+        }
+        if (c.pmndrsCloudsWindSpeed && c.pmndrsCloudsWindSpeedValue) {
+            c.pmndrsCloudsWindSpeedValue.textContent = Shared.formatNumber(parseFloat(c.pmndrsCloudsWindSpeed.value));
+        }
+        if (c.pmndrsCloudsWindDirection && c.pmndrsCloudsWindDirectionValue) {
+            c.pmndrsCloudsWindDirectionValue.textContent = Shared.formatDegrees(c.pmndrsCloudsWindDirection.value);
         }
         if (c.pmndrsAerialStrength && c.pmndrsAerialStrengthValue) {
             c.pmndrsAerialStrengthValue.textContent = Shared.formatNumber(parseFloat(c.pmndrsAerialStrength.value));
@@ -988,6 +1016,33 @@ window.addEventListener('DOMContentLoaded', () => {
                 0.01
             );
         }
+        if (controls.pmndrsCloudsStyle) {
+            controls.pmndrsCloudsStyle.value = VRODOS.editor.envir && VRODOS.editor.envir.scene
+                ? VRodosCompileUI.Atmosphere.normalizeCloudsStyle(VRODOS.editor.envir.scene.aframePmndrsCloudsStyle)
+                : Shared.PMNDRS_TWEAK_DEFAULTS.cloudsStyle;
+        }
+        if (controls.pmndrsCloudsWind) {
+            controls.pmndrsCloudsWind.checked = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) ||
+                VRODOS.editor.envir.scene.aframePmndrsCloudsWindEnabled !== false;
+        }
+        if (controls.pmndrsCloudsWindSpeed) {
+            controls.pmndrsCloudsWindSpeed.value = Shared.clampNumber(
+                VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsCloudsWindSpeed : Shared.PMNDRS_TWEAK_DEFAULTS.cloudsWindSpeed,
+                0,
+                2,
+                Shared.PMNDRS_TWEAK_DEFAULTS.cloudsWindSpeed,
+                0.05
+            );
+        }
+        if (controls.pmndrsCloudsWindDirection) {
+            controls.pmndrsCloudsWindDirection.value = Shared.clampNumber(
+                VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsCloudsWindDirectionDeg : Shared.PMNDRS_TWEAK_DEFAULTS.cloudsWindDirectionDeg,
+                0,
+                360,
+                Shared.PMNDRS_TWEAK_DEFAULTS.cloudsWindDirectionDeg,
+                1
+            );
+        }
         if (controls.pmndrsCorrectAltitude) {
             controls.pmndrsCorrectAltitude.checked = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) || VRODOS.editor.envir.scene.aframePmndrsCorrectAltitudeEnabled !== false;
         }
@@ -1236,7 +1291,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     bindEngineTab(controls.postFxEngineTabLegacy);
     bindEngineTab(controls.postFxEngineTabPmndrs);
-    [controls.pmndrsBloomIntensity, controls.pmndrsBloomThreshold, controls.pmndrsExposure, controls.pmndrsLutStrength, controls.pmndrsVignetteDarkness, controls.pmndrsNoiseOpacity, controls.pmndrsChromaticAberrationOffset, controls.pmndrsAtmospherePresetIntensity, controls.pmndrsCloudsCoverage].forEach((el) => {
+    [
+        controls.pmndrsBloomIntensity,
+        controls.pmndrsBloomThreshold,
+        controls.pmndrsExposure,
+        controls.pmndrsLutStrength,
+        controls.pmndrsVignetteDarkness,
+        controls.pmndrsNoiseOpacity,
+        controls.pmndrsChromaticAberrationOffset,
+        controls.pmndrsAtmospherePresetIntensity,
+        controls.pmndrsCloudsCoverage,
+        controls.pmndrsCloudsWindSpeed,
+        controls.pmndrsCloudsWindDirection
+    ].forEach((el) => {
         if (el) {
             el.addEventListener('input', updatePmndrsValueLabels);
         }
@@ -1405,6 +1472,8 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.pmndrsAerialPerspective,
         controls.pmndrsClouds,
         controls.pmndrsCloudsQuality,
+        controls.pmndrsCloudsStyle,
+        controls.pmndrsCloudsWind,
         controls.pmndrsGeospatialLatitude,
         controls.pmndrsGeospatialLongitude,
         controls.pmndrsGeospatialAltitude
@@ -1462,6 +1531,34 @@ window.addEventListener('DOMContentLoaded', () => {
             VRodosCompileUI.Atmosphere.syncToScene(controls);
         });
     }
+    if (controls.pmndrsCloudsWindSpeed) {
+        controls.pmndrsCloudsWindSpeed.addEventListener('change', () => {
+            controls.pmndrsCloudsWindSpeed.value = Shared.clampNumber(
+                controls.pmndrsCloudsWindSpeed.value,
+                0,
+                2,
+                Shared.PMNDRS_TWEAK_DEFAULTS.cloudsWindSpeed,
+                0.05
+            );
+            updatePmndrsValueLabels();
+            syncCompilePostFxState();
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
+        });
+    }
+    if (controls.pmndrsCloudsWindDirection) {
+        controls.pmndrsCloudsWindDirection.addEventListener('change', () => {
+            controls.pmndrsCloudsWindDirection.value = Shared.clampNumber(
+                controls.pmndrsCloudsWindDirection.value,
+                0,
+                360,
+                Shared.PMNDRS_TWEAK_DEFAULTS.cloudsWindDirectionDeg,
+                1
+            );
+            updatePmndrsValueLabels();
+            syncCompilePostFxState();
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
+        });
+    }
     if (controls.pmndrsResetBtn) {
         controls.pmndrsResetBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1489,6 +1586,10 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsClouds) c.pmndrsClouds.checked = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsEnabled;
             if (c.pmndrsCloudsQuality) c.pmndrsCloudsQuality.value = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsQuality;
             if (c.pmndrsCloudsCoverage) c.pmndrsCloudsCoverage.value = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsCoverage;
+            if (c.pmndrsCloudsStyle) c.pmndrsCloudsStyle.value = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsStyle;
+            if (c.pmndrsCloudsWind) c.pmndrsCloudsWind.checked = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsWindEnabled;
+            if (c.pmndrsCloudsWindSpeed) c.pmndrsCloudsWindSpeed.value = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsWindSpeed;
+            if (c.pmndrsCloudsWindDirection) c.pmndrsCloudsWindDirection.value = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsWindDirectionDeg;
             if (c.pmndrsCelestialMode) c.pmndrsCelestialMode.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialMode;
             if (c.pmndrsCelestialTimePreset) c.pmndrsCelestialTimePreset.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset;
             if (c.pmndrsCelestialDate) c.pmndrsCelestialDate.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialDate;

@@ -182,6 +182,39 @@
         return readPmndrsNumber(self, 'pmndrsCloudsCoverage', 0, 1, 0.35);
     }
 
+    function normalizePmndrsCloudsStyle(value) {
+        if (RuntimeSettings.normalizeEnum) {
+            return RuntimeSettings.normalizeEnum('pmndrsCloudsStyle', value, 'default');
+        }
+
+        switch (value) {
+            case 'default':
+            case 'scattered':
+            case 'broken':
+            case 'overcast':
+            case 'storm':
+                return value;
+            default:
+                return 'default';
+        }
+    }
+
+    function getPmndrsCloudsStyle(self) {
+        return normalizePmndrsCloudsStyle(self && self.data ? self.data.pmndrsCloudsStyle : 'default');
+    }
+
+    function isPmndrsCloudsWindEnabled(self) {
+        return readPmndrsBool(self, 'pmndrsCloudsWindEnabled');
+    }
+
+    function getPmndrsCloudsWindSpeed(self) {
+        return readPmndrsNumber(self, 'pmndrsCloudsWindSpeed', 0, 2, 1);
+    }
+
+    function getPmndrsCloudsWindDirectionDeg(self) {
+        return readPmndrsNumber(self, 'pmndrsCloudsWindDirectionDeg', 0, 360, 0);
+    }
+
     const PMNDRS_CLOUD_LENS_FLARE_COVERAGE_START = 0.62;
     const PMNDRS_CLOUD_LIGHT_SHAFT_COVERAGE_START = 0.35;
     const PMNDRS_CLOUD_SUN_VISIBILITY_FULL_Y = 0.08;
@@ -388,6 +421,110 @@
         return profile.layerProfile || '';
     }
 
+    const PMNDRS_CLOUD_DEFAULT_LAYERS = [
+        {
+            channel: 'r',
+            altitude: 750,
+            height: 650,
+            densityScale: 0.2,
+            shapeAmount: 1,
+            shapeDetailAmount: 1,
+            weatherExponent: 1,
+            shapeAlteringBias: 0.35,
+            coverageFilterWidth: 0.6,
+            shadow: true
+        },
+        {
+            channel: 'g',
+            altitude: 1000,
+            height: 1200,
+            densityScale: 0.2,
+            shapeAmount: 1,
+            shapeDetailAmount: 1,
+            weatherExponent: 1,
+            shapeAlteringBias: 0.35,
+            coverageFilterWidth: 0.6,
+            shadow: true
+        },
+        {
+            channel: 'b',
+            altitude: 7500,
+            height: 500,
+            densityScale: 0.003,
+            shapeAmount: 0.4,
+            shapeDetailAmount: 0,
+            weatherExponent: 1,
+            shapeAlteringBias: 0.35,
+            coverageFilterWidth: 0.5,
+            shadow: false
+        },
+        {
+            channel: 'a',
+            altitude: 0,
+            height: 0,
+            densityScale: 0.2,
+            shapeAmount: 1,
+            shapeDetailAmount: 1,
+            weatherExponent: 1,
+            shapeAlteringBias: 0.35,
+            coverageFilterWidth: 0.6,
+            shadow: false
+        }
+    ];
+
+    function clonePmndrsCloudLayers(layers) {
+        return (Array.isArray(layers) ? layers : PMNDRS_CLOUD_DEFAULT_LAYERS)
+            .map((layer) => Object.assign({}, layer));
+    }
+
+    function mergePmndrsCloudLayerOverrides(overrides) {
+        return PMNDRS_CLOUD_DEFAULT_LAYERS.map((layer, index) => Object.assign({}, layer, overrides && overrides[index] ? overrides[index] : {}));
+    }
+
+    const PMNDRS_CLOUD_STYLE_PROFILES = {
+        default: {
+            id: 'default',
+            layerProfile: 'takram-default',
+            layers: clonePmndrsCloudLayers(PMNDRS_CLOUD_DEFAULT_LAYERS)
+        },
+        scattered: {
+            id: 'scattered',
+            layerProfile: 'style-scattered',
+            layers: mergePmndrsCloudLayerOverrides([
+                { height: 520, densityScale: 0.14, shapeAmount: 0.86, shapeDetailAmount: 0.82 },
+                { altitude: 1250, height: 900, densityScale: 0.11, shapeAmount: 0.72, shapeDetailAmount: 0.72 },
+                { densityScale: 0.0018, shapeAmount: 0.25 }
+            ])
+        },
+        broken: {
+            id: 'broken',
+            layerProfile: 'style-broken',
+            layers: mergePmndrsCloudLayerOverrides([
+                { height: 680, densityScale: 0.19, shapeAmount: 0.95 },
+                { altitude: 1100, height: 1100, densityScale: 0.17, shapeAmount: 0.9 },
+                { densityScale: 0.0024, shapeAmount: 0.35 }
+            ])
+        },
+        overcast: {
+            id: 'overcast',
+            layerProfile: 'style-overcast',
+            layers: mergePmndrsCloudLayerOverrides([
+                { altitude: 700, height: 850, densityScale: 0.24, shapeAmount: 1, shapeDetailAmount: 0.9 },
+                { altitude: 950, height: 1450, densityScale: 0.24, shapeAmount: 1, shapeDetailAmount: 0.9 },
+                { densityScale: 0.0032, shapeAmount: 0.42 }
+            ])
+        },
+        storm: {
+            id: 'storm',
+            layerProfile: 'style-storm',
+            layers: mergePmndrsCloudLayerOverrides([
+                { altitude: 650, height: 950, densityScale: 0.29, shapeAmount: 1, shapeDetailAmount: 0.95 },
+                { altitude: 900, height: 1600, densityScale: 0.3, shapeAmount: 1, shapeDetailAmount: 0.95 },
+                { altitude: 6800, height: 650, densityScale: 0.004, shapeAmount: 0.45 }
+            ])
+        }
+    };
+
     const PMNDRS_CLOUD_PERFORMANCE_PROFILES = {
         low: {
             id: 'low-performance',
@@ -483,9 +620,20 @@
         }
     };
 
-    function getPmndrsCloudPerformanceProfile(quality) {
-        return PMNDRS_CLOUD_PERFORMANCE_PROFILES[normalizePmndrsCloudsQuality(quality)] ||
+    function getPmndrsCloudStyleProfile(style) {
+        const normalized = normalizePmndrsCloudsStyle(style);
+        return PMNDRS_CLOUD_STYLE_PROFILES[normalized] || PMNDRS_CLOUD_STYLE_PROFILES.default;
+    }
+
+    function getPmndrsCloudPerformanceProfile(quality, style) {
+        const base = PMNDRS_CLOUD_PERFORMANCE_PROFILES[normalizePmndrsCloudsQuality(quality)] ||
             PMNDRS_CLOUD_PERFORMANCE_PROFILES.low;
+        const styleProfile = getPmndrsCloudStyleProfile(style);
+        return Object.assign({}, base, {
+            style: styleProfile.id,
+            layerProfile: styleProfile.layerProfile,
+            layers: clonePmndrsCloudLayers(styleProfile.layers)
+        });
     }
 
     function getPmndrsCloudsResolutionScale(quality) {
@@ -542,15 +690,49 @@
         }
     }
 
-    function applyPmndrsCloudPerformanceProfile(effect, quality) {
-        if (!effect) {
-            return getPmndrsCloudPerformanceProfile(quality);
+    function getPmndrsCloudWindVelocity(self, profile) {
+        if (!isPmndrsCloudsWindEnabled(self)) {
+            return [0, 0];
         }
 
-        const profile = getPmndrsCloudPerformanceProfile(quality);
+        const speed = getPmndrsCloudsWindSpeed(self);
+        const directionRad = getPmndrsCloudsWindDirectionDeg(self) * Math.PI / 180;
+        const baseVelocity = profile && Array.isArray(profile.localWeatherVelocity)
+            ? profile.localWeatherVelocity
+            : [0.0003, 0];
+        const baseMagnitude = Math.max(
+            0.00001,
+            Math.sqrt(
+                ((baseVelocity[0] || 0) * (baseVelocity[0] || 0)) +
+                ((baseVelocity[1] || 0) * (baseVelocity[1] || 0))
+            )
+        );
+        const magnitude = baseMagnitude * speed;
+        return [
+            Math.cos(directionRad) * magnitude,
+            Math.sin(directionRad) * magnitude
+        ];
+    }
+
+    function applyPmndrsCloudWind(effect, self, profile) {
+        const velocity = getPmndrsCloudWindVelocity(self, profile);
+        if (effect) {
+            setPmndrsCloudVector(effect.localWeatherVelocity, velocity);
+            effect._vrodosCloudWindVelocity = velocity;
+        }
+        return velocity;
+    }
+
+    function applyPmndrsCloudPerformanceProfile(effect, quality, style) {
+        if (!effect) {
+            return getPmndrsCloudPerformanceProfile(quality, style);
+        }
+
+        const profile = getPmndrsCloudPerformanceProfile(quality, style);
         const accuratePhaseFunction = shouldUsePmndrsCloudAccuratePhaseFunction(profile);
         const signature = [
             profile.id,
+            profile.style || '',
             profile.takramQuality,
             profile.layerProfile || '',
             getPmndrsCloudLayerProfileSignature(profile.layers),
@@ -700,17 +882,25 @@
         }
 
         const previous = self._pmndrsCloudsDiagnostics || {};
-        const profile = getPmndrsCloudPerformanceProfile(getPmndrsCloudsQuality(self));
+        const cloudStyle = getPmndrsCloudsStyle(self);
+        const profile = getPmndrsCloudPerformanceProfile(getPmndrsCloudsQuality(self), cloudStyle);
+        const windVelocity = getPmndrsCloudWindVelocity(self, profile);
         const authoredCoverage = getPmndrsCloudsCoverage(self);
         const effectiveCoverage = getPmndrsCloudsEffectiveCoverage(self);
         const next = Object.assign({
             cloudsActive: false,
             cloudsSkippedReason: 'disabled',
             quality: getPmndrsCloudsQuality(self),
+            style: cloudStyle,
             profile: profile.id,
             takramQuality: profile.takramQuality,
             layerProfile: profile.layerProfile || '',
             resolutionScale: profile.resolutionScale,
+            cloudWindEnabled: isPmndrsCloudsWindEnabled(self),
+            cloudWindSpeed: getPmndrsCloudsWindSpeed(self),
+            cloudWindDirectionDeg: getPmndrsCloudsWindDirectionDeg(self),
+            cloudWindVelocityX: windVelocity[0],
+            cloudWindVelocityY: windVelocity[1],
             multiScatteringOctaves: profile.multiScatteringOctaves || 0,
             accurateSunSkyLight: Boolean(profile.accurateSunSkyLight),
             accuratePhaseFunction: shouldUsePmndrsCloudAccuratePhaseFunction(profile),
@@ -771,6 +961,12 @@
         next.authoredCoverage = authoredCoverage;
         next.effectiveCoverage = effectiveCoverage;
         next.coverage = authoredCoverage;
+        next.style = cloudStyle;
+        next.cloudWindEnabled = isPmndrsCloudsWindEnabled(self);
+        next.cloudWindSpeed = getPmndrsCloudsWindSpeed(self);
+        next.cloudWindDirectionDeg = getPmndrsCloudsWindDirectionDeg(self);
+        next.cloudWindVelocityX = windVelocity[0];
+        next.cloudWindVelocityY = windVelocity[1];
         self._pmndrsCloudsDiagnostics = next;
         self.pmndrsCloudsDiagnostics = next;
         return next;
@@ -782,10 +978,18 @@
         }
 
         const diagnostics = self._pmndrsCloudsDiagnostics || updatePmndrsCloudDiagnostics(self);
+        const profile = getPmndrsCloudPerformanceProfile(getPmndrsCloudsQuality(self), getPmndrsCloudsStyle(self));
+        const windVelocity = getPmndrsCloudWindVelocity(self, profile);
         Object.assign(diagnostics, {
             authoredCoverage: getPmndrsCloudsCoverage(self),
             effectiveCoverage: getPmndrsCloudsEffectiveCoverage(self),
-            coverage: getPmndrsCloudsCoverage(self)
+            coverage: getPmndrsCloudsCoverage(self),
+            style: getPmndrsCloudsStyle(self),
+            cloudWindEnabled: isPmndrsCloudsWindEnabled(self),
+            cloudWindSpeed: getPmndrsCloudsWindSpeed(self),
+            cloudWindDirectionDeg: getPmndrsCloudsWindDirectionDeg(self),
+            cloudWindVelocityX: windVelocity[0],
+            cloudWindVelocityY: windVelocity[1]
         }, updates || {});
         self._pmndrsCloudsDiagnostics = diagnostics;
         self.pmndrsCloudsDiagnostics = diagnostics;
@@ -2643,7 +2847,9 @@
             `clouds skip: ${  self && self._pmndrsCloudsDiagnostics ? (self._pmndrsCloudsDiagnostics.cloudsSkippedReason || 'none') : 'none'}`,
             `clouds quality: ${  getPmndrsCloudsQuality(self)}`,
             `clouds profile: ${  self && self._pmndrsCloudsDiagnostics ? (self._pmndrsCloudsDiagnostics.profile || 'off') : 'off'}`,
+            `clouds style: ${  self && self._pmndrsCloudsDiagnostics ? (self._pmndrsCloudsDiagnostics.style || 'default') : 'off'}`,
             `clouds layers: ${  self && self._pmndrsCloudsDiagnostics ? (self._pmndrsCloudsDiagnostics.layerProfile || 'default') : 'off'}`,
+            `clouds wind: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudWindEnabled ? `${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, 'cloudWindSpeed', 1)).toFixed(2)} @ ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, 'cloudWindDirectionDeg', 0)).toFixed(0)}deg` : 'off'}`,
             `clouds render: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.takramQuality || getPmndrsCloudsQuality(self)} @ ${Number(self._pmndrsCloudsDiagnostics.resolutionScale || getPmndrsCloudsResolutionScale(getPmndrsCloudsQuality(self))).toFixed(2)}x` : 'off'}`,
             `clouds light shafts: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.lightShafts ? 'yes' : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.lightShaftsSkippedReason ? ` (${self._pmndrsCloudsDiagnostics.lightShaftsSkippedReason})` : ''}`}`,
             `clouds haze: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.haze ? 'yes' : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.hazeDisabledReason ? ` (${self._pmndrsCloudsDiagnostics.hazeDisabledReason})` : ''}`}`,
@@ -2850,7 +3056,12 @@
         self.pmndrsCloudsEffect.shapeDetailTexture = textureState.textures.shapeDetailTexture || null;
         self.pmndrsCloudsEffect.turbulenceTexture = textureState.textures.turbulenceTexture || null;
         self.pmndrsCloudsEffect.stbnTexture = textureState.textures.stbnTexture || null;
-        const profile = applyPmndrsCloudPerformanceProfile(self.pmndrsCloudsEffect, getPmndrsCloudsQuality(self));
+        const profile = applyPmndrsCloudPerformanceProfile(
+            self.pmndrsCloudsEffect,
+            getPmndrsCloudsQuality(self),
+            getPmndrsCloudsStyle(self)
+        );
+        const cloudWindVelocity = applyPmndrsCloudWind(self.pmndrsCloudsEffect, self, profile);
         const temporalUpscaleEnabled = shouldUsePmndrsCloudTemporalUpscale(self, atmosphereConfig, profile);
         if (typeof self.pmndrsCloudsEffect.temporalUpscale !== 'undefined' && self.pmndrsCloudsEffect.temporalUpscale !== temporalUpscaleEnabled) {
             self.pmndrsCloudsEffect.temporalUpscale = temporalUpscaleEnabled;
@@ -2882,10 +3093,16 @@
             textureLoaded: textureState.loaded,
             textureTotal: textureState.total,
             quality: getPmndrsCloudsQuality(self),
+            style: getPmndrsCloudsStyle(self),
             profile: profile.id,
             takramQuality: profile.takramQuality,
             layerProfile: profile.layerProfile || '',
             resolutionScale: profile.resolutionScale,
+            cloudWindEnabled: isPmndrsCloudsWindEnabled(self),
+            cloudWindSpeed: getPmndrsCloudsWindSpeed(self),
+            cloudWindDirectionDeg: getPmndrsCloudsWindDirectionDeg(self),
+            cloudWindVelocityX: cloudWindVelocity[0],
+            cloudWindVelocityY: cloudWindVelocity[1],
             multiScatteringOctaves: profile.multiScatteringOctaves || 0,
             accurateSunSkyLight: Boolean(profile.accurateSunSkyLight),
             accuratePhaseFunction: Boolean(self.pmndrsCloudsEffect._vrodosCloudsAccuratePhaseFunction),
@@ -3035,10 +3252,12 @@
             } else {
                 try {
                     const cloudsQuality = getPmndrsCloudsQuality(this);
+                    const cloudsStyle = getPmndrsCloudsStyle(this);
                     this.pmndrsCloudsEffect = new VTC.CloudsEffect(camera, {
                         resolutionScale: getPmndrsCloudsResolutionScale(cloudsQuality)
                     });
-                    const cloudsProfile = applyPmndrsCloudPerformanceProfile(this.pmndrsCloudsEffect, cloudsQuality);
+                    const cloudsProfile = applyPmndrsCloudPerformanceProfile(this.pmndrsCloudsEffect, cloudsQuality, cloudsStyle);
+                    const cloudWindVelocity = applyPmndrsCloudWind(this.pmndrsCloudsEffect, this, cloudsProfile);
                     const initialTemporalUpscale = shouldUsePmndrsCloudTemporalUpscale(this, atmosphereConfig, cloudsProfile);
                     if (typeof this.pmndrsCloudsEffect.temporalUpscale !== 'undefined') {
                         this.pmndrsCloudsEffect.temporalUpscale = initialTemporalUpscale;
@@ -3047,10 +3266,16 @@
                     const initialDirectCompositeEnabled = setPmndrsCloudDirectComposite(this.pmndrsCloudsEffect, true);
                     updatePmndrsCloudDiagnostics(this, {
                         quality: cloudsQuality,
+                        style: cloudsStyle,
                         profile: cloudsProfile.id,
                         takramQuality: cloudsProfile.takramQuality,
                         layerProfile: cloudsProfile.layerProfile || '',
                         resolutionScale: cloudsProfile.resolutionScale,
+                        cloudWindEnabled: isPmndrsCloudsWindEnabled(this),
+                        cloudWindSpeed: getPmndrsCloudsWindSpeed(this),
+                        cloudWindDirectionDeg: getPmndrsCloudsWindDirectionDeg(this),
+                        cloudWindVelocityX: cloudWindVelocity[0],
+                        cloudWindVelocityY: cloudWindVelocity[1],
                         multiScatteringOctaves: cloudsProfile.multiScatteringOctaves || 0,
                         accurateSunSkyLight: Boolean(cloudsProfile.accurateSunSkyLight),
                         accuratePhaseFunction: Boolean(this.pmndrsCloudsEffect._vrodosCloudsAccuratePhaseFunction),

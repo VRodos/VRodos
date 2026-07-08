@@ -276,6 +276,37 @@
             "min": 0,
             "max": 1
         },
+        "pmndrsCloudsStyle": {
+            "metadataKey": "aframePmndrsCloudsStyle",
+            "type": "enum",
+            "default": "default",
+            "allowed": [
+                "default",
+                "scattered",
+                "broken",
+                "overcast",
+                "storm"
+            ]
+        },
+        "pmndrsCloudsWindEnabled": {
+            "metadataKey": "aframePmndrsCloudsWindEnabled",
+            "type": "boolean",
+            "default": true
+        },
+        "pmndrsCloudsWindSpeed": {
+            "metadataKey": "aframePmndrsCloudsWindSpeed",
+            "type": "number",
+            "default": 1,
+            "min": 0,
+            "max": 2
+        },
+        "pmndrsCloudsWindDirectionDeg": {
+            "metadataKey": "aframePmndrsCloudsWindDirectionDeg",
+            "type": "number",
+            "default": 0,
+            "min": 0,
+            "max": 360
+        },
         "pmndrsCorrectAltitudeEnabled": {
             "metadataKey": "aframePmndrsCorrectAltitudeEnabled",
             "type": "boolean",
@@ -710,6 +741,10 @@
     "pmndrsCloudsEnabled": "0",
     "pmndrsCloudsQuality": "low",
     "pmndrsCloudsCoverage": "0.35",
+    "pmndrsCloudsStyle": "default",
+    "pmndrsCloudsWindEnabled": "1",
+    "pmndrsCloudsWindSpeed": "1",
+    "pmndrsCloudsWindDirectionDeg": "0",
     "pmndrsCorrectAltitudeEnabled": "1",
     "pmndrsGeospatialEnabled": "0",
     "pmndrsGeospatialLatitudeDeg": "0",

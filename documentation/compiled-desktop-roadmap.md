@@ -1,6 +1,6 @@
 # VRodos Compiled Desktop Roadmap
 
-Status date: 2026-06-30.
+Status date: 2026-07-08.
 
 This is the current coordination doc for compiled desktop and non-VR scene work. It consolidates active TODOs from the rendering, performance, collision, and framework notes while preserving historical findings under `documentation/archive/rendering-history/README.md`.
 
@@ -59,6 +59,7 @@ Deferred cleanup:
 - Keep smoke coverage for Horizon and non-Horizon PMNDRS scenes.
 - Continue validating native PMNDRS SSAO across broader authored scenes.
 - Validate the desktop Takram cloud-sun bridge with day-night cycle scenes: visible sun-disk cloud coverage should dim direct/indirect light factors, reflections, shadow contrast/softness, and lens flare through diagnostics. High/ultra quality should report `cloudSkySunDiskMode=takram-phase`, keeping Takram's native disk behind cloud composition; the VRodos sun sprite is a fallback path, not the target look.
+- Validate desktop cloud authoring presets and wind controls from `TAKRAM_CLOUD_OCCLUSION_PLAN.md`: style presets should change cloud-layer character without touching raw scattering/raymarch controls, and wind should drive local weather velocity without changing lighting ownership.
 - Prototype a desktop-only Takram `post-process-albedo` mode later; do not mix that experiment into the current Takram light-source path.
 - Keep immersive XR composer/cloud bypass policy out of this desktop pass.
 

@@ -30,6 +30,8 @@ This is not a projected cloud-shadow map. It does not raymarch from every surfac
 - Follow-up finding from 0.33 vs 0.70 QA: the sparse case stays clean because Horizon keeps Takram light shafts off below the coverage threshold. The high-coverage case exposed large screen-space shaft/shadow footprints, so Horizon now keeps cloud light shafts and aerial cloud shadow/shadow-length routing debug-only while preserving the visible cloud overlay and global cloud-sun occlusion scalar.
 - Follow-up finding from dark-frame QA: Horizon cloud scenes force `AerialPerspectiveEffect` on for cloud overlay composition. If Takram clouds stay in direct color-composite mode before that route is ready, below-horizon/night frames can receive an almost black cloud buffer over the scene. Horizon now disables direct cloud compositing whenever the aerial compositor is expected; if the compositor is not ready, clouds fail closed instead of darkening the view.
 - Follow-up finding from Takram's `clouds/Clouds -- Vanilla` and `Clouds -- Basic` Storybook references: the reference composes `CloudsEffect` with `Atmosphere`, `SunDirectionalLight`, `SkyLight`, a normal pass, and tone mapping inside the PMNDRS/Takram effect chain. The sun does not stay as a hard independent disk over cloud color; when cloud crosses it, it reads as a cloud-integrated veiled glow and can disappear in dense cloud. In the Basic demo, `accuratePhaseFunction=true`, `accurateSunSkyLight=true`, `multiScatteringOctaves=8`, temporal upscale remains enabled, and cloud shadow max far is `100000`. VRodos should tune the desktop bridge toward that diffuse occlusion behavior, not toward a crisp billboard disk.
+- The Storybook control surface separates authoring concerns cleanly: tone mapping, location, local date/time, cloud coverage, quality, rendering toggles, scattering, weather/shape, cascaded cloud shadow maps, advanced cloud raymarching, and per-layer fields. For VRodos production authoring, only stable artistic controls should be exposed first. Raw scattering coefficients, iteration counts, shadow-map splits, and shadow-length routing remain profile/debug territory.
+- The next safe author-facing layer is cloud style plus wind. Style can map to conservative Takram cloud-layer presets while keeping `coverageFilterWidth`, `weatherExponent`, and `localWeatherRepeat` on stable defaults. Wind can map to `localWeatherVelocity` without changing cloud lighting, tone mapping, or composer order.
 - PMNDRS `EffectComposer` applies fullscreen passes after the scene render, so it cannot directly change the directional light or shadow-map intensity that already lit PBR meshes.
 - Therefore, in the current `lit-pbr` path, cloud-driven lighting changes must be fed back into VRodos-managed light sources before the next render. Sampling the previous cloud buffer around the projected sun disk is a supported bridge for desktop Horizon scenes, not a replacement for true Takram post-process albedo lighting.
 - True local moving cloud shadows would require a projected shadow layer, sun-view depth, or extra GPU work. That is intentionally deferred.
@@ -53,11 +55,14 @@ Limitations:
 - High and ultra desktop cloud quality let Takram's accurate phase-function path own the visible sun/cloud integration. Low/medium profiles and debug-disabled accurate phase can still use the older VRodos sprite fallback when the sampled projected disk is covered.
 - It is desktop-only in this phase. Immersive XR/headset clouds stay disabled by policy.
 
-### Phase 2: Validation And Authoring Polish
+### Phase 2: Desktop Cloud Authoring Presets And Wind
 
 - Validate compiled desktop Horizon scenes with day-night cycle active, cloud coverage `0.22`, `0.35`, `0.70`, and `0.90`, and the sun moving behind visible cloud masses.
 - Tune the bridge only after confirming diagnostics change: `cloudSunDiskOcclusion`, `cloudSunDiskStrength`, light factors, `cloudSunShadowIntensityFactor`, and `cloudSunShadowRadiusScale`.
-- Add an author-facing control only after visual QA proves a stable range. Until then, keep the bridge automatic and diagnostic-driven.
+- Add author-facing `pmndrsCloudsStyle` presets: `default`, `scattered`, `broken`, `overcast`, and `storm`.
+- Keep style presets conservative: they may adjust Takram cloud-layer altitude, height, density, and shape amount, but they should not expose or mutate raw scattering coefficients, raymarch iteration counts, cloud shadow routing, weather repeat, or coverage filter width.
+- Add wind animation controls: `pmndrsCloudsWindEnabled`, `pmndrsCloudsWindSpeed`, and `pmndrsCloudsWindDirectionDeg`. These map to `CloudsEffect.localWeatherVelocity` and preserve the current default drift when enabled.
+- Diagnostics must report selected `style`, `layerProfile`, `cloudWindEnabled`, speed, direction, and computed velocity.
 
 ### Phase 3: Experimental `takram-albedo` / Mixed Lighting
 
@@ -72,6 +77,13 @@ Keep this out of the production `lit-pbr` path until it is a deliberate mode. It
 
 This is feasible, but it is a new pipeline mode, not a value tweak inside the current PBR bridge.
 
+### Phase 4: Future Cloud Features
+
+- Revisit Takram cloud light shafts as an author-facing option only after measured Horizon visual/performance validation. They are cloud-aware, but current Horizon local scenes showed large screen-space shaft/shadow footprints at high coverage.
+- Investigate projected moving terrain cloud shadows as a separate GPU feature. The current bridge changes scene light intensity and shadow softness globally; it does not project cloud silhouettes onto terrain.
+- Evaluate a desktop-only advanced cloud debug panel if we need QA access to raw Takram fields. Keep it separate from normal author controls.
+- Keep immersive XR/headset clouds deferred until PMNDRS stereo composer ownership is proven safe.
+
 ## Implemented Desktop Bridge
 
 - Cloud sun occlusion is enabled only when Takram cloud diagnostics report active clouds and valid authored coverage.
@@ -84,10 +96,11 @@ This is feasible, but it is a new pipeline mode, not a value tweak inside the cu
 - The scalar is smoothed through the existing runtime light smoothing path to avoid day-night flicker.
 - Diagnostics are published through PMNDRS cloud diagnostics, startup/runtime horizon logs, and runtime feature state.
 - Takram `CloudsEffect.lightShafts` is enabled for high and ultra profiles and remains disabled for low and medium profiles.
-- The only cloud controls exposed to authors remain enable, quality, and coverage. Tone mapping, location, and local date/time stay existing author controls. The deeper Takram cloud parameters above are profile-owned diagnostics for now, not raw UI sliders.
+- Author cloud controls now include enable, quality, coverage, style, wind animation, wind speed, and wind direction. Tone mapping, location, and local date/time stay existing author controls. The deeper Takram cloud parameters above are profile-owned diagnostics for now, not raw UI sliders.
 - Authored cloud coverage remains `0..1`; Horizon maps it into a Takram shader coverage value that preserves `0..0.35` and smoothly compresses dense authored values into roughly `0.35..0.395`. Diagnostics report `authoredCoverage` and `effectiveCoverage`.
 - Takram `CloudsEffect.haze` is disabled in Horizon sky-owner mode because `SkyMaterial` and `AerialPerspectiveEffect` already own sky haze/transmittance there.
-- Takram cloud layers stay on Takram defaults in the desktop Horizon profile. VRodos no longer applies a custom CloudLayer profile by default because the haze and shadow-routing issues are separate from cloud volume shape.
+- The default cloud style applies Takram's documented default cloud-layer set. Non-default styles use conservative layer presets for scattered, broken, overcast, and storm looks; they do not alter coverage filter width, weather exponent, weather repeat, or scattering/raymarch settings.
+- Wind controls route to `CloudsEffect.localWeatherVelocity`. The default state preserves the previous subtle desktop drift, and authors can disable animation or rotate/speed up the weather field without changing cloud lighting.
 - Takram cloud temporal upscaling stays enabled by default; full-resolution cloud raymarching is debug-only because it is too expensive for the desktop target.
 - Takram cloud light shafts remain available for high and ultra profiles outside Horizon, but Horizon keeps them behind `?vrodos_debug_enable_pmndrs_cloud_light_shafts=1` because high-coverage local scenes exposed large screen-space shaft footprints.
 - Horizon routes only the cloud `atmosphereOverlay` into `AerialPerspectiveEffect` by default. Cloud `atmosphereShadow` / `atmosphereShadowLength` routing is available behind `?vrodos_debug_enable_pmndrs_cloud_aerial_shadow=1`; direct `SkyMaterial.shadowLength` routing remains behind `?vrodos_debug_enable_pmndrs_cloud_sky_shadow_length=1`.
@@ -104,6 +117,8 @@ This is feasible, but it is a new pipeline mode, not a value tweak inside the cu
 - [x] Runtime documentation updated.
 - [x] Runtime bundles rebuilt.
 - [x] Static checks completed.
+- [x] Cloud authoring preset and wind implementation added from Takram demo findings.
+- [x] Static verification for cloud preset/wind path completed.
 - [ ] Visual QA completed in a compiled desktop scene.
 
 ## Diagnostics
@@ -146,7 +161,13 @@ Expected diagnostic fields:
 - `lightShaftsSkippedReason`
 - `temporalUpscale`
 - `temporalUpscaleSkippedReason`
+- `style`
 - `layerProfile`
+- `cloudWindEnabled`
+- `cloudWindSpeed`
+- `cloudWindDirectionDeg`
+- `cloudWindVelocityX`
+- `cloudWindVelocityY`
 - `haze`
 - `hazeDisabledReason`
 - `directCompositeEnabled`
@@ -158,11 +179,14 @@ Expected diagnostic fields:
 ## QA Notes
 
 - Static verification completed with `node --check`, direct ESLint, runtime bundle rebuild, generated bundle syntax checks, and `git diff --check`.
+- PHP syntax checks should still be run in an environment with `php` available on `PATH`; the current Codex shell did not expose PHP.
 - Visual QA has not been run in this environment; recompile a desktop PMNDRS Horizon scene before testing so cache-busted runtime chunks are used.
 - Clouds disabled should match the previous lighting path.
 - Coverage `0.35`, `0.75`, `0.9`, and `1.0` should progressively dim direct scene lighting without making terrain or GLBs unreadable.
 - Coverage `0.22` should remain sparse and natural, without hard polygon/weather-cell islands around the sun.
-- Coverage `0.7+` should report authored/effective coverage split, for example authored around `0.70` and effective around `0.38`, plus `layerProfile=takram-default` and `haze=false` with `hazeDisabledReason=horizon-sky-owner` in Horizon scenes; it must not render as a hard rectangle in the sky.
+- Coverage `0.7+` should report authored/effective coverage split, for example authored around `0.70` and effective around `0.38`. Default style should report `layerProfile=takram-default`; non-default styles should report their `style-*` layer profile. Horizon scenes should report `haze=false` with `hazeDisabledReason=horizon-sky-owner`, and must not render as a hard rectangle in the sky.
+- Non-default cloud styles should change cloud volume character while diagnostics still show stable coverage mapping, temporal upscale on, and Horizon cloud haze off.
+- Wind off should freeze local weather drift; wind on should report non-zero `cloudWindVelocityX/Y` matching speed/direction and should not affect light factors except through normal moving cloud/sun overlap over time.
 - Midday coverage `0.7` should render visible clouds after the generated scene is recompiled. In Horizon, diagnostics should report `direct-composite-off`, `aerial-overlay-on`, `shafts-skip-horizon-light-shafts-disabled`, and `aerial-shadow-horizon-aerial-shadow-disabled`.
 - Below-horizon day/night frames should report `aerialShadowRouted=false` with `aerialShadowReason=sun-below-horizon-or-unavailable`.
 - Normal desktop scenes should report `temporalUpscale=true`; the debug override should report `temporalUpscale=false` with `temporalUpscaleSkippedReason=debug-disabled`.

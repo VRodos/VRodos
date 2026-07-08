@@ -718,12 +718,40 @@
 												<option value="ultra">Ultra</option>
 											</select>
 										</label>
+										<label class="tw-form-control tw-w-full">
+											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400" title="Artist layer preset for the Takram cloud volume. Quality still owns raymarch cost.">Cloud Style</span>
+											<select id="compilePmndrsCloudsStyleSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+												<option value="default">Takram Default</option>
+												<option value="scattered">Scattered</option>
+												<option value="broken">Broken</option>
+												<option value="overcast">Overcast</option>
+												<option value="storm">Storm</option>
+											</select>
+										</label>
 										<div>
 											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
 												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Authored cloudiness 0..1. Horizon maps dense authored values to Takram shader coverage below the default-layer saturation range.">Cloud Coverage</span>
 												<span id="compilePmndrsCloudsCoverageValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]" title="Authored cloudiness. Runtime diagnostics show authored -> effective Takram shader coverage.">0.35</span>
 											</div>
 											<input id="compilePmndrsCloudsCoverageSlider" type="range" min="0" max="1" step="0.01" value="0.35" class="tw-range tw-range-primary tw-range-xs" title="Authored cloudiness 0..1. Horizon maps dense authored values to Takram shader coverage below the default-layer saturation range.">
+										</div>
+										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-self-end tw-pb-1">
+											<input id="compilePmndrsCloudsWindToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Animate the Takram local weather field. Speed and direction only affect Desktop clouds.">Wind Animation</span>
+										</label>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Multiplier for Takram local weather drift.">Wind Speed</span>
+												<span id="compilePmndrsCloudsWindSpeedValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+											</div>
+											<input id="compilePmndrsCloudsWindSpeedSlider" type="range" min="0" max="2" step="0.05" value="1" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Horizontal direction for the Takram local weather drift.">Wind Direction</span>
+												<span id="compilePmndrsCloudsWindDirectionValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">0°</span>
+											</div>
+											<input id="compilePmndrsCloudsWindDirectionSlider" type="range" min="0" max="360" step="1" value="0" class="tw-range tw-range-primary tw-range-xs">
 										</div>
 									</div>
 

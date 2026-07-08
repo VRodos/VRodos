@@ -453,6 +453,13 @@ class VRodos_Scene_CPT_Manager {
 		$scene_data['aframePmndrsCloudsQuality'] = in_array( $pmndrs_clouds_quality_raw, [ 'low', 'medium', 'high', 'ultra' ], true ) ? $pmndrs_clouds_quality_raw : 'low';
 		$pmndrs_clouds_coverage = isset( $json_metadata->aframePmndrsCloudsCoverage ) ? (float) $json_metadata->aframePmndrsCloudsCoverage : 0.35;
 		$scene_data['aframePmndrsCloudsCoverage'] = max( 0.0, min( 1.0, $pmndrs_clouds_coverage ) );
+		$pmndrs_clouds_style_raw = $json_metadata->aframePmndrsCloudsStyle ?? 'default';
+		$scene_data['aframePmndrsCloudsStyle'] = in_array( $pmndrs_clouds_style_raw, [ 'default', 'scattered', 'broken', 'overcast', 'storm' ], true ) ? $pmndrs_clouds_style_raw : 'default';
+		$scene_data['aframePmndrsCloudsWindEnabled'] = VRodos_Runtime_Settings_Contract::normalize_bool( $json_metadata->aframePmndrsCloudsWindEnabled ?? true );
+		$pmndrs_clouds_wind_speed = isset( $json_metadata->aframePmndrsCloudsWindSpeed ) ? (float) $json_metadata->aframePmndrsCloudsWindSpeed : 1.0;
+		$scene_data['aframePmndrsCloudsWindSpeed'] = max( 0.0, min( 2.0, $pmndrs_clouds_wind_speed ) );
+		$pmndrs_clouds_wind_direction = isset( $json_metadata->aframePmndrsCloudsWindDirectionDeg ) ? (float) $json_metadata->aframePmndrsCloudsWindDirectionDeg : 0.0;
+		$scene_data['aframePmndrsCloudsWindDirectionDeg'] = max( 0.0, min( 360.0, $pmndrs_clouds_wind_direction ) );
 		$scene_data['aframePmndrsCorrectAltitudeEnabled'] = $json_metadata->aframePmndrsCorrectAltitudeEnabled ?? true;
 		$scene_data['aframePmndrsGeospatialEnabled'] = $json_metadata->aframePmndrsGeospatialEnabled ?? false;
 		$scene_data['aframePmndrsGeospatialLatitudeDeg'] = isset( $json_metadata->aframePmndrsGeospatialLatitudeDeg ) ? (float) $json_metadata->aframePmndrsGeospatialLatitudeDeg : 0.0;

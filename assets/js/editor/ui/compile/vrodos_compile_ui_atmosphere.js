@@ -154,6 +154,13 @@ VRodosCompileUI.Atmosphere = (function () {
         return Shared.PMNDRS_TWEAK_DEFAULTS.cloudsQuality;
     }
 
+    function normalizeCloudsStyle(value) {
+        if (['default', 'scattered', 'broken', 'overcast', 'storm'].indexOf(value) !== -1) {
+            return value;
+        }
+        return Shared.PMNDRS_TWEAK_DEFAULTS.cloudsStyle;
+    }
+
     function normalizePreset(value) {
         if (SKY_TIME_PRESETS.concat(['custom']).indexOf(value) !== -1) {
             return value;
@@ -411,6 +418,10 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsClouds,
             controls.pmndrsCloudsQuality,
             controls.pmndrsCloudsCoverage,
+            controls.pmndrsCloudsStyle,
+            controls.pmndrsCloudsWind,
+            controls.pmndrsCloudsWindSpeed,
+            controls.pmndrsCloudsWindDirection,
             controls.pmndrsCorrectAltitude,
             controls.pmndrsGeospatial,
             controls.pmndrsGeospatialLatitude,
@@ -479,7 +490,9 @@ VRodosCompileUI.Atmosphere = (function () {
         const cloudsTitle = cloudsAvailable
             ? ''
             : 'Clouds require High render quality, PMNDRS post-FX, and Takram atmosphere.';
-        const cloudCoverageTitle = 'Authored cloudiness 0..1. Horizon maps dense authored values to Takram shader coverage below the default-layer saturation range; diagnostics show authored -> effective.';
+        const cloudCoverageTitle = 'Authored cloudiness 0..1. Horizon maps dense authored values to Takram shader coverage below the selected layer saturation range; diagnostics show authored -> effective.';
+        const cloudWindActive = cloudsActive && controls.pmndrsCloudsWind && controls.pmndrsCloudsWind.checked === true;
+        const cloudWindTitle = cloudsActive ? 'Animate the Takram local weather field.' : cloudsTitle;
         if (controls.pmndrsClouds) {
             controls.pmndrsClouds.disabled = !cloudsAvailable;
             controls.pmndrsClouds.title = cloudsTitle;
@@ -492,7 +505,9 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsCloudsWrapper.classList.toggle('tw-opacity-50', !cloudsActive);
         }
         [
-            controls.pmndrsCloudsQuality
+            controls.pmndrsCloudsQuality,
+            controls.pmndrsCloudsStyle,
+            controls.pmndrsCloudsWind
         ].forEach((el) => {
             if (el) {
                 el.disabled = !cloudsActive;
@@ -506,6 +521,23 @@ VRodosCompileUI.Atmosphere = (function () {
         if (controls.pmndrsCloudsCoverageValue) {
             controls.pmndrsCloudsCoverageValue.title = cloudCoverageTitle;
         }
+        [
+            controls.pmndrsCloudsWindSpeed,
+            controls.pmndrsCloudsWindDirection
+        ].forEach((el) => {
+            if (el) {
+                el.disabled = !cloudWindActive;
+                el.title = cloudWindTitle;
+            }
+        });
+        [
+            controls.pmndrsCloudsWindSpeedValue,
+            controls.pmndrsCloudsWindDirectionValue
+        ].forEach((el) => {
+            if (el) {
+                el.title = cloudWindTitle;
+            }
+        });
         syncAerialPerspectiveCloudRequirement(controls, isEnabled, cloudsActive);
 
         const geospatialEnabled = isEnabled && controls.pmndrsGeospatial && controls.pmndrsGeospatial.checked === true;
@@ -583,6 +615,22 @@ VRodosCompileUI.Atmosphere = (function () {
             d.cloudsCoverage,
             0.01
         );
+        VRODOS.editor.envir.scene.aframePmndrsCloudsStyle = normalizeCloudsStyle(controls.pmndrsCloudsStyle ? controls.pmndrsCloudsStyle.value : d.cloudsStyle);
+        VRODOS.editor.envir.scene.aframePmndrsCloudsWindEnabled = controls.pmndrsCloudsWind ? controls.pmndrsCloudsWind.checked === true : d.cloudsWindEnabled;
+        VRODOS.editor.envir.scene.aframePmndrsCloudsWindSpeed = Shared.clampNumber(
+            controls.pmndrsCloudsWindSpeed ? controls.pmndrsCloudsWindSpeed.value : d.cloudsWindSpeed,
+            0,
+            2,
+            d.cloudsWindSpeed,
+            0.05
+        );
+        VRODOS.editor.envir.scene.aframePmndrsCloudsWindDirectionDeg = Shared.clampNumber(
+            controls.pmndrsCloudsWindDirection ? controls.pmndrsCloudsWindDirection.value : d.cloudsWindDirectionDeg,
+            0,
+            360,
+            d.cloudsWindDirectionDeg,
+            1
+        );
         VRODOS.editor.envir.scene.aframePmndrsCorrectAltitudeEnabled = controls.pmndrsCorrectAltitude ? controls.pmndrsCorrectAltitude.checked === true : d.correctAltitudeEnabled;
         VRODOS.editor.envir.scene.aframePmndrsGeospatialEnabled = (pmndrsRuntimeEnabled && controls.pmndrsGeospatial) ? controls.pmndrsGeospatial.checked === true : false;
         VRODOS.editor.envir.scene.aframePmndrsGeospatialLatitudeDeg = Shared.clampNumber(controls.pmndrsGeospatialLatitude ? controls.pmndrsGeospatialLatitude.value : d.geospatialLatitudeDeg, -90, 90, d.geospatialLatitudeDeg);
@@ -648,6 +696,7 @@ VRodosCompileUI.Atmosphere = (function () {
         syncToScene,
         normalizeQuality,
         normalizeCloudsQuality,
+        normalizeCloudsStyle,
         normalizePreset,
         normalizeCelestialMode,
         normalizeCelestialTimePreset,

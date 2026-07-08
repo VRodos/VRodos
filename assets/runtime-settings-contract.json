@@ -218,6 +218,31 @@
       "min": 0.0,
       "max": 1.0
     },
+    "pmndrsCloudsStyle": {
+      "metadataKey": "aframePmndrsCloudsStyle",
+      "type": "enum",
+      "default": "default",
+      "allowed": ["default", "scattered", "broken", "overcast", "storm"]
+    },
+    "pmndrsCloudsWindEnabled": {
+      "metadataKey": "aframePmndrsCloudsWindEnabled",
+      "type": "boolean",
+      "default": true
+    },
+    "pmndrsCloudsWindSpeed": {
+      "metadataKey": "aframePmndrsCloudsWindSpeed",
+      "type": "number",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 2.0
+    },
+    "pmndrsCloudsWindDirectionDeg": {
+      "metadataKey": "aframePmndrsCloudsWindDirectionDeg",
+      "type": "number",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 360.0
+    },
     "pmndrsCorrectAltitudeEnabled": {
       "metadataKey": "aframePmndrsCorrectAltitudeEnabled",
       "type": "boolean",
