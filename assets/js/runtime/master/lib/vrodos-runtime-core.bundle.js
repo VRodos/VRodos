@@ -3682,6 +3682,8 @@
     const PMNDRS_CLOUD_SUN_DISK_SPRITE_OPACITY_MIN = 0.56;
     const PMNDRS_CLOUD_SUN_DISK_SPRITE_OPACITY_CURVE = 0.45;
     const PMNDRS_CLOUD_SUN_DISK_SPRITE_INTENSITY_SCALE = 1.05;
+    const PMNDRS_CLOUD_PHASE_NATIVE_SUN_HIDE_VISIBILITY = 0.14;
+    const PMNDRS_CLOUD_PHASE_NATIVE_SUN_RELEASE_VISIBILITY = 0.24;
     const PMNDRS_CLOUD_SUN_OCCLUSION_STATIC_SMOOTH_MS = 900;
     const PMNDRS_CLOUD_SUN_OCCLUSION_DAY_NIGHT_MIN_SMOOTH_MS = 1800;
     const WGS84_EQUATORIAL_RADIUS = 6378137;
@@ -8894,6 +8896,11 @@ ${shader.fragmentShader}` : withUniform;
       }
       return 1;
     }
+    function shouldHidePmndrsTakramPhaseNativeSunDisk(self, targetVisibility) {
+      const visibility = Number.isFinite(targetVisibility) ? clamp01(targetVisibility) : 1;
+      const threshold = self && self._pmndrsCloudSunDiskTakramPhaseNativeHidden === true ? PMNDRS_CLOUD_PHASE_NATIVE_SUN_RELEASE_VISIBILITY : PMNDRS_CLOUD_PHASE_NATIVE_SUN_HIDE_VISIBILITY;
+      return visibility <= threshold;
+    }
     function getPmndrsCloudSunDiskSpriteOpacity(visibility) {
       const value = Number.isFinite(visibility) ? clamp01(visibility) : 1;
       if (value >= 0.999) {
@@ -9012,19 +9019,22 @@ ${shader.fragmentShader}` : withUniform;
         typeof diagnostics.cloudSkySunDiskVisibility === "number" ? diagnostics.cloudSkySunDiskVisibility : targetVisibility
       ) : 1;
       if (takramPhaseOwnsSunDisk) {
+        const hideNativeSunDisk = shouldHidePmndrsTakramPhaseNativeSunDisk(self, targetVisibility);
         const hasLegacySunSprite = self._pmndrsCloudSunDiskSpriteActive === true || self._pmndrsSunSpriteActive === true || typeof document !== "undefined" && (document.getElementById("vrodos-pmndrs-sun") || document.getElementById("vrodos-pmndrs-sun-haze") || document.getElementById("vrodos-takram-visible-sun"));
         if (hasLegacySunSprite) {
           clearPmndrsHorizonSun(self);
         }
         clearPmndrsCloudSunDiskScreenOverlay(self);
         self._pmndrsCloudSunDiskTakramPhaseActive = true;
+        self._pmndrsCloudSunDiskTakramPhaseNativeHidden = hideNativeSunDisk;
         self._pmndrsCloudSunDiskSpriteActive = false;
         self._pmndrsCloudSunDiskSpriteVisibility = visibility;
         self._pmndrsCloudSunDiskSpriteOpacity = 0;
         const sceneOcclusion = typeof self._pmndrsSunOcclusionFactor === "number" ? self._pmndrsSunOcclusionFactor : 1;
-        setPmndrsSkyMaterialNativeSun(self, config && config.takramSunEnabled !== false && sceneOcclusion > 0.01);
+        setPmndrsSkyMaterialNativeSun(self, !hideNativeSunDisk && config && config.takramSunEnabled !== false && sceneOcclusion > 0.01);
       } else if (shouldUseSprite) {
         self._pmndrsCloudSunDiskTakramPhaseActive = false;
+        self._pmndrsCloudSunDiskTakramPhaseNativeHidden = false;
         const horizonPreset = typeof self.getHorizonSkyPreset === "function" ? self.getHorizonSkyPreset() : "natural";
         const spriteOpacity = getPmndrsCloudSunDiskSpriteOpacity(visibility);
         self._pmndrsCloudSunDiskSpriteActive = true;
@@ -9043,6 +9053,8 @@ ${shader.fragmentShader}` : withUniform;
       } else {
         visibility = 1;
         self._pmndrsCloudSunDiskTakramPhaseActive = false;
+        const wasTakramPhaseNativeHidden = self._pmndrsCloudSunDiskTakramPhaseNativeHidden === true;
+        self._pmndrsCloudSunDiskTakramPhaseNativeHidden = false;
         if (self._pmndrsCloudSunDiskSpriteActive) {
           self._pmndrsCloudSunDiskSpriteActive = false;
           self._pmndrsCloudSunDiskSpriteVisibility = 1;
@@ -9051,13 +9063,17 @@ ${shader.fragmentShader}` : withUniform;
           clearPmndrsCloudSunDiskScreenOverlay(self);
           const sceneOcclusion = typeof self._pmndrsSunOcclusionFactor === "number" ? self._pmndrsSunOcclusionFactor : 1;
           setPmndrsSkyMaterialNativeSun(self, config && config.takramSunEnabled !== false && sceneOcclusion > 0.01);
+        } else if (wasTakramPhaseNativeHidden) {
+          const sceneOcclusion = typeof self._pmndrsSunOcclusionFactor === "number" ? self._pmndrsSunOcclusionFactor : 1;
+          setPmndrsSkyMaterialNativeSun(self, config && config.takramSunEnabled !== false && sceneOcclusion > 0.01);
         }
       }
       diagnostics.cloudSkySunDiskVisibility = roundPmndrsCloudSunOcclusionDiagnostic(visibility);
       diagnostics.cloudSkySunDiskTargetVisibility = roundPmndrsCloudSunOcclusionDiagnostic(targetVisibility);
       diagnostics.cloudSkySunDiskSpriteOpacity = roundPmndrsCloudSunOcclusionDiagnostic(shouldUseSprite ? self._pmndrsCloudSunDiskSpriteOpacity : 0);
       diagnostics.cloudSkySunDiskScreenOpacity = roundPmndrsCloudSunOcclusionDiagnostic(shouldUseSprite ? self._pmndrsCloudSunDiskScreenOverlayOpacity : 0);
-      diagnostics.cloudSkySunDiskMode = takramPhaseOwnsSunDisk ? "takram-phase" : shouldUseSprite ? "sprite" : "native";
+      diagnostics.cloudSkySunDiskNativeHidden = Boolean(takramPhaseOwnsSunDisk && self._pmndrsCloudSunDiskTakramPhaseNativeHidden === true);
+      diagnostics.cloudSkySunDiskMode = takramPhaseOwnsSunDisk ? diagnostics.cloudSkySunDiskNativeHidden ? "takram-phase-muted" : "takram-phase" : shouldUseSprite ? "sprite" : "native";
       self._pmndrsCloudsDiagnostics = diagnostics;
       self.pmndrsCloudsDiagnostics = diagnostics;
       const state = self && self._pmndrsAtmosphereState ? self._pmndrsAtmosphereState : null;
@@ -9066,7 +9082,8 @@ ${shader.fragmentShader}` : withUniform;
         state.skySunDiskCloudTargetVisibility = shouldUseSprite || takramPhaseOwnsSunDisk ? targetVisibility : 1;
         state.skySunDiskCloudShaderPatched = false;
         state.skySunDiskCloudPatchFailed = false;
-        state.skySunDiskCloudMode = takramPhaseOwnsSunDisk ? "takram-phase" : shouldUseSprite ? "sprite" : "native";
+        state.skySunDiskNativeHidden = diagnostics.cloudSkySunDiskNativeHidden;
+        state.skySunDiskCloudMode = diagnostics.cloudSkySunDiskMode;
       }
       return visibility;
     }
@@ -9479,7 +9496,8 @@ ${shader.fragmentShader}` : withUniform;
       const state = self && self._pmndrsAtmosphereState ? self._pmndrsAtmosphereState : null;
       if (state && state.skyMaterial && typeof state.skyMaterial.sun !== "undefined") {
         const cloudSpriteOwnsSunDisk = Boolean(self && self._pmndrsCloudSunDiskSpriteActive === true);
-        const shouldShowSkySun = !cloudSpriteOwnsSunDisk && factor > 0.01;
+        const cloudPhaseHidesNativeSunDisk = Boolean(self && self._pmndrsCloudSunDiskTakramPhaseNativeHidden === true);
+        const shouldShowSkySun = !cloudSpriteOwnsSunDisk && !cloudPhaseHidesNativeSunDisk && factor > 0.01;
         setPmndrsSkyMaterialNativeSun(self, shouldShowSkySun);
       }
       const sunEl = typeof document !== "undefined" ? document.getElementById("vrodos-pmndrs-sun") : null;
@@ -9617,6 +9635,7 @@ ${shader.fragmentShader}` : withUniform;
       self._pmndrsSunDistance = null;
       self._pmndrsSunSpriteActive = false;
       self._pmndrsCloudSunDiskTakramPhaseActive = false;
+      self._pmndrsCloudSunDiskTakramPhaseNativeHidden = false;
       self._pmndrsCloudSunDiskSpriteActive = false;
       self._pmndrsCloudSunDiskSpriteVisibility = 1;
       self._pmndrsCloudSunDiskSpriteOpacity = 1;

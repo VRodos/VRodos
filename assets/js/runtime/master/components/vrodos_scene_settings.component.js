@@ -1910,6 +1910,7 @@ AFRAME.registerComponent('scene-settings', {
                 cloudSkySunDiskScreenOpacity: typeof cloudDiagnostics.cloudSkySunDiskScreenOpacity === 'number'
                     ? cloudDiagnostics.cloudSkySunDiskScreenOpacity
                     : null,
+                cloudSkySunDiskNativeHidden: Boolean(cloudDiagnostics.cloudSkySunDiskNativeHidden),
                 cloudSkySunDiskMode: cloudDiagnostics.cloudSkySunDiskMode || '',
                 cloudSunDiskOcclusion: typeof cloudDiagnostics.cloudSunDiskOcclusion === 'number'
                     ? cloudDiagnostics.cloudSunDiskOcclusion

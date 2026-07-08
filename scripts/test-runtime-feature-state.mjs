@@ -374,7 +374,8 @@ const desktopClouds = createFeatureStateFixture({
         cloudSkySunDiskTargetVisibility: 0.08,
         cloudSkySunDiskSpriteOpacity: 0,
         cloudSkySunDiskScreenOpacity: 0,
-        cloudSkySunDiskMode: "takram-phase",
+        cloudSkySunDiskNativeHidden: true,
+        cloudSkySunDiskMode: "takram-phase-muted",
         cloudSunDiskOcclusion: 0.88,
         cloudSunDiskStrength: 0.96,
         cloudSunDiskUvX: 0.52,
@@ -409,7 +410,8 @@ assertPath(desktopClouds.takram.cloudSkySunDiskVisibility, 0.14, "desktop PMNDRS
 assertPath(desktopClouds.takram.cloudSkySunDiskTargetVisibility, 0.08, "desktop PMNDRS cloud sky sun disk target diagnostic");
 assertPath(desktopClouds.takram.cloudSkySunDiskSpriteOpacity, 0, "desktop PMNDRS cloud sky sun disk sprite opacity diagnostic");
 assertPath(desktopClouds.takram.cloudSkySunDiskScreenOpacity, 0, "desktop PMNDRS cloud sky sun disk screen opacity diagnostic");
-assertPath(desktopClouds.takram.cloudSkySunDiskMode, "takram-phase", "desktop PMNDRS cloud sky sun disk mode diagnostic");
+assertPath(desktopClouds.takram.cloudSkySunDiskNativeHidden, true, "desktop PMNDRS cloud sky sun disk native hidden diagnostic");
+assertPath(desktopClouds.takram.cloudSkySunDiskMode, "takram-phase-muted", "desktop PMNDRS cloud sky sun disk mode diagnostic");
 assertPath(desktopClouds.takram.cloudSunDiskOcclusion, 0.88, "desktop PMNDRS cloud sun-disk occlusion diagnostic");
 assertPath(desktopClouds.takram.cloudSunDiskSampleReason, "sampled", "desktop PMNDRS cloud sun-disk sample reason diagnostic");
 

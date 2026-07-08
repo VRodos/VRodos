@@ -751,6 +751,7 @@
             cloudSkySunDiskTargetVisibility: 1,
             cloudSkySunDiskSpriteOpacity: 1,
             cloudSkySunDiskScreenOpacity: 0,
+            cloudSkySunDiskNativeHidden: false,
             cloudSkySunDiskMode: 'native',
             cloudSunElevationFactor: 0,
             cloudSunOcclusionReason: 'not-evaluated',

@@ -2089,6 +2089,7 @@
           cloudSkySunDiskTargetVisibility: typeof cloudDiagnostics.cloudSkySunDiskTargetVisibility === "number" ? cloudDiagnostics.cloudSkySunDiskTargetVisibility : null,
           cloudSkySunDiskSpriteOpacity: typeof cloudDiagnostics.cloudSkySunDiskSpriteOpacity === "number" ? cloudDiagnostics.cloudSkySunDiskSpriteOpacity : null,
           cloudSkySunDiskScreenOpacity: typeof cloudDiagnostics.cloudSkySunDiskScreenOpacity === "number" ? cloudDiagnostics.cloudSkySunDiskScreenOpacity : null,
+          cloudSkySunDiskNativeHidden: Boolean(cloudDiagnostics.cloudSkySunDiskNativeHidden),
           cloudSkySunDiskMode: cloudDiagnostics.cloudSkySunDiskMode || "",
           cloudSunDiskOcclusion: typeof cloudDiagnostics.cloudSunDiskOcclusion === "number" ? cloudDiagnostics.cloudSunDiskOcclusion : null,
           cloudSunDiskStrength: typeof cloudDiagnostics.cloudSunDiskStrength === "number" ? cloudDiagnostics.cloudSunDiskStrength : null,
