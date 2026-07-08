@@ -355,6 +355,7 @@ assert(coveredCloudSun.directFactor < 0.25, "covered sun disk should strongly di
 assert(coveredCloudSun.ambientFactor < 1, "covered sun disk should dim ambient bounce");
 assert(coveredCloudSun.reflectionFactor < 1, "covered sun disk should dim environment reflections");
 assert(coveredCloudSun.shadowRadiusScale > 2, "covered sun disk should soften direct sun shadows instead of disabling them");
+assert(coveredCloudSun.skySunDiskVisibility < 0.06, "covered sun disk should fade the Takram sky sun disk");
 
 const nightCloudSun = helpers.computePmndrsCloudSunOcclusionFactors({
     authoredCoverage: 0.9,
@@ -363,6 +364,7 @@ const nightCloudSun = helpers.computePmndrsCloudSunOcclusionFactors({
 });
 assert(nightCloudSun.targetStrength === 0, "cloud sun occlusion should be horizon-gated at night");
 assert(nightCloudSun.shadowRadiusScale === 1, "cloud shadow softening should be off below horizon");
+assert(nightCloudSun.skySunDiskVisibility === 1, "sky sun disk cloud attenuation should be neutral below horizon");
 
 assert(
     helpers.usesVrTakramDirectSkyCalibration.call(createVrTakramSkyFixture({ stereo: false })) === true,

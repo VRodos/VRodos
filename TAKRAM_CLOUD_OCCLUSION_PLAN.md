@@ -28,6 +28,7 @@ This is not a projected cloud-shadow map. It does not raymarch from every surfac
 - Follow-up finding from FPS QA: Takram cloud temporal upscaling is required for the desktop performance target. Disabling it forces full-resolution cloud raymarching and tanks FPS, so VRodos keeps it enabled by default and exposes full-resolution clouds only through `?vrodos_debug_disable_pmndrs_cloud_temporal_upscale=1` for visual comparison.
 - Follow-up finding from midday 0.70 QA: Takram's documented Clouds + AerialPerspective route keeps `CloudsEffect.skipRendering` true. CloudsEffect still renders its internal cloud buffers, but final cloud color is routed through `atmosphereOverlay` into AerialPerspectiveEffect. Clearing `skipRendering` while also routing the overlay double-composites clouds and can amplify screen-space artifacts.
 - Follow-up finding from 0.33 vs 0.70 QA: the sparse case stays clean because Horizon keeps Takram light shafts off below the coverage threshold. The high-coverage case exposed large screen-space shaft/shadow footprints, so Horizon now keeps cloud light shafts and aerial cloud shadow/shadow-length routing debug-only while preserving the visible cloud overlay and global cloud-sun occlusion scalar.
+- Follow-up finding from dark-frame QA: Horizon cloud scenes force `AerialPerspectiveEffect` on for cloud overlay composition. If Takram clouds stay in direct color-composite mode before that route is ready, below-horizon/night frames can receive an almost black cloud buffer over the scene. Horizon now disables direct cloud compositing whenever the aerial compositor is expected; if the compositor is not ready, clouds fail closed instead of darkening the view.
 - PMNDRS `EffectComposer` applies fullscreen passes after the scene render, so it cannot directly change the directional light or shadow-map intensity that already lit PBR meshes.
 - Therefore, in the current `lit-pbr` path, cloud-driven lighting changes must be fed back into VRodos-managed light sources before the next render. Sampling the previous cloud buffer around the projected sun disk is a supported bridge for desktop Horizon scenes, not a replacement for true Takram post-process albedo lighting.
 - True local moving cloud shadows would require a projected shadow layer, sun-view depth, or extra GPU work. That is intentionally deferred.
@@ -76,6 +77,7 @@ This is feasible, but it is a new pipeline mode, not a value tweak inside the cu
 - The sun-disk sampler reads Takram's cloud render target around the projected sun disk in desktop Horizon scenes. If readback is unavailable, the bridge fails closed to coverage-only behavior and reports the sample reason.
 - Direct sun light is dimmed most, sky probe less, hemisphere fill and ambient bounce less, and reflections are attenuated to avoid bright specular response under overcast conditions. Dense daytime sun-disk occlusion can reach about `0.18x` direct sun, `0.56x` sky probe, `0.66x` fill, `0.78x` ambient, and `0.68x` reflections.
 - Direct sun shadows keep casting when the sampled sun disk is cloud-covered, but their contrast drops with direct sun intensity and their radius increases with cloud occlusion strength. This avoids hard on/off shadow transitions while still making dense overcast shadows lighter and softer.
+- Visible Takram sun-disk occlusion is deferred. A runtime `SkyMaterial` shader-patch attempt could black out the sky and drop frame rate in compiled Horizon scenes, so the production bridge currently affects scene lighting, reflections, shadow softness, and lens flare only.
 - The scalar is smoothed through the existing runtime light smoothing path to avoid day-night flicker.
 - Diagnostics are published through PMNDRS cloud diagnostics, startup/runtime horizon logs, and runtime feature state.
 - Takram `CloudsEffect.lightShafts` is enabled for high and ultra profiles and remains disabled for low and medium profiles.
@@ -115,6 +117,8 @@ Expected diagnostic fields:
 - `cloudAmbientFactor`
 - `cloudReflectionFactor`
 - `cloudSunShadowRadiusScale`
+- `cloudSkySunDiskVisibility`
+- `cloudSkySunDiskTargetVisibility`
 - `cloudSunDiskOcclusion`
 - `cloudSunDiskStrength`
 - `cloudSunDiskUvX`
@@ -150,8 +154,8 @@ Expected diagnostic fields:
 - Daytime Horizon scenes should report `skyShadowLengthRouted=false` with `skyShadowLengthReason=horizon-sky-shadowlength-disabled` unless the debug comparison flag is enabled.
 - Dynamic day/night should not flicker at sunrise or sunset.
 - Night scenes should keep moon/night readability unchanged and should report `cloudSunOcclusionReason=sun-below-horizon`.
-- Dense clouds should make lens flare, sun disk attenuation, scene-light intensity, reflections, and direct sun shadow contrast move in the same visual direction.
-- A screenshot with a cloud visually crossing the sun disk is the target local occlusion case for the desktop bridge. It should report `cloudSunDiskSampleReason=sampled`, rising `cloudSunDiskOcclusion`, lower direct/sky/fill/ambient/reflection factors, and higher `cloudSunShadowRadiusScale` when the disk is heavily covered.
+- Dense clouds should make lens flare, visible sun disk attenuation, scene-light intensity, reflections, and direct sun shadow contrast move in the same visual direction.
+- A screenshot with a cloud visually crossing the sun disk is the target local occlusion case for the desktop bridge. It should report `cloudSunDiskSampleReason=sampled`, rising `cloudSunDiskOcclusion`, lower `cloudSkySunDiskVisibility`, lower direct/sky/fill/ambient/reflection factors, and higher `cloudSunShadowRadiusScale` when the disk is heavily covered.
 - The bridge still does not project the exact cloud silhouette onto terrain lighting. If a cloud covers only part of the sun disk, the scene-level light response should be plausible and smooth, not a per-surface cloud-shadow match.
 
 ## Deferred

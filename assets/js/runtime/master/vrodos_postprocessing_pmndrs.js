@@ -674,6 +674,8 @@
             cloudSunDirectFactor: 1,
             cloudSkyFactor: 1,
             cloudFillFactor: 1,
+            cloudSkySunDiskVisibility: 1,
+            cloudSkySunDiskTargetVisibility: 1,
             cloudSunElevationFactor: 0,
             cloudSunOcclusionReason: 'not-evaluated',
             cloudSunCoverageStrength: 0,
@@ -725,6 +727,14 @@
         return false;
     }
 
+    function syncPmndrsCloudSunDiskToSky(self) {
+        const helpers = VRODOSMaster.SceneSettingsHelpers || {};
+        if (helpers && typeof helpers.syncPmndrsSkySunDiskCloudAttenuation === 'function') {
+            return helpers.syncPmndrsSkySunDiskCloudAttenuation.call(self);
+        }
+        return 1;
+    }
+
     function syncPmndrsLensFlareCloudFactor(self) {
         if (!self) {
             return 1;
@@ -752,9 +762,11 @@
 
         const skyShadowLengthRouted = syncPmndrsCloudShadowLengthToSky(self, reason);
         const lensFlareCloudFactor = syncPmndrsLensFlareCloudFactor(self);
+        const skySunDiskVisibility = syncPmndrsCloudSunDiskToSky(self);
         updatePmndrsCloudLinkedDiagnostics(self, {
             skyShadowLengthRouted,
-            lensFlareCloudFactor
+            lensFlareCloudFactor,
+            cloudSkySunDiskVisibility: skySunDiskVisibility
         });
     }
 
@@ -2564,7 +2576,7 @@
             `clouds sky shadow: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.skyShadowLengthRouted ? 'yes' : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.skyShadowLengthReason ? ` (${self._pmndrsCloudsDiagnostics.skyShadowLengthReason})` : ''}`}`,
             `clouds lens flare factor: ${  self && self._pmndrsCloudsDiagnostics && typeof self._pmndrsCloudsDiagnostics.lensFlareCloudFactor === 'number' ? self._pmndrsCloudsDiagnostics.lensFlareCloudFactor.toFixed(2) : '1.00'}`,
             `clouds sun occlusion: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudSunOcclusionEnabled ? `${Number(self._pmndrsCloudsDiagnostics.cloudSunOcclusionStrength || 0).toFixed(2)} direct ${Number(self._pmndrsCloudsDiagnostics.cloudSunDirectFactor || 1).toFixed(2)} sky ${Number(self._pmndrsCloudsDiagnostics.cloudSkyFactor || 1).toFixed(2)} fill ${Number(self._pmndrsCloudsDiagnostics.cloudFillFactor || 1).toFixed(2)}` : `off${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudSunOcclusionReason ? ` (${self._pmndrsCloudsDiagnostics.cloudSunOcclusionReason})` : ''}`}`,
-            `clouds sun disk: ${  self && self._pmndrsCloudsDiagnostics ? `${Number(self._pmndrsCloudsDiagnostics.cloudSunDiskOcclusion || 0).toFixed(2)} strength ${Number(self._pmndrsCloudsDiagnostics.cloudSunDiskStrength || 0).toFixed(2)} ${self._pmndrsCloudsDiagnostics.cloudSunDiskSampleReason || 'not-sampled'}` : 'off'}`,
+            `clouds sun disk: ${  self && self._pmndrsCloudsDiagnostics ? `${Number(self._pmndrsCloudsDiagnostics.cloudSunDiskOcclusion || 0).toFixed(2)} strength ${Number(self._pmndrsCloudsDiagnostics.cloudSunDiskStrength || 0).toFixed(2)} sky ${Number(self._pmndrsCloudsDiagnostics.cloudSkySunDiskVisibility || 1).toFixed(2)} ${self._pmndrsCloudsDiagnostics.cloudSunDiskSampleReason || 'not-sampled'}` : 'off'}`,
             `clouds textures: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.textureReady ? 'ready' : ((self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.textureLoaded !== undefined) ? `${self._pmndrsCloudsDiagnostics.textureLoaded}/${self._pmndrsCloudsDiagnostics.textureTotal || 0}` : 'off')}`,
             `clouds xr skip: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.xrSkipped ? 'yes' : 'no'}`,
             `horizon aerial: ${  shouldEnablePmndrsHorizonAerial(self) ? 'experimental-on' : 'off'}`,

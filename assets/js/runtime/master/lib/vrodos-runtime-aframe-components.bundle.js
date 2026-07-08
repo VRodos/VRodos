@@ -2078,6 +2078,8 @@
           cloudAmbientFactor: typeof cloudDiagnostics.cloudAmbientFactor === "number" ? cloudDiagnostics.cloudAmbientFactor : null,
           cloudReflectionFactor: typeof cloudDiagnostics.cloudReflectionFactor === "number" ? cloudDiagnostics.cloudReflectionFactor : null,
           cloudSunShadowRadiusScale: typeof cloudDiagnostics.cloudSunShadowRadiusScale === "number" ? cloudDiagnostics.cloudSunShadowRadiusScale : null,
+          cloudSkySunDiskVisibility: typeof cloudDiagnostics.cloudSkySunDiskVisibility === "number" ? cloudDiagnostics.cloudSkySunDiskVisibility : null,
+          cloudSkySunDiskTargetVisibility: typeof cloudDiagnostics.cloudSkySunDiskTargetVisibility === "number" ? cloudDiagnostics.cloudSkySunDiskTargetVisibility : null,
           cloudSunDiskOcclusion: typeof cloudDiagnostics.cloudSunDiskOcclusion === "number" ? cloudDiagnostics.cloudSunDiskOcclusion : null,
           cloudSunDiskStrength: typeof cloudDiagnostics.cloudSunDiskStrength === "number" ? cloudDiagnostics.cloudSunDiskStrength : null,
           cloudSunDiskUvX: typeof cloudDiagnostics.cloudSunDiskUvX === "number" ? cloudDiagnostics.cloudSunDiskUvX : null,

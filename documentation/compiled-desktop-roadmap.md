@@ -58,7 +58,7 @@ Deferred cleanup:
 - Maintain the current A-Frame master plus Three r184 baseline until an explicit shared-runtime upgrade spike is opened.
 - Keep smoke coverage for Horizon and non-Horizon PMNDRS scenes.
 - Continue validating native PMNDRS SSAO across broader authored scenes.
-- Validate the desktop Takram cloud-sun bridge with day-night cycle scenes: visible sun-disk cloud coverage should dim direct/indirect light factors, reflections, shadow contrast/softness, and lens flare through diagnostics before adding author-facing controls.
+- Validate the desktop Takram cloud-sun bridge with day-night cycle scenes: visible sun-disk cloud coverage should dim direct/indirect light factors, reflections, shadow contrast/softness, and lens flare through diagnostics before adding author-facing controls. Visible Takram sun-disk occlusion is deferred after the runtime `SkyMaterial` shader-patch attempt destabilized compiled Horizon scenes.
 - Prototype a desktop-only Takram `post-process-albedo` mode later; do not mix that experiment into the current Takram light-source path.
 - Keep immersive XR composer/cloud bypass policy out of this desktop pass.
 

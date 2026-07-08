@@ -364,6 +364,8 @@ const desktopClouds = createFeatureStateFixture({
         cloudAmbientFactor: 0.81,
         cloudReflectionFactor: 0.73,
         cloudSunShadowRadiusScale: 2.05,
+        cloudSkySunDiskVisibility: 0.14,
+        cloudSkySunDiskTargetVisibility: 0.08,
         cloudSunDiskOcclusion: 0.88,
         cloudSunDiskStrength: 0.96,
         cloudSunDiskUvX: 0.52,
@@ -388,6 +390,8 @@ assertPath(desktopClouds.takram.cloudsActive, true, "desktop PMNDRS clouds activ
 assertPath(desktopClouds.takram.cloudAmbientFactor, 0.81, "desktop PMNDRS cloud ambient factor diagnostic");
 assertPath(desktopClouds.takram.cloudReflectionFactor, 0.73, "desktop PMNDRS cloud reflection factor diagnostic");
 assertPath(desktopClouds.takram.cloudSunShadowRadiusScale, 2.05, "desktop PMNDRS cloud shadow radius diagnostic");
+assertPath(desktopClouds.takram.cloudSkySunDiskVisibility, 0.14, "desktop PMNDRS cloud sky sun disk visibility diagnostic");
+assertPath(desktopClouds.takram.cloudSkySunDiskTargetVisibility, 0.08, "desktop PMNDRS cloud sky sun disk target diagnostic");
 assertPath(desktopClouds.takram.cloudSunDiskOcclusion, 0.88, "desktop PMNDRS cloud sun-disk occlusion diagnostic");
 assertPath(desktopClouds.takram.cloudSunDiskSampleReason, "sampled", "desktop PMNDRS cloud sun-disk sample reason diagnostic");
 
@@ -551,5 +555,17 @@ const spatialUi = createFeatureStateFixture({
 });
 assertPath(spatialUi.spatialUi.bundleLoaded, true, "spatial UI bundle diagnostic");
 assertPath(spatialUi.spatialUi.activePanel, false, "spatial UI panel diagnostic");
+
+const pmndrsPostFxSource = readFileSync(resolve(root, "assets/js/runtime/master/vrodos_postprocessing_pmndrs.js"), "utf8");
+assert(
+    pmndrsPostFxSource.includes("function constrainPmndrsHorizonAerialToVanillaLightSourceMode"),
+    "Horizon aerial compositor constraint should remain present"
+);
+assert(
+    pmndrsPostFxSource.includes("effect.sunLight = false") &&
+        pmndrsPostFxSource.includes("effect.skyLight = false") &&
+        pmndrsPostFxSource.includes("effect.sky = false"),
+    "Horizon aerial compositor should not re-light PBR content or render a duplicate sky"
+);
 
 console.log("Runtime feature-state smoke tests passed.");

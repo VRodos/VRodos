@@ -1883,6 +1883,12 @@ AFRAME.registerComponent('scene-settings', {
                 cloudSunShadowRadiusScale: typeof cloudDiagnostics.cloudSunShadowRadiusScale === 'number'
                     ? cloudDiagnostics.cloudSunShadowRadiusScale
                     : null,
+                cloudSkySunDiskVisibility: typeof cloudDiagnostics.cloudSkySunDiskVisibility === 'number'
+                    ? cloudDiagnostics.cloudSkySunDiskVisibility
+                    : null,
+                cloudSkySunDiskTargetVisibility: typeof cloudDiagnostics.cloudSkySunDiskTargetVisibility === 'number'
+                    ? cloudDiagnostics.cloudSkySunDiskTargetVisibility
+                    : null,
                 cloudSunDiskOcclusion: typeof cloudDiagnostics.cloudSunDiskOcclusion === 'number'
                     ? cloudDiagnostics.cloudSunDiskOcclusion
                     : null,

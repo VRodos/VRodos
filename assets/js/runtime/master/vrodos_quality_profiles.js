@@ -42,6 +42,7 @@
     const PMNDRS_CLOUD_SUN_OCCLUSION_AMBIENT_MIN = 0.78;
     const PMNDRS_CLOUD_SUN_OCCLUSION_REFLECTION_MIN = 0.68;
     const PMNDRS_CLOUD_SUN_SHADOW_RADIUS_BOOST = 1.25;
+    const PMNDRS_CLOUD_SKY_SUN_DISK_VISIBILITY_MIN = 0.025;
     const PMNDRS_CLOUD_SUN_OCCLUSION_STATIC_SMOOTH_MS = 900;
     const PMNDRS_CLOUD_SUN_OCCLUSION_DAY_NIGHT_MIN_SMOOTH_MS = 1800;
     const WGS84_EQUATORIAL_RADIUS = 6378137;
@@ -1524,6 +1525,12 @@
             diskOcclusion
         );
         const targetStrength = clamp01(Math.max(coverageStrength, diskStrength) * sunElevationFactor);
+        const skySunDiskVisibility = sunElevationFactor > 0.001
+            ? Math.max(
+                PMNDRS_CLOUD_SKY_SUN_DISK_VISIBILITY_MIN,
+                1 - ((1 - PMNDRS_CLOUD_SKY_SUN_DISK_VISIBILITY_MIN) * diskStrength)
+            )
+            : 1;
 
         return {
             coverageStrength,
@@ -1534,7 +1541,8 @@
             fillFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_FILL_MIN) * targetStrength),
             ambientFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_AMBIENT_MIN) * targetStrength),
             reflectionFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_REFLECTION_MIN) * targetStrength),
-            shadowRadiusScale: 1 + (targetStrength * PMNDRS_CLOUD_SUN_SHADOW_RADIUS_BOOST)
+            shadowRadiusScale: 1 + (targetStrength * PMNDRS_CLOUD_SUN_SHADOW_RADIUS_BOOST),
+            skySunDiskVisibility
         };
     }
 
@@ -1553,6 +1561,7 @@
             cloudAmbientFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.ambientFactor),
             cloudReflectionFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.reflectionFactor),
             cloudSunShadowRadiusScale: roundPmndrsCloudSunOcclusionDiagnostic(state.shadowRadiusScale),
+            cloudSkySunDiskVisibility: roundPmndrsCloudSunOcclusionDiagnostic(state.skySunDiskVisibility),
             cloudSunElevationFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.sunElevationFactor),
             cloudSunOcclusionReason: state.reason || '',
             cloudSunCoverageStrength: roundPmndrsCloudSunOcclusionDiagnostic(state.coverageStrength),
@@ -1607,6 +1616,7 @@
             ambientFactor: 1,
             reflectionFactor: 1,
             shadowRadiusScale: 1,
+            skySunDiskVisibility: 1,
             sunElevationFactor,
             reason: 'not-evaluated',
             coverageStrength: 0,
@@ -1656,6 +1666,7 @@
             ambientFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_AMBIENT_MIN) * strength),
             reflectionFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_REFLECTION_MIN) * strength),
             shadowRadiusScale: 1 + (strength * PMNDRS_CLOUD_SUN_SHADOW_RADIUS_BOOST),
+            skySunDiskVisibility: factors.skySunDiskVisibility,
             sunElevationFactor,
             reason: factors.diskStrength > factors.coverageStrength ? 'active-sun-disk' : 'active-coverage',
             coverageStrength: factors.coverageStrength,
@@ -3593,7 +3604,8 @@
             `fill${formatPmndrsNumberForLog(diagnostics.cloudFillFactor, 2)}`,
             `ambient${formatPmndrsNumberForLog(diagnostics.cloudAmbientFactor, 2)}`,
             `reflection${formatPmndrsNumberForLog(diagnostics.cloudReflectionFactor, 2)}`,
-            `shadowRadius${formatPmndrsNumberForLog(diagnostics.cloudSunShadowRadiusScale, 2)}`
+            `shadowRadius${formatPmndrsNumberForLog(diagnostics.cloudSunShadowRadiusScale, 2)}`,
+            `skySun${formatPmndrsNumberForLog(diagnostics.cloudSkySunDiskVisibility, 2)}`
         ].join(':');
 
         return {
@@ -4785,6 +4797,7 @@
         const lightingSmoothingMs = getPmndrsRuntimeLightingSmoothingMs(config);
         const indirectLightingSmoothingMs = getPmndrsRuntimeIndirectLightingSmoothingMs(config);
         const cloudSunOcclusion = getPmndrsCloudSunOcclusionState(self, config, lightingSmoothingMs, indirectLightingSmoothingMs);
+        syncPmndrsSkySunDiskCloudAttenuation(self, config, cloudSunOcclusion, lightingSmoothingMs);
         const dynamicCycleShadows = arePmndrsDayNightCycleDynamicShadowsEnabled(self, config);
         const adaptiveShadowCenter = dynamicCycleShadows ? getAdaptiveShadowCenter(self) : null;
 
@@ -6108,6 +6121,24 @@
         return true;
     }
 
+    function syncPmndrsSkySunDiskCloudAttenuation(self, _config, _cloudSunOcclusion, _smoothingMs) {
+        const diagnostics = self._pmndrsCloudsDiagnostics || {};
+        diagnostics.cloudSkySunDiskVisibility = 1;
+        diagnostics.cloudSkySunDiskTargetVisibility = 1;
+        self._pmndrsCloudsDiagnostics = diagnostics;
+        self.pmndrsCloudsDiagnostics = diagnostics;
+
+        const state = self && self._pmndrsAtmosphereState ? self._pmndrsAtmosphereState : null;
+        if (state) {
+            state.skySunDiskCloudVisibility = 1;
+            state.skySunDiskCloudTargetVisibility = 1;
+            state.skySunDiskCloudShaderPatched = false;
+            state.skySunDiskCloudPatchFailed = false;
+        }
+
+        return 1;
+    }
+
     function ensurePmndrsAtmosphereSky(self, config) {
         config = getPresentedPmndrsAtmosphereConfig(self, config);
         const state = self.ensurePmndrsAtmosphereResources ? self.ensurePmndrsAtmosphereResources() : null;
@@ -6142,6 +6173,13 @@
             const materialSignature = getPmndrsAtmosphereSkyMaterialSignature(config, state);
             const materialSignatureChanged = state.skyMaterialSignature !== materialSignature;
             applyVrTakramSkyDirectCalibration(self, state.skyMaterial);
+            const skyCloudState = getPmndrsCloudSunOcclusionState(
+                self,
+                config,
+                getPmndrsRuntimeLightingSmoothingMs(config),
+                getPmndrsRuntimeIndirectLightingSmoothingMs(config)
+            );
+            syncPmndrsSkySunDiskCloudAttenuation(self, config, skyCloudState, getPmndrsRuntimeLightingSmoothingMs(config));
             self.applyPmndrsAtmosphereConfigToTarget(state.skyMaterial, config);
             if (materialSignatureChanged) {
                 state.skyMaterial.irradianceTexture = state.textures.irradianceTexture || null;
@@ -7831,6 +7869,15 @@
         return isPmndrsAtmosphereSkyVisible(this);
     };
     H.computePmndrsCloudSunOcclusionFactors = computePmndrsCloudSunOcclusionFactors;
+    H.syncPmndrsSkySunDiskCloudAttenuation = function (config) {
+        const atmosphereConfig = config || (typeof this.getPmndrsAtmosphereConfig === 'function'
+            ? this.getPmndrsAtmosphereConfig()
+            : null);
+        const smoothingMs = getPmndrsRuntimeLightingSmoothingMs(atmosphereConfig);
+        const indirectSmoothingMs = getPmndrsRuntimeIndirectLightingSmoothingMs(atmosphereConfig);
+        const cloudSunOcclusion = getPmndrsCloudSunOcclusionState(this, atmosphereConfig, smoothingMs, indirectSmoothingMs);
+        return syncPmndrsSkySunDiskCloudAttenuation(this, atmosphereConfig, cloudSunOcclusion, smoothingMs);
+    };
     H.syncPmndrsCloudShadowLengthToSkyMaterial = function (shadowLength, reason) {
         return syncPmndrsCloudShadowLengthToSkyMaterial(this, shadowLength, reason);
     };
