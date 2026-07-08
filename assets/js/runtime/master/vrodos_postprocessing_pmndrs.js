@@ -187,6 +187,9 @@
     const PMNDRS_CLOUD_SUN_VISIBILITY_FULL_Y = 0.08;
     const PMNDRS_CLOUD_HORIZON_COVERAGE_COMPRESS_START = 0.35;
     const PMNDRS_CLOUD_HORIZON_COVERAGE_MAX = 0.395;
+    const PMNDRS_CLOUD_SUN_DISK_SAMPLE_INTERVAL_MS = 160;
+    const PMNDRS_CLOUD_SUN_DISK_SAMPLE_RADIUS_PX = 3;
+    const PMNDRS_CLOUD_SUN_DISK_SAMPLE_MAX_AGE_MS = 900;
 
     function smoothStep01(value) {
         const t = clamp01(value);
@@ -226,7 +229,12 @@
             (authoredCoverage - PMNDRS_CLOUD_LENS_FLARE_COVERAGE_START) /
             (1 - PMNDRS_CLOUD_LENS_FLARE_COVERAGE_START)
         );
-        return Math.max(0.18, 1 - (t * 0.82));
+        const coverageFactor = Math.max(0.18, 1 - (t * 0.82));
+        const diskStrength = typeof diagnostics.cloudSunDiskStrength === 'number'
+            ? clamp01(diagnostics.cloudSunDiskStrength)
+            : 0;
+        const diskFactor = Math.max(0.04, 1 - (diskStrength * 0.96));
+        return Math.min(coverageFactor, diskFactor);
     }
 
     function getPmndrsCloudSunVisibility(atmosphereConfig) {
@@ -670,6 +678,13 @@
             cloudSunOcclusionReason: 'not-evaluated',
             cloudSunCoverageStrength: 0,
             cloudSunOcclusionTargetStrength: 0,
+            cloudSunDiskOcclusion: 0,
+            cloudSunDiskStrength: 0,
+            cloudSunDiskUvX: null,
+            cloudSunDiskUvY: null,
+            cloudSunDiskSampleReason: 'not-evaluated',
+            cloudSunDiskSampleAgeMs: null,
+            cloudSunDiskSampleCount: 0,
             textureReady: false,
             xrSkipped: false
         }, previous, updates || {});
@@ -722,7 +737,10 @@
             if (typeof self.pmndrsLensFlareEffect._vrodosBaseIntensity !== 'number') {
                 self.pmndrsLensFlareEffect._vrodosBaseIntensity = Number.isFinite(currentIntensity) ? currentIntensity : 0.005;
             }
-            self.pmndrsLensFlareEffect.intensity = self.pmndrsLensFlareEffect._vrodosBaseIntensity * factor;
+            const sceneFactor = typeof self._pmndrsLensFlareSceneOcclusionFactor === 'number'
+                ? self._pmndrsLensFlareSceneOcclusionFactor
+                : 1;
+            self.pmndrsLensFlareEffect.intensity = self.pmndrsLensFlareEffect._vrodosBaseIntensity * factor * sceneFactor;
         }
         return factor;
     }
@@ -740,12 +758,248 @@
         });
     }
 
+    function halfFloatToNumber(value) {
+        const sign = (value & 0x8000) ? -1 : 1;
+        const exponent = (value >> 10) & 0x1f;
+        const fraction = value & 0x03ff;
+
+        if (exponent === 0) {
+            return sign * Math.pow(2, -14) * (fraction / 1024);
+        }
+        if (exponent === 31) {
+            return fraction ? NaN : sign * Infinity;
+        }
+        return sign * Math.pow(2, exponent - 15) * (1 + (fraction / 1024));
+    }
+
+    function getPmndrsCloudSunDiskReadBuffer(self, renderTarget) {
+        const THREE = window.THREE || {};
+        const texture = renderTarget && renderTarget.texture ? renderTarget.texture : null;
+        const type = texture ? texture.type : null;
+        const key = type === THREE.FloatType
+            ? 'float'
+            : (type === THREE.HalfFloatType ? 'half' : 'byte');
+
+        if (!self._pmndrsCloudSunDiskReadBuffer || self._pmndrsCloudSunDiskReadBufferType !== key) {
+            self._pmndrsCloudSunDiskReadBufferType = key;
+            self._pmndrsCloudSunDiskReadBuffer = key === 'float'
+                ? new Float32Array(4)
+                : (key === 'half' ? new Uint16Array(4) : new Uint8Array(4));
+        }
+        return self._pmndrsCloudSunDiskReadBuffer;
+    }
+
+    function readPmndrsCloudSunDiskAlpha(buffer, typeKey) {
+        if (!buffer || buffer.length < 4) {
+            return null;
+        }
+
+        if (typeKey === 'float') {
+            return Number.isFinite(buffer[3]) ? clamp01(buffer[3]) : null;
+        }
+        if (typeKey === 'half') {
+            const value = halfFloatToNumber(buffer[3]);
+            return Number.isFinite(value) ? clamp01(value) : null;
+        }
+        return clamp01(buffer[3] / 255);
+    }
+
+    function getPmndrsCloudSunDiskRenderTarget(effect) {
+        const cloudsPass = effect && effect.cloudsPass ? effect.cloudsPass : null;
+        if (!cloudsPass) {
+            return null;
+        }
+        return cloudsPass.historyRenderTarget || cloudsPass.resolveRenderTarget || cloudsPass.currentRenderTarget || null;
+    }
+
+    function projectPmndrsCloudSunDiskUv(self, camera, atmosphereConfig) {
+        const THREE = window.THREE;
+        const direction = atmosphereConfig && (atmosphereConfig.localSunDirection || atmosphereConfig.sunDirection);
+        if (!THREE || !camera || !direction || typeof direction.lengthSq !== 'function' || direction.lengthSq() < 0.0001) {
+            return { reason: 'sun-direction-unavailable' };
+        }
+        if (getPmndrsCloudSunVisibility(atmosphereConfig) <= 0.001) {
+            return { reason: 'sun-below-horizon' };
+        }
+
+        self._pmndrsCloudSunDiskCameraPosition = self._pmndrsCloudSunDiskCameraPosition || new THREE.Vector3();
+        self._pmndrsCloudSunDiskDirection = self._pmndrsCloudSunDiskDirection || new THREE.Vector3();
+        self._pmndrsCloudSunDiskProjectedPosition = self._pmndrsCloudSunDiskProjectedPosition || new THREE.Vector3();
+
+        const cameraPosition = self._pmndrsCloudSunDiskCameraPosition;
+        if (typeof camera.getWorldPosition === 'function') {
+            camera.getWorldPosition(cameraPosition);
+        } else if (camera.position && typeof cameraPosition.copy === 'function') {
+            cameraPosition.copy(camera.position);
+        } else {
+            cameraPosition.set(0, 0, 0);
+        }
+
+        const sunDistance = Math.max(100, Math.min(Number(atmosphereConfig.sunDistance || 5200), 20000));
+        const sunDirection = self._pmndrsCloudSunDiskDirection.copy(direction).normalize();
+        const projected = self._pmndrsCloudSunDiskProjectedPosition.copy(cameraPosition).addScaledVector(sunDirection, sunDistance);
+        if (typeof projected.project !== 'function') {
+            return { reason: 'projection-unavailable' };
+        }
+        projected.project(camera);
+
+        if (!Number.isFinite(projected.x) || !Number.isFinite(projected.y) || !Number.isFinite(projected.z)) {
+            return { reason: 'projection-invalid' };
+        }
+        if (projected.z < -1 || projected.z > 1) {
+            return { reason: 'sun-behind-camera' };
+        }
+
+        const u = (projected.x * 0.5) + 0.5;
+        const v = (projected.y * 0.5) + 0.5;
+        if (u < -0.05 || u > 1.05 || v < -0.05 || v > 1.05) {
+            return { reason: 'sun-offscreen' };
+        }
+        return {
+            reason: '',
+            u: clamp01(u),
+            v: clamp01(v)
+        };
+    }
+
+    function getPmndrsCloudSunDiskPreviousSample(self, reason, now) {
+        const previous = self && self._pmndrsCloudSunDiskSample ? self._pmndrsCloudSunDiskSample : null;
+        const age = previous && typeof previous.sampleTimeMs === 'number'
+            ? Math.max(0, now - previous.sampleTimeMs)
+            : null;
+
+        if (previous && age !== null && age <= PMNDRS_CLOUD_SUN_DISK_SAMPLE_MAX_AGE_MS) {
+            return Object.assign({}, previous, {
+                reason: reason || previous.reason || 'sample-reused',
+                ageMs: age
+            });
+        }
+
+        return {
+            occlusion: 0,
+            reason: reason || 'sample-unavailable',
+            u: null,
+            v: null,
+            ageMs: age,
+            sampleCount: 0,
+            sampleTimeMs: previous && typeof previous.sampleTimeMs === 'number' ? previous.sampleTimeMs : null
+        };
+    }
+
+    function samplePmndrsCloudSunDiskOcclusion(self, renderer, camera, atmosphereConfig) {
+        const now = typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
+        const previous = self && self._pmndrsCloudSunDiskSample ? self._pmndrsCloudSunDiskSample : null;
+        if (!self || !renderer || !camera || !self.pmndrsCloudsEffect || !isHorizonBackground(self)) {
+            return getPmndrsCloudSunDiskPreviousSample(self, 'not-horizon-clouds', now);
+        }
+        if (typeof self.isDirectVrPresentationActive === 'function' && self.isDirectVrPresentationActive()) {
+            return getPmndrsCloudSunDiskPreviousSample(self, 'immersive-xr', now);
+        }
+        if (previous && typeof previous.sampleTimeMs === 'number' && (now - previous.sampleTimeMs) < PMNDRS_CLOUD_SUN_DISK_SAMPLE_INTERVAL_MS) {
+            return Object.assign({}, previous, {
+                reason: 'sample-throttled',
+                ageMs: Math.max(0, now - previous.sampleTimeMs)
+            });
+        }
+        if (typeof renderer.readRenderTargetPixels !== 'function') {
+            return getPmndrsCloudSunDiskPreviousSample(self, 'readpixels-unavailable', now);
+        }
+
+        const renderTarget = getPmndrsCloudSunDiskRenderTarget(self.pmndrsCloudsEffect);
+        const width = renderTarget && typeof renderTarget.width === 'number' ? renderTarget.width : 0;
+        const height = renderTarget && typeof renderTarget.height === 'number' ? renderTarget.height : 0;
+        if (!renderTarget || width < 2 || height < 2) {
+            return getPmndrsCloudSunDiskPreviousSample(self, 'cloud-target-unavailable', now);
+        }
+
+        const projection = projectPmndrsCloudSunDiskUv(self, camera, atmosphereConfig);
+        if (projection.reason) {
+            return getPmndrsCloudSunDiskPreviousSample(self, projection.reason, now);
+        }
+
+        const radius = Math.max(1, Math.min(PMNDRS_CLOUD_SUN_DISK_SAMPLE_RADIUS_PX, Math.floor(Math.min(width, height) * 0.015)));
+        const centerX = Math.max(0, Math.min(width - 1, Math.round(projection.u * (width - 1))));
+        const centerY = Math.max(0, Math.min(height - 1, Math.round(projection.v * (height - 1))));
+        const offsets = [
+            [0, 0],
+            [radius, 0],
+            [-radius, 0],
+            [0, radius],
+            [0, -radius],
+            [radius, radius],
+            [-radius, radius],
+            [radius, -radius],
+            [-radius, -radius]
+        ];
+        const buffer = getPmndrsCloudSunDiskReadBuffer(self, renderTarget);
+        const typeKey = self._pmndrsCloudSunDiskReadBufferType || 'byte';
+        let alphaTotal = 0;
+        let sampleCount = 0;
+
+        try {
+            for (let i = 0; i < offsets.length; i += 1) {
+                const offset = offsets[i];
+                const x = Math.max(0, Math.min(width - 1, centerX + offset[0]));
+                const y = Math.max(0, Math.min(height - 1, centerY + offset[1]));
+                renderer.readRenderTargetPixels(renderTarget, x, y, 1, 1, buffer);
+                const alpha = readPmndrsCloudSunDiskAlpha(buffer, typeKey);
+                if (alpha !== null) {
+                    alphaTotal += alpha;
+                    sampleCount += 1;
+                }
+            }
+        } catch (err) {
+            if (!self._pmndrsCloudSunDiskReadWarned) {
+                console.info('[VRodos] PMNDRS cloud sun-disk readback unavailable; cloud lighting falls back to authored coverage.', err);
+                self._pmndrsCloudSunDiskReadWarned = true;
+            }
+            return getPmndrsCloudSunDiskPreviousSample(self, 'readpixels-failed', now);
+        }
+
+        if (sampleCount <= 0) {
+            return getPmndrsCloudSunDiskPreviousSample(self, 'sample-empty', now);
+        }
+
+        const sample = {
+            occlusion: clamp01(alphaTotal / sampleCount),
+            reason: 'sampled',
+            u: projection.u,
+            v: projection.v,
+            ageMs: 0,
+            sampleCount,
+            sampleTimeMs: now
+        };
+        self._pmndrsCloudSunDiskSample = sample;
+        return sample;
+    }
+
+    function cloudSunDiskSampleToDiagnostics(sample) {
+        const occlusion = sample && typeof sample.occlusion === 'number' ? clamp01(sample.occlusion) : 0;
+        const strength = smoothStep01((occlusion - 0.18) / (0.78 - 0.18));
+        return {
+            cloudSunDiskOcclusion: occlusion,
+            cloudSunDiskStrength: strength,
+            cloudSunDiskUvX: sample && typeof sample.u === 'number' ? Number(sample.u.toFixed(4)) : null,
+            cloudSunDiskUvY: sample && typeof sample.v === 'number' ? Number(sample.v.toFixed(4)) : null,
+            cloudSunDiskSampleReason: sample && sample.reason ? sample.reason : 'not-sampled',
+            cloudSunDiskSampleAgeMs: sample && typeof sample.ageMs === 'number' ? Math.round(sample.ageMs) : null,
+            cloudSunDiskSampleCount: sample && typeof sample.sampleCount === 'number' ? sample.sampleCount : 0
+        };
+    }
+
     function markPmndrsCloudsSkipped(self, reason, updates) {
         const next = updatePmndrsCloudDiagnostics(self, Object.assign({
             cloudsActive: false,
             cloudsSkippedReason: reason || 'disabled',
             xrSkipped: reason === 'immersive-xr'
-        }, updates || {}));
+        }, cloudSunDiskSampleToDiagnostics({
+            occlusion: 0,
+            reason: reason || 'clouds-skipped',
+            u: null,
+            v: null,
+            ageMs: null,
+            sampleCount: 0
+        }), updates || {}));
 
         if (self && reason && reason !== 'disabled' && reason !== 'cloud-assets-loading' && self._pmndrsCloudsWarnedReason !== reason) {
             const message = `[VRodos] Takram volumetric clouds skipped: ${reason}.`;
@@ -2310,6 +2564,7 @@
             `clouds sky shadow: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.skyShadowLengthRouted ? 'yes' : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.skyShadowLengthReason ? ` (${self._pmndrsCloudsDiagnostics.skyShadowLengthReason})` : ''}`}`,
             `clouds lens flare factor: ${  self && self._pmndrsCloudsDiagnostics && typeof self._pmndrsCloudsDiagnostics.lensFlareCloudFactor === 'number' ? self._pmndrsCloudsDiagnostics.lensFlareCloudFactor.toFixed(2) : '1.00'}`,
             `clouds sun occlusion: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudSunOcclusionEnabled ? `${Number(self._pmndrsCloudsDiagnostics.cloudSunOcclusionStrength || 0).toFixed(2)} direct ${Number(self._pmndrsCloudsDiagnostics.cloudSunDirectFactor || 1).toFixed(2)} sky ${Number(self._pmndrsCloudsDiagnostics.cloudSkyFactor || 1).toFixed(2)} fill ${Number(self._pmndrsCloudsDiagnostics.cloudFillFactor || 1).toFixed(2)}` : `off${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudSunOcclusionReason ? ` (${self._pmndrsCloudsDiagnostics.cloudSunOcclusionReason})` : ''}`}`,
+            `clouds sun disk: ${  self && self._pmndrsCloudsDiagnostics ? `${Number(self._pmndrsCloudsDiagnostics.cloudSunDiskOcclusion || 0).toFixed(2)} strength ${Number(self._pmndrsCloudsDiagnostics.cloudSunDiskStrength || 0).toFixed(2)} ${self._pmndrsCloudsDiagnostics.cloudSunDiskSampleReason || 'not-sampled'}` : 'off'}`,
             `clouds textures: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.textureReady ? 'ready' : ((self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.textureLoaded !== undefined) ? `${self._pmndrsCloudsDiagnostics.textureLoaded}/${self._pmndrsCloudsDiagnostics.textureTotal || 0}` : 'off')}`,
             `clouds xr skip: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.xrSkipped ? 'yes' : 'no'}`,
             `horizon aerial: ${  shouldEnablePmndrsHorizonAerial(self) ? 'experimental-on' : 'off'}`,
@@ -2531,8 +2786,9 @@
         const hazeDisabledReason = getPmndrsCloudHazeDisabledReason(self, profile, hazeEnabled);
         self.pmndrsCloudsEffect.coverage = effectiveCoverage;
         const directCompositeEnabled = setPmndrsCloudDirectComposite(self.pmndrsCloudsEffect, !self.pmndrsAerialPerspectiveEffect);
+        const sunDiskSample = samplePmndrsCloudSunDiskOcclusion(self, renderer, camera, atmosphereConfig);
 
-        markPmndrsCloudsActive(self, {
+        markPmndrsCloudsActive(self, Object.assign({
             textureReady: true,
             textureLoaded: textureState.loaded,
             textureTotal: textureState.total,
@@ -2551,7 +2807,7 @@
             coverage: getPmndrsCloudsCoverage(self),
             authoredCoverage: getPmndrsCloudsCoverage(self),
             effectiveCoverage
-        });
+        }, cloudSunDiskSampleToDiagnostics(sunDiskSample)));
         routePmndrsCloudsIntoAerial(self, atmosphereConfig);
     }
 

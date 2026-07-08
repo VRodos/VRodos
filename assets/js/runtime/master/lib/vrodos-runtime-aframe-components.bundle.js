@@ -1978,6 +1978,8 @@
       const vrFeaturePolicy = this.getVrRuntimeFeaturePolicy();
       const vrHdrReflectionsActive = Boolean(vrFeaturePolicy.hdrReflections);
       const vrTakramVisibleSkyActive = Boolean(vrFeaturePolicy.takramVisibleSky);
+      const desktopCloudsAllowed = !vrFeaturePolicy.profileActive && this.isPmndrsCloudsEnabled();
+      const cloudsPolicyAllowed = Boolean(vrFeaturePolicy.clouds || desktopCloudsAllowed);
       const pmndrsAtmosphereSkyVisible = typeof this.isPmndrsAtmosphereSkyVisible === "function" && this.isPmndrsAtmosphereSkyVisible();
       let pixelRatio = null;
       if (renderer && typeof renderer.getPixelRatio === "function") {
@@ -2048,9 +2050,9 @@
           visibleSkyDirectWarmed: Boolean(vrTakramVisibleSkyActive && atmosphereState && atmosphereState.vrTakramSkyDirectWarmed),
           visibleSkyDirectWarmupMs: vrTakramVisibleSkyActive && atmosphereState && typeof atmosphereState.vrTakramSkyDirectWarmupMs === "number" ? atmosphereState.vrTakramSkyDirectWarmupMs : null,
           visibleSkyDirectWarmupRemainingMs: vrTakramVisibleSkyActive && atmosphereState && typeof atmosphereState.vrTakramSkyDirectWarmupRemainingMs === "number" ? atmosphereState.vrTakramSkyDirectWarmupRemainingMs : null,
-          cloudsRequested: Boolean(vrFeaturePolicy.clouds && this.isPmndrsCloudsEnabled()),
+          cloudsRequested: Boolean(cloudsPolicyAllowed && this.isPmndrsCloudsEnabled()),
           cloudsBundleLoaded: Boolean(window.VRODOS_TAKRAM_CLOUDS),
-          cloudsActive: Boolean(vrFeaturePolicy.clouds && cloudDiagnostics.cloudsActive),
+          cloudsActive: Boolean(cloudsPolicyAllowed && cloudDiagnostics.cloudsActive),
           cloudsSkippedReason: cloudDiagnostics.cloudsSkippedReason || "",
           cloudsAuthoredCoverage: typeof cloudDiagnostics.authoredCoverage === "number" ? cloudDiagnostics.authoredCoverage : typeof cloudDiagnostics.coverage === "number" ? cloudDiagnostics.coverage : null,
           cloudsEffectiveCoverage: typeof cloudDiagnostics.effectiveCoverage === "number" ? cloudDiagnostics.effectiveCoverage : null,
@@ -2073,6 +2075,16 @@
           cloudSunDirectFactor: typeof cloudDiagnostics.cloudSunDirectFactor === "number" ? cloudDiagnostics.cloudSunDirectFactor : null,
           cloudSkyFactor: typeof cloudDiagnostics.cloudSkyFactor === "number" ? cloudDiagnostics.cloudSkyFactor : null,
           cloudFillFactor: typeof cloudDiagnostics.cloudFillFactor === "number" ? cloudDiagnostics.cloudFillFactor : null,
+          cloudAmbientFactor: typeof cloudDiagnostics.cloudAmbientFactor === "number" ? cloudDiagnostics.cloudAmbientFactor : null,
+          cloudReflectionFactor: typeof cloudDiagnostics.cloudReflectionFactor === "number" ? cloudDiagnostics.cloudReflectionFactor : null,
+          cloudSunShadowRadiusScale: typeof cloudDiagnostics.cloudSunShadowRadiusScale === "number" ? cloudDiagnostics.cloudSunShadowRadiusScale : null,
+          cloudSunDiskOcclusion: typeof cloudDiagnostics.cloudSunDiskOcclusion === "number" ? cloudDiagnostics.cloudSunDiskOcclusion : null,
+          cloudSunDiskStrength: typeof cloudDiagnostics.cloudSunDiskStrength === "number" ? cloudDiagnostics.cloudSunDiskStrength : null,
+          cloudSunDiskUvX: typeof cloudDiagnostics.cloudSunDiskUvX === "number" ? cloudDiagnostics.cloudSunDiskUvX : null,
+          cloudSunDiskUvY: typeof cloudDiagnostics.cloudSunDiskUvY === "number" ? cloudDiagnostics.cloudSunDiskUvY : null,
+          cloudSunDiskSampleReason: cloudDiagnostics.cloudSunDiskSampleReason || "",
+          cloudSunDiskSampleAgeMs: typeof cloudDiagnostics.cloudSunDiskSampleAgeMs === "number" ? cloudDiagnostics.cloudSunDiskSampleAgeMs : null,
+          cloudSunDiskSampleCount: typeof cloudDiagnostics.cloudSunDiskSampleCount === "number" ? cloudDiagnostics.cloudSunDiskSampleCount : null,
           cloudSunElevationFactor: typeof cloudDiagnostics.cloudSunElevationFactor === "number" ? cloudDiagnostics.cloudSunElevationFactor : null,
           cloudSunOcclusionReason: cloudDiagnostics.cloudSunOcclusionReason || "",
           cloudSunCoverageStrength: typeof cloudDiagnostics.cloudSunCoverageStrength === "number" ? cloudDiagnostics.cloudSunCoverageStrength : null,

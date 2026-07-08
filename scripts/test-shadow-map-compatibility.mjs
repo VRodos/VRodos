@@ -337,6 +337,33 @@ function createVrTakramSkyFixture({ stereo }) {
 const context = createQualityProfileContext();
 const helpers = context.VRODOSMaster.SceneSettingsHelpers;
 
+const clearCloudSun = helpers.computePmndrsCloudSunOcclusionFactors({
+    authoredCoverage: 0.22,
+    diskOcclusion: 0,
+    sunElevationFactor: 1
+});
+assert(clearCloudSun.targetStrength === 0, "sparse clouds should not dim daylight");
+assert(clearCloudSun.directFactor === 1, "clear cloud factor should keep direct sun unchanged");
+
+const coveredCloudSun = helpers.computePmndrsCloudSunOcclusionFactors({
+    authoredCoverage: 0.22,
+    diskOcclusion: 0.9,
+    sunElevationFactor: 1
+});
+assert(coveredCloudSun.diskStrength > 0.95, "sun-disk cloud sample should dominate sparse authored coverage");
+assert(coveredCloudSun.directFactor < 0.25, "covered sun disk should strongly dim direct light");
+assert(coveredCloudSun.ambientFactor < 1, "covered sun disk should dim ambient bounce");
+assert(coveredCloudSun.reflectionFactor < 1, "covered sun disk should dim environment reflections");
+assert(coveredCloudSun.shadowRadiusScale > 2, "covered sun disk should soften direct sun shadows instead of disabling them");
+
+const nightCloudSun = helpers.computePmndrsCloudSunOcclusionFactors({
+    authoredCoverage: 0.9,
+    diskOcclusion: 0.9,
+    sunElevationFactor: 0
+});
+assert(nightCloudSun.targetStrength === 0, "cloud sun occlusion should be horizon-gated at night");
+assert(nightCloudSun.shadowRadiusScale === 1, "cloud shadow softening should be off below horizon");
+
 assert(
     helpers.usesVrTakramDirectSkyCalibration.call(createVrTakramSkyFixture({ stereo: false })) === true,
     "legacy headset Takram visible sky should keep direct calibration"

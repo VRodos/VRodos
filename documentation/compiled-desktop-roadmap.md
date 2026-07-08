@@ -58,6 +58,7 @@ Deferred cleanup:
 - Maintain the current A-Frame master plus Three r184 baseline until an explicit shared-runtime upgrade spike is opened.
 - Keep smoke coverage for Horizon and non-Horizon PMNDRS scenes.
 - Continue validating native PMNDRS SSAO across broader authored scenes.
+- Validate the desktop Takram cloud-sun bridge with day-night cycle scenes: visible sun-disk cloud coverage should dim direct/indirect light factors, reflections, shadow contrast/softness, and lens flare through diagnostics before adding author-facing controls.
 - Prototype a desktop-only Takram `post-process-albedo` mode later; do not mix that experiment into the current Takram light-source path.
 - Keep immersive XR composer/cloud bypass policy out of this desktop pass.
 
@@ -80,7 +81,8 @@ Deferred cleanup:
 
 - Steep-face shadow proxy for terrain shadows.
 - Cloud light-shafts controls after measured visual and performance validation.
-- Geospatial date/time solar simulation, `LightingMaskPass`, and related geospatial helper experiments.
+- PMNDRS `GodRaysEffect` integration, if needed, after the cloud lighting bridge is visually stable.
+- Geospatial date/time solar simulation, `LightingMaskPass`, the experimental `takram-albedo` / mixed-lighting mode, and related geospatial helper experiments.
 
 ## Deferred VR And PCVR Items
 

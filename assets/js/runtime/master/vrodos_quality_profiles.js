@@ -34,9 +34,14 @@
     const PMNDRS_DAY_NIGHT_SHADOW_RADIUS_MEDIUM = 1.8;
     const PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_START = 0.22;
     const PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_FULL = 0.82;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_DIRECT_MIN = 0.48;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_SKY_MIN = 0.72;
-    const PMNDRS_CLOUD_SUN_OCCLUSION_FILL_MIN = 0.82;
+    const PMNDRS_CLOUD_SUN_DISK_OCCLUSION_START = 0.18;
+    const PMNDRS_CLOUD_SUN_DISK_OCCLUSION_FULL = 0.78;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_DIRECT_MIN = 0.18;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_SKY_MIN = 0.56;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_FILL_MIN = 0.66;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_AMBIENT_MIN = 0.78;
+    const PMNDRS_CLOUD_SUN_OCCLUSION_REFLECTION_MIN = 0.68;
+    const PMNDRS_CLOUD_SUN_SHADOW_RADIUS_BOOST = 1.25;
     const PMNDRS_CLOUD_SUN_OCCLUSION_STATIC_SMOOTH_MS = 900;
     const PMNDRS_CLOUD_SUN_OCCLUSION_DAY_NIGHT_MIN_SMOOTH_MS = 1800;
     const WGS84_EQUATORIAL_RADIUS = 6378137;
@@ -1503,6 +1508,36 @@
         return Number.isFinite(value) ? Number(value.toFixed(4)) : null;
     }
 
+    function computePmndrsCloudSunOcclusionFactors(options) {
+        const opts = options || {};
+        const authoredCoverage = Number.isFinite(opts.authoredCoverage) ? opts.authoredCoverage : 0;
+        const diskOcclusion = Number.isFinite(opts.diskOcclusion) ? opts.diskOcclusion : 0;
+        const sunElevationFactor = Number.isFinite(opts.sunElevationFactor) ? clamp01(opts.sunElevationFactor) : 0;
+        const coverageStrength = smoothstepNumber(
+            PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_START,
+            PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_FULL,
+            authoredCoverage
+        );
+        const diskStrength = smoothstepNumber(
+            PMNDRS_CLOUD_SUN_DISK_OCCLUSION_START,
+            PMNDRS_CLOUD_SUN_DISK_OCCLUSION_FULL,
+            diskOcclusion
+        );
+        const targetStrength = clamp01(Math.max(coverageStrength, diskStrength) * sunElevationFactor);
+
+        return {
+            coverageStrength,
+            diskStrength,
+            targetStrength,
+            directFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_DIRECT_MIN) * targetStrength),
+            skyFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_SKY_MIN) * targetStrength),
+            fillFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_FILL_MIN) * targetStrength),
+            ambientFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_AMBIENT_MIN) * targetStrength),
+            reflectionFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_REFLECTION_MIN) * targetStrength),
+            shadowRadiusScale: 1 + (targetStrength * PMNDRS_CLOUD_SUN_SHADOW_RADIUS_BOOST)
+        };
+    }
+
     function publishPmndrsCloudSunOcclusionDiagnostics(self, state) {
         if (!self || !state) {
             return state || null;
@@ -1515,9 +1550,13 @@
             cloudSunDirectFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.directFactor),
             cloudSkyFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.skyFactor),
             cloudFillFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.fillFactor),
+            cloudAmbientFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.ambientFactor),
+            cloudReflectionFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.reflectionFactor),
+            cloudSunShadowRadiusScale: roundPmndrsCloudSunOcclusionDiagnostic(state.shadowRadiusScale),
             cloudSunElevationFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.sunElevationFactor),
             cloudSunOcclusionReason: state.reason || '',
             cloudSunCoverageStrength: roundPmndrsCloudSunOcclusionDiagnostic(state.coverageStrength),
+            cloudSunDiskStrength: roundPmndrsCloudSunOcclusionDiagnostic(state.diskStrength),
             cloudSunOcclusionTargetStrength: roundPmndrsCloudSunOcclusionDiagnostic(state.targetStrength)
         });
         self._pmndrsCloudsDiagnostics = diagnostics;
@@ -1525,6 +1564,13 @@
         self._pmndrsCloudSunOcclusionState = diagnostics;
         logPmndrsCloudSunOcclusionDiagnostic(self, diagnostics);
         return diagnostics;
+    }
+
+    function getPmndrsCloudSunShadowRadiusScale(cloudSunOcclusion) {
+        const strength = cloudSunOcclusion && typeof cloudSunOcclusion.cloudSunOcclusionStrength === 'number'
+            ? clamp01(cloudSunOcclusion.cloudSunOcclusionStrength)
+            : 0;
+        return 1 + (strength * PMNDRS_CLOUD_SUN_SHADOW_RADIUS_BOOST);
     }
 
     function getPmndrsCloudSunOcclusionSmoothingMs(config, directSmoothingMs, indirectSmoothingMs) {
@@ -1547,6 +1593,9 @@
         const authoredCoverage = diagnostics && typeof diagnostics.authoredCoverage === 'number'
             ? diagnostics.authoredCoverage
             : effectiveCoverage;
+        const diskOcclusion = diagnostics && typeof diagnostics.cloudSunDiskOcclusion === 'number'
+            ? diagnostics.cloudSunDiskOcclusion
+            : 0;
         const cloudsActive = Boolean(diagnostics && diagnostics.cloudsActive === true);
         const sunElevationFactor = getPmndrsSunDirectLightVisibility(config);
         const defaultState = {
@@ -1555,9 +1604,13 @@
             directFactor: 1,
             skyFactor: 1,
             fillFactor: 1,
+            ambientFactor: 1,
+            reflectionFactor: 1,
+            shadowRadiusScale: 1,
             sunElevationFactor,
             reason: 'not-evaluated',
             coverageStrength: 0,
+            diskStrength: 0,
             targetStrength: 0
         };
 
@@ -1577,21 +1630,20 @@
             return publishPmndrsCloudSunOcclusionDiagnostics(self, defaultState);
         }
 
-        const coverageStrength = smoothstepNumber(
-            PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_START,
-            PMNDRS_CLOUD_SUN_OCCLUSION_COVERAGE_FULL,
-            authoredCoverage
-        );
-        const targetStrength = clamp01(coverageStrength * sunElevationFactor);
+        const factors = computePmndrsCloudSunOcclusionFactors({
+            authoredCoverage,
+            diskOcclusion,
+            sunElevationFactor
+        });
         const smoothingMs = getPmndrsCloudSunOcclusionSmoothingMs(config, directSmoothingMs, indirectSmoothingMs);
         const currentStrength = self._pmndrsCloudSunOcclusionState &&
             typeof self._pmndrsCloudSunOcclusionState.cloudSunOcclusionStrength === 'number'
             ? self._pmndrsCloudSunOcclusionState.cloudSunOcclusionStrength
-            : targetStrength;
+            : factors.targetStrength;
         const strength = smoothPmndrsRuntimeLightValue(
             self,
             'takramCloudSunOcclusionStrength',
-            targetStrength,
+            factors.targetStrength,
             smoothingMs,
             currentStrength
         );
@@ -1601,10 +1653,14 @@
             directFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_DIRECT_MIN) * strength),
             skyFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_SKY_MIN) * strength),
             fillFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_FILL_MIN) * strength),
+            ambientFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_AMBIENT_MIN) * strength),
+            reflectionFactor: 1 - ((1 - PMNDRS_CLOUD_SUN_OCCLUSION_REFLECTION_MIN) * strength),
+            shadowRadiusScale: 1 + (strength * PMNDRS_CLOUD_SUN_SHADOW_RADIUS_BOOST),
             sunElevationFactor,
-            reason: 'active',
-            coverageStrength,
-            targetStrength
+            reason: factors.diskStrength > factors.coverageStrength ? 'active-sun-disk' : 'active-coverage',
+            coverageStrength: factors.coverageStrength,
+            diskStrength: factors.diskStrength,
+            targetStrength: factors.targetStrength
         };
 
         return publishPmndrsCloudSunOcclusionDiagnostics(self, state);
@@ -3530,10 +3586,14 @@
             `s${formatPmndrsNumberForLog(diagnostics.cloudSunOcclusionStrength, 2)}`,
             `target${formatPmndrsNumberForLog(diagnostics.cloudSunOcclusionTargetStrength, 2)}`,
             `coverage${formatPmndrsNumberForLog(diagnostics.cloudSunCoverageStrength, 2)}`,
+            `disk${formatPmndrsNumberForLog(diagnostics.cloudSunDiskStrength, 2)}`,
             `elev${formatPmndrsNumberForLog(diagnostics.cloudSunElevationFactor, 2)}`,
             `direct${formatPmndrsNumberForLog(diagnostics.cloudSunDirectFactor, 2)}`,
             `sky${formatPmndrsNumberForLog(diagnostics.cloudSkyFactor, 2)}`,
-            `fill${formatPmndrsNumberForLog(diagnostics.cloudFillFactor, 2)}`
+            `fill${formatPmndrsNumberForLog(diagnostics.cloudFillFactor, 2)}`,
+            `ambient${formatPmndrsNumberForLog(diagnostics.cloudAmbientFactor, 2)}`,
+            `reflection${formatPmndrsNumberForLog(diagnostics.cloudReflectionFactor, 2)}`,
+            `shadowRadius${formatPmndrsNumberForLog(diagnostics.cloudSunShadowRadiusScale, 2)}`
         ].join(':');
 
         return {
@@ -4789,7 +4849,8 @@
                     sunLight.shadow.map = null;
                 }
                 sunLight.shadow.bias = contactShadowSettings.bias;
-                sunLight.shadow.radius = getPmndrsDayNightShadowRadius(self);
+                sunLight.shadow.radius = getPmndrsDayNightShadowRadius(self) *
+                    getPmndrsCloudSunShadowRadiusScale(cloudSunOcclusion);
                 if (typeof sunLight.shadow.normalBias !== 'undefined') {
                     sunLight.shadow.normalBias = contactShadowSettings.normalBias;
                 }
@@ -4916,7 +4977,10 @@
         }
 
         if (ambientLight) {
-            const ambientBounceIntensity = getPmndrsTakramAmbientBounceIntensity(config);
+            const cloudAmbientFactor = typeof cloudSunOcclusion.cloudAmbientFactor === 'number'
+                ? cloudSunOcclusion.cloudAmbientFactor
+                : 1;
+            const ambientBounceIntensity = getPmndrsTakramAmbientBounceIntensity(config) * cloudAmbientFactor;
             const smoothedAmbientIntensity = smoothPmndrsRuntimeLightValue(
                 self,
                 'takramAmbientIntensity',
@@ -6569,10 +6633,18 @@
         }
 
         if (self && self.pmndrsLensFlareEffect && typeof self.pmndrsLensFlareEffect.intensity === 'number') {
-            if (typeof self._pmndrsLensFlareBaseIntensity !== 'number' || self._pmndrsLensFlareBaseIntensity <= 0) {
-                self._pmndrsLensFlareBaseIntensity = self.pmndrsLensFlareEffect.intensity || 0.005;
-            }
-            self.pmndrsLensFlareEffect.intensity = self._pmndrsLensFlareBaseIntensity * factor;
+            const baseIntensity = typeof self.pmndrsLensFlareEffect._vrodosBaseIntensity === 'number'
+                ? self.pmndrsLensFlareEffect._vrodosBaseIntensity
+                : (typeof self._pmndrsLensFlareBaseIntensity === 'number' && self._pmndrsLensFlareBaseIntensity > 0
+                    ? self._pmndrsLensFlareBaseIntensity
+                    : (self.pmndrsLensFlareEffect.intensity || 0.005));
+            self.pmndrsLensFlareEffect._vrodosBaseIntensity = baseIntensity;
+            self._pmndrsLensFlareBaseIntensity = baseIntensity;
+            self._pmndrsLensFlareSceneOcclusionFactor = factor;
+            const cloudFactor = typeof self._pmndrsLensFlareCloudFactor === 'number'
+                ? self._pmndrsLensFlareCloudFactor
+                : 1;
+            self.pmndrsLensFlareEffect.intensity = baseIntensity * factor * cloudFactor;
         }
 
         return factor;
@@ -7175,6 +7247,7 @@
                 node.userData = node.userData || {};
                 const isPhotorealHelperLight = isVrodosPhotorealHelperLight(node);
                 const isVrodosManagedLight = isVrodosManagedShadowLight(node);
+                const previousCastShadow = node.castShadow === true;
                 if (typeof node.userData.vrodosAuthoredCastShadow === 'undefined') {
                     node.userData.vrodosAuthoredCastShadow = node.castShadow === true;
                 }
@@ -7237,7 +7310,7 @@
                     }
                 }
 
-                node.shadow.needsUpdate = node.castShadow;
+                node.shadow.needsUpdate = node.castShadow || previousCastShadow !== node.castShadow;
             }
         });
 
@@ -7271,8 +7344,12 @@
             reflectionOcclusionMode !== 'off' &&
             (typeof this.getEffectiveShadowQuality === 'function' ? this.getEffectiveShadowQuality() : this.data.shadowQuality) !== 'off' &&
             !(typeof this.isVrPresentationActive === 'function' && this.isVrPresentationActive());
-        const reflectionTargetScale = getPmndrsNightReflectionIntensityScale(this, atmosphereConfig, reflectionSource);
         const reflectionSmoothingMs = getPmndrsRuntimeLightingSmoothingMs(atmosphereConfig);
+        const cloudSunOcclusion = getPmndrsCloudSunOcclusionState(this, atmosphereConfig, reflectionSmoothingMs, reflectionSmoothingMs);
+        const cloudReflectionFactor = cloudSunOcclusion && typeof cloudSunOcclusion.cloudReflectionFactor === 'number'
+            ? cloudSunOcclusion.cloudReflectionFactor
+            : 1;
+        const reflectionTargetScale = getPmndrsNightReflectionIntensityScale(this, atmosphereConfig, reflectionSource) * cloudReflectionFactor;
         const reflectionIntensityScale = reflectionSmoothingMs > 0 && typeof this._vrodosReflectionEnvironmentIntensityScale === 'number'
             ? this._vrodosReflectionEnvironmentIntensityScale
             : reflectionTargetScale;
@@ -7389,8 +7466,12 @@
         }
 
         const atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
-        const targetScale = getPmndrsNightReflectionIntensityScale(this, atmosphereConfig, source);
         const smoothingMs = getPmndrsRuntimeLightingSmoothingMs(atmosphereConfig);
+        const cloudSunOcclusion = getPmndrsCloudSunOcclusionState(this, atmosphereConfig, smoothingMs, smoothingMs);
+        const cloudReflectionFactor = cloudSunOcclusion && typeof cloudSunOcclusion.cloudReflectionFactor === 'number'
+            ? cloudSunOcclusion.cloudReflectionFactor
+            : 1;
+        const targetScale = getPmndrsNightReflectionIntensityScale(this, atmosphereConfig, source) * cloudReflectionFactor;
         const smoothedScale = smoothPmndrsRuntimeLightValue(
             this,
             `reflectionEnvironmentIntensity:${source}`,
@@ -7749,6 +7830,7 @@
     H.isPmndrsAtmosphereSkyVisible = function () {
         return isPmndrsAtmosphereSkyVisible(this);
     };
+    H.computePmndrsCloudSunOcclusionFactors = computePmndrsCloudSunOcclusionFactors;
     H.syncPmndrsCloudShadowLengthToSkyMaterial = function (shadowLength, reason) {
         return syncPmndrsCloudShadowLengthToSkyMaterial(this, shadowLength, reason);
     };

@@ -346,6 +346,51 @@ assertPath(desktopPmndrs.postProcessing.requested, true, "desktop PMNDRS request
 assertPath(desktopPmndrs.postProcessing.allowed, true, "desktop PMNDRS allowed");
 assertPath(desktopPmndrs.postProcessing.owner, "pmndrs", "desktop PMNDRS owner");
 
+const desktopClouds = createFeatureStateFixture({
+    pmndrsActive: true,
+    postprocessingBundle: true,
+    takramBundle: true,
+    cloudsBundle: true,
+    cloudDiagnostics: {
+        cloudsActive: true,
+        authoredCoverage: 0.7,
+        effectiveCoverage: 0.38,
+        lensFlareCloudFactor: 0.12,
+        cloudSunOcclusionEnabled: true,
+        cloudSunOcclusionStrength: 0.85,
+        cloudSunDirectFactor: 0.3,
+        cloudSkyFactor: 0.63,
+        cloudFillFactor: 0.72,
+        cloudAmbientFactor: 0.81,
+        cloudReflectionFactor: 0.73,
+        cloudSunShadowRadiusScale: 2.05,
+        cloudSunDiskOcclusion: 0.88,
+        cloudSunDiskStrength: 0.96,
+        cloudSunDiskUvX: 0.52,
+        cloudSunDiskUvY: 0.47,
+        cloudSunDiskSampleReason: "sampled",
+        cloudSunDiskSampleAgeMs: 32,
+        cloudSunDiskSampleCount: 9,
+        cloudSunElevationFactor: 1,
+        cloudSunCoverageStrength: 0.5,
+        cloudSunOcclusionTargetStrength: 0.96
+    },
+    data: {
+        renderQuality: "high",
+        postFXEnabled: "1",
+        postFXEngine: "pmndrs",
+        pmndrsAtmosphereEnabled: "1",
+        pmndrsCloudsEnabled: "1"
+    }
+});
+assertPath(desktopClouds.takram.cloudsRequested, true, "desktop PMNDRS clouds request diagnostic");
+assertPath(desktopClouds.takram.cloudsActive, true, "desktop PMNDRS clouds active diagnostic");
+assertPath(desktopClouds.takram.cloudAmbientFactor, 0.81, "desktop PMNDRS cloud ambient factor diagnostic");
+assertPath(desktopClouds.takram.cloudReflectionFactor, 0.73, "desktop PMNDRS cloud reflection factor diagnostic");
+assertPath(desktopClouds.takram.cloudSunShadowRadiusScale, 2.05, "desktop PMNDRS cloud shadow radius diagnostic");
+assertPath(desktopClouds.takram.cloudSunDiskOcclusion, 0.88, "desktop PMNDRS cloud sun-disk occlusion diagnostic");
+assertPath(desktopClouds.takram.cloudSunDiskSampleReason, "sampled", "desktop PMNDRS cloud sun-disk sample reason diagnostic");
+
 const headsetNoPostFx = createFeatureStateFixture({
     immersive: true,
     userAgent: "OculusBrowser Quest",
