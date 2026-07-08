@@ -286,7 +286,11 @@
         haze: true,
         shapeDetail: false,
         turbulence: false,
+        multiScatteringOctaves: 8,
+        accurateSunSkyLight: false,
+        accuratePhaseFunction: false,
         shadowFarScale: 0.25,
+        shadowMaxFar: null,
         localWeatherRepeat: 100,
         localWeatherVelocity: [2e-4, 0],
         shapeRepeat: 3e-4,
@@ -305,7 +309,11 @@
         haze: true,
         shapeDetail: true,
         turbulence: false,
+        multiScatteringOctaves: 8,
+        accurateSunSkyLight: false,
+        accuratePhaseFunction: false,
         shadowFarScale: 0.25,
+        shadowMaxFar: null,
         localWeatherRepeat: 100,
         localWeatherVelocity: [25e-5, 0],
         shapeRepeat: 3e-4,
@@ -324,7 +332,11 @@
         haze: true,
         shapeDetail: true,
         turbulence: true,
-        shadowFarScale: 0.25,
+        multiScatteringOctaves: 8,
+        accurateSunSkyLight: true,
+        accuratePhaseFunction: true,
+        shadowFarScale: 1,
+        shadowMaxFar: 1e5,
         localWeatherRepeat: 100,
         localWeatherVelocity: [3e-4, 0],
         shapeRepeat: 3e-4,
@@ -343,7 +355,11 @@
         haze: true,
         shapeDetail: true,
         turbulence: true,
-        shadowFarScale: 0.25,
+        multiScatteringOctaves: 8,
+        accurateSunSkyLight: true,
+        accuratePhaseFunction: true,
+        shadowFarScale: 1,
+        shadowMaxFar: 1e5,
         localWeatherRepeat: 100,
         localWeatherVelocity: [35e-5, 0],
         shapeRepeat: 3e-4,
@@ -357,6 +373,18 @@
     }
     function getPmndrsCloudsResolutionScale(quality) {
       return getPmndrsCloudPerformanceProfile(quality).resolutionScale;
+    }
+    function shouldUsePmndrsCloudAccuratePhaseFunction(profile) {
+      return Boolean(profile && profile.accuratePhaseFunction === true) && !hasPmndrsDebugFlag("disablePmndrsCloudAccuratePhaseFunction", "vrodos_debug_disable_pmndrs_cloud_accurate_phase_function");
+    }
+    function getPmndrsCloudAccuratePhaseFunctionSkippedReason(profile, enabled) {
+      if (!(profile && profile.accuratePhaseFunction === true) || enabled) {
+        return "";
+      }
+      return hasPmndrsDebugFlag("disablePmndrsCloudAccuratePhaseFunction", "vrodos_debug_disable_pmndrs_cloud_accurate_phase_function") ? "debug-disabled" : "profile-disabled";
+    }
+    function getPmndrsCloudDiagnosticNumber(diagnostics, key, fallback) {
+      return diagnostics && typeof diagnostics[key] === "number" ? diagnostics[key] : fallback;
     }
     function setPmndrsCloudVector(target, value) {
       if (!target || value === void 0 || value === null) {
@@ -389,6 +417,7 @@
         return getPmndrsCloudPerformanceProfile(quality);
       }
       const profile = getPmndrsCloudPerformanceProfile(quality);
+      const accuratePhaseFunction = shouldUsePmndrsCloudAccuratePhaseFunction(profile);
       const signature = [
         profile.id,
         profile.takramQuality,
@@ -399,9 +428,16 @@
         profile.lightShafts ? 1 : 0,
         profile.haze ? 1 : 0,
         profile.shapeDetail ? 1 : 0,
-        profile.turbulence ? 1 : 0
+        profile.turbulence ? 1 : 0,
+        profile.multiScatteringOctaves || 0,
+        profile.accurateSunSkyLight ? 1 : 0,
+        accuratePhaseFunction ? 1 : 0,
+        profile.shadowFarScale,
+        profile.shadowMaxFar || ""
       ].join("|");
       if (effect._vrodosCloudsProfileSignature === signature) {
+        effect._vrodosCloudsAccuratePhaseFunction = accuratePhaseFunction;
+        effect._vrodosCloudsAccuratePhaseFunctionSkippedReason = getPmndrsCloudAccuratePhaseFunctionSkippedReason(profile, accuratePhaseFunction);
         return profile;
       }
       effect.qualityPreset = profile.takramQuality;
@@ -424,8 +460,22 @@
       if (typeof effect.turbulenceDisplacement !== "undefined") {
         effect.turbulenceDisplacement = profile.turbulenceDisplacement;
       }
+      if (effect.clouds) {
+        if (typeof effect.clouds.multiScatteringOctaves !== "undefined") {
+          effect.clouds.multiScatteringOctaves = profile.multiScatteringOctaves;
+        }
+        if (typeof effect.clouds.accurateSunSkyLight !== "undefined") {
+          effect.clouds.accurateSunSkyLight = Boolean(profile.accurateSunSkyLight);
+        }
+        if (typeof effect.clouds.accuratePhaseFunction !== "undefined") {
+          effect.clouds.accuratePhaseFunction = accuratePhaseFunction;
+        }
+      }
       if (effect.shadow && typeof effect.shadow.farScale !== "undefined") {
         effect.shadow.farScale = profile.shadowFarScale;
+      }
+      if (effect.shadow && typeof effect.shadow.maxFar !== "undefined") {
+        effect.shadow.maxFar = profile.shadowMaxFar || null;
       }
       applyPmndrsCloudLayerProfile(effect, profile);
       setPmndrsCloudVector(effect.localWeatherRepeat, profile.localWeatherRepeat);
@@ -434,6 +484,8 @@
       setPmndrsCloudVector(effect.shapeDetailRepeat, profile.shapeDetailRepeat);
       setPmndrsCloudVector(effect.turbulenceRepeat, profile.turbulenceRepeat);
       effect._vrodosCloudsProfileSignature = signature;
+      effect._vrodosCloudsAccuratePhaseFunction = accuratePhaseFunction;
+      effect._vrodosCloudsAccuratePhaseFunctionSkippedReason = getPmndrsCloudAccuratePhaseFunctionSkippedReason(profile, accuratePhaseFunction);
       return profile;
     }
     function shouldUsePmndrsCloudTemporalUpscale(self, atmosphereConfig, profile) {
@@ -505,6 +557,15 @@
         takramQuality: profile.takramQuality,
         layerProfile: profile.layerProfile || "",
         resolutionScale: profile.resolutionScale,
+        multiScatteringOctaves: profile.multiScatteringOctaves || 0,
+        accurateSunSkyLight: Boolean(profile.accurateSunSkyLight),
+        accuratePhaseFunction: shouldUsePmndrsCloudAccuratePhaseFunction(profile),
+        accuratePhaseFunctionSkippedReason: getPmndrsCloudAccuratePhaseFunctionSkippedReason(
+          profile,
+          shouldUsePmndrsCloudAccuratePhaseFunction(profile)
+        ),
+        shadowFarScale: profile.shadowFarScale,
+        shadowMaxFar: profile.shadowMaxFar || null,
         temporalUpscale: profile.temporalUpscale,
         temporalUpscaleSkippedReason: "",
         lightShafts: Boolean(profile.lightShafts),
@@ -526,8 +587,15 @@
         cloudSunDirectFactor: 1,
         cloudSkyFactor: 1,
         cloudFillFactor: 1,
+        cloudAmbientFactor: 1,
+        cloudReflectionFactor: 1,
+        cloudSunShadowIntensityFactor: 1,
+        cloudSunShadowRadiusScale: 1,
         cloudSkySunDiskVisibility: 1,
         cloudSkySunDiskTargetVisibility: 1,
+        cloudSkySunDiskSpriteOpacity: 1,
+        cloudSkySunDiskScreenOpacity: 0,
+        cloudSkySunDiskMode: "native",
         cloudSunElevationFactor: 0,
         cloudSunOcclusionReason: "not-evaluated",
         cloudSunCoverageStrength: 0,
@@ -2151,8 +2219,8 @@ ${selectedSummaries.join("\n")}`);
         `clouds aerial shadow: ${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.aerialShadowRouted ? "yes" : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.aerialShadowReason ? ` (${self._pmndrsCloudsDiagnostics.aerialShadowReason})` : ""}`}`,
         `clouds sky shadow: ${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.skyShadowLengthRouted ? "yes" : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.skyShadowLengthReason ? ` (${self._pmndrsCloudsDiagnostics.skyShadowLengthReason})` : ""}`}`,
         `clouds lens flare factor: ${self && self._pmndrsCloudsDiagnostics && typeof self._pmndrsCloudsDiagnostics.lensFlareCloudFactor === "number" ? self._pmndrsCloudsDiagnostics.lensFlareCloudFactor.toFixed(2) : "1.00"}`,
-        `clouds sun occlusion: ${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudSunOcclusionEnabled ? `${Number(self._pmndrsCloudsDiagnostics.cloudSunOcclusionStrength || 0).toFixed(2)} direct ${Number(self._pmndrsCloudsDiagnostics.cloudSunDirectFactor || 1).toFixed(2)} sky ${Number(self._pmndrsCloudsDiagnostics.cloudSkyFactor || 1).toFixed(2)} fill ${Number(self._pmndrsCloudsDiagnostics.cloudFillFactor || 1).toFixed(2)}` : `off${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudSunOcclusionReason ? ` (${self._pmndrsCloudsDiagnostics.cloudSunOcclusionReason})` : ""}`}`,
-        `clouds sun disk: ${self && self._pmndrsCloudsDiagnostics ? `${Number(self._pmndrsCloudsDiagnostics.cloudSunDiskOcclusion || 0).toFixed(2)} strength ${Number(self._pmndrsCloudsDiagnostics.cloudSunDiskStrength || 0).toFixed(2)} sky ${Number(self._pmndrsCloudsDiagnostics.cloudSkySunDiskVisibility || 1).toFixed(2)} ${self._pmndrsCloudsDiagnostics.cloudSunDiskSampleReason || "not-sampled"}` : "off"}`,
+        `clouds sun occlusion: ${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudSunOcclusionEnabled ? `${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudSunOcclusionStrength", 0)).toFixed(2)} direct ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudSunDirectFactor", 1)).toFixed(2)} sky ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudSkyFactor", 1)).toFixed(2)} fill ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudFillFactor", 1)).toFixed(2)} shadowOpacity ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudSunShadowIntensityFactor", 1)).toFixed(2)}` : `off${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudSunOcclusionReason ? ` (${self._pmndrsCloudsDiagnostics.cloudSunOcclusionReason})` : ""}`}`,
+        `clouds sun disk: ${self && self._pmndrsCloudsDiagnostics ? `${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudSunDiskOcclusion", 0)).toFixed(2)} strength ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudSunDiskStrength", 0)).toFixed(2)} sky ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudSkySunDiskVisibility", 1)).toFixed(2)} opacity ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudSkySunDiskSpriteOpacity", 0)).toFixed(2)} screen ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudSkySunDiskScreenOpacity", 0)).toFixed(2)} mode ${self._pmndrsCloudsDiagnostics.cloudSkySunDiskMode || "native"} ${self._pmndrsCloudsDiagnostics.cloudSunDiskSampleReason || "not-sampled"}` : "off"}`,
         `clouds textures: ${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.textureReady ? "ready" : self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.textureLoaded !== void 0 ? `${self._pmndrsCloudsDiagnostics.textureLoaded}/${self._pmndrsCloudsDiagnostics.textureTotal || 0}` : "off"}`,
         `clouds xr skip: ${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.xrSkipped ? "yes" : "no"}`,
         `horizon aerial: ${shouldEnablePmndrsHorizonAerial(self) ? "experimental-on" : "off"}`,
@@ -2357,6 +2425,12 @@ ${selectedSummaries.join("\n")}`);
         takramQuality: profile.takramQuality,
         layerProfile: profile.layerProfile || "",
         resolutionScale: profile.resolutionScale,
+        multiScatteringOctaves: profile.multiScatteringOctaves || 0,
+        accurateSunSkyLight: Boolean(profile.accurateSunSkyLight),
+        accuratePhaseFunction: Boolean(self.pmndrsCloudsEffect._vrodosCloudsAccuratePhaseFunction),
+        accuratePhaseFunctionSkippedReason: self.pmndrsCloudsEffect._vrodosCloudsAccuratePhaseFunctionSkippedReason || "",
+        shadowFarScale: profile.shadowFarScale,
+        shadowMaxFar: profile.shadowMaxFar || null,
         temporalUpscale: temporalUpscaleEnabled,
         temporalUpscaleSkippedReason,
         lightShafts: lightShaftsEnabled,
@@ -2497,6 +2571,12 @@ ${selectedSummaries.join("\n")}`);
               takramQuality: cloudsProfile.takramQuality,
               layerProfile: cloudsProfile.layerProfile || "",
               resolutionScale: cloudsProfile.resolutionScale,
+              multiScatteringOctaves: cloudsProfile.multiScatteringOctaves || 0,
+              accurateSunSkyLight: Boolean(cloudsProfile.accurateSunSkyLight),
+              accuratePhaseFunction: Boolean(this.pmndrsCloudsEffect._vrodosCloudsAccuratePhaseFunction),
+              accuratePhaseFunctionSkippedReason: this.pmndrsCloudsEffect._vrodosCloudsAccuratePhaseFunctionSkippedReason || "",
+              shadowFarScale: cloudsProfile.shadowFarScale,
+              shadowMaxFar: cloudsProfile.shadowMaxFar || null,
               temporalUpscale: initialTemporalUpscale,
               temporalUpscaleSkippedReason: getPmndrsCloudTemporalUpscaleSkippedReason(this, atmosphereConfig, cloudsProfile, initialTemporalUpscale),
               haze: Boolean(cloudsProfile.haze),

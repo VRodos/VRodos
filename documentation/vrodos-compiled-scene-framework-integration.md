@@ -324,7 +324,7 @@ When active, `window.POSTPROCESSING` provides the PMNDRS composer and effect cla
 
 Takram is optional and only loads when PMNDRS atmosphere is enabled. It provides physical sky, sun, moon, celestial, and geospatial atmosphere capabilities through `window.VRODOS_TAKRAM_ATMOSPHERE`.
 
-In compiled Horizon scenes, Takram owns the sky and sun disk. VRodos then bridges that atmosphere into scene lighting:
+In compiled Horizon scenes, Takram owns the sky and the default native sun disk. VRodos then bridges that atmosphere into scene lighting:
 
 - Takram `SunDirectionalLight` owns sun key light when available;
 - VRodos moon directional light owns night shape when visible;
@@ -344,15 +344,16 @@ Runtime contract:
 - Cloud assets are served from `assets/vendor/takram-clouds/`.
 - `CloudsEffect` is created before `AerialPerspectiveEffect`.
 - `CloudsEffect.skipRendering` stays `true` when AerialPerspectiveEffect is present, matching Takram's documented route: CloudsEffect renders its internal cloud buffers, skips direct color-buffer composition, and routes its atmosphere overlay into `AerialPerspectiveEffect`. Horizon keeps Takram cloud aerial shadow/shadow-length routing and direct `SkyMaterial.shadowLength` routing disabled by default because those screen-space shadow buffers can reveal large geometric footprints on the sky during day/night motion.
-- Horizon constrains `AerialPerspectiveEffect` to cloud overlay and atmosphere transmittance. It must not render its own sky, `sunLight`, or `skyLight`; Takram `SkyMaterial` remains the single visual sky/sun-disk owner, and VRodos/Takram light sources remain the scene-lighting owners.
+- Horizon constrains `AerialPerspectiveEffect` to cloud overlay and atmosphere transmittance. It must not render its own sky, `sunLight`, or `skyLight`; Takram `SkyMaterial` remains the visual sky owner. High/ultra cloud quality keeps the native Takram disk behind accurate cloud phase composition, while the desktop sprite bridge remains only a fallback for lower/debug paths. VRodos/Takram light sources remain the scene-lighting owners.
 - Each frame syncs camera, active Takram atmosphere textures, sun direction, world-to-ECEF matrix, correct-altitude mode, authored coverage, effective coverage diagnostics, quality profile, Horizon cloud haze ownership, and local cloud textures.
 - `pmndrsCloudsCoverage` remains authored cloudiness `0..1`. Horizon maps dense authored values to a lower Takram `CloudsEffect.coverage` shader input because the default cloud-layer density math saturates near `1 - coverageFilterWidth`; diagnostics expose both authored and effective coverage.
 - Horizon scenes keep Takram default cloud layers and weather controls. VRodos does not alter `coverageFilterWidth`, `weatherExponent`, or `localWeatherRepeat` in the default desktop profile because the Takram docs describe those as weather-mask sharpness/repetition controls and local testing showed hard weather-cell silhouettes when they were pushed away from defaults.
 - Takram cloud temporal upscaling stays enabled by default for desktop performance. Use `?vrodos_debug_disable_pmndrs_cloud_temporal_upscale=1` only for visual comparison because full-resolution cloud raymarching is expensive.
 - `pmndrsAerialPerspectiveEnabled` remains the authored Aerial Haze toggle, but active clouds require the AerialPerspective composition pass for cloud overlay/shadow routing. The compile dialog shows that as a checked/locked effective state while preserving the authored toggle value for when clouds are later disabled.
-- Active daytime desktop clouds also drive a CPU-only sun-occlusion bridge on Takram light-source scene lighting. It combines authored cloud coverage with a Horizon sun-disk cloud-opacity sample, then dims `SunDirectionalLight`, `SkyLightProbe`, hemisphere fill, ambient bounce, reflection intensity, and Takram lens flare while keeping direct sun shadows active and softer under heavy sun-disk occlusion. Moon/night readability remains unchanged because the bridge is gated by direct sun visibility.
+- Active daytime desktop clouds also drive a CPU-only sun-occlusion bridge on Takram light-source scene lighting and the visible desktop sun disk. It combines authored cloud coverage with a Horizon sun-disk cloud-opacity sample, then dims `SunDirectionalLight`, `SkyLightProbe`, hemisphere fill, ambient bounce, reflection intensity, Takram lens flare, and direct shadow opacity/softness while keeping direct sun shadows active under heavy sun-disk occlusion. High/ultra profiles apply Takram Basic-demo-aligned phase settings (`accuratePhaseFunction`, `accurateSunSkyLight`, `multiScatteringOctaves=8`, `shadow.maxFar=100000`) so the native disk is veiled by cloud composition (`cloudSkySunDiskMode=takram-phase`). Lower/debug fallback can still use the public `SkyMaterial.sun` flag plus a VRodos sprite when the projected disk is covered. Moon/night readability remains unchanged because the bridge is gated by direct sun visibility.
 - High and ultra desktop cloud profiles keep Takram `CloudsEffect.lightShafts` available only behind `?vrodos_debug_enable_pmndrs_cloud_light_shafts=1` in Horizon; low and medium keep light shafts disabled for lower GPU cost.
 - Supported quality values are Takram's four performance profiles: `low`, `medium`, `high`, and `ultra`.
+- The cloud authoring surface stays intentionally narrow: enable, quality, and coverage. Tone mapping, location, and local date/time remain the UI controls for atmosphere/celestial context; deeper Takram cloud fields are runtime profile choices surfaced through diagnostics.
 - Real immersive WebXR skips clouds because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`.
 
 The cloud path must fail closed. Missing WebGL2/Data3DTexture support, mobile, missing local assets, missing or crashed cloud bundle, disabled PMNDRS composer, and immersive XR all produce cloud diagnostics instead of breaking first render. The v1 lighting bridge is global overcast dimming plus Takram light shafts, not local projected moving cloud shadows on terrain.
@@ -361,7 +362,7 @@ The cloud path must fail closed. Missing WebGL2/Data3DTexture support, mobile, m
 
 Lighting in the compiled client is split into separate responsibilities:
 
-- Takram sky and sun disk are visual atmosphere.
+- Takram sky and the default native sun disk are visual atmosphere.
 - Takram/VRodos directional sun and moon lights provide direct scene lighting and shadows only while above the local horizon threshold.
 - `SkyLightProbe`, hemisphere fill, ambient floor, and ground bounce provide indirect readability and move more slowly than direct celestial lights.
 - Shadow maps are fitted near the camera for large terrain instead of to the whole scene bounds.

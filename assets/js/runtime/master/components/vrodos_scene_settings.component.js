@@ -1846,6 +1846,18 @@ AFRAME.registerComponent('scene-settings', {
                     ? cloudDiagnostics.effectiveCoverage
                     : null,
                 cloudLayerProfile: cloudDiagnostics.layerProfile || '',
+                cloudMultiScatteringOctaves: typeof cloudDiagnostics.multiScatteringOctaves === 'number'
+                    ? cloudDiagnostics.multiScatteringOctaves
+                    : null,
+                cloudAccurateSunSkyLight: Boolean(cloudDiagnostics.accurateSunSkyLight),
+                cloudAccuratePhaseFunction: Boolean(cloudDiagnostics.accuratePhaseFunction),
+                cloudAccuratePhaseFunctionSkippedReason: cloudDiagnostics.accuratePhaseFunctionSkippedReason || '',
+                cloudShadowFarScale: typeof cloudDiagnostics.shadowFarScale === 'number'
+                    ? cloudDiagnostics.shadowFarScale
+                    : null,
+                cloudShadowMaxFar: typeof cloudDiagnostics.shadowMaxFar === 'number'
+                    ? cloudDiagnostics.shadowMaxFar
+                    : null,
                 cloudHazeEnabled: Boolean(cloudDiagnostics.haze),
                 cloudHazeDisabledReason: cloudDiagnostics.hazeDisabledReason || '',
                 cloudDirectCompositeEnabled: Boolean(cloudDiagnostics.directCompositeEnabled),
@@ -1883,12 +1895,22 @@ AFRAME.registerComponent('scene-settings', {
                 cloudSunShadowRadiusScale: typeof cloudDiagnostics.cloudSunShadowRadiusScale === 'number'
                     ? cloudDiagnostics.cloudSunShadowRadiusScale
                     : null,
+                cloudSunShadowIntensityFactor: typeof cloudDiagnostics.cloudSunShadowIntensityFactor === 'number'
+                    ? cloudDiagnostics.cloudSunShadowIntensityFactor
+                    : null,
                 cloudSkySunDiskVisibility: typeof cloudDiagnostics.cloudSkySunDiskVisibility === 'number'
                     ? cloudDiagnostics.cloudSkySunDiskVisibility
                     : null,
                 cloudSkySunDiskTargetVisibility: typeof cloudDiagnostics.cloudSkySunDiskTargetVisibility === 'number'
                     ? cloudDiagnostics.cloudSkySunDiskTargetVisibility
                     : null,
+                cloudSkySunDiskSpriteOpacity: typeof cloudDiagnostics.cloudSkySunDiskSpriteOpacity === 'number'
+                    ? cloudDiagnostics.cloudSkySunDiskSpriteOpacity
+                    : null,
+                cloudSkySunDiskScreenOpacity: typeof cloudDiagnostics.cloudSkySunDiskScreenOpacity === 'number'
+                    ? cloudDiagnostics.cloudSkySunDiskScreenOpacity
+                    : null,
+                cloudSkySunDiskMode: cloudDiagnostics.cloudSkySunDiskMode || '',
                 cloudSunDiskOcclusion: typeof cloudDiagnostics.cloudSunDiskOcclusion === 'number'
                     ? cloudDiagnostics.cloudSunDiskOcclusion
                     : null,

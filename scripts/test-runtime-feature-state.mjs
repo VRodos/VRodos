@@ -363,9 +363,18 @@ const desktopClouds = createFeatureStateFixture({
         cloudFillFactor: 0.72,
         cloudAmbientFactor: 0.81,
         cloudReflectionFactor: 0.73,
+        cloudSunShadowIntensityFactor: 0.7,
         cloudSunShadowRadiusScale: 2.05,
+        multiScatteringOctaves: 8,
+        accurateSunSkyLight: true,
+        accuratePhaseFunction: true,
+        shadowFarScale: 1,
+        shadowMaxFar: 100000,
         cloudSkySunDiskVisibility: 0.14,
         cloudSkySunDiskTargetVisibility: 0.08,
+        cloudSkySunDiskSpriteOpacity: 0,
+        cloudSkySunDiskScreenOpacity: 0,
+        cloudSkySunDiskMode: "takram-phase",
         cloudSunDiskOcclusion: 0.88,
         cloudSunDiskStrength: 0.96,
         cloudSunDiskUvX: 0.52,
@@ -389,9 +398,18 @@ assertPath(desktopClouds.takram.cloudsRequested, true, "desktop PMNDRS clouds re
 assertPath(desktopClouds.takram.cloudsActive, true, "desktop PMNDRS clouds active diagnostic");
 assertPath(desktopClouds.takram.cloudAmbientFactor, 0.81, "desktop PMNDRS cloud ambient factor diagnostic");
 assertPath(desktopClouds.takram.cloudReflectionFactor, 0.73, "desktop PMNDRS cloud reflection factor diagnostic");
+assertPath(desktopClouds.takram.cloudSunShadowIntensityFactor, 0.7, "desktop PMNDRS cloud shadow opacity diagnostic");
 assertPath(desktopClouds.takram.cloudSunShadowRadiusScale, 2.05, "desktop PMNDRS cloud shadow radius diagnostic");
+assertPath(desktopClouds.takram.cloudMultiScatteringOctaves, 8, "desktop PMNDRS cloud scattering octave diagnostic");
+assertPath(desktopClouds.takram.cloudAccurateSunSkyLight, true, "desktop PMNDRS cloud accurate sun/sky light diagnostic");
+assertPath(desktopClouds.takram.cloudAccuratePhaseFunction, true, "desktop PMNDRS cloud accurate phase diagnostic");
+assertPath(desktopClouds.takram.cloudShadowFarScale, 1, "desktop PMNDRS cloud shadow far scale diagnostic");
+assertPath(desktopClouds.takram.cloudShadowMaxFar, 100000, "desktop PMNDRS cloud shadow max far diagnostic");
 assertPath(desktopClouds.takram.cloudSkySunDiskVisibility, 0.14, "desktop PMNDRS cloud sky sun disk visibility diagnostic");
 assertPath(desktopClouds.takram.cloudSkySunDiskTargetVisibility, 0.08, "desktop PMNDRS cloud sky sun disk target diagnostic");
+assertPath(desktopClouds.takram.cloudSkySunDiskSpriteOpacity, 0, "desktop PMNDRS cloud sky sun disk sprite opacity diagnostic");
+assertPath(desktopClouds.takram.cloudSkySunDiskScreenOpacity, 0, "desktop PMNDRS cloud sky sun disk screen opacity diagnostic");
+assertPath(desktopClouds.takram.cloudSkySunDiskMode, "takram-phase", "desktop PMNDRS cloud sky sun disk mode diagnostic");
 assertPath(desktopClouds.takram.cloudSunDiskOcclusion, 0.88, "desktop PMNDRS cloud sun-disk occlusion diagnostic");
 assertPath(desktopClouds.takram.cloudSunDiskSampleReason, "sampled", "desktop PMNDRS cloud sun-disk sample reason diagnostic");
 

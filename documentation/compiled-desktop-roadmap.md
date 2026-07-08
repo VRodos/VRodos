@@ -58,7 +58,7 @@ Deferred cleanup:
 - Maintain the current A-Frame master plus Three r184 baseline until an explicit shared-runtime upgrade spike is opened.
 - Keep smoke coverage for Horizon and non-Horizon PMNDRS scenes.
 - Continue validating native PMNDRS SSAO across broader authored scenes.
-- Validate the desktop Takram cloud-sun bridge with day-night cycle scenes: visible sun-disk cloud coverage should dim direct/indirect light factors, reflections, shadow contrast/softness, and lens flare through diagnostics before adding author-facing controls. Visible Takram sun-disk occlusion is deferred after the runtime `SkyMaterial` shader-patch attempt destabilized compiled Horizon scenes.
+- Validate the desktop Takram cloud-sun bridge with day-night cycle scenes: visible sun-disk cloud coverage should dim direct/indirect light factors, reflections, shadow contrast/softness, and lens flare through diagnostics. High/ultra quality should report `cloudSkySunDiskMode=takram-phase`, keeping Takram's native disk behind cloud composition; the VRodos sun sprite is a fallback path, not the target look.
 - Prototype a desktop-only Takram `post-process-albedo` mode later; do not mix that experiment into the current Takram light-source path.
 - Keep immersive XR composer/cloud bypass policy out of this desktop pass.
 
@@ -81,6 +81,7 @@ Deferred cleanup:
 
 - Steep-face shadow proxy for terrain shadows.
 - Cloud light-shafts controls after measured visual and performance validation.
+- Native Takram `SkyMaterial` shader patching remains research-only; the desktop production path uses Takram cloud accurate phase on high/ultra and keeps the public `SkyMaterial.sun` flag plus VRodos sun sprite as a fallback only.
 - PMNDRS `GodRaysEffect` integration, if needed, after the cloud lighting bridge is visually stable.
 - Geospatial date/time solar simulation, `LightingMaskPass`, the experimental `takram-albedo` / mixed-lighting mode, and related geospatial helper experiments.
 

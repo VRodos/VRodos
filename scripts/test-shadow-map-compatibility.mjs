@@ -344,6 +344,7 @@ const clearCloudSun = helpers.computePmndrsCloudSunOcclusionFactors({
 });
 assert(clearCloudSun.targetStrength === 0, "sparse clouds should not dim daylight");
 assert(clearCloudSun.directFactor === 1, "clear cloud factor should keep direct sun unchanged");
+assert(clearCloudSun.shadowIntensityFactor === 1, "clear cloud factor should keep shadow opacity unchanged");
 
 const coveredCloudSun = helpers.computePmndrsCloudSunOcclusionFactors({
     authoredCoverage: 0.22,
@@ -354,7 +355,8 @@ assert(coveredCloudSun.diskStrength > 0.95, "sun-disk cloud sample should domina
 assert(coveredCloudSun.directFactor < 0.25, "covered sun disk should strongly dim direct light");
 assert(coveredCloudSun.ambientFactor < 1, "covered sun disk should dim ambient bounce");
 assert(coveredCloudSun.reflectionFactor < 1, "covered sun disk should dim environment reflections");
-assert(coveredCloudSun.shadowRadiusScale > 2, "covered sun disk should soften direct sun shadows instead of disabling them");
+assert(coveredCloudSun.shadowIntensityFactor > 0.65 && coveredCloudSun.shadowIntensityFactor < 0.75, "covered sun disk should lighten direct sun shadow opacity while retaining shadow weight");
+assert(coveredCloudSun.shadowRadiusScale > 1.7 && coveredCloudSun.shadowRadiusScale < 2, "covered sun disk should soften direct sun shadows without making them weightless");
 assert(coveredCloudSun.skySunDiskVisibility < 0.06, "covered sun disk should fade the Takram sky sun disk");
 
 const nightCloudSun = helpers.computePmndrsCloudSunOcclusionFactors({
@@ -363,6 +365,7 @@ const nightCloudSun = helpers.computePmndrsCloudSunOcclusionFactors({
     sunElevationFactor: 0
 });
 assert(nightCloudSun.targetStrength === 0, "cloud sun occlusion should be horizon-gated at night");
+assert(nightCloudSun.shadowIntensityFactor === 1, "cloud shadow opacity should be neutral below horizon");
 assert(nightCloudSun.shadowRadiusScale === 1, "cloud shadow softening should be off below horizon");
 assert(nightCloudSun.skySunDiskVisibility === 1, "sky sun disk cloud attenuation should be neutral below horizon");
 
