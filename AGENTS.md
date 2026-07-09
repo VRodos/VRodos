@@ -125,6 +125,14 @@ Rendering docs:
 - `PC_RENDERED_VR_PLAN.md`: parked PC-rendered VR parent profile plan
 - `documentation/archive/rendering-history/README.md`: consolidated historical rendering, performance, Takram, collision, and VR-platform findings
 
+External rendering library fixes:
+
+- When PMNDRS/Takram/Three behavior looks like an implementation artifact, audit the upstream docs, README warnings, demo story source, generated package code, and our runtime wiring before tuning local profiles. The Takram cloud cube-artifact fix came from tracing the demo-safe path to Takram's documented cube-sphere local-weather UV limitation, not from further cloud-style tweaks.
+- Prefer deterministic build-time vendor patches in `scripts/build-three-vendor.mjs` over hand-editing generated bundles or `node_modules`. Regenerate the affected `assets/js/runtime/master/lib/` bundle and add a static test that proves the patch text exists in the generated output.
+- Apply shader defines to every upstream material/pass that samples the affected code path. For Takram clouds, both `cloudsPass.currentMaterial` and `shadowPass.currentMaterial` must use the same weather UV mode so visible clouds, shadow buffers, sun occlusion, and light shafts agree.
+- Gate external-library deviations by scene/runtime policy and preserve upstream behavior where it is correct. Horizon desktop clouds use VRodos local tangent weather UVs; geospatial/global scenes keep Takram's native cube-sphere UV path.
+- Add diagnostics and an A/B debug flag for every nontrivial vendor integration patch. Future work should expose the active mode, patch-applied status, frame/source assumptions, and enough values to compare against the upstream demo without adding author-facing controls.
+
 Do not load a newer Three.js beside the current classic A-Frame runtime. Future Three upgrades belong in a separate A-Frame module/import-map runtime spike where A-Frame, VRodos, loaders, PMNDRS, Takram, and addons resolve to one shared `THREE`.
 
 ## Styling And Templates

@@ -42,6 +42,7 @@ const takramAssetsOutputDir = path.join(rootDir, 'assets', 'vendor', 'takram-atm
 const takramStarsOutputPath = path.join(takramAssetsOutputDir, 'stars.bin');
 const takramCloudsBundlePath = path.join(runtimeVendorDir, 'vrodos-takram-clouds.bundle.js');
 const takramCloudsEntryPath = path.join(rootDir, 'scripts', '.tmp-build-takram-clouds-entry.mjs');
+const takramCloudsSharedPath = path.join(rootDir, 'node_modules', '@takram', 'three-clouds', 'build', 'shared.js');
 const takramAtmosphereShimPath = path.join(rootDir, 'scripts', '.tmp-takram-atmosphere-global-shim.mjs');
 const takramGeospatialShimPath = path.join(rootDir, 'scripts', '.tmp-takram-geospatial-clouds-shim.mjs');
 const takramCloudsAssetsSourceDir = path.join(rootDir, 'node_modules', '@takram', 'three-clouds', 'assets');
@@ -266,6 +267,47 @@ function createAliasPlugin(aliases) {
   };
 }
 
+function patchTakramCloudsSharedSource(source) {
+  const original = `vec2 getGlobeUv(const vec3 position) {
+  return getCubeSphereUv(position);
+}`;
+  const replacement = `vec2 getVrodosLocalHorizonUv(const vec3 position) {
+  vec3 worldPosition = (ecefToWorldMatrix * vec4(position - altitudeCorrection, 1.0)).xyz;
+  return worldPosition.xz / (2.0 * bottomRadius) + vec2(0.5);
+}
+
+vec2 getGlobeUv(const vec3 position) {
+  #ifdef VRODOS_LOCAL_HORIZON_WEATHER_UV
+  return getVrodosLocalHorizonUv(position);
+  #else
+  return getCubeSphereUv(position);
+  #endif
+}`;
+  if (!source.includes(original)) {
+    throw new Error('Takram clouds shader patch failed: getGlobeUv() source did not match the expected upstream form');
+  }
+  return source.replace(original, replacement);
+}
+
+function createTakramCloudsShaderPatchPlugin() {
+  const sharedPath = path.normalize(takramCloudsSharedPath);
+  return {
+    name: 'vrodos-takram-clouds-shader-patch',
+    setup(buildContext) {
+      buildContext.onLoad({ filter: /@takram[\\/]three-clouds[\\/]build[\\/]shared\.js$/ }, async (args) => {
+        if (path.normalize(args.path) !== sharedPath) {
+          return null;
+        }
+        const source = await readFile(args.path, 'utf8');
+        return {
+          contents: patchTakramCloudsSharedSource(source),
+          loader: 'js'
+        };
+      });
+    }
+  };
+}
+
 function createGlobalShimSource(globalExpression, exportNames) {
   const safeNames = exportNames.filter((name) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name));
   const exportLines = safeNames
@@ -436,6 +478,9 @@ async function rewriteTakramCloudBundleAssetDefaults() {
       "'assets/vendor/takram-clouds/turbulence.png'"
     );
 
+  if (!rewritten.includes('VRODOS_LOCAL_HORIZON_WEATHER_UV')) {
+    throw new Error('Takram clouds bundle patch failed: VRODOS_LOCAL_HORIZON_WEATHER_UV define is missing from generated bundle');
+  }
   if (rewritten !== source) {
     await writeFile(takramCloudsBundlePath, rewritten, 'utf8');
   }
@@ -571,6 +616,7 @@ window.VRODOS_TAKRAM_CLOUDS = {
         '.glsl': 'text'
       },
       plugins: [
+        createTakramCloudsShaderPatchPlugin(),
         createAliasPlugin({
           three: threeShimPath,
           postprocessing: postprocessingShimPath,

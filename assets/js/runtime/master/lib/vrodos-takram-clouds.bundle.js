@@ -4927,8 +4927,17 @@ vec2 getCubeSphereUv(const vec3 position) {
   return uv * 0.5 + 0.5;
 }
 
+vec2 getVrodosLocalHorizonUv(const vec3 position) {
+  vec3 worldPosition = (ecefToWorldMatrix * vec4(position - altitudeCorrection, 1.0)).xyz;
+  return worldPosition.xz / (2.0 * bottomRadius) + vec2(0.5);
+}
+
 vec2 getGlobeUv(const vec3 position) {
+  #ifdef VRODOS_LOCAL_HORIZON_WEATHER_UV
+  return getVrodosLocalHorizonUv(position);
+  #else
   return getCubeSphereUv(position);
+  #endif
 }
 
 float getMipLevel(const vec2 uv) {

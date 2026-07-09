@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import process from "node:process";
 
 const root = process.cwd();
 const sourcePath = resolve(root, "assets/js/runtime/master/vrodos_postprocessing_pmndrs.js");
 const source = readFileSync(sourcePath, "utf8");
+const takramCloudsBundlePath = resolve(root, "assets/js/runtime/master/lib/vrodos-takram-clouds.bundle.js");
 
 function assert(condition, message) {
     if (!condition) {
@@ -59,41 +60,66 @@ for (const forbidden of [
 
 for (const required of [
     "PMNDRS_CLOUD_DENSITY_PROFILE_DEFAULT",
+    "PMNDRS_CLOUD_HORIZON_COVERAGE_MAPPER",
     "normalizePmndrsCloudDensityProfile",
     "normalizePmndrsCloudLayer",
     "normalizePmndrsCloudLayers",
     "normalizePmndrsCloudCoverageMapper",
     "effect._vrodosCloudProfileValidationStatus",
-    "effect._vrodosCloudProfileFallbackReason"
+    "effect._vrodosCloudProfileFallbackReason",
+    "shouldUsePmndrsCloudLocalWeatherUv",
+    "setPmndrsCloudLocalWeatherUvMode",
+    "VRODOS_LOCAL_HORIZON_WEATHER_UV",
+    "geospatialEnabled === true",
+    "local-tangent",
+    "cube-sphere",
+    "cloudWeatherUvPatchApplied",
+    "cloudWorldToEcefFrame",
+    "cloudCoverageMapperShared"
 ]) {
     assert(source.includes(required), `Missing cloud profile safety hook ${required}`);
 }
 
+const mapperMatch = source.match(
+    /const PMNDRS_CLOUD_HORIZON_COVERAGE_MAPPER = Object\.freeze\(\{ scale: ([0-9.]+), bias: ([0-9.]+), max: ([0-9.]+) \}\);/
+);
+assert(mapperMatch, "Missing shared Horizon cloud coverage mapper");
+const sharedMapper = {
+    scale: Number(mapperMatch[1]),
+    bias: Number(mapperMatch[2]),
+    max: Number(mapperMatch[3])
+};
+assert(
+    Number.isFinite(sharedMapper.scale) &&
+        Number.isFinite(sharedMapper.bias) &&
+        Number.isFinite(sharedMapper.max),
+    "Shared Horizon cloud coverage mapper must be finite"
+);
+const sharedSamples = [0, 0.1, 0.27, 0.5, 0.85, 1].map((coverage) => effectiveCoverage(coverage, sharedMapper));
+assert(sharedSamples[0] === 0, "Shared Horizon cloud coverage must map 0 to 0");
+for (let index = 1; index < sharedSamples.length; index += 1) {
+    assert(sharedSamples[index] >= sharedSamples[index - 1], "Shared Horizon cloud coverage must be monotonic");
+}
+assert(sharedSamples[2] > sharedSamples[0], "Shared Horizon cloud coverage 0.27 must produce visible effective coverage");
+assert(sharedSamples[3] > sharedSamples[2], "Shared Horizon cloud coverage 0.5 must be higher than 0.27");
+assert(sharedSamples[4] > sharedSamples[3], "Shared Horizon high coverage must be higher than 0.5");
+
 for (const style of ["default", "scattered", "broken", "overcast", "storm"]) {
     const match = styleProfilesSource.match(new RegExp(
-        `${style}: \\{[\\s\\S]*?coverageMapper: \\{ scale: ([0-9.]+), bias: ([0-9.]+), max: ([0-9.]+) \\}`
+        `${style}: \\{[\\s\\S]*?coverageMapper: PMNDRS_CLOUD_HORIZON_COVERAGE_MAPPER`
     ));
-    assert(match, `Missing coverage mapper for ${style}`);
-    const mapper = {
-        scale: Number(match[1]),
-        bias: Number(match[2]),
-        max: Number(match[3])
-    };
-    assert(
-        Number.isFinite(mapper.scale) &&
-            Number.isFinite(mapper.bias) &&
-            Number.isFinite(mapper.max),
-        `Coverage mapper for ${style} must be finite`
-    );
-
-    const samples = [0, 0.1, 0.27, 0.5, 0.85, 1].map((coverage) => effectiveCoverage(coverage, mapper));
-    assert(samples[0] === 0, `${style} coverage must map 0 to 0`);
-    for (let index = 1; index < samples.length; index += 1) {
-        assert(samples[index] >= samples[index - 1], `${style} effective coverage must be monotonic`);
-    }
-    assert(samples[2] > samples[0], `${style} coverage 0.27 must produce visible effective coverage`);
-    assert(samples[3] > samples[2], `${style} coverage 0.5 must be higher than 0.27`);
-    assert(samples[4] > samples[3], `${style} high coverage must be higher than 0.5`);
+    assert(match, `${style} must use the shared Horizon coverage mapper`);
 }
+
+assert(existsSync(takramCloudsBundlePath), "Generated Takram clouds bundle is missing");
+const takramCloudsBundle = readFileSync(takramCloudsBundlePath, "utf8");
+assert(
+    takramCloudsBundle.includes("VRODOS_LOCAL_HORIZON_WEATHER_UV"),
+    "Generated Takram clouds bundle is missing the VRodos local Horizon UV define"
+);
+assert(
+    takramCloudsBundle.includes("getVrodosLocalHorizonUv"),
+    "Generated Takram clouds bundle is missing the VRodos local Horizon UV helper"
+);
 
 console.log("Takram cloud profile safety tests passed.");

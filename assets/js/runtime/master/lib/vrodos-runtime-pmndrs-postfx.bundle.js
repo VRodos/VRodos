@@ -156,6 +156,7 @@
       linearTerm: 0.75,
       constantTerm: 0.25
     });
+    const PMNDRS_CLOUD_HORIZON_COVERAGE_MAPPER = Object.freeze({ scale: 0.72, bias: 0.03, max: 0.5 });
     const PMNDRS_CLOUD_LAYER_CHANNELS = Object.freeze({ r: true, g: true, b: true, a: true });
     const PMNDRS_CLOUD_LAYER_NUMERIC_FIELDS = Object.freeze([
       "altitude",
@@ -579,14 +580,14 @@
       default: {
         id: "default",
         layerProfile: "takram-default",
-        coverageMapper: { scale: 0.65, bias: 0, max: 0.45 },
+        coverageMapper: PMNDRS_CLOUD_HORIZON_COVERAGE_MAPPER,
         weatherSeamMitigation: "takram-default",
         layers: clonePmndrsCloudLayers(PMNDRS_CLOUD_DEFAULT_LAYERS)
       },
       scattered: {
         id: "scattered",
         layerProfile: "style-scattered",
-        coverageMapper: { scale: 0.5, bias: 0, max: 0.42 },
+        coverageMapper: PMNDRS_CLOUD_HORIZON_COVERAGE_MAPPER,
         weatherSeamMitigation: "demo-safe-layer-fields",
         layers: mergePmndrsCloudLayerOverrides([
           { altitude: 950, height: 420, densityScale: 0.11, shapeAmount: 0.74, shapeDetailAmount: 0.55 },
@@ -597,7 +598,7 @@
       broken: {
         id: "broken",
         layerProfile: "style-broken",
-        coverageMapper: { scale: 0.62, bias: 0, max: 0.46 },
+        coverageMapper: PMNDRS_CLOUD_HORIZON_COVERAGE_MAPPER,
         weatherSeamMitigation: "demo-safe-layer-fields",
         layers: mergePmndrsCloudLayerOverrides([
           { altitude: 760, height: 650, densityScale: 0.18, shapeAmount: 0.96, shapeDetailAmount: 0.76 },
@@ -608,7 +609,7 @@
       overcast: {
         id: "overcast",
         layerProfile: "style-overcast",
-        coverageMapper: { scale: 0.72, bias: 0.04, max: 0.48 },
+        coverageMapper: PMNDRS_CLOUD_HORIZON_COVERAGE_MAPPER,
         weatherSeamMitigation: "demo-safe-layer-fields",
         layers: mergePmndrsCloudLayerOverrides([
           { altitude: 780, height: 900, densityScale: 0.18, shapeAmount: 0.95, shapeDetailAmount: 0.75 },
@@ -619,7 +620,7 @@
       storm: {
         id: "storm",
         layerProfile: "style-storm",
-        coverageMapper: { scale: 0.78, bias: 0.05, max: 0.5 },
+        coverageMapper: PMNDRS_CLOUD_HORIZON_COVERAGE_MAPPER,
         weatherSeamMitigation: "demo-safe-layer-fields",
         layers: mergePmndrsCloudLayerOverrides([
           { altitude: 680, height: 1e3, densityScale: 0.24, shapeAmount: 0.93, shapeDetailAmount: 0.8 },
@@ -821,39 +822,128 @@
     function isPmndrsCloudWeatherUvDebugEnabled() {
       return hasPmndrsDebugFlag("showPmndrsCloudUv", "vrodos_debug_show_pmndrs_cloud_uv");
     }
-    function setPmndrsCloudWeatherUvDebug(effect, enabled) {
-      const material = effect && effect.cloudsPass && effect.cloudsPass.currentMaterial ? effect.cloudsPass.currentMaterial : null;
+    function isPmndrsCloudLocalWeatherUvForceDisabled() {
+      return hasPmndrsDebugFlag(
+        "disablePmndrsCloudLocalWeatherUv",
+        "vrodos_debug_disable_pmndrs_cloud_local_weather_uv"
+      );
+    }
+    function isPmndrsCloudLocalWeatherUvForceEnabled() {
+      return hasPmndrsDebugFlag(
+        "forcePmndrsCloudLocalWeatherUv",
+        "vrodos_debug_force_pmndrs_cloud_local_weather_uv"
+      );
+    }
+    function shouldUsePmndrsCloudLocalWeatherUv(self, atmosphereConfig) {
+      if (isPmndrsCloudLocalWeatherUvForceDisabled()) {
+        return false;
+      }
+      if (isPmndrsCloudLocalWeatherUvForceEnabled()) {
+        return true;
+      }
+      return Boolean(
+        isHorizonBackground(self) && !(atmosphereConfig && atmosphereConfig.geospatialEnabled === true) && !isPmndrsDirectVrPresentationActive(self) && !shouldSkipPmndrsCloudsForVr(self)
+      );
+    }
+    function getPmndrsCloudWeatherUvMode(self, atmosphereConfig) {
+      return shouldUsePmndrsCloudLocalWeatherUv(self, atmosphereConfig) ? "local-tangent" : "cube-sphere";
+    }
+    function getPmndrsCloudWorldToEcefFrame(self, atmosphereConfig) {
+      if (!(atmosphereConfig && atmosphereConfig.enabled)) {
+        return "none";
+      }
+      if (atmosphereConfig.geospatialEnabled === true) {
+        const lat = Number(atmosphereConfig.geospatialLatitude);
+        const lon = Number(atmosphereConfig.geospatialLongitude);
+        const alt = Number(atmosphereConfig.geospatialAltitude);
+        return `geospatial:${Number.isFinite(lat) ? lat.toFixed(4) : "n/a"},${Number.isFinite(lon) ? lon.toFixed(4) : "n/a"},${Number.isFinite(alt) ? alt.toFixed(0) : "n/a"}`;
+      }
+      return isHorizonBackground(self) ? "local-horizon-fixed-wgs84" : "takram-default";
+    }
+    function getPmndrsCloudDefineMaterials(effect) {
+      const materials = [];
+      if (effect && effect.cloudsPass && effect.cloudsPass.currentMaterial) {
+        materials.push(effect.cloudsPass.currentMaterial);
+      }
+      if (effect && effect.shadowPass && effect.shadowPass.currentMaterial) {
+        materials.push(effect.shadowPass.currentMaterial);
+      }
+      return materials;
+    }
+    function setPmndrsCloudMaterialDefine(material, defineName, enabled) {
       const defines = material && material.defines ? material.defines : null;
       const next = Boolean(enabled);
-      let changed = false;
       if (!defines) {
-        if (effect) {
-          effect._vrodosCloudWeatherUvDebug = false;
-        }
         return false;
       }
       if (defines instanceof Map) {
-        if (next && defines.get("DEBUG_SHOW_UV") !== "1") {
-          defines.set("DEBUG_SHOW_UV", "1");
-          changed = true;
-        } else if (!next && defines.has("DEBUG_SHOW_UV")) {
-          defines.delete("DEBUG_SHOW_UV");
+        if (next && defines.get(defineName) !== "1") {
+          defines.set(defineName, "1");
+          return true;
+        }
+        if (!next && defines.has(defineName)) {
+          defines.delete(defineName);
+          return true;
+        }
+        return false;
+      }
+      if (next && defines[defineName] !== "1") {
+        defines[defineName] = "1";
+        return true;
+      }
+      if (!next && defines[defineName] !== void 0) {
+        delete defines[defineName];
+        return true;
+      }
+      return false;
+    }
+    function hasPmndrsCloudMaterialDefine(material, defineName) {
+      const defines = material && material.defines ? material.defines : null;
+      if (!defines) {
+        return false;
+      }
+      return defines instanceof Map ? defines.has(defineName) : defines[defineName] !== void 0;
+    }
+    function hasPmndrsCloudDefine(effect, defineName, requireShadowMaterial) {
+      const cloudMaterial = effect && effect.cloudsPass && effect.cloudsPass.currentMaterial ? effect.cloudsPass.currentMaterial : null;
+      const shadowMaterial = effect && effect.shadowPass && effect.shadowPass.currentMaterial ? effect.shadowPass.currentMaterial : null;
+      if (requireShadowMaterial) {
+        return Boolean(
+          cloudMaterial && shadowMaterial && hasPmndrsCloudMaterialDefine(cloudMaterial, defineName) && hasPmndrsCloudMaterialDefine(shadowMaterial, defineName)
+        );
+      }
+      return Boolean(cloudMaterial && hasPmndrsCloudMaterialDefine(cloudMaterial, defineName));
+    }
+    function setPmndrsCloudDefine(effect, defineName, enabled) {
+      const materials = getPmndrsCloudDefineMaterials(effect);
+      let changed = false;
+      materials.forEach((material) => {
+        if (setPmndrsCloudMaterialDefine(material, defineName, enabled)) {
+          material.needsUpdate = true;
           changed = true;
         }
-      } else if (next && defines.DEBUG_SHOW_UV !== "1") {
-        defines.DEBUG_SHOW_UV = "1";
-        changed = true;
-      } else if (!next && defines.DEBUG_SHOW_UV !== void 0) {
-        delete defines.DEBUG_SHOW_UV;
-        changed = true;
-      }
+      });
       if (changed) {
-        material.needsUpdate = true;
         if (typeof effect.setChanged === "function") {
           effect.setChanged();
         }
       }
-      effect._vrodosCloudWeatherUvDebug = next;
+      return Boolean(enabled && hasPmndrsCloudDefine(effect, defineName, false));
+    }
+    function setPmndrsCloudWeatherUvDebug(effect, enabled) {
+      const next = setPmndrsCloudDefine(effect, "DEBUG_SHOW_UV", enabled);
+      if (effect) {
+        effect._vrodosCloudWeatherUvDebug = next;
+      }
+      return next;
+    }
+    function setPmndrsCloudLocalWeatherUvMode(effect, enabled) {
+      setPmndrsCloudDefine(effect, "VRODOS_LOCAL_HORIZON_WEATHER_UV", enabled);
+      const next = Boolean(enabled && hasPmndrsCloudDefine(effect, "VRODOS_LOCAL_HORIZON_WEATHER_UV", true));
+      if (effect) {
+        effect._vrodosCloudWeatherUvMode = next ? "local-tangent" : "cube-sphere";
+        effect._vrodosCloudWeatherUvPatchApplied = next;
+      }
       return next;
     }
     function applyPmndrsCloudPerformanceProfile(effect, quality, style, self) {
@@ -863,6 +953,10 @@
       const profile = self ? getPmndrsCloudRuntimeProfile(self, quality, style) : getPmndrsCloudPerformanceProfile(quality, style);
       const accuratePhaseFunction = shouldUsePmndrsCloudAccuratePhaseFunction(profile);
       const weatherUvDebug = isPmndrsCloudWeatherUvDebugEnabled();
+      const atmosphereConfig = self && typeof self.getPmndrsAtmosphereConfig === "function" ? self.getPmndrsAtmosphereConfig() : null;
+      const localWeatherUvEnabled = shouldUsePmndrsCloudLocalWeatherUv(self, atmosphereConfig);
+      const weatherUvMode = localWeatherUvEnabled ? "local-tangent" : "cube-sphere";
+      const worldToEcefFrame = getPmndrsCloudWorldToEcefFrame(self, atmosphereConfig);
       const signature = [
         profile.id,
         profile.style || "",
@@ -882,6 +976,7 @@
         profile.localWeatherRepeat,
         Array.isArray(profile.localWeatherOffset) ? profile.localWeatherOffset.join(",") : "",
         profile.weatherSeamMitigation || "",
+        weatherUvMode,
         weatherUvDebug ? 1 : 0,
         profile.shapeRepeat,
         profile.shapeDetailRepeat,
@@ -894,6 +989,8 @@
         effect._vrodosCloudsAccuratePhaseFunction = accuratePhaseFunction;
         effect._vrodosCloudsAccuratePhaseFunctionSkippedReason = getPmndrsCloudAccuratePhaseFunctionSkippedReason(profile, accuratePhaseFunction);
         setPmndrsCloudWeatherUvDebug(effect, weatherUvDebug);
+        setPmndrsCloudLocalWeatherUvMode(effect, localWeatherUvEnabled);
+        effect._vrodosCloudWorldToEcefFrame = worldToEcefFrame;
         return profile;
       }
       effect.qualityPreset = profile.takramQuality;
@@ -941,9 +1038,11 @@
       setPmndrsCloudVector(effect.shapeDetailRepeat, profile.shapeDetailRepeat);
       setPmndrsCloudVector(effect.turbulenceRepeat, profile.turbulenceRepeat);
       setPmndrsCloudWeatherUvDebug(effect, weatherUvDebug);
+      setPmndrsCloudLocalWeatherUvMode(effect, localWeatherUvEnabled);
       effect._vrodosCloudsProfileSignature = signature;
       effect._vrodosCloudsAccuratePhaseFunction = accuratePhaseFunction;
       effect._vrodosCloudsAccuratePhaseFunctionSkippedReason = getPmndrsCloudAccuratePhaseFunctionSkippedReason(profile, accuratePhaseFunction);
+      effect._vrodosCloudWorldToEcefFrame = worldToEcefFrame;
       return profile;
     }
     function shouldUsePmndrsCloudTemporalUpscale(self, atmosphereConfig, profile) {
@@ -1009,6 +1108,7 @@
       const windVelocity = getPmndrsCloudWindVelocity(self, profile);
       const authoredCoverage = getPmndrsCloudsCoverage(self);
       const effectiveCoverage = getPmndrsCloudsEffectiveCoverage(self);
+      const atmosphereConfig = typeof self.getPmndrsAtmosphereConfig === "function" ? self.getPmndrsAtmosphereConfig() : null;
       const next = Object.assign({
         cloudsActive: false,
         cloudsSkippedReason: "disabled",
@@ -1024,6 +1124,7 @@
         cloudProfileValidationStatus: profile.profileValidationStatus || "ok",
         cloudProfileFallbackReason: profile.profileFallbackReason || "",
         coverageMapperSignature: getPmndrsCloudCoverageMapperSignature(profile.coverageMapper),
+        cloudCoverageMapperShared: true,
         resolutionScale: profile.resolutionScale,
         cloudWindEnabled: isPmndrsCloudsWindEnabled(self),
         cloudWindSpeed: getPmndrsCloudsWindSpeed(self),
@@ -1096,8 +1197,10 @@
         cloudSunDiskSampleAgeMs: null,
         cloudSunDiskSampleCount: 0,
         cloudWeatherSeamMitigation: profile.weatherSeamMitigation || "none",
-        cloudWeatherUvMode: "cube-sphere",
+        cloudWeatherUvMode: getPmndrsCloudWeatherUvMode(self, atmosphereConfig),
+        cloudWeatherUvPatchApplied: false,
         cloudWeatherUvDebug: false,
+        cloudWorldToEcefFrame: getPmndrsCloudWorldToEcefFrame(self, atmosphereConfig),
         cloudWeatherRepeatX: Array.isArray(profile.localWeatherRepeat) ? profile.localWeatherRepeat[0] : profile.localWeatherRepeat,
         cloudWeatherRepeatY: Array.isArray(profile.localWeatherRepeat) ? profile.localWeatherRepeat[1] : profile.localWeatherRepeat,
         cloudWeatherOffsetX: Array.isArray(profile.localWeatherOffset) ? profile.localWeatherOffset[0] : 0,
@@ -1116,6 +1219,7 @@
       next.cloudProfileValidationStatus = profile.profileValidationStatus || "ok";
       next.cloudProfileFallbackReason = profile.profileFallbackReason || "";
       next.coverageMapperSignature = getPmndrsCloudCoverageMapperSignature(profile.coverageMapper);
+      next.cloudCoverageMapperShared = true;
       next.cloudWindEnabled = isPmndrsCloudsWindEnabled(self);
       next.cloudWindSpeed = getPmndrsCloudsWindSpeed(self);
       next.cloudWindDirectionDeg = getPmndrsCloudsWindDirectionDeg(self);
@@ -1132,6 +1236,7 @@
       const diagnostics = self._pmndrsCloudsDiagnostics || updatePmndrsCloudDiagnostics(self);
       const profile = getPmndrsCloudRuntimeProfile(self, getPmndrsCloudsQuality(self), getPmndrsCloudsStyle(self));
       const windVelocity = getPmndrsCloudWindVelocity(self, profile);
+      const atmosphereConfig = typeof self.getPmndrsAtmosphereConfig === "function" ? self.getPmndrsAtmosphereConfig() : null;
       Object.assign(diagnostics, {
         authoredCoverage: getPmndrsCloudsCoverage(self),
         effectiveCoverage: getPmndrsCloudsEffectiveCoverage(self),
@@ -1147,7 +1252,12 @@
         cloudProfileValidationStatus: self.pmndrsCloudsEffect && self.pmndrsCloudsEffect._vrodosCloudProfileValidationStatus ? self.pmndrsCloudsEffect._vrodosCloudProfileValidationStatus : profile.profileValidationStatus || "ok",
         cloudProfileFallbackReason: self.pmndrsCloudsEffect && self.pmndrsCloudsEffect._vrodosCloudProfileFallbackReason ? self.pmndrsCloudsEffect._vrodosCloudProfileFallbackReason : profile.profileFallbackReason || "",
         coverageMapperSignature: getPmndrsCloudCoverageMapperSignature(profile.coverageMapper),
+        cloudCoverageMapperShared: true,
         cloudWeatherSeamMitigation: profile.weatherSeamMitigation || "none",
+        cloudWeatherUvMode: self.pmndrsCloudsEffect && self.pmndrsCloudsEffect._vrodosCloudWeatherUvMode ? self.pmndrsCloudsEffect._vrodosCloudWeatherUvMode : getPmndrsCloudWeatherUvMode(self, atmosphereConfig),
+        cloudWeatherUvPatchApplied: Boolean(self.pmndrsCloudsEffect && self.pmndrsCloudsEffect._vrodosCloudWeatherUvPatchApplied),
+        cloudWeatherUvDebug: Boolean(self.pmndrsCloudsEffect && self.pmndrsCloudsEffect._vrodosCloudWeatherUvDebug),
+        cloudWorldToEcefFrame: self.pmndrsCloudsEffect && self.pmndrsCloudsEffect._vrodosCloudWorldToEcefFrame ? self.pmndrsCloudsEffect._vrodosCloudWorldToEcefFrame : getPmndrsCloudWorldToEcefFrame(self, atmosphereConfig),
         cloudWeatherRepeatX: Array.isArray(profile.localWeatherRepeat) ? profile.localWeatherRepeat[0] : profile.localWeatherRepeat,
         cloudWeatherRepeatY: Array.isArray(profile.localWeatherRepeat) ? profile.localWeatherRepeat[1] : profile.localWeatherRepeat,
         cloudWeatherOffsetX: Array.isArray(profile.localWeatherOffset) ? profile.localWeatherOffset[0] : 0,
@@ -2902,7 +3012,7 @@ ${selectedSummaries.join("\n")}`);
         `clouds haze: ${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.haze ? "yes" : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.hazeDisabledReason ? ` (${self._pmndrsCloudsDiagnostics.hazeDisabledReason})` : ""}`}`,
         `clouds temporal: ${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.temporalUpscale ? "yes" : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.temporalUpscaleSkippedReason ? ` (${self._pmndrsCloudsDiagnostics.temporalUpscaleSkippedReason})` : ""}`}`,
         `clouds coverage: ${getPmndrsCloudsCoverage(self).toFixed(2)} -> ${getPmndrsCloudsEffectiveCoverage(self).toFixed(2)}`,
-        `clouds weather: ${self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.cloudWeatherUvMode || "cube-sphere"} repeat ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudWeatherRepeatX", 0)).toFixed(1)},${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudWeatherRepeatY", 0)).toFixed(1)} offset ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudWeatherOffsetX", 0)).toFixed(2)},${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudWeatherOffsetY", 0)).toFixed(2)} seam ${self._pmndrsCloudsDiagnostics.cloudWeatherSeamMitigation || "none"}${self._pmndrsCloudsDiagnostics.cloudWeatherUvDebug ? " debug-uv" : ""}` : "off"}`,
+        `clouds weather: ${self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.cloudWeatherUvMode || "cube-sphere"} ${self._pmndrsCloudsDiagnostics.cloudWeatherUvPatchApplied ? "patch" : "native"} frame ${self._pmndrsCloudsDiagnostics.cloudWorldToEcefFrame || "n/a"} repeat ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudWeatherRepeatX", 0)).toFixed(1)},${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudWeatherRepeatY", 0)).toFixed(1)} offset ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudWeatherOffsetX", 0)).toFixed(2)},${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, "cloudWeatherOffsetY", 0)).toFixed(2)} seam ${self._pmndrsCloudsDiagnostics.cloudWeatherSeamMitigation || "none"}${self._pmndrsCloudsDiagnostics.cloudWeatherUvDebug ? " debug-uv" : ""}` : "off"}`,
         `clouds aerial shadow: ${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.aerialShadowRouted ? "yes" : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.aerialShadowReason ? ` (${self._pmndrsCloudsDiagnostics.aerialShadowReason})` : ""}`}`,
         `clouds aerial shadow length: ${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.aerialShadowLengthRouted ? "yes" : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.aerialShadowLengthReason ? ` (${self._pmndrsCloudsDiagnostics.aerialShadowLengthReason})` : ""}`}`,
         `clouds sky shadow: ${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.skyShadowLengthRouted ? "yes" : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.skyShadowLengthReason ? ` (${self._pmndrsCloudsDiagnostics.skyShadowLengthReason})` : ""}`}`,
@@ -3212,9 +3322,12 @@ ${selectedSummaries.join("\n")}`);
         coverage: getPmndrsCloudsCoverage(self),
         authoredCoverage: getPmndrsCloudsCoverage(self),
         effectiveCoverage,
+        cloudCoverageMapperShared: true,
         cloudWeatherSeamMitigation: profile.weatherSeamMitigation || "none",
-        cloudWeatherUvMode: "cube-sphere",
+        cloudWeatherUvMode: self.pmndrsCloudsEffect._vrodosCloudWeatherUvMode || getPmndrsCloudWeatherUvMode(self, atmosphereConfig),
+        cloudWeatherUvPatchApplied: Boolean(self.pmndrsCloudsEffect._vrodosCloudWeatherUvPatchApplied),
         cloudWeatherUvDebug: Boolean(self.pmndrsCloudsEffect._vrodosCloudWeatherUvDebug),
+        cloudWorldToEcefFrame: self.pmndrsCloudsEffect._vrodosCloudWorldToEcefFrame || getPmndrsCloudWorldToEcefFrame(self, atmosphereConfig),
         cloudWeatherRepeatX: self.pmndrsCloudsEffect.localWeatherRepeat && typeof self.pmndrsCloudsEffect.localWeatherRepeat.x === "number" ? self.pmndrsCloudsEffect.localWeatherRepeat.x : Array.isArray(profile.localWeatherRepeat) ? profile.localWeatherRepeat[0] : profile.localWeatherRepeat,
         cloudWeatherRepeatY: self.pmndrsCloudsEffect.localWeatherRepeat && typeof self.pmndrsCloudsEffect.localWeatherRepeat.y === "number" ? self.pmndrsCloudsEffect.localWeatherRepeat.y : Array.isArray(profile.localWeatherRepeat) ? profile.localWeatherRepeat[1] : profile.localWeatherRepeat,
         cloudWeatherOffsetX: self.pmndrsCloudsEffect.localWeatherOffset && typeof self.pmndrsCloudsEffect.localWeatherOffset.x === "number" ? self.pmndrsCloudsEffect.localWeatherOffset.x : Array.isArray(profile.localWeatherOffset) ? profile.localWeatherOffset[0] : 0,
@@ -3394,9 +3507,12 @@ ${selectedSummaries.join("\n")}`);
               coverage: getPmndrsCloudsCoverage(this),
               authoredCoverage: getPmndrsCloudsCoverage(this),
               effectiveCoverage: getPmndrsCloudsEffectiveCoverage(this),
+              cloudCoverageMapperShared: true,
               cloudWeatherSeamMitigation: cloudsProfile.weatherSeamMitigation || "none",
-              cloudWeatherUvMode: "cube-sphere",
+              cloudWeatherUvMode: this.pmndrsCloudsEffect._vrodosCloudWeatherUvMode || getPmndrsCloudWeatherUvMode(this, atmosphereConfig),
+              cloudWeatherUvPatchApplied: Boolean(this.pmndrsCloudsEffect._vrodosCloudWeatherUvPatchApplied),
               cloudWeatherUvDebug: Boolean(this.pmndrsCloudsEffect._vrodosCloudWeatherUvDebug),
+              cloudWorldToEcefFrame: this.pmndrsCloudsEffect._vrodosCloudWorldToEcefFrame || getPmndrsCloudWorldToEcefFrame(this, atmosphereConfig),
               cloudWeatherRepeatX: this.pmndrsCloudsEffect.localWeatherRepeat && typeof this.pmndrsCloudsEffect.localWeatherRepeat.x === "number" ? this.pmndrsCloudsEffect.localWeatherRepeat.x : Array.isArray(cloudsProfile.localWeatherRepeat) ? cloudsProfile.localWeatherRepeat[0] : cloudsProfile.localWeatherRepeat,
               cloudWeatherRepeatY: this.pmndrsCloudsEffect.localWeatherRepeat && typeof this.pmndrsCloudsEffect.localWeatherRepeat.y === "number" ? this.pmndrsCloudsEffect.localWeatherRepeat.y : Array.isArray(cloudsProfile.localWeatherRepeat) ? cloudsProfile.localWeatherRepeat[1] : cloudsProfile.localWeatherRepeat,
               cloudWeatherOffsetX: this.pmndrsCloudsEffect.localWeatherOffset && typeof this.pmndrsCloudsEffect.localWeatherOffset.x === "number" ? this.pmndrsCloudsEffect.localWeatherOffset.x : Array.isArray(cloudsProfile.localWeatherOffset) ? cloudsProfile.localWeatherOffset[0] : 0,

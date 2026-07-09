@@ -1854,9 +1854,12 @@ AFRAME.registerComponent('scene-settings', {
                 cloudProfileValidationStatus: cloudDiagnostics.cloudProfileValidationStatus || '',
                 cloudProfileFallbackReason: cloudDiagnostics.cloudProfileFallbackReason || '',
                 cloudCoverageMapperSignature: cloudDiagnostics.coverageMapperSignature || '',
+                cloudCoverageMapperShared: Boolean(cloudDiagnostics.cloudCoverageMapperShared),
                 cloudWeatherSeamMitigation: cloudDiagnostics.cloudWeatherSeamMitigation || '',
                 cloudWeatherUvMode: cloudDiagnostics.cloudWeatherUvMode || '',
+                cloudWeatherUvPatchApplied: Boolean(cloudDiagnostics.cloudWeatherUvPatchApplied),
                 cloudWeatherUvDebug: Boolean(cloudDiagnostics.cloudWeatherUvDebug),
+                cloudWorldToEcefFrame: cloudDiagnostics.cloudWorldToEcefFrame || '',
                 cloudWeatherRepeatX: typeof cloudDiagnostics.cloudWeatherRepeatX === 'number'
                     ? cloudDiagnostics.cloudWeatherRepeatX
                     : null,
