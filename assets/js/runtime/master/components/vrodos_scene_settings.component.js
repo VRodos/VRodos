@@ -1851,6 +1851,8 @@ AFRAME.registerComponent('scene-settings', {
                 cloudAppliedLayerSignature: cloudDiagnostics.appliedLayerSignature || '',
                 cloudLayerApplyMethod: cloudDiagnostics.layerApplyMethod || '',
                 cloudLayerProfileApplied: Boolean(cloudDiagnostics.layerProfileApplied),
+                cloudProfileValidationStatus: cloudDiagnostics.cloudProfileValidationStatus || '',
+                cloudProfileFallbackReason: cloudDiagnostics.cloudProfileFallbackReason || '',
                 cloudCoverageMapperSignature: cloudDiagnostics.coverageMapperSignature || '',
                 cloudWeatherSeamMitigation: cloudDiagnostics.cloudWeatherSeamMitigation || '',
                 cloudWeatherUvMode: cloudDiagnostics.cloudWeatherUvMode || '',

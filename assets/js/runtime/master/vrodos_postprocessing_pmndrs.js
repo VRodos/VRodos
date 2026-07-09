@@ -223,6 +223,23 @@
     const PMNDRS_CLOUD_SUN_DISK_SAMPLE_MAX_AGE_MS = 900;
     const PMNDRS_CLOUD_LIGHTING_MASK_LAYER = 30;
     const PMNDRS_HORIZON_FOLIAGE_OVERLAY_LAYER = 29;
+    const PMNDRS_CLOUD_DENSITY_PROFILE_DEFAULT = Object.freeze({
+        expTerm: 0,
+        exponent: 0,
+        linearTerm: 0.75,
+        constantTerm: 0.25
+    });
+    const PMNDRS_CLOUD_LAYER_CHANNELS = Object.freeze({ r: true, g: true, b: true, a: true });
+    const PMNDRS_CLOUD_LAYER_NUMERIC_FIELDS = Object.freeze([
+        'altitude',
+        'height',
+        'densityScale',
+        'shapeAmount',
+        'shapeDetailAmount',
+        'weatherExponent',
+        'shapeAlteringBias',
+        'coverageFilterWidth'
+    ]);
 
     function smoothStep01(value) {
         const t = clamp01(value);
@@ -241,21 +258,13 @@
         const mapper = (profile && profile.coverageMapper) || {};
         const scale = typeof mapper.scale === 'number' && isFinite(mapper.scale) ? mapper.scale : 1;
         const bias = typeof mapper.bias === 'number' && isFinite(mapper.bias) ? mapper.bias : 0;
-        const min = typeof mapper.min === 'number' && isFinite(mapper.min) ? mapper.min : 0;
         const max = typeof mapper.max === 'number' && isFinite(mapper.max) ? mapper.max : 1;
-        const curved = smoothStep01(authoredCoverage);
-        const blend = typeof mapper.curve === 'number' && isFinite(mapper.curve)
-            ? Math.max(0, Math.min(1, mapper.curve))
-            : 0.45;
-        const shapedCoverage = authoredCoverage + ((curved - authoredCoverage) * blend);
-        const biasFactor = smoothStep01(authoredCoverage / 0.35);
-        const minFactor = smoothStep01(authoredCoverage / 0.25);
-        const effectiveMin = min * minFactor;
+        const shapedCoverage = (authoredCoverage * scale) + (bias * smoothStep01(authoredCoverage));
 
-        // Takram's default cloud layers begin to saturate around
-        // 1 - coverageFilterWidth. Horizon maps author coverage into the
-        // non-saturating range per style so presets remain visually distinct.
-        return clamp01(Math.max(effectiveMin, Math.min(max, (shapedCoverage * scale) + (bias * biasFactor))));
+        // Takram coverage remains live and monotonic for every style, but
+        // Horizon caps dense values before the default layer filter saturates
+        // into a flat local slab.
+        return clamp01(Math.min(max, Math.max(0, shapedCoverage)));
     }
 
     function getPmndrsCloudLensFlareFactorForCoverage(self) {
@@ -454,18 +463,25 @@
         if (!Array.isArray(layers)) {
             return 'none';
         }
-        return layers.map((layer) => [
-            layer.channel || '',
-            layer.altitude || 0,
-            layer.height || 0,
-            layer.densityScale || 0,
-            layer.shapeAmount || 0,
-            layer.shapeDetailAmount || 0,
-            layer.weatherExponent || 0,
-            layer.shapeAlteringBias || 0,
-            layer.coverageFilterWidth || 0,
-            layer.shadow ? 1 : 0
-        ].join(',')).join('|');
+        return layers.map((layer) => {
+            const densityProfile = layer && layer.densityProfile ? layer.densityProfile : {};
+            return [
+                layer.channel || '',
+                layer.altitude || 0,
+                layer.height || 0,
+                layer.densityScale || 0,
+                layer.shapeAmount || 0,
+                layer.shapeDetailAmount || 0,
+                layer.weatherExponent || 0,
+                layer.shapeAlteringBias || 0,
+                layer.coverageFilterWidth || 0,
+                densityProfile.expTerm || 0,
+                densityProfile.exponent || 0,
+                densityProfile.linearTerm || 0,
+                densityProfile.constantTerm || 0,
+                layer.shadow ? 1 : 0
+            ].join(',');
+        }).join('|');
     }
 
     function getPmndrsCloudCoverageMapperSignature(mapper) {
@@ -475,14 +491,123 @@
         return [
             mapper.scale,
             mapper.bias,
-            mapper.min,
-            mapper.max,
-            mapper.curve
+            mapper.max
         ].map((value) => (typeof value === 'number' && isFinite(value) ? value : '')).join(',');
     }
 
+    function clonePmndrsCloudDensityProfile(profile) {
+        return Object.assign({}, PMNDRS_CLOUD_DENSITY_PROFILE_DEFAULT, profile || {});
+    }
+
+    function pushPmndrsCloudProfileIssue(issues, message) {
+        if (Array.isArray(issues)) {
+            issues.push(message);
+        }
+    }
+
+    function getPmndrsCloudFiniteNumber(value, fallback, issues, label, min, max) {
+        if (typeof value !== 'number' || !isFinite(value)) {
+            pushPmndrsCloudProfileIssue(issues, `${label}:non-finite`);
+            return fallback;
+        }
+        if (typeof min === 'number' && value < min) {
+            pushPmndrsCloudProfileIssue(issues, `${label}:below-min`);
+            return fallback;
+        }
+        if (typeof max === 'number' && value > max) {
+            pushPmndrsCloudProfileIssue(issues, `${label}:above-max`);
+            return fallback;
+        }
+        return value;
+    }
+
+    function normalizePmndrsCloudDensityProfile(profile, fallbackProfile, issues, label) {
+        const fallback = clonePmndrsCloudDensityProfile(fallbackProfile);
+        const source = profile && typeof profile === 'object' ? profile : {};
+        const result = {};
+
+        Object.keys(PMNDRS_CLOUD_DENSITY_PROFILE_DEFAULT).forEach((key) => {
+            const value = source[key];
+            const fallbackValue = typeof fallback[key] === 'number' && isFinite(fallback[key])
+                ? fallback[key]
+                : PMNDRS_CLOUD_DENSITY_PROFILE_DEFAULT[key];
+            result[key] = value === undefined
+                ? fallbackValue
+                : getPmndrsCloudFiniteNumber(value, fallbackValue, issues, `${label}.densityProfile.${key}`);
+        });
+
+        return result;
+    }
+
+    function normalizePmndrsCloudLayer(layer, fallbackLayer, index, issues) {
+        const fallback = fallbackLayer || PMNDRS_CLOUD_DEFAULT_LAYERS[index] || PMNDRS_CLOUD_DEFAULT_LAYERS[0];
+        const source = layer && typeof layer === 'object' ? layer : {};
+        if (!layer || typeof layer !== 'object') {
+            pushPmndrsCloudProfileIssue(issues, `layer${index}:missing`);
+        }
+
+        const result = {};
+        const channel = source.channel !== undefined ? source.channel : fallback.channel;
+        result.channel = PMNDRS_CLOUD_LAYER_CHANNELS[channel]
+            ? channel
+            : (PMNDRS_CLOUD_LAYER_CHANNELS[fallback.channel] ? fallback.channel : 'r');
+        if (result.channel !== channel) {
+            pushPmndrsCloudProfileIssue(issues, `layer${index}.channel:invalid`);
+        }
+
+        PMNDRS_CLOUD_LAYER_NUMERIC_FIELDS.forEach((field) => {
+            const fallbackValue = typeof fallback[field] === 'number' && isFinite(fallback[field])
+                ? fallback[field]
+                : PMNDRS_CLOUD_DEFAULT_LAYERS[index] && typeof PMNDRS_CLOUD_DEFAULT_LAYERS[index][field] === 'number'
+                    ? PMNDRS_CLOUD_DEFAULT_LAYERS[index][field]
+                    : 0;
+            const value = source[field] === undefined ? fallbackValue : source[field];
+            const min = field === 'coverageFilterWidth' ? 0 : (field === 'weatherExponent' || field === 'shapeAlteringBias' ? 0.0001 : 0);
+            const max = field === 'coverageFilterWidth' ? 1 : undefined;
+            result[field] = getPmndrsCloudFiniteNumber(value, fallbackValue, issues, `layer${index}.${field}`, min, max);
+        });
+
+        result.shadow = typeof source.shadow === 'boolean'
+            ? source.shadow
+            : Boolean(fallback.shadow);
+        result.densityProfile = normalizePmndrsCloudDensityProfile(
+            source.densityProfile,
+            fallback.densityProfile,
+            issues,
+            `layer${index}`
+        );
+        return result;
+    }
+
+    function normalizePmndrsCloudLayers(layers, label) {
+        const issues = [];
+        const source = Array.isArray(layers) ? layers : null;
+        if (!source) {
+            pushPmndrsCloudProfileIssue(issues, `${label || 'profile'}:missing-layers`);
+        }
+        const normalized = PMNDRS_CLOUD_DEFAULT_LAYERS.map((fallbackLayer, index) => (
+            normalizePmndrsCloudLayer(source && source[index], fallbackLayer, index, issues)
+        ));
+        return {
+            layers: normalized,
+            status: issues.length > 0 ? 'fallback-applied' : 'ok',
+            reason: issues.join(';')
+        };
+    }
+
+    function normalizePmndrsCloudCoverageMapper(mapper) {
+        const source = mapper || {};
+        return {
+            scale: typeof source.scale === 'number' && isFinite(source.scale) ? Math.max(0, source.scale) : 1,
+            bias: typeof source.bias === 'number' && isFinite(source.bias) ? Math.max(0, source.bias) : 0,
+            max: typeof source.max === 'number' && isFinite(source.max) ? clamp01(source.max) : 1
+        };
+    }
+
     function applyPmndrsCloudLayerProfile(effect, profile) {
-        const layers = profile && Array.isArray(profile.layers) ? profile.layers : null;
+        const normalizedProfile = profile || {};
+        const validation = normalizePmndrsCloudLayers(normalizedProfile.layers, normalizedProfile.layerProfile || 'profile');
+        const layers = validation.layers;
         const targetLayers = effect && effect.cloudLayers && typeof effect.cloudLayers.length === 'number'
             ? effect.cloudLayers
             : null;
@@ -496,7 +621,9 @@
             effect._vrodosCloudLayerAppliedSignature = currentSignature;
             effect._vrodosCloudLayerApplyMethod = effect._vrodosCloudLayerApplyMethod || 'unchanged';
             effect._vrodosCloudLayerProfileApplied = true;
-            return profile.layerProfile || '';
+            effect._vrodosCloudProfileValidationStatus = validation.status;
+            effect._vrodosCloudProfileFallbackReason = validation.reason;
+            return normalizedProfile.layerProfile || '';
         }
 
         if (typeof targetLayers.set === 'function') {
@@ -523,7 +650,9 @@
         effect._vrodosCloudLayerProfileSignature = signature;
         effect._vrodosCloudLayerAppliedSignature = appliedSignature;
         effect._vrodosCloudLayerProfileApplied = appliedSignature === signature;
-        return profile.layerProfile || '';
+        effect._vrodosCloudProfileValidationStatus = validation.status;
+        effect._vrodosCloudProfileFallbackReason = validation.reason;
+        return normalizedProfile.layerProfile || '';
     }
 
     const PMNDRS_CLOUD_DEFAULT_LAYERS = [
@@ -537,6 +666,7 @@
             weatherExponent: 1,
             shapeAlteringBias: 0.35,
             coverageFilterWidth: 0.6,
+            densityProfile: clonePmndrsCloudDensityProfile(),
             shadow: true
         },
         {
@@ -549,6 +679,7 @@
             weatherExponent: 1,
             shapeAlteringBias: 0.35,
             coverageFilterWidth: 0.6,
+            densityProfile: clonePmndrsCloudDensityProfile(),
             shadow: true
         },
         {
@@ -561,6 +692,7 @@
             weatherExponent: 1,
             shapeAlteringBias: 0.35,
             coverageFilterWidth: 0.5,
+            densityProfile: clonePmndrsCloudDensityProfile(),
             shadow: false
         },
         {
@@ -573,12 +705,17 @@
             weatherExponent: 1,
             shapeAlteringBias: 0.35,
             coverageFilterWidth: 0.6,
+            densityProfile: clonePmndrsCloudDensityProfile(),
             shadow: false
         }
     ];
 
     function clonePmndrsCloudLayer(layer) {
-        return Object.assign({}, layer || {});
+        const clone = Object.assign({}, layer || {});
+        if (layer && layer.densityProfile) {
+            clone.densityProfile = clonePmndrsCloudDensityProfile(layer.densityProfile);
+        }
+        return clone;
     }
 
     function clonePmndrsCloudLayers(layers) {
@@ -598,83 +735,53 @@
         default: {
             id: 'default',
             layerProfile: 'takram-default',
-            coverageMapper: { scale: 1, bias: 0, min: 0, max: 0.395, curve: 0.45 },
-            localWeatherRepeat: 100,
-            localWeatherOffset: [0, 0],
+            coverageMapper: { scale: 0.65, bias: 0, max: 0.45 },
             weatherSeamMitigation: 'takram-default',
-            shapeRepeat: 0.0003,
-            shapeDetailRepeat: 0.006,
-            turbulenceRepeat: 20,
-            turbulenceDisplacement: 350,
             layers: clonePmndrsCloudLayers(PMNDRS_CLOUD_DEFAULT_LAYERS)
         },
         scattered: {
             id: 'scattered',
             layerProfile: 'style-scattered',
-            coverageMapper: { scale: 0.52, bias: 0.02, min: 0, max: 0.32, curve: 0.2 },
-            localWeatherRepeat: 88,
-            localWeatherOffset: [0, 0],
-            weatherSeamMitigation: 'takram-default',
-            shapeRepeat: 0.00024,
-            shapeDetailRepeat: 0.005,
-            turbulenceRepeat: 18,
-            turbulenceDisplacement: 260,
+            coverageMapper: { scale: 0.5, bias: 0, max: 0.42 },
+            weatherSeamMitigation: 'demo-safe-layer-fields',
             layers: mergePmndrsCloudLayerOverrides([
-                { altitude: 950, height: 420, densityScale: 0.11, shapeAmount: 0.74, shapeDetailAmount: 0.55, weatherExponent: 1.45, coverageFilterWidth: 0.42 },
-                { altitude: 1650, height: 640, densityScale: 0.07, shapeAmount: 0.62, shapeDetailAmount: 0.45, weatherExponent: 1.55, coverageFilterWidth: 0.36 },
-                { altitude: 7600, height: 420, densityScale: 0.0014, shapeAmount: 0.18, shapeDetailAmount: 0, weatherExponent: 1.35, coverageFilterWidth: 0.38 }
+                { altitude: 950, height: 420, densityScale: 0.11, shapeAmount: 0.74, shapeDetailAmount: 0.55 },
+                { altitude: 1650, height: 640, densityScale: 0.07, shapeAmount: 0.62, shapeDetailAmount: 0.45 },
+                { altitude: 7600, height: 420, densityScale: 0.0014, shapeAmount: 0.18, shapeDetailAmount: 0 }
             ])
         },
         broken: {
             id: 'broken',
             layerProfile: 'style-broken',
-            coverageMapper: { scale: 0.62, bias: 0.09, min: 0, max: 0.4, curve: 0.35 },
-            localWeatherRepeat: 94,
-            localWeatherOffset: [0, 0],
-            weatherSeamMitigation: 'takram-default',
-            shapeRepeat: 0.0003,
-            shapeDetailRepeat: 0.0055,
-            turbulenceRepeat: 20,
-            turbulenceDisplacement: 330,
+            coverageMapper: { scale: 0.62, bias: 0, max: 0.46 },
+            weatherSeamMitigation: 'demo-safe-layer-fields',
             layers: mergePmndrsCloudLayerOverrides([
-                { altitude: 720, height: 720, densityScale: 0.2, shapeAmount: 0.94, shapeDetailAmount: 0.76, weatherExponent: 1.16, coverageFilterWidth: 0.52 },
-                { altitude: 1080, height: 1120, densityScale: 0.18, shapeAmount: 0.88, shapeDetailAmount: 0.78, weatherExponent: 1.18, coverageFilterWidth: 0.5 },
-                { altitude: 7200, height: 560, densityScale: 0.0028, shapeAmount: 0.34, shapeDetailAmount: 0, weatherExponent: 1.05, coverageFilterWidth: 0.48 }
+                { altitude: 760, height: 650, densityScale: 0.18, shapeAmount: 0.96, shapeDetailAmount: 0.76 },
+                { altitude: 1150, height: 1050, densityScale: 0.16, shapeAmount: 0.9, shapeDetailAmount: 0.78 },
+                { altitude: 7200, height: 560, densityScale: 0.0028, shapeAmount: 0.34, shapeDetailAmount: 0 }
             ])
         },
         overcast: {
             id: 'overcast',
             layerProfile: 'style-overcast',
-            coverageMapper: { scale: 0.32, bias: 0.25, min: 0.3, max: 0.43, curve: 0.65 },
-            localWeatherRepeat: 112,
-            localWeatherOffset: [0.23, 0.41],
-            weatherSeamMitigation: 'dense-horizon-offset-v1',
-            shapeRepeat: 0.00022,
-            shapeDetailRepeat: 0.0044,
-            turbulenceRepeat: 22,
-            turbulenceDisplacement: 320,
+            coverageMapper: { scale: 0.72, bias: 0.04, max: 0.48 },
+            weatherSeamMitigation: 'demo-safe-layer-fields',
             layers: mergePmndrsCloudLayerOverrides([
-                { altitude: 560, height: 980, densityScale: 0.21, shapeAmount: 0.96, shapeDetailAmount: 0.74, weatherExponent: 0.98, shapeAlteringBias: 0.26, coverageFilterWidth: 0.48 },
-                { altitude: 880, height: 1660, densityScale: 0.2, shapeAmount: 0.96, shapeDetailAmount: 0.74, weatherExponent: 0.96, shapeAlteringBias: 0.24, coverageFilterWidth: 0.5 },
-                { altitude: 4300, height: 900, densityScale: 0.0048, shapeAmount: 0.38, shapeDetailAmount: 0, weatherExponent: 1.08, coverageFilterWidth: 0.48 }
+                { altitude: 780, height: 900, densityScale: 0.18, shapeAmount: 0.95, shapeDetailAmount: 0.75 },
+                { altitude: 1120, height: 1500, densityScale: 0.22, shapeAmount: 0.95, shapeDetailAmount: 0.78 },
+                { altitude: 5600, height: 1000, densityScale: 0.0045, shapeAmount: 0.38, shapeDetailAmount: 0 }
             ])
         },
         storm: {
             id: 'storm',
             layerProfile: 'style-storm',
-            coverageMapper: { scale: 0.32, bias: 0.22, min: 0.22, max: 0.42, curve: 0.72 },
-            localWeatherRepeat: 118,
-            localWeatherOffset: [0.37, 0.19],
-            weatherSeamMitigation: 'dense-horizon-offset-v1',
-            shapeRepeat: 0.00024,
-            shapeDetailRepeat: 0.0052,
-            turbulenceRepeat: 23,
-            turbulenceDisplacement: 380,
+            coverageMapper: { scale: 0.78, bias: 0.05, max: 0.5 },
+            weatherSeamMitigation: 'demo-safe-layer-fields',
             layers: mergePmndrsCloudLayerOverrides([
-                { altitude: 560, height: 1020, densityScale: 0.23, shapeAmount: 0.96, shapeDetailAmount: 0.82, weatherExponent: 1.02, shapeAlteringBias: 0.26, coverageFilterWidth: 0.46 },
-                { altitude: 940, height: 1680, densityScale: 0.24, shapeAmount: 0.98, shapeDetailAmount: 0.84, weatherExponent: 0.98, shapeAlteringBias: 0.24, coverageFilterWidth: 0.48 },
-                { altitude: 6100, height: 940, densityScale: 0.0058, shapeAmount: 0.5, shapeDetailAmount: 0, weatherExponent: 1.02, coverageFilterWidth: 0.46 },
-                { channel: 'a', altitude: 380, height: 360, densityScale: 0.03, shapeAmount: 0.74, shapeDetailAmount: 0.58, weatherExponent: 1.45, shapeAlteringBias: 0.3, coverageFilterWidth: 0.24, shadow: false }
+                { altitude: 680, height: 1000, densityScale: 0.24, shapeAmount: 0.93, shapeDetailAmount: 0.8 },
+                { altitude: 950, height: 1800, densityScale: 0.3, shapeAmount: 0.9, shapeDetailAmount: 0.85 },
+                { altitude: 5200, height: 1300, densityScale: 0.008, shapeAmount: 0.44, shapeDetailAmount: 0 },
+                { channel: 'a', altitude: 450, height: 360, densityScale: 0.035, shapeAmount: 0.75, shapeDetailAmount: 0.55, shadow: false }
             ])
         }
     };
@@ -783,10 +890,11 @@
         const base = PMNDRS_CLOUD_PERFORMANCE_PROFILES[normalizePmndrsCloudsQuality(quality)] ||
             PMNDRS_CLOUD_PERFORMANCE_PROFILES.low;
         const styleProfile = getPmndrsCloudStyleProfile(style);
+        const layerValidation = normalizePmndrsCloudLayers(styleProfile.layers, styleProfile.layerProfile || styleProfile.id);
         return Object.assign({}, base, {
             style: styleProfile.id,
             layerProfile: styleProfile.layerProfile,
-            coverageMapper: Object.assign({}, styleProfile.coverageMapper || {}),
+            coverageMapper: normalizePmndrsCloudCoverageMapper(styleProfile.coverageMapper),
             localWeatherRepeat: styleProfile.localWeatherRepeat || base.localWeatherRepeat,
             localWeatherOffset: Array.isArray(styleProfile.localWeatherOffset) ? styleProfile.localWeatherOffset.slice() : [0, 0],
             weatherSeamMitigation: styleProfile.weatherSeamMitigation || 'none',
@@ -794,32 +902,14 @@
             shapeDetailRepeat: styleProfile.shapeDetailRepeat || base.shapeDetailRepeat,
             turbulenceRepeat: styleProfile.turbulenceRepeat || base.turbulenceRepeat,
             turbulenceDisplacement: styleProfile.turbulenceDisplacement || base.turbulenceDisplacement,
-            layers: clonePmndrsCloudLayers(styleProfile.layers)
+            layers: layerValidation.layers,
+            profileValidationStatus: layerValidation.status,
+            profileFallbackReason: layerValidation.reason
         });
     }
 
     function getPmndrsCloudRuntimeProfile(self, quality, style) {
-        const profile = getPmndrsCloudPerformanceProfile(quality, style);
-        if (!self || !isHorizonBackground(self) || profile.style !== 'storm') {
-            return profile;
-        }
-
-        if (getPmndrsCloudsCoverage(self) < 0.65 || !Array.isArray(profile.layers) || !profile.layers[3]) {
-            return profile;
-        }
-
-        profile.layers = clonePmndrsCloudLayers(profile.layers);
-        profile.layers[3] = Object.assign({}, profile.layers[3], {
-            height: 260,
-            densityScale: 0.012,
-            shapeAmount: 0.62,
-            shapeDetailAmount: 0.48,
-            weatherExponent: 1.75,
-            coverageFilterWidth: 0.16
-        });
-        profile.layerProfile = `${profile.layerProfile || 'style-storm'}-dense-scud-softened`;
-        profile.weatherSeamMitigation = `${profile.weatherSeamMitigation || 'dense-horizon-offset-v1'}+dense-scud-softened`;
-        return profile;
+        return getPmndrsCloudPerformanceProfile(quality, style);
     }
 
     function getPmndrsCloudsResolutionScale(quality) {
@@ -1145,6 +1235,8 @@
             appliedLayerSignature: '',
             layerApplyMethod: '',
             layerProfileApplied: false,
+            cloudProfileValidationStatus: profile.profileValidationStatus || 'ok',
+            cloudProfileFallbackReason: profile.profileFallbackReason || '',
             coverageMapperSignature: getPmndrsCloudCoverageMapperSignature(profile.coverageMapper),
             resolutionScale: profile.resolutionScale,
             cloudWindEnabled: isPmndrsCloudsWindEnabled(self),
@@ -1238,6 +1330,8 @@
         next.takramQuality = profile.takramQuality;
         next.layerProfile = profile.layerProfile || '';
         next.layerSignature = getPmndrsCloudLayerProfileSignature(profile.layers);
+        next.cloudProfileValidationStatus = profile.profileValidationStatus || 'ok';
+        next.cloudProfileFallbackReason = profile.profileFallbackReason || '';
         next.coverageMapperSignature = getPmndrsCloudCoverageMapperSignature(profile.coverageMapper);
         next.cloudWindEnabled = isPmndrsCloudsWindEnabled(self);
         next.cloudWindSpeed = getPmndrsCloudsWindSpeed(self);
@@ -1275,6 +1369,12 @@
             layerProfileApplied: self.pmndrsCloudsEffect
                 ? self.pmndrsCloudsEffect._vrodosCloudLayerProfileApplied === true
                 : Boolean(diagnostics.layerProfileApplied),
+            cloudProfileValidationStatus: self.pmndrsCloudsEffect && self.pmndrsCloudsEffect._vrodosCloudProfileValidationStatus
+                ? self.pmndrsCloudsEffect._vrodosCloudProfileValidationStatus
+                : (profile.profileValidationStatus || 'ok'),
+            cloudProfileFallbackReason: self.pmndrsCloudsEffect && self.pmndrsCloudsEffect._vrodosCloudProfileFallbackReason
+                ? self.pmndrsCloudsEffect._vrodosCloudProfileFallbackReason
+                : (profile.profileFallbackReason || ''),
             coverageMapperSignature: getPmndrsCloudCoverageMapperSignature(profile.coverageMapper),
             cloudWeatherSeamMitigation: profile.weatherSeamMitigation || 'none',
             cloudWeatherRepeatX: Array.isArray(profile.localWeatherRepeat) ? profile.localWeatherRepeat[0] : profile.localWeatherRepeat,
@@ -3325,6 +3425,7 @@
             `clouds style: ${  self && self._pmndrsCloudsDiagnostics ? (self._pmndrsCloudsDiagnostics.style || 'default') : 'off'}`,
             `clouds layers: ${  self && self._pmndrsCloudsDiagnostics ? (self._pmndrsCloudsDiagnostics.layerProfile || 'default') : 'off'}`,
             `clouds layer apply: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.layerApplyMethod || 'none'} ${self._pmndrsCloudsDiagnostics.layerProfileApplied ? 'match' : 'pending'}` : 'off'}`,
+            `clouds profile validation: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.cloudProfileValidationStatus || 'ok'}${self._pmndrsCloudsDiagnostics.cloudProfileFallbackReason ? ` (${self._pmndrsCloudsDiagnostics.cloudProfileFallbackReason})` : ''}` : 'off'}`,
             `clouds wind: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudWindEnabled ? `${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, 'cloudWindSpeed', 1)).toFixed(2)} @ ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, 'cloudWindDirectionDeg', 0)).toFixed(0)}deg` : 'off'}`,
             `clouds render: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.takramQuality || getPmndrsCloudsQuality(self)} @ ${Number(self._pmndrsCloudsDiagnostics.resolutionScale || getPmndrsCloudsResolutionScale(getPmndrsCloudsQuality(self))).toFixed(2)}x` : 'off'}`,
             `clouds detail/turbulence: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.shapeDetail ? 'detail' : 'no-detail'} / ${self._pmndrsCloudsDiagnostics.turbulence ? 'turbulence' : 'no-turbulence'}` : 'off'}`,
@@ -3640,6 +3741,8 @@
             appliedLayerSignature: self.pmndrsCloudsEffect._vrodosCloudLayerAppliedSignature || '',
             layerApplyMethod: self.pmndrsCloudsEffect._vrodosCloudLayerApplyMethod || '',
             layerProfileApplied: self.pmndrsCloudsEffect._vrodosCloudLayerProfileApplied === true,
+            cloudProfileValidationStatus: self.pmndrsCloudsEffect._vrodosCloudProfileValidationStatus || profile.profileValidationStatus || 'ok',
+            cloudProfileFallbackReason: self.pmndrsCloudsEffect._vrodosCloudProfileFallbackReason || profile.profileFallbackReason || '',
             coverageMapperSignature: getPmndrsCloudCoverageMapperSignature(profile.coverageMapper),
             resolutionScale: profile.resolutionScale,
             cloudWindEnabled: isPmndrsCloudsWindEnabled(self),
@@ -3853,6 +3956,8 @@
                         appliedLayerSignature: this.pmndrsCloudsEffect._vrodosCloudLayerAppliedSignature || '',
                         layerApplyMethod: this.pmndrsCloudsEffect._vrodosCloudLayerApplyMethod || '',
                         layerProfileApplied: this.pmndrsCloudsEffect._vrodosCloudLayerProfileApplied === true,
+                        cloudProfileValidationStatus: this.pmndrsCloudsEffect._vrodosCloudProfileValidationStatus || cloudsProfile.profileValidationStatus || 'ok',
+                        cloudProfileFallbackReason: this.pmndrsCloudsEffect._vrodosCloudProfileFallbackReason || cloudsProfile.profileFallbackReason || '',
                         coverageMapperSignature: getPmndrsCloudCoverageMapperSignature(cloudsProfile.coverageMapper),
                         resolutionScale: cloudsProfile.resolutionScale,
                         cloudWindEnabled: isPmndrsCloudsWindEnabled(this),
