@@ -59,7 +59,7 @@ Deferred cleanup:
 - Keep smoke coverage for Horizon and non-Horizon PMNDRS scenes.
 - Continue validating native PMNDRS SSAO across broader authored scenes.
 - Validate the desktop Takram cloud-sun bridge with day-night cycle scenes: visible sun-disk cloud coverage should dim direct/indirect light factors, reflections, shadow contrast/softness, and lens flare through diagnostics. High/ultra quality should report `cloudSkySunDiskMode=takram-phase`, keeping Takram's native disk behind cloud composition; the VRodos sun sprite is a fallback path, not the target look.
-- Validate desktop cloud authoring presets and wind controls from `TAKRAM_CLOUD_OCCLUSION_PLAN.md`: style presets should change cloud-layer character without touching raw scattering/raymarch controls, and wind should drive local weather velocity without changing lighting ownership.
+- Validate desktop cloud authoring presets and wind controls from `TAKRAM_CLOUD_OCCLUSION_PLAN.md`: style presets should change cloud-layer character, effective coverage mapping, and applied layer signatures without touching raw scattering/raymarch controls; wind should drive local weather velocity without changing lighting ownership. High/ultra cloud quality should enable profile-gated light shafts only when AerialPerspective, sun position, coverage, and non-XR desktop policy allow them.
 - Prototype a desktop-only Takram `post-process-albedo` mode later; do not mix that experiment into the current Takram light-source path.
 - Keep immersive XR composer/cloud bypass policy out of this desktop pass.
 

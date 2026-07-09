@@ -1845,7 +1845,13 @@ AFRAME.registerComponent('scene-settings', {
                 cloudsEffectiveCoverage: typeof cloudDiagnostics.effectiveCoverage === 'number'
                     ? cloudDiagnostics.effectiveCoverage
                     : null,
+                cloudStyle: cloudDiagnostics.style || '',
                 cloudLayerProfile: cloudDiagnostics.layerProfile || '',
+                cloudLayerSignature: cloudDiagnostics.layerSignature || '',
+                cloudAppliedLayerSignature: cloudDiagnostics.appliedLayerSignature || '',
+                cloudLayerApplyMethod: cloudDiagnostics.layerApplyMethod || '',
+                cloudLayerProfileApplied: Boolean(cloudDiagnostics.layerProfileApplied),
+                cloudCoverageMapperSignature: cloudDiagnostics.coverageMapperSignature || '',
                 cloudMultiScatteringOctaves: typeof cloudDiagnostics.multiScatteringOctaves === 'number'
                     ? cloudDiagnostics.multiScatteringOctaves
                     : null,
@@ -1864,6 +1870,8 @@ AFRAME.registerComponent('scene-settings', {
                 cloudAerialOverlayRouted: Boolean(cloudDiagnostics.aerialOverlayRouted),
                 cloudTemporalUpscaleEnabled: Boolean(cloudDiagnostics.temporalUpscale),
                 cloudTemporalUpscaleSkippedReason: cloudDiagnostics.temporalUpscaleSkippedReason || '',
+                cloudShapeDetailEnabled: Boolean(cloudDiagnostics.shapeDetail),
+                cloudTurbulenceEnabled: Boolean(cloudDiagnostics.turbulence),
                 cloudLightShaftsEnabled: Boolean(cloudDiagnostics.lightShafts),
                 cloudLightShaftsSkippedReason: cloudDiagnostics.lightShaftsSkippedReason || '',
                 cloudsAerialShadowRouted: Boolean(cloudDiagnostics.aerialShadowRouted),
