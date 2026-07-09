@@ -1852,6 +1852,21 @@ AFRAME.registerComponent('scene-settings', {
                 cloudLayerApplyMethod: cloudDiagnostics.layerApplyMethod || '',
                 cloudLayerProfileApplied: Boolean(cloudDiagnostics.layerProfileApplied),
                 cloudCoverageMapperSignature: cloudDiagnostics.coverageMapperSignature || '',
+                cloudWeatherSeamMitigation: cloudDiagnostics.cloudWeatherSeamMitigation || '',
+                cloudWeatherUvMode: cloudDiagnostics.cloudWeatherUvMode || '',
+                cloudWeatherUvDebug: Boolean(cloudDiagnostics.cloudWeatherUvDebug),
+                cloudWeatherRepeatX: typeof cloudDiagnostics.cloudWeatherRepeatX === 'number'
+                    ? cloudDiagnostics.cloudWeatherRepeatX
+                    : null,
+                cloudWeatherRepeatY: typeof cloudDiagnostics.cloudWeatherRepeatY === 'number'
+                    ? cloudDiagnostics.cloudWeatherRepeatY
+                    : null,
+                cloudWeatherOffsetX: typeof cloudDiagnostics.cloudWeatherOffsetX === 'number'
+                    ? cloudDiagnostics.cloudWeatherOffsetX
+                    : null,
+                cloudWeatherOffsetY: typeof cloudDiagnostics.cloudWeatherOffsetY === 'number'
+                    ? cloudDiagnostics.cloudWeatherOffsetY
+                    : null,
                 cloudMultiScatteringOctaves: typeof cloudDiagnostics.multiScatteringOctaves === 'number'
                     ? cloudDiagnostics.multiScatteringOctaves
                     : null,
@@ -1874,8 +1889,24 @@ AFRAME.registerComponent('scene-settings', {
                 cloudTurbulenceEnabled: Boolean(cloudDiagnostics.turbulence),
                 cloudLightShaftsEnabled: Boolean(cloudDiagnostics.lightShafts),
                 cloudLightShaftsSkippedReason: cloudDiagnostics.lightShaftsSkippedReason || '',
+                cloudLightShaftsMode: cloudDiagnostics.cloudLightShaftsMode || '',
+                cloudAerialSkyEnabled: Boolean(cloudDiagnostics.aerialSkyEnabled),
+                cloudAerialSunLightEnabled: Boolean(cloudDiagnostics.aerialSunLight),
+                cloudAerialSkyLightEnabled: Boolean(cloudDiagnostics.aerialSkyLight),
+                cloudAerialNormalBufferReady: Boolean(cloudDiagnostics.aerialNormalBufferReady),
+                cloudAerialLightingMaskReady: Boolean(cloudDiagnostics.aerialLightingMaskReady),
+                cloudAerialLightingMaskLayer: typeof cloudDiagnostics.aerialLightingMaskLayer === 'number'
+                    ? cloudDiagnostics.aerialLightingMaskLayer
+                    : null,
+                cloudAerialLightingMaskSelectedCount: typeof cloudDiagnostics.aerialLightingMaskSelectedCount === 'number'
+                    ? cloudDiagnostics.aerialLightingMaskSelectedCount
+                    : null,
+                cloudsAerialShadowReady: Boolean(cloudDiagnostics.aerialShadowReady),
                 cloudsAerialShadowRouted: Boolean(cloudDiagnostics.aerialShadowRouted),
                 cloudsAerialShadowReason: cloudDiagnostics.aerialShadowReason || '',
+                cloudsAerialShadowLengthReady: Boolean(cloudDiagnostics.aerialShadowLengthReady),
+                cloudsAerialShadowLengthRouted: Boolean(cloudDiagnostics.aerialShadowLengthRouted),
+                cloudsAerialShadowLengthReason: cloudDiagnostics.aerialShadowLengthReason || '',
                 cloudsSkyShadowLengthRouted: Boolean(cloudDiagnostics.skyShadowLengthRouted),
                 cloudsSkyShadowLengthReason: cloudDiagnostics.skyShadowLengthReason || '',
                 cloudsLensFlareCloudFactor: typeof cloudDiagnostics.lensFlareCloudFactor === 'number'

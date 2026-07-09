@@ -582,10 +582,13 @@ assert(
     "Horizon aerial compositor constraint should remain present"
 );
 assert(
-    pmndrsPostFxSource.includes("effect.sunLight = false") &&
-        pmndrsPostFxSource.includes("effect.skyLight = false") &&
-        pmndrsPostFxSource.includes("effect.sky = false"),
-    "Horizon aerial compositor should not re-light PBR content or render a duplicate sky"
+    pmndrsPostFxSource.includes("allowMaskedAerialSkyLighting") &&
+        pmndrsPostFxSource.includes("LightingMaskPass") &&
+        pmndrsPostFxSource.includes("PMNDRS_CLOUD_LIGHTING_MASK_LAYER = 30") &&
+        pmndrsPostFxSource.includes("effect.sunLight = Boolean(allowMaskedAerialSkyLighting)") &&
+        pmndrsPostFxSource.includes("effect.skyLight = Boolean(allowMaskedAerialSkyLighting)") &&
+        pmndrsPostFxSource.includes("effect.sky = Boolean(allowMaskedAerialSkyLighting)"),
+    "Horizon aerial compositor should only re-light through the masked cloud shaft path"
 );
 
 console.log("Runtime feature-state smoke tests passed.");

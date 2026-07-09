@@ -59,8 +59,8 @@ Deferred cleanup:
 - Keep smoke coverage for Horizon and non-Horizon PMNDRS scenes.
 - Continue validating native PMNDRS SSAO across broader authored scenes.
 - Validate the desktop Takram cloud-sun bridge with day-night cycle scenes: visible sun-disk cloud coverage should dim direct/indirect light factors, reflections, shadow contrast/softness, and lens flare through diagnostics. High/ultra quality should report `cloudSkySunDiskMode=takram-phase`, keeping Takram's native disk behind cloud composition; the VRodos sun sprite is a fallback path, not the target look.
-- Validate desktop cloud authoring presets and wind controls from `TAKRAM_CLOUD_OCCLUSION_PLAN.md`: style presets should change cloud-layer character, effective coverage mapping, and applied layer signatures without touching raw scattering/raymarch controls; wind should drive local weather velocity without changing lighting ownership. High/ultra cloud quality should enable profile-gated light shafts only when AerialPerspective, sun position, coverage, and non-XR desktop policy allow them.
-- Prototype a desktop-only Takram `post-process-albedo` mode later; do not mix that experiment into the current Takram light-source path.
+- Validate desktop cloud authoring presets and wind controls from `TAKRAM_CLOUD_OCCLUSION_PLAN.md`: style presets should change cloud-layer character, effective coverage mapping, applied layer signatures, and weather seam-mitigation diagnostics without touching raw scattering/raymarch controls; wind should drive local weather velocity without changing lighting ownership. High/ultra cloud quality should report `cloudLightShaftsMode=masked-aerial-sky` when AerialPerspective, sun position, coverage, mask readiness, and non-XR desktop policy allow shafts.
+- Prototype a broader desktop-only Takram `post-process-albedo` mode later; the current production path uses masked Aerial sky lighting only for cloud shafts while authored meshes stay on the light-source path.
 - Keep immersive XR composer/cloud bypass policy out of this desktop pass.
 
 ## Performance And Asset Backlog
@@ -81,10 +81,10 @@ Deferred cleanup:
 ## Research Only
 
 - Steep-face shadow proxy for terrain shadows.
-- Cloud light-shafts controls after measured visual and performance validation.
 - Native Takram `SkyMaterial` shader patching remains research-only; the desktop production path uses Takram cloud accurate phase on high/ultra and keeps the public `SkyMaterial.sun` flag plus VRodos sun sprite as a fallback only.
 - PMNDRS `GodRaysEffect` integration, if needed, after the cloud lighting bridge is visually stable.
-- Geospatial date/time solar simulation, `LightingMaskPass`, the experimental `takram-albedo` / mixed-lighting mode, and related geospatial helper experiments.
+- Author-facing cloud light-shafts controls after measured visual and performance validation.
+- Geospatial date/time solar simulation, the experimental full-scene `takram-albedo` / mixed-lighting mode, and related geospatial helper experiments.
 
 ## Deferred VR And PCVR Items
 
