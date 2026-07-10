@@ -1250,6 +1250,13 @@ async function captureSceneSnapshot(cdp) {
         }
 
         const rendererPixelInfo = readRendererPixelInfo();
+        const runtimeFeatureState = window.VRODOS_RUNTIME_FEATURE_STATE || window.__vrodosRuntimeFeatureState || null;
+        const hardwareDiagnostics = settingsComponent && typeof settingsComponent.getHardwareDiagnosticsState === 'function'
+            ? settingsComponent.getHardwareDiagnosticsState()
+            : (runtimeFeatureState && runtimeFeatureState.renderer ? {
+                gpu: runtimeFeatureState.renderer.gpu || null,
+                performance: runtimeFeatureState.renderer.performance || null
+            } : null);
 
         return {
             location: window.location.href,
@@ -1304,6 +1311,8 @@ async function captureSceneSnapshot(cdp) {
                 contextAttributes: renderer.getContext && renderer.getContext() && renderer.getContext().getContextAttributes
                     ? renderer.getContext().getContextAttributes()
                     : null,
+                gpu: hardwareDiagnostics ? hardwareDiagnostics.gpu : null,
+                performance: hardwareDiagnostics ? hardwareDiagnostics.performance : null,
                 logarithmicDepthBuffer: Boolean(renderer.capabilities && renderer.capabilities.logarithmicDepthBuffer),
                 outputColorSpace: renderer.outputColorSpace || null,
                 toneMapping: typeof renderer.toneMapping !== 'undefined' ? renderer.toneMapping : null,
@@ -1359,7 +1368,14 @@ async function captureSceneSnapshot(cdp) {
                 spectorDebugScriptLoaded: Boolean(document.querySelector('script[data-vrodos-spector-debug="true"]')),
                 spectorProfilerScriptLoaded: Boolean(document.querySelector('script[data-vrodos-spector-profiler="true"]'))
             },
-            runtimeFeatureState: window.VRODOS_RUNTIME_FEATURE_STATE || window.__vrodosRuntimeFeatureState || null,
+            gpuAdvisory: (() => {
+                const advisory = document.getElementById('vrodos-gpu-advisory');
+                return advisory ? {
+                    present: true,
+                    text: advisory.textContent.replace(/\\s+/g, ' ').trim()
+                } : { present: false, text: '' };
+            })(),
+            runtimeFeatureState,
             compileDiagnostics: window.VRODOS_COMPILE_DIAGNOSTICS || null
         };
     })()`);
@@ -1706,6 +1722,14 @@ function printSummary(result) {
             const toneMapping = scene.renderer.toneMappingName || scene.renderer.toneMapping || 'n/a';
             const exposure = typeof scene.renderer.toneMappingExposure === 'number' ? scene.renderer.toneMappingExposure : 'n/a';
             console.log(`Renderer: css ${css.width}x${css.height}, pixelRatio ${scene.renderer.pixelRatio}, buffer ${buffer.width || 'n/a'}x${buffer.height || 'n/a'}, estimated ${estimatedLabel} pixels, budget ${budgetLabel}, sortObjects ${scene.renderer.sortObjects}, toneMapping ${toneMapping}, exposure ${exposure}`);
+        }
+        if (scene.renderer && scene.renderer.gpu) {
+            const gpu = scene.renderer.gpu;
+            const performance = scene.renderer.performance || {};
+            const adapter = gpu.renderer || gpu.vendor || 'unavailable';
+            console.log(`GPU: ${adapter}, class ${gpu.adapterClass || 'unknown'} (${gpu.confidence || 'none'}), source ${gpu.informationSource || 'unavailable'}, power requested ${gpu.requestedPowerPreference || 'n/a'}, context ${gpu.contextPowerPreference || 'not reported'}`);
+            console.log(`GPU sample: ${performance.status || 'unavailable'}, average ${formatNumber(performance.averageFps)} FPS, p95 ${formatNumber(performance.p95FrameMs)} ms, frames ${performance.validFrameCount || 0}, advisory ${performance.advisoryReason || 'none'}`);
+            console.log(`GPU advisory banner: ${scene.gpuAdvisory && scene.gpuAdvisory.present ? 'present' : 'not present'}`);
         }
         const shadowType = scene.renderer ? (scene.renderer.shadowMapTypeName || scene.renderer.shadowMapType || 'n/a') : 'n/a';
         console.log(`Shadows: ${scene.objectCounts.shadowCasters} casters, ${scene.objectCounts.shadowReceivers} receivers, renderer shadow map ${scene.renderer ? scene.renderer.shadowMapEnabled : 'n/a'}, type ${shadowType}`);

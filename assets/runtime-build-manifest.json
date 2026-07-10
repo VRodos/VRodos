@@ -102,6 +102,7 @@
         "assets/js/runtime/master/vrodos_runtime_render_policy.js",
         "assets/js/runtime/master/vrodos_runtime_resources.js",
         "assets/js/runtime/master/vrodos_ui_helpers.js",
+        "assets/js/runtime/master/vrodos_hardware_diagnostics.js",
         "assets/js/runtime/master/vrodos_master_bootstrap.js",
         "assets/js/runtime/master/vrodos_spector_debug.js",
         "assets/js/runtime/master/vrodos_master_rendering.js",

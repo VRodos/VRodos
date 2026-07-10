@@ -144,6 +144,7 @@ function createVmContext(userAgent) {
     [
         "assets/js/runtime/master/vrodos_runtime_profile_policy.js",
         "assets/js/runtime/master/vrodos_runtime_render_policy.js",
+        "assets/js/runtime/master/vrodos_hardware_diagnostics.js",
         "assets/js/runtime/master/components/vrodos_scene_settings.component.js"
     ].forEach((relativePath) => {
         vm.runInContext(readFileSync(resolve(root, relativePath), "utf8"), context, { filename: relativePath });
@@ -345,6 +346,10 @@ assertPath(desktopPmndrs.vrProfile.profile, "desktop", "desktop profile");
 assertPath(desktopPmndrs.postProcessing.requested, true, "desktop PMNDRS request");
 assertPath(desktopPmndrs.postProcessing.allowed, true, "desktop PMNDRS allowed");
 assertPath(desktopPmndrs.postProcessing.owner, "pmndrs", "desktop PMNDRS owner");
+assertPath(desktopPmndrs.renderer.gpu.requestedPowerPreference, "high-performance", "renderer GPU requested preference");
+assertPath(desktopPmndrs.renderer.gpu.adapterClass, "unknown", "renderer GPU missing-context fallback");
+assertPath(desktopPmndrs.renderer.gpu.canForceAdapter, false, "renderer GPU adapter forcing contract");
+assertPath(desktopPmndrs.renderer.performance.status, "unavailable", "renderer performance missing-context fallback");
 
 const desktopClouds = createFeatureStateFixture({
     pmndrsActive: true,

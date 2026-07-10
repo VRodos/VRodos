@@ -1,4 +1,5 @@
 import { mkdir, rm, writeFile, cp, access, readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
@@ -61,6 +62,8 @@ const postprocessingShimPath = path.join(rootDir, 'scripts', '.tmp-postprocessin
 const manifestPath = path.join(rootDir, 'assets', RUNTIME_MANIFEST_FILE);
 const runtimeConfig = getPackageRuntimeConfig();
 const aframeConfig = runtimeConfig.aframe ?? {};
+const aframeBundleRelativePath = 'assets/vendor/aframe/aframe-master.min.js';
+const aframeBundlePath = path.join(rootDir, ...aframeBundleRelativePath.split('/'));
 
 const requiredPackages = [
   'three',
@@ -221,6 +224,81 @@ function resolveAframeRuntimeUrl() {
   }
 
   throw new Error('Unable to resolve A-Frame runtime URL from vrodos.runtime.aframe metadata.');
+}
+
+function inspectAframeRuntimeArtifact(source) {
+  const version = String(aframeConfig.version || '');
+  const requestsHighPerformance = /powerPreference\s*:\s*["']high-performance["']/.test(source);
+  const artifactCommitMatch = /A-Frame Version:[^)]*Commit #([0-9a-f]{8,40})/i.exec(source);
+
+  return {
+    versionMatches: !version || source.includes(version),
+    requestsHighPerformance,
+    artifactCommit: artifactCommitMatch ? artifactCommitMatch[1] : '',
+  };
+}
+
+function validateAframeRuntimeArtifact(source, label) {
+  const inspection = inspectAframeRuntimeArtifact(source);
+  const failures = [];
+
+  if (!inspection.versionMatches) failures.push(`declared version ${aframeConfig.version}`);
+  if (!inspection.requestsHighPerformance) failures.push('powerPreference: "high-performance"');
+
+  if (failures.length) {
+    throw new Error(`${label} does not contain ${failures.join(', ')}.`);
+  }
+
+  return inspection;
+}
+
+async function syncAframeRuntimeArtifact() {
+  let source = '';
+  let needsDownload = true;
+
+  try {
+    source = await readFile(aframeBundlePath, 'utf8');
+    const inspection = inspectAframeRuntimeArtifact(source);
+    const localSha256 = createHash('sha256').update(source, 'utf8').digest('hex');
+    let previousAframe = {};
+    try {
+      const previousManifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+      previousAframe = previousManifest.aframe || {};
+    } catch {
+      previousAframe = {};
+    }
+    const sourceCommit = previousAframe.sourceCommit || previousAframe.commit || '';
+    const provenanceMatches = sourceCommit === (aframeConfig.commit || '') &&
+      previousAframe.url === resolveAframeRuntimeUrl() &&
+      previousAframe.bundlePath === aframeBundleRelativePath &&
+      previousAframe.sha256 === localSha256;
+    needsDownload = !inspection.versionMatches || !inspection.requestsHighPerformance || !provenanceMatches;
+  } catch {
+    needsDownload = true;
+  }
+
+  if (needsDownload) {
+    const url = resolveAframeRuntimeUrl();
+    const response = await fetch(url, { redirect: 'follow' });
+    if (!response.ok) {
+      throw new Error(`Unable to download pinned A-Frame runtime (${response.status} ${response.statusText}) from ${url}.`);
+    }
+
+    source = await response.text();
+    validateAframeRuntimeArtifact(source, 'Downloaded A-Frame runtime');
+    await mkdir(path.dirname(aframeBundlePath), { recursive: true });
+    await writeFile(aframeBundlePath, source, 'utf8');
+  } else {
+    validateAframeRuntimeArtifact(source, 'Local A-Frame runtime');
+  }
+
+  const inspection = validateAframeRuntimeArtifact(source, 'Local A-Frame runtime');
+  return {
+    bundlePath: aframeBundleRelativePath,
+    sha256: createHash('sha256').update(source, 'utf8').digest('hex'),
+    requestedPowerPreference: 'high-performance',
+    artifactCommit: inspection.artifactCommit,
+  };
 }
 
 async function copySupportAssets() {
@@ -672,7 +750,7 @@ window.VRODOS_COLLISION_BVH = {
   }
 }
 
-async function writeRuntimeManifest() {
+async function writeRuntimeManifest(aframeArtifact) {
   const postprocessingVersion = getLockedPackageVersion('postprocessing');
   const takramAtmosphereVersion = getLockedPackageVersion('@takram/three-atmosphere');
   const takramCloudsVersion = getLockedPackageVersion('@takram/three-clouds');
@@ -687,7 +765,12 @@ async function writeRuntimeManifest() {
       source: aframeConfig.source,
       version: aframeConfig.version ?? '',
       commit: aframeConfig.commit ?? '',
+      sourceCommit: aframeConfig.commit ?? '',
+      artifactCommit: aframeArtifact.artifactCommit,
       url: resolveAframeRuntimeUrl(),
+      bundlePath: aframeArtifact.bundlePath,
+      sha256: aframeArtifact.sha256,
+      requestedPowerPreference: aframeArtifact.requestedPowerPreference,
     },
     three: {
       version: threeRuntimeConfig.version,
@@ -747,6 +830,7 @@ async function writeRuntimeManifest() {
 
 async function main() {
   validateRuntimeVersions();
+  const aframeArtifact = await syncAframeRuntimeArtifact();
   await buildBundle();
   await buildThreeAddonsRuntimeBundle();
   await buildPostprocessingRuntimeBundle();
@@ -754,13 +838,14 @@ async function main() {
   await buildTakramCloudsBundle();
   await buildCollisionBvhBundle();
   await copySupportAssets();
-  await writeRuntimeManifest();
+  await writeRuntimeManifest(aframeArtifact);
   console.log(`Built ${path.relative(rootDir, bundlePath)}`);
   console.log(`Built ${path.relative(rootDir, threeAddonsRuntimeBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, postprocessingRuntimeBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, takramBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, takramCloudsBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, collisionBvhBundlePath)}`);
+  console.log(`Verified ${path.relative(rootDir, aframeBundlePath)} (${aframeArtifact.sha256})`);
   console.log(`Wrote ${path.relative(rootDir, manifestPath)}`);
 }
 

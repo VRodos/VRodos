@@ -170,6 +170,16 @@ node scripts/profile-master-client.mjs http://wp.local:5832/Master_Client_766.ht
 
 Compiled desktop runtime applies a render-pixel budget automatically only to the `performance` render-quality profile. `high` keeps the current visual DPR behavior by default, while `?vrodos_dpr_pixel_budget=1650000` can force a desktop profiling override. Immersive WebXR is excluded from this budget path.
 
+### Desktop GPU Diagnostics
+
+A-Frame requests WebGL with `powerPreference: "high-performance"`, but that value is a browser/OS hint rather than an adapter-selection API. VRodos must not create a probe canvas, replace A-Frame's renderer, or claim it can force a discrete GPU. The vendor build verifies that the pinned local A-Frame artifact still contains this request and records the artifact commit and SHA-256 in `assets/runtime-version-manifest.json`.
+
+Compiled desktop clients inspect only A-Frame's live context and expose local diagnostics at `window.VRODOS_RUNTIME_FEATURE_STATE.renderer.gpu` and `.renderer.performance`. The state includes the requested and returned power preference, available masked/unmasked adapter strings, conservative adapter classification, WebGL limits, drawing-buffer/CSS dimensions, and an eight-second frame sample gathered by `vrodos-render-profile`. Adapter strings remain in the page and profiler capture; VRodos does not transmit them or add telemetry.
+
+Sampling starts three seconds after `vrodos-scene-loader-ready`, excludes hidden/loading/immersive-XR periods and invalid deltas, and requires at least 120 valid frames. It does not change DPR, post-processing, clouds, shadows, or the authored quality profile. The desktop routing advisory appears only for confirmed software rendering, integrated-likely rendering with sustained average FPS below 45, or unknown adapter information with the same sustained pressure. Recognized discrete/unified adapters do not receive a routing claim solely because frame rate is low.
+
+For support captures, append `?vrodos_debug_gpu=1` or set `window.VRODOS_DEBUG.gpu = true` before runtime initialization. This logs the GPU/context state and forces the dismissible advisory without enabling the FPS meter. The advisory reports the selected adapter, average FPS, and drawing-buffer resolution, then gives Windows Graphics Settings steps. Dismissal uses `sessionStorage`, so it does not suppress later browser sessions.
+
 Use the read-only GLB audit after a profiler capture to map compile diagnostics back to local asset metadata:
 
 ```bash

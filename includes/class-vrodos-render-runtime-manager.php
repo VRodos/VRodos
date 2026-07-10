@@ -52,6 +52,10 @@ class VRodos_Render_Runtime_Manager {
 			'aframe_runtime_version' => self::string_value( $aframe, 'version', self::FALLBACK_AFRAME_RUNTIME_VERSION ),
 			'aframe_runtime_url' => self::string_value( $aframe, 'url', self::FALLBACK_AFRAME_RUNTIME_URL ),
 			'aframe_master_commit' => self::string_value( $aframe, 'commit', self::FALLBACK_AFRAME_RUNTIME_COMMIT ),
+			'aframe_source_commit' => self::string_value( $aframe, 'sourceCommit', self::FALLBACK_AFRAME_RUNTIME_COMMIT ),
+			'aframe_artifact_commit' => self::string_value( $aframe, 'artifactCommit', '' ),
+			'aframe_bundle_sha256' => self::string_value( $aframe, 'sha256', '' ),
+			'aframe_requested_power_preference' => self::string_value( $aframe, 'requestedPowerPreference', 'high-performance' ),
 			'three_vendor_version' => self::string_value( $three, 'version', self::FALLBACK_THREE_VENDOR_VERSION ),
 			'three_vendor_dir' => self::string_value( $three, 'vendorDir', self::FALLBACK_THREE_VENDOR_DIR ),
 			'three_vendor_bundle' => self::string_value( $three, 'bundleFile', self::FALLBACK_THREE_VENDOR_BUNDLE ),
@@ -134,6 +138,19 @@ class VRodos_Render_Runtime_Manager {
 
 		$path = VRodos_Path_Manager::plugin_path( self::LOCAL_AFRAME_RUNTIME_PATH );
 		if ( ! is_readable( $path ) ) {
+			return '';
+		}
+
+		$manifest = self::get_manifest();
+		$aframe   = is_array( $manifest['aframe'] ?? null ) ? $manifest['aframe'] : [];
+		$bundle_path = self::string_value( $aframe, 'bundlePath', '' );
+		$expected_sha256 = strtolower( self::string_value( $aframe, 'sha256', '' ) );
+		if ( self::LOCAL_AFRAME_RUNTIME_PATH !== $bundle_path || 1 !== preg_match( '/^[a-f0-9]{64}$/', $expected_sha256 ) ) {
+			return '';
+		}
+
+		$actual_sha256 = hash_file( 'sha256', $path );
+		if ( ! is_string( $actual_sha256 ) || ! hash_equals( $expected_sha256, strtolower( $actual_sha256 ) ) ) {
 			return '';
 		}
 

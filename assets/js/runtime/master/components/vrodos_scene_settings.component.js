@@ -1743,6 +1743,7 @@ AFRAME.registerComponent('scene-settings', {
             ? this.getPmndrsTakramHorizonState()
             : null;
         const cameraRigDiagnostics = this.getCameraRigFeatureDiagnostics();
+        const hardwareDiagnostics = this.getHardwareDiagnosticsState();
         const vrFeaturePolicy = this.getVrRuntimeFeaturePolicy();
         const vrHdrReflectionsActive = Boolean(vrFeaturePolicy.hdrReflections);
         const vrTakramVisibleSkyActive = Boolean(vrFeaturePolicy.takramVisibleSky);
@@ -1776,7 +1777,9 @@ AFRAME.registerComponent('scene-settings', {
                 aaQuality: this.getAAQualityLevel(),
                 pixelRatio,
                 webgl2: Boolean(renderer && renderer.capabilities && renderer.capabilities.isWebGL2 === true),
-                vrRenderBudget: this._vrodosVrRenderBudget || this.getVrRenderBudgetPolicy()
+                vrRenderBudget: this._vrodosVrRenderBudget || this.getVrRenderBudgetPolicy(),
+                gpu: hardwareDiagnostics.gpu,
+                performance: hardwareDiagnostics.performance
             },
             reveal: this.getRuntimeRevealReadinessState({ startLoads: false }),
             vrProfile: vrFeaturePolicy,
@@ -2989,6 +2992,34 @@ AFRAME.registerComponent('scene-settings', {
     usesVrTakramDirectSkyCalibration: VRODOSSceneSettingsMaster.SceneSettingsHelpers.usesVrTakramDirectSkyCalibration || function () { return true; },
     prepareVrTakramVisibleSkyForReveal: VRODOSSceneSettingsMaster.SceneSettingsHelpers.prepareVrTakramVisibleSkyForReveal || function () { return true; },
     logPmndrsHorizonDiagnostic: VRODOSSceneSettingsMaster.SceneSettingsHelpers.logPmndrsHorizonDiagnostic || function () {},
+    initializeHardwareDiagnostics: VRODOSSceneSettingsMaster.SceneSettingsHelpers.initializeHardwareDiagnostics || vrodosRuntimeNoop,
+    updateHardwarePerformanceDiagnostics: VRODOSSceneSettingsMaster.SceneSettingsHelpers.updateHardwarePerformanceDiagnostics || vrodosRuntimeNoop,
+    getHardwareDiagnosticsState: VRODOSSceneSettingsMaster.SceneSettingsHelpers.getHardwareDiagnosticsState || function () {
+        return {
+            gpu: {
+                api: 'unavailable',
+                requestedPowerPreference: 'high-performance',
+                contextPowerPreference: null,
+                vendor: '',
+                renderer: '',
+                informationSource: 'unavailable',
+                adapterClass: 'unknown',
+                confidence: 'none',
+                softwareRendering: false,
+                canForceAdapter: false
+            },
+            performance: {
+                status: 'unavailable',
+                sampleDurationMs: 0,
+                validFrameCount: 0,
+                averageFps: null,
+                p95FrameMs: null,
+                sustainedLowFps: false,
+                advisoryReason: ''
+            }
+        };
+    },
+    disposeHardwareDiagnostics: VRODOSSceneSettingsMaster.SceneSettingsHelpers.disposeHardwareDiagnostics || vrodosRuntimeNoop,
     applyBackgroundQualityProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyBackgroundQualityProfile,
     applyPostFXProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPostFXProfile,
     applyQualityProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyQualityProfiles,
@@ -3128,6 +3159,7 @@ AFRAME.registerComponent('scene-settings', {
         this._xrExitRestoreActive = false;
         this._xrExitRestoreTriggers = [];
         this._xrExitRestoreDiagnostics = null;
+        this.initializeHardwareDiagnostics();
         window.addEventListener('resize', this.handleResize);
         window.addEventListener('focus', this.handleXrExitResumeSignal);
         window.addEventListener('pageshow', this.handleXrExitResumeSignal);
@@ -3373,11 +3405,14 @@ AFRAME.registerComponent('scene-settings', {
             pmndrsSunHaze.parentNode.removeChild(pmndrsSunHaze);
         }
         if (this.runtimeResources) {
+            this.disposeHardwareDiagnostics();
             this.runtimeResources.disposeAll();
             this.runtimeResources = null;
+        } else {
+            this.disposeHardwareDiagnostics();
         }
     },
-    tick: function (time) {
+    tick: function (time, timeDelta) {
         const expectedPipelineComponents = typeof this.getRuntimePipelineComponentNames === 'function'
             ? this.getRuntimePipelineComponentNames()
             : ['vrodos-render-profile', 'vrodos-postfx-router', 'vrodos-atmosphere', 'vrodos-reflections'];
@@ -3388,6 +3423,7 @@ AFRAME.registerComponent('scene-settings', {
             return;
         }
 
+        this.updateHardwarePerformanceDiagnostics(time, timeDelta);
         this.publishRuntimeFeatureState('scene-settings-tick', { time, throttleMs: 1500 });
 
         if (this.fpsStats && typeof this.fpsStats.update === 'function') {

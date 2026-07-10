@@ -6,7 +6,12 @@
     "source": "cdn-master",
     "version": "1.7.1",
     "commit": "adf8f4e02b0499223b2c4fa93165e49b50384564",
-    "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@adf8f4e02b0499223b2c4fa93165e49b50384564/dist/aframe-master.min.js"
+    "sourceCommit": "adf8f4e02b0499223b2c4fa93165e49b50384564",
+    "artifactCommit": "6a9d4b54",
+    "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@adf8f4e02b0499223b2c4fa93165e49b50384564/dist/aframe-master.min.js",
+    "bundlePath": "assets/vendor/aframe/aframe-master.min.js",
+    "sha256": "66569700fc7c41ac0db85956dcc543925c62347cebafa084e7ac8d81e64e57d3",
+    "requestedPowerPreference": "high-performance"
   },
   "three": {
     "version": "0.184.0",

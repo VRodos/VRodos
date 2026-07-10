@@ -14,10 +14,14 @@
     });
 
     AFRAME.registerComponent('vrodos-render-profile', {
-        tick: function (time) {
+        tick: function (time, timeDelta) {
             const settings = sceneSettings(this.el);
             if (!settings) {
                 return;
+            }
+
+            if (typeof settings.updateHardwarePerformanceDiagnostics === 'function') {
+                settings.updateHardwarePerformanceDiagnostics(time, timeDelta);
             }
 
             if (typeof settings.publishRuntimeFeatureState === 'function') {
