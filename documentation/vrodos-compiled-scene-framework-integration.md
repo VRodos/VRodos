@@ -48,7 +48,7 @@ graph TD
 
     subgraph Runtime["Compiled Runtime Client"]
         HTML --> AFrame["A-Frame Host<br/>scene, XR session, camera, controllers"]
-        AFrame --> Three["Shared Three.js r184 Substrate"]
+        AFrame --> Three["Shared Three.js r185 Substrate"]
         AFrame --> Media["Scene Objects + Media Components"]
         AFrame --> AssessmentHost["Assessment/CEFR Components"]
 
@@ -294,7 +294,7 @@ Quest Browser manual acceptance is required before considering a spatial UI chan
 
 ## 5. Three.js As The Shared Substrate
 
-Three r184 is the shared low-level substrate under A-Frame and the optional VRodos runtime systems. Current A-Frame master builds provide that substrate through the `super-three` package alias; VRodos treats this as A-Frame's runtime implementation detail and still binds every optional runtime system to the single live `window.THREE` object.
+Three r185 is the shared low-level substrate under A-Frame and the optional VRodos runtime systems. The pinned A-Frame 1.8.0 master artifact provides that substrate through the `super-three` package alias; VRodos treats this as A-Frame's runtime implementation detail and binds every optional runtime system to the single live `window.THREE` object.
 
 Three provides:
 - the WebGL renderer used by A-Frame;
@@ -401,4 +401,4 @@ The A-Frame Environment component is still a legacy preset-background provider f
 As we continue to push the boundaries of realism and performance, several advanced features are planned for future integration into our pipeline:
 
 - **Takram Geospatial Expansion**: Expanding the Takram integration to include full geospatial date/time solar simulation, mixed-lighting masks, and validated immersive headset cloud rendering.
-- **WebGPU Migration**: Validate WebGPU as a separate opt-in experimental renderer after the classic A-Frame/WebGL r184 baseline is stable.
+- **WebGPU Migration**: Validate WebGPU as a separate opt-in experimental renderer after the classic A-Frame/WebGL r185 baseline is stable.

@@ -4,33 +4,13 @@ window.VRODOS = window.VRODOS || {};
 VRODOS.loader = VRODOS.loader || {};
 
 (function initVrodosLoaderDecoderConfig() {
-    function joinUrl(base, path) {
-        return `${String(base || '').replace(/\/+$/, '')}/${String(path || '').replace(/^\/+/, '')}`;
-    }
-
-    function resolveVendorBaseUrl() {
-        if (window.vrodos_three_vendor_base) {
-            return window.vrodos_three_vendor_base;
-        }
-
-        const paths = VRODOS.data && VRODOS.data.paths ? VRODOS.data.paths : {};
-        const vendorBaseUrl = paths.vendorBaseUrl || '';
-        const vendorDir = window.vrodos_three_vendor_dir || 'three-r184';
-
-        return vendorBaseUrl ? joinUrl(vendorBaseUrl, `${vendorDir}/`) : '';
-    }
-
     function resolveDracoPath() {
-        const vendorBase = resolveVendorBaseUrl();
         return window.vrodos_three_draco_decoder_path ||
-            window.vrodos_three_decoder_path ||
-            (vendorBase ? joinUrl(vendorBase, 'draco/gltf/') : '');
+            window.vrodos_three_decoder_path || '';
     }
 
     function resolveBasisPath() {
-        const vendorBase = resolveVendorBaseUrl();
-        return window.vrodos_three_basis_transcoder_path ||
-            (vendorBase ? joinUrl(vendorBase, 'basis/') : '');
+        return window.vrodos_three_basis_transcoder_path || '';
     }
 
     function configureDraco(loader) {

@@ -4,25 +4,25 @@
   "aframe": {
     "label": "A-Frame master",
     "source": "cdn-master",
-    "version": "1.7.1",
-    "commit": "adf8f4e02b0499223b2c4fa93165e49b50384564",
-    "sourceCommit": "adf8f4e02b0499223b2c4fa93165e49b50384564",
-    "artifactCommit": "6a9d4b54",
-    "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@adf8f4e02b0499223b2c4fa93165e49b50384564/dist/aframe-master.min.js",
+    "version": "1.8.0",
+    "commit": "e145c1a01a1cdc817329503d49cf5a9b0b32288b",
+    "sourceCommit": "e145c1a01a1cdc817329503d49cf5a9b0b32288b",
+    "artifactCommit": "4573b956",
+    "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@e145c1a01a1cdc817329503d49cf5a9b0b32288b/dist/aframe-master.min.js",
     "bundlePath": "assets/vendor/aframe/aframe-master.min.js",
-    "sha256": "66569700fc7c41ac0db85956dcc543925c62347cebafa084e7ac8d81e64e57d3",
+    "sha256": "cfabe62e7b0b5b9c9cf49d54571deac34a6219d0c093d288a47679d51bd1e50c",
     "requestedPowerPreference": "high-performance"
   },
   "three": {
-    "version": "0.184.0",
-    "revision": "184",
-    "vendorDir": "three-r184",
-    "bundleFile": "vrodos-three-r184.bundle.js",
-    "bundlePath": "assets/vendor/three-r184/vrodos-three-r184.bundle.js",
+    "version": "0.185.0",
+    "revision": "185",
+    "vendorDir": "three-r185",
+    "bundleFile": "vrodos-three-r185.bundle.js",
+    "bundlePath": "assets/vendor/three-r185/vrodos-three-r185.bundle.js",
     "decoders": {
-      "dracoDecoderPath": "assets/vendor/three-r184/draco/gltf/",
-      "basisTranscoderPath": "assets/vendor/three-r184/basis/",
-      "meshoptDecoderPath": "assets/vendor/three-r184/meshopt/meshopt_decoder.js"
+      "dracoDecoderPath": "assets/vendor/three-r185/draco/gltf/",
+      "basisTranscoderPath": "assets/vendor/three-r185/basis/",
+      "meshoptDecoderPath": "assets/vendor/three-r185/meshopt/meshopt_decoder.js"
     }
   },
   "threeAddons": {

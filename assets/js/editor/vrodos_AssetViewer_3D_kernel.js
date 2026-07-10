@@ -1,23 +1,4 @@
 /* GLB-only 3D viewer used by the asset editor. */
-function vrodosAssetViewerJoinUrl(base, path) {
-    return `${String(base || '').replace(/\/+$/, '')  }/${  String(path || '').replace(/^\/+/, '')}`;
-}
-
-function vrodosAssetViewerResolveBaseUrl(localizedKey, pluginPath, fallbackRelative) {
-    const paths = VRODOS.data.paths || {};
-
-    if (paths[localizedKey]) {
-        return paths[localizedKey];
-    }
-
-    const pluginBaseUrl = paths.pluginBaseUrl || (typeof pluginPath === 'string' ? pluginPath : '');
-    if (pluginBaseUrl) {
-        return vrodosAssetViewerJoinUrl(pluginBaseUrl, fallbackRelative);
-    }
-
-    return String(fallbackRelative || '').replace(/^\/+/, '');
-}
-
 function vrodosCreateSpecGlossMaterialExtension(parser) {
     const extensionName = 'KHR_materials_pbrSpecularGlossiness';
 
@@ -496,34 +477,11 @@ class VRodos_AssetViewer_3D_kernel {
         }
     }
 
-    getDracoDecoderPath() {
-        const vendorDir = window.vrodos_three_vendor_dir || 'three-r184';
-        const vendorBaseUrl = vrodosAssetViewerResolveBaseUrl(
-            'vendorBaseUrl',
-            typeof VRODOS.data !== 'undefined' ? VRODOS.data.pluginPath : '',
-            'assets/vendor/'
-        );
-
-        if (window.vrodos_three_decoder_path) {
-            return window.vrodos_three_decoder_path;
-        }
-
-        if (window.vrodos_three_vendor_base) {
-            return `${window.vrodos_three_vendor_base  }draco/`;
-        }
-
-        return vrodosAssetViewerJoinUrl(vendorBaseUrl, `${vendorDir  }/draco/`);
-    }
-
     createGlbLoader() {
-        const loader = VRODOS.loader && typeof VRODOS.loader.createGltfLoader === 'function'
-            ? VRODOS.loader.createGltfLoader(null, { renderer: this.renderer })
-            : new THREE.GLTFLoader();
-        if ((!VRODOS.loader || typeof VRODOS.loader.createGltfLoader !== 'function') && THREE.DRACOLoader) {
-            const dracoLoader = new THREE.DRACOLoader();
-            dracoLoader.setDecoderPath(this.getDracoDecoderPath());
-            loader.setDRACOLoader(dracoLoader);
+        if (!VRODOS.loader || typeof VRODOS.loader.createGltfLoader !== 'function') {
+            throw new Error('VRodos GLTF decoder configuration is required before creating the asset viewer loader.');
         }
+        const loader = VRODOS.loader.createGltfLoader(null, { renderer: this.renderer });
         loader.register(vrodosCreateSpecGlossMaterialExtension);
         return loader;
     }

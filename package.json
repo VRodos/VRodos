@@ -7,9 +7,9 @@
       "aframe": {
         "label": "A-Frame master",
         "source": "cdn-master",
-        "version": "1.7.1",
-        "commit": "adf8f4e02b0499223b2c4fa93165e49b50384564",
-        "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@adf8f4e02b0499223b2c4fa93165e49b50384564/dist/aframe-master.min.js"
+        "version": "1.8.0",
+        "commit": "e145c1a01a1cdc817329503d49cf5a9b0b32288b",
+        "url": "https://cdn.jsdelivr.net/gh/aframevr/aframe@e145c1a01a1cdc817329503d49cf5a9b0b32288b/dist/aframe-master.min.js"
       }
     }
   },
@@ -29,7 +29,7 @@
     "smoke:browser-feature-state": "node ./scripts/run-browser-feature-state-smoke.mjs",
     "smoke:browser-feature-state:matrix": "node ./scripts/run-browser-feature-state-smoke-matrix.mjs",
     "check:runtime": "npm run lint && npm run check:syntax && npm run test:runtime && npm run test:compiler && npm run build:runtime && git diff --check",
-    "test:runtime": "node ./scripts/test-navigation-math.mjs && node ./scripts/test-assessment-runtime.mjs && node ./scripts/test-xr-exit-handoff.mjs && node ./scripts/test-runtime-feature-state.mjs && node ./scripts/test-hardware-diagnostics.mjs && node ./scripts/test-aframe-runtime-provenance.mjs && node ./scripts/test-takram-cloud-profile-safety.mjs && node ./scripts/test-shadow-map-compatibility.mjs && node ./scripts/test-profile-feature-state-check.mjs",
+    "test:runtime": "node ./scripts/test-navigation-math.mjs && node ./scripts/test-assessment-runtime.mjs && node ./scripts/test-xr-exit-handoff.mjs && node ./scripts/test-runtime-feature-state.mjs && node ./scripts/test-hardware-diagnostics.mjs && node ./scripts/test-aframe-runtime-provenance.mjs && node ./scripts/test-loader-decoder-config.mjs && node ./scripts/test-takram-cloud-profile-safety.mjs && node ./scripts/test-shadow-map-compatibility.mjs && node ./scripts/test-profile-feature-state-check.mjs",
     "test:compiler": "node ./scripts/run-compiler-runtime-tests.mjs",
     "format": "prettier --write \"**/*.{js,css,md,json}\"",
     "build:css": "tailwindcss -i ./assets/css/vrodos_modern.css -o ./assets/css/vrodos_modern_compiled.css --minify",
@@ -48,7 +48,7 @@
     "postprocessing": "^6.39.2",
     "prettier": "^3.9.4",
     "tailwindcss": "^3.4.19",
-    "three": "npm:super-three@0.184.0",
+    "three": "npm:super-three@0.185.0",
     "three-mesh-bvh": "^0.9.10"
   },
   "engines": {

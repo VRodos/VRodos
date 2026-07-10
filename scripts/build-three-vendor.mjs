@@ -26,9 +26,6 @@ const basisOutputDir = path.join(outputDir, 'basis');
 const meshoptSourcePath = path.join(rootDir, 'node_modules', 'meshoptimizer', 'meshopt_decoder.cjs');
 const meshoptOutputDir = path.join(outputDir, 'meshopt');
 const meshoptOutputPath = path.join(meshoptOutputDir, 'meshopt_decoder.js');
-const fontSourcePath = path.join(rootDir, 'node_modules', 'three', 'examples', 'fonts', 'helvetiker_bold.typeface.json');
-const fontOutputDir = path.join(outputDir, 'fonts');
-const fontOutputPath = path.join(fontOutputDir, 'helvetiker_bold.typeface.json');
 const tempEntryPath = path.join(rootDir, 'scripts', THREE_VENDOR_BUILD_ENTRY_FILE);
 const runtimeVendorDir = path.join(rootDir, 'assets', 'js', 'runtime', 'master', 'lib');
 const threeAddonsRuntimeBundlePath = path.join(runtimeVendorDir, 'vrodos-three-addons.bundle.js');
@@ -91,8 +88,6 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 // pmndrs/postprocessing pipeline (Phase 1 of POSTPROCESSING_MIGRATION_PLAN.md).
 // Bundled alongside the legacy three/examples postprocessing helpers above so
@@ -127,8 +122,6 @@ Object.assign(THREE, { ...THREEBase }, {
   ShaderPass,
   OutlinePass,
   FXAAShader,
-  FontLoader,
-  TextGeometry,
 });
 
 window.THREE = THREE;
@@ -305,7 +298,6 @@ async function copySupportAssets() {
   await ensurePathExists(dracoSourceDir, 'Draco decoder assets');
   await ensurePathExists(basisSourceDir, 'Basis/KTX2 transcoder assets');
   await ensurePathExists(meshoptSourcePath, 'Meshopt decoder asset');
-  await ensurePathExists(fontSourcePath, 'Helvetiker font asset');
   await ensurePathExists(takramStarsSourcePath, 'Takram stars data asset');
   for (const assetFile of takramCloudAssetFiles) {
     await ensurePathExists(path.join(takramCloudsAssetsSourceDir, assetFile), `Takram cloud ${assetFile} asset`);
@@ -314,14 +306,12 @@ async function copySupportAssets() {
   await mkdir(dracoOutputDir, { recursive: true });
   await mkdir(basisOutputDir, { recursive: true });
   await mkdir(meshoptOutputDir, { recursive: true });
-  await mkdir(fontOutputDir, { recursive: true });
   await mkdir(takramAssetsOutputDir, { recursive: true });
   await mkdir(takramCloudsAssetsOutputDir, { recursive: true });
   await ensurePathExists(takramStbnOutputPath, 'Takram cloud STBN data asset');
   await cp(dracoSourceDir, dracoOutputDir, { recursive: true, force: true });
   await cp(basisSourceDir, basisOutputDir, { recursive: true, force: true });
   await cp(meshoptSourcePath, meshoptOutputPath, { force: true });
-  await cp(fontSourcePath, fontOutputPath, { force: true });
   await cp(takramStarsSourcePath, takramStarsOutputPath, { force: true });
   for (const assetFile of takramCloudAssetFiles) {
     await cp(
@@ -386,6 +376,40 @@ function createTakramCloudsShaderPatchPlugin() {
   };
 }
 
+function patchThreeClassicLoaderUrlSource(source, loaderName) {
+  const assetDirectory = loaderName === 'DRACOLoader' ? 'draco' : 'basis';
+  const upstreamDirectory = `../libs/${assetDirectory}/`;
+  const marker = `const VRODOS_THREE_CLASSIC_BUNDLE_URL =
+  (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) ||
+  (typeof location !== 'undefined' ? location.href : 'http://localhost/');
+
+`;
+
+  if (!source.includes(upstreamDirectory) || !source.includes('import.meta.url')) {
+    throw new Error(`${loaderName} classic-bundle URL patch failed: expected r185 import.meta URL defaults were not found`);
+  }
+
+  return marker + source
+    .replaceAll(upstreamDirectory, `./${assetDirectory}/`)
+    .replaceAll('import.meta.url', 'VRODOS_THREE_CLASSIC_BUNDLE_URL');
+}
+
+function createThreeClassicLoaderUrlPatchPlugin() {
+  return {
+    name: 'vrodos-three-classic-loader-url-patch',
+    setup(buildContext) {
+      buildContext.onLoad({ filter: /three[\\/]examples[\\/]jsm[\\/]loaders[\\/](?:DRACOLoader|KTX2Loader)\.js$/ }, async (args) => {
+        const loaderName = path.basename(args.path, '.js');
+        const source = await readFile(args.path, 'utf8');
+        return {
+          contents: patchThreeClassicLoaderUrlSource(source, loaderName),
+          loader: 'js'
+        };
+      });
+    }
+  };
+}
+
 function createGlobalShimSource(globalExpression, exportNames) {
   const safeNames = exportNames.filter((name) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name));
   const exportLines = safeNames
@@ -414,7 +438,8 @@ async function buildBundle() {
       platform: 'browser',
       target: ['es2019'],
       outfile: bundlePath,
-      legalComments: 'none'
+      legalComments: 'none',
+      plugins: [createThreeClassicLoaderUrlPatchPlugin()]
     });
   } finally {
     await rm(tempEntryPath, { force: true });
@@ -831,6 +856,7 @@ async function writeRuntimeManifest(aframeArtifact) {
 async function main() {
   validateRuntimeVersions();
   const aframeArtifact = await syncAframeRuntimeArtifact();
+  await rm(outputDir, { recursive: true, force: true });
   await buildBundle();
   await buildThreeAddonsRuntimeBundle();
   await buildPostprocessingRuntimeBundle();

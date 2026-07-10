@@ -1,6 +1,6 @@
 # VRodos Rendering Pipeline - Technical Reference
 
-Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized A-Frame 1.7.1/master-commit + Three r184 runtime. For the current compiled desktop/non-VR cleanup and backlog, see `documentation/compiled-desktop-roadmap.md`. For the current standalone VR Headset policy, TODOs, and validation checklist, see `documentation/compiled-headset-roadmap.md` and `VR_HEADSET_RUNTIME_HANDOFF.md`. Historical rendering plans and debug notes live under `documentation/archive/rendering-history/`.
+Canonical reference for the compiled A-Frame scene rendering stack on the current package-synchronized pinned A-Frame 1.8.0 master artifact + Three r185 runtime. For the current compiled desktop/non-VR cleanup and backlog, see `documentation/compiled-desktop-roadmap.md`. For the current standalone VR Headset policy, TODOs, and validation checklist, see `documentation/compiled-headset-roadmap.md` and `VR_HEADSET_RUNTIME_HANDOFF.md`. Historical rendering plans and debug notes live under `documentation/archive/rendering-history/`.
 
 ## 1. Runtime Overview
 
@@ -236,7 +236,7 @@ LOD should follow the same derivative contract: generated alternatives are store
 The compiler now writes A-Frame decoder paths onto the root scene:
 
 ```html
-<a-scene gltf-model="dracoDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r184/draco/gltf/; basisTranscoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r184/basis/; meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r184/meshopt/meshopt_decoder.js;">
+<a-scene gltf-model="dracoDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r185/draco/gltf/; basisTranscoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r185/basis/; meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r185/meshopt/meshopt_decoder.js;">
 ```
 
 Decoder files are copied by `npm run build:three` and recorded in `assets/runtime-version-manifest.json` under `three.decoders`.
@@ -313,7 +313,7 @@ this.postProcessingTarget.isXRRenderTarget = true;
 this.postProcessingTarget.texture.colorSpace = THREE.SRGBColorSpace;
 ```
 
-This compatibility behavior is retained for the pinned r184 stack.
+This behavior is retained for the pinned r185 stack.
 
 ## 5. Static Shadows And Shadow Roles
 
@@ -352,9 +352,9 @@ Day/night cycle shadows keep runtime-forced `pcf` filtering. The current PMNDRS/
 - Medium shadow quality: directional `shadow.radius = 1.8`.
 - Debug override: `?vrodos_debug_day_night_shadow_radius=VALUE`, clamped to `0..6`.
 
-Root A-Frame `shadow.type` is kept compatible with newer A-Frame master schemas by emitting only `basic` or `pcf`. VRodos still preserves the authored/internal `pcfsoft` shadow intent in `scene-settings.rootShadowType`, but Three r184 renders that intent through `THREE.PCFShadowMap`. Do not reintroduce `pcfsoft` into the A-Frame `shadow` attribute as a way to get soft shadows; it creates schema warnings and can be overwritten by A-Frame's shadow system.
+Root A-Frame `shadow.type` is kept compatible with newer A-Frame master schemas by emitting only `basic` or `pcf`. VRodos still preserves the authored/internal `pcfsoft` shadow intent in `scene-settings.rootShadowType`, but Three r185 renders that intent through `THREE.PCFShadowMap`. Do not reintroduce `pcfsoft` into the A-Frame `shadow` attribute as a way to get soft shadows; it creates schema warnings and can be overwritten by A-Frame's shadow system.
 
-Three r184 PCF shadow receivers use `sampler2DShadow` / `samplerCubeShadow` uniforms and bind `light.shadow.map.depthTexture` with a depth compare function. Any VRodos custom shader that samples scene shadow uniforms must either call Three's `getShadow(...)` helper under PCF or guard raw depth `sampler2D` reads out of the `SHADOWMAP_TYPE_PCF` path.
+Three r185 PCF shadow receivers use `sampler2DShadow` / `samplerCubeShadow` uniforms and bind `light.shadow.map.depthTexture` with a depth compare function. Any VRodos custom shader that samples scene shadow uniforms must either call Three's `getShadow(...)` helper under PCF or guard raw depth `sampler2D` reads out of the `SHADOWMAP_TYPE_PCF` path.
 
 Takram sun shadows and authored directional shadows use the same contact-shadow profile. Bias remains negative, `normalBias` remains small, and the old hardcoded positive Takram bias values must not be reintroduced.
 
@@ -678,9 +678,9 @@ If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`,
 - `npm run build:runtime` generates the compiled-scene runtime bundles, the browser settings-contract script from `assets/runtime-settings-contract.json`, and validates/writes `assets/runtime-build-manifest.json`.
 - `assets/runtime-build-manifest.json` defines compiled runtime chunks, dependency order, lazy feature coverage, and generated script URLs consumed by `VRodos_Compiler_Runtime_Script_Planner`.
 - `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, Takram, and collision BVH metadata.
-- The current live vendor bundle is Three.js r184.
-- The classic compiled A-Frame runtime must not load a second Three instance. VRodos follows A-Frame's `super-three@0.184.0` substrate rather than a VRodos-only Three fork.
-- WebGPU remains an experimental renderer mode after r184, with separate validation for PMNDRS post-processing, GLSL/onBeforeCompile material hooks, Takram integration, and XR behavior.
+- The current live vendor bundle is Three.js r185.
+- The classic compiled A-Frame runtime must not load a second Three instance. VRodos follows A-Frame's `super-three@0.185.0` substrate rather than a VRodos-only Three fork.
+- WebGPU remains an experimental renderer mode after r185, with separate validation for PMNDRS post-processing, GLSL/onBeforeCompile material hooks, Takram integration, and XR behavior.
 
 ## 13. Future Ideas
 
@@ -688,7 +688,7 @@ These are backlog items, not current implementation requirements:
 
 - Desktop-only Takram-vanilla `post-process-albedo` mode.
 - Continue validating native `POSTPROCESSING.SSAOEffect` across broader Horizon and non-Horizon scenes.
-- Track A-Frame r184 and run a WebGPU compatibility spike after the shared runtime upgrade is available.
+- Track later A-Frame/Three releases independently; WebGPU remains a separate opt-in compatibility spike after the shared r185 WebGL runtime is stable.
 - Geospatial date/time solar simulation, `LightingMaskPass`, and geospatial helpers.
 - Immersive XR/headset cloud validation after PMNDRS stereo composer behavior is proven safe.
 - Author-facing Takram cloud light-shafts controls after a measured performance pass.

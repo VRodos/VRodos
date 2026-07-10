@@ -14,11 +14,31 @@ if ( ! function_exists( 'apply_filters' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_parse_url' ) ) {
+	function wp_parse_url( string $url, int $component = -1 ) {
+		return parse_url( $url, $component );
+	}
+}
+
+if ( ! class_exists( 'VRodos_Path_Manager' ) ) {
+	class VRodos_Path_Manager {
+		public static function plugin_path( string $relative = '' ): string {
+			return dirname( __DIR__ ) . '/' . ltrim( str_replace( '\\', '/', $relative ), '/' );
+		}
+
+		public static function plugin_url( string $relative = '' ): string {
+			return 'https://example.test/wp-content/plugins/VRodos/' . ltrim( str_replace( '\\', '/', $relative ), '/' );
+		}
+	}
+}
+
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-dom-transformer.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-template-renderer.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-assets.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-aframe-dom-helper.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-page-builder.php';
+require_once __DIR__ . '/../includes/class-vrodos-render-runtime-manager.php';
+require_once __DIR__ . '/../includes/class-vrodos-compiler-manager.php';
 
 class VRodos_Test_Template_Renderer extends VRodos_Compiler_Template_Renderer {
 	public function read_runtime_template( string $filename ): string {
@@ -207,12 +227,31 @@ try {
 vrodos_dom_transformer_assert( $threw, 'missing runtime templates should fail explicitly' );
 
 $runtime_page_build = vrodos_runtime_page_builder_fixture();
+$runtime_config     = VRodos_Render_Runtime_Manager::get_config();
+$aframe_runtime_url = VRodos_Render_Runtime_Manager::get_aframe_runtime_url();
+
+vrodos_dom_transformer_assert( '/wp-content/plugins/VRodos/assets/vendor/aframe/aframe-master.min.js' === $aframe_runtime_url, 'compiler should select the pinned local A-Frame artifact' );
+vrodos_dom_transformer_assert( str_ends_with( $runtime_config['three_draco_decoder_url'], '/assets/vendor/three-r185/draco/gltf/' ), 'compiler runtime config should expose the r185 Draco decoder URL' );
+vrodos_dom_transformer_assert( str_ends_with( $runtime_config['three_basis_transcoder_url'], '/assets/vendor/three-r185/basis/' ), 'compiler runtime config should expose the r185 Basis transcoder URL' );
+vrodos_dom_transformer_assert( str_ends_with( $runtime_config['three_meshopt_decoder_url'], '/assets/vendor/three-r185/meshopt/meshopt_decoder.js' ), 'compiler runtime config should expose the r185 Meshopt decoder URL' );
+
+$compiler_reflection = new ReflectionClass( VRodos_Compiler_Manager::class );
+$compiler            = $compiler_reflection->newInstanceWithoutConstructor();
+$website_root        = $compiler_reflection->getProperty( 'website_root_url' );
+$website_root->setAccessible( true );
+$website_root->setValue( $compiler, 'example.test' );
+$decoder_method = $compiler_reflection->getMethod( 'build_gltf_decoder_config' );
+$decoder_method->setAccessible( true );
+$decoder_config = $decoder_method->invoke( $compiler );
+vrodos_dom_transformer_assert( str_contains( $decoder_config, 'three-r185/draco/gltf/' ), 'compiler decoder config should emit the r185 Draco path' );
+vrodos_dom_transformer_assert( str_contains( $decoder_config, 'three-r185/basis/' ), 'compiler decoder config should emit the r185 Basis path' );
+vrodos_dom_transformer_assert( str_contains( $decoder_config, 'three-r185/meshopt/meshopt_decoder.js' ), 'compiler decoder config should emit the r185 Meshopt path' );
 
 foreach ( [ 'Master_Client_prototype.html', 'Simple_Client_prototype.html' ] as $template_name ) {
 	$prepared_template = $runtime_page_build->prepare_template(
 		$template_name,
 		[
-			'AFRAME_RUNTIME_URL_PLACEHOLDER'    => 'aframe-test.js',
+			'AFRAME_RUNTIME_URL_PLACEHOLDER'    => $aframe_runtime_url,
 			'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER' => '',
 			'VRODOS_RUNTIME_MODE_PLACEHOLDER'   => 'single-player',
 			'VRODOS_PLUGIN_URL_PLACEHOLDER'     => '/wp-content/plugins/VRodos/',
@@ -222,9 +261,10 @@ foreach ( [ 'Master_Client_prototype.html', 'Simple_Client_prototype.html' ] as 
 	vrodos_dom_transformer_assert( ! str_contains( $prepared_template, 'VRODOS_WEBXR_LAYER_SHIM_PLACEHOLDER' ), $template_name . ' should replace the WebXR shim placeholder' );
 	vrodos_dom_transformer_assert( str_contains( $prepared_template, 'window.__VRODOS_WEBXR_LAYER_SHIM_ACTIVE' ), $template_name . ' should include the shared WebXR shim' );
 	vrodos_dom_transformer_assert( str_contains( $prepared_template, 'XRWebGLBinding' ), $template_name . ' should include the WebXR layer compatibility guard' );
+	vrodos_dom_transformer_assert( str_contains( $prepared_template, 'src="' . $aframe_runtime_url . '"' ), $template_name . ' should include the pinned local A-Frame artifact' );
 
 	$shim_position   = strpos( $prepared_template, 'window.__VRODOS_WEBXR_LAYER_SHIM_ACTIVE' );
-	$aframe_position = strpos( $prepared_template, 'aframe-test.js' );
+	$aframe_position = strpos( $prepared_template, $aframe_runtime_url );
 	vrodos_dom_transformer_assert( false !== $shim_position && false !== $aframe_position && $shim_position < $aframe_position, $template_name . ' should install the WebXR shim before A-Frame' );
 }
 

@@ -20,6 +20,7 @@ function parseArgs(argv) {
         viewport: { width: 1280, height: 720 },
         dpr: 1,
         headless: true,
+        fakeMedia: false,
         output: '',
         chrome: '',
         userDataDir: '',
@@ -92,6 +93,9 @@ function parseArgs(argv) {
                 break;
             case '--headless':
                 options.headless = true;
+                break;
+            case '--fake-media':
+                options.fakeMedia = true;
                 break;
             case '--keep-profile':
                 options.keepProfile = true;
@@ -168,6 +172,7 @@ Options:
   --dpr N                 Device scale factor for the browser. Default: 1.
   --chrome PATH           Chrome/Edge executable path.
   --headed                Run Chrome with a visible window.
+  --fake-media            Auto-grant deterministic fake camera/microphone streams for network-runtime QA.
   --user-data-dir PATH    Reuse a Chrome profile directory.
   --keep-profile          Keep the temporary profile directory.
   --json                  Print full JSON to stdout even when --output is used.
@@ -1263,6 +1268,33 @@ async function captureSceneSnapshot(cdp) {
             userAgent: navigator.userAgent,
             devicePixelRatio: window.devicePixelRatio,
             sceneLoaded: Boolean(scene && scene.hasLoaded),
+            runtimeProvenance: {
+                aframeVersion: window.AFRAME && window.AFRAME.version ? String(window.AFRAME.version) : null,
+                threeRevision: window.THREE && window.THREE.REVISION ? String(window.THREE.REVISION) : null,
+                aframeThreeRevision: window.AFRAME && window.AFRAME.THREE && window.AFRAME.THREE.REVISION
+                    ? String(window.AFRAME.THREE.REVISION)
+                    : null,
+                sharedThree: Boolean(window.THREE && window.AFRAME && window.AFRAME.THREE === window.THREE)
+            },
+            networking: {
+                networkedScene: Boolean(scene && scene.hasAttribute('networked-scene')),
+                nafAvailable: Boolean(window.NAF),
+                clientId: window.NAF && window.NAF.clientId ? String(window.NAF.clientId) : null,
+                room: window.NAF && window.NAF.room ? String(window.NAF.room) : null,
+                connected: Boolean(window.NAF && window.NAF.connection && typeof window.NAF.connection.isConnected === 'function' && window.NAF.connection.isConnected()),
+                connectedClients: window.NAF && window.NAF.connection && typeof window.NAF.connection.getConnectedClients === 'function'
+                    ? Object.keys(window.NAF.connection.getConnectedClients() || {})
+                    : [],
+                activeDataChannels: window.NAF && window.NAF.connection && window.NAF.connection.activeDataChannels
+                    ? Object.keys(window.NAF.connection.activeDataChannels).filter((clientId) => window.NAF.connection.activeDataChannels[clientId])
+                    : [],
+                networkedEntities: window.NAF && window.NAF.entities && window.NAF.entities.entities
+                    ? Object.keys(window.NAF.entities.entities).length
+                    : 0,
+                occupantsText: document.getElementById('occupantsNumberShow')
+                    ? document.getElementById('occupantsNumberShow').textContent.trim()
+                    : null
+            },
             settings,
             effectiveQuality: settingsComponent ? {
                 renderQuality: typeof settingsComponent.getRenderQualityLevel === 'function' ? settingsComponent.getRenderQualityLevel() : settingsComponent.data.renderQuality,
@@ -1710,6 +1742,10 @@ function printSummary(result) {
     console.log(`VRodos profile: ${result.url}`);
     console.log(`Viewport: ${result.viewport.width}x${result.viewport.height} @ dpr ${result.dpr}`);
     console.log(`rAF: p50 ${formatMs(raf.p50Ms)}, p95 ${formatMs(raf.p95Ms)}, mean ${formatMs(raf.meanMs)}, max ${formatMs(raf.maxMs)}, frames ${raf.count}`);
+    if (scene && scene.runtimeProvenance) {
+        const provenance = scene.runtimeProvenance;
+        console.log(`Runtime: A-Frame ${provenance.aframeVersion || 'unknown'}, Three r${provenance.threeRevision || 'unknown'}, A-Frame Three r${provenance.aframeThreeRevision || 'unknown'}, shared instance ${provenance.sharedThree ? 'yes' : 'no'}`);
+    }
     if (scene && scene.objectCounts) {
         console.log(`Scene: ${scene.objectCounts.visibleMeshes}/${scene.objectCounts.meshes} visible meshes, ${scene.objectCounts.geometries} geometries, ${scene.objectCounts.materials} materials, ${scene.objectCounts.textures} textures`);
         if (scene.renderer && scene.renderer.cssSize) {
@@ -1804,6 +1840,10 @@ async function run() {
         chromeArgs.unshift('--headless=new');
     }
 
+    if (options.fakeMedia) {
+        chromeArgs.unshift('--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream');
+    }
+
     const chrome = spawn(chromePath, chromeArgs, {
         stdio: ['ignore', 'ignore', 'pipe']
     });
@@ -1825,6 +1865,7 @@ async function run() {
 
         const consoleMessages = [];
         const networkFailures = [];
+        const networkRequests = new Map();
         const exceptions = [];
         const resourceOverrideEvents = [];
 
@@ -1847,9 +1888,27 @@ async function run() {
                 columnNumber: params.exceptionDetails?.columnNumber || 0
             });
         });
+        cdp.on('Network.requestWillBeSent', (params) => {
+            networkRequests.set(params.requestId, params.request?.url || '');
+        });
+        cdp.on('Network.responseReceived', (params) => {
+            const status = Number(params.response?.status || 0);
+            if (status < 400) {
+                return;
+            }
+            networkFailures.push({
+                requestId: params.requestId,
+                url: params.response?.url || networkRequests.get(params.requestId) || '',
+                errorText: `HTTP ${status}`,
+                canceled: false,
+                type: params.type,
+                status
+            });
+        });
         cdp.on('Network.loadingFailed', (params) => {
             networkFailures.push({
                 requestId: params.requestId,
+                url: networkRequests.get(params.requestId) || '',
                 errorText: params.errorText,
                 canceled: params.canceled,
                 type: params.type
@@ -1892,7 +1951,8 @@ async function run() {
         }
 
         const runtimeOverrides = {
-            fpsMeter: options.disableFpsMeter ? await disableRuntimeFpsMeter(cdp) : { disabled: false }
+            fpsMeter: options.disableFpsMeter ? await disableRuntimeFpsMeter(cdp) : { disabled: false },
+            fakeMedia: options.fakeMedia
         };
 
         if (options.warmupMs > 0) {

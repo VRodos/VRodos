@@ -1,6 +1,8 @@
 # VRodos Compiled Headset Roadmap
 
-Status date: 2026-07-02.
+Status date: 2026-07-10.
+
+The shared runtime baseline is the pinned A-Frame 1.8.0 master artifact with Three r185. Desktop acceptance is the first migration gate; after it passes, pause for a connected Quest 2 and revalidate the existing public `headset` target before declaring the migration complete. Quest-specific profile redesign remains separate work.
 
 This is the current coordination doc for standalone VR-headset compiled scenes, meaning Quest-class browsers that open the compiled client and render on the headset hardware. PC-rendered VR is a separate path and remains parked in `PC_RENDERED_VR_PLAN.md`.
 

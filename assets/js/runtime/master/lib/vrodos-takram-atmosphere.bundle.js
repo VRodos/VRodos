@@ -1311,21 +1311,21 @@
           hcode[im] = l3;
           if (l3 == LONG_ZEROCODE_RUN) {
             if (p5.value - inOffset.value > ni2) {
-              throw new Error("Something wrong with hufUnpackEncTable");
+              throw new Error("THREE.EXRLoader: Something wrong with hufUnpackEncTable");
             }
             getBits(8, c4, lc, uInt8Array2, p5);
             let zerun = getBitsReturn.l + SHORTEST_LONG_RUN;
             c4 = getBitsReturn.c;
             lc = getBitsReturn.lc;
             if (im + zerun > iM + 1) {
-              throw new Error("Something wrong with hufUnpackEncTable");
+              throw new Error("THREE.EXRLoader: Something wrong with hufUnpackEncTable");
             }
             while (zerun--) hcode[im++] = 0;
             im--;
           } else if (l3 >= SHORT_ZEROCODE_RUN) {
             let zerun = l3 - SHORT_ZEROCODE_RUN + 2;
             if (im + zerun > iM + 1) {
-              throw new Error("Something wrong with hufUnpackEncTable");
+              throw new Error("THREE.EXRLoader: Something wrong with hufUnpackEncTable");
             }
             while (zerun--) hcode[im++] = 0;
             im--;
@@ -1344,12 +1344,12 @@
           const c4 = hufCode(hcode[im]);
           const l3 = hufLength(hcode[im]);
           if (c4 >> l3) {
-            throw new Error("Invalid table entry");
+            throw new Error("THREE.EXRLoader: Invalid table entry");
           }
           if (l3 > HUF_DECBITS) {
             const pl = hdecod[c4 >> l3 - HUF_DECBITS];
             if (pl.len) {
-              throw new Error("Invalid table entry");
+              throw new Error("THREE.EXRLoader: Invalid table entry");
             }
             pl.lit++;
             if (pl.p) {
@@ -1367,7 +1367,7 @@
             for (let i4 = 1 << HUF_DECBITS - l3; i4 > 0; i4--) {
               const pl = hdecod[(c4 << HUF_DECBITS - l3) + plOffset];
               if (pl.len || pl.p) {
-                throw new Error("Invalid table entry");
+                throw new Error("THREE.EXRLoader: Invalid table entry");
               }
               pl.len = l3;
               pl.lit = im;
@@ -1538,7 +1538,7 @@
               lc = getCodeReturn.lc;
             } else {
               if (!pl.p) {
-                throw new Error("hufDecode issues");
+                throw new Error("THREE.EXRLoader: hufDecode issues");
               }
               let j3;
               for (j3 = 0; j3 < pl.lit; j3++) {
@@ -1559,7 +1559,7 @@
                 }
               }
               if (j3 == pl.lit) {
-                throw new Error("hufDecode issues");
+                throw new Error("THREE.EXRLoader: hufDecode issues");
               }
             }
           }
@@ -1575,7 +1575,7 @@
             c4 = getCodeReturn.c;
             lc = getCodeReturn.lc;
           } else {
-            throw new Error("hufDecode issues");
+            throw new Error("THREE.EXRLoader: hufDecode issues");
           }
         }
         return true;
@@ -1589,7 +1589,7 @@
         const nBits = parseUint32(inDataView, inOffset);
         inOffset.value += 4;
         if (im < 0 || im >= HUF_ENCSIZE || iM < 0 || iM >= HUF_ENCSIZE) {
-          throw new Error("Something wrong with HUF_ENCSIZE");
+          throw new Error("THREE.EXRLoader: Something wrong with HUF_ENCSIZE");
         }
         const freq = new Array(HUF_ENCSIZE);
         const hdec = new Array(HUF_DECSIZE);
@@ -1597,7 +1597,7 @@
         const ni2 = nCompressed - (inOffset.value - initialInOffset);
         hufUnpackEncTable(uInt8Array2, inOffset, ni2, im, iM, freq);
         if (nBits > 8 * (nCompressed - (inOffset.value - initialInOffset))) {
-          throw new Error("Something wrong with hufUncompress");
+          throw new Error("THREE.EXRLoader: Something wrong with hufUncompress");
         }
         hufBuildDecTable(freq, im, iM, hdec);
         hufDecode(freq, hdec, uInt8Array2, inOffset, nBits, iM, nRaw, outBuffer, outOffset);
@@ -1993,7 +1993,7 @@
         const minNonZero = parseUint16(inDataView, inOffset);
         const maxNonZero = parseUint16(inDataView, inOffset);
         if (maxNonZero >= BITMAP_SIZE) {
-          throw new Error("Something is wrong with PIZ_COMPRESSION BITMAP_SIZE");
+          throw new Error("THREE.EXRLoader: Something is wrong with PIZ_COMPRESSION BITMAP_SIZE");
         }
         if (minNonZero <= maxNonZero) {
           for (let i4 = 0; i4 < maxNonZero - minNonZero + 1; i4++) {
@@ -2198,7 +2198,7 @@
           acCompression: parseInt64(inDataView, inOffset)
         };
         if (dwaHeader.version < 2)
-          throw new Error("EXRLoader.parse: " + EXRHeader.compression + " version " + dwaHeader.version + " is unsupported");
+          throw new Error("THREE.EXRLoader: " + EXRHeader.compression + " version " + dwaHeader.version + " is unsupported");
         const channelRules = new Array();
         let ruleSize = parseUint16(inDataView, inOffset) - INT16_SIZE;
         while (ruleSize > 0) {
@@ -2313,7 +2313,7 @@
               lossyDctChannelDecode(i4, rowOffsets, channelData, acBuffer, dcBuffer, outBuffer);
               break;
             default:
-              throw new Error("EXRLoader.parse: unsupported channel compression");
+              throw new Error("THREE.EXRLoader: unsupported channel compression");
           }
         }
         return new DataView(outBuffer.buffer);
@@ -2607,10 +2607,8 @@
           const isCompressed = EXRDecoder2.size < EXRDecoder2.lines * bytesPerLine;
           const viewer = isCompressed ? EXRDecoder2.uncompress(EXRDecoder2) : uncompressRAW(EXRDecoder2);
           offset2.value += EXRDecoder2.size;
-          for (let line_y = 0; line_y < EXRDecoder2.blockHeight; line_y++) {
-            const scan_y = scanlineBlockIdx * EXRDecoder2.blockHeight;
-            const true_y = line_y + EXRDecoder2.scanOrder(scan_y);
-            if (true_y >= EXRDecoder2.height) continue;
+          for (let line_y = 0; line_y < EXRDecoder2.lines; line_y++) {
+            const true_y = line + line_y;
             const lineOffset = line_y * bytesPerLine;
             const outLineOffset = (EXRDecoder2.height - 1 - true_y) * EXRDecoder2.outLineWidth;
             for (let channelID = 0; channelID < EXRDecoder2.inputChannels.length; channelID++) {
@@ -2643,9 +2641,8 @@
           EXRDecoder2.offset = offset2;
           const viewer = isCompressed ? EXRDecoder2.uncompress(EXRDecoder2) : uncompressRAW(EXRDecoder2);
           EXRDecoder2.offset = savedOffset;
-          for (let line_y = 0; line_y < EXRDecoder2.blockHeight; line_y++) {
-            const true_y = line_y + line;
-            if (true_y >= EXRDecoder2.height) continue;
+          for (let line_y = 0; line_y < EXRDecoder2.lines; line_y++) {
+            const true_y = line + line_y;
             const lineOffset = line_y * bytesPerLine;
             const outLineOffset = (EXRDecoder2.height - 1 - true_y) * EXRDecoder2.outLineWidth;
             for (let channelID = 0; channelID < EXRDecoder2.inputChannels.length; channelID++) {
@@ -2683,7 +2680,7 @@
             return new DataView(tmpBuffer.buffer);
           }
           default:
-            throw new Error("EXRLoader.parse: " + compression + " is unsupported for deep data");
+            throw new Error("THREE.EXRLoader: " + compression + " is unsupported for deep data");
         }
       }
       function parseDeepScanline() {
@@ -2832,7 +2829,6 @@
           channelByteOffsets: {},
           shouldExpand: false,
           yCbCr: false,
-          scanOrder: null,
           totalBytes: null,
           columns: null,
           lines: null,
@@ -2881,7 +2877,7 @@
             EXRDecoder2.uncompress = uncompressDWA;
             break;
           default:
-            throw new Error("EXRLoader.parse: " + EXRHeader2.compression + " is unsupported");
+            throw new Error("THREE.EXRLoader: " + EXRHeader2.compression + " is unsupported");
         }
         const channels = {};
         for (const channel of EXRHeader2.channels) {
@@ -2907,7 +2903,7 @@
         } else if (channels.Y) {
           EXRDecoder2.outputChannels = 1;
         } else {
-          throw new Error("EXRLoader.parse: file contains unsupported data channels.");
+          throw new Error("THREE.EXRLoader: file contains unsupported data channels.");
         }
         switch (EXRDecoder2.outputChannels) {
           case 4:
@@ -2957,7 +2953,7 @@
           default:
             invalidOutput = true;
         }
-        if (invalidOutput) throw new Error("EXRLoader.parse: invalid output format for specified file.");
+        if (invalidOutput) throw new Error("THREE.EXRLoader: invalid output format for specified file.");
         if (EXRDecoder2.yCbCr) {
           EXRDecoder2.format = RGBAFormat;
           EXRDecoder2.outputChannels = 4;
@@ -2982,7 +2978,7 @@
               EXRDecoder2.getter = decodeFloat32;
           }
         } else {
-          throw new Error("EXRLoader.parse: unsupported pixelType " + EXRDecoder2.type + " for " + EXRHeader2.compression + ".");
+          throw new Error("THREE.EXRLoader: unsupported pixelType " + EXRDecoder2.type + " for " + EXRHeader2.compression + ".");
         }
         EXRDecoder2.columns = EXRDecoder2.width;
         const size = EXRDecoder2.width * EXRDecoder2.height * EXRDecoder2.outputChannels;
@@ -3010,11 +3006,6 @@
         }
         EXRDecoder2.totalBytes = byteOffset;
         EXRDecoder2.outLineWidth = EXRDecoder2.width * EXRDecoder2.outputChannels;
-        if (EXRHeader2.lineOrder === "INCREASING_Y") {
-          EXRDecoder2.scanOrder = (y4) => y4;
-        } else {
-          EXRDecoder2.scanOrder = (y4) => EXRDecoder2.height - 1 - y4;
-        }
         if (EXRHeader2.spec.deepFormat) {
           EXRDecoder2.deepChannels = [];
           let deepBytesPerSample = 0;
@@ -3124,7 +3115,11 @@
         data: EXRDecoder.byteArray,
         format: EXRDecoder.format,
         colorSpace: EXRDecoder.colorSpace,
-        type: this.type
+        type: this.type,
+        minFilter: LinearFilter,
+        magFilter: LinearFilter,
+        generateMipmaps: false,
+        flipY: false
       };
     }
     /**
@@ -3156,17 +3151,6 @@
     setPart(value) {
       this.part = value;
       return this;
-    }
-    load(url, onLoad, onProgress, onError) {
-      function onLoadCallback(texture, texData) {
-        texture.colorSpace = texData.colorSpace;
-        texture.minFilter = LinearFilter;
-        texture.magFilter = LinearFilter;
-        texture.generateMipmaps = false;
-        texture.flipY = false;
-        if (onLoad) onLoad(texture, texData);
-      }
-      return super.load(url, onLoadCallback, onProgress, onError);
     }
   };
 

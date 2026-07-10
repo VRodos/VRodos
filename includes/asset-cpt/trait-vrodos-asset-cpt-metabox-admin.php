@@ -366,29 +366,11 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 					controls.dampingFactor = 0.08;
 				}
 
-				let loader = new THREE.GLTFLoader();
-				if (THREE.DRACOLoader && typeof loader.setDRACOLoader === 'function') {
-					let dracoLoader = new THREE.DRACOLoader();
-					let dracoPath = window.vrodos_three_draco_decoder_path || window.vrodos_three_decoder_path || '';
-					if (dracoPath) {
-						dracoLoader.setDecoderPath(dracoPath);
-						loader.setDRACOLoader(dracoLoader);
-					}
+				if (!window.VRODOS || !VRODOS.loader || typeof VRODOS.loader.createGltfLoader !== 'function') {
+					console.error('VRodos GLTF decoder configuration is unavailable for the asset preview.');
+					return;
 				}
-				if (THREE.KTX2Loader && typeof loader.setKTX2Loader === 'function') {
-					let basisPath = window.vrodos_three_basis_transcoder_path || '';
-					if (basisPath) {
-						let ktx2Loader = new THREE.KTX2Loader();
-						ktx2Loader.setTranscoderPath(basisPath);
-						if (typeof ktx2Loader.detectSupport === 'function') {
-							ktx2Loader.detectSupport(renderer);
-						}
-						loader.setKTX2Loader(ktx2Loader);
-					}
-				}
-				if (THREE.MeshoptDecoder && typeof loader.setMeshoptDecoder === 'function') {
-					loader.setMeshoptDecoder(THREE.MeshoptDecoder);
-				}
+				let loader = VRODOS.loader.createGltfLoader(null, { renderer: renderer });
 
 				let state = { scene: scene, renderer: renderer, animationFrame: null, resizeObserver: null };
 				window.vrodosAdminGlbPreviewState = state;

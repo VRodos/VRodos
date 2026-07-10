@@ -29,7 +29,7 @@ VRodos/
   assets/js/runtime/master/        Compiled-scene runtime helpers
   assets/js/runtime/master/lib/    Generated runtime bundles
   assets/css/                      Source and generated CSS
-  assets/vendor/                   Vendored browser bundles such as Three r184
+  assets/vendor/                   Vendored browser bundles such as Three r185
   runtime/build/                   Generated compiled HTML output only
   services/vrodos-network-runtime/ Node/WebRTC collaborative runtime server
   scripts/                         Build and maintenance scripts
@@ -62,7 +62,7 @@ Important managers:
 The active compiled runtime targets:
 
 - A-Frame metadata declared in root `package.json`
-- Three.js vendor stack `r184`, derived from the locked root `three` package alias `npm:super-three@0.184.0`
+- Three.js vendor stack `r185`, derived from the locked root `three` package alias `npm:super-three@0.185.0`
 - PMNDRS `postprocessing` bundle exported as `window.POSTPROCESSING`
 - Takram atmosphere/effects bundle exported as `window.VRODOS_TAKRAM_ATMOSPHERE`
 
@@ -215,7 +215,7 @@ Performance tooling:
 - `VRodos_Asset_Optimization_Manager` stores read-only GLB benefit analysis in `_vrodos_asset3d_glb_analysis` when `vrodos_asset3d_glb` changes. Analysis should remain cheap and non-generative; derivative files are created only by explicit admin actions.
 - The top-level VRodos dashboard has an `Actionable Assets` tab for top GLB optimization items. Dashboard row actions are the primary single-asset operational surface for refreshing analysis and generating safe Draco derivatives, but must not auto-enable compile substitution. Analysis refresh and Compile Use toggles are AJAX row updates; safe Draco generation remains a signed admin action until a queued/progress flow exists. The dashboard Compile Use toggle is the explicit per-asset control for enabling/disabling derivative substitution and must validate a ready derivative before enabling.
 - Cached derivative files are owned by the asset post. Permanent `vrodos_asset3d` deletion must remove `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/` and optimization metadata; project deletion should get this by deleting associated asset posts.
-- `npm run build:three` copies Draco, Basis/KTX2, and Meshopt decoder assets into `assets/vendor/three-r184/` and records them in `assets/runtime-version-manifest.json`.
+- `npm run build:three` copies Draco, Basis/KTX2, and Meshopt decoder assets into `assets/vendor/three-r185/` and records them in `assets/runtime-version-manifest.json`.
 - Compiled scenes receive root `gltf-model` decoder paths from `VRodos_Compiler_Manager`; regenerate compiled HTML before testing compressed derivatives.
 - Use `meshopt_decoder.js` for A-Frame `meshoptDecoderPath`. A-Frame loads this path as a classic script, so do not point compiled scenes at the ESM `meshopt_decoder.module.js`; the vendor build no longer publishes a `.module.js` compatibility copy for older generated clients.
 - Do not enable compile substitution for Draco, Meshopt, or KTX2 derivatives until the relevant A-Frame/Three decoder path is present in the generated client and visual parity is checked. Substitution must remain per-asset opt-in.

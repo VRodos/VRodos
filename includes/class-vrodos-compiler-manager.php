@@ -645,16 +645,14 @@ class VRodos_Compiler_Manager {
 	}
 
 	private function build_gltf_decoder_config(): string {
-		$runtime_config    = VRodos_Render_Runtime_Manager::get_config();
-		$three_vendor_dir  = (string) ( $runtime_config['three_vendor_dir'] ?? VRodos_Render_Runtime_Manager::get_three_vendor_dir() );
-		$three_vendor_base = VRodos_Path_Manager::vendor_url( $three_vendor_dir . '/' );
+		$runtime_config = VRodos_Render_Runtime_Manager::get_config();
 
 		return implode(
 			' ',
 			[
-				'dracoDecoderPath: ' . $this->normalize_url( $three_vendor_base . 'draco/gltf/' ) . ';',
-				'basisTranscoderPath: ' . $this->normalize_url( $three_vendor_base . 'basis/' ) . ';',
-				'meshoptDecoderPath: ' . $this->normalize_url( $three_vendor_base . 'meshopt/meshopt_decoder.js' ) . ';',
+				'dracoDecoderPath: ' . $this->normalize_url( (string) $runtime_config['three_draco_decoder_url'] ) . ';',
+				'basisTranscoderPath: ' . $this->normalize_url( (string) $runtime_config['three_basis_transcoder_url'] ) . ';',
+				'meshoptDecoderPath: ' . $this->normalize_url( (string) $runtime_config['three_meshopt_decoder_url'] ) . ';',
 			]
 		);
 	}

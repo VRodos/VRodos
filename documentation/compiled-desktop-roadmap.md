@@ -1,6 +1,6 @@
 # VRodos Compiled Desktop Roadmap
 
-Status date: 2026-07-08.
+Status date: 2026-07-10.
 
 This is the current coordination doc for compiled desktop and non-VR scene work. It consolidates active TODOs from the rendering, performance, collision, and framework notes while preserving historical findings under `documentation/archive/rendering-history/README.md`.
 
@@ -28,13 +28,13 @@ The runtime baseline is package/manifest driven:
 - Generated A-Frame, Three, PMNDRS, Takram, decoder, and BVH metadata lives in `assets/runtime-version-manifest.json`.
 - Generated compiled-client chunk order, dependency, and lazy-feature coverage lives in `assets/runtime-build-manifest.json`.
 
-The current public vendor baseline remains Three r184 with A-Frame's shared `window.THREE` substrate. Do not hardcode patch-level package versions in this roadmap; use the root package files and generated manifests as source of truth.
+The current public vendor baseline is Three r185 with the pinned A-Frame 1.8.0 master artifact and its shared `window.THREE` substrate. Root package files and generated manifests remain the version source of truth.
 
 ## Code Cleanup Goals
 
 Active cleanup:
 
-- Keep only `assets/vendor/three-r184/meshopt/meshopt_decoder.js` for A-Frame `meshoptDecoderPath`; the old `meshopt_decoder.module.js` generated-client compatibility copy is no longer produced.
+- Keep only `assets/vendor/three-r185/meshopt/meshopt_decoder.js` for A-Frame `meshoptDecoderPath`; the old `meshopt_decoder.module.js` generated-client compatibility copy is no longer produced.
 - Support only the current `collision-proxy` category slug for hidden compiled blockers; the legacy `blocking-obstacles` alias is no longer normalized by the editor/compiler for new scenes.
 
 Why this is code cleanup, not feature cleanup:
@@ -55,7 +55,7 @@ Deferred cleanup:
 
 ## Desktop Rendering Backlog
 
-- Maintain the current A-Frame master plus Three r184 baseline until an explicit shared-runtime upgrade spike is opened.
+- Keep the pinned A-Frame 1.8.0 artifact and Three r185 baseline reproducible; audit any later upstream pin as a separate shared-runtime migration.
 - Keep smoke coverage for Horizon and non-Horizon PMNDRS scenes.
 - Continue validating native PMNDRS SSAO across broader authored scenes.
 - Validate the desktop Takram cloud-sun bridge with day-night cycle scenes: visible sun-disk cloud coverage should dim direct/indirect light factors, reflections, shadow contrast/softness, and lens flare through diagnostics. High/ultra quality should report `cloudSkySunDiskMode=takram-phase`, keeping Takram's native disk behind cloud composition; the VRodos sun sprite is a fallback path, not the target look.

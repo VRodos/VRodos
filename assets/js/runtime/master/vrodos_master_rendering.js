@@ -907,7 +907,7 @@ function vrodosInstallTerrainSoftShadowPatch(material) {
         shader.uniforms.vrodosTerrainShadowGapStart = terrainShadowGapStartUniform;
         shader.uniforms.vrodosTerrainShadowGapEnd = terrainShadowGapEndUniform;
 
-        // Three r184 uses sampler2DShadow for PCF shadow maps, so raw depth reads
+        // Three r185 uses sampler2DShadow for PCF shadow maps, so raw depth reads
         // must only be emitted for non-PCF shadow map variants.
         const functionSource = [
             'uniform float vrodosTerrainShadowLiftStrength;',

@@ -9,14 +9,17 @@ class VRodos_Render_Runtime_Manager {
 
 	private const FALLBACK_AFRAME_RUNTIME_LABEL   = 'A-Frame master';
 	private const FALLBACK_AFRAME_RUNTIME_SOURCE  = 'cdn-master';
-	private const FALLBACK_AFRAME_RUNTIME_VERSION = '1.7.1';
-	private const FALLBACK_AFRAME_RUNTIME_URL     = 'https://cdn.jsdelivr.net/gh/aframevr/aframe@adf8f4e02b0499223b2c4fa93165e49b50384564/dist/aframe-master.min.js';
-	private const FALLBACK_AFRAME_RUNTIME_COMMIT  = 'adf8f4e02b0499223b2c4fa93165e49b50384564';
+	private const FALLBACK_AFRAME_RUNTIME_VERSION = '1.8.0';
+	private const FALLBACK_AFRAME_RUNTIME_URL     = 'https://cdn.jsdelivr.net/gh/aframevr/aframe@e145c1a01a1cdc817329503d49cf5a9b0b32288b/dist/aframe-master.min.js';
+	private const FALLBACK_AFRAME_RUNTIME_COMMIT  = 'e145c1a01a1cdc817329503d49cf5a9b0b32288b';
 	private const LOCAL_AFRAME_RUNTIME_PATH       = 'assets/vendor/aframe/aframe-master.min.js';
 
-	private const FALLBACK_THREE_VENDOR_VERSION = '0.184.0';
-	private const FALLBACK_THREE_VENDOR_DIR     = 'three-r184';
-	private const FALLBACK_THREE_VENDOR_BUNDLE  = 'vrodos-three-r184.bundle.js';
+	private const FALLBACK_THREE_VENDOR_VERSION       = '0.185.0';
+	private const FALLBACK_THREE_VENDOR_DIR           = 'three-r185';
+	private const FALLBACK_THREE_VENDOR_BUNDLE        = 'vrodos-three-r185.bundle.js';
+	private const FALLBACK_THREE_DRACO_DECODER_PATH   = 'assets/vendor/three-r185/draco/gltf/';
+	private const FALLBACK_THREE_BASIS_TRANSCODER_PATH = 'assets/vendor/three-r185/basis/';
+	private const FALLBACK_THREE_MESHOPT_DECODER_PATH = 'assets/vendor/three-r185/meshopt/meshopt_decoder.js';
 	private const FALLBACK_TAKRAM_STARS_DATA_PATH = 'assets/vendor/takram-atmosphere/stars.bin';
 	private const FALLBACK_TAKRAM_CLOUDS_BASE_PATH = 'assets/vendor/takram-clouds/';
 	private const FALLBACK_TAKRAM_CLOUDS_LOCAL_WEATHER_PATH = 'assets/vendor/takram-clouds/local_weather.png';
@@ -31,6 +34,7 @@ class VRodos_Render_Runtime_Manager {
 		$manifest = self::get_manifest();
 		$aframe   = is_array( $manifest['aframe'] ?? null ) ? $manifest['aframe'] : [];
 		$three    = is_array( $manifest['three'] ?? null ) ? $manifest['three'] : [];
+		$three_decoders = is_array( $three['decoders'] ?? null ) ? $three['decoders'] : [];
 		$postfx   = is_array( $manifest['postprocessing'] ?? null ) ? $manifest['postprocessing'] : [];
 		$takram   = is_array( $manifest['takram'] ?? null ) ? $manifest['takram'] : [];
 		$takram_assets = is_array( $takram['assets'] ?? null ) ? $takram['assets'] : [];
@@ -45,6 +49,9 @@ class VRodos_Render_Runtime_Manager {
 		$takram_clouds_shape_detail_path = self::string_value( $takram_assets, 'cloudsShapeDetailPath', self::FALLBACK_TAKRAM_CLOUDS_SHAPE_DETAIL_PATH );
 		$takram_clouds_turbulence_path = self::string_value( $takram_assets, 'cloudsTurbulencePath', self::FALLBACK_TAKRAM_CLOUDS_TURBULENCE_PATH );
 		$takram_clouds_stbn_path = self::string_value( $takram_assets, 'cloudsStbnPath', self::FALLBACK_TAKRAM_CLOUDS_STBN_PATH );
+		$three_draco_decoder_path = self::string_value( $three_decoders, 'dracoDecoderPath', self::FALLBACK_THREE_DRACO_DECODER_PATH );
+		$three_basis_transcoder_path = self::string_value( $three_decoders, 'basisTranscoderPath', self::FALLBACK_THREE_BASIS_TRANSCODER_PATH );
+		$three_meshopt_decoder_path = self::string_value( $three_decoders, 'meshoptDecoderPath', self::FALLBACK_THREE_MESHOPT_DECODER_PATH );
 
 		return [
 			'aframe_runtime_label' => self::string_value( $aframe, 'label', self::FALLBACK_AFRAME_RUNTIME_LABEL ),
@@ -59,6 +66,12 @@ class VRodos_Render_Runtime_Manager {
 			'three_vendor_version' => self::string_value( $three, 'version', self::FALLBACK_THREE_VENDOR_VERSION ),
 			'three_vendor_dir' => self::string_value( $three, 'vendorDir', self::FALLBACK_THREE_VENDOR_DIR ),
 			'three_vendor_bundle' => self::string_value( $three, 'bundleFile', self::FALLBACK_THREE_VENDOR_BUNDLE ),
+			'three_draco_decoder_path' => $three_draco_decoder_path,
+			'three_draco_decoder_url' => VRodos_Path_Manager::plugin_url( $three_draco_decoder_path ),
+			'three_basis_transcoder_path' => $three_basis_transcoder_path,
+			'three_basis_transcoder_url' => VRodos_Path_Manager::plugin_url( $three_basis_transcoder_path ),
+			'three_meshopt_decoder_path' => $three_meshopt_decoder_path,
+			'three_meshopt_decoder_url' => VRodos_Path_Manager::plugin_url( $three_meshopt_decoder_path ),
 			'postprocessing_version' => self::string_value( $postfx, 'version', '' ),
 			'takram_atmosphere_version' => self::string_value( $takram, 'atmosphereVersion', '' ),
 			'takram_clouds_version' => self::string_value( $takram, 'cloudsVersion', '' ),
