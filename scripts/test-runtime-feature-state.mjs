@@ -591,4 +591,33 @@ assert(
     "Horizon aerial compositor should only re-light through the masked cloud shaft path"
 );
 
+const cloudShaftGenerationStart = pmndrsPostFxSource.indexOf("function shouldGeneratePmndrsCloudShadowLength");
+const cloudShaftGenerationEnd = pmndrsPostFxSource.indexOf("function shouldRoutePmndrsCloudLightShafts", cloudShaftGenerationStart);
+const cloudShaftGenerationSource = pmndrsPostFxSource.slice(cloudShaftGenerationStart, cloudShaftGenerationEnd);
+assert(
+    cloudShaftGenerationStart !== -1 &&
+        cloudShaftGenerationSource.includes("profile.lightShafts") &&
+        cloudShaftGenerationSource.includes("shouldUsePmndrsCloudShadowLength") &&
+        !cloudShaftGenerationSource.includes("pmndrsAerialPerspectiveEffect") &&
+        !cloudShaftGenerationSource.includes("effectiveCoverage"),
+    "Takram cloud shadow-length generation should not depend on its Aerial consumer or coverage threshold"
+);
+
+const nativeSsaoSetupStart = pmndrsPostFxSource.indexOf("const aoPreset =");
+const nativeSsaoSetupEnd = pmndrsPostFxSource.indexOf("// Bloom", nativeSsaoSetupStart);
+const nativeSsaoSetupSource = pmndrsPostFxSource.slice(nativeSsaoSetupStart, nativeSsaoSetupEnd);
+assert(
+    nativeSsaoSetupStart !== -1 &&
+        nativeSsaoSetupSource.includes("const existingNormalPass = this.pmndrsNativeNormalPass || null") &&
+        !nativeSsaoSetupSource.includes("this.pmndrsNativeNormalPass = null;"),
+    "SSAO setup must preserve a NormalPass already owned by masked cloud light shafts"
+);
+
+assert(
+    pmndrsPostFxSource.includes("cloudShadowLengthBufferReady") &&
+        pmndrsPostFxSource.includes("aerialShadowLengthDefineReady") &&
+        pmndrsPostFxSource.includes("cloudLightShaftsVisible"),
+    "Cloud shaft diagnostics should report real buffer, shader-define, and visible routing state"
+);
+
 console.log("Runtime feature-state smoke tests passed.");

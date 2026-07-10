@@ -216,7 +216,6 @@
     }
 
     const PMNDRS_CLOUD_LENS_FLARE_COVERAGE_START = 0.62;
-    const PMNDRS_CLOUD_LIGHT_SHAFT_COVERAGE_START = 0.28;
     const PMNDRS_CLOUD_SUN_VISIBILITY_FULL_Y = 0.08;
     const PMNDRS_CLOUD_SUN_DISK_SAMPLE_INTERVAL_MS = 160;
     const PMNDRS_CLOUD_SUN_DISK_SAMPLE_RADIUS_PX = 3;
@@ -333,14 +332,25 @@
             self.pmndrsCloudLightingMaskPass);
     }
 
-    function shouldUsePmndrsCloudLightShafts(self, profile, atmosphereConfig, effectiveCoverage) {
+    function isPmndrsCloudLightShaftsDesktopReady(self) {
+        return !isPmndrsDirectVrPresentationActive(self) && !shouldSkipPmndrsCloudsForVr(self);
+    }
+
+    function shouldGeneratePmndrsCloudShadowLength(self, profile, atmosphereConfig) {
         if (!(profile && profile.lightShafts)) {
             return false;
         }
         if (isPmndrsCloudLightShaftsDebugDisabled()) {
             return false;
         }
-        if (isPmndrsDirectVrPresentationActive(self) || shouldSkipPmndrsCloudsForVr(self)) {
+        if (!isPmndrsCloudLightShaftsDesktopReady(self)) {
+            return false;
+        }
+        return shouldUsePmndrsCloudShadowLength(self, atmosphereConfig);
+    }
+
+    function shouldRoutePmndrsCloudLightShafts(self, profile, atmosphereConfig) {
+        if (!shouldGeneratePmndrsCloudShadowLength(self, profile, atmosphereConfig)) {
             return false;
         }
         if (!self || !self.pmndrsAerialPerspectiveEffect) {
@@ -349,13 +359,10 @@
         if (isHorizonBackground(self) && !isPmndrsMaskedAerialSkyLightShaftsReady(self)) {
             return false;
         }
-        if (!shouldUsePmndrsCloudShadowLength(self, atmosphereConfig)) {
-            return false;
-        }
-        return effectiveCoverage >= PMNDRS_CLOUD_LIGHT_SHAFT_COVERAGE_START;
+        return true;
     }
 
-    function getPmndrsCloudLightShaftsSkippedReason(self, profile, enabled, sunShadowVisible, lightShaftsCoverageVisible, aerialReady, desktopReady, maskedAerialReady) {
+    function getPmndrsCloudShadowLengthGenerationSkippedReason(self, profile, enabled, atmosphereConfig) {
         if (enabled) {
             return '';
         }
@@ -365,27 +372,20 @@
         if (isPmndrsCloudLightShaftsDebugDisabled()) {
             return 'debug-disabled';
         }
-        if (!desktopReady) {
+        if (!isPmndrsCloudLightShaftsDesktopReady(self)) {
             return 'not-desktop';
         }
-        if (!aerialReady) {
-            return 'no-aerial';
-        }
-        if (isHorizonBackground(self) && !maskedAerialReady) {
-            return 'masked-aerial-unavailable';
-        }
-        return !sunShadowVisible ? 'sun-below-horizon' : (!lightShaftsCoverageVisible ? 'coverage-too-low' : 'profile-disabled');
+        return shouldUsePmndrsCloudShadowLength(self, atmosphereConfig) ? 'generation-unavailable' : 'sun-below-horizon';
     }
 
     function shouldRoutePmndrsCloudAerialShadow(self, atmosphereConfig) {
         const profile = getPmndrsCloudRuntimeProfile(self, getPmndrsCloudsQuality(self), getPmndrsCloudsStyle(self));
-        return shouldUsePmndrsCloudLightShafts(self, profile, atmosphereConfig, getPmndrsCloudsEffectiveCoverage(self));
+        return shouldRoutePmndrsCloudLightShafts(self, profile, atmosphereConfig);
     }
 
     function getPmndrsCloudLightShaftsMode(self, atmosphereConfig) {
         const profile = getPmndrsCloudRuntimeProfile(self, getPmndrsCloudsQuality(self), getPmndrsCloudsStyle(self));
-        const effectiveCoverage = getPmndrsCloudsEffectiveCoverage(self);
-        if (!shouldUsePmndrsCloudLightShafts(self, profile, atmosphereConfig, effectiveCoverage)) {
+        if (!shouldRoutePmndrsCloudLightShafts(self, profile, atmosphereConfig)) {
             return 'off';
         }
         return isHorizonBackground(self) ? 'masked-aerial-sky' : 'shadow-length-only';
@@ -396,16 +396,16 @@
             return '';
         }
         const profile = getPmndrsCloudRuntimeProfile(self, getPmndrsCloudsQuality(self), getPmndrsCloudsStyle(self));
-        return getPmndrsCloudLightShaftsSkippedReason(
-            self,
-            profile,
-            false,
-            shouldUsePmndrsCloudShadowLength(self, atmosphereConfig),
-            getPmndrsCloudsEffectiveCoverage(self) >= PMNDRS_CLOUD_LIGHT_SHAFT_COVERAGE_START,
-            Boolean(self && self.pmndrsAerialPerspectiveEffect),
-            !isPmndrsDirectVrPresentationActive(self) && !shouldSkipPmndrsCloudsForVr(self),
-            isPmndrsMaskedAerialSkyLightShaftsReady(self)
-        ) || 'shadow-unavailable';
+        if (!shouldGeneratePmndrsCloudShadowLength(self, profile, atmosphereConfig)) {
+            return getPmndrsCloudShadowLengthGenerationSkippedReason(self, profile, false, atmosphereConfig) || 'shadow-unavailable';
+        }
+        if (!self || !self.pmndrsAerialPerspectiveEffect) {
+            return 'no-aerial';
+        }
+        if (isHorizonBackground(self) && !isPmndrsMaskedAerialSkyLightShaftsReady(self)) {
+            return 'masked-aerial-unavailable';
+        }
+        return 'shadow-unavailable';
     }
 
     function setPmndrsCloudLightShafts(effect, enabled) {
@@ -419,6 +419,40 @@
         }
         effect._vrodosCloudLightShaftsEnabled = next;
         return next;
+    }
+
+    function hasPmndrsEffectDefine(effect, name) {
+        if (!effect || !effect.defines || !name) {
+            return false;
+        }
+        if (typeof effect.defines.has === 'function') {
+            return effect.defines.has(name);
+        }
+        return Object.prototype.hasOwnProperty.call(effect.defines, name);
+    }
+
+    function getPmndrsCloudLightShaftBufferDiagnostics(self) {
+        const cloudsEffect = self && self.pmndrsCloudsEffect ? self.pmndrsCloudsEffect : null;
+        const aerialEffect = self && self.pmndrsAerialPerspectiveEffect ? self.pmndrsAerialPerspectiveEffect : null;
+        const atmosphereShadowLength = cloudsEffect && cloudsEffect.atmosphereShadowLength
+            ? cloudsEffect.atmosphereShadowLength
+            : null;
+        const cloudsPassShadowLength = cloudsEffect && cloudsEffect.cloudsPass
+            ? cloudsEffect.cloudsPass.shadowLengthBuffer
+            : null;
+        const aerialShadowLength = aerialEffect && aerialEffect.shadowLength
+            ? aerialEffect.shadowLength
+            : null;
+
+        return {
+            cloudLightShaftsResourcesPrepared: Boolean(self && self._pmndrsCloudMaskedAerialPrepared),
+            cloudShadowLengthGenerationEnabled: Boolean(cloudsEffect && cloudsEffect._vrodosCloudLightShaftsEnabled),
+            cloudShadowLengthBufferReady: Boolean(cloudsPassShadowLength),
+            cloudAtmosphereShadowLengthReady: Boolean(atmosphereShadowLength && atmosphereShadowLength.map),
+            aerialShadowLengthBufferReady: Boolean(aerialShadowLength && aerialShadowLength.map),
+            aerialShadowLengthDefineReady: hasPmndrsEffectDefine(aerialEffect, 'HAS_SHADOW_LENGTH'),
+            aerialLightingMaskDefineReady: hasPmndrsEffectDefine(aerialEffect, 'HAS_LIGHTING_MASK')
+        };
     }
 
     function setPmndrsCloudHaze(effect, enabled) {
@@ -1382,11 +1416,19 @@
             lightShafts: Boolean(profile.lightShafts),
             lightShaftsSkippedReason: '',
             cloudLightShaftsMode: 'off',
+            cloudLightShaftsResourcesPrepared: false,
+            cloudShadowLengthGenerationEnabled: false,
+            cloudShadowLengthBufferReady: false,
+            cloudAtmosphereShadowLengthReady: false,
+            cloudLightShaftsVisible: false,
             aerialSkyEnabled: false,
             aerialSunLight: false,
             aerialSkyLight: false,
             aerialNormalBufferReady: false,
             aerialLightingMaskReady: false,
+            aerialShadowLengthBufferReady: false,
+            aerialShadowLengthDefineReady: false,
+            aerialLightingMaskDefineReady: false,
             aerialLightingMaskLayer: PMNDRS_CLOUD_LIGHTING_MASK_LAYER,
             aerialLightingMaskSelectedCount: 0,
             shapeDetail: Boolean(profile.shapeDetail),
@@ -2953,8 +2995,7 @@
         }
 
         const profile = getPmndrsCloudRuntimeProfile(self, getPmndrsCloudsQuality(self), getPmndrsCloudsStyle(self));
-        const effectiveCoverage = getPmndrsCloudsEffectiveCoverage(self);
-        const allowMaskedAerialSkyLighting = shouldUsePmndrsCloudLightShafts(self, profile, atmosphereConfig, effectiveCoverage) &&
+        const allowMaskedAerialSkyLighting = shouldRoutePmndrsCloudLightShafts(self, profile, atmosphereConfig) &&
             isHorizonBackground(self) &&
             isPmndrsMaskedAerialSkyLightShaftsReady(self);
         const effect = self.pmndrsAerialPerspectiveEffect;
@@ -2971,7 +3012,7 @@
             }
         }
 
-        updatePmndrsCloudLinkedDiagnostics(self, {
+        updatePmndrsCloudLinkedDiagnostics(self, Object.assign({
             cloudLightShaftsMode: allowMaskedAerialSkyLighting ? 'masked-aerial-sky' : getPmndrsCloudLightShaftsMode(self, atmosphereConfig),
             aerialSkyEnabled: Boolean(effect.sky),
             aerialSunLight: Boolean(effect.sunLight),
@@ -2980,7 +3021,7 @@
             aerialLightingMaskReady: Boolean(effect.lightingMask),
             aerialLightingMaskLayer: PMNDRS_CLOUD_LIGHTING_MASK_LAYER,
             aerialLightingMaskSelectedCount: self._pmndrsCloudLightingMaskSelectedCount || 0
-        });
+        }, getPmndrsCloudLightShaftBufferDiagnostics(self)));
         return allowMaskedAerialSkyLighting;
     }
 
@@ -3569,6 +3610,7 @@
             `clouds render: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.takramQuality || getPmndrsCloudsQuality(self)} @ ${Number(self._pmndrsCloudsDiagnostics.resolutionScale || getPmndrsCloudsResolutionScale(getPmndrsCloudsQuality(self))).toFixed(2)}x` : 'off'}`,
             `clouds detail/turbulence: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.shapeDetail ? 'detail' : 'no-detail'} / ${self._pmndrsCloudsDiagnostics.turbulence ? 'turbulence' : 'no-turbulence'}` : 'off'}`,
             `clouds light shafts: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.lightShafts ? `yes ${self._pmndrsCloudsDiagnostics.cloudLightShaftsMode || 'shadow-length-only'}` : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.lightShaftsSkippedReason ? ` (${self._pmndrsCloudsDiagnostics.lightShaftsSkippedReason})` : ''}`}`,
+            `clouds shaft buffers: ${  self && self._pmndrsCloudsDiagnostics ? `generate ${self._pmndrsCloudsDiagnostics.cloudShadowLengthGenerationEnabled ? 'yes' : 'no'} cloud ${self._pmndrsCloudsDiagnostics.cloudShadowLengthBufferReady ? 'yes' : 'no'} atmosphere ${self._pmndrsCloudsDiagnostics.cloudAtmosphereShadowLengthReady ? 'yes' : 'no'} aerial ${self._pmndrsCloudsDiagnostics.aerialShadowLengthBufferReady ? 'yes' : 'no'} define ${self._pmndrsCloudsDiagnostics.aerialShadowLengthDefineReady ? 'yes' : 'no'} visible ${self._pmndrsCloudsDiagnostics.cloudLightShaftsVisible ? 'yes' : 'no'}` : 'off'}`,
             `clouds aerial lighting: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.aerialSkyEnabled ? 'sky' : 'no-sky'} / ${self._pmndrsCloudsDiagnostics.aerialSunLight ? 'sunLight' : 'no-sunLight'} / ${self._pmndrsCloudsDiagnostics.aerialSkyLight ? 'skyLight' : 'no-skyLight'} normal ${self._pmndrsCloudsDiagnostics.aerialNormalBufferReady ? 'yes' : 'no'} mask ${self._pmndrsCloudsDiagnostics.aerialLightingMaskReady ? `${self._pmndrsCloudsDiagnostics.aerialLightingMaskSelectedCount || 0}@${self._pmndrsCloudsDiagnostics.aerialLightingMaskLayer || PMNDRS_CLOUD_LIGHTING_MASK_LAYER}` : 'no'}` : 'off'}`,
             `clouds haze: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.haze ? 'yes' : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.hazeDisabledReason ? ` (${self._pmndrsCloudsDiagnostics.hazeDisabledReason})` : ''}`}`,
             `clouds temporal: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.temporalUpscale ? 'yes' : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.temporalUpscaleSkippedReason ? ` (${self._pmndrsCloudsDiagnostics.temporalUpscaleSkippedReason})` : ''}`}`,
@@ -3692,7 +3734,7 @@
 
         if (!self.pmndrsAerialPerspectiveEffect) {
             if (self.pmndrsCloudsEffect) {
-                updatePmndrsCloudLinkedDiagnostics(self, {
+                updatePmndrsCloudLinkedDiagnostics(self, Object.assign({
                     directCompositeEnabled: setPmndrsCloudDirectComposite(self.pmndrsCloudsEffect, true),
                     aerialOverlayRouted: false,
                     aerialShadowReady: false,
@@ -3708,8 +3750,9 @@
                     aerialNormalBufferReady: false,
                     aerialLightingMaskReady: false,
                     aerialLightingMaskLayer: PMNDRS_CLOUD_LIGHTING_MASK_LAYER,
-                    aerialLightingMaskSelectedCount: self._pmndrsCloudLightingMaskSelectedCount || 0
-                });
+                    aerialLightingMaskSelectedCount: self._pmndrsCloudLightingMaskSelectedCount || 0,
+                    cloudLightShaftsVisible: false
+                }, getPmndrsCloudLightShaftBufferDiagnostics(self)));
             }
             syncPmndrsCloudDependentEffects(self, 'cloud-route-no-aerial');
             return;
@@ -3719,7 +3762,10 @@
             const directCompositeEnabled = setPmndrsCloudDirectComposite(self.pmndrsCloudsEffect, false);
             const routeShadowLength = shouldRoutePmndrsCloudAerialShadow(self, atmosphereConfig);
             const aerialShadowReady = Boolean(self.pmndrsCloudsEffect.atmosphereShadow);
-            const aerialShadowLengthReady = Boolean(self.pmndrsCloudsEffect.atmosphereShadowLength);
+            const aerialShadowLengthReady = Boolean(
+                self.pmndrsCloudsEffect.atmosphereShadowLength &&
+                self.pmndrsCloudsEffect.atmosphereShadowLength.map
+            );
             const routeAerialShadow = routeShadowLength && aerialShadowReady;
             const routeAerialShadowLength = routeShadowLength && aerialShadowLengthReady;
             self.pmndrsAerialPerspectiveEffect.overlay = self.pmndrsCloudsEffect.atmosphereOverlay || null;
@@ -3732,7 +3778,8 @@
             if (shouldEnablePmndrsHorizonAerial(self)) {
                 syncPmndrsCloudMaskedAerialSkyLighting(self, atmosphereConfig);
             }
-            updatePmndrsCloudLinkedDiagnostics(self, {
+            const shaftBufferDiagnostics = getPmndrsCloudLightShaftBufferDiagnostics(self);
+            updatePmndrsCloudLinkedDiagnostics(self, Object.assign({
                 directCompositeEnabled,
                 aerialOverlayRouted: Boolean(self.pmndrsCloudsEffect.atmosphereOverlay),
                 aerialShadowReady,
@@ -3752,8 +3799,17 @@
                 aerialNormalBufferReady: Boolean(self.pmndrsAerialPerspectiveEffect && self.pmndrsAerialPerspectiveEffect.normalBuffer),
                 aerialLightingMaskReady: Boolean(self.pmndrsAerialPerspectiveEffect && self.pmndrsAerialPerspectiveEffect.lightingMask),
                 aerialLightingMaskLayer: PMNDRS_CLOUD_LIGHTING_MASK_LAYER,
-                aerialLightingMaskSelectedCount: self._pmndrsCloudLightingMaskSelectedCount || 0
-            });
+                aerialLightingMaskSelectedCount: self._pmndrsCloudLightingMaskSelectedCount || 0,
+                cloudLightShaftsVisible: Boolean(
+                    routeAerialShadowLength &&
+                    self.pmndrsAerialPerspectiveEffect.sky &&
+                    self.pmndrsAerialPerspectiveEffect.normalBuffer &&
+                    self.pmndrsAerialPerspectiveEffect.lightingMask &&
+                    shaftBufferDiagnostics.aerialShadowLengthBufferReady &&
+                    shaftBufferDiagnostics.aerialShadowLengthDefineReady &&
+                    shaftBufferDiagnostics.aerialLightingMaskDefineReady
+                )
+            }, shaftBufferDiagnostics));
             syncPmndrsCloudDependentEffects(self, 'cloud-route-aerial');
             return;
         }
@@ -3841,25 +3897,16 @@
             self.pmndrsCloudsEffect.temporalUpscale = temporalUpscaleEnabled;
         }
         const temporalUpscaleSkippedReason = getPmndrsCloudTemporalUpscaleSkippedReason(self, atmosphereConfig, profile, temporalUpscaleEnabled);
-        const sunShadowVisible = shouldUsePmndrsCloudShadowLength(self, atmosphereConfig);
         const effectiveCoverage = getPmndrsCloudsEffectiveCoverage(self);
-        const lightShaftsCoverageVisible = effectiveCoverage >= PMNDRS_CLOUD_LIGHT_SHAFT_COVERAGE_START;
-        const aerialReady = Boolean(self.pmndrsAerialPerspectiveEffect);
-        const desktopReady = !isPmndrsDirectVrPresentationActive(self) && !shouldSkipPmndrsCloudsForVr(self);
-        const maskedAerialReady = isPmndrsMaskedAerialSkyLightShaftsReady(self);
         const lightShaftsEnabled = setPmndrsCloudLightShafts(
             self.pmndrsCloudsEffect,
-            shouldUsePmndrsCloudLightShafts(self, profile, atmosphereConfig, effectiveCoverage)
+            shouldGeneratePmndrsCloudShadowLength(self, profile, atmosphereConfig)
         );
-        const lightShaftsSkippedReason = getPmndrsCloudLightShaftsSkippedReason(
+        const lightShaftsSkippedReason = getPmndrsCloudShadowLengthGenerationSkippedReason(
             self,
             profile,
             lightShaftsEnabled,
-            sunShadowVisible,
-            lightShaftsCoverageVisible,
-            aerialReady,
-            desktopReady,
-            maskedAerialReady
+            atmosphereConfig
         );
         const hazeEnabled = setPmndrsCloudHaze(self.pmndrsCloudsEffect, shouldUsePmndrsCloudHaze(self, profile));
         const hazeDisabledReason = getPmndrsCloudHazeDisabledReason(self, profile, hazeEnabled);
@@ -3937,7 +3984,7 @@
             cloudWeatherOffsetY: self.pmndrsCloudsEffect.localWeatherOffset && typeof self.pmndrsCloudsEffect.localWeatherOffset.y === 'number'
                 ? self.pmndrsCloudsEffect.localWeatherOffset.y
                 : (Array.isArray(profile.localWeatherOffset) ? profile.localWeatherOffset[1] : 0)
-        }, cloudSunDiskSampleToDiagnostics(sunDiskSample)));
+        }, getPmndrsCloudLightShaftBufferDiagnostics(self), cloudSunDiskSampleToDiagnostics(sunDiskSample)));
         routePmndrsCloudsIntoAerial(self, atmosphereConfig);
     }
 
@@ -4259,14 +4306,13 @@
         // SSAO through the shared ambientOcclusionPreset control.
         // Native POSTPROCESSING.SSAOEffect is the default PMNDRS AO backend.
         const aoPreset = (!xrStereoMode && typeof this.getAmbientOcclusionPreset === 'function') ? this.getAmbientOcclusionPreset() : 'off';
-        this.pmndrsNativeNormalPass = null;
+        const existingNormalPass = this.pmndrsNativeNormalPass || null;
         this.pmndrsNativeSsaoEffect = null;
         if (aoPreset && aoPreset !== 'off') {
             if (PP.NormalPass && PP.SSAOEffect) {
                 try {
                     const nativeSsaoOptions = nativeSsaoOptionsForPreset(PP, aoPreset);
                     let normalPassResolutionScale = nativeSsaoNormalPassResolutionScale(nativeSsaoOptions);
-                    const existingNormalPass = this.pmndrsNativeNormalPass || null;
                     this.pmndrsNativeNormalPass = ensurePmndrsSharedNormalPass(
                         this,
                         composer,
