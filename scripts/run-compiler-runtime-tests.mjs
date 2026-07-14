@@ -47,7 +47,8 @@ if (!php) {
 
 [
     "scripts/test-compiler-runtime-script-planner.php",
-    "scripts/test-compiler-runtime-dom-transformer.php"
+    "scripts/test-compiler-runtime-dom-transformer.php",
+    "scripts/test-compiler-plan-foundations.php"
 ].forEach((testFile) => {
     const result = spawnSync(php, [resolve(root, testFile)], {
         cwd: root,
@@ -58,3 +59,12 @@ if (!php) {
         process.exit(result.status || 1);
     }
 });
+
+const securityResult = spawnSync(process.execPath, [resolve(root, "scripts/test-compiler-security-contract.mjs")], {
+    cwd: root,
+    stdio: "inherit",
+    shell: false
+});
+if (securityResult.status !== 0) {
+    process.exit(securityResult.status || 1);
+}

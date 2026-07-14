@@ -81,7 +81,8 @@ function authoredFiles(directory) {
     const files = [];
     const visit = (current) => {
         const relative = current.slice(root.length + 1).replaceAll("\\", "/");
-        if (ignoredDirectories.has(relative) || [...ignoredDirectories].some((entry) => relative.startsWith(`${entry}/`))) {
+        const pathSegments = relative.split("/");
+        if (pathSegments.includes("node_modules") || ignoredDirectories.has(relative) || [...ignoredDirectories].some((entry) => relative.startsWith(`${entry}/`))) {
             return;
         }
         for (const entry of readdirSync(current)) {

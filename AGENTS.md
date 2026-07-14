@@ -48,7 +48,9 @@ Important managers:
 
 - `VRodos_Asset_Manager`: script/style registration and enqueueing
 - `VRodos_Scene_CPT_Manager`: scene editor data preparation
-- `VRodos_Compiler_Manager`: compiled A-Frame scene generation
+- `VRodos_Compiler_Manager`: compatibility facade and compile orchestration entry point; new callers use `compile(VRodos_Compile_Request)`
+- `VRodos_Compiler_Plan_Resolver`: the single project/scene compile-policy resolver; project runtime target fields are applied uniformly and artistic settings remain scene-specific
+- `VRodos_Compiler_Artifact_Transaction` / `VRodos_Compiler_Link_Publisher`: locked atomic publication and stable legacy link construction
 - `VRodos_Compiler_Runtime_Page_Builder`: shared compiled-client assembly path for Master/Simple template loading, DOM setup, scene settings, decoder config, object rendering, diagnostics, and output writing
 - `VRodos_Compiler_Runtime_Manifest` / `VRodos_Compiler_Runtime_Script_Planner`: runtime chunk validation, dependency ordering, and lazy compiled-scene script selection
 - `VRodos_Render_Runtime_Manager`: active runtime/version configuration
@@ -69,6 +71,8 @@ The active compiled runtime targets:
 Root `package.json` plus `package-lock.json` are the version source of truth. `npm run build:three` generates `assets/runtime-version-manifest.json`, and `VRodos_Render_Runtime_Manager` reads that manifest.
 
 `assets/runtime-build-manifest.json` is the compiled runtime chunk source of truth. It must validate missing script files, undeclared dependencies, duplicate chunk ordering, and feature coverage. Keep PMNDRS, Takram, collision BVH, FPS meter, and networked bundles lazy: do not include PMNDRS unless PMNDRS post-FX is selected, do not include Takram unless PMNDRS atmosphere is enabled, and do not include networked components in single-player output.
+
+Compiler architecture and compatibility boundaries are documented in `documentation/compiler-architecture.md`. Compile requests are authenticated POST actions. Generated HTML must never contain MediaVerse node tokens; virtual-production recording upload goes through the authenticated WordPress proxy actions.
 
 VR spatial UI current state:
 

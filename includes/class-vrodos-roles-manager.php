@@ -143,7 +143,7 @@ class VRodos_Roles_Manager {
 			<tr>
 				<th><label for="mvnode_token"><?php _e( 'MediaVerse Node Token' ); ?></label></th>
 				<td>
-					<input type="text" name="mvnode_token" id="mvnode_token" value="
+					<input type="password" name="mvnode_token" id="mvnode_token" autocomplete="new-password" value="
 					<?php
 							echo esc_attr( get_the_author_meta( 'mvnode_token', $user->ID ) );
 					?>
@@ -165,7 +165,8 @@ class VRodos_Roles_Manager {
 			return false;
 		}
 
-		update_user_meta( $user_id, 'mvnode_token', $_POST['mvnode_token'] );
+		$token = isset( $_POST['mvnode_token'] ) ? sanitize_text_field( wp_unslash( $_POST['mvnode_token'] ) ) : '';
+		update_user_meta( $user_id, 'mvnode_token', $token );
 		return true;
 	}
 
@@ -198,7 +199,8 @@ class VRodos_Roles_Manager {
 			return false;
 		}
 
-		update_user_meta( $user_id, 'mvnode_url', $_POST['mvnode_url'] );
+		$url = isset( $_POST['mvnode_url'] ) ? esc_url_raw( wp_unslash( $_POST['mvnode_url'] ), [ 'http', 'https' ] ) : '';
+		update_user_meta( $user_id, 'mvnode_url', $url );
 		return true;
 	}
 }

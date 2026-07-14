@@ -342,7 +342,62 @@
         }
 
         if (uploadBtn) {
-            uploadBtn.disabled = false;
+            uploadBtn.disabled = uploadBtn.dataset.vrodosUploadAvailable !== 'true' || !window.recordedBlob;
+        }
+    }
+
+    function mediaVerseUploadContext() {
+        const runtimeContext = window.VRODOS_RUNTIME_CONTEXT || {};
+        const ajaxUrl = String(runtimeContext.ajaxUrl || '');
+        const projectId = String(runtimeContext.projectId || '');
+        if (!ajaxUrl || !projectId) {
+            throw new Error('This compiled scene has no WordPress upload context. Recompile it and try again.');
+        }
+        if (new URL(ajaxUrl, window.location.href).origin !== window.location.origin) {
+            throw new Error('Recording upload requires opening the compiled scene from its authenticated WordPress origin.');
+        }
+        return { ajaxUrl, projectId };
+    }
+
+    function requestMediaVerseUploadSession() {
+        const context = mediaVerseUploadContext();
+        const sessionBody = new URLSearchParams({
+            action: 'vrodos_mediaverse_upload_session',
+            projectId: context.projectId
+        });
+        return fetch(context.ajaxUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+            body: sessionBody.toString()
+        }).then((response) => response.text().then((text) => {
+            let payload = null;
+            try {
+                payload = JSON.parse(text);
+            } catch (error) {
+                payload = null;
+            }
+            if (!response.ok || !payload || payload.success !== true || !payload.data || !payload.data.nonce) {
+                throw new Error((payload && payload.data && payload.data.message) || 'Sign in to WordPress to upload this recording.');
+            }
+            return { context, session: payload.data };
+        }));
+    }
+
+    function setMediaVerseUploadAvailability(button, captureLabel, available, message) {
+        if (!button) return;
+        button.dataset.vrodosUploadAvailable = available ? 'true' : 'false';
+        button.disabled = !available || !window.recordedBlob;
+        if (message) {
+            button.title = message;
+            button.setAttribute('aria-label', message);
+            if (captureLabel && !window.recordedBlob) {
+                captureLabel.textContent = message;
+                captureLabel.dataset.vrodosUploadStatus = 'true';
+            }
+        } else if (captureLabel && captureLabel.dataset.vrodosUploadStatus === 'true') {
+            captureLabel.textContent = '';
+            delete captureLabel.dataset.vrodosUploadStatus;
         }
     }
 
@@ -353,6 +408,18 @@
         const uploadButton = VRODOSMaster.getElement('upload-recording-btn', true);
         const captureLabel = VRODOSMaster.getElement('captured-video-label', true);
         const recording = VRODOSMaster.getElement('recording', true);
+
+        const mediaPanel = VRODOSMaster.getElement('mediaPanel', true);
+        if (uploadButton && mediaPanel && mediaPanel.dataset.vrodosMediaverseProxy === 'true') {
+            try {
+                mediaVerseUploadContext();
+                requestMediaVerseUploadSession()
+                    .then(() => setMediaVerseUploadAvailability(uploadButton, captureLabel, true, ''))
+                    .catch((error) => setMediaVerseUploadAvailability(uploadButton, captureLabel, false, error.message));
+            } catch (error) {
+                setMediaVerseUploadAvailability(uploadButton, captureLabel, false, error.message);
+            }
+        }
 
         bindOnce(recordButton, 'recording', (buttonEl) => {
             buttonEl.addEventListener('click', () => {
@@ -412,6 +479,7 @@
 
                     if (uploadButton && recording) {
                         uploadButton.href = recording.src;
+						uploadButton.disabled = uploadButton.dataset.vrodosUploadAvailable !== 'true';
                     }
 
                     if (captureLabel) {
@@ -423,7 +491,7 @@
                         downloadButton.style.visibility = window.recordedBlob ? 'visible' : 'hidden';
                     }
                     if (uploadButton) {
-                        uploadButton.disabled = false;
+						uploadButton.disabled = uploadButton.dataset.vrodosUploadAvailable !== 'true' || !window.recordedBlob;
                     }
                     if (videoPreview) {
                         videoPreview.style.display = 'none';
@@ -444,51 +512,43 @@
                 }
 
                 buttonEl.disabled = true;
-                const mvUrlInput = VRODOSMaster.getElement('node-url-input', true);
-                const mvTokenInput = VRODOSMaster.getElement('node-token-input', true);
-                const mvProjectIdInput = VRODOSMaster.getElement('mv-project-id-input', true);
-                const mvUrl = mvUrlInput ? mvUrlInput.value : '';
-                const mvToken = mvTokenInput ? mvTokenInput.value : '';
-                const mvProjectId = mvProjectIdInput ? mvProjectIdInput.value : '';
 
-                const videoFile = new File([window.recordedBlob], `vrodos-${  window.recordedBlob.size  }.webm`, { type: window.recordedBlob.type });
-                const formData = new FormData();
-                formData.append('file', videoFile);
+                requestMediaVerseUploadSession()
+					.then(({ context, session }) => {
 
-                fetch(`${mvUrl  }/dam/assets?description=Recorded video from VRodos&externalTool=VRodos`, {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${  mvToken}` },
-                    body: formData
-                }).then((response) => {
-                    if (response.ok) {
-                        return response.json();
-                    }
-
-                    buttonEl.disabled = false;
-                    alert('There has been a problem uploading your video to MediaVerse platform');
-                    return null;
-                }).then((data) => {
-                    if (!data) {
-                        return;
-                    }
-
-                    fetch(`${mvUrl  }/dam/project/${  mvProjectId  }/projectOutput`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${  mvToken}`
-                        },
-                        body: JSON.stringify({ projectOutput: [data.key] })
-                    }).then((response) => {
-                        buttonEl.disabled = false;
-                        if (response.ok) {
-                            alert('The video has been successfully uploaded to MediaVerse!');
-                            return;
+                        const mime = String(window.recordedBlob.type || 'video/webm').split(';')[0];
+                        const extension = mime === 'video/mp4' ? 'mp4' : 'webm';
+                        const videoFile = new File(
+                            [window.recordedBlob],
+                            `vrodos-${  window.recordedBlob.size  }.${extension}`,
+                            { type: mime }
+                        );
+						if (Number(session.maxFileSize || 0) > 0 && videoFile.size > Number(session.maxFileSize)) {
+                            throw new Error('The recording exceeds the WordPress upload limit.');
                         }
 
-                        alert('There has been a problem uploading your video to MediaVerse platform');
+                        const formData = new FormData();
+                        formData.append('action', 'vrodos_mediaverse_upload_recording');
+						formData.append('projectId', context.projectId);
+						formData.append('nonce', session.nonce);
+                        formData.append('recording', videoFile);
+						return fetch(context.ajaxUrl, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            body: formData
+                        });
+                    }).then((response) => response.json().then((payload) => ({ response, payload })))
+                    .then(({ response, payload }) => {
+                        if (!response.ok || !payload || payload.success !== true) {
+                            throw new Error((payload && payload.data && payload.data.message) || 'MediaVerse rejected the recording upload.');
+                        }
+                        alert('The video has been successfully uploaded to MediaVerse!');
+                    }).catch((error) => {
+                        console.warn('[VRodos] MediaVerse upload failed.', error);
+                        alert(error && error.message ? error.message : 'There has been a problem uploading your video to MediaVerse platform');
+                    }).finally(() => {
+						buttonEl.disabled = buttonEl.dataset.vrodosUploadAvailable !== 'true' || !window.recordedBlob;
                     });
-                });
             });
         });
     }

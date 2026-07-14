@@ -53,6 +53,9 @@
         "assessment",
         "video"
       ],
+      "activationCapabilities": [
+        "spatial-ui"
+      ],
       "sourceFiles": [
         "assets/js/runtime/spatial-ui/vrodos_spatial_ui.js"
       ],
@@ -70,6 +73,9 @@
         "networked-components",
         "chat",
         "availability"
+      ],
+      "activationCapabilities": [
+        "networking"
       ],
       "sourceFiles": [
         "assets/js/runtime/components/chat_poi_component.js",
@@ -128,6 +134,9 @@
         "fxaa",
         "bloom"
       ],
+      "activationCapabilities": [
+        "postfx:legacy"
+      ],
       "sourceFiles": [
         "assets/js/runtime/master/vrodos_shaders_bloom.js",
         "assets/js/runtime/master/vrodos_shaders_sao.js",
@@ -152,6 +161,9 @@
       "features": [
         "postfx",
         "pmndrs-postfx"
+      ],
+      "activationCapabilities": [
+        "postfx:pmndrs"
       ],
       "sourceFiles": [
         "assets/js/runtime/master/vrodos_postprocessing_pmndrs.js"
@@ -228,6 +240,9 @@
         "takram-celestial",
         "takram-geospatial"
       ],
+      "activationCapabilities": [
+        "atmosphere:takram"
+      ],
       "generatedBy": "build:three"
     },
     "takram-clouds": {
@@ -245,6 +260,9 @@
         "pmndrs-clouds",
         "volumetric-clouds"
       ],
+      "activationCapabilities": [
+        "clouds:takram"
+      ],
       "generatedBy": "build:three"
     },
     "collision-bvh-vendor": {
@@ -260,6 +278,9 @@
         "navigation",
         "player-collision"
       ],
+      "activationCapabilities": [
+        "collision-bvh"
+      ],
       "generatedBy": "build:three"
     },
     "fps-meter": {
@@ -271,6 +292,9 @@
       "features": [
         "fps-meter",
         "debug-tooling"
+      ],
+      "activationCapabilities": [
+        "fps-meter"
       ],
       "moduleImport": "https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js",
       "readyGlobal": "VRODOS_STATS_READY",

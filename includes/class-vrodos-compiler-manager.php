@@ -13,8 +13,13 @@ require_once __DIR__ . '/class-vrodos-compiler-scene-settings.php';
 require_once __DIR__ . '/class-vrodos-compiler-aframe-entity-renderer.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-manifest.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
-require_once __DIR__ . '/class-vrodos-compiler-runtime-dom-transformer.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-page-builder.php';
+require_once __DIR__ . '/class-vrodos-compiler-types.php';
+require_once __DIR__ . '/class-vrodos-compiler-plan-resolver.php';
+require_once __DIR__ . '/class-vrodos-compiler-artifact-transaction.php';
+require_once __DIR__ . '/class-vrodos-compiler-link-publisher.php';
+require_once __DIR__ . '/class-vrodos-compiler-network-runtime-service.php';
+require_once __DIR__ . '/class-vrodos-compiler-target-renderer.php';
 
 class VRodos_Compiler_Manager {
 	public const RUNTIME_MODE_NETWORKED     = 'networked';
@@ -24,16 +29,19 @@ class VRodos_Compiler_Manager {
 	private string $website_root_url;
 	private array $runtime_link_settings = [];
 	private string $runtime_mode = self::RUNTIME_MODE_NETWORKED;
-	private bool $isHoverEnabled = true;
 	private VRodos_Compiler_Runtime_Feature_Flags $runtime_feature_flags;
 	private VRodos_Compiler_Runtime_Assets $runtime_assets;
 	private VRodos_Compiler_Template_Renderer $template_renderer;
 	private VRodos_Compiler_Scene_Repository $scene_repository;
 	private VRodos_Compiler_Scene_Settings $scene_settings;
 	private VRodos_Compiler_AFrame_Entity_Renderer $entity_renderer;
-	private VRodos_Compiler_Runtime_DOM_Transformer $runtime_dom_transformer;
 	private VRodos_Compiler_Runtime_Page_Builder $runtime_page_builder;
-	private ?VRodos_Compiler_Runtime_Script_Planner $runtime_script_planner = null;
+	private VRodos_Compiler_Runtime_Script_Planner $runtime_script_planner;
+	private VRodos_Compiler_Plan_Resolver $plan_resolver;
+	private VRodos_Compiler_Artifact_Transaction $artifact_transaction;
+	private VRodos_Compiler_Link_Publisher $link_publisher;
+	private VRodos_Compiler_Network_Runtime_Service $network_runtime_service;
+	private VRodos_Compiler_Target_Renderer $target_renderer;
 
 	public function __construct() {
 		$this->plugin_path_url       = VRodos_Path_Manager::plugin_url();
@@ -42,7 +50,7 @@ class VRodos_Compiler_Manager {
 		$this->template_renderer = new VRodos_Compiler_Template_Renderer();
 		$this->scene_repository = new VRodos_Compiler_Scene_Repository();
 		$this->scene_settings   = new VRodos_Compiler_Scene_Settings( $this->scene_repository, $this->runtime_feature_flags );
-		$this->runtime_dom_transformer = new VRodos_Compiler_Runtime_DOM_Transformer();
+		$this->runtime_script_planner = new VRodos_Compiler_Runtime_Script_Planner( new VRodos_Compiler_Runtime_Manifest(), $this->runtime_feature_flags );
 		$this->entity_renderer  = new VRodos_Compiler_AFrame_Entity_Renderer(
 			$this->runtime_assets,
 			$this->scene_repository,
@@ -69,79 +77,121 @@ class VRodos_Compiler_Manager {
 		$this->plugin_path_url = $this->normalize_url( $this->plugin_path_url );
 
 		$this->runtime_link_settings = $this->load_runtime_link_settings();
+		$this->plan_resolver           = new VRodos_Compiler_Plan_Resolver( $this->scene_settings, $this->runtime_script_planner );
+		$this->artifact_transaction    = new VRodos_Compiler_Artifact_Transaction();
+		$this->network_runtime_service = new VRodos_Compiler_Network_Runtime_Service();
+		$this->target_renderer          = new VRodos_Compiler_Target_Renderer();
+		$this->link_publisher          = new VRodos_Compiler_Link_Publisher(
+			[ $this, 'runtime_url_for_file' ],
+			(string) $this->runtime_link_settings['default_link_mode'],
+			$this->primary_runtime_mode()
+		);
 	}
 
 	public function compile_aframe( $project_id, $scene_id_list, $showPawnPositions, $runtime_mode = null ) {
-
-		// Ensure output directory exists before writing compiled files
-		$build_dir = VRodos_Path_Manager::runtime_build_path();
-		if ( ! is_dir( $build_dir ) ) {
-			wp_mkdir_p( $build_dir );
-		}
-
 		$context = $this->scene_repository->load_compile_context( (int) $project_id, (array) $scene_id_list );
 		if ( ! empty( $context['error'] ) ) {
-			return wp_json_encode( [ 'error' => $context['error'] ] );
+			return wp_json_encode( [ 'error' => (string) $context['error'] ] );
 		}
 
-		$project_title   = $context['project_title'];
-		$scene_json      = $context['scene_json'];
-		$scene_title     = $context['scene_title'];
-		$valid_scene_ids = $context['valid_scene_ids'];
-		$is_vrexpo       = $context['is_vrexpo'];
-		$first_scene_id  = $context['first_scene_id'];
-		$last_scene_id   = $context['last_scene_id'];
 		$first_scene_json = $context['first_scene_json'];
-
-		$this->runtime_mode = $this->resolve_runtime_mode( $runtime_mode, $first_scene_json );
-		if ( $this->is_networked_runtime() ) {
-			$this->start_networked_aframe_server();
+		$metadata         = is_object( $first_scene_json->metadata ?? null ) ? $first_scene_json->metadata : new stdClass();
+		$request          = new VRodos_Compile_Request(
+			(int) $project_id,
+			(int) ( $context['last_scene_id'] ?? 0 ),
+			(array) $context['valid_scene_ids'],
+			$this->runtime_feature_flags->runtime_mode_for_scene( $first_scene_json, $runtime_mode ),
+			(string) VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrRuntimeProfile', 'desktop' ),
+			VRodos_Runtime_Settings_Contract::normalize_bool( $showPawnPositions, false )
+		);
+		$result = $this->compile( $request );
+		if ( is_wp_error( $result ) ) {
+			return wp_json_encode( [ 'error' => $result->get_error_message(), 'code' => $result->get_error_code() ] );
 		}
 
-		$this->isHoverEnabled = $first_scene_json->metadata->aframeHoveringInteractables ?? true;
-		$this->entity_renderer->configure( $this->plugin_path_url, (bool) $this->isHoverEnabled );
+		return wp_json_encode( $result->to_legacy_payload() );
+	}
 
-		foreach ( $valid_scene_ids as $key => $value ) {
-			if ( $this->is_networked_runtime() && ! $is_vrexpo ) {
-				$this->createIndexFile( $project_title, $value, $scene_title );
+	public function compile( VRodos_Compile_Request $request ): VRodos_Compile_Result|WP_Error {
+		if ( $request->project_id <= 0 || empty( $request->scene_ids ) ) {
+			return new WP_Error( 'vrodos_compile_invalid_request', 'A project and at least one scene are required.', [ 'status' => 400 ] );
+		}
+
+		$context = $this->scene_repository->load_compile_context( $request->project_id, $request->scene_ids, $request->selected_scene_id );
+		if ( ! empty( $context['error'] ) ) {
+			return new WP_Error( 'vrodos_compile_invalid_context', (string) $context['error'], [ 'status' => 400 ] );
+		}
+
+		try {
+			$plan               = $this->plan_resolver->resolve( $request, $context );
+			$this->runtime_mode = $request->runtime_mode;
+			$this->template_renderer->begin_capture();
+			$render_warnings = [];
+
+			foreach ( $plan->scenes as $scene_plan ) {
+				$this->entity_renderer->configure( $this->plugin_path_url, $scene_plan->hover_enabled );
+				if ( $plan->is_networked() && ! $plan->is_vrexpo() ) {
+					// Preserve the established index heading contract: every index uses the first scene title.
+					$this->createIndexFile( $plan->project_title, $scene_plan->scene_id, $plan->scenes[0]->title );
+				}
+				$this->createMasterClient(
+					$scene_plan->scene_id,
+					$scene_plan->title,
+					$scene_plan->scene_json,
+					$request->show_pawn_positions_attr(),
+					$request->project_id,
+					$plan->scene_ids(),
+					$scene_plan->settings,
+					$scene_plan->chunk_ids,
+					$scene_plan->diagnostics
+				);
+				$render_warnings = array_merge( $render_warnings, (array) ( $this->runtime_page_builder->last_compile_diagnostics()['warnings'] ?? [] ) );
+				if ( $plan->is_networked() && ! $plan->is_vrexpo() ) {
+					$this->createSimpleClient(
+						$scene_plan->scene_id,
+						$scene_plan->scene_json,
+						$request->project_id,
+						$request->show_pawn_positions_attr(),
+						$scene_plan->settings,
+						$scene_plan->diagnostics
+					);
+					$render_warnings = array_merge( $render_warnings, (array) ( $this->runtime_page_builder->last_compile_diagnostics()['warnings'] ?? [] ) );
+				}
 			}
-			$this->createMasterClient( $value, $scene_title, $scene_json[ $key ], $showPawnPositions, $key, $project_id, $valid_scene_ids );
-			if ( $this->is_networked_runtime() && ! $is_vrexpo ) {
-				$this->createSimpleClient( $value, $scene_json[ $key ], $project_id );
+
+			$artifacts = $this->template_renderer->finish_capture();
+			$this->artifact_transaction->commit( $request->project_id, $artifacts );
+
+			$warnings = $render_warnings;
+			foreach ( $plan->scenes as $scene_plan ) {
+				$warnings = array_merge( $warnings, $scene_plan->diagnostics );
 			}
+
+			$network_ready = null;
+			if ( $plan->is_networked() ) {
+				try {
+					$network_ready = $this->network_runtime_service->ensure_started();
+				} catch ( Throwable $startup_error ) {
+					$network_ready = false;
+					error_log( '[VRodos] Network runtime startup failed after compile: ' . $startup_error->getMessage() );
+				}
+				if ( ! $network_ready ) {
+					$warnings[] = 'Compiled files were published, but the network runtime could not be started automatically.';
+				}
+			}
+
+			return $this->link_publisher->publish( $plan, $artifacts, $warnings, $network_ready );
+		} catch ( Throwable $error ) {
+			$this->template_renderer->abort_capture();
+			error_log( '[VRodos] Compile failed for project #' . $request->project_id . ': ' . $error->getMessage() );
+			$status  = 409 === (int) $error->getCode() ? 409 : 500;
+			$message = 409 === $status ? $error->getMessage() : 'Scene compilation failed. Check the server log for details.';
+			return new WP_Error( 'vrodos_compile_failed', $message, [ 'status' => $status ] );
 		}
-
-		$master_scene_id  = ( $is_vrexpo ? $first_scene_id : $last_scene_id );
-		$master_filename  = 'Master_Client_' . $master_scene_id . '.html';
-		$result           = [
-			'DefaultLinkMode' => $this->runtime_link_settings['default_link_mode'],
-			'PrimaryLinkMode' => $this->is_single_player_runtime() ? 'static' : $this->primary_runtime_mode(),
-			'RuntimeMode'     => $this->runtime_mode,
-			'MasterClient'    => $this->runtime_url_for_file( $master_filename ),
-		];
-		if ( $this->is_networked_runtime() ) {
-			$this->append_runtime_link_variants( $result, 'MasterClient', $master_filename );
-		}
-
-		if ( $this->is_networked_runtime() && ! $is_vrexpo ) {
-			$index_filename         = 'index_' . $last_scene_id . '.html';
-			$simple_client_filename = 'Simple_Client_' . $last_scene_id . '.html';
-
-			$result['index']        = $this->runtime_url_for_file( $index_filename );
-			$result['SimpleClient'] = $this->runtime_url_for_file( $simple_client_filename );
-			$this->append_runtime_link_variants( $result, 'Index', $index_filename );
-			$this->append_runtime_link_variants( $result, 'SimpleClient', $simple_client_filename );
-		}
-
-		return json_encode( $result );
 	}
 
 	public static function normalize_runtime_mode( $runtime_mode ): string {
 		return VRodos_Compiler_Runtime_Feature_Flags::normalize_runtime_mode_value( $runtime_mode );
-	}
-
-	private function resolve_runtime_mode( $runtime_mode, $first_scene_json ): string {
-		return $this->runtime_feature_flags->runtime_mode_for_scene( $first_scene_json, $runtime_mode );
 	}
 
 	private function is_networked_runtime(): bool {
@@ -150,30 +200,6 @@ class VRodos_Compiler_Manager {
 
 	private function is_single_player_runtime(): bool {
 		return $this->runtime_feature_flags->is_single_player_runtime( $this->runtime_mode );
-	}
-
-	private function start_networked_aframe_server(): void {
-		$server_script = VRodos_Path_Manager::networked_aframe_server_path();
-
-		if ( PHP_OS == 'WINNT' ) {
-			$strCmd = 'node "' . str_replace( '"', '\"', $server_script ) . '"';
-			popen( 'start "" ' . $strCmd, 'r' );
-			return;
-		}
-
-		$strCmd = 'node ' . escapeshellarg( $server_script );
-		if ( ! $this->processExists( 'vrodos-network-runtime' ) ) {
-			shell_exec( $strCmd . ' > /dev/null 2>/dev/null &' );
-		}
-	}
-
-	private function processExists( $processName ) {
-		$exists = false;
-		exec( "ps -A | grep -i $processName | grep -v grep", $pids );
-		if ( count( $pids ) > 0 ) {
-			$exists = true;
-		}
-		return $exists;
 	}
 
 	public function nodeJSpath() {
@@ -289,14 +315,6 @@ class VRodos_Compiler_Manager {
 		return 'local';
 	}
 
-	private function append_runtime_link_variants( array &$result, string $field, string $filename ): void {
-		$result[ 'Local' . $field ] = $this->runtime_url_for_file( $filename, 'local' );
-
-		if ( '' !== $this->runtime_link_settings['public_base_url'] ) {
-			$result[ 'Public' . $field ] = $this->runtime_url_for_file( $filename, 'public' );
-		}
-	}
-
 	/**
 	 * Normalize URLs by stripping the 'localhost' domain and converting to relative paths.
 	 * This fixes CORS and PNA issues when accessed via IP, because Node.js serves them as relative to itself.
@@ -323,10 +341,6 @@ class VRodos_Compiler_Manager {
 		return $url;
 	}
 
-	private function get_project_type_slug( int $project_id ): string {
-		return $this->scene_repository->get_project_type_slug( $project_id );
-	}
-
 	private function get_avatar_camera_position_attribute( $scene_json ): string {
 		$position = $scene_json->objects->avatarCamera->position ?? [0, 1.6, 0];
 		$position = is_array( $position ) ? $position : (array) $position;
@@ -341,53 +355,31 @@ class VRodos_Compiler_Manager {
 		return implode( ' ', $values );
 	}
 
-	private function create_runtime_dom_structure( string $content, $scene_json, string $body_id ): array {
-		return $this->runtime_page_builder->create_dom_structure( $content, $scene_json, $body_id );
-	}
-
-	private function createBasicDomStructureAframeActor( $content, $scene_json ) {
-		return $this->create_runtime_dom_structure( (string) $content, $scene_json, 'simple-client-body' );
-	}
-
 	private function createBasicDomStructureAframeDirector( $content, $scene_json, $project_id, $scene_id, $scene_id_list ) {
-		$dom_elements = $this->create_runtime_dom_structure( (string) $content, $scene_json, 'master-client-body' );
+		$dom_elements = $this->runtime_page_builder->create_dom_structure( (string) $content, $scene_json, 'master-client-body' );
 		$dom          = $dom_elements['dom'];
 		$ascene       = $dom_elements['ascene'];
 		$ascenePlayer = $dom->getElementById( 'player' );
 
-		// If MediaVerse project, then enable upload to MV Node.
+		// Virtual-production recording uploads use the authenticated WordPress proxy.
 		$media_panel        = $dom->getElementById( 'mediaPanel' );
 		$recording_controls = $dom->getElementById( 'upload-recording-btn' );
-		$project_type       = wp_get_post_terms( $project_id, 'vrodos_game_type' );
-		if ( $project_type && $project_type[0]->slug == 'virtualproduction_games' ) {
-			$media_panel->setAttribute( 'style', 'visibility: visible;' );
-			$recording_controls->setAttribute( 'style', 'visibility: visible;' );
-
-			// If MediaVerse project, get MV node url, in order to upload video and update project
-			$user_id = get_current_user_id();
-			if ( $user_id ) {
-				$token            = get_the_author_meta( 'mvnode_token', $user_id );
-				$node_token_input = $dom->getElementById( 'node-token-input' );
-				$node_token_input->setAttribute( 'value', $token );
-
-				$url            = get_the_author_meta( 'mvnode_url', $user_id );
-				$node_url_input = $dom->getElementById( 'node-url-input' );
-				$node_url_input->setAttribute( 'value', $url );
-
+		$project_type       = $this->scene_repository->get_project_type_slug( (int) $project_id );
+		if ( 'virtualproduction_games' === $project_type ) {
+			if ( $media_panel instanceof DOMElement ) {
+				$media_panel->setAttribute( 'style', 'visibility: visible;' );
+				$media_panel->setAttribute( 'data-vrodos-mediaverse-proxy', 'true' );
 			}
-
-			// If there is a MV project id, then forward it to client
-			$mv_project_id = get_post_meta( $project_id, 'mv_project_id' );
-			if ( ! empty( $mv_project_id ) ) {
-				$mv_project_id_input = $dom->getElementById( 'mv-project-id-input' );
-				$mv_project_id_input->setAttribute( 'value', $mv_project_id[0] );
+			if ( $recording_controls instanceof DOMElement ) {
+				$recording_controls->setAttribute( 'style', 'visibility: visible;' );
 			}
-
-			$dom->saveHTML();
 		} else {
-
-			$media_panel->setAttribute( 'style', 'visibility: hidden;' );
-			$recording_controls->setAttribute( 'style', 'visibility: hidden;' );
+			if ( $media_panel instanceof DOMElement ) {
+				$media_panel->setAttribute( 'style', 'visibility: hidden;' );
+			}
+			if ( $recording_controls instanceof DOMElement ) {
+				$recording_controls->setAttribute( 'style', 'visibility: hidden;' );
+			}
 		}
 
 		// Toggle general chat
@@ -415,14 +407,10 @@ class VRodos_Compiler_Manager {
 		return $dom_elements;
 	}
 
-	private function prepare_runtime_template( string $template, array $replacements ): string {
-		return $this->runtime_page_builder->prepare_template( $template, $replacements );
-	}
-
-	private function createIndexFile( $project_title, $scene_id, $scene_title ) {
+	private function createIndexFile( $project_title, $scene_id, string $scene_title ) {
 		$content        = $this->template_renderer->read_runtime_template( 'index_prototype.html' );
 		$content        = str_replace( 'Client.html', 'Client_' . $scene_id . '.html', $content );
-		$content        = str_replace( 'project_sceneId', $project_title . ' - ' . $scene_title[0], $content );
+		$content        = str_replace( 'project_sceneId', $project_title . ' - ' . $scene_title, $content );
 		$content        = $this->runtime_assets->replace_placeholders( $content );
 		$content        = str_replace(
 			'VRODOS_PLUGIN_URL_PLACEHOLDER',
@@ -432,15 +420,47 @@ class VRodos_Compiler_Manager {
 		return $this->template_renderer->write_runtime_build( 'index_' . $scene_id . '.html', $content );
 	}
 
-	private function createMasterClient( $scene_id, $scene_title, $scene_json, $showPawnPositions, $index, $project_id, $scene_id_list ) {
+	private function createMasterClient(
+		$scene_id,
+		string $scene_title,
+		$scene_json,
+		$showPawnPositions,
+		$project_id,
+		$scene_id_list,
+		array $resolved_settings = [],
+		array $chunk_ids = [],
+		array $compile_diagnostics = []
+	) {
+		$runtime_profile = (string) ( $resolved_settings['vrRuntimeProfile'] ?? VRodos_Runtime_Settings_Contract::normalize_metadata_value(
+			is_object( $scene_json->metadata ?? null ) ? $scene_json->metadata : new stdClass(),
+			'vrRuntimeProfile',
+			'desktop'
+		) );
+		$lean_single_player_headset = $this->is_single_player_runtime() && 'headset' === $runtime_profile;
+		$network_vendor_scripts = $this->is_networked_runtime()
+			? '<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>' . "\n    "
+				. '<script src="../easyrtc/easyrtc.js"></script>' . "\n    "
+				. '<script src="../dist/networked-aframe.js"></script>'
+			: '';
+		$extras_script = $lean_single_player_headset
+			? ''
+			: '<script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.7.0/dist/aframe-extras.min.js"></script>';
+		$environment_script = ! $lean_single_player_headset || $this->target_renderer->uses_legacy_environment_background( $resolved_settings )
+			? '<script src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.5.0/dist/aframe-environment-component.min.js"></script>'
+			: '';
 
-		$content = $this->prepare_runtime_template(
+		$content = $this->runtime_page_builder->prepare_template(
 			'Master_Client_prototype.html',
 			[
 				'roomname'                           => 'room' . $scene_id,
 				'AFRAME_RUNTIME_URL_PLACEHOLDER'     => esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ),
 				'VRODOS_RUNTIME_MODE_PLACEHOLDER'    => esc_js( $this->runtime_mode ),
-				'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER' => $this->runtime_script_planner()->render_scripts_for_scene( $scene_json, $this->runtime_mode ),
+				'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER' => ! empty( $chunk_ids )
+					? $this->runtime_script_planner->render_scripts_for_chunk_ids( $chunk_ids )
+					: $this->runtime_script_planner->render_scripts_for_scene( $scene_json, $this->runtime_mode ),
+				'VRODOS_NETWORK_VENDOR_SCRIPTS_PLACEHOLDER' => $network_vendor_scripts,
+				'VRODOS_AFRAME_EXTRAS_SCRIPT_PLACEHOLDER'  => $extras_script,
+				'VRODOS_ENVIRONMENT_SCRIPT_PLACEHOLDER'    => $environment_script,
 				'VRODOS_PLUGIN_URL_PLACEHOLDER'      => esc_js( $this->plugin_path_url ),
 			]
 		);
@@ -452,96 +472,27 @@ class VRodos_Compiler_Manager {
 		$ascenePlayer = $basicDomElements['ascenePlayer'];
 		$camera_position_attr = $this->get_avatar_camera_position_attribute( $scene_json );
 
-		$projectType = $this->get_project_type_slug( (int) $project_id );
-		$runtime_profile = VRodos_Runtime_Settings_Contract::normalize_metadata_value(
-			is_object( $scene_json->metadata ?? null ) ? $scene_json->metadata : new stdClass(),
-			'vrRuntimeProfile',
-			'desktop'
-		);
-		$lean_single_player_headset = $this->is_single_player_runtime() && 'headset' === $runtime_profile;
-		
-		$dom->getElementsByTagName( 'title' )->item( 0 )->nodeValue = $scene_title[ $index ];
+		$projectType = $this->scene_repository->get_project_type_slug( (int) $project_id );
+
+		$dom->getElementsByTagName( 'title' )->item( 0 )->nodeValue = $scene_title;
 
 		if ( $this->is_networked_runtime() ) {
 			$enable_director_audio = ( $projectType == 'vrexpo_games' ) ? 'false' : 'true';
 			$app_name              = ( $projectType == 'vrexpo_games' ) ? 'vrexpo' : 'vrodos';
 			$ascene->setAttribute( 'networked-scene', "app: $app_name; room: room$scene_id; debug: false; audio: $enable_director_audio; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;" );
+			$this->target_renderer->apply_networking( $dom );
 		} else {
 			$ascene->removeAttribute( 'networked-scene' );
 		}
 
-		if ( $projectType == 'vrexpo_games' ) {
-			$ascenePlayer->setAttribute( 'custom-movement', '' );
-			if ( ! $lean_single_player_headset ) {
-				$ascenePlayer->setAttribute( 'show-position', '' );
-			}
-
-			// OCULUS
-			$a_camera = $dom->createElement( 'a-camera' );
-			$a_camera->setAttribute( 'camera', 'active: true; near: 0.1; far: 7000; fov: 60' );
-			$a_camera->setAttribute( 'id', 'cameraA' );
-			$a_camera->setAttribute( 'position', $camera_position_attr );
-			if ( $this->is_networked_runtime() ) {
-				$a_camera->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
-			}
-			$a_camera->setAttribute( 'player-info', '' );
-			$a_camera->setAttribute( 'avatar-movement-info', '' );
-			$a_camera->setAttribute( 'look-controls', '' );
-			if ( ! $lean_single_player_headset ) {
-				$a_camera->setAttribute( 'entity-movement-emitter', '' );
-			}
-
-			$a_cursor = $dom->createElement( 'a-entity' );
-			$a_cursor->setAttribute( 'id', 'cursor' );
-			$a_cursor->setAttribute( 'cursor', 'rayOrigin: mouse; fuse: false' );
-			$a_cursor->setAttribute( 'raycaster', 'objects: .raycastable' );
-
-			$a_entity_oc_right = $dom->createElement( 'a-entity' );
-			$a_entity_oc_right->setAttribute( 'id', 'oculusRight' );
-			$a_entity_oc_right->setAttribute( 'laser-controls', 'hand: right' );
-			$a_entity_oc_right->setAttribute( 'raycaster', 'objects: .raycastable' );
-
-			$a_entity_oc_left = $dom->createElement( 'a-entity' );
-			$a_entity_oc_left->setAttribute( 'id', 'oculusLeft' );
-			$a_entity_oc_left->setAttribute( 'laser-controls', 'hand: left' );
-			$a_entity_oc_left->setAttribute( 'raycaster', 'objects: .raycastable' );
-
-			$a_camera->appendChild( $a_cursor );
-			$ascenePlayer->appendChild( $a_camera );
-			$ascenePlayer->appendChild( $a_entity_oc_right );
-			$ascenePlayer->appendChild( $a_entity_oc_left );
-
-		} else {
-			$ascenePlayer->setAttribute( 'position', $camera_position_attr );
-			if ( $this->is_networked_runtime() ) {
-				$ascenePlayer->setAttribute( 'networked', 'template:#avatar-template;attachTemplateToLocal:false;' );
-			}
-			$ascenePlayer->setAttribute( 'custom-movement', '' );
-			if ( ! $lean_single_player_headset ) {
-				$ascenePlayer->setAttribute( 'show-position', '' );
-			}
-			$ascenePlayer->setAttribute( 'wasd-controls', 'fly:false; acceleration:20' );
-			$ascenePlayer->setAttribute( 'look-controls', 'pointerLockEnabled: false' );
-
-			$a_cursor = $dom->createElement( 'a-entity' );
-			$a_cursor->setAttribute( 'id', 'cursor' );
-			$a_cursor->setAttribute( 'cursor', 'rayOrigin: mouse; fuse: false' );
-			$a_cursor->setAttribute( 'raycaster', 'objects: .raycastable' );
-
-			$a_entity = $dom->createElement( 'a-entity' );
-			$a_entity->setAttribute( 'id', 'cameraA' );
-			$a_entity->setAttribute( 'active', 'true' );
-			$a_entity->setAttribute( 'camera', 'near: 0.1; far: 7000.0;' );
-			$a_entity->setAttribute( 'position', '0 0 0' );
-			if ( $this->is_networked_runtime() ) {
-				$a_entity->setAttribute( 'networked', 'template:#avatar-template-expo;attachTemplateToLocal:false' );
-			}
-			$a_entity->setAttribute( 'player-info', '' );
-			$a_entity->setAttribute( 'avatar-movement-info', '' );
-
-			$a_entity->appendChild( $a_cursor );
-			$ascenePlayer->appendChild( $a_entity );
-		}
+		$this->target_renderer->apply_player_rig(
+			$dom,
+			$ascenePlayer,
+			$projectType,
+			$camera_position_attr,
+			$this->is_networked_runtime(),
+			$lean_single_player_headset
+		);
 
 		// print($scene_id)
 
@@ -554,6 +505,8 @@ class VRodos_Compiler_Manager {
 			(int) $scene_id,
 			[
 				'scene_loader'    => true,
+				'resolved_scene_settings' => $resolved_settings,
+				'compile_diagnostics'     => $compile_diagnostics,
 				'render_options'  => [
 					'showPawnPositions' => $showPawnPositions,
 				],
@@ -562,11 +515,11 @@ class VRodos_Compiler_Manager {
 
 		if ( $lean_single_player_headset ) {
 			$compiled_scene_settings = VRodos_Compiler_AFrame_DOM_Helper::parse_component_attribute( $ascene->getAttribute( 'scene-settings' ) );
-			$this->runtime_dom_transformer->apply_lean_headset_mode( $dom, $ascene, $compiled_scene_settings );
+			$this->target_renderer->apply_lean_headset_mode( $ascene, $compiled_scene_settings );
 		}
 
 		if ( $this->is_single_player_runtime() ) {
-			$this->runtime_dom_transformer->apply_single_player_mode( $dom, $ascene );
+			$this->target_renderer->apply_single_player_mode( $dom, $ascene );
 		}
 
 		return $this->runtime_page_builder->write_dom(
@@ -577,30 +530,43 @@ class VRodos_Compiler_Manager {
 		);
 	}
 
-	private function createSimpleClient( $scene_id, $scene_json, $project_id ) {
+	private function createSimpleClient( $scene_id, $scene_json, $project_id, string $show_pawn_positions, array $resolved_settings = [], array $compile_diagnostics = [] ) {
 
-		$projectType = $this->get_project_type_slug( (int) $project_id );
+		$projectType = $this->scene_repository->get_project_type_slug( (int) $project_id );
 		$app_name    = ( $projectType == 'vrexpo_games' ) ? 'vrexpo' : 'vrodos';
-		$content     = $this->prepare_runtime_template(
+		$content     = $this->runtime_page_builder->prepare_template(
 			'Simple_Client_prototype.html',
 			[
 				'appname'                            => $app_name,
 				'roomname'                           => 'room' . $scene_id,
 				'AFRAME_RUNTIME_URL_PLACEHOLDER'     => esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ),
-				'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER' => $this->runtime_script_planner()->render_scripts_for_chunk_ids( [ 'scene-components' ] ),
+				'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER' => $this->runtime_script_planner->render_scripts_for_chunk_ids( [ 'scene-components' ] ),
 				'VRODOS_PLUGIN_URL_PLACEHOLDER'      => $this->normalize_url( $this->plugin_path_url ),
 			]
 		);
 
 		// Create Basic dom structure for an aframe page
-		$basicDomElements = $this->createBasicDomStructureAframeActor( $content, $scene_json );
+		$basicDomElements = $this->runtime_page_builder->create_dom_structure( $content, $scene_json, 'simple-client-body' );
 
 		$dom        = $basicDomElements['dom'];
 		$objects    = $basicDomElements['objects'];
 		$actionsDiv = $basicDomElements['actionsDiv'];
 		$ascene     = $basicDomElements['ascene'];
 
-		$this->runtime_page_builder->apply_scene_core( $dom, $ascene, $scene_json, (int) $project_id, (int) $scene_id );
+		$this->runtime_page_builder->apply_scene_core(
+			$dom,
+			$ascene,
+			$scene_json,
+			(int) $project_id,
+			(int) $scene_id,
+			[
+				'resolved_scene_settings' => $resolved_settings,
+				'compile_diagnostics'     => $compile_diagnostics,
+				'render_options'          => [
+					'showPawnPositions' => $show_pawn_positions,
+				],
+			]
+		);
 		$i = 0;
 		foreach ( $objects as $contentObject ) {
 
@@ -657,11 +623,4 @@ class VRodos_Compiler_Manager {
 		);
 	}
 
-	private function runtime_script_planner(): VRodos_Compiler_Runtime_Script_Planner {
-		if ( null === $this->runtime_script_planner ) {
-			$this->runtime_script_planner = new VRodos_Compiler_Runtime_Script_Planner( new VRodos_Compiler_Runtime_Manifest(), $this->runtime_feature_flags );
-		}
-
-		return $this->runtime_script_planner;
-	}
 }

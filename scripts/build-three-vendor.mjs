@@ -180,7 +180,7 @@ function versionSatisfiesDeclaration(version, declaration) {
   return declaration === version;
 }
 
-function validateRuntimeVersions() {
+async function validateRuntimeVersions() {
   for (const packageName of requiredPackages) {
     const declaration = getDeclaredDependency(packageName);
     const lockedVersion = getLockedPackageVersion(packageName);
@@ -192,6 +192,13 @@ function validateRuntimeVersions() {
     if (!versionSatisfiesDeclaration(lockedVersion, declaration)) {
       throw new Error(
         `${packageName}@${lockedVersion} from package-lock.json does not satisfy package.json declaration ${declaration}.`
+      );
+    }
+
+    const installedManifest = JSON.parse(await readFile(path.join(rootDir, 'node_modules', packageName, 'package.json'), 'utf8'));
+    if (installedManifest.version !== lockedVersion) {
+      throw new Error(
+        `${packageName} is installed at ${installedManifest.version}, but package-lock.json requires ${lockedVersion}. Reset node_modules with npm ci before building.`
       );
     }
   }
@@ -854,7 +861,7 @@ async function writeRuntimeManifest(aframeArtifact) {
 }
 
 async function main() {
-  validateRuntimeVersions();
+  await validateRuntimeVersions();
   const aframeArtifact = await syncAframeRuntimeArtifact();
   await rm(outputDir, { recursive: true, force: true });
   await buildBundle();

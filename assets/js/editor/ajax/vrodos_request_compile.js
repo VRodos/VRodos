@@ -29,29 +29,40 @@ VRODOS.utils = VRODOS.utils || {};
 			'';
 	}
 
-	function buildCompileUrl(projectId, sceneId, showPawnPositions) {
+	function buildCompileRequest(projectId, sceneId, showPawnPositions) {
+		const scene = VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene : {};
 		const params = new URLSearchParams({
 			action: 'vrodos_compile_action',
 			projectId,
 			showPawnPositions,
-			vrodos_scene: sceneId
+			vrodos_scene: sceneId,
+			runtimeMode: scene.aframeRuntimeMode === 'networked' ? 'networked' : 'single-player',
+			vrRuntimeProfile: scene.aframeVrRuntimeProfile || 'desktop',
+			nonce: VRODOS.config.compileNonce || VRODOS.data.compile_nonce || (window.vrodos_api_config && window.vrodos_api_config.compileNonce) || ''
 		});
 		const ajaxBase = VRODOS.config.isAdmin === 'back' ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl();
-		return `${ajaxBase}?${params.toString()}`;
+		return { url: ajaxBase, body: params };
 	}
 
 	function parseCompileResponse(response) {
 		return response.text().then((text) => {
-			if (!response.ok) {
+			let payload;
+			try {
+				payload = JSON.parse(text);
+			} catch (error) {
 				throw new Error(text || `Compile request failed with HTTP ${response.status}`);
 			}
-			return JSON.parse(text);
+			if (!response.ok) {
+				const errorData = payload && payload.data;
+				throw new Error((errorData && errorData.message) || errorData || `Compile request failed with HTTP ${response.status}`);
+			}
+			return payload;
 		});
 	}
 
 	function assertCompileSuccess(urls) {
 		if (urls && urls.success === false) {
-			throw new Error(urls.data || 'Compile failed.');
+			throw new Error((urls.data && urls.data.message) || urls.data || 'Compile failed.');
 		}
 		return urls || {};
 	}
@@ -67,8 +78,14 @@ VRODOS.utils = VRODOS.utils || {};
 
 	function runCompileRequest(projectId, sceneId, resolvedShowPawnPositions) {
 		dialogState.showStartedState();
+		const request = buildCompileRequest(projectId, sceneId, resolvedShowPawnPositions);
 
-		fetch(buildCompileUrl(projectId, sceneId, resolvedShowPawnPositions))
+		fetch(request.url, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+			body: request.body.toString()
+		})
 			.then(parseCompileResponse)
 			.then(assertCompileSuccess)
 			.then((urls) => {

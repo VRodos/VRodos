@@ -113,21 +113,22 @@ $manifest = new VRodos_Compiler_Runtime_Manifest(
 		'schemaVersion' => 1,
 		'chunks'        => [
 			'scene-components'             => vrodos_test_chunk( 'scene-components', 'script', 'js/master/lib/vrodos-runtime-scene-components.bundle.js', 10 ),
-			'spatial-ui'                   => vrodos_test_chunk( 'spatial-ui', 'script', 'js/master/lib/vrodos-runtime-spatial-ui.bundle.js', 12, [ 'scene-components' ] ),
-			'networked-components'         => vrodos_test_chunk( 'networked-components', 'script', 'js/master/lib/vrodos-runtime-networked-components.bundle.js', 15 ),
+			'spatial-ui'                   => vrodos_test_chunk( 'spatial-ui', 'script', 'js/master/lib/vrodos-runtime-spatial-ui.bundle.js', 12, [ 'scene-components' ], [ 'activationCapabilities' => [ 'spatial-ui' ] ] ),
+			'networked-components'         => vrodos_test_chunk( 'networked-components', 'script', 'js/master/lib/vrodos-runtime-networked-components.bundle.js', 15, [], [ 'activationCapabilities' => [ 'networking' ] ] ),
 			'core-runtime'                 => vrodos_test_chunk( 'core-runtime', 'script', 'js/master/lib/vrodos-runtime-core.bundle.js', 20 ),
 			'fps-meter'                    => vrodos_test_chunk( 'fps-meter', 'inline-module', '', 30, [], [
 				'moduleImport' => 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js',
 				'readyGlobal'  => 'VRODOS_STATS_READY',
 				'global'       => 'Stats',
 				'export'       => 'default',
+				'activationCapabilities' => [ 'fps-meter' ],
 			] ),
-			'collision-bvh-vendor'         => vrodos_test_chunk( 'collision-bvh-vendor', 'script', 'js/master/lib/vrodos-collision-bvh.bundle.js', 32 ),
+			'collision-bvh-vendor'         => vrodos_test_chunk( 'collision-bvh-vendor', 'script', 'js/master/lib/vrodos-collision-bvh.bundle.js', 32, [], [ 'activationCapabilities' => [ 'collision-bvh' ] ] ),
 			'pmndrs-postprocessing-vendor' => vrodos_test_chunk( 'pmndrs-postprocessing-vendor', 'script', 'js/master/lib/vrodos-postprocessing.bundle.js', 35 ),
-			'legacy-postfx'                => vrodos_test_chunk( 'legacy-postfx', 'script', 'js/master/lib/vrodos-runtime-legacy-postfx.bundle.js', 40 ),
-			'takram-atmosphere'            => vrodos_test_chunk( 'takram-atmosphere', 'script', 'js/master/lib/vrodos-takram-atmosphere.bundle.js', 45, [ 'pmndrs-postprocessing-vendor' ] ),
-			'takram-clouds'                => vrodos_test_chunk( 'takram-clouds', 'script', 'js/master/lib/vrodos-takram-clouds.bundle.js', 46, [ 'takram-atmosphere' ] ),
-			'pmndrs-postfx'                => vrodos_test_chunk( 'pmndrs-postfx', 'script', 'js/master/lib/vrodos-runtime-pmndrs-postfx.bundle.js', 50, [ 'pmndrs-postprocessing-vendor' ] ),
+			'legacy-postfx'                => vrodos_test_chunk( 'legacy-postfx', 'script', 'js/master/lib/vrodos-runtime-legacy-postfx.bundle.js', 40, [], [ 'activationCapabilities' => [ 'postfx:legacy' ] ] ),
+			'takram-atmosphere'            => vrodos_test_chunk( 'takram-atmosphere', 'script', 'js/master/lib/vrodos-takram-atmosphere.bundle.js', 45, [ 'pmndrs-postprocessing-vendor' ], [ 'activationCapabilities' => [ 'atmosphere:takram' ] ] ),
+			'takram-clouds'                => vrodos_test_chunk( 'takram-clouds', 'script', 'js/master/lib/vrodos-takram-clouds.bundle.js', 46, [ 'takram-atmosphere' ], [ 'activationCapabilities' => [ 'clouds:takram' ] ] ),
+			'pmndrs-postfx'                => vrodos_test_chunk( 'pmndrs-postfx', 'script', 'js/master/lib/vrodos-runtime-pmndrs-postfx.bundle.js', 50, [ 'pmndrs-postprocessing-vendor' ], [ 'activationCapabilities' => [ 'postfx:pmndrs' ] ] ),
 			'aframe-components'            => vrodos_test_chunk( 'aframe-components', 'script', 'js/master/lib/vrodos-runtime-aframe-components.bundle.js', 90, [ 'core-runtime' ] ),
 		],
 	]
@@ -430,7 +431,24 @@ vrodos_assert_manifest_error(
 	'feature coverage validation'
 );
 
+vrodos_assert_manifest_error(
+	[
+		'schemaVersion' => 1,
+		'chunks'        => [
+			'a' => vrodos_test_chunk( 'a', 'script', 'a.js', 10, [], [ 'activationCapabilities' => [ 'same-capability' ] ] ),
+			'b' => vrodos_test_chunk( 'b', 'script', 'b.js', 20, [], [ 'activationCapabilities' => [ 'same-capability' ] ] ),
+		],
+	],
+	'declared by multiple chunks',
+	'duplicate activation capability validation'
+);
+
 $actual_manifest = new VRodos_Compiler_Runtime_Manifest();
+vrodos_assert_same(
+	[ 'networked-components', 'takram-atmosphere', 'takram-clouds', 'collision-bvh-vendor' ],
+	$actual_manifest->chunk_ids_for_activation_capabilities( [ 'networking', 'collision-bvh', 'atmosphere:takram', 'clouds:takram' ] ),
+	'actual manifest capability lookup'
+);
 vrodos_assert_same(
 	[ 'scene-components', 'networked-components', 'three-addons-vendor', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ],
 	$actual_manifest->resolve_chunk_ids( [ 'scene-components', 'networked-components', 'core-runtime', 'collision-bvh-vendor', 'aframe-components' ] ),

@@ -71,6 +71,39 @@ class VRodos_Compiler_Runtime_Manifest {
 		);
 	}
 
+	/**
+	 * Resolve optional runtime chunks from canonical compile capabilities.
+	 *
+	 * @return string[]
+	 */
+	public function chunk_ids_for_activation_capabilities( array $capabilities ): array {
+		$requested = array_values( array_unique( array_filter( array_map( 'strval', $capabilities ) ) ) );
+		$matched   = [];
+		$found     = [];
+
+		foreach ( $this->manifest['chunks'] as $chunk_id => $chunk ) {
+			foreach ( (array) ( $chunk['activationCapabilities'] ?? [] ) as $capability ) {
+				$capability = (string) $capability;
+				if ( in_array( $capability, $requested, true ) ) {
+					$matched[]            = (string) $chunk_id;
+					$found[ $capability ] = true;
+				}
+			}
+		}
+
+		$missing = array_values(
+			array_filter(
+				$requested,
+				static fn ( string $capability ): bool => empty( $found[ $capability ] )
+			)
+		);
+		if ( ! empty( $missing ) ) {
+			throw new RuntimeException( '[VRodos] Runtime capabilities have no activating chunk: ' . implode( ', ', $missing ) );
+		}
+
+		return array_values( array_unique( $matched ) );
+	}
+
 	public function script_version_for_chunk( array $chunk ): string {
 		$declared_version = (string) ( $chunk['version'] ?? '' );
 		if ( '' !== $declared_version ) {
@@ -130,6 +163,7 @@ class VRodos_Compiler_Runtime_Manifest {
 		}
 
 		$order_to_chunk_id = [];
+		$activation_to_chunk_id = [];
 		foreach ( $manifest['chunks'] as $chunk_id => $chunk ) {
 			if ( ! is_array( $chunk ) ) {
 				throw new RuntimeException( '[VRodos] Runtime chunk entry is invalid: ' . $chunk_id );
@@ -151,6 +185,20 @@ class VRodos_Compiler_Runtime_Manifest {
 
 			if ( ! isset( $chunk['features'] ) || ! is_array( $chunk['features'] ) || empty( $chunk['features'] ) ) {
 				throw new RuntimeException( '[VRodos] Runtime chunk has no feature coverage declaration: ' . $chunk_id );
+			}
+
+			if ( isset( $chunk['activationCapabilities'] ) && ! is_array( $chunk['activationCapabilities'] ) ) {
+				throw new RuntimeException( '[VRodos] Runtime chunk activation capabilities are invalid: ' . $chunk_id );
+			}
+			foreach ( (array) ( $chunk['activationCapabilities'] ?? [] ) as $capability ) {
+				$capability = trim( (string) $capability );
+				if ( '' === $capability ) {
+					throw new RuntimeException( '[VRodos] Runtime chunk has an empty activation capability: ' . $chunk_id );
+				}
+				if ( isset( $activation_to_chunk_id[ $capability ] ) ) {
+					throw new RuntimeException( '[VRodos] Runtime activation capability is declared by multiple chunks: ' . $capability );
+				}
+				$activation_to_chunk_id[ $capability ] = (string) $chunk_id;
 			}
 
 			if ( 'script' === $chunk['type'] && empty( $chunk['src'] ) ) {

@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/class-vrodos-compiler-runtime-feature-flags.php';
 
 class VRodos_Compiler_Runtime_Script_Planner {
+	private const BASELINE_CHUNK_IDS = [ 'scene-components', 'core-runtime', 'aframe-components' ];
 	private VRodos_Compiler_Runtime_Manifest $manifest;
 	private VRodos_Compiler_Runtime_Feature_Flags $feature_flags;
 
@@ -16,44 +17,74 @@ class VRodos_Compiler_Runtime_Script_Planner {
 	}
 
 	public function script_ids_for_scene( $scene_json, string $runtime_mode = 'networked' ): array {
-		$metadata  = $this->feature_flags->metadata( $scene_json );
-		$requested = [
-			'scene-components',
-		];
+		return $this->script_ids_for_capabilities( $this->capabilities_for_scene( $scene_json, $runtime_mode ) );
+	}
+
+	/**
+	 * Capabilities must be derived from effective settings, after legacy overlay
+	 * and project target policy have been resolved.
+	 *
+	 * @return string[]
+	 */
+	public function capabilities_for_resolved_scene( $scene_json, array $settings ): array {
+		$effective_scene = is_object( $scene_json ) ? clone $scene_json : new stdClass();
+		$metadata        = is_object( $effective_scene->metadata ?? null ) ? clone $effective_scene->metadata : new stdClass();
+		foreach ( VRodos_Runtime_Settings_Contract::settings() as $setting_key => $definition ) {
+			if ( ! is_array( $definition ) || ! array_key_exists( (string) $setting_key, $settings ) ) {
+				continue;
+			}
+			$metadata_key              = VRodos_Runtime_Settings_Contract::metadata_key( (string) $setting_key );
+			$metadata->{$metadata_key} = $settings[ (string) $setting_key ];
+		}
+		$effective_scene->metadata = $metadata;
+
+		return $this->capabilities_for_scene(
+			$effective_scene,
+			(string) ( $settings['runtimeMode'] ?? VRodos_Compiler_Runtime_Feature_Flags::RUNTIME_MODE_SINGLE_PLAYER )
+		);
+	}
+
+	/** @return string[] */
+	public function capabilities_for_scene( $scene_json, string $runtime_mode = 'networked' ): array {
+		$metadata     = $this->feature_flags->metadata( $scene_json );
+		$capabilities = [];
 
 		if ( $this->feature_flags->has_spatial_ui_content( $scene_json ) ) {
-			$requested[] = 'spatial-ui';
+			$capabilities[] = 'spatial-ui';
 		}
 
 		if ( $this->feature_flags->is_networked_runtime( $runtime_mode ) ) {
-			$requested[] = 'networked-components';
+			$capabilities[] = 'networking';
 		}
 
-		$requested[] = 'core-runtime';
-
 		if ( $this->feature_flags->is_fps_meter_enabled( $metadata ) ) {
-			$requested[] = 'fps-meter';
+			$capabilities[] = 'fps-meter';
 		}
 
 		if ( $this->feature_flags->is_static_collision_enabled( $metadata ) ) {
-			$requested[] = 'collision-bvh-vendor';
+			$capabilities[] = 'collision-bvh';
 		}
 
 		if ( $this->feature_flags->is_post_fx_enabled( $metadata ) ) {
-			$requested[] = VRodos_Compiler_Runtime_Feature_Flags::POST_FX_ENGINE_PMNDRS === $this->feature_flags->post_fx_engine( $metadata )
-				? 'pmndrs-postfx'
-				: 'legacy-postfx';
+			$capabilities[] = VRodos_Compiler_Runtime_Feature_Flags::POST_FX_ENGINE_PMNDRS === $this->feature_flags->post_fx_engine( $metadata )
+				? 'postfx:pmndrs'
+				: 'postfx:legacy';
 		}
 
 		if ( $this->feature_flags->is_pmndrs_atmosphere_enabled( $metadata ) ) {
-			$requested[] = 'takram-atmosphere';
+			$capabilities[] = 'atmosphere:takram';
 		}
 
 		if ( $this->feature_flags->is_pmndrs_clouds_enabled( $metadata ) ) {
-			$requested[] = 'takram-clouds';
+			$capabilities[] = 'clouds:takram';
 		}
 
-		$requested[] = 'aframe-components';
+		return array_values( array_unique( $capabilities ) );
+	}
+
+	/** @return string[] */
+	public function script_ids_for_capabilities( array $capabilities ): array {
+		$requested = array_merge( self::BASELINE_CHUNK_IDS, $this->manifest->chunk_ids_for_activation_capabilities( $capabilities ) );
 
 		return $this->manifest->resolve_chunk_ids( $requested );
 	}

@@ -17,15 +17,9 @@
     <!-- A-Frame runtime source is selected by the compiler to allow a pinned master spike without changing the prototype again. -->
     <script src="AFRAME_RUNTIME_URL_PLACEHOLDER"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
-
-    <script src="../easyrtc/easyrtc.js"></script>
-    <script src="../dist/networked-aframe.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.7.0/dist/aframe-extras.min.js"></script>
-    <script
-        src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.5.0/dist/aframe-environment-component.min.js">
-    </script>
+    VRODOS_NETWORK_VENDOR_SCRIPTS_PLACEHOLDER
+    VRODOS_AFRAME_EXTRAS_SCRIPT_PLACEHOLDER
+    VRODOS_ENVIRONMENT_SCRIPT_PLACEHOLDER
 
 
 
@@ -242,8 +236,6 @@
 
             <div id="panelsSizeControlsDiv" class="tw-hidden"></div>
         </div>
-        <input id="node-url-input" hidden disabled />
-        <input id="node-token-input" hidden disabled />
         <input id="is-base-scene-input" hidden disabled />
     </div>
     </div>
@@ -378,8 +370,7 @@
             logarithmicDepthBuffer: false;
             alpha: false;
             stencil: false;" shadow="enabled: false; type: pcf; autoUpdate: true;" vr-mode-ui="enabled: true"
-        device-orientation-permission-ui="enabled: false" loading-screen="dotsColor: gray; backgroundColor: black;"
-        networked-scene="app: appname; room: roomname; debug: false; adapter: easyrtc; serverURL: /; connectOnLoad: true; onConnect: connectionResolve;">
+        device-orientation-permission-ui="enabled: false" loading-screen="dotsColor: gray; backgroundColor: black;">
 
         <a-assets id="scene-assets">
 
@@ -409,16 +400,15 @@
 
             <!-- Avatar template for MediaVerse projects-->
             <template id="avatar-template">
-                <a-entity class="avatar hideable" networked-audio-source>
+                <a-entity class="avatar hideable">
 
                     <a-plane id="videoPlaneGreen" class="videoPlaneGreenClass" color="#FFF" width="2" height="1.5"
                         position="0 0.6 -0.15" material="side: double"
-                        networked-video-source="useGreenScreen: true; greenThreshold: 0.04; streamName: video"
                         render-order-change="2000">
                     </a-plane>
 
                     <a-plane id="screenPlane" color="#FFF" width="0" height="0" position="0 0.6 -0.15"
-                        material="side: double" networked-video-source="streamName:screen">
+                        material="side: double">
                     </a-plane>
                 </a-entity>
             </template>
@@ -431,8 +421,6 @@
         <a-entity id="actor"></a-entity>
 
     </a-scene>
-
-    <script src="js/components/chat_component.js"></script>
 </body>
 
 </html>

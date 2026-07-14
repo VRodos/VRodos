@@ -241,7 +241,8 @@ class VRodos_Asset_Manager {
                 'projectId' => $template_data['project_id'],
                 'slug'      => $template_data['projectSlug'],
                 'sceneId'   => $template_data['current_scene_id'],
-                'isAdmin'   => $template_data['isAdmin']
+				'isAdmin'   => $template_data['isAdmin'],
+				'compileNonce' => wp_create_nonce( 'vrodos_compile_scene' )
             ]
         );
 
@@ -263,6 +264,7 @@ class VRodos_Asset_Manager {
 			'siteurl'             => site_url(),
 			// Phase 2 localization
 			'upload_image_nonce'  => wp_create_nonce( 'vrodos_scene_upload_image_nonce' ),
+			'compile_nonce'       => wp_create_nonce( 'vrodos_compile_scene' ),
 			'isPaused'            => false,
 			'isAnyLight'          => true,
 			'mapActions'          => new stdClass(),

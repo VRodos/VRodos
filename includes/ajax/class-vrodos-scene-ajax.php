@@ -198,59 +198,68 @@ class VRodos_Scene_AJAX {
 	 * Compile scene to A-Frame
 	 */
 	public function compile_action_callback() {
-
-		$sceneId           = intval( $_REQUEST['vrodos_scene'] );
-		$projectId         = intval( $_REQUEST['projectId'] );
-		$showPawnPositions = $_REQUEST['showPawnPositions'] ?? 'false';
-		$runtimeMode       = isset( $_REQUEST['runtimeMode'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['runtimeMode'] ) ) : null;
-
-		$terms = wp_get_post_terms( $sceneId, 'vrodos_scene_pgame' );
-		if ( is_wp_error( $terms ) || empty( $terms ) ) {
-			wp_send_json_error( 'Scene has no project term assigned.', 400 );
-			return;
-		}
-		$parent_id = $terms[0]->term_id;
-
-		$sceneIdList = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( $parent_id );
-
-		$compiler      = new VRodos_Compiler_Manager();
-		$scene_json    = $compiler->compile_aframe( $projectId, $sceneIdList, $showPawnPositions, $runtimeMode );
-		$scene_payload = json_decode( (string) $scene_json, true );
-
-		if ( is_array( $scene_payload ) ) {
-			$master_filename = 'Master_Client_' . (int) $sceneId . '.html';
-			$simple_filename = 'Simple_Client_' . (int) $sceneId . '.html';
-			$runtime_mode    = $scene_payload['RuntimeMode'] ?? VRodos_Compiler_Manager::RUNTIME_MODE_NETWORKED;
-
-			if ( VRodos_Compiler_Manager::RUNTIME_MODE_SINGLE_PLAYER === $runtime_mode ) {
-				$scene_payload['CurrentSceneMasterClient'] = $compiler->runtime_url_for_file(
-					$master_filename,
-					null,
-					VRodos_Compiler_Manager::RUNTIME_MODE_SINGLE_PLAYER
-				);
-				echo wp_json_encode( $scene_payload );
-				wp_die();
-			}
-
-			$scene_payload['CurrentSceneMasterClient']      = $compiler->runtime_url_for_file( $master_filename );
-			$scene_payload['CurrentSceneSimpleClient']      = $compiler->runtime_url_for_file( $simple_filename );
-			$scene_payload['LocalCurrentSceneMasterClient'] = $compiler->runtime_url_for_file( $master_filename, 'local' );
-			$scene_payload['LocalCurrentSceneSimpleClient'] = $compiler->runtime_url_for_file( $simple_filename, 'local' );
-
-			$public_master_url = $compiler->runtime_url_for_file( $master_filename, 'public' );
-			$public_simple_url = $compiler->runtime_url_for_file( $simple_filename, 'public' );
-
-			if ( $public_master_url !== $scene_payload['LocalCurrentSceneMasterClient'] ) {
-				$scene_payload['PublicCurrentSceneMasterClient'] = $public_master_url;
-			}
-			if ( $public_simple_url !== $scene_payload['LocalCurrentSceneSimpleClient'] ) {
-				$scene_payload['PublicCurrentSceneSimpleClient'] = $public_simple_url;
-			}
-			echo wp_json_encode( $scene_payload );
-		} else {
-			echo $scene_json;
+		if ( ! check_ajax_referer( 'vrodos_compile_scene', 'nonce', false ) ) {
+			wp_send_json_error( [ 'code' => 'invalid_nonce', 'message' => 'Compile security check failed.' ], 403 );
 		}
 
-		wp_die();
+		$scene_id   = absint( $_POST['vrodos_scene'] ?? 0 );
+		$project_id = absint( $_POST['projectId'] ?? 0 );
+		if ( $scene_id <= 0 || $project_id <= 0 ) {
+			wp_send_json_error( [ 'code' => 'invalid_ids', 'message' => 'Invalid project or scene.' ], 400 );
+		}
+
+		$project = get_post( $project_id );
+		$scene   = get_post( $scene_id );
+		if ( ! $project instanceof WP_Post || 'vrodos_game' !== $project->post_type || ! $scene instanceof WP_Post || 'vrodos_scene' !== $scene->post_type ) {
+			wp_send_json_error( [ 'code' => 'invalid_posts', 'message' => 'Invalid project or scene.' ], 400 );
+		}
+		if ( ! current_user_can( 'edit_post', $project_id ) || ! current_user_can( 'edit_post', $scene_id ) ) {
+			wp_send_json_error( [ 'code' => 'forbidden', 'message' => 'You are not allowed to compile this project.' ], 403 );
+		}
+
+		$project_term = get_term_by( 'slug', (string) $project->post_name, 'vrodos_scene_pgame' );
+		if ( ! $project_term || is_wp_error( $project_term ) ) {
+			wp_send_json_error( [ 'code' => 'missing_project_term', 'message' => 'Project has no scene taxonomy term.' ], 400 );
+		}
+		$scene_ids = VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( (int) $project_term->term_id );
+		if ( ! in_array( $scene_id, array_map( 'absint', $scene_ids ), true ) ) {
+			wp_send_json_error( [ 'code' => 'scene_project_mismatch', 'message' => 'Selected scene does not belong to this project.' ], 400 );
+		}
+		foreach ( $scene_ids as $candidate_scene_id ) {
+			if ( ! current_user_can( 'edit_post', absint( $candidate_scene_id ) ) ) {
+				wp_send_json_error( [ 'code' => 'forbidden_scene', 'message' => 'You cannot compile every scene in this project.' ], 403 );
+			}
+		}
+
+		$runtime_mode = sanitize_text_field( wp_unslash( $_POST['runtimeMode'] ?? '' ) );
+		if ( ! in_array( $runtime_mode, [ 'networked', 'single-player' ], true ) ) {
+			wp_send_json_error( [ 'code' => 'invalid_runtime_mode', 'message' => 'Invalid compile runtime mode.' ], 400 );
+		}
+		$vr_runtime_profile = sanitize_text_field( wp_unslash( $_POST['vrRuntimeProfile'] ?? '' ) );
+		$profile_setting    = VRodos_Runtime_Settings_Contract::setting( 'vrRuntimeProfile' );
+		$allowed_profiles   = is_array( $profile_setting['allowed'] ?? null ) ? $profile_setting['allowed'] : [];
+		if ( ! in_array( $vr_runtime_profile, $allowed_profiles, true ) ) {
+			wp_send_json_error( [ 'code' => 'invalid_vr_runtime_profile', 'message' => 'Invalid compile VR target.' ], 400 );
+		}
+
+		$request = new VRodos_Compile_Request(
+			$project_id,
+			$scene_id,
+			$scene_ids,
+			$runtime_mode,
+			$vr_runtime_profile,
+			VRodos_Runtime_Settings_Contract::normalize_bool( wp_unslash( $_POST['showPawnPositions'] ?? 'false' ), false )
+		);
+		$result   = ( new VRodos_Compiler_Manager() )->compile( $request );
+		if ( is_wp_error( $result ) ) {
+			$data   = $result->get_error_data();
+			$status = is_array( $data ) ? absint( $data['status'] ?? 500 ) : 500;
+			wp_send_json_error(
+				[ 'code' => $result->get_error_code(), 'message' => $result->get_error_message() ],
+				$status > 0 ? $status : 500
+			);
+		}
+
+		wp_send_json( $result->to_public_payload() );
 	}
 }

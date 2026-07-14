@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/class-vrodos-compiler-aframe-dom-helper.php';
+require_once __DIR__ . '/class-vrodos-compiler-entity-policy.php';
 
 class VRodos_Compiler_AFrame_Entity_Renderer {
 	private const GLTF_LOAD_PHASE_CRITICAL = 'critical';
@@ -17,6 +18,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private VRodos_Compiler_Runtime_Assets $runtime_assets;
 	private VRodos_Compiler_Scene_Repository $scene_repository;
+	private VRodos_Compiler_Entity_Policy $entity_policy;
 	private $normalize_url;
 	private string $plugin_path_url = '';
 	private bool $isHoverEnabled = true;
@@ -41,6 +43,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->runtime_assets   = $runtime_assets;
 		$this->scene_repository = $scene_repository;
 		$this->normalize_url    = $normalize_url;
+		$this->entity_policy     = new VRodos_Compiler_Entity_Policy();
 	}
 
 	public function configure( string $plugin_path_url, bool $is_hover_enabled ): void {
@@ -788,10 +791,6 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		);
 	}
 
-	private function set_overlay_ui_attributes( DOMElement $entity ): void {
-		VRodos_Compiler_AFrame_DOM_Helper::apply_overlay_ui_attributes( $entity );
-	}
-
 	private function world_media_material( string $src, string $side = 'double', bool $transparent = true ): string {
 		return VRodos_Compiler_AFrame_DOM_Helper::world_media_material( $src, $side, $transparent );
 	}
@@ -823,7 +822,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	}
 
 	private function normalize_runtime_category( string $category ): string {
-		return sanitize_title( $category );
+		return $this->entity_policy->canonical_category( $category );
 	}
 
 	private function append_class( DOMElement $entity, string $class_name ): void {
@@ -896,16 +895,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->use_flat_media_materials = $this->should_use_flat_media_materials( $scene_settings );
 		$this->runtime_profile = (string) ( $scene_settings['vrRuntimeProfile'] ?? 'desktop' );
 		foreach ( $objects as $object_key => $obj ) {
-			if ( is_object( $obj ) ) {
-				unset( $obj->follow_camera, $obj->follow_camera_x, $obj->follow_camera_z );
-
-				if ( empty( $obj->uuid ) ) {
-					$obj->uuid = $this->build_runtime_object_id( $obj, (string) $object_key );
-				}
-				if ( empty( $obj->name ) ) {
-					$obj->name = (string) $object_key;
-				}
+			if ( ! is_object( $obj ) ) {
+				continue;
 			}
+			$obj = $this->entity_policy->normalize( $obj, $this->current_scene_id, (string) $object_key );
 
 			$this->render_scene_object( $dom, $render_container, $assets, $obj, array_merge( $config, [
 				'project_id' => $project_id,
@@ -914,69 +907,26 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		}
 	}
 
-	private function build_runtime_object_id( $obj, string $object_key = '' ): string {
-		$parts = [];
-
-		if ( $object_key !== '' ) {
-			$parts[] = sanitize_title( $object_key );
-		}
-
-		if ( ! empty( $obj->asset_slug ) ) {
-			$parts[] = sanitize_title( (string) $obj->asset_slug );
-		}
-
-		if ( ! empty( $obj->asset_id ) ) {
-			$parts[] = 'asset_' . absint( $obj->asset_id );
-		}
-
-		if ( ! empty( $obj->immerse_attachment_id ) ) {
-			$parts[] = 'immerse_' . sanitize_title( (string) $obj->immerse_attachment_id );
-		}
-
-		if ( ! empty( $obj->category_slug ) ) {
-			$parts[] = sanitize_title( (string) $obj->category_slug );
-		}
-
-		$parts = array_values( array_filter( array_unique( $parts ) ) );
-		if ( empty( $parts ) ) {
-			return 'object_' . wp_generate_password( 8, false, false );
-		}
-
-		return implode( '_', $parts );
-	}
-
 	private function render_scene_object( $dom, $ascene, $assets, $obj, $config = [] ) {
-		$cat  = $this->normalize_runtime_category( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) );
-		if ( is_object( $obj ) ) {
-			$obj->category_slug = $cat;
-		}
+		$cat    = $this->normalize_runtime_category( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) );
+		$family = $this->entity_policy->family_for( $cat );
 		$this->diagnostic_object_count++;
 		$this->diagnostic_category_counts[ $cat ] = ( $this->diagnostic_category_counts[ $cat ] ?? 0 ) + 1;
 
-		switch ( $cat ) {
-			case 'lightSun':
-			case 'lightSpot':
-			case 'lightLamp':
-			case 'lightAmbient':
+		switch ( $family ) {
+			case 'light':
 				$this->render_light_entity( $dom, $ascene, $obj );
 				break;
-			case 'decoration':
-			case 'walkable-surface':
-			case 'collision-proxy':
-			case 'door':
-			case 'poi-link':
-			case 'chat':
-			case 'poi-chat':
+			case 'gltf':
 				$this->render_gltf_entity( $dom, $ascene, $assets, $obj, (int) ($config['scene_id'] ?? 0) );
 				break;
 			case 'audio':
 				$this->render_audio_entity( $dom, $ascene, $assets, $obj );
 				break;
-			case 'image':
-			case 'video':
+			case 'media':
 				$this->render_media_entity( $dom, $ascene, $assets, $obj );
 				break;
-			case '3d-text':
+			case 'text':
 				$this->render_3d_text_entity( $dom, $ascene, $obj );
 				break;
 			case 'poi-imagetext':
@@ -1090,7 +1040,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private function render_light_entity( $dom, $ascene, $obj ) {
 		$uuid = $obj->uuid ?? '';
-		$cat  = $obj->category_name ?? $obj->category_slug ?? '';
+		$cat  = $this->normalize_runtime_category( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) );
 		$type = $this->map_light_type( $cat );
 
 		$a_light = $dom->createElement( 'a-light' );
@@ -1099,7 +1049,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$a_light->setAttribute( 'data-vrodos-light-category', sanitize_title( (string) $cat ) );
 		$a_light->setAttribute( 'data-vrodos-light-type', $type );
 
-		if ( $cat === 'lightSun' ) {
+		if ( 'light-sun' === $cat ) {
 			$a_light->setAttribute( 'id', 'lighttarget' );
 			$a_light->setAttribute( 'data-vrodos-celestial-light', 'true' );
 		}
@@ -1523,10 +1473,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 
 	private function map_light_type( $cat ) {
 		$map = [
-			'lightSun'     => 'directional',
-			'lightSpot'    => 'spot',
-			'lightLamp'    => 'point',
-			'lightAmbient' => 'ambient'
+			'light-sun'     => 'directional',
+			'light-spot'    => 'spot',
+			'light-lamp'    => 'point',
+			'light-ambient' => 'ambient'
 		];
 		return $map[ $cat ] ?? 'point';
 	}

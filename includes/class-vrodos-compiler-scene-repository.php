@@ -5,11 +5,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class VRodos_Compiler_Scene_Repository {
-	public function load_compile_context( int $project_id, array $scene_id_list ): array {
+	public function load_compile_context( int $project_id, array $scene_id_list, int $selected_scene_id = 0 ): array {
 		$project_post = get_post( $project_id );
-		if ( ! ( $project_post instanceof WP_Post ) ) {
+		if ( ! ( $project_post instanceof WP_Post ) || 'vrodos_game' !== $project_post->post_type ) {
 			error_log( '[VRodos] compile_aframe() aborted: invalid project #' . $project_id );
 			return [ 'error' => 'Invalid project.' ];
+		}
+		$project_slug = (string) $project_post->post_name;
+		if ( '' === $project_slug ) {
+			return [ 'error' => 'Project has no scene taxonomy slug.' ];
 		}
 
 		$scene_json      = [];
@@ -23,9 +27,14 @@ class VRodos_Compiler_Scene_Repository {
 			}
 
 			$scene_post = get_post( $scene_id );
-			if ( ! ( $scene_post instanceof WP_Post ) ) {
-				error_log( '[VRodos] compile_aframe() skipped invalid scene #' . $scene_id . ' for project #' . $project_id );
-				continue;
+			if ( ! ( $scene_post instanceof WP_Post ) || 'vrodos_scene' !== $scene_post->post_type ) {
+				error_log( '[VRodos] compile_aframe() rejected invalid scene #' . $scene_id . ' for project #' . $project_id );
+				return [ 'error' => 'Invalid scene in compile request.' ];
+			}
+
+			if ( ! $this->scene_belongs_to_project( $scene_id, $project_slug ) ) {
+				error_log( '[VRodos] compile_aframe() rejected scene/project mismatch for scene #' . $scene_id . ' and project #' . $project_id );
+				return [ 'error' => 'A requested scene does not belong to this project.' ];
 			}
 
 			$decoded_scene = json_decode( (string) $scene_post->post_content );
@@ -43,6 +52,9 @@ class VRodos_Compiler_Scene_Repository {
 			error_log( '[VRodos] compile_aframe() aborted: no valid scenes for project #' . $project_id );
 			return [ 'error' => 'No valid scenes to compile.' ];
 		}
+		if ( $selected_scene_id > 0 && ! in_array( $selected_scene_id, $valid_scene_ids, true ) ) {
+			return [ 'error' => 'Selected scene does not belong to this compile request.' ];
+		}
 
 		$project_type_slug = $this->get_project_type_slug( $project_id );
 
@@ -58,6 +70,21 @@ class VRodos_Compiler_Scene_Repository {
 			'scene_title'       => $scene_title,
 			'scene_json'        => $scene_json,
 		];
+	}
+
+	public function scene_belongs_to_project( int $scene_id, string $project_slug ): bool {
+		$terms = wp_get_post_terms( $scene_id, 'vrodos_scene_pgame' );
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			return false;
+		}
+
+		foreach ( $terms as $term ) {
+			if ( isset( $term->slug ) && (string) $term->slug === $project_slug ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function is_immerse_project( int $project_id ): bool {

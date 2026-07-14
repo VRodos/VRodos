@@ -710,7 +710,10 @@ async function testControllerRayReadinessResetsOnControllerEvents(context) {
 function testControllerRaySourceContracts() {
     const navigationSource = readFileSync(resolve(root, "assets/js/runtime/master/components/vrodos_navigation.component.js"), "utf8");
     const spatialSource = readFileSync(resolve(root, "assets/js/runtime/spatial-ui/vrodos_spatial_ui.js"), "utf8");
-    const compilerSource = readFileSync(resolve(root, "includes/class-vrodos-compiler-manager.php"), "utf8");
+    const compilerSource = [
+        readFileSync(resolve(root, "includes/class-vrodos-compiler-manager.php"), "utf8"),
+        readFileSync(resolve(root, "includes/class-vrodos-compiler-target-renderer.php"), "utf8")
+    ].join("\n");
     const cefrSource = readFileSync(resolve(root, "assets/js/runtime/assessment/assessment-cefr-runtime.js"), "utf8");
     const overlaySource = readFileSync(resolve(root, "assets/js/runtime/vrodos_runtime_overlay.js"), "utf8");
     const pmndrsPostFxSource = readFileSync(resolve(root, "assets/js/runtime/master/vrodos_postprocessing_pmndrs.js"), "utf8");
@@ -743,8 +746,9 @@ function testControllerRaySourceContracts() {
     assert(!spatialSource.includes("resolvePhysicalControllerInputSource"), "spatial UI must not duplicate WebXR input-source readiness checks");
     assert(!spatialSource.includes("generic-tracked-controller-controls"), "spatial UI must not keep a local component-stack readiness fallback");
 
-    assert(compilerSource.includes("$a_entity_oc_right->setAttribute( 'laser-controls', 'hand: right' )"), "compiler must keep laser-controls as right controller owner");
-    assert(compilerSource.includes("$a_entity_oc_left->setAttribute( 'laser-controls', 'hand: left' )"), "compiler must keep laser-controls as left controller owner");
+    assert(compilerSource.includes("create_controller( $dom, 'oculusRight', 'right' )"), "compiler must keep the right controller under the target rig");
+    assert(compilerSource.includes("create_controller( $dom, 'oculusLeft', 'left' )"), "compiler must keep the left controller under the target rig");
+    assert(compilerSource.includes("$controller->setAttribute( 'laser-controls', 'hand: ' . $hand )"), "compiler must keep laser-controls as controller ray owner");
     assert(!compilerSource.includes("meta-touch-controls"), "compiler must not emit explicit meta-touch-controls beside laser-controls");
 
     const fontGateIndex = cefrSource.indexOf("runtime.prewarmSpatialUiFonts(spatialUi)");

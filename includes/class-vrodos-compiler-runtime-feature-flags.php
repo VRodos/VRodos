@@ -142,12 +142,8 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 		return is_string( $value ) && '' !== $value ? $value : 'desktop';
 	}
 
-	public function is_vr_scene_owned_profile( $metadata ): bool {
-		return false;
-	}
-
 	public function is_authored_post_fx_enabled( $metadata ): bool {
-		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframePostFXEnabled ?? false );
+		return VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'postFXEnabled', false );
 	}
 
 	public function is_headset_stereo_post_fx_enabled( $metadata ): bool {
@@ -157,7 +153,7 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function authored_post_fx_engine( $metadata ): string {
-		return ( $metadata->aframePostFXEngine ?? self::POST_FX_ENGINE_LEGACY ) === self::POST_FX_ENGINE_PMNDRS
+		return VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'postFXEngine', self::POST_FX_ENGINE_LEGACY ) === self::POST_FX_ENGINE_PMNDRS
 			? self::POST_FX_ENGINE_PMNDRS
 			: self::POST_FX_ENGINE_LEGACY;
 	}
@@ -176,8 +172,7 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 	}
 
 	public function is_pmndrs_atmosphere_enabled( $metadata ): bool {
-		return ! $this->is_vr_scene_owned_profile( $metadata )
-			&& $this->is_authored_post_fx_enabled( $metadata )
+		return $this->is_authored_post_fx_enabled( $metadata )
 			&& self::POST_FX_ENGINE_PMNDRS === $this->authored_post_fx_engine( $metadata )
 			&& VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmosphereEnabled', true );
 	}
@@ -194,7 +189,7 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 		}
 
 		return VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->enableFPSMeter ?? false )
-			|| VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeFPSMeterEnabled ?? false );
+			|| VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'fpsMeterEnabled', false );
 	}
 
 	public function fps_meter_attr( $metadata ): string {
@@ -210,7 +205,7 @@ class VRodos_Compiler_Runtime_Feature_Flags {
 			return $value;
 		}
 
-		return 'off' === (string) ( is_object( $metadata ) ? ( $metadata->aframeCollisionMode ?? 'auto' ) : 'auto' )
+		return 'off' === (string) VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'collisionMode', 'auto' )
 			? 'walk'
 			: 'walkable';
 	}

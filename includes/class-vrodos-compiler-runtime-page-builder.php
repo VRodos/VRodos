@@ -11,6 +11,7 @@ class VRodos_Compiler_Runtime_Page_Builder {
 	private VRodos_Compiler_AFrame_Entity_Renderer $entity_renderer;
 	private $normalize_url;
 	private $decoder_config;
+	private array $last_compile_diagnostics = [];
 
 	public function __construct(
 		VRodos_Compiler_Runtime_Assets $runtime_assets,
@@ -60,7 +61,17 @@ class VRodos_Compiler_Runtime_Page_Builder {
 	}
 
 	public function apply_scene_core( DOMDocument $dom, DOMElement $ascene, $scene_json, int $project_id, int $scene_id, array $options = [] ): DOMElement {
-		$scene_settings = $this->scene_settings->apply( $dom, $ascene, $scene_json, $project_id, $this->normalize_url );
+		$settings_diagnostics = [];
+		$resolved_settings    = is_array( $options['resolved_scene_settings'] ?? null ) ? $options['resolved_scene_settings'] : null;
+		$scene_settings       = $this->scene_settings->apply(
+			$dom,
+			$ascene,
+			$scene_json,
+			$project_id,
+			$this->normalize_url,
+			$resolved_settings,
+			$settings_diagnostics
+		);
 		$ascene->setAttribute( 'gltf-model', (string) call_user_func( $this->decoder_config ) );
 		$this->apply_runtime_pipeline_components( $ascene, $scene_settings );
 
@@ -85,9 +96,24 @@ class VRodos_Compiler_Runtime_Page_Builder {
 
 		$this->entity_renderer->markDelayedRevealEntities( $dom );
 		$this->append_runtime_context_script( $dom, $project_id, $scene_id, $scene_json, $scene_settings );
-		$this->append_compile_diagnostics_script( $dom, $this->entity_renderer->build_compile_diagnostics( $dom ) );
+		$compile_diagnostics = $this->entity_renderer->build_compile_diagnostics( $dom );
+		$plan_diagnostics    = array_merge(
+			$settings_diagnostics,
+			array_values( array_filter( array_map( 'strval', (array) ( $options['compile_diagnostics'] ?? [] ) ) ) )
+		);
+		if ( ! empty( $plan_diagnostics ) ) {
+			$compile_diagnostics['warnings'] = array_values(
+				array_unique( array_merge( (array) ( $compile_diagnostics['warnings'] ?? [] ), $plan_diagnostics ) )
+			);
+		}
+		$this->append_compile_diagnostics_script( $dom, $compile_diagnostics );
+		$this->last_compile_diagnostics = $compile_diagnostics;
 
 		return $a_asset;
+	}
+
+	public function last_compile_diagnostics(): array {
+		return $this->last_compile_diagnostics;
 	}
 
 	private function apply_runtime_pipeline_components( DOMElement $ascene, array $scene_settings ): void {
@@ -169,6 +195,7 @@ class VRodos_Compiler_Runtime_Page_Builder {
 			'projectId'  => absint( $project_id ),
 			'sceneId'    => absint( $scene_id ),
 			'sceneTitle' => (string) get_the_title( absint( $scene_id ) ),
+			'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
 		];
 
 		$context = apply_filters( 'vrodos_compiled_runtime_context', $context, absint( $project_id ), absint( $scene_id ), $scene_json, $scene_settings );

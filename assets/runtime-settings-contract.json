@@ -7,6 +7,137 @@
       "default": "single-player",
       "allowed": ["networked", "single-player"]
     },
+    "clearColor": {
+      "metadataKey": "ClearColor",
+      "type": "color",
+      "default": "#ffffff"
+    },
+    "backgroundStyleOption": {
+      "metadataKey": "backgroundStyleOption",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 3,
+      "step": 1
+    },
+    "backgroundImagePath": {
+      "metadataKey": "backgroundImagePath",
+      "type": "string",
+      "default": "0"
+    },
+    "backgroundPresetOption": {
+      "metadataKey": "backgroundPresetOption",
+      "type": "string",
+      "default": "None"
+    },
+    "backgroundPresetGroundEnabled": {
+      "metadataKey": "backgroundPresetGroundEnabled",
+      "type": "boolean",
+      "default": false
+    },
+    "fogCategory": {
+      "metadataKey": "fogCategory",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 2,
+      "step": 1
+    },
+    "fogColor": {
+      "metadataKey": "fogcolor",
+      "type": "color",
+      "default": "#ffffff"
+    },
+    "fogFar": {
+      "metadataKey": "fogfar",
+      "type": "number",
+      "default": 1000,
+      "min": 0,
+      "max": 100000
+    },
+    "fogNear": {
+      "metadataKey": "fognear",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 100000
+    },
+    "fogDensity": {
+      "metadataKey": "fogdensity",
+      "type": "number",
+      "default": 0.00000001,
+      "min": 0,
+      "max": 1
+    },
+    "movementDisabled": {
+      "metadataKey": "disableMovement",
+      "type": "boolean",
+      "default": false
+    },
+    "avatarEnabled": {
+      "metadataKey": "enableAvatar",
+      "type": "boolean",
+      "default": false
+    },
+    "generalChatEnabled": {
+      "metadataKey": "enableGeneralChat",
+      "type": "boolean",
+      "default": false
+    },
+    "collisionMode": {
+      "metadataKey": "aframeCollisionMode",
+      "type": "enum",
+      "default": "auto",
+      "allowed": ["auto", "off"]
+    },
+    "fpsMeterEnabled": {
+      "metadataKey": "aframeFPSMeterEnabled",
+      "type": "boolean",
+      "default": false
+    },
+    "hoveringInteractables": {
+      "metadataKey": "aframeHoveringInteractables",
+      "type": "boolean",
+      "default": true
+    },
+    "renderQuality": {
+      "metadataKey": "aframeRenderQuality",
+      "type": "enum",
+      "default": "standard",
+      "allowed": ["performance", "standard", "high"]
+    },
+    "shadowQuality": {
+      "metadataKey": "aframeShadowQuality",
+      "type": "enum",
+      "default": "medium",
+      "allowed": ["off", "medium", "high"]
+    },
+    "aaQuality": {
+      "metadataKey": "aframeAAQuality",
+      "type": "enum",
+      "default": "balanced",
+      "allowed": ["off", "balanced", "high", "ultra"]
+    },
+    "ambientOcclusionPreset": {
+      "metadataKey": "aframeAmbientOcclusionPreset",
+      "type": "enum",
+      "default": "balanced",
+      "allowed": ["off", "soft", "balanced", "strong"]
+    },
+    "contactShadowPreset": {
+      "metadataKey": "aframeContactShadowPreset",
+      "type": "enum",
+      "default": "soft",
+      "allowed": ["off", "soft", "balanced", "strong"]
+    },
+    "legacyHorizonStageSize": {
+      "metadataKey": "aframeLegacyHorizonStageSize",
+      "type": "number",
+      "default": 5000,
+      "min": 500,
+      "max": 8000,
+      "step": 100
+    },
     "vrRuntimeProfile": {
       "metadataKey": "aframeVrRuntimeProfile",
       "type": "enum",
@@ -39,6 +170,93 @@
       "metadataKey": "aframePostFXColorEnabled",
       "type": "boolean",
       "default": false
+    },
+    "postFXEnabled": {
+      "metadataKey": "aframePostFXEnabled",
+      "type": "boolean",
+      "default": false
+    },
+    "postFXEngine": {
+      "metadataKey": "aframePostFXEngine",
+      "type": "enum",
+      "default": "legacy",
+      "allowed": ["legacy", "pmndrs"]
+    },
+    "postFXBloomEnabled": {
+      "metadataKey": "aframePostFXBloomEnabled",
+      "type": "boolean",
+      "default": false
+    },
+    "postFXEdgeAAEnabled": {
+      "metadataKey": "aframePostFXEdgeAAEnabled",
+      "type": "boolean",
+      "default": true
+    },
+    "postFXEdgeAAStrength": {
+      "metadataKey": "aframePostFXEdgeAAStrength",
+      "type": "number",
+      "default": 3,
+      "min": 0,
+      "max": 5,
+      "step": 1
+    },
+    "postFXTAAEnabled": {
+      "metadataKey": "aframePostFXTAAEnabled",
+      "type": "boolean",
+      "default": false
+    },
+    "postFXSSREnabled": {
+      "metadataKey": "aframePostFXSSREnabled",
+      "type": "boolean",
+      "default": false
+    },
+    "postFXSSRStrength": {
+      "metadataKey": "aframePostFXSSRStrength",
+      "type": "enum",
+      "default": "off",
+      "allowed": ["off", "subtle", "balanced", "strong"]
+    },
+    "bloomStrength": {
+      "metadataKey": "aframeBloomStrength",
+      "type": "enum",
+      "default": "off",
+      "allowed": ["off", "soft", "medium"]
+    },
+    "exposurePreset": {
+      "metadataKey": "aframeExposurePreset",
+      "type": "enum",
+      "default": "neutral",
+      "allowed": ["neutral", "bright", "cinematic"]
+    },
+    "contrastPreset": {
+      "metadataKey": "aframeContrastPreset",
+      "type": "enum",
+      "default": "balanced",
+      "allowed": ["soft", "balanced", "punchy"]
+    },
+    "reflectionProfile": {
+      "metadataKey": "aframeReflectionProfile",
+      "type": "enum",
+      "default": "balanced",
+      "allowed": ["soft", "balanced", "enhanced"]
+    },
+    "reflectionSource": {
+      "metadataKey": "aframeReflectionSource",
+      "type": "enum",
+      "default": "hdr",
+      "allowed": ["hdr", "scene-probe"]
+    },
+    "envMapPreset": {
+      "metadataKey": "aframeEnvMapPreset",
+      "type": "enum",
+      "default": "none",
+      "allowed": ["none", "studio", "quarry", "venice"]
+    },
+    "horizonSkyPreset": {
+      "metadataKey": "aframeHorizonSkyPreset",
+      "type": "enum",
+      "default": "natural",
+      "allowed": ["natural", "clear", "crisp"]
     },
     "navigationMode": {
       "metadataKey": "aframeNavigationMode",
@@ -296,7 +514,7 @@
       "metadataKey": "aframePmndrsCelestialUtcTime",
       "type": "string",
       "default": "12:00",
-      "pattern": "^\\d{2}:\\d{2}$"
+      "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
     },
     "pmndrsDayNightCycleEnabled": {
       "metadataKey": "aframePmndrsDayNightCycleEnabled",

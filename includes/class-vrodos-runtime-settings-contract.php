@@ -115,6 +115,10 @@ class VRodos_Runtime_Settings_Contract {
 			return self::normalize_color( $value, (string) $default );
 		}
 
+		if ( isset( $setting['pattern'] ) && ! preg_match( '/' . str_replace( '/', '\\/', (string) $setting['pattern'] ) . '/', (string) $value ) ) {
+			return $default;
+		}
+
 		return null === $value ? $default : $value;
 	}
 
@@ -124,6 +128,22 @@ class VRodos_Runtime_Settings_Contract {
 			self::value_from_metadata( $metadata, $scene_setting_key, $fallback ),
 			$fallback
 		);
+	}
+
+	/**
+	 * Builds editor hydration values from the same metadata keys and defaults used
+	 * by compilation. Compatibility/derived editor rules may refine this result.
+	 */
+	public static function hydrate_editor_metadata( $metadata ): array {
+		$hydrated = [];
+		foreach ( self::settings() as $setting_key => $setting ) {
+			if ( ! is_array( $setting ) || empty( $setting['metadataKey'] ) ) {
+				continue;
+			}
+			$hydrated[ (string) $setting['metadataKey'] ] = self::normalize_metadata_value( $metadata, (string) $setting_key );
+		}
+
+		return $hydrated;
 	}
 
 	public static function normalize_bool( $value, bool $fallback = false ): bool {

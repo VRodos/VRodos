@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once plugin_dir_path( __FILE__ ) . 'class-vrodos-project-ajax.php';
 require_once plugin_dir_path( __FILE__ ) . 'class-vrodos-scene-ajax.php';
 require_once plugin_dir_path( __FILE__ ) . 'class-vrodos-asset-ajax.php';
+require_once plugin_dir_path( __FILE__ ) . 'class-vrodos-mediaverse-ajax.php';
 
 /**
  * VRodos_AJAX_Handler
@@ -21,5 +22,6 @@ class VRodos_AJAX_Handler {
 		new VRodos_Project_AJAX();
 		new VRodos_Scene_AJAX();
 		new VRodos_Asset_AJAX();
+		new VRodos_MediaVerse_AJAX();
 	}
 }

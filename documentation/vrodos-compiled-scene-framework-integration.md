@@ -12,6 +12,8 @@ VRodos compiled scenes integrate A-Frame, Three.js, PMNDRS, Takram, three-mesh-b
 - immersive dialog UI is a PMNDRS/Horizon island mounted in the same A-Frame/Three scene, not a second renderer and not A-Frame UI primitives;
 - optional systems such as PMNDRS, Takram atmosphere, BVH collision, FPS tooling, spatial UI, and networking load only when scene metadata requests them.
 
+Compiler request, plan, capability, artifact-transaction, and compatibility boundaries are defined in `documentation/compiler-architecture.md`.
+
 The runtime is a single A-Frame scene with helpers attached to the same renderer, scene graph, material system, loader configuration, and lifecycle.
 
 ## Runtime Architecture
