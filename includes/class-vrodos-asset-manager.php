@@ -338,7 +338,7 @@ class VRodos_Asset_Manager {
       ['vrodos_scene_settings_schema', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_settings_schema.js' ), ['vrodos_namespace', 'vrodos_runtime_settings_contract']],
       ['vrodos_scene_settings_sync', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_settings_sync.js' ), ['vrodos_namespace', 'vrodos_scene_settings_schema']],
       ['vrodos_ScenePersistence', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_persistence.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_scene_settings_schema']],
-      ['stats-gl', 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js'],
+      ['stats-gl', VRodos_Path_Manager::vendor_url( 'stats-gl/main.js' )],
       // AJAX Scripts
       ['ajax-script_compile', VRodos_Path_Manager::editor_ajax_js_url( 'vrodos_request_compile.js' ), ['vrodos_namespace', 'vrodos_ui_helpers']],
       ['ajax-script_deletescene', VRodos_Path_Manager::editor_ajax_js_url( 'delete_scene.js' ), ['vrodos_namespace']],
@@ -410,8 +410,8 @@ class VRodos_Asset_Manager {
       // Active Three vendor bundle paired with the pinned A-Frame runtime.
       ['vrodos_three_vendor_bundle', VRodos_Path_Manager::vendor_url( $three_vendor_dir . '/' . $three_vendor_bundle )],
       // Other Libraries
-      ['vrodos_load_lilgui', 'https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.umd.js'],
-      ['lucide-icons', 'https://unpkg.com/lucide@0.469.0'],
+      ['vrodos_load_lilgui', VRodos_Path_Manager::vendor_url( 'lil-gui/lil-gui.umd.js' )],
+      ['lucide-icons', VRodos_Path_Manager::vendor_url( 'lucide/lucide.min.js' )],
   ];
 
 		foreach ( $scripts as $script ) {
@@ -423,7 +423,7 @@ class VRodos_Asset_Manager {
 	public function register_styles() {
 		wp_register_style( 'vrodos_backend', VRodos_Path_Manager::css_url( 'admin/vrodos_backend.css' ) );
 		wp_register_style( 'vrodos_3D_editor', VRodos_Path_Manager::css_url( 'editor/vrodos_3D_editor.css' ) );
-		wp_register_style( 'vrodos_lilgui', 'https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.esm.css' );
+		wp_register_style( 'vrodos_lilgui', VRodos_Path_Manager::vendor_url( 'lil-gui/lil-gui.css' ) );
 		wp_register_style( 'vrodos_dashboard_table', VRodos_Path_Manager::css_url( 'admin/vrodos_dashboard_table_style.css' ) );
 		wp_register_style( 'vrodos_3D_editor_browser', VRodos_Path_Manager::css_url( 'editor/vrodos_3D_editor_browser.css' ) );
 		wp_register_style( 'vrodos_frontend_stylesheet', VRodos_Path_Manager::css_url( 'frontend/vrodos_frontend.css' ) );
@@ -474,7 +474,7 @@ class VRodos_Asset_Manager {
 			'<script type="module">
                 import("%1$s")
                     .then(m => { window.Stats = m.default; })
-                    .catch(e => { console.warn("VRodos Error: stats-gl failed to load from CDN. Scene will continue without performance overlay.", e); });
+                    .catch(e => { console.warn("VRodos Error: local stats-gl failed to load. Scene will continue without performance overlay.", e); });
             </script>',
 			esc_url( $src )
 		);

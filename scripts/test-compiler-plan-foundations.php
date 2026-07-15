@@ -105,8 +105,8 @@ $first      = $normalizer->normalize( $source, 42, 'lightSun0' );
 $second     = $normalizer->normalize( $source, 42, 'lightSun0' );
 vrodos_foundation_assert( 'light-sun' === $first->category_slug, 'camelCase light category normalization' );
 vrodos_foundation_assert( $first->uuid === $second->uuid, 'deterministic object id' );
-vrodos_foundation_assert( ! property_exists( $source, 'uuid' ), 'source object remains immutable' );
-vrodos_foundation_assert( property_exists( $source, 'follow_camera' ), 'source compatibility fields remain untouched' );
+vrodos_foundation_assert( $first === $source, 'compile-plan entity normalization avoids a redundant JSON clone' );
+vrodos_foundation_assert( ! property_exists( $source, 'follow_camera' ), 'compile-plan entity drops compatibility-only fields' );
 
 $registry = new VRodos_Compiler_Entity_Policy();
 $light_aliases = [
@@ -217,6 +217,7 @@ function vrodos_foundation_chunk( string $id, int $order, array $activation = []
 		'id' => $id,
 		'type' => 'script',
 		'src' => $id . '.js',
+		'file' => $id . '.js',
 		'order' => $order,
 		'dependencies' => $dependencies,
 		'features' => [ $id ],
@@ -230,7 +231,8 @@ function vrodos_foundation_chunk( string $id, int $order, array $activation = []
 $plan_manifest = new VRodos_Compiler_Runtime_Manifest(
 	null,
 	[
-		'schemaVersion' => 1,
+		'schemaVersion' => 2,
+		'runtimeRoot' => 'assets/js/runtime/master/lib',
 		'chunks' => [
 			'scene-components' => vrodos_foundation_chunk( 'scene-components', 10 ),
 			'networked-components' => vrodos_foundation_chunk( 'networked-components', 15, [ 'networking' ] ),
@@ -252,7 +254,14 @@ $scene_one = (object) [
 		'aframeRenderQuality' => 'high',
 		'aframeHoveringInteractables' => true,
 	],
-	'objects' => (object) [],
+	'objects' => (object) [
+		'avatarCamera' => (object) [ 'position' => [ 0, 1.6, 0 ] ],
+		'decoration0' => (object) [
+			'category_name' => 'decoration',
+			'asset_id' => 77,
+			'follow_camera' => true,
+		],
+	],
 ];
 $scene_two = (object) [
 	'metadata' => (object) [
@@ -280,6 +289,12 @@ vrodos_foundation_assert( 'high' === $project_plan->scenes[0]->settings['renderQ
 vrodos_foundation_assert( 'performance' === $project_plan->scenes[1]->settings['renderQuality'], 'second scene artistic settings remain local' );
 vrodos_foundation_assert( $project_plan->scenes[0]->hover_enabled && ! $project_plan->scenes[1]->hover_enabled, 'hover remains scene-specific' );
 vrodos_foundation_assert( in_array( 'networked-components', $project_plan->scenes[0]->chunk_ids, true ), 'project capability plan activates networking' );
+$planned_decoration = $project_plan->scenes[0]->scene_json->objects->decoration0;
+vrodos_foundation_assert( ! empty( $planned_decoration->uuid ), 'compile plan normalizes entity identity once' );
+vrodos_foundation_assert( ! property_exists( $planned_decoration, 'follow_camera' ), 'compile plan strips compatibility-only entity fields' );
+vrodos_foundation_assert( ! property_exists( $scene_one->objects->decoration0, 'uuid' ), 'compile plan does not mutate source scene entities' );
+vrodos_foundation_assert( property_exists( $scene_one->objects->decoration0, 'follow_camera' ), 'source scene compatibility fields remain intact' );
+vrodos_foundation_assert( ! property_exists( $project_plan->scenes[0]->scene_json->objects->avatarCamera, 'uuid' ), 'camera configuration is not normalized as an entity' );
 
 $link_publisher = new VRodos_Compiler_Link_Publisher(
 	static fn ( string $filename, ?string $mode, string $runtime_mode ): string => ( $mode ?: 'primary' ) . ':' . $runtime_mode . ':' . $filename,
@@ -292,16 +307,41 @@ vrodos_foundation_assert( str_ends_with( $vrexpo_result->links['CurrentSceneMast
 vrodos_foundation_assert( ! isset( $vrexpo_result->links['SimpleClient'] ), 'VRExpo omits Simple client link' );
 vrodos_foundation_assert( isset( $vrexpo_result->to_public_payload()['artifacts'] ), 'public result exposes artifact summaries' );
 
-$standard_plan = new VRodos_Project_Compile_Plan(
+$standard_plan = $plan_resolver->resolve(
 	$project_plan->request,
-	$project_plan->project_title,
-	'virtualproduction_games',
-	$project_plan->scenes
+	[
+		'project_title' => 'Fixture',
+		'project_type_slug' => 'virtualproduction_games',
+		'valid_scene_ids' => [ 101, 102 ],
+		'scene_title' => [ 'One', 'Two' ],
+		'scene_json' => [ $scene_one, $scene_two ],
+	]
 );
 $standard_result = $link_publisher->publish( $standard_plan, [] );
 vrodos_foundation_assert( str_ends_with( $standard_result->links['MasterClient'], 'Master_Client_102.html' ), 'standard master link keeps last-scene convention' );
 vrodos_foundation_assert( str_ends_with( $standard_result->links['index'], 'index_102.html' ), 'standard index filename remains stable' );
 vrodos_foundation_assert( str_ends_with( $standard_result->links['SimpleClient'], 'Simple_Client_102.html' ), 'standard Simple filename remains stable' );
+vrodos_foundation_assert( 6 === count( $standard_plan->targets ), 'networked standard plan declares Master/Simple/Index for every scene' );
+vrodos_foundation_assert( 2 === count( $project_plan->targets ), 'VRExpo plan declares only Master targets' );
+$simple_target = $standard_plan->target( VRodos_Runtime_Target_Plan::SIMPLE, 102 );
+vrodos_foundation_assert( $simple_target instanceof VRodos_Runtime_Target_Plan, 'standard plan exposes selected Simple target' );
+vrodos_foundation_assert( [ 'scene-components' ] === $simple_target->chunk_ids, 'Simple target preserves its lean dependency plan' );
+
+$single_player_plan = $plan_resolver->resolve(
+	new VRodos_Compile_Request( 9, 102, [ 101, 102 ], 'single-player', 'desktop', true ),
+	[
+		'project_title' => 'Fixture',
+		'project_type_slug' => 'virtualproduction_games',
+		'valid_scene_ids' => [ 101, 102 ],
+		'scene_title' => [ 'One', 'Two' ],
+		'scene_json' => [ $scene_one, $scene_two ],
+	]
+);
+vrodos_foundation_assert( 2 === count( $single_player_plan->targets ), 'single-player plan declares one Master target per scene' );
+foreach ( $single_player_plan->targets as $target ) {
+	vrodos_foundation_assert( VRodos_Runtime_Target_Plan::MASTER === $target->kind, 'single-player target matrix excludes network companion pages' );
+	vrodos_foundation_assert( ! in_array( 'networked-components', $target->chunk_ids, true ), 'single-player target excludes network chunk' );
+}
 
 $legacy_diagnostics = [];
 $legacy_settings = $plan_settings->build_settings(
@@ -350,6 +390,7 @@ file_put_contents( $test_dir . DIRECTORY_SEPARATOR . 'Simple_Client_1.html', 'ol
 $artifacts = [
 	new VRodos_Compile_Artifact( 'Master_Client_1.html', 'new-master', 'master', 1 ),
 	new VRodos_Compile_Artifact( 'Simple_Client_1.html', 'new-simple', 'simple', 1 ),
+	new VRodos_Compile_Artifact( 'Master_Client_2.html', 'new-scene-master', 'master', 2 ),
 ];
 $failing_transaction = new VRodos_Compiler_Artifact_Transaction(
 	$test_dir,
@@ -370,6 +411,49 @@ try {
 ( new VRodos_Compiler_Artifact_Transaction( $test_dir ) )->commit( 99, $artifacts );
 vrodos_foundation_assert( 'new-master' === file_get_contents( $test_dir . DIRECTORY_SEPARATOR . 'Master_Client_1.html' ), 'master transaction commit' );
 vrodos_foundation_assert( 'new-simple' === file_get_contents( $test_dir . DIRECTORY_SEPARATOR . 'Simple_Client_1.html' ), 'simple transaction commit' );
+vrodos_foundation_assert( 'new-scene-master' === file_get_contents( $test_dir . DIRECTORY_SEPARATOR . 'Master_Client_2.html' ), 'second scene transaction commit' );
+
+$stale_rollback_transaction = new VRodos_Compiler_Artifact_Transaction(
+	$test_dir,
+	static function ( VRodos_Compile_Artifact $artifact, int $committed ): void {
+		if ( 0 === $committed ) {
+			throw new RuntimeException( 'Injected stale cleanup failure.' );
+		}
+	}
+);
+try {
+	$stale_rollback_transaction->commit( 99, [ new VRodos_Compile_Artifact( 'Master_Client_1.html', 'latest-master', 'master', 1 ) ] );
+	vrodos_foundation_assert( false, 'stale cleanup rollback injection' );
+} catch ( RuntimeException $error ) {
+	vrodos_foundation_assert( 'new-master' === file_get_contents( $test_dir . DIRECTORY_SEPARATOR . 'Master_Client_1.html' ), 'replacement restored after stale cleanup rollback' );
+	vrodos_foundation_assert( 'new-simple' === file_get_contents( $test_dir . DIRECTORY_SEPARATOR . 'Simple_Client_1.html' ), 'stale artifact restored after rollback' );
+	vrodos_foundation_assert( 'new-scene-master' === file_get_contents( $test_dir . DIRECTORY_SEPARATOR . 'Master_Client_2.html' ), 'removed scene artifact restored after rollback' );
+}
+
+( new VRodos_Compiler_Artifact_Transaction( $test_dir ) )->commit(
+	99,
+	[ new VRodos_Compile_Artifact( 'Master_Client_1.html', 'latest-master', 'master', 1 ) ]
+);
+vrodos_foundation_assert( ! is_file( $test_dir . DIRECTORY_SEPARATOR . 'Simple_Client_1.html' ), 'stale Simple client removed from project inventory' );
+vrodos_foundation_assert( ! is_file( $test_dir . DIRECTORY_SEPARATOR . 'Master_Client_2.html' ), 'removed scene artifact removed from project inventory' );
+$inventory = json_decode( (string) file_get_contents( $test_dir . DIRECTORY_SEPARATOR . '.manifests' . DIRECTORY_SEPARATOR . 'project-99.json' ), true );
+vrodos_foundation_assert( [ 'Master_Client_1.html' ] === $inventory['artifacts'], 'project artifact inventory records the complete published set' );
+
+$lock_path = $test_dir . DIRECTORY_SEPARATOR . '.locks' . DIRECTORY_SEPARATOR . 'project-99.lock';
+$held_lock = fopen( $lock_path, 'c+' );
+vrodos_foundation_assert( is_resource( $held_lock ) && flock( $held_lock, LOCK_EX | LOCK_NB ), 'fixture acquires project compile lock' );
+try {
+	( new VRodos_Compiler_Artifact_Transaction( $test_dir ) )->commit(
+		99,
+		[ new VRodos_Compile_Artifact( 'Master_Client_1.html', 'blocked-master', 'master', 1 ) ]
+	);
+	vrodos_foundation_assert( false, 'concurrent compile rejection' );
+} catch ( RuntimeException $error ) {
+	vrodos_foundation_assert( 409 === $error->getCode(), 'concurrent compile reports conflict' );
+} finally {
+	flock( $held_lock, LOCK_UN );
+	fclose( $held_lock );
+}
 vrodos_foundation_remove_tree( $test_dir );
 
 echo "Compiler plan foundation tests passed.\n";

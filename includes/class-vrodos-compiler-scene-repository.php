@@ -8,7 +8,7 @@ class VRodos_Compiler_Scene_Repository {
 	public function load_compile_context( int $project_id, array $scene_id_list, int $selected_scene_id = 0 ): array {
 		$project_post = get_post( $project_id );
 		if ( ! ( $project_post instanceof WP_Post ) || 'vrodos_game' !== $project_post->post_type ) {
-			error_log( '[VRodos] compile_aframe() aborted: invalid project #' . $project_id );
+			error_log( '[VRodos] compile() aborted: invalid project #' . $project_id );
 			return [ 'error' => 'Invalid project.' ];
 		}
 		$project_slug = (string) $project_post->post_name;
@@ -28,18 +28,18 @@ class VRodos_Compiler_Scene_Repository {
 
 			$scene_post = get_post( $scene_id );
 			if ( ! ( $scene_post instanceof WP_Post ) || 'vrodos_scene' !== $scene_post->post_type ) {
-				error_log( '[VRodos] compile_aframe() rejected invalid scene #' . $scene_id . ' for project #' . $project_id );
+				error_log( '[VRodos] compile() rejected invalid scene #' . $scene_id . ' for project #' . $project_id );
 				return [ 'error' => 'Invalid scene in compile request.' ];
 			}
 
 			if ( ! $this->scene_belongs_to_project( $scene_id, $project_slug ) ) {
-				error_log( '[VRodos] compile_aframe() rejected scene/project mismatch for scene #' . $scene_id . ' and project #' . $project_id );
+				error_log( '[VRodos] compile() rejected scene/project mismatch for scene #' . $scene_id . ' and project #' . $project_id );
 				return [ 'error' => 'A requested scene does not belong to this project.' ];
 			}
 
 			$decoded_scene = json_decode( (string) $scene_post->post_content );
 			if ( ! is_object( $decoded_scene ) ) {
-				error_log( '[VRodos] compile_aframe() skipped scene #' . $scene_id . ' due to invalid JSON content.' );
+				error_log( '[VRodos] compile() skipped scene #' . $scene_id . ' due to invalid JSON content.' );
 				continue;
 			}
 
@@ -49,7 +49,7 @@ class VRodos_Compiler_Scene_Repository {
 		}
 
 		if ( empty( $valid_scene_ids ) ) {
-			error_log( '[VRodos] compile_aframe() aborted: no valid scenes for project #' . $project_id );
+			error_log( '[VRodos] compile() aborted: no valid scenes for project #' . $project_id );
 			return [ 'error' => 'No valid scenes to compile.' ];
 		}
 		if ( $selected_scene_id > 0 && ! in_array( $selected_scene_id, $valid_scene_ids, true ) ) {

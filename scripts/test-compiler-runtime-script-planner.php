@@ -78,7 +78,7 @@ function vrodos_assert_order( string $haystack, string $first, string $second, s
 }
 
 function vrodos_test_chunk( string $id, string $type, string $src, int $order, array $dependencies = [], array $extra = [] ): array {
-	return array_merge(
+	$chunk = array_merge(
 		[
 			'id'           => $id,
 			'type'         => $type,
@@ -89,6 +89,10 @@ function vrodos_test_chunk( string $id, string $type, string $src, int $order, a
 		],
 		$extra
 	);
+	if ( 'script' === $type ) {
+		$chunk['file'] = basename( $src );
+	}
+	return $chunk;
 }
 
 function vrodos_assert_manifest_error( array $manifest, string $expected_message, string $label ): void {
@@ -110,14 +114,15 @@ function vrodos_assert_manifest_error( array $manifest, string $expected_message
 $manifest = new VRodos_Compiler_Runtime_Manifest(
 	null,
 	[
-		'schemaVersion' => 1,
+		'schemaVersion' => 2,
+		'runtimeRoot'   => 'assets/js/runtime/master/lib',
 		'chunks'        => [
 			'scene-components'             => vrodos_test_chunk( 'scene-components', 'script', 'js/master/lib/vrodos-runtime-scene-components.bundle.js', 10 ),
 			'spatial-ui'                   => vrodos_test_chunk( 'spatial-ui', 'script', 'js/master/lib/vrodos-runtime-spatial-ui.bundle.js', 12, [ 'scene-components' ], [ 'activationCapabilities' => [ 'spatial-ui' ] ] ),
 			'networked-components'         => vrodos_test_chunk( 'networked-components', 'script', 'js/master/lib/vrodos-runtime-networked-components.bundle.js', 15, [], [ 'activationCapabilities' => [ 'networking' ] ] ),
 			'core-runtime'                 => vrodos_test_chunk( 'core-runtime', 'script', 'js/master/lib/vrodos-runtime-core.bundle.js', 20 ),
 			'fps-meter'                    => vrodos_test_chunk( 'fps-meter', 'inline-module', '', 30, [], [
-				'moduleImport' => 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js',
+				'moduleImport' => 'VRODOS_PLUGIN_URL_PLACEHOLDERassets/vendor/stats-gl/main.js',
 				'readyGlobal'  => 'VRODOS_STATS_READY',
 				'global'       => 'Stats',
 				'export'       => 'default',
@@ -162,7 +167,8 @@ vrodos_assert_true( VRodos_Compiler_Runtime_Feature_Flags::POST_FX_ENGINE_PMNDRS
 $versioned_manifest = new VRodos_Compiler_Runtime_Manifest(
 	null,
 	[
-		'schemaVersion' => 1,
+		'schemaVersion' => 2,
+		'runtimeRoot'   => 'assets/js/runtime/master/lib',
 		'chunks'        => [
 			'scene-components' => vrodos_test_chunk(
 				'scene-components',
@@ -399,7 +405,8 @@ vrodos_assert_not_contains( $single_player_html, 'vrodos-runtime-networked-compo
 
 vrodos_assert_manifest_error(
 	[
-		'schemaVersion' => 1,
+		'schemaVersion' => 2,
+		'runtimeRoot'   => 'assets/js/runtime/master/lib',
 		'chunks'        => [
 			'a' => vrodos_test_chunk( 'a', 'script', 'a.js', 10 ),
 			'b' => vrodos_test_chunk( 'b', 'script', 'b.js', 10 ),
@@ -411,7 +418,8 @@ vrodos_assert_manifest_error(
 
 vrodos_assert_manifest_error(
 	[
-		'schemaVersion' => 1,
+		'schemaVersion' => 2,
+		'runtimeRoot'   => 'assets/js/runtime/master/lib',
 		'chunks'        => [
 			'a' => vrodos_test_chunk( 'a', 'script', 'a.js', 10, [ 'missing' ] ),
 		],
@@ -422,7 +430,8 @@ vrodos_assert_manifest_error(
 
 vrodos_assert_manifest_error(
 	[
-		'schemaVersion' => 1,
+		'schemaVersion' => 2,
+		'runtimeRoot'   => 'assets/js/runtime/master/lib',
 		'chunks'        => [
 			'a' => vrodos_test_chunk( 'a', 'script', 'a.js', 10, [], [ 'features' => [] ] ),
 		],
@@ -433,7 +442,8 @@ vrodos_assert_manifest_error(
 
 vrodos_assert_manifest_error(
 	[
-		'schemaVersion' => 1,
+		'schemaVersion' => 2,
+		'runtimeRoot'   => 'assets/js/runtime/master/lib',
 		'chunks'        => [
 			'a' => vrodos_test_chunk( 'a', 'script', 'a.js', 10, [], [ 'activationCapabilities' => [ 'same-capability' ] ] ),
 			'b' => vrodos_test_chunk( 'b', 'script', 'b.js', 20, [], [ 'activationCapabilities' => [ 'same-capability' ] ] ),
@@ -443,7 +453,73 @@ vrodos_assert_manifest_error(
 	'duplicate activation capability validation'
 );
 
+vrodos_assert_manifest_error(
+	[
+		'schemaVersion' => 2,
+		'runtimeRoot'   => 'assets/js/runtime/master/lib',
+		'chunks'        => [
+			'a' => vrodos_test_chunk( 'a', 'script', 'a.js', 10, [ 'b' ] ),
+			'b' => vrodos_test_chunk( 'b', 'script', 'b.js', 20, [ 'a' ] ),
+		],
+	],
+	'dependency cycle',
+	'dependency cycle validation'
+);
+
+vrodos_assert_manifest_error(
+	[
+		'schemaVersion' => 2,
+		'runtimeRoot'   => 'assets/js/runtime/master/lib',
+		'chunks'        => [
+			'a' => vrodos_test_chunk( 'a', 'script', '../a.js', 10 ),
+		],
+	],
+	'invalid chunk source',
+	'path traversal validation'
+);
+
+vrodos_assert_manifest_error(
+	[
+		'schemaVersion' => 2,
+		'runtimeRoot'   => 'assets/js/runtime/master/lib',
+		'chunks'        => [
+			'a' => vrodos_test_chunk( 'a', 'script', 'safe/%2e%2e/a.js', 10 ),
+		],
+	],
+	'invalid chunk source',
+	'encoded path traversal validation'
+);
+
+vrodos_assert_manifest_error(
+	[
+		'schemaVersion' => 2,
+		'runtimeRoot'   => 'assets/js/runtime/master/lib',
+		'chunks'        => [
+			'a' => vrodos_test_chunk( 'a', 'inline-module', '', 10, [], [ 'moduleImport' => '../unsafe.js' ] ),
+		],
+	],
+	'invalid module import',
+	'inline module path traversal validation'
+);
+
+vrodos_assert_manifest_error(
+	[
+		'schemaVersion' => 2,
+		'runtimeRoot'   => 'assets/js/runtime/master/lib',
+		'chunks'        => [
+			'a' => vrodos_test_chunk( 'a', 'script', 'a.js', 10, [ 'b' ] ),
+			'b' => vrodos_test_chunk( 'b', 'script', 'b.js', 20 ),
+		],
+	],
+	'dependency order is invalid',
+	'dependency order validation'
+);
+
 $actual_manifest = new VRodos_Compiler_Runtime_Manifest();
+vrodos_assert_true(
+	in_array( 'assets/js/runtime/components/chat_component.js', $actual_manifest->chunk( 'networked-components' )['sourceFiles'], true ),
+	'networked chunk includes VRODOSChat implementation'
+);
 vrodos_assert_same(
 	[ 'networked-components', 'takram-atmosphere', 'takram-clouds', 'collision-bvh-vendor' ],
 	$actual_manifest->chunk_ids_for_activation_capabilities( [ 'networking', 'collision-bvh', 'atmosphere:takram', 'clouds:takram' ] ),

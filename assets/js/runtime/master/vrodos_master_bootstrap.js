@@ -188,14 +188,13 @@
     function buildVideoControlGui(buttonEl) {
         if (
             typeof window.NAF === 'undefined' ||
-            !window.NAF.connection ||
-            !window.NAF.connection.entities ||
+            !window.NAF.entities ||
             typeof lil === 'undefined'
         ) {
             return;
         }
 
-        const entities = window.NAF.connection.entities.entities;
+        const entities = window.NAF.entities.entities;
         const panelsSizeControlsDiv = VRODOSMaster.getElement('panelsSizeControlsDiv', true);
         if (panelsSizeControlsDiv) {
             panelsSizeControlsDiv.replaceChildren([]);

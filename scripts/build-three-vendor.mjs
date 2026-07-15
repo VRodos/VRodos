@@ -61,6 +61,15 @@ const runtimeConfig = getPackageRuntimeConfig();
 const aframeConfig = runtimeConfig.aframe ?? {};
 const aframeBundleRelativePath = 'assets/vendor/aframe/aframe-master.min.js';
 const aframeBundlePath = path.join(rootDir, ...aframeBundleRelativePath.split('/'));
+const browserVendorFiles = [
+  ['aframe-extras', 'dist/aframe-extras.min.js', 'aframe-extras/aframe-extras.min.js'],
+  ['aframe-environment-component', 'dist/aframe-environment-component.min.js', 'aframe-environment/aframe-environment-component.min.js'],
+  ['stats-gl', 'dist/main.js', 'stats-gl/main.js'],
+  ['stats-gl', 'dist/panel.js', 'stats-gl/panel.js'],
+  ['lil-gui', 'dist/lil-gui.umd.js', 'lil-gui/lil-gui.umd.js'],
+  ['lil-gui', 'dist/lil-gui.css', 'lil-gui/lil-gui.css'],
+  ['lucide', 'dist/umd/lucide.min.js', 'lucide/lucide.min.js'],
+];
 
 const requiredPackages = [
   'three',
@@ -68,7 +77,13 @@ const requiredPackages = [
   '@takram/three-atmosphere',
   '@takram/three-geospatial-effects',
   '@takram/three-clouds',
+  '@takram/three-geospatial',
   'three-mesh-bvh',
+  'aframe-extras',
+  'aframe-environment-component',
+  'stats-gl',
+  'lil-gui',
+  'lucide',
 ];
 
 const bundleEntrySource = `
@@ -601,6 +616,7 @@ async function buildTakramCloudsBundle() {
   await writeGlobalShim('three', 'window.THREE || {}', threeShimPath);
   await writeGlobalShim('postprocessing', 'window.POSTPROCESSING || {}', postprocessingShimPath);
   await writeGlobalShim('@takram/three-atmosphere', 'window.VRODOS_TAKRAM_ATMOSPHERE || {}', takramAtmosphereShimPath);
+  const takramGeospatialPublicEntry = fileURLToPath(import.meta.resolve('@takram/three-geospatial')).replaceAll('\\', '/');
   await writeFile(takramGeospatialShimPath, `
 export {
   Geodetic,
@@ -614,18 +630,17 @@ export {
   reinterpretType,
   resolveIncludes,
   unrollLoops
-} from '../node_modules/@takram/three-geospatial/build/index.js';
-export const UniformMap = Map;
+} from ${JSON.stringify(takramGeospatialPublicEntry)};
 `, 'utf8');
 
   const entrySource = `
 import {
-  C as CLOUD_SHAPE_TEXTURE_SIZE,
-  a as CLOUD_SHAPE_DETAIL_TEXTURE_SIZE,
-  b as CloudLayer,
-  c as CloudLayers,
-  d as CloudsEffect
-} from '../node_modules/@takram/three-clouds/build/shared.js';
+  CLOUD_SHAPE_TEXTURE_SIZE,
+  CLOUD_SHAPE_DETAIL_TEXTURE_SIZE,
+  CloudLayer,
+  CloudLayers,
+  CloudsEffect
+} from '@takram/three-clouds';
 import {
   ByteType,
   FileLoader,
@@ -788,9 +803,13 @@ async function writeRuntimeManifest(aframeArtifact) {
   const takramCloudsVersion = getLockedPackageVersion('@takram/three-clouds');
   const takramEffectsVersion = getLockedPackageVersion('@takram/three-geospatial-effects');
   const collisionBvhVersion = getLockedPackageVersion('three-mesh-bvh');
+  const browserVersions = Object.fromEntries(
+    ['aframe-extras', 'aframe-environment-component', 'stats-gl', 'lil-gui', 'lucide']
+      .map((packageName) => [packageName, getLockedPackageVersion(packageName)])
+  );
 
   const manifest = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedBy: 'scripts/build-three-vendor.mjs',
     aframe: {
       label: aframeConfig.label,
@@ -854,10 +873,28 @@ async function writeRuntimeManifest(aframeArtifact) {
       bundleFile: path.basename(collisionBvhBundlePath),
       bundlePath: 'assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js',
     },
+    browserLibraries: {
+      versions: browserVersions,
+      files: Object.fromEntries(
+        browserVendorFiles.map(([packageName, _source, destination]) => [
+          packageName + ':' + path.basename(destination),
+          'assets/vendor/' + destination,
+        ])
+      ),
+    },
   };
 
   await mkdir(path.dirname(manifestPath), { recursive: true });
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+}
+
+async function copyBrowserVendorAssets() {
+  for (const [packageName, source, destination] of browserVendorFiles) {
+    const sourcePath = path.join(rootDir, 'node_modules', packageName, ...source.split('/'));
+    const destinationPath = path.join(rootDir, 'assets', 'vendor', ...destination.split('/'));
+    await mkdir(path.dirname(destinationPath), { recursive: true });
+    await cp(sourcePath, destinationPath, { force: true });
+  }
 }
 
 async function main() {
@@ -871,6 +908,7 @@ async function main() {
   await buildTakramCloudsBundle();
   await buildCollisionBvhBundle();
   await copySupportAssets();
+  await copyBrowserVendorAssets();
   await writeRuntimeManifest(aframeArtifact);
   console.log(`Built ${path.relative(rootDir, bundlePath)}`);
   console.log(`Built ${path.relative(rootDir, threeAddonsRuntimeBundlePath)}`);

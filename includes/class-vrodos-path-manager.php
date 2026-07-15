@@ -110,10 +110,11 @@ class VRodos_Path_Manager {
 	}
 
 	public static function page_template_meta_values( string $template ): array {
-		return [
-			self::canonical_page_template_meta( $template ),
-			self::legacy_page_template_meta( $template ),
-		];
+		$values = [ self::canonical_page_template_meta( $template ) ];
+		if ( ! class_exists( 'VRodos_Legacy_Metadata_Migration' ) || ! VRodos_Legacy_Metadata_Migration::is_complete() ) {
+			$values[] = self::legacy_page_template_meta( $template );
+		}
+		return $values;
 	}
 
 	public static function runtime_build_path( string $relative = '' ): string {

@@ -12,6 +12,9 @@ function assert(condition, message) {
 
 const packageJson = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 const packageLock = JSON.parse(readFileSync(resolve(root, "package-lock.json"), "utf8"));
+const servicePackageJson = JSON.parse(readFileSync(resolve(root, "services/vrodos-network-runtime/package.json"), "utf8"));
+const servicePackageLock = JSON.parse(readFileSync(resolve(root, "services/vrodos-network-runtime/package-lock.json"), "utf8"));
+const libraryAudit = readFileSync(resolve(root, "documentation/runtime-library-audit.md"), "utf8");
 const manifest = JSON.parse(readFileSync(resolve(root, "assets/runtime-version-manifest.json"), "utf8"));
 const declared = packageJson.vrodos?.runtime?.aframe;
 const artifact = manifest.aframe;
@@ -20,6 +23,7 @@ const lockedThree = packageLock.packages?.["node_modules/three"];
 
 assert(declared, "package.json must declare vrodos.runtime.aframe metadata");
 assert(artifact, "runtime-version-manifest.json must contain A-Frame metadata");
+assert(manifest.schemaVersion === 2, "runtime version manifest must use schema v2");
 assert(declared.version === "1.8.0", "A-Frame 1.8.0 must be declared");
 assert(declared.commit === "e145c1a01a1cdc817329503d49cf5a9b0b32288b", "A-Frame must pin the audited r185 CDN artifact");
 assert(artifact.version === declared.version, "A-Frame manifest version must match package.json");
@@ -43,17 +47,68 @@ assert(
 
 const runtimeManager = readFileSync(resolve(root, "includes/class-vrodos-render-runtime-manager.php"), "utf8");
 assert(runtimeManager.includes("hash_file( 'sha256', $path )"), "runtime manager must hash the served local A-Frame artifact");
-assert(runtimeManager.includes("hash_equals( $expected_sha256"), "runtime manager must compare the local A-Frame hash safely");
+assert(runtimeManager.includes("hash_equals( $expected"), "runtime manager must compare the local A-Frame hash safely");
+assert(!runtimeManager.includes("FALLBACK_AFRAME_RUNTIME_URL"), "runtime manager must not retain a CDN fallback");
 assert(runtimeManager.includes("three_draco_decoder_url"), "runtime manager must expose the canonical Draco decoder URL");
 assert(runtimeManager.includes("three_basis_transcoder_url"), "runtime manager must expose the canonical Basis transcoder URL");
 assert(runtimeManager.includes("three_meshopt_decoder_url"), "runtime manager must expose the canonical Meshopt decoder URL");
 
 assert(lockedThree?.version === "0.185.0", "package-lock.json must lock super-three 0.185.0");
 assert(packageJson.devDependencies?.three === "npm:super-three@0.185.0", "package.json must declare exact super-three 0.185.0");
+assert(packageJson.dependencies?.["@pmndrs/msdfonts"] === "1.0.74", "Direct MSDF import must have exact package ownership");
+assert(packageJson.dependencies?.["@takram/three-geospatial"] === "0.9.1", "Direct Takram geospatial import must have exact package ownership");
+for (const [packageName, expectedVersion] of Object.entries({
+    "aframe-extras": "7.7.0",
+    "aframe-environment-component": "1.5.0",
+    "stats-gl": "2.2.8",
+    "lil-gui": "0.19.2",
+    "lucide": "0.469.0"
+})) {
+    assert(packageJson.dependencies?.[packageName] === expectedVersion, `Browser library must have exact package ownership: ${packageName}`);
+}
 assert(threeArtifact?.version === lockedThree.version, "Three manifest version must match package-lock.json");
 assert(threeArtifact?.revision === "185", "Three manifest revision must be 185");
 assert(threeArtifact?.vendorDir === "three-r185", "Three manifest vendor directory must be three-r185");
 assert(threeArtifact?.bundleFile === "vrodos-three-r185.bundle.js", "Three manifest bundle filename must be revisioned for r185");
+
+const manifestVersions = {
+    three: manifest.three?.version,
+    postprocessing: manifest.postprocessing?.version,
+    "@takram/three-atmosphere": manifest.takram?.atmosphereVersion,
+    "@takram/three-clouds": manifest.takram?.cloudsVersion,
+    "@takram/three-geospatial-effects": manifest.takram?.effectsVersion,
+    "three-mesh-bvh": manifest.collisionBvh?.version,
+    ...(manifest.browserLibraries?.versions || {})
+};
+for (const [packageName, manifestVersion] of Object.entries(manifestVersions)) {
+    const lockedVersion = packageLock.packages?.[`node_modules/${packageName}`]?.version;
+    assert(lockedVersion, `Runtime package must be locked: ${packageName}`);
+    assert(manifestVersion === lockedVersion, `Runtime manifest version drift for ${packageName}: ${manifestVersion} != ${lockedVersion}`);
+}
+for (const relativePath of Object.values(manifest.browserLibraries?.files || {})) {
+    assert(existsSync(resolve(root, ...relativePath.split("/"))), `Browser vendor artifact is missing: ${relativePath}`);
+}
+
+function assertDirectDependenciesAudited(packageMetadata, lockMetadata, label) {
+    const auditNames = {
+        tailwindcss: "Tailwind CSS"
+    };
+    const dependencies = {
+        ...(packageMetadata.dependencies || {}),
+        ...(packageMetadata.devDependencies || {})
+    };
+    for (const packageName of Object.keys(dependencies)) {
+        const lockedVersion = lockMetadata.packages?.[`node_modules/${packageName}`]?.version;
+        assert(lockedVersion, `${label} direct dependency must be locked: ${packageName}`);
+        const escapedName = (auditNames[packageName] || packageName).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const escapedVersion = lockedVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const auditRow = new RegExp(`^\\|[^\\n]*${escapedName}[^\\n]*\\|[^\\n]*${escapedVersion}[^\\n]*$`, "im");
+        assert(auditRow.test(libraryAudit), `${label} direct dependency must be versioned in the library audit: ${packageName}@${lockedVersion}`);
+    }
+}
+
+assertDirectDependenciesAudited(packageJson, packageLock, "Root");
+assertDirectDependenciesAudited(servicePackageJson, servicePackageLock, "Network service");
 
 const threeBundle = readFileSync(resolve(root, ...threeArtifact.bundlePath.split("/")), "utf8");
 assert(threeBundle.includes('var REVISION = "185";'), "Editor Three bundle must contain revision 185");

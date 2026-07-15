@@ -9,7 +9,6 @@ const packageJson = JSON.parse(readFileSync(path.join(rootDir, 'package.json'), 
 const packageLockJson = JSON.parse(readFileSync(path.join(rootDir, 'package-lock.json'), 'utf8'));
 
 export const THREE_VENDOR_BUILD_ENTRY_FILE = '.tmp-build-three-vendor-entry.mjs';
-export const THREE_SMOKE_BUNDLE_FILE = 'vrodos-phase0-smoke.bundle.js';
 export const RUNTIME_MANIFEST_FILE = 'runtime-version-manifest.json';
 
 export function getLockedPackageVersion(packageName) {

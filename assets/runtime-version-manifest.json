@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generatedBy": "scripts/build-three-vendor.mjs",
   "aframe": {
     "label": "A-Frame master",
@@ -58,9 +58,27 @@
     }
   },
   "collisionBvh": {
-    "version": "0.9.10",
+    "version": "0.9.11",
     "global": "VRODOS_COLLISION_BVH",
     "bundleFile": "vrodos-collision-bvh.bundle.js",
     "bundlePath": "assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js"
+  },
+  "browserLibraries": {
+    "versions": {
+      "aframe-extras": "7.7.0",
+      "aframe-environment-component": "1.5.0",
+      "stats-gl": "2.2.8",
+      "lil-gui": "0.19.2",
+      "lucide": "0.469.0"
+    },
+    "files": {
+      "aframe-extras:aframe-extras.min.js": "assets/vendor/aframe-extras/aframe-extras.min.js",
+      "aframe-environment-component:aframe-environment-component.min.js": "assets/vendor/aframe-environment/aframe-environment-component.min.js",
+      "stats-gl:main.js": "assets/vendor/stats-gl/main.js",
+      "stats-gl:panel.js": "assets/vendor/stats-gl/panel.js",
+      "lil-gui:lil-gui.umd.js": "assets/vendor/lil-gui/lil-gui.umd.js",
+      "lil-gui:lil-gui.css": "assets/vendor/lil-gui/lil-gui.css",
+      "lucide:lucide.min.js": "assets/vendor/lucide/lucide.min.js"
+    }
   }
 }

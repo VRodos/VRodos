@@ -154,9 +154,10 @@ class VRodos_Compiler_Runtime_Manifest {
 	}
 
 	private function validate_manifest( array $manifest ): array {
-		if ( (int) ( $manifest['schemaVersion'] ?? 0 ) !== 1 ) {
+		if ( (int) ( $manifest['schemaVersion'] ?? 0 ) !== 2 ) {
 			throw new RuntimeException( '[VRodos] Unsupported runtime build manifest schema.' );
 		}
+		$this->assert_safe_relative_path( (string) ( $manifest['runtimeRoot'] ?? '' ), 'runtimeRoot' );
 
 		if ( ! isset( $manifest['chunks'] ) || ! is_array( $manifest['chunks'] ) ) {
 			throw new RuntimeException( '[VRodos] Runtime build manifest has no chunks.' );
@@ -204,9 +205,27 @@ class VRodos_Compiler_Runtime_Manifest {
 			if ( 'script' === $chunk['type'] && empty( $chunk['src'] ) ) {
 				throw new RuntimeException( '[VRodos] Runtime script chunk is missing src: ' . $chunk_id );
 			}
+			if ( 'script' === $chunk['type'] ) {
+				$this->assert_safe_relative_path( (string) $chunk['src'], 'chunk source for ' . $chunk_id );
+				$this->assert_safe_basename( (string) ( $chunk['file'] ?? '' ), 'chunk file for ' . $chunk_id );
+			}
 
-			if ( 'inline-module' === $chunk['type'] && empty( $chunk['moduleImport'] ) ) {
-				throw new RuntimeException( '[VRodos] Runtime inline module chunk is missing moduleImport: ' . $chunk_id );
+			if ( 'inline-module' === $chunk['type'] ) {
+				$module_import = (string) ( $chunk['moduleImport'] ?? '' );
+				if ( '' === $module_import ) {
+					throw new RuntimeException( '[VRodos] Runtime inline module chunk is missing moduleImport: ' . $chunk_id );
+				}
+				$plugin_placeholder = 'VRODOS_PLUGIN_URL_PLACEHOLDER';
+				if ( str_starts_with( $module_import, $plugin_placeholder ) ) {
+					$module_import = substr( $module_import, strlen( $plugin_placeholder ) );
+				}
+				$this->assert_safe_relative_path( $module_import, 'module import for ' . $chunk_id );
+			}
+			foreach ( (array) ( $chunk['sourceFiles'] ?? [] ) as $source_file ) {
+				$this->assert_safe_relative_path( (string) $source_file, 'source file for ' . $chunk_id );
+				if ( $this->validate_files ) {
+					$this->validate_source_file_exists( (string) $chunk_id, (string) $source_file );
+				}
 			}
 
 			foreach ( (array) ( $chunk['dependencies'] ?? [] ) as $dependency_id ) {
@@ -219,8 +238,77 @@ class VRodos_Compiler_Runtime_Manifest {
 				$this->validate_chunk_file_exists( $manifest, (string) $chunk_id, $chunk );
 			}
 		}
+		$this->validate_dependency_graph( $manifest['chunks'] );
+		$this->validate_dependency_order( $manifest['chunks'] );
 
 		return $manifest;
+	}
+
+	private function validate_dependency_graph( array $chunks ): void {
+		$state = [];
+		$visit = function ( string $chunk_id, array $path ) use ( &$visit, &$state, $chunks ): void {
+			if ( 2 === ( $state[ $chunk_id ] ?? 0 ) ) {
+				return;
+			}
+			if ( 1 === ( $state[ $chunk_id ] ?? 0 ) ) {
+				$path[] = $chunk_id;
+				throw new RuntimeException( '[VRodos] Runtime chunk dependency cycle: ' . implode( ' -> ', $path ) );
+			}
+			$state[ $chunk_id ] = 1;
+			$path[]             = $chunk_id;
+			foreach ( (array) ( $chunks[ $chunk_id ]['dependencies'] ?? [] ) as $dependency_id ) {
+				$visit( (string) $dependency_id, $path );
+			}
+			$state[ $chunk_id ] = 2;
+		};
+
+		foreach ( array_keys( $chunks ) as $chunk_id ) {
+			$visit( (string) $chunk_id, [] );
+		}
+	}
+
+	private function validate_dependency_order( array $chunks ): void {
+		foreach ( $chunks as $chunk_id => $chunk ) {
+			$order = (int) ( $chunk['order'] ?? PHP_INT_MAX );
+			foreach ( (array) ( $chunk['dependencies'] ?? [] ) as $dependency_id ) {
+				$dependency_order = (int) ( $chunks[ (string) $dependency_id ]['order'] ?? PHP_INT_MAX );
+				if ( $dependency_order >= $order ) {
+					throw new RuntimeException( '[VRodos] Runtime chunk dependency order is invalid: ' . $chunk_id . ' -> ' . (string) $dependency_id );
+				}
+			}
+		}
+	}
+
+	private function assert_safe_basename( string $path, string $label ): void {
+		$path = trim( str_replace( '\\', '/', $path ) );
+		if ( '' === $path || basename( $path ) !== $path || str_contains( $path, '..' ) ) {
+			throw new RuntimeException( '[VRodos] Runtime manifest has invalid ' . $label . ': ' . $path );
+		}
+	}
+
+	private function assert_safe_relative_path( string $path, string $label ): void {
+		$path = trim( str_replace( '\\', '/', $path ) );
+		if (
+			'' === $path ||
+			str_starts_with( $path, '/' ) ||
+			preg_match( '#^[a-z][a-z0-9+.-]*:#i', $path ) ||
+			preg_match( '/%[0-9a-f]{2}/i', $path ) ||
+			str_contains( $path, '?' ) ||
+			str_contains( $path, '#' ) ||
+			preg_match( '/[\x00-\x1f\x7f]/', $path ) ||
+			in_array( '..', explode( '/', $path ), true )
+		) {
+			throw new RuntimeException( '[VRodos] Runtime manifest has invalid ' . $label . ': ' . $path );
+		}
+	}
+
+	private function validate_source_file_exists( string $chunk_id, string $source_file ): void {
+		$path = class_exists( 'VRodos_Path_Manager' )
+			? VRodos_Path_Manager::plugin_path( $source_file )
+			: dirname( __DIR__ ) . '/' . $source_file;
+		if ( ! is_readable( $path ) ) {
+			throw new RuntimeException( '[VRodos] Runtime chunk source file is missing: ' . $chunk_id . ' at ' . $path );
+		}
 	}
 
 	private function validate_chunk_file_exists( array $manifest, string $chunk_id, array $chunk ): void {

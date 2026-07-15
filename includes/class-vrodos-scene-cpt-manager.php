@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/class-vrodos-url-normalizer.php';
+
 require_once __DIR__ . '/class-vrodos-runtime-settings-contract.php';
 
 class VRodos_Scene_CPT_Manager {
@@ -202,17 +204,11 @@ class VRodos_Scene_CPT_Manager {
 			return '';
 		}
 
-		if ( class_exists( 'VRodos_Compiler_Manager' ) ) {
-			static $compiler = null;
-
-			if ( ! $compiler instanceof VRodos_Compiler_Manager ) {
-				$compiler = new VRodos_Compiler_Manager();
-			}
-
-			return (string) $compiler->normalize_url( $url );
+		static $normalizer = null;
+		if ( ! $normalizer instanceof VRodos_URL_Normalizer ) {
+			$normalizer = new VRodos_URL_Normalizer();
 		}
-
-		return $url;
+		return $normalizer->normalize( $url );
 	}
 
 	private static function collect_scene_object_asset_ids( $objects ): array {
@@ -385,7 +381,11 @@ class VRodos_Scene_CPT_Manager {
 				break;
 			}
 		}
-		if ( $has_legacy_atmosphere_metadata && ! property_exists( $json_metadata, 'aframePmndrsAtmospherePreset' ) ) {
+		if (
+			$has_legacy_atmosphere_metadata &&
+			! property_exists( $json_metadata, 'aframePmndrsAtmospherePreset' ) &&
+			( ! class_exists( 'VRodos_Legacy_Metadata_Migration' ) || ! VRodos_Legacy_Metadata_Migration::is_complete() )
+		) {
 			$scene_data['aframePmndrsAtmospherePreset'] = 'custom';
 		}
 

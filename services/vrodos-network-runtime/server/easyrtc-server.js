@@ -5,6 +5,7 @@ const express = require("express");
 const socketIo = require("socket.io");
 const easyrtc = require("open-easyrtc");
 const fs = require("fs");
+const servicePackage = require("../package.json");
 
 const DEFAULT_PORT = 5832;
 const port = Number.parseInt(process.argv[2] || process.env.PORT || DEFAULT_PORT, 10) || DEFAULT_PORT;
@@ -43,10 +44,7 @@ function loadIceServers() {
     }
   }
 
-  const configPaths = [
-    path.resolve(__dirname, "keys.json"),
-    path.resolve(pluginRoot, "services", "networked-aframe", "server", "keys.json")
-  ];
+  const configPaths = [path.resolve(__dirname, "keys.json")];
 
   for (const configPath of configPaths) {
     if (!fs.existsSync(configPath)) {
@@ -71,6 +69,26 @@ app.use(function (_req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
+});
+
+function packageVersion(packageName) {
+  try {
+    return require(packageName + "/package.json").version || "unknown";
+  } catch (_error) {
+    return "unknown";
+  }
+}
+
+app.get("/healthz", (_req, res) => {
+  res.json({
+    status: "ok",
+    service: servicePackage.name,
+    versions: {
+      service: servicePackage.version,
+      socketIo: packageVersion("socket.io"),
+      easyRtc: packageVersion("open-easyrtc")
+    }
+  });
 });
 
 // Serve generated compiled clients first.

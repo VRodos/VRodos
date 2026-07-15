@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/class-vrodos-compiler-types.php';
 require_once __DIR__ . '/class-vrodos-compiler-scene-settings.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
+require_once __DIR__ . '/class-vrodos-compiler-entity-policy.php';
 
 /**
  * Converts repository data plus one project target into an effective compile plan.
@@ -14,6 +15,7 @@ require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
 final class VRodos_Compiler_Plan_Resolver {
 	private VRodos_Compiler_Scene_Settings $scene_settings;
 	private VRodos_Compiler_Runtime_Script_Planner $script_planner;
+	private VRodos_Compiler_Entity_Policy $entity_policy;
 
 	public function __construct(
 		VRodos_Compiler_Scene_Settings $scene_settings,
@@ -21,6 +23,7 @@ final class VRodos_Compiler_Plan_Resolver {
 	) {
 		$this->scene_settings = $scene_settings;
 		$this->script_planner = $script_planner;
+		$this->entity_policy  = new VRodos_Compiler_Entity_Policy();
 	}
 
 	public function resolve( VRodos_Compile_Request $request, array $context ): VRodos_Project_Compile_Plan {
@@ -36,6 +39,7 @@ final class VRodos_Compiler_Plan_Resolver {
 			}
 
 			$normalized_scene = $this->clone_scene( $source );
+			$this->normalize_entities( $normalized_scene, (int) $scene_id );
 			$metadata         = is_object( $normalized_scene->metadata ?? null ) ? $normalized_scene->metadata : new stdClass();
 			$normalized_scene->metadata = $metadata;
 
@@ -70,12 +74,78 @@ final class VRodos_Compiler_Plan_Resolver {
 			);
 		}
 
+		$project_type_slug = (string) ( $context['project_type_slug'] ?? '' );
+		$targets           = $this->build_targets( $request, $project_type_slug, $scene_plans );
+
 		return new VRodos_Project_Compile_Plan(
 			$request,
 			(string) ( $context['project_title'] ?? '' ),
-			(string) ( $context['project_type_slug'] ?? '' ),
-			$scene_plans
+			$project_type_slug,
+			$scene_plans,
+			$targets
 		);
+	}
+
+	private function normalize_entities( object $scene, int $scene_id ): void {
+		$objects = $scene->objects ?? null;
+		if ( ! is_object( $objects ) && ! is_array( $objects ) ) {
+			return;
+		}
+		foreach ( $objects as $object_key => $entity ) {
+			if ( ! is_object( $entity ) ) {
+				continue;
+			}
+			$category = trim( (string) ( $entity->category_slug ?? $entity->category_name ?? '' ) );
+			if ( '' === $category ) {
+				continue;
+			}
+			$this->entity_policy->normalize( $entity, $scene_id, (string) $object_key );
+		}
+	}
+
+	/** @param VRodos_Scene_Compile_Plan[] $scene_plans */
+	private function build_targets( VRodos_Compile_Request $request, string $project_type_slug, array $scene_plans ): array {
+		$targets          = [];
+		$networked        = VRodos_Compiler_Runtime_Feature_Flags::RUNTIME_MODE_NETWORKED === $request->runtime_mode;
+		$include_companions = $networked && 'vrexpo_games' !== $project_type_slug;
+
+		foreach ( $scene_plans as $scene_plan ) {
+			if ( $include_companions ) {
+				$targets[] = new VRodos_Runtime_Target_Plan(
+					VRodos_Runtime_Target_Plan::INDEX,
+					'index_prototype.html',
+					'index_' . $scene_plan->scene_id . '.html',
+					$scene_plan,
+					$request->runtime_mode,
+					[ 'index-ui' ],
+					[]
+				);
+			}
+
+			$targets[] = new VRodos_Runtime_Target_Plan(
+				VRodos_Runtime_Target_Plan::MASTER,
+				'Master_Client_prototype.html',
+				'Master_Client_' . $scene_plan->scene_id . '.html',
+				$scene_plan,
+				$request->runtime_mode,
+				$scene_plan->capabilities,
+				$scene_plan->chunk_ids
+			);
+
+			if ( $include_companions ) {
+				$targets[] = new VRodos_Runtime_Target_Plan(
+					VRodos_Runtime_Target_Plan::SIMPLE,
+					'Simple_Client_prototype.html',
+					'Simple_Client_' . $scene_plan->scene_id . '.html',
+					$scene_plan,
+					$request->runtime_mode,
+					[],
+					[ 'scene-components' ]
+				);
+			}
+		}
+
+		return $targets;
 	}
 
 	private function clone_scene( object $scene ): object {

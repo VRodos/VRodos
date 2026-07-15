@@ -75,7 +75,6 @@ class VRodos_Compiler_Scene_Settings {
 		$atmosphere_preset    = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmospherePreset' );
 		$celestial_mode       = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCelestialMode' );
 		$celestial_time       = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCelestialTimePreset' );
-		$tone_mapping_exposure = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsToneMappingExposure' );
 		$tone_mapping_exposure_authored = $this->is_pmndrs_tone_mapping_exposure_authored( $metadata );
 		if ( 'datetime' !== $celestial_mode && 'custom' !== $atmosphere_preset ) {
 			$celestial_mode = 'preset-time';
@@ -94,120 +93,35 @@ class VRodos_Compiler_Scene_Settings {
 			: '0';
 		$navigation_mode = $this->feature_flags->navigation_mode( $metadata );
 
-		$settings = [
-			'color'                              => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'clearColor' ),
-			'pr_type'                            => $project_type_slug,
-			'selChoice'                          => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'backgroundStyleOption' ),
-			'presChoice'                         => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'backgroundPresetOption' ),
-			'presetGroundEnabled'                => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'backgroundPresetGroundEnabled' ), true, '1', '0' ),
-			'movement_disabled'                  => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'movementDisabled' ) ),
-			'avatar_enabled'                     => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'avatarEnabled' ), false, '1', '0' ),
-			'runtimeMode'                        => $this->feature_flags->runtime_mode_from_metadata( $metadata ),
-			'collisionMode'                      => $this->feature_flags->collision_mode_attr( $metadata ),
-			'navigationMode'                     => $navigation_mode,
-			'renderQuality'                      => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'renderQuality' ),
-			'shadowQuality'                      => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'shadowQuality' ),
-			'shadowUpdateMode'                   => $this->normalize_shadow_update_mode( $metadata ),
-			'flatMediaShadowCasting'             => $this->get_flat_media_shadow_casting_attr( $metadata ),
-			'aaQuality'                          => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'aaQuality' ),
-			'fpsMeterEnabled'                    => $this->feature_flags->fps_meter_attr( $metadata ),
-			'vrRuntimeProfile'                   => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrRuntimeProfile' ),
-			'vrFramebufferScale'                 => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrFramebufferScale' ),
-			'vrFoveationStrength'                => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrFoveationStrength' ),
-			'vrHeadsetStereoPostFxEnabled'       => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'vrHeadsetStereoPostFxEnabled', false ), false, '1', '0' ),
-			'legacyHorizonStageSize'             => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'legacyHorizonStageSize' ),
-			'ambientOcclusionPreset'             => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'ambientOcclusionPreset' ),
-			'contactShadowPreset'                => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'contactShadowPreset' ),
-			'postFXEnabled'                      => $post_fx_enabled_bool ? '1' : '0',
-			'postFXEngine'                       => $post_fx_engine,
-			'postFXColorEnabled'                 => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'postFXColorEnabled' ), false, '1', '0' ),
-			'postFXBloomEnabled'                 => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'postFXBloomEnabled' ), false, '1', '0' ),
-			'postFXEdgeAAEnabled'                => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'postFXEdgeAAEnabled' ), true, '1', '0' ),
-			'postFXEdgeAAStrength'               => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'postFXEdgeAAStrength' ),
-			'postFXTAAEnabled'                   => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'postFXTAAEnabled' ), false, '1', '0' ),
-			'postFXSSREnabled'                   => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'postFXSSREnabled' ), false, '1', '0' ),
-			'postFXSSRStrength'                  => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'postFXSSRStrength' ),
-			'bloomStrength'                      => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'bloomStrength' ),
-			'exposurePreset'                     => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'exposurePreset' ),
-			'contrastPreset'                     => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'contrastPreset' ),
-			'reflectionsEnabled'                 => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'reflectionsEnabled' ), true, '1', '0' ),
-			'reflectionProfile'                  => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'reflectionProfile' ),
-			'reflectionSource'                   => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'reflectionSource' ),
-			'sceneProbeUpdateMode'               => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'sceneProbeUpdateMode', 'static' ),
-			'sceneProbeResolution'               => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'sceneProbeResolution', '128' ),
-			'reflectionOcclusionMode'            => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'reflectionOcclusionMode' ),
-			'horizonSkyPreset'                   => $horizon_preset,
-			'envMapPreset'                       => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'envMapPreset' ),
-			'cam_position'                       => $camera_position,
-			'cam_rotation_y'                     => $camera_rotation_y,
-			'public_chat'                        => VRodos_Runtime_Settings_Contract::bool_string( VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'generalChatEnabled' ), false, '1', '0' ),
-			'fogCategory'                        => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'fogCategory' ),
-			'fogcolor'                           => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'fogColor' ),
-			'fogfar'                             => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'fogFar' ),
-			'fognear'                            => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'fogNear' ),
-			'fogdensity'                         => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'fogDensity' ),
-			'pmndrsAAMode'                       => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAAMode' ),
-			'pmndrsAAPreset'                     => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAAPreset' ),
-			'pmndrsBloomIntensity'               => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsBloomIntensity' ),
-			'pmndrsBloomThreshold'               => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsBloomThreshold' ),
-			'pmndrsVignetteEnabled'              => $this->pmndrs_bool_attr( $metadata, 'pmndrsVignetteEnabled' ),
-			'pmndrsVignetteDarkness'             => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsVignetteDarkness' ),
-			'pmndrsToneMappingExposure'          => $tone_mapping_exposure,
-			'pmndrsLowLightAutoExposureEnabled'  => $this->pmndrs_bool_attr( $metadata, 'pmndrsLowLightAutoExposureEnabled', true ),
-			'pmndrsToneMappingExposureAuthored'  => $tone_mapping_exposure_authored ? 'true' : 'false',
-			'pmndrsToneMappingMode'              => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsToneMappingMode' ),
-			'pmndrsLensFlareEnabled'             => $this->pmndrs_bool_attr( $metadata, 'pmndrsLensFlareEnabled' ),
-			'pmndrsLutEnabled'                   => $this->pmndrs_bool_attr( $metadata, 'pmndrsLutEnabled' ),
-			'pmndrsLutLook'                      => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsLutLook' ),
-			'pmndrsLutStrength'                  => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsLutStrength' ),
-			'pmndrsNoiseEnabled'                 => $this->pmndrs_bool_attr( $metadata, 'pmndrsNoiseEnabled' ),
-			'pmndrsNoiseOpacity'                 => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsNoiseOpacity' ),
-			'pmndrsChromaticAberrationEnabled'   => $this->pmndrs_bool_attr( $metadata, 'pmndrsChromaticAberrationEnabled' ),
-			'pmndrsChromaticAberrationOffset'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsChromaticAberrationOffset' ),
-			'pmndrsAtmosphereEnabled'            => $this->feature_flags->is_pmndrs_atmosphere_enabled( $metadata ) ? 'true' : 'false',
-			'pmndrsAtmospherePreset'             => $atmosphere_preset,
-			'pmndrsAtmospherePresetIntensity'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmospherePresetIntensity' ),
-			'pmndrsAtmosphereQuality'            => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAtmosphereQuality' ),
-			'pmndrsAerialPerspectiveEnabled'     => $this->pmndrs_bool_attr( $metadata, 'pmndrsAerialPerspectiveEnabled' ),
-			'pmndrsCloudsEnabled'                => $this->feature_flags->is_pmndrs_clouds_enabled( $metadata ) ? 'true' : 'false',
-			'pmndrsCloudsQuality'                => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCloudsQuality' ),
-			'pmndrsCloudsCoverage'               => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCloudsCoverage' ),
-			'pmndrsCloudsStyle'                  => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCloudsStyle' ),
-			'pmndrsCloudsWindEnabled'            => $this->pmndrs_bool_attr( $metadata, 'pmndrsCloudsWindEnabled', true ),
-			'pmndrsCloudsWindSpeed'              => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCloudsWindSpeed' ),
-			'pmndrsCloudsWindDirectionDeg'       => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCloudsWindDirectionDeg' ),
-			'pmndrsCorrectAltitudeEnabled'       => $this->pmndrs_bool_attr( $metadata, 'pmndrsCorrectAltitudeEnabled', true ),
-			'pmndrsGeospatialEnabled'            => $this->pmndrs_bool_attr( $metadata, 'pmndrsGeospatialEnabled' ),
-			'pmndrsGeospatialLatitudeDeg'        => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsGeospatialLatitudeDeg' ),
-			'pmndrsGeospatialLongitudeDeg'       => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsGeospatialLongitudeDeg' ),
-			'pmndrsGeospatialAltitudeMeters'     => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsGeospatialAltitudeMeters' ),
-			'pmndrsCelestialMode'                => $celestial_mode,
-			'pmndrsCelestialTimePreset'          => $celestial_time,
-			'pmndrsCelestialDate'                => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCelestialDate' ),
-			'pmndrsCelestialUtcTime'             => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsCelestialUtcTime' ),
-			'pmndrsDayNightCycleEnabled'         => $this->pmndrs_bool_attr( $metadata, 'pmndrsDayNightCycleEnabled' ),
-			'pmndrsDayNightCycleDurationMinutes' => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsDayNightCycleDurationMinutes' ),
-			'pmndrsSunElevationDeg'              => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsSunElevationDeg' ),
-			'pmndrsSunAzimuthDeg'                => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsSunAzimuthDeg' ),
-			'pmndrsSunDistance'                  => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsSunDistance' ),
-			'pmndrsSunAngularRadius'             => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsSunAngularRadius' ),
-			'pmndrsAerialStrength'               => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAerialStrength' ),
-			'pmndrsAlbedoScale'                  => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAlbedoScale' ),
-			'pmndrsTransmittanceEnabled'         => $this->pmndrs_bool_attr( $metadata, 'pmndrsTransmittanceEnabled', true ),
-			'pmndrsInscatterEnabled'             => $this->pmndrs_bool_attr( $metadata, 'pmndrsInscatterEnabled', true ),
-			'pmndrsGroundEnabled'                => $this->pmndrs_bool_attr( $metadata, 'pmndrsGroundEnabled', true ),
-			'pmndrsGroundAlbedo'                 => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsGroundAlbedo' ),
-			'pmndrsRayleighScale'                => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsRayleighScale' ),
-			'pmndrsMieScatteringScale'           => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsMieScatteringScale' ),
-			'pmndrsMieExtinctionScale'           => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsMieExtinctionScale' ),
-			'pmndrsMiePhaseG'                    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsMiePhaseG' ),
-			'pmndrsAbsorptionScale'              => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsAbsorptionScale' ),
-			'pmndrsMoonEnabled'                  => $moon_enabled ? 'true' : 'false',
-			'pmndrsStarsEnabled'                 => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsStarsEnabled' ),
-			'pmndrsHorizonLightingPreset'        => $horizon_lighting_preset,
-			'pmndrsHorizonKeyLightIntensity'     => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsHorizonKeyLightIntensity', $horizon_defaults['keyLightIntensity'] ),
-			'pmndrsHorizonFillLightIntensity'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsHorizonFillLightIntensity', $horizon_defaults['fillLightIntensity'] ),
-		];
+		// The contract owns every ordinary wire value. Only values whose meaning
+		// depends on project, camera, renderer, or effective runtime policy are
+		// overlaid here.
+		$settings = VRodos_Runtime_Settings_Contract::wire_settings_from_metadata( $metadata );
+		$settings = array_merge(
+			$settings,
+			[
+				'pr_type'                           => $project_type_slug,
+				'runtimeMode'                       => $this->feature_flags->runtime_mode_from_metadata( $metadata ),
+				'collisionMode'                     => $this->feature_flags->collision_mode_attr( $metadata ),
+				'navigationMode'                    => $navigation_mode,
+				'shadowUpdateMode'                  => $this->normalize_shadow_update_mode( $metadata ),
+				'flatMediaShadowCasting'            => $this->get_flat_media_shadow_casting_attr( $metadata ),
+				'fpsMeterEnabled'                   => $this->feature_flags->fps_meter_attr( $metadata ),
+				'postFXEnabled'                     => $post_fx_enabled_bool ? '1' : '0',
+				'postFXEngine'                      => $post_fx_engine,
+				'cam_position'                      => $camera_position,
+				'cam_rotation_y'                    => $camera_rotation_y,
+				'pmndrsToneMappingExposureAuthored' => $tone_mapping_exposure_authored ? 'true' : 'false',
+				'pmndrsAtmosphereEnabled'           => $this->feature_flags->is_pmndrs_atmosphere_enabled( $metadata ) ? 'true' : 'false',
+				'pmndrsCloudsEnabled'               => $this->feature_flags->is_pmndrs_clouds_enabled( $metadata ) ? 'true' : 'false',
+				'pmndrsCelestialMode'               => $celestial_mode,
+				'pmndrsCelestialTimePreset'         => $celestial_time,
+				'pmndrsMoonEnabled'                 => $moon_enabled ? 'true' : 'false',
+				'pmndrsHorizonLightingPreset'       => $horizon_lighting_preset,
+				'pmndrsHorizonKeyLightIntensity'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsHorizonKeyLightIntensity', $horizon_defaults['keyLightIntensity'] ),
+				'pmndrsHorizonFillLightIntensity'   => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsHorizonFillLightIntensity', $horizon_defaults['fillLightIntensity'] ),
+			]
+		);
 
 		return $this->apply_legacy_composite_overlay( $settings, $metadata, $diagnostics );
 	}
@@ -225,6 +139,9 @@ class VRodos_Compiler_Scene_Settings {
 	 * Preserve known legacy composite overrides without retaining a raw attribute escape hatch.
 	 */
 	public function apply_legacy_composite_overlay( array $settings, $metadata, ?array &$diagnostics = null ): array {
+		if ( class_exists( 'VRodos_Legacy_Metadata_Migration' ) && VRodos_Legacy_Metadata_Migration::is_complete() ) {
+			return $settings;
+		}
 		$raw = is_object( $metadata ) ? trim( (string) ( $metadata->composite_params ?? '' ) ) : '';
 		if ( '' === $raw ) {
 			return $settings;
@@ -708,11 +625,6 @@ class VRodos_Compiler_Scene_Settings {
 		}
 
 		return false;
-	}
-
-	private function pmndrs_bool_attr( $metadata, string $scene_setting_key, bool $fallback = false ): string {
-		$value = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, $scene_setting_key, $fallback );
-		return $value ? 'true' : 'false';
 	}
 
 	private function get_or_create_assets_container( DOMDocument $dom, DOMElement $ascene ): DOMElement {

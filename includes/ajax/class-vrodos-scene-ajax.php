@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once plugin_dir_path( __FILE__ ) . '../vrodos-scene-model.php';
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-compiler-manager.php';
+require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-url-normalizer.php';
 
 class VRodos_Scene_AJAX {
 
@@ -188,8 +189,7 @@ class VRodos_Scene_AJAX {
 
 		// Prepare the final normalized URL for the editor
 		$final_path = wp_get_attachment_url( $attachment_id );
-		$compiler   = new VRodos_Compiler_Manager();
-		$final_path = $compiler->normalize_url( $final_path );
+		$final_path = ( new VRodos_URL_Normalizer() )->normalize( $final_path );
 
 		wp_send_json( [ 'url' => $final_path ] );
 	}
@@ -250,7 +250,15 @@ class VRodos_Scene_AJAX {
 			$vr_runtime_profile,
 			VRodos_Runtime_Settings_Contract::normalize_bool( wp_unslash( $_POST['showPawnPositions'] ?? 'false' ), false )
 		);
-		$result   = ( new VRodos_Compiler_Manager() )->compile( $request );
+		try {
+			$result = ( new VRodos_Compiler_Manager() )->compile( $request );
+		} catch ( Throwable $error ) {
+			error_log( '[VRodos] Compiler initialization failed: ' . $error->getMessage() );
+			wp_send_json_error(
+				[ 'code' => 'runtime_contract_invalid', 'message' => 'Scene compilation is unavailable because the runtime contract is invalid.' ],
+				500
+			);
+		}
 		if ( is_wp_error( $result ) ) {
 			$data   = $result->get_error_data();
 			$status = is_array( $data ) ? absint( $data['status'] ?? 500 ) : 500;

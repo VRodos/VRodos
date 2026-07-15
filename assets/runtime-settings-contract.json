@@ -1,16 +1,21 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "sceneSettings": {
     "runtimeMode": {
       "metadataKey": "aframeRuntimeMode",
       "type": "enum",
       "default": "single-player",
-      "allowed": ["networked", "single-player"]
+      "allowed": [
+        "networked",
+        "single-player"
+      ],
+      "wireKey": "runtimeMode"
     },
     "clearColor": {
       "metadataKey": "ClearColor",
       "type": "color",
-      "default": "#ffffff"
+      "default": "#ffffff",
+      "wireKey": "color"
     },
     "backgroundStyleOption": {
       "metadataKey": "backgroundStyleOption",
@@ -18,22 +23,28 @@
       "default": 0,
       "min": 0,
       "max": 3,
-      "step": 1
+      "step": 1,
+      "wireKey": "selChoice"
     },
     "backgroundImagePath": {
       "metadataKey": "backgroundImagePath",
       "type": "string",
-      "default": "0"
+      "default": "0",
+      "wireKey": "backgroundImagePath",
+      "wireEnabled": false
     },
     "backgroundPresetOption": {
       "metadataKey": "backgroundPresetOption",
       "type": "string",
-      "default": "None"
+      "default": "None",
+      "wireKey": "presChoice"
     },
     "backgroundPresetGroundEnabled": {
       "metadataKey": "backgroundPresetGroundEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "presetGroundEnabled",
+      "wireFormat": "one-zero"
     },
     "fogCategory": {
       "metadataKey": "fogCategory",
@@ -41,94 +52,142 @@
       "default": 0,
       "min": 0,
       "max": 2,
-      "step": 1
+      "step": 1,
+      "wireKey": "fogCategory"
     },
     "fogColor": {
       "metadataKey": "fogcolor",
       "type": "color",
-      "default": "#ffffff"
+      "default": "#ffffff",
+      "wireKey": "fogcolor"
     },
     "fogFar": {
       "metadataKey": "fogfar",
       "type": "number",
       "default": 1000,
       "min": 0,
-      "max": 100000
+      "max": 100000,
+      "wireKey": "fogfar"
     },
     "fogNear": {
       "metadataKey": "fognear",
       "type": "number",
       "default": 0,
       "min": 0,
-      "max": 100000
+      "max": 100000,
+      "wireKey": "fognear"
     },
     "fogDensity": {
       "metadataKey": "fogdensity",
       "type": "number",
-      "default": 0.00000001,
+      "default": 1e-8,
       "min": 0,
-      "max": 1
+      "max": 1,
+      "wireKey": "fogdensity"
     },
     "movementDisabled": {
       "metadataKey": "disableMovement",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "movement_disabled",
+      "wireFormat": "true-false"
     },
     "avatarEnabled": {
       "metadataKey": "enableAvatar",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "avatar_enabled",
+      "wireFormat": "one-zero"
     },
     "generalChatEnabled": {
       "metadataKey": "enableGeneralChat",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "public_chat",
+      "wireFormat": "one-zero"
     },
     "collisionMode": {
       "metadataKey": "aframeCollisionMode",
       "type": "enum",
       "default": "auto",
-      "allowed": ["auto", "off"]
+      "allowed": [
+        "auto",
+        "off"
+      ],
+      "wireKey": "collisionMode"
     },
     "fpsMeterEnabled": {
       "metadataKey": "aframeFPSMeterEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "fpsMeterEnabled",
+      "wireFormat": "true-false"
     },
     "hoveringInteractables": {
       "metadataKey": "aframeHoveringInteractables",
       "type": "boolean",
-      "default": true
+      "default": true,
+      "wireKey": "hoveringInteractables",
+      "wireFormat": "true-false",
+      "wireEnabled": false
     },
     "renderQuality": {
       "metadataKey": "aframeRenderQuality",
       "type": "enum",
       "default": "standard",
-      "allowed": ["performance", "standard", "high"]
+      "allowed": [
+        "performance",
+        "standard",
+        "high"
+      ],
+      "wireKey": "renderQuality"
     },
     "shadowQuality": {
       "metadataKey": "aframeShadowQuality",
       "type": "enum",
       "default": "medium",
-      "allowed": ["off", "medium", "high"]
+      "allowed": [
+        "off",
+        "medium",
+        "high"
+      ],
+      "wireKey": "shadowQuality"
     },
     "aaQuality": {
       "metadataKey": "aframeAAQuality",
       "type": "enum",
       "default": "balanced",
-      "allowed": ["off", "balanced", "high", "ultra"]
+      "allowed": [
+        "off",
+        "balanced",
+        "high",
+        "ultra"
+      ],
+      "wireKey": "aaQuality"
     },
     "ambientOcclusionPreset": {
       "metadataKey": "aframeAmbientOcclusionPreset",
       "type": "enum",
       "default": "balanced",
-      "allowed": ["off", "soft", "balanced", "strong"]
+      "allowed": [
+        "off",
+        "soft",
+        "balanced",
+        "strong"
+      ],
+      "wireKey": "ambientOcclusionPreset"
     },
     "contactShadowPreset": {
       "metadataKey": "aframeContactShadowPreset",
       "type": "enum",
       "default": "soft",
-      "allowed": ["off", "soft", "balanced", "strong"]
+      "allowed": [
+        "off",
+        "soft",
+        "balanced",
+        "strong"
+      ],
+      "wireKey": "contactShadowPreset"
     },
     "legacyHorizonStageSize": {
       "metadataKey": "aframeLegacyHorizonStageSize",
@@ -136,14 +195,20 @@
       "default": 5000,
       "min": 500,
       "max": 8000,
-      "step": 100
+      "step": 100,
+      "wireKey": "legacyHorizonStageSize"
     },
     "vrRuntimeProfile": {
       "metadataKey": "aframeVrRuntimeProfile",
       "type": "enum",
       "default": "desktop",
       "editorDefault": "desktop",
-      "allowed": ["desktop", "headset", "pc-rendered-vr"]
+      "allowed": [
+        "desktop",
+        "headset",
+        "pc-rendered-vr"
+      ],
+      "wireKey": "vrRuntimeProfile"
     },
     "vrFramebufferScale": {
       "metadataKey": "aframeVrFramebufferScale",
@@ -151,7 +216,8 @@
       "default": 0,
       "min": 0,
       "max": 1.5,
-      "step": 0.05
+      "step": 0.05,
+      "wireKey": "vrFramebufferScale"
     },
     "vrFoveationStrength": {
       "metadataKey": "aframeVrFoveationStrength",
@@ -159,38 +225,53 @@
       "default": -1,
       "min": -1,
       "max": 1,
-      "step": 0.05
+      "step": 0.05,
+      "wireKey": "vrFoveationStrength"
     },
     "vrHeadsetStereoPostFxEnabled": {
       "metadataKey": "aframeVrHeadsetStereoPostFxEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "vrHeadsetStereoPostFxEnabled",
+      "wireFormat": "one-zero"
     },
     "postFXColorEnabled": {
       "metadataKey": "aframePostFXColorEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "postFXColorEnabled",
+      "wireFormat": "one-zero"
     },
     "postFXEnabled": {
       "metadataKey": "aframePostFXEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "postFXEnabled",
+      "wireFormat": "true-false"
     },
     "postFXEngine": {
       "metadataKey": "aframePostFXEngine",
       "type": "enum",
       "default": "legacy",
-      "allowed": ["legacy", "pmndrs"]
+      "allowed": [
+        "legacy",
+        "pmndrs"
+      ],
+      "wireKey": "postFXEngine"
     },
     "postFXBloomEnabled": {
       "metadataKey": "aframePostFXBloomEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "postFXBloomEnabled",
+      "wireFormat": "one-zero"
     },
     "postFXEdgeAAEnabled": {
       "metadataKey": "aframePostFXEdgeAAEnabled",
       "type": "boolean",
-      "default": true
+      "default": true,
+      "wireKey": "postFXEdgeAAEnabled",
+      "wireFormat": "one-zero"
     },
     "postFXEdgeAAStrength": {
       "metadataKey": "aframePostFXEdgeAAStrength",
@@ -198,490 +279,711 @@
       "default": 3,
       "min": 0,
       "max": 5,
-      "step": 1
+      "step": 1,
+      "wireKey": "postFXEdgeAAStrength"
     },
     "postFXTAAEnabled": {
       "metadataKey": "aframePostFXTAAEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "postFXTAAEnabled",
+      "wireFormat": "one-zero"
     },
     "postFXSSREnabled": {
       "metadataKey": "aframePostFXSSREnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "postFXSSREnabled",
+      "wireFormat": "one-zero"
     },
     "postFXSSRStrength": {
       "metadataKey": "aframePostFXSSRStrength",
       "type": "enum",
       "default": "off",
-      "allowed": ["off", "subtle", "balanced", "strong"]
+      "allowed": [
+        "off",
+        "subtle",
+        "balanced",
+        "strong"
+      ],
+      "wireKey": "postFXSSRStrength"
     },
     "bloomStrength": {
       "metadataKey": "aframeBloomStrength",
       "type": "enum",
       "default": "off",
-      "allowed": ["off", "soft", "medium"]
+      "allowed": [
+        "off",
+        "soft",
+        "medium"
+      ],
+      "wireKey": "bloomStrength"
     },
     "exposurePreset": {
       "metadataKey": "aframeExposurePreset",
       "type": "enum",
       "default": "neutral",
-      "allowed": ["neutral", "bright", "cinematic"]
+      "allowed": [
+        "neutral",
+        "bright",
+        "cinematic"
+      ],
+      "wireKey": "exposurePreset"
     },
     "contrastPreset": {
       "metadataKey": "aframeContrastPreset",
       "type": "enum",
       "default": "balanced",
-      "allowed": ["soft", "balanced", "punchy"]
+      "allowed": [
+        "soft",
+        "balanced",
+        "punchy"
+      ],
+      "wireKey": "contrastPreset"
     },
     "reflectionProfile": {
       "metadataKey": "aframeReflectionProfile",
       "type": "enum",
       "default": "balanced",
-      "allowed": ["soft", "balanced", "enhanced"]
+      "allowed": [
+        "soft",
+        "balanced",
+        "enhanced"
+      ],
+      "wireKey": "reflectionProfile"
     },
     "reflectionSource": {
       "metadataKey": "aframeReflectionSource",
       "type": "enum",
       "default": "hdr",
-      "allowed": ["hdr", "scene-probe"]
+      "allowed": [
+        "hdr",
+        "scene-probe"
+      ],
+      "wireKey": "reflectionSource"
     },
     "envMapPreset": {
       "metadataKey": "aframeEnvMapPreset",
       "type": "enum",
       "default": "none",
-      "allowed": ["none", "studio", "quarry", "venice"]
+      "allowed": [
+        "none",
+        "studio",
+        "quarry",
+        "venice"
+      ],
+      "wireKey": "envMapPreset"
     },
     "horizonSkyPreset": {
       "metadataKey": "aframeHorizonSkyPreset",
       "type": "enum",
       "default": "natural",
-      "allowed": ["natural", "clear", "crisp"]
+      "allowed": [
+        "natural",
+        "clear",
+        "crisp"
+      ],
+      "wireKey": "horizonSkyPreset"
     },
     "navigationMode": {
       "metadataKey": "aframeNavigationMode",
       "type": "enum",
       "default": "walkable",
       "editorDefault": "walkable",
-      "allowed": ["walk", "walkable", "fly"]
+      "allowed": [
+        "walk",
+        "walkable",
+        "fly"
+      ],
+      "wireKey": "navigationMode"
     },
     "shadowUpdateMode": {
       "metadataKey": "aframeShadowUpdateMode",
       "type": "enum",
       "default": "static",
       "editorDefault": "static",
-      "allowed": ["static", "dynamic"]
+      "allowed": [
+        "static",
+        "dynamic"
+      ],
+      "wireKey": "shadowUpdateMode"
     },
     "flatMediaShadowCasting": {
       "metadataKey": "aframeFlatMediaShadowCasting",
       "type": "boolean",
-      "default": true
+      "default": true,
+      "wireKey": "flatMediaShadowCasting",
+      "wireFormat": "true-false"
     },
     "pmndrsAAMode": {
       "metadataKey": "aframePmndrsAAMode",
       "type": "enum",
       "default": "inherit",
       "editorDefault": "none",
-      "allowed": ["inherit", "none", "smaa", "msaa"]
+      "allowed": [
+        "inherit",
+        "none",
+        "smaa",
+        "msaa"
+      ],
+      "wireKey": "pmndrsAAMode"
     },
     "pmndrsAAPreset": {
       "metadataKey": "aframePmndrsAAPreset",
       "type": "enum",
       "default": "inherit",
       "editorDefault": "medium",
-      "allowed": ["inherit", "low", "medium", "high", "ultra"]
+      "allowed": [
+        "inherit",
+        "low",
+        "medium",
+        "high",
+        "ultra"
+      ],
+      "wireKey": "pmndrsAAPreset"
     },
     "pmndrsBloomIntensity": {
       "metadataKey": "aframePmndrsBloomIntensity",
       "type": "number",
-      "default": 1.0,
-      "min": 0.0,
-      "max": 3.0
+      "default": 1,
+      "min": 0,
+      "max": 3,
+      "wireKey": "pmndrsBloomIntensity"
     },
     "pmndrsBloomThreshold": {
       "metadataKey": "aframePmndrsBloomThreshold",
       "type": "number",
       "default": 0.62,
-      "min": 0.0,
-      "max": 1.0
+      "min": 0,
+      "max": 1,
+      "wireKey": "pmndrsBloomThreshold"
     },
     "pmndrsVignetteEnabled": {
       "metadataKey": "aframePmndrsVignetteEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "pmndrsVignetteEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsVignetteDarkness": {
       "metadataKey": "aframePmndrsVignetteDarkness",
       "type": "number",
       "default": 0.5,
-      "min": 0.0,
-      "max": 1.0
+      "min": 0,
+      "max": 1,
+      "wireKey": "pmndrsVignetteDarkness"
     },
     "pmndrsToneMappingExposure": {
       "metadataKey": "aframePmndrsToneMappingExposure",
       "type": "number",
-      "default": 1.0,
+      "default": 1,
       "min": 0.1,
-      "max": 5.0,
-      "step": 0.1
+      "max": 5,
+      "step": 0.1,
+      "wireKey": "pmndrsToneMappingExposure"
     },
     "pmndrsLowLightAutoExposureEnabled": {
       "metadataKey": "aframePmndrsLowLightAutoExposureEnabled",
       "type": "boolean",
-      "default": true
+      "default": true,
+      "wireKey": "pmndrsLowLightAutoExposureEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsToneMappingExposureAuthored": {
       "metadataKey": "aframePmndrsToneMappingExposureAuthored",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "pmndrsToneMappingExposureAuthored",
+      "wireFormat": "true-false"
     },
     "pmndrsToneMappingMode": {
       "metadataKey": "aframePmndrsToneMappingMode",
       "type": "enum",
       "default": "agx",
       "editorDefault": "agx",
-      "allowed": ["agx", "reinhard", "cineon", "aces-filmic", "linear"]
+      "allowed": [
+        "agx",
+        "reinhard",
+        "cineon",
+        "aces-filmic",
+        "linear"
+      ],
+      "wireKey": "pmndrsToneMappingMode"
     },
     "pmndrsLensFlareEnabled": {
       "metadataKey": "aframePmndrsLensFlareEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "pmndrsLensFlareEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsLutEnabled": {
       "metadataKey": "aframePmndrsLutEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "pmndrsLutEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsLutLook": {
       "metadataKey": "aframePmndrsLutLook",
       "type": "enum",
       "default": "neutral",
-      "allowed": ["neutral", "warm-film", "cool-clarity", "cinematic-contrast", "soft-fade"]
+      "allowed": [
+        "neutral",
+        "warm-film",
+        "cool-clarity",
+        "cinematic-contrast",
+        "soft-fade"
+      ],
+      "wireKey": "pmndrsLutLook"
     },
     "pmndrsLutStrength": {
       "metadataKey": "aframePmndrsLutStrength",
       "type": "number",
-      "default": 1.0,
-      "min": 0.0,
-      "max": 1.0
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "wireKey": "pmndrsLutStrength"
     },
     "pmndrsNoiseEnabled": {
       "metadataKey": "aframePmndrsNoiseEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "pmndrsNoiseEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsNoiseOpacity": {
       "metadataKey": "aframePmndrsNoiseOpacity",
       "type": "number",
       "default": 0.04,
-      "min": 0.0,
-      "max": 0.2
+      "min": 0,
+      "max": 0.2,
+      "wireKey": "pmndrsNoiseOpacity"
     },
     "pmndrsChromaticAberrationEnabled": {
       "metadataKey": "aframePmndrsChromaticAberrationEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "pmndrsChromaticAberrationEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsChromaticAberrationOffset": {
       "metadataKey": "aframePmndrsChromaticAberrationOffset",
       "type": "number",
       "default": 0.0015,
-      "min": 0.0,
-      "max": 0.006
+      "min": 0,
+      "max": 0.006,
+      "wireKey": "pmndrsChromaticAberrationOffset"
     },
     "pmndrsAtmosphereEnabled": {
       "metadataKey": "aframePmndrsAtmosphereEnabled",
       "type": "boolean",
-      "default": true
+      "default": true,
+      "wireKey": "pmndrsAtmosphereEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsAtmospherePreset": {
       "metadataKey": "aframePmndrsAtmospherePreset",
       "type": "enum",
       "default": "midday",
-      "allowed": ["night", "dawn", "sunrise", "early-morning", "midday", "golden-hour", "sunset", "custom"]
+      "allowed": [
+        "night",
+        "dawn",
+        "sunrise",
+        "early-morning",
+        "midday",
+        "golden-hour",
+        "sunset",
+        "custom"
+      ],
+      "wireKey": "pmndrsAtmospherePreset"
     },
     "pmndrsAtmospherePresetIntensity": {
       "metadataKey": "aframePmndrsAtmospherePresetIntensity",
       "type": "number",
-      "default": 1.0,
-      "min": 0.0,
-      "max": 1.0
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "wireKey": "pmndrsAtmospherePresetIntensity"
     },
     "pmndrsAtmosphereQuality": {
       "metadataKey": "aframePmndrsAtmosphereQuality",
       "type": "enum",
       "default": "balanced",
-      "allowed": ["performance", "balanced", "quality", "cinematic"]
+      "allowed": [
+        "performance",
+        "balanced",
+        "quality",
+        "cinematic"
+      ],
+      "wireKey": "pmndrsAtmosphereQuality"
     },
     "pmndrsAerialPerspectiveEnabled": {
       "metadataKey": "aframePmndrsAerialPerspectiveEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "pmndrsAerialPerspectiveEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsCloudsEnabled": {
       "metadataKey": "aframePmndrsCloudsEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "pmndrsCloudsEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsCloudsQuality": {
       "metadataKey": "aframePmndrsCloudsQuality",
       "type": "enum",
       "default": "low",
-      "allowed": ["low", "medium", "high", "ultra"]
+      "allowed": [
+        "low",
+        "medium",
+        "high",
+        "ultra"
+      ],
+      "wireKey": "pmndrsCloudsQuality"
     },
     "pmndrsCloudsCoverage": {
       "metadataKey": "aframePmndrsCloudsCoverage",
       "type": "number",
       "default": 0.35,
-      "min": 0.0,
-      "max": 1.0
+      "min": 0,
+      "max": 1,
+      "wireKey": "pmndrsCloudsCoverage"
     },
     "pmndrsCloudsStyle": {
       "metadataKey": "aframePmndrsCloudsStyle",
       "type": "enum",
       "default": "default",
-      "allowed": ["default", "scattered", "broken", "overcast", "storm"]
+      "allowed": [
+        "default",
+        "scattered",
+        "broken",
+        "overcast",
+        "storm"
+      ],
+      "wireKey": "pmndrsCloudsStyle"
     },
     "pmndrsCloudsWindEnabled": {
       "metadataKey": "aframePmndrsCloudsWindEnabled",
       "type": "boolean",
-      "default": true
+      "default": true,
+      "wireKey": "pmndrsCloudsWindEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsCloudsWindSpeed": {
       "metadataKey": "aframePmndrsCloudsWindSpeed",
       "type": "number",
-      "default": 1.0,
-      "min": 0.0,
-      "max": 2.0
+      "default": 1,
+      "min": 0,
+      "max": 2,
+      "wireKey": "pmndrsCloudsWindSpeed"
     },
     "pmndrsCloudsWindDirectionDeg": {
       "metadataKey": "aframePmndrsCloudsWindDirectionDeg",
       "type": "number",
-      "default": 0.0,
-      "min": 0.0,
-      "max": 360.0
+      "default": 0,
+      "min": 0,
+      "max": 360,
+      "wireKey": "pmndrsCloudsWindDirectionDeg"
     },
     "pmndrsCorrectAltitudeEnabled": {
       "metadataKey": "aframePmndrsCorrectAltitudeEnabled",
       "type": "boolean",
-      "default": true
+      "default": true,
+      "wireKey": "pmndrsCorrectAltitudeEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsGeospatialEnabled": {
       "metadataKey": "aframePmndrsGeospatialEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "pmndrsGeospatialEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsGeospatialLatitudeDeg": {
       "metadataKey": "aframePmndrsGeospatialLatitudeDeg",
       "type": "number",
-      "default": 0.0,
-      "min": -90.0,
-      "max": 90.0
+      "default": 0,
+      "min": -90,
+      "max": 90,
+      "wireKey": "pmndrsGeospatialLatitudeDeg"
     },
     "pmndrsGeospatialLongitudeDeg": {
       "metadataKey": "aframePmndrsGeospatialLongitudeDeg",
       "type": "number",
-      "default": 0.0,
-      "min": -180.0,
-      "max": 180.0
+      "default": 0,
+      "min": -180,
+      "max": 180,
+      "wireKey": "pmndrsGeospatialLongitudeDeg"
     },
     "pmndrsGeospatialAltitudeMeters": {
       "metadataKey": "aframePmndrsGeospatialAltitudeMeters",
       "type": "number",
-      "default": 0.0,
-      "min": -500.0,
-      "max": 20000.0
+      "default": 0,
+      "min": -500,
+      "max": 20000,
+      "wireKey": "pmndrsGeospatialAltitudeMeters"
     },
     "pmndrsCelestialMode": {
       "metadataKey": "aframePmndrsCelestialMode",
       "type": "enum",
       "default": "manual",
-      "allowed": ["manual", "preset-time", "datetime"]
+      "allowed": [
+        "manual",
+        "preset-time",
+        "datetime"
+      ],
+      "wireKey": "pmndrsCelestialMode"
     },
     "pmndrsCelestialTimePreset": {
       "metadataKey": "aframePmndrsCelestialTimePreset",
       "type": "enum",
       "default": "midday",
-      "allowed": ["night", "dawn", "sunrise", "early-morning", "midday", "golden-hour", "sunset"]
+      "allowed": [
+        "night",
+        "dawn",
+        "sunrise",
+        "early-morning",
+        "midday",
+        "golden-hour",
+        "sunset"
+      ],
+      "wireKey": "pmndrsCelestialTimePreset"
     },
     "pmndrsCelestialDate": {
       "metadataKey": "aframePmndrsCelestialDate",
       "type": "string",
       "default": "2026-06-21",
-      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "wireKey": "pmndrsCelestialDate"
     },
     "pmndrsCelestialUtcTime": {
       "metadataKey": "aframePmndrsCelestialUtcTime",
       "type": "string",
       "default": "12:00",
-      "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+      "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+      "wireKey": "pmndrsCelestialUtcTime"
     },
     "pmndrsDayNightCycleEnabled": {
       "metadataKey": "aframePmndrsDayNightCycleEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "pmndrsDayNightCycleEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsDayNightCycleDurationMinutes": {
       "metadataKey": "aframePmndrsDayNightCycleDurationMinutes",
       "type": "number",
-      "default": 1.0,
+      "default": 1,
       "min": 0.25,
-      "max": 1440.0
+      "max": 1440,
+      "wireKey": "pmndrsDayNightCycleDurationMinutes"
     },
     "pmndrsSunElevationDeg": {
       "metadataKey": "aframePmndrsSunElevationDeg",
       "type": "number",
-      "default": 62.0,
-      "min": -18.0,
-      "max": 85.0
+      "default": 62,
+      "min": -18,
+      "max": 85,
+      "wireKey": "pmndrsSunElevationDeg"
     },
     "pmndrsSunAzimuthDeg": {
       "metadataKey": "aframePmndrsSunAzimuthDeg",
       "type": "number",
-      "default": 20.0,
-      "min": -180.0,
-      "max": 180.0
+      "default": 20,
+      "min": -180,
+      "max": 180,
+      "wireKey": "pmndrsSunAzimuthDeg"
     },
     "pmndrsSunDistance": {
       "metadataKey": "aframePmndrsSunDistance",
       "type": "number",
-      "default": 5200.0,
-      "min": 1500.0,
-      "max": 20000.0
+      "default": 5200,
+      "min": 1500,
+      "max": 20000,
+      "wireKey": "pmndrsSunDistance"
     },
     "pmndrsSunAngularRadius": {
       "metadataKey": "aframePmndrsSunAngularRadius",
       "type": "number",
       "default": 0.004675,
       "min": 0.002,
-      "max": 0.03
+      "max": 0.03,
+      "wireKey": "pmndrsSunAngularRadius"
     },
     "pmndrsAerialStrength": {
       "metadataKey": "aframePmndrsAerialStrength",
       "type": "number",
       "default": 0.55,
-      "min": 0.0,
-      "max": 2.0
+      "min": 0,
+      "max": 2,
+      "wireKey": "pmndrsAerialStrength"
     },
     "pmndrsAlbedoScale": {
       "metadataKey": "aframePmndrsAlbedoScale",
       "type": "number",
-      "default": 1.0,
-      "min": 0.0,
-      "max": 2.0
+      "default": 1,
+      "min": 0,
+      "max": 2,
+      "wireKey": "pmndrsAlbedoScale"
     },
     "pmndrsTransmittanceEnabled": {
       "metadataKey": "aframePmndrsTransmittanceEnabled",
       "type": "boolean",
-      "default": true
+      "default": true,
+      "wireKey": "pmndrsTransmittanceEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsInscatterEnabled": {
       "metadataKey": "aframePmndrsInscatterEnabled",
       "type": "boolean",
-      "default": true
+      "default": true,
+      "wireKey": "pmndrsInscatterEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsGroundEnabled": {
       "metadataKey": "aframePmndrsGroundEnabled",
       "type": "boolean",
-      "default": true
+      "default": true,
+      "wireKey": "pmndrsGroundEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsGroundAlbedo": {
       "metadataKey": "aframePmndrsGroundAlbedo",
       "type": "color",
-      "default": "#1a1a1a"
+      "default": "#1a1a1a",
+      "wireKey": "pmndrsGroundAlbedo"
     },
     "pmndrsRayleighScale": {
       "metadataKey": "aframePmndrsRayleighScale",
       "type": "number",
-      "default": 1.0,
+      "default": 1,
       "min": 0.1,
-      "max": 3.0
+      "max": 3,
+      "wireKey": "pmndrsRayleighScale"
     },
     "pmndrsMieScatteringScale": {
       "metadataKey": "aframePmndrsMieScatteringScale",
       "type": "number",
-      "default": 1.0,
+      "default": 1,
       "min": 0.1,
-      "max": 3.0
+      "max": 3,
+      "wireKey": "pmndrsMieScatteringScale"
     },
     "pmndrsMieExtinctionScale": {
       "metadataKey": "aframePmndrsMieExtinctionScale",
       "type": "number",
-      "default": 1.0,
+      "default": 1,
       "min": 0.1,
-      "max": 3.0
+      "max": 3,
+      "wireKey": "pmndrsMieExtinctionScale"
     },
     "pmndrsMiePhaseG": {
       "metadataKey": "aframePmndrsMiePhaseG",
       "type": "number",
       "default": 0.8,
-      "min": 0.0,
-      "max": 0.99
+      "min": 0,
+      "max": 0.99,
+      "wireKey": "pmndrsMiePhaseG"
     },
     "pmndrsAbsorptionScale": {
       "metadataKey": "aframePmndrsAbsorptionScale",
       "type": "number",
-      "default": 1.0,
+      "default": 1,
       "min": 0.1,
-      "max": 3.0
+      "max": 3,
+      "wireKey": "pmndrsAbsorptionScale"
     },
     "pmndrsMoonEnabled": {
       "metadataKey": "aframePmndrsMoonEnabled",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "wireKey": "pmndrsMoonEnabled",
+      "wireFormat": "true-false"
     },
     "pmndrsStarsEnabled": {
       "metadataKey": "aframePmndrsStarsEnabled",
       "type": "enum",
       "default": "auto",
-      "allowed": ["auto", "off", "on"]
+      "allowed": [
+        "auto",
+        "off",
+        "on"
+      ],
+      "wireKey": "pmndrsStarsEnabled"
     },
     "pmndrsHorizonLightingPreset": {
       "metadataKey": "aframePmndrsHorizonLightingPreset",
       "type": "enum",
       "default": "natural",
-      "allowed": ["natural", "clear", "crisp", "custom"]
+      "allowed": [
+        "natural",
+        "clear",
+        "crisp",
+        "custom"
+      ],
+      "wireKey": "pmndrsHorizonLightingPreset"
     },
     "pmndrsHorizonKeyLightIntensity": {
       "metadataKey": "aframePmndrsHorizonKeyLightIntensity",
       "type": "number",
       "default": 1.15,
-      "min": 0.0,
-      "max": 3.0
+      "min": 0,
+      "max": 3,
+      "wireKey": "pmndrsHorizonKeyLightIntensity"
     },
     "pmndrsHorizonFillLightIntensity": {
       "metadataKey": "aframePmndrsHorizonFillLightIntensity",
       "type": "number",
       "default": 0.45,
-      "min": 0.0,
-      "max": 3.0
+      "min": 0,
+      "max": 3,
+      "wireKey": "pmndrsHorizonFillLightIntensity"
     },
     "reflectionsEnabled": {
       "metadataKey": "aframeReflectionsEnabled",
       "type": "boolean",
       "default": true,
-      "editorDefault": true
+      "editorDefault": true,
+      "wireKey": "reflectionsEnabled",
+      "wireFormat": "one-zero"
     },
     "sceneProbeUpdateMode": {
       "metadataKey": "aframeSceneProbeUpdateMode",
       "type": "enum",
       "default": "static",
       "editorDefault": "static",
-      "allowed": ["static", "slow-dynamic"]
+      "allowed": [
+        "static",
+        "slow-dynamic"
+      ],
+      "wireKey": "sceneProbeUpdateMode"
     },
     "sceneProbeResolution": {
       "metadataKey": "aframeSceneProbeResolution",
       "type": "enum",
       "default": "128",
       "editorDefault": "128",
-      "allowed": ["64", "128", "256"]
+      "allowed": [
+        "64",
+        "128",
+        "256"
+      ],
+      "wireKey": "sceneProbeResolution"
     },
     "reflectionOcclusionMode": {
       "metadataKey": "aframeReflectionOcclusionMode",
       "type": "enum",
       "default": "auto",
       "editorDefault": "auto",
-      "allowed": ["auto", "off", "strong"]
+      "allowed": [
+        "auto",
+        "off",
+        "strong"
+      ],
+      "wireKey": "reflectionOcclusionMode"
     }
   },
   "horizonHelperLightPresets": {
@@ -728,11 +1030,11 @@
       "inscatterEnabled": true,
       "groundEnabled": true,
       "groundAlbedo": "#1a1a1a",
-      "rayleighScale": 1.0,
+      "rayleighScale": 1,
       "mieScatteringScale": 0.75,
       "mieExtinctionScale": 0.85,
       "miePhaseG": 0.8,
-      "absorptionScale": 1.0,
+      "absorptionScale": 1,
       "moonEnabled": false
     },
     "sunrise": {
@@ -746,11 +1048,11 @@
       "inscatterEnabled": true,
       "groundEnabled": true,
       "groundAlbedo": "#1a1a1a",
-      "rayleighScale": 1.0,
+      "rayleighScale": 1,
       "mieScatteringScale": 0.9,
       "mieExtinctionScale": 0.95,
       "miePhaseG": 0.8,
-      "absorptionScale": 1.0,
+      "absorptionScale": 1,
       "moonEnabled": false
     },
     "early-morning": {
@@ -759,16 +1061,16 @@
       "sunDistance": 5200,
       "sunAngularRadius": 0.004675,
       "aerialStrength": 0.5,
-      "albedoScale": 1.0,
+      "albedoScale": 1,
       "transmittanceEnabled": true,
       "inscatterEnabled": true,
       "groundEnabled": true,
       "groundAlbedo": "#1a1a1a",
-      "rayleighScale": 1.0,
+      "rayleighScale": 1,
       "mieScatteringScale": 0.95,
       "mieExtinctionScale": 0.98,
       "miePhaseG": 0.8,
-      "absorptionScale": 1.0,
+      "absorptionScale": 1,
       "moonEnabled": false
     },
     "midday": {
@@ -777,16 +1079,16 @@
       "sunDistance": 5200,
       "sunAngularRadius": 0.004675,
       "aerialStrength": 0.55,
-      "albedoScale": 1.0,
+      "albedoScale": 1,
       "transmittanceEnabled": true,
       "inscatterEnabled": true,
       "groundEnabled": true,
       "groundAlbedo": "#1a1a1a",
-      "rayleighScale": 1.0,
-      "mieScatteringScale": 1.0,
-      "mieExtinctionScale": 1.0,
+      "rayleighScale": 1,
+      "mieScatteringScale": 1,
+      "mieExtinctionScale": 1,
       "miePhaseG": 0.8,
-      "absorptionScale": 1.0,
+      "absorptionScale": 1,
       "moonEnabled": false
     },
     "golden-hour": {
@@ -800,11 +1102,11 @@
       "inscatterEnabled": true,
       "groundEnabled": true,
       "groundAlbedo": "#1a1a1a",
-      "rayleighScale": 1.0,
+      "rayleighScale": 1,
       "mieScatteringScale": 0.9,
       "mieExtinctionScale": 0.95,
       "miePhaseG": 0.8,
-      "absorptionScale": 1.0,
+      "absorptionScale": 1,
       "moonEnabled": false
     },
     "sunset": {
@@ -818,11 +1120,11 @@
       "inscatterEnabled": true,
       "groundEnabled": true,
       "groundAlbedo": "#1a1a1a",
-      "rayleighScale": 1.0,
+      "rayleighScale": 1,
       "mieScatteringScale": 0.95,
       "mieExtinctionScale": 1.05,
       "miePhaseG": 0.8,
-      "absorptionScale": 1.0,
+      "absorptionScale": 1,
       "moonEnabled": false
     }
   }

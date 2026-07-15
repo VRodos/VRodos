@@ -16,20 +16,31 @@ class VRodos_Runtime_Settings_Contract {
 
 		$path = VRodos_Path_Manager::plugin_path( self::CONTRACT_RELATIVE_PATH );
 		if ( ! is_readable( $path ) ) {
-			self::$contract = [
-				'schemaVersion' => 0,
-				'sceneSettings' => [],
-				'horizonHelperLightPresets' => [],
-			];
-			return self::$contract;
+			throw new RuntimeException( '[VRodos] Runtime settings contract is missing: ' . $path );
 		}
 
 		$decoded = json_decode( (string) file_get_contents( $path ), true );
-		self::$contract = is_array( $decoded ) ? $decoded : [
-			'schemaVersion' => 0,
-			'sceneSettings' => [],
-			'horizonHelperLightPresets' => [],
-		];
+		if ( ! is_array( $decoded ) || 2 !== (int) ( $decoded['schemaVersion'] ?? 0 ) || ! is_array( $decoded['sceneSettings'] ?? null ) ) {
+			throw new RuntimeException( '[VRodos] Runtime settings contract is invalid or uses an unsupported schema.' );
+		}
+		$wire_keys = [];
+		foreach ( $decoded['sceneSettings'] as $setting_key => $setting ) {
+			$wire_key = is_array( $setting ) ? (string) ( $setting['wireKey'] ?? '' ) : '';
+			if ( '' === $wire_key || ! preg_match( '/^[A-Za-z][A-Za-z0-9_]*$/', $wire_key ) ) {
+				throw new RuntimeException( '[VRodos] Runtime setting has an invalid wire key: ' . $setting_key );
+			}
+			if ( isset( $wire_keys[ $wire_key ] ) ) {
+				throw new RuntimeException( '[VRodos] Runtime settings share a wire key: ' . $wire_key );
+			}
+			$wire_keys[ $wire_key ] = true;
+			if ( array_key_exists( 'wireEnabled', $setting ) && ! is_bool( $setting['wireEnabled'] ) ) {
+				throw new RuntimeException( '[VRodos] Runtime setting has an invalid wire-enabled declaration: ' . $setting_key );
+			}
+			if ( 'boolean' === (string) ( $setting['type'] ?? '' ) && ! in_array( (string) ( $setting['wireFormat'] ?? '' ), [ 'true-false', 'one-zero', 'native-boolean' ], true ) ) {
+				throw new RuntimeException( '[VRodos] Runtime boolean setting has no supported wire format: ' . $setting_key );
+			}
+		}
+		self::$contract = $decoded;
 
 		return self::$contract;
 	}
@@ -52,6 +63,38 @@ class VRodos_Runtime_Settings_Contract {
 	public static function metadata_key( string $scene_setting_key ): string {
 		$setting = self::setting( $scene_setting_key );
 		return (string) ( $setting['metadataKey'] ?? $scene_setting_key );
+	}
+
+	public static function wire_key( string $scene_setting_key ): string {
+		$setting = self::setting( $scene_setting_key );
+		return (string) ( $setting['wireKey'] ?? $scene_setting_key );
+	}
+
+	/** Builds the ordinary scene-settings wire values from the contract. */
+	public static function wire_settings_from_metadata( $metadata ): array {
+		$settings = [];
+		foreach ( self::settings() as $setting_key => $definition ) {
+			if ( ! is_array( $definition ) || false === ( $definition['wireEnabled'] ?? true ) ) {
+				continue;
+			}
+			$value = self::normalize_metadata_value( $metadata, (string) $setting_key );
+			if ( 'boolean' === (string) ( $definition['type'] ?? '' ) ) {
+				$value = self::format_boolean_wire_value( $value, (string) $definition['wireFormat'] );
+			}
+			$settings[ (string) $definition['wireKey'] ] = $value;
+		}
+		return $settings;
+	}
+
+	private static function format_boolean_wire_value( $value, string $format ) {
+		$normalized = self::normalize_bool( $value, false );
+		if ( 'one-zero' === $format ) {
+			return $normalized ? '1' : '0';
+		}
+		if ( 'native-boolean' === $format ) {
+			return $normalized;
+		}
+		return $normalized ? 'true' : 'false';
 	}
 
 	public static function value_from_metadata( $metadata, string $scene_setting_key, $fallback = null ) {

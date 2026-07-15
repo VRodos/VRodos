@@ -36,13 +36,14 @@ class VRodos_Pages_Manager {
 			VRodos_Path_Manager::canonical_page_template_meta( 'vrodos-asset-editor-template.php' ) => 'Asset Editor Template',
 		];
 
-		// Keep legacy template keys resolving for existing page meta during migration.
-		$this->legacy_template_aliases = [
-			VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-project-manager-template.php' ) => 'Project Manager Template',
-			VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-assets-list-template.php' ) => 'Assets List Template',
-			VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-edit-3D-scene-template.php' ) => 'Scene 3D Editor Template',
-			VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-asset-editor-template.php' ) => 'Asset Editor Template',
-		];
+		if ( ! class_exists( 'VRodos_Legacy_Metadata_Migration' ) || ! VRodos_Legacy_Metadata_Migration::is_complete() ) {
+			$this->legacy_template_aliases = [
+				VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-project-manager-template.php' ) => 'Project Manager Template',
+				VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-assets-list-template.php' ) => 'Assets List Template',
+				VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-edit-3D-scene-template.php' ) => 'Scene 3D Editor Template',
+				VRodos_Path_Manager::legacy_page_template_meta( 'vrodos-asset-editor-template.php' ) => 'Asset Editor Template',
+			];
+		}
 
 		add_action( 'admin_notices', $this->vrodos_fx_admin_notice_notice(...) );
 	}

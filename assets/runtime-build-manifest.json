@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generatedBy": "scripts/build-runtime-master-bundles.mjs",
   "runtimeRoot": "assets/js/runtime/master/lib",
   "chunks": {
@@ -78,6 +78,7 @@
         "networking"
       ],
       "sourceFiles": [
+        "assets/js/runtime/components/chat_component.js",
         "assets/js/runtime/components/chat_poi_component.js",
         "assets/js/runtime/components/indicator_component.js"
       ],
@@ -296,7 +297,7 @@
       "activationCapabilities": [
         "fps-meter"
       ],
-      "moduleImport": "https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js",
+      "moduleImport": "VRODOS_PLUGIN_URL_PLACEHOLDERassets/vendor/stats-gl/main.js",
       "readyGlobal": "VRODOS_STATS_READY",
       "global": "Stats",
       "export": "default"

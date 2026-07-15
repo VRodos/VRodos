@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-compiler-manager.php';
+require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-runtime-url-resolver.php';
 
 class VRodos_Project_AJAX {
 
@@ -186,9 +186,7 @@ class VRodos_Project_AJAX {
 
 		$parameter_Scenepass = !empty($_POST['parameter_Scenepass']) ? $_POST['parameter_Scenepass'] : $parameter_Scenepass;
 		
-		// Pre-instantiate managers for performance
-		$compiler = new VRodos_Compiler_Manager();
-		$nodeJSpath = $compiler->nodeJSpath();
+		$runtime_url_resolver = new VRodos_Runtime_URL_Resolver();
 
 		// Output custom query loop
 		if ( $custom_query->have_posts() ) {
@@ -233,7 +231,11 @@ class VRodos_Project_AJAX {
 				$edit_scene_page_id = $editscenePage[0]->ID;
 
 				$loadMainSceneLink = esc_url( ( get_permalink( $edit_scene_page_id ) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $game_id . '&scene_type=' . $scene_data['type'] ) );
-				$loadMasterClientLink = $nodeJSpath . 'Master_Client_' . $scene_data['id'] . '.html';
+				$loadMasterClientLink = $runtime_url_resolver->runtime_url_for_file(
+					'Master_Client_' . absint( $scene_data['id'] ) . '.html',
+					null,
+					VRodos_Compiler_Runtime_Feature_Flags::RUNTIME_MODE_NETWORKED
+				);
 
 				$assets_list_page    = VRodos_Core_Manager::vrodos_getEditpage( 'assetslist' );
 				$assets_list_page_id = $assets_list_page[0]->ID;

@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-vrodos-legacy-metadata-migration.php';
+
 /**
  * VRodos_Install_Manager Class.
  *
@@ -23,6 +25,7 @@ class VRodos_Install_Manager {
 		register_activation_hook( VRODOS_PLUGIN_FILE, [$this, 'activate'] );
 		register_uninstall_hook( VRODOS_PLUGIN_FILE, [self::class, 'uninstall'] );
 		add_action( 'init', [$this, 'run_legacy_cleanup_migrations'], 20 );
+		add_action( 'admin_notices', [ new VRodos_Legacy_Metadata_Migration(), 'render_admin_notice' ] );
 	}
 
 	/**
@@ -50,6 +53,7 @@ class VRodos_Install_Manager {
 	}
 
 	public function run_legacy_cleanup_migrations(): void {
+		( new VRodos_Legacy_Metadata_Migration() )->run_batch();
 		$this->run_legacy_asset_clone_meta_cleanup();
 		$this->run_legacy_asset_removed_fields_cleanup();
 	}
@@ -141,6 +145,9 @@ class VRodos_Install_Manager {
 		delete_option( 'vrodos_db_version' );
 		delete_option( self::LEGACY_ASSET_CLONE_META_CLEANUP_OPTION );
 		delete_option( self::LEGACY_ASSET_REMOVED_FIELDS_CLEANUP_OPTION );
+		delete_option( VRodos_Legacy_Metadata_Migration::COMPLETE_OPTION );
+		delete_option( VRodos_Legacy_Metadata_Migration::REPORT_OPTION );
+		delete_option( 'vrodos_metadata_migration_v2_cursor' );
 
 		// 2. Postmeta
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$del_prefix}postmeta WHERE meta_value LIKE %s", '%vrodos%' ) );

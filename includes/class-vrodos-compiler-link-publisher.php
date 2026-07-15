@@ -29,8 +29,9 @@ final class VRodos_Compiler_Link_Publisher {
 	): VRodos_Compile_Result {
 		$runtime_mode   = $plan->request->runtime_mode;
 		$master_scene   = $plan->is_vrexpo() ? $plan->first_scene_id : $plan->last_scene_id;
-		$master_file    = 'Master_Client_' . $master_scene . '.html';
+		$master_file    = $this->target_filename( $plan, VRodos_Runtime_Target_Plan::MASTER, $master_scene );
 		$selected_scene = $plan->request->selected_scene_id > 0 ? $plan->request->selected_scene_id : $master_scene;
+		$selected_master_file = $this->target_filename( $plan, VRodos_Runtime_Target_Plan::MASTER, $selected_scene );
 
 		$links = [
 			'DefaultLinkMode' => $this->default_link_mode,
@@ -38,18 +39,18 @@ final class VRodos_Compiler_Link_Publisher {
 			'RuntimeMode'     => $runtime_mode,
 			'VrRuntimeProfile' => $plan->request->vr_runtime_profile,
 			'MasterClient'    => $this->url( $master_file, null, $runtime_mode ),
-			'CurrentSceneMasterClient' => $this->url( 'Master_Client_' . $selected_scene . '.html', null, $runtime_mode ),
+			'CurrentSceneMasterClient' => $this->url( $selected_master_file, null, $runtime_mode ),
 		];
 
 		if ( $plan->is_networked() ) {
 			$this->append_variants( $links, 'MasterClient', $master_file, $runtime_mode );
-			$this->append_variants( $links, 'CurrentSceneMasterClient', 'Master_Client_' . $selected_scene . '.html', $runtime_mode );
+			$this->append_variants( $links, 'CurrentSceneMasterClient', $selected_master_file, $runtime_mode );
 		}
 
 		if ( $plan->is_networked() && ! $plan->is_vrexpo() ) {
-			$index_file = 'index_' . $plan->last_scene_id . '.html';
-			$simple_file = 'Simple_Client_' . $plan->last_scene_id . '.html';
-			$current_simple_file = 'Simple_Client_' . $selected_scene . '.html';
+			$index_file          = $this->target_filename( $plan, VRodos_Runtime_Target_Plan::INDEX, $plan->last_scene_id );
+			$simple_file         = $this->target_filename( $plan, VRodos_Runtime_Target_Plan::SIMPLE, $plan->last_scene_id );
+			$current_simple_file = $this->target_filename( $plan, VRodos_Runtime_Target_Plan::SIMPLE, $selected_scene );
 
 			$links['index']                    = $this->url( $index_file, null, $runtime_mode );
 			$links['SimpleClient']             = $this->url( $simple_file, null, $runtime_mode );
@@ -60,6 +61,14 @@ final class VRodos_Compiler_Link_Publisher {
 		}
 
 		return new VRodos_Compile_Result( $links, $artifacts, $warnings, $network_runtime_ready );
+	}
+
+	private function target_filename( VRodos_Project_Compile_Plan $plan, string $kind, int $scene_id ): string {
+		$target = $plan->target( $kind, $scene_id );
+		if ( ! $target instanceof VRodos_Runtime_Target_Plan ) {
+			throw new RuntimeException( '[VRodos] Compile plan is missing target ' . $kind . ' for scene #' . $scene_id );
+		}
+		return $target->filename;
 	}
 
 	private function append_variants( array &$links, string $field, string $filename, string $runtime_mode ): void {

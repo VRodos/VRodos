@@ -229,7 +229,7 @@ The `scripts/` folder should stay, but it needs clear ownership. Current scripts
 | Validation checks | `check-runtime-syntax.mjs` | Fast syntax coverage for classic runtime/editor/script files that are not generated bundles. |
 | Browser profiling and diagnostics | `profile-master-client.mjs`, `capture-quest-immersive-diagnostics.mjs`, `start-vr-adb.ps1` | Captures desktop/CDP profiling, Quest Browser runtime diagnostics, and ADB setup for headset validation. |
 | Asset optimization tooling | `audit-master-client-assets.mjs`, `prototype-optimize-master-client-assets.mjs` | Supports GLB audit, derivative experiments, and admin/backend asset-optimization decisions. |
-| Size and smoke utilities | `report-css-size.mjs`, `build-phase0-smoke.mjs` | `report-css-size.mjs` is a small CSS reporting helper. `build-phase0-smoke.mjs` appears to be a rare Three/vendor migration smoke utility and should be documented before any cleanup decision. |
+| Size utility | `report-css-size.mjs` | Small CSS reporting helper retained for stylesheet regression checks. The obsolete Phase-0 Three smoke builder was removed after the locked vendor build and provenance tests superseded it. |
 
 Cleanup rule: do not delete scripts just because they are not daily-use. First classify them, make sure any retained rare script has a one-line purpose, and only then remove scripts that are obsolete and unreferenced by package commands, docs, or current diagnostics.
 

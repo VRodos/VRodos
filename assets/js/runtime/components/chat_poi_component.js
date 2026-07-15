@@ -1,463 +1,278 @@
-AFRAME.registerComponent('chat-poi', {
+(function (window, document, AFRAME) {
+  'use strict';
+
+  function appendLogLine(log, text, color = '') {
+    if (!log) return;
+    const line = document.createElement('span');
+    line.textContent = text;
+    if (color) line.style.color = color;
+    log.appendChild(line);
+    log.appendChild(document.createElement('br'));
+  }
+
+  AFRAME.registerComponent('chat-poi', {
     schema: {
-        scene_id: {type: "string", default: "false" },
-        num_participants: {type: "string", default: "2" }
+      scene_id: { type: 'string', default: 'false' },
+      num_participants: { type: 'string', default: '2' }
     },
-    init: function () {
-        let sendMsgChatBtn = document.getElementById('send-msg-chat-btn');
-        let chatInput = document.getElementById('chatInput');
-        let chatLog = document.getElementById('chat-messages');
-        let roomOccupants;
-        let connectedEntities = [];
-        let room_id = this.data.scene_id;
-        let maxParticipants = Number(this.data.num_participants);
-        this.el.setAttribute("isActive", "false");
-        let elem = this.el;
-        let currentUsers = 0;
-        let syncComplete = false;
 
-        if (maxParticipants ===  -1) {
-            maxParticipants = Number.MAX_SAFE_INTEGER;
-        } else if (!Number.isFinite(maxParticipants) || maxParticipants < 1) {
-            maxParticipants = 2;
-        }
+    init() {
+      this.chatApi = window.VRODOSChat;
+      this.cleanup = [];
+      this.privateHistory = [];
+      this.privateUnsubscribe = null;
+      this.privateSendHandler = null;
 
-        let private_button_label = document.getElementById('private-chat-button-label') || document.getElementById('private-chat-button');
-        if (private_button_label) {
-            private_button_label.innerHTML = this.el.getAttribute("title") || "Private";
-        }
+      if (!this.chatApi || typeof this.chatApi.send !== 'function' || typeof this.chatApi.subscribe !== 'function') {
+        console.warn('[VRodos] chat-poi disabled because VRODOSChat is unavailable.');
+        return;
+      }
 
-        const setPrivateChatButtonVisibility = function (isVisible) {
-            const button = document.getElementById("private-chat-button");
-            if (!button) {
-                return;
-            }
+      this.sendButton = document.getElementById('send-msg-chat-btn');
+      this.chatInput = document.getElementById('chatInput');
+      this.chatLog = document.getElementById('chat-messages');
+      this.exitButton = document.getElementById('exit-private-chat-btn');
+      if (!this.sendButton || !this.chatInput || !this.chatLog) {
+        console.warn('[VRodos] chat-poi disabled because the chat drawer is incomplete.');
+        return;
+      }
+      this.maxParticipants = Number(this.data.num_participants);
+      if (this.maxParticipants === -1) {
+        this.maxParticipants = Number.MAX_SAFE_INTEGER;
+      } else if (!Number.isFinite(this.maxParticipants) || this.maxParticipants < 1) {
+        this.maxParticipants = 2;
+      }
 
-            if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.setButtonVisible === 'function') {
-                window.VRODOSMasterUI.setButtonVisible(button, isVisible);
-            } else {
-                button.style.visibility = isVisible ? 'visible' : 'hidden';
-            }
-        };
+      this.el.setAttribute('isActive', 'false');
+      this.el.setAttribute('currentState', this.isPublicEnabled() ? 'public' : 'private');
+      this.setSelectedPrivateChatLabel();
+      this.emitAvailabilityChange();
 
-        const setChatTabState = function (activeTab) {
-            if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.applyChatTabs === 'function') {
-                return window.VRODOSMasterUI.applyChatTabs(activeTab);
-            }
+      const scene = this.el.sceneEl || document.querySelector('a-scene');
+      this.bind(scene, 'enter-vr', () => this.el.classList.remove('raycastable'));
+      this.bind(scene, 'exit-vr', () => this.el.classList.add('raycastable'));
+      this.bind(this.el, 'click', (event) => this.handleClick(event));
+      this.bind(document, 'chat-selected', (event) => this.handleChatSelected(event));
+      this.bind(document, 'entityCreated', () => this.emitAvailabilityChange());
+      this.bind(document.body, 'entityRemoved', () => this.emitAvailabilityChange());
+      this.bind(document.body, 'clientDisconnected', () => this.emitAvailabilityChange());
+      this.bind(document.body, 'connected', () => this.emitAvailabilityChange());
+      this.bind(document, 'componentchanged', (event) => {
+        if (event.detail?.name === 'player-info') this.emitAvailabilityChange();
+      });
+      this.bind(this.exitButton, 'click', () => this.exitPrivateChat(), true);
+    },
 
-            if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.setChatTabState === 'function') {
-                window.VRODOSMasterUI.setChatTabState(activeTab);
-                // Also ensure the active tab is visible if it was hidden
-                const activeBtn = document.getElementById(activeTab + "-chat-button");
-                if (activeBtn) {
-                    activeBtn.classList.remove('tw-hidden');
-                }
-                return;
-            }
+    bind(element, eventName, handler, options) {
+      if (!element) return;
+      element.addEventListener(eventName, handler, options);
+      this.cleanup.push(() => element.removeEventListener(eventName, handler, options));
+    },
 
-            const publicButton = document.getElementById("public-chat-button");
-            const privateButton = document.getElementById("private-chat-button");
+    isPublicEnabled() {
+      return Boolean(this.chatApi?.isPublicEnabled());
+    },
 
-            if (publicButton) {
-                publicButton.classList.toggle('tw-btn-active', activeTab === 'public');
-                publicButton.classList.toggle('tw-btn-primary', activeTab === 'public');
-                publicButton.classList.toggle('tw-btn-ghost', activeTab !== 'public');
-            }
+    isNetworkReady() {
+      return Boolean(window.NAF?.connection && typeof window.NAF.connection.broadcastData === 'function');
+    },
 
-            if (privateButton) {
-                privateButton.classList.toggle('tw-btn-active', activeTab === 'private');
-                privateButton.classList.toggle('tw-btn-primary', activeTab === 'private');
-                privateButton.classList.toggle('tw-btn-ghost', activeTab !== 'private');
-                if (activeTab === 'private') {
-                    privateButton.classList.remove('tw-hidden');
-                }
-            }
-        };
+    playerInfo() {
+      const camera = document.getElementById('cameraA');
+      return camera?.getAttribute('player-info') || {};
+    },
 
-        const getPlayerInfoData = function (playerEl) {
-            if (!playerEl || !playerEl.components || !playerEl.components['player-info']) {
-                return null;
-            }
+    privateChatId() {
+      return this.el.getAttribute('id') || `chat-${this.data.scene_id}`;
+    },
 
-            return playerEl.components['player-info'].data || null;
-        };
+    occupancy() {
+      const chatId = this.privateChatId();
+      return Array.from(document.querySelectorAll('[player-info]')).filter((player) => {
+        const data = player.components?.['player-info']?.data || player.getAttribute('player-info');
+        return data?.currentPrivateChat === chatId;
+      }).length;
+    },
 
-        const getPrivateChatOccupancy = function (chatId) {
-            return [...document.querySelectorAll('[player-info]')].filter(function (playerEl) {
-                let playerInfo = getPlayerInfoData(playerEl);
-                return playerInfo && playerInfo.currentPrivateChat == chatId;
-            }).length;
-        };
+    emitAvailabilityChange() {
+      const occupancy = this.occupancy();
+      const isFull = this.maxParticipants !== Number.MAX_SAFE_INTEGER && occupancy >= this.maxParticipants;
+      this.el.emit('chat-availability-change', isFull ? 'full' : 'available', false);
+      document.dispatchEvent(
+        new CustomEvent('chat-occupancy-changed', {
+          detail: { chatId: this.privateChatId(), occupancy, maxParticipants: this.maxParticipants, isFull }
+        })
+      );
+    },
 
-        const isNetworkReady = function () {
-            return typeof NAF !== 'undefined' && NAF.connection && typeof NAF.connection.broadcastData === 'function';
-        };
+    setPrivateButtonVisible(visible) {
+      const button = document.getElementById('private-chat-button');
+      if (!button) return;
+      if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.setButtonVisible === 'function') {
+        window.VRODOSMasterUI.setButtonVisible(button, visible);
+      } else {
+        button.style.visibility = visible ? 'visible' : 'hidden';
+      }
+    },
 
-        const emitAvailabilityChange = function () {
-            let occupancy = getPrivateChatOccupancy(elem.getAttribute("id"));
-            let isFull = maxParticipants !== Number.MAX_SAFE_INTEGER && occupancy >= maxParticipants;
-            elem.emit('chat-availability-change', isFull ? "full" : "available", false);
-            document.dispatchEvent(new CustomEvent('chat-occupancy-changed', {
-                detail: {
-                    chatId: elem.getAttribute("id"),
-                    occupancy: occupancy,
-                    maxParticipants: maxParticipants,
-                    isFull: isFull
-                }
-            }));
-        };
+    setTab(activeTab) {
+      if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.applyChatTabs === 'function') {
+        window.VRODOSMasterUI.applyChatTabs(activeTab);
+        return;
+      }
+      if (window.VRODOSMasterUI && typeof window.VRODOSMasterUI.setChatTabState === 'function') {
+        window.VRODOSMasterUI.setChatTabState(activeTab);
+        return;
+      }
 
-        const setSelectedPrivateChatLabel = function () {
-            let privateButtonLabel = document.getElementById('private-chat-button-label') || document.getElementById('private-chat-button');
-            if (privateButtonLabel) {
-                privateButtonLabel.innerHTML = elem.getAttribute("title") || "Private";
-            }
-        };
+      ['public', 'private'].forEach((tab) => {
+        const button = document.getElementById(`${tab}-chat-button`);
+        if (!button) return;
+        const active = tab === activeTab;
+        button.classList.toggle('tw-btn-active', active);
+        button.classList.toggle('tw-btn-primary', active);
+        button.classList.toggle('tw-btn-ghost', !active);
+        if (active) button.classList.remove('tw-hidden');
+      });
+    },
 
-        const getUniqueNumbers = (arr1, arr2) => {
-            let uniqueOfBoth = arr1.filter((ele) => {
-                return arr2.indexOf(ele) !== -1
-            })
+    setSelectedPrivateChatLabel() {
+      const label = document.getElementById('private-chat-button-label') || document.getElementById('private-chat-button');
+      if (label) label.textContent = this.el.getAttribute('title') || 'Private';
+    },
 
-            let uniqueOfList1 = arr1.filter((ele) => {
-                return arr2.indexOf(ele) == -1
-            })
+    showDrawer() {
+      const wrapper = document.getElementById('chat-wrapper-el');
+      if (!wrapper) return false;
+      wrapper.style.visibility = 'visible';
+      wrapper.style.display = 'flex';
+      wrapper.classList.remove('tw-hidden');
+      return true;
+    },
 
-            let uniqueOfList2 = arr2.filter((ele) => {
-                return arr1.indexOf(ele) == -1
-            })
+    handleClick(event) {
+      if (event.detail?.originalEvent?.button !== undefined && event.detail.originalEvent.button !== 0) return;
+      if (!this.showDrawer()) return;
 
-            return uniqueOfList2;
-        }
+      this.setSelectedPrivateChatLabel();
+      this.setPrivateButtonVisible(true);
+      this.setTab('private');
+      this.chatApi.setPublicActive(false);
+      const publicButton = document.getElementById('public-chat-button');
+      if (publicButton) publicButton.disabled = !this.isPublicEnabled();
+      if (typeof window.gtag === 'function') window.gtag('event', 'chat_initiation');
 
-        function ObjectLength( object ) {
-            let length = 0;
-            for( let key in object ) {
-                if( object.hasOwnProperty(key) ) {
-                    ++length;
-                }
-            }
-            return length;
-        }
+      if (this.playerInfo().currentPrivateChat) return;
+      this.chatLog.replaceChildren();
+      appendLogLine(this.chatLog, `Connecting to private chat '${this.el.getAttribute('title') || 'Private'}'`);
 
-        function isEqual(a, b) {
-            if (!a || !b) {
-                return false;
-            }
-            if (a.length !== b.length) {
-                return false;
-            }
-            let map = new Map();
-            for (let elem of a) {
-                map.set(elem, (map.get(elem) || 0) + 1);
-            }
-            for (let elem of b)
-            {
-                if (!map.has(elem)) {
-                    return false;
-                }
-                map.set(elem, map.get(elem) - 1);
-                if (map.get(elem) < 0) {
-                    return false;
-                }
-            }
-            return true;
-        }
+      if (!this.isNetworkReady()) {
+        appendLogLine(this.chatLog, 'Chat is still synchronizing. Please wait a moment and click again.');
+        return;
+      }
+      if (this.occupancy() >= this.maxParticipants) {
+        appendLogLine(this.chatLog, 'Current chat is full. Please try again later.');
+        this.setPrivateButtonVisible(false);
+        if (this.isPublicEnabled()) this.renderChatState('public', 'Current chat is full. Returning to public chat.');
+        return;
+      }
 
-        document.querySelector('a-scene').addEventListener('enter-vr', ()=>{
-            elem.classList.remove("raycastable");
-        });
-        document.querySelector('a-scene').addEventListener('exit-vr', ()=>{
-            elem.classList.add("raycastable");
-        });
-        document.addEventListener('entityCreated',evt => {
-            roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id) || [];
-            if(evt.detail.el.id == "cameraA"){
-                if (connectedEntities.indexOf(NAF.clientId) < 0) {
-                    connectedEntities.push(NAF.clientId);
-                }
-            }
-            else{
-                let networked = evt.detail.el.getAttribute('networked');
-                let ownerId = networked ? networked.owner : null;
-                if (ownerId && connectedEntities.indexOf(ownerId) < 0){
-                    connectedEntities.push(ownerId);
-                }
-            }
+      const camera = document.getElementById('cameraA');
+      camera?.setAttribute('player-info', 'currentPrivateChat', this.privateChatId());
+      this.el.setAttribute('isActive', 'true');
+      this.el.setAttribute('currentState', 'private');
+      if (this.exitButton) this.exitButton.style.display = 'inline-block';
+      appendLogLine(this.chatLog, 'Connected. Press X to leave.');
+      this.startPrivateChannel();
+      this.emitAvailabilityChange();
+      if (typeof window.gtag === 'function') window.gtag('event', 'chat_join');
+    },
 
-            if (isEqual(roomOccupants, connectedEntities)){
-                syncComplete = true;
-                let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
-                document.dispatchEvent(eventSyncComplete);
-            }
-        }, false);
+    startPrivateChannel() {
+      this.stopPrivateChannel();
+      const chatId = this.privateChatId();
+      this.privateUnsubscribe = this.chatApi.subscribe(chatId, (_senderId, _dataType, data) => {
+        const player = data?.player || {};
+        const line = `${this.chatApi.timeString()} ${player.name || 'Stranger'}: ${data?.txt || ''}`;
+        this.privateHistory.push({ text: line, color: player.color || '#80c9d4' });
+        if (this.el.getAttribute('currentState') === 'private') appendLogLine(this.chatLog, line, player.color);
+      });
+      this.privateSendHandler = () => {
+        const message = this.chatInput?.value.trim() || '';
+        if (!message) return;
+        const line = `${this.chatApi.timeString()} Me: ${message}`;
+        this.privateHistory.push({ text: line, color: '' });
+        appendLogLine(this.chatLog, line);
+        this.chatApi.send(chatId, { txt: message, player: this.playerInfo() });
+        this.chatInput.value = '';
+        if (typeof window.gtag === 'function') window.gtag('event', 'chat_private_msg_dispatched');
+      };
+      this.sendButton?.addEventListener('click', this.privateSendHandler, true);
+    },
 
-        // Check for existing entities if we joined late
-        const checkExistingEntities = () => {
-            if (typeof NAF === 'undefined' || !NAF.connection || !NAF.connection.entities) return;
-            
-            roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id) || [];
-            if (NAF.clientId && connectedEntities.indexOf(NAF.clientId) < 0) {
-                connectedEntities.push(NAF.clientId);
-            }
-            
-            for (let id in NAF.connection.entities.entities) {
-                let owner = NAF.connection.entities.entities[id].getAttribute('networked').owner;
-                if (owner && connectedEntities.indexOf(owner) < 0) {
-                    connectedEntities.push(owner);
-                }
-            }
+    stopPrivateChannel() {
+      if (this.privateSendHandler) this.sendButton?.removeEventListener('click', this.privateSendHandler, true);
+      this.privateSendHandler = null;
+      if (this.privateUnsubscribe) this.privateUnsubscribe();
+      this.privateUnsubscribe = null;
+    },
 
-            if (isEqual(roomOccupants, connectedEntities)) {
-                syncComplete = true;
-                let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
-                document.dispatchEvent(eventSyncComplete);
-            } else {
-                setTimeout(checkExistingEntities, 1000);
-            }
-        };
-        setTimeout(checkExistingEntities, 1000);
-        // document.body.addEventListener('clientConnected',evt => {
-        //     console.log('clientConnected');
-        //     console.log(evt.detail);
-        // }, false);
-        document.body.addEventListener('entityRemoved',evt => {
-            roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id);
-            let result = getUniqueNumbers(roomOccupants, connectedEntities);
-            let i = 0;
+    handleChatSelected(event) {
+      if (this.el.getAttribute('isActive') !== 'true') return;
+      const requested = event.detail;
+      if (requested === 'public' && !this.isPublicEnabled()) {
+        console.warn('[VRodos] Public chat is disabled for this scene.');
+        return;
+      }
+      if (requested !== 'public' && requested !== 'private') return;
+      this.el.setAttribute('currentState', requested);
+      this.renderChatState(requested);
+    },
 
-            while (i < result.length) {
-                let index = connectedEntities.indexOf(result[i]);
-                if (index > -1) {
-                    connectedEntities.splice(index, 1);
-                }
-                i++;
-            }
-        }, false);
-        document.body.addEventListener('clientDisconnected',evt => {
-            roomOccupants = easyrtc.getRoomOccupantsAsArray('room'+ room_id) || [];
-            if (!syncComplete){
-                if (connectedEntities.indexOf(evt.detail.clientId) > -1){
-                    connectedEntities.splice(connectedEntities.indexOf(evt.detail.clientId), 1);
-                }
-                if (roomOccupants.indexOf(evt.detail.clientId) > -1){
-                    roomOccupants.splice(roomOccupants.indexOf(evt.detail.clientId), 1);
-                }
-                if (isEqual(roomOccupants,connectedEntities)){
-                    let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
-                    document.dispatchEvent(eventSyncComplete);
-                    syncComplete = true;
-                }
-            }
-            if (isEqual(roomOccupants,connectedEntities)){
-                let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
-                document.dispatchEvent(eventSyncComplete);
-                syncComplete = true;
-            }
-        }, false);
-        document.body.addEventListener('connected',evt => {
-            roomOccupants = easyrtc.getRoomOccupantsAsArray('room' + room_id) || [];
-            connectedEntities.push(NAF.clientId);
-            if (isEqual(roomOccupants,connectedEntities)){
-                let eventSyncComplete = new CustomEvent('chat-ready', {"detail": "success"});
-                document.dispatchEvent(eventSyncComplete);
-                syncComplete = true;
-            }
-            for (let key in NAF.connection.entities.entities) {
-                if (NAF.connection.entities.entities.hasOwnProperty(key)) {
-                    if(NAF.connection.entities.entities[key].hasOwnProperty('firstUpdateData')){
-                        connectedEntities.push(NAF.connection.entities.entities[key].firstUpdateData.owner);
-                    }
-                }
-            }
-        }, false);
+    renderChatState(state, message = '') {
+      this.chatLog.replaceChildren();
+      if (state === 'public') {
+        this.stopPrivateChannel();
+        this.chatApi.setPublicActive(true);
+        appendLogLine(this.chatLog, message || 'Connected to public chat.');
+        this.chatApi.getPublicHistory().forEach((line) => appendLogLine(this.chatLog, line));
+      } else {
+        this.chatApi.setPublicActive(false);
+        appendLogLine(this.chatLog, `Connected to private chat '${this.el.getAttribute('title') || 'Private'}'.`);
+        this.privateHistory.forEach((line) => appendLogLine(this.chatLog, line.text, line.color));
+        this.startPrivateChannel();
+      }
+      this.setTab(state);
+    },
 
-        const isPublicChatEnabled = () => document.getElementById("aframe-scene-container")?.getAttribute("scene-settings")?.public_chat == "1";
-        
-        if(isPublicChatEnabled()) {
-            this.el.setAttribute("currentState", "public");
-        } else {
-            this.el.setAttribute("currentState", "private");
-            setChatTabState('private');
-        }
-        let chatLogPrivateHistory = [];
-        const onPrivateMessageStepIndex = function sendPrivateMessage(chat_id, element){
-            {
-                return function executeOnEvent (event) {
-                    let player_object = document.getElementById('cameraA').getAttribute('player-info', 'name');
-                    let dateString = getChatCurrentTimeString();
-                    chatLog.innerHTML += '<span>' + dateString + ' Me: </span><span>' + chatInput.value + '</span><br>';
-                    chatLogPrivateHistory.push(dateString + ' Me: ' + chatInput.value);
-                    NAF.connection.broadcastData(chat_id, {txt: chatInput.value, player: player_object })
-                    if (typeof window.gtag === 'function') {
-                        window.gtag('event', 'chat_private_msg_dispatched');
-                    }
-                }
-            }
-        };
-        const onExitPrivateChatStepIndex = function exitPrivateChat(chat_id, element){
-            {
-                return function actualOnStepIndex (event) {
-                    NAF.connection.unsubscribeToDataChannel(chat_id);
-                    stopPrivateMessageNode(chat_id);
-                    document.getElementById('exit-private-chat-btn').style.display = 'none';
-                    document.getElementById('cameraA').setAttribute('player-info', 'currentPrivateChat', '');
-                    element.setAttribute("isActive", "false");
-                    element.emit('chat-availability-change', "available", false);
-                    document.dispatchEvent(new CustomEvent('chat-occupancy-changed', {
-                        detail: {
-                            chatId: element.getAttribute("id")
-                        }
-                    }));
-                    chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  ' Exiting Private Chat <br>';
-                    stopExitPrivateChatNode(chat_id);
+    exitPrivateChat() {
+      if (this.el.getAttribute('isActive') !== 'true') return;
+      this.stopPrivateChannel();
+      document.getElementById('cameraA')?.setAttribute('player-info', 'currentPrivateChat', '');
+      this.el.setAttribute('isActive', 'false');
+      this.el.setAttribute('currentState', this.isPublicEnabled() ? 'public' : 'private');
+      if (this.exitButton) this.exitButton.style.display = 'none';
+      this.privateHistory = [];
+      this.setPrivateButtonVisible(false);
+      this.emitAvailabilityChange();
 
-                    if(document.getElementById("aframe-scene-container").getAttribute("scene-settings").public_chat == "0") {
-                        document.getElementById("chat-wrapper-el").style.visibility = 'hidden';
-                        setChatTabState('private');
-                    }
-                    else{
-                        chatLog.innerHTML = "";
-                        chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  ' Connected to public chat <br>';
-                        publicChatIsActive = true;
-                        chatLogPublicHistory.forEach((element)=> chatLog.innerHTML += "<span>" + element + "</span>");
-                        sendMsgChatBtn.addEventListener("click", sendPublicMessage);
-                        setChatTabState('public');
-                    }
-                }
-            }
-        };
-        const startPrivateMessageNode = (stepIndex, element) => {
-            NAF.connection.subscribeToDataChannel(element.getAttribute("id"), (senderId, dataType, data, targetId) => {
-                let dateString = getChatCurrentTimeString();
-                if (element.getAttribute("currentState") == "private")
-                    chatLog.innerHTML += '<span style=" color: ' + data.player.color + '">•</span> <span style="color: white">' + dateString + ' ' + data.player.name + ": </span><span>" + data.txt + '</span> <br>';
-                chatLogPrivateHistory.push(dateString + ' ' + data.player.name + ": " + data.txt);
-            } );
-            sendMsgChatBtn.addEventListener("click", privateMessageHandlers[stepIndex] = onPrivateMessageStepIndex(stepIndex, element), true);
-        };
-        const stopPrivateMessageNode = (stepIndex) => {
-            sendMsgChatBtn.removeEventListener("click", privateMessageHandlers[stepIndex], true);
-        };
-        const privateMessageHandlers = [];
-        const exitPrivateChatHandlers = [];
-        const startExitPrivateChatNode = (stepIndex, element) => {
-            document.getElementById('exit-private-chat-btn').addEventListener("click", exitPrivateChatHandlers[stepIndex] = onExitPrivateChatStepIndex(stepIndex, element), true);
-        };
-        const stopExitPrivateChatNode = (stepIndex) => {
-            document.getElementById('exit-private-chat-btn').removeEventListener("click", exitPrivateChatHandlers[stepIndex], true);
-            setPrivateChatButtonVisibility(false);
-            chatLogPrivateHistory = [];
-        };
-        document.addEventListener("chat-selected", (evt) =>{
-            if (this.el.getAttribute("isActive") == "true"){
-                if (this.el.getAttribute("currentState") == evt.detail){
-                }
-                else{
-                    if (evt.detail === 'public' && !isPublicChatEnabled()) {
-                        console.warn("Public chat is disabled for this scene.");
-                        return;
-                    }
-                    this.el.setAttribute("currentState", evt.detail)
-                    setChatTabState(evt.detail);
-                }
-                chatLogUpdate(evt.detail, this.el.getAttribute("id"), this.el);
-            }
-        });
-        elem.addEventListener("click", evt => {
-            if (evt.detail && evt.detail.originalEvent && evt.detail.originalEvent.button !== undefined) {
-                if (evt.detail.originalEvent.button !== 0) return;
-            }
-            const wrapper = document.getElementById("chat-wrapper-el");
-            if (!wrapper) {
-                return;
-            }
-            setSelectedPrivateChatLabel();
-            wrapper.style.visibility = 'visible';
-            wrapper.style.display = 'flex'; // Ensure it's not display:none
-            wrapper.classList.remove('tw-hidden');
-            setChatTabState('private');
-            const publicChatButton = document.getElementById("public-chat-button");
-            if (publicChatButton) {
-                publicChatButton.disabled = !isPublicChatEnabled();
-            }
-            setPrivateChatButtonVisibility(true);
-            publicChatIsActive = false;
+      if (this.isPublicEnabled()) {
+        this.renderChatState('public', 'Exited private chat. Connected to public chat.');
+      } else {
+        const wrapper = document.getElementById('chat-wrapper-el');
+        if (wrapper) wrapper.style.visibility = 'hidden';
+        this.setTab('private');
+      }
+    },
 
-            if (typeof window.gtag === 'function') {
-                window.gtag('event', 'chat_initiation');
-            }
-
-            if (document.getElementById('cameraA').getAttribute('player-info').currentPrivateChat){
-                // Silence already in chat message as requested
-            }else{
-                sendMsgChatBtn.removeEventListener("click",sendPublicMessage);
-                chatLog.innerHTML = "";
-                let chatlist = getPrivateChatOccupancy(elem.getAttribute("id"));
-                chatLog.innerHTML +='<span style=" color: white">•</span> <span style="color: white">' +  ' Connecting to private chat \'' + elem.getAttribute("title") + '\'' +"</span><br>" ;
-
-                if (!isNetworkReady()) {
-                    chatLog.innerHTML += '<span style=" color: white">&bull;</span> <span style="color: white">' +  ' Chat is still synchronizing. Please wait a moment and click again... ' + "</span><br>";
-                } else if (chatlist < maxParticipants){
-                    chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  ' Connected. Press X to leave ' + "</span><br>";
-                    if (typeof window.gtag === 'function') {
-                        window.gtag('event', 'chat_join');
-                    }
-
-                    document.getElementById('cameraA').setAttribute('player-info', 'currentPrivateChat', elem.getAttribute("id"));
-                    emitAvailabilityChange();
-                    elem.setAttribute("isActive", "true");
-                    document.getElementById('exit-private-chat-btn').style.display = 'inline-block';
-                    elem.setAttribute("currentState", "private");
-
-                    startPrivateMessageNode(elem.getAttribute("id"), elem);
-                    startExitPrivateChatNode(elem.getAttribute("id"), elem);
-                    setChatTabState('private');
-
-                }else if (chatlist >= maxParticipants){
-                    chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  ' Current chat is full. Please try again later ' + "</span> <br>";
-                    setPrivateChatButtonVisibility(false);
-                    
-                    if (isPublicChatEnabled()) {
-                        chatLogUpdate("public", elem.getAttribute("id"), elem, "Current chat is full. Returning to public chat");
-                    } else {
-                        // If public chat is disabled, just inform and maybe close the drawer after a delay
-                        setTimeout(() => {
-                            if (elem.getAttribute("isActive") == "false") {
-                                document.getElementById("chat-wrapper-el").style.visibility = 'hidden';
-                            }
-                        }, 3000);
-                    }
-
-                } else {
-                    chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  ' Chat is still synchronizing. Please wait a moment and click again... ' + "</span><br>";
-                }
-
-            }
-        });
-
-        function chatLogUpdate(currenChatState, chat_id, element, chatLogMessage = 'Connected to public chat'){
-            switch (currenChatState){
-                case "public":
-                    chatLog.innerHTML = "";
-                    chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  chatLogMessage + "</span>";
-                    publicChatIsActive = true;
-                    chatLogPublicHistory.forEach((element)=> chatLog.innerHTML += "<span>" + element + "</span><br>");
-                    stopPrivateMessageNode(chat_id);
-                    sendMsgChatBtn.addEventListener("click",sendPublicMessage);
-                    setChatTabState('public');
-                    break;
-
-                case "private":
-                    chatLog.innerHTML = "";
-                    chatLog.innerHTML += '<span style=" color: white">•</span> <span style="color: white">' +  ' Connected to private chat \'' +  element.getAttribute("title") + '\' ' + "</span><br>";
-                    publicChatIsActive = false;
-                    chatLogPrivateHistory.forEach((element)=> chatLog.innerHTML += "<span>" + element + "</span><br>");
-                    sendMsgChatBtn.removeEventListener("click",sendPublicMessage);
-                    startPrivateMessageNode(chat_id, element);
-                    setChatTabState('private');
-                    break;
-            }
-        }
+    remove() {
+      this.stopPrivateChannel();
+      const camera = document.getElementById('cameraA');
+      const player = camera?.getAttribute('player-info');
+      if (player?.currentPrivateChat === this.privateChatId()) {
+        camera.setAttribute('player-info', 'currentPrivateChat', '');
+      }
+      this.cleanup.splice(0).forEach((dispose) => dispose());
     }
-});
+  });
+})(window, document, AFRAME);

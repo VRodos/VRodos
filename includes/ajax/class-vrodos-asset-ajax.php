@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-compiler-manager.php';
+require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-url-normalizer.php';
 
 class VRodos_Asset_AJAX {
 
@@ -196,7 +196,7 @@ class VRodos_Asset_AJAX {
 
 		$response = VRodos_Core_Manager::vrodos_get_assets_by_game( $_POST['gameProjectSlug'], $_POST['gameProjectID'] );
 
-		$compiler = new VRodos_Compiler_Manager();
+		$url_normalizer = new VRodos_URL_Normalizer();
 		for ( $i = 0; $i < count( $response ); $i++ ) {
 			if ( isset( $response[ $i ]['assetName'] ) ) {
 				$response[ $i ]['name'] = $response[ $i ]['assetName'];
@@ -205,7 +205,7 @@ class VRodos_Asset_AJAX {
 			// Normalize all paths
 			foreach ( ['glb_path', 'path', 'screenshot_path', 'video_path', 'poi_img_path'] as $key ) {
 				if ( isset( $response[ $i ][ $key ] ) ) {
-					$response[ $i ][ $key ] = $compiler->normalize_url( $response[ $i ][ $key ] );
+					$response[ $i ][ $key ] = $url_normalizer->normalize( $response[ $i ][ $key ] );
 				}
 			}
 		}
@@ -224,10 +224,10 @@ class VRodos_Asset_AJAX {
 		$glbID = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
 		$glbURL = VRodos_Core_Manager::resolve_media_meta_url( $glbID );
 
-		$compiler = new VRodos_Compiler_Manager();
+		$url_normalizer = new VRodos_URL_Normalizer();
 		$output = new stdClass();
 		$output->glbIDs = $glbID;
-		$output->glbURL = $compiler->normalize_url( $glbURL );
+		$output->glbURL = $url_normalizer->normalize( $glbURL );
 		$output->sourceSizeBytes = 0;
 		$output->editorPreviewGlbURL = '';
 		$output->editorPreviewStatus = 'none';
@@ -241,7 +241,7 @@ class VRodos_Asset_AJAX {
 		if ( class_exists( 'VRodos_Asset_Optimization_Manager' ) && '' !== $glbURL ) {
 			$preview_state = VRodos_Asset_Optimization_Manager::get_editor_preview_asset_state( $asset_id );
 			$output->sourceSizeBytes = (int) ( $preview_state['sourceSizeBytes'] ?? 0 );
-			$output->editorPreviewGlbURL = $compiler->normalize_url( (string) ( $preview_state['url'] ?? '' ) );
+			$output->editorPreviewGlbURL = $url_normalizer->normalize( (string) ( $preview_state['url'] ?? '' ) );
 			$output->editorPreviewStatus = (string) ( $preview_state['status'] ?? 'none' );
 			$output->editorPreviewMessage = (string) ( $preview_state['message'] ?? '' );
 			$output->editorPreviewUsed = ! empty( $preview_state['used'] );
@@ -272,7 +272,7 @@ class VRodos_Asset_AJAX {
 		if ( $sshotID ) {
 			$sshotUrl = VRodos_Core_Manager::resolve_media_meta_url( $sshotID );
 			if ( $sshotUrl ) {
-				$output->screenshot_path = $compiler->normalize_url( $sshotUrl );
+				$output->screenshot_path = $url_normalizer->normalize( $sshotUrl );
 			}
 		}
 

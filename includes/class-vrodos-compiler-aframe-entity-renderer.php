@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/class-vrodos-compiler-aframe-dom-helper.php';
 require_once __DIR__ . '/class-vrodos-compiler-entity-policy.php';
+require_once __DIR__ . '/class-vrodos-compiler-entity-dispatcher.php';
 
 class VRodos_Compiler_AFrame_Entity_Renderer {
 	private const GLTF_LOAD_PHASE_CRITICAL = 'critical';
@@ -19,6 +20,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private VRodos_Compiler_Runtime_Assets $runtime_assets;
 	private VRodos_Compiler_Scene_Repository $scene_repository;
 	private VRodos_Compiler_Entity_Policy $entity_policy;
+	private VRodos_Compiler_Entity_Dispatcher $entity_dispatcher;
 	private $normalize_url;
 	private string $plugin_path_url = '';
 	private bool $isHoverEnabled = true;
@@ -44,6 +46,46 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->scene_repository = $scene_repository;
 		$this->normalize_url    = $normalize_url;
 		$this->entity_policy     = new VRodos_Compiler_Entity_Policy();
+		$this->entity_dispatcher = new VRodos_Compiler_Entity_Dispatcher(
+			[
+				new VRodos_Compiler_Model_Light_Pawn_Renderer(
+					[
+						'light' => function ( VRodos_Compiler_Entity_Render_Context $context ): void {
+							$this->render_light_entity( $context->dom, $context->scene, $context->entity );
+						},
+						'gltf' => function ( VRodos_Compiler_Entity_Render_Context $context ): void {
+							$this->render_gltf_entity( $context->dom, $context->scene, $context->assets, $context->entity, (int) ( $context->config['scene_id'] ?? 0 ) );
+						},
+						'pawn' => function ( VRodos_Compiler_Entity_Render_Context $context ): void {
+							$this->render_pawn_entity( $context->dom, $context->scene, $context->assets, $context->entity, $context->config );
+						},
+					]
+				),
+				new VRodos_Compiler_Media_Audio_Text_POI_Renderer(
+					[
+						'audio' => function ( VRodos_Compiler_Entity_Render_Context $context ): void {
+							$this->render_audio_entity( $context->dom, $context->scene, $context->assets, $context->entity );
+						},
+						'media' => function ( VRodos_Compiler_Entity_Render_Context $context ): void {
+							$this->render_media_entity( $context->dom, $context->scene, $context->assets, $context->entity );
+						},
+						'text' => function ( VRodos_Compiler_Entity_Render_Context $context ): void {
+							$this->render_3d_text_entity( $context->dom, $context->scene, $context->entity );
+						},
+						'poi-imagetext' => function ( VRodos_Compiler_Entity_Render_Context $context ): void {
+							$this->render_poi_imagetext_entity( $context->dom, $context->scene, $context->assets, $context->entity );
+						},
+					]
+				),
+				new VRodos_Compiler_Assessment_Renderer(
+					function ( VRodos_Compiler_Entity_Render_Context $context ): void {
+						if ( $this->is_immerse_project( (int) ( $context->config['project_id'] ?? 0 ) ) ) {
+							$this->append_immerse_assessment_entity( $context->dom, $context->scene, $context->assets, $context->entity );
+						}
+					}
+				),
+			]
+		);
 	}
 
 	public function configure( string $plugin_path_url, bool $is_hover_enabled ): void {
@@ -898,7 +940,13 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			if ( ! is_object( $obj ) ) {
 				continue;
 			}
-			$obj = $this->entity_policy->normalize( $obj, $this->current_scene_id, (string) $object_key );
+			$category = trim( (string) ( $obj->category_slug ?? $obj->category_name ?? '' ) );
+			if ( '' === $category ) {
+				continue;
+			}
+			if ( ! $this->entity_policy->is_normalized( $obj ) ) {
+				$obj = $this->entity_policy->normalize( $obj, $this->current_scene_id, (string) $object_key );
+			}
 
 			$this->render_scene_object( $dom, $render_container, $assets, $obj, array_merge( $config, [
 				'project_id' => $project_id,
@@ -913,44 +961,15 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->diagnostic_object_count++;
 		$this->diagnostic_category_counts[ $cat ] = ( $this->diagnostic_category_counts[ $cat ] ?? 0 ) + 1;
 
-		switch ( $family ) {
-			case 'light':
-				$this->render_light_entity( $dom, $ascene, $obj );
-				break;
-			case 'gltf':
-				$this->render_gltf_entity( $dom, $ascene, $assets, $obj, (int) ($config['scene_id'] ?? 0) );
-				break;
-			case 'audio':
-				$this->render_audio_entity( $dom, $ascene, $assets, $obj );
-				break;
-			case 'media':
-				$this->render_media_entity( $dom, $ascene, $assets, $obj );
-				break;
-			case 'text':
-				$this->render_3d_text_entity( $dom, $ascene, $obj );
-				break;
-			case 'poi-imagetext':
-				$this->render_poi_imagetext_entity( $dom, $ascene, $assets, $obj );
-				break;
-			case 'pawn':
-				$this->render_pawn_entity( $dom, $ascene, $assets, $obj, $config );
-				break;
-			case 'assessment':
-				if ( $this->is_immerse_project( (int) $config['project_id'] ) ) {
-					$this->append_immerse_assessment_entity( $dom, $ascene, $assets, $obj );
-				}
-				break;
-			default:
-				if ( '' !== trim( (string) $cat ) ) {
-					$this->add_diagnostic_warning(
-						'unhandled-category|' . sanitize_key( (string) $cat ),
-						sprintf(
-							'Skipped unsupported compiled asset category "%s". Add it to VRodos_Compiler_AFrame_Entity_Renderer before relying on it in compiled scenes.',
-							(string) $cat
-						)
-					);
-				}
-				break;
+		$context = new VRodos_Compiler_Entity_Render_Context( $dom, $ascene, $assets, $obj, $cat, (string) $family, $config );
+		if ( ! $this->entity_dispatcher->dispatch( $context ) && '' !== trim( (string) $cat ) ) {
+			$this->add_diagnostic_warning(
+				'unhandled-category|' . sanitize_key( (string) $cat ),
+				sprintf(
+					'Skipped unsupported compiled asset category "%s". Add it to VRodos_Compiler_Entity_Dispatcher before relying on it in compiled scenes.',
+					(string) $cat
+				)
+			);
 		}
 	}
 

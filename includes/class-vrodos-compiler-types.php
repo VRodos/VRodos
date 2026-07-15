@@ -67,19 +67,40 @@ final readonly class VRodos_Compile_Result {
 		$this->network_runtime_ready = $network_runtime_ready;
 	}
 
-	public function to_legacy_payload(): array {
-		$payload = $this->links;
-		if ( $this->warnings ) $payload['Warnings'] = $this->warnings;
-		if ( null !== $this->network_runtime_ready ) $payload['NetworkRuntimeReady'] = $this->network_runtime_ready;
-		return $payload;
-	}
-
 	public function to_public_payload(): array {
 		return $this->links + [
 			'artifacts'           => array_map( static fn ( VRodos_Compile_Artifact $artifact ): array => $artifact->summary(), $this->artifacts ),
 			'warnings'            => $this->warnings,
 			'networkRuntimeReady' => $this->network_runtime_ready,
 		];
+	}
+}
+
+final readonly class VRodos_Runtime_Target_Plan {
+	public const MASTER = 'master';
+	public const SIMPLE = 'simple';
+	public const INDEX  = 'index';
+
+	public array $capabilities;
+	public array $chunk_ids;
+
+	public function __construct(
+		public string $kind,
+		public string $template,
+		public string $filename,
+		public VRodos_Scene_Compile_Plan $scene,
+		public string $runtime_mode,
+		array $capabilities,
+		array $chunk_ids
+	) {
+		if ( ! in_array( $kind, [ self::MASTER, self::SIMPLE, self::INDEX ], true ) ) {
+			throw new InvalidArgumentException( '[VRodos] Unknown runtime target kind: ' . $kind );
+		}
+		if ( basename( $filename ) !== $filename ) {
+			throw new InvalidArgumentException( '[VRodos] Runtime target filename must be a basename.' );
+		}
+		$this->capabilities = array_values( array_unique( array_map( 'strval', $capabilities ) ) );
+		$this->chunk_ids    = array_values( array_unique( array_map( 'strval', $chunk_ids ) ) );
 	}
 }
 
@@ -106,6 +127,8 @@ final readonly class VRodos_Scene_Compile_Plan {
 
 final readonly class VRodos_Project_Compile_Plan {
 	public array $scenes;
+	/** @var VRodos_Runtime_Target_Plan[] */
+	public array $targets;
 	public int $first_scene_id;
 	public int $last_scene_id;
 
@@ -113,12 +136,17 @@ final readonly class VRodos_Project_Compile_Plan {
 		public VRodos_Compile_Request $request,
 		public string $project_title,
 		public string $project_type_slug,
-		array $scenes
+		array $scenes,
+		array $targets
 	) {
 		if ( ! $scenes ) {
 			throw new InvalidArgumentException( '[VRodos] A project compile plan requires at least one scene.' );
 		}
 		$this->scenes         = array_values( $scenes );
+		$this->targets        = array_values( $targets );
+		if ( ! $this->targets ) {
+			throw new InvalidArgumentException( '[VRodos] A project compile plan requires at least one runtime target.' );
+		}
 		$this->first_scene_id = $this->scenes[0]->scene_id;
 		$this->last_scene_id  = $this->scenes[ count( $this->scenes ) - 1 ]->scene_id;
 	}
@@ -134,5 +162,14 @@ final readonly class VRodos_Project_Compile_Plan {
 	/** @return int[] */
 	public function scene_ids(): array {
 		return array_map( static fn ( VRodos_Scene_Compile_Plan $scene ): int => $scene->scene_id, $this->scenes );
+	}
+
+	public function target( string $kind, int $scene_id ): ?VRodos_Runtime_Target_Plan {
+		foreach ( $this->targets as $target ) {
+			if ( $target->kind === $kind && $target->scene->scene_id === $scene_id ) {
+				return $target;
+			}
+		}
+		return null;
 	}
 }

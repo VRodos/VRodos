@@ -29,7 +29,7 @@
     "smoke:browser-feature-state": "node ./scripts/run-browser-feature-state-smoke.mjs",
     "smoke:browser-feature-state:matrix": "node ./scripts/run-browser-feature-state-smoke-matrix.mjs",
     "check:runtime": "npm run lint && npm run check:syntax && npm run test:runtime && npm run test:compiler && npm run build:runtime && git diff --check",
-    "test:runtime": "node ./scripts/test-navigation-math.mjs && node ./scripts/test-assessment-runtime.mjs && node ./scripts/test-xr-exit-handoff.mjs && node ./scripts/test-runtime-feature-state.mjs && node ./scripts/test-hardware-diagnostics.mjs && node ./scripts/test-aframe-runtime-provenance.mjs && node ./scripts/test-loader-decoder-config.mjs && node ./scripts/test-takram-cloud-profile-safety.mjs && node ./scripts/test-shadow-map-compatibility.mjs && node ./scripts/test-profile-feature-state-check.mjs",
+    "test:runtime": "node ./scripts/test-navigation-math.mjs && node ./scripts/test-assessment-runtime.mjs && node ./scripts/test-xr-exit-handoff.mjs && node ./scripts/test-runtime-feature-state.mjs && node ./scripts/test-hardware-diagnostics.mjs && node ./scripts/test-network-chat-runtime.mjs && node ./scripts/test-aframe-runtime-provenance.mjs && node ./scripts/test-loader-decoder-config.mjs && node ./scripts/test-takram-cloud-profile-safety.mjs && node ./scripts/test-shadow-map-compatibility.mjs && node ./scripts/test-profile-feature-state-check.mjs",
     "test:compiler": "node ./scripts/run-compiler-runtime-tests.mjs",
     "format": "prettier --write \"**/*.{js,css,md,json}\"",
     "build:css": "tailwindcss -i ./assets/css/vrodos_modern.css -o ./assets/css/vrodos_modern_compiled.css --minify",
@@ -55,13 +55,20 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
+    "@pmndrs/msdfonts": "1.0.74",
     "@pmndrs/pointer-events": "^6.6.30",
     "@pmndrs/uikit": "^1.0.74",
     "@pmndrs/uikit-horizon": "^1.0.74",
     "@pmndrs/uikit-lucide": "^1.0.74",
     "@takram/three-atmosphere": "^0.19.1",
     "@takram/three-clouds": "^0.7.6",
+    "@takram/three-geospatial": "0.9.1",
     "@takram/three-geospatial-effects": "^0.6.4",
-    "@zappar/msdf-generator": "^1.2.4"
+    "@zappar/msdf-generator": "^1.2.4",
+    "aframe-environment-component": "1.5.0",
+    "aframe-extras": "7.7.0",
+    "lil-gui": "0.19.2",
+    "lucide": "0.469.0",
+    "stats-gl": "2.2.8"
   }
 }

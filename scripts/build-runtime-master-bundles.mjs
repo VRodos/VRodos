@@ -71,6 +71,7 @@ const chunks = [
     features: ['networked-components', 'chat', 'availability'],
     activationCapabilities: ['networking'],
     files: [
+      'components/chat_component.js',
       'components/chat_poi_component.js',
       'components/indicator_component.js'
     ].map((file) => path.join(runtimeDir, file))
@@ -212,7 +213,7 @@ const externalChunks = [
     dependencies: [],
     features: ['fps-meter', 'debug-tooling'],
     activationCapabilities: ['fps-meter'],
-    moduleImport: 'https://cdn.jsdelivr.net/npm/stats-gl@2.2.8/dist/main.js',
+    moduleImport: 'VRODOS_PLUGIN_URL_PLACEHOLDERassets/vendor/stats-gl/main.js',
     readyGlobal: 'VRODOS_STATS_READY',
     global: 'Stats',
     export: 'default'
@@ -391,7 +392,7 @@ async function buildManifest() {
   }
 
   const manifest = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedBy: 'scripts/build-runtime-master-bundles.mjs',
     runtimeRoot: 'assets/js/runtime/master/lib',
     chunks: manifestChunks

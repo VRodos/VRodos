@@ -459,7 +459,7 @@
   var DEFAULT_OPTIONS = {
     strategy: CENTER,
     maxDepth: 40,
-    maxLeafSize: 10,
+    targetLeafSize: 10,
     useSharedArrayBuffer: false,
     setBoundingBox: true,
     onProgress: null,
@@ -883,7 +883,8 @@
     const {
       maxDepth,
       verbose,
-      maxLeafSize,
+      targetLeafSize,
+      _strictLeafSize = Infinity,
       strategy,
       onProgress
     } = options;
@@ -907,39 +908,38 @@
           console.warn(`BVH: Max depth of ${maxDepth} reached when generating BVH. Consider increasing maxDepth.`);
         }
       }
-      if (count2 <= maxLeafSize || depth >= maxDepth) {
+      const mustSplit = count2 > _strictLeafSize;
+      if (count2 <= targetLeafSize && !mustSplit || depth >= maxDepth) {
         triggerProgress(offset2 + count2);
         node.offset = offset2;
         node.count = count2;
         return node;
       }
       const split = getOptimalSplit(node.boundingData, centroidBoundingData, primitiveBounds, offset2, count2, strategy);
-      if (split.axis === -1) {
-        triggerProgress(offset2 + count2);
-        node.offset = offset2;
-        node.count = count2;
-        return node;
+      let splitOffset = split.axis === -1 ? -1 : partition(partitionBuffer, partitionStride, primitiveBounds, offset2, count2, split);
+      if (split.axis === -1 || splitOffset === offset2 || splitOffset === offset2 + count2) {
+        if (!mustSplit) {
+          triggerProgress(offset2 + count2);
+          node.offset = offset2;
+          node.count = count2;
+          return node;
+        }
+        split.axis = Math.max(0, getLongestEdgeIndex(node.boundingData));
+        splitOffset = offset2 + Math.max(1, Math.floor(count2 / 2));
       }
-      const splitOffset = partition(partitionBuffer, partitionStride, primitiveBounds, offset2, count2, split);
-      if (splitOffset === offset2 || splitOffset === offset2 + count2) {
-        triggerProgress(offset2 + count2);
-        node.offset = offset2;
-        node.count = count2;
-      } else {
-        node.splitAxis = split.axis;
-        const left = new BVHNode();
-        const lstart = offset2;
-        const lcount = splitOffset - offset2;
-        node.left = left;
-        getBounds(primitiveBounds, lstart, lcount, left.boundingData, cacheCentroidBoundingData);
-        splitNode(left, lstart, lcount, cacheCentroidBoundingData, depth + 1);
-        const right = new BVHNode();
-        const rstart = splitOffset;
-        const rcount = count2 - lcount;
-        node.right = right;
-        getBounds(primitiveBounds, rstart, rcount, right.boundingData, cacheCentroidBoundingData);
-        splitNode(right, rstart, rcount, cacheCentroidBoundingData, depth + 1);
-      }
+      node.splitAxis = split.axis;
+      const left = new BVHNode();
+      const lstart = offset2;
+      const lcount = splitOffset - offset2;
+      node.left = left;
+      getBounds(primitiveBounds, lstart, lcount, left.boundingData, cacheCentroidBoundingData);
+      splitNode(left, lstart, lcount, cacheCentroidBoundingData, depth + 1);
+      const right = new BVHNode();
+      const rstart = splitOffset;
+      const rcount = count2 - lcount;
+      node.right = right;
+      getBounds(primitiveBounds, rstart, rcount, right.boundingData, cacheCentroidBoundingData);
+      splitNode(right, rstart, rcount, cacheCentroidBoundingData, depth + 1);
       return node;
     }
   }
@@ -1406,6 +1406,86 @@
     return result;
   }
 
+  // node_modules/three-mesh-bvh/src/core/BVHTraversalHelper.js
+  var BVHTraversalHelper = new class {
+    constructor() {
+      let buffer = null;
+      let uint32Array2 = null;
+      let uint16Array2 = null;
+      let traversing = false;
+      this.root = null;
+      this.buffer = null;
+      this.uint32Array = null;
+      this.uint16Array = null;
+      this.setBVH = (bvh, root) => {
+        if (traversing) {
+          throw new Error("BVHTraversalHelper: cannot call setBVH during an active traversal.");
+        }
+        this.root = root;
+        this.buffer = buffer = bvh._roots[root];
+        this.uint16Array = uint16Array2 = new Uint16Array(buffer);
+        this.uint32Array = uint32Array2 = new Uint32Array(buffer);
+      };
+      this.reset = () => {
+        this.root = null;
+        this.buffer = buffer = null;
+        this.uint16Array = uint16Array2 = null;
+        this.uint32Array = uint32Array2 = null;
+      };
+      this.getRangeStart = (node32Index) => {
+        let node16Index = node32Index * 2;
+        while (!IS_LEAF(node16Index, uint16Array2)) {
+          node32Index = LEFT_NODE(node32Index);
+          node16Index = node32Index * 2;
+        }
+        return OFFSET(node32Index, uint32Array2);
+      };
+      this.getRangeEnd = (node32Index) => {
+        let node16Index = node32Index * 2;
+        while (!IS_LEAF(node16Index, uint16Array2)) {
+          node32Index = RIGHT_NODE(node32Index, uint32Array2);
+          node16Index = node32Index * 2;
+        }
+        return OFFSET(node32Index, uint32Array2) + COUNT(node16Index, uint16Array2);
+      };
+      const walk = (callback, node32Index, depth) => {
+        const node16Index = node32Index * 2;
+        const isLeaf = IS_LEAF(node16Index, uint16Array2);
+        const stopTraversal = callback(depth, isLeaf, node32Index);
+        if (!stopTraversal && !isLeaf) {
+          const left = LEFT_NODE(node32Index);
+          const right = RIGHT_NODE(node32Index, uint32Array2);
+          walk(callback, left, depth + 1);
+          walk(callback, right, depth + 1);
+        }
+      };
+      this.traverseBuffer = (callback) => {
+        if (traversing) {
+          throw new Error("BVHTraversalHelper: cannot start a traversal during an active traversal.");
+        }
+        traversing = true;
+        try {
+          walk(callback, 0, 0);
+        } finally {
+          traversing = false;
+        }
+      };
+      this.traverse = (callback) => {
+        this.traverseBuffer((depth, isLeaf, node32Index) => {
+          if (isLeaf) {
+            const node16Index = node32Index * 2;
+            const offset = uint32Array2[node32Index + 6];
+            const count = uint16Array2[node16Index + 14];
+            return callback(depth, isLeaf, new Float32Array(buffer, node32Index * 4, 6), offset, count);
+          } else {
+            const splitAxis = SPLIT_AXIS(node32Index, uint32Array2);
+            return callback(depth, isLeaf, new Float32Array(buffer, node32Index * 4, 6), splitAxis);
+          }
+        });
+      };
+    }
+  }();
+
   // node_modules/three-mesh-bvh/src/core/BVH.js
   var _tempBox = /* @__PURE__ */ new Box3();
   var _tempBuffer = /* @__PURE__ */ new Float32Array(6);
@@ -1420,6 +1500,13 @@
         ...DEFAULT_OPTIONS,
         ...options
       };
+      if ("maxLeafSize" in options) {
+        console.warn('BVH: "maxLeafSize" option has been deprecated. Use "targetLeafSize", instead.');
+        options = {
+          ...options,
+          targetLeafSize: options.maxLeafSize
+        };
+      }
       buildPackedTree(this, options);
     }
     getRootRanges() {
@@ -1517,28 +1604,9 @@
      * @param {number} [rootIndex=0]
      */
     traverse(callback, rootIndex = 0) {
-      const buffer = this._roots[rootIndex];
-      const uint32Array2 = new Uint32Array(buffer);
-      const uint16Array2 = new Uint16Array(buffer);
-      _traverse2(0);
-      function _traverse2(node32Index, depth = 0) {
-        const node16Index = node32Index * 2;
-        const isLeaf = IS_LEAF(node16Index, uint16Array2);
-        if (isLeaf) {
-          const offset = uint32Array2[node32Index + 6];
-          const count = uint16Array2[node16Index + 14];
-          callback(depth, isLeaf, new Float32Array(buffer, node32Index * 4, 6), offset, count);
-        } else {
-          const left = LEFT_NODE(node32Index);
-          const right = RIGHT_NODE(node32Index, uint32Array2);
-          const splitAxis = SPLIT_AXIS(node32Index, uint32Array2);
-          const stopTraversal = callback(depth, isLeaf, new Float32Array(buffer, node32Index * 4, 6), splitAxis);
-          if (!stopTraversal) {
-            _traverse2(left, depth + 1);
-            _traverse2(right, depth + 1);
-          }
-        }
-      }
+      BVHTraversalHelper.setBVH(this, rootIndex);
+      BVHTraversalHelper.traverse(callback);
+      BVHTraversalHelper.reset();
     }
     /**
      * Refits all BVH node bounds to reflect the current primitive positions. Faster than
@@ -4038,10 +4106,10 @@
     }
     constructor(geometry, options = {}) {
       if (options.maxLeafTris) {
-        console.warn('MeshBVH: "maxLeafTris" option has been deprecated. Use maxLeafSize, instead.');
+        console.warn('MeshBVH: "maxLeafTris" option has been deprecated. Use "targetLeafSize", instead.');
         options = {
           ...options,
-          maxLeafSize: options.maxLeafTris
+          targetLeafSize: options.maxLeafTris
         };
       }
       super(geometry, options);

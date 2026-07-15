@@ -30,11 +30,12 @@ class VRodos_Compiler_Runtime_Script_Planner {
 		$effective_scene = is_object( $scene_json ) ? clone $scene_json : new stdClass();
 		$metadata        = is_object( $effective_scene->metadata ?? null ) ? clone $effective_scene->metadata : new stdClass();
 		foreach ( VRodos_Runtime_Settings_Contract::settings() as $setting_key => $definition ) {
-			if ( ! is_array( $definition ) || ! array_key_exists( (string) $setting_key, $settings ) ) {
+			$wire_key = VRodos_Runtime_Settings_Contract::wire_key( (string) $setting_key );
+			if ( ! is_array( $definition ) || ! array_key_exists( $wire_key, $settings ) ) {
 				continue;
 			}
 			$metadata_key              = VRodos_Runtime_Settings_Contract::metadata_key( (string) $setting_key );
-			$metadata->{$metadata_key} = $settings[ (string) $setting_key ];
+			$metadata->{$metadata_key} = $settings[ $wire_key ];
 		}
 		$effective_scene->metadata = $metadata;
 

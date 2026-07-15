@@ -511,20 +511,23 @@
   // node_modules/@preact/signals-core/dist/signals-core.module.js
   var i = /* @__PURE__ */ Symbol.for("preact-signals");
   function t() {
-    if (!(s > 1)) {
+    if (!(v > 1)) {
       var i2, t2 = false;
       !(function() {
         var i3 = c;
         c = void 0;
         while (void 0 !== i3) {
-          if (i3.S.v === i3.v) i3.S.i = i3.i;
+          var t3 = i3.S;
+          if (t3.v === i3.v) {
+            for (var n3 = t3.t; void 0 !== n3; n3 = n3.x) if (n3.i === i3.i) n3.i = t3.i;
+          }
           i3 = i3.o;
         }
       })();
       while (void 0 !== h) {
         var n2 = h;
         h = void 0;
-        v++;
+        s++;
         while (void 0 !== n2) {
           var r2 = n2.u;
           n2.u = void 0;
@@ -540,58 +543,60 @@
           n2 = r2;
         }
       }
-      v = 0;
-      s--;
+      s = 0;
+      v--;
       if (t2) throw i2;
-    } else s--;
+    } else v--;
   }
   function n(i2) {
-    if (s > 0) return i2();
+    if (v > 0) return i2();
     e = ++u;
-    s++;
+    v++;
     try {
       return i2();
     } finally {
       t();
     }
   }
-  var r = void 0;
-  function o(i2) {
-    var t2 = r;
+  var r;
+  var o = void 0;
+  function f(i2) {
+    var t2 = o, n2 = r;
+    o = void 0;
     r = void 0;
     try {
       return i2();
     } finally {
-      r = t2;
+      o = t2;
+      r = n2;
     }
   }
-  var f;
   var h = void 0;
-  var s = 0;
   var v = 0;
+  var s = 0;
   var u = 0;
   var e = 0;
   var c = void 0;
   var d = 0;
   function a(i2) {
-    if (void 0 !== r) {
+    if (void 0 !== o) {
       var t2 = i2.n;
-      if (void 0 === t2 || t2.t !== r) {
-        t2 = { i: 0, S: i2, p: r.s, n: void 0, t: r, e: void 0, x: void 0, r: t2 };
-        if (void 0 !== r.s) r.s.n = t2;
-        r.s = t2;
+      if (void 0 === t2 || t2.t !== o) {
+        t2 = { i: 0, S: i2, p: o.s, n: void 0, t: o, e: void 0, x: void 0, r: t2 };
+        if (void 0 !== o.s) o.s.n = t2;
+        o.s = t2;
         i2.n = t2;
-        if (32 & r.f) i2.S(t2);
+        if (32 & o.f) i2.S(t2);
         return t2;
       } else if (-1 === t2.i) {
         t2.i = 0;
         if (void 0 !== t2.n) {
           t2.n.p = t2.p;
           if (void 0 !== t2.p) t2.p.n = t2.n;
-          t2.p = r.s;
+          t2.p = o.s;
           t2.n = void 0;
-          r.s.n = t2;
-          r.s = t2;
+          o.s.n = t2;
+          o.s = t2;
         }
         return t2;
       }
@@ -617,7 +622,7 @@
       i2.x = n2;
       this.t = i2;
       if (void 0 !== n2) n2.e = i2;
-      else o(function() {
+      else f(function() {
         var i3;
         null == (i3 = t2.W) || i3.call(t2);
       });
@@ -637,7 +642,7 @@
       }
       if (i2 === this.t) {
         this.t = r2;
-        if (void 0 === r2) o(function() {
+        if (void 0 === r2) f(function() {
           var i3;
           null == (i3 = t2.Z) || i3.call(t2);
         });
@@ -648,7 +653,7 @@
     var t2 = this;
     return j(function() {
       var n2 = t2.value;
-      o(function() {
+      f(function() {
         return i2(n2);
       });
     }, { name: "sub" });
@@ -664,7 +669,7 @@
   };
   l.prototype.peek = function() {
     var i2 = this;
-    return o(function() {
+    return f(function() {
       return i2.value;
     });
   };
@@ -674,9 +679,9 @@
     return this.v;
   }, set: function(i2) {
     if (i2 !== this.v) {
-      if (v > 100) throw new Error("Cycle detected");
+      if (s > 100) throw new Error("Cycle detected");
       !(function(i3) {
-        if (0 !== s && 0 === v) {
+        if (0 !== v && 0 === s) {
           if (i3.l !== e) {
             i3.l = e;
             c = { S: i3, v: i3.v, i: i3.i, o: c };
@@ -686,7 +691,7 @@
       this.v = i2;
       this.i++;
       d++;
-      s++;
+      v++;
       try {
         for (var n2 = this.t; void 0 !== n2; n2 = n2.x) n2.t.N();
       } finally {
@@ -748,10 +753,10 @@
       this.f &= -2;
       return true;
     }
-    var i2 = r;
+    var i2 = o;
     try {
       _(this);
-      r = this;
+      o = this;
       var t2 = this.x();
       if (16 & this.f || this.v !== t2 || 0 === this.i) {
         this.v = t2;
@@ -763,7 +768,7 @@
       this.f |= 16;
       this.i++;
     }
-    r = i2;
+    o = i2;
     b(this);
     this.f &= -2;
     return true;
@@ -805,9 +810,9 @@
     var n2 = i2.m;
     i2.m = void 0;
     if ("function" == typeof n2) {
-      s++;
-      var o2 = r;
-      r = void 0;
+      v++;
+      var r2 = o;
+      o = void 0;
       try {
         n2();
       } catch (t2) {
@@ -816,7 +821,7 @@
         m(i2);
         throw t2;
       } finally {
-        r = o2;
+        o = r2;
         t();
       }
     }
@@ -828,9 +833,9 @@
     S(i2);
   }
   function x(i2) {
-    if (r !== this) throw new Error("Out-of-order effect");
+    if (o !== this) throw new Error("Out-of-order effect");
     b(this);
-    r = i2;
+    o = i2;
     this.f &= -2;
     if (8 & this.f) m(this);
     t();
@@ -842,7 +847,7 @@
     this.u = void 0;
     this.f = 32;
     this.name = null == t2 ? void 0 : t2.name;
-    if (f) f.push(this);
+    if (r) r.push(this);
   }
   E.prototype.c = function() {
     var i2 = this.S();
@@ -861,9 +866,9 @@
     this.f &= -9;
     S(this);
     _(this);
-    s++;
-    var i2 = r;
-    r = this;
+    v++;
+    var i2 = o;
+    o = this;
     return x.bind(this, i2);
   };
   E.prototype.N = function() {
@@ -5289,7 +5294,7 @@
       }
       const defaultValue = (_a4 = this.defaults) == null ? void 0 : _a4[key];
       const layerIndices = Array.from(this.propertiesLayers.keys()).sort((a2, b2) => a2 - b2);
-      const [result] = o(() => selectLayerValue(0, layerIndices, this.propertiesLayers, key, defaultValue));
+      const [result] = f(() => selectLayerValue(0, layerIndices, this.propertiesLayers, key, defaultValue));
       return result;
     }
     set(layerIndex, key, value) {
