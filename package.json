@@ -67,8 +67,8 @@
     "@zappar/msdf-generator": "^1.2.4",
     "aframe-environment-component": "1.5.0",
     "aframe-extras": "7.7.0",
-    "lil-gui": "0.19.2",
-    "lucide": "0.469.0",
-    "stats-gl": "2.2.8"
+    "lil-gui": "0.21.0",
+    "lucide": "^1.24.0",
+    "stats-gl": "^4.2.3"
   }
 }

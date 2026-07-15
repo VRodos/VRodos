@@ -61,11 +61,11 @@ const runtimeConfig = getPackageRuntimeConfig();
 const aframeConfig = runtimeConfig.aframe ?? {};
 const aframeBundleRelativePath = 'assets/vendor/aframe/aframe-master.min.js';
 const aframeBundlePath = path.join(rootDir, ...aframeBundleRelativePath.split('/'));
+const statsGlVendorDir = path.join(rootDir, 'assets', 'vendor', 'stats-gl');
+const statsGlVendorBundlePath = path.join(statsGlVendorDir, 'main.js');
 const browserVendorFiles = [
   ['aframe-extras', 'dist/aframe-extras.min.js', 'aframe-extras/aframe-extras.min.js'],
   ['aframe-environment-component', 'dist/aframe-environment-component.min.js', 'aframe-environment/aframe-environment-component.min.js'],
-  ['stats-gl', 'dist/main.js', 'stats-gl/main.js'],
-  ['stats-gl', 'dist/panel.js', 'stats-gl/panel.js'],
   ['lil-gui', 'dist/lil-gui.umd.js', 'lil-gui/lil-gui.umd.js'],
   ['lil-gui', 'dist/lil-gui.css', 'lil-gui/lil-gui.css'],
   ['lucide', 'dist/umd/lucide.min.js', 'lucide/lucide.min.js'],
@@ -876,10 +876,13 @@ async function writeRuntimeManifest(aframeArtifact) {
     browserLibraries: {
       versions: browserVersions,
       files: Object.fromEntries(
-        browserVendorFiles.map(([packageName, _source, destination]) => [
-          packageName + ':' + path.basename(destination),
-          'assets/vendor/' + destination,
-        ])
+        [
+          ...browserVendorFiles.map(([packageName, _source, destination]) => [
+            packageName + ':' + path.basename(destination),
+            'assets/vendor/' + destination,
+          ]),
+          ['stats-gl:main.js', 'assets/vendor/stats-gl/main.js'],
+        ]
       ),
     },
   };
@@ -897,6 +900,25 @@ async function copyBrowserVendorAssets() {
   }
 }
 
+async function buildStatsGlBrowserBundle() {
+  await rm(statsGlVendorDir, { recursive: true, force: true });
+  await mkdir(statsGlVendorDir, { recursive: true });
+  await build({
+    stdin: {
+      contents: "import Stats from 'stats-gl';\nexport default Stats;\n",
+      resolveDir: rootDir,
+      sourcefile: 'vrodos-stats-gl-entry.mjs',
+      loader: 'js',
+    },
+    bundle: true,
+    format: 'esm',
+    platform: 'browser',
+    target: ['es2020'],
+    outfile: statsGlVendorBundlePath,
+    legalComments: 'none',
+  });
+}
+
 async function main() {
   await validateRuntimeVersions();
   const aframeArtifact = await syncAframeRuntimeArtifact();
@@ -908,6 +930,7 @@ async function main() {
   await buildTakramCloudsBundle();
   await buildCollisionBvhBundle();
   await copySupportAssets();
+  await buildStatsGlBrowserBundle();
   await copyBrowserVendorAssets();
   await writeRuntimeManifest(aframeArtifact);
   console.log(`Built ${path.relative(rootDir, bundlePath)}`);
@@ -916,6 +939,7 @@ async function main() {
   console.log(`Built ${path.relative(rootDir, takramBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, takramCloudsBundlePath)}`);
   console.log(`Built ${path.relative(rootDir, collisionBvhBundlePath)}`);
+  console.log(`Built ${path.relative(rootDir, statsGlVendorBundlePath)}`);
   console.log(`Verified ${path.relative(rootDir, aframeBundlePath)} (${aframeArtifact.sha256})`);
   console.log(`Wrote ${path.relative(rootDir, manifestPath)}`);
 }

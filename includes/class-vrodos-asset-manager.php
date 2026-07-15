@@ -321,8 +321,10 @@ class VRodos_Asset_Manager {
 	}
 
 	public function register_scripts() {
-		$three_vendor_dir    = VRodos_Render_Runtime_Manager::get_three_vendor_dir();
-		$three_vendor_bundle = VRodos_Render_Runtime_Manager::get_three_vendor_bundle();
+		$runtime_config           = VRodos_Render_Runtime_Manager::get_config();
+		$three_vendor_dir         = (string) $runtime_config['three_vendor_dir'];
+		$three_vendor_bundle      = (string) $runtime_config['three_vendor_bundle'];
+		$browser_library_versions = (array) $runtime_config['browser_library_versions'];
 
 		$scripts = [
       // Foundation
@@ -338,7 +340,7 @@ class VRodos_Asset_Manager {
       ['vrodos_scene_settings_schema', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_settings_schema.js' ), ['vrodos_namespace', 'vrodos_runtime_settings_contract']],
       ['vrodos_scene_settings_sync', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_settings_sync.js' ), ['vrodos_namespace', 'vrodos_scene_settings_schema']],
       ['vrodos_ScenePersistence', VRodos_Path_Manager::editor_js_url( 'scene/vrodos_scene_persistence.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_scene_settings_schema']],
-      ['stats-gl', VRodos_Path_Manager::vendor_url( 'stats-gl/main.js' )],
+      ['stats-gl', VRodos_Path_Manager::vendor_url( 'stats-gl/main.js' ), [], $browser_library_versions['stats-gl']],
       // AJAX Scripts
       ['ajax-script_compile', VRodos_Path_Manager::editor_ajax_js_url( 'vrodos_request_compile.js' ), ['vrodos_namespace', 'vrodos_ui_helpers']],
       ['ajax-script_deletescene', VRodos_Path_Manager::editor_ajax_js_url( 'delete_scene.js' ), ['vrodos_namespace']],
@@ -410,20 +412,23 @@ class VRodos_Asset_Manager {
       // Active Three vendor bundle paired with the pinned A-Frame runtime.
       ['vrodos_three_vendor_bundle', VRodos_Path_Manager::vendor_url( $three_vendor_dir . '/' . $three_vendor_bundle )],
       // Other Libraries
-      ['vrodos_load_lilgui', VRodos_Path_Manager::vendor_url( 'lil-gui/lil-gui.umd.js' )],
-      ['lucide-icons', VRodos_Path_Manager::vendor_url( 'lucide/lucide.min.js' )],
+      ['vrodos_load_lilgui', VRodos_Path_Manager::vendor_url( 'lil-gui/lil-gui.umd.js' ), [], $browser_library_versions['lil-gui']],
+      ['lucide-icons', VRodos_Path_Manager::vendor_url( 'lucide/lucide.min.js' ), [], $browser_library_versions['lucide']],
   ];
 
 		foreach ( $scripts as $script ) {
 			$dependencies = $script[2] ?? [];
-			wp_register_script( $script[0], $script[1], $dependencies, null, false );
+			$version      = $script[3] ?? null;
+			wp_register_script( $script[0], $script[1], $dependencies, $version, false );
 		}
 	}
 
 	public function register_styles() {
+		$runtime_config           = VRodos_Render_Runtime_Manager::get_config();
+		$browser_library_versions = (array) $runtime_config['browser_library_versions'];
 		wp_register_style( 'vrodos_backend', VRodos_Path_Manager::css_url( 'admin/vrodos_backend.css' ) );
 		wp_register_style( 'vrodos_3D_editor', VRodos_Path_Manager::css_url( 'editor/vrodos_3D_editor.css' ) );
-		wp_register_style( 'vrodos_lilgui', VRodos_Path_Manager::vendor_url( 'lil-gui/lil-gui.css' ) );
+		wp_register_style( 'vrodos_lilgui', VRodos_Path_Manager::vendor_url( 'lil-gui/lil-gui.css' ), [], $browser_library_versions['lil-gui'] );
 		wp_register_style( 'vrodos_dashboard_table', VRodos_Path_Manager::css_url( 'admin/vrodos_dashboard_table_style.css' ) );
 		wp_register_style( 'vrodos_3D_editor_browser', VRodos_Path_Manager::css_url( 'editor/vrodos_3D_editor_browser.css' ) );
 		wp_register_style( 'vrodos_frontend_stylesheet', VRodos_Path_Manager::css_url( 'frontend/vrodos_frontend.css' ) );

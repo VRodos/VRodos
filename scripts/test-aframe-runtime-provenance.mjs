@@ -46,25 +46,31 @@ assert(
 );
 
 const runtimeManager = readFileSync(resolve(root, "includes/class-vrodos-render-runtime-manager.php"), "utf8");
+const assetManager = readFileSync(resolve(root, "includes/class-vrodos-asset-manager.php"), "utf8");
 assert(runtimeManager.includes("hash_file( 'sha256', $path )"), "runtime manager must hash the served local A-Frame artifact");
 assert(runtimeManager.includes("hash_equals( $expected"), "runtime manager must compare the local A-Frame hash safely");
 assert(!runtimeManager.includes("FALLBACK_AFRAME_RUNTIME_URL"), "runtime manager must not retain a CDN fallback");
 assert(runtimeManager.includes("three_draco_decoder_url"), "runtime manager must expose the canonical Draco decoder URL");
 assert(runtimeManager.includes("three_basis_transcoder_url"), "runtime manager must expose the canonical Basis transcoder URL");
 assert(runtimeManager.includes("three_meshopt_decoder_url"), "runtime manager must expose the canonical Meshopt decoder URL");
+assert(runtimeManager.includes("browser_library_versions"), "runtime manager must expose browser-library versions for cache busting");
+assert(assetManager.includes("$browser_library_versions['stats-gl']"), "stats-gl registration must use its generated package version");
+assert(assetManager.includes("$browser_library_versions['lil-gui']"), "lil-gui registration must use its generated package version");
+assert(assetManager.includes("$browser_library_versions['lucide']"), "Lucide registration must use its generated package version");
 
 assert(lockedThree?.version === "0.185.0", "package-lock.json must lock super-three 0.185.0");
 assert(packageJson.devDependencies?.three === "npm:super-three@0.185.0", "package.json must declare exact super-three 0.185.0");
 assert(packageJson.dependencies?.["@pmndrs/msdfonts"] === "1.0.74", "Direct MSDF import must have exact package ownership");
 assert(packageJson.dependencies?.["@takram/three-geospatial"] === "0.9.1", "Direct Takram geospatial import must have exact package ownership");
-for (const [packageName, expectedVersion] of Object.entries({
-    "aframe-extras": "7.7.0",
-    "aframe-environment-component": "1.5.0",
-    "stats-gl": "2.2.8",
-    "lil-gui": "0.19.2",
-    "lucide": "0.469.0"
-})) {
-    assert(packageJson.dependencies?.[packageName] === expectedVersion, `Browser library must have exact package ownership: ${packageName}`);
+for (const packageName of [
+    "aframe-extras",
+    "aframe-environment-component",
+    "stats-gl",
+    "lil-gui",
+    "lucide"
+]) {
+    assert(packageJson.dependencies?.[packageName], `Browser library must have direct package ownership: ${packageName}`);
+    assert(packageLock.packages?.[`node_modules/${packageName}`]?.version, `Browser library must be locked: ${packageName}`);
 }
 assert(threeArtifact?.version === lockedThree.version, "Three manifest version must match package-lock.json");
 assert(threeArtifact?.revision === "185", "Three manifest revision must be 185");
@@ -88,6 +94,17 @@ for (const [packageName, manifestVersion] of Object.entries(manifestVersions)) {
 for (const relativePath of Object.values(manifest.browserLibraries?.files || {})) {
     assert(existsSync(resolve(root, ...relativePath.split("/"))), `Browser vendor artifact is missing: ${relativePath}`);
 }
+assert(
+    manifest.browserLibraries?.files?.["stats-gl:main.js"] === "assets/vendor/stats-gl/main.js",
+    "stats-gl must have one stable local browser bundle"
+);
+assert(!manifest.browserLibraries?.files?.["stats-gl:panel.js"], "stats-gl internals must not leak into the runtime manifest");
+assert(!existsSync(resolve(root, "assets/vendor/stats-gl/panel.js")), "stale stats-gl internal modules must be removed");
+const statsGlBundle = readFileSync(resolve(root, "assets/vendor/stats-gl/main.js"), "utf8");
+assert(
+    !/(?:from\s*|import\s*)["']\.\//.test(statsGlBundle),
+    "stats-gl local bundle must not import unpublished sibling files"
+);
 
 function assertDirectDependenciesAudited(packageMetadata, lockMetadata, label) {
     const auditNames = {

@@ -13,13 +13,14 @@ final class VRodos_Render_Runtime_Manager {
 	private static ?array $validation_errors = null;
 
 	public static function get_config(): array {
-		$manifest       = self::get_manifest();
-		$aframe         = $manifest['aframe'];
-		$three          = $manifest['three'];
-		$three_decoders = $three['decoders'];
-		$postfx         = $manifest['postprocessing'];
-		$takram         = $manifest['takram'];
-		$takram_assets  = $takram['assets'];
+		$manifest          = self::get_manifest();
+		$aframe            = $manifest['aframe'];
+		$three             = $manifest['three'];
+		$three_decoders    = $three['decoders'];
+		$postfx            = $manifest['postprocessing'];
+		$takram            = $manifest['takram'];
+		$takram_assets     = $takram['assets'];
+		$browser_libraries = $manifest['browserLibraries'];
 
 		return [
 			'aframe_runtime_label'                 => $aframe['label'],
@@ -54,6 +55,7 @@ final class VRodos_Render_Runtime_Manager {
 			'takram_clouds_shape_detail_url'       => VRodos_Path_Manager::plugin_url( $takram_assets['cloudsShapeDetailPath'] ),
 			'takram_clouds_turbulence_url'         => VRodos_Path_Manager::plugin_url( $takram_assets['cloudsTurbulencePath'] ),
 			'takram_clouds_stbn_url'               => VRodos_Path_Manager::plugin_url( $takram_assets['cloudsStbnPath'] ),
+			'browser_library_versions'              => $browser_libraries['versions'],
 		];
 	}
 

@@ -22,9 +22,9 @@ Audited against `package-lock.json`, `services/vrodos-network-runtime/package-lo
 | @zappar/msdf-generator | 1.2.4; root lock | none declared | documented worker/WASM runtime files | runtime build; lazy spatial UI | `assets/vendor/zappar-msdf-generator/` | [Zappar MSDF generator](https://github.com/zappar-xr/msdf-generator) |
 | aframe-extras | 7.7.0; direct root lock | A-Frame runtime | distributed A-Frame components | browser vendor copy; omitted only for lean headset | `assets/vendor/aframe-extras/` | [A-Frame Extras](https://github.com/c-frame/aframe-extras) |
 | aframe-environment-component | 1.5.0; direct root lock | A-Frame runtime | `environment` component | browser vendor copy; legacy-background capability | `assets/vendor/aframe-environment/` | [Environment component](https://github.com/supermedium/aframe-environment-component) |
-| stats-gl | 2.2.8; direct root lock | none declared | default `Stats` module export | browser vendor copy; lazy FPS capability | `assets/vendor/stats-gl/` | [stats-gl](https://github.com/RenanMConcepts/stats-gl) |
-| lil-gui | 0.19.2; direct root lock | none declared | `lil.GUI` UMD API and CSS | browser vendor copy; editor/Simple UI | `assets/vendor/lil-gui/` | [lil-gui](https://lil-gui.georgealways.com/) |
-| Lucide | 0.469.0; direct root lock | none declared | `lucide.createIcons()` UMD API | browser vendor copy; UI | `assets/vendor/lucide/` | [Lucide guide](https://lucide.dev/guide/) |
+| stats-gl | 4.2.3; direct root lock | none declared | default `Stats` package export | generated single-file ESM bundle; lazy FPS capability | `assets/vendor/stats-gl/main.js` | [stats-gl](https://github.com/RenanMConcepts/stats-gl) |
+| lil-gui | 0.21.0; direct root lock | none declared | `lil.GUI` UMD API and CSS | browser vendor copy; editor/Simple UI | `assets/vendor/lil-gui/` | [lil-gui](https://lil-gui.georgealways.com/) |
+| Lucide | 1.24.0; direct root lock | none declared | `lucide.createIcons()` UMD API | browser vendor copy; UI | `assets/vendor/lucide/` | [Lucide guide](https://lucide.dev/guide/) |
 | NoSleep.js | 0.12.0; vendored file banner | none declared | `new NoSleep()`, `enable()` | manually vendored legacy actor-client wake lock; Simple only | `assets/js/runtime/NoSleep.min.js` | [NoSleep.js](https://github.com/richtr/NoSleep.js) |
 | SpectorJS | 0.9.30; pinned jsDelivr URL | none declared | `SPECTOR.Spector` capture API | diagnostics-only dynamic loader; absent unless explicitly requested | no local artifact | [SpectorJS](https://github.com/BabylonJS/Spector.js) |
 | Networked-AFrame | 0.14.3; `patches/networked-aframe/config.json` | A-Frame/adapter runtime | `NAF.entities`, schemas, connection/data-channel APIs | `build-networked-aframe-vendor.mjs`; networked only | `assets/vendor/networked-aframe/dist/` | [Networked-AFrame](https://github.com/networked-aframe/networked-aframe) |
@@ -39,7 +39,7 @@ Audited against `package-lock.json`, `services/vrodos-network-runtime/package-lo
 | Tailwind CSS | 3.4.19; root lock | PostCSS toolchain | prefixed source CSS build | generated CSS | [Tailwind v3](https://v3.tailwindcss.com/docs/installation) |
 | DaisyUI | 4.12.24; root lock | Tailwind plugin | prefixed component styles | generated CSS | [DaisyUI v4](https://v4.daisyui.com/docs/install/) |
 | PostCSS | 8.5.19; root lock | none declared | CSS pipeline | build only | [PostCSS](https://postcss.org/) |
-| Autoprefixer | 10.5.2; root lock | PostCSS `^8.1` | CSS prefixing | build only | [Autoprefixer](https://github.com/postcss/autoprefixer) |
+| Autoprefixer | 10.5.3; root lock | PostCSS `^8.1` | CSS prefixing | build only | [Autoprefixer](https://github.com/postcss/autoprefixer) |
 | ESLint | 10.7.0; root lock | optional `jiti` | JS static checks | build only | [ESLint](https://eslint.org/docs/latest/) |
 | Prettier | 3.9.5; root lock | none declared | formatting | build only | [Prettier](https://prettier.io/docs/) |
 | Express | 4.22.2; service lock | none declared | HTTP/static/health routes | network service only | [Express 4](https://expressjs.com/en/4x/api.html) |
