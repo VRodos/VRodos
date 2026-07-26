@@ -34,24 +34,6 @@
 		<!-- Body -->
 		<div class="tw-p-6 tw-overflow-y-auto tw-flex-1">
 
-			<div class="tw-mb-3 tw-rounded-lg tw-border tw-border-emerald-200 tw-bg-emerald-50/80 tw-px-3 tw-py-2">
-				<div class="tw-flex tw-flex-col tw-gap-2 sm:tw-flex-row sm:tw-items-center sm:tw-justify-between">
-					<div class="tw-flex tw-items-center tw-gap-2 tw-min-w-0">
-						<div class="tw-w-7 tw-h-7 tw-bg-emerald-100 tw-text-emerald-700 tw-rounded-md tw-flex tw-items-center tw-justify-center tw-flex-shrink-0">
-							<i data-lucide="radio-tower" class="tw-w-3.5 tw-h-3.5"></i>
-						</div>
-						<div class="tw-min-w-0">
-							<p class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Runtime Mode</p>
-							<p class="tw-text-[10px] tw-leading-tight tw-text-emerald-700/70">Networked service or static single-player output.</p>
-						</div>
-					</div>
-					<select id="compileRuntimeModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full sm:tw-w-64 tw-bg-white">
-						<option value="single-player">Single-player static</option>
-						<option value="networked">Networked collaboration</option>
-					</select>
-				</div>
-			</div>
-
 			<div class="tw-mb-4">
 				<div id="compileStatusRow" class="tw-flex tw-items-start tw-justify-between tw-gap-3 tw-flex-wrap">
 					<div id="constantUpdateUser" class="tw-flex tw-items-start tw-gap-2 tw-text-sm tw-text-slate-600">
@@ -90,14 +72,27 @@
 				<!-- Left Column: Global Settings -->
 				<div class="tw-flex tw-flex-col tw-gap-4">
 
-					<!-- Card: Base Render Quality -->
+					<!-- Card: Output & Quality -->
 					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 						<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
 							<i data-lucide="monitor" class="tw-w-4 tw-h-4 tw-text-emerald-500"></i>
-							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Base Render Quality</h4>
+							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Output &amp; Quality</h4>
 						</div>
 
 						<div class="tw-space-y-4">
+							<div class="tw-rounded-lg tw-border tw-border-emerald-200 tw-bg-emerald-50/80 tw-p-3">
+								<div class="tw-flex tw-flex-col tw-gap-2 sm:tw-flex-row sm:tw-items-center sm:tw-justify-between">
+									<div class="tw-min-w-0">
+										<p class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Runtime Mode</p>
+										<p class="tw-text-[10px] tw-leading-tight tw-text-emerald-700/70">Networked service or static single-player output.</p>
+									</div>
+									<select id="compileRuntimeModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full sm:tw-w-52 tw-bg-white">
+										<option value="single-player">Single-player static</option>
+										<option value="networked">Networked collaboration</option>
+									</select>
+								</div>
+							</div>
+
 							<label class="tw-form-control">
 								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Runtime Target</span>
 								<select id="compileRuntimeTargetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
@@ -202,11 +197,11 @@
 						</div>
 					</div>
 
-					<!-- Card: Environment & Tools -->
+					<!-- Card: Reflections & Environment -->
 					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 						<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
 							<i data-lucide="globe" class="tw-w-4 tw-h-4 tw-text-sky-500"></i>
-							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Environment &amp; Tools</h4>
+							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Reflections &amp; Environment</h4>
 						</div>
 
 						<div class="tw-space-y-4">
@@ -256,37 +251,40 @@
 								</div>
 							</div>
 
-							<div class="tw-space-y-3 tw-pt-3 tw-border-t tw-border-slate-200">
-								<p class="tw-text-[10px] tw-font-bold tw-uppercase tw-tracking-wide tw-text-slate-400">Runtime Helpers</p>
-								<div class="tw-grid tw-grid-cols-2 tw-gap-3">
-									<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer">
-										<input id="compileHoveringInteractablesToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
-										<div class="tw-min-w-0">
-											<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Hovering Interactables</span>
-											<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Enables a subtle floating animation on interactive markers.</p>
-										</div>
-									</label>
-
-									<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer">
-										<input id="compileFPSMeterToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
-										<div class="tw-min-w-0">
-											<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">FPS Meter</span>
-											<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Shows a live FPS counter in compiled scenes for quality testing.</p>
-										</div>
-									</label>
-								</div>
-
-								<div id="compileLegacyHorizonStageSizeRow">
-									<div class="tw-flex tw-items-center tw-justify-between tw-gap-3 tw-mb-1">
-										<div class="tw-min-w-0">
-											<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Legacy Horizon Size</span>
-											<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Expands the A-Frame environment dome for Legacy + HORIZON scenes.</p>
-										</div>
-										<span id="compileLegacyHorizonStageSizeValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px] tw-flex-shrink-0">5000</span>
+							<div id="compileLegacyHorizonStageSizeRow" class="tw-pt-3 tw-border-t tw-border-slate-200">
+								<div class="tw-flex tw-items-center tw-justify-between tw-gap-3 tw-mb-1">
+									<div class="tw-min-w-0">
+										<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Legacy Horizon Size</span>
+										<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Expands the A-Frame environment dome for Legacy + HORIZON scenes.</p>
 									</div>
-									<input id="compileLegacyHorizonStageSizeSlider" type="range" min="500" max="8000" step="100" value="5000" class="tw-range tw-range-primary tw-range-xs">
+									<span id="compileLegacyHorizonStageSizeValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px] tw-flex-shrink-0">5000</span>
 								</div>
+								<input id="compileLegacyHorizonStageSizeSlider" type="range" min="500" max="8000" step="100" value="5000" class="tw-range tw-range-primary tw-range-xs">
 							</div>
+						</div>
+					</div>
+
+					<!-- Card: Runtime Helpers -->
+					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+						<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+							<i data-lucide="wrench" class="tw-w-4 tw-h-4 tw-text-cyan-500"></i>
+							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Runtime Helpers</h4>
+						</div>
+						<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3">
+							<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer">
+								<input id="compileHoveringInteractablesToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
+								<div class="tw-min-w-0">
+									<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Hovering Interactables</span>
+									<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Enables a subtle floating animation on interactive markers.</p>
+								</div>
+							</label>
+							<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer">
+								<input id="compileFPSMeterToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
+								<div class="tw-min-w-0">
+									<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">FPS Meter</span>
+									<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Shows a live FPS counter in compiled scenes for quality testing.</p>
+								</div>
+							</label>
 						</div>
 					</div>
 
@@ -524,11 +522,11 @@
 							</div>
 						</div>
 
-						<!-- Card: PMNDRS Bloom & Lens -->
+						<!-- Card: PMNDRS Lens & Finishing -->
 						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 							<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
 								<i data-lucide="camera" class="tw-w-4 tw-h-4 tw-text-violet-500"></i>
-								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">PMNDRS Bloom &amp; Lens</h4>
+								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">PMNDRS Lens &amp; Finishing</h4>
 							</div>
 
 							<div class="tw-space-y-4">
@@ -619,6 +617,11 @@
 								</div>
 
 								<div id="compilePmndrsAtmosphereWrapper" class="tw-space-y-4">
+									<section class="tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3 tw-space-y-3">
+										<div class="tw-flex tw-items-center tw-gap-2">
+											<i data-lucide="clock-3" class="tw-w-3.5 tw-h-3.5 tw-text-orange-500"></i>
+											<h5 class="tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-wide tw-text-slate-600">Sky &amp; Time</h5>
+										</div>
 									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
 										<label class="tw-form-control tw-w-full">
 											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Sky Time</span>
@@ -689,11 +692,21 @@
 										</label>
 									</div>
 
-									<div class="tw-grid tw-grid-cols-2 tw-gap-3">
-										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
-											<input id="compilePmndrsGeospatialToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Use latitude, longitude, and altitude to anchor the Takram world-to-ECEF frame.">Geospatial Frame</span>
-										</label>
+										<div>
+											<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Preset Intensity</span>
+												<span id="compilePmndrsAtmospherePresetIntensityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
+											</div>
+											<input id="compilePmndrsAtmospherePresetIntensitySlider" type="range" min="0" max="1" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
+										</div>
+									</section>
+
+									<section class="tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3 tw-space-y-3">
+										<div class="tw-flex tw-items-center tw-gap-2">
+											<i data-lucide="cloud-sun" class="tw-w-3.5 tw-h-3.5 tw-text-sky-500"></i>
+											<h5 class="tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-wide tw-text-slate-600">Clouds &amp; Weather</h5>
+										</div>
+									<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-3 tw-gap-3">
 										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 											<input id="compilePmndrsAerialPerspectiveToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
 											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Takram AerialPerspectiveEffect distance haze. This pass is required while clouds are enabled; Takram cloud shader haze is disabled separately in Horizon mode.">Aerial Haze</span>
@@ -703,12 +716,13 @@
 											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Takram volumetric clouds in the desktop PMNDRS composer.">Clouds</span>
 										</label>
 										<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
-											<input id="compilePmndrsCorrectAltitudeToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
-											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Takram correctAltitude compensation for the atmospheric ellipsoid.">Correct Altitude</span>
+											<input id="compilePmndrsCloudsLightShaftsToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs" checked>
+											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Cloud-aware Takram light shafts. Effective on High and Ultra cloud quality in desktop non-XR scenes.">Light Shafts</span>
 										</label>
 									</div>
+									<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Light Shafts preserve the selected cloud quality and become effective only on High/Ultra desktop clouds.</p>
 
-									<div id="compilePmndrsCloudsWrapper" class="tw-grid tw-grid-cols-2 tw-gap-3">
+									<div id="compilePmndrsCloudsWrapper" class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3">
 										<label class="tw-form-control tw-w-full">
 											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Cloud Quality</span>
 											<select id="compilePmndrsCloudsQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
@@ -754,8 +768,24 @@
 											<input id="compilePmndrsCloudsWindDirectionSlider" type="range" min="0" max="360" step="1" value="0" class="tw-range tw-range-primary tw-range-xs">
 										</div>
 									</div>
+									</section>
 
-									<div class="tw-grid tw-grid-cols-3 tw-gap-3">
+									<section class="tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3 tw-space-y-3">
+										<div class="tw-flex tw-items-center tw-gap-2">
+											<i data-lucide="map-pin" class="tw-w-3.5 tw-h-3.5 tw-text-emerald-500"></i>
+											<h5 class="tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-wide tw-text-slate-600">World Positioning</h5>
+										</div>
+										<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3">
+											<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+												<input id="compilePmndrsGeospatialToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Use latitude, longitude, and altitude to anchor the Takram world-to-ECEF frame.">Geospatial Frame</span>
+											</label>
+											<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
+												<input id="compilePmndrsCorrectAltitudeToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Takram correctAltitude compensation for the atmospheric ellipsoid.">Correct Altitude</span>
+											</label>
+										</div>
+									<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-3 tw-gap-3">
 										<label class="tw-form-control tw-w-full">
 											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Latitude</span>
 											<input id="compilePmndrsGeospatialLatitudeInput" type="number" min="-90" max="90" step="0.0001" value="0" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1">
@@ -769,16 +799,14 @@
 											<input id="compilePmndrsGeospatialAltitudeInput" type="number" min="-500" max="20000" step="1" value="0" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1">
 										</label>
 									</div>
+									</section>
 
-									<div>
-										<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
-											<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Preset Intensity</span>
-											<span id="compilePmndrsAtmospherePresetIntensityValue" class="tw-badge tw-badge-ghost tw-badge-sm tw-text-[9px]">1.00</span>
-										</div>
-										<input id="compilePmndrsAtmospherePresetIntensitySlider" type="range" min="0" max="1" step="0.05" value="1.0" class="tw-range tw-range-primary tw-range-xs">
-									</div>
-
-									<div id="compilePmndrsAtmosphereAdvanced" class="tw-space-y-3 tw-pt-3 tw-border-t tw-border-slate-200">
+									<details class="tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3">
+										<summary class="tw-flex tw-cursor-pointer tw-items-center tw-gap-2 tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-wide tw-text-slate-600">
+											<i data-lucide="sliders-horizontal" class="tw-w-3.5 tw-h-3.5 tw-text-violet-500"></i>
+											Advanced Lighting &amp; Scattering
+										</summary>
+									<div id="compilePmndrsAtmosphereAdvanced" class="tw-space-y-3 tw-pt-4">
 										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
 											<div>
 												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
@@ -914,6 +942,7 @@
 											</label>
 										</div>
 									</div>
+									</details>
 								</div>
 							</div>
 						</div>

@@ -1,6 +1,6 @@
 # VRodos Compiled Desktop Roadmap
 
-Status date: 2026-07-10.
+Status date: 2026-07-26.
 
 This is the current coordination doc for compiled desktop and non-VR scene work. It consolidates active TODOs from the rendering, performance, collision, and framework notes while preserving historical findings under `documentation/archive/rendering-history/README.md`.
 
@@ -60,6 +60,7 @@ Deferred cleanup:
 - Continue validating native PMNDRS SSAO across broader authored scenes.
 - Validate the desktop Takram cloud-sun bridge with day-night cycle scenes: visible sun-disk cloud coverage should dim direct/indirect light factors, reflections, shadow contrast/softness, and lens flare through diagnostics. High/ultra quality should report `cloudSkySunDiskMode=takram-phase`, keeping Takram's native disk behind cloud composition; the VRodos sun sprite is a fallback path, not the target look.
 - Validate desktop cloud authoring presets and wind controls from `TAKRAM_CLOUD_OCCLUSION_PLAN.md`: style presets should change cloud-layer character with demo-safe layer fields only, coverage must visibly change every style through the shared Horizon mapper at `0.27`, `0.5`, and high values, Horizon non-geospatial scenes should report `cloudWeatherUvMode=local-tangent` / `cloudWeatherUvPatchApplied=true` with no cube-sphere seam blocks, and diagnostics should report clean profile validation plus matching applied layer signatures. High/ultra cloud quality should generate shadow length independently, preserve the cloud-owned shared NormalPass when SSAO is off or on, and settle on `cloudLightShaftsMode=masked-aerial-sky`, `cloudShadowLengthBufferReady=true`, `aerialShadowLengthDefineReady=true`, and `cloudLightShaftsVisible=true` when AerialPerspective, sun position, mask readiness, and non-XR desktop policy allow shafts.
+- The build dialog now exposes one contract-backed Light Shafts checkbox beside the cloud controls. It defaults on to preserve the established High/Ultra desktop behavior, gates both shaft generation and masked-Aerial routing, and leaves clouds plus the cloud-sun lighting bridge unchanged when off. Compiled-scene visual/performance acceptance remains the active follow-up.
 - Prototype a broader desktop-only Takram `post-process-albedo` mode later; the current production path uses masked Aerial sky lighting only for cloud shafts while authored meshes stay on the light-source path.
 - Keep immersive XR composer/cloud bypass policy out of this desktop pass.
 
@@ -83,7 +84,6 @@ Deferred cleanup:
 - Steep-face shadow proxy for terrain shadows.
 - Native Takram `SkyMaterial` shader patching remains research-only; the desktop production path uses Takram cloud accurate phase on high/ultra and keeps the public `SkyMaterial.sun` flag plus VRodos sun sprite as a fallback only.
 - PMNDRS `GodRaysEffect` integration, if needed, after the cloud lighting bridge is visually stable.
-- Author-facing cloud light-shafts controls after measured visual and performance validation.
 - Geospatial date/time solar simulation, the experimental full-scene `takram-albedo` / mixed-lighting mode, and related geospatial helper experiments.
 
 ## Deferred VR And PCVR Items

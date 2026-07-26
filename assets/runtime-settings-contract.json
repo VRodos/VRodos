@@ -632,6 +632,13 @@
       "wireKey": "pmndrsCloudsEnabled",
       "wireFormat": "true-false"
     },
+    "pmndrsCloudsLightShaftsEnabled": {
+      "metadataKey": "aframePmndrsCloudsLightShaftsEnabled",
+      "type": "boolean",
+      "default": true,
+      "wireKey": "pmndrsCloudsLightShaftsEnabled",
+      "wireFormat": "true-false"
+    },
     "pmndrsCloudsQuality": {
       "metadataKey": "aframePmndrsCloudsQuality",
       "type": "enum",

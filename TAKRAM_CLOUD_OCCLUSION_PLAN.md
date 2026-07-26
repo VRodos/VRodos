@@ -1,6 +1,6 @@
 # Takram Cloud Occlusion Plan
 
-Status date: 2026-07-08.
+Status date: 2026-07-26.
 
 ## Summary
 
@@ -27,11 +27,11 @@ This is not a projected cloud-shadow map. It does not raymarch from every surfac
 - Follow-up finding from below-horizon day/night QA: `CloudsEffect.atmosphereShadow` must be routed together with a valid `atmosphereShadowLength`. Keeping the shadow buffer routed while clearing shadow length can leave stale screen-space cloud-shadow structure in the AerialPerspective path.
 - Follow-up finding from FPS QA: Takram cloud temporal upscaling is required for the desktop performance target. Disabling it forces full-resolution cloud raymarching and tanks FPS, so VRodos keeps it enabled by default and exposes full-resolution clouds only through `?vrodos_debug_disable_pmndrs_cloud_temporal_upscale=1` for visual comparison.
 - Follow-up finding from midday 0.70 QA: Takram's documented Clouds + AerialPerspective route keeps `CloudsEffect.skipRendering` true. CloudsEffect still renders its internal cloud buffers, but final cloud color is routed through `atmosphereOverlay` into AerialPerspectiveEffect. Clearing `skipRendering` while also routing the overlay double-composites clouds and can amplify screen-space artifacts.
-- Follow-up finding from 0.33 vs 0.70 QA: the sparse case stays clean because Horizon keeps Takram light shafts off below the coverage threshold. The high-coverage case exposed large screen-space shaft/shadow footprints, so Horizon now keeps cloud light shafts and aerial cloud shadow/shadow-length routing debug-only while preserving the visible cloud overlay and global cloud-sun occlusion scalar.
+- Follow-up finding from 0.33 vs 0.70 QA: direct sky shadow-length routing can expose large screen-space footprints. Horizon therefore keeps direct `SkyMaterial.shadowLength` routing disabled and uses the masked Aerial sky path for High/Ultra cloud shafts without relighting authored PBR/media surfaces.
 - Follow-up finding from dark-frame QA: Horizon cloud scenes force `AerialPerspectiveEffect` on for cloud overlay composition. If Takram clouds stay in direct color-composite mode before that route is ready, below-horizon/night frames can receive an almost black cloud buffer over the scene. Horizon now disables direct cloud compositing whenever the aerial compositor is expected; if the compositor is not ready, clouds fail closed instead of darkening the view.
 - Follow-up finding from Takram's `clouds/Clouds -- Vanilla` and `Clouds -- Basic` Storybook references: the reference composes `CloudsEffect` with `Atmosphere`, `SunDirectionalLight`, `SkyLight`, a normal pass, and tone mapping inside the PMNDRS/Takram effect chain. The sun does not stay as a hard independent disk over cloud color; when cloud crosses it, it reads as a cloud-integrated veiled glow and can disappear in dense cloud. In the Basic demo, `accuratePhaseFunction=true`, `accurateSunSkyLight=true`, `multiScatteringOctaves=8`, temporal upscale remains enabled, and cloud shadow max far is `100000`. VRodos should tune the desktop bridge toward that diffuse occlusion behavior, not toward a crisp billboard disk.
 - The Storybook control surface separates authoring concerns cleanly: tone mapping, location, local date/time, cloud coverage, quality, rendering toggles, scattering, weather/shape, cascaded cloud shadow maps, advanced cloud raymarching, and per-layer fields. For VRodos production authoring, only stable artistic controls should be exposed first. Raw scattering coefficients, iteration counts, shadow-map splits, and shadow-length routing remain profile/debug territory.
-- The next safe author-facing layer is cloud style plus wind. Style can map to conservative Takram cloud-layer presets while keeping `coverageFilterWidth`, `weatherExponent`, and `localWeatherRepeat` on stable defaults. Wind can map to `localWeatherVelocity` without changing cloud lighting, tone mapping, or composer order.
+- The current author-facing cloud layer includes style, wind, and a boolean Light Shafts request. Style and wind retain their conservative profile mappings; Light Shafts only gates the existing High/Ultra desktop Takram path and does not expose raw routing or scattering controls.
 - PMNDRS `EffectComposer` applies fullscreen passes after the scene render, so it cannot directly change the directional light or shadow-map intensity that already lit PBR meshes.
 - Therefore, in the current `lit-pbr` path, cloud-driven lighting changes must be fed back into VRodos-managed light sources before the next render. Sampling the previous cloud buffer around the projected sun disk is a supported bridge for desktop Horizon scenes, not a replacement for true Takram post-process albedo lighting.
 - True local moving cloud shadows would require a projected shadow layer, sun-view depth, or extra GPU work. That is intentionally deferred.
@@ -79,9 +79,9 @@ This is feasible, but it is a new pipeline mode, not a value tweak inside the cu
 
 ### Phase 4: Future Cloud Features
 
-- Revisit Takram cloud light shafts as an author-facing option only after measured Horizon visual/performance validation. They are cloud-aware, but current Horizon local scenes showed large screen-space shaft/shadow footprints at high coverage.
 - Investigate projected moving terrain cloud shadows as a separate GPU feature. The current bridge changes scene light intensity and shadow softness globally; it does not project cloud silhouettes onto terrain.
 - Evaluate a desktop-only advanced cloud debug panel if we need QA access to raw Takram fields. Keep it separate from normal author controls.
+- Keep PMNDRS `GodRaysEffect` as separate research; it is not cloud-aware in the current Takram buffer path.
 - Keep immersive XR/headset clouds deferred until PMNDRS stereo composer ownership is proven safe.
 
 ## Implemented Desktop Bridge
@@ -95,17 +95,17 @@ This is feasible, but it is a new pipeline mode, not a value tweak inside the cu
 - The previous safe sprite bridge remains as a fallback for low/medium cloud quality, debug-disabled accurate phase, or future compatibility cases. In that fallback, when the desktop Horizon cloud sampler reports that the projected sun disk is covered, VRodos disables the native Takram disk through the public material `sun` flag and renders the existing VRodos sun sprite at the presented sun direction. Clear-sun frames keep the native Takram disk even if clouds exist elsewhere in the sky.
 - The scalar is smoothed through the existing runtime light smoothing path to avoid day-night flicker.
 - Diagnostics are published through PMNDRS cloud diagnostics, startup/runtime horizon logs, and runtime feature state.
-- Takram `CloudsEffect.lightShafts` is enabled for high and ultra profiles and remains disabled for low and medium profiles.
-- Author cloud controls now include enable, quality, coverage, style, wind animation, wind speed, and wind direction. Tone mapping, location, and local date/time stay existing author controls. The deeper Takram cloud parameters above are profile-owned diagnostics for now, not raw UI sliders.
+- Takram `CloudsEffect.lightShafts` is author-requested through `pmndrsCloudsLightShaftsEnabled`, defaults on, becomes effective for eligible high and ultra desktop profiles, and remains profile-disabled for low and medium.
+- Author cloud controls now include enable, quality, coverage, style, wind animation, wind speed, wind direction, and Light Shafts. Tone mapping, location, and local date/time stay existing author controls. The deeper Takram cloud parameters above are profile-owned diagnostics, not raw UI sliders.
 - Authored cloud coverage remains `0..1`; Horizon maps it into a Takram shader coverage value that preserves `0..0.35` and smoothly compresses dense authored values into roughly `0.35..0.395`. Diagnostics report `authoredCoverage` and `effectiveCoverage`.
 - Takram `CloudsEffect.haze` is disabled in Horizon sky-owner mode because `SkyMaterial` and `AerialPerspectiveEffect` already own sky haze/transmittance there.
 - The default cloud style applies Takram's documented default cloud-layer set. Non-default styles use conservative layer presets for scattered, broken, overcast, and storm looks; they do not alter coverage filter width, weather exponent, weather repeat, or scattering/raymarch settings.
 - Wind controls route to `CloudsEffect.localWeatherVelocity`. The default state preserves the previous subtle desktop drift, and authors can disable animation or rotate/speed up the weather field without changing cloud lighting.
 - Takram cloud temporal upscaling stays enabled by default; full-resolution cloud raymarching is debug-only because it is too expensive for the desktop target.
-- Takram cloud light shafts remain available for high and ultra profiles outside Horizon, but Horizon keeps them behind `?vrodos_debug_enable_pmndrs_cloud_light_shafts=1` because high-coverage local scenes exposed large screen-space shaft footprints.
-- Horizon routes only the cloud `atmosphereOverlay` into `AerialPerspectiveEffect` by default. Cloud `atmosphereShadow` / `atmosphereShadowLength` routing is available behind `?vrodos_debug_enable_pmndrs_cloud_aerial_shadow=1`; direct `SkyMaterial.shadowLength` routing remains behind `?vrodos_debug_enable_pmndrs_cloud_sky_shadow_length=1`.
+- High/ultra Horizon light shafts use the masked Aerial sky route when the author request, desktop, sun, normal-buffer, and lighting-mask gates pass. Direct `SkyMaterial.shadowLength` routing remains disabled.
+- Horizon routes the cloud `atmosphereOverlay` and eligible shaft shadow-length output into `AerialPerspectiveEffect`; authored meshes remain on the Takram/VRodos light-source path through the lighting mask.
 - The compile dialog treats Aerial Haze as the effective AerialPerspective composition pass: active clouds check and lock that control because the pass is required for cloud overlay/shadow routing, while preserving the authored toggle value for scenes without clouds.
-- Cloud light shafts and shadow-length routing are horizon-aware: default Horizon scenes keep cloud overlays active but clear sun-shadow-length routing to avoid flat rectangular sky darkening.
+- Cloud light shafts and shadow-length routing are horizon-aware: unchecking Light Shafts stops generation and masked-Aerial routing while cloud overlay, haze ownership, and the global cloud-sun bridge continue unchanged.
 - Takram `CloudsEffect.skipRendering` stays true in the routed AerialPerspective path and is only cleared if VRodos has no AerialPerspectiveEffect to receive the cloud overlay.
 
 ## Progress
@@ -119,6 +119,8 @@ This is feasible, but it is a new pipeline mode, not a value tweak inside the cu
 - [x] Static checks completed.
 - [x] Cloud authoring preset and wind implementation added from Takram demo findings.
 - [x] Static verification for cloud preset/wind path completed.
+- [x] Prior automated/static test milestones completed.
+- [x] Author-facing Light Shafts contract, compiler serialization, runtime gate, diagnostics, and focused acceptance coverage added.
 - [ ] Visual QA completed in a compiled desktop scene.
 
 ## Diagnostics
@@ -157,6 +159,7 @@ Expected diagnostic fields:
 - `cloudSunDiskSampleAgeMs`
 - `cloudSunDiskSampleCount`
 - `cloudSunElevationFactor`
+- `lightShaftsRequested`
 - `lightShafts`
 - `lightShaftsSkippedReason`
 - `temporalUpscale`
@@ -187,8 +190,9 @@ Expected diagnostic fields:
 - Coverage `0.7+` should report authored/effective coverage split, for example authored around `0.70` and effective around `0.38`. Default style should report `layerProfile=takram-default`; non-default styles should report their `style-*` layer profile. Horizon scenes should report `haze=false` with `hazeDisabledReason=horizon-sky-owner`, and must not render as a hard rectangle in the sky.
 - Non-default cloud styles should change cloud volume character while diagnostics still show stable coverage mapping, temporal upscale on, and Horizon cloud haze off.
 - Wind off should freeze local weather drift; wind on should report non-zero `cloudWindVelocityX/Y` matching speed/direction and should not affect light factors except through normal moving cloud/sun overlap over time.
-- Midday coverage `0.7` should render visible clouds after the generated scene is recompiled. In Horizon, diagnostics should report `direct-composite-off`, `aerial-overlay-on`, `shafts-skip-horizon-light-shafts-disabled`, and `aerial-shadow-horizon-aerial-shadow-disabled`.
-- Below-horizon day/night frames should report `aerialShadowRouted=false` with `aerialShadowReason=sun-below-horizon-or-unavailable`.
+- Midday High/Ultra coverage `0.7` with Light Shafts checked should render visible clouds and report `lightShaftsRequested=true`, `lightShafts=true`, and `cloudLightShaftsMode=masked-aerial-sky` once the mask and buffers are ready.
+- Unchecking Light Shafts should report `lightShaftsRequested=false`, `lightShafts=false`, and `lightShaftsSkippedReason=author-disabled` while clouds, the aerial overlay, and cloud-driven lighting factors remain active.
+- Low/Medium or below-horizon frames should keep shafts inactive with `profile-disabled` or `sun-below-horizon` respectively and must not retain stale shaft buffers.
 - Normal desktop scenes should report `temporalUpscale=true`; the debug override should report `temporalUpscale=false` with `temporalUpscaleSkippedReason=debug-disabled`.
 - Daytime Horizon scenes should report `skyShadowLengthRouted=false` with `skyShadowLengthReason=horizon-sky-shadowlength-disabled` unless the debug comparison flag is enabled.
 - Dynamic day/night should not flicker at sunrise or sunset.

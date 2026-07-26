@@ -41,6 +41,7 @@ VRodosCompileUI.Shared = (function () {
         atmosphereQuality: contractDefault('pmndrsAtmosphereQuality', 'balanced'),
         aerialPerspectiveEnabled: contractDefault('pmndrsAerialPerspectiveEnabled', false),
         cloudsEnabled: contractDefault('pmndrsCloudsEnabled', false),
+        cloudsLightShaftsEnabled: contractDefault('pmndrsCloudsLightShaftsEnabled', true),
         cloudsQuality: contractDefault('pmndrsCloudsQuality', 'low'),
         cloudsCoverage: contractDefault('pmndrsCloudsCoverage', 0.35),
         cloudsStyle: contractDefault('pmndrsCloudsStyle', 'default'),

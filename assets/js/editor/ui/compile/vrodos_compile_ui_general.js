@@ -59,6 +59,7 @@ VRodosCompileUI.General = (function () {
         'pmndrsGeospatialAltitude',
         'pmndrsAerialPerspective',
         'pmndrsClouds',
+        'pmndrsCloudsLightShafts',
         'pmndrsCloudsQuality',
         'pmndrsCloudsCoverage',
         'pmndrsCloudsStyle',

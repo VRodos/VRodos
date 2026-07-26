@@ -416,6 +416,7 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsDayNightCycle,
             controls.pmndrsAerialPerspective,
             controls.pmndrsClouds,
+            controls.pmndrsCloudsLightShafts,
             controls.pmndrsCloudsQuality,
             controls.pmndrsCloudsCoverage,
             controls.pmndrsCloudsStyle,
@@ -503,6 +504,12 @@ VRodosCompileUI.Atmosphere = (function () {
         if (controls.pmndrsCloudsWrapper) {
             controls.pmndrsCloudsWrapper.style.display = cloudsActive ? '' : 'none';
             controls.pmndrsCloudsWrapper.classList.toggle('tw-opacity-50', !cloudsActive);
+        }
+        if (controls.pmndrsCloudsLightShafts) {
+            controls.pmndrsCloudsLightShafts.disabled = !cloudsActive;
+            controls.pmndrsCloudsLightShafts.title = cloudsActive
+                ? 'Cloud-aware light shafts are effective on High and Ultra cloud quality in desktop non-XR scenes.'
+                : cloudsTitle;
         }
         [
             controls.pmndrsCloudsQuality,
@@ -607,6 +614,9 @@ VRodosCompileUI.Atmosphere = (function () {
         const cloudsEnabled = Boolean(atmosphereEnabled && highRenderQuality && controls.pmndrsClouds && controls.pmndrsClouds.checked === true);
         VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled = (pmndrsRuntimeEnabled && controls.pmndrsAerialPerspective) ? getAerialPerspectiveAuthoredChecked(controls) : false;
         VRODOS.editor.envir.scene.aframePmndrsCloudsEnabled = cloudsEnabled;
+        VRODOS.editor.envir.scene.aframePmndrsCloudsLightShaftsEnabled = controls.pmndrsCloudsLightShafts
+            ? controls.pmndrsCloudsLightShafts.checked === true
+            : d.cloudsLightShaftsEnabled;
         VRODOS.editor.envir.scene.aframePmndrsCloudsQuality = normalizeCloudsQuality(controls.pmndrsCloudsQuality ? controls.pmndrsCloudsQuality.value : d.cloudsQuality);
         VRODOS.editor.envir.scene.aframePmndrsCloudsCoverage = Shared.clampNumber(
             controls.pmndrsCloudsCoverage ? controls.pmndrsCloudsCoverage.value : d.cloudsCoverage,

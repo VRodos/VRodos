@@ -309,8 +309,15 @@
         return hasPmndrsDebugFlag('disablePmndrsCloudLightShafts', 'vrodos_debug_disable_pmndrs_cloud_light_shafts');
     }
 
+    function isPmndrsCloudLightShaftsRequested(self) {
+        return readPmndrsBool(self, 'pmndrsCloudsLightShaftsEnabled');
+    }
+
     function shouldPreparePmndrsMaskedAerialSkyLightShafts(self, profile) {
         if (!isHorizonBackground(self)) {
+            return false;
+        }
+        if (!isPmndrsCloudLightShaftsRequested(self)) {
             return false;
         }
         if (!(profile && profile.lightShafts)) {
@@ -337,6 +344,9 @@
     }
 
     function shouldGeneratePmndrsCloudShadowLength(self, profile, atmosphereConfig) {
+        if (!isPmndrsCloudLightShaftsRequested(self)) {
+            return false;
+        }
         if (!(profile && profile.lightShafts)) {
             return false;
         }
@@ -365,6 +375,9 @@
     function getPmndrsCloudShadowLengthGenerationSkippedReason(self, profile, enabled, atmosphereConfig) {
         if (enabled) {
             return '';
+        }
+        if (!isPmndrsCloudLightShaftsRequested(self)) {
+            return 'author-disabled';
         }
         if (!(profile && profile.lightShafts)) {
             return 'profile-disabled';
@@ -1203,6 +1216,7 @@
         const localWeatherUvEnabled = shouldUsePmndrsCloudLocalWeatherUv(self, atmosphereConfig);
         const weatherUvMode = localWeatherUvEnabled ? 'local-tangent' : 'cube-sphere';
         const worldToEcefFrame = getPmndrsCloudWorldToEcefFrame(self, atmosphereConfig);
+        const lightShaftsRequested = Boolean(profile.lightShafts && (!self || isPmndrsCloudLightShaftsRequested(self)));
         const signature = [
             profile.id,
             profile.style || '',
@@ -1211,7 +1225,7 @@
             getPmndrsCloudLayerProfileSignature(profile.layers),
             profile.resolutionScale,
             profile.temporalUpscale ? 1 : 0,
-            profile.lightShafts ? 1 : 0,
+            lightShaftsRequested ? 1 : 0,
             profile.haze ? 1 : 0,
             profile.shapeDetail ? 1 : 0,
             profile.turbulence ? 1 : 0,
@@ -1247,7 +1261,7 @@
             effect.temporalUpscale = profile.temporalUpscale;
         }
         if (typeof effect.lightShafts !== 'undefined') {
-            effect.lightShafts = profile.lightShafts;
+            effect.lightShafts = lightShaftsRequested;
         }
         if (typeof effect.haze !== 'undefined') {
             effect.haze = profile.haze;
@@ -1413,7 +1427,8 @@
             shadowMaxFar: profile.shadowMaxFar || null,
             temporalUpscale: profile.temporalUpscale,
             temporalUpscaleSkippedReason: '',
-            lightShafts: Boolean(profile.lightShafts),
+            lightShaftsRequested: isPmndrsCloudLightShaftsRequested(self),
+            lightShafts: false,
             lightShaftsSkippedReason: '',
             cloudLightShaftsMode: 'off',
             cloudLightShaftsResourcesPrepared: false,
@@ -1858,10 +1873,18 @@
     }
 
     function markPmndrsCloudsSkipped(self, reason, updates) {
+        const lightShaftsRequested = isPmndrsCloudLightShaftsRequested(self);
+        setPmndrsCloudLightShafts(self && self.pmndrsCloudsEffect, false);
         const next = updatePmndrsCloudDiagnostics(self, Object.assign({
             cloudsActive: false,
             cloudsSkippedReason: reason || 'disabled',
-            xrSkipped: reason === 'immersive-xr'
+            xrSkipped: reason === 'immersive-xr',
+            lightShaftsRequested,
+            lightShafts: false,
+            lightShaftsSkippedReason: lightShaftsRequested
+                ? (reason === 'immersive-xr' ? 'not-desktop' : (reason || 'clouds-disabled'))
+                : 'author-disabled',
+            cloudLightShaftsMode: 'off'
         }, cloudSunDiskSampleToDiagnostics({
             occlusion: 0,
             reason: reason || 'clouds-skipped',
@@ -3609,7 +3632,7 @@
             `clouds wind: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.cloudWindEnabled ? `${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, 'cloudWindSpeed', 1)).toFixed(2)} @ ${Number(getPmndrsCloudDiagnosticNumber(self._pmndrsCloudsDiagnostics, 'cloudWindDirectionDeg', 0)).toFixed(0)}deg` : 'off'}`,
             `clouds render: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.takramQuality || getPmndrsCloudsQuality(self)} @ ${Number(self._pmndrsCloudsDiagnostics.resolutionScale || getPmndrsCloudsResolutionScale(getPmndrsCloudsQuality(self))).toFixed(2)}x` : 'off'}`,
             `clouds detail/turbulence: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.shapeDetail ? 'detail' : 'no-detail'} / ${self._pmndrsCloudsDiagnostics.turbulence ? 'turbulence' : 'no-turbulence'}` : 'off'}`,
-            `clouds light shafts: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.lightShafts ? `yes ${self._pmndrsCloudsDiagnostics.cloudLightShaftsMode || 'shadow-length-only'}` : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.lightShaftsSkippedReason ? ` (${self._pmndrsCloudsDiagnostics.lightShaftsSkippedReason})` : ''}`}`,
+            `clouds light shafts: ${  self && self._pmndrsCloudsDiagnostics ? `requested ${self._pmndrsCloudsDiagnostics.lightShaftsRequested ? 'yes' : 'no'}, active ${self._pmndrsCloudsDiagnostics.lightShafts ? `yes ${self._pmndrsCloudsDiagnostics.cloudLightShaftsMode || 'shadow-length-only'}` : `no${self._pmndrsCloudsDiagnostics.lightShaftsSkippedReason ? ` (${self._pmndrsCloudsDiagnostics.lightShaftsSkippedReason})` : ''}`}` : 'off'}`,
             `clouds shaft buffers: ${  self && self._pmndrsCloudsDiagnostics ? `generate ${self._pmndrsCloudsDiagnostics.cloudShadowLengthGenerationEnabled ? 'yes' : 'no'} cloud ${self._pmndrsCloudsDiagnostics.cloudShadowLengthBufferReady ? 'yes' : 'no'} atmosphere ${self._pmndrsCloudsDiagnostics.cloudAtmosphereShadowLengthReady ? 'yes' : 'no'} aerial ${self._pmndrsCloudsDiagnostics.aerialShadowLengthBufferReady ? 'yes' : 'no'} define ${self._pmndrsCloudsDiagnostics.aerialShadowLengthDefineReady ? 'yes' : 'no'} visible ${self._pmndrsCloudsDiagnostics.cloudLightShaftsVisible ? 'yes' : 'no'}` : 'off'}`,
             `clouds aerial lighting: ${  self && self._pmndrsCloudsDiagnostics ? `${self._pmndrsCloudsDiagnostics.aerialSkyEnabled ? 'sky' : 'no-sky'} / ${self._pmndrsCloudsDiagnostics.aerialSunLight ? 'sunLight' : 'no-sunLight'} / ${self._pmndrsCloudsDiagnostics.aerialSkyLight ? 'skyLight' : 'no-skyLight'} normal ${self._pmndrsCloudsDiagnostics.aerialNormalBufferReady ? 'yes' : 'no'} mask ${self._pmndrsCloudsDiagnostics.aerialLightingMaskReady ? `${self._pmndrsCloudsDiagnostics.aerialLightingMaskSelectedCount || 0}@${self._pmndrsCloudsDiagnostics.aerialLightingMaskLayer || PMNDRS_CLOUD_LIGHTING_MASK_LAYER}` : 'no'}` : 'off'}`,
             `clouds haze: ${  self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.haze ? 'yes' : `no${self && self._pmndrsCloudsDiagnostics && self._pmndrsCloudsDiagnostics.hazeDisabledReason ? ` (${self._pmndrsCloudsDiagnostics.hazeDisabledReason})` : ''}`}`,
@@ -3944,6 +3967,7 @@
             shadowMaxFar: profile.shadowMaxFar || null,
             temporalUpscale: temporalUpscaleEnabled,
             temporalUpscaleSkippedReason,
+            lightShaftsRequested: isPmndrsCloudLightShaftsRequested(self),
             lightShafts: lightShaftsEnabled,
             lightShaftsSkippedReason,
             cloudLightShaftsMode: getPmndrsCloudLightShaftsMode(self, atmosphereConfig),
@@ -4127,6 +4151,10 @@
                         resolutionScale: getPmndrsCloudsResolutionScale(cloudsQuality)
                     });
                     const cloudsProfile = applyPmndrsCloudPerformanceProfile(this.pmndrsCloudsEffect, cloudsQuality, cloudsStyle, this);
+                    const initialLightShaftsEnabled = setPmndrsCloudLightShafts(
+                        this.pmndrsCloudsEffect,
+                        shouldGeneratePmndrsCloudShadowLength(this, cloudsProfile, atmosphereConfig)
+                    );
                     this._pmndrsCloudMaskedAerialPrepared = shouldPreparePmndrsMaskedAerialSkyLightShafts(this, cloudsProfile);
                     const cloudWindVelocity = applyPmndrsCloudWind(this.pmndrsCloudsEffect, this, cloudsProfile);
                     const initialTemporalUpscale = shouldUsePmndrsCloudTemporalUpscale(this, atmosphereConfig, cloudsProfile);
@@ -4162,6 +4190,14 @@
                         shadowMaxFar: cloudsProfile.shadowMaxFar || null,
                         temporalUpscale: initialTemporalUpscale,
                         temporalUpscaleSkippedReason: getPmndrsCloudTemporalUpscaleSkippedReason(this, atmosphereConfig, cloudsProfile, initialTemporalUpscale),
+                        lightShaftsRequested: isPmndrsCloudLightShaftsRequested(this),
+                        lightShafts: initialLightShaftsEnabled,
+                        lightShaftsSkippedReason: getPmndrsCloudShadowLengthGenerationSkippedReason(
+                            this,
+                            cloudsProfile,
+                            initialLightShaftsEnabled,
+                            atmosphereConfig
+                        ),
                         cloudLightShaftsMode: getPmndrsCloudLightShaftsMode(this, atmosphereConfig),
                         aerialSkyEnabled: Boolean(this.pmndrsAerialPerspectiveEffect && this.pmndrsAerialPerspectiveEffect.sky),
                         aerialSunLight: Boolean(this.pmndrsAerialPerspectiveEffect && this.pmndrsAerialPerspectiveEffect.sunLight),

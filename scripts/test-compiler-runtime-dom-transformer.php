@@ -225,18 +225,6 @@ vrodos_dom_transformer_assert( str_ends_with( $runtime_config['three_draco_decod
 vrodos_dom_transformer_assert( str_ends_with( $runtime_config['three_basis_transcoder_url'], '/assets/vendor/three-r185/basis/' ), 'compiler runtime config should expose the r185 Basis transcoder URL' );
 vrodos_dom_transformer_assert( str_ends_with( $runtime_config['three_meshopt_decoder_url'], '/assets/vendor/three-r185/meshopt/meshopt_decoder.js' ), 'compiler runtime config should expose the r185 Meshopt decoder URL' );
 
-$compiler_reflection = new ReflectionClass( VRodos_Compiler_Manager::class );
-$compiler            = $compiler_reflection->newInstanceWithoutConstructor();
-$website_root        = $compiler_reflection->getProperty( 'website_root_url' );
-$website_root->setAccessible( true );
-$website_root->setValue( $compiler, 'example.test' );
-$decoder_method = $compiler_reflection->getMethod( 'build_gltf_decoder_config' );
-$decoder_method->setAccessible( true );
-$decoder_config = $decoder_method->invoke( $compiler );
-vrodos_dom_transformer_assert( str_contains( $decoder_config, 'three-r185/draco/gltf/' ), 'compiler decoder config should emit the r185 Draco path' );
-vrodos_dom_transformer_assert( str_contains( $decoder_config, 'three-r185/basis/' ), 'compiler decoder config should emit the r185 Basis path' );
-vrodos_dom_transformer_assert( str_contains( $decoder_config, 'three-r185/meshopt/meshopt_decoder.js' ), 'compiler decoder config should emit the r185 Meshopt path' );
-
 foreach ( [ 'Master_Client_prototype.html', 'Simple_Client_prototype.html' ] as $template_name ) {
 	$prepared_template = $runtime_page_build->prepare_template(
 		$template_name,

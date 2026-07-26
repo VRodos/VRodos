@@ -247,6 +247,18 @@ $plan_flags      = new VRodos_Compiler_Runtime_Feature_Flags();
 $plan_settings   = new VRodos_Compiler_Scene_Settings( $plan_repository, $plan_flags );
 $plan_planner    = new VRodos_Compiler_Runtime_Script_Planner( $plan_manifest, $plan_flags );
 $plan_resolver   = new VRodos_Compiler_Plan_Resolver( $plan_settings, $plan_planner );
+$light_shaft_defaults = VRodos_Runtime_Settings_Contract::wire_settings_from_metadata( (object) [] );
+vrodos_foundation_assert( 'true' === $light_shaft_defaults['pmndrsCloudsLightShaftsEnabled'], 'cloud light shafts default to enabled' );
+$light_shaft_disabled = $plan_settings->build_settings(
+	(object) [ 'aframePmndrsCloudsLightShaftsEnabled' => false ],
+	(object) [ 'objects' => (object) [] ],
+	9
+);
+vrodos_foundation_assert( 'false' === $light_shaft_disabled['pmndrsCloudsLightShaftsEnabled'], 'compiler preserves explicit cloud light shafts disable' );
+vrodos_foundation_assert(
+	str_contains( $plan_settings->serialize_settings( $light_shaft_disabled ), 'pmndrsCloudsLightShaftsEnabled: false' ),
+	'compiler serializes cloud light shafts setting'
+);
 $scene_one = (object) [
 	'metadata' => (object) [
 		'aframeRuntimeMode' => 'single-player',
@@ -255,7 +267,10 @@ $scene_one = (object) [
 		'aframeHoveringInteractables' => true,
 	],
 	'objects' => (object) [
-		'avatarCamera' => (object) [ 'position' => [ 0, 1.6, 0 ] ],
+		'avatarCamera' => (object) [
+			'position' => [ 0, 1.6, 0 ],
+			'rotation' => [ 0, 0, 0 ],
+		],
 		'decoration0' => (object) [
 			'category_name' => 'decoration',
 			'asset_id' => 77,

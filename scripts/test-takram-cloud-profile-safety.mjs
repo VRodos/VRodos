@@ -39,6 +39,14 @@ const styleProfilesSource = extractBetween(
     "const PMNDRS_CLOUD_STYLE_PROFILES = {",
     "const PMNDRS_CLOUD_PERFORMANCE_PROFILES = {"
 );
+const performanceProfilesSource = extractBetween(
+    "const PMNDRS_CLOUD_PERFORMANCE_PROFILES = {",
+    "function getPmndrsCloudStyleProfile"
+);
+const lightShaftPolicySource = extractBetween(
+    "function isPmndrsCloudLightShaftsRequested",
+    "function setPmndrsCloudLightShafts"
+);
 
 for (const forbidden of [
     "densityProfile:",
@@ -110,6 +118,45 @@ for (const style of ["default", "scattered", "broken", "overcast", "storm"]) {
     ));
     assert(match, `${style} must use the shared Horizon coverage mapper`);
 }
+
+for (const required of [
+    "readPmndrsBool(self, 'pmndrsCloudsLightShaftsEnabled')",
+    "shouldPreparePmndrsMaskedAerialSkyLightShafts",
+    "shouldGeneratePmndrsCloudShadowLength",
+    "isPmndrsCloudLightShaftsDesktopReady",
+    "shouldUsePmndrsCloudShadowLength",
+    "author-disabled",
+    "profile-disabled",
+    "not-desktop",
+    "sun-below-horizon"
+]) {
+    assert(lightShaftPolicySource.includes(required), `Missing cloud light-shafts policy gate ${required}`);
+}
+
+for (const quality of ["low", "medium"]) {
+    assert(
+        new RegExp(`${quality}: \\{[\\s\\S]*?lightShafts: false`).test(performanceProfilesSource),
+        `${quality} cloud quality must keep light shafts disabled`
+    );
+}
+for (const quality of ["high", "ultra"]) {
+    assert(
+        new RegExp(`${quality}: \\{[\\s\\S]*?lightShafts: true`).test(performanceProfilesSource),
+        `${quality} cloud quality must allow author-requested light shafts`
+    );
+}
+assert(
+    source.includes("lightShaftsRequested: isPmndrsCloudLightShaftsRequested(self)"),
+    "Cloud diagnostics must expose the authored light-shafts request"
+);
+assert(
+    source.includes("reason === 'immersive-xr' ? 'not-desktop'"),
+    "Immersive XR cloud skips must report the light-shafts desktop policy gate"
+);
+assert(
+    source.includes("setPmndrsCloudLightShafts(self && self.pmndrsCloudsEffect, false)"),
+    "Skipping clouds must stop light-shafts generation"
+);
 
 assert(existsSync(takramCloudsBundlePath), "Generated Takram clouds bundle is missing");
 const takramCloudsBundle = readFileSync(takramCloudsBundlePath, "utf8");

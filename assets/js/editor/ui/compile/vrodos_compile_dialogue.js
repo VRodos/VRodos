@@ -117,6 +117,7 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsGeospatialAltitude: document.getElementById('compilePmndrsGeospatialAltitudeInput'),
             pmndrsAerialPerspective: document.getElementById('compilePmndrsAerialPerspectiveToggle'),
             pmndrsClouds: document.getElementById('compilePmndrsCloudsToggle'),
+            pmndrsCloudsLightShafts: document.getElementById('compilePmndrsCloudsLightShaftsToggle'),
             pmndrsCloudsWrapper: document.getElementById('compilePmndrsCloudsWrapper'),
             pmndrsCloudsQuality: document.getElementById('compilePmndrsCloudsQualitySelect'),
             pmndrsCloudsCoverage: document.getElementById('compilePmndrsCloudsCoverageSlider'),
@@ -767,6 +768,10 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls.pmndrsClouds) {
             controls.pmndrsClouds.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsCloudsEnabled);
         }
+        if (controls.pmndrsCloudsLightShafts) {
+            controls.pmndrsCloudsLightShafts.checked = !(VRODOS.editor.envir && VRODOS.editor.envir.scene) ||
+                VRODOS.editor.envir.scene.aframePmndrsCloudsLightShaftsEnabled !== false;
+        }
         if (controls.pmndrsCloudsQuality) {
             controls.pmndrsCloudsQuality.value = VRODOS.editor.envir && VRODOS.editor.envir.scene
                 ? VRodosCompileUI.Atmosphere.normalizeCloudsQuality(VRODOS.editor.envir.scene.aframePmndrsCloudsQuality)
@@ -1236,6 +1241,7 @@ window.addEventListener('DOMContentLoaded', () => {
         controls.pmndrsCorrectAltitude,
         controls.pmndrsAerialPerspective,
         controls.pmndrsClouds,
+        controls.pmndrsCloudsLightShafts,
         controls.pmndrsCloudsQuality,
         controls.pmndrsCloudsStyle,
         controls.pmndrsCloudsWind,
@@ -1349,6 +1355,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsAtmospherePresetIntensity) c.pmndrsAtmospherePresetIntensity.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmospherePresetIntensity;
             if (c.pmndrsAtmosphereQuality) c.pmndrsAtmosphereQuality.value = Shared.PMNDRS_TWEAK_DEFAULTS.atmosphereQuality;
             if (c.pmndrsClouds) c.pmndrsClouds.checked = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsEnabled;
+            if (c.pmndrsCloudsLightShafts) c.pmndrsCloudsLightShafts.checked = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsLightShaftsEnabled;
             if (c.pmndrsCloudsQuality) c.pmndrsCloudsQuality.value = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsQuality;
             if (c.pmndrsCloudsCoverage) c.pmndrsCloudsCoverage.value = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsCoverage;
             if (c.pmndrsCloudsStyle) c.pmndrsCloudsStyle.value = Shared.PMNDRS_TWEAK_DEFAULTS.cloudsStyle;

@@ -1,7 +1,9 @@
 # VRodos Modernization And Regression Plan
 
 Date: 2026-06-30
-Status: In progress
+Status: Complete
+
+Automated/static test milestone: Complete
 Last updated: 2026-07-02
 
 This document tracks the v1 strategy for making VRodos easier to change without repeatedly rediscovering regressions through manual headset testing.
@@ -117,7 +119,7 @@ Targeted `node --check` and PHP syntax checks should be added for edited files w
 
 The local VM smoke tests assert pure policy and `window.VRODOS_RUNTIME_FEATURE_STATE` assembly, but they do not prove the generated browser client publishes the same state after A-Frame boots.
 
-Before treating the runtime smoke row as complete, add a browser capture pass for one freshly compiled representative Master client:
+The runtime smoke row is complete. The accepted browser capture pass for a freshly compiled representative Master client is:
 
 ```powershell
 npm run smoke:browser-feature-state -- --client Master_Client_RECOMPILED.html --expect-presentation inline --expect-profile desktop --expect-postfx-requested true --expect-postfx-allowed true --expect-navigation-mode walkable
@@ -313,7 +315,7 @@ Without those proofs, R3F risks becoming the same spaghetti in a different frame
 
 - Resumed the modernization plan after the separate PCF shadow-warning fix landed.
 - Reconciled the progress tracker with the committed compiler script-planner and DOM-transformer fixtures.
-- Added the browser/CDP feature-state smoke target that remains open for the next generated-client capture.
+- Added the browser/CDP feature-state smoke target, then completed the representative generated-client capture and four-case browser matrix.
 - Added a Quest diagnostic smoke path with required runtime feature-state, smoothness, browser-version, and manual acceptance fields.
 - Added the v1 change-location guide for compiler settings, lazy chunks, runtime policy, rendering/shadows, spatial UI, video, navigation/collision, networking, generated bundles, and package/vendor updates.
 - Added `scripts/check-profile-feature-state.mjs`, `npm run check:browser-feature-state`, and a runtime harness test so browser/CDP captures can fail the same core `runtimeFeatureState` fields checked in the plan.
