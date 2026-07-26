@@ -975,7 +975,7 @@
     document.body.style.cursor = (_a4 = cursorTypeStack[cursorTypeStack.length - 1]) != null ? _a4 : "default";
   }
 
-  // assets/js/runtime/master/lib/.vrodos-spatial-ui-three-shim.mjs
+  // vrodos-virtual-module:three
   var moduleValue = window.THREE || window.AFRAME && window.AFRAME.THREE || {};
   var ACESFilmicToneMapping = moduleValue["ACESFilmicToneMapping"];
   var AddEquation = moduleValue["AddEquation"];

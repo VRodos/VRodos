@@ -137,7 +137,7 @@
     version: () => version
   });
 
-  // scripts/.tmp-three-global-shim.mjs
+  // vrodos-virtual-module:three
   var moduleValue = window.THREE || {};
   var ACESFilmicToneMapping = moduleValue["ACESFilmicToneMapping"];
   var AddEquation = moduleValue["AddEquation"];
@@ -582,7 +582,7 @@
   var warnOnce = moduleValue["warnOnce"];
 
   // node_modules/postprocessing/build/index.js
-  var version = "6.39.2";
+  var version = "6.39.3";
   var Disposable = class {
     /**
      * Frees internal resources.
@@ -1450,12 +1450,21 @@ gl_FragDepth=readDepth(vUv);
       this.inputBuffer = this.createBuffer(depthBuffer, stencilBuffer, frameBufferType, multisampling);
       this.outputBuffer = this.inputBuffer.clone();
       this.copyPass = new CopyPass();
-      this.depthTexture = null;
       this.depthRenderTarget = null;
       this.passes = [];
       this.timer = new Timer2();
       this.autoRenderToScreen = true;
       this.setRenderer(renderer);
+    }
+    /**
+     * A stable depth texture to be used by depth-aware passes.
+     *
+     * @type {DepthTexture}
+     * @private
+     */
+    get stableDepthTexture() {
+      var _a, _b;
+      return (_b = (_a = this.depthRenderTarget) == null ? void 0 : _a.depthTexture) != null ? _b : null;
     }
     /**
      * The current amount of samples used for multisample anti-aliasing.
@@ -1473,24 +1482,13 @@ gl_FragDepth=readDepth(vUv);
      * @type {Number}
      */
     set multisampling(value) {
-      const buffer = this.inputBuffer;
-      const multisampling = this.multisampling;
-      if (multisampling > 0 && value > 0) {
-        this.inputBuffer.samples = value;
-        this.outputBuffer.samples = value;
-        this.inputBuffer.dispose();
-        this.outputBuffer.dispose();
-      } else if (multisampling !== value) {
-        this.inputBuffer.dispose();
-        this.outputBuffer.dispose();
-        this.inputBuffer = this.createBuffer(
-          buffer.depthBuffer,
-          buffer.stencilBuffer,
-          buffer.texture.type,
-          value
-        );
-        this.outputBuffer = this.inputBuffer.clone();
+      if (this.multisampling === value) {
+        return;
       }
+      this.inputBuffer.samples = value;
+      this.outputBuffer.samples = value;
+      this.inputBuffer.dispose();
+      this.outputBuffer.dispose();
     }
     /**
      * Returns the internal timer.
@@ -1560,31 +1558,35 @@ gl_FragDepth=readDepth(vUv);
      * Creates a depth texture attachment that will be provided to all passes.
      *
      * To prevent errors or incorrect behavior when the same depth buffer is attached to the input and output buffers,
-     * a separate stable depth target is created alongside the ping-pong buffers.  All passes receive the stable target's
+     * a separate stable depth target is created alongside the ping-pong buffers. All passes receive the stable target's
      * depth texture, which is never used as a render output and therefore cannot create a feedback loop.  The stable
      * texture is populated each frame via blitFramebuffer immediately before the first buffer swap.
      *
      * @private
-     * @return {DepthTexture} The stable depth texture distributed to passes.
      */
     createDepthTexture() {
-      const inputBuffer = this.inputBuffer;
-      const depthTexture = new DepthTexture();
-      this.depthTexture = depthTexture;
-      if (inputBuffer.stencilBuffer) {
-        depthTexture.format = DepthStencilFormat;
-        depthTexture.type = UnsignedInt248Type;
+      const inputDepthTexture = new DepthTexture();
+      inputDepthTexture.name = "EffectComposer.InputDepth";
+      if (this.inputBuffer.stencilBuffer) {
+        inputDepthTexture.format = DepthStencilFormat;
+        inputDepthTexture.type = UnsignedInt248Type;
       } else {
-        depthTexture.type = FloatType;
+        inputDepthTexture.type = FloatType;
       }
-      const stableDepthTexture = depthTexture.clone();
+      const outputDepthTexture = inputDepthTexture.clone();
+      outputDepthTexture.name = "EffectComposer.OutputDepth";
+      const stableDepthTexture = inputDepthTexture.clone();
       stableDepthTexture.name = "EffectComposer.StableDepth";
-      this.depthRenderTarget = new WebGLRenderTarget(inputBuffer.width, inputBuffer.height, {
+      this.inputBuffer.depthTexture = inputDepthTexture;
+      this.outputBuffer.depthTexture = outputDepthTexture;
+      this.inputBuffer.dispose();
+      this.outputBuffer.dispose();
+      const { width, height } = this.inputBuffer;
+      this.depthRenderTarget = new WebGLRenderTarget(width, height, {
         depthBuffer: true,
-        stencilBuffer: inputBuffer.stencilBuffer,
+        stencilBuffer: this.inputBuffer.stencilBuffer,
         depthTexture: stableDepthTexture
       });
-      return stableDepthTexture;
     }
     /**
      * Copies the depth buffer from the src render target into the stable depth target.
@@ -1625,17 +1627,19 @@ gl_FragDepth=readDepth(vUv);
      * @private
      */
     deleteDepthTexture() {
-      if (this.depthTexture !== null) {
-        this.depthTexture.dispose();
-        this.depthTexture = null;
-        this.depthRenderTarget.dispose();
-        this.depthRenderTarget = null;
-        this.inputBuffer.depthTexture = null;
-        this.outputBuffer.depthTexture = null;
-        for (const pass of this.passes) {
+      var _a, _b, _c;
+      const stableDepthTexture = this.stableDepthTexture;
+      for (const pass of this.passes) {
+        if (pass.getDepthTexture() === stableDepthTexture) {
           pass.setDepthTexture(null);
         }
       }
+      (_a = this.depthRenderTarget) == null ? void 0 : _a.dispose();
+      this.depthRenderTarget = null;
+      (_b = this.inputBuffer.depthTexture) == null ? void 0 : _b.dispose();
+      this.inputBuffer.depthTexture = null;
+      (_c = this.outputBuffer.depthTexture) == null ? void 0 : _c.dispose();
+      this.outputBuffer.depthTexture = null;
     }
     /**
      * Creates a new render target.
@@ -1650,17 +1654,14 @@ gl_FragDepth=readDepth(vUv);
     createBuffer(depthBuffer, stencilBuffer, type, multisampling) {
       const renderer = this.renderer;
       const size = renderer === null ? new Vector2() : renderer.getDrawingBufferSize(new Vector2());
-      const options = {
+      const renderTarget = new WebGLRenderTarget(size.width, size.height, {
         minFilter: LinearFilter,
         magFilter: LinearFilter,
+        samples: multisampling,
         stencilBuffer,
         depthBuffer,
         type
-      };
-      const renderTarget = new WebGLRenderTarget(size.width, size.height, options);
-      if (multisampling > 0) {
-        renderTarget.samples = multisampling;
-      }
+      });
       if (type === UnsignedByteType && renderer !== null && renderer.outputColorSpace === SRGBColorSpace) {
         renderTarget.texture.colorSpace = SRGBColorSpace;
       }
@@ -1719,15 +1720,14 @@ gl_FragDepth=readDepth(vUv);
       if (this.autoRenderToScreen) {
         passes[passes.length - 1].renderToScreen = true;
       }
-      if (pass.needsDepthTexture || this.depthTexture !== null) {
-        if (this.depthTexture === null) {
-          const stableDepthTexture = this.createDepthTexture();
-          for (pass of passes) {
-            pass.setDepthTexture(stableDepthTexture);
+      if (pass.needsDepthTexture || this.depthRenderTarget !== null) {
+        if (this.depthRenderTarget === null) {
+          this.createDepthTexture();
+          for (const existingPass of passes) {
+            existingPass.setDepthTexture(this.stableDepthTexture);
           }
         } else {
-          const stableDepthTexture = this.depthRenderTarget.depthTexture;
-          pass.setDepthTexture(stableDepthTexture);
+          pass.setDepthTexture(this.stableDepthTexture);
         }
       }
     }
@@ -1742,11 +1742,11 @@ gl_FragDepth=readDepth(vUv);
       const exists = index !== -1;
       const removed = exists && passes.splice(index, 1).length > 0;
       if (removed) {
-        if (this.depthTexture !== null) {
+        const stableDepthTexture = this.stableDepthTexture;
+        if (stableDepthTexture !== null) {
           const reducer = (a, b) => a || b.needsDepthTexture;
           const depthTextureRequired = passes.reduce(reducer, false);
           if (!depthTextureRequired) {
-            const stableDepthTexture = this.depthRenderTarget.depthTexture;
             if (pass.getDepthTexture() === stableDepthTexture) {
               pass.setDepthTexture(null);
             }
@@ -1796,8 +1796,6 @@ gl_FragDepth=readDepth(vUv);
         if (!pass.enabled) {
           continue;
         }
-        inputBuffer.depthTexture = this.depthTexture;
-        outputBuffer.depthTexture = null;
         pass.render(renderer, inputBuffer, outputBuffer, deltaTime, stencilTest);
         if (pass.needsDepthBlit) {
           if (this.depthRenderTarget !== null) {
@@ -1865,16 +1863,12 @@ gl_FragDepth=readDepth(vUv);
       for (const pass of this.passes) {
         pass.dispose();
       }
-      this.passes = [];
-      if (this.inputBuffer !== null) {
-        this.inputBuffer.dispose();
-      }
-      if (this.outputBuffer !== null) {
-        this.outputBuffer.dispose();
-      }
       this.deleteDepthTexture();
+      this.inputBuffer.dispose();
+      this.outputBuffer.dispose();
       this.copyPass.dispose();
       this.timer.dispose();
+      this.passes = [];
       Pass.fullscreenGeometry.dispose();
     }
   };
@@ -16596,6 +16590,6 @@ uniform vec2 kernel[STEPS];varying vec2 vOffset;varying vec2 vUv;void main(){vec
     }
   };
 
-  // scripts/.tmp-build-postprocessing-runtime-entry.mjs
+  // scripts/build/entries/postprocessing.mjs
   window.POSTPROCESSING = build_exports;
 })();

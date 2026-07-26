@@ -68,7 +68,7 @@ The active compiled runtime targets:
 - PMNDRS `postprocessing` bundle exported as `window.POSTPROCESSING`
 - Takram atmosphere/effects bundle exported as `window.VRODOS_TAKRAM_ATMOSPHERE`
 
-Root `package.json` plus `package-lock.json` are the version source of truth. `npm run build:three` generates `assets/runtime-version-manifest.json`, and `VRodos_Render_Runtime_Manager` reads that manifest.
+Root `package.json` plus `package-lock.json` are the version source of truth. `npm run build:vendor` generates `assets/runtime-version-manifest.json`, and `VRodos_Render_Runtime_Manager` reads that manifest.
 
 `assets/runtime-build-manifest.json` is the compiled runtime chunk source of truth. It must validate missing script files, undeclared dependencies, duplicate chunk ordering, and feature coverage. Keep PMNDRS, Takram, collision BVH, FPS meter, and networked bundles lazy: do not include PMNDRS unless PMNDRS post-FX is selected, do not include Takram unless PMNDRS atmosphere is enabled, and do not include networked components in single-player output.
 
@@ -132,7 +132,7 @@ Rendering docs:
 External rendering library fixes:
 
 - When PMNDRS/Takram/Three behavior looks like an implementation artifact, audit the upstream docs, README warnings, demo story source, generated package code, and our runtime wiring before tuning local profiles. The Takram cloud cube-artifact fix came from tracing the demo-safe path to Takram's documented cube-sphere local-weather UV limitation, not from further cloud-style tweaks.
-- Prefer deterministic build-time vendor patches in `scripts/build-three-vendor.mjs` over hand-editing generated bundles or `node_modules`. Regenerate the affected `assets/js/runtime/master/lib/` bundle and add a static test that proves the patch text exists in the generated output.
+- Prefer deterministic build-time vendor patches in `scripts/build/vendor-patches.mjs` over hand-editing generated bundles or `node_modules`. Regenerate the affected `assets/js/runtime/master/lib/` bundle and add a static test that proves the patch text exists in the generated output.
 - Apply shader defines to every upstream material/pass that samples the affected code path. For Takram clouds, both `cloudsPass.currentMaterial` and `shadowPass.currentMaterial` must use the same weather UV mode so visible clouds, shadow buffers, sun occlusion, and light shafts agree.
 - Gate external-library deviations by scene/runtime policy and preserve upstream behavior where it is correct. Horizon desktop clouds use VRodos local tangent weather UVs; geospatial/global scenes keep Takram's native cube-sphere UV path.
 - Add diagnostics and an A/B debug flag for every nontrivial vendor integration patch. Future work should expose the active mode, patch-applied status, frame/source assumptions, and enough values to compare against the upstream demo without adding author-facing controls.
@@ -187,7 +187,7 @@ Lucide icons:
 Runtime package updates:
 
 1. Update root `package.json` and `package-lock.json`.
-2. Run `npm run build:three`.
+2. Run `npm run build:vendor`.
 3. Run `npm run build:runtime`.
 4. Commit generated runtime outputs that changed intentionally.
 
@@ -206,6 +206,7 @@ Common checks:
 
 - `npm run lint`
 - `node --check` for edited JS files
+- `npm run check:build-config` for build catalog, manifest, package, and generated-artifact drift
 - PHP syntax checks for edited PHP files
 - `git diff --check`
 
@@ -222,7 +223,7 @@ Performance tooling:
 - `VRodos_Asset_Optimization_Manager` stores read-only GLB benefit analysis in `_vrodos_asset3d_glb_analysis` when `vrodos_asset3d_glb` changes. Analysis should remain cheap and non-generative; derivative files are created only by explicit admin actions.
 - The top-level VRodos dashboard has an `Actionable Assets` tab for top GLB optimization items. Dashboard row actions are the primary single-asset operational surface for refreshing analysis and generating safe Draco derivatives, but must not auto-enable compile substitution. Analysis refresh and Compile Use toggles are AJAX row updates; safe Draco generation remains a signed admin action until a queued/progress flow exists. The dashboard Compile Use toggle is the explicit per-asset control for enabling/disabling derivative substitution and must validate a ready derivative before enabling.
 - Cached derivative files are owned by the asset post. Permanent `vrodos_asset3d` deletion must remove `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/` and optimization metadata; project deletion should get this by deleting associated asset posts.
-- `npm run build:three` copies Draco, Basis/KTX2, and Meshopt decoder assets into `assets/vendor/three-r185/` and records them in `assets/runtime-version-manifest.json`.
+- `npm run build:vendor` copies Draco, Basis/KTX2, and Meshopt decoder assets into `assets/vendor/three-r185/` and records them in `assets/runtime-version-manifest.json`.
 - Compiled scenes receive root `gltf-model` decoder paths from `VRodos_Compiler_Manager`; regenerate compiled HTML before testing compressed derivatives.
 - Use `meshopt_decoder.js` for A-Frame `meshoptDecoderPath`. A-Frame loads this path as a classic script, so do not point compiled scenes at the ESM `meshopt_decoder.module.js`; the vendor build no longer publishes a `.module.js` compatibility copy for older generated clients.
 - Do not enable compile substitution for Draco, Meshopt, or KTX2 derivatives until the relevant A-Frame/Three decoder path is present in the generated client and visual parity is checked. Substitution must remain per-asset opt-in.

@@ -55,7 +55,7 @@
     toAstroTime: () => P0
   });
 
-  // scripts/.tmp-postprocessing-global-shim.mjs
+  // vrodos-virtual-module:postprocessing
   var moduleValue = window.POSTPROCESSING || {};
   var ASCIIEffect = moduleValue["ASCIIEffect"];
   var ASCIITexture = moduleValue["ASCIITexture"];
@@ -185,7 +185,7 @@
   var WebGLExtension = moduleValue["WebGLExtension"];
   var version = moduleValue["version"];
 
-  // scripts/.tmp-three-global-shim.mjs
+  // vrodos-virtual-module:three
   var moduleValue2 = window.THREE || {};
   var ACESFilmicToneMapping = moduleValue2["ACESFilmicToneMapping"];
   var AddEquation = moduleValue2["AddEquation"];
@@ -11346,7 +11346,11 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     return a3.name = e3.name, a3.type = e3.type, e3.colorSpace = a3.colorSpace, a3;
   }
 
-  // scripts/.tmp-build-takram-atmosphere-entry.mjs
-  window.VRODOS_TAKRAM_ATMOSPHERE = Object.assign({}, build_exports, build_exports2);
+  // scripts/build/entries/takram-atmosphere.mjs
+  window.VRODOS_TAKRAM_ATMOSPHERE = Object.assign(
+    {},
+    build_exports,
+    build_exports2
+  );
   window.VRODOS_TAKRAM_EFFECTS = build_exports2;
 })();

@@ -131,6 +131,8 @@ vendor/
 !/assets/vendor/**
 node_modules/
 build/
+!/scripts/build/
+!/scripts/build/**
 build_dist/
 .idea/
 .vscode/

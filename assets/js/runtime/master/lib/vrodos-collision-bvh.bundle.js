@@ -1,5 +1,5 @@
 (() => {
-  // scripts/.tmp-three-global-shim.mjs
+  // vrodos-virtual-module:three
   var moduleValue = window.THREE || {};
   var ACESFilmicToneMapping = moduleValue["ACESFilmicToneMapping"];
   var AddEquation = moduleValue["AddEquation"];
@@ -4645,7 +4645,7 @@
     this.boundsTree = null;
   }
 
-  // scripts/.tmp-build-collision-bvh-entry.mjs
+  // scripts/build/entries/collision-bvh.mjs
   window.VRODOS_COLLISION_BVH = {
     acceleratedRaycast,
     computeBoundsTree,

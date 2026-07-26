@@ -1,5 +1,5 @@
 (() => {
-  // scripts/.tmp-postprocessing-global-shim.mjs
+  // vrodos-virtual-module:postprocessing
   var moduleValue = window.POSTPROCESSING || {};
   var ASCIIEffect = moduleValue["ASCIIEffect"];
   var ASCIITexture = moduleValue["ASCIITexture"];
@@ -129,7 +129,7 @@
   var WebGLExtension = moduleValue["WebGLExtension"];
   var version = moduleValue["version"];
 
-  // scripts/.tmp-three-global-shim.mjs
+  // vrodos-virtual-module:three
   var moduleValue2 = window.THREE || {};
   var ACESFilmicToneMapping = moduleValue2["ACESFilmicToneMapping"];
   var AddEquation = moduleValue2["AddEquation"];
@@ -573,7 +573,7 @@
   var warn = moduleValue2["warn"];
   var warnOnce = moduleValue2["warnOnce"];
 
-  // scripts/.tmp-takram-atmosphere-global-shim.mjs
+  // vrodos-virtual-module:@takram/three-atmosphere
   var moduleValue3 = window.VRODOS_TAKRAM_ATMOSPHERE || {};
   var AerialPerspectiveEffect = moduleValue3["AerialPerspectiveEffect"];
   var AtmosphereMaterialBase = moduleValue3["AtmosphereMaterialBase"];
@@ -7198,7 +7198,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
   var ln2 = 'assets/vendor/takram-clouds/shape_detail.bin';
   var hn2 = 'assets/vendor/takram-clouds/turbulence.png';
 
-  // scripts/.tmp-build-takram-clouds-entry.mjs
+  // scripts/build/entries/takram-clouds.mjs
   function parseUint8Array(buffer) {
     return new Uint8Array(buffer);
   }

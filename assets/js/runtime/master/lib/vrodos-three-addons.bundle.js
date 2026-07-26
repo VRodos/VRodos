@@ -1,5 +1,5 @@
 (() => {
-  // scripts/.tmp-three-global-shim.mjs
+  // vrodos-virtual-module:three
   var moduleValue = window.THREE || window.AFRAME && window.AFRAME.THREE || {};
   var ACESFilmicToneMapping = moduleValue["ACESFilmicToneMapping"];
   var AddEquation = moduleValue["AddEquation"];
@@ -696,7 +696,7 @@
     }
   };
 
-  // scripts/.tmp-build-three-addons-runtime-entry.mjs
+  // scripts/build/entries/three-addons.mjs
   var THREE = window.THREE || window.AFRAME && window.AFRAME.THREE || {};
   THREE.HDRLoader = HDRLoader;
   THREE.RGBELoader = RGBELoader || HDRLoader;

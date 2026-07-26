@@ -1665,8 +1665,8 @@ _Stats.Panel = Panel;
 _Stats.PanelTexture = PanelTexture;
 var Stats = _Stats;
 
-// vrodos-stats-gl-entry.mjs
-var vrodos_stats_gl_entry_default = Stats;
+// scripts/build/entries/stats-gl.mjs
+var stats_gl_default = Stats;
 export {
-  vrodos_stats_gl_entry_default as default
+  stats_gl_default as default
 };

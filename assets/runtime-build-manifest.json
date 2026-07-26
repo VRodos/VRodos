@@ -209,7 +209,7 @@
         "three-addons",
         "hdr-loader"
       ],
-      "generatedBy": "build:three"
+      "generatedBy": "build:vendor"
     },
     "pmndrs-postprocessing-vendor": {
       "id": "pmndrs-postprocessing-vendor",
@@ -223,7 +223,7 @@
         "pmndrs-vendor",
         "postprocessing"
       ],
-      "generatedBy": "build:three"
+      "generatedBy": "build:vendor"
     },
     "takram-atmosphere": {
       "id": "takram-atmosphere",
@@ -244,7 +244,7 @@
       "activationCapabilities": [
         "atmosphere:takram"
       ],
-      "generatedBy": "build:three"
+      "generatedBy": "build:vendor"
     },
     "takram-clouds": {
       "id": "takram-clouds",
@@ -264,7 +264,7 @@
       "activationCapabilities": [
         "clouds:takram"
       ],
-      "generatedBy": "build:three"
+      "generatedBy": "build:vendor"
     },
     "collision-bvh-vendor": {
       "id": "collision-bvh-vendor",
@@ -282,7 +282,7 @@
       "activationCapabilities": [
         "collision-bvh"
       ],
-      "generatedBy": "build:three"
+      "generatedBy": "build:vendor"
     },
     "fps-meter": {
       "id": "fps-meter",

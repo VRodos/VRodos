@@ -239,7 +239,7 @@ The compiler now writes A-Frame decoder paths onto the root scene:
 <a-scene gltf-model="dracoDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r185/draco/gltf/; basisTranscoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r185/basis/; meshoptDecoderPath: /wp-content/plugins/VRodos/assets/vendor/three-r185/meshopt/meshopt_decoder.js;">
 ```
 
-Decoder files are copied by `npm run build:three` and recorded in `assets/runtime-version-manifest.json` under `three.decoders`.
+Decoder files are copied by `npm run build:vendor` and recorded in `assets/runtime-version-manifest.json` under `three.decoders`.
 Use the browser-global Meshopt decoder file, `meshopt_decoder.js`, in generated clients. A-Frame loads `meshoptDecoderPath` as a classic script, so the ESM `meshopt_decoder.module.js` form is not valid there. The vendor build no longer publishes a `.module.js` compatibility copy; regenerate compiled scenes into the current pipeline instead of relying on older generated-client shims.
 
 A short smoke profile on `Master_Client_766.html` confirmed the generated root scene attribute points at `meshopt_decoder.js` and no longer throws the previous Meshopt `Unexpected token 'export'` / `MeshoptDecoder.ready` errors. For future captures, inspect `scene.gltfModel` in `scripts/profile-master-client.mjs` output to confirm the root scene attribute and decoder globals.
@@ -541,7 +541,7 @@ Takram cloud integration lessons:
 - Treat repeated visual failures against an external demo as an integration audit, not a tuning exercise. The cube/rectangle clouds were caused by exposing Takram's documented cube-sphere local-weather UV seams in local Horizon scenes; changing densities, layer heights, or coverage could hide symptoms but could not fix the projection.
 - Compare four sources before changing behavior: upstream README caveats, upstream story/demo source, the packaged build code actually bundled in VRodos, and our runtime data flow. For this fix, the decisive path was `getGlobeUv(position) -> getCubeSphereUv(position) -> sampleWeather(...)` in Takram's shared cloud shader.
 - Keep upstream behavior for contexts where it is correct. VRodos only switches to local tangent UVs for non-geospatial desktop Horizon clouds; geospatial/global scenes continue using Takram's cube-sphere projection.
-- Patch external library shader code only through deterministic build tooling. `scripts/build-three-vendor.mjs` injects the local tangent helper, `node .\scripts\build-three-vendor.mjs` regenerates `vrodos-takram-clouds.bundle.js`, and `scripts/test-takram-cloud-profile-safety.mjs` asserts the generated bundle still contains the patch.
+- Patch external library shader code only through deterministic build tooling. `scripts/build/vendor-patches.mjs` injects the local tangent helper, `npm run build:vendor` regenerates `vrodos-takram-clouds.bundle.js`, and `scripts/test-takram-cloud-profile-safety.mjs` asserts the generated bundle still contains the patch.
 - Every material/pass that samples the patched shader path must get the same define. Takram cloud color, cloud shadow, sun-occlusion, and light-shaft routing depend on cloud and shadow materials sharing the same weather UV mode.
 - Diagnostics are part of the fix, not cleanup. `cloudWeatherUvMode`, `cloudWeatherUvPatchApplied`, `cloudWorldToEcefFrame`, `cloudCoverageMapperShared`, and the cloud UV debug flags make the runtime state testable without adding public author controls.
 
@@ -675,7 +675,7 @@ If `reflectionsEnabled` is off, `getEffectiveReflectionSource()` returns `none`,
 ## 12. Version Source of Truth
 
 - Root `package.json` and `package-lock.json` define runtime package intent.
-- `npm run build:three` generates `assets/runtime-version-manifest.json`.
+- `npm run build:vendor` generates `assets/runtime-version-manifest.json`.
 - `npm run build:runtime` generates the compiled-scene runtime bundles, the browser settings-contract script from `assets/runtime-settings-contract.json`, and validates/writes `assets/runtime-build-manifest.json`.
 - `assets/runtime-build-manifest.json` defines compiled runtime chunks, dependency order, lazy feature coverage, and generated script URLs consumed by `VRodos_Compiler_Runtime_Script_Planner`.
 - `VRodos_Render_Runtime_Manager` reads the generated manifest for A-Frame, Three, PMNDRS, Takram, and collision BVH metadata.

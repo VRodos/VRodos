@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedBy": "scripts/build-three-vendor.mjs",
+  "generatedBy": "scripts/build-runtime-vendors.mjs",
   "aframe": {
     "label": "A-Frame master",
     "source": "cdn-master",
@@ -31,7 +31,7 @@
     "bundlePath": "assets/js/runtime/master/lib/vrodos-three-addons.bundle.js"
   },
   "postprocessing": {
-    "version": "6.39.2",
+    "version": "6.39.3",
     "global": "POSTPROCESSING",
     "bundleFile": "vrodos-postprocessing.bundle.js",
     "bundlePath": "assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js"
@@ -58,7 +58,7 @@
     }
   },
   "collisionBvh": {
-    "version": "0.9.11",
+    "version": "0.9.13",
     "global": "VRODOS_COLLISION_BVH",
     "bundleFile": "vrodos-collision-bvh.bundle.js",
     "bundlePath": "assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js"
@@ -67,9 +67,9 @@
     "versions": {
       "aframe-extras": "7.7.0",
       "aframe-environment-component": "1.5.0",
-      "stats-gl": "4.2.3",
       "lil-gui": "0.21.0",
-      "lucide": "1.24.0"
+      "lucide": "1.27.0",
+      "stats-gl": "4.2.3"
     },
     "files": {
       "aframe-extras:aframe-extras.min.js": "assets/vendor/aframe-extras/aframe-extras.min.js",

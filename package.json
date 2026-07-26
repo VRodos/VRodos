@@ -14,21 +14,21 @@
     }
   },
   "scripts": {
-    "build": "npm run build:three && npm run build:runtime && npm run build:css",
+    "build": "npm run build:vendor && npm run build:runtime && npm run build:css",
     "build:all": "npm run build:naf && npm run build",
-    "build:three": "node ./scripts/build-three-vendor.mjs",
     "build:runtime": "node ./scripts/build-runtime-master-bundles.mjs",
     "build:naf": "node ./scripts/build-networked-aframe-vendor.mjs",
-    "build:vendor": "npm run build:three",
+    "build:vendor": "node ./scripts/build-runtime-vendors.mjs",
     "assets:audit:master": "node ./scripts/audit-master-client-assets.mjs",
     "assets:optimize:prototype": "node ./scripts/prototype-optimize-master-client-assets.mjs",
     "lint": "eslint \"assets/js/{editor,runtime}/**/*.js\"",
     "lint:fix": "eslint \"assets/js/{editor,runtime}/**/*.js\" --fix",
     "check:syntax": "node ./scripts/check-runtime-syntax.mjs",
+    "check:build-config": "node ./scripts/check-build-config.mjs",
     "check:browser-feature-state": "node ./scripts/check-profile-feature-state.mjs",
     "smoke:browser-feature-state": "node ./scripts/run-browser-feature-state-smoke.mjs",
     "smoke:browser-feature-state:matrix": "node ./scripts/run-browser-feature-state-smoke-matrix.mjs",
-    "check:runtime": "npm run lint && npm run check:syntax && npm run test:runtime && npm run test:compiler && npm run build:runtime && git diff --check",
+    "check:runtime": "npm run lint && npm run check:syntax && npm run check:build-config && npm run test:runtime && npm run test:compiler && npm run build:runtime && git diff --check",
     "test:runtime": "node ./scripts/test-navigation-math.mjs && node ./scripts/test-assessment-runtime.mjs && node ./scripts/test-xr-exit-handoff.mjs && node ./scripts/test-runtime-feature-state.mjs && node ./scripts/test-hardware-diagnostics.mjs && node ./scripts/test-network-chat-runtime.mjs && node ./scripts/test-aframe-runtime-provenance.mjs && node ./scripts/test-loader-decoder-config.mjs && node ./scripts/test-takram-cloud-profile-safety.mjs && node ./scripts/test-shadow-map-compatibility.mjs && node ./scripts/test-profile-feature-state-check.mjs",
     "test:compiler": "node ./scripts/run-compiler-runtime-tests.mjs",
     "format": "prettier --write \"**/*.{js,css,md,json}\"",
@@ -38,18 +38,18 @@
     "size:css": "node ./scripts/report-css-size.mjs"
   },
   "devDependencies": {
-    "@gltf-transform/cli": "4.4.1",
-    "autoprefixer": "^10.5.2",
+    "@gltf-transform/cli": "4.4.2",
+    "autoprefixer": "^10.5.4",
     "daisyui": "^4.12.24",
     "esbuild": "^0.28.1",
-    "eslint": "^10.7.0",
+    "eslint": "^10.8.0",
     "meshoptimizer": "^1.2.0",
-    "postcss": "^8.5.19",
-    "postprocessing": "^6.39.2",
-    "prettier": "^3.9.5",
+    "postcss": "^8.5.23",
+    "postprocessing": "^6.39.3",
+    "prettier": "^3.9.6",
     "tailwindcss": "^3.4.19",
     "three": "npm:super-three@0.185.0",
-    "three-mesh-bvh": "^0.9.11"
+    "three-mesh-bvh": "^0.9.13"
   },
   "engines": {
     "node": ">=22.13.0"
@@ -68,7 +68,7 @@
     "aframe-environment-component": "1.5.0",
     "aframe-extras": "7.7.0",
     "lil-gui": "0.21.0",
-    "lucide": "^1.24.0",
+    "lucide": "^1.27.0",
     "stats-gl": "^4.2.3"
   }
 }

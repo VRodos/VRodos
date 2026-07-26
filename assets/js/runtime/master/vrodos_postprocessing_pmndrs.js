@@ -2,7 +2,7 @@
  * VRodos pmndrs Post-Processing Pipeline (clean-room sibling to vrodos_postprocessing.js)
  *
  * Uses pmndrs/postprocessing 6.39 (window.POSTPROCESSING, bundled by
- * scripts/build-three-vendor.mjs) to drive an EffectComposer that fuses
+ * scripts/build-runtime-vendors.mjs) to drive an EffectComposer that fuses
  * compatible effects into as few EffectPasses as possible. This module is
  * selected per-scene via the postFXEngine scene-settings
  * field. See POSTPROCESSING_MIGRATION_PLAN.md §11 for the architectural decision.

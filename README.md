@@ -78,7 +78,7 @@ Important ownership rules:
 
 ## Compiled Runtime Summary
 
-Runtime versions are sourced from root [`package.json`](package.json), [`package-lock.json`](package-lock.json), and generated manifests. `npm run build:three` writes [`assets/runtime-version-manifest.json`](assets/runtime-version-manifest.json), and [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php) reads that manifest at runtime.
+Runtime versions are sourced from root [`package.json`](package.json), [`package-lock.json`](package-lock.json), and generated manifests. `npm run build:vendor` writes [`assets/runtime-version-manifest.json`](assets/runtime-version-manifest.json), and [`includes/class-vrodos-render-runtime-manager.php`](includes/class-vrodos-render-runtime-manager.php) reads that manifest at runtime.
 
 Current compiled scenes are A-Frame-hosted clients with one shared Three.js substrate. The runtime can load these feature families as scene metadata requires:
 
