@@ -2,104 +2,78 @@
 
 Status date: 2026-07-26.
 
-This is the current coordination doc for compiled desktop and non-VR scene work. It consolidates active TODOs from the rendering, performance, collision, and framework notes while preserving historical findings under `documentation/archive/rendering-history/README.md`.
+This is the single active backlog for compiled desktop inline and fullscreen scenes. Current rendering behavior belongs in `../RENDERING_PIPELINE.md`; framework and lifecycle ownership belongs in `vrodos-compiled-scene-framework-integration.md`; completed investigations belong in `archive/rendering-history/README.md`.
 
-## Scope
+## Scope And Baseline
 
-This roadmap is for desktop inline/fullscreen compiled scenes. Standalone headset behavior, immersive WebXR parity, and PC-rendered VR are intentionally deferred to their own pass.
+- Preserve both supported desktop post-FX engines: Legacy for SSR/TAA/custom SAO and PMNDRS for modern AA/AO, finishing effects, and Takram atmosphere.
+- Preserve the package/manifest-driven A-Frame 1.8.0 master artifact and shared Three r185 runtime. A later A-Frame/Three upgrade is a separate migration.
+- Preserve single-player and networked Master/Simple compile targets, A-Frame Environment for non-Takram scenes, static BVH collision, and explicit per-asset derivative selection.
+- Treat new scenes as freshly compiled into the current pipeline. `runtime/build/` HTML is generated output, not source or a compatibility target.
+- Keep immersive WebXR and standalone headset policy out of desktop rendering changes unless the headset roadmap explicitly makes them shared work.
 
-Keep active features intact during cleanup:
+## Active Desktop Acceptance
 
-- Legacy post-FX engine and controls.
-- PMNDRS/Takram desktop rendering, atmosphere, lighting, lens flare, and clouds.
-- Networked Master Client and Simple Client paths.
-- A-Frame Environment support for non-Takram scenes.
-- Headset/VR profile behavior, including legacy hidden profile normalization.
-- Shared generic camera/layout fallbacks unless a focused runtime audit proves they are dead.
+### Cloud Light Shafts And Weather
 
-Assume new scenes are recompiled into the current pipeline. Already-generated HTML does not need old compatibility shims during this cleanup phase.
+The author-facing `pmndrsCloudsLightShaftsEnabled` control is implemented and defaults on. It requests Takram's cloud-aware shaft path without changing cloud quality. High/Ultra desktop daytime scenes can make the request effective; Low/Medium, immersive XR, below-horizon sun, unavailable resources, or an unchecked control must produce an explicit skip reason.
 
-## Current Runtime Baseline
+The remaining acceptance work is a freshly compiled desktop PMNDRS Horizon scene:
 
-The runtime baseline is package/manifest driven:
+- [ ] High and Ultra daytime clouds show shafts when Light Shafts is checked.
+- [ ] Unchecking Light Shafts removes only shafts; clouds, haze, cloud/sun occlusion, reflections, and lens-flare attenuation remain visually unchanged.
+- [ ] Low and Medium report `profile-disabled` without changing the selected cloud quality.
+- [ ] Below-horizon/night scenes report `sun-below-horizon` and retain no stale shaft buffer.
+- [ ] The unchecked control reports `lightShaftsRequested=false`, `lightShafts=false`, and `lightShaftsSkippedReason=author-disabled`.
+- [ ] SSAO off and on both retain correct shared `NormalPass` ownership.
+- [ ] Horizon local-weather UV diagnostics report `cloudWeatherUvMode=local-tangent` and `cloudWeatherUvPatchApplied=true`, without cube-sphere seam blocks.
+- [ ] Coverage remains visibly monotonic across styles, including representative values `0.27`, `0.5`, and `0.7+`.
+- [ ] The regrouped build dialog remains usable at wide and narrow widths.
 
-- A-Frame metadata and package intent live in root `package.json`.
-- Locked package versions live in root `package-lock.json`.
-- Generated A-Frame, Three, PMNDRS, Takram, decoder, and BVH metadata lives in `assets/runtime-version-manifest.json`.
-- Generated compiled-client chunk order, dependency, and lazy-feature coverage lives in `assets/runtime-build-manifest.json`.
+The contract, compiler serialization, runtime gates, diagnostics, generated bundles, and automated/static acceptance checks are complete. Do not mark this visual checklist complete from static tests or desktop WebXR emulator evidence.
 
-The current public vendor baseline is Three r185 with the pinned A-Frame 1.8.0 master artifact and its shared `window.THREE` substrate. Root package files and generated manifests remain the version source of truth.
+### General Rendering
 
-## Code Cleanup Goals
-
-Active cleanup:
-
-- Keep only `assets/vendor/three-r185/meshopt/meshopt_decoder.js` for A-Frame `meshoptDecoderPath`; the old `meshopt_decoder.module.js` generated-client compatibility copy is no longer produced.
-- Support only the current `collision-proxy` category slug for hidden compiled blockers; the legacy `blocking-obstacles` alias is no longer normalized by the editor/compiler for new scenes.
-
-Why this is code cleanup, not feature cleanup:
-
-- New compiled scenes are regenerated from the current compiler, so old generated-client compatibility shims increase build and documentation surface without supporting an active authoring feature.
-- A-Frame expects `meshoptDecoderPath` to resolve to the browser-global decoder file, so keeping the ESM `.module.js` copy beside it was only an old-output compatibility path.
-- `collision-proxy` is the current authored helper category for hidden blockers. Keeping the older `blocking-obstacles` alias would preserve a stale content name in new compiler/editor behavior, while the actual collision feature remains unchanged.
-- Runtime features with active owners stay intact: legacy post-FX, PMNDRS/Takram desktop rendering, networked clients, A-Frame Environment presets, current compiler output, and headset behavior.
-- Desktop cleanup stops at shared fallback code unless a later focused audit proves a path is unreachable by active Master/Simple clients.
-- Package versions are referenced through root package files and generated manifests because hardcoded patch numbers drift quickly during dependency updates.
-
-Deferred cleanup:
-
-- VR/headset hidden profile names and policy normalization belong in a later VR-specific cleanup pass.
-- Generic camera/layout fallbacks in shared runtime components should remain until a focused audit proves they cannot be reached by active Master/Simple clients.
-- Asset CPT traits can be converted into concrete services after the current admin UI behavior is verified.
-- Admin/dashboard enqueue ownership can be revisited if those scripts keep growing.
-
-## Desktop Rendering Backlog
-
-- Keep the pinned A-Frame 1.8.0 artifact and Three r185 baseline reproducible; audit any later upstream pin as a separate shared-runtime migration.
-- Keep smoke coverage for Horizon and non-Horizon PMNDRS scenes.
+- Keep representative Horizon and non-Horizon PMNDRS browser smoke scenes.
 - Continue validating native PMNDRS SSAO across broader authored scenes.
-- Validate the desktop Takram cloud-sun bridge with day-night cycle scenes: visible sun-disk cloud coverage should dim direct/indirect light factors, reflections, shadow contrast/softness, and lens flare through diagnostics. High/ultra quality should report `cloudSkySunDiskMode=takram-phase`, keeping Takram's native disk behind cloud composition; the VRodos sun sprite is a fallback path, not the target look.
-- Validate desktop cloud authoring presets and wind controls from `TAKRAM_CLOUD_OCCLUSION_PLAN.md`: style presets should change cloud-layer character with demo-safe layer fields only, coverage must visibly change every style through the shared Horizon mapper at `0.27`, `0.5`, and high values, Horizon non-geospatial scenes should report `cloudWeatherUvMode=local-tangent` / `cloudWeatherUvPatchApplied=true` with no cube-sphere seam blocks, and diagnostics should report clean profile validation plus matching applied layer signatures. High/ultra cloud quality should generate shadow length independently, preserve the cloud-owned shared NormalPass when SSAO is off or on, and settle on `cloudLightShaftsMode=masked-aerial-sky`, `cloudShadowLengthBufferReady=true`, `aerialShadowLengthDefineReady=true`, and `cloudLightShaftsVisible=true` when AerialPerspective, sun position, mask readiness, and non-XR desktop policy allow shafts.
-- The build dialog now exposes one contract-backed Light Shafts checkbox beside the cloud controls. It defaults on to preserve the established High/Ultra desktop behavior, gates both shaft generation and masked-Aerial routing, and leaves clouds plus the cloud-sun lighting bridge unchanged when off. Compiled-scene visual/performance acceptance remains the active follow-up.
-- Prototype a broader desktop-only Takram `post-process-albedo` mode later; the current production path uses masked Aerial sky lighting only for cloud shafts while authored meshes stay on the light-source path.
-- Keep immersive XR composer/cloud bypass policy out of this desktop pass.
+- Validate the cloud/sun lighting bridge through a full day-night cycle: direct/indirect light factors, reflections, shadow contrast/softness, native sun visibility, and lens flare must move in the same direction as sampled cloud coverage.
+- Keep `cloudSkySunDiskMode=takram-phase` as the High/Ultra target. The VRodos sun sprite is a Low/Medium or debug fallback, not the target desktop look.
 
 ## Performance And Asset Backlog
 
 - Add KTX2/Basis texture derivative generation for texture-heavy GLBs.
-- After texture derivatives are stable, define explicit LOD derivative families such as `lod0`, `lod1`, and `lod2`.
-- Keep derivative substitution explicit and per-asset opt-in. Do not silently downgrade uploaded source assets.
-- Use profiler/Spector captures and visual parity checks before promoting new derivative families into compile selection.
+- After texture derivatives are stable, define explicit opt-in LOD derivative families such as `lod0`, `lod1`, and `lod2`.
+- Keep derivative substitution explicit and per asset. Never silently downgrade uploaded source assets.
+- Use profiler/Spector captures and visual parity checks before promoting a derivative family into compile selection.
 
 ## Collision Backlog
 
 - Add spawn-clearance diagnostics for compiled walkable scenes.
-- Add collision triangle-count and BVH build timing diagnostics.
+- Add collision triangle-count and BVH build-time diagnostics.
 - Add traversal presets: `Relaxed`, `Balanced`, and `Strict`.
-- Tighten corner behavior where axis sliding and blocker rejection still feel sticky.
-- Keep representative browser smoke scenes for walkable surfaces, hidden collision proxies, rough terrain recovery, and high-poly art with explicit proxy blockers.
+- Tighten sticky corner behavior without regressing blocker rejection or rough-terrain recovery.
+- Keep representative browser smoke scenes for walkable surfaces, collision proxies, rough terrain, and high-poly art with explicit proxy blockers.
 
 ## Research Only
 
-- Steep-face shadow proxy for terrain shadows.
-- Native Takram `SkyMaterial` shader patching remains research-only; the desktop production path uses Takram cloud accurate phase on high/ultra and keeps the public `SkyMaterial.sun` flag plus VRodos sun sprite as a fallback only.
-- PMNDRS `GodRaysEffect` integration, if needed, after the cloud lighting bridge is visually stable.
-- Geospatial date/time solar simulation, the experimental full-scene `takram-albedo` / mixed-lighting mode, and related geospatial helper experiments.
+- PMNDRS `GodRaysEffect`. It is not cloud-aware by default because Takram clouds live in post-process buffers rather than ordinary scene depth; do not treat it as a replacement for Takram cloud light shafts.
+- Projected moving cloud shadows on terrain or meshes.
+- Desktop-only Takram `post-process-albedo` / mixed-lighting mode.
+- Steep-face terrain shadow proxies.
+- Native Takram `SkyMaterial` shader patching.
+- Geospatial date/time solar simulation and broader geospatial helpers.
+- WebGPU and future A-Frame/Three upgrades as isolated runtime migrations.
 
-## Deferred VR And PCVR Items
+## Deferred XR Work
 
-- Standalone headset policy and validation checklist live in `VR_HEADSET_RUNTIME_HANDOFF.md`; the current headset TODO list lives in `documentation/compiled-headset-roadmap.md`.
-- PC-rendered VR parent profile planning lives in `PC_RENDERED_VR_PLAN.md`.
-- Immersive XR/headset Takram clouds remain deferred until PMNDRS stereo composer behavior is proven safe.
-- Headset hidden profile cleanup should be done only when working on the VR runtime path.
+Standalone headset and parked PC-rendered VR work live in `compiled-headset-roadmap.md`. Takram clouds remain disabled in the public standalone headset profile until stereo PMNDRS ownership is proven safe on device.
 
-## Historical Doc Index
+## Documentation Ownership
 
-Historical rendering, performance, Takram, collision, and VR-platform findings are consolidated in `documentation/archive/rendering-history/README.md`. Treat that file as evidence and implementation history, not as a competing active TODO list.
-
-Current technical references:
-
-- `README.md`: project overview and high-level current compiled runtime.
-- `AGENTS.md`: agent handoff rules and build/verification expectations.
-- `RENDERING_PIPELINE.md`: canonical current rendering and collision technical reference.
-- `documentation/vrodos-compiled-scene-framework-integration.md`: framework boundaries, runtime ownership, lazy chunk selection, and spatial UI integration.
+- `../README.md`: product overview, workflow, setup, and documentation map.
+- `../RENDERING_PIPELINE.md`: current rendering, lighting, cloud, shadow, collision, reflection, diagnostics, and profiling behavior.
+- `compiler-architecture.md`: compiler request, settings, plan, artifact, and security boundaries.
+- `vrodos-compiled-scene-framework-integration.md`: A-Frame/Three ownership, lazy chunks, XR lifecycle, and spatial UI.
+- `compiled-headset-roadmap.md`: standalone headset policy, device validation, and parked PCVR work.
+- `runtime-library-audit.md`: test-enforced locked library inventory and provenance.
+- `archive/rendering-history/README.md`: historical evidence only; never a competing active TODO list.

@@ -1,6 +1,6 @@
 # Runtime library audit
 
-Audited against `package-lock.json`, `services/vrodos-network-runtime/package-lock.json`, package peer metadata, and the linked official documentation on 2026-07-15. Lockfiles are the exact-version authority; generated manifests must agree with them.
+Validated against `package-lock.json`, `services/vrodos-network-runtime/package-lock.json`, and generated runtime manifests on 2026-07-26. Package peer metadata and the linked official documentation were last audited on 2026-07-15. Lockfiles are the exact-version authority; generated manifests must agree with them.
 
 ## Browser and compiled-runtime libraries
 

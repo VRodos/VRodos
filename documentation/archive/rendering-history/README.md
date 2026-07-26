@@ -5,15 +5,14 @@ This file preserves the useful subject matter from the old rendering-history not
 Current docs:
 
 - `../../../RENDERING_PIPELINE.md`: canonical compiled rendering, post-FX, shadows, collision, reflection, and diagnostics reference.
-- `../../compiled-desktop-roadmap.md`: current compiled desktop/non-VR cleanup goals and backlog.
-- `../../compiled-headset-roadmap.md`: current standalone VR-headset baseline, active TODOs, and deferred experiments.
-- `../../../VR_HEADSET_RUNTIME_HANDOFF.md`: current standalone headset policy and validation commands.
-- `../../../PC_RENDERED_VR_PLAN.md`: parked PC-rendered VR plan.
+- `../../compiled-desktop-roadmap.md`: active desktop acceptance, performance, asset, collision, and rendering research backlog.
+- `../../compiled-headset-roadmap.md`: standalone headset policy and device validation plus parked PC-rendered VR work.
+- `../../vrodos-compiled-scene-framework-integration.md`: A-Frame/Three ownership, WebXR lifecycle, and immersive spatial UI.
 
 ## Consolidation Rationale
 
 - The old files mixed shipped behavior, debug history, discarded experiments, and future TODOs. Keeping them as separate current-looking docs made it too easy to follow stale instructions.
-- The active docs now split by responsibility: rendering reference, desktop roadmap, headset roadmap, headset handoff, and parked PCVR plan.
+- The active docs now split by responsibility: rendering reference, desktop roadmap, consolidated headset/PCVR roadmap, framework integration, and compiler architecture.
 - This summary keeps the useful evidence from the old notes: accepted/rejected render paths, profiling lessons, asset-derivative constraints, collision decisions, shadow/reflection caveats, and Quest/headset findings.
 - Removed files were historical source notes, not runtime source code. Their subject matter is preserved below, while active implementation details remain in the current docs listed above.
 - Future work should move only the still-actionable item into the relevant active roadmap, then keep any old context here as evidence.
@@ -31,8 +30,8 @@ Current docs:
 - The accepted current desktop Horizon path is Takram light-source lighting for A-Frame/PBR content, not the Takram vanilla `post-process-albedo` model.
 - The future Takram-vanilla target remains an explicit desktop-only `post-process-albedo` prototype. Do not fake that look by only raising helper fill, exposure, or bloom.
 - Takram visible sky should keep Takram procedural ground disabled for local Horizon scenes so authored terrain/navmesh remains the actual ground.
-- Takram cloud work shipped as opt-in desktop PMNDRS/Takram clouds with local assets and quality profiles. Cloud light shafts remain research-only until measured on representative scenes.
-- Geospatial date/time solar simulation, `LightingMaskPass`, and related geospatial helper ideas remain research, not current implementation.
+- Takram cloud work shipped as opt-in desktop PMNDRS/Takram clouds with local assets, quality/style/wind controls, and a default-enabled Light Shafts request. High/Ultra desktop daytime scenes can activate the masked-Aerial shaft route; compiled-scene visual/performance acceptance remains open in the desktop roadmap.
+- Geospatial date/time solar simulation and broader mixed-lighting/geospatial helper ideas remain research. The focused `LightingMaskPass` used by current desktop cloud shafts is implemented production behavior.
 
 ### Performance And Assets
 
@@ -74,3 +73,9 @@ The long historical files that fed this summary were consolidated to avoid paral
 - `PERFORMANCE_OPTIMIZATION_PLAN.md`
 - `AFRAME_COLLISION_ROADMAP.md`
 - `COMPILED_SCENE_PLATFORM_AUDIT_AND_VR_PARITY_PLAN.md`
+
+The completed or overlapping active-looking trackers removed in the 2026-07-26 documentation consolidation were:
+
+- `TAKRAM_CLOUD_OCCLUSION_PLAN.md`; current cloud behavior moved to `../../../RENDERING_PIPELINE.md` and remaining visual acceptance to `../../compiled-desktop-roadmap.md`.
+- `VR_HEADSET_RUNTIME_HANDOFF.md` and `PC_RENDERED_VR_PLAN.md`; policy, commands, and parked PCVR acceptance moved to `../../compiled-headset-roadmap.md`.
+- `documentation/repo-modernization-regression-plan.md`; its completed aggregate verification flow is now documented in `../../../README.md` and enforced by root package scripts.

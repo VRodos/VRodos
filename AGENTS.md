@@ -86,7 +86,7 @@ VR spatial UI current state:
 - Greek assessment/CEFR text in spatial UI depends on Noto Sans assets under `assets/vendor/fonts/noto-sans/` and the Zappar MSDF worker/WASM under `assets/vendor/zappar-msdf-generator/`. Do not transliterate Greek or restore A-Frame text primitives to suppress glyph warnings.
 - The spatial UI runtime passes the MSDF worker an `application/wasm` data URL for the vendored WASM asset so local servers that omit `.wasm` MIME types do not trigger streaming-compile warnings.
 - Spatial UI panel sizing uses physical meters plus calculated `designWidthPx`/`pixelSize`; keep the default immersive panel scale at `1` and tune panel width/height, design pixels, and internal frame spacing instead of globally scaling the group.
-- Immersive assessment and image/text POI panels should spawn camera-relative at readable/controller distance with `centerAtEyeLevel: true`, no object `anchorElement`, and only a short initial anchor refresh. CEFR can remain compact/lower through its explicit `topAtEyeLevel` configuration.
+- Immersive CEFR, assessment, and image/text POI panels should spawn camera-relative at readable/controller distance with `centerAtEyeLevel: true`, no object `anchorElement`, and only a short initial anchor refresh. Keep CEFR compact through its panel dimensions and small vertical offset, not `topAtEyeLevel`.
 - Controller ray visuals use the active A-Frame controller line, but spatial UI trims that line and clamps the active controller raycaster `far` distance to the dialog surface while a panel is active, shows a small hit dot anywhere on the surface, switches to a larger/action color over selectable controls, suppresses scene raycast targets behind the modal, and restores everything on close; do not hide/retarget controller rays or add A-Frame hit planes for PMNDRS panels.
 - When no modal is open in immersive XR, normal scene `.raycastable` targets get a ray endpoint dot through `vrodos-scene-ray-feedback`; this is feedback only and must not retarget scene raycasters or replace video/POI/assessment click paths.
 - PMNDRS can clear its pointer intersection during a click that closes/rerenders a panel; treat that stale `pointer.up()` intersection error as benign cleanup, not as a failed click or a reason to add fallback hit geometry.
@@ -122,11 +122,11 @@ Lighting/shadow ownership:
 Rendering docs:
 
 - `RENDERING_PIPELINE.md`: current technical render-stack reference
-- `documentation/compiled-desktop-roadmap.md`: current compiled desktop/non-VR cleanup goals, active backlog, deferred VR items, and historical-doc index
-- `documentation/compiled-headset-roadmap.md`: current standalone VR-headset baseline, active TODOs, deferred experiments, and validation focus
+- `documentation/compiled-desktop-roadmap.md`: current desktop acceptance, performance, asset, collision, and rendering research backlog
+- `documentation/compiled-headset-roadmap.md`: standalone headset policy and device validation plus the parked PC-rendered VR profile
 - `documentation/vrodos-compiled-scene-framework-integration.md`: compiled-scene framework boundaries, runtime ownership, lazy chunks, and immersive PMNDRS/Horizon VR dialog ownership
-- `VR_HEADSET_RUNTIME_HANDOFF.md`: current standalone headset runtime policy and validation checklist
-- `PC_RENDERED_VR_PLAN.md`: parked PC-rendered VR parent profile plan
+- `documentation/compiler-architecture.md`: compiler request, plan, target, artifact-publication, and security boundaries
+- `documentation/runtime-library-audit.md`: test-enforced locked dependency and runtime provenance inventory
 - `documentation/archive/rendering-history/README.md`: consolidated historical rendering, performance, Takram, collision, and VR-platform findings
 
 External rendering library fixes:
@@ -148,7 +148,10 @@ Tailwind and DaisyUI both use the `tw-` prefix.
 - Do not use `peer-checked:tw-*` variants for important state styling in WordPress templates; use explicit sibling CSS when needed.
 - Put `data-theme="emerald"` on `<html>` only.
 - Every rendered page body must include `vrodos-manager-wrapper`; Tailwind uses `important: '.vrodos-manager-wrapper'`.
+- `assets/css/vrodos_modern.css` is the source stylesheet; `assets/css/vrodos_modern_compiled.css` is generated.
+- When adding or moving PHP/JS template content that contains Tailwind classes, keep the `tailwind.config.js` content paths accurate.
 - Do not manually run CSS builds unless the task is explicitly about building CSS. Development normally relies on `npm run watch:css`.
+- When an explicit CSS build is required, use `npm run build:css`.
 
 Template rules:
 

@@ -126,7 +126,7 @@ VRodos uses A-Frame as the orchestration layer:
 
 ## 4.1 Immersive Dialog UI Ownership
 
-Current state: 2026-06-19.
+Current ownership contract:
 
 CEFR prompts, assessment dialogs, and image/text POI dialogs in immersive XR are not rendered with A-Frame `a-plane`, `a-text`, or A-Frame button entities. They use `window.VRODOSSpatialUI`, a PMNDRS UIKit/Horizon layer that creates a `THREE.Group` under `a-scene.object3D` and renders Horizon components through the same A-Frame-owned Three runtime. VR video playback is different by design: trigger clicks on the authored video object should toggle play/pause directly and should not open a play/pause dialog.
 
@@ -338,7 +338,7 @@ In compiled Horizon scenes, Takram owns the sky and the default native sun disk.
 
 ### Takram Volumetric Clouds
 
-Takram clouds are optional and desktop-only in v1. They load through the `takram-clouds` chunk only when PMNDRS post-FX, high render quality, Takram atmosphere, and cloud settings are all enabled.
+Takram clouds are optional and desktop-only in v1. They load through the `takram-clouds` chunk when a desktop-like profile uses PMNDRS/Takram atmosphere and authored clouds. The authored cloud-quality setting selects the Low, Medium, High, or Ultra runtime profile; it does not decide whether the chunk is present.
 
 Runtime contract:
 
@@ -354,9 +354,9 @@ Runtime contract:
 - Takram cloud temporal upscaling stays enabled by default for desktop performance. Use `?vrodos_debug_disable_pmndrs_cloud_temporal_upscale=1` only for visual comparison because full-resolution cloud raymarching is expensive.
 - `pmndrsAerialPerspectiveEnabled` remains the authored Aerial Haze toggle, but active clouds require the AerialPerspective composition pass for cloud overlay/shadow routing. The compile dialog shows that as a checked/locked effective state while preserving the authored toggle value for when clouds are later disabled.
 - Active daytime desktop clouds also drive a CPU-only sun-occlusion bridge on Takram light-source scene lighting and the visible desktop sun disk. It combines authored cloud coverage with a Horizon sun-disk cloud-opacity sample, then dims `SunDirectionalLight`, `SkyLightProbe`, hemisphere fill, ambient bounce, reflection intensity, Takram lens flare, and direct shadow opacity/softness while keeping direct sun shadows active under heavy sun-disk occlusion. High/ultra profiles apply Takram Basic-demo-aligned phase settings (`accuratePhaseFunction`, `accurateSunSkyLight`, `multiScatteringOctaves=8`, `shadow.maxFar=100000`) so the native disk is veiled by cloud composition (`cloudSkySunDiskMode=takram-phase`). Lower/debug fallback can still use the public `SkyMaterial.sun` flag plus a VRodos sprite when the projected disk is covered. Moon/night readability remains unchanged because the bridge is gated by direct sun visibility.
-- High and ultra desktop cloud profiles generate Takram `CloudsEffect.lightShafts` whenever clouds are active, the sun is above the horizon, and the renderer is non-XR desktop. Generation is independent of coverage and downstream Aerial readiness; the resulting buffer routes only after masked AerialPerspective is ready. The cloud-owned shared `NormalPass` must be retained through SSAO setup and reused when AO is active. Low and medium keep light shafts disabled for lower GPU cost; `?vrodos_debug_disable_pmndrs_cloud_light_shafts=1` remains available for troubleshooting.
+- High and Ultra desktop cloud profiles generate Takram `CloudsEffect.lightShafts` only when `pmndrsCloudsLightShaftsEnabled` is authored on, clouds are active, the sun is above the horizon, and the renderer is non-XR desktop. Generation is independent of coverage and downstream Aerial readiness; the resulting buffer routes only after masked AerialPerspective is ready. The cloud-owned shared `NormalPass` must be retained through SSAO setup and reused when AO is active. Low and Medium keep light shafts disabled for lower GPU cost. Diagnostics distinguish `lightShaftsRequested` from effective `lightShafts` and report `author-disabled`, `profile-disabled`, `not-desktop`, `sun-below-horizon`, or resource-readiness reasons as applicable. `?vrodos_debug_disable_pmndrs_cloud_light_shafts=1` remains available for troubleshooting.
 - Supported quality values are Takram's four performance profiles: `low`, `medium`, `high`, and `ultra`.
-- The cloud authoring surface stays intentionally narrow: enable, quality, coverage, style, wind animation, wind speed, and wind direction. Tone mapping, location, and local date/time remain the UI controls for atmosphere/celestial context; deeper Takram cloud fields are runtime profile choices surfaced through diagnostics.
+- The cloud authoring surface stays intentionally narrow: enable, quality, coverage, style, wind animation, wind speed, wind direction, and Light Shafts. Tone mapping, location, and local date/time remain the UI controls for atmosphere/celestial context; deeper Takram cloud fields are runtime profile choices surfaced through diagnostics.
 - Real immersive WebXR skips clouds because the PMNDRS composer is bypassed while `renderer.xr.isPresenting`.
 
 The cloud path must fail closed. Missing WebGL2/Data3DTexture support, mobile, missing local assets, missing or crashed cloud bundle, disabled PMNDRS composer, and immersive XR all produce cloud diagnostics instead of breaking first render. The v1 lighting bridge is global overcast dimming plus Takram light shafts, not local projected moving cloud shadows on terrain.
@@ -398,9 +398,10 @@ Super-three's WebXR layer, multiview, and postprocessing helpers are opt-in vali
 
 The A-Frame Environment component is still a legacy preset-background provider for non-Takram compiled scenes. It is not the owner of WebXR session creation, WebXR layers, or controller input. Moving more backgrounds to PMNDRS/Takram is desirable, but it is a separate rendering-pipeline migration from the `XRWebGLBinding` VR-entry fix.
 
-## 11. Future Features & Roadmap
+## 11. Roadmap Ownership
 
-As we continue to push the boundaries of realism and performance, several advanced features are planned for future integration into our pipeline:
+This document defines current framework boundaries, not feature priority:
 
-- **Takram Geospatial Expansion**: Expanding the Takram integration to include full geospatial date/time solar simulation, mixed-lighting masks, and validated immersive headset cloud rendering.
-- **WebGPU Migration**: Validate WebGPU as a separate opt-in experimental renderer after the classic A-Frame/WebGL r185 baseline is stable.
+- Desktop rendering acceptance and research, including God Rays, geospatial expansion, mixed lighting, and WebGPU, live in `compiled-desktop-roadmap.md`.
+- Standalone headset policy, Quest validation, deferred immersive features, and parked PCVR work live in `compiled-headset-roadmap.md`.
+- Rendering implementation details and diagnostic fields live in `../RENDERING_PIPELINE.md`.

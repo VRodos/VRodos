@@ -11,15 +11,17 @@ It combines:
 
 ## Documentation Map
 
-Keep current behavior in one place where possible:
+Each current concern has one canonical owner:
 
-- [`documentation/vrodos-compiled-scene-framework-integration.md`](documentation/vrodos-compiled-scene-framework-integration.md): compiled-scene framework boundaries, shared Three.js ownership, lazy runtime chunks, and immersive PMNDRS UIKit Horizon dialog ownership.
-- [`documentation/compiled-desktop-roadmap.md`](documentation/compiled-desktop-roadmap.md): current compiled desktop/non-VR cleanup goals, active backlog, deferred VR items, and historical-doc index.
-- [`documentation/compiled-headset-roadmap.md`](documentation/compiled-headset-roadmap.md): current standalone VR-headset baseline, active headset TODOs, deferred experiments, and validation focus.
-- [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md): canonical compiled runtime rendering, PMNDRS/Takram, day-night lighting, shadows, emissive/readability handling, diagnostics, and future render-track notes.
-- [`VR_HEADSET_RUNTIME_HANDOFF.md`](VR_HEADSET_RUNTIME_HANDOFF.md): current standalone headset runtime policy, completed cleanup decisions, and validation checklist.
-- [`PC_RENDERED_VR_PLAN.md`](PC_RENDERED_VR_PLAN.md): future PC-rendered VR parent profile plan, parked until hardware/runtime validation.
-- Historical rendering/performance findings are summarized in [`documentation/archive/rendering-history/README.md`](documentation/archive/rendering-history/README.md).
+- [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md): compiled rendering, PMNDRS/Takram, lighting, clouds, shadows, collision, reflections, diagnostics, and profiling.
+- [`documentation/compiler-architecture.md`](documentation/compiler-architecture.md): compiler requests, settings, plan resolution, target assembly, artifact publication, and security boundaries.
+- [`documentation/vrodos-compiled-scene-framework-integration.md`](documentation/vrodos-compiled-scene-framework-integration.md): A-Frame/Three ownership, lazy runtime chunks, WebXR lifecycle, and immersive PMNDRS UIKit/Horizon UI.
+- [`documentation/compiled-desktop-roadmap.md`](documentation/compiled-desktop-roadmap.md): active desktop acceptance, performance, asset, collision, and rendering research backlog.
+- [`documentation/compiled-headset-roadmap.md`](documentation/compiled-headset-roadmap.md): standalone headset policy and device validation plus the parked PC-rendered VR profile.
+- [`documentation/runtime-library-audit.md`](documentation/runtime-library-audit.md): test-enforced locked runtime, browser, build, and service dependency inventory.
+- [`documentation/archive/rendering-history/README.md`](documentation/archive/rendering-history/README.md): consolidated historical evidence; it is not an active TODO list.
+
+Component-specific setup stays beside the component: [`services/vrodos-network-runtime/README.md`](services/vrodos-network-runtime/README.md) for the network service and [`patches/networked-aframe/README.md`](patches/networked-aframe/README.md) for the Networked-Aframe patch queue.
 
 ## What VRodos Supports Today
 
@@ -89,7 +91,7 @@ Current compiled scenes are A-Frame-hosted clients with one shared Three.js subs
 - direct immersive video trigger playback without a play/pause dialog;
 - networked/collaborative components when the scene selects the networked runtime.
 
-Detailed rendering, collision, performance, diagnostics, and compile-control behavior lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). Active desktop/non-VR work is tracked in [`documentation/compiled-desktop-roadmap.md`](documentation/compiled-desktop-roadmap.md). Standalone headset work is tracked in [`documentation/compiled-headset-roadmap.md`](documentation/compiled-headset-roadmap.md) and [`VR_HEADSET_RUNTIME_HANDOFF.md`](VR_HEADSET_RUNTIME_HANDOFF.md).
+Detailed rendering, collision, performance, diagnostics, and compile-control behavior lives in [`RENDERING_PIPELINE.md`](RENDERING_PIPELINE.md). Active desktop work is tracked in [`documentation/compiled-desktop-roadmap.md`](documentation/compiled-desktop-roadmap.md); standalone headset and parked PCVR work are tracked in [`documentation/compiled-headset-roadmap.md`](documentation/compiled-headset-roadmap.md).
 
 ## Compiled Runtime Rules
 
@@ -209,6 +211,16 @@ npm run build
 Do not manually copy `postprocessing.min.js` into the runtime. PMNDRS globals are exported by `assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js` as `window.POSTPROCESSING`, using A-Frame's existing `window.THREE`.
 
 Do not load a newer Three.js beside the current classic A-Frame runtime. Future Three upgrades should be tested through a separate A-Frame module/import-map runtime track so A-Frame, VRodos, PMNDRS, Takram, loaders, and addons all share one Three instance.
+
+### Verification
+
+Use the aggregate runtime gate for changes that touch the compiler or compiled runtime:
+
+```bash
+npm run check:runtime
+```
+
+It runs lint, syntax checks, runtime tests, compiler tests, the runtime bundle build, and `git diff --check`. Recompile representative clients after runtime changes. Browser/CDP smoke and real Quest validation remain required when a change affects generated-client behavior or immersive XR; the exact workflows live in the desktop and headset roadmaps.
 
 ## Upload Limits
 

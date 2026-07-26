@@ -1,148 +1,148 @@
 # VRodos Compiled Headset Roadmap
 
-Status date: 2026-07-10.
+Status date: 2026-07-26.
 
-The shared runtime baseline is the pinned A-Frame 1.8.0 master artifact with Three r185. Desktop acceptance is the first migration gate; after it passes, pause for a connected Quest 2 and revalidate the existing public `headset` target before declaring the migration complete. Quest-specific profile redesign remains separate work.
+This is the single active policy, validation, and backlog document for both standalone headset rendering and the parked PC-rendered VR profile. Current renderer mechanics belong in `../RENDERING_PIPELINE.md`; immersive dialog ownership belongs in `vrodos-compiled-scene-framework-integration.md`.
 
-This is the current coordination doc for standalone VR-headset compiled scenes, meaning Quest-class browsers that open the compiled client and render on the headset hardware. PC-rendered VR is a separate path and remains parked in `PC_RENDERED_VR_PLAN.md`.
+## Supported Profiles
 
-## Scope
+- `desktop`: full desktop/browser rendering.
+- `headset`: standalone Quest-class rendering, lean by default and expanded only through explicit device-validated work.
+- `pc-rendered-vr`: desktop-rendered WebXR through a PCVR/OpenXR runtime. It remains parked until compatible hardware is available.
 
-This roadmap is for the public `headset` runtime profile selected through the compile dialog's `Runtime Target: VR Headset` option.
+Legacy names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-reflections`, `balanced`, and `max` are compatibility inputs only and normalize to `headset`. Do not add behavior behind those aliases.
 
-Keep these baseline decisions intact:
+## Standalone Headset Policy
 
-- WebXR/A-Frame owns HMD pose, controller pose, controller raycasters, the XR session, and the stereo render loop.
-- VRodos owns virtual navigation only by moving/rotating `#vrodos-authored-world` in immersive XR.
-- `#player` stays an unpositioned tracking rig, and authored camera placement stays on `#cameraA`.
-- Freshly recompile representative scenes before headset validation; do not add compatibility fallbacks for old generated layouts.
-- PMNDRS/legacy composer ownership, Takram clouds, scene probes, Takram sky PMREM capture, native WebXR layers, old movement HUDs, and old movement emitter scaffolding stay disabled by default.
-- New headset realism work belongs only in the explicit stereo PMNDRS opt-in path (`vrHeadsetStereoPostFxEnabled`) and must be generated from dynamic Takram runtime state, not static color emulation.
-- Legacy hidden profile names such as `baseline`, `safe`, `takram-lights`, `takram-sky`, `hdr-reflections`, `balanced`, and `max` are compatibility inputs only and normalize to `headset`.
+- A-Frame/WebXR owns the XR session, HMD and controller poses, controller raycasters, and stereo render loop.
+- `#player` remains an unpositioned tracking rig. Authored camera placement remains on `#cameraA`.
+- `custom-movement` owns only virtual navigation and moves/rotates `#vrodos-authored-world` in immersive XR.
+- Freshly recompile representative scenes. Do not add per-root or old-layout fallbacks for generated clients.
+- PMNDRS/Legacy composer ownership, Takram clouds, scene probes, Takram sky PMREM capture, native WebXR layers, old movement HUDs, and old movement emitter scaffolding remain disabled by default.
+- New headset realism work belongs only behind `vrHeadsetStereoPostFxEnabled` and must use dynamic Takram sky/time/light state. Do not substitute static headset palettes, A-Frame fallback environments, or fixed lower-hemisphere fills.
+- Keep `vrodos-postprocessing.bundle.js` available when headset Takram atmosphere needs the full PMNDRS/Takram vendor classes; disabling composer ownership does not make the vendor library itself invalid.
+- Do not restore the retired source-only headset bundle split. It passed static scans but produced a black sky/no-sun regression on device.
+- The older no-composer visible-sky path may retain its direct-sky reveal calibration; the stereo PMNDRS opt-in must use native Takram sky output.
+- Keep native renderer antialiasing and hard shadow caps: directional `1024`, point/spot `512`.
+- Headset walkable collision requires BVH and uses the reduced blocker-ray budget.
+- Keep Takram procedural ground disabled for local Horizon scenes; authored terrain owns the ground surface.
+- Add headset features back one at a time and validate them on Quest-class hardware before changing public defaults.
 
-## Separation Rationale
+## Interaction Contract
 
-- Standalone headset scenes have their own constraints: native WebXR session timing, Quest Browser compositor behavior, controller ray readiness, HMD tracking, and headset frame budget.
-- Past Quest testing accepted scene-owned visuals, walkable collision/BVH, controller locomotion, capped shadows, and selected Takram/HDR behavior, but rejected PMNDRS/legacy composer ownership in immersive XR by default.
-- Desktop cleanup should not change headset policy. Headset fallbacks and hidden profile cleanup need Quest-class validation, so they remain in this roadmap instead of the desktop cleanup pass.
-- Freshly recompiled representative scenes are the validation target. Old generated layouts should not drive new headset fallback code unless a release explicitly needs that compatibility.
+- Immersive video trigger clicks toggle playback directly.
+- CEFR, assessment, and image/text POI panels use `window.VRODOSSpatialUI`.
+- Do not route immersive panels through A-Frame planes/text, DOM overlays, `.vrodos-overlay-hit-target`, or `VRODOSRuntimeOverlay.openVrPanel()`.
+- Controller visuals remain tied to the active A-Frame raycasters because those raycasters own scene selection.
+- Modal panels clamp the active controller ray to the panel surface and restore it on close.
+- Normal `.raycastable` scene targets get endpoint-dot feedback only when no modal is open.
+- If spatial UI or controller-ray readiness is unavailable, report diagnostics and fail closed.
 
-## Accepted Baseline
+## Accepted Device Baseline
 
-- A-Frame scene host and current WebXR entry.
-- Authored GLBs, media, POIs, fog, material profiles, and scene-owned lighting.
-- HMD tracking without camera freeze.
-- Controller input and raycaster-driven scene selection.
-- Thumbstick movement, yaw, walkable navigation, and static collision/BVH.
-- Native renderer antialiasing.
-- Hard headset shadow caps: directional `1024`, point/spot `512`.
-- Authored Takram visible sky/light sources where the current policy allows them.
-- HDR environment-map reflections where the current policy allows them.
-- Minor far-edge shimmer is accepted unless it regresses.
+Manual Quest pass on 2026-06-30:
 
-## Latest Headset Validation
+- HMD/controller tracking, controller rays, thumbstick movement, yaw, walkable collision, capped shadows, and immersive exit recovery were accepted.
+- CEFR session continuation/clearing, CEFR panels, image/text POI panels, assessment read/answer/submit/close, and controller-driven modal interaction were accepted.
+- Video triggers directly toggled playback and normal `.raycastable` targets showed endpoint-dot feedback.
+- Quest Browser: `146.3.0.52.52.997435173`, `versionCode=569800627`, `lastUpdateTime=2026-06-23 19:40:28`.
 
-2026-06-30 manual Immerse VR-only headset pass:
+Diagnostic smoke pass on 2026-07-02:
 
-- Accepted: HMD/controller tracking, controller rays, thumbstick movement, yaw, walkable collision, CEFR spatial UI interaction, headset shadow behavior, and controller-driven modal interaction were reported working well.
-- Accepted after runtime cleanup: exiting immersive mode back to the headset browser page restored page/A-Frame interaction instead of leaving the compiled client non-interactable.
-- Accepted after runtime cleanup: stored CEFR participant/session state can be continued or cleared through the startup session prompt.
-- Accepted after recompiling with the latest runtime: image/text POI spatial panels open through `window.VRODOSSpatialUI` and reveal the image with the dialog shell, with no image-only flash.
-- Accepted after recompiling with the latest runtime: plain VR video trigger clicks directly toggle play/pause without opening a dialog.
-- Accepted after recompiling with the latest runtime: assessment panels open, remain readable, accept answers, submit, and close.
-- Accepted after recompiling with the latest runtime: normal scene `.raycastable` targets show endpoint-dot feedback when no modal is open.
-- Quest Browser version recorded from ADB: `146.3.0.52.52.997435173` (`versionCode=569800627`, `lastUpdateTime=2026-06-23 19:40:28`).
+- Fresh compiled client reported real immersive XR, the `headset` profile, direct post-FX ownership, inactive PMNDRS composer/clouds, active Takram visible sky, loaded spatial UI, walkable collision, installed BVH, and `#vrodos-authored-world` movement ownership.
+- Pixel ratio `1`, foveation `0.5`, framebuffer scale `1`, effective shadow quality `medium`, and Takram sun/moon shadow maps at `1024x1024` matched policy.
+- Navigation reported one navmesh and four blockers. Runtime locomotion p95 values remained small: collision refresh `0.1ms`, movement apply `0.3ms`, right-stick turn `0.3ms`, transform apply `0.3ms`.
+- A visible half-second movement pause was traced to DevTools polling with `--include-frames-each-sample`, not the locomotion path. Use summary-only captures for smoothness acceptance.
 
-2026-07-02 Quest diagnostic smoke pass:
+## Active Standalone Validation
 
-- Scene/client: `runtime/build/Master_Client_8606.html`.
-- URL flags: `vrodos_debug_runtime_features=1&vrodos_debug_immersive_smoothness=1`.
-- Quest Browser version recorded from ADB: `146.3.0.52.52.997435173` (`versionCode=569800627`, `lastUpdateTime=2026-06-23 19:40:28`).
-- Feature state confirmed real immersive XR: `presentation.mode=immersive-xr`, `xrPresenting=true`, headset profile active, `postProcessing.owner=direct`, `postProcessing.allowed=false`, PMNDRS composer disabled, Takram visible sky active, clouds inactive, and spatial UI bundle loaded with no active panel.
-- Renderer and shadow policy matched the headset budget: pixel ratio `1`, foveation `0.5` applied, framebuffer scale `1`, effective shadow quality `medium`, and Takram sun/moon directional shadow maps at `1024x1024`.
-- Navigation/collision state matched the accepted single-owner model: `mode=walkable`, collision active, BVH bundle loaded and installed, `navMeshTargets=1`, `blockerTargets=4`, `#vrodos-authored-world` present, and immersive collision roots covered.
-- Movement/yaw diagnostic buckets were captured: idle `65`, move `382`, yaw `194`, move+yaw `259` frames in the final 900-frame ring.
-- Runtime-side locomotion timings were small even during movement: `collisionRefreshMs p95=0.1`, `movementApplyMs p95=0.3`, `rightStickTurnMs p95=0.3`, and `transformApplyMs p95=0.3`.
-- The visible half-second movement pause during capture was measurement overhead. The forensic capture used `--include-frames-each-sample` with 500ms polling and produced `200-230ms` frame gaps at the same cadence. After the capture stopped, thumbstick movement was reported correct again.
-- Do not treat that forensic capture as headset frame-pacing acceptance. Use lighter captures without per-sample frame dumps for future smoothness acceptance.
-
-## Active Headset TODOs
-
-### Interaction Parity
-
-- Plain VR video trigger direct play/pause was accepted on headset on 2026-06-30; retest after video interaction changes.
-- CEFR prompts opening through `window.VRODOSSpatialUI` were accepted on headset on 2026-06-30; retest after CEFR/spatial UI changes.
-- Assessment panels opening, readability, answer, submit, and close were accepted on headset on 2026-06-30; retest after assessment/spatial UI changes.
-- Image/text POI panels opening through `window.VRODOSSpatialUI` and deferred first reveal were accepted on headset on 2026-06-30; retest after POI/spatial UI changes.
-- Modal panel controller interaction was accepted on headset on 2026-06-30; keep validating locomotion lock, controller ray clamp, hit-dot feedback, and ray restore after spatial-panel changes.
-- Normal scene `.raycastable` endpoint-dot feedback with no modal open was accepted on headset on 2026-06-30; retest after controller ray/feedback changes.
-- If spatial UI is unavailable in immersive XR, log diagnostics and fail closed; do not restore A-Frame plane/text or DOM overlay fallbacks.
-- Retest HMD tracking, controller rays, locomotion, yaw, walkable collision, and video/POI/CEFR/assessment interactions after each spatial-panel change.
-
-### Movement, Collision, And Smoothness
-
-- Preserve the accepted single-owner tracking model: WebXR/A-Frame tracks the user; VRodos transforms only `#vrodos-authored-world`.
+- Retest HMD/controller tracking, locomotion, yaw, collision, video, POI, CEFR, assessment, modal ray clamp/restore, endpoint feedback, and immersive exit after relevant runtime changes.
 - Keep yaw-only authored-world rotation from clearing authored-space ground caches.
-- Use `vrodos_debug_immersive_smoothness=1` plus `scripts/capture-quest-immersive-diagnostics.mjs` before changing locomotion or render policy.
-- For smoothness acceptance, avoid `--include-frames-each-sample` during live movement because DevTools serialization can create visible periodic stalls. Reserve per-frame dumps for short forensic captures after reproducing a problem with lighter sampling.
-- Watch frame time, shadow dirty count, transformed root count, collision target count, blocker ray count, and shadow map sizes.
-- Walkable collision and controller thumbstick movement were accepted again on headset on 2026-06-30; treat them as accepted baseline features unless a future change touches navigation/collision.
-- If networked headset scenes matter for a release, validate them separately on headset hardware; current support is conditional on scene/runtime/network behavior.
+- Investigate the remaining caveat where immersive right-stick yaw can make directional shadows appear player-relative. Treat it as shadow/light fitting, not a reason to change locomotion ownership.
+- Validate the stereo PMNDRS opt-in on device: native Takram sky must follow time of day, reflections must come from Takram sky PMREM, and the default no-composer baseline must remain unchanged.
+- Validate networked headset scenes separately when a release depends on them.
+- Record device, browser/runtime version, compiled client, date, diagnostics, and manual acceptance for every headset pass.
 
-### Shadows And Scene-Owned Visuals
+## Device Validation Workflow
 
-- Keep headset shadow maps capped at directional `1024` and point/spot `512`; visible headset shadow behavior was accepted on 2026-06-30, but diagnostic cap values should still be checked when touching shadow policy.
-- Keep adaptive shadow fitting restricted to targeted dirty events.
-- Audit the archived open caveat: immersive right-stick authored-world yaw can make object shadows appear player-relative/rotating. Investigate this as a directional shadow/light fitting problem under immersive presentation yaw without changing the accepted locomotion/collision baseline.
-- Keep headset visible Takram sky on the desktop local-Horizon ground policy: Takram `SkyMaterial` ground disabled, authored terrain provides the ground.
-- Keep no-ground below-horizon sky cooling confined to the older no-composer headset visible-sky calibration; do not use Takram ground albedo or A-Frame environment as a lower-hemisphere fill.
-- For the stereo PMNDRS opt-in path, validate native Takram sky output and Takram sky PMREM as dynamic sources from Takram sky/time-of-day/light-probe state. Do not approximate desktop realism with headset-specific static sky colors, fixed ambient palettes, lower-haze shader colors, or fallback A-Frame environments.
-- Revisit reflection/glint attenuation only after headset-specific visual and performance measurements.
+Use a freshly compiled representative Master scene. Do not treat existing `runtime/build/` HTML as a current fixture.
 
-### Diagnostics And Validation Fixtures
+Preflight:
 
-- Use a freshly recompiled representative Master scene for headset validation.
-- Keep `window.VRODOS_RUNTIME_FEATURE_STATE` useful for active profile, render budget, post-FX owner, Takram/cloud skip state, reflections, shadow diagnostics, navigation/collision state, camera-rig diagnostics, and spatial UI state.
-- Confirm diagnostics distinguish browser-panel mode from real immersive XR.
-- Keep logs quiet by default; avoid repeated per-frame DOM root diagnostics.
-- Record the Quest/browser/runtime/date when a headset behavior is accepted or rejected.
+1. Run `npm run check:runtime`.
+2. Recompile the scene so runtime script URLs receive current cache-busting versions.
+3. Serve the client through a Quest-reachable LAN URL or `localhost:5832` via ADB reverse. Do not use `wp.local` for headset WebXR.
+4. Load with `vrodos_debug_runtime_features=1&vrodos_debug_immersive_smoothness=1` and enter immersive VR.
+
+ADB reverse example:
+
+```powershell
+$adb = 'C:\Program Files\Meta Quest Developer Hub\resources\bin\adb.exe'
+$url = 'http://localhost:5832/wp-content/plugins/VRodos/runtime/build/Master_Client_RECOMPILED.html?vrodos_debug_runtime_features=1&vrodos_debug_immersive_smoothness=1'
+& $adb reverse tcp:5832 tcp:5832
+& $adb shell "am start -a android.intent.action.VIEW -d '$url' -p com.oculus.browser"
+```
+
+Capture:
+
+```powershell
+node scripts\capture-quest-immersive-diagnostics.mjs --list-targets
+node scripts\capture-quest-immersive-diagnostics.mjs --duration-ms 30000 --target-url Master_Client_RECOMPILED.html --output C:\tmp\vrodos-quest-immersive-diagnostics.json
+```
+
+Start with summary-only captures. Use `--include-frames-each-sample` only for short forensic captures because repeatedly serializing the frame ring can create visible stalls.
+
+Required checks:
+
+- `presentation.mode=immersive-xr`, expected profile, post-FX owner, and render budget.
+- Directional and point/spot shadow caps.
+- `#vrodos-authored-world` as the only immersive navigation transform owner.
+- Collision target and blocker counts.
+- Spatial UI bundle/panel state and controller ray clamp/restore.
+- Frame time, shadow dirty count, transformed root count, and repeated log noise.
+- Manual interaction and comfort acceptance.
+
+## Parked PC-Rendered VR
+
+The target is a desktop browser rendering stereo frames while a headset supplies display, tracking, and controller input through Meta Quest Link/Air Link, SteamVR/OpenXR, Steam Link, Virtual Desktop, or a native PCVR runtime.
+
+Current blocker: the available desktop PC is not compatible with Meta Quest Link/Air Link. Do not implement profile-specific fixes until a known-good PCVR/OpenXR session can be run. Desktop mirroring, Remote Desktop, HDMI capture, and Quest HDMI Link do not validate WebXR tracking or input.
+
+Required setup:
+
+- VR-ready PC and compatible GPU/USB or Wi-Fi path.
+- Quest or native PCVR headset with a working PCVR/OpenXR runtime.
+- Desktop Chrome or Edge with immersive WebXR support.
+- Localhost or HTTPS serving for a freshly compiled scene.
+
+Validate before changing VRodos:
+
+1. Confirm a known-good native VR or WebXR sample enters immersive mode.
+2. Confirm `navigator.xr.isSessionSupported('immersive-vr')`.
+3. Enter a freshly compiled VRodos scene from the desktop browser.
+4. Verify HMD position/rotation and both controller poses without double-applied transforms.
+5. Verify A-Frame ray alignment, select/squeeze, gamepad axes, and thumbstick locomotion.
+6. Verify video, POI, CEFR, assessment, endpoint feedback, and authored-world movement ownership.
+7. Measure frame pacing and streaming latency.
+
+Only after a real failure is reproduced should VRodos add small diagnostics or controller-profile handling. Keep the standalone Quest path unchanged and never add a display-only ray that diverges from the active selection ray.
+
+PC-rendered VR is validated only when headset/controller poses, selection, locomotion, modal interactions, media, and performance all work in a real PCVR runtime without regressing standalone Quest. Record headset, GPU, browser, PCVR runtime, and validation date.
 
 ## Deferred Headset Experiments
 
-These remain out of the public `headset` profile until a dedicated Quest/headset validation pass proves them safe:
-
-- PMNDRS composer ownership in immersive XR outside the explicit stereo PMNDRS opt-in path.
-- Legacy post-FX composer ownership in immersive XR.
-- FXAA, TAA, SAO/SSAO, SSR, bloom, color post-FX, vignette, noise, chromatic aberration, and lens flare through the existing screen-space composer paths.
+- PMNDRS composer ownership outside the explicit stereo opt-in.
+- Legacy post-FX in immersive XR.
+- Existing screen-space FXAA/TAA/AO/SSR/bloom/color/vignette/noise/chromatic/lens-flare paths in immersive XR.
 - Takram volumetric clouds.
-- Scene probes.
-- Takram sky PMREM reflection capture outside the explicit stereo PMNDRS Takram path.
-- Native WebXR layers.
-- AR and MR behavior.
+- Scene probes and Takram sky PMREM outside the explicit stereo path.
+- Native WebXR layers, AR, and MR.
 
-If PMNDRS XR composer work resumes, validate in this order:
+If PMNDRS XR work resumes, validate in order: explicit opt-in, no-effect composer, one cheap effect at a time, automatic direct-stereo fallback, and only then any public enablement.
 
-1. Explicit opt-in flag only.
-2. No-effect composer path.
-3. One cheap effect at a time, starting with color-only effects.
-4. Automatic fallback to direct stereo when unsupported, too slow, or visually broken.
-5. No global/public enablement until Quest-class headset evidence is acceptable.
+## References
 
-## Non-Goals For This Pass
-
-- Do not change desktop compiled-scene behavior.
-- Do not work on PC-rendered VR without the hardware/runtime listed in `PC_RENDERED_VR_PLAN.md`.
-- Do not solve headset shimmer with legacy FXAA/TAA; Quest testing showed that path corrupts immersive XR.
-- Do not reintroduce retired source-only headset bundle splits.
-- Do not add per-root transform fallbacks for older compiled scenes.
-
-## Current References
-
-- `VR_HEADSET_RUNTIME_HANDOFF.md`: policy, completed cleanup decisions, validation commands, and diagnostics.
-- `RENDERING_PIPELINE.md`: current renderer, post-FX, shadow, collision, reflection, and diagnostic technical reference.
-- `documentation/vrodos-compiled-scene-framework-integration.md`: framework ownership and immersive spatial UI contract.
-- `PC_RENDERED_VR_PLAN.md`: parked PC-rendered VR plan.
-
-## Historical References
-
-Historical platform-audit, profile-ladder, post-FX/color, and Takram realism findings are consolidated in `documentation/archive/rendering-history/README.md`. Use that file as evidence and implementation history, not as a competing active TODO list.
+- `../RENDERING_PIPELINE.md`: renderer, post-FX, lighting, shadows, collision, reflections, and diagnostics.
+- `vrodos-compiled-scene-framework-integration.md`: A-Frame/WebXR ownership and immersive spatial UI.
+- `compiled-desktop-roadmap.md`: desktop-only acceptance and research.
+- `archive/rendering-history/README.md`: historical evidence, not active policy.
