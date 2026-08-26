@@ -1936,6 +1936,16 @@ AFRAME.registerComponent('scene-settings', {
                 cloudShadowLengthBufferReady: Boolean(cloudDiagnostics.cloudShadowLengthBufferReady),
                 cloudAtmosphereShadowLengthReady: Boolean(cloudDiagnostics.cloudAtmosphereShadowLengthReady),
                 cloudLightShaftsVisible: Boolean(cloudDiagnostics.cloudLightShaftsVisible),
+                cloudMoonShaftsPrepared: Boolean(cloudDiagnostics.cloudMoonShaftsPrepared),
+                cloudMoonShaftsActive: Boolean(cloudDiagnostics.cloudMoonShaftsActive),
+                cloudMoonShaftsStrength: typeof cloudDiagnostics.cloudMoonShaftsStrength === 'number'
+                    ? cloudDiagnostics.cloudMoonShaftsStrength
+                    : null,
+                cloudMoonShaftsSourceVisibility: typeof cloudDiagnostics.cloudMoonShaftsSourceVisibility === 'number'
+                    ? cloudDiagnostics.cloudMoonShaftsSourceVisibility
+                    : null,
+                cloudMoonShaftsSkippedReason: cloudDiagnostics.cloudMoonShaftsSkippedReason || '',
+                cloudMoonShaftsMode: cloudDiagnostics.cloudMoonShaftsMode || '',
                 cloudAerialSkyEnabled: Boolean(cloudDiagnostics.aerialSkyEnabled),
                 cloudAerialSunLightEnabled: Boolean(cloudDiagnostics.aerialSunLight),
                 cloudAerialSkyLightEnabled: Boolean(cloudDiagnostics.aerialSkyLight),
@@ -2029,6 +2039,55 @@ AFRAME.registerComponent('scene-settings', {
                 cloudSunOcclusionTargetStrength: typeof cloudDiagnostics.cloudSunOcclusionTargetStrength === 'number'
                     ? cloudDiagnostics.cloudSunOcclusionTargetStrength
                     : null,
+                cloudMoonOcclusionEnabled: Boolean(cloudDiagnostics.cloudMoonOcclusionEnabled),
+                cloudMoonOcclusionStrength: typeof cloudDiagnostics.cloudMoonOcclusionStrength === 'number'
+                    ? cloudDiagnostics.cloudMoonOcclusionStrength
+                    : null,
+                cloudMoonDirectFactor: typeof cloudDiagnostics.cloudMoonDirectFactor === 'number'
+                    ? cloudDiagnostics.cloudMoonDirectFactor
+                    : null,
+                cloudMoonIndirectFactor: typeof cloudDiagnostics.cloudMoonIndirectFactor === 'number'
+                    ? cloudDiagnostics.cloudMoonIndirectFactor
+                    : null,
+                cloudMoonReflectionFactor: typeof cloudDiagnostics.cloudMoonReflectionFactor === 'number'
+                    ? cloudDiagnostics.cloudMoonReflectionFactor
+                    : null,
+                cloudMoonShadowRadiusScale: typeof cloudDiagnostics.cloudMoonShadowRadiusScale === 'number'
+                    ? cloudDiagnostics.cloudMoonShadowRadiusScale
+                    : null,
+                cloudMoonShadowIntensityFactor: typeof cloudDiagnostics.cloudMoonShadowIntensityFactor === 'number'
+                    ? cloudDiagnostics.cloudMoonShadowIntensityFactor
+                    : null,
+                cloudMoonDiscVisibility: typeof cloudDiagnostics.cloudMoonDiscVisibility === 'number'
+                    ? cloudDiagnostics.cloudMoonDiscVisibility
+                    : null,
+                cloudMoonDiskOcclusion: typeof cloudDiagnostics.cloudMoonDiskOcclusion === 'number'
+                    ? cloudDiagnostics.cloudMoonDiskOcclusion
+                    : null,
+                cloudMoonDiskStrength: typeof cloudDiagnostics.cloudMoonDiskStrength === 'number'
+                    ? cloudDiagnostics.cloudMoonDiskStrength
+                    : null,
+                cloudMoonDiskUvX: typeof cloudDiagnostics.cloudMoonDiskUvX === 'number'
+                    ? cloudDiagnostics.cloudMoonDiskUvX
+                    : null,
+                cloudMoonDiskUvY: typeof cloudDiagnostics.cloudMoonDiskUvY === 'number'
+                    ? cloudDiagnostics.cloudMoonDiskUvY
+                    : null,
+                cloudMoonDiskSampleReason: cloudDiagnostics.cloudMoonDiskSampleReason || '',
+                cloudMoonDiskSampleAgeMs: typeof cloudDiagnostics.cloudMoonDiskSampleAgeMs === 'number'
+                    ? cloudDiagnostics.cloudMoonDiskSampleAgeMs
+                    : null,
+                cloudMoonDiskSampleCount: typeof cloudDiagnostics.cloudMoonDiskSampleCount === 'number'
+                    ? cloudDiagnostics.cloudMoonDiskSampleCount
+                    : null,
+                cloudMoonOcclusionReason: cloudDiagnostics.cloudMoonOcclusionReason || '',
+                cloudMoonStarRecoveryFactor: typeof cloudDiagnostics.cloudMoonStarRecoveryFactor === 'number'
+                    ? cloudDiagnostics.cloudMoonStarRecoveryFactor
+                    : null,
+                cloudMoonRecoveredStarsIntensity: typeof cloudDiagnostics.cloudMoonRecoveredStarsIntensity === 'number'
+                    ? cloudDiagnostics.cloudMoonRecoveredStarsIntensity
+                    : null,
+                cloudCelestialShadowOwner: cloudDiagnostics.cloudCelestialShadowOwner || '',
                 cloudsXrSkipped: Boolean(cloudDiagnostics.xrSkipped)
             },
             reflections: {

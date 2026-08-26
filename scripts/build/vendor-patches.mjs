@@ -31,6 +31,7 @@ uniform sampler2D vrodosMoonColorTexture;
 uniform float vrodosMoonIllumination;
 uniform float vrodosMoonHaloRadiusScale;
 uniform float vrodosMoonHaloStrength;
+uniform float vrodosMoonCloudVisibility;
 uniform mat4 inverseViewMatrix;
 uniform mat4 worldToECEFMatrix;
 uniform vec3 groundAlbedo;
@@ -86,7 +87,7 @@ uniform vec3 groundAlbedo;
       getLunarRadiance(moonAngularRadius) *
       lunarRadianceScale *
       vec3(0.93, 0.96, 1.0) *
-      (vrodosMoonHaloStrength * vrodosMoonIllumination * vrodosMoonHalo);
+      (vrodosMoonHaloStrength * vrodosMoonIllumination * vrodosMoonCloudVisibility * vrodosMoonHalo);
   }
   #endif // VRODOS_CINEMATIC_MOON_HALO`,
     'Takram moon block did not match the expected upstream form'
@@ -188,6 +189,7 @@ uniform vec3 groundAlbedo;
         vrodosMoonIllumination: new d(1),
         vrodosMoonHaloRadiusScale: new d(1),
         vrodosMoonHaloStrength: new d(0),
+        vrodosMoonCloudVisibility: new d(1),
         groundAlbedo: new d(s.clone()),`,
     'SkyMaterial uniform construction did not match the expected upstream form'
   );

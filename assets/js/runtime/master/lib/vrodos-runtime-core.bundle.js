@@ -3624,6 +3624,16 @@
     const PMNDRS_CLOUD_SUN_SHADOW_INTENSITY_MIN = 0.7;
     const PMNDRS_CLOUD_SUN_SHADOW_RADIUS_BOOST = 0.85;
     const PMNDRS_CLOUD_SKY_SUN_DISK_VISIBILITY_MIN = 0.025;
+    const PMNDRS_CLOUD_MOON_OCCLUSION_COVERAGE_START = 0.22;
+    const PMNDRS_CLOUD_MOON_OCCLUSION_COVERAGE_FULL = 0.86;
+    const PMNDRS_CLOUD_MOON_DISK_OCCLUSION_START = 0.14;
+    const PMNDRS_CLOUD_MOON_DISK_OCCLUSION_FULL = 0.82;
+    const PMNDRS_CLOUD_MOON_DIRECT_MIN = 0.12;
+    const PMNDRS_CLOUD_MOON_INDIRECT_MIN = 0.58;
+    const PMNDRS_CLOUD_MOON_REFLECTION_MIN = 0.62;
+    const PMNDRS_CLOUD_MOON_SHADOW_INTENSITY_MIN = 0.58;
+    const PMNDRS_CLOUD_MOON_SHADOW_RADIUS_BOOST = 1.1;
+    const PMNDRS_CLOUD_MOON_DISC_VISIBILITY_MIN = 0.035;
     const PMNDRS_CLOUD_SUN_DISK_SPRITE_ACTIVATE_VISIBILITY = 0.985;
     const PMNDRS_CLOUD_SUN_DISK_SPRITE_RELEASE_VISIBILITY = 0.997;
     const PMNDRS_CLOUD_SUN_DISK_SPRITE_OPACITY_MIN = 0.56;
@@ -4540,7 +4550,7 @@
     function getPmndrsDirectLightVisibility(config, useMoonDirection) {
       return useMoonDirection ? getPmndrsMoonDirectLightVisibility(config) : getPmndrsSunDirectLightVisibility(config);
     }
-    function getPmndrsStarsIntensity(config) {
+    function getPmndrsStarsIntensity(config, self) {
       if (!config || config.enabled === false) {
         return 0;
       }
@@ -4551,19 +4561,23 @@
       const calibratedProfile = getPmndrsCalibratedCelestialLightingProfile(config);
       if (calibratedProfile) {
         if (mode === "on") {
-          return Math.max(calibratedProfile.starsIntensity, config.sunElevationDeg < 0 ? PMNDRS_STARS_DAWN_INTENSITY : 0);
+          return getPmndrsCloudMoonStarRecovery(
+            self,
+            config,
+            Math.max(calibratedProfile.starsIntensity, config.sunElevationDeg < 0 ? PMNDRS_STARS_DAWN_INTENSITY : 0)
+          );
         }
-        return calibratedProfile.starsIntensity;
+        return getPmndrsCloudMoonStarRecovery(self, config, calibratedProfile.starsIntensity);
       }
       if (isPmndrsPresetTimeNight(config)) {
-        return PMNDRS_STARS_NIGHT_INTENSITY;
+        return getPmndrsCloudMoonStarRecovery(self, config, PMNDRS_STARS_NIGHT_INTENSITY);
       }
       if (isPmndrsLowLightDawn(config)) {
-        return mode === "on" ? PMNDRS_STARS_DAWN_INTENSITY : 0;
+        return mode === "on" ? getPmndrsCloudMoonStarRecovery(self, config, PMNDRS_STARS_DAWN_INTENSITY) : 0;
       }
       const sunElevation = typeof config.sunElevationDeg === "number" ? config.sunElevationDeg : null;
       if (mode === "on" && sunElevation !== null && sunElevation < 0) {
-        return PMNDRS_STARS_DAWN_INTENSITY;
+        return getPmndrsCloudMoonStarRecovery(self, config, PMNDRS_STARS_DAWN_INTENSITY);
       }
       return 0;
     }
@@ -5137,6 +5151,176 @@
         targetStrength: factors.targetStrength
       };
       return publishPmndrsCloudSunOcclusionDiagnostics(self, state);
+    }
+    function computePmndrsCloudMoonOcclusionFactors(options) {
+      const opts = options || {};
+      const authoredCoverage = clamp01(Number(opts.authoredCoverage) || 0);
+      const diskOcclusion = clamp01(Number(opts.diskOcclusion) || 0);
+      const moonVisibility = clamp01(Number(opts.moonVisibility) || 0);
+      const moonIllumination = clamp01(Number(opts.moonIllumination) || 0);
+      const nightFactor = clamp01(Number(opts.nightFactor) || 0);
+      const coverageStrength = smoothstepNumber(
+        PMNDRS_CLOUD_MOON_OCCLUSION_COVERAGE_START,
+        PMNDRS_CLOUD_MOON_OCCLUSION_COVERAGE_FULL,
+        authoredCoverage
+      );
+      const diskStrength = smoothstepNumber(
+        PMNDRS_CLOUD_MOON_DISK_OCCLUSION_START,
+        PMNDRS_CLOUD_MOON_DISK_OCCLUSION_FULL,
+        diskOcclusion
+      );
+      const sourceFactor = moonVisibility * moonIllumination * nightFactor;
+      const targetStrength = clamp01(Math.max(coverageStrength, diskStrength) * sourceFactor);
+      const discStrength = clamp01(Math.max(diskStrength, coverageStrength * 0.32) * sourceFactor);
+      return {
+        coverageStrength,
+        diskStrength,
+        targetStrength,
+        directFactor: 1 - (1 - PMNDRS_CLOUD_MOON_DIRECT_MIN) * targetStrength,
+        indirectFactor: 1 - (1 - PMNDRS_CLOUD_MOON_INDIRECT_MIN) * targetStrength,
+        reflectionFactor: 1 - (1 - PMNDRS_CLOUD_MOON_REFLECTION_MIN) * targetStrength,
+        shadowIntensityFactor: 1 - (1 - PMNDRS_CLOUD_MOON_SHADOW_INTENSITY_MIN) * targetStrength,
+        shadowRadiusScale: 1 + targetStrength * PMNDRS_CLOUD_MOON_SHADOW_RADIUS_BOOST,
+        discVisibility: Math.max(
+          PMNDRS_CLOUD_MOON_DISC_VISIBILITY_MIN,
+          1 - (1 - PMNDRS_CLOUD_MOON_DISC_VISIBILITY_MIN) * discStrength
+        ),
+        sourceFactor
+      };
+    }
+    function publishPmndrsCloudMoonOcclusionDiagnostics(self, state) {
+      if (!self || !state) {
+        return state || null;
+      }
+      const diagnostics = self._pmndrsCloudsDiagnostics || {};
+      Object.assign(diagnostics, {
+        cloudMoonOcclusionEnabled: Boolean(state.enabled),
+        cloudMoonOcclusionStrength: roundPmndrsCloudSunOcclusionDiagnostic(state.strength),
+        cloudMoonDirectFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.directFactor),
+        cloudMoonIndirectFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.indirectFactor),
+        cloudMoonReflectionFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.reflectionFactor),
+        cloudMoonShadowIntensityFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.shadowIntensityFactor),
+        cloudMoonShadowRadiusScale: roundPmndrsCloudSunOcclusionDiagnostic(state.shadowRadiusScale),
+        cloudMoonDiscVisibility: roundPmndrsCloudSunOcclusionDiagnostic(state.discVisibility),
+        cloudMoonVisibilityFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.moonVisibility),
+        cloudMoonIlluminationFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.moonIllumination),
+        cloudMoonNightFactor: roundPmndrsCloudSunOcclusionDiagnostic(state.nightFactor),
+        cloudMoonCoverageStrength: roundPmndrsCloudSunOcclusionDiagnostic(state.coverageStrength),
+        cloudMoonDiskStrength: roundPmndrsCloudSunOcclusionDiagnostic(state.diskStrength),
+        cloudMoonOcclusionTargetStrength: roundPmndrsCloudSunOcclusionDiagnostic(state.targetStrength),
+        cloudMoonOcclusionReason: state.reason || ""
+      });
+      self._pmndrsCloudsDiagnostics = diagnostics;
+      self.pmndrsCloudsDiagnostics = diagnostics;
+      self._pmndrsCloudMoonOcclusionState = diagnostics;
+      return diagnostics;
+    }
+    function getPmndrsCloudMoonOcclusionState(self, config, smoothingMs) {
+      const diagnostics = self && self._pmndrsCloudsDiagnostics ? self._pmndrsCloudsDiagnostics : null;
+      const authoredCoverage = diagnostics && typeof diagnostics.authoredCoverage === "number" ? diagnostics.authoredCoverage : diagnostics && typeof diagnostics.effectiveCoverage === "number" ? diagnostics.effectiveCoverage : null;
+      const diskOcclusion = diagnostics && typeof diagnostics.cloudMoonDiskOcclusion === "number" ? diagnostics.cloudMoonDiskOcclusion : 0;
+      const moonVisibility = getPmndrsMoonDirectLightVisibility(config);
+      const moonIllumination = config && typeof config.moonIllumination === "number" ? clamp01(config.moonIllumination) : 1;
+      const sunElevation = config && typeof config.sunElevationDeg === "number" ? config.sunElevationDeg : 62;
+      const nightFactor = 1 - smoothstepNumber(-8, -3, sunElevation);
+      const defaultState = {
+        enabled: false,
+        strength: 0,
+        directFactor: 1,
+        indirectFactor: 1,
+        reflectionFactor: 1,
+        shadowIntensityFactor: 1,
+        shadowRadiusScale: 1,
+        discVisibility: 1,
+        moonVisibility,
+        moonIllumination,
+        nightFactor,
+        reason: "not-evaluated",
+        coverageStrength: 0,
+        diskStrength: 0,
+        targetStrength: 0
+      };
+      if (!self || !config || hasPmndrsDebugFlag("disablePmndrsCloudMoonInteraction", "vrodos_debug_disable_pmndrs_cloud_moon_interaction") || !(diagnostics && diagnostics.cloudsActive === true) || config.moonEnabled === false || !Number.isFinite(authoredCoverage) || moonVisibility <= 1e-3 || moonIllumination <= 1e-3 || nightFactor <= 1e-3) {
+        if (self && self._pmndrsRuntimeLightSmoothValues) {
+          self._pmndrsRuntimeLightSmoothValues.takramCloudMoonOcclusionStrength = 0;
+        }
+        if (!self) {
+          defaultState.reason = "no-runtime";
+        } else if (!config) {
+          defaultState.reason = "no-config";
+        } else if (hasPmndrsDebugFlag("disablePmndrsCloudMoonInteraction", "vrodos_debug_disable_pmndrs_cloud_moon_interaction")) {
+          defaultState.reason = "debug-disabled";
+        } else if (!(diagnostics && diagnostics.cloudsActive === true)) {
+          defaultState.reason = "clouds-inactive";
+        } else if (config.moonEnabled === false) {
+          defaultState.reason = "moon-disabled";
+        } else if (!Number.isFinite(authoredCoverage)) {
+          defaultState.reason = "invalid-coverage";
+        } else if (moonVisibility <= 1e-3) {
+          defaultState.reason = "moon-below-horizon";
+        } else if (moonIllumination <= 1e-3) {
+          defaultState.reason = "moon-unilluminated";
+        } else {
+          defaultState.reason = "not-night";
+        }
+        return publishPmndrsCloudMoonOcclusionDiagnostics(self, defaultState);
+      }
+      const factors = computePmndrsCloudMoonOcclusionFactors({
+        authoredCoverage,
+        diskOcclusion,
+        moonVisibility,
+        moonIllumination,
+        nightFactor
+      });
+      const currentStrength = self._pmndrsCloudMoonOcclusionState && typeof self._pmndrsCloudMoonOcclusionState.cloudMoonOcclusionStrength === "number" ? self._pmndrsCloudMoonOcclusionState.cloudMoonOcclusionStrength : factors.targetStrength;
+      const strength = smoothPmndrsRuntimeLightValue(
+        self,
+        "takramCloudMoonOcclusionStrength",
+        factors.targetStrength,
+        Math.max(420, smoothingMs || 0),
+        currentStrength
+      );
+      const state = {
+        enabled: strength > 1e-4,
+        strength,
+        directFactor: 1 - (1 - PMNDRS_CLOUD_MOON_DIRECT_MIN) * strength,
+        indirectFactor: 1 - (1 - PMNDRS_CLOUD_MOON_INDIRECT_MIN) * strength,
+        reflectionFactor: 1 - (1 - PMNDRS_CLOUD_MOON_REFLECTION_MIN) * strength,
+        shadowIntensityFactor: 1 - (1 - PMNDRS_CLOUD_MOON_SHADOW_INTENSITY_MIN) * strength,
+        shadowRadiusScale: 1 + strength * PMNDRS_CLOUD_MOON_SHADOW_RADIUS_BOOST,
+        discVisibility: factors.discVisibility,
+        moonVisibility,
+        moonIllumination,
+        nightFactor,
+        reason: factors.diskStrength > factors.coverageStrength ? "active-moon-disk" : "active-coverage",
+        coverageStrength: factors.coverageStrength,
+        diskStrength: factors.diskStrength,
+        targetStrength: factors.targetStrength
+      };
+      return publishPmndrsCloudMoonOcclusionDiagnostics(self, state);
+    }
+    function getPmndrsCloudMoonStarRecovery(self, config, starsIntensity) {
+      const state = self && self._pmndrsCloudMoonOcclusionState ? self._pmndrsCloudMoonOcclusionState : null;
+      const strength = state && typeof state.cloudMoonOcclusionStrength === "number" ? clamp01(state.cloudMoonOcclusionStrength) : 0;
+      if (strength <= 1e-3 || starsIntensity <= 0) {
+        if (self && self._pmndrsCloudsDiagnostics) {
+          self._pmndrsCloudsDiagnostics.cloudMoonStarRecoveryFactor = 0;
+          self._pmndrsCloudsDiagnostics.cloudMoonRecoveredStarsIntensity = roundPmndrsCloudSunOcclusionDiagnostic(starsIntensity);
+        }
+        return starsIntensity;
+      }
+      const moonY = config && config.localMoonDirection && typeof config.localMoonDirection.y === "number" ? config.localMoonDirection.y : -1;
+      const moonVisibility = config && config.moonEnabled !== false ? smoothstepNumber(-0.04, 0.38, moonY) : 0;
+      const moonIllumination = config && typeof config.moonIllumination === "number" ? clamp01(config.moonIllumination) : 1;
+      const washout = clamp01(moonVisibility * moonIllumination * 0.35);
+      const unwashedIntensity = starsIntensity / Math.max(0.65, 1 - washout);
+      const recovery = strength * 0.8;
+      const recoveredIntensity = lerpNumber(starsIntensity, unwashedIntensity, recovery);
+      if (self._pmndrsCloudsDiagnostics) {
+        self._pmndrsCloudsDiagnostics.cloudMoonStarRecoveryFactor = roundPmndrsCloudSunOcclusionDiagnostic(recovery);
+        self._pmndrsCloudsDiagnostics.cloudMoonRecoveredStarsIntensity = roundPmndrsCloudSunOcclusionDiagnostic(recoveredIntensity);
+      }
+      return recoveredIntensity;
     }
     function getPmndrsAtmosphereResourceProfile(self, renderer) {
       const quality = normalizePmndrsAtmosphereQuality(self && typeof self.getPmndrsAtmosphereQuality === "function" ? self.getPmndrsAtmosphereQuality() : self && self.data ? self.data.pmndrsAtmosphereQuality : "balanced");
@@ -6641,7 +6825,8 @@
       if (!diagnostics) {
         return {
           clouds: "none",
-          cloudSun: "none"
+          cloudSun: "none",
+          cloudMoon: "none"
         };
       }
       const authoredCoverage = typeof diagnostics.authoredCoverage === "number" ? diagnostics.authoredCoverage : typeof diagnostics.coverage === "number" ? diagnostics.coverage : null;
@@ -6683,9 +6868,25 @@
         `shadowRadius${formatPmndrsNumberForLog(diagnostics.cloudSunShadowRadiusScale, 2)}`,
         `skySun${formatPmndrsNumberForLog(diagnostics.cloudSkySunDiskVisibility, 2)}`
       ].join(":");
+      const moonReason = diagnostics.cloudMoonOcclusionReason || (diagnostics.cloudMoonOcclusionEnabled ? "active" : "none");
+      const cloudMoonState = [
+        diagnostics.cloudMoonOcclusionEnabled ? "on" : "off",
+        moonReason,
+        `s${formatPmndrsNumberForLog(diagnostics.cloudMoonOcclusionStrength, 2)}`,
+        `disk${formatPmndrsNumberForLog(diagnostics.cloudMoonDiskStrength, 2)}`,
+        `sample-${diagnostics.cloudMoonDiskSampleReason || "none"}`,
+        `direct${formatPmndrsNumberForLog(diagnostics.cloudMoonDirectFactor, 2)}`,
+        `indirect${formatPmndrsNumberForLog(diagnostics.cloudMoonIndirectFactor, 2)}`,
+        `reflection${formatPmndrsNumberForLog(diagnostics.cloudMoonReflectionFactor, 2)}`,
+        `disc${formatPmndrsNumberForLog(diagnostics.cloudMoonDiscVisibility, 2)}`,
+        `stars${formatPmndrsNumberForLog(diagnostics.cloudMoonStarRecoveryFactor, 2)}`,
+        `shadow-${diagnostics.cloudCelestialShadowOwner || "none"}`,
+        diagnostics.cloudMoonShaftsActive ? `shafts${formatPmndrsNumberForLog(diagnostics.cloudMoonShaftsStrength, 3)}` : `shafts-skip-${diagnostics.cloudMoonShaftsSkippedReason || "inactive"}`
+      ].join(":");
       return {
         clouds: cloudsState,
-        cloudSun: cloudSunState
+        cloudSun: cloudSunState,
+        cloudMoon: cloudMoonState
       };
     }
     function logPmndrsCloudSunOcclusionDiagnostic(self, diagnostics) {
@@ -6700,7 +6901,8 @@
       const cloudLightingLog = formatPmndrsCloudLightingForLog(self);
       const signature = [
         cloudLightingLog.clouds,
-        cloudLightingLog.cloudSun
+        cloudLightingLog.cloudSun,
+        cloudLightingLog.cloudMoon
       ].join("|");
       if (diagnosticsEnabled) {
         self._pmndrsCloudSunOcclusionDiagSignature = self._pmndrsCloudSunOcclusionDiagSignature || "";
@@ -6715,7 +6917,7 @@
       const log = console[logMethod] || console.info || console.log || function() {
         return void 0;
       };
-      log.call(console, `[VRodos] PMNDRS cloud lighting: clouds=${cloudLightingLog.clouds}, cloudSun=${cloudLightingLog.cloudSun}`);
+      log.call(console, `[VRodos] PMNDRS cloud lighting: clouds=${cloudLightingLog.clouds}, cloudSun=${cloudLightingLog.cloudSun}, cloudMoon=${cloudLightingLog.cloudMoon}`);
     }
     function logPmndrsHorizonDiagnostic(self, context, atmosphereConfig) {
       if (!self || !self.data || !context) {
@@ -6749,7 +6951,7 @@
       const reflectionOcclusionMode = normalizeReflectionOcclusionMode(self.data.reflectionOcclusionMode);
       const shadowState = getShadowDiagnosticState(self);
       const resolvedSkyTimePreset = getResolvedPmndrsSkyTimePreset(atmosphereConfig);
-      const starsIntensity = atmosphereConfig ? getPmndrsStarsIntensity(atmosphereConfig) : 0;
+      const starsIntensity = atmosphereConfig ? getPmndrsStarsIntensity(atmosphereConfig, self) : 0;
       const cloudLightingLog = formatPmndrsCloudLightingForLog(self);
       const owner = atmosphereConfig && atmosphereConfig.enabled && shouldUseVrTakramLightsOnly(self) ? "takram-lights-only" : atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsHorizonAerialPerspectivePath(self) ? "takram-sky+aerial" : atmosphereConfig && atmosphereConfig.enabled && shouldUsePmndrsTakramHorizonPath(self) ? "takram-sky" : atmosphereConfig && atmosphereConfig.enabled ? "takram-fallback" : "legacy-fallback";
       const signature = [
@@ -6784,13 +6986,14 @@
         shadowState.fittedDirLights,
         shadowState.fitted,
         cloudLightingLog.clouds,
-        cloudLightingLog.cloudSun
+        cloudLightingLog.cloudSun,
+        cloudLightingLog.cloudMoon
       ].join("|");
       if (startupStateLogEnabled) {
         self._pmndrsHorizonStartupStateLogged = true;
         const log2 = console.info || console.log || function() {
         };
-        log2.call(console, `[VRodos] Compiled scene state: engine=pmndrs, owner=${owner}, reflection=${reflectionSource}, reflectionOcclusion=${reflectionOcclusionMode}, shadowQuality=${self.data.shadowQuality || "medium"}, celestial=${atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : "manual"}/${resolvedSkyTimePreset}, sunDir=${formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null)}, exposure=${pmndrsExposure.toFixed(2)}, toneMapping=${toneMappingMode}, lensFlare=${lensFlare}, lightSource=${lightSourceMode}, skyLight=${fillIntensity !== null ? fillIntensity.toFixed(2) : "n/a"}, pbrFill=${pbrFillIntensity !== null ? pbrFillIntensity.toFixed(2) : "n/a"}, reflectionScale=${reflectionScale.toFixed(2)}, stars=${starsIntensity.toFixed(2)}, clouds=${cloudLightingLog.clouds}, cloudSun=${cloudLightingLog.cloudSun}`);
+        log2.call(console, `[VRodos] Compiled scene state: engine=pmndrs, owner=${owner}, reflection=${reflectionSource}, reflectionOcclusion=${reflectionOcclusionMode}, shadowQuality=${self.data.shadowQuality || "medium"}, celestial=${atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : "manual"}/${resolvedSkyTimePreset}, sunDir=${formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null)}, exposure=${pmndrsExposure.toFixed(2)}, toneMapping=${toneMappingMode}, lensFlare=${lensFlare}, lightSource=${lightSourceMode}, skyLight=${fillIntensity !== null ? fillIntensity.toFixed(2) : "n/a"}, pbrFill=${pbrFillIntensity !== null ? pbrFillIntensity.toFixed(2) : "n/a"}, reflectionScale=${reflectionScale.toFixed(2)}, stars=${starsIntensity.toFixed(2)}, clouds=${cloudLightingLog.clouds}, cloudSun=${cloudLightingLog.cloudSun}, cloudMoon=${cloudLightingLog.cloudMoon}`);
         return;
       }
       self._pmndrsHorizonDiagSignatures = self._pmndrsHorizonDiagSignatures || {};
@@ -6801,7 +7004,7 @@
       const logMethod = verboseDiagnosticsEnabled ? "info" : "debug";
       const log = console[logMethod] || console.info || function() {
       };
-      log.call(console, `[VRodos] PMNDRS horizon diagnostic (${context}): owner=${owner}, reflection=${reflectionSource}, celestial=${atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : "manual"}/${resolvedSkyTimePreset}, ground=${atmosphereConfig && atmosphereConfig.groundEnabled ? "on" : "off"}, sun=${atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? "off" : "on"}, sunDir=${formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null)}, helperKey=${keyIntensity !== null ? keyIntensity.toFixed(2) : "n/a"}, helperFill=${fillIntensity !== null ? fillIntensity.toFixed(2) : "n/a"}, pbrFill=${pbrFillIntensity !== null ? pbrFillIntensity.toFixed(2) : "n/a"}, helperDir=${helperConfig ? helperConfig.directionOwner : "n/a"}, reflectionScale=${reflectionScale.toFixed(2)}, sunRadius=${takramSunAngularRadius !== null ? takramSunAngularRadius.toFixed(4) : "n/a"}, aframeDefaultLights=${aframeDefaultLights}, takramLut=${takramLutState}, exposure=${pmndrsExposure.toFixed(2)}, toneMapping=${toneMappingMode}, lensFlare=${lensFlare}, correctAltitude=${correctAltitude}, lightSource=${lightSourceMode}, stars=${starsIntensity.toFixed(2)}, reflectionOcclusion=${reflectionOcclusionMode}, shadowQuality=${self.data.shadowQuality || "medium"}, shadowCasters=${shadowState.casters}, shadowReceivers=${shadowState.receivers}, shadowReceiverOnly=${shadowState.receiverOnly}, dirShadowLights=${shadowState.dirShadowLights}, fittedDirLights=${shadowState.fittedDirLights}, shadowFit=${shadowState.fitted}, clouds=${cloudLightingLog.clouds}, cloudSun=${cloudLightingLog.cloudSun}`);
+      log.call(console, `[VRodos] PMNDRS horizon diagnostic (${context}): owner=${owner}, reflection=${reflectionSource}, celestial=${atmosphereConfig && atmosphereConfig.celestialMode ? atmosphereConfig.celestialMode : "manual"}/${resolvedSkyTimePreset}, ground=${atmosphereConfig && atmosphereConfig.groundEnabled ? "on" : "off"}, sun=${atmosphereConfig && atmosphereConfig.takramSunEnabled === false ? "off" : "on"}, sunDir=${formatPmndrsSunDirectionForLog(atmosphereConfig && atmosphereConfig.sunDirection ? atmosphereConfig.sunDirection : null)}, helperKey=${keyIntensity !== null ? keyIntensity.toFixed(2) : "n/a"}, helperFill=${fillIntensity !== null ? fillIntensity.toFixed(2) : "n/a"}, pbrFill=${pbrFillIntensity !== null ? pbrFillIntensity.toFixed(2) : "n/a"}, helperDir=${helperConfig ? helperConfig.directionOwner : "n/a"}, reflectionScale=${reflectionScale.toFixed(2)}, sunRadius=${takramSunAngularRadius !== null ? takramSunAngularRadius.toFixed(4) : "n/a"}, aframeDefaultLights=${aframeDefaultLights}, takramLut=${takramLutState}, exposure=${pmndrsExposure.toFixed(2)}, toneMapping=${toneMappingMode}, lensFlare=${lensFlare}, correctAltitude=${correctAltitude}, lightSource=${lightSourceMode}, stars=${starsIntensity.toFixed(2)}, reflectionOcclusion=${reflectionOcclusionMode}, shadowQuality=${self.data.shadowQuality || "medium"}, shadowCasters=${shadowState.casters}, shadowReceivers=${shadowState.receivers}, shadowReceiverOnly=${shadowState.receiverOnly}, dirShadowLights=${shadowState.dirShadowLights}, fittedDirLights=${shadowState.fittedDirLights}, shadowFit=${shadowState.fitted}, clouds=${cloudLightingLog.clouds}, cloudSun=${cloudLightingLog.cloudSun}, cloudMoon=${cloudLightingLog.cloudMoon}`);
     }
     function hidePmndrsHorizonEnvironmentVisuals(self) {
       if (!self || !self.el || !self.el.object3D) {
@@ -7368,17 +7571,20 @@
       const renderer = self && self.el ? self.el.renderer : null;
       const shadowType = renderer && renderer.shadowMap ? getThreeShadowMapTypeName(renderer.shadowMap.type) : "none";
       const sunLight = state && state.sunLight ? state.sunLight : null;
-      const shadow = sunLight && sunLight.shadow ? sunLight.shadow : null;
+      const moonLight = state && state.moonLight ? state.moonLight : null;
+      const shadowLight = moonLight && moonLight.castShadow ? moonLight : sunLight;
+      const shadow = shadowLight && shadowLight.shadow ? shadowLight.shadow : null;
       const mapSize = shadow && shadow.mapSize ? `${shadow.mapSize.x || 0}x${shadow.mapSize.y || 0}` : "0x0";
-      const direction = sunLight && sunLight.sunDirection ? sunLight.sunDirection : sunLight && sunLight.position ? sunLight.position : null;
-      if (!sunLight) {
+      const direction = shadowLight && shadowLight.sunDirection ? shadowLight.sunDirection : shadowLight && shadowLight.position ? shadowLight.position : null;
+      if (!shadowLight) {
         return `takram:none|${shadowType}`;
       }
       return [
-        `takram:${sunLight.name || "sun"}`,
-        sunLight.visible ? "visible" : "hidden",
-        sunLight.castShadow ? "cast" : "no-cast",
-        typeof sunLight.intensity === "number" ? sunLight.intensity.toFixed(2) : "n/a",
+        `takram:${shadowLight.name || "celestial"}`,
+        shadowLight === moonLight ? "owner:moon" : "owner:sun",
+        shadowLight.visible ? "visible" : "hidden",
+        shadowLight.castShadow ? "cast" : "no-cast",
+        typeof shadowLight.intensity === "number" ? shadowLight.intensity.toFixed(2) : "n/a",
         mapSize,
         shadow && shadow.map ? "map" : "no-map",
         vectorToSignature(direction),
@@ -7398,7 +7604,9 @@
       self._pmndrsTakramLightShadowSignatureReason = reason || "takram-light";
       self._pmndrsTakramLightShadowPreviousSignature = previousSignature;
       const sunLight = state.sunLight || null;
-      if (sunLight && sunLight.castShadow && typeof self.markShadowDirty === "function") {
+      const moonLight = state.moonLight || null;
+      const shadowLight = moonLight && moonLight.castShadow ? moonLight : sunLight;
+      if (shadowLight && shadowLight.castShadow && typeof self.markShadowDirty === "function") {
         self.markShadowDirty(reason || "takram-light-ready");
       }
     }
@@ -7412,6 +7620,7 @@
       const skyLight = state.skyLight || null;
       const moonLight = state.moonLight || null;
       const moonTarget = state.moonTarget || null;
+      const adaptiveShadowCenter = arePmndrsDayNightCycleDynamicShadowsEnabled(self, presentedConfig) ? getAdaptiveShadowCenter(self) : null;
       const directionSignature = [
         vectorToSignature(presentedConfig.localSunDirection || presentedConfig.sunDirection),
         vectorToSignature(presentedConfig.localMoonDirection || presentedConfig.moonDirection)
@@ -7439,9 +7648,18 @@
         const moonDirection = getPmndrsMoonSceneLightDirection(presentedConfig);
         if (moonTarget) {
           moonLight.target = moonTarget;
+          if (adaptiveShadowCenter) {
+            moonTarget.position.copy(adaptiveShadowCenter);
+          } else {
+            moonTarget.position.set(0, 0, 0);
+          }
+          moonTarget.updateMatrixWorld(true);
         }
         if (moonDirection && moonLight.position && typeof moonLight.position.copy === "function") {
           moonLight.position.copy(moonDirection).normalize().multiplyScalar(28);
+          if (adaptiveShadowCenter) {
+            moonLight.position.add(adaptiveShadowCenter);
+          }
           moonLight.updateMatrixWorld(true);
         }
       }
@@ -7604,6 +7822,8 @@
       const lightingSmoothingMs = getPmndrsRuntimeLightingSmoothingMs(config);
       const indirectLightingSmoothingMs = getPmndrsRuntimeIndirectLightingSmoothingMs(config);
       const cloudSunOcclusion = getPmndrsCloudSunOcclusionState(self, config, lightingSmoothingMs, indirectLightingSmoothingMs);
+      const cloudMoonOcclusion = getPmndrsCloudMoonOcclusionState(self, config, lightingSmoothingMs);
+      const cloudIndirectFactor = helperConfig.useMoonDirection ? cloudMoonOcclusion.cloudMoonIndirectFactor : cloudSunOcclusion.cloudSkyFactor;
       syncPmndrsSkySunDiskCloudAttenuation(self, config, cloudSunOcclusion, lightingSmoothingMs);
       const dynamicCycleShadows = arePmndrsDayNightCycleDynamicShadowsEnabled(self, config);
       const adaptiveShadowCenter = dynamicCycleShadows ? getAdaptiveShadowCenter(self) : null;
@@ -7616,7 +7836,11 @@
         state.target.updateMatrixWorld(true);
       }
       if (moonTarget) {
-        moonTarget.position.set(0, 0, 0);
+        if (adaptiveShadowCenter) {
+          moonTarget.position.copy(adaptiveShadowCenter);
+        } else {
+          moonTarget.position.set(0, 0, 0);
+        }
         moonTarget.updateMatrixWorld(true);
       }
       if (sunLight) {
@@ -7648,7 +7872,7 @@
         if (typeof sunLight.correctAltitude !== "undefined") {
           sunLight.correctAltitude = config.correctAltitudeEnabled !== false;
         }
-        sunLight.castShadow = shadowEnabled && sunLight.visible && (!config.dayNightCycleEnabled || dynamicCycleShadows);
+        sunLight.castShadow = shadowEnabled && useSunKey && sunLight.visible && (!config.dayNightCycleEnabled || dynamicCycleShadows);
         sunLight.transmittanceTexture = textures ? textures.transmittanceTexture || null : null;
         if (config.sunDirection && sunLight.sunDirection) {
           sunLight.sunDirection.copy(config.sunDirection);
@@ -7694,7 +7918,7 @@
         const moonLightEnabled = shouldUsePmndrsMoonSceneLight(config);
         const moonDirection = getPmndrsMoonSceneLightDirection(config);
         const moonIntensity = getPmndrsMoonSceneLightIntensity(config);
-        const targetMoonIntensity = moonLightEnabled && Boolean(moonDirection) ? moonIntensity : 0;
+        const targetMoonIntensity = moonLightEnabled && Boolean(moonDirection) ? moonIntensity * cloudMoonOcclusion.cloudMoonDirectFactor : 0;
         const smoothedMoonIntensity = smoothPmndrsRuntimeLightValue(
           self,
           "takramMoonIntensity",
@@ -7704,7 +7928,8 @@
         );
         moonLight.visible = smoothedMoonIntensity > 1e-3 || targetMoonIntensity > 1e-3;
         moonLight.intensity = smoothedMoonIntensity;
-        moonLight.castShadow = false;
+        const moonOwnsShadow = helperConfig.useMoonDirection && moonLightEnabled && targetMoonIntensity > 1e-3;
+        moonLight.castShadow = shadowEnabled && moonOwnsShadow && moonLight.visible && (!config.dayNightCycleEnabled || dynamicCycleShadows);
         if (moonLight.color && typeof moonLight.color.copy === "function") {
           moonLight.color.copy(smoothPmndrsRuntimeLightColor(
             self,
@@ -7721,11 +7946,40 @@
         }
         if (moonDirection && moonLight.position && typeof moonLight.position.copy === "function") {
           moonLight.position.copy(moonDirection).normalize().multiplyScalar(28);
+          if (adaptiveShadowCenter) {
+            moonLight.position.add(adaptiveShadowCenter);
+          }
           moonLight.updateMatrixWorld(true);
+        }
+        if (moonLight.shadow) {
+          moonLight.shadow.mapSize.set(shadowMap, shadowMap);
+          moonLight.shadow.bias = contactShadowSettings.bias;
+          moonLight.shadow.radius = getPmndrsDayNightShadowRadius(self) * (typeof cloudMoonOcclusion.cloudMoonShadowRadiusScale === "number" ? cloudMoonOcclusion.cloudMoonShadowRadiusScale : 1);
+          if (typeof moonLight.shadow.normalBias !== "undefined") {
+            moonLight.shadow.normalBias = contactShadowSettings.normalBias;
+          }
+          if (typeof moonLight.shadow.intensity !== "undefined") {
+            moonLight.shadow.intensity = typeof cloudMoonOcclusion.cloudMoonShadowIntensityFactor === "number" ? cloudMoonOcclusion.cloudMoonShadowIntensityFactor : 1;
+          }
+          const adaptiveShadowFitted = moonLight.userData && moonLight.userData.vrodosAdaptiveShadowFitted;
+          if (moonLight.shadow.camera && !adaptiveShadowFitted) {
+            const shadowExtent = getDirectionalShadowDistanceForScene(self, 28);
+            moonLight.shadow.camera.top = shadowExtent;
+            moonLight.shadow.camera.right = shadowExtent;
+            moonLight.shadow.camera.left = -shadowExtent;
+            moonLight.shadow.camera.bottom = -shadowExtent;
+            moonLight.shadow.camera.updateProjectionMatrix();
+          }
+          if (!dynamicCycleShadows) {
+            moonLight.shadow.needsUpdate = true;
+          }
+        }
+        if (self._pmndrsCloudsDiagnostics) {
+          self._pmndrsCloudsDiagnostics.cloudCelestialShadowOwner = moonLight.castShadow ? "moon" : sunLight && sunLight.castShadow ? "sun" : "none";
         }
       }
       if (skyLight) {
-        const targetSkyIntensity = helperConfig.fillIntensity > 0 && hasTakramSkyIrradiance ? getPmndrsTakramSkyLightIntensity(helperConfig, config) * cloudSunOcclusion.cloudSkyFactor : 0;
+        const targetSkyIntensity = helperConfig.fillIntensity > 0 && hasTakramSkyIrradiance ? getPmndrsTakramSkyLightIntensity(helperConfig, config) * cloudIndirectFactor : 0;
         const skyIntensity = smoothPmndrsRuntimeLightValue(
           self,
           "takramSkyIntensity",
@@ -7748,7 +8002,7 @@
         }
       }
       if (fillLight) {
-        const targetFillIntensity = helperConfig.fillIntensity > 0 ? getPmndrsTakramPbrFillIntensity(helperConfig, config) * cloudSunOcclusion.cloudFillFactor : 0;
+        const targetFillIntensity = helperConfig.fillIntensity > 0 ? getPmndrsTakramPbrFillIntensity(helperConfig, config) * cloudIndirectFactor : 0;
         const fillIntensity = smoothPmndrsRuntimeLightValue(
           self,
           "takramFillIntensity",
@@ -7782,7 +8036,7 @@
         }
       }
       if (ambientLight) {
-        const cloudAmbientFactor = typeof cloudSunOcclusion.cloudAmbientFactor === "number" ? cloudSunOcclusion.cloudAmbientFactor : 1;
+        const cloudAmbientFactor = helperConfig.useMoonDirection ? cloudMoonOcclusion.cloudMoonIndirectFactor : typeof cloudSunOcclusion.cloudAmbientFactor === "number" ? cloudSunOcclusion.cloudAmbientFactor : 1;
         const ambientBounceIntensity = getPmndrsTakramAmbientBounceIntensity(config) * cloudAmbientFactor;
         const smoothedAmbientIntensity = smoothPmndrsRuntimeLightValue(
           self,
@@ -8118,7 +8372,7 @@
       return getPmndrsNightReflectionIntensityScale(this, atmosphereConfig, reflectionSource);
     };
     H.getPmndrsStarsIntensity = function(atmosphereConfig) {
-      return getPmndrsStarsIntensity(atmosphereConfig);
+      return getPmndrsStarsIntensity(atmosphereConfig, this);
     };
     H.applyPmndrsAtmosphereConfigToTarget = function(target, config) {
       const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
@@ -8568,7 +8822,7 @@ ${shader.vertexShader}`;
       if (!self || !state || !config || state.failed || state.starsFailed || !self.el || !self.el.object3D) {
         return false;
       }
-      const intensity = getPmndrsStarsIntensity(config);
+      const intensity = getPmndrsStarsIntensity(config, self);
       state.starsIntensity = intensity;
       if (intensity <= 0) {
         if (state.starsMesh) {
@@ -8691,6 +8945,7 @@ ${shader.vertexShader}`;
       const material = state && state.skyMaterial ? state.skyMaterial : null;
       const defines = material && material.defines ? material.defines : null;
       const moonDefineEnabled = Boolean(defines && (typeof defines.has === "function" && defines.has("MOON") || typeof defines.has !== "function" && defines.MOON != null));
+      const cloudMoonState = self && self._pmndrsCloudMoonOcclusionState ? self._pmndrsCloudMoonOcclusionState : null;
       const diagnostics = {
         enabled: Boolean(config && config.moonEnabled),
         authoredPhase: config ? config.moonPhase : "auto",
@@ -8718,6 +8973,8 @@ ${shader.vertexShader}`;
         haloEnabled: Boolean(defines && defines.VRODOS_CINEMATIC_MOON_HALO != null),
         haloRadiusScale: PMNDRS_MOON_HALO_RADIUS_SCALE,
         haloStrength: PMNDRS_MOON_HALO_STRENGTH,
+        cloudVisibility: cloudMoonState && typeof cloudMoonState.cloudMoonDiscVisibility === "number" ? cloudMoonState.cloudMoonDiscVisibility : 1,
+        cloudOcclusionStrength: cloudMoonState && typeof cloudMoonState.cloudMoonOcclusionStrength === "number" ? cloudMoonState.cloudMoonOcclusionStrength : 0,
         starOcclusionRadiusDeg: PMNDRS_MOON_ANGULAR_DIAMETER_DEG * 0.5 + THREE.MathUtils.radToDeg(PMNDRS_MOON_STAR_OCCLUSION_FEATHER_RAD),
         starOcclusionShaderApplied: Boolean(state && state.starMoonOcclusionShaderApplied),
         starOcclusionFallbackApplied: Boolean(state && state.starMoonOcclusionFallbackApplied),
@@ -8740,16 +8997,19 @@ ${shader.vertexShader}`;
     }
     function applyPmndrsMoonShaderState(self, config, state, material) {
       const uniforms = material && material.uniforms ? material.uniforms : null;
-      const patchApplied = Boolean(uniforms && uniforms.vrodosMoonLightDirection && uniforms.vrodosMoonFixedToECEFMatrix && uniforms.vrodosMoonColorTexture && uniforms.vrodosMoonIllumination && uniforms.vrodosMoonHaloRadiusScale && uniforms.vrodosMoonHaloStrength);
+      const patchApplied = Boolean(uniforms && uniforms.vrodosMoonLightDirection && uniforms.vrodosMoonFixedToECEFMatrix && uniforms.vrodosMoonColorTexture && uniforms.vrodosMoonIllumination && uniforms.vrodosMoonHaloRadiusScale && uniforms.vrodosMoonHaloStrength && uniforms.vrodosMoonCloudVisibility);
+      const cloudMoonState = self && self._pmndrsCloudMoonOcclusionState ? self._pmndrsCloudMoonOcclusionState : getPmndrsCloudMoonOcclusionState(self, config, getPmndrsRuntimeLightingSmoothingMs(config));
+      const cloudVisibility = cloudMoonState && typeof cloudMoonState.cloudMoonDiscVisibility === "number" ? cloudMoonState.cloudMoonDiscVisibility : 1;
       state.moonShaderPatchApplied = patchApplied;
       material.moonAngularRadius = PMNDRS_MOON_ANGULAR_RADIUS;
-      material.lunarRadianceScale = PMNDRS_MOON_RADIANCE_SCALE;
+      material.lunarRadianceScale = PMNDRS_MOON_RADIANCE_SCALE * cloudVisibility;
       if (patchApplied) {
         uniforms.vrodosMoonLightDirection.value.copy(config.moonLightDirection);
         uniforms.vrodosMoonFixedToECEFMatrix.value.copy(config.moonFixedToECEFMatrix);
         uniforms.vrodosMoonIllumination.value = config.moonEnabled ? config.moonIllumination : 0;
         uniforms.vrodosMoonHaloRadiusScale.value = PMNDRS_MOON_HALO_RADIUS_SCALE;
         uniforms.vrodosMoonHaloStrength.value = PMNDRS_MOON_HALO_STRENGTH;
+        uniforms.vrodosMoonCloudVisibility.value = cloudVisibility;
       }
       const debugDisabled = hasPmndrsDebugFlag("disableTexturedMoon", "vrodos_debug_disable_textured_moon");
       const cinematicMoonEnabled = Boolean(config.moonEnabled && patchApplied && !debugDisabled);
@@ -10319,7 +10579,10 @@ ${shader.fragmentShader}` : withUniform;
       const shadowAwareReflections = reflectionsEnabled && reflectionOcclusionMode !== "off" && (typeof this.getEffectiveShadowQuality === "function" ? this.getEffectiveShadowQuality() : this.data.shadowQuality) !== "off" && !(typeof this.isVrPresentationActive === "function" && this.isVrPresentationActive());
       const reflectionSmoothingMs = getPmndrsRuntimeLightingSmoothingMs(atmosphereConfig);
       const cloudSunOcclusion = getPmndrsCloudSunOcclusionState(this, atmosphereConfig, reflectionSmoothingMs, reflectionSmoothingMs);
-      const cloudReflectionFactor = cloudSunOcclusion && typeof cloudSunOcclusion.cloudReflectionFactor === "number" ? cloudSunOcclusion.cloudReflectionFactor : 1;
+      const cloudMoonOcclusion = getPmndrsCloudMoonOcclusionState(this, atmosphereConfig, reflectionSmoothingMs);
+      const cloudSunReflectionFactor = cloudSunOcclusion && typeof cloudSunOcclusion.cloudReflectionFactor === "number" ? cloudSunOcclusion.cloudReflectionFactor : 1;
+      const cloudMoonReflectionFactor = cloudMoonOcclusion && typeof cloudMoonOcclusion.cloudMoonReflectionFactor === "number" ? cloudMoonOcclusion.cloudMoonReflectionFactor : 1;
+      const cloudReflectionFactor = Math.min(cloudSunReflectionFactor, cloudMoonReflectionFactor);
       const reflectionTargetScale = getPmndrsNightReflectionIntensityScale(this, atmosphereConfig, reflectionSource) * cloudReflectionFactor;
       const reflectionIntensityScale = reflectionSmoothingMs > 0 && typeof this._vrodosReflectionEnvironmentIntensityScale === "number" ? this._vrodosReflectionEnvironmentIntensityScale : reflectionTargetScale;
       const options = {
@@ -10426,7 +10689,10 @@ ${shader.fragmentShader}` : withUniform;
       const atmosphereConfig = this.getPmndrsAtmosphereConfig ? this.getPmndrsAtmosphereConfig() : null;
       const smoothingMs = getPmndrsRuntimeLightingSmoothingMs(atmosphereConfig);
       const cloudSunOcclusion = getPmndrsCloudSunOcclusionState(this, atmosphereConfig, smoothingMs, smoothingMs);
-      const cloudReflectionFactor = cloudSunOcclusion && typeof cloudSunOcclusion.cloudReflectionFactor === "number" ? cloudSunOcclusion.cloudReflectionFactor : 1;
+      const cloudMoonOcclusion = getPmndrsCloudMoonOcclusionState(this, atmosphereConfig, smoothingMs);
+      const cloudSunReflectionFactor = cloudSunOcclusion && typeof cloudSunOcclusion.cloudReflectionFactor === "number" ? cloudSunOcclusion.cloudReflectionFactor : 1;
+      const cloudMoonReflectionFactor = cloudMoonOcclusion && typeof cloudMoonOcclusion.cloudMoonReflectionFactor === "number" ? cloudMoonOcclusion.cloudMoonReflectionFactor : 1;
+      const cloudReflectionFactor = Math.min(cloudSunReflectionFactor, cloudMoonReflectionFactor);
       const targetScale = getPmndrsNightReflectionIntensityScale(this, atmosphereConfig, source) * cloudReflectionFactor;
       const smoothedScale = smoothPmndrsRuntimeLightValue(
         this,

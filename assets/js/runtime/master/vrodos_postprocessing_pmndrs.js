@@ -217,9 +217,12 @@
 
     const PMNDRS_CLOUD_LENS_FLARE_COVERAGE_START = 0.62;
     const PMNDRS_CLOUD_SUN_VISIBILITY_FULL_Y = 0.08;
-    const PMNDRS_CLOUD_SUN_DISK_SAMPLE_INTERVAL_MS = 160;
-    const PMNDRS_CLOUD_SUN_DISK_SAMPLE_RADIUS_PX = 3;
-    const PMNDRS_CLOUD_SUN_DISK_SAMPLE_MAX_AGE_MS = 900;
+    const PMNDRS_CLOUD_CELESTIAL_DISK_SAMPLE_INTERVAL_MS = 160;
+    const PMNDRS_CLOUD_CELESTIAL_DISK_SAMPLE_RADIUS_PX = 3;
+    const PMNDRS_CLOUD_CELESTIAL_DISK_SAMPLE_MAX_AGE_MS = 900;
+    const PMNDRS_CLOUD_MOON_DIRECT_LIGHT_START_Y = 0.02;
+    const PMNDRS_CLOUD_MOON_DIRECT_LIGHT_FULL_Y = 0.16;
+    const PMNDRS_CLOUD_MOON_SHAFTS_MAX_STRENGTH = 0.055;
     const PMNDRS_CLOUD_LIGHTING_MASK_LAYER = 30;
     const PMNDRS_HORIZON_FOLIAGE_OVERLAY_LAYER = 29;
     const PMNDRS_CLOUD_DENSITY_PROFILE_DEFAULT = Object.freeze({
@@ -244,6 +247,20 @@
     function smoothStep01(value) {
         const t = clamp01(value);
         return t * t * (3 - (2 * t));
+    }
+
+    function smoothstepRange(edge0, edge1, value) {
+        if (edge0 === edge1) {
+            return value < edge0 ? 0 : 1;
+        }
+        return smoothStep01((value - edge0) / (edge1 - edge0));
+    }
+
+    function isPmndrsCloudMoonInteractionDebugDisabled() {
+        return hasPmndrsDebugFlag(
+            'disablePmndrsCloudMoonInteraction',
+            'vrodos_debug_disable_pmndrs_cloud_moon_interaction'
+        );
     }
 
     function getPmndrsCloudsEffectiveCoverage(self) {
@@ -1657,7 +1674,7 @@
         return sign * Math.pow(2, exponent - 15) * (1 + (fraction / 1024));
     }
 
-    function getPmndrsCloudSunDiskReadBuffer(self, renderTarget) {
+    function getPmndrsCloudCelestialDiskReadBuffer(self, renderTarget) {
         const THREE = window.THREE || {};
         const texture = renderTarget && renderTarget.texture ? renderTarget.texture : null;
         const type = texture ? texture.type : null;
@@ -1665,16 +1682,16 @@
             ? 'float'
             : (type === THREE.HalfFloatType ? 'half' : 'byte');
 
-        if (!self._pmndrsCloudSunDiskReadBuffer || self._pmndrsCloudSunDiskReadBufferType !== key) {
-            self._pmndrsCloudSunDiskReadBufferType = key;
-            self._pmndrsCloudSunDiskReadBuffer = key === 'float'
+        if (!self._pmndrsCloudCelestialDiskReadBuffer || self._pmndrsCloudCelestialDiskReadBufferType !== key) {
+            self._pmndrsCloudCelestialDiskReadBufferType = key;
+            self._pmndrsCloudCelestialDiskReadBuffer = key === 'float'
                 ? new Float32Array(4)
                 : (key === 'half' ? new Uint16Array(4) : new Uint8Array(4));
         }
-        return self._pmndrsCloudSunDiskReadBuffer;
+        return self._pmndrsCloudCelestialDiskReadBuffer;
     }
 
-    function readPmndrsCloudSunDiskAlpha(buffer, typeKey) {
+    function readPmndrsCloudCelestialDiskAlpha(buffer, typeKey) {
         if (!buffer || buffer.length < 4) {
             return null;
         }
@@ -1689,7 +1706,7 @@
         return clamp01(buffer[3] / 255);
     }
 
-    function getPmndrsCloudSunDiskRenderTarget(effect) {
+    function getPmndrsCloudCelestialDiskRenderTarget(effect) {
         const cloudsPass = effect && effect.cloudsPass ? effect.cloudsPass : null;
         if (!cloudsPass) {
             return null;
@@ -1697,21 +1714,66 @@
         return cloudsPass.historyRenderTarget || cloudsPass.resolveRenderTarget || cloudsPass.currentRenderTarget || null;
     }
 
-    function projectPmndrsCloudSunDiskUv(self, camera, atmosphereConfig) {
+    function getPmndrsCloudCelestialDescriptor(atmosphereConfig, celestial) {
+        const type = celestial === 'moon' ? 'moon' : 'sun';
+        if (type === 'moon') {
+            const direction = atmosphereConfig && (atmosphereConfig.localMoonDirection || atmosphereConfig.moonDirection);
+            const directionY = direction && typeof direction.y === 'number' ? direction.y : -1;
+            const moonVisibility = atmosphereConfig && atmosphereConfig.moonEnabled !== false
+                ? smoothstepRange(PMNDRS_CLOUD_MOON_DIRECT_LIGHT_START_Y, PMNDRS_CLOUD_MOON_DIRECT_LIGHT_FULL_Y, directionY)
+                : 0;
+            const illumination = atmosphereConfig && typeof atmosphereConfig.moonIllumination === 'number'
+                ? clamp01(atmosphereConfig.moonIllumination)
+                : 1;
+            const sunElevation = atmosphereConfig && typeof atmosphereConfig.sunElevationDeg === 'number'
+                ? atmosphereConfig.sunElevationDeg
+                : 62;
+            const nightFactor = 1 - smoothstepRange(-8, -3, sunElevation);
+            return {
+                type,
+                direction,
+                distance: 5200,
+                visibility: moonVisibility * illumination * nightFactor,
+                unavailableReason: atmosphereConfig && atmosphereConfig.moonEnabled === false
+                    ? 'moon-disabled'
+                    : (illumination <= 0.001
+                        ? 'moon-unilluminated'
+                        : (moonVisibility <= 0.001
+                            ? 'moon-below-horizon'
+                            : (nightFactor <= 0.001 ? 'not-night' : '')))
+            };
+        }
+
+        return {
+            type,
+            direction: atmosphereConfig && (atmosphereConfig.localSunDirection || atmosphereConfig.sunDirection),
+            distance: Math.max(100, Math.min(Number((atmosphereConfig && atmosphereConfig.sunDistance) || 5200), 20000)),
+            visibility: getPmndrsCloudSunVisibility(atmosphereConfig),
+            unavailableReason: getPmndrsCloudSunVisibility(atmosphereConfig) <= 0.001 ? 'sun-below-horizon' : ''
+        };
+    }
+
+    function projectPmndrsCloudCelestialDiskUv(self, camera, atmosphereConfig, celestial) {
         const THREE = window.THREE;
-        const direction = atmosphereConfig && (atmosphereConfig.localSunDirection || atmosphereConfig.sunDirection);
+        const descriptor = getPmndrsCloudCelestialDescriptor(atmosphereConfig, celestial);
+        const type = descriptor.type;
+        const direction = descriptor.direction;
         if (!THREE || !camera || !direction || typeof direction.lengthSq !== 'function' || direction.lengthSq() < 0.0001) {
-            return { reason: 'sun-direction-unavailable' };
+            return { reason: `${type}-direction-unavailable` };
         }
-        if (getPmndrsCloudSunVisibility(atmosphereConfig) <= 0.001) {
-            return { reason: 'sun-below-horizon' };
+        if (descriptor.visibility <= 0.001) {
+            return { reason: descriptor.unavailableReason || `${type}-not-visible` };
         }
 
-        self._pmndrsCloudSunDiskCameraPosition = self._pmndrsCloudSunDiskCameraPosition || new THREE.Vector3();
-        self._pmndrsCloudSunDiskDirection = self._pmndrsCloudSunDiskDirection || new THREE.Vector3();
-        self._pmndrsCloudSunDiskProjectedPosition = self._pmndrsCloudSunDiskProjectedPosition || new THREE.Vector3();
+        const keyPrefix = type === 'moon' ? '_pmndrsCloudMoonDisk' : '_pmndrsCloudSunDisk';
+        const cameraPositionKey = `${keyPrefix}CameraPosition`;
+        const directionKey = `${keyPrefix}Direction`;
+        const projectedPositionKey = `${keyPrefix}ProjectedPosition`;
+        self[cameraPositionKey] = self[cameraPositionKey] || new THREE.Vector3();
+        self[directionKey] = self[directionKey] || new THREE.Vector3();
+        self[projectedPositionKey] = self[projectedPositionKey] || new THREE.Vector3();
 
-        const cameraPosition = self._pmndrsCloudSunDiskCameraPosition;
+        const cameraPosition = self[cameraPositionKey];
         if (typeof camera.getWorldPosition === 'function') {
             camera.getWorldPosition(cameraPosition);
         } else if (camera.position && typeof cameraPosition.copy === 'function') {
@@ -1720,9 +1782,8 @@
             cameraPosition.set(0, 0, 0);
         }
 
-        const sunDistance = Math.max(100, Math.min(Number(atmosphereConfig.sunDistance || 5200), 20000));
-        const sunDirection = self._pmndrsCloudSunDiskDirection.copy(direction).normalize();
-        const projected = self._pmndrsCloudSunDiskProjectedPosition.copy(cameraPosition).addScaledVector(sunDirection, sunDistance);
+        const celestialDirection = self[directionKey].copy(direction).normalize();
+        const projected = self[projectedPositionKey].copy(cameraPosition).addScaledVector(celestialDirection, descriptor.distance);
         if (typeof projected.project !== 'function') {
             return { reason: 'projection-unavailable' };
         }
@@ -1732,13 +1793,13 @@
             return { reason: 'projection-invalid' };
         }
         if (projected.z < -1 || projected.z > 1) {
-            return { reason: 'sun-behind-camera' };
+            return { reason: `${type}-behind-camera` };
         }
 
         const u = (projected.x * 0.5) + 0.5;
         const v = (projected.y * 0.5) + 0.5;
         if (u < -0.05 || u > 1.05 || v < -0.05 || v > 1.05) {
-            return { reason: 'sun-offscreen' };
+            return { reason: `${type}-offscreen` };
         }
         return {
             reason: '',
@@ -1747,13 +1808,14 @@
         };
     }
 
-    function getPmndrsCloudSunDiskPreviousSample(self, reason, now) {
-        const previous = self && self._pmndrsCloudSunDiskSample ? self._pmndrsCloudSunDiskSample : null;
+    function getPmndrsCloudCelestialDiskPreviousSample(self, celestial, reason, now) {
+        const sampleKey = celestial === 'moon' ? '_pmndrsCloudMoonDiskSample' : '_pmndrsCloudSunDiskSample';
+        const previous = self && self[sampleKey] ? self[sampleKey] : null;
         const age = previous && typeof previous.sampleTimeMs === 'number'
             ? Math.max(0, now - previous.sampleTimeMs)
             : null;
 
-        if (previous && age !== null && age <= PMNDRS_CLOUD_SUN_DISK_SAMPLE_MAX_AGE_MS) {
+        if (previous && age !== null && age <= PMNDRS_CLOUD_CELESTIAL_DISK_SAMPLE_MAX_AGE_MS) {
             return Object.assign({}, previous, {
                 reason: reason || previous.reason || 'sample-reused',
                 ageMs: age
@@ -1771,38 +1833,41 @@
         };
     }
 
-    function samplePmndrsCloudSunDiskOcclusion(self, renderer, camera, atmosphereConfig) {
+    function samplePmndrsCloudCelestialDiskOcclusion(self, renderer, camera, atmosphereConfig, celestial) {
+        const type = celestial === 'moon' ? 'moon' : 'sun';
+        const sampleKey = type === 'moon' ? '_pmndrsCloudMoonDiskSample' : '_pmndrsCloudSunDiskSample';
+        const warnKey = type === 'moon' ? '_pmndrsCloudMoonDiskReadWarned' : '_pmndrsCloudSunDiskReadWarned';
         const now = typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
-        const previous = self && self._pmndrsCloudSunDiskSample ? self._pmndrsCloudSunDiskSample : null;
+        const previous = self && self[sampleKey] ? self[sampleKey] : null;
         if (!self || !renderer || !camera || !self.pmndrsCloudsEffect || !isHorizonBackground(self)) {
-            return getPmndrsCloudSunDiskPreviousSample(self, 'not-horizon-clouds', now);
+            return getPmndrsCloudCelestialDiskPreviousSample(self, type, 'not-horizon-clouds', now);
         }
         if (typeof self.isDirectVrPresentationActive === 'function' && self.isDirectVrPresentationActive()) {
-            return getPmndrsCloudSunDiskPreviousSample(self, 'immersive-xr', now);
+            return getPmndrsCloudCelestialDiskPreviousSample(self, type, 'immersive-xr', now);
         }
-        if (previous && typeof previous.sampleTimeMs === 'number' && (now - previous.sampleTimeMs) < PMNDRS_CLOUD_SUN_DISK_SAMPLE_INTERVAL_MS) {
+        if (previous && typeof previous.sampleTimeMs === 'number' && (now - previous.sampleTimeMs) < PMNDRS_CLOUD_CELESTIAL_DISK_SAMPLE_INTERVAL_MS) {
             return Object.assign({}, previous, {
                 reason: 'sample-throttled',
                 ageMs: Math.max(0, now - previous.sampleTimeMs)
             });
         }
         if (typeof renderer.readRenderTargetPixels !== 'function') {
-            return getPmndrsCloudSunDiskPreviousSample(self, 'readpixels-unavailable', now);
+            return getPmndrsCloudCelestialDiskPreviousSample(self, type, 'readpixels-unavailable', now);
         }
 
-        const renderTarget = getPmndrsCloudSunDiskRenderTarget(self.pmndrsCloudsEffect);
+        const renderTarget = getPmndrsCloudCelestialDiskRenderTarget(self.pmndrsCloudsEffect);
         const width = renderTarget && typeof renderTarget.width === 'number' ? renderTarget.width : 0;
         const height = renderTarget && typeof renderTarget.height === 'number' ? renderTarget.height : 0;
         if (!renderTarget || width < 2 || height < 2) {
-            return getPmndrsCloudSunDiskPreviousSample(self, 'cloud-target-unavailable', now);
+            return getPmndrsCloudCelestialDiskPreviousSample(self, type, 'cloud-target-unavailable', now);
         }
 
-        const projection = projectPmndrsCloudSunDiskUv(self, camera, atmosphereConfig);
+        const projection = projectPmndrsCloudCelestialDiskUv(self, camera, atmosphereConfig, type);
         if (projection.reason) {
-            return getPmndrsCloudSunDiskPreviousSample(self, projection.reason, now);
+            return getPmndrsCloudCelestialDiskPreviousSample(self, type, projection.reason, now);
         }
 
-        const radius = Math.max(1, Math.min(PMNDRS_CLOUD_SUN_DISK_SAMPLE_RADIUS_PX, Math.floor(Math.min(width, height) * 0.015)));
+        const radius = Math.max(1, Math.min(PMNDRS_CLOUD_CELESTIAL_DISK_SAMPLE_RADIUS_PX, Math.floor(Math.min(width, height) * 0.015)));
         const centerX = Math.max(0, Math.min(width - 1, Math.round(projection.u * (width - 1))));
         const centerY = Math.max(0, Math.min(height - 1, Math.round(projection.v * (height - 1))));
         const offsets = [
@@ -1816,8 +1881,8 @@
             [radius, -radius],
             [-radius, -radius]
         ];
-        const buffer = getPmndrsCloudSunDiskReadBuffer(self, renderTarget);
-        const typeKey = self._pmndrsCloudSunDiskReadBufferType || 'byte';
+        const buffer = getPmndrsCloudCelestialDiskReadBuffer(self, renderTarget);
+        const typeKey = self._pmndrsCloudCelestialDiskReadBufferType || 'byte';
         let alphaTotal = 0;
         let sampleCount = 0;
 
@@ -1827,22 +1892,22 @@
                 const x = Math.max(0, Math.min(width - 1, centerX + offset[0]));
                 const y = Math.max(0, Math.min(height - 1, centerY + offset[1]));
                 renderer.readRenderTargetPixels(renderTarget, x, y, 1, 1, buffer);
-                const alpha = readPmndrsCloudSunDiskAlpha(buffer, typeKey);
+                const alpha = readPmndrsCloudCelestialDiskAlpha(buffer, typeKey);
                 if (alpha !== null) {
                     alphaTotal += alpha;
                     sampleCount += 1;
                 }
             }
         } catch (err) {
-            if (!self._pmndrsCloudSunDiskReadWarned) {
-                console.info('[VRodos] PMNDRS cloud sun-disk readback unavailable; cloud lighting falls back to authored coverage.', err);
-                self._pmndrsCloudSunDiskReadWarned = true;
+            if (!self[warnKey]) {
+                console.info(`[VRodos] PMNDRS cloud ${type}-disk readback unavailable; celestial cloud lighting falls back to authored coverage.`, err);
+                self[warnKey] = true;
             }
-            return getPmndrsCloudSunDiskPreviousSample(self, 'readpixels-failed', now);
+            return getPmndrsCloudCelestialDiskPreviousSample(self, type, 'readpixels-failed', now);
         }
 
         if (sampleCount <= 0) {
-            return getPmndrsCloudSunDiskPreviousSample(self, 'sample-empty', now);
+            return getPmndrsCloudCelestialDiskPreviousSample(self, type, 'sample-empty', now);
         }
 
         const sample = {
@@ -1854,22 +1919,173 @@
             sampleCount,
             sampleTimeMs: now
         };
-        self._pmndrsCloudSunDiskSample = sample;
+        self[sampleKey] = sample;
         return sample;
     }
 
-    function cloudSunDiskSampleToDiagnostics(sample) {
+    function cloudCelestialDiskSampleToDiagnostics(sample, celestial) {
+        const prefix = celestial === 'moon' ? 'cloudMoonDisk' : 'cloudSunDisk';
         const occlusion = sample && typeof sample.occlusion === 'number' ? clamp01(sample.occlusion) : 0;
         const strength = smoothStep01((occlusion - 0.18) / (0.78 - 0.18));
-        return {
-            cloudSunDiskOcclusion: occlusion,
-            cloudSunDiskStrength: strength,
-            cloudSunDiskUvX: sample && typeof sample.u === 'number' ? Number(sample.u.toFixed(4)) : null,
-            cloudSunDiskUvY: sample && typeof sample.v === 'number' ? Number(sample.v.toFixed(4)) : null,
-            cloudSunDiskSampleReason: sample && sample.reason ? sample.reason : 'not-sampled',
-            cloudSunDiskSampleAgeMs: sample && typeof sample.ageMs === 'number' ? Math.round(sample.ageMs) : null,
-            cloudSunDiskSampleCount: sample && typeof sample.sampleCount === 'number' ? sample.sampleCount : 0
-        };
+        const diagnostics = {};
+        diagnostics[`${prefix}Occlusion`] = occlusion;
+        diagnostics[`${prefix}Strength`] = strength;
+        diagnostics[`${prefix}UvX`] = sample && typeof sample.u === 'number' ? Number(sample.u.toFixed(4)) : null;
+        diagnostics[`${prefix}UvY`] = sample && typeof sample.v === 'number' ? Number(sample.v.toFixed(4)) : null;
+        diagnostics[`${prefix}SampleReason`] = sample && sample.reason ? sample.reason : 'not-sampled';
+        diagnostics[`${prefix}SampleAgeMs`] = sample && typeof sample.ageMs === 'number' ? Math.round(sample.ageMs) : null;
+        diagnostics[`${prefix}SampleCount`] = sample && typeof sample.sampleCount === 'number' ? sample.sampleCount : 0;
+        return diagnostics;
+    }
+
+    const PMNDRS_MOON_CLOUD_SHAFTS_FRAGMENT_SHADER = `
+uniform sampler2D vrodosCloudBuffer;
+uniform vec2 vrodosMoonUv;
+uniform vec2 vrodosInvResolution;
+uniform vec3 vrodosMoonColor;
+uniform float vrodosMoonShaftStrength;
+uniform float vrodosMoonSourceVisibility;
+uniform float vrodosAspect;
+
+void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
+  outputColor = inputColor;
+  if (vrodosMoonShaftStrength <= 0.00001) {
+    return;
+  }
+
+  vec2 toMoon = vrodosMoonUv - uv;
+  float distanceToMoon = length(vec2(toMoon.x * vrodosAspect, toMoon.y));
+  if (distanceToMoon > 1.25) {
+    return;
+  }
+
+  float currentAlpha = texture(vrodosCloudBuffer, uv).a;
+  vec2 stepUv = toMoon / 12.0;
+  float transmission = 0.0;
+  float weightTotal = 0.0;
+  for (int i = 1; i <= 12; i++) {
+    float sampleWeight = 1.0 - (float(i) / 13.0);
+    float cloudAlpha = texture(vrodosCloudBuffer, uv + stepUv * float(i)).a;
+    transmission += (1.0 - cloudAlpha) * sampleWeight;
+    weightTotal += sampleWeight;
+  }
+  transmission /= max(weightTotal, 0.0001);
+
+  vec2 rimOffset = normalize(toMoon + vec2(0.000001)) * max(vrodosInvResolution.x, vrodosInvResolution.y) * 3.0;
+  float towardMoonAlpha = texture(vrodosCloudBuffer, uv + rimOffset).a;
+  float silverLining = max(0.0, currentAlpha - towardMoonAlpha) * (1.0 - currentAlpha * 0.45);
+  float distanceFade = 1.0 - smoothstep(0.08, 1.15, distanceToMoon);
+  float shaft = transmission * distanceFade * (0.3 + 0.7 * vrodosMoonSourceVisibility);
+  vec3 lunarRadiance = vrodosMoonColor * vrodosMoonShaftStrength *
+    (shaft * 0.62 + silverLining * 1.15);
+  outputColor.rgb += lunarRadiance;
+}
+`;
+
+    function shouldPreparePmndrsMoonCloudShafts(self) {
+        const quality = getPmndrsCloudsQuality(self);
+        return Boolean(
+            self &&
+            isHorizonBackground(self) &&
+            isPmndrsCloudsRequested(self) &&
+            isPmndrsCloudLightShaftsRequested(self) &&
+            (quality === 'high' || quality === 'ultra') &&
+            !isPmndrsCloudMoonInteractionDebugDisabled() &&
+            !(typeof self.isMobileDevice === 'function' && self.isMobileDevice()) &&
+            !isPmndrsDirectVrPresentationActive(self) &&
+            !shouldSkipPmndrsCloudsForVr(self)
+        );
+    }
+
+    function createPmndrsMoonCloudShaftsEffect(self, PP, THREE) {
+        if (!shouldPreparePmndrsMoonCloudShafts(self) || !PP || typeof PP.Effect !== 'function' || !THREE) {
+            return null;
+        }
+        return new PP.Effect('VRODOSMoonCloudShaftsEffect', PMNDRS_MOON_CLOUD_SHAFTS_FRAGMENT_SHADER, {
+            uniforms: new Map([
+                ['vrodosCloudBuffer', new THREE.Uniform(null)],
+                ['vrodosMoonUv', new THREE.Uniform(new THREE.Vector2(0.5, 0.5))],
+                ['vrodosInvResolution', new THREE.Uniform(new THREE.Vector2(1, 1))],
+                ['vrodosMoonColor', new THREE.Uniform(new THREE.Color('#b9c6df'))],
+                ['vrodosMoonShaftStrength', new THREE.Uniform(0)],
+                ['vrodosMoonSourceVisibility', new THREE.Uniform(0)],
+                ['vrodosAspect', new THREE.Uniform(1)]
+            ])
+        });
+    }
+
+    function syncPmndrsMoonCloudShaftsEffect(self, camera, atmosphereConfig) {
+        const effect = self && self.pmndrsMoonCloudShaftsEffect ? self.pmndrsMoonCloudShaftsEffect : null;
+        if (!self || !effect || !effect.uniforms) {
+            return false;
+        }
+
+        const diagnostics = self._pmndrsCloudsDiagnostics || {};
+        const overlay = self.pmndrsCloudsEffect && self.pmndrsCloudsEffect.atmosphereOverlay
+            ? self.pmndrsCloudsEffect.atmosphereOverlay
+            : null;
+        const renderTarget = getPmndrsCloudCelestialDiskRenderTarget(self.pmndrsCloudsEffect);
+        const projection = projectPmndrsCloudCelestialDiskUv(self, camera, atmosphereConfig, 'moon');
+        const descriptor = getPmndrsCloudCelestialDescriptor(atmosphereConfig, 'moon');
+        const authoredCoverage = getPmndrsCloudsCoverage(self);
+        const diskOcclusion = typeof diagnostics.cloudMoonDiskOcclusion === 'number'
+            ? clamp01(diagnostics.cloudMoonDiskOcclusion)
+            : 0;
+        const coverageRise = smoothstepRange(0.08, 0.34, authoredCoverage);
+        const overcastFade = 1 - smoothstepRange(0.72, 0.96, authoredCoverage);
+        const sourceVisibility = 1 - smoothstepRange(0.18, 0.88, diskOcclusion);
+        const partialCover = coverageRise * overcastFade * (0.45 + (0.55 * sourceVisibility));
+        let skippedReason = '';
+
+        if (isPmndrsCloudMoonInteractionDebugDisabled()) {
+            skippedReason = 'debug-disabled';
+        } else if (!diagnostics.cloudsActive || !overlay || !overlay.map || !renderTarget) {
+            skippedReason = 'cloud-buffer-unavailable';
+        } else if (!isPmndrsCloudLightShaftsRequested(self)) {
+            skippedReason = 'author-disabled';
+        } else if (getPmndrsCloudsQuality(self) !== 'high' && getPmndrsCloudsQuality(self) !== 'ultra') {
+            skippedReason = 'profile-disabled';
+        } else if (projection.reason) {
+            skippedReason = projection.reason;
+        } else if (descriptor.visibility <= 0.001) {
+            skippedReason = descriptor.unavailableReason || 'moon-not-visible';
+        } else if (partialCover <= 0.001) {
+            skippedReason = authoredCoverage <= 0.08 ? 'cloud-cover-too-low' : 'overcast';
+        }
+
+        const strength = skippedReason
+            ? 0
+            : PMNDRS_CLOUD_MOON_SHAFTS_MAX_STRENGTH * descriptor.visibility * partialCover;
+        const cloudBufferUniform = effect.uniforms.get('vrodosCloudBuffer');
+        const moonUvUniform = effect.uniforms.get('vrodosMoonUv');
+        const invResolutionUniform = effect.uniforms.get('vrodosInvResolution');
+        const strengthUniform = effect.uniforms.get('vrodosMoonShaftStrength');
+        const sourceVisibilityUniform = effect.uniforms.get('vrodosMoonSourceVisibility');
+        const aspectUniform = effect.uniforms.get('vrodosAspect');
+
+        cloudBufferUniform.value = overlay && overlay.map ? overlay.map : null;
+        if (!projection.reason) {
+            moonUvUniform.value.set(projection.u, projection.v);
+        }
+        invResolutionUniform.value.set(
+            1 / Math.max(1, renderTarget && renderTarget.width ? renderTarget.width : 1),
+            1 / Math.max(1, renderTarget && renderTarget.height ? renderTarget.height : 1)
+        );
+        strengthUniform.value = strength;
+        sourceVisibilityUniform.value = sourceVisibility;
+        aspectUniform.value = renderTarget && renderTarget.height
+            ? renderTarget.width / renderTarget.height
+            : 1;
+
+        updatePmndrsCloudLinkedDiagnostics(self, {
+            cloudMoonShaftsPrepared: true,
+            cloudMoonShaftsActive: strength > 0.00001,
+            cloudMoonShaftsStrength: Number(strength.toFixed(5)),
+            cloudMoonShaftsSourceVisibility: Number(sourceVisibility.toFixed(4)),
+            cloudMoonShaftsSkippedReason: skippedReason,
+            cloudMoonShaftsMode: 'screen-space-cloud-alpha'
+        });
+        return strength > 0.00001;
     }
 
     function markPmndrsCloudsSkipped(self, reason, updates) {
@@ -1885,14 +2101,27 @@
                 ? (reason === 'immersive-xr' ? 'not-desktop' : (reason || 'clouds-disabled'))
                 : 'author-disabled',
             cloudLightShaftsMode: 'off'
-        }, cloudSunDiskSampleToDiagnostics({
+        }, cloudCelestialDiskSampleToDiagnostics({
             occlusion: 0,
             reason: reason || 'clouds-skipped',
             u: null,
             v: null,
             ageMs: null,
             sampleCount: 0
-        }), updates || {}));
+        }, 'sun'), cloudCelestialDiskSampleToDiagnostics({
+            occlusion: 0,
+            reason: reason || 'clouds-skipped',
+            u: null,
+            v: null,
+            ageMs: null,
+            sampleCount: 0
+        }, 'moon'), {
+            cloudMoonShaftsPrepared: false,
+            cloudMoonShaftsActive: false,
+            cloudMoonShaftsStrength: 0,
+            cloudMoonShaftsSkippedReason: reason || 'clouds-disabled',
+            cloudMoonShaftsMode: 'off'
+        }, updates || {}));
 
         if (self && reason && reason !== 'disabled' && reason !== 'cloud-assets-loading' && self._pmndrsCloudsWarnedReason !== reason) {
             const message = `[VRodos] Takram volumetric clouds skipped: ${reason}.`;
@@ -2887,9 +3116,10 @@
         return `${getPmndrsAtmosphereModeSignature(self, atmosphereConfig) 
             }|${  getPmndrsCloudTextureSignature(self, renderer, atmosphereConfig)
             }:${  getPmndrsCloudsQuality(self)
-            }:${  getPmndrsCloudsCoverage(self)
-            }:${  getPmndrsCloudsStyle(self)
-            }|ao:${  (self && typeof self.getAmbientOcclusionPreset === 'function') ? self.getAmbientOcclusionPreset() : 'off' 
+             }:${  getPmndrsCloudsCoverage(self)
+             }:${  getPmndrsCloudsStyle(self)
+             }:shafts:${  isPmndrsCloudLightShaftsRequested(self)
+             }|ao:${  (self && typeof self.getAmbientOcclusionPreset === 'function') ? self.getAmbientOcclusionPreset() : 'off'
             }|aoBackend:${  getPmndrsAmbientOcclusionBackend(self) 
             }|aaMode:${  getPmndrsAAMode(self) 
             }|aaPreset:${  getPmndrsAAPreset(self) 
@@ -3704,6 +3934,8 @@
         disposePmndrsNativeSsaoResources(self, true);
         disposePmndrsCloudEffect(self);
         disposePmndrsCloudLightingMaskResources(self);
+        disposeRuntimeResource(self.pmndrsMoonCloudShaftsEffect);
+        self.pmndrsMoonCloudShaftsEffect = null;
 
         if (self.pmndrsComposer) {
             try {
@@ -3735,6 +3967,7 @@
         self.pmndrsChromaticAberrationEffect = null;
         self.pmndrsAerialPerspectiveEffect = null;
         self.pmndrsCloudsEffect = null;
+        self.pmndrsMoonCloudShaftsEffect = null;
         self.pmndrsHorizonFoliageOverlayPass = null;
         restoreAllPmndrsHorizonFoliageMaterials(self);
         self._pmndrsAtmosphereSignature = null;
@@ -3935,7 +4168,13 @@
         const hazeDisabledReason = getPmndrsCloudHazeDisabledReason(self, profile, hazeEnabled);
         self.pmndrsCloudsEffect.coverage = effectiveCoverage;
         const directCompositeEnabled = setPmndrsCloudDirectComposite(self.pmndrsCloudsEffect, !self.pmndrsAerialPerspectiveEffect);
-        const sunDiskSample = samplePmndrsCloudSunDiskOcclusion(self, renderer, camera, atmosphereConfig);
+        const sunDiskSample = samplePmndrsCloudCelestialDiskOcclusion(self, renderer, camera, atmosphereConfig, 'sun');
+        const celestialSampleNow = typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now();
+        const moonDiskSample = isPmndrsCloudMoonInteractionDebugDisabled()
+            ? getPmndrsCloudCelestialDiskPreviousSample(self, 'moon', 'debug-disabled', celestialSampleNow)
+            : samplePmndrsCloudCelestialDiskOcclusion(self, renderer, camera, atmosphereConfig, 'moon');
 
         markPmndrsCloudsActive(self, Object.assign({
             textureReady: true,
@@ -4008,7 +4247,10 @@
             cloudWeatherOffsetY: self.pmndrsCloudsEffect.localWeatherOffset && typeof self.pmndrsCloudsEffect.localWeatherOffset.y === 'number'
                 ? self.pmndrsCloudsEffect.localWeatherOffset.y
                 : (Array.isArray(profile.localWeatherOffset) ? profile.localWeatherOffset[1] : 0)
-        }, getPmndrsCloudLightShaftBufferDiagnostics(self), cloudSunDiskSampleToDiagnostics(sunDiskSample)));
+        }, getPmndrsCloudLightShaftBufferDiagnostics(self),
+        cloudCelestialDiskSampleToDiagnostics(sunDiskSample, 'sun'),
+        cloudCelestialDiskSampleToDiagnostics(moonDiskSample, 'moon')));
+        syncPmndrsMoonCloudShaftsEffect(self, camera, atmosphereConfig);
         routePmndrsCloudsIntoAerial(self, atmosphereConfig);
     }
 
@@ -4334,6 +4576,42 @@
             // opaque white ground cap over the horizon.
             this.pmndrsAerialPerspectiveEffect = null;
             restoreAllPmndrsHorizonFoliageMaterials(this);
+        }
+
+        this.pmndrsMoonCloudShaftsEffect = null;
+        if (!xrStereoMode && shouldPreparePmndrsMoonCloudShafts(this)) {
+            try {
+                this.pmndrsMoonCloudShaftsEffect = createPmndrsMoonCloudShaftsEffect(this, PP, THREE);
+                if (this.pmndrsMoonCloudShaftsEffect) {
+                    effects.push(this.pmndrsMoonCloudShaftsEffect);
+                    syncPmndrsMoonCloudShaftsEffect(this, camera, atmosphereConfig);
+                }
+            } catch (err) {
+                console.warn('[VRodos] PMNDRS moon cloud-shafts effect construction failed, skipping:', err);
+                disposeRuntimeResource(this.pmndrsMoonCloudShaftsEffect);
+                this.pmndrsMoonCloudShaftsEffect = null;
+                updatePmndrsCloudLinkedDiagnostics(this, {
+                    cloudMoonShaftsPrepared: false,
+                    cloudMoonShaftsActive: false,
+                    cloudMoonShaftsStrength: 0,
+                    cloudMoonShaftsSkippedReason: 'effect-construction-failed',
+                    cloudMoonShaftsMode: 'off'
+                });
+            }
+        } else {
+            updatePmndrsCloudLinkedDiagnostics(this, {
+                cloudMoonShaftsPrepared: false,
+                cloudMoonShaftsActive: false,
+                cloudMoonShaftsStrength: 0,
+                cloudMoonShaftsSkippedReason: isPmndrsCloudMoonInteractionDebugDisabled()
+                    ? 'debug-disabled'
+                    : (!isPmndrsCloudLightShaftsRequested(this)
+                        ? 'author-disabled'
+                        : ((getPmndrsCloudsQuality(this) === 'high' || getPmndrsCloudsQuality(this) === 'ultra')
+                            ? 'not-desktop-horizon-clouds'
+                            : 'profile-disabled')),
+                cloudMoonShaftsMode: 'off'
+            });
         }
 
         this._pmndrsAtmosphereSignature = getPmndrsAtmosphereModeSignature(this, atmosphereConfig);

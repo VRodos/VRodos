@@ -7087,7 +7087,7 @@ vec3 getSkyRadiance(
       getLunarRadiance(moonAngularRadius) *
       lunarRadianceScale *
       vec3(0.93, 0.96, 1.0) *
-      (vrodosMoonHaloStrength * vrodosMoonIllumination * vrodosMoonHalo);
+      (vrodosMoonHaloStrength * vrodosMoonIllumination * vrodosMoonCloudVisibility * vrodosMoonHalo);
   }
   #endif // VRODOS_CINEMATIC_MOON_HALO
   if (intersection > 0.0) {
@@ -10211,6 +10211,7 @@ uniform sampler2D vrodosMoonColorTexture;
 uniform float vrodosMoonIllumination;
 uniform float vrodosMoonHaloRadiusScale;
 uniform float vrodosMoonHaloStrength;
+uniform float vrodosMoonCloudVisibility;
 uniform mat4 inverseViewMatrix;
 uniform mat4 worldToECEFMatrix;
 uniform vec3 groundAlbedo;
@@ -10413,6 +10414,7 @@ void main() {
           vrodosMoonIllumination: new Uniform(1),
           vrodosMoonHaloRadiusScale: new Uniform(1),
           vrodosMoonHaloStrength: new Uniform(0),
+          vrodosMoonCloudVisibility: new Uniform(1),
           groundAlbedo: new Uniform(s2.clone()),
           shadowLengthBuffer: new Uniform(null),
           ...l3.uniforms
