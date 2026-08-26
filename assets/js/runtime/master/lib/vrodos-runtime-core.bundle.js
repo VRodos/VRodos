@@ -3564,8 +3564,8 @@
     const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 4675e-6;
     const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.36;
-    const PMNDRS_NIGHT_MOON_LIGHT_INTENSITY = 0.34;
-    const PMNDRS_NIGHT_MOON_LIGHT_COLOR = "#c4d2ff";
+    const PMNDRS_NIGHT_MOON_LIGHT_INTENSITY = 0.08;
+    const PMNDRS_NIGHT_MOON_LIGHT_COLOR = "#b9c6df";
     const PMNDRS_NIGHT_AUTO_EXPOSURE = 3.4;
     const PMNDRS_DAWN_AUTO_EXPOSURE = 2.2;
     const PMNDRS_STARS_NIGHT_INTENSITY = 6;
@@ -3579,8 +3579,8 @@
     const PMNDRS_MOON_ANGULAR_RADIUS = 0.015708;
     const PMNDRS_MOON_ANGULAR_DIAMETER_DEG = 1.8;
     const PMNDRS_MOON_VISIBILITY_BOOST = 8;
-    const PMNDRS_MOON_HALO_RADIUS_SCALE = 3.2;
-    const PMNDRS_MOON_HALO_STRENGTH = 0.045;
+    const PMNDRS_MOON_HALO_RADIUS_SCALE = 5.5;
+    const PMNDRS_MOON_HALO_STRENGTH = 0.012;
     const PMNDRS_MOON_STAR_OCCLUSION_FEATHER_RAD = 2094e-6;
     const PMNDRS_MOON_RADIANCE_SCALE = Math.pow(
       PMNDRS_MOON_ANGULAR_RADIUS / PMNDRS_TAKRAM_NATIVE_MOON_ANGULAR_RADIUS,
@@ -4048,10 +4048,11 @@
     }
     function applyPmndrsMoonPhaseConfig(config, vta) {
       const authoredPhase = normalizePmndrsMoonPhase(config.moonPhase);
-      const astronomicalAuto = authoredPhase === "auto" && config.celestialMode === "datetime";
+      const astronomicalPosition = config.celestialMode === "datetime" && config.astronomicalMoonPosition === true;
+      const astronomicalAuto = authoredPhase === "auto" && astronomicalPosition;
       let phaseAngleDeg = 0;
       let illumination = 1;
-      if (!astronomicalAuto) {
+      if (!astronomicalPosition) {
         config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
         config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection || config.sunDirection);
       }
@@ -4072,10 +4073,12 @@
       }
       let orientationMode = "stable-north-up";
       let moonFixedToECEFMatrix = getPmndrsStableMoonFixedToEcefMatrix(config.moonDirection);
-      if (config.celestialMode === "datetime" && config.effectiveDate && config.inertialToECEFMatrix && vta && typeof vta.getMoonFixedToECIRotationMatrix === "function") {
+      const moonEffectiveDate = config.moonEffectiveDate || config.effectiveDate;
+      const moonInertialToECEFMatrix = config.moonInertialToECEFMatrix || config.inertialToECEFMatrix;
+      if (config.celestialMode === "datetime" && moonEffectiveDate && moonInertialToECEFMatrix && vta && typeof vta.getMoonFixedToECIRotationMatrix === "function") {
         moonFixedToECEFMatrix = new THREE.Matrix4().multiplyMatrices(
-          config.inertialToECEFMatrix,
-          vta.getMoonFixedToECIRotationMatrix(config.effectiveDate, new THREE.Matrix4())
+          moonInertialToECEFMatrix,
+          vta.getMoonFixedToECIRotationMatrix(moonEffectiveDate, new THREE.Matrix4())
         );
         orientationMode = "moon-fixed-date-time";
       }
@@ -4086,7 +4089,7 @@
       config.moonLightDirection = lightDirection;
       config.moonFixedToECEFMatrix = moonFixedToECEFMatrix;
       config.moonOrientationMode = orientationMode;
-      config.moonPositionMode = astronomicalAuto ? "astronomical" : "author-controlled-night";
+      config.moonPositionMode = astronomicalAuto ? "astronomical-auto-phase" : astronomicalPosition ? "astronomical-fixed-phase" : "author-controlled-night";
       return config;
     }
     VRODOSMaster.MoonPhase = Object.freeze({
@@ -4634,7 +4637,8 @@
           durationMinutes,
           clockSource: clock.source,
           startRuntimeMs: clock.timeMs,
-          effectiveDate: new Date(baseDateMs)
+          effectiveDate: new Date(baseDateMs),
+          moonEffectiveDate: new Date(baseDateMs)
         };
         self._pmndrsDayNightCycleState = state;
         return state.effectiveDate;
@@ -4643,6 +4647,7 @@
       const simulatedElapsedMs = elapsedRuntimeMs / durationMs * PMNDRS_DAY_NIGHT_CYCLE_DAY_MS;
       const wrappedTimeOfDayMs = ((state.baseTimeOfDayMs + simulatedElapsedMs) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS + PMNDRS_DAY_NIGHT_CYCLE_DAY_MS) % PMNDRS_DAY_NIGHT_CYCLE_DAY_MS;
       state.effectiveDate = new Date(state.baseDayStartMs + wrappedTimeOfDayMs);
+      state.moonEffectiveDate = new Date(state.baseDateMs + simulatedElapsedMs);
       return state.effectiveDate;
     }
     function getPmndrsNightReflectionIntensityScale(self, config, reflectionSource) {
@@ -7303,7 +7308,7 @@
       self.ensurePhotorealHelperLight(
         "vrodos-pmndrs-horizon-key-light",
         `type: directional; color: ${helperConfig.keyColor}; intensity: ${keyIntensity.toFixed(2)}; castShadow: ${castShadow}; shadowMapWidth: ${shadowMap}; shadowMapHeight: ${shadowMap}; shadowCameraTop: 28; shadowCameraRight: 28; shadowCameraLeft: -28; shadowCameraBottom: -28; shadowBias: -0.00012; shadowRadius: ${getPmndrsDayNightShadowRadius(self).toFixed(2)};`,
-        formatVectorPosition(keyDirection, shadowDistance, helperConfig.useMoonDirection ? 4 : 8)
+        formatVectorPosition(keyDirection, shadowDistance, helperConfig.useMoonDirection ? 0 : 8)
       );
       self.ensurePhotorealHelperLight(
         "vrodos-pmndrs-horizon-fill-light",
@@ -7437,7 +7442,6 @@
         }
         if (moonDirection && moonLight.position && typeof moonLight.position.copy === "function") {
           moonLight.position.copy(moonDirection).normalize().multiplyScalar(28);
-          moonLight.position.y += 4;
           moonLight.updateMatrixWorld(true);
         }
       }
@@ -7620,13 +7624,13 @@
         const sunDirectVisibility = getPmndrsSunDirectLightVisibility(config);
         const targetSunVisible = useSunKey && helperConfig.keyIntensity > 0 && sunDirectVisibility > 1e-3;
         const targetSunIntensity = targetSunVisible ? (hasTakramSunRadiance ? 1 : helperConfig.keyIntensity) * sunDirectVisibility * cloudSunOcclusion.cloudSunDirectFactor : 0;
-        const sunIntensity = targetSunVisible ? smoothPmndrsRuntimeLightValue(
+        const sunIntensity = smoothPmndrsRuntimeLightValue(
           self,
           "takramSunIntensity",
           targetSunIntensity,
           lightingSmoothingMs,
           sunLight.intensity
-        ) : 0;
+        );
         sunLight.visible = sunIntensity > 1e-3 || targetSunVisible;
         sunLight.intensity = sunIntensity;
         if (sunLight.color && typeof sunLight.color.copy === "function") {
@@ -7691,13 +7695,13 @@
         const moonDirection = getPmndrsMoonSceneLightDirection(config);
         const moonIntensity = getPmndrsMoonSceneLightIntensity(config);
         const targetMoonIntensity = moonLightEnabled && Boolean(moonDirection) ? moonIntensity : 0;
-        const smoothedMoonIntensity = targetMoonIntensity > 0 ? smoothPmndrsRuntimeLightValue(
+        const smoothedMoonIntensity = smoothPmndrsRuntimeLightValue(
           self,
           "takramMoonIntensity",
           targetMoonIntensity,
           lightingSmoothingMs,
           moonLight.intensity
-        ) : 0;
+        );
         moonLight.visible = smoothedMoonIntensity > 1e-3 || targetMoonIntensity > 1e-3;
         moonLight.intensity = smoothedMoonIntensity;
         moonLight.castShadow = false;
@@ -7717,7 +7721,6 @@
         }
         if (moonDirection && moonLight.position && typeof moonLight.position.copy === "function") {
           moonLight.position.copy(moonDirection).normalize().multiplyScalar(28);
-          moonLight.position.y += 4;
           moonLight.updateMatrixWorld(true);
         }
       }
@@ -8037,22 +8040,27 @@
         const frame = getPmndrsResolvedGeospatialFrame(config);
         const observerECEF = frame.position;
         const date = dayNightCycleEnabled ? getPmndrsDayNightCycleEffectiveDate(this, celestialDate, celestialUtcTime, dayNightCycleDurationMinutes) : getPmndrsDateObject(celestialDate, celestialUtcTime);
+        const moonDate = dayNightCycleEnabled && this._pmndrsDayNightCycleState && this._pmndrsDayNightCycleState.moonEffectiveDate ? this._pmndrsDayNightCycleState.moonEffectiveDate : date;
         const vta = window.VRODOS_TAKRAM_ATMOSPHERE;
         config.effectiveDate = date;
+        config.moonEffectiveDate = moonDate;
         if (typeof vta.getSunDirectionECEF === "function") {
           config.sunDirection = vta.getSunDirectionECEF(date, new THREE.Vector3(), observerECEF).normalize();
           config.localSunDirection = ecefDirectionToPmndrsLocal(config.sunDirection, frame);
           applyLocalDirectionAngles(config);
         }
         if (typeof vta.getMoonDirectionECEF === "function") {
-          config.moonDirection = vta.getMoonDirectionECEF(date, new THREE.Vector3(), observerECEF).normalize();
+          config.moonDirection = vta.getMoonDirectionECEF(moonDate, new THREE.Vector3(), observerECEF).normalize();
           config.localMoonDirection = ecefDirectionToPmndrsLocal(config.moonDirection, frame);
+          config.astronomicalMoonPosition = true;
         } else {
           config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
           config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection);
+          config.astronomicalMoonPosition = false;
         }
         if (typeof vta.getECIToECEFRotationMatrix === "function") {
           config.inertialToECEFMatrix = vta.getECIToECEFRotationMatrix(date, new THREE.Matrix4());
+          config.moonInertialToECEFMatrix = vta.getECIToECEFRotationMatrix(moonDate, new THREE.Matrix4());
         }
       }
       applyPmndrsMoonPhaseConfig(config, window.VRODOS_TAKRAM_ATMOSPHERE || null);
@@ -8663,6 +8671,22 @@ ${shader.vertexShader}`;
       material.needsUpdate = true;
       return true;
     }
+    function setPmndrsProjectedMoonDiscDefine(material, enabled) {
+      if (!material || !material.defines) {
+        return false;
+      }
+      const active = material.defines.VRODOS_PROJECTED_MOON_DISC != null;
+      if (enabled === active) {
+        return false;
+      }
+      if (enabled) {
+        material.defines.VRODOS_PROJECTED_MOON_DISC = "1";
+      } else {
+        delete material.defines.VRODOS_PROJECTED_MOON_DISC;
+      }
+      material.needsUpdate = true;
+      return true;
+    }
     function updatePmndrsMoonDiagnostics(self, state, config, fallbackState) {
       const material = state && state.skyMaterial ? state.skyMaterial : null;
       const defines = material && material.defines ? material.defines : null;
@@ -8674,10 +8698,13 @@ ${shader.vertexShader}`;
         phaseAngleDeg: config && typeof config.moonPhaseAngleDeg === "number" ? config.moonPhaseAngleDeg : 0,
         illumination: config && typeof config.moonIllumination === "number" ? config.moonIllumination : 1,
         angularDiameterDeg: PMNDRS_MOON_ANGULAR_DIAMETER_DEG,
+        angularRadiusInvariant: true,
+        projectedDiscEnabled: Boolean(defines && defines.VRODOS_PROJECTED_MOON_DISC != null),
         radianceScale: PMNDRS_MOON_RADIANCE_SCALE,
         visibilityBoost: PMNDRS_MOON_VISIBILITY_BOOST,
         orientationMode: config ? config.moonOrientationMode : "stable-north-up",
         positionMode: config ? config.moonPositionMode : "author-controlled-night",
+        siderealDriftEnabled: Boolean(config && config.astronomicalMoonPosition),
         localDirection: config && config.localMoonDirection ? vectorToRoundedArray(config.localMoonDirection) : null,
         ecefDirection: config && config.moonDirection ? vectorToRoundedArray(config.moonDirection) : null,
         materialMoonEnabled: Boolean(material && material.moon),
@@ -8688,7 +8715,7 @@ ${shader.vertexShader}`;
         textureLoading: Boolean(state && state.moonTextureLoading),
         textureFailed: Boolean(state && state.moonTextureFailed),
         debugDisabled: hasPmndrsDebugFlag("disableTexturedMoon", "vrodos_debug_disable_textured_moon"),
-        haloEnabled: Boolean(config && config.moonEnabled && state && state.moonShaderPatchApplied),
+        haloEnabled: Boolean(defines && defines.VRODOS_CINEMATIC_MOON_HALO != null),
         haloRadiusScale: PMNDRS_MOON_HALO_RADIUS_SCALE,
         haloStrength: PMNDRS_MOON_HALO_STRENGTH,
         starOcclusionRadiusDeg: PMNDRS_MOON_ANGULAR_DIAMETER_DEG * 0.5 + THREE.MathUtils.radToDeg(PMNDRS_MOON_STAR_OCCLUSION_FEATHER_RAD),
@@ -8724,8 +8751,10 @@ ${shader.vertexShader}`;
         uniforms.vrodosMoonHaloRadiusScale.value = PMNDRS_MOON_HALO_RADIUS_SCALE;
         uniforms.vrodosMoonHaloStrength.value = PMNDRS_MOON_HALO_STRENGTH;
       }
-      setPmndrsCinematicMoonHaloDefine(material, Boolean(config.moonEnabled && patchApplied));
       const debugDisabled = hasPmndrsDebugFlag("disableTexturedMoon", "vrodos_debug_disable_textured_moon");
+      const cinematicMoonEnabled = Boolean(config.moonEnabled && patchApplied && !debugDisabled);
+      setPmndrsCinematicMoonHaloDefine(material, cinematicMoonEnabled);
+      setPmndrsProjectedMoonDiscDefine(material, cinematicMoonEnabled);
       const textured = Boolean(config.moonEnabled && patchApplied && state.moonTexture && !debugDisabled);
       if (patchApplied) {
         uniforms.vrodosMoonColorTexture.value = textured ? state.moonTexture : null;

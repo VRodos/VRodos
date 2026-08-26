@@ -46,8 +46,8 @@ assert(
   Math.cos(cinematicMoonRadius + starOcclusionFeather * 2) < starOcclusionCosine,
   'A star beyond the moon edge feather must remain visible'
 );
-assert(illumination(0) * 0.045 > illumination(90) * 0.045, 'Full-moon halo must exceed quarter-moon halo');
-assert(illumination(180) * 0.045 === 0, 'New-moon halo must be disabled');
+assert(illumination(0) * 0.012 > illumination(90) * 0.012, 'Full-moon halo must exceed quarter-moon halo');
+assert(illumination(180) * 0.012 === 0, 'New-moon halo must be disabled');
 
 const contract = JSON.parse(read('assets/runtime-settings-contract.json'));
 const phaseContract = contract.sceneSettings.pmndrsMoonPhase;
@@ -60,6 +60,7 @@ for (const phase of ['auto', ...Object.keys(phaseAngles)]) {
 }
 
 const runtimeSource = read('assets/js/runtime/master/vrodos_quality_profiles.js');
+const postprocessingSource = read('assets/js/runtime/master/vrodos_postprocessing_pmndrs.js');
 for (const forbidden of [
   'createPmndrsMoonTexture',
   "new THREE.Sprite(state.moonMaterial)",
@@ -72,12 +73,15 @@ for (const required of [
   'PMNDRS_MOON_ANGULAR_DIAMETER_DEG = 1.8',
   'PMNDRS_MOON_RADIANCE_SCALE = Math.pow',
   'PMNDRS_MOON_VISIBILITY_BOOST = 8.0',
-  'PMNDRS_MOON_HALO_RADIUS_SCALE = 3.2',
-  'PMNDRS_MOON_HALO_STRENGTH = 0.045',
+  'PMNDRS_MOON_HALO_RADIUS_SCALE = 5.5',
+  'PMNDRS_MOON_HALO_STRENGTH = 0.012',
   'PMNDRS_MOON_STAR_OCCLUSION_FEATHER_RAD = 0.002094',
-  'PMNDRS_NIGHT_MOON_LIGHT_INTENSITY = 0.34',
-  "PMNDRS_NIGHT_MOON_LIGHT_COLOR = '#c4d2ff'",
+  'PMNDRS_NIGHT_MOON_LIGHT_INTENSITY = 0.08',
+  "PMNDRS_NIGHT_MOON_LIGHT_COLOR = '#b9c6df'",
   'material.lunarRadianceScale = PMNDRS_MOON_RADIANCE_SCALE',
+  'angularRadiusInvariant: true',
+  'projectedDiscEnabled: Boolean(defines && defines.VRODOS_PROJECTED_MOON_DISC != null)',
+  "material.defines.VRODOS_PROJECTED_MOON_DISC = '1'",
   "material.defines.VRODOS_CINEMATIC_MOON_HALO = '1'",
   'syncPmndrsTakramStarMoonOcclusion(state.starsMaterial, config, state)',
   'installPmndrsFallbackStarMoonOcclusion(state.starsFallbackMaterial)',
@@ -85,7 +89,15 @@ for (const required of [
   '[VRodos] Moon state:',
   "normalizePmndrsMoonPhase(this.data.pmndrsMoonPhase)",
   'applyPmndrsMoonPhaseConfig(config',
-  "astronomicalAuto ? 'astronomical' : 'author-controlled-night'",
+  "'astronomical-auto-phase'",
+  "'astronomical-fixed-phase'",
+  'if (!astronomicalPosition)',
+  'config.astronomicalMoonPosition = true',
+  'siderealDriftEnabled: Boolean(config && config.astronomicalMoonPosition)',
+  'state.effectiveDate = new Date(state.baseDayStartMs + wrappedTimeOfDayMs)',
+  'state.moonEffectiveDate = new Date(state.baseDateMs + simulatedElapsedMs)',
+  'config.moonDirection = vta.getMoonDirectionECEF(moonDate',
+  'moonLight.position.copy(moonDirection).normalize().multiplyScalar(28)',
   'config.moonDirection = buildPmndrsMoonDirection(config.sunDirection)',
   'illuminatedMoonVisibility',
   "vrodos_debug_disable_textured_moon",
@@ -94,6 +106,13 @@ for (const required of [
 ]) {
   assert(runtimeSource.includes(required), `Missing textured moon runtime hook: ${required}`);
 }
+assert(runtimeSource.includes('wrappedTimeOfDayMs'), 'Day-night cycle no longer preserves the authored solar day');
+assert(!runtimeSource.includes('moonLight.position.y += 4'), 'Moon light direction is still artificially elevated');
+
+assert(
+  !postprocessingSource.includes('enforcePmndrsAerialCelestialDiskOwnership'),
+  'Aerial celestial defines must not be toggled after applying the atmosphere config'
+);
 
 const bundle = read('assets/js/runtime/master/lib/vrodos-takram-atmosphere.bundle.js');
 for (const marker of [
@@ -112,12 +131,21 @@ for (const marker of [
   'vrodosMoonIllumination',
   'vrodosMoonHaloRadiusScale',
   'vrodosMoonHaloStrength',
+  'vrodosMoonHalo *= vrodosMoonHalo',
+  'VRODOS_PROJECTED_MOON_DISC_SHADER_PATCH',
+  '#ifdef VRODOS_PROJECTED_MOON_DISC',
+  'vrodosMoonScreenRadius',
+  'vrodosMoonScreenUv',
+  'vrodosMoonScreenSlope',
+  'vrodosRayScreenSlope',
   'VRODOS_MOON_STAR_OCCLUSION_SHADER_PATCH',
   'vrodosMoonOcclusionDirection',
-  'vrodosMoonOcclusionCosine'
+  'vrodosMoonOcclusionCosine',
+  'vrodosOcclusionSlopeRadius'
 ]) {
   assert(bundle.includes(marker), `Generated Takram bundle is missing ${marker}`);
 }
+assert(!bundle.includes('inverse(inverseProjectionMatrix)'), 'Generated Takram bundle still performs a matrix inverse per sky fragment');
 
 const manifest = JSON.parse(read('assets/runtime-version-manifest.json'));
 const moonPath = manifest.takram.assets.moonColorPath;

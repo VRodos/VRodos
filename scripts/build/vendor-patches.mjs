@@ -31,6 +31,8 @@ uniform sampler2D vrodosMoonColorTexture;
 uniform float vrodosMoonIllumination;
 uniform float vrodosMoonHaloRadiusScale;
 uniform float vrodosMoonHaloStrength;
+uniform mat4 inverseViewMatrix;
+uniform mat4 worldToECEFMatrix;
 uniform vec3 groundAlbedo;
 
 #include "sky"`,
@@ -42,26 +44,51 @@ uniform vec3 groundAlbedo;
     `  #ifdef MOON
   float intersection = intersectSphere(rayDirection, moonDirection, moonAngularRadius);`,
     `  #ifdef MOON
+  float intersection;
+  float vrodosMoonScreenRadius = -1.0;
+  vec2 vrodosMoonScreenUv = vec2(0.0);
+  #ifdef VRODOS_PROJECTED_MOON_DISC
+  // VRODOS_PROJECTED_MOON_DISC_SHADER_PATCH
+  vec3 vrodosMoonWorldDirection = transpose(mat3(worldToECEFMatrix)) * moonDirection;
+  vec3 vrodosMoonViewDirection = transpose(mat3(inverseViewMatrix)) * vrodosMoonWorldDirection;
+  vec3 vrodosRayWorldDirection = transpose(mat3(worldToECEFMatrix)) * rayDirection;
+  vec3 vrodosRayViewDirection = transpose(mat3(inverseViewMatrix)) * vrodosRayWorldDirection;
+  if (vrodosMoonViewDirection.z < -1e-5 && vrodosRayViewDirection.z < -1e-5) {
+    vec2 vrodosMoonScreenSlope = vrodosMoonViewDirection.xy / -vrodosMoonViewDirection.z;
+    vec2 vrodosRayScreenSlope = vrodosRayViewDirection.xy / -vrodosRayViewDirection.z;
+    vrodosMoonScreenUv =
+      (vrodosRayScreenSlope - vrodosMoonScreenSlope) /
+      max(tan(moonAngularRadius), 1e-6);
+    vrodosMoonScreenRadius = length(vrodosMoonScreenUv);
+  }
+  intersection = vrodosMoonScreenRadius >= 0.0 && vrodosMoonScreenRadius <= 1.0 ? 1.0 : -1.0;
+  #else
+  intersection = intersectSphere(rayDirection, moonDirection, moonAngularRadius);
+  #endif // VRODOS_PROJECTED_MOON_DISC
+
   #ifdef VRODOS_CINEMATIC_MOON_HALO
   // VRODOS_CINEMATIC_MOON_HALO_SHADER_PATCH
+  float vrodosMoonHalo;
+  #ifdef VRODOS_PROJECTED_MOON_DISC
+  vrodosMoonHalo = vrodosMoonScreenRadius >= 0.0
+    ? 1.0 - smoothstep(0.0, vrodosMoonHaloRadiusScale, vrodosMoonScreenRadius)
+    : 0.0;
+  #else
   float vrodosMoonViewDot = dot(rayDirection, moonDirection);
   float vrodosMoonAngle = acos(clamp(vrodosMoonViewDot, -1.0, 1.0));
-  float vrodosMoonHaloInner = moonAngularRadius * 0.92;
   float vrodosMoonHaloOuter = moonAngularRadius * vrodosMoonHaloRadiusScale;
-  float vrodosMoonHalo =
-    smoothstep(vrodosMoonHaloInner, moonAngularRadius * 1.08, vrodosMoonAngle) *
-    (1.0 - smoothstep(moonAngularRadius * 1.05, vrodosMoonHaloOuter, vrodosMoonAngle));
+  vrodosMoonHalo = 1.0 - smoothstep(0.0, vrodosMoonHaloOuter, vrodosMoonAngle);
+  #endif // VRODOS_PROJECTED_MOON_DISC
+  vrodosMoonHalo *= vrodosMoonHalo;
   if (vrodosMoonHalo > 0.0 && vrodosMoonIllumination > 0.0) {
     radiance +=
       transmittance *
       getLunarRadiance(moonAngularRadius) *
       lunarRadianceScale *
-      vec3(0.82, 0.90, 1.0) *
+      vec3(0.93, 0.96, 1.0) *
       (vrodosMoonHaloStrength * vrodosMoonIllumination * vrodosMoonHalo);
   }
-  #endif // VRODOS_CINEMATIC_MOON_HALO
-
-  float intersection = intersectSphere(rayDirection, moonDirection, moonAngularRadius);`,
+  #endif // VRODOS_CINEMATIC_MOON_HALO`,
     'Takram moon block did not match the expected upstream form'
   );
 
@@ -70,7 +97,30 @@ uniform vec3 groundAlbedo;
     `    vec3 normal = normalize(moonDirection - rayDirection * intersection);
     float diffuse = orenNayarDiffuse(-sunDirection, rayDirection, normal);
     float viewDotMoon = dot(rayDirection, moonDirection);`,
-    `    vec3 normal = normalize(moonDirection - rayDirection * intersection);
+    `    vec3 normal;
+    #ifdef VRODOS_PROJECTED_MOON_DISC
+    vec3 vrodosCameraRightECEF = normalize(
+      mat3(worldToECEFMatrix) * mat3(inverseViewMatrix) * vec3(1.0, 0.0, 0.0)
+    );
+    vec3 vrodosCameraUpECEF = normalize(
+      mat3(worldToECEFMatrix) * mat3(inverseViewMatrix) * vec3(0.0, 1.0, 0.0)
+    );
+    vec3 vrodosMoonTangentRight = normalize(
+      vrodosCameraRightECEF - moonDirection * dot(vrodosCameraRightECEF, moonDirection)
+    );
+    vec3 vrodosMoonTangentUp = normalize(cross(moonDirection, vrodosMoonTangentRight));
+    if (dot(vrodosMoonTangentUp, vrodosCameraUpECEF) < 0.0) {
+      vrodosMoonTangentUp = -vrodosMoonTangentUp;
+    }
+    float vrodosMoonSurfaceZ = sqrt(max(0.0, 1.0 - dot(vrodosMoonScreenUv, vrodosMoonScreenUv)));
+    normal = normalize(
+      moonDirection * vrodosMoonSurfaceZ +
+      vrodosMoonTangentRight * vrodosMoonScreenUv.x +
+      vrodosMoonTangentUp * vrodosMoonScreenUv.y
+    );
+    #else
+    normal = normalize(moonDirection - rayDirection * intersection);
+    #endif // VRODOS_PROJECTED_MOON_DISC
     vec3 moonLightDirection = -sunDirection;
     vec3 moonColor = vec3(1.0);
     #ifdef VRODOS_TEXTURED_MOON
@@ -96,6 +146,25 @@ uniform vec3 groundAlbedo;
     float diffuse = orenNayarDiffuse(moonLightDirection, rayDirection, normal);
     float viewDotMoon = dot(rayDirection, moonDirection);`,
     'Oren-Nayar moon shading block did not match the expected upstream form'
+  );
+
+  source = replaceRequired(
+    source,
+    `    float angle = acos(clamp(viewDotMoon, -1.0, 1.0));
+    float antialias = smoothstep(moonAngularRadius, moonAngularRadius - fragmentAngle, angle);`,
+    `    float angle = acos(clamp(viewDotMoon, -1.0, 1.0));
+    float antialias;
+    #ifdef VRODOS_PROJECTED_MOON_DISC
+    float vrodosMoonAntialiasWidth = max(fragmentAngle / max(moonAngularRadius, 1e-6), 1e-4);
+    antialias = 1.0 - smoothstep(
+      1.0 - vrodosMoonAntialiasWidth,
+      1.0,
+      vrodosMoonScreenRadius
+    );
+    #else
+    antialias = smoothstep(moonAngularRadius, moonAngularRadius - fragmentAngle, angle);
+    #endif // VRODOS_PROJECTED_MOON_DISC`,
+    'Moon antialias block did not match the expected upstream form'
   );
 
   source = replaceRequired(
@@ -133,6 +202,8 @@ in vec3 vRayDirection;`,
 // VRODOS_MOON_STAR_OCCLUSION_SHADER_PATCH
 uniform vec3 vrodosMoonOcclusionDirection;
 uniform float vrodosMoonOcclusionCosine;
+uniform mat4 viewMatrix;
+uniform mat4 worldToECEFMatrix;
 
 in vec3 vCameraPosition;
 in vec3 vRayDirection;`,
@@ -146,11 +217,20 @@ in vec3 vRayDirection;`,
   float r = length(vCameraPosition);`,
     `  #ifdef BACKGROUND
   vec3 rayDirection = normalize(vRayDirection);
-  if (
-    vrodosMoonOcclusionCosine < 1.0 &&
-    dot(rayDirection, normalize(vrodosMoonOcclusionDirection)) > vrodosMoonOcclusionCosine
-  ) {
-    discard;
+  if (vrodosMoonOcclusionCosine < 1.0) {
+    vec3 vrodosStarWorldDirection = transpose(mat3(worldToECEFMatrix)) * rayDirection;
+    vec3 vrodosMoonWorldDirection = transpose(mat3(worldToECEFMatrix)) * normalize(vrodosMoonOcclusionDirection);
+    vec3 vrodosStarViewDirection = mat3(viewMatrix) * vrodosStarWorldDirection;
+    vec3 vrodosMoonViewDirection = mat3(viewMatrix) * vrodosMoonWorldDirection;
+    if (vrodosMoonViewDirection.z < -1e-5 && vrodosStarViewDirection.z < -1e-5) {
+      vec2 vrodosStarScreenSlope = vrodosStarViewDirection.xy / -vrodosStarViewDirection.z;
+      vec2 vrodosMoonScreenSlope = vrodosMoonViewDirection.xy / -vrodosMoonViewDirection.z;
+      float vrodosOcclusionAngularRadius = acos(clamp(vrodosMoonOcclusionCosine, -1.0, 1.0));
+      float vrodosOcclusionSlopeRadius = max(tan(vrodosOcclusionAngularRadius), 1e-6);
+      if (length(vrodosStarScreenSlope - vrodosMoonScreenSlope) < vrodosOcclusionSlopeRadius) {
+        discard;
+      }
+    }
   }
   float r = length(vCameraPosition);`,
     'StarsMaterial background fragment block did not match the expected upstream form'
