@@ -910,6 +910,23 @@
       "wireKey": "pmndrsMoonEnabled",
       "wireFormat": "true-false"
     },
+    "pmndrsMoonPhase": {
+      "metadataKey": "aframePmndrsMoonPhase",
+      "type": "enum",
+      "default": "auto",
+      "allowed": [
+        "auto",
+        "new",
+        "waxing-crescent",
+        "first-quarter",
+        "waxing-gibbous",
+        "full",
+        "waning-gibbous",
+        "last-quarter",
+        "waning-crescent"
+      ],
+      "wireKey": "pmndrsMoonPhase"
+    },
     "pmndrsStarsEnabled": {
       "metadataKey": "aframePmndrsStarsEnabled",
       "type": "enum",

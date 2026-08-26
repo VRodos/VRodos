@@ -182,6 +182,21 @@ VRodosCompileUI.Atmosphere = (function () {
         return Shared.PMNDRS_TWEAK_DEFAULTS.celestialTimePreset;
     }
 
+    function normalizeMoonPhase(value) {
+        const allowed = [
+            'auto',
+            'new',
+            'waxing-crescent',
+            'first-quarter',
+            'waxing-gibbous',
+            'full',
+            'waning-gibbous',
+            'last-quarter',
+            'waning-crescent'
+        ];
+        return allowed.indexOf(value) !== -1 ? value : 'auto';
+    }
+
     function normalizeDate(value, fallback) {
         const candidate = typeof value === 'string' ? value.trim() : '';
         if (/^\d{4}-\d{2}-\d{2}$/.test(candidate)) {
@@ -444,6 +459,7 @@ VRodosCompileUI.Atmosphere = (function () {
             controls.pmndrsMiePhaseG,
             controls.pmndrsAbsorptionScale,
             controls.pmndrsMoon,
+            controls.pmndrsMoonPhase,
             controls.pmndrsHorizonLightingPreset,
             controls.pmndrsHorizonKeyLightIntensity,
             controls.pmndrsHorizonFillLightIntensity
@@ -460,6 +476,9 @@ VRodosCompileUI.Atmosphere = (function () {
         }
         if (controls.pmndrsCelestialMode) {
             controls.pmndrsCelestialMode.disabled = !isEnabled || dayNightCycleEnabled;
+        }
+        if (controls.pmndrsMoonPhase) {
+            controls.pmndrsMoonPhase.disabled = !isEnabled || !(controls.pmndrsMoon && controls.pmndrsMoon.checked === true);
         }
         if (controls.pmndrsCelestialTimePresetWrapper) {
             controls.pmndrsCelestialTimePresetWrapper.style.display = 'none';
@@ -668,6 +687,7 @@ VRodosCompileUI.Atmosphere = (function () {
         VRODOS.editor.envir.scene.aframePmndrsMiePhaseG = Shared.clampNumber(controls.pmndrsMiePhaseG ? controls.pmndrsMiePhaseG.value : d.miePhaseG, 0, 0.99, d.miePhaseG);
         VRODOS.editor.envir.scene.aframePmndrsAbsorptionScale = Shared.clampNumber(controls.pmndrsAbsorptionScale ? controls.pmndrsAbsorptionScale.value : d.absorptionScale, 0.1, 3, d.absorptionScale);
         VRODOS.editor.envir.scene.aframePmndrsMoonEnabled = controls.pmndrsMoon ? controls.pmndrsMoon.checked === true : false;
+        VRODOS.editor.envir.scene.aframePmndrsMoonPhase = normalizeMoonPhase(controls.pmndrsMoonPhase ? controls.pmndrsMoonPhase.value : d.moonPhase);
         const lightingPresetFallback = VRODOS.editor.envir.scene.aframeHorizonSkyPreset || d.horizonLightingPreset;
         VRODOS.editor.envir.scene.aframePmndrsHorizonLightingPreset = Shared.normalizePmndrsHorizonLightingPreset(
             controls.pmndrsHorizonLightingPreset ? controls.pmndrsHorizonLightingPreset.value : lightingPresetFallback,
@@ -710,6 +730,7 @@ VRodosCompileUI.Atmosphere = (function () {
         normalizePreset,
         normalizeCelestialMode,
         normalizeCelestialTimePreset,
+        normalizeMoonPhase,
         normalizeDate,
         normalizeUtcTime,
         getAerialPerspectiveAuthoredChecked

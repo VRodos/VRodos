@@ -84,6 +84,7 @@ class VRodos_Compiler_Scene_Settings {
 		$moon_enabled         = $moon_explicit
 			? VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsMoonEnabled' )
 			: ( 'preset-time' === $celestial_mode && 'night' === $celestial_time );
+		$moon_phase           = VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsMoonPhase' );
 
 		$camera_position = isset( $scene_json->objects->avatarCamera )
 			? implode( ' ', (array) $scene_json->objects->avatarCamera->position )
@@ -117,6 +118,7 @@ class VRodos_Compiler_Scene_Settings {
 				'pmndrsCelestialMode'               => $celestial_mode,
 				'pmndrsCelestialTimePreset'         => $celestial_time,
 				'pmndrsMoonEnabled'                 => $moon_enabled ? 'true' : 'false',
+				'pmndrsMoonPhase'                   => $moon_phase,
 				'pmndrsHorizonLightingPreset'       => $horizon_lighting_preset,
 				'pmndrsHorizonKeyLightIntensity'    => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsHorizonKeyLightIntensity', $horizon_defaults['keyLightIntensity'] ),
 				'pmndrsHorizonFillLightIntensity'   => VRodos_Runtime_Settings_Contract::normalize_metadata_value( $metadata, 'pmndrsHorizonFillLightIntensity', $horizon_defaults['fillLightIntensity'] ),

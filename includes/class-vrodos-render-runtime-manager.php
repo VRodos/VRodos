@@ -48,6 +48,8 @@ final class VRodos_Render_Runtime_Manager {
 			'takram_clouds_bundle'                 => $takram['cloudsBundleFile'],
 			'takram_stars_data_path'               => $takram_assets['starsDataPath'],
 			'takram_stars_data_url'                => VRodos_Path_Manager::plugin_url( $takram_assets['starsDataPath'] ),
+			'takram_moon_color_path'               => $takram_assets['moonColorPath'],
+			'takram_moon_color_url'                => VRodos_Path_Manager::plugin_url( $takram_assets['moonColorPath'] ),
 			'takram_clouds_assets_base_path'       => $takram_assets['cloudsBasePath'],
 			'takram_clouds_assets_base_url'        => VRodos_Path_Manager::plugin_url( $takram_assets['cloudsBasePath'] ),
 			'takram_clouds_local_weather_url'      => VRodos_Path_Manager::plugin_url( $takram_assets['cloudsLocalWeatherPath'] ),
@@ -177,7 +179,7 @@ final class VRodos_Render_Runtime_Manager {
 		self::require_keys( $manifest['threeAddons'], [ 'global', 'bundleFile', 'bundlePath' ], 'threeAddons' );
 		self::require_keys( $manifest['postprocessing'], [ 'version', 'bundlePath' ], 'postprocessing' );
 		self::require_keys( $manifest['takram'], [ 'atmosphereVersion', 'cloudsVersion', 'effectsVersion', 'bundleFile', 'bundlePath', 'cloudsBundleFile', 'cloudsBundlePath', 'assets' ], 'takram' );
-		self::require_keys( $manifest['takram']['assets'], [ 'starsDataPath', 'cloudsBasePath', 'cloudsLocalWeatherPath', 'cloudsShapePath', 'cloudsShapeDetailPath', 'cloudsTurbulencePath', 'cloudsStbnPath' ], 'takram.assets' );
+		self::require_keys( $manifest['takram']['assets'], [ 'starsDataPath', 'moonColorPath', 'cloudsBasePath', 'cloudsLocalWeatherPath', 'cloudsShapePath', 'cloudsShapeDetailPath', 'cloudsTurbulencePath', 'cloudsStbnPath' ], 'takram.assets' );
 		self::require_keys( $manifest['collisionBvh'], [ 'version', 'bundlePath' ], 'collisionBvh' );
 		if ( ! is_array( $manifest['browserLibraries']['versions'] ?? null ) || empty( $manifest['browserLibraries']['versions'] ) || ! is_array( $manifest['browserLibraries']['files'] ?? null ) || empty( $manifest['browserLibraries']['files'] ) ) {
 			throw new RuntimeException( '[VRodos] Runtime version manifest browser library provenance is incomplete.' );
@@ -222,6 +224,7 @@ final class VRodos_Render_Runtime_Manager {
 			$manifest['three']['decoders']['basisTranscoderPath'],
 			$manifest['three']['decoders']['meshoptDecoderPath'],
 			$manifest['takram']['assets']['starsDataPath'],
+			$manifest['takram']['assets']['moonColorPath'],
 			$manifest['takram']['assets']['cloudsBasePath'],
 			$manifest['takram']['assets']['cloudsLocalWeatherPath'],
 			$manifest['takram']['assets']['cloudsShapePath'],

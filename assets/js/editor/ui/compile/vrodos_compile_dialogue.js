@@ -157,6 +157,7 @@ window.addEventListener('DOMContentLoaded', () => {
             pmndrsAbsorptionScale: document.getElementById('compilePmndrsAbsorptionScaleSlider'),
             pmndrsAbsorptionScaleValue: document.getElementById('compilePmndrsAbsorptionScaleValue'),
             pmndrsMoon: document.getElementById('compilePmndrsMoonToggle'),
+            pmndrsMoonPhase: document.getElementById('compilePmndrsMoonPhaseSelect'),
             pmndrsHorizonLightingPreset: document.getElementById('compilePmndrsHorizonLightingPresetSelect'),
             pmndrsHorizonKeyLightIntensity: document.getElementById('compilePmndrsHorizonKeyLightIntensitySlider'),
             pmndrsHorizonKeyLightIntensityValue: document.getElementById('compilePmndrsHorizonKeyLightIntensityValue'),
@@ -908,6 +909,11 @@ window.addEventListener('DOMContentLoaded', () => {
         if (resolvedCelestialMode === 'datetime' && controls.pmndrsMoon) {
             controls.pmndrsMoon.checked = Boolean(VRODOS.editor.envir && VRODOS.editor.envir.scene && VRODOS.editor.envir.scene.aframePmndrsMoonEnabled);
         }
+        if (controls.pmndrsMoonPhase) {
+            controls.pmndrsMoonPhase.value = VRodosCompileUI.Atmosphere.normalizeMoonPhase(
+                VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsMoonPhase : Shared.PMNDRS_TWEAK_DEFAULTS.moonPhase
+            );
+        }
         if (controls.pmndrsHorizonKeyLightIntensity) {
             controls.pmndrsHorizonKeyLightIntensity.value = Shared.clampNumber(
                 VRODOS.editor.envir && VRODOS.editor.envir.scene ? VRODOS.editor.envir.scene.aframePmndrsHorizonKeyLightIntensity : helperDefaults.keyLightIntensity,
@@ -1156,6 +1162,13 @@ window.addEventListener('DOMContentLoaded', () => {
     if (controls.pmndrsVignette) {
         controls.pmndrsVignette.addEventListener('change', syncCompilePostFxState);
     }
+    if (controls.pmndrsMoonPhase) {
+        controls.pmndrsMoonPhase.addEventListener('change', () => {
+            controls.pmndrsMoonPhase.value = VRodosCompileUI.Atmosphere.normalizeMoonPhase(controls.pmndrsMoonPhase.value);
+            VRodosCompileUI.Atmosphere.syncToScene(controls);
+            syncCompilePostFxState();
+        });
+    }
     if (controls.pmndrsLut) {
         controls.pmndrsLut.addEventListener('change', syncCompilePostFxState);
     }
@@ -1368,6 +1381,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if (c.pmndrsCelestialUtcTime) c.pmndrsCelestialUtcTime.value = Shared.PMNDRS_TWEAK_DEFAULTS.celestialUtcTime;
             if (c.pmndrsDayNightCycle) c.pmndrsDayNightCycle.checked = Shared.PMNDRS_TWEAK_DEFAULTS.dayNightCycleEnabled;
             if (c.pmndrsDayNightCycleDuration) c.pmndrsDayNightCycleDuration.value = Shared.PMNDRS_TWEAK_DEFAULTS.dayNightCycleDurationMinutes;
+            if (c.pmndrsMoonPhase) c.pmndrsMoonPhase.value = Shared.PMNDRS_TWEAK_DEFAULTS.moonPhase;
             if (c.pmndrsGeospatial) c.pmndrsGeospatial.checked = Shared.PMNDRS_TWEAK_DEFAULTS.geospatialEnabled;
             if (c.pmndrsAerialPerspective) c.pmndrsAerialPerspective.checked = Shared.PMNDRS_TWEAK_DEFAULTS.aerialPerspectiveEnabled;
             if (c.pmndrsCorrectAltitude) c.pmndrsCorrectAltitude.checked = Shared.PMNDRS_TWEAK_DEFAULTS.correctAltitudeEnabled;

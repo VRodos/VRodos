@@ -7045,10 +7045,51 @@ vec3 getSkyRadiance(
   #endif // SUN
 
   #ifdef MOON
+  #ifdef VRODOS_CINEMATIC_MOON_HALO
+  // VRODOS_CINEMATIC_MOON_HALO_SHADER_PATCH
+  float vrodosMoonViewDot = dot(rayDirection, moonDirection);
+  float vrodosMoonAngle = acos(clamp(vrodosMoonViewDot, -1.0, 1.0));
+  float vrodosMoonHaloInner = moonAngularRadius * 0.92;
+  float vrodosMoonHaloOuter = moonAngularRadius * vrodosMoonHaloRadiusScale;
+  float vrodosMoonHalo =
+    smoothstep(vrodosMoonHaloInner, moonAngularRadius * 1.08, vrodosMoonAngle) *
+    (1.0 - smoothstep(moonAngularRadius * 1.05, vrodosMoonHaloOuter, vrodosMoonAngle));
+  if (vrodosMoonHalo > 0.0 && vrodosMoonIllumination > 0.0) {
+    radiance +=
+      transmittance *
+      getLunarRadiance(moonAngularRadius) *
+      lunarRadianceScale *
+      vec3(0.82, 0.90, 1.0) *
+      (vrodosMoonHaloStrength * vrodosMoonIllumination * vrodosMoonHalo);
+  }
+  #endif // VRODOS_CINEMATIC_MOON_HALO
+
   float intersection = intersectSphere(rayDirection, moonDirection, moonAngularRadius);
   if (intersection > 0.0) {
     vec3 normal = normalize(moonDirection - rayDirection * intersection);
-    float diffuse = orenNayarDiffuse(-sunDirection, rayDirection, normal);
+    vec3 moonLightDirection = -sunDirection;
+    vec3 moonColor = vec3(1.0);
+    #ifdef VRODOS_TEXTURED_MOON
+    moonLightDirection = normalize(vrodosMoonLightDirection);
+    vec3 normalMoonFixed = (transpose(mat3(vrodosMoonFixedToECEFMatrix)) * normal).xzy;
+    vec2 moonUv = vec2(
+      atan(normalMoonFixed.z, normalMoonFixed.x) / (2.0 * PI) + 0.5,
+      asin(clamp(normalMoonFixed.y, -1.0, 1.0)) / PI + 0.5
+    );
+    // The NASA color map is decoded to linear sRGB. Normalize its sampled
+    // mean luminance so it modulates Takram's existing lunar radiance instead
+    // of applying lunar albedo a second time.
+    const float VRODOS_MOON_COLOR_GAIN = 3.2;
+    const float VRODOS_MOON_COLOR_SATURATION = 0.06;
+    vec3 sampledMoonColor = texture(vrodosMoonColorTexture, moonUv).rgb;
+    float moonLuminance = dot(sampledMoonColor, vec3(0.2126, 0.7152, 0.0722));
+    moonColor = mix(
+      vec3(moonLuminance),
+      sampledMoonColor,
+      VRODOS_MOON_COLOR_SATURATION
+    ) * VRODOS_MOON_COLOR_GAIN;
+    #endif // VRODOS_TEXTURED_MOON
+    float diffuse = orenNayarDiffuse(moonLightDirection, rayDirection, normal);
     float viewDotMoon = dot(rayDirection, moonDirection);
     float angle = acos(clamp(viewDotMoon, -1.0, 1.0));
     float antialias = smoothstep(moonAngularRadius, moonAngularRadius - fragmentAngle, angle);
@@ -7056,6 +7097,7 @@ vec3 getSkyRadiance(
       transmittance *
       getLunarRadiance(moonAngularRadius) *
       lunarRadianceScale *
+      moonColor *
       diffuse *
       antialias;
   }
@@ -10104,6 +10146,13 @@ uniform float cosSunAngularRadius;
 uniform vec3 moonDirection;
 uniform float moonAngularRadius;
 uniform float lunarRadianceScale;
+// VRODOS_TEXTURED_MOON_SHADER_PATCH
+uniform vec3 vrodosMoonLightDirection;
+uniform mat4 vrodosMoonFixedToECEFMatrix;
+uniform sampler2D vrodosMoonColorTexture;
+uniform float vrodosMoonIllumination;
+uniform float vrodosMoonHaloRadiusScale;
+uniform float vrodosMoonHaloStrength;
 uniform vec3 groundAlbedo;
 
 #include "sky"
@@ -10298,6 +10347,12 @@ void main() {
           moonDirection: new Uniform((_a2 = i4 == null ? void 0 : i4.clone()) != null ? _a2 : new Vector3()),
           moonAngularRadius: new Uniform(a3),
           lunarRadianceScale: new Uniform(o2),
+          vrodosMoonLightDirection: new Uniform(new Vector3(0, 0, 1)),
+          vrodosMoonFixedToECEFMatrix: new Uniform(new Matrix4()),
+          vrodosMoonColorTexture: new Uniform(null),
+          vrodosMoonIllumination: new Uniform(1),
+          vrodosMoonHaloRadiusScale: new Uniform(1),
+          vrodosMoonHaloStrength: new Uniform(0),
           groundAlbedo: new Uniform(s2.clone()),
           shadowLengthBuffer: new Uniform(null),
           ...l3.uniforms
@@ -10383,6 +10438,9 @@ uniform sampler3D higher_order_scattering_texture;
 #include "bruneton/runtime"
 
 uniform vec3 sunDirection;
+// VRODOS_MOON_STAR_OCCLUSION_SHADER_PATCH
+uniform vec3 vrodosMoonOcclusionDirection;
+uniform float vrodosMoonOcclusionCosine;
 
 in vec3 vCameraPosition;
 in vec3 vRayDirection;
@@ -10401,6 +10459,12 @@ void main() {
 
   #ifdef BACKGROUND
   vec3 rayDirection = normalize(vRayDirection);
+  if (
+    vrodosMoonOcclusionCosine < 1.0 &&
+    dot(rayDirection, normalize(vrodosMoonOcclusionDirection)) > vrodosMoonOcclusionCosine
+  ) {
+    discard;
+  }
   float r = length(vCameraPosition);
   float mu = dot(vCameraPosition, rayDirection) / r;
 
@@ -10512,6 +10576,8 @@ void main() {
           pointSize: new Uniform(0),
           magnitudeRange: new Uniform(new Vector2(-2, 8)),
           intensity: new Uniform(r4),
+          vrodosMoonOcclusionDirection: new Uniform(new Vector3(0, 0, 1)),
+          vrodosMoonOcclusionCosine: new Uniform(1),
           ...o2.uniforms
         },
         defines: {

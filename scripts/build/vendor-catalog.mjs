@@ -137,6 +137,10 @@ export const takramAssetCopies = Object.freeze([
 
 export const requiredStaticAssets = Object.freeze([
   {
+    label: 'NASA CGI Moon Kit 1K color asset',
+    path: 'assets/vendor/nasa-moon/lroc_color_poles_1k.jpg'
+  },
+  {
     label: 'Takram cloud STBN data asset',
     path: 'assets/vendor/takram-clouds/stbn.bin'
   }
@@ -256,6 +260,7 @@ export function createRuntimeVersionManifest(aframeArtifact) {
       starsDataPath: 'assets/vendor/takram-atmosphere/stars.bin',
       assets: {
         starsDataPath: 'assets/vendor/takram-atmosphere/stars.bin',
+        moonColorPath: 'assets/vendor/nasa-moon/lroc_color_poles_1k.jpg',
         cloudsBasePath: 'assets/vendor/takram-clouds/',
         cloudsLocalWeatherPath: 'assets/vendor/takram-clouds/local_weather.png',
         cloudsShapePath: 'assets/vendor/takram-clouds/shape.bin',

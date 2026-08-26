@@ -461,6 +461,7 @@ class VRodos_Asset_Manager {
 			. 'window.vrodos_three_basis_transcoder_path = ' . wp_json_encode( $three_basis_transcoder_url ) . ';'
 			. 'window.vrodos_three_meshopt_decoder_path = ' . wp_json_encode( $three_meshopt_decoder_url ) . ';'
 			. 'window.vrodos_takram_stars_data_url = ' . wp_json_encode( $runtime_config['takram_stars_data_url'] ?? VRodos_Path_Manager::vendor_url( 'takram-atmosphere/stars.bin' ) ) . ';'
+			. 'window.vrodos_takram_moon_color_url = ' . wp_json_encode( $runtime_config['takram_moon_color_url'] ?? VRodos_Path_Manager::vendor_url( 'nasa-moon/lroc_color_poles_1k.jpg' ) ) . ';'
 			. 'window.vrodos_takram_cloud_assets = ' . wp_json_encode( $takram_cloud_assets ) . ';'
 			. 'window.vrodos_render_runtime = ' . wp_json_encode( $runtime_config ) . ';';
 		wp_add_inline_script( 'vrodos_three_vendor_bundle', $inline_script, 'before' );

@@ -83,6 +83,7 @@ VRodosCompileUI.General = (function () {
         'pmndrsMiePhaseG',
         'pmndrsAbsorptionScale',
         'pmndrsMoon',
+        'pmndrsMoonPhase',
         'pmndrsHorizonLightingPreset',
         'pmndrsHorizonKeyLightIntensity',
         'pmndrsHorizonFillLightIntensity',

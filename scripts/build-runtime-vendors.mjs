@@ -23,6 +23,7 @@ import {
   vendorArtifacts
 } from './build/vendor-catalog.mjs';
 import {
+  createTakramAtmosphereMoonShaderPatchPlugin,
   createTakramCloudsShaderPatchPlugin,
   createThreeClassicLoaderUrlPatchPlugin,
   rewriteTakramCloudBundleAssetDefaults
@@ -100,6 +101,7 @@ async function buildTakramAtmosphereBundle() {
   await buildBrowserBundle({
     entryPoint: entry('takram-atmosphere'),
     outfile: artifactPath('takramAtmosphere'),
+    plugins: [createTakramAtmosphereMoonShaderPatchPlugin()],
     virtualModules: {
       three: {
         globalExpression: 'window.THREE || {}'

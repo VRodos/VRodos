@@ -369,6 +369,9 @@
             : 0;
         const moonDirection = atmosphereConfig.localMoonDirection || null;
         const moonY = moonDirection && typeof moonDirection.y === 'number' ? moonDirection.y : -1;
+        const moonIllumination = typeof atmosphereConfig.moonIllumination === 'number'
+            ? atmosphereConfig.moonIllumination
+            : 1;
         const starsIntensity = typeof this.getPmndrsStarsIntensity === 'function'
             ? this.getPmndrsStarsIntensity(atmosphereConfig)
             : 0;
@@ -377,6 +380,7 @@
             Math.round(sunElevation * 2) / 2,
             Math.round(sunAzimuth * 0.25) / 0.25,
             Math.round(moonY * 20) / 20,
+            Math.round(moonIllumination * 20) / 20,
             Math.round(starsIntensity * 10) / 10
         ].join('|');
     };

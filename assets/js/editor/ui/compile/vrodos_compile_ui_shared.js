@@ -75,6 +75,7 @@ VRodosCompileUI.Shared = (function () {
         miePhaseG: contractDefault('pmndrsMiePhaseG', 0.8),
         absorptionScale: contractDefault('pmndrsAbsorptionScale', 1.0),
         moonEnabled: contractDefault('pmndrsMoonEnabled', false),
+        moonPhase: contractDefault('pmndrsMoonPhase', 'auto'),
         starsEnabled: contractDefault('pmndrsStarsEnabled', 'auto'),
         horizonLightingPreset: contractDefault('pmndrsHorizonLightingPreset', 'natural'),
         horizonKeyLightIntensity: contractDefault('pmndrsHorizonKeyLightIntensity', 1.15),

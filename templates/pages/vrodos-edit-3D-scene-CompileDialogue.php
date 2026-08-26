@@ -898,6 +898,20 @@
 												<input id="compilePmndrsMoonToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
 												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Moon</span>
 											</label>
+											<label class="tw-flex tw-items-center tw-gap-2">
+												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Phase</span>
+												<select id="compilePmndrsMoonPhaseSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-40 tw-text-[10px]">
+													<option value="auto">Auto</option>
+													<option value="new">New</option>
+													<option value="waxing-crescent">Waxing Crescent</option>
+													<option value="first-quarter">First Quarter</option>
+													<option value="waxing-gibbous">Waxing Gibbous</option>
+													<option value="full">Full</option>
+													<option value="waning-gibbous">Waning Gibbous</option>
+													<option value="last-quarter">Last Quarter</option>
+													<option value="waning-crescent">Waning Crescent</option>
+												</select>
+											</label>
 										</div>
 
 										<div class="tw-grid tw-grid-cols-2 tw-gap-3">

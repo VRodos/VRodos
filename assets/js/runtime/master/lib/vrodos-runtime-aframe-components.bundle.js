@@ -1971,6 +1971,7 @@
       const postProcessingAllowed = this.shouldUsePostProcessing();
       const effectiveReflectionSource = this.getEffectiveReflectionSource();
       const cloudDiagnostics = this._pmndrsCloudsDiagnostics || {};
+      const moonDiagnostics = this._pmndrsMoonDiagnostics || {};
       const atmosphereState = this._pmndrsAtmosphereState || null;
       const shadowDiagnostics = typeof this.getShadowDiagnosticState === "function" ? this.getShadowDiagnosticState() : null;
       const horizonState = typeof this.getPmndrsTakramHorizonState === "function" ? this.getPmndrsTakramHorizonState() : null;
@@ -2039,6 +2040,35 @@
           immersiveRenderYawDeg: typeof this._pmndrsImmersiveRenderYawDeg === "number" ? this._pmndrsImmersiveRenderYawDeg : null,
           sunSpriteActive: Boolean(this._pmndrsSunSpriteActive),
           dayNightCycleActive: Boolean(this.isPmndrsDayNightCycleActive()),
+          moon: {
+            enabled: Boolean(moonDiagnostics.enabled),
+            authoredPhase: moonDiagnostics.authoredPhase || "auto",
+            effectivePhase: moonDiagnostics.effectivePhase || "full",
+            phaseAngleDeg: typeof moonDiagnostics.phaseAngleDeg === "number" ? moonDiagnostics.phaseAngleDeg : 0,
+            illumination: typeof moonDiagnostics.illumination === "number" ? moonDiagnostics.illumination : 1,
+            angularDiameterDeg: typeof moonDiagnostics.angularDiameterDeg === "number" ? moonDiagnostics.angularDiameterDeg : 1.8,
+            radianceScale: typeof moonDiagnostics.radianceScale === "number" ? moonDiagnostics.radianceScale : 1,
+            visibilityBoost: typeof moonDiagnostics.visibilityBoost === "number" ? moonDiagnostics.visibilityBoost : 1,
+            orientationMode: moonDiagnostics.orientationMode || "",
+            positionMode: moonDiagnostics.positionMode || "author-controlled-night",
+            localDirection: moonDiagnostics.localDirection || null,
+            ecefDirection: moonDiagnostics.ecefDirection || null,
+            materialMoonEnabled: Boolean(moonDiagnostics.materialMoonEnabled),
+            materialMoonDefineEnabled: Boolean(moonDiagnostics.materialMoonDefineEnabled),
+            assetUrl: moonDiagnostics.assetUrl || "",
+            shaderPatchApplied: Boolean(moonDiagnostics.shaderPatchApplied),
+            textureReady: Boolean(moonDiagnostics.textureReady),
+            textureLoading: Boolean(moonDiagnostics.textureLoading),
+            textureFailed: Boolean(moonDiagnostics.textureFailed),
+            debugDisabled: Boolean(moonDiagnostics.debugDisabled),
+            haloEnabled: Boolean(moonDiagnostics.haloEnabled),
+            haloRadiusScale: typeof moonDiagnostics.haloRadiusScale === "number" ? moonDiagnostics.haloRadiusScale : 0,
+            haloStrength: typeof moonDiagnostics.haloStrength === "number" ? moonDiagnostics.haloStrength : 0,
+            starOcclusionRadiusDeg: typeof moonDiagnostics.starOcclusionRadiusDeg === "number" ? moonDiagnostics.starOcclusionRadiusDeg : 0,
+            starOcclusionShaderApplied: Boolean(moonDiagnostics.starOcclusionShaderApplied),
+            starOcclusionFallbackApplied: Boolean(moonDiagnostics.starOcclusionFallbackApplied),
+            fallbackState: moonDiagnostics.fallbackState || "native-smooth"
+          },
           horizonOwner: vrTakramVisibleSkyActive && pmndrsAtmosphereSkyVisible ? "takram-sky" : horizonState && horizonState.owner ? horizonState.owner : "",
           lightOwner: horizonState && horizonState.owner ? horizonState.owner : "",
           takramSunEnabled: Boolean(horizonState && horizonState.takramSunEnabled),

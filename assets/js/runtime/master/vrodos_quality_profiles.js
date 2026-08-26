@@ -7,7 +7,8 @@
     const H = VRODOSMaster.SceneSettingsHelpers = VRODOSMaster.SceneSettingsHelpers || {};
     const TAKRAM_DEFAULT_SUN_ANGULAR_RADIUS = 0.004675;
     const PMNDRS_NIGHT_REFLECTION_INTENSITY_SCALE = 0.36;
-    const PMNDRS_NIGHT_MOON_LIGHT_INTENSITY = 0.28;
+    const PMNDRS_NIGHT_MOON_LIGHT_INTENSITY = 0.34;
+    const PMNDRS_NIGHT_MOON_LIGHT_COLOR = '#c4d2ff';
     const PMNDRS_NIGHT_AUTO_EXPOSURE = 3.4;
     const PMNDRS_DAWN_AUTO_EXPOSURE = 2.2;
     const PMNDRS_STARS_NIGHT_INTENSITY = 6.0;
@@ -16,6 +17,28 @@
     const PMNDRS_STARS_FALLBACK_POINT_SIZE = 1.65;
     const PMNDRS_STARS_FALLBACK_RADIUS = 6000;
     const PMNDRS_TAKRAM_STARS_RELATIVE_PATH = 'assets/vendor/takram-atmosphere/stars.bin';
+    const PMNDRS_TAKRAM_MOON_COLOR_RELATIVE_PATH = 'assets/vendor/nasa-moon/lroc_color_poles_1k.jpg';
+    const PMNDRS_TAKRAM_NATIVE_MOON_ANGULAR_RADIUS = 0.0045;
+    const PMNDRS_MOON_ANGULAR_RADIUS = 0.015708;
+    const PMNDRS_MOON_ANGULAR_DIAMETER_DEG = 1.8;
+    const PMNDRS_MOON_VISIBILITY_BOOST = 8.0;
+    const PMNDRS_MOON_HALO_RADIUS_SCALE = 3.2;
+    const PMNDRS_MOON_HALO_STRENGTH = 0.045;
+    const PMNDRS_MOON_STAR_OCCLUSION_FEATHER_RAD = 0.002094;
+    const PMNDRS_MOON_RADIANCE_SCALE = Math.pow(
+        PMNDRS_MOON_ANGULAR_RADIUS / PMNDRS_TAKRAM_NATIVE_MOON_ANGULAR_RADIUS,
+        2
+    ) * PMNDRS_MOON_VISIBILITY_BOOST;
+    const PMNDRS_MOON_PHASE_ANGLES_DEG = Object.freeze({
+        full: 0,
+        'waxing-gibbous': -45,
+        'first-quarter': -90,
+        'waxing-crescent': -135,
+        new: 180,
+        'waning-crescent': 135,
+        'last-quarter': 90,
+        'waning-gibbous': 45
+    });
     const VR_TAKRAM_SKY_DIRECT_EXPOSURE = 24;
     const VR_TAKRAM_SKY_REVEAL_WARMUP_MS = 10000;
     const PMNDRS_DAY_NIGHT_CYCLE_DEFAULT_MINUTES = 1;
@@ -473,6 +496,102 @@
         }
     }
 
+    function normalizePmndrsMoonPhase(value) {
+        if (RuntimeSettings.normalizeEnum) {
+            return RuntimeSettings.normalizeEnum('pmndrsMoonPhase', value, 'auto');
+        }
+        return value === 'auto' || Object.prototype.hasOwnProperty.call(PMNDRS_MOON_PHASE_ANGLES_DEG, value)
+            ? value
+            : 'auto';
+    }
+
+    function getPmndrsMoonPhaseIlluminationFromAngle(angleDeg) {
+        return Math.max(0, Math.min(1, (1 + Math.cos(THREE.MathUtils.degToRad(angleDeg))) * 0.5));
+    }
+
+    function getPmndrsAutoMoonIllumination(config) {
+        if (!(config && config.sunDirection && config.moonDirection)) {
+            return 1;
+        }
+        return Math.max(0, Math.min(1, (1 - config.sunDirection.dot(config.moonDirection)) * 0.5));
+    }
+
+    function getPmndrsStableMoonNorth(moonDirection) {
+        const north = new THREE.Vector3(0, 1, 0);
+        north.addScaledVector(moonDirection, -north.dot(moonDirection));
+        if (north.lengthSq() < 1e-6) {
+            north.set(0, 0, 1).addScaledVector(moonDirection, -moonDirection.z);
+        }
+        return north.normalize();
+    }
+
+    function getPmndrsStableMoonFixedToEcefMatrix(moonDirection) {
+        const center = moonDirection.clone().normalize();
+        const north = getPmndrsStableMoonNorth(center);
+        const east = north.clone().cross(center).normalize();
+        return new THREE.Matrix4().makeBasis(center, east, north);
+    }
+
+    function applyPmndrsMoonPhaseConfig(config, vta) {
+        const authoredPhase = normalizePmndrsMoonPhase(config.moonPhase);
+        const astronomicalAuto = authoredPhase === 'auto' && config.celestialMode === 'datetime';
+        let phaseAngleDeg = 0;
+        let illumination = 1;
+
+        // Named phases are an author-controlled cinematic state. Keep their moon
+        // opposite the sun so it rises during the authored night instead of
+        // inheriting an unrelated astronomical position from the selected date.
+        // Only datetime + auto retains Takram's real Moon ephemeris.
+        if (!astronomicalAuto) {
+            config.moonDirection = buildPmndrsMoonDirection(config.sunDirection);
+            config.localMoonDirection = buildPmndrsMoonDirection(config.localSunDirection || config.sunDirection);
+        }
+
+        const lightDirection = config.moonDirection.clone().normalize();
+        let effectivePhase = authoredPhase;
+
+        if (astronomicalAuto) {
+            illumination = getPmndrsAutoMoonIllumination(config);
+            lightDirection.copy(config.sunDirection).negate().normalize();
+            effectivePhase = 'auto';
+        } else {
+            phaseAngleDeg = authoredPhase === 'auto' ? 0 : PMNDRS_MOON_PHASE_ANGLES_DEG[authoredPhase];
+            illumination = getPmndrsMoonPhaseIlluminationFromAngle(phaseAngleDeg);
+            lightDirection.applyAxisAngle(
+                getPmndrsStableMoonNorth(config.moonDirection),
+                THREE.MathUtils.degToRad(phaseAngleDeg)
+            ).normalize();
+            effectivePhase = authoredPhase === 'auto' ? 'full' : authoredPhase;
+        }
+
+        let orientationMode = 'stable-north-up';
+        let moonFixedToECEFMatrix = getPmndrsStableMoonFixedToEcefMatrix(config.moonDirection);
+        if (config.celestialMode === 'datetime' && config.effectiveDate && config.inertialToECEFMatrix &&
+            vta && typeof vta.getMoonFixedToECIRotationMatrix === 'function') {
+            moonFixedToECEFMatrix = new THREE.Matrix4().multiplyMatrices(
+                config.inertialToECEFMatrix,
+                vta.getMoonFixedToECIRotationMatrix(config.effectiveDate, new THREE.Matrix4())
+            );
+            orientationMode = 'moon-fixed-date-time';
+        }
+
+        config.moonPhase = authoredPhase;
+        config.effectiveMoonPhase = effectivePhase;
+        config.moonPhaseAngleDeg = phaseAngleDeg;
+        config.moonIllumination = illumination;
+        config.moonLightDirection = lightDirection;
+        config.moonFixedToECEFMatrix = moonFixedToECEFMatrix;
+        config.moonOrientationMode = orientationMode;
+        config.moonPositionMode = astronomicalAuto ? 'astronomical' : 'author-controlled-night';
+        return config;
+    }
+
+    VRODOSMaster.MoonPhase = Object.freeze({
+        anglesDeg: PMNDRS_MOON_PHASE_ANGLES_DEG,
+        normalize: normalizePmndrsMoonPhase,
+        illuminationFromAngle: getPmndrsMoonPhaseIlluminationFromAngle
+    });
+
     function normalizePmndrsDate(value, fallback) {
         if (RuntimeSettings.normalizeDate) {
             return RuntimeSettings.normalizeDate('pmndrsCelestialDate', value, fallback || '2026-06-21');
@@ -649,7 +768,7 @@
     const PMNDRS_CALIBRATED_LIGHTING_ANCHORS = {
         night: {
             elevation: -18,
-            keyColor: '#b8c8ff',
+            keyColor: PMNDRS_NIGHT_MOON_LIGHT_COLOR,
             fillColor: '#2f3b62',
             groundFillColor: '#070a10',
             keyIntensity: 0.22,
@@ -879,15 +998,17 @@
             ? config.localMoonDirection.y
             : -1;
         const moonVisibility = config.moonEnabled === false ? 0 : smoothstepNumber(-0.04, 0.38, moonY);
+        const moonIllumination = typeof config.moonIllumination === 'number' ? config.moonIllumination : 1;
+        const illuminatedMoonVisibility = moonVisibility * moonIllumination;
         const nightAmount = 1 - smoothstepNumber(-14, -4, sunElevation);
-        const moonWeight = nightAmount * moonVisibility;
+        const moonWeight = nightAmount * illuminatedMoonVisibility;
         const moonKeyBlend = smoothstepNumber(0.35, 0.62, moonWeight) *
             (1 - smoothstepNumber(-4, -2, sunElevation));
         const useMoonDirection = moonKeyBlend > 0.5;
 
         profile.moonLightIntensity = PMNDRS_NIGHT_MOON_LIGHT_INTENSITY * moonWeight;
         profile.useMoonDirection = useMoonDirection;
-        profile.keyColor = lerpPmndrsColor(profile.keyColor, '#b8c8ff', moonKeyBlend);
+        profile.keyColor = lerpPmndrsColor(profile.keyColor, PMNDRS_NIGHT_MOON_LIGHT_COLOR, moonKeyBlend);
         profile.keyIntensity = lerpNumber(
             profile.keyIntensity,
             Math.max(profile.keyIntensity * (0.35 + moonWeight * 0.45), profile.moonLightIntensity),
@@ -895,13 +1016,13 @@
         );
 
         const noMoonDeepNightAmount = (1 - smoothstepNumber(-12, -8, sunElevation)) *
-            (1 - smoothstepNumber(0.12, 0.28, moonVisibility));
+            (1 - smoothstepNumber(0.12, 0.28, illuminatedMoonVisibility));
         profile.keyIntensity *= lerpNumber(1, 0.45, noMoonDeepNightAmount);
         profile.skyLightIntensity *= lerpNumber(1, 0.72, noMoonDeepNightAmount);
         profile.pbrFillIntensity *= lerpNumber(1, 0.70, noMoonDeepNightAmount);
         profile.ambientBounceIntensity *= lerpNumber(1, 0.75, noMoonDeepNightAmount);
         profile.reflectionIntensityScale *= lerpNumber(1, 0.78, noMoonDeepNightAmount);
-        profile.starsIntensity *= (1 - moonVisibility * 0.35);
+        profile.starsIntensity *= (1 - illuminatedMoonVisibility * 0.35);
         profile.skyLightIntensity = Math.max(0, Math.min(4.0, profile.skyLightIntensity));
         profile.pbrFillIntensity = Math.max(0, Math.min(3.0, profile.pbrFillIntensity));
         profile.ambientBounceIntensity = Math.max(0, Math.min(0.95, profile.ambientBounceIntensity));
@@ -939,7 +1060,8 @@
         if (calibratedProfile) {
             return calibratedProfile.moonLightIntensity * directVisibility;
         }
-        return isPmndrsPresetTimeNight(config) ? PMNDRS_NIGHT_MOON_LIGHT_INTENSITY * directVisibility : 0;
+        const illumination = typeof config.moonIllumination === 'number' ? config.moonIllumination : 1;
+        return isPmndrsPresetTimeNight(config) ? PMNDRS_NIGHT_MOON_LIGHT_INTENSITY * directVisibility * illumination : 0;
     }
 
     function getPmndrsMoonSceneLightDirection(config) {
@@ -1025,6 +1147,22 @@
         }
 
         const configuredPath = runtime.takram_stars_data_path || runtime.takramStarsDataPath || PMNDRS_TAKRAM_STARS_RELATIVE_PATH;
+        const pluginBase = window.VRODOS_PLUGIN_URL ||
+            (window.vrodos_data && (window.vrodos_data.pluginUrl || window.vrodos_data.plugin_url || window.vrodos_data.pluginPath)) ||
+            '';
+        return joinPmndrsRuntimeUrl(pluginBase, configuredPath);
+    }
+
+    function getPmndrsTakramMoonColorUrl() {
+        const runtime = window.vrodos_render_runtime || {};
+        const configuredUrl = window.vrodos_takram_moon_color_url ||
+            runtime.takram_moon_color_url ||
+            runtime.takramMoonColorUrl;
+        if (typeof configuredUrl === 'string' && configuredUrl.trim()) {
+            return configuredUrl.trim();
+        }
+
+        const configuredPath = runtime.takram_moon_color_path || runtime.takramMoonColorPath || PMNDRS_TAKRAM_MOON_COLOR_RELATIVE_PATH;
         const pluginBase = window.VRODOS_PLUGIN_URL ||
             (window.vrodos_data && (window.vrodos_data.pluginUrl || window.vrodos_data.plugin_url || window.vrodos_data.pluginPath)) ||
             '';
@@ -1157,12 +1295,15 @@
 
         if (isPmndrsPresetTimeNight(atmosphereConfig)) {
             const moonEnabled = atmosphereConfig.moonEnabled !== false;
-            keyColor = moonEnabled ? '#b8c8ff' : '#39425c';
+            const moonIllumination = moonEnabled && typeof atmosphereConfig.moonIllumination === 'number'
+                ? atmosphereConfig.moonIllumination
+                : (moonEnabled ? 1 : 0);
+            keyColor = moonEnabled ? PMNDRS_NIGHT_MOON_LIGHT_COLOR : '#39425c';
             fillColor = moonEnabled ? '#3f4f78' : '#111827';
-            keyIntensity = Math.min(keyIntensity, moonEnabled ? PMNDRS_NIGHT_MOON_LIGHT_INTENSITY : 0.03);
+            keyIntensity = Math.min(keyIntensity, moonEnabled ? PMNDRS_NIGHT_MOON_LIGHT_INTENSITY * moonIllumination : 0.03);
             fillIntensity = Math.min(fillIntensity, moonEnabled ? 0.08 : 0.015);
-            useMoonDirection = moonEnabled;
-            directionOwner = moonEnabled ? 'moon' : 'none';
+            useMoonDirection = moonEnabled && moonIllumination > 0.01;
+            directionOwner = useMoonDirection ? 'moon' : 'none';
         } else if (atmosphereConfig && (skyTimePreset === 'dawn' || (sunElevation !== null && sunElevation < 0))) {
             keyColor = '#9fb7ff';
             fillColor = '#223354';
@@ -3377,12 +3518,7 @@
         if (state.starsFallbackMesh && state.starsFallbackMesh.parent) {
             state.starsFallbackMesh.parent.remove(state.starsFallbackMesh);
         }
-        if (state.moonMesh && state.moonMesh.parent) {
-            state.moonMesh.parent.remove(state.moonMesh);
-        }
-        if (state.moonMaterial && typeof state.moonMaterial.dispose === 'function') {
-            state.moonMaterial.dispose();
-        }
+        state.moonTextureLoadToken = (state.moonTextureLoadToken || 0) + 1;
         if (state.moonTexture && typeof state.moonTexture.dispose === 'function') {
             state.moonTexture.dispose();
         }
@@ -3420,10 +3556,10 @@
         state.starsFallbackMesh = null;
         state.starsFallbackMaterial = null;
         state.starsFallbackGeometry = null;
-        state.moonMesh = null;
-        state.moonMaterial = null;
         state.moonTexture = null;
-        state.moonVisible = false;
+        state.moonTextureLoading = false;
+        state.moonTextureFailed = false;
+        state.moonDiagnostics = null;
         state.starsIntensity = 0;
     }
 
@@ -3444,10 +3580,6 @@
         }
         if (state.starsFallbackMesh) {
             state.starsFallbackMesh.visible = Boolean(visible) && state.starsIntensity > 0;
-            changed = true;
-        }
-        if (state.moonMesh) {
-            state.moonMesh.visible = Boolean(visible) && state.moonVisible === true;
             changed = true;
         }
         return changed;
@@ -4722,7 +4854,7 @@
             }
 
             const moonLight = typeof THREE.DirectionalLight === 'function'
-                ? new THREE.DirectionalLight('#b8c8ff', PMNDRS_NIGHT_MOON_LIGHT_INTENSITY)
+                ? new THREE.DirectionalLight(PMNDRS_NIGHT_MOON_LIGHT_COLOR, PMNDRS_NIGHT_MOON_LIGHT_INTENSITY)
                 : null;
             const moonTarget = moonLight ? moonLight.target : null;
             if (moonLight) {
@@ -4783,7 +4915,7 @@
                 scene.add(state.ambientLight);
             }
             if (!state.moonLight && typeof THREE.DirectionalLight === 'function') {
-                state.moonLight = new THREE.DirectionalLight('#b8c8ff', PMNDRS_NIGHT_MOON_LIGHT_INTENSITY);
+                state.moonLight = new THREE.DirectionalLight(PMNDRS_NIGHT_MOON_LIGHT_COLOR, PMNDRS_NIGHT_MOON_LIGHT_INTENSITY);
                 state.moonLight.name = 'vrodosPmndrsTakramMoonLight';
                 state.moonLight.userData.vrodosPmndrsTakramLightSource = true;
                 state.moonLight.castShadow = false;
@@ -4935,12 +5067,12 @@
                 moonLight.color.copy(smoothPmndrsRuntimeLightColor(
                     self,
                     'takramMoonColor',
-                    '#b8c8ff',
+                    PMNDRS_NIGHT_MOON_LIGHT_COLOR,
                     lightingSmoothingMs,
                     moonLight.color
                 ));
             } else if (moonLight.color && typeof moonLight.color.set === 'function') {
-                moonLight.color.set('#b8c8ff');
+                moonLight.color.set(PMNDRS_NIGHT_MOON_LIGHT_COLOR);
             }
             if (moonTarget) {
                 moonLight.target = moonTarget;
@@ -5262,6 +5394,7 @@
             lowLightAutoExposureEnabled: readPmndrsAtmosphereBool(this, 'pmndrsLowLightAutoExposureEnabled', true),
             toneMappingExposureAuthored: readPmndrsAtmosphereBool(this, 'pmndrsToneMappingExposureAuthored', false),
             starsEnabled: normalizePmndrsStarsEnabled(this.data.pmndrsStarsEnabled),
+            moonPhase: normalizePmndrsMoonPhase(this.data.pmndrsMoonPhase),
             geospatialEnabled,
             geospatialLatitudeDeg: readPmndrsAtmosphereNumber(this, 'pmndrsGeospatialLatitudeDeg', -90, 90, 0),
             geospatialLongitudeDeg: readPmndrsAtmosphereNumber(this, 'pmndrsGeospatialLongitudeDeg', -180, 180, 0),
@@ -5335,6 +5468,7 @@
                 config.inertialToECEFMatrix = vta.getECIToECEFRotationMatrix(date, new THREE.Matrix4());
             }
         }
+        applyPmndrsMoonPhaseConfig(config, window.VRODOS_TAKRAM_ATMOSPHERE || null);
         syncPmndrsTakramHorizonState(this, config);
         return config;
     };
@@ -5720,6 +5854,103 @@
         return config._starsLocalRotationMatrix;
     }
 
+    function getPmndrsMoonStarOcclusionCosine(config) {
+        if (!config || config.moonEnabled === false) {
+            return 1;
+        }
+        return Math.cos(PMNDRS_MOON_ANGULAR_RADIUS + PMNDRS_MOON_STAR_OCCLUSION_FEATHER_RAD);
+    }
+
+    function syncPmndrsTakramStarMoonOcclusion(material, config, state) {
+        const uniforms = material && material.uniforms ? material.uniforms : null;
+        const patchApplied = Boolean(uniforms &&
+            uniforms.vrodosMoonOcclusionDirection &&
+            uniforms.vrodosMoonOcclusionCosine);
+        if (state) {
+            state.starMoonOcclusionShaderApplied = patchApplied;
+        }
+        if (!patchApplied) {
+            return false;
+        }
+        if (config.moonDirection && uniforms.vrodosMoonOcclusionDirection.value &&
+            typeof uniforms.vrodosMoonOcclusionDirection.value.copy === 'function') {
+            uniforms.vrodosMoonOcclusionDirection.value.copy(config.moonDirection);
+        }
+        uniforms.vrodosMoonOcclusionCosine.value = getPmndrsMoonStarOcclusionCosine(config);
+        return true;
+    }
+
+    function installPmndrsFallbackStarMoonOcclusion(material) {
+        if (!material || !THREE.Vector3 || (material.userData && material.userData.vrodosMoonOcclusionInstalled)) {
+            return false;
+        }
+        material.userData = material.userData || {};
+        const directionUniform = { value: new THREE.Vector3(0, 0, 1) };
+        const cosineUniform = { value: 1 };
+        const originalOnBeforeCompile = typeof material.onBeforeCompile === 'function'
+            ? material.onBeforeCompile.bind(material)
+            : null;
+        const originalProgramKey = typeof material.customProgramCacheKey === 'function'
+            ? material.customProgramCacheKey.bind(material)
+            : null;
+
+        material.onBeforeCompile = function (shader, renderer) {
+            if (originalOnBeforeCompile) {
+                originalOnBeforeCompile(shader, renderer);
+            }
+            shader.uniforms.vrodosMoonOcclusionDirection = directionUniform;
+            shader.uniforms.vrodosMoonOcclusionCosine = cosineUniform;
+            shader.vertexShader = `varying vec3 vVrodosStarWorldDirection;\n${  shader.vertexShader}`;
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                '#include <begin_vertex>\n vVrodosStarWorldDirection = normalize((modelMatrix * vec4(transformed, 0.0)).xyz);'
+            );
+            shader.fragmentShader = [
+                'uniform vec3 vrodosMoonOcclusionDirection;',
+                'uniform float vrodosMoonOcclusionCosine;',
+                'varying vec3 vVrodosStarWorldDirection;',
+                shader.fragmentShader
+            ].join('\n');
+            shader.fragmentShader = shader.fragmentShader.replace(
+                'void main() {',
+                [
+                    'void main() {',
+                    '  // VRODOS_FALLBACK_MOON_STAR_OCCLUSION_SHADER_PATCH',
+                    '  if (vrodosMoonOcclusionCosine < 1.0 &&',
+                    '      dot(normalize(vVrodosStarWorldDirection), normalize(vrodosMoonOcclusionDirection)) > vrodosMoonOcclusionCosine) {',
+                    '    discard;',
+                    '  }'
+                ].join('\n')
+            );
+        };
+        material.customProgramCacheKey = function () {
+            return `${originalProgramKey ? originalProgramKey() : ''  }|vrodos-moon-star-occlusion-v1`;
+        };
+        material.userData.vrodosMoonOcclusionInstalled = true;
+        material.userData.vrodosMoonOcclusionDirection = directionUniform;
+        material.userData.vrodosMoonOcclusionCosine = cosineUniform;
+        material.needsUpdate = true;
+        return true;
+    }
+
+    function syncPmndrsFallbackStarMoonOcclusion(material, config, state) {
+        const userData = material && material.userData ? material.userData : null;
+        const directionUniform = userData ? userData.vrodosMoonOcclusionDirection : null;
+        const cosineUniform = userData ? userData.vrodosMoonOcclusionCosine : null;
+        const patchApplied = Boolean(directionUniform && cosineUniform);
+        if (state) {
+            state.starMoonOcclusionFallbackApplied = patchApplied;
+        }
+        if (!patchApplied) {
+            return false;
+        }
+        if (config.localMoonDirection && directionUniform.value && typeof directionUniform.value.copy === 'function') {
+            directionUniform.value.copy(config.localMoonDirection);
+        }
+        cosineUniform.value = getPmndrsMoonStarOcclusionCosine(config);
+        return true;
+    }
+
     function ensurePmndrsAtmosphereStarsFallback(self, config, state, intensity) {
         if (!self || !state || !state.starsData || intensity <= 0 || !self.el || !self.el.object3D || !THREE.Points || !THREE.PointsMaterial) {
             return false;
@@ -5742,6 +5973,7 @@
                 blending: THREE.AdditiveBlending || THREE.NormalBlending
             });
             state.starsFallbackMaterial.toneMapped = false;
+            installPmndrsFallbackStarMoonOcclusion(state.starsFallbackMaterial);
             state.starsFallbackMesh = new THREE.Points(state.starsFallbackGeometry, state.starsFallbackMaterial);
             state.starsFallbackMesh.frustumCulled = false;
             state.starsFallbackMesh.renderOrder = -998;
@@ -5761,6 +5993,7 @@
         }
 
         if (state.starsFallbackMaterial) {
+            syncPmndrsFallbackStarMoonOcclusion(state.starsFallbackMaterial, config, state);
             const normalizedIntensity = Math.max(0, Math.min(1, intensity / PMNDRS_STARS_NIGHT_INTENSITY));
             state.starsFallbackMaterial.opacity = Math.max(0.18, Math.min(0.92, 0.18 + normalizedIntensity * 0.74));
             state.starsFallbackMaterial.size = PMNDRS_STARS_FALLBACK_POINT_SIZE;
@@ -5830,6 +6063,7 @@
 
         if (state.starsMaterial) {
             self.applyPmndrsAtmosphereConfigToTarget(state.starsMaterial, config);
+            syncPmndrsTakramStarMoonOcclusion(state.starsMaterial, config, state);
             state.starsMaterial.irradianceTexture = state.textures.irradianceTexture || null;
             state.starsMaterial.scatteringTexture = state.textures.scatteringTexture || null;
             state.starsMaterial.transmittanceTexture = state.textures.transmittanceTexture || null;
@@ -5854,132 +6088,201 @@
             }
         }
 
-        const fallbackVisible = ensurePmndrsAtmosphereStarsFallback(self, config, state, intensity);
+        const fallbackVisible = state.starsMesh
+            ? false
+            : ensurePmndrsAtmosphereStarsFallback(self, config, state, intensity);
+        if (state.starsFallbackMesh && state.starsMesh) {
+            state.starsFallbackMesh.visible = false;
+        }
         return Boolean(state.starsMesh || fallbackVisible);
     }
 
-    function createPmndrsMoonTexture(state) {
-        if (!state || state.moonTexture || typeof document === 'undefined') {
-            return state ? state.moonTexture : null;
+    function setPmndrsTexturedMoonDefine(material, enabled) {
+        if (!material || !material.defines) {
+            return false;
         }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = 256;
-        canvas.height = 256;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-            return null;
+        const active = material.defines.VRODOS_TEXTURED_MOON != null;
+        if (enabled === active) {
+            return false;
         }
-
-        const gradient = ctx.createRadialGradient(104, 88, 12, 128, 128, 118);
-        gradient.addColorStop(0.0, 'rgba(255,255,246,1)');
-        gradient.addColorStop(0.58, 'rgba(232,238,245,0.96)');
-        gradient.addColorStop(0.86, 'rgba(188,200,218,0.82)');
-        gradient.addColorStop(1.0, 'rgba(120,135,160,0)');
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(128, 128, 112, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.globalCompositeOperation = 'multiply';
-        ctx.fillStyle = 'rgba(120,130,150,0.22)';
-        [
-            [92, 102, 13],
-            [150, 86, 8],
-            [168, 144, 18],
-            [112, 168, 10],
-            [132, 124, 7]
-        ].forEach((crater) => {
-            ctx.beginPath();
-            ctx.arc(crater[0], crater[1], crater[2], 0, Math.PI * 2);
-            ctx.fill();
-        });
-        ctx.globalCompositeOperation = 'source-over';
-
-        state.moonTexture = new THREE.CanvasTexture(canvas);
-        state.moonTexture.generateMipmaps = false;
-        state.moonTexture.minFilter = THREE.LinearFilter;
-        state.moonTexture.magFilter = THREE.LinearFilter;
-        state.moonTexture.needsUpdate = true;
-        return state.moonTexture;
+        if (enabled) {
+            material.defines.VRODOS_TEXTURED_MOON = '1';
+        } else {
+            delete material.defines.VRODOS_TEXTURED_MOON;
+        }
+        material.needsUpdate = true;
+        return true;
     }
 
-    function ensurePmndrsAtmosphereMoon(self, config, state) {
-        if (!self || !state || !config || !self.el || !self.el.object3D || config.moonEnabled === false || typeof THREE.Sprite !== 'function') {
-            if (state) {
-                state.moonVisible = false;
-                if (state.moonMesh) {
-                    state.moonMesh.visible = false;
+    function setPmndrsCinematicMoonHaloDefine(material, enabled) {
+        if (!material || !material.defines) {
+            return false;
+        }
+        const active = material.defines.VRODOS_CINEMATIC_MOON_HALO != null;
+        if (enabled === active) {
+            return false;
+        }
+        if (enabled) {
+            material.defines.VRODOS_CINEMATIC_MOON_HALO = '1';
+        } else {
+            delete material.defines.VRODOS_CINEMATIC_MOON_HALO;
+        }
+        material.needsUpdate = true;
+        return true;
+    }
+
+    function updatePmndrsMoonDiagnostics(self, state, config, fallbackState) {
+        const material = state && state.skyMaterial ? state.skyMaterial : null;
+        const defines = material && material.defines ? material.defines : null;
+        const moonDefineEnabled = Boolean(defines && (
+            (typeof defines.has === 'function' && defines.has('MOON')) ||
+            (typeof defines.has !== 'function' && defines.MOON != null)
+        ));
+        const diagnostics = {
+            enabled: Boolean(config && config.moonEnabled),
+            authoredPhase: config ? config.moonPhase : 'auto',
+            effectivePhase: config ? config.effectiveMoonPhase : 'full',
+            phaseAngleDeg: config && typeof config.moonPhaseAngleDeg === 'number' ? config.moonPhaseAngleDeg : 0,
+            illumination: config && typeof config.moonIllumination === 'number' ? config.moonIllumination : 1,
+            angularDiameterDeg: PMNDRS_MOON_ANGULAR_DIAMETER_DEG,
+            radianceScale: PMNDRS_MOON_RADIANCE_SCALE,
+            visibilityBoost: PMNDRS_MOON_VISIBILITY_BOOST,
+            orientationMode: config ? config.moonOrientationMode : 'stable-north-up',
+            positionMode: config ? config.moonPositionMode : 'author-controlled-night',
+            localDirection: config && config.localMoonDirection ? vectorToRoundedArray(config.localMoonDirection) : null,
+            ecefDirection: config && config.moonDirection ? vectorToRoundedArray(config.moonDirection) : null,
+            materialMoonEnabled: Boolean(material && material.moon),
+            materialMoonDefineEnabled: moonDefineEnabled,
+            assetUrl: state && state.moonTextureUrl ? state.moonTextureUrl : getPmndrsTakramMoonColorUrl(),
+            shaderPatchApplied: Boolean(state && state.moonShaderPatchApplied),
+            textureReady: Boolean(state && state.moonTexture),
+            textureLoading: Boolean(state && state.moonTextureLoading),
+            textureFailed: Boolean(state && state.moonTextureFailed),
+            debugDisabled: hasPmndrsDebugFlag('disableTexturedMoon', 'vrodos_debug_disable_textured_moon'),
+            haloEnabled: Boolean(config && config.moonEnabled && state && state.moonShaderPatchApplied),
+            haloRadiusScale: PMNDRS_MOON_HALO_RADIUS_SCALE,
+            haloStrength: PMNDRS_MOON_HALO_STRENGTH,
+            starOcclusionRadiusDeg: PMNDRS_MOON_ANGULAR_DIAMETER_DEG * 0.5 +
+                THREE.MathUtils.radToDeg(PMNDRS_MOON_STAR_OCCLUSION_FEATHER_RAD),
+            starOcclusionShaderApplied: Boolean(state && state.starMoonOcclusionShaderApplied),
+            starOcclusionFallbackApplied: Boolean(state && state.starMoonOcclusionFallbackApplied),
+            fallbackState: fallbackState || 'native-smooth'
+        };
+        if (state) {
+            state.moonDiagnostics = diagnostics;
+        }
+        if (self) {
+            self._pmndrsMoonDiagnostics = diagnostics;
+            if (hasPmndrsDebugFlag('runtimeFeatures', 'vrodos_debug_runtime_features')) {
+                const signature = JSON.stringify(diagnostics);
+                if (signature !== self._pmndrsMoonDiagnosticsLogSignature) {
+                    self._pmndrsMoonDiagnosticsLogSignature = signature;
+                    console.info(`[VRodos] Moon state: ${signature}`);
                 }
             }
+        }
+        return diagnostics;
+    }
+
+    function applyPmndrsMoonShaderState(self, config, state, material) {
+        const uniforms = material && material.uniforms ? material.uniforms : null;
+        const patchApplied = Boolean(uniforms &&
+            uniforms.vrodosMoonLightDirection &&
+            uniforms.vrodosMoonFixedToECEFMatrix &&
+            uniforms.vrodosMoonColorTexture &&
+            uniforms.vrodosMoonIllumination &&
+            uniforms.vrodosMoonHaloRadiusScale &&
+            uniforms.vrodosMoonHaloStrength);
+        state.moonShaderPatchApplied = patchApplied;
+        material.moonAngularRadius = PMNDRS_MOON_ANGULAR_RADIUS;
+        material.lunarRadianceScale = PMNDRS_MOON_RADIANCE_SCALE;
+
+        if (patchApplied) {
+            uniforms.vrodosMoonLightDirection.value.copy(config.moonLightDirection);
+            uniforms.vrodosMoonFixedToECEFMatrix.value.copy(config.moonFixedToECEFMatrix);
+            uniforms.vrodosMoonIllumination.value = config.moonEnabled ? config.moonIllumination : 0;
+            uniforms.vrodosMoonHaloRadiusScale.value = PMNDRS_MOON_HALO_RADIUS_SCALE;
+            uniforms.vrodosMoonHaloStrength.value = PMNDRS_MOON_HALO_STRENGTH;
+        }
+        setPmndrsCinematicMoonHaloDefine(material, Boolean(config.moonEnabled && patchApplied));
+
+        const debugDisabled = hasPmndrsDebugFlag('disableTexturedMoon', 'vrodos_debug_disable_textured_moon');
+        const textured = Boolean(config.moonEnabled && patchApplied && state.moonTexture && !debugDisabled);
+        if (patchApplied) {
+            uniforms.vrodosMoonColorTexture.value = textured ? state.moonTexture : null;
+        }
+        setPmndrsTexturedMoonDefine(material, textured);
+        updatePmndrsMoonDiagnostics(
+            self,
+            state,
+            config,
+            textured ? 'textured' : (debugDisabled ? 'native-debug-disabled' : (state.moonTextureFailed ? 'native-load-failed' : 'native-smooth'))
+        );
+        return textured;
+    }
+
+    function ensurePmndrsAtmosphereMoon(self, config, state, material) {
+        if (!self || !state || !config || !material) {
             return false;
         }
 
-        const moonDirection = config.localMoonDirection || config.moonDirection;
-        const moonElevation = moonDirection && typeof moonDirection.y === 'number' ? moonDirection.y : -1;
-        const nightAmount = 1 - smoothstepNumber(-7, 1, typeof config.sunElevationDeg === 'number' ? config.sunElevationDeg : 10);
-        const visibility = smoothstepNumber(-0.03, 0.16, moonElevation) * nightAmount;
+        if (!config.moonEnabled || hasPmndrsDebugFlag('disableTexturedMoon', 'vrodos_debug_disable_textured_moon')) {
+            return applyPmndrsMoonShaderState(self, config, state, material);
+        }
 
-        state.moonVisible = visibility > 0.02;
-        if (!state.moonVisible) {
-            if (state.moonMesh) {
-                state.moonMesh.visible = false;
+        if (state.moonTexture || state.moonTextureLoading || state.moonTextureFailed) {
+            return applyPmndrsMoonShaderState(self, config, state, material);
+        }
+
+        state.moonTextureLoading = true;
+        state.moonTextureUrl = getPmndrsTakramMoonColorUrl();
+        const loadToken = (state.moonTextureLoadToken || 0) + 1;
+        state.moonTextureLoadToken = loadToken;
+        updatePmndrsMoonDiagnostics(self, state, config, 'native-loading');
+
+        new THREE.TextureLoader().load(
+            state.moonTextureUrl,
+            (texture) => {
+                if (!self._pmndrsAtmosphereState || self._pmndrsAtmosphereState !== state || state.moonTextureLoadToken !== loadToken) {
+                    texture.dispose();
+                    return;
+                }
+                texture.name = 'vrodosNasaMoonColor1K';
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.ClampToEdgeWrapping;
+                texture.colorSpace = THREE.SRGBColorSpace;
+                texture.generateMipmaps = true;
+                texture.minFilter = THREE.LinearMipmapLinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                texture.needsUpdate = true;
+                state.moonTexture = texture;
+                state.moonTextureLoading = false;
+                state.moonTextureFailed = false;
+                applyPmndrsMoonShaderState(self, config, state, material);
+                self._takramSkyEnvironmentNeedsUpdate = true;
+                if (typeof self.publishRuntimeFeatureState === 'function') {
+                    self.publishRuntimeFeatureState('moon-texture-ready');
+                }
+            },
+            undefined,
+            (error) => {
+                if (state.moonTextureLoadToken !== loadToken) {
+                    return;
+                }
+                state.moonTextureLoading = false;
+                state.moonTextureFailed = true;
+                applyPmndrsMoonShaderState(self, config, state, material);
+                if (!state.moonTextureWarningLogged) {
+                    state.moonTextureWarningLogged = true;
+                    console.warn('[VRodos] NASA moon texture failed to load; Takram native phase moon remains active.', error);
+                }
+                if (typeof self.publishRuntimeFeatureState === 'function') {
+                    self.publishRuntimeFeatureState('moon-texture-failed');
+                }
             }
-            return false;
-        }
+        );
 
-        const texture = createPmndrsMoonTexture(state);
-        if (!texture) {
-            return false;
-        }
-
-        if (!state.moonMesh) {
-            state.moonMaterial = new THREE.SpriteMaterial({
-                map: texture,
-                color: '#eaf1ff',
-                transparent: true,
-                alphaTest: 0.001,
-                blending: THREE.NormalBlending,
-                depthWrite: false,
-                depthTest: true,
-                fog: false
-            });
-            state.moonMaterial.toneMapped = false;
-            state.moonMesh = new THREE.Sprite(state.moonMaterial);
-            state.moonMesh.name = 'vrodosPmndrsAtmosphereMoon';
-            state.moonMesh.frustumCulled = false;
-            state.moonMesh.renderOrder = -997;
-            state.moonMesh.userData.vrodosPmndrsAtmosphereMoon = true;
-            self.el.object3D.add(state.moonMesh);
-        } else if (state.moonMesh.parent !== self.el.object3D) {
-            self.el.object3D.add(state.moonMesh);
-        }
-
-        if (!state.moonCameraPosition) {
-            state.moonCameraPosition = new THREE.Vector3();
-            state.moonDirection = new THREE.Vector3();
-        }
-
-        const camera = self.el.camera;
-        if (camera && typeof camera.getWorldPosition === 'function') {
-            camera.getWorldPosition(state.moonCameraPosition);
-            state.moonDirection.copy(moonDirection).normalize();
-            state.moonMesh.position.copy(state.moonCameraPosition).addScaledVector(state.moonDirection, 5100);
-        }
-
-        const scale = 92;
-        state.moonMesh.scale.set(scale, scale, 1);
-        state.moonMesh.visible = true;
-        if (state.moonMaterial) {
-            state.moonMaterial.opacity = Math.max(0.18, Math.min(0.96, visibility));
-            state.moonMaterial.color.set('#eaf1ff').multiplyScalar(1.3 + visibility * 1.2);
-            state.moonMaterial.needsUpdate = true;
-        }
-
-        return true;
+        return applyPmndrsMoonShaderState(self, config, state, material);
     }
 
     function getTextureIdentity(texture) {
@@ -6600,7 +6903,7 @@
             state.skyMesh.visible = true;
         }
         ensurePmndrsAtmosphereStars(self, config, state, vta);
-        ensurePmndrsAtmosphereMoon(self, config, state);
+        ensurePmndrsAtmosphereMoon(self, config, state, state.skyMaterial);
 
         return true;
     }
