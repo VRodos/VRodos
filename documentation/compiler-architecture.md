@@ -78,7 +78,7 @@ Compiled virtual-production pages contain only the same-origin WordPress AJAX UR
 
 ## Verification
 
-Run `node scripts/run-compiler-runtime-tests.mjs` with `PHP_BINARY` set to PHP 8.3 when PHP is not available on `PATH`. The suite covers manifest/capability order, cycles and unsafe paths, DOM target transformations, target uniformity across scenes, settings precedence, light aliases, deterministic IDs, source isolation, rig strategies, unknown-category diagnostics, stale artifact cleanup, and artifact rollback.
+Run `node scripts/run-compiler-runtime-tests.mjs` with PHP 8.3. The runner checks `PHP_BINARY`, `PHP`, and `PATH` in that order; on Windows it also discovers versioned LocalWP and WampServer PHP installations. The suite covers manifest/capability order, cycles and unsafe paths, DOM target transformations, target uniformity across scenes, settings precedence, light aliases, deterministic IDs, source isolation, rig strategies, unknown-category diagnostics, stale artifact cleanup, and artifact rollback.
 
 After compiler/runtime source changes, also run `node --check`, PHP syntax checks, `npm run lint`, the direct runtime build fallback when necessary, and `git diff --check`. Recompile representative single-player, networked, desktop, and headset scenes before deployment.
 

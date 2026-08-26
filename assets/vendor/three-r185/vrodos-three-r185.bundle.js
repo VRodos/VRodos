@@ -52144,7 +52144,7 @@ void main() {
     WebGLExtension: () => WebGLExtension,
     version: () => version
   });
-  var version = "6.39.3";
+  var version = "6.39.4";
   var Disposable = class {
     /**
      * Frees internal resources.
@@ -53025,8 +53025,7 @@ gl_FragDepth=readDepth(vUv);
      * @private
      */
     get stableDepthTexture() {
-      var _a2, _b2;
-      return (_b2 = (_a2 = this.depthRenderTarget) == null ? void 0 : _a2.depthTexture) != null ? _b2 : null;
+      return this.depthRenderTarget === null ? null : this.depthRenderTarget.depthTexture;
     }
     /**
      * The current amount of samples used for multisample anti-aliasing.
@@ -53189,19 +53188,24 @@ gl_FragDepth=readDepth(vUv);
      * @private
      */
     deleteDepthTexture() {
-      var _a2, _b2, _c;
       const stableDepthTexture = this.stableDepthTexture;
       for (const pass of this.passes) {
         if (pass.getDepthTexture() === stableDepthTexture) {
           pass.setDepthTexture(null);
         }
       }
-      (_a2 = this.depthRenderTarget) == null ? void 0 : _a2.dispose();
-      this.depthRenderTarget = null;
-      (_b2 = this.inputBuffer.depthTexture) == null ? void 0 : _b2.dispose();
-      this.inputBuffer.depthTexture = null;
-      (_c = this.outputBuffer.depthTexture) == null ? void 0 : _c.dispose();
-      this.outputBuffer.depthTexture = null;
+      if (this.depthRenderTarget !== null) {
+        this.depthRenderTarget.dispose();
+        this.depthRenderTarget = null;
+      }
+      if (this.inputBuffer.depthTexture !== null) {
+        this.inputBuffer.depthTexture.dispose();
+        this.inputBuffer.depthTexture = null;
+      }
+      if (this.outputBuffer.depthTexture !== null) {
+        this.outputBuffer.depthTexture.dispose();
+        this.outputBuffer.depthTexture = null;
+      }
     }
     /**
      * Creates a new render target.
@@ -64196,13 +64200,11 @@ vUv2=(uvTransform*vec3(uv,1.0)).xy;
      * @deprecated Use texture.matrixAutoUpdate instead.
      */
     get uvTransform() {
-      const texture = this.texture;
-      return texture !== null && texture.matrixAutoUpdate;
+      return this.texture !== null && this.texture.matrixAutoUpdate;
     }
     set uvTransform(value) {
-      const texture = this.texture;
-      if (texture !== null) {
-        texture.matrixAutoUpdate = value;
+      if (this.texture !== null) {
+        this.texture.matrixAutoUpdate = value;
       }
     }
     /**
@@ -64230,8 +64232,9 @@ vUv2=(uvTransform*vec3(uv,1.0)).xy;
      * @param {Number} [deltaTime] - The time between the last frame and the current one in seconds.
      */
     update(renderer, inputBuffer, deltaTime) {
-      if (this.texture.matrixAutoUpdate) {
-        this.texture.updateMatrix();
+      const texture = this.texture;
+      if (texture !== null && texture.matrixAutoUpdate) {
+        texture.updateMatrix();
       }
     }
   };

@@ -1,8 +1,20 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const root = resolve(import.meta.dirname, "..");
+
+function versionedPhpBinaries(directory, executablePath) {
+    if (!directory || !existsSync(directory)) {
+        return [];
+    }
+
+    return readdirSync(directory, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => join(directory, entry.name, ...executablePath))
+        .filter(existsSync)
+        .sort((left, right) => right.localeCompare(left, undefined, { numeric: true }));
+}
 
 function candidatePhpBinaries() {
     const candidates = [
@@ -12,15 +24,28 @@ function candidatePhpBinaries() {
     ].filter(Boolean);
 
     if (process.env.APPDATA) {
-        candidates.push(join(
+        candidates.push(...versionedPhpBinaries(join(
             process.env.APPDATA,
             "Local",
-            "lightning-services",
-            "php-8.3.29+1",
-            "bin",
-            "win64",
-            "php.exe"
-        ));
+            "lightning-services"
+        ), ["bin", "win64", "php.exe"]));
+    }
+
+    if (process.platform === "win32") {
+        const systemDrive = process.env.SystemDrive || "C:";
+        const wampRoots = [
+            process.env.WAMP_HOME,
+            process.env.WAMP64_HOME,
+            `${systemDrive}\\wamp64`,
+            `${systemDrive}\\wamp`
+        ].filter(Boolean);
+
+        wampRoots.forEach((wampRoot) => {
+            candidates.push(...versionedPhpBinaries(
+                join(wampRoot, "bin", "php"),
+                ["php.exe"]
+            ));
+        });
     }
 
     return candidates;

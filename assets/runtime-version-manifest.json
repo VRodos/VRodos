@@ -31,7 +31,7 @@
     "bundlePath": "assets/js/runtime/master/lib/vrodos-three-addons.bundle.js"
   },
   "postprocessing": {
-    "version": "6.39.3",
+    "version": "6.39.4",
     "global": "POSTPROCESSING",
     "bundleFile": "vrodos-postprocessing.bundle.js",
     "bundlePath": "assets/js/runtime/master/lib/vrodos-postprocessing.bundle.js"
@@ -58,7 +58,7 @@
     }
   },
   "collisionBvh": {
-    "version": "0.9.13",
+    "version": "0.9.14",
     "global": "VRODOS_COLLISION_BVH",
     "bundleFile": "vrodos-collision-bvh.bundle.js",
     "bundlePath": "assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js"
@@ -68,7 +68,7 @@
       "aframe-extras": "7.7.0",
       "aframe-environment-component": "1.5.0",
       "lil-gui": "0.21.0",
-      "lucide": "1.27.0",
+      "lucide": "1.34.0",
       "stats-gl": "4.2.3"
     },
     "files": {
