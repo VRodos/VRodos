@@ -88,7 +88,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                     <?php endif; ?>
                 </div>
 
-                <a href="<?php echo get_site_url(); ?>/vrodos-project-manager-page/" class="tw-text-xs tw-font-bold tw-text-slate-400 hover:tw-text-primary transition-all">Projects Manager</a>
+                <a href="<?php echo get_site_url(); ?>/vrodos-project-manager-page/" class="tw-text-xs tw-font-bold tw-text-slate-400 hover:tw-text-primary transition-all">Project Manager</a>
             </div>
         </div>
     </header>
