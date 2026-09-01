@@ -32,7 +32,11 @@ global $parameter_Scenepass;
 			$is_current = ( $current_scene_id == $scene_id );
 
 			// Get scene type
-			$scene_type = get_post_meta( $scene_id, 'vrodos_scene_metatype', true );
+			$scene_type    = get_post_meta( $scene_id, 'vrodos_scene_metatype', true );
+			$thumbnail_id  = get_post_thumbnail_id( $scene_id );
+			$thumbnail_url = $thumbnail_id
+				? VRodos_Storage_Manager::authoring_url_for_attachment( $thumbnail_id, 'thumbnail' )
+				: '';
 
 			// 0 or 1: depending if this scene is the default one
 			$default_scene = get_post_meta( $scene_id, 'vrodos_scene_default', true );
@@ -63,8 +67,10 @@ global $parameter_Scenepass;
 					<div class="SceneThumbnail tw-relative">
 						<span class="scene-order-badge"><?php echo $scene_index; ?></span>
 						<a href="<?php echo $edit_page_link; ?>" class="tw-block tw-w-full tw-h-full">
-							<?php if ( has_post_thumbnail( $scene_id ) ) : ?>
-								<?php echo get_the_post_thumbnail( $scene_id, 'thumbnail', ['class' => 'tw-w-full tw-h-full tw-object-cover' . ($is_current ? ' current-scene-thumb' : '')] ); ?>
+							<?php if ( '' !== $thumbnail_url ) : ?>
+								<img src="<?php echo esc_url( $thumbnail_url ); ?>"
+									 alt="<?php echo esc_attr( $scene_title ); ?>"
+									 class="tw-w-full tw-h-full tw-object-cover<?php echo $is_current ? ' current-scene-thumb' : ''; ?>">
 							<?php else : ?>
 								<div class="tw-w-full tw-h-full tw-bg-slate-800/80 tw-flex tw-items-center tw-justify-center <?php echo $is_current ? 'current-scene-thumb-placeholder' : ''; ?>">
 									<i data-lucide="image" class="tw-w-6 tw-h-6 tw-text-slate-500"></i>

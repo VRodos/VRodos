@@ -211,18 +211,21 @@ final class VRodos_Storage_Manager {
 		return self::insert_private_attachment( $path, basename( $path ), $mime, $owner_id, $owner_type, $role );
 	}
 
-	public static function authoring_url_for_attachment( int $attachment_id ): string {
+	public static function authoring_url_for_attachment( int $attachment_id, string $image_size = '' ): string {
 		if ( '1' !== (string) get_post_meta( $attachment_id, self::PRIVATE_MARKER_META, true ) ) {
-			$url = wp_get_attachment_url( $attachment_id );
+			$url = '' !== $image_size
+				? wp_get_attachment_image_url( $attachment_id, $image_size )
+				: wp_get_attachment_url( $attachment_id );
 			return is_string( $url ) ? $url : '';
 		}
-		return add_query_arg(
-			[
-				'action' => 'vrodos_private_media',
-				'id'     => $attachment_id,
-			],
-			admin_url( 'admin-ajax.php' )
-		);
+		$args = [
+			'action' => 'vrodos_private_media',
+			'id'     => $attachment_id,
+		];
+		if ( '' !== $image_size ) {
+			$args['size'] = sanitize_key( $image_size );
+		}
+		return add_query_arg( $args, admin_url( 'admin-ajax.php' ) );
 	}
 
 	public static function filter_private_attachment_url( string $url, int $attachment_id ): string {
@@ -293,7 +296,7 @@ final class VRodos_Storage_Manager {
 				require_once ABSPATH . 'wp-admin/includes/image.php';
 			}
 			$metadata = wp_generate_attachment_metadata( $attachment_id, $destination );
-			if ( ! is_array( $metadata ) || false === wp_update_attachment_metadata( $attachment_id, $metadata ) ) {
+			if ( ! is_array( $metadata ) || ! self::ensure_attachment_metadata( $attachment_id, $metadata ) ) {
 				self::delete_generated_image_files( $destination, is_array( $metadata ) ? $metadata : [] );
 				self::ensure_attached_file( $attachment_id, $source );
 				if ( is_array( $old_metadata ) ) {
@@ -305,6 +308,17 @@ final class VRodos_Storage_Manager {
 			}
 		}
 		return [ 'attachmentId' => $attachment_id, 'source' => wp_normalize_path( $source ), 'legacyFiles' => $legacy_files, 'destination' => wp_normalize_path( $destination ), 'sha256' => $hash, 'sizeBytes' => (int) filesize( $destination ) ];
+	}
+
+	/** Repair an interrupted migration's attachment path after validating private ownership and containment. */
+	public static function repair_private_attachment_path( int $attachment_id, string $path ): bool {
+		$root = self::private_site_root( false );
+		return
+			self::is_private_attachment( $attachment_id )
+			&& is_string( $root )
+			&& is_file( $path )
+			&& self::path_is_within( $path, $root )
+			&& self::ensure_attached_file( $attachment_id, $path );
 	}
 
 	private static function attachment_file_inventory( string $source, array $metadata ): array {
@@ -348,12 +362,28 @@ final class VRodos_Storage_Manager {
 		}
 		$path = get_attached_file( $attachment_id, true );
 		$root = self::private_site_root( false );
+		$mime               = get_post_mime_type( $attachment_id ) ?: 'application/octet-stream';
+		$requested_size_raw = (string) wp_unslash( $_GET['size'] ?? '' );
+		$requested_size     = sanitize_key( $requested_size_raw );
+		if ( $requested_size_raw !== $requested_size ) {
+			status_header( 404 );
+			exit;
+		}
+		if ( '' !== $requested_size && is_string( $path ) ) {
+			$metadata = wp_get_attachment_metadata( $attachment_id );
+			$filename = basename( (string) ( is_array( $metadata ) ? ( $metadata['sizes'][ $requested_size ]['file'] ?? '' ) : '' ) );
+			$path     = '' !== $filename ? dirname( $path ) . DIRECTORY_SEPARATOR . $filename : '';
+			$checked  = wp_check_filetype( $filename );
+			if ( ! empty( $checked['type'] ) ) {
+				$mime = (string) $checked['type'];
+			}
+		}
 		if ( ! is_string( $path ) || ! is_string( $root ) || ! is_file( $path ) || ! self::path_is_within( $path, $root ) ) {
 			status_header( 404 );
 			exit;
 		}
 
-		self::stream_private_path( $path, get_post_mime_type( $attachment_id ) ?: 'application/octet-stream' );
+		self::stream_private_path( $path, $mime );
 	}
 
 	private static function stream_private_path( string $path, string $mime ): void {
@@ -640,7 +670,7 @@ final class VRodos_Storage_Manager {
 				require_once ABSPATH . 'wp-admin/includes/image.php';
 			}
 			$metadata = wp_generate_attachment_metadata( (int) $id, $path );
-			if ( ! is_array( $metadata ) || false === wp_update_attachment_metadata( (int) $id, $metadata ) ) {
+			if ( ! is_array( $metadata ) || ! self::ensure_attachment_metadata( (int) $id, $metadata ) ) {
 				self::delete_generated_image_files( $path, is_array( $metadata ) ? $metadata : [] );
 				wp_delete_attachment( (int) $id, true );
 				return new WP_Error( 'vrodos_attachment_metadata_failed', 'WordPress could not create image attachment metadata.' );
@@ -650,9 +680,17 @@ final class VRodos_Storage_Manager {
 	}
 
 	private static function ensure_attached_file( int $attachment_id, string $path ): bool {
-		$updated = update_attached_file( $attachment_id, $path );
+		$stored_path = DIRECTORY_SEPARATOR === '\\'
+			? wp_slash( str_replace( '/', '\\', wp_normalize_path( $path ) ) )
+			: $path;
+		$updated = update_attached_file( $attachment_id, $stored_path );
 		$current = get_attached_file( $attachment_id, true );
 		return false !== $updated || ( is_string( $current ) && wp_normalize_path( $current ) === wp_normalize_path( $path ) );
+	}
+
+	private static function ensure_attachment_metadata( int $attachment_id, array $metadata ): bool {
+		$updated = wp_update_attachment_metadata( $attachment_id, $metadata );
+		return false !== $updated || wp_get_attachment_metadata( $attachment_id ) === $metadata;
 	}
 
 	private static function clear_private_marker( int $attachment_id ): void {

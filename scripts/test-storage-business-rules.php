@@ -24,8 +24,14 @@ function sanitize_key( string $value ): string { return preg_replace( '/[^a-z0-9
 function is_wp_error( $value ): bool { return $value instanceof WP_Error; }
 function wp_generate_password(): string { return 'random-token'; }
 function absint( $value ): int { return abs( (int) $value ); }
+function wp_slash( string $value ): string { return addslashes( $value ); }
+function admin_url( string $path = '' ): string { return 'https://example.test/wp-admin/' . ltrim( $path, '/' ); }
+function add_query_arg( array $args, string $url ): string { return $url . '?' . http_build_query( $args ); }
+function wp_get_attachment_url( int $attachment_id ) { return 'https://example.test/uploads/' . $attachment_id; }
+function wp_get_attachment_image_url( int $attachment_id, string $size ) { return 'https://example.test/uploads/' . $attachment_id . '-' . $size; }
 
 $test_meta = [];
+$test_attached_files = [];
 $test_deleted_attachments = [];
 $test_failed_meta_key = '';
 function get_post_meta( int $post_id, string $key, bool $single = false ) {
@@ -49,6 +55,15 @@ function wp_delete_attachment( int $attachment_id, bool $force_delete = false ):
 	$test_deleted_attachments[] = $attachment_id;
 	return true;
 }
+function update_attached_file( int $attachment_id, string $file ) {
+	global $test_attached_files;
+	$test_attached_files[ $attachment_id ] = stripslashes( $file );
+	return 1;
+}
+function get_attached_file( int $attachment_id, bool $unfiltered = false ) {
+	global $test_attached_files;
+	return $test_attached_files[ $attachment_id ] ?? false;
+}
 
 require_once dirname( __DIR__ ) . '/includes/class-vrodos-storage-manager.php';
 
@@ -63,6 +78,14 @@ try {
 	vrodos_storage_assert( is_string( $root ) && str_ends_with( wp_normalize_path( $root ), '/private/site-7/' ), 'multisite private root' );
 	$source = VRodos_Storage_Manager::private_entity_directory( 'asset', 42, 'source' );
 	vrodos_storage_assert( str_ends_with( wp_normalize_path( $source ), '/site-7/assets/42/source/' ), 'ID-owned asset source path' );
+	$private_file = $source . 'windows-path.glb';
+	file_put_contents( $private_file, 'private attachment' );
+	$test_meta[501] = [ '_vrodos_private_storage' => '1' ];
+	vrodos_storage_assert( VRodos_Storage_Manager::repair_private_attachment_path( 501, $private_file ), 'private attachment path repair' );
+	vrodos_storage_assert( wp_normalize_path( $test_attached_files[501] ) === wp_normalize_path( $private_file ), 'absolute private path survives metadata unslashing' );
+	$test_meta[502] = [ '_vrodos_private_storage' => '1' ];
+	$thumbnail_url = VRodos_Storage_Manager::authoring_url_for_attachment( 502, 'thumbnail' );
+	vrodos_storage_assert( $thumbnail_url === 'https://example.test/wp-admin/admin-ajax.php?action=vrodos_private_media&id=502&size=thumbnail', 'private image size uses authenticated delivery' );
 	vrodos_storage_assert( ! str_contains( $source, 'project-slug' ), 'no slug-derived path' );
 	$derivative = VRodos_Storage_Manager::private_entity_directory( 'asset', 42, 'derivatives', 'safe-draco' );
 	vrodos_storage_assert( str_ends_with( wp_normalize_path( $derivative ), '/site-7/assets/42/derivatives/safe-draco/' ), 'profile derivative path' );

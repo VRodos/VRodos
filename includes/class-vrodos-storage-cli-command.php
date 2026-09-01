@@ -57,6 +57,8 @@ final class VRodos_Storage_CLI_Command {
 			foreach ( $this->attachment_references() as $reference ) {
 				$key = $reference['ownerType'] . ':' . $reference['ownerId'] . ':' . $reference['metaKey'];
 				if ( 'done' === ( $state['items'][ $key ]['status'] ?? '' ) ) {
+					$state['items'][ $key ] = $this->repair_completed_reference( $reference, $state['items'][ $key ] );
+					$this->save_state( $state );
 					continue;
 				}
 				$state['items'][ $key ] = $this->migrate_reference( $reference, $state );
@@ -321,6 +323,36 @@ final class VRodos_Storage_CLI_Command {
 		return [ 'status' => 'done', 'sourceUrl' => $source_url ] + $result;
 	}
 
+	private function repair_completed_reference( array $reference, array $item ): array {
+		$attachment_id = absint( $item['attachmentId'] ?? $reference['attachmentId'] ?? 0 );
+		$destination   = wp_normalize_path( (string) ( $item['destination'] ?? '' ) );
+		$current       = get_attached_file( $attachment_id, true );
+
+		if ( ! is_file( $destination ) && is_string( $current ) && is_file( $current ) ) {
+			$destination = wp_normalize_path( $current );
+		}
+		if ( ! is_file( $destination ) ) {
+			$directory = VRodos_Storage_Manager::private_entity_directory(
+				(string) $reference['ownerType'],
+				(int) $reference['ownerId'],
+				(string) $reference['role']
+			);
+			$filename = basename( (string) wp_parse_url( (string) ( $item['sourceUrl'] ?? '' ), PHP_URL_PATH ) );
+			if ( ! is_wp_error( $directory ) && '' !== $filename && is_file( $directory . $filename ) ) {
+				$destination = wp_normalize_path( $directory . $filename );
+			}
+		}
+		if ( ! is_file( $destination ) || ! VRodos_Storage_Manager::repair_private_attachment_path( $attachment_id, $destination ) ) {
+			throw new RuntimeException( 'Could not repair completed private attachment #' . $attachment_id . '.' );
+		}
+
+		$item['attachmentId'] = $attachment_id;
+		$item['destination']  = $destination;
+		$item['sha256']       = hash_file( 'sha256', $destination );
+		$item['sizeBytes']    = (int) filesize( $destination );
+		return $item;
+	}
+
 	private function migrate_derivatives( array &$state ): void {
 		foreach ( get_posts( [ 'post_type' => 'vrodos_asset3d', 'post_status' => 'any', 'fields' => 'ids', 'posts_per_page' => -1 ] ) as $asset_id ) {
 			$meta = get_post_meta( (int) $asset_id, '_vrodos_asset3d_glb_derivatives', true );
@@ -550,9 +582,11 @@ final class VRodos_Storage_CLI_Command {
 				$html = str_replace( [ '../easyrtc/', '../dist/', '../js/' ], [ '/easyrtc/', '/dist/', '/js/' ], $html );
 				foreach ( $state['items'] as $item ) {
 					$old_url = (string) ( $item['sourceUrl'] ?? '' );
-					if ( '' === $old_url || ! str_contains( $html, $old_url ) ) { continue; }
+					$old_url_path = (string) wp_parse_url( html_entity_decode( $old_url ), PHP_URL_PATH );
+					$old_urls     = array_values( array_unique( array_filter( [ $old_url, $old_url_path ] ) ) );
+					if ( empty( array_filter( $old_urls, static fn ( string $candidate ): bool => str_contains( $html, $candidate ) ) ) ) { continue; }
 					$published = $this->publish_migration_media( $project_id, (string) $item['destination'], (int) ( $item['attachmentId'] ?? 0 ) );
-					$html = str_replace( $old_url, $published['url'], $html );
+					$html = str_replace( $old_urls, $published['url'], $html );
 					$media[ $published['entry']['file'] ] = $published['entry'];
 				}
 				$temporary = $clients_dir . basename( $filename ) . '.migration.partial';
