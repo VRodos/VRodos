@@ -29,7 +29,10 @@ VRODOS.api.createProject = function(project_title, project_type_slug, current_us
 		document.getElementById( 'createNewProjectBtn' ).style.display = '';
 		document.getElementById( 'create-game-progress-bar' ).style.display = 'none';
 
-		VRODOS.api.fetchAllProjectsAndAddToDOM( current_user_id, parameter_Scenepass, new_project_id );
+		if (typeof VRODOS.api.selectProjectSource === 'function') {
+			VRODOS.api.selectProjectSource('vrodos');
+		}
+		VRODOS.api.fetchAllProjectsAndAddToDOM( current_user_id, parameter_Scenepass, new_project_id, false, 'vrodos' );
 
 	})
 	.catch( (err) => {
@@ -43,7 +46,8 @@ VRODOS.api.createProject = function(project_title, project_type_slug, current_us
 }
 
 
-VRODOS.api.fetchAllProjectsAndAddToDOM = function(current_user_id, parameter_Scenepass, new_project_id=-1, is_initial_load = false){
+VRODOS.api.fetchAllProjectsAndAddToDOM = function(current_user_id, parameter_Scenepass, new_project_id=-1, is_initial_load = false, project_source = null){
+	project_source = project_source || VRODOS.api.currentProjectSource || 'vrodos';
 
 	fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl(), {
 		method: 'POST',
@@ -53,10 +57,17 @@ VRODOS.api.fetchAllProjectsAndAddToDOM = function(current_user_id, parameter_Sce
 			nonce: document.querySelector('[name="post_nonce_field"]')?.value || '',
 			current_user_id,
 			parameter_Scenepass,
-			is_initial_load
+			is_initial_load,
+			project_source
 		})
 	})
-	.then( (response) => response.text())
+	.then( async (response) => {
+		const body = await response.text();
+		if (!response.ok) {
+			throw new Error(body);
+		}
+		return body;
+	})
 	.then( (domhtml) => {
 
 		// Add list to div

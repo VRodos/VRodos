@@ -14,7 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    VRODOS.api.fetchAllProjectsAndAddToDOM(VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass, -1, true);
+    setupProjectSourceTabs();
+    VRODOS.api.selectProjectSource('vrodos');
+    VRODOS.api.fetchAllProjectsAndAddToDOM(VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass, -1, true, 'vrodos');
     setupProjectCountSync();
 
     // Modals (DaisyUI)
@@ -120,6 +122,39 @@ document.addEventListener('DOMContentLoaded', () => {
         dialog.close();
     });
 
+    function setupProjectSourceTabs() {
+        const tabs = Array.from(document.querySelectorAll('.vrodos-project-source-tab'));
+
+        VRODOS.api.selectProjectSource = function(source) {
+            const normalizedSource = source === 'immerse' ? 'immerse' : 'vrodos';
+            VRODOS.api.currentProjectSource = normalizedSource;
+
+            tabs.forEach(tab => {
+                const isActive = tab.dataset.projectSource === normalizedSource;
+                tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                tab.classList.toggle('tw-bg-base-100', isActive);
+                tab.classList.toggle('tw-shadow-sm', isActive);
+                tab.classList.toggle('tw-btn-ghost', !isActive);
+            });
+        };
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const source = tab.dataset.projectSource === 'immerse' ? 'immerse' : 'vrodos';
+                if (source === VRODOS.api.currentProjectSource) return;
+
+                VRODOS.api.selectProjectSource(source);
+                VRODOS.api.fetchAllProjectsAndAddToDOM(
+                    VRODOS.config.current_user_id,
+                    VRODOS.config.parameter_Scenepass,
+                    -1,
+                    false,
+                    source
+                );
+            });
+        });
+    }
+
     function setupProjectCountSync() {
         const projectRoot = document.getElementById('ExistingProjectsDivDOM');
         const observerRoot = projectRoot ? projectRoot.parentElement : null;
@@ -140,26 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const indicator = document.getElementById('projects-count-indicator');
             if (!indicator) return;
 
-            const immerseContainer = document.getElementById('ic-immerse-projects');
-            const isImmerseVisible = immerseContainer && !immerseContainer.classList.contains('tw-hidden');
-            const count = (isImmerseVisible
-                ? readContainerCount('ic-pm-project-container')
-                : readContainerCount('vrodos-list-projects-container')) || '0';
-
-            indicator.textContent = count;
+            indicator.textContent = readContainerCount('vrodos-list-projects-container') || '0';
         }
-
-        document.addEventListener('click', (event) => {
-            if (event.target.closest('.ic-pm-tab')) {
-                setTimeout(updateCountIndicator, 0);
-            }
-        });
-
-        document.addEventListener('change', (event) => {
-            if (event.target.matches('#ic-pm-usecase-filter')) {
-                setTimeout(updateCountIndicator, 0);
-            }
-        });
 
         if (observerRoot) {
             new MutationObserver(() => setTimeout(updateCountIndicator, 0)).observe(observerRoot, {

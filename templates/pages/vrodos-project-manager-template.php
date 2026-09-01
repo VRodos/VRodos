@@ -105,7 +105,22 @@ else {
             <main class="tw-flex-1 tw-overflow-y-auto tw-bg-slate-50/30 tw-px-8 tw-py-10 tw-z-10">
                 <div class="tw-max-w-4xl tw-mx-auto">
                     <div class="tw-flex tw-items-center tw-justify-between tw-mb-8">
-                        <h2 class="tw-text-sm tw-font-bold tw-text-slate-500 tw-uppercase tw-tracking-widest">Active <?php echo $multiple; ?></h2>
+                        <div class="tw-flex tw-items-center tw-gap-1 tw-bg-base-200 tw-p-1 tw-rounded-xl" role="tablist" aria-label="Project source">
+                            <button type="button"
+                                    class="vrodos-project-source-tab tw-btn tw-btn-xs tw-rounded-lg tw-font-bold tw-text-xs tw-uppercase tw-tracking-widest tw-px-4 tw-bg-base-100 tw-shadow-sm tw-border-0"
+                                    data-project-source="vrodos"
+                                    role="tab"
+                                    aria-selected="true">
+                                VRodos
+                            </button>
+                            <button type="button"
+                                    class="vrodos-project-source-tab tw-btn tw-btn-xs tw-btn-ghost tw-rounded-lg tw-font-bold tw-text-xs tw-uppercase tw-tracking-widest tw-px-4 tw-border-0"
+                                    data-project-source="immerse"
+                                    role="tab"
+                                    aria-selected="false">
+                                IMMERSE
+                            </button>
+                        </div>
                         <span id="projects-count-indicator" class="tw-text-[10px] tw-font-bold tw-text-slate-400">0</span>
                     </div>
 

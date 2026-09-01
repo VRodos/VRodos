@@ -172,8 +172,13 @@ class VRodos_Project_AJAX {
 	 * Fetch list of projects and render HTML
 	 */
 	public function vrodos_fetch_list_projects_callback() {
-		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) || ! current_user_can( 'edit_vrodos_project' ) ) {
+		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) || ! current_user_can( 'publish_vrodos_project' ) ) {
 			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
+
+		$project_source = isset( $_POST['project_source'] ) ? sanitize_key( (string) wp_unslash( $_POST['project_source'] ) ) : 'vrodos';
+		if ( ! in_array( $project_source, [ 'vrodos', 'immerse' ], true ) ) {
+			wp_send_json_error( 'Invalid project source.', 400 );
 		}
 
 		$perma_structure     = (bool) get_option( 'permalink_structure' );
@@ -188,7 +193,29 @@ class VRodos_Project_AJAX {
 		}
 
 		// Define custom query parameters
-		$custom_query_args = ['post_type' => 'vrodos_game', 'posts_per_page' => -1];
+		$custom_query_args = [
+			'post_type'      => 'vrodos_game',
+			'posts_per_page' => -1,
+			'meta_query'     => 'immerse' === $project_source
+				? [
+					[
+						'key'   => '_immerse_source',
+						'value' => 'immerse',
+					],
+				]
+				: [
+					'relation' => 'OR',
+					[
+						'key'     => '_immerse_source',
+						'compare' => 'NOT EXISTS',
+					],
+					[
+						'key'     => '_immerse_source',
+						'value'   => 'immerse',
+						'compare' => '!=',
+					],
+				],
+		];
 		if (!empty($shared_ids)) {
 			$custom_query_args['post__not_in'] = $shared_ids;
 		}
@@ -201,7 +228,7 @@ class VRodos_Project_AJAX {
 		// Output custom query loop
 		if ( $custom_query->have_posts() ) {
 
-			echo '<div id="vrodos-list-projects-container" class="tw-flex tw-flex-col tw-gap-6 tw-mt-4" data-project-count="' . $custom_query->found_posts . '">';
+			echo '<div id="vrodos-list-projects-container" class="tw-flex tw-flex-col tw-gap-6 tw-mt-4" data-project-source="' . esc_attr( $project_source ) . '" data-project-count="' . $custom_query->found_posts . '">';
 			$i = 1;
 			while ( $custom_query->have_posts() ) :
 
@@ -283,21 +310,30 @@ class VRodos_Project_AJAX {
 				echo '<div class="tw-min-w-0 tw-flex tw-flex-col tw-gap-1">';
 				echo '<div class="tw-flex tw-items-center tw-gap-2 tw-group/title tw-min-w-0">';
 				echo '<div id="' . $game_id . '-title" class="tw-text-sm tw-font-bold tw-text-base-content tw-truncate">' . esc_html( $game_title ) . '</div>';
-				echo '<input id="' . $game_id . '-title-input" type="text" class="tw-input tw-input-xs tw-input-bordered tw-w-full tw-hidden" value="' . esc_attr( $game_title ) . '" />';
-				echo '<button type="button" class="tw-p-1 tw-text-base-content/20 hover:tw-text-primary tw-opacity-0 group-hover/title:tw-opacity-100 tw-transition-all vrodos-rename-project-btn" data-game-id="' . $game_id . '" title="Rename project">';
-				echo '<i data-lucide="pencil" class="tw-w-3 tw-h-3"></i>';
-				echo '</button>';
-				echo '<div id="' . $game_id . '-rename-actions" class="tw-flex tw-items-center tw-gap-1 tw-hidden">';
-				echo '<button type="button" class="tw-p-1 tw-text-success hover:tw-bg-success/10 tw-rounded vrodos-save-rename-btn" data-game-id="' . $game_id . '" title="Save">';
-				echo '<i data-lucide="check" class="tw-w-3 tw-h-3"></i>';
-				echo '</button>';
-				echo '<button type="button" class="tw-p-1 tw-text-error hover:tw-bg-error/10 tw-rounded vrodos-cancel-rename-btn" data-game-id="' . $game_id . '" title="Cancel">';
-				echo '<i data-lucide="x" class="tw-w-3 tw-h-3"></i>';
-				echo '</button>';
-				echo '</div>';
+				if ( 'immerse' !== $project_source ) {
+					echo '<input id="' . $game_id . '-title-input" type="text" class="tw-input tw-input-xs tw-input-bordered tw-w-full tw-hidden" value="' . esc_attr( $game_title ) . '" />';
+					echo '<button type="button" class="tw-p-1 tw-text-base-content/20 hover:tw-text-primary tw-opacity-0 group-hover/title:tw-opacity-100 tw-transition-all vrodos-rename-project-btn" data-game-id="' . $game_id . '" title="Rename project">';
+					echo '<i data-lucide="pencil" class="tw-w-3 tw-h-3"></i>';
+					echo '</button>';
+					echo '<div id="' . $game_id . '-rename-actions" class="tw-flex tw-items-center tw-gap-1 tw-hidden">';
+					echo '<button type="button" class="tw-p-1 tw-text-success hover:tw-bg-success/10 tw-rounded vrodos-save-rename-btn" data-game-id="' . $game_id . '" title="Save">';
+					echo '<i data-lucide="check" class="tw-w-3 tw-h-3"></i>';
+					echo '</button>';
+					echo '<button type="button" class="tw-p-1 tw-text-error hover:tw-bg-error/10 tw-rounded vrodos-cancel-rename-btn" data-game-id="' . $game_id . '" title="Cancel">';
+					echo '<i data-lucide="x" class="tw-w-3 tw-h-3"></i>';
+					echo '</button>';
+					echo '</div>';
+				}
 				echo '</div>';
 				echo '<div class="tw-flex tw-items-center tw-gap-2 tw-flex-wrap">';
-				echo '<span class="tw-text-[9px] tw-font-bold tw-text-primary tw-bg-primary/10 tw-px-1.5 tw-py-0.5 tw-rounded tw-uppercase">' . esc_html( $game_type_obj->string ) . '</span>';
+				$source_label = 'immerse' === $project_source ? 'IMMERSE' : $game_type_obj->string;
+				echo '<span class="tw-text-[9px] tw-font-bold tw-text-primary tw-bg-primary/10 tw-px-1.5 tw-py-0.5 tw-rounded tw-uppercase">' . esc_html( $source_label ) . '</span>';
+				if ( 'immerse' === $project_source ) {
+					$use_case_name = (string) get_post_meta( $game_id, '_immerse_use_case_name', true );
+					if ( '' !== $use_case_name ) {
+						echo '<span class="tw-text-[9px] tw-font-bold tw-text-base-content/40 tw-bg-base-200 tw-px-1.5 tw-py-0.5 tw-rounded">' . esc_html( $use_case_name ) . '</span>';
+					}
+				}
 				echo '<span class="tw-text-[10px] tw-text-base-content/40">' . esc_html( $game_date ) . '</span>';
 				echo '<span class="tw-text-[9px] tw-font-medium tw-text-base-content/30 tw-flex tw-items-center tw-gap-0.5" title="Scenes"><i data-lucide="layers" class="tw-w-3 tw-h-3"></i>' . $scene_count . '</span>';
 				echo '<span class="tw-text-[9px] tw-font-medium tw-text-base-content/30 tw-flex tw-items-center tw-gap-0.5" title="Assets"><i data-lucide="box" class="tw-w-3 tw-h-3"></i>' . $asset_count . '</span>';
@@ -308,9 +344,11 @@ class VRodos_Project_AJAX {
 				echo '<div class="tw-flex tw-items-center tw-gap-2 tw-flex-shrink-0">';
 				echo '<a href="' . $loadProjectAssets . '" class="tw-btn tw-btn-outline tw-btn-sm tw-text-[10px] tw-font-bold tw-rounded-md" title="Manage assets">ASSETS</a>';
 				echo '<a id="3d-editor-bt-' . $game_id . '" href="' . $loadMainSceneLink . '" class="tw-btn tw-btn-primary tw-btn-sm tw-text-white tw-px-4 tw-rounded-md tw-text-[10px] tw-font-bold" title="Open 3D Editor">3D EDITOR</a>';
-				echo '<button type="button" class="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-text-base-content/20 hover:tw-text-error hover:tw-bg-error/10 tw-rounded tw-transition-all vrodos-delete-project-btn" data-game-id="' . $game_id . '" data-game-title="' . esc_attr( $game_title ) . '" title="Delete project">';
-				echo '<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>';
-				echo '</button>';
+				if ( 'immerse' !== $project_source ) {
+					echo '<button type="button" class="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-text-base-content/20 hover:tw-text-error hover:tw-bg-error/10 tw-rounded tw-transition-all vrodos-delete-project-btn" data-game-id="' . $game_id . '" data-game-title="' . esc_attr( $game_title ) . '" title="Delete project">';
+					echo '<i data-lucide="trash-2" class="tw-w-4 tw-h-4"></i>';
+					echo '</button>';
+				}
 				echo '</div>';
 
 				echo '</div>'; // content
@@ -328,8 +366,10 @@ class VRodos_Project_AJAX {
 			echo '<div class="tw-w-20 tw-h-20 tw-rounded-full tw-bg-base-200 tw-flex tw-items-center tw-justify-center tw-mb-4">';
 			echo '<i data-lucide="folder-open" class="tw-w-10 tw-h-10 tw-text-base-content/30"></i>';
 			echo '</div>';
-			echo '<h3 class="tw-text-lg tw-font-semibold tw-text-base-content/70 tw-mb-1">No projects yet</h3>';
-			echo '<p class="tw-text-sm tw-text-base-content/40">Create your first project to get started</p>';
+			$empty_title = 'immerse' === $project_source ? 'No IMMERSE projects imported yet' : 'No VRodos projects yet';
+			$empty_text  = 'immerse' === $project_source ? 'Imported lessons will appear here.' : 'Create your first project to get started.';
+			echo '<h3 class="tw-text-lg tw-font-semibold tw-text-base-content/70 tw-mb-1">' . esc_html( $empty_title ) . '</h3>';
+			echo '<p class="tw-text-sm tw-text-base-content/40">' . esc_html( $empty_text ) . '</p>';
 			echo '</div>';
 		}
 

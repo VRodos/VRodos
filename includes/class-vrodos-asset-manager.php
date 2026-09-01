@@ -330,6 +330,8 @@ class VRodos_Asset_Manager {
 		$three_vendor_dir         = (string) $runtime_config['three_vendor_dir'];
 		$three_vendor_bundle      = (string) $runtime_config['three_vendor_bundle'];
 		$browser_library_versions = (array) $runtime_config['browser_library_versions'];
+		$create_project_version   = (string) filemtime( VRodos_Path_Manager::asset_path( 'js/editor/ajax/create_project.js' ) );
+		$project_manager_version  = (string) filemtime( VRodos_Path_Manager::asset_path( 'js/editor/vrodos_project_manager.js' ) );
 
 		$scripts = [
       // Foundation
@@ -355,7 +357,7 @@ class VRodos_Asset_Manager {
       ['ajax-script_fetchasset', VRodos_Path_Manager::editor_ajax_js_url( 'fetch_asset.js' ), ['vrodos_namespace']],
       ['ajax-script_delete_game', VRodos_Path_Manager::editor_ajax_js_url( 'delete_game_scene_asset.js' ), ['vrodos_namespace']],
       ['ajax-script_deleteasset', VRodos_Path_Manager::editor_ajax_js_url( 'delete_asset.js' ), ['vrodos_namespace']],
-      ['ajax-script_create_game', VRodos_Path_Manager::editor_ajax_js_url( 'create_project.js' ), ['vrodos_namespace']],
+      ['ajax-script_create_game', VRodos_Path_Manager::editor_ajax_js_url( 'create_project.js' ), ['vrodos_namespace'], $create_project_version],
       ['ajax-script_rename_game', VRodos_Path_Manager::editor_ajax_js_url( 'rename_project.js' ), ['vrodos_namespace']],
       // 3D Editor & Viewer Scripts
       ['vrodos_AssetViewer_3D_kernel', VRodos_Path_Manager::editor_js_url( 'vrodos_AssetViewer_3D_kernel.js' ), ['vrodos_namespace', 'vrodos_loader_decoder_config']],
@@ -411,7 +413,7 @@ class VRodos_Asset_Manager {
       ['vrodos_CompileUI_PostFX', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_ui_postfx.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared']],
       ['vrodos_CompileUI_Atmosphere', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_ui_atmosphere.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared']],
       ['vrodos_compile_dialogue', VRodos_Path_Manager::editor_js_url( 'ui/compile/vrodos_compile_dialogue.js' ), ['vrodos_namespace', 'vrodos_CompileUI_Shared', 'vrodos_CompileUI_General', 'vrodos_CompileUI_PostFX', 'vrodos_CompileUI_Atmosphere']],
-      ['vrodos_project_manager', VRodos_Path_Manager::editor_js_url( 'vrodos_project_manager.js' ), ['vrodos_namespace', 'ajax-script_create_game', 'ajax-script_rename_game']],
+      ['vrodos_project_manager', VRodos_Path_Manager::editor_js_url( 'vrodos_project_manager.js' ), ['vrodos_namespace', 'ajax-script_create_game', 'ajax-script_rename_game'], $project_manager_version],
       ['vrodos_dashboard_assets', VRodos_Path_Manager::editor_js_url( 'vrodos_dashboard_assets.js' ), ['lucide-icons']],
       ['vrodos_EditorInitializer', VRodos_Path_Manager::editor_js_url( 'core/vrodos_editor_initializer.js' ), ['vrodos_namespace', 'vrodos_editor_core_utils', 'vrodos_ui_helpers', 'vrodos_ScenePersistence', 'vrodos_editor_diagnostics', 'vrodos_editor_services', 'vrodos_editor_render_loop', 'vrodos_scripts', 'vrodos_scene_settings_sync', 'ajax-script_savescene', 'vrodos_loader_scene_lifecycle', 'vrodos_3d_editor_environmentals', 'vrodos_addRemoveOne', 'vrodos_3d_editor_buttons_drags', 'vrodos_scene_editor_ui_controller']],
       // Active Three vendor bundle paired with the pinned A-Frame runtime.
