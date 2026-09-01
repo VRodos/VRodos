@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once plugin_dir_path( __FILE__ ) . '../vrodos-scene-model.php';
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-compiler-manager.php';
+require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-scene-standalone-exporter.php';
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-url-normalizer.php';
 
 class VRodos_Scene_AJAX {
@@ -16,6 +17,7 @@ class VRodos_Scene_AJAX {
 		add_action( 'wp_ajax_vrodos_reorder_scenes_action', [ $this, 'reorder_scenes_callback' ] );
 		add_action( 'wp_ajax_image_upload_action', [ $this, 'image_upload_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_compile_action', [ $this, 'compile_action_callback' ] );
+		add_action( 'wp_ajax_vrodos_export_scene_zip_action', [ $this, 'export_scene_zip_action_callback' ] );
 	}
 
 	/**
@@ -160,16 +162,16 @@ class VRodos_Scene_AJAX {
 
 		// Ensure we have a unique filename
 		$hashed_filename = $project_id . '_' . time() . '_' . $scene_id . '_bg.' . $ext;
-		
+
 		// Decode base64 image
 		$decoded_image = base64_decode( substr( (string) $image_data, strpos( (string) $image_data, ',' ) + 1 ) );
-		
+
 		// Upload the background image file using WordPress standard bits
-		$_REQUEST['post_id'] = $scene_id; 
+		$_REQUEST['post_id'] = $scene_id;
 		add_filter( 'upload_dir', [ 'VRodos_Upload_Manager', 'upload_dir_for_scenes_or_assets' ] );
-		
+
 		$file_return = wp_upload_bits( $hashed_filename, null, $decoded_image );
-		
+
 		remove_filter( 'upload_dir', [ 'VRodos_Upload_Manager', 'upload_dir_for_scenes_or_assets' ] );
 		unset( $_REQUEST['post_id'] );
 
@@ -179,7 +181,7 @@ class VRodos_Scene_AJAX {
 
 		// Insert the attachment into the database
 		$attachment_id = VRodos_Upload_Manager::insert_attachment_post( $file_return, $scene_id );
-		
+
 		if ( ! $attachment_id ) {
 			wp_send_json_error( 'Failed to create database attachment record.', 500 );
 		}
@@ -269,5 +271,68 @@ class VRodos_Scene_AJAX {
 		}
 
 		wp_send_json( $result->to_public_payload() );
+	}
+
+	/**
+	 * Streams a static ZIP package for the selected compiled scene.
+	 */
+	public function export_scene_zip_action_callback(): void {
+		if ( ! check_ajax_referer( 'vrodos_export_scene_zip', 'nonce', false ) ) {
+			wp_send_json_error( [ 'code' => 'invalid_nonce', 'message' => 'Export security check failed.' ], 403 );
+		}
+
+		$scene_id   = absint( $_POST['vrodos_scene'] ?? 0 );
+		$project_id = absint( $_POST['projectId'] ?? 0 );
+		if ( $scene_id <= 0 || $project_id <= 0 ) {
+			wp_send_json_error( [ 'code' => 'invalid_ids', 'message' => 'Invalid project or scene.' ], 400 );
+		}
+
+		$project = get_post( $project_id );
+		$scene   = get_post( $scene_id );
+		if ( ! $project instanceof WP_Post || 'vrodos_game' !== $project->post_type || ! $scene instanceof WP_Post || 'vrodos_scene' !== $scene->post_type ) {
+			wp_send_json_error( [ 'code' => 'invalid_posts', 'message' => 'Invalid project or scene.' ], 400 );
+		}
+		if ( ! current_user_can( 'edit_post', $project_id ) || ! current_user_can( 'edit_post', $scene_id ) ) {
+			wp_send_json_error( [ 'code' => 'forbidden', 'message' => 'You are not allowed to export this scene.' ], 403 );
+		}
+
+		$project_term = get_term_by( 'slug', (string) $project->post_name, 'vrodos_scene_pgame' );
+		if ( ! $project_term || is_wp_error( $project_term ) ) {
+			wp_send_json_error( [ 'code' => 'missing_project_term', 'message' => 'Project has no scene taxonomy term.' ], 400 );
+		}
+		$scene_ids = array_map( 'absint', VRodos_Core_Manager::vrodos_get_all_sceneids_of_game( (int) $project_term->term_id ) );
+		if ( ! in_array( $scene_id, $scene_ids, true ) ) {
+			wp_send_json_error( [ 'code' => 'scene_project_mismatch', 'message' => 'Selected scene does not belong to this project.' ], 400 );
+		}
+
+		$package = ( new VRodos_Scene_Standalone_Exporter() )->build( $scene_id );
+		if ( is_wp_error( $package ) ) {
+			$data   = $package->get_error_data();
+			$status = is_array( $data ) ? absint( $data['status'] ?? 500 ) : 500;
+			wp_send_json_error(
+				[ 'code' => $package->get_error_code(), 'message' => $package->get_error_message() ],
+				$status > 0 ? $status : 500
+			);
+		}
+
+		$zip_path = $package['path'];
+		register_shutdown_function(
+			static function () use ( $zip_path ): void {
+				if ( is_file( $zip_path ) ) {
+					wp_delete_file( $zip_path );
+				}
+			}
+		);
+
+		while ( ob_get_level() > 0 ) {
+			ob_end_clean();
+		}
+		nocache_headers();
+		header( 'Content-Type: application/zip' );
+		header( 'Content-Disposition: attachment; filename="' . sanitize_file_name( $package['filename'] ) . '"' );
+		header( 'Content-Length: ' . (string) filesize( $zip_path ) );
+		header( 'X-Content-Type-Options: nosniff' );
+		readfile( $zip_path );
+		exit;
 	}
 }

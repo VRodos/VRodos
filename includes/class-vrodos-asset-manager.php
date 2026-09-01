@@ -37,7 +37,7 @@ class VRodos_Asset_Manager {
 			wp_enqueue_script( $handle );
 		}
 	}
-	
+
 	public function enqueue_dashboard_scripts( $hook ) {
 		if ( 'toplevel_page_vrodos-plugin' !== $hook ) {
 			return;
@@ -54,7 +54,7 @@ class VRodos_Asset_Manager {
 				'nonce'   => wp_create_nonce( 'vrodos_dashboard_asset_actions' ),
 			]
 		);
-		
+
 		// Initialize Lucide icons
 		wp_add_inline_script( 'lucide-icons', 'window.addEventListener("DOMContentLoaded", function() { lucide.createIcons(); });' );
 	}
@@ -242,7 +242,8 @@ class VRodos_Asset_Manager {
                 'slug'      => $template_data['projectSlug'],
                 'sceneId'   => $template_data['current_scene_id'],
 				'isAdmin'   => $template_data['isAdmin'],
-				'compileNonce' => wp_create_nonce( 'vrodos_compile_scene' )
+				'compileNonce' => wp_create_nonce( 'vrodos_compile_scene' ),
+				'exportNonce'  => wp_create_nonce( 'vrodos_export_scene_zip' ),
             ]
         );
 
@@ -265,6 +266,7 @@ class VRodos_Asset_Manager {
 			// Phase 2 localization
 			'upload_image_nonce'  => wp_create_nonce( 'vrodos_scene_upload_image_nonce' ),
 			'compile_nonce'       => wp_create_nonce( 'vrodos_compile_scene' ),
+			'export_nonce'        => wp_create_nonce( 'vrodos_export_scene_zip' ),
 			'isPaused'            => false,
 			'isAnyLight'          => true,
 			'mapActions'          => new stdClass(),

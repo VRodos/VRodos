@@ -57,6 +57,10 @@
 						</div>
 					</div>
 					<div class="tw-flex tw-items-center tw-gap-2">
+						<button id="downloadStandaloneZip" type="button" class="tw-btn tw-btn-outline tw-btn-sm tw-text-emerald-700" title="Download a standalone static ZIP">
+							<i data-lucide="package" class="tw-w-4 tw-h-4"></i>
+							Export ZIP
+						</button>
 						<button id="buttonCopyWebLink" type="button" class="tw-btn tw-btn-ghost tw-btn-sm tw-text-emerald-700" title="Copy compiled scene URL">
 							<i data-lucide="copy" class="tw-w-4 tw-h-4"></i>
 						</button>
