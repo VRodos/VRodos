@@ -265,6 +265,9 @@ class VRodos_Asset_Manager {
 			'siteurl'             => site_url(),
 			// Phase 2 localization
 			'upload_image_nonce'  => wp_create_nonce( 'vrodos_scene_upload_image_nonce' ),
+			'scene_mutation_nonce' => wp_create_nonce( 'vrodos_scene_mutation' ),
+			'asset_mutation_nonce' => wp_create_nonce( 'post_nonce' ),
+			'asset_mutation_nonce' => wp_create_nonce( 'post_nonce' ),
 			'compile_nonce'       => wp_create_nonce( 'vrodos_compile_scene' ),
 			'export_nonce'        => wp_create_nonce( 'vrodos_export_scene_zip' ),
 			'isPaused'            => false,

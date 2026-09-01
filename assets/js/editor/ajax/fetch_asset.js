@@ -5,6 +5,7 @@ VRODOS.api.fetchAssetAndSetWidget = function(asset_id, selectedObject) {
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			'action': 'vrodos_fetch_assetmeta_action',
+			nonce: window.vrodos_data.scene_mutation_nonce,
 			asset_id
 		})
 	})

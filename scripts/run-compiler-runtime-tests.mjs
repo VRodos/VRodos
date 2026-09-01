@@ -74,7 +74,8 @@ if (!php) {
     "scripts/test-compiler-runtime-script-planner.php",
     "scripts/test-compiler-runtime-dom-transformer.php",
     "scripts/test-compiler-plan-foundations.php",
-    "scripts/test-legacy-metadata-migration.php"
+	"scripts/test-legacy-metadata-migration.php",
+	"scripts/test-storage-business-rules.php"
 ].forEach((testFile) => {
     const result = spawnSync(php, [resolve(root, testFile)], {
         cwd: root,
@@ -93,4 +94,13 @@ const securityResult = spawnSync(process.execPath, [resolve(root, "scripts/test-
 });
 if (securityResult.status !== 0) {
     process.exit(securityResult.status || 1);
+}
+
+const storageSecurityResult = spawnSync(process.execPath, [resolve(root, "scripts/test-storage-security-contract.mjs")], {
+	cwd: root,
+	stdio: "inherit",
+	shell: false
+});
+if (storageSecurityResult.status !== 0) {
+	process.exit(storageSecurityResult.status || 1);
 }

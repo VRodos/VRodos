@@ -30,7 +30,7 @@ VRodos/
   assets/js/runtime/master/lib/    Generated runtime bundles
   assets/css/                      Source and generated CSS
   assets/vendor/                   Vendored browser bundles such as Three r185
-  runtime/build/                   Generated compiled HTML output only
+  runtime/build/                   Legacy compiled HTML migration input only
   services/vrodos-network-runtime/ Node/WebRTC collaborative runtime server
   scripts/                         Build and maintenance scripts
 ```
@@ -40,7 +40,8 @@ Architectural rules:
 - `assets/` is the single public/static asset root.
 - `includes/` is PHP-only.
 - `templates/runtime/aframe/` contains source HTML prototypes, not generated output.
-- `runtime/build/` is generated output and should not be treated as source.
+- New compiled clients and media publish under `wp-content/uploads/vrodos/published/projects/{project_id}/`; `runtime/build/` is legacy migration input only.
+- Mutable authoring files use the ID-owned private layout documented in `documentation/storage-architecture.md`.
 - Prefer `VRodos_Path_Manager` over hardcoded plugin paths/URLs.
 - Keep compatibility globals available during migration: `vrodos_data.pluginPath`, `window.vrodos_three_vendor_base`, `window.vrodos_three_decoder_path`, and `vrodos_data.paths.*`.
 
@@ -219,10 +220,10 @@ Performance tooling:
 - Use `--spector` only after rAF/trace sampling for one-frame WebGL anatomy.
 - Use profiler `--resource-override URL_OR_PATH=FILE` for compiled-scene derivative trials without editing uploads or generated HTML. Treat it as a validation tool, not production substitution.
 - Use `scripts/audit-master-client-assets.mjs` to correlate compile diagnostics with local GLB metadata.
-- Use `scripts/prototype-optimize-master-client-assets.mjs` for derivative prototypes and admin/backend single-source optimization. In audit mode it writes reports/GLBs under the requested output directory. In admin single-source mode, `VRodos_Asset_Optimization_Manager` writes derivatives under `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/`. Settings > Assets is a GLB-referenced diagnostics/reporting view and must not list non-GLB media as optimization work.
+- Use `scripts/prototype-optimize-master-client-assets.mjs` for derivative prototypes and admin/backend single-source optimization. In audit mode it writes reports/GLBs under the requested output directory. In admin single-source mode, `VRodos_Asset_Optimization_Manager` writes derivatives under the private asset profile directory. Settings > Assets is a GLB-referenced diagnostics/reporting view and must not list non-GLB media as optimization work.
 - `VRodos_Asset_Optimization_Manager` stores read-only GLB benefit analysis in `_vrodos_asset3d_glb_analysis` when `vrodos_asset3d_glb` changes. Analysis should remain cheap and non-generative; derivative files are created only by explicit admin actions.
 - The top-level VRodos dashboard has an `Actionable Assets` tab for top GLB optimization items. Dashboard row actions are the primary single-asset operational surface for refreshing analysis and generating safe Draco derivatives, but must not auto-enable compile substitution. Analysis refresh and Compile Use toggles are AJAX row updates; safe Draco generation remains a signed admin action until a queued/progress flow exists. The dashboard Compile Use toggle is the explicit per-asset control for enabling/disabling derivative substitution and must validate a ready derivative before enabling.
-- Cached derivative files are owned by the asset post. Permanent `vrodos_asset3d` deletion must remove `wp-content/uploads/vrodos-optimized-assets/asset-{asset_id}/` and optimization metadata; project deletion should get this by deleting associated asset posts.
+- Cached derivative files and their attachment records are owned by the asset post. Permanent `vrodos_asset3d` deletion must remove its private derivative profiles and optimization metadata; project deletion should get this by deleting associated asset posts.
 - `npm run build:vendor` copies Draco, Basis/KTX2, and Meshopt decoder assets into `assets/vendor/three-r185/` and records them in `assets/runtime-version-manifest.json`.
 - Compiled scenes receive root `gltf-model` decoder paths from `VRodos_Compiler_Manager`; regenerate compiled HTML before testing compressed derivatives.
 - Use `meshopt_decoder.js` for A-Frame `meshoptDecoderPath`. A-Frame loads this path as a classic script, so do not point compiled scenes at the ESM `meshopt_decoder.module.js`; the vendor build no longer publishes a `.module.js` compatibility copy for older generated clients.
@@ -259,7 +260,7 @@ The local runtime server is typically used on port `5832`.
 
 ## Cleanup Rules
 
-- Do not treat `runtime/build/` HTML as source.
+- Do not treat legacy `runtime/build/` HTML or published upload artifacts as source.
 - Do not reintroduce `js_libs/` or the mirrored `includes/templates/` tree.
 - Do not reintroduce top-level `css/` or `images/`; `assets/css/` and `assets/images/` are canonical.
 - Keep cleanup/removal work separate from behavioral fixes when possible.

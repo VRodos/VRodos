@@ -146,7 +146,8 @@ VRODOS.exporter.SceneExporter = class {
             } else if (key === 'fogtype') {
                 value = (VRODOS.editor.envir.scene.fogCategory === 1) ? 'linear' : (VRODOS.editor.envir.scene.fogCategory === 2 ? 'exponential' : 'none');
             } else if (key === 'backgroundImagePath') {
-                value = VRODOS.editor.envir.scene.img_bcg_path || '0';
+                // The scene attachment ID is canonical. The editor and compiler hydrate its current URL.
+                value = '0';
             } else if (key === 'aframeNavigationMode') {
                 value = ['walk', 'walkable', 'fly'].includes(value)
                     ? value
@@ -324,6 +325,23 @@ VRODOS.exporter.SceneExporter = class {
         }
 
         entryObject.fnPath = o.fnPath ? o.fnPath : '';
+		if (String(entryObject.asset_id || '').trim()) {
+			[
+				'path',
+				'fnPath',
+				'glb_path',
+				'screenshot_path',
+				'audio_path',
+				'video_path',
+				'image_path',
+				'poi_img_path',
+				'poi_image_path',
+				'text_content',
+				'text_content_b64',
+				'text_format',
+				'text_truncated'
+			].forEach((field) => delete entryObject[field]);
+		}
         VRODOS.utils.sceneDecodeExportTextFields(entryObject);
         entryObject.category_slug = typeof VRODOS.utils.normalizeSceneAssetCategory === 'function'
             ? VRODOS.utils.normalizeSceneAssetCategory(entryObject.category_slug || entryObject.category_name || o.category_slug || o.category_name)

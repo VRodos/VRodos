@@ -29,6 +29,8 @@ if ( ! defined( 'VRODOS_PLUGIN_FILE' ) ) {
 $project_scope = 2;
 
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-path-manager.php');
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-storage-manager.php');
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-shared-repository-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-render-runtime-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-text-asset-helper.php');
 add_action( 'admin_notices', [ VRodos_Render_Runtime_Manager::class, 'render_admin_notice' ] );
@@ -83,6 +85,7 @@ require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-default-scene-ma
 // Upload Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-upload-manager.php');
 VRodos_Upload_Manager::register_hooks();
+VRodos_Storage_Manager::register_hooks();
 
 // Asset Import Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-blender-converter.php');
@@ -101,3 +104,8 @@ new VRodos_Settings_Manager();
 // AJAX Handler Class
 require_once(plugin_dir_path(__FILE__) . 'includes/ajax/class-vrodos-ajax-handler.php');
 new VRodos_AJAX_Handler();
+
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+    require_once plugin_dir_path( __FILE__ ) . 'includes/class-vrodos-storage-cli-command.php';
+    WP_CLI::add_command( 'vrodos storage', VRodos_Storage_CLI_Command::class );
+}

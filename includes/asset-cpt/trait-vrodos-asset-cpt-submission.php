@@ -10,6 +10,9 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		if ( ! isset( $_POST['submitted'] ) || ! isset( $_POST['post_nonce_field'] ) || ! wp_verify_nonce( $_POST['post_nonce_field'], 'post_nonce' ) ) {
 			return;
 		}
+		if ( ! VRodos_Storage_Manager::storage_schema_ready() ) {
+			return;
+		}
 
 		// Permission check: must be logged in, and must be asset owner or admin
 		if ( ! is_user_logged_in() ) {
@@ -26,14 +29,17 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 		$submission_buffer_level = self::begin_frontend_submission_buffer();
 
-		$asset_id       = isset( $_GET['vrodos_asset'] ) ? sanitize_text_field( intval( $_GET['vrodos_asset'] ) ) : null;
-		$project_id     = isset( $_GET['vrodos_game'] ) ? sanitize_text_field( intval( $_GET['vrodos_game'] ) ) : null;
+		$asset_id       = isset( $_GET['vrodos_asset'] ) ? absint( $_GET['vrodos_asset'] ) : null;
+		$project_id     = isset( $_GET['vrodos_game'] ) ? absint( $_GET['vrodos_game'] ) : null;
 		$game_post      = get_post( $project_id );
+		if ( ! $game_post instanceof WP_Post || 'vrodos_game' !== $game_post->post_type || ! current_user_can( 'edit_post', $project_id ) ) {
+			return;
+		}
 		$gameSlug       = $game_post ? $game_post->post_name : '';
 		$assetPGame     = self::ensure_asset_project_term( $game_post );
 		$assetPGameID   = $assetPGame ? $assetPGame->term_id : null;
 		$assetPGameSlug = $assetPGame ? $assetPGame->slug : '';
-		$isShared       = ( $assetPGameSlug && str_contains( $assetPGameSlug, 'joker' ) ) ? 'true' : 'false';
+		$is_shared      = in_array( $assetPGameSlug, VRodos_Shared_Repository_Manager::all_slugs(), true );
 
 		$assetTitle   = self::sanitize_asset_title( $_POST['assetTitle'] ?? '' );
 		$assetCatID   = isset( $_POST['term_id'] ) ? intval( $_POST['term_id'] ) : 0; // Legacy hidden input.
@@ -92,7 +98,6 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$asset_updatedConf = 0;
 		$has_new_model_upload = ( isset( $_FILES['multipleFilesInput'] ) && isset( $_FILES['multipleFilesInput']['error'][0] ) && (int) $_FILES['multipleFilesInput']['error'][0] !== UPLOAD_ERR_NO_FILE )
 			|| ( isset( $_POST['glbFileInput'] ) && ! empty( $_POST['glbFileInput'] ) )
-			|| ( isset( $_POST['glbChunkUploadToken'] ) && ! empty( $_POST['glbChunkUploadToken'] ) )
 			|| ( isset( $_POST['assetImportUploadToken'] ) && ! empty( $_POST['assetImportUploadToken'] ) );
 		// NEW Asset: submit info to backend
 
@@ -121,7 +126,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 				}
 			}
 
-			update_post_meta( $asset_id, 'vrodos_asset3d_isJoker', $isShared );
+			update_post_meta( $asset_id, '_vrodos_asset_is_shared', $is_shared ? '1' : '0' );
 
 			// Invalidate all Assets List transients
 			global $wpdb;
@@ -177,18 +182,35 @@ trait VRodos_Asset_CPT_Submission_Controller {
 
 			case 'image':
 				$image_file = $_FILES['imageFlatFileInput'] ?? [];
+				$old_image_value   = get_post_meta( $asset_id, 'vrodos_asset3d_image', true );
+				$old_preview_value = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
+				$old_image_id      = absint( $old_image_value );
+				$old_preview_id    = absint( $old_preview_value );
 				$restore_original_image = ! empty( $_POST['restoreImageOriginalUrl'] );
 				$original_image_url     = self::get_immerse_original_image_url( $asset_id );
 				if ( $restore_original_image && $original_image_url !== '' ) {
-					update_post_meta( $asset_id, 'vrodos_asset3d_image', $original_image_url );
-					update_post_meta( $asset_id, 'vrodos_asset3d_screenimage', $original_image_url );
-					delete_post_thumbnail( $asset_id );
+					$image_updated   = update_post_meta( $asset_id, 'vrodos_asset3d_image', $original_image_url );
+					$preview_updated = update_post_meta( $asset_id, 'vrodos_asset3d_screenimage', $original_image_url );
+					$image_matches   = $image_updated || get_post_meta( $asset_id, 'vrodos_asset3d_image', true ) === $original_image_url;
+					$preview_matches = $preview_updated || get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true ) === $original_image_url;
+					if ( $image_matches && $preview_matches ) {
+						delete_post_thumbnail( $asset_id );
+						foreach ( array_unique( [ $old_image_id, $old_preview_id ] ) as $old_attachment_id ) {
+							VRodos_Storage_Manager::delete_attachment_if_owned_by( $old_attachment_id, 'asset', (int) $asset_id );
+						}
+					} else {
+						update_post_meta( $asset_id, 'vrodos_asset3d_image', $old_image_value );
+						update_post_meta( $asset_id, 'vrodos_asset3d_screenimage', $old_preview_value );
+					}
 				} elseif ( ! empty( $image_file ) && ( $image_file['error'] ?? 4 ) != 4 ) {
 					$attachment_id = VRodos_Upload_Manager::upload_img_vid_aud( $image_file, $asset_id );
 					if ( $attachment_id ) {
-						update_post_meta( $asset_id, 'vrodos_asset3d_image', $attachment_id );
-						update_post_meta( $asset_id, 'vrodos_asset3d_screenimage', $attachment_id );
-						set_post_thumbnail( $asset_id, $attachment_id );
+						VRodos_Storage_Manager::replace_attachment_references(
+							(int) $asset_id,
+							'asset',
+							[ 'vrodos_asset3d_image', 'vrodos_asset3d_screenimage', '_thumbnail_id' ],
+							(int) $attachment_id
+						);
 					}
 				}
 				break;
@@ -237,7 +259,6 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$asset_information = ['post_title'   => $asset_title, 'post_content' => $asset_description, 'post_type'    => 'vrodos_asset3d', 'post_status'  => 'publish', 'tax_input'    => $asset_taxonomies];
 
 		$asset_id = wp_insert_post( $asset_information );
-		update_post_meta( $asset_id, 'vrodos_asset3d_pathData', $game_slug );
 		self::update_asset_meta( $asset_id, $asset_back_3d_color, $asset_trs );
 
 		return $asset_id ?: 0;
@@ -330,9 +351,8 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$assetPGame           = self::ensure_asset_project_term( $game_post );
 		$data['assetPGameID'] = $assetPGame ? $assetPGame->term_id : null;
 
-		// Terminology update: isJoker -> isShared
 		$assetPGameSlug   = $assetPGame ? $assetPGame->slug : '';
-		$data['isShared'] = ( str_contains( $assetPGameSlug, 'joker' ) ) ? 'true' : 'false';
+		$data['isShared'] = in_array( $assetPGameSlug, VRodos_Shared_Repository_Manager::all_slugs(), true );
 
 		$all_game_category     = get_the_terms( $data['project_id'], 'vrodos_game_type' );
 		$data['game_category'] = ( ! is_wp_error( $all_game_category ) && ! empty( $all_game_category ) ) ? $all_game_category[0]->slug : null;

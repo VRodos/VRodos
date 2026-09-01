@@ -9,7 +9,7 @@ This is the single active backlog for compiled desktop inline and fullscreen sce
 - Preserve both supported desktop post-FX engines: Legacy for SSR/TAA/custom SAO and PMNDRS for modern AA/AO, finishing effects, and Takram atmosphere.
 - Preserve the package/manifest-driven A-Frame 1.8.0 master artifact and shared Three r185 runtime. A later A-Frame/Three upgrade is a separate migration.
 - Preserve single-player and networked Master/Simple compile targets, A-Frame Environment for non-Takram scenes, static BVH collision, and explicit per-asset derivative selection.
-- Treat new scenes as freshly compiled into the current pipeline. `runtime/build/` HTML is generated output, not source or a compatibility target.
+- Treat new scenes as freshly compiled into the current project publication. Legacy `runtime/build/` HTML and published upload artifacts are not source or compatibility targets.
 - Keep immersive WebXR and standalone headset policy out of desktop rendering changes unless the headset roadmap explicitly makes them shared work.
 
 ## Active Desktop Acceptance

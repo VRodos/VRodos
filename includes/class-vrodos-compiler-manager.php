@@ -15,6 +15,7 @@ require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
 require_once __DIR__ . '/class-vrodos-compiler-types.php';
 require_once __DIR__ . '/class-vrodos-compiler-plan-resolver.php';
 require_once __DIR__ . '/class-vrodos-compiler-artifact-transaction.php';
+require_once __DIR__ . '/class-vrodos-compiler-resource-publisher.php';
 require_once __DIR__ . '/class-vrodos-compiler-link-publisher.php';
 require_once __DIR__ . '/class-vrodos-compiler-network-runtime-service.php';
 require_once __DIR__ . '/class-vrodos-compiler-target-assembler.php';
@@ -32,6 +33,7 @@ class VRodos_Compiler_Manager {
 	private VRodos_Compiler_Runtime_Script_Planner $runtime_script_planner;
 	private VRodos_Compiler_Plan_Resolver $plan_resolver;
 	private VRodos_Compiler_Artifact_Transaction $artifact_transaction;
+	private VRodos_Compiler_Resource_Publisher $resource_publisher;
 	private VRodos_Compiler_Link_Publisher $link_publisher;
 	private VRodos_Compiler_Network_Runtime_Service $network_runtime_service;
 	private VRodos_Compiler_Target_Assembler $target_assembler;
@@ -56,6 +58,7 @@ class VRodos_Compiler_Manager {
 
 		$this->plan_resolver           = new VRodos_Compiler_Plan_Resolver( $this->scene_settings, $this->runtime_script_planner );
 		$this->artifact_transaction    = new VRodos_Compiler_Artifact_Transaction();
+		$this->resource_publisher      = new VRodos_Compiler_Resource_Publisher( $this->runtime_url_resolver );
 		$this->network_runtime_service = new VRodos_Compiler_Network_Runtime_Service( $this->runtime_url_resolver->local_runtime_base_url() );
 		$this->link_publisher          = new VRodos_Compiler_Link_Publisher(
 			[ $this->runtime_url_resolver, 'runtime_url_for_file' ],
@@ -74,8 +77,10 @@ class VRodos_Compiler_Manager {
 			return new WP_Error( 'vrodos_compile_invalid_context', (string) $context['error'], [ 'status' => 400 ] );
 		}
 
+		$clients_published = false;
 		try {
-			$plan               = $this->plan_resolver->resolve( $request, $context );
+			$plan = $this->plan_resolver->resolve( $request, $context );
+			$this->resource_publisher->prepare_plan( $plan );
 			$this->template_renderer->begin_capture();
 			$render_warnings = [];
 
@@ -88,6 +93,8 @@ class VRodos_Compiler_Manager {
 
 			$artifacts = $this->template_renderer->finish_capture();
 			$this->artifact_transaction->commit( $request->project_id, $artifacts );
+			$clients_published = true;
+			$this->resource_publisher->finalize( $artifacts );
 
 			$warnings = $render_warnings;
 			foreach ( $plan->scenes as $scene_plan ) {
@@ -110,6 +117,9 @@ class VRodos_Compiler_Manager {
 			return $this->link_publisher->publish( $plan, $artifacts, $warnings, $network_ready );
 		} catch ( Throwable $error ) {
 			$this->template_renderer->abort_capture();
+			if ( ! $clients_published ) {
+				$this->resource_publisher->abort();
+			}
 			error_log( '[VRodos] Compile failed for project #' . $request->project_id . ': ' . $error->getMessage() );
 			$status  = 409 === (int) $error->getCode() ? 409 : 500;
 			$message = 409 === $status ? $error->getMessage() : 'Scene compilation failed. Check the server log for details.';

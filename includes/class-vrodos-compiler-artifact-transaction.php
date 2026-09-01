@@ -12,11 +12,11 @@ require_once __DIR__ . '/class-vrodos-compiler-types.php';
 final class VRodos_Compiler_Artifact_Transaction {
 	private const INVENTORY_SCHEMA_VERSION = 1;
 
-	private string $build_dir;
+	private ?string $build_dir;
 	private $before_publish;
 
 	public function __construct( ?string $build_dir = null, ?callable $before_publish = null ) {
-		$this->build_dir      = $build_dir ?: VRodos_Path_Manager::runtime_build_path();
+		$this->build_dir      = $build_dir;
 		$this->before_publish = $before_publish;
 	}
 
@@ -24,6 +24,10 @@ final class VRodos_Compiler_Artifact_Transaction {
 	public function commit( int $project_id, array $artifacts ): void {
 		if ( empty( $artifacts ) ) {
 			throw new RuntimeException( '[VRodos] Compiler produced no artifacts.' );
+		}
+		if ( null === $this->build_dir ) {
+			$this->commit_project_publication( $project_id, $artifacts );
+			return;
 		}
 		if ( ! is_dir( $this->build_dir ) && ! wp_mkdir_p( $this->build_dir ) ) {
 			throw new RuntimeException( '[VRodos] Compiler output directory could not be created: ' . $this->build_dir );
@@ -48,6 +52,93 @@ final class VRodos_Compiler_Artifact_Transaction {
 		try {
 			$this->commit_locked( $project_id, $artifacts );
 		} finally {
+			flock( $lock, LOCK_UN );
+			fclose( $lock );
+		}
+	}
+
+	/** @param VRodos_Compile_Artifact[] $artifacts */
+	private function commit_project_publication( int $project_id, array $artifacts ): void {
+		$build_dir = VRodos_Storage_Manager::published_project_directory( $project_id, 'clients' );
+		$lock_dir  = VRodos_Storage_Manager::temporary_directory( 'compiler-locks', 'shared' );
+		$stage_dir = VRodos_Storage_Manager::temporary_directory( 'compile', wp_generate_uuid4() );
+		if ( is_wp_error( $build_dir ) || is_wp_error( $lock_dir ) || is_wp_error( $stage_dir ) ) {
+			$error = is_wp_error( $build_dir ) ? $build_dir : ( is_wp_error( $lock_dir ) ? $lock_dir : $stage_dir );
+			throw new RuntimeException( $error->get_error_message() );
+		}
+		$lock = fopen( $lock_dir . 'project-' . $project_id . '.lock', 'c+' );
+		if ( false === $lock || ! flock( $lock, LOCK_EX | LOCK_NB ) ) {
+			if ( is_resource( $lock ) ) {
+				fclose( $lock );
+			}
+			throw new RuntimeException( '[VRodos] This project is already being compiled.', 409 );
+		}
+
+		$token     = preg_replace( '/[^a-zA-Z0-9-]/', '', wp_generate_uuid4() );
+		$prepared  = [];
+		$backups   = [];
+		$committed = [];
+		try {
+			$seen = [];
+			foreach ( $artifacts as $artifact ) {
+				if ( ! $artifact instanceof VRodos_Compile_Artifact || basename( $artifact->filename ) !== $artifact->filename || isset( $seen[ $artifact->filename ] ) ) {
+					throw new InvalidArgumentException( '[VRodos] Invalid or duplicate compile artifact.' );
+				}
+				$seen[ $artifact->filename ] = true;
+				$staged = $stage_dir . $artifact->filename;
+				if ( false === file_put_contents( $staged, $artifact->content, LOCK_EX ) ) {
+					throw new RuntimeException( '[VRodos] Compiler staging write failed.' );
+				}
+				$partial = $build_dir . $artifact->filename . '.' . $token . '.partial';
+				if ( ! @copy( $staged, $partial ) || hash_file( 'sha256', $staged ) !== hash_file( 'sha256', $partial ) ) {
+					throw new RuntimeException( '[VRodos] Compiler publication copy could not be verified.' );
+				}
+				$prepared[ $artifact->filename ] = $partial;
+			}
+
+			$previous = get_post_meta( $project_id, '_vrodos_published_inventory', true );
+			$previous_clients = is_array( $previous ) && is_array( $previous['clients'] ?? null ) ? $previous['clients'] : [];
+			foreach ( array_unique( array_merge( $previous_clients, array_keys( $prepared ) ) ) as $filename ) {
+				$filename = basename( (string) $filename );
+				$final    = $build_dir . $filename;
+				if ( is_file( $final ) ) {
+					$backup = $final . '.' . $token . '.previous';
+					if ( ! @rename( $final, $backup ) ) {
+						throw new RuntimeException( '[VRodos] Compiler could not back up an existing client.' );
+					}
+					$backups[ $final ] = $backup;
+				}
+			}
+			foreach ( $prepared as $filename => $partial ) {
+				$final = $build_dir . $filename;
+				if ( is_callable( $this->before_publish ) ) {
+					call_user_func( $this->before_publish, $filename, count( $committed ) );
+				}
+				if ( ! @rename( $partial, $final ) ) {
+					throw new RuntimeException( '[VRodos] Compiler could not atomically publish ' . $filename . '.' );
+				}
+				$committed[] = $final;
+			}
+			foreach ( $backups as $backup ) {
+				wp_delete_file( $backup );
+			}
+		} catch ( Throwable $error ) {
+			foreach ( $committed as $final ) {
+				wp_delete_file( $final );
+			}
+			foreach ( $backups as $final => $backup ) {
+				if ( is_file( $backup ) ) {
+					@rename( $backup, $final );
+				}
+			}
+			throw $error;
+		} finally {
+			foreach ( $prepared as $partial ) {
+				if ( is_file( $partial ) ) {
+					wp_delete_file( $partial );
+				}
+			}
+			$this->remove_staging_directory( untrailingslashit( $stage_dir ) );
 			flock( $lock, LOCK_UN );
 			fclose( $lock );
 		}

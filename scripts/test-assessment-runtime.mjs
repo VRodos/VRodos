@@ -434,7 +434,7 @@ async function runSessionRuntimeHarness() {
     const sessionWindow = {
         console,
         location: {
-            href: "http://localhost:10005/wp-content/plugins/VRodos/runtime/build/Master_Client_11.html",
+            href: "http://localhost:10005/wp-content/uploads/vrodos/published/projects/11/clients/Master_Client_11.html",
             search: ""
         },
         navigator: { userAgent: "assessment-session-test" },

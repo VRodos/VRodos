@@ -8,7 +8,7 @@ class VRodos_Path_Manager {
 	public const PAGE_TEMPLATES_DIR   = 'templates/pages/';
 	public const LEGACY_PAGE_TEMPLATES_DIR = 'templates/';
 	public const RUNTIME_TEMPLATES_DIR = 'templates/runtime/aframe/';
-	public const RUNTIME_BUILD_DIR    = 'runtime/build/';
+	public const LEGACY_RUNTIME_BUILD_DIR = 'runtime/build/';
 	public const SERVICES_DIR         = 'services/';
 
 	public const ASSETS_DIR             = 'assets/';
@@ -117,12 +117,8 @@ class VRodos_Path_Manager {
 		return $values;
 	}
 
-	public static function runtime_build_path( string $relative = '' ): string {
-		return self::plugin_path( self::RUNTIME_BUILD_DIR . $relative );
-	}
-
-	public static function runtime_build_url( string $relative = '' ): string {
-		return self::plugin_url( self::RUNTIME_BUILD_DIR . $relative );
+	public static function legacy_runtime_build_path( string $relative = '' ): string {
+		return self::plugin_path( self::LEGACY_RUNTIME_BUILD_DIR . $relative );
 	}
 
 	public static function networked_aframe_server_path(): string {

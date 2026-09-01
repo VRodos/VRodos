@@ -97,6 +97,7 @@ VRODOS.api.saveScene = function() {
 
 	const postdata = new URLSearchParams({
 		'action': 'vrodos_save_scene_async_action',
+		'nonce': window.vrodos_data.scene_mutation_nonce,
 		'scene_id': VRODOS.config.sceneId,
 		'scene_json': document.getElementById( "vrodos_scene_json_input" ).value,
 		'scene_title': document.getElementById( "sceneTitleInput" ).value,

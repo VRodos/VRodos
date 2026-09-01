@@ -147,10 +147,11 @@ class VRodos_Pages_Manager {
 	public static function prepare_assets_list_page_data() {
 		$perma_structure   = (bool) get_option( 'permalink_structure' );
 		$parameter_pass    = $perma_structure ? '?vrodos_game=' : '&vrodos_game=';
-		$shared_project_id = get_page_by_path( 'archaeology-joker', OBJECT, 'vrodos_game' )->ID;
+		$shared_project = get_page_by_path( VRodos_Shared_Repository_Manager::slug_for_taxonomy( 'archaeology_games' ), OBJECT, 'vrodos_game' );
+		$shared_project_id = $shared_project instanceof WP_Post ? (int) $shared_project->ID : 0;
 
 		$shared_project_post = get_post( $shared_project_id );
-		$shared_project_slug = $shared_project_post->post_name;
+		$shared_project_slug = $shared_project_post instanceof WP_Post ? $shared_project_post->post_name : '';
 
 		$isUserloggedIn = is_user_logged_in();
 		$isUserAdmin    = $isUserloggedIn && current_user_can( 'administrator' );
@@ -207,6 +208,6 @@ class VRodos_Pages_Manager {
 			$helpMessage = 'Login to manage Shared Assets or to create a new Project for your private assets.';
 		}
 
-		return ['assets'                       => $assets, 'is_user_logged_in'            => $isUserloggedIn, 'is_user_admin'                => $isUserAdmin, 'user_id'                      => $user_id, 'link_to_add'                  => $link_to_add, 'link_to_edit'                 => $link_to_edit, 'go_back_to_all_projects_link' => $goBackTo_AllProjects_link, 'help_message'                 => $helpMessage, 'joker_project_slug'           => $shared_project_slug, 'single_project_asset_list'    => $single_project_asset_list, 'current_game_project_post'    => $current_game_project_post, 'has_immerse_assets'          => $has_immerse_assets];
+		return ['assets'                       => $assets, 'is_user_logged_in'            => $isUserloggedIn, 'is_user_admin'                => $isUserAdmin, 'user_id'                      => $user_id, 'link_to_add'                  => $link_to_add, 'link_to_edit'                 => $link_to_edit, 'go_back_to_all_projects_link' => $goBackTo_AllProjects_link, 'help_message'                 => $helpMessage, 'shared_project_slug'          => $shared_project_slug, 'single_project_asset_list'    => $single_project_asset_list, 'current_game_project_post'    => $current_game_project_post, 'has_immerse_assets'          => $has_immerse_assets];
 	}
 }

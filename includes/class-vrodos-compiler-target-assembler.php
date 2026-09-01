@@ -158,7 +158,7 @@ final class VRodos_Compiler_Target_Assembler {
 		$content  = str_replace( 'project_sceneId', $project_title . ' - ' . $scene_title, $content );
 		$content  = $this->runtime_assets->replace_placeholders( $content );
 		$content  = str_replace( 'VRODOS_PLUGIN_URL_PLACEHOLDER', esc_url( $this->plugin_path_url ), $content );
-		$this->template_renderer->write_runtime_build( $target->filename, $content );
+		$this->template_renderer->write_runtime_artifact( $target->filename, $content );
 	}
 
 	private function create_master(
@@ -177,8 +177,8 @@ final class VRodos_Compiler_Target_Assembler {
 		$lean_headset    = $this->is_single_player( $runtime_mode ) && 'headset' === $runtime_profile;
 		$network_scripts = $this->is_networked( $runtime_mode )
 			? '<script src="/socket.io/socket.io.js"></script>' . "\n    "
-				. '<script src="../easyrtc/easyrtc.js"></script>' . "\n    "
-				. '<script src="../dist/networked-aframe.js"></script>'
+				. '<script src="/easyrtc/easyrtc.js"></script>' . "\n    "
+				. '<script src="/dist/networked-aframe.js"></script>'
 			: '';
 		$extras_script = $lean_headset ? '' : '<script src="' . esc_url( $this->plugin_path_url . 'assets/vendor/aframe-extras/aframe-extras.min.js' ) . '"></script>';
 		$environment_script = ! $lean_headset || $this->target_renderer->uses_legacy_environment_background( $settings )

@@ -23,7 +23,7 @@ class VRodos_Compiler_Runtime_Assets {
 	}
 
 	public function runtime_asset_url( string $relative ): string {
-		return '../../assets/' . ltrim( str_replace( '\\', '/', $relative ), '/' );
+		return VRodos_Path_Manager::asset_url( ltrim( str_replace( '\\', '/', $relative ), '/' ) );
 	}
 
 	public function runtime_image_url( string $relative ): string {
@@ -31,6 +31,7 @@ class VRodos_Compiler_Runtime_Assets {
 	}
 
 	public function redirect_runtime_template_urls( string $content ): string {
+		$content = str_replace( '../../assets/', $this->same_origin_path( VRodos_Path_Manager::asset_url() ), $content );
 		$content = str_replace( 'src="js/components/', 'src="' . $this->same_origin_path( VRodos_Path_Manager::runtime_component_url() ), $content );
 		$content = str_replace( 'src="js/master/', 'src="' . $this->same_origin_path( VRodos_Path_Manager::runtime_master_url() ), $content );
 		$content = str_replace( 'src="js/', 'src="' . $this->same_origin_path( VRodos_Path_Manager::runtime_js_url() ), $content );

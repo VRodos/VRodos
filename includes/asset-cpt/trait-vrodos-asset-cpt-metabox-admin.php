@@ -5,19 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 trait VRodos_Asset_CPT_Metabox_Admin {
-	public function vrodos_create_pathdata_asset( $post_ID, $post, $update ): void {
-		if ( get_post_type( $post_ID ) === 'vrodos_asset3d' ) {
-			$parentGameID = $_GET['vrodos_game'] ?? null;
-			if ( ! is_numeric( $parentGameID ) ) {
-				return;
-			}
-			$parentGameID   = intval( $parentGameID );
-			$game_post = get_post( $parentGameID );
-			$parentGameSlug = $game_post ? $game_post->post_name : '';
-			update_post_meta( $post_ID, 'vrodos_asset3d_pathData', $parentGameSlug );
-		}
-	}
-
 	public function vrodos_set_custom_vrodos_asset3d_columns( $columns ): array {
 		$columns['asset_slug'] = 'Asset Slug';
 		return $columns;
@@ -43,7 +30,6 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 		}
 
 		$hidden_asset_meta_keys = [
-			'vrodos_asset3d_pathData',
 			'vrodos_asset3d_screenimage',
 			'vrodos_asset3d_glb',
 		];
@@ -209,11 +195,11 @@ trait VRodos_Asset_CPT_Metabox_Admin {
 										value="Upload <?php echo esc_html( $field['name'] ); ?>"/>
 								<p>Pathfile: <?php echo $attachment_url ? esc_html( $attachment_url ) : esc_html( 'No ' . $field['name'] ); ?></p>
 								<img id="<?php echo $preview_id; ?>" style="width:50%; height:auto"
-									src="<?php echo wp_get_attachment_url( $post_meta_id ); ?>"
+									src="<?php echo esc_url( VRodos_Storage_Manager::authoring_url_for_attachment( (int) $post_meta_id ) ); ?>"
 									alt="<?php echo $extension; ?> preview image"/>
 								<?php
 								break;
-							case 'isJoker': // Displayed as 'isShared' in labels but keep ID for logic
+							case 'shared':
 							case 'assettrs':
 								?>
 								<input type="text" name="<?php echo esc_attr( $field['id'] ); ?>" readonly

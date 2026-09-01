@@ -16,10 +16,17 @@ VRODOS.api.deleteProject = function(game_id, dialog, current_user_id, parameter_
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			'action': 'vrodos_delete_game_action',
+			nonce: document.querySelector('[name="post_nonce_field"]')?.value || '',
 			game_id
 		})
 	})
-	.then( (response) => response.text())
+	.then(async (response) => {
+		const payload = await response.json();
+		if (!response.ok || !payload.success) {
+			throw new Error(payload.data || 'Project deletion failed.');
+		}
+		return payload.data;
+	})
 	.then( () => {
 
 		VRODOS.api.isDeleteProjectPending = false;

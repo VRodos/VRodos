@@ -312,7 +312,7 @@ vrodos_foundation_assert( property_exists( $scene_one->objects->decoration0, 'fo
 vrodos_foundation_assert( ! property_exists( $project_plan->scenes[0]->scene_json->objects->avatarCamera, 'uuid' ), 'camera configuration is not normalized as an entity' );
 
 $link_publisher = new VRodos_Compiler_Link_Publisher(
-	static fn ( string $filename, ?string $mode, string $runtime_mode ): string => ( $mode ?: 'primary' ) . ':' . $runtime_mode . ':' . $filename,
+	static fn ( int $project_id, string $filename, ?string $mode, string $runtime_mode ): string => $project_id . ':' . ( $mode ?: 'primary' ) . ':' . $runtime_mode . ':' . $filename,
 	'both',
 	'local'
 );

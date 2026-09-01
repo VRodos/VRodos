@@ -14,11 +14,10 @@ class VRodos_Post_Type_Manager {
 		add_action( 'init', $this->vrodos_assets_taxpgame(...) );
 		add_action( 'init', $this->vrodos_assets_taxcategory_ipr(...) );
 
-		// Hide joker projects from taxonomy lists in admin
-		add_filter( 'terms_clauses', $this->vrodos_exclude_joker_terms_clauses(...), 10, 3 );
+		add_filter( 'terms_clauses', $this->exclude_shared_repository_terms(...), 10, 3 );
 	}
 
-	public function vrodos_exclude_joker_terms_clauses( $clauses, $taxonomies, $args ): array {
+	public function exclude_shared_repository_terms( $clauses, $taxonomies, $args ): array {
 		if ( ! is_admin() ) {
 			return $clauses;
 		}
@@ -27,8 +26,8 @@ class VRodos_Post_Type_Manager {
 
 		// Check if we are querying one of the project taxonomies
 		if ( array_intersect( (array) $taxonomies, $project_taxonomies ) ) {
-			$joker_slugs = ["'archaeology-joker'", "'vrexpo-joker'", "'virtualproduction-joker'"];
-			$slugs_list  = implode( ',', $joker_slugs );
+			$quoted_slugs = array_map( static fn( string $slug ): string => "'" . esc_sql( $slug ) . "'", VRodos_Shared_Repository_Manager::all_slugs() );
+			$slugs_list   = implode( ',', $quoted_slugs );
 			$clauses['where'] .= " AND t.slug NOT IN ($slugs_list)";
 		}
 
@@ -56,7 +55,8 @@ class VRodos_Post_Type_Manager {
       'supports'            => ['title', 'author', 'editor', 'revisions'],
       'hierarchical'        => false,
       'has_archive'         => false,
-      'capabilities'        => ['publish_posts'       => 'publish_vrodos_project', 'edit_posts'          => 'edit_vrodos_project', 'edit_others_posts'   => 'edit_others_vrodos_project', 'delete_posts'        => 'delete_vrodos_project', 'delete_others_posts' => 'delete_others_vrodos_project', 'read_private_posts'  => 'read_private_vrodos_project', 'edit_post'           => 'edit_vrodos_project', 'delete_post'         => 'delete_vrodos_project', 'read_post'           => 'read_vrodos_project'],
+      'map_meta_cap'        => true,
+      'capabilities'        => ['publish_posts'       => 'publish_vrodos_project', 'edit_posts'          => 'edit_vrodos_project', 'edit_others_posts'   => 'edit_others_vrodos_project', 'edit_published_posts' => 'edit_vrodos_project', 'delete_posts'        => 'delete_vrodos_project', 'delete_others_posts' => 'delete_others_vrodos_project', 'delete_published_posts' => 'delete_vrodos_project', 'delete_private_posts' => 'delete_vrodos_project', 'read_private_posts'  => 'read_private_vrodos_project', 'edit_post'           => 'edit_vrodos_project', 'delete_post'         => 'delete_vrodos_project', 'read_post'           => 'read_vrodos_project', 'create_posts'        => 'publish_vrodos_project'],
   ];
 
 		register_post_type( 'vrodos_game', $args );
@@ -119,7 +119,7 @@ class VRodos_Post_Type_Manager {
 	public function vrodos_scenes_construct(): void {
 
 		$labels = ['name'               => _x( 'Scenes', 'post type general name' ), 'singular_name'      => _x( 'Scene', 'post type singular name' ), 'menu_name'          => _x( 'Scenes', 'admin menu' ), 'name_admin_bar'     => _x( 'Scene', 'add new on admin bar' ), 'add_new'            => _x( 'Add New', 'add new on menu' ), 'add_new_item'       => __( 'Add New Scene' ), 'new_item'           => __( 'New Scene' ), 'edit'               => __( 'Edit' ), 'edit_item'          => __( 'Edit Scene' ), 'view'               => __( 'View' ), 'view_item'          => __( 'View Scene' ), 'all_items'          => __( 'All Scenes' ), 'search_items'       => __( 'Search Scenes' ), 'parent_item_colon'  => __( 'Parent Scenes:' ), 'parent'             => __( 'Parent Scene' ), 'not_found'          => __( 'No Scenes found.' ), 'not_found_in_trash' => __( 'No Scenes found in Trash.' )];
-		$args   = ['labels'              => $labels, 'description'         => 'Displays all the Scenes of a Project', 'public'              => true, 'exclude_from_search' => true, 'publicly_queryable'  => false, 'show_in_nav_menus'   => false, 'show_ui'             => true, 'show_in_menu'        => false, 'menu_position'       => 25, 'menu_icon'           => 'dashicons-media-default', 'taxonomies'          => ['vrodos_scene_pgame', 'vrodos_scene_yaml'], 'supports'            => ['title', 'author', 'editor', 'thumbnail', 'revisions', 'page-attributes'], 'hierarchical'        => false, 'has_archive'         => false, 'capabilities'        => ['publish_posts'       => 'publish_vrodos_scene', 'edit_posts'          => 'edit_vrodos_scene', 'edit_others_posts'   => 'edit_others_vrodos_scene', 'delete_posts'        => 'delete_vrodos_scene', 'delete_others_posts' => 'delete_others_vrodos_scene', 'read_private_posts'  => 'read_private_vrodos_scene', 'edit_post'           => 'edit_vrodos_scene', 'delete_post'         => 'delete_vrodos_scene', 'read_post'           => 'read_vrodos_scene']];
+		$args   = ['labels'              => $labels, 'description'         => 'Displays all the Scenes of a Project', 'public'              => true, 'exclude_from_search' => true, 'publicly_queryable'  => false, 'show_in_nav_menus'   => false, 'show_ui'             => true, 'show_in_menu'        => false, 'menu_position'       => 25, 'menu_icon'           => 'dashicons-media-default', 'taxonomies'          => ['vrodos_scene_pgame', 'vrodos_scene_yaml'], 'supports'            => ['title', 'author', 'editor', 'thumbnail', 'revisions', 'page-attributes'], 'hierarchical'        => false, 'has_archive'         => false, 'map_meta_cap'        => true, 'capabilities'        => ['publish_posts'       => 'publish_vrodos_scene', 'edit_posts'          => 'edit_vrodos_scene', 'edit_others_posts'   => 'edit_others_vrodos_scene', 'edit_published_posts' => 'edit_vrodos_scene', 'delete_posts'        => 'delete_vrodos_scene', 'delete_others_posts' => 'delete_others_vrodos_scene', 'delete_published_posts' => 'delete_vrodos_scene', 'delete_private_posts' => 'delete_vrodos_scene', 'read_private_posts'  => 'read_private_vrodos_scene', 'edit_post'           => 'edit_vrodos_scene', 'delete_post'         => 'delete_vrodos_scene', 'read_post'           => 'read_vrodos_scene', 'create_posts'        => 'publish_vrodos_scene']];
 		register_post_type( 'vrodos_scene', $args );
 	}
 
@@ -145,7 +145,7 @@ class VRodos_Post_Type_Manager {
 
 		$labels = ['name'               => _x( 'Assets 3D', 'post type general name' ), 'singular_name'      => _x( 'Asset 3D', 'post type singular name' ), 'menu_name'          => _x( 'Assets 3D', 'admin menu' ), 'name_admin_bar'     => _x( 'Asset 3D', 'add new on admin bar' ), 'add_new'            => _x( 'Add New', 'add new on menu' ), 'add_new_item'       => __( 'Add New Asset 3D' ), 'new_item'           => __( 'New Asset 3D' ), 'edit'               => __( 'Edit' ), 'edit_item'          => __( 'Edit Asset 3D' ), 'view'               => __( 'View' ), 'view_item'          => __( 'View Asset 3D' ), 'all_items'          => __( 'All Assets 3D' ), 'search_items'       => __( 'Search Assets 3D' ), 'parent_item_colon'  => __( 'Parent Assets 3D:' ), 'parent'             => __( 'Parent Asset 3D' ), 'not_found'          => __( 'No Assets 3D found.' ), 'not_found_in_trash' => __( 'No Assets 3D found in Trash.' )];
 
-		$args = ['labels'              => $labels, 'description'         => 'Displays Assets 3D', 'public'              => true, 'exclude_from_search' => true, 'publicly_queryable'  => false, 'show_in_nav_menus'   => false, 'show_ui'             => true, 'show_in_menu'        => false, 'menu_position'       => 25, 'menu_icon'           => 'dashicons-editor-textcolor', 'taxonomies'          => ['vrodos_asset3d_cat', 'vrodos_asset3d_pgame', 'vrodos_asset3d_ipr_cat'], 'supports'            => ['title', 'editor', 'custom-fields', 'thumbnail', 'revisions', 'author'], 'hierarchical'        => false, 'has_archive'         => false, 'capabilities'        => ['publish_posts'       => 'publish_vrodos_asset3d', 'edit_posts'          => 'edit_vrodos_asset3d', 'edit_others_posts'   => 'edit_others_vrodos_asset3d', 'delete_posts'        => 'delete_vrodos_asset3d', 'delete_others_posts' => 'delete_others_vrodos_asset3d', 'read_private_posts'  => 'read_private_vrodos_asset3d', 'edit_post'           => 'edit_vrodos_asset3d', 'delete_post'         => 'delete_vrodos_asset3d', 'read_post'           => 'read_vrodos_asset3d']];
+		$args = ['labels'              => $labels, 'description'         => 'Displays Assets 3D', 'public'              => true, 'exclude_from_search' => true, 'publicly_queryable'  => false, 'show_in_nav_menus'   => false, 'show_ui'             => true, 'show_in_menu'        => false, 'menu_position'       => 25, 'menu_icon'           => 'dashicons-editor-textcolor', 'taxonomies'          => ['vrodos_asset3d_cat', 'vrodos_asset3d_pgame', 'vrodos_asset3d_ipr_cat'], 'supports'            => ['title', 'editor', 'custom-fields', 'thumbnail', 'revisions', 'author'], 'hierarchical'        => false, 'has_archive'         => false, 'map_meta_cap'        => true, 'capabilities'        => ['publish_posts'       => 'publish_vrodos_asset3d', 'edit_posts'          => 'edit_vrodos_asset3d', 'edit_others_posts'   => 'edit_others_vrodos_asset3d', 'edit_published_posts' => 'edit_vrodos_asset3d', 'delete_posts'        => 'delete_vrodos_asset3d', 'delete_others_posts' => 'delete_others_vrodos_asset3d', 'delete_published_posts' => 'delete_vrodos_asset3d', 'delete_private_posts' => 'delete_vrodos_asset3d', 'read_private_posts'  => 'read_private_vrodos_asset3d', 'edit_post'           => 'edit_vrodos_asset3d', 'delete_post'         => 'delete_vrodos_asset3d', 'read_post'           => 'read_vrodos_asset3d', 'create_posts'        => 'publish_vrodos_asset3d']];
 		register_post_type( 'vrodos_asset3d', $args );
 	}
 

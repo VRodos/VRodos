@@ -10,12 +10,14 @@ class VRodos_Admin_Dashboard_Page {
 
 		$projects_total = (int) wp_count_posts( 'vrodos_game' )->publish;
 		
-		// Subtract hidden technical repositories (joker projects) from the count
-		$shared_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
+		$shared_slugs = VRodos_Shared_Repository_Manager::all_slugs();
+		$shared_project_ids = [];
 		$hidden_projects_count = 0;
 		foreach ( $shared_slugs as $slug ) {
-			if ( get_page_by_path( $slug, OBJECT, 'vrodos_game' ) ) {
+			$shared_project = get_page_by_path( $slug, OBJECT, 'vrodos_game' );
+			if ( $shared_project ) {
 				$hidden_projects_count++;
+				$shared_project_ids[] = (int) $shared_project->ID;
 			}
 		}
 		
@@ -178,18 +180,12 @@ class VRodos_Admin_Dashboard_Page {
 												'orderby' => 'modified',
 												'order' => 'DESC',
 												'post_status' => 'publish',
-												// Exclude projects that have 'joker' in their slug
-												'post_name__not_in' => [], // We'll handle this in the loop or with a better query if we knew the IDs
-												// Better: use a meta query if possible, but let's use a simpler way:
-												// Most joker projects have a specific category or are identified by slug
+												'post__not_in' => $shared_project_ids,
 											]);
 
 											$display_count = 0;
 											if ( $recent_projects->have_posts() ) :
 												while ( $recent_projects->have_posts() && $display_count < 5 ) : $recent_projects->the_post();
-													if ( str_contains( get_post()->post_name, 'joker' ) ) {
-														continue;
-													}
 													$display_count++;
 													$project_id   = get_the_ID();
 													$project_type = VRodos_Core_Manager::vrodos_return_project_type( $project_id );

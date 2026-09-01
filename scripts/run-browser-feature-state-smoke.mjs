@@ -41,7 +41,8 @@ Starts a temporary local static server for the WordPress public root, profiles a
 then validates the profile JSON with scripts/check-profile-feature-state.mjs.
 
 Options:
-  --client NAME                    Runtime build HTML filename. Defaults to newest Master_Client_*.html.
+  --project ID                     Published project ID. Required with --client; otherwise newest publication wins.
+  --client NAME                    Published client filename. Defaults to newest Master_Client_*.html.
   --public-root PATH               WordPress public root. Default: ${defaultPublicRoot}
   --host HOST                      Static server host. Default: 127.0.0.1.
   --port N                         Static server port. Default: 5833.
@@ -69,6 +70,7 @@ Options:
 function parseArgs(argv) {
     const options = {
         client: "",
+		project: "",
         publicRoot: defaultPublicRoot,
         host: "127.0.0.1",
         port: 5833,
@@ -117,6 +119,10 @@ function parseArgs(argv) {
                 options.client = next(index, arg);
                 index += 1;
                 break;
+			case "--project":
+				options.project = String(nextNumber(index, arg));
+				index += 1;
+				break;
             case "--public-root":
                 options.publicRoot = path.resolve(next(index, arg));
                 index += 1;
@@ -214,24 +220,36 @@ function parseArgs(argv) {
     return options;
 }
 
-async function latestMasterClient() {
-    const buildDir = path.join(pluginRoot, "runtime", "build");
-    const entries = await readdir(buildDir);
+async function latestMasterClient(projectId = "") {
+	const projectsRoot = path.join(defaultPublicRoot, "wp-content", "uploads", "vrodos", "published", "projects");
+	const projectIds = projectId ? [projectId] : await readdir(projectsRoot);
     const candidates = [];
-    for (const entry of entries) {
-        if (!/^Master_Client_.+\.html$/i.test(entry)) {
-            continue;
-        }
-        const info = await stat(path.join(buildDir, entry));
-        candidates.push({ entry, mtimeMs: info.mtimeMs });
+	for (const currentProjectId of projectIds) {
+		if (!/^\d+$/.test(currentProjectId)) {
+			continue;
+		}
+		const clientsDir = path.join(projectsRoot, currentProjectId, "clients");
+		let entries;
+		try {
+			entries = await readdir(clientsDir);
+		} catch (_error) {
+			continue;
+		}
+		for (const entry of entries) {
+			if (!/^Master_Client_.+\.html$/i.test(entry)) {
+				continue;
+			}
+			const info = await stat(path.join(clientsDir, entry));
+			candidates.push({ projectId: currentProjectId, entry, mtimeMs: info.mtimeMs });
+		}
     }
 
     if (candidates.length === 0) {
-        throw new Error("No Master_Client_*.html files found under runtime/build.");
+		throw new Error("No Master_Client_*.html files found in project publications.");
     }
 
     candidates.sort((left, right) => right.mtimeMs - left.mtimeMs);
-    return candidates[0].entry;
+	return candidates[0];
 }
 
 function send(res, status, body, headers = {}) {
@@ -331,8 +349,14 @@ function validatorArgs(options) {
 
 async function main() {
     const options = parseArgs(process.argv.slice(2));
-    const client = options.client || await latestMasterClient();
-    const clientPath = `/wp-content/plugins/VRodos/runtime/build/${client}`;
+	if (options.client && !options.project) {
+		throw new Error("--project is required when --client is supplied.");
+	}
+	const selected = options.client
+		? { projectId: options.project, entry: path.basename(options.client) }
+		: await latestMasterClient(options.project);
+	const client = selected.entry;
+	const clientPath = `/wp-content/uploads/vrodos/published/projects/${selected.projectId}/clients/${client}`;
     const url = `http://${options.host}:${options.port}${clientPath}`;
     options.output = options.output || path.join(os.tmpdir(), `vrodos-browser-feature-state-${client.replace(/[^A-Za-z0-9_-]/g, "-")}-${Date.now()}.json`);
 

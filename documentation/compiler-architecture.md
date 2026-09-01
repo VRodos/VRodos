@@ -2,7 +2,7 @@
 
 ## Scope
 
-The compiler remains a synchronous WordPress/A-Frame pipeline. It preserves the current `Master_Client_{scene}.html`, `Simple_Client_{scene}.html`, and `index_{scene}.html` naming rules, existing response URL fields, `scene-settings`, compatibility globals, decoder configuration, and lazy runtime chunks.
+The compiler remains a synchronous WordPress/A-Frame pipeline. It preserves the current `Master_Client_{scene}.html`, `Simple_Client_{scene}.html`, and `index_{scene}.html` naming rules, existing response URL fields, `scene-settings`, compatibility globals, decoder configuration, and lazy runtime chunks. Generated clients live under `wp-content/uploads/vrodos/published/projects/{project_id}/clients/`; content-addressed public media lives beside them under `media/`.
 
 New compiler work should use this flow:
 

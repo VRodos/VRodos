@@ -65,7 +65,7 @@ Diagnostic smoke pass on 2026-07-02:
 
 ## Device Validation Workflow
 
-Use a freshly compiled representative Master scene. Do not treat existing `runtime/build/` HTML as a current fixture.
+Use a freshly compiled representative Master scene from its project publication. Do not treat legacy `runtime/build/` HTML as a current fixture.
 
 Preflight:
 
@@ -78,7 +78,7 @@ ADB reverse example:
 
 ```powershell
 $adb = 'C:\Program Files\Meta Quest Developer Hub\resources\bin\adb.exe'
-$url = 'http://localhost:5832/wp-content/plugins/VRodos/runtime/build/Master_Client_RECOMPILED.html?vrodos_debug_runtime_features=1&vrodos_debug_immersive_smoothness=1'
+$url = 'http://localhost:5832/vrodos-published/projects/PROJECT_ID/clients/Master_Client_RECOMPILED.html?vrodos_debug_runtime_features=1&vrodos_debug_immersive_smoothness=1'
 & $adb reverse tcp:5832 tcp:5832
 & $adb shell "am start -a android.intent.action.VIEW -d '$url' -p com.oculus.browser"
 ```

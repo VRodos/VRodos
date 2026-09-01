@@ -7,6 +7,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const defaultPublicRoot = path.resolve(pluginRoot, "../../..");
 const defaultCases = [
     "desktop-pmndrs-walkable",
     "desktop-no-postfx-walkable",
@@ -106,7 +107,7 @@ function printUsage() {
     console.log(`Usage:
   node scripts/run-browser-feature-state-smoke-matrix.mjs [options]
 
-Auto-discovers generated Master clients in runtime/build and runs browser feature-state smoke checks
+Auto-discovers project-scoped published Master clients and runs browser feature-state smoke checks
 for a small representative matrix.
 
 Options:
@@ -202,33 +203,42 @@ function sceneSetting(settings, key) {
 }
 
 async function discoverClients() {
-    const buildDir = path.join(pluginRoot, "runtime", "build");
-    const entries = await readdir(buildDir);
+	const projectsRoot = path.join(defaultPublicRoot, "wp-content", "uploads", "vrodos", "published", "projects");
+	const projectIds = await readdir(projectsRoot);
     const clients = [];
 
-    for (const entry of entries) {
-        if (!/^Master_Client_.+\.html$/i.test(entry)) {
-            continue;
-        }
-
-        const file = path.join(buildDir, entry);
-        const [html, info] = await Promise.all([
-            readFile(file, "utf8"),
-            stat(file)
-        ]);
-        const settingsMatch = html.match(/scene-settings="([^"]*)"/);
-        const settings = settingsMatch ? settingsMatch[1] : "";
-        clients.push({
-            file: entry,
-            mtimeMs: info.mtimeMs,
-            profile: sceneSetting(settings, "vrRuntimeProfile") || "desktop",
-            postFXEnabled: sceneSetting(settings, "postFXEnabled"),
-            postFXEngine: sceneSetting(settings, "postFXEngine"),
-            pmndrsAtmosphereEnabled: sceneSetting(settings, "pmndrsAtmosphereEnabled"),
-            navigationMode: sceneSetting(settings, "navigationMode"),
-            collisionMode: sceneSetting(settings, "collisionMode"),
-            spatialUi: html.includes("vrodos-runtime-spatial-ui.bundle.js")
-        });
+	for (const projectId of projectIds) {
+		if (!/^\d+$/.test(projectId)) {
+			continue;
+		}
+		const clientsDir = path.join(projectsRoot, projectId, "clients");
+		let entries;
+		try {
+			entries = await readdir(clientsDir);
+		} catch (_error) {
+			continue;
+		}
+		for (const entry of entries) {
+			if (!/^Master_Client_.+\.html$/i.test(entry)) {
+				continue;
+			}
+			const file = path.join(clientsDir, entry);
+			const [html, info] = await Promise.all([readFile(file, "utf8"), stat(file)]);
+			const settingsMatch = html.match(/scene-settings="([^"]*)"/);
+			const settings = settingsMatch ? settingsMatch[1] : "";
+			clients.push({
+				projectId,
+				file: entry,
+				mtimeMs: info.mtimeMs,
+				profile: sceneSetting(settings, "vrRuntimeProfile") || "desktop",
+				postFXEnabled: sceneSetting(settings, "postFXEnabled"),
+				postFXEngine: sceneSetting(settings, "postFXEngine"),
+				pmndrsAtmosphereEnabled: sceneSetting(settings, "pmndrsAtmosphereEnabled"),
+				navigationMode: sceneSetting(settings, "navigationMode"),
+				collisionMode: sceneSetting(settings, "collisionMode"),
+				spatialUi: html.includes("vrodos-runtime-spatial-ui.bundle.js")
+			});
+		}
     }
 
     clients.sort((left, right) => right.mtimeMs - left.mtimeMs);
@@ -310,6 +320,7 @@ async function main() {
         console.log(`\n[${entry.caseId}] ${entry.definition.description}: ${entry.client.file}`);
         await runCommand(process.execPath, [
             "scripts/run-browser-feature-state-smoke.mjs",
+			"--project", entry.client.projectId,
             "--client", entry.client.file,
             "--frames", String(options.frames),
             "--warmup-ms", String(options.warmupMs),

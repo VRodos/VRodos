@@ -191,7 +191,7 @@ The audit parses GLB headers/JSON without rewriting uploads. It estimates unique
 Use profiler resource overrides for compiled-scene derivative trials before changing compiler substitution rules:
 
 ```bash
-node scripts/profile-master-client.mjs http://wp.local:5832/Master_Client_766.html --disable-fps-meter --resource-override "/wp-content/uploads/archaeology-joker/models/asphalt_injection8_-_monacoazure_coast.glb=C:\tmp\vrodos-master-client-optimized-assets\01-asphalt-injection8-monacoazure-coast.safe-draco.glb" --output C:\tmp\vrodos-master-client-draco-asphalt-override.json
+node scripts/profile-master-client.mjs http://wp.local:5832/vrodos-published/projects/766/clients/Master_Client_766.html --disable-fps-meter --resource-override "/vrodos-published/projects/766/media/{content-hash}.glb=C:\tmp\vrodos-master-client-optimized-assets\01-asphalt-injection8-monacoazure-coast.safe-draco.glb" --output C:\tmp\vrodos-master-client-draco-asphalt-override.json
 ```
 
 `--resource-override` is repeatable. It uses CDP request interception and is intended for one-off derivative validation; production clients should reference validated cached derivative URLs directly.

@@ -282,10 +282,27 @@ class VRodos_Scene_CPT_Manager {
 			'path'            => self::normalize_editor_scene_asset_url( $glb_url ),
 			'screenshot_id'   => $screenshot_id,
 			'screenshot_path' => self::normalize_editor_scene_asset_url( $screenshot_url ),
+			'is_shared'      => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ),
 		];
+		foreach ( [
+			'audio_path'   => 'vrodos_asset3d_audio',
+			'video_path'   => 'vrodos_asset3d_video',
+			'image_path'   => 'vrodos_asset3d_image',
+			'poi_img_path' => 'vrodos_asset3d_poi_imgtxt_image',
+		] as $field => $meta_key ) {
+			$url = VRodos_Core_Manager::resolve_media_meta_url( get_post_meta( $asset_id, $meta_key, true ) );
+			if ( '' !== $url ) {
+				$metadata[ $field ] = self::normalize_editor_scene_asset_url( $url );
+			}
+		}
 
 		if ( 'door' === $category_slug ) {
 			$metadata['vrodos_asset3d_scene'] = get_post_meta( $asset_id, 'vrodos_asset3d_scene', true );
+		}
+		if ( '3d-text' === $category_slug ) {
+			$metadata['text_content']   = (string) get_post_meta( $asset_id, 'vrodos_asset3d_text_content', true );
+			$metadata['text_format']    = (string) get_post_meta( $asset_id, 'vrodos_asset3d_text_format', true );
+			$metadata['text_truncated'] = (string) get_post_meta( $asset_id, 'vrodos_asset3d_text_truncated', true );
 		}
 
 		if ( class_exists( 'VRodos_Asset_Optimization_Manager' ) && '' !== $glb_url ) {
@@ -452,7 +469,7 @@ class VRodos_Scene_CPT_Manager {
 					// Standard Object
 					$object_data['path']             = $relative_path . ( $value->fnPath ?? '' );
 					$object_data['overrideMaterial'] = $value->overrideMaterial ?? 'false';
-					$object_data['is_joker']         = $value->is_joker ?? 'false';
+					$object_data['is_shared']        = $value->is_shared ?? false;
 				}
 
 				$object_data = self::enrich_editor_scene_object_asset_metadata( $object_data );
@@ -509,6 +526,14 @@ class VRodos_Scene_CPT_Manager {
 		$scene_json_from_db = ( $scene_post && $scene_post->post_content )
 			? $scene_post->post_content
 			: VRodos_Core_Manager::vrodos_getDefaultJSONscene( strtolower( $project_type ?? '' ) );
+		$background_id = absint( get_post_meta( (int) $current_scene_id, 'vrodos_scene_bg_image', true ) );
+		if ( $background_id ) {
+			$decoded_scene = json_decode( html_entity_decode( (string) $scene_json_from_db ) );
+			if ( is_object( $decoded_scene ) && isset( $decoded_scene->metadata ) && is_object( $decoded_scene->metadata ) ) {
+				$decoded_scene->metadata->backgroundImagePath = VRodos_Storage_Manager::authoring_url_for_attachment( $background_id );
+				$scene_json_from_db = wp_json_encode( $decoded_scene, JSON_UNESCAPED_SLASHES );
+			}
+		}
 
 		$scene_model = new Vrodos_Scene_Model( $scene_json_from_db );
 		$sceneJSON   = $scene_model->to_json();

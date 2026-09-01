@@ -16,6 +16,8 @@ The default port is `5832`. A different port can be passed as the first argument
 node server/easyrtc-server.js 5833
 ```
 
+Generated projects are served at `/vrodos-published/projects/{project_id}/`. By default the service mounts `wp-content/uploads/vrodos/published`; set `VRODOS_PUBLISHED_ROOT` to the absolute publication root when WordPress uploads live elsewhere.
+
 ## ICE/TURN Config
 
 `server/keys.json` is intentionally ignored because it can contain TURN credentials. Use `server/keys.example.json` as the shape, or set `VRODOS_ICE_SERVERS_JSON` to a JSON array or an object with an `iceServers` array.

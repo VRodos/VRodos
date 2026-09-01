@@ -61,8 +61,9 @@ function bindAssetCategoryTabs(categoryTabs, openCategoryTab) {
 VRODOS.api.fetchListAvailableAssets = function(isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) {
 
     const url = VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl();
-    const body = new URLSearchParams({
-        'action': 'vrodos_fetch_game_assets_action',
+	const body = new URLSearchParams({
+		'action': 'vrodos_fetch_game_assets_action',
+		nonce: window.vrodos_data.scene_mutation_nonce,
         gameProjectSlug,
         gameProjectID
     });

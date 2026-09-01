@@ -89,13 +89,20 @@ VRODOS.utils = VRODOS.utils || {};
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 			body: new URLSearchParams({
 				action: 'vrodos_delete_scene_action',
+				nonce: window.vrodos_data.scene_mutation_nonce,
 				scene_id: sceneId,
 				url_scene_redirect: resolvedRedirectUrl
 			})
 		})
-			.then((response) => response.text())
-			.then((res) => {
-				console.log(`Scene with title=${res} was successfully deleted`);
+			.then(async (response) => {
+				const payload = await response.json();
+				if (!response.ok || !payload.success) {
+					throw new Error(payload.data || 'Scene deletion failed.');
+				}
+				return payload.data;
+			})
+			.then((data) => {
+				console.log(`Scene with title=${data.title} was successfully deleted`);
 
 				resetDeleteSceneDialog();
 				fadeOutDeletedScene(sceneId);

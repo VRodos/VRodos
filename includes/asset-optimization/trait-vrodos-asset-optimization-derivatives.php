@@ -108,6 +108,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 
 		return [
 			'meta'      => $source_meta,
+			'attachmentId' => is_numeric( $source_meta ) ? (int) $source_meta : 0,
 			'url'       => $source_url,
 			'path'      => $source_path,
 			'sizeBytes' => false === $size ? 0 : (int) $size,
@@ -203,34 +204,42 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 	}
 
 	private function build_derivative_paths( int $asset_id, array $source, string $profile ): array {
-		$uploads = wp_upload_dir();
-		$dir     = self::derivative_cache_dir( $asset_id );
-		$url     = trailingslashit( $uploads['baseurl'] ) . 'vrodos-optimized-assets/asset-' . $asset_id;
+		$dir = VRodos_Storage_Manager::private_entity_directory( 'asset', $asset_id, 'derivatives', $profile );
+		if ( is_wp_error( $dir ) ) {
+			throw new RuntimeException( $dir->get_error_message() );
+		}
+		$dir     = untrailingslashit( $dir );
 		$base    = sanitize_file_name( pathinfo( (string) $source['path'], PATHINFO_FILENAME ) . '.' . $profile );
 
 		return [
 			'dir'      => $dir,
-			'urlBase'  => $url,
 			'file'     => $dir . '/' . $base . '.glb',
-			'url'      => $url . '/' . $base . '.glb',
 			'manifest' => $dir . '/' . $base . '.manifest.json',
 			'markdown' => $dir . '/' . $base . '.manifest.md',
 		];
 	}
 
 	private static function derivative_cache_dir( int $asset_id ): string {
-		$uploads = wp_upload_dir();
-		return wp_normalize_path( trailingslashit( $uploads['basedir'] ) . 'vrodos-optimized-assets/asset-' . $asset_id );
+		$root = VRodos_Storage_Manager::private_site_root( false );
+		return is_string( $root ) ? wp_normalize_path( trailingslashit( $root ) . 'assets/' . $asset_id . '/derivatives' ) : '';
 	}
 
 	private static function optimized_assets_base_dir(): string {
-		$uploads = wp_upload_dir();
-		return wp_normalize_path( trailingslashit( $uploads['basedir'] ) . 'vrodos-optimized-assets' );
+		$root = VRodos_Storage_Manager::private_site_root( false );
+		return is_string( $root ) ? wp_normalize_path( trailingslashit( $root ) . 'assets' ) : '';
 	}
 
 	private static function delete_asset_derivative_cache( int $asset_id ): void {
 		if ( $asset_id <= 0 ) {
 			return;
+		}
+
+		$meta = self::get_derivative_meta( $asset_id );
+		foreach ( (array) ( $meta['derivatives'] ?? [] ) as $derivative ) {
+			$attachment_id = is_array( $derivative ) ? absint( $derivative['attachmentId'] ?? 0 ) : 0;
+			if ( $attachment_id ) {
+				VRodos_Storage_Manager::delete_attachment_if_owned_by( $attachment_id, 'asset', $asset_id );
+			}
 		}
 
 		$dir = self::derivative_cache_dir( $asset_id );
@@ -244,7 +253,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 
 	private static function is_safe_derivative_cache_dir( string $dir, int $asset_id ): bool {
 		$base = self::optimized_assets_base_dir();
-		$expected = wp_normalize_path( trailingslashit( $base ) . 'asset-' . $asset_id );
+		$expected = wp_normalize_path( trailingslashit( $base ) . $asset_id . '/derivatives' );
 
 		if ( $dir !== $expected ) {
 			return false;
@@ -292,15 +301,25 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		$paths  = $result['paths'];
 		$profile = $result['profile'];
 		$meta   = self::get_derivative_meta( $asset_id );
+		$source = self::get_source_glb( $asset_id );
 
+		$attachment_id = VRodos_Storage_Manager::register_existing_private_attachment( $paths['file'], 'model/gltf-binary', $asset_id, 'asset', 'derivatives', $profile );
+		if ( is_wp_error( $attachment_id ) ) {
+			throw new RuntimeException( $attachment_id->get_error_message() );
+		}
+		$previous_attachment_id = absint( $meta['derivatives'][ $profile ]['attachmentId'] ?? 0 );
+		$source_path = is_wp_error( $source ) ? (string) ( $record['sourcePath'] ?? '' ) : (string) ( $source['path'] ?? '' );
 		$meta['derivatives'][ $profile ] = [
 			'profile'             => $profile,
 			'status'              => 'ready',
-			'url'                 => esc_url_raw( $paths['url'] ),
+			'attachmentId'        => (int) $attachment_id,
+			'url'                 => VRodos_Storage_Manager::authoring_url_for_attachment( (int) $attachment_id ),
 			'path'                => wp_normalize_path( $paths['file'] ),
 			'manifestPath'        => wp_normalize_path( $paths['manifest'] ),
 			'sourceUrl'           => esc_url_raw( (string) ( $record['sourceUrl'] ?? '' ) ),
-			'sourcePath'          => wp_normalize_path( (string) ( $record['sourcePath'] ?? '' ) ),
+			'sourcePath'          => wp_normalize_path( $source_path ),
+			'sourceAttachmentId'  => is_wp_error( $source ) ? 0 : absint( $source['attachmentId'] ?? 0 ),
+			'sourceSha256'        => is_file( $source_path ) ? hash_file( 'sha256', $source_path ) : '',
 			'sourceSizeBytes'     => (int) ( $record['sourceSizeBytes'] ?? 0 ),
 			'derivativeSizeBytes' => (int) ( $record['derivativeSizeBytes'] ?? 0 ),
 			'reductionBytes'      => (int) ( $record['reductionBytes'] ?? 0 ),
@@ -314,7 +333,17 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		}
 		$meta['lastError'] = '';
 
-		update_post_meta( $asset_id, self::META_KEY, $meta );
+		$updated = update_post_meta( $asset_id, self::META_KEY, $meta );
+		if ( false === $updated && get_post_meta( $asset_id, self::META_KEY, true ) !== $meta ) {
+			VRodos_Storage_Manager::delete_attachment_if_owned_by( (int) $attachment_id, 'asset', $asset_id );
+			if ( is_file( $paths['manifest'] ) ) {
+				wp_delete_file( $paths['manifest'] );
+			}
+			throw new RuntimeException( 'WordPress rejected the derivative metadata update.' );
+		}
+		if ( $previous_attachment_id && $previous_attachment_id !== (int) $attachment_id ) {
+			VRodos_Storage_Manager::delete_attachment_if_owned_by( $previous_attachment_id, 'asset', $asset_id );
+		}
 	}
 
 	private function record_error( int $asset_id, string $message ): void {
@@ -344,6 +373,12 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 
 		if ( ! empty( $derivative['path'] ) && ! is_file( (string) $derivative['path'] ) ) {
 			return 'Derivative file is missing.';
+		}
+
+		$source_path = (string) ( $derivative['sourcePath'] ?? '' );
+		$source_hash = (string) ( $derivative['sourceSha256'] ?? '' );
+		if ( '' !== $source_hash && ( ! is_file( $source_path ) || hash_file( 'sha256', $source_path ) !== $source_hash ) ) {
+			return 'Source GLB content has changed since the derivative was generated.';
 		}
 
 		$derivative_source = (string) ( $derivative['sourceUrl'] ?? '' );

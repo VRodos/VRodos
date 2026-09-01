@@ -5,8 +5,9 @@ VRODOS.api.renameProject = function(projectId, newTitle, onComplete) {
     fetch(VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-            'action': 'vrodos_rename_project_action',
+		body: new URLSearchParams({
+			'action': 'vrodos_rename_project_action',
+			nonce: document.querySelector('[name="post_nonce_field"]')?.value || '',
             'project_id': projectId,
             'project_title': newTitle
         })
@@ -100,5 +101,4 @@ VRODOS.api.saveRename = function(gameId) {
         VRODOS.api.exitEditMode(gameId);
     }
 }
-
 

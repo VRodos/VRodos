@@ -107,6 +107,7 @@ VRODOS.api.deleteAsset = function(asset_id, game_slug) {
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			'action': 'vrodos_delete_asset_action',
+			nonce: window.vrodos_data.asset_mutation_nonce,
 			asset_id,
 			game_slug
 		})

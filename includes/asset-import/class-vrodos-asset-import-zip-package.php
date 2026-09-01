@@ -778,35 +778,12 @@ class VRodos_Asset_Import_Zip_Package {
 	}
 
 	private static function temp_directory_candidates(): array {
-		$candidates = [];
-		$upload_dir = wp_upload_dir();
-		if ( empty( $upload_dir['error'] ) && ! empty( $upload_dir['basedir'] ) ) {
-			$candidates[] = trailingslashit( (string) $upload_dir['basedir'] ) . 'vrodos-asset-import-temp';
-		}
-		if ( function_exists( 'get_temp_dir' ) ) {
-			$candidates[] = get_temp_dir();
-		}
-		$candidates[] = sys_get_temp_dir();
-
-		return array_values( array_unique( array_filter( array_map( 'strval', $candidates ) ) ) );
+		$directory = VRodos_Storage_Manager::temporary_directory( 'conversion', wp_generate_uuid4() );
+		return is_string( $directory ) ? [ $directory ] : [];
 	}
 
 	private static function create_temp_directory( string $prefix ): string|WP_Error {
-		$upload_dir = wp_upload_dir();
-		if ( empty( $upload_dir['error'] ) && ! empty( $upload_dir['basedir'] ) ) {
-			$temp_root = trailingslashit( (string) $upload_dir['basedir'] ) . 'vrodos-asset-import-temp';
-			$base      = trailingslashit( $temp_root ) . $prefix . wp_generate_uuid4();
-			if ( wp_mkdir_p( $base ) ) {
-				return $base;
-			}
-		}
-
-		$fallback = trailingslashit( get_temp_dir() ) . $prefix . wp_generate_uuid4();
-		if ( wp_mkdir_p( $fallback ) ) {
-			return $fallback;
-		}
-
-		return new WP_Error( 'tmp_dir_failed', 'Could not create temporary directory.' );
+		return VRodos_Storage_Manager::temporary_directory( 'conversion', wp_generate_uuid4() );
 	}
 
 	private static function recursive_remove_directory( string $dir ): void {

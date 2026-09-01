@@ -9,9 +9,11 @@ final class VRodos_Scene_Standalone_Exporter {
 	private const PLUGIN_ARCHIVE_ROOT = 'wp-content/plugins/VRodos/';
 	private const README_FILENAME     = 'README.txt';
 	private const SERVER_FILENAME     = 'server.mjs';
+	private int $project_id = 0;
 
-	/** @return array{path:string,filename:string,file_count:int}|WP_Error */
-	public function build( int $scene_id ): array|WP_Error {
+	/** @return array{path:string,temp_dir:string,filename:string,file_count:int}|WP_Error */
+	public function build( int $project_id, int $scene_id ): array|WP_Error {
+		$this->project_id = $project_id;
 		if ( ! function_exists( 'wp_tempnam' ) || ! function_exists( 'wp_delete_file' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 		}
@@ -19,7 +21,11 @@ final class VRodos_Scene_Standalone_Exporter {
 			return new WP_Error( 'zip_unavailable', 'PHP ZipArchive is required to export standalone scenes.', [ 'status' => 500 ] );
 		}
 
-		$compiled_path = VRodos_Path_Manager::runtime_build_path( 'Master_Client_' . $scene_id . '.html' );
+		$clients_dir = VRodos_Storage_Manager::published_project_directory( $project_id, 'clients' );
+		if ( is_wp_error( $clients_dir ) ) {
+			return $clients_dir;
+		}
+		$compiled_path = $clients_dir . 'Master_Client_' . $scene_id . '.html';
 		if ( ! is_readable( $compiled_path ) ) {
 			return new WP_Error( 'compiled_scene_missing', 'Build this scene in Single-player static mode before exporting it.', [ 'status' => 409 ] );
 		}
@@ -32,19 +38,21 @@ final class VRodos_Scene_Standalone_Exporter {
 			return new WP_Error( 'standalone_requires_single_player', 'Rebuild this scene with Runtime Mode set to Single-player static, then export it again.', [ 'status' => 409 ] );
 		}
 
-		$temp_dir = VRodos_Path_Manager::runtime_build_path( '.standalone-export-temp' );
-		if ( ! wp_mkdir_p( $temp_dir ) || ! is_writable( $temp_dir ) ) {
-			return new WP_Error( 'zip_temp_directory_failed', 'The standalone export directory is not writable.', [ 'status' => 500 ] );
+		$temp_dir = VRodos_Storage_Manager::temporary_directory( 'export', wp_generate_uuid4() );
+		if ( is_wp_error( $temp_dir ) ) {
+			return $temp_dir;
 		}
 
 		$temp_path = wp_tempnam( 'vrodos-scene-' . $scene_id . '.zip', trailingslashit( $temp_dir ) );
 		if ( ! is_string( $temp_path ) || '' === $temp_path ) {
+			@rmdir( untrailingslashit( $temp_dir ) );
 			return new WP_Error( 'zip_temp_failed', 'The temporary ZIP file could not be created.', [ 'status' => 500 ] );
 		}
 
 		$zip = new ZipArchive();
 		if ( true !== $zip->open( $temp_path, ZipArchive::CREATE | ZipArchive::OVERWRITE ) ) {
 			wp_delete_file( $temp_path );
+			@rmdir( untrailingslashit( $temp_dir ) );
 			return new WP_Error( 'zip_open_failed', 'The standalone ZIP could not be opened for writing.', [ 'status' => 500 ] );
 		}
 
@@ -67,11 +75,13 @@ final class VRodos_Scene_Standalone_Exporter {
 		} catch ( Throwable $error ) {
 			$zip->close();
 			wp_delete_file( $temp_path );
+			@rmdir( untrailingslashit( $temp_dir ) );
 			return new WP_Error( 'zip_build_failed', $error->getMessage(), [ 'status' => 500 ] );
 		}
 
 		if ( ! $zip->close() || ! is_readable( $temp_path ) ) {
 			wp_delete_file( $temp_path );
+			@rmdir( untrailingslashit( $temp_dir ) );
 			return new WP_Error( 'zip_finalize_failed', 'The standalone ZIP could not be finalized.', [ 'status' => 500 ] );
 		}
 
@@ -80,6 +90,7 @@ final class VRodos_Scene_Standalone_Exporter {
 
 		return [
 			'path'       => $temp_path,
+			'temp_dir'   => $temp_dir,
 			'filename'   => $filename,
 			'file_count' => count( $dependencies ) + 4,
 		];
@@ -173,7 +184,8 @@ final class VRodos_Scene_Standalone_Exporter {
 
 		if ( str_starts_with( $path, trailingslashit( $upload_url_path ) ) ) {
 			$relative = ltrim( substr( $path, strlen( trailingslashit( $upload_url_path ) ) ), '/' );
-			if ( '' === $relative ) {
+			$owned_prefix = 'vrodos/published/projects/' . $this->project_id . '/';
+			if ( '' === $relative || ! str_starts_with( $relative, $owned_prefix ) ) {
 				return null;
 			}
 			return $this->resolve_within_root( (string) $upload_dir['basedir'], 'wp-content/uploads/', $relative, false );

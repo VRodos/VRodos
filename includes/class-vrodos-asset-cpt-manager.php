@@ -42,7 +42,7 @@ class VRodos_Asset_CPT_Manager {
       ['3D Text Format', '3D Text Source Format', 'vrodos_asset3d_text_format', 'string', '', true, true],
       ['3D Text Original Length', '3D Text Original Length', 'vrodos_asset3d_text_original_length', 'string', '', true, true],
       ['3D Text Truncated', '3D Text Truncated', 'vrodos_asset3d_text_truncated', 'string', '0', true, true],
-      ['isShared', 'isShared Asset', 'vrodos_asset3d_isJoker', 'string', 'false', true, true],
+      ['isShared', 'Shared Asset', '_vrodos_asset_is_shared', 'boolean', false, true, true],
       ['back_3d_color', '3D viewer background color', 'vrodos_asset3d_back3dcolor', 'string', '#FFFFFF', true, true],
       ['Asset TRS', 'Initial asset translation, rotation, scale for the asset editor', 'vrodos_asset3d_assettrs', 'string', '0,0,0,0,0,0,0,0,0', true, true],
   ];
@@ -57,7 +57,6 @@ class VRodos_Asset_CPT_Manager {
 
 	private function register_hooks(): void {
 		add_action( 'init', $this->vrodos_asset3d_metas_description(...), 1 );
-		add_action( 'save_post', $this->vrodos_create_pathdata_asset(...), 10, 3 );
 		add_action( 'save_post', $this->vrodos_assets_databox_save(...) );
 		add_action( 'save_post', $this->vrodos_asset_tax_category_box_content_save(...) );
 		add_action( 'save_post', $this->vrodos_assets_taxcategory_ipr_box_content_save(...) );
@@ -75,7 +74,6 @@ class VRodos_Asset_CPT_Manager {
 	}
 
 	public function vrodos_asset3d_metas_description(): void { $this->controller->vrodos_asset3d_metas_description(); }
-	public function vrodos_create_pathdata_asset( $post_ID, $post, $update ): void { $this->controller->vrodos_create_pathdata_asset( $post_ID, $post, $update ); }
 	public function vrodos_assets_databox_save( $post_id ): void { $this->controller->vrodos_assets_databox_save( $post_id ); }
 	public function vrodos_asset_tax_category_box_content_save( $post_id ): void { $this->controller->vrodos_asset_tax_category_box_content_save( $post_id ); }
 	public function vrodos_assets_taxcategory_ipr_box_content_save( $post_id ): void { $this->controller->vrodos_assets_taxcategory_ipr_box_content_save( $post_id ); }

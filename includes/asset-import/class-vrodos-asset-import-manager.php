@@ -30,6 +30,8 @@ class VRodos_Asset_Import_Manager {
 
 	private const IMPORT_CRON_HOOK  = 'vrodos_asset_import_process_job';
 	private const CLEANUP_CRON_HOOK = 'vrodos_asset_import_cleanup_staged_uploads';
+	private const CHUNK_BYTES       = 8 * 1024 * 1024;
+	private const MAX_UPLOAD_BYTES  = 2 * 1024 * 1024 * 1024;
 
 	public function __construct() {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
@@ -45,6 +47,7 @@ class VRodos_Asset_Import_Manager {
 		add_action( 'wp_ajax_vrodos_asset_import_test_blender', [ $this, 'test_blender_callback' ] );
 		add_action( self::IMPORT_CRON_HOOK, [ $this, 'process_scheduled_job' ], 10, 1 );
 		add_action( self::CLEANUP_CRON_HOOK, [ $this, 'cleanup_staged_uploads' ] );
+		add_action( 'before_delete_post', [ $this, 'handle_asset_delete' ], 10, 2 );
 
 		if ( ! wp_next_scheduled( self::CLEANUP_CRON_HOOK ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CLEANUP_CRON_HOOK );
@@ -168,9 +171,18 @@ class VRodos_Asset_Import_Manager {
 		$file_name   = isset( $_POST['file_name'] ) ? sanitize_file_name( (string) wp_unslash( $_POST['file_name'] ) ) : '';
 		$project_id  = isset( $_POST['project_id'] ) ? absint( $_POST['project_id'] ) : 0;
 		$extension   = strtolower( pathinfo( $file_name, PATHINFO_EXTENSION ) );
+		$max_bytes   = self::max_upload_bytes();
 
 		if ( '' === $upload_id || $total <= 0 || $chunk_index >= $total || '' === $file_name ) {
 			wp_send_json_error( 'Invalid model upload metadata.', 400 );
+		}
+
+		if ( $project_id <= 0 || 'vrodos_game' !== get_post_type( $project_id ) || ! current_user_can( 'edit_post', $project_id ) ) {
+			wp_send_json_error( 'You are not allowed to upload assets to this project.', 403 );
+		}
+
+		if ( $total > (int) ceil( $max_bytes / self::CHUNK_BYTES ) ) {
+			wp_send_json_error( 'The model upload exceeds the configured size limit.', 413 );
 		}
 
 		if ( ! self::is_supported_extension( $extension ) ) {
@@ -179,6 +191,11 @@ class VRodos_Asset_Import_Manager {
 
 		if ( empty( $_FILES['chunk'] ) || (int) ( $_FILES['chunk']['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_OK ) {
 			wp_send_json_error( 'The model upload chunk was not received.', 400 );
+		}
+
+		$chunk_size = (int) ( $_FILES['chunk']['size'] ?? 0 );
+		if ( $chunk_size <= 0 || $chunk_size > self::CHUNK_BYTES ) {
+			wp_send_json_error( 'The model upload chunk has an invalid size.', 413 );
 		}
 
 		$upload_dir = wp_upload_dir();
@@ -194,6 +211,29 @@ class VRodos_Asset_Import_Manager {
 
 		if ( ! wp_mkdir_p( $session_dir ) ) {
 			wp_send_json_error( 'Could not create the model upload directory.', 500 );
+		}
+
+		$state_path = trailingslashit( $session_dir ) . 'upload-state.json';
+		$state      = is_file( $state_path ) ? json_decode( (string) file_get_contents( $state_path ), true ) : null;
+		if ( ! is_array( $state ) ) {
+			$state = [
+				'file_name'    => $file_name,
+				'project_id'   => $project_id,
+				'user_id'      => $user_id,
+				'total_chunks' => $total,
+			];
+			if ( false === file_put_contents( $state_path, wp_json_encode( $state ), LOCK_EX ) ) {
+				wp_send_json_error( 'Could not create the model upload manifest.', 500 );
+			}
+		}
+
+		if (
+			(string) ( $state['file_name'] ?? '' ) !== $file_name
+			|| (int) ( $state['project_id'] ?? 0 ) !== $project_id
+			|| (int) ( $state['user_id'] ?? 0 ) !== $user_id
+			|| (int) ( $state['total_chunks'] ?? 0 ) !== $total
+		) {
+			wp_send_json_error( 'The model upload manifest does not match this chunk.', 409 );
 		}
 
 		$part_path = trailingslashit( $session_dir ) . 'chunk-' . $chunk_index . '.part';
@@ -228,8 +268,17 @@ class VRodos_Asset_Import_Manager {
 				wp_delete_file( $part );
 			}
 			fclose( $out );
+			$assembled_size = (int) filesize( $final_path );
+			if ( $assembled_size <= 0 || $assembled_size > $max_bytes ) {
+				wp_delete_file( $final_path );
+				wp_send_json_error( 'The assembled model upload exceeds the configured size limit.', 413 );
+			}
+			if ( ! self::valid_model_signature( $final_path, $extension ) ) {
+				wp_delete_file( $final_path );
+				wp_send_json_error( 'The assembled file content does not match its model type.', 415 );
+			}
 
-			file_put_contents(
+			if ( false === file_put_contents(
 				trailingslashit( $session_dir ) . 'manifest.json',
 				wp_json_encode(
 					[
@@ -238,10 +287,14 @@ class VRodos_Asset_Import_Manager {
 						'project_id' => $project_id,
 						'user_id'    => $user_id,
 						'created'    => time(),
-						'size'       => filesize( $final_path ),
+						'size'       => $assembled_size,
+						'total_chunks' => $total,
 					]
-				)
-			);
+				),
+				LOCK_EX
+			) ) {
+				wp_send_json_error( 'Could not finalize the model upload manifest.', 500 );
+			}
 		}
 
 		wp_send_json_success(
@@ -384,6 +437,19 @@ class VRodos_Asset_Import_Manager {
 		self::process_asset_import_job( $asset_id );
 	}
 
+	public function handle_asset_delete( int $post_id, WP_Post $post ): void {
+		if ( 'vrodos_asset3d' !== $post->post_type ) {
+			return;
+		}
+		wp_clear_scheduled_hook( self::IMPORT_CRON_HOOK, [ $post_id ] );
+		delete_transient( 'vrodos_asset_import_lock_' . $post_id );
+		$staged_dir = (string) get_post_meta( $post_id, self::STAGED_DIR_META, true );
+		$root       = VRodos_Storage_Manager::private_site_root( false );
+		if ( '' !== $staged_dir && is_string( $root ) ) {
+			self::delete_directory_inside_root( $staged_dir, trailingslashit( $root ) . 'tmp/import' );
+		}
+	}
+
 	public static function consume_staged_upload( string $token, int $asset_id, int $project_id, int $asset_cat_id ): array {
 		$token = sanitize_key( $token );
 		if ( '' === $token || $asset_id <= 0 ) {
@@ -415,11 +481,19 @@ class VRodos_Asset_Import_Manager {
 			];
 		}
 
-		if ( (int) ( $manifest['user_id'] ?? 0 ) !== $user_id ) {
+		if ( ! self::can_access_staged_manifest( $manifest ) ) {
 			return [
 				'success' => false,
 				'status'  => 'failed',
 				'error'   => 'The staged model upload belongs to a different user.',
+			];
+		}
+
+		if ( ! self::can_mutate_import_target( $asset_id, $project_id, $manifest ) ) {
+			return [
+				'success' => false,
+				'status'  => 'failed',
+				'error'   => 'The staged upload does not belong to this editable asset and project.',
 			];
 		}
 
@@ -435,7 +509,6 @@ class VRodos_Asset_Import_Manager {
 
 		$prepared_path = self::prepared_glb_path_from_manifest( $session_dir, $manifest );
 		if ( '' !== $prepared_path && is_file( $prepared_path ) ) {
-			$previous_glb_id = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
 			$attachment_id   = self::save_glb_file_for_asset( $prepared_path, self::target_glb_name( $asset_id, $asset_cat_id ), $asset_id );
 			if ( is_wp_error( $attachment_id ) ) {
 				self::mark_failed( $asset_id, $attachment_id->get_error_message() );
@@ -446,7 +519,11 @@ class VRodos_Asset_Import_Manager {
 				];
 			}
 
-			update_post_meta( $asset_id, 'vrodos_asset3d_glb', (int) $attachment_id );
+			$switched = VRodos_Storage_Manager::replace_attachment_references( $asset_id, 'asset', [ 'vrodos_asset3d_glb' ], (int) $attachment_id );
+			if ( is_wp_error( $switched ) ) {
+				self::mark_failed( $asset_id, $switched->get_error_message() );
+				return [ 'success' => false, 'status' => 'failed', 'error' => $switched->get_error_message() ];
+			}
 			if ( ! empty( $manifest['prepared_conversion_tool'] ) ) {
 				update_post_meta( $asset_id, self::CONVERSION_TOOL_META, sanitize_key( (string) $manifest['prepared_conversion_tool'] ) );
 				update_post_meta( $asset_id, self::CONVERSION_VER_META, self::CONVERSION_VERSION );
@@ -460,7 +537,6 @@ class VRodos_Asset_Import_Manager {
 				(string) ( $manifest['prepared_diagnostic'] ?? 'Prepared ZIP model package saved.' ),
 				(string) ( $manifest['selected_entry'] ?? ( $manifest['file_name'] ?? basename( $prepared_path ) ) )
 			);
-			self::delete_replaced_glb_attachment( $previous_glb_id, (int) $attachment_id );
 			self::maybe_generate_blender_thumbnail( $asset_id, (int) $attachment_id, $project_id );
 			self::delete_directory_inside_root( $session_dir, self::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
 			self::clear_asset_browser_cache();
@@ -473,7 +549,6 @@ class VRodos_Asset_Import_Manager {
 		}
 
 		if ( 'glb' === $extension ) {
-			$previous_glb_id = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
 			$attachment_id   = self::save_glb_file_for_asset( $source_path, self::target_glb_name( $asset_id, $asset_cat_id ), $asset_id );
 			if ( is_wp_error( $attachment_id ) ) {
 				self::mark_failed( $asset_id, $attachment_id->get_error_message() );
@@ -484,11 +559,14 @@ class VRodos_Asset_Import_Manager {
 				];
 			}
 
-			update_post_meta( $asset_id, 'vrodos_asset3d_glb', (int) $attachment_id );
+			$switched = VRodos_Storage_Manager::replace_attachment_references( $asset_id, 'asset', [ 'vrodos_asset3d_glb' ], (int) $attachment_id );
+			if ( is_wp_error( $switched ) ) {
+				self::mark_failed( $asset_id, $switched->get_error_message() );
+				return [ 'success' => false, 'status' => 'failed', 'error' => $switched->get_error_message() ];
+			}
 			delete_post_meta( $asset_id, self::CONVERSION_TOOL_META );
 			delete_post_meta( $asset_id, self::CONVERSION_VER_META );
 			self::mark_ready( $asset_id, (int) $attachment_id, 'Direct GLB upload saved.', (string) ( $manifest['file_name'] ?? 'upload.glb' ) );
-			self::delete_replaced_glb_attachment( $previous_glb_id, (int) $attachment_id );
 			self::delete_directory_inside_root( $session_dir, self::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
 			self::clear_asset_browser_cache();
 
@@ -525,6 +603,23 @@ class VRodos_Asset_Import_Manager {
 				'success' => false,
 				'status'  => 'failed',
 				'error'   => 'The model upload was not received.',
+			];
+		}
+
+		if ( ! self::can_mutate_import_target( $asset_id, $project_id ) ) {
+			return [
+				'success' => false,
+				'status'  => 'failed',
+				'error'   => 'You are not allowed to replace this asset in the selected project.',
+			];
+		}
+
+		$file_size = (int) ( $file['size'] ?? 0 );
+		if ( $file_size <= 0 || $file_size > self::max_upload_bytes() ) {
+			return [
+				'success' => false,
+				'status'  => 'failed',
+				'error'   => 'The model upload exceeds the configured size limit.',
 			];
 		}
 
@@ -565,6 +660,14 @@ class VRodos_Asset_Import_Manager {
 				'success' => false,
 				'status'  => 'failed',
 				'error'   => 'Could not stage the model upload.',
+			];
+		}
+		if ( ! self::valid_model_signature( $source_path, $extension ) ) {
+			self::delete_directory_inside_root( $session_dir, self::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
+			return [
+				'success' => false,
+				'status'  => 'failed',
+				'error'   => 'The uploaded file content does not match its model type.',
 			];
 		}
 
@@ -616,7 +719,7 @@ class VRodos_Asset_Import_Manager {
 			];
 		}
 
-		if ( (int) ( $manifest['user_id'] ?? 0 ) !== $user_id ) {
+		if ( ! self::can_access_staged_manifest( $manifest ) ) {
 			return [
 				'success'  => false,
 				'can_save' => false,
@@ -967,7 +1070,7 @@ class VRodos_Asset_Import_Manager {
 			];
 		}
 
-		if ( (int) ( $manifest['user_id'] ?? 0 ) !== $user_id ) {
+		if ( ! self::can_access_staged_manifest( $manifest ) ) {
 			return [
 				'success'  => false,
 				'can_save' => false,
@@ -1131,7 +1234,7 @@ class VRodos_Asset_Import_Manager {
 			];
 		}
 
-		if ( (int) ( $manifest['user_id'] ?? 0 ) !== $user_id ) {
+		if ( ! self::can_access_staged_manifest( $manifest ) ) {
 			return [
 				'success' => false,
 				'message' => 'The staged model upload belongs to a different user.',
@@ -1211,7 +1314,6 @@ class VRodos_Asset_Import_Manager {
 		wp_raise_memory_limit( 'admin' );
 		@set_time_limit( 600 );
 
-		$previous_glb_id = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
 		$model_tmp_path  = '';
 		$selected_entry  = (string) get_post_meta( $asset_id, self::ORIGINAL_NAME_META, true );
 		$diagnostic      = '';
@@ -1321,7 +1423,11 @@ class VRodos_Asset_Import_Manager {
 			return self::fail_job( $asset_id, $attachment_id->get_error_message(), $diagnostic );
 		}
 
-		update_post_meta( $asset_id, 'vrodos_asset3d_glb', (int) $attachment_id );
+		$switched = VRodos_Storage_Manager::replace_attachment_references( $asset_id, 'asset', [ 'vrodos_asset3d_glb' ], (int) $attachment_id );
+		if ( is_wp_error( $switched ) ) {
+			VRodos_Asset_Import_Zip_Package::cleanup_paths( $cleanup_paths );
+			return self::fail_job( $asset_id, $switched->get_error_message(), $diagnostic );
+		}
 		update_post_meta( $asset_id, self::SELECTED_ENTRY_META, $selected_entry );
 		if ( '' !== $converted_from ) {
 			update_post_meta( $asset_id, self::CONVERSION_TOOL_META, 'blender' );
@@ -1332,7 +1438,6 @@ class VRodos_Asset_Import_Manager {
 		}
 
 		self::mark_ready( $asset_id, (int) $attachment_id, $diagnostic, $selected_entry );
-		self::delete_replaced_glb_attachment( $previous_glb_id, (int) $attachment_id );
 		self::maybe_generate_blender_thumbnail( $asset_id, (int) $attachment_id, $project_id );
 		self::clear_asset_browser_cache();
 		VRodos_Asset_Import_Zip_Package::cleanup_paths( $cleanup_paths );
@@ -1340,7 +1445,7 @@ class VRodos_Asset_Import_Manager {
 		if ( '' !== $staged_dir ) {
 			$upload_dir = wp_upload_dir();
 			if ( empty( $upload_dir['error'] ) ) {
-				self::delete_directory_inside_root( $staged_dir, trailingslashit( (string) $upload_dir['basedir'] ) . 'vrodos-model-imports' );
+				self::delete_directory_inside_root( $staged_dir, self::user_staged_root( '', get_current_user_id() ) );
 			}
 		}
 
@@ -1410,42 +1515,8 @@ class VRodos_Asset_Import_Manager {
 			return new WP_Error( 'source_missing', 'The GLB source file is missing.' );
 		}
 
-		$previous_request_post_id = $_REQUEST['post_id'] ?? null;
-		$_REQUEST['post_id']     = $asset_id;
-		add_filter( 'upload_dir', [ 'VRodos_Upload_Manager', 'upload_dir_for_scenes_or_assets' ] );
-		add_filter( 'intermediate_image_sizes_advanced', [ 'VRodos_Upload_Manager', 'remove_allthumbs_sizes' ], 10, 2 );
-		$target_upload_dir = wp_upload_dir();
-		remove_filter( 'upload_dir', [ 'VRodos_Upload_Manager', 'upload_dir_for_scenes_or_assets' ] );
-		remove_filter( 'intermediate_image_sizes_advanced', [ 'VRodos_Upload_Manager', 'remove_allthumbs_sizes' ], 10, 2 );
-		if ( null === $previous_request_post_id ) {
-			unset( $_REQUEST['post_id'] );
-		} else {
-			$_REQUEST['post_id'] = $previous_request_post_id;
-		}
-
-		if ( ! empty( $target_upload_dir['error'] ) || ! wp_mkdir_p( $target_upload_dir['path'] ) ) {
-			return new WP_Error( 'upload_dir_failed', 'Could not prepare final model upload directory.' );
-		}
-
-		$filename    = wp_unique_filename( $target_upload_dir['path'], sanitize_file_name( $target_name ) );
-		$destination = trailingslashit( $target_upload_dir['path'] ) . $filename;
-		if ( ! @copy( $source_path, $destination ) ) {
-			return new WP_Error( 'copy_failed', 'Could not save the generated GLB file.' );
-		}
-
-		$file_return = [
-			'file' => $destination,
-			'url'  => trailingslashit( $target_upload_dir['url'] ) . $filename,
-			'type' => 'model/gltf-binary',
-		];
-
-		$attachment_id = VRodos_Upload_Manager::insert_attachment_post( $file_return, $asset_id );
-		if ( ! $attachment_id ) {
-			wp_delete_file( $destination );
-			return new WP_Error( 'attachment_failed', 'Could not create the GLB attachment.' );
-		}
-
-		return (int) $attachment_id;
+		$attachment_id = VRodos_Storage_Manager::import_existing_file( $source_path, $target_name, 'model/gltf-binary', $asset_id, 'asset', 'source' );
+		return is_wp_error( $attachment_id ) ? $attachment_id : (int) $attachment_id;
 	}
 
 	private static function maybe_generate_blender_thumbnail( int $asset_id, int $glb_attachment_id, int $project_id ): void {
@@ -1458,9 +1529,11 @@ class VRodos_Asset_Import_Manager {
 			return;
 		}
 
-		$upload_dir = wp_upload_dir();
-		$temp_root  = empty( $upload_dir['error'] ) && ! empty( $upload_dir['basedir'] ) ? (string) $upload_dir['basedir'] : get_temp_dir();
-		$temp_png   = trailingslashit( $temp_root ) . 'vrodos_asset_import_thumb_' . wp_generate_password( 12, false, false ) . '.png';
+		$temp_root = VRodos_Storage_Manager::temporary_directory( 'thumbnail', wp_generate_uuid4() );
+		if ( is_wp_error( $temp_root ) ) {
+			return;
+		}
+		$temp_png = $temp_root . 'thumbnail.png';
 		try {
 			$rendered = VRodos_Asset_Import_Blender_Converter::render_glb_thumbnail( $glb_path, $temp_png );
 		} catch ( Throwable $throwable ) {
@@ -1476,6 +1549,7 @@ class VRodos_Asset_Import_Manager {
 
 		$image_binary = file_get_contents( $temp_png );
 		@unlink( $temp_png );
+		@rmdir( untrailingslashit( $temp_root ) );
 		if ( ! is_string( $image_binary ) || '' === $image_binary ) {
 			return;
 		}
@@ -1628,7 +1702,7 @@ class VRodos_Asset_Import_Manager {
 			return '';
 		}
 
-		return esc_url_raw( trailingslashit( $session_url ) . $prepared_glb . '?v=' . rawurlencode( (string) ( $manifest['prepared_at'] ?? time() ) ) );
+		return esc_url_raw( add_query_arg( [ 'file' => basename( $prepared_glb ), 'v' => (string) ( $manifest['prepared_at'] ?? time() ) ], $session_url ) );
 	}
 
 	private static function current_user_can_edit_asset( int $asset_id ): bool {
@@ -1643,18 +1717,61 @@ class VRodos_Asset_Import_Manager {
 		return (int) get_post_field( 'post_author', $asset_id ) === get_current_user_id();
 	}
 
+	private static function can_access_staged_manifest( array $manifest ): bool {
+		$project_id = absint( $manifest['project_id'] ?? 0 );
+
+		return (int) ( $manifest['user_id'] ?? 0 ) === get_current_user_id()
+			&& $project_id > 0
+			&& 'vrodos_game' === get_post_type( $project_id )
+			&& current_user_can( 'edit_post', $project_id );
+	}
+
+	private static function can_mutate_import_target( int $asset_id, int $project_id, ?array $manifest = null ): bool {
+		if (
+			$asset_id <= 0
+			|| $project_id <= 0
+			|| 'vrodos_asset3d' !== get_post_type( $asset_id )
+			|| 'vrodos_game' !== get_post_type( $project_id )
+			|| ! self::current_user_can_edit_asset( $asset_id )
+			|| ! current_user_can( 'edit_post', $project_id )
+		) {
+			return false;
+		}
+
+		return null === $manifest
+			|| ( self::can_access_staged_manifest( $manifest ) && (int) ( $manifest['project_id'] ?? 0 ) === $project_id );
+	}
+
+	private static function max_upload_bytes(): int {
+		return max(
+			self::CHUNK_BYTES,
+			(int) apply_filters( 'vrodos_max_model_upload_bytes', self::MAX_UPLOAD_BYTES )
+		);
+	}
+
+	private static function valid_model_signature( string $path, string $extension ): bool {
+		$head = is_file( $path ) ? file_get_contents( $path, false, null, 0, 65536 ) : false;
+		if ( ! is_string( $head ) || '' === $head ) {
+			return false;
+		}
+		return match ( $extension ) {
+			'glb'   => 'glTF' === substr( $head, 0, 4 ),
+			'zip'   => str_starts_with( $head, "PK\x03\x04" ) || str_starts_with( $head, "PK\x05\x06" ),
+			'blend' => str_starts_with( $head, 'BLENDER' ),
+			'fbx'   => str_starts_with( $head, 'Kaydara FBX Binary' ) || str_contains( substr( $head, 0, 2048 ), 'FBX' ),
+			'obj'   => ! str_contains( $head, "\0" ) && 1 === preg_match( '/^(?:v|vn|vt|f|o|g|mtllib|usemtl)\s+/m', $head ),
+			'dae'   => ! str_contains( $head, "\0" ) && false !== stripos( $head, '<COLLADA' ),
+			'gltf'  => ! str_contains( $head, "\0" ) && 1 === preg_match( '/"asset"\s*:\s*\{/', $head ),
+			default => false,
+		};
+	}
+
 	private static function sanitize_local_path( string $path ): string {
 		$path = wp_strip_all_tags( $path, true );
 		$path = str_replace( [ "\0", "\r", "\n" ], '', $path );
 		$path = preg_replace( '/[\x00-\x1F\x7F]/', '', $path );
 
 		return trim( is_string( $path ) ? $path : '' );
-	}
-
-	private static function delete_replaced_glb_attachment( $previous_glb_id, int $new_glb_id ): void {
-		if ( is_numeric( $previous_glb_id ) && (int) $previous_glb_id > 0 && (int) $previous_glb_id !== $new_glb_id ) {
-			wp_delete_attachment( (int) $previous_glb_id, true );
-		}
 	}
 
 	private static function clear_asset_browser_cache(): void {
@@ -1673,7 +1790,8 @@ class VRodos_Asset_Import_Manager {
 	}
 
 	private static function user_staged_root( string $upload_basedir, int $user_id ): string {
-		return trailingslashit( $upload_basedir ) . 'vrodos-model-imports/user-' . $user_id;
+		$root = VRodos_Storage_Manager::private_site_root();
+		return is_string( $root ) ? trailingslashit( $root ) . 'tmp/import' : '';
 	}
 
 	private static function staged_session_dir( string $upload_basedir, int $user_id, string $token ): string {
@@ -1681,7 +1799,7 @@ class VRodos_Asset_Import_Manager {
 	}
 
 	private static function staged_session_url( string $upload_baseurl, int $user_id, string $token ): string {
-		return trailingslashit( $upload_baseurl ) . 'vrodos-model-imports/user-' . $user_id . '/' . sanitize_key( $token );
+		return add_query_arg( [ 'action' => 'vrodos_private_media', 'staging_token' => sanitize_key( $token ) ], admin_url( 'admin-ajax.php' ) );
 	}
 
 	public function cleanup_staged_uploads(): void {
@@ -1721,7 +1839,7 @@ class VRodos_Asset_Import_Manager {
 
 			$staged_dir = (string) get_post_meta( $expired_asset_id, self::STAGED_DIR_META, true );
 			if ( '' !== $staged_dir ) {
-				self::delete_directory_inside_root( $staged_dir, trailingslashit( (string) $upload_dir['basedir'] ) . 'vrodos-model-imports' );
+				self::delete_directory_inside_root( $staged_dir, self::user_staged_root( '', get_current_user_id() ) );
 			}
 
 			delete_post_meta( $expired_asset_id, self::SOURCE_PATH_META );
@@ -1735,10 +1853,8 @@ class VRodos_Asset_Import_Manager {
 			}
 		}
 
-		$roots = [
-			trailingslashit( (string) $upload_dir['basedir'] ) . 'vrodos-model-imports',
-			trailingslashit( (string) $upload_dir['basedir'] ) . 'vrodos-asset-import-temp',
-		];
+		$private_root = VRodos_Storage_Manager::private_site_root( false );
+		$roots = is_string( $private_root ) ? [ trailingslashit( $private_root ) . 'tmp/import', trailingslashit( $private_root ) . 'tmp/conversion' ] : [];
 		$threshold = time() - ( 2 * DAY_IN_SECONDS );
 
 		foreach ( $roots as $root ) {

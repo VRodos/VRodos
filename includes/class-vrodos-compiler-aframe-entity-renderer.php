@@ -259,14 +259,6 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			return $poster_url;
 		}
 
-		$wp_thumb = get_the_post_thumbnail_url( (int) $obj->asset_id, 'full' );
-		if ( $wp_thumb ) {
-			$thumbnail_url = $this->normalize_url( $wp_thumb );
-			if ( $this->is_image_texture_url( $thumbnail_url ) ) {
-				return $thumbnail_url;
-			}
-		}
-
 		$immerse_url = (string) get_post_meta( (int) $obj->asset_id, '_immerse_original_url', true );
 		if ( '' !== trim( $immerse_url ) ) {
 			$immerse_url = $this->normalize_url( $immerse_url );
@@ -1226,21 +1218,10 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	}
 
 	private function resolve_compiled_gltf_asset_url( $obj, string $source_url ): array {
-		$result = [
+		return [
 			'url'        => $source_url,
 			'derivative' => null,
 		];
-
-		if ( empty( $obj->asset_id ) || ! class_exists( 'VRodos_Asset_Optimization_Manager' ) ) {
-			return $result;
-		}
-
-		$resolved = VRodos_Asset_Optimization_Manager::resolve_compiled_glb_asset( absint( $obj->asset_id ), $source_url );
-		if ( is_array( $resolved ) && ! empty( $resolved['url'] ) ) {
-			return $resolved;
-		}
-
-		return $result;
 	}
 
 	private function track_gltf_derivative_usage( array $resolution, $obj, string $context ): void {

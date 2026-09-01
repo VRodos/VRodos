@@ -248,7 +248,6 @@ else { ?>
                         </div>
 
                         <input type="hidden" name="glbFileInput" value="" id="glbFileInput" />
-                        <input type="hidden" name="glbChunkUploadToken" value="" id="glbChunkUploadToken" />
                         <input type="hidden" name="assetImportUploadToken" value="" id="assetImportUploadToken" />
                         <input type="hidden" id="assettrs" name="assettrs" value="<?php echo trim($assettrs_saved); ?>" />
                         <?php

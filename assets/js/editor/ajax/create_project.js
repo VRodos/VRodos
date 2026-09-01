@@ -15,6 +15,7 @@ VRODOS.api.createProject = function(project_title, project_type_slug, current_us
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			'action': 'vrodos_create_project_action',
+			nonce: document.querySelector('[name="post_nonce_field"]')?.value || '',
 			project_title,
 			project_type_slug
 		})
@@ -49,6 +50,7 @@ VRODOS.api.fetchAllProjectsAndAddToDOM = function(current_user_id, parameter_Sce
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			'action': 'vrodos_fetch_list_projects_action',
+			nonce: document.querySelector('[name="post_nonce_field"]')?.value || '',
 			current_user_id,
 			parameter_Scenepass,
 			is_initial_load

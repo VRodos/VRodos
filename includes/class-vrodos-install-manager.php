@@ -36,7 +36,18 @@ class VRodos_Install_Manager {
 	public function activate(): void {
 		$this->vrodos_db_create_games_versions_table();
 		$this->create_required_directories();
+		$this->initialize_storage_schema_for_fresh_install();
 		VRodos_Pages_Manager::vrodos_create_pages();
+	}
+
+	private function initialize_storage_schema_for_fresh_install(): void {
+		if ( false !== get_option( VRodos_Storage_Manager::STORAGE_SCHEMA_OPTION, false ) ) {
+			return;
+		}
+		$existing = get_posts( [ 'post_type' => [ 'vrodos_game', 'vrodos_scene', 'vrodos_asset3d' ], 'post_status' => 'any', 'fields' => 'ids', 'posts_per_page' => 1 ] );
+		if ( empty( $existing ) ) {
+			update_option( VRodos_Storage_Manager::STORAGE_SCHEMA_OPTION, 1, false );
+		}
 	}
 
 	/**
@@ -44,12 +55,7 @@ class VRodos_Install_Manager {
 	 * Safe to call on every activation — wp_mkdir_p() is idempotent.
 	 */
 	private function create_required_directories(): void {
-		$dirs = [
-			VRodos_Path_Manager::runtime_build_path(),
-		];
-		foreach ( $dirs as $dir ) {
-			wp_mkdir_p( $dir );
-		}
+		VRodos_Storage_Manager::private_site_root();
 	}
 
 	public function run_legacy_cleanup_migrations(): void {
@@ -102,10 +108,7 @@ class VRodos_Install_Manager {
 					continue;
 				}
 
-				$attachment = get_post( $attachment_id );
-				if ( $attachment && $attachment->post_type === 'attachment' && (int) $attachment->post_parent === $asset_id ) {
-					wp_delete_attachment( $attachment_id, true );
-				}
+				VRodos_Storage_Manager::delete_attachment_if_owned_by( $attachment_id, 'asset', $asset_id );
 			}
 		}
 
@@ -132,47 +135,17 @@ class VRodos_Install_Manager {
 	/**
 	 * Plugin uninstall callback.
 	 *
-	 * Removes all plugin data from the database.
+	 * Preserves authored and published user data. Destructive removal is only
+	 * available through the explicit ownership-checked WP-CLI purge command.
 	 */
 	public static function uninstall(): void {
+		wp_clear_scheduled_hook( 'vrodos_asset_import_process_job' );
+		wp_clear_scheduled_hook( 'vrodos_asset_import_cleanup_staged_uploads' );
+		wp_clear_scheduled_hook( 'vrodos_asset_editor_preview_process_job' );
+		delete_option( 'vrodos_storage_migration_lock' );
+		delete_option( 'vrodos_storage_audit_cache' );
 		global $wpdb;
-		$del_prefix = $wpdb->prefix;
-
-		// 1. Options
-		delete_option( 'vrodos_scene_yaml_children' );
-		delete_option( 'vrodos_game_type_children' );
-		delete_option( 'widget_vrodos_3d_widget' );
-		delete_option( 'vrodos_db_version' );
-		delete_option( self::LEGACY_ASSET_CLONE_META_CLEANUP_OPTION );
-		delete_option( self::LEGACY_ASSET_REMOVED_FIELDS_CLEANUP_OPTION );
-		delete_option( VRodos_Legacy_Metadata_Migration::COMPLETE_OPTION );
-		delete_option( VRodos_Legacy_Metadata_Migration::REPORT_OPTION );
-		delete_option( 'vrodos_metadata_migration_v2_cursor' );
-
-		// 2. Postmeta
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$del_prefix}postmeta WHERE meta_value LIKE %s", '%vrodos%' ) );
-
-		// 3. Posts
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$del_prefix}posts WHERE post_name LIKE %s OR post_name LIKE %s", '%vrodos%', '%joker%' ) );
-
-		// 4. Termmeta
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$del_prefix}termmeta WHERE meta_key LIKE %s", '%vrodos%' ) );
-
-		// 5. Terms
-		$wpdb->query( "DELETE FROM {$del_prefix}terms WHERE slug LIKE '%-yaml%'" );
-		$wpdb->query( "DELETE FROM {$del_prefix}terms WHERE slug LIKE '%-joker%'" );
-		$wpdb->query( "DELETE FROM {$del_prefix}terms WHERE slug LIKE '%_games%'" );
-		$wpdb->query( "DELETE FROM {$del_prefix}terms WHERE slug LIKE '%pois_%'" );
-		$wpdb->query( "DELETE FROM {$del_prefix}terms WHERE slug LIKE '%decoration%'" );
-		$wpdb->query( "DELETE FROM {$del_prefix}terms WHERE slug LIKE '%door%'" );
-		$wpdb->query( "DELETE FROM {$del_prefix}terms WHERE slug LIKE '%video%'" );
-		$wpdb->query( "DELETE FROM {$del_prefix}terms WHERE slug LIKE '%chat%'" );
-
-		// 6. Term taxonomy
-		$wpdb->query( "DELETE FROM {$del_prefix}term_taxonomy WHERE taxonomy LIKE '%vrodos%'" );
-
-		// 7. Games versions table
-		$wpdb->query( "DROP TABLE IF EXISTS {$del_prefix}_games_versions" );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_vrodos_%', '_transient_timeout_vrodos_%' ) );
 	}
 
 	/**

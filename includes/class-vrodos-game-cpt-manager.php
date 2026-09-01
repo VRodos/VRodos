@@ -10,22 +10,20 @@ class VRodos_Game_CPT_Manager {
 		add_action( 'manage_vrodos_game_posts_custom_column', $this->set_custom_vrodos_game_columns_fill(...), 10, 2 );
 		add_action( 'add_meta_boxes', $this->games_databox_add(...) );
 
-		// Set to the lowest priority in order to have game taxes available when joker games are created
-		add_action( 'init', $this->vrodos_create_joker_projects(...), 100, 2 );
+		add_action( 'init', $this->create_shared_repositories(...), 100, 2 );
 
-		// Hide joker projects from the admin list
-		add_action( 'pre_get_posts', $this->hide_joker_projects_from_admin_list(...) );
+		add_action( 'pre_get_posts', $this->hide_shared_repositories_from_admin_list(...) );
 		add_filter( 'views_edit-vrodos_game', $this->adjust_vrodos_game_counts(...) );
 	}
 
-	public function hide_joker_projects_from_admin_list( $query ): void {
+	public function hide_shared_repositories_from_admin_list( $query ): void {
 		if ( ! is_admin() || ! $query->is_main_query() ) {
 			return;
 		}
 
 		$screen = get_current_screen();
 		if ( $screen && $screen->id === 'edit-vrodos_game' ) {
-			$shared_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
+			$shared_slugs = VRodos_Shared_Repository_Manager::all_slugs();
 			$shared_ids   = [];
 			foreach ( $shared_slugs as $slug ) {
 				$shared_post = get_page_by_path( $slug, OBJECT, 'vrodos_game' );
@@ -41,7 +39,7 @@ class VRodos_Game_CPT_Manager {
 	}
 
 	public function adjust_vrodos_game_counts( $views ): array {
-		$shared_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
+		$shared_slugs = VRodos_Shared_Repository_Manager::all_slugs();
 		$hidden_count = 0;
 		foreach ( $shared_slugs as $slug ) {
 			if ( get_page_by_path( $slug, OBJECT, 'vrodos_game' ) ) {
@@ -66,39 +64,25 @@ class VRodos_Game_CPT_Manager {
 		return $views;
 	}
 
-	public function vrodos_create_joker_projects(): void {
-
-		$userID = get_current_user_id();
-
-		if ( ! VRodos_Core_Manager::vrodos_the_slug_exists( 'archaeology-joker' ) ) {
-
-			$tax_slug   = 'archaeology_games';
-			$post_title = 'Shared Assets Repository';
-			$post_name  = 'archaeology-joker';
-
-			$this->create_post_project_joker( $tax_slug, $post_title, $post_name, $userID );
+	public function create_shared_repositories(): void {
+		if ( 1 !== (int) get_option( VRodos_Storage_Manager::STORAGE_SCHEMA_OPTION, 0 ) ) {
+			return;
 		}
-
-		if ( ! VRodos_Core_Manager::vrodos_the_slug_exists( 'vrexpo-joker' ) ) {
-
-			$tax_slug   = 'vrexpo_games';
-			$post_title = 'VRExpo Joker';
-			$post_name  = 'vrexpo-joker';
-
-			$this->create_post_project_joker( $tax_slug, $post_title, $post_name, $userID );
-		}
-
-		if ( ! VRodos_Core_Manager::vrodos_the_slug_exists( 'virtualproduction-joker' ) ) {
-
-			$tax_slug   = 'virtualproduction_games';
-			$post_title = 'Virtual Production Joker';
-			$post_name  = 'virtualproduction-joker';
-
-			$this->create_post_project_joker( $tax_slug, $post_title, $post_name, $userID );
+		$user_id = get_current_user_id();
+		$titles  = [
+			'archaeology_games'       => 'Shared Archaeology Assets',
+			'vrexpo_games'            => 'Shared VRExpo Assets',
+			'virtualproduction_games' => 'Shared Virtual Production Assets',
+		];
+		foreach ( $titles as $taxonomy_slug => $title ) {
+			$repository_slug = VRodos_Shared_Repository_Manager::slug_for_taxonomy( $taxonomy_slug );
+			if ( '' !== $repository_slug && ! VRodos_Core_Manager::vrodos_the_slug_exists( $repository_slug ) ) {
+				$this->create_shared_repository( $taxonomy_slug, $title, $repository_slug, $user_id );
+			}
 		}
 	}
 
-	public function create_post_project_joker( $tax_slug, $post_title, $post_name, $userID ): void {
+	public function create_shared_repository( $tax_slug, $post_title, $post_name, $userID ): void {
 
 		$tax                     = get_term_by( 'slug', $tax_slug, 'vrodos_game_type' );
 		$tax_id                  = $tax->term_id;
@@ -141,8 +125,8 @@ class VRodos_Game_CPT_Manager {
 				}
 			}
 
-			// If project is not a joker one
-			if ( ! str_contains( $projectSlug, '-joker' ) ) {
+			$is_shared_repository = in_array( $projectSlug, VRodos_Shared_Repository_Manager::all_slugs(), true );
+			if ( ! $is_shared_repository ) {
 				// Create a parent game tax category for the scenes
 				wp_insert_term(
 					$projectTitle,

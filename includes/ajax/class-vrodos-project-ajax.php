@@ -19,8 +19,11 @@ class VRodos_Project_AJAX {
 	 * Rename project
 	 */
 	public function vrodos_rename_project_frontend_callback(): void {
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			wp_send_json_error( 'Insufficient permissions.', 403 );
+		if ( ! VRodos_Storage_Manager::storage_schema_ready() ) {
+			wp_send_json_error( 'VRodos storage migration must be verified first.', 503 );
+		}
+		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
 		}
 
 		$project_id    = absint( $_POST['project_id'] );
@@ -33,6 +36,9 @@ class VRodos_Project_AJAX {
 		$project_post = get_post( $project_id );
 		if ( ! $project_post || $project_post->post_type !== 'vrodos_game' ) {
 			wp_send_json_error( 'Invalid project.' );
+		}
+		if ( ! current_user_can( 'edit_post', $project_id ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
 		}
 
 		$res = wp_update_post( [
@@ -52,7 +58,13 @@ class VRodos_Project_AJAX {
 	 * Create new project
 	 */
 	public function vrodos_create_project_frontend_callback(): void {
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		if ( ! VRodos_Storage_Manager::storage_schema_ready() ) {
+			wp_send_json_error( 'VRodos storage migration must be verified first.', 503 );
+		}
+		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
+		}
+		if ( ! current_user_can( 'publish_vrodos_project' ) ) {
 			wp_send_json_error( 'Insufficient permissions.', 403 );
 		}
 
@@ -87,8 +99,11 @@ class VRodos_Project_AJAX {
 	 * Delete project and all its associated data (scenes, assets)
 	 */
 	public function vrodos_delete_gameproject_frontend_callback(): void {
-		if ( ! current_user_can( 'administrator' ) ) {
-			wp_send_json_error( 'Insufficient permissions.', 403 );
+		if ( ! VRodos_Storage_Manager::storage_schema_ready() ) {
+			wp_send_json_error( 'VRodos storage migration must be verified first.', 503 );
+		}
+		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) ) {
+			wp_send_json_error( 'Invalid security token.', 403 );
 		}
 
 		$game_id   = absint( $_POST['game_id'] );
@@ -97,20 +112,24 @@ class VRodos_Project_AJAX {
 		if ( ! $game_post || $game_post->post_type !== 'vrodos_game' ) {
 			wp_send_json_error( 'Invalid project.' );
 		}
+		if ( ! current_user_can( 'delete_post', $game_id ) || in_array( $game_post->post_name, VRodos_Shared_Repository_Manager::all_slugs(), true ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
 
 		$gameSlug  = $game_post->post_name;
 		$gameTitle = get_the_title( $game_id );
+		$assetPGame = get_term_by( 'slug', $gameSlug, 'vrodos_asset3d_pgame' );
+		$scenePGame = get_term_by( 'slug', $gameSlug, 'vrodos_scene_pgame' );
+		$asset_ids = $assetPGame ? get_posts( [ 'post_type' => 'vrodos_asset3d', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids', 'tax_query' => [ [ 'taxonomy' => 'vrodos_asset3d_pgame', 'field' => 'term_id', 'terms' => $assetPGame->term_id ] ] ] ) : [];
+		$scene_ids = $scenePGame ? get_posts( [ 'post_type' => 'vrodos_scene', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids', 'tax_query' => [ [ 'taxonomy' => 'vrodos_scene_pgame', 'field' => 'term_id', 'terms' => $scenePGame->term_id ] ] ] ) : [];
+		foreach ( array_merge( $asset_ids, $scene_ids ) as $child_id ) {
+			if ( ! current_user_can( 'delete_post', (int) $child_id ) ) {
+				wp_send_json_error( 'You are not allowed to delete every asset and scene in this project.', 403 );
+			}
+		}
 
 		// Delete all assets
-		$assetPGame = get_term_by( 'slug', $gameSlug, 'vrodos_asset3d_pgame' );
 		if ( $assetPGame ) {
-			$asset_ids = get_posts( [
-				'post_type'      => 'vrodos_asset3d',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'tax_query'      => [ [ 'taxonomy' => 'vrodos_asset3d_pgame', 'field' => 'term_id', 'terms' => $assetPGame->term_id ] ],
-			] );
-
 			if ( ! empty( $asset_ids ) ) {
 				update_meta_cache( 'post', $asset_ids );
 				foreach ( $asset_ids as $asset_id ) {
@@ -122,40 +141,30 @@ class VRodos_Project_AJAX {
 		}
 
 		// Delete all scenes
-		$scenePGame = get_term_by( 'slug', $gameSlug, 'vrodos_scene_pgame' );
 		if ( $scenePGame ) {
-			$scene_ids = get_posts( [
-				'post_type'      => 'vrodos_scene',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'tax_query'      => [ [ 'taxonomy' => 'vrodos_scene_pgame', 'field' => 'term_id', 'terms' => $scenePGame->term_id ] ],
-			] );
-
 			foreach ( $scene_ids as $scene_id ) {
+				VRodos_Storage_Manager::delete_owned_attachments( 'scene', (int) $scene_id );
 				wp_delete_post( $scene_id, true );
 			}
 
 			wp_delete_term( $scenePGame->term_id, 'vrodos_scene_pgame' );
 		}
 
-		wp_delete_post( $game_id, false );
+		VRodos_Storage_Manager::delete_project_publication( $game_id );
+		wp_delete_post( $game_id, true );
 
 		// Clear asset list transients
 		global $wpdb;
 		$wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_vrodos_assets_%', '_transient_timeout_vrodos_assets_%' ) );
 
-		echo $gameTitle;
-		wp_die();
+		wp_send_json_success( [ 'title' => $gameTitle, 'project_id' => $game_id ] );
 	}
 
 	/**
 	 * Internal helper to delete an asset and its meta
 	 */
 	private function vrodos_delete_asset3d_noscenes_frontend( $asset_id ): void {
-		$glbID = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
-		wp_delete_attachment( $glbID, true );
-		$screenID = get_post_meta( $asset_id, 'vrodos_asset3d_screenimage', true );
-		wp_delete_attachment( $screenID, true );
+		VRodos_Storage_Manager::delete_owned_attachments( 'asset', (int) $asset_id );
 		wp_delete_post( $asset_id, true );
 	}
 
@@ -163,12 +172,15 @@ class VRodos_Project_AJAX {
 	 * Fetch list of projects and render HTML
 	 */
 	public function vrodos_fetch_list_projects_callback() {
+		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) || ! current_user_can( 'edit_vrodos_project' ) ) {
+			wp_send_json_error( 'Insufficient permissions.', 403 );
+		}
 
 		$perma_structure     = (bool) get_option( 'permalink_structure' );
 		$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 
 		// Exclude internal shared-asset repositories from the listing
-		$shared_slugs = ['archaeology-joker', 'vrexpo-joker', 'virtualproduction-joker'];
+		$shared_slugs = VRodos_Shared_Repository_Manager::all_slugs();
 		$shared_ids = [];
 		foreach ($shared_slugs as $slug) {
 			$post = get_page_by_path($slug, OBJECT, 'vrodos_game');
@@ -184,8 +196,6 @@ class VRodos_Project_AJAX {
 		// Instantiate custom query
 		$custom_query = new WP_Query( $custom_query_args );
 
-		$parameter_Scenepass = !empty($_POST['parameter_Scenepass']) ? $_POST['parameter_Scenepass'] : $parameter_Scenepass;
-		
 		$runtime_url_resolver = new VRodos_Runtime_URL_Resolver();
 
 		// Output custom query loop
@@ -232,6 +242,7 @@ class VRodos_Project_AJAX {
 
 				$loadMainSceneLink = esc_url( ( get_permalink( $edit_scene_page_id ) . $parameter_Scenepass . $scene_data['id'] . '&vrodos_game=' . $game_id . '&scene_type=' . $scene_data['type'] ) );
 				$loadMasterClientLink = $runtime_url_resolver->runtime_url_for_file(
+					$game_id,
 					'Master_Client_' . absint( $scene_data['id'] ) . '.html',
 					null,
 					VRodos_Compiler_Runtime_Feature_Flags::RUNTIME_MODE_NETWORKED
@@ -247,7 +258,7 @@ class VRodos_Project_AJAX {
 				// Get scene thumbnail
 				$scene_thumb_url = '';
 				if ( ! empty( $scene_data['id'] ) && has_post_thumbnail( $scene_data['id'] ) ) {
-					$scene_thumb_url = get_the_post_thumbnail_url( $scene_data['id'], 'medium' );
+					$scene_thumb_url = VRodos_Storage_Manager::authoring_url_for_attachment( get_post_thumbnail_id( $scene_data['id'] ) );
 				}
 				$is_expo = str_contains( strtolower( $game_type_obj->slug ?? '' ), 'vrexpo' ) || str_contains( strtolower( $game_type_obj->string ?? '' ), 'expo' );
 

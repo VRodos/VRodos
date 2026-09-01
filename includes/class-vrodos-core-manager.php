@@ -73,6 +73,9 @@ class VRodos_Core_Manager {
 		if ( empty( $data['ext'] ) || empty( $data['type'] ) ) {
 			$ext = pathinfo( $filename, PATHINFO_EXTENSION );
 			$ext = strtolower( (string) $ext );
+			if ( ! $this->vrodos_is_valid_custom_upload( (string) $file, $ext ) ) {
+				return $data;
+			}
 			if ( 'glb' === $ext ) {
 				$data['ext']  = $ext;
 				$data['type'] = 'model/gltf-binary';
@@ -102,13 +105,35 @@ class VRodos_Core_Manager {
 		return $data;
 	}
 
+	private function vrodos_is_valid_custom_upload( string $file, string $extension ): bool {
+		if ( ! is_file( $file ) || ! is_readable( $file ) ) {
+			return false;
+		}
+		$head = file_get_contents( $file, false, null, 0, 65536 );
+		if ( ! is_string( $head ) || '' === $head ) {
+			return false;
+		}
+		return match ( $extension ) {
+			'glb'   => "glTF" === substr( $head, 0, 4 ),
+			'zip'   => str_starts_with( $head, "PK\x03\x04" ) || str_starts_with( $head, "PK\x05\x06" ),
+			'blend' => str_starts_with( $head, 'BLENDER' ),
+			'fbx'   => str_starts_with( $head, 'Kaydara FBX Binary') || str_contains( substr( $head, 0, 2048 ), 'FBX' ),
+			'obj'   => ! str_contains( $head, "\0" ) && 1 === preg_match( '/^(?:v|vn|vt|f|o|g|mtllib|usemtl)\s+/m', $head ),
+			'dae'   => ! str_contains( $head, "\0" ) && false !== stripos( $head, '<COLLADA' ),
+			'gltf'  => ! str_contains( $head, "\0" ) && 1 === preg_match( '/"asset"\s*:\s*\{/', $head ),
+			'txt'   => ! str_contains( $head, "\0" ),
+			'rtf'   => str_starts_with( ltrim( $head ), '{\\rtf' ),
+			default => false,
+		};
+	}
+
 	public static function resolve_media_meta_url( $meta_value ): string {
 		if ( empty( $meta_value ) ) {
 			return '';
 		}
 
 		if ( is_numeric( $meta_value ) ) {
-			return self::normalize_media_url( wp_get_attachment_url( (int) $meta_value ) ?: '' );
+			return self::normalize_media_url( VRodos_Storage_Manager::authoring_url_for_attachment( (int) $meta_value ) );
 		}
 
 		return self::normalize_media_url( esc_url_raw( (string) $meta_value ) );
@@ -267,7 +292,8 @@ class VRodos_Core_Manager {
 
 		$videos = [];
 		foreach ( $query_images->posts as $image ) {
-			$videos[] = wp_get_attachment_url( $image->ID );
+			$url = VRodos_Storage_Manager::authoring_url_for_attachment( (int) $image->ID );
+			if ( '' !== $url ) { $videos[] = $url; }
 		}
 
 		return $videos;
@@ -486,7 +512,7 @@ class VRodos_Core_Manager {
 	}
 
 	/**
-	 * Get the Assets of a game plus its respective joker game assets
+	 * Get project assets plus the shared repository assets.
 	 *
 	 * @param $gameProjectSlug
 	 * @param $gameProjectID
@@ -511,7 +537,7 @@ class VRodos_Core_Manager {
 			'post_type'      => 'vrodos_asset3d',
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
-			'meta_query'     => [ [ 'key' => 'vrodos_asset3d_isJoker', 'value' => 'true', 'compare' => '=' ] ],
+			'meta_query'     => [ [ 'key' => '_vrodos_asset_is_shared', 'value' => '1', 'compare' => '=' ] ],
 		] );
 
 		$all_ids = array_unique( array_merge( $project_ids, $shared_ids ) );
@@ -554,7 +580,7 @@ class VRodos_Core_Manager {
 					}
 				}
 
-				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_shared'        => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true )];
+				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_shared'        => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id )];
 
 				$immerse_cefr_levels = self::encode_cefr_levels_meta(
 					get_post_meta( $asset_id, 'vrodos_asset3d_immerse_cefr_levels', true )
@@ -779,10 +805,10 @@ class VRodos_Core_Manager {
 					'path'                   => $glbPath,
 					'screenshot_id'          => $sshotID,
 					'screenshot_path'        => $sshotPath,
-					'is_shared'              => get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ),
+					'is_shared'              => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ),
 					'is_immerse'             => get_post_meta( $asset_id, '_immerse_source', true ) === 'immerse' ? 'true' : 'false',
 					'assettrs'               => $assettrs,
-					'asset_parent_game'      => ( get_post_meta( $asset_id, 'vrodos_asset3d_isJoker', true ) === 'true' ) ? 'Public Assets' : ( ! empty( $asset_pgame ) ? $asset_pgame[0]->name : '' ),
+					'asset_parent_game'      => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ) ? 'Shared Assets' : ( ! empty( $asset_pgame ) ? $asset_pgame[0]->name : '' ),
 					'asset_parent_game_slug' => ! empty( $asset_pgame ) ? $asset_pgame[0]->slug : '',
 					'author_id'              => $author_id,
 					'author_displayname'     => $author_displayname,
@@ -854,11 +880,10 @@ class VRodos_Core_Manager {
 
 		$assetIds = [];
 
-		// find the shared game slug e.g. "archaeology-joker" (preserved for compatibility)
-		$shared_game_slug = $gameType . '-joker';
-
-		// Slugs are low case 
-		$shared_game_slug = strtolower( $shared_game_slug );
+		$shared_game_slug = VRodos_Shared_Repository_Manager::slug_for_taxonomy( strtolower( (string) $gameType ) );
+		if ( '' === $shared_game_slug ) {
+			return [];
+		}
 
 		$queryargs = ['post_type'      => 'vrodos_asset3d', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_asset3d_pgame', 'field'    => 'slug', 'terms'    => $shared_game_slug]]];
 
@@ -905,33 +930,41 @@ class VRodos_Core_Manager {
 	}
 
 
-	public static function vrodos_delete_asset_3d_from_scenes( $asset_id, $game_slug ): void {
-		$scenes_query_args = ['post_type'      => 'vrodos_scene', 'posts_per_page' => -1, 'tax_query'      => [['taxonomy' => 'vrodos_scene_pgame', 'field'    => 'slug', 'terms'    => $game_slug]]];
-
-		$scenes_query = new WP_Query( $scenes_query_args );
-
-		if ( $scenes_query->have_posts() ) {
-			while ( $scenes_query->have_posts() ) {
-				$scenes_query->the_post();
-				$scene_id      = get_the_ID();
-				$scene_content = get_post_field( 'post_content', $scene_id );
-				$scene_data    = json_decode( $scene_content, true );
-				if ( ! is_array( $scene_data ) || ! isset( $scene_data['objects'] ) || ! is_array( $scene_data['objects'] ) ) {
-					continue;
-				}
-
-				$original_count = count( $scene_data['objects'] );
-				$scene_data['objects'] = array_values( array_filter( $scene_data['objects'], function ( $obj ) use ( $asset_id ) {
-					return ! isset( $obj['asset_id'] ) || $obj['asset_id'] != $asset_id;
-				} ) );
-
-				if ( count( $scene_data['objects'] ) < $original_count ) {
-					wp_update_post(
-						['ID'           => $scene_id, 'post_content' => json_encode( $scene_data )]
-					);
-				}
+	public static function vrodos_delete_asset_3d_from_scenes( $asset_id ) {
+		$asset_id = absint( $asset_id );
+		$updates  = [];
+		foreach ( get_posts( [ 'post_type' => 'vrodos_scene', 'post_status' => 'any', 'posts_per_page' => -1 ] ) as $scene ) {
+			$scene_data = json_decode( (string) $scene->post_content, true );
+			if ( ! is_array( $scene_data ) || ! is_array( $scene_data['objects'] ?? null ) ) {
+				continue;
 			}
+			$filtered = array_filter(
+				$scene_data['objects'],
+				static fn ( $object ): bool => ! is_array( $object ) || absint( $object['asset_id'] ?? 0 ) !== $asset_id
+			);
+			if ( count( $filtered ) === count( $scene_data['objects'] ) ) {
+				continue;
+			}
+			if ( ! current_user_can( 'edit_post', $scene->ID ) ) {
+				return new WP_Error( 'vrodos_asset_in_use_forbidden', 'This asset is used by a scene you cannot edit.' );
+			}
+			$scene_data['objects'] = array_values( $filtered );
+			$updates[ $scene->ID ] = [
+				'next'     => wp_json_encode( $scene_data, JSON_UNESCAPED_SLASHES ),
+				'previous' => (string) $scene->post_content,
+			];
 		}
-		wp_reset_postdata();
+		$applied = [];
+		foreach ( $updates as $scene_id => $scene_update ) {
+			$result = wp_update_post( [ 'ID' => $scene_id, 'post_content' => $scene_update['next'] ], true );
+			if ( is_wp_error( $result ) ) {
+				foreach ( array_reverse( $applied, true ) as $applied_id => $previous ) {
+					wp_update_post( [ 'ID' => $applied_id, 'post_content' => $previous ] );
+				}
+				return $result;
+			}
+			$applied[ $scene_id ] = $scene_update['previous'];
+		}
+		return true;
 	}
 }

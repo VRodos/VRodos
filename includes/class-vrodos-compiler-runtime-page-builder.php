@@ -187,7 +187,7 @@ class VRodos_Compiler_Runtime_Page_Builder {
 
 	public function write_dom( DOMDocument $dom, string $filename, bool $document_element_only = false, string $prefix = '' ): string {
 		$content = $document_element_only ? $dom->saveHTML( $dom->documentElement ) : $dom->saveHTML();
-		return $this->template_renderer->write_runtime_build( $filename, $prefix . $content );
+		return $this->template_renderer->write_runtime_artifact( $filename, $prefix . $content );
 	}
 
 	private function append_runtime_context_script( DOMDocument $dom, int $project_id, int $scene_id, $scene_json, array $scene_settings ): void {

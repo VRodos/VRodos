@@ -11,7 +11,7 @@ trait VRodos_Asset_CPT_Shared {
 		}
 
 		if ( is_numeric( $meta_value ) ) {
-			return wp_get_attachment_url( (int) $meta_value ) ?: '';
+			return VRodos_Storage_Manager::authoring_url_for_attachment( (int) $meta_value );
 		}
 
 		return esc_url_raw( (string) $meta_value );

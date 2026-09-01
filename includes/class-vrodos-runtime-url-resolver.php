@@ -18,19 +18,27 @@ final readonly class VRodos_Runtime_URL_Resolver {
 		$this->settings          = $this->normalize_settings( $settings ?? (array) get_option( 'vrodos_general_settings', [] ) );
 	}
 
-	public function runtime_url_for_file( string $filename, ?string $mode = null, ?string $runtime_mode = null ): string {
+	public function runtime_url_for_file( int $project_id, string $filename, ?string $mode = null, ?string $runtime_mode = null ): string {
+		return $this->runtime_url_for_published_file( $project_id, 'clients', $filename, $mode, $runtime_mode );
+	}
+
+	public function runtime_url_for_published_file( int $project_id, string $role, string $filename, ?string $mode = null, ?string $runtime_mode = null ): string {
+		if ( ! in_array( $role, [ 'clients', 'media' ], true ) ) {
+			return '';
+		}
 		$runtime_mode = VRodos_Compiler_Runtime_Feature_Flags::normalize_runtime_mode_value( $runtime_mode );
 		if ( VRodos_Compiler_Runtime_Feature_Flags::RUNTIME_MODE_SINGLE_PLAYER === $runtime_mode ) {
-			return VRodos_Path_Manager::runtime_build_url( ltrim( $filename, '/' ) );
+			$url = VRodos_Storage_Manager::published_project_url( $project_id, $role, ltrim( $filename, '/' ) );
+			return is_wp_error( $url ) ? '' : $url;
 		}
 
 		$base_urls = $this->runtime_base_urls();
 		$mode      = $mode ?: $this->primary_runtime_mode();
 		if ( 'public' === $mode && ! empty( $base_urls['public'] ) ) {
-			return $base_urls['public'] . ltrim( $filename, '/' );
+			return $base_urls['public'] . 'vrodos-published/projects/' . $project_id . '/' . $role . '/' . ltrim( $filename, '/' );
 		}
 
-		return $base_urls['local'] . ltrim( $filename, '/' );
+		return $base_urls['local'] . 'vrodos-published/projects/' . $project_id . '/' . $role . '/' . ltrim( $filename, '/' );
 	}
 
 	public function primary_runtime_base_url(): string {

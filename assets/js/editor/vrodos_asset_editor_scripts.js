@@ -43,11 +43,6 @@ function vrodos_clear_asset_files(asset_viewer_3d_kernel) {
         importTokenInput.value = '';
     }
 
-    const glbChunkTokenInput = document.getElementById('glbChunkUploadToken');
-    if (glbChunkTokenInput) {
-        glbChunkTokenInput.value = '';
-    }
-
     window.vrodosZipPreflightState = {
         status: 'idle',
         token: '',
@@ -340,11 +335,6 @@ function addHandlerFor3Dfiles(asset_viewer_3d_kernel_local, multipleFilesInputEl
             screenshotInput.value = '';
         }
 
-        const chunkTokenInput = document.getElementById('glbChunkUploadToken');
-        if (chunkTokenInput) {
-            chunkTokenInput.value = '';
-        }
-
         if (extension === 'zip' || VRODOS_MODEL_CONVERSION_EXTENSIONS.includes(extension)) {
             vrodos_set_asset_editor_notice(extension === 'zip' ? 'Uploading ZIP package for inspection...' : `Uploading ${extension.toUpperCase()} model for conversion...`, false);
             const form = document.getElementById('3dAssetForm');
@@ -579,7 +569,6 @@ window.vrodos_prepare_selected_model_upload = async function (form, selectionSer
 window.vrodos_upload_selected_model_in_chunks = async function (form, options = {}) {
     const fileInput = document.getElementById('fileUploadInput');
     const tokenInput = document.getElementById('assetImportUploadToken');
-    const oldGlbTokenInput = document.getElementById('glbChunkUploadToken');
     const nonceInput = form ? form.querySelector('[name="post_nonce_field"]') : null;
     const file = fileInput && fileInput.files && fileInput.files.length ? fileInput.files[0] : null;
 
@@ -668,10 +657,6 @@ window.vrodos_upload_selected_model_in_chunks = async function (form, options = 
         if (tokenInput) {
             tokenInput.value = uploadId;
         }
-        if (oldGlbTokenInput) {
-            oldGlbTokenInput.value = '';
-        }
-
         if (shouldPrepareModel) {
             let inspection = null;
             let prepareStatus = 'converting';

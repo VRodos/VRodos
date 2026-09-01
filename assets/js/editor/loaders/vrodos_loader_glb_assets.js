@@ -48,14 +48,6 @@ function vrodosLoaderResolveGlbUrl(resource, resourcesGLB, modelBaseUrl) {
     return resource.glb_path || resource.path || '';
 }
 
-function vrodosLoaderResolveCanonicalGlbUrl(resource, resourcesGLB) {
-    if (resourcesGLB && Object.prototype.hasOwnProperty.call(resourcesGLB, 'glbURL')) {
-        return resourcesGLB.glbURL || '';
-    }
-
-    return resource && (resource.glb_path || resource.path || '') || '';
-}
-
 function vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB, modelBaseUrl) {
     const canonicalUrl = vrodosLoaderResolveGlbUrl(resource, resourcesGLB, modelBaseUrl);
     const previewUrl = resourcesGLB && resourcesGLB.editorPreviewGlbURL
@@ -198,8 +190,9 @@ VRODOS.loader.fetchGlbMetadata = async function(name, resource) {
     const response = await fetch(ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-            action: 'vrodos_fetch_glb_asset_action',
+		body: new URLSearchParams({
+			action: 'vrodos_fetch_glb_asset_action',
+			nonce: window.vrodos_data.scene_mutation_nonce,
             asset_id: resource.asset_id
         })
     });

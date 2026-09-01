@@ -33,7 +33,7 @@ class VRodos_Compiler_Template_Renderer {
 		return $this->read_file( VRodos_Path_Manager::runtime_template_path( $filename ) );
 	}
 
-	public function write_runtime_build( string $filename, string $content ) {
+	public function write_runtime_artifact( string $filename, string $content ) {
 		if ( $this->capture_enabled ) {
 			$scene_id = preg_match( '/_(\d+)\.html$/', $filename, $matches ) ? (int) $matches[1] : 0;
 			$kind     = str_starts_with( $filename, 'Master_Client_' )
@@ -43,7 +43,7 @@ class VRodos_Compiler_Template_Renderer {
 			return strlen( $content );
 		}
 
-		return $this->write_file( VRodos_Path_Manager::runtime_build_path( $filename ), $content );
+		throw new LogicException( '[VRodos] Runtime artifacts must be captured and committed through project publication.' );
 	}
 
 	public function read_file( string $filename ): string {

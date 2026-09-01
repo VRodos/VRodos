@@ -382,17 +382,8 @@ class VRodos_Asset_Import_Blender_Converter {
 	}
 
 	private static function temp_directory_candidates(): array {
-		$candidates = [];
-		$upload_dir = wp_upload_dir();
-		if ( empty( $upload_dir['error'] ) && ! empty( $upload_dir['basedir'] ) ) {
-			$candidates[] = trailingslashit( (string) $upload_dir['basedir'] ) . 'vrodos-asset-import-temp';
-		}
-		if ( function_exists( 'get_temp_dir' ) ) {
-			$candidates[] = get_temp_dir();
-		}
-		$candidates[] = sys_get_temp_dir();
-
-		return array_values( array_unique( array_filter( array_map( 'strval', $candidates ) ) ) );
+		$directory = VRodos_Storage_Manager::temporary_directory( 'conversion', wp_generate_uuid4() );
+		return is_string( $directory ) ? [ $directory ] : [];
 	}
 
 	private static function write_conversion_script(): string|WP_Error {

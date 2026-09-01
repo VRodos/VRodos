@@ -2,7 +2,7 @@
 
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -484,7 +484,8 @@ async function optimizeAsset(asset, index, options, runner) {
     const fileName = path.basename(normalizeUrlPath(asset.url || sourcePath));
     const slug = `${String(index + 1).padStart(2, '0')}-${slugify(fileName)}`;
     const derivativePath = options.outputFile || path.join(options.outputDir, `${slug}.${options.profile}.glb`);
-    const workDir = path.join(options.outputDir, '.work', `${slug}-${Date.now()}`);
+    const workRoot = path.join(options.outputDir, '.work');
+    const workDir = path.join(workRoot, `${slug}-${Date.now()}`);
     const sourceSizeBytes = asset.localSizeBytes || asset.sizeBytes || await getFileSize(sourcePath);
     const record = {
         sourceUrl: asset.url,
@@ -525,27 +526,32 @@ async function optimizeAsset(asset, index, options, runner) {
 
     await mkdir(path.dirname(derivativePath), { recursive: true });
     await mkdir(workDir, { recursive: true });
-    const steps = profileSteps(options.profile, sourcePath, derivativePath, workDir);
-    const stepTimeoutMs = options.profile === 'editor-preview' ? 30 * 60 * 1000 : 10 * 60 * 1000;
-    for (const args of steps) {
-        const command = await runCommand(runner, args, stepTimeoutMs);
-        record.commands.push(command);
-        if (command.code !== 0) {
-            record.status = 'error';
-            record.error = `${args[0]} failed with exit code ${command.code}${command.signal ? ` (${command.signal})` : ''}`;
-            return record;
+    try {
+        const steps = profileSteps(options.profile, sourcePath, derivativePath, workDir);
+        const stepTimeoutMs = options.profile === 'editor-preview' ? 30 * 60 * 1000 : 10 * 60 * 1000;
+        for (const args of steps) {
+            const command = await runCommand(runner, args, stepTimeoutMs);
+            record.commands.push(command);
+            if (command.code !== 0) {
+                record.status = 'error';
+                record.error = `${args[0]} failed with exit code ${command.code}${command.signal ? ` (${command.signal})` : ''}`;
+                return record;
+            }
         }
+
+        record.derivativeSizeBytes = await getFileSize(derivativePath);
+        record.derivativeSizeLabel = formatBytes(record.derivativeSizeBytes);
+        const delta = reduction(sourceSizeBytes, record.derivativeSizeBytes);
+        record.reductionBytes = delta.bytes;
+        record.reductionPercent = delta.percent;
+        record.derivative = await analyzeGlbFile(derivativePath);
+        record.status = 'done';
+
+        return record;
+    } finally {
+        await rm(workDir, { recursive: true, force: true });
+        await rm(workRoot, { recursive: false, force: true }).catch(() => {});
     }
-
-    record.derivativeSizeBytes = await getFileSize(derivativePath);
-    record.derivativeSizeLabel = formatBytes(record.derivativeSizeBytes);
-    const delta = reduction(sourceSizeBytes, record.derivativeSizeBytes);
-    record.reductionBytes = delta.bytes;
-    record.reductionPercent = delta.percent;
-    record.derivative = await analyzeGlbFile(derivativePath);
-    record.status = 'done';
-
-    return record;
 }
 
 function markdownEscape(value) {

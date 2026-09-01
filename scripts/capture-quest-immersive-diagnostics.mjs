@@ -234,7 +234,7 @@ function selectTarget(targets, targetUrl) {
         return matchingTarget;
     }
 
-    return pageTargets.find((target) => String(target.url || '').includes('/runtime/build/')) ||
+	return pageTargets.find((target) => String(target.url || '').includes('/vrodos-published/projects/')) ||
         pageTargets.find((target) => String(target.url || '').includes('Master_Client_')) ||
         pageTargets[0] ||
         null;

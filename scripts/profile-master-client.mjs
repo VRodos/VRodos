@@ -7,7 +7,7 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 
-const DEFAULT_URL = 'http://wp.local:5832/Master_Client_766.html';
+const DEFAULT_URL = process.env.VRODOS_PROFILE_URL || '';
 const SPECTOR_CDN_URL = 'https://cdn.jsdelivr.net/npm/spectorjs@0.9.30/dist/spector.bundle.js';
 
 function parseArgs(argv) {
@@ -163,7 +163,7 @@ function printHelp() {
   node scripts/profile-master-client.mjs [url] [options]
 
 Options:
-  --url URL               Compiled client URL. Defaults to ${DEFAULT_URL}
+  --url URL               Project-scoped published client URL. May also use VRODOS_PROFILE_URL.
   --output PATH           Write the full JSON capture to PATH.
   --frames N              Number of requestAnimationFrame deltas to sample. Default: 240.
   --warmup-ms N           Warmup time after page load before sampling. Default: 5000.
@@ -1806,6 +1806,9 @@ function printSummary(result) {
 
 async function run() {
     const options = parseArgs(process.argv.slice(2));
+	if (!options.url) {
+		throw new Error('Provide a project-scoped published client URL, for example /vrodos-published/projects/123/clients/Master_Client_456.html.');
+	}
     let targetUrl = options.url;
     if (options.disableFpsMeter) {
         targetUrl = addUrlQueryParam(targetUrl, 'vrodos_debug_disable_fps_meter', '1');
