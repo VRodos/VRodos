@@ -27,6 +27,7 @@ function absint( $value ): int { return abs( (int) $value ); }
 function wp_slash( string $value ): string { return addslashes( $value ); }
 function admin_url( string $path = '' ): string { return 'https://example.test/wp-admin/' . ltrim( $path, '/' ); }
 function add_query_arg( array $args, string $url ): string { return $url . '?' . http_build_query( $args ); }
+function wp_parse_url( string $url, int $component = -1 ) { return parse_url( $url, $component ); }
 function wp_get_attachment_url( int $attachment_id ) { return 'https://example.test/uploads/' . $attachment_id; }
 function wp_get_attachment_image_url( int $attachment_id, string $size ) { return 'https://example.test/uploads/' . $attachment_id . '-' . $size; }
 
@@ -99,6 +100,37 @@ try {
 	vrodos_storage_assert( VRodos_Storage_Manager::path_is_within( $source, $root ), 'contained path accepted' );
 	vrodos_storage_assert( ! VRodos_Storage_Manager::path_is_within( $root . '../site-70/file', $root ), 'sibling traversal rejected' );
 	vrodos_storage_assert( VRodos_Storage_Manager::path_is_within( '//server/share/site-7/assets/42', '//server/share/site-7' ), 'UNC containment' );
+
+	$uploads_root = wp_upload_dir( null, true )['basedir'];
+	$legacy_url_file = trailingslashit( $uploads_root ) . 'legacy/url-source.glb';
+	wp_mkdir_p( dirname( $legacy_url_file ) );
+	file_put_contents( $legacy_url_file, 'legacy URL source' );
+	$test_meta[601] = [ '_wp_attached_file' => 'https://old.example.test/wp-content/uploads/legacy/url-source.glb' ];
+	$test_attached_files[601] = trailingslashit( $uploads_root ) . $test_meta[601]['_wp_attached_file'];
+	$resolved_legacy_url = VRodos_Storage_Manager::resolve_migration_attachment_source( 601 );
+	vrodos_storage_assert(
+		is_string( $resolved_legacy_url ) && realpath( $resolved_legacy_url ) === realpath( $legacy_url_file ),
+		'legacy upload URL resolves to the existing local file'
+	);
+
+	$legacy_absolute_file = trailingslashit( $uploads_root ) . 'legacy/windows-source.glb';
+	file_put_contents( $legacy_absolute_file, 'legacy Windows source' );
+	$test_meta[602] = [ '_wp_attached_file' => wp_normalize_path( $legacy_absolute_file ) ];
+	$test_attached_files[602] = trailingslashit( $uploads_root ) . $test_meta[602]['_wp_attached_file'];
+	$resolved_legacy_absolute = VRodos_Storage_Manager::resolve_migration_attachment_source( 602 );
+	vrodos_storage_assert(
+		is_string( $resolved_legacy_absolute ) && realpath( $resolved_legacy_absolute ) === realpath( $legacy_absolute_file ),
+		'legacy Windows absolute path resolves without an uploads prefix'
+	);
+
+	$outside_file = trailingslashit( VRODOS_PRIVATE_STORAGE_DIR ) . 'outside-source.glb';
+	file_put_contents( $outside_file, 'outside source' );
+	$test_meta[603] = [ '_wp_attached_file' => wp_normalize_path( $outside_file ) ];
+	$test_attached_files[603] = $outside_file;
+	vrodos_storage_assert( is_wp_error( VRodos_Storage_Manager::resolve_migration_attachment_source( 603 ) ), 'out-of-uploads absolute source is rejected' );
+	$test_meta[604] = [ '_wp_attached_file' => 'https://external.example.test/media/source.glb' ];
+	$test_attached_files[604] = false;
+	vrodos_storage_assert( is_wp_error( VRodos_Storage_Manager::resolve_migration_attachment_source( 604 ) ), 'external non-upload URL is rejected' );
 
 	foreach ( [ 101, 102, 200 ] as $attachment_id ) {
 		$test_meta[ $attachment_id ] = [ '_vrodos_private_storage' => '1', '_vrodos_storage_owner_type' => 'asset', '_vrodos_storage_owner_id' => 42 ];

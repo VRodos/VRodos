@@ -301,9 +301,9 @@ final class VRodos_Storage_CLI_Command {
 					return $item;
 				}
 			}
-			$path = get_attached_file( $id, true );
-			if ( ! is_string( $path ) || ! is_file( $path ) ) {
-				throw new RuntimeException( 'Media Library attachment #' . $id . ' is missing its file.' );
+			$path = VRodos_Storage_Manager::resolve_migration_attachment_source( $id );
+			if ( is_wp_error( $path ) ) {
+				throw new RuntimeException( $path->get_error_message() );
 			}
 			$new  = VRodos_Storage_Manager::import_existing_file( $path, basename( $path ), get_post_mime_type( $id ) ?: 'application/octet-stream', $owner_id, $owner_type, $reference['role'] );
 			if ( is_wp_error( $new ) ) {
@@ -658,9 +658,12 @@ final class VRodos_Storage_CLI_Command {
 		$missing = []; $private = 0;
 		$attachment_references = $this->attachment_references();
 		foreach ( $attachment_references as $reference ) {
-			$path = get_attached_file( $reference['attachmentId'], true );
-			if ( ! is_string( $path ) || ! is_file( $path ) ) { $missing[] = $reference; }
-			if ( VRodos_Storage_Manager::is_private_attachment( $reference['attachmentId'] ) ) { ++$private; }
+			$is_private = VRodos_Storage_Manager::is_private_attachment( $reference['attachmentId'] );
+			$path       = $is_private
+				? get_attached_file( $reference['attachmentId'], true )
+				: VRodos_Storage_Manager::resolve_migration_attachment_source( $reference['attachmentId'] );
+			if ( is_wp_error( $path ) || ! is_string( $path ) || ! is_file( $path ) ) { $missing[] = $reference; }
+			if ( $is_private ) { ++$private; }
 		}
 		$scene_documents = [];
 		$embedded_urls   = [];
