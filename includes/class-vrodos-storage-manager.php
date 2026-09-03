@@ -30,40 +30,36 @@ final class VRodos_Storage_Manager {
 		return 1 === (int) get_option( self::STORAGE_SCHEMA_OPTION, 0 );
 	}
 
-	/** Resolve canonical and legacy attachment metadata to an existing local upload. */
-	public static function resolve_migration_attachment_source( int $attachment_id ) {
+	/** Resolve a legacy upload path or URL without allowing access outside uploads. */
+	public static function resolve_migration_upload_source( string $source ) {
 		$uploads = wp_upload_dir( null, false );
 		if ( ! empty( $uploads['error'] ) ) {
 			return new WP_Error( 'vrodos_uploads_unavailable', (string) $uploads['error'] );
 		}
 
 		$uploads_root = self::resolved_path( (string) $uploads['basedir'] );
-		$candidates    = [];
-		$current       = get_attached_file( $attachment_id, true );
-		if ( is_string( $current ) && '' !== $current ) {
-			$candidates[] = $current;
+		$source       = html_entity_decode( trim( $source ) );
+		$normalized   = wp_normalize_path( $source );
+		$candidates   = [];
+		$is_url       = 1 === preg_match( '#^https?://#i', $source );
+		$url_path     = $is_url ? rawurldecode( (string) wp_parse_url( $source, PHP_URL_PATH ) ) : '';
+
+		if ( ! $is_url && self::is_absolute_path( $normalized ) ) {
+			$candidates[] = $normalized;
 		}
 
-		$stored = html_entity_decode( trim( (string) get_post_meta( $attachment_id, '_wp_attached_file', true ) ) );
-		if ( '' !== $stored ) {
-			$normalized = wp_normalize_path( $stored );
-			if ( self::is_absolute_path( $normalized ) ) {
-				$candidates[] = $normalized;
-			} elseif ( preg_match( '#^https?://#i', $stored ) ) {
-				$url_path = rawurldecode( (string) wp_parse_url( $stored, PHP_URL_PATH ) );
-				$base_path = untrailingslashit( rawurldecode( (string) wp_parse_url( (string) $uploads['baseurl'], PHP_URL_PATH ) ) );
-				$relative = '';
-				if ( '' !== $base_path && str_starts_with( $url_path, $base_path . '/' ) ) {
-					$relative = substr( $url_path, strlen( $base_path ) + 1 );
-				} elseif ( preg_match( '#/wp-content/uploads/(.+)$#i', $url_path, $matches ) ) {
-					$relative = (string) $matches[1];
-				}
-				if ( '' !== $relative ) {
-					$candidates[] = trailingslashit( $uploads_root ) . ltrim( $relative, '/\\' );
-				}
-			} else {
-				$candidates[] = trailingslashit( $uploads_root ) . ltrim( $stored, '/\\' );
-			}
+		$reference_path = '' !== $url_path ? $url_path : $normalized;
+		$base_path      = untrailingslashit( rawurldecode( (string) wp_parse_url( (string) $uploads['baseurl'], PHP_URL_PATH ) ) );
+		$relative       = '';
+		if ( '' !== $base_path && str_starts_with( $reference_path, $base_path . '/' ) ) {
+			$relative = substr( $reference_path, strlen( $base_path ) + 1 );
+		} elseif ( preg_match( '#/wp-content/uploads/(.+)$#i', $reference_path, $matches ) ) {
+			$relative = (string) $matches[1];
+		} elseif ( ! $is_url && ! self::is_absolute_path( $normalized ) ) {
+			$relative = ltrim( $source, '/\\' );
+		}
+		if ( '' !== $relative ) {
+			$candidates[] = trailingslashit( $uploads_root ) . ltrim( $relative, '/\\' );
 		}
 
 		foreach ( array_unique( array_map( 'wp_normalize_path', $candidates ) ) as $candidate ) {
@@ -72,6 +68,29 @@ final class VRodos_Storage_Manager {
 				if ( self::path_is_within( $resolved_candidate, $uploads_root ) ) {
 					return $resolved_candidate;
 				}
+			}
+		}
+
+		return new WP_Error( 'vrodos_migration_source_missing', 'The migration source file is missing or outside WordPress uploads.' );
+	}
+
+	/** Resolve canonical and legacy attachment metadata to an existing local upload. */
+	public static function resolve_migration_attachment_source( int $attachment_id ) {
+		$candidates = [];
+		$current    = get_attached_file( $attachment_id, true );
+		if ( is_string( $current ) && '' !== $current ) {
+			$candidates[] = $current;
+		}
+
+		$stored = html_entity_decode( trim( (string) get_post_meta( $attachment_id, '_wp_attached_file', true ) ) );
+		if ( '' !== $stored ) {
+			$candidates[] = $stored;
+		}
+
+		foreach ( array_unique( $candidates ) as $candidate ) {
+			$resolved = self::resolve_migration_upload_source( $candidate );
+			if ( is_string( $resolved ) ) {
+				return $resolved;
 			}
 		}
 
@@ -347,7 +366,17 @@ final class VRodos_Storage_Manager {
 				require_once ABSPATH . 'wp-admin/includes/image.php';
 			}
 			$metadata = wp_generate_attachment_metadata( $attachment_id, $destination );
-			if ( ! is_array( $metadata ) || ! self::ensure_attachment_metadata( $attachment_id, $metadata ) ) {
+			$metadata_file = is_array( $metadata ) ? (string) ( $metadata['file'] ?? '' ) : '';
+			$primary_path  = self::is_absolute_path( $metadata_file )
+				? wp_normalize_path( $metadata_file )
+				: dirname( $destination ) . DIRECTORY_SEPARATOR . basename( $metadata_file );
+			if (
+				! is_array( $metadata )
+				|| ! is_file( $primary_path )
+				|| ! self::path_is_within( self::resolved_path( $primary_path ), $directory )
+				|| ! self::ensure_attachment_metadata( $attachment_id, $metadata )
+				|| ! self::ensure_attached_file( $attachment_id, $primary_path )
+			) {
 				self::delete_generated_image_files( $destination, is_array( $metadata ) ? $metadata : [] );
 				self::ensure_attached_file( $attachment_id, $source );
 				if ( is_array( $old_metadata ) ) {
@@ -357,6 +386,7 @@ final class VRodos_Storage_Manager {
 				wp_delete_file( $destination );
 				return new WP_Error( 'vrodos_migration_metadata_failed', 'WordPress rejected the migrated image metadata.' );
 			}
+			$destination = $primary_path;
 		}
 		return [ 'attachmentId' => $attachment_id, 'source' => wp_normalize_path( $source ), 'legacyFiles' => $legacy_files, 'destination' => wp_normalize_path( $destination ), 'sha256' => $hash, 'sizeBytes' => (int) filesize( $destination ) ];
 	}

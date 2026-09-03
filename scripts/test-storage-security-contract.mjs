@@ -49,13 +49,19 @@ assert(storage.includes("replace_attachment_references"), "attachment replacemen
 
 const postTypes = read("includes/class-vrodos-post-type-manager.php");
 assert((postTypes.match(/'map_meta_cap'\s*=>\s*true/g) || []).length === 3, "project, scene, and asset capabilities are object-aware");
+assert(postTypes.includes("'edit_posts'          => 'edit_vrodos_projects'"), "project collection editing uses a primitive capability");
+assert(postTypes.includes("'edit_post'           => 'edit_vrodos_project'"), "single-project editing uses an object capability");
+assert(postTypes.includes("'edit_posts'            => 'edit_vrodos_scenes'"), "scene collection editing uses a primitive capability");
+assert(postTypes.includes("'edit_post'             => 'edit_vrodos_scene'"), "single-scene editing uses an object capability");
+assert(postTypes.includes("'edit_posts'            => 'edit_vrodos_assets3d'"), "asset collection editing uses a primitive capability");
+assert(postTypes.includes("'edit_post'             => 'edit_vrodos_asset3d'"), "single-asset editing uses an object capability");
 
 const projectAjax = read("includes/ajax/class-vrodos-project-ajax.php");
 const projectListHandler = projectAjax.slice(
 	projectAjax.indexOf("public function vrodos_fetch_list_projects_callback"),
 	projectAjax.lastIndexOf("\n}")
 );
-assert(projectListHandler.includes("current_user_can( 'publish_vrodos_project' )"), "project listing uses a collection-level capability");
+assert(projectListHandler.includes("current_user_can( 'publish_vrodos_projects' )"), "project listing uses a collection-level capability");
 assert(!projectListHandler.includes("current_user_can( 'edit_vrodos_project' )"), "project listing does not invoke an object capability without an ID");
 
 const publisher = read("includes/class-vrodos-compiler-resource-publisher.php");

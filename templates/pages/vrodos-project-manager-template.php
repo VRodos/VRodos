@@ -39,7 +39,7 @@ if (!is_user_logged_in() || !current_user_can('administrator')) {
 					<span>VRodos</span>
 					<span>Project Manager</span>
 				</div>
-				<h1 id="vrodos-auth-title">Create and manage immersive 3D environments.</h1>
+				<h1 id="vrodos-auth-title" class="vrodos-display-title">Create and manage immersive 3D environments.</h1>
 				<div class="vrodos-auth-preview" aria-label="VRodos scene editor preview">
 					<div class="vrodos-auth-preview-bar">
 						<span></span>
@@ -88,7 +88,7 @@ else {
         <nav class="tw-flex-none tw-bg-white tw-border-b tw-border-slate-200 tw-px-8 tw-py-4 tw-z-[60] tw-shadow-sm">
             <div class="tw-max-w-screen-2xl tw-mx-auto tw-flex tw-items-center tw-justify-between">
                 <div class="tw-flex tw-items-center tw-gap-4">
-                    <span class="tw-text-xl tw-font-black tw-tracking-tight tw-text-primary">VRODOS</span>
+                    <span class="vrodos-display-title tw-text-xl tw-font-black tw-tracking-tight tw-text-primary">VRODOS</span>
                     <div class="tw-h-4 tw-w-px tw-bg-slate-200"></div>
                     <h1 class="tw-text-xs tw-font-bold tw-text-slate-400 uppercase tw-tracking-widest"><?php echo $full_title; ?> Manager</h1>
                 </div>
@@ -146,7 +146,7 @@ else {
             <aside class="tw-w-[400px] tw-bg-base-100 tw-border-l tw-border-base-300 tw-p-8 tw-overflow-y-auto tw-z-20">
                 <div class="tw-space-y-8">
                     <div>
-                        <h2 class="tw-text-lg tw-font-bold tw-text-base-content">Create New Project</h2>
+                        <h2 class="vrodos-display-title tw-text-lg tw-font-bold tw-text-base-content">Create New Project</h2>
                         <p class="tw-text-xs tw-text-base-content/60 tw-mt-1">Add a new project to your collection.</p>
                     </div>
 

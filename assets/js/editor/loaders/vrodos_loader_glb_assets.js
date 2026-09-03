@@ -18,7 +18,6 @@ function vrodosLoaderMergeGlbMetadata(resource, resourcesGLB) {
         'editorPreviewStatus',
         'editorPreviewMessage',
         'editorPreviewShouldUse',
-        'editorPreviewMustAvoidSource',
         'editorPreviewReasons',
         'glbAnalysis'
     ].forEach((key) => {
@@ -62,10 +61,6 @@ function vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB, modelBas
         (resourcesGLB && resourcesGLB.editorPreviewShouldUse) ||
         (resource && resource.editorPreviewShouldUse)
     );
-    const mustAvoidSource = Boolean(
-        (resourcesGLB && resourcesGLB.editorPreviewMustAvoidSource) ||
-        (resource && resource.editorPreviewMustAvoidSource)
-    );
 
     if (shouldUsePreview && previewStatus === 'ready' && previewUrl) {
         return {
@@ -74,17 +69,6 @@ function vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB, modelBas
             usesPreview: true,
             status: previewStatus,
             message: (resourcesGLB && resourcesGLB.editorPreviewMessage) || (resource && resource.editorPreviewMessage) || 'Editor preview optimized.'
-        };
-    }
-
-    if (shouldUsePreview && mustAvoidSource) {
-        return {
-            loadUrl: '',
-            canonicalUrl,
-            usesPreview: false,
-            skipSource: true,
-            status: previewStatus,
-            message: (resourcesGLB && resourcesGLB.editorPreviewMessage) || (resource && resource.editorPreviewMessage) || 'Large asset preview is not ready yet.'
         };
     }
 
@@ -135,54 +119,6 @@ function vrodosLoaderAddGlbSceneObject(object, name, resources3D, loadInfo) {
     }
 
     return finalObject;
-}
-
-function vrodosLoaderCreateLargeAssetPlaceholder(name, resource, resources3D, loadInfo) {
-    const group = new THREE.Group();
-    const box = new THREE.Mesh(
-        new THREE.BoxGeometry(1.2, 1.2, 1.2),
-        new THREE.MeshBasicMaterial({
-            color: 0x0f766e,
-            transparent: true,
-            opacity: 0.18,
-            wireframe: true
-        })
-    );
-    box.name = `${name}_large_asset_placeholder_box`;
-    box.isSelectableMesh = false;
-    group.add(box);
-
-    const marker = new THREE.Mesh(
-        new THREE.SphereGeometry(0.12, 24, 16),
-        new THREE.MeshBasicMaterial({ color: 0x14b8a6 })
-    );
-    marker.name = `${name}_large_asset_preview_status`;
-    marker.position.set(0, 0.78, 0);
-    marker.isSelectableMesh = false;
-    group.add(marker);
-
-    VRODOS.loader.setObjectProperties(group, name, resources3D);
-    group.isSelectableMesh = true;
-    group.glb_path = loadInfo.canonicalUrl || resource.glb_path || '';
-    group.path = loadInfo.canonicalUrl || resource.path || '';
-    group.editor_loaded_glb_path = '';
-    group.editor_preview_loaded = false;
-    group.editor_preview_placeholder = true;
-    group.editor_preview_status = loadInfo.status || 'queued';
-    group.editor_preview_message = loadInfo.message || 'Large asset preview is not ready yet.';
-    group.editor_preview_full_load_available = true;
-
-    VRODOS.editor.objectFactory.addSceneObject(group, {
-        selectable: true,
-        incrementLoaded: false,
-        renderReason: 'large-glb-placeholder'
-    });
-
-    if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
-        VRODOS.api.setSceneLoadingProgressText(group.editor_preview_message);
-    }
-
-    return group;
 }
 
 VRODOS.loader.fetchGlbMetadata = async function(name, resource) {
@@ -264,18 +200,6 @@ VRODOS.loader.loadGlbAsset = function(manager, gltfLoader, name, resource, resou
                 vrodosLoaderMergeGlbMetadata(resource, resourcesGLB);
 
                 const loadInfo = vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB, modelBaseUrl);
-                if (loadInfo.skipSource) {
-                    const placeholder = vrodosLoaderCreateLargeAssetPlaceholder(name, resource, resources3D, loadInfo);
-                    console.warn(`Large asset '${name}' was not loaded because its editor preview is not ready.`, {
-                        asset_id: resource.asset_id || '',
-                        status: loadInfo.status,
-                        message: loadInfo.message
-                    });
-                    if (manager) manager.itemEnd(name);
-                    resolve(placeholder);
-                    return;
-                }
-
                 if (!loadInfo.loadUrl) {
                     if (manager) {
                         manager.itemError(name);

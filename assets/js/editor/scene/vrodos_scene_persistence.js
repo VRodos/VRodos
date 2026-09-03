@@ -296,8 +296,6 @@ VRODOS.exporter.SceneExporter = class {
             'editor_preview_loaded',
             'editor_preview_status',
             'editor_preview_message',
-            'editor_preview_placeholder',
-            'editor_preview_full_load_available',
             'follow_camera',
             'follow_camera_x',
             'follow_camera_z'

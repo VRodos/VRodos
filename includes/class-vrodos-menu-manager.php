@@ -114,7 +114,6 @@ class VRodos_Menu_Manager {
 		add_submenu_page( 'vrodos-plugin', 'Projects', 'Projects', 'manage_options', 'edit.php?post_type=vrodos_game' );
 		add_submenu_page( 'vrodos-plugin', 'Project Types', 'Project Types', 'manage_options', 'edit-tags.php?post_type=vrodos_game&taxonomy=vrodos_game_type' );
 		add_submenu_page( 'vrodos-plugin', 'Scenes', 'Scenes', 'manage_options', 'edit.php?post_type=vrodos_scene' );
-		add_submenu_page( 'vrodos-plugin', 'Scene Types', 'Scene Types', 'manage_options', 'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_yaml' );
 		add_submenu_page( 'vrodos-plugin', 'Scenes Grouped by Project', 'Scenes Grouped by Project', 'manage_options', 'edit-tags.php?post_type=vrodos_scene&taxonomy=vrodos_scene_pgame' );
 		add_submenu_page( 'vrodos-plugin', 'Assets', 'Assets', 'manage_options', 'edit.php?post_type=vrodos_asset3d' );
 		add_submenu_page( 'vrodos-plugin', 'Asset Types', 'Asset Types', 'manage_options', 'edit-tags.php?post_type=vrodos_asset3d&taxonomy=vrodos_asset3d_cat' );

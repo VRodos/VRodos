@@ -53,7 +53,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
     <header class="tw-flex-none tw-bg-white tw-border-b tw-border-slate-200 tw-px-8 tw-py-4 tw-z-[60] tw-shadow-sm">
         <div class="tw-max-w-screen-2xl tw-mx-auto tw-flex tw-items-center tw-justify-between">
             <div class="tw-flex tw-items-center tw-gap-4">
-                <span class="tw-text-xl tw-font-black tw-tracking-tight tw-text-primary">VRODOS</span>
+                <span class="vrodos-display-title tw-text-xl tw-font-black tw-tracking-tight tw-text-primary">VRODOS</span>
                 <div class="tw-h-4 tw-w-px tw-bg-slate-200"></div>
                 <div class="tw-flex tw-items-center tw-gap-3">
                     <h1 class="tw-text-xs tw-font-bold tw-text-slate-400 uppercase tw-tracking-widest">Asset Manager</h1>

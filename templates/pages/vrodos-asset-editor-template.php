@@ -87,7 +87,7 @@ extract($data);
     <header class="tw-h-16 tw-flex-none tw-bg-white tw-border-b tw-border-slate-200 tw-px-8 tw-z-[60] tw-shadow-sm tw-flex tw-items-center">
         <div class="tw-w-full tw-flex tw-items-center tw-justify-between">
             <div class="tw-flex tw-items-center tw-gap-4">
-                <span class="tw-text-xl tw-font-black tw-tracking-tight tw-text-primary">VRODOS</span>
+                <span class="vrodos-display-title tw-text-xl tw-font-black tw-tracking-tight tw-text-primary">VRODOS</span>
             </div>
 
             <div class="tw-flex tw-items-center tw-gap-6">
@@ -121,7 +121,7 @@ extract($data);
                 <div class="tw-w-20 tw-h-20 tw-bg-slate-50 tw-rounded-2xl tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-6">
                     <i data-lucide="lock" class="tw-w-10 tw-h-10 tw-text-slate-300"></i>
                 </div>
-                <h2 class="tw-text-2xl tw-font-black tw-text-slate-800 tw-mb-4">Authentication Required</h2>
+                <h2 class="vrodos-display-title tw-text-2xl tw-font-black tw-text-slate-800 tw-mb-4">Authentication Required</h2>
                 <p class="tw-text-slate-500 tw-font-medium tw-mb-8">Please login to access the asset editor and manage your 3D repository.</p>
                 <div class="tw-flex tw-flex-col tw-gap-3">
                     <a href="<?php echo wp_login_url(get_permalink()); ?>" class="tw-btn tw-btn-primary tw-text-white tw-font-bold tw-rounded-xl">Log In</a>

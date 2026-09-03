@@ -64,7 +64,7 @@ class VRodos_Project_AJAX {
 		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) ) {
 			wp_send_json_error( 'Invalid security token.', 403 );
 		}
-		if ( ! current_user_can( 'publish_vrodos_project' ) ) {
+		if ( ! current_user_can( 'publish_vrodos_projects' ) ) {
 			wp_send_json_error( 'Insufficient permissions.', 403 );
 		}
 
@@ -172,7 +172,7 @@ class VRodos_Project_AJAX {
 	 * Fetch list of projects and render HTML
 	 */
 	public function vrodos_fetch_list_projects_callback() {
-		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) || ! current_user_can( 'publish_vrodos_project' ) ) {
+		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) || ! current_user_can( 'publish_vrodos_projects' ) ) {
 			wp_send_json_error( 'Insufficient permissions.', 403 );
 		}
 

@@ -327,8 +327,12 @@ final class VRodos_Storage_CLI_Command {
 		$attachment_id = absint( $item['attachmentId'] ?? $reference['attachmentId'] ?? 0 );
 		$destination   = wp_normalize_path( (string) ( $item['destination'] ?? '' ) );
 		$current       = get_attached_file( $attachment_id, true );
+		$stored        = wp_normalize_path( (string) get_post_meta( $attachment_id, '_wp_attached_file', true ) );
+		$private_root  = VRodos_Storage_Manager::private_site_root( false );
 
-		if ( ! is_file( $destination ) && is_string( $current ) && is_file( $current ) ) {
+		if ( is_string( $private_root ) && is_file( $stored ) && VRodos_Storage_Manager::path_is_within( $stored, $private_root ) ) {
+			$destination = $stored;
+		} elseif ( ! is_file( $destination ) && is_string( $current ) && is_file( $current ) ) {
 			$destination = wp_normalize_path( $current );
 		}
 		if ( ! is_file( $destination ) ) {
@@ -589,6 +593,7 @@ final class VRodos_Storage_CLI_Command {
 					$html = str_replace( $old_urls, $published['url'], $html );
 					$media[ $published['entry']['file'] ] = $published['entry'];
 				}
+				$html = $this->migrate_remaining_client_uploads( $html, $project_id, $media );
 				$temporary = $clients_dir . basename( $filename ) . '.migration.partial';
 				if ( false === file_put_contents( $temporary, $html, LOCK_EX ) ) {
 					throw new RuntimeException( 'Could not stage migrated client ' . basename( $filename ) . '.' );
@@ -604,6 +609,31 @@ final class VRodos_Storage_CLI_Command {
 		}
 		$state['legacyClientSources'] = array_values( array_unique( $state['legacyClientSources'] ?? [] ) );
 		$this->save_state( $state );
+	}
+
+	private function migrate_remaining_client_uploads( string $html, int $project_id, array &$media ): string {
+		$uploads     = wp_upload_dir( null, false );
+		$upload_path = trailingslashit( (string) wp_parse_url( (string) $uploads['baseurl'], PHP_URL_PATH ) );
+		if ( '' === $upload_path ) {
+			return $html;
+		}
+		$pattern = '#(?:https?://[^/"\'<>\s]+)?' . preg_quote( $upload_path, '#' ) . '[^"\'<>\s]+#i';
+		if ( ! preg_match_all( $pattern, $html, $matches ) ) {
+			return $html;
+		}
+		foreach ( array_unique( $matches[0] ) as $old_url ) {
+			if ( str_contains( $old_url, '/vrodos/published/' ) ) {
+				continue;
+			}
+			$source = VRodos_Storage_Manager::resolve_migration_upload_source( $old_url );
+			if ( is_wp_error( $source ) ) {
+				throw new RuntimeException( 'Legacy client upload could not be migrated: ' . $old_url );
+			}
+			$published = $this->publish_migration_media( $project_id, $source, 0 );
+			$html = str_replace( $old_url, $published['url'], $html );
+			$media[ $published['entry']['file'] ] = $published['entry'];
+		}
+		return $html;
 	}
 
 	private function infer_project_id_for_legacy_client( string $filename ): int {

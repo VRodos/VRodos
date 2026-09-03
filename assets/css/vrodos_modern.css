@@ -4,10 +4,29 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap');
 
+@font-face {
+  font-family: 'Cal Sans';
+  src: url('../vendor/fonts/cal-sans/CalSans-Regular.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
 @layer base {
   body {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
   }
+}
+
+.vrodos-display-title {
+  font-family: 'Cal Sans', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.025em;
+}
+
+.vrodos-display-title__meta {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  letter-spacing: normal;
 }
 
 /* ═══════════════════════════════════════════

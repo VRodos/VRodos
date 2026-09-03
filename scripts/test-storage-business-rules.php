@@ -112,6 +112,10 @@ try {
 		is_string( $resolved_legacy_url ) && realpath( $resolved_legacy_url ) === realpath( $legacy_url_file ),
 		'legacy upload URL resolves to the existing local file'
 	);
+	vrodos_storage_assert(
+		realpath( VRodos_Storage_Manager::resolve_migration_upload_source( '/wp-content/uploads/legacy/url-source.glb' ) ) === realpath( $legacy_url_file ),
+		'root-relative legacy upload URL resolves to the existing local file'
+	);
 
 	$legacy_absolute_file = trailingslashit( $uploads_root ) . 'legacy/windows-source.glb';
 	file_put_contents( $legacy_absolute_file, 'legacy Windows source' );

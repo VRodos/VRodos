@@ -15,7 +15,6 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 					'sourceSizeBytes' => 0,
 					'analysis'        => [],
 					'shouldPreview'   => false,
-					'mustAvoidSource' => false,
 				]
 			);
 		}
@@ -67,7 +66,6 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 				'sourceSizeBytes' => (int) $source['sizeBytes'],
 				'analysis'        => self::public_editor_analysis( is_array( $analysis ) ? $analysis : [] ),
 				'shouldPreview'   => (bool) $decision['shouldPreview'],
-				'mustAvoidSource' => (bool) $decision['mustAvoidSource'],
 				'reasons'         => $decision['reasons'],
 			]
 		);
@@ -306,9 +304,8 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		}
 
 		return [
-			'shouldPreview'   => ! empty( $reasons ),
-			'mustAvoidSource' => $source_size_bytes >= self::EDITOR_PREVIEW_HUGE_FILE_THRESHOLD_BYTES || $triangles >= self::EDITOR_PREVIEW_HUGE_TRIANGLE_THRESHOLD,
-			'reasons'         => array_values( array_unique( $reasons ) ),
+			'shouldPreview' => ! empty( $reasons ),
+			'reasons'       => array_values( array_unique( $reasons ) ),
 		];
 	}
 
@@ -352,7 +349,6 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 				'sourceSizeBytes' => 0,
 				'analysis'        => [],
 				'shouldPreview'   => false,
-				'mustAvoidSource' => false,
 				'reasons'         => [],
 			],
 			$extra

@@ -31,6 +31,10 @@ class VRodos_Admin_Dashboard_Page {
 			}
 			$plugin_data = get_plugin_data( VRODOS_PLUGIN_FILE );
 		}
+
+		$logo_relative_path = 'ui/vrodos-logo.png';
+		$logo_version       = (string) filemtime( VRodos_Path_Manager::asset_path( 'images/' . $logo_relative_path ) );
+		$logo_url           = add_query_arg( 'ver', $logo_version, VRodos_Path_Manager::image_url( $logo_relative_path ) );
 		?>
 
 
@@ -75,7 +79,7 @@ class VRodos_Admin_Dashboard_Page {
 			<div class="tw-max-w-7xl tw-mx-auto">
 				<!-- Header Section -->
 				<div class="tw-flex tw-justify-between tw-items-center tw-mb-8">
-					<h1 class="tw-text-3xl tw-font-bold tw-text-slate-800">VRodos Dashboard <span class="tw-text-sm tw-font-normal tw-opacity-60">(v<?php echo $plugin_data['Version']; ?>)</span></h1>
+					<h1 class="vrodos-display-title tw-text-3xl tw-font-bold tw-text-slate-800">VRodos Dashboard <span class="vrodos-display-title__meta tw-text-sm tw-font-normal tw-opacity-60">(v<?php echo $plugin_data['Version']; ?>)</span></h1>
 				</div>
 
 				<!-- Hero Section -->
@@ -83,12 +87,12 @@ class VRodos_Admin_Dashboard_Page {
 					<div class="tw-hero-content tw-flex-col lg:tw-flex-row-reverse tw-p-8 lg:tw-p-12 tw-gap-8">
 						<div class="tw-relative">
 							<div class="tw-absolute -tw-inset-4 tw-bg-white/20 tw-rounded-full tw-blur-3xl"></div>
-							<img src="<?php echo esc_url( VRodos_Path_Manager::image_url( 'ui/VRodos_icon_512.png' ) ); ?>"
-								 alt="VRodos Icon" 
-								 class="tw-relative tw-w-40 tw-h-40 lg:tw-w-56 lg:tw-h-56 tw-drop-shadow-2xl">
+							<img src="<?php echo esc_url( $logo_url ); ?>"
+								 alt="VRodos logo"
+								 class="tw-relative tw-w-40 lg:tw-w-56 tw-drop-shadow-2xl">
 						</div>
 						<div class="tw-max-w-2xl">
-							<h1 class="tw-text-5xl tw-font-black tw-mb-6 tw-tracking-tight">Welcome to VRodos!</h1>
+							<h1 class="vrodos-display-title tw-text-5xl tw-font-black tw-mb-6 tw-tracking-tight">Welcome to VRodos!</h1>
 							<p class="tw-text-xl tw-opacity-95 tw-mb-10 tw-leading-relaxed">Create immersive 3D, VR and AR experiences directly within WordPress using our powerful WebGL editor.</p>
 							<div class="tw-flex tw-flex-wrap tw-gap-4">
 								<a href="<?php echo esc_url( get_permalink( $allProjectsPage[0]->ID ) ); ?>" 

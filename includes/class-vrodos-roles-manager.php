@@ -87,33 +87,57 @@ class VRodos_Roles_Manager {
 
 	public function vrodos_add_capabilities_to_admin(): void {
 		$role = get_role( 'administrator' );
+		if ( ! $role ) {
+			return;
+		}
 
 		// Caps about Games
-		$role->add_cap( 'publish_vrodos_project' );
-		$role->add_cap( 'edit_vrodos_project' );
-		$role->add_cap( 'edit_others_vrodos_project' );
-		$role->add_cap( 'delete_vrodos_project' );
-		$role->add_cap( 'delete_others_vrodos_project' );
-		$role->add_cap( 'read_private_vrodos_project' );
-		$role->add_cap( 'read_vrodos_project' );
+		foreach ( [
+			'publish_vrodos_projects',
+			'edit_vrodos_projects',
+			'edit_others_vrodos_projects',
+			'edit_private_vrodos_projects',
+			'edit_published_vrodos_projects',
+			'delete_vrodos_projects',
+			'delete_others_vrodos_projects',
+			'delete_private_vrodos_projects',
+			'delete_published_vrodos_projects',
+			'read_private_vrodos_projects',
+		] as $capability ) {
+			$role->add_cap( $capability );
+		}
 
 		// Caps about Scenes
-		$role->add_cap( 'publish_vrodos_scene' );
-		$role->add_cap( 'edit_vrodos_scene' );
-		$role->add_cap( 'edit_others_vrodos_scene' );
-		$role->add_cap( 'delete_vrodos_scene' );
-		$role->add_cap( 'delete_others_vrodos_scene' );
-		$role->add_cap( 'read_vrodos_scene' );
-		$role->add_cap( 'read_private_vrodos_scene' );
+		foreach ( [
+			'publish_vrodos_scenes',
+			'edit_vrodos_scenes',
+			'edit_others_vrodos_scenes',
+			'edit_private_vrodos_scenes',
+			'edit_published_vrodos_scenes',
+			'delete_vrodos_scenes',
+			'delete_others_vrodos_scenes',
+			'delete_private_vrodos_scenes',
+			'delete_published_vrodos_scenes',
+			'read_private_vrodos_scenes',
+		] as $capability ) {
+			$role->add_cap( $capability );
+		}
 
 		// Caps about Assets
-		$role->add_cap( 'publish_vrodos_asset3d' );
-		$role->add_cap( 'edit_vrodos_asset3d' );
-		$role->add_cap( 'edit_others_vrodos_asset3d' );
-		$role->add_cap( 'delete_vrodos_asset3d' );
-		$role->add_cap( 'delete_others_vrodos_asset3d' );
-		$role->add_cap( 'read_private_vrodos_asset3d' );
-		$role->add_cap( 'read_vrodos_asset3d' );
+		foreach ( [
+			'publish_vrodos_assets3d',
+			'edit_vrodos_assets3d',
+			'edit_others_vrodos_assets3d',
+			'edit_private_vrodos_assets3d',
+			'edit_published_vrodos_assets3d',
+			'delete_vrodos_assets3d',
+			'delete_others_vrodos_assets3d',
+			'delete_private_vrodos_assets3d',
+			'delete_published_vrodos_assets3d',
+			'read_private_vrodos_assets3d',
+		] as $capability ) {
+			$role->add_cap( $capability );
+		}
 
 		// Caps about Taxonomies
 		$role->add_cap( 'manage_vrodos_project_type' );

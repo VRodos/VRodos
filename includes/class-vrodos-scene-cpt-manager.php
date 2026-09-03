@@ -312,7 +312,6 @@ class VRodos_Scene_CPT_Manager {
 			$metadata['editorPreviewStatus'] = (string) ( $preview_state['status'] ?? 'none' );
 			$metadata['editorPreviewMessage'] = (string) ( $preview_state['message'] ?? '' );
 			$metadata['editorPreviewShouldUse'] = ! empty( $preview_state['shouldPreview'] );
-			$metadata['editorPreviewMustAvoidSource'] = ! empty( $preview_state['mustAvoidSource'] );
 			$metadata['editorPreviewReasons'] = is_array( $preview_state['reasons'] ?? null ) ? $preview_state['reasons'] : [];
 			$metadata['glbAnalysis'] = is_array( $preview_state['analysis'] ?? null ) ? $preview_state['analysis'] : [];
 		}

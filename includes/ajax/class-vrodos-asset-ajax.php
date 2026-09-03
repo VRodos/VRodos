@@ -135,7 +135,6 @@ class VRodos_Asset_AJAX {
 		$output->editorPreviewMessage = '';
 		$output->editorPreviewUsed = false;
 		$output->editorPreviewShouldUse = false;
-		$output->editorPreviewMustAvoidSource = false;
 		$output->editorPreviewReasons = [];
 		$output->glbAnalysis = [];
 
@@ -147,7 +146,6 @@ class VRodos_Asset_AJAX {
 			$output->editorPreviewMessage = (string) ( $preview_state['message'] ?? '' );
 			$output->editorPreviewUsed = ! empty( $preview_state['used'] );
 			$output->editorPreviewShouldUse = ! empty( $preview_state['shouldPreview'] );
-			$output->editorPreviewMustAvoidSource = ! empty( $preview_state['mustAvoidSource'] );
 			$output->editorPreviewReasons = is_array( $preview_state['reasons'] ?? null ) ? $preview_state['reasons'] : [];
 			$output->glbAnalysis = is_array( $preview_state['analysis'] ?? null ) ? $preview_state['analysis'] : [];
 		}
