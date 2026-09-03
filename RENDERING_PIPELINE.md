@@ -421,6 +421,7 @@ When AO is active, PMNDRS disables composer MSAA and recommends SMAA because the
 PMNDRS AO backends:
 
 - Default: `POSTPROCESSING.NormalPass` plus `POSTPROCESSING.SSAOEffect`, with `SSAOEffect` merged into the fused `EffectPass`.
+- The shared `NormalPass` excludes Takram atmosphere/background helper meshes. Their fullscreen sky materials are replaced by the pass's normal override material, so including those helpers would turn the 2 x 2 sky plane at the world origin into false SSAO geometry.
 - The PMNDRS debug overlay reports `ao: native-ssao` or `ao: off`.
 
 Native SSAO presets are budgeted so the final color buffer stays full-resolution while the AO normal/depth work scales with the AO preset:

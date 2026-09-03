@@ -618,6 +618,19 @@ assert(
     "SSAO setup must preserve a NormalPass already owned by masked cloud light shafts"
 );
 
+const normalPassFilterStart = pmndrsPostFxSource.indexOf("function isPmndrsNormalPassExcludedObject");
+const normalPassFilterEnd = pmndrsPostFxSource.indexOf("function ensurePmndrsSharedNormalPass", normalPassFilterStart);
+const normalPassFilterSource = pmndrsPostFxSource.slice(normalPassFilterStart, normalPassFilterEnd);
+assert(
+    normalPassFilterStart !== -1 &&
+        normalPassFilterSource.includes("node.userData.vrodosPmndrsAtmosphereSky") &&
+        normalPassFilterSource.includes("originalRender.apply(this, arguments)") &&
+        normalPassFilterSource.includes("finally") &&
+        normalPassFilterSource.includes("node.visible = true") &&
+        pmndrsPostFxSource.includes("installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass)"),
+    "NormalPass must exclude atmosphere helper geometry and restore its visibility after rendering"
+);
+
 assert(
     pmndrsPostFxSource.includes("cloudShadowLengthBufferReady") &&
         pmndrsPostFxSource.includes("aerialShadowLengthDefineReady") &&

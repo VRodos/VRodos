@@ -2325,11 +2325,41 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
     function getPmndrsAmbientOcclusionBackend(self) {
       return isPmndrsAmbientOcclusionEnabled(self) ? "native-ssao" : "off";
     }
+    function isPmndrsNormalPassExcludedObject(node) {
+      return Boolean(node && node.userData && (node.userData.vrodosPmndrsAtmosphereSky || node.userData.vrodosPmndrsAtmosphereStars || node.userData.vrodosPmndrsAtmosphereMoon || node.userData.vrodosVrTakramLightsOnlySky || node.userData.vrodosPmndrsLegacySuppressed));
+    }
+    function installPmndrsNormalPassVisibilityFilter(normalPass) {
+      if (!normalPass || typeof normalPass.render !== "function" || normalPass._vrodosVisibilityFilterInstalled) {
+        return;
+      }
+      const originalRender = normalPass.render;
+      normalPass.render = function() {
+        const normalScene = this.renderPass && this.renderPass.scene;
+        const hiddenObjects = [];
+        if (normalScene && typeof normalScene.traverse === "function") {
+          normalScene.traverse((node) => {
+            if (node.visible !== false && isPmndrsNormalPassExcludedObject(node)) {
+              hiddenObjects.push(node);
+              node.visible = false;
+            }
+          });
+        }
+        try {
+          return originalRender.apply(this, arguments);
+        } finally {
+          hiddenObjects.forEach((node) => {
+            node.visible = true;
+          });
+        }
+      };
+      normalPass._vrodosVisibilityFilterInstalled = true;
+    }
     function ensurePmndrsSharedNormalPass(self, composer, scene, camera, PP, resolutionScale, reason) {
       if (!self || !composer || !scene || !camera || !PP || !PP.NormalPass) {
         return null;
       }
       if (self.pmndrsNativeNormalPass) {
+        installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass);
         if (reason && self._pmndrsNativeNormalPassReason && self._pmndrsNativeNormalPassReason.indexOf(reason) === -1) {
           self._pmndrsNativeNormalPassReason = `${self._pmndrsNativeNormalPassReason}+${reason}`;
         }
@@ -2340,6 +2370,7 @@ void mainImage(const vec4 inputColor, const vec2 uv, out vec4 outputColor) {
         self.pmndrsNativeNormalPass = new PP.NormalPass(scene, camera, {
           resolutionScale: normalPassResolutionScale
         });
+        installPmndrsNormalPassVisibilityFilter(self.pmndrsNativeNormalPass);
         composer.addPass(self.pmndrsNativeNormalPass);
         self._pmndrsNativeNormalPassResolutionScale = normalPassResolutionScale;
         self._pmndrsNativeNormalPassReason = reason || "unknown";
