@@ -45,6 +45,8 @@ assert(storage.includes("VRODOS_PRIVATE_STORAGE_DIR"), "private root override is
 assert(storage.includes("'site-' . get_current_blog_id()"), "private storage is site-separated");
 assert(storage.includes("wp_ajax_vrodos_private_media"), "authenticated private delivery is registered");
 assert(storage.includes("HTTP_RANGE") && storage.includes("REQUEST_METHOD") && storage.includes("'HEAD'"), "range and HEAD delivery are implemented");
+const privateStream = storage.slice(storage.indexOf("private static function stream_private_path"), storage.indexOf("private static function serve_private_staging_file"));
+assert(privateStream.indexOf("while ( ob_get_level() > 0 )") < privateStream.indexOf("header( 'Content-Length:"), "private delivery clears output buffers before declaring the binary response length");
 assert(storage.includes("replace_attachment_references"), "attachment replacement uses a centralized metadata transaction");
 
 const postTypes = read("includes/class-vrodos-post-type-manager.php");

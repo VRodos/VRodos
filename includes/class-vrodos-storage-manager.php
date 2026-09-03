@@ -488,6 +488,9 @@ final class VRodos_Storage_Manager {
 			header( sprintf( 'Content-Range: bytes %d-%d/%d', $start, $end, $size ) );
 		}
 
+		while ( ob_get_level() > 0 ) {
+			ob_end_clean();
+		}
 		nocache_headers();
 		header( 'Accept-Ranges: bytes' );
 		header( 'Content-Type: ' . sanitize_mime_type( $mime ) );
