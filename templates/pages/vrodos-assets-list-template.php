@@ -71,7 +71,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                         <?php if ($single_project_asset_list && $current_game_project_post): ?>
                             Project: <span class="tw-text-primary tw-normal-case"><?php echo esc_html($current_game_project_post->post_title); ?></span>
                         <?php else: ?>
-                            Shared
+                            <?php echo $is_restricted_immerse_user ? 'Immerse + Public' : 'Shared'; ?>
                         <?php endif; ?>
                     </div>
                     <?php if ($help_message): ?>
@@ -100,19 +100,25 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
         $categories = array_unique(array_column($assets, 'category_name'));
         ?>
         <div class="tw-mb-12 tw-flex tw-flex-wrap tw-items-center tw-gap-10 tw-bg-white/80 tw-backdrop-blur-md tw-p-3 tw-pr-8 tw-rounded-2xl tw-border tw-border-slate-200 tw-w-fit tw-shadow-sm">
+            <?php if ( ! $is_restricted_immerse_user ) : ?>
             <!-- Visibility Filters -->
             <div class="tw-flex tw-items-center tw-gap-1.5 tw-p-1 tw-bg-slate-50 tw-rounded-xl">
                 <button class="visibility-filter-btn tw-btn tw-btn-xs tw-btn-primary tw-rounded-lg tw-px-5" data-visibility="all">All</button>
                 <button class="visibility-filter-btn tw-btn tw-btn-xs tw-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-visibility="shared">Shared</button>
                 <button class="visibility-filter-btn tw-btn tw-btn-xs tw-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-visibility="private">Private</button>
             </div>
+			<?php endif; ?>
 
-            <?php if ( ! empty( $has_immerse_assets ) ) : ?>
+			<?php if ( $is_restricted_immerse_user || ! empty( $has_immerse_assets ) ) : ?>
                 <!-- Source Filters -->
                 <div class="tw-flex tw-items-center tw-gap-1.5 tw-p-1 tw-bg-slate-50 tw-rounded-xl">
                     <button class="source-filter-btn tw-btn tw-btn-xs tw-btn-primary tw-rounded-lg tw-px-5" data-source="all">All Assets</button>
                     <button class="source-filter-btn tw-btn tw-btn-xs tw-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-source="immerse">Immerse</button>
-                    <button class="source-filter-btn tw-btn tw-btn-xs tw-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-source="native">VRodos</button>
+					<?php if ( $is_restricted_immerse_user ) : ?>
+						<button class="source-filter-btn tw-btn tw-btn-xs tw-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-source="public">Public</button>
+					<?php else : ?>
+						<button class="source-filter-btn tw-btn tw-btn-xs tw-btn-ghost tw-text-slate-400 tw-rounded-lg tw-px-5 hover:tw-bg-white hover:tw-text-slate-600" data-source="native">VRodos</button>
+					<?php endif; ?>
                 </div>
             <?php endif; ?>
 
@@ -145,6 +151,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
         <!-- Asset Grid -->
         <div id="asset-grid" class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 xl:tw-grid-cols-4 tw-gap-8">
 
+			<?php if ( $can_add_asset ) : ?>
             <!-- Add New Asset Card -->
             <a href="<?php echo $link_to_add; ?>"
                class="tw-group tw-relative tw-flex tw-flex-col tw-items-center tw-justify-center tw-p-8 tw-bg-white tw-border-2 tw-border-dashed tw-border-slate-200 tw-rounded-2xl hover:tw-border-primary hover:tw-bg-primary/5 tw-transition-all tw-duration-300 tw-h-full tw-min-h-[280px] vr-glow-card">
@@ -156,11 +163,12 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                     <p class="tw-text-slate-400 tw-text-xs tw-mt-1 tw-font-bold tw-uppercase tw-tracking-wider"><?php echo $single_project_asset_list ? 'Private to Project' : 'Global Access'; ?></p>
                 </div>
             </a>
+			<?php endif; ?>
 
             <?php
             foreach ( $assets as $asset ) :
-                $pGameId = get_page_by_path( $asset['asset_parent_game_slug'], OBJECT, 'vrodos_game' )->ID;
-                $can_edit_asset = $is_user_admin || ( $user_id == $asset['author_id'] );
+				$pGameId = absint( $asset['owner_project_id'] ?? 0 );
+				$can_edit_asset = ! empty( $asset['can_edit'] );
                 $edit_link = $link_to_edit . 'vrodos_asset=' . $asset['asset_id'] . '&vrodos_game=' . $pGameId . '&preview=0';
                 $asset_icon = vrodos_get_asset_category_icon( $asset['category_slug'] );
                 $asset_preview_icon = vrodos_get_asset_preview_fallback_icon( $asset['category_slug'] );
@@ -237,7 +245,7 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                             <?php endif; ?>
 
                             <!-- Trash Button -->
-                            <?php if ( $is_user_admin || ( $user_id == $asset['author_id'] ) ) : ?>
+							<?php if ( $can_edit_asset ) : ?>
                                 <button onclick="openDeleteModal(<?php echo esc_attr( wp_json_encode( (int) $asset['asset_id'] ) ); ?>, <?php echo esc_attr( wp_json_encode( (string) $asset['asset_name'] ) ); ?>, <?php echo esc_attr( wp_json_encode( (string) $shared_project_slug ) ); ?>)"
                                         class="tw-btn tw-btn-ghost tw-btn-sm tw-btn-square tw-text-slate-300 hover:tw-text-rose-500 tw-transition-colors"
                                         title="Delete Asset">
@@ -322,7 +330,9 @@ function vrodos_get_asset_preview_fallback_icon($category_slug) {
                 var cardSource = card.dataset.source || 'native';
                 var catMatch = (activeCategory === 'all' || cardCat === activeCategory);
                 var visMatch = (activeVisibility === 'all' || cardVis === activeVisibility);
-                var sourceMatch = (activeSource === 'all' || cardSource === activeSource);
+				var sourceMatch = activeSource === 'public'
+					? cardVis === 'shared'
+					: (activeSource === 'all' || cardSource === activeSource);
                 card.style.display = (catMatch && visMatch && sourceMatch) ? '' : 'none';
             });
             initIcons();

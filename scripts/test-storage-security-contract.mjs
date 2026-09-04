@@ -63,12 +63,13 @@ const projectListHandler = projectAjax.slice(
 	projectAjax.indexOf("public function vrodos_fetch_list_projects_callback"),
 	projectAjax.lastIndexOf("\n}")
 );
-assert(projectListHandler.includes("current_user_can( 'publish_vrodos_projects' )"), "project listing uses a collection-level capability");
+assert(projectListHandler.includes("current_user_can( 'edit_vrodos_projects' )"), "project listing uses the collection edit capability shared by administrators and restricted Immerse users");
 assert(!projectListHandler.includes("current_user_can( 'edit_vrodos_project' )"), "project listing does not invoke an object capability without an ID");
 
 const publisher = read("includes/class-vrodos-compiler-resource-publisher.php");
 assert(publisher.includes("hash_file( 'sha256'"), "published media is content-addressed");
 assert(publisher.includes("published_project_directory( $this->project_id, 'media' )"), "published media is project-owned");
+assert(publisher.includes("$this->desktop_profiles_enabled && absint( $meta ) > 0"), "desktop GLB derivatives are required only for assets with a GLB attachment");
 
 const cli = read("includes/class-vrodos-storage-cli-command.php");
 for (const command of ["audit", "migrate", "verify", "cleanup", "purge"]) {

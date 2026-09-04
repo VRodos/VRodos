@@ -9,14 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
-    const projectManager = document.getElementById('vrodos-project-manager');
+	const projectManager = document.getElementById('vrodos-project-manager');
     if (!projectManager) {
         return;
     }
 
-    setupProjectSourceTabs();
-    VRODOS.api.selectProjectSource('vrodos');
-    VRODOS.api.fetchAllProjectsAndAddToDOM(VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass, -1, true, 'vrodos');
+	const initialProjectSource = window.vrodosProjectManagerRestricted ? 'immerse' : 'vrodos';
+	setupProjectSourceTabs();
+	VRODOS.api.selectProjectSource(initialProjectSource);
+	VRODOS.api.fetchAllProjectsAndAddToDOM(VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass, -1, true, initialProjectSource);
     setupProjectCountSync();
 
     // Modals (DaisyUI)
@@ -32,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (val === 'virtualproduction_games'){
             content = "Create a Multiuser Virtual Production project";
         }
-        document.getElementById('project-description-label').innerHTML = content;
+		const description = document.getElementById('project-description-label');
+		if (description) description.innerHTML = content;
     }
     loadProjectTypeDescription();
 
@@ -41,7 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
         radio.addEventListener('change', loadProjectTypeDescription);
     });
 
-    document.getElementById('createNewProjectBtn').addEventListener('click', () => {
+	const createProjectButton = document.getElementById('createNewProjectBtn');
+	if (createProjectButton) {
+		createProjectButton.addEventListener('click', () => {
         // Title of game project
         const titleEl = document.getElementById('title');
         const title_vrodos_project = titleEl ? titleEl.value : "";
@@ -62,7 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 titleEl.classList.add('tw-input-error');
             }
         }
-    });
+		});
+	}
 
     // Delegated event listener for project actions (deletion, rename)
     document.getElementById('ExistingProjectsDivDOM').addEventListener('click', (e) => {
@@ -112,15 +117,21 @@ document.addEventListener('DOMContentLoaded', () => {
         dialog.showModal();
     }
 
-    document.getElementById('deleteProjectBtn').addEventListener('click', () => {
-        document.getElementById('delete-dialog-progress-bar').style.display = '';
-        VRODOS.api.deleteProject(dialog.dataset.projectId, dialog, VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass);
-    });
+	const deleteProjectButton = document.getElementById('deleteProjectBtn');
+	if (deleteProjectButton) {
+		deleteProjectButton.addEventListener('click', () => {
+			document.getElementById('delete-dialog-progress-bar').style.display = '';
+			VRODOS.api.deleteProject(dialog.dataset.projectId, dialog, VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass);
+		});
+	}
 
-    document.getElementById('canceldeleteProjectBtn').addEventListener('click', () => {
-        document.getElementById('delete-dialog-progress-bar').style.display = 'none';
-        dialog.close();
-    });
+	const cancelDeleteProjectButton = document.getElementById('canceldeleteProjectBtn');
+	if (cancelDeleteProjectButton) {
+		cancelDeleteProjectButton.addEventListener('click', () => {
+			document.getElementById('delete-dialog-progress-bar').style.display = 'none';
+			dialog.close();
+		});
+	}
 
     function setupProjectSourceTabs() {
         const tabs = Array.from(document.querySelectorAll('.vrodos-project-source-tab'));

@@ -172,13 +172,16 @@ class VRodos_Project_AJAX {
 	 * Fetch list of projects and render HTML
 	 */
 	public function vrodos_fetch_list_projects_callback() {
-		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) || ! current_user_can( 'publish_vrodos_projects' ) ) {
+		if ( ! check_ajax_referer( 'post_nonce', 'nonce', false ) || ! current_user_can( 'edit_vrodos_projects' ) ) {
 			wp_send_json_error( 'Insufficient permissions.', 403 );
 		}
 
 		$project_source = isset( $_POST['project_source'] ) ? sanitize_key( (string) wp_unslash( $_POST['project_source'] ) ) : 'vrodos';
 		if ( ! in_array( $project_source, [ 'vrodos', 'immerse' ], true ) ) {
 			wp_send_json_error( 'Invalid project source.', 400 );
+		}
+		if ( VRodos_Immerse_Access_Manager::is_restricted_user() && 'immerse' !== $project_source ) {
+			wp_send_json_error( 'Immerse users can only access Immerse projects.', 403 );
 		}
 
 		$perma_structure     = (bool) get_option( 'permalink_structure' );

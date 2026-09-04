@@ -729,7 +729,12 @@ class VRodos_Scene_CPT_Manager {
 		}
 
 		$project_id = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
-		if ( ! $project_id ) {
+		if (
+			! $project_id
+			|| 'vrodos_game' !== get_post_type( $project_id )
+			|| ! current_user_can( 'edit_post', $project_id )
+			|| ! current_user_can( 'publish_vrodos_scenes' )
+		) {
 			return;
 		}
 
@@ -790,6 +795,9 @@ class VRodos_Scene_CPT_Manager {
 		$scene_id = wp_insert_post( $scene_information );
 
 		if ( $scene_id ) {
+			if ( VRodos_Immerse_Access_Manager::is_immerse_project( $project_id ) ) {
+				update_post_meta( (int) $scene_id, '_immerse_source', 'immerse' );
+			}
 			$editscenePage_res = VRodos_Core_Manager::vrodos_getEditpage( 'scene' );
 			if ( empty( $editscenePage_res ) ) {
 				return;

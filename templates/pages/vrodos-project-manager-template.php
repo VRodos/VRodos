@@ -14,6 +14,7 @@ $full_title = 'Projects';
 $full_title_lowercase = 'projects';
 $single = 'project';
 $multiple = 'projects';
+$is_restricted_immerse_user = VRodos_Immerse_Access_Manager::is_restricted_user();
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="emerald">
@@ -22,12 +23,13 @@ $multiple = 'projects';
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>VRodos Project Manager</title>
 	<?php wp_head(); ?>
+	<script>window.vrodosProjectManagerRestricted = <?php echo $is_restricted_immerse_user ? 'true' : 'false'; ?>;</script>
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
 
 <!-- if user not logged in then show a hint to login -->
 <?php
-if (!is_user_logged_in() || !current_user_can('administrator')) {
+if ( ! is_user_logged_in() || ! VRodos_Immerse_Access_Manager::can_use_management_pages() ) {
 	$login_url    = wp_login_url( get_permalink() );
 	$register_url = wp_registration_url();
 	$can_register = (bool) get_option( 'users_can_register' );
@@ -84,6 +86,7 @@ else {
     <div id="vrodos-project-manager"
          class="tw-flex tw-flex-col tw-overflow-hidden"
          style="height: calc(100vh - var(--wp-admin-bar-height, 0px));">
+        <?php wp_nonce_field( 'post_nonce', 'post_nonce_field' ); ?>
         <!-- Navbar (Unified Light Header) -->
         <nav class="tw-flex-none tw-bg-white tw-border-b tw-border-slate-200 tw-px-8 tw-py-4 tw-z-[60] tw-shadow-sm">
             <div class="tw-max-w-screen-2xl tw-mx-auto tw-flex tw-items-center tw-justify-between">
@@ -103,8 +106,9 @@ else {
 
             <!-- Sidebar: List -->
             <main class="tw-flex-1 tw-overflow-y-auto tw-bg-slate-50/30 tw-px-8 tw-py-10 tw-z-10">
-                <div class="tw-max-w-4xl tw-mx-auto">
+                <div class="<?php echo $is_restricted_immerse_user ? 'tw-max-w-6xl' : 'tw-max-w-4xl'; ?> tw-mx-auto">
                     <div class="tw-flex tw-items-center tw-justify-between tw-mb-8">
+                        <?php if ( ! $is_restricted_immerse_user ) : ?>
                         <div class="tw-flex tw-items-center tw-gap-1 tw-bg-base-200 tw-p-1 tw-rounded-xl" role="tablist" aria-label="Project source">
                             <button type="button"
                                     class="vrodos-project-source-tab tw-btn tw-btn-xs tw-rounded-lg tw-font-bold tw-text-xs tw-uppercase tw-tracking-widest tw-px-4 tw-bg-base-100 tw-shadow-sm tw-border-0"
@@ -121,6 +125,9 @@ else {
                                 IMMERSE
                             </button>
                         </div>
+                        <?php else : ?>
+                        <div class="tw-text-xs tw-font-bold tw-uppercase tw-tracking-widest tw-text-primary">Immerse Projects</div>
+                        <?php endif; ?>
                         <span id="projects-count-indicator" class="tw-text-[10px] tw-font-bold tw-text-slate-400">0</span>
                     </div>
 
@@ -143,6 +150,7 @@ else {
             </main>
 
             <!-- Sidebar: Form -->
+            <?php if ( ! $is_restricted_immerse_user ) : ?>
             <aside class="tw-w-[400px] tw-bg-base-100 tw-border-l tw-border-base-300 tw-p-8 tw-overflow-y-auto tw-z-20">
                 <div class="tw-space-y-8">
                     <div>
@@ -176,7 +184,6 @@ else {
 
                         <p id="project-description-label" class="tw-text-[10px] tw-text-slate-400 tw-italic tw-leading-relaxed"></p>
 
-                        <?php wp_nonce_field('post_nonce', 'post_nonce_field'); ?>
                         <input type="hidden" name="submitted" id="submitted" value="true" />
 
                         <button id="createNewProjectBtn" type="button"
@@ -193,6 +200,7 @@ else {
                     </form>
                 </div>
             </aside>
+            <?php endif; ?>
         </div>
     </div>
 

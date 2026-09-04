@@ -798,12 +798,13 @@ final class VRodos_Storage_Manager {
 		if ( $owner_id < 1 || ! in_array( $owner_type, [ 'asset', 'scene' ], true ) ) {
 			return false;
 		}
+		if ( 'asset' === $owner_type && VRodos_Immerse_Access_Manager::can_read_asset( $owner_id ) ) {
+			return true;
+		}
 		if ( current_user_can( 'edit_post', $owner_id ) ) {
 			return true;
 		}
-		return 'asset' === $owner_type
-			&& '1' === (string) get_post_meta( $owner_id, '_vrodos_asset_is_shared', true )
-			&& current_user_can( 'edit_posts' );
+		return false;
 	}
 
 	private static function delete_owned_directory_tree( string $directory, string $root ): void {

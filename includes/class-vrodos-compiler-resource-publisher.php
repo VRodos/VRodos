@@ -156,7 +156,7 @@ final class VRodos_Compiler_Resource_Publisher {
 				$meta = get_post_thumbnail_id( $asset_id );
 			}
 			if ( 'glb_path' === $property ) {
-				if ( $this->desktop_profiles_enabled ) {
+				if ( $this->desktop_profiles_enabled && absint( $meta ) > 0 ) {
 					$profile_urls = [];
 					foreach ( $this->desktop_profile_slots as $slot ) {
 						$path = VRodos_Asset_Optimization_Manager::desktop_profile_derivative_path( $asset_id, $slot );

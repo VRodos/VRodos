@@ -155,6 +155,7 @@ class VRodos_Pages_Manager {
 
 		$isUserloggedIn = is_user_logged_in();
 		$isUserAdmin    = $isUserloggedIn && current_user_can( 'administrator' );
+		$isRestrictedImmerseUser = $isUserloggedIn && VRodos_Immerse_Access_Manager::is_restricted_user();
 		$user_id        = get_current_user_id();
 
 		$single_project_asset_list = false;
@@ -165,8 +166,10 @@ class VRodos_Pages_Manager {
 			$single_project_asset_list = true;
 			$current_game_project_id   = absint( $_GET['vrodos_project_id'] );
 			$current_game_project_post = get_post( $current_game_project_id );
-			$current_game_project_slug = $current_game_project_post->post_name;
+			$current_game_project_slug = $current_game_project_post instanceof WP_Post ? $current_game_project_post->post_name : '';
 			$user_games_slugs          = [$current_game_project_slug];
+		} elseif ( $isRestrictedImmerseUser ) {
+			$user_games_slugs = [];
 		} else {
 			$user_games_slugs = VRodos_Core_Manager::vrodos_get_user_game_projects( $user_id, $isUserAdmin );
 		}
@@ -180,14 +183,20 @@ class VRodos_Pages_Manager {
 			)
 		);
 
+		$can_add_asset = false;
 		if ( ! $isUserloggedIn ) {
 			$link_to_add = wp_login_url();
 		} elseif ( $isUserloggedIn && $single_project_asset_list ) {
 			$link_to_add = esc_url( get_permalink( $newAssetPage[0]->ID ) . $parameter_pass . $current_game_project_id . '&singleproject=true&preview=0' );
+			$can_add_asset = current_user_can( 'publish_vrodos_assets3d' ) && current_user_can( 'edit_post', $current_game_project_id );
+		} elseif ( $isRestrictedImmerseUser ) {
+			$link_to_add = '';
 		} elseif ( $isUserAdmin && ! $single_project_asset_list ) {
 			$link_to_add = esc_url( get_permalink( $newAssetPage[0]->ID ) . $parameter_pass . $shared_project_id . '&preview=0' );
+			$can_add_asset = true;
 		} elseif ( $isUserloggedIn ) {
 			$link_to_add = esc_url( get_permalink( $newAssetPage[0]->ID ) . $parameter_pass . $shared_project_id . '&preview=0' );
+			$can_add_asset = true;
 		}
 
 		$link_to_edit = home_url() . '/vrodos-asset-editor-page/?';
@@ -199,7 +208,11 @@ class VRodos_Pages_Manager {
 		$goBackTo_AllProjects_link = ! empty( $allProjectsPage ) ? esc_url( get_permalink( $allProjectsPage[0]->ID ) ) : home_url();
 
 		if ( $isUserloggedIn ) {
-			if ( $single_project_asset_list ) {
+			if ( $isRestrictedImmerseUser && $single_project_asset_list ) {
+				$helpMessage = 'Create assets for this Immerse project or reuse any Immerse and public asset shown here.';
+			} elseif ( $isRestrictedImmerseUser ) {
+				$helpMessage = 'All Immerse assets and public assets are available here. Open a project to add a new asset.';
+			} elseif ( $single_project_asset_list ) {
 				$helpMessage = 'A list of your private Assets belonging to the project <b>' . $current_game_project_post->post_title . '</b>.';
 			} else {
 				$helpMessage = 'Add a Shared Asset here. These are accessible across all your projects. To keep an asset private, create a new project and add it there.';
@@ -208,6 +221,6 @@ class VRodos_Pages_Manager {
 			$helpMessage = 'Login to manage Shared Assets or to create a new Project for your private assets.';
 		}
 
-		return ['assets'                       => $assets, 'is_user_logged_in'            => $isUserloggedIn, 'is_user_admin'                => $isUserAdmin, 'user_id'                      => $user_id, 'link_to_add'                  => $link_to_add, 'link_to_edit'                 => $link_to_edit, 'go_back_to_all_projects_link' => $goBackTo_AllProjects_link, 'help_message'                 => $helpMessage, 'shared_project_slug'          => $shared_project_slug, 'single_project_asset_list'    => $single_project_asset_list, 'current_game_project_post'    => $current_game_project_post, 'has_immerse_assets'          => $has_immerse_assets];
+		return ['assets'                       => $assets, 'is_user_logged_in'            => $isUserloggedIn, 'is_user_admin'                => $isUserAdmin, 'is_restricted_immerse_user' => $isRestrictedImmerseUser, 'user_id'                      => $user_id, 'link_to_add'                  => $link_to_add, 'can_add_asset' => $can_add_asset, 'link_to_edit'                 => $link_to_edit, 'go_back_to_all_projects_link' => $goBackTo_AllProjects_link, 'help_message'                 => $helpMessage, 'shared_project_slug'          => $shared_project_slug, 'single_project_asset_list'    => $single_project_asset_list, 'current_game_project_post'    => $current_game_project_post, 'has_immerse_assets'          => $has_immerse_assets];
 	}
 }

@@ -22,8 +22,19 @@ function getAssetBrowserElements() {
     return { toolbar, categoryTabs, fileList };
 }
 
-function buildAssetEditUrl(editBaseUrl, assetId) {
-    return `${editBaseUrl}${assetId}&scene_type=scene&preview=0&editable=true`;
+function buildAssetEditUrl(editBaseUrl, assetId, ownerProjectId) {
+	const url = new URL(`${editBaseUrl}${assetId}`, window.location.href);
+	const returnProjectId = url.searchParams.get('vrodos_game');
+	if (returnProjectId) {
+		url.searchParams.set('vrodos_return_game', returnProjectId);
+	}
+	if (ownerProjectId) {
+		url.searchParams.set('vrodos_game', String(ownerProjectId));
+	}
+	url.searchParams.set('scene_type', 'scene');
+	url.searchParams.set('preview', '0');
+	url.searchParams.set('editable', 'true');
+	return url.toString();
 }
 
 function bindAssetListControls(fileList) {
@@ -328,9 +339,9 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                     `</div>${ 
 
                     (function() {
-                        const canEditThis = Boolean(VRODOS.data.isUserAdmin) || (String(f.author_id) === String(VRODOS.data.current_user_id));
-                        if (canEditThis) {
-                            const editUrl = buildAssetEditUrl(urlforAssetEdit, f.asset_id);
+						const canEditThis = f.can_edit === true || f.can_edit === 1 || f.can_edit === '1';
+						if (canEditThis) {
+							const editUrl = buildAssetEditUrl(urlforAssetEdit, f.asset_id, f.owner_project_id);
                             return `<div class="tw-absolute tw-bottom-0 tw-left-0 tw-w-full tw-p-2 tw-z-10 tw-transform tw-translate-y-1 group-hover:tw-translate-y-0 tw-transition-transform">` +
                                 `<button type="button" class="tw-w-full tw-bg-indigo-500/80 hover:tw-bg-indigo-500 tw-backdrop-blur-md tw-text-[9px] tw-font-bold tw-text-white tw-py-1 tw-rounded tw-transition-all tw-tracking-widest" data-vrodos-asset-edit-url="${  VRODOS.utils.escapeAttribute(editUrl)  }">EDIT</button>` +
                             `</div>`;

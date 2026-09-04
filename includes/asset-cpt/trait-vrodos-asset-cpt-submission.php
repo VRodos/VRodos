@@ -14,17 +14,16 @@ trait VRodos_Asset_CPT_Submission_Controller {
 			return;
 		}
 
-		// Permission check: must be logged in, and must be asset owner or admin
+		// Permission check: all edits flow through the CPT object capabilities.
 		if ( ! is_user_logged_in() ) {
 			return;
 		}
-		$current_user_id = get_current_user_id();
 		$editing_asset_id = isset( $_GET['vrodos_asset'] ) ? absint( $_GET['vrodos_asset'] ) : 0;
-		if ( $editing_asset_id > 0 ) {
-			$asset_author = get_post_field( 'post_author', $editing_asset_id );
-			if ( $current_user_id != $asset_author && ! current_user_can( 'administrator' ) ) {
-				return; // Not owner and not admin — reject
-			}
+		if ( $editing_asset_id > 0 && ! current_user_can( 'edit_post', $editing_asset_id ) ) {
+			return;
+		}
+		if ( 0 === $editing_asset_id && ! current_user_can( 'publish_vrodos_assets3d' ) ) {
+			return;
 		}
 
 		$submission_buffer_level = self::begin_frontend_submission_buffer();
@@ -33,6 +32,9 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$project_id     = isset( $_GET['vrodos_game'] ) ? absint( $_GET['vrodos_game'] ) : null;
 		$game_post      = get_post( $project_id );
 		if ( ! $game_post instanceof WP_Post || 'vrodos_game' !== $game_post->post_type || ! current_user_can( 'edit_post', $project_id ) ) {
+			return;
+		}
+		if ( $editing_asset_id > 0 && VRodos_Immerse_Access_Manager::is_restricted_user() && ! VRodos_Immerse_Access_Manager::object_belongs_to_project( $editing_asset_id, (int) $project_id ) ) {
 			return;
 		}
 		$gameSlug       = $game_post ? $game_post->post_name : '';
@@ -127,6 +129,9 @@ trait VRodos_Asset_CPT_Submission_Controller {
 			}
 
 			update_post_meta( $asset_id, '_vrodos_asset_is_shared', $is_shared ? '1' : '0' );
+			if ( VRodos_Immerse_Access_Manager::is_immerse_project( (int) $project_id ) ) {
+				update_post_meta( $asset_id, '_immerse_source', 'immerse' );
+			}
 
 			// Invalidate all Assets List transients
 			global $wpdb;
@@ -320,7 +325,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 			if ( ! isset( $_GET['vrodos_asset'] ) ) {
 				$data['isEditable'] = true;
 				$data['author_id']  = $data['current_user']->ID;
-			} elseif ( $data['isUserAdmin'] || $data['isOwner'] ) {
+			} elseif ( current_user_can( 'edit_post', (int) $data['asset_id'] ) ) {
 				$data['isEditable'] = true;
 				$data['author_id']  = get_post_field( 'post_author', $data['asset_id'] );
 			}
@@ -358,6 +363,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$data['game_category'] = ( ! is_wp_error( $all_game_category ) && ! empty( $all_game_category ) ) ? $all_game_category[0]->slug : null;
 
 		$scene_id           = isset( $_GET['vrodos_scene'] ) ? sanitize_text_field( intval( $_GET['vrodos_scene'] ) ) : null;
+		$return_project_id  = isset( $_GET['vrodos_return_game'] ) ? absint( $_GET['vrodos_return_game'] ) : (int) $data['project_id'];
 		$editscenePage      = VRodos_Core_Manager::vrodos_getEditpage( 'scene' );
 		$edit_scene_page_id = $editscenePage ? $editscenePage[0]->ID : null;
 
@@ -365,7 +371,7 @@ trait VRodos_Asset_CPT_Submission_Controller {
 		$parameter_Scenepass = $perma_structure ? '?vrodos_scene=' : '&vrodos_scene=';
 
 		$data['goBackToLink'] = $scene_id && $edit_scene_page_id
-			? get_permalink( $edit_scene_page_id ) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $data['project_id'] . '&scene_type=' . ( $_GET['scene_type'] ?? '' )
+			? get_permalink( $edit_scene_page_id ) . $parameter_Scenepass . $scene_id . '&vrodos_game=' . $return_project_id . '&scene_type=' . ( $_GET['scene_type'] ?? '' )
 			: home_url( '/vrodos-assets-list-page/?' ) . ( ! isset( $_GET['singleproject'] ) ? 'vrodos_game=' : 'vrodos_project_id=' ) . $data['project_id'];
 
 		// Prepare taxonomy and meta data for the template

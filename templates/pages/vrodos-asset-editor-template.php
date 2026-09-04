@@ -132,7 +132,7 @@ extract($data);
     <?php
 }
 else { ?>
-        <?php if (!$isOwner && !$isUserAdmin && $isEditMode) { ?>
+		<?php if ( ! $isEditable && $isEditMode ) { ?>
             <div class="tw-bg-amber-50 tw-border-b tw-border-amber-200 tw-px-8 tw-py-2 tw-flex tw-items-center tw-gap-2">
                 <i data-lucide="eye" class="tw-w-4 tw-h-4 tw-text-amber-600"></i>
                 <span class="tw-text-xs tw-font-bold tw-text-amber-700">View Only — You do not own this asset</span>

@@ -521,9 +521,18 @@ class VRodos_Core_Manager {
 
 		$allAssets = [];
 
-		// 1. Project-specific asset IDs via taxonomy
+		// 1. Project-specific asset IDs via taxonomy. Restricted Immerse users
+		// receive the complete Immerse library instead of native project assets.
 		$project_ids = [];
-		if ( ! empty( $gameProjectSlug ) ) {
+		if ( VRodos_Immerse_Access_Manager::is_restricted_user() ) {
+			$project_ids = get_posts( [
+				'post_type'      => 'vrodos_asset3d',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_key'       => '_immerse_source',
+				'meta_value'     => 'immerse',
+			] );
+		} elseif ( ! empty( $gameProjectSlug ) ) {
 			$project_ids = get_posts( [
 				'post_type'      => 'vrodos_asset3d',
 				'posts_per_page' => -1,
@@ -580,7 +589,8 @@ class VRodos_Core_Manager {
 					}
 				}
 
-				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_shared'        => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id )];
+				$owner_project_id = VRodos_Immerse_Access_Manager::resolve_parent_project_id( $asset_id );
+				$data_arr = ['asset_name'      => get_the_title(), 'asset_slug'      => get_post()->post_name, 'asset_id'        => $asset_id, 'category_name'   => $asset_cat_arr[0]->name, 'category_slug'   => $asset_cat_arr[0]->slug, 'category_id'     => $asset_cat_arr[0]->term_id, 'category_icon'   => get_term_meta( $asset_cat_arr[0]->term_id, 'vrodos_assetcat_icon', true ), 'glb_id'          => $glbID, 'glb_path'        => $glbPath, 'path'            => $glbPath, 'screenshot_id'   => $sshotID, 'screenshot_path' => $sshotPath, 'is_shared'        => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ), 'is_immerse' => VRodos_Immerse_Access_Manager::is_immerse_asset( $asset_id ), 'owner_project_id' => $owner_project_id, 'can_edit' => VRodos_Immerse_Access_Manager::can_edit_asset( $asset_id ), 'author_id' => (int) get_post_field( 'post_author', $asset_id )];
 
 				$immerse_cefr_levels = self::encode_cefr_levels_meta(
 					get_post_meta( $asset_id, 'vrodos_asset3d_immerse_cefr_levels', true )
@@ -737,7 +747,8 @@ class VRodos_Core_Manager {
 
 	public static function get_assets( $games_slugs ): array {
 		// Create a cache key based on the games slugs to ensure per-context caching
-		$cache_key = 'vrodos_assets_' . md5( json_encode( $games_slugs ) . get_current_user_id() . '|source-filter-v1' );
+		$access_scope = VRodos_Immerse_Access_Manager::is_restricted_user() ? 'immerse-restricted' : 'standard';
+		$cache_key = 'vrodos_assets_' . md5( wp_json_encode( $games_slugs ) . get_current_user_id() . '|source-filter-v2|' . $access_scope );
 		$cached_assets = get_transient( $cache_key );
 
 		if ( false !== $cached_assets ) {
@@ -751,7 +762,19 @@ class VRodos_Core_Manager {
 			'fields'         => 'ids', // Get only IDs first for performance
 		];
 
-		if ( $games_slugs ) {
+		if ( VRodos_Immerse_Access_Manager::is_restricted_user() ) {
+			$queryargs['meta_query'] = [
+				'relation' => 'OR',
+				[
+					'key'   => '_immerse_source',
+					'value' => 'immerse',
+				],
+				[
+					'key'   => '_vrodos_asset_is_shared',
+					'value' => '1',
+				],
+			];
+		} elseif ( $games_slugs ) {
 			$queryargs['tax_query'] = [['taxonomy' => 'vrodos_asset3d_pgame', 'field'    => 'slug', 'terms'    => $games_slugs]];
 		}
 
@@ -762,12 +785,18 @@ class VRodos_Core_Manager {
 			_prime_post_caches( $asset_ids, true, true );
 
 			foreach ( $asset_ids as $asset_id ) {
+				if ( VRodos_Immerse_Access_Manager::is_restricted_user() && ! VRodos_Immerse_Access_Manager::can_read_asset( (int) $asset_id ) ) {
+					continue;
+				}
 				$asset_name    = get_the_title( $asset_id );
 				$asset_pgame   = wp_get_post_terms( $asset_id, 'vrodos_asset3d_pgame' );
 				$asset_cat_arr = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat' );
 
-				if ( empty( $asset_cat_arr ) ) {
+				if ( is_wp_error( $asset_cat_arr ) || empty( $asset_cat_arr ) ) {
 					continue;
+				}
+				if ( is_wp_error( $asset_pgame ) ) {
+					$asset_pgame = [];
 				}
 
 				$glbID   = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
@@ -792,6 +821,7 @@ class VRodos_Core_Manager {
 				$author_username    = get_the_author_meta( 'nickname', $author_id );
 				$assettrs           = get_post_meta( $asset_id, 'vrodos_asset3d_assettrs', true );
 
+				$owner_project_id = VRodos_Immerse_Access_Manager::resolve_parent_project_id( (int) $asset_id );
 				$data_arr = [
 					'asset_name'             => $asset_name,
 					'asset_slug'             => get_post( $asset_id )->post_name,
@@ -807,6 +837,8 @@ class VRodos_Core_Manager {
 					'screenshot_path'        => $sshotPath,
 					'is_shared'              => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ),
 					'is_immerse'             => get_post_meta( $asset_id, '_immerse_source', true ) === 'immerse' ? 'true' : 'false',
+					'owner_project_id'       => $owner_project_id,
+					'can_edit'               => VRodos_Immerse_Access_Manager::can_edit_asset( (int) $asset_id ),
 					'assettrs'               => $assettrs,
 					'asset_parent_game'      => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ) ? 'Shared Assets' : ( ! empty( $asset_pgame ) ? $asset_pgame[0]->name : '' ),
 					'asset_parent_game_slug' => ! empty( $asset_pgame ) ? $asset_pgame[0]->slug : '',

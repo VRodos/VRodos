@@ -47,7 +47,7 @@ VRODOS.api.createProject = function(project_title, project_type_slug, current_us
 
 
 VRODOS.api.fetchAllProjectsAndAddToDOM = function(current_user_id, parameter_Scenepass, new_project_id=-1, is_initial_load = false, project_source = null){
-	project_source = project_source || VRODOS.api.currentProjectSource || 'vrodos';
+	project_source = project_source || VRODOS.api.currentProjectSource || (window.vrodosProjectManagerRestricted ? 'immerse' : 'vrodos');
 
 	fetch( VRODOS.config.isAdmin === "back" ? 'admin-ajax.php' : VRODOS.utils.getAjaxUrl(), {
 		method: 'POST',

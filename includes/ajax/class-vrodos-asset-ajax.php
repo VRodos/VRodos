@@ -180,9 +180,6 @@ class VRodos_Asset_AJAX {
 	}
 
 	private function can_read_asset( int $asset_id ): bool {
-		return $asset_id > 0 && 'vrodos_asset3d' === get_post_type( $asset_id ) && (
-			current_user_can( 'edit_post', $asset_id ) ||
-			( VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ) && current_user_can( 'edit_posts' ) )
-		);
+		return VRodos_Immerse_Access_Manager::can_read_asset( $asset_id );
 	}
 }

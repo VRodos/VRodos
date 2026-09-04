@@ -31,9 +31,11 @@ $project_scope = 2;
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-path-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-storage-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-shared-repository-manager.php');
+require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-immerse-access-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-render-runtime-manager.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-text-asset-helper.php');
 add_action( 'admin_notices', [ VRodos_Render_Runtime_Manager::class, 'render_admin_notice' ] );
+new VRodos_Immerse_Access_Manager();
 
 // Asset Manager Class
 require_once(plugin_dir_path(__FILE__) . 'includes/class-vrodos-asset-manager.php');

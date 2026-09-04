@@ -13,7 +13,7 @@ extract( $data );
 	<?php wp_head(); ?>
 </head>
 <body id="vrodos-scene-editor" <?php body_class( 'vrodos-manager-wrapper tw-overflow-hidden' ); ?>>
-<?php if ( ! is_user_logged_in() || ! current_user_can( 'administrator' ) ) { ?>
+<?php if ( ! is_user_logged_in() || ! VRodos_Immerse_Access_Manager::can_use_management_pages() ) { ?>
 
 	<!-- if user not logged in, then prompt to log in -->
 	<div class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-min-h-screen tw-bg-slate-50">
