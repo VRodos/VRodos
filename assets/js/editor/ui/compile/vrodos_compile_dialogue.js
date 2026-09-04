@@ -1070,6 +1070,20 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     bindEngineTab(controls.postFxEngineTabLegacy);
     bindEngineTab(controls.postFxEngineTabPmndrs);
+    const engineTabs = [controls.postFxEngineTabLegacy, controls.postFxEngineTabPmndrs].filter(Boolean);
+    engineTabs.forEach((tab, index) => {
+        tab.addEventListener('keydown', (event) => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            let next = index;
+            if (event.key === 'Home') next = 0;
+            if (event.key === 'End') next = engineTabs.length - 1;
+            if (event.key === 'ArrowLeft') next = (index - 1 + engineTabs.length) % engineTabs.length;
+            if (event.key === 'ArrowRight') next = (index + 1) % engineTabs.length;
+            engineTabs[next].focus();
+            engineTabs[next].click();
+        });
+    });
     [
         controls.pmndrsBloomIntensity,
         controls.pmndrsBloomThreshold,

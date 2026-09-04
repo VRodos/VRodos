@@ -49,6 +49,20 @@ VRODOS.ui = VRODOS.ui || {};
         'pmndrsLutEnabled', 'pmndrsVignetteEnabled', 'pmndrsChromaticAberrationEnabled', 'pmndrsAtmosphereEnabled', 'pmndrsAerialPerspectiveEnabled',
         'pmndrsCloudsEnabled', 'pmndrsCloudsLightShaftsEnabled', 'reflectionsEnabled'
     ];
+    const SETTING_GROUPS = {
+        shadowQuality: 'Rendering & shadows', shadowUpdateMode: 'Rendering & shadows', flatMediaShadowCasting: 'Rendering & shadows',
+        aaQuality: 'Rendering & shadows', ambientOcclusionPreset: 'Rendering & shadows', contactShadowPreset: 'Rendering & shadows',
+        postFXEnabled: 'Post-processing', postFXEngine: 'Post-processing', postFXBloomEnabled: 'Post-processing',
+        postFXEdgeAAEnabled: 'Post-processing', postFXTAAEnabled: 'Post-processing', postFXSSREnabled: 'Post-processing',
+        postFXSSRStrength: 'Post-processing', bloomStrength: 'Post-processing', pmndrsAAMode: 'Post-processing',
+        pmndrsAAPreset: 'Post-processing', pmndrsLensFlareEnabled: 'Post-processing', pmndrsLutEnabled: 'Post-processing',
+        pmndrsVignetteEnabled: 'Post-processing', pmndrsNoiseEnabled: 'Post-processing', pmndrsChromaticAberrationEnabled: 'Post-processing',
+        reflectionProfile: 'Lighting & reflections', reflectionSource: 'Lighting & reflections', reflectionsEnabled: 'Lighting & reflections',
+        sceneProbeUpdateMode: 'Lighting & reflections', sceneProbeResolution: 'Lighting & reflections',
+        pmndrsAtmosphereEnabled: 'Atmosphere & sky', pmndrsAtmosphereQuality: 'Atmosphere & sky',
+        pmndrsAerialPerspectiveEnabled: 'Atmosphere & sky', pmndrsCloudsEnabled: 'Atmosphere & sky',
+        pmndrsCloudsQuality: 'Atmosphere & sky', pmndrsCloudsLightShaftsEnabled: 'Atmosphere & sky'
+    };
 
     function contract() {
         return window.VRODOS_DESKTOP_PERFORMANCE_PROFILE_CONTRACT || null;
@@ -299,19 +313,70 @@ VRODOS.ui = VRODOS.ui || {};
     function renderTierControls(state) {
         const profileId = state.activeTab;
         const container = document.getElementById('compileDesktopTierControls');
+        const fixedContainer = document.getElementById('compileDesktopTierFixedValues');
         if (!container || !TIER_IDS.includes(profileId)) return;
         container.replaceChildren();
+        if (fixedContainer) fixedContainer.replaceChildren();
         const slot = state.profiles[profileId];
+        const groupedSettings = new Map();
         editableSettings(profileId).forEach((settingKey) => {
+            const group = SETTING_GROUPS[settingKey] || 'Other settings';
+            if (!groupedSettings.has(group)) groupedSettings.set(group, []);
+            groupedSettings.get(group).push(settingKey);
+        });
+
+        groupedSettings.forEach((settingKeys, groupName) => {
+            const section = document.createElement('fieldset');
+            section.className = 'tw-col-span-full';
+            const heading = document.createElement('legend');
+            heading.className = 'tw-mb-2 tw-text-xs tw-font-bold tw-text-slate-700';
+            heading.textContent = groupName;
+            const grid = document.createElement('div');
+            grid.className = 'tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-2';
+            let visibleControls = 0;
+
+            settingKeys.forEach((settingKey) => {
             const values = allowedValues(profileId, settingKey);
             if (!values.length) return;
+            if (values.length === 1) {
+                if (fixedContainer) {
+                    const chip = document.createElement('span');
+                    chip.className = 'tw-badge tw-badge-outline tw-badge-sm tw-h-auto tw-min-h-6 tw-py-1';
+                    chip.textContent = `${SETTING_LABELS[settingKey] || settingKey}: ${formatOption(values[0])}`;
+                    fixedContainer.appendChild(chip);
+                }
+                return;
+            }
+
             const label = document.createElement('label');
-            label.className = 'tw-form-control';
+            label.className = 'tw-flex tw-min-h-16 tw-items-center tw-justify-between tw-gap-3 tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3';
             const title = document.createElement('span');
-            title.className = 'tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500';
+            title.className = 'tw-text-xs tw-font-semibold tw-leading-snug tw-text-slate-700';
             title.textContent = SETTING_LABELS[settingKey] || settingKey;
+            const isBoolean = values.every((value) => typeof value === 'boolean');
+
+            if (isBoolean) {
+                const input = document.createElement('input');
+                const canEnable = sharedFeatureAllows(settingKey, true);
+                if (!canEnable && bool(slot.settings[settingKey])) slot.settings[settingKey] = false;
+                input.type = 'checkbox';
+                input.className = 'tw-toggle tw-toggle-primary tw-toggle-sm tw-flex-shrink-0';
+                input.dataset.vrodosTierSetting = settingKey;
+                input.checked = bool(slot.settings[settingKey]);
+                input.disabled = !canEnable;
+                input.addEventListener('change', () => {
+                    slot.settings[settingKey] = input.checked;
+                    updateUi();
+                });
+                label.appendChild(title);
+                label.appendChild(input);
+                grid.appendChild(label);
+                visibleControls += 1;
+                return;
+            }
+
             const select = document.createElement('select');
-            select.className = 'tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1 tw-bg-white';
+            select.className = 'tw-select tw-select-bordered tw-select-sm tw-w-32 tw-max-w-[48%] tw-bg-white';
             select.dataset.vrodosTierSetting = settingKey;
             values.forEach((value) => {
                 const option = document.createElement('option');
@@ -334,7 +399,15 @@ VRODOS.ui = VRODOS.ui || {};
             });
             label.appendChild(title);
             label.appendChild(select);
-            container.appendChild(label);
+            grid.appendChild(label);
+            visibleControls += 1;
+            });
+
+            if (visibleControls > 0) {
+                section.appendChild(heading);
+                section.appendChild(grid);
+                container.appendChild(section);
+            }
         });
     }
 
@@ -346,13 +419,32 @@ VRODOS.ui = VRODOS.ui || {};
             'compilePmndrsAtmosphereQualitySelect', 'compilePmndrsCloudsQualitySelect'
         ];
         const show = !desktop || state.buildMode === 'custom';
+        ['compileCustomQualityCard', 'compileLegacyAACard', 'compilePmndrsAACard'].forEach((id) => {
+            const card = document.getElementById(id);
+            if (card) card.hidden = !show;
+        });
+        const reflectionsCard = document.getElementById('compileLightingReflectionsCard');
+        if (reflectionsCard) {
+            reflectionsCard.classList.toggle('lg:tw-col-span-2', !show);
+        }
         qualityIds.forEach((id) => {
             const control = document.getElementById(id);
             const wrapper = control && control.closest('label');
-            if (wrapper) wrapper.style.display = show ? '' : 'none';
+            if (wrapper) wrapper.hidden = !show;
         });
         const probe = document.getElementById('compileSceneProbeControlsWrapper');
-        if (probe) probe.style.display = show ? '' : 'none';
+        if (probe) probe.hidden = !show;
+    }
+
+    function updateBuildSummary(state, desktop) {
+        const summary = document.getElementById('compileBuildSummary');
+        if (!summary) return;
+        const target = document.getElementById('compileRuntimeTargetSelect');
+        const mode = document.getElementById('compileRuntimeModeSelect');
+        const targetLabel = target && target.selectedOptions.length ? target.selectedOptions[0].textContent : 'Desktop';
+        const modeLabel = mode && mode.selectedOptions.length ? mode.selectedOptions[0].textContent : 'Single-player static';
+        const strategy = desktop ? (state.buildMode === 'custom' ? 'Custom only' : 'Adaptive Low/Medium/High') : 'Target policy';
+        summary.textContent = `${targetLabel} · ${strategy} · ${modeLabel}`;
     }
 
     function updateUi() {
@@ -363,24 +455,48 @@ VRODOS.ui = VRODOS.ui || {};
         panel.style.display = desktop ? '' : 'none';
         const customPanel = document.getElementById('compileDesktopCustomPanel');
         const tierPanel = document.getElementById('compileDesktopTierPanel');
+        updateBuildSummary(state, desktop);
         if (!desktop) {
-            if (customPanel) customPanel.style.display = '';
-            if (tierPanel) tierPanel.style.display = 'none';
+            if (customPanel) {
+                customPanel.hidden = false;
+                customPanel.style.display = '';
+            }
+            if (tierPanel) {
+                tierPanel.hidden = true;
+                tierPanel.style.display = 'none';
+            }
             setCustomQualityVisibility(state, false);
             return;
         }
 
+        if (state.buildMode === 'custom' && state.activeTab !== 'custom') state.activeTab = 'custom';
+
         panel.querySelectorAll('[data-vrodos-desktop-profile]').forEach((button) => {
             const active = button.dataset.vrodosDesktopProfile === state.activeTab;
+            const available = state.buildMode === 'adaptive' || button.dataset.vrodosDesktopProfile === 'custom';
+            button.hidden = !available;
             button.classList.toggle('tw-tab-active', active);
             button.setAttribute('aria-selected', active ? 'true' : 'false');
+            button.tabIndex = active ? 0 : -1;
         });
+        const tabList = document.getElementById('compileDesktopProfileTabList');
+        if (tabList) {
+            tabList.classList.toggle('tw-grid-cols-4', state.buildMode === 'adaptive');
+            tabList.classList.toggle('tw-grid-cols-1', state.buildMode === 'custom');
+        }
         panel.querySelectorAll('input[name="compileDesktopBuildMode"]').forEach((input) => {
             input.checked = input.value === state.buildMode;
         });
         const isTier = TIER_IDS.includes(state.activeTab);
-        if (customPanel) customPanel.style.display = isTier ? 'none' : '';
-        if (tierPanel) tierPanel.style.display = isTier ? '' : 'none';
+        if (customPanel) {
+            customPanel.hidden = isTier;
+            customPanel.style.display = isTier ? 'none' : '';
+        }
+        if (tierPanel) {
+            tierPanel.hidden = !isTier;
+            tierPanel.style.display = isTier ? '' : 'none';
+            tierPanel.setAttribute('aria-labelledby', `compileDesktopProfileTab${state.activeTab.charAt(0).toUpperCase()}${state.activeTab.slice(1)}`);
+        }
         const badge = document.getElementById('compileDesktopProfileState');
         if (badge) {
             badge.style.display = isTier ? '' : 'none';
@@ -388,11 +504,17 @@ VRODOS.ui = VRODOS.ui || {};
                 badge.textContent = settingsEqual(state.profiles[state.activeTab].settings, state.profiles[state.activeTab].presetSettings) ? 'Default' : 'Modified';
             }
         }
+        const customOnly = state.buildMode === 'custom';
+        const tabsLabel = document.getElementById('compileDesktopProfileTabsLabel');
+        if (tabsLabel) {
+            tabsLabel.hidden = customOnly;
+        }
         const hint = document.getElementById('compileDesktopProfileSelectionHint');
         if (hint) {
-            hint.textContent = state.buildMode === 'adaptive'
-                ? 'The browser selects Low, Medium, or High before A-Frame, runtime chunks, or GLBs download.'
-                : 'Only the authored Custom experience is published. Adaptive selection and downgrades are disabled.';
+            hint.hidden = customOnly;
+            hint.textContent = customOnly
+                ? ''
+                : 'The browser selects Low, Medium, or High before A-Frame, runtime chunks, or GLBs download.';
         }
         if (isTier) {
             const definition = contract().profiles[state.activeTab] || {};
@@ -477,34 +599,30 @@ VRODOS.ui = VRODOS.ui || {};
         updateUi();
     }
 
-    function moveRuntimeControlsAboveProfiles() {
-        const mount = document.getElementById('compileRuntimePolicyMount');
-        const mode = document.getElementById('compileRuntimeModeSelect');
-        const target = document.getElementById('compileRuntimeTargetSelect');
-        if (!mount || !mode || !target || mount.childElementCount) return;
-        const card = document.createElement('div');
-        card.className = 'tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4 tw-space-y-3';
-        const heading = document.createElement('h4');
-        heading.className = 'tw-text-sm tw-font-bold tw-text-slate-800';
-        heading.textContent = 'Runtime output';
-        card.appendChild(heading);
-        const modeWrapper = mode.closest('.tw-rounded-lg');
-        const targetWrapper = target.closest('label');
-        const headset = document.getElementById('compileVrHeadsetPolicyPanel');
-        if (modeWrapper) card.appendChild(modeWrapper);
-        if (targetWrapper) card.appendChild(targetWrapper);
-        if (headset) card.appendChild(headset);
-        mount.appendChild(card);
-    }
-
     function bind() {
         const panel = document.getElementById('compileDesktopProfilesPanel');
         if (!panel || panel.dataset.vrodosProfilesBound === '1') return;
         panel.dataset.vrodosProfilesBound = '1';
-        moveRuntimeControlsAboveProfiles();
         panel.querySelectorAll('[data-vrodos-desktop-profile]').forEach((button) => {
             button.addEventListener('click', () => switchProfile(button.dataset.vrodosDesktopProfile));
         });
+        const tabList = document.getElementById('compileDesktopProfileTabList');
+        if (tabList) {
+            tabList.addEventListener('keydown', (event) => {
+                if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                const tabs = Array.from(tabList.querySelectorAll('[data-vrodos-desktop-profile]')).filter((tab) => !tab.hidden);
+                const current = tabs.indexOf(document.activeElement);
+                if (current < 0 || !tabs.length) return;
+                event.preventDefault();
+                let next = current;
+                if (event.key === 'Home') next = 0;
+                if (event.key === 'End') next = tabs.length - 1;
+                if (event.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+                if (event.key === 'ArrowRight') next = (current + 1) % tabs.length;
+                tabs[next].focus();
+                tabs[next].click();
+            });
+        }
         const reset = document.getElementById('compileDesktopProfileReset');
         if (reset) reset.addEventListener('click', resetActive);
         panel.querySelectorAll('input[name="compileDesktopBuildMode"]').forEach((input) => {
@@ -516,6 +634,8 @@ VRODOS.ui = VRODOS.ui || {};
         });
         const target = document.getElementById('compileRuntimeTargetSelect');
         if (target) target.addEventListener('change', updateUi);
+        const mode = document.getElementById('compileRuntimeModeSelect');
+        if (mode) mode.addEventListener('change', updateUi);
         const dialog = document.getElementById('compile-dialog');
         if (dialog) {
             dialog.addEventListener('change', () => window.setTimeout(captureActive, 0));

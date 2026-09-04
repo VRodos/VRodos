@@ -16,6 +16,7 @@ VRODOS.api = VRODOS.api || {};
             }
 
             bindCompileOpenControl();
+            bindCompileSaveSettingsControl();
             bindCompileProceedControl();
             bindCompileCancelControl();
             bindCompileDialogCloseButton();
@@ -114,6 +115,54 @@ VRODOS.api = VRODOS.api || {};
                     dialogState.finishBuildState();
                     dialogState.showSaveFailedMessage();
                     console.warn('VRodos: compile blocked because scene save failed.', error);
+                });
+        });
+    }
+
+    function bindCompileSaveSettingsControl() {
+        const saveButton = document.getElementById('compileSaveSettingsBtn');
+        if (!saveButton) return;
+
+        const label = saveButton.querySelector('span');
+        saveButton.addEventListener('click', () => {
+            if (typeof VRODOS.ui.applyCompileDialogSettingsToScene === 'function') {
+                VRODOS.ui.applyCompileDialogSettingsToScene();
+            }
+
+            const profileEditor = VRODOS.ui.desktopPerformanceProfiles;
+            const profileErrors = profileEditor && typeof profileEditor.validationErrors === 'function'
+                ? profileEditor.validationErrors()
+                : [];
+            const status = document.getElementById('constantUpdateUser');
+            if (profileErrors.length) {
+                if (status) status.textContent = `Save blocked: ${profileErrors[0]}`;
+                return;
+            }
+
+            saveButton.disabled = true;
+            if (label) label.textContent = 'Saving…';
+            if (status) status.textContent = 'Saving build settings…';
+
+            const waitForLatestSave = typeof VRODOS.api.waitForLatestSceneSave === 'function'
+                ? VRODOS.api.waitForLatestSceneSave()
+                : Promise.resolve();
+
+            waitForLatestSave
+                .then(() => (typeof VRODOS.api.saveChanges === 'function') ? VRODOS.api.saveChanges({ force: true }) : Promise.resolve())
+                .then(() => {
+                    if (label) label.textContent = 'Saved';
+                    if (status) status.textContent = 'Build settings saved. No build was started.';
+                    window.setTimeout(() => {
+                        if (label && saveButton.isConnected) label.textContent = 'Save';
+                    }, 2000);
+                })
+                .catch((error) => {
+                    if (label) label.textContent = 'Save';
+                    if (status) status.textContent = 'Build settings could not be saved.';
+                    console.warn('VRodos: build settings save failed.', error);
+                })
+                .finally(() => {
+                    saveButton.disabled = false;
                 });
         });
     }

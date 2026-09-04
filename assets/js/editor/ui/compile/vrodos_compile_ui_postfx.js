@@ -107,28 +107,27 @@ VRodosCompileUI.PostFX = (function () {
     // --- UI State Management ---
 
     function updateUI(controls, postFxEnabled, isPmndrs, isBloomEnabled) {
-        if (controls.universalPostFxGroup) {
-            controls.universalPostFxGroup.style.display = postFxEnabled ? '' : 'none';
-        }
+        const setVisible = (element, visible) => {
+            if (!element) return;
+            element.hidden = !visible;
+            element.style.display = visible ? '' : 'none';
+        };
 
-        if (controls.engineControlsColumn) {
-            controls.engineControlsColumn.style.display = postFxEnabled ? '' : 'none';
-        }
-
-        if (controls.legacyPane) {
-            controls.legacyPane.style.display = (postFxEnabled && !isPmndrs) ? '' : 'none';
-        }
-
-        if (controls.pmndrsPane) {
-            controls.pmndrsPane.style.display = (postFxEnabled && isPmndrs) ? '' : 'none';
-        }
+        setVisible(controls.universalPostFxGroup, postFxEnabled);
+        setVisible(controls.engineControlsColumn, postFxEnabled);
+        setVisible(controls.legacyPane, postFxEnabled && !isPmndrs);
+        setVisible(controls.pmndrsPane, postFxEnabled && isPmndrs);
 
         // Engine Tabs Styling
         if (controls.postFxEngineTabLegacy) {
             controls.postFxEngineTabLegacy.classList.toggle('tw-tab-active', !isPmndrs);
+            controls.postFxEngineTabLegacy.setAttribute('aria-selected', isPmndrs ? 'false' : 'true');
+            controls.postFxEngineTabLegacy.tabIndex = isPmndrs ? -1 : 0;
         }
         if (controls.postFxEngineTabPmndrs) {
             controls.postFxEngineTabPmndrs.classList.toggle('tw-tab-active', isPmndrs);
+            controls.postFxEngineTabPmndrs.setAttribute('aria-selected', isPmndrs ? 'true' : 'false');
+            controls.postFxEngineTabPmndrs.tabIndex = isPmndrs ? 0 : -1;
         }
 
         // Badge and Hint update

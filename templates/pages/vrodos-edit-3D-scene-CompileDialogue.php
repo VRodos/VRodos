@@ -2,10 +2,12 @@
 <dialog id="compile-dialog"
         class="tw-modal"
         style="z-index: 1000;"
+        aria-labelledby="compileDialogTitle"
+        aria-describedby="compileDialogDescription"
         data-game-slug="<?php echo esc_attr( $projectSlug ); ?>"
         data-project-id="<?php echo esc_attr( $project_id ); ?>">
 
-	<div class="tw-modal-box tw-p-0 tw-overflow-hidden tw-max-w-3xl tw-w-full tw-max-h-[90vh] tw-flex tw-flex-col">
+    <div class="tw-modal-box tw-p-0 tw-overflow-hidden tw-max-w-3xl tw-w-full tw-max-h-[90vh] tw-flex tw-flex-col tw-min-h-0">
 
 		<!-- Header -->
 		<div class="tw-p-4 tw-px-6 tw-flex tw-items-center tw-gap-3 tw-border-b tw-border-slate-200 tw-flex-shrink-0">
@@ -13,30 +15,32 @@
 				<i data-lucide="hammer" class="tw-w-5 tw-h-5"></i>
 			</div>
 			<div class="tw-flex-1">
-				<h3 class="tw-text-lg tw-font-bold tw-text-slate-800">Build <?php echo esc_html( $single_lowercase ); ?></h3>
-				<p class="tw-text-xs tw-text-slate-400">Compile your scene into a deployable experience</p>
+				<h3 id="compileDialogTitle" class="tw-text-lg tw-font-bold tw-text-slate-800">Build <?php echo esc_html( $single_lowercase ); ?></h3>
+				<p id="compileDialogDescription" class="tw-text-xs tw-text-slate-500">Compile your scene into a deployable experience</p>
 			</div>
 			<div class="tw-flex tw-items-center tw-gap-2 tw-flex-shrink-0">
-				<button id="compileCancelBtn" class="tw-btn tw-btn-ghost tw-text-slate-500 tw-btn-sm">Cancel</button>
-				<a id="compileProceedBtn" type="button" class="tw-btn tw-btn-primary tw-btn-sm tw-px-6">
-					<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>
-					Build Project
-				</a>
+				<button id="compileSaveSettingsBtn"
+				        type="button"
+				        class="tw-btn tw-btn-outline tw-btn-primary tw-btn-sm"
+				        aria-label="Save build settings without building">
+					<i data-lucide="save" class="tw-w-4 tw-h-4"></i>
+					<span>Save</span>
+				</button>
 				<button id="compileDialogCloseBtn"
 				        type="button"
 				        class="tw-p-1.5 tw-text-slate-400 hover:tw-text-slate-700 tw-rounded-lg hover:tw-bg-slate-100 tw-transition-colors"
-				        title="Close">
+				        aria-label="Close build dialog">
 					<i data-lucide="x" class="tw-w-4 tw-h-4"></i>
 				</button>
 			</div>
 		</div>
 
 		<!-- Body -->
-		<div class="tw-p-6 tw-overflow-y-auto tw-flex-1">
+        <div class="tw-p-6 tw-overflow-y-auto tw-flex-1 tw-min-h-0">
 
 			<div class="tw-mb-4">
 				<div id="compileStatusRow" class="tw-flex tw-items-start tw-justify-between tw-gap-3 tw-flex-wrap">
-					<div id="constantUpdateUser" class="tw-flex tw-items-start tw-gap-2 tw-text-sm tw-text-slate-600">
+					<div id="constantUpdateUser" class="tw-flex tw-items-start tw-gap-2 tw-text-sm tw-text-slate-600" role="status" aria-live="polite">
 						<i data-lucide="info" class="tw-w-4 tw-h-4 tw-text-slate-400 tw-flex-shrink-0 tw-mt-0.5"></i>
 						Configure your scene quality settings and click "Build" to construct the virtual world.
 					</div>
@@ -72,7 +76,69 @@
 				</div>
 			</div>
 
-			<div id="compileRuntimePolicyMount" class="tw-mb-4"></div>
+			<section id="compileRuntimePolicyMount" class="tw-mb-4 tw-rounded-xl tw-border tw-border-emerald-200 tw-bg-emerald-50/60 tw-p-4" aria-labelledby="compileBuildSetupTitle">
+				<div class="tw-flex tw-items-start tw-gap-2 tw-mb-3">
+					<i data-lucide="settings-2" class="tw-w-4 tw-h-4 tw-mt-0.5 tw-text-emerald-600"></i>
+					<div>
+						<h4 id="compileBuildSetupTitle" class="tw-text-sm tw-font-bold tw-text-slate-800">Build setup</h4>
+						<p class="tw-mt-1 tw-text-xs tw-leading-relaxed tw-text-slate-600">Choose the output device and whether the published experience is standalone or networked.</p>
+					</div>
+				</div>
+				<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-3">
+					<label class="tw-form-control">
+						<span class="tw-label-text tw-text-xs tw-font-bold tw-uppercase tw-text-slate-600">Runtime target</span>
+						<select id="compileRuntimeTargetSelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1 tw-bg-white">
+							<option value="desktop">Desktop</option>
+							<option value="vr-headset">VR Headset Full</option>
+							<option value="pc-rendered-vr">VR Headset - PC Rendered</option>
+						</select>
+						<p id="compileRuntimeTargetHint" class="tw-text-xs tw-leading-relaxed tw-text-slate-500 tw-mt-1"></p>
+					</label>
+					<label class="tw-form-control">
+						<span class="tw-label-text tw-text-xs tw-font-bold tw-uppercase tw-text-slate-600">Runtime mode</span>
+						<select id="compileRuntimeModeSelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1 tw-bg-white">
+							<option value="single-player">Single-player static</option>
+							<option value="networked">Networked collaboration</option>
+						</select>
+						<p class="tw-text-xs tw-leading-relaxed tw-text-slate-500 tw-mt-1">Choose a static build or connect the experience to the network runtime.</p>
+					</label>
+				</div>
+
+				<div id="compileVrHeadsetPolicyPanel" class="tw-mt-3 tw-rounded-lg tw-border tw-border-emerald-200 tw-bg-white/80 tw-p-3 tw-space-y-3" style="display:none;">
+					<div class="tw-flex tw-items-center tw-justify-between tw-gap-3">
+						<span class="tw-text-xs tw-font-bold tw-uppercase tw-text-emerald-700">VR Headset effective policy</span>
+						<span class="tw-badge tw-badge-success tw-badge-sm tw-uppercase">Active</span>
+					</div>
+					<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-3">
+						<label class="tw-form-control">
+							<span class="tw-label-text tw-text-xs tw-font-bold tw-uppercase tw-text-emerald-700">Headset sky time</span>
+							<select id="compileVrHeadsetSkyTimeSelect" class="tw-select tw-select-bordered tw-select-sm tw-w-full tw-mt-1">
+								<option value="off">Use authored default</option>
+								<option value="night">Night</option>
+								<option value="dawn">Dawn</option>
+								<option value="sunrise">Sunrise</option>
+								<option value="early-morning">Early Morning</option>
+								<option value="midday">Midday</option>
+								<option value="golden-hour">Golden Hour</option>
+								<option value="sunset">Sunset</option>
+							</select>
+						</label>
+						<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer tw-rounded-md tw-border tw-border-emerald-100 tw-bg-white tw-p-3">
+							<input id="compileVrHeadsetStereoPostFxToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-sm tw-mt-0.5 tw-flex-shrink-0">
+							<span class="tw-min-w-0"><strong class="tw-block tw-text-xs tw-uppercase tw-text-emerald-700">Stereo Post-FX</strong><span class="tw-block tw-text-xs tw-leading-relaxed tw-text-emerald-700/80 tw-mt-0.5">PMNDRS per-eye composer with SMAA.</span></span>
+						</label>
+						<div class="tw-rounded-md tw-border tw-border-emerald-100 tw-bg-white tw-p-3">
+							<p class="tw-text-xs tw-font-bold tw-uppercase tw-text-emerald-700">Fixed policy</p>
+							<div class="tw-mt-2 tw-flex tw-flex-wrap tw-gap-1.5">
+								<span class="tw-badge tw-badge-outline tw-badge-sm">HDR reflections</span>
+								<span class="tw-badge tw-badge-outline tw-badge-sm">Probe off</span>
+								<span class="tw-badge tw-badge-outline tw-badge-sm">Native AA</span>
+								<span class="tw-badge tw-badge-outline tw-badge-sm">XR budget 1.0 / 0.5</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
 
 			<div id="compileDesktopProfilesPanel" class="tw-mb-4 tw-rounded-xl tw-border tw-border-emerald-200 tw-bg-emerald-50/60 tw-p-4">
 				<div class="tw-flex tw-items-start tw-justify-between tw-gap-3">
@@ -80,7 +146,6 @@
 						<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Desktop Quality</h4>
 						<p class="tw-mt-1 tw-text-[10px] tw-text-slate-500">Choose one exact Custom build or device-adaptive Low, Medium, and High variants.</p>
 					</div>
-					<span id="compileDesktopProfileState" class="tw-badge tw-badge-sm tw-badge-outline" style="display:none;">Default</span>
 				</div>
 				<fieldset class="tw-mt-3">
 					<legend class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Build mode</legend>
@@ -96,123 +161,82 @@
 					</div>
 				</fieldset>
 				<p id="compileDesktopProfileSelectionHint" class="tw-mt-2 tw-text-[10px] tw-text-slate-500"></p>
-				<div class="tw-mt-3 tw-tabs tw-tabs-boxed tw-bg-white" role="tablist" aria-label="Desktop quality settings">
-					<button type="button" role="tab" class="tw-tab tw-tab-active tw-text-xs" data-vrodos-desktop-profile="custom">Custom</button>
-					<button type="button" role="tab" class="tw-tab tw-text-xs" data-vrodos-desktop-profile="low">Low</button>
-					<button type="button" role="tab" class="tw-tab tw-text-xs" data-vrodos-desktop-profile="medium">Medium</button>
-					<button type="button" role="tab" class="tw-tab tw-text-xs" data-vrodos-desktop-profile="high">High</button>
+				<p id="compileDesktopProfileTabsLabel" class="tw-mt-3 tw-text-xs tw-font-semibold tw-text-slate-600">Edit settings for</p>
+				<div id="compileDesktopProfileTabList" class="tw-mt-1 tw-grid tw-grid-cols-4 tw-rounded-lg tw-bg-white tw-p-1" role="tablist" aria-label="Desktop quality settings">
+					<button id="compileDesktopProfileTabCustom" type="button" role="tab" class="tw-tab tw-tab-active tw-text-xs" data-vrodos-desktop-profile="custom" aria-controls="compileDesktopCustomPanel" aria-selected="true" tabindex="0">Shared / Custom</button>
+					<button id="compileDesktopProfileTabLow" type="button" role="tab" class="tw-tab tw-text-xs" data-vrodos-desktop-profile="low" aria-controls="compileDesktopTierPanel" aria-selected="false" tabindex="-1">Low</button>
+					<button id="compileDesktopProfileTabMedium" type="button" role="tab" class="tw-tab tw-text-xs" data-vrodos-desktop-profile="medium" aria-controls="compileDesktopTierPanel" aria-selected="false" tabindex="-1">Medium</button>
+					<button id="compileDesktopProfileTabHigh" type="button" role="tab" class="tw-tab tw-text-xs" data-vrodos-desktop-profile="high" aria-controls="compileDesktopTierPanel" aria-selected="false" tabindex="-1">High</button>
 				</div>
 				<p id="compileDesktopProfileWarning" class="tw-mt-2 tw-text-[10px] tw-font-semibold tw-text-amber-700" style="display:none;"></p>
 			</div>
 
-			<div id="compileDesktopTierPanel" class="tw-mb-5 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4" style="display:none;">
+			<div id="compileDesktopTierPanel" class="tw-mb-5 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4" role="tabpanel" aria-labelledby="compileDesktopProfileTabLow" tabindex="0" style="display:none;">
 				<div class="tw-flex tw-items-start tw-justify-between tw-gap-3">
 					<div>
 						<h4 id="compileDesktopTierTitle" class="tw-text-sm tw-font-bold tw-text-slate-800"></h4>
 						<p id="compileDesktopTierBudget" class="tw-mt-1 tw-text-[10px] tw-leading-relaxed tw-text-slate-500"></p>
 					</div>
-					<button type="button" id="compileDesktopProfileReset" class="tw-btn tw-btn-xs tw-btn-outline">Restore default</button>
+					<div class="tw-flex tw-items-center tw-gap-2">
+						<span id="compileDesktopProfileState" class="tw-badge tw-badge-sm tw-badge-outline" style="display:none;">Default</span>
+						<button type="button" id="compileDesktopProfileReset" class="tw-btn tw-btn-sm tw-btn-outline">Restore default</button>
+					</div>
 				</div>
 				<p id="compileDesktopTierExcluded" class="tw-mt-3 tw-rounded-lg tw-bg-amber-50 tw-p-2 tw-text-[10px] tw-font-semibold tw-text-amber-700" style="display:none;">Not included in this build.</p>
-				<div id="compileDesktopTierControls" class="tw-mt-4 tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3"></div>
+				<div id="compileDesktopTierControls" class="tw-mt-4 tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-3"></div>
 				<div class="tw-mt-4 tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3">
 					<p class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Fixed by this tier</p>
+					<div id="compileDesktopTierFixedValues" class="tw-mt-2 tw-flex tw-flex-wrap tw-gap-2"></div>
 					<p id="compileDesktopTierFixedSummary" class="tw-mt-1 tw-text-[10px] tw-leading-relaxed tw-text-slate-500"></p>
 				</div>
 			</div>
 
-			<div id="compileDesktopCustomPanel" class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-mb-5 tw-items-start">
-				<div class="md:tw-col-span-2 tw-rounded-xl tw-border tw-border-sky-100 tw-bg-sky-50/60 tw-p-3">
-					<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Custom</h4>
-					<p class="tw-mt-1 tw-text-[10px] tw-leading-relaxed tw-text-slate-500">Shared Experience settings define the scene's artistic identity for every build. Custom Quality values are used only by a Custom-only build.</p>
+			<div id="compileDesktopCustomPanel" class="tw-flex tw-flex-col tw-gap-4 tw-mb-5" role="tabpanel" aria-labelledby="compileDesktopProfileTabCustom" tabindex="0">
+				<!-- Functional controls stay ahead of graphical controls. -->
+				<div id="compileRuntimeHelpersCard" class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+					<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+						<i data-lucide="wrench" class="tw-w-4 tw-h-4 tw-text-cyan-500"></i>
+						<div>
+							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Runtime behavior</h4>
+							<p class="tw-mt-0.5 tw-text-xs tw-text-slate-500">Configure interaction and diagnostic helpers for the published experience.</p>
+						</div>
+					</div>
+					<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3">
+						<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer">
+							<input id="compileHoveringInteractablesToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
+							<div class="tw-min-w-0">
+								<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Hovering Interactables</span>
+								<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Enables a subtle floating animation on interactive markers.</p>
+							</div>
+						</label>
+						<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer">
+							<input id="compileFPSMeterToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
+							<div class="tw-min-w-0">
+								<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">FPS Meter</span>
+								<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Shows a live FPS counter in compiled scenes for quality testing.</p>
+							</div>
+						</label>
+					</div>
 				</div>
-				<!-- Left Column: Global Settings -->
-				<div class="tw-flex tw-flex-col tw-gap-4">
+
+				<section aria-labelledby="compileVisualQualityTitle">
+					<div class="tw-mb-3">
+						<h4 id="compileVisualQualityTitle" class="tw-text-sm tw-font-bold tw-text-slate-800">Visual quality</h4>
+						<p class="tw-mt-1 tw-text-xs tw-text-slate-500">Rendering controls are grouped separately from effects and atmosphere.</p>
+					</div>
+					<div class="tw-space-y-4">
+						<!-- Compact core controls share a row; deeper sections use the full width below. -->
+						<div id="compileSceneRenderingColumn" class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-items-start tw-gap-4">
+							<p class="tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-wide tw-text-slate-500 lg:tw-col-span-2">Rendering &amp; environment</p>
 					<!-- Card: Output & Quality -->
-					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+					<div id="compileCustomQualityCard" class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 						<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
 							<i data-lucide="monitor" class="tw-w-4 tw-h-4 tw-text-emerald-500"></i>
-							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Custom Quality &amp; Runtime Options</h4>
+							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Rendering &amp; Shadows</h4>
 						</div>
 
 						<div class="tw-space-y-4">
-							<div class="tw-rounded-lg tw-border tw-border-emerald-200 tw-bg-emerald-50/80 tw-p-3">
-								<div class="tw-flex tw-flex-col tw-gap-2 sm:tw-flex-row sm:tw-items-center sm:tw-justify-between">
-									<div class="tw-min-w-0">
-										<p class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Runtime Mode</p>
-										<p class="tw-text-[10px] tw-leading-tight tw-text-emerald-700/70">Networked service or static single-player output.</p>
-									</div>
-									<select id="compileRuntimeModeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full sm:tw-w-52 tw-bg-white">
-										<option value="single-player">Single-player static</option>
-										<option value="networked">Networked collaboration</option>
-									</select>
-								</div>
-							</div>
-
-							<label class="tw-form-control">
-								<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Runtime Target</span>
-								<select id="compileRuntimeTargetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-									<option value="desktop">Desktop</option>
-									<option value="vr-headset">VR Headset Full</option>
-									<option value="pc-rendered-vr">VR Headset - PC Rendered</option>
-								</select>
-								<p id="compileRuntimeTargetHint" class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-1"></p>
-							</label>
-
-							<div id="compileVrHeadsetPolicyPanel" class="tw-rounded-lg tw-border tw-border-emerald-200 tw-bg-emerald-50/70 tw-p-3 tw-space-y-3" style="display:none;">
-								<div class="tw-flex tw-items-center tw-justify-between tw-gap-3">
-									<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">VR Headset Effective Policy</span>
-									<span class="tw-badge tw-badge-success tw-badge-xs tw-text-[9px] tw-uppercase">Active</span>
-								</div>
-								<div class="tw-grid tw-grid-cols-2 tw-gap-3">
-									<label class="tw-form-control">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Headset Sky Time</span>
-										<select id="compileVrHeadsetSkyTimeSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-											<option value="off">Use authored default</option>
-											<option value="night">Night</option>
-											<option value="dawn">Dawn</option>
-											<option value="sunrise">Sunrise</option>
-											<option value="early-morning">Early Morning</option>
-											<option value="midday">Midday</option>
-											<option value="golden-hour">Golden Hour</option>
-											<option value="sunset">Sunset</option>
-										</select>
-									</label>
-									<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer tw-rounded-md tw-border tw-border-emerald-100 tw-bg-white/70 tw-p-2">
-										<input id="compileVrHeadsetStereoPostFxToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
-										<div class="tw-min-w-0">
-											<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Stereo Post-FX</span>
-											<p class="tw-text-[10px] tw-leading-relaxed tw-text-emerald-700/70 tw-mt-0.5">PMNDRS per-eye composer with SMAA.</p>
-										</div>
-									</label>
-									<label class="tw-form-control">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Reflections</span>
-										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-											<option>HDR env map if authored</option>
-										</select>
-									</label>
-									<label class="tw-form-control">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Scene Probe</span>
-										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-											<option>Disabled</option>
-										</select>
-									</label>
-									<label class="tw-form-control">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">Native AA</span>
-										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-											<option>Enabled</option>
-										</select>
-									</label>
-									<label class="tw-form-control">
-										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-emerald-700">XR Budget</span>
-										<select class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1" disabled>
-											<option>Scale 1.0 / Foveation 0.5</option>
-										</select>
-									</label>
-								</div>
-							</div>
-
-							<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+							<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-3">
 								<label class="tw-form-control">
 									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Render</span>
 									<select id="compileRenderQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
@@ -254,7 +278,7 @@
 					</div>
 
 					<!-- Card: Reflections & Environment -->
-					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+					<div id="compileLightingReflectionsCard" class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 						<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
 							<i data-lucide="globe" class="tw-w-4 tw-h-4 tw-text-sky-500"></i>
 							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Reflections &amp; Environment</h4>
@@ -273,12 +297,20 @@
 								<div id="compileReflectionControlsWrapper" class="tw-grid tw-grid-cols-2 tw-gap-3">
 									<label class="tw-form-control">
 										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Choose between HDR reflections or a live scene-based reflection probe">Reflection Source</span>
-										<select id="compileReflectionSourceSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+									<select id="compileReflectionSourceSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 											<option value="hdr">HDR</option>
 											<option value="scene-probe">Scene Probe</option>
-										</select>
-									</label>
-									<label id="compileEnvMapPresetWrapper" class="tw-form-control">
+									</select>
+								</label>
+								<label class="tw-form-control">
+									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Reflection quality</span>
+									<select id="compileReflectionProfileSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
+										<option value="soft">Soft</option>
+										<option value="balanced">Balanced</option>
+										<option value="enhanced">Enhanced</option>
+									</select>
+								</label>
+								<label id="compileEnvMapPresetWrapper" class="tw-form-control">
 										<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="HDR environment map for PBR reflections and lighting">Env Lighting</span>
 										<select id="compileEnvMapPresetSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 											<option value="none">None</option>
@@ -318,58 +350,31 @@
 								<input id="compileLegacyHorizonStageSizeSlider" type="range" min="500" max="8000" step="100" value="5000" class="tw-range tw-range-primary tw-range-xs">
 							</div>
 						</div>
-					</div>
-
-					<!-- Card: Runtime Helpers -->
-					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
-						<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
-							<i data-lucide="wrench" class="tw-w-4 tw-h-4 tw-text-cyan-500"></i>
-							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Runtime Helpers</h4>
 						</div>
-						<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3">
-							<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer">
-								<input id="compileHoveringInteractablesToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
-								<div class="tw-min-w-0">
-									<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Hovering Interactables</span>
-									<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Enables a subtle floating animation on interactive markers.</p>
-								</div>
-							</label>
-							<label class="tw-flex tw-items-start tw-gap-2 tw-cursor-pointer">
-								<input id="compileFPSMeterToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs tw-mt-0.5 tw-flex-shrink-0">
-								<div class="tw-min-w-0">
-									<span class="tw-block tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">FPS Meter</span>
-									<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400 tw-mt-0.5">Shows a live FPS counter in compiled scenes for quality testing.</p>
-								</div>
-							</label>
 						</div>
-					</div>
 
-					<!-- Card: Universal Cinematic Effects -->
-					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+						<!-- Full-width graphical controls avoid a tall, isolated right rail. -->
+						<div id="compileEffectsAtmosphereColumn" class="tw-flex tw-flex-col tw-gap-4">
+							<p class="tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-wide tw-text-slate-500">Post-processing &amp; atmosphere</p>
+
+							<!-- Card: Universal Cinematic Effects -->
+							<div id="compilePostProcessingCard" class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 						<div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
 							<div class="tw-flex tw-items-center tw-gap-2">
 								<i data-lucide="sparkles" class="tw-w-4 tw-h-4 tw-text-amber-500"></i>
-								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Universal Cinematic FX</h4>
+								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Post-processing</h4>
 							</div>
-							<input id="compilePostFxToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-xs">
+							<input id="compilePostFxToggle" type="checkbox" class="tw-toggle tw-toggle-primary tw-toggle-sm" aria-label="Enable post-processing">
 						</div>
 
 						<div id="compileUniversalPostFxGroup" class="tw-space-y-4">
-							<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+							<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3">
 								<label class="tw-form-control">
 									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Bloom Preset</span>
 									<select id="compileBloomStrengthSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
 										<option value="off">Off</option>
 										<option value="soft">Soft</option>
 										<option value="medium">Medium</option>
-									</select>
-								</label>
-								<label class="tw-form-control">
-									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Reflection Profile</span>
-									<select id="compileReflectionProfileSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
-										<option value="soft">Soft</option>
-										<option value="balanced">Balanced</option>
-										<option value="enhanced">Enhanced</option>
 									</select>
 								</label>
 							</div>
@@ -407,27 +412,26 @@
 								<input id="compileEdgeAAStrengthSlider" type="range" min="0" max="5" step="1" value="3" class="tw-range tw-range-primary tw-range-xs tw-mt-1">
 							</div>
 						</div>
-					</div>
-				</div>
+							</div>
 
-				<!-- Right Column: Contextual Engine Controls -->
-				<div id="compileEngineControlsColumn" class="tw-flex tw-flex-col tw-gap-4">
+							<!-- Contextual engine controls -->
+							<div id="compileEngineControlsColumn" class="tw-flex tw-flex-col tw-gap-4">
 
 					<!-- Engine selection tabs -->
 					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 						<div class="tw-mb-3">
 							<div class="tw-flex tw-items-center tw-justify-between">
-								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Advanced Engine Controls</h4>
+								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Processing engine</h4>
 								<span id="compilePostFxEngineHintBadge" class="tw-badge tw-badge-ghost tw-badge-xs tw-text-[9px] tw-uppercase" style="display:none;">PostFX Must Be On</span>
 							</div>
 							<p id="compilePostFxEngineHint" class="tw-text-[10px] tw-text-slate-400 tw-mt-1"></p>
 						</div>
-						<div role="tablist" class="tw-tabs tw-tabs-boxed tw-bg-slate-100">
-							<button type="button" id="compilePostFxEngineTabLegacy" role="tab" data-engine="legacy" class="tw-tab tw-tab-active tw-text-[11px] tw-font-bold">
+						<div role="tablist" class="tw-tabs tw-tabs-boxed tw-bg-slate-100" aria-label="Post-processing engine">
+							<button type="button" id="compilePostFxEngineTabLegacy" role="tab" data-engine="legacy" class="tw-tab tw-tab-active tw-text-[11px] tw-font-bold" aria-controls="compileLegacyPane" aria-selected="true" tabindex="0">
 								<i data-lucide="cpu" class="tw-w-3 tw-h-3 tw-mr-1"></i>
 								Legacy
 							</button>
-							<button type="button" id="compilePostFxEngineTabPmndrs" role="tab" data-engine="pmndrs" class="tw-tab tw-text-[11px] tw-font-bold">
+							<button type="button" id="compilePostFxEngineTabPmndrs" role="tab" data-engine="pmndrs" class="tw-tab tw-text-[11px] tw-font-bold" aria-controls="compilePmndrsPane" aria-selected="false" tabindex="-1">
 								<i data-lucide="sparkles" class="tw-w-3 tw-h-3 tw-mr-1"></i>
 								Pmndrs
 							</button>
@@ -436,9 +440,9 @@
 					</div>
 
 					<!-- LEGACY Engine Panes -->
-					<div id="compileLegacyPane" class="tw-flex tw-flex-col tw-gap-4">
+					<div id="compileLegacyPane" class="tw-flex tw-flex-col tw-gap-4" role="tabpanel" aria-labelledby="compilePostFxEngineTabLegacy">
 						<!-- Card: Legacy Anti-Aliasing -->
-						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+						<div id="compileLegacyAACard" class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 							<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
 								<i data-lucide="scan" class="tw-w-4 tw-h-4 tw-text-indigo-500"></i>
 								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Legacy Anti-Aliasing</h4>
@@ -455,12 +459,13 @@
 						</div>
 
 						<!-- Card: Legacy Enhancements -->
-						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
-							<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+						<details class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+							<summary class="tw-flex tw-cursor-pointer tw-items-center tw-gap-2 tw-text-sm tw-font-bold tw-text-slate-800">
 								<i data-lucide="layers" class="tw-w-4 tw-h-4 tw-text-indigo-500"></i>
-								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Legacy Enhancements</h4>
-							</div>
-							<div class="tw-space-y-4">
+								Legacy engine tuning
+								<i data-lucide="chevron-down" class="vrodos-disclosure-chevron tw-ml-auto tw-w-4 tw-h-4 tw-flex-shrink-0"></i>
+							</summary>
+							<div class="tw-space-y-4 tw-pt-4">
 								<label class="tw-form-control">
 									<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Screen-space reflections for floors, glass, and polished surfaces">Reflections (SSR)</span>
 									<select id="compileSSRStrengthSelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
@@ -478,13 +483,13 @@
 									</label>
 								</div>
 							</div>
-						</div>
+						</details>
 					</div>
 
 					<!-- PMNDRS Engine Panes -->
-					<div id="compilePmndrsPane" class="tw-flex tw-flex-col tw-gap-4" style="display:none;">
+					<div id="compilePmndrsPane" class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-items-start tw-gap-4" role="tabpanel" aria-labelledby="compilePostFxEngineTabPmndrs" style="display:none;">
 						<!-- Card: PMNDRS Anti-Aliasing -->
-						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+						<div id="compilePmndrsAACard" class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 							<div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
 								<div class="tw-flex tw-items-center tw-gap-2">
 									<i data-lucide="scan" class="tw-w-4 tw-h-4 tw-text-fuchsia-500"></i>
@@ -579,13 +584,14 @@
 						</div>
 
 						<!-- Card: PMNDRS Lens & Finishing -->
-						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
-							<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+						<details class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4 lg:tw-col-span-2">
+							<summary class="tw-flex tw-cursor-pointer tw-items-center tw-gap-2 tw-text-sm tw-font-bold tw-text-slate-800">
 								<i data-lucide="camera" class="tw-w-4 tw-h-4 tw-text-violet-500"></i>
-								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">PMNDRS Lens &amp; Finishing</h4>
-							</div>
+								Lens &amp; finishing
+								<i data-lucide="chevron-down" class="vrodos-disclosure-chevron tw-ml-auto tw-w-4 tw-h-4 tw-flex-shrink-0"></i>
+							</summary>
 
-							<div class="tw-space-y-4">
+							<div class="tw-space-y-4 tw-pt-4">
 								<div class="tw-pt-2">
 									<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 										<input id="compilePmndrsLensFlareToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
@@ -655,13 +661,13 @@
 									</div>
 								</div>
 							</div>
-						</div>
+						</details>
 
 						<!-- Card: Takram Atmosphere -->
-						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
+						<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4 lg:tw-col-span-2">
 							<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
 								<i data-lucide="sun" class="tw-w-4 tw-h-4 tw-text-orange-500"></i>
-								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Takram Atmosphere</h4>
+								<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Atmosphere &amp; Sky</h4>
 							</div>
 
 							<div class="tw-space-y-4">
@@ -778,7 +784,7 @@
 									</div>
 									<p class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">Light Shafts preserve the selected cloud quality and become effective only on High/Ultra desktop clouds.</p>
 
-									<div id="compilePmndrsCloudsWrapper" class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3">
+									<div id="compilePmndrsCloudsWrapper" class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-3">
 										<label class="tw-form-control tw-w-full">
 											<span class="tw-label-text tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-400">Cloud Quality</span>
 											<select id="compilePmndrsCloudsQualitySelect" class="tw-select tw-select-bordered tw-select-xs tw-w-full tw-mt-1">
@@ -826,12 +832,13 @@
 									</div>
 									</section>
 
-									<section class="tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3 tw-space-y-3">
-										<div class="tw-flex tw-items-center tw-gap-2">
+									<details class="tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3">
+										<summary class="tw-flex tw-cursor-pointer tw-items-center tw-gap-2 tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-wide tw-text-slate-600">
 											<i data-lucide="map-pin" class="tw-w-3.5 tw-h-3.5 tw-text-emerald-500"></i>
-											<h5 class="tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-wide tw-text-slate-600">World Positioning</h5>
-										</div>
-										<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3">
+											World positioning
+											<i data-lucide="chevron-down" class="vrodos-disclosure-chevron tw-ml-auto tw-w-4 tw-h-4 tw-flex-shrink-0"></i>
+										</summary>
+										<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3 tw-pt-4">
 											<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 												<input id="compilePmndrsGeospatialToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
 												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500" title="Use latitude, longitude, and altitude to anchor the Takram world-to-ECEF frame.">Geospatial Frame</span>
@@ -855,15 +862,16 @@
 											<input id="compilePmndrsGeospatialAltitudeInput" type="number" min="-500" max="20000" step="1" value="0" class="tw-input tw-input-bordered tw-input-xs tw-w-full tw-mt-1">
 										</label>
 									</div>
-									</section>
+									</details>
 
 									<details class="tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3">
 										<summary class="tw-flex tw-cursor-pointer tw-items-center tw-gap-2 tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-wide tw-text-slate-600">
 											<i data-lucide="sliders-horizontal" class="tw-w-3.5 tw-h-3.5 tw-text-violet-500"></i>
 											Advanced Lighting &amp; Scattering
+											<i data-lucide="chevron-down" class="vrodos-disclosure-chevron tw-ml-auto tw-w-4 tw-h-4 tw-flex-shrink-0"></i>
 										</summary>
 									<div id="compilePmndrsAtmosphereAdvanced" class="tw-space-y-3 tw-pt-4">
-										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<div class="tw-grid tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-3">
 											<div>
 												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
 													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Sun Elevation</span>
@@ -937,7 +945,7 @@
 											</div>
 										</div>
 
-										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<div class="tw-grid tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-3">
 											<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
 												<input id="compilePmndrsTransmittanceToggle" type="checkbox" class="tw-checkbox tw-checkbox-primary tw-checkbox-xs">
 												<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Transmittance</span>
@@ -970,7 +978,7 @@
 											</label>
 										</div>
 
-										<div class="tw-grid tw-grid-cols-2 tw-gap-3">
+										<div class="tw-grid tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-3">
 											<div>
 												<div class="tw-flex tw-items-center tw-justify-between tw-mb-1">
 													<span class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Rayleigh</span>
@@ -1016,11 +1024,30 @@
 								</div>
 							</div>
 						</div>
+						</div>
 					</div>
-				</div>
+						</div>
+					</div>
+				</section>
 			</div>
 
 		</div>
+
+		<footer class="tw-flex-shrink-0 tw-border-t tw-border-slate-200 tw-bg-white tw-px-4 tw-py-3 sm:tw-px-6">
+			<div class="tw-flex tw-flex-col tw-gap-3 sm:tw-flex-row sm:tw-items-center sm:tw-justify-between">
+				<div class="tw-min-w-0">
+					<p class="tw-text-xs tw-font-bold tw-uppercase tw-text-slate-500">Build summary</p>
+					<p id="compileBuildSummary" class="tw-mt-0.5 tw-text-sm tw-text-slate-700" aria-live="polite">Desktop · Adaptive · Single-player</p>
+				</div>
+				<div class="tw-flex tw-items-center tw-justify-end tw-gap-2">
+					<button id="compileCancelBtn" type="button" class="tw-btn tw-btn-ghost tw-btn-sm">Cancel</button>
+					<button id="compileProceedBtn" type="button" class="tw-btn tw-btn-primary tw-btn-sm">
+						<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i>
+						Build Project
+					</button>
+				</div>
+			</div>
+		</footer>
 
 	</div>
 	<form method="dialog" class="tw-modal-backdrop">
