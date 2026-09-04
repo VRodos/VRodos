@@ -986,6 +986,7 @@ source = os.path.abspath(args.input)
 target = os.path.abspath(args.output)
 
 def scene_bounds():
+    bpy.context.view_layer.update()
     mins = Vector((float("inf"), float("inf"), float("inf")))
     maxs = Vector((float("-inf"), float("-inf"), float("-inf")))
     found = False
@@ -1064,14 +1065,14 @@ try:
 
     bpy.context.scene.render.resolution_x = 512
     bpy.context.scene.render.resolution_y = 512
+    bpy.context.scene.render.resolution_percentage = 100
     bpy.context.scene.render.film_transparent = False
     bpy.context.scene.render.image_settings.file_format = "PNG"
     bpy.context.scene.render.filepath = target
 
-    if "BLENDER_EEVEE_NEXT" in {item.identifier for item in bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items}:
-        bpy.context.scene.render.engine = "BLENDER_EEVEE_NEXT"
-    elif "BLENDER_EEVEE" in {item.identifier for item in bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items}:
-        bpy.context.scene.render.engine = "BLENDER_EEVEE"
+    bpy.context.scene.render.engine = "BLENDER_WORKBENCH"
+    bpy.context.scene.display.shading.light = "STUDIO"
+    bpy.context.scene.display.shading.color_type = "TEXTURE"
 
     os.makedirs(os.path.dirname(target), exist_ok=True)
     bpy.ops.render.render(write_still=True)
