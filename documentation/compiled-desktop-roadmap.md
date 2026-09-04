@@ -1,6 +1,6 @@
 # VRodos Compiled Desktop Roadmap
 
-Status date: 2026-07-26.
+Status date: 2026-09-04.
 
 This is the single active backlog for compiled desktop inline and fullscreen scenes. Current rendering behavior belongs in `../RENDERING_PIPELINE.md`; framework and lifecycle ownership belongs in `vrodos-compiled-scene-framework-integration.md`; completed investigations belong in `archive/rendering-history/README.md`.
 
@@ -13,6 +13,23 @@ This is the single active backlog for compiled desktop inline and fullscreen sce
 - Keep immersive WebXR and standalone headset policy out of desktop rendering changes unless the headset roadmap explicitly makes them shared work.
 
 ## Active Desktop Acceptance
+
+### Adaptive Performance Profiles
+
+Desktop compilation now has four editor tabs: Custom, Low, Medium, and High. Custom is the canonical authored scene and exact fixed-build profile. Low/Medium/High contain only bounded performance controls from schema v2 of `assets/desktop-performance-profiles.json`; editing one changes its badge from `Default` to `Modified`. High retains the authored feature set and is the adaptive visual ceiling. Artistic values such as time, color, exposure/look, cloud coverage/style/wind, transforms, materials, movement, and interactions remain shared and never affect tier badge state.
+
+The compile dialog exposes an explicit build-mode decision:
+
+- Adaptive Low/Medium/High prepares and publishes all three immutable profile derivatives. A lightweight pre-A-Frame capability probe chooses one profile, and only that profile's runtime chunks and GLBs are requested.
+- Custom only prepares, publishes, and loads `desktop-custom` with original textures and geometry plus safe Draco. It does not include the hardware probe, adaptive query override, recommendation, or automatic downgrade path.
+
+Low uses 1024px-class KTX2 textures, a 96 MiB scene target, 50% geometry, Low clouds without shafts when High enables clouds, and the Performance render policy. Medium uses 2048px-class KTX2 textures, a 192 MiB target, 80% geometry, Off/SMAA Low/Medium controls, Low/Medium clouds without shafts, and the Standard render policy. High preserves authored textures and geometry with safe Draco compression. Collision/navigation assets plus skinned or morph-target GLBs are never simplified.
+
+Remaining acceptance:
+
+- [ ] Profile Corinth Low/Medium/High publications on representative low-, mid-, and high-end desktop hardware.
+- [ ] Confirm forced profile loads never request unselected GLBs or optional chunks in production browser traces.
+- [ ] Confirm collision/navigation parity and visual hierarchy for every derivative family before deployment.
 
 ### Cloud Light Shafts And Weather
 
@@ -41,8 +58,8 @@ The contract, compiler serialization, runtime gates, diagnostics, generated bund
 
 ## Performance And Asset Backlog
 
-- Add KTX2/Basis texture derivative generation for texture-heavy GLBs.
-- After texture derivatives are stable, define explicit opt-in LOD derivative families such as `lod0`, `lod1`, and `lod2`.
+- Validate the implemented KTX2/Basis desktop profile derivatives across the representative production asset set.
+- After profile derivatives are stable, define explicit opt-in runtime LOD families such as `lod0`, `lod1`, and `lod2` only if measured scenes still need them.
 - Keep derivative substitution explicit and per asset. Never silently downgrade uploaded source assets.
 - Use profiler/Spector captures and visual parity checks before promoting a derivative family into compile selection.
 

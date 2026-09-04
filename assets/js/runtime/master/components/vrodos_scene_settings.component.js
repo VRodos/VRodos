@@ -238,6 +238,20 @@ function vrodosRuntimeSettingsDefaultsForPrefix(prefix) {
 
 const VRODOS_PMNDRS_SCHEMA_DEFAULTS = vrodosRuntimeSettingsDefaultsForPrefix('pmndrs');
 
+function vrodosApplyActiveDesktopPerformanceProfile(component) {
+    const active = window.VRODOS_ACTIVE_DESKTOP_PROFILE;
+    if (!component || !active || !active.settings || component.data.vrRuntimeProfile !== 'desktop') {
+        return;
+    }
+
+    Object.keys(active.settings).forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(component.data, key)) {
+            component.data[key] = String(active.settings[key]);
+        }
+    });
+    component._vrodosDesktopPerformanceProfile = active;
+}
+
 function vrodosRuntimeStringSchema(defaults) {
     if (VRODOSRuntimeSettings.schemaStringMap) {
         return VRODOSRuntimeSettings.schemaStringMap(defaults);
@@ -535,7 +549,9 @@ AFRAME.registerComponent('scene-settings', {
                 vrodosRuntimeDebugFlag('enablePmndrsHorizonAerial', 'vrodos_debug_enable_pmndrs_horizon_aerial'));
     },
     isPmndrsCloudsEnabled: function () {
-        const authored = this.getRenderQualityLevel() === 'high' &&
+        const adaptiveProfile = this._vrodosDesktopPerformanceProfile && this._vrodosDesktopPerformanceProfile.id;
+        const qualityAllowsClouds = this.getRenderQualityLevel() === 'high' || adaptiveProfile === 'medium' || adaptiveProfile === 'low';
+        const authored = qualityAllowsClouds &&
             this.data.postFXEngine === 'pmndrs' &&
             this.data.postFXEnabled !== '0' &&
             this.isPmndrsAtmosphereEnabled() &&
@@ -1763,6 +1779,8 @@ AFRAME.registerComponent('scene-settings', {
         }
 
         return {
+            desktopPerformanceProfile: hardwareDiagnostics.profile || null,
+            desktopPerformanceRecommendation: hardwareDiagnostics.recommendation || null,
             presentation: {
                 mode: this.getPresentationMode(),
                 immersiveXr: this.isImmersiveXrActive(),
@@ -3116,6 +3134,7 @@ AFRAME.registerComponent('scene-settings', {
     applyPostFXProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPostFXProfile,
     applyQualityProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyQualityProfiles,
     init: function () {
+        vrodosApplyActiveDesktopPerformanceProfile(this);
         this.ensureRuntimePipelineComponents();
         this.runtimeResources = VRODOSSceneSettingsMaster.RuntimeResources && VRODOSSceneSettingsMaster.RuntimeResources.createRegistry
             ? VRODOSSceneSettingsMaster.RuntimeResources.createRegistry()

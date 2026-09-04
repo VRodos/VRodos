@@ -83,40 +83,7 @@
         return navigatorValue.platform || navigatorValue.userAgent || '';
     }
 
-    Hardware.classifyAdapter = function (details) {
-        const source = details || {};
-        const vendor = stringValue(source.vendor);
-        const renderer = stringValue(source.renderer);
-        const platform = stringValue(source.platform);
-        const label = `${vendor} ${renderer}`.toLowerCase();
-        const windows = /windows|win32|win64/i.test(platform);
-
-        if (/swiftshader|llvmpipe|lavapipe|software rasterizer|microsoft basic render driver/.test(label)) {
-            return { adapterClass: 'software', confidence: 'high', softwareRendering: true };
-        }
-
-        if (/apple/.test(label) && /(apple\s+m\d|apple\s+gpu|metal)/.test(label)) {
-            return { adapterClass: 'unified', confidence: 'high', softwareRendering: false };
-        }
-
-        if (/nvidia|geforce|quadro|rtx|gtx/.test(label)) {
-            return { adapterClass: 'discrete-likely', confidence: 'high', softwareRendering: false };
-        }
-
-        if (/intel.*arc|arc.*intel/.test(label)) {
-            return { adapterClass: 'unknown', confidence: 'low', softwareRendering: false };
-        }
-
-        if (windows && /intel/.test(label) && /\b(hd|uhd|iris|graphics family)\b/.test(label)) {
-            return { adapterClass: 'integrated-likely', confidence: 'medium', softwareRendering: false };
-        }
-
-        if (/radeon\s+(rx|pro)|firepro/.test(label)) {
-            return { adapterClass: 'discrete-likely', confidence: 'medium', softwareRendering: false };
-        }
-
-        return { adapterClass: 'unknown', confidence: label.trim() ? 'low' : 'none', softwareRendering: false };
-    };
+    Hardware.classifyAdapter = window.VRODOSHardwareCapabilities.classifyAdapter;
 
     Hardware.createGpuState = function () {
         return {
@@ -504,6 +471,107 @@
         updateAdvisoryMetrics(state);
     }
 
+    function showQualityRecommendation(component, target, direction) {
+        const state = component._vrodosHardwareDiagnostics;
+        if (!state || state.dismissed || !target || isImmersive(component)) return;
+        const reason = `quality-${direction}-${target}`;
+        if (Hardware.shouldReuseAdvisory(state, reason)) return;
+        removeAdvisory(state);
+        const ui = window.VRODOSMasterUI;
+        const host = ui && typeof ui.ensureOverlayHost === 'function' ? ui.ensureOverlayHost() : document.body;
+        if (!host) return;
+
+        const banner = document.createElement('aside');
+        banner.id = 'vrodos-quality-recommendation';
+        banner.setAttribute('role', 'status');
+        banner.style.cssText = 'position:absolute;top:16px;right:16px;width:min(390px,calc(100vw - 32px));box-sizing:border-box;padding:16px;border:1px solid rgba(16,185,129,.75);border-radius:12px;background:rgba(17,24,39,.96);color:#f9fafb;box-shadow:0 16px 40px rgba(0,0,0,.35);font:14px/1.4 system-ui,sans-serif;pointer-events:auto;';
+        const title = document.createElement('strong');
+        title.style.display = 'block';
+        title.textContent = direction === 'down' ? 'A lower quality profile is recommended' : 'This device can try a higher quality profile';
+        const message = document.createElement('p');
+        message.style.margin = '8px 0 12px';
+        message.textContent = direction === 'down'
+            ? `The settled frame-rate sample is below the target. Switch to ${target} for smoother playback?`
+            : `The settled frame-rate sample has clear headroom. Try ${target}?`;
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display:flex;gap:8px;';
+        const apply = document.createElement('button');
+        apply.type = 'button';
+        apply.className = 'tw-btn tw-btn-sm tw-btn-primary';
+        apply.textContent = `Use ${target}`;
+        const keep = document.createElement('button');
+        keep.type = 'button';
+        keep.className = 'tw-btn tw-btn-sm tw-btn-ghost';
+        keep.textContent = 'Keep current';
+        apply.addEventListener('click', function () {
+            const manifest = window.VRODOS_DESKTOP_PROFILE_MANIFEST || {};
+            try { window.localStorage.setItem(manifest.storageKey || 'vrodos.desktopQualityOverride.v1', target); } catch (error) { /* Storage is optional. */ }
+            window.location.reload();
+        });
+        keep.addEventListener('click', function () {
+            state.dismissed = true;
+            storeDismissal();
+            removeAdvisory(state);
+        });
+        actions.appendChild(apply);
+        actions.appendChild(keep);
+        banner.appendChild(title);
+        banner.appendChild(message);
+        banner.appendChild(actions);
+        host.appendChild(banner);
+        state.banner = banner;
+        state.bannerReason = reason;
+    }
+
+    function evaluateProfilePerformance(component) {
+        const state = component && component._vrodosHardwareDiagnostics;
+        const active = window.VRODOS_ACTIVE_DESKTOP_PROFILE;
+        if (!state || !active || state.performance.status !== 'complete' || active.source === 'query') return;
+        const manifest = window.VRODOS_DESKTOP_PROFILE_MANIFEST || {};
+        if (manifest.buildMode !== 'adaptive') {
+            state.recommendation = null;
+            return;
+        }
+        const available = Object.keys(manifest.profiles || {});
+        if (available.length < 2) {
+            state.recommendation = null;
+            return;
+        }
+        const rules = manifest.selection || {};
+        const averageFps = Number(state.performance.averageFps);
+        const p95 = Number(state.performance.p95FrameMs);
+        const poor = averageFps < Number(rules.downgradeAverageFps || 45) || p95 > Number(rules.downgradeP95FrameMs || 33);
+        const order = ['low', 'medium', 'high'];
+        const index = order.indexOf(active.id);
+        state.recommendation = null;
+        if (poor && index > 0) {
+            const desiredTarget = averageFps < Number(rules.severeAverageFps || 28) ? 'low' : order[index - 1];
+            const target = order.slice(0, index).reverse().find(function (profile) {
+                return available.indexOf(profile) !== -1 && order.indexOf(profile) <= order.indexOf(desiredTarget);
+            });
+            if (!target) return;
+            state.recommendation = { direction: 'down', target };
+            if (active.source === 'auto') {
+                const key = (window.VRODOS_DESKTOP_PROFILE_MANIFEST || {}).sessionDowngradeKey || 'vrodos.desktopQualityDowngrade.v1';
+                let alreadyDowngraded = false;
+                try { alreadyDowngraded = Boolean(window.sessionStorage.getItem(key)); } catch (error) { alreadyDowngraded = true; }
+                if (!alreadyDowngraded) {
+                    try { window.sessionStorage.setItem(key, target); } catch (error) { return; }
+                    window.location.reload();
+                    return;
+                }
+            }
+            showQualityRecommendation(component, target, 'down');
+            return;
+        }
+        if (!poor && averageFps >= 58 && p95 <= 20 && index >= 0 && index < order.length - 1) {
+            const target = order.slice(index + 1).find(function (profile) { return available.indexOf(profile) !== -1; });
+            if (!target) return;
+            state.recommendation = { direction: 'up', target };
+            showQualityRecommendation(component, target, 'up');
+        }
+    }
+
     function publish(component, reason) {
         if (component && typeof component.publishRuntimeFeatureState === 'function') {
             component.publishRuntimeFeatureState(reason || 'gpu-diagnostics');
@@ -519,6 +587,15 @@
         console.info('[VRodos][GPU diagnostics]', reason, {
             gpu: state.gpu,
             performance: state.performance,
+            desktopProfile: state.profile,
+            recommendation: state.recommendation,
+            estimatedTextureMemoryMiB: state.profile && state.profile.assets
+                ? state.profile.assets.estimatedTextureMemoryMiB
+                : null,
+            loadedChunks: state.profile && Array.isArray(state.profile.chunkIds) ? state.profile.chunkIds : [],
+            downgradeStatus: state.profile && state.profile.reason === 'session-downgrade'
+                ? 'session-downgrade'
+                : 'none',
             canForceAdapter: false
         });
     }
@@ -568,7 +645,9 @@
             frameDeltas: [],
             debugForced,
             dismissed: debugForced ? false : readDismissal(),
-            banner: null
+            banner: null,
+            profile: window.VRODOS_ACTIVE_DESKTOP_PROFILE || null,
+            recommendation: null
         };
 
         const handleLoaderReady = function () {
@@ -628,7 +707,7 @@
         if (this.el && this.el.renderer) {
             readRendererDimensions(this.el.renderer, state.gpu);
         }
-        return { gpu: state.gpu, performance: state.performance };
+        return { gpu: state.gpu, performance: state.performance, profile: state.profile, recommendation: state.recommendation };
     };
 
     Helpers.updateHardwarePerformanceDiagnostics = function (time, timeDelta) {
@@ -656,6 +735,7 @@
 
         if (state.performance.status === 'complete' || state.performance.status === 'insufficient-samples') {
             evaluateAdvisory(this);
+            evaluateProfilePerformance(this);
             return;
         }
 
@@ -686,6 +766,7 @@
 
         state.performance = Hardware.summarizePerformance(state.frameDeltas, state.sampleDurationMs);
         evaluateAdvisory(this);
+        evaluateProfilePerformance(this);
         publish(this, 'gpu-sampling-complete');
         logDiagnostics(this, 'sampling-complete');
     };

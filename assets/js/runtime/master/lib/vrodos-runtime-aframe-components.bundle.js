@@ -136,6 +136,7 @@
       return elapsed >= Math.max(0, Number(minimumMs) || 0);
     },
     handleSceneLoaded: function() {
+      this.activateDesktopProfileSources();
       this.revealTargets = Array.prototype.slice.call(
         this.sceneEl.querySelectorAll('[data-vrodos-delayed-reveal="true"]')
       );
@@ -165,6 +166,21 @@
       if (this.isReady) {
         this.startLazyLoading();
       }
+    },
+    activateDesktopProfileSources: function() {
+      const profile = window.VRODOS_ACTIVE_DESKTOP_PROFILE && window.VRODOS_ACTIVE_DESKTOP_PROFILE.id ? window.VRODOS_ACTIVE_DESKTOP_PROFILE.id : "high";
+      Array.prototype.slice.call(this.sceneEl.querySelectorAll('[data-vrodos-profile-gltf="true"]')).forEach(function(target) {
+        const selected = target.getAttribute(`data-vrodos-profile-gltf-${profile}`) || target.getAttribute("data-vrodos-profile-gltf-high");
+        if (!selected) return;
+        const source = `url(${selected})`;
+        if (target.getAttribute("data-vrodos-load-phase") === "critical") {
+          target.setAttribute("gltf-model", source);
+          target.setAttribute("data-vrodos-lazy-state", "critical-loading");
+        } else {
+          target.setAttribute("data-vrodos-lazy-gltf-src", source);
+          target.setAttribute("data-vrodos-lazy-state", "queued");
+        }
+      });
     },
     collectLazyTargets: function() {
       return Array.prototype.slice.call(
@@ -804,6 +820,18 @@
     return defaults;
   }
   const VRODOS_PMNDRS_SCHEMA_DEFAULTS = vrodosRuntimeSettingsDefaultsForPrefix("pmndrs");
+  function vrodosApplyActiveDesktopPerformanceProfile(component) {
+    const active = window.VRODOS_ACTIVE_DESKTOP_PROFILE;
+    if (!component || !active || !active.settings || component.data.vrRuntimeProfile !== "desktop") {
+      return;
+    }
+    Object.keys(active.settings).forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(component.data, key)) {
+        component.data[key] = String(active.settings[key]);
+      }
+    });
+    component._vrodosDesktopPerformanceProfile = active;
+  }
   function vrodosRuntimeStringSchema(defaults) {
     if (VRODOSRuntimeSettings.schemaStringMap) {
       return VRODOSRuntimeSettings.schemaStringMap(defaults);
@@ -1083,7 +1111,9 @@
       return this.data.postFXEngine === "pmndrs" && (vrodosRuntimeTruthy(this.data.pmndrsAerialPerspectiveEnabled) || vrodosRuntimeDebugFlag("enablePmndrsHorizonAerial", "vrodos_debug_enable_pmndrs_horizon_aerial"));
     },
     isPmndrsCloudsEnabled: function() {
-      const authored = this.getRenderQualityLevel() === "high" && this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && this.isPmndrsAtmosphereEnabled() && vrodosRuntimeTruthy(this.data.pmndrsCloudsEnabled);
+      const adaptiveProfile = this._vrodosDesktopPerformanceProfile && this._vrodosDesktopPerformanceProfile.id;
+      const qualityAllowsClouds = this.getRenderQualityLevel() === "high" || adaptiveProfile === "medium" || adaptiveProfile === "low";
+      const authored = qualityAllowsClouds && this.data.postFXEngine === "pmndrs" && this.data.postFXEnabled !== "0" && this.isPmndrsAtmosphereEnabled() && vrodosRuntimeTruthy(this.data.pmndrsCloudsEnabled);
       return this.vrRuntimeAllows("clouds", authored);
     },
     getReflectionSource: function() {
@@ -1992,6 +2022,8 @@
         }
       }
       return {
+        desktopPerformanceProfile: hardwareDiagnostics.profile || null,
+        desktopPerformanceRecommendation: hardwareDiagnostics.recommendation || null,
         presentation: {
           mode: this.getPresentationMode(),
           immersiveXr: this.isImmersiveXrActive(),
@@ -3139,6 +3171,7 @@
     applyPostFXProfile: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyPostFXProfile,
     applyQualityProfiles: VRODOSSceneSettingsMaster.SceneSettingsHelpers.applyQualityProfiles,
     init: function() {
+      vrodosApplyActiveDesktopPerformanceProfile(this);
       this.ensureRuntimePipelineComponents();
       this.runtimeResources = VRODOSSceneSettingsMaster.RuntimeResources && VRODOSSceneSettingsMaster.RuntimeResources.createRegistry ? VRODOSSceneSettingsMaster.RuntimeResources.createRegistry() : null;
       this.handleQualityModelLoad = function() {

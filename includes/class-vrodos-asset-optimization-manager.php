@@ -11,6 +11,7 @@ require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-scan
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-analysis.php';
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-derivatives.php';
 require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-editor-preview.php';
+require_once __DIR__ . '/asset-optimization/trait-vrodos-asset-optimization-desktop-profiles.php';
 require_once __DIR__ . '/asset-optimization/class-vrodos-asset-optimization-admin-controller.php';
 
 class VRodos_Asset_Optimization_Manager {
@@ -34,6 +35,7 @@ class VRodos_Asset_Optimization_Manager {
 		add_action( 'deleted_post_meta', [ $this->controller, 'handle_asset_glb_meta_delete' ], 10, 4 );
 		add_action( 'before_delete_post', [ $this->controller, 'handle_asset_delete' ], 10, 2 );
 		add_action( VRodos_Asset_Optimization_Admin_Controller::EDITOR_PREVIEW_CRON_HOOK, [ $this->controller, 'process_editor_preview_job' ], 10, 1 );
+		add_action( VRodos_Asset_Optimization_Admin_Controller::DESKTOP_PROFILE_CRON_HOOK, [ $this->controller, 'process_desktop_profile_job' ], 10, 4 );
 		add_filter( 'vrodos_settings_tabs', [ $this->controller, 'register_settings_tab' ] );
 		add_action( 'vrodos_render_settings_tab_' . VRodos_Asset_Optimization_Admin_Controller::SETTINGS_TAB_KEY, [ $this->controller, 'render_asset_optimization_settings' ] );
 	}
@@ -52,5 +54,17 @@ class VRodos_Asset_Optimization_Manager {
 
 	public static function get_editor_preview_asset_state( int $asset_id ): array {
 		return VRodos_Asset_Optimization_Admin_Controller::get_editor_preview_asset_state( $asset_id );
+	}
+
+	public static function prepare_desktop_profile_derivatives( VRodos_Project_Compile_Plan $plan ): array {
+		return VRodos_Asset_Optimization_Admin_Controller::prepare_desktop_profile_derivatives( $plan );
+	}
+
+	public static function desktop_profile_derivative_path( int $asset_id, string $slot ): string {
+		return VRodos_Asset_Optimization_Admin_Controller::desktop_profile_derivative_path( $asset_id, $slot );
+	}
+
+	public static function desktop_profile_derivative_info( int $asset_id, string $slot ): array {
+		return VRodos_Asset_Optimization_Admin_Controller::desktop_profile_derivative_info( $asset_id, $slot );
 	}
 }

@@ -12,12 +12,14 @@ class VRodos_Asset_Optimization_Admin_Controller {
 	use VRodos_Asset_Optimization_Analysis_Service;
 	use VRodos_Asset_Optimization_Derivative_Service;
 	use VRodos_Asset_Optimization_Editor_Preview;
+	use VRodos_Asset_Optimization_Desktop_Profiles;
 
 	public const META_KEY = '_vrodos_asset3d_glb_derivatives';
 	public const ANALYSIS_META_KEY = '_vrodos_asset3d_glb_analysis';
 	public const SETTINGS_PAGE_KEY = 'vrodos_options';
 	public const SETTINGS_TAB_KEY = 'vrodos_asset_optimization_settings';
 	public const EDITOR_PREVIEW_CRON_HOOK = 'vrodos_asset_editor_preview_process_job';
+	public const DESKTOP_PROFILE_CRON_HOOK = 'vrodos_asset_desktop_profile_process_job';
 	public const BATCH_TRANSIENT_PREFIX = 'vrodos_asset_glb_opt_batch_';
 	public const GLB_MAGIC = 'glTF';
 	public const GLB_VERSION = 2;

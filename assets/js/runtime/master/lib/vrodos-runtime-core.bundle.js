@@ -3,6 +3,7 @@
   (function() {
     window.VRODOS_RUNTIME_SETTINGS_CONTRACT = { "schemaVersion": 2, "sceneSettings": { "runtimeMode": { "metadataKey": "aframeRuntimeMode", "type": "enum", "default": "single-player", "allowed": ["networked", "single-player"], "wireKey": "runtimeMode" }, "clearColor": { "metadataKey": "ClearColor", "type": "color", "default": "#ffffff", "wireKey": "color" }, "backgroundStyleOption": { "metadataKey": "backgroundStyleOption", "type": "number", "default": 0, "min": 0, "max": 3, "step": 1, "wireKey": "selChoice" }, "backgroundImagePath": { "metadataKey": "backgroundImagePath", "type": "string", "default": "0", "wireKey": "backgroundImagePath", "wireEnabled": false }, "backgroundPresetOption": { "metadataKey": "backgroundPresetOption", "type": "string", "default": "None", "wireKey": "presChoice" }, "backgroundPresetGroundEnabled": { "metadataKey": "backgroundPresetGroundEnabled", "type": "boolean", "default": false, "wireKey": "presetGroundEnabled", "wireFormat": "one-zero" }, "fogCategory": { "metadataKey": "fogCategory", "type": "number", "default": 0, "min": 0, "max": 2, "step": 1, "wireKey": "fogCategory" }, "fogColor": { "metadataKey": "fogcolor", "type": "color", "default": "#ffffff", "wireKey": "fogcolor" }, "fogFar": { "metadataKey": "fogfar", "type": "number", "default": 1e3, "min": 0, "max": 1e5, "wireKey": "fogfar" }, "fogNear": { "metadataKey": "fognear", "type": "number", "default": 0, "min": 0, "max": 1e5, "wireKey": "fognear" }, "fogDensity": { "metadataKey": "fogdensity", "type": "number", "default": 1e-8, "min": 0, "max": 1, "wireKey": "fogdensity" }, "movementDisabled": { "metadataKey": "disableMovement", "type": "boolean", "default": false, "wireKey": "movement_disabled", "wireFormat": "true-false" }, "avatarEnabled": { "metadataKey": "enableAvatar", "type": "boolean", "default": false, "wireKey": "avatar_enabled", "wireFormat": "one-zero" }, "generalChatEnabled": { "metadataKey": "enableGeneralChat", "type": "boolean", "default": false, "wireKey": "public_chat", "wireFormat": "one-zero" }, "collisionMode": { "metadataKey": "aframeCollisionMode", "type": "enum", "default": "auto", "allowed": ["auto", "off"], "wireKey": "collisionMode" }, "fpsMeterEnabled": { "metadataKey": "aframeFPSMeterEnabled", "type": "boolean", "default": false, "wireKey": "fpsMeterEnabled", "wireFormat": "true-false" }, "hoveringInteractables": { "metadataKey": "aframeHoveringInteractables", "type": "boolean", "default": true, "wireKey": "hoveringInteractables", "wireFormat": "true-false", "wireEnabled": false }, "renderQuality": { "metadataKey": "aframeRenderQuality", "type": "enum", "default": "standard", "allowed": ["performance", "standard", "high"], "wireKey": "renderQuality" }, "shadowQuality": { "metadataKey": "aframeShadowQuality", "type": "enum", "default": "medium", "allowed": ["off", "medium", "high"], "wireKey": "shadowQuality" }, "aaQuality": { "metadataKey": "aframeAAQuality", "type": "enum", "default": "balanced", "allowed": ["off", "balanced", "high", "ultra"], "wireKey": "aaQuality" }, "ambientOcclusionPreset": { "metadataKey": "aframeAmbientOcclusionPreset", "type": "enum", "default": "balanced", "allowed": ["off", "soft", "balanced", "strong"], "wireKey": "ambientOcclusionPreset" }, "contactShadowPreset": { "metadataKey": "aframeContactShadowPreset", "type": "enum", "default": "soft", "allowed": ["off", "soft", "balanced", "strong"], "wireKey": "contactShadowPreset" }, "legacyHorizonStageSize": { "metadataKey": "aframeLegacyHorizonStageSize", "type": "number", "default": 5e3, "min": 500, "max": 8e3, "step": 100, "wireKey": "legacyHorizonStageSize" }, "vrRuntimeProfile": { "metadataKey": "aframeVrRuntimeProfile", "type": "enum", "default": "desktop", "editorDefault": "desktop", "allowed": ["desktop", "headset", "pc-rendered-vr"], "wireKey": "vrRuntimeProfile" }, "vrFramebufferScale": { "metadataKey": "aframeVrFramebufferScale", "type": "number", "default": 0, "min": 0, "max": 1.5, "step": 0.05, "wireKey": "vrFramebufferScale" }, "vrFoveationStrength": { "metadataKey": "aframeVrFoveationStrength", "type": "number", "default": -1, "min": -1, "max": 1, "step": 0.05, "wireKey": "vrFoveationStrength" }, "vrHeadsetStereoPostFxEnabled": { "metadataKey": "aframeVrHeadsetStereoPostFxEnabled", "type": "boolean", "default": false, "wireKey": "vrHeadsetStereoPostFxEnabled", "wireFormat": "one-zero" }, "postFXColorEnabled": { "metadataKey": "aframePostFXColorEnabled", "type": "boolean", "default": false, "wireKey": "postFXColorEnabled", "wireFormat": "one-zero" }, "postFXEnabled": { "metadataKey": "aframePostFXEnabled", "type": "boolean", "default": false, "wireKey": "postFXEnabled", "wireFormat": "true-false" }, "postFXEngine": { "metadataKey": "aframePostFXEngine", "type": "enum", "default": "legacy", "allowed": ["legacy", "pmndrs"], "wireKey": "postFXEngine" }, "postFXBloomEnabled": { "metadataKey": "aframePostFXBloomEnabled", "type": "boolean", "default": false, "wireKey": "postFXBloomEnabled", "wireFormat": "one-zero" }, "postFXEdgeAAEnabled": { "metadataKey": "aframePostFXEdgeAAEnabled", "type": "boolean", "default": true, "wireKey": "postFXEdgeAAEnabled", "wireFormat": "one-zero" }, "postFXEdgeAAStrength": { "metadataKey": "aframePostFXEdgeAAStrength", "type": "number", "default": 3, "min": 0, "max": 5, "step": 1, "wireKey": "postFXEdgeAAStrength" }, "postFXTAAEnabled": { "metadataKey": "aframePostFXTAAEnabled", "type": "boolean", "default": false, "wireKey": "postFXTAAEnabled", "wireFormat": "one-zero" }, "postFXSSREnabled": { "metadataKey": "aframePostFXSSREnabled", "type": "boolean", "default": false, "wireKey": "postFXSSREnabled", "wireFormat": "one-zero" }, "postFXSSRStrength": { "metadataKey": "aframePostFXSSRStrength", "type": "enum", "default": "off", "allowed": ["off", "subtle", "balanced", "strong"], "wireKey": "postFXSSRStrength" }, "bloomStrength": { "metadataKey": "aframeBloomStrength", "type": "enum", "default": "off", "allowed": ["off", "soft", "medium"], "wireKey": "bloomStrength" }, "exposurePreset": { "metadataKey": "aframeExposurePreset", "type": "enum", "default": "neutral", "allowed": ["neutral", "bright", "cinematic"], "wireKey": "exposurePreset" }, "contrastPreset": { "metadataKey": "aframeContrastPreset", "type": "enum", "default": "balanced", "allowed": ["soft", "balanced", "punchy"], "wireKey": "contrastPreset" }, "reflectionProfile": { "metadataKey": "aframeReflectionProfile", "type": "enum", "default": "balanced", "allowed": ["soft", "balanced", "enhanced"], "wireKey": "reflectionProfile" }, "reflectionSource": { "metadataKey": "aframeReflectionSource", "type": "enum", "default": "hdr", "allowed": ["hdr", "scene-probe"], "wireKey": "reflectionSource" }, "envMapPreset": { "metadataKey": "aframeEnvMapPreset", "type": "enum", "default": "none", "allowed": ["none", "studio", "quarry", "venice"], "wireKey": "envMapPreset" }, "horizonSkyPreset": { "metadataKey": "aframeHorizonSkyPreset", "type": "enum", "default": "natural", "allowed": ["natural", "clear", "crisp"], "wireKey": "horizonSkyPreset" }, "navigationMode": { "metadataKey": "aframeNavigationMode", "type": "enum", "default": "walkable", "editorDefault": "walkable", "allowed": ["walk", "walkable", "fly"], "wireKey": "navigationMode" }, "shadowUpdateMode": { "metadataKey": "aframeShadowUpdateMode", "type": "enum", "default": "static", "editorDefault": "static", "allowed": ["static", "dynamic"], "wireKey": "shadowUpdateMode" }, "flatMediaShadowCasting": { "metadataKey": "aframeFlatMediaShadowCasting", "type": "boolean", "default": true, "wireKey": "flatMediaShadowCasting", "wireFormat": "true-false" }, "pmndrsAAMode": { "metadataKey": "aframePmndrsAAMode", "type": "enum", "default": "inherit", "editorDefault": "none", "allowed": ["inherit", "none", "smaa", "msaa"], "wireKey": "pmndrsAAMode" }, "pmndrsAAPreset": { "metadataKey": "aframePmndrsAAPreset", "type": "enum", "default": "inherit", "editorDefault": "medium", "allowed": ["inherit", "low", "medium", "high", "ultra"], "wireKey": "pmndrsAAPreset" }, "pmndrsBloomIntensity": { "metadataKey": "aframePmndrsBloomIntensity", "type": "number", "default": 1, "min": 0, "max": 3, "wireKey": "pmndrsBloomIntensity" }, "pmndrsBloomThreshold": { "metadataKey": "aframePmndrsBloomThreshold", "type": "number", "default": 0.62, "min": 0, "max": 1, "wireKey": "pmndrsBloomThreshold" }, "pmndrsVignetteEnabled": { "metadataKey": "aframePmndrsVignetteEnabled", "type": "boolean", "default": false, "wireKey": "pmndrsVignetteEnabled", "wireFormat": "true-false" }, "pmndrsVignetteDarkness": { "metadataKey": "aframePmndrsVignetteDarkness", "type": "number", "default": 0.5, "min": 0, "max": 1, "wireKey": "pmndrsVignetteDarkness" }, "pmndrsToneMappingExposure": { "metadataKey": "aframePmndrsToneMappingExposure", "type": "number", "default": 1, "min": 0.1, "max": 5, "step": 0.1, "wireKey": "pmndrsToneMappingExposure" }, "pmndrsLowLightAutoExposureEnabled": { "metadataKey": "aframePmndrsLowLightAutoExposureEnabled", "type": "boolean", "default": true, "wireKey": "pmndrsLowLightAutoExposureEnabled", "wireFormat": "true-false" }, "pmndrsToneMappingExposureAuthored": { "metadataKey": "aframePmndrsToneMappingExposureAuthored", "type": "boolean", "default": false, "wireKey": "pmndrsToneMappingExposureAuthored", "wireFormat": "true-false" }, "pmndrsToneMappingMode": { "metadataKey": "aframePmndrsToneMappingMode", "type": "enum", "default": "agx", "editorDefault": "agx", "allowed": ["agx", "reinhard", "cineon", "aces-filmic", "linear"], "wireKey": "pmndrsToneMappingMode" }, "pmndrsLensFlareEnabled": { "metadataKey": "aframePmndrsLensFlareEnabled", "type": "boolean", "default": false, "wireKey": "pmndrsLensFlareEnabled", "wireFormat": "true-false" }, "pmndrsLutEnabled": { "metadataKey": "aframePmndrsLutEnabled", "type": "boolean", "default": false, "wireKey": "pmndrsLutEnabled", "wireFormat": "true-false" }, "pmndrsLutLook": { "metadataKey": "aframePmndrsLutLook", "type": "enum", "default": "neutral", "allowed": ["neutral", "warm-film", "cool-clarity", "cinematic-contrast", "soft-fade"], "wireKey": "pmndrsLutLook" }, "pmndrsLutStrength": { "metadataKey": "aframePmndrsLutStrength", "type": "number", "default": 1, "min": 0, "max": 1, "wireKey": "pmndrsLutStrength" }, "pmndrsNoiseEnabled": { "metadataKey": "aframePmndrsNoiseEnabled", "type": "boolean", "default": false, "wireKey": "pmndrsNoiseEnabled", "wireFormat": "true-false" }, "pmndrsNoiseOpacity": { "metadataKey": "aframePmndrsNoiseOpacity", "type": "number", "default": 0.04, "min": 0, "max": 0.2, "wireKey": "pmndrsNoiseOpacity" }, "pmndrsChromaticAberrationEnabled": { "metadataKey": "aframePmndrsChromaticAberrationEnabled", "type": "boolean", "default": false, "wireKey": "pmndrsChromaticAberrationEnabled", "wireFormat": "true-false" }, "pmndrsChromaticAberrationOffset": { "metadataKey": "aframePmndrsChromaticAberrationOffset", "type": "number", "default": 15e-4, "min": 0, "max": 6e-3, "wireKey": "pmndrsChromaticAberrationOffset" }, "pmndrsAtmosphereEnabled": { "metadataKey": "aframePmndrsAtmosphereEnabled", "type": "boolean", "default": true, "wireKey": "pmndrsAtmosphereEnabled", "wireFormat": "true-false" }, "pmndrsAtmospherePreset": { "metadataKey": "aframePmndrsAtmospherePreset", "type": "enum", "default": "midday", "allowed": ["night", "dawn", "sunrise", "early-morning", "midday", "golden-hour", "sunset", "custom"], "wireKey": "pmndrsAtmospherePreset" }, "pmndrsAtmospherePresetIntensity": { "metadataKey": "aframePmndrsAtmospherePresetIntensity", "type": "number", "default": 1, "min": 0, "max": 1, "wireKey": "pmndrsAtmospherePresetIntensity" }, "pmndrsAtmosphereQuality": { "metadataKey": "aframePmndrsAtmosphereQuality", "type": "enum", "default": "balanced", "allowed": ["performance", "balanced", "quality", "cinematic"], "wireKey": "pmndrsAtmosphereQuality" }, "pmndrsAerialPerspectiveEnabled": { "metadataKey": "aframePmndrsAerialPerspectiveEnabled", "type": "boolean", "default": false, "wireKey": "pmndrsAerialPerspectiveEnabled", "wireFormat": "true-false" }, "pmndrsCloudsEnabled": { "metadataKey": "aframePmndrsCloudsEnabled", "type": "boolean", "default": false, "wireKey": "pmndrsCloudsEnabled", "wireFormat": "true-false" }, "pmndrsCloudsLightShaftsEnabled": { "metadataKey": "aframePmndrsCloudsLightShaftsEnabled", "type": "boolean", "default": true, "wireKey": "pmndrsCloudsLightShaftsEnabled", "wireFormat": "true-false" }, "pmndrsCloudsQuality": { "metadataKey": "aframePmndrsCloudsQuality", "type": "enum", "default": "low", "allowed": ["low", "medium", "high", "ultra"], "wireKey": "pmndrsCloudsQuality" }, "pmndrsCloudsCoverage": { "metadataKey": "aframePmndrsCloudsCoverage", "type": "number", "default": 0.35, "min": 0, "max": 1, "wireKey": "pmndrsCloudsCoverage" }, "pmndrsCloudsStyle": { "metadataKey": "aframePmndrsCloudsStyle", "type": "enum", "default": "default", "allowed": ["default", "scattered", "broken", "overcast", "storm"], "wireKey": "pmndrsCloudsStyle" }, "pmndrsCloudsWindEnabled": { "metadataKey": "aframePmndrsCloudsWindEnabled", "type": "boolean", "default": true, "wireKey": "pmndrsCloudsWindEnabled", "wireFormat": "true-false" }, "pmndrsCloudsWindSpeed": { "metadataKey": "aframePmndrsCloudsWindSpeed", "type": "number", "default": 1, "min": 0, "max": 2, "wireKey": "pmndrsCloudsWindSpeed" }, "pmndrsCloudsWindDirectionDeg": { "metadataKey": "aframePmndrsCloudsWindDirectionDeg", "type": "number", "default": 0, "min": 0, "max": 360, "wireKey": "pmndrsCloudsWindDirectionDeg" }, "pmndrsCorrectAltitudeEnabled": { "metadataKey": "aframePmndrsCorrectAltitudeEnabled", "type": "boolean", "default": true, "wireKey": "pmndrsCorrectAltitudeEnabled", "wireFormat": "true-false" }, "pmndrsGeospatialEnabled": { "metadataKey": "aframePmndrsGeospatialEnabled", "type": "boolean", "default": false, "wireKey": "pmndrsGeospatialEnabled", "wireFormat": "true-false" }, "pmndrsGeospatialLatitudeDeg": { "metadataKey": "aframePmndrsGeospatialLatitudeDeg", "type": "number", "default": 0, "min": -90, "max": 90, "wireKey": "pmndrsGeospatialLatitudeDeg" }, "pmndrsGeospatialLongitudeDeg": { "metadataKey": "aframePmndrsGeospatialLongitudeDeg", "type": "number", "default": 0, "min": -180, "max": 180, "wireKey": "pmndrsGeospatialLongitudeDeg" }, "pmndrsGeospatialAltitudeMeters": { "metadataKey": "aframePmndrsGeospatialAltitudeMeters", "type": "number", "default": 0, "min": -500, "max": 2e4, "wireKey": "pmndrsGeospatialAltitudeMeters" }, "pmndrsCelestialMode": { "metadataKey": "aframePmndrsCelestialMode", "type": "enum", "default": "manual", "allowed": ["manual", "preset-time", "datetime"], "wireKey": "pmndrsCelestialMode" }, "pmndrsCelestialTimePreset": { "metadataKey": "aframePmndrsCelestialTimePreset", "type": "enum", "default": "midday", "allowed": ["night", "dawn", "sunrise", "early-morning", "midday", "golden-hour", "sunset"], "wireKey": "pmndrsCelestialTimePreset" }, "pmndrsCelestialDate": { "metadataKey": "aframePmndrsCelestialDate", "type": "string", "default": "2026-06-21", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "wireKey": "pmndrsCelestialDate" }, "pmndrsCelestialUtcTime": { "metadataKey": "aframePmndrsCelestialUtcTime", "type": "string", "default": "12:00", "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$", "wireKey": "pmndrsCelestialUtcTime" }, "pmndrsDayNightCycleEnabled": { "metadataKey": "aframePmndrsDayNightCycleEnabled", "type": "boolean", "default": false, "wireKey": "pmndrsDayNightCycleEnabled", "wireFormat": "true-false" }, "pmndrsDayNightCycleDurationMinutes": { "metadataKey": "aframePmndrsDayNightCycleDurationMinutes", "type": "number", "default": 1, "min": 0.25, "max": 1440, "wireKey": "pmndrsDayNightCycleDurationMinutes" }, "pmndrsSunElevationDeg": { "metadataKey": "aframePmndrsSunElevationDeg", "type": "number", "default": 62, "min": -18, "max": 85, "wireKey": "pmndrsSunElevationDeg" }, "pmndrsSunAzimuthDeg": { "metadataKey": "aframePmndrsSunAzimuthDeg", "type": "number", "default": 20, "min": -180, "max": 180, "wireKey": "pmndrsSunAzimuthDeg" }, "pmndrsSunDistance": { "metadataKey": "aframePmndrsSunDistance", "type": "number", "default": 5200, "min": 1500, "max": 2e4, "wireKey": "pmndrsSunDistance" }, "pmndrsSunAngularRadius": { "metadataKey": "aframePmndrsSunAngularRadius", "type": "number", "default": 4675e-6, "min": 2e-3, "max": 0.03, "wireKey": "pmndrsSunAngularRadius" }, "pmndrsAerialStrength": { "metadataKey": "aframePmndrsAerialStrength", "type": "number", "default": 0.55, "min": 0, "max": 2, "wireKey": "pmndrsAerialStrength" }, "pmndrsAlbedoScale": { "metadataKey": "aframePmndrsAlbedoScale", "type": "number", "default": 1, "min": 0, "max": 2, "wireKey": "pmndrsAlbedoScale" }, "pmndrsTransmittanceEnabled": { "metadataKey": "aframePmndrsTransmittanceEnabled", "type": "boolean", "default": true, "wireKey": "pmndrsTransmittanceEnabled", "wireFormat": "true-false" }, "pmndrsInscatterEnabled": { "metadataKey": "aframePmndrsInscatterEnabled", "type": "boolean", "default": true, "wireKey": "pmndrsInscatterEnabled", "wireFormat": "true-false" }, "pmndrsGroundEnabled": { "metadataKey": "aframePmndrsGroundEnabled", "type": "boolean", "default": true, "wireKey": "pmndrsGroundEnabled", "wireFormat": "true-false" }, "pmndrsGroundAlbedo": { "metadataKey": "aframePmndrsGroundAlbedo", "type": "color", "default": "#1a1a1a", "wireKey": "pmndrsGroundAlbedo" }, "pmndrsRayleighScale": { "metadataKey": "aframePmndrsRayleighScale", "type": "number", "default": 1, "min": 0.1, "max": 3, "wireKey": "pmndrsRayleighScale" }, "pmndrsMieScatteringScale": { "metadataKey": "aframePmndrsMieScatteringScale", "type": "number", "default": 1, "min": 0.1, "max": 3, "wireKey": "pmndrsMieScatteringScale" }, "pmndrsMieExtinctionScale": { "metadataKey": "aframePmndrsMieExtinctionScale", "type": "number", "default": 1, "min": 0.1, "max": 3, "wireKey": "pmndrsMieExtinctionScale" }, "pmndrsMiePhaseG": { "metadataKey": "aframePmndrsMiePhaseG", "type": "number", "default": 0.8, "min": 0, "max": 0.99, "wireKey": "pmndrsMiePhaseG" }, "pmndrsAbsorptionScale": { "metadataKey": "aframePmndrsAbsorptionScale", "type": "number", "default": 1, "min": 0.1, "max": 3, "wireKey": "pmndrsAbsorptionScale" }, "pmndrsMoonEnabled": { "metadataKey": "aframePmndrsMoonEnabled", "type": "boolean", "default": false, "wireKey": "pmndrsMoonEnabled", "wireFormat": "true-false" }, "pmndrsMoonPhase": { "metadataKey": "aframePmndrsMoonPhase", "type": "enum", "default": "auto", "allowed": ["auto", "new", "waxing-crescent", "first-quarter", "waxing-gibbous", "full", "waning-gibbous", "last-quarter", "waning-crescent"], "wireKey": "pmndrsMoonPhase" }, "pmndrsStarsEnabled": { "metadataKey": "aframePmndrsStarsEnabled", "type": "enum", "default": "auto", "allowed": ["auto", "off", "on"], "wireKey": "pmndrsStarsEnabled" }, "pmndrsHorizonLightingPreset": { "metadataKey": "aframePmndrsHorizonLightingPreset", "type": "enum", "default": "natural", "allowed": ["natural", "clear", "crisp", "custom"], "wireKey": "pmndrsHorizonLightingPreset" }, "pmndrsHorizonKeyLightIntensity": { "metadataKey": "aframePmndrsHorizonKeyLightIntensity", "type": "number", "default": 1.15, "min": 0, "max": 3, "wireKey": "pmndrsHorizonKeyLightIntensity" }, "pmndrsHorizonFillLightIntensity": { "metadataKey": "aframePmndrsHorizonFillLightIntensity", "type": "number", "default": 0.45, "min": 0, "max": 3, "wireKey": "pmndrsHorizonFillLightIntensity" }, "reflectionsEnabled": { "metadataKey": "aframeReflectionsEnabled", "type": "boolean", "default": true, "editorDefault": true, "wireKey": "reflectionsEnabled", "wireFormat": "one-zero" }, "sceneProbeUpdateMode": { "metadataKey": "aframeSceneProbeUpdateMode", "type": "enum", "default": "static", "editorDefault": "static", "allowed": ["static", "slow-dynamic"], "wireKey": "sceneProbeUpdateMode" }, "sceneProbeResolution": { "metadataKey": "aframeSceneProbeResolution", "type": "enum", "default": "128", "editorDefault": "128", "allowed": ["64", "128", "256"], "wireKey": "sceneProbeResolution" }, "reflectionOcclusionMode": { "metadataKey": "aframeReflectionOcclusionMode", "type": "enum", "default": "auto", "editorDefault": "auto", "allowed": ["auto", "off", "strong"], "wireKey": "reflectionOcclusionMode" } }, "horizonHelperLightPresets": { "natural": { "keyLightIntensity": 1.15, "fillLightIntensity": 0.45 }, "clear": { "keyLightIntensity": 1.24, "fillLightIntensity": 0.55 }, "crisp": { "keyLightIntensity": 1.19, "fillLightIntensity": 0.49 } }, "atmosphereLookDefaults": { "night": { "sunElevationDeg": -18, "sunAzimuthDeg": 25, "sunDistance": 5200, "sunAngularRadius": 4675e-6, "aerialStrength": 0.16, "albedoScale": 0.85, "transmittanceEnabled": true, "inscatterEnabled": true, "groundEnabled": true, "groundAlbedo": "#1a1a1a", "rayleighScale": 0.9, "mieScatteringScale": 0.45, "mieExtinctionScale": 0.55, "miePhaseG": 0.8, "absorptionScale": 1.05, "moonEnabled": true }, "dawn": { "sunElevationDeg": -5, "sunAzimuthDeg": -65, "sunDistance": 5200, "sunAngularRadius": 4675e-6, "aerialStrength": 0.45, "albedoScale": 0.9, "transmittanceEnabled": true, "inscatterEnabled": true, "groundEnabled": true, "groundAlbedo": "#1a1a1a", "rayleighScale": 1, "mieScatteringScale": 0.75, "mieExtinctionScale": 0.85, "miePhaseG": 0.8, "absorptionScale": 1, "moonEnabled": false }, "sunrise": { "sunElevationDeg": 2, "sunAzimuthDeg": -55, "sunDistance": 5200, "sunAngularRadius": 4675e-6, "aerialStrength": 0.65, "albedoScale": 0.96, "transmittanceEnabled": true, "inscatterEnabled": true, "groundEnabled": true, "groundAlbedo": "#1a1a1a", "rayleighScale": 1, "mieScatteringScale": 0.9, "mieExtinctionScale": 0.95, "miePhaseG": 0.8, "absorptionScale": 1, "moonEnabled": false }, "early-morning": { "sunElevationDeg": 22, "sunAzimuthDeg": -28, "sunDistance": 5200, "sunAngularRadius": 4675e-6, "aerialStrength": 0.5, "albedoScale": 1, "transmittanceEnabled": true, "inscatterEnabled": true, "groundEnabled": true, "groundAlbedo": "#1a1a1a", "rayleighScale": 1, "mieScatteringScale": 0.95, "mieExtinctionScale": 0.98, "miePhaseG": 0.8, "absorptionScale": 1, "moonEnabled": false }, "midday": { "sunElevationDeg": 62, "sunAzimuthDeg": 20, "sunDistance": 5200, "sunAngularRadius": 4675e-6, "aerialStrength": 0.55, "albedoScale": 1, "transmittanceEnabled": true, "inscatterEnabled": true, "groundEnabled": true, "groundAlbedo": "#1a1a1a", "rayleighScale": 1, "mieScatteringScale": 1, "mieExtinctionScale": 1, "miePhaseG": 0.8, "absorptionScale": 1, "moonEnabled": false }, "golden-hour": { "sunElevationDeg": 5, "sunAzimuthDeg": 32, "sunDistance": 5200, "sunAngularRadius": 4675e-6, "aerialStrength": 0.65, "albedoScale": 0.98, "transmittanceEnabled": true, "inscatterEnabled": true, "groundEnabled": true, "groundAlbedo": "#1a1a1a", "rayleighScale": 1, "mieScatteringScale": 0.9, "mieExtinctionScale": 0.95, "miePhaseG": 0.8, "absorptionScale": 1, "moonEnabled": false }, "sunset": { "sunElevationDeg": 1, "sunAzimuthDeg": 38, "sunDistance": 5200, "sunAngularRadius": 4675e-6, "aerialStrength": 0.75, "albedoScale": 0.96, "transmittanceEnabled": true, "inscatterEnabled": true, "groundEnabled": true, "groundAlbedo": "#1a1a1a", "rayleighScale": 1, "mieScatteringScale": 0.95, "mieExtinctionScale": 1.05, "miePhaseG": 0.8, "absorptionScale": 1, "moonEnabled": false } } };
     window.VRODOS_RUNTIME_SETTINGS_SCHEMA_DEFAULTS = { "runtimeMode": "single-player", "clearColor": "#ffffff", "backgroundStyleOption": "0", "backgroundImagePath": "0", "backgroundPresetOption": "None", "backgroundPresetGroundEnabled": "0", "fogCategory": "0", "fogColor": "#ffffff", "fogFar": "1000", "fogNear": "0", "fogDensity": "1e-8", "movementDisabled": "0", "avatarEnabled": "0", "generalChatEnabled": "0", "collisionMode": "auto", "fpsMeterEnabled": "0", "hoveringInteractables": "1", "renderQuality": "standard", "shadowQuality": "medium", "aaQuality": "balanced", "ambientOcclusionPreset": "balanced", "contactShadowPreset": "soft", "legacyHorizonStageSize": "5000", "vrRuntimeProfile": "desktop", "vrFramebufferScale": "0", "vrFoveationStrength": "-1", "vrHeadsetStereoPostFxEnabled": "0", "postFXColorEnabled": "0", "postFXEnabled": "0", "postFXEngine": "legacy", "postFXBloomEnabled": "0", "postFXEdgeAAEnabled": "1", "postFXEdgeAAStrength": "3", "postFXTAAEnabled": "0", "postFXSSREnabled": "0", "postFXSSRStrength": "off", "bloomStrength": "off", "exposurePreset": "neutral", "contrastPreset": "balanced", "reflectionProfile": "balanced", "reflectionSource": "hdr", "envMapPreset": "none", "horizonSkyPreset": "natural", "navigationMode": "walkable", "shadowUpdateMode": "static", "flatMediaShadowCasting": "1", "pmndrsAAMode": "inherit", "pmndrsAAPreset": "inherit", "pmndrsBloomIntensity": "1", "pmndrsBloomThreshold": "0.62", "pmndrsVignetteEnabled": "0", "pmndrsVignetteDarkness": "0.5", "pmndrsToneMappingExposure": "1", "pmndrsLowLightAutoExposureEnabled": "1", "pmndrsToneMappingExposureAuthored": "0", "pmndrsToneMappingMode": "agx", "pmndrsLensFlareEnabled": "0", "pmndrsLutEnabled": "0", "pmndrsLutLook": "neutral", "pmndrsLutStrength": "1", "pmndrsNoiseEnabled": "0", "pmndrsNoiseOpacity": "0.04", "pmndrsChromaticAberrationEnabled": "0", "pmndrsChromaticAberrationOffset": "0.0015", "pmndrsAtmosphereEnabled": "1", "pmndrsAtmospherePreset": "midday", "pmndrsAtmospherePresetIntensity": "1", "pmndrsAtmosphereQuality": "balanced", "pmndrsAerialPerspectiveEnabled": "0", "pmndrsCloudsEnabled": "0", "pmndrsCloudsLightShaftsEnabled": "1", "pmndrsCloudsQuality": "low", "pmndrsCloudsCoverage": "0.35", "pmndrsCloudsStyle": "default", "pmndrsCloudsWindEnabled": "1", "pmndrsCloudsWindSpeed": "1", "pmndrsCloudsWindDirectionDeg": "0", "pmndrsCorrectAltitudeEnabled": "1", "pmndrsGeospatialEnabled": "0", "pmndrsGeospatialLatitudeDeg": "0", "pmndrsGeospatialLongitudeDeg": "0", "pmndrsGeospatialAltitudeMeters": "0", "pmndrsCelestialMode": "manual", "pmndrsCelestialTimePreset": "midday", "pmndrsCelestialDate": "2026-06-21", "pmndrsCelestialUtcTime": "12:00", "pmndrsDayNightCycleEnabled": "0", "pmndrsDayNightCycleDurationMinutes": "1", "pmndrsSunElevationDeg": "62", "pmndrsSunAzimuthDeg": "20", "pmndrsSunDistance": "5200", "pmndrsSunAngularRadius": "0.004675", "pmndrsAerialStrength": "0.55", "pmndrsAlbedoScale": "1", "pmndrsTransmittanceEnabled": "1", "pmndrsInscatterEnabled": "1", "pmndrsGroundEnabled": "1", "pmndrsGroundAlbedo": "#1a1a1a", "pmndrsRayleighScale": "1", "pmndrsMieScatteringScale": "1", "pmndrsMieExtinctionScale": "1", "pmndrsMiePhaseG": "0.8", "pmndrsAbsorptionScale": "1", "pmndrsMoonEnabled": "0", "pmndrsMoonPhase": "auto", "pmndrsStarsEnabled": "auto", "pmndrsHorizonLightingPreset": "natural", "pmndrsHorizonKeyLightIntensity": "1.15", "pmndrsHorizonFillLightIntensity": "0.45", "reflectionsEnabled": "1", "sceneProbeUpdateMode": "static", "sceneProbeResolution": "128", "reflectionOcclusionMode": "auto" };
+    window.VRODOS_DESKTOP_PERFORMANCE_PROFILE_CONTRACT = { "schemaVersion": 2, "storageKey": "vrodos.desktopQualityOverride.v1", "queryParameter": "vrodos_quality", "sessionDowngradeKey": "vrodos.desktopQualityDowngrade.v1", "managedSettings": ["renderQuality", "shadowQuality", "shadowUpdateMode", "flatMediaShadowCasting", "aaQuality", "ambientOcclusionPreset", "contactShadowPreset", "postFXEnabled", "postFXEngine", "postFXBloomEnabled", "postFXEdgeAAEnabled", "postFXTAAEnabled", "postFXSSREnabled", "postFXSSRStrength", "bloomStrength", "reflectionProfile", "reflectionSource", "sceneProbeUpdateMode", "sceneProbeResolution", "pmndrsAAMode", "pmndrsAAPreset", "pmndrsLensFlareEnabled", "pmndrsLutEnabled", "pmndrsVignetteEnabled", "pmndrsNoiseEnabled", "pmndrsChromaticAberrationEnabled", "pmndrsAtmosphereEnabled", "pmndrsAtmosphereQuality", "pmndrsAerialPerspectiveEnabled", "pmndrsCloudsEnabled", "pmndrsCloudsLightShaftsEnabled", "pmndrsCloudsQuality", "reflectionsEnabled"], "custom": { "label": "Custom", "assetProfile": "desktop-custom", "textureMaxSize": null, "textureMemoryBudgetMiB": null, "geometryRatio": 1, "summary": "Original textures and geometry, with safe Draco compression." }, "profiles": { "low": { "label": "Low", "renderPixelBudget": 165e4, "minPixelRatio": 0.75, "maxPixelRatio": 0.9, "assetProfile": "desktop-low", "textureMaxSize": 1024, "textureMemoryBudgetMiB": 96, "geometryRatio": 0.5, "summary": "1.65 MP, DPR 0.75-0.9, 1024px textures, 96 MiB texture target, 50% visual geometry.", "editableSettings": ["pmndrsAtmosphereEnabled", "pmndrsAtmosphereQuality", "pmndrsCloudsEnabled", "pmndrsCloudsQuality", "reflectionsEnabled", "reflectionProfile"], "allowedValues": { "pmndrsAtmosphereEnabled": [false, true], "pmndrsAtmosphereQuality": ["performance"], "pmndrsCloudsEnabled": [false, true], "pmndrsCloudsQuality": ["low"], "reflectionsEnabled": [false, true], "reflectionProfile": ["soft"] }, "settings": { "renderQuality": "performance", "shadowQuality": "off", "shadowUpdateMode": "static", "flatMediaShadowCasting": "false", "aaQuality": "off", "ambientOcclusionPreset": "off", "contactShadowPreset": "off", "postFXEnabled": "0", "postFXEngine": "pmndrs", "postFXBloomEnabled": "0", "postFXEdgeAAEnabled": "0", "postFXTAAEnabled": "0", "postFXSSREnabled": "0", "postFXSSRStrength": "off", "bloomStrength": "off", "reflectionProfile": "soft", "reflectionSource": "hdr", "sceneProbeUpdateMode": "static", "sceneProbeResolution": "64", "pmndrsAAMode": "none", "pmndrsAAPreset": "low", "pmndrsLensFlareEnabled": "false", "pmndrsLutEnabled": "false", "pmndrsVignetteEnabled": "false", "pmndrsNoiseEnabled": "false", "pmndrsChromaticAberrationEnabled": "false", "pmndrsAtmosphereQuality": "performance", "pmndrsAerialPerspectiveEnabled": "false", "pmndrsCloudsLightShaftsEnabled": "false", "pmndrsCloudsQuality": "low" } }, "medium": { "label": "Medium", "renderPixelBudget": 37e5, "minPixelRatio": 0.75, "maxPixelRatio": 1, "assetProfile": "desktop-medium", "textureMaxSize": 2048, "textureMemoryBudgetMiB": 192, "geometryRatio": 0.8, "summary": "3.7 MP, DPR up to 1, 2048px textures, 192 MiB texture target, 80% visual geometry.", "editableSettings": ["shadowQuality", "pmndrsAAMode", "pmndrsAAPreset", "ambientOcclusionPreset", "contactShadowPreset", "postFXEnabled", "pmndrsAtmosphereEnabled", "pmndrsAtmosphereQuality", "pmndrsAerialPerspectiveEnabled", "pmndrsCloudsEnabled", "pmndrsCloudsQuality", "reflectionsEnabled", "reflectionProfile"], "allowedValues": { "shadowQuality": ["off", "medium"], "pmndrsAAMode": ["none", "smaa"], "pmndrsAAPreset": ["low", "medium"], "ambientOcclusionPreset": ["off", "soft"], "contactShadowPreset": ["off", "soft"], "postFXEnabled": [false, true], "pmndrsAtmosphereEnabled": [false, true], "pmndrsAtmosphereQuality": ["performance", "balanced"], "pmndrsAerialPerspectiveEnabled": [false, true], "pmndrsCloudsEnabled": [false, true], "pmndrsCloudsQuality": ["low", "medium"], "reflectionsEnabled": [false, true], "reflectionProfile": ["soft", "balanced"] }, "settings": { "renderQuality": "standard", "shadowQuality": "medium", "shadowUpdateMode": "static", "flatMediaShadowCasting": "false", "aaQuality": "balanced", "ambientOcclusionPreset": "soft", "contactShadowPreset": "soft", "postFXEnabled": "1", "postFXEngine": "pmndrs", "postFXBloomEnabled": "0", "postFXEdgeAAEnabled": "0", "postFXTAAEnabled": "0", "postFXSSREnabled": "0", "postFXSSRStrength": "off", "bloomStrength": "off", "reflectionProfile": "balanced", "reflectionSource": "hdr", "sceneProbeUpdateMode": "static", "sceneProbeResolution": "64", "pmndrsAAMode": "smaa", "pmndrsAAPreset": "medium", "pmndrsLensFlareEnabled": "false", "pmndrsNoiseEnabled": "false", "pmndrsChromaticAberrationEnabled": "false", "pmndrsAtmosphereQuality": "balanced", "pmndrsCloudsLightShaftsEnabled": "false", "pmndrsCloudsQuality": "medium" } }, "high": { "label": "High", "renderPixelBudget": null, "minPixelRatio": 0.75, "maxPixelRatio": 1.5, "assetProfile": "desktop-high", "textureMaxSize": null, "textureMemoryBudgetMiB": null, "geometryRatio": 1, "summary": "Authored resolution up to DPR 1.5, original textures and geometry, safe Draco compression.", "editableSettings": ["shadowQuality", "shadowUpdateMode", "flatMediaShadowCasting", "aaQuality", "ambientOcclusionPreset", "contactShadowPreset", "postFXEnabled", "postFXEngine", "postFXBloomEnabled", "postFXEdgeAAEnabled", "postFXTAAEnabled", "postFXSSREnabled", "postFXSSRStrength", "bloomStrength", "pmndrsAAMode", "pmndrsAAPreset", "pmndrsLensFlareEnabled", "pmndrsLutEnabled", "pmndrsVignetteEnabled", "pmndrsNoiseEnabled", "pmndrsChromaticAberrationEnabled", "pmndrsAtmosphereEnabled", "pmndrsAtmosphereQuality", "pmndrsAerialPerspectiveEnabled", "pmndrsCloudsEnabled", "pmndrsCloudsQuality", "pmndrsCloudsLightShaftsEnabled", "reflectionsEnabled", "reflectionProfile", "reflectionSource", "sceneProbeResolution", "sceneProbeUpdateMode"], "settings": { "renderQuality": "high" } } }, "selection": { "benchmarkDurationMs": 450, "lowFrameMs": 18, "highFrameMs": 8, "lowDeviceMemoryGiB": 4, "highDeviceMemoryGiB": 8, "highHardwareConcurrency": 8, "minimumTextureSize": 8192, "downgradeAverageFps": 45, "severeAverageFps": 28, "downgradeP95FrameMs": 33 } };
   })();
   var VRODOSMaster = window.VRODOSMaster || (window.VRODOSMaster = {});
   VRODOSMaster.domCache = VRODOSMaster.domCache || {};
@@ -809,6 +810,188 @@
     });
   })();
   (function() {
+    window.VRODOSHardwareCapabilities = window.VRODOSHardwareCapabilities || {};
+    const Capabilities = window.VRODOSHardwareCapabilities;
+    function stringValue(value) {
+      return typeof value === "string" ? value.trim() : "";
+    }
+    function platformLabel() {
+      if (typeof navigator === "undefined") return "";
+      return navigator.userAgentData && navigator.userAgentData.platform || navigator.platform || navigator.userAgent || "";
+    }
+    Capabilities.classifyAdapter = function(details) {
+      const source = details || {};
+      const label = `${stringValue(source.vendor)} ${stringValue(source.renderer)}`.toLowerCase();
+      const windows = /windows|win32|win64/i.test(source.platform || platformLabel());
+      if (/swiftshader|llvmpipe|lavapipe|software rasterizer|microsoft basic render driver/.test(label)) {
+        return { adapterClass: "software", confidence: "high", softwareRendering: true };
+      }
+      if (/apple/.test(label) && /(apple\s+m\d|apple\s+gpu|metal)/.test(label)) {
+        return { adapterClass: "unified", confidence: "high", softwareRendering: false };
+      }
+      if (/nvidia|geforce|quadro|rtx|gtx|intel.*arc|arc.*intel/.test(label)) {
+        return { adapterClass: "discrete-likely", confidence: /intel/.test(label) ? "medium" : "high", softwareRendering: false };
+      }
+      if (windows && /intel/.test(label) && /\b(hd|uhd|iris|graphics family)\b/.test(label)) {
+        return { adapterClass: "integrated-likely", confidence: "medium", softwareRendering: false };
+      }
+      if (/radeon\s+(rx|pro)|firepro/.test(label)) {
+        return { adapterClass: "discrete-likely", confidence: "medium", softwareRendering: false };
+      }
+      return { adapterClass: "unknown", confidence: label.trim() ? "low" : "none", softwareRendering: false };
+    };
+    function compileShader(context, type, source) {
+      const shader = context.createShader(type);
+      context.shaderSource(shader, source);
+      context.compileShader(shader);
+      if (!context.getShaderParameter(shader, context.COMPILE_STATUS)) {
+        context.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+    Capabilities.probe = function(selection) {
+      const rules = selection || {};
+      const state = {
+        webgl2: false,
+        majorPerformanceCaveat: false,
+        vendor: "",
+        renderer: "",
+        informationSource: "unavailable",
+        adapterClass: "unknown",
+        confidence: "none",
+        softwareRendering: false,
+        maxTextureSize: null,
+        deviceMemoryGiB: typeof navigator !== "undefined" && Number.isFinite(navigator.deviceMemory) ? navigator.deviceMemory : null,
+        hardwareConcurrency: typeof navigator !== "undefined" && Number.isFinite(navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : null,
+        medianFrameMs: null
+      };
+      if (typeof document === "undefined") return state;
+      const canvas = document.createElement("canvas");
+      canvas.width = 256;
+      canvas.height = 256;
+      let context = null;
+      try {
+        context = canvas.getContext("webgl2", {
+          powerPreference: "high-performance",
+          failIfMajorPerformanceCaveat: true,
+          antialias: false,
+          alpha: false,
+          depth: false,
+          stencil: false,
+          preserveDrawingBuffer: false
+        });
+      } catch (error) {
+        state.majorPerformanceCaveat = true;
+      }
+      if (!context) return state;
+      state.webgl2 = true;
+      state.maxTextureSize = context.getParameter(context.MAX_TEXTURE_SIZE);
+      state.vendor = stringValue(context.getParameter(context.VENDOR));
+      state.renderer = stringValue(context.getParameter(context.RENDERER));
+      state.informationSource = state.vendor || state.renderer ? "masked" : "unavailable";
+      try {
+        const info = context.getExtension("WEBGL_debug_renderer_info");
+        if (info) {
+          state.vendor = stringValue(context.getParameter(info.UNMASKED_VENDOR_WEBGL)) || state.vendor;
+          state.renderer = stringValue(context.getParameter(info.UNMASKED_RENDERER_WEBGL)) || state.renderer;
+          state.informationSource = "webgl-debug-renderer-info";
+        }
+      } catch (error) {
+      }
+      Object.assign(state, Capabilities.classifyAdapter({ vendor: state.vendor, renderer: state.renderer, platform: platformLabel() }));
+      const vertex = compileShader(context, context.VERTEX_SHADER, "#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}");
+      const fragment = compileShader(context, context.FRAGMENT_SHADER, "#version 300 es\nprecision highp float;out vec4 c;void main(){vec2 p=gl_FragCoord.xy/256.;float v=0.;for(int i=0;i<24;i++){v+=sin(p.x*float(i+1))*cos(p.y*float(i+1));}c=vec4(fract(v),p,1.);}");
+      const program = vertex && fragment ? context.createProgram() : null;
+      if (program) {
+        context.attachShader(program, vertex);
+        context.attachShader(program, fragment);
+        context.linkProgram(program);
+      }
+      if (program && context.getProgramParameter(program, context.LINK_STATUS)) {
+        const buffer = context.createBuffer();
+        context.bindBuffer(context.ARRAY_BUFFER, buffer);
+        context.bufferData(context.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), context.STATIC_DRAW);
+        const location = context.getAttribLocation(program, "p");
+        context.enableVertexAttribArray(location);
+        context.vertexAttribPointer(location, 2, context.FLOAT, false, 0, 0);
+        context.useProgram(program);
+        const frameTimes = [];
+        const deadline = performance.now() + Math.max(100, Math.min(500, Number(rules.benchmarkDurationMs) || 450));
+        while (performance.now() < deadline) {
+          const started = performance.now();
+          for (let draw = 0; draw < 48; draw += 1) context.drawArrays(context.TRIANGLES, 0, 3);
+          context.finish();
+          frameTimes.push(performance.now() - started);
+        }
+        frameTimes.sort(function(left, right) {
+          return left - right;
+        });
+        state.medianFrameMs = frameTimes.length ? frameTimes[Math.floor(frameTimes.length / 2)] : null;
+        context.deleteBuffer(buffer);
+        context.deleteProgram(program);
+      }
+      if (vertex) context.deleteShader(vertex);
+      if (fragment) context.deleteShader(fragment);
+      const lose = context.getExtension("WEBGL_lose_context");
+      if (lose) lose.loseContext();
+      return state;
+    };
+    function safeStorage(storage, method, key, value) {
+      try {
+        return storage && typeof storage[method] === "function" ? storage[method](key, value) : null;
+      } catch (error) {
+        return null;
+      }
+    }
+    Capabilities.selectProfile = function(manifest) {
+      if (!manifest || manifest.buildMode !== "adaptive") {
+        throw new Error("[VRodos] Hardware profile selection requires an adaptive desktop manifest.");
+      }
+      const availableProfiles = Object.keys(manifest.profiles || {}).filter(function(profile2) {
+        return ["low", "medium", "high"].includes(profile2);
+      });
+      const valid = ["auto"].concat(availableProfiles);
+      let query = "";
+      try {
+        query = new URLSearchParams(window.location.search || "").get(manifest.queryParameter || "vrodos_quality") || "";
+      } catch (error) {
+        query = "";
+      }
+      query = String(query).toLowerCase();
+      const stored = String(safeStorage(window.localStorage, "getItem", manifest.storageKey || "vrodos.desktopQualityOverride.v1") || "auto").toLowerCase();
+      const requested = valid.indexOf(query) !== -1 ? query : valid.indexOf(stored) !== -1 ? stored : "auto";
+      const source = valid.indexOf(query) !== -1 ? "query" : requested !== "auto" ? "saved-override" : "auto";
+      if (requested !== "auto") return { profile: requested, requested, source, reason: source, probe: null };
+      const rules = manifest.selection || {};
+      const probe = Capabilities.probe(rules);
+      let profile = "medium";
+      let reason = "balanced-capability";
+      if (!probe.webgl2 || probe.majorPerformanceCaveat || probe.softwareRendering || probe.adapterClass === "unknown" || Number.isFinite(probe.deviceMemoryGiB) && probe.deviceMemoryGiB <= Number(rules.lowDeviceMemoryGiB || 4) || Number.isFinite(probe.maxTextureSize) && probe.maxTextureSize < Number(rules.minimumTextureSize || 8192) || !Number.isFinite(probe.medianFrameMs) || probe.medianFrameMs > Number(rules.lowFrameMs || 18)) {
+        profile = "low";
+        reason = "conservative-low-capability";
+      } else if ((probe.adapterClass === "discrete-likely" || probe.adapterClass === "unified") && probe.medianFrameMs <= Number(rules.highFrameMs || 8) && (!Number.isFinite(probe.deviceMemoryGiB) || probe.deviceMemoryGiB >= Number(rules.highDeviceMemoryGiB || 8)) && (!Number.isFinite(probe.hardwareConcurrency) || probe.hardwareConcurrency >= Number(rules.highHardwareConcurrency || 8))) {
+        profile = "high";
+        reason = "high-capability";
+      }
+      const downgrade = String(safeStorage(window.sessionStorage, "getItem", manifest.sessionDowngradeKey || "vrodos.desktopQualityDowngrade.v1") || "").toLowerCase();
+      const rank = { low: 0, medium: 1, high: 2 };
+      if (Object.prototype.hasOwnProperty.call(rank, downgrade) && rank[downgrade] < rank[profile]) {
+        profile = downgrade;
+        reason = "session-downgrade";
+      }
+      return { profile, requested, source, reason, probe };
+    };
+    Capabilities.bootstrap = function(manifest) {
+      const decision = Capabilities.selectProfile(manifest || {});
+      const profile = manifest.profiles && manifest.profiles[decision.profile] ? manifest.profiles[decision.profile] : manifest.profiles[Object.keys(manifest.profiles || {})[0]];
+      window.VRODOS_DESKTOP_PROFILE_MANIFEST = manifest;
+      window.VRODOS_ACTIVE_DESKTOP_PROFILE = Object.assign({}, profile, decision, { id: decision.profile });
+      document.write(manifest.loaders && manifest.loaders[decision.profile] || "");
+      return window.VRODOS_ACTIVE_DESKTOP_PROFILE;
+    };
+  })();
+  (function() {
     window.VRODOSMaster = window.VRODOSMaster || {};
     const Master = window.VRODOSMaster;
     const Helpers = Master.SceneSettingsHelpers = Master.SceneSettingsHelpers || {};
@@ -876,33 +1059,7 @@
       }
       return navigatorValue.platform || navigatorValue.userAgent || "";
     }
-    Hardware.classifyAdapter = function(details) {
-      const source = details || {};
-      const vendor = stringValue(source.vendor);
-      const renderer = stringValue(source.renderer);
-      const platform = stringValue(source.platform);
-      const label = `${vendor} ${renderer}`.toLowerCase();
-      const windows = /windows|win32|win64/i.test(platform);
-      if (/swiftshader|llvmpipe|lavapipe|software rasterizer|microsoft basic render driver/.test(label)) {
-        return { adapterClass: "software", confidence: "high", softwareRendering: true };
-      }
-      if (/apple/.test(label) && /(apple\s+m\d|apple\s+gpu|metal)/.test(label)) {
-        return { adapterClass: "unified", confidence: "high", softwareRendering: false };
-      }
-      if (/nvidia|geforce|quadro|rtx|gtx/.test(label)) {
-        return { adapterClass: "discrete-likely", confidence: "high", softwareRendering: false };
-      }
-      if (/intel.*arc|arc.*intel/.test(label)) {
-        return { adapterClass: "unknown", confidence: "low", softwareRendering: false };
-      }
-      if (windows && /intel/.test(label) && /\b(hd|uhd|iris|graphics family)\b/.test(label)) {
-        return { adapterClass: "integrated-likely", confidence: "medium", softwareRendering: false };
-      }
-      if (/radeon\s+(rx|pro)|firepro/.test(label)) {
-        return { adapterClass: "discrete-likely", confidence: "medium", softwareRendering: false };
-      }
-      return { adapterClass: "unknown", confidence: label.trim() ? "low" : "none", softwareRendering: false };
-    };
+    Hardware.classifyAdapter = window.VRODOSHardwareCapabilities.classifyAdapter;
     Hardware.createGpuState = function() {
       return {
         api: "unavailable",
@@ -1241,6 +1398,115 @@
       state.bannerMetrics = metrics;
       updateAdvisoryMetrics(state);
     }
+    function showQualityRecommendation(component, target, direction) {
+      const state = component._vrodosHardwareDiagnostics;
+      if (!state || state.dismissed || !target || isImmersive(component)) return;
+      const reason = `quality-${direction}-${target}`;
+      if (Hardware.shouldReuseAdvisory(state, reason)) return;
+      removeAdvisory(state);
+      const ui = window.VRODOSMasterUI;
+      const host = ui && typeof ui.ensureOverlayHost === "function" ? ui.ensureOverlayHost() : document.body;
+      if (!host) return;
+      const banner = document.createElement("aside");
+      banner.id = "vrodos-quality-recommendation";
+      banner.setAttribute("role", "status");
+      banner.style.cssText = "position:absolute;top:16px;right:16px;width:min(390px,calc(100vw - 32px));box-sizing:border-box;padding:16px;border:1px solid rgba(16,185,129,.75);border-radius:12px;background:rgba(17,24,39,.96);color:#f9fafb;box-shadow:0 16px 40px rgba(0,0,0,.35);font:14px/1.4 system-ui,sans-serif;pointer-events:auto;";
+      const title = document.createElement("strong");
+      title.style.display = "block";
+      title.textContent = direction === "down" ? "A lower quality profile is recommended" : "This device can try a higher quality profile";
+      const message = document.createElement("p");
+      message.style.margin = "8px 0 12px";
+      message.textContent = direction === "down" ? `The settled frame-rate sample is below the target. Switch to ${target} for smoother playback?` : `The settled frame-rate sample has clear headroom. Try ${target}?`;
+      const actions = document.createElement("div");
+      actions.style.cssText = "display:flex;gap:8px;";
+      const apply = document.createElement("button");
+      apply.type = "button";
+      apply.className = "tw-btn tw-btn-sm tw-btn-primary";
+      apply.textContent = `Use ${target}`;
+      const keep = document.createElement("button");
+      keep.type = "button";
+      keep.className = "tw-btn tw-btn-sm tw-btn-ghost";
+      keep.textContent = "Keep current";
+      apply.addEventListener("click", function() {
+        const manifest = window.VRODOS_DESKTOP_PROFILE_MANIFEST || {};
+        try {
+          window.localStorage.setItem(manifest.storageKey || "vrodos.desktopQualityOverride.v1", target);
+        } catch (error) {
+        }
+        window.location.reload();
+      });
+      keep.addEventListener("click", function() {
+        state.dismissed = true;
+        storeDismissal();
+        removeAdvisory(state);
+      });
+      actions.appendChild(apply);
+      actions.appendChild(keep);
+      banner.appendChild(title);
+      banner.appendChild(message);
+      banner.appendChild(actions);
+      host.appendChild(banner);
+      state.banner = banner;
+      state.bannerReason = reason;
+    }
+    function evaluateProfilePerformance(component) {
+      const state = component && component._vrodosHardwareDiagnostics;
+      const active = window.VRODOS_ACTIVE_DESKTOP_PROFILE;
+      if (!state || !active || state.performance.status !== "complete" || active.source === "query") return;
+      const manifest = window.VRODOS_DESKTOP_PROFILE_MANIFEST || {};
+      if (manifest.buildMode !== "adaptive") {
+        state.recommendation = null;
+        return;
+      }
+      const available = Object.keys(manifest.profiles || {});
+      if (available.length < 2) {
+        state.recommendation = null;
+        return;
+      }
+      const rules = manifest.selection || {};
+      const averageFps = Number(state.performance.averageFps);
+      const p95 = Number(state.performance.p95FrameMs);
+      const poor = averageFps < Number(rules.downgradeAverageFps || 45) || p95 > Number(rules.downgradeP95FrameMs || 33);
+      const order = ["low", "medium", "high"];
+      const index = order.indexOf(active.id);
+      state.recommendation = null;
+      if (poor && index > 0) {
+        const desiredTarget = averageFps < Number(rules.severeAverageFps || 28) ? "low" : order[index - 1];
+        const target = order.slice(0, index).reverse().find(function(profile) {
+          return available.indexOf(profile) !== -1 && order.indexOf(profile) <= order.indexOf(desiredTarget);
+        });
+        if (!target) return;
+        state.recommendation = { direction: "down", target };
+        if (active.source === "auto") {
+          const key = (window.VRODOS_DESKTOP_PROFILE_MANIFEST || {}).sessionDowngradeKey || "vrodos.desktopQualityDowngrade.v1";
+          let alreadyDowngraded = false;
+          try {
+            alreadyDowngraded = Boolean(window.sessionStorage.getItem(key));
+          } catch (error) {
+            alreadyDowngraded = true;
+          }
+          if (!alreadyDowngraded) {
+            try {
+              window.sessionStorage.setItem(key, target);
+            } catch (error) {
+              return;
+            }
+            window.location.reload();
+            return;
+          }
+        }
+        showQualityRecommendation(component, target, "down");
+        return;
+      }
+      if (!poor && averageFps >= 58 && p95 <= 20 && index >= 0 && index < order.length - 1) {
+        const target = order.slice(index + 1).find(function(profile) {
+          return available.indexOf(profile) !== -1;
+        });
+        if (!target) return;
+        state.recommendation = { direction: "up", target };
+        showQualityRecommendation(component, target, "up");
+      }
+    }
     function publish(component, reason) {
       if (component && typeof component.publishRuntimeFeatureState === "function") {
         component.publishRuntimeFeatureState(reason || "gpu-diagnostics");
@@ -1254,6 +1520,11 @@
       console.info("[VRodos][GPU diagnostics]", reason, {
         gpu: state.gpu,
         performance: state.performance,
+        desktopProfile: state.profile,
+        recommendation: state.recommendation,
+        estimatedTextureMemoryMiB: state.profile && state.profile.assets ? state.profile.assets.estimatedTextureMemoryMiB : null,
+        loadedChunks: state.profile && Array.isArray(state.profile.chunkIds) ? state.profile.chunkIds : [],
+        downgradeStatus: state.profile && state.profile.reason === "session-downgrade" ? "session-downgrade" : "none",
         canForceAdapter: false
       });
     }
@@ -1298,7 +1569,9 @@
         frameDeltas: [],
         debugForced,
         dismissed: debugForced ? false : readDismissal(),
-        banner: null
+        banner: null,
+        profile: window.VRODOS_ACTIVE_DESKTOP_PROFILE || null,
+        recommendation: null
       };
       const handleLoaderReady = function() {
         const state = this._vrodosHardwareDiagnostics;
@@ -1351,7 +1624,7 @@
       if (this.el && this.el.renderer) {
         readRendererDimensions(this.el.renderer, state.gpu);
       }
-      return { gpu: state.gpu, performance: state.performance };
+      return { gpu: state.gpu, performance: state.performance, profile: state.profile, recommendation: state.recommendation };
     };
     Helpers.updateHardwarePerformanceDiagnostics = function(time, timeDelta) {
       const state = this._vrodosHardwareDiagnostics;
@@ -1375,6 +1648,7 @@
       }
       if (state.performance.status === "complete" || state.performance.status === "insufficient-samples") {
         evaluateAdvisory(this);
+        evaluateProfilePerformance(this);
         return;
       }
       const delta = Number(timeDelta);
@@ -1401,6 +1675,7 @@
       }
       state.performance = Hardware.summarizePerformance(state.frameDeltas, state.sampleDurationMs);
       evaluateAdvisory(this);
+      evaluateProfilePerformance(this);
       publish(this, "gpu-sampling-complete");
       logDiagnostics(this, "sampling-complete");
     };
@@ -3710,11 +3985,14 @@
     function applyDesktopRenderPixelBudget(component, renderer, targetPixelRatio, options) {
       const cssSize = getRendererCssSize(renderer);
       const overrideBudget = readDprPixelBudgetOverride();
+      const activeProfile = window.VRODOS_ACTIVE_DESKTOP_PROFILE || null;
+      const activeBudget = activeProfile && activeProfile.renderBudget ? activeProfile.renderBudget : null;
       const isImmersiveXr = Boolean(
         component && typeof component.isVrPresentationActive === "function" && component.isVrPresentationActive()
       );
-      const shouldApplyBudget = !isImmersiveXr && (options.isPerformanceQuality || overrideBudget !== null);
-      const pixelBudget = overrideBudget !== null ? overrideBudget : PERFORMANCE_DESKTOP_RENDER_PIXEL_BUDGET;
+      const profilePixelBudget = activeBudget && activeBudget.pixelBudget !== null && Number.isFinite(Number(activeBudget.pixelBudget)) ? Number(activeBudget.pixelBudget) : null;
+      const shouldApplyBudget = !isImmersiveXr && (options.isPerformanceQuality || profilePixelBudget !== null || overrideBudget !== null);
+      const pixelBudget = overrideBudget !== null ? overrideBudget : profilePixelBudget !== null ? profilePixelBudget : PERFORMANCE_DESKTOP_RENDER_PIXEL_BUDGET;
       const originalPixelRatio = targetPixelRatio;
       let budgetPixelRatio = null;
       if (shouldApplyBudget) {
@@ -3737,7 +4015,7 @@
           pixelRatio: targetPixelRatio,
           estimatedRenderPixels: Math.round(cssSize.width * cssSize.height * targetPixelRatio * targetPixelRatio),
           applied: Boolean(shouldApplyBudget && targetPixelRatio < originalPixelRatio - 1e-4),
-          source: shouldApplyBudget ? overrideBudget !== null ? "query" : "performance-profile" : "none",
+          source: shouldApplyBudget ? overrideBudget !== null ? "query" : activeProfile ? `desktop-${activeProfile.id}` : "performance-profile" : "none",
           immersiveXr: isImmersiveXr
         };
       }
@@ -10309,6 +10587,7 @@ ${shader.fragmentShader}` : withUniform;
       const renderQuality = typeof this.getRenderQualityLevel === "function" ? this.getRenderQualityLevel() : this.data.renderQuality === "high" ? "high" : "standard";
       const isHighQuality = renderQuality === "high";
       const isPerformanceQuality = renderQuality === "performance";
+      const activeRenderBudget = window.VRODOS_ACTIVE_DESKTOP_PROFILE && window.VRODOS_ACTIVE_DESKTOP_PROFILE.renderBudget ? window.VRODOS_ACTIVE_DESKTOP_PROFILE.renderBudget : null;
       let targetPixelRatio = Math.min(window.devicePixelRatio || 1, isHighQuality ? 2 : isPerformanceQuality ? 0.9 : 1);
       if (isHighQuality) {
         targetPixelRatio = Math.max(targetPixelRatio, this.getAAQualityPixelRatioTarget());
@@ -10319,8 +10598,8 @@ ${shader.fragmentShader}` : withUniform;
       targetPixelRatio = applyDesktopRenderPixelBudget(this, renderer, targetPixelRatio, {
         renderQuality,
         isPerformanceQuality,
-        minPixelRatio: isPerformanceQuality ? 0.75 : 1,
-        maxPixelRatio: isHighQuality ? 1.5 : isPerformanceQuality ? 0.9 : 1
+        minPixelRatio: activeRenderBudget ? Number(activeRenderBudget.minPixelRatio || 0.75) : isPerformanceQuality ? 0.75 : 1,
+        maxPixelRatio: activeRenderBudget ? Number(activeRenderBudget.maxPixelRatio || 1.5) : isHighQuality ? 1.5 : isPerformanceQuality ? 0.9 : 1
       });
       const isXrPresenting = typeof this.isImmersiveXrActive === "function" ? this.isImmersiveXrActive() : Boolean(renderer.xr && renderer.xr.isPresenting);
       if (!isXrPresenting) {

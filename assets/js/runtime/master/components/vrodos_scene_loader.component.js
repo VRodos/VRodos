@@ -152,6 +152,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         return elapsed >= Math.max(0, Number(minimumMs) || 0);
     },
     handleSceneLoaded: function () {
+        this.activateDesktopProfileSources();
         this.revealTargets = Array.prototype.slice.call(
             this.sceneEl.querySelectorAll('[data-vrodos-delayed-reveal="true"]')
         );
@@ -188,6 +189,23 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         if (this.isReady) {
             this.startLazyLoading();
         }
+    },
+    activateDesktopProfileSources: function () {
+        const profile = window.VRODOS_ACTIVE_DESKTOP_PROFILE && window.VRODOS_ACTIVE_DESKTOP_PROFILE.id
+            ? window.VRODOS_ACTIVE_DESKTOP_PROFILE.id
+            : 'high';
+        Array.prototype.slice.call(this.sceneEl.querySelectorAll('[data-vrodos-profile-gltf="true"]')).forEach(function (target) {
+            const selected = target.getAttribute(`data-vrodos-profile-gltf-${profile}`) || target.getAttribute('data-vrodos-profile-gltf-high');
+            if (!selected) return;
+            const source = `url(${selected})`;
+            if (target.getAttribute('data-vrodos-load-phase') === 'critical') {
+                target.setAttribute('gltf-model', source);
+                target.setAttribute('data-vrodos-lazy-state', 'critical-loading');
+            } else {
+                target.setAttribute('data-vrodos-lazy-gltf-src', source);
+                target.setAttribute('data-vrodos-lazy-state', 'queued');
+            }
+        });
     },
     collectLazyTargets: function () {
         return Array.prototype.slice.call(

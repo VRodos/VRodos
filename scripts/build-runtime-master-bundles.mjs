@@ -20,6 +20,7 @@ import {
 } from './build/runtime-manifest-validator.mjs';
 
 const contractPath = fromPluginRoot('assets/runtime-settings-contract.json');
+const desktopProfilesPath = fromPluginRoot('assets/desktop-performance-profiles.json');
 const contractOutputPath = fromPluginRoot(generatedRuntimeContractPath);
 const manifestPath = fromPluginRoot(runtimeBuildManifestPath);
 const spatialUiFontDir = fromPluginRoot('assets/vendor/fonts/noto-sans');
@@ -54,12 +55,14 @@ function runtimeSchemaDefaults(contract) {
 
 async function buildContract() {
   const parsed = JSON.parse(await readFile(contractPath, 'utf8'));
+  const desktopProfiles = JSON.parse(await readFile(desktopProfilesPath, 'utf8'));
   const schemaDefaults = runtimeSchemaDefaults(parsed);
   const source = [
     generatedBanner,
     '(function () {',
     `    window.VRODOS_RUNTIME_SETTINGS_CONTRACT = ${JSON.stringify(parsed)};`,
     `    window.VRODOS_RUNTIME_SETTINGS_SCHEMA_DEFAULTS = ${JSON.stringify(schemaDefaults)};`,
+    `    window.VRODOS_DESKTOP_PERFORMANCE_PROFILE_CONTRACT = ${JSON.stringify(desktopProfiles)};`,
     '}());',
     ''
   ].join('\n');
@@ -139,6 +142,7 @@ async function buildChunk(chunk) {
 async function validateBuildPrerequisites() {
   const prerequisites = [
     [contractPath, 'Runtime settings contract'],
+    [desktopProfilesPath, 'Desktop performance profile contract'],
     [path.join(spatialUiFontDir, 'NotoSans-Regular.ttf'), 'Spatial UI Noto Sans regular font'],
     [path.join(spatialUiFontDir, 'NotoSans-Bold.ttf'), 'Spatial UI Noto Sans bold font'],
     [path.join(spatialUiFontDir, 'LICENSE'), 'Spatial UI Noto Sans license'],

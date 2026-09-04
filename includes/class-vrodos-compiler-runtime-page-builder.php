@@ -235,7 +235,7 @@ class VRodos_Compiler_Runtime_Page_Builder {
 				continue;
 			}
 			$src = (string) $candidate->getAttribute( 'src' );
-			if ( str_contains( $src, 'vrodos-runtime-' ) || str_contains( $src, '/assets/js/runtime/master/lib/' ) ) {
+			if ( str_contains( $src, 'vrodos-runtime-' ) || str_contains( $src, 'vrodos_hardware_capabilities.js' ) || str_contains( $src, '/assets/js/runtime/master/lib/' ) ) {
 				$runtime_script = $candidate;
 				break;
 			}

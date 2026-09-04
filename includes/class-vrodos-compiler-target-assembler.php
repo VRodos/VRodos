@@ -16,6 +16,7 @@ require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
 require_once __DIR__ . '/class-vrodos-compiler-target-renderer.php';
 require_once __DIR__ . '/class-vrodos-url-normalizer.php';
 require_once __DIR__ . '/class-vrodos-render-runtime-manager.php';
+require_once __DIR__ . '/class-vrodos-asset-optimization-manager.php';
 
 /** Renders one immutable runtime target plan; the manager only orchestrates. */
 final class VRodos_Compiler_Target_Assembler {
@@ -63,7 +64,15 @@ final class VRodos_Compiler_Target_Assembler {
 
 	public function render( VRodos_Runtime_Target_Plan $target, VRodos_Project_Compile_Plan $project ): void {
 		$scene = $target->scene;
-		$this->entity_renderer->configure( $this->plugin_path_url, $scene->hover_enabled );
+		$default_desktop_profile = (string) ( $scene->desktop_profiles['defaultProfile'] ?? 'high' );
+		$adaptive_desktop = 'desktop' === $project->request->vr_runtime_profile
+			&& 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'adaptive' );
+		$this->entity_renderer->configure(
+			$this->plugin_path_url,
+			$scene->hover_enabled,
+			VRodos_Runtime_Target_Plan::MASTER === $target->kind && $adaptive_desktop,
+			$default_desktop_profile
+		);
 
 		if ( VRodos_Runtime_Target_Plan::INDEX === $target->kind ) {
 			// Preserve the established index heading contract: every index uses the first scene title.
@@ -85,12 +94,16 @@ final class VRodos_Compiler_Target_Assembler {
 			return;
 		}
 
+		$simple_settings = $scene->settings;
+		if ( 'desktop' === $project->request->vr_runtime_profile ) {
+			$simple_settings = (array) ( $scene->desktop_profiles['profiles'][ $default_desktop_profile ]['settings'] ?? $simple_settings );
+		}
 		$this->create_simple(
 			$target,
 			$scene->scene_json,
 			$project->request->project_id,
 			$project->request->show_pawn_positions_attr(),
-			$scene->settings,
+			$simple_settings,
 			$scene->diagnostics
 		);
 	}
@@ -174,6 +187,8 @@ final class VRodos_Compiler_Target_Assembler {
 		$scene_id        = $target->scene->scene_id;
 		$runtime_mode    = $target->runtime_mode;
 		$runtime_profile = (string) ( $settings['vrRuntimeProfile'] ?? 'desktop' );
+		$adaptive_desktop = 'desktop' === $runtime_profile
+			&& 'adaptive' === (string) ( $target->scene->desktop_profiles['buildMode'] ?? 'adaptive' );
 		$lean_headset    = $this->is_single_player( $runtime_mode ) && 'headset' === $runtime_profile;
 		$network_scripts = $this->is_networked( $runtime_mode )
 			? '<script src="/socket.io/socket.io.js"></script>' . "\n    "
@@ -185,16 +200,25 @@ final class VRodos_Compiler_Target_Assembler {
 			? '<script src="' . esc_url( $this->plugin_path_url . 'assets/vendor/aframe-environment/aframe-environment-component.min.js' ) . '"></script>'
 			: '';
 
+		$direct_runtime_loader = '<script src="' . esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ) . '"></script>' . "\n    " . $network_scripts . "\n    " . $extras_script . "\n    " . $environment_script;
+		if ( 'desktop' === $runtime_profile && ! $adaptive_desktop ) {
+			$custom_profile = (array) ( $target->scene->desktop_profiles['profiles']['custom'] ?? [] );
+			$active_profile = wp_json_encode( array_merge( $custom_profile, [ 'id' => 'custom', 'source' => 'build-profile', 'reason' => 'custom-build' ] ), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES );
+			if ( ! is_string( $active_profile ) ) {
+				throw new RuntimeException( '[VRodos] Custom desktop profile diagnostics could not be encoded.' );
+			}
+			$direct_runtime_loader = '<script>window.VRODOS_ACTIVE_DESKTOP_PROFILE=' . $active_profile . ';</script>' . "\n    " . $direct_runtime_loader;
+		}
+
 		$content = $this->runtime_page_builder->prepare_template(
 			$target->template,
 			[
 				'roomname'                                  => 'room' . $scene_id,
-				'AFRAME_RUNTIME_URL_PLACEHOLDER'            => esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ),
+				'VRODOS_AFRAME_RUNTIME_SCRIPT_PLACEHOLDER'  => $adaptive_desktop
+					? $this->render_desktop_adaptive_loader( $target, $network_scripts, $extras_script, $environment_script )
+					: $direct_runtime_loader,
 				'VRODOS_RUNTIME_MODE_PLACEHOLDER'           => esc_js( $runtime_mode ),
-				'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER'        => $this->runtime_script_planner->render_scripts_for_chunk_ids( $target->chunk_ids ),
-				'VRODOS_NETWORK_VENDOR_SCRIPTS_PLACEHOLDER' => $network_scripts,
-				'VRODOS_AFRAME_EXTRAS_SCRIPT_PLACEHOLDER'   => $extras_script,
-				'VRODOS_ENVIRONMENT_SCRIPT_PLACEHOLDER'     => $environment_script,
+				'VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER'        => $adaptive_desktop ? '' : $this->runtime_script_planner->render_scripts_for_chunk_ids( $target->chunk_ids ),
 				'VRODOS_PLUGIN_URL_PLACEHOLDER'             => esc_js( $this->plugin_path_url ),
 			]
 		);
@@ -239,6 +263,97 @@ final class VRodos_Compiler_Target_Assembler {
 			$this->target_renderer->apply_single_player_mode( $dom, $scene );
 		}
 		$this->runtime_page_builder->write_dom( $dom, $target->filename, false, "<!-- Detected Hostname: {$this->website_root_host} -->\n" );
+	}
+
+	private function render_desktop_adaptive_loader( VRodos_Runtime_Target_Plan $target, string $network_scripts, string $extras_script, string $environment_script ): string {
+		$profiles = (array) ( $target->scene->desktop_profiles['profiles'] ?? [] );
+		$manifest = [
+			'schemaVersion'        => 2,
+			'buildMode'            => 'adaptive',
+			'storageKey'           => (string) ( $target->scene->desktop_profiles['storageKey'] ?? 'vrodos.desktopQualityOverride.v1' ),
+			'queryParameter'       => (string) ( $target->scene->desktop_profiles['queryParameter'] ?? 'vrodos_quality' ),
+			'sessionDowngradeKey'  => (string) ( $target->scene->desktop_profiles['sessionDowngradeKey'] ?? 'vrodos.desktopQualityDowngrade.v1' ),
+			'selection'            => (array) ( $target->scene->desktop_profiles['selection'] ?? [] ),
+			'profiles'             => [],
+			'loaders'              => [],
+		];
+		$aframe = '<script src="' . esc_url( VRodos_Render_Runtime_Manager::get_aframe_runtime_url() ) . '"></script>';
+		$shared = implode( "\n", array_filter( [ $aframe, $network_scripts, $extras_script, $environment_script ] ) );
+
+		$profile_ids = [ 'low', 'medium', 'high' ];
+		foreach ( $profile_ids as $profile_id ) {
+			$profile = (array) ( $profiles[ $profile_id ] ?? [] );
+			$chunk_ids = (array) ( $profile['chunkIds'] ?? $target->chunk_ids );
+			$runtime_scripts = $this->runtime_script_planner->render_scripts_for_chunk_ids( $chunk_ids );
+			$runtime_scripts = $this->runtime_assets->redirect_runtime_template_urls( $runtime_scripts );
+			$runtime_scripts = str_replace( 'VRODOS_PLUGIN_URL_PLACEHOLDER', $this->plugin_path_url, $runtime_scripts );
+			$asset_summary = $this->desktop_profile_asset_summary( $target->scene->scene_json, $profile_id );
+			$manifest['profiles'][ $profile_id ] = [
+				'label'        => (string) ( $profile['label'] ?? ucfirst( $profile_id ) ),
+				'presetState'  => (string) ( $profile['presetState'] ?? 'default' ),
+				'settings'     => (array) ( $profile['settings'] ?? [] ),
+				'assets'       => array_merge( (array) ( $profile['assets'] ?? [] ), $asset_summary ),
+				'renderBudget' => (array) ( $profile['renderBudget'] ?? [] ),
+				'chunkIds'     => $chunk_ids,
+			];
+			$manifest['loaders'][ $profile_id ] = $shared . "\n" . $runtime_scripts;
+		}
+
+		$capability_path = VRodos_Path_Manager::asset_path( 'js/runtime/master/vrodos_hardware_capabilities.js' );
+		$capability_url = $this->runtime_assets->runtime_asset_url( 'js/runtime/master/vrodos_hardware_capabilities.js' );
+		$version = is_file( $capability_path ) ? (string) filemtime( $capability_path ) : '1';
+		$json = wp_json_encode( $manifest, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES );
+		if ( ! is_string( $json ) ) {
+			throw new RuntimeException( '[VRodos] Desktop performance profile manifest could not be encoded.' );
+		}
+
+		return '<script src="' . esc_url( $capability_url ) . '?ver=' . rawurlencode( $version ) . '"></script>' . "\n    "
+			. '<script>window.VRODOSHardwareCapabilities.bootstrap(' . $json . ');</script>';
+	}
+
+	private function desktop_profile_asset_summary( object $scene_json, string $slot ): array {
+		$asset_ids = [];
+		$collect = function ( $value ) use ( &$collect, &$asset_ids ): void {
+			if ( is_array( $value ) ) {
+				foreach ( $value as $child ) {
+					$collect( $child );
+				}
+				return;
+			}
+			if ( ! is_object( $value ) ) {
+				return;
+			}
+			$asset_id = absint( $value->asset_id ?? 0 );
+			if ( $asset_id && ( is_object( $value->desktop_profile_glb_urls ?? null ) || ! empty( $value->glb_path ) ) ) {
+				$asset_ids[ $asset_id ] = true;
+			}
+			foreach ( get_object_vars( $value ) as $child ) {
+				$collect( $child );
+			}
+		};
+		$collect( $scene_json );
+		$texture_bytes = 0;
+		$package_bytes = 0;
+		$texture_sizes = [];
+		$protected_count = 0;
+		foreach ( array_keys( $asset_ids ) as $asset_id ) {
+			$info = VRodos_Asset_Optimization_Manager::desktop_profile_derivative_info( (int) $asset_id, $slot );
+			$texture_bytes += (int) ( $info['estimatedTextureMemoryBytes'] ?? 0 );
+			$package_bytes += (int) ( $info['derivativeSizeBytes'] ?? 0 );
+			if ( ! empty( $info['textureMaxSize'] ) ) {
+				$texture_sizes[] = (int) $info['textureMaxSize'];
+			}
+			if ( ! empty( $info['geometryProtected'] ) ) {
+				++$protected_count;
+			}
+		}
+		return [
+			'derivativeCount'             => count( $asset_ids ),
+			'estimatedTextureMemoryMiB'   => round( $texture_bytes / 1048576, 2 ),
+			'derivativePackageSizeBytes'  => $package_bytes,
+			'effectiveTextureMaxSize'     => $texture_sizes ? max( $texture_sizes ) : null,
+			'geometryProtectedAssetCount' => $protected_count,
+		];
 	}
 
 	private function create_simple(

@@ -65,6 +65,9 @@ VRODOS.api = VRODOS.api || {};
         if (!compileButton) return;
 
         compileButton.addEventListener('click', () => {
+            if (VRODOS.ui.desktopPerformanceProfiles && typeof VRODOS.ui.desktopPerformanceProfiles.prepare === 'function') {
+                VRODOS.ui.desktopPerformanceProfiles.prepare();
+            }
             if (typeof VRODOS.ui.syncCompileDialogFromSceneSettings === 'function') {
                 VRODOS.ui.syncCompileDialogFromSceneSettings();
             }
@@ -80,11 +83,19 @@ VRODOS.api = VRODOS.api || {};
         if (!proceedButton) return;
 
         proceedButton.addEventListener('click', () => {
-            dialogState.resetBuildState();
-
             if (typeof VRODOS.ui.applyCompileDialogSettingsToScene === 'function') {
                 VRODOS.ui.applyCompileDialogSettingsToScene();
             }
+            const profileEditor = VRODOS.ui.desktopPerformanceProfiles;
+            const profileErrors = profileEditor && typeof profileEditor.validationErrors === 'function'
+                ? profileEditor.validationErrors()
+                : [];
+            if (profileErrors.length) {
+                const status = document.getElementById('constantUpdateUser');
+                if (status) status.textContent = `Build blocked: ${profileErrors[0]}`;
+                return;
+            }
+            dialogState.resetBuildState();
 
             dialogState.showSavePendingMessage();
 

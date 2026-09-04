@@ -2,7 +2,7 @@
 
 ## Scope
 
-The compiler remains a synchronous WordPress/A-Frame pipeline. It preserves the current `Master_Client_{scene}.html`, `Simple_Client_{scene}.html`, and `index_{scene}.html` naming rules, existing response URL fields, `scene-settings`, compatibility globals, decoder configuration, and lazy runtime chunks. Generated clients live under `wp-content/uploads/vrodos/published/projects/{project_id}/clients/`; content-addressed public media lives beside them under `media/`.
+The compiler remains a transactional WordPress/A-Frame pipeline. Desktop profile derivatives may be prepared asynchronously before rendering, but no client or stable link changes until every required artifact is ready. The compiler preserves the current `Master_Client_{scene}.html`, `Simple_Client_{scene}.html`, and `index_{scene}.html` naming rules, existing response URL fields, `scene-settings`, compatibility globals, decoder configuration, and lazy runtime chunks. Generated clients live under `wp-content/uploads/vrodos/published/projects/{project_id}/clients/`; content-addressed public media lives beside them under `media/`.
 
 New compiler work should use this flow:
 
@@ -11,7 +11,8 @@ flowchart LR
     Request["Authenticated compile POST"] --> Typed["VRodos_Compile_Request"]
     Typed --> Context["Validated project + scene context"]
     Context --> Resolver["VRodos_Compiler_Plan_Resolver"]
-    Resolver --> Targets["VRodos_Runtime_Target_Plan[]"]
+    Resolver --> Profiles["Desktop profile derivative preflight"]
+    Profiles --> Targets["VRodos_Runtime_Target_Plan[]"]
     Targets --> Render["VRodos_Compiler_Target_Assembler"]
     Render --> Transaction["Project lock + staging + rollback"]
     Transaction --> Links["VRodos_Compiler_Link_Publisher"]
@@ -34,6 +35,8 @@ The runtime mode and VR profile apply to every scene in one project build. Rende
 
 `VRodos_Compiler_Plan_Resolver` clones source scene JSON, normalizes every entity once, applies project policy to the clone, resolves effective settings, derives capabilities, asks the manifest planner for ordered chunks, and returns immutable scene, target, and project plans. Source post metadata is not mutated.
 
+For the desktop runtime target, scene metadata stores schema v2 `desktopPerformanceProfiles`: `buildMode` (`custom` or `adaptive`), `activeTab`, and the bounded performance overrides plus preset baselines for Low/Medium/High. Ordinary scene metadata remains the canonical Custom/shared source. `assets/desktop-performance-profiles.json` is the shared PHP/browser preset and constraint source. Custom builds plan one `desktop-custom` capability/chunk set; adaptive builds plan Low, Medium, and High. Headset, PC-rendered-VR, mobile, and touch policies do not consume this contract.
+
 ## Settings and capabilities
 
 `assets/runtime-settings-contract.json` schema 2 is the shared default/type/enum/wire contract. Every ordinary setting declares its generated `scene-settings` wire key and boolean format. The generated browser contract drives editor defaults; PHP uses the same contract for editor hydration, compile normalization, and wire serialization. A small derived-policy layer still owns project target, camera, fog, celestial presets, renderer policy, and effective post-FX.
@@ -48,6 +51,8 @@ An idempotent batched migration moves allowlisted legacy `composite_params`, atm
 
 Capabilities are derived once after effective scene policy is known. `activationCapabilities` in `assets/runtime-build-manifest.json` schema 2 maps capabilities to lazy chunks. The script planner adds baseline chunks, validates activation coverage, resolves dependencies, and preserves manifest order. Invalid paths, missing files, duplicate ordering, dependency cycles, undeclared dependencies, and uncovered capabilities are compile errors.
 
+Before target rendering, `VRodos_Asset_Optimization_Manager` verifies the required desktop derivative family. Custom-only needs `desktop-custom`; adaptive needs `desktop-low`, `desktop-medium`, and `desktop-high`. Missing work is queued through WordPress Cron and returned to the compile UI as progress; failures stop preflight while the prior publication remains intact. Low/Medium require KTX-Software, use KTX2 textures and safe Draco, and enforce scene texture-memory gates. Custom/High use safe Draco without changing authored textures or geometry. Source uploads are never modified. Collision/navigation assets and GLBs containing skins or morph targets bypass simplification.
+
 ## Artifact and target policy
 
 All HTML is rendered into `VRodos_Compile_Artifact` values before publication. `VRodos_Compiler_Artifact_Transaction` acquires a project-specific filesystem lock, writes same-filesystem staging files, reads the per-project artifact inventory, backs up replacements and stale targets, publishes the new set and inventory, and restores replacements, stale files, and the prior inventory if publication fails.
@@ -59,6 +64,8 @@ Each `VRodos_Runtime_Target_Plan` declares its template, filename, scene, runtim
 - dedicated VRExpo/standard player rigs and explicit networking fragments through `VRodos_Compiler_Target_Renderer`.
 
 `VRodos_Compiler_Target_Assembler` is the single target-assembly path. It consumes the immutable target plan and delegates shared DOM, settings, decoder, entity, and diagnostics work to `VRodos_Compiler_Runtime_Page_Builder`; the compiler manager only sequences targets and publishes the captured artifact set.
+
+Adaptive Desktop Master output embeds a small schema v2 manifest. Its capability bootstrap runs before A-Frame, selects Low/Medium/High using query override, saved preference, or automatic hardware policy, and writes only the selected A-Frame/runtime script set. Profile GLB URLs remain inert data attributes until `vrodos-scene-loader` activates the selected URL. Custom-only Master output contains no capability bootstrap or adaptive query/downgrade path and renders its single derivative directly. Simple remains a lean companion and renders Custom or the adaptive High slot directly.
 
 The link publisher owns URL construction. Network runtime startup happens only after artifact commit; startup failure produces a warning and does not roll back valid HTML.
 

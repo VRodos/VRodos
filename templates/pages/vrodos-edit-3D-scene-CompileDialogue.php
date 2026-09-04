@@ -72,15 +72,67 @@
 				</div>
 			</div>
 
-			<div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-mb-5 tw-items-start">
+			<div id="compileRuntimePolicyMount" class="tw-mb-4"></div>
+
+			<div id="compileDesktopProfilesPanel" class="tw-mb-4 tw-rounded-xl tw-border tw-border-emerald-200 tw-bg-emerald-50/60 tw-p-4">
+				<div class="tw-flex tw-items-start tw-justify-between tw-gap-3">
+					<div>
+						<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Desktop Quality</h4>
+						<p class="tw-mt-1 tw-text-[10px] tw-text-slate-500">Choose one exact Custom build or device-adaptive Low, Medium, and High variants.</p>
+					</div>
+					<span id="compileDesktopProfileState" class="tw-badge tw-badge-sm tw-badge-outline" style="display:none;">Default</span>
+				</div>
+				<fieldset class="tw-mt-3">
+					<legend class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Build mode</legend>
+					<div class="tw-mt-1 tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-2">
+						<label class="tw-flex tw-cursor-pointer tw-items-start tw-gap-2 tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3">
+							<input type="radio" name="compileDesktopBuildMode" value="custom" class="tw-radio tw-radio-primary tw-radio-xs tw-mt-0.5">
+							<span><strong class="tw-block tw-text-xs tw-text-slate-700">Custom only</strong><span class="tw-block tw-text-[10px] tw-text-slate-500">Publish one exact experience.</span></span>
+						</label>
+						<label class="tw-flex tw-cursor-pointer tw-items-start tw-gap-2 tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3">
+							<input type="radio" name="compileDesktopBuildMode" value="adaptive" class="tw-radio tw-radio-primary tw-radio-xs tw-mt-0.5" checked>
+							<span><strong class="tw-block tw-text-xs tw-text-slate-700">Adaptive Low/Medium/High</strong><span class="tw-block tw-text-[10px] tw-text-slate-500">Publish three variants and load one per device.</span></span>
+						</label>
+					</div>
+				</fieldset>
+				<p id="compileDesktopProfileSelectionHint" class="tw-mt-2 tw-text-[10px] tw-text-slate-500"></p>
+				<div class="tw-mt-3 tw-tabs tw-tabs-boxed tw-bg-white" role="tablist" aria-label="Desktop quality settings">
+					<button type="button" role="tab" class="tw-tab tw-tab-active tw-text-xs" data-vrodos-desktop-profile="custom">Custom</button>
+					<button type="button" role="tab" class="tw-tab tw-text-xs" data-vrodos-desktop-profile="low">Low</button>
+					<button type="button" role="tab" class="tw-tab tw-text-xs" data-vrodos-desktop-profile="medium">Medium</button>
+					<button type="button" role="tab" class="tw-tab tw-text-xs" data-vrodos-desktop-profile="high">High</button>
+				</div>
+				<p id="compileDesktopProfileWarning" class="tw-mt-2 tw-text-[10px] tw-font-semibold tw-text-amber-700" style="display:none;"></p>
+			</div>
+
+			<div id="compileDesktopTierPanel" class="tw-mb-5 tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4" style="display:none;">
+				<div class="tw-flex tw-items-start tw-justify-between tw-gap-3">
+					<div>
+						<h4 id="compileDesktopTierTitle" class="tw-text-sm tw-font-bold tw-text-slate-800"></h4>
+						<p id="compileDesktopTierBudget" class="tw-mt-1 tw-text-[10px] tw-leading-relaxed tw-text-slate-500"></p>
+					</div>
+					<button type="button" id="compileDesktopProfileReset" class="tw-btn tw-btn-xs tw-btn-outline">Restore default</button>
+				</div>
+				<p id="compileDesktopTierExcluded" class="tw-mt-3 tw-rounded-lg tw-bg-amber-50 tw-p-2 tw-text-[10px] tw-font-semibold tw-text-amber-700" style="display:none;">Not included in this build.</p>
+				<div id="compileDesktopTierControls" class="tw-mt-4 tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-3"></div>
+				<div class="tw-mt-4 tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3">
+					<p class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Fixed by this tier</p>
+					<p id="compileDesktopTierFixedSummary" class="tw-mt-1 tw-text-[10px] tw-leading-relaxed tw-text-slate-500"></p>
+				</div>
+			</div>
+
+			<div id="compileDesktopCustomPanel" class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-6 tw-mb-5 tw-items-start">
+				<div class="md:tw-col-span-2 tw-rounded-xl tw-border tw-border-sky-100 tw-bg-sky-50/60 tw-p-3">
+					<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Custom</h4>
+					<p class="tw-mt-1 tw-text-[10px] tw-leading-relaxed tw-text-slate-500">Shared Experience settings define the scene's artistic identity for every build. Custom Quality values are used only by a Custom-only build.</p>
+				</div>
 				<!-- Left Column: Global Settings -->
 				<div class="tw-flex tw-flex-col tw-gap-4">
-
 					<!-- Card: Output & Quality -->
 					<div class="tw-rounded-xl tw-border tw-border-slate-200 tw-bg-slate-50 tw-p-4">
 						<div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
 							<i data-lucide="monitor" class="tw-w-4 tw-h-4 tw-text-emerald-500"></i>
-							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Output &amp; Quality</h4>
+							<h4 class="tw-text-sm tw-font-bold tw-text-slate-800">Custom Quality &amp; Runtime Options</h4>
 						</div>
 
 						<div class="tw-space-y-4">

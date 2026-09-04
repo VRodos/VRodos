@@ -505,11 +505,16 @@ VRodosCompileUI.Atmosphere = (function () {
         const highRenderQuality = controls.renderQuality
             ? VRodosCompileUI.General.normalizeRenderQuality(controls.renderQuality.value) === 'high'
             : false;
-        const cloudsAvailable = isEnabled && highRenderQuality;
+        const desktopProfilesActive = Boolean(
+            controls.runtimeTarget && controls.runtimeTarget.value === 'desktop' &&
+            VRODOS.editor.envir && VRODOS.editor.envir.scene &&
+            VRODOS.editor.envir.scene.desktopPerformanceProfiles
+        );
+        const cloudsAvailable = isEnabled && (highRenderQuality || desktopProfilesActive);
         const cloudsActive = cloudsAvailable && controls.pmndrsClouds && controls.pmndrsClouds.checked === true;
         const cloudsTitle = cloudsAvailable
             ? ''
-            : 'Clouds require High render quality, PMNDRS post-FX, and Takram atmosphere.';
+            : 'Clouds require a desktop performance profile or High render quality, PMNDRS post-FX, and Takram atmosphere.';
         const cloudCoverageTitle = 'Authored cloudiness 0..1. Horizon maps dense authored values to Takram shader coverage below the selected layer saturation range; diagnostics show authored -> effective.';
         const cloudWindActive = cloudsActive && controls.pmndrsCloudsWind && controls.pmndrsCloudsWind.checked === true;
         const cloudWindTitle = cloudsActive ? 'Animate the Takram local weather field.' : cloudsTitle;
@@ -598,6 +603,11 @@ VRodosCompileUI.Atmosphere = (function () {
         const highRenderQuality = controls.renderQuality
             ? VRodosCompileUI.General.normalizeRenderQuality(controls.renderQuality.value) === 'high'
             : false;
+        const desktopProfilesActive = Boolean(
+            controls.runtimeTarget && controls.runtimeTarget.value === 'desktop' &&
+            VRODOS.editor.envir && VRODOS.editor.envir.scene &&
+            VRODOS.editor.envir.scene.desktopPerformanceProfiles
+        );
 
         VRODOS.editor.envir.scene.aframePmndrsAtmosphereEnabled = atmosphereEnabled;
         const atmospherePreset = headsetSkyTimeAuthored
@@ -630,7 +640,7 @@ VRodosCompileUI.Atmosphere = (function () {
             1440,
             d.dayNightCycleDurationMinutes
         );
-        const cloudsEnabled = Boolean(atmosphereEnabled && highRenderQuality && controls.pmndrsClouds && controls.pmndrsClouds.checked === true);
+        const cloudsEnabled = Boolean(atmosphereEnabled && (highRenderQuality || desktopProfilesActive) && controls.pmndrsClouds && controls.pmndrsClouds.checked === true);
         VRODOS.editor.envir.scene.aframePmndrsAerialPerspectiveEnabled = (pmndrsRuntimeEnabled && controls.pmndrsAerialPerspective) ? getAerialPerspectiveAuthoredChecked(controls) : false;
         VRODOS.editor.envir.scene.aframePmndrsCloudsEnabled = cloudsEnabled;
         VRODOS.editor.envir.scene.aframePmndrsCloudsLightShaftsEnabled = controls.pmndrsCloudsLightShafts

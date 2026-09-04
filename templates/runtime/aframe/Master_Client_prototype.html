@@ -14,12 +14,14 @@
 
     VRODOS_WEBXR_LAYER_SHIM_PLACEHOLDER
 
-    <!-- A-Frame runtime source is selected by the compiler to allow a pinned master spike without changing the prototype again. -->
-    <script src="AFRAME_RUNTIME_URL_PLACEHOLDER"></script>
+    <script>
+        window.VRODOS_PLUGIN_URL = "VRODOS_PLUGIN_URL_PLACEHOLDER";
+        window.VRODOS_ASSET_IMAGE_URL = "VRODOS_ASSET_IMAGE_URL_PLACEHOLDER";
+        window.VRODOS_RUNTIME_MODE = "VRODOS_RUNTIME_MODE_PLACEHOLDER";
+    </script>
 
-    VRODOS_NETWORK_VENDOR_SCRIPTS_PLACEHOLDER
-    VRODOS_AFRAME_EXTRAS_SCRIPT_PLACEHOLDER
-    VRODOS_ENVIRONMENT_SCRIPT_PLACEHOLDER
+    <!-- Desktop adaptive builds choose a profile before loading A-Frame, optional chunks, or scene assets. -->
+    VRODOS_AFRAME_RUNTIME_SCRIPT_PLACEHOLDER
 
 
 
@@ -66,11 +68,6 @@
     </style>
 
     <!-- Master Client Modular Runtime -->
-    <script>
-        window.VRODOS_PLUGIN_URL = "VRODOS_PLUGIN_URL_PLACEHOLDER";
-        window.VRODOS_ASSET_IMAGE_URL = "VRODOS_ASSET_IMAGE_URL_PLACEHOLDER";
-        window.VRODOS_RUNTIME_MODE = "VRODOS_RUNTIME_MODE_PLACEHOLDER";
-    </script>
     VRODOS_RUNTIME_SCRIPTS_PLACEHOLDER
 
 </head>

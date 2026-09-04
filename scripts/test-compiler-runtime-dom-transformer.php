@@ -239,10 +239,14 @@ foreach ( [ 'Master_Client_prototype.html', 'Simple_Client_prototype.html' ] as 
 	vrodos_dom_transformer_assert( ! str_contains( $prepared_template, 'VRODOS_WEBXR_LAYER_SHIM_PLACEHOLDER' ), $template_name . ' should replace the WebXR shim placeholder' );
 	vrodos_dom_transformer_assert( str_contains( $prepared_template, 'window.__VRODOS_WEBXR_LAYER_SHIM_ACTIVE' ), $template_name . ' should include the shared WebXR shim' );
 	vrodos_dom_transformer_assert( str_contains( $prepared_template, 'XRWebGLBinding' ), $template_name . ' should include the WebXR layer compatibility guard' );
-	vrodos_dom_transformer_assert( str_contains( $prepared_template, 'src="' . $aframe_runtime_url . '"' ), $template_name . ' should include the pinned local A-Frame artifact' );
+	if ( 'Master_Client_prototype.html' === $template_name ) {
+		vrodos_dom_transformer_assert( str_contains( $prepared_template, 'VRODOS_AFRAME_RUNTIME_SCRIPT_PLACEHOLDER' ), 'Master client should defer A-Frame loading to the desktop profile bootstrap' );
+	} else {
+		vrodos_dom_transformer_assert( str_contains( $prepared_template, 'src="' . $aframe_runtime_url . '"' ), $template_name . ' should include the pinned local A-Frame artifact' );
+	}
 
 	$shim_position   = strpos( $prepared_template, 'window.__VRODOS_WEBXR_LAYER_SHIM_ACTIVE' );
-	$aframe_position = strpos( $prepared_template, $aframe_runtime_url );
+	$aframe_position = strpos( $prepared_template, 'Master_Client_prototype.html' === $template_name ? 'VRODOS_AFRAME_RUNTIME_SCRIPT_PLACEHOLDER' : $aframe_runtime_url );
 	vrodos_dom_transformer_assert( false !== $shim_position && false !== $aframe_position && $shim_position < $aframe_position, $template_name . ' should install the WebXR shim before A-Frame' );
 }
 

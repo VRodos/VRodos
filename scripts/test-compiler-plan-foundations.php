@@ -47,6 +47,31 @@ if ( ! function_exists( 'absint' ) ) {
 		return abs( (int) $value );
 	}
 }
+if ( ! function_exists( 'wp_parse_url' ) ) {
+	function wp_parse_url( string $url, int $component = -1 ) {
+		return -1 === $component ? parse_url( $url ) : parse_url( $url, $component );
+	}
+}
+if ( ! function_exists( 'trailingslashit' ) ) {
+	function trailingslashit( string $value ): string {
+		return rtrim( $value, '/\\' ) . '/';
+	}
+}
+if ( ! function_exists( 'wp_normalize_path' ) ) {
+	function wp_normalize_path( string $value ): string {
+		return str_replace( '\\', '/', $value );
+	}
+}
+if ( ! function_exists( 'home_url' ) ) {
+	function home_url( string $path = '' ): string {
+		return 'https://example.test/' . ltrim( $path, '/' );
+	}
+}
+if ( ! function_exists( 'wp_strip_all_tags' ) ) {
+	function wp_strip_all_tags( string $value ): string {
+		return strip_tags( $value );
+	}
+}
 
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-assets.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-scene-repository.php';
@@ -168,6 +193,44 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$render_diagnostics = $renderer->build_compile_diagnostics( $dom );
 	vrodos_foundation_assert( 1 === count( $render_diagnostics['warnings'] ?? [] ), 'unknown categories emit one diagnostic' );
 
+	$profile_object = (object) [
+		'category_slug' => 'decoration',
+		'asset_id' => 77,
+		'glb_path' => '/published/low.glb',
+		'desktop_profile_glb_urls' => (object) [
+			'low' => '/published/low.glb',
+			'medium' => '/published/medium.glb',
+			'high' => '/published/high.glb',
+		],
+		'position' => [ 0, 0, 0 ],
+		'rotation' => [ 0, 0, 0 ],
+		'scale' => [ 1, 1, 1 ],
+	];
+	$adaptive_dom = new DOMDocument( '1.0', 'UTF-8' );
+	$adaptive_scene = $adaptive_dom->createElement( 'a-scene' );
+	$adaptive_assets = $adaptive_dom->createElement( 'a-assets' );
+	$adaptive_dom->appendChild( $adaptive_scene );
+	$adaptive_scene->appendChild( $adaptive_assets );
+	$adaptive_renderer = new VRodos_Compiler_AFrame_Entity_Renderer( new VRodos_Compiler_Runtime_Assets(), new VRodos_Compiler_Scene_Repository(), static fn ( $url ) => $url );
+	$adaptive_renderer->configure( '/plugin/', true, true, 'high' );
+	$adaptive_renderer->render_scene_objects( $adaptive_dom, $adaptive_scene, $adaptive_assets, [ 'profiled' => $profile_object ], 1, 42, [ 'scene_settings' => [ 'vrRuntimeProfile' => 'desktop' ], 'container' => $adaptive_scene ] );
+	$adaptive_entity = ( new DOMXPath( $adaptive_dom ) )->query( '//*[@data-vrodos-profile-gltf="true"]' )->item( 0 );
+	vrodos_foundation_assert( $adaptive_entity instanceof DOMElement, 'Master client emits adaptive GLB attributes' );
+	vrodos_foundation_assert( ! $adaptive_entity->hasAttribute( 'gltf-model' ), 'Master client does not request a GLB before profile selection' );
+	vrodos_foundation_assert( '/published/medium.glb' === $adaptive_entity->getAttribute( 'data-vrodos-profile-gltf-medium' ), 'Master client carries the Medium derivative URL' );
+
+	$fixed_dom = new DOMDocument( '1.0', 'UTF-8' );
+	$fixed_scene_element = $fixed_dom->createElement( 'a-scene' );
+	$fixed_assets = $fixed_dom->createElement( 'a-assets' );
+	$fixed_dom->appendChild( $fixed_scene_element );
+	$fixed_scene_element->appendChild( $fixed_assets );
+	$fixed_renderer = new VRodos_Compiler_AFrame_Entity_Renderer( new VRodos_Compiler_Runtime_Assets(), new VRodos_Compiler_Scene_Repository(), static fn ( $url ) => $url );
+	$fixed_renderer->configure( '/plugin/', true, false, 'medium' );
+	$fixed_renderer->render_scene_objects( $fixed_dom, $fixed_scene_element, $fixed_assets, [ 'profiled' => $profile_object ], 1, 42, [ 'scene_settings' => [ 'vrRuntimeProfile' => 'desktop' ], 'container' => $fixed_scene_element ] );
+	$fixed_markup = $fixed_dom->saveHTML();
+	vrodos_foundation_assert( str_contains( $fixed_markup, '/published/medium.glb' ), 'Simple/fixed renderer uses the selected Medium derivative' );
+	vrodos_foundation_assert( ! str_contains( $fixed_markup, '/published/low.glb' ) && ! str_contains( $fixed_markup, '/published/high.glb' ), 'Simple/fixed renderer omits unselected derivative URLs' );
+
 	$rig_builder = new VRodos_Compiler_Target_Renderer();
 	$vrexpo_dom  = new DOMDocument( '1.0', 'UTF-8' );
 	$vrexpo_scene = $vrexpo_dom->createElement( 'a-scene' );
@@ -238,6 +301,8 @@ $plan_manifest = new VRodos_Compiler_Runtime_Manifest(
 			'networked-components' => vrodos_foundation_chunk( 'networked-components', 15, [ 'networking' ] ),
 			'core-runtime' => vrodos_foundation_chunk( 'core-runtime', 20 ),
 			'collision-bvh-vendor' => vrodos_foundation_chunk( 'collision-bvh-vendor', 30, [ 'collision-bvh' ] ),
+			'pmndrs-postfx' => vrodos_foundation_chunk( 'pmndrs-postfx', 40, [ 'postfx:pmndrs' ], [ 'core-runtime' ] ),
+			'takram-atmosphere' => vrodos_foundation_chunk( 'takram-atmosphere', 50, [ 'atmosphere:takram', 'clouds:takram' ], [ 'pmndrs-postfx' ] ),
 			'aframe-components' => vrodos_foundation_chunk( 'aframe-components', 90, [], [ 'core-runtime' ] ),
 		],
 	]
@@ -357,6 +422,80 @@ foreach ( $single_player_plan->targets as $target ) {
 	vrodos_foundation_assert( VRodos_Runtime_Target_Plan::MASTER === $target->kind, 'single-player target matrix excludes network companion pages' );
 	vrodos_foundation_assert( ! in_array( 'networked-components', $target->chunk_ids, true ), 'single-player target excludes network chunk' );
 }
+$desktop_profiles = $single_player_plan->scenes[0]->desktop_profiles;
+vrodos_foundation_assert( 2 === $desktop_profiles['schemaVersion'], 'desktop profiles use schema v2' );
+vrodos_foundation_assert( 'adaptive' === $desktop_profiles['buildMode'], 'desktop profiles default to adaptive build mode' );
+vrodos_foundation_assert( isset( $desktop_profiles['profiles']['custom'] ), 'desktop profiles include the independently cached Custom build' );
+vrodos_foundation_assert( 'performance' === $desktop_profiles['profiles']['low']['settings']['renderQuality'], 'Low preset uses performance render quality' );
+vrodos_foundation_assert( 'standard' === $desktop_profiles['profiles']['medium']['settings']['renderQuality'], 'Medium preset uses standard render quality' );
+vrodos_foundation_assert( 'high' === $desktop_profiles['profiles']['high']['settings']['renderQuality'], 'High preset remains the visual maximum' );
+vrodos_foundation_assert( 'false' === $desktop_profiles['profiles']['low']['settings']['pmndrsCloudsEnabled'], 'Low does not enable clouds absent from High' );
+vrodos_foundation_assert( 'false' === $desktop_profiles['profiles']['medium']['settings']['pmndrsCloudsEnabled'], 'Medium does not enable clouds absent from High' );
+vrodos_foundation_assert( [] === VRodos_Desktop_Performance_Profiles::validate_monotonic( $desktop_profiles ), 'desktop preset defaults are monotonic' );
+$invalid_desktop_profiles = $desktop_profiles;
+$invalid_desktop_profiles['profiles']['low']['settings']['shadowQuality'] = 'high';
+vrodos_foundation_assert( [] !== VRodos_Desktop_Performance_Profiles::validate_monotonic( $invalid_desktop_profiles ), 'desktop profile validation rejects a lower slot that exceeds Medium' );
+
+$cloud_scene = json_decode( wp_json_encode( $scene_one ) );
+$cloud_scene->metadata->aframePostFXEngine = 'pmndrs';
+$cloud_scene->metadata->aframePostFXEnabled = true;
+$cloud_scene->metadata->aframePmndrsAtmosphereEnabled = true;
+$cloud_scene->metadata->aframePmndrsAtmosphereQuality = 'cinematic';
+$cloud_scene->metadata->aframePmndrsCloudsEnabled = true;
+$cloud_scene->metadata->aframePmndrsCloudsLightShaftsEnabled = true;
+$cloud_scene->metadata->aframePmndrsCloudsQuality = 'ultra';
+$cloud_plan = $plan_resolver->resolve(
+	new VRodos_Compile_Request( 9, 101, [ 101 ], 'single-player', 'desktop', true ),
+	[
+		'project_title' => 'Cloud fixture',
+		'project_type_slug' => 'virtualproduction_games',
+		'valid_scene_ids' => [ 101 ],
+		'scene_title' => [ 'Clouds' ],
+		'scene_json' => [ $cloud_scene ],
+	]
+);
+$cloud_profiles = $cloud_plan->scenes[0]->desktop_profiles['profiles'];
+vrodos_foundation_assert( 'true' === $cloud_profiles['low']['settings']['pmndrsAtmosphereEnabled'], 'Low keeps authored atmosphere enabled' );
+vrodos_foundation_assert( 'performance' === $cloud_profiles['low']['settings']['pmndrsAtmosphereQuality'], 'Low caps atmosphere at Performance quality' );
+vrodos_foundation_assert( 'true' === $cloud_profiles['medium']['settings']['pmndrsAtmosphereEnabled'], 'Medium keeps authored atmosphere enabled' );
+vrodos_foundation_assert( 'balanced' === $cloud_profiles['medium']['settings']['pmndrsAtmosphereQuality'], 'Medium caps atmosphere at Balanced quality' );
+vrodos_foundation_assert( 'true' === $cloud_profiles['low']['settings']['pmndrsCloudsEnabled'], 'Low keeps authored clouds enabled' );
+vrodos_foundation_assert( 'low' === $cloud_profiles['low']['settings']['pmndrsCloudsQuality'], 'Low caps clouds at Low quality' );
+vrodos_foundation_assert( 'false' === $cloud_profiles['low']['settings']['pmndrsCloudsLightShaftsEnabled'], 'Low disables cloud light shafts' );
+vrodos_foundation_assert( 'medium' === $cloud_profiles['medium']['settings']['pmndrsCloudsQuality'], 'Medium caps clouds at Medium quality' );
+vrodos_foundation_assert( 'false' === $cloud_profiles['medium']['settings']['pmndrsCloudsLightShaftsEnabled'], 'Medium disables cloud light shafts' );
+vrodos_foundation_assert( 'true' === $cloud_profiles['high']['settings']['pmndrsCloudsLightShaftsEnabled'], 'High preserves authored cloud light shafts' );
+
+$fixed_scene = json_decode( wp_json_encode( $scene_one ) );
+$fixed_scene->metadata->desktopPerformanceProfiles = (object) [
+	'schemaVersion' => 1,
+	'activeProfile' => 'medium',
+	'autoSelect' => false,
+	'profiles' => (object) [
+		'medium' => (object) [
+			'presetSettings' => (object) [ 'renderQuality' => 'standard' ],
+			'settings' => (object) [ 'renderQuality' => 'performance' ],
+		],
+	],
+];
+$fixed_plan = $plan_resolver->resolve(
+	new VRodos_Compile_Request( 9, 101, [ 101 ], 'single-player', 'desktop', true ),
+	[
+		'project_title' => 'Fixed fixture',
+		'project_type_slug' => 'virtualproduction_games',
+		'valid_scene_ids' => [ 101 ],
+		'scene_title' => [ 'Fixed' ],
+		'scene_json' => [ $fixed_scene ],
+	]
+);
+$fixed_profiles = $fixed_plan->scenes[0]->desktop_profiles;
+vrodos_foundation_assert( 'custom' === $fixed_profiles['buildMode'], 'v1 fixed build migrates to Custom-only mode' );
+vrodos_foundation_assert( 'custom' === $fixed_profiles['defaultProfile'], 'Custom-only build selects the Custom cache identity' );
+vrodos_foundation_assert( 'performance' === $fixed_profiles['profiles']['custom']['settings']['renderQuality'], 'v1 selected tier quality migrates into Custom' );
+vrodos_foundation_assert( isset( $fixed_profiles['profiles']['custom']['chunkIds'] ), 'Custom-only build plans the Custom chunk set' );
+vrodos_foundation_assert( ! isset( $fixed_profiles['profiles']['low']['chunkIds'] ), 'Custom-only build does not plan Low chunks' );
+vrodos_foundation_assert( ! isset( $fixed_profiles['profiles']['medium']['chunkIds'] ), 'Custom-only build does not plan Medium chunks' );
+vrodos_foundation_assert( ! isset( $fixed_profiles['profiles']['high']['chunkIds'] ), 'Custom-only build does not plan High chunks' );
 
 $legacy_diagnostics = [];
 $legacy_settings = $plan_settings->build_settings(

@@ -36,6 +36,8 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private bool $suppress_flat_media_shadow_casting = false;
 	private bool $use_flat_media_materials = false;
 	private string $runtime_profile = 'desktop';
+	private bool $adaptive_desktop_sources = false;
+	private string $desktop_profile_slot = 'high';
 	private int $diagnostic_object_count = 0;
 	private int $diagnostic_collider_count = 0;
 	private int $current_project_id = 0;
@@ -88,9 +90,11 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		);
 	}
 
-	public function configure( string $plugin_path_url, bool $is_hover_enabled ): void {
+	public function configure( string $plugin_path_url, bool $is_hover_enabled, bool $adaptive_desktop_sources = false, string $desktop_profile_slot = 'high' ): void {
 		$this->plugin_path_url = $plugin_path_url;
 		$this->isHoverEnabled = $is_hover_enabled;
+		$this->adaptive_desktop_sources = $adaptive_desktop_sources;
+		$this->desktop_profile_slot = in_array( $desktop_profile_slot, [ 'custom', 'low', 'medium', 'high' ], true ) ? $desktop_profile_slot : 'high';
 	}
 
 	public function reset_compile_diagnostics(): void {
@@ -410,6 +414,13 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	): array {
 		$glb_url      = $this->normalize_url( $glb_url );
 		$asset_dom_id = sanitize_key( $asset_dom_id );
+		$profile_urls = is_object( $obj->desktop_profile_glb_urls ?? null )
+			? get_object_vars( $obj->desktop_profile_glb_urls )
+			: [];
+		if ( $profile_urls && ! $this->adaptive_desktop_sources ) {
+			$glb_url = $this->normalize_url( (string) ( $profile_urls[ $this->desktop_profile_slot ] ?? $profile_urls['high'] ?? reset( $profile_urls ) ) );
+			$profile_urls = [];
+		}
 		if ( '' === $glb_url || '' === $asset_dom_id ) {
 			return [];
 		}
@@ -431,6 +442,19 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$this->apply_gltf_load_plan_attributes( $entity, $load_plan );
 		if ( ! empty( $obj->asset_id ) ) {
 			$entity->setAttribute( 'data-vrodos-asset-id', (string) absint( $obj->asset_id ) );
+		}
+		if ( $profile_urls ) {
+			foreach ( [ 'low', 'medium', 'high' ] as $slot ) {
+				$url = $this->normalize_url( (string) ( $profile_urls[ $slot ] ?? '' ) );
+				if ( '' === $url ) {
+					continue;
+				}
+				$entity->setAttribute( 'data-vrodos-profile-gltf-' . $slot, $url );
+				$this->track_runtime_asset( $asset_type . '-' . $slot, $url, $context . ':' . $slot );
+			}
+			$entity->setAttribute( 'data-vrodos-profile-gltf', 'true' );
+			$entity->setAttribute( 'data-vrodos-lazy-state', self::GLTF_LOAD_PHASE_LAZY === $load_plan['phase'] ? 'queued' : 'critical' );
+			return $load_plan;
 		}
 
 		if ( self::GLTF_LOAD_PHASE_CRITICAL === $load_plan['phase'] && $assets instanceof DOMElement ) {
@@ -1221,10 +1245,19 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		return [
 			'url'        => $source_url,
 			'derivative' => null,
+			'profiles'   => is_object( $obj->desktop_profile_glb_urls ?? null ) ? get_object_vars( $obj->desktop_profile_glb_urls ) : [],
 		];
 	}
 
 	private function track_gltf_derivative_usage( array $resolution, $obj, string $context ): void {
+		if ( ! empty( $resolution['profiles'] ) ) {
+			$this->diagnostic_notes[] = sprintf(
+				'Using adaptive desktop GLB derivatives for asset %d in %s.',
+				! empty( $obj->asset_id ) ? absint( $obj->asset_id ) : 0,
+				$context
+			);
+			return;
+		}
 		if ( empty( $resolution['derivative'] ) || ! is_array( $resolution['derivative'] ) ) {
 			return;
 		}

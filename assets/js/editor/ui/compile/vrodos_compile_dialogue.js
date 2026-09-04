@@ -526,6 +526,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
         // Delegate Atmosphere synchronization to module
         VRodosCompileUI.Atmosphere.syncToScene(controls);
+        if (VRODOS.ui.desktopPerformanceProfiles && typeof VRODOS.ui.desktopPerformanceProfiles.captureActive === 'function') {
+            VRODOS.ui.desktopPerformanceProfiles.captureActive();
+        }
     }
 
     window.vrodosApplyCompileDialogSettingsToScene = applyCompileDialogSettingsToScene;

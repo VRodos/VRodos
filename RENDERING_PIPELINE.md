@@ -18,6 +18,21 @@ The compiled `scene-settings` attribute remains the compatibility data contract.
 
 `scene-settings` still owns schema parsing, compatibility helpers, and existing public methods used by those components.
 
+### Desktop Custom and adaptive performance slots
+
+The Custom tab owns canonical shared artistic intent and the exact fixed-build quality. Adaptive desktop Master clients have three reusable runtime slots: Low, Medium, and High. High begins with authored settings and remains the maximum. Low and Medium are caps, so they never enable a feature that Custom/High disables. Clouds remain available at lower technical quality when authored on: Low uses Low clouds without shafts, Medium uses Medium clouds without shafts, and both stay off when authored clouds are off.
+
+| Slot | Render/assets | Expensive rendering |
+| --- | --- | --- |
+| Custom | Authored render settings, DPR ≤1.5, original textures and geometry, safe Draco | Exact authored fixed-build quality; no hardware selection |
+| Low | `performance`, 1.65 MP / DPR 0.75–0.9, 1024px KTX2, 96 MiB texture target, 50% geometry | Shadows/AA/AO/contact off; PMNDRS adapter only when required for authored Low clouds; no shafts |
+| Medium | `standard`, 3.7 MP / DPR ≤1, 2048px KTX2, 192 MiB target, 80% geometry | Static Medium shadows, Off or SMAA Low/Medium, Soft AO/contact, lightweight PMNDRS; no bloom/SSR/TAA/flare/noise/chromatic aberration or shafts |
+| High | `high`, DPR ≤1.5, authored texture resolution/encoding, 100% geometry | Authored settings up to the runtime maximum |
+
+Editing a tier-controlled field changes only that slot from `Default` to `Modified`; artistic/shared fields do not. Publication validates Low ≤ Medium ≤ High for performance-sensitive settings. Collision/navigation assets and skinned or morph-target GLBs are never simplified.
+
+With `Adaptive Low/Medium/High` selected at build time, the publication contains all three tier manifests and derivative families. `vrodos_hardware_capabilities.js` runs before A-Frame, performs a sub-500 ms WebGL2 probe, applies query/saved override precedence, and chooses one tier before heavy scripts or GLBs load. `Custom only` publishes one `desktop-custom` derivative and directly loads its chunks without the hardware selector, adaptive query overrides, recommendations, or downgrade. The settled 3-second + 8-second FPS sample may auto-downgrade an adaptive Auto selection once per tab, while explicit overrides suppress that reload. Runtime diagnostics expose the active slot, Default/Modified state, selection source/reason, benchmark, estimated texture memory, loaded chunk IDs, recommendation, and downgrade state.
+
 Presentation mode is part of the rendering contract:
 
 - Inline desktop and desktop fullscreen use the same eligible post-FX path.
@@ -41,6 +56,7 @@ Presentation mode is part of the rendering contract:
 | `assets/js/runtime/master/components/vrodos_scene_settings.component.js` | A-Frame schema, lifecycle, settings getters, engine dispatcher |
 | `assets/js/runtime/master/vrodos_runtime_profile_policy.js` | Pure runtime profile, headset post-FX, capability, HDR fallback, and render-budget default policy |
 | `assets/js/runtime/master/vrodos_runtime_render_policy.js` | Pure render-quality, headset shadow-cap, AA, contact-shadow, and VR budget override policy |
+| `assets/js/runtime/master/vrodos_hardware_capabilities.js` | Pre-A-Frame desktop hardware probe, override precedence, and profile selection |
 | `assets/js/runtime/master/components/vrodos_runtime_pipeline.component.js` | Focused A-Frame components/systems for render profile, post-FX routing, atmosphere, and reflections |
 | `assets/js/runtime/master/components/vrodos_navigation.component.js` | Compiled-scene walk/fly navigation, walkable-surface ground sampling, static player collision, wall sliding, and nav diagnostics |
 | `assets/js/runtime/master/vrodos_master_rendering.js` | HDR loader and shared material/runtime helpers |
@@ -53,6 +69,7 @@ Presentation mode is part of the rendering contract:
 | `assets/js/runtime/master/lib/vrodos-runtime-aframe-components.bundle.js` | Generated compiled-scene master A-Frame component bundle |
 | `assets/js/runtime/master/lib/vrodos-collision-bvh.bundle.js` | Bundled `three-mesh-bvh` helpers exposed as `window.VRODOS_COLLISION_BVH` for static player/world collision acceleration |
 | `assets/runtime-build-manifest.json` | Generated runtime chunk manifest consumed by the compiler script planner |
+| `assets/desktop-performance-profiles.json` | Schema v2 Custom/adaptive build contract, bounded Low/Medium/High controls, asset budgets, and selection thresholds |
 
 ### Compiler and build files
 

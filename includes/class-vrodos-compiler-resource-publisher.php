@@ -13,6 +13,8 @@ final class VRodos_Compiler_Resource_Publisher {
 	private array $media = [];
 	private array $created_files = [];
 	private string $runtime_mode = '';
+	private bool $desktop_profiles_enabled = false;
+	private array $desktop_profile_slots = [];
 	private VRodos_Runtime_URL_Resolver $url_resolver;
 	/** @var resource|null */
 	private $lock_handle = null;
@@ -26,9 +28,13 @@ final class VRodos_Compiler_Resource_Publisher {
 		$this->media      = [];
 		$this->created_files = [];
 		$this->runtime_mode = $plan->request->runtime_mode;
+		$this->desktop_profiles_enabled = 'desktop' === $plan->request->vr_runtime_profile;
 		$this->acquire_lock();
 		try {
 			foreach ( $plan->scenes as $scene ) {
+				$this->desktop_profile_slots = 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'adaptive' )
+					? [ 'low', 'medium', 'high' ]
+					: [ 'custom' ];
 				$this->hydrate_value( $scene->scene_json );
 				$background_id = absint( get_post_meta( $scene->scene_id, 'vrodos_scene_bg_image', true ) );
 				if ( $background_id && isset( $scene->scene_json->metadata ) && is_object( $scene->scene_json->metadata ) ) {
@@ -150,6 +156,21 @@ final class VRodos_Compiler_Resource_Publisher {
 				$meta = get_post_thumbnail_id( $asset_id );
 			}
 			if ( 'glb_path' === $property ) {
+				if ( $this->desktop_profiles_enabled ) {
+					$profile_urls = [];
+					foreach ( $this->desktop_profile_slots as $slot ) {
+						$path = VRodos_Asset_Optimization_Manager::desktop_profile_derivative_path( $asset_id, $slot );
+						if ( '' === $path ) {
+							throw new RuntimeException( sprintf( '[VRodos] Asset #%d %s desktop derivative is not ready.', $asset_id, ucfirst( $slot ) ) );
+						}
+						$profile_urls[ $slot ] = $this->publish_file( $path, 'asset-' . $asset_id . '-desktop-' . $slot );
+					}
+					if ( count( $profile_urls ) > 1 ) {
+						$object->desktop_profile_glb_urls = (object) $profile_urls;
+					}
+					$object->{$property} = (string) reset( $profile_urls );
+					continue;
+				}
 				$derivative = $this->selected_derivative_path( $asset_id );
 				if ( '' !== $derivative ) {
 					$object->{$property} = $this->publish_file( $derivative, 'asset-' . $asset_id . '-derivative' );

@@ -64,6 +64,11 @@ function createHarness() {
     context.globalThis = context;
     vm.createContext(context);
     vm.runInContext(
+        readFileSync(resolve(root, "assets/js/runtime/master/vrodos_hardware_capabilities.js"), "utf8"),
+        context,
+        { filename: "vrodos_hardware_capabilities.js" }
+    );
+    vm.runInContext(
         readFileSync(resolve(root, "assets/js/runtime/master/vrodos_hardware_diagnostics.js"), "utf8"),
         context,
         { filename: "vrodos_hardware_diagnostics.js" }
@@ -137,7 +142,7 @@ const classificationCases = [
     ["NVIDIA Corporation", "ANGLE (NVIDIA GeForce RTX 4090)", "Win32", "discrete-likely", "high"],
     ["Intel", "Intel(R) UHD Graphics 630", "Win32", "integrated-likely", "medium"],
     ["Intel", "Intel(R) Iris(R) Xe Graphics", "Win32", "integrated-likely", "medium"],
-    ["Intel", "Intel Arc A770", "Win32", "unknown", "low"],
+    ["Intel", "Intel Arc A770", "Win32", "discrete-likely", "medium"],
     ["AMD", "AMD Radeon(TM) Graphics", "Win32", "unknown", "low"],
     ["Apple Inc.", "Apple M3 Pro", "MacIntel", "unified", "high"],
     ["Google Inc.", "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device))", "Win32", "software", "high"],

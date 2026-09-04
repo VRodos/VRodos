@@ -10,6 +10,7 @@
     VRODOS.config.SCENE_SETTINGS_SCHEMA = {
         fogtype: { type: 'string', default: 'none', envirKey: 'fogtype' },
         aframePostFXVignetteEnabled: { type: 'boolean', default: false, envirKey: 'aframePostFXVignetteEnabled' },
+        desktopPerformanceProfiles: { type: 'object', default: null, envirKey: 'desktopPerformanceProfiles' },
     };
 
     Object.entries(contractSettings).forEach(([contractKey, setting]) => {

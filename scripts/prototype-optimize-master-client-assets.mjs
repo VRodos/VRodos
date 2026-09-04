@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import sharp from 'sharp';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,6 +36,8 @@ function parseArgs(argv) {
         limit: 3,
         include: '',
         gltfTransform: '',
+        protectGeometry: false,
+        textureMaxSize: 0,
         dryRun: false,
         json: false
     };
@@ -88,6 +91,12 @@ function parseArgs(argv) {
             case '--gltf-transform':
                 options.gltfTransform = nextValue() || '';
                 break;
+            case '--protect-geometry':
+                options.protectGeometry = true;
+                break;
+            case '--texture-max-size':
+                options.textureMaxSize = Math.max(0, Math.floor(nextNumber(0)));
+                break;
             case '--dry-run':
                 options.dryRun = true;
                 break;
@@ -130,7 +139,9 @@ Options:
   --source PATH           Optimize one local GLB instead of selecting assets from an audit.
   --source-url URL        Source URL metadata to record with --source.
   --output-file PATH      Exact derivative GLB path for --source mode.
-  --profile NAME          One of safe-draco, safe-meshopt, editor-preview. Default: safe-draco.
+  --profile NAME          safe-draco, safe-meshopt, editor-preview, desktop-custom, desktop-low, desktop-medium, or desktop-high.
+  --protect-geometry      Skip weld/simplify for collision or navigation geometry.
+  --texture-max-size N    Override the desktop profile texture cap in pixels.
   --limit N               Number of top GLBs to process. Default: 3.
   --include REGEX         Only process assets whose URL or filename matches.
   --gltf-transform PATH   Optional glTF Transform CLI executable.
@@ -183,7 +194,7 @@ function slugify(value) {
         .slice(0, 90) || 'asset';
 }
 
-function parseGlbJson(buffer, filePath) {
+function parseGlb(buffer, filePath) {
     if (buffer.length < 20 || buffer.toString('utf8', 0, 4) !== GLB_MAGIC) {
         throw new Error(`${filePath} is not a GLB file.`);
     }
@@ -195,6 +206,8 @@ function parseGlbJson(buffer, filePath) {
 
     const declaredLength = buffer.readUInt32LE(8);
     let offset = 12;
+    let gltf = null;
+    let binary = null;
     while (offset + 8 <= buffer.length && offset < declaredLength) {
         const chunkLength = buffer.readUInt32LE(offset);
         const chunkType = buffer.readUInt32LE(offset + 4);
@@ -204,12 +217,14 @@ function parseGlbJson(buffer, filePath) {
             throw new Error(`${filePath} has a malformed GLB chunk.`);
         }
         if (chunkType === GLB_JSON_CHUNK) {
-            return JSON.parse(buffer.toString('utf8', chunkStart, chunkEnd).trim());
+            gltf = JSON.parse(buffer.toString('utf8', chunkStart, chunkEnd).trim());
+        } else if (chunkType === 0x004e4942) {
+            binary = buffer.subarray(chunkStart, chunkEnd);
         }
         offset = chunkEnd;
     }
-
-    throw new Error(`${filePath} does not contain a JSON chunk.`);
+    if (!gltf) throw new Error(`${filePath} does not contain a JSON chunk.`);
+    return { gltf, binary };
 }
 
 function primitiveSubmittedCount(gltf, primitive) {
@@ -272,12 +287,14 @@ function analyzeGltf(gltf) {
     const textures = Array.isArray(gltf.textures) ? gltf.textures : [];
     const images = Array.isArray(gltf.images) ? gltf.images : [];
     const animations = Array.isArray(gltf.animations) ? gltf.animations : [];
+    const skins = Array.isArray(gltf.skins) ? gltf.skins : [];
     const extensions = extensionSet(gltf);
     const usedMaterials = new Set();
     let primitiveCount = 0;
     let vertexCount = 0;
     let submittedVertexCount = 0;
     let estimatedTriangles = 0;
+    let morphTargetPrimitiveCount = 0;
 
     meshes.forEach((mesh) => {
         (mesh.primitives || []).forEach((primitive) => {
@@ -290,6 +307,7 @@ function analyzeGltf(gltf) {
             submittedVertexCount += submitted;
             vertexCount += primitiveVertexCount(gltf, primitive);
             estimatedTriangles += estimatePrimitiveTriangles(mode, submitted);
+            if (Array.isArray(primitive.targets) && primitive.targets.length) morphTargetPrimitiveCount += 1;
         });
     });
 
@@ -310,6 +328,11 @@ function analyzeGltf(gltf) {
             vertexCount,
             submittedVertexCount
         },
+        protectedGeometry: {
+            hasSkins: skins.length > 0,
+            hasMorphTargets: morphTargetPrimitiveCount > 0,
+            morphTargetPrimitiveCount
+        },
         extensions: {
             used: Array.from(extensions).sort(),
             hasMeshopt: extensions.has('EXT_meshopt_compression'),
@@ -321,7 +344,49 @@ function analyzeGltf(gltf) {
 
 async function analyzeGlbFile(filePath) {
     const buffer = await readFile(filePath);
-    return analyzeGltf(parseGlbJson(buffer, filePath));
+    const parsed = parseGlb(buffer, filePath);
+    const analysis = analyzeGltf(parsed.gltf);
+    analysis.textureMemory = await estimateTextureMemory(parsed.gltf, parsed.binary);
+    return analysis;
+}
+
+async function estimateTextureMemory(gltf, binary) {
+    const images = Array.isArray(gltf.images) ? gltf.images : [];
+    const bufferViews = Array.isArray(gltf.bufferViews) ? gltf.bufferViews : [];
+    let estimatedBytes = 0;
+    let accountedImages = 0;
+    for (const image of images) {
+        const view = Number.isInteger(image.bufferView) ? bufferViews[image.bufferView] : null;
+        if (!view || !binary) continue;
+        const start = Number(view.byteOffset || 0);
+        const bytes = binary.subarray(start, start + Number(view.byteLength || 0));
+        let width = 0;
+        let height = 0;
+        let gpuBytesPerPixel = 4;
+        if (image.mimeType === 'image/ktx2' && bytes.length >= 44) {
+            width = bytes.readUInt32LE(20);
+            height = bytes.readUInt32LE(24);
+            gpuBytesPerPixel = 1;
+        } else {
+            try {
+                const metadata = await sharp(bytes).metadata();
+                width = Number(metadata.width || 0);
+                height = Number(metadata.height || 0);
+            } catch (error) {
+                continue;
+            }
+        }
+        if (width > 0 && height > 0) {
+            estimatedBytes += Math.ceil(width * height * gpuBytesPerPixel * 4 / 3);
+            accountedImages += 1;
+        }
+    }
+    return {
+        estimatedMipmappedBytes: estimatedBytes,
+        estimatedMipmappedMiB: Number((estimatedBytes / (1024 * 1024)).toFixed(2)),
+        accountedImages,
+        unaccountedImages: Math.max(0, images.length - accountedImages)
+    };
 }
 
 function scoreAsset(asset) {
@@ -426,13 +491,25 @@ async function runCommand(runner, args, timeoutMs = 10 * 60 * 1000) {
     });
 }
 
-function profileSteps(profile, inputPath, outputPath, workDir) {
+function profileSteps(profile, inputPath, outputPath, workDir, profileOptions = {}) {
     const step1 = path.join(workDir, '01-prune.glb');
     const step2 = path.join(workDir, '02-dedup.glb');
     const step3 = path.join(workDir, '03-weld.glb');
     const step4 = path.join(workDir, '04-simplify.glb');
+    const step5 = path.join(workDir, '05-png.glb');
+    const step6 = path.join(workDir, '06-resize.glb');
+    const step7 = path.join(workDir, '07-uastc.glb');
+    const step8 = path.join(workDir, '08-etc1s.glb');
 
     if (profile === 'safe-draco') {
+        return [
+            ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
+            ['dedup', step1, step2],
+            ['draco', step2, outputPath, '--method', 'edgebreaker']
+        ];
+    }
+
+    if (profile === 'desktop-custom' || profile === 'desktop-high') {
         return [
             ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
             ['dedup', step1, step2],
@@ -456,6 +533,29 @@ function profileSteps(profile, inputPath, outputPath, workDir) {
             ['simplify', step3, step4, '--ratio', '0.35', '--error', '0.01', '--lock-border', 'true'],
             ['resize', step4, outputPath, '--width', '1024', '--height', '1024']
         ];
+    }
+
+    if (profile === 'desktop-low' || profile === 'desktop-medium') {
+        const low = profile === 'desktop-low';
+        const ratio = low ? '0.5' : '0.8';
+        const error = low ? '0.01' : '0.005';
+        const textureMaxSize = String(profileOptions.textureMaxSize || (low ? 1024 : 2048));
+        const steps = [
+            ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
+            ['dedup', step1, step2]
+        ];
+        let geometryOutput = step2;
+        if (!profileOptions.protectGeometry) {
+            steps.push(['weld', step2, step3]);
+            steps.push(['simplify', step3, step4, '--ratio', ratio, '--error', error, '--lock-border', 'true']);
+            geometryOutput = step4;
+        }
+        steps.push(['png', geometryOutput, step5, '--formats', '*']);
+        steps.push(['resize', step5, step6, '--width', textureMaxSize, '--height', textureMaxSize]);
+        steps.push(['uastc', step6, step7, '--slots', '{normalTexture,occlusionTexture,metallicRoughnessTexture,clearcoatTexture,clearcoatRoughnessTexture,clearcoatNormalTexture,transmissionTexture,thicknessTexture,specularTexture,iridescenceTexture,iridescenceThicknessTexture,anisotropyTexture}', '--level', '2', '--zstd', '18']);
+        steps.push(['etc1s', step7, step8, '--slots', '{baseColorTexture,emissiveTexture,sheenColorTexture,specularColorTexture}', '--quality', low ? '96' : '128']);
+        steps.push(['draco', step8, outputPath, '--method', 'edgebreaker']);
+        return steps;
     }
 
     throw new Error(`Unknown optimization profile "${profile}".`);
@@ -508,6 +608,15 @@ async function optimizeAsset(asset, index, options, runner) {
         runtimeNotes: []
     };
 
+    const sourceAnalysis = record.original;
+    const protectedByContent = Boolean(sourceAnalysis?.protectedGeometry?.hasSkins || sourceAnalysis?.protectedGeometry?.hasMorphTargets);
+    const protectGeometry = Boolean(options.protectGeometry || protectedByContent);
+    record.profileOptions = {
+        protectGeometry,
+        protectedByContent,
+        textureMaxSize: options.textureMaxSize || (options.profile === 'desktop-low' ? 1024 : (options.profile === 'desktop-medium' ? 2048 : null))
+    };
+
     if (options.profile === 'safe-meshopt') {
         record.runtimeNotes.push('Requires EXT_meshopt_compression decoder wiring before compile-time substitution.');
     }
@@ -518,7 +627,12 @@ async function optimizeAsset(asset, index, options, runner) {
         record.runtimeNotes.push('Editor-only preview derivative. Do not enable for compiled-scene substitution.');
         record.runtimeNotes.push('Uses geometry simplification and texture resize without Draco compression to avoid editor decode stalls.');
     }
-    record.runtimeNotes.push('Derivative is for prototype review only; source upload is untouched.');
+    if (options.profile.startsWith('desktop-')) {
+        record.runtimeNotes.push('Compiled desktop performance profile derivative; source upload is untouched.');
+        if (protectGeometry) record.runtimeNotes.push('Geometry simplification was skipped to protect collision/navigation, skinning, or morph targets.');
+    } else {
+        record.runtimeNotes.push('Derivative is for prototype review only; source upload is untouched.');
+    }
 
     if (options.dryRun) {
         return record;
@@ -527,14 +641,15 @@ async function optimizeAsset(asset, index, options, runner) {
     await mkdir(path.dirname(derivativePath), { recursive: true });
     await mkdir(workDir, { recursive: true });
     try {
-        const steps = profileSteps(options.profile, sourcePath, derivativePath, workDir);
+        const steps = profileSteps(options.profile, sourcePath, derivativePath, workDir, record.profileOptions);
         const stepTimeoutMs = options.profile === 'editor-preview' ? 30 * 60 * 1000 : 10 * 60 * 1000;
         for (const args of steps) {
             const command = await runCommand(runner, args, stepTimeoutMs);
             record.commands.push(command);
             if (command.code !== 0) {
                 record.status = 'error';
-                record.error = `${args[0]} failed with exit code ${command.code}${command.signal ? ` (${command.signal})` : ''}`;
+                const details = String(command.stderr || command.stdout || '').trim().split(/\r?\n/).slice(-3).join(' ');
+                record.error = `${args[0]} failed with exit code ${command.code}${command.signal ? ` (${command.signal})` : ''}${details ? `: ${details}` : ''}`;
                 return record;
             }
         }
@@ -545,6 +660,9 @@ async function optimizeAsset(asset, index, options, runner) {
         record.reductionBytes = delta.bytes;
         record.reductionPercent = delta.percent;
         record.derivative = await analyzeGlbFile(derivativePath);
+        const hasSourceTextures = Number(record.original?.counts?.images || 0) > 0;
+        record.runtimeSubstitutionReady = record.derivative.extensions.hasDraco &&
+            (!options.profile.startsWith('desktop-') || ['desktop-custom', 'desktop-high'].includes(options.profile) || !hasSourceTextures || record.derivative.extensions.hasKtx2);
         record.status = 'done';
 
         return record;

@@ -108,6 +108,7 @@ final readonly class VRodos_Scene_Compile_Plan {
 	public array $capabilities;
 	public array $chunk_ids;
 	public array $diagnostics;
+	public array $desktop_profiles;
 
 	public function __construct(
 		public int $scene_id,
@@ -117,11 +118,13 @@ final readonly class VRodos_Scene_Compile_Plan {
 		array $capabilities,
 		array $chunk_ids,
 		array $diagnostics,
-		public bool $hover_enabled
+		public bool $hover_enabled,
+		array $desktop_profiles = []
 	) {
 		$this->capabilities = array_values( array_unique( $capabilities ) );
 		$this->chunk_ids    = array_values( array_unique( $chunk_ids ) );
 		$this->diagnostics  = array_values( array_unique( $diagnostics ) );
+		$this->desktop_profiles = $desktop_profiles;
 	}
 }
 

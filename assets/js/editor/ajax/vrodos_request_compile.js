@@ -54,7 +54,9 @@ VRODOS.utils = VRODOS.utils || {};
 			}
 			if (!response.ok) {
 				const errorData = payload && payload.data;
-				throw new Error((errorData && errorData.message) || errorData || `Compile request failed with HTTP ${response.status}`);
+				const compileError = new Error((errorData && errorData.message) || errorData || `Compile request failed with HTTP ${response.status}`);
+				compileError.compileData = errorData && typeof errorData === 'object' ? errorData : {};
+				throw compileError;
 			}
 			return payload;
 		});
@@ -76,8 +78,9 @@ VRODOS.utils = VRODOS.utils || {};
 			VRODOS.editor.envir.scene;
 	}
 
-	function runCompileRequest(projectId, sceneId, resolvedShowPawnPositions) {
-		dialogState.showStartedState();
+	function runCompileRequest(projectId, sceneId, resolvedShowPawnPositions, attempt) {
+		const requestAttempt = Number(attempt || 0);
+		if (requestAttempt === 0) dialogState.showStartedState();
 		const request = buildCompileRequest(projectId, sceneId, resolvedShowPawnPositions);
 
 		fetch(request.url, {
@@ -95,7 +98,20 @@ VRODOS.utils = VRODOS.utils || {};
 				dialogState.showPrimaryExperienceLink(primaryExperienceUrl);
 			})
 			.catch((err) => {
+				const pending = err && err.compileData && err.compileData.pending === true;
+				if (pending && requestAttempt < 200) {
+					const status = document.getElementById('constantUpdateUser');
+					if (status) status.textContent = err.message;
+					const retryAfterMs = Math.max(1000, Math.min(10000, Number(err.compileData.retryAfterMs) || 3000));
+					window.setTimeout(
+						() => runCompileRequest(projectId, sceneId, resolvedShowPawnPositions, requestAttempt + 1),
+						retryAfterMs
+					);
+					return;
+				}
 				console.log(`Ajax Aframe ERROR 189: ${err}`);
+				const status = document.getElementById('constantUpdateUser');
+				if (status && err && err.message) status.textContent = err.message;
 				dialogState.finishBuildState();
 			});
 	}

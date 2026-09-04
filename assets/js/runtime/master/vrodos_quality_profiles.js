@@ -161,13 +161,20 @@
     function applyDesktopRenderPixelBudget(component, renderer, targetPixelRatio, options) {
         const cssSize = getRendererCssSize(renderer);
         const overrideBudget = readDprPixelBudgetOverride();
+        const activeProfile = window.VRODOS_ACTIVE_DESKTOP_PROFILE || null;
+        const activeBudget = activeProfile && activeProfile.renderBudget ? activeProfile.renderBudget : null;
         const isImmersiveXr = Boolean(
             component &&
             typeof component.isVrPresentationActive === 'function' &&
             component.isVrPresentationActive()
         );
-        const shouldApplyBudget = !isImmersiveXr && (options.isPerformanceQuality || overrideBudget !== null);
-        const pixelBudget = overrideBudget !== null ? overrideBudget : PERFORMANCE_DESKTOP_RENDER_PIXEL_BUDGET;
+        const profilePixelBudget = activeBudget && activeBudget.pixelBudget !== null && Number.isFinite(Number(activeBudget.pixelBudget))
+            ? Number(activeBudget.pixelBudget)
+            : null;
+        const shouldApplyBudget = !isImmersiveXr && (options.isPerformanceQuality || profilePixelBudget !== null || overrideBudget !== null);
+        const pixelBudget = overrideBudget !== null
+            ? overrideBudget
+            : (profilePixelBudget !== null ? profilePixelBudget : PERFORMANCE_DESKTOP_RENDER_PIXEL_BUDGET);
         const originalPixelRatio = targetPixelRatio;
         let budgetPixelRatio = null;
 
@@ -193,7 +200,7 @@
                 pixelRatio: targetPixelRatio,
                 estimatedRenderPixels: Math.round(cssSize.width * cssSize.height * targetPixelRatio * targetPixelRatio),
                 applied: Boolean(shouldApplyBudget && targetPixelRatio < originalPixelRatio - 0.0001),
-                source: shouldApplyBudget ? (overrideBudget !== null ? 'query' : 'performance-profile') : 'none',
+                source: shouldApplyBudget ? (overrideBudget !== null ? 'query' : (activeProfile ? `desktop-${activeProfile.id}` : 'performance-profile')) : 'none',
                 immersiveXr: isImmersiveXr
             };
         }
@@ -8105,6 +8112,9 @@
         const renderQuality = typeof this.getRenderQualityLevel === 'function' ? this.getRenderQualityLevel() : (this.data.renderQuality === 'high' ? 'high' : 'standard');
         const isHighQuality = renderQuality === 'high';
         const isPerformanceQuality = renderQuality === 'performance';
+        const activeRenderBudget = window.VRODOS_ACTIVE_DESKTOP_PROFILE && window.VRODOS_ACTIVE_DESKTOP_PROFILE.renderBudget
+            ? window.VRODOS_ACTIVE_DESKTOP_PROFILE.renderBudget
+            : null;
         let targetPixelRatio = Math.min(window.devicePixelRatio || 1, isHighQuality ? 2 : (isPerformanceQuality ? 0.9 : 1));
         if (isHighQuality) {
             targetPixelRatio = Math.max(targetPixelRatio, this.getAAQualityPixelRatioTarget());
@@ -8115,8 +8125,8 @@
         targetPixelRatio = applyDesktopRenderPixelBudget(this, renderer, targetPixelRatio, {
             renderQuality,
             isPerformanceQuality,
-            minPixelRatio: isPerformanceQuality ? 0.75 : 1,
-            maxPixelRatio: isHighQuality ? 1.5 : (isPerformanceQuality ? 0.9 : 1)
+            minPixelRatio: activeRenderBudget ? Number(activeRenderBudget.minPixelRatio || 0.75) : (isPerformanceQuality ? 0.75 : 1),
+            maxPixelRatio: activeRenderBudget ? Number(activeRenderBudget.maxPixelRatio || 1.5) : (isHighQuality ? 1.5 : (isPerformanceQuality ? 0.9 : 1))
         });
         const isXrPresenting = typeof this.isImmersiveXrActive === 'function'
             ? this.isImmersiveXrActive()

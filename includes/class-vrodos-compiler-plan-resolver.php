@@ -8,6 +8,7 @@ require_once __DIR__ . '/class-vrodos-compiler-types.php';
 require_once __DIR__ . '/class-vrodos-compiler-scene-settings.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
 require_once __DIR__ . '/class-vrodos-compiler-entity-policy.php';
+require_once __DIR__ . '/class-vrodos-desktop-performance-profiles.php';
 
 /**
  * Converts repository data plus one project target into an effective compile plan.
@@ -58,8 +59,34 @@ final class VRodos_Compiler_Plan_Resolver {
 			$settings['runtimeMode']     = $request->runtime_mode;
 			$settings['vrRuntimeProfile'] = $request->vr_runtime_profile;
 
-			$capabilities = $this->script_planner->capabilities_for_resolved_scene( $normalized_scene, $settings );
-			$chunk_ids    = $this->script_planner->script_ids_for_capabilities( $capabilities );
+			$desktop_profiles = [];
+			if ( 'desktop' === $request->vr_runtime_profile ) {
+				$desktop_profiles = VRodos_Desktop_Performance_Profiles::resolve( $metadata, $settings );
+				$profile_errors = VRodos_Desktop_Performance_Profiles::validate_monotonic( $desktop_profiles );
+				if ( $profile_errors ) {
+					throw new RuntimeException( implode( ' ', $profile_errors ), 409 );
+				}
+				$capabilities = [];
+				$chunk_ids = [];
+				$compiled_profile_ids = 'adaptive' === (string) ( $desktop_profiles['buildMode'] ?? 'adaptive' )
+					? [ 'low', 'medium', 'high' ]
+					: [ 'custom' ];
+				foreach ( $compiled_profile_ids as $profile_id ) {
+					$desktop_profile = &$desktop_profiles['profiles'][ $profile_id ];
+					$profile_capabilities = $this->script_planner->capabilities_for_resolved_scene( $normalized_scene, $desktop_profile['settings'] );
+					$profile_chunk_ids = $this->script_planner->script_ids_for_capabilities( $profile_capabilities );
+					$desktop_profile['capabilities'] = $profile_capabilities;
+					$desktop_profile['chunkIds'] = $profile_chunk_ids;
+					$capabilities = array_merge( $capabilities, $profile_capabilities );
+					$chunk_ids = array_merge( $chunk_ids, $profile_chunk_ids );
+				}
+				unset( $desktop_profile );
+				$capabilities = array_values( array_unique( $capabilities ) );
+				$chunk_ids = array_values( array_unique( $chunk_ids ) );
+			} else {
+				$capabilities = $this->script_planner->capabilities_for_resolved_scene( $normalized_scene, $settings );
+				$chunk_ids    = $this->script_planner->script_ids_for_capabilities( $capabilities );
+			}
 			$hover        = VRodos_Runtime_Settings_Contract::normalize_bool( $metadata->aframeHoveringInteractables ?? true, true );
 
 			$scene_plans[] = new VRodos_Scene_Compile_Plan(
@@ -70,7 +97,8 @@ final class VRodos_Compiler_Plan_Resolver {
 				$capabilities,
 				$chunk_ids,
 				$diagnostics,
-				$hover
+				$hover,
+				$desktop_profiles
 			);
 		}
 

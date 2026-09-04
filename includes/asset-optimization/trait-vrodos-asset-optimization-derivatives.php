@@ -61,8 +61,12 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 
 	private static function supported_profiles(): array {
 		return [
-			'safe-draco'   => 'Safe Draco',
-			'safe-meshopt' => 'Safe Meshopt',
+			'safe-draco'    => 'Safe Draco',
+			'safe-meshopt'  => 'Safe Meshopt',
+			'desktop-custom' => 'Desktop Custom',
+			'desktop-low'   => 'Desktop Low',
+			'desktop-medium' => 'Desktop Medium',
+			'desktop-high'  => 'Desktop High',
 		];
 	}
 
@@ -137,7 +141,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		return '';
 	}
 
-	private function generate_derivative( int $asset_id, array $source, string $profile ) {
+	private function generate_derivative( int $asset_id, array $source, string $profile, array $options = [] ) {
 		$paths = $this->build_derivative_paths( $asset_id, $source, $profile );
 
 		if ( ! wp_mkdir_p( $paths['dir'] ) ) {
@@ -168,6 +172,13 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			$profile,
 			'--json',
 		];
+		if ( ! empty( $options['protectGeometry'] ) ) {
+			$args[] = '--protect-geometry';
+		}
+		if ( ! empty( $options['textureMaxSize'] ) ) {
+			$args[] = '--texture-max-size';
+			$args[] = (string) absint( $options['textureMaxSize'] );
+		}
 
 		$command = implode( ' ', array_map( 'escapeshellarg', $args ) ) . ' 2>&1';
 		$output = [];
@@ -192,7 +203,8 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 
 		$record = $manifest['assets'][0];
 		if ( ( $record['status'] ?? '' ) !== 'done' || ! is_file( $paths['file'] ) ) {
-			return new WP_Error( 'vrodos_optimizer_derivative_missing', 'Optimizer did not produce a ready derivative file.' );
+			$message = trim( (string) ( $record['error'] ?? '' ) );
+			return new WP_Error( 'vrodos_optimizer_derivative_missing', $message ?: 'Optimizer did not produce a ready derivative file.' );
 		}
 
 		return [
@@ -200,6 +212,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			'paths'    => $paths,
 			'manifest' => $manifest,
 			'record'   => $record,
+			'options'  => $options,
 		];
 	}
 
@@ -325,6 +338,14 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			'reductionBytes'      => (int) ( $record['reductionBytes'] ?? 0 ),
 			'reductionPercent'    => is_numeric( $record['reductionPercent'] ?? null ) ? (float) $record['reductionPercent'] : 0.0,
 			'extensions'          => $record['derivative']['extensions']['used'] ?? [],
+			'profileOptions'      => array_merge(
+				is_array( $record['profileOptions'] ?? null ) ? $record['profileOptions'] : [],
+				is_array( $result['options'] ?? null ) ? $result['options'] : []
+			),
+			'estimatedTextureMemoryBytes' => (int) ( $record['derivative']['textureMemory']['estimatedMipmappedBytes'] ?? 0 ),
+			'unaccountedTextureImages' => (int) ( $record['derivative']['textureMemory']['unaccountedImages'] ?? 0 ),
+			'textureImageCount'    => (int) ( $record['derivative']['counts']['images'] ?? 0 ),
+			'runtimeSubstitutionReady' => ! empty( $record['runtimeSubstitutionReady'] ),
 			'generatedAt'         => current_time( 'mysql', true ),
 		];
 

@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/class-vrodos-runtime-settings-contract.php';
+require_once __DIR__ . '/class-vrodos-desktop-performance-profiles.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-feature-flags.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-assets.php';
 require_once __DIR__ . '/class-vrodos-compiler-template-renderer.php';
@@ -21,6 +22,7 @@ require_once __DIR__ . '/class-vrodos-compiler-network-runtime-service.php';
 require_once __DIR__ . '/class-vrodos-compiler-target-assembler.php';
 require_once __DIR__ . '/class-vrodos-url-normalizer.php';
 require_once __DIR__ . '/class-vrodos-runtime-url-resolver.php';
+require_once __DIR__ . '/class-vrodos-asset-optimization-manager.php';
 
 class VRodos_Compiler_Manager {
 	private VRodos_URL_Normalizer $url_normalizer;
@@ -80,6 +82,27 @@ class VRodos_Compiler_Manager {
 		$clients_published = false;
 		try {
 			$plan = $this->plan_resolver->resolve( $request, $context );
+			$profile_assets = VRodos_Asset_Optimization_Manager::prepare_desktop_profile_derivatives( $plan );
+			if ( 'pending' === (string) ( $profile_assets['status'] ?? '' ) ) {
+				return new WP_Error(
+					'vrodos_desktop_profiles_pending',
+					(string) ( $profile_assets['message'] ?? 'Preparing desktop performance profile assets.' ),
+					[
+						'status'  => 409,
+						'pending' => true,
+						'ready'   => absint( $profile_assets['ready'] ?? 0 ),
+						'total'   => absint( $profile_assets['total'] ?? 0 ),
+						'retryAfterMs' => 3000,
+					]
+				);
+			}
+			if ( 'failed' === (string) ( $profile_assets['status'] ?? '' ) ) {
+				return new WP_Error(
+					'vrodos_desktop_profiles_failed',
+					(string) ( $profile_assets['message'] ?? 'Desktop performance profile asset preparation failed.' ),
+					[ 'status' => 409 ]
+				);
+			}
 			$this->resource_publisher->prepare_plan( $plan );
 			$this->template_renderer->begin_capture();
 			$render_warnings = [];
