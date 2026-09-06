@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/class-vrodos-runtime-settings-contract.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-feature-flags.php';
+require_once __DIR__ . '/class-vrodos-compiler-build-state.php';
 
 final readonly class VRodos_Compile_Request {
 	public int $project_id;
@@ -15,14 +16,16 @@ final readonly class VRodos_Compile_Request {
 	public string $runtime_mode;
 	public string $vr_runtime_profile;
 	public bool $show_pawn_positions;
+	public string $build_id;
 
-	public function __construct( int $project_id, int $selected_scene_id, array $scene_ids, string $runtime_mode, string $vr_runtime_profile, bool $show_pawn_positions ) {
+	public function __construct( int $project_id, int $selected_scene_id, array $scene_ids, string $runtime_mode, string $vr_runtime_profile, bool $show_pawn_positions, string $build_id = '' ) {
 		$this->project_id          = max( 0, $project_id );
 		$this->selected_scene_id   = max( 0, $selected_scene_id );
 		$this->scene_ids           = array_values( array_unique( array_filter( array_map( 'intval', $scene_ids ), static fn ( int $scene_id ): bool => $scene_id > 0 ) ) );
 		$this->runtime_mode        = VRodos_Compiler_Runtime_Feature_Flags::normalize_runtime_mode_value( $runtime_mode );
 		$this->vr_runtime_profile  = (string) VRodos_Runtime_Settings_Contract::normalize( 'vrRuntimeProfile', $vr_runtime_profile, 'desktop' );
 		$this->show_pawn_positions = $show_pawn_positions;
+		$this->build_id            = VRodos_Compiler_Build_State::normalize_build_id( $build_id );
 	}
 
 	public function show_pawn_positions_attr(): string {

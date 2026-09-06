@@ -264,7 +264,12 @@ VRODOS.ui.compileDialogState = (function(existing) {
         dialog: 'compile-dialog',
         openWebLink: 'openWebLinkhref',
         proceedButton: 'compileProceedBtn',
-        resultMeta: 'compileResultMeta',
+		progressBar: 'compileProgressBar',
+		progressCount: 'compileProgressCount',
+		progressLabel: 'compileProgressLabel',
+		progressPanel: 'compileProgressPanel',
+		resultMeta: 'compileResultMeta',
+		settingsSaveButton: 'compileSaveSettingsBtn',
         saveButton: 'save-scene-button',
         statusRow: 'compileStatusRow',
         topResultLink: 'compileTopResultLink'
@@ -303,12 +308,48 @@ VRODOS.ui.compileDialogState = (function(existing) {
         const cancelButton = getElement('cancelButton');
 
         if (proceedButton) {
-            proceedButton.classList.remove('LinkDisabled');
+			proceedButton.classList.remove('LinkDisabled');
+			proceedButton.disabled = false;
+			proceedButton.innerHTML = '<i data-lucide="hammer" class="tw-w-4 tw-h-4"></i> Build Project';
         }
-        if (cancelButton) {
-            cancelButton.classList.remove('LinkDisabled');
+		if (cancelButton) {
+			cancelButton.classList.remove('LinkDisabled');
+			cancelButton.textContent = 'Cancel';
         }
+		const settingsSaveButton = getElement('settingsSaveButton');
+		if (settingsSaveButton) settingsSaveButton.disabled = false;
+		VRODOS.ui.refreshLucideIcons();
     }
+
+	function setBuildActionsRunning() {
+		const proceedButton = getElement('proceedButton');
+		const cancelButton = getElement('cancelButton');
+		const settingsSaveButton = getElement('settingsSaveButton');
+		if (proceedButton) {
+			proceedButton.disabled = true;
+			proceedButton.innerHTML = '<i data-lucide="loader-circle" class="tw-w-4 tw-h-4 tw-animate-spin"></i> Building…';
+		}
+		if (cancelButton) cancelButton.textContent = 'Cancel build';
+		if (settingsSaveButton) settingsSaveButton.disabled = true;
+		VRODOS.ui.refreshLucideIcons();
+	}
+
+	function showBuildProgress(ready, total, message) {
+		const safeReady = Math.max(0, Number(ready) || 0);
+		const safeTotal = Math.max(0, Number(total) || 0);
+		const percentage = safeTotal > 0 ? Math.min(100, Math.round((safeReady / safeTotal) * 100)) : 0;
+		const panel = getElement('progressPanel');
+		const progressTrack = getElement('progressBar') && getElement('progressBar').parentElement;
+		setDisplay(panel, 'block');
+		setText(getElement('progressLabel'), message || 'Preparing build…');
+		setText(getElement('progressCount'), safeTotal > 0 ? `${safeReady} / ${safeTotal}` : 'Starting…');
+		if (getElement('progressBar')) getElement('progressBar').style.width = `${percentage}%`;
+		if (progressTrack) progressTrack.setAttribute('aria-valuenow', String(percentage));
+	}
+
+	function hideBuildProgress() {
+		setDisplay(getElement('progressPanel'), 'none');
+	}
 
     function resetResultState() {
         const topResultLink = getElement('topResultLink');
@@ -332,7 +373,8 @@ VRODOS.ui.compileDialogState = (function(existing) {
     }
 
     function resetDialogStatusState() {
-        resetResultState();
+		resetResultState();
+		hideBuildProgress();
         setStatusMessage('info', 'Configure your scene quality settings and click "Build" to construct the virtual world.');
     }
 
@@ -355,8 +397,10 @@ VRODOS.ui.compileDialogState = (function(existing) {
             cancelButton.classList.remove('LinkDisabled');
         }
 
-        resetResultState();
-        setStatusMessage('info', 'Please wait while we build your scene');
+		resetResultState();
+		setBuildActionsRunning();
+		setStatusMessage('info', 'Please wait while we build your scene');
+		showBuildProgress(0, 0, 'Starting build…');
     }
 
     function finishBuildState() {
@@ -407,16 +451,18 @@ VRODOS.ui.compileDialogState = (function(existing) {
     }
 
     return Object.assign(existing || {}, {
-        copyPrimaryExperienceUrl,
-        getElement,
+		copyPrimaryExperienceUrl,
+		getElement,
         getPrimaryExperienceUrl,
         finishBuildState,
-        releaseBuildActions,
+		releaseBuildActions,
+		hideBuildProgress,
         resetDialogStatusState,
         resetBuildState,
         resetResultState,
         setStatusMessage,
-        showPrimaryExperienceLink,
+		showPrimaryExperienceLink,
+		showBuildProgress,
         showSaveFailedMessage,
         showSavePendingMessage,
         showStartedState

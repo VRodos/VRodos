@@ -186,9 +186,13 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		exec( $command, $output, $code );
 
 		if ( 0 !== $code ) {
+			$message = trim( implode( "\n", array_slice( $output, -12 ) ) );
+			if ( preg_match( '/(?:node:\s*not found|node.*not recognized)/i', $message ) ) {
+				$message = 'Node.js is not available to the WordPress PHP process. Configure the vrodos_asset_optimizer_node_command filter with the Node executable path.';
+			}
 			return new WP_Error(
 				'vrodos_optimizer_failed',
-				'glTF optimization failed: ' . trim( implode( "\n", array_slice( $output, -12 ) ) )
+				'glTF optimization failed: ' . $message
 			);
 		}
 

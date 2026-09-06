@@ -73,7 +73,8 @@ VRODOS.api = VRODOS.api || {};
                 VRODOS.ui.syncCompileDialogFromSceneSettings();
             }
 
-            dialogState.resetDialogStatusState();
+			const restored = typeof VRODOS.api.restoreCompileUi === 'function' && VRODOS.api.restoreCompileUi();
+			if (!restored) dialogState.resetDialogStatusState();
             showDialog('compile-dialog');
             pauseRenderingForCompileDialog();
         });
@@ -96,26 +97,9 @@ VRODOS.api = VRODOS.api || {};
                 if (status) status.textContent = `Build blocked: ${profileErrors[0]}`;
                 return;
             }
-            dialogState.resetBuildState();
-
-            dialogState.showSavePendingMessage();
-
-            const waitForLatestSave = typeof VRODOS.api.waitForLatestSceneSave === 'function'
-                ? VRODOS.api.waitForLatestSceneSave()
-                : Promise.resolve();
-
-            waitForLatestSave
-                .then(() => (typeof VRODOS.api.saveChanges === 'function') ? VRODOS.api.saveChanges({ force: true }) : Promise.resolve())
-                .then(() => {
-                    if (typeof VRODOS.api.compileScene === 'function') {
-                        VRODOS.api.compileScene(VRODOS.editor.showPawnPositions, { skipSave: true });
-                    }
-                })
-                .catch((error) => {
-                    dialogState.finishBuildState();
-                    dialogState.showSaveFailedMessage();
-                    console.warn('VRodos: compile blocked because scene save failed.', error);
-                });
+			if (typeof VRODOS.api.compileScene === 'function') {
+				VRODOS.api.compileScene(VRODOS.editor.showPawnPositions);
+			}
         });
     }
 
@@ -168,11 +152,15 @@ VRODOS.api = VRODOS.api || {};
     }
 
     function bindCompileCancelControl() {
-        const cancelButton = document.getElementById('compileCancelBtn');
+		const cancelButton = document.getElementById('compileCancelBtn');
         if (!cancelButton) return;
 
-        cancelButton.addEventListener('click', () => {
-            resumeRenderingAfterCompileDialog();
+		cancelButton.addEventListener('click', () => {
+			if (typeof VRODOS.api.isCompileRunning === 'function' && VRODOS.api.isCompileRunning()) {
+				VRODOS.api.cancelCompile();
+				return;
+			}
+			resumeRenderingAfterCompileDialog();
             closeCompileDialogIfOpen();
         });
     }

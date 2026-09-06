@@ -96,6 +96,15 @@ if (securityResult.status !== 0) {
     process.exit(securityResult.status || 1);
 }
 
+const compileLifecycleResult = spawnSync(process.execPath, [resolve(root, "scripts/test-compile-request-lifecycle.mjs")], {
+    cwd: root,
+    stdio: "inherit",
+    shell: false
+});
+if (compileLifecycleResult.status !== 0) {
+    process.exit(compileLifecycleResult.status || 1);
+}
+
 const storageSecurityResult = spawnSync(process.execPath, [resolve(root, "scripts/test-storage-security-contract.mjs")], {
 	cwd: root,
 	stdio: "inherit",

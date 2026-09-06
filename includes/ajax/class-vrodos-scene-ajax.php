@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once plugin_dir_path( __FILE__ ) . '../vrodos-scene-model.php';
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-compiler-manager.php';
+require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-compiler-build-state.php';
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-scene-standalone-exporter.php';
 require_once plugin_dir_path( __FILE__ ) . '../class-vrodos-url-normalizer.php';
 
@@ -17,6 +18,7 @@ class VRodos_Scene_AJAX {
 		add_action( 'wp_ajax_vrodos_reorder_scenes_action', [ $this, 'reorder_scenes_callback' ] );
 		add_action( 'wp_ajax_image_upload_action', [ $this, 'image_upload_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_compile_action', [ $this, 'compile_action_callback' ] );
+		add_action( 'wp_ajax_vrodos_cancel_compile_action', [ $this, 'cancel_compile_action_callback' ] );
 		add_action( 'wp_ajax_vrodos_export_scene_zip_action', [ $this, 'export_scene_zip_action_callback' ] );
 	}
 
@@ -237,7 +239,8 @@ class VRodos_Scene_AJAX {
 			$scene_ids,
 			$runtime_mode,
 			$vr_runtime_profile,
-			VRodos_Runtime_Settings_Contract::normalize_bool( wp_unslash( $_POST['showPawnPositions'] ?? 'false' ), false )
+			VRodos_Runtime_Settings_Contract::normalize_bool( wp_unslash( $_POST['showPawnPositions'] ?? 'false' ), false ),
+			VRodos_Compiler_Build_State::normalize_build_id( sanitize_text_field( wp_unslash( $_POST['buildId'] ?? '' ) ) )
 		);
 		try {
 			$result = ( new VRodos_Compiler_Manager() )->compile( $request );
@@ -262,6 +265,30 @@ class VRodos_Scene_AJAX {
 		}
 
 		wp_send_json( $result->to_public_payload() );
+	}
+
+	/**
+	 * Cancels one compile orchestration request. Shared derivative jobs already running
+	 * may finish and remain available for a later build.
+	 */
+	public function cancel_compile_action_callback(): void {
+		$this->require_storage_schema();
+		if ( ! check_ajax_referer( 'vrodos_compile_scene', 'nonce', false ) ) {
+			wp_send_json_error( [ 'code' => 'invalid_nonce', 'message' => 'Compile security check failed.' ], 403 );
+		}
+
+		$project_id = absint( $_POST['projectId'] ?? 0 );
+		$scene_id   = absint( $_POST['vrodos_scene'] ?? 0 );
+		$build_id   = VRodos_Compiler_Build_State::normalize_build_id( sanitize_text_field( wp_unslash( $_POST['buildId'] ?? '' ) ) );
+		if ( $project_id <= 0 || $scene_id <= 0 || '' === $build_id ) {
+			wp_send_json_error( [ 'code' => 'invalid_cancel_request', 'message' => 'Invalid build cancellation request.' ], 400 );
+		}
+		if ( 'vrodos_game' !== get_post_type( $project_id ) || 'vrodos_scene' !== get_post_type( $scene_id ) || ! current_user_can( 'edit_post', $project_id ) || ! current_user_can( 'edit_post', $scene_id ) ) {
+			wp_send_json_error( [ 'code' => 'forbidden', 'message' => 'You are not allowed to cancel this build.' ], 403 );
+		}
+
+		VRodos_Compiler_Build_State::cancel( $build_id, $project_id );
+		wp_send_json_success( [ 'buildId' => $build_id ] );
 	}
 
 	/**

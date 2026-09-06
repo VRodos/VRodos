@@ -14,6 +14,7 @@ require_once __DIR__ . '/class-vrodos-compiler-scene-settings.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-manifest.php';
 require_once __DIR__ . '/class-vrodos-compiler-runtime-script-planner.php';
 require_once __DIR__ . '/class-vrodos-compiler-types.php';
+require_once __DIR__ . '/class-vrodos-compiler-build-state.php';
 require_once __DIR__ . '/class-vrodos-compiler-plan-resolver.php';
 require_once __DIR__ . '/class-vrodos-compiler-artifact-transaction.php';
 require_once __DIR__ . '/class-vrodos-compiler-resource-publisher.php';
@@ -73,6 +74,9 @@ class VRodos_Compiler_Manager {
 		if ( $request->project_id <= 0 || empty( $request->scene_ids ) ) {
 			return new WP_Error( 'vrodos_compile_invalid_request', 'A project and at least one scene are required.', [ 'status' => 400 ] );
 		}
+		if ( VRodos_Compiler_Build_State::is_cancelled( $request->build_id, $request->project_id ) ) {
+			return new WP_Error( 'vrodos_compile_cancelled', 'Build canceled.', [ 'status' => 409 ] );
+		}
 
 		$context = $this->scene_repository->load_compile_context( $request->project_id, $request->scene_ids, $request->selected_scene_id );
 		if ( ! empty( $context['error'] ) ) {
@@ -83,6 +87,9 @@ class VRodos_Compiler_Manager {
 		try {
 			$plan = $this->plan_resolver->resolve( $request, $context );
 			$profile_assets = VRodos_Asset_Optimization_Manager::prepare_desktop_profile_derivatives( $plan );
+			if ( VRodos_Compiler_Build_State::is_cancelled( $request->build_id, $request->project_id ) ) {
+				return new WP_Error( 'vrodos_compile_cancelled', 'Build canceled.', [ 'status' => 409 ] );
+			}
 			if ( 'pending' === (string) ( $profile_assets['status'] ?? '' ) ) {
 				return new WP_Error(
 					'vrodos_desktop_profiles_pending',
@@ -112,6 +119,9 @@ class VRodos_Compiler_Manager {
 				if ( VRodos_Runtime_Target_Plan::INDEX !== $target_plan->kind ) {
 					$render_warnings = array_merge( $render_warnings, (array) ( $this->target_assembler->last_compile_diagnostics()['warnings'] ?? [] ) );
 				}
+			}
+			if ( VRodos_Compiler_Build_State::is_cancelled( $request->build_id, $request->project_id ) ) {
+				throw new RuntimeException( 'Build canceled.', 409 );
 			}
 
 			$artifacts = $this->template_renderer->finish_capture();
@@ -144,6 +154,9 @@ class VRodos_Compiler_Manager {
 				$this->resource_publisher->abort();
 			}
 			error_log( '[VRodos] Compile failed for project #' . $request->project_id . ': ' . $error->getMessage() );
+			if ( VRodos_Compiler_Build_State::is_cancelled( $request->build_id, $request->project_id ) ) {
+				return new WP_Error( 'vrodos_compile_cancelled', 'Build canceled.', [ 'status' => 409 ] );
+			}
 			$status  = 409 === (int) $error->getCode() ? 409 : 500;
 			$message = 409 === $status ? $error->getMessage() : 'Scene compilation failed. Check the server log for details.';
 			return new WP_Error( 'vrodos_compile_failed', $message, [ 'status' => $status ] );
