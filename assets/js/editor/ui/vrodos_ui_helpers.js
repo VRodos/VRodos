@@ -267,7 +267,10 @@ VRODOS.ui.compileDialogState = (function(existing) {
 		progressBar: 'compileProgressBar',
 		progressCount: 'compileProgressCount',
 		progressLabel: 'compileProgressLabel',
+		progressMessage: 'compileProgressMessage',
 		progressPanel: 'compileProgressPanel',
+		progressProfiles: 'compileProgressProfiles',
+		progressStage: 'compileProgressStage',
 		resultMeta: 'compileResultMeta',
 		settingsSaveButton: 'compileSaveSettingsBtn',
         saveButton: 'save-scene-button',
@@ -334,17 +337,93 @@ VRODOS.ui.compileDialogState = (function(existing) {
 		VRODOS.ui.refreshLucideIcons();
 	}
 
-	function showBuildProgress(ready, total, message) {
-		const safeReady = Math.max(0, Number(ready) || 0);
-		const safeTotal = Math.max(0, Number(total) || 0);
-		const percentage = safeTotal > 0 ? Math.min(100, Math.round((safeReady / safeTotal) * 100)) : 0;
+	function buildProfileStatusLabel(profile) {
+		if (profile.status === 'ready') return 'Ready';
+		if (profile.status === 'failed') return 'Failed';
+		if (profile.status === 'running') {
+			return profile.totalSteps > 0 && profile.step > 0
+				? `Running — step ${profile.step}/${profile.totalSteps}`
+				: 'Running';
+		}
+		return 'Queued';
+	}
+
+	function renderBuildProfiles(profiles) {
+		const container = getElement('progressProfiles');
+		if (!container) return;
+		container.replaceChildren();
+		setDisplay(container, profiles.length ? 'grid' : 'none');
+
+		profiles.forEach((profile) => {
+			const row = document.createElement('div');
+			row.className = 'tw-rounded-md tw-border tw-border-emerald-100 tw-bg-white tw-p-2';
+			row.setAttribute('role', 'listitem');
+
+			const summary = document.createElement('div');
+			summary.className = 'tw-flex tw-items-center tw-justify-between tw-gap-3';
+			const identity = document.createElement('span');
+			identity.className = 'tw-min-w-0 tw-truncate tw-text-xs tw-font-semibold tw-text-slate-700';
+			identity.textContent = `${profile.assetLabel} · ${profile.profileLabel}`;
+			identity.title = identity.textContent;
+			const status = document.createElement('span');
+			status.className = profile.status === 'failed'
+				? 'tw-flex-shrink-0 tw-text-xs tw-font-semibold tw-text-red-700'
+				: (profile.status === 'ready'
+					? 'tw-flex-shrink-0 tw-text-xs tw-font-semibold tw-text-emerald-700'
+					: 'tw-flex-shrink-0 tw-text-xs tw-font-semibold tw-text-slate-600');
+			status.textContent = buildProfileStatusLabel(profile);
+			summary.append(identity, status);
+			row.append(summary);
+
+			if (profile.message) {
+				const detail = document.createElement('p');
+				detail.className = 'tw-mt-1 tw-text-xs tw-text-slate-500';
+				detail.textContent = profile.message;
+				row.append(detail);
+			}
+
+			container.append(row);
+		});
+	}
+
+	function setBuildProgressFailureTone(failed) {
+		const panel = getElement('progressPanel');
+		if (!panel) return;
+		panel.classList.toggle('tw-border-red-200', failed);
+		panel.classList.toggle('tw-bg-red-50', failed);
+		panel.classList.toggle('tw-border-emerald-100', !failed);
+		panel.classList.toggle('tw-bg-emerald-50', !failed);
+	}
+
+	function showBuildProgress(progress) {
+		const state = progress && typeof progress === 'object' ? progress : {};
+		const safeReady = Math.max(0, Number(state.ready) || 0);
+		const safeTotal = Math.max(0, Number(state.total) || 0);
+		const calculatedPercentage = safeTotal > 0 ? Math.round((safeReady / safeTotal) * 100) : 0;
+		const percentage = Math.max(0, Math.min(100, Number.isFinite(Number(state.percent)) ? Number(state.percent) : calculatedPercentage));
+		const phase = state.phase && typeof state.phase === 'object' ? state.phase : {};
+		const phaseStep = Math.max(1, Number(phase.step) || 1);
+		const phaseTotal = Math.max(1, Number(phase.totalSteps) || 3);
+		const profiles = Array.isArray(state.profiles) ? state.profiles : [];
 		const panel = getElement('progressPanel');
 		const progressTrack = getElement('progressBar') && getElement('progressBar').parentElement;
 		setDisplay(panel, 'block');
-		setText(getElement('progressLabel'), message || 'Preparing build…');
-		setText(getElement('progressCount'), safeTotal > 0 ? `${safeReady} / ${safeTotal}` : 'Starting…');
+		setBuildProgressFailureTone(false);
+		setText(getElement('progressStage'), `Step ${Math.min(phaseStep, phaseTotal)} of ${phaseTotal}`);
+		setText(getElement('progressLabel'), phase.label || 'Preparing build…');
+		setText(getElement('progressMessage'), state.message || 'Preparing build…');
+		setText(getElement('progressCount'), safeTotal > 0 ? `${safeReady}/${safeTotal} ready · ${Math.round(percentage)}%` : `${Math.round(percentage)}%`);
 		if (getElement('progressBar')) getElement('progressBar').style.width = `${percentage}%`;
 		if (progressTrack) progressTrack.setAttribute('aria-valuenow', String(percentage));
+		renderBuildProfiles(profiles);
+	}
+
+	function showBuildFailure(progress, message) {
+		showBuildProgress(progress);
+		setBuildProgressFailureTone(true);
+		setText(getElement('progressLabel'), 'Build failed');
+		setText(getElement('progressMessage'), message || 'The build could not be completed.');
+		setStatusMessage('triangle-alert', message || 'The build could not be completed.');
 	}
 
 	function hideBuildProgress() {
@@ -355,8 +434,8 @@ VRODOS.ui.compileDialogState = (function(existing) {
         const topResultLink = getElement('topResultLink');
 
         setDisplay(getElement('statusRow'), 'flex');
-        setDisplay(getElement('appResult'), 'none');
-        setText(getElement('resultMeta'), 'The experience is ready to be shared');
+		setDisplay(getElement('appResult'), 'none');
+		setText(getElement('resultMeta'), 'Step 3 of 3 complete — the experience is ready to be shared');
 
         if (topResultLink) {
             topResultLink.classList.add('tw-hidden');
@@ -400,7 +479,14 @@ VRODOS.ui.compileDialogState = (function(existing) {
 		resetResultState();
 		setBuildActionsRunning();
 		setStatusMessage('info', 'Please wait while we build your scene');
-		showBuildProgress(0, 0, 'Starting build…');
+		showBuildProgress({
+			ready: 0,
+			total: 0,
+			percent: 0,
+			message: 'Starting build…',
+			phase: { step: 1, totalSteps: 3, label: 'Saving scene changes' },
+			profiles: []
+		});
     }
 
     function finishBuildState() {
@@ -416,7 +502,7 @@ VRODOS.ui.compileDialogState = (function(existing) {
 
         setDisplay(getElement('statusRow'), 'none');
         setDisplay(getElement('appResult'), 'flex');
-        setText(getElement('resultMeta'), `Ready to be shared - ${new Date().toLocaleString()}`);
+		setText(getElement('resultMeta'), `Step 3 of 3 complete — ready to be shared · ${new Date().toLocaleString()}`);
 
         if (openWebLink) {
             setHref(openWebLink, primaryExperienceUrl);
@@ -463,6 +549,7 @@ VRODOS.ui.compileDialogState = (function(existing) {
         setStatusMessage,
 		showPrimaryExperienceLink,
 		showBuildProgress,
+		showBuildFailure,
         showSaveFailedMessage,
         showSavePendingMessage,
         showStartedState

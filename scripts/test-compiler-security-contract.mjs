@@ -15,6 +15,8 @@ assert.doesNotMatch(compileAjax, /\$_GET\[/);
 assert.match(compileAjax, /runtime_contract_invalid/);
 assert.match(compileAjax, /wp_ajax_vrodos_cancel_compile_action/);
 assert.match(compileAjax, /VRodos_Compiler_Build_State::cancel/);
+assert.match(compileAjax, /202 === \$status/);
+assert.match(compileAjax, /wp_send_json\( array_merge\( \[ 'status' => 'pending' \]/);
 
 const compileRequest = read("assets/js/editor/ajax/vrodos_request_compile.js");
 assert.match(compileRequest, /method: 'POST'/);
@@ -22,6 +24,8 @@ assert.match(compileRequest, /compileNonce/);
 assert.match(compileRequest, /AbortController/);
 assert.match(compileRequest, /vrodos_cancel_compile_action/);
 assert.match(compileRequest, /activeBuild\.id !== build\.id/);
+assert.match(compileRequest, /payload\.pending === true/);
+assert.match(compileRequest, /showBuildFailure/);
 
 const compilerManager = read("includes/class-vrodos-compiler-manager.php");
 const targetAssembler = read("includes/class-vrodos-compiler-target-assembler.php");
@@ -32,8 +36,14 @@ assert.doesNotMatch(compilerManager, /function normalize_url\s*\(/);
 assert.doesNotMatch(compilerManager, /RUNTIME_MODE_(?:NETWORKED|SINGLE_PLAYER)/);
 assert.doesNotMatch(compilerTypes, /function to_legacy_payload\s*\(/);
 assert.match(compilerManager, /target_assembler->render/);
+assert.match(compilerManager, /'status'\s*=> 202/);
+assert.match(compilerManager, /'profiles'\s*=>/);
 assert.doesNotMatch(compilerManager, /function create(?:Master|Simple|Index)/);
 assert.match(targetAssembler, /VRodos_Runtime_Target_Plan::MASTER/);
+
+const compileTemplate = read("templates/pages/vrodos-edit-3D-scene-CompileDialogue.php");
+assert.match(compileTemplate, /id="compileProgressStage"/);
+assert.match(compileTemplate, /id="compileProgressProfiles"/);
 
 const projectAjax = read("includes/ajax/class-vrodos-project-ajax.php");
 assert.match(projectAjax, /VRodos_Runtime_URL_Resolver/);

@@ -51,12 +51,15 @@
 				</div>
 				<div id="compileProgressPanel" class="tw-mt-3 tw-rounded-lg tw-border tw-border-emerald-100 tw-bg-emerald-50 tw-p-3" style="display:none;">
 					<div class="tw-flex tw-items-center tw-justify-between tw-gap-3 tw-text-xs">
-						<span id="compileProgressLabel" class="tw-font-semibold tw-text-emerald-800">Preparing build…</span>
-						<span id="compileProgressCount" class="tw-text-emerald-700">0 / 0</span>
+						<span id="compileProgressStage" class="tw-font-semibold tw-text-emerald-800">Step 1 of 3</span>
+						<span id="compileProgressCount" class="tw-text-emerald-700">Starting…</span>
 					</div>
+					<p id="compileProgressLabel" class="tw-mt-1 tw-text-sm tw-font-semibold tw-text-slate-800">Preparing build…</p>
 					<div class="tw-mt-2 tw-h-2 tw-w-full tw-overflow-hidden tw-rounded-full tw-bg-white" role="progressbar" aria-label="Build progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
 						<div id="compileProgressBar" class="tw-h-full tw-rounded-full tw-bg-emerald-500 tw-transition-all" style="width:0%;"></div>
 					</div>
+					<p id="compileProgressMessage" class="tw-mt-2 tw-text-xs tw-text-slate-600">Starting build…</p>
+					<div id="compileProgressProfiles" class="tw-mt-3 tw-space-y-2" role="list" aria-label="Desktop asset profile progress"></div>
 				</div>
 
 				<div id="appResultDiv" class="tw-rounded-xl tw-bg-emerald-50 tw-border tw-border-emerald-100 tw-p-4 tw-flex tw-items-center tw-justify-between tw-gap-3 tw-flex-wrap" style="display:none">

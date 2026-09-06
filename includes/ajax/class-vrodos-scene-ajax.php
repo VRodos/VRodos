@@ -256,7 +256,10 @@ class VRodos_Scene_AJAX {
 			$status = is_array( $data ) ? absint( $data['status'] ?? 500 ) : 500;
 			$error_payload = [ 'code' => $result->get_error_code(), 'message' => $result->get_error_message() ];
 			if ( is_array( $data ) ) {
-				$error_payload = array_merge( $error_payload, array_intersect_key( $data, array_flip( [ 'pending', 'ready', 'total', 'retryAfterMs' ] ) ) );
+				$error_payload = array_merge( $error_payload, array_intersect_key( $data, array_flip( [ 'pending', 'phase', 'ready', 'total', 'percent', 'profiles', 'retryAfterMs' ] ) ) );
+			}
+			if ( 202 === $status && ! empty( $error_payload['pending'] ) ) {
+				wp_send_json( array_merge( [ 'status' => 'pending' ], $error_payload ), 202 );
 			}
 			wp_send_json_error(
 				$error_payload,

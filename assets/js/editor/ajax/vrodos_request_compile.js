@@ -66,9 +66,50 @@ VRODOS.utils = VRODOS.utils || {};
 
 	function assertCompileSuccess(urls) {
 		if (urls && urls.success === false) {
-			throw new Error((urls.data && urls.data.message) || urls.data || 'Compile failed.');
+			const compileError = new Error((urls.data && urls.data.message) || urls.data || 'Compile failed.');
+			compileError.compileData = urls.data && typeof urls.data === 'object' ? urls.data : {};
+			throw compileError;
 		}
 		return urls || {};
+	}
+
+	function normalizeBuildProgress(data, fallbackMessage) {
+		const source = data && typeof data === 'object' ? data : {};
+		const ready = Math.max(0, Number(source.ready) || 0);
+		const total = Math.max(0, Number(source.total) || 0);
+		const phaseSource = source.phase && typeof source.phase === 'object' ? source.phase : {};
+		const profiles = Array.isArray(source.profiles) ? source.profiles.map((profile) => ({
+			assetId: Math.max(0, Number(profile.assetId) || 0),
+			assetLabel: String(profile.assetLabel || `Asset #${profile.assetId || ''}`).trim(),
+			profile: String(profile.profile || ''),
+			profileLabel: String(profile.profileLabel || profile.profile || 'Profile'),
+			status: ['queued', 'running', 'ready', 'failed'].includes(profile.status) ? profile.status : 'queued',
+			step: Math.max(0, Number(profile.step) || 0),
+			totalSteps: Math.max(0, Number(profile.totalSteps) || 0),
+			percent: Math.max(0, Math.min(100, Number(profile.percent) || 0)),
+			message: String(profile.message || ''),
+			updatedAt: String(profile.updatedAt || '')
+		})) : [];
+		const calculatedPercent = total > 0 ? Math.round((ready / total) * 100) : 0;
+
+		return {
+			ready,
+			total,
+			percent: Math.max(0, Math.min(100, Number.isFinite(Number(source.percent)) ? Number(source.percent) : calculatedPercent)),
+			message: String(source.message || fallbackMessage || 'Preparing build…'),
+			phase: {
+				key: String(phaseSource.key || 'asset-optimization'),
+				step: Math.max(1, Number(phaseSource.step) || 2),
+				totalSteps: Math.max(1, Number(phaseSource.totalSteps) || 3),
+				label: String(phaseSource.label || 'Preparing desktop assets')
+			},
+			profiles
+		};
+	}
+
+	function updateBuildProgress(build, data, fallbackMessage) {
+		Object.assign(build, normalizeBuildProgress(data, fallbackMessage));
+		dialogState.showBuildProgress(build);
 	}
 
 	function shouldSaveBeforeCompile(compileOptions) {
@@ -80,9 +121,13 @@ VRODOS.utils = VRODOS.utils || {};
 			VRODOS.editor.envir.scene;
 	}
 
-	function runCompileRequest(build, attempt) {
-		const requestAttempt = Number(attempt || 0);
+	function runCompileRequest(build) {
 		if (!activeBuild || activeBuild.id !== build.id || build.cancelled) return;
+		if (!build.phase || Number(build.phase.step) < 2) {
+			build.phase = { key: 'asset-optimization', step: 2, totalSteps: 3, label: 'Preparing desktop assets' };
+			build.message = 'Checking build requirements…';
+			dialogState.showBuildProgress(build);
+		}
 		const request = buildCompileRequest(build.projectId, build.sceneId, build.showPawnPositions, build.id);
 		build.controller = new window.AbortController();
 
@@ -94,11 +139,23 @@ VRODOS.utils = VRODOS.utils || {};
 			body: request.body.toString()
 		})
 			.then(parseCompileResponse)
-			.then(assertCompileSuccess)
+			.then((payload) => {
+				if (!activeBuild || activeBuild.id !== build.id || build.cancelled) return null;
+				if (payload && payload.pending === true) {
+					updateBuildProgress(build, payload, payload.message);
+					dialogState.setStatusMessage('loader-circle', build.message);
+					const retryAfterMs = Math.max(1000, Math.min(10000, Number(payload.retryAfterMs) || 3000));
+					build.timeoutId = window.setTimeout(() => runCompileRequest(build), retryAfterMs);
+					return null;
+				}
+				return assertCompileSuccess(payload);
+			})
 			.then((urls) => {
-				if (!activeBuild || activeBuild.id !== build.id || build.cancelled) return;
+				if (!urls || !activeBuild || activeBuild.id !== build.id || build.cancelled) return;
 				const primaryExperienceUrl = resolvePrimaryExperienceUrl(urls);
 
+				build.phase = { key: 'complete', step: 3, totalSteps: 3, label: 'Build complete' };
+				build.percent = 100;
 				activeBuild = null;
 				dialogState.finishBuildState();
 				dialogState.hideBuildProgress();
@@ -106,27 +163,11 @@ VRODOS.utils = VRODOS.utils || {};
 			})
 			.catch((err) => {
 				if (build.cancelled || (err && err.name === 'AbortError') || !activeBuild || activeBuild.id !== build.id) return;
-				const pending = err && err.compileData && err.compileData.pending === true;
-				if (pending && requestAttempt < 200) {
-					build.ready = Number(err.compileData.ready) || 0;
-					build.total = Number(err.compileData.total) || 0;
-					build.message = err.message;
-					const status = document.getElementById('constantUpdateUser');
-					if (status) status.textContent = err.message;
-					dialogState.showBuildProgress(build.ready, build.total, err.message);
-					const retryAfterMs = Math.max(1000, Math.min(10000, Number(err.compileData.retryAfterMs) || 3000));
-					build.timeoutId = window.setTimeout(
-						() => runCompileRequest(build, requestAttempt + 1),
-						retryAfterMs
-					);
-					return;
-				}
-				console.log(`Ajax Aframe ERROR 189: ${err}`);
-				const status = document.getElementById('constantUpdateUser');
-				if (status && err && err.message) status.textContent = err.message;
+				updateBuildProgress(build, err && err.compileData, err && err.message);
+				console.error('VRodos scene build failed.', err);
 				activeBuild = null;
 				dialogState.finishBuildState();
-				dialogState.hideBuildProgress();
+				dialogState.showBuildFailure(build, err && err.message ? err.message : 'Build failed.');
 			});
 	}
 
@@ -144,7 +185,10 @@ VRODOS.utils = VRODOS.utils || {};
 			showPawnPositions,
 			ready: 0,
 			total: 0,
+			percent: 0,
 			message: 'Starting build…',
+			phase: { key: 'save', step: 1, totalSteps: 3, label: 'Saving scene changes' },
+			profiles: [],
 			cancelled: false,
 			controller: null,
 			timeoutId: null
@@ -178,7 +222,7 @@ VRODOS.utils = VRODOS.utils || {};
 	VRODOS.api.restoreCompileUi = function() {
 		if (!VRODOS.api.isCompileRunning()) return false;
 		dialogState.showStartedState();
-		dialogState.showBuildProgress(activeBuild.ready, activeBuild.total, activeBuild.message);
+		dialogState.showBuildProgress(activeBuild);
 		return true;
 	};
 
@@ -222,13 +266,13 @@ VRODOS.utils = VRODOS.utils || {};
 		if (shouldSaveBeforeCompile(compileOptions)) {
 			build.message = 'Saving build settings and latest scene changes…';
 			dialogState.showSavePendingMessage();
-			dialogState.showBuildProgress(0, 0, build.message);
+			dialogState.showBuildProgress(build);
 			VRODOS.api.waitForLatestSceneSave()
 				.then(() => VRODOS.api.saveChanges({ force: true }))
 				.then(() => {
 					if (!activeBuild || activeBuild.id !== build.id || build.cancelled) return;
 					build.message = 'Starting build…';
-					runCompileRequest(build, 0);
+					runCompileRequest(build);
 				})
 				.catch((error) => {
 					if (build.cancelled || !activeBuild || activeBuild.id !== build.id) return;
@@ -241,7 +285,7 @@ VRODOS.utils = VRODOS.utils || {};
 			return;
 		}
 
-		runCompileRequest(build, 0);
+		runCompileRequest(build);
 	};
 
 })();

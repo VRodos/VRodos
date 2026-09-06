@@ -51,7 +51,42 @@ An idempotent batched migration moves allowlisted legacy `composite_params`, atm
 
 Capabilities are derived once after effective scene policy is known. `activationCapabilities` in `assets/runtime-build-manifest.json` schema 2 maps capabilities to lazy chunks. The script planner adds baseline chunks, validates activation coverage, resolves dependencies, and preserves manifest order. Invalid paths, missing files, duplicate ordering, dependency cycles, undeclared dependencies, and uncovered capabilities are compile errors.
 
-Before target rendering, `VRodos_Asset_Optimization_Manager` verifies the required desktop derivative family. Custom-only needs `desktop-custom`; adaptive needs `desktop-low`, `desktop-medium`, and `desktop-high`. Missing work is queued through WordPress Cron and returned to the compile UI as progress; failures stop preflight while the prior publication remains intact. The compile dialog keeps polling while hidden and restores the active progress when reopened. Canceling stops that compile request and prevents its publication; shared derivative work that is already running may finish and be reused by a later build. Low/Medium require KTX-Software, use KTX2 textures and safe Draco, and enforce scene texture-memory gates. Custom/High use safe Draco without changing authored textures or geometry. Source uploads are never modified. Collision/navigation assets and GLBs containing skins or morph targets bypass simplification.
+Before target rendering, `VRodos_Asset_Optimization_Manager` verifies the required desktop derivative family. Custom-only needs `desktop-custom`; adaptive needs `desktop-low`, `desktop-medium`, and `desktop-high`. Missing work is queued through WordPress Cron and returned as HTTP `202 Accepted` with the build phase, overall percentage, ready/total counts, and per-asset/profile optimizer steps; HTTP `409` is reserved for cancellation or a real state conflict. Failures stop preflight while the prior publication remains intact. The compile dialog keeps polling while hidden and restores the active progress when reopened. Canceling stops that compile request and prevents its publication; shared derivative work that is already running may finish and be reused by a later build. Low/Medium require KTX-Software, use KTX2 textures and safe Draco, and enforce scene texture-memory gates. Custom/High use safe Draco without changing authored textures or geometry. Source uploads are never modified. Collision/navigation assets and GLBs containing skins or morph targets bypass simplification.
+
+Pending compile responses are a bare JSON payload, not a WordPress error envelope:
+
+```json
+{
+  "status": "pending",
+  "pending": true,
+  "phase": {
+    "key": "asset-optimization",
+    "step": 2,
+    "totalSteps": 3,
+    "label": "Preparing desktop assets"
+  },
+  "ready": 1,
+  "total": 3,
+  "percent": 42,
+  "profiles": [
+    {
+      "assetId": 90,
+      "assetLabel": "Ancient Ruined Template",
+      "profile": "desktop-medium",
+      "profileLabel": "Medium",
+      "status": "running",
+      "step": 6,
+      "totalSteps": 9,
+      "percent": 67,
+      "message": "Resizing textures",
+      "updatedAt": "2026-09-06T11:54:00.000Z"
+    }
+  ],
+  "retryAfterMs": 3000
+}
+```
+
+Clients continue polling at `retryAfterMs` until a final HTTP `200` compile payload, user cancellation, or an actual error response. Profile status is one of `queued`, `running`, `ready`, or `failed`. Optimizer step totals describe work units, not a time estimate.
 
 ## Artifact and target policy
 

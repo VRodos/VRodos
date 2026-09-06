@@ -12,7 +12,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 
 	public static function prepare_desktop_profile_derivatives( VRodos_Project_Compile_Plan $plan ): array {
 		if ( 'desktop' !== $plan->request->vr_runtime_profile ) {
-			return [ 'status' => 'ready', 'ready' => 0, 'total' => 0, 'message' => '' ];
+			return [ 'status' => 'ready', 'ready' => 0, 'total' => 0, 'percent' => 100, 'profiles' => [], 'message' => '' ];
 		}
 
 		$assets = [];
@@ -39,11 +39,23 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		$pending = [];
 		$errors = [];
 		$records = [ 'custom' => [], 'low' => [], 'medium' => [], 'high' => [] ];
+		$profile_progress = [];
 
 		foreach ( $assets as $asset_id => $asset ) {
 			$source = self::get_source_glb( (int) $asset_id );
 			if ( is_wp_error( $source ) ) {
 				$errors[] = sprintf( 'Asset #%d: %s', $asset_id, $source->get_error_message() );
+				foreach ( (array) $asset['slots'] as $slot ) {
+					$profile_progress[] = self::desktop_profile_progress_item(
+						(int) $asset_id,
+						(string) $slot,
+						[],
+						[],
+						[ 'protectGeometry' => ! empty( $asset['protectGeometry'] ) ],
+						'failed',
+						$source->get_error_message()
+					);
+				}
 				continue;
 			}
 
@@ -62,6 +74,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				if ( self::desktop_profile_record_is_ready( $record, $source, $profile, $options ) ) {
 					++$ready;
 					$records[ $slot ][ $asset_id ] = $record;
+					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $record, $source, $options, 'ready', 'Ready' );
 					continue;
 				}
 
@@ -71,19 +84,34 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 						$message = 'KTX-Software 4.3+ is required for Low and Medium desktop profiles. ' . $message;
 					}
 					$errors[] = sprintf( 'Asset #%d %s: %s', $asset_id, ucfirst( $slot ), $message );
+					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $record, $source, $options, 'failed', $message );
 					continue;
 				}
 
 				self::queue_desktop_profile_derivative( (int) $asset_id, $profile, $source, $options );
+				$record = self::desktop_profile_record( (int) $asset_id, $profile );
+				$status = in_array( (string) ( $record['status'] ?? '' ), [ 'queued', 'running' ], true ) ? (string) $record['status'] : 'queued';
+				$profile_progress[] = self::desktop_profile_progress_item(
+					(int) $asset_id,
+					$slot,
+					$record,
+					$source,
+					$options,
+					$status,
+					(string) ( $record['message'] ?? 'Desktop profile derivative is queued.' )
+				);
 				$pending[] = sprintf( 'asset #%d %s', $asset_id, ucfirst( $slot ) );
 			}
 		}
+		$percent = self::desktop_profile_overall_percent( $profile_progress, $total );
 
 		if ( $errors ) {
 			return [
 				'status'  => 'failed',
 				'ready'   => $ready,
 				'total'   => $total,
+				'percent' => $percent,
+				'profiles' => $profile_progress,
 				'message' => implode( ' ', array_values( array_unique( $errors ) ) ),
 			];
 		}
@@ -92,6 +120,8 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				'status'  => 'pending',
 				'ready'   => $ready,
 				'total'   => $total,
+				'percent' => $percent,
+				'profiles' => $profile_progress,
 				'message' => sprintf( 'Preparing desktop profile assets (%d/%d ready).', $ready, $total ),
 			];
 		}
@@ -100,6 +130,8 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		if ( 'ready' !== $memory_gate['status'] ) {
 			$memory_gate['ready'] = $ready;
 			$memory_gate['total'] = $total;
+			$memory_gate['percent'] = $percent;
+			$memory_gate['profiles'] = $profile_progress;
 			return $memory_gate;
 		}
 
@@ -107,6 +139,8 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			'status'  => 'ready',
 			'ready'   => $ready,
 			'total'   => $total,
+			'percent' => 100,
+			'profiles' => $profile_progress,
 			'message' => sprintf( 'Desktop profile assets are ready (%d/%d).', $ready, $total ),
 		];
 	}
@@ -128,8 +162,8 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			'textureMaxSize'  => absint( $texture_max_size ),
 			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 		];
+		$source = self::get_source_glb( $asset_id );
 		try {
-			$source = self::get_source_glb( $asset_id );
 			if ( is_wp_error( $source ) ) {
 				self::store_desktop_profile_failure( $asset_id, $profile, $source->get_error_message(), $options );
 				return;
@@ -141,7 +175,14 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				return;
 			}
 			$this->store_derivative_record( $asset_id, $result );
+		} catch ( Throwable $error ) {
+			if ( is_array( $source ) ) {
+				self::store_desktop_profile_failure( $asset_id, $profile, $error->getMessage(), $options );
+			}
 		} finally {
+			if ( is_array( $source ) ) {
+				self::delete_desktop_profile_progress_file( $asset_id, $profile, $source );
+			}
 			delete_transient( self::DESKTOP_PROFILE_LOCK_KEY );
 		}
 	}
@@ -221,11 +262,123 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			&& ( 0 === $requested_size || ( $record_size > 0 && $record_size <= $requested_size ) );
 	}
 
+	private static function desktop_profile_progress_item(
+		int $asset_id,
+		string $slot,
+		array $record,
+		array $source,
+		array $options,
+		string $status,
+		string $message
+	): array {
+		$profile = 'desktop-' . sanitize_key( $slot );
+		$total_steps = self::desktop_profile_total_steps( $profile, $options );
+		$step = 0;
+		$percent = 0;
+		$updated_at = sanitize_text_field( (string) ( $record['updatedAt'] ?? '' ) );
+
+		if ( 'ready' === $status ) {
+			$step = $total_steps;
+			$percent = 100;
+		} elseif ( is_array( $source ) && 'running' === $status ) {
+			$progress = self::read_desktop_profile_progress_file( $asset_id, $profile, $source );
+			if ( $progress ) {
+				$step = absint( $progress['step'] ?? 0 );
+				$total_steps = max( 1, absint( $progress['totalSteps'] ?? $total_steps ) );
+				$percent = max( 0, min( 100, absint( $progress['percent'] ?? 0 ) ) );
+				$message = (string) ( $progress['message'] ?? $message );
+				$updated_at = (string) ( $progress['updatedAt'] ?? $updated_at );
+				if ( 'failed' === (string) ( $progress['status'] ?? '' ) ) {
+					$status = 'failed';
+				}
+			}
+		}
+
+		$title = wp_strip_all_tags( (string) get_the_title( $asset_id ) );
+		return [
+			'assetId'      => $asset_id,
+			'assetLabel'   => '' !== $title ? $title : sprintf( 'Asset #%d', $asset_id ),
+			'profile'      => $profile,
+			'profileLabel' => ucfirst( sanitize_key( $slot ) ),
+			'status'       => in_array( $status, [ 'queued', 'running', 'ready', 'failed' ], true ) ? $status : 'queued',
+			'step'         => min( $step, $total_steps ),
+			'totalSteps'   => $total_steps,
+			'percent'      => $percent,
+			'message'      => substr( wp_strip_all_tags( $message ), 0, 500 ),
+			'updatedAt'    => $updated_at,
+		];
+	}
+
+	private static function desktop_profile_total_steps( string $profile, array $options ): int {
+		if ( in_array( $profile, [ 'desktop-custom', 'desktop-high' ], true ) ) {
+			return 5;
+		}
+		return ! empty( $options['protectGeometry'] ) ? 9 : 11;
+	}
+
+	private static function desktop_profile_overall_percent( array $profiles, int $total ): int {
+		if ( $total <= 0 ) {
+			return 100;
+		}
+		$sum = array_sum( array_map( static fn( array $profile ): int => absint( $profile['percent'] ?? 0 ), $profiles ) );
+		return max( 0, min( 100, (int) round( $sum / $total ) ) );
+	}
+
+	private static function read_desktop_profile_progress_file( int $asset_id, string $profile, array $source ): array {
+		try {
+			$paths = self::build_derivative_paths( $asset_id, $source, $profile );
+		} catch ( Throwable $error ) {
+			return [];
+		}
+		$path = (string) ( $paths['progress'] ?? '' );
+		$size = '' !== $path && is_file( $path ) ? filesize( $path ) : false;
+		if ( false === $size || $size <= 0 || $size > 65536 || ! is_readable( $path ) ) {
+			return [];
+		}
+
+		$progress = json_decode( (string) file_get_contents( $path ), true );
+		if (
+			! is_array( $progress )
+			|| 1 !== absint( $progress['schemaVersion'] ?? 0 )
+			|| $profile !== sanitize_key( (string) ( $progress['profile'] ?? '' ) )
+			|| wp_normalize_path( (string) ( $progress['sourcePath'] ?? '' ) ) !== wp_normalize_path( (string) ( $source['path'] ?? '' ) )
+		) {
+			return [];
+		}
+
+		return [
+			'status'     => sanitize_key( (string) ( $progress['status'] ?? '' ) ),
+			'step'       => absint( $progress['step'] ?? 0 ),
+			'totalSteps' => absint( $progress['totalSteps'] ?? 0 ),
+			'percent'    => max( 0, min( 100, absint( $progress['percent'] ?? 0 ) ) ),
+			'message'    => substr( wp_strip_all_tags( (string) ( $progress['message'] ?? '' ) ), 0, 500 ),
+			'updatedAt'  => sanitize_text_field( (string) ( $progress['updatedAt'] ?? '' ) ),
+		];
+	}
+
+	private static function delete_desktop_profile_progress_file( int $asset_id, string $profile, array $source ): void {
+		try {
+			$paths = self::build_derivative_paths( $asset_id, $source, $profile );
+		} catch ( Throwable $error ) {
+			return;
+		}
+		$path = (string) ( $paths['progress'] ?? '' );
+		if ( '' !== $path && is_file( $path ) ) {
+			wp_delete_file( $path );
+		}
+		foreach ( glob( $path . '.*.tmp' ) ?: [] as $temporary_path ) {
+			if ( is_file( $temporary_path ) ) {
+				wp_delete_file( $temporary_path );
+			}
+		}
+	}
+
 	private static function queue_desktop_profile_derivative( int $asset_id, string $profile, array $source, array $options ): void {
 		$record = self::desktop_profile_record( $asset_id, $profile );
 		if ( in_array( (string) ( $record['status'] ?? '' ), [ 'queued', 'running' ], true ) && self::desktop_profile_record_matches_request( $record, $source, $options ) ) {
 			return;
 		}
+		self::delete_desktop_profile_progress_file( $asset_id, $profile, $source );
 		self::store_desktop_profile_status( $asset_id, $profile, $source, $options, 'queued', 'Desktop profile derivative is queued.' );
 		self::schedule_desktop_profile_job(
 			$asset_id,

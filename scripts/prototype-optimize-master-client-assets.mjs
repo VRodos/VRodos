@@ -2,7 +2,7 @@
 
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
@@ -32,6 +32,7 @@ function parseArgs(argv) {
         source: '',
         sourceUrl: '',
         outputFile: '',
+        progressFile: '',
         profile: 'safe-draco',
         limit: 3,
         include: '',
@@ -79,6 +80,9 @@ function parseArgs(argv) {
             case '--output-file':
                 options.outputFile = nextValue() || '';
                 break;
+            case '--progress-file':
+                options.progressFile = nextValue() || '';
+                break;
             case '--profile':
                 options.profile = nextValue() || options.profile;
                 break;
@@ -123,6 +127,7 @@ function parseArgs(argv) {
     options.markdown = path.resolve(options.markdown || path.join(options.outputDir, path.basename(defaultMarkdownPath)));
     options.source = options.source ? path.resolve(options.source) : '';
     options.outputFile = options.outputFile ? path.resolve(options.outputFile) : '';
+    options.progressFile = options.progressFile ? path.resolve(options.progressFile) : '';
 
     return options;
 }
@@ -139,6 +144,7 @@ Options:
   --source PATH           Optimize one local GLB instead of selecting assets from an audit.
   --source-url URL        Source URL metadata to record with --source.
   --output-file PATH      Exact derivative GLB path for --source mode.
+  --progress-file PATH    Optional private JSON file for atomic optimizer progress updates.
   --profile NAME          safe-draco, safe-meshopt, editor-preview, desktop-custom, desktop-low, desktop-medium, or desktop-high.
   --protect-geometry      Skip weld/simplify for collision or navigation geometry.
   --texture-max-size N    Override the desktop profile texture cap in pixels.
@@ -579,6 +585,52 @@ function reduction(sourceBytes, derivativeBytes) {
     };
 }
 
+function progressStepLabel(command) {
+    const labels = {
+        prune: 'Removing unused data',
+        dedup: 'Deduplicating data',
+        weld: 'Welding geometry',
+        simplify: 'Simplifying geometry',
+        png: 'Converting source textures',
+        resize: 'Resizing textures',
+        uastc: 'Compressing material textures (UASTC)',
+        etc1s: 'Compressing color textures (ETC1S)',
+        draco: 'Compressing geometry (Draco)',
+        meshopt: 'Compressing geometry (Meshopt)'
+    };
+    return labels[command] || `Running ${command}`;
+}
+
+async function writeOptimizerProgress(options, sourcePath, progress) {
+    if (!options.progressFile) {
+        return;
+    }
+
+    const payload = {
+        schemaVersion: 1,
+        sourcePath,
+        profile: options.profile,
+        status: progress.status || 'running',
+        step: Math.max(0, Number(progress.step) || 0),
+        totalSteps: Math.max(0, Number(progress.totalSteps) || 0),
+        percent: Math.max(0, Math.min(100, Number(progress.percent) || 0)),
+        message: String(progress.message || 'Preparing optimizer'),
+        updatedAt: new Date().toISOString()
+    };
+    const tempPath = `${options.progressFile}.${process.pid}.tmp`;
+    await mkdir(path.dirname(options.progressFile), { recursive: true });
+    await writeFile(tempPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+    try {
+        await rename(tempPath, options.progressFile);
+    } catch (error) {
+        if (process.platform !== 'win32') {
+            throw error;
+        }
+        await rm(options.progressFile, { force: true });
+        await rename(tempPath, options.progressFile);
+    }
+}
+
 async function optimizeAsset(asset, index, options, runner) {
     const sourcePath = path.resolve(asset.localPath);
     const fileName = path.basename(normalizeUrlPath(asset.url || sourcePath));
@@ -587,6 +639,17 @@ async function optimizeAsset(asset, index, options, runner) {
     const workRoot = path.join(options.outputDir, '.work');
     const workDir = path.join(workRoot, `${slug}-${Date.now()}`);
     const sourceSizeBytes = asset.localSizeBytes || asset.sizeBytes || await getFileSize(sourcePath);
+    let progressStep = 1;
+    let progressTotalSteps = 0;
+    let progressPercent = 0;
+    await writeOptimizerProgress(options, sourcePath, {
+        status: 'running',
+        step: progressStep,
+        totalSteps: progressTotalSteps,
+        percent: progressPercent,
+        message: 'Analyzing source asset'
+    });
+    const original = asset.gltf || await analyzeGlbFile(sourcePath);
     const record = {
         sourceUrl: asset.url,
         sourcePath,
@@ -599,7 +662,7 @@ async function optimizeAsset(asset, index, options, runner) {
         derivativeSizeLabel: null,
         reductionBytes: null,
         reductionPercent: null,
-        original: asset.gltf || await analyzeGlbFile(sourcePath),
+        original,
         derivative: null,
         commands: [],
         status: options.dryRun ? 'dry-run' : 'pending',
@@ -635,6 +698,13 @@ async function optimizeAsset(asset, index, options, runner) {
     }
 
     if (options.dryRun) {
+        await writeOptimizerProgress(options, sourcePath, {
+            status: 'ready',
+            step: 1,
+            totalSteps: 1,
+            percent: 100,
+            message: 'Dry run complete'
+        });
         return record;
     }
 
@@ -642,18 +712,55 @@ async function optimizeAsset(asset, index, options, runner) {
     await mkdir(workDir, { recursive: true });
     try {
         const steps = profileSteps(options.profile, sourcePath, derivativePath, workDir, record.profileOptions);
+        const totalSteps = steps.length + 2;
+        progressTotalSteps = totalSteps;
+        progressPercent = Math.round(100 / totalSteps);
+        await writeOptimizerProgress(options, sourcePath, {
+            status: 'running',
+            step: progressStep,
+            totalSteps,
+            percent: progressPercent,
+            message: 'Source analysis complete'
+        });
         const stepTimeoutMs = options.profile === 'editor-preview' ? 30 * 60 * 1000 : 10 * 60 * 1000;
-        for (const args of steps) {
+        for (let stepIndex = 0; stepIndex < steps.length; stepIndex += 1) {
+            const args = steps[stepIndex];
+            const step = stepIndex + 2;
+            progressStep = step;
+            progressPercent = Math.round(((step - 1) / totalSteps) * 100);
+            await writeOptimizerProgress(options, sourcePath, {
+                status: 'running',
+                step,
+                totalSteps,
+                percent: progressPercent,
+                message: progressStepLabel(args[0])
+            });
             const command = await runCommand(runner, args, stepTimeoutMs);
             record.commands.push(command);
             if (command.code !== 0) {
                 record.status = 'error';
                 const details = String(command.stderr || command.stdout || '').trim().split(/\r?\n/).slice(-3).join(' ');
                 record.error = `${args[0]} failed with exit code ${command.code}${command.signal ? ` (${command.signal})` : ''}${details ? `: ${details}` : ''}`;
+                await writeOptimizerProgress(options, sourcePath, {
+                    status: 'failed',
+                    step,
+                    totalSteps,
+                    percent: Math.round(((step - 1) / totalSteps) * 100),
+                    message: record.error
+                });
                 return record;
             }
         }
 
+        progressStep = totalSteps;
+        progressPercent = Math.round(((totalSteps - 1) / totalSteps) * 100);
+        await writeOptimizerProgress(options, sourcePath, {
+            status: 'running',
+            step: totalSteps,
+            totalSteps,
+            percent: progressPercent,
+            message: 'Validating optimized asset'
+        });
         record.derivativeSizeBytes = await getFileSize(derivativePath);
         record.derivativeSizeLabel = formatBytes(record.derivativeSizeBytes);
         const delta = reduction(sourceSizeBytes, record.derivativeSizeBytes);
@@ -664,8 +771,24 @@ async function optimizeAsset(asset, index, options, runner) {
         record.runtimeSubstitutionReady = record.derivative.extensions.hasDraco &&
             (!options.profile.startsWith('desktop-') || ['desktop-custom', 'desktop-high'].includes(options.profile) || !hasSourceTextures || record.derivative.extensions.hasKtx2);
         record.status = 'done';
+        await writeOptimizerProgress(options, sourcePath, {
+            status: 'ready',
+            step: totalSteps,
+            totalSteps,
+            percent: 100,
+            message: 'Desktop profile derivative is ready'
+        });
 
         return record;
+    } catch (error) {
+        await writeOptimizerProgress(options, sourcePath, {
+            status: 'failed',
+            step: progressStep,
+            totalSteps: progressTotalSteps,
+            percent: progressPercent,
+            message: error && error.message ? error.message : String(error)
+        });
+        throw error;
     } finally {
         await rm(workDir, { recursive: true, force: true });
         await rm(workRoot, { recursive: false, force: true }).catch(() => {});

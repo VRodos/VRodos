@@ -1,17 +1,22 @@
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import vm from "node:vm";
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import vm from 'node:vm';
 
-const root = resolve(import.meta.dirname, "..");
-const source = readFileSync(resolve(root, "assets/js/editor/ajax/vrodos_request_compile.js"), "utf8");
+const root = resolve(import.meta.dirname, '..');
+const source = readFileSync(resolve(root, 'assets/js/editor/ajax/vrodos_request_compile.js'), 'utf8');
 const requests = [];
+const responses = [];
+const servedStatuses = [];
 const timers = [];
 const progress = [];
+const failures = [];
+const links = [];
+const consoleErrors = [];
 let started = 0;
 let finished = 0;
 let hidden = 0;
-let statusMessage = "";
+let statusMessage = '';
 
 class TestAbortController {
     constructor() {
@@ -24,26 +29,88 @@ class TestAbortController {
     }
 }
 
-const statusElement = { textContent: "" };
+function response(status, payload) {
+    return {
+        ok: status >= 200 && status < 300,
+        status,
+        text: async () => JSON.stringify(payload)
+    };
+}
+
+function flushPromises() {
+    return new Promise((resolvePromise) => setImmediate(resolvePromise));
+}
+
+const pendingPayload = {
+    status: 'pending',
+    pending: true,
+    code: 'vrodos_desktop_profiles_pending',
+    message: 'Preparing desktop profile assets (1/3 ready).',
+    phase: { key: 'asset-optimization', step: 2, totalSteps: 3, label: 'Preparing desktop assets' },
+    ready: 1,
+    total: 3,
+    percent: 48,
+    profiles: [
+        {
+            assetId: 90,
+            assetLabel: 'Ancient Ruined Template',
+            profile: 'desktop-low',
+            profileLabel: 'Low',
+            status: 'ready',
+            step: 9,
+            totalSteps: 9,
+            percent: 100,
+            message: 'Ready',
+            updatedAt: '2026-09-06T11:15:04.000Z'
+        },
+        {
+            assetId: 90,
+            assetLabel: 'Ancient Ruined Template',
+            profile: 'desktop-medium',
+            profileLabel: 'Medium',
+            status: 'running',
+            step: 6,
+            totalSteps: 9,
+            percent: 56,
+            message: 'Resizing textures',
+            updatedAt: '2026-09-06T11:16:00.000Z'
+        },
+        {
+            assetId: 90,
+            assetLabel: 'Ancient Ruined Template',
+            profile: 'desktop-high',
+            profileLabel: 'High',
+            status: 'queued',
+            step: 0,
+            totalSteps: 5,
+            percent: 0,
+            message: 'Desktop profile derivative is queued.',
+            updatedAt: '2026-09-06T11:14:28.000Z'
+        }
+    ],
+    retryAfterMs: 3000
+};
+
 const VRODOS = {
     api: {},
-    config: { projectId: "85", sceneId: "86", compileNonce: "test-nonce", isAdmin: "front" },
+    config: { projectId: '88', sceneId: '89', compileNonce: 'test-nonce', isAdmin: 'front' },
     data: {},
-    editor: { envir: { scene: { aframeRuntimeMode: "single-player", aframeVrRuntimeProfile: "desktop" } } },
+    editor: { envir: { scene: { aframeRuntimeMode: 'single-player', aframeVrRuntimeProfile: 'desktop' } } },
     ui: {
         compileDialogState: {
             finishBuildState() { finished += 1; },
             getElement() { return null; },
             hideBuildProgress() { hidden += 1; },
             setStatusMessage(_icon, message) { statusMessage = message; },
-            showBuildProgress(ready, total, message) { progress.push({ ready, total, message }); },
-            showPrimaryExperienceLink() {},
+            showBuildFailure(state, message) { failures.push({ state: structuredClone(state), message }); },
+            showBuildProgress(state) { progress.push(structuredClone(state)); },
+            showPrimaryExperienceLink(url) { links.push(url); },
             showSaveFailedMessage() {},
             showSavePendingMessage() {},
             showStartedState() { started += 1; }
         }
     },
-    utils: { getAjaxUrl: () => "/wp-admin/admin-ajax.php" }
+    utils: { getAjaxUrl: () => '/wp-admin/admin-ajax.php' }
 };
 
 const windowObject = {
@@ -73,52 +140,108 @@ const context = vm.createContext({
     Uint8Array,
     URLSearchParams,
     VRODOS,
-    console: { log() {}, warn() {} },
-    document: { getElementById: () => statusElement },
+    console: {
+        error(...args) { consoleErrors.push(args); },
+        log() {},
+        warn() {}
+    },
     fetch(_url, options) {
         const params = new URLSearchParams(options.body);
-        const action = params.get("action");
+        const action = params.get('action');
         requests.push({ action, params, options });
-        if (action === "vrodos_cancel_compile_action") {
-            return Promise.resolve({ ok: true, status: 200, text: async () => JSON.stringify({ success: true }) });
+        if (action === 'vrodos_cancel_compile_action') {
+            servedStatuses.push(200);
+            return Promise.resolve(response(200, { success: true }));
         }
-        return Promise.resolve({
-            ok: false,
-            status: 409,
-            text: async () => JSON.stringify({
-                success: false,
-                data: { message: "Preparing desktop profile assets (2/6 ready).", pending: true, ready: 2, total: 6, retryAfterMs: 3000 }
-            })
-        });
+        const next = responses.shift();
+        assert(next, 'test did not queue a compile response');
+        servedStatuses.push(next.status);
+        return Promise.resolve(next);
     },
+    structuredClone,
     window: windowObject
 });
 windowObject.window = windowObject;
 
-vm.runInContext(source, context, { filename: "vrodos_request_compile.js" });
+vm.runInContext(source, context, { filename: 'vrodos_request_compile.js' });
+
+responses.push(
+    response(202, pendingPayload),
+    response(200, { CurrentSceneMasterClient: 'http://localhost:8088/build/scene-89.html' })
+);
 VRODOS.api.compileScene(false, { skipSave: true });
-await new Promise((resolvePromise) => setImmediate(resolvePromise));
+await flushPromises();
 
-assert.equal(VRODOS.api.isCompileRunning(), true, "compile remains active while derivative work is pending");
-assert.equal(started, 1, "the build UI enters its running state once");
-assert.equal(requests[0].action, "vrodos_compile_action", "the first request starts the build");
-assert.match(requests[0].params.get("buildId"), /^[a-f0-9]{32}$/);
-assert.deepEqual(progress.at(-1), { ready: 2, total: 6, message: "Preparing desktop profile assets (2/6 ready)." });
-assert.equal(timers.length, 1, "pending work schedules one retry");
+assert.equal(VRODOS.api.isCompileRunning(), true, 'compile remains active while derivative work is pending');
+assert.equal(started, 1, 'the build UI enters its running state once');
+assert.equal(requests[0].action, 'vrodos_compile_action', 'the first request starts the build');
+assert.match(requests[0].params.get('buildId'), /^[a-f0-9]{32}$/);
+assert.equal(servedStatuses[0], 202, 'expected background work uses HTTP 202');
+assert.equal(progress.at(-1).ready, 1);
+assert.equal(progress.at(-1).percent, 48);
+assert.equal(progress.at(-1).phase.step, 2);
+assert.equal(progress.at(-1).profiles[1].message, 'Resizing textures');
+assert.equal(progress.at(-1).profiles[1].step, 6);
+assert.equal(timers.length, 1, 'pending work schedules one retry');
 
-assert.equal(VRODOS.api.restoreCompileUi(), true, "an active build can restore the dialog state");
-assert.equal(started, 2, "restoring the dialog reapplies the running controls");
+timers.shift()();
+await flushPromises();
+assert.equal(servedStatuses[1], 200, 'the retry can complete with HTTP 200');
+assert.equal(VRODOS.api.isCompileRunning(), false, 'successful compile clears the active build');
+assert.equal(finished, 1, 'successful compile releases the build controls');
+assert.equal(hidden, 1, 'successful compile hides the progress panel');
+assert.equal(links.at(-1), 'http://localhost:8088/build/scene-89.html');
+assert.equal(consoleErrors.length, 0, 'normal pending and successful responses do not log errors');
 
+responses.push(response(202, pendingPayload));
+VRODOS.api.compileScene(false, { skipSave: true });
+await flushPromises();
+assert.equal(VRODOS.api.restoreCompileUi(), true, 'an active build can restore its detailed progress');
+assert.equal(started, 3, 'restoring the dialog reapplies the running controls');
+const compileRequestsBeforeCancel = requests.filter((request) => request.action === 'vrodos_compile_action').length;
+const staleRetry = timers.shift();
 await VRODOS.api.cancelCompile();
-assert.equal(VRODOS.api.isCompileRunning(), false, "cancel clears the active build");
-assert.equal(finished, 1, "cancel releases the build controls");
-assert.equal(hidden, 1, "cancel hides the progress panel");
+assert.equal(VRODOS.api.isCompileRunning(), false, 'cancel clears the active build');
+assert.equal(hidden, 2, 'cancel hides the progress panel');
 assert.match(statusMessage, /Build canceled/);
-assert.equal(requests[1].action, "vrodos_cancel_compile_action", "cancel is persisted on the server");
-assert.equal(requests[1].params.get("buildId"), requests[0].params.get("buildId"));
+assert.equal(requests.at(-1).action, 'vrodos_cancel_compile_action', 'cancel is persisted on the server');
+staleRetry();
+await flushPromises();
+assert.equal(
+    requests.filter((request) => request.action === 'vrodos_compile_action').length,
+    compileRequestsBeforeCancel,
+    'a canceled retry cannot restart the old build'
+);
 
-timers[0]();
-await new Promise((resolvePromise) => setImmediate(resolvePromise));
-assert.equal(requests.filter((request) => request.action === "vrodos_compile_action").length, 1, "a canceled retry cannot restart the old build");
+responses.push(response(500, {
+    success: false,
+    data: {
+        code: 'vrodos_desktop_profiles_failed',
+        message: 'KTX-Software is unavailable.',
+        ready: 1,
+        total: 3,
+        percent: 34,
+        profiles: [
+            {
+                assetId: 90,
+                assetLabel: 'Ancient Ruined Template',
+                profile: 'desktop-medium',
+                profileLabel: 'Medium',
+                status: 'failed',
+                step: 6,
+                totalSteps: 9,
+                percent: 56,
+                message: 'KTX-Software is unavailable.'
+            }
+        ]
+    }
+}));
+VRODOS.api.compileScene(false, { skipSave: true });
+await flushPromises();
+assert.equal(VRODOS.api.isCompileRunning(), false, 'a genuine failure clears the active build');
+assert.equal(failures.length, 1, 'a genuine failure remains visible in the progress UI');
+assert.equal(failures[0].state.profiles[0].status, 'failed');
+assert.match(failures[0].message, /KTX-Software/);
+assert.equal(consoleErrors.length, 1, 'only a genuine failure is logged as an error');
 
-console.log("Compile request lifecycle tests passed.");
+console.log('Compile request lifecycle tests passed.');

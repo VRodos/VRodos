@@ -142,7 +142,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 	}
 
 	private function generate_derivative( int $asset_id, array $source, string $profile, array $options = [] ) {
-		$paths = $this->build_derivative_paths( $asset_id, $source, $profile );
+		$paths = self::build_derivative_paths( $asset_id, $source, $profile );
 
 		if ( ! wp_mkdir_p( $paths['dir'] ) ) {
 			return new WP_Error( 'vrodos_derivative_dir_failed', 'Could not create derivative output directory.' );
@@ -172,6 +172,10 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			$profile,
 			'--json',
 		];
+		if ( str_starts_with( $profile, 'desktop-' ) ) {
+			$args[] = '--progress-file';
+			$args[] = $paths['progress'];
+		}
 		if ( ! empty( $options['protectGeometry'] ) ) {
 			$args[] = '--protect-geometry';
 		}
@@ -220,7 +224,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		];
 	}
 
-	private function build_derivative_paths( int $asset_id, array $source, string $profile ): array {
+	private static function build_derivative_paths( int $asset_id, array $source, string $profile ): array {
 		$dir = VRodos_Storage_Manager::private_entity_directory( 'asset', $asset_id, 'derivatives', $profile );
 		if ( is_wp_error( $dir ) ) {
 			throw new RuntimeException( $dir->get_error_message() );
@@ -233,6 +237,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			'file'     => $dir . '/' . $base . '.glb',
 			'manifest' => $dir . '/' . $base . '.manifest.json',
 			'markdown' => $dir . '/' . $base . '.manifest.md',
+			'progress' => $dir . '/' . $base . '.progress.json',
 		];
 	}
 

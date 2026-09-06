@@ -105,6 +105,15 @@ if (compileLifecycleResult.status !== 0) {
     process.exit(compileLifecycleResult.status || 1);
 }
 
+const optimizerProgressResult = spawnSync(process.execPath, [resolve(root, "scripts/test-optimizer-progress.mjs")], {
+    cwd: root,
+    stdio: "inherit",
+    shell: false
+});
+if (optimizerProgressResult.status !== 0) {
+    process.exit(optimizerProgressResult.status || 1);
+}
+
 const storageSecurityResult = spawnSync(process.execPath, [resolve(root, "scripts/test-storage-security-contract.mjs")], {
 	cwd: root,
 	stdio: "inherit",

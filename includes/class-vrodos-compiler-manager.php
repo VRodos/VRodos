@@ -95,10 +95,18 @@ class VRodos_Compiler_Manager {
 					'vrodos_desktop_profiles_pending',
 					(string) ( $profile_assets['message'] ?? 'Preparing desktop performance profile assets.' ),
 					[
-						'status'  => 409,
+						'status'  => 202,
 						'pending' => true,
+						'phase'   => [
+							'key'        => 'asset-optimization',
+							'step'       => 2,
+							'totalSteps' => 3,
+							'label'      => 'Preparing desktop assets',
+						],
 						'ready'   => absint( $profile_assets['ready'] ?? 0 ),
 						'total'   => absint( $profile_assets['total'] ?? 0 ),
+						'percent' => absint( $profile_assets['percent'] ?? 0 ),
+						'profiles' => is_array( $profile_assets['profiles'] ?? null ) ? $profile_assets['profiles'] : [],
 						'retryAfterMs' => 3000,
 					]
 				);
@@ -107,7 +115,13 @@ class VRodos_Compiler_Manager {
 				return new WP_Error(
 					'vrodos_desktop_profiles_failed',
 					(string) ( $profile_assets['message'] ?? 'Desktop performance profile asset preparation failed.' ),
-					[ 'status' => 409 ]
+					[
+						'status'   => 500,
+						'ready'    => absint( $profile_assets['ready'] ?? 0 ),
+						'total'    => absint( $profile_assets['total'] ?? 0 ),
+						'percent'  => absint( $profile_assets['percent'] ?? 0 ),
+						'profiles' => is_array( $profile_assets['profiles'] ?? null ) ? $profile_assets['profiles'] : [],
+					]
 				);
 			}
 			$this->resource_publisher->prepare_plan( $plan );
