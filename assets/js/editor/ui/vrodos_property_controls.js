@@ -884,11 +884,16 @@ function getObjectTypeLabel(object) {
     if (!object) return '';
 
     return humanizeObjectTypeLabel(
-        object.category_slug ||
-        object.category_name ||
-        object.asset_type ||
-        ''
+        vrodosGetEffectiveObjectCategory(object) || object.asset_type || ''
     );
+}
+
+function vrodosGetEffectiveObjectCategory(object) {
+    if (!object) return '';
+
+    return typeof VRODOS.utils.resolveSceneAssetCategory === 'function'
+        ? VRODOS.utils.resolveSceneAssetCategory(object)
+        : String(object.category_slug || object.category_name || '').trim();
 }
 
 function updateObjectControlsMeta(object) {
@@ -994,6 +999,74 @@ function displayAssessmentProperties(object) {
     section.style.display = 'block';
 }
 
+function ensureSceneAssetRolePropertiesSection() {
+    const container = getObjectControlsElement('propertiesContainer');
+    if (!container) return null;
+
+    let section = document.getElementById('sceneAssetRolePropertiesDiv');
+    if (section) {
+        return section;
+    }
+
+    section = document.createElement('div');
+    section.id = 'sceneAssetRolePropertiesDiv';
+    section.className = 'object-property-section';
+    section.style.display = 'none';
+    section.innerHTML =
+        '<div class="prop-section-title" style="padding-bottom:2px; margin-bottom:2px;">Scene Role</div>' +
+        '<div class="tw-flex tw-flex-col tw-gap-2 tw-px-3 tw-pb-3" style="padding-top:2px;">' +
+        '<label for="sceneAssetRoleSelect" class="tw-text-[11px] tw-font-semibold tw-text-slate-200">Role for this placement</label>' +
+        '<select id="sceneAssetRoleSelect" class="tw-select tw-select-sm tw-w-full tw-bg-slate-900/70 tw-border-white/10 tw-text-slate-100">' +
+        '<option value="decoration">Decoration</option>' +
+        '<option value="walkable-surface">Walkable Surface</option>' +
+        '</select>' +
+        '<div class="tw-text-[10px] tw-leading-relaxed tw-text-slate-400">This changes only this placement in the current scene. The uploaded asset and its other placements stay unchanged.</div>' +
+        '</div>';
+
+    container.appendChild(section);
+
+    const select = document.getElementById('sceneAssetRoleSelect');
+    if (select) {
+        select.addEventListener('change', function () {
+            const selectedObject = getObjectControlsTargetObject();
+            if (!selectedObject || typeof VRODOS.utils.isSceneAssetRoleEligible !== 'function' ||
+                !VRODOS.utils.isSceneAssetRoleEligible(selectedObject)) {
+                return;
+            }
+
+            const nextRole = VRODOS.utils.normalizeSceneAssetRole(this.value);
+            const previousRole = vrodosGetEffectiveObjectCategory(selectedObject);
+            if (!nextRole || nextRole === previousRole) {
+                return;
+            }
+
+            if (nextRole === 'walkable-surface' && typeof VRODOS.utils.initializeWalkableBehaviorForRoleChange === 'function') {
+                VRODOS.utils.initializeWalkableBehaviorForRoleChange(selectedObject);
+            }
+
+            const override = typeof VRODOS.utils.sceneAssetRoleOverrideFor === 'function'
+                ? VRODOS.utils.sceneAssetRoleOverrideFor(selectedObject, nextRole)
+                : nextRole;
+            vrodosCommitObjectControlsProperty('sceneAssetRole', override || undefined);
+            refreshSceneAssetRolePresentation(selectedObject);
+        });
+    }
+
+    return section;
+}
+
+function displaySceneAssetRoleProperties(object) {
+    const section = ensureSceneAssetRolePropertiesSection();
+    if (!section || !object) return;
+
+    const select = document.getElementById('sceneAssetRoleSelect');
+    if (select) {
+        select.value = vrodosGetEffectiveObjectCategory(object);
+    }
+
+    section.style.display = 'block';
+}
+
 function vrodosNormalizeWalkableBehavior(value) {
     return String(value || '').toLowerCase() === 'auto' ? 'auto' : 'precise';
 }
@@ -1030,24 +1103,12 @@ function ensureWalkableSurfacePropertiesSection() {
             const selectedObject = getObjectControlsTargetObject();
             if (!selectedObject) return;
 
-            if (String(selectedObject.category_slug || '').toLowerCase() !== 'walkable-surface') {
+            if (vrodosGetEffectiveObjectCategory(selectedObject) !== 'walkable-surface') {
                 return;
             }
 
             const nextBehavior = vrodosNormalizeWalkableBehavior(select.value);
-            if (selectedObject.walkableBehavior === nextBehavior) {
-                return;
-            }
-
-            selectedObject.walkableBehavior = nextBehavior;
-            if (!selectedObject.userData) {
-                selectedObject.userData = {};
-            }
-            selectedObject.userData.walkableBehavior = nextBehavior;
-
-            if (typeof VRODOS.editor.envir !== 'undefined' && VRODOS.editor.envir.scene) {
-                VRODOS.editor.envir.scene.dispatchEvent({ type: 'modificationPendingSave' });
-            }
+            vrodosCommitObjectControlsProperty('walkableBehavior', nextBehavior);
         });
     }
 
@@ -1113,7 +1174,7 @@ function vrodosIsPlayerCollisionEligible(object) {
         return false;
     }
 
-    const categorySlug = String(object.category_slug || '').toLowerCase();
+    const categorySlug = vrodosGetEffectiveObjectCategory(object).toLowerCase();
     if (VRODOS_COLLIDABLE_CATEGORY_SLUGS.has(categorySlug)) {
         return true;
     }
@@ -1372,11 +1433,16 @@ function vrodosCommitObjectControlsProperty(prop, nextValue) {
         return;
     }
 
-    targetObject[prop] = nextValue;
     if (!targetObject.userData) {
         targetObject.userData = {};
     }
-    targetObject.userData[prop] = nextValue;
+    if (prop === 'sceneAssetRole' && (nextValue === undefined || nextValue === null || nextValue === '')) {
+        delete targetObject.sceneAssetRole;
+        delete targetObject.userData.sceneAssetRole;
+    } else {
+        targetObject[prop] = nextValue;
+        targetObject.userData[prop] = nextValue;
+    }
 
     if (typeof VRODOS.editor.undoManager !== 'undefined' && !VRODOS.editor.undoManager.isExecuting) {
         VRODOS.editor.undoManager.add(new VRODOS.editor.PropertyCommand(targetObject, prop, previousValue, nextValue));
@@ -1553,8 +1619,12 @@ function showPropertiesInPanel(object) {
 
     let hasProperties = false;
 
-    // Dispatch by category_slug first
-    switch (object.category_slug) {
+    if (typeof VRODOS.utils.isSceneAssetRoleEligible === 'function' && VRODOS.utils.isSceneAssetRoleEligible(object)) {
+        displaySceneAssetRoleProperties(object);
+        hasProperties = true;
+    }
+
+    switch (vrodosGetEffectiveObjectCategory(object)) {
         case 'assessment':
             displayAssessmentProperties(object);
             hasProperties = true;
@@ -1592,6 +1662,18 @@ function showPropertiesInPanel(object) {
     if (hasProperties) {
         const container = getObjectControlsElement('propertiesContainer');
         if (container) container.style.display = 'block';
+    }
+}
+
+function refreshSceneAssetRolePresentation(object) {
+    if (!object) return;
+
+    showPropertiesInPanel(object);
+    if (typeof VRODOS.ui.updateHierarchyObjectType === 'function') {
+        VRODOS.ui.updateHierarchyObjectType(object);
+    }
+    if (typeof VRODOS.editor.requestRender === 'function') {
+        VRODOS.editor.requestRender('scene-asset-role-changed');
     }
 }
 
@@ -2589,6 +2671,7 @@ VRODOS.ui.isObjectControlsPanelOpen = isObjectControlsPanelOpen;
 VRODOS.ui.bindObjectControlsPanelEvents = bindObjectControlsPanelEvents;
 VRODOS.ui.setObjectControlsActionsVisible = setObjectControlsActionsVisible;
 VRODOS.ui.showPropertiesInPanel = showPropertiesInPanel;
+VRODOS.ui.refreshSceneAssetRolePresentation = refreshSceneAssetRolePresentation;
 VRODOS.ui.controlInterface = controlInterface;
 VRODOS.ui.controllerDatGuiOnChange = controllerDatGuiOnChange;
 VRODOS.ui.updatePositionsPhpAndJavsFromControlsAxes = updatePositionsPhpAndJavsFromControlsAxes;

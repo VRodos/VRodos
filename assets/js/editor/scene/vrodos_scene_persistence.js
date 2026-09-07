@@ -345,6 +345,14 @@ VRODOS.exporter.SceneExporter = class {
         entryObject.category_slug = typeof VRODOS.utils.normalizeSceneAssetCategory === 'function'
             ? VRODOS.utils.normalizeSceneAssetCategory(entryObject.category_slug || entryObject.category_name || o.category_slug || o.category_name)
             : (entryObject.category_slug || entryObject.category_name || '');
+        const sceneAssetRole = typeof VRODOS.utils.sceneAssetRoleOverrideFor === 'function'
+            ? VRODOS.utils.sceneAssetRoleOverrideFor(entryObject, entryObject.sceneAssetRole)
+            : '';
+        if (sceneAssetRole) {
+            entryObject.sceneAssetRole = sceneAssetRole;
+        } else {
+            delete entryObject.sceneAssetRole;
+        }
         entryObject.compiledCollisionEnabled = o.compiledCollisionEnabled === true ||
             String(o.compiledCollisionEnabled).trim().toLowerCase() === 'true' ||
             String(o.compiledCollisionEnabled).trim() === '1';

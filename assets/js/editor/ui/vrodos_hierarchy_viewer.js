@@ -205,10 +205,17 @@ VRODOS.ui.resetInScene = function(name) {
  */
 function _hierarchyIconForObject(obj) {
     if (_hierarchyIsDirector(obj)) return VRODOS.ui.getCategoryIcon('director');
-    // Prefer category_slug (taxonomy), fall back to category_name (runtime lights/pawn)
-    return VRODOS.ui.getCategoryIcon(obj.category_slug) !== VRODOS.ui.icons.categoryIconDefault
-        ? VRODOS.ui.getCategoryIcon(obj.category_slug)
+    const categorySlug = typeof VRODOS.utils.resolveSceneAssetCategory === 'function'
+        ? VRODOS.utils.resolveSceneAssetCategory(obj)
+        : obj.category_slug;
+    return VRODOS.ui.getCategoryIcon(categorySlug) !== VRODOS.ui.icons.categoryIconDefault
+        ? VRODOS.ui.getCategoryIcon(categorySlug)
         : VRODOS.ui.getCategoryIcon(obj.category_name);
+}
+
+function _hierarchyIconColorForObject(obj) {
+    if (_hierarchyIsDirector(obj)) return 'tw-text-blue-400';
+    return _hierarchyIsLightCategory(obj) ? 'tw-text-amber-400' : 'tw-text-white/40';
 }
 
 /**
@@ -540,9 +547,7 @@ function _findInsertionPoint(obj) {
 
 function _hierarchyItemHTML(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML) {
     const iconName = _hierarchyIconForObject(obj);
-    const isLight = _hierarchyIsLightCategory(obj);
-    let iconColor = isLight ? 'tw-text-amber-400' : 'tw-text-white/40';
-    if (_hierarchyIsDirector(obj)) iconColor = 'tw-text-blue-400';
+    const iconColor = _hierarchyIconColorForObject(obj);
     const assessmentBadgesHTML = _hierarchyAssessmentBadgesHTML(obj);
     const safeId = _hierarchyAttribute(obj.uuid);
     const safeName = _hierarchyAttribute(obj.name);
@@ -639,6 +644,20 @@ VRODOS.ui.updateHierarchyLockIcon = function(object) {
     const deleteButton = hierarchyItem.querySelector('[data-hierarchy-action="delete"]');
     _hierarchyApplyDeleteButtonState(deleteButton, object);
     VRODOS.ui.refreshLucideIcons({ nodes: [lockAnchor] });
+};
+
+VRODOS.ui.updateHierarchyObjectType = function(object) {
+    const hierarchyItem = object ? VRODOS.ui.getHierarchyItemForObject(object.uuid, object.name) : null;
+    const currentIcon = hierarchyItem ? hierarchyItem.firstElementChild : null;
+    if (!currentIcon || !['I', 'SVG'].includes(String(currentIcon.tagName || '').toUpperCase())) {
+        return;
+    }
+
+    const replacement = document.createElement('i');
+    replacement.setAttribute('data-lucide', _hierarchyIconForObject(object));
+    replacement.className = `tw-w-4 tw-h-4 tw-flex-shrink-0 ${_hierarchyIconColorForObject(object)}`;
+    currentIcon.replaceWith(replacement);
+    VRODOS.ui.refreshLucideIcons({ nodes: [hierarchyItem] });
 };
 
 function _createHierarchyItemFragment(obj, object_name, created, deleteButtonHTML, resetButtonHTML, lockButtonHTML) {

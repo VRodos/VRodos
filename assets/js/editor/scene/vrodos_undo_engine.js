@@ -512,6 +512,18 @@ VRODOS.editor.PropertyCommand = class {
 
         if (this.property === 'locked') {
             vrodosUndoSetLocked(obj, val);
+        } else if (this.property === 'sceneAssetRole') {
+            const sceneRole = typeof VRODOS.utils.sceneAssetRoleOverrideFor === 'function'
+                ? VRODOS.utils.sceneAssetRoleOverrideFor(obj, val)
+                : val;
+            obj.userData = obj.userData || {};
+            if (sceneRole) {
+                obj.sceneAssetRole = sceneRole;
+                obj.userData.sceneAssetRole = sceneRole;
+            } else {
+                delete obj.sceneAssetRole;
+                delete obj.userData.sceneAssetRole;
+            }
         } else if (this.property === 'color') {
             if (isLightObject && VRODOS.utils && typeof VRODOS.utils.applyEditorLightColor === 'function') {
                 VRODOS.utils.applyEditorLightColor(obj, val, scene);
@@ -524,6 +536,11 @@ VRODOS.editor.PropertyCommand = class {
             }
         } else {
             obj[this.property] = val;
+        }
+
+        if (this.property === 'walkableBehavior') {
+            obj.userData = obj.userData || {};
+            obj.userData.walkableBehavior = val;
         }
 
         const isLocked = vrodosUndoReconcileLockState(obj);
@@ -542,7 +559,9 @@ VRODOS.editor.PropertyCommand = class {
             VRODOS.ui.setDatGuiInitialVales(obj);
         }
         
-        if (!isLocked && typeof VRODOS.ui.showPropertiesInPanel === 'function') {
+        if (!isLocked && this.property === 'sceneAssetRole' && typeof VRODOS.ui.refreshSceneAssetRolePresentation === 'function') {
+            VRODOS.ui.refreshSceneAssetRolePresentation(obj);
+        } else if (!isLocked && typeof VRODOS.ui.showPropertiesInPanel === 'function') {
             VRODOS.ui.showPropertiesInPanel(obj);
         }
 

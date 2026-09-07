@@ -72,6 +72,14 @@ if ( ! function_exists( 'wp_strip_all_tags' ) ) {
 		return strip_tags( $value );
 	}
 }
+if ( ! function_exists( 'get_post_meta' ) ) {
+	function get_post_meta( int $post_id, string $key, bool $single = false ) {
+		if ( 'vrodos_asset3d_glb' === $key && $post_id > 0 ) {
+			return '/uploads/source-' . $post_id . '.glb';
+		}
+		return $single ? '' : [];
+	}
+}
 
 require_once __DIR__ . '/../includes/class-vrodos-compiler-runtime-assets.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-scene-repository.php';
@@ -85,6 +93,17 @@ require_once __DIR__ . '/../includes/class-vrodos-compiler-scene-settings.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-plan-resolver.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-target-renderer.php';
 require_once __DIR__ . '/../includes/class-vrodos-compiler-link-publisher.php';
+require_once __DIR__ . '/../includes/asset-optimization/trait-vrodos-asset-optimization-desktop-profiles.php';
+
+final class VRodos_Test_Desktop_Profile_Asset_Collector {
+	use VRodos_Asset_Optimization_Desktop_Profiles;
+
+	public static function collect( $scene_json ): array {
+		$assets = [];
+		self::collect_desktop_profile_assets( $scene_json, $assets );
+		return $assets;
+	}
+}
 
 function vrodos_foundation_assert( bool $condition, string $label ): void {
 	if ( $condition ) {
@@ -151,6 +170,23 @@ foreach ( [ 'walkableSurface' => 'walkable-surface', 'collisionProxy' => 'collis
 	vrodos_foundation_assert( $expected === $normalizer->canonical_category( $alias ), 'canonical entity category: ' . $alias );
 }
 
+vrodos_foundation_assert(
+	'walkable-surface' === $normalizer->effective_category( (object) [ 'category_slug' => 'decoration', 'sceneAssetRole' => 'walkable-surface' ] ),
+	'decoration placement can resolve as walkable'
+);
+vrodos_foundation_assert(
+	'decoration' === $normalizer->effective_category( (object) [ 'category_slug' => 'walkable-surface', 'sceneAssetRole' => 'decoration' ] ),
+	'walkable placement can resolve as decoration'
+);
+vrodos_foundation_assert(
+	'decoration' === $normalizer->effective_category( (object) [ 'category_slug' => 'decoration', 'sceneAssetRole' => 'invalid' ] ),
+	'invalid placement role is ignored'
+);
+vrodos_foundation_assert(
+	'door' === $normalizer->effective_category( (object) [ 'category_slug' => 'door', 'sceneAssetRole' => 'walkable-surface' ] ),
+	'placement role on an ineligible category is ignored'
+);
+
 if ( class_exists( 'DOMDocument' ) ) {
 	$dom     = new DOMDocument( '1.0', 'UTF-8' );
 	$scene   = $dom->createElement( 'a-scene' );
@@ -182,6 +218,28 @@ if ( class_exists( 'DOMDocument' ) ) {
 				'rotation' => [ 0, 0, 0 ],
 				'scale' => [ 1, 1, 1 ],
 			],
+			'convertedWalkable' => (object) [
+				'category_slug' => 'decoration',
+				'sceneAssetRole' => 'walkable-surface',
+				'asset_id' => 701,
+				'glb_path' => '/converted-walkable.glb',
+				'compiledCollisionEnabled' => true,
+				'walkableBehavior' => 'auto',
+				'position' => [ 100, 0, 0 ],
+				'rotation' => [ 0, 0, 0 ],
+				'scale' => [ 1, 1, 1 ],
+			],
+			'convertedDecoration' => (object) [
+				'category_slug' => 'walkable-surface',
+				'sceneAssetRole' => 'decoration',
+				'asset_id' => 702,
+				'glb_path' => '/converted-decoration.glb',
+				'compiledCollisionEnabled' => true,
+				'walkableBehavior' => 'precise',
+				'position' => [ 100, 0, 0 ],
+				'rotation' => [ 0, 0, 0 ],
+				'scale' => [ 1, 1, 1 ],
+			],
 		],
 		1,
 		42,
@@ -190,6 +248,18 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$lights = $dom->getElementsByTagName( 'a-light' );
 	vrodos_foundation_assert( 1 === $lights->length, 'light renderer emits a-light' );
 	vrodos_foundation_assert( str_contains( $lights->item( 0 )->getAttribute( 'light' ), 'type: directional' ), 'sun renderer emits directional light' );
+	$role_xpath = new DOMXPath( $dom );
+	$converted_walkable = $role_xpath->query( '//*[@data-vrodos-asset-id="701"]' )->item( 0 );
+	$converted_decoration = $role_xpath->query( '//*[@data-vrodos-asset-id="702"]' )->item( 0 );
+	vrodos_foundation_assert( $converted_walkable instanceof DOMElement, 'converted walkable is rendered' );
+	vrodos_foundation_assert( 'true' === $converted_walkable->getAttribute( 'data-vrodos-navmesh' ), 'converted walkable emits navmesh attributes' );
+	vrodos_foundation_assert( 'auto' === $converted_walkable->getAttribute( 'data-vrodos-walk-behavior' ), 'converted walkable keeps Auto behavior' );
+	vrodos_foundation_assert( 'critical' === $converted_walkable->getAttribute( 'data-vrodos-load-phase' ), 'converted walkable loads critically' );
+	vrodos_foundation_assert( 'navmesh' === $converted_walkable->getAttribute( 'data-vrodos-collision-role' ), 'converted walkable collision resolves as navmesh' );
+	vrodos_foundation_assert( $converted_decoration instanceof DOMElement, 'converted decoration is rendered' );
+	vrodos_foundation_assert( ! $converted_decoration->hasAttribute( 'data-vrodos-navmesh' ), 'converted decoration omits navmesh attributes' );
+	vrodos_foundation_assert( 'lazy' === $converted_decoration->getAttribute( 'data-vrodos-load-phase' ), 'converted decoration uses normal deferred loading' );
+	vrodos_foundation_assert( 'solid' === $converted_decoration->getAttribute( 'data-vrodos-collision-role' ), 'converted decoration preserves explicitly enabled solid collision' );
 	$render_diagnostics = $renderer->build_compile_diagnostics( $dom );
 	vrodos_foundation_assert( 1 === count( $render_diagnostics['warnings'] ?? [] ), 'unknown categories emit one diagnostic' );
 
@@ -375,6 +445,60 @@ vrodos_foundation_assert( ! property_exists( $planned_decoration, 'follow_camera
 vrodos_foundation_assert( ! property_exists( $scene_one->objects->decoration0, 'uuid' ), 'compile plan does not mutate source scene entities' );
 vrodos_foundation_assert( property_exists( $scene_one->objects->decoration0, 'follow_camera' ), 'source scene compatibility fields remain intact' );
 vrodos_foundation_assert( ! property_exists( $project_plan->scenes[0]->scene_json->objects->avatarCamera, 'uuid' ), 'camera configuration is not normalized as an entity' );
+
+$role_scene_one = (object) [
+	'metadata' => (object) [],
+	'objects' => (object) [
+		'convertedWalkable' => (object) [
+			'category_slug' => 'decoration',
+			'sceneAssetRole' => 'walkable-surface',
+			'asset_id' => 801,
+			'compiledCollisionEnabled' => false,
+		],
+		'siblingDecoration' => (object) [
+			'category_slug' => 'decoration',
+			'asset_id' => 801,
+			'compiledCollisionEnabled' => false,
+		],
+		'convertedDecoration' => (object) [
+			'category_slug' => 'walkable-surface',
+			'sceneAssetRole' => 'decoration',
+			'asset_id' => 802,
+			'compiledCollisionEnabled' => false,
+		],
+	],
+];
+$role_scene_two = (object) [
+	'metadata' => (object) [],
+	'objects' => (object) [
+		'otherScenePlacement' => (object) [
+			'category_slug' => 'decoration',
+			'asset_id' => 801,
+			'compiledCollisionEnabled' => false,
+		],
+	],
+];
+$role_plan = $plan_resolver->resolve(
+	new VRodos_Compile_Request( 9, 201, [ 201, 202 ], 'single-player', 'desktop', true ),
+	[
+		'project_title' => 'Scene role fixture',
+		'project_type_slug' => 'virtualproduction_games',
+		'valid_scene_ids' => [ 201, 202 ],
+		'scene_title' => [ 'Override', 'Inherited' ],
+		'scene_json' => [ $role_scene_one, $role_scene_two ],
+	]
+);
+$role_objects = $role_plan->scenes[0]->scene_json->objects;
+vrodos_foundation_assert( 'walkable-surface' === $role_objects->convertedWalkable->category_slug, 'compile plan applies Decoration to Walkable override' );
+vrodos_foundation_assert( 'decoration' === $role_objects->siblingDecoration->category_slug, 'two placements of one asset keep independent roles' );
+vrodos_foundation_assert( 'decoration' === $role_objects->convertedDecoration->category_slug, 'compile plan applies Walkable to Decoration override' );
+vrodos_foundation_assert( 'decoration' === $role_plan->scenes[1]->scene_json->objects->otherScenePlacement->category_slug, 'the same asset in another scene remains unchanged' );
+vrodos_foundation_assert( 'decoration' === $role_scene_one->objects->convertedWalkable->category_slug, 'compile plan leaves the persisted source category untouched' );
+$role_profile_assets = VRodos_Test_Desktop_Profile_Asset_Collector::collect( $role_plan->scenes[0]->scene_json );
+$other_scene_profile_assets = VRodos_Test_Desktop_Profile_Asset_Collector::collect( $role_plan->scenes[1]->scene_json );
+vrodos_foundation_assert( ! empty( $role_profile_assets[801]['protectGeometry'] ), 'converted walkable protects desktop-profile geometry' );
+vrodos_foundation_assert( empty( $role_profile_assets[802]['protectGeometry'] ), 'converted decoration does not retain walkable geometry protection' );
+vrodos_foundation_assert( empty( $other_scene_profile_assets[801]['protectGeometry'] ), 'geometry protection remains scene-specific' );
 
 $link_publisher = new VRodos_Compiler_Link_Publisher(
 	static fn ( int $project_id, string $filename, ?string $mode, string $runtime_mode ): string => $project_id . ':' . ( $mode ?: 'primary' ) . ':' . $runtime_mode . ':' . $filename,

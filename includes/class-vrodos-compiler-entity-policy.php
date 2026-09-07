@@ -6,6 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Canonicalizes objects from the compile plan's already-isolated scene copy. */
 final class VRodos_Compiler_Entity_Policy {
+	private const SCENE_ASSET_ROLES = [ 'decoration', 'walkable-surface' ];
+
 	private const CATEGORY_ALIASES = [
 		'lightsun' => 'light-sun', 'lightspot' => 'light-spot', 'lightlamp' => 'light-lamp', 'lightambient' => 'light-ambient',
 		'walkablesurface' => 'walkable-surface', 'collisionproxy' => 'collision-proxy', 'poilink' => 'poi-link', 'poichat' => 'poi-chat',
@@ -21,7 +23,7 @@ final class VRodos_Compiler_Entity_Policy {
 
 	public function normalize( object $source, int $scene_id, string $object_key ): object {
 		unset( $source->follow_camera, $source->follow_camera_x, $source->follow_camera_z );
-		$source->category_slug = $this->canonical_category( (string) ( $source->category_slug ?? $source->category_name ?? '' ) );
+		$source->category_slug = $this->effective_category( $source );
 		$source->name          = empty( $source->name ) ? $object_key : $source->name;
 		if ( empty( $source->uuid ) ) {
 			$identity    = implode( '|', [ max( 0, $scene_id ), $object_key, $source->category_slug, $source->asset_id ?? '', $source->asset_slug ?? '', $source->immerse_attachment_id ?? '' ] );
@@ -33,6 +35,16 @@ final class VRodos_Compiler_Entity_Policy {
 	public function canonical_category( string $category ): string {
 		$category = trim( preg_replace( '/[^a-z0-9]+/', '-', strtolower( trim( $category ) ) ) ?? '', '-' );
 		return self::CATEGORY_ALIASES[ $category ] ?? $category;
+	}
+
+	public function effective_category( object $source ): string {
+		$source_category = $this->canonical_category( (string) ( $source->category_slug ?? $source->category_name ?? '' ) );
+		if ( ! in_array( $source_category, self::SCENE_ASSET_ROLES, true ) ) {
+			return $source_category;
+		}
+
+		$scene_role = strtolower( trim( (string) ( $source->sceneAssetRole ?? '' ) ) );
+		return in_array( $scene_role, self::SCENE_ASSET_ROLES, true ) ? $scene_role : $source_category;
 	}
 
 	public function is_normalized( object $entity ): bool {

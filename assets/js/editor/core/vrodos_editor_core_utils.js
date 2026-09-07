@@ -23,6 +23,12 @@ VRODOS.importer = VRODOS.importer || {};
     const sceneCategoryAliases = Object.freeze({
         Pawn: 'pawn',
         pawn: 'pawn',
+        Decoration: 'decoration',
+        decoration: 'decoration',
+        'Walkable Surface': 'walkable-surface',
+        'Walkable Surfaces': 'walkable-surface',
+        walkableSurface: 'walkable-surface',
+        'walkable-surface': 'walkable-surface',
         '3D Text': '3d-text',
         '3d-text': '3d-text',
         Assessment: 'assessment',
@@ -163,6 +169,61 @@ VRODOS.importer = VRODOS.importer || {};
     function normalizeSceneAssetCategory(category) {
         const value = String(category || '').trim();
         return sceneCategoryAliases[value] || value;
+    }
+
+    const sceneAssetRoleValues = Object.freeze(['decoration', 'walkable-surface']);
+    const sceneAssetRoleSet = new Set(sceneAssetRoleValues);
+
+    function getSceneAssetSourceCategory(resource) {
+        if (!resource || typeof resource !== 'object') {
+            return '';
+        }
+
+        return normalizeSceneAssetCategory(resource.category_slug || resource.category_name || '');
+    }
+
+    function normalizeSceneAssetRole(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        return sceneAssetRoleSet.has(normalized) ? normalized : '';
+    }
+
+    function isSceneAssetRoleEligible(resource) {
+        return sceneAssetRoleSet.has(getSceneAssetSourceCategory(resource));
+    }
+
+    function resolveSceneAssetCategory(resource) {
+        const sourceCategory = getSceneAssetSourceCategory(resource);
+        if (!sceneAssetRoleSet.has(sourceCategory)) {
+            return sourceCategory;
+        }
+
+        return normalizeSceneAssetRole(resource.sceneAssetRole) || sourceCategory;
+    }
+
+    function sceneAssetRoleOverrideFor(resource, selectedRole) {
+        const sourceCategory = getSceneAssetSourceCategory(resource);
+        const normalizedRole = normalizeSceneAssetRole(selectedRole);
+        if (!sceneAssetRoleSet.has(sourceCategory) || !normalizedRole || normalizedRole === sourceCategory) {
+            return '';
+        }
+
+        return normalizedRole;
+    }
+
+    function initializeWalkableBehaviorForRoleChange(resource) {
+        if (!resource || typeof resource !== 'object') {
+            return '';
+        }
+
+        const existing = String(resource.walkableBehavior || '').trim().toLowerCase();
+        if (existing === 'auto' || existing === 'precise') {
+            return existing;
+        }
+
+        resource.walkableBehavior = 'auto';
+        resource.userData = resource.userData || {};
+        resource.userData.walkableBehavior = 'auto';
+        return 'auto';
     }
 
     function isSceneLightCategory(category) {
@@ -412,6 +473,13 @@ VRODOS.importer = VRODOS.importer || {};
         sceneNameText,
         isDisplayTextField,
         normalizeSceneAssetCategory,
+        sceneAssetRoleValues,
+        getSceneAssetSourceCategory,
+        normalizeSceneAssetRole,
+        isSceneAssetRoleEligible,
+        resolveSceneAssetCategory,
+        sceneAssetRoleOverrideFor,
+        initializeWalkableBehaviorForRoleChange,
         isSceneLightCategory,
         isScenePawnCategory,
         isSceneLightOrPawnCategory,
