@@ -183,75 +183,133 @@ async function vrodosLoaderResolveGlbMetadata(name, resource) {
     return VRODOS.loader.fetchGlbMetadata(name, resource);
 }
 
-VRODOS.loader.loadGlbAsset = function(manager, gltfLoader, name, resource, resources3D) {
-    return new Promise((resolve) => {
-        const fetchAndLoadGLB = async () => {
-            try {
-                if (manager) manager.itemStart(name);
+VRODOS.loader.resolveGlbAssetRequest = async function(name, resource) {
+    const resourcesGLB = await vrodosLoaderResolveGlbMetadata(name, resource);
+    vrodosLoaderMergeGlbMetadata(resource, resourcesGLB);
 
-                const resourcesGLB = await vrodosLoaderResolveGlbMetadata(name, resource);
-                vrodosLoaderMergeGlbMetadata(resource, resourcesGLB);
+    return {
+        name,
+        resource,
+        loadInfo: vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB)
+    };
+};
 
-                const loadInfo = vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB);
-                if (!loadInfo.loadUrl) {
-                    if (manager) {
-                        manager.itemError(name);
-                        manager.itemEnd(name);
-                    }
-                    console.warn(`Asset '${name}' has no GLB path and will be skipped.`, {
-                        asset_id: resource.asset_id || '',
-                        asset_missing: Boolean(resource.asset_missing)
-                    });
-                    resolve(null);
-                    return;
-                }
+function vrodosLoaderTrackManagerStart(manager, requests) {
+    if (!manager) return;
+    requests.forEach((request) => manager.itemStart(request.name));
+}
 
+function vrodosLoaderTrackManagerEnd(manager, request, failed) {
+    if (!manager) return;
+    if (failed) manager.itemError(request.name);
+    manager.itemEnd(request.name);
+}
+
+function vrodosLoaderCreateTemplatePromise(gltfLoader, requests) {
+    const representative = requests[0];
+    const loadInfo = representative.loadInfo;
+    const placementCount = requests.length;
+
+    return new Promise((resolve, reject) => {
+        gltfLoader.load(
+            loadInfo.loadUrl,
+            resolve,
+            (xhr) => {
+                const mbLoaded = Math.floor(xhr.loaded / 104857.6) / 10;
+                const displayName = VRODOS.utils.loaderDisplayText(representative.resource.asset_name || representative.name);
+                const placementLabel = placementCount > 1 ? ` (${placementCount} placements)` : '';
                 if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
-                    VRODOS.api.setSceneLoadingProgressText("Loading ...");
+                    VRODOS.api.setSceneLoadingProgressText(`'${displayName}'${placementLabel} downloaded ${mbLoaded} Mb`);
                 }
-
-                gltfLoader.load(
-                    loadInfo.loadUrl,
-                    (object) => {
-                        vrodosLoaderStartGlbAnimations(object);
-                        const finalObject = vrodosLoaderAddGlbSceneObject(object, name, resources3D, loadInfo);
-                        if (loadInfo.usesPreview) {
-                            console.info(`Loaded editor preview derivative for '${name}'.`, {
-                                asset_id: resource.asset_id || '',
-                                source: loadInfo.canonicalUrl,
-                                preview: loadInfo.loadUrl
-                            });
-                        }
-                        if (manager) manager.itemEnd(name);
-                        resolve(finalObject);
-                    },
-                    (xhr) => {
-                        const mbLoaded = Math.floor(xhr.loaded / 104857.6) / 10;
-                        const displayName = VRODOS.utils.loaderDisplayText(resource.asset_name || name);
-                        if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
-                            VRODOS.api.setSceneLoadingProgressText(`'${displayName}' downloaded ${mbLoaded} Mb`);
-                        }
-                    },
-                    (error) => {
-                        console.error('A GLB loading error happened. Error 1590', error);
-                        if (manager) {
-                            manager.itemError(name);
-                            manager.itemEnd(name);
-                        }
-                        resolve(null);
-                    }
-                );
-            } catch (err) {
-                alert(`Could not fetch GLB asset. Probably deleted? ${name}`);
-                console.error(`Ajax Fetch Asset ERROR: ${err}`);
-                if (manager) {
-                    manager.itemError(name);
-                    manager.itemEnd(name);
-                }
-                resolve(null);
-            }
-        };
-
-        fetchAndLoadGLB();
+            },
+            reject
+        );
     });
+}
+
+function vrodosLoaderWarnMissingPath(request) {
+    console.warn(`Asset '${request.name}' has no GLB path and will be skipped.`, {
+        asset_id: request.resource.asset_id || '',
+        asset_missing: Boolean(request.resource.asset_missing)
+    });
+}
+
+VRODOS.loader.loadResolvedGlbAssetGroup = async function(manager, gltfLoader, requests, resources3D) {
+    const group = Array.isArray(requests) ? requests.filter(Boolean) : [];
+    if (group.length === 0) {
+        return [];
+    }
+
+    vrodosLoaderTrackManagerStart(manager, group);
+    const loadUrl = group[0].loadInfo && group[0].loadInfo.loadUrl;
+    if (!loadUrl) {
+        group.forEach((request) => {
+            vrodosLoaderWarnMissingPath(request);
+            vrodosLoaderTrackManagerEnd(manager, request, true);
+        });
+        return group.map(() => null);
+    }
+
+    if (typeof VRODOS.api.setSceneLoadingProgressText === 'function') {
+        VRODOS.api.setSceneLoadingProgressText('Loading ...');
+    }
+
+    try {
+        await VRODOS.loader.glbAssetCache.load(
+            loadUrl,
+            () => vrodosLoaderCreateTemplatePromise(gltfLoader, group)
+        );
+
+        return group.map((request) => {
+            const object = VRODOS.loader.glbAssetCache.instantiate(request.loadInfo.loadUrl);
+            vrodosLoaderStartGlbAnimations(object);
+            const finalObject = vrodosLoaderAddGlbSceneObject(
+                object,
+                request.name,
+                resources3D,
+                request.loadInfo
+            );
+
+            if (request.loadInfo.usesPreview) {
+                console.info(`Loaded editor preview derivative for '${request.name}'.`, {
+                    asset_id: request.resource.asset_id || '',
+                    source: request.loadInfo.canonicalUrl,
+                    preview: request.loadInfo.loadUrl
+                });
+            }
+
+            vrodosLoaderTrackManagerEnd(manager, request, false);
+            return finalObject;
+        });
+    } catch (error) {
+        console.error('A GLB loading error happened. Error 1590', {
+            error,
+            url: loadUrl,
+            placements: group.map((request) => request.name)
+        });
+        group.forEach((request) => vrodosLoaderTrackManagerEnd(manager, request, true));
+        return group.map(() => null);
+    }
+};
+
+VRODOS.loader.loadGlbAsset = async function(manager, gltfLoader, name, resource, resources3D) {
+    try {
+        const request = await VRODOS.loader.resolveGlbAssetRequest(name, resource);
+        const results = await VRODOS.loader.loadResolvedGlbAssetGroup(
+            manager,
+            gltfLoader,
+            [request],
+            resources3D
+        );
+        return results[0] || null;
+    } catch (error) {
+        alert(`Could not fetch GLB asset. Probably deleted? ${name}`);
+        console.error(`Ajax Fetch Asset ERROR: ${error}`);
+        if (manager) {
+            manager.itemStart(name);
+            manager.itemError(name);
+            manager.itemEnd(name);
+        }
+        return null;
+    }
 };

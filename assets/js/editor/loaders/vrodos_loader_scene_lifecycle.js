@@ -92,6 +92,19 @@ VRODOS.api.clearSceneForReload = function() {
         VRODOS.editor.selection.clear({ source: 'scene-reload', hidePanel: false });
     }
 
+    if (Array.isArray(envir.animationMixers)) {
+        envir.animationMixers.forEach((mixer) => {
+            if (!mixer) return;
+            if (typeof mixer.stopAllAction === 'function') {
+                mixer.stopAllAction();
+            }
+            if (mixer._root && typeof mixer.uncacheRoot === 'function') {
+                mixer.uncacheRoot(mixer._root);
+            }
+        });
+        envir.animationMixers = [];
+    }
+
     const preserveNames = new Set([
         'myAxisHelper',
         'myGridHelper',

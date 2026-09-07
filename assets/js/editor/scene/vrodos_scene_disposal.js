@@ -4,11 +4,27 @@ window.VRODOS = window.VRODOS || {};
 VRODOS.utils = VRODOS.utils || {};
 
 (function initVrodosSceneDisposal() {
-    function disposeMaterialValue(value) {
+    function getGlbAssetCache() {
+        return VRODOS.loader && VRODOS.loader.glbAssetCache
+            ? VRODOS.loader.glbAssetCache
+            : null;
+    }
+
+    function disposeMaterialValue(value, disposed) {
         if (!value || typeof value.dispose !== 'function') {
             return;
         }
 
+        const cache = getGlbAssetCache();
+        if (cache && typeof cache.isSharedTexture === 'function' && cache.isSharedTexture(value)) {
+            return;
+        }
+
+        if (disposed.has(value)) {
+            return;
+        }
+
+        disposed.add(value);
         value.dispose();
     }
 
@@ -34,8 +50,22 @@ VRODOS.utils = VRODOS.utils || {};
             return;
         }
 
+        const cache = getGlbAssetCache();
+        const disposed = new Set();
+
         object.traverse((node) => {
-            if (node.geometry && typeof node.geometry.dispose === 'function') {
+            const geometryIsShared = Boolean(
+                cache &&
+                typeof cache.isSharedGeometry === 'function' &&
+                cache.isSharedGeometry(node.geometry)
+            );
+            if (
+                node.geometry &&
+                typeof node.geometry.dispose === 'function' &&
+                !geometryIsShared &&
+                !disposed.has(node.geometry)
+            ) {
+                disposed.add(node.geometry);
                 node.geometry.dispose();
             }
 
@@ -53,10 +83,20 @@ VRODOS.utils = VRODOS.utils || {};
                     if (!Object.prototype.hasOwnProperty.call(material, key)) {
                         continue;
                     }
-                    disposeMaterialValue(material[key]);
+                    disposeMaterialValue(material[key], disposed);
                 }
 
-                if (typeof material.dispose === 'function') {
+                const materialIsShared = Boolean(
+                    cache &&
+                    typeof cache.isSharedMaterial === 'function' &&
+                    cache.isSharedMaterial(material)
+                );
+                if (
+                    typeof material.dispose === 'function' &&
+                    !materialIsShared &&
+                    !disposed.has(material)
+                ) {
+                    disposed.add(material);
                     material.dispose();
                 }
             });

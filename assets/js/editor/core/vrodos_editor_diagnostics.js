@@ -16,6 +16,11 @@ VRODOS.editor = VRODOS.editor || {};
             glbMetadataCache: {
                 hits: 0,
                 misses: 0
+            },
+            parsedGlbCache: {
+                hits: 0,
+                misses: 0,
+                coalesced: 0
             }
         }, details || {});
         return this.currentLoad;
@@ -48,6 +53,26 @@ VRODOS.editor = VRODOS.editor || {};
         return this.currentLoad.glbMetadataCache;
     };
 
+    diagnostics.recordParsedGlbCache = function(result) {
+        if (!this.currentLoad) {
+            return null;
+        }
+
+        if (!this.currentLoad.parsedGlbCache) {
+            this.currentLoad.parsedGlbCache = { hits: 0, misses: 0, coalesced: 0 };
+        }
+
+        if (result === 'hit') {
+            this.currentLoad.parsedGlbCache.hits++;
+        } else if (result === 'coalesced') {
+            this.currentLoad.parsedGlbCache.coalesced++;
+        } else {
+            this.currentLoad.parsedGlbCache.misses++;
+        }
+
+        return this.currentLoad.parsedGlbCache;
+    };
+
     diagnostics.markLoadEnd = function(status) {
         if (!this.currentLoad) {
             return null;
@@ -74,6 +99,7 @@ VRODOS.editor = VRODOS.editor || {};
         const rendererInfo = envir.renderer && envir.renderer.info ? envir.renderer.info : {};
         const registry = VRODOS.editor.sceneRegistry || null;
         const loop = VRODOS.editor.renderLoop || {};
+        const glbAssetCache = VRODOS.loader && VRODOS.loader.glbAssetCache;
 
         return {
             renderLoop: {
@@ -113,6 +139,9 @@ VRODOS.editor = VRODOS.editor || {};
                 geometries: rendererInfo.memory ? rendererInfo.memory.geometries : 0,
                 textures: rendererInfo.memory ? rendererInfo.memory.textures : 0
             },
+            glbAssetCache: glbAssetCache && typeof glbAssetCache.snapshot === 'function'
+                ? glbAssetCache.snapshot()
+                : null,
             loads: {
                 active: this.currentLoad,
                 recent: this.loadTimings.slice()

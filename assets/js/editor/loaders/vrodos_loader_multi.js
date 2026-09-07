@@ -62,6 +62,49 @@ VRODOS.loader.LoaderMulti = class {
             }
         }
 
+        let uniqueGlbCount = 0;
+        let reusedGlbPlacementCount = 0;
+        if (glbLoadEntries.length > 0) {
+            const gltfLoader = getLoader();
+            const resolvedRequests = await Promise.all(glbLoadEntries.map(async (entry) => {
+                try {
+                    return await VRODOS.loader.resolveGlbAssetRequest(entry.name, entry.resource);
+                } catch (error) {
+                    alert(`Could not fetch GLB asset. Probably deleted? ${entry.name}`);
+                    console.error(`Ajax Fetch Asset ERROR: ${error}`);
+                    return {
+                        name: entry.name,
+                        resource: entry.resource,
+                        loadInfo: { loadUrl: '' }
+                    };
+                }
+            }));
+            const groupedRequests = new Map();
+            let validPlacementCount = 0;
+
+            resolvedRequests.forEach((request) => {
+                const loadUrl = request.loadInfo && request.loadInfo.loadUrl;
+                const key = loadUrl
+                    ? VRODOS.loader.glbAssetCache.getKey(loadUrl)
+                    : `missing:${request.name}`;
+                if (loadUrl) validPlacementCount++;
+                if (!groupedRequests.has(key)) {
+                    groupedRequests.set(key, []);
+                }
+                groupedRequests.get(key).push(request);
+            });
+
+            uniqueGlbCount = Array.from(groupedRequests.entries())
+                .filter(([key]) => !key.startsWith('missing:'))
+                .length;
+            reusedGlbPlacementCount = Math.max(0, validPlacementCount - uniqueGlbCount);
+
+            const glbLoadTasks = Array.from(groupedRequests.values()).map((group) => (
+                () => VRODOS.loader.loadResolvedGlbAssetGroup(manager, gltfLoader, group, resources3D)
+            ));
+            pendingLoads.push(VRODOS.utils.runLimitedTasks(glbLoadTasks, loadProfile.loadConcurrency));
+        }
+
         if (
             VRODOS.editor &&
             VRODOS.editor.diagnostics &&
@@ -69,18 +112,13 @@ VRODOS.loader.LoaderMulti = class {
         ) {
             VRODOS.editor.diagnostics.updateCurrentLoad({
                 glbCount: glbLoadEntries.length,
+                glbPlacementCount: glbLoadEntries.length,
+                uniqueGlbCount,
+                reusedGlbPlacementCount,
                 generatedVideoCount: loadProfile.generatedVideoCount,
-                loadConcurrency: glbLoadEntries.length > 0 ? loadProfile.loadConcurrency : 0,
+                loadConcurrency: uniqueGlbCount > 0 ? loadProfile.loadConcurrency : 0,
                 isDenseScene: Boolean(loadProfile.isDenseScene)
             });
-        }
-
-        if (glbLoadEntries.length > 0) {
-            const gltfLoader = getLoader();
-            const glbLoadTasks = glbLoadEntries.map((entry) => (
-                () => VRODOS.loader.loadGlbAsset(manager, gltfLoader, entry.name, entry.resource, resources3D)
-            ));
-            pendingLoads.push(VRODOS.utils.runLimitedTasks(glbLoadTasks, loadProfile.loadConcurrency));
         }
 
         return Promise.allSettled(pendingLoads);
