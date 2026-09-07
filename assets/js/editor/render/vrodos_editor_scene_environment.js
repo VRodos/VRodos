@@ -35,7 +35,7 @@ VRODOS.data = VRODOS.data || {};
         const hdrLoader = new THREE.HDRLoader();
 
         hdrLoader.setPath(`${imageBaseUrl  }hdr/`)
-            .load('Stonewall_Ref.hdr', (texture) => {
+            .load('spot1Lux.hdr', (texture) => {
                 texture.mapping = THREE.EquirectangularReflectionMapping;
                 this.maintexture = texture;
                 this.scene.environment = this.maintexture;

@@ -317,7 +317,7 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
                 const previewFallbackIcon = vrodos_getAssetPreviewFallbackIcon(f);
                 const assetMetaHTML = vrodos_buildAssetMetaHTML(f);
                 const previewMarkup = f.screenshot_path
-                    ? `<img class="assetImg tw-w-full tw-h-full tw-object-cover tw-transition-transform tw-duration-700 group-hover:tw-scale-110" draggable="false" src="${  encodeURI(f.screenshot_path)  }">`
+                    ? `<img class="assetImg tw-w-full tw-h-full tw-object-cover tw-transition-transform tw-duration-700 group-hover:tw-scale-110" draggable="false" loading="lazy" decoding="async" src="${  encodeURI(f.screenshot_path)  }">`
                     : `<div class="assetImg tw-flex tw-items-center tw-justify-center tw-bg-slate-700/80">` +
                         `<i data-lucide="${  VRODOS.utils.escapeAttribute(previewFallbackIcon)  }" class="tw-w-10 tw-h-10 tw-text-slate-300"></i>` +
                       `</div>`;

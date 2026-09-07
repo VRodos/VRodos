@@ -532,13 +532,18 @@ function profileSteps(profile, inputPath, outputPath, workDir, profileOptions = 
     }
 
     if (profile === 'editor-preview') {
-        return [
+        const steps = [
             ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
-            ['dedup', step1, step2],
-            ['weld', step2, step3],
-            ['simplify', step3, step4, '--ratio', '0.35', '--error', '0.01', '--lock-border', 'true'],
-            ['resize', step4, outputPath, '--width', '1024', '--height', '1024']
+            ['dedup', step1, step2]
         ];
+        let geometryOutput = step2;
+        if (!profileOptions.protectGeometry) {
+            steps.push(['weld', step2, step3]);
+            steps.push(['simplify', step3, step4, '--ratio', '0.35', '--error', '0.01', '--lock-border', 'true']);
+            geometryOutput = step4;
+        }
+        steps.push(['resize', geometryOutput, outputPath, '--width', '1024', '--height', '1024']);
+        return steps;
     }
 
     if (profile === 'desktop-low' || profile === 'desktop-medium') {
@@ -688,7 +693,9 @@ async function optimizeAsset(asset, index, options, runner) {
     }
     if (options.profile === 'editor-preview') {
         record.runtimeNotes.push('Editor-only preview derivative. Do not enable for compiled-scene substitution.');
-        record.runtimeNotes.push('Uses geometry simplification and texture resize without Draco compression to avoid editor decode stalls.');
+        record.runtimeNotes.push(protectGeometry
+            ? 'Geometry simplification was skipped to protect collision/navigation, skinning, or morph targets; textures are resized without Draco compression.'
+            : 'Uses geometry simplification and texture resize without Draco compression to avoid editor decode stalls.');
     }
     if (options.profile.startsWith('desktop-')) {
         record.runtimeNotes.push('Compiled desktop performance profile derivative; source upload is untouched.');

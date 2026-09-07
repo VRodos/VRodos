@@ -166,17 +166,8 @@ function vrodosFetchAvailableAssetsForEditor() {
     );
 }
 
-function vrodosScheduleAvailableAssetsFetch(sceneLoadPromise) {
-    const scheduleFetch = () => {
-        VRODOS.api.deferEditorStartupTask(vrodosFetchAvailableAssetsForEditor);
-    };
-
-    if (sceneLoadPromise && typeof sceneLoadPromise.then === 'function') {
-        sceneLoadPromise.then(scheduleFetch, scheduleFetch);
-        return;
-    }
-
-    scheduleFetch();
+function vrodosScheduleAvailableAssetsFetch() {
+    VRODOS.api.deferEditorStartupTask(vrodosFetchAvailableAssetsForEditor);
 }
 
 /**
@@ -283,6 +274,12 @@ function initVrodosEditor() {
         VRODOS.editor.envir.sceneType = VRODOS.data.sceneType;
     }
 
+    if (window.performance && typeof window.performance.mark === 'function') {
+        window.performance.mark('vrodos-editor-shell-ready');
+    }
+
+    vrodosScheduleAvailableAssetsFetch();
+
     VRODOS.api.deferEditorStartupTask(() => {
         // Initial hierarchy
         VRODOS.ui.setHierarchyViewer();
@@ -292,11 +289,10 @@ function initVrodosEditor() {
         }
 
         // 3. Load 3D Objects
-        const sceneLoadPromise = VRODOS.api.loadEditorSceneResources(initialSceneData, {
+        VRODOS.api.loadEditorSceneResources(initialSceneData, {
             assetResources: getInitialSceneObjectResources(),
             reason: 'initial-scene-load'
         });
-        vrodosScheduleAvailableAssetsFetch(sceneLoadPromise);
     });
 }
 

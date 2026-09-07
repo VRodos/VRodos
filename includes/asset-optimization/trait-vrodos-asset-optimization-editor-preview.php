@@ -136,10 +136,16 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 				'stats'             => self::editor_preview_stats_from_analysis( $analysis ),
 				'editorOnly'        => true,
 				'compileEnabled'    => false,
+				'startedAt'         => current_time( 'mysql', true ),
 			]
 		);
 
-		$result = $this->generate_derivative( $asset_id, $source, self::EDITOR_PREVIEW_PROFILE );
+		$result = $this->generate_derivative(
+			$asset_id,
+			$source,
+			self::EDITOR_PREVIEW_PROFILE,
+			[ 'protectGeometry' => self::editor_preview_protects_geometry( $asset_id ) ]
+		);
 		if ( is_wp_error( $result ) ) {
 			self::store_editor_preview_record(
 				$asset_id,
@@ -152,6 +158,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 					'stats'             => self::editor_preview_stats_from_analysis( $analysis ),
 					'editorOnly'        => true,
 					'compileEnabled'    => false,
+					'failedAt'          => current_time( 'mysql', true ),
 				]
 			);
 			return;
@@ -170,7 +177,27 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 			return;
 		}
 
-		if ( in_array( $current_status, [ 'queued', 'running' ], true ) && $current_fingerprint === $source_fingerprint ) {
+		if ( 'queued' === $current_status && $current_fingerprint === $source_fingerprint ) {
+			self::schedule_editor_preview_job( $asset_id );
+			return;
+		}
+
+		if ( 'running' === $current_status && $current_fingerprint === $source_fingerprint ) {
+			$updated_at = strtotime( (string) ( $record['updatedAt'] ?? '' ) . ' UTC' );
+			if ( false !== $updated_at && time() - $updated_at < self::EDITOR_PREVIEW_JOB_TIMEOUT_SECONDS ) {
+				return;
+			}
+
+			self::store_editor_preview_record(
+				$asset_id,
+				[
+					'status'    => 'queued',
+					'message'   => 'A stale editor preview job was queued again.',
+					'queuedAt'  => current_time( 'mysql', true ),
+					'retryCount' => absint( $record['retryCount'] ?? 0 ) + 1,
+				]
+			);
+			self::schedule_editor_preview_job( $asset_id );
 			return;
 		}
 
@@ -186,6 +213,7 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 				'reasons'           => $decision['reasons'],
 				'editorOnly'        => true,
 				'compileEnabled'    => false,
+				'queuedAt'          => current_time( 'mysql', true ),
 			]
 		);
 
@@ -213,37 +241,76 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 		return is_array( $record ) ? $record : [];
 	}
 
-	private static function store_editor_preview_record( int $asset_id, array $record ): void {
+	private static function store_editor_preview_record( int $asset_id, array $record ): bool {
 		$meta = self::get_derivative_meta( $asset_id );
 		$existing = self::get_editor_preview_record( $asset_id );
 
 		$meta['derivatives'][ self::EDITOR_PREVIEW_PROFILE ] = wp_parse_args(
 			$record,
-			[
-				'profile'        => self::EDITOR_PREVIEW_PROFILE,
-				'status'         => 'none',
-				'url'            => '',
-				'path'           => '',
-				'message'        => '',
-				'editorOnly'     => true,
-				'compileEnabled' => false,
-				'createdAt'      => (string) ( $existing['createdAt'] ?? '' ),
-				'updatedAt'      => current_time( 'mysql', true ),
-			]
+			wp_parse_args(
+				$existing,
+				[
+					'profile'        => self::EDITOR_PREVIEW_PROFILE,
+					'status'         => 'none',
+					'attachmentId'   => 0,
+					'url'            => '',
+					'path'           => '',
+					'message'        => '',
+					'editorOnly'     => true,
+					'compileEnabled' => false,
+					'createdAt'      => '',
+				]
+			)
 		);
+		$meta['derivatives'][ self::EDITOR_PREVIEW_PROFILE ]['updatedAt'] = current_time( 'mysql', true );
 
-		update_post_meta( $asset_id, self::META_KEY, $meta );
+		$updated = update_post_meta( $asset_id, self::META_KEY, $meta );
+		return false !== $updated || get_post_meta( $asset_id, self::META_KEY, true ) === $meta;
 	}
 
 	private function store_editor_preview_derivative_record( int $asset_id, array $result, array $source, array $analysis ): void {
 		$record = $result['record'];
 		$paths = $result['paths'];
+		$existing = self::get_editor_preview_record( $asset_id );
+		$previous_attachment_id = absint( $existing['attachmentId'] ?? 0 );
+		$attachment_id = 0;
+		$registered_new_attachment = false;
 
-		self::store_editor_preview_record(
+		if (
+			$previous_attachment_id > 0
+			&& VRodos_Storage_Manager::attachment_is_owned_by( $previous_attachment_id, 'asset', $asset_id )
+			&& wp_normalize_path( (string) get_attached_file( $previous_attachment_id, true ) ) === wp_normalize_path( (string) $paths['file'] )
+		) {
+			$attachment_id = $previous_attachment_id;
+		} else {
+			$attachment_id = VRodos_Storage_Manager::register_existing_private_attachment(
+				$paths['file'],
+				'model/gltf-binary',
+				$asset_id,
+				'asset',
+				'derivatives',
+				self::EDITOR_PREVIEW_PROFILE
+			);
+			if ( is_wp_error( $attachment_id ) ) {
+				self::store_editor_preview_record(
+					$asset_id,
+					[
+						'status'   => 'failed',
+						'message'  => $attachment_id->get_error_message(),
+						'failedAt' => current_time( 'mysql', true ),
+					]
+				);
+				return;
+			}
+			$registered_new_attachment = true;
+		}
+
+		$stored = self::store_editor_preview_record(
 			$asset_id,
 			[
 				'status'              => 'ready',
-				'url'                 => esc_url_raw( (string) $paths['url'] ),
+				'attachmentId'        => (int) $attachment_id,
+				'url'                 => VRodos_Storage_Manager::authoring_url_for_attachment( (int) $attachment_id ),
 				'path'                => wp_normalize_path( (string) $paths['file'] ),
 				'file'                => wp_normalize_path( (string) $paths['file'] ),
 				'manifestPath'        => wp_normalize_path( (string) $paths['manifest'] ),
@@ -263,8 +330,28 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 				'editorOnly'          => true,
 				'compileEnabled'      => false,
 				'createdAt'           => current_time( 'mysql', true ),
+				'completedAt'         => current_time( 'mysql', true ),
 			]
 		);
+
+		if ( ! $stored ) {
+			if ( $registered_new_attachment ) {
+				VRodos_Storage_Manager::delete_attachment_if_owned_by( (int) $attachment_id, 'asset', $asset_id );
+			}
+			return;
+		}
+		if ( $previous_attachment_id && $previous_attachment_id !== (int) $attachment_id ) {
+			VRodos_Storage_Manager::delete_attachment_if_owned_by( $previous_attachment_id, 'asset', $asset_id );
+		}
+	}
+
+	private static function editor_preview_protects_geometry( int $asset_id ): bool {
+		$terms = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat', [ 'fields' => 'slugs' ] );
+		if ( is_wp_error( $terms ) ) {
+			return false;
+		}
+
+		return ! empty( array_intersect( [ 'walkable-surface', 'collision-proxy' ], array_map( 'sanitize_title', $terms ) ) );
 	}
 
 	private static function editor_preview_record_is_ready( array $record, array $source ): bool {

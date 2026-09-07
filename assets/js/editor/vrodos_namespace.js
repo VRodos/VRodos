@@ -4,6 +4,10 @@
  * This object serves as the single source of truth for global states
  * across the Editor and Runtime environments.
  */
+if (window.performance && typeof window.performance.mark === 'function') {
+    window.performance.mark('vrodos-editor-script-start');
+}
+
 window.VRODOS = window.VRODOS || {};
 
 Object.assign(window.VRODOS, {

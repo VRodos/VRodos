@@ -99,7 +99,18 @@ VRODOS.loader.LoaderMulti = class {
                 .length;
             reusedGlbPlacementCount = Math.max(0, validPlacementCount - uniqueGlbCount);
 
-            const glbLoadTasks = Array.from(groupedRequests.values()).map((group) => (
+            const orderedRequestGroups = Array.from(groupedRequests.values())
+                .map((group, originalIndex) => ({
+                    group,
+                    originalIndex,
+                    sourceSizeBytes: group.reduce((largest, request) => (
+                        Math.max(largest, Number(request.resource && request.resource.sourceSizeBytes) || 0)
+                    ), 0)
+                }))
+                .sort((left, right) => (
+                    right.sourceSizeBytes - left.sourceSizeBytes || left.originalIndex - right.originalIndex
+                ));
+            const glbLoadTasks = orderedRequestGroups.map(({ group }) => (
                 () => VRODOS.loader.loadResolvedGlbAssetGroup(manager, gltfLoader, group, resources3D)
             ));
             pendingLoads.push(VRODOS.utils.runLimitedTasks(glbLoadTasks, loadProfile.loadConcurrency));

@@ -150,6 +150,10 @@ VRODOS.api.loadEditorSceneResources = function(resources3D, options) {
     envir.sceneLoadFinalized = false;
     VRODOS.api.prepareSceneLoadManager();
 
+    if (window.performance && typeof window.performance.mark === 'function') {
+        window.performance.mark('vrodos-editor-scene-load-start');
+    }
+
     const assetResources = opts.assetResources || VRODOS.api.getSceneAssetResources(resources3D);
     if (typeof VRODOS.utils.dedupeSceneDataObjects === 'function') {
         VRODOS.utils.dedupeSceneDataObjects(assetResources, { reason: opts.reason || 'scene-load' });
@@ -267,6 +271,21 @@ VRODOS.api.finalizeSceneLoad = function() {
 
     const compileButton = document.getElementById("compileGameBtn");
     if (compileButton) compileButton.disabled = false;
+
+    if (window.performance && typeof window.performance.mark === 'function') {
+        window.performance.mark('vrodos-editor-scene-ready');
+        if (typeof window.performance.measure === 'function') {
+            try {
+                window.performance.measure(
+                    'vrodos-editor-scene-load',
+                    'vrodos-editor-scene-load-start',
+                    'vrodos-editor-scene-ready'
+                );
+            } catch (_error) {
+                // The start mark may not exist when legacy integrations call finalization directly.
+            }
+        }
+    }
 
     VRODOS.editor.requestRender('scene-load-finalized');
 };

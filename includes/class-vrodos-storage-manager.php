@@ -585,7 +585,9 @@ final class VRodos_Storage_Manager {
 
 		if ( $allow_revalidation ) {
 			$etag = self::private_file_etag( $size, $modified_at );
-			header( 'Cache-Control: private, no-cache, must-revalidate' );
+			header_remove( 'Expires' );
+			header_remove( 'Pragma' );
+			header( 'Cache-Control: private, max-age=0, must-revalidate' );
 			header( 'ETag: ' . $etag );
 			header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $modified_at ) . ' GMT' );
 

@@ -31,7 +31,7 @@ class VRodos_Asset_Optimization_Admin_Controller {
 	private const EDITOR_PREVIEW_LOCK_KEY = 'vrodos_asset_editor_preview_global_lock';
 	private const EDITOR_PREVIEW_QUEUE_DELAY_SECONDS = 10;
 	private const EDITOR_PREVIEW_JOB_TIMEOUT_SECONDS = 900;
-	private const EDITOR_PREVIEW_FILE_THRESHOLD_BYTES = 157286400;
+	private const EDITOR_PREVIEW_FILE_THRESHOLD_BYTES = 10485760;
 	private const EDITOR_PREVIEW_TRIANGLE_THRESHOLD = 500000;
 	private const EDITOR_PREVIEW_PRIMITIVE_THRESHOLD = 200;
 	private const EDITOR_PREVIEW_MATERIAL_THRESHOLD = 80;

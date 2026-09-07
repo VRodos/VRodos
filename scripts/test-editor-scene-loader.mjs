@@ -321,6 +321,25 @@ await context.VRODOS.loader.loadGlbAsset(null, new MockGltfLoader(), "hydrated",
 });
 assert(metadataRequests === 0, "server-hydrated scene GLBs must not refetch metadata");
 
+const previewLoader = new MockGltfLoader();
+const previewResource = {
+    asset_id: 22,
+    category_slug: "decoration",
+    editorMetadataHydrated: true,
+    glb_id: 202,
+    glb_path: "/source.glb",
+    path: "/source.glb",
+    editorPreviewGlbURL: "/preview.glb",
+    editorPreviewStatus: "ready",
+    editorPreviewShouldUse: true
+};
+const previewObject = await context.VRODOS.loader.loadGlbAsset(null, previewLoader, "preview", previewResource, {
+    preview: previewResource
+});
+assert(previewLoader.loadedUrl === "/preview.glb", "ready editor previews must replace qualifying source requests");
+assert(previewObject.editor_loaded_glb_path === "/preview.glb", "loaded editor objects must record the preview URL");
+assert(previewObject.glb_path === "/source.glb", "preview loading must preserve the canonical source URL for persistence and compilation");
+
 const dynamicResource = {
     asset_id: 21,
     category_slug: "decoration",
@@ -587,6 +606,24 @@ serialLoader.resolve("/after-failure.glb", createGlbTemplate("after-failure").gl
 await serialLoad;
 assert(serialLoadSettled === true, "scene completion must wait until successful and failed GLBs all settle");
 
+const sizeOrderedLoader = new ControlledGltfLoader();
+context.VRODOS.loader.createGltfLoader = () => sizeOrderedLoader;
+const sizeOrderedLoad = new context.VRODOS.loader.LoaderMulti().load(null, {
+    small: { category_slug: "decoration", editorMetadataHydrated: true, glb_id: 9301, glb_path: "/small.glb", sourceSizeBytes: 10 },
+    largest: { category_slug: "decoration", editorMetadataHydrated: true, glb_id: 9302, glb_path: "/largest.glb", sourceSizeBytes: 80 },
+    medium: { category_slug: "decoration", editorMetadataHydrated: true, glb_id: 9303, glb_path: "/medium.glb", sourceSizeBytes: 40 }
+}, "/plugin");
+await flushTasks();
+assert(sizeOrderedLoader.calls.join(",") === "/largest.glb", "the largest unique GLB must start first");
+sizeOrderedLoader.resolve("/largest.glb", createGlbTemplate("largest").gltf);
+await flushTasks();
+assert(sizeOrderedLoader.calls.join(",") === "/largest.glb,/medium.glb", "the next-largest GLB must start when the worker is released");
+sizeOrderedLoader.resolve("/medium.glb", createGlbTemplate("medium").gltf);
+await flushTasks();
+sizeOrderedLoader.resolve("/small.glb", createGlbTemplate("small").gltf);
+await sizeOrderedLoad;
+assert(sizeOrderedLoader.calls.join(",") === "/largest.glb,/medium.glb,/small.glb", "unique GLBs must retain largest-first scheduling through completion");
+
 const sharedTreeGeometry = loadedTreeOne.children[0].geometry;
 const sharedTreeTexture = loadedTreeOne.children[0].material.map;
 const reloadInstanceMaterial = dynamicCachedObject.children[0].material;
@@ -625,9 +662,23 @@ const sceneManagerSource = readFileSync(resolve(root, "includes/class-vrodos-sce
 const scenePersistenceSource = readFileSync(resolve(root, "assets/js/editor/scene/vrodos_scene_persistence.js"), "utf8");
 const assetManagerSource = readFileSync(resolve(root, "includes/class-vrodos-asset-manager.php"), "utf8");
 const threeVendorSource = readFileSync(resolve(root, "scripts/build/entries/three-vendor.mjs"), "utf8");
+const editorEnvironmentSource = readFileSync(resolve(root, "assets/js/editor/render/vrodos_editor_scene_environment.js"), "utf8");
+const assetBrowserSource = readFileSync(resolve(root, "assets/js/editor/ui/vrodos_asset_browser_toolbar.js"), "utf8");
+const editorInitializerSource = readFileSync(resolve(root, "assets/js/editor/core/vrodos_editor_initializer.js"), "utf8");
+const editorNamespaceSource = readFileSync(resolve(root, "assets/js/editor/vrodos_namespace.js"), "utf8");
+const sceneLifecycleSource = readFileSync(resolve(root, "assets/js/editor/loaders/vrodos_loader_scene_lifecycle.js"), "utf8");
 assert(sceneManagerSource.includes("'editorMetadataHydrated' => true"), "PHP scene bootstrap data must mark hydrated asset metadata");
 assert(scenePersistenceSource.includes("'editorMetadataHydrated'"), "the hydration marker must be excluded from persisted scene JSON");
 assert(assetManagerSource.includes("vrodos_loader_glb_asset_cache"), "the editor must register and load the parsed GLB cache");
+assert(!assetManagerSource.includes("wp_enqueue_media("), "the scene editor must not enqueue the unused WordPress media graph");
+assert(assetManagerSource.includes("'in_footer' => true") && assetManagerSource.includes("'strategy'  => 'defer'"), "VRodos scripts must load deferred in the footer");
+assert(editorEnvironmentSource.includes(".load('spot1Lux.hdr'"), "the editor must use the lightweight HDR environment");
+assert(!editorEnvironmentSource.includes("Stonewall_Ref.hdr"), "the heavyweight editor HDR must stay off the authoring path");
+assert(assetBrowserSource.includes('loading="lazy" decoding="async"'), "asset thumbnails must decode asynchronously and load lazily");
+assert(editorInitializerSource.indexOf("vrodosScheduleAvailableAssetsFetch();") < editorInitializerSource.indexOf("VRODOS.api.loadEditorSceneResources(initialSceneData"), "the asset browser must begin fetching before the scene GLBs settle");
+assert(editorNamespaceSource.includes("window.performance.mark('vrodos-editor-script-start')"), "the first editor dependency must mark script execution start");
+assert(editorInitializerSource.includes("window.performance.mark('vrodos-editor-shell-ready')"), "editor shell readiness must be marked");
+assert(sceneLifecycleSource.includes("window.performance.mark('vrodos-editor-scene-load-start')") && sceneLifecycleSource.includes("window.performance.mark('vrodos-editor-scene-ready')"), "scene loading must expose start and ready marks");
 assert(threeVendorSource.includes("SkeletonUtils"), "the Three.js vendor bundle must export SkeletonUtils for skinned clones");
 
 console.log("Editor scene loader tests passed.");

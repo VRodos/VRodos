@@ -11,8 +11,8 @@ const optimizer = path.join(root, 'scripts', 'prototype-optimize-master-client-a
 const source = path.join(root, 'assets', 'models', 'editor', 'cube.glb');
 const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'vrodos-optimizer-progress-'));
 
-function runOptimizer(outputDir, progressFile, profile) {
-    return spawnSync(process.execPath, [
+function runOptimizer(outputDir, progressFile, profile, options = {}) {
+    const args = [
         optimizer,
         '--source', source,
         '--source-url', 'https://example.test/cube.glb',
@@ -23,7 +23,9 @@ function runOptimizer(outputDir, progressFile, profile) {
         '--progress-file', progressFile,
         '--profile', profile,
         '--json'
-    ], {
+    ];
+    if (options.protectGeometry) args.push('--protect-geometry');
+    return spawnSync(process.execPath, args, {
         cwd: root,
         encoding: 'utf8',
         timeout: 120000
@@ -46,6 +48,14 @@ try {
     assert.equal(progress.percent, 100);
     assert.match(progress.message, /ready/i);
     assert.equal((await readdir(successDir)).some((entry) => entry.endsWith('.tmp')), false, 'atomic progress writes must not leave temporary files');
+
+    const protectedDir = path.join(temporaryRoot, 'protected-preview');
+    const protectedProgressFile = path.join(protectedDir, 'progress.json');
+    const protectedPreview = runOptimizer(protectedDir, protectedProgressFile, 'editor-preview', { protectGeometry: true });
+    assert.equal(protectedPreview.status, 0, protectedPreview.stderr || protectedPreview.stdout || 'protected editor preview optimizer failed');
+    const protectedManifest = JSON.parse(await readFile(path.join(protectedDir, 'manifest.json'), 'utf8'));
+    assert.equal(protectedManifest.assets[0].profileOptions.protectGeometry, true, 'protected previews must retain the geometry protection flag');
+    assert.match(protectedManifest.assets[0].runtimeNotes.join(' '), /simplification was skipped/i, 'protected previews must skip geometry simplification');
 
     const failureDir = path.join(temporaryRoot, 'failure');
     const failureProgressFile = path.join(failureDir, 'progress.json');

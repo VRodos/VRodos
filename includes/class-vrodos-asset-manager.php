@@ -282,10 +282,6 @@ class VRodos_Asset_Manager {
 		// Editor Initialization module (Phase 2)
 		wp_enqueue_script( 'vrodos_EditorInitializer' );
 
-		// Media
-		if ( $template_data['current_scene_id'] ) {
-			wp_enqueue_media( ['post' => $template_data['current_scene_id']] );
-		}
 	}
 
 	public function enqueue_asset_editor_scripts() {
@@ -434,7 +430,16 @@ class VRodos_Asset_Manager {
 		foreach ( $scripts as $script ) {
 			$dependencies = $script[2] ?? [];
 			$version      = $script[3] ?? null;
-			wp_register_script( $script[0], $script[1], $dependencies, $version, false );
+			wp_register_script(
+				$script[0],
+				$script[1],
+				$dependencies,
+				$version,
+				[
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				]
+			);
 		}
 	}
 
