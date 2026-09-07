@@ -255,6 +255,19 @@ VRODOS.ui = VRODOS.ui || {};
         });
     }
 
+    function changeBuildMode(state, requestedMode) {
+        if (!state) return null;
+
+        const nextMode = requestedMode === 'adaptive' ? 'adaptive' : 'custom';
+        if (state.buildMode === 'adaptive' && nextMode === 'custom' && TIER_IDS.includes(state.activeTab)) {
+            applySettingsToScene(effectiveTierSettings(state, state.activeTab));
+        }
+
+        state.buildMode = nextMode;
+        if (nextMode === 'custom') state.activeTab = 'custom';
+        return state;
+    }
+
     function settingsEqual(left, right) {
         return JSON.stringify(normalizeSettings(left)) === JSON.stringify(normalizeSettings(right));
     }
@@ -628,7 +641,15 @@ VRODOS.ui = VRODOS.ui || {};
         panel.querySelectorAll('input[name="compileDesktopBuildMode"]').forEach((input) => {
             input.addEventListener('change', () => {
                 const state = ensureProfiles();
-                if (state && input.checked) state.buildMode = input.value === 'custom' ? 'custom' : 'adaptive';
+                if (state && input.checked) {
+                    if (state.activeTab === 'custom' && typeof VRODOS.ui.applyCompileDialogSettingsToScene === 'function') {
+                        VRODOS.ui.applyCompileDialogSettingsToScene();
+                    }
+                    changeBuildMode(state, input.value);
+                    if (state.buildMode === 'custom' && typeof VRODOS.ui.syncCompileDialogFromSceneSettings === 'function') {
+                        VRODOS.ui.syncCompileDialogFromSceneSettings();
+                    }
+                }
                 updateUi();
             });
         });
@@ -651,7 +672,7 @@ VRODOS.ui = VRODOS.ui || {};
         validationErrors,
         switchProfile,
         resetActive,
-        _test: { migrateState, tierSettings, allowedValues, settingsEqual }
+        _test: { migrateState, tierSettings, allowedValues, settingsEqual, changeBuildMode }
     };
     window.addEventListener('DOMContentLoaded', bind);
 }());

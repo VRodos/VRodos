@@ -171,4 +171,16 @@ assertEqual(editor.api.allowedValues('medium', 'pmndrsCloudsQuality').join(','),
 assertEqual(editor.api.allowedValues('medium', 'pmndrsAAMode').join(','), 'none,smaa', 'Medium AA is limited to Off or SMAA');
 assertEqual(editor.api.allowedValues('medium', 'pmndrsAAPreset').join(','), 'low,medium', 'Medium SMAA quality is limited to Low or Medium');
 
+editor.scene.aframePmndrsToneMappingExposure = 2.4;
+defaultProfiles.buildMode = 'adaptive';
+defaultProfiles.activeTab = 'high';
+defaultProfiles.profiles.high.settings.pmndrsCloudsEnabled = true;
+defaultProfiles.profiles.high.settings.ambientOcclusionPreset = 'off';
+editor.api.changeBuildMode(defaultProfiles, 'custom');
+assertEqual(defaultProfiles.buildMode, 'custom', 'switching from Adaptive selects Custom-only mode');
+assertEqual(defaultProfiles.activeTab, 'custom', 'switching from Adaptive opens the Custom tab');
+assertEqual(editor.scene.aframePmndrsCloudsEnabled, true, 'Custom inherits the active tier cloud setting');
+assertEqual(editor.scene.aframeAmbientOcclusionPreset, 'off', 'Custom inherits the active tier SSAO setting');
+assertEqual(editor.scene.aframePmndrsToneMappingExposure, 2.4, 'Custom conversion preserves authored exposure');
+
 console.log('Desktop performance profile selection tests passed.');
