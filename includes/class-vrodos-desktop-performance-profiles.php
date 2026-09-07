@@ -86,7 +86,6 @@ final class VRodos_Desktop_Performance_Profiles {
 			'selection'     => (array) ( $contract['selection'] ?? [] ),
 			'storageKey'    => (string) ( $contract['storageKey'] ?? 'vrodos.desktopQualityOverride.v1' ),
 			'queryParameter' => (string) ( $contract['queryParameter'] ?? 'vrodos_quality' ),
-			'sessionDowngradeKey' => (string) ( $contract['sessionDowngradeKey'] ?? 'vrodos.desktopQualityDowngrade.v1' ),
 			'validationErrors'    => $stored_validation_errors,
 		];
 	}

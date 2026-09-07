@@ -181,7 +181,11 @@ final class VRodos_Compiler_Resource_Publisher {
 				if ( ! VRodos_Storage_Manager::attachment_is_owned_by( absint( $meta ), 'asset', $asset_id ) ) {
 					throw new RuntimeException( sprintf( '[VRodos] Asset attachment #%d must be migrated to private asset storage before compilation.', absint( $meta ) ) );
 				}
-				$object->{$property} = $this->publish_attachment( absint( $meta ), 'asset-' . $asset_id . '-' . $property );
+				$object->{$property} = $this->publish_attachment(
+					absint( $meta ),
+					'asset-' . $asset_id . '-' . $property,
+					'glb_path' === $property ? 'glb' : ''
+				);
 			} elseif ( is_string( $meta ) && wp_http_validate_url( $meta ) ) {
 				$object->{$property} = esc_url_raw( $meta );
 			}
@@ -240,20 +244,20 @@ final class VRodos_Compiler_Resource_Publisher {
 			: '';
 	}
 
-	private function publish_attachment( int $attachment_id, string $context ): string {
+	private function publish_attachment( int $attachment_id, string $context, string $forced_extension = '' ): string {
 		$path = get_attached_file( $attachment_id, true );
 		if ( ! is_string( $path ) || ! is_file( $path ) || ! is_readable( $path ) ) {
 			throw new RuntimeException( sprintf( '[VRodos] Missing attachment #%d required by %s.', $attachment_id, $context ) );
 		}
-		return $this->publish_file( $path, $context, $attachment_id );
+		return $this->publish_file( $path, $context, $attachment_id, $forced_extension );
 	}
 
-	private function publish_file( string $source, string $context, int $attachment_id = 0 ): string {
+	private function publish_file( string $source, string $context, int $attachment_id = 0, string $forced_extension = '' ): string {
 		$hash = hash_file( 'sha256', $source );
 		if ( ! is_string( $hash ) || '' === $hash ) {
 			throw new RuntimeException( '[VRodos] Could not hash ' . $context . '.' );
 		}
-		$extension = strtolower( pathinfo( $source, PATHINFO_EXTENSION ) );
+		$extension = '' !== $forced_extension ? sanitize_key( $forced_extension ) : strtolower( pathinfo( $source, PATHINFO_EXTENSION ) );
 		$filename  = $hash . ( '' !== $extension ? '.' . sanitize_key( $extension ) : '' );
 		$media_dir = VRodos_Storage_Manager::published_project_directory( $this->project_id, 'media' );
 		if ( is_wp_error( $media_dir ) ) {

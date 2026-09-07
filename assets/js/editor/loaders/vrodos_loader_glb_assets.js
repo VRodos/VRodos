@@ -33,12 +33,8 @@ function vrodosLoaderMergeGlbMetadata(resource, resourcesGLB) {
     }
 }
 
-function vrodosLoaderResolveGlbUrl(resource, resourcesGLB, modelBaseUrl) {
+function vrodosLoaderResolveGlbUrl(resource, resourcesGLB) {
     if (!resource) return '';
-
-    if (resource.category_slug === "video") {
-        return `${modelBaseUrl  }editor/tv_flat_scaled_rotated.glb`;
-    }
 
     if (resourcesGLB && Object.prototype.hasOwnProperty.call(resourcesGLB, 'glbURL')) {
         return resourcesGLB.glbURL || '';
@@ -47,8 +43,8 @@ function vrodosLoaderResolveGlbUrl(resource, resourcesGLB, modelBaseUrl) {
     return resource.glb_path || resource.path || '';
 }
 
-function vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB, modelBaseUrl) {
-    const canonicalUrl = vrodosLoaderResolveGlbUrl(resource, resourcesGLB, modelBaseUrl);
+function vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB) {
+    const canonicalUrl = vrodosLoaderResolveGlbUrl(resource, resourcesGLB);
     const previewUrl = resourcesGLB && resourcesGLB.editorPreviewGlbURL
         ? resourcesGLB.editorPreviewGlbURL
         : (resource && resource.editorPreviewGlbURL ? resource.editorPreviewGlbURL : '');
@@ -156,12 +152,12 @@ function vrodosLoaderHasLocalGlbMetadata(resource) {
         return true;
     }
 
-    if (resource.asset_id) {
-        return false;
+    if (resource.editorMetadataHydrated === true) {
+        return true;
     }
 
-    if (VRODOS.utils.normalizeSceneAssetCategory(resource.category_slug) === 'video') {
-        return true;
+    if (resource.asset_id) {
+        return false;
     }
 
     return Boolean(resource.glb_path || resource.path);
@@ -187,10 +183,7 @@ async function vrodosLoaderResolveGlbMetadata(name, resource) {
     return VRODOS.loader.fetchGlbMetadata(name, resource);
 }
 
-VRODOS.loader.loadGlbAsset = function(manager, gltfLoader, name, resource, resources3D, options) {
-    const opts = options || {};
-    const modelBaseUrl = opts.modelBaseUrl || '';
-
+VRODOS.loader.loadGlbAsset = function(manager, gltfLoader, name, resource, resources3D) {
     return new Promise((resolve) => {
         const fetchAndLoadGLB = async () => {
             try {
@@ -199,7 +192,7 @@ VRODOS.loader.loadGlbAsset = function(manager, gltfLoader, name, resource, resou
                 const resourcesGLB = await vrodosLoaderResolveGlbMetadata(name, resource);
                 vrodosLoaderMergeGlbMetadata(resource, resourcesGLB);
 
-                const loadInfo = vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB, modelBaseUrl);
+                const loadInfo = vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB);
                 if (!loadInfo.loadUrl) {
                     if (manager) {
                         manager.itemError(name);

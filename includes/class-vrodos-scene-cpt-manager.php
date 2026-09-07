@@ -276,6 +276,7 @@ class VRodos_Scene_CPT_Manager {
 
 		$screenshot_url = $screenshot_id ? VRodos_Core_Manager::resolve_media_meta_url( $screenshot_id ) : '';
 		$metadata       = [
+			'editorMetadataHydrated' => true,
 			'category_slug'   => $category_slug,
 			'glb_id'          => $glb_id,
 			'glb_path'        => self::normalize_editor_scene_asset_url( $glb_url ),

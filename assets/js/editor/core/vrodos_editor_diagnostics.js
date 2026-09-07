@@ -57,7 +57,8 @@ VRODOS.editor = VRODOS.editor || {};
         const timing = Object.assign({}, this.currentLoad, {
             status: status || 'complete',
             endedAt,
-            durationMs: endedAt - this.currentLoad.startedAt
+            durationMs: endedAt - this.currentLoad.startedAt,
+            assetLoadDurationMs: endedAt - this.currentLoad.startedAt
         });
 
         this.loadTimings.push(timing);

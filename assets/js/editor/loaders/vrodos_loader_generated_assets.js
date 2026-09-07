@@ -71,6 +71,17 @@ VRODOS.loader.loadTextAsset = function(name, resource, resources3D) {
     });
 };
 
+VRODOS.loader.loadVideoAsset = function(name, resource, resources3D) {
+    return new Promise((resolve) => {
+        const object = VRODOS.loader.createVideoDisplayObject(name, resource);
+        VRODOS.loader.setObjectProperties(object, name, resources3D);
+        resolve(vrodosLoaderAddGeneratedSceneObject(object, resource, {
+            source: 'video-loaded',
+            renderReason: 'video-loaded'
+        }));
+    });
+};
+
 VRODOS.loader.loadImageAsset = function(manager, name, resource, resources3D) {
     return new Promise((resolve) => {
         const imageUrl = resource.image_path;

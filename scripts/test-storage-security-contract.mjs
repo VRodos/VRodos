@@ -45,8 +45,17 @@ assert(storage.includes("VRODOS_PRIVATE_STORAGE_DIR"), "private root override is
 assert(storage.includes("'site-' . get_current_blog_id()"), "private storage is site-separated");
 assert(storage.includes("wp_ajax_vrodos_private_media"), "authenticated private delivery is registered");
 assert(storage.includes("HTTP_RANGE") && storage.includes("REQUEST_METHOD") && storage.includes("'HEAD'"), "range and HEAD delivery are implemented");
+const privateDelivery = storage.slice(storage.indexOf("public static function serve_private_media"), storage.indexOf("private static function private_file_etag"));
+assert(privateDelivery.indexOf("current_user_can_access_owner") < privateDelivery.indexOf("stream_private_path"), "private delivery authorizes ownership before evaluating cache validators");
 const privateStream = storage.slice(storage.indexOf("private static function stream_private_path"), storage.indexOf("private static function serve_private_staging_file"));
 assert(privateStream.indexOf("while ( ob_get_level() > 0 )") < privateStream.indexOf("header( 'Content-Length:"), "private delivery clears output buffers before declaring the binary response length");
+assert(privateStream.includes("Cache-Control: private, no-cache, must-revalidate"), "normal private attachments use authenticated cache revalidation");
+assert(privateStream.includes("header( 'ETag: '") && privateStream.includes("header( 'Last-Modified: '"), "normal private attachments emit ETag and Last-Modified validators");
+assert(privateStream.includes("! $has_range") && privateStream.includes("status_header( 304 )"), "only full private attachment responses may return 304");
+assert(privateStream.includes("status_header( 206 )"), "private attachment ranges remain partial responses");
+assert(privateStream.includes("Cache-Control: private, no-store"), "staging responses remain non-storeable");
+const privateStaging = storage.slice(storage.indexOf("private static function serve_private_staging_file"), storage.indexOf("public static function delete_private_attachment_file"));
+assert(/stream_private_path\([^;]+false\s*\)/s.test(privateStaging), "staging delivery explicitly disables revalidation");
 assert(storage.includes("replace_attachment_references"), "attachment replacement uses a centralized metadata transaction");
 
 const postTypes = read("includes/class-vrodos-post-type-manager.php");

@@ -2,7 +2,6 @@
   "schemaVersion": 2,
   "storageKey": "vrodos.desktopQualityOverride.v1",
   "queryParameter": "vrodos_quality",
-  "sessionDowngradeKey": "vrodos.desktopQualityDowngrade.v1",
   "managedSettings": [
     "renderQuality",
     "shadowQuality",

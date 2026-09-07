@@ -272,7 +272,6 @@ final class VRodos_Compiler_Target_Assembler {
 			'buildMode'            => 'adaptive',
 			'storageKey'           => (string) ( $target->scene->desktop_profiles['storageKey'] ?? 'vrodos.desktopQualityOverride.v1' ),
 			'queryParameter'       => (string) ( $target->scene->desktop_profiles['queryParameter'] ?? 'vrodos_quality' ),
-			'sessionDowngradeKey'  => (string) ( $target->scene->desktop_profiles['sessionDowngradeKey'] ?? 'vrodos.desktopQualityDowngrade.v1' ),
 			'selection'            => (array) ( $target->scene->desktop_profiles['selection'] ?? [] ),
 			'profiles'             => [],
 			'loaders'              => [],

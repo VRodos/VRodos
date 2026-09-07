@@ -15,6 +15,7 @@ require_once __DIR__ . '/class-vrodos-legacy-metadata-migration.php';
 class VRodos_Install_Manager {
 	private const LEGACY_ASSET_CLONE_META_CLEANUP_OPTION = 'vrodos_removed_legacy_asset_clone_meta';
 	private const LEGACY_ASSET_REMOVED_FIELDS_CLEANUP_OPTION = 'vrodos_removed_legacy_asset_removed_fields_meta';
+	private const LEGACY_GLB_NORMALIZATION_OPTION = 'vrodos_normalized_legacy_glb_attachments';
 
 	/**
 	 * Constructor.
@@ -60,8 +61,44 @@ class VRodos_Install_Manager {
 
 	public function run_legacy_cleanup_migrations(): void {
 		( new VRodos_Legacy_Metadata_Migration() )->run_batch();
+		$this->run_legacy_glb_attachment_normalization();
 		$this->run_legacy_asset_clone_meta_cleanup();
 		$this->run_legacy_asset_removed_fields_cleanup();
+	}
+
+	private function run_legacy_glb_attachment_normalization(): void {
+		if ( get_option( self::LEGACY_GLB_NORMALIZATION_OPTION ) === '1' || ! VRodos_Storage_Manager::storage_schema_ready() ) {
+			return;
+		}
+
+		$complete = true;
+		$asset_ids = get_posts(
+			[
+				'post_type'      => 'vrodos_asset3d',
+				'post_status'    => 'any',
+				'fields'         => 'ids',
+				'posts_per_page' => -1,
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+			]
+		);
+		foreach ( $asset_ids as $asset_id ) {
+			$attachment_id = absint( get_post_meta( (int) $asset_id, 'vrodos_asset3d_glb', true ) );
+			if ( $attachment_id <= 0 || ! VRodos_Storage_Manager::attachment_is_owned_by( $attachment_id, 'asset', (int) $asset_id ) ) {
+				continue;
+			}
+			$path = get_attached_file( $attachment_id, true );
+			if ( ! is_string( $path ) || ! VRodos_Storage_Manager::is_glb_file( $path ) ) {
+				continue;
+			}
+			if ( is_wp_error( VRodos_Storage_Manager::normalize_glb_attachment( $attachment_id, (int) $asset_id ) ) ) {
+				$complete = false;
+			}
+		}
+
+		if ( $complete ) {
+			update_option( self::LEGACY_GLB_NORMALIZATION_OPTION, '1', false );
+		}
 	}
 
 	private function run_legacy_asset_clone_meta_cleanup(): void {

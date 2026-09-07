@@ -628,6 +628,24 @@ VRODOS.api.createTextAsset = function(nameModel, addedAt) {
     });
 }
 
+VRODOS.api.createVideoAsset = function(nameModel, addedAt) {
+    const resource = getSceneObjectRecord(nameModel) || {};
+    const videoObject = VRODOS.loader.createVideoDisplayObject(nameModel, {
+        ...resource,
+        addedAt
+    });
+
+    VRODOS.loader.setObjectProperties(videoObject, nameModel, VRODOS.utils.getSceneDataObjectMap({ create: false }) || {});
+    videoObject.addedAt = addedAt;
+
+    VRODOS.ui.finalizeSceneObjectAdd(videoObject, {
+        registerOptions: addedObjectRegisterOptions('video-added'),
+        selectOptions: { source: 'video-added' }
+    });
+
+    return videoObject;
+}
+
 /**
  * Main function to add objects to the canvas.
  */
@@ -681,6 +699,7 @@ VRODOS.api.addAssetToCanvas = function(nameModel, path, categoryName, dataDrag, 
         'lightAmbient': () => VRODOS.api.createLightAmbient(nameModel, addedAt),
         'pawn': () => VRODOS.api.createPawn(nameModel, addedAt, VRODOS.data.pluginPath),
         '3d-text': () => VRODOS.api.createTextAsset(nameModel, addedAt),
+        'video': () => VRODOS.api.createVideoAsset(nameModel, addedAt),
         'assessment': () => VRODOS.api.createAssessmentAsset(nameModel, addedAt)
     };
     const addCategory = VRODOS.utils.normalizeSceneAssetCategory(categoryName);

@@ -50,7 +50,6 @@ function manifest(overrides = {}) {
         buildMode: 'adaptive',
         queryParameter: 'vrodos_quality',
         storageKey: 'vrodos.desktopQualityOverride.v1',
-        sessionDowngradeKey: 'vrodos.desktopQualityDowngrade.v1',
         profiles: { low: {}, medium: {}, high: {} },
         loaders: { low: 'LOW', medium: 'MEDIUM', high: 'HIGH' },
         selection: {
@@ -107,12 +106,6 @@ decision = fixture.capabilities.selectProfile(manifest());
 assertEqual(decision.profile, 'low', 'unknown hardware conservative profile');
 
 fixture.capabilities.probe = () => capable;
-fixture.window.sessionStorage.setItem('vrodos.desktopQualityDowngrade.v1', 'medium');
-decision = fixture.capabilities.selectProfile(manifest());
-assertEqual(decision.profile, 'medium', 'session downgrade ceiling');
-assertEqual(decision.reason, 'session-downgrade', 'session downgrade reason');
-
-fixture.window.sessionStorage.removeItem('vrodos.desktopQualityDowngrade.v1');
 fixture.window.location.search = '?vrodos_quality=high';
 fixture.capabilities.bootstrap(manifest({ profiles: { low: {}, medium: {}, high: { presetState: 'modified' } } }));
 assertEqual(fixture.writes.at(-1), 'HIGH', 'adaptive bootstrap writes only the selected loader');

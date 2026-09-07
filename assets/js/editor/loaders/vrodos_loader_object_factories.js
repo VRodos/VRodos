@@ -20,7 +20,11 @@ VRODOS.utils.runLimitedTasks = async function(tasks, limit) {
             if (typeof task !== 'function') {
                 continue;
             }
-            await task();
+            try {
+                await task();
+            } catch (error) {
+                console.error('VRodos: scene asset loading task failed', error);
+            }
         }
     }
 
@@ -202,6 +206,47 @@ VRODOS.loader.applyVideoThumbnailTexture = function(object, resource) {
     );
 
     return true;
+};
+
+VRODOS.loader.createVideoDisplayObject = function(name, resource) {
+    const videoResource = resource || {};
+    const group = new THREE.Group();
+    group.name = name;
+    group.asset_name = VRODOS.utils.loaderDisplayText(videoResource.asset_name || name);
+    group.category_name = videoResource.category_name || 'Video';
+    group.category_slug = 'video';
+    group.isSelectableMesh = true;
+    group.isLight = false;
+
+    // Match the authored footprint of the retired 30 MB editor-only TV GLB.
+    const body = new THREE.Mesh(
+        new THREE.BoxGeometry(3.9, 3, 0.158),
+        new THREE.MeshStandardMaterial({
+            color: 0x1f2937,
+            roughness: 0.72,
+            metalness: 0.18
+        })
+    );
+    body.name = `${name}_frame`;
+    body.isSelectableMesh = false;
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
+
+    const screen = new THREE.Mesh(
+        new THREE.PlaneGeometry(3.887, 2.98),
+        new THREE.MeshBasicMaterial({
+            color: 0x111827,
+            side: THREE.DoubleSide
+        })
+    );
+    screen.name = `${name}_screen`;
+    screen.position.z = -0.0805;
+    screen.rotation.y = Math.PI;
+    screen.isSelectableMesh = false;
+    group.add(screen);
+
+    return group;
 };
 
 VRODOS.utils.drawRoundedRect = function(ctx, x, y, width, height, radius, fillStyle, strokeStyle, lineWidth) {

@@ -145,7 +145,7 @@ VRODOS.api.loadEditorSceneResources = function(resources3D, options) {
     if (VRODOS.editor.diagnostics && typeof VRODOS.editor.diagnostics.markLoadStart === 'function') {
         const resourceStats = typeof VRODOS.loader.getSceneResourceStats === 'function'
             ? VRODOS.loader.getSceneResourceStats(assetResources)
-            : { resourceCount: Object.keys(assetResources || {}).length, glbCount: 0 };
+            : { resourceCount: Object.keys(assetResources || {}).length, glbCount: 0, generatedVideoCount: 0 };
         VRODOS.editor.diagnostics.markLoadStart(opts.reason || 'scene-load', resourceStats);
     }
 

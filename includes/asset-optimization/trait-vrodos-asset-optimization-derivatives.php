@@ -104,8 +104,15 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			return new WP_Error( 'vrodos_glb_source_not_local', 'Only local uploaded GLB files can be optimized.' );
 		}
 
-		if ( strtolower( pathinfo( $source_path, PATHINFO_EXTENSION ) ) !== 'glb' ) {
+		if ( ! VRodos_Storage_Manager::is_glb_file( $source_path ) ) {
 			return new WP_Error( 'vrodos_glb_source_invalid_type', 'The source asset is not a GLB file.' );
+		}
+
+		if ( is_numeric( $source_meta ) && VRodos_Storage_Manager::attachment_is_owned_by( (int) $source_meta, 'asset', $asset_id ) ) {
+			$normalized_path = VRodos_Storage_Manager::normalize_glb_attachment( (int) $source_meta, $asset_id );
+			if ( ! is_wp_error( $normalized_path ) ) {
+				$source_path = $normalized_path;
+			}
 		}
 
 		$size = filesize( $source_path );

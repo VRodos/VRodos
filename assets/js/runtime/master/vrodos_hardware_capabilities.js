@@ -153,12 +153,6 @@
             profile = 'high';
             reason = 'high-capability';
         }
-        const downgrade = String(safeStorage(window.sessionStorage, 'getItem', manifest.sessionDowngradeKey || 'vrodos.desktopQualityDowngrade.v1') || '').toLowerCase();
-        const rank = { low: 0, medium: 1, high: 2 };
-        if (Object.prototype.hasOwnProperty.call(rank, downgrade) && rank[downgrade] < rank[profile]) {
-            profile = downgrade;
-            reason = 'session-downgrade';
-        }
         return { profile, requested, source, reason, probe };
     };
 

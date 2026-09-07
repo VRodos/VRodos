@@ -35,7 +35,7 @@ VRODOS.loader.isGlbSceneResource = function(name, resource, categorySlug) {
 
     const normalizedCategory = categorySlug || VRODOS.utils.normalizeSceneAssetCategory(resource && resource.category_slug);
     if (normalizedCategory === 'video') {
-        return true;
+        return false;
     }
 
     return Boolean(resource && resource.glb_id !== '' && resource.glb_id !== undefined);
@@ -44,7 +44,8 @@ VRODOS.loader.isGlbSceneResource = function(name, resource, categorySlug) {
 VRODOS.loader.getSceneResourceStats = function(resources3D) {
     const stats = {
         resourceCount: 0,
-        glbCount: 0
+        glbCount: 0,
+        generatedVideoCount: 0
     };
 
     if (!resources3D) {
@@ -60,7 +61,10 @@ VRODOS.loader.getSceneResourceStats = function(resources3D) {
         }
 
         stats.resourceCount++;
-        if (VRODOS.loader.isGlbSceneResource(name, resource)) {
+        const categorySlug = VRODOS.utils.normalizeSceneAssetCategory(resource && resource.category_slug);
+        if (categorySlug === 'video') {
+            stats.generatedVideoCount++;
+        } else if (VRODOS.loader.isGlbSceneResource(name, resource, categorySlug)) {
             stats.glbCount++;
         }
     }
@@ -83,6 +87,7 @@ VRODOS.loader.applyResourceLoadProfile = function(resources3D) {
 
     return {
         resourceCount,
+        generatedVideoCount: resourceStats.generatedVideoCount,
         isDenseScene,
         loadConcurrency: isDenseScene
             ? Math.min(VRODOS_LOADER_DENSE_CONCURRENCY_CAP, baseConcurrency)

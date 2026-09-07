@@ -33,23 +33,65 @@ function createEventTarget() {
 
 function createHarness() {
     const storage = new Map();
+    const localStorage = new Map();
+    const reloads = [];
+    function createElement(tagName) {
+        const element = Object.assign(createEventTarget(), {
+            tagName: String(tagName || "div").toUpperCase(),
+            style: {},
+            attributes: {},
+            children: [],
+            parentNode: null,
+            appendChild(child) {
+                child.parentNode = this;
+                this.children.push(child);
+                return child;
+            },
+            removeChild(child) {
+                this.children = this.children.filter((candidate) => candidate !== child);
+                child.parentNode = null;
+                return child;
+            },
+            setAttribute(name, value) {
+                this.attributes[name] = String(value);
+            }
+        });
+        return element;
+    }
     const documentStub = {
         visibilityState: "visible",
-        body: null
+        body: createElement("body"),
+        createElement
     };
     const windowStub = {
         document: documentStub,
         navigator: { platform: "Win32", userAgent: "Mozilla/5.0 Windows Chrome" },
-        location: { search: "" },
+        location: {
+            search: "",
+            reload() {
+                reloads.push("reload");
+            }
+        },
         devicePixelRatio: 1.5,
         VRODOS_DEBUG: {},
         VRODOSMaster: { SceneSettingsHelpers: {} },
+        localStorage: {
+            getItem(key) {
+                return localStorage.has(key) ? localStorage.get(key) : null;
+            },
+            setItem(key, value) {
+                localStorage.set(key, String(value));
+            }
+        },
         sessionStorage: {
             getItem(key) {
                 return storage.has(key) ? storage.get(key) : null;
             },
             setItem(key, value) {
                 storage.set(key, String(value));
+            },
+            removeItem(key) {
+                storage.delete(key);
             }
         }
     };
@@ -73,7 +115,7 @@ function createHarness() {
         context,
         { filename: "vrodos_hardware_diagnostics.js" }
     );
-    return { context, window: windowStub, document: documentStub, storage };
+    return { context, window: windowStub, document: documentStub, storage, localStorage, reloads };
 }
 
 function createWebGlContext(options = {}) {
@@ -220,6 +262,7 @@ assertEqual(Hardware.isDebugEnabled(), true, "global debug flag");
 harness.window.VRODOS_DEBUG.gpu = false;
 Hardware.storeSessionDismissal();
 assertEqual(Hardware.readSessionDismissal(), true, "session dismissal");
+harness.window.sessionStorage.removeItem(Hardware.dismissalKey);
 
 const canvas = createEventTarget();
 let activeContext = createWebGlContext({ vendor: "Intel", renderer: "Intel(R) UHD Graphics 630" });
@@ -249,6 +292,37 @@ activeContext = createWebGlContext({ vendor: "NVIDIA Corporation", renderer: "NV
 renderer.domElement.dispatch("webglcontextrestored");
 assertEqual(component._vrodosHardwareDiagnostics.gpu.adapterClass, "discrete-likely", "context-restored adapter refresh");
 assertEqual(component._vrodosHardwareDiagnostics.performance.status, "settling", "context-restored sampling reset");
+
+harness.window.VRODOS_DESKTOP_PROFILE_MANIFEST = {
+    buildMode: "adaptive",
+    storageKey: "vrodos.desktopQualityOverride.v1",
+    profiles: { low: {}, medium: {}, high: {} },
+    selection: { downgradeAverageFps: 45, severeAverageFps: 28, downgradeP95FrameMs: 33 }
+};
+harness.window.VRODOS_ACTIVE_DESKTOP_PROFILE = { id: "high", source: "auto" };
+component._vrodosHardwareDiagnostics.profile = harness.window.VRODOS_ACTIVE_DESKTOP_PROFILE;
+activeContext = createWebGlContext({ vendor: "Intel", renderer: "Intel(R) UHD Graphics 630" });
+Helpers.initializeHardwareDiagnostics.call(component);
+for (let frame = 0; frame < 400 && component._vrodosHardwareDiagnostics.performance.status !== "complete"; frame += 1) {
+    Helpers.updateHardwarePerformanceDiagnostics.call(component, frame * 40, 40);
+}
+assertEqual(component._vrodosHardwareDiagnostics.performance.status, "complete", "adaptive recommendation sample completion");
+assertEqual(harness.reloads.length, 0, "adaptive recommendation never reloads before player consent");
+assertEqual(component._vrodosHardwareDiagnostics.recommendation.target, "low", "severe sample recommends Low");
+const recommendationBanner = component._vrodosHardwareDiagnostics.banner;
+assertEqual(recommendationBanner.id, "vrodos-quality-recommendation", "quality recommendation banner");
+Helpers.updateHardwarePerformanceDiagnostics.call(component, 16040, 40);
+assert(component._vrodosHardwareDiagnostics.banner === recommendationBanner, "completed sampling keeps the actionable banner stable");
+
+const recommendationActions = recommendationBanner.children[2];
+const applyRecommendation = recommendationActions.children[0];
+const keepCurrent = recommendationActions.children[1];
+keepCurrent.dispatch("click");
+assertEqual(recommendationBanner.parentNode, null, "Keep current dismisses the recommendation");
+assertEqual(harness.reloads.length, 0, "Keep current does not reload");
+applyRecommendation.dispatch("click");
+assertEqual(harness.localStorage.get("vrodos.desktopQualityOverride.v1"), "low", "Use Low saves the selected override");
+assertEqual(harness.reloads.length, 1, "Use Low reloads after player consent");
 
 const profilerSource = readFileSync(resolve(root, "scripts/profile-master-client.mjs"), "utf8");
 assert(profilerSource.includes("GPU sample:"), "profiler must print GPU performance evidence");

@@ -189,7 +189,7 @@ trait VRodos_Asset_Optimization_Scanner {
 
 		if ( is_numeric( $source_meta ) ) {
 			$source_path = get_attached_file( (int) $source_meta );
-			return is_string( $source_path ) && 'glb' === strtolower( pathinfo( $source_path, PATHINFO_EXTENSION ) );
+			return is_string( $source_path ) && VRodos_Storage_Manager::is_glb_file( $source_path );
 		}
 
 		return false;

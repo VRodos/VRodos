@@ -551,16 +551,6 @@
             });
             if (!target) return;
             state.recommendation = { direction: 'down', target };
-            if (active.source === 'auto') {
-                const key = (window.VRODOS_DESKTOP_PROFILE_MANIFEST || {}).sessionDowngradeKey || 'vrodos.desktopQualityDowngrade.v1';
-                let alreadyDowngraded = false;
-                try { alreadyDowngraded = Boolean(window.sessionStorage.getItem(key)); } catch (error) { alreadyDowngraded = true; }
-                if (!alreadyDowngraded) {
-                    try { window.sessionStorage.setItem(key, target); } catch (error) { return; }
-                    window.location.reload();
-                    return;
-                }
-            }
             showQualityRecommendation(component, target, 'down');
             return;
         }
@@ -593,9 +583,6 @@
                 ? state.profile.assets.estimatedTextureMemoryMiB
                 : null,
             loadedChunks: state.profile && Array.isArray(state.profile.chunkIds) ? state.profile.chunkIds : [],
-            downgradeStatus: state.profile && state.profile.reason === 'session-downgrade'
-                ? 'session-downgrade'
-                : 'none',
             canForceAdapter: false
         });
     }
@@ -734,8 +721,8 @@
         }
 
         if (state.performance.status === 'complete' || state.performance.status === 'insufficient-samples') {
-            evaluateAdvisory(this);
-            evaluateProfilePerformance(this);
+            // The completed sample has already produced its advisory. Rebuilding it
+            // every frame replaces a pressed button before its click event fires.
             return;
         }
 

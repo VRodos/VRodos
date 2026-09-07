@@ -25,6 +25,8 @@ function is_wp_error( $value ): bool { return $value instanceof WP_Error; }
 function wp_generate_password(): string { return 'random-token'; }
 function absint( $value ): int { return abs( (int) $value ); }
 function wp_slash( string $value ): string { return addslashes( $value ); }
+function sanitize_file_name( string $value ): string { return preg_replace( '/[^A-Za-z0-9._-]/', '-', $value ); }
+function wp_unique_filename( string $directory, string $filename ): string { return $filename; }
 function admin_url( string $path = '' ): string { return 'https://example.test/wp-admin/' . ltrim( $path, '/' ); }
 function add_query_arg( array $args, string $url ): string { return $url . '?' . http_build_query( $args ); }
 function wp_parse_url( string $url, int $component = -1 ) { return parse_url( $url, $component ); }
@@ -35,6 +37,8 @@ $test_meta = [];
 $test_attached_files = [];
 $test_deleted_attachments = [];
 $test_failed_meta_key = '';
+$test_post_mime_types = [];
+$test_options = [];
 function get_post_meta( int $post_id, string $key, bool $single = false ) {
 	global $test_meta;
 	return $test_meta[ $post_id ][ $key ] ?? '';
@@ -64,6 +68,20 @@ function update_attached_file( int $attachment_id, string $file ) {
 function get_attached_file( int $attachment_id, bool $unfiltered = false ) {
 	global $test_attached_files;
 	return $test_attached_files[ $attachment_id ] ?? false;
+}
+function wp_update_post( array $post, bool $wp_error = false ) {
+	global $test_post_mime_types;
+	$test_post_mime_types[ (int) $post['ID'] ] = (string) ( $post['post_mime_type'] ?? '' );
+	return (int) $post['ID'];
+}
+function get_option( string $key, $default = false ) {
+	global $test_options;
+	return $test_options[ $key ] ?? $default;
+}
+function update_option( string $key, $value, bool $autoload = true ): bool {
+	global $test_options;
+	$test_options[ $key ] = $value;
+	return true;
 }
 
 require_once dirname( __DIR__ ) . '/includes/class-vrodos-storage-manager.php';
@@ -100,6 +118,21 @@ try {
 	vrodos_storage_assert( VRodos_Storage_Manager::path_is_within( $source, $root ), 'contained path accepted' );
 	vrodos_storage_assert( ! VRodos_Storage_Manager::path_is_within( $root . '../site-70/file', $root ), 'sibling traversal rejected' );
 	vrodos_storage_assert( VRodos_Storage_Manager::path_is_within( '//server/share/site-7/assets/42', '//server/share/site-7' ), 'UNC containment' );
+
+	$legacy_glb = $source . 'legacy-model.txt';
+	file_put_contents( $legacy_glb, 'glTF' . pack( 'V', 2 ) . pack( 'V', 20 ) . str_repeat( "\0", 8 ) );
+	$test_attached_files[503] = $legacy_glb;
+	$test_meta[503] = [
+		'_vrodos_private_storage'   => '1',
+		'_vrodos_storage_owner_type' => 'asset',
+		'_vrodos_storage_owner_id'   => 42,
+	];
+	vrodos_storage_assert( VRodos_Storage_Manager::is_glb_file( $legacy_glb ), 'GLB content is detected independently of its extension' );
+	$normalized_glb = VRodos_Storage_Manager::normalize_glb_attachment( 503, 42 );
+	vrodos_storage_assert( is_string( $normalized_glb ) && str_ends_with( $normalized_glb, '.glb' ), 'legacy GLB extension is normalized' );
+	vrodos_storage_assert( is_file( $normalized_glb ) && ! is_file( $legacy_glb ), 'legacy GLB is renamed in private storage' );
+	vrodos_storage_assert( wp_normalize_path( $test_attached_files[503] ) === wp_normalize_path( $normalized_glb ), 'normalized GLB attachment path is updated' );
+	vrodos_storage_assert( $test_post_mime_types[503] === 'model/gltf-binary', 'normalized GLB MIME type is updated' );
 
 	$uploads_root = wp_upload_dir( null, true )['basedir'];
 	$legacy_url_file = trailingslashit( $uploads_root ) . 'legacy/url-source.glb';

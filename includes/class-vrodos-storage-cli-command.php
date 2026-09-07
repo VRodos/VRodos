@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Ownership-checked, resumable storage rollout commands. */
 final class VRodos_Storage_CLI_Command {
-	private const STATE_OPTION = 'vrodos_storage_migration_v1';
+	private const STATE_OPTION = VRodos_Storage_Manager::MIGRATION_STATE_OPTION;
 	private const LOCK_OPTION  = 'vrodos_storage_migration_lock';
 	private const LEGACY_REPOSITORIES = [
 		'archaeology-joker'       => 'vrodos-shared-assets-archaeology',

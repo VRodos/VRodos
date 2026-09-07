@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class VRodos_Storage_Manager {
 	public const STORAGE_SCHEMA_OPTION = 'vrodos_storage_schema_version';
+	public const MIGRATION_STATE_OPTION = 'vrodos_storage_migration_v1';
 	private const PRIVATE_MARKER_META = '_vrodos_private_storage';
 	private const OWNER_TYPE_META     = '_vrodos_storage_owner_type';
 	private const OWNER_ID_META       = '_vrodos_storage_owner_id';
@@ -28,6 +29,89 @@ final class VRodos_Storage_Manager {
 
 	public static function storage_schema_ready(): bool {
 		return 1 === (int) get_option( self::STORAGE_SCHEMA_OPTION, 0 );
+	}
+
+	/** Validate GLB v2 content independently of a legacy filename or MIME type. */
+	public static function is_glb_file( string $path ): bool {
+		if ( ! is_file( $path ) || ! is_readable( $path ) ) {
+			return false;
+		}
+
+		$handle = fopen( $path, 'rb' );
+		if ( false === $handle ) {
+			return false;
+		}
+		$header = fread( $handle, 12 );
+		fclose( $handle );
+		if ( false === $header || 12 !== strlen( $header ) || 'glTF' !== substr( $header, 0, 4 ) ) {
+			return false;
+		}
+
+		$version = unpack( 'Vvalue', substr( $header, 4, 4 ) );
+		$length  = unpack( 'Vvalue', substr( $header, 8, 4 ) );
+		$size    = filesize( $path );
+		return 2 === (int) ( $version['value'] ?? 0 )
+			&& false !== $size
+			&& $size >= 20
+			&& (int) $size === (int) ( $length['value'] ?? 0 );
+	}
+
+	/** Canonicalize a valid legacy GLB attachment without changing its attachment ID. */
+	public static function normalize_glb_attachment( int $attachment_id, int $asset_id ) {
+		if ( ! self::attachment_is_owned_by( $attachment_id, 'asset', $asset_id ) ) {
+			return new WP_Error( 'vrodos_glb_normalize_unowned', 'The GLB attachment is not owned by this asset.' );
+		}
+
+		$path = get_attached_file( $attachment_id, true );
+		$root = self::private_site_root( false );
+		if (
+			! is_string( $path )
+			|| ! is_string( $root )
+			|| is_link( $path )
+			|| ! self::path_is_within( $path, $root )
+			|| ! self::is_glb_file( $path )
+		) {
+			return new WP_Error( 'vrodos_glb_normalize_invalid', 'The attachment is not a valid private GLB file.' );
+		}
+
+		$original_path = wp_normalize_path( $path );
+		$target_path   = $original_path;
+		if ( 'glb' === strtolower( pathinfo( $original_path, PATHINFO_EXTENSION ) ) && 'model/gltf-binary' === get_post_mime_type( $attachment_id ) ) {
+			return $original_path;
+		}
+		if ( 'glb' !== strtolower( pathinfo( $original_path, PATHINFO_EXTENSION ) ) ) {
+			$directory   = trailingslashit( dirname( $original_path ) );
+			$filename    = sanitize_file_name( pathinfo( $original_path, PATHINFO_FILENAME ) . '.glb' );
+			$target_path = wp_normalize_path( $directory . wp_unique_filename( $directory, $filename ) );
+			if ( ! @rename( $original_path, $target_path ) ) {
+				return new WP_Error( 'vrodos_glb_normalize_rename_failed', 'The legacy GLB file could not be renamed.' );
+			}
+			if ( ! self::ensure_attached_file( $attachment_id, $target_path ) ) {
+				@rename( $target_path, $original_path );
+				self::ensure_attached_file( $attachment_id, $original_path );
+				return new WP_Error( 'vrodos_glb_normalize_database_failed', 'WordPress rejected the normalized GLB path.' );
+			}
+		}
+
+		$mime_updated = wp_update_post(
+			[
+				'ID'             => $attachment_id,
+				'post_mime_type' => 'model/gltf-binary',
+			],
+			true
+		);
+		if ( is_wp_error( $mime_updated ) ) {
+			if ( $target_path !== $original_path ) {
+				self::ensure_attached_file( $attachment_id, $original_path );
+				@rename( $target_path, $original_path );
+			}
+			return new WP_Error( 'vrodos_glb_normalize_database_failed', 'WordPress rejected the normalized GLB MIME type.' );
+		}
+
+		if ( $target_path !== $original_path ) {
+			self::replace_glb_source_path_records( $asset_id, $original_path, $target_path );
+		}
+		return $target_path;
 	}
 
 	/** Resolve a legacy upload path or URL without allowing access outside uploads. */
@@ -467,11 +551,54 @@ final class VRodos_Storage_Manager {
 		self::stream_private_path( $path, $mime );
 	}
 
-	private static function stream_private_path( string $path, string $mime ): void {
-		$size  = (int) filesize( $path );
-		$start = 0;
-		$end   = max( 0, $size - 1 );
-		if ( isset( $_SERVER['HTTP_RANGE'] ) && preg_match( '/^bytes=(\d*)-(\d*)$/', (string) $_SERVER['HTTP_RANGE'], $matches ) ) {
+	private static function private_file_etag( int $size, int $modified_at ): string {
+		return sprintf( 'W/"%x-%x"', max( 0, $size ), max( 0, $modified_at ) );
+	}
+
+	private static function request_cache_validator_matches( string $etag, int $modified_at ): bool {
+		$if_none_match = trim( (string) ( $_SERVER['HTTP_IF_NONE_MATCH'] ?? '' ) );
+		if ( '' !== $if_none_match ) {
+			$requested_etags = array_map( 'trim', explode( ',', $if_none_match ) );
+			return in_array( '*', $requested_etags, true ) || in_array( $etag, $requested_etags, true );
+		}
+
+		$if_modified_since = trim( (string) ( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? '' ) );
+		if ( '' === $if_modified_since ) {
+			return false;
+		}
+
+		$requested_modified_at = strtotime( $if_modified_since );
+		return false !== $requested_modified_at && $requested_modified_at >= $modified_at;
+	}
+
+	private static function stream_private_path( string $path, string $mime, bool $allow_revalidation = true ): void {
+		$size            = (int) filesize( $path );
+		$modified_at     = max( 0, (int) filemtime( $path ) );
+		$start           = 0;
+		$end             = max( 0, $size - 1 );
+		$range_header    = trim( (string) ( $_SERVER['HTTP_RANGE'] ?? '' ) );
+		$has_range       = '' !== $range_header;
+
+		while ( ob_get_level() > 0 ) {
+			ob_end_clean();
+		}
+
+		if ( $allow_revalidation ) {
+			$etag = self::private_file_etag( $size, $modified_at );
+			header( 'Cache-Control: private, no-cache, must-revalidate' );
+			header( 'ETag: ' . $etag );
+			header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $modified_at ) . ' GMT' );
+
+			if ( ! $has_range && self::request_cache_validator_matches( $etag, $modified_at ) ) {
+				status_header( 304 );
+				exit;
+			}
+		} else {
+			nocache_headers();
+			header( 'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0' );
+		}
+
+		if ( $has_range && preg_match( '/^bytes=(\d*)-(\d*)$/', $range_header, $matches ) ) {
 			if ( '' === $matches[1] && '' !== $matches[2] ) {
 				$length = min( $size, (int) $matches[2] );
 				$start  = $size - $length;
@@ -488,10 +615,6 @@ final class VRodos_Storage_Manager {
 			header( sprintf( 'Content-Range: bytes %d-%d/%d', $start, $end, $size ) );
 		}
 
-		while ( ob_get_level() > 0 ) {
-			ob_end_clean();
-		}
-		nocache_headers();
 		header( 'Accept-Ranges: bytes' );
 		header( 'Content-Type: ' . sanitize_mime_type( $mime ) );
 		header( 'X-Content-Type-Options: nosniff' );
@@ -547,7 +670,7 @@ final class VRodos_Storage_Manager {
 			exit;
 		}
 		$checked = wp_check_filetype( $file );
-		self::stream_private_path( $path, (string) ( $checked['type'] ?? 'application/octet-stream' ) );
+		self::stream_private_path( $path, (string) ( $checked['type'] ?? 'application/octet-stream' ), false );
 	}
 
 	public static function delete_private_attachment_file( int $attachment_id ): void {
@@ -775,6 +898,31 @@ final class VRodos_Storage_Manager {
 	private static function ensure_attachment_metadata( int $attachment_id, array $metadata ): bool {
 		$updated = wp_update_attachment_metadata( $attachment_id, $metadata );
 		return false !== $updated || wp_get_attachment_metadata( $attachment_id ) === $metadata;
+	}
+
+	private static function replace_glb_source_path_records( int $asset_id, string $old_path, string $new_path ): void {
+		$derivative_meta = get_post_meta( $asset_id, '_vrodos_asset3d_glb_derivatives', true );
+		if ( is_array( $derivative_meta ) && is_array( $derivative_meta['derivatives'] ?? null ) ) {
+			$changed = false;
+			foreach ( $derivative_meta['derivatives'] as &$record ) {
+				if ( is_array( $record ) && wp_normalize_path( (string) ( $record['sourcePath'] ?? '' ) ) === $old_path ) {
+					$record['sourcePath'] = $new_path;
+					$changed = true;
+				}
+			}
+			unset( $record );
+			if ( $changed ) {
+				update_post_meta( $asset_id, '_vrodos_asset3d_glb_derivatives', $derivative_meta );
+			}
+		}
+
+		delete_post_meta( $asset_id, '_vrodos_asset3d_glb_analysis' );
+		$state = get_option( self::MIGRATION_STATE_OPTION, [] );
+		$key   = 'asset:' . $asset_id . ':vrodos_asset3d_glb';
+		if ( is_array( $state ) && is_array( $state['items'][ $key ] ?? null ) ) {
+			$state['items'][ $key ]['destination'] = $new_path;
+			update_option( self::MIGRATION_STATE_OPTION, $state, false );
+		}
 	}
 
 	private static function clear_private_marker( int $attachment_id ): void {
