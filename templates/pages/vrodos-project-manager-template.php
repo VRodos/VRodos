@@ -15,6 +15,7 @@ $full_title_lowercase = 'projects';
 $single = 'project';
 $multiple = 'projects';
 $is_restricted_immerse_user = VRodos_Immerse_Access_Manager::is_restricted_user();
+$initial_project_source = VRodos_Immerse_Access_Manager::is_immerse_user() ? 'immerse' : 'vrodos';
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="emerald">
@@ -23,7 +24,10 @@ $is_restricted_immerse_user = VRodos_Immerse_Access_Manager::is_restricted_user(
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>VRodos Project Manager</title>
 	<?php wp_head(); ?>
-	<script>window.vrodosProjectManagerRestricted = <?php echo $is_restricted_immerse_user ? 'true' : 'false'; ?>;</script>
+	<script>
+		window.vrodosProjectManagerRestricted = <?php echo $is_restricted_immerse_user ? 'true' : 'false'; ?>;
+		window.vrodosProjectManagerInitialSource = <?php echo wp_json_encode( $initial_project_source ); ?>;
+	</script>
 </head>
 <body <?php body_class('vrodos-manager-wrapper tw-overflow-hidden'); ?>>
 
@@ -111,17 +115,17 @@ else {
                         <?php if ( ! $is_restricted_immerse_user ) : ?>
                         <div class="tw-flex tw-items-center tw-gap-1 tw-bg-base-200 tw-p-1 tw-rounded-xl" role="tablist" aria-label="Project source">
                             <button type="button"
-                                    class="vrodos-project-source-tab tw-btn tw-btn-xs tw-rounded-lg tw-font-bold tw-text-xs tw-uppercase tw-tracking-widest tw-px-4 tw-bg-base-100 tw-shadow-sm tw-border-0"
+                                    class="vrodos-project-source-tab tw-btn tw-btn-xs tw-rounded-lg tw-font-bold tw-text-xs tw-uppercase tw-tracking-widest tw-px-4 <?php echo 'vrodos' === $initial_project_source ? 'tw-bg-base-100 tw-shadow-sm' : 'tw-btn-ghost'; ?> tw-border-0"
                                     data-project-source="vrodos"
                                     role="tab"
-                                    aria-selected="true">
+                                    aria-selected="<?php echo 'vrodos' === $initial_project_source ? 'true' : 'false'; ?>">
                                 VRodos
                             </button>
                             <button type="button"
-                                    class="vrodos-project-source-tab tw-btn tw-btn-xs tw-btn-ghost tw-rounded-lg tw-font-bold tw-text-xs tw-uppercase tw-tracking-widest tw-px-4 tw-border-0"
+                                    class="vrodos-project-source-tab tw-btn tw-btn-xs tw-rounded-lg tw-font-bold tw-text-xs tw-uppercase tw-tracking-widest tw-px-4 <?php echo 'immerse' === $initial_project_source ? 'tw-bg-base-100 tw-shadow-sm' : 'tw-btn-ghost'; ?> tw-border-0"
                                     data-project-source="immerse"
                                     role="tab"
-                                    aria-selected="false">
+                                    aria-selected="<?php echo 'immerse' === $initial_project_source ? 'true' : 'false'; ?>">
                                 IMMERSE
                             </button>
                         </div>

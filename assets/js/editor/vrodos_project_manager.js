@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-	const initialProjectSource = window.vrodosProjectManagerRestricted ? 'immerse' : 'vrodos';
+	const initialProjectSource = window.vrodosProjectManagerInitialSource === 'immerse' ? 'immerse' : 'vrodos';
 	setupProjectSourceTabs();
 	VRODOS.api.selectProjectSource(initialProjectSource);
 	VRODOS.api.fetchAllProjectsAndAddToDOM(VRODOS.config.current_user_id, VRODOS.config.parameter_Scenepass, -1, true, initialProjectSource);

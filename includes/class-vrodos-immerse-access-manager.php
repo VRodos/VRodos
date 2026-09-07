@@ -8,6 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Enforces the content boundary for users provisioned by the Immerse connector.
  */
 class VRodos_Immerse_Access_Manager {
+	public const IMMERSE_ROLE = 'vrodos_immerse_user';
 	public const RESTRICTED_CAPABILITY = 'vrodos_immerse_restricted';
 
 	public function __construct() {
@@ -21,6 +22,16 @@ class VRodos_Immerse_Access_Manager {
 			&& $user->exists()
 			&& ! empty( $user->allcaps[ self::RESTRICTED_CAPABILITY ] )
 			&& empty( $user->allcaps['manage_options'] );
+	}
+
+	public static function is_immerse_user( int $user_id = 0 ): bool {
+		$user = $user_id > 0 ? get_userdata( $user_id ) : wp_get_current_user();
+		return $user instanceof WP_User
+			&& $user->exists()
+			&& (
+				in_array( self::IMMERSE_ROLE, (array) $user->roles, true )
+				|| ! empty( $user->allcaps[ self::RESTRICTED_CAPABILITY ] )
+			);
 	}
 
 	public static function can_use_management_pages(): bool {
