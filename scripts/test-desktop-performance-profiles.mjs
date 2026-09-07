@@ -144,6 +144,10 @@ function editorHarness() {
 }
 
 const editor = editorHarness();
+const defaultProfiles = editor.api.migrateState();
+assertEqual(defaultProfiles.buildMode, 'custom', 'editor defaults new scenes to Custom-only builds');
+assertEqual(defaultProfiles.activeTab, 'custom', 'editor opens the Custom tab for new scenes');
+
 const migratedAdaptive = editor.api.migrateState({ schemaVersion: 1, autoSelect: true, activeProfile: 'medium', profiles: {} });
 assertEqual(migratedAdaptive.schemaVersion, 2, 'editor migrates profiles to schema v2');
 assertEqual(migratedAdaptive.buildMode, 'adaptive', 'editor preserves adaptive v1 builds');

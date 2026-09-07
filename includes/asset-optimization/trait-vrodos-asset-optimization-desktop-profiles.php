@@ -22,7 +22,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			$current_scene_assets = [];
 			self::collect_desktop_profile_assets( $scene->scene_json, $current_scene_assets );
 			$scene_assets[ $scene->scene_id ] = $current_scene_assets;
-			$current_slots = 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'adaptive' )
+			$current_slots = 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'custom' )
 				? [ 'low', 'medium', 'high' ]
 				: [ 'custom' ];
 			$scene_slots[ $scene->scene_id ] = $current_slots;

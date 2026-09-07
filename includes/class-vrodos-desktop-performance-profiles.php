@@ -76,7 +76,7 @@ final class VRodos_Desktop_Performance_Profiles {
 
 		self::apply_shared_feature_caps( $profiles, $custom_settings );
 		self::apply_adaptive_tier_caps( $profiles );
-		$build_mode = 'custom' === (string) ( $stored_state['buildMode'] ?? '' ) ? 'custom' : 'adaptive';
+		$build_mode = 'adaptive' === (string) ( $stored_state['buildMode'] ?? '' ) ? 'adaptive' : 'custom';
 		return [
 			'schemaVersion' => 2,
 			'buildMode'     => $build_mode,
@@ -96,7 +96,7 @@ final class VRodos_Desktop_Performance_Profiles {
 		}
 
 		$active = in_array( (string) ( $state['activeProfile'] ?? '' ), [ 'low', 'medium', 'high' ], true ) ? (string) $state['activeProfile'] : 'high';
-		$adaptive = false !== ( $state['autoSelect'] ?? true );
+		$adaptive = true === ( $state['autoSelect'] ?? false );
 		$raw_profiles = is_array( $state['profiles'] ?? null ) ? $state['profiles'] : [];
 		$profiles = $raw_profiles;
 		foreach ( [ 'low', 'medium', 'high' ] as $profile_id ) {
@@ -130,7 +130,7 @@ final class VRodos_Desktop_Performance_Profiles {
 
 	/** @return string[] */
 	public static function validate_monotonic( array $resolved ): array {
-		if ( 'adaptive' !== (string) ( $resolved['buildMode'] ?? 'adaptive' ) ) {
+		if ( 'adaptive' !== (string) ( $resolved['buildMode'] ?? 'custom' ) ) {
 			return [];
 		}
 		$profiles = (array) ( $resolved['profiles'] ?? [] );

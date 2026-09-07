@@ -163,11 +163,11 @@
 					<legend class="tw-text-[10px] tw-font-bold tw-uppercase tw-text-slate-500">Build mode</legend>
 					<div class="tw-mt-1 tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-2">
 						<label class="tw-flex tw-cursor-pointer tw-items-start tw-gap-2 tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3">
-							<input type="radio" name="compileDesktopBuildMode" value="custom" class="tw-radio tw-radio-primary tw-radio-xs tw-mt-0.5">
+							<input type="radio" name="compileDesktopBuildMode" value="custom" class="tw-radio tw-radio-primary tw-radio-xs tw-mt-0.5" checked>
 							<span><strong class="tw-block tw-text-xs tw-text-slate-700">Custom only</strong><span class="tw-block tw-text-[10px] tw-text-slate-500">Publish one exact experience.</span></span>
 						</label>
 						<label class="tw-flex tw-cursor-pointer tw-items-start tw-gap-2 tw-rounded-lg tw-border tw-border-slate-200 tw-bg-white tw-p-3">
-							<input type="radio" name="compileDesktopBuildMode" value="adaptive" class="tw-radio tw-radio-primary tw-radio-xs tw-mt-0.5" checked>
+							<input type="radio" name="compileDesktopBuildMode" value="adaptive" class="tw-radio tw-radio-primary tw-radio-xs tw-mt-0.5">
 							<span><strong class="tw-block tw-text-xs tw-text-slate-700">Adaptive Low/Medium/High</strong><span class="tw-block tw-text-[10px] tw-text-slate-500">Publish three variants and load one per device.</span></span>
 						</label>
 					</div>

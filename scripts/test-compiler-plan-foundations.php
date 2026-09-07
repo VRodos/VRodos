@@ -548,7 +548,8 @@ foreach ( $single_player_plan->targets as $target ) {
 }
 $desktop_profiles = $single_player_plan->scenes[0]->desktop_profiles;
 vrodos_foundation_assert( 2 === $desktop_profiles['schemaVersion'], 'desktop profiles use schema v2' );
-vrodos_foundation_assert( 'adaptive' === $desktop_profiles['buildMode'], 'desktop profiles default to adaptive build mode' );
+vrodos_foundation_assert( 'custom' === $desktop_profiles['buildMode'], 'desktop profiles default to Custom-only build mode' );
+vrodos_foundation_assert( 'custom' === $desktop_profiles['defaultProfile'], 'default desktop builds select the Custom cache identity' );
 vrodos_foundation_assert( isset( $desktop_profiles['profiles']['custom'] ), 'desktop profiles include the independently cached Custom build' );
 vrodos_foundation_assert( 'performance' === $desktop_profiles['profiles']['low']['settings']['renderQuality'], 'Low preset uses performance render quality' );
 vrodos_foundation_assert( 'standard' === $desktop_profiles['profiles']['medium']['settings']['renderQuality'], 'Medium preset uses standard render quality' );
@@ -557,6 +558,7 @@ vrodos_foundation_assert( 'false' === $desktop_profiles['profiles']['low']['sett
 vrodos_foundation_assert( 'false' === $desktop_profiles['profiles']['medium']['settings']['pmndrsCloudsEnabled'], 'Medium does not enable clouds absent from High' );
 vrodos_foundation_assert( [] === VRodos_Desktop_Performance_Profiles::validate_monotonic( $desktop_profiles ), 'desktop preset defaults are monotonic' );
 $invalid_desktop_profiles = $desktop_profiles;
+$invalid_desktop_profiles['buildMode'] = 'adaptive';
 $invalid_desktop_profiles['profiles']['low']['settings']['shadowQuality'] = 'high';
 vrodos_foundation_assert( [] !== VRodos_Desktop_Performance_Profiles::validate_monotonic( $invalid_desktop_profiles ), 'desktop profile validation rejects a lower slot that exceeds Medium' );
 

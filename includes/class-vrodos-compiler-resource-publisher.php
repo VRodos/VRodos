@@ -32,7 +32,7 @@ final class VRodos_Compiler_Resource_Publisher {
 		$this->acquire_lock();
 		try {
 			foreach ( $plan->scenes as $scene ) {
-				$this->desktop_profile_slots = 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'adaptive' )
+				$this->desktop_profile_slots = 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'custom' )
 					? [ 'low', 'medium', 'high' ]
 					: [ 'custom' ];
 				$this->hydrate_value( $scene->scene_json );

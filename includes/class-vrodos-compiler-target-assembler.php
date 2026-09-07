@@ -64,9 +64,9 @@ final class VRodos_Compiler_Target_Assembler {
 
 	public function render( VRodos_Runtime_Target_Plan $target, VRodos_Project_Compile_Plan $project ): void {
 		$scene = $target->scene;
-		$default_desktop_profile = (string) ( $scene->desktop_profiles['defaultProfile'] ?? 'high' );
+		$default_desktop_profile = (string) ( $scene->desktop_profiles['defaultProfile'] ?? 'custom' );
 		$adaptive_desktop = 'desktop' === $project->request->vr_runtime_profile
-			&& 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'adaptive' );
+			&& 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'custom' );
 		$this->entity_renderer->configure(
 			$this->plugin_path_url,
 			$scene->hover_enabled,
@@ -188,7 +188,7 @@ final class VRodos_Compiler_Target_Assembler {
 		$runtime_mode    = $target->runtime_mode;
 		$runtime_profile = (string) ( $settings['vrRuntimeProfile'] ?? 'desktop' );
 		$adaptive_desktop = 'desktop' === $runtime_profile
-			&& 'adaptive' === (string) ( $target->scene->desktop_profiles['buildMode'] ?? 'adaptive' );
+			&& 'adaptive' === (string) ( $target->scene->desktop_profiles['buildMode'] ?? 'custom' );
 		$lean_headset    = $this->is_single_player( $runtime_mode ) && 'headset' === $runtime_profile;
 		$network_scripts = $this->is_networked( $runtime_mode )
 			? '<script src="/socket.io/socket.io.js"></script>' . "\n    "

@@ -197,7 +197,7 @@ VRODOS.ui = VRODOS.ui || {};
         return {
             schemaVersion: 2,
             activeTab: 'custom',
-            buildMode: 'adaptive',
+            buildMode: 'custom',
             profiles
         };
     }
@@ -206,7 +206,7 @@ VRODOS.ui = VRODOS.ui || {};
         if (!stored || typeof stored !== 'object') return createProfiles();
         if (Number(stored.schemaVersion) === 2) return stored;
         const activeProfile = TIER_IDS.includes(stored.activeProfile) ? stored.activeProfile : 'high';
-        const adaptive = stored.autoSelect !== false;
+        const adaptive = stored.autoSelect === true;
         const migrated = {
             schemaVersion: 2,
             activeTab: adaptive ? activeProfile : 'custom',
@@ -226,7 +226,7 @@ VRODOS.ui = VRODOS.ui || {};
         const state = activeScene.desktopPerformanceProfiles;
         state.schemaVersion = 2;
         state.activeTab = PROFILE_IDS.includes(state.activeTab) ? state.activeTab : 'custom';
-        state.buildMode = state.buildMode === 'custom' ? 'custom' : 'adaptive';
+        state.buildMode = state.buildMode === 'adaptive' ? 'adaptive' : 'custom';
         state.profiles = state.profiles && typeof state.profiles === 'object' ? state.profiles : {};
         const currentHighPreset = derivePreset(captureManagedSettings(), 'high');
         TIER_IDS.forEach((profileId) => {

@@ -68,7 +68,7 @@ final class VRodos_Compiler_Plan_Resolver {
 				}
 				$capabilities = [];
 				$chunk_ids = [];
-				$compiled_profile_ids = 'adaptive' === (string) ( $desktop_profiles['buildMode'] ?? 'adaptive' )
+				$compiled_profile_ids = 'adaptive' === (string) ( $desktop_profiles['buildMode'] ?? 'custom' )
 					? [ 'low', 'medium', 'high' ]
 					: [ 'custom' ];
 				foreach ( $compiled_profile_ids as $profile_id ) {
