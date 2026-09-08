@@ -1757,7 +1757,8 @@ class VRodos_Asset_Import_Manager {
 		return match ( $extension ) {
 			'glb'   => 'glTF' === substr( $head, 0, 4 ),
 			'zip'   => str_starts_with( $head, "PK\x03\x04" ) || str_starts_with( $head, "PK\x05\x06" ),
-			'blend' => str_starts_with( $head, 'BLENDER' ),
+			'blend' => str_starts_with( $head, 'BLENDER' )
+				|| str_starts_with( $head, "\x28\xB5\x2F\xFD" ), // Zstandard-compressed .blend.
 			'fbx'   => str_starts_with( $head, 'Kaydara FBX Binary' ) || str_contains( substr( $head, 0, 2048 ), 'FBX' ),
 			'obj'   => ! str_contains( $head, "\0" ) && 1 === preg_match( '/^(?:v|vn|vt|f|o|g|mtllib|usemtl)\s+/m', $head ),
 			'dae'   => ! str_contains( $head, "\0" ) && false !== stripos( $head, '<COLLADA' ),
