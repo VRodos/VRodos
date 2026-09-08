@@ -189,6 +189,7 @@
         "avatars"
       ],
       "sourceFiles": [
+        "assets/js/runtime/master/vrodos_model_origin.js",
         "assets/js/runtime/master/components/vrodos_scene_loader.component.js",
         "assets/js/runtime/master/components/vrodos_avatar.component.js",
         "assets/js/runtime/master/components/vrodos_scene_settings.component.js",

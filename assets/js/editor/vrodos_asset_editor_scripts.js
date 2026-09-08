@@ -120,6 +120,7 @@ function vrodos_set_asset_save_progress(options = {}) {
     const percent = Math.max(0, Math.min(100, Math.round(Number(options.percent) || 0)));
     const wasHidden = overlay.classList.contains('tw-hidden');
 
+    overlay.inert = false;
     overlay.classList.remove('tw-hidden');
     overlay.classList.add('tw-flex');
     overlay.setAttribute('aria-hidden', 'false');
@@ -145,7 +146,11 @@ function vrodos_set_asset_save_progress(options = {}) {
         detail.textContent = options.detail || '';
     }
     if (wasHidden) {
-        window.requestAnimationFrame(() => overlay.focus());
+        window.requestAnimationFrame(() => {
+            if (!overlay.inert && overlay.getAttribute('aria-hidden') === 'false') {
+                overlay.focus();
+            }
+        });
     }
 
     bar.classList.toggle('vrodos-indeterminate', isIndeterminate);
@@ -172,10 +177,9 @@ function vrodos_set_asset_save_progress(options = {}) {
 function vrodos_hide_asset_save_progress() {
     const overlay = document.getElementById('assetSaveProgressOverlay');
     const editor = document.getElementById('vrodos-asset-editor');
-    if (overlay) {
-        overlay.classList.add('tw-hidden');
-        overlay.classList.remove('tw-flex');
-        overlay.setAttribute('aria-hidden', 'true');
+    const focusTarget = vrodosAssetSaveProgressPreviousFocus;
+    if (overlay && overlay.contains(document.activeElement)) {
+        document.activeElement.blur();
     }
     if (editor) {
         editor.removeAttribute('aria-busy');
@@ -186,10 +190,23 @@ function vrodos_hide_asset_save_progress() {
             }
         });
     }
-    if (vrodosAssetSaveProgressPreviousFocus && vrodosAssetSaveProgressPreviousFocus.isConnected) {
-        vrodosAssetSaveProgressPreviousFocus.focus();
+    if (overlay) {
+        overlay.inert = true;
+        overlay.classList.add('tw-hidden');
+        overlay.classList.remove('tw-flex');
+        overlay.setAttribute('aria-hidden', 'true');
     }
     vrodosAssetSaveProgressPreviousFocus = null;
+
+    const restoreFocus = () => {
+        if (focusTarget && focusTarget.isConnected && !focusTarget.disabled) {
+            focusTarget.focus({ preventScroll: true });
+        }
+    };
+    restoreFocus();
+    if (focusTarget && focusTarget.disabled) {
+        window.requestAnimationFrame(restoreFocus);
+    }
 }
 
 window.vrodos_set_asset_save_progress = vrodos_set_asset_save_progress;

@@ -21,6 +21,57 @@ class MockVector {
         this.z = z;
         return this;
     }
+
+    clone() {
+        return new MockVector(this.x, this.y, this.z);
+    }
+}
+
+class MockBox3 {
+    constructor() {
+        this.makeEmpty();
+    }
+
+    makeEmpty() {
+        this.min = new MockVector(Infinity, Infinity, Infinity);
+        this.max = new MockVector(-Infinity, -Infinity, -Infinity);
+        return this;
+    }
+
+    setFromObject(object) {
+        this.makeEmpty();
+        object.traverse((node) => {
+            if (!node.geometry) return;
+            const center = new MockVector();
+            let current = node;
+            while (current) {
+                center.x += current.position.x;
+                center.y += current.position.y;
+                center.z += current.position.z;
+                current = current.parent;
+            }
+            const halfSize = node.geometry.halfSize || [0.5, 0.5, 0.5];
+            this.min.x = Math.min(this.min.x, center.x - halfSize[0]);
+            this.min.y = Math.min(this.min.y, center.y - halfSize[1]);
+            this.min.z = Math.min(this.min.z, center.z - halfSize[2]);
+            this.max.x = Math.max(this.max.x, center.x + halfSize[0]);
+            this.max.y = Math.max(this.max.y, center.y + halfSize[1]);
+            this.max.z = Math.max(this.max.z, center.z + halfSize[2]);
+        });
+        return this;
+    }
+
+    isEmpty() {
+        return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z;
+    }
+
+    getCenter(target) {
+        return target.set(
+            (this.min.x + this.max.x) / 2,
+            (this.min.y + this.max.y) / 2,
+            (this.min.z + this.max.z) / 2
+        );
+    }
 }
 
 let mockUuid = 0;
@@ -50,6 +101,8 @@ class MockObject3D {
         this.children.forEach((child) => child.traverse(visitor));
     }
 
+    updateMatrixWorld() {}
+
     clone(recursive = true) {
         const clone = this.isMesh
             ? new MockMesh(this.geometry, this.material)
@@ -57,6 +110,9 @@ class MockObject3D {
         clone.name = this.name;
         clone.isSkinnedMesh = this.isSkinnedMesh;
         clone.userData = { ...this.userData };
+        clone.position.set(this.position.x, this.position.y, this.position.z);
+        clone.rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
+        clone.scale.set(this.scale.x, this.scale.y, this.scale.z);
         if (recursive) {
             this.children.forEach((child) => clone.add(child.clone(true)));
         }
@@ -172,6 +228,7 @@ const context = {
     performance,
     THREE: {
         AnimationMixer: MockAnimationMixer,
+        Box3: MockBox3,
         BoxGeometry: MockGeometry,
         DoubleSide: 2,
         FrontSide: 0,
@@ -187,7 +244,8 @@ const context = {
                 return source.clone(true);
             }
         },
-        TextureLoader: MockTextureLoader
+        TextureLoader: MockTextureLoader,
+        Vector3: MockVector
     },
     VRODOS: {
         api: {},
@@ -236,6 +294,7 @@ for (const relativePath of [
     "assets/js/editor/loaders/vrodos_loader_resource_metadata.js",
     "assets/js/editor/loaders/vrodos_loader_glb_asset_cache.js",
     "assets/js/editor/scene/vrodos_scene_disposal.js",
+    "assets/js/runtime/master/vrodos_model_origin.js",
     "assets/js/editor/loaders/vrodos_loader_glb_assets.js",
     "assets/js/editor/loaders/vrodos_loader_multi.js",
     "assets/js/editor/loaders/vrodos_loader_scene_lifecycle.js"
@@ -386,6 +445,9 @@ function createGlbTemplate(label, options = {}) {
     const mesh = new MockMesh(geometry, material);
     mesh.name = `${label}-mesh`;
     mesh.isSkinnedMesh = options.skinned === true;
+    if (Array.isArray(options.offset)) {
+        mesh.position.set(...options.offset);
+    }
     scene.add(mesh);
     return {
         gltf: {
@@ -402,6 +464,40 @@ async function flushTasks() {
     await Promise.resolve();
     await new Promise((resolvePromise) => setImmediate(resolvePromise));
 }
+
+const centeredLoader = new ControlledGltfLoader();
+const centeredResource = {
+    asset_id: 23,
+    category_slug: "decoration",
+    editorMetadataHydrated: true,
+    glb_id: 203,
+    glb_path: "/centered.glb",
+    path: "/centered.glb",
+    vrodosAssetOriginMode: "bounds-center",
+    trs: { translation: [3, 4, 5] }
+};
+const centeredLoad = context.VRODOS.loader.loadGlbAsset(
+    null,
+    centeredLoader,
+    "centered",
+    centeredResource,
+    { centered: centeredResource }
+);
+await flushTasks();
+const centeredTemplate = createGlbTemplate("centered", {
+    offset: [10, 2, -4],
+    animations: [{ name: "centered-idle" }]
+});
+centeredLoader.resolve("/centered.glb", centeredTemplate.gltf);
+const centeredObject = await centeredLoad;
+assert(centeredObject.position.x === 3 && centeredObject.position.y === 4 && centeredObject.position.z === 5, "centered roots must retain authored placement transforms");
+assert(centeredObject.vrodosAssetOriginMode === "bounds-center", "centered roots must retain origin metadata for persistence");
+assert(centeredObject.isSelectableMesh === true, "centered pivot roots must remain selectable");
+assert(centeredObject.children[0].name === "vrodosModelOriginOffset", "marked GLBs must place content under an origin offset");
+assert(centeredObject.children[0].position.x === -10 && centeredObject.children[0].position.y === -2 && centeredObject.children[0].position.z === 4, "the origin offset must negate the model bounds center");
+assert(centeredTemplate.gltf.scene.children[0].position.x === 10, "centering must not rewrite imported node transforms");
+assert(context.VRODOS.loader.glbAssetCache.isInstance(centeredObject), "centered pivot roots must preserve cache instance identity");
+assert(context.VRODOS.editor.envir.animationMixers.some((mixer) => mixer._root === centeredObject), "centered animations must be rooted at the authored pivot");
 
 context.VRODOS.editor.renderLoop.loaderConcurrency = 3;
 const duplicateLoader = new ControlledGltfLoader();
@@ -650,6 +746,10 @@ assert(firstTreeMaterial.disposeCount === 1, "deleting a cached placement must d
 assert(secondTreeMaterial.disposeCount === 0, "deleting one placement must not dispose another placement's material");
 assert(sharedTreeGeometry.disposeCount === 0, "deleting one placement must retain shared geometry");
 assert(sharedTreeTexture.disposeCount === 0, "deleting one placement must retain shared textures");
+const centeredInstanceMesh = centeredObject.children[0].children[0].children[0];
+context.VRODOS.utils.disposeObject(centeredObject);
+assert(centeredInstanceMesh.material.disposeCount === 1, "deleting a centered placement must dispose its cloned material");
+assert(centeredTemplate.geometry.disposeCount === 0 && centeredTemplate.texture.disposeCount === 0, "deleting a centered placement must retain shared cached resources");
 assert(context.VRODOS.editor.diagnostics.parsedCacheResults.includes("hit"), "parsed-cache diagnostics must record completed cache hits");
 assert(context.VRODOS.editor.diagnostics.parsedCacheResults.includes("miss"), "parsed-cache diagnostics must record cache misses");
 assert(context.VRODOS.editor.diagnostics.parsedCacheResults.includes("coalesced"), "parsed-cache diagnostics must record pending-request coalescing");

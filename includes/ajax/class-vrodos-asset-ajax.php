@@ -129,6 +129,7 @@ class VRodos_Asset_AJAX {
 		$output = new stdClass();
 		$output->glbIDs = $glbID;
 		$output->glbURL = $url_normalizer->normalize( $glbURL );
+		$output->vrodosAssetOriginMode = VRodos_Asset_Origin::mode_for_asset( $asset_id );
 		$output->sourceSizeBytes = 0;
 		$output->editorPreviewGlbURL = '';
 		$output->editorPreviewStatus = 'none';

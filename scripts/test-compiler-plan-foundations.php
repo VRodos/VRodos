@@ -221,6 +221,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 			'convertedWalkable' => (object) [
 				'category_slug' => 'decoration',
 				'sceneAssetRole' => 'walkable-surface',
+				'vrodosAssetOriginMode' => 'bounds-center',
 				'asset_id' => 701,
 				'glb_path' => '/converted-walkable.glb',
 				'compiledCollisionEnabled' => true,
@@ -252,11 +253,13 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$converted_walkable = $role_xpath->query( '//*[@data-vrodos-asset-id="701"]' )->item( 0 );
 	$converted_decoration = $role_xpath->query( '//*[@data-vrodos-asset-id="702"]' )->item( 0 );
 	vrodos_foundation_assert( $converted_walkable instanceof DOMElement, 'converted walkable is rendered' );
+	vrodos_foundation_assert( 'bounds-center' === $converted_walkable->getAttribute( 'vrodos-model-origin' ), 'marked GLBs emit the bounds-center runtime component' );
 	vrodos_foundation_assert( 'true' === $converted_walkable->getAttribute( 'data-vrodos-navmesh' ), 'converted walkable emits navmesh attributes' );
 	vrodos_foundation_assert( 'auto' === $converted_walkable->getAttribute( 'data-vrodos-walk-behavior' ), 'converted walkable keeps Auto behavior' );
 	vrodos_foundation_assert( 'critical' === $converted_walkable->getAttribute( 'data-vrodos-load-phase' ), 'converted walkable loads critically' );
 	vrodos_foundation_assert( 'navmesh' === $converted_walkable->getAttribute( 'data-vrodos-collision-role' ), 'converted walkable collision resolves as navmesh' );
 	vrodos_foundation_assert( $converted_decoration instanceof DOMElement, 'converted decoration is rendered' );
+	vrodos_foundation_assert( ! $converted_decoration->hasAttribute( 'vrodos-model-origin' ), 'unmarked legacy GLBs preserve their authored origin' );
 	vrodos_foundation_assert( ! $converted_decoration->hasAttribute( 'data-vrodos-navmesh' ), 'converted decoration omits navmesh attributes' );
 	vrodos_foundation_assert( 'lazy' === $converted_decoration->getAttribute( 'data-vrodos-load-phase' ), 'converted decoration uses normal deferred loading' );
 	vrodos_foundation_assert( 'solid' === $converted_decoration->getAttribute( 'data-vrodos-collision-role' ), 'converted decoration preserves explicitly enabled solid collision' );
@@ -265,6 +268,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 
 	$profile_object = (object) [
 		'category_slug' => 'decoration',
+		'vrodosAssetOriginMode' => 'bounds-center',
 		'asset_id' => 77,
 		'glb_path' => '/published/low.glb',
 		'desktop_profile_glb_urls' => (object) [
@@ -286,6 +290,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$adaptive_renderer->render_scene_objects( $adaptive_dom, $adaptive_scene, $adaptive_assets, [ 'profiled' => $profile_object ], 1, 42, [ 'scene_settings' => [ 'vrRuntimeProfile' => 'desktop' ], 'container' => $adaptive_scene ] );
 	$adaptive_entity = ( new DOMXPath( $adaptive_dom ) )->query( '//*[@data-vrodos-profile-gltf="true"]' )->item( 0 );
 	vrodos_foundation_assert( $adaptive_entity instanceof DOMElement, 'Master client emits adaptive GLB attributes' );
+	vrodos_foundation_assert( 'bounds-center' === $adaptive_entity->getAttribute( 'vrodos-model-origin' ), 'adaptive GLBs keep the centered-origin component before profile selection' );
 	vrodos_foundation_assert( ! $adaptive_entity->hasAttribute( 'gltf-model' ), 'Master client does not request a GLB before profile selection' );
 	vrodos_foundation_assert( '/published/medium.glb' === $adaptive_entity->getAttribute( 'data-vrodos-profile-gltf-medium' ), 'Master client carries the Medium derivative URL' );
 
@@ -298,6 +303,7 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$fixed_renderer->configure( '/plugin/', true, false, 'medium' );
 	$fixed_renderer->render_scene_objects( $fixed_dom, $fixed_scene_element, $fixed_assets, [ 'profiled' => $profile_object ], 1, 42, [ 'scene_settings' => [ 'vrRuntimeProfile' => 'desktop' ], 'container' => $fixed_scene_element ] );
 	$fixed_markup = $fixed_dom->saveHTML();
+	vrodos_foundation_assert( str_contains( $fixed_markup, 'vrodos-model-origin="bounds-center"' ), 'fixed-profile GLBs keep the centered-origin component' );
 	vrodos_foundation_assert( str_contains( $fixed_markup, '/published/medium.glb' ), 'Simple/fixed renderer uses the selected Medium derivative' );
 	vrodos_foundation_assert( ! str_contains( $fixed_markup, '/published/low.glb' ) && ! str_contains( $fixed_markup, '/published/high.glb' ), 'Simple/fixed renderer omits unselected derivative URLs' );
 

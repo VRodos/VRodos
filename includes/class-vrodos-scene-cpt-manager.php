@@ -285,6 +285,10 @@ class VRodos_Scene_CPT_Manager {
 			'screenshot_path' => self::normalize_editor_scene_asset_url( $screenshot_url ),
 			'is_shared'      => VRodos_Shared_Repository_Manager::is_shared_asset( $asset_id ),
 		];
+		$origin_mode = VRodos_Asset_Origin::mode_for_asset( $asset_id );
+		if ( '' !== $origin_mode ) {
+			$metadata['vrodosAssetOriginMode'] = $origin_mode;
+		}
 		foreach ( [
 			'audio_path'   => 'vrodos_asset3d_audio',
 			'video_path'   => 'vrodos_asset3d_video',
@@ -328,6 +332,7 @@ class VRodos_Scene_CPT_Manager {
 	private static function enrich_editor_scene_object_asset_metadata( array $object_data ): array {
 		$asset_id = absint( $object_data['asset_id'] ?? 0 );
 		if ( $asset_id > 0 ) {
+			unset( $object_data['vrodosAssetOriginMode'] );
 			$asset_metadata = self::get_editor_scene_asset_metadata( $asset_id );
 			if ( empty( $asset_metadata ) ) {
 				unset( $object_data['glb_path'], $object_data['path'], $object_data['glb_id'] );

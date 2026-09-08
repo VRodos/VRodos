@@ -34,6 +34,54 @@ AFRAME.registerComponent('clear-frustum-culling', {
     }
 });
 
+AFRAME.registerComponent('vrodos-model-origin', {
+    schema: { type: 'string', default: '' },
+    init: function () {
+        this.boundApplyOrigin = this.applyOrigin.bind(this);
+        this.warnedFailure = false;
+        this.el.addEventListener('model-loaded', this.boundApplyOrigin);
+    },
+    update: function () {
+        this.applyOrigin();
+    },
+    applyOrigin: function () {
+        const origin = window.VRODOSModelOrigin;
+        if (!origin || origin.normalizeMode(this.data) !== origin.MODE_BOUNDS_CENTER) {
+            return;
+        }
+
+        const modelRoot = this.el.getObject3D('mesh');
+        if (!modelRoot) {
+            return;
+        }
+
+        const centered = origin.createOffsetRoot(modelRoot, this.data);
+        if (!centered.applied || !centered.root) {
+            if (!this.warnedFailure) {
+                console.warn('VRodos: compiled GLB bounds could not be centered; the authored origin is unchanged.', {
+                    id: this.el.id || '',
+                    reason: centered.reason || 'unknown'
+                });
+                this.warnedFailure = true;
+            }
+            return;
+        }
+        if (centered.alreadyApplied || centered.root === modelRoot) {
+            return;
+        }
+
+        this.el.removeObject3D('mesh');
+        this.el.setObject3D('mesh', centered.root);
+        this.el.emit('vrodos-model-origin-applied', {
+            mode: centered.mode,
+            center: [centered.center.x, centered.center.y, centered.center.z]
+        }, false);
+    },
+    remove: function () {
+        this.el.removeEventListener('model-loaded', this.boundApplyOrigin);
+    }
+});
+
 AFRAME.registerComponent('vrodos-scene-loader', {
     schema: {
         minimumVisibleMs: { type: 'number', default: 350 },

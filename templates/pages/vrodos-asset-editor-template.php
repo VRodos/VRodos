@@ -149,6 +149,7 @@ else { ?>
              role="dialog"
              aria-modal="true"
              aria-hidden="true"
+             inert
              tabindex="-1"
              aria-labelledby="assetSaveProgressTitle"
              aria-describedby="assetSaveProgressMessage assetSaveProgressDetail">

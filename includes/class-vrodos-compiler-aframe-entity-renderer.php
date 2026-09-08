@@ -721,6 +721,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		VRodos_Compiler_AFrame_DOM_Helper::apply_transform( $entity, $contentObject, $preserve_editor_rotation );
 	}
 
+	private function apply_model_origin( DOMElement $entity, $content_object ): void {
+		if ( 'bounds-center' === (string) ( $content_object->vrodosAssetOriginMode ?? '' ) ) {
+			$entity->setAttribute( 'vrodos-model-origin', 'bounds-center' );
+		}
+	}
+
 	private function colorRGB2Hex( $colorRGB ) {
 		if ( ! is_array( $colorRGB ) || count( $colorRGB ) < 3 ) {
 			return '#ffffff';
@@ -1156,6 +1162,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		// Create entity
 		$entity = $dom->createElement( 'a-entity' );
 		$this->apply_compiled_gltf_source( $dom, $assets, $entity, $obj, $glb_url, $uuid, 'gltf', $context );
+		$this->apply_model_origin( $entity, $obj );
 		$this->track_gltf_derivative_usage( $glb_resolution, $obj, $context );
 
 		$sc_x = $obj->scale[0] ?? 1;
@@ -1297,6 +1304,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 		$entity = $dom->createElement( 'a-entity' );
 		$entity->setAttribute( 'id', 'audio_entity_' . $uuid );
 		$this->apply_compiled_gltf_source( $dom, $assets, $entity, $obj, $glb_path, $uuid, 'audio-model', 'audio:' . $uuid );
+		$this->apply_model_origin( $entity, $obj );
 		$entity->setAttribute( 'clear-frustum-culling', '' );
 		$this->set_world_lighting_attributes( $entity );
 		$entity->setAttribute( 'material', '' );

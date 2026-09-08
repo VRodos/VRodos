@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once dirname( __DIR__ ) . '/class-vrodos-asset-origin.php';
+
 class VRodos_Asset_Import_Manager {
 	public const SETTINGS_OPTION_KEY = 'vrodos_asset_import_settings';
 	public const SETTINGS_TAB_KEY    = 'vrodos_asset_import_settings';
@@ -1571,6 +1573,7 @@ class VRodos_Asset_Import_Manager {
 	}
 
 	private static function mark_ready( int $asset_id, int $attachment_id, string $diagnostic = '', string $selected_entry = '' ): void {
+		VRodos_Asset_Origin::mark_bounds_centered( $asset_id );
 		update_post_meta( $asset_id, self::STATUS_META, 'ready' );
 		update_post_meta( $asset_id, self::FINAL_GLB_ID_META, $attachment_id );
 		delete_post_meta( $asset_id, self::ERROR_META );

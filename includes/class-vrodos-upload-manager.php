@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-vrodos-asset-origin.php';
+
 /** Explicit, entity-owned authoring uploads. No global WordPress upload filters. */
 final class VRodos_Upload_Manager {
 	public static function register_hooks(): void {}
@@ -31,6 +33,7 @@ final class VRodos_Upload_Manager {
 		if ( is_wp_error( $switched ) ) {
 			return [ 'success' => false, 'status' => 'failed', 'error' => $switched->get_error_message() ];
 		}
+		VRodos_Asset_Origin::mark_bounds_centered( $asset_id );
 		return [ 'success' => true, 'status' => 'ready', 'attachment_id' => (int) $new_id ];
 	}
 

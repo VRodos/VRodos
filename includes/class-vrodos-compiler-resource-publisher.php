@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-vrodos-asset-origin.php';
+
 require_once __DIR__ . '/class-vrodos-text-asset-helper.php';
 
 /** Publishes immutable, content-addressed copies required by one build. */
@@ -142,6 +144,13 @@ final class VRodos_Compiler_Resource_Publisher {
 	}
 
 	private function hydrate_asset_object( object $object, int $asset_id ): void {
+		$origin_mode = VRodos_Asset_Origin::mode_for_asset( $asset_id );
+		if ( '' !== $origin_mode ) {
+			$object->vrodosAssetOriginMode = $origin_mode;
+		} else {
+			unset( $object->vrodosAssetOriginMode );
+		}
+
 		$field_map = [
 			'glb_path'        => 'vrodos_asset3d_glb',
 			'screenshot_path' => 'vrodos_asset3d_screenimage',

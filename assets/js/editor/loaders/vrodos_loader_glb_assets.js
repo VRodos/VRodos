@@ -19,7 +19,8 @@ function vrodosLoaderMergeGlbMetadata(resource, resourcesGLB) {
         'editorPreviewMessage',
         'editorPreviewShouldUse',
         'editorPreviewReasons',
-        'glbAnalysis'
+        'glbAnalysis',
+        'vrodosAssetOriginMode'
     ].forEach((key) => {
         if (Object.prototype.hasOwnProperty.call(resourcesGLB, key)) {
             resource[key] = resourcesGLB[key];
@@ -77,20 +78,49 @@ function vrodosLoaderResolveEditorGlbLoadTarget(resource, resourcesGLB) {
     };
 }
 
-function vrodosLoaderStartGlbAnimations(object) {
+function vrodosLoaderStartGlbAnimations(object, animationRoot) {
     if (!object || !object.animations || object.animations.length === 0) {
         return null;
     }
 
-    object.mixer = new THREE.AnimationMixer(object.scene);
+    object.mixer = new THREE.AnimationMixer(animationRoot || object.scene);
     VRODOS.editor.envir.animationMixers.push(object.mixer);
     const action = object.mixer.clipAction(object.animations[0]);
     action.play();
     return object.mixer;
 }
 
+function vrodosLoaderCreateGlbSceneRoot(object, resource) {
+    const contentRoot = object && object.scene;
+    const requestedMode = resource && resource.vrodosAssetOriginMode;
+    const origin = window.VRODOSModelOrigin;
+    if (!contentRoot || !origin || origin.normalizeMode(requestedMode) !== origin.MODE_BOUNDS_CENTER) {
+        return contentRoot;
+    }
+
+    const centered = origin.createOffsetRoot(contentRoot, requestedMode);
+    if (!centered.applied || !centered.root) {
+        console.warn('VRodos: could not center GLB asset bounds; the authored origin will be preserved.', {
+            asset_id: resource.asset_id || '',
+            reason: centered.reason || 'unknown'
+        });
+        return contentRoot;
+    }
+
+    const sceneRoot = new THREE.Group();
+    sceneRoot.add(centered.root);
+    sceneRoot.userData = Object.assign({}, sceneRoot.userData || {}, {
+        vrodosGlbCacheInstance: Boolean(contentRoot.userData && contentRoot.userData.vrodosGlbCacheInstance),
+        vrodosGlbCacheKey: contentRoot.userData && contentRoot.userData.vrodosGlbCacheKey
+    });
+    sceneRoot.vrodosAssetOriginCenter = [centered.center.x, centered.center.y, centered.center.z];
+    return sceneRoot;
+}
+
 function vrodosLoaderAddGlbSceneObject(object, name, resources3D, loadInfo) {
-    const finalObject = VRODOS.loader.setObjectProperties(object.scene, name, resources3D);
+    const resource = resources3D[name] || {};
+    const sceneRoot = vrodosLoaderCreateGlbSceneRoot(object, resource);
+    const finalObject = VRODOS.loader.setObjectProperties(sceneRoot, name, resources3D);
     finalObject.isSelectableMesh = true;
     VRODOS.loader.applyTextureAnisotropy(finalObject, VRODOS.loader.getEditorTextureAnisotropy());
 
@@ -262,13 +292,13 @@ VRODOS.loader.loadResolvedGlbAssetGroup = async function(manager, gltfLoader, re
 
         return group.map((request) => {
             const object = VRODOS.loader.glbAssetCache.instantiate(request.loadInfo.loadUrl);
-            vrodosLoaderStartGlbAnimations(object);
             const finalObject = vrodosLoaderAddGlbSceneObject(
                 object,
                 request.name,
                 resources3D,
                 request.loadInfo
             );
+            vrodosLoaderStartGlbAnimations(object, finalObject);
 
             if (request.loadInfo.usesPreview) {
                 console.info(`Loaded editor preview derivative for '${request.name}'.`, {
