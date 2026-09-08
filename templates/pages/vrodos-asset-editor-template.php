@@ -1099,28 +1099,31 @@ else { ?>
 			}, 300);
 		};
 
-		assetVideoTag.addEventListener('loadeddata', debouncedGenerateSshot, false);
-		assetVideoTag.addEventListener('seeked', debouncedGenerateSshot);
+		// Asset-editor dependencies are deferred in wp_footer(), so wait until they have executed.
+		document.addEventListener('DOMContentLoaded', function() {
+			assetVideoTag.addEventListener('loadeddata', debouncedGenerateSshot, false);
+			assetVideoTag.addEventListener('seeked', debouncedGenerateSshot);
 
-		setScreenshotHandler();
+			window.setScreenshotHandler();
 
-		// ------- Class to load 3D model ---------
-		window.asset_viewer_3d_kernel = new VRODOS.editor.AssetViewer3DKernel(document.getElementById( 'previewCanvas' ),
-			document.getElementById( 'previewCanvasLabels' ),
-			document.getElementById('animButton1'),
-			document.getElementById('previewProgressSlider'), // Hide entire slider when ready
-			document.getElementById('previewProgressSliderLine'),
-			back_3d_color,
-			null,
-			glb_file_name,
-			false,
-			false,
-			false,
-			true,
-			assettrs,
-			null); // boundSphButton removed
+			// ------- Class to load 3D model ---------
+			window.asset_viewer_3d_kernel = new VRODOS.editor.AssetViewer3DKernel(document.getElementById( 'previewCanvas' ),
+				document.getElementById( 'previewCanvasLabels' ),
+				document.getElementById('animButton1'),
+				document.getElementById('previewProgressSlider'), // Hide entire slider when ready
+				document.getElementById('previewProgressSliderLine'),
+				back_3d_color,
+				null,
+				glb_file_name,
+				false,
+				false,
+				false,
+				true,
+				assettrs,
+				null); // boundSphButton removed
 
-		addHandlerFor3Dfiles(window.asset_viewer_3d_kernel, multipleFilesInputElem);
+			window.addHandlerFor3Dfiles(window.asset_viewer_3d_kernel, multipleFilesInputElem);
+		});
 
 		const assetForm = document.getElementById('3dAssetForm');
 		if (assetForm) {
