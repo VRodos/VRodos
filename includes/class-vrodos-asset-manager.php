@@ -95,8 +95,9 @@ class VRodos_Asset_Manager {
 			'vrodos_namespace',
 			'vrodos_api_config',
 			[
-                'ajax_url' => admin_url( 'admin-ajax.php' ),
-                'isAdmin'  => $isAdmin
+				'ajax_url'           => admin_url( 'admin-ajax.php' ),
+				'isAdmin'            => $isAdmin,
+				'assetMutationNonce' => wp_create_nonce( 'post_nonce' ),
             ]
 		);
 
@@ -244,8 +245,9 @@ class VRodos_Asset_Manager {
 				'isAdmin'   => $template_data['isAdmin'],
 				'compileNonce' => wp_create_nonce( 'vrodos_compile_scene' ),
 				'exportNonce'  => wp_create_nonce( 'vrodos_export_scene_zip' ),
-            ]
-        );
+				'assetMutationNonce' => wp_create_nonce( 'post_nonce' ),
+			]
+		);
 
 		$localized_data = [
 			'scene_data'          => $scene_data,
@@ -266,7 +268,6 @@ class VRodos_Asset_Manager {
 			// Phase 2 localization
 			'upload_image_nonce'  => wp_create_nonce( 'vrodos_scene_upload_image_nonce' ),
 			'scene_mutation_nonce' => wp_create_nonce( 'vrodos_scene_mutation' ),
-			'asset_mutation_nonce' => wp_create_nonce( 'post_nonce' ),
 			'asset_mutation_nonce' => wp_create_nonce( 'post_nonce' ),
 			'compile_nonce'       => wp_create_nonce( 'vrodos_compile_scene' ),
 			'export_nonce'        => wp_create_nonce( 'vrodos_export_scene_zip' ),
