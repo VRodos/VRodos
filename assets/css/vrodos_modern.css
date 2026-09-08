@@ -73,7 +73,8 @@
 /* ═══════════════════════════════════════════
    WordPress Reset — override aggressive WP themes
    ═══════════════════════════════════════════ */
-.vrodos-main-h {
+.vrodos-main-h,
+body.vrodos-manager-wrapper {
   height: 100vh !important;
   height: calc(100vh - var(--wp-admin-bar-height, 0px)) !important;
 }
