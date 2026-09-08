@@ -144,6 +144,42 @@ else { ?>
             <i data-lucide="<?php echo ($asset_notice_type === 'error') ? 'alert-triangle' : 'check-circle-2'; ?>" class="tw-w-4 tw-h-4"></i>
             <span id="assetEditorNoticeText" class="tw-text-xs tw-font-bold"><?php echo esc_html($asset_notice_message); ?></span>
         </div>
+        <div id="assetSaveProgressOverlay"
+             class="tw-hidden tw-fixed tw-inset-0 tw-z-[100] tw-items-center tw-justify-center tw-bg-slate-950/60 tw-p-6 tw-backdrop-blur-sm"
+             role="dialog"
+             aria-modal="true"
+             aria-hidden="true"
+             tabindex="-1"
+             aria-labelledby="assetSaveProgressTitle"
+             aria-describedby="assetSaveProgressMessage assetSaveProgressDetail">
+            <div class="tw-w-full tw-max-w-md tw-rounded-3xl tw-border tw-border-white/20 tw-bg-white tw-p-7 tw-shadow-2xl">
+                <div class="tw-flex tw-items-start tw-gap-4">
+                    <div class="tw-flex tw-h-12 tw-w-12 tw-flex-none tw-items-center tw-justify-center tw-rounded-2xl tw-bg-emerald-50 tw-text-primary">
+                        <i data-lucide="upload-cloud" class="tw-h-6 tw-w-6"></i>
+                    </div>
+                    <div class="tw-min-w-0 tw-flex-1">
+                        <h2 id="assetSaveProgressTitle" class="tw-text-lg tw-font-black tw-tracking-tight tw-text-slate-900">Saving Asset</h2>
+                        <p id="assetSaveProgressMessage" class="tw-mt-1 tw-text-sm tw-font-bold tw-text-slate-600" aria-live="polite">Preparing upload…</p>
+                    </div>
+                </div>
+
+                <div class="tw-mt-6" role="progressbar" id="assetSaveProgressTrack" aria-label="Asset save progress">
+                    <div class="tw-mb-2 tw-flex tw-items-center tw-justify-between tw-gap-3">
+                        <span class="tw-text-[10px] tw-font-black tw-uppercase tw-tracking-widest tw-text-slate-400">Progress</span>
+                        <span id="assetSaveProgressPercent" class="tw-text-sm tw-font-black tw-tabular-nums tw-text-primary">0%</span>
+                    </div>
+                    <div class="vrodos-progress-track">
+                        <div id="assetSaveProgressBar" class="vrodos-progress-bar" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <p id="assetSaveProgressDetail" class="tw-mt-3 tw-min-h-5 tw-text-xs tw-font-semibold tw-text-slate-500"></p>
+                <div class="tw-mt-5 tw-flex tw-items-center tw-gap-2 tw-rounded-xl tw-bg-slate-50 tw-px-3 tw-py-2.5 tw-text-slate-500">
+                    <i data-lucide="info" class="tw-h-4 tw-w-4 tw-flex-none"></i>
+                    <span class="tw-text-[11px] tw-font-bold">Do not close this page while the asset is being saved.</span>
+                </div>
+            </div>
+        </div>
         <form name="3dAssetForm" id="3dAssetForm" method="POST" enctype="multipart/form-data" class="tw-flex-1 tw-flex tw-flex-col tw-min-h-0 tw-m-0 tw-bg-slate-50">
             <main class="tw-flex-1 tw-flex tw-flex-col lg:tw-flex-row tw-overflow-y-auto lg:tw-overflow-hidden tw-min-h-0 tw-bg-slate-50">
             
@@ -1137,6 +1173,9 @@ else { ?>
 				}
 				if (!window.vrodos_validate_selected_model()) {
 					event.preventDefault();
+					if (typeof window.vrodos_hide_asset_save_progress === 'function') {
+						window.vrodos_hide_asset_save_progress();
+					}
 					if (typeof window.vrodos_set_asset_editor_submit_locked === 'function') {
 						window.vrodos_set_asset_editor_submit_locked(false);
 					}
@@ -1150,8 +1189,19 @@ else { ?>
 						if (typeof window.vrodos_set_asset_editor_submit_locked === 'function') {
 							window.vrodos_set_asset_editor_submit_locked(true, 'Saving Asset...');
 						}
-						assetForm.submit();
+						if (typeof window.vrodos_set_asset_save_progress === 'function') {
+							window.vrodos_set_asset_save_progress({
+								title: 'Saving Asset',
+								message: 'Finalizing asset…',
+								detail: 'Registering the model and saving the asset details.',
+								indeterminate: true
+							});
+						}
+						window.setTimeout(() => assetForm.submit(), 50);
 					} else if (typeof window.vrodos_set_asset_editor_submit_locked === 'function') {
+						if (typeof window.vrodos_hide_asset_save_progress === 'function') {
+							window.vrodos_hide_asset_save_progress();
+						}
 						window.vrodos_set_asset_editor_submit_locked(false);
 					}
 				}

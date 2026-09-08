@@ -1515,7 +1515,7 @@ class VRodos_Asset_Import_Manager {
 			return new WP_Error( 'source_missing', 'The GLB source file is missing.' );
 		}
 
-		$attachment_id = VRodos_Storage_Manager::import_existing_file( $source_path, $target_name, 'model/gltf-binary', $asset_id, 'asset', 'source' );
+		$attachment_id = VRodos_Storage_Manager::promote_private_temporary_glb( $source_path, $target_name, $asset_id );
 		return is_wp_error( $attachment_id ) ? $attachment_id : (int) $attachment_id;
 	}
 

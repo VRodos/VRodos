@@ -58,6 +58,14 @@ assert(privateStream.includes("Cache-Control: private, no-store"), "staging resp
 const privateStaging = storage.slice(storage.indexOf("private static function serve_private_staging_file"), storage.indexOf("public static function delete_private_attachment_file"));
 assert(/stream_private_path\([^;]+false\s*\)/s.test(privateStaging), "staging delivery explicitly disables revalidation");
 assert(storage.includes("replace_attachment_references"), "attachment replacement uses a centralized metadata transaction");
+const privatePromotion = storage.slice(
+	storage.indexOf("public static function promote_private_temporary_glb"),
+	storage.indexOf("public static function register_existing_private_attachment")
+);
+assert(privatePromotion.includes("self::join( $root, 'tmp' )"), "temporary promotion is restricted to the private tmp root");
+assert(privatePromotion.includes("path_is_within") && privatePromotion.includes("path_contains_link") && privatePromotion.includes("is_link"), "temporary promotion rejects traversal and linked paths");
+assert(privatePromotion.indexOf("@rename") < privatePromotion.indexOf("insert_private_attachment"), "temporary promotion moves the validated bytes before attachment hooks run");
+assert(privatePromotion.includes("'asset', 'source', $source"), "temporary promotion supplies the staging path for registration rollback");
 
 const postTypes = read("includes/class-vrodos-post-type-manager.php");
 assert((postTypes.match(/'map_meta_cap'\s*=>\s*true/g) || []).length === 3, "project, scene, and asset capabilities are object-aware");

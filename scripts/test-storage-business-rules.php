@@ -23,12 +23,19 @@ function get_current_blog_id(): int { return 7; }
 function sanitize_key( string $value ): string { return preg_replace( '/[^a-z0-9_-]/', '', strtolower( $value ) ); }
 function is_wp_error( $value ): bool { return $value instanceof WP_Error; }
 function wp_generate_password(): string { return 'random-token'; }
+function wp_generate_uuid4(): string { return '00000000-0000-4000-8000-000000000000'; }
 function absint( $value ): int { return abs( (int) $value ); }
 function wp_slash( string $value ): string { return addslashes( $value ); }
 function sanitize_file_name( string $value ): string { return preg_replace( '/[^A-Za-z0-9._-]/', '-', $value ); }
+function sanitize_mime_type( string $value ): string { return preg_replace( '/[^A-Za-z0-9.+\/-]/', '', $value ); }
 function wp_unique_filename( string $directory, string $filename ): string { return $filename; }
 function admin_url( string $path = '' ): string { return 'https://example.test/wp-admin/' . ltrim( $path, '/' ); }
-function add_query_arg( array $args, string $url ): string { return $url . '?' . http_build_query( $args ); }
+function home_url( string $path = '' ): string { return 'https://example.test/' . ltrim( $path, '/' ); }
+function add_query_arg( $key, $value = null, $url = null ): string {
+	$args = is_array( $key ) ? $key : [ $key => $value ];
+	$base_url = is_array( $key ) ? (string) $value : (string) $url;
+	return $base_url . '?' . http_build_query( $args );
+}
 function wp_parse_url( string $url, int $component = -1 ) { return parse_url( $url, $component ); }
 function wp_get_attachment_url( int $attachment_id ) { return 'https://example.test/uploads/' . $attachment_id; }
 function wp_get_attachment_image_url( int $attachment_id, string $size ) { return 'https://example.test/uploads/' . $attachment_id . '-' . $size; }
@@ -39,6 +46,8 @@ $test_deleted_attachments = [];
 $test_failed_meta_key = '';
 $test_post_mime_types = [];
 $test_options = [];
+$test_fail_attachment_insert = false;
+$test_next_attachment_id = 700;
 function get_post_meta( int $post_id, string $key, bool $single = false ) {
 	global $test_meta;
 	return $test_meta[ $post_id ][ $key ] ?? '';
@@ -60,6 +69,15 @@ function wp_delete_attachment( int $attachment_id, bool $force_delete = false ):
 	$test_deleted_attachments[] = $attachment_id;
 	return true;
 }
+function wp_delete_file( string $path ): bool { return ! is_file( $path ) || unlink( $path ); }
+function wp_insert_attachment( array $attachment, string $path, int $parent_id, bool $wp_error = false ) {
+	global $test_fail_attachment_insert, $test_next_attachment_id, $test_post_mime_types;
+	if ( $test_fail_attachment_insert ) { return new WP_Error( 'attachment-insert-failed', 'Attachment insert failed.' ); }
+	$attachment_id = $test_next_attachment_id++;
+	$test_post_mime_types[ $attachment_id ] = (string) ( $attachment['post_mime_type'] ?? '' );
+	return $attachment_id;
+}
+function wp_attachment_is_image( int $attachment_id ): bool { return false; }
 function update_attached_file( int $attachment_id, string $file ) {
 	global $test_attached_files;
 	$test_attached_files[ $attachment_id ] = stripslashes( $file );
@@ -111,6 +129,31 @@ try {
 	$background = VRodos_Storage_Manager::private_entity_directory( 'scene', 91, 'backgrounds' );
 	vrodos_storage_assert( str_ends_with( wp_normalize_path( $background ), '/site-7/scenes/91/backgrounds/' ), 'scene background path' );
 	vrodos_storage_assert( is_wp_error( VRodos_Storage_Manager::private_entity_directory( 'asset', 42, 'unknown' ) ), 'unsafe role rejection' );
+
+	$promotion_dir = VRodos_Storage_Manager::temporary_directory( 'import', 'promotion-success' );
+	$promotion_source = $promotion_dir . 'upload.glb';
+	file_put_contents( $promotion_source, 'validated staged model' );
+	$promoted_id = VRodos_Storage_Manager::promote_private_temporary_glb( $promotion_source, 'model.glb', 42 );
+	vrodos_storage_assert( is_int( $promoted_id ) && $promoted_id >= 700, 'private temporary file is promoted into an attachment' );
+	vrodos_storage_assert( ! is_file( $promotion_source ), 'successful promotion removes the staging source' );
+	vrodos_storage_assert( str_ends_with( wp_normalize_path( $test_attached_files[ $promoted_id ] ), '/site-7/assets/42/source/model.glb' ), 'promoted file uses the ID-owned source path' );
+	vrodos_storage_assert( file_get_contents( $test_attached_files[ $promoted_id ] ) === 'validated staged model', 'promotion preserves file bytes' );
+	vrodos_storage_assert( (int) $test_meta[ $promoted_id ]['_vrodos_storage_owner_id'] === 42, 'promoted attachment records its owner' );
+
+	$outside_promotion_source = trailingslashit( VRODOS_PRIVATE_STORAGE_DIR ) . 'outside-promotion.glb';
+	file_put_contents( $outside_promotion_source, 'outside temporary root' );
+	$outside_promotion = VRodos_Storage_Manager::promote_private_temporary_glb( $outside_promotion_source, 'outside.glb', 42 );
+	vrodos_storage_assert( is_wp_error( $outside_promotion ) && is_file( $outside_promotion_source ), 'promotion rejects files outside the private temporary root' );
+
+	$rollback_dir = VRodos_Storage_Manager::temporary_directory( 'import', 'promotion-rollback' );
+	$rollback_source = $rollback_dir . 'upload.glb';
+	file_put_contents( $rollback_source, 'rollback staged model' );
+	$test_fail_attachment_insert = true;
+	$rollback_result = VRodos_Storage_Manager::promote_private_temporary_glb( $rollback_source, 'rollback.glb', 42 );
+	$test_fail_attachment_insert = false;
+	vrodos_storage_assert( is_wp_error( $rollback_result ) && is_file( $rollback_source ), 'failed attachment registration keeps the staging file available' );
+	vrodos_storage_assert( file_get_contents( $rollback_source ) === 'rollback staged model', 'promotion rollback preserves file bytes' );
+
 	$client = VRodos_Storage_Manager::published_project_directory( 13, 'clients' );
 	vrodos_storage_assert( str_ends_with( wp_normalize_path( $client ), '/uploads/vrodos/published/projects/13/clients/' ), 'project-scoped public clients' );
 	$media_url = VRodos_Storage_Manager::published_project_url( 13, 'media', 'abc123.glb' );

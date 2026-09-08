@@ -354,6 +354,46 @@ final class VRodos_Storage_Manager {
 		return self::store_attachment_file( $source, $filename, $mime, $owner_id, $owner_type, $role, $profile, false );
 	}
 
+	/** Atomically promote a validated staged GLB without copying its bytes again. */
+	public static function promote_private_temporary_glb( string $source, string $filename, int $asset_id ) {
+		$root = self::private_site_root();
+		if ( is_wp_error( $root ) ) {
+			return $root;
+		}
+
+		$source          = self::normalize_absolute_path( $source );
+		$resolved_source = self::resolved_path( $source );
+		$temporary_root  = self::join( $root, 'tmp' );
+		if (
+			! is_file( $source )
+			|| is_link( $source )
+			|| ! self::path_is_within( $resolved_source, $temporary_root )
+			|| self::path_contains_link( $source, $root )
+		) {
+			return new WP_Error( 'vrodos_invalid_temporary_source', 'The promoted file must be an unlinked file inside VRodos private temporary storage.' );
+		}
+
+		$directory = self::private_entity_directory( 'asset', $asset_id, 'source' );
+		if ( is_wp_error( $directory ) ) {
+			return $directory;
+		}
+		$filename = wp_unique_filename( $directory, sanitize_file_name( $filename ) );
+		if ( '' === $filename ) {
+			return new WP_Error( 'vrodos_upload_invalid_name', 'The promoted filename is invalid.' );
+		}
+
+		$destination = $directory . $filename;
+		if ( ! @rename( $source, $destination ) ) {
+			return new WP_Error( 'vrodos_storage_promotion_failed', 'VRodos could not promote the validated temporary file.' );
+		}
+		$attachment_id = self::insert_private_attachment( $destination, $filename, 'model/gltf-binary', $asset_id, 'asset', 'source', $source );
+		if ( is_wp_error( $attachment_id ) ) {
+			return $attachment_id;
+		}
+
+		return (int) $attachment_id;
+	}
+
 	public static function register_existing_private_attachment( string $path, string $mime, int $owner_id, string $owner_type, string $role, string $profile = '' ) {
 		$directory = self::private_entity_directory( $owner_type, $owner_id, $role, $profile );
 		if ( is_wp_error( $directory ) ) {
@@ -851,7 +891,7 @@ final class VRodos_Storage_Manager {
 		return $attachment_id;
 	}
 
-	private static function insert_private_attachment( string $path, string $filename, string $mime, int $owner_id, string $owner_type, string $role ) {
+	private static function insert_private_attachment( string $path, string $filename, string $mime, int $owner_id, string $owner_type, string $role, string $restore_path_on_failure = '' ) {
 		$guid = add_query_arg( 'vrodos-private-guid', wp_generate_uuid4(), home_url( '/' ) );
 		$id   = wp_insert_attachment(
 			[
@@ -867,10 +907,17 @@ final class VRodos_Storage_Manager {
 			true
 		);
 		if ( is_wp_error( $id ) ) {
+			if ( '' !== $restore_path_on_failure && is_file( $path ) && ! @rename( $path, $restore_path_on_failure ) ) {
+				return new WP_Error( 'vrodos_storage_promotion_rollback_failed', 'VRodos could not register or restore the validated temporary file.' );
+			}
 			return $id;
 		}
 		if ( ! self::mark_attachment_private( (int) $id, $owner_id, $owner_type, $role ) || ! self::ensure_attached_file( (int) $id, $path ) ) {
+			$restored = '' === $restore_path_on_failure || ! is_file( $path ) || @rename( $path, $restore_path_on_failure );
 			wp_delete_attachment( (int) $id, true );
+			if ( ! $restored ) {
+				return new WP_Error( 'vrodos_storage_promotion_rollback_failed', 'VRodos could not register or restore the validated temporary file.' );
+			}
 			return new WP_Error( 'vrodos_attachment_database_failed', 'WordPress rejected the private attachment metadata.' );
 		}
 
