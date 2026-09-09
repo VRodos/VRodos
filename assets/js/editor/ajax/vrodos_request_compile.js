@@ -10,6 +10,8 @@ VRODOS.utils = VRODOS.utils || {};
 
 (function initVrodosCompileRequestApi() {
 	const dialogState = VRODOS.ui.compileDialogState;
+	const SLOW_BUILD_WARNING_MS = 2 * 60 * 1000;
+	const STALLED_BUILD_TIMEOUT_MS = 15 * 60 * 1000;
 	let activeBuild = null;
 
 	function getElement(key) {
@@ -107,9 +109,53 @@ VRODOS.utils = VRODOS.utils || {};
 		};
 	}
 
+	function noteMeaningfulProgress(build, progress) {
+		const now = Date.now();
+		let advanced = progress.ready > build.bestReady;
+		build.bestReady = Math.max(build.bestReady, progress.ready);
+
+		progress.profiles.forEach((profile) => {
+			const key = `${profile.assetId}:${profile.profile}`;
+			const previous = build.bestProfileProgress[key] || { step: 0, percent: 0, ready: false };
+			const ready = profile.status === 'ready';
+			if (profile.step > previous.step || profile.percent > previous.percent || (ready && !previous.ready)) {
+				advanced = true;
+			}
+			build.bestProfileProgress[key] = {
+				step: Math.max(previous.step, profile.step),
+				percent: Math.max(previous.percent, profile.percent),
+				ready: previous.ready || ready
+			};
+		});
+
+		if (advanced) {
+			build.lastMeaningfulProgressAt = now;
+		}
+		return Math.max(0, now - build.lastMeaningfulProgressAt);
+	}
+
 	function updateBuildProgress(build, data, fallbackMessage) {
-		Object.assign(build, normalizeBuildProgress(data, fallbackMessage));
+		const progress = normalizeBuildProgress(data, fallbackMessage);
+		const idleMs = noteMeaningfulProgress(build, progress);
+		Object.assign(build, progress);
 		dialogState.showBuildProgress(build);
+		return idleMs;
+	}
+
+	function stopStalledBuild(build) {
+		if (!activeBuild || activeBuild.id !== build.id) return;
+		if (build.timeoutId) window.clearTimeout(build.timeoutId);
+		build.timeoutId = null;
+		build.controller = null;
+		build.stalled = true;
+		build.message = 'Asset preparation stopped making progress. Completed work was saved. Retry the build; if it stalls again, contact an administrator.';
+		activeBuild = null;
+		dialogState.finishBuildState();
+		if (typeof dialogState.showBuildStalled === 'function') {
+			dialogState.showBuildStalled(build, build.message);
+		} else {
+			dialogState.showBuildFailure(build, build.message);
+		}
 	}
 
 	function shouldSaveBeforeCompile(compileOptions) {
@@ -123,6 +169,7 @@ VRODOS.utils = VRODOS.utils || {};
 
 	function runCompileRequest(build) {
 		if (!activeBuild || activeBuild.id !== build.id || build.cancelled) return;
+		build.timeoutId = null;
 		if (!build.phase || Number(build.phase.step) < 2) {
 			build.phase = { key: 'asset-optimization', step: 2, totalSteps: 3, label: 'Preparing desktop assets' };
 			build.message = 'Checking build requirements…';
@@ -142,8 +189,18 @@ VRODOS.utils = VRODOS.utils || {};
 			.then((payload) => {
 				if (!activeBuild || activeBuild.id !== build.id || build.cancelled) return null;
 				if (payload && payload.pending === true) {
-					updateBuildProgress(build, payload, payload.message);
-					dialogState.setStatusMessage('loader-circle', build.message);
+					const idleMs = updateBuildProgress(build, payload, payload.message);
+					if (idleMs >= STALLED_BUILD_TIMEOUT_MS) {
+						stopStalledBuild(build);
+						return null;
+					}
+					if (idleMs >= SLOW_BUILD_WARNING_MS) {
+						build.message = 'This is taking longer than usual. You can close this dialog and continue editing; asset preparation will continue in the background.';
+						dialogState.showBuildProgress(build);
+						dialogState.setStatusMessage('clock-alert', build.message);
+					} else {
+						dialogState.setStatusMessage('loader-circle', build.message);
+					}
 					const retryAfterMs = Math.max(1000, Math.min(10000, Number(payload.retryAfterMs) || 3000));
 					build.timeoutId = window.setTimeout(() => runCompileRequest(build), retryAfterMs);
 					return null;
@@ -190,8 +247,12 @@ VRODOS.utils = VRODOS.utils || {};
 			phase: { key: 'save', step: 1, totalSteps: 3, label: 'Saving scene changes' },
 			profiles: [],
 			cancelled: false,
+			stalled: false,
 			controller: null,
-			timeoutId: null
+			timeoutId: null,
+			bestReady: 0,
+			bestProfileProgress: Object.create(null),
+			lastMeaningfulProgressAt: Date.now()
 		};
 		dialogState.showStartedState();
 		return activeBuild;
@@ -235,7 +296,7 @@ VRODOS.utils = VRODOS.utils || {};
 		activeBuild = null;
 		dialogState.finishBuildState();
 		dialogState.hideBuildProgress();
-		dialogState.setStatusMessage('circle-x', 'Build canceled. Asset optimization already running may finish and be reused by a later build.');
+		dialogState.setStatusMessage('circle-x', 'Stopped waiting. Completed or in-progress asset preparation is preserved and can be reused by a later build.');
 		return sendCancellation(build).then(() => true).catch((error) => {
 			console.warn('VRodos: the local build stopped, but the server cancellation request failed.', error);
 			return false;

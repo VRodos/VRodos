@@ -86,7 +86,7 @@ Pending compile responses are a bare JSON payload, not a WordPress error envelop
 }
 ```
 
-Clients continue polling at `retryAfterMs` until a final HTTP `200` compile payload, user cancellation, or an actual error response. Profile status is one of `queued`, `running`, `ready`, or `failed`. Optimizer step totals describe work units, not a time estimate.
+Clients continue polling at `retryAfterMs` until a final HTTP `200` compile payload, user cancellation, an actual error response, or 15 minutes without meaningful optimizer progress. The dialog warns after two minutes without progress and allows the user to stop waiting without discarding reusable derivative work. Matching `queued` records repair missing cron events, while `running` records with no metadata or progress-file activity for 12 minutes are returned to the queue. Profile status is one of `queued`, `running`, `ready`, or `failed`. Optimizer step totals describe work units, not a time estimate.
 
 ## Artifact and target policy
 

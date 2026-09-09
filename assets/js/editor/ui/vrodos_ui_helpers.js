@@ -407,6 +407,7 @@ VRODOS.ui.compileDialogState = (function(existing) {
 		const profiles = Array.isArray(state.profiles) ? state.profiles : [];
 		const panel = getElement('progressPanel');
 		const progressTrack = getElement('progressBar') && getElement('progressBar').parentElement;
+		const cancelButton = getElement('cancelButton');
 		setDisplay(panel, 'block');
 		setBuildProgressFailureTone(false);
 		setText(getElement('progressStage'), `Step ${Math.min(phaseStep, phaseTotal)} of ${phaseTotal}`);
@@ -415,6 +416,7 @@ VRODOS.ui.compileDialogState = (function(existing) {
 		setText(getElement('progressCount'), safeTotal > 0 ? `${safeReady}/${safeTotal} ready · ${Math.round(percentage)}%` : `${Math.round(percentage)}%`);
 		if (getElement('progressBar')) getElement('progressBar').style.width = `${percentage}%`;
 		if (progressTrack) progressTrack.setAttribute('aria-valuenow', String(percentage));
+		if (cancelButton) cancelButton.textContent = phase.key === 'asset-optimization' ? 'Stop waiting' : 'Cancel build';
 		renderBuildProfiles(profiles);
 	}
 
@@ -424,6 +426,22 @@ VRODOS.ui.compileDialogState = (function(existing) {
 		setText(getElement('progressLabel'), 'Build failed');
 		setText(getElement('progressMessage'), message || 'The build could not be completed.');
 		setStatusMessage('triangle-alert', message || 'The build could not be completed.');
+	}
+
+	function showBuildStalled(progress, message) {
+		showBuildProgress(progress);
+		setBuildProgressFailureTone(true);
+		setText(getElement('progressLabel'), 'Build stalled');
+		setText(getElement('progressMessage'), message || 'Asset preparation stopped making progress.');
+		setStatusMessage('triangle-alert', message || 'Asset preparation stopped making progress.');
+		const proceedButton = getElement('proceedButton');
+		const cancelButton = getElement('cancelButton');
+		if (proceedButton) {
+			proceedButton.disabled = false;
+			proceedButton.innerHTML = '<i data-lucide="rotate-cw" class="tw-w-4 tw-h-4"></i> Retry build';
+		}
+		if (cancelButton) cancelButton.textContent = 'Close';
+		VRODOS.ui.refreshLucideIcons();
 	}
 
 	function hideBuildProgress() {
@@ -550,6 +568,7 @@ VRODOS.ui.compileDialogState = (function(existing) {
 		showPrimaryExperienceLink,
 		showBuildProgress,
 		showBuildFailure,
+		showBuildStalled,
         showSaveFailedMessage,
         showSavePendingMessage,
         showStartedState

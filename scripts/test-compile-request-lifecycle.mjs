@@ -11,8 +11,10 @@ const servedStatuses = [];
 const timers = [];
 const progress = [];
 const failures = [];
+const stalledBuilds = [];
 const links = [];
 const consoleErrors = [];
+let fakeNow = Date.UTC(2026, 8, 6, 11, 0, 0);
 let started = 0;
 let finished = 0;
 let hidden = 0;
@@ -103,6 +105,7 @@ const VRODOS = {
             hideBuildProgress() { hidden += 1; },
             setStatusMessage(_icon, message) { statusMessage = message; },
             showBuildFailure(state, message) { failures.push({ state: structuredClone(state), message }); },
+            showBuildStalled(state, message) { stalledBuilds.push({ state: structuredClone(state), message }); },
             showBuildProgress(state) { progress.push(structuredClone(state)); },
             showPrimaryExperienceLink(url) { links.push(url); },
             showSaveFailedMessage() {},
@@ -132,6 +135,7 @@ const windowObject = {
 const context = vm.createContext({
     Array,
     Boolean,
+    Date: { now: () => fakeNow },
     Error,
     Math,
     Number,
@@ -203,7 +207,7 @@ const staleRetry = timers.shift();
 await VRODOS.api.cancelCompile();
 assert.equal(VRODOS.api.isCompileRunning(), false, 'cancel clears the active build');
 assert.equal(hidden, 2, 'cancel hides the progress panel');
-assert.match(statusMessage, /Build canceled/);
+assert.match(statusMessage, /Stopped waiting/);
 assert.equal(requests.at(-1).action, 'vrodos_cancel_compile_action', 'cancel is persisted on the server');
 staleRetry();
 await flushPromises();
@@ -211,6 +215,51 @@ assert.equal(
     requests.filter((request) => request.action === 'vrodos_compile_action').length,
     compileRequestsBeforeCancel,
     'a canceled retry cannot restart the old build'
+);
+
+const cancellationRequestsBeforeStall = requests.filter((request) => request.action === 'vrodos_cancel_compile_action').length;
+responses.push(response(202, pendingPayload));
+VRODOS.api.compileScene(false, { skipSave: true });
+await flushPromises();
+assert.equal(VRODOS.api.isCompileRunning(), true, 'a new build starts normally before stall tracking');
+
+fakeNow += 2 * 60 * 1000;
+responses.push(response(202, pendingPayload));
+timers.shift()();
+await flushPromises();
+assert.match(statusMessage, /taking longer than usual/i, 'two minutes without progress shows a slow-build warning');
+assert.equal(VRODOS.api.isCompileRunning(), true, 'the slow-build warning does not stop healthy background work');
+
+const progressedPayload = structuredClone(pendingPayload);
+progressedPayload.percent = 62;
+progressedPayload.profiles[1].step = 7;
+progressedPayload.profiles[1].percent = 67;
+progressedPayload.profiles[1].message = 'Writing optimized GLB';
+fakeNow += 14 * 60 * 1000;
+responses.push(response(202, progressedPayload));
+timers.shift()();
+await flushPromises();
+assert.equal(VRODOS.api.isCompileRunning(), true, 'meaningful per-profile progress resets the stall timer');
+assert.doesNotMatch(statusMessage, /taking longer than usual/i, 'progress clears the slow-build warning');
+
+fakeNow += 14 * 60 * 1000;
+responses.push(response(202, progressedPayload));
+timers.shift()();
+await flushPromises();
+assert.equal(VRODOS.api.isCompileRunning(), true, 'the client keeps polling before the no-progress deadline');
+assert.match(statusMessage, /taking longer than usual/i, 'the warning returns when progress stops again');
+
+fakeNow += 60 * 1000;
+responses.push(response(202, progressedPayload));
+timers.shift()();
+await flushPromises();
+assert.equal(VRODOS.api.isCompileRunning(), false, 'fifteen minutes without meaningful progress stops client polling');
+assert.equal(stalledBuilds.length, 1, 'the stalled build gets a dedicated actionable UI state');
+assert.match(stalledBuilds[0].message, /Retry the build/);
+assert.equal(
+    requests.filter((request) => request.action === 'vrodos_cancel_compile_action').length,
+    cancellationRequestsBeforeStall,
+    'auto-failing a stalled build must not cancel shared derivative work'
 );
 
 responses.push(response(500, {

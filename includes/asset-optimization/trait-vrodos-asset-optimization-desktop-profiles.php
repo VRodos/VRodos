@@ -9,6 +9,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 	private const DESKTOP_PROFILE_PIPELINE_VERSION = 1;
 	private const DESKTOP_PROFILE_LOCK_KEY = 'vrodos_asset_desktop_profile_global_lock';
 	private const DESKTOP_PROFILE_MIN_TEXTURE_SIZE = 256;
+	private const DESKTOP_PROFILE_STALE_SECONDS = 720;
 
 	public static function prepare_desktop_profile_derivatives( VRodos_Project_Compile_Plan $plan ): array {
 		if ( 'desktop' !== $plan->request->vr_runtime_profile ) {
@@ -88,7 +89,14 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					continue;
 				}
 
-				self::queue_desktop_profile_derivative( (int) $asset_id, $profile, $source, $options );
+				$queue_result = self::queue_desktop_profile_derivative( (int) $asset_id, $profile, $source, $options );
+				if ( is_wp_error( $queue_result ) ) {
+					$message = $queue_result->get_error_message();
+					$errors[] = sprintf( 'Asset #%d %s: %s', $asset_id, ucfirst( $slot ), $message );
+					$record = self::desktop_profile_record( (int) $asset_id, $profile );
+					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $record, $source, $options, 'failed', $message );
+					continue;
+				}
 				$record = self::desktop_profile_record( (int) $asset_id, $profile );
 				$status = in_array( (string) ( $record['status'] ?? '' ), [ 'queued', 'running' ], true ) ? (string) $record['status'] : 'queued';
 				$profile_progress[] = self::desktop_profile_progress_item(
@@ -152,7 +160,16 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			return;
 		}
 		if ( get_transient( self::DESKTOP_PROFILE_LOCK_KEY ) ) {
-			self::schedule_desktop_profile_job( $asset_id, $profile, $protect_geometry, $texture_max_size, 30 );
+			$schedule_result = self::schedule_desktop_profile_job( $asset_id, $profile, $protect_geometry, $texture_max_size, 30 );
+			if ( is_wp_error( $schedule_result ) ) {
+				$options = [
+					'protectGeometry' => 1 === $protect_geometry,
+					'textureMaxSize'  => absint( $texture_max_size ),
+					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
+				];
+				self::store_desktop_profile_failure( $asset_id, $profile, $schedule_result->get_error_message(), $options );
+				self::log_desktop_profile_schedule_failure( $asset_id, $profile, $schedule_result );
+			}
 			return;
 		}
 
@@ -275,7 +292,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		$total_steps = self::desktop_profile_total_steps( $profile, $options );
 		$step = 0;
 		$percent = 0;
-		$updated_at = sanitize_text_field( (string) ( $record['updatedAt'] ?? '' ) );
+		$updated_at = sanitize_text_field( (string) ( $record['updatedAt'] ?? $record['generatedAt'] ?? '' ) );
 
 		if ( 'ready' === $status ) {
 			$step = $total_steps;
@@ -373,26 +390,98 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		}
 	}
 
-	private static function queue_desktop_profile_derivative( int $asset_id, string $profile, array $source, array $options ): void {
+	private static function queue_desktop_profile_derivative( int $asset_id, string $profile, array $source, array $options ) {
 		$record = self::desktop_profile_record( $asset_id, $profile );
-		if ( in_array( (string) ( $record['status'] ?? '' ), [ 'queued', 'running' ], true ) && self::desktop_profile_record_matches_request( $record, $source, $options ) ) {
-			return;
+		$status = (string) ( $record['status'] ?? '' );
+		$matches_request = self::desktop_profile_record_matches_request( $record, $source, $options );
+
+		if ( 'queued' === $status && $matches_request ) {
+			$had_scheduled_event = false !== wp_next_scheduled(
+				self::DESKTOP_PROFILE_CRON_HOOK,
+				[ $asset_id, $profile, ! empty( $options['protectGeometry'] ) ? 1 : 0, absint( $options['textureMaxSize'] ?? 0 ) ]
+			);
+			$schedule_result = self::schedule_desktop_profile_job(
+				$asset_id,
+				$profile,
+				! empty( $options['protectGeometry'] ) ? 1 : 0,
+				absint( $options['textureMaxSize'] ?? 0 )
+			);
+			if ( is_wp_error( $schedule_result ) ) {
+				self::store_desktop_profile_failure( $asset_id, $profile, $schedule_result->get_error_message(), $options );
+				self::log_desktop_profile_schedule_failure( $asset_id, $profile, $schedule_result );
+				return $schedule_result;
+			}
+			if ( ! $had_scheduled_event ) {
+				error_log( sprintf( '[VRodos] Recovered missing desktop profile cron job for asset #%d (%s).', $asset_id, $profile ) );
+			}
+			return true;
+		}
+
+		if ( 'running' === $status && $matches_request ) {
+			if ( ! self::desktop_profile_job_is_stale( $asset_id, $profile, $record, $source ) ) {
+				return true;
+			}
+			self::delete_desktop_profile_progress_file( $asset_id, $profile, $source );
+			self::store_desktop_profile_status( $asset_id, $profile, $source, $options, 'queued', 'A stale desktop profile job was queued again.' );
+			error_log( sprintf( '[VRodos] Requeued stale desktop profile job for asset #%d (%s) after %d seconds without progress.', $asset_id, $profile, self::DESKTOP_PROFILE_STALE_SECONDS ) );
+			$schedule_result = self::schedule_desktop_profile_job(
+				$asset_id,
+				$profile,
+				! empty( $options['protectGeometry'] ) ? 1 : 0,
+				absint( $options['textureMaxSize'] ?? 0 )
+			);
+			if ( is_wp_error( $schedule_result ) ) {
+				self::store_desktop_profile_failure( $asset_id, $profile, $schedule_result->get_error_message(), $options );
+				self::log_desktop_profile_schedule_failure( $asset_id, $profile, $schedule_result );
+				return $schedule_result;
+			}
+			return true;
 		}
 		self::delete_desktop_profile_progress_file( $asset_id, $profile, $source );
 		self::store_desktop_profile_status( $asset_id, $profile, $source, $options, 'queued', 'Desktop profile derivative is queued.' );
-		self::schedule_desktop_profile_job(
+		$schedule_result = self::schedule_desktop_profile_job(
 			$asset_id,
 			$profile,
 			! empty( $options['protectGeometry'] ) ? 1 : 0,
 			absint( $options['textureMaxSize'] ?? 0 )
 		);
+		if ( is_wp_error( $schedule_result ) ) {
+			self::store_desktop_profile_failure( $asset_id, $profile, $schedule_result->get_error_message(), $options );
+			self::log_desktop_profile_schedule_failure( $asset_id, $profile, $schedule_result );
+			return $schedule_result;
+		}
+		return true;
 	}
 
-	private static function schedule_desktop_profile_job( int $asset_id, string $profile, int $protect_geometry, int $texture_max_size, int $delay = 2 ): void {
-		$args = [ $asset_id, $profile, $protect_geometry, $texture_max_size ];
-		if ( ! wp_next_scheduled( self::DESKTOP_PROFILE_CRON_HOOK, $args ) ) {
-			wp_schedule_single_event( time() + max( 1, $delay ), self::DESKTOP_PROFILE_CRON_HOOK, $args );
+	private static function desktop_profile_job_is_stale( int $asset_id, string $profile, array $record, array $source ): bool {
+		$latest_activity = strtotime( (string) ( $record['updatedAt'] ?? '' ) . ' UTC' );
+		$latest_activity = false === $latest_activity ? 0 : $latest_activity;
+		$progress = self::read_desktop_profile_progress_file( $asset_id, $profile, $source );
+		if ( $progress ) {
+			$progress_updated_at = strtotime( (string) ( $progress['updatedAt'] ?? '' ) . ' UTC' );
+			if ( false !== $progress_updated_at ) {
+				$latest_activity = max( $latest_activity, $progress_updated_at );
+			}
 		}
+
+		return $latest_activity <= 0 || time() - $latest_activity >= self::DESKTOP_PROFILE_STALE_SECONDS;
+	}
+
+	private static function schedule_desktop_profile_job( int $asset_id, string $profile, int $protect_geometry, int $texture_max_size, int $delay = 2 ) {
+		$args = [ $asset_id, $profile, $protect_geometry, $texture_max_size ];
+		if ( false !== wp_next_scheduled( self::DESKTOP_PROFILE_CRON_HOOK, $args ) ) {
+			return true;
+		}
+
+		$result = wp_schedule_single_event( time() + max( 1, $delay ), self::DESKTOP_PROFILE_CRON_HOOK, $args, true );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		return $result ? true : new WP_Error( 'vrodos_desktop_profile_schedule_failed', 'WordPress did not schedule the desktop profile background job.' );
+	}
+
+	private static function log_desktop_profile_schedule_failure( int $asset_id, string $profile, WP_Error $error ): void {
+		error_log( sprintf( '[VRodos] Failed to schedule desktop profile job for asset #%d (%s): %s', $asset_id, $profile, $error->get_error_message() ) );
 	}
 
 	private static function store_desktop_profile_status( int $asset_id, string $profile, array $source, array $options, string $status, string $message ): void {
@@ -480,7 +569,13 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					'textureMaxSize'  => max( self::DESKTOP_PROFILE_MIN_TEXTURE_SIZE, (int) floor( $current_size / 2 ) ),
 					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 				];
-				self::queue_desktop_profile_derivative( $largest_asset_id, 'desktop-' . $slot, $source, $options );
+				$queue_result = self::queue_desktop_profile_derivative( $largest_asset_id, 'desktop-' . $slot, $source, $options );
+				if ( is_wp_error( $queue_result ) ) {
+					return [
+						'status'  => 'failed',
+						'message' => $queue_result->get_error_message(),
+					];
+				}
 				return [
 					'status' => 'pending',
 					'message' => sprintf( 'Scene #%d %s texture memory is %.1f MiB; reducing the largest texture set to meet the %.0f MiB target.', $scene->scene_id, ucfirst( $slot ), $total_bytes / 1048576, $budget_mib ),
