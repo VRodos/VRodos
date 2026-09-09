@@ -100,7 +100,7 @@ else {
                     <h1 class="tw-text-xs tw-font-bold tw-text-slate-400 uppercase tw-tracking-widest"><?php echo $full_title; ?> Manager</h1>
                 </div>
                 <div class="tw-flex tw-items-center tw-gap-6">
-                    <a href="<?php echo get_site_url(); ?>/vrodos-assets-list-page/" class="tw-text-xs tw-font-bold tw-text-slate-400 hover:tw-text-primary transition-all">Shared Assets</a>
+                    <a href="<?php echo get_site_url(); ?>/vrodos-assets-list-page/" class="tw-text-xs tw-font-bold tw-text-slate-400 hover:tw-text-primary transition-all">Assets</a>
                 </div>
             </div>
         </nav>
