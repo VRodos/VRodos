@@ -47,7 +47,7 @@ final class VRodos_Desktop_Performance_Profiles {
 				'label'       => (string) ( $custom_definition['label'] ?? 'Custom' ),
 				'presetState' => 'default',
 				'settings'    => $custom_settings,
-				'assets'      => self::asset_definition( $custom_definition, 'desktop-custom' ),
+				'assets'      => self::asset_definition( $custom_definition, 'web-high' ),
 				'renderBudget' => [ 'pixelBudget' => null, 'minPixelRatio' => 0.75, 'maxPixelRatio' => 1.5 ],
 			],
 		];
@@ -65,7 +65,7 @@ final class VRodos_Desktop_Performance_Profiles {
 				'label'       => (string) ( $definition['label'] ?? ucfirst( $profile_id ) ),
 				'presetState' => self::preset_state( $stored_profile, $preset ),
 				'settings'    => $settings,
-				'assets'      => self::asset_definition( $definition, 'desktop-' . $profile_id ),
+				'assets'      => self::asset_definition( $definition, 'web-' . $profile_id ),
 				'renderBudget' => [
 					'pixelBudget'  => $definition['renderPixelBudget'] ?? null,
 					'minPixelRatio' => (float) ( $definition['minPixelRatio'] ?? 0.75 ),

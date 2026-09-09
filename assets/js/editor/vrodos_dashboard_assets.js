@@ -158,7 +158,7 @@
 		}
 
 		const action = actionEl.dataset.vrodosDashboardAction;
-		if (action !== 'refresh-analysis' && action !== 'toggle-compile') {
+		if (action !== 'refresh-analysis') {
 			return;
 		}
 
@@ -170,14 +170,7 @@
 		event.preventDefault();
 		setBusy(actionEl, true);
 
-		const ajaxAction = action === 'refresh-analysis'
-			? 'vrodos_dashboard_refresh_asset_glb_analysis'
-			: 'vrodos_dashboard_toggle_asset_compile_use';
-		const extra = action === 'toggle-compile'
-			? { enabled: actionEl.dataset.enabled || '0', profile: 'safe-draco' }
-			: {};
-
-		requestDashboardAction(ajaxAction, assetId, extra)
+		requestDashboardAction('vrodos_dashboard_refresh_asset_glb_analysis', assetId, {})
 			.then((response) => {
 				const payload = response && response.data ? response.data : {};
 				updateRow(assetId, payload);

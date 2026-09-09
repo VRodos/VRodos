@@ -21,9 +21,9 @@ Desktop compilation now has four editor tabs: Custom, Low, Medium, and High. Cus
 The compile dialog exposes an explicit build-mode decision:
 
 - Adaptive Low/Medium/High prepares and publishes all three immutable profile derivatives. A lightweight pre-A-Frame capability probe chooses one profile, and only that profile's runtime chunks and GLBs are requested.
-- Custom only prepares, publishes, and loads `desktop-custom` with original textures and geometry plus safe Draco. It does not include the hardware probe, adaptive query override, or runtime recommendation path.
+- Custom only prepares, publishes, and loads `web-high`, preserving authored geometry and artistic intent while capping pathological textures at 4096px and compressing them to KTX2. It does not include the hardware probe, adaptive query override, or runtime recommendation path.
 
-Low uses 1024px-class KTX2 textures, a 96 MiB scene target, 50% geometry, Low clouds without shafts when High enables clouds, and the Performance render policy. Medium uses 2048px-class KTX2 textures, a 192 MiB target, 80% geometry, Off/SMAA Low/Medium controls, Low/Medium clouds without shafts, and the Standard render policy. High preserves authored textures and geometry with safe Draco compression. Collision/navigation assets plus skinned or morph-target GLBs are never simplified.
+Low uses 1024px-class KTX2 textures, a 96 MiB scene target, 50% geometry, Low clouds without shafts when High enables clouds, and the Performance render policy. Medium uses 2048px-class KTX2 textures, a 192 MiB target, 80% geometry, Off/SMAA Low/Medium controls, Low/Medium clouds without shafts, and the Standard render policy. High preserves authored geometry and artistic intent while capping textures at 4096px and encoding them as KTX2. Collision/navigation assets plus skinned or morph-target GLBs are never simplified.
 
 Remaining acceptance:
 

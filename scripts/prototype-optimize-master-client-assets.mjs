@@ -145,9 +145,9 @@ Options:
   --source-url URL        Source URL metadata to record with --source.
   --output-file PATH      Exact derivative GLB path for --source mode.
   --progress-file PATH    Optional private JSON file for atomic optimizer progress updates.
-  --profile NAME          safe-draco, safe-meshopt, editor-preview, desktop-custom, desktop-low, desktop-medium, or desktop-high.
+  --profile NAME          safe-draco, safe-meshopt, editor-preview, web-high, web-medium, or web-low.
   --protect-geometry      Skip weld/simplify for collision or navigation geometry.
-  --texture-max-size N    Override the desktop profile texture cap in pixels.
+  --texture-max-size N    Override the web profile texture cap in pixels.
   --limit N               Number of top GLBs to process. Default: 3.
   --include REGEX         Only process assets whose URL or filename matches.
   --gltf-transform PATH   Optional glTF Transform CLI executable.
@@ -515,14 +515,6 @@ function profileSteps(profile, inputPath, outputPath, workDir, profileOptions = 
         ];
     }
 
-    if (profile === 'desktop-custom' || profile === 'desktop-high') {
-        return [
-            ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
-            ['dedup', step1, step2],
-            ['draco', step2, outputPath, '--method', 'edgebreaker']
-        ];
-    }
-
     if (profile === 'safe-meshopt') {
         return [
             ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
@@ -546,17 +538,18 @@ function profileSteps(profile, inputPath, outputPath, workDir, profileOptions = 
         return steps;
     }
 
-    if (profile === 'desktop-low' || profile === 'desktop-medium') {
-        const low = profile === 'desktop-low';
+    if (profile === 'web-low' || profile === 'web-medium' || profile === 'web-high') {
+        const low = profile === 'web-low';
+        const high = profile === 'web-high';
         const ratio = low ? '0.5' : '0.8';
         const error = low ? '0.01' : '0.005';
-        const textureMaxSize = String(profileOptions.textureMaxSize || (low ? 1024 : 2048));
+        const textureMaxSize = String(profileOptions.textureMaxSize || (low ? 1024 : (high ? 4096 : 2048)));
         const steps = [
             ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
             ['dedup', step1, step2]
         ];
         let geometryOutput = step2;
-        if (!profileOptions.protectGeometry) {
+        if (!high && !profileOptions.protectGeometry) {
             steps.push(['weld', step2, step3]);
             steps.push(['simplify', step3, step4, '--ratio', ratio, '--error', error, '--lock-border', 'true']);
             geometryOutput = step4;
@@ -682,7 +675,7 @@ async function optimizeAsset(asset, index, options, runner) {
     record.profileOptions = {
         protectGeometry,
         protectedByContent,
-        textureMaxSize: options.textureMaxSize || (options.profile === 'desktop-low' ? 1024 : (options.profile === 'desktop-medium' ? 2048 : null))
+        textureMaxSize: options.textureMaxSize || (options.profile === 'web-low' ? 1024 : (options.profile === 'web-medium' ? 2048 : (options.profile === 'web-high' ? 4096 : null)))
     };
 
     if (options.profile === 'safe-meshopt') {
@@ -697,8 +690,8 @@ async function optimizeAsset(asset, index, options, runner) {
             ? 'Geometry simplification was skipped to protect collision/navigation, skinning, or morph targets; textures are resized without Draco compression.'
             : 'Uses geometry simplification and texture resize without Draco compression to avoid editor decode stalls.');
     }
-    if (options.profile.startsWith('desktop-')) {
-        record.runtimeNotes.push('Compiled desktop performance profile derivative; source upload is untouched.');
+    if (options.profile.startsWith('web-')) {
+        record.runtimeNotes.push('Compiled web runtime derivative; source upload is untouched.');
         if (protectGeometry) record.runtimeNotes.push('Geometry simplification was skipped to protect collision/navigation, skinning, or morph targets.');
     } else {
         record.runtimeNotes.push('Derivative is for prototype review only; source upload is untouched.');
@@ -776,14 +769,14 @@ async function optimizeAsset(asset, index, options, runner) {
         record.derivative = await analyzeGlbFile(derivativePath);
         const hasSourceTextures = Number(record.original?.counts?.images || 0) > 0;
         record.runtimeSubstitutionReady = record.derivative.extensions.hasDraco &&
-            (!options.profile.startsWith('desktop-') || ['desktop-custom', 'desktop-high'].includes(options.profile) || !hasSourceTextures || record.derivative.extensions.hasKtx2);
+            (!options.profile.startsWith('web-') || !hasSourceTextures || record.derivative.extensions.hasKtx2);
         record.status = 'done';
         await writeOptimizerProgress(options, sourcePath, {
             status: 'ready',
             step: totalSteps,
             totalSteps,
             percent: 100,
-            message: 'Desktop profile derivative is ready'
+            message: 'Web derivative is ready'
         });
 
         return record;

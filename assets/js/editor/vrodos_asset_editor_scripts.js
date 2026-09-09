@@ -1126,12 +1126,29 @@ function vrodos_init_asset_import_status_polling() {
         return payload.data || {};
     };
 
+    let shouldReloadAfterImport = initialStatus.status === 'pending' || initialStatus.status === 'running';
     const poll = async () => {
         try {
             const status = await fetchStatus();
-            setImportNotice(status.status, status.message, status.can_retry);
+            const optimization = status.optimization || {};
+            const optimizationActive = optimization.status === 'queued' || optimization.status === 'running';
+            const optimizationFailed = optimization.status === 'failed';
+            if (status.status === 'ready' && optimizationActive) {
+                const percent = Number(optimization.percent || 0);
+                setImportNotice('running', `${optimization.message || 'Optimizing GLB for the web.'}${percent > 0 ? ` ${percent}%` : ''}`, false);
+            } else if (status.status === 'ready' && optimizationFailed) {
+                setImportNotice('failed', `${optimization.message || 'Web optimization failed. The original GLB is unchanged.'} Use GLB Optimization to retry.`, false);
+            } else {
+                setImportNotice(status.status, status.message, status.can_retry);
+            }
             if (status.status === 'ready') {
-                setTimeout(() => window.location.reload(), 900);
+                if (shouldReloadAfterImport) {
+                    setTimeout(() => window.location.reload(), 900);
+                    return;
+                }
+                if (optimizationActive) {
+                    setTimeout(poll, 5000);
+                }
                 return;
             }
             if (status.status === 'pending' || status.status === 'running') {
@@ -1161,6 +1178,7 @@ function vrodos_init_asset_import_status_polling() {
                     throw new Error(vrodos_payload_error_message(payload, 'Could not retry model import.'));
                 }
                 setImportNotice('pending', 'Model package is queued for GLB conversion.', false);
+                shouldReloadAfterImport = true;
                 setTimeout(poll, 1500);
             } catch (error) {
                 setImportNotice('failed', error && error.message ? error.message : 'Could not retry model import.', false);
@@ -1170,8 +1188,14 @@ function vrodos_init_asset_import_status_polling() {
         });
     }
 
-    if (initialStatus.status === 'pending' || initialStatus.status === 'running') {
-        setImportNotice(initialStatus.status, initialStatus.message, false);
+    const initialOptimization = initialStatus.optimization || {};
+    if (initialStatus.status === 'pending' || initialStatus.status === 'running' || initialOptimization.status === 'queued' || initialOptimization.status === 'running') {
+        if (initialStatus.status === 'ready') {
+            const percent = Number(initialOptimization.percent || 0);
+            setImportNotice('running', `${initialOptimization.message || 'Optimizing GLB for the web.'}${percent > 0 ? ` ${percent}%` : ''}`, false);
+        } else {
+            setImportNotice(initialStatus.status, initialStatus.message, false);
+        }
         setTimeout(poll, 1500);
     }
 }

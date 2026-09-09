@@ -74,6 +74,93 @@
 
 <body id="master-client-body" class="vrodos-manager-wrapper tw-overflow-hidden tw-antialiased">
 
+    <style id="vrodos-scene-loader-style">
+        @keyframes vrodos-loader-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        #vrodos-scene-loader-overlay { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: radial-gradient(circle at center, rgba(32,36,48,.98) 0%, #080a10 72%); color: #f5f7fb; font-family: "Segoe UI", sans-serif; letter-spacing: .02em; transition: opacity 240ms ease; }
+        #vrodos-scene-loader-spinner { width: 42px; height: 42px; border: 3px solid rgba(255,255,255,.16); border-top-color: #fff; border-radius: 50%; animation: vrodos-loader-spin .9s linear infinite; }
+        #vrodos-scene-loader-title { font-size: 18px; font-weight: 600; }
+        #vrodos-scene-loader-progress { max-width: min(86vw, 620px); font-size: 13px; opacity: .82; text-align: center; }
+        #vrodos-scene-loader-retry { display: none; border: 0; border-radius: 999px; padding: 10px 18px; cursor: pointer; font-weight: 700; }
+    </style>
+    <div id="vrodos-scene-loader-overlay" role="status" aria-live="polite">
+        <div id="vrodos-scene-loader-spinner" aria-hidden="true"></div>
+        <div id="vrodos-scene-loader-title">Loading scene</div>
+        <div id="vrodos-scene-loader-progress">Preparing 3D assets</div>
+        <button id="vrodos-scene-loader-retry" type="button">Retry</button>
+    </div>
+    <script>
+        (function () {
+            var state = window.VRODOSSceneLoadProgress = window.VRODOSSceneLoadProgress || { items: {}, listeners: [] };
+            var formatMb = function (bytes) { return Math.round((Number(bytes) || 0) / 104857.6) / 10; };
+            state.snapshot = function () {
+                var values = Object.keys(state.items).map(function (key) { return state.items[key]; });
+                return {
+                    loadedBytes: values.reduce(function (sum, item) { return sum + Math.min(item.loadedBytes, item.totalBytes); }, 0),
+                    totalBytes: values.reduce(function (sum, item) { return sum + item.totalBytes; }, 0),
+                    loadedCount: values.filter(function (item) { return item.loaded; }).length,
+                    totalCount: values.length,
+                    failed: values.filter(function (item) { return item.failed; })
+                };
+            };
+            state.render = function () {
+                var snapshot = state.snapshot();
+                var label = document.getElementById('vrodos-scene-loader-progress');
+                var title = document.getElementById('vrodos-scene-loader-title');
+                var spinner = document.getElementById('vrodos-scene-loader-spinner');
+                var retry = document.getElementById('vrodos-scene-loader-retry');
+                if (!label) return;
+                if (snapshot.failed.length) {
+                    if (title) title.textContent = 'A required 3D asset could not be loaded';
+                    label.textContent = 'Check your connection and retry. Walking or collision data is not ready.';
+                    if (spinner) spinner.style.display = 'none';
+                    if (retry) retry.style.display = 'block';
+                } else if (snapshot.totalBytes > 0 && snapshot.loadedBytes < snapshot.totalBytes) {
+                    var percent = Math.min(99, Math.round(snapshot.loadedBytes * 100 / snapshot.totalBytes));
+                    label.textContent = 'Downloading 3D assets — ' + percent + '% · ' + formatMb(snapshot.loadedBytes) + ' / ' + formatMb(snapshot.totalBytes) + ' MB';
+                } else if (snapshot.totalCount > 0) {
+                    label.textContent = 'Decoding 3D assets — 0 / ' + snapshot.totalCount;
+                }
+                state.listeners.slice().forEach(function (listener) { listener(snapshot); });
+            };
+            state.selectProfileAssets = function (root) {
+                var activeProfile = window.VRODOS_ACTIVE_DESKTOP_PROFILE && window.VRODOS_ACTIVE_DESKTOP_PROFILE.id ? window.VRODOS_ACTIVE_DESKTOP_PROFILE.id : 'high';
+                var assets = root.matches && root.matches('a-asset-item[data-vrodos-profile-asset="true"]') ? [root] : root.querySelectorAll('a-asset-item[data-vrodos-profile-asset="true"]');
+                assets.forEach(function (asset) {
+                    var selectedSource = asset.getAttribute('data-vrodos-profile-src-' + activeProfile) || asset.getAttribute('data-vrodos-profile-src-high');
+                    var selectedSize = asset.getAttribute('data-vrodos-profile-size-' + activeProfile) || asset.getAttribute('data-vrodos-profile-size-high');
+                    if (selectedSource) asset.setAttribute('src', selectedSource);
+                    if (selectedSize) asset.setAttribute('data-vrodos-asset-size-bytes', selectedSize);
+                });
+            };
+            var profileObserver = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) { mutation.addedNodes.forEach(function (node) { if (node.nodeType === 1) state.selectProfileAssets(node); }); });
+            });
+            profileObserver.observe(document.documentElement, { childList: true, subtree: true });
+            state.bind = function () {
+                state.selectProfileAssets(document);
+                profileObserver.disconnect();
+                document.querySelectorAll('a-asset-item[data-vrodos-critical="true"]').forEach(function (asset, index) {
+                    var id = asset.id || 'critical-' + index;
+                    if (state.items[id]) return;
+                    var known = Number(asset.getAttribute('data-vrodos-asset-size-bytes')) || 0;
+                    state.items[id] = { element: asset, loadedBytes: 0, totalBytes: known, loaded: false, failed: false };
+                    asset.addEventListener('progress', function (event) {
+                        var detail = event.detail || {};
+                        var item = state.items[id];
+                        item.loadedBytes = Number(detail.loadedBytes) || item.loadedBytes;
+                        item.totalBytes = Number(detail.totalBytes) || item.totalBytes || known;
+                        state.render();
+                    });
+                    ['load', 'loaded'].forEach(function (name) { asset.addEventListener(name, function () { var item = state.items[id]; item.loaded = true; item.loadedBytes = item.totalBytes; state.render(); }); });
+                    asset.addEventListener('error', function () { state.items[id].failed = true; state.render(); });
+                });
+                state.render();
+            };
+            document.addEventListener('DOMContentLoaded', state.bind, { once: true });
+            document.getElementById('vrodos-scene-loader-retry').addEventListener('click', function () { window.location.reload(); });
+        }());
+    </script>
+
     <div class="ChatDrawerStyle tw-z-[101] tw-flex tw-flex-col tw-overflow-hidden tw-shadow-2xl tw-transition-all tw-duration-500"
         id="chat-wrapper-el" style="visibility: hidden">
 
@@ -367,7 +454,7 @@
             logarithmicDepthBuffer: false;
             alpha: false;
             stencil: false;" shadow="enabled: false; type: pcf; autoUpdate: true;" vr-mode-ui="enabled: true"
-        device-orientation-permission-ui="enabled: false" loading-screen="dotsColor: gray; backgroundColor: black;">
+        device-orientation-permission-ui="enabled: false" loading-screen="enabled: false;">
 
         <a-assets id="scene-assets">
 

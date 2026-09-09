@@ -444,6 +444,32 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$entity->setAttribute( 'data-vrodos-asset-id', (string) absint( $obj->asset_id ) );
 		}
 		if ( $profile_urls ) {
+			if ( self::GLTF_LOAD_PHASE_CRITICAL === $load_plan['phase'] && $assets instanceof DOMElement ) {
+				$asset_item = $dom->createElement( 'a-asset-item' );
+				$asset_item->setAttribute( 'id', $asset_dom_id );
+				$asset_item->setAttribute( 'src', $this->normalize_url( (string) ( $profile_urls['high'] ?? reset( $profile_urls ) ) ) );
+				$asset_item->setAttribute( 'response-type', 'arraybuffer' );
+				$asset_item->setAttribute( 'crossorigin', 'anonymous' );
+				$asset_item->setAttribute( 'data-vrodos-profile-asset', 'true' );
+				$asset_item->setAttribute( 'data-vrodos-critical', 'true' );
+				$asset_item->setAttribute( 'data-vrodos-critical-role', $this->sanitize_text_attr( (string) $load_plan['reason'] ) );
+				$asset_item->setAttribute( 'data-vrodos-load-phase', self::GLTF_LOAD_PHASE_CRITICAL );
+				$asset_item->setAttribute( 'data-vrodos-load-priority', (string) (int) $load_plan['priority'] );
+				foreach ( [ 'low', 'medium', 'high' ] as $slot ) {
+					$url = $this->normalize_url( (string) ( $profile_urls[ $slot ] ?? '' ) );
+					if ( '' === $url ) {
+						continue;
+					}
+					$asset_item->setAttribute( 'data-vrodos-profile-src-' . $slot, $url );
+					$size = $this->resolve_local_asset_size( $url );
+					if ( null !== $size ) {
+						$asset_item->setAttribute( 'data-vrodos-profile-size-' . $slot, (string) $size );
+					}
+				}
+				$assets->appendChild( $asset_item );
+				$entity->setAttribute( 'gltf-model', '#' . $asset_dom_id );
+				return $load_plan;
+			}
 			foreach ( [ 'low', 'medium', 'high' ] as $slot ) {
 				$url = $this->normalize_url( (string) ( $profile_urls[ $slot ] ?? '' ) );
 				if ( '' === $url ) {
@@ -471,6 +497,12 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			$asset_item->setAttribute( 'crossorigin', 'anonymous' );
 			$asset_item->setAttribute( 'data-vrodos-load-phase', self::GLTF_LOAD_PHASE_CRITICAL );
 			$asset_item->setAttribute( 'data-vrodos-load-priority', (string) (int) $load_plan['priority'] );
+			$asset_item->setAttribute( 'data-vrodos-critical', 'true' );
+			$asset_item->setAttribute( 'data-vrodos-critical-role', $this->sanitize_text_attr( (string) $load_plan['reason'] ) );
+			if ( null !== $load_plan['sizeBytes'] ) {
+				$asset_item->setAttribute( 'data-vrodos-asset-size-bytes', (string) (int) $load_plan['sizeBytes'] );
+				$asset_item->setAttribute( 'data-vrodos-asset-size-label', $this->format_bytes( (int) $load_plan['sizeBytes'] ) );
+			}
 			$assets->appendChild( $asset_item );
 			$this->critical_gltf_asset_dom_ids[ $glb_url ] = $asset_dom_id;
 			$entity->setAttribute( 'gltf-model', '#' . $asset_dom_id );

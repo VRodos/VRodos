@@ -1628,6 +1628,13 @@ class VRodos_Asset_Import_Manager {
 		$glb_id     = get_post_meta( $asset_id, 'vrodos_asset3d_glb', true );
 		$glb_url    = class_exists( 'VRodos_Core_Manager' ) ? VRodos_Core_Manager::resolve_media_meta_url( $glb_id ) : '';
 
+		$optimization = class_exists( 'VRodos_Asset_Optimization_Manager' )
+			? VRodos_Asset_Optimization_Manager::get_web_optimization_state( $asset_id )
+			: [
+				'status' => 'none', 'profile' => 'web-high', 'percent' => 0, 'message' => '',
+				'sourceBytes' => 0, 'derivativeBytes' => 0, 'reductionPercent' => 0.0, 'canRetry' => false,
+			];
+
 		return [
 			'status'      => $status,
 			'message'     => self::status_message( $status, $error ),
@@ -1638,6 +1645,7 @@ class VRodos_Asset_Import_Manager {
 			'glb_url'     => $glb_url,
 			'can_retry'   => 'failed' === $status && is_file( (string) get_post_meta( $asset_id, self::SOURCE_PATH_META, true ) ),
 			'source_name' => (string) get_post_meta( $asset_id, self::ORIGINAL_NAME_META, true ),
+			'optimization' => $optimization,
 		];
 	}
 

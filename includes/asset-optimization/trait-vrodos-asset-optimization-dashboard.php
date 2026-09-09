@@ -12,7 +12,7 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 	}
 
 	private static function collect_dashboard_actionable_assets(): array {
-		$scan  = self::scan_glb_derivatives( 'safe-draco' );
+		$scan  = self::scan_glb_derivatives( 'web-high' );
 		$items = [];
 
 		$mark = static function ( array $source_items, string $key ) use ( &$items ): void {
@@ -44,19 +44,6 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 		$mark( $scan['recommendedTexture'], 'texture' );
 		$mark( $scan['recommendedLod'], 'lod' );
 		$mark( $scan['stale'], 'stale-derivative' );
-
-		$ready_compile_candidates = array_filter(
-			$scan['ready'],
-			static function ( array $item ): bool {
-				$asset_id = (int) ( $item['assetId'] ?? 0 );
-				if ( $asset_id <= 0 ) {
-					return false;
-				}
-				$meta = self::get_derivative_meta( $asset_id );
-				return empty( $meta['compileEnabled'] );
-			}
-		);
-		$mark( $ready_compile_candidates, 'compile-disabled' );
 
 		$unsupported = array_filter(
 			$scan['unsupported'],
@@ -140,8 +127,8 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">Geometry</th>
 						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">Texture</th>
 						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">LOD</th>
-						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">Safe Draco</th>
-						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">Compile</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">Web High</th>
+						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-center tw-w-16">Policy</th>
 						<th class="tw-text-slate-400 tw-font-extrabold tw-text-[10px] tw-uppercase tw-tracking-widest tw-text-right">Actions</th>
 					</tr>
 				</thead>
@@ -153,8 +140,8 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 						$analysis = is_array( $item['analysis'] ?? null ) ? $item['analysis'] : [];
 						$meta     = self::get_derivative_meta( $asset_id );
 						$source_url = (string) ( $item['sourceUrl'] ?? '' );
-						$derivative = $meta['derivatives']['safe-draco'] ?? null;
-						$derivative_status = is_array( $derivative ) ? self::derivative_unusable_reason( $derivative, $source_url ) : 'No safe Draco derivative generated.';
+						$derivative = $meta['derivatives']['web-high'] ?? null;
+						$derivative_status = is_array( $derivative ) ? self::derivative_unusable_reason( $derivative, $source_url ) : 'No Web High derivative generated.';
 						$derivative_ready = is_array( $derivative ) && '' === $derivative_status;
 						$flags = is_array( $item['dashboardFlags'] ?? null ) ? $item['dashboardFlags'] : [];
 						?>
@@ -171,7 +158,7 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 							<td class="tw-text-center" data-vrodos-dashboard-cell="texture"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'textureDerivative', 'Texture derivative recommended', 'Texture derivative not recommended' ); ?></td>
 							<td class="tw-text-center" data-vrodos-dashboard-cell="lod"><?php self::render_dashboard_recommendation_icon( $flags, $analysis, 'lodDerivative', 'LOD derivative recommended', 'LOD derivative not recommended' ); ?></td>
 							<td class="tw-text-center" data-vrodos-dashboard-cell="draco"><?php self::render_dashboard_draco_icon( $derivative_ready, $derivative_status, $flags ); ?></td>
-							<td class="tw-text-center" data-vrodos-dashboard-cell="compile"><?php self::render_dashboard_compile_toggle( $asset_id, $meta, $derivative_ready ); ?></td>
+							<td class="tw-text-center" data-vrodos-dashboard-cell="compile"><?php self::render_dashboard_compile_icon( $meta, $derivative_ready ); ?></td>
 							<td class="tw-text-right tw-whitespace-nowrap">
 								<div class="tw-flex tw-flex-nowrap tw-justify-end tw-gap-1" data-vrodos-dashboard-cell="actions">
 									<?php echo self::dashboard_row_actions_html( $asset_id, $flags, $derivative_ready ); ?>
@@ -277,7 +264,7 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 	}
 
 	private static function dashboard_asset_row_state( int $asset_id ): array {
-		$scan = self::scan_glb_derivatives( 'safe-draco' );
+		$scan = self::scan_glb_derivatives( 'web-high' );
 		$item = null;
 		foreach ( [ 'analysisMissing', 'analysisStale', 'recommendedGeometry', 'recommendedTexture', 'recommendedLod', 'stale', 'ready', 'unsupported', 'lowBenefit', 'missing' ] as $bucket ) {
 			foreach ( $scan[ $bucket ] ?? [] as $candidate ) {
@@ -311,28 +298,23 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 			}
 		}
 
-		$derivative = $meta['derivatives']['safe-draco'] ?? null;
-		$derivative_status = is_array( $derivative ) ? self::derivative_unusable_reason( $derivative, $source_url ) : 'No safe Draco derivative generated.';
+		$derivative = $meta['derivatives']['web-high'] ?? null;
+		$derivative_status = is_array( $derivative ) ? self::derivative_unusable_reason( $derivative, $source_url ) : 'No Web High derivative generated.';
 		$derivative_ready = is_array( $derivative ) && '' === $derivative_status;
 		if ( is_array( $derivative ) && ! $derivative_ready ) {
 			$flags['stale-derivative'] = true;
 		}
-		if ( $derivative_ready && empty( $meta['compileEnabled'] ) ) {
-			$flags['compile-disabled'] = true;
-		}
-
 		return [
 			'assetId'      => $asset_id,
 			'rowVisible'   => self::dashboard_row_is_actionable( $flags ),
 			'cells'        => self::dashboard_row_cells_html( $asset_id, $meta, $analysis, $flags, $derivative_ready, $derivative_status ),
 			'actionsHtml'  => self::dashboard_row_actions_html( $asset_id, $flags, $derivative_ready ),
-			'compileEnabled' => ! empty( $meta['compileEnabled'] ),
 			'title'        => (string) ( $item['title'] ?? get_the_title( $asset_id ) ?: 'Asset #' . $asset_id ),
 		];
 	}
 
 	private static function dashboard_row_is_actionable( array $flags ): bool {
-		foreach ( [ 'analysis-missing', 'analysis-stale', 'geometry', 'texture', 'lod', 'stale-derivative', 'unsupported', 'compile-disabled' ] as $key ) {
+		foreach ( [ 'analysis-missing', 'analysis-stale', 'geometry', 'texture', 'lod', 'stale-derivative', 'unsupported' ] as $key ) {
 			if ( ! empty( $flags[ $key ] ) ) {
 				return true;
 			}
@@ -347,7 +329,7 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 			'texture'  => self::capture_dashboard_html( static fn() => self::render_dashboard_recommendation_icon( $flags, $analysis, 'textureDerivative', 'Texture derivative recommended', 'Texture derivative not recommended' ) ),
 			'lod'      => self::capture_dashboard_html( static fn() => self::render_dashboard_recommendation_icon( $flags, $analysis, 'lodDerivative', 'LOD derivative recommended', 'LOD derivative not recommended' ) ),
 			'draco'    => self::capture_dashboard_html( static fn() => self::render_dashboard_draco_icon( $derivative_ready, $derivative_status, $flags ) ),
-			'compile'  => self::capture_dashboard_html( static fn() => self::render_dashboard_compile_toggle( $asset_id, $meta, $derivative_ready ) ),
+			'compile'  => self::capture_dashboard_html( static fn() => self::render_dashboard_compile_icon( $meta, $derivative_ready ) ),
 		];
 	}
 
@@ -415,56 +397,23 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 
 	private static function render_dashboard_draco_icon( bool $derivative_ready, string $derivative_status, array $flags ): void {
 		if ( $derivative_ready ) {
-			self::render_dashboard_status_icon( 'check-circle', 'Safe Draco derivative is ready', 'tw-text-emerald-500' );
+			self::render_dashboard_status_icon( 'check-circle', 'Web High KTX2/Draco derivative is ready', 'tw-text-emerald-500' );
 			return;
 		}
 		if ( ! empty( $flags['stale-derivative'] ) ) {
-			self::render_dashboard_status_icon( 'refresh-cw', 'Safe Draco derivative is stale', 'tw-text-amber-500' );
+			self::render_dashboard_status_icon( 'refresh-cw', 'Web High derivative is stale', 'tw-text-amber-500' );
 			return;
 		}
 		if ( ! empty( $flags['geometry'] ) ) {
-			self::render_dashboard_status_icon( 'triangle-alert', 'Safe Draco derivative is recommended', 'tw-text-amber-500' );
+			self::render_dashboard_status_icon( 'triangle-alert', 'Web High derivative is recommended', 'tw-text-amber-500' );
 			return;
 		}
-		self::render_dashboard_status_icon( 'circle-minus', $derivative_status ?: 'Safe Draco derivative is not applicable', 'tw-text-slate-300' );
+		self::render_dashboard_status_icon( 'circle-minus', $derivative_status ?: 'Web High derivative is not applicable', 'tw-text-slate-300' );
 	}
 
 	private static function render_dashboard_compile_icon( array $meta, bool $derivative_ready ): void {
-		if ( ! empty( $meta['compileEnabled'] ) && $derivative_ready ) {
-			self::render_dashboard_status_icon( 'check-circle', 'Compiled scenes may use this derivative', 'tw-text-emerald-500' );
-			return;
-		}
-		if ( ! empty( $meta['compileEnabled'] ) && ! $derivative_ready ) {
-			self::render_dashboard_status_icon( 'x-circle', 'Compile use is enabled but derivative is not ready', 'tw-text-rose-500' );
-			return;
-		}
-		self::render_dashboard_status_icon( 'circle-minus', 'Compile use is off', 'tw-text-slate-300' );
-	}
-
-	private static function render_dashboard_compile_toggle( int $asset_id, array $meta, bool $derivative_ready ): void {
-		$compile_enabled = ! empty( $meta['compileEnabled'] );
-		if ( $compile_enabled && $derivative_ready ) {
-			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, false ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-emerald-500 hover:tw-text-emerald-700" title="' . esc_attr__( 'Disable derivative use in compiled scenes', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Disable derivative use in compiled scenes', 'vrodos' ) . '" data-vrodos-dashboard-action="toggle-compile" data-asset-id="' . esc_attr( (string) $asset_id ) . '" data-enabled="0">';
-			echo '<i data-lucide="toggle-right" class="tw-w-5 tw-h-5"></i>';
-			echo '</a>';
-			return;
-		}
-
-		if ( $compile_enabled && ! $derivative_ready ) {
-			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, false ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-rose-500 hover:tw-text-rose-700" title="' . esc_attr__( 'Disable invalid compile use', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Disable invalid compile use', 'vrodos' ) . '" data-vrodos-dashboard-action="toggle-compile" data-asset-id="' . esc_attr( (string) $asset_id ) . '" data-enabled="0">';
-			echo '<i data-lucide="x-circle" class="tw-w-5 tw-h-5"></i>';
-			echo '</a>';
-			return;
-		}
-
-		if ( $derivative_ready ) {
-			echo '<a href="' . esc_url( self::dashboard_toggle_compile_url( $asset_id, true ) ) . '" class="tw-inline-flex tw-items-center tw-justify-center tw-text-slate-300 hover:tw-text-emerald-600" title="' . esc_attr__( 'Enable derivative use in compiled scenes', 'vrodos' ) . '" aria-label="' . esc_attr__( 'Enable derivative use in compiled scenes', 'vrodos' ) . '" data-vrodos-dashboard-action="toggle-compile" data-asset-id="' . esc_attr( (string) $asset_id ) . '" data-enabled="1">';
-			echo '<i data-lucide="toggle-left" class="tw-w-5 tw-h-5"></i>';
-			echo '</a>';
-			return;
-		}
-
-		self::render_dashboard_status_icon( 'circle-minus', 'Generate a ready derivative before enabling compile use', 'tw-text-slate-300' );
+		unset( $meta );
+		self::render_dashboard_status_icon( $derivative_ready ? 'check-circle' : 'refresh-cw', $derivative_ready ? 'Automatic compile selection is ready' : 'Compiler will prepare the required derivative', $derivative_ready ? 'tw-text-emerald-500' : 'tw-text-amber-500' );
 	}
 
 	private static function render_dashboard_status_icon( string $icon, string $title, string $class ): void {
@@ -492,26 +441,11 @@ trait VRodos_Asset_Optimization_Dashboard_View {
 				[
 					'action'   => 'vrodos_dashboard_optimize_asset_glb',
 					'asset_id' => $asset_id,
-					'profile'  => 'safe-draco',
+					'profile'  => 'web-high',
 				],
 				admin_url( 'admin-post.php' )
 			),
 			'vrodos_dashboard_optimize_asset_glb_' . $asset_id
-		);
-	}
-
-	private static function dashboard_toggle_compile_url( int $asset_id, bool $enabled ): string {
-		return wp_nonce_url(
-			add_query_arg(
-				[
-					'action'   => 'vrodos_dashboard_toggle_asset_compile_use',
-					'asset_id' => $asset_id,
-					'profile'  => 'safe-draco',
-					'enabled'  => $enabled ? '1' : '0',
-				],
-				admin_url( 'admin-post.php' )
-			),
-			'vrodos_dashboard_toggle_asset_compile_use_' . $asset_id
 		);
 	}
 

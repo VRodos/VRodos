@@ -86,14 +86,14 @@ class VRodos_Compiler_Manager {
 		$clients_published = false;
 		try {
 			$plan = $this->plan_resolver->resolve( $request, $context );
-			$profile_assets = VRodos_Asset_Optimization_Manager::prepare_desktop_profile_derivatives( $plan );
+			$profile_assets = VRodos_Asset_Optimization_Manager::prepare_runtime_profile_derivatives( $plan );
 			if ( VRodos_Compiler_Build_State::is_cancelled( $request->build_id, $request->project_id ) ) {
 				return new WP_Error( 'vrodos_compile_cancelled', 'Build canceled.', [ 'status' => 409 ] );
 			}
 			if ( 'pending' === (string) ( $profile_assets['status'] ?? '' ) ) {
 				return new WP_Error(
-					'vrodos_desktop_profiles_pending',
-					(string) ( $profile_assets['message'] ?? 'Preparing desktop performance profile assets.' ),
+					'vrodos_asset_optimization_pending',
+					(string) ( $profile_assets['message'] ?? 'Preparing web-optimized assets.' ),
 					[
 						'status'  => 202,
 						'pending' => true,
@@ -101,7 +101,7 @@ class VRodos_Compiler_Manager {
 							'key'        => 'asset-optimization',
 							'step'       => 2,
 							'totalSteps' => 3,
-							'label'      => 'Preparing desktop assets',
+							'label'      => 'Optimizing 3D assets',
 						],
 						'ready'   => absint( $profile_assets['ready'] ?? 0 ),
 						'total'   => absint( $profile_assets['total'] ?? 0 ),
@@ -113,8 +113,8 @@ class VRodos_Compiler_Manager {
 			}
 			if ( 'failed' === (string) ( $profile_assets['status'] ?? '' ) ) {
 				return new WP_Error(
-					'vrodos_desktop_profiles_failed',
-					(string) ( $profile_assets['message'] ?? 'Desktop performance profile asset preparation failed.' ),
+					'vrodos_asset_optimization_failed',
+					(string) ( $profile_assets['message'] ?? 'Required web asset optimization failed.' ),
 					[
 						'status'   => 500,
 						'ready'    => absint( $profile_assets['ready'] ?? 0 ),
@@ -143,7 +143,7 @@ class VRodos_Compiler_Manager {
 			$clients_published = true;
 			$this->resource_publisher->finalize( $artifacts );
 
-			$warnings = $render_warnings;
+			$warnings = array_merge( $render_warnings, (array) ( $profile_assets['warnings'] ?? [] ) );
 			foreach ( $plan->scenes as $scene_plan ) {
 				$warnings = array_merge( $warnings, $scene_plan->diagnostics );
 			}

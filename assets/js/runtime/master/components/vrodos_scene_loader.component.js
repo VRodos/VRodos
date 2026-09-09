@@ -107,6 +107,8 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.pendingAssetCount = 0;
         this.loadedAssets = false;
         this.isReady = false;
+        this.criticalFailure = false;
+        this.navigationPrepared = false;
         this.startedAt = performance.now();
         this.loadingOverlay = null;
         this.progressLabel = null;
@@ -117,6 +119,7 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         this.boundHandleModelError = this.handleModelError.bind(this);
         this.boundHandleAssetReady = this.handleAssetReady.bind(this);
         this.boundHandleLazyModelReady = this.handleLazyModelReady.bind(this);
+        this.boundHandleCriticalDownloadProgress = this.handleCriticalDownloadProgress.bind(this);
 
         this.createOverlay();
 
@@ -131,58 +134,23 @@ AFRAME.registerComponent('vrodos-scene-loader', {
 
     },
     createOverlay: function () {
-        const overlay = document.createElement('div');
-        overlay.id = 'vrodos-scene-loader-overlay';
-        overlay.setAttribute('aria-live', 'polite');
-        overlay.style.position = 'fixed';
-        overlay.style.inset = '0';
-        overlay.style.zIndex = '99999';
-        overlay.style.display = 'flex';
-        overlay.style.flexDirection = 'column';
-        overlay.style.alignItems = 'center';
-        overlay.style.justifyContent = 'center';
-        overlay.style.gap = '14px';
-        overlay.style.background = 'radial-gradient(circle at center, rgba(32, 36, 48, 0.98) 0%, rgba(8, 10, 16, 1) 72%)';
-        overlay.style.color = '#f5f7fb';
-        overlay.style.fontFamily = 'Segoe UI, sans-serif';
-        overlay.style.letterSpacing = '0.02em';
-        overlay.style.transition = 'opacity 240ms ease';
-        overlay.style.opacity = '1';
-        overlay.style.pointerEvents = 'auto';
-
-        const spinner = document.createElement('div');
-        spinner.style.width = '42px';
-        spinner.style.height = '42px';
-        spinner.style.border = '3px solid rgba(255,255,255,0.16)';
-        spinner.style.borderTopColor = '#ffffff';
-        spinner.style.borderRadius = '50%';
-        spinner.style.animation = 'vrodos-loader-spin 0.9s linear infinite';
-
-        const title = document.createElement('div');
-        title.textContent = 'Loading scene';
-        title.style.fontSize = '18px';
-        title.style.fontWeight = '600';
-
-        const progress = document.createElement('div');
-        progress.textContent = 'Preparing 3D assets...';
-        progress.style.fontSize = '13px';
-        progress.style.opacity = '0.78';
-
-        if (!document.getElementById('vrodos-scene-loader-style')) {
-            const style = document.createElement('style');
-            style.id = 'vrodos-scene-loader-style';
-            style.textContent = '@keyframes vrodos-loader-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
-            document.head.appendChild(style);
+        this.loadingOverlay = document.getElementById('vrodos-scene-loader-overlay');
+        this.progressLabel = document.getElementById('vrodos-scene-loader-progress');
+        if (!this.loadingOverlay || !this.progressLabel) {
+            console.error('VRodos: the static scene loader overlay is missing from the compiled client.');
         }
-
-        overlay.appendChild(spinner);
-        overlay.appendChild(title);
-        overlay.appendChild(progress);
-
-        document.body.appendChild(overlay);
-
-        this.loadingOverlay = overlay;
-        this.progressLabel = progress;
+        const progressState = window.VRODOSSceneLoadProgress;
+        if (progressState && Array.isArray(progressState.listeners)) {
+            progressState.listeners.push(this.boundHandleCriticalDownloadProgress);
+            if (typeof progressState.snapshot === 'function') {
+                this.handleCriticalDownloadProgress(progressState.snapshot());
+            }
+        }
+    },
+    handleCriticalDownloadProgress: function (snapshot) {
+        if (snapshot && Array.isArray(snapshot.failed) && snapshot.failed.length > 0) {
+            this.showCriticalFailure('A required 3D asset could not be downloaded.');
+        }
     },
     markRuntimePhaseVisible: function (phaseKey, message) {
         const key = phaseKey || 'runtime';
@@ -374,6 +342,10 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return;
         }
 
+        if (event.type === 'error' && event.target.getAttribute('data-vrodos-critical') === 'true') {
+            this.showCriticalFailure('A required 3D asset could not be downloaded.');
+            return;
+        }
         this.resolvePendingAsset(event.target);
     },
     resolvePendingAsset: function (target) {
@@ -414,7 +386,21 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return;
         }
 
+        if (event.target.getAttribute('data-vrodos-load-phase') === 'critical') {
+            this.showCriticalFailure('A required 3D asset could not be decoded.');
+            return;
+        }
         this.resolvePendingModel(event.target);
+    },
+    showCriticalFailure: function (message) {
+        this.criticalFailure = true;
+        const title = document.getElementById('vrodos-scene-loader-title');
+        const spinner = document.getElementById('vrodos-scene-loader-spinner');
+        const retry = document.getElementById('vrodos-scene-loader-retry');
+        if (title) title.textContent = 'A required 3D asset could not be loaded';
+        if (this.progressLabel) this.progressLabel.textContent = `${message} Check your connection and retry.`;
+        if (spinner) spinner.style.display = 'none';
+        if (retry) retry.style.display = 'block';
     },
     resolvePendingModel: function (target) {
         if (!target || !target.id || !this.pendingModelIds[target.id]) {
@@ -428,6 +414,18 @@ AFRAME.registerComponent('vrodos-scene-loader', {
     },
     updateProgress: function () {
         if (!this.progressLabel) {
+            return;
+        }
+
+        if (this.criticalFailure) {
+            return;
+        }
+
+        const downloadState = window.VRODOSSceneLoadProgress && typeof window.VRODOSSceneLoadProgress.snapshot === 'function'
+            ? window.VRODOSSceneLoadProgress.snapshot()
+            : null;
+        if (downloadState && downloadState.totalBytes > 0 && downloadState.loadedBytes < downloadState.totalBytes) {
+            window.VRODOSSceneLoadProgress.render();
             return;
         }
 
@@ -454,10 +452,10 @@ AFRAME.registerComponent('vrodos-scene-loader', {
         }
 
         const loadedModelCount = totalModelCount - this.pendingModelCount;
-        this.progressLabel.textContent = `Loading 3D assets ${  loadedModelCount  }/${  totalModelCount}`;
+        this.progressLabel.textContent = `Decoding 3D assets — ${  loadedModelCount  } / ${  totalModelCount}`;
     },
     maybeRevealScene: function () {
-        if (this.isReady || !this.loadedAssets || this.pendingModelCount > 0) {
+        if (this.isReady || this.criticalFailure || !this.loadedAssets || this.pendingModelCount > 0) {
             return;
         }
 
@@ -484,12 +482,27 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             return true;
         }
 
+        if (!this.navigationPrepared) {
+            const movementEl = this.sceneEl.querySelector('[custom-movement]');
+            const movement = movementEl && movementEl.components ? movementEl.components['custom-movement'] : null;
+            const requiresNavigation = settingsComponent.data && settingsComponent.data.navigationMode === 'walkable' && settingsComponent.data.collisionMode !== 'off';
+            if (requiresNavigation && movement && typeof movement.refreshCollisionWorld === 'function') {
+                this.progressLabel.textContent = 'Preparing navigation';
+                movement.refreshCollisionWorld();
+                if (movement.collisionWorldDirty) {
+                    return false;
+                }
+            }
+            this.navigationPrepared = true;
+            return false;
+        }
+
         if (typeof settingsComponent.getRuntimeRevealReadinessState === 'function') {
             const readiness = settingsComponent.getRuntimeRevealReadinessState();
             const pendingKey = readiness.pending && readiness.pending[0] ? readiness.pending[0] : '';
             if (!readiness.ready && this.progressLabel) {
                 if (pendingKey) {
-                    this.markRuntimePhaseVisible(pendingKey, readiness.message || 'Preparing scene rendering...');
+                    this.markRuntimePhaseVisible(pendingKey, readiness.message || 'Preparing lighting and sky');
                 } else {
                     this.progressLabel.textContent = readiness.message || 'Preparing scene rendering...';
                 }
@@ -612,6 +625,10 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             target.removeEventListener('model-loaded', this.boundHandleLazyModelReady);
             target.removeEventListener('model-error', this.boundHandleLazyModelReady);
             target.setAttribute('data-vrodos-lazy-state', event.type === 'model-error' ? 'error' : 'loaded');
+            if (event.type === 'model-error') {
+                console.warn('VRodos: optional lazy 3D asset failed after scene entry.', { id: target.id || '' });
+                this.sceneEl.emit('vrodos-optional-asset-error', { id: target.id || '' }, false);
+            }
         }
 
         this.lazyActiveCount = Math.max(0, this.lazyActiveCount - 1);
@@ -687,6 +704,10 @@ AFRAME.registerComponent('vrodos-scene-loader', {
             target.removeEventListener('model-loaded', this.boundHandleLazyModelReady);
             target.removeEventListener('model-error', this.boundHandleLazyModelReady);
         });
+        const progressState = window.VRODOSSceneLoadProgress;
+        if (progressState && Array.isArray(progressState.listeners)) {
+            progressState.listeners = progressState.listeners.filter((listener) => listener !== this.boundHandleCriticalDownloadProgress);
+        }
 
         if (this.loadingOverlay && this.loadingOverlay.parentNode) {
             this.loadingOverlay.parentNode.removeChild(this.loadingOverlay);

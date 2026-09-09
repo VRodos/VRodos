@@ -39,11 +39,11 @@
   ],
   "custom": {
     "label": "Custom",
-    "assetProfile": "desktop-custom",
-    "textureMaxSize": null,
+    "assetProfile": "web-high",
+    "textureMaxSize": 4096,
     "textureMemoryBudgetMiB": null,
     "geometryRatio": 1,
-    "summary": "Original textures and geometry, with safe Draco compression."
+    "summary": "Exact authored geometry and artistic intent, with textures capped at 4096px and web-compressed to KTX2."
   },
   "profiles": {
     "low": {
@@ -51,7 +51,7 @@
       "renderPixelBudget": 1650000,
       "minPixelRatio": 0.75,
       "maxPixelRatio": 0.9,
-      "assetProfile": "desktop-low",
+      "assetProfile": "web-low",
       "textureMaxSize": 1024,
       "textureMemoryBudgetMiB": 96,
       "geometryRatio": 0.5,
@@ -110,7 +110,7 @@
       "renderPixelBudget": 3700000,
       "minPixelRatio": 0.75,
       "maxPixelRatio": 1,
-      "assetProfile": "desktop-medium",
+      "assetProfile": "web-medium",
       "textureMaxSize": 2048,
       "textureMemoryBudgetMiB": 192,
       "geometryRatio": 0.8,
@@ -180,11 +180,11 @@
       "renderPixelBudget": null,
       "minPixelRatio": 0.75,
       "maxPixelRatio": 1.5,
-      "assetProfile": "desktop-high",
-      "textureMaxSize": null,
+      "assetProfile": "web-high",
+      "textureMaxSize": 4096,
       "textureMemoryBudgetMiB": null,
       "geometryRatio": 1,
-      "summary": "Authored resolution up to DPR 1.5, original textures and geometry, safe Draco compression.",
+      "summary": "Authored resolution up to DPR 1.5, exact geometry, and textures capped at 4096px with KTX2 and Draco compression.",
       "editableSettings": [
         "shadowQuality",
         "shadowUpdateMode",

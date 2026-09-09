@@ -5,68 +5,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 trait VRodos_Asset_Optimization_Derivative_Service {
-	public static function resolve_compiled_glb_asset( int $asset_id, string $source_url ): array {
-		$result = [
-			'url'        => $source_url,
-			'derivative' => null,
-		];
-
-		if ( $asset_id <= 0 || '' === trim( $source_url ) ) {
-			return $result;
-		}
-
-		$meta = self::get_derivative_meta( $asset_id );
-		if ( empty( $meta['compileEnabled'] ) ) {
-			return $result;
-		}
-
-		$profile = (string) ( $meta['activeProfile'] ?? '' );
-		if ( '' === $profile || empty( $meta['derivatives'][ $profile ] ) || ! is_array( $meta['derivatives'][ $profile ] ) ) {
-			return $result;
-		}
-
-		$derivative = $meta['derivatives'][ $profile ];
-		if ( ! self::is_derivative_usable( $derivative, $source_url ) ) {
-			return $result;
-		}
-
-		$result['url']        = (string) $derivative['url'];
-		$result['derivative'] = $derivative;
-		return $result;
-	}
-
-	private static function set_asset_compile_use( int $asset_id, string $profile, bool $enabled ) {
-		if ( ! isset( self::supported_profiles()[ $profile ] ) ) {
-			return new WP_Error( 'vrodos_invalid_derivative_profile', __( 'Unsupported derivative profile.', 'vrodos' ) );
-		}
-
-		$meta = self::get_derivative_meta( $asset_id );
-		if ( $enabled ) {
-			$source = self::get_source_glb( $asset_id );
-			$derivative = $meta['derivatives'][ $profile ] ?? null;
-			if ( is_wp_error( $source ) || ! is_array( $derivative ) || ! self::is_derivative_usable( $derivative, (string) $source['url'] ) ) {
-				return new WP_Error( 'vrodos_derivative_not_ready', __( 'The derivative is not ready for compiled-scene use.', 'vrodos' ) );
-			}
-
-			$meta['activeProfile'] = $profile;
-			$meta['compileEnabled'] = true;
-			update_post_meta( $asset_id, self::META_KEY, $meta );
-			return true;
-		}
-
-		$meta['compileEnabled'] = false;
-		update_post_meta( $asset_id, self::META_KEY, $meta );
-		return true;
-	}
-
 	private static function supported_profiles(): array {
 		return [
 			'safe-draco'    => 'Safe Draco',
 			'safe-meshopt'  => 'Safe Meshopt',
-			'desktop-custom' => 'Desktop Custom',
-			'desktop-low'   => 'Desktop Low',
-			'desktop-medium' => 'Desktop Medium',
-			'desktop-high'  => 'Desktop High',
+			'web-high'      => 'Web High (4096px KTX2)',
+			'web-medium'    => 'Web Medium (2048px KTX2)',
+			'web-low'       => 'Web Low (1024px KTX2)',
 		];
 	}
 
@@ -79,11 +24,9 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 		return wp_parse_args(
 			$raw,
 			[
-				'schemaVersion'  => 1,
-				'compileEnabled' => false,
-				'activeProfile'  => '',
-				'derivatives'    => [],
-				'lastError'      => '',
+				'schemaVersion' => 1,
+				'derivatives'   => [],
+				'lastError'     => '',
 			]
 		);
 	}
@@ -149,6 +92,21 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 	}
 
 	private function generate_derivative( int $asset_id, array $source, string $profile, array $options = [] ) {
+		if ( str_starts_with( $profile, 'web-' ) ) {
+			$options = array_merge(
+				[
+					'protectGeometry' => true,
+					'textureMaxSize'  => match ( $profile ) {
+						'web-low' => 1024,
+						'web-medium' => 2048,
+						default => 4096,
+					},
+					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
+					'recipe'          => $profile,
+				],
+				$options
+			);
+		}
 		$paths = self::build_derivative_paths( $asset_id, $source, $profile );
 
 		if ( ! wp_mkdir_p( $paths['dir'] ) ) {
@@ -179,7 +137,7 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			$profile,
 			'--json',
 		];
-		if ( str_starts_with( $profile, 'desktop-' ) ) {
+		if ( str_starts_with( $profile, 'web-' ) ) {
 			$args[] = '--progress-file';
 			$args[] = $paths['progress'];
 		}
@@ -365,9 +323,6 @@ trait VRodos_Asset_Optimization_Derivative_Service {
 			'generatedAt'         => current_time( 'mysql', true ),
 		];
 
-		if ( empty( $meta['activeProfile'] ) ) {
-			$meta['activeProfile'] = $profile;
-		}
 		$meta['lastError'] = '';
 
 		$updated = update_post_meta( $asset_id, self::META_KEY, $meta );

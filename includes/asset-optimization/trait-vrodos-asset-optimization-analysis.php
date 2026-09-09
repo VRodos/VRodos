@@ -31,7 +31,7 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 
 	private static function build_analysis_error_record( string $message, ?array $source = null ): array {
 		return [
-			'schemaVersion'     => 1,
+			'schemaVersion'     => 2,
 			'status'            => 'unsupported',
 			'error'             => wp_strip_all_tags( $message ),
 			'sourceUrl'         => isset( $source['url'] ) ? esc_url_raw( (string) $source['url'] ) : '',
@@ -54,7 +54,7 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 		}
 
 		$analysis = self::analyze_gltf_json( $gltf );
-		$analysis['schemaVersion']     = 1;
+		$analysis['schemaVersion']     = 2;
 		$analysis['status']            = 'analyzed';
 		$analysis['sourceUrl']         = esc_url_raw( (string) $source['url'] );
 		$analysis['sourcePath']        = wp_normalize_path( (string) $source['path'] );
@@ -163,6 +163,8 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 		$used_materials = [];
 		$geometry_buffer_views = [];
 		$image_buffer_views = [];
+		$uncompressed_image_buffer_views = [];
+		$basis_image_indices = [];
 		$primitive_count = 0;
 		$indexed_primitive_count = 0;
 		$vertex_count = 0;
@@ -209,9 +211,19 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 			}
 		}
 
-		foreach ( $images as $image ) {
+		foreach ( $textures as $texture ) {
+			$basis_source = is_array( $texture ) ? ( $texture['extensions']['KHR_texture_basisu']['source'] ?? null ) : null;
+			if ( null !== $basis_source ) {
+				$basis_image_indices[ (int) $basis_source ] = true;
+			}
+		}
+
+		foreach ( $images as $image_index => $image ) {
 			if ( is_array( $image ) && isset( $image['bufferView'] ) ) {
 				$image_buffer_views[ (int) $image['bufferView'] ] = true;
+				if ( empty( $basis_image_indices[ (int) $image_index ] ) ) {
+					$uncompressed_image_buffer_views[ (int) $image['bufferView'] ] = true;
+				}
 			}
 		}
 
@@ -222,6 +234,7 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 
 		$geometry_bytes = self::sum_buffer_view_bytes( $buffer_views, array_keys( $geometry_buffer_views ) );
 		$image_bytes    = self::sum_buffer_view_bytes( $buffer_views, array_keys( $image_buffer_views ) );
+		$uncompressed_image_bytes = self::sum_buffer_view_bytes( $buffer_views, array_keys( $uncompressed_image_buffer_views ) );
 		$extension_names = array_keys( $extensions );
 		sort( $extension_names );
 
@@ -250,6 +263,7 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 			'payload'      => [
 				'declaredBufferBytes' => $buffer_bytes,
 				'estimatedImageBytes' => $image_bytes,
+				'estimatedUncompressedImageBytes' => $uncompressed_image_bytes,
 			],
 			'extensions'   => [
 				'used'                   => $extension_names,
@@ -330,7 +344,7 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 		$materials      = (int) ( $analysis['counts']['usedMaterials'] ?? $analysis['counts']['materials'] ?? 0 );
 		$images         = (int) ( $analysis['counts']['images'] ?? 0 );
 		$geometry_bytes = (int) ( $analysis['geometry']['estimatedGeometryBytes'] ?? 0 );
-		$image_bytes    = (int) ( $analysis['payload']['estimatedImageBytes'] ?? 0 );
+		$image_bytes    = (int) ( $analysis['payload']['estimatedUncompressedImageBytes'] ?? $analysis['payload']['estimatedImageBytes'] ?? 0 );
 		$extensions     = is_array( $analysis['extensions'] ?? null ) ? $analysis['extensions'] : [];
 		$flags          = [];
 		$reasons        = [];
@@ -362,7 +376,7 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 
 		$texture_payload_likely = $image_bytes >= 8 * 1024 * 1024
 			|| ( $size_bytes >= 20 * 1024 * 1024 && $images > 0 && ( 0 === $geometry_bytes || $geometry_bytes < (int) ( $size_bytes * 0.45 ) ) );
-		if ( $images > 0 && empty( $extensions['hasTextureCompression'] ) && $texture_payload_likely ) {
+		if ( $images > 0 && $image_bytes > 0 && $texture_payload_likely ) {
 			$flags[] = 'missing_texture_compression';
 			$recommendations['textureDerivative'] = true;
 			$reasons[] = 'Texture payload appears significant and no KTX2/Basis texture compression is present.';
@@ -395,11 +409,8 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 	}
 
 	private static function suggested_action_for_recommendations( array $recommendations ): string {
-		if ( ! empty( $recommendations['geometryDerivative'] ) ) {
-			return 'Generate a safe Draco derivative first.';
-		}
-		if ( ! empty( $recommendations['textureDerivative'] ) ) {
-			return 'Plan a KTX2/Basis texture derivative.';
+		if ( ! empty( $recommendations['geometryDerivative'] ) || ! empty( $recommendations['textureDerivative'] ) ) {
+			return 'Prepare the automatic Web High KTX2/Draco derivative.';
 		}
 		if ( ! empty( $recommendations['lodDerivative'] ) ) {
 			return 'Plan explicit LOD derivatives and distance bands.';
@@ -408,7 +419,7 @@ trait VRodos_Asset_Optimization_Analysis_Service {
 	}
 
 	private static function analysis_needs_refresh( array $analysis, array $source ): bool {
-		if ( empty( $analysis ) || ( $analysis['sourceFingerprint'] ?? '' ) !== self::source_fingerprint( $source ) ) {
+		if ( (int) ( $analysis['schemaVersion'] ?? 0 ) !== 2 || empty( $analysis ) || ( $analysis['sourceFingerprint'] ?? '' ) !== self::source_fingerprint( $source ) ) {
 			return true;
 		}
 		return false;

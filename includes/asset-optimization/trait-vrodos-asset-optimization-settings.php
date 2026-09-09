@@ -11,13 +11,13 @@ trait VRodos_Asset_Optimization_Settings_View {
 			return;
 		}
 
-		$profile          = 'safe-draco';
+		$profile          = 'web-high';
 		$scan             = self::scan_glb_derivatives( $profile );
 		$report           = $this->read_batch_report_from_request();
 		$analysis_report  = $this->read_analysis_report_from_request();
 
 		echo '<h2>' . esc_html__( 'Asset Optimization' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Analyze uploaded GLBs before generating cached optimized derivatives. This does not replace source uploads and does not enable compiled-scene substitution.' ) . '</p>';
+		echo '<p>' . esc_html__( 'Analyze uploaded GLBs and inspect cached Web High derivatives. Source uploads stay unchanged; compilation selects validated Web profiles automatically.' ) . '</p>';
 
 		$this->render_analysis_report( $analysis_report );
 		$this->render_batch_report( $report );
@@ -27,11 +27,11 @@ trait VRodos_Asset_Optimization_Settings_View {
 		echo '<p>' . esc_html__( 'Use Dashboard > Actionable Assets for per-asset analysis refresh and derivative generation. This Settings tab is now the GLB diagnostics and reporting view.' ) . '</p>';
 
 		$this->render_asset_candidate_list( __( 'Recommended for safe Draco/Meshopt geometry derivatives' ), $scan['recommendedGeometry'], 'recommendation' );
-		$this->render_asset_candidate_list( __( 'Recommended for future KTX2 texture derivatives' ), $scan['recommendedTexture'], 'recommendation' );
+		$this->render_asset_candidate_list( __( 'Recommended for Web High KTX2 texture optimization' ), $scan['recommendedTexture'], 'recommendation' );
 		$this->render_asset_candidate_list( __( 'Recommended for future LOD derivatives' ), $scan['recommendedLod'], 'recommendation' );
 		$this->render_asset_candidate_list( __( 'Low-benefit or already compressed GLB assets' ), $scan['lowBenefit'], 'recommendation' );
-		$this->render_asset_candidate_list( __( 'Missing safe Draco derivatives' ), $scan['missing'] );
-		$this->render_asset_candidate_list( __( 'Stale safe Draco derivatives' ), $scan['stale'] );
+		$this->render_asset_candidate_list( __( 'Missing Web High derivatives' ), $scan['missing'] );
+		$this->render_asset_candidate_list( __( 'Stale Web High derivatives' ), $scan['stale'] );
 		$this->render_asset_candidate_list( __( 'Needs analysis refresh' ), array_merge( $scan['analysisMissing'], $scan['analysisStale'] ) );
 		$this->render_asset_candidate_list( __( 'Unsupported or non-local GLB assets' ), $scan['unsupported'] );
 
@@ -53,11 +53,11 @@ trait VRodos_Asset_Optimization_Settings_View {
 		echo '<tr><th scope="row">' . esc_html__( 'Analyzed GLB assets' ) . '</th><td>' . esc_html( number_format_i18n( (int) $scan['analysisReady'] ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Needs analysis refresh' ) . '</th><td>' . esc_html( number_format_i18n( count( $scan['analysisMissing'] ) + count( $scan['analysisStale'] ) ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Recommended safe Draco candidates' ) . '</th><td>' . esc_html( number_format_i18n( count( $scan['recommendedGeometry'] ) ) ) . '</td></tr>';
-		echo '<tr><th scope="row">' . esc_html__( 'Future KTX2 candidates' ) . '</th><td>' . esc_html( number_format_i18n( count( $scan['recommendedTexture'] ) ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Web High KTX2 candidates' ) . '</th><td>' . esc_html( number_format_i18n( count( $scan['recommendedTexture'] ) ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Future LOD candidates' ) . '</th><td>' . esc_html( number_format_i18n( count( $scan['recommendedLod'] ) ) ) . '</td></tr>';
-		echo '<tr><th scope="row">' . esc_html__( 'Ready safe Draco derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $ready_count ) ) . '</td></tr>';
-		echo '<tr><th scope="row">' . esc_html__( 'Missing safe Draco derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $missing_count ) ) . '</td></tr>';
-		echo '<tr><th scope="row">' . esc_html__( 'Stale safe Draco derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $stale_count ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Ready Web High derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $ready_count ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Missing Web High derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $missing_count ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Stale Web High derivatives' ) . '</th><td>' . esc_html( number_format_i18n( $stale_count ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Unsupported/non-local assets' ) . '</th><td>' . esc_html( number_format_i18n( $unsupported_count ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Ready derivative savings' ) . '</th><td>' . esc_html( size_format( $ready_saved_bytes, 1 ) ) . ' saved from ' . esc_html( size_format( $ready_source_bytes, 1 ) ) . ' source GLBs';
 		if ( $ready_derivative_bytes > 0 ) {

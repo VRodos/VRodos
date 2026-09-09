@@ -35,16 +35,16 @@ function runOptimizer(outputDir, progressFile, profile, options = {}) {
 try {
     const successDir = path.join(temporaryRoot, 'success');
     const successProgressFile = path.join(successDir, 'progress.json');
-    const success = runOptimizer(successDir, successProgressFile, 'desktop-high');
-    assert.equal(success.status, 0, success.stderr || success.stdout || 'desktop-high optimizer failed');
+    const success = runOptimizer(successDir, successProgressFile, 'web-high');
+    assert.equal(success.status, 0, success.stderr || success.stdout || 'web-high optimizer failed');
 
     const progress = JSON.parse(await readFile(successProgressFile, 'utf8'));
     assert.equal(progress.schemaVersion, 1);
-    assert.equal(progress.profile, 'desktop-high');
+    assert.equal(progress.profile, 'web-high');
     assert.equal(path.resolve(progress.sourcePath), path.resolve(source));
     assert.equal(progress.status, 'ready');
-    assert.equal(progress.step, 5);
-    assert.equal(progress.totalSteps, 5);
+    assert.equal(progress.step, 9);
+    assert.equal(progress.totalSteps, 9);
     assert.equal(progress.percent, 100);
     assert.match(progress.message, /ready/i);
     assert.equal((await readdir(successDir)).some((entry) => entry.endsWith('.tmp')), false, 'atomic progress writes must not leave temporary files');

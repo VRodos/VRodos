@@ -2,7 +2,7 @@
 
 ## Scope
 
-The compiler remains a transactional WordPress/A-Frame pipeline. Desktop profile derivatives may be prepared asynchronously before rendering, but no client or stable link changes until every required artifact is ready. The compiler preserves the current `Master_Client_{scene}.html`, `Simple_Client_{scene}.html`, and `index_{scene}.html` naming rules, existing response URL fields, `scene-settings`, compatibility globals, decoder configuration, and lazy runtime chunks. Generated clients live under `wp-content/uploads/vrodos/published/projects/{project_id}/clients/`; content-addressed public media lives beside them under `media/`.
+The compiler remains a transactional WordPress/A-Frame pipeline. Target-specific Web derivatives may be prepared asynchronously before rendering, but no client or stable link changes until every required artifact is ready. The compiler preserves the current `Master_Client_{scene}.html`, `Simple_Client_{scene}.html`, and `index_{scene}.html` naming rules, existing response URL fields, `scene-settings`, compatibility globals, decoder configuration, and lazy runtime chunks. Generated clients live under `wp-content/uploads/vrodos/published/projects/{project_id}/clients/`; content-addressed public media lives beside them under `media/`.
 
 New compiler work should use this flow:
 
@@ -11,7 +11,7 @@ flowchart LR
     Request["Authenticated compile POST"] --> Typed["VRodos_Compile_Request"]
     Typed --> Context["Validated project + scene context"]
     Context --> Resolver["VRodos_Compiler_Plan_Resolver"]
-    Resolver --> Profiles["Desktop profile derivative preflight"]
+    Resolver --> Profiles["Target Web derivative preflight"]
     Profiles --> Targets["VRodos_Runtime_Target_Plan[]"]
     Targets --> Render["VRodos_Compiler_Target_Assembler"]
     Render --> Transaction["Project lock + staging + rollback"]
@@ -35,7 +35,7 @@ The runtime mode and VR profile apply to every scene in one project build. Rende
 
 `VRodos_Compiler_Plan_Resolver` clones source scene JSON, normalizes every entity once, applies project policy to the clone, resolves effective settings, derives capabilities, asks the manifest planner for ordered chunks, and returns immutable scene, target, and project plans. Source post metadata is not mutated.
 
-For the desktop runtime target, scene metadata stores schema v2 `desktopPerformanceProfiles`: `buildMode` (`custom` or `adaptive`), `activeTab`, and the bounded performance overrides plus preset baselines for Low/Medium/High. Ordinary scene metadata remains the canonical Custom/shared source. `assets/desktop-performance-profiles.json` is the shared PHP/browser preset and constraint source. Custom builds plan one `desktop-custom` capability/chunk set; adaptive builds plan Low, Medium, and High. Headset, PC-rendered-VR, mobile, and touch policies do not consume this contract.
+For the desktop runtime target, scene metadata stores schema v2 `desktopPerformanceProfiles`: `buildMode` (`custom` or `adaptive`), `activeTab`, and the bounded performance overrides plus preset baselines for Low/Medium/High. Ordinary scene metadata remains the canonical Custom/shared source. `assets/desktop-performance-profiles.json` is the shared PHP/browser preset and constraint source. Custom builds plan one Web High capability/chunk set; adaptive builds plan Web Low, Medium, and High. Headset and PC-rendered-VR use the derivative family but do not consume this desktop settings contract.
 
 ## Settings and capabilities
 
@@ -51,7 +51,7 @@ An idempotent batched migration moves allowlisted legacy `composite_params`, atm
 
 Capabilities are derived once after effective scene policy is known. `activationCapabilities` in `assets/runtime-build-manifest.json` schema 2 maps capabilities to lazy chunks. The script planner adds baseline chunks, validates activation coverage, resolves dependencies, and preserves manifest order. Invalid paths, missing files, duplicate ordering, dependency cycles, undeclared dependencies, and uncovered capabilities are compile errors.
 
-Before target rendering, `VRodos_Asset_Optimization_Manager` verifies the required desktop derivative family. Custom-only needs `desktop-custom`; adaptive needs `desktop-low`, `desktop-medium`, and `desktop-high`. Missing work is queued through WordPress Cron and returned as HTTP `202 Accepted` with the build phase, overall percentage, ready/total counts, and per-asset/profile optimizer steps; HTTP `409` is reserved for cancellation or a real state conflict. Failures stop preflight while the prior publication remains intact. The compile dialog keeps polling while hidden and restores the active progress when reopened. Canceling stops that compile request and prevents its publication; shared derivative work that is already running may finish and be reused by a later build. Low/Medium require KTX-Software, use KTX2 textures and safe Draco, and enforce scene texture-memory gates. Custom/High use safe Draco without changing authored textures or geometry. Source uploads are never modified. Collision/navigation assets and GLBs containing skins or morph targets bypass simplification.
+Before target rendering, `VRodos_Asset_Optimization_Manager` verifies the required versioned Web derivative family. Desktop Custom/High and PC-rendered-VR need `web-high`, Desktop Medium needs `web-medium`, and Desktop Low plus standalone headset need `web-low`. Missing work is queued through WordPress Cron and returned as HTTP `202 Accepted` with the build phase, overall percentage, ready/total counts, and per-asset/profile optimizer steps; HTTP `409` is reserved for cancellation or a real state conflict. A source over 100 MiB cannot be published when its required derivative failed or is unavailable; smaller sources may fall back with a compile warning, while the prior publication remains intact. All Web profiles require KTX-Software, cap textures at 4096/2048/1024px, use KTX2 textures and safe Draco, and keep source uploads unchanged. Web High preserves geometry. Collision/navigation assets and GLBs containing skins or morph targets bypass simplification in every profile.
 
 Pending compile responses are a bare JSON payload, not a WordPress error envelope:
 
@@ -72,7 +72,7 @@ Pending compile responses are a bare JSON payload, not a WordPress error envelop
     {
       "assetId": 90,
       "assetLabel": "Ancient Ruined Template",
-      "profile": "desktop-medium",
+      "profile": "web-medium",
       "profileLabel": "Medium",
       "status": "running",
       "step": 6,

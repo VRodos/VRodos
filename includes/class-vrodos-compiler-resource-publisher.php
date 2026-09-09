@@ -11,12 +11,15 @@ require_once __DIR__ . '/class-vrodos-text-asset-helper.php';
 /** Publishes immutable, content-addressed copies required by one build. */
 final class VRodos_Compiler_Resource_Publisher {
 	private const INVENTORY_META = '_vrodos_published_inventory';
+	private const LARGE_SOURCE_PUBLISH_GATE_BYTES = 104857600;
 	private int $project_id = 0;
 	private array $media = [];
 	private array $created_files = [];
 	private string $runtime_mode = '';
+	private string $runtime_profile = 'desktop';
 	private bool $desktop_profiles_enabled = false;
 	private array $desktop_profile_slots = [];
+	private array $desktop_profile_recipes = [];
 	private VRodos_Runtime_URL_Resolver $url_resolver;
 	/** @var resource|null */
 	private $lock_handle = null;
@@ -30,6 +33,7 @@ final class VRodos_Compiler_Resource_Publisher {
 		$this->media      = [];
 		$this->created_files = [];
 		$this->runtime_mode = $plan->request->runtime_mode;
+		$this->runtime_profile = $plan->request->vr_runtime_profile;
 		$this->desktop_profiles_enabled = 'desktop' === $plan->request->vr_runtime_profile;
 		$this->acquire_lock();
 		try {
@@ -37,6 +41,10 @@ final class VRodos_Compiler_Resource_Publisher {
 				$this->desktop_profile_slots = 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'custom' )
 					? [ 'low', 'medium', 'high' ]
 					: [ 'custom' ];
+				$this->desktop_profile_recipes = [];
+				foreach ( $this->desktop_profile_slots as $slot ) {
+					$this->desktop_profile_recipes[ $slot ] = sanitize_key( (string) ( $scene->desktop_profiles['profiles'][ $slot ]['assets']['profile'] ?? ( 'custom' === $slot ? 'web-high' : 'web-' . $slot ) ) );
+				}
 				$this->hydrate_value( $scene->scene_json );
 				$background_id = absint( get_post_meta( $scene->scene_id, 'vrodos_scene_bg_image', true ) );
 				if ( $background_id && isset( $scene->scene_json->metadata ) && is_object( $scene->scene_json->metadata ) ) {
@@ -168,23 +176,32 @@ final class VRodos_Compiler_Resource_Publisher {
 				if ( $this->desktop_profiles_enabled && absint( $meta ) > 0 ) {
 					$profile_urls = [];
 					foreach ( $this->desktop_profile_slots as $slot ) {
-						$path = VRodos_Asset_Optimization_Manager::desktop_profile_derivative_path( $asset_id, $slot );
+						$profile = $this->desktop_profile_recipes[ $slot ] ?? ( 'custom' === $slot ? 'web-high' : 'web-' . $slot );
+						$path = VRodos_Asset_Optimization_Manager::runtime_profile_derivative_path( $asset_id, $profile );
 						if ( '' === $path ) {
-							throw new RuntimeException( sprintf( '[VRodos] Asset #%d %s desktop derivative is not ready.', $asset_id, ucfirst( $slot ) ) );
+							$this->ensure_source_fallback_allowed( $asset_id, $meta, $profile );
+							$path = get_attached_file( absint( $meta ), true );
+							if ( ! is_string( $path ) || ! is_file( $path ) ) {
+								throw new RuntimeException( sprintf( '[VRodos] Asset #%d has neither a ready %s derivative nor a readable source.', $asset_id, $profile ) );
+							}
 						}
-						$profile_urls[ $slot ] = $this->publish_file( $path, 'asset-' . $asset_id . '-desktop-' . $slot );
+						$profile_urls[ $slot ] = $this->publish_file( $path, 'asset-' . $asset_id . '-' . $profile );
 					}
-					if ( count( $profile_urls ) > 1 ) {
+					if ( count( $profile_urls ) === count( $this->desktop_profile_slots ) && count( $profile_urls ) > 1 ) {
 						$object->desktop_profile_glb_urls = (object) $profile_urls;
 					}
-					$object->{$property} = (string) reset( $profile_urls );
-					continue;
+					if ( $profile_urls ) {
+						$object->{$property} = (string) reset( $profile_urls );
+						continue;
+					}
 				}
-				$derivative = $this->selected_derivative_path( $asset_id );
+				$profile = 'headset' === $this->runtime_profile ? 'web-low' : 'web-high';
+				$derivative = VRodos_Asset_Optimization_Manager::runtime_profile_derivative_path( $asset_id, $profile );
 				if ( '' !== $derivative ) {
-					$object->{$property} = $this->publish_file( $derivative, 'asset-' . $asset_id . '-derivative' );
+					$object->{$property} = $this->publish_file( $derivative, 'asset-' . $asset_id . '-' . $profile );
 					continue;
 				}
+				$this->ensure_source_fallback_allowed( $asset_id, $meta, $profile );
 			}
 			if ( is_numeric( $meta ) && absint( $meta ) ) {
 				if ( ! VRodos_Storage_Manager::attachment_is_owned_by( absint( $meta ), 'asset', $asset_id ) ) {
@@ -223,34 +240,12 @@ final class VRodos_Compiler_Resource_Publisher {
 		}
 	}
 
-	private function selected_derivative_path( int $asset_id ): string {
-		$meta = get_post_meta( $asset_id, '_vrodos_asset3d_glb_derivatives', true );
-		if ( ! is_array( $meta ) || empty( $meta['compileEnabled'] ) ) {
-			return '';
+	private function ensure_source_fallback_allowed( int $asset_id, $source_attachment_id, string $profile ): void {
+		$source_path = is_numeric( $source_attachment_id ) ? get_attached_file( absint( $source_attachment_id ), true ) : '';
+		$source_bytes = is_string( $source_path ) && is_file( $source_path ) ? filesize( $source_path ) : 0;
+		if ( is_int( $source_bytes ) && $source_bytes > self::LARGE_SOURCE_PUBLISH_GATE_BYTES ) {
+			throw new RuntimeException( sprintf( '[VRodos] Asset #%d is larger than 100 MiB and cannot fall back to its source because the required %s derivative is unavailable.', $asset_id, $profile ) );
 		}
-		$profile = sanitize_key( (string) ( $meta['activeProfile'] ?? '' ) );
-		$record  = $profile && is_array( $meta['derivatives'][ $profile ] ?? null ) ? $meta['derivatives'][ $profile ] : [];
-		$attachment_id = absint( $record['attachmentId'] ?? 0 );
-		$source_id     = absint( get_post_meta( $asset_id, 'vrodos_asset3d_glb', true ) );
-		$source_path   = $source_id ? get_attached_file( $source_id, true ) : '';
-		$path          = $attachment_id ? get_attached_file( $attachment_id, true ) : '';
-		$path          = is_string( $path ) ? wp_normalize_path( $path ) : '';
-		$root    = VRodos_Storage_Manager::private_site_root( false );
-		$source_hash = is_string( $source_path ) && is_file( $source_path ) ? hash_file( 'sha256', $source_path ) : '';
-		return
-			'ready' === ( $record['status'] ?? '' )
-			&& $attachment_id > 0
-			&& VRodos_Storage_Manager::attachment_is_owned_by( $attachment_id, 'asset', $asset_id )
-			&& $source_id > 0
-			&& absint( $record['sourceAttachmentId'] ?? 0 ) === $source_id
-			&& is_string( $source_hash )
-			&& '' !== $source_hash
-			&& hash_equals( (string) ( $record['sourceSha256'] ?? '' ), $source_hash )
-			&& is_string( $root )
-			&& is_file( $path )
-			&& VRodos_Storage_Manager::path_is_within( $path, $root )
-			? $path
-			: '';
 	}
 
 	private function publish_attachment( int $attachment_id, string $context, string $forced_extension = '' ): string {

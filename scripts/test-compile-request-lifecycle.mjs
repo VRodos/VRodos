@@ -56,7 +56,7 @@ const pendingPayload = {
         {
             assetId: 90,
             assetLabel: 'Ancient Ruined Template',
-            profile: 'desktop-low',
+            profile: 'web-low',
             profileLabel: 'Low',
             status: 'ready',
             step: 9,
@@ -68,7 +68,7 @@ const pendingPayload = {
         {
             assetId: 90,
             assetLabel: 'Ancient Ruined Template',
-            profile: 'desktop-medium',
+            profile: 'web-medium',
             profileLabel: 'Medium',
             status: 'running',
             step: 6,
@@ -80,7 +80,7 @@ const pendingPayload = {
         {
             assetId: 90,
             assetLabel: 'Ancient Ruined Template',
-            profile: 'desktop-high',
+            profile: 'web-high',
             profileLabel: 'High',
             status: 'queued',
             step: 0,
@@ -274,7 +274,7 @@ responses.push(response(500, {
             {
                 assetId: 90,
                 assetLabel: 'Ancient Ruined Template',
-                profile: 'desktop-medium',
+                profile: 'web-medium',
                 profileLabel: 'Medium',
                 status: 'failed',
                 step: 6,

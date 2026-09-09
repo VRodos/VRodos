@@ -4,18 +4,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/** Queued immutable GLB families used by desktop Custom and adaptive builds. */
+/** Queued immutable GLB families selected automatically for compiled runtimes. */
 trait VRodos_Asset_Optimization_Desktop_Profiles {
-	private const DESKTOP_PROFILE_PIPELINE_VERSION = 1;
+	private const DESKTOP_PROFILE_PIPELINE_VERSION = 2;
+	private const LARGE_SOURCE_PUBLISH_GATE_BYTES = 104857600;
 	private const DESKTOP_PROFILE_LOCK_KEY = 'vrodos_asset_desktop_profile_global_lock';
 	private const DESKTOP_PROFILE_MIN_TEXTURE_SIZE = 256;
 	private const DESKTOP_PROFILE_STALE_SECONDS = 720;
 
-	public static function prepare_desktop_profile_derivatives( VRodos_Project_Compile_Plan $plan ): array {
-		if ( 'desktop' !== $plan->request->vr_runtime_profile ) {
-			return [ 'status' => 'ready', 'ready' => 0, 'total' => 0, 'percent' => 100, 'profiles' => [], 'message' => '' ];
-		}
-
+	public static function prepare_runtime_profile_derivatives( VRodos_Project_Compile_Plan $plan ): array {
 		$assets = [];
 		$scene_assets = [];
 		$scene_slots = [];
@@ -23,9 +20,13 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			$current_scene_assets = [];
 			self::collect_desktop_profile_assets( $scene->scene_json, $current_scene_assets );
 			$scene_assets[ $scene->scene_id ] = $current_scene_assets;
-			$current_slots = 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'custom' )
-				? [ 'low', 'medium', 'high' ]
-				: [ 'custom' ];
+			if ( 'desktop' === $plan->request->vr_runtime_profile ) {
+				$current_slots = 'adaptive' === (string) ( $scene->desktop_profiles['buildMode'] ?? 'custom' )
+					? [ 'low', 'medium', 'high' ]
+					: [ 'custom' ];
+			} else {
+				$current_slots = [ $plan->request->vr_runtime_profile ];
+			}
 			$scene_slots[ $scene->scene_id ] = $current_slots;
 			foreach ( $current_scene_assets as $asset_id => $asset ) {
 				$assets[ $asset_id ] = [
@@ -39,17 +40,20 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		$ready = 0;
 		$pending = [];
 		$errors = [];
-		$records = [ 'custom' => [], 'low' => [], 'medium' => [], 'high' => [] ];
+		$records = [ 'custom' => [], 'low' => [], 'medium' => [], 'high' => [], 'headset' => [], 'pc-rendered-vr' => [] ];
 		$profile_progress = [];
+		$warnings = [];
 
 		foreach ( $assets as $asset_id => $asset ) {
 			$source = self::get_source_glb( (int) $asset_id );
 			if ( is_wp_error( $source ) ) {
 				$errors[] = sprintf( 'Asset #%d: %s', $asset_id, $source->get_error_message() );
 				foreach ( (array) $asset['slots'] as $slot ) {
+					$profile = self::runtime_derivative_profile_for_slot( (string) $slot, $plan->request->vr_runtime_profile, $plan->scenes[0]->desktop_profiles ?? [] );
 					$profile_progress[] = self::desktop_profile_progress_item(
 						(int) $asset_id,
 						(string) $slot,
+						$profile,
 						[],
 						[],
 						[ 'protectGeometry' => ! empty( $asset['protectGeometry'] ) ],
@@ -60,41 +64,54 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				continue;
 			}
 
-			foreach ( [ 'custom', 'low', 'medium', 'high' ] as $slot ) {
+			foreach ( (array) $asset['slots'] as $slot ) {
 				if ( ! in_array( $slot, $asset['slots'], true ) ) {
 					continue;
 				}
-				$profile = 'desktop-' . $slot;
-				$definition = (array) ( $plan->scenes[0]->desktop_profiles['profiles'][ $slot ]['assets'] ?? [] );
+				$profile = self::runtime_derivative_profile_for_slot( (string) $slot, $plan->request->vr_runtime_profile, $plan->scenes[0]->desktop_profiles ?? [] );
+				$definition = self::runtime_derivative_definition_for_slot( (string) $slot, $plan->scenes[0]->desktop_profiles ?? [] );
 				$options = [
 					'protectGeometry' => ! empty( $asset['protectGeometry'] ),
-					'textureMaxSize'  => absint( $definition['textureMaxSize'] ?? 0 ),
+					'textureMaxSize'  => absint( $definition['textureMaxSize'] ?? self::runtime_derivative_texture_cap( $profile ) ),
 					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
+					'recipe'          => $profile,
 				];
 				$record = self::desktop_profile_record( (int) $asset_id, $profile );
 				if ( self::desktop_profile_record_is_ready( $record, $source, $profile, $options ) ) {
 					++$ready;
 					$records[ $slot ][ $asset_id ] = $record;
-					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $record, $source, $options, 'ready', 'Ready' );
+					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, 'ready', 'Ready' );
 					continue;
 				}
 
 				if ( 'failed' === (string) ( $record['status'] ?? '' ) && self::desktop_profile_record_matches_request( $record, $source, $options ) && time() - absint( $record['failedAt'] ?? 0 ) < 60 ) {
 					$message = (string) ( $record['message'] ?? 'Derivative generation failed.' );
-					if ( in_array( $slot, [ 'low', 'medium' ], true ) && preg_match( '/toktx|ktx.software|ktx software/i', $message ) ) {
-						$message = 'KTX-Software 4.3+ is required for Low and Medium desktop profiles. ' . $message;
+					if ( preg_match( '/toktx|ktx.software|ktx software/i', $message ) ) {
+						$message = 'KTX-Software 4.3+ is required for automatic web derivatives. ' . $message;
 					}
-					$errors[] = sprintf( 'Asset #%d %s: %s', $asset_id, ucfirst( $slot ), $message );
-					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $record, $source, $options, 'failed', $message );
+					if ( (int) $source['sizeBytes'] > self::LARGE_SOURCE_PUBLISH_GATE_BYTES ) {
+						$errors[] = sprintf( 'Asset #%d %s: %s', $asset_id, ucfirst( $slot ), $message );
+						$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, 'failed', $message );
+					} else {
+						++$ready;
+						$warning = sprintf( 'Asset #%d %s derivative failed; source GLB will be published: %s', $asset_id, ucfirst( $slot ), $message );
+						$warnings[] = $warning;
+						$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, 'ready', $warning );
+					}
 					continue;
 				}
 
 				$queue_result = self::queue_desktop_profile_derivative( (int) $asset_id, $profile, $source, $options );
 				if ( is_wp_error( $queue_result ) ) {
 					$message = $queue_result->get_error_message();
-					$errors[] = sprintf( 'Asset #%d %s: %s', $asset_id, ucfirst( $slot ), $message );
+					if ( (int) $source['sizeBytes'] > self::LARGE_SOURCE_PUBLISH_GATE_BYTES ) {
+						$errors[] = sprintf( 'Asset #%d %s: %s', $asset_id, ucfirst( $slot ), $message );
+					} else {
+						++$ready;
+						$warnings[] = sprintf( 'Asset #%d %s derivative could not be queued; source GLB will be published: %s', $asset_id, ucfirst( $slot ), $message );
+					}
 					$record = self::desktop_profile_record( (int) $asset_id, $profile );
-					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $record, $source, $options, 'failed', $message );
+					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, (int) $source['sizeBytes'] > self::LARGE_SOURCE_PUBLISH_GATE_BYTES ? 'failed' : 'ready', $message );
 					continue;
 				}
 				$record = self::desktop_profile_record( (int) $asset_id, $profile );
@@ -102,11 +119,12 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				$profile_progress[] = self::desktop_profile_progress_item(
 					(int) $asset_id,
 					$slot,
+					$profile,
 					$record,
 					$source,
 					$options,
 					$status,
-					(string) ( $record['message'] ?? 'Desktop profile derivative is queued.' )
+					(string) ( $record['message'] ?? 'Web derivative is queued.' )
 				);
 				$pending[] = sprintf( 'asset #%d %s', $asset_id, ucfirst( $slot ) );
 			}
@@ -120,6 +138,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				'total'   => $total,
 				'percent' => $percent,
 				'profiles' => $profile_progress,
+				'warnings' => $warnings,
 				'message' => implode( ' ', array_values( array_unique( $errors ) ) ),
 			];
 		}
@@ -130,16 +149,20 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				'total'   => $total,
 				'percent' => $percent,
 				'profiles' => $profile_progress,
-				'message' => sprintf( 'Preparing desktop profile assets (%d/%d ready).', $ready, $total ),
+				'message' => sprintf( 'Preparing web-optimized assets (%d/%d ready).', $ready, $total ),
+				'warnings' => $warnings,
 			];
 		}
 
-		$memory_gate = self::apply_desktop_texture_memory_gates( $plan, $assets, $scene_assets, $scene_slots, $records );
+		$memory_gate = 'desktop' === $plan->request->vr_runtime_profile
+			? self::apply_desktop_texture_memory_gates( $plan, $assets, $scene_assets, $scene_slots, $records )
+			: [ 'status' => 'ready', 'message' => '' ];
 		if ( 'ready' !== $memory_gate['status'] ) {
 			$memory_gate['ready'] = $ready;
 			$memory_gate['total'] = $total;
 			$memory_gate['percent'] = $percent;
 			$memory_gate['profiles'] = $profile_progress;
+			$memory_gate['warnings'] = $warnings;
 			return $memory_gate;
 		}
 
@@ -149,14 +172,80 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			'total'   => $total,
 			'percent' => 100,
 			'profiles' => $profile_progress,
-			'message' => sprintf( 'Desktop profile assets are ready (%d/%d).', $ready, $total ),
+			'message' => sprintf( 'Web-optimized assets are ready (%d/%d).', $ready, $total ),
+			'warnings' => $warnings,
+		];
+	}
+
+	private static function runtime_derivative_profile_for_slot( string $slot, string $runtime_profile, array $desktop_profiles ): string {
+		if ( 'desktop' === $runtime_profile ) {
+			return sanitize_key( (string) ( $desktop_profiles['profiles'][ $slot ]['assets']['profile'] ?? ( 'custom' === $slot ? 'web-high' : 'web-' . $slot ) ) );
+		}
+		return 'headset' === $runtime_profile ? 'web-low' : 'web-high';
+	}
+
+	private static function runtime_derivative_definition_for_slot( string $slot, array $desktop_profiles ): array {
+		if ( isset( $desktop_profiles['profiles'][ $slot ]['assets'] ) ) {
+			return (array) $desktop_profiles['profiles'][ $slot ]['assets'];
+		}
+		return [ 'textureMaxSize' => in_array( $slot, [ 'headset', 'low' ], true ) ? 1024 : ( 'medium' === $slot ? 2048 : 4096 ) ];
+	}
+
+	private static function runtime_derivative_texture_cap( string $profile ): int {
+		return match ( $profile ) {
+			'web-low' => 1024,
+			'web-medium' => 2048,
+			default => 4096,
+		};
+	}
+
+	public static function maybe_queue_web_high( int $asset_id, array $source, array $analysis ) {
+		$source_bytes = (int) ( $source['sizeBytes'] ?? 0 );
+		$image_bytes = (int) ( $analysis['payload']['estimatedUncompressedImageBytes'] ?? $analysis['payload']['estimatedImageBytes'] ?? 0 );
+		$has_uncompressed_textures = $image_bytes > 0 && (int) ( $analysis['counts']['images'] ?? 0 ) > 0;
+		if ( $source_bytes < 20 * 1024 * 1024 && ( ! $has_uncompressed_textures || $image_bytes < 8 * 1024 * 1024 ) ) {
+			return false;
+		}
+
+		$options = [
+			'protectGeometry' => false,
+			'textureMaxSize'  => 4096,
+			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
+			'recipe'          => 'web-high',
+		];
+		return self::queue_desktop_profile_derivative( $asset_id, 'web-high', $source, $options );
+	}
+
+	public static function get_web_optimization_state( int $asset_id ): array {
+		$source = self::get_source_glb( $asset_id );
+		$record = self::desktop_profile_record( $asset_id, 'web-high' );
+		$source_bytes = is_wp_error( $source ) ? 0 : (int) ( $source['sizeBytes'] ?? 0 );
+		$status = sanitize_key( (string) ( $record['status'] ?? 'none' ) );
+		$percent = 'ready' === $status ? 100 : 0;
+		if ( 'running' === $status && is_array( $source ) ) {
+			$progress = self::read_desktop_profile_progress_file( $asset_id, 'web-high', $source );
+			$percent = absint( $progress['percent'] ?? 0 );
+			if ( ! empty( $progress['message'] ) ) {
+				$record['message'] = $progress['message'];
+			}
+		}
+		$derivative_bytes = absint( $record['derivativeSizeBytes'] ?? 0 );
+		return [
+			'status'          => in_array( $status, [ 'queued', 'running', 'ready', 'failed' ], true ) ? $status : 'none',
+			'profile'         => 'web-high',
+			'percent'         => max( 0, min( 100, $percent ) ),
+			'message'         => (string) ( $record['message'] ?? ( 'ready' === $status ? 'Web High derivative is ready.' : '' ) ),
+			'sourceBytes'     => $source_bytes,
+			'derivativeBytes' => $derivative_bytes,
+			'reductionPercent' => is_numeric( $record['reductionPercent'] ?? null ) ? (float) $record['reductionPercent'] : 0.0,
+			'canRetry'        => 'failed' === $status,
 		];
 	}
 
 	public function process_desktop_profile_job( int $asset_id, string $profile, int $protect_geometry = 0, int $texture_max_size = 0 ): void {
 		$asset_id = absint( $asset_id );
 		$profile = sanitize_key( $profile );
-		if ( $asset_id <= 0 || 'vrodos_asset3d' !== get_post_type( $asset_id ) || ! in_array( $profile, [ 'desktop-custom', 'desktop-low', 'desktop-medium', 'desktop-high' ], true ) ) {
+		if ( $asset_id <= 0 || 'vrodos_asset3d' !== get_post_type( $asset_id ) || ! in_array( $profile, [ 'web-low', 'web-medium', 'web-high' ], true ) ) {
 			return;
 		}
 		if ( get_transient( self::DESKTOP_PROFILE_LOCK_KEY ) ) {
@@ -166,6 +255,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					'protectGeometry' => 1 === $protect_geometry,
 					'textureMaxSize'  => absint( $texture_max_size ),
 					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
+					'recipe'          => $profile,
 				];
 				self::store_desktop_profile_failure( $asset_id, $profile, $schedule_result->get_error_message(), $options );
 				self::log_desktop_profile_schedule_failure( $asset_id, $profile, $schedule_result );
@@ -178,6 +268,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			'protectGeometry' => 1 === $protect_geometry,
 			'textureMaxSize'  => absint( $texture_max_size ),
 			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
+			'recipe'          => $profile,
 		];
 		$source = self::get_source_glb( $asset_id );
 		try {
@@ -185,7 +276,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 				self::store_desktop_profile_failure( $asset_id, $profile, $source->get_error_message(), $options );
 				return;
 			}
-			self::store_desktop_profile_status( $asset_id, $profile, $source, $options, 'running', 'Generating desktop profile derivative.' );
+			self::store_desktop_profile_status( $asset_id, $profile, $source, $options, 'running', 'Generating web derivative.' );
 			$result = $this->generate_derivative( $asset_id, $source, $profile, $options );
 			if ( is_wp_error( $result ) ) {
 				self::store_desktop_profile_failure( $asset_id, $profile, $result->get_error_message(), $options );
@@ -204,8 +295,8 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		}
 	}
 
-	public static function desktop_profile_derivative_path( int $asset_id, string $slot ): string {
-		$profile = 'desktop-' . sanitize_key( $slot );
+	public static function runtime_profile_derivative_path( int $asset_id, string $profile ): string {
+		$profile = sanitize_key( $profile );
 		$source = self::get_source_glb( $asset_id );
 		if ( is_wp_error( $source ) ) {
 			return '';
@@ -218,7 +309,8 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 	}
 
 	public static function desktop_profile_derivative_info( int $asset_id, string $slot ): array {
-		$record = self::desktop_profile_record( $asset_id, 'desktop-' . sanitize_key( $slot ) );
+		$profile = 'custom' === $slot ? 'web-high' : 'web-' . sanitize_key( $slot );
+		$record = self::desktop_profile_record( $asset_id, $profile );
 		return [
 			'estimatedTextureMemoryBytes' => absint( $record['estimatedTextureMemoryBytes'] ?? 0 ),
 			'derivativeSizeBytes'         => absint( $record['derivativeSizeBytes'] ?? 0 ),
@@ -264,7 +356,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		if ( ! in_array( 'KHR_draco_mesh_compression', $extensions, true ) ) {
 			return false;
 		}
-		return in_array( $profile, [ 'desktop-custom', 'desktop-high' ], true ) || 0 === absint( $record['textureImageCount'] ?? 0 ) || in_array( 'KHR_texture_basisu', $extensions, true );
+		return 0 === absint( $record['textureImageCount'] ?? 0 ) || in_array( 'KHR_texture_basisu', $extensions, true );
 	}
 
 	private static function desktop_profile_record_matches_request( array $record, array $source, array $options ): bool {
@@ -275,6 +367,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		return '' !== $source_hash
 			&& hash_equals( (string) ( $record['sourceSha256'] ?? '' ), $source_hash )
 			&& (int) ( $record_options['pipelineVersion'] ?? 0 ) === self::DESKTOP_PROFILE_PIPELINE_VERSION
+			&& sanitize_key( (string) ( $record_options['recipe'] ?? '' ) ) === sanitize_key( (string) ( $options['recipe'] ?? '' ) )
 			&& ( empty( $options['protectGeometry'] ) || ! empty( $record_options['protectGeometry'] ) )
 			&& ( 0 === $requested_size || ( $record_size > 0 && $record_size <= $requested_size ) );
 	}
@@ -282,13 +375,13 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 	private static function desktop_profile_progress_item(
 		int $asset_id,
 		string $slot,
+		string $profile,
 		array $record,
 		array $source,
 		array $options,
 		string $status,
 		string $message
 	): array {
-		$profile = 'desktop-' . sanitize_key( $slot );
 		$total_steps = self::desktop_profile_total_steps( $profile, $options );
 		$step = 0;
 		$percent = 0;
@@ -327,10 +420,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 	}
 
 	private static function desktop_profile_total_steps( string $profile, array $options ): int {
-		if ( in_array( $profile, [ 'desktop-custom', 'desktop-high' ], true ) ) {
-			return 5;
-		}
-		return ! empty( $options['protectGeometry'] ) ? 9 : 11;
+		return 'web-high' === $profile || ! empty( $options['protectGeometry'] ) ? 9 : 11;
 	}
 
 	private static function desktop_profile_overall_percent( array $profiles, int $total ): int {
@@ -438,7 +528,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			return true;
 		}
 		self::delete_desktop_profile_progress_file( $asset_id, $profile, $source );
-		self::store_desktop_profile_status( $asset_id, $profile, $source, $options, 'queued', 'Desktop profile derivative is queued.' );
+		self::store_desktop_profile_status( $asset_id, $profile, $source, $options, 'queued', 'Web derivative is queued.' );
 		$schedule_result = self::schedule_desktop_profile_job(
 			$asset_id,
 			$profile,
@@ -477,7 +567,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
-		return $result ? true : new WP_Error( 'vrodos_desktop_profile_schedule_failed', 'WordPress did not schedule the desktop profile background job.' );
+		return $result ? true : new WP_Error( 'vrodos_web_profile_schedule_failed', 'WordPress did not schedule the web derivative background job.' );
 	}
 
 	private static function log_desktop_profile_schedule_failure( int $asset_id, string $profile, WP_Error $error ): void {
@@ -568,8 +658,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					'protectGeometry' => ! empty( $assets[ $largest_asset_id ]['protectGeometry'] ),
 					'textureMaxSize'  => max( self::DESKTOP_PROFILE_MIN_TEXTURE_SIZE, (int) floor( $current_size / 2 ) ),
 					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
+					'recipe'          => 'web-' . $slot,
 				];
-				$queue_result = self::queue_desktop_profile_derivative( $largest_asset_id, 'desktop-' . $slot, $source, $options );
+				$queue_result = self::queue_desktop_profile_derivative( $largest_asset_id, 'web-' . $slot, $source, $options );
 				if ( is_wp_error( $queue_result ) ) {
 					return [
 						'status'  => 'failed',

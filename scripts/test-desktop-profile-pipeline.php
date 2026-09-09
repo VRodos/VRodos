@@ -162,22 +162,24 @@ function seed_desktop_profile_record( int $asset_id, string $profile, string $st
 $test_dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vrodos-desktop-profile-' . bin2hex( random_bytes( 6 ) );
 mkdir( $test_dir, 0777, true );
 $source_path = $test_dir . DIRECTORY_SEPARATOR . 'source.glb';
-$progress_path = $test_dir . DIRECTORY_SEPARATOR . 'source.desktop-custom.progress.json';
+$progress_path = $test_dir . DIRECTORY_SEPARATOR . 'source.web-high.progress.json';
 $log_path = $test_dir . DIRECTORY_SEPARATOR . 'test.log';
 file_put_contents( $source_path, 'desktop-profile-source' );
 ini_set( 'log_errors', '1' );
 ini_set( 'error_log', $log_path );
 
 $asset_id = 44;
-$profile = 'desktop-custom';
+$profile = 'web-high';
 $source = [
 	'url'  => '/private/source.glb',
 	'path' => $source_path,
+	'sizeBytes' => 101 * 1024 * 1024,
 ];
 $options = [
 	'protectGeometry' => true,
-	'textureMaxSize'  => 0,
-	'pipelineVersion' => 1,
+	'textureMaxSize'  => 4096,
+	'pipelineVersion' => 2,
+	'recipe'          => 'web-high',
 ];
 $GLOBALS['vrodos_desktop_test_source'] = $source;
 $GLOBALS['vrodos_desktop_test_progress_path'] = $progress_path;
@@ -232,6 +234,22 @@ vrodos_desktop_assert( is_wp_error( $failed ), 'scheduler rejection must be retu
 vrodos_desktop_assert( 'failed' === $failed_record['status'] && ! empty( $failed_record['failedAt'] ), 'scheduler rejection must persist a failed profile state' );
 vrodos_desktop_assert( str_contains( (string) file_get_contents( $log_path ), 'Failed to schedule desktop profile job' ), 'scheduler rejection should be logged' );
 
+vrodos_desktop_assert( 'web-low' === invoke_desktop_profile_method( 'runtime_derivative_profile_for_slot', [ 'headset', 'headset', [] ] ), 'standalone headset must select Web Low' );
+vrodos_desktop_assert( 'web-high' === invoke_desktop_profile_method( 'runtime_derivative_profile_for_slot', [ 'pc-rendered-vr', 'pc-rendered-vr', [] ] ), 'PC-rendered VR must select Web High' );
+vrodos_desktop_assert( 'web-medium' === invoke_desktop_profile_method( 'runtime_derivative_profile_for_slot', [ 'medium', 'desktop', [ 'profiles' => [ 'medium' => [ 'assets' => [ 'profile' => 'web-medium' ] ] ] ] ] ), 'desktop Medium must select Web Medium' );
+
+$GLOBALS['vrodos_desktop_test_schedule_failure'] = false;
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$small_source = array_merge( $source, [ 'sizeBytes' => 19 * 1024 * 1024 ] );
+$small_analysis = [ 'counts' => [ 'images' => 1 ], 'payload' => [ 'estimatedImageBytes' => 7 * 1024 * 1024 ], 'extensions' => [ 'hasTextureCompression' => false ] ];
+vrodos_desktop_assert( false === VRodos_Desktop_Profile_Test_Harness::maybe_queue_web_high( 55, $small_source, $small_analysis ), 'assets below both automatic thresholds must not queue' );
+$large_analysis = array_merge( $small_analysis, [ 'payload' => [ 'estimatedImageBytes' => 8 * 1024 * 1024 ] ] );
+vrodos_desktop_assert( true === VRodos_Desktop_Profile_Test_Harness::maybe_queue_web_high( 55, $small_source, $large_analysis ), '8 MiB of embedded uncompressed textures must queue Web High' );
+VRodos_Desktop_Profile_Test_Harness::maybe_queue_web_high( 55, $small_source, $large_analysis );
+vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'automatic optimization queueing must be idempotent' );
+
+$GLOBALS['vrodos_desktop_test_schedule_failure'] = true;
+
 $plan = new VRodos_Project_Compile_Plan();
 $plan->request = (object) [ 'vr_runtime_profile' => 'desktop' ];
 $plan->scenes = [
@@ -240,11 +258,11 @@ $plan->scenes = [
 		'scene_json'      => (object) [ 'asset_id' => $asset_id ],
 		'desktop_profiles' => [
 			'buildMode' => 'custom',
-			'profiles'  => [ 'custom' => [ 'assets' => $options ] ],
+			'profiles'  => [ 'custom' => [ 'assets' => array_merge( $options, [ 'profile' => 'web-high' ] ) ] ],
 		],
 	],
 ];
-$compile_state = VRodos_Desktop_Profile_Test_Harness::prepare_desktop_profile_derivatives( $plan );
+$compile_state = VRodos_Desktop_Profile_Test_Harness::prepare_runtime_profile_derivatives( $plan );
 vrodos_desktop_assert( 'failed' === $compile_state['status'], 'scheduler rejection must propagate as a failed compiler preflight' );
 vrodos_desktop_assert( str_contains( $compile_state['message'], 'test scheduler rejected' ), 'compiler failure should retain the scheduler error' );
 
