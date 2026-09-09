@@ -544,13 +544,8 @@ VRODOS.loader.wrapTextPanelLines = function(ctx, text, maxWidth, maxLines) {
     return lines;
 };
 
-VRODOS.loader.normalizeCompiledCollisionEnabled = function(value) {
-    if (value === undefined || value === null || value === '') {
-        return false;
-    }
-
-    const normalized = String(value).trim().toLowerCase();
-    return !(normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off');
+VRODOS.loader.normalizeCompiledCollisionEnabled = function(value, resource) {
+    return VRODOS.utils.normalizeCompiledCollisionEnabled(value, resource);
 };
 
 VRODOS.loader.createTextPanelTexture = function(text) {
@@ -672,7 +667,8 @@ VRODOS.loader.setObjectProperties = function(object, name, resources3D) {
     object.compiledCollisionEnabled = VRODOS.loader.normalizeCompiledCollisionEnabled(
         resource.compiledCollisionEnabled !== undefined
             ? resource.compiledCollisionEnabled
-            : object.compiledCollisionEnabled
+            : object.compiledCollisionEnabled,
+        resource
     );
     object.vrodosShadowRole = ['auto', 'caster-receiver', 'receiver', 'none'].includes(String(resource.vrodosShadowRole || resource.shadowRole || object.vrodosShadowRole || '').toLowerCase())
         ? String(resource.vrodosShadowRole || resource.shadowRole || object.vrodosShadowRole).toLowerCase()

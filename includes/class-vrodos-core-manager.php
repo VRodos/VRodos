@@ -998,7 +998,7 @@ class VRodos_Core_Manager {
 			if ( ! current_user_can( 'edit_post', $scene->ID ) ) {
 				return new WP_Error( 'vrodos_asset_in_use_forbidden', 'This asset is used by a scene you cannot edit.' );
 			}
-			$scene_data['objects'] = array_values( $filtered );
+			$scene_data['objects'] = $filtered;
 			$updates[ $scene->ID ] = [
 				'next'     => wp_json_encode( $scene_data, JSON_UNESCAPED_SLASHES ),
 				'previous' => (string) $scene->post_content,

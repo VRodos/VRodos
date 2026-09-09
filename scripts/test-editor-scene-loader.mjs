@@ -289,6 +289,7 @@ const context = {
 context.window = context;
 
 for (const relativePath of [
+    "assets/js/editor/core/vrodos_editor_core_utils.js",
     "assets/js/editor/loaders/vrodos_loader_object_factories.js",
     "assets/js/editor/loaders/vrodos_loader_generated_assets.js",
     "assets/js/editor/loaders/vrodos_loader_resource_metadata.js",
@@ -375,10 +376,11 @@ const hydratedResource = {
     glb_path: "/hydrated.glb",
     path: "/hydrated.glb"
 };
-await context.VRODOS.loader.loadGlbAsset(null, new MockGltfLoader(), "hydrated", hydratedResource, {
+const hydratedObject = await context.VRODOS.loader.loadGlbAsset(null, new MockGltfLoader(), "hydrated", hydratedResource, {
     hydrated: hydratedResource
 });
 assert(metadataRequests === 0, "server-hydrated scene GLBs must not refetch metadata");
+assert(hydratedObject.compiledCollisionEnabled === true, "loaded decorations without a saved collision choice must default to collidable");
 
 const previewLoader = new MockGltfLoader();
 const previewResource = {
@@ -390,7 +392,8 @@ const previewResource = {
     path: "/source.glb",
     editorPreviewGlbURL: "/preview.glb",
     editorPreviewStatus: "ready",
-    editorPreviewShouldUse: true
+    editorPreviewShouldUse: true,
+    compiledCollisionEnabled: false
 };
 const previewObject = await context.VRODOS.loader.loadGlbAsset(null, previewLoader, "preview", previewResource, {
     preview: previewResource
@@ -398,6 +401,7 @@ const previewObject = await context.VRODOS.loader.loadGlbAsset(null, previewLoad
 assert(previewLoader.loadedUrl === "/preview.glb", "ready editor previews must replace qualifying source requests");
 assert(previewObject.editor_loaded_glb_path === "/preview.glb", "loaded editor objects must record the preview URL");
 assert(previewObject.glb_path === "/source.glb", "preview loading must preserve the canonical source URL for persistence and compilation");
+assert(previewObject.compiledCollisionEnabled === false, "loaded decorations must preserve an explicitly disabled collision choice");
 
 const dynamicResource = {
     asset_id: 21,

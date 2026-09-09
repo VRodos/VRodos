@@ -874,6 +874,9 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private function is_compiled_collision_enabled( $obj ): bool {
 		if ( is_object( $obj ) && property_exists( $obj, 'compiledCollisionEnabled' ) ) {
 			$value = $obj->compiledCollisionEnabled;
+			if ( null === $value || '' === trim( (string) $value ) ) {
+				return 'decoration' === $this->entity_policy->effective_category( $obj );
+			}
 			if ( is_bool( $value ) ) {
 				return $value;
 			}
@@ -882,7 +885,7 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 			return ! in_array( $normalized, [ '0', 'false', 'no', 'off' ], true );
 		}
 
-		return false;
+		return is_object( $obj ) && 'decoration' === $this->entity_policy->effective_category( $obj );
 	}
 
 	private function normalize_runtime_category( string $category ): string {

@@ -1150,15 +1150,6 @@ const VRODOS_COLLIDABLE_CATEGORY_SLUGS = new Set([
     'assessment'
 ]);
 
-function vrodosNormalizeCompiledCollisionEnabled(value) {
-    if (value === undefined || value === null || value === '') {
-        return false;
-    }
-
-    const normalized = String(value).trim().toLowerCase();
-    return !(normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off');
-}
-
 function vrodosNormalizeObjectShadowRole(value) {
     const normalized = String(value || '').trim().toLowerCase();
     return ['auto', 'caster-receiver', 'receiver', 'none'].includes(normalized) ? normalized : 'auto';
@@ -1258,7 +1249,7 @@ function displayCollisionProperties(object) {
     if (!section || !object) return;
 
     const checkbox = document.getElementById('compiledCollisionEnabledCheckbox');
-    const enabled = vrodosNormalizeCompiledCollisionEnabled(object.compiledCollisionEnabled);
+    const enabled = VRODOS.utils.normalizeCompiledCollisionEnabled(object.compiledCollisionEnabled, object);
     object.compiledCollisionEnabled = enabled;
     if (!object.userData) {
         object.userData = {};

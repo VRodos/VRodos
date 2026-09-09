@@ -224,7 +224,6 @@ if ( class_exists( 'DOMDocument' ) ) {
 				'vrodosAssetOriginMode' => 'bounds-center',
 				'asset_id' => 701,
 				'glb_path' => '/converted-walkable.glb',
-				'compiledCollisionEnabled' => true,
 				'walkableBehavior' => 'auto',
 				'position' => [ 100, 0, 0 ],
 				'rotation' => [ 0, 0, 0 ],
@@ -241,6 +240,23 @@ if ( class_exists( 'DOMDocument' ) ) {
 				'rotation' => [ 0, 0, 0 ],
 				'scale' => [ 1, 1, 1 ],
 			],
+			'defaultCollidableDecoration' => (object) [
+				'category_slug' => 'decoration',
+				'asset_id' => 703,
+				'glb_path' => '/default-collidable-decoration.glb',
+				'position' => [ 100, 0, 0 ],
+				'rotation' => [ 0, 0, 0 ],
+				'scale' => [ 1, 1, 1 ],
+			],
+			'disabledCollisionDecoration' => (object) [
+				'category_slug' => 'decoration',
+				'asset_id' => 704,
+				'glb_path' => '/disabled-collision-decoration.glb',
+				'compiledCollisionEnabled' => false,
+				'position' => [ 100, 0, 0 ],
+				'rotation' => [ 0, 0, 0 ],
+				'scale' => [ 1, 1, 1 ],
+			],
 		],
 		1,
 		42,
@@ -252,6 +268,8 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$role_xpath = new DOMXPath( $dom );
 	$converted_walkable = $role_xpath->query( '//*[@data-vrodos-asset-id="701"]' )->item( 0 );
 	$converted_decoration = $role_xpath->query( '//*[@data-vrodos-asset-id="702"]' )->item( 0 );
+	$default_collidable_decoration = $role_xpath->query( '//*[@data-vrodos-asset-id="703"]' )->item( 0 );
+	$disabled_collision_decoration = $role_xpath->query( '//*[@data-vrodos-asset-id="704"]' )->item( 0 );
 	vrodos_foundation_assert( $converted_walkable instanceof DOMElement, 'converted walkable is rendered' );
 	vrodos_foundation_assert( 'bounds-center' === $converted_walkable->getAttribute( 'vrodos-model-origin' ), 'marked GLBs emit the bounds-center runtime component' );
 	vrodos_foundation_assert( 'true' === $converted_walkable->getAttribute( 'data-vrodos-navmesh' ), 'converted walkable emits navmesh attributes' );
@@ -263,6 +281,8 @@ if ( class_exists( 'DOMDocument' ) ) {
 	vrodos_foundation_assert( ! $converted_decoration->hasAttribute( 'data-vrodos-navmesh' ), 'converted decoration omits navmesh attributes' );
 	vrodos_foundation_assert( 'lazy' === $converted_decoration->getAttribute( 'data-vrodos-load-phase' ), 'converted decoration uses normal deferred loading' );
 	vrodos_foundation_assert( 'solid' === $converted_decoration->getAttribute( 'data-vrodos-collision-role' ), 'converted decoration preserves explicitly enabled solid collision' );
+	vrodos_foundation_assert( 'solid' === $default_collidable_decoration->getAttribute( 'data-vrodos-collision-role' ), 'decoration collision defaults to enabled when no value is persisted' );
+	vrodos_foundation_assert( ! $disabled_collision_decoration->hasAttribute( 'data-vrodos-collider' ), 'explicitly disabled decoration collision remains disabled' );
 	$render_diagnostics = $renderer->build_compile_diagnostics( $dom );
 	vrodos_foundation_assert( 1 === count( $render_diagnostics['warnings'] ?? [] ), 'unknown categories emit one diagnostic' );
 
@@ -447,8 +467,10 @@ vrodos_foundation_assert( $project_plan->scenes[0]->hover_enabled && ! $project_
 vrodos_foundation_assert( in_array( 'networked-components', $project_plan->scenes[0]->chunk_ids, true ), 'project capability plan activates networking' );
 $planned_decoration = $project_plan->scenes[0]->scene_json->objects->decoration0;
 vrodos_foundation_assert( ! empty( $planned_decoration->uuid ), 'compile plan normalizes entity identity once' );
+vrodos_foundation_assert( true === $planned_decoration->compiledCollisionEnabled, 'compile plan defaults decoration collision to enabled' );
 vrodos_foundation_assert( ! property_exists( $planned_decoration, 'follow_camera' ), 'compile plan strips compatibility-only entity fields' );
 vrodos_foundation_assert( ! property_exists( $scene_one->objects->decoration0, 'uuid' ), 'compile plan does not mutate source scene entities' );
+vrodos_foundation_assert( ! property_exists( $scene_one->objects->decoration0, 'compiledCollisionEnabled' ), 'compile plan leaves source decoration collision metadata untouched' );
 vrodos_foundation_assert( property_exists( $scene_one->objects->decoration0, 'follow_camera' ), 'source scene compatibility fields remain intact' );
 vrodos_foundation_assert( ! property_exists( $project_plan->scenes[0]->scene_json->objects->avatarCamera, 'uuid' ), 'camera configuration is not normalized as an entity' );
 

@@ -200,6 +200,15 @@ VRODOS.importer = VRODOS.importer || {};
         return normalizeSceneAssetRole(resource.sceneAssetRole) || sourceCategory;
     }
 
+    function normalizeCompiledCollisionEnabled(value, resource) {
+        if (value === undefined || value === null || value === '') {
+            return getSceneAssetSourceCategory(resource) === 'decoration';
+        }
+
+        const normalized = String(value).trim().toLowerCase();
+        return !(normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off');
+    }
+
     function sceneAssetRoleOverrideFor(resource, selectedRole) {
         const sourceCategory = getSceneAssetSourceCategory(resource);
         const normalizedRole = normalizeSceneAssetRole(selectedRole);
@@ -478,6 +487,7 @@ VRODOS.importer = VRODOS.importer || {};
         normalizeSceneAssetRole,
         isSceneAssetRoleEligible,
         resolveSceneAssetCategory,
+        normalizeCompiledCollisionEnabled,
         sceneAssetRoleOverrideFor,
         initializeWalkableBehaviorForRoleChange,
         isSceneLightCategory,

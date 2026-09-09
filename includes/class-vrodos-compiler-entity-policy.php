@@ -23,6 +23,13 @@ final class VRodos_Compiler_Entity_Policy {
 
 	public function normalize( object $source, int $scene_id, string $object_key ): object {
 		unset( $source->follow_camera, $source->follow_camera_x, $source->follow_camera_z );
+		$source_category = $this->canonical_category( (string) ( $source->category_slug ?? $source->category_name ?? '' ) );
+		$collision_value_missing = ! property_exists( $source, 'compiledCollisionEnabled' ) ||
+			null === $source->compiledCollisionEnabled ||
+			'' === trim( (string) $source->compiledCollisionEnabled );
+		if ( $collision_value_missing ) {
+			$source->compiledCollisionEnabled = 'decoration' === $source_category;
+		}
 		$source->category_slug = $this->effective_category( $source );
 		$source->name          = empty( $source->name ) ? $object_key : $source->name;
 		if ( empty( $source->uuid ) ) {

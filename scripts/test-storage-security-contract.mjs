@@ -76,6 +76,14 @@ assert(postTypes.includes("'edit_post'             => 'edit_vrodos_scene'"), "si
 assert(postTypes.includes("'edit_posts'            => 'edit_vrodos_assets3d'"), "asset collection editing uses a primitive capability");
 assert(postTypes.includes("'edit_post'             => 'edit_vrodos_asset3d'"), "single-asset editing uses an object capability");
 
+const coreManager = read("includes/class-vrodos-core-manager.php");
+const assetDeletion = coreManager.slice(
+	coreManager.indexOf("public static function vrodos_delete_asset_3d_from_scenes"),
+	coreManager.indexOf("\n\t}", coreManager.indexOf("public static function vrodos_delete_asset_3d_from_scenes"))
+);
+assert(assetDeletion.includes("$scene_data['objects'] = $filtered;"), "asset deletion preserves scene object keys");
+assert(!assetDeletion.includes("array_values( $filtered )"), "asset deletion must not convert the scene object map into a list");
+
 const projectAjax = read("includes/ajax/class-vrodos-project-ajax.php");
 const projectListHandler = projectAjax.slice(
 	projectAjax.indexOf("public function vrodos_fetch_list_projects_callback"),
