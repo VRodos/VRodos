@@ -1,6 +1,6 @@
 # Runtime library audit
 
-Validated against `package-lock.json`, `services/vrodos-network-runtime/package-lock.json`, and generated runtime manifests on 2026-08-26. Package peer metadata and the linked official documentation were last audited on 2026-08-26. Lockfiles are the exact-version authority; generated manifests must agree with them.
+Validated against `package-lock.json`, `services/vrodos-network-runtime/package-lock.json`, and generated runtime manifests on 2026-09-09. Package peer metadata and the linked official documentation were last audited on 2026-09-09. Lockfiles are the exact-version authority; generated manifests must agree with them.
 
 ## Browser and compiled-runtime libraries
 
@@ -33,13 +33,18 @@ Validated against `package-lock.json`, `services/vrodos-network-runtime/package-
 
 | Library | Locked version / source | Relevant peer range | Use / build owner | Lazy/local result | Official documentation |
 |---|---|---|---|---|---|
-| @gltf-transform/cli | 4.4.2; root lock | none declared | explicit GLB audit/derivative tooling | CLI only | [glTF Transform](https://gltf-transform.dev/) |
+| @gltf-transform/cli | 4.5.0; root lock | none declared | GLB audit/derivative tooling; programmatic NodeIO/functions pipeline with the `toktx` bridge | build/worker only | [glTF Transform](https://gltf-transform.dev/) |
+| @gltf-transform/core | 4.5.0; root lock | none declared | programmatic GLB read/write and document graph | build/worker only | [glTF Transform Core](https://gltf-transform.dev/modules/core.html) |
+| @gltf-transform/extensions | 4.5.0; root lock | `@gltf-transform/core` `^4.5.0` | Draco, Meshopt, and KTX2 extension registration | build/worker only | [glTF Transform Extensions](https://gltf-transform.dev/modules/extensions.html) |
+| @gltf-transform/functions | 4.5.0; root lock | `@gltf-transform/core` and extensions `^4.5.0` | in-memory prune, dedup, simplify, compression, and texture transforms | build/worker only | [glTF Transform Functions](https://gltf-transform.dev/modules/functions.html) |
+| draco3dgltf | 1.5.7; root lock | none declared | Node Draco encoder/decoder modules for GLB transforms | build/worker only | [Draco](https://github.com/google/draco) |
 | esbuild | 0.28.2; root lock | none declared | all generated browser bundles | build only | [esbuild](https://esbuild.github.io/) |
 | meshoptimizer | 1.2.0; root lock | none declared | decoder copy/asset tooling | `assets/vendor/three-r185/meshopt/` | [meshoptimizer](https://github.com/zeux/meshoptimizer) |
+| sharp | 0.35.4; root lock | none declared | libvips/SIMD texture analysis, conversion, and resizing | build/worker only | [Sharp](https://sharp.pixelplumbing.com/) |
 | Tailwind CSS | 3.4.19; root lock | PostCSS toolchain | prefixed source CSS build | generated CSS | [Tailwind v3](https://v3.tailwindcss.com/docs/installation) |
 | DaisyUI | 4.12.24; root lock | Tailwind plugin | prefixed component styles | generated CSS | [DaisyUI v4](https://v4.daisyui.com/docs/install/) |
 | PostCSS | 8.5.26; root lock | none declared | CSS pipeline | build only | [PostCSS](https://postcss.org/) |
-| Autoprefixer | 10.5.4; root lock | PostCSS `^8.1` | CSS prefixing | build only | [Autoprefixer](https://github.com/postcss/autoprefixer) |
+| Autoprefixer | 10.5.5; root lock | PostCSS `^8.1` | CSS prefixing | build only | [Autoprefixer](https://github.com/postcss/autoprefixer) |
 | ESLint | 10.9.1; root lock | optional `jiti` | JS static checks | build only | [ESLint](https://eslint.org/docs/latest/) |
 | Prettier | 3.9.6; root lock | none declared | formatting | build only | [Prettier](https://prettier.io/docs/) |
 | Express | 4.22.2; service lock | none declared | HTTP/static/health routes | network service only | [Express 4](https://expressjs.com/en/4x/api.html) |
@@ -56,5 +61,6 @@ EasyRTC uses peer-to-peer mesh topology for media/data channels. Its practical r
 
 - `assets/runtime-version-manifest.json` schema v2 records runtime and browser-library versions and must match the root lockfile.
 - `assets/runtime-build-manifest.json` schema v2 owns chunk order, dependencies, capabilities, source files, and local artifacts.
+- Keep one exact Sharp version deduplicated across the glTF-Transform dependency graph. Loading different Sharp native generations in one Windows worker can collide at the DLL boundary even when each version works in isolation.
 - Compiled output must use local A-Frame/browser artifacts and the Socket.IO client served by the active service. There is no compile-time CDN fallback.
 - Takram imports use package-root public exports. The local weather-UV shader deviation remains deterministic, policy-gated, and tested in the vendor build.

@@ -20,6 +20,7 @@ final class VRodos_Compiler_Resource_Publisher {
 	private bool $desktop_profiles_enabled = false;
 	private array $desktop_profile_slots = [];
 	private array $desktop_profile_recipes = [];
+	private array $desktop_profile_definitions = [];
 	private VRodos_Runtime_URL_Resolver $url_resolver;
 	/** @var resource|null */
 	private $lock_handle = null;
@@ -42,8 +43,11 @@ final class VRodos_Compiler_Resource_Publisher {
 					? [ 'low', 'medium', 'high' ]
 					: [ 'custom' ];
 				$this->desktop_profile_recipes = [];
+				$this->desktop_profile_definitions = [];
 				foreach ( $this->desktop_profile_slots as $slot ) {
-					$this->desktop_profile_recipes[ $slot ] = sanitize_key( (string) ( $scene->desktop_profiles['profiles'][ $slot ]['assets']['profile'] ?? ( 'custom' === $slot ? 'web-high' : 'web-' . $slot ) ) );
+					$definition = (array) ( $scene->desktop_profiles['profiles'][ $slot ]['assets'] ?? [] );
+					$this->desktop_profile_recipes[ $slot ] = sanitize_key( (string) ( $definition['profile'] ?? ( 'custom' === $slot ? 'web-high' : 'web-' . $slot ) ) );
+					$this->desktop_profile_definitions[ $slot ] = $definition;
 				}
 				$this->hydrate_value( $scene->scene_json );
 				$background_id = absint( get_post_meta( $scene->scene_id, 'vrodos_scene_bg_image', true ) );
@@ -167,6 +171,7 @@ final class VRodos_Compiler_Resource_Publisher {
 			'image_path'      => 'vrodos_asset3d_image',
 			'poi_img_path'    => 'vrodos_asset3d_poi_imgtxt_image',
 		];
+		$protect_geometry = $this->asset_requires_protected_geometry( $object );
 		foreach ( $field_map as $property => $meta_key ) {
 			$meta = get_post_meta( $asset_id, $meta_key, true );
 			if ( 'screenshot_path' === $property && ! absint( $meta ) ) {
@@ -177,7 +182,16 @@ final class VRodos_Compiler_Resource_Publisher {
 					$profile_urls = [];
 					foreach ( $this->desktop_profile_slots as $slot ) {
 						$profile = $this->desktop_profile_recipes[ $slot ] ?? ( 'custom' === $slot ? 'web-high' : 'web-' . $slot );
-						$path = VRodos_Asset_Optimization_Manager::runtime_profile_derivative_path( $asset_id, $profile );
+						$definition = (array) ( $this->desktop_profile_definitions[ $slot ] ?? [] );
+						$path = VRodos_Asset_Optimization_Manager::runtime_profile_derivative_path(
+							$asset_id,
+							$profile,
+							[
+								'protectGeometry' => $protect_geometry,
+								'textureMaxSize'  => absint( $definition['textureMaxSize'] ?? $this->runtime_profile_texture_cap( $profile ) ),
+								'recipe'          => $profile,
+							]
+						);
 						if ( '' === $path ) {
 							$this->ensure_source_fallback_allowed( $asset_id, $meta, $profile );
 							$path = get_attached_file( absint( $meta ), true );
@@ -196,7 +210,15 @@ final class VRodos_Compiler_Resource_Publisher {
 					}
 				}
 				$profile = 'headset' === $this->runtime_profile ? 'web-low' : 'web-high';
-				$derivative = VRodos_Asset_Optimization_Manager::runtime_profile_derivative_path( $asset_id, $profile );
+				$derivative = VRodos_Asset_Optimization_Manager::runtime_profile_derivative_path(
+					$asset_id,
+					$profile,
+					[
+						'protectGeometry' => $protect_geometry,
+						'textureMaxSize'  => $this->runtime_profile_texture_cap( $profile ),
+						'recipe'          => $profile,
+					]
+				);
 				if ( '' !== $derivative ) {
 					$object->{$property} = $this->publish_file( $derivative, 'asset-' . $asset_id . '-' . $profile );
 					continue;
@@ -216,6 +238,7 @@ final class VRodos_Compiler_Resource_Publisher {
 				$object->{$property} = esc_url_raw( $meta );
 			}
 		}
+
 		$text_attachment_id = absint( get_post_meta( $asset_id, 'vrodos_asset3d_text_file', true ) );
 		$text_result = null;
 		if ( $text_attachment_id ) {
@@ -238,6 +261,20 @@ final class VRodos_Compiler_Resource_Publisher {
 		if ( isset( $object->poi_image_path ) && isset( $object->poi_img_path ) ) {
 			$object->poi_image_path = $object->poi_img_path;
 		}
+	}
+
+	private function asset_requires_protected_geometry( object $object ): bool {
+		$category = sanitize_title( (string) ( $object->category_slug ?? $object->category_name ?? '' ) );
+		return in_array( $category, [ 'walkable-surface', 'collision-proxy' ], true )
+			|| VRodos_Runtime_Settings_Contract::normalize_bool( $object->compiledCollisionEnabled ?? false, false );
+	}
+
+	private function runtime_profile_texture_cap( string $profile ): int {
+		return match ( $profile ) {
+			'web-low'    => 1024,
+			'web-medium' => 2048,
+			default      => 4096,
+		};
 	}
 
 	private function ensure_source_fallback_allowed( int $asset_id, $source_attachment_id, string $profile ): void {

@@ -16,10 +16,12 @@ class VRodos_Asset_Optimization_Admin_Controller {
 
 	public const META_KEY = '_vrodos_asset3d_glb_derivatives';
 	public const ANALYSIS_META_KEY = '_vrodos_asset3d_glb_analysis';
+	public const SOURCE_META_KEY = '_vrodos_asset3d_glb_source_snapshot';
 	public const SETTINGS_PAGE_KEY = 'vrodos_options';
 	public const SETTINGS_TAB_KEY = 'vrodos_asset_optimization_settings';
 	public const EDITOR_PREVIEW_CRON_HOOK = 'vrodos_asset_editor_preview_process_job';
 	public const DESKTOP_PROFILE_CRON_HOOK = 'vrodos_asset_desktop_profile_process_job';
+	public const OPTIMIZER_LEASE_OPTION = 'vrodos_asset_optimizer_worker_lease';
 	public const BATCH_TRANSIENT_PREFIX = 'vrodos_asset_glb_opt_batch_';
 	public const GLB_MAGIC = 'glTF';
 	public const GLB_VERSION = 2;
@@ -28,7 +30,6 @@ class VRodos_Asset_Optimization_Admin_Controller {
 	public const GLTF_TRIANGLE_STRIP_MODE = 5;
 	public const GLTF_TRIANGLE_FAN_MODE = 6;
 	private const EDITOR_PREVIEW_PROFILE = 'editor-preview';
-	private const EDITOR_PREVIEW_LOCK_KEY = 'vrodos_asset_editor_preview_global_lock';
 	private const EDITOR_PREVIEW_QUEUE_DELAY_SECONDS = 10;
 	private const EDITOR_PREVIEW_JOB_TIMEOUT_SECONDS = 900;
 	private const EDITOR_PREVIEW_FILE_THRESHOLD_BYTES = 10485760;

@@ -1,12 +1,20 @@
 #!/usr/bin/env node
 
-import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { link, mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
+import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS, KHRDracoMeshCompression } from '@gltf-transform/extensions';
+import { dedup, draco, meshopt, prune, simplify, textureCompress, weld } from '@gltf-transform/functions';
+import { Mode, toktx } from '@gltf-transform/cli';
+import draco3d from 'draco3dgltf';
+import { MeshoptDecoder, MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +30,7 @@ const GLB_JSON_CHUNK = 0x4e4f534a;
 const TRIANGLES_MODE = 4;
 const TRIANGLE_STRIP_MODE = 5;
 const TRIANGLE_FAN_MODE = 6;
+const execFileAsync = promisify(execFile);
 
 function parseArgs(argv) {
     const options = {
@@ -33,12 +42,18 @@ function parseArgs(argv) {
         sourceUrl: '',
         outputFile: '',
         progressFile: '',
+        sourceSha256: '',
+        jobKey: '',
+        queuedAt: '',
+        preparedBaseline: '',
+        preparedAnalysis: '',
+        writePreparedBaseline: false,
         profile: 'safe-draco',
         limit: 3,
         include: '',
-        gltfTransform: '',
         protectGeometry: false,
         textureMaxSize: 0,
+        uastcZstdLevel: 9,
         dryRun: false,
         json: false
     };
@@ -83,6 +98,24 @@ function parseArgs(argv) {
             case '--progress-file':
                 options.progressFile = nextValue() || '';
                 break;
+            case '--source-sha256':
+                options.sourceSha256 = String(nextValue() || '').toLowerCase();
+                break;
+            case '--job-key':
+                options.jobKey = String(nextValue() || '');
+                break;
+            case '--queued-at':
+                options.queuedAt = String(nextValue() || '');
+                break;
+            case '--prepared-baseline':
+                options.preparedBaseline = nextValue() || '';
+                break;
+            case '--prepared-analysis':
+                options.preparedAnalysis = nextValue() || '';
+                break;
+            case '--write-prepared-baseline':
+                options.writePreparedBaseline = true;
+                break;
             case '--profile':
                 options.profile = nextValue() || options.profile;
                 break;
@@ -92,14 +125,14 @@ function parseArgs(argv) {
             case '--include':
                 options.include = nextValue() || '';
                 break;
-            case '--gltf-transform':
-                options.gltfTransform = nextValue() || '';
-                break;
             case '--protect-geometry':
                 options.protectGeometry = true;
                 break;
             case '--texture-max-size':
                 options.textureMaxSize = Math.max(0, Math.floor(nextNumber(0)));
+                break;
+            case '--uastc-zstd-level':
+                options.uastcZstdLevel = Math.max(1, Math.min(22, Math.floor(nextNumber(9))));
                 break;
             case '--dry-run':
                 options.dryRun = true;
@@ -128,6 +161,8 @@ function parseArgs(argv) {
     options.source = options.source ? path.resolve(options.source) : '';
     options.outputFile = options.outputFile ? path.resolve(options.outputFile) : '';
     options.progressFile = options.progressFile ? path.resolve(options.progressFile) : '';
+    options.preparedBaseline = options.preparedBaseline ? path.resolve(options.preparedBaseline) : '';
+    options.preparedAnalysis = options.preparedAnalysis ? path.resolve(options.preparedAnalysis) : '';
 
     return options;
 }
@@ -145,12 +180,18 @@ Options:
   --source-url URL        Source URL metadata to record with --source.
   --output-file PATH      Exact derivative GLB path for --source mode.
   --progress-file PATH    Optional private JSON file for atomic optimizer progress updates.
+  --source-sha256 HASH    Expected source content hash supplied by the owning queue.
+  --job-key KEY           Immutable queue identity recorded in progress and reports.
+  --queued-at ISO_TIME     Queue timestamp used to record worker waiting time.
+  --prepared-baseline P   Reuse a source-hash-scoped prune/dedup GLB when available.
+  --prepared-analysis P   Analysis metadata paired with --prepared-baseline.
+  --write-prepared-baseline  Persist the common stage for following family profiles.
   --profile NAME          safe-draco, safe-meshopt, editor-preview, web-high, web-medium, or web-low.
   --protect-geometry      Skip weld/simplify for collision or navigation geometry.
   --texture-max-size N    Override the web profile texture cap in pixels.
+  --uastc-zstd-level N    Benchmark override for UASTC Zstd; production defaults to 9.
   --limit N               Number of top GLBs to process. Default: 3.
   --include REGEX         Only process assets whose URL or filename matches.
-  --gltf-transform PATH   Optional glTF Transform CLI executable.
   --dry-run               Select assets and write reports without generating derivatives.
   --json                  Print JSON manifest to stdout.
 `);
@@ -350,6 +391,10 @@ function analyzeGltf(gltf) {
 
 async function analyzeGlbFile(filePath) {
     const buffer = await readFile(filePath);
+    return analyzeGlbBuffer(buffer, filePath);
+}
+
+async function analyzeGlbBuffer(buffer, filePath) {
     const parsed = parseGlb(buffer, filePath);
     const analysis = analyzeGltf(parsed.gltf);
     analysis.textureMemory = await estimateTextureMemory(parsed.gltf, parsed.binary);
@@ -361,6 +406,8 @@ async function estimateTextureMemory(gltf, binary) {
     const bufferViews = Array.isArray(gltf.bufferViews) ? gltf.bufferViews : [];
     let estimatedBytes = 0;
     let accountedImages = 0;
+    let maxWidth = 0;
+    let maxHeight = 0;
     for (const image of images) {
         const view = Number.isInteger(image.bufferView) ? bufferViews[image.bufferView] : null;
         if (!view || !binary) continue;
@@ -385,13 +432,17 @@ async function estimateTextureMemory(gltf, binary) {
         if (width > 0 && height > 0) {
             estimatedBytes += Math.ceil(width * height * gpuBytesPerPixel * 4 / 3);
             accountedImages += 1;
+            maxWidth = Math.max(maxWidth, width);
+            maxHeight = Math.max(maxHeight, height);
         }
     }
     return {
         estimatedMipmappedBytes: estimatedBytes,
         estimatedMipmappedMiB: Number((estimatedBytes / (1024 * 1024)).toFixed(2)),
         accountedImages,
-        unaccountedImages: Math.max(0, images.length - accountedImages)
+        unaccountedImages: Math.max(0, images.length - accountedImages),
+        maxWidth,
+        maxHeight
     };
 }
 
@@ -446,124 +497,195 @@ function selectAssets(audit, options) {
         .slice(0, options.limit);
 }
 
-function resolveGltfTransformRunner(explicitPath) {
-    if (explicitPath) {
-        return { command: explicitPath, baseArgs: [] };
-    }
+let optimizerIOPromise = null;
 
-    const cliPath = path.join(pluginRoot, 'node_modules', '@gltf-transform', 'cli', 'bin', 'cli.js');
-    if (!existsSync(cliPath)) {
-        throw new Error('Missing @gltf-transform/cli. Run npm install before optimizing assets.');
+function createOptimizerIO() {
+    if (!optimizerIOPromise) {
+        optimizerIOPromise = Promise.all([
+            draco3d.createDecoderModule(),
+            draco3d.createEncoderModule(),
+            MeshoptDecoder.ready,
+            MeshoptEncoder.ready,
+            MeshoptSimplifier.ready
+        ]).then(([dracoDecoder, dracoEncoder]) => new NodeIO()
+            .registerExtensions(ALL_EXTENSIONS)
+            .registerDependencies({
+                'draco3d.decoder': dracoDecoder,
+                'draco3d.encoder': dracoEncoder,
+                'meshopt.decoder': MeshoptDecoder,
+                'meshopt.encoder': MeshoptEncoder
+            }));
     }
+    return optimizerIOPromise;
+}
 
+async function atomicWriteFile(targetPath, data) {
+    const temporaryPath = `${targetPath}.${process.pid}.tmp`;
+    await mkdir(path.dirname(targetPath), { recursive: true });
+    await writeFile(temporaryPath, data);
+    await atomicReplaceTemporary(temporaryPath, targetPath);
+}
+
+async function atomicReplaceTemporary(temporaryPath, targetPath) {
+    try {
+        await rename(temporaryPath, targetPath);
+    } catch (error) {
+        if (process.platform !== 'win32') throw error;
+        await rm(targetPath, { force: true });
+        await rename(temporaryPath, targetPath);
+    }
+}
+
+async function atomicLinkOrWrite(sourcePath, targetPath, fallbackData) {
+    const temporaryPath = `${targetPath}.${process.pid}.tmp`;
+    await mkdir(path.dirname(targetPath), { recursive: true });
+    await rm(temporaryPath, { force: true });
+    try {
+        await link(sourcePath, temporaryPath);
+        await atomicReplaceTemporary(temporaryPath, targetPath);
+    } catch (error) {
+        await rm(temporaryPath, { force: true });
+        await atomicWriteFile(targetPath, fallbackData);
+    }
+}
+
+function sourceDigest(buffer) {
+    return createHash('sha256').update(buffer).digest('hex');
+}
+
+function isWebProfile(profile) {
+    return profile === 'web-low' || profile === 'web-medium' || profile === 'web-high';
+}
+
+function webProfileTextureCap(profile, override) {
+    return override || (profile === 'web-low' ? 1024 : (profile === 'web-medium' ? 2048 : 4096));
+}
+
+function selectKtxJobs(analysis) {
+    const textureMemory = analysis?.textureMemory || {};
+    const maxDimension = Math.max(Number(textureMemory.maxWidth || 0), Number(textureMemory.maxHeight || 0));
+    const estimatedBytes = Number(textureMemory.estimatedMipmappedBytes || 0);
+    if (maxDimension > 4096 || estimatedBytes > 512 * 1024 * 1024) {
+        return 1;
+    }
+    const available = typeof os.availableParallelism === 'function' ? os.availableParallelism() : (os.cpus().length || 1);
+    const imageCount = Math.max(1, Number(analysis?.counts?.images || 1));
+    const estimatedWorkingSetPerJob = Math.max(256 * 1024 * 1024, Math.ceil(estimatedBytes / imageCount) * 3);
+    const memoryBound = Math.max(1, Math.floor(os.freemem() / estimatedWorkingSetPerJob));
+    return Math.max(1, Math.min(4, available, memoryBound));
+}
+
+function systemCpuSnapshot() {
+    return os.cpus().reduce((snapshot, cpu) => {
+        const times = cpu.times || {};
+        const total = Object.values(times).reduce((sum, value) => sum + Number(value || 0), 0);
+        snapshot.idle += Number(times.idle || 0);
+        snapshot.total += total;
+        return snapshot;
+    }, { idle: 0, total: 0 });
+}
+
+function systemCpuUtilization(start, end) {
+    const total = end.total - start.total;
+    const idle = end.idle - start.idle;
+    return total > 0 ? Number(((total - idle) * 100 / total).toFixed(1)) : 0;
+}
+
+function documentResourceCounts(document) {
+    const root = document.getRoot();
     return {
-        command: process.execPath,
-        baseArgs: [cliPath]
+        accessors: root.listAccessors().length,
+        animations: root.listAnimations().length,
+        buffers: root.listBuffers().length,
+        cameras: root.listCameras().length,
+        materials: root.listMaterials().length,
+        meshes: root.listMeshes().length,
+        nodes: root.listNodes().length,
+        scenes: root.listScenes().length,
+        skins: root.listSkins().length,
+        textures: root.listTextures().length
     };
 }
 
-async function runCommand(runner, args, timeoutMs = 10 * 60 * 1000) {
-    const startedAt = Date.now();
-    return new Promise((resolve) => {
-        const child = spawn(runner.command, [...runner.baseArgs, ...args], {
-            cwd: pluginRoot,
-            stdio: ['ignore', 'pipe', 'pipe'],
-            windowsHide: true
-        });
-
-        let stdout = '';
-        let stderr = '';
-        const timeout = setTimeout(() => {
-            child.kill();
-        }, timeoutMs);
-
-        child.stdout.on('data', (chunk) => {
-            stdout += String(chunk);
-        });
-        child.stderr.on('data', (chunk) => {
-            stderr += String(chunk);
-        });
-        child.on('close', (code, signal) => {
-            clearTimeout(timeout);
-            resolve({
-                args,
-                code,
-                signal,
-                stdout,
-                stderr,
-                durationMs: Date.now() - startedAt
-            });
-        });
-    });
+function standardTextureCoordinateSnapshot(document) {
+    const coordinates = new Map();
+    for (const material of document.getRoot().listMaterials()) {
+        for (const info of [
+            material.getBaseColorTextureInfo(),
+            material.getMetallicRoughnessTextureInfo(),
+            material.getNormalTextureInfo(),
+            material.getOcclusionTextureInfo(),
+            material.getEmissiveTextureInfo()
+        ]) {
+            if (info) coordinates.set(info, info.getTexCoord());
+        }
+    }
+    return coordinates;
 }
 
-function profileSteps(profile, inputPath, outputPath, workDir, profileOptions = {}) {
-    const step1 = path.join(workDir, '01-prune.glb');
-    const step2 = path.join(workDir, '02-dedup.glb');
-    const step3 = path.join(workDir, '03-weld.glb');
-    const step4 = path.join(workDir, '04-simplify.glb');
-    const step5 = path.join(workDir, '05-png.glb');
-    const step6 = path.join(workDir, '06-resize.glb');
-    const step7 = path.join(workDir, '07-uastc.glb');
-    const step8 = path.join(workDir, '08-etc1s.glb');
-
-    if (profile === 'safe-draco') {
-        return [
-            ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
-            ['dedup', step1, step2],
-            ['draco', step2, outputPath, '--method', 'edgebreaker']
-        ];
-    }
-
-    if (profile === 'safe-meshopt') {
-        return [
-            ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
-            ['dedup', step1, step2],
-            ['meshopt', step2, outputPath, '--level', 'medium']
-        ];
-    }
-
-    if (profile === 'editor-preview') {
-        const steps = [
-            ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
-            ['dedup', step1, step2]
-        ];
-        let geometryOutput = step2;
-        if (!profileOptions.protectGeometry) {
-            steps.push(['weld', step2, step3]);
-            steps.push(['simplify', step3, step4, '--ratio', '0.35', '--error', '0.01', '--lock-border', 'true']);
-            geometryOutput = step4;
-        }
-        steps.push(['resize', geometryOutput, outputPath, '--width', '1024', '--height', '1024']);
-        return steps;
-    }
-
-    if (profile === 'web-low' || profile === 'web-medium' || profile === 'web-high') {
-        const low = profile === 'web-low';
-        const high = profile === 'web-high';
-        const ratio = low ? '0.5' : '0.8';
-        const error = low ? '0.01' : '0.005';
-        const textureMaxSize = String(profileOptions.textureMaxSize || (low ? 1024 : (high ? 4096 : 2048)));
-        const steps = [
-            ['prune', inputPath, step1, '--keep-leaves', 'true', '--keep-solid-textures', 'true'],
-            ['dedup', step1, step2]
-        ];
-        let geometryOutput = step2;
-        if (!high && !profileOptions.protectGeometry) {
-            steps.push(['weld', step2, step3]);
-            steps.push(['simplify', step3, step4, '--ratio', ratio, '--error', error, '--lock-border', 'true']);
-            geometryOutput = step4;
-        }
-        steps.push(['png', geometryOutput, step5, '--formats', '*']);
-        steps.push(['resize', step5, step6, '--width', textureMaxSize, '--height', textureMaxSize]);
-        steps.push(['uastc', step6, step7, '--slots', '{normalTexture,occlusionTexture,metallicRoughnessTexture,clearcoatTexture,clearcoatRoughnessTexture,clearcoatNormalTexture,transmissionTexture,thicknessTexture,specularTexture,iridescenceTexture,iridescenceThicknessTexture,anisotropyTexture}', '--level', '2', '--zstd', '18']);
-        steps.push(['etc1s', step7, step8, '--slots', '{baseColorTexture,emissiveTexture,sheenColorTexture,specularColorTexture}', '--quality', low ? '96' : '128']);
-        steps.push(['draco', step8, outputPath, '--method', 'edgebreaker']);
-        return steps;
-    }
-
-    throw new Error(`Unknown optimization profile "${profile}".`);
+function preparationMutationsAreNoops(events, textureCoordinates) {
+    return events.every((event) => event.type === 'node:change' &&
+        event.attribute === 'texCoord' &&
+        textureCoordinates.has(event.target) &&
+        textureCoordinates.get(event.target) === event.target.getTexCoord());
 }
+
+function configureDracoWithoutWeld(document) {
+    if (document.hasExtension('KHR_mesh_primitive_restart')) {
+        throw new Error('draco: Missing support for KHR_mesh_primitive_restart.');
+    }
+    let indexedPrimitiveCount = 0;
+    for (const mesh of document.getRoot().listMeshes()) {
+        for (const primitive of mesh.listPrimitives()) {
+            if (primitive.getIndices() || primitive.getMode() !== TRIANGLES_MODE) continue;
+            const position = primitive.getAttribute('POSITION');
+            const vertexCount = position?.getCount() || 0;
+            if (vertexCount <= 0) continue;
+            const indices = vertexCount <= 65536 ? new Uint16Array(vertexCount) : new Uint32Array(vertexCount);
+            for (let index = 0; index < vertexCount; index += 1) indices[index] = index;
+            primitive.setIndices(document.createAccessor()
+                .setType('SCALAR')
+                .setArray(indices)
+                .setBuffer(position.getBuffer()));
+            indexedPrimitiveCount += 1;
+        }
+    }
+    document
+        .createExtension(KHRDracoMeshCompression)
+        .setRequired(true)
+        .setEncoderOptions({
+            method: KHRDracoMeshCompression.EncoderMethod.EDGEBREAKER,
+            encodeSpeed: 5,
+            decodeSpeed: 5,
+            quantizationBits: {
+                POSITION: 14,
+                NORMAL: 10,
+                COLOR: 8,
+                TEX_COORD: 12,
+                GENERIC: 12
+            },
+            quantizationVolume: 'mesh'
+        });
+    return indexedPrimitiveCount;
+}
+
+async function normalizeUnsupportedTextures(document) {
+    let converted = 0;
+    for (const texture of document.getRoot().listTextures()) {
+        const mimeType = texture.getMimeType();
+        if (mimeType === 'image/png' || mimeType === 'image/jpeg' || mimeType === 'image/ktx2') continue;
+        const image = texture.getImage();
+        if (!image) continue;
+        texture.setImage(await sharp(image, { limitInputPixels: false }).png().toBuffer());
+        texture.setMimeType('image/png');
+        if (texture.getURI()) texture.setURI(`${path.parse(texture.getURI()).name}.png`);
+        converted += 1;
+    }
+    return converted;
+}
+
+const DATA_TEXTURE_SLOTS = /(?:normalTexture|occlusionTexture|metallicRoughnessTexture|clearcoatTexture|clearcoatRoughnessTexture|clearcoatNormalTexture|transmissionTexture|thicknessTexture|specularTexture|iridescenceTexture|iridescenceThicknessTexture|anisotropyTexture)/;
+const COLOR_TEXTURE_SLOTS = /(?:baseColorTexture|emissiveTexture|sheenColorTexture|specularColorTexture)/;
 
 async function getFileSize(filePath) {
     const details = await stat(filePath);
@@ -608,6 +730,7 @@ async function writeOptimizerProgress(options, sourcePath, progress) {
         schemaVersion: 1,
         sourcePath,
         profile: options.profile,
+        jobKey: options.jobKey || '',
         status: progress.status || 'running',
         step: Math.max(0, Number(progress.step) || 0),
         totalSteps: Math.max(0, Number(progress.totalSteps) || 0),
@@ -629,13 +752,13 @@ async function writeOptimizerProgress(options, sourcePath, progress) {
     }
 }
 
-async function optimizeAsset(asset, index, options, runner) {
+async function optimizeAsset(asset, index, options) {
+    const workerStartedAt = Date.now();
+    const systemCpuStartedAt = systemCpuSnapshot();
     const sourcePath = path.resolve(asset.localPath);
     const fileName = path.basename(normalizeUrlPath(asset.url || sourcePath));
     const slug = `${String(index + 1).padStart(2, '0')}-${slugify(fileName)}`;
     const derivativePath = options.outputFile || path.join(options.outputDir, `${slug}.${options.profile}.glb`);
-    const workRoot = path.join(options.outputDir, '.work');
-    const workDir = path.join(workRoot, `${slug}-${Date.now()}`);
     const sourceSizeBytes = asset.localSizeBytes || asset.sizeBytes || await getFileSize(sourcePath);
     let progressStep = 1;
     let progressTotalSteps = 0;
@@ -647,7 +770,66 @@ async function optimizeAsset(asset, index, options, runner) {
         percent: progressPercent,
         message: 'Analyzing source asset'
     });
-    const original = asset.gltf || await analyzeGlbFile(sourcePath);
+
+    if (!['safe-draco', 'safe-meshopt', 'editor-preview', 'web-high', 'web-medium', 'web-low'].includes(options.profile)) {
+        const message = `Unknown optimization profile "${options.profile}".`;
+        await writeOptimizerProgress(options, sourcePath, { status: 'failed', step: 1, totalSteps: 1, percent: 0, message });
+        throw new Error(message);
+    }
+
+    const io = await createOptimizerIO();
+    let sourceBuffer = null;
+    let inputBuffer = null;
+    let original = asset.gltf || null;
+    let sourceSha256 = options.sourceSha256;
+    let reusedPreparedBaseline = false;
+
+    if (isWebProfile(options.profile) && options.preparedBaseline && options.preparedAnalysis && existsSync(options.preparedBaseline) && existsSync(options.preparedAnalysis)) {
+        try {
+            const prepared = JSON.parse(await readFile(options.preparedAnalysis, 'utf8'));
+            if (prepared.schemaVersion === 2 && prepared.sourceSha256 && (!sourceSha256 || prepared.sourceSha256 === sourceSha256)) {
+                const candidateBuffer = await readFile(options.preparedBaseline);
+                if (prepared.preparedSha256 && sourceDigest(candidateBuffer) === prepared.preparedSha256) {
+                    inputBuffer = candidateBuffer;
+                    original = prepared.original;
+                    sourceSha256 = prepared.sourceSha256;
+                    reusedPreparedBaseline = true;
+                }
+            }
+        } catch (error) {
+            inputBuffer = null;
+            original = asset.gltf || null;
+        }
+    }
+
+    if (!inputBuffer) {
+        sourceBuffer = await readFile(sourcePath);
+        const actualSourceSha256 = sourceDigest(sourceBuffer);
+        if (sourceSha256 && sourceSha256 !== actualSourceSha256) {
+            throw new Error('Source GLB changed after this optimization job was queued.');
+        }
+        sourceSha256 = actualSourceSha256;
+        inputBuffer = sourceBuffer;
+        original = original || await analyzeGlbBuffer(sourceBuffer, sourcePath);
+    }
+
+    const document = await io.readBinary(new Uint8Array(inputBuffer));
+    const initialResourceCounts = documentResourceCounts(document);
+    const initialTextureCoordinates = standardTextureCoordinateSnapshot(document);
+    const preparationMutations = [];
+    let stopTrackingPreparation = () => {};
+    if (options.writePreparedBaseline && !reusedPreparedBaseline) {
+        const graph = document.getGraph();
+        const trackPreparationMutation = (event) => { preparationMutations.push(event); };
+        for (const eventName of ['node:create', 'node:change', 'node:dispose']) {
+            graph.addEventListener(eventName, trackPreparationMutation);
+        }
+        stopTrackingPreparation = () => {
+            for (const eventName of ['node:create', 'node:change', 'node:dispose']) {
+                graph.removeEventListener(eventName, trackPreparationMutation);
+            }
+        };
+    }
     const record = {
         sourceUrl: asset.url,
         sourcePath,
@@ -663,6 +845,10 @@ async function optimizeAsset(asset, index, options, runner) {
         original,
         derivative: null,
         commands: [],
+        stageTimings: [],
+        sourceSha256,
+        jobKey: options.jobKey || '',
+        reusedPreparedBaseline,
         status: options.dryRun ? 'dry-run' : 'pending',
         error: null,
         runtimeSubstitutionReady: false,
@@ -671,11 +857,15 @@ async function optimizeAsset(asset, index, options, runner) {
 
     const sourceAnalysis = record.original;
     const protectedByContent = Boolean(sourceAnalysis?.protectedGeometry?.hasSkins || sourceAnalysis?.protectedGeometry?.hasMorphTargets);
-    const protectGeometry = Boolean(options.protectGeometry || protectedByContent);
+    const protectGeometry = Boolean(options.protectGeometry || protectedByContent || options.profile === 'web-high');
     record.profileOptions = {
         protectGeometry,
         protectedByContent,
-        textureMaxSize: options.textureMaxSize || (options.profile === 'web-low' ? 1024 : (options.profile === 'web-medium' ? 2048 : (options.profile === 'web-high' ? 4096 : null)))
+        textureMaxSize: isWebProfile(options.profile) ? webProfileTextureCap(options.profile, options.textureMaxSize) : null,
+        ktxJobs: isWebProfile(options.profile) ? selectKtxJobs(original) : 0,
+        uastcLevel: isWebProfile(options.profile) ? 2 : null,
+        uastcZstdLevel: isWebProfile(options.profile) ? options.uastcZstdLevel : null,
+        etc1sQuality: options.profile === 'web-low' ? 96 : (isWebProfile(options.profile) ? 128 : null)
     };
 
     if (options.profile === 'safe-meshopt') {
@@ -709,10 +899,149 @@ async function optimizeAsset(asset, index, options, runner) {
     }
 
     await mkdir(path.dirname(derivativePath), { recursive: true });
-    await mkdir(workDir, { recursive: true });
+    sharp.simd(true);
+    sharp.concurrency(Math.max(1, Math.min(4, typeof os.availableParallelism === 'function' ? os.availableParallelism() : (os.cpus().length || 1))));
+
+    const operations = [];
+    if (!reusedPreparedBaseline) {
+        operations.push({
+            id: 'prune',
+            label: 'Removing unused data',
+            run: () => document.transform(prune({ keepLeaves: true, keepSolidTextures: true }))
+        });
+        operations.push({
+            id: 'dedup',
+            label: 'Deduplicating data',
+            run: () => document.transform(dedup())
+        });
+        if (options.writePreparedBaseline && options.preparedBaseline && options.preparedAnalysis) {
+            operations.push({
+                id: 'prepared-baseline',
+                label: 'Saving reusable preparation stage',
+                run: async () => {
+                    const preparedResourceCounts = documentResourceCounts(document);
+                    stopTrackingPreparation();
+                    const reusedSourceBytes = Boolean(sourceBuffer &&
+                        preparationMutationsAreNoops(preparationMutations, initialTextureCoordinates));
+                    const preparedBinary = reusedSourceBytes ? sourceBuffer : Buffer.from(await io.writeBinary(document));
+                    if (reusedSourceBytes) {
+                        await atomicLinkOrWrite(sourcePath, options.preparedBaseline, preparedBinary);
+                    } else {
+                        await atomicWriteFile(options.preparedBaseline, preparedBinary);
+                    }
+                    await atomicWriteFile(options.preparedAnalysis, `${JSON.stringify({
+                        schemaVersion: 2,
+                        sourcePath,
+                        sourceSha256,
+                        preparedSha256: sourceDigest(preparedBinary),
+                        original,
+                        reusedSourceBytes,
+                        preparationMutationCount: preparationMutations.length,
+                        initialResourceCounts,
+                        resourceCounts: preparedResourceCounts,
+                        createdAt: new Date().toISOString()
+                    }, null, 2)}\n`);
+                    record.preparedBaselineReusedSourceBytes = reusedSourceBytes;
+                }
+            });
+        }
+    }
+
+    if ((options.profile === 'editor-preview' || options.profile === 'web-low' || options.profile === 'web-medium') && !protectGeometry) {
+        const ratio = options.profile === 'editor-preview' ? 0.35 : (options.profile === 'web-low' ? 0.5 : 0.8);
+        const error = options.profile === 'web-medium' ? 0.005 : 0.01;
+        operations.push({ id: 'weld', label: 'Welding visual geometry', run: () => document.transform(weld()) });
+        operations.push({
+            id: 'simplify',
+            label: 'Simplifying visual geometry',
+            run: () => document.transform(simplify({ simplifier: MeshoptSimplifier, ratio, error, lockBorder: true }))
+        });
+    }
+
+    if (options.profile === 'editor-preview') {
+        operations.push({
+            id: 'resize',
+            label: 'Resizing preview textures',
+            run: () => document.transform(textureCompress({ encoder: sharp, resize: [1024, 1024], limitInputPixels: false }))
+        });
+    }
+
+    if (isWebProfile(options.profile)) {
+        const textureMaxSize = record.profileOptions.textureMaxSize;
+        const jobs = record.profileOptions.ktxJobs;
+        operations.push({ id: 'normalize-textures', label: 'Normalizing source textures', run: () => normalizeUnsupportedTextures(document) });
+        operations.push({
+            id: 'uastc',
+            label: 'Compressing material textures (UASTC)',
+            run: () => document.transform(toktx({
+                encoder: sharp,
+                resize: [textureMaxSize, textureMaxSize],
+                mode: Mode.UASTC,
+                slots: DATA_TEXTURE_SLOTS,
+                level: 2,
+                zstd: record.profileOptions.uastcZstdLevel,
+                jobs,
+                limitInputPixels: false
+            }))
+        });
+        operations.push({
+            id: 'etc1s',
+            label: 'Compressing color textures (ETC1S)',
+            run: async () => {
+                await document.transform(toktx({
+                    encoder: sharp,
+                    resize: [textureMaxSize, textureMaxSize],
+                    mode: Mode.ETC1S,
+                    slots: COLOR_TEXTURE_SLOTS,
+                    quality: options.profile === 'web-low' ? 96 : 128,
+                    jobs,
+                    limitInputPixels: false
+                }));
+                if (document.getRoot().listTextures().some((texture) => texture.getMimeType() !== 'image/ktx2')) {
+                    await document.transform(toktx({
+                        encoder: sharp,
+                        resize: [textureMaxSize, textureMaxSize],
+                        mode: Mode.UASTC,
+                        level: 2,
+                        zstd: record.profileOptions.uastcZstdLevel,
+                        jobs,
+                        limitInputPixels: false
+                    }));
+                }
+            }
+        });
+    }
+
+    const canPreserveSourceDraco = Boolean(sourceAnalysis?.extensions?.hasDraco && protectGeometry);
+    record.profileOptions.preservedSourceDraco = canPreserveSourceDraco;
+    if (options.profile === 'safe-meshopt') {
+        operations.push({ id: 'meshopt', label: 'Compressing geometry (Meshopt)', run: () => document.transform(meshopt({ encoder: MeshoptEncoder, level: 'medium' })) });
+    } else if (options.profile !== 'editor-preview' && protectGeometry && !canPreserveSourceDraco) {
+        operations.push({
+            id: 'draco',
+            label: 'Compressing geometry (Draco)',
+            run: () => {
+                record.profileOptions.identityIndexedPrimitives = configureDracoWithoutWeld(document);
+            }
+        });
+    } else if (options.profile !== 'editor-preview' && !canPreserveSourceDraco) {
+        operations.push({ id: 'draco', label: 'Compressing geometry (Draco)', run: () => document.transform(draco({ method: 'edgebreaker' })) });
+    } else if (canPreserveSourceDraco) {
+        record.runtimeNotes.push('The source Draco extension is retained without an extra weld pass because protected geometry is unchanged.');
+    }
+
+    let derivativeBuffer = null;
+    operations.push({
+        id: 'serialize',
+        label: 'Writing optimized asset',
+        run: async () => {
+            derivativeBuffer = Buffer.from(await io.writeBinary(document));
+            await atomicWriteFile(derivativePath, derivativeBuffer);
+        }
+    });
+
     try {
-        const steps = profileSteps(options.profile, sourcePath, derivativePath, workDir, record.profileOptions);
-        const totalSteps = steps.length + 2;
+        const totalSteps = operations.length + 2;
         progressTotalSteps = totalSteps;
         progressPercent = Math.round(100 / totalSteps);
         await writeOptimizerProgress(options, sourcePath, {
@@ -722,9 +1051,8 @@ async function optimizeAsset(asset, index, options, runner) {
             percent: progressPercent,
             message: 'Source analysis complete'
         });
-        const stepTimeoutMs = options.profile === 'editor-preview' ? 30 * 60 * 1000 : 10 * 60 * 1000;
-        for (let stepIndex = 0; stepIndex < steps.length; stepIndex += 1) {
-            const args = steps[stepIndex];
+        for (let stepIndex = 0; stepIndex < operations.length; stepIndex += 1) {
+            const operation = operations[stepIndex];
             const step = stepIndex + 2;
             progressStep = step;
             progressPercent = Math.round(((step - 1) / totalSteps) * 100);
@@ -733,23 +1061,21 @@ async function optimizeAsset(asset, index, options, runner) {
                 step,
                 totalSteps,
                 percent: progressPercent,
-                message: progressStepLabel(args[0])
+                message: operation.label
             });
-            const command = await runCommand(runner, args, stepTimeoutMs);
-            record.commands.push(command);
-            if (command.code !== 0) {
-                record.status = 'error';
-                const details = String(command.stderr || command.stdout || '').trim().split(/\r?\n/).slice(-3).join(' ');
-                record.error = `${args[0]} failed with exit code ${command.code}${command.signal ? ` (${command.signal})` : ''}${details ? `: ${details}` : ''}`;
-                await writeOptimizerProgress(options, sourcePath, {
-                    status: 'failed',
-                    step,
-                    totalSteps,
-                    percent: Math.round(((step - 1) / totalSteps) * 100),
-                    message: record.error
-                });
-                return record;
-            }
+            const stageStartedAt = Date.now();
+            const cpuStartedAt = process.cpuUsage();
+            await operation.run();
+            const cpu = process.cpuUsage(cpuStartedAt);
+            const timing = {
+                stage: operation.id,
+                durationMs: Date.now() - stageStartedAt,
+                cpuUserMs: Math.round(cpu.user / 1000),
+                cpuSystemMs: Math.round(cpu.system / 1000),
+                maxRssBytes: process.resourceUsage().maxRSS * 1024
+            };
+            record.stageTimings.push(timing);
+            record.commands.push(timing);
         }
 
         progressStep = totalSteps;
@@ -761,15 +1087,37 @@ async function optimizeAsset(asset, index, options, runner) {
             percent: progressPercent,
             message: 'Validating optimized asset'
         });
-        record.derivativeSizeBytes = await getFileSize(derivativePath);
+        if (!derivativeBuffer) throw new Error('Optimizer did not serialize a derivative GLB.');
+        const parsedDerivative = parseGlb(derivativeBuffer, derivativePath);
+        record.derivativeSizeBytes = derivativeBuffer.byteLength;
         record.derivativeSizeLabel = formatBytes(record.derivativeSizeBytes);
         const delta = reduction(sourceSizeBytes, record.derivativeSizeBytes);
         record.reductionBytes = delta.bytes;
         record.reductionPercent = delta.percent;
-        record.derivative = await analyzeGlbFile(derivativePath);
+        record.derivative = analyzeGltf(parsedDerivative.gltf);
+        record.derivative.textureMemory = await estimateTextureMemory(parsedDerivative.gltf, parsedDerivative.binary);
         const hasSourceTextures = Number(record.original?.counts?.images || 0) > 0;
+        const uncompressedTextures = document.getRoot().listTextures().filter((texture) => texture.getMimeType() !== 'image/ktx2').length;
         record.runtimeSubstitutionReady = record.derivative.extensions.hasDraco &&
-            (!options.profile.startsWith('web-') || !hasSourceTextures || record.derivative.extensions.hasKtx2);
+            (!isWebProfile(options.profile) || !hasSourceTextures || (record.derivative.extensions.hasKtx2 && uncompressedTextures === 0));
+        record.performance = {
+            totalDurationMs: record.stageTimings.reduce((total, stage) => total + stage.durationMs, 0),
+            maxRssBytes: process.resourceUsage().maxRSS * 1024,
+            cpuUserMs: record.stageTimings.reduce((total, stage) => total + stage.cpuUserMs, 0),
+            cpuSystemMs: record.stageTimings.reduce((total, stage) => total + stage.cpuSystemMs, 0),
+            queueWaitMs: options.queuedAt && Number.isFinite(Date.parse(options.queuedAt))
+                ? Math.max(0, workerStartedAt - Date.parse(options.queuedAt))
+                : null,
+            ktxJobs: record.profileOptions.ktxJobs,
+            sharpSimd: sharp.simd(),
+            sharpConcurrency: sharp.concurrency(),
+            encoderVersions: options.encoderVersions
+        };
+        const totalCpuMs = record.performance.cpuUserMs + record.performance.cpuSystemMs;
+        record.performance.nodeCpuUtilizationPercent = record.performance.totalDurationMs > 0
+            ? Number((totalCpuMs * 100 / record.performance.totalDurationMs).toFixed(1))
+            : 0;
+        record.performance.systemCpuUtilizationPercent = systemCpuUtilization(systemCpuStartedAt, systemCpuSnapshot());
         record.status = 'done';
         await writeOptimizerProgress(options, sourcePath, {
             status: 'ready',
@@ -781,17 +1129,16 @@ async function optimizeAsset(asset, index, options, runner) {
 
         return record;
     } catch (error) {
+        record.status = 'error';
+        record.error = error && error.message ? error.message : String(error);
         await writeOptimizerProgress(options, sourcePath, {
             status: 'failed',
             step: progressStep,
             totalSteps: progressTotalSteps,
             percent: progressPercent,
-            message: error && error.message ? error.message : String(error)
+            message: record.error
         });
-        throw error;
-    } finally {
-        await rm(workDir, { recursive: true, force: true });
-        await rm(workRoot, { recursive: false, force: true }).catch(() => {});
+        return record;
     }
 }
 
@@ -859,10 +1206,26 @@ function renderMarkdown(manifest) {
     return `${lines.join('\n')}\n`;
 }
 
-async function getToolVersion(runner) {
-    const result = await runCommand(runner, ['--version'], 30000);
-    const text = `${result.stdout}\n${result.stderr}`.trim();
-    return text || '';
+async function getToolVersion() {
+    const packagePath = path.join(pluginRoot, 'node_modules', '@gltf-transform', 'cli', 'package.json');
+    const packageJson = JSON.parse(await readFile(packagePath, 'utf8'));
+    return String(packageJson.version || '');
+}
+
+async function getEncoderVersions(gltfTransformVersion) {
+    let ktxSoftware = 'unavailable';
+    try {
+        const result = await execFileAsync('ktx', ['--version'], { windowsHide: true, timeout: 10000 });
+        ktxSoftware = String(result.stdout || result.stderr || '').trim().split(/\r?\n/, 1)[0] || 'available';
+    } catch (error) {
+        ktxSoftware = 'unavailable';
+    }
+    return {
+        gltfTransform: gltfTransformVersion,
+        sharp: String(sharp.versions?.sharp || ''),
+        libvips: String(sharp.versions?.vips || ''),
+        ktxSoftware
+    };
 }
 
 function printSummary(manifest) {
@@ -881,8 +1244,8 @@ async function run() {
     const options = parseArgs(process.argv.slice(2));
     const audit = options.source ? { glbAssets: [] } : JSON.parse(await readFile(options.audit, 'utf8'));
     const selectedAssets = selectAssets(audit, options);
-    const runner = resolveGltfTransformRunner(options.gltfTransform);
-    const toolVersion = options.dryRun ? '' : await getToolVersion(runner);
+    const toolVersion = await getToolVersion();
+    options.encoderVersions = await getEncoderVersions(toolVersion);
     await mkdir(options.outputDir, { recursive: true });
 
     const manifest = {
@@ -894,10 +1257,11 @@ async function run() {
         profile: options.profile,
         dryRun: options.dryRun,
         gltfTransform: {
-            command: runner.command,
-            baseArgs: runner.baseArgs,
+            command: 'programmatic NodeIO pipeline',
+            baseArgs: [],
             version: toolVersion
         },
+        encoderVersions: options.encoderVersions,
         selection: {
             limit: options.limit,
             include: options.include || null,
@@ -907,7 +1271,7 @@ async function run() {
     };
 
     for (let index = 0; index < selectedAssets.length; index += 1) {
-        manifest.assets.push(await optimizeAsset(selectedAssets[index], index, options, runner));
+        manifest.assets.push(await optimizeAsset(selectedAssets[index], index, options));
     }
 
     await mkdir(path.dirname(options.manifest), { recursive: true });

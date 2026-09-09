@@ -74,6 +74,10 @@ function sanitize_text_field( string $value ): string {
 	return trim( strip_tags( $value ) );
 }
 
+function wp_json_encode( $value ): string {
+	return json_encode( $value, JSON_UNESCAPED_SLASHES );
+}
+
 function update_post_meta( int $post_id, string $key, $value ): bool {
 	$GLOBALS['vrodos_desktop_test_meta'][ $post_id ][ $key ] = $value;
 	return true;
@@ -110,21 +114,40 @@ function wp_strip_all_tags( string $value ): string {
 	return strip_tags( $value );
 }
 
+function wp_get_post_terms( int $post_id, string $taxonomy, array $args = [] ): array {
+	unset( $post_id, $taxonomy, $args );
+	return [ 'walkable-surface' ];
+}
+
 require_once dirname( __DIR__ ) . '/includes/asset-optimization/trait-vrodos-asset-optimization-desktop-profiles.php';
 
 final class VRodos_Desktop_Profile_Test_Harness {
 	use VRodos_Asset_Optimization_Desktop_Profiles;
 
 	public const DESKTOP_PROFILE_CRON_HOOK = 'vrodos_asset_desktop_profile_process_job';
+	public const EDITOR_PREVIEW_CRON_HOOK = 'vrodos_asset_editor_preview_process_job';
 	public const META_KEY = '_vrodos_asset3d_glb_derivatives';
+	public const SOURCE_META_KEY = '_vrodos_asset3d_glb_source_snapshot';
+	public const ANALYSIS_META_KEY = '_vrodos_asset3d_glb_analysis';
 
-	private static function build_derivative_paths( int $asset_id, array $source, string $profile ): array {
+	private static function build_derivative_paths( int $asset_id, array $source, string $profile, string $job_key = '' ): array {
+		unset( $asset_id, $source, $profile, $job_key );
 		return [ 'progress' => $GLOBALS['vrodos_desktop_test_progress_path'] ];
 	}
 
 	private static function get_derivative_meta( int $asset_id ): array {
 		$meta = get_post_meta( $asset_id, self::META_KEY, true );
-		return is_array( $meta ) ? $meta : [ 'derivatives' => [] ];
+		return is_array( $meta ) ? $meta : [ 'schemaVersion' => 2, 'derivatives' => [], 'webVariants' => [], 'webProfileDefaults' => [] ];
+	}
+
+	private static function ensure_current_derivative_schema( int $asset_id ): void {
+		unset( $asset_id );
+	}
+
+	private static function source_identity_matches( int $asset_id, string $sha256, int $generation ): bool {
+		unset( $asset_id );
+		return $sha256 === (string) ( $GLOBALS['vrodos_desktop_test_source']['sha256'] ?? '' )
+			&& $generation === (int) ( $GLOBALS['vrodos_desktop_test_source']['generation'] ?? 0 );
 	}
 
 	private static function get_source_glb( int $asset_id ) {
@@ -142,21 +165,39 @@ function invoke_desktop_profile_method( string $name, array $arguments = [] ) {
 	return $method->invokeArgs( null, $arguments );
 }
 
-function seed_desktop_profile_record( int $asset_id, string $profile, string $status, array $source, array $options, string $updated_at ): void {
-	$GLOBALS['vrodos_desktop_test_meta'][ $asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ] = [
-		'derivatives' => [
-			$profile => [
-				'profile'        => $profile,
-				'status'         => $status,
-				'message'        => 'Test state.',
-				'sourceUrl'      => $source['url'],
-				'sourcePath'     => $source['path'],
-				'sourceSha256'   => hash_file( 'sha256', $source['path'] ),
-				'profileOptions' => $options,
-				'updatedAt'      => $updated_at,
-			],
-		],
+function seed_desktop_profile_record( int $asset_id, string $profile, string $status, array $source, array $options, string $updated_at ): string {
+	$job_key = invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, $profile, $options ] );
+	$record = [
+		'profile'        => $profile,
+		'jobKey'         => $job_key,
+		'status'         => $status,
+		'message'        => 'Test state.',
+		'sourceUrl'      => $source['url'],
+		'sourcePath'     => $source['path'],
+		'sourceSha256'   => $source['sha256'],
+		'sourceGeneration' => $source['generation'],
+		'profileOptions' => array_merge( $options, [ 'jobKey' => $job_key, 'sourceSha256' => $source['sha256'], 'sourceGeneration' => $source['generation'] ] ),
+		'updatedAt'      => $updated_at,
 	];
+	if ( 'ready' === $status ) {
+		$record = array_merge(
+			$record,
+			[
+				'path' => $source['path'],
+				'url' => '/private/derivative.glb',
+				'runtimeSubstitutionReady' => true,
+				'extensions' => [ 'KHR_draco_mesh_compression' ],
+				'textureImageCount' => 0,
+			]
+		);
+	}
+	$GLOBALS['vrodos_desktop_test_meta'][ $asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ] = [
+		'schemaVersion' => 2,
+		'derivatives' => [ $profile => $record ],
+		'webVariants' => [ $job_key => $record ],
+		'webProfileDefaults' => [ $profile => $job_key ],
+	];
+	return $job_key;
 }
 
 $test_dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vrodos-desktop-profile-' . bin2hex( random_bytes( 6 ) );
@@ -174,29 +215,43 @@ $source = [
 	'url'  => '/private/source.glb',
 	'path' => $source_path,
 	'sizeBytes' => 101 * 1024 * 1024,
+	'sha256' => hash_file( 'sha256', $source_path ),
+	'generation' => 1,
 ];
 $options = [
 	'protectGeometry' => true,
 	'textureMaxSize'  => 4096,
-	'pipelineVersion' => 2,
+	'pipelineVersion' => 4,
 	'recipe'          => 'web-high',
 ];
 $GLOBALS['vrodos_desktop_test_source'] = $source;
 $GLOBALS['vrodos_desktop_test_progress_path'] = $progress_path;
 
-seed_desktop_profile_record( $asset_id, $profile, 'queued', $source, $options, gmdate( 'Y-m-d H:i:s', time() - 60 ) );
-$result = invoke_desktop_profile_method( 'queue_desktop_profile_derivative', [ $asset_id, $profile, $source, $options ] );
+$job_key = seed_desktop_profile_record( $asset_id, $profile, 'queued', $source, $options, gmdate( 'Y-m-d H:i:s', time() - 60 ) );
+$result = VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
 vrodos_desktop_assert( true === $result, 'a matching queued record should remain recoverable' );
 vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'a matching queued record must recreate its missing cron event' );
 
-invoke_desktop_profile_method( 'queue_desktop_profile_derivative', [ $asset_id, $profile, $source, $options ] );
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
 vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'an existing cron event must not be duplicated' );
 vrodos_desktop_assert( 1 === substr_count( (string) file_get_contents( $log_path ), 'Recovered missing desktop profile cron job' ), 'lost-job recovery should be logged once' );
 
 $GLOBALS['vrodos_desktop_test_events'] = [];
 seed_desktop_profile_record( $asset_id, $profile, 'running', $source, $options, gmdate( 'Y-m-d H:i:s', time() - 60 ) );
-invoke_desktop_profile_method( 'queue_desktop_profile_derivative', [ $asset_id, $profile, $source, $options ] );
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
 vrodos_desktop_assert( 0 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'a recently updated running job must not be requeued' );
+
+$GLOBALS['vrodos_desktop_test_events'] = [];
+seed_desktop_profile_record( $asset_id, $profile, 'running', $source, $options, gmdate( 'Y-m-d H:i:s' ) );
+$replacement_source = array_merge( $source, [ 'generation' => 2 ] );
+$GLOBALS['vrodos_desktop_test_source'] = $replacement_source;
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $replacement_source, $options );
+$replacement_record = $GLOBALS['vrodos_desktop_test_meta'][ $asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webVariants'][ $job_key ];
+vrodos_desktop_assert( 'queued' === $replacement_record['status'], 'same-content attachment replacement must not join work owned by the obsolete source generation' );
+vrodos_desktop_assert( 2 === $replacement_record['sourceGeneration'] && 2 === (int) ( $replacement_record['cronArgs'][5] ?? 0 ), 'replacement work must persist and schedule the active source generation' );
+vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'same-content attachment replacement must schedule one current-generation job' );
+$GLOBALS['vrodos_desktop_test_source'] = $source;
+$GLOBALS['vrodos_desktop_test_events'] = [];
 
 seed_desktop_profile_record( $asset_id, $profile, 'running', $source, $options, gmdate( 'Y-m-d H:i:s', time() - 900 ) );
 file_put_contents(
@@ -205,6 +260,7 @@ file_put_contents(
 		[
 			'schemaVersion' => 1,
 			'profile'       => $profile,
+			'jobKey'        => $job_key,
 			'sourcePath'    => $source_path,
 			'status'        => 'running',
 			'step'          => 2,
@@ -215,12 +271,12 @@ file_put_contents(
 		]
 	)
 );
-invoke_desktop_profile_method( 'queue_desktop_profile_derivative', [ $asset_id, $profile, $source, $options ] );
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
 vrodos_desktop_assert( 0 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'recent progress-file activity must keep a running job active' );
 
 unlink( $progress_path );
-invoke_desktop_profile_method( 'queue_desktop_profile_derivative', [ $asset_id, $profile, $source, $options ] );
-$recovered = $GLOBALS['vrodos_desktop_test_meta'][ $asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['derivatives'][ $profile ];
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
+$recovered = $GLOBALS['vrodos_desktop_test_meta'][ $asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webVariants'][ $job_key ];
 vrodos_desktop_assert( 'queued' === $recovered['status'], 'a stale running job must return to the queue' );
 vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'a stale running job must schedule a replacement event' );
 vrodos_desktop_assert( str_contains( (string) file_get_contents( $log_path ), 'Requeued stale desktop profile job' ), 'stale-job recovery should be logged' );
@@ -228,11 +284,16 @@ vrodos_desktop_assert( str_contains( (string) file_get_contents( $log_path ), 'R
 $GLOBALS['vrodos_desktop_test_events'] = [];
 $GLOBALS['vrodos_desktop_test_schedule_failure'] = true;
 seed_desktop_profile_record( $asset_id, $profile, 'queued', $source, $options, gmdate( 'Y-m-d H:i:s' ) );
-$failed = invoke_desktop_profile_method( 'queue_desktop_profile_derivative', [ $asset_id, $profile, $source, $options ] );
-$failed_record = $GLOBALS['vrodos_desktop_test_meta'][ $asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['derivatives'][ $profile ];
+$failed = VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
+$failed_record = $GLOBALS['vrodos_desktop_test_meta'][ $asset_id ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webVariants'][ $job_key ];
 vrodos_desktop_assert( is_wp_error( $failed ), 'scheduler rejection must be returned to the compiler' );
 vrodos_desktop_assert( 'failed' === $failed_record['status'] && ! empty( $failed_record['failedAt'] ), 'scheduler rejection must persist a failed profile state' );
 vrodos_desktop_assert( str_contains( (string) file_get_contents( $log_path ), 'Failed to schedule desktop profile job' ), 'scheduler rejection should be logged' );
+$GLOBALS['vrodos_desktop_test_schedule_failure'] = false;
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$failed_repeat = VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, $profile, $source, $options );
+vrodos_desktop_assert( is_wp_error( $failed_repeat ), 'a failed immutable job must require an explicit regeneration attempt' );
+vrodos_desktop_assert( 0 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'Build and status checks must not silently retry a failed job' );
 
 vrodos_desktop_assert( 'web-low' === invoke_desktop_profile_method( 'runtime_derivative_profile_for_slot', [ 'headset', 'headset', [] ] ), 'standalone headset must select Web Low' );
 vrodos_desktop_assert( 'web-high' === invoke_desktop_profile_method( 'runtime_derivative_profile_for_slot', [ 'pc-rendered-vr', 'pc-rendered-vr', [] ] ), 'PC-rendered VR must select Web High' );
@@ -247,6 +308,62 @@ $large_analysis = array_merge( $small_analysis, [ 'payload' => [ 'estimatedImage
 vrodos_desktop_assert( true === VRodos_Desktop_Profile_Test_Harness::maybe_queue_web_high( 55, $small_source, $large_analysis ), '8 MiB of embedded uncompressed textures must queue Web High' );
 VRodos_Desktop_Profile_Test_Harness::maybe_queue_web_high( 55, $small_source, $large_analysis );
 vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'automatic optimization queueing must be idempotent' );
+$auto_record = invoke_desktop_profile_method( 'desktop_profile_record', [ 55, 'web-high' ] );
+vrodos_desktop_assert( 1 === $auto_record['attempts'] && ! empty( $auto_record['queuedAt'] ), 'an idempotent queued job must retain one attempt and its original queue timestamp' );
+
+$medium_options = [
+	'protectGeometry' => true,
+	'textureMaxSize'  => 2048,
+	'pipelineVersion' => 4,
+	'recipe'          => 'web-medium',
+];
+$low_options = array_merge( $medium_options, [ 'textureMaxSize' => 1024, 'recipe' => 'web-low' ] );
+$medium_key = invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, 'web-medium', $medium_options ] );
+$low_key = invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, 'web-low', $low_options ] );
+vrodos_desktop_assert( $medium_key !== $low_key, 'profile identity must distinguish recipe and texture cap' );
+vrodos_desktop_assert(
+	$job_key === invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, 'web-high', array_merge( $options, [ 'protectGeometry' => false ] ) ] ),
+	'Web High must canonicalize geometry protection so upload and Build join the same job'
+);
+vrodos_desktop_assert(
+	$medium_key !== invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, 'web-medium', array_merge( $medium_options, [ 'protectGeometry' => false ] ) ] ),
+	'profile identity must distinguish geometry protection'
+);
+
+$standard_key = seed_desktop_profile_record( 77, 'web-medium', 'ready', $source, $medium_options, gmdate( 'Y-m-d H:i:s' ) );
+$custom_path = $test_dir . DIRECTORY_SEPARATOR . 'custom-medium.glb';
+file_put_contents( $custom_path, 'custom-medium' );
+$custom_options = array_merge( $medium_options, [ 'textureMaxSize' => 1536 ] );
+$custom_key = invoke_desktop_profile_method( 'desktop_profile_job_key', [ $source, 'web-medium', $custom_options ] );
+$custom_record = $GLOBALS['vrodos_desktop_test_meta'][77][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webVariants'][ $standard_key ];
+$custom_record['jobKey'] = $custom_key;
+$custom_record['path'] = $custom_path;
+$custom_record['profileOptions'] = array_merge( $custom_options, [ 'jobKey' => $custom_key, 'sourceSha256' => $source['sha256'], 'sourceGeneration' => $source['generation'] ] );
+$GLOBALS['vrodos_desktop_test_meta'][77][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webVariants'][ $custom_key ] = $custom_record;
+invoke_desktop_profile_method( 'activate_desktop_profile_variant', [ 77, 'web-medium', $custom_key ] );
+vrodos_desktop_assert(
+	$standard_key === $GLOBALS['vrodos_desktop_test_meta'][77][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webProfileDefaults']['web-medium'],
+	'a scene-specific texture cap must not overwrite the standard profile derivative'
+);
+vrodos_desktop_assert(
+	$custom_path === VRodos_Desktop_Profile_Test_Harness::runtime_profile_derivative_path( 77, 'web-medium', $custom_options ),
+	'the compiler must resolve the immutable scene-specific profile variant directly'
+);
+
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$family_high_options = array_merge( $options, [ 'familySequence' => true ] );
+seed_desktop_profile_record( $asset_id, 'web-high', 'ready', $source, $family_high_options, gmdate( 'Y-m-d H:i:s' ) );
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( $asset_id, 'web-high', $source, $family_high_options );
+vrodos_desktop_assert( 1 === count( $GLOBALS['vrodos_desktop_test_events'] ), 'a ready High derivative must queue only Medium next' );
+$family_event_key = (string) array_key_first( $GLOBALS['vrodos_desktop_test_events'] );
+vrodos_desktop_assert( str_contains( $family_event_key, 'web-medium' ) && ! str_contains( $family_event_key, 'web-low' ), 'family ordering must remain High, then Medium, then Low' );
+
+$GLOBALS['vrodos_desktop_test_events'] = [];
+$regenerate_key = seed_desktop_profile_record( 66, 'web-high', 'ready', $source, $options, gmdate( 'Y-m-d H:i:s' ) );
+$GLOBALS['vrodos_desktop_test_meta'][ 66 ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webVariants'][ $regenerate_key ]['attempts'] = 1;
+VRodos_Desktop_Profile_Test_Harness::ensure_derivative( 66, 'web-high', $source, $options, true );
+$regenerated = $GLOBALS['vrodos_desktop_test_meta'][ 66 ][ VRodos_Desktop_Profile_Test_Harness::META_KEY ]['webVariants'][ $regenerate_key ];
+vrodos_desktop_assert( 'queued' === $regenerated['status'] && 2 === $regenerated['attempts'], 'only explicit regeneration of a ready job must create its next attempt' );
 
 $GLOBALS['vrodos_desktop_test_schedule_failure'] = true;
 
@@ -255,7 +372,7 @@ $plan->request = (object) [ 'vr_runtime_profile' => 'desktop' ];
 $plan->scenes = [
 	(object) [
 		'scene_id'        => 45,
-		'scene_json'      => (object) [ 'asset_id' => $asset_id ],
+		'scene_json'      => (object) [ 'asset_id' => 88 ],
 		'desktop_profiles' => [
 			'buildMode' => 'custom',
 			'profiles'  => [ 'custom' => [ 'assets' => array_merge( $options, [ 'profile' => 'web-high' ] ) ] ],
@@ -268,6 +385,7 @@ vrodos_desktop_assert( str_contains( $compile_state['message'], 'test scheduler 
 
 wp_delete_file( $source_path );
 wp_delete_file( $log_path );
+wp_delete_file( $custom_path );
 rmdir( $test_dir );
 
 echo "Desktop profile pipeline tests passed.\n";

@@ -16,16 +16,30 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 		if ( 'vrodos_asset3d_glb' !== $meta_key || get_post_type( $asset_id ) !== 'vrodos_asset3d' ) {
 			return;
 		}
+		$previous_snapshot = self::read_source_snapshot( $asset_id );
+		$previous_meta = get_post_meta( $asset_id, self::META_KEY, true );
+		$source = self::get_source_glb( $asset_id );
+		if ( is_wp_error( $source ) ) {
+			return;
+		}
+		$content_changed = '' !== (string) ( $previous_snapshot['sha256'] ?? '' )
+			&& (string) $previous_snapshot['sha256'] !== (string) ( $source['sha256'] ?? '' );
+		$attachment_changed = absint( $previous_snapshot['attachmentId'] ?? 0 ) > 0
+			&& absint( $previous_snapshot['attachmentId'] ?? 0 ) !== absint( $source['attachmentId'] ?? 0 );
+		$legacy_records = is_array( $previous_meta ) && 2 !== absint( $previous_meta['schemaVersion'] ?? 0 );
+		if ( $content_changed || $attachment_changed || $legacy_records ) {
+			self::cancel_asset_optimization_jobs( $asset_id );
+		}
+		if ( $content_changed || $legacy_records ) {
+			self::delete_asset_derivative_cache( $asset_id );
+		}
 
 		$analysis = self::refresh_asset_analysis( $asset_id );
 		if ( ! is_wp_error( $analysis ) ) {
-			$source = self::get_source_glb( $asset_id );
-			if ( ! is_wp_error( $source ) ) {
-				self::maybe_queue_web_high( $asset_id, $source, is_array( $analysis ) ? $analysis : [] );
-				$decision = self::editor_preview_decision( (int) $source['sizeBytes'], is_array( $analysis ) ? $analysis : [] );
-				if ( ! empty( $decision['shouldPreview'] ) ) {
-					self::maybe_queue_editor_preview( $asset_id, $source, is_array( $analysis ) ? $analysis : [], $decision );
-				}
+			self::maybe_queue_web_high( $asset_id, $source, is_array( $analysis ) ? $analysis : [] );
+			$decision = self::editor_preview_decision( (int) $source['sizeBytes'], is_array( $analysis ) ? $analysis : [] );
+			if ( ! empty( $decision['shouldPreview'] ) ) {
+				self::maybe_queue_editor_preview( $asset_id, $source, is_array( $analysis ) ? $analysis : [], $decision );
 			}
 		}
 	}
@@ -37,17 +51,9 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 			return;
 		}
 
-		delete_post_meta( $asset_id, self::ANALYSIS_META_KEY );
-		self::store_editor_preview_record(
-			$asset_id,
-			[
-				'status'  => 'none',
-				'url'     => '',
-				'path'    => '',
-				'file'    => '',
-				'message' => 'Asset has no GLB source for editor preview.',
-			]
-		);
+		self::cancel_asset_optimization_jobs( $asset_id );
+		self::delete_asset_derivative_cache( $asset_id );
+		delete_post_meta( $asset_id, self::SOURCE_META_KEY );
 	}
 
 	public function handle_asset_delete( int $post_id, WP_Post $post ): void {
@@ -55,7 +61,9 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 			return;
 		}
 
+		self::cancel_asset_optimization_jobs( $post_id );
 		self::delete_asset_derivative_cache( $post_id );
+		delete_post_meta( $post_id, self::SOURCE_META_KEY );
 	}
 
 	public function add_meta_boxes(): void {
@@ -76,10 +84,12 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 
 		$notice = isset( $_GET['vrodos_optimize_notice'] ) ? sanitize_key( (string) wp_unslash( $_GET['vrodos_optimize_notice'] ) ) : '';
 		if ( '' !== $notice ) {
-			$notice_class = 'optimized' === $notice ? 'notice-success' : 'notice-error';
-			$notice_text  = 'optimized' === $notice
-				? 'Optimized derivative generated.'
-				: 'Optimization failed. Check the error details below or server logs.';
+			$notice_class = in_array( $notice, [ 'optimized', 'queued' ], true ) ? 'notice-success' : 'notice-error';
+			$notice_text  = match ( $notice ) {
+				'optimized' => 'Optimized derivative generated.',
+				'queued'    => 'Web derivative regeneration was queued.',
+				default     => 'Optimization failed. Check the error details below or server logs.',
+			};
 			echo '<div class="notice ' . esc_attr( $notice_class ) . ' inline"><p>' . esc_html( $notice_text ) . '</p></div>';
 		}
 
@@ -154,14 +164,30 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 			$this->redirect_to_asset( $asset_id, 'failed' );
 		}
 
-		$result = $this->generate_derivative( $asset_id, $source, $profile );
+		if ( str_starts_with( $profile, 'web-' ) ) {
+			$result = self::ensure_derivative(
+				$asset_id,
+				$profile,
+				$source,
+				[
+					'protectGeometry' => 'web-high' === $profile || self::automatic_profile_protects_geometry( $asset_id ),
+					'textureMaxSize'  => self::runtime_derivative_texture_cap( $profile ),
+					'recipe'          => $profile,
+				],
+				true
+			);
+		} else {
+			$result = $this->generate_derivative( $asset_id, $source, $profile );
+		}
 		if ( is_wp_error( $result ) ) {
 			$this->record_error( $asset_id, $result->get_error_message() );
 			$this->redirect_to_asset( $asset_id, 'failed' );
 		}
 
-		$this->store_derivative_record( $asset_id, $result );
-		$this->redirect_to_asset( $asset_id, 'optimized' );
+		if ( ! str_starts_with( $profile, 'web-' ) ) {
+			$this->store_derivative_record( $asset_id, $result );
+		}
+		$this->redirect_to_asset( $asset_id, str_starts_with( $profile, 'web-' ) ? 'queued' : 'optimized' );
 	}
 
 	public function handle_optimize_missing_glbs(): void {
@@ -194,7 +220,7 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 		$args = [
 			'vrodos_asset_batch_report' => $report_key,
 		];
-		if ( $autorun && empty( $report['failed'] ) && ! empty( $report['generated'] ) && (int) ( $report['remaining'] ?? 0 ) > 0 ) {
+		if ( $autorun && empty( $report['failed'] ) && ( ! empty( $report['generated'] ) || ! empty( $report['queued'] ) ) && (int) ( $report['remaining'] ?? 0 ) > 0 ) {
 			$args['vrodos_asset_optimization_autorun'] = '1';
 		}
 
@@ -270,15 +296,31 @@ trait VRodos_Asset_Optimization_Admin_Actions {
 			exit;
 		}
 
-		$result = $this->generate_derivative( $asset_id, $source, $profile );
+		if ( str_starts_with( $profile, 'web-' ) ) {
+			$result = self::ensure_derivative(
+				$asset_id,
+				$profile,
+				$source,
+				[
+					'protectGeometry' => 'web-high' === $profile || self::automatic_profile_protects_geometry( $asset_id ),
+					'textureMaxSize'  => self::runtime_derivative_texture_cap( $profile ),
+					'recipe'          => $profile,
+				],
+				true
+			);
+		} else {
+			$result = $this->generate_derivative( $asset_id, $source, $profile );
+		}
 		if ( is_wp_error( $result ) ) {
 			$this->record_error( $asset_id, $result->get_error_message() );
 			wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'optimize-failed' ] ) );
 			exit;
 		}
 
-		$this->store_derivative_record( $asset_id, $result );
-		wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => 'optimized' ] ) );
+		if ( ! str_starts_with( $profile, 'web-' ) ) {
+			$this->store_derivative_record( $asset_id, $result );
+		}
+		wp_safe_redirect( self::dashboard_url( [ 'vrodos_asset_opt_notice' => str_starts_with( $profile, 'web-' ) ? 'queued' : 'optimized' ] ) );
 		exit;
 	}
 

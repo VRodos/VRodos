@@ -282,6 +282,7 @@ class VRodos_Admin_Dashboard_Page {
 		return match ( $notice ) {
 			'analysis-refreshed'    => 'Asset analysis refreshed.',
 			'optimized'             => 'Safe Draco derivative generated.',
+			'queued'                => 'Web derivative regeneration queued.',
 			'compile-enabled'       => 'Compiled scenes will use the active derivative for this asset.',
 			'compile-disabled'      => 'Compiled scenes will use the original GLB for this asset.',
 			'analysis-failed'       => 'Asset analysis failed. Open the asset or Settings > Assets for details.',

@@ -77,17 +77,16 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 			return;
 		}
 
-		if ( get_transient( self::EDITOR_PREVIEW_LOCK_KEY ) ) {
+		$lease_token = self::acquire_optimizer_lease( 'preview:' . $asset_id, self::EDITOR_PREVIEW_JOB_TIMEOUT_SECONDS );
+		if ( '' === $lease_token ) {
 			self::schedule_editor_preview_job( $asset_id, 60 );
 			return;
 		}
 
-		set_transient( self::EDITOR_PREVIEW_LOCK_KEY, $asset_id, self::EDITOR_PREVIEW_JOB_TIMEOUT_SECONDS );
-
 		try {
 			$this->run_editor_preview_job( $asset_id );
 		} finally {
-			delete_transient( self::EDITOR_PREVIEW_LOCK_KEY );
+			self::release_optimizer_lease( $lease_token );
 		}
 	}
 
@@ -271,6 +270,12 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 	private function store_editor_preview_derivative_record( int $asset_id, array $result, array $source, array $analysis ): void {
 		$record = $result['record'];
 		$paths = $result['paths'];
+		$source_hash = (string) ( $source['sha256'] ?? '' );
+		$source_generation = absint( $source['generation'] ?? 0 );
+		if ( '' === $source_hash || ! self::source_identity_matches( $asset_id, $source_hash, $source_generation ) ) {
+			self::delete_generated_derivative_files( $paths );
+			return;
+		}
 		$existing = self::get_editor_preview_record( $asset_id );
 		$previous_attachment_id = absint( $existing['attachmentId'] ?? 0 );
 		$attachment_id = 0;
@@ -303,6 +308,13 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 				return;
 			}
 			$registered_new_attachment = true;
+		}
+		if ( ! self::source_identity_matches( $asset_id, $source_hash, $source_generation ) ) {
+			if ( $registered_new_attachment ) {
+				VRodos_Storage_Manager::delete_attachment_if_owned_by( (int) $attachment_id, 'asset', $asset_id );
+			}
+			self::delete_generated_derivative_files( $paths );
+			return;
 		}
 
 		$stored = self::store_editor_preview_record(
@@ -338,6 +350,19 @@ trait VRodos_Asset_Optimization_Editor_Preview {
 			if ( $registered_new_attachment ) {
 				VRodos_Storage_Manager::delete_attachment_if_owned_by( (int) $attachment_id, 'asset', $asset_id );
 			}
+			return;
+		}
+		if ( ! self::source_identity_matches( $asset_id, $source_hash, $source_generation ) ) {
+			$current = self::get_editor_preview_record( $asset_id );
+			if ( absint( $current['attachmentId'] ?? 0 ) === (int) $attachment_id ) {
+				$meta = self::get_derivative_meta( $asset_id );
+				unset( $meta['derivatives'][ self::EDITOR_PREVIEW_PROFILE ] );
+				update_post_meta( $asset_id, self::META_KEY, $meta );
+			}
+			if ( $registered_new_attachment ) {
+				VRodos_Storage_Manager::delete_attachment_if_owned_by( (int) $attachment_id, 'asset', $asset_id );
+			}
+			self::delete_generated_derivative_files( $paths );
 			return;
 		}
 		if ( $previous_attachment_id && $previous_attachment_id !== (int) $attachment_id ) {

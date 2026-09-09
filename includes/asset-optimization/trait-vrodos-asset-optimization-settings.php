@@ -166,9 +166,10 @@ trait VRodos_Asset_Optimization_Settings_View {
 
 		echo '<div class="notice ' . esc_attr( $class ) . ' inline"><p>';
 		printf(
-			esc_html__( 'Optimization batch finished: %1$d attempted, %2$d generated, %3$d failed, %4$d remaining.' ),
+			esc_html__( 'Optimization batch finished: %1$d attempted, %2$d generated, %3$d queued, %4$d failed, %5$d remaining.' ),
 			(int) ( $report['attempted'] ?? 0 ),
 			count( $report['generated'] ?? [] ),
+			count( $report['queued'] ?? [] ),
 			$failed_count,
 			(int) ( $report['remaining'] ?? 0 )
 		);
@@ -178,6 +179,13 @@ trait VRodos_Asset_Optimization_Settings_View {
 			echo '<ul>';
 			foreach ( $report['generated'] as $item ) {
 				echo '<li>' . esc_html( (string) $item['title'] ) . ': ' . esc_html( size_format( (int) $item['sourceSizeBytes'], 1 ) ) . ' -> ' . esc_html( size_format( (int) $item['derivativeSizeBytes'], 1 ) ) . ' (' . esc_html( size_format( (int) $item['reductionBytes'], 1 ) ) . ' saved)</li>';
+			}
+			echo '</ul>';
+		}
+		if ( ! empty( $report['queued'] ) ) {
+			echo '<ul>';
+			foreach ( $report['queued'] as $item ) {
+				echo '<li>' . esc_html( (string) $item['title'] ) . ': ' . esc_html( (string) $item['profile'] ) . ' queued.</li>';
 			}
 			echo '</ul>';
 		}
@@ -222,6 +230,7 @@ trait VRodos_Asset_Optimization_Settings_View {
 			'target'    => $target,
 			'attempted' => count( $candidates ),
 			'generated' => [],
+			'queued'    => [],
 			'failed'    => [],
 			'remaining' => count( $scan[ $target ] ?? [] ),
 		];
@@ -241,7 +250,22 @@ trait VRodos_Asset_Optimization_Settings_View {
 				continue;
 			}
 
-			$result = $this->generate_derivative( $asset_id, $source, $profile );
+			$web_options = [];
+			if ( str_starts_with( $profile, 'web-' ) ) {
+				$web_options = [
+					'protectGeometry' => 'web-high' === $profile || self::automatic_profile_protects_geometry( $asset_id ),
+					'textureMaxSize'  => self::runtime_derivative_texture_cap( $profile ),
+					'recipe'          => $profile,
+				];
+				$result = self::ensure_derivative(
+					$asset_id,
+					$profile,
+					$source,
+					$web_options
+				);
+			} else {
+				$result = $this->generate_derivative( $asset_id, $source, $profile );
+			}
 			if ( is_wp_error( $result ) ) {
 				$this->record_error( $asset_id, $result->get_error_message() );
 				$report['failed'][] = [
@@ -252,8 +276,20 @@ trait VRodos_Asset_Optimization_Settings_View {
 				continue;
 			}
 
-			$this->store_derivative_record( $asset_id, $result );
-			$record                = $result['record'];
+			if ( str_starts_with( $profile, 'web-' ) ) {
+				$record = self::desktop_profile_record( $asset_id, $profile, $source, $web_options );
+				if ( 'ready' !== (string) ( $record['status'] ?? '' ) ) {
+					$report['queued'][] = [
+						'assetId' => $asset_id,
+						'title'   => $title,
+						'profile' => $profile,
+					];
+					continue;
+				}
+			} else {
+				$this->store_derivative_record( $asset_id, $result );
+				$record = $result['record'];
+			}
 			$report['generated'][] = [
 				'assetId'              => $asset_id,
 				'title'                => $title,

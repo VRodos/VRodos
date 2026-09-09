@@ -26,7 +26,7 @@ final class VRodos_Compiler_Entity_Policy {
 		$source_category = $this->canonical_category( (string) ( $source->category_slug ?? $source->category_name ?? '' ) );
 		$collision_value_missing = ! property_exists( $source, 'compiledCollisionEnabled' ) ||
 			null === $source->compiledCollisionEnabled ||
-			'' === trim( (string) $source->compiledCollisionEnabled );
+			( ! is_bool( $source->compiledCollisionEnabled ) && '' === trim( (string) $source->compiledCollisionEnabled ) );
 		if ( $collision_value_missing ) {
 			$source->compiledCollisionEnabled = 'decoration' === $source_category;
 		}

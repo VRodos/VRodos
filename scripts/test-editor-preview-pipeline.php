@@ -8,6 +8,8 @@ $GLOBALS['vrodos_test_meta'] = [];
 $GLOBALS['vrodos_test_events'] = [];
 $GLOBALS['vrodos_test_terms'] = [];
 $GLOBALS['vrodos_test_attached_files'] = [];
+$GLOBALS['vrodos_test_source_current'] = true;
+$GLOBALS['vrodos_test_removed_results'] = [];
 
 class WP_Error {
 	public function __construct( private string $code, private string $message ) {}
@@ -130,6 +132,14 @@ class VRodos_Editor_Preview_Test_Harness {
 	private static function source_fingerprint( array $source ): string {
 		return sha1( (string) ( $source['path'] ?? '' ) . ':' . (string) ( $source['sizeBytes'] ?? 0 ) );
 	}
+
+	private static function source_identity_matches( int $asset_id, string $sha256, int $generation ): bool {
+		return $asset_id > 0 && '' !== $sha256 && $generation > 0 && $GLOBALS['vrodos_test_source_current'];
+	}
+
+	private static function delete_generated_derivative_files( array $paths ): void {
+		$GLOBALS['vrodos_test_removed_results'][] = $paths;
+	}
 }
 
 function invoke_preview_method( string $name, array $arguments = [] ) {
@@ -146,6 +156,8 @@ $source = [
 	'path'         => '/private/source.glb',
 	'sizeBytes'    => 80 * 1024 * 1024,
 	'attachmentId' => 99,
+	'sha256'       => str_repeat( 'a', 64 ),
+	'generation'   => 1,
 ];
 $analysis = [ 'geometry' => [ 'estimatedTriangles' => 700000 ] ];
 $result = [
@@ -171,6 +183,11 @@ vrodos_preview_assert( ! empty( $stored['sourceFingerprint'] ) && ! empty( $stor
 invoke_preview_method( 'store_editor_preview_derivative_record', [ $asset_id, $result, $source, $analysis ] );
 vrodos_preview_assert( 1 === count( VRodos_Storage_Manager::$registered ), 'regeneration at the same private path must reuse its owned attachment' );
 vrodos_preview_assert( [] === VRodos_Storage_Manager::$deleted, 'same-path regeneration must not delete the active GLB' );
+
+$GLOBALS['vrodos_test_source_current'] = false;
+invoke_preview_method( 'store_editor_preview_derivative_record', [ $asset_id, $result, $source, $analysis ] );
+vrodos_preview_assert( 1 === count( $GLOBALS['vrodos_test_removed_results'] ), 'a stale preview result must be removed before registration' );
+$GLOBALS['vrodos_test_source_current'] = true;
 
 $replacement = $result;
 $replacement['paths']['file'] = '/private/editor-v2.glb';

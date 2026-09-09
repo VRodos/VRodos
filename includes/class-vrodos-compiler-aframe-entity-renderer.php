@@ -906,11 +906,11 @@ class VRodos_Compiler_AFrame_Entity_Renderer {
 	private function is_compiled_collision_enabled( $obj ): bool {
 		if ( is_object( $obj ) && property_exists( $obj, 'compiledCollisionEnabled' ) ) {
 			$value = $obj->compiledCollisionEnabled;
-			if ( null === $value || '' === trim( (string) $value ) ) {
-				return 'decoration' === $this->entity_policy->effective_category( $obj );
-			}
 			if ( is_bool( $value ) ) {
 				return $value;
+			}
+			if ( null === $value || '' === trim( (string) $value ) ) {
+				return 'decoration' === $this->entity_policy->effective_category( $obj );
 			}
 
 			$normalized = strtolower( trim( (string) $value ) );

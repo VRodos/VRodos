@@ -308,11 +308,14 @@ if ( class_exists( 'DOMDocument' ) ) {
 	$adaptive_renderer = new VRodos_Compiler_AFrame_Entity_Renderer( new VRodos_Compiler_Runtime_Assets(), new VRodos_Compiler_Scene_Repository(), static fn ( $url ) => $url );
 	$adaptive_renderer->configure( '/plugin/', true, true, 'high' );
 	$adaptive_renderer->render_scene_objects( $adaptive_dom, $adaptive_scene, $adaptive_assets, [ 'profiled' => $profile_object ], 1, 42, [ 'scene_settings' => [ 'vrRuntimeProfile' => 'desktop' ], 'container' => $adaptive_scene ] );
-	$adaptive_entity = ( new DOMXPath( $adaptive_dom ) )->query( '//*[@data-vrodos-profile-gltf="true"]' )->item( 0 );
-	vrodos_foundation_assert( $adaptive_entity instanceof DOMElement, 'Master client emits adaptive GLB attributes' );
+	$adaptive_xpath = new DOMXPath( $adaptive_dom );
+	$adaptive_asset = $adaptive_xpath->query( '//*[@data-vrodos-profile-asset="true"]' )->item( 0 );
+	$adaptive_entity = $adaptive_xpath->query( '//*[@vrodos-model-origin="bounds-center"]' )->item( 0 );
+	vrodos_foundation_assert( $adaptive_asset instanceof DOMElement, 'Master client emits adaptive critical-asset attributes' );
+	vrodos_foundation_assert( $adaptive_entity instanceof DOMElement, 'Master client renders the adaptive GLB entity' );
 	vrodos_foundation_assert( 'bounds-center' === $adaptive_entity->getAttribute( 'vrodos-model-origin' ), 'adaptive GLBs keep the centered-origin component before profile selection' );
-	vrodos_foundation_assert( ! $adaptive_entity->hasAttribute( 'gltf-model' ), 'Master client does not request a GLB before profile selection' );
-	vrodos_foundation_assert( '/published/medium.glb' === $adaptive_entity->getAttribute( 'data-vrodos-profile-gltf-medium' ), 'Master client carries the Medium derivative URL' );
+	vrodos_foundation_assert( '#' . $adaptive_asset->getAttribute( 'id' ) === $adaptive_entity->getAttribute( 'gltf-model' ), 'Master client points the entity at its selected critical asset' );
+	vrodos_foundation_assert( '/published/medium.glb' === $adaptive_asset->getAttribute( 'data-vrodos-profile-src-medium' ), 'Master client carries the Medium derivative URL before download' );
 
 	$fixed_dom = new DOMDocument( '1.0', 'UTF-8' );
 	$fixed_scene_element = $fixed_dom->createElement( 'a-scene' );

@@ -6,11 +6,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Queued immutable GLB families selected automatically for compiled runtimes. */
 trait VRodos_Asset_Optimization_Desktop_Profiles {
-	private const DESKTOP_PROFILE_PIPELINE_VERSION = 2;
+	private const DESKTOP_PROFILE_PIPELINE_VERSION = 4;
 	private const LARGE_SOURCE_PUBLISH_GATE_BYTES = 104857600;
-	private const DESKTOP_PROFILE_LOCK_KEY = 'vrodos_asset_desktop_profile_global_lock';
 	private const DESKTOP_PROFILE_MIN_TEXTURE_SIZE = 256;
 	private const DESKTOP_PROFILE_STALE_SECONDS = 720;
+	private const WEB_FAMILY_PROFILES = [ 'web-high', 'web-medium', 'web-low' ];
 
 	public static function prepare_runtime_profile_derivatives( VRodos_Project_Compile_Plan $plan ): array {
 		$assets = [];
@@ -76,8 +76,9 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 					'recipe'          => $profile,
 				];
-				$record = self::desktop_profile_record( (int) $asset_id, $profile );
+				$record = self::desktop_profile_record( (int) $asset_id, $profile, $source, $options );
 				if ( self::desktop_profile_record_is_ready( $record, $source, $profile, $options ) ) {
+					self::activate_desktop_profile_variant( (int) $asset_id, $profile, (string) $record['jobKey'] );
 					++$ready;
 					$records[ $slot ][ $asset_id ] = $record;
 					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, 'ready', 'Ready' );
@@ -101,7 +102,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					continue;
 				}
 
-				$queue_result = self::queue_desktop_profile_derivative( (int) $asset_id, $profile, $source, $options );
+				$queue_result = self::ensure_derivative( (int) $asset_id, $profile, $source, $options );
 				if ( is_wp_error( $queue_result ) ) {
 					$message = $queue_result->get_error_message();
 					if ( (int) $source['sizeBytes'] > self::LARGE_SOURCE_PUBLISH_GATE_BYTES ) {
@@ -110,11 +111,11 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 						++$ready;
 						$warnings[] = sprintf( 'Asset #%d %s derivative could not be queued; source GLB will be published: %s', $asset_id, ucfirst( $slot ), $message );
 					}
-					$record = self::desktop_profile_record( (int) $asset_id, $profile );
+					$record = self::desktop_profile_record( (int) $asset_id, $profile, $source, $options );
 					$profile_progress[] = self::desktop_profile_progress_item( (int) $asset_id, $slot, $profile, $record, $source, $options, (int) $source['sizeBytes'] > self::LARGE_SOURCE_PUBLISH_GATE_BYTES ? 'failed' : 'ready', $message );
 					continue;
 				}
-				$record = self::desktop_profile_record( (int) $asset_id, $profile );
+				$record = self::desktop_profile_record( (int) $asset_id, $profile, $source, $options );
 				$status = in_array( (string) ( $record['status'] ?? '' ), [ 'queued', 'running' ], true ) ? (string) $record['status'] : 'queued';
 				$profile_progress[] = self::desktop_profile_progress_item(
 					(int) $asset_id,
@@ -208,101 +209,168 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		}
 
 		$options = [
-			'protectGeometry' => false,
+			'protectGeometry' => true,
 			'textureMaxSize'  => 4096,
 			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 			'recipe'          => 'web-high',
+			'familySequence'  => true,
+			'writePreparedBaseline' => $source_bytes >= self::LARGE_SOURCE_PUBLISH_GATE_BYTES,
 		];
-		return self::queue_desktop_profile_derivative( $asset_id, 'web-high', $source, $options );
+		return self::ensure_derivative( $asset_id, 'web-high', $source, $options );
 	}
 
 	public static function get_web_optimization_state( int $asset_id ): array {
 		$source = self::get_source_glb( $asset_id );
-		$record = self::desktop_profile_record( $asset_id, 'web-high' );
 		$source_bytes = is_wp_error( $source ) ? 0 : (int) ( $source['sizeBytes'] ?? 0 );
-		$status = sanitize_key( (string) ( $record['status'] ?? 'none' ) );
-		$percent = 'ready' === $status ? 100 : 0;
-		if ( 'running' === $status && is_array( $source ) ) {
-			$progress = self::read_desktop_profile_progress_file( $asset_id, 'web-high', $source );
-			$percent = absint( $progress['percent'] ?? 0 );
-			if ( ! empty( $progress['message'] ) ) {
-				$record['message'] = $progress['message'];
-			}
+		$high_record = self::desktop_profile_record( $asset_id, 'web-high' );
+		$high_options = (array) ( $high_record['profileOptions'] ?? [] );
+		if ( ! is_wp_error( $source ) && ! empty( $high_options['familySequence'] ) ) {
+			self::ensure_derivative( $asset_id, 'web-high', $source, $high_options );
 		}
-		$derivative_bytes = absint( $record['derivativeSizeBytes'] ?? 0 );
+		$profiles = [];
+		$ready_profiles = 0;
+		$family_percent = 0;
+		$active_profile = '';
+		foreach ( self::WEB_FAMILY_PROFILES as $profile ) {
+			$record = self::desktop_profile_record( $asset_id, $profile );
+			$status = sanitize_key( (string) ( $record['status'] ?? 'none' ) );
+			$percent = 'ready' === $status ? 100 : 0;
+			if ( 'running' === $status && is_array( $source ) ) {
+				$progress = self::read_desktop_profile_progress_file( $asset_id, $profile, $source, (array) ( $record['profileOptions'] ?? [] ) );
+				$percent = absint( $progress['percent'] ?? 0 );
+				if ( ! empty( $progress['message'] ) ) {
+					$record['message'] = $progress['message'];
+				}
+			}
+			if ( 'ready' === $status ) {
+				++$ready_profiles;
+			}
+			if ( '' === $active_profile && in_array( $status, [ 'running', 'queued' ], true ) ) {
+				$active_profile = $profile;
+			}
+			$family_percent += $percent;
+			$profiles[ str_replace( 'web-', '', $profile ) ] = [
+				'profile'           => $profile,
+				'status'            => in_array( $status, [ 'queued', 'running', 'ready', 'failed', 'cancelled' ], true ) ? $status : 'none',
+				'percent'           => max( 0, min( 100, $percent ) ),
+				'message'           => (string) ( $record['message'] ?? '' ),
+				'sourceBytes'       => $source_bytes,
+				'derivativeBytes'   => absint( $record['derivativeSizeBytes'] ?? 0 ),
+				'reductionPercent'  => is_numeric( $record['reductionPercent'] ?? null ) ? (float) $record['reductionPercent'] : 0.0,
+				'attempts'          => max( 0, absint( $record['attempts'] ?? 0 ) ),
+				'canRetry'          => 'failed' === $status,
+			];
+		}
+		$high = $profiles['high'];
+		$statuses = array_column( $profiles, 'status' );
+		$family_status = 3 === $ready_profiles
+			? 'ready'
+			: ( in_array( 'running', $statuses, true ) ? 'running' : ( in_array( 'queued', $statuses, true ) ? 'queued' : ( in_array( 'failed', $statuses, true ) ? 'failed' : 'none' ) ) );
 		return [
-			'status'          => in_array( $status, [ 'queued', 'running', 'ready', 'failed' ], true ) ? $status : 'none',
+			'status'          => $high['status'],
 			'profile'         => 'web-high',
-			'percent'         => max( 0, min( 100, $percent ) ),
-			'message'         => (string) ( $record['message'] ?? ( 'ready' === $status ? 'Web High derivative is ready.' : '' ) ),
+			'percent'         => $high['percent'],
+			'message'         => (string) ( $high['message'] ?: ( 'ready' === $high['status'] ? 'Web High derivative is ready.' : '' ) ),
 			'sourceBytes'     => $source_bytes,
-			'derivativeBytes' => $derivative_bytes,
-			'reductionPercent' => is_numeric( $record['reductionPercent'] ?? null ) ? (float) $record['reductionPercent'] : 0.0,
-			'canRetry'        => 'failed' === $status,
+			'derivativeBytes' => $high['derivativeBytes'],
+			'reductionPercent' => $high['reductionPercent'],
+			'canRetry'        => $high['canRetry'],
+			'familyStatus'    => $family_status,
+			'familyPercent'   => (int) round( $family_percent / count( self::WEB_FAMILY_PROFILES ) ),
+			'activeProfile'   => $active_profile,
+			'readyProfiles'   => $ready_profiles,
+			'totalProfiles'   => count( self::WEB_FAMILY_PROFILES ),
+			'profiles'        => $profiles,
 		];
 	}
 
-	public function process_desktop_profile_job( int $asset_id, string $profile, int $protect_geometry = 0, int $texture_max_size = 0 ): void {
+	public function process_desktop_profile_job( int $asset_id, string $profile, int $protect_geometry = 0, int $texture_max_size = 0, string $job_key = '', int $source_generation = 0 ): void {
 		$asset_id = absint( $asset_id );
 		$profile = sanitize_key( $profile );
-		if ( $asset_id <= 0 || 'vrodos_asset3d' !== get_post_type( $asset_id ) || ! in_array( $profile, [ 'web-low', 'web-medium', 'web-high' ], true ) ) {
+		$job_key = sanitize_key( $job_key );
+		$source_generation = absint( $source_generation );
+		if ( $asset_id <= 0 || 'vrodos_asset3d' !== get_post_type( $asset_id ) || ! in_array( $profile, self::WEB_FAMILY_PROFILES, true ) || '' === $job_key ) {
 			return;
 		}
-		if ( get_transient( self::DESKTOP_PROFILE_LOCK_KEY ) ) {
-			$schedule_result = self::schedule_desktop_profile_job( $asset_id, $profile, $protect_geometry, $texture_max_size, 30 );
+
+		$source = self::get_source_glb( $asset_id );
+		if ( is_wp_error( $source ) || ! self::source_identity_matches( $asset_id, (string) ( $source['sha256'] ?? '' ), $source_generation ) ) {
+			return;
+		}
+		$record = self::desktop_profile_record_by_job_key( $asset_id, $job_key );
+		$options = array_merge(
+			[
+				'protectGeometry' => 1 === $protect_geometry,
+				'textureMaxSize'  => absint( $texture_max_size ),
+				'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
+				'recipe'          => $profile,
+			],
+			(array) ( $record['profileOptions'] ?? [] ),
+			[
+				'jobKey'          => $job_key,
+				'sourceSha256'    => (string) $source['sha256'],
+				'sourceGeneration' => $source_generation,
+				'queuedAt'        => (string) ( $record['queuedAt'] ?? '' ),
+			]
+		);
+		if ( ! self::desktop_profile_record_matches_request( $record, $source, $options ) ) {
+			return;
+		}
+
+		$lease_token = self::acquire_optimizer_lease( 'web:' . $asset_id . ':' . $job_key, 1800 );
+		if ( '' === $lease_token ) {
+			$schedule_result = self::schedule_desktop_profile_job( $asset_id, $profile, $options, 30 );
 			if ( is_wp_error( $schedule_result ) ) {
-				$options = [
-					'protectGeometry' => 1 === $protect_geometry,
-					'textureMaxSize'  => absint( $texture_max_size ),
-					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
-					'recipe'          => $profile,
-				];
-				self::store_desktop_profile_failure( $asset_id, $profile, $schedule_result->get_error_message(), $options );
+				self::store_desktop_profile_failure( $asset_id, $profile, $source, $schedule_result->get_error_message(), $options );
 				self::log_desktop_profile_schedule_failure( $asset_id, $profile, $schedule_result );
 			}
 			return;
 		}
 
-		set_transient( self::DESKTOP_PROFILE_LOCK_KEY, $asset_id . ':' . $profile, 1800 );
-		$options = [
-			'protectGeometry' => 1 === $protect_geometry,
-			'textureMaxSize'  => absint( $texture_max_size ),
-			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
-			'recipe'          => $profile,
-		];
-		$source = self::get_source_glb( $asset_id );
 		try {
-			if ( is_wp_error( $source ) ) {
-				self::store_desktop_profile_failure( $asset_id, $profile, $source->get_error_message(), $options );
-				return;
-			}
 			self::store_desktop_profile_status( $asset_id, $profile, $source, $options, 'running', 'Generating web derivative.' );
 			$result = $this->generate_derivative( $asset_id, $source, $profile, $options );
 			if ( is_wp_error( $result ) ) {
-				self::store_desktop_profile_failure( $asset_id, $profile, $result->get_error_message(), $options );
+				self::store_desktop_profile_failure( $asset_id, $profile, $source, $result->get_error_message(), $options );
+				self::delete_prepared_baseline( $asset_id, $source );
 				return;
 			}
 			$this->store_derivative_record( $asset_id, $result );
+			self::continue_web_family( $asset_id, $profile, $source, $options );
 		} catch ( Throwable $error ) {
-			if ( is_array( $source ) ) {
-				self::store_desktop_profile_failure( $asset_id, $profile, $error->getMessage(), $options );
+			if ( self::source_identity_matches( $asset_id, (string) $source['sha256'], $source_generation ) ) {
+				self::store_desktop_profile_failure( $asset_id, $profile, $source, $error->getMessage(), $options );
 			}
+			self::delete_prepared_baseline( $asset_id, $source );
 		} finally {
-			if ( is_array( $source ) ) {
-				self::delete_desktop_profile_progress_file( $asset_id, $profile, $source );
+			self::delete_desktop_profile_progress_file( $asset_id, $profile, $source, $options );
+			if ( 'web-low' === $profile ) {
+				self::delete_prepared_baseline( $asset_id, $source );
 			}
-			delete_transient( self::DESKTOP_PROFILE_LOCK_KEY );
+			self::release_optimizer_lease( $lease_token );
 		}
 	}
 
-	public static function runtime_profile_derivative_path( int $asset_id, string $profile ): string {
+	public static function runtime_profile_derivative_path( int $asset_id, string $profile, array $options = [] ): string {
 		$profile = sanitize_key( $profile );
 		$source = self::get_source_glb( $asset_id );
 		if ( is_wp_error( $source ) ) {
 			return '';
 		}
-		$record = self::desktop_profile_record( $asset_id, $profile );
-		$options = is_array( $record['profileOptions'] ?? null ) ? $record['profileOptions'] : [];
+		$record = $options
+			? self::desktop_profile_record( $asset_id, $profile, $source, $options )
+			: self::desktop_profile_record( $asset_id, $profile );
+		if ( $options && empty( $options['protectGeometry'] ) && ! self::desktop_profile_record_is_ready( $record, $source, $profile, $options ) ) {
+			$protected_options = array_merge( $options, [ 'protectGeometry' => true ] );
+			$protected_record = self::desktop_profile_record( $asset_id, $profile, $source, $protected_options );
+			if ( self::desktop_profile_record_is_ready( $protected_record, $source, $profile, $protected_options ) ) {
+				$record = $protected_record;
+				$options = $protected_options;
+			}
+		}
+		if ( ! $options ) {
+			$options = is_array( $record['profileOptions'] ?? null ) ? $record['profileOptions'] : [];
+		}
 		return self::desktop_profile_record_is_ready( $record, $source, $profile, $options )
 			? (string) ( $record['path'] ?? '' )
 			: '';
@@ -315,7 +383,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			'estimatedTextureMemoryBytes' => absint( $record['estimatedTextureMemoryBytes'] ?? 0 ),
 			'derivativeSizeBytes'         => absint( $record['derivativeSizeBytes'] ?? 0 ),
 			'textureMaxSize'              => absint( $record['profileOptions']['textureMaxSize'] ?? 0 ),
-			'geometryProtected'           => ! empty( $record['profileOptions']['protectGeometry'] ),
+			'geometryProtected'           => ! empty( $record['profileOptions']['effectiveProtectGeometry'] ) || ! empty( $record['profileOptions']['protectGeometry'] ),
 		];
 	}
 
@@ -342,14 +410,49 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		}
 	}
 
-	private static function desktop_profile_record( int $asset_id, string $profile ): array {
+	private static function desktop_profile_record( int $asset_id, string $profile, array $source = [], array $options = [] ): array {
 		$meta = self::get_derivative_meta( $asset_id );
+		if ( $source && $options ) {
+			$job_key = self::desktop_profile_job_key( $source, $profile, $options );
+			$record = $meta['webVariants'][ $job_key ] ?? [];
+			return is_array( $record ) ? $record : [];
+		}
+		$default_key = sanitize_key( (string) ( $meta['webProfileDefaults'][ $profile ] ?? '' ) );
+		if ( '' !== $default_key && is_array( $meta['webVariants'][ $default_key ] ?? null ) ) {
+			return $meta['webVariants'][ $default_key ];
+		}
 		$record = $meta['derivatives'][ $profile ] ?? [];
 		return is_array( $record ) ? $record : [];
 	}
 
+	private static function desktop_profile_record_by_job_key( int $asset_id, string $job_key ): array {
+		$meta = self::get_derivative_meta( $asset_id );
+		$record = $meta['webVariants'][ sanitize_key( $job_key ) ] ?? [];
+		return is_array( $record ) ? $record : [];
+	}
+
+	private static function normalize_desktop_profile_options( string $profile, array $options ): array {
+		return [
+			'protectGeometry' => 'web-high' === $profile || ! empty( $options['protectGeometry'] ),
+			'textureMaxSize'  => max( self::DESKTOP_PROFILE_MIN_TEXTURE_SIZE, absint( $options['textureMaxSize'] ?? self::runtime_derivative_texture_cap( $profile ) ) ),
+			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
+			'recipe'          => sanitize_key( (string) ( $options['recipe'] ?? $profile ) ),
+		];
+	}
+
+	private static function desktop_profile_job_key( array $source, string $profile, array $options ): string {
+		$identity = self::normalize_desktop_profile_options( $profile, $options );
+		$identity['sourceSha256'] = strtolower( (string) ( $source['sha256'] ?? '' ) );
+		return hash( 'sha256', wp_json_encode( $identity ) );
+	}
+
 	private static function desktop_profile_record_is_ready( array $record, array $source, string $profile, array $options ): bool {
-		if ( ! self::desktop_profile_record_matches_request( $record, $source, $options ) || ! self::is_derivative_usable( $record, (string) $source['url'] ) || empty( $record['runtimeSubstitutionReady'] ) ) {
+		if (
+			! self::desktop_profile_record_matches_request( $record, $source, $options )
+			|| empty( $record['runtimeSubstitutionReady'] )
+			|| empty( $record['path'] )
+			|| ! is_file( (string) $record['path'] )
+		) {
 			return false;
 		}
 		$extensions = array_map( 'strval', (array) ( $record['extensions'] ?? [] ) );
@@ -361,15 +464,15 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 
 	private static function desktop_profile_record_matches_request( array $record, array $source, array $options ): bool {
 		$record_options = (array) ( $record['profileOptions'] ?? [] );
-		$source_hash = is_file( (string) $source['path'] ) ? hash_file( 'sha256', (string) $source['path'] ) : '';
-		$requested_size = absint( $options['textureMaxSize'] ?? 0 );
-		$record_size = absint( $record_options['textureMaxSize'] ?? 0 );
-		return '' !== $source_hash
-			&& hash_equals( (string) ( $record['sourceSha256'] ?? '' ), $source_hash )
+		$normalized = self::normalize_desktop_profile_options( sanitize_key( (string) ( $options['recipe'] ?? '' ) ), $options );
+		$job_key = self::desktop_profile_job_key( $source, sanitize_key( (string) ( $options['recipe'] ?? '' ) ), $options );
+		return '' !== (string) ( $source['sha256'] ?? '' )
+			&& hash_equals( (string) ( $record['sourceSha256'] ?? '' ), (string) $source['sha256'] )
+			&& hash_equals( (string) ( $record['jobKey'] ?? '' ), $job_key )
 			&& (int) ( $record_options['pipelineVersion'] ?? 0 ) === self::DESKTOP_PROFILE_PIPELINE_VERSION
-			&& sanitize_key( (string) ( $record_options['recipe'] ?? '' ) ) === sanitize_key( (string) ( $options['recipe'] ?? '' ) )
-			&& ( empty( $options['protectGeometry'] ) || ! empty( $record_options['protectGeometry'] ) )
-			&& ( 0 === $requested_size || ( $record_size > 0 && $record_size <= $requested_size ) );
+			&& sanitize_key( (string) ( $record_options['recipe'] ?? '' ) ) === $normalized['recipe']
+			&& (bool) ( $record_options['protectGeometry'] ?? false ) === $normalized['protectGeometry']
+			&& absint( $record_options['textureMaxSize'] ?? 0 ) === $normalized['textureMaxSize'];
 	}
 
 	private static function desktop_profile_progress_item(
@@ -391,7 +494,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			$step = $total_steps;
 			$percent = 100;
 		} elseif ( is_array( $source ) && 'running' === $status ) {
-			$progress = self::read_desktop_profile_progress_file( $asset_id, $profile, $source );
+			$progress = self::read_desktop_profile_progress_file( $asset_id, $profile, $source, $options );
 			if ( $progress ) {
 				$step = absint( $progress['step'] ?? 0 );
 				$total_steps = max( 1, absint( $progress['totalSteps'] ?? $total_steps ) );
@@ -431,9 +534,10 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		return max( 0, min( 100, (int) round( $sum / $total ) ) );
 	}
 
-	private static function read_desktop_profile_progress_file( int $asset_id, string $profile, array $source ): array {
+	private static function read_desktop_profile_progress_file( int $asset_id, string $profile, array $source, array $options = [] ): array {
 		try {
-			$paths = self::build_derivative_paths( $asset_id, $source, $profile );
+			$job_key = (string) ( $options['jobKey'] ?? self::desktop_profile_job_key( $source, $profile, $options ) );
+			$paths = self::build_derivative_paths( $asset_id, $source, $profile, $job_key );
 		} catch ( Throwable $error ) {
 			return [];
 		}
@@ -448,6 +552,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			! is_array( $progress )
 			|| 1 !== absint( $progress['schemaVersion'] ?? 0 )
 			|| $profile !== sanitize_key( (string) ( $progress['profile'] ?? '' ) )
+			|| ( '' !== $job_key && $job_key !== sanitize_key( (string) ( $progress['jobKey'] ?? '' ) ) )
 			|| wp_normalize_path( (string) ( $progress['sourcePath'] ?? '' ) ) !== wp_normalize_path( (string) ( $source['path'] ?? '' ) )
 		) {
 			return [];
@@ -463,9 +568,10 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		];
 	}
 
-	private static function delete_desktop_profile_progress_file( int $asset_id, string $profile, array $source ): void {
+	private static function delete_desktop_profile_progress_file( int $asset_id, string $profile, array $source, array $options = [] ): void {
 		try {
-			$paths = self::build_derivative_paths( $asset_id, $source, $profile );
+			$job_key = (string) ( $options['jobKey'] ?? self::desktop_profile_job_key( $source, $profile, $options ) );
+			$paths = self::build_derivative_paths( $asset_id, $source, $profile, $job_key );
 		} catch ( Throwable $error ) {
 			return;
 		}
@@ -480,24 +586,50 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		}
 	}
 
-	private static function queue_desktop_profile_derivative( int $asset_id, string $profile, array $source, array $options ) {
-		$record = self::desktop_profile_record( $asset_id, $profile );
+	public static function ensure_derivative( int $asset_id, string $profile, array $source = [], array $options = [], bool $regenerate = false ) {
+		$profile = sanitize_key( $profile );
+		if ( ! in_array( $profile, self::WEB_FAMILY_PROFILES, true ) ) {
+			return new WP_Error( 'vrodos_web_profile_invalid', 'Unknown web derivative profile.' );
+		}
+		if ( ! $source ) {
+			$source = self::get_source_glb( $asset_id );
+		}
+		if ( is_wp_error( $source ) ) {
+			return $source;
+		}
+		self::ensure_current_derivative_schema( $asset_id );
+		$identity_options = self::normalize_desktop_profile_options( $profile, $options );
+		$options = array_merge( $options, $identity_options );
+		$options['sourceSha256'] = (string) ( $source['sha256'] ?? '' );
+		$options['sourceGeneration'] = absint( $source['generation'] ?? 0 );
+		$options['jobKey'] = self::desktop_profile_job_key( $source, $profile, $options );
+		self::cleanup_stale_prepared_baseline( $asset_id, $source );
+		$record = self::desktop_profile_record_by_job_key( $asset_id, $options['jobKey'] );
 		$status = (string) ( $record['status'] ?? '' );
 		$matches_request = self::desktop_profile_record_matches_request( $record, $source, $options );
+		$work_generation_matches = absint( $record['sourceGeneration'] ?? 0 ) === absint( $source['generation'] ?? 0 );
+		if ( ! $regenerate && $matches_request && self::desktop_profile_record_is_ready( $record, $source, $profile, $options ) ) {
+			self::activate_desktop_profile_variant( $asset_id, $profile, (string) $record['jobKey'] );
+			if ( ! empty( $options['familySequence'] ) ) {
+				self::merge_desktop_profile_orchestration_options( $asset_id, $options );
+				self::continue_web_family( $asset_id, $profile, $source, $options );
+			}
+			return true;
+		}
+		if ( ! $regenerate && 'failed' === $status && $matches_request ) {
+			self::merge_desktop_profile_orchestration_options( $asset_id, $options );
+			return new WP_Error( 'vrodos_web_derivative_failed', (string) ( $record['message'] ?? 'Derivative generation failed. Use Regenerate to retry.' ) );
+		}
 
-		if ( 'queued' === $status && $matches_request ) {
+		if ( ! $regenerate && 'queued' === $status && $matches_request && $work_generation_matches ) {
 			$had_scheduled_event = false !== wp_next_scheduled(
 				self::DESKTOP_PROFILE_CRON_HOOK,
-				[ $asset_id, $profile, ! empty( $options['protectGeometry'] ) ? 1 : 0, absint( $options['textureMaxSize'] ?? 0 ) ]
+				self::desktop_profile_cron_args( $asset_id, $profile, $options )
 			);
-			$schedule_result = self::schedule_desktop_profile_job(
-				$asset_id,
-				$profile,
-				! empty( $options['protectGeometry'] ) ? 1 : 0,
-				absint( $options['textureMaxSize'] ?? 0 )
-			);
+			self::merge_desktop_profile_orchestration_options( $asset_id, $options );
+			$schedule_result = self::schedule_desktop_profile_job( $asset_id, $profile, $options );
 			if ( is_wp_error( $schedule_result ) ) {
-				self::store_desktop_profile_failure( $asset_id, $profile, $schedule_result->get_error_message(), $options );
+				self::store_desktop_profile_failure( $asset_id, $profile, $source, $schedule_result->get_error_message(), $options );
 				self::log_desktop_profile_schedule_failure( $asset_id, $profile, $schedule_result );
 				return $schedule_result;
 			}
@@ -507,46 +639,37 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 			return true;
 		}
 
-		if ( 'running' === $status && $matches_request ) {
-			if ( ! self::desktop_profile_job_is_stale( $asset_id, $profile, $record, $source ) ) {
+		if ( ! $regenerate && 'running' === $status && $matches_request && $work_generation_matches ) {
+			self::merge_desktop_profile_orchestration_options( $asset_id, $options );
+			if ( ! self::desktop_profile_job_is_stale( $asset_id, $profile, $record, $source, $options ) ) {
 				return true;
 			}
-			self::delete_desktop_profile_progress_file( $asset_id, $profile, $source );
+			self::delete_desktop_profile_progress_file( $asset_id, $profile, $source, $options );
 			self::store_desktop_profile_status( $asset_id, $profile, $source, $options, 'queued', 'A stale desktop profile job was queued again.' );
 			error_log( sprintf( '[VRodos] Requeued stale desktop profile job for asset #%d (%s) after %d seconds without progress.', $asset_id, $profile, self::DESKTOP_PROFILE_STALE_SECONDS ) );
-			$schedule_result = self::schedule_desktop_profile_job(
-				$asset_id,
-				$profile,
-				! empty( $options['protectGeometry'] ) ? 1 : 0,
-				absint( $options['textureMaxSize'] ?? 0 )
-			);
+			$schedule_result = self::schedule_desktop_profile_job( $asset_id, $profile, $options );
 			if ( is_wp_error( $schedule_result ) ) {
-				self::store_desktop_profile_failure( $asset_id, $profile, $schedule_result->get_error_message(), $options );
+				self::store_desktop_profile_failure( $asset_id, $profile, $source, $schedule_result->get_error_message(), $options );
 				self::log_desktop_profile_schedule_failure( $asset_id, $profile, $schedule_result );
 				return $schedule_result;
 			}
 			return true;
 		}
-		self::delete_desktop_profile_progress_file( $asset_id, $profile, $source );
+		self::delete_desktop_profile_progress_file( $asset_id, $profile, $source, $options );
 		self::store_desktop_profile_status( $asset_id, $profile, $source, $options, 'queued', 'Web derivative is queued.' );
-		$schedule_result = self::schedule_desktop_profile_job(
-			$asset_id,
-			$profile,
-			! empty( $options['protectGeometry'] ) ? 1 : 0,
-			absint( $options['textureMaxSize'] ?? 0 )
-		);
+		$schedule_result = self::schedule_desktop_profile_job( $asset_id, $profile, $options );
 		if ( is_wp_error( $schedule_result ) ) {
-			self::store_desktop_profile_failure( $asset_id, $profile, $schedule_result->get_error_message(), $options );
+			self::store_desktop_profile_failure( $asset_id, $profile, $source, $schedule_result->get_error_message(), $options );
 			self::log_desktop_profile_schedule_failure( $asset_id, $profile, $schedule_result );
 			return $schedule_result;
 		}
 		return true;
 	}
 
-	private static function desktop_profile_job_is_stale( int $asset_id, string $profile, array $record, array $source ): bool {
+	private static function desktop_profile_job_is_stale( int $asset_id, string $profile, array $record, array $source, array $options ): bool {
 		$latest_activity = strtotime( (string) ( $record['updatedAt'] ?? '' ) . ' UTC' );
 		$latest_activity = false === $latest_activity ? 0 : $latest_activity;
-		$progress = self::read_desktop_profile_progress_file( $asset_id, $profile, $source );
+		$progress = self::read_desktop_profile_progress_file( $asset_id, $profile, $source, $options );
 		if ( $progress ) {
 			$progress_updated_at = strtotime( (string) ( $progress['updatedAt'] ?? '' ) . ' UTC' );
 			if ( false !== $progress_updated_at ) {
@@ -557,8 +680,19 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 		return $latest_activity <= 0 || time() - $latest_activity >= self::DESKTOP_PROFILE_STALE_SECONDS;
 	}
 
-	private static function schedule_desktop_profile_job( int $asset_id, string $profile, int $protect_geometry, int $texture_max_size, int $delay = 2 ) {
-		$args = [ $asset_id, $profile, $protect_geometry, $texture_max_size ];
+	private static function desktop_profile_cron_args( int $asset_id, string $profile, array $options ): array {
+		return [
+			$asset_id,
+			$profile,
+			! empty( $options['protectGeometry'] ) ? 1 : 0,
+			absint( $options['textureMaxSize'] ?? 0 ),
+			sanitize_key( (string) ( $options['jobKey'] ?? '' ) ),
+			absint( $options['sourceGeneration'] ?? 0 ),
+		];
+	}
+
+	private static function schedule_desktop_profile_job( int $asset_id, string $profile, array $options, int $delay = 2 ) {
+		$args = self::desktop_profile_cron_args( $asset_id, $profile, $options );
 		if ( false !== wp_next_scheduled( self::DESKTOP_PROFILE_CRON_HOOK, $args ) ) {
 			return true;
 		}
@@ -576,40 +710,145 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 
 	private static function store_desktop_profile_status( int $asset_id, string $profile, array $source, array $options, string $status, string $message ): void {
 		$meta = self::get_derivative_meta( $asset_id );
-		$existing = is_array( $meta['derivatives'][ $profile ] ?? null ) ? $meta['derivatives'][ $profile ] : [];
-		$source_hash = is_file( (string) $source['path'] ) ? hash_file( 'sha256', (string) $source['path'] ) : '';
-		$meta['derivatives'][ $profile ] = array_merge(
+		$job_key = sanitize_key( (string) ( $options['jobKey'] ?? self::desktop_profile_job_key( $source, $profile, $options ) ) );
+		$options['jobKey'] = $job_key;
+		$options['sourceSha256'] = (string) ( $source['sha256'] ?? '' );
+		$options['sourceGeneration'] = absint( $source['generation'] ?? 0 );
+		$existing = is_array( $meta['webVariants'][ $job_key ] ?? null ) ? $meta['webVariants'][ $job_key ] : [];
+		$paths = self::build_derivative_paths( $asset_id, $source, $profile, $job_key );
+		$stored = array_merge(
 			$existing,
 			[
 				'profile'        => $profile,
+				'jobKey'         => $job_key,
 				'status'         => $status,
 				'message'        => wp_strip_all_tags( $message ),
 				'sourceUrl'      => esc_url_raw( (string) $source['url'] ),
 				'sourcePath'     => wp_normalize_path( (string) $source['path'] ),
-				'sourceSha256'   => $source_hash,
+				'sourceSha256'   => (string) ( $source['sha256'] ?? '' ),
+				'sourceGeneration' => absint( $source['generation'] ?? 0 ),
 				'profileOptions' => $options,
+				'cronArgs'       => self::desktop_profile_cron_args( $asset_id, $profile, $options ),
+				'progressPath'   => wp_normalize_path( (string) $paths['progress'] ),
+				'attempts'       => absint( $existing['attempts'] ?? 0 ) + ( 'queued' === $status && 'queued' !== (string) ( $existing['status'] ?? '' ) ? 1 : 0 ),
 				'updatedAt'      => current_time( 'mysql', true ),
 			]
 		);
-		unset( $meta['derivatives'][ $profile ]['failedAt'] );
+		if ( 'queued' === $status && empty( $stored['queuedAt'] ) ) {
+			$stored['queuedAt'] = gmdate( DATE_ATOM );
+		}
+		if ( 'failed' !== $status ) {
+			unset( $stored['failedAt'] );
+		}
+		$meta['webVariants'][ $job_key ] = $stored;
+		if ( absint( $options['textureMaxSize'] ?? 0 ) === self::runtime_derivative_texture_cap( $profile ) ) {
+			$meta['webProfileDefaults'][ $profile ] = $job_key;
+			$meta['derivatives'][ $profile ] = $stored;
+		}
 		update_post_meta( $asset_id, self::META_KEY, $meta );
 	}
 
-	private static function store_desktop_profile_failure( int $asset_id, string $profile, string $message, array $options ): void {
-		$source = self::get_source_glb( $asset_id );
-		if ( is_wp_error( $source ) ) {
-			$meta = self::get_derivative_meta( $asset_id );
-			$meta['derivatives'][ $profile ] = [
-				'profile' => $profile, 'status' => 'failed', 'message' => wp_strip_all_tags( $message ),
-				'profileOptions' => $options, 'failedAt' => time(),
-			];
-			update_post_meta( $asset_id, self::META_KEY, $meta );
-			return;
-		}
+	private static function store_desktop_profile_failure( int $asset_id, string $profile, array $source, string $message, array $options ): void {
 		self::store_desktop_profile_status( $asset_id, $profile, $source, $options, 'failed', $message );
 		$meta = self::get_derivative_meta( $asset_id );
-		$meta['derivatives'][ $profile ]['failedAt'] = time();
+		$job_key = sanitize_key( (string) ( $options['jobKey'] ?? '' ) );
+		$meta['webVariants'][ $job_key ]['failedAt'] = time();
+		if ( (string) ( $meta['webProfileDefaults'][ $profile ] ?? '' ) === $job_key ) {
+			$meta['derivatives'][ $profile ] = $meta['webVariants'][ $job_key ];
+		}
 		update_post_meta( $asset_id, self::META_KEY, $meta );
+	}
+
+	private static function merge_desktop_profile_orchestration_options( int $asset_id, array $options ): void {
+		$job_key = sanitize_key( (string) ( $options['jobKey'] ?? '' ) );
+		if ( '' === $job_key ) {
+			return;
+		}
+		$meta = self::get_derivative_meta( $asset_id );
+		if ( ! is_array( $meta['webVariants'][ $job_key ] ?? null ) ) {
+			return;
+		}
+		foreach ( [ 'familySequence', 'writePreparedBaseline' ] as $key ) {
+			if ( ! empty( $options[ $key ] ) ) {
+				$meta['webVariants'][ $job_key ]['profileOptions'][ $key ] = true;
+			}
+		}
+		update_post_meta( $asset_id, self::META_KEY, $meta );
+	}
+
+	private static function activate_desktop_profile_variant( int $asset_id, string $profile, string $job_key ): void {
+		$meta = self::get_derivative_meta( $asset_id );
+		$record = $meta['webVariants'][ $job_key ] ?? null;
+		if (
+			! is_array( $record )
+			|| 'ready' !== (string) ( $record['status'] ?? '' )
+			|| absint( $record['profileOptions']['textureMaxSize'] ?? 0 ) !== self::runtime_derivative_texture_cap( $profile )
+		) {
+			return;
+		}
+		$meta['webProfileDefaults'][ $profile ] = $job_key;
+		$meta['derivatives'][ $profile ] = $record;
+		update_post_meta( $asset_id, self::META_KEY, $meta );
+	}
+
+	private static function continue_web_family( int $asset_id, string $profile, array $source, array $options ): void {
+		if ( empty( $options['familySequence'] ) || ! self::source_identity_matches( $asset_id, (string) ( $source['sha256'] ?? '' ), absint( $source['generation'] ?? 0 ) ) ) {
+			return;
+		}
+		$next_profile = match ( $profile ) {
+			'web-high'   => 'web-medium',
+			'web-medium' => 'web-low',
+			default      => '',
+		};
+		if ( '' === $next_profile ) {
+			return;
+		}
+		$next_options = [
+			'protectGeometry' => self::automatic_profile_protects_geometry( $asset_id ),
+			'textureMaxSize'  => self::runtime_derivative_texture_cap( $next_profile ),
+			'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
+			'recipe'          => $next_profile,
+			'familySequence'  => true,
+		];
+		$result = self::ensure_derivative( $asset_id, $next_profile, $source, $next_options );
+		if ( is_wp_error( $result ) ) {
+			error_log( sprintf( '[VRodos] Failed to continue web derivative family for asset #%d (%s): %s', $asset_id, $next_profile, $result->get_error_message() ) );
+		}
+	}
+
+	private static function automatic_profile_protects_geometry( int $asset_id ): bool {
+		$terms = wp_get_post_terms( $asset_id, 'vrodos_asset3d_cat', [ 'fields' => 'slugs' ] );
+		if ( is_wp_error( $terms ) ) {
+			return true;
+		}
+		$slugs = array_map( 'sanitize_title', (array) $terms );
+		return ! empty( array_intersect( [ 'walkable-surface', 'collision-proxy' ], $slugs ) );
+	}
+
+	private static function delete_prepared_baseline( int $asset_id, array $source ): void {
+		try {
+			$paths = self::build_derivative_paths( $asset_id, $source, 'web-low', 'cleanup' );
+		} catch ( Throwable $error ) {
+			return;
+		}
+		foreach ( [ 'preparedBaseline', 'preparedAnalysis' ] as $key ) {
+			$path = (string) ( $paths[ $key ] ?? '' );
+			if ( '' !== $path && is_file( $path ) ) {
+				wp_delete_file( $path );
+			}
+		}
+	}
+
+	private static function cleanup_stale_prepared_baseline( int $asset_id, array $source ): void {
+		try {
+			$paths = self::build_derivative_paths( $asset_id, $source, 'web-low', 'cleanup' );
+		} catch ( Throwable $error ) {
+			return;
+		}
+		$baseline = (string) ( $paths['preparedBaseline'] ?? '' );
+		if ( '' !== $baseline && is_file( $baseline ) && (int) filemtime( $baseline ) < time() - 86400 ) {
+			self::delete_prepared_baseline( $asset_id, $source );
+		}
 	}
 
 	private static function apply_desktop_texture_memory_gates( VRodos_Project_Compile_Plan $plan, array $assets, array $scene_assets, array $scene_slots, array $records ): array {
@@ -660,7 +899,7 @@ trait VRodos_Asset_Optimization_Desktop_Profiles {
 					'pipelineVersion' => self::DESKTOP_PROFILE_PIPELINE_VERSION,
 					'recipe'          => 'web-' . $slot,
 				];
-				$queue_result = self::queue_desktop_profile_derivative( $largest_asset_id, 'web-' . $slot, $source, $options );
+				$queue_result = self::ensure_derivative( $largest_asset_id, 'web-' . $slot, $source, $options );
 				if ( is_wp_error( $queue_result ) ) {
 					return [
 						'status'  => 'failed',
