@@ -452,10 +452,21 @@ extract( $data );
 						<button id="allAssetsViewBt" class="tablinks tw-btn tw-btn-xs tw-btn-ghost active">All</button>
 					</div>
 
-					<!-- Search bar -->
-					<div class="search tw-relative tw-p-2 tw-bg-slate-900/40 tw-mx-2 tw-mb-2 tw-rounded-lg tw-border tw-border-white/5">
-						<i data-lucide="search" class="tw-absolute tw-left-4 tw-top-1/2 tw-transform tw--translate-y-1/2 tw-w-3.5 tw-h-3.5 tw-opacity-40"></i>
-						<input type="search" placeholder="Find assets..." class="tw-w-full tw-bg-transparent tw-border-none tw-pl-8 tw-pr-4 tw-py-1 tw-text-[11px] tw-text-slate-200 focus:tw-ring-0 placeholder:tw-text-slate-500" />
+					<div class="AssetBrowserFilterRow">
+						<!-- Asset visibility -->
+						<div class="AssetVisibilityFilterStyle" role="group" aria-label="Filter assets by visibility">
+							<button type="button" class="asset-visibility-filter active" data-asset-visibility-filter="all" aria-pressed="true" title="Show private and shared assets">All</button>
+							<button type="button" class="asset-visibility-filter" data-asset-visibility-filter="private" aria-pressed="false" title="Show private assets">Private</button>
+							<button type="button" class="asset-visibility-filter" data-asset-visibility-filter="shared" aria-pressed="false" title="Show assets shared across projects">Shared</button>
+						</div>
+
+						<!-- Expandable asset search -->
+						<div class="search AssetSearchStyle">
+							<input id="assetBrowserSearchInput" type="search" placeholder="Find assets..." aria-label="Search assets" />
+							<button type="button" class="asset-search-toggle" aria-controls="assetBrowserSearchInput" aria-expanded="false" title="Search assets">
+								<i data-lucide="search"></i>
+							</button>
+						</div>
 					</div>
 
 					<ul id="filesList" class="data">

@@ -25,7 +25,26 @@ final class VRodos_Upload_Manager {
 		if ( 'glb' !== $extension && class_exists( 'VRodos_Asset_Import_Manager' ) ) {
 			return VRodos_Asset_Import_Manager::consume_uploaded_file_array( $file, $asset_id, $project_id, absint( $asset_cat_id ) );
 		}
-		$new_id = VRodos_Storage_Manager::store_uploaded_attachment( $file, $asset_id, 'asset', 'source' );
+
+		$output_path   = trailingslashit( dirname( (string) ( $file['tmp_name'] ?? '' ) ) ) . 'vrodos-normalized-' . sanitize_key( wp_generate_uuid4() ) . '.glb';
+		$normalization = VRodos_Asset_Import_Glb_Normalizer::normalize( (string) ( $file['tmp_name'] ?? '' ), $output_path );
+		if ( is_wp_error( $normalization ) ) {
+			return [ 'success' => false, 'status' => 'failed', 'error' => $normalization->get_error_message() ];
+		}
+
+		if ( ! empty( $normalization['converted'] ) ) {
+			$new_id = VRodos_Storage_Manager::import_existing_file(
+				(string) $normalization['path'],
+				sanitize_file_name( (string) ( $file['name'] ?? 'model.glb' ) ),
+				'model/gltf-binary',
+				$asset_id,
+				'asset',
+				'source'
+			);
+			wp_delete_file( (string) $normalization['path'] );
+		} else {
+			$new_id = VRodos_Storage_Manager::store_uploaded_attachment( $file, $asset_id, 'asset', 'source' );
+		}
 		if ( is_wp_error( $new_id ) ) {
 			return [ 'success' => false, 'status' => 'failed', 'error' => $new_id->get_error_message() ];
 		}
@@ -33,6 +52,7 @@ final class VRodos_Upload_Manager {
 		if ( is_wp_error( $switched ) ) {
 			return [ 'success' => false, 'status' => 'failed', 'error' => $switched->get_error_message() ];
 		}
+		VRodos_Asset_Import_Glb_Normalizer::record_asset_result( $asset_id, $normalization );
 		VRodos_Asset_Origin::mark_bounds_centered( $asset_id );
 		return [ 'success' => true, 'status' => 'ready', 'attachment_id' => (int) $new_id ];
 	}

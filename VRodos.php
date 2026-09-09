@@ -91,6 +91,7 @@ VRodos_Upload_Manager::register_hooks();
 VRodos_Storage_Manager::register_hooks();
 
 // Asset Import Manager Class
+require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-glb-normalizer.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-blender-converter.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-zip-package.php');
 require_once(plugin_dir_path(__FILE__) . 'includes/asset-import/class-vrodos-asset-import-manager.php');

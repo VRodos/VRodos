@@ -10,6 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class VRodos_Immerse_Access_Manager {
 	public const IMMERSE_ROLE = 'vrodos_immerse_user';
 	public const RESTRICTED_CAPABILITY = 'vrodos_immerse_restricted';
+	private const MANAGEMENT_PAGE_TEMPLATES = [
+		'vrodos-project-manager-template.php',
+		'vrodos-assets-list-template.php',
+		'vrodos-edit-3D-scene-template.php',
+		'vrodos-asset-editor-template.php',
+	];
 
 	public function __construct() {
 		add_filter( 'map_meta_cap', [ self::class, 'filter_meta_cap' ], 20, 4 );
@@ -142,13 +148,25 @@ class VRodos_Immerse_Access_Manager {
 	}
 
 	public static function guard_frontend_pages(): void {
-		if ( ! self::is_restricted_user() || ! is_page() ) {
+		if ( ! is_page() ) {
 			return;
 		}
 
 		$page_id  = get_queried_object_id();
 		$template = (string) get_post_meta( $page_id, '_wp_page_template', true );
+		if ( ! self::is_management_page_template( $template ) ) {
+			return;
+		}
 		$basename = basename( str_replace( '\\', '/', $template ) );
+
+		if ( ! is_user_logged_in() ) {
+			auth_redirect();
+			return;
+		}
+
+		if ( ! self::is_restricted_user() ) {
+			return;
+		}
 
 		if ( 'vrodos-assets-list-template.php' === $basename ) {
 			$project_id = absint( $_GET['vrodos_project_id'] ?? 0 );
@@ -195,6 +213,16 @@ class VRodos_Immerse_Access_Manager {
 		if ( ! $allowed ) {
 			self::deny();
 		}
+	}
+
+	private static function is_management_page_template( string $template ): bool {
+		foreach ( self::MANAGEMENT_PAGE_TEMPLATES as $filename ) {
+			if ( in_array( $template, VRodos_Path_Manager::page_template_meta_values( $filename ), true ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private static function deny(): void {

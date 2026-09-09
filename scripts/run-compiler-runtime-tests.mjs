@@ -76,9 +76,11 @@ if (!php) {
     "scripts/test-compiler-plan-foundations.php",
 	"scripts/test-legacy-metadata-migration.php",
 	"scripts/test-storage-business-rules.php",
-    "scripts/test-private-media-cache-logic.php",
+	"scripts/test-frontend-access.php",
+	"scripts/test-private-media-cache-logic.php",
 	"scripts/test-editor-preview-pipeline.php",
-	"scripts/test-asset-origin-contract.php"
+	"scripts/test-asset-origin-contract.php",
+	"scripts/test-glb-legacy-material-normalizer.php"
 ].forEach((testFile) => {
     const result = spawnSync(php, [resolve(root, testFile)], {
         cwd: root,

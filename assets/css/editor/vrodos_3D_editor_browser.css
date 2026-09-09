@@ -32,25 +32,88 @@
 /*-------------------------
 	Search box
 -------------------------*/
-.filemanager .search {
-	margin: 4px 8px;
+.AssetBrowserFilterRow {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 6px 8px 4px;
+	position: relative;
 	flex-shrink: 0;
 }
 
-.filemanager .search input[type=search] {
-	outline: none;
-	height: 24px !important;
-	/* padding removed to allow Tailwind tw-pl-8 to work */
-	font-size: 11px !important;
-	box-sizing: border-box;
+.filemanager .AssetSearchStyle {
+	position: relative;
+	width: 28px;
+	height: 28px;
+	flex: 0 0 28px;
+	margin-left: auto;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 6px;
+	background: rgba(15, 23, 42, 0.55);
+	overflow: hidden;
+	transition: width 0.2s ease, flex-basis 0.2s ease, border-color 0.2s ease;
 }
 
-.filemanager .search input[type=search]::placeholder {
+.filemanager .AssetSearchStyle.expanded {
+	width: 132px;
+	flex-basis: 132px;
+	border-color: rgba(16, 185, 129, 0.45);
+}
+
+.filemanager .AssetSearchStyle input[type=search] {
+	width: 100%;
+	outline: none;
+	height: 26px !important;
+	padding: 3px 30px 3px 8px;
+	border: 0;
+	background: transparent;
+	color: #e2e8f0;
+	font-size: 11px !important;
+	box-sizing: border-box;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease;
+}
+
+.filemanager .AssetSearchStyle.expanded input[type=search] {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.filemanager .AssetSearchStyle input[type=search]::placeholder {
 	color: rgba(255, 255, 255, 0.4);
 }
 
-.filemanager .search input[type=search]:focus {
-	height: 24px !important;
+.filemanager .AssetSearchStyle input[type=search]:focus {
+	height: 26px !important;
+}
+
+.filemanager .AssetSearchStyle .asset-search-toggle {
+	position: absolute;
+	top: 0;
+	right: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 27px;
+	height: 27px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: rgba(226, 232, 240, 0.65);
+	cursor: pointer;
+	transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.filemanager .AssetSearchStyle .asset-search-toggle:hover,
+.filemanager .AssetSearchStyle.expanded .asset-search-toggle {
+	background: rgba(16, 185, 129, 0.14);
+	color: #d1fae5;
+}
+
+.filemanager .AssetSearchStyle .asset-search-toggle svg {
+	width: 14px;
+	height: 14px;
 }
 
 /*-------------------------
@@ -150,6 +213,43 @@
 	background-color: #10b981; /* Emerald-500 */
 	color: #fff;
 	border-color: #059669;
+}
+
+.AssetVisibilityFilterStyle {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 4px;
+	margin: 0;
+	padding: 3px;
+	background: rgba(15, 23, 42, 0.55);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 6px;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.AssetVisibilityFilterStyle button {
+	min-width: 0;
+	padding: 4px 6px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	background: transparent;
+	color: rgba(226, 232, 240, 0.55);
+	font-size: 9px;
+	font-weight: 700;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.AssetVisibilityFilterStyle button:hover {
+	background: rgba(255, 255, 255, 0.08);
+	color: #fff;
+}
+
+.AssetVisibilityFilterStyle button.active {
+	background: rgba(16, 185, 129, 0.2);
+	border-color: rgba(16, 185, 129, 0.45);
+	color: #d1fae5;
 }
 
 /* Empty State */

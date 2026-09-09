@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once dirname( __DIR__ ) . '/class-vrodos-asset-origin.php';
+require_once __DIR__ . '/class-vrodos-asset-import-glb-normalizer.php';
 
 class VRodos_Asset_Import_Manager {
 	public const SETTINGS_OPTION_KEY = 'vrodos_asset_import_settings';
@@ -23,8 +24,8 @@ class VRodos_Asset_Import_Manager {
 	private const ORIGINAL_NAME_META   = '_vrodos_asset_import_original_name';
 	private const JOB_TOKEN_META       = '_vrodos_asset_import_job_token';
 	private const FINAL_GLB_ID_META    = '_vrodos_asset_import_final_glb_id';
-	private const CONVERSION_TOOL_META = '_vrodos_asset_import_conversion_tool';
-	private const CONVERSION_VER_META  = '_vrodos_asset_import_conversion_version';
+	private const CONVERSION_TOOL_META = VRodos_Asset_Import_Glb_Normalizer::CONVERSION_TOOL_META;
+	private const CONVERSION_VER_META  = VRodos_Asset_Import_Glb_Normalizer::CONVERSION_VERSION_META;
 	private const CLEANUP_AFTER_META   = '_vrodos_asset_import_cleanup_after';
 
 	private const SUPPORTED_EXTENSIONS  = [ 'glb', 'zip', 'blend', 'fbx', 'obj', 'dae', 'gltf' ];
@@ -511,7 +512,13 @@ class VRodos_Asset_Import_Manager {
 
 		$prepared_path = self::prepared_glb_path_from_manifest( $session_dir, $manifest );
 		if ( '' !== $prepared_path && is_file( $prepared_path ) ) {
-			$attachment_id   = self::save_glb_file_for_asset( $prepared_path, self::target_glb_name( $asset_id, $asset_cat_id ), $asset_id );
+			$normalization = self::normalize_glb_path( $prepared_path, $session_dir );
+			if ( is_wp_error( $normalization ) ) {
+				self::mark_failed( $asset_id, $normalization->get_error_message() );
+				return [ 'success' => false, 'status' => 'failed', 'error' => $normalization->get_error_message() ];
+			}
+			$diagnostic   = trim( (string) ( $manifest['prepared_diagnostic'] ?? '' ) . ' ' . ( ! empty( $normalization['converted'] ) ? (string) $normalization['diagnostic'] : '' ) );
+			$attachment_id = self::save_glb_file_for_asset( (string) $normalization['path'], self::target_glb_name( $asset_id, $asset_cat_id ), $asset_id );
 			if ( is_wp_error( $attachment_id ) ) {
 				self::mark_failed( $asset_id, $attachment_id->get_error_message() );
 				return [
@@ -526,17 +533,18 @@ class VRodos_Asset_Import_Manager {
 				self::mark_failed( $asset_id, $switched->get_error_message() );
 				return [ 'success' => false, 'status' => 'failed', 'error' => $switched->get_error_message() ];
 			}
-			if ( ! empty( $manifest['prepared_conversion_tool'] ) ) {
+			if ( ! empty( $normalization['converted'] ) ) {
+				VRodos_Asset_Import_Glb_Normalizer::record_asset_result( $asset_id, $normalization );
+			} elseif ( ! empty( $manifest['prepared_conversion_tool'] ) ) {
 				update_post_meta( $asset_id, self::CONVERSION_TOOL_META, sanitize_key( (string) $manifest['prepared_conversion_tool'] ) );
 				update_post_meta( $asset_id, self::CONVERSION_VER_META, self::CONVERSION_VERSION );
 			} else {
-				delete_post_meta( $asset_id, self::CONVERSION_TOOL_META );
-				delete_post_meta( $asset_id, self::CONVERSION_VER_META );
+				VRodos_Asset_Import_Glb_Normalizer::record_asset_result( $asset_id, $normalization );
 			}
 			self::mark_ready(
 				$asset_id,
 				(int) $attachment_id,
-				(string) ( $manifest['prepared_diagnostic'] ?? 'Prepared ZIP model package saved.' ),
+				'' !== $diagnostic ? $diagnostic : 'Prepared ZIP model package saved.',
 				(string) ( $manifest['selected_entry'] ?? ( $manifest['file_name'] ?? basename( $prepared_path ) ) )
 			);
 			self::maybe_generate_blender_thumbnail( $asset_id, (int) $attachment_id, $project_id );
@@ -551,7 +559,12 @@ class VRodos_Asset_Import_Manager {
 		}
 
 		if ( 'glb' === $extension ) {
-			$attachment_id   = self::save_glb_file_for_asset( $source_path, self::target_glb_name( $asset_id, $asset_cat_id ), $asset_id );
+			$normalization = self::normalize_glb_path( $source_path, $session_dir );
+			if ( is_wp_error( $normalization ) ) {
+				self::mark_failed( $asset_id, $normalization->get_error_message() );
+				return [ 'success' => false, 'status' => 'failed', 'error' => $normalization->get_error_message() ];
+			}
+			$attachment_id = self::save_glb_file_for_asset( (string) $normalization['path'], self::target_glb_name( $asset_id, $asset_cat_id ), $asset_id );
 			if ( is_wp_error( $attachment_id ) ) {
 				self::mark_failed( $asset_id, $attachment_id->get_error_message() );
 				return [
@@ -566,9 +579,11 @@ class VRodos_Asset_Import_Manager {
 				self::mark_failed( $asset_id, $switched->get_error_message() );
 				return [ 'success' => false, 'status' => 'failed', 'error' => $switched->get_error_message() ];
 			}
-			delete_post_meta( $asset_id, self::CONVERSION_TOOL_META );
-			delete_post_meta( $asset_id, self::CONVERSION_VER_META );
-			self::mark_ready( $asset_id, (int) $attachment_id, 'Direct GLB upload saved.', (string) ( $manifest['file_name'] ?? 'upload.glb' ) );
+			VRodos_Asset_Import_Glb_Normalizer::record_asset_result( $asset_id, $normalization );
+			$diagnostic = ! empty( $normalization['converted'] )
+				? (string) $normalization['diagnostic']
+				: 'Direct GLB upload saved.';
+			self::mark_ready( $asset_id, (int) $attachment_id, $diagnostic, (string) ( $manifest['file_name'] ?? 'upload.glb' ) );
 			self::delete_directory_inside_root( $session_dir, self::user_staged_root( (string) $upload_dir['basedir'], $user_id ) );
 			self::clear_asset_browser_cache();
 
@@ -1570,6 +1585,11 @@ class VRodos_Asset_Import_Manager {
 			'status'  => 'failed',
 			'error'   => $message,
 		];
+	}
+
+	private static function normalize_glb_path( string $source_path, string $working_dir ): array|WP_Error {
+		$output_path = trailingslashit( $working_dir ) . 'normalized-' . sanitize_key( wp_generate_uuid4() ) . '.glb';
+		return VRodos_Asset_Import_Glb_Normalizer::normalize( $source_path, $output_path );
 	}
 
 	private static function mark_ready( int $asset_id, int $attachment_id, string $diagnostic = '', string $selected_entry = '' ): void {

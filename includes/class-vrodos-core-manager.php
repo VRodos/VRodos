@@ -555,7 +555,17 @@ class VRodos_Core_Manager {
 			return $allAssets;
 		}
 
-		$queryargs = [ 'post_type' => 'vrodos_asset3d', 'posts_per_page' => -1, 'post__in' => $all_ids, 'orderby' => 'post__in' ];
+		// A new asset starts with its upload time as the modified date; later edits
+		// move it back to the top while every browser filter preserves this order.
+		$queryargs = [
+			'post_type'      => 'vrodos_asset3d',
+			'posts_per_page' => -1,
+			'post__in'       => $all_ids,
+			'orderby'        => [
+				'modified' => 'DESC',
+				'ID'       => 'DESC',
+			],
+		];
 
 		$custom_query = new WP_Query( $queryargs );
 

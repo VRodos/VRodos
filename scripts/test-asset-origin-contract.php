@@ -57,6 +57,32 @@ function sanitize_key( string $value ): string {
 	return strtolower( preg_replace( '/[^a-z0-9_\-]/', '', $value ) ?? '' );
 }
 
+function sanitize_file_name( string $value ): string {
+	return basename( $value );
+}
+
+function sanitize_text_field( string $value ): string {
+	return trim( $value );
+}
+
+function trailingslashit( string $value ): string {
+	return rtrim( $value, '/\\' ) . DIRECTORY_SEPARATOR;
+}
+
+function wp_generate_uuid4(): string {
+	return '12345678-1234-4234-8234-123456789abc';
+}
+
+function wp_normalize_path( string $path ): string {
+	return str_replace( '\\', '/', $path );
+}
+
+function wp_delete_file( string $path ): void {
+	if ( is_file( $path ) ) {
+		unlink( $path );
+	}
+}
+
 function wp_unslash( $value ) {
 	return $value;
 }
@@ -69,6 +95,16 @@ require_once dirname( __DIR__ ) . '/includes/class-vrodos-asset-origin.php';
 require_once dirname( __DIR__ ) . '/includes/class-vrodos-upload-manager.php';
 require_once dirname( __DIR__ ) . '/includes/asset-import/class-vrodos-asset-import-manager.php';
 
+$direct_glb_json = json_encode( [ 'asset' => [ 'version' => '2.0' ] ] );
+$direct_glb_json .= str_repeat( ' ', ( 4 - strlen( $direct_glb_json ) % 4 ) % 4 );
+$direct_glb_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vrodos-origin-direct.glb';
+file_put_contents(
+	$direct_glb_path,
+	pack( 'a4VV', 'glTF', 2, 20 + strlen( $direct_glb_json ) )
+		. pack( 'VV', strlen( $direct_glb_json ), 0x4E4F534A )
+		. $direct_glb_json
+);
+
 vrodos_asset_origin_assert( '' === VRodos_Asset_Origin::mode_for_asset( 41 ), 'legacy assets must remain unmarked' );
 vrodos_asset_origin_assert( '' === VRodos_Asset_Origin::normalize_mode( 'bottom-center' ), 'unsupported origin modes must be rejected' );
 VRodos_Asset_Origin::mark_bounds_centered( 41 );
@@ -80,7 +116,7 @@ $_FILES                            = [
 	'multipleFilesInput' => [
 		'name'     => [ 'direct.glb' ],
 		'type'     => [ 'model/gltf-binary' ],
-		'tmp_name' => [ 'direct.glb' ],
+		'tmp_name' => [ $direct_glb_path ],
 		'error'    => [ UPLOAD_ERR_OK ],
 		'size'     => [ 128 ],
 	],
@@ -119,5 +155,7 @@ $import_source = file_get_contents( dirname( __DIR__ ) . '/includes/asset-import
 $upload_source = file_get_contents( dirname( __DIR__ ) . '/includes/class-vrodos-upload-manager.php' );
 vrodos_asset_origin_assert( is_string( $import_source ) && str_contains( $import_source, 'VRodos_Asset_Origin::mark_bounds_centered( $asset_id );' ), 'staged and converted imports must mark their finalized GLB' );
 vrodos_asset_origin_assert( is_string( $upload_source ) && str_contains( $upload_source, 'VRodos_Asset_Origin::mark_bounds_centered( $asset_id );' ), 'direct GLB uploads must mark their finalized GLB' );
+
+wp_delete_file( $direct_glb_path );
 
 echo "Asset origin contract tests passed.\n";

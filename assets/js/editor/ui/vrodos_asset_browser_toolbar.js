@@ -3,6 +3,7 @@ const VRODOS_ASSET_BROWSER_SELECTORS = {
     toolbar: 'assetBrowserToolbar',
     categoryTabs: 'assetCategTab',
     allAssetsTab: 'allAssetsViewBt',
+    visibilityFilter: '[data-asset-visibility-filter]',
     dataList: '.data',
     assetCard: 'li:not(.asset-empty-state)',
     editButton: '[data-vrodos-asset-edit-url]',
@@ -67,6 +68,20 @@ function bindAssetCategoryTabs(categoryTabs, openCategoryTab) {
 
         openCategoryTab(button);
     });
+}
+
+function assetBrowserFlagIsTrue(value) {
+    return value === true || value === 1 || value === '1' || value === 'true';
+}
+
+function assetBrowserMatchesVisibility(value, visibility) {
+    if (visibility === 'shared') {
+        return assetBrowserFlagIsTrue(value);
+    }
+    if (visibility === 'private') {
+        return !assetBrowserFlagIsTrue(value);
+    }
+    return true;
 }
 
 VRODOS.api.fetchListAvailableAssets = function(isAdmin, gameProjectSlug, urlforAssetEdit, gameProjectID) {
@@ -198,48 +213,55 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
         window.vrodosAssetBrowserItemsById[String(asset.asset_id)] = asset;
     });
 
+    const filterState = {
+        category: VRODOS_ASSET_BROWSER_SELECTORS.allAssetsTab,
+        visibility: 'all',
+        search: ''
+    };
+
     bindAssetListControls(fileList);
     bindAssetCategoryTabs(categoryTabs, openCategoryTab);
+    bindAssetVisibilityFilters();
     render(responseData, gameProjectSlug, urlforAssetEdit);
+    applyAssetBrowserFilters();
     if (typeof VRODOS.ui.setHierarchyViewer === 'function') {
         VRODOS.ui.setHierarchyViewer();
     }
 
-    // Hiding and showing the search box
     const searchBox = filemanager.querySelector('.search');
-    if (searchBox) {
-        searchBox.addEventListener('click', function () {
-            const span = this.querySelector('span');
-            const input = this.querySelector('input[type=search]');
-            if (span) span.style.display = 'none';
-            if (input) { input.style.display = ''; input.focus(); }
+    const searchInput = searchBox ? searchBox.querySelector('input[type=search]') : null;
+    const searchToggle = searchBox ? searchBox.querySelector('.asset-search-toggle') : null;
+    if (searchBox && searchInput && searchToggle) {
+        searchToggle.addEventListener('click', () => {
+            searchBox.classList.add('expanded');
+            searchToggle.setAttribute('aria-expanded', 'true');
+            searchInput.focus();
         });
-    }
-
-    // Listening for keyboard input on the search field.
-    const searchInput = filemanager.querySelector('input');
-    if (searchInput) {
         searchInput.addEventListener('input', function () {
-            const value = this.value.trim();
-            if (value.length) {
-                filemanager.classList.add('searching');
-                fileList.innerHTML = '';
-                const filteredResponseData = selectAssetsByTitle(responseData, value.trim());
-                render(filteredResponseData, gameProjectSlug, urlforAssetEdit);
-            } else {
-                filemanager.classList.remove('searching');
-                fileList.innerHTML = '';
-                render(responseData, gameProjectSlug, urlforAssetEdit);
-            }
+            filterState.search = this.value.trim().toLowerCase();
+            filemanager.classList.toggle('searching', filterState.search.length > 0);
+            applyAssetBrowserFilters();
         });
         searchInput.addEventListener('keyup', function (e) {
-            if (e.keyCode === 27) this.blur();
+            if (e.key !== 'Escape') {
+                return;
+            }
+
+            if (this.value) {
+                this.value = '';
+                filterState.search = '';
+                filemanager.classList.remove('searching');
+                applyAssetBrowserFilters();
+            } else {
+                searchBox.classList.remove('expanded');
+                searchToggle.setAttribute('aria-expanded', 'false');
+                searchToggle.focus();
+            }
         });
-        searchInput.addEventListener('focusout', function () {
-            if (!this.value.trim().length) {
-                this.style.display = 'none';
-                const span = this.parentElement.querySelector('span');
-                if (span) span.style.display = '';
+        searchBox.addEventListener('focusout', (event) => {
+            if (!searchBox.contains(event.relatedTarget) && !searchInput.value.trim()) {
+                searchBox.classList.remove('expanded');
+                searchToggle.setAttribute('aria-expanded', 'false');
             }
         });
     }
@@ -358,17 +380,6 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
             }
             // Re-initialize Lucide icons after dynamic DOM insertion
             VRODOS.ui.refreshLucideIcons();
-        } else {
-            // Show empty state when no assets exist
-            const emptyHTML = '<li class="asset-empty-state tw-col-span-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-16 tw-px-4 tw-text-center tw-bg-slate-800/20 tw-rounded-xl tw-border tw-border-dashed tw-border-white/10 tw-my-4">' +
-                '<div class="tw-bg-slate-800/40 tw-p-4 tw-rounded-full tw-mb-4 tw-border tw-border-white/5">' +
-                    '<i data-lucide="package-open" class="tw-w-10 tw-h-10 tw-text-slate-400"></i>' +
-                '</div>' +
-                '<p class="tw-text-xs tw-font-bold tw-text-white tw-tracking-wide">No assets found</p>' +
-                '<p class="tw-text-[10px] tw-text-slate-300 tw-mt-2 tw-leading-relaxed">Your library is empty. Add new 3D models and media from the Asset Manager to start building.</p>' +
-            '</li>';
-            fileList.insertAdjacentHTML('beforeend', emptyHTML);
-            VRODOS.ui.refreshLucideIcons();
         }
 
         // Remove animation
@@ -381,81 +392,91 @@ VRODOS.ui.fileBrowsingByDb = function(responseData, gameProjectSlug, urlforAsset
 
     // Icon mapping now handled by vrodos_icons.js (single source of truth)
 
-    function selectAssetsByTitle(inputData, needle) {
-        const query = VRODOS.utils.displayText(needle).trim().toLowerCase();
-        if (!query) {
-            return inputData;
-        }
-
-        return inputData.filter((asset) => {
-            const searchableText = [
-                asset.asset_name,
-                asset.asset_slug,
-                asset.category_name,
-                asset.category_slug
-            ].map((value) => VRODOS.utils.displayText(value).toLowerCase()).join(' ');
-
-            return searchableText.indexOf(query) !== -1;
+    function bindAssetVisibilityFilters() {
+        const buttons = filemanager.querySelectorAll(VRODOS_ASSET_BROWSER_SELECTORS.visibilityFilter);
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                filterState.visibility = button.dataset.assetVisibilityFilter || 'all';
+                buttons.forEach((candidate) => {
+                    const isActive = candidate === button;
+                    candidate.classList.toggle('active', isActive);
+                    candidate.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                });
+                applyAssetBrowserFilters();
+            });
         });
     }
 
-
-    function openCategoryTab(b) {
-
-        const categName = b.id;
-
-        // Declare all variables
-        // Get all elements with class="tabcontent" and hide them
-        const tabcontent = document.getElementsByClassName("tabcontent");
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = "none";
+    function assetMatchesSearch(item) {
+        if (!filterState.search) {
+            return true;
         }
 
-        // Get all elements with class="tablinks" and remove the class "active"
-        const tablinks = document.getElementsByClassName("tablinks");
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].classList.remove("active");
+        const searchableText = [
+            item.dataset.asset_name,
+            item.dataset.asset_slug,
+            item.dataset.category_name,
+            item.dataset.category_slug
+        ].map((value) => VRODOS.utils.displayText(value).toLowerCase()).join(' ');
+
+        return searchableText.indexOf(filterState.search) !== -1;
+    }
+
+    function updateAssetBrowserEmptyState(totalCount, visibleCount) {
+        const existingEmptyState = fileList.querySelector(VRODOS_ASSET_BROWSER_SELECTORS.emptyState);
+        if (visibleCount > 0) {
+            if (existingEmptyState) {
+                existingEmptyState.remove();
+            }
+            return;
         }
 
-        // Show the current tab, and add an "active" class to the button that opened the tab
+        const title = totalCount > 0 ? 'No matching assets' : 'No assets found';
+        const message = totalCount > 0
+            ? 'No assets match the selected category, visibility, and search filters.'
+            : 'Your library is empty. Add a private asset or ask an administrator to add shared assets.';
+
+        if (existingEmptyState) {
+            existingEmptyState.querySelector('p:nth-of-type(1)').textContent = title;
+            existingEmptyState.querySelector('p:nth-of-type(2)').textContent = message;
+            return;
+        }
+
+        const emptyHTML = '<li class="asset-empty-state tw-col-span-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-16 tw-px-4 tw-text-center tw-bg-slate-800/20 tw-rounded-xl tw-border tw-border-dashed tw-border-white/10 tw-my-4">' +
+            '<div class="tw-bg-slate-800/40 tw-p-4 tw-rounded-full tw-mb-4 tw-border tw-border-white/5">' +
+                '<i data-lucide="package-open" class="tw-w-10 tw-h-10 tw-text-slate-400"></i>' +
+            '</div>' +
+            `<p class="tw-text-xs tw-font-bold tw-text-white tw-tracking-wide">${  title  }</p>` +
+            `<p class="tw-text-[10px] tw-text-slate-300 tw-mt-2 tw-leading-relaxed">${  message  }</p>` +
+        '</li>';
+        fileList.insertAdjacentHTML('beforeend', emptyHTML);
+        VRODOS.ui.refreshLucideIcons();
+    }
+
+    function applyAssetBrowserFilters() {
         const items = fileList.querySelectorAll(VRODOS_ASSET_BROWSER_SELECTORS.assetCard);
         let visibleCount = 0;
-        for (let i = 0; i < items.length; ++i) {
-            if (categName === "allAssetsViewBt") {
-                items[i].style.display = '';
+
+        items.forEach((item) => {
+            const matchesCategory = filterState.category === VRODOS_ASSET_BROWSER_SELECTORS.allAssetsTab
+                || item.dataset.category_slug === filterState.category;
+            const matchesVisibility = assetBrowserMatchesVisibility(item.dataset.is_shared, filterState.visibility);
+            const isVisible = matchesCategory && matchesVisibility && assetMatchesSearch(item);
+
+            item.style.display = isVisible ? '' : 'none';
+            if (isVisible) {
                 visibleCount++;
-            } else {
-                if (items[i].dataset.category_slug === categName) {
-                    items[i].style.display = '';
-                    visibleCount++;
-                } else {
-                    items[i].style.display = 'none';
-                }
             }
-        }
+        });
 
-        // Show/hide empty state based on visibility
-        const emptyState = fileList.querySelector(VRODOS_ASSET_BROWSER_SELECTORS.emptyState);
-        if (visibleCount === 0) {
-            if (!emptyState) {
-                const emptyHTML = '<li class="asset-empty-state tw-col-span-full tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-16 tw-px-4 tw-text-center tw-bg-slate-800/20 tw-rounded-xl tw-border tw-border-dashed tw-border-white/10 tw-my-4">' +
-                    '<div class="tw-bg-slate-800/40 tw-p-4 tw-rounded-full tw-mb-4 tw-border tw-border-white/5">' +
-                    '<i data-lucide="package-open" class="tw-w-10 tw-h-10 tw-text-slate-400"></i>' +
-                    '</div>' +
-                    '<p class="tw-text-xs tw-font-bold tw-text-white tw-tracking-wide">Empty Category</p>' +
-                    '<p class="tw-text-[10px] tw-text-slate-300 tw-mt-2 tw-leading-relaxed">No assets match this category in your project library.</p>' +
-                    '</li>';
-                fileList.insertAdjacentHTML('beforeend', emptyHTML);
-                VRODOS.ui.refreshLucideIcons();
-            } else {
-                 emptyState.style.display = '';
-                 emptyState.querySelector('p:nth-of-type(1)').textContent = "Empty Category";
-                 emptyState.querySelector('p:nth-of-type(2)').textContent = "No assets match this category in your project library.";
-            }
-        } else {
-            if (emptyState) emptyState.style.display = 'none';
-        }
+        updateAssetBrowserEmptyState(items.length, visibleCount);
+    }
 
-        b.classList.add("active");
+    function openCategoryTab(b) {
+        filterState.category = b.id;
+        categoryTabs.querySelectorAll('.tablinks').forEach((button) => {
+            button.classList.toggle('active', button === b);
+        });
+        applyAssetBrowserFilters();
     }
 };
